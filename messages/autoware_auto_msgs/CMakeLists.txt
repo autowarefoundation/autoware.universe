@@ -10,24 +10,31 @@ ament_auto_find_build_dependencies()
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   # Helper types
-  "msg/BoundingBox.msg"
-  "msg/Complex32.msg"
-  "msg/DiagnosticHeader.msg"
-  "msg/Quaternion32.msg"
-  "msg/TrajectoryPoint.msg"
+  "msg/BoundingBox.idl"
+  "msg/Complex32.idl"
+  "msg/DiagnosticHeader.idl"
+  "msg/Quaternion32.idl"
+  "msg/TrajectoryPoint.idl"
   # Interfaces
-  "msg/BoundingBoxArray.msg"
-  "msg/ControlDiagnostic.msg"
-  "msg/HighLevelControlCommand.msg"
-  "msg/RawControlCommand.msg"
-  "msg/Trajectory.msg"
-  "msg/VehicleControlCommand.msg"
-  "msg/VehicleKinematicState.msg"
-  "msg/VehicleOdometry.msg"
-  "msg/VehicleStateCommand.msg"
-  "msg/VehicleStateReport.msg"
+  "msg/BoundingBoxArray.idl"
+  "msg/ControlDiagnostic.idl"
+  "msg/HighLevelControlCommand.idl"
+  "msg/RawControlCommand.idl"
+  "msg/Trajectory.idl"
+  "msg/VehicleControlCommand.idl"
+  "msg/VehicleKinematicState.idl"
+  "msg/VehicleOdometry.idl"
+  "msg/VehicleStateCommand.idl"
+  "msg/VehicleStateReport.idl"
   # Implementation-specific messages
-  "msg/PointClusters.msg"
-  DEPENDENCIES "std_msgs" "geometry_msgs" "sensor_msgs")
+  "msg/PointClusters.idl"
+  DEPENDENCIES "std_msgs" "geometry_msgs" "sensor_msgs"
+  ADD_LINTER_TESTS
+)
+
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
+endif()
 
 ament_auto_package()
