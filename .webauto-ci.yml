@@ -1,0 +1,13 @@
+# This is required for Continuous Integration for Autoware using the simulator
+# and remote update (Over The Air update) to real cars.
+# If you have any additional questions, please contact us at #tier4-dev channel.
+
+services:
+  autoware:
+    type: roslaunch
+    package_name: autoware_launch
+    file_name: autoware.launch
+  planning_simulator:
+    type: roslaunch
+    package_name: autoware_launch
+    file_name: planning_simulator.launch

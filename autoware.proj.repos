@@ -1,0 +1,49 @@
+repositories:
+  autoware/autoware.iv:
+    type: git
+    url: git@github.com:tier4/autoware.iv.universe.git
+    version: master
+  autoware/launcher:
+    type: git
+    url: git@github.com:tier4/autoware_launcher.iv.universe.git
+    version: master
+  description/sensor/sensor_description:
+    type: git
+    url: git@github.com:tier4/sensor_description.iv.universe.git
+    version: master
+  description/vehicle/lexus_description:
+    type: git
+    url: git@github.com:tier4/lexus_description.iv.universe.git
+    version: master
+  simulator/planning_simulator:
+    type: git
+    url: git@github.com:tier4/planning_simulator.iv.universe.git
+    version: master
+  simulator/planning_simulator_launcher:
+    type: git
+    url: git@github.com:tier4/planning_sim_launcher.iv.universe.git
+    version: master
+  simulator/scenario_runner:
+    type: git
+    url: git@github.com:tier4/scenario_runner.iv.universe.git
+    version: master
+  vendor/lanelet2:
+    type: git
+    url: git@github.com:fzi-forschungszentrum-informatik/Lanelet2.git
+    version: 1.0.1
+  vendor/mrt_cmake_modules:
+    type: git
+    url: git@github.com:KIT-MRT/mrt_cmake_modules.git
+    version: 1.0.2
+  vendor/livox_ros_driver:
+    type: git
+    url: git@github.com:Livox-SDK/livox_ros_driver.git
+    version: v2.5.0
+  vendor/velodyne:
+    type: git
+    url: git@github.com:tier4/velodyne.git
+    version: feature/iv_impl
+  vendor/velodyne_vls:
+    type: git
+    url: git@github.com:tier4/velodyne_vls.git
+    version: feature/iv_impl

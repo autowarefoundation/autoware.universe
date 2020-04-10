@@ -1,0 +1,6 @@
+---
+rosdistro: "melodic"
+package: "desktop-full"
+repository: "http://packages.ros.org/ros/ubuntu"
+keyserver: "hkp://keyserver.ubuntu.com:80"
+keyid: "C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654"
