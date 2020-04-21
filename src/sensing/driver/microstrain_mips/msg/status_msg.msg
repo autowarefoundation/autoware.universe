@@ -1,0 +1,33 @@
+uint16 device_model
+uint8  status_selector
+
+uint32 status_flags
+
+uint16 system_state
+uint32 system_timer_ms
+
+uint8 gps_power_on
+
+uint32 num_gps_pps_triggers
+uint32 last_gps_pps_trigger_ms
+
+uint8 imu_stream_enabled
+uint8 gps_stream_enabled
+uint8 filter_stream_enabled
+
+uint32 imu_dropped_packets
+uint32 gps_dropped_packets
+uint32 filter_dropped_packets
+
+uint32 com1_port_bytes_written
+uint32 com1_port_bytes_read
+uint32 com1_port_write_overruns
+uint32 com1_port_read_overruns
+
+uint32 imu_parser_errors
+uint32 imu_message_count
+uint32 imu_last_message_ms
+
+uint32 gps_parser_errors
+uint32 gps_message_count
+uint32 gps_last_message_ms

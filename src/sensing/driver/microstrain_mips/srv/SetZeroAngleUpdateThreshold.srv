@@ -1,0 +1,4 @@
+int8 enable
+float32 threshold
+---
+bool success

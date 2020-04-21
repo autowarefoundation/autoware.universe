@@ -1,0 +1,14 @@
+<library path="lib/libautoware_perception_rviz_plugin">
+  <class name="rviz/PedestrianInitialPoseTool"
+         type="rviz::PedestrianInitialPoseTool"
+         base_class_type="rviz::Tool">
+  </class>
+  <class name="rviz/CarInitialPoseTool"
+         type="rviz::CarInitialPoseTool"
+         base_class_type="rviz::Tool">
+  </class>
+  <class name="rviz/DeleteAllObjectsTool"
+         type="rviz::DeleteAllObjectsTool"
+         base_class_type="rviz::Tool">
+  </class>
+</library>

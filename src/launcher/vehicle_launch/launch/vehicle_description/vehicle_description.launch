@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+
+  <arg name="model" default="$(find vehicle_launch)/urdf/vehicle.xacro"/>
+
+  <param name="robot_description" command="$(find xacro)/xacro --inorder $(arg model)" />
+
+  <group ns="/vehicle_info">
+    <rosparam file="$(find lexus_description)/config/vehicle_info.yaml" command="load"/>
+    <node name="additional_vehicle_info_generator" pkg="additional_vehicle_info_generator" type="additional_vehicle_info_generator" output="log"/>
+
+    <group ns="mirror">
+      <rosparam file="$(find lexus_description)/config/mirror.yaml" command="load"/>
+    </group>
+  </group>
+
+  <!-- tf publisher -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+
+</launch>

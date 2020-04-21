@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<package>
+    <name>tensorrt_yolo3</name>
+    <version>0.1.0</version>
+    <description>tensorrt_yolo3</description>
+
+    <maintainer email="cirpue49@yahoo.co.jp">Kosuke Murakami</maintainer>
+    <license>Apache 2.0</license>
+
+    <buildtool_depend>catkin</buildtool_depend>
+
+    <build_depend>roscpp</build_depend>
+    <build_depend>roslib</build_depend>
+    <build_depend>cv_bridge</build_depend>
+    <!-- <build_depend>pcl_ros</build_depend> -->
+    <build_depend>autoware_perception_msgs</build_depend>
+    <!-- <build_depend>tf2</build_depend>
+    <build_depend>tf2_geometry_msgs</build_depend> -->
+
+
+    <run_depend>roscpp</run_depend>
+    <run_depend>roslib</run_depend>
+    <run_depend>cv_bridge</run_depend>
+    <!-- <run_depend>pcl_ros</run_depend> -->
+    <run_depend>autoware_perception_msgs</run_depend>
+    <!-- <run_depend>tf2</run_depend>
+    <run_depend>tf2_geometry_msgs</run_depend> -->
+
+    <export></export>
+</package>

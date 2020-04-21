@@ -1,0 +1,8 @@
+<!-- -*- mode: XML -*- -->
+
+<launch>
+  <arg name="manager" default="velodyne_nodelet_manager" />
+
+  <node pkg="nodelet" type="nodelet" name="$(arg manager)_interpolate" args="load velodyne_pointcloud/InterpolateNodelet $(arg manager)">
+  </node>
+</launch>

@@ -1,0 +1,2 @@
+Header header
+autoware_control_msgs/ControlCommand control

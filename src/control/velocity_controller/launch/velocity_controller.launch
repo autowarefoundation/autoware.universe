@@ -1,0 +1,35 @@
+<launch>
+
+
+  <!-- system -->
+  <arg name="control_rate" default="30" doc="controller execution rate [Hz]" />
+
+  <!-- enable flags -->
+  <arg name="show_debug_info" default="false" />
+  <arg name="enable_smooth_stop" default="true" />
+  <arg name="enable_slope_compensation" default="false" />
+  <arg name="enable_pub_debug" default="true" />
+
+
+
+  <node pkg="velocity_controller" type="velocity_controller" name="velocity_controller" output="screen">
+    <rosparam command="load" file="$(find velocity_controller)/config/velocity_controller_param.yaml" />
+
+    <remap from="~current_velocity" to="/localization/twist"/>
+    <remap from="~control_cmd" to="longitudinal/control_cmd"/>
+    <remap from="~current_trajectory" to="/planning/scenario_planning/trajectory"/>
+
+    <!-- system -->
+    <param name="control_rate" value="$(arg control_rate)"/>
+
+    <!-- enable flags -->
+    <param name="show_debug_info" value="$(arg show_debug_info)" />
+    <param name="enable_smooth_stop" value="$(arg enable_smooth_stop)" />
+    <param name="enable_slope_compensation" value="$(arg enable_slope_compensation)" />
+    <param name="enable_pub_debug" value="$(arg enable_pub_debug)" />
+
+
+  </node>
+
+
+</launch>

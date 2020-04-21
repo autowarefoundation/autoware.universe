@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<launch>
+
+  <node pkg="tamagawa_imu_driver" name="tag_serial_driver" type="tag_serial_driver" args="/dev/ttyUSB0 noGPS 100" output="screen"/>
+
+</launch>

@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>perception_launch</name>
+  <version>0.1.0</version>
+  <description>The perception_launch package</description>
+
+  <maintainer email="yukihiro.saito@tier4.jp">Yukihiro Saito</maintainer>
+  <license>Apache2</license>
+
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>dynamic_object_visualization</build_depend>
+  <build_depend>euclidean_cluster</build_depend>
+  <build_depend>pointcloud_to_laserscan</build_depend>
+  <build_depend>shape_estimation</build_depend>
+  <build_export_depend>dynamic_object_visualization</build_export_depend>
+  <build_export_depend>euclidean_cluster</build_export_depend>
+  <build_export_depend>pointcloud_to_laserscan</build_export_depend>
+  <build_export_depend>shape_estimation</build_export_depend>
+  <exec_depend>dynamic_object_visualization</exec_depend>
+  <exec_depend>euclidean_cluster</exec_depend>
+  <exec_depend>pointcloud_to_laserscan</exec_depend>
+  <exec_depend>shape_estimation</exec_depend>
+
+  <export>
+  </export>
+</package>

@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+
+<launch>
+  <arg name="input/image" default="/camera/image_raw"/>
+  <arg name="input/rois" default="input/rois"/>
+  <arg name="output/image" default="debug/rois"/>
+
+  <node pkg="traffic_light_visualization" type="traffic_light_roi_visualizer_node" name="$(anon traffic_light_roi_visualizer)" output="screen">
+    <remap from="~input/image" to="$(arg input/image)"/>
+    <remap from="~input/rois" to="$(arg input/rois)"/>
+    <remap from="~output/image" to="$(arg output/image)"/>
+  </node>
+</launch>

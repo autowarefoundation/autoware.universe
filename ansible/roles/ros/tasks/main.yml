@@ -1,0 +1,62 @@
+---
+- name: ROS (set up your keys)
+  apt_key:
+    keyserver: "{{ keyserver }}"
+    id: "{{ keyid }}"
+  become: yes
+
+- name: ROS (add source list)
+  apt_repository:
+    repo: "deb {{ repository }} {{ ansible_lsb.codename }} main"
+    state: present
+    update_cache: yes
+  become: yes
+
+- name: ROS (install packages)
+  apt:
+    name: "ros-{{ release }}-{{ package }}"
+    state: latest
+    update_cache: yes
+    cache_valid_time: 3600
+  become: yes
+
+- name: ROS (check rosdep file)
+  stat:
+    path: /etc/ros/rosdep/sources.list.d/20-default.list
+  register: ros_repository
+
+- name: ROS (install rosdep)
+  apt:
+    name: "python-rosdep"
+    state: latest
+    update_cache: yes
+    cache_valid_time: 3600
+  become: yes
+
+- name: ROS (initilize rosdep)
+  command: rosdep init
+  when: ros_repository.stat.exists == false
+  become: yes
+
+- name: ROS (update rosdep)
+  command: rosdep update
+  become: no
+
+- name: ROS (add path >> bashrc)
+  lineinfile:
+    dest: ~/.bashrc
+    line: source /opt/ros/{{ release }}/setup.bash
+    state: present
+  become: no
+
+- name: ROS (install dependencies for building packages)
+  apt:
+    name:
+      - "ros-{{ release }}-velodyne-pointcloud"
+      - "ros-{{ release }}-roswww"
+      - "ros-{{ release }}-rosbridge-server"
+      - build-essential
+    state: latest
+    update_cache: yes
+    cache_valid_time: 3600
+  become: yes

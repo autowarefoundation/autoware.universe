@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+  <include file="$(find gyro_odometer)/launch/gyro_odometer.launch">
+    <arg name="output_twist_topic" value="/localization/twist_estimator/twist" doc="" />
+    <arg name="output_twist_with_covariance_topic" value="/localization/twist_estimator/twist_with_covariance" doc="" />
+  </include>
+</launch>

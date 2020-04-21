@@ -1,0 +1,31 @@
+/**
+\mainpage
+\htmlinclude manifest.html
+
+\b microstrain_3dm_gx5_45 is a driver for the Lord/Microstrain integrated IMU/GPS sensors.
+
+\section codeapi Code API
+
+Provide links to specific auto-generated API documentation within your
+package that is of particular interest to a reader. Doxygen will
+document pretty much every part of your code, so do your best here to
+point the reader to the actual API.
+
+If your codebase is fairly large or has different sets of APIs, you
+should use the doxygen 'group' tag to keep these APIs together. For
+example, the roscpp documentation has 'libros' and 'botherder' groups
+so that those can be viewed separately. The rospy documentation
+similarly has a 'client-api' group that pulls together APIs for a
+Client API page.
+
+
+\section rosapi ROS API
+
+Every ROS name in your code must be documented. Names are very
+important in ROS because they are the API to nodes and services. They
+are also capable of being remapped on the command-line, so it is VERY
+IMPORTANT THAT YOU LIST NAMES AS THEY APPEAR IN THE CODE. It is also
+important that you write your code so that the names can be easily
+remapped.
+
+*/

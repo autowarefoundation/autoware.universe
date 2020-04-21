@@ -1,0 +1,5 @@
+<launch>
+
+  <test test-name="test-mpc_lowpass_filter" pkg="mpc_follower" type="test-mpc_lowpass_filter" name="test"/>
+
+</launch>

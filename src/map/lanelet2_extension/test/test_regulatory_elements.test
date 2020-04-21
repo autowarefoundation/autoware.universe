@@ -1,0 +1,5 @@
+<launch>
+
+  <test test-name="test-regulatory_elements" pkg="lanelet2_extension" type="regulatory_elements-test" name="test"/>
+
+</launch>

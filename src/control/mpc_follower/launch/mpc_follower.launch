@@ -1,0 +1,20 @@
+<launch>
+
+  <arg name="show_debug_info" default="false"/>
+
+  <!-- mpc for trajectory following -->
+  <node pkg="mpc_follower" type="mpc_follower" name="mpc_follower" output="screen">
+    <rosparam command="load" file="$(find mpc_follower)/config/mpc_follower_param.yaml" />
+    <param name="show_debug_info" value="$(arg show_debug_info)"/>
+    <remap from="~input/reference_trajectory" to="/planning/scenario_planning/trajectory"/>
+    <remap from="~input/current_velocity" to="/localization/twist"/>
+    <remap from="~input/current_steering" to="/vehicle/status/steering"/>
+    <remap from="~output/twist_raw" to="lateral/twist_raw"/>
+    <remap from="~output/control_raw" to="lateral/control_cmd"/>
+  </node>
+
+  <!-- steering dynamics simulator for turning -->
+  <node pkg="mpc_follower" type="steer_simulator.py" name="steer_simulator" output="log" />
+
+
+</launch>

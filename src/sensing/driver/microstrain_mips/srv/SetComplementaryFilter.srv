@@ -1,0 +1,7 @@
+int8 north_comp_enable
+int8 up_comp_enable
+float32 north_comp_time_const
+float32 up_comp_time_const
+
+---
+bool success

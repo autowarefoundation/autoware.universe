@@ -1,0 +1,5 @@
+<launch>
+  <node pkg="obstacle_stop_planner" type="obstacle_stop_planner_node" name="obstacle_stop_planner" output="screen">
+  </node>
+
+</launch>

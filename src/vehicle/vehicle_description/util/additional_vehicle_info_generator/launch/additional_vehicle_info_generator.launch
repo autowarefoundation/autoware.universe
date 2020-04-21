@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+
+  <group ns="/vehicle_info">
+    <rosparam file="$(find lexus_description)/config/vehicle_info.yaml" command="load"/>
+    <node name="additional_vehicle_info_generator" pkg="additional_vehicle_info_generator" type="additional_vehicle_info_generator" output="log"/>
+  </group>
+
+</launch>

@@ -1,0 +1,11 @@
+# Universal rule for GX3/4/5 devices
+SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ATTRS{product}=="Lord Inertial Sensor", SYMLINK="microstrain", MODE="0666"
+
+# Vendor/Product-locked rules for GX3/4/5 devices
+#SUBSYSTEM=="tty", ATTRS{idVendor}=="199b", ATTRS{idProduct}=="3065", SYMLINK="microstrain", MODE="0666"
+#SUBSYSTEM=="tty", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740", SYMLINK="microstrain", MODE="0666"
+
+# Uncomment these rules if you'd like the serial number to appear in the symlink.  Useful if you have multiple devices.
+#SUBSYSTEM=="tty", ATTRS{idVendor}=="199b", ATTRS{idProduct}=="3065", SYMLINK+="microstrain_%s{serial}", MODE="0666"
+#SUBSYSTEM=="tty", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740", SYMLINK+="microstrain_%s{serial}", MODE="0666"
+#SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ATTRS{product}=="Lord Inertial Sensor", SYMLINK+="microstrain_%s{serial}", MODE="0666"

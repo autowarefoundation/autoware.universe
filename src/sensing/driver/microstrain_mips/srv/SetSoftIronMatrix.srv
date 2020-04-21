@@ -1,0 +1,5 @@
+geometry_msgs/Vector3 soft_iron_1
+geometry_msgs/Vector3 soft_iron_2
+geometry_msgs/Vector3 soft_iron_3
+---
+bool success

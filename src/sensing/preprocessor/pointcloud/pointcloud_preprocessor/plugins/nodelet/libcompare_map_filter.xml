@@ -1,0 +1,31 @@
+<library path="lib/libcompare_map_filter">
+
+  <class name="pointcloud_preprocessor/distance_based_compare_map_filter_nodelet"
+	 type="pointcloud_preprocessor::DistanceBasedCompareMapFilterNodelet"
+	 base_class_type="nodelet::Nodelet">
+    <description>
+      compare two pointcloud data between map and sensor data.
+    </description>
+  </class>
+  <class name="pointcloud_preprocessor/voxel_based_approximate_compare_map_filter_nodelet"
+	 type="pointcloud_preprocessor::VoxelBasedApproximateCompareMapFilterNodelet"
+	 base_class_type="nodelet::Nodelet">
+    <description>
+      compare two pointcloud data between map and sensor data.
+    </description>
+  </class>
+  <class name="pointcloud_preprocessor/voxel_based_compare_map_filter_nodelet"
+	 type="pointcloud_preprocessor::VoxelBasedCompareMapFilterNodelet"
+	 base_class_type="nodelet::Nodelet">
+    <description>
+      compare two pointcloud data between map and sensor data.
+    </description>
+  </class>
+  <class name="pointcloud_preprocessor/voxel_distance_based_compare_map_filter_nodelet"
+	 type="pointcloud_preprocessor::VoxelDistanceBasedCompareMapFilterNodelet"
+	 base_class_type="nodelet::Nodelet">
+    <description>
+      compare two pointcloud data between map and sensor data.
+    </description>
+  </class>
+</library>

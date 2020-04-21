@@ -1,0 +1,9 @@
+float32 enable
+float32 low_pass_cutoff
+float32 min_1sigma
+float32 low_limit
+float32 high_limit
+float32 low_limit_1sigma
+float32 high_limit_1sigma
+---
+bool success

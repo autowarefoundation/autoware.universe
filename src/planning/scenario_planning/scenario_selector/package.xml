@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>scenario_selector</name>
+  <version>0.1.0</version>
+  <description>The scenario_selector package</description>
+  <maintainer email="kenji.miyake@tier4.jp">Kenji Miyake</maintainer>
+  <license>Apache 2</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>autoware_lanelet2_msgs</depend>
+  <depend>autoware_planning_msgs</depend>
+  <depend>lanelet2_extension</depend>
+  <depend>roscpp</depend>
+  <depend>tf2</depend>
+  <depend>tf2_ros</depend>
+  <depend>tf2_geometry_msgs</depend>
+
+  <export>
+  </export>
+</package>

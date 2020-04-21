@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>microstrain_mips</name>
+  <version>0.1.0</version>
+  <description>The microstrain_mips package provides a driver for the LORD/Microstrain 3DM_GX5_XX GPS-aided IMU sensor.</description>
+  <author email="briansbingham@gmail.com">Brian Bingham</author> -->
+  <maintainer email="briansbingham@gmail.com">Brian Bingham</maintainer>
+  <license>MIT</license>
+  <url type="website">http://wiki.ros.org/microstrain_3dm_gx5_45</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>roscpp</depend>
+  <depend>cmake_modules</depend>
+  <depend>diagnostic_updater</depend>
+  <depend>tf2</depend>
+  <depend>tf2_ros</depend>
+  <depend>std_msgs</depend>
+  <depend>std_srvs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>nav_msgs</depend>
+
+  <build_depend>message_generation</build_depend>
+  <build_depend>roslint</build_depend>
+  <exec_depend>message_runtime</exec_depend>
+  <exec_depend>diagnostic_aggregator</exec_depend>
+
+  <export>
+    <rosdoc config="rosdoc.yaml" />
+  </export>
+</package>

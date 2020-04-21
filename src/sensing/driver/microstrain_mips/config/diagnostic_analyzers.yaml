@@ -1,0 +1,45 @@
+analyzers:
+  microstrain_mips_node:
+    type: diagnostic_aggregator/AnalyzerGroup
+    path: microstrain_mips_node
+    analyzers:
+      general:
+        type: diagnostic_aggregator/GenericAnalyzer
+        path: general
+        remove_prefix: 'microstrain_mips_node'
+        timeout: 5.0
+        expected: [
+          'microstrain_mips_node: Device Model',
+          'microstrain_mips_node: Status Selector',
+          'microstrain_mips_node: Status Flags',
+          'microstrain_mips_node: System State',
+          'microstrain_mips_node: System Timer ms',
+          'microstrain_mips_node: IMU Stream Enabled',
+          'microstrain_mips_node: Filter Stream Enabled']
+        packet:
+          type: diagnostic_aggregator/GenericAnalyzer
+          path: packet
+          remove_prefix: 'microstrain_mips_node'
+          timeout: 5.0
+          expected: [
+          'microstrain_mips_node: IMU Dropped Packets',
+          'microstrain_mips_node: Filter Dropped Packets']
+        port:
+          type: diagnostic_aggregator/GenericAnalyzer
+          path: port
+          remove_prefix: 'microstrain_mips_node'
+          timeout: 5.0
+          expected: [
+           'microstrain_mips_node: COM1 Port Bytes Written',
+           'microstrain_mips_node: COM1 Port Bytes Read',
+           'microstrain_mips_node: COM1 Port Write Overruns',
+           'microstrain_mips_node: COM1 Port Read Overruns']
+        imu:
+          type: diagnostic_aggregator/GenericAnalyzer
+          path: imu
+          remove_prefix: 'microstrain_mips_node'
+          timeout: 5.0
+          expected: [
+            'microstrain_mips_node: IMU Parser Errors',
+            'microstrain_mips_node: IMU Message Count',
+            'microstrain_mips_node: IMU Last Message ms']

@@ -1,0 +1,6 @@
+- builder: doxygen
+  name: C++ API
+  output_dir: api
+  javadoc_autobrief: YES
+  file_patterns: '*.c *.cpp *.h *.dox *.md'
+  exclude_patterns: '*/test/* */MIPSDK/*'

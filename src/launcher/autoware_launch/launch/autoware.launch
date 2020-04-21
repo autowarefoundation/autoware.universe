@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+  <!-- Map path -->
+  <arg name="map_path"/>
+
+  <!-- Rosbag -->
+  <arg name="rosbag" default="false" />
+  <param name="/use_sim_time" value="$(arg rosbag)" />
+
+  <!-- Vehicle Setting -->
+  <include file="$(find vehicle_launch)/launch/vehicle_description/vehicle_description.launch" />
+
+  <!-- State Monitor -->
+  <include file="$(find autoware_launch)/launch/monitor.launch" />
+
+  <!-- Map -->
+  <include file="$(find map_launch)/launch/map.launch">
+    <arg name="map_path" value="$(arg map_path)"/>
+  </include>
+
+  <!-- Sensing -->
+  <include file="$(find sensing_launch)/launch/sensing.launch">
+    <arg name="launch_driver" value="true" unless="$(arg rosbag)"/>
+    <arg name="launch_driver" value="false" if="$(arg rosbag)"/>
+  </include>
+
+  <!-- Localization -->
+  <include file="$(find localization_launch)/launch/localization.launch">
+  </include>
+
+  <!-- Perception -->
+  <include file="$(find perception_launch)/launch/perception.launch">
+    <arg name="mode" value="lidar"/>
+    <!-- "camera_lidar_fusion", "lidar" or "camera" -->
+  </include>
+
+  <!-- Planning -->
+  <include file="$(find planning_launch)/launch/planning.launch" />
+
+  <!-- Control -->
+  <include file="$(find control_launch)/launch/control.launch">
+    <arg name="lateral_controller_mode" value="mpc_follower" doc="options: mpc_follower, pure_pursuit"/>
+  </include>
+
+  <!-- Rviz -->
+  <node pkg="rviz" type="rviz" name="rviz" output="screen" args="-d $(find autoware_launch)/rviz/autoware.rviz" />
+
+  <!-- Web Controller -->
+  <include file="$(find roswww)/launch/roswww.launch">
+    <arg name="cached" value="false"/>
+  </include>
+  <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" />
+</launch>

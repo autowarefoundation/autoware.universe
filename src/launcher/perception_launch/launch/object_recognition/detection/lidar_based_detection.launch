@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+
+<launch>
+  <arg name="use_vector_map" default="true"/>
+  <include file="$(find lidar_apollo_instance_segmentation)/launch/lidar_apollo_instance_segmentation.launch" />
+  <include file="$(find shape_estimation)/launch/shape_estimation.launch">
+    <arg name="use_map_corrent" default="$(arg use_vector_map)"/>
+    <arg name="output/objects" default="objects" />
+  </include>
+</launch>

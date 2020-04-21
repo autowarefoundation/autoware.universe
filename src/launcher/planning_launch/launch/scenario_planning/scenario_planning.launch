@@ -1,0 +1,32 @@
+<launch>
+  <arg name="is_online_path_update" default="true"/>
+
+  <!-- scenario selector -->
+  <include file="$(find scenario_selector)/launch/scenario_selector.launch">
+    <arg name="input_lane_driving_trajectory" value="/planning/scenario_planning/lane_driving/trajectory"/>
+    <arg name="input_parking_trajectory" value="/planning/scenario_planning/parking/trajectory"/>
+    <arg name="input_lanelet_map" value="/map/vector_map"/>
+    <arg name="input_route" value="/planning/mission_planning/route"/>
+    <arg name="input_twist" value="/localization/twist"/>
+    <arg name="output_scenario" value="/planning/scenario_planning/scenario"/>
+    <arg name="output_trajectory" value="/planning/scenario_planning/scenario_selector/trajectory"/>
+    <arg name="is_parking_completed" value="/planning/scenario_planning/parking/is_completed"/>
+  </include>
+
+  <!-- velocity planning with max velocity, acceleration, jerk, stop point constraint -->
+  <group>
+    <remap from="~/input/trajectory" to="/planning/scenario_planning/scenario_selector/trajectory"/>
+    <remap from="~/output/trajectory" to="/planning/scenario_planning/trajectory"/>
+    <include file="$(find motion_velocity_optimizer)/launch/motion_velocity_optimizer.launch"/>
+  </group>
+
+  <!-- scenarios-->
+  <group>
+    <!-- lane driving -->
+    <include file="$(find planning_launch)/launch/scenario_planning/lane_driving.launch">
+    </include>
+    <!-- parking -->
+    <include file="$(find planning_launch)/launch/scenario_planning/parking.launch">
+    </include>
+  </group>
+</launch>

@@ -1,0 +1,29 @@
+<launch>
+  <arg name="input_lane_driving_trajectory" />
+  <arg name="input_parking_trajectory" />
+  <arg name="input_lanelet_map" />
+  <arg name="input_route" />
+  <arg name="input_twist" />
+  <arg name="is_parking_completed" />
+
+  <arg name="output_scenario" />
+  <arg name="output_trajectory" />
+
+  <node pkg="scenario_selector" type="scenario_selector" name="scenario_selector" output="screen">
+    <remap from="~input/lane_driving/trajectory" to="$(arg input_lane_driving_trajectory)"/>
+    <remap from="~input/parking/trajectory" to="$(arg input_parking_trajectory)"/>
+    <remap from="~input/lanelet_map" to="$(arg input_lanelet_map)"/>
+    <remap from="~input/route" to="$(arg input_route)"/>
+    <remap from="~input/twist" to="$(arg input_twist)"/>
+    <remap from="is_parking_completed" to="$(arg is_parking_completed)"/>
+
+    <remap from="~output/scenario" to="$(arg output_scenario)"/>
+    <remap from="~output/trajectory" to="$(arg output_trajectory)"/>
+
+    <param name="update_rate" value="10.0" />
+    <param name="th_max_message_delay_sec" value="1.0" />
+    <param name="th_arrived_distance_m" value="1.0" />
+    <param name="th_stopped_time_sec" value="1.0" />
+    <param name="th_stopped_velocity_mps" value="0.01" />
+  </node>
+</launch>

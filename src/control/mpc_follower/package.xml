@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>mpc_follower</name>
+  <version>0.1.0</version>
+  <description>The mpc_follower package</description>
+  <maintainer email="horibe.takamasa@gmail.com">Takamasa Horibe</maintainer>
+  <author email="horibe.takamasa@gmail.com">Takamasa Horibe</author>
+  <license>Apache 2</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>geometry_msgs</depend>
+  <depend>roscpp</depend>
+  <depend>rostest</depend>
+  <depend>rosunit</depend>
+  <depend>std_msgs</depend>
+  <depend>tf2</depend>
+  <depend>tf2_ros</depend>
+  <depend>autoware_planning_msgs</depend>
+  <depend>autoware_control_msgs</depend>
+  <depend>autoware_vehicle_msgs</depend>
+  <depend>osqp_interface</depend>
+  <!-- <depend>qpoases_vendor</depend> -->
+</package>

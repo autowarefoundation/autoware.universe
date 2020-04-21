@@ -1,0 +1,13 @@
+<launch>
+  <arg name="prototxt_file" default="$(find tensorrt_yolo3)/data/yolov3_416_trt.prototxt"/>
+  <arg name="caffemodel_file" default="$(find tensorrt_yolo3)/data/yolov3_416.caffemodel"/>
+  <arg name="input_topic" default="/image_raw"/>
+  <arg name="output_topic" default="rois"/>
+  <node pkg="tensorrt_yolo3" type="tensorrt_yolo3" name="$(anon tensorrt_yolo3)" output="screen">
+    <remap from="/image_raw" to="$(arg input_topic)" />
+    <remap from="rois" to="$(arg output_topic)" />
+    <remap from="/perception/tensorrt_yolo3/classified_image" to="$(arg output_topic)/debug/image" />
+    <param name="prototxt_file" type="str" value="$(arg prototxt_file)"/>
+    <param name="caffemodel_file" type="str" value="$(arg caffemodel_file)"/>
+  </node>
+</launch>

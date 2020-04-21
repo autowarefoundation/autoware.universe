@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package>
+  <name>ndt_omp</name>
+  <version>0.1.0</version>
+  <description>OpenMP boosted NDT and GICP algorithms</description>
+
+  <maintainer email="yamato.ando@tier4.jp">Yamato Ando</maintainer>
+  <license>Apache 2</license>
+
+  <maintainer email="koide@aisl.cs.tut.ac.jp">koide</maintainer>
+
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>pcl_ros</build_depend>
+  <build_depend>roscpp</build_depend>
+  <run_depend>pcl_ros</run_depend>
+  <run_depend>roscpp</run_depend>
+
+  <export>
+  </export>
+</package>
