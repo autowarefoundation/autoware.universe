@@ -12,10 +12,9 @@
       - python-pip
     state: latest
     update_cache: yes
-    cache_valid_time: 3600
   become: yes
 
-- name: Autoware (install gdown to download some files for neural network)    
+- name: Autoware (install gdown to download some files for neural network)
   pip:
     name:
       - gdown
