@@ -57,11 +57,12 @@ Note that the computer need to be connected to Internet to download neural netwo
 
 ### Quick Start
 #### Rosbag
-1. Download sample map from [here](https://drive.google.com/open?id=1ovrJcFS5CZ2H51D8xVWNtEvj_oiXW-zk).
+1. Download sample map from [here](https://drive.google.com/open?id=1ovrJcFS5CZ2H51D8xVWNtEvj_oiXW-zk) and extract the zip file.
 
 2. Download sample rosbag from [here](https://drive.google.com/open?id=1BFcNjIBUVKwupPByATYczv2X4qZtdAeD).
 3. Launch Autoware
 ```
+source devel/setup.bash
 roslaunch autoware_launch autoware.launch map_path:=[path] rosbag:=true
 ```
 4. Play rosbag
@@ -77,10 +78,11 @@ rosbag play --clock [rosbag file] -r 0.2
     - Decreased accuracy of object detection
 
 #### Planning Simulator
-1. Download sample map from [here](https://drive.google.com/open?id=197kgRfSomZzaSbRrjWTx614le2qN-oxx).
+1. Download sample map from [here](https://drive.google.com/open?id=197kgRfSomZzaSbRrjWTx614le2qN-oxx) and extract the zip file.
 
 2. Launch Autoware
 ```
+source devel/setup.bash
 roslaunch autoware_launch planning_simulator.launch map_path:=[path]
 ```
 3. Set initial pose

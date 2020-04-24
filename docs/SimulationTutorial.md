@@ -50,7 +50,7 @@ rosbag play --clock -r 0.2　sample.bag
 
 Assuming already completed [Autoware setup](https://github.com/tier4/AutowareArchitectureProposal#autoware-setup).
 
-1. Download sample map from [here](https://drive.google.com/open?id=197kgRfSomZzaSbRrjWTx614le2qN-oxx).
+1. Download sample map from [here](https://drive.google.com/open?id=197kgRfSomZzaSbRrjWTx614le2qN-oxx) and extract the zip file.
 2. Launch Autoware with Planning Simulator
 ```
 source devel/setup.bash
