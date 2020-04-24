@@ -18,7 +18,6 @@
       - libnvparsers7=7.0.0-1+cuda10.2
       - libnvparsers-dev=7.0.0-1+cuda10.2
     update_cache: yes
-    cache_valid_time: 3600
 
 - name: TensorRT (prevent cuda related packages from upgrading)
   become: yes

@@ -11,7 +11,6 @@
       - python-catkin-tools
     state: latest
     update_cache: yes
-    cache_valid_time: 3600
   become: yes
 
 - name: Lanelet2 (clone Lanelet2 repository catkin workspace)
