@@ -86,7 +86,7 @@ public:
   bool isDeadEndLanelet(const lanelet::ConstLanelet & lanelet) const;
   bool isInTargetLane(
     const geometry_msgs::PoseStamped & pose, const lanelet::ConstLanelets & target) const;
-
+  bool isInGoalRouteSection(const lanelet::ConstLanelet & lanelet) const;
   lanelet::ConstLanelets getRouteLanelets() const;
   lanelet::ConstLanelets getLaneletSequence(const lanelet::ConstLanelet & lanelet) const;
   lanelet::ConstLanelets getLaneletSequence(
