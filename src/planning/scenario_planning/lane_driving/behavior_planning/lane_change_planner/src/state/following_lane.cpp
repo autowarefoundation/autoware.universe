@@ -127,7 +127,7 @@ State FollowingLaneState::getNextState() const
   if (route_handler_ptr_->isInPreferredLane(current_pose_) && isLaneBlocked(current_lanes_)) {
     return State::BLOCKED_BY_OBSTACLE;
   }
-  if (isLaneChangeAvailable() || laneChangeForcedByOperator()) {
+  if (isLaneChangeAvailable() && laneChangeForcedByOperator()) {
     return State::FORCING_LANE_CHANGE;
   }
   if (isLaneChangeReady() && isLaneChangeApproved()) {

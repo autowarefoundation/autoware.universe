@@ -187,6 +187,15 @@ bool RouteHandler::getGoalLanelet(lanelet::ConstLanelet * goal_lanelet) const
   return false;
 }
 
+bool RouteHandler::isInGoalRouteSection(const lanelet::ConstLanelet & lanelet) const
+{
+  if (route_msg_.route_sections.empty()) {
+    return false;
+  } else {
+    return exists(route_msg_.route_sections.back().lane_ids, lanelet.id());
+  }
+}
+
 lanelet::ConstLanelets RouteHandler::getLaneletsFromIds(const std::vector<uint64_t> ids) const
 {
   lanelet::ConstLanelets lanelets;
@@ -448,17 +457,25 @@ PathWithLaneId RouteHandler::getReferencePath(
   }
 
   const auto arc_coordinates = lanelet::utils::getArcCoordinates(lanelet_sequence, pose);
-  double s = arc_coordinates.length;
-  double s_backward = std::max(0., s - backward_path_length);
+  const double s = arc_coordinates.length;
+  const double s_backward = std::max(0., s - backward_path_length);
   double s_forward = s + forward_path_length;
-  double lane_length = lanelet::utils::getLaneletLength2d(lanelet_sequence);
+
   constexpr double buffer = 1.0;  // buffer for min_lane_change_length
+  const int num_lane_change = std::abs(getNumLaneToPreferredLane(lanelet_sequence.back()));
+  const double lane_length = lanelet::utils::getLaneletLength2d(lanelet_sequence);
+  const double lane_change_buffer = num_lane_change * (minimum_lane_change_length + buffer);
+
   if (isDeadEndLanelet(lanelet_sequence.back())) {
-    int n_lane_change = std::abs(getNumLaneToPreferredLane(lanelet_sequence.back()));
-    s_forward =
-      std::min(s_forward, lane_length - n_lane_change * (minimum_lane_change_length + buffer));
-    return getReferencePath(lanelet_sequence, s_backward, s_forward, true);
+    s_forward = std::min(s_forward, lane_length - lane_change_buffer);
   }
+
+  if (isInGoalRouteSection(lanelet_sequence.back())) {
+    const auto goal_arc_coordinates =
+      lanelet::utils::getArcCoordinates(lanelet_sequence, getGoalPose());
+    s_forward = std::min(s_forward, goal_arc_coordinates.length - lane_change_buffer);
+  }
+
   return getReferencePath(lanelet_sequence, s_backward, s_forward, false);
 }
 
@@ -633,28 +650,13 @@ double RouteHandler::getLaneChangeableDistance(
     return 0;
   }
 
-  lanelet::ConstLanelet target_lane;
-  if (direction == LaneChangeDirection::RIGHT) {
-    if (!getRightLaneletWithinRoute(current_lane, &target_lane)) {
-      return 0.0;
-    }
-  }
-  if (direction == LaneChangeDirection::LEFT) {
-    if (!getLeftLaneletWithinRoute(current_lane, &target_lane)) {
-      return 0.0;
-    }
-  }
+  // get lanelets after current lane
+  auto lanelet_sequence = getLaneletSequenceAfter(current_lane);
+  lanelet_sequence.insert(lanelet_sequence.begin(), current_lane);
 
   double accumulated_distance = 0;
-  const auto current_position = lanelet::utils::conversion::toLaneletPoint(current_pose.position);
-  const auto arc_coordinate = lanelet::geometry::toArcCoordinates(
-    lanelet::utils::to2D(current_lane.centerline()),
-    lanelet::utils::to2D(current_position).basicPoint());
-  accumulated_distance = lanelet::utils::getLaneletLength3d(current_lane) - arc_coordinate.length;
-
-  const auto following_lanes = getLaneletSequenceAfter(current_lane, 100);
-
-  for (const auto & lane : following_lanes) {
+  for (const auto & lane : lanelet_sequence) {
+    lanelet::ConstLanelet target_lane;
     if (direction == LaneChangeDirection::RIGHT) {
       if (!getRightLaneletWithinRoute(lane, &target_lane)) {
         break;
@@ -665,7 +667,26 @@ double RouteHandler::getLaneChangeableDistance(
         break;
       }
     }
-    accumulated_distance += lanelet::utils::getLaneletLength3d(lane);
+    double lane_length = lanelet::utils::getLaneletLength3d(lane);
+
+    // overwrite  goal because lane change must be finished before reaching goal
+    if (isInGoalRouteSection(lane)) {
+      const auto goal_position = lanelet::utils::conversion::toLaneletPoint(getGoalPose().position);
+      const auto goal_arc_coordinates = lanelet::geometry::toArcCoordinates(
+        lanelet::utils::to2D(lane.centerline()), lanelet::utils::to2D(goal_position).basicPoint());
+      lane_length = std::min(goal_arc_coordinates.length, lane_length);
+    }
+
+    //subtract distance up to current position for first lane
+    if (lane == current_lane) {
+      const auto current_position =
+        lanelet::utils::conversion::toLaneletPoint(current_pose.position);
+      const auto arc_coordinate = lanelet::geometry::toArcCoordinates(
+        lanelet::utils::to2D(lane.centerline()),
+        lanelet::utils::to2D(current_position).basicPoint());
+      lane_length = std::max(lane_length - arc_coordinate.length, 0.0);
+    }
+    accumulated_distance += lane_length;
   }
   return accumulated_distance;
 }
