@@ -76,6 +76,14 @@ The parameters and input topic names can be set in the `ekf_localizer.launch` fi
 
     Estimated pose with covariance.
 
+ - ekf_pose_with_covariance (geometry_msgs/PoseStamped)
+
+    Estimated pose without yawbias effect.
+
+ - ekf_pose_with_covariance_without_yawbias (geometry_msgs/PoseWithCovarianceStamped)
+
+    Estimated pose with covariance without yawbias effect.
+
  - ekf_twist (geometry_msgs/TwistStamped)
 
     Estimated twist.
@@ -87,8 +95,7 @@ The parameters and input topic names can be set in the `ekf_localizer.launch` fi
 
 ## Published TF
 
- - ekf_pose
-
+ - base_link
     TF from "map" coordinate to estimated pose.
 
 
