@@ -1,4 +1,4 @@
-# MPC follower description
+# MPC follower description (TBU)
 
 ## Overview
 A waypoint follower based on model predictive control (MPC) for accurate path tracking. This can be used as a waypoint_follower, as well as other path following nodes like pure_pursuit.
