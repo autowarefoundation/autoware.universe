@@ -10,8 +10,8 @@
   <!-- Vehicle Setting -->
   <include file="$(find vehicle_launch)/launch/vehicle_description/vehicle_description.launch" />
 
-  <!-- State Monitor -->
-  <include file="$(find autoware_launch)/launch/monitor.launch" />
+  <!-- System -->
+  <include file="$(find system_launch)/launch/system.launch" />
 
   <!-- Map -->
   <include file="$(find map_launch)/launch/map.launch">

@@ -9,8 +9,8 @@
   <!-- Dummy /vehicle/engage for autoware_state_monitor -->
   <node pkg="rostopic" type="rostopic" name="simulation_vehicle_engage_publisher" args="pub /vehicle/engage std_msgs/Bool 'data: true'" output="screen"/>
 
-  <!-- Monitor -->
-  <include file="$(find autoware_launch)/launch/monitor.launch" />
+  <!-- System -->
+  <include file="$(find system_launch)/launch/system.launch" />
 
   <!-- Map -->
   <include file="$(find map_launch)/launch/map.launch">
