@@ -6,7 +6,7 @@ For following target trajectory, control stack needs to output lateral control c
 
 ## Role
 
-Longitudinal controller module calculates velocity and acceleration for following target velocity provile. This module velocity error from target trajectory.
+Longitudinal controller module calculates velocity and acceleration for following target velocity profile. This module velocity error from target trajectory.
 
 ### Input
 
