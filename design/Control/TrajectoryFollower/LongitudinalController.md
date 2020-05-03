@@ -6,11 +6,11 @@ For following target trajectory, control stack needs to output lateral control c
 
 ## Role
 
-Lateral controller module calculates suitable steering angle and steering angle velocity for following target trajectory. This module balances distance/yaw error from target trajectory, and smoothness of movement.
+Longitudinal controller module calculates velocity and acceleration for following target velocity provile. This module velocity error from target trajectory.
 
 ### Input
 
-The input to Lateral Controller module:
+The input to Longitudinal Controller module:
 | Input | Data Type | Explanation |
 | -----------| ------------------------------------ | ------------------------------------------------------------------ |
 | Trajectory | `autoware_planning_msgs::Trajectory` | Target trajectory to follow (target position, twist, acceleration) |
@@ -19,7 +19,7 @@ The input to Lateral Controller module:
 
 ### Output
 
-The output type from Lateral Controller module is `autoware_control_msgs/ControlCommandStamped`.
+The output type from Longitudinal Controller module is `autoware_control_msgs/ControlCommandStamped`.
 
 The main outputs included in `autoware_control_msgs/ControlCommandStamped` are as follows:
 
@@ -30,4 +30,4 @@ The main outputs included in `autoware_control_msgs/ControlCommandStamped` are a
 | Steering angle          | std_msgs/Float64 |
 | Steering angle velocity | std_msgs/Float64 |
 
-Note that steering angle and steering angle velocity are always output as 0 from Lateral Controller module.
+Note that steering angle and steering angle velocity are always output as 0 from Longitudinal Controller module.
