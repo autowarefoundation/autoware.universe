@@ -1,7 +1,7 @@
-# How to setup for the specific hardware configulation
+# How to setup for the specific hardware configuration
 
 
-In order to test the autoware in the vehicle, you need to setup for the specific hardware configulation. Please make the following settings.
+In order to test the autoware in the vehicle, you need to setup for the specific hardware configuration. Please make the following settings.
 
 ## 1. Sensor TF setting
 
@@ -27,7 +27,7 @@ Required parameters are as follows.
 
 ## 4. Launch files setting
 
-The following launch files has to be modified for the specific configulation.
+The following launch files has to be modified for the specific configuration.
 
 **sensor.launch**
 
