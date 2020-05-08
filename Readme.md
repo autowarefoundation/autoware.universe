@@ -8,6 +8,8 @@ This is the source code of the feasibility study for Autoware architecture propo
 
 > **WARNING**: This source is solely for demonstrating an architecture proposal. It should not be used to drive cars. 
 
+Architecture overview is [here](/design/Overview.md).
+
 # How to setup
 
 ## Requirements
