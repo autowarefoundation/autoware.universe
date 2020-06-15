@@ -48,9 +48,9 @@ void RoiClusterFusionNodelet::onInit()
   nh_ = getNodeHandle();
   private_nh_ = getPrivateNodeHandle();
 
-  private_nh_.param<bool>("use_iou_x_", use_iou_x_, true);
-  private_nh_.param<bool>("use_iou_y_", use_iou_y_, false);
-  private_nh_.param<bool>("use_iou_", use_iou_, false);
+  private_nh_.param<bool>("use_iou_x", use_iou_x_, false);
+  private_nh_.param<bool>("use_iou_y", use_iou_y_, false);
+  private_nh_.param<bool>("use_iou", use_iou_, true);
   private_nh_.param<double>("iou_threshold", iou_threshold_, 0.1);
   private_nh_.param<int>("rois_number", rois_number_, 1);
   if (rois_number_ < 1) {
