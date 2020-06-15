@@ -175,7 +175,7 @@ Need to fill `lamp_states` in `autoware_traffic_light_msg::TrafficLightState.msg
 
 | Property    | Definition                                                      | Data Type                               | Parent Data Type                              |
 | ----------- | --------------------------------------------------------------- | --------------------------------------- | --------------------------------------------- |
-| lamp_states | Seguence of traffic light result                                | `autoware_perception_msgs::LampState[]` | `autoware_perception_msgs::TrafficLightState` |
+| lamp_states | Sequence of traffic light result                                | `autoware_perception_msgs::LampState[]` | `autoware_perception_msgs::TrafficLightState` |
 | id          | This id corresponds to the traffic light id defined in a map    | `int32`                                 |`autoware_perception_msgs::TrafficLightState` |
 
 ### Input
