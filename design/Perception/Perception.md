@@ -57,7 +57,7 @@ From above table, high-level requirements of Perception stack are summarized as 
 | Output              | Topic Name (Data Type)                                                                                               | Explanation                                                                                                                                                                               |
 | ------------------- | -------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Dynamic Object      | `/perception/object_recognition/objects`<br>(`autoware_perception_msgs::DynamicObjectArray`)                         | This includes obstacles' information. An obstacle is described by 3 major properties; State, Shape, Semantic. Detail design for these properties is in below  Object Recognition section. |
-| Traffic Light State | `/perception/traffic_light_recognition/traffic_light_states`<br>(`autoware_perception_msgs::TrafficLightStateArray`) | This includes the status of traffic light signals in array format.  The closest traffic signal status is in front of the array, the farrest one is in the end of the array.               |
+| Traffic Light State | `/perception/traffic_light_recognition/traffic_light_states`<br>(`autoware_perception_msgs::TrafficLightStateArray`) | This includes the status of traffic light signals in array format.|
 
 
 # Design
@@ -175,7 +175,8 @@ Need to fill `lamp_states` in `autoware_traffic_light_msg::TrafficLightState.msg
 
 | Property    | Definition                                                      | Data Type                               | Parent Data Type                              |
 | ----------- | --------------------------------------------------------------- | --------------------------------------- | --------------------------------------------- |
-| lamp_states | Seguence of traffic light result from the closest traffic light | `autoware_perception_msgs::LampState[]` | `autoware_perception_msgs::TrafficLightState` |
+| lamp_states | Sequence of traffic light result                                | `autoware_perception_msgs::LampState[]` | `autoware_perception_msgs::TrafficLightState` |
+| id          | This id corresponds to the traffic light id defined in a map    | `int32`                                 |`autoware_perception_msgs::TrafficLightState` |
 
 ### Input
 
