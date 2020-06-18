@@ -28,21 +28,12 @@ bool BusFilter::filter(
   double s = x * y;
   constexpr double min_width = 2.0;
   constexpr double max_width = 2.9;
-  constexpr double min_length = 5.0;
   constexpr double max_length = 12.0;
 
-  if (x < min_width && y < min_width) {
-    return false;
-  }
-  if (max_width < x && max_width < y) {
-    return false;
-  }
-
-  if (max_length < x || max_length < y) {
-    return false;
-  }
-
-  if (s < 0.5 && max_length * max_width < s) {
+  if ((x < min_width && y < min_width)
+      ||(max_width < x && max_width < y)
+      ||(max_length < x || max_length < y) 
+      ||(s < 0.5 || max_length * max_width < s)){
     return false;
   }
   return true;
