@@ -19,6 +19,7 @@
     <build_depend>visualization_msgs</build_depend>
     <build_depend>diagnostic_msgs</build_depend>
     <build_depend>pcl_conversions</build_depend>
+    <build_depend>eigen_conversions</build_depend>
     <build_depend>pcl_ros</build_depend>
     <build_depend>libpcl-all-dev</build_depend>
     <build_depend>ndt_pcl_modified</build_depend>
@@ -38,6 +39,7 @@
     <run_depend>visualization_msgs</run_depend>
     <run_depend>diagnostic_msgs</run_depend>
     <run_depend>pcl_conversions</run_depend>
+    <run_depend>eigen_conversions</run_depend>
     <run_depend>pcl_ros</run_depend>
     <run_depend>libpcl-all</run_depend>
     <run_depend>ndt_pcl_modified</run_depend>
