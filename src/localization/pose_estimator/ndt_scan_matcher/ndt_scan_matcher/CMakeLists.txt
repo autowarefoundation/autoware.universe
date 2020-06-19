@@ -24,6 +24,7 @@ find_package(catkin REQUIRED COMPONENTS
   ndt_omp
   ndt
   autoware_localization_srvs
+  eigen_conversions
 )
 
 catkin_package(
