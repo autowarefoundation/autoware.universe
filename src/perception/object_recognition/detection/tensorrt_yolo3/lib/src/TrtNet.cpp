@@ -195,9 +195,10 @@ nvinfer1::ICudaEngine * trtNet::loadModelAndCreateEngine(
 {
   // Create the builder
   IBuilder * builder = createInferBuilder(gLogger);
+  IBuilderConfig * config = builder->createBuilderConfig();
 
   // Parse the model to populate the network, then set the outputs.
-  INetworkDefinition * network = builder->createNetwork();
+  INetworkDefinition * network = builder->createNetworkV2(0U);
   parser->setPluginFactory(pluginFactory);
 
   std::cout << "Begin parsing model..." << std::endl;
@@ -217,22 +218,22 @@ nvinfer1::ICudaEngine * trtNet::loadModelAndCreateEngine(
 
   // Build the engine.
   builder->setMaxBatchSize(maxBatchSize);
-  builder->setMaxWorkspaceSize(1 << 30);  // 1G
+  config->setMaxWorkspaceSize(1 << 30);  // 1G
   if (mTrtRunMode == RUN_MODE::INT8) {
     std::cout << "setInt8Mode" << std::endl;
     if (!builder->platformHasFastInt8())
       std::cout << "Notice: the platform do not has fast for int8" << std::endl;
-    builder->setInt8Mode(true);
-    builder->setInt8Calibrator(calibrator);
+    config->setFlag(BuilderFlag::kINT8);
+    config->setInt8Calibrator(calibrator);
   } else if (mTrtRunMode == RUN_MODE::FLOAT16) {
     std::cout << "setFp16Mode" << std::endl;
     if (!builder->platformHasFastFp16())
       std::cout << "Notice: the platform do not has fast for fp16" << std::endl;
-    builder->setFp16Mode(true);
+    config->setFlag(BuilderFlag::kFP16);
   }
 
   std::cout << "Begin building engine..." << std::endl;
-  ICudaEngine * engine = builder->buildCudaEngine(*network);
+  ICudaEngine * engine = builder->buildEngineWithConfig(*network, *config);
   if (!engine) RETURN_AND_LOG(nullptr, ERROR, "Unable to create engine");
   std::cout << "End building engine..." << std::endl;
 
@@ -244,6 +245,7 @@ nvinfer1::ICudaEngine * trtNet::loadModelAndCreateEngine(
   trtModelStream = engine->serialize();
 
   builder->destroy();
+  config->destroy();
   shutdownProtobufLibrary();
   return engine;
 }

@@ -1,15 +1,19 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(tensorrt_yolo3)
 
+option(CUDA_VERBOSE "Verbose output of CUDA modules" OFF)
+
 # set flags for CUDA availability
 option(CUDA_AVAIL "CUDA available" OFF)
 find_package(CUDA)
 if (CUDA_FOUND)
   find_library(CUBLAS_LIBRARIES cublas HINTS
     ${CUDA_TOOLKIT_ROOT_DIR}/lib)
-  message("CUDA is available!")
-  message("CUDA Libs: ${CUDA_LIBRARIES}")
-  message("CUDA Headers: ${CUDA_INCLUDE_DIRS}")
+  if (CUDA_VERBOSE)
+    message("CUDA is available!")
+    message("CUDA Libs: ${CUDA_LIBRARIES}")
+    message("CUDA Headers: ${CUDA_INCLUDE_DIRS}")
+  endif ()
   set(CUDA_AVAIL ON)
 else()
   message("CUDA NOT FOUND")
@@ -24,10 +28,12 @@ find_library(NVPARSERS NAMES nvparsers)
 find_library(NVCAFFE_PARSER NAMES nvcaffe_parser)
 find_library(NVINFER_PLUGIN NAMES nvinfer_plugin)
 if(NVINFER AND NVPARSERS AND NVCAFFE_PARSER AND NVINFER_PLUGIN)
-  message("TensorRT is available!")
-  message("NVINFER: ${NVINFER}")
-  message("NVPARSERS: ${NVPARSERS}")
-  message("NVCAFFE_PARSER: ${NVCAFFE_PARSER}")
+  if (CUDA_VERBOSE)
+    message("TensorRT is available!")
+    message("NVINFER: ${NVINFER}")
+    message("NVPARSERS: ${NVPARSERS}")
+    message("NVCAFFE_PARSER: ${NVCAFFE_PARSER}")
+  endif ()
   set(TRT_AVAIL ON)
 else()
   message("TensorRT is NOT Available")
@@ -43,8 +49,10 @@ PATHS $ENV{LD_LIBRARY_PATH} ${__libpath_cudart} ${CUDNN_ROOT_DIR} ${PC_CUDNN_LIB
 PATH_SUFFIXES lib lib64 bin
 DOC "CUDNN library." )
 if(CUDNN_LIBRARY)
-  message("CUDNN is available!")
-  message("CUDNN_LIBRARY: ${CUDNN_LIBRARY}")
+  if (CUDA_VERBOSE)
+    message("CUDNN is available!")
+    message("CUDNN_LIBRARY: ${CUDNN_LIBRARY}")
+  endif ()
   set(CUDNN_AVAIL ON)
 else()
   message("CUDNN is NOT Available")
@@ -122,6 +130,7 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     lib/src/EntroyCalibrator.cpp
     lib/src/TrtNet.cpp
     lib/src/UpsampleLayer.cpp
+    lib/src/YoloLayer.cpp
   )
 
   target_link_libraries(tensorrt_yolo3_lib
