@@ -41,16 +41,10 @@ static constexpr int CUDA_THREAD_NUM = 512;
 // Integration for serialization.
 using nvinfer1::UpsampleLayerPlugin;
 using nvinfer1::YoloLayerPlugin;
-using nvinfer1::plugin::createPReLUPlugin;
 using nvinfer1::plugin::INvPlugin;
 class PluginFactory : public nvinfer1::IPluginFactory, public nvcaffeparser1::IPluginFactoryExt
 {
 public:
-  inline bool isLeakyRelu(const char * layerName)
-  {
-    return std::regex_match(layerName, std::regex(R"(layer(\d*)-act)"));
-  }
-
   inline bool isUpsample(const char * layerName)
   {
     return std::regex_match(layerName, std::regex(R"(layer(\d*)-upsample)"));
@@ -63,12 +57,7 @@ public:
   {
     assert(isPlugin(layerName));
 
-    if (isLeakyRelu(layerName)) {
-      assert(nbWeights == 0 && weights == nullptr);
-      mPluginLeakyRelu.emplace_back(std::unique_ptr<INvPlugin, void (*)(INvPlugin *)>(
-        createPReLUPlugin(NEG_SLOPE), nvPluginDeleter));
-      return mPluginLeakyRelu.back().get();
-    } else if (isUpsample(layerName)) {
+    if (isUpsample(layerName)) {
       assert(nbWeights == 0 && weights == nullptr);
       mPluginUpsample.emplace_back(std::unique_ptr<UpsampleLayerPlugin>(
         new UpsampleLayerPlugin(UPSAMPLE_SCALE, CUDA_THREAD_NUM)));
@@ -88,11 +77,7 @@ public:
   {
     assert(isPlugin(layerName));
 
-    if (isLeakyRelu(layerName)) {
-      mPluginLeakyRelu.emplace_back(std::unique_ptr<INvPlugin, void (*)(INvPlugin *)>(
-        createPReLUPlugin(serialData, serialLength), nvPluginDeleter));
-      return mPluginLeakyRelu.back().get();
-    } else if (isUpsample(layerName)) {
+    if (isUpsample(layerName)) {
       mPluginUpsample.emplace_back(
         std::unique_ptr<UpsampleLayerPlugin>(new UpsampleLayerPlugin(serialData, serialLength)));
       return mPluginUpsample.back().get();
@@ -110,15 +95,12 @@ public:
 
   bool isPluginExt(const char * name) override
   {
-    // std::cout << "check plugin " << name  << isYolo(name)<< std::endl;
-    return isLeakyRelu(name) || isUpsample(name) || isYolo(name);
+    return isUpsample(name) || isYolo(name);
   }
 
   // The application has to destroy the plugin when it knows it's safe to do so.
   void destroyPlugin()
   {
-    for (auto & item : mPluginLeakyRelu) item.reset();
-
     for (auto & item : mPluginUpsample) item.reset();
 
     mPluginYolo.reset();
@@ -128,7 +110,6 @@ public:
     if (ptr) ptr->destroy();
   }};
 
-  std::vector<std::unique_ptr<INvPlugin, void (*)(INvPlugin *)>> mPluginLeakyRelu{};
   std::vector<std::unique_ptr<UpsampleLayerPlugin>> mPluginUpsample{};
   std::unique_ptr<YoloLayerPlugin> mPluginYolo{nullptr};
 };
