@@ -2,7 +2,7 @@ Classification
 =====
 ## Use Cases and Requirements
 Classification in Traffic Light Recognition is required for usecases involved with traffic light:
-* Passing the intersection when traffic light is greed
+* Passing the intersection when traffic light is green
 * Stopping at the intersection when traffic signal is red
 
 For the details about related requirements, please refer to the [document for Perception stack](/design/Perception/Perception.md).
