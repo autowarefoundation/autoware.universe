@@ -78,7 +78,7 @@ else()
   set(CUDNN_AVAIL OFF)
 endif()
 
-# Download caffemodel and prototxt
+# Download onnx model
 set(PATH "${CMAKE_CURRENT_SOURCE_DIR}/data")
 if (NOT EXISTS "${PATH}")
   execute_process(COMMAND mkdir -p ${PATH})
@@ -87,7 +87,7 @@ set(FILE "${PATH}/yolov3-tlr.onnx")
 message(STATUS "Checking and downloading yolov3-tlr.onnx")
 if (NOT EXISTS "${FILE}")
   message(STATUS "... file does not exist. Downloading now ...")
-  execute_process(COMMAND gdown "https://drive.google.com/uc?id=1goWNFhKYqPrjfPnWTbwaIhjUeX1L7VTS" -O ${PATH}/yolov3-tlr.onnx)
+  execute_process(COMMAND gdown "https://drive.google.com/uc?id=1MdDX37d_VSHciPeKwlckFjbyTxOq6pqz" -O ${PATH}/yolov3-tlr.onnx)
 
 endif()
 
