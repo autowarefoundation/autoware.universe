@@ -32,16 +32,24 @@ Again, traffic rules might be different depending on country, and the requiremen
    * Ego vehicle must slow down (e.g. to 5km/h) when there is a pedestrian in the deceleration area shown in the image.
   **raitonale:** We don't want to make vehicle keep waiting for pedestrian to pass crosswalk completely. We want vehicle to start driving when pedestrian walks past the car.
 
+![Crosswalk](/design/img/Crosswalk.png)
+
 2. **Intersection**
    * Unless ego vehicle has right of way, Vehicle must stop before entering intersection whenever other vehicles are entering intersection.
+
+![Intersection](/design/img/Intersection.png)
 
 3. **Stop Line (Stop Sign)**
    * Vehicle must stop at stopline when it passes through the line.
    * Stop line should be specified in the Semantic Map.
 
+![Stopline](/design/img/Stopline.png)
+
 4. **Follow traffic light**
    * Planning stack should refer to Perception output of the traffic light associated to driving lane.
    * Speed profile of a trajectory at the associated stopline must be zero when relevant traffic light is red and it has enough distance to stop before the stopline with given deceleration configuration
+
+![TrafficLight](/design/img/TrafficLight.png)
 
 ## Design
 The example node diagram of the behavior velocity planner is shown as the diagram below.
