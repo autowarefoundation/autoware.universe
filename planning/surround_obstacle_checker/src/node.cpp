@@ -190,6 +190,7 @@ bool SurroundObstacleCheckerNode::getPose(
       0.5, "[surround_obstacle_checker]: cannot get tf from " << source << " to " << target);
     return false;
   }
+  return true;
 }
 
 bool SurroundObstacleCheckerNode::convertPose(
