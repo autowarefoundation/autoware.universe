@@ -7,6 +7,8 @@
   <!-- Optional parameters -->
   <arg name="rosbag" default="false" doc="use rosbag data"/>
   <arg name="rviz" default="true" doc="launch rviz"/>
+  <arg name="lanelet2_map_file" default="lanelet2_map.osm" />
+  <arg name="pointcloud_map_file" default="pointcloud_map.pcd" />
 
   <param name="/use_sim_time" value="$(arg rosbag)" />
 
@@ -23,7 +25,8 @@
 
   <!-- Map -->
   <include file="$(find map_launch)/launch/map.launch">
-    <arg name="map_path" value="$(arg map_path)"/>
+    <arg name="lanelet2_map_path" value="$(arg map_path)/$(arg lanelet2_map_file)" />
+    <arg name="pointcloud_map_path" value="$(arg map_path)/$(arg pointcloud_map_file)"/>
   </include>
 
   <!-- Sensing -->
