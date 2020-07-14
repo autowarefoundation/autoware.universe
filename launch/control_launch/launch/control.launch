@@ -7,6 +7,7 @@
   <!-- control parameter -->
   <arg name="mpc_follower_param_path" default="$(find control_launch)/config/mpc_follower/mpc_follower_param.yaml"/>
   <arg name="pure_pursuit_param_path" default="$(find control_launch)/config/pure_pursuit/pure_pursuit_param.yaml"/>
+  <arg name="velocity_controller_param_path" default="$(find control_launch)/config/velocity_controller/velocity_controller_param.yaml"/>
 
   <!-- control module -->
   <group ns="control">
@@ -25,6 +26,7 @@
 
       <!-- longitudinal controller -->
       <include file="$(find velocity_controller)/launch/velocity_controller.launch">
+        <arg name="velocity_controller_param_path" value="$(arg velocity_controller_param_path)"/>
       </include>
 
       <!-- latlon coupler -->
