@@ -1,0 +1,3 @@
+Header header
+bool obstacle_avoidance_ready
+autoware_planning_msgs/Trajectory candidate_path

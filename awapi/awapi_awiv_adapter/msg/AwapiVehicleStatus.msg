@@ -1,0 +1,16 @@
+std_msgs/Header header
+geometry_msgs/Pose pose
+awapi_awiv_adapter/Euler eulerangle
+awapi_awiv_adapter/Latlon latlon
+float64 velocity
+float64 acceleration
+float64 steering
+float64 steering_velocity
+float64 angular_velocity
+int32 gear
+float64 distance_to_empty
+int32 turn_signal
+float64 target_velocity
+float64 target_acceleration
+float64 target_steering
+float64 target_steering_velocity
