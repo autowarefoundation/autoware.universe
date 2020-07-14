@@ -14,6 +14,16 @@ module_names:
 ## timeout[s]: double (0: none)
 ## warn_rate[hz]: double (0: none)
 topic_configs:
+  - module: "map"
+    name: "/map/vector_map"
+    timeout: 0.0
+    warn_rate: 0.0
+
+  - module: "map"
+    name: "/map/pointcloud_map"
+    timeout: 0.0
+    warn_rate: 0.0
+
   - module: "perception"
     name: "/perception/object_recognition/detection/objects"
     timeout: 1.0

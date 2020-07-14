@@ -115,6 +115,10 @@ bool StateMachine::isModuleInitialized(const char * module_name) const
 
 bool StateMachine::isVehicleInitialized() const
 {
+  if (!isModuleInitialized(ModuleName::map)) {
+    return false;
+  }
+
   if (!isModuleInitialized(ModuleName::vehicle)) {
     return false;
   }
