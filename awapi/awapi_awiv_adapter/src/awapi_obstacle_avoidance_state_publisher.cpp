@@ -23,12 +23,12 @@ AutowareIvObstacleAvoidanceStatePublisher::AutowareIvObstacleAvoidanceStatePubli
 {
   // publisher
   pub_state_ =
-    pnh_.advertise<awapi_awiv_adapter::ObstacleAvoidanceStatus>("output/obstacle_avoid_status", 1);
+    pnh_.advertise<autoware_api_msgs::ObstacleAvoidanceStatus>("output/obstacle_avoid_status", 1);
 }
 
 void AutowareIvObstacleAvoidanceStatePublisher::statePublisher(const AutowareInfo & aw_info)
 {
-  awapi_awiv_adapter::ObstacleAvoidanceStatus status;
+  autoware_api_msgs::ObstacleAvoidanceStatus status;
 
   //input header
   status.header.frame_id = "base_link";
@@ -43,7 +43,7 @@ void AutowareIvObstacleAvoidanceStatePublisher::statePublisher(const AutowareInf
 }
 
 void AutowareIvObstacleAvoidanceStatePublisher::getObstacleAvoidReadyInfo(
-  const std_msgs::Bool::ConstPtr & ready_ptr, awapi_awiv_adapter::ObstacleAvoidanceStatus * status)
+  const std_msgs::Bool::ConstPtr & ready_ptr, autoware_api_msgs::ObstacleAvoidanceStatus * status)
 {
   if (!ready_ptr) {
     ROS_WARN_STREAM_THROTTLE(
@@ -56,7 +56,7 @@ void AutowareIvObstacleAvoidanceStatePublisher::getObstacleAvoidReadyInfo(
 
 void AutowareIvObstacleAvoidanceStatePublisher::getCandidatePathInfo(
   const autoware_planning_msgs::Trajectory::ConstPtr & path_ptr,
-  awapi_awiv_adapter::ObstacleAvoidanceStatus * status)
+  autoware_api_msgs::ObstacleAvoidanceStatus * status)
 {
   if (!path_ptr) {
     ROS_WARN_STREAM_THROTTLE(

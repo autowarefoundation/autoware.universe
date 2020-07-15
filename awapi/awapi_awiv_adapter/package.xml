@@ -9,9 +9,8 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <depend>message_generation</depend>
-  <depend>message_runtime</depend>
   <depend>roscpp</depend>
+  <depend>autoware_api_msgs</depend>
   <depend>autoware_system_msgs</depend>
   <depend>autoware_planning_msgs</depend>
   <depend>autoware_control_msgs</depend>

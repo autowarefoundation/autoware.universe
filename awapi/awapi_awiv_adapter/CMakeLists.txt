@@ -7,6 +7,7 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
   message_runtime
   roscpp
+  autoware_api_msgs
   autoware_system_msgs
   autoware_planning_msgs
   autoware_control_msgs
@@ -17,25 +18,6 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   tf2
   tf2_geometry_msgs
-)
-
-add_message_files(
-  DIRECTORY msg
-  FILES
-    Latlon.msg
-    Euler.msg
-    AwapiVehicleStatus.msg
-    AwapiAutowareStatus.msg
-    LaneChangeStatus.msg
-    ObstacleAvoidanceStatus.msg
-)
-
-generate_messages(
-  DEPENDENCIES
-    std_msgs
-    geometry_msgs
-    diagnostic_msgs
-    autoware_planning_msgs
 )
 
 catkin_package(

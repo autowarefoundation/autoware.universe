@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <awapi_awiv_adapter/AwapiAutowareStatus.h>
+#include <autoware_api_msgs/AwapiAutowareStatus.h>
 #include <awapi_awiv_adapter/awapi_autoware_util.h>
 
 namespace autoware_api
@@ -35,29 +35,29 @@ private:
 
   void getAutowareStateInfo(
     const autoware_system_msgs::AutowareState::ConstPtr & autoware_state_ptr,
-    awapi_awiv_adapter::AwapiAutowareStatus * status);
+    autoware_api_msgs::AwapiAutowareStatus * status);
   void getControlModeInfo(
     const autoware_vehicle_msgs::ControlMode::ConstPtr & control_mode_ptr,
-    awapi_awiv_adapter::AwapiAutowareStatus * status);
+    autoware_api_msgs::AwapiAutowareStatus * status);
   void getGateModeInfo(
     const autoware_control_msgs::GateMode::ConstPtr & gate_mode_ptr,
-    awapi_awiv_adapter::AwapiAutowareStatus * status);
+    autoware_api_msgs::AwapiAutowareStatus * status);
   void getIsEmergencyInfo(
     const std_msgs::Bool::ConstPtr & is_emergency_ptr,
-    awapi_awiv_adapter::AwapiAutowareStatus * status);
+    autoware_api_msgs::AwapiAutowareStatus * status);
   // TODO: not implemented
   /*
   void getStopReasonInfo(
     const - & stop_reason_ptr,
-    awapi_awiv_adapter::AwapiAutowareStatus * status);
+    autoware_api_msgs::AwapiAutowareStatus * status);
   */
   void getDiagInfo(
     const diagnostic_msgs::DiagnosticArray::ConstPtr & diag_ptr,
-    awapi_awiv_adapter::AwapiAutowareStatus * status);
+    autoware_api_msgs::AwapiAutowareStatus * status);
 
   void getAutoDriveEnableInfo(
     const std_msgs::Bool::ConstPtr & auto_drive_enable_ptr,
-    awapi_awiv_adapter::AwapiAutowareStatus * status);
+    autoware_api_msgs::AwapiAutowareStatus * status);
 };
 
 }  // namespace autoware_api

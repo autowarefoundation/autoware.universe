@@ -22,12 +22,12 @@ AutowareIvVehicleStatePublisher::AutowareIvVehicleStatePublisher()
 : nh_(), pnh_("~"), prev_accel_(0.0)
 {
   // publisher
-  pub_state_ = pnh_.advertise<awapi_awiv_adapter::AwapiVehicleStatus>("output/vehicle_status", 1);
+  pub_state_ = pnh_.advertise<autoware_api_msgs::AwapiVehicleStatus>("output/vehicle_status", 1);
 }
 
 void AutowareIvVehicleStatePublisher::statePublisher(const AutowareInfo & aw_info)
 {
-  awapi_awiv_adapter::AwapiVehicleStatus status;
+  autoware_api_msgs::AwapiVehicleStatus status;
 
   //input header
   status.header.frame_id = "base_link";
@@ -48,7 +48,7 @@ void AutowareIvVehicleStatePublisher::statePublisher(const AutowareInfo & aw_inf
 
 void AutowareIvVehicleStatePublisher::getPoseInfo(
   const std::shared_ptr<geometry_msgs::PoseStamped> & pose_ptr,
-  awapi_awiv_adapter::AwapiVehicleStatus * status)
+  autoware_api_msgs::AwapiVehicleStatus * status)
 {
   if (!pose_ptr) {
     ROS_WARN_STREAM_THROTTLE(5.0, "[AutowareIvVehicleStatePublisher] current pose is nullptr");
@@ -68,7 +68,7 @@ void AutowareIvVehicleStatePublisher::getPoseInfo(
 
 void AutowareIvVehicleStatePublisher::getSteerInfo(
   const autoware_vehicle_msgs::Steering::ConstPtr & steer_ptr,
-  awapi_awiv_adapter::AwapiVehicleStatus * status)
+  autoware_api_msgs::AwapiVehicleStatus * status)
 {
   if (!steer_ptr) {
     ROS_WARN_STREAM_THROTTLE(5.0, "[AutowareIvVehicleStatePublisher] steer is nullptr");
@@ -96,7 +96,7 @@ void AutowareIvVehicleStatePublisher::getSteerInfo(
 }
 void AutowareIvVehicleStatePublisher::getVehicleCmdInfo(
   const autoware_vehicle_msgs::VehicleCommand::ConstPtr & vehicle_cmd_ptr,
-  awapi_awiv_adapter::AwapiVehicleStatus * status)
+  autoware_api_msgs::AwapiVehicleStatus * status)
 {
   if (!vehicle_cmd_ptr) {
     ROS_WARN_STREAM_THROTTLE(5.0, "[AutowareIvVehicleStatePublisher] vehicle cmd is nullptr");
@@ -112,7 +112,7 @@ void AutowareIvVehicleStatePublisher::getVehicleCmdInfo(
 
 void AutowareIvVehicleStatePublisher::getTurnSignalInfo(
   const autoware_vehicle_msgs::TurnSignal::ConstPtr & turn_signal_ptr,
-  awapi_awiv_adapter::AwapiVehicleStatus * status)
+  autoware_api_msgs::AwapiVehicleStatus * status)
 {
   if (!turn_signal_ptr) {
     ROS_WARN_STREAM_THROTTLE(5.0, "[AutowareIvVehicleStatePublisher] turn signal is nullptr");
@@ -125,7 +125,7 @@ void AutowareIvVehicleStatePublisher::getTurnSignalInfo(
 
 void AutowareIvVehicleStatePublisher::getTwistInfo(
   const geometry_msgs::TwistStamped::ConstPtr & twist_ptr,
-  awapi_awiv_adapter::AwapiVehicleStatus * status)
+  autoware_api_msgs::AwapiVehicleStatus * status)
 {
   if (!twist_ptr) {
     ROS_WARN_STREAM_THROTTLE(5.0, "[AutowareIvVehicleStatePublisher] twist is nullptr");
@@ -154,7 +154,7 @@ void AutowareIvVehicleStatePublisher::getTwistInfo(
 
 void AutowareIvVehicleStatePublisher::getGearInfo(
   const autoware_vehicle_msgs::ShiftStamped::ConstPtr & gear_ptr,
-  awapi_awiv_adapter::AwapiVehicleStatus * status)
+  autoware_api_msgs::AwapiVehicleStatus * status)
 {
   if (!gear_ptr) {
     ROS_WARN_STREAM_THROTTLE(5.0, "[AutowareIvVehicleStatePublisher] gear is nullptr");
@@ -167,7 +167,7 @@ void AutowareIvVehicleStatePublisher::getGearInfo(
 
 void AutowareIvVehicleStatePublisher::getGpsInfo(
   const sensor_msgs::NavSatFix::ConstPtr & nav_sat_ptr,
-  awapi_awiv_adapter::AwapiVehicleStatus * status)
+  autoware_api_msgs::AwapiVehicleStatus * status)
 {
   if (!nav_sat_ptr) {
     ROS_WARN_STREAM_THROTTLE(5.0, "[AutowareIvVehicleStatePublisher] nav_sat(gps) is nullptr");

@@ -21,12 +21,12 @@ namespace autoware_api
 AutowareIvAutowareStatePublisher::AutowareIvAutowareStatePublisher() : nh_(), pnh_("~")
 {
   // publisher
-  pub_state_ = pnh_.advertise<awapi_awiv_adapter::AwapiAutowareStatus>("output/autoware_status", 1);
+  pub_state_ = pnh_.advertise<autoware_api_msgs::AwapiAutowareStatus>("output/autoware_status", 1);
 }
 
 void AutowareIvAutowareStatePublisher::statePublisher(const AutowareInfo & aw_info)
 {
-  awapi_awiv_adapter::AwapiAutowareStatus status;
+  autoware_api_msgs::AwapiAutowareStatus status;
 
   //input header
   status.header.frame_id = "base_link";
@@ -47,7 +47,7 @@ void AutowareIvAutowareStatePublisher::statePublisher(const AutowareInfo & aw_in
 
 void AutowareIvAutowareStatePublisher::getAutowareStateInfo(
   const autoware_system_msgs::AutowareState::ConstPtr & autoware_state_ptr,
-  awapi_awiv_adapter::AwapiAutowareStatus * status)
+  autoware_api_msgs::AwapiAutowareStatus * status)
 {
   if (!autoware_state_ptr) {
     ROS_WARN_STREAM_THROTTLE(5.0, "[AutowareIvAutowareStatePublisher] autoware_state is nullptr");
@@ -60,7 +60,7 @@ void AutowareIvAutowareStatePublisher::getAutowareStateInfo(
 
 void AutowareIvAutowareStatePublisher::getControlModeInfo(
   const autoware_vehicle_msgs::ControlMode::ConstPtr & control_mode_ptr,
-  awapi_awiv_adapter::AwapiAutowareStatus * status)
+  autoware_api_msgs::AwapiAutowareStatus * status)
 {
   if (!control_mode_ptr) {
     ROS_WARN_STREAM_THROTTLE(5.0, "[AutowareIvAutowareStatePublisher] control mode is nullptr");
@@ -73,7 +73,7 @@ void AutowareIvAutowareStatePublisher::getControlModeInfo(
 
 void AutowareIvAutowareStatePublisher::getGateModeInfo(
   const autoware_control_msgs::GateMode::ConstPtr & gate_mode_ptr,
-  awapi_awiv_adapter::AwapiAutowareStatus * status)
+  autoware_api_msgs::AwapiAutowareStatus * status)
 {
   if (!gate_mode_ptr) {
     ROS_WARN_STREAM_THROTTLE(5.0, "[AutowareIvAutowareStatePublisher] gate mode is nullptr");
@@ -86,7 +86,7 @@ void AutowareIvAutowareStatePublisher::getGateModeInfo(
 
 void AutowareIvAutowareStatePublisher::getIsEmergencyInfo(
   const std_msgs::Bool::ConstPtr & is_emergency_ptr,
-  awapi_awiv_adapter::AwapiAutowareStatus * status)
+  autoware_api_msgs::AwapiAutowareStatus * status)
 {
   if (!is_emergency_ptr) {
     ROS_WARN_STREAM_THROTTLE(5.0, "[AutowareIvAutowareStatePublisher] is_emergency is nullptr");
@@ -101,12 +101,12 @@ void AutowareIvAutowareStatePublisher::getIsEmergencyInfo(
 /*
   void AutowareIvAutowareStatePublisher::getStopReasonInfo(
     const - & stop_reason_ptr,
-    awapi_awiv_adapter::AwapiAutowareStatus * status){}
+    autoware_api_msgs::AwapiAutowareStatus * status){}
   */
 
 void AutowareIvAutowareStatePublisher::getDiagInfo(
   const diagnostic_msgs::DiagnosticArray::ConstPtr & diag_ptr,
-  awapi_awiv_adapter::AwapiAutowareStatus * status)
+  autoware_api_msgs::AwapiAutowareStatus * status)
 {
   if (!diag_ptr) {
     ROS_WARN_STREAM_THROTTLE(5.0, "[AutowareIvAutowareStatePublisher] diagnostics is nullptr");
@@ -119,7 +119,7 @@ void AutowareIvAutowareStatePublisher::getDiagInfo(
 
 void AutowareIvAutowareStatePublisher::getAutoDriveEnableInfo(
   const std_msgs::Bool::ConstPtr & auto_drive_enable_ptr,
-  awapi_awiv_adapter::AwapiAutowareStatus * status)
+  autoware_api_msgs::AwapiAutowareStatus * status)
 {
   if (!auto_drive_enable_ptr) {
     ROS_WARN_STREAM_THROTTLE(

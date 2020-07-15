@@ -21,12 +21,12 @@ namespace autoware_api
 AutowareIvLaneChangeStatePublisher::AutowareIvLaneChangeStatePublisher() : nh_(), pnh_("~")
 {
   // publisher
-  pub_state_ = pnh_.advertise<awapi_awiv_adapter::LaneChangeStatus>("output/lane_change_status", 1);
+  pub_state_ = pnh_.advertise<autoware_api_msgs::LaneChangeStatus>("output/lane_change_status", 1);
 }
 
 void AutowareIvLaneChangeStatePublisher::statePublisher(const AutowareInfo & aw_info)
 {
-  awapi_awiv_adapter::LaneChangeStatus status;
+  autoware_api_msgs::LaneChangeStatus status;
 
   //input header
   status.header.frame_id = "base_link";
@@ -42,7 +42,7 @@ void AutowareIvLaneChangeStatePublisher::statePublisher(const AutowareInfo & aw_
 }
 
 void AutowareIvLaneChangeStatePublisher::getLaneChangeAvailableInfo(
-  const std_msgs::Bool::ConstPtr & available_ptr, awapi_awiv_adapter::LaneChangeStatus * status)
+  const std_msgs::Bool::ConstPtr & available_ptr, autoware_api_msgs::LaneChangeStatus * status)
 {
   if (!available_ptr) {
     ROS_WARN_STREAM_THROTTLE(
@@ -55,7 +55,7 @@ void AutowareIvLaneChangeStatePublisher::getLaneChangeAvailableInfo(
 }
 
 void AutowareIvLaneChangeStatePublisher::getLaneChangeReadyInfo(
-  const std_msgs::Bool::ConstPtr & ready_ptr, awapi_awiv_adapter::LaneChangeStatus * status)
+  const std_msgs::Bool::ConstPtr & ready_ptr, autoware_api_msgs::LaneChangeStatus * status)
 {
   if (!ready_ptr) {
     ROS_WARN_STREAM_THROTTLE(
@@ -69,7 +69,7 @@ void AutowareIvLaneChangeStatePublisher::getLaneChangeReadyInfo(
 
 void AutowareIvLaneChangeStatePublisher::getCandidatePathInfo(
   const autoware_planning_msgs::Path::ConstPtr & path_ptr,
-  awapi_awiv_adapter::LaneChangeStatus * status)
+  autoware_api_msgs::LaneChangeStatus * status)
 {
   if (!path_ptr) {
     ROS_WARN_STREAM_THROTTLE(

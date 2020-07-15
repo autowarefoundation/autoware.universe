@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <awapi_awiv_adapter/AwapiVehicleStatus.h>
+#include <autoware_api_msgs/AwapiVehicleStatus.h>
 #include <awapi_awiv_adapter/awapi_autoware_util.h>
 
 namespace autoware_api
@@ -35,25 +35,25 @@ private:
 
   void getPoseInfo(
     const std::shared_ptr<geometry_msgs::PoseStamped> & pose_ptr,
-    awapi_awiv_adapter::AwapiVehicleStatus * status);
+    autoware_api_msgs::AwapiVehicleStatus * status);
   void getSteerInfo(
     const autoware_vehicle_msgs::Steering::ConstPtr & steer_ptr,
-    awapi_awiv_adapter::AwapiVehicleStatus * status);
+    autoware_api_msgs::AwapiVehicleStatus * status);
   void getVehicleCmdInfo(
     const autoware_vehicle_msgs::VehicleCommand::ConstPtr & vehicle_cmd_ptr,
-    awapi_awiv_adapter::AwapiVehicleStatus * status);
+    autoware_api_msgs::AwapiVehicleStatus * status);
   void getTurnSignalInfo(
     const autoware_vehicle_msgs::TurnSignal::ConstPtr & turn_signal_ptr,
-    awapi_awiv_adapter::AwapiVehicleStatus * status);
+    autoware_api_msgs::AwapiVehicleStatus * status);
   void getTwistInfo(
     const geometry_msgs::TwistStamped::ConstPtr & twist_ptr,
-    awapi_awiv_adapter::AwapiVehicleStatus * status);
+    autoware_api_msgs::AwapiVehicleStatus * status);
   void getGearInfo(
     const autoware_vehicle_msgs::ShiftStamped::ConstPtr & gear_ptr,
-    awapi_awiv_adapter::AwapiVehicleStatus * status);
+    autoware_api_msgs::AwapiVehicleStatus * status);
   void getGpsInfo(
     const sensor_msgs::NavSatFix::ConstPtr & nav_sat_ptr,
-    awapi_awiv_adapter::AwapiVehicleStatus * status);
+    autoware_api_msgs::AwapiVehicleStatus * status);
 
   //parameters
   geometry_msgs::TwistStamped::ConstPtr previous_twist_ptr_;

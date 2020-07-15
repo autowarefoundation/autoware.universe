@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <awapi_awiv_adapter/ObstacleAvoidanceStatus.h>
+#include <autoware_api_msgs/ObstacleAvoidanceStatus.h>
 #include <awapi_awiv_adapter/awapi_autoware_util.h>
 
 namespace autoware_api
@@ -35,10 +35,10 @@ private:
 
   void getObstacleAvoidReadyInfo(
     const std_msgs::Bool::ConstPtr & ready_ptr,
-    awapi_awiv_adapter::ObstacleAvoidanceStatus * status);
+    autoware_api_msgs::ObstacleAvoidanceStatus * status);
   void getCandidatePathInfo(
     const autoware_planning_msgs::Trajectory::ConstPtr & path_ptr,
-    awapi_awiv_adapter::ObstacleAvoidanceStatus * status);
+    autoware_api_msgs::ObstacleAvoidanceStatus * status);
 };
 
 }  // namespace autoware_api
