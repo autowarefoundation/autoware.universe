@@ -2,17 +2,21 @@
 <launch>
   <arg name="sensor_model"/>
   <arg name="vehicle_model"/>
+
   <arg name="simulation" default="false" />
+  <arg name ="vehicle_id" value="$(optenv VEHICLE_ID default)" />
 
   <!-- vehicle description -->
   <include file="$(find vehicle_launch)/launch/vehicle_description.launch">
     <arg name="vehicle_model" value="$(arg vehicle_model)"/>
     <arg name="sensor_model" value="$(arg sensor_model)"/>
+    <arg name="vehicle_id" value="$(arg vehicle_id)"/>
   </include>
 
   <!-- vehicle interface -->
   <include file="$(find vehicle_launch)/launch/vehicle_interface.launch">
     <arg name="simulation" value="$(arg simulation)"/>
     <arg name="vehicle_model" value="$(arg vehicle_model)"/>
+    <arg name="vehicle_id" value="$(arg vehicle_id)"/>
   </include>
 </launch>

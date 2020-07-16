@@ -2,15 +2,17 @@
 <launch>
   <arg name="simulation" />
   <arg name="vehicle_model" />
-  <arg name="simulator_model" value="$(eval find(arg('vehicle_model')+'_description')+'/config/simulator_model.yaml')" />
+  <arg name="vehicle_id" />
 
   <!-- simulation mode -->
   <group if="$(eval simulation==true)">
+    <arg name="simulator_model" value="$(eval find(arg('vehicle_model')+'_description')+'/config/simulator_model.yaml')" />
     <include file="$(find simple_planning_simulator)/launch/simple_planning_simulator.launch" pass_all_args="true"/>
   </group>
 
   <!-- real mode -->
   <group unless="$(eval simulation==true)">
-    <include file="$(eval find(arg('vehicle_model')+'_description')+'/launch/vehicle_interface.launch')"/>
+    <include file="$(eval find(arg('vehicle_model')+'_description')+'/launch/vehicle_interface.launch')" >
+    </include>
   </group>
 </launch>

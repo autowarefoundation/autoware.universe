@@ -3,9 +3,11 @@
   <arg name="sensor_model"/>
   <arg name="vehicle_model"/>
 
+  <arg name ="vehicle_id" />
+
   <arg name="model" value="$(find vehicle_launch)/urdf/vehicle.xacro"/>
 
-  <param name="robot_description" command="$(find xacro)/xacro --inorder $(arg model) vehicle_model:=$(arg vehicle_model) sensor_model:=$(arg sensor_model) config_dir:=$(find vehicle_launch)/config/$(arg sensor_model)"/>
+  <param name="robot_description" command="$(find xacro)/xacro --inorder $(arg model) vehicle_model:=$(arg vehicle_model) sensor_model:=$(arg sensor_model) config_dir:=$(find vehicle_launch)/config/$(arg vehicle_id)/$(arg sensor_model)"/>
 
   <group ns="/vehicle_info">
     <rosparam file="$(eval find(arg('vehicle_model')+'_description')+'/config/vehicle_info.yaml')" command="load"/>
