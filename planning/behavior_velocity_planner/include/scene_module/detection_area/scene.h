@@ -40,7 +40,7 @@
 class DetectionAreaModule : public SceneModuleInterface
 {
 public:
-  enum class State { APPROARCH, PASS };
+  enum class State { APPROACH, PASS };
 
   struct DebugData
   {

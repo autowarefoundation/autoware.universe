@@ -39,7 +39,7 @@
 class TrafficLightModule : public SceneModuleInterface
 {
 public:
-  enum class State { APPROARCH, STOP, GO_OUT };
+  enum class State { APPROACH, STOP, GO_OUT };
 
   struct DebugData
   {

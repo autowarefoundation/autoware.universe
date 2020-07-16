@@ -35,7 +35,7 @@ DetectionAreaModule::DetectionAreaModule(
   const PlannerParam & planner_param)
 : SceneModuleInterface(module_id),
   detection_area_reg_elem_(detection_area_reg_elem),
-  state_(State::APPROARCH)
+  state_(State::APPROACH)
 {
   planner_param_ = planner_param;
 }

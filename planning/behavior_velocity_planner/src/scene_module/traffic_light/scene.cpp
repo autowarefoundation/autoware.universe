@@ -121,7 +121,7 @@ TrafficLightModule::TrafficLightModule(
 : SceneModuleInterface(module_id),
   traffic_light_reg_elem_(traffic_light_reg_elem),
   lane_(lane),
-  state_(State::APPROARCH)
+  state_(State::APPROACH)
 {
   planner_param_ = planner_param;
 }

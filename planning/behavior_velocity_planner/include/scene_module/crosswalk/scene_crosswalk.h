@@ -84,7 +84,7 @@ private:
 
   bool isTargetType(const autoware_perception_msgs::DynamicObject & obj);
 
-  enum class State { APPROARCH, INSIDE, GO_OUT };
+  enum class State { APPROACH, INSIDE, GO_OUT };
 
   lanelet::ConstLanelet crosswalk_;
   State state_;

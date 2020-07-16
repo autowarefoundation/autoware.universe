@@ -36,7 +36,7 @@
 class StopLineModule : public SceneModuleInterface
 {
 public:
-  enum class State { APPROARCH, STOP, START };
+  enum class State { APPROACH, STOP, START };
 
   struct DebugData
   {
