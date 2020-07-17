@@ -15,16 +15,18 @@
  */
 #include <scene_module/detection_area/scene.h>
 
+#include <tf2_eigen/tf2_eigen.h>
+
 #include <utilization/util.h>
 
 namespace
 {
-double calcDistance(const geometry_msgs::Pose & p1, const Eigen::Vector2d & p2)
+double calcSignedDistance(const geometry_msgs::Pose & p1, const Eigen::Vector2d & p2)
 {
-  const auto dx = p1.position.x - p2.x();
-  const auto dy = p1.position.y - p2.y();
-
-  return std::hypot(dx, dy);
+  Eigen::Affine3d map2p1;
+  tf2::fromMsg(p1, map2p1);
+  auto basecoords_p2 = map2p1 * Eigen::Vector3d(p2.x(), p2.y(), p1.position.z);
+  return basecoords_p2.x() >= 0 ? basecoords_p2.norm() : -basecoords_p2.norm();
 }
 }  // namespace
 
@@ -83,7 +85,9 @@ bool DetectionAreaModule::modifyPathVelocity(autoware_planning_msgs::PathWithLan
       continue;
     }
 
-    if (calcDistance(self_pose.pose, stop_line_point) < pass_judge_line_distance) {
+    if (
+      state_ != State::STOP &&
+      calcSignedDistance(self_pose.pose, stop_line_point) < pass_judge_line_distance) {
       ROS_WARN_THROTTLE(1.0, "[detection_area] vehicle is over stop border");
       state_ = State::PASS;
       return true;
@@ -93,6 +97,9 @@ bool DetectionAreaModule::modifyPathVelocity(autoware_planning_msgs::PathWithLan
     if (!insertTargetVelocityPoint(input_path, stop_line, planner_param_.stop_margin, 0.0, *path)) {
       continue;
     }
+
+    state_ = State::STOP;
+
     return true;
   }
   return false;
