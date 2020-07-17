@@ -66,7 +66,7 @@ IntersectionModuleManager::IntersectionModuleManager()
   pnh.param(ns + "/stuck_vehicle_detect_dist", p.stuck_vehicle_detect_dist, 5.0);
   pnh.param(ns + "/stuck_vehicle_vel_thr", p.stuck_vehicle_vel_thr, 3.0 / 3.6);
   pnh.param(ns + "/intersection_velocity", p.intersection_velocity, 10.0 / 3.6);
-  pnh.param(ns + "/detection_area_length", p.detection_area_length, 100.0);
+  pnh.param(ns + "/detection_area_length", p.detection_area_length, 200.0);
 }
 
 void IntersectionModuleManager::launchNewModules(

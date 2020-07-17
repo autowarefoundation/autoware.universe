@@ -6,4 +6,4 @@ intersection:
   stuck_vehicle_detect_dist: 5.0
   stuck_vehicle_vel_thr: 0.833  # 0.833m/s = 3.0km/h
   intersection_velocity: 2.778  # 2.778m/s = 10.0km/h
-  detection_area_length: 100.0  # [m]
+  detection_area_length: 200.0  # [m]
