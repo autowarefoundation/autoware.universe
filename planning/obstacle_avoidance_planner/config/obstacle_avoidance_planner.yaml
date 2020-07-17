@@ -1,4 +1,4 @@
-# trajecotry total/fixing length
+# trajectory total/fixing length
 trajectory_length: 200 # total trajectory length[m]
 forward_fixing_distance: 5.0 # forward fixing length from base_link[m]
 backward_fixing_distance: 5.0 # backward fixing length from base_link[m]

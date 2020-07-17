@@ -8,6 +8,11 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   tf2_ros
   osqp_interface
+  dynamic_reconfigure
+)
+
+generate_dynamic_reconfigure_options(
+  cfg/AvoidancePlanner.cfg
 )
 
 catkin_package(

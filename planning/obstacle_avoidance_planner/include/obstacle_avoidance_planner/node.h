@@ -16,7 +16,10 @@
 #ifndef NODE_H
 #define NODE_H
 
+#include <mutex>
 #include <boost/optional/optional_fwd.hpp>
+#include <dynamic_reconfigure/server.h>
+#include "obstacle_avoidance_planner/AvoidancePlannerConfig.h"
 
 namespace ros
 {
@@ -76,6 +79,7 @@ private:
   bool is_using_vehicle_config_;
   bool enable_avoidance_;
   const int min_num_points_for_getting_yaw_;
+  std::mutex mutex_;
 
   // params outside logic
   double min_delta_dist_for_replan_;
@@ -98,6 +102,8 @@ private:
   std::unique_ptr<std::vector<autoware_planning_msgs::TrajectoryPoint>> prev_traj_points_ptr_;
   std::unique_ptr<std::vector<autoware_planning_msgs::PathPoint>> prev_path_points_ptr_;
   std::unique_ptr<autoware_perception_msgs::DynamicObjectArray> in_objects_ptr_;
+
+  dynamic_reconfigure::Server<obstacle_avoidance_planner::AvoidancePlannerConfig> dynamic_reconfigure_srv_;
 
   // TF
   std::unique_ptr<tf2_ros::Buffer> tf_buffer_ptr_;
@@ -123,6 +129,8 @@ private:
   void twistCallback(const geometry_msgs::TwistStamped & msg);
   void objectsCallback(const autoware_perception_msgs ::DynamicObjectArray & msg);
   void enableAvoidanceCallback(const std_msgs::Bool & msg);
+  void configCallback(
+    const obstacle_avoidance_planner::AvoidancePlannerConfig & config, const uint32_t level);
 
   void initialize();
 

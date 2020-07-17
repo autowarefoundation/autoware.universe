@@ -15,16 +15,19 @@
   <build_depend>roscpp</build_depend>
   <build_depend>tf2_ros</build_depend>
   <build_depend>osqp_interface</build_depend>
+  <build_depend>dynamic_reconfigure</build_depend>
   <build_export_depend>autoware_planning_msgs</build_export_depend>
   <build_export_depend>autoware_perception_msgs</build_export_depend>
   <build_export_depend>autoware_system_msgs</build_export_depend>
   <build_export_depend>roscpp</build_export_depend>
   <build_export_depend>tf2_ros</build_export_depend>
   <build_export_depend>osqp_interface</build_export_depend>
+  <build_export_depend>dynamic_reconfigure</build_export_depend>
   <exec_depend>autoware_planning_msgs</exec_depend>
   <exec_depend>autoware_perception_msgs</exec_depend>
   <exec_depend>autoware_system_msgs</exec_depend>
   <exec_depend>roscpp</exec_depend>
   <exec_depend>tf2_ros</exec_depend>
   <exec_depend>osqp_interface</exec_depend>
+  <exec_depend>dynamic_reconfigure</exec_depend>
 </package>

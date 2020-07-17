@@ -94,6 +94,9 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner()
     "/planning/scenario_planning/lane_driving/obstacle_avoidance_approval", 10,
     &ObstacleAvoidancePlanner::enableAvoidanceCallback, this);
 
+  dynamic_reconfigure_srv_.setCallback(
+    boost::bind(&ObstacleAvoidancePlanner::configCallback, this, _1, _2));
+
   pnh_.param<bool>("is_publishing_clearance_map", is_publishing_clearance_map_, false);
   pnh_.param<bool>("is_publishing_area_with_objects", is_publishing_area_with_objects_, false);
   pnh_.param<bool>("is_showing_debug_info", is_showing_debug_info_, true);
@@ -190,8 +193,40 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner()
 ObstacleAvoidancePlanner::~ObstacleAvoidancePlanner() {}
 
 // ROS callback functions
+void ObstacleAvoidancePlanner::configCallback(
+  const obstacle_avoidance_planner::AvoidancePlannerConfig & config, const uint32_t level)
+{
+  if (!eb_path_optimizer_ptr_) return;  // waiting for initialize
+
+  std::lock_guard<std::mutex> lock(mutex_);
+
+  // trajectory total/fixing length
+  traj_param_->trajectory_length = config.trajectory_length;
+  traj_param_->forward_fixing_distance = config.forward_fixing_distance;
+  traj_param_->backward_fixing_distance = config.backward_fixing_distance;
+
+  // clearance for unique points
+  constrain_param_->clearance_for_straight_line = config.clearance_for_straight_line_;
+  constrain_param_->clearance_for_joint = config.clearance_for_joint_;
+  constrain_param_->clearance_for_only_smoothing = config.clearance_for_only_smoothing;
+  constrain_param_->clearance_from_object_for_straight = config.clearance_from_object_for_straight;
+
+  // clearance(distance) when generating trajectory
+  constrain_param_->min_clearance_from_road = config.min_clearance_from_road;
+  constrain_param_->min_clearance_from_object = config.min_clearance_from_object;
+  constrain_param_->min_object_clearance_for_joint = config.min_object_clearance_for_joint;
+
+  // avoiding param
+  traj_param_->max_avoiding_ego_velocity_ms = config.max_avoiding_ego_velocity_ms;
+  traj_param_->max_avoiding_objects_velocity_ms = config.max_avoiding_objects_velocity_ms;
+  traj_param_->center_line_width = config.center_line_width;
+  traj_param_->acceleration_for_non_deceleration_range =
+    config.acceleration_for_non_deceleration_range;
+}
+
 void ObstacleAvoidancePlanner::pathCallback(const autoware_planning_msgs::Path & msg)
 {
+  std::lock_guard<std::mutex> lock(mutex_);
   current_ego_pose_ptr_ = getCurrentEgoPose();
   if (
     msg.points.empty() || msg.drivable_area.data.empty() || !current_ego_pose_ptr_ ||
