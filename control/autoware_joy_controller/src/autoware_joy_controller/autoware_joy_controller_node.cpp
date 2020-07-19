@@ -15,6 +15,8 @@
  */
 
 #include <autoware_joy_controller/autoware_joy_controller.h>
+#include <autoware_joy_controller/joy_converter/g29_joy_converter.h>
+#include <autoware_joy_controller/joy_converter/ds4_joy_converter.h>
 
 namespace
 {
@@ -87,7 +89,11 @@ const char * getGateModeName(const GateModeType & gate_mode)
 void AutowareJoyControllerNode::onJoy(const sensor_msgs::Joy::ConstPtr & msg)
 {
   last_joy_received_time_ = msg->header.stamp;
-  joy_ = std::make_shared<const JoyConverter>(*msg);
+  if (joy_type_ == "G29") {
+    joy_ = std::make_shared<const G29JoyConverter>(*msg);
+  } else {
+    joy_ = std::make_shared<const DS4JoyConverter>(*msg);
+  }
 
   if (joy_->shift_up() || joy_->shift_down() || joy_->shift_drive() || joy_->shift_reverse()) {
     publishShift();
@@ -371,6 +377,7 @@ void AutowareJoyControllerNode::publishRawVehicleCommand()
 AutowareJoyControllerNode::AutowareJoyControllerNode()
 {
   // Parameter
+  private_nh_.param<std::string>("joy_type", joy_type_, "DS4");
   private_nh_.param("update_rate", update_rate_, 10.0);
   private_nh_.param("accel_ratio", accel_ratio_, 3.0);
   private_nh_.param("brake_ratio", brake_ratio_, 5.0);
@@ -380,6 +387,8 @@ AutowareJoyControllerNode::AutowareJoyControllerNode()
   private_nh_.param("control_command/max_forward_velocity", max_forward_velocity_, 20.0);
   private_nh_.param("control_command/max_backward_velocity", max_backward_velocity_, 3.0);
   private_nh_.param("control_command/backward_accel_ratio", backward_accel_ratio_, 1.0);
+
+  ROS_INFO("Joy type: %s", joy_type_.c_str());
 
   // Subscriber
   sub_joy_ = private_nh_.subscribe("input/joy", 1, &AutowareJoyControllerNode::onJoy, this);

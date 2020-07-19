@@ -1,4 +1,6 @@
 <launch>
+  <arg name="joy_type" default="DS4" doc="options: DS4, G29"/>
+
   <arg name="input_joy" default="/joy" />
   <arg name="input_twist" default="/localization/twist" />
 
@@ -32,6 +34,7 @@
     <remap from="~output/raw_vehicle_cmd" to="/remote/raw_vehicle_cmd"/>
 
     <rosparam command="load" file="$(arg config_file)" />
+    <param name="joy_type" value="$(arg joy_type)" />
   </node>
 
   <node pkg="joy" type="joy_node" name="joy_node" output="screen">
