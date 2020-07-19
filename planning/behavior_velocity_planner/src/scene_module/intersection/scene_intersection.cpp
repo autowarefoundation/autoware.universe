@@ -118,7 +118,8 @@ bool IntersectionModule::modifyPathVelocity(autoware_planning_msgs::PathWithLane
   if (state_machine_.getState() == State::STOP) {
     constexpr double stop_vel = 0.0;
     const double decel_vel = planner_param_.decel_velocoity;
-    double v = (has_traffic_light_ && turn_direction_ == "straight") ? decel_vel : stop_vel;
+    double v =
+      (!is_stuck && has_traffic_light_ && turn_direction_ == "straight") ? decel_vel : stop_vel;
     util::setVelocityFrom(stop_line_idx, v, path);
   }
 
