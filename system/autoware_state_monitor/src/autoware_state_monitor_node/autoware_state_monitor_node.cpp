@@ -292,7 +292,7 @@ AutowareStateMonitorNode::AutowareStateMonitorNode()
 {
   // Parameter
   private_nh_.param("update_rate", update_rate_, 10.0);
-  private_nh_.param("disengage_on_route", disengage_on_route_, false);
+  private_nh_.param("disengage_on_route", disengage_on_route_, true);
   private_nh_.param("disengage_on_complete", disengage_on_complete_, false);
   private_nh_.param("disengage_on_error", disengage_on_error_, false);
 
