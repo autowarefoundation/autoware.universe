@@ -63,9 +63,20 @@ target_link_libraries(dummy_perception_publisher_node
   ${catkin_LIBRARIES}
 )
 
+add_executable(empty_objects_publisher
+  src/empty_objects_publisher.cpp
+)
+
+add_dependencies(empty_objects_publisher ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+target_link_libraries(empty_objects_publisher
+  ${catkin_LIBRARIES}
+)
+
 install(
   TARGETS
     dummy_perception_publisher_node
+    empty_objects_publisher
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

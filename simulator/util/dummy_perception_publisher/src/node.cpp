@@ -34,6 +34,7 @@ DummyPerceptionPublisherNode::DummyPerceptionPublisherNode()
   pnh_.param<double>("visible_range", visible_range_, double(100.0));
   pnh_.param<double>("detection_successful_rate", detection_successful_rate_, 0.8);
   pnh_.param<bool>("enable_ray_tracing", enable_ray_tracing_, true);
+  pnh_.param<bool>("use_object_recognition", use_object_recognition_, true);
 }
 
 void DummyPerceptionPublisherNode::timerCallback(const ros::TimerEvent &)
@@ -182,7 +183,9 @@ void DummyPerceptionPublisherNode::timerCallback(const ros::TimerEvent &)
 
   // publish
   pointcloud_pub_.publish(output_pointcloud_msg);
-  dynamic_object_pub_.publish(output_dynamic_object_msg);
+  if (use_object_recognition_) {
+    dynamic_object_pub_.publish(output_dynamic_object_msg);
+  }
 }
 
 void DummyPerceptionPublisherNode::createObjectPointcloud(
