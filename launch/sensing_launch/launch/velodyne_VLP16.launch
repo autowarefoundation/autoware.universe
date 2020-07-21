@@ -3,36 +3,55 @@
   <!-- Params -->
   <arg name="launch_driver" default="true" />
 
-  <arg name="manager" default="velodyne_nodelet_manager" />
-
+  <arg name="model" default="VLP16"/>
+  <arg name="calibration" default="$(find velodyne_pointcloud)/params/VLP16db.yaml"/>
+  <arg name="device_ip" default="192.168.1.201" />
   <arg name="sensor_frame" default="velodyne" />
   <arg name="base_frame" default="base_link" />
-
-  <arg name="device_ip" default="192.168.1.201"/>
-  <arg name="port" default="2368"/>
-
-  <arg name="model" default="VLP16"/>
-  <arg name="calibration" default="$(find velodyne_pointcloud)/params/VLP16db.yaml" />
+  <arg name="manager" default="velodyne_nodelet_manager" />
+  <arg name="max_range" default="130.0" />
+  <arg name="min_range" default="0.4" />
+  <arg name="pcap" default="" />
+  <arg name="port" default="2368" />
+  <arg name="read_fast" default="false" />
+  <arg name="read_once" default="false" />
+  <arg name="repeat_delay" default="0.0" />
+  <arg name="rpm" default="600.0" />
+  <arg name="sensor_phase" default="0.0" />
+  <arg name="sensor_timestamp" default="false" />
+  <arg name="laserscan_ring" default="-1" />
+  <arg name="laserscan_resolution" default="0.007" />
+  <arg name="num_points_threshold" default="300"/>
+  <arg name="invalid_intensity" default="[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]"/>
 
   <!-- nodelet manager -->
   <node pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" />
 
   <!-- velodyne driver -->
-  <node pkg="nodelet" type="nodelet" name="$(arg manager)_driver" args="load velodyne_driver/DriverNodelet $(arg manager)"  if="$(arg launch_driver)">
+  <node pkg="nodelet" type="nodelet" name="$(arg manager)_driver" args="load velodyne_driver/DriverNodelet $(arg manager)" if="$(arg launch_driver)">
     <param name="device_ip" value="$(arg device_ip)" />
     <param name="frame_id" value="$(arg sensor_frame)"/>
     <param name="model" value="$(arg model)"/>
+    <param name="pcap" value="$(arg pcap)"/>
     <param name="port" value="$(arg port)" />
+    <param name="read_fast" value="$(arg read_fast)"/>
+    <param name="read_once" value="$(arg read_once)"/>
+    <param name="repeat_delay" value="$(arg repeat_delay)"/>
+    <param name="rpm" value="$(arg rpm)"/>
+    <param name="sensor_phase" value="$(arg sensor_phase)"/>
+    <param name="sensor_timestamp" value="$(arg sensor_timestamp)" />
   </node>
 
   <!-- velodyne_packets to pointcloud -->
   <node pkg="nodelet" type="nodelet" name="$(arg manager)_cloud" args="load velodyne_pointcloud/CloudNodelet $(arg manager)">
     <remap from="velodyne_points" to="pointcloud_raw" />
     <remap from="velodyne_points_ex" to="pointcloud_raw_ex" />
-
     <param name="calibration" value="$(arg calibration)"/>
-    <param name="max_range" value="130.0"/>
-    <param name="min_range" value="0.5"/>
+    <param name="max_range" value="$(arg max_range)"/>
+    <param name="min_range" value="$(arg min_range)"/>
+    <param name="num_points_threshold" value="$(arg num_points_threshold)"/>
+    <param name="invalid_intensity" value="$(arg invalid_intensity)"/>
+    <param name="sensor_phase" value="$(arg sensor_phase)"/>
   </node>
 
   <!-- crop self -->

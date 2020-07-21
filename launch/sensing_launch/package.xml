@@ -9,8 +9,8 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
+  <exec_depend>velodyne_driver</exec_depend>
   <exec_depend>velodyne_pointcloud</exec_depend>
-  <exec_depend>velodyne_vls_pointcloud</exec_depend>
 
   <export>
   </export>

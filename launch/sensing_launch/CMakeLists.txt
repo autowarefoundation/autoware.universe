@@ -4,8 +4,8 @@ project(sensing_launch)
 find_package(catkin REQUIRED)
 
 # Force Tier IV's fork version
-find_package(velodyne_pointcloud 0.1.0 EXACT REQUIRED)
-find_package(velodyne_vls_pointcloud 0.1.0 EXACT REQUIRED)
+find_package(velodyne_driver 0.2.0 EXACT REQUIRED)
+find_package(velodyne_pointcloud 0.2.0 EXACT REQUIRED)
 
 catkin_package()
 
