@@ -46,6 +46,7 @@ private:
   double visible_range_;
   double detection_successful_rate_;
   bool enable_ray_tracing_;
+  bool use_object_recognition_;
   std::mt19937 random_generator_;
   void timerCallback(const ros::TimerEvent &);
   void createObjectPointcloud(
