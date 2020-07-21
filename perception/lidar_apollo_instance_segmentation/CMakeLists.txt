@@ -59,6 +59,10 @@ else()
   set(CUDNN_AVAIL OFF)
 endif()
 
+find_program(GDOWN_AVAIL "gdown")
+if (NOT GDOWN_AVAIL)
+  message("gdown: command not found. External files could not be downloaded.")
+endif()
 if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
   # download weight files
   set(PATH "${CMAKE_CURRENT_SOURCE_DIR}/data")
