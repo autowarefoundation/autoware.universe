@@ -277,10 +277,24 @@ void PointCloudConcatenateDataSynchronizerNodelet::publish()
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void PointCloudConcatenateDataSynchronizerNodelet::convertToXYZCloud(
+  const sensor_msgs::PointCloud2 & input_cloud,
+  sensor_msgs::PointCloud2 & output_cloud)
+{
+  pcl::PointCloud<pcl::PointXYZ> tmp_xyz_cloud;
+  pcl::fromROSMsg(input_cloud, tmp_xyz_cloud);
+  pcl::toROSMsg(tmp_xyz_cloud, output_cloud);
+  output_cloud.header = input_cloud.header;
+}
+
 void PointCloudConcatenateDataSynchronizerNodelet::cloud_callback(
   const sensor_msgs::PointCloud2::ConstPtr & input_ptr, const std::string & topic_name)
 {
   std::lock_guard<std::mutex> lock(mutex_);
+
+  sensor_msgs::PointCloud2 xyz_cloud;
+  convertToXYZCloud(*input_ptr, xyz_cloud);
+  sensor_msgs::PointCloud2::ConstPtr xyz_input_ptr(new sensor_msgs::PointCloud2(xyz_cloud));
 
   const bool is_already_subscribed_this = (cloud_stdmap_[topic_name] != nullptr);
   const bool is_already_subscribed_tmp = std::any_of(
@@ -289,7 +303,7 @@ void PointCloudConcatenateDataSynchronizerNodelet::cloud_callback(
 
   static ros::Time timer_start_time;
   if (is_already_subscribed_this) {
-    cloud_stdmap_tmp_[topic_name] = input_ptr;
+    cloud_stdmap_tmp_[topic_name] = xyz_input_ptr;
 
     if (!is_already_subscribed_tmp) {
       // ROS_INFO("Subscribed already received topic. Create Timer");
@@ -299,11 +313,11 @@ void PointCloudConcatenateDataSynchronizerNodelet::cloud_callback(
     }
   } else {
     if (is_already_subscribed_tmp) {
-      cloud_stdmap_tmp_[topic_name] = input_ptr;
+      cloud_stdmap_tmp_[topic_name] = xyz_input_ptr;
       // std::cout << (ros::Time::now() - timer_start_time).toSec() << std::endl;
     }
 
-    cloud_stdmap_[topic_name] = input_ptr;
+    cloud_stdmap_[topic_name] = xyz_input_ptr;
     const bool is_subscribed_all = std::all_of(
       std::begin(cloud_stdmap_), std::end(cloud_stdmap_),
       [](const auto & e) { return e.second != nullptr; });

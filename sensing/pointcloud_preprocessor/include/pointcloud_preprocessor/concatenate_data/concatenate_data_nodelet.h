@@ -140,6 +140,9 @@ private:
     const PointCloud2::ConstPtr & in1, const PointCloud2::ConstPtr & in2, PointCloud2::Ptr & out);
   void publish();
 
+  void convertToXYZCloud(
+    const sensor_msgs::PointCloud2 & input_cloud,
+    sensor_msgs::PointCloud2 & output_cloud);
   void cloud_callback(
     const sensor_msgs::PointCloud2::ConstPtr & input_ptr, const std::string & topic_name);
   void twist_callback(const geometry_msgs::TwistStamped::ConstPtr & input);
