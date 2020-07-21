@@ -75,6 +75,10 @@ else()
 endif()
 
 # Download caffemodel and prototxt
+find_program(GDOWN_AVAIL "gdown")
+if (NOT GDOWN_AVAIL)
+  message("gdown: command not found. External files could not be downloaded.")
+endif()
 set(PATH "${CMAKE_CURRENT_SOURCE_DIR}/data")
 if (NOT EXISTS "${PATH}")
   execute_process(COMMAND mkdir -p ${PATH})
