@@ -43,3 +43,7 @@ repositories:
     type: git
     url: git@github.com:tier4/velodyne_vls.git
     version: tier4/master
+  calibration/tunable_static_tf_broadcaster:
+    type: git
+    url: git@github.com:tier4/tunable_static_tf_broadcaster.git
+    version: master
