@@ -39,7 +39,7 @@ void AutowareIvAutowareStatePublisher::statePublisher(const AutowareInfo & aw_in
   getIsEmergencyInfo(aw_info.is_emergency_ptr, &status);
   // getStopReasonInfo(aw_info.stop_reason_ptr, &status); // TODO: not implemented
   getDiagInfo(aw_info.diagnostic_ptr, &status);
-  getAutoDriveEnableInfo(aw_info.autodrive_enable_ptr, &status);
+  getGlobalRptInfo(aw_info.global_rpt_ptr, &status);
 
   // publish info
   pub_state_.publish(status);
@@ -117,18 +117,17 @@ void AutowareIvAutowareStatePublisher::getDiagInfo(
   status->diagnostics = diag_ptr->status;
 }
 
-void AutowareIvAutowareStatePublisher::getAutoDriveEnableInfo(
-  const std_msgs::Bool::ConstPtr & auto_drive_enable_ptr,
+void AutowareIvAutowareStatePublisher::getGlobalRptInfo(
+  const pacmod_msgs::GlobalRpt::ConstPtr & global_rpt_ptr,
   autoware_api_msgs::AwapiAutowareStatus * status)
 {
-  if (!auto_drive_enable_ptr) {
-    ROS_WARN_STREAM_THROTTLE(
-      5.0, "[AutowareIvAutowareStatePublisher] auto_drive_enable is nullptr");
+  if (!global_rpt_ptr) {
+    ROS_WARN_STREAM_THROTTLE(5.0, "[AutowareIvAutowareStatePublisher] global_rpt is nullptr");
     return;
   }
 
-  // get auto_drive_enable (autonomous_overriden = not auto_drive_enable)
-  status->autonomous_overriden = auto_drive_enable_ptr->data ? false : true;
+  // get global_rpt
+  status->autonomous_overriden = global_rpt_ptr->override_active;
 }
 
 }  // namespace autoware_api

@@ -45,7 +45,7 @@ private:
   ros::Subscriber sub_emergency_;
   ros::Subscriber sub_stop_reason_;
   ros::Subscriber sub_diagnostics_;
-  ros::Subscriber sub_autodrive_enable_;
+  ros::Subscriber sub_global_rpt_;
   ros::Subscriber sub_lane_change_available_;
   ros::Subscriber sub_lane_change_ready_;
   ros::Subscriber sub_lane_change_candidate_;
@@ -71,7 +71,7 @@ private:
   void callbackIsEmergency(const std_msgs::Bool::ConstPtr & msg_ptr);
   // void callbackStopReason();  // TODO: not implemented
   void callbackDiagnostics(const diagnostic_msgs::DiagnosticArray::ConstPtr & msg_ptr);
-  void callbackAutodriveEnable(const std_msgs::Bool::ConstPtr & msg_ptr);
+  void callbackGlobalRpt(const pacmod_msgs::GlobalRpt::ConstPtr & msg_ptr);
   void callbackLaneChangeAvailable(const std_msgs::Bool::ConstPtr & msg_ptr);
   void callbackLaneChangeReady(const std_msgs::Bool::ConstPtr & msg_ptr);
   void callbackLaneChangeCandidatePath(const autoware_planning_msgs::Path::ConstPtr & msg_ptr);
@@ -82,6 +82,7 @@ private:
   // timer function
   void timerCallback(const ros::TimerEvent & e);
 
+  void emergencyParamCheck(const bool emergency_handling_param);
   void getCurrentPose();
 
   // parameter

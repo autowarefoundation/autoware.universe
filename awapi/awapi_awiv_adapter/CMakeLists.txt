@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   autoware_vehicle_msgs
   diagnostic_msgs
   geometry_msgs
+  pacmod_msgs
   std_msgs
   sensor_msgs
   tf2

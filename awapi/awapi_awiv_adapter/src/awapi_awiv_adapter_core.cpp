@@ -22,6 +22,9 @@ AutowareIvAdapter::AutowareIvAdapter() : nh_(), pnh_("~"), tf_listener_(tf_buffe
 {
   // get param
   pnh_.param<double>("status_pub_hz", status_pub_hz_, 5.0);
+  const bool em_handle_param = waitForParam<bool>(pnh_, "param/emergency_handling");
+  emergencyParamCheck(em_handle_param);
+
   // setup instance
   vehicle_state_publisher_ = std::make_unique<AutowareIvVehicleStatePublisher>();
   autoware_state_publisher_ = std::make_unique<AutowareIvAutowareStatePublisher>();
@@ -52,8 +55,8 @@ AutowareIvAdapter::AutowareIvAdapter() : nh_(), pnh_("~"), tf_listener_(tf_buffe
   */
   sub_diagnostics_ =
     pnh_.subscribe("input/diagnostics", 1, &AutowareIvAdapter::callbackDiagnostics, this);
-  sub_autodrive_enable_ =
-    pnh_.subscribe("input/autodrive_enable", 1, &AutowareIvAdapter::callbackAutodriveEnable, this);
+  sub_global_rpt_ =
+    pnh_.subscribe("input/global_rpt", 1, &AutowareIvAdapter::callbackGlobalRpt, this);
   sub_lane_change_available_ = pnh_.subscribe(
     "input/lane_change_avaiable", 1, &AutowareIvAdapter::callbackLaneChangeAvailable, this);
   sub_lane_change_ready_ =
@@ -70,6 +73,14 @@ AutowareIvAdapter::AutowareIvAdapter() : nh_(), pnh_("~"), tf_listener_(tf_buffe
   // timer
   timer_ =
     nh_.createTimer(ros::Duration(1.0 / status_pub_hz_), &AutowareIvAdapter::timerCallback, this);
+}
+
+void AutowareIvAdapter::emergencyParamCheck(const bool emergency_handling_param)
+{
+  if (!emergency_handling_param) {
+    ROS_ERROR_STREAM("parameter[use_emergency_handling] is false.");
+    ROS_ERROR_STREAM("autoware/put/emergency is not valid");
+  }
 }
 
 void AutowareIvAdapter::timerCallback(const ros::TimerEvent & e)
@@ -173,10 +184,10 @@ void AutowareIvAdapter::callbackDiagnostics(
   aw_info_.diagnostic_ptr = msg_ptr;
 }
 
-void AutowareIvAdapter::callbackAutodriveEnable(const std_msgs::Bool::ConstPtr & msg_ptr)
+void AutowareIvAdapter::callbackGlobalRpt(const pacmod_msgs::GlobalRpt::ConstPtr & msg_ptr)
 {
   // TODO: now, it is not used
-  aw_info_.autodrive_enable_ptr = msg_ptr;
+  aw_info_.global_rpt_ptr = msg_ptr;
 }
 
 void AutowareIvAdapter::callbackLaneChangeAvailable(const std_msgs::Bool::ConstPtr & msg_ptr)

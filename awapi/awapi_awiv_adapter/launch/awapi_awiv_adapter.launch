@@ -15,7 +15,7 @@
   <arg name="input_is_emergency" default="/system/emergency/is_emergency" />
   <arg name="input_stop_reason" default="/planning/scenario_planning/stop_reason" /> <!-- not implemented -->
   <arg name="input_diagnostics" default="/diagnostics_agg" />
-  <arg name="input_autodrive_enable" default="tmp" /> <!-- not implemented -->
+  <arg name="input_global_rpt" default="/pacmod/parsed_tx/global_rpt" />
   <arg name="input_lane_change_avaiable" default="/planning/scenario_planning/lane_driving/lane_change_available" />
   <arg name="input_lane_change_ready" default="/planning/scenario_planning/lane_driving/lane_change_ready" />
   <arg name="input_lane_change_candidate_path" default="/planning/scenario_planning/lane_driving/lane_change_candidate_path" />
@@ -40,6 +40,8 @@
   <arg name="output_obstacle_avoid_approval" default="/planning/scenario_planning/lane_driving/obstacle_avoidance_approval" />
   <arg name="output_force_obstacle_avoid" default="tmp" /> <!-- not implemented -->
   <arg name="output_overwrite_traffic_light_state" default="tmp" /> <!-- not implemented -->
+
+  <arg name="param_emergency_handling" default="/control/vehicle_cmd_gate/use_emergency_handling" />
 
   <arg name="set_upper_velocity" default="vehicle/put/velocity" />
   <arg name="set_gate_mode" default="autoware/put/gate_mode" />
@@ -70,7 +72,7 @@
       <remap from="~input/is_emergency" to="$(arg input_is_emergency)" />
       <remap from="~input/stop_reason" to="$(arg input_stop_reason)" />
       <remap from="~input/diagnostics" to="$(arg input_diagnostics)" />
-      <remap from="~input/autodrive_enable" to="$(arg input_autodrive_enable)" />
+      <remap from="~input/global_rpt" to="$(arg input_global_rpt)" />
       <remap from="~input/lane_change_avaiable" to="$(arg input_lane_change_avaiable)" />
       <remap from="~input/lane_change_ready" to="$(arg input_lane_change_ready)" />
       <remap from="~input/lane_change_candidate_path" to="$(arg input_lane_change_candidate_path)" />
@@ -80,6 +82,7 @@
       <remap from="~output/autoware_status" to="$(arg output_autoware_status)" />
       <remap from="~output/lane_change_status" to="$(arg output_lane_change_status)" />
       <remap from="~output/obstacle_avoid_status" to="$(arg output_obstacle_avoid_status)" />
+      <remap from="~param/emergency_handling" to="$(arg param_emergency_handling)" />
       <param name="status_pub_hz" value="$(arg status_pub_hz)" />
     </node>
 

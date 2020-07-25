@@ -21,6 +21,7 @@
 
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
+#include <pacmod_msgs/GlobalRpt.h>
 #include <ros/ros.h>
 #include <sensor_msgs/NavSatFix.h>
 #include <std_msgs/Bool.h>
@@ -56,7 +57,7 @@ struct AutowareInfo
   std_msgs::Bool::ConstPtr is_emergency_ptr;
   // TODO ?? stop_reason_ptr;
   diagnostic_msgs::DiagnosticArray::ConstPtr diagnostic_ptr;
-  std_msgs::Bool::ConstPtr autodrive_enable_ptr;
+  pacmod_msgs::GlobalRpt::ConstPtr global_rpt_ptr;
   std_msgs::Bool::ConstPtr lane_change_available_ptr;
   std_msgs::Bool::ConstPtr lane_change_ready_ptr;
   autoware_planning_msgs::Path::ConstPtr lane_change_candidate_ptr;
@@ -70,6 +71,25 @@ T getParam(const ros::NodeHandle & nh, const std::string & key, const T & defaul
   T value;
   nh.param<T>(key, value, default_value);
   return value;
+}
+
+template <class T>
+T waitForParam(const ros::NodeHandle & nh, const std::string & key)
+{
+  T value;
+  ros::Rate rate(1.0);
+
+  while (ros::ok()) {
+    const auto result = nh.getParam(key, value);
+    if (result) {
+      return value;
+    }
+
+    ROS_WARN("waiting for parameter `%s` ...", key.c_str());
+    rate.sleep();
+  }
+
+  return {};
 }
 
 double lowpass_filter(const double current_value, const double prev_value, const double gain);

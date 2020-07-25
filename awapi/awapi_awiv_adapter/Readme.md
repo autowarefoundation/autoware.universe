@@ -10,7 +10,7 @@
 | type                      | name                     | unit                                          | note                                         |
 | :------------------------ | :----------------------- | :-------------------------------------------- | :------------------------------------------- |
 | std_msgs/Header           | header                   |                                               |                                              |
-| geometry_msgs/Pose        | pose                     | [m](position)                                 |                                              |
+| geometry_msgs/Pose        | pose                     | position:[m]                                  |                                              |
 | awapi_awiv_adapter/Euler  | eulerangle               | [rad]                                         | roll/pitch/yaw                               |
 | awapi_awiv_adapter/Latlon | latlon                   |                                               | lat/lon/alt                                  |
 | float64                   | velocity                 | [m/s]                                         |                                              |
@@ -31,16 +31,17 @@
 - get autoware status
 - MessageType: awapi_awiv_adapter/AwapiVehicleStatus.msg
 
-| type                               | name                 | unit                                           | note                                                   |
-| :--------------------------------- | :------------------- | :--------------------------------------------- | :----------------------------------------------------- |
-| std_msgs/Header                    | header               |                                                |                                                        |
-| string                             | autoware_state       |                                                |                                                        |
-| int32                              | control_mode         | accroding to autoware_vehicle_msgs/ControlMode | manual/auto (changed by /awapi/autoware/put/engage)    |
-| int32                              | gate_mode            | autoware_vehicle_msgs/GateMode                 | auto/remote (it is valid only when control_mode=auto)) |
-| bool                               | emergency_stopped    | True in emergency mode                         |                                                        |
-| StopReasonArray???                 | stop_reason          |                                                | <font color="Red">**not implemented**</font>           |
-| diagnostic_msgs/DiagnosticStatus[] | diagnostics          |                                                |                                                        |
-| bool                               | autonomous_overriden |                                                | <font color="Red">**not implemented**</font>           |
+| type                               | name                 | unit                                           | note                                                          |
+| :--------------------------------- | :------------------- | :--------------------------------------------- | :------------------------------------------------------------ |
+| std_msgs/Header                    | header               |                                                |                                                               |
+| string                             | autoware_state       |                                                |                                                               |
+| int32                              | control_mode         | accroding to autoware_vehicle_msgs/ControlMode | manual/auto (changed by /awapi/autoware/put/engage)           |
+| int32                              | gate_mode            | autoware_vehicle_msgs/GateMode                 | auto/remote (it is valid only when control_mode=auto))        |
+| bool                               | emergency_stopped    | True in emergency mode                         |                                                               |
+| StopReasonArray???                 | stop_reason          |                                                | <font color="Red">**not implemented**</font>                  |
+| diagnostic_msgs/DiagnosticStatus[] | diagnostics          |                                                |                                                               |
+| bool                               | autonomous_overriden |                                                | get info from pacmod msg directly (global_rpt/override_active |
+| )                                  |
 
 ### /awapi/autoware/get/route
 
@@ -96,7 +97,7 @@
 
 - send emergency signal
 - MessageType: std_msgs/Bool
-- <font color="Cyan">**Emergency stop does work only in Remote Mode. (not work in Auto Mode)**</font>
+- <font color="Cyan">**To enable this functionality, autoware have to be in the Remote Mode or set _/control/vehicle_cmd_gate/use_emergency_handling_ to true.**</font>
 
 ### /awapi/autoware/put/engage
 

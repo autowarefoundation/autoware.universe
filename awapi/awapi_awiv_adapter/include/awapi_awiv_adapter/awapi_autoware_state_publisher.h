@@ -55,8 +55,8 @@ private:
     const diagnostic_msgs::DiagnosticArray::ConstPtr & diag_ptr,
     autoware_api_msgs::AwapiAutowareStatus * status);
 
-  void getAutoDriveEnableInfo(
-    const std_msgs::Bool::ConstPtr & auto_drive_enable_ptr,
+  void getGlobalRptInfo(
+    const pacmod_msgs::GlobalRpt::ConstPtr & global_rpt_ptr,
     autoware_api_msgs::AwapiAutowareStatus * status);
 };
 

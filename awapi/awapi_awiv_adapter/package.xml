@@ -17,6 +17,7 @@
   <depend>autoware_vehicle_msgs</depend>
   <depend>diagnostic_msgs</depend>
   <depend>geometry_msgs</depend>
+  <depend>pacmod_msgs</depend>
   <depend>std_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>tf2</depend>
