@@ -13,6 +13,7 @@
   <exec_depend>imu_description</exec_depend>
   <exec_depend>livox_description</exec_depend>
   <exec_depend>velodyne_description</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
 
   <depend>roscpp</depend>
   <export>
