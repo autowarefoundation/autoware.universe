@@ -211,7 +211,7 @@ void ObstacleAvoidancePlanner::configCallback(
   constrain_param_->clearance_for_only_smoothing = config.clearance_for_only_smoothing;
   constrain_param_->clearance_from_object_for_straight = config.clearance_from_object_for_straight;
 
-  // clearance(distance) when generating trajectory
+  // clearance (distance) when generating trajectory
   constrain_param_->min_clearance_from_road = config.min_clearance_from_road;
   constrain_param_->min_clearance_from_object = config.min_clearance_from_object;
   constrain_param_->min_object_clearance_for_joint = config.min_object_clearance_for_joint;
@@ -222,6 +222,14 @@ void ObstacleAvoidancePlanner::configCallback(
   traj_param_->center_line_width = config.center_line_width;
   traj_param_->acceleration_for_non_deceleration_range =
     config.acceleration_for_non_deceleration_range;
+
+  /* If any parameters change in dynamic reconfigure, ObstacleAvoidancePlanner reset
+   * and delete previous path and previous trajectory 
+   */
+  ROS_WARN(
+    "[ObstacleAvoidancePlanner] Resetting trajectory from changing parameters in dynamic "
+    "reconfigure. Changing parameters when vehicle is moving may cause undefined behaviors.");
+  initialize();
 }
 
 void ObstacleAvoidancePlanner::pathCallback(const autoware_planning_msgs::Path & msg)
@@ -312,7 +320,6 @@ ObstacleAvoidancePlanner::generateOptimizedTrajectory(
 void ObstacleAvoidancePlanner::initialize()
 {
   ROS_WARN("[ObstacleAvoidancePlanner] Resetting");
-  ros::Duration(1.0).sleep();
   eb_path_optimizer_ptr_ = std::make_unique<EBPathOptimizer>(
     is_showing_debug_info_, *qp_param_, *traj_param_, *constrain_param_);
   prev_traj_points_ptr_ = nullptr;
