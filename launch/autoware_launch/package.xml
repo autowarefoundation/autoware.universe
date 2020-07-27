@@ -16,6 +16,7 @@
   <exec_depend>sensing_launch</exec_depend>
 
   <exec_depend>rosbridge_server</exec_depend>
+  <exec_depend>roswww</exec_depend>
   <exec_depend condition="$ROS_PYTHON_VERSION == 2">python-tornado</exec_depend>
   <exec_depend condition="$ROS_PYTHON_VERSION == 3">python3-tornado</exec_depend>
   <exec_depend condition="$ROS_PYTHON_VERSION == 2">python-bson</exec_depend>
