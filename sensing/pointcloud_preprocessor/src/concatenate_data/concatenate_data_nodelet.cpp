@@ -301,23 +301,18 @@ void PointCloudConcatenateDataSynchronizerNodelet::cloud_callback(
     std::begin(cloud_stdmap_tmp_), std::end(cloud_stdmap_tmp_),
     [](const auto & e) { return e.second != nullptr; });
 
-  static ros::Time timer_start_time;
   if (is_already_subscribed_this) {
+
     cloud_stdmap_tmp_[topic_name] = xyz_input_ptr;
 
     if (!is_already_subscribed_tmp) {
-      // ROS_INFO("Subscribed already received topic. Create Timer");
       timer_.setPeriod(ros::Duration(timeout_sec_), true);
       timer_.start();
-      timer_start_time = ros::Time::now();
     }
   } else {
-    if (is_already_subscribed_tmp) {
-      cloud_stdmap_tmp_[topic_name] = xyz_input_ptr;
-      // std::cout << (ros::Time::now() - timer_start_time).toSec() << std::endl;
-    }
 
     cloud_stdmap_[topic_name] = xyz_input_ptr;
+
     const bool is_subscribed_all = std::all_of(
       std::begin(cloud_stdmap_), std::end(cloud_stdmap_),
       [](const auto & e) { return e.second != nullptr; });
@@ -328,6 +323,8 @@ void PointCloudConcatenateDataSynchronizerNodelet::cloud_callback(
           cloud_stdmap_[e.first] = e.second;
         }
       }
+      std::for_each(std::begin(cloud_stdmap_tmp_), std::end(cloud_stdmap_tmp_),
+        [](auto & e) { e.second = nullptr; });
 
       timer_.stop();
       publish();
@@ -337,11 +334,15 @@ void PointCloudConcatenateDataSynchronizerNodelet::cloud_callback(
 
 void PointCloudConcatenateDataSynchronizerNodelet::timer_callback(const ros::TimerEvent &)
 {
-  // ROS_WARN("TimeOut. Please confirm PointCloud topic");
-
-  std::lock_guard<std::mutex> lock(mutex_);
   timer_.stop();
-  publish();
+  if(mutex_.try_lock()) {
+    publish();
+    mutex_.unlock();
+  }
+  else {
+    timer_.setPeriod(ros::Duration(0.01), true);
+    timer_.start();
+  }
 }
 
 void PointCloudConcatenateDataSynchronizerNodelet::twist_callback(

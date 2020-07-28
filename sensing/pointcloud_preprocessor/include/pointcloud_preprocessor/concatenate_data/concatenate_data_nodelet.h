@@ -86,13 +86,13 @@ public:
   typedef PointCloud2::ConstPtr PointCloud2ConstPtr;
 
   /** \brief Empty constructor. */
-  PointCloudConcatenateDataSynchronizerNodelet() : maximum_queue_size_(3), timeout_sec_(0.03){};
+  PointCloudConcatenateDataSynchronizerNodelet() : maximum_queue_size_(3), timeout_sec_(0.1){};
 
   /** \brief Empty constructor.
    * \param queue_size the maximum queue size
    */
   PointCloudConcatenateDataSynchronizerNodelet(int queue_size)
-  : maximum_queue_size_(queue_size), timeout_sec_(0.03){};
+  : maximum_queue_size_(queue_size), timeout_sec_(0.1){};
 
   /** \brief Empty destructor. */
   virtual ~PointCloudConcatenateDataSynchronizerNodelet(){};
