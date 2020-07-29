@@ -70,7 +70,7 @@ void TrafficLightRoiVisualizer::imageRoiCallback(
 {
   cv_bridge::CvImagePtr cv_ptr;
   try {
-    cv_ptr = cv_bridge::toCvCopy(input_image_msg, sensor_msgs::image_encodings::BGR8);
+    cv_ptr = cv_bridge::toCvCopy(input_image_msg, input_image_msg->encoding);
     for (auto tl_roi : input_tl_roi_msg->rois) {
       createRect(cv_ptr->image, tl_roi, cv::Scalar(0,255,0));
     }
@@ -87,7 +87,7 @@ void TrafficLightRoiVisualizer::imageRoughRoiCallback(
 {
   cv_bridge::CvImagePtr cv_ptr;
   try {
-    cv_ptr = cv_bridge::toCvCopy(input_image_msg, sensor_msgs::image_encodings::BGR8);
+    cv_ptr = cv_bridge::toCvCopy(input_image_msg, input_image_msg->encoding);
     for (auto tl_roi : input_tl_roi_msg->rois) {
       createRect(cv_ptr->image, tl_roi, cv::Scalar(0,0,255));
     }
