@@ -76,14 +76,14 @@ bool splineInterpolate(
   }
 
   // do spline for xy
-  interpolation::SplineInterpolate spline;
+  spline_interpolation::SplineInterpolator spline;
   std::vector<double> resampled_x;
   std::vector<double> resampled_y;
   std::vector<double> resampled_z;
   if (
-    !spline.interpolate(base_s, base_x, resampled_s, resampled_x) ||
-    !spline.interpolate(base_s, base_y, resampled_s, resampled_y) ||
-    !spline.interpolate(base_s, base_z, resampled_s, resampled_z)) {
+    !spline.interpolate(base_s, base_x, resampled_s, resampled_x, spline_interpolation::Method::PCG) ||
+    !spline.interpolate(base_s, base_y, resampled_s, resampled_y, spline_interpolation::Method::PCG) ||
+    !spline.interpolate(base_s, base_z, resampled_s, resampled_z, spline_interpolation::Method::PCG)) {
     ROS_ERROR("[IntersectionModule::splineInterpolate] spline interpolation failed.");
     return false;
   }

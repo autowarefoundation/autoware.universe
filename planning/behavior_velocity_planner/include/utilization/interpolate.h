@@ -37,25 +37,6 @@ public:
     const double & return_index, double & return_value);
 };
 
-class SplineInterpolate
-{
-  bool initialized_;
-  std::vector<double> a_;
-  std::vector<double> b_;
-  std::vector<double> c_;
-  std::vector<double> d_;
-
-public:
-  SplineInterpolate();
-  explicit SplineInterpolate(const std::vector<double> & x);
-  void generateSpline(const std::vector<double> & x);
-  double getValue(const double & s);
-  std::vector<double> getValueVector(const std::vector<double> & s_v);
-  bool interpolate(
-    const std::vector<double> & base_index, const std::vector<double> & base_value,
-    const std::vector<double> & return_index, std::vector<double> & return_value);
-};
-
 /*
  * helper functions
  */

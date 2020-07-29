@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   pcl_ros
   roscpp
   sensor_msgs
+  spline_interpolation
   tf2
   tf2_eigen
   tf2_geometry_msgs
@@ -33,6 +34,7 @@ catkin_package(
     lanelet2_extension
     pcl_ros
     sensor_msgs
+    spline_interpolation
     tf2
     tf2_eigen
     tf2_geometry_msgs

@@ -22,6 +22,7 @@
 #include <ros/ros.h>
 
 #include <scene_module/intersection/scene_intersection.h>
+#include <spline_interpolation/spline_interpolation.h>
 
 #include <geometry_msgs/Point.h>
 #include <std_msgs/Float32MultiArray.h>
