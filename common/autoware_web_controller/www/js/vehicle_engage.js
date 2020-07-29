@@ -113,3 +113,59 @@ if (!VehicleEngageStatusSubscriber) {
         VehicleEngageStatusSubscriber.ros.close();
     };
 }
+if (!VehicleControlModeStatusSubscriber) {
+    var VehicleControlModeStatusSubscriber = {
+        ros: null,
+        name: "",
+        init: function() {
+            this.ros = new ROSLIB.Ros();
+            this.ros.on('error', function(error) {
+                document.getElementById('state').innerHTML = "Error";
+            });
+            this.ros.on('connection', function(error) {
+                document.getElementById('state').innerHTML = "Connect";
+            });
+            this.ros.on('close', function(error) {
+                document.getElementById('state').innerHTML = "Close";
+            });
+            this.ros.connect('ws://' + location.hostname + ':9090');
+
+            var sub = new ROSLIB.Topic({
+                ros: this.ros,
+                name: '/vehicle/status/control_mode',
+                messageType: 'autoware_vehicle_msgs/ControlMode'
+            });
+            sub.subscribe(function(message) {
+                const div = document.getElementById("vehicle_control_mode_status");
+                if (div.hasChildNodes()) {
+                    div.removeChild(div.firstChild);
+                }
+                var res = "";
+                if (message.data == 0) {
+                  res = "Manual";
+                }
+                else if (message.data == 1) {
+                  res = "Auto";
+                }
+                else if (message.data == 2) {
+                  res = "Auto Steer Only";
+                }
+                else if (message.data == 3) {
+                  res = "Auto Pedal Only";
+                }
+                else {
+                  res = "Undefined"
+                }
+                var el = document.createElement("span");
+                el.innerHTML = res
+                document.getElementById("vehicle_control_mode_status").appendChild(el);
+            });
+        }
+    }
+    VehicleControlModeStatusSubscriber.init();
+
+    window.onload = function() {};
+    window.onunload = function() {
+        VehicleControlModeStatusSubscriber.ros.close();
+    };
+}

@@ -22,7 +22,7 @@
             min-width: 90px;
             max-width: 150px;
         }
-        
+
         .ui-menu .ui-menu-item {
             margin: 0;
             padding: 0;
@@ -71,6 +71,10 @@
             <div>
                 <span>Status:</span>
                 <span id="vehicle_engage_status"> - </span>
+            </div>
+            <div>
+                <span>Control Mode:</span>
+                <span id="vehicle_control_mode_status"> - </span>
             </div>
             <h3>Velocity Limit : <span id="velocity_limit_info"> - </span></h3>
             <form action="javascript:VelocityLimitPublisher.send();" id="ui" name="velocity_limit_form">
