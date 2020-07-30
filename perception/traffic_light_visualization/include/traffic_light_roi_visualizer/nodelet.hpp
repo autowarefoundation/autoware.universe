@@ -23,22 +23,24 @@
 #include "message_filters/sync_policies/approximate_time.h"
 #include "message_filters/synchronizer.h"
 #include "sensor_msgs/Image.h"
+#include <nodelet/nodelet.h>
+#include <pluginlib/class_list_macros.h>
 
 #include <cv_bridge/cv_bridge.h>
 #include <opencv2/imgproc/imgproc_c.h>
 #include <opencv2/highgui/highgui.hpp>
 #include <string>
 #include <memory>
+#include <mutex>
 
 namespace traffic_light
 {
-class TrafficLightRoiVisualizer
+class TrafficLightRoiVisualizerNodelet : public nodelet::Nodelet
 {
 public:
-  TrafficLightRoiVisualizer();
-  virtual ~TrafficLightRoiVisualizer();
+  virtual void onInit();
+  void connectCb();
 
-private:
   void imageRoiCallback(
     const sensor_msgs::ImageConstPtr & input_image_msg,
     const autoware_perception_msgs::TrafficLightRoiArray::ConstPtr & input_tl_roi_msg);
@@ -48,13 +50,14 @@ private:
     const autoware_perception_msgs::TrafficLightRoiArrayConstPtr & input_tl_roi_msg,
     const autoware_perception_msgs::TrafficLightRoiArrayConstPtr & input_tl_rough_roi_msg);
 
+private:
   bool createRect(
     cv::Mat& image,
     const autoware_perception_msgs::TrafficLightRoi& tl_roi,
     const cv::Scalar& color);
 
   ros::NodeHandle nh_, pnh_;
-  image_transport::ImageTransport image_transport_;
+  std::shared_ptr<image_transport::ImageTransport> image_transport_;
   image_transport::SubscriberFilter image_sub_;
   message_filters::Subscriber<autoware_perception_msgs::TrafficLightRoiArray> roi_sub_;
   message_filters::Subscriber<autoware_perception_msgs::TrafficLightRoiArray> rough_roi_sub_;
@@ -62,15 +65,18 @@ private:
   typedef message_filters::sync_policies::ApproximateTime<
     sensor_msgs::Image, autoware_perception_msgs::TrafficLightRoiArray>
     SyncPolicy;
-  boost::shared_ptr<message_filters::Synchronizer<SyncPolicy>> sync_;
+  typedef message_filters::Synchronizer<SyncPolicy> Sync;
+  std::shared_ptr<Sync> sync_;
 
   typedef message_filters::sync_policies::ApproximateTime<
     sensor_msgs::Image,
     autoware_perception_msgs::TrafficLightRoiArray,
     autoware_perception_msgs::TrafficLightRoiArray>
     SyncPolicyWithRoughRoi;
-  boost::shared_ptr<message_filters::Synchronizer<SyncPolicyWithRoughRoi>> sync_with_rough_roi_;
+  typedef message_filters::Synchronizer<SyncPolicyWithRoughRoi> SyncWithRoughRoi;
+  std::shared_ptr<SyncWithRoughRoi> sync_with_rough_roi_;
 
+  std::mutex connect_mutex_;
   bool enable_fine_detection_;
 };
 

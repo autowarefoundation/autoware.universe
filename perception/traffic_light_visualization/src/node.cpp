@@ -14,90 +14,21 @@
  * limitations under the License.
  */
 
-#include <traffic_light_roi_visualizer/node.hpp>
+#include <nodelet/loader.h>
+#include <ros/ros.h>
 
-namespace traffic_light
+int main(int argc, char ** argv)
 {
-TrafficLightRoiVisualizer::TrafficLightRoiVisualizer()
-: nh_(""),
-  pnh_("~"),
-  image_transport_(pnh_),
-  image_sub_(image_transport_, "input/image", 1),
-  roi_sub_(pnh_, "input/rois", 1),
-  rough_roi_sub_(pnh_, "input/rough/rois", 1)
-{
-  pnh_.param<bool>("enable_fine_detection", enable_fine_detection_, false);
+  ros::init(argc, argv, "traffic_light_roi_visualizer_node");
+  ros::NodeHandle private_nh("~");
 
-  image_pub_ = image_transport_.advertise("output/image", 1);
+  nodelet::Loader nodelet;
+  nodelet::M_string remap(ros::names::getRemappings());
+  nodelet::V_string nargv;
+  std::string nodelet_name = ros::this_node::getName();
+  nodelet.load(
+    nodelet_name, "traffic_light/traffic_light_roi_visualizer", remap, nargv);
 
-  if (enable_fine_detection_) {
-    sync_with_rough_roi_ = boost::make_shared<message_filters::Synchronizer<SyncPolicyWithRoughRoi>>(10);
-    sync_with_rough_roi_->connectInput(image_sub_, roi_sub_, rough_roi_sub_);
-    sync_with_rough_roi_->registerCallback(boost::bind(&TrafficLightRoiVisualizer::imageRoughRoiCallback, this, _1, _2, _3));
-  } else {
-    sync_ = boost::make_shared<message_filters::Synchronizer<SyncPolicy>>(10);
-    sync_->connectInput(image_sub_, roi_sub_);
-    sync_->registerCallback(boost::bind(&TrafficLightRoiVisualizer::imageRoiCallback, this, _1, _2));
-  }
-  // cv::namedWindow("view");
+  ros::spin();
+  return 0;
 }
-TrafficLightRoiVisualizer::~TrafficLightRoiVisualizer()
-{
-  // cv::destroyWindow("view");
-}
-
-bool TrafficLightRoiVisualizer::createRect(
-  cv::Mat& image,
-  const autoware_perception_msgs::TrafficLightRoi& tl_roi,
-  const cv::Scalar& color)
-{
-  cv::rectangle(
-    image,
-    cv::Point(tl_roi.roi.x_offset, tl_roi.roi.y_offset),
-    cv::Point(tl_roi.roi.x_offset + tl_roi.roi.width, tl_roi.roi.y_offset + tl_roi.roi.height),
-    color, 1, CV_AA, 0);
-  cv::putText(
-    image,
-    std::to_string(tl_roi.id),
-    cv::Point(tl_roi.roi.x_offset, tl_roi.roi.y_offset),
-    cv::FONT_HERSHEY_SIMPLEX, 1.0, color, 1, CV_AA);
-  return true;
-}
-
-void TrafficLightRoiVisualizer::imageRoiCallback(
-  const sensor_msgs::ImageConstPtr & input_image_msg,
-  const autoware_perception_msgs::TrafficLightRoiArrayConstPtr & input_tl_roi_msg)
-{
-  cv_bridge::CvImagePtr cv_ptr;
-  try {
-    cv_ptr = cv_bridge::toCvCopy(input_image_msg, input_image_msg->encoding);
-    for (auto tl_roi : input_tl_roi_msg->rois) {
-      createRect(cv_ptr->image, tl_roi, cv::Scalar(0,255,0));
-    }
-  } catch (cv_bridge::Exception & e) {
-    ROS_ERROR("Could not convert from '%s' to 'bgr8'.", input_image_msg->encoding.c_str());
-  }
-  image_pub_.publish(cv_ptr->toImageMsg());
-}
-
-void TrafficLightRoiVisualizer::imageRoughRoiCallback(
-  const sensor_msgs::ImageConstPtr & input_image_msg,
-  const autoware_perception_msgs::TrafficLightRoiArrayConstPtr & input_tl_roi_msg,
-  const autoware_perception_msgs::TrafficLightRoiArrayConstPtr & input_tl_rough_roi_msg)
-{
-  cv_bridge::CvImagePtr cv_ptr;
-  try {
-    cv_ptr = cv_bridge::toCvCopy(input_image_msg, input_image_msg->encoding);
-    for (auto tl_roi : input_tl_roi_msg->rois) {
-      createRect(cv_ptr->image, tl_roi, cv::Scalar(0,0,255));
-    }
-    for (auto tl_rough_roi : input_tl_rough_roi_msg->rois) {
-      createRect(cv_ptr->image, tl_rough_roi, cv::Scalar(0,255,0));
-    }
-  } catch (cv_bridge::Exception & e) {
-    ROS_ERROR("Could not convert from '%s' to 'bgr8'.", input_image_msg->encoding.c_str());
-  }
-  image_pub_.publish(cv_ptr->toImageMsg());
-}
-
-}  // namespace traffic_light

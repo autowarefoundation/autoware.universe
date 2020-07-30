@@ -6,8 +6,9 @@
   <arg name="input/rough/rois" default="rough/rois"/>
   <arg name="output/image" default="debug/rois"/>
   <arg name="enable_fine_detection" default="false"/>
+  <arg name="manager" default="traffic_light_recognition_nodelet_manager"/>
 
-  <node pkg="traffic_light_visualization" type="traffic_light_roi_visualizer_node" name="$(anon traffic_light_roi_visualizer)" output="screen">
+  <node pkg="nodelet" type="nodelet" name="traffic_light_roi_visualizer" args="load traffic_light/traffic_light_roi_visualizer $(arg manager)">
     <remap from="~input/image" to="$(arg input/image)"/>
     <remap from="~input/rois" to="$(arg input/rois)"/>
     <remap from="~input/rough/rois" to="$(arg input/rough/rois)"/>
