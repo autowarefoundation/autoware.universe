@@ -54,35 +54,32 @@ void RingOutlierFilterNodelet::filter(
   pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_output(new pcl::PointCloud<pcl::PointXYZ>);
   pcl_output->points.reserve(pcl_input->points.size());
 
+  pcl::PointCloud<pcl::PointXYZ> pcl_tmp;
+  pcl::PointXYZ p;
   for (const auto & ring_pointcloud : pcl_input_ring_array) {
     if (ring_pointcloud.points.size() < 2) {
       continue;
     }
-    pcl::PointCloud<pcl::PointXYZ> pcl_tmp;
-    pcl_tmp.points.reserve(ring_pointcloud.points.size());
 
     for (auto iter = std::begin(ring_pointcloud.points);
          iter != std::end(ring_pointcloud.points) - 1; ++iter) {
-      pcl::PointXYZ p;
       p.x = iter->x;
       p.y = iter->y;
       p.z = iter->z;
       pcl_tmp.points.push_back(p);
       // if(std::abs(iter->distance - (iter+1)->distance) <= std::sqrt(iter->distance) * 0.08) {
-      const float min_dist = std::max(std::min(iter->distance, (iter + 1)->distance), 0.f);
-      const float max_dist = std::max(std::max(iter->distance, (iter + 1)->distance), 0.f);
-      if (max_dist / min_dist < distance_ratio_) {
+      const double min_dist = std::min(iter->distance, (iter + 1)->distance);
+      const double max_dist = std::max(iter->distance, (iter + 1)->distance);
+      if (min_dist > 0 && max_dist > 0 && max_dist / min_dist < distance_ratio_) {
         continue;
       } else {
         if (
           pcl_tmp.points.size() > num_points_threshold_ &&
-          (pcl_tmp.points.front().x - pcl_tmp.points.back().x) *
-                (pcl_tmp.points.front().x - pcl_tmp.points.back().x) +
-              (pcl_tmp.points.front().y - pcl_tmp.points.back().y) *
-                (pcl_tmp.points.front().y - pcl_tmp.points.back().y) +
-              (pcl_tmp.points.front().z - pcl_tmp.points.back().z) *
-                (pcl_tmp.points.front().z - pcl_tmp.points.back().z) >=
-            object_length_threshold_ * object_length_threshold_) {
+          std::sqrt(
+            std::pow(pcl_tmp.points.front().x - pcl_tmp.points.back().x, 2.0) +
+            std::pow(pcl_tmp.points.front().y - pcl_tmp.points.back().y, 2.0) +
+            std::pow(pcl_tmp.points.front().z - pcl_tmp.points.back().z, 2.0)) >=
+            object_length_threshold_) {
           for (const auto & tmp_p : pcl_tmp.points) {
             pcl_output->points.push_back(tmp_p);
           }
