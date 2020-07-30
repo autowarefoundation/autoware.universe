@@ -14,3 +14,9 @@ analyzers:
         path: tf_status
         contains: ": localization_tf_status"
         num_items: 0
+
+      ndt_scan_matcher:
+        type: diagnostic_aggregator/GenericAnalyzer
+        path: ndt_scan_matcher
+        contains: "ndt_scan_matcher"
+        num_items: 0
