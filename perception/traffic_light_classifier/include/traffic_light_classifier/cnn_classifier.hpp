@@ -34,8 +34,7 @@ namespace traffic_light
 class CNNClassifier : public ClassifierInterface
 {
 public:
-  CNNClassifier();
-  ~CNNClassifier(){};
+  explicit CNNClassifier(const ros::NodeHandle & nh, const ros::NodeHandle & pnh);
 
   bool getLampState(
     const cv::Mat & input_image,

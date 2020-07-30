@@ -12,7 +12,9 @@
   <arg name="mean" default="[0.5, 0.5, 0.5]"/>
   <arg name="std" default="[0.5, 0.5, 0.5]"/>
   <arg name="save_rough_roi_image" default="false"/>
-  <node pkg="traffic_light_ssd_fine_detector" type="traffic_light_ssd_fine_detector" name="traffic_light_ssd_fine_detector" output="screen">
+  <arg name="manager" default="traffic_light_recognition_nodelet_manager"/>
+
+  <node pkg="nodelet" type="nodelet" name="traffic_light_ssd_fine_detector" args="load traffic_light/traffic_light_ssd_fine_detector $(arg manager)">
     <remap from="input/image" to="$(arg input/image)" />
     <remap from="~input/rois" to="$(arg input/rois)" />
     <remap from="~output/rois" to="$(arg output/rois)" />

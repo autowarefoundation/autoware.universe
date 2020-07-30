@@ -1,0 +1,10 @@
+<library path="lib/libtraffic_light_classifier_nodelet">
+
+  <class name="traffic_light/traffic_light_classifier"
+         type="traffic_light::TrafficLightClassifierNodelet"
+         base_class_type="nodelet::Nodelet">
+    <description>
+    </description>
+  </class>
+
+</library>

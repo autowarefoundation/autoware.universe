@@ -92,6 +92,7 @@ find_package(catkin REQUIRED COMPONENTS
   image_transport
   message_filters
   dynamic_reconfigure
+  nodelet
   )
 
 generate_dynamic_reconfigure_options(cfg/HSVFilter.cfg)
@@ -131,17 +132,35 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
   add_dependencies(libutils
     ${catkin_EXPORTED_TARGETS})
 
-  add_executable(traffic_light_classifier_node
+  add_library(traffic_light_classifier_nodelet SHARED
     src/color_classifier.cpp
     src/cnn_classifier.cpp
-    src/node.cpp
-    src/main.cpp
+    src/nodelet.cpp
     )
 
-  add_dependencies(traffic_light_classifier_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS}
+  add_dependencies(traffic_light_classifier_nodelet
+    ${${PROJECT_NAME}_EXPORTED_TARGETS}
+    ${catkin_EXPORTED_TARGETS}
     )
+
+  target_link_libraries(traffic_light_classifier_nodelet
+    libutils
+    ${catkin_LIBRARIES}
+    ${OpenCV_LIBRARIES}
+    )
+
+  add_executable(traffic_light_classifier_node
+    src/node.cpp
+    )
+
+  add_dependencies(traffic_light_classifier_node
+    ${${PROJECT_NAME}_EXPORTED_TARGETS}
+    ${catkin_EXPORTED_TARGETS}
+    )
+
   target_link_libraries(traffic_light_classifier_node
     libutils
+    traffic_light_classifier_nodelet
     ${catkin_LIBRARIES}
     ${OpenCV_LIBRARIES}
     )
@@ -149,10 +168,17 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
   install(
     TARGETS
     traffic_light_classifier_node
+    traffic_light_classifier_nodelet
     libutils
     ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+    )
+
+  install(
+    FILES
+    traffic_light_classifier.xml
+    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
     )
 
   install(
@@ -177,15 +203,34 @@ else()
     CATKIN_DEPENDS
     )
 
-  add_executable(traffic_light_classifier_node
+  add_library(traffic_light_classifier_nodelet SHARED
     src/color_classifier.cpp
-    src/node.cpp
-    src/main.cpp
+    src/nodelet.cpp
     )
 
-  add_dependencies(traffic_light_classifier_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS}
+  add_dependencies(traffic_light_classifier_nodelet
+    ${${PROJECT_NAME}_EXPORTED_TARGETS}
+    ${catkin_EXPORTED_TARGETS}
     )
+
+  target_link_libraries(traffic_light_classifier_nodelet
+    libutils
+    ${catkin_LIBRARIES}
+    ${OpenCV_LIBRARIES}
+    )
+
+  add_executable(traffic_light_classifier_node
+    src/node.cpp
+    )
+
+  add_dependencies(traffic_light_classifier_node
+    ${${PROJECT_NAME}_EXPORTED_TARGETS}
+    ${catkin_EXPORTED_TARGETS}
+    )
+
   target_link_libraries(traffic_light_classifier_node
+    libutils
+    traffic_light_classifier_nodelet
     ${catkin_LIBRARIES}
     ${OpenCV_LIBRARIES}
     )
@@ -193,9 +238,16 @@ else()
   install(
     TARGETS
     traffic_light_classifier_node
+    traffic_light_classifier_nodelet
     ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+    )
+
+  install(
+    FILES
+    traffic_light_classifier.xml
+    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
     )
 
   install(

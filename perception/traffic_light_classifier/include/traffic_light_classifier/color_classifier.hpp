@@ -31,8 +31,7 @@ namespace traffic_light
 class ColorClassifier : public ClassifierInterface
 {
 public:
-  ColorClassifier();
-  ~ColorClassifier(){};
+  explicit ColorClassifier(const ros::NodeHandle & nh, const ros::NodeHandle & pnh);
 
   bool getLampState(
     const cv::Mat & input_image,

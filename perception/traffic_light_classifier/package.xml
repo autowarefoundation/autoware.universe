@@ -48,6 +48,7 @@
   <build_depend>image_transport</build_depend>
   <build_depend>message_filters</build_depend>
   <build_depend>dynamic_reconfigure</build_depend>
+  <build_depend>nodelet</build_depend>
   <build_export_depend>autoware_perception_msgs</build_export_depend>
   <build_export_depend>cv_bridge</build_export_depend>
   <build_export_depend>roscpp</build_export_depend>
@@ -55,6 +56,7 @@
   <build_export_depend>image_transport</build_export_depend>
   <build_export_depend>message_filters</build_export_depend>
   <build_export_depend>dynamic_reconfigure</build_export_depend>
+  <build_export_depend>nodelet</build_export_depend>
   <exec_depend>autoware_perception_msgs</exec_depend>
   <exec_depend>cv_bridge</exec_depend>
   <exec_depend>roscpp</exec_depend>
@@ -62,11 +64,11 @@
   <exec_depend>image_transport</exec_depend>
   <exec_depend>message_filters</exec_depend>
   <exec_depend>dynamic_reconfigure</exec_depend>
+  <exec_depend>nodelet</exec_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
-    <!-- Other tools can request additional information be placed here -->
-
+    <nodelet plugin="${prefix}/traffic_light_classifier.xml" />
   </export>
 </package>

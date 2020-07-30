@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   std_msgs
   autoware_perception_msgs
+  nodelet
 )
 
 find_package(OpenCV REQUIRED)
@@ -132,25 +133,48 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     ${CUDNN_LIBRARY}
   )
 
-  add_executable(traffic_light_ssd_fine_detector
-    src/main.cpp
-    src/node.cpp
+  add_library(traffic_light_ssd_fine_detector_nodelet SHARED
+    src/nodelet.cpp
   )
-  target_link_libraries(traffic_light_ssd_fine_detector
+
+  add_dependencies(traffic_light_ssd_fine_detector_nodelet
+    ${catkin_EXPORTED_TARGETS}
+  )
+
+  target_link_libraries(traffic_light_ssd_fine_detector_nodelet
     ${catkin_LIBRARIES}
     ${OpenCV_LIBS}
     ssd
   )
-  add_dependencies(traffic_light_ssd_fine_detector
+
+  add_executable(traffic_light_ssd_fine_detector_node
+    src/node.cpp
+  )
+
+  target_link_libraries(traffic_light_ssd_fine_detector_node
+    traffic_light_ssd_fine_detector_nodelet
+    ${catkin_LIBRARIES}
+    ${OpenCV_LIBS}
+    ssd
+  )
+
+  add_dependencies(traffic_light_ssd_fine_detector_node
     ${catkin_EXPORTED_TARGETS}
   )
 
   install(TARGETS
-    traffic_light_ssd_fine_detector
+    traffic_light_ssd_fine_detector_node
+    traffic_light_ssd_fine_detector_nodelet
     ssd
     ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  )
+
+  install(
+    FILES
+    traffic_light_ssd_fine_detector.xml
+    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
   )
 
   install(

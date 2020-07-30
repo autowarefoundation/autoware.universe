@@ -19,9 +19,10 @@
 
 namespace traffic_light
 {
-ColorClassifier::ColorClassifier()
-: nh_(""), pnh_("~"), image_transport_(pnh_), ratio_threshold_(0.02)
+ColorClassifier::ColorClassifier(const ros::NodeHandle & nh, const ros::NodeHandle & pnh)
+: nh_(nh), pnh_(pnh), image_transport_(pnh), ratio_threshold_(0.02)
 {
+  image_transport_ = image_transport::ImageTransport(pnh_);
   image_pub_ = image_transport_.advertise("debug/image", 1);
   dynamic_reconfigure_.setCallback(boost::bind(&ColorClassifier::parametersCallback, this, _1, _2));
 }

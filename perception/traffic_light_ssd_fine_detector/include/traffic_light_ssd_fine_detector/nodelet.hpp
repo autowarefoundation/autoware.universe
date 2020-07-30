@@ -19,6 +19,7 @@
 #include <chrono>
 #include <fstream>
 #include <memory>
+#include <mutex>
 #include <string>
 
 #include <opencv/cv.hpp>
@@ -33,6 +34,8 @@
 #include <message_filters/sync_policies/approximate_time.h>
 #include <message_filters/synchronizer.h>
 #include <message_filters/time_synchronizer.h>
+#include <nodelet/nodelet.h>
+#include <pluginlib/class_list_macros.h>
 #include <ros/ros.h>
 
 #include <cv_bridge/cv_bridge.h>
@@ -50,18 +53,16 @@ typedef struct Detection
 
 namespace traffic_light
 {
-class TrafficLightSSDFineDetector
+class TrafficLightSSDFineDetectorNodelet : public nodelet::Nodelet
 {
 public:
-  TrafficLightSSDFineDetector();
-  ~TrafficLightSSDFineDetector();
-
-private:
-  // functions
+  virtual void onInit();
+  void connectCb();
   void callback(
     const sensor_msgs::Image::ConstPtr & image_msg,
     const autoware_perception_msgs::TrafficLightRoiArray::ConstPtr & traffic_light_roi_msg);
 
+private:
   bool cvMat2CnnInput(
     const std::vector<cv::Mat> & in_imgs, const int num_rois, std::vector<float> & data);
   bool cnnOutput2BoxDetection(
@@ -76,22 +77,24 @@ private:
 
   // variables
   ros::NodeHandle nh_, pnh_;
-  image_transport::ImageTransport image_transport_;
+  std::shared_ptr<image_transport::ImageTransport> image_transport_;
   image_transport::SubscriberFilter image_sub_;
   message_filters::Subscriber<autoware_perception_msgs::TrafficLightRoiArray> roi_sub_;
+  std::mutex connect_mutex_;
   ros::Publisher output_roi_pub_;
   ros::Publisher exe_time_pub_;
 
   typedef message_filters::sync_policies::ExactTime<
     sensor_msgs::Image, autoware_perception_msgs::TrafficLightRoiArray>
     SyncPolicy;
+  typedef message_filters::Synchronizer<SyncPolicy> Sync;
+  std::shared_ptr<Sync> sync_;
 
   typedef message_filters::sync_policies::ApproximateTime<
     sensor_msgs::Image, autoware_perception_msgs::TrafficLightRoiArray>
     ApproximateSyncPolicy;
-
-  std::shared_ptr<message_filters::Synchronizer<SyncPolicy> > sync_;
-  std::shared_ptr<message_filters::Synchronizer<ApproximateSyncPolicy> > approximate_sync_;
+  typedef message_filters::Synchronizer<ApproximateSyncPolicy> ApproximateSync;
+  std::shared_ptr<ApproximateSync> approximate_sync_;
 
   bool is_approximate_sync_;
   double score_thresh_;
@@ -108,6 +111,6 @@ private:
 
   std::unique_ptr<ssd::Net> net_ptr_;
 
-};  // TrafficLightSSDFineDetector
+};  // TrafficLightSSDFineDetectorNodelet
 
 }  // namespace traffic_light

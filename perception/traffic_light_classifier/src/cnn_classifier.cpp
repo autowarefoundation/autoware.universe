@@ -19,7 +19,8 @@
 
 namespace traffic_light
 {
-CNNClassifier::CNNClassifier() : nh_(""), pnh_("~"), image_transport_(pnh_)
+CNNClassifier::CNNClassifier(const ros::NodeHandle & nh, const ros::NodeHandle & pnh)
+: nh_(nh), pnh_(pnh), image_transport_(pnh_)
 {
   image_pub_ = image_transport_.advertise("output/debug/image", 1);
 
@@ -119,7 +120,7 @@ void CNNClassifier::outputDebugImage(
   cv::vconcat(debug_image, text_img, debug_image);
 
   sensor_msgs::ImagePtr debug_image_msg =
-    cv_bridge::CvImage(std_msgs::Header(), "bgr8", debug_image).toImageMsg();
+    cv_bridge::CvImage(std_msgs::Header(), "rgb8", debug_image).toImageMsg();
   image_pub_.publish(debug_image_msg);
 }
 
@@ -128,7 +129,7 @@ void CNNClassifier::preProcess(cv::Mat & image, float * input_tensor, bool norma
   /* normalize */
   /* ((channel[0] / 255) - mean[0]) / std[0] */
 
-  cv::cvtColor(image, image, cv::COLOR_BGR2RGB, 3);
+  // cv::cvtColor(image, image, cv::COLOR_BGR2RGB, 3);
   cv::resize(image, image, cv::Size(input_w_, input_h_));
 
   const size_t strides_cv[3] = {static_cast<size_t>(input_w_ * input_c_),
@@ -174,7 +175,7 @@ bool CNNClassifier::postProcess(
   boost::algorithm::split(splited_label, match_label, boost::is_any_of(","));
   for (auto label : splited_label) {
     if (label2state_.find(label) == label2state_.end()) {
-      ROS_DEBUG("cnn_classifier does not have a key [%s]", label);
+      ROS_DEBUG("cnn_classifier does not have a key [%s]", label.c_str());
       continue;
     }
     autoware_perception_msgs::LampState state;
