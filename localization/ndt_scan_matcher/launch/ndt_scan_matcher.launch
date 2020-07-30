@@ -9,7 +9,7 @@
 
   <arg name="output_pose_topic" default="ndt_pose" doc="Estimated self position" />
   <arg name="output_pose_with_covariance_topic" default="ndt_pose_with_covariance" doc="Estimated self position with covariance" />
-  <arg name="output_diagnostics_topic" default="diagnostics" doc="Diagnostic topic" />
+  <arg name="output_diagnostics_topic" default="/diagnostics" doc="Diagnostic topic" />
 
   <!-- tf -->
   <arg name="base_frame" default="base_link" doc="Vehicle reference frame" />
