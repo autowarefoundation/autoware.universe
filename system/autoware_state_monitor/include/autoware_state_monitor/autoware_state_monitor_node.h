@@ -85,7 +85,6 @@ private:
 
   // Publisher
   ros::Publisher pub_autoware_state_;
-  ros::Publisher pub_diag_array_;
   ros::Publisher pub_autoware_engage_;
 
   void setDisengage();

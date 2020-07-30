@@ -325,7 +325,6 @@ AutowareStateMonitorNode::AutowareStateMonitorNode()
   // Publisher
   pub_autoware_state_ =
     private_nh_.advertise<autoware_system_msgs::AutowareState>("output/autoware_state", 1);
-  pub_diag_array_ = private_nh_.advertise<diagnostic_msgs::DiagnosticArray>("output/diag_array", 1);
   pub_autoware_engage_ = private_nh_.advertise<std_msgs::Bool>("output/autoware_engage", 1);
 
   // Diagnostic Updater
