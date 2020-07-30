@@ -51,7 +51,7 @@
     <group ns="front_left">
       <include file="$(find sensing_launch)/launch/livox_horizon.launch">
         <arg name="sensor_frame" default="livox_front_left" />
-        <arg name="bd_list" value="1HDDH1200105911" />
+        <arg name="bd_list" value="$(env LIVOX_FRONT_LEFT_ID)" />
         <arg name="xfer_format" value="0"/>
         <arg name="launch_driver" value="$(arg launch_driver)" />
       </include>
@@ -60,7 +60,7 @@
     <group ns="front_right">
       <include file="$(find sensing_launch)/launch/livox_horizon.launch">
         <arg name="sensor_frame" default="livox_front_right" />
-        <arg name="bd_list" value="1HDDH1200104481" />
+        <arg name="bd_list" value="$(env LIVOX_FRONT_RIGHT_ID)" />
         <arg name="xfer_format" value="0"/>
         <arg name="launch_driver" value="$(arg launch_driver)" />
       </include>
