@@ -26,6 +26,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/VehicleOdometry.idl"
   "msg/VehicleStateCommand.idl"
   "msg/VehicleStateReport.idl"
+  "msg/HADMapBin.idl"
+  "srv/HADMapService.idl"
   # Implementation-specific messages
   "msg/PointClusters.idl"
   DEPENDENCIES "std_msgs" "geometry_msgs" "sensor_msgs"
