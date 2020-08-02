@@ -3,8 +3,6 @@ project(pose2twist)
 
 add_compile_options(-std=c++14)
 
-set(CMAKE_BUILD_TYPE "Release")
-
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   tf2_geometry_msgs
