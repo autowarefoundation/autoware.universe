@@ -3,8 +3,6 @@ project(ndt_pcl_modified)
 
 add_compile_options(-std=c++14)
 
-set(CMAKE_BUILD_TYPE "Release")
-
 find_package(catkin REQUIRED)
 find_package(PCL REQUIRED COMPONENTS common)
 
