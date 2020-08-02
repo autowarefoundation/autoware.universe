@@ -3,8 +3,6 @@ project(initial_pose_button_panel)
 
 add_compile_options(-std=c++14)
 
-set(CMAKE_BUILD_TYPE "Release")
-
 find_package(catkin REQUIRED COMPONENTS
   rviz
   std_msgs
