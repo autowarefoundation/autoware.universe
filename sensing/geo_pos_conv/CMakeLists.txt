@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(geo_pos_conv)
 
-set(CMAKE_BUILD_TYPE "Release")
-
 find_package(catkin REQUIRED COMPONENTS roscpp)
 
 catkin_package(
