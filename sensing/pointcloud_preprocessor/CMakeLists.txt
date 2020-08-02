@@ -3,7 +3,6 @@ project(pointcloud_preprocessor)
 
 add_compile_options(-std=c++14)
 
-set(CMAKE_BUILD_TYPE "Release")
 set(CMAKE_CXX_STANDARD 14)
 
 find_package(catkin REQUIRED COMPONENTS
