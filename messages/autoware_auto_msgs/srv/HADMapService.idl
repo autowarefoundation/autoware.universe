@@ -12,7 +12,7 @@ module autoware_auto_msgs {
     //   StaticObjects
     // };
 
-    module HADMapService_Constants {
+    module HADMapService_Request_Constants {
       const uint8 FULL_MAP = 0;
       const uint8 ALL_PRIMITIVES = 1;
       const uint8 DRIVEABLE_GEOMETRY = 2;
