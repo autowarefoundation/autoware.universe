@@ -4,7 +4,6 @@ SCRIPT_DIR=$(cd $(dirname $0); pwd)
 source $SCRIPT_DIR/helper_functions.sh
 
 # Update vcs versions
-echo -e "\e[36mUpdate vcs versions\e[m"
 for repository in $(get_vcs_repositories); do
   repo_path="src/$repository"
   git_command="git --work-tree=$repo_path --git-dir=$repo_path/.git"

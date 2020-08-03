@@ -76,6 +76,11 @@ if [ "$delete" ]; then
   esac
 fi
 
+# Create src directory if not exist
+if ! [ -d src ]; then
+  mkdir -p src
+fi
+
 # Check workspace diff
 echo -e "\e[36mCheck workspace diff\e[m"
 if ! is_workspace_clean; then

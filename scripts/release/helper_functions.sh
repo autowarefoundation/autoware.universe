@@ -47,7 +47,7 @@ function is_workspace_clean() {
   git diff HEAD --quiet --exit-code || return 1
 
   # .repos
-  vcs custom src --skip-empty --args diff HEAD --quiet --exit-code > /dev/null 2>&1 || return 1
+  vcs custom src --skip-empty --git --args diff HEAD --quiet --exit-code > /dev/null 2>&1 || return 1
 
   return 0
 }
@@ -59,11 +59,11 @@ function show_workspace_diff() {
 
   # .repos
   echo -e "\n[diff of .repos]"
-  vcs custom src --skip-empty --args diff HEAD --name-only --exit-code
+  vcs custom src --skip-empty --git --args diff HEAD --name-only --exit-code
 }
 
 function get_autoware_repositories() {
-  echo "." "src/autoware/autoware.iv" "src/autoware/launcher"
+  echo "src/autoware/autoware.iv" "src/autoware/launcher"
 }
 
 function get_vcs_repositories() {
@@ -82,10 +82,10 @@ function is_on_rc_branch() {
 
 function update_workspace() {
   # .proj
-  git pull --rebase || return 1
+  git pull --rebase # Ignore errors because no-remote-branch always makes an error
 
   # .repos
-  vcs custom src --args remote update || return 1
+  vcs custom src --git --args remote update || return 1
   vcs import src < $(get_repos_file_path) || return 1
   vcs pull src # Ignore errors because tag/hash versions always make errors
 

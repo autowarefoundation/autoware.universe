@@ -1,7 +1,31 @@
 #!/usr/bin/env bash
 
 SCRIPT_DIR=$(cd $(dirname $0); pwd)
-source $SCRIPT_DIR/release_common_pre.sh
+source $SCRIPT_DIR/helper_functions.sh
+
+# Define functions
+function add_tag() {
+  repository="$1"
+  if [ "$repository" = "" ]; then
+    echo -e "Please input a repository name as the 1st argument"
+    return 1
+  fi
+
+  git_command="git --work-tree=$repository --git-dir=$repository/.git"
+
+  $git_command tag $autoware_version
+
+  if [ "$push" ]; then
+    $git_command push origin $autoware_version
+  fi
+
+  if [ "$delete" ]; then
+    $git_command tag -d $autoware_version > /dev/null
+  fi
+}
+
+# Pre common tasks
+source $SCRIPT_DIR/pre_common_tasks.sh
 
 # Check version
 if ! is_valid_autoware_version $autoware_version; then
@@ -20,17 +44,12 @@ fi
 # Add tags to autoware repositories
 echo -e "\e[36mAdd tags to autoware repositories\e[m"
 for autoware_repository in $(get_autoware_repositories); do
-  git_command="git --work-tree=$autoware_repository --git-dir=$autoware_repository/.git"
-
-  $git_command tag $autoware_version
-
-  if [ "$push" ]; then
-    $git_command push origin $autoware_version
-  fi
-
-  if [ "$delete" ]; then
-    $git_command tag -d $autoware_version > /dev/null
-  fi
+  add_tag $autoware_repository
 done
 
-source $SCRIPT_DIR/release_common_post.sh
+# Post common tasks
+source $SCRIPT_DIR/post_common_tasks.sh
+
+# Add tag to autoware.proj
+echo -e "\e[36mAdd tag to autoware.proj\e[m"
+add_tag .
