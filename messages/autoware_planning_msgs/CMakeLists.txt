@@ -20,6 +20,9 @@ add_message_files(
     Route.msg
     RouteSection.msg
     Scenario.msg
+    StopFactor.msg
+    StopReason.msg
+    StopReasonArray.msg
     Trajectory.msg
     TrajectoryPoint.msg
 )
