@@ -24,6 +24,8 @@ ObstacleStopPlannerDebugNode::ObstacleStopPlannerDebugNode(const double base_lin
 : nh_(), pnh_("~"), base_link2front_(base_link2front)
 {
   debug_viz_pub_ = pnh_.advertise<visualization_msgs::MarkerArray>("debug/marker", 1);
+  stop_reason_pub_ =
+    pnh_.advertise<autoware_planning_msgs::StopReasonArray>("output/stop_reasons", 1);
 }
 
 bool ObstacleStopPlannerDebugNode::pushPolygon(
@@ -102,6 +104,28 @@ bool ObstacleStopPlannerDebugNode::pushObstaclePoint(
 }
 
 void ObstacleStopPlannerDebugNode::publish()
+{
+  /* publish debug marker for rviz */
+  const auto visualization_msg = makeVisualizationMarker();
+  debug_viz_pub_.publish(visualization_msg);
+
+  /* publish stop reason for autoware api */
+  const auto stop_reason_msg = makeStopReasonArray();
+  stop_reason_pub_.publish(stop_reason_msg);
+
+  /* reset variables */
+  vehicle_polygons_.clear();
+  collision_polygons_.clear();
+  slow_down_range_polygons_.clear();
+  slow_down_polygons_.clear();
+  stop_pose_ptr_ = nullptr;
+  slow_down_start_pose_ptr_ = nullptr;
+  slow_down_end_pose_ptr_ = nullptr;
+  stop_obstacle_point_ptr_ = nullptr;
+  slow_down_obstacle_point_ptr_ = nullptr;
+}
+
+visualization_msgs::MarkerArray ObstacleStopPlannerDebugNode::makeVisualizationMarker()
 {
   visualization_msgs::MarkerArray msg;
   ros::Time current_time = ros::Time::now();
@@ -560,16 +584,33 @@ void ObstacleStopPlannerDebugNode::publish()
     msg.markers.push_back(marker);
   }
 
-  debug_viz_pub_.publish(msg);
-  vehicle_polygons_.clear();
-  collision_polygons_.clear();
-  slow_down_range_polygons_.clear();
-  slow_down_polygons_.clear();
-  stop_pose_ptr_ = nullptr;
-  slow_down_start_pose_ptr_ = nullptr;
-  slow_down_end_pose_ptr_ = nullptr;
-  stop_obstacle_point_ptr_ = nullptr;
-  slow_down_obstacle_point_ptr_ = nullptr;
-  return;
+  return msg;
 }
+
+autoware_planning_msgs::StopReasonArray ObstacleStopPlannerDebugNode::makeStopReasonArray()
+{
+  //create header
+  std_msgs::Header header;
+  header.frame_id = "map";
+  header.stamp = ros::Time::now();
+
+  //create stop reason stamped
+  autoware_planning_msgs::StopReason stop_reason_msg;
+  stop_reason_msg.reason = autoware_planning_msgs::StopReason::OBSTACLE_STOP;
+  autoware_planning_msgs::StopFactor stop_factor;
+  if (stop_pose_ptr_ != nullptr) {
+    stop_factor.stop_pose = *stop_pose_ptr_;
+  }
+  if (stop_obstacle_point_ptr_ != nullptr) {
+    stop_factor.stop_factor_points.emplace_back(*stop_obstacle_point_ptr_);
+  }
+  stop_reason_msg.stop_factors.emplace_back(stop_factor);
+
+  //create stop reason array
+  autoware_planning_msgs::StopReasonArray stop_reason_array;
+  stop_reason_array.header = header;
+  stop_reason_array.stop_reasons.emplace_back(stop_reason_msg);
+  return stop_reason_array;
+}
+
 }  // namespace motion_planning

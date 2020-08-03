@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #pragma once
+#include <autoware_planning_msgs/StopReasonArray.h>
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/Pose.h>
 #include <pcl/point_types.h>
@@ -47,6 +48,8 @@ public:
   bool pushPose(const geometry_msgs::Pose & pose, const PoseType & type);
   bool pushObstaclePoint(const geometry_msgs::Point & obstacle_point, const PointType & type);
   bool pushObstaclePoint(const pcl::PointXYZ & obstacle_point, const PointType & type);
+  visualization_msgs::MarkerArray makeVisualizationMarker();
+  autoware_planning_msgs::StopReasonArray makeStopReasonArray();
 
   void publish();
 
@@ -54,6 +57,7 @@ private:
   ros::NodeHandle nh_;
   ros::NodeHandle pnh_;
   ros::Publisher debug_viz_pub_;
+  ros::Publisher stop_reason_pub_;
   double base_link2front_;
 
   std::shared_ptr<geometry_msgs::Pose> stop_pose_ptr_;
