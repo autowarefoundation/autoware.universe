@@ -50,7 +50,7 @@ public:
     std::vector<geometry_msgs::Pose> stop_poses;
     geometry_msgs::Pose first_stop_pose;
     std::vector<geometry_msgs::Pose> dead_line_poses;
-    geometry_msgs::Point traffic_light_point;
+    std::vector<geometry_msgs::Point> traffic_light_points;
   };
 
   struct PlannerParam

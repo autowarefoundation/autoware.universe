@@ -127,8 +127,7 @@ TrafficLightModule::TrafficLightModule(
 }
 
 bool TrafficLightModule::modifyPathVelocity(
-  autoware_planning_msgs::PathWithLaneId * path,
-  autoware_planning_msgs::StopReason * stop_reason)
+  autoware_planning_msgs::PathWithLaneId * path, autoware_planning_msgs::StopReason * stop_reason)
 {
   debug_data_ = {};
   debug_data_.base_link2front = planner_data_->base_link2front;
@@ -154,8 +153,9 @@ bool TrafficLightModule::modifyPathVelocity(
     return true;
   } else {
     for (size_t i = 0; i < lanelet_stop_line.size() - 1; i++) {
-      const Line stop_line = {{lanelet_stop_line[i].x(), lanelet_stop_line[i].y()},
-                              {lanelet_stop_line[i + 1].x(), lanelet_stop_line[i + 1].y()}};
+      const Line stop_line = {
+        {lanelet_stop_line[i].x(), lanelet_stop_line[i].y()},
+        {lanelet_stop_line[i + 1].x(), lanelet_stop_line[i + 1].y()}};
       // Check Dead Line
       {
         constexpr double dead_line_range = 5.0;
@@ -208,7 +208,7 @@ bool TrafficLightModule::modifyPathVelocity(
       /* get stop point and stop factor */
       autoware_planning_msgs::StopFactor stop_factor;
       stop_factor.stop_pose = debug_data_.first_stop_pose;
-      stop_factor.stop_factor_points;
+      stop_factor.stop_factor_points = debug_data_.traffic_light_points;
       planning_utils::appendStopReason(stop_factor, stop_reason);
       return true;
     }
@@ -334,7 +334,10 @@ bool TrafficLightModule::getHighestConfidenceTrafficLightState(
     if (highest_confidence < tl_state.lamp_states.front().confidence) {
       highest_confidence = tl_state.lamp_states.front().confidence;
       highest_confidence_tl_state = tl_state;
-      debug_data_.traffic_light_point = getTrafficLightPosition(traffic_light);
+      const std::vector<geometry_msgs::Point> highest_traffic_light{
+        getTrafficLightPosition(traffic_light)};
+      // store only highest confidence traffic light (not all traffic light)
+      debug_data_.traffic_light_points = highest_traffic_light;
     }
     found = true;
   }
@@ -482,10 +485,10 @@ geometry_msgs::Point TrafficLightModule::getTrafficLightPosition(
   const lanelet::ConstLineStringOrPolygon3d traffic_light)
 {
   geometry_msgs::Point tl_center;
-  for (const auto tl_point : *traffic_light.polygon()) {
-    tl_center.x += tl_point.x() / (*traffic_light.polygon()).size();
-    tl_center.y += tl_point.y() / (*traffic_light.polygon()).size();
-    tl_center.z += tl_point.z() / (*traffic_light.polygon()).size();
+  for (const auto tl_point : *traffic_light.lineString()) {
+    tl_center.x += tl_point.x() / (*traffic_light.lineString()).size();
+    tl_center.y += tl_point.y() / (*traffic_light.lineString()).size();
+    tl_center.z += tl_point.z() / (*traffic_light.lineString()).size();
   }
   return tl_center;
 }
