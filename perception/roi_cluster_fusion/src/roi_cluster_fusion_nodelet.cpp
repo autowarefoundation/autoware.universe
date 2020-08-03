@@ -174,12 +174,13 @@ void RoiClusterFusionNodelet::fusionCallback(
       continue;
     }
 
-    // intrinsic
-    Eigen::Matrix3d intrinsic;
-    intrinsic << m_camera_info_.at(id).K.at(0), m_camera_info_.at(id).K.at(1),
-      m_camera_info_.at(id).K.at(2), m_camera_info_.at(id).K.at(3), m_camera_info_.at(id).K.at(4),
-      m_camera_info_.at(id).K.at(5), m_camera_info_.at(id).K.at(6), m_camera_info_.at(id).K.at(7),
-      m_camera_info_.at(id).K.at(8);
+    // projection matrix
+    Eigen::Matrix4d projection;
+    projection << m_camera_info_.at(id).P.at(0), m_camera_info_.at(id).P.at(1),
+      m_camera_info_.at(id).P.at(2), m_camera_info_.at(id).P.at(3), m_camera_info_.at(id).P.at(4),
+      m_camera_info_.at(id).P.at(5), m_camera_info_.at(id).P.at(6), m_camera_info_.at(id).P.at(7),
+      m_camera_info_.at(id).P.at(8), m_camera_info_.at(id).P.at(9), m_camera_info_.at(id).P.at(10),
+      m_camera_info_.at(id).P.at(11);
 
     // get transform from cluster frame id to camera optical frame id
     geometry_msgs::TransformStamped transform_stamped;
@@ -224,7 +225,7 @@ void RoiClusterFusionNodelet::fusionCallback(
            iter_y(transformed_cluster, "y"), iter_z(transformed_cluster, "z");
            iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z) {
         if (*iter_z <= 0.0) continue;
-        Eigen::Vector3d projected_point = intrinsic * Eigen::Vector3d(*iter_x, *iter_y, *iter_z);
+        Eigen::Vector4d projected_point = projection * Eigen::Vector4d(*iter_x, *iter_y, *iter_z, 1.0);
         Eigen::Vector2d normalized_projected_point = Eigen::Vector2d(
           projected_point.x() / projected_point.z(), projected_point.y() / projected_point.z());
         if (
