@@ -9,7 +9,7 @@
         <arg name="sensor_frame" default="velodyne_top" />
         <arg name="device_ip" value="192.168.1.201"/>
         <arg name="port" value="2368"/>
-        <arg name="sensor_phase" default="90.0" />
+        <arg name="scan_phase" default="300.0" />
         <arg name="sensor_timestamp" default="false" />
         <arg name="launch_driver" value="$(arg launch_driver)" />
       </include>
@@ -20,7 +20,7 @@
         <arg name="sensor_frame" default="velodyne_left" />
         <arg name="device_ip" value="192.168.1.202"/>
         <arg name="port" value="2369"/>
-        <arg name="sensor_phase" default="0.0" />
+        <arg name="scan_phase" default="180.0" />
         <arg name="sensor_timestamp" default="false" />
         <arg name="launch_driver" value="$(arg launch_driver)" />
       </include>
@@ -31,7 +31,7 @@
         <arg name="sensor_frame" default="velodyne_right" />
         <arg name="device_ip" value="192.168.1.203"/>
         <arg name="port" value="2370"/>
-        <arg name="sensor_phase" default="0.0" />
+        <arg name="scan_phase" default="180.0" />
         <arg name="sensor_timestamp" default="false" />
         <arg name="launch_driver" value="$(arg launch_driver)" />
       </include>
@@ -42,7 +42,7 @@
         <arg name="sensor_frame" default="velodyne_rear" />
         <arg name="device_ip" value="192.168.1.204"/>
         <arg name="port" value="2371"/>
-        <arg name="sensor_phase" default="0.0" />
+        <arg name="scan_phase" default="180.0" />
         <arg name="sensor_timestamp" default="false" />
         <arg name="launch_driver" value="$(arg launch_driver)" />
       </include>

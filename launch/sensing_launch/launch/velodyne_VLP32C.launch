@@ -9,7 +9,7 @@
   <arg name="sensor_frame" default="velodyne" />
   <arg name="base_frame" default="base_link" />
   <arg name="manager" default="velodyne_nodelet_manager" />
-  <arg name="max_range" default="130.0" />
+  <arg name="max_range" default="200.0" />
   <arg name="min_range" default="0.4" />
   <arg name="pcap" default="" />
   <arg name="port" default="2368" />
@@ -17,6 +17,8 @@
   <arg name="read_once" default="false" />
   <arg name="repeat_delay" default="0.0" />
   <arg name="rpm" default="600.0" />
+  <arg name="scan_phase" default="0.0" />
+  <arg name="sensor_timestamp" default="false" />
   <arg name="laserscan_ring" default="-1" />
   <arg name="laserscan_resolution" default="0.007" />
   <arg name="num_points_threshold" default="300"/>
@@ -36,7 +38,7 @@
     <param name="read_once" value="$(arg read_once)"/>
     <param name="repeat_delay" value="$(arg repeat_delay)"/>
     <param name="rpm" value="$(arg rpm)"/>
-    <param name="sensor_phase" value="$(arg sensor_phase)"/>
+    <param name="scan_phase" value="$(arg scan_phase)"/>
     <param name="sensor_timestamp" value="$(arg sensor_timestamp)" />
   </node>
 
@@ -49,7 +51,7 @@
     <param name="min_range" value="$(arg min_range)"/>
     <param name="num_points_threshold" value="$(arg num_points_threshold)"/>
     <param name="invalid_intensity" value="$(arg invalid_intensity)"/>
-    <param name="sensor_phase" value="$(arg sensor_phase)"/>
+    <param name="scan_phase" value="$(arg scan_phase)"/>
   </node>
 
   <!-- crop self -->
