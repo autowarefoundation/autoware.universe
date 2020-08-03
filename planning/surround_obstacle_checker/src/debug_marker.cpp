@@ -163,13 +163,14 @@ autoware_planning_msgs::StopReasonArray SurroundObstacleCheckerDebugNode::makeSt
   autoware_planning_msgs::StopReason stop_reason_msg;
   stop_reason_msg.reason = autoware_planning_msgs::StopReason::SURROUND_OBSTACLE_CHECK;
   autoware_planning_msgs::StopFactor stop_factor;
+
   if (stop_pose_ptr_ != nullptr) {
     stop_factor.stop_pose = *stop_pose_ptr_;
+    if (stop_obstacle_point_ptr_ != nullptr) {
+      stop_factor.stop_factor_points.emplace_back(*stop_obstacle_point_ptr_);
+    }
+    stop_reason_msg.stop_factors.emplace_back(stop_factor);
   }
-  if (stop_obstacle_point_ptr_ != nullptr) {
-    stop_factor.stop_factor_points.emplace_back(*stop_obstacle_point_ptr_);
-  }
-  stop_reason_msg.stop_factors.emplace_back(stop_factor);
 
   //create stop reason array
   autoware_planning_msgs::StopReasonArray stop_reason_array;
