@@ -1,4 +1,5 @@
 repositories:
+  # autoware
   autoware/autoware.iv:
     type: git
     url: git@github.com:tier4/autoware.iv.universe.git
@@ -7,6 +8,7 @@ repositories:
     type: git
     url: git@github.com:tier4/autoware_launcher.iv.universe.git
     version: master
+  # description
   description/sensor/sensor_description:
     type: git
     url: git@github.com:tier4/sensor_description.iv.universe.git
@@ -15,6 +17,7 @@ repositories:
     type: git
     url: git@github.com:tier4/lexus_description.iv.universe.git
     version: master
+  # simulator
   simulator/planning_simulator:
     type: git
     url: git@github.com:tier4/planning_simulator.iv.universe.git
@@ -27,6 +30,7 @@ repositories:
     type: git
     url: git@github.com:tier4/scenario_runner.iv.universe.git
     version: master
+  # vendor
   vendor/lanelet2:
     type: git
     url: git@github.com:fzi-forschungszentrum-informatik/Lanelet2.git
@@ -43,6 +47,7 @@ repositories:
     type: git
     url: git@github.com:tier4/velodyne_vls.git
     version: tier4/master
+  # calibration
   calibration/tunable_static_tf_broadcaster:
     type: git
     url: git@github.com:tier4/tunable_static_tf_broadcaster.git
