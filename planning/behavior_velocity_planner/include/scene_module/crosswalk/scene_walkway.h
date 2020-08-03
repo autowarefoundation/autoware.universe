@@ -43,14 +43,13 @@
 #include <lanelet2_routing/RoutingGraph.h>
 #include <lanelet2_routing/RoutingGraphContainer.h>
 
-#include <scene_module/scene_module_interface.h>
 #include <scene_module/crosswalk/scene_crosswalk.h>
 #include <scene_module/crosswalk/util.h>
+#include <scene_module/scene_module_interface.h>
 
 class WalkwayModule : public SceneModuleInterface
 {
 public:
-
 public:
   struct PlannerParam
   {
@@ -60,12 +59,13 @@ public:
     const int64_t module_id, const lanelet::ConstLanelet & walkway,
     const PlannerParam & planner_param);
 
-  bool modifyPathVelocity(autoware_planning_msgs::PathWithLaneId * path) override;
+  bool modifyPathVelocity(
+    autoware_planning_msgs::PathWithLaneId * path,
+    autoware_planning_msgs::StopReason * stop_reason) override;
 
   visualization_msgs::MarkerArray createDebugMarkerArray() override;
 
 private:
-
   enum class State { APPROACH, STOP, SURPASSED };
 
   lanelet::ConstLanelet walkway_;

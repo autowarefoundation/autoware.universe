@@ -81,6 +81,8 @@ bool insertTargetVelocityPoint(
       if (j == 0 || dist < min_dist) {
         min_dist = dist;
         nearest_collision_point = collision_points.at(j);
+        debug_data.nearest_collision_point =
+          planning_utils::toRosPoint(collision_points.at(j), p0.z);
       }
     }
 
@@ -133,6 +135,9 @@ bool insertTargetVelocityPoint(
     target_point_with_lane_id.point.twist.linear.x = velocity;
     if (velocity == 0.0 && target_velocity_point_idx < first_stop_path_point_index) {
       first_stop_path_point_index = target_velocity_point_idx;
+      // -- debug code --
+      debug_data.first_stop_pose = target_point_with_lane_id.point.pose;
+      // ----------------
     }
     // -- debug code --
     if (velocity == 0.0)

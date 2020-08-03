@@ -42,12 +42,15 @@ DetectionAreaModule::DetectionAreaModule(
   planner_param_ = planner_param;
 }
 
-bool DetectionAreaModule::modifyPathVelocity(autoware_planning_msgs::PathWithLaneId * path)
+bool DetectionAreaModule::modifyPathVelocity(
+  autoware_planning_msgs::PathWithLaneId * path, autoware_planning_msgs::StopReason * stop_reason)
 {
   const auto input_path = *path;
 
   debug_data_ = {};
   debug_data_.base_link2front = planner_data_->base_link2front;
+  *stop_reason =
+    planning_utils::initializeStopReason(autoware_planning_msgs::StopReason::DETECTION_AREA);
 
   if (state_ == State::PASS) {
     return true;
@@ -99,6 +102,11 @@ bool DetectionAreaModule::modifyPathVelocity(autoware_planning_msgs::PathWithLan
     }
 
     state_ = State::STOP;
+    /* get stop point and stop factor */
+    autoware_planning_msgs::StopFactor stop_factor;
+    stop_factor.stop_pose = debug_data_.first_stop_pose;
+    stop_factor.stop_factor_points = debug_data_.detection_points;
+    planning_utils::appendStopReason(stop_factor, stop_reason);
 
     return true;
   }
@@ -121,6 +129,8 @@ bool DetectionAreaModule::isPointsWithinDetectionArea(
 
       Point point(no_ground_pointcloud_ptr->at(i).x, no_ground_pointcloud_ptr->at(i).y);
       if (bg::within(point, polygon)) {
+        debug_data_.detection_points.emplace_back(
+          planning_utils::toRosPoint(no_ground_pointcloud_ptr->at(i)));
         return true;
       }
     }
@@ -156,6 +166,7 @@ bool DetectionAreaModule::insertTargetVelocityPoint(
     output.points.at(j).point.twist.linear.x =
       std::min(velocity, output.points.at(j).point.twist.linear.x);
   if (velocity == 0.0 && target_velocity_point_idx < first_stop_path_point_index_) {
+    debug_data_.first_stop_pose = target_point_with_lane_id.point.pose;
     first_stop_path_point_index_ = target_velocity_point_idx;
   }
   // -- debug code --

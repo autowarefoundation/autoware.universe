@@ -196,7 +196,8 @@ bool generateStopLine(
   const int lane_id, const std::vector<lanelet::CompoundPolygon3d> detection_areas,
   const std::shared_ptr<const PlannerData> & planner_data,
   const IntersectionModule::PlannerParam & planner_param,
-  autoware_planning_msgs::PathWithLaneId * path, int * stop_line_idx, int * pass_judge_line_idx)
+  autoware_planning_msgs::PathWithLaneId * path, int * stop_line_idx, int * pass_judge_line_idx,
+  int * first_idx_inside_lane)
 {
   /* set judge line dist */
   const double current_vel = planner_data->current_velocity->twist.linear.x;
@@ -223,12 +224,12 @@ bool generateStopLine(
     planning_utils::calcClosestIndex(path_ip, stop_point_from_map, stop_idx_ip, 10.0);
     stop_idx_ip = std::max(stop_idx_ip - base2front_idx_dist, 0);
   } else {
-    int first_idx_inside_lane = getFirstPointInsidePolygons(path_ip, detection_areas);
-    if (first_idx_inside_lane == -1) {
+    *first_idx_inside_lane = getFirstPointInsidePolygons(path_ip, detection_areas);
+    if (*first_idx_inside_lane == -1) {
       ROS_DEBUG("[MergeFromPrivateRoad] generate stopline, but no intersect line found.");
       return false;
     }
-    stop_idx_ip = std::max(first_idx_inside_lane - 1 - margin_idx_dist - base2front_idx_dist, 0);
+    stop_idx_ip = std::max(*first_idx_inside_lane - 1 - margin_idx_dist - base2front_idx_dist, 0);
   }
 
   /* insert stop_point */

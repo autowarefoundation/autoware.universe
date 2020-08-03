@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include <scene_module/stop_line/scene.h>
+#include <utilization/util.h>
 
 namespace bg = boost::geometry;
 using Point = bg::model::d2::point_xy<double>;
@@ -27,11 +28,14 @@ StopLineModule::StopLineModule(
   planner_param_ = planner_param;
 }
 
-bool StopLineModule::modifyPathVelocity(autoware_planning_msgs::PathWithLaneId * path)
+bool StopLineModule::modifyPathVelocity(
+  autoware_planning_msgs::PathWithLaneId * path, autoware_planning_msgs::StopReason * stop_reason)
 {
   debug_data_ = {};
   debug_data_.base_link2front = planner_data_->base_link2front;
   first_stop_path_point_index_ = static_cast<int>(path->points.size()) - 1;
+  *stop_reason =
+    planning_utils::initializeStopReason(autoware_planning_msgs::StopReason::STOP_LINE);
 
   Eigen::Vector2d stop_point;
   bg::model::linestring<Point> stop_line = {{stop_line_[0].x(), stop_line_[0].y()},
@@ -79,6 +83,7 @@ bool StopLineModule::modifyPathVelocity(autoware_planning_msgs::PathWithLaneId *
       stop_point_with_lane_id.point.twist.linear.x = 0.0;
       if (stop_point_idx < first_stop_path_point_index_) {
         first_stop_path_point_index_ = stop_point_idx;
+        debug_data_.first_stop_pose = stop_point_with_lane_id.point.pose;
       }
       debug_data_.stop_poses.push_back(stop_point_with_lane_id.point.pose);
 
@@ -100,6 +105,11 @@ bool StopLineModule::modifyPathVelocity(autoware_planning_msgs::PathWithLaneId *
     return true;
   } else if (state_ == State::STOP) {
     if (!planner_data_->isVehicleStopping()) state_ = State::START;
+    /* get stop point and stop factor */
+    autoware_planning_msgs::StopFactor stop_factor;
+    stop_factor.stop_pose = debug_data_.first_stop_pose;
+    stop_factor.stop_factor_points.emplace_back(getCenterOfStopLine(stop_line_));
+    planning_utils::appendStopReason(stop_factor, stop_reason);
     return true;
   }
 }
@@ -112,4 +122,14 @@ bool StopLineModule::getBackwordPointFromBasePoint(
   Eigen::Vector2d backward_vec = backward_length * line_vec.normalized();
   output_point = base_point + backward_vec;
   return true;
+}
+
+geometry_msgs::Point StopLineModule::getCenterOfStopLine(
+  const lanelet::ConstLineString3d & stop_line)
+{
+  geometry_msgs::Point center_point;
+  center_point.x = (stop_line[0].x() + stop_line[1].x()) / 2.0;
+  center_point.y = (stop_line[0].y() + stop_line[1].y()) / 2.0;
+  center_point.z = (stop_line[0].z() + stop_line[1].z()) / 2.0;
+  return center_point;
 }

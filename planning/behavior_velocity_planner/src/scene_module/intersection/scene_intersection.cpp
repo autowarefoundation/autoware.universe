@@ -40,9 +40,12 @@ IntersectionModule::IntersectionModule(
     !(assigned_lanelet.regulatoryElementsAs<const lanelet::TrafficLight>().empty());
 }
 
-bool IntersectionModule::modifyPathVelocity(autoware_planning_msgs::PathWithLaneId * path)
+bool IntersectionModule::modifyPathVelocity(
+  autoware_planning_msgs::PathWithLaneId * path, autoware_planning_msgs::StopReason * stop_reason)
 {
   debug_data_ = {};
+  *stop_reason =
+    planning_utils::initializeStopReason(autoware_planning_msgs::StopReason::INTERSECTION);
 
   const auto input_path = *path;
   debug_data_.path_raw = input_path;
@@ -70,9 +73,10 @@ bool IntersectionModule::modifyPathVelocity(autoware_planning_msgs::PathWithLane
   /* set stop-line and stop-judgement-line for base_link */
   int stop_line_idx = -1;
   int pass_judge_line_idx = -1;
+  int first_idx_inside_lane = -1;
   if (!util::generateStopLine(
         lane_id_, detection_areas, planner_data_, planner_param_, path, &stop_line_idx,
-        &pass_judge_line_idx)) {
+        &pass_judge_line_idx, &first_idx_inside_lane)) {
     ROS_WARN_DELAYED_THROTTLE(1.0, "[IntersectionModule::run] setStopLineIdx fail");
     return false;
   }
@@ -121,6 +125,15 @@ bool IntersectionModule::modifyPathVelocity(autoware_planning_msgs::PathWithLane
     double v =
       (!is_stuck && has_traffic_light_ && turn_direction_ == "straight") ? decel_vel : stop_vel;
     util::setVelocityFrom(stop_line_idx, v, path);
+
+    /* get stop point and stop factor */
+    autoware_planning_msgs::StopFactor stop_factor;
+    stop_factor.stop_pose = debug_data_.stop_point_pose;
+    const auto stop_factor_conflict = planning_utils::toRosPoints(debug_data_.conflicting_targets);
+    const auto stop_factor_stuck = planning_utils::toRosPoints(debug_data_.stuck_targets);
+    stop_factor.stop_factor_points =
+      planning_utils::concatVector(stop_factor_conflict, stop_factor_stuck);
+    planning_utils::appendStopReason(stop_factor, stop_reason);
   }
 
   return true;

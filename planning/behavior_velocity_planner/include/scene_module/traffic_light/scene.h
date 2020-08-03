@@ -48,7 +48,9 @@ public:
       std::shared_ptr<const lanelet::TrafficLight>, autoware_perception_msgs::TrafficLightState>>
       tl_state;  // TODO: replace tuple with struct
     std::vector<geometry_msgs::Pose> stop_poses;
+    geometry_msgs::Pose first_stop_pose;
     std::vector<geometry_msgs::Pose> dead_line_poses;
+    geometry_msgs::Point traffic_light_point;
   };
 
   struct PlannerParam
@@ -62,7 +64,9 @@ public:
     const int64_t module_id, const lanelet::TrafficLight & traffic_light_reg_elem,
     lanelet::ConstLanelet lane, const PlannerParam & planner_param);
 
-  bool modifyPathVelocity(autoware_planning_msgs::PathWithLaneId * path) override;
+  bool modifyPathVelocity(
+    autoware_planning_msgs::PathWithLaneId * path,
+    autoware_planning_msgs::StopReason * stop_reason) override;
 
   visualization_msgs::MarkerArray createDebugMarkerArray() override;
 
@@ -98,6 +102,9 @@ private:
 
   bool hasLamp(
     const autoware_perception_msgs::TrafficLightState & tl_state, const uint8_t & lamp_color);
+
+  geometry_msgs::Point getTrafficLightPosition(
+    const lanelet::ConstLineStringOrPolygon3d traffic_light);
 
   // Key Feature
   const lanelet::TrafficLight & traffic_light_reg_elem_;

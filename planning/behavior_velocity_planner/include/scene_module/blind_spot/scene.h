@@ -101,7 +101,9 @@ public:
    * @brief plan go-stop velocity at traffic crossing with collision check between reference path
    * and object predicted path
    */
-  bool modifyPathVelocity(autoware_planning_msgs::PathWithLaneId * path) override;
+  bool modifyPathVelocity(
+    autoware_planning_msgs::PathWithLaneId * path,
+    autoware_planning_msgs::StopReason * stop_reason) override;
 
   visualization_msgs::MarkerArray createDebugMarkerArray() override;
 
@@ -183,7 +185,8 @@ private:
    */
   bool generateStopLine(
     const std::vector<lanelet::CompoundPolygon3d> detection_areas,
-    autoware_planning_msgs::PathWithLaneId * path, int * stop_line_idx, int * pass_judge_line_idx) const;
+    autoware_planning_msgs::PathWithLaneId * path, int * stop_line_idx,
+    int * pass_judge_line_idx) const;
 
   /**
    * @brief Calculate first path index that is in the polygon.

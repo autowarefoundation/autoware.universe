@@ -46,6 +46,8 @@ public:
   {
     double base_link2front;
     std::vector<geometry_msgs::Pose> stop_poses;
+    geometry_msgs::Pose first_stop_pose;
+    std::vector<geometry_msgs::Point> detection_points;
   };
 
   struct PlannerParam
@@ -58,7 +60,9 @@ public:
     const int64_t module_id, const lanelet::autoware::DetectionArea & detection_area_reg_elem,
     const PlannerParam & planner_param);
 
-  bool modifyPathVelocity(autoware_planning_msgs::PathWithLaneId * path) override;
+  bool modifyPathVelocity(
+    autoware_planning_msgs::PathWithLaneId * path,
+    autoware_planning_msgs::StopReason * stop_reason) override;
 
   visualization_msgs::MarkerArray createDebugMarkerArray() override;
 

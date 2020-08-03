@@ -82,7 +82,7 @@ public:
     std::vector<lanelet::ConstLanelet> intersection_detection_lanelets;
     std::vector<lanelet::CompoundPolygon3d> detection_area;
     autoware_planning_msgs::PathWithLaneId spline_path;
-    autoware_perception_msgs::DynamicObjectArray conflicting_targets;
+    geometry_msgs::Point first_collision_point;
     autoware_perception_msgs::DynamicObjectArray stuck_targets;
   };
 
@@ -95,7 +95,9 @@ public:
    * @brief plan go-stop velocity at traffic crossing with collision check between reference path
    * and object predicted path
    */
-  bool modifyPathVelocity(autoware_planning_msgs::PathWithLaneId * path) override;
+  bool modifyPathVelocity(
+    autoware_planning_msgs::PathWithLaneId * path,
+    autoware_planning_msgs::StopReason * stop_reason) override;
 
   visualization_msgs::MarkerArray createDebugMarkerArray() override;
 

@@ -20,6 +20,8 @@
 
 #include <autoware_planning_msgs/Path.h>
 #include <autoware_planning_msgs/PathWithLaneId.h>
+#include <autoware_planning_msgs/StopReason.h>
+#include <autoware_planning_msgs/StopReasonArray.h>
 
 #include <behavior_velocity_planner/planner_data.h>
 
@@ -33,7 +35,9 @@ public:
   explicit SceneModuleInterface(const int64_t module_id) : module_id_(module_id) {}
   virtual ~SceneModuleInterface() = default;
 
-  virtual bool modifyPathVelocity(autoware_planning_msgs::PathWithLaneId * path) = 0;
+  virtual bool modifyPathVelocity(
+    autoware_planning_msgs::PathWithLaneId * path,
+    autoware_planning_msgs::StopReason * stop_reason) = 0;
   virtual visualization_msgs::MarkerArray createDebugMarkerArray() = 0;
 
   int64_t getModuleId() const { return module_id_; }
@@ -57,6 +61,8 @@ public:
   {
     const auto ns = std::string("debug/") + module_name;
     pub_debug_ = private_nh_.advertise<visualization_msgs::MarkerArray>(ns, 20);
+    pub_stop_reason_ =
+      private_nh_.advertise<autoware_planning_msgs::StopReasonArray>("output/stop_reasons", 20);
   }
 
   virtual ~SceneModuleManagerInterface() = default;
@@ -78,11 +84,16 @@ public:
   void modifyPathVelocity(autoware_planning_msgs::PathWithLaneId * path)
   {
     visualization_msgs::MarkerArray debug_marker_array;
+    autoware_planning_msgs::StopReasonArray stop_reason_array;
+    stop_reason_array.header.frame_id = "map";
+    stop_reason_array.header.stamp = ros::Time::now();
 
     first_stop_path_point_index_ = static_cast<int>(path->points.size());
     for (const auto & scene_module : scene_modules_) {
+      autoware_planning_msgs::StopReason stop_reason;
       scene_module->setPlannerData(planner_data_);
-      scene_module->modifyPathVelocity(path);
+      scene_module->modifyPathVelocity(path, &stop_reason);
+      stop_reason_array.stop_reasons.emplace_back(stop_reason);
 
       if (scene_module->getFirstStopPathPointIndex() < first_stop_path_point_index_) {
         first_stop_path_point_index_ = scene_module->getFirstStopPathPointIndex();
@@ -93,6 +104,9 @@ public:
       }
     }
 
+    if (!stop_reason_array.stop_reasons.empty()) {
+      pub_stop_reason_.publish(stop_reason_array);
+    }
     pub_debug_.publish(debug_marker_array);
   }
 
@@ -146,4 +160,5 @@ protected:
   // Debug
   ros::NodeHandle private_nh_{"~"};
   ros::Publisher pub_debug_;
+  ros::Publisher pub_stop_reason_;
 };

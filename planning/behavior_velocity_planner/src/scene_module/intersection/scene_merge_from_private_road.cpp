@@ -38,9 +38,13 @@ MergeFromPrivateRoadModule::MergeFromPrivateRoadModule(
   state_machine_.setState(State::STOP);
 }
 
-bool MergeFromPrivateRoadModule::modifyPathVelocity(autoware_planning_msgs::PathWithLaneId * path)
+bool MergeFromPrivateRoadModule::modifyPathVelocity(
+  autoware_planning_msgs::PathWithLaneId * path,
+  autoware_planning_msgs::StopReason * stop_reason)
 {
   debug_data_ = {};
+  *stop_reason = planning_utils::initializeStopReason(
+    autoware_planning_msgs::StopReason::MERGE_FROM_PRIVATE_ROAD);
 
   const auto input_path = *path;
   debug_data_.path_raw = input_path;
@@ -69,9 +73,10 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(autoware_planning_msgs::Path
   /* set stop-line and stop-judgement-line for base_link */
   int stop_line_idx = -1;
   int judge_line_idx = -1;
+  int first_idx_inside_lane = -1;
   if (!util::generateStopLine(
         lane_id_, detection_areas, planner_data_, planner_param_, path, &stop_line_idx,
-        &judge_line_idx)) {
+        &judge_line_idx, &first_idx_inside_lane)) {
     ROS_WARN_DELAYED_THROTTLE(1.0, "[MergeFromPrivateRoadModule::run] setStopLineIdx fail");
     return false;
   }
@@ -84,6 +89,7 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(autoware_planning_msgs::Path
   debug_data_.virtual_wall_pose =
     util::getAheadPose(stop_line_idx, planner_data_->base_link2front, *path);
   debug_data_.stop_point_pose = path->points.at(stop_line_idx).point.pose;
+  debug_data_.first_collision_point = path->points.at(first_idx_inside_lane).point.pose.position;
 
   /* set stop speed */
   if (state_machine_.getState() == State::STOP) {
@@ -91,6 +97,14 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(autoware_planning_msgs::Path
     const double decel_vel = planner_param_.decel_velocoity;
     double v = (has_traffic_light_ && turn_direction_ == "straight") ? decel_vel : stop_vel;
     util::setVelocityFrom(stop_line_idx, v, path);
+
+    /* get stop point and stop factor */
+    if (v == stop_vel) {
+      autoware_planning_msgs::StopFactor stop_factor;
+      stop_factor.stop_pose = debug_data_.stop_point_pose;
+      stop_factor.stop_factor_points.emplace_back(debug_data_.first_collision_point);
+      planning_utils::appendStopReason(stop_factor, stop_reason);
+    }
 
     const double distance =
       planning_utils::calcDist2d(current_pose.pose, path->points.at(stop_line_idx).point.pose);

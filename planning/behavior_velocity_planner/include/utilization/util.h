@@ -18,15 +18,22 @@
 #ifndef COMMON_MATH_PLANNING_UTILS_H
 #define COMMON_MATH_PLANNING_UTILS_H
 
+#include <autoware_perception_msgs/DynamicObjectArray.h>
 #include <autoware_planning_msgs/Path.h>
 #include <autoware_planning_msgs/PathWithLaneId.h>
+#include <autoware_planning_msgs/StopReason.h>
 #include <autoware_planning_msgs/Trajectory.h>
 #include <autoware_planning_msgs/TrajectoryPoint.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Quaternion.h>
+#include <pcl_ros/point_cloud.h>
 #include <tf2/utils.h>
+#include <boost/geometry.hpp>
+#include <boost/geometry/geometries/linestring.hpp>
+#include <boost/geometry/geometries/point_xy.hpp>
 #include <vector>
 
+using Point2d = boost::geometry::model::d2::point_xy<double>;
 namespace planning_utils
 {
 inline geometry_msgs::Point getPoint(const geometry_msgs::Point & p) { return p; }
@@ -92,6 +99,24 @@ geometry_msgs::Pose transformAbsCoordinate2D(
 
 double calcJudgeLineDist(double velocity);
 
+autoware_planning_msgs::StopReason initializeStopReason(const std::string & stop_reason);
+void appendStopReason(
+  const autoware_planning_msgs::StopFactor stop_factor,
+  autoware_planning_msgs::StopReason * stop_reason);
+
+std::vector<geometry_msgs::Point> toRosPoints(
+  const autoware_perception_msgs::DynamicObjectArray & object);
+
+geometry_msgs::Point toRosPoint(const pcl::PointXYZ & pcl_point);
+geometry_msgs::Point toRosPoint(const Point2d & boost_point, const double z);
+
+template <class T>
+std::vector<T> concatVector(const std::vector<T> & vec1, const std::vector<T> & vec2)
+{
+  auto concat_vec = vec1;
+  concat_vec.insert(std::end(concat_vec), std::begin(vec2), std::end(vec2));
+  return concat_vec;
+}
 }  // namespace planning_utils
 
 #endif  // COMMON_MATH_PLANNING_UTILS_H

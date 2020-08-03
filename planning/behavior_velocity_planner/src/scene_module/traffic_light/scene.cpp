@@ -126,11 +126,15 @@ TrafficLightModule::TrafficLightModule(
   planner_param_ = planner_param;
 }
 
-bool TrafficLightModule::modifyPathVelocity(autoware_planning_msgs::PathWithLaneId * path)
+bool TrafficLightModule::modifyPathVelocity(
+  autoware_planning_msgs::PathWithLaneId * path,
+  autoware_planning_msgs::StopReason * stop_reason)
 {
   debug_data_ = {};
   debug_data_.base_link2front = planner_data_->base_link2front;
   first_stop_path_point_index_ = static_cast<int>(path->points.size()) - 1;
+  *stop_reason =
+    planning_utils::initializeStopReason(autoware_planning_msgs::StopReason::TRAFFIC_LIGHT);
 
   const auto input_path = *path;
 
@@ -201,6 +205,11 @@ bool TrafficLightModule::modifyPathVelocity(autoware_planning_msgs::PathWithLane
         continue;
       }
       state_ = State::STOP;
+      /* get stop point and stop factor */
+      autoware_planning_msgs::StopFactor stop_factor;
+      stop_factor.stop_pose = debug_data_.first_stop_pose;
+      stop_factor.stop_factor_points;
+      planning_utils::appendStopReason(stop_factor, stop_reason);
       return true;
     }
   }
@@ -325,6 +334,7 @@ bool TrafficLightModule::getHighestConfidenceTrafficLightState(
     if (highest_confidence < tl_state.lamp_states.front().confidence) {
       highest_confidence = tl_state.lamp_states.front().confidence;
       highest_confidence_tl_state = tl_state;
+      debug_data_.traffic_light_point = getTrafficLightPosition(traffic_light);
     }
     found = true;
   }
@@ -365,6 +375,7 @@ bool TrafficLightModule::insertTargetVelocityPoint(
       std::min(velocity, output.points.at(j).point.twist.linear.x);
   if (velocity == 0.0 && target_velocity_point_idx < first_stop_path_point_index_) {
     first_stop_path_point_index_ = target_velocity_point_idx;
+    debug_data_.first_stop_pose = target_point_with_lane_id.point.pose;
   }
   // -- debug code --
   if (velocity == 0.0) debug_data_.stop_poses.push_back(target_point_with_lane_id.point.pose);
@@ -465,4 +476,16 @@ bool TrafficLightModule::hasLamp(
     [&lamp_color](const auto & x) { return x.type == lamp_color; });
 
   return it_lamp != tl_state.lamp_states.end();
+}
+
+geometry_msgs::Point TrafficLightModule::getTrafficLightPosition(
+  const lanelet::ConstLineStringOrPolygon3d traffic_light)
+{
+  geometry_msgs::Point tl_center;
+  for (const auto tl_point : *traffic_light.polygon()) {
+    tl_center.x += tl_point.x() / (*traffic_light.polygon()).size();
+    tl_center.y += tl_point.y() / (*traffic_light.polygon()).size();
+    tl_center.z += tl_point.z() / (*traffic_light.polygon()).size();
+  }
+  return tl_center;
 }

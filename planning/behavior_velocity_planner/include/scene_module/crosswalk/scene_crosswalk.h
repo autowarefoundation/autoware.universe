@@ -61,7 +61,9 @@ public:
     const int64_t module_id, const lanelet::ConstLanelet & crosswalk,
     const PlannerParam & planner_param);
 
-  bool modifyPathVelocity(autoware_planning_msgs::PathWithLaneId * path) override;
+  bool modifyPathVelocity(
+    autoware_planning_msgs::PathWithLaneId * path,
+    autoware_planning_msgs::StopReason * stop_reason) override;
 
   visualization_msgs::MarkerArray createDebugMarkerArray() override;
 
@@ -80,7 +82,7 @@ private:
       polygon,
     const autoware_perception_msgs::DynamicObjectArray::ConstPtr & objects_ptr,
     const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & no_ground_pointcloud_ptr,
-    autoware_planning_msgs::PathWithLaneId & output);
+    autoware_planning_msgs::PathWithLaneId & output, bool * insert_stop);
 
   bool isTargetType(const autoware_perception_msgs::DynamicObject & obj);
 

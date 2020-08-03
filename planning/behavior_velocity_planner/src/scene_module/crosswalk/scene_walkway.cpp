@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include <scene_module/crosswalk/scene_walkway.h>
+#include <utilization/util.h>
 
 #include <cmath>
 
@@ -30,11 +31,13 @@ WalkwayModule::WalkwayModule(
   planner_param_ = planner_param;
 }
 
-bool WalkwayModule::modifyPathVelocity(autoware_planning_msgs::PathWithLaneId * path)
+bool WalkwayModule::modifyPathVelocity(
+  autoware_planning_msgs::PathWithLaneId * path, autoware_planning_msgs::StopReason * stop_reason)
 {
   debug_data_ = {};
   debug_data_.base_link2front = planner_data_->base_link2front;
   first_stop_path_point_index_ = static_cast<int>(path->points.size()) - 1;
+  *stop_reason = planning_utils::initializeStopReason(autoware_planning_msgs::StopReason::WALKWAY);
 
   const auto input = *path;
 
@@ -61,6 +64,12 @@ bool WalkwayModule::modifyPathVelocity(autoware_planning_msgs::PathWithLaneId * 
     if (distance < distance_threshold && planner_data_->isVehicleStopping()) state_ = State::STOP;
     return true;
   } else if (state_ == State::STOP) {
+    /* get stop point and stop factor */
+    autoware_planning_msgs::StopFactor stop_factor;
+    stop_factor.stop_pose = debug_data_.first_stop_pose;
+    stop_factor.stop_factor_points.emplace_back(debug_data_.nearest_collision_point);
+    planning_utils::appendStopReason(stop_factor, stop_reason);
+
     if (planner_data_->isVehicleStopping()) {
       state_ = State::SURPASSED;
     }

@@ -159,4 +159,46 @@ double calcJudgeLineDist(double velocity)  // TODO: also consider jerk
   return judge_line_dist;
 }
 
+autoware_planning_msgs::StopReason initializeStopReason(const std::string & stop_reason)
+{
+  autoware_planning_msgs::StopReason stop_reason_msg;
+  stop_reason_msg.reason = stop_reason;
+  return stop_reason_msg;
+}
+
+void appendStopReason(
+  const autoware_planning_msgs::StopFactor stop_factor,
+  autoware_planning_msgs::StopReason * stop_reason)
+{
+  stop_reason->stop_factors.emplace_back(stop_factor);
+}
+
+std::vector<geometry_msgs::Point> toRosPoints(
+  const autoware_perception_msgs::DynamicObjectArray & object)
+{
+  std::vector<geometry_msgs::Point> points;
+  for (const auto obj : object.objects) {
+    points.emplace_back(obj.state.pose_covariance.pose.position);
+  }
+  return points;
+}
+
+geometry_msgs::Point toRosPoint(const pcl::PointXYZ & pcl_point)
+{
+  geometry_msgs::Point point;
+  point.x = pcl_point.x;
+  point.y = pcl_point.y;
+  point.z = pcl_point.z;
+  return point;
+}
+
+geometry_msgs::Point toRosPoint(const Point2d & boost_point, const double z)
+{
+  geometry_msgs::Point point;
+  point.x = boost_point.x();
+  point.y = boost_point.y();
+  point.z = z;
+  return point;
+}
+
 }  // namespace planning_utils

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include <scene_module/crosswalk/scene_crosswalk.h>
+#include <utilization/util.h>
 
 #include <cmath>
 
@@ -30,11 +31,14 @@ CrosswalkModule::CrosswalkModule(
   planner_param_ = planner_param;
 }
 
-bool CrosswalkModule::modifyPathVelocity(autoware_planning_msgs::PathWithLaneId * path)
+bool CrosswalkModule::modifyPathVelocity(
+  autoware_planning_msgs::PathWithLaneId * path, autoware_planning_msgs::StopReason * stop_reason)
 {
   debug_data_ = {};
   debug_data_.base_link2front = planner_data_->base_link2front;
   first_stop_path_point_index_ = static_cast<int>(path->points.size()) - 1;
+  *stop_reason =
+    planning_utils::initializeStopReason(autoware_planning_msgs::StopReason::CROSSWALK);
 
   const auto input = *path;
 
@@ -62,11 +66,22 @@ bool CrosswalkModule::modifyPathVelocity(autoware_planning_msgs::PathWithLaneId 
     if (!checkSlowArea(input, polygon, objects_ptr, no_ground_pointcloud_ptr, slow_path)) {
       return false;
     }
-    if (!checkStopArea(slow_path, polygon, objects_ptr, no_ground_pointcloud_ptr, stop_path)) {
+
+    bool insert_stop;
+    if (!checkStopArea(
+          slow_path, polygon, objects_ptr, no_ground_pointcloud_ptr, stop_path, &insert_stop)) {
       return false;
     }
     // stop_path = slow_path;
     *path = stop_path;
+
+    if (insert_stop) {
+      /* get stop point and stop factor */
+      autoware_planning_msgs::StopFactor stop_factor;
+      stop_factor.stop_pose = debug_data_.first_stop_pose;
+      stop_factor.stop_factor_points = debug_data_.stop_factor_points;
+      planning_utils::appendStopReason(stop_factor, stop_reason);
+    }
   }
   return true;
 }
@@ -77,9 +92,10 @@ bool CrosswalkModule::checkStopArea(
     crosswalk_polygon,
   const autoware_perception_msgs::DynamicObjectArray::ConstPtr & objects_ptr,
   const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & no_ground_pointcloud_ptr,
-  autoware_planning_msgs::PathWithLaneId & output)
+  autoware_planning_msgs::PathWithLaneId & output, bool * insert_stop)
 {
   output = input;
+  *insert_stop = false;
   bool pedestrian_found = false;
   bool object_found = false;
   ros::Time current_time = ros::Time::now();
@@ -134,11 +150,16 @@ bool CrosswalkModule::checkStopArea(
     if (!bg::within(point, crosswalk_polygon)) continue;
     if (bg::within(point, stop_polygon)) {
       object_found = true;
+      debug_data_.stop_factor_points.emplace_back(
+        planning_utils::toRosPoint(no_ground_pointcloud_ptr->at(i)));
+      break;
     }
   }
 
   // check pedestrian
   for (const auto & object : objects_ptr->objects) {
+    if (object_found) break;
+
     if (isTargetType(object)) {
       Point point(
         object.state.pose_covariance.pose.position.x, object.state.pose_covariance.pose.position.y);
@@ -156,6 +177,11 @@ bool CrosswalkModule::checkStopArea(
             std::vector<Point> line_collision_points;
             bg::intersection(stop_polygon, line, line_collision_points);
             if (!line_collision_points.empty()) pedestrian_found = true;
+            if (pedestrian_found) {
+              debug_data_.stop_factor_points.emplace_back(
+                object.state.pose_covariance.pose.position);
+              break;
+            }
           }
         }
       }
@@ -167,8 +193,10 @@ bool CrosswalkModule::checkStopArea(
   // insert stop point
   if (!insertTargetVelocityPoint(
         input, crosswalk_polygon, planner_param_.stop_margin, 0.0, *planner_data_, output,
-        debug_data_, first_stop_path_point_index_))
+        debug_data_, first_stop_path_point_index_)) {
     return false;
+  }
+  *insert_stop = true;
   return true;
 }
 

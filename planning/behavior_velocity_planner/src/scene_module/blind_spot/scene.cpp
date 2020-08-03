@@ -41,9 +41,13 @@ BlindSpotModule::BlindSpotModule(
     !(assigned_lanelet.regulatoryElementsAs<const lanelet::TrafficLight>().empty());
 }
 
-bool BlindSpotModule::modifyPathVelocity(autoware_planning_msgs::PathWithLaneId * path)
+bool BlindSpotModule::modifyPathVelocity(
+  autoware_planning_msgs::PathWithLaneId * path,
+  autoware_planning_msgs::StopReason * stop_reason)
 {
   debug_data_ = {};
+  *stop_reason =
+    planning_utils::initializeStopReason(autoware_planning_msgs::StopReason::BLIND_SPOT);
 
   const auto input_path = *path;
   debug_data_.path_raw = input_path;
@@ -86,6 +90,7 @@ bool BlindSpotModule::modifyPathVelocity(autoware_planning_msgs::PathWithLaneId 
     return false;
   }
 
+  /* get debug info */
   debug_data_.virtual_wall_pose =
     util::getAheadPose(stop_line_idx, planner_data_->base_link2front, *path);
   debug_data_.stop_point_pose = path->points.at(stop_line_idx).point.pose;
@@ -113,6 +118,12 @@ bool BlindSpotModule::modifyPathVelocity(autoware_planning_msgs::PathWithLaneId 
   if (state_machine_.getState() == State::STOP) {
     constexpr double stop_vel = 0.0;
     util::setVelocityFrom(stop_line_idx, stop_vel, path);
+
+    /* get stop point and stop factor */
+    autoware_planning_msgs::StopFactor stop_factor;
+    stop_factor.stop_pose = debug_data_.stop_point_pose;
+    stop_factor.stop_factor_points = planning_utils::toRosPoints(debug_data_.conflicting_targets);
+    planning_utils::appendStopReason(stop_factor, stop_reason);
   }
 
   return true;
