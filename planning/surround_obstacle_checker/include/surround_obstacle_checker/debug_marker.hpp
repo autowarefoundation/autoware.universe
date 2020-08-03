@@ -15,6 +15,7 @@
  */
 
 #pragma once
+#include <autoware_planning_msgs/StopReasonArray.h>
 #include <geometry_msgs/Pose.h>
 #include <ros/ros.h>
 #include <visualization_msgs/Marker.h>
@@ -36,7 +37,11 @@ private:
   ros::NodeHandle nh_;
   ros::NodeHandle pnh_;
   ros::Publisher debug_viz_pub_;
+  ros::Publisher stop_reason_pub_;
   double base_link2front_;
+
+  visualization_msgs::MarkerArray makeVisualizationMarker();
+  autoware_planning_msgs::StopReasonArray makeStopReasonArray();
 
   std::shared_ptr<geometry_msgs::Point> stop_obstacle_point_ptr_;
   std::shared_ptr<geometry_msgs::Pose> stop_pose_ptr_;
