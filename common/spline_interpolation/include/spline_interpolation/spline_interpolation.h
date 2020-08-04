@@ -82,6 +82,7 @@ private:
   void generateSpline(
     const std::vector<double> & base_index, const std::vector<double> & base_value);
   bool isIncrease(const std::vector<double> & x) const;
+  bool isNonDecrease(const std::vector<double> & x) const;
   bool isValidInput(
     const std::vector<double> & base_index, const std::vector<double> & base_value,
     const std::vector<double> & return_index, std::vector<double> & return_value) const;

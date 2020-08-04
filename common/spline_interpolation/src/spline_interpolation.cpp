@@ -97,6 +97,14 @@ bool SplineInterpolator::interpolate(
 bool SplineInterpolator::isIncrease(const std::vector<double> & x) const
 {
   for (int i = 0; i < static_cast<int>(x.size()) - 1; ++i) {
+    if (x[i] >= x[i + 1]) return false;
+  }
+  return true;
+};
+
+bool SplineInterpolator::isNonDecrease(const std::vector<double> & x) const
+{
+  for (int i = 0; i < static_cast<int>(x.size()) - 1; ++i) {
     if (x[i] > x[i + 1]) return false;
   }
   return true;
@@ -117,8 +125,8 @@ bool SplineInterpolator::isValidInput(
               << base_index.front() << ", " << base_index.back() << "]" << std::endl;
     return false;
   }
-  if (!isIncrease(return_index)) {
-    std::cout << "bad index : base_index is not monotonically increasing. return_index = ["
+  if (!isNonDecrease(return_index)) {
+    std::cout << "bad index : base_index is not monotonically nondecreasing. return_index = ["
               << return_index.front() << ", " << return_index.back() << "]" << std::endl;
     return false;
   }
@@ -192,12 +200,13 @@ std::vector<double> PreconditionedConjugateGradient::solve() const
 {
   // allocation
   const size_t N = rhs_.size();
-  std::vector<double> x(N);       // Solution
-  std::vector<double> r(N - 2);   // Residual
-  std::vector<double> rn(N - 2);  // Residual (next step)
-  std::vector<double> z(N - 2);   // Preconditioned residual
-  std::vector<double> zn(N - 2);  // Preconditioned residual (next step)
-  std::vector<double> p(N - 2);   // Basis
+  std::vector<double> x(N);          // Solution
+  std::vector<double> r(N - 2);      // Residual
+  std::vector<double> rn(N - 2);     // Residual (next step)
+  std::vector<double> z(N - 2);      // Preconditioned residual
+  std::vector<double> zn(N - 2);     // Preconditioned residual (next step)
+  std::vector<double> p(N - 2);      // Basis
+  std::vector<double> zeros(N - 2);  // Zero vector (for check convergence)
 
   // initialization
   x[0] = rhs_[0];
@@ -239,7 +248,7 @@ std::vector<double> PreconditionedConjugateGradient::solve() const
       return r - alpha * y;
     });
     // (5) check convergence
-    if (isConvergeL1(r, rn)) {
+    if (isConvergeL1(rn, zeros)) {
       num_iter = iter;
       break;
     }
