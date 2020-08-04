@@ -79,6 +79,40 @@ geometry_msgs::PoseStamped::ConstPtr getCurrentPose(const tf2_ros::Buffer & tf_b
   return geometry_msgs::PoseStamped::ConstPtr(p);
 }
 
+std::string getStateMessage(const AutowareState & state)
+{
+  if (state == AutowareState::InitializingVehicle) {
+    return "Please wait for a while. If the current pose is not estimated automatically, please "
+           "set it manually.";
+  }
+
+  if (state == AutowareState::WaitingForRoute) {
+    return "Please send a route.";
+  }
+
+  if (state == AutowareState::Planning) {
+    return "Please wait for a while.";
+  }
+
+  if (state == AutowareState::WaitingForEngage) {
+    return "Please set engage.";
+  }
+
+  if (state == AutowareState::Driving) {
+    return "Under autonomous driving. Have fun!";
+  }
+
+  if (state == AutowareState::ArrivedGoal) {
+    return "Autonomous driving has completed. Thank you!";
+  }
+
+  if (state == AutowareState::Emergency) {
+    return "Emergency! Please recover the system.";
+  }
+
+  throw std::runtime_error("invalid state");
+}
+
 }  // namespace
 
 void AutowareStateMonitorNode::onAutowareEngage(const std_msgs::Bool::ConstPtr & msg)
@@ -90,6 +124,11 @@ void AutowareStateMonitorNode::onVehicleControlMode(
   const autoware_vehicle_msgs::ControlMode::ConstPtr & msg)
 {
   state_input_.vehicle_control_mode = msg;
+}
+
+void AutowareStateMonitorNode::onIsEmergency(const std_msgs::Bool::ConstPtr & msg)
+{
+  state_input_.is_emergency = msg;
 }
 
 void AutowareStateMonitorNode::onRoute(const autoware_planning_msgs::Route::ConstPtr & msg)
@@ -150,7 +189,7 @@ void AutowareStateMonitorNode::onTimer(const ros::TimerEvent & event)
     setDisengage();
   }
 
-  if (disengage_on_error_ && autoware_state == AutowareState::Error) {
+  if (disengage_on_emergency_ && autoware_state == AutowareState::Emergency) {
     setDisengage();
   }
 
@@ -162,7 +201,9 @@ void AutowareStateMonitorNode::onTimer(const ros::TimerEvent & event)
     // Add messages line by line
     std::ostringstream oss;
 
-    for (const auto & msg : state_machine_->getErrorMessages()) {
+    oss << getStateMessage(autoware_state) << std::endl;
+
+    for (const auto & msg : state_machine_->getMessages()) {
       oss << msg << std::endl;
     }
 
@@ -173,12 +214,6 @@ void AutowareStateMonitorNode::onTimer(const ros::TimerEvent & event)
 
   // Publish diag message
   updater_.force_update();
-
-  // Reset when error
-  if (autoware_state == AutowareState::Error) {
-    ROS_INFO("reset state machine due to an error");
-    state_machine_ = std::make_shared<StateMachine>(state_param_);
-  }
 }
 
 void AutowareStateMonitorNode::onTopic(
@@ -294,7 +329,7 @@ AutowareStateMonitorNode::AutowareStateMonitorNode()
   private_nh_.param("update_rate", update_rate_, 10.0);
   private_nh_.param("disengage_on_route", disengage_on_route_, true);
   private_nh_.param("disengage_on_complete", disengage_on_complete_, false);
-  private_nh_.param("disengage_on_error", disengage_on_error_, false);
+  private_nh_.param("disengage_on_emergency", disengage_on_emergency_, false);
 
   // Parameter for StateMachine
   private_nh_.param("th_arrived_distance_m", state_param_.th_arrived_distance_m, 1.0);
@@ -319,6 +354,8 @@ AutowareStateMonitorNode::AutowareStateMonitorNode()
     "input/autoware_engage", 1, &AutowareStateMonitorNode::onAutowareEngage, this);
   sub_vehicle_control_mode_ = private_nh_.subscribe(
     "input/vehicle_control_mode", 1, &AutowareStateMonitorNode::onVehicleControlMode, this);
+  sub_is_emergency_ =
+    private_nh_.subscribe("input/is_emergency", 1, &AutowareStateMonitorNode::onIsEmergency, this);
   sub_route_ = private_nh_.subscribe("input/route", 1, &AutowareStateMonitorNode::onRoute, this);
   sub_twist_ = private_nh_.subscribe("input/twist", 100, &AutowareStateMonitorNode::onTwist, this);
 

@@ -54,7 +54,7 @@ private:
   double update_rate_;
   bool disengage_on_route_;
   bool disengage_on_complete_;
-  bool disengage_on_error_;
+  bool disengage_on_emergency_;
 
   std::vector<TopicConfig> topic_configs_;
   std::vector<ParamConfig> param_configs_;
@@ -68,11 +68,13 @@ private:
   // Subscriber
   ros::Subscriber sub_autoware_engage_;
   ros::Subscriber sub_vehicle_control_mode_;
+  ros::Subscriber sub_is_emergency_;
   ros::Subscriber sub_route_;
   ros::Subscriber sub_twist_;
 
   void onAutowareEngage(const std_msgs::Bool::ConstPtr & msg);
   void onVehicleControlMode(const autoware_vehicle_msgs::ControlMode::ConstPtr & msg);
+  void onIsEmergency(const std_msgs::Bool::ConstPtr & msg);
   void onRoute(const autoware_planning_msgs::Route::ConstPtr & msg);
   void onTwist(const geometry_msgs::TwistStamped::ConstPtr & msg);
 

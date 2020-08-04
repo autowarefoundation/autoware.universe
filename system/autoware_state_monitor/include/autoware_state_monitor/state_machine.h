@@ -42,6 +42,7 @@ struct StateInput
 
   std_msgs::Bool::ConstPtr autoware_engage;
   autoware_vehicle_msgs::ControlMode::ConstPtr vehicle_control_mode;
+  std_msgs::Bool::ConstPtr is_emergency;
   autoware_planning_msgs::Route::ConstPtr route;
   geometry_msgs::TwistStamped::ConstPtr twist;
   std::deque<geometry_msgs::TwistStamped::ConstPtr> twist_buffer;
@@ -57,6 +58,7 @@ struct StateParam
 struct Times
 {
   ros::Time arrived_goal;
+  ros::Time planning_completed;
 };
 
 class StateMachine
@@ -66,7 +68,7 @@ public:
 
   AutowareState getCurrentState() const { return autoware_state_; }
   AutowareState updateState(const StateInput & state_input);
-  std::vector<std::string> getErrorMessages() const { return msgs_; }
+  std::vector<std::string> getMessages() const { return msgs_; }
 
 private:
   AutowareState autoware_state_ = AutowareState::InitializingVehicle;
@@ -75,17 +77,17 @@ private:
 
   mutable std::vector<std::string> msgs_;
   mutable Times times_;
-  mutable autoware_planning_msgs::Route::ConstPtr executing_route_;
+  mutable autoware_planning_msgs::Route::ConstPtr executing_route_ = nullptr;
+  mutable bool waiting_after_planning_ = false;
 
   AutowareState judgeAutowareState() const;
 
   bool isModuleInitialized(const char * module_name) const;
   bool isVehicleInitialized() const;
   bool isRouteReceived() const;
-  bool isNewRouteReceived() const;
   bool isPlanningCompleted() const;
   bool isEngaged() const;
   bool isOverridden() const;
+  bool isEmergency() const;
   bool hasArrivedGoal() const;
-  bool hasFailedToArriveGoal() const;
 };

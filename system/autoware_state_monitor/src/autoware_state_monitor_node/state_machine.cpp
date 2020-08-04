@@ -135,12 +135,12 @@ bool StateMachine::isVehicleInitialized() const
     return false;
   }
 
+  // TODO(Kenji Miyake): Check if the vehicle is on a lane?
+
   return true;
 }
 
-bool StateMachine::isRouteReceived() const { return state_input_.route != nullptr; }
-
-bool StateMachine::isNewRouteReceived() const { return state_input_.route != executing_route_; }
+bool StateMachine::isRouteReceived() const { return state_input_.route != executing_route_; }
 
 bool StateMachine::isPlanningCompleted() const
 {
@@ -178,6 +178,15 @@ bool StateMachine::isEngaged() const
 
 bool StateMachine::isOverridden() const { return !isEngaged(); }
 
+bool StateMachine::isEmergency() const
+{
+  if (!state_input_.is_emergency) {
+    return false;
+  }
+
+  return state_input_.is_emergency->data;
+}
+
 bool StateMachine::hasArrivedGoal() const
 {
   const auto is_near_goal = isNearGoal(
@@ -189,12 +198,6 @@ bool StateMachine::hasArrivedGoal() const
     return true;
   }
 
-  return false;
-}
-
-bool StateMachine::hasFailedToArriveGoal() const
-{
-  // not implemented
   return false;
 }
 
@@ -210,67 +213,70 @@ AutowareState StateMachine::judgeAutowareState() const
 {
   switch (autoware_state_) {
     case (AutowareState::InitializingVehicle): {
-      msgs_.push_back(
-        "[InitializingVehicle] Please wait for a while. If the current pose is not estimated "
-        "automatically, please set manually.");
-
-      if (!isVehicleInitialized()) {
-        break;
+      if (isVehicleInitialized()) {
+        return AutowareState::WaitingForRoute;
       }
 
-      return AutowareState::WaitingForRoute;
+      break;
     }
 
     case (AutowareState::WaitingForRoute): {
-      msgs_.push_back("[WaitingForRoute] Please send a route.");
-
-      // TODO: canExecuteAutonomousDriving, inGeoFence, etc...?
-
-      if (!isRouteReceived()) {
-        break;
+      if (isRouteReceived()) {
+        return AutowareState::Planning;
       }
 
-      if (!isNewRouteReceived()) {
-        break;
-      }
-
-      return AutowareState::Planning;
+      break;
     }
 
     case (AutowareState::Planning): {
-      msgs_.push_back("[Planning] Please wait for a while.");
       executing_route_ = state_input_.route;
 
-      if (!isPlanningCompleted()) {
-        break;
+      if (isPlanningCompleted()) {
+        if (!waiting_after_planning_) {
+          waiting_after_planning_ = true;
+          times_.planning_completed = ros::Time::now();
+          break;
+        }
+
+        // Wait after planning completed to avoid sync error
+        constexpr double wait_time_after_planning = 1.0;
+        const auto time_from_planning = ros::Time::now() - times_.planning_completed;
+        if (time_from_planning.toSec() > wait_time_after_planning) {
+          waiting_after_planning_ = false;
+          return AutowareState::WaitingForEngage;
+        }
       }
 
-      return AutowareState::WaitingForEngage;
+      break;
     }
 
     case (AutowareState::WaitingForEngage): {
-      msgs_.push_back("[WaitingForEngage] Please set engage.");
-
-      if (!isEngaged()) {
-        break;
+      if (isEmergency()) {
+        return AutowareState::Emergency;
       }
 
-      if (isNewRouteReceived()) {
+      if (isRouteReceived()) {
         return AutowareState::Planning;
       }
 
-      return AutowareState::Driving;
+      if (isEngaged()) {
+        return AutowareState::Driving;
+      }
+
+      break;
     }
 
     case (AutowareState::Driving): {
-      msgs_.push_back("[Driving] Under autonomous driving. Have fun!");
+      if (isEmergency()) {
+        return AutowareState::Emergency;
+      }
+
+      if (isRouteReceived()) {
+        return AutowareState::Planning;
+      }
 
       if (isOverridden()) {
         return AutowareState::WaitingForEngage;
-      }
-
-      if (isNewRouteReceived()) {
-        return AutowareState::Planning;
       }
 
       if (hasArrivedGoal()) {
@@ -278,21 +284,15 @@ AutowareState StateMachine::judgeAutowareState() const
         return AutowareState::ArrivedGoal;
       }
 
-      if (hasFailedToArriveGoal()) {
-        return AutowareState::FailedToArriveGoal;
-      }
-
       break;
     }
 
     case (AutowareState::ArrivedGoal): {
-      msgs_.push_back("[ArrivedGoal] Autonomous driving has completed. Thank you!");
-
       if (isOverridden()) {
         return AutowareState::WaitingForEngage;
       }
 
-      constexpr double wait_time_after_arrived_goal = 2;
+      constexpr double wait_time_after_arrived_goal = 2.0;
       const auto time_from_arrived_goal = ros::Time::now() - times_.arrived_goal;
       if (time_from_arrived_goal.toSec() > wait_time_after_arrived_goal) {
         return AutowareState::WaitingForRoute;
@@ -301,26 +301,8 @@ AutowareState StateMachine::judgeAutowareState() const
       break;
     }
 
-    case (AutowareState::FailedToArriveGoal): {
-      msgs_.push_back("[FailedToArriveGoal] Autonomous driving has failed. Please override.");
-
-      if (isOverridden()) {
-        return AutowareState::WaitingForEngage;
-      }
-
-      constexpr double wait_time_after_failed = 2;
-      const auto time_from_failed = ros::Time::now() - times_.arrived_goal;
-      if (time_from_failed.toSec() > wait_time_after_failed) {
-        return AutowareState::Error;
-      }
-
-      break;
-    }
-
-    case (AutowareState::Error): {
-      msgs_.push_back("[Error] An error has occurred. Please override.");
-
-      if (isOverridden()) {
+    case (AutowareState::Emergency): {
+      if (!isEmergency()) {
         return AutowareState::WaitingForEngage;
       }
 
@@ -328,10 +310,7 @@ AutowareState StateMachine::judgeAutowareState() const
     }
 
     default: {
-      std::ostringstream oss;
-      ROS_ERROR("no state was given: state = %d", static_cast<int>(autoware_state_));
-
-      return AutowareState::Error;
+      throw std::runtime_error("invalid state");
     }
   }
 

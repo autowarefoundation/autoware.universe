@@ -21,44 +21,41 @@
 #include <autoware_system_msgs/AutowareState.h>
 
 enum class AutowareState : int8_t {
-  Error = -1,
-  InitializingVehicle = 0,
+  InitializingVehicle,
   WaitingForRoute,
   Planning,
   WaitingForEngage,
   Driving,
   ArrivedGoal,
-  FailedToArriveGoal,
+  Emergency,
 };
 
 inline AutowareState fromString(const std::string & state)
 {
   using StateMessage = autoware_system_msgs::AutowareState;
 
-  if (state == StateMessage::Error) return AutowareState::Error;
   if (state == StateMessage::InitializingVehicle) return AutowareState::InitializingVehicle;
   if (state == StateMessage::WaitingForRoute) return AutowareState::WaitingForRoute;
   if (state == StateMessage::Planning) return AutowareState::Planning;
   if (state == StateMessage::WaitingForEngage) return AutowareState::WaitingForEngage;
   if (state == StateMessage::Driving) return AutowareState::Driving;
   if (state == StateMessage::ArrivedGoal) return AutowareState::ArrivedGoal;
-  if (state == StateMessage::FailedToArriveGoal) return AutowareState::FailedToArriveGoal;
+  if (state == StateMessage::Emergency) return AutowareState::Emergency;
 
-  return AutowareState::Error;
+  throw std::runtime_error("invalid state");
 }
 
 inline std::string toString(const AutowareState & state)
 {
   using StateMessage = autoware_system_msgs::AutowareState;
 
-  if (state == AutowareState::Error) return StateMessage::Error;
   if (state == AutowareState::InitializingVehicle) return StateMessage::InitializingVehicle;
   if (state == AutowareState::WaitingForRoute) return StateMessage::WaitingForRoute;
   if (state == AutowareState::Planning) return StateMessage::Planning;
   if (state == AutowareState::WaitingForEngage) return StateMessage::WaitingForEngage;
   if (state == AutowareState::Driving) return StateMessage::Driving;
   if (state == AutowareState::ArrivedGoal) return StateMessage::ArrivedGoal;
-  if (state == AutowareState::FailedToArriveGoal) return StateMessage::FailedToArriveGoal;
+  if (state == AutowareState::Emergency) return StateMessage::Emergency;
 
-  return StateMessage::Error;
+  throw std::runtime_error("invalid state");
 }
