@@ -70,6 +70,24 @@ bool splineInterpolate(
     base_z.push_back(p.point.pose.position.z);
   }
   std::vector<double> base_s = interpolation::calcEuclidDist(base_x, base_y);
+
+  // remove duplicating sample points
+  {
+    size_t Ns = base_s.size();
+    size_t i = 1;
+    while (i < Ns) {
+      if (std::fabs(base_s[i - 1] - base_s[i]) < ep) {
+        base_s.erase(base_s.begin() + i);
+        base_x.erase(base_x.begin() + i);
+        base_y.erase(base_y.begin() + i);
+        base_z.erase(base_z.begin() + i);
+        Ns -= 1;
+        i -= 1;
+      }
+      ++i;
+    }
+  }
+
   std::vector<double> resampled_s;
   for (double d = 0.0; d < base_s.back() - ep; d += interval) {
     resampled_s.push_back(d);
@@ -81,9 +99,12 @@ bool splineInterpolate(
   std::vector<double> resampled_y;
   std::vector<double> resampled_z;
   if (
-    !spline.interpolate(base_s, base_x, resampled_s, resampled_x, spline_interpolation::Method::PCG) ||
-    !spline.interpolate(base_s, base_y, resampled_s, resampled_y, spline_interpolation::Method::PCG) ||
-    !spline.interpolate(base_s, base_z, resampled_s, resampled_z, spline_interpolation::Method::PCG)) {
+    !spline.interpolate(
+      base_s, base_x, resampled_s, resampled_x, spline_interpolation::Method::PCG) ||
+    !spline.interpolate(
+      base_s, base_y, resampled_s, resampled_y, spline_interpolation::Method::PCG) ||
+    !spline.interpolate(
+      base_s, base_z, resampled_s, resampled_z, spline_interpolation::Method::PCG)) {
     ROS_ERROR("[IntersectionModule::splineInterpolate] spline interpolation failed.");
     return false;
   }
