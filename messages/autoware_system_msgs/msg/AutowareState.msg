@@ -1,11 +1,10 @@
-string Error=Error
 string InitializingVehicle=InitializingVehicle
 string WaitingForRoute=WaitingForRoute
 string Planning=Planning
 string WaitingForEngage=WaitingForEngage
 string Driving=Driving
 string ArrivedGoal=ArrivedGoal
-string FailedToArriveGoal=FailedToArriveGoal
+string Emergency=Emergency
 
 string state
 string msg
