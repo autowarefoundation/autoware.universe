@@ -68,18 +68,25 @@ void RingOutlierFilterNodelet::filter(
       p.z = iter->z;
       pcl_tmp.points.push_back(p);
       // if(std::abs(iter->distance - (iter+1)->distance) <= std::sqrt(iter->distance) * 0.08) {
-      const double min_dist = std::min(iter->distance, (iter + 1)->distance);
-      const double max_dist = std::max(iter->distance, (iter + 1)->distance);
-      if (min_dist > 0 && max_dist > 0 && max_dist / min_dist < distance_ratio_) {
+      const float min_dist = std::min(iter->distance, (iter + 1)->distance);
+      const float max_dist = std::max(iter->distance, (iter + 1)->distance);
+      float azimuth_diff = (iter+1)->azimuth - iter->azimuth;
+      azimuth_diff = azimuth_diff < 0.f ? azimuth_diff + 36000.f : azimuth_diff;
+
+      if (min_dist > 0.f && max_dist > 0.f && azimuth_diff < 100.f && max_dist / min_dist < distance_ratio_) {
         continue;
       } else {
+
+        // same code
         if (
           pcl_tmp.points.size() > num_points_threshold_ &&
-          std::sqrt(
-            std::pow(pcl_tmp.points.front().x - pcl_tmp.points.back().x, 2.0) +
-            std::pow(pcl_tmp.points.front().y - pcl_tmp.points.back().y, 2.0) +
-            std::pow(pcl_tmp.points.front().z - pcl_tmp.points.back().z, 2.0)) >=
-            object_length_threshold_) {
+          (pcl_tmp.points.front().x - pcl_tmp.points.back().x) *
+                (pcl_tmp.points.front().x - pcl_tmp.points.back().x) +
+              (pcl_tmp.points.front().y - pcl_tmp.points.back().y) *
+                (pcl_tmp.points.front().y - pcl_tmp.points.back().y) +
+              (pcl_tmp.points.front().z - pcl_tmp.points.back().z) *
+                (pcl_tmp.points.front().z - pcl_tmp.points.back().z) >=
+            object_length_threshold_ * object_length_threshold_) {
           for (const auto & tmp_p : pcl_tmp.points) {
             pcl_output->points.push_back(tmp_p);
           }
@@ -87,6 +94,23 @@ void RingOutlierFilterNodelet::filter(
         pcl_tmp.points.clear();
       }
     }
+
+    // same code
+    if (
+      pcl_tmp.points.size() > num_points_threshold_ &&
+      (pcl_tmp.points.front().x - pcl_tmp.points.back().x) *
+            (pcl_tmp.points.front().x - pcl_tmp.points.back().x) +
+          (pcl_tmp.points.front().y - pcl_tmp.points.back().y) *
+            (pcl_tmp.points.front().y - pcl_tmp.points.back().y) +
+          (pcl_tmp.points.front().z - pcl_tmp.points.back().z) *
+            (pcl_tmp.points.front().z - pcl_tmp.points.back().z) >=
+        object_length_threshold_ * object_length_threshold_) {
+      for (const auto & tmp_p : pcl_tmp.points) {
+        pcl_output->points.push_back(tmp_p);
+      }
+    }
+    pcl_tmp.points.clear();
+
   }
 
   // TODO delete test code
