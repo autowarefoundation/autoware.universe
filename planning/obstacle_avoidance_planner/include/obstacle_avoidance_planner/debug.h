@@ -16,16 +16,18 @@
 #ifndef DEBUG_OBSTACLEA_AVOIDANCE_PLANNER_H
 #define DEBUG_OBSTACLEA_AVOIDANCE_PLANNER_H
 
-class ConstrainRectangle;
+struct ConstrainRectangle;
+struct Bounds;
+struct DebugData;
+
+namespace util
+{
+struct Footprint;
+}
 
 visualization_msgs::MarkerArray getDebugVisualizationMarker(
-  const std::vector<geometry_msgs::Point> & interpolated_points,
-  const std::vector<autoware_planning_msgs::TrajectoryPoint> & optimized_points,
-  const std::vector<geometry_msgs::Point> & straight_points,
-  const std::vector<geometry_msgs::Pose> & fixed_points,
-  const std::vector<geometry_msgs::Pose> & non_fixed_points,
-  const std::vector<ConstrainRectangle> & constrain_ranges,
-  const std::vector<autoware_perception_msgs::DynamicObject> & avoiding_objects);
+  const DebugData & debug_data,
+  const std::vector<autoware_planning_msgs::TrajectoryPoint> & optimized_points);
 
 visualization_msgs::MarkerArray getDebugPointsMarkers(
   const std::vector<geometry_msgs::Point> & interpolated_points,
@@ -35,11 +37,51 @@ visualization_msgs::MarkerArray getDebugPointsMarkers(
   const std::vector<geometry_msgs::Pose> & non_fixed_points);
 
 visualization_msgs::MarkerArray getDebugConstrainMarkers(
-  const std::vector<ConstrainRectangle> & constrain_ranges);
+  const std::vector<ConstrainRectangle> & constrain_ranges, const std::string & ns);
 
 visualization_msgs::MarkerArray getObjectsMarkerArray(
   const std::vector<autoware_perception_msgs::DynamicObject> & objects, const std::string & ns,
   const double r, const double g, const double b);
+
+visualization_msgs::MarkerArray getRectanglesMarkerArray(
+  const std::vector<util::Footprint> & rects, const std::string & ns, const double r,
+  const double g, const double b);
+
+visualization_msgs::MarkerArray getRectanglesNumMarkerArray(
+  const std::vector<util::Footprint> & rects, const std::string & ns, const double r,
+  const double g, const double b);
+
+visualization_msgs::MarkerArray getPointsMarkerArray(
+  const std::vector<geometry_msgs::Pose> & points, const std::string & ns, const double r,
+  const double g, const double b);
+
+visualization_msgs::MarkerArray getPointsMarkerArray(
+  const std::vector<geometry_msgs::Point> & points, const std::string & ns, const double r,
+  const double g, const double b);
+
+visualization_msgs::MarkerArray getPointsTextMarkerArray(
+  const std::vector<geometry_msgs::Pose> & points, const std::string & ns, const double r,
+  const double g, const double b);
+
+visualization_msgs::MarkerArray getPointsTextMarkerArray(
+  const std::vector<autoware_planning_msgs::TrajectoryPoint> & points, const std::string & ns,
+  const double r, const double g, const double b);
+
+visualization_msgs::MarkerArray getBaseBoundsLineMarkerArray(
+  const std::vector<Bounds> & bounds, const std::vector<geometry_msgs::Pose> & candidate_p0,
+  const std::string & ns, const double r, const double g, const double b);
+
+visualization_msgs::MarkerArray getTopBoundsLineMarkerArray(
+  const std::vector<Bounds> & bounds, const std::vector<geometry_msgs::Pose> & candidate_p1,
+  const std::string & ns, const double r, const double g, const double b);
+
+visualization_msgs::MarkerArray getVirtualWallMarkerArray(
+  const geometry_msgs::Pose & pose, const std::string & ns, const double r, const double g,
+  const double b);
+
+visualization_msgs::MarkerArray getVirtualWallTextMarkerArray(
+  const geometry_msgs::Pose & pose, const std::string & ns, const double r, const double g,
+  const double b);
 
 nav_msgs::OccupancyGrid getDebugCostmap(
   const cv::Mat & clearance_map, const nav_msgs::OccupancyGrid & occupancy_grid);

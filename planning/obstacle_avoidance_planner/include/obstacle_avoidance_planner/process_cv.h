@@ -20,12 +20,18 @@
 #include <geometry_msgs/Point32.h>
 #include <boost/optional/optional_fwd.hpp>
 
+namespace util
+{
+struct Footprint;
+}
+
 struct CVMaps
 {
   cv::Mat drivable_area;
   cv::Mat clearance_map;
   cv::Mat only_objects_clearance_map;
   cv::Mat area_with_objects_map;
+  nav_msgs::MapMetaData map_info;
 };
 
 struct Edges
@@ -103,6 +109,14 @@ boost::optional<Edges> getEdges(
 
 bool arePointsInsideDriveableArea(
   const std::vector<geometry_msgs::Point> & image_points, const cv::Mat & clearance_map);
+
+double getDistance(
+  const cv::Mat & clearance_map, const geometry_msgs::Point & map_point,
+  const nav_msgs::MapMetaData & map_info, const double default_dist = 0);
+
+boost::optional<int> getStopIdx(
+  const std::vector<util::Footprint> & vehicle_footprints, const geometry_msgs::Pose & ego_pose,
+  const cv::Mat & road_clearance_map, const nav_msgs::MapMetaData & map_info);
 
 CVMaps getMaps(
   const autoware_planning_msgs::Path & path,

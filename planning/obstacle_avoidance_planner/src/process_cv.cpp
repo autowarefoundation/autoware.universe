@@ -457,6 +457,45 @@ cv::Mat getAreaWithObjects(const cv::Mat & drivable_area, const cv::Mat & object
   return area_with_objects;
 }
 
+boost::optional<int> getStopIdx(
+  const std::vector<util::Footprint> & footprints, const geometry_msgs::Pose & ego_pose,
+  const cv::Mat & road_clearance_map, const nav_msgs::MapMetaData & map_info)
+{
+  const int nearest_idx = util::getNearestPointIdx(footprints, ego_pose.position);
+  for (int i = nearest_idx; i < footprints.size(); i++) {
+    constexpr double default_dist = 0.0;
+    const double top_left_dist =
+      getDistance(road_clearance_map, footprints[i].top_left, map_info, default_dist);
+    const double top_right_dist =
+      getDistance(road_clearance_map, footprints[i].top_right, map_info, default_dist);
+    const double bottom_right_dist =
+      getDistance(road_clearance_map, footprints[i].bottom_right, map_info, default_dist);
+    const double bottom_left_dist =
+      getDistance(road_clearance_map, footprints[i].bottom_left, map_info, default_dist);
+    const double epsilon = 1e-8;
+    if (
+      top_left_dist < epsilon || top_right_dist < epsilon || bottom_left_dist < epsilon ||
+      bottom_right_dist < epsilon) {
+      return std::max(i - 1, 0);
+    }
+  }
+  return boost::none;
+}
+
+double getDistance(
+  const cv::Mat & clearance_map, const geometry_msgs::Point & map_point,
+  const nav_msgs::MapMetaData & map_info, const double default_dist)
+{
+  const auto image_point = util::transformMapToOptionalImage(map_point, map_info);
+  if (!image_point) {
+    return default_dist;
+  }
+  const float clearance =
+    clearance_map.ptr<float>((int)image_point.get().y)[(int)image_point.get().x] *
+    map_info.resolution;
+  return clearance;
+}
+
 CVMaps getMaps(
   const autoware_planning_msgs::Path & path,
   const std::vector<autoware_perception_msgs::DynamicObject> & objects,
@@ -473,6 +512,7 @@ CVMaps getMaps(
     max_avoiding_objects_velocity_ms, center_line_width, &debug_avoiding_objects);
   cv_maps.area_with_objects_map = getAreaWithObjects(cv_maps.drivable_area, objects_image);
   cv_maps.only_objects_clearance_map = getClearanceMap(objects_image);
+  cv_maps.map_info = path.drivable_area.info;
 
   debug_data->clearance_map = cv_maps.clearance_map;
   debug_data->only_object_clearance_map = cv_maps.only_objects_clearance_map;

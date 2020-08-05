@@ -16,10 +16,12 @@
 #ifndef NODE_H
 #define NODE_H
 
-#include <mutex>
-#include <boost/optional/optional_fwd.hpp>
 #include <dynamic_reconfigure/server.h>
+#include <boost/optional/optional_fwd.hpp>
+#include <mutex>
 #include "obstacle_avoidance_planner/AvoidancePlannerConfig.h"
+
+#include <nav_msgs/MapMetaData.h>
 
 namespace ros
 {
@@ -68,7 +70,10 @@ class EBPathOptimizer;
 struct QPParam;
 struct TrajectoryParam;
 struct ConstrainParam;
+struct VehicleParam;
+struct MPTParam;
 struct DebugData;
+struct Trajectories;
 
 class ObstacleAvoidancePlanner
 {
@@ -77,6 +82,7 @@ private:
   bool is_publishing_area_with_objects_;
   bool is_showing_debug_info_;
   bool is_using_vehicle_config_;
+  bool is_stopping_if_outside_drivable_area_;
   bool enable_avoidance_;
   const int min_num_points_for_getting_yaw_;
   std::mutex mutex_;
@@ -94,16 +100,18 @@ private:
   std::unique_ptr<QPParam> qp_param_;
   std::unique_ptr<TrajectoryParam> traj_param_;
   std::unique_ptr<ConstrainParam> constrain_param_;
+  std::unique_ptr<VehicleParam> vehicle_param_;
+  std::unique_ptr<MPTParam> mpt_param_;
 
   std::unique_ptr<geometry_msgs::Pose> current_ego_pose_ptr_;
   std::unique_ptr<geometry_msgs::TwistStamped> current_twist_ptr_;
   std::unique_ptr<geometry_msgs::Pose> prev_ego_pose_ptr_;
-  std::unique_ptr<std::vector<autoware_planning_msgs::TrajectoryPoint>> prev_optimized_points_ptr_;
-  std::unique_ptr<std::vector<autoware_planning_msgs::TrajectoryPoint>> prev_traj_points_ptr_;
+  std::unique_ptr<Trajectories> prev_trajectories_ptr_;
   std::unique_ptr<std::vector<autoware_planning_msgs::PathPoint>> prev_path_points_ptr_;
   std::unique_ptr<autoware_perception_msgs::DynamicObjectArray> in_objects_ptr_;
 
-  dynamic_reconfigure::Server<obstacle_avoidance_planner::AvoidancePlannerConfig> dynamic_reconfigure_srv_;
+  dynamic_reconfigure::Server<obstacle_avoidance_planner::AvoidancePlannerConfig>
+    dynamic_reconfigure_srv_;
 
   // TF
   std::unique_ptr<tf2_ros::Buffer> tf_buffer_ptr_;
@@ -114,6 +122,7 @@ private:
   ros::NodeHandle nh_, pnh_;
   ros::Publisher trajectory_pub_;
   ros::Publisher avoiding_traj_pub_;
+  ros::Publisher debug_smoothed_points_pub_;
   ros::Publisher is_avoidance_possible_pub_;
   ros::Publisher debug_markers_pub_;
   ros::Publisher debug_clearance_map_pub_;
@@ -134,10 +143,11 @@ private:
 
   void initialize();
 
+  //generate fine trajectory
   std::vector<autoware_planning_msgs::TrajectoryPoint> generatePostProcessedTrajectory(
     const geometry_msgs::Pose & ego_pose,
     const std::vector<autoware_planning_msgs::PathPoint> & path_points,
-    const std::vector<autoware_planning_msgs::TrajectoryPoint> & merged_optimized_points);
+    const std::vector<autoware_planning_msgs::TrajectoryPoint> & merged_optimized_points) const;
 
   bool needReplan(
     const geometry_msgs::Pose & ego_pose,
@@ -145,7 +155,7 @@ private:
     const std::vector<autoware_planning_msgs::PathPoint> & path_points,
     const std::unique_ptr<ros::Time> & previous_replanned_time,
     const std::unique_ptr<std::vector<autoware_planning_msgs::PathPoint>> & prev_path_points,
-    std::unique_ptr<std::vector<autoware_planning_msgs::TrajectoryPoint>> & prev_traj_points);
+    std::unique_ptr<Trajectories> & prev_traj_points);
 
   std::vector<autoware_planning_msgs::TrajectoryPoint> generateOptimizedTrajectory(
     const geometry_msgs::Pose & ego_pose, const autoware_planning_msgs::Path & input_path);
@@ -162,14 +172,7 @@ private:
 
   std::vector<autoware_planning_msgs::TrajectoryPoint> convertPointsToTrajectory(
     const std::vector<autoware_planning_msgs::PathPoint> & path_points,
-    const std::vector<autoware_planning_msgs::TrajectoryPoint> & trajectory_points);
-
-  boost::optional<geometry_msgs::Point> getExtendedPoint(
-    const std::vector<autoware_planning_msgs::PathPoint> & path_points,
-    const std::vector<geometry_msgs::Point> & interpolated_points);
-
-  std::vector<autoware_planning_msgs::TrajectoryPoint> getOptimizedPointsWhenAborting(
-    const std::vector<autoware_planning_msgs::PathPoint> & path_points);
+    const std::vector<autoware_planning_msgs::TrajectoryPoint> & trajectory_points) const;
 
   void publishingDebugData(
     const DebugData & debug_data, const autoware_planning_msgs::Path & path,
@@ -177,7 +180,37 @@ private:
 
   int calculateNonDecelerationRange(
     const std::vector<autoware_planning_msgs::TrajectoryPoint> & traj_points,
-    const geometry_msgs::Pose & ego_pose, const geometry_msgs::Twist & ego_twist);
+    const geometry_msgs::Pose & ego_pose, const geometry_msgs::Twist & ego_twist) const;
+
+  Trajectories getTrajectoryInsideArea(
+    const Trajectories & trajs, const std::vector<autoware_planning_msgs::PathPoint> & path_points,
+    const cv::Mat & road_clearance_map, const nav_msgs::MapMetaData & map_info,
+    DebugData * debug_data) const;
+
+  boost::optional<Trajectories> calcTrajectoryInsideArea(
+    const Trajectories & trajs, const std::vector<autoware_planning_msgs::PathPoint> & path_points,
+    const cv::Mat & road_clearance_map, const nav_msgs::MapMetaData & map_info,
+    DebugData * debug_data, const bool is_prev_traj = false) const;
+
+  Trajectories getPrevTrajs(
+    const std::vector<autoware_planning_msgs::PathPoint> & path_points) const;
+
+  std::vector<autoware_planning_msgs::TrajectoryPoint> getPrevTrajectory(
+    const std::vector<autoware_planning_msgs::PathPoint> & path_points) const;
+
+  Trajectories makePrevTrajectories(
+    const geometry_msgs::Pose & ego_pose,
+    const std::vector<autoware_planning_msgs::PathPoint> & path_points,
+    const Trajectories & trajs) const;
+
+  Trajectories getBaseTrajectory(
+    const std::vector<autoware_planning_msgs::PathPoint> & path_points,
+    const Trajectories & current_trajs) const;
+
+  boost::optional<int> getStopIdx(
+    const std::vector<autoware_planning_msgs::PathPoint> & path_points, const Trajectories & trajs,
+    const nav_msgs::MapMetaData & map_info, const cv::Mat & road_clearance_map,
+    DebugData * debug_data) const;
 
 public:
   ObstacleAvoidancePlanner();

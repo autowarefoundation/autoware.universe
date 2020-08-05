@@ -8,12 +8,16 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   tf2_ros
   osqp_interface
+  spline_interpolation
   dynamic_reconfigure
 )
 
 generate_dynamic_reconfigure_options(
   cfg/AvoidancePlanner.cfg
 )
+
+find_package(Eigen3 REQUIRED)
+find_package(OpenCV REQUIRED)
 
 catkin_package(
   INCLUDE_DIRS
@@ -25,10 +29,11 @@ catkin_package(
     roscpp
     tf2_ros
     osqp_interface
+    spline_interpolation
+  DEPENDS
+    OpenCV
 )
 
-find_package(Eigen3 REQUIRED)
-find_package(OpenCV REQUIRED)
 
 include_directories(
   include
@@ -40,10 +45,13 @@ add_compile_options(-std=c++14)
 
 
 add_executable(obstacle_avoidance_planner_node
+  src/vehicle_model/vehicle_model_interface.cpp
+  src/vehicle_model/vehicle_model_bicycle_kinematics.cpp
+  src/vehicle_model/vehicle_model_bicycle_kinematics_no_delay.cpp
   src/util.cpp
   src/debug.cpp
-  src/spline_interpolate.cpp
   src/eb_path_optimizer.cpp
+  src/mpt_optimizer.cpp
   src/process_cv.cpp
   src/node.cpp
   src/main.cpp)
