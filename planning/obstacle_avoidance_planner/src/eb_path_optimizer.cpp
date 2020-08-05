@@ -1419,6 +1419,10 @@ FOAData EBPathOptimizer::getFOAData(
       foa_data.is_avoidance_possible = false;
     }
   }
+  if (!foa_data.is_avoidance_possible) {
+    ROS_WARN("[ObstacleAvoidancePlanner] Fail to make new trajectory from empty drivable area");
+  }
+
   foa_data.constrain_rectangles = rectangles;
   foa_data.avoiding_traj_points = calculateTrajectory(
     interpolated_points, foa_data.constrain_rectangles, farrest_idx, OptMode::Visualizing);
