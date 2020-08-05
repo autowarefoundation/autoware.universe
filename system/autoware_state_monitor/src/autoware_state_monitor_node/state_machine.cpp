@@ -288,10 +288,6 @@ AutowareState StateMachine::judgeAutowareState() const
     }
 
     case (AutowareState::ArrivedGoal): {
-      if (isOverridden()) {
-        return AutowareState::WaitingForEngage;
-      }
-
       constexpr double wait_time_after_arrived_goal = 2.0;
       const auto time_from_arrived_goal = ros::Time::now() - times_.arrived_goal;
       if (time_from_arrived_goal.toSec() > wait_time_after_arrived_goal) {
