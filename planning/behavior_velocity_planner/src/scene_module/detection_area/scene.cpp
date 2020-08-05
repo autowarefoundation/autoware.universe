@@ -25,7 +25,7 @@ double calcSignedDistance(const geometry_msgs::Pose & p1, const Eigen::Vector2d 
 {
   Eigen::Affine3d map2p1;
   tf2::fromMsg(p1, map2p1);
-  auto basecoords_p2 = map2p1 * Eigen::Vector3d(p2.x(), p2.y(), p1.position.z);
+  auto basecoords_p2 = map2p1.inverse() * Eigen::Vector3d(p2.x(), p2.y(), p1.position.z);
   return basecoords_p2.x() >= 0 ? basecoords_p2.norm() : -basecoords_p2.norm();
 }
 }  // namespace
