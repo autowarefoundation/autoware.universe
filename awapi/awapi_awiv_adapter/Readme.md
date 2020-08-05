@@ -40,7 +40,7 @@
 | ✓   | int32                                  | control_mode         | accroding to autoware_vehicle_msgs/ControlMode | manual/auto (changed by /awapi/autoware/put/engage)                          |
 |     | int32                                  | gate_mode            | autoware_vehicle_msgs/GateMode                 | auto/remote (it is valid only when control_mode=auto))                       |
 |     | bool                                   | emergency_stopped    | True in emergency mode                         |                                                                              |
-|     | autoware_planning_msgs/StopReasonArray | stop_reason          |                                                | "stop_pose" represents the position of "base_link" (not the head of the car) |
+| ✓   | autoware_planning_msgs/StopReasonArray | stop_reason          |                                                | "stop_pose" represents the position of "base_link" (not the head of the car) |
 | ✓   | diagnostic_msgs/DiagnosticStatus[]     | diagnostics          |                                                |                                                                              |
 |     | bool                                   | autonomous_overriden |                                                | get info from pacmod msg directly (global_rpt/override_active)               |
 
@@ -60,7 +60,7 @@
 
 | ✓   | type                                        | name | unit | note |
 | --- | :------------------------------------------ | :--- | :--- | :--- |
-|     | autoware_perception_msgs/DynamicObjectArray |      |      |      |
+| ✓   | autoware_perception_msgs/DynamicObjectArray |      |      |      |
 
 ### /awapi/lane_change/get/status
 
@@ -101,9 +101,9 @@
 - set upper velocity
 - MessageType: std_msgs/Float32
 
-| ✓   | type             | name | unit | note |
-| --- | :--------------- | :--- | :--- | :--- |
-|     | std_msgs/Float32 |      |      |      |
+| ✓   | type             | name | unit | note         |
+| --- | :--------------- | :--- | :--- | :----------- |
+| ✓   | std_msgs/Float32 |      |      | max velocity |
 
 ### /awapi/autoware/put/gate_mode
 
@@ -133,14 +133,14 @@
 | --- | :------------ | :--- | :--- | :--- |
 |     | std_msgs/Bool |      |      |      |
 
-### /awapi/autoware/put/goal_pose
+### /awapi/autoware/put/route
 
 - send goal pose
-- MessageType: geometry_msgs/PoseStamped
+- MessageType: autoware_planning_msgs/Route
 
-| ✓   | type                      | name | unit | note |
-| --- | :------------------------ | :--- | :--- | :--- |
-|     | geometry_msgs/PoseStamped |      |      |      |
+| ✓   | type                         | name | unit | note |
+| --- | :--------------------------- | :--- | :--- | :--- |
+|     | autoware_planning_msgs/Route |      |      |      |
 
 ### /awapi/lane_change/put/approval
 
