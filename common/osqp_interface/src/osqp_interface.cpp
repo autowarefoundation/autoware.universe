@@ -190,9 +190,11 @@ void OSQPInterface::updateEpsRel(const double eps_rel) { osqp_update_eps_rel(wor
 
 void OSQPInterface::updateMaxIter(const int max_iter) { osqp_update_max_iter(work, max_iter); }
 
+void OSQPInterface::updateVerbose(const bool is_verbose) { osqp_update_verbose(work, is_verbose); }
+
 int OSQPInterface::getTakenIter() { return work->info->iter; }
 
-std::tuple<std::vector<double>, std::vector<double>, int> OSQPInterface::solve()
+std::tuple<std::vector<double>, std::vector<double>, int, int> OSQPInterface::solve()
 {
   // Solve Problem
   osqp_solve(work);
@@ -206,21 +208,23 @@ std::tuple<std::vector<double>, std::vector<double>, int> OSQPInterface::solve()
   std::vector<double> sol_lagrange_multiplier(sol_y, sol_y + static_cast<int>(param_n));
   // Solver polish status
   int status_polish = work->info->status_polish;
+  // Solver solution status
+  int status_solution = work->info->status_val;
   // Result tuple
-  std::tuple<std::vector<double>, std::vector<double>, int> result =
-    std::make_tuple(sol_primal, sol_lagrange_multiplier, status_polish);
+  std::tuple<std::vector<double>, std::vector<double>, int, int> result =
+    std::make_tuple(sol_primal, sol_lagrange_multiplier, status_polish, status_solution);
 
   return result;
 }
 
-std::tuple<std::vector<double>, std::vector<double>, int> OSQPInterface::optimize()
+std::tuple<std::vector<double>, std::vector<double>, int, int> OSQPInterface::optimize()
 {
   // Run the solver on the stored problem representation.
-  std::tuple<std::vector<double>, std::vector<double>, int> result = solve();
+  std::tuple<std::vector<double>, std::vector<double>, int, int> result = solve();
   return result;
 }
 
-std::tuple<std::vector<double>, std::vector<double>, int> OSQPInterface::optimize(
+std::tuple<std::vector<double>, std::vector<double>, int, int> OSQPInterface::optimize(
   const Eigen::MatrixXd & P, const Eigen::MatrixXd & A, const std::vector<double> & q,
   const std::vector<double> & l, const std::vector<double> & u)
 {
@@ -228,7 +232,7 @@ std::tuple<std::vector<double>, std::vector<double>, int> OSQPInterface::optimiz
   initializeProblem(P, A, q, l, u);
 
   // Run the solver on the stored problem representation.
-  std::tuple<std::vector<double>, std::vector<double>, int> result = solve();
+  std::tuple<std::vector<double>, std::vector<double>, int, int> result = solve();
 
   // Free allocated memory for problem
   osqp_cleanup(work);
