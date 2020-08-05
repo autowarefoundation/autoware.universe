@@ -18,6 +18,7 @@
 #include <awapi_awiv_adapter/awapi_autoware_util.h>
 #include <awapi_awiv_adapter/awapi_lane_change_state_publisher.h>
 #include <awapi_awiv_adapter/awapi_obstacle_avoidance_state_publisher.h>
+#include <awapi_awiv_adapter/awapi_stop_reason_aggregator.h>
 #include <awapi_awiv_adapter/awapi_vehicle_state_publisher.h>
 
 namespace autoware_api
@@ -69,7 +70,7 @@ private:
   void callbackControlMode(const autoware_vehicle_msgs::ControlMode::ConstPtr & msg_ptr);
   void callbackGateMode(const autoware_control_msgs::GateMode::ConstPtr & msg_ptr);
   void callbackIsEmergency(const std_msgs::Bool::ConstPtr & msg_ptr);
-  // void callbackStopReason();  // TODO: not implemented
+  void callbackStopReason(const autoware_planning_msgs::StopReasonArray::ConstPtr & msg_ptr);
   void callbackDiagnostics(const diagnostic_msgs::DiagnosticArray::ConstPtr & msg_ptr);
   void callbackGlobalRpt(const pacmod_msgs::GlobalRpt::ConstPtr & msg_ptr);
   void callbackLaneChangeAvailable(const std_msgs::Bool::ConstPtr & msg_ptr);
@@ -89,9 +90,11 @@ private:
   AutowareInfo aw_info_;
   std::unique_ptr<AutowareIvVehicleStatePublisher> vehicle_state_publisher_;
   std::unique_ptr<AutowareIvAutowareStatePublisher> autoware_state_publisher_;
+  std::unique_ptr<AutowareIvStopReasonAggregator> stop_reason_aggreagator_;
   std::unique_ptr<AutowareIvLaneChangeStatePublisher> lane_change_state_publisher_;
   std::unique_ptr<AutowareIvObstacleAvoidanceStatePublisher> obstacle_avoidance_state_publisher_;
   double status_pub_hz_;
+  double stop_reason_timeout_;
 };
 
 }  // namespace autoware_api

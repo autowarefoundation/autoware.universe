@@ -22,12 +22,14 @@ AutowareIvAdapter::AutowareIvAdapter() : nh_(), pnh_("~"), tf_listener_(tf_buffe
 {
   // get param
   pnh_.param<double>("status_pub_hz", status_pub_hz_, 5.0);
+  pnh_.param<double>("stop_reason_timeout", stop_reason_timeout_, 0.5);
   const bool em_handle_param = waitForParam<bool>(pnh_, "param/emergency_handling");
   emergencyParamCheck(em_handle_param);
 
   // setup instance
   vehicle_state_publisher_ = std::make_unique<AutowareIvVehicleStatePublisher>();
   autoware_state_publisher_ = std::make_unique<AutowareIvAutowareStatePublisher>();
+  stop_reason_aggreagator_ = std::make_unique<AutowareIvStopReasonAggregator>(stop_reason_timeout_);
   lane_change_state_publisher_ = std::make_unique<AutowareIvLaneChangeStatePublisher>();
   obstacle_avoidance_state_publisher_ =
     std::make_unique<AutowareIvObstacleAvoidanceStatePublisher>();
@@ -48,11 +50,8 @@ AutowareIvAdapter::AutowareIvAdapter() : nh_(), pnh_("~"), tf_listener_(tf_buffe
   sub_gate_mode_ = pnh_.subscribe("input/gate_mode", 1, &AutowareIvAdapter::callbackGateMode, this);
   sub_emergency_ =
     pnh_.subscribe("input/is_emergency", 1, &AutowareIvAdapter::callbackIsEmergency, this);
-  //TODO: not implemented
-  /*
   sub_stop_reason_ =
-    pnh_.subscribe("input/stop_reason", 1, &AutowareIvAdapter::callbackStopReason, this);
-  */
+    pnh_.subscribe("input/stop_reason", 100, &AutowareIvAdapter::callbackStopReason, this);
   sub_diagnostics_ =
     pnh_.subscribe("input/diagnostics", 1, &AutowareIvAdapter::callbackDiagnostics, this);
   sub_global_rpt_ =
@@ -170,13 +169,11 @@ void AutowareIvAdapter::callbackIsEmergency(const std_msgs::Bool::ConstPtr & msg
   aw_info_.is_emergency_ptr = msg_ptr;
 }
 
-// TODO: not implemented
-/*
-void AutowareIvAdapter::callbackStopReason(& msg_ptr)
+void AutowareIvAdapter::callbackStopReason(
+  const autoware_planning_msgs::StopReasonArrayConstPtr & msg_ptr)
 {
-  aw_info_.stop_reason_ptr = msg_ptr;
+  aw_info_.stop_reason_ptr = stop_reason_aggreagator_->updateStopReasonArray(msg_ptr);
 }
-*/
 
 void AutowareIvAdapter::callbackDiagnostics(
   const diagnostic_msgs::DiagnosticArray::ConstPtr & msg_ptr)
@@ -186,7 +183,6 @@ void AutowareIvAdapter::callbackDiagnostics(
 
 void AutowareIvAdapter::callbackGlobalRpt(const pacmod_msgs::GlobalRpt::ConstPtr & msg_ptr)
 {
-  // TODO: now, it is not used
   aw_info_.global_rpt_ptr = msg_ptr;
 }
 

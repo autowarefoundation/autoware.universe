@@ -37,7 +37,7 @@ void AutowareIvAutowareStatePublisher::statePublisher(const AutowareInfo & aw_in
   getControlModeInfo(aw_info.control_mode_ptr, &status);
   getGateModeInfo(aw_info.gate_mode_ptr, &status);
   getIsEmergencyInfo(aw_info.is_emergency_ptr, &status);
-  // getStopReasonInfo(aw_info.stop_reason_ptr, &status); // TODO: not implemented
+  getStopReasonInfo(aw_info.stop_reason_ptr, &status);
   getDiagInfo(aw_info.diagnostic_ptr, &status);
   getGlobalRptInfo(aw_info.global_rpt_ptr, &status);
 
@@ -97,12 +97,17 @@ void AutowareIvAutowareStatePublisher::getIsEmergencyInfo(
   status->emergency_stopped = is_emergency_ptr->data;
 }
 
-// TODO: not implemented
-/*
-  void AutowareIvAutowareStatePublisher::getStopReasonInfo(
-    const - & stop_reason_ptr,
-    autoware_api_msgs::AwapiAutowareStatus * status){}
-  */
+void AutowareIvAutowareStatePublisher::getStopReasonInfo(
+  const autoware_planning_msgs::StopReasonArray::ConstPtr & stop_reason_ptr,
+  autoware_api_msgs::AwapiAutowareStatus * status)
+{
+  if (!stop_reason_ptr) {
+    ROS_WARN_STREAM_THROTTLE(5.0, "[AutowareIvAutowareStatePublisher] stop reason is nullptr");
+    return;
+  }
+
+  status->stop_reason = *stop_reason_ptr;
+}
 
 void AutowareIvAutowareStatePublisher::getDiagInfo(
   const diagnostic_msgs::DiagnosticArray::ConstPtr & diag_ptr,

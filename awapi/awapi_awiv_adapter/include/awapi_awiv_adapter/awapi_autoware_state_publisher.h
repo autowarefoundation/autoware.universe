@@ -45,12 +45,9 @@ private:
   void getIsEmergencyInfo(
     const std_msgs::Bool::ConstPtr & is_emergency_ptr,
     autoware_api_msgs::AwapiAutowareStatus * status);
-  // TODO: not implemented
-  /*
   void getStopReasonInfo(
-    const - & stop_reason_ptr,
+    const autoware_planning_msgs::StopReasonArray::ConstPtr & stop_reason_ptr,
     autoware_api_msgs::AwapiAutowareStatus * status);
-  */
   void getDiagInfo(
     const diagnostic_msgs::DiagnosticArray::ConstPtr & diag_ptr,
     autoware_api_msgs::AwapiAutowareStatus * status);

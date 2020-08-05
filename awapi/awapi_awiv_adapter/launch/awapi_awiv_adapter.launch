@@ -2,6 +2,7 @@
   <arg name="adapter_output" default="screen" />
   <arg name="relay_output" default="log" />
   <arg name="status_pub_hz" default="5.0" />
+  <arg name="stop_reason_timeout" default="0.5" />
 
   <arg name="input_steer" default="/vehicle/status/steering" />
   <arg name="input_vehicle_cmd" default="/control/vehicle_cmd" />
@@ -13,7 +14,7 @@
   <arg name="input_control_mode" default="/vehicle/status/control_mode" />
   <arg name="input_gate_mode" default="/control/current_gate_mode" />
   <arg name="input_is_emergency" default="/system/emergency/is_emergency" />
-  <arg name="input_stop_reason" default="/planning/scenario_planning/stop_reason" /> <!-- not implemented -->
+  <arg name="input_stop_reason" default="/planning/scenario_planning/status/stop_reasons" />
   <arg name="input_diagnostics" default="/diagnostics_agg" />
   <arg name="input_global_rpt" default="/pacmod/parsed_tx/global_rpt" />
   <arg name="input_lane_change_avaiable" default="/planning/scenario_planning/lane_driving/lane_change_available" />
