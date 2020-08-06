@@ -871,6 +871,42 @@ Visualization Manager:
                         no_start_obstacle_text: true
                       Queue Size: 100
                       Value: true
+                    - Class: rviz/MarkerArray
+                      Enabled: true
+                      Marker Topic: /planning/scenario_planning/lane_driving/motion_planning/obstacle_avoidance_planner/debug/marker
+                      Name: ObstacleAvoidance
+                      Namespaces:
+                        base_bounds_line: false
+                        bounds_candidate_base_text: false
+                        bounds_candidate_for_base: false
+                        bounds_candidate_for_top: false
+                        bounds_candidate_top_text: false
+                        constrain_rect: false
+                        constrain_rect_text: false
+                        constrain_rectlocation: false
+                        current_vehicle_footprint: false
+                        extending_constrain_rect: false
+                        extending_constrain_rect_text: false
+                        extending_constrain_rectlocation: false
+                        fixed_mpt_points: false
+                        fixed_points_for_extending: false
+                        fixed_points_marker: false
+                        interpolated_points_for_extending: false
+                        interpolated_points_marker: false
+                        interpolated_points_text_marker: false
+                        non_fixed_points_for_extending: false
+                        non_fixed_points_marker: false
+                        num_vehicle_footprint: false
+                        optimized_points_marker: false
+                        optimized_points_text_marker: false
+                        smoothed_points_text: false
+                        straight_points_marker: false
+                        top_bounds_line: false
+                        vehicle_footprint: false
+                        virtual_wall: true
+                        virtual_wall_text: true
+                      Queue Size: 100
+                      Value: true
                   Enabled: true
                   Name: MotionPlanning
               Enabled: true
