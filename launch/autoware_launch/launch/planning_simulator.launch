@@ -6,7 +6,7 @@
   <arg name="sensor_model"/>
   <!-- Optional parameters -->
   <arg name="rviz" default="true" doc="launch rviz"/>
-  <arg name="rviz_args" default="$-d (find autoware_launch)/rviz/autoware.rviz"/>
+  <arg name="rviz_args" default="-d $(find autoware_launch)/rviz/autoware.rviz"/>
   <arg name="lanelet2_map_file" default="lanelet2_map.osm" />
   <arg name="pointcloud_map_file" default="pointcloud_map.pcd" />
   <!-- Optional parameters for scenario simulation -->
