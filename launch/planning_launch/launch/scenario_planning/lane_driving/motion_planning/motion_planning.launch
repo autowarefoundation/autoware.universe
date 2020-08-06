@@ -6,6 +6,7 @@
     <remap from="~input/path" to="$(arg input_path_topic)" />
     <remap from="~output/path" to="obstacle_avoidance_planner/trajectory" />
     <include file="$(find obstacle_avoidance_planner)/launch/obstacle_avoidance_planner.launch">
+      <arg name="param_path" value="$(find planning_launch)/config/scenario_planning/lane_driving/motion_planning/obstacle_avoidance_planner/obstacle_avoidance_planner.yaml"/>
     </include>
   </group>
 
