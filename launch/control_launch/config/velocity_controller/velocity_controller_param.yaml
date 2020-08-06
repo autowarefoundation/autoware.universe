@@ -37,6 +37,7 @@ max_jerk: 2.0
 min_jerk: -5.0
 
 # slope compensation
+enable_slope_compensation: true
 max_pitch_rad: 0.1
 min_pitch_rad: -0.1
 lpf_pitch_gain: 0.95
