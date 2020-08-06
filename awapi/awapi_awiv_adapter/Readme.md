@@ -43,6 +43,7 @@
 | ✓   | autoware_planning_msgs/StopReasonArray | stop_reason          |                                                | "stop_pose" represents the position of "base_link" (not the head of the car) |
 | ✓   | diagnostic_msgs/DiagnosticStatus[]     | diagnostics          |                                                |                                                                              |
 |     | bool                                   | autonomous_overriden |                                                | get info from pacmod msg directly (global_rpt/override_active)               |
+|     | bool                                   | arrived_goal         |                                                |                                                                              |
 
 ### /awapi/autoware/get/route
 

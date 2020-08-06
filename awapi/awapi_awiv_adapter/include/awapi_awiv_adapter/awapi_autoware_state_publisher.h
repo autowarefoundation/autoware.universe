@@ -33,6 +33,12 @@ private:
   // publisher
   ros::Publisher pub_state_;
 
+  // parameter
+
+  /* parameter for judging goal now */
+  bool arrived_goal_;
+  autoware_system_msgs::AutowareState::_state_type prev_state_;
+
   void getAutowareStateInfo(
     const autoware_system_msgs::AutowareState::ConstPtr & autoware_state_ptr,
     autoware_api_msgs::AwapiAutowareStatus * status);
@@ -55,6 +61,8 @@ private:
   void getGlobalRptInfo(
     const pacmod_msgs::GlobalRpt::ConstPtr & global_rpt_ptr,
     autoware_api_msgs::AwapiAutowareStatus * status);
+
+  bool isGoal(const autoware_system_msgs::AutowareState::ConstPtr & autoware_state);
 };
 
 }  // namespace autoware_api

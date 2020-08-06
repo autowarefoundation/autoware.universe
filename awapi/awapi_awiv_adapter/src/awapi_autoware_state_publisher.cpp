@@ -18,7 +18,8 @@
 
 namespace autoware_api
 {
-AutowareIvAutowareStatePublisher::AutowareIvAutowareStatePublisher() : nh_(), pnh_("~")
+AutowareIvAutowareStatePublisher::AutowareIvAutowareStatePublisher()
+: nh_(), pnh_("~"), arrived_goal_(false)
 {
   // publisher
   pub_state_ = pnh_.advertise<autoware_api_msgs::AwapiAutowareStatus>("output/autoware_status", 1);
@@ -56,6 +57,7 @@ void AutowareIvAutowareStatePublisher::getAutowareStateInfo(
 
   // get autoware_state
   status->autoware_state = autoware_state_ptr->state;
+  status->arrived_goal = isGoal(autoware_state_ptr);
 }
 
 void AutowareIvAutowareStatePublisher::getControlModeInfo(
@@ -133,6 +135,32 @@ void AutowareIvAutowareStatePublisher::getGlobalRptInfo(
 
   // get global_rpt
   status->autonomous_overriden = global_rpt_ptr->override_active;
+}
+
+bool AutowareIvAutowareStatePublisher::isGoal(
+  const autoware_system_msgs::AutowareState::ConstPtr & autoware_state)
+{
+  //rename
+  const auto & aw_state = autoware_state->state;
+
+  if (aw_state == autoware_system_msgs::AutowareState::ArrivedGoal) {
+    arrived_goal_ = true;
+  } else if (
+    prev_state_ == autoware_system_msgs::AutowareState::Driving &&
+    aw_state == autoware_system_msgs::AutowareState::WaitingForRoute) {
+    arrived_goal_ = true;
+  }
+
+  if (
+    aw_state == autoware_system_msgs::AutowareState::WaitingForEngage ||
+    aw_state == autoware_system_msgs::AutowareState::Driving) {
+    //cancel goal state
+    arrived_goal_ = false;
+  }
+
+  prev_state_ = aw_state;
+
+  return arrived_goal_;
 }
 
 }  // namespace autoware_api
