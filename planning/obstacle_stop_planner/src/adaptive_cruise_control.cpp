@@ -180,6 +180,9 @@ AdaptiveCruiseController::AdaptiveCruiseController(
   param_.valid_est_vel_max = getParam<double>(pnh_, "valid_estimated_vel_max", 20.0);
   param_.valid_est_vel_min = getParam<double>(pnh_, "valid_estimated_vel_min", -20.0);
   param_.thresh_vel_to_stop = getParam<double>(pnh_, "thresh_vel_to_stop", 0.5);
+
+  /* publisher */
+  pub_debug_ = pnh_.advertise<std_msgs::Float32MultiArray>("debug_values", 1);
 }
 
 void AdaptiveCruiseController::insertAdaptiveCruiseVelocity(
@@ -190,6 +193,9 @@ void AdaptiveCruiseController::insertAdaptiveCruiseVelocity(
   const geometry_msgs::TwistStamped::ConstPtr current_velocity_ptr, bool * need_to_stop,
   autoware_planning_msgs::Trajectory * output_trajectory)
 {
+  debug_values_.data.clear();
+  debug_values_.data.resize(num_debug_values_, 0.0);
+
   const double current_velocity = current_velocity_ptr->twist.linear.x;
   double col_point_distance;
   double point_velocity;
@@ -227,12 +233,14 @@ void AdaptiveCruiseController::insertAdaptiveCruiseVelocity(
     //if failed to estimate velocity, need to stop
     ROS_DEBUG_THROTTLE(1.0, "Failed to estimate velocity of forward vehicle. Insert stop line.");
     *need_to_stop = true;
+    pub_debug_.publish(debug_values_);
     return;
   }
 
   //calculate max(target) velocity of self
   const double upper_velocity =
     calcUpperVelocity(col_point_distance, point_velocity, current_velocity);
+  pub_debug_.publish(debug_values_);
 
   if (upper_velocity <= param_.thresh_vel_to_stop) {
     //if upper velocity is too low, need to stop
@@ -272,6 +280,7 @@ void AdaptiveCruiseController::calcDistanceToNearestPointOnPath(
   if (nearest_point_idx <= 2) {
     // if too nearest collision point, return direct distance
     *distance = boost::geometry::distance(self_poly, nearest_point2d);
+    debug_values_.data.at(DBGVAL::FORWARD_OBJ_DISTANCE) = *distance;
     return;
   }
 
@@ -297,6 +306,7 @@ void AdaptiveCruiseController::calcDistanceToNearestPointOnPath(
   dist_to_point -= param_.min_behavior_stop_margin;
 
   *distance = std::max(0.0, dist_to_point);
+  debug_values_.data.at(DBGVAL::FORWARD_OBJ_DISTANCE) = *distance;
 }
 
 double AdaptiveCruiseController::calcTrajYaw(
@@ -333,6 +343,7 @@ bool AdaptiveCruiseController::estimatePointVelocityFromObject(
 
   if (get_obj) {
     *velocity = obj_vel * std::cos(obj_yaw - traj_yaw);
+    debug_values_.data.at(DBGVAL::ESTIMATED_VEL_OBJ) = *velocity;
     return true;
   } else {
     return false;
@@ -376,6 +387,7 @@ bool AdaptiveCruiseController::estimatePointVelocityFromPcl(
   registerQueToVelocity(est_velocity, nearest_collision_point_time);
   // calc average(median) velocity from que
   *velocity = getMedianVel(est_vel_que_);
+  debug_values_.data.at(DBGVAL::ESTIMATED_VEL_PCL) = *velocity;
 
   prev_collsion_point_time_ = nearest_collision_point_time;
   prev_collsion_point_ = nearest_collision_point;
@@ -386,6 +398,7 @@ bool AdaptiveCruiseController::estimatePointVelocityFromPcl(
 double AdaptiveCruiseController::calcUpperVelocity(
   const double dist_to_col, const double obj_vel, const double self_vel)
 {
+  debug_values_.data.at(DBGVAL::ESTIMATED_VEL_FINAL) = obj_vel;
   if (obj_vel < param_.obstacle_stop_velocity_thresh) {
     // stop by static obstacle
     ROS_DEBUG_THROTTLE(1.0, "The velocity of forward vehicle is too low. Insert stop line.");
@@ -495,6 +508,11 @@ double AdaptiveCruiseController::calcTargetVelocityByPID(
   const double add_vel_d = calcTargetVelocity_D(target_dist, current_dist);
 
   double target_vel = current_vel + add_vel_p + add_vel_i + add_vel_d;
+  debug_values_.data.at(DBGVAL::CURRENT_VEL) = current_vel;
+  debug_values_.data.at(DBGVAL::UPPER_VEL_P) = add_vel_p;
+  debug_values_.data.at(DBGVAL::UPPER_VEL_I) = add_vel_i;
+  debug_values_.data.at(DBGVAL::UPPER_VEL_D) = add_vel_d;
+  debug_values_.data.at(DBGVAL::UPPER_VEL) = target_vel;
   return target_vel;
 };
 

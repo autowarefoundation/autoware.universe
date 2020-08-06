@@ -24,6 +24,7 @@
 #include <pcl_ros/point_cloud.h>
 #include <pcl_ros/transforms.h>
 #include <ros/ros.h>
+#include <std_msgs/Float32MultiArray.h>
 #include <tf2/utils.h>
 
 #include <autoware_perception_msgs/DynamicObjectArray.h>
@@ -49,6 +50,7 @@ public:
 private:
   ros::NodeHandle nh_;
   ros::NodeHandle pnh_;
+  ros::Publisher pub_debug_;
 
   /*
    * Parameter
@@ -176,6 +178,22 @@ private:
     const double current_vel, const double target_vel, const double dist_to_collsion_point,
     autoware_planning_msgs::Trajectory * output_trajectory);
   void registerQueToVelocity(const double vel, const ros::Time & vel_time);
+
+  /* Debug */
+  mutable std_msgs::Float32MultiArray debug_values_;
+  enum DBGVAL {
+    ESTIMATED_VEL_PCL = 0,
+    ESTIMATED_VEL_OBJ = 1,
+    ESTIMATED_VEL_FINAL = 2,
+    FORWARD_OBJ_DISTANCE = 3,
+    CURRENT_VEL = 4,
+    UPPER_VEL_P = 5,
+    UPPER_VEL_I = 6,
+    UPPER_VEL_D = 7,
+    UPPER_VEL = 8,
+
+  };
+  static constexpr unsigned int num_debug_values_ = 9;
 };
 
 }  // namespace motion_planning
