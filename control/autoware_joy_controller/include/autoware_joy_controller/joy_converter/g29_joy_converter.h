@@ -71,10 +71,10 @@ private:
   bool Circle() const { return j_.buttons.at(1); }
   bool Triangle() const { return j_.buttons.at(2); }
   bool Square() const { return j_.buttons.at(3); }
-  bool L1() const { return j_.buttons.at(4); }
-  bool R1() const { return j_.buttons.at(5); }
-  bool L2() const { return j_.buttons.at(6); }
-  bool R2() const { return j_.buttons.at(7); }
+  bool L1() const { return j_.buttons.at(5); }
+  bool R1() const { return j_.buttons.at(4); }
+  bool L2() const { return j_.buttons.at(7); }
+  bool R2() const { return j_.buttons.at(6); }
   bool Share() const { return j_.buttons.at(8); }
   bool Options() const { return j_.buttons.at(9); }
   bool PS() const { return j_.buttons.at(24); }

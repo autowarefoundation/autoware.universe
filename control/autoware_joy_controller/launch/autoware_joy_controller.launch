@@ -39,5 +39,6 @@
 
   <node pkg="joy" type="joy_node" name="joy_node" output="screen">
     <param name="autorepeat_rate" value="1" />
+    <param name="deadzone" value="0.0" />
   </node>
 </launch>
