@@ -3,6 +3,7 @@
   <arg name="simulation" />
   <arg name="vehicle_model" />
   <arg name="vehicle_id" />
+  <arg name="initial_engage_state" default="true"/>
 
   <!-- simulation mode -->
   <group if="$(eval simulation==true)">
