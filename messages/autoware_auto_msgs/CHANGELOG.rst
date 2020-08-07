@@ -2,8 +2,8 @@
 Changelog for package autoware_auto_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.1.0 (2020-08-07)
+------------------
 * Merge branch 'add-hadmap-msgs' into 'master'
   had map msgs - respect idl constant naming conventions
   See merge request `autowarefoundation/autoware.auto/autoware_auto_msgs!5 <https://gitlab.com/autowarefoundation/autoware.auto/autoware_auto_msgs/-/merge_requests/5>`_
