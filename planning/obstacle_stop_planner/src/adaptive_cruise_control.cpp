@@ -361,30 +361,36 @@ bool AdaptiveCruiseController::estimatePointVelocityFromPcl(
 
   /* estimate velocity */
   const double p_dt = nearest_collision_point_time.toSec() - prev_collsion_point_time_.toSec();
-  // valid time check
-  if (p_dt <= 0 || param_.valid_est_vel_diff_time < p_dt) {
-    prev_collsion_point_time_ = nearest_collision_point_time;
-    prev_collsion_point_ = nearest_collision_point;
-    prev_collsion_point_valid_ = true;
-    return false;
-  }
-  const double p_dx = nearest_collision_point.x - prev_collsion_point_.x;
-  const double p_dy = nearest_collision_point.y - prev_collsion_point_.y;
-  const double p_dist = std::hypot(p_dx, p_dy);
-  const double p_yaw = std::atan2(p_dy, p_dx);
-  const double p_vel = p_dist / p_dt;
-  const double est_velocity = p_vel * std::cos(p_yaw - traj_yaw);
-  // valid velocity check
-  if (est_velocity <= param_.valid_est_vel_min || param_.valid_est_vel_max <= est_velocity) {
-    prev_collsion_point_time_ = nearest_collision_point_time;
-    prev_collsion_point_ = nearest_collision_point;
-    prev_collsion_point_valid_ = true;
-    est_vel_que_.clear();
-    return false;
+
+  // if get same pointcloud with previous step,
+  // skip estimate process
+  if (std::fabs(p_dt) > std::numeric_limits<double>::epsilon()) {
+    // valid time check
+    if (p_dt < 0 || param_.valid_est_vel_diff_time < p_dt) {
+      prev_collsion_point_time_ = nearest_collision_point_time;
+      prev_collsion_point_ = nearest_collision_point;
+      prev_collsion_point_valid_ = true;
+      return false;
+    }
+    const double p_dx = nearest_collision_point.x - prev_collsion_point_.x;
+    const double p_dy = nearest_collision_point.y - prev_collsion_point_.y;
+    const double p_dist = std::hypot(p_dx, p_dy);
+    const double p_yaw = std::atan2(p_dy, p_dx);
+    const double p_vel = p_dist / p_dt;
+    const double est_velocity = p_vel * std::cos(p_yaw - traj_yaw);
+    // valid velocity check
+    if (est_velocity <= param_.valid_est_vel_min || param_.valid_est_vel_max <= est_velocity) {
+      prev_collsion_point_time_ = nearest_collision_point_time;
+      prev_collsion_point_ = nearest_collision_point;
+      prev_collsion_point_valid_ = true;
+      est_vel_que_.clear();
+      return false;
+    }
+
+    // append new velocity and remove old velocity from que
+    registerQueToVelocity(est_velocity, nearest_collision_point_time);
   }
 
-  // append new velocity and remove old velocity from que
-  registerQueToVelocity(est_velocity, nearest_collision_point_time);
   // calc average(median) velocity from que
   *velocity = getMedianVel(est_vel_que_);
   debug_values_.data.at(DBGVAL::ESTIMATED_VEL_PCL) = *velocity;
