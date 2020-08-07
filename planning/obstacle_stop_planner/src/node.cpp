@@ -238,16 +238,14 @@ void ObstacleStopPlannerNode::pathCallback(
   }
 
   /*
-   * check collision
+   * check collision, slow_down
    */
+  // for collision
   bool is_collision = false;
   size_t decimate_trajectory_collision_index;
   pcl::PointXYZ nearest_collision_point;
   ros::Time nearest_collision_point_time;
-
-  /*
-   * check slow_down
-   */
+  // for slow down
   bool canditate_slow_down = false;
   bool is_slow_down = false;
   size_t decimate_trajectory_slow_down_index;
@@ -255,7 +253,6 @@ void ObstacleStopPlannerNode::pathCallback(
   pcl::PointXYZ lateral_nearest_slow_down_point;
   pcl::PointCloud<pcl::PointXYZ>::Ptr slow_down_pointcloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
   double lateral_deviation = 0.0;
-
   for (int i = 0; i < (int)(trajectory.points.size()) - 1; ++i) {
     /*
      * create one step polygon for vehicle
