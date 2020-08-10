@@ -250,6 +250,14 @@ bool generateStopLine(
       ROS_DEBUG("[MergeFromPrivateRoad] generate stopline, but no intersect line found.");
       return false;
     }
+    if (*first_idx_inside_lane == 0) {
+      ROS_DEBUG(
+        "[intersection] path[0] is already in the detection area. This happens if you have already "
+        "crossed the stop line or are very far from the intersection. Ignore computation.");
+      *stop_line_idx = 0;
+      *pass_judge_line_idx = 0;
+      return true;
+    }
     stop_idx_ip = std::max(*first_idx_inside_lane - 1 - margin_idx_dist - base2front_idx_dist, 0);
   }
 
