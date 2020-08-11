@@ -259,7 +259,10 @@ void BehaviorVelocityPlannerNode::onTrafficLightStates(
   const autoware_perception_msgs::TrafficLightStateArray::ConstPtr & msg)
 {
   for (const auto & state : msg->states) {
-    planner_data_.traffic_light_id_map_[state.id] = {msg->header, state};
+    autoware_perception_msgs::TrafficLightStateStamped traffic_light_state;
+    traffic_light_state.header = msg->header;
+    traffic_light_state.state = state;
+    planner_data_.traffic_light_id_map_[state.id] = traffic_light_state;
   }
 }
 

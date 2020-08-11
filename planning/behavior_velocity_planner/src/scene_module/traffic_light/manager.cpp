@@ -58,6 +58,40 @@ TrafficLightModuleManager::TrafficLightModuleManager()
   auto & p = planner_param_;
   pnh.param(ns + "/stop_margin", p.stop_margin, 0.0);
   pnh.param(ns + "/tl_state_timeout", p.tl_state_timeout, 1.0);
+  pub_tl_state_ = pnh.advertise<autoware_perception_msgs::TrafficLightStateStamped>(
+    "output/traffic_light_state", 1);
+}
+
+void TrafficLightModuleManager::modifyPathVelocity(autoware_planning_msgs::PathWithLaneId * path)
+{
+  visualization_msgs::MarkerArray debug_marker_array;
+  autoware_planning_msgs::StopReasonArray stop_reason_array;
+  autoware_perception_msgs::TrafficLightStateStamped tl_state;
+  stop_reason_array.header.frame_id = "map";
+  stop_reason_array.header.stamp = ros::Time::now();
+  first_stop_path_point_index_ = static_cast<int>(path->points.size());
+  for (const auto & scene_module : scene_modules_) {
+    autoware_planning_msgs::StopReason stop_reason;
+    scene_module->setPlannerData(planner_data_);
+    scene_module->modifyPathVelocity(path, &stop_reason);
+    stop_reason_array.stop_reasons.emplace_back(stop_reason);
+    if (scene_module->getFirstStopPathPointIndex() < first_stop_path_point_index_) {
+      first_stop_path_point_index_ = scene_module->getFirstStopPathPointIndex();
+      if (scene_module->getTrafficLightModuleState() != TrafficLightModule::State::GO_OUT) {
+        tl_state = scene_module->getTrafficLightState();
+      }
+    }
+    for (const auto & marker : scene_module->createDebugMarkerArray().markers) {
+      debug_marker_array.markers.push_back(marker);
+    }
+  }
+  if (!stop_reason_array.stop_reasons.empty()) {
+    pub_stop_reason_.publish(stop_reason_array);
+  }
+  pub_debug_.publish(debug_marker_array);
+  if (!tl_state.state.lamp_states.empty()) {
+    pub_tl_state_.publish(tl_state);
+  }
 }
 
 void TrafficLightModuleManager::launchNewModules(
