@@ -149,7 +149,7 @@ private:
    */
   Polygon2d generateEgoIntersectionLanePolygon(
     const autoware_planning_msgs::PathWithLaneId & path, const int closest_idx,
-    const double extra_dist) const;
+    const double extra_dist, const bool start_from_ego_point = true) const;
 
   /**
    * @brief Modify objects predicted path. remove path point if the time exceeds timer_thr.
