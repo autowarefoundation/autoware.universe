@@ -39,6 +39,9 @@ private:
   bool arrived_goal_;
   autoware_system_msgs::AutowareState::_state_type prev_state_;
 
+  /* parameter for judging diag leaf */
+  std::set<std::string> diag_name_set_;
+
   void getAutowareStateInfo(
     const autoware_system_msgs::AutowareState::ConstPtr & autoware_state_ptr,
     autoware_api_msgs::AwapiAutowareStatus * status);
@@ -63,6 +66,11 @@ private:
     autoware_api_msgs::AwapiAutowareStatus * status);
 
   bool isGoal(const autoware_system_msgs::AutowareState::ConstPtr & autoware_state);
+  std::vector<diagnostic_msgs::DiagnosticStatus> extractLeafDiag(
+    const std::vector<diagnostic_msgs::DiagnosticStatus> & diag_vec);
+  std::string splitStringByLastSlash(const std::string & str);
+  void updateDiagNameSet(const std::vector<diagnostic_msgs::DiagnosticStatus> & diag_vec);
+  bool isLeaf(const diagnostic_msgs::DiagnosticStatus & diag);
 };
 
 }  // namespace autoware_api

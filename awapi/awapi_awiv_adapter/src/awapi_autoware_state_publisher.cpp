@@ -15,6 +15,7 @@
  */
 
 #include <awapi_awiv_adapter/awapi_autoware_state_publisher.h>
+#include <regex>
 
 namespace autoware_api
 {
@@ -121,7 +122,7 @@ void AutowareIvAutowareStatePublisher::getDiagInfo(
   }
 
   // get diag
-  status->diagnostics = diag_ptr->status;
+  status->diagnostics = extractLeafDiag(diag_ptr->status);
 }
 
 void AutowareIvAutowareStatePublisher::getGlobalRptInfo(
@@ -161,6 +162,47 @@ bool AutowareIvAutowareStatePublisher::isGoal(
   prev_state_ = aw_state;
 
   return arrived_goal_;
+}
+
+std::vector<diagnostic_msgs::DiagnosticStatus> AutowareIvAutowareStatePublisher::extractLeafDiag(
+  const std::vector<diagnostic_msgs::DiagnosticStatus> & diag_vec)
+{
+  updateDiagNameSet(diag_vec);
+
+  std::vector<diagnostic_msgs::DiagnosticStatus> leaf_diag_info;
+  for (const auto diag : diag_vec) {
+    if (isLeaf(diag)) {
+      leaf_diag_info.emplace_back(diag);
+    }
+  }
+  return leaf_diag_info;
+}
+
+std::string AutowareIvAutowareStatePublisher::splitStringByLastSlash(const std::string & str)
+{
+  const auto last_slash = str.find_last_of("/");
+
+  if (last_slash == std::string::npos) {
+    // if not find slash
+    return str;
+  }
+
+  return str.substr(0, last_slash);
+}
+
+void AutowareIvAutowareStatePublisher::updateDiagNameSet(
+  const std::vector<diagnostic_msgs::DiagnosticStatus> & diag_vec)
+{
+  // set diag name to diag_name_set_
+  for (const auto & diag : diag_vec) {
+    diag_name_set_.insert(splitStringByLastSlash(diag.name));
+  }
+}
+
+bool AutowareIvAutowareStatePublisher::isLeaf(const diagnostic_msgs::DiagnosticStatus & diag)
+{
+  //if not find diag.name in diag set, diag is leaf.
+  return diag_name_set_.find(diag.name) == diag_name_set_.end();
 }
 
 }  // namespace autoware_api

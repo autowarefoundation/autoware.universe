@@ -41,7 +41,7 @@
 |     | int32                                  | gate_mode            | autoware_vehicle_msgs/GateMode                 | auto/remote (it is valid only when control_mode=auto))                       |
 |     | bool                                   | emergency_stopped    | True in emergency mode                         |                                                                              |
 | ✓   | autoware_planning_msgs/StopReasonArray | stop_reason          |                                                | "stop_pose" represents the position of "base_link" (not the head of the car) |
-| ✓   | diagnostic_msgs/DiagnosticStatus[]     | diagnostics          |                                                |                                                                              |
+| ✓   | diagnostic_msgs/DiagnosticStatus[]     | diagnostics          |                                                | output only diag. of leaf node (diag. of parent node are cut)                |
 |     | bool                                   | autonomous_overriden |                                                | get info from pacmod msg directly (global_rpt/override_active)               |
 |     | bool                                   | arrived_goal         |                                                |                                                                              |
 
