@@ -9,5 +9,5 @@ services:
     file_name: autoware.launch
   planning_simulator:
     type: roslaunch
-    package_name: autoware_launch
-    file_name: planning_simulator.launch
+    package_name: integration_launch
+    file_name: ci_planning_simulator.launch
