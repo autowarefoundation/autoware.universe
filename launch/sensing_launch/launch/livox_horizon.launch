@@ -1,6 +1,5 @@
 <launch>
   <!-- Params -->
-  <arg name="launch_driver" default="true" />
   <arg name="sensor_frame" default="livox_frame" />
   <arg name="lvx_file_path" default="livox_test.lvx"/>
   <arg name="bd_list" default="100000000000000"/>
@@ -11,7 +10,7 @@
   <arg name="output_type" default="0"/>
   <arg name="cmdline_arg" default="$(arg bd_list)"/>
 
-  <group if="$(arg launch_driver)">
+  <group>
     <param name="xfer_format" value="$(arg xfer_format)"/>
     <param name="multi_topic" value="$(arg multi_topic)"/>
     <param name="data_src" value="$(arg data_src)"/>

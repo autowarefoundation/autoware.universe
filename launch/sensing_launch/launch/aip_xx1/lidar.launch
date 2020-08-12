@@ -49,20 +49,18 @@
     </group>
 
     <group ns="front_left">
-      <include file="$(find sensing_launch)/launch/livox_horizon.launch">
+      <include file="$(find sensing_launch)/launch/livox_horizon.launch" if="$(arg launch_driver)">
         <arg name="sensor_frame" default="livox_front_left" />
         <arg name="bd_list" value="$(env LIVOX_FRONT_LEFT_ID)" />
         <arg name="xfer_format" value="0"/>
-        <arg name="launch_driver" value="$(arg launch_driver)" />
       </include>
     </group>
 
     <group ns="front_right">
-      <include file="$(find sensing_launch)/launch/livox_horizon.launch">
+      <include file="$(find sensing_launch)/launch/livox_horizon.launch" if="$(arg launch_driver)">
         <arg name="sensor_frame" default="livox_front_right" />
         <arg name="bd_list" value="$(env LIVOX_FRONT_RIGHT_ID)" />
         <arg name="xfer_format" value="0"/>
-        <arg name="launch_driver" value="$(arg launch_driver)" />
       </include>
     </group>
 
