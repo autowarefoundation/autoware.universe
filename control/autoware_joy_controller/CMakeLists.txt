@@ -8,6 +8,7 @@ find_package(catkin REQUIRED COMPONENTS
   autoware_vehicle_msgs
   joy
   geometry_msgs
+  roscpp
   sensor_msgs
   std_msgs
 )
