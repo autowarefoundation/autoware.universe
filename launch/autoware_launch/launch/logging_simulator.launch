@@ -4,6 +4,7 @@
   <arg name="map_path" doc="point cloud and lanelet2 map directory path"/>
   <arg name="vehicle_model"/>
   <arg name="sensor_model"/>
+  <arg name="vehicle_id" value="$(optenv VEHICLE_ID default)"/>
   <!-- Optional parameters -->
   <arg name="vehicle" default="true" doc="launch vehicle" />
   <arg name="system" default="true" doc="launch system" />
@@ -19,10 +20,10 @@
   <param name="/use_sim_time" value="true" />
 
   <!-- Vehicle -->
-  <include file="$(find vehicle_launch)/launch/vehicle.launch" if="$(arg vehicle)">
+  <include file="$(find vehicle_launch)/launch/vehicle_description.launch" if="$(arg vehicle)">
     <arg name="vehicle_model" value="$(arg vehicle_model)"/>
     <arg name="sensor_model" value="$(arg sensor_model)"/>
-    <arg name="simulation" value="true"/>
+    <arg name="vehicle_id" value="$(arg vehicle_id)"/>
   </include>
 
   <!-- System -->
