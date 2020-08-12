@@ -159,24 +159,26 @@ visualization_msgs::MarkerArray createPathMarkerArray(
 {
   const auto current_time = ros::Time::now();
   visualization_msgs::MarkerArray msg;
-
-  visualization_msgs::Marker marker{};
-  marker.header.frame_id = "map";
-  marker.header.stamp = current_time;
-  marker.ns = ns;
-  marker.id = lane_id;
-  marker.lifetime = ros::Duration(0.3);
-  marker.type = visualization_msgs::Marker::LINE_STRIP;
-  marker.action = visualization_msgs::Marker::ADD;
-  marker.pose.orientation = createMarkerOrientation(0, 0, 0, 1.0);
-  marker.scale = createMarkerScale(0.3, 0.0, 0.0);
-  marker.color = createMarkerColor(r, g, b, 0.999);
-
+  int32_t uid = (lane_id << (sizeof(visualization_msgs::Marker::id) * 4 / 2));
+  int count = 0;
   for (const auto & p : path.points) {
-    marker.points.push_back(p.point.pose.position);
+    visualization_msgs::Marker marker{};
+    marker.header.frame_id = "map";
+    marker.header.stamp = current_time;
+    marker.ns = ns;
+    marker.id = uid + count++;
+    marker.lifetime = ros::Duration(0.3);
+    marker.type = visualization_msgs::Marker::ARROW;
+    marker.action = visualization_msgs::Marker::ADD;
+    marker.pose = p.point.pose;
+    marker.scale = createMarkerScale(0.6, 0.3, 0.3);
+    if (p.lane_ids.front() == lane_id) {
+      marker.color = createMarkerColor(r, g, b, 0.999);
+    } else {
+      marker.color = createMarkerColor(0.5, 0.5, 0.5, 0.999);
+    }
+    msg.markers.push_back(marker);
   }
-
-  msg.markers.push_back(marker);
 
   return msg;
 }
