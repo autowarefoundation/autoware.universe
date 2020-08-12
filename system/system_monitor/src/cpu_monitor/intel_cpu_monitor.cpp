@@ -173,7 +173,8 @@ void CPUMonitor::getTempNames(void)
   std::sort(temps_.begin(), temps_.end(), [](const cpu_temp_info & c1, const cpu_temp_info & c2) {
     boost::smatch match;
     boost::regex filter(".*temp(\\d+)_input");
-    int n1, n2 = 0;
+    int n1 = 0;
+    int n2 = 0;
     if (boost::regex_match(c1.path_, match, filter)) n1 = std::stoi(match[1].str());
     if (boost::regex_match(c2.path_, match, filter)) n2 = std::stoi(match[1].str());
     return n1 < n2;
