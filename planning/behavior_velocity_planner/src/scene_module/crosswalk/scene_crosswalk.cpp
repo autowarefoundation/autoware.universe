@@ -145,16 +145,16 @@ bool CrosswalkModule::checkStopArea(
   // ----------------
 
   // check object pointcloud
-  for (size_t i = 0; i < no_ground_pointcloud_ptr->size(); ++i) {
-    Point point(no_ground_pointcloud_ptr->at(i).x, no_ground_pointcloud_ptr->at(i).y);
-    if (!bg::within(point, crosswalk_polygon)) continue;
-    if (bg::within(point, stop_polygon)) {
-      object_found = true;
-      debug_data_.stop_factor_points.emplace_back(
-        planning_utils::toRosPoint(no_ground_pointcloud_ptr->at(i)));
-      break;
-    }
-  }
+  // for (size_t i = 0; i < no_ground_pointcloud_ptr->size(); ++i) {
+  //   Point point(no_ground_pointcloud_ptr->at(i).x, no_ground_pointcloud_ptr->at(i).y);
+  //   if (!bg::within(point, crosswalk_polygon)) continue;
+  //   if (bg::within(point, stop_polygon)) {
+  //     object_found = true;
+  //     debug_data_.stop_factor_points.emplace_back(
+  //       planning_utils::toRosPoint(no_ground_pointcloud_ptr->at(i)));
+  //     break;
+  //   }
+  // }
 
   // check pedestrian
   for (const auto & object : objects_ptr->objects) {
