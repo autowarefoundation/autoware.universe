@@ -805,6 +805,20 @@ Visualization Manager:
                         stop_virtual_wall: true
                       Queue Size: 100
                       Value: true
+                    - Class: rviz/MarkerArray
+                      Enabled: true
+                      Marker Topic: /planning/scenario_planning/lane_driving/behavior_planning/lane_change_planner/debug/predicted_path_markers
+                      Name: LaneChange
+                      Namespaces:
+                        candidate_lane_change_path: false
+                        ego_lane_change_path: false
+                        ego_lane_follow_path: false
+                        factor_text: true
+                        object_predicted_path: false
+                        selected_path: false
+                        stop_virtual_wall: true
+                      Queue Size: 100
+                      Value: true
                     - Class: rviz_plugins/Path
                       Color Border Vel Max: 3
                       Enabled: true
