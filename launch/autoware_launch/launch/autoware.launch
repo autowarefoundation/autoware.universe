@@ -49,6 +49,9 @@
     <arg name="lateral_controller_mode" value="mpc_follower" doc="options: mpc_follower, pure_pursuit"/>
   </include>
 
+  <!-- AutowareAPI -->
+  <include file="$(find awapi_awiv_adapter)/launch/awapi_awiv_adapter.launch" />
+
   <!-- Rviz -->
   <node pkg="rviz" type="rviz" name="rviz" output="screen" args="-d $(find autoware_launch)/rviz/autoware.rviz" if="$(arg rviz)" />
 
