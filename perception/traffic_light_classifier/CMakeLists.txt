@@ -214,7 +214,6 @@ else()
     )
 
   target_link_libraries(traffic_light_classifier_nodelet
-    libutils
     ${catkin_LIBRARIES}
     ${OpenCV_LIBRARIES}
     )
@@ -229,7 +228,6 @@ else()
     )
 
   target_link_libraries(traffic_light_classifier_node
-    libutils
     traffic_light_classifier_nodelet
     ${catkin_LIBRARIES}
     ${OpenCV_LIBRARIES}
