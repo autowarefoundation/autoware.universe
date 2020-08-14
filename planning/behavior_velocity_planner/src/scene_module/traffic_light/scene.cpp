@@ -193,13 +193,8 @@ bool TrafficLightModule::modifyPathVelocity(
         }
       }
 
-      if (!getHighestConfidenceTrafficLightState(traffic_lights, tl_state_)) {
-        // Don't stop when UNKNOWN or TIMEOUT as discussed at #508
-        continue;
-      }
-
       // Check Traffic Light
-      if (!isStopRequired(tl_state_.state)) {
+      if (!isStopRequired(traffic_lights)) {
         continue;
       }
 
@@ -267,8 +262,14 @@ bool TrafficLightModule::isOverDeadLine(
 }
 
 bool TrafficLightModule::isStopRequired(
-  const autoware_perception_msgs::TrafficLightState & tl_state)
+  const lanelet::ConstLineStringsOrPolygons3d & traffic_lights)
 {
+  autoware_perception_msgs::TrafficLightState tl_state;
+  if (!getHighestConfidenceTrafficLightState(traffic_lights, tl_state)) {
+    // Don't stop when UNKNOWN or TIMEOUT as discussed at #508
+    return false;
+  }
+
   if (hasLamp(tl_state, autoware_perception_msgs::LampState::GREEN)) {
     return false;
   }
@@ -296,7 +297,7 @@ bool TrafficLightModule::isStopRequired(
 
 bool TrafficLightModule::getHighestConfidenceTrafficLightState(
   const lanelet::ConstLineStringsOrPolygons3d & traffic_lights,
-  autoware_perception_msgs::TrafficLightStateStamped & highest_confidence_tl_state)
+  autoware_perception_msgs::TrafficLightState & highest_confidence_tl_state)
 {
   // search traffic light state
   bool found = false;
@@ -317,7 +318,7 @@ bool TrafficLightModule::getHighestConfidenceTrafficLightState(
     }
 
     const auto header = tl_state_stamped->header;
-    const auto tl_state = tl_state_stamped->state;
+    const auto tl_state = tl_state_stamped->traffic_light_state;
     if (!((ros::Time::now() - header.stamp).toSec() < planner_param_.tl_state_timeout)) {
       reason = "TimeOut";
       continue;
@@ -332,7 +333,7 @@ bool TrafficLightModule::getHighestConfidenceTrafficLightState(
 
     if (highest_confidence < tl_state.lamp_states.front().confidence) {
       highest_confidence = tl_state.lamp_states.front().confidence;
-      highest_confidence_tl_state = *tl_state_stamped;
+      highest_confidence_tl_state = tl_state;
       const std::vector<geometry_msgs::Point> highest_traffic_light{
         getTrafficLightPosition(traffic_light)};
       // store only highest confidence traffic light (not all traffic light)

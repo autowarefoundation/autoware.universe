@@ -81,7 +81,7 @@ public:
     deleteExpiredModules(path);
   }
 
-  virtual void modifyPathVelocity(autoware_planning_msgs::PathWithLaneId * path)
+  void modifyPathVelocity(autoware_planning_msgs::PathWithLaneId * path)
   {
     visualization_msgs::MarkerArray debug_marker_array;
     autoware_planning_msgs::StopReasonArray stop_reason_array;

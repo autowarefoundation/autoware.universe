@@ -29,7 +29,6 @@
     <remap from="~input/traffic_light_states" to="/perception/traffic_light_recognition/traffic_light_states" />
     <remap from="~output/path" to="path" />
     <remap from="~output/stop_reasons" to="/planning/scenario_planning/status/stop_reasons" />
-    <remap from="~output/traffic_light_state" to="debug/traffic_light_state" />
 
     <param name="launch_stop_line" value="$(arg launch_stop_line)" />
     <param name="launch_crosswalk" value="$(arg launch_crosswalk)" />
