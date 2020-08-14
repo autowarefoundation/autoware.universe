@@ -32,7 +32,6 @@ add_message_files(
     TrafficLightRoiArray.msg
     TrafficLightState.msg
     TrafficLightStateArray.msg
-    TrafficLightStateStamped.msg
 )
 
 
