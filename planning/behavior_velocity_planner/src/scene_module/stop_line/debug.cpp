@@ -24,8 +24,9 @@ namespace
 {
 using DebugData = StopLineModule::DebugData;
 
-visualization_msgs::MarkerArray createMarkers(const DebugData & debug_data)
+visualization_msgs::MarkerArray createMarkers(const DebugData & debug_data, const int64_t module_id)
 {
+  int32_t uid = planning_utils::bitShift(module_id);
   visualization_msgs::MarkerArray msg;
   ros::Time current_time = ros::Time::now();
   tf2::Transform tf_base_link2front(
@@ -37,7 +38,7 @@ visualization_msgs::MarkerArray createMarkers(const DebugData & debug_data)
     marker.header.frame_id = "map";
     marker.header.stamp = current_time;
     marker.ns = "stop_virtual_wall";
-    marker.id = j;
+    marker.id = uid + j;
     marker.lifetime = ros::Duration(0.5);
     marker.type = visualization_msgs::Marker::CUBE;
     marker.action = visualization_msgs::Marker::ADD;
@@ -55,13 +56,13 @@ visualization_msgs::MarkerArray createMarkers(const DebugData & debug_data)
     marker.color.b = 0.0;
     msg.markers.push_back(marker);
   }
-  // Facto Text
+  // Factor Text
   for (size_t j = 0; j < debug_data.stop_poses.size(); ++j) {
     visualization_msgs::Marker marker;
     marker.header.frame_id = "map";
     marker.header.stamp = current_time;
     marker.ns = "factor_text";
-    marker.id = j;
+    marker.id = uid + j;
     marker.lifetime = ros::Duration(0.5);
     marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
     marker.action = visualization_msgs::Marker::ADD;
@@ -90,7 +91,7 @@ visualization_msgs::MarkerArray StopLineModule::createDebugMarkerArray()
 {
   visualization_msgs::MarkerArray debug_marker_array;
 
-  appendMarkerArray(createMarkers(debug_data_), &debug_marker_array);
+  appendMarkerArray(createMarkers(debug_data_, module_id_), &debug_marker_array);
 
   return debug_marker_array;
 }

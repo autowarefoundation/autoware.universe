@@ -26,7 +26,10 @@ using Line = bg::model::linestring<Point>;
 CrosswalkModule::CrosswalkModule(
   const int64_t module_id, const lanelet::ConstLanelet & crosswalk,
   const PlannerParam & planner_param)
-: SceneModuleInterface(module_id), crosswalk_(crosswalk), state_(State::APPROACH)
+: SceneModuleInterface(module_id),
+  module_id_(module_id),
+  crosswalk_(crosswalk),
+  state_(State::APPROACH)
 {
   planner_param_ = planner_param;
 }

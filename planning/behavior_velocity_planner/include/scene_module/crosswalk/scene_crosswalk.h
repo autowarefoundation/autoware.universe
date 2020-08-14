@@ -68,6 +68,8 @@ public:
   visualization_msgs::MarkerArray createDebugMarkerArray() override;
 
 private:
+  int64_t module_id_;
+
   bool checkSlowArea(
     const autoware_planning_msgs::PathWithLaneId & input,
     const boost::geometry::model::polygon<boost::geometry::model::d2::point_xy<double>, false> &

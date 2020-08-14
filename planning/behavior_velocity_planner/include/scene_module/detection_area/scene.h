@@ -67,6 +67,8 @@ public:
   visualization_msgs::MarkerArray createDebugMarkerArray() override;
 
 private:
+  int64_t module_id_;
+
   using Point = boost::geometry::model::d2::point_xy<double>;
   using Line = boost::geometry::model::linestring<Point>;
   using Polygon = boost::geometry::model::polygon<Point, false>;

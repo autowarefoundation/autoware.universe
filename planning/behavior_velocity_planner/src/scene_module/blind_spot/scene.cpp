@@ -42,8 +42,7 @@ BlindSpotModule::BlindSpotModule(
 }
 
 bool BlindSpotModule::modifyPathVelocity(
-  autoware_planning_msgs::PathWithLaneId * path,
-  autoware_planning_msgs::StopReason * stop_reason)
+  autoware_planning_msgs::PathWithLaneId * path, autoware_planning_msgs::StopReason * stop_reason)
 {
   debug_data_ = {};
   *stop_reason =

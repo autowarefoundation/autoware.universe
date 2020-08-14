@@ -62,6 +62,8 @@ public:
   visualization_msgs::MarkerArray createDebugMarkerArray() override;
 
 private:
+  int64_t module_id_;
+
   bool getBackwordPointFromBasePoint(
     const Eigen::Vector2d & line_point1, const Eigen::Vector2d & line_point2,
     const Eigen::Vector2d & base_point, const double backward_length,

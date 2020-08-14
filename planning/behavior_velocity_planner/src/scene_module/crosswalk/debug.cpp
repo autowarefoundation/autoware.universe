@@ -21,8 +21,8 @@
 
 namespace
 {
-
-visualization_msgs::MarkerArray createCrosswalkMarkers(const DebugData & debug_data)
+visualization_msgs::MarkerArray createCrosswalkMarkers(
+  const DebugData & debug_data, const int64_t module_id)
 {
   visualization_msgs::MarkerArray msg;
   ros::Time current_time = ros::Time::now();
@@ -30,6 +30,7 @@ visualization_msgs::MarkerArray createCrosswalkMarkers(const DebugData & debug_d
     tf2::Quaternion(0.0, 0.0, 0.0, 1.0), tf2::Vector3(debug_data.base_link2front, 0.0, 0.0));
 
   // Crosswalk polygons
+  int32_t uid = planning_utils::bitShift(module_id);
   for (size_t i = 0; i < debug_data.crosswalk_polygons.size(); ++i) {
     std::vector<Eigen::Vector3d> polygon = debug_data.crosswalk_polygons.at(i);
 
@@ -38,7 +39,7 @@ visualization_msgs::MarkerArray createCrosswalkMarkers(const DebugData & debug_d
     marker.header.stamp = current_time;
 
     marker.ns = "crosswalk polygon line";
-    marker.id = i;
+    marker.id = uid + i;
     marker.lifetime = ros::Duration(0.5);
     marker.type = visualization_msgs::Marker::LINE_STRIP;
     marker.action = visualization_msgs::Marker::ADD;
@@ -98,7 +99,7 @@ visualization_msgs::MarkerArray createCrosswalkMarkers(const DebugData & debug_d
     marker.header.frame_id = "map";
     marker.header.stamp = current_time;
     marker.ns = "collision line";
-    marker.id = i;
+    marker.id = uid + i;
     marker.lifetime = ros::Duration(0.5);
     marker.type = visualization_msgs::Marker::LINE_STRIP;
     marker.action = visualization_msgs::Marker::ADD;
@@ -166,7 +167,7 @@ visualization_msgs::MarkerArray createCrosswalkMarkers(const DebugData & debug_d
     marker.header.stamp = current_time;
 
     marker.ns = "slow polygon line";
-    marker.id = i;
+    marker.id = uid + i;
     marker.lifetime = ros::Duration(0.5);
     marker.type = visualization_msgs::Marker::LINE_STRIP;
     marker.action = visualization_msgs::Marker::ADD;
@@ -235,7 +236,7 @@ visualization_msgs::MarkerArray createCrosswalkMarkers(const DebugData & debug_d
     marker.header.stamp = current_time;
 
     marker.ns = "stop polygon line";
-    marker.id = i;
+    marker.id = uid + i;
     marker.lifetime = ros::Duration(0.5);
     marker.type = visualization_msgs::Marker::LINE_STRIP;
     marker.action = visualization_msgs::Marker::ADD;
@@ -268,7 +269,7 @@ visualization_msgs::MarkerArray createCrosswalkMarkers(const DebugData & debug_d
     marker.header.frame_id = "map";
     marker.header.stamp = current_time;
     marker.ns = "stop point";
-    marker.id = 0;
+    marker.id = module_id;
     marker.lifetime = ros::Duration(0.5);
     marker.type = visualization_msgs::Marker::POINTS;
     marker.action = visualization_msgs::Marker::ADD;
@@ -301,7 +302,7 @@ visualization_msgs::MarkerArray createCrosswalkMarkers(const DebugData & debug_d
     marker.header.frame_id = "map";
     marker.header.stamp = current_time;
     marker.ns = "stop_virtual_wall";
-    marker.id = j;
+    marker.id = uid + j;
     marker.lifetime = ros::Duration(0.5);
     marker.type = visualization_msgs::Marker::CUBE;
     marker.action = visualization_msgs::Marker::ADD;
@@ -325,7 +326,7 @@ visualization_msgs::MarkerArray createCrosswalkMarkers(const DebugData & debug_d
     marker.header.frame_id = "map";
     marker.header.stamp = current_time;
     marker.ns = "factor_text";
-    marker.id = j;
+    marker.id = uid + j;
     marker.lifetime = ros::Duration(0.5);
     marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
     marker.action = visualization_msgs::Marker::ADD;
@@ -351,7 +352,7 @@ visualization_msgs::MarkerArray createCrosswalkMarkers(const DebugData & debug_d
     marker.header.frame_id = "map";
     marker.header.stamp = current_time;
     marker.ns = "slow virtual_wall";
-    marker.id = j;
+    marker.id = uid + j;
     marker.lifetime = ros::Duration(0.5);
     marker.type = visualization_msgs::Marker::CUBE;
     marker.action = visualization_msgs::Marker::ADD;
@@ -375,7 +376,7 @@ visualization_msgs::MarkerArray createCrosswalkMarkers(const DebugData & debug_d
     marker.header.frame_id = "map";
     marker.header.stamp = current_time;
     marker.ns = "slow factor_text";
-    marker.id = j;
+    marker.id = uid + j;
     marker.lifetime = ros::Duration(0.5);
     marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
     marker.action = visualization_msgs::Marker::ADD;
@@ -398,8 +399,10 @@ visualization_msgs::MarkerArray createCrosswalkMarkers(const DebugData & debug_d
   return msg;
 }
 
-visualization_msgs::MarkerArray createWalkwayMarkers(const DebugData & debug_data)
+visualization_msgs::MarkerArray createWalkwayMarkers(
+  const DebugData & debug_data, const int64_t module_id)
 {
+  int32_t uid = planning_utils::bitShift(module_id);
   visualization_msgs::MarkerArray msg;
   ros::Time current_time = ros::Time::now();
   tf2::Transform tf_base_link2front(
@@ -411,7 +414,7 @@ visualization_msgs::MarkerArray createWalkwayMarkers(const DebugData & debug_dat
     marker.header.frame_id = "map";
     marker.header.stamp = current_time;
     marker.ns = "stop point";
-    marker.id = 0;
+    marker.id = module_id;
     marker.lifetime = ros::Duration(0.5);
     marker.type = visualization_msgs::Marker::POINTS;
     marker.action = visualization_msgs::Marker::ADD;
@@ -444,7 +447,7 @@ visualization_msgs::MarkerArray createWalkwayMarkers(const DebugData & debug_dat
     marker.header.frame_id = "map";
     marker.header.stamp = current_time;
     marker.ns = "stop_virtual_wall";
-    marker.id = j;
+    marker.id = uid + j;
     marker.lifetime = ros::Duration(0.5);
     marker.type = visualization_msgs::Marker::CUBE;
     marker.action = visualization_msgs::Marker::ADD;
@@ -468,7 +471,7 @@ visualization_msgs::MarkerArray createWalkwayMarkers(const DebugData & debug_dat
     marker.header.frame_id = "map";
     marker.header.stamp = current_time;
     marker.ns = "factor_text";
-    marker.id = j;
+    marker.id = uid + j;
     marker.lifetime = ros::Duration(0.5);
     marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
     marker.action = visualization_msgs::Marker::ADD;
@@ -491,14 +494,13 @@ visualization_msgs::MarkerArray createWalkwayMarkers(const DebugData & debug_dat
   return msg;
 }
 
-
 }  // namespace
 
 visualization_msgs::MarkerArray CrosswalkModule::createDebugMarkerArray()
 {
   visualization_msgs::MarkerArray debug_marker_array;
 
-  appendMarkerArray(createCrosswalkMarkers(debug_data_), &debug_marker_array);
+  appendMarkerArray(createCrosswalkMarkers(debug_data_, module_id_), &debug_marker_array);
 
   return debug_marker_array;
 }
@@ -507,7 +509,7 @@ visualization_msgs::MarkerArray WalkwayModule::createDebugMarkerArray()
 {
   visualization_msgs::MarkerArray debug_marker_array;
 
-  appendMarkerArray(createWalkwayMarkers(debug_data_), &debug_marker_array);
+  appendMarkerArray(createWalkwayMarkers(debug_data_, module_id_), &debug_marker_array);
 
   return debug_marker_array;
 }

@@ -36,6 +36,7 @@ DetectionAreaModule::DetectionAreaModule(
   const int64_t module_id, const lanelet::autoware::DetectionArea & detection_area_reg_elem,
   const PlannerParam & planner_param)
 : SceneModuleInterface(module_id),
+  module_id_(module_id),
   detection_area_reg_elem_(detection_area_reg_elem),
   state_(State::APPROACH)
 {

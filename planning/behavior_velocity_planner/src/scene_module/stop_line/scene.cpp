@@ -23,7 +23,10 @@ using Polygon = bg::model::polygon<Point>;
 StopLineModule::StopLineModule(
   const int64_t module_id, const lanelet::ConstLineString3d & stop_line,
   const PlannerParam & planner_param)
-: SceneModuleInterface(module_id), stop_line_(stop_line), state_(State::APPROACH)
+: SceneModuleInterface(module_id),
+  module_id_(module_id),
+  stop_line_(stop_line),
+  state_(State::APPROACH)
 {
   planner_param_ = planner_param;
 }
@@ -38,8 +41,8 @@ bool StopLineModule::modifyPathVelocity(
     planning_utils::initializeStopReason(autoware_planning_msgs::StopReason::STOP_LINE);
 
   Eigen::Vector2d stop_point;
-  bg::model::linestring<Point> stop_line = {{stop_line_[0].x(), stop_line_[0].y()},
-                                            {stop_line_[1].x(), stop_line_[1].y()}};
+  bg::model::linestring<Point> stop_line = {
+    {stop_line_[0].x(), stop_line_[0].y()}, {stop_line_[1].x(), stop_line_[1].y()}};
 
   if (state_ == State::APPROACH) {
     for (size_t i = 0; i < path->points.size() - 1; ++i) {

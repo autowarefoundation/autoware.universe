@@ -64,7 +64,7 @@ visualization_msgs::MarkerArray createLaneletPolygonsMarkerArray(
   visualization_msgs::MarkerArray msg;
 
   int32_t i = 0;
-  int32_t uid = (lane_id << (sizeof(visualization_msgs::Marker::id) * 8 / 2));
+  int32_t uid = planning_utils::bitShift(lane_id);
   for (const auto & polygon : polygons) {
     visualization_msgs::Marker marker{};
     marker.header.frame_id = "map";
@@ -136,7 +136,7 @@ visualization_msgs::MarkerArray createObjectsMarkerArray(
   marker.header.stamp = current_time;
   marker.ns = ns;
 
-  int32_t uid = (lane_id << (sizeof(visualization_msgs::Marker::id) * 8 / 2));
+  int32_t uid = planning_utils::bitShift(lane_id);
   int32_t i = 0;
   for (const auto & object : objects.objects) {
     marker.id = uid + i++;
@@ -286,12 +286,14 @@ visualization_msgs::MarkerArray BlindSpotModule::createDebugMarkerArray()
 
   appendMarkerArray(
     createPolygonMarkerArray(
-      debug_data_.confict_area_for_blind_spot, "conflict_area_for_blind_spot", lane_id_, 0.0, 0.5, 0.5),
+      debug_data_.confict_area_for_blind_spot, "conflict_area_for_blind_spot", lane_id_, 0.0, 0.5,
+      0.5),
     &debug_marker_array);
 
   appendMarkerArray(
     createPolygonMarkerArray(
-      debug_data_.detection_area_for_blind_spot, "detection_area_for_blind_spot", lane_id_, 0.0, 0.5, 0.5),
+      debug_data_.detection_area_for_blind_spot, "detection_area_for_blind_spot", lane_id_, 0.0,
+      0.5, 0.5),
     &debug_marker_array);
 
   appendMarkerArray(

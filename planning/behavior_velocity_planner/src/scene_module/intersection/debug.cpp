@@ -65,7 +65,7 @@ visualization_msgs::MarkerArray createLaneletPolygonsMarkerArray(
   visualization_msgs::MarkerArray msg;
 
   int32_t i = 0;
-  int32_t uid = (lane_id << (sizeof(visualization_msgs::Marker::id) * 8 / 2));
+  int32_t uid = planning_utils::bitShift(lane_id);
   for (const auto & polygon : polygons) {
     visualization_msgs::Marker marker{};
     marker.header.frame_id = "map";
@@ -137,7 +137,7 @@ visualization_msgs::MarkerArray createObjectsMarkerArray(
   marker.header.stamp = current_time;
   marker.ns = ns;
 
-  int32_t uid = (lane_id << (sizeof(visualization_msgs::Marker::id) * 8 / 2));
+  int32_t uid = planning_utils::bitShift(lane_id);
   int32_t i = 0;
   for (const auto & object : objects.objects) {
     marker.id = uid + i++;
@@ -159,20 +159,21 @@ visualization_msgs::MarkerArray createPathMarkerArray(
 {
   const auto current_time = ros::Time::now();
   visualization_msgs::MarkerArray msg;
-  int32_t uid = (lane_id << (sizeof(visualization_msgs::Marker::id) * 4 / 2));
-  int count = 0;
+  int32_t uid = planning_utils::bitShift(lane_id);
+  int32_t i = 0;
   for (const auto & p : path.points) {
     visualization_msgs::Marker marker{};
     marker.header.frame_id = "map";
     marker.header.stamp = current_time;
     marker.ns = ns;
-    marker.id = uid + count++;
+    marker.id = uid + i++;
     marker.lifetime = ros::Duration(0.3);
     marker.type = visualization_msgs::Marker::ARROW;
     marker.action = visualization_msgs::Marker::ADD;
     marker.pose = p.point.pose;
     marker.scale = createMarkerScale(0.6, 0.3, 0.3);
-    if (p.lane_ids.front() == lane_id) {
+    if (std::find(p.lane_ids.begin(), p.lane_ids.end(), lane_id) != p.lane_ids.end()) {
+      // if p.lane_ids has lane_id
       marker.color = createMarkerColor(r, g, b, 0.999);
     } else {
       marker.color = createMarkerColor(0.5, 0.5, 0.5, 0.999);

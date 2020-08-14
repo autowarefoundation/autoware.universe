@@ -28,6 +28,7 @@
 #include <geometry_msgs/Quaternion.h>
 #include <pcl_ros/point_cloud.h>
 #include <tf2/utils.h>
+#include <visualization_msgs/Marker.h>
 #include <boost/geometry.hpp>
 #include <boost/geometry/geometries/linestring.hpp>
 #include <boost/geometry/geometries/point_xy.hpp>
@@ -66,6 +67,8 @@ inline geometry_msgs::Pose getPose(const autoware_planning_msgs::Trajectory & tr
 {
   return traj.points.at(idx).pose;
 }
+
+inline int64_t bitShift(int64_t original_id) { return (original_id << (sizeof(int32_t) * 8 / 2)); }
 
 inline double square(const double & a) { return a * a; }
 double normalizeEulerAngle(double euler);

@@ -66,6 +66,8 @@ public:
   visualization_msgs::MarkerArray createDebugMarkerArray() override;
 
 private:
+  int64_t module_id_;
+
   enum class State { APPROACH, STOP, SURPASSED };
 
   lanelet::ConstLanelet walkway_;
