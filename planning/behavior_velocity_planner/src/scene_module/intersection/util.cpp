@@ -245,8 +245,11 @@ bool generateStopLine(
     planning_utils::calcClosestIndex(path_ip, stop_point_from_map, stop_idx_ip, 10.0);
     stop_idx_ip = std::max(stop_idx_ip - base2front_idx_dist, 0);
   } else {
-    *first_idx_inside_lane = getFirstPointInsidePolygons(path_ip, detection_areas);
-    if (*first_idx_inside_lane == -1) {
+    //get idx of first_inside_lane point
+    int first_idx_ip_inside_lane = getFirstPointInsidePolygons(path_ip, detection_areas);
+    const auto first_inside_point = path_ip.points.at(first_idx_ip_inside_lane).point.pose;
+    planning_utils::calcClosestIndex(*path, first_inside_point, *first_idx_inside_lane, 10.0);
+    if (first_idx_ip_inside_lane == -1) {
       ROS_DEBUG("[MergeFromPrivateRoad] generate stopline, but no intersect line found.");
       return false;
     }
