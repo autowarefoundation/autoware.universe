@@ -39,8 +39,7 @@ MergeFromPrivateRoadModule::MergeFromPrivateRoadModule(
 }
 
 bool MergeFromPrivateRoadModule::modifyPathVelocity(
-  autoware_planning_msgs::PathWithLaneId * path,
-  autoware_planning_msgs::StopReason * stop_reason)
+  autoware_planning_msgs::PathWithLaneId * path, autoware_planning_msgs::StopReason * stop_reason)
 {
   debug_data_ = {};
   *stop_reason = planning_utils::initializeStopReason(
@@ -89,7 +88,9 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(
   debug_data_.virtual_wall_pose =
     util::getAheadPose(stop_line_idx, planner_data_->base_link2front, *path);
   debug_data_.stop_point_pose = path->points.at(stop_line_idx).point.pose;
-  debug_data_.first_collision_point = path->points.at(first_idx_inside_lane).point.pose.position;
+  if (first_idx_inside_lane != -1) {
+    debug_data_.first_collision_point = path->points.at(first_idx_inside_lane).point.pose.position;
+  }
 
   /* set stop speed */
   if (state_machine_.getState() == State::STOP) {

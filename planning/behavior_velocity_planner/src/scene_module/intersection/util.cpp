@@ -239,14 +239,16 @@ bool generateStopLine(
   /* generate stop point */
   // If a stop_line is defined in lanelet_map, use it.
   // else, generates a local stop_line with considering the lane conflictions.
-  int stop_idx_ip;  // stop point index for interpolated path.
+  int first_idx_ip_inside_lane;  // first stop point index for interpolated path.
+  int stop_idx_ip;               // stop point index for interpolated path.
   geometry_msgs::Point stop_point_from_map;
   if (getStopPoseFromMap(lane_id, &stop_point_from_map, planner_data)) {
     planning_utils::calcClosestIndex(path_ip, stop_point_from_map, stop_idx_ip, 10.0);
     stop_idx_ip = std::max(stop_idx_ip - base2front_idx_dist, 0);
   } else {
-    //get idx of first_inside_lane point
-    int first_idx_ip_inside_lane = getFirstPointInsidePolygons(path_ip, detection_areas);
+    // get idx of first_inside_lane point
+    first_idx_ip_inside_lane = getFirstPointInsidePolygons(path_ip, detection_areas);
+    // only for visualization
     const auto first_inside_point = path_ip.points.at(first_idx_ip_inside_lane).point.pose;
     planning_utils::calcClosestIndex(*path, first_inside_point, *first_idx_inside_lane, 10.0);
     if (first_idx_ip_inside_lane == -1) {
@@ -261,7 +263,7 @@ bool generateStopLine(
       *pass_judge_line_idx = 0;
       return true;
     }
-    stop_idx_ip = std::max(*first_idx_inside_lane - 1 - margin_idx_dist - base2front_idx_dist, 0);
+    stop_idx_ip = std::max(first_idx_ip_inside_lane - 1 - margin_idx_dist - base2front_idx_dist, 0);
   }
 
   /* insert stop_point */
