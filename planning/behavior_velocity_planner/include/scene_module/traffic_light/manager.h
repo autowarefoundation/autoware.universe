@@ -43,10 +43,15 @@ public:
 
   const char * getModuleName() override { return "traffic_light"; }
 
+  virtual void modifyPathVelocity(autoware_planning_msgs::PathWithLaneId * path) override;
+
 private:
   TrafficLightModule::PlannerParam planner_param_;
   void launchNewModules(const autoware_planning_msgs::PathWithLaneId & path) override;
 
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
     const autoware_planning_msgs::PathWithLaneId & path) override;
+
+  // Debug
+  ros::Publisher pub_tl_state_;
 };

@@ -70,6 +70,12 @@ public:
 
   visualization_msgs::MarkerArray createDebugMarkerArray() override;
 
+  inline autoware_perception_msgs::TrafficLightStateStamped getTrafficLightState() const
+  {
+    return tl_state_;
+  };
+  inline State getTrafficLightModuleState() const { return state_; };
+
 private:
   int64_t lane_id_;
 
@@ -87,14 +93,14 @@ private:
 
   bool getHighestConfidenceTrafficLightState(
     const lanelet::ConstLineStringsOrPolygons3d & traffic_lights,
-    autoware_perception_msgs::TrafficLightState & highest_confidence_tl_state);
+    autoware_perception_msgs::TrafficLightStateStamped & highest_confidence_tl_state);
 
   bool isOverDeadLine(
     const geometry_msgs::Pose & self_pose,
     const autoware_planning_msgs::PathWithLaneId & input_path, const size_t & dead_line_point_idx,
     const Eigen::Vector2d & dead_line_point, const double dead_line_range);
 
-  bool isStopRequired(const lanelet::ConstLineStringsOrPolygons3d & traffic_lights);
+  bool isStopRequired(const autoware_perception_msgs::TrafficLightState & tl_state);
 
   bool createTargetPoint(
     const autoware_planning_msgs::PathWithLaneId & input,
@@ -120,4 +126,7 @@ private:
 
   // Debug
   DebugData debug_data_;
+
+  // Traffic Light State
+  autoware_perception_msgs::TrafficLightStateStamped tl_state_;
 };
