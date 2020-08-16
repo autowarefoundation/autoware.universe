@@ -83,12 +83,12 @@ void TrafficLightClassifierNodelet::imageRoiCallback(
 
   for (size_t i = 0; i < input_rois_msg->rois.size(); ++i) {
     const sensor_msgs::RegionOfInterest & roi = input_rois_msg->rois.at(i).roi;
-    cv::Mat cliped_image(
+    cv::Mat clipped_image(
       cv_ptr->image, cv::Rect(roi.x_offset, roi.y_offset, roi.width, roi.height));
 
     std::vector<autoware_perception_msgs::LampState> lamp_states;
 
-    if (!classifier_ptr_->getLampState(cliped_image, lamp_states)) {
+    if (!classifier_ptr_->getLampState(clipped_image, lamp_states)) {
       NODELET_ERROR("failed classify image, abort callback");
       return;
     }
