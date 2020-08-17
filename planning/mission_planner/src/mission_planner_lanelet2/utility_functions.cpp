@@ -44,6 +44,23 @@ void insertMarkerArray(
   a1->markers.insert(a1->markers.end(), a2.markers.begin(), a2.markers.end());
 }
 
+std::vector<std::pair<double, lanelet::Lanelet>> excludeSubtypeLaneletsWithDistance(
+  const std::vector<std::pair<double, lanelet::Lanelet>> & lls, const char subtype[])
+{
+  std::vector<std::pair<double, lanelet::Lanelet>> exclude_subtype_lanelets;
+
+  for (const auto & ll : lls) {
+    if (ll.second.hasAttribute(lanelet::AttributeName::Subtype)) {
+      lanelet::Attribute attr = ll.second.attribute(lanelet::AttributeName::Subtype);
+      if (attr.value() != subtype) {
+        exclude_subtype_lanelets.push_back(ll);
+      }
+    }
+  }
+
+  return exclude_subtype_lanelets;
+}
+
 bool getClosestLanelet(
   const geometry_msgs::Pose & search_pose, const lanelet::LaneletMapPtr & lanelet_map_ptr_,
   lanelet::Lanelet * closest_lanelet, double distance_thresh)
@@ -51,13 +68,15 @@ bool getClosestLanelet(
   lanelet::BasicPoint2d search_point(search_pose.position.x, search_pose.position.y);
   std::vector<std::pair<double, lanelet::Lanelet>> nearest_lanelet =
     lanelet::geometry::findNearest(lanelet_map_ptr_->laneletLayer, search_point, 1);
-  if (nearest_lanelet.empty()) {
+  const auto nearest_road_lanelet =
+    excludeSubtypeLaneletsWithDistance(nearest_lanelet, lanelet::AttributeValueString::Crosswalk);
+  if (nearest_road_lanelet.empty()) {
     ROS_ERROR_STREAM(
       "Failed to find the closest lane!" << std::endl
                                          << "search point: " << toString(search_pose) << std::endl);
     return false;
   }
-  if (nearest_lanelet.front().first > distance_thresh) {
+  if (nearest_road_lanelet.front().first > distance_thresh) {
     ROS_ERROR_STREAM(
       "Closest lane is too far away!" << std::endl
                                       << "search point: " << toString(search_pose) << std::endl
@@ -65,7 +84,7 @@ bool getClosestLanelet(
     return false;
   }
 
-  *closest_lanelet = nearest_lanelet.front().second;
+  *closest_lanelet = nearest_road_lanelet.front().second;
 
   return true;
 }
