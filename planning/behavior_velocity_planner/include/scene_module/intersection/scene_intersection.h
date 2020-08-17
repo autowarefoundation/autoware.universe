@@ -85,10 +85,13 @@ public:
     double decel_velocoity;    //! used when in straight and traffic_light lane
     double path_expand_width;  //! path width to calculate the edge line for both side
     double stop_line_margin;   //! distance from auto-generated stopline to detection_area boundary
-    double stuck_vehicle_detect_dist;  //! distance from intersection for stuck vehicle check
-    double stuck_vehicle_vel_thr;      //! Threshold of the speed to be recognized as stopped
-    double intersection_velocity;      //! used for intersection passing time
-    double detection_area_length;      //! used to create detection area polygon
+    double
+      stuck_vehicle_detect_dist;  //! distance from intersection end point to finish stuck vehicle check
+    double
+      stuck_vehicle_ignore_dist;  //! distance from intersection start point to start stuck vehicle check
+    double stuck_vehicle_vel_thr;  //! Threshold of the speed to be recognized as stopped
+    double intersection_velocity;  //! used for intersection passing time
+    double detection_area_length;  //! used to create detection area polygon
   };
 
   IntersectionModule(
@@ -136,7 +139,7 @@ private:
    * @return true if exists
    */
   bool checkStuckVehicleInIntersection(
-    const autoware_planning_msgs::PathWithLaneId & path, const int closest_idx,
+    const autoware_planning_msgs::PathWithLaneId & path, const int closest_idx, const int stop_idx,
     const autoware_perception_msgs::DynamicObjectArray::ConstPtr objects_ptr) const;
 
   /**
@@ -145,11 +148,12 @@ private:
    * @param path           ego-car lane
    * @param closest_idx    ego-car position index on the lane
    * @param extra_dist     extra distance from the end point of the intersection lanelet
+   * @param ignore_dist    ignore distance from the start point of the ego-intersection lane
    * @return generated polygon
    */
   Polygon2d generateEgoIntersectionLanePolygon(
-    const autoware_planning_msgs::PathWithLaneId & path, const int closest_idx,
-    const double extra_dist, const bool start_from_ego_point = true) const;
+    const autoware_planning_msgs::PathWithLaneId & path, const int closest_idx, const int start_idx,
+    const double extra_dist, const double ignore_dist) const;
 
   /**
    * @brief Modify objects predicted path. remove path point if the time exceeds timer_thr.

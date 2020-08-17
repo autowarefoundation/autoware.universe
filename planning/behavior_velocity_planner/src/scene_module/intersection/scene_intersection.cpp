@@ -114,7 +114,7 @@ bool IntersectionModule::modifyPathVelocity(
 
   /* calculate dynamic collision around detection area */
   bool has_collision = checkCollision(*path, detection_areas, objects_ptr, closest_idx);
-  bool is_stuck = checkStuckVehicleInIntersection(*path, closest_idx, objects_ptr);
+  bool is_stuck = checkStuckVehicleInIntersection(*path, closest_idx, stop_line_idx, objects_ptr);
   bool is_entry_prohibited = (has_collision || is_stuck);
   state_machine_.setStateWithMarginTime(is_entry_prohibited ? State::STOP : State::GO);
 
@@ -162,8 +162,8 @@ bool IntersectionModule::checkCollision(
   const autoware_perception_msgs::DynamicObjectArray::ConstPtr objects_ptr, const int closest_idx)
 {
   /* generate ego-lane polygon */
-  const Polygon2d ego_poly =
-    generateEgoIntersectionLanePolygon(path, closest_idx, 0.0);  // TODO use Lanelet
+  const Polygon2d ego_poly = generateEgoIntersectionLanePolygon(
+    path, closest_idx, closest_idx, 0.0, 0.0);  // TODO use Lanelet
   debug_data_.ego_lane_polygon = toGeomMsg(ego_poly);
 
   /* extruct target objects */
@@ -223,18 +223,14 @@ bool IntersectionModule::checkCollision(
 }
 
 Polygon2d IntersectionModule::generateEgoIntersectionLanePolygon(
-  const autoware_planning_msgs::PathWithLaneId & path, const int closest_idx,
-  const double extra_dist, const bool start_from_ego_point) const
+  const autoware_planning_msgs::PathWithLaneId & path, const int closest_idx, const int start_idx,
+  const double extra_dist, const double ignore_dist) const
 {
+  const size_t assigned_lane_start_idx = start_idx;
   size_t assigned_lane_end_idx = 0;
-  size_t assigned_lane_start_idx = 0;
   bool has_assigned_lane_id_prev = false;
   for (size_t i = 0; i < path.points.size(); ++i) {
     bool has_assigned_lane_id = util::hasLaneId(path.points.at(i), lane_id_);
-    if (!has_assigned_lane_id_prev && has_assigned_lane_id) {
-      //set lane_start_idx to start inddx of intersection
-      assigned_lane_start_idx = i;
-    }
     if (has_assigned_lane_id_prev && !has_assigned_lane_id) {
       assigned_lane_end_idx = i;
       break;
@@ -242,30 +238,42 @@ Polygon2d IntersectionModule::generateEgoIntersectionLanePolygon(
     has_assigned_lane_id_prev = has_assigned_lane_id;
   }
 
-  if (assigned_lane_start_idx < closest_idx) {
-    assigned_lane_start_idx = closest_idx;
+  size_t ego_area_start_idx = assigned_lane_start_idx;
+  {
+    //decide start idx with considering ignore_dist
+    double dist_sum = 0.0;
+    for (int i = assigned_lane_start_idx + 1; i < assigned_lane_end_idx; ++i) {
+      dist_sum += planning_utils::calcDist2d(path.points.at(i), path.points.at(i - 1));
+      ++ego_area_start_idx;
+      if (dist_sum > ignore_dist) break;
+    }
   }
 
-  // use closest_idx as lane_start_idx by start_from_ego_point option
-  if (start_from_ego_point) assigned_lane_start_idx = closest_idx;
+  if (ego_area_start_idx < closest_idx) {
+    //If ego-position is over the start_idx, use closest_idx as start
+    ego_area_start_idx = closest_idx;
+  }
 
   size_t ego_area_end_idx = assigned_lane_end_idx;
-  double dist_sum = 0.0;
-  for (size_t i = assigned_lane_end_idx + 1; i < path.points.size(); ++i) {
-    dist_sum += planning_utils::calcDist2d(path.points.at(i), path.points.at(i - 1));
-    if (dist_sum > extra_dist) break;
-    ++ego_area_end_idx;
+  {
+    //decide end idx with cosidering extra_dist
+    double dist_sum = 0.0;
+    for (size_t i = assigned_lane_end_idx + 1; i < path.points.size(); ++i) {
+      dist_sum += planning_utils::calcDist2d(path.points.at(i), path.points.at(i - 1));
+      if (dist_sum > extra_dist) break;
+      ++ego_area_end_idx;
+    }
   }
 
   Polygon2d ego_area;  // open polygon
   const auto width = planner_param_.path_expand_width;
-  for (int i = assigned_lane_start_idx; i <= ego_area_end_idx; ++i) {
+  for (int i = ego_area_start_idx; i <= ego_area_end_idx; ++i) {
     double yaw = tf2::getYaw(path.points.at(i).point.pose.orientation);
     double x = path.points.at(i).point.pose.position.x + width * std::sin(yaw);
     double y = path.points.at(i).point.pose.position.y - width * std::cos(yaw);
     ego_area.outer().push_back(Point2d(x, y));
   }
-  for (int i = ego_area_end_idx; i >= assigned_lane_start_idx; --i) {
+  for (int i = ego_area_end_idx; i >= ego_area_start_idx; --i) {
     if (i < 0) break;
     double yaw = tf2::getYaw(path.points.at(i).point.pose.orientation);
     double x = path.points.at(i).point.pose.position.x - width * std::sin(yaw);
@@ -303,11 +311,12 @@ double IntersectionModule::calcIntersectionPassingTime(
 }
 
 bool IntersectionModule::checkStuckVehicleInIntersection(
-  const autoware_planning_msgs::PathWithLaneId & path, const int closest_idx,
+  const autoware_planning_msgs::PathWithLaneId & path, const int closest_idx, const int stop_idx,
   const autoware_perception_msgs::DynamicObjectArray::ConstPtr objects_ptr) const
 {
   const Polygon2d stuck_vehicle_detect_area = generateEgoIntersectionLanePolygon(
-    path, closest_idx, planner_param_.stuck_vehicle_detect_dist, false);
+    path, closest_idx, stop_idx, planner_param_.stuck_vehicle_detect_dist,
+    planner_param_.stuck_vehicle_ignore_dist);
   debug_data_.stuck_vehicle_detect_area = toGeomMsg(stuck_vehicle_detect_area);
 
   for (const auto & object : objects_ptr->objects) {

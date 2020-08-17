@@ -64,6 +64,8 @@ IntersectionModuleManager::IntersectionModuleManager()
   pnh.param(ns + "/path_expand_width", p.path_expand_width, 2.0);
   pnh.param(ns + "/stop_line_margin", p.stop_line_margin, 1.0);
   pnh.param(ns + "/stuck_vehicle_detect_dist", p.stuck_vehicle_detect_dist, 5.0);
+  pnh.param(ns + "/stuck_vehicle_ignore_dist", p.stuck_vehicle_ignore_dist, 5.0) +
+    planner_data_->base_link2front;
   pnh.param(ns + "/stuck_vehicle_vel_thr", p.stuck_vehicle_vel_thr, 3.0 / 3.6);
   pnh.param(ns + "/intersection_velocity", p.intersection_velocity, 10.0 / 3.6);
   pnh.param(ns + "/detection_area_length", p.detection_area_length, 200.0);
