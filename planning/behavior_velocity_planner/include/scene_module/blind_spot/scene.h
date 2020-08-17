@@ -19,6 +19,8 @@
 #include <string>
 #include <vector>
 
+#include <boost/optional.hpp>
+
 #include <ros/ros.h>
 
 #include <autoware_perception_msgs/DynamicObject.h>
@@ -35,8 +37,8 @@
 
 struct BlindSpotPolygons
 {
-  Polygon2d conflict_area;
-  Polygon2d detection_area;
+  lanelet::CompoundPolygon3d conflict_area;
+  lanelet::CompoundPolygon3d detection_area;
 };
 
 class BlindSpotModule : public SceneModuleInterface
@@ -46,6 +48,8 @@ public:
     STOP = 0,
     GO,
   };
+
+  enum class TurnDirection { LEFT = 0, RIGHT, INVALID };
 
   /**
    * @brief Manage stop-go states with safety margin time.
@@ -76,9 +80,8 @@ public:
     geometry_msgs::Pose virtual_wall_pose;
     geometry_msgs::Pose stop_point_pose;
     geometry_msgs::Pose judge_point_pose;
-    geometry_msgs::Polygon confict_area_for_blind_spot;
-    geometry_msgs::Polygon detection_area_for_blind_spot;
-    std::vector<lanelet::CompoundPolygon3d> detection_area;
+    lanelet::CompoundPolygon3d confict_area_for_blind_spot;
+    lanelet::CompoundPolygon3d detection_area_for_blind_spot;
     autoware_planning_msgs::PathWithLaneId spline_path;
     autoware_perception_msgs::DynamicObjectArray conflicting_targets;
   };
@@ -109,19 +112,11 @@ public:
 
 private:
   int64_t lane_id_;
-  std::string turn_direction_;
+  TurnDirection turn_direction_;
   bool has_traffic_light_;
 
   // Parameter
   PlannerParam planner_param_;
-
-  /**
-   * @brief get objective polygons for detection area
-   */
-  bool getObjectivePolygons(
-    lanelet::LaneletMapConstPtr lanelet_map_ptr,
-    lanelet::routing::RoutingGraphPtr routing_graph_ptr, const int lane_id,
-    std::vector<lanelet::CompoundPolygon3d> * polygons);
 
   /**
    * @brief Check obstacle is in blind spot areas.
@@ -131,32 +126,44 @@ private:
    * @param path path information associated with lane id
    * @param objects_ptr dynamic objects
    * @param closest_idx closest path point index from ego car in path points
-   * @param stop_idx stop path point index in path points
    * @return true when an object is detected in blind spot
    */
   bool checkObstacleInBlindSpot(
+    lanelet::LaneletMapConstPtr lanelet_map_ptr,
+    lanelet::routing::RoutingGraphPtr routing_graph_ptr,
     const autoware_planning_msgs::PathWithLaneId & path,
-    const autoware_perception_msgs::DynamicObjectArray::ConstPtr objects_ptr, const int closest_idx,
-    const int stop_idx) const;
+    const autoware_perception_msgs::DynamicObjectArray::ConstPtr objects_ptr,
+    const int closest_idx) const;
+
+  /**
+   * @brief Create half lanelet
+   * @param lanelet input lanelet
+   * @return Half lanelet
+   */
+  lanelet::ConstLanelet generateHalfLanelet(const lanelet::ConstLanelet lanelet) const;
 
   /**
    * @brief Make blind spot areas. Narrow area is made from closest path point to stop line index.
    * Broad area is made from backward expanded point to stop line point
    * @param path path information associated with lane id
    * @param closest_idx closest path point index from ego car in path points
-   * @param stop_line_idx stop path point index in path points
    * @return Blind spot polygons
    */
   BlindSpotPolygons generateBlindSpotPolygons(
-    const autoware_planning_msgs::PathWithLaneId & path, const int closest_idx,
-    const int stop_line_idx) const;
+    lanelet::LaneletMapConstPtr lanelet_map_ptr,
+    lanelet::routing::RoutingGraphPtr routing_graph_ptr,
+    const autoware_planning_msgs::PathWithLaneId & path, const int closest_idx) const;
 
   /**
-   * @brief Get lane width from lanelet
-   * @param lanelet lanelet object
-   * @return lane width
+   * @brief Get vehicle edge
+   * @param vehicle_pose pose of ego vehicle
+   * @param vehicle_width width of ego vehicle
+   * @param base_link2front length between base link and front of ego vehicle
+   * @return edge of ego vehicle
    */
-  double getLaneletWidth(lanelet::ConstLanelet & lanelet) const;
+  lanelet::LineString2d getVehicleEdge(
+    const geometry_msgs::Pose & vehicle_pose, const double vehicle_width,
+    const double base_link2front) const;
 
   /**
    * @brief Check if object is belong to targeted classes
@@ -172,38 +179,45 @@ private:
    * @return True when at least one of object's predicted position is in area
    */
   bool isPredictedPathInArea(
-    const autoware_perception_msgs::DynamicObject & object, const Polygon2d & area) const;
+    const autoware_perception_msgs::DynamicObject & object,
+    const lanelet::CompoundPolygon3d & area) const;
 
   /**
-   * @brief Generate a stop line and insert it into the path. If the stop line is defined in the map,
-   * read it from the map; otherwise, generate a stop line at a position where it will not collide.
+   * @brief Generate a stop line and insert it into the path.
+   * A stop line is at an intersection point of straight path with vehicle path
    * @param detection_areas used to generate stop line
    * @param path            ego-car lane
    * @param stop_line_idx   generated stop line index
-   * @param pass_judge_line_idx  generated stpo line index
+   * @param pass_judge_line_idx  generated pass judge line index
    * @return false when generation failed
    */
   bool generateStopLine(
-    const std::vector<lanelet::CompoundPolygon3d> detection_areas,
-    autoware_planning_msgs::PathWithLaneId * path, int * stop_line_idx,
-    int * pass_judge_line_idx) const;
+    const lanelet::ConstLanelets straight_lanelets, autoware_planning_msgs::PathWithLaneId * path,
+    int * stop_line_idx, int * pass_judge_line_idx) const;
 
   /**
-   * @brief Calculate first path index that is in the polygon.
+   * @brief Calculate first path index that is conflicting lanelets.
    * @param path     target path
-   * @param polygons target polygon
+   * @param laneletss target lanelets
    * @return path point index
    */
-  int getFirstPointInsidePolygons(
+  boost::optional<int> getFirstPointConflictingLanelets(
     const autoware_planning_msgs::PathWithLaneId & path,
-    const std::vector<lanelet::CompoundPolygon3d> & polygons) const;
+    const lanelet::ConstLanelets & lanelets) const;
 
   /**
-   * @brief Get stop point from map if exists
-   * @param stop_pose stop point defined on map
-   * @return true when the stop point is defined on map.
+   * @brief Get start point from lanelet
+   * @param lane_id lane id of objective lanelet
+   * @return end point of lanelet
    */
-  bool getStopPoseFromMap(const int lane_id, geometry_msgs::Point * stop_pose) const;
+  boost::optional<geometry_msgs::Point> getStartPointFromLaneLet(const int lane_id) const;
+
+  /**
+   * @brief get straight lanelets in intersection
+   */
+  lanelet::ConstLanelets getStraightLanelets(
+    lanelet::LaneletMapConstPtr lanelet_map_ptr,
+    lanelet::routing::RoutingGraphPtr routing_graph_ptr, const int lane_id);
 
   /**
    * @brief Modify objects predicted path. remove path point if the time exceeds timer_thr.
