@@ -248,13 +248,13 @@ bool generateStopLine(
   } else {
     // get idx of first_inside_lane point
     first_idx_ip_inside_lane = getFirstPointInsidePolygons(path_ip, detection_areas);
-    // only for visualization
-    const auto first_inside_point = path_ip.points.at(first_idx_ip_inside_lane).point.pose;
-    planning_utils::calcClosestIndex(*path, first_inside_point, *first_idx_inside_lane, 10.0);
     if (first_idx_ip_inside_lane == -1) {
       ROS_DEBUG("[MergeFromPrivateRoad] generate stopline, but no intersect line found.");
       return false;
     }
+    // only for visualization
+    const auto first_inside_point = path_ip.points.at(first_idx_ip_inside_lane).point.pose;
+    planning_utils::calcClosestIndex(*path, first_inside_point, *first_idx_inside_lane, 10.0);
     if (*first_idx_inside_lane == 0) {
       ROS_DEBUG(
         "[intersection] path[0] is already in the detection area. This happens if you have already "
