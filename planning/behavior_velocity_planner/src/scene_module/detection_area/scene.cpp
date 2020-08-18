@@ -21,6 +21,83 @@
 
 namespace
 {
+std::pair<int, double> findWayPointAndDistance(
+  const autoware_planning_msgs::PathWithLaneId & input_path, const Eigen::Vector2d & p)
+{
+  constexpr double max_lateral_dist = 3.0;
+  for (size_t i = 0; i < input_path.points.size() - 1; ++i) {
+    const double dx = p.x() - input_path.points.at(i).point.pose.position.x;
+    const double dy = p.y() - input_path.points.at(i).point.pose.position.y;
+    const double dx_wp = input_path.points.at(i + 1).point.pose.position.x -
+                         input_path.points.at(i).point.pose.position.x;
+    const double dy_wp = input_path.points.at(i + 1).point.pose.position.y -
+                         input_path.points.at(i).point.pose.position.y;
+
+    const double theta = std::atan2(dy, dx) - std::atan2(dy_wp, dx_wp);
+
+    const double dist = std::hypot(dx, dy);
+    const double dist_wp = std::hypot(dx_wp, dy_wp);
+
+    // check lateral distance
+    if (std::fabs(dist * std::sin(theta)) > max_lateral_dist) {
+      continue;
+    }
+
+    // if the point p is back of the way point, return negative distance
+    if (dist * std::cos(theta) < 0) {
+      return std::make_pair(static_cast<int>(i), -1.0 * dist);
+    }
+
+    if (dist * std::cos(theta) < dist_wp) {
+      return std::make_pair(static_cast<int>(i), dist);
+    }
+  }
+
+  // if the way point is not found, return negative distance from the way point at 0
+  const double dx = p.x() - input_path.points.at(0).point.pose.position.x;
+  const double dy = p.y() - input_path.points.at(0).point.pose.position.y;
+  return std::make_pair(-1, -1.0 * std::hypot(dx, dy));
+}
+
+double calcArcLengthFromWayPoint(
+  const autoware_planning_msgs::PathWithLaneId & input_path, const int & src, const int & dst)
+{
+  double length = 0;
+  const size_t src_idx = src >= 0 ? static_cast<size_t>(src) : 0;
+  const size_t dst_idx = dst >= 0 ? static_cast<size_t>(dst) : 0;
+  for (size_t i = src_idx; i < dst_idx; ++i) {
+    const double dx_wp = input_path.points.at(i + 1).point.pose.position.x -
+                         input_path.points.at(i).point.pose.position.x;
+    const double dy_wp = input_path.points.at(i + 1).point.pose.position.y -
+                         input_path.points.at(i).point.pose.position.y;
+    length += std::hypot(dx_wp, dy_wp);
+  }
+  return length;
+}
+
+double calcSignedArcLength(
+  const autoware_planning_msgs::PathWithLaneId & input_path, const geometry_msgs::Pose & p1,
+  const Eigen::Vector2d & p2)
+{
+  std::pair<int, double> src =
+    findWayPointAndDistance(input_path, Eigen::Vector2d(p1.position.x, p1.position.y));
+  std::pair<int, double> dst = findWayPointAndDistance(input_path, p2);
+  if (dst.first == -1) {
+    double dx = p1.position.x - p2.x();
+    double dy = p1.position.y - p2.y();
+    return -1.0 * std::hypot(dx, dy);
+  }
+
+  if (src.first < dst.first) {
+    return calcArcLengthFromWayPoint(input_path, src.first, dst.first) - src.second + dst.second;
+  } else if (src.first > dst.first) {
+    return -1.0 *
+           (calcArcLengthFromWayPoint(input_path, dst.first, src.first) - dst.second + src.second);
+  } else {
+    return dst.second - src.second;
+  }
+}
+
 double calcSignedDistance(const geometry_msgs::Pose & p1, const Eigen::Vector2d & p2)
 {
   Eigen::Affine3d map2p1;
@@ -81,20 +158,42 @@ bool DetectionAreaModule::modifyPathVelocity(
     const Line stop_line = {
       {lanelet_stop_line[stop_line_id].x(), lanelet_stop_line[stop_line_id].y()},
       {lanelet_stop_line[stop_line_id + 1].x(), lanelet_stop_line[stop_line_id + 1].y()}};
-    Eigen::Vector2d stop_line_point;
-    size_t stop_line_point_idx;
-    if (!createTargetPoint(
-          input_path, stop_line, planner_param_.stop_margin, stop_line_point_idx,
-          stop_line_point)) {
-      continue;
+
+    // Check Dead Line
+    {
+      constexpr double dead_line_range = 5.0;
+      Eigen::Vector2d dead_line_point;
+      size_t dead_line_point_idx;
+      if (!createTargetPoint(
+          input_path, stop_line, -2.0 /*overline margin*/, dead_line_point_idx,
+          dead_line_point)) {
+        continue;
+      }
+
+      if (isOverDeadLine(
+          self_pose.pose, input_path, dead_line_point_idx, dead_line_point, dead_line_range)) {
+        state_ = State::PASS;
+        return true;
+      }
     }
 
-    if (
-      state_ != State::STOP &&
-      calcSignedDistance(self_pose.pose, stop_line_point) < pass_judge_line_distance) {
-      ROS_WARN_THROTTLE(1.0, "[detection_area] vehicle is over stop border");
-      state_ = State::PASS;
-      return true;
+    // Check Stop Line
+    {
+      Eigen::Vector2d stop_line_point;
+      size_t stop_line_point_idx;
+      if (!createTargetPoint(
+          input_path, stop_line, planner_param_.stop_margin, stop_line_point_idx,
+          stop_line_point)) {
+        continue;
+      }
+
+      if (
+        state_ != State::STOP &&
+        calcSignedDistance(self_pose.pose, stop_line_point) < pass_judge_line_distance) {
+        ROS_WARN_THROTTLE(1.0, "[detection_area] vehicle is over stop border");
+        state_ = State::PASS;
+        return true;
+      }
     }
 
     // Add Stop WayPoint
@@ -113,6 +212,51 @@ bool DetectionAreaModule::modifyPathVelocity(
   }
   return false;
 }
+
+bool DetectionAreaModule::isOverDeadLine(
+  const geometry_msgs::Pose & self_pose, const autoware_planning_msgs::PathWithLaneId & input_path,
+  const size_t & dead_line_point_idx, const Eigen::Vector2d & dead_line_point,
+  const double dead_line_range)
+{
+  if (calcSignedArcLength(input_path, self_pose, dead_line_point) > dead_line_range) {
+    return false;
+  }
+
+  double yaw;
+  if (dead_line_point_idx == 0)
+    yaw = std::atan2(
+      input_path.points.at(dead_line_point_idx + 1).point.pose.position.y - dead_line_point.y(),
+      input_path.points.at(dead_line_point_idx + 1).point.pose.position.x - dead_line_point.x());
+  else
+    yaw = std::atan2(
+      dead_line_point.y() - input_path.points.at(dead_line_point_idx - 1).point.pose.position.y,
+      dead_line_point.x() - input_path.points.at(dead_line_point_idx - 1).point.pose.position.x);
+
+  // Calculate transform from dead_line_pose to self_pose
+  tf2::Transform tf_dead_line_pose2self_pose;
+  {
+    tf2::Quaternion quat;
+    quat.setRPY(0, 0, yaw);
+    tf2::Transform tf_map2dead_line_pose(
+      quat, tf2::Vector3(dead_line_point.x(), dead_line_point.y(), self_pose.position.z));
+    tf2::Transform tf_map2self_pose;
+    tf2::fromMsg(self_pose, tf_map2self_pose);
+    tf_dead_line_pose2self_pose = tf_map2dead_line_pose.inverse() * tf_map2self_pose;
+
+    // debug code
+    geometry_msgs::Pose dead_line_pose;
+    tf2::toMsg(tf_map2dead_line_pose, dead_line_pose);
+    debug_data_.dead_line_poses.push_back(dead_line_pose);
+  }
+
+  if (0 < tf_dead_line_pose2self_pose.getOrigin().x()) {
+    ROS_WARN("[traffic_light] vehicle is over dead line");
+    return true;
+  }
+
+  return false;
+}
+
 
 bool DetectionAreaModule::isPointsWithinDetectionArea(
   const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & no_ground_pointcloud_ptr,

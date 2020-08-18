@@ -57,6 +57,30 @@ visualization_msgs::MarkerArray createMarkerArray(
     marker.color.b = 0.0;
     msg.markers.push_back(marker);
   }
+  // Dead VirtualWall
+  for (size_t j = 0; j < debug_data.dead_line_poses.size(); ++j) {
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = "map";
+    marker.header.stamp = current_time;
+    marker.ns = "dead_line_virtual_wall";
+    marker.id = uid + j;
+    marker.lifetime = ros::Duration(0.5);
+    marker.type = visualization_msgs::Marker::CUBE;
+    marker.action = visualization_msgs::Marker::ADD;
+    tf2::Transform tf_map2base_link;
+    tf2::fromMsg(debug_data.dead_line_poses.at(j), tf_map2base_link);
+    tf2::Transform tf_map2front = tf_map2base_link * tf_base_link2front;
+    tf2::toMsg(tf_map2front, marker.pose);
+    marker.pose.position.z += 1.0;
+    marker.scale.x = 0.1;
+    marker.scale.y = 5.0;
+    marker.scale.z = 2.0;
+    marker.color.a = 0.5;  // Don't forget to set the alpha!
+    marker.color.r = 0.0;
+    marker.color.g = 1.0;
+    marker.color.b = 0.0;
+    msg.markers.push_back(marker);
+  }
   // Facto Text
   for (size_t j = 0; j < debug_data.stop_poses.size(); ++j) {
     visualization_msgs::Marker marker;
