@@ -16,6 +16,9 @@
 
 #pragma once
 
+#include <memory>
+#include <string>
+
 #include <diagnostic_msgs/DiagnosticStatus.h>
 #include <diagnostic_msgs/KeyValue.h>
 #include <geometry_msgs/TwistStamped.h>
@@ -42,6 +45,8 @@ using Point2d = boost::geometry::model::d2::point_xy<double>;
 using Polygon2d =
   boost::geometry::model::polygon<Point2d, false, false>;  // counter-clockwise, open
 
+enum class State { PASS, STOP };
+
 class SurroundObstacleCheckerNode
 {
 public:
@@ -65,7 +70,8 @@ private:
     double * min_dist_to_obj, geometry_msgs::Point * nearest_obj_point);
   void getNearestObstacleByDynamicObject(
     double * min_dist_to_obj, geometry_msgs::Point * nearest_obj_point);
-  void checkSurroundObstacle(const double min_dist_to_obj, bool * is_surround_obstacle);
+  bool isObstacleFound(const double min_dist_to_obj);
+  bool isStopRequired(const bool is_obstacle_found, const bool is_stopped);
   size_t getClosestIdx(
     const autoware_planning_msgs::Trajectory & traj, const geometry_msgs::Pose current_pose);
   bool checkStop(const autoware_planning_msgs::TrajectoryPoint & closest_point);
@@ -106,6 +112,11 @@ private:
   // For preventing chattering,
   // surround_check_recover_distance_ must be  bigger than surround_check_distance_
   double surround_check_recover_distance_;
+  double state_clear_time_;
   double stop_state_ego_speed_;
   bool is_surround_obstacle_;
+
+  // State Machine
+  State state_ = State::PASS;
+  std::shared_ptr<const ros::Time> last_obstacle_found_time_;
 };

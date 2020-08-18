@@ -46,13 +46,14 @@ T waitForParam(const ros::NodeHandle & nh, const std::string & key)
 }
 
 SurroundObstacleCheckerNode::SurroundObstacleCheckerNode()
-: nh_(), pnh_("~"), tf_listener_(tf_buffer_), is_surround_obstacle_(false)
+: nh_(), pnh_("~"), tf_listener_(tf_buffer_)
 {
   // Parameters
   pnh_.param<bool>("use_pointcloud", use_pointcloud_, true);
   pnh_.param<bool>("use_dynamic_object", use_dynamic_object_, true);
   pnh_.param<double>("surround_check_distance", surround_check_distance_, 2.0);
   pnh_.param<double>("surround_check_recover_distance", surround_check_recover_distance_, 2.5);
+  pnh_.param<double>("state_clear_time", state_clear_time_, 2.0);
   pnh_.param<double>("stop_state_ego_speed", stop_state_ego_speed_, 0.1);
   wheel_base_ = waitForParam<double>(pnh_, "/vehicle_info/wheel_base");
   front_overhang_ = waitForParam<double>(pnh_, "/vehicle_info/front_overhang");
@@ -102,45 +103,50 @@ void SurroundObstacleCheckerNode::pathCallback(
   // parameter description
   autoware_planning_msgs::Trajectory output_msg = *input_msg;
   diagnostic_msgs::DiagnosticStatus no_start_reason_diag;
-  geometry_msgs::Pose current_pose;
-  size_t closest_idx;
-  bool is_stopped = false;
-  bool is_surround_object_recover = true;
-  double min_dist_to_obj = std::numeric_limits<double>::max();
-  geometry_msgs::Point nearest_obj_point;
 
-  //get current pose in traj frame
+  // get current pose in traj frame
+  geometry_msgs::Pose current_pose;
   if (!getPose(input_msg->header.frame_id, "base_link", input_msg->header.stamp, current_pose)) {
     return;
   }
 
-  //get closest idx
-  closest_idx = getClosestIdx(*input_msg, current_pose);
+  // get closest idx
+  const size_t closest_idx = getClosestIdx(*input_msg, current_pose);
 
   // get nearest object
+  double min_dist_to_obj = std::numeric_limits<double>::max();
+  geometry_msgs::Point nearest_obj_point;
   getNearestObstacle(&min_dist_to_obj, &nearest_obj_point);
 
-  //check current obstacle status (exist or not)
-  checkSurroundObstacle(min_dist_to_obj, &is_surround_obstacle_);
+  // check current obstacle status (exist or not)
+  const auto is_obstacle_found = isObstacleFound(min_dist_to_obj);
 
-  //check current stop status (stop or not)
-  is_stopped = checkStop(input_msg->points.at(closest_idx));
+  // check current stop status (stop or not)
+  const auto is_stopped = checkStop(input_msg->points.at(closest_idx));
 
-  //insert stop velocity
-  if (is_surround_obstacle_ && is_stopped) {
-    //do not start when there is a obstacle near the ego vehicle.
+  const auto is_stop_required = isStopRequired(is_obstacle_found, is_stopped);
+
+  // insert stop velocity
+  if (is_stop_required) {
+    state_ = State::STOP;
+
+    // do not start when there is a obstacle near the ego vehicle.
     ROS_WARN_STREAM_THROTTLE(
       0.5, "[surround_obstacle_checker]: "
              << "do not start because there is obstacle near the ego vehicle.");
     insertStopVelocity(closest_idx, &output_msg);
 
-    //visualization for debug
-    debug_ptr_->pushObstaclePoint(nearest_obj_point, PointType::NoStart);
+    // visualization for debug
+    if (is_obstacle_found) {
+      debug_ptr_->pushObstaclePoint(nearest_obj_point, PointType::NoStart);
+    }
     debug_ptr_->pushPose(input_msg->points.at(closest_idx).pose, PoseType::NoStart);
     no_start_reason_diag = makeStopReasonDiag("obstacle", input_msg->points.at(closest_idx).pose);
+  } else {
+    state_ = State::PASS;
   }
 
-  //publish trajectory and debug info
+  // publish trajectory and debug info
   path_pub_.publish(output_msg);
   stop_reason_diag_pub_.publish(no_start_reason_diag);
   debug_ptr_->publish();
@@ -320,23 +326,48 @@ void SurroundObstacleCheckerNode::getNearestObstacleByDynamicObject(
   }
 }
 
-void SurroundObstacleCheckerNode::checkSurroundObstacle(
-  const double min_dist_to_obj, bool * is_surround_obstacle)
+bool SurroundObstacleCheckerNode::isObstacleFound(const double min_dist_to_obj)
 {
-  if (min_dist_to_obj < surround_check_distance_) {
-    //detect surround obstacle
-    *is_surround_obstacle = true;
-    return;
+  const auto is_obstacle_inside_range = min_dist_to_obj < surround_check_distance_;
+  const auto is_obstacle_outside_range = min_dist_to_obj > surround_check_recover_distance_;
+
+  if (state_ == State::PASS) {
+    return is_obstacle_inside_range;
   }
 
-  if (min_dist_to_obj > surround_check_recover_distance_) {
-    //surround obstacle does not exist
-    *is_surround_obstacle = false;
-    return;
+  if (state_ == State::STOP) {
+    return !is_obstacle_outside_range;
   }
 
-  //other case:
-  //obstacle status does not change
+  throw std::runtime_error("invalid state");
+}
+
+bool SurroundObstacleCheckerNode::isStopRequired(
+  const bool is_obstacle_found, const bool is_stopped)
+{
+  if (!is_stopped) {
+    return false;
+  }
+
+  if (is_obstacle_found) {
+    last_obstacle_found_time_ = std::make_shared<const ros::Time>(ros::Time::now());
+    return true;
+  }
+
+  if (state_ != State::STOP) {
+    return false;
+  }
+
+  // Keep stop state
+  if (last_obstacle_found_time_) {
+    const auto elapsed_time = ros::Time::now() - *last_obstacle_found_time_;
+    if (elapsed_time.toSec() <= state_clear_time_) {
+      return true;
+    }
+  }
+
+  last_obstacle_found_time_ = {};
+  return false;
 }
 
 bool SurroundObstacleCheckerNode::checkStop(
