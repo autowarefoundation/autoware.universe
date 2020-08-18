@@ -21,8 +21,7 @@
 | ✓   | float64                   | steering_velocity        | [rad/s]                                       | calculate from steering in awapi_adapter     |
 | ✓   | float64                   | angular_velocity         | [rad/s]                                       |                                              |
 |     | int32                     | gear                     | accroding to autoware_vehicle_msgs/Shift      |                                              |
-|     | float64                   | distance_to_empty        |                                               | <font color="Red">**not implemented**</font> |
-|     | int32                     | turn_signal              | accroding to autoware_vehicle_msgs/TurnSignal |                                              |
+| ✓   | int32                     | turn_signal              | accroding to autoware_vehicle_msgs/TurnSignal |                                              |
 | ✓   | float64                   | target_velocity          | [m/s]                                         |                                              |
 | ✓   | float64                   | target_acceleration      | [m/ss]                                        |                                              |
 | ✓   | float64                   | target_steering          | [rad]                                         |                                              |
@@ -33,17 +32,16 @@
 - get autoware status
 - MessageType: awapi_awiv_adapter/AwapiVehicleStatus
 
-| ✓   | type                                   | name                 | unit                                           | note                                                                         |
-| --- | :------------------------------------- | :------------------- | :--------------------------------------------- | :--------------------------------------------------------------------------- |
-| ✓   | std_msgs/Header                        | header               |                                                |                                                                              |
-| ✓   | string                                 | autoware_state       |                                                |                                                                              |
-| ✓   | int32                                  | control_mode         | accroding to autoware_vehicle_msgs/ControlMode | manual/auto (changed by /awapi/autoware/put/engage)                          |
-|     | int32                                  | gate_mode            | autoware_vehicle_msgs/GateMode                 | auto/remote (it is valid only when control_mode=auto))                       |
-|     | bool                                   | emergency_stopped    | True in emergency mode                         |                                                                              |
-| ✓   | autoware_planning_msgs/StopReasonArray | stop_reason          |                                                | "stop_pose" represents the position of "base_link" (not the head of the car) |
-| ✓   | diagnostic_msgs/DiagnosticStatus[]     | diagnostics          |                                                | output only diag. of leaf node (diag. of parent node are cut)                |
-|     | bool                                   | autonomous_overriden |                                                | get info from pacmod msg directly (global_rpt/override_active)               |
-|     | bool                                   | arrived_goal         |                                                |                                                                              |
+| ✓   | type                                   | name                 | unit                                           | note                                                                                                                                                                        |
+| --- | :------------------------------------- | :------------------- | :--------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ✓   | std_msgs/Header                        | header               |                                                |                                                                                                                                                                             |
+| ✓   | string                                 | autoware_state       |                                                |                                                                                                                                                                             |
+| ✓   | int32                                  | control_mode         | accroding to autoware_vehicle_msgs/ControlMode | manual/auto (changed by /awapi/autoware/put/engage)                                                                                                                         |
+|     | int32                                  | gate_mode            | autoware_vehicle_msgs/GateMode                 | auto/remote (it is valid only when control_mode=auto))                                                                                                                      |
+| ✓   | bool                                   | emergency_stopped    | True in emergency mode                         |                                                                                                                                                                             |
+| ✓   | autoware_planning_msgs/StopReasonArray | stop_reason          |                                                | "stop_pose" represents the position of "base_link" (not the head of the car)                                                                                                |
+| ✓   | diagnostic_msgs/DiagnosticStatus[]     | diagnostics          |                                                | output only diag. of leaf node (diag. of parent node are cut)                                                                                                               |
+| ✓   | bool                                   | arrived_goal         |                                                | True if the autoware_state is changed from Driving to ArrivedGoal or WairingForRoute. False if the autoware_state is changed to WaitingForEngage or Driving. Default False. |
 
 ### /awapi/autoware/get/route
 
@@ -123,7 +121,7 @@
 
 | ✓   | type          | name | unit | note |
 | --- | :------------ | :--- | :--- | :--- |
-|     | std_msgs/Bool |      |      |      |
+| ✓   | std_msgs/Bool |      |      |      |
 
 ### /awapi/autoware/put/engage
 
@@ -132,7 +130,7 @@
 
 | ✓   | type          | name | unit | note |
 | --- | :------------ | :--- | :--- | :--- |
-|     | std_msgs/Bool |      |      |      |
+| ✓   | std_msgs/Bool |      |      |      |
 
 ### /awapi/autoware/put/route
 
@@ -141,7 +139,7 @@
 
 | ✓   | type                         | name | unit | note |
 | --- | :--------------------------- | :--- | :--- | :--- |
-|     | autoware_planning_msgs/Route |      |      |      |
+| ✓   | autoware_planning_msgs/Route |      |      |      |
 
 ### /awapi/lane_change/put/approval
 
