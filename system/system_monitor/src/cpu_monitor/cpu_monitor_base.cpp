@@ -107,7 +107,6 @@ void CPUMonitorBase::checkTemp(diagnostic_updater::DiagnosticStatusWrapper & sta
     temp /= 1000;
     stat.addf(itr->label_, "%.1f DegC", temp);
 
-    level = DiagStatus::OK;
     if (temp >= temp_error_)
       level = std::max(level, static_cast<int>(DiagStatus::ERROR));
     else if (temp >= temp_warn_)

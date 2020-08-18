@@ -142,7 +142,7 @@ void CPUMonitor::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & s
 
 void CPUMonitor::getTempNames(void)
 {
-  const fs::path root("/sys/devices/platform");
+  const fs::path root("/sys/devices/platform/coretemp.0");
 
   for (const fs::path & path : boost::make_iterator_range(
          fs::recursive_directory_iterator(root), fs::recursive_directory_iterator())) {
@@ -152,7 +152,7 @@ void CPUMonitor::getTempNames(void)
     boost::regex filter(".*temp(\\d+)_input");
     std::string temp_input = path.generic_string();
 
-    // /sys/devices/platform/coretemp.[0-9]/hwmon/hwmon[0-9]/temp[0-9]_input ?
+    // /sys/devices/platform/coretemp.0/hwmon/hwmon[0-9]/temp[0-9]_input ?
     if (!boost::regex_match(temp_input, match, filter)) continue;
 
     cpu_temp_info temp;

@@ -108,7 +108,7 @@ void NetMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
     fd = socket(AF_INET, SOCK_DGRAM, 0);
     strncpy(ifrm.ifr_name, ifa->ifa_name, IFNAMSIZ - 1);
     if (ioctl(fd, SIOCGIFMTU, &ifrm) < 0) {
-      stat.add((boost::format("Network %1%: status") % index).str(), usage_dict_.at(level));
+      stat.add((boost::format("Network %1%: status") % index).str(), "Error");
       stat.add((boost::format("Network %1%: interface name") % index).str(), ifa->ifa_name);
       stat.add("ioctl(SIOCGIFMTU)", strerror(errno));
       error_str = "ioctl error";
@@ -122,10 +122,10 @@ void NetMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
     ifrc.ifr_data = (caddr_t)&edata;
     edata.cmd = ETHTOOL_GSET;
     if (ioctl(fd, SIOCETHTOOL, &ifrc) < 0) {
-      // possibly wireless connection, get bitrate(MBit/s) and convert to B/s
-      speed = nl80211_.getBitrate(ifa->ifa_name) / 8;
+      // possibly wireless connection, get bitrate(MBit/s)
+      speed = nl80211_.getBitrate(ifa->ifa_name);
       if (speed <= 0) {
-        stat.add((boost::format("Network %1%: status") % index).str(), usage_dict_.at(level));
+        stat.add((boost::format("Network %1%: status") % index).str(), "Error");
         stat.add((boost::format("Network %1%: interface name") % index).str(), ifa->ifa_name);
         stat.add("ioctl(SIOCETHTOOL)", strerror(errno));
         error_str = "ioctl error";
@@ -142,19 +142,19 @@ void NetMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
     if (bytes_.find(ifa->ifa_name) != bytes_.end()) {
       rx_traffic = toMbit(stats->rx_bytes - bytes_[ifa->ifa_name].rx_bytes) / duration.toSec();
       tx_traffic = toMbit(stats->tx_bytes - bytes_[ifa->ifa_name].tx_bytes) / duration.toSec();
-      rx_usage = rx_traffic / speed * 1e+2;
-      tx_usage = tx_traffic / speed * 1e+2;
+      rx_usage = rx_traffic / speed;
+      tx_usage = tx_traffic / speed;
       if (rx_usage >= usage_warn_ || tx_usage > usage_warn_)
         level = std::max(level, static_cast<int>(DiagStatus::WARN));
     }
 
     stat.add((boost::format("Network %1%: status") % index).str(), usage_dict_.at(level));
     stat.add((boost::format("Network %1%: interface name") % index).str(), ifa->ifa_name);
-    stat.addf((boost::format("Network %1%: rx_usage") % index).str(), "%.2f%%", rx_usage);
-    stat.addf((boost::format("Network %1%: tx_usage") % index).str(), "%.2f%%", tx_usage);
-    stat.addf((boost::format("Network %1%: rx_traffic") % index).str(), "%.2f MB/s", rx_traffic);
-    stat.addf((boost::format("Network %1%: tx_traffic") % index).str(), "%.2f MB/s", tx_traffic);
-    stat.addf((boost::format("Network %1%: capacity") % index).str(), "%.1f MB/s", speed);
+    stat.addf((boost::format("Network %1%: rx_usage") % index).str(), "%.2f%%", rx_usage * 1e+2);
+    stat.addf((boost::format("Network %1%: tx_usage") % index).str(), "%.2f%%", tx_usage * 1e+2);
+    stat.addf((boost::format("Network %1%: rx_traffic") % index).str(), "%.2f MBit/s", rx_traffic);
+    stat.addf((boost::format("Network %1%: tx_traffic") % index).str(), "%.2f MBit/s", tx_traffic);
+    stat.addf((boost::format("Network %1%: capacity") % index).str(), "%.1f MBit/s", speed);
     stat.add((boost::format("Network %1%: mtu") % index).str(), ifrm.ifr_mtu);
     stat.add((boost::format("Network %1%: rx_bytes") % index).str(), stats->rx_bytes);
     stat.add((boost::format("Network %1%: rx_errors") % index).str(), stats->rx_errors);
