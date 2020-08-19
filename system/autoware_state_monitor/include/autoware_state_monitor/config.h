@@ -69,6 +69,7 @@ struct TfConfig
 struct TopicStats
 {
   ros::Time checked_time;
+  std::vector<TopicConfig> ok_list;
   std::vector<TopicConfig> non_received_list;
   std::vector<std::pair<TopicConfig, ros::Time>> timeout_list;  // pair<TfConfig, last_received>
   std::vector<std::pair<TopicConfig, double>> slow_rate_list;   // pair<TfConfig, rate>
@@ -77,12 +78,14 @@ struct TopicStats
 struct ParamStats
 {
   ros::Time checked_time;
+  std::vector<ParamConfig> ok_list;
   std::vector<ParamConfig> non_set_list;
 };
 
 struct TfStats
 {
   ros::Time checked_time;
+  std::vector<TfConfig> ok_list;
   std::vector<TfConfig> non_received_list;
   std::vector<std::pair<TfConfig, ros::Time>> timeout_list;  // pair<TfConfig, last_received>
 };

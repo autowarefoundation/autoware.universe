@@ -53,10 +53,18 @@ void AutowareStateMonitorNode::checkTopicStatus(
   diagnostic_updater::DiagnosticStatusWrapper & stat, const std::string & module_name)
 {
   int8_t level = diagnostic_msgs::DiagnosticStatus::OK;
-  std::vector<std::string> error_msgs;
 
   const auto & topic_stats = state_input_.topic_stats;
   const auto & tf_stats = state_input_.tf_stats;
+
+  // OK
+  for (const auto & topic_config : topic_stats.ok_list) {
+    if (topic_config.module != module_name) {
+      continue;
+    }
+
+    stat.add(fmt::format("{} status", topic_config.name), "OK");
+  }
 
   // Check topic received
   for (const auto & topic_config : topic_stats.non_received_list) {
@@ -64,9 +72,8 @@ void AutowareStateMonitorNode::checkTopicStatus(
       continue;
     }
 
-    const auto msg = fmt::format("topic `{}` is not received", topic_config.name);
+    stat.add(fmt::format("{} status", topic_config.name), "Not Received");
 
-    error_msgs.push_back(msg);
     level = diagnostic_msgs::DiagnosticStatus::ERROR;
   }
 
@@ -79,11 +86,11 @@ void AutowareStateMonitorNode::checkTopicStatus(
       continue;
     }
 
-    const auto msg = fmt::format(
-      "topic `{}` is slow rate: warn_rate = {}, actual_rate = {}", topic_config.name,
-      topic_config.warn_rate, topic_rate);
+    const auto & name = topic_config.name;
+    stat.add(fmt::format("{} status", name), "Slow Rate");
+    stat.addf(fmt::format("{} warn_rate", name), "%.2f [Hz]", topic_config.warn_rate);
+    stat.addf(fmt::format("{} measured_rate", name), "%.2f [Hz]", topic_rate);
 
-    error_msgs.push_back(msg);
     level = diagnostic_msgs::DiagnosticStatus::WARN;
   }
 
@@ -96,32 +103,45 @@ void AutowareStateMonitorNode::checkTopicStatus(
       continue;
     }
 
-    const auto msg = fmt::format(
-      "topic `{}` is timeout: timeout = {}, checked_time = {:10.3f}, last_received_time = {:10.3f}",
-      topic_config.name, topic_config.timeout, topic_stats.checked_time.toSec(),
-      last_received_time.toSec());
+    const auto & name = topic_config.name;
+    stat.add(fmt::format("{} status", name), "Timeout");
+    stat.addf(fmt::format("{} timeout", name), "%.2f [s]", topic_config.timeout);
+    stat.addf(fmt::format("{} checked_time", name), "%.2f [s]", topic_stats.checked_time.toSec());
+    stat.addf(fmt::format("{} last_received_time", name), "%.2f [s]", last_received_time.toSec());
 
-    error_msgs.push_back(msg);
     level = diagnostic_msgs::DiagnosticStatus::ERROR;
   }
 
   // Create message
-  std::ostringstream oss;
-  for (const auto & msg : error_msgs) {
-    oss << msg << std::endl;
+  std::string msg;
+  if (level == diagnostic_msgs::DiagnosticStatus::OK) {
+    msg = "OK";
+  } else if (level == diagnostic_msgs::DiagnosticStatus::WARN) {
+    msg = "Warn";
+  } else if (level == diagnostic_msgs::DiagnosticStatus::WARN) {
+    msg = "Error";
   }
 
-  stat.summary(level, oss.str());
+  stat.summary(level, msg);
 }
 
 void AutowareStateMonitorNode::checkTfStatus(
   diagnostic_updater::DiagnosticStatusWrapper & stat, const std::string & module_name)
 {
   int8_t level = diagnostic_msgs::DiagnosticStatus::OK;
-  std::vector<std::string> error_msgs;
 
   const auto & topic_stats = state_input_.topic_stats;
   const auto & tf_stats = state_input_.tf_stats;
+
+  // OK
+  for (const auto & tf_config : tf_stats.ok_list) {
+    if (tf_config.module != module_name) {
+      continue;
+    }
+
+    const auto name = fmt::format("{}2{}", tf_config.from, tf_config.to);
+    stat.add(fmt::format("{} status", name), "OK");
+  }
 
   // Check tf timeout
   for (const auto & tf_config_pair : tf_stats.timeout_list) {
@@ -132,21 +152,24 @@ void AutowareStateMonitorNode::checkTfStatus(
       continue;
     }
 
-    const auto msg = fmt::format(
-      "tf from `{}` to `{}` is timeout: timeout = {}, checked_time = {:10.3f}, last_received_time "
-      "= {:10.3f}",
-      tf_config.from, tf_config.to, tf_config.timeout, tf_stats.checked_time.toSec(),
-      last_received_time.toSec());
+    const auto name = fmt::format("{}2{}", tf_config.from, tf_config.to);
+    stat.add(fmt::format("{} status", name), "Timeout");
+    stat.addf(fmt::format("{} timeout", name), "%.2f [s]", tf_config.timeout);
+    stat.addf(fmt::format("{} checked_time", name), "%.2f [s]", tf_stats.checked_time.toSec());
+    stat.addf(fmt::format("{} last_received_time", name), "%.2f [s]", last_received_time.toSec());
 
-    error_msgs.push_back(msg);
     level = diagnostic_msgs::DiagnosticStatus::ERROR;
   }
 
   // Create message
-  std::ostringstream oss;
-  for (const auto & msg : error_msgs) {
-    oss << msg << std::endl;
+  std::string msg;
+  if (level == diagnostic_msgs::DiagnosticStatus::OK) {
+    msg = "OK";
+  } else if (level == diagnostic_msgs::DiagnosticStatus::WARN) {
+    msg = "Warn";
+  } else if (level == diagnostic_msgs::DiagnosticStatus::WARN) {
+    msg = "Error";
   }
 
-  stat.summary(level, oss.str());
+  stat.summary(level, msg);
 }

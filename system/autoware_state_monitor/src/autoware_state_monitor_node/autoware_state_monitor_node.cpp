@@ -263,6 +263,7 @@ TopicStats AutowareStateMonitorNode::getTopicStats() const
     const auto is_timeout = (topic_config.timeout != 0) && (time_diff > topic_config.timeout);
     if (is_timeout) {
       topic_stats.timeout_list.emplace_back(topic_config, last_received_time);
+      continue;
     }
 
     // Check topic rate
@@ -270,8 +271,12 @@ TopicStats AutowareStateMonitorNode::getTopicStats() const
       const auto topic_rate = calcTopicRate(buf);
       if (topic_config.warn_rate != 0 && topic_rate < topic_config.warn_rate) {
         topic_stats.slow_rate_list.emplace_back(topic_config, topic_rate);
+        continue;
       }
     }
+
+    // No error
+    topic_stats.ok_list.push_back(topic_config);
   }
 
   return topic_stats;
@@ -287,7 +292,11 @@ ParamStats AutowareStateMonitorNode::getParamStats() const
     const auto result = nh_.getParam(param_config.name, xml);
     if (!result) {
       param_stats.non_set_list.push_back(param_config);
+      continue;
     }
+
+    // No error
+    param_stats.ok_list.push_back(param_config);
   }
 
   return param_stats;
@@ -307,10 +316,15 @@ TfStats AutowareStateMonitorNode::getTfStats() const
       const auto time_diff = (tf_stats.checked_time - last_received_time).toSec();
       if (time_diff > tf_config.timeout) {
         tf_stats.timeout_list.emplace_back(tf_config, last_received_time);
+        continue;
       }
     } catch (tf2::TransformException ex) {
       tf_stats.non_received_list.push_back(tf_config);
+      continue;
     }
+
+    // No error
+    tf_stats.ok_list.push_back(tf_config);
   }
 
   return tf_stats;
