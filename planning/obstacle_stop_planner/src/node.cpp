@@ -362,7 +362,7 @@ void ObstacleStopPlannerNode::pathCallback(
    * insert stop point
    */
   if (need_to_stop) {
-    for (int i = decimate_trajectory_index_map.at(decimate_trajectory_collision_index);
+    for (int i = decimate_trajectory_index_map.at(decimate_trajectory_collision_index) + trajectory_trim_index;
          i < (int)base_path.points.size(); ++i) {
       Eigen::Vector2d trajectory_vec;
       {
