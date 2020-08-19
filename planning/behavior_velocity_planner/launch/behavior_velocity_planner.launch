@@ -1,5 +1,6 @@
 <launch>
   <arg name="input_route_topic_name" default="/planning/mission_planning/route" />
+  <arg name="input_traffic_light_topic_name" default="/perception/traffic_light_recognition/traffic_light_states" />
   <arg name="map_topic_name" default="/map/vector_map" />
 
   <arg name="launch_stop_line" default="true" />
@@ -26,7 +27,7 @@
     <remap from="~input/vehicle_velocity" to="/localization/twist" />
     <remap from="~input/dynamic_objects" to="/perception/object_recognition/objects" />
     <remap from="~input/no_ground_pointcloud" to="/sensing/lidar/no_ground/pointcloud" />
-    <remap from="~input/traffic_light_states" to="/perception/traffic_light_recognition/traffic_light_states" />
+    <remap from="~input/traffic_light_states" to="$(arg input_traffic_light_topic_name)" />
     <remap from="~output/path" to="path" />
     <remap from="~output/stop_reasons" to="/planning/scenario_planning/status/stop_reasons" />
     <remap from="~output/traffic_light_state" to="debug/traffic_light_state" />
