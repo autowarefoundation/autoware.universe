@@ -6,6 +6,6 @@ min_behavior_stop_margin: 2.0 # stop margin distance when any other stop point i
 slow_down_margin: 5.0 # margin distance from slow down point [m]
 expand_slow_down_range: 1.0 # offset from vehicle side edge for expanding the search area of the surrounding point cloud [m]
 max_slow_down_vel: 4.0 # max slow down velocity [m/s]
-min_slow_down_vel: 2.0 # min slow down velocity [m/s]
+min_slow_down_vel: 0.84 # min slow down velocity [m/s]
 max_deceleration: 2.0 # max slow down deceleration [m/s2]
 enable_slow_down: false # the flag to switch to use the slow down function
