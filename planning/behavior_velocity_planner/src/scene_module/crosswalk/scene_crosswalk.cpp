@@ -123,7 +123,7 @@ bool CrosswalkModule::checkStopArea(
 
   Polygon stop_polygon;
   {
-    constexpr double extension_margin = 0.25;
+    constexpr double extension_margin = 1.0;
     const double width = planner_data_->vehicle_width;
     const double d = (width / 2.0) + extension_margin;
     const auto cp0 = path_collision_points.at(0);
