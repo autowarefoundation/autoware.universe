@@ -3,6 +3,7 @@ cpu_monitor:
   temp_error: 95.0
   usage_warn:  0.90
   usage_error: 1.00
+  usage_avg: true
   load1_warn: 0.90
   load5_warn: 0.80
   msr_reader_port: 7634

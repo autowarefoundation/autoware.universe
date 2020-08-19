@@ -45,6 +45,7 @@ CPUMonitorBase::CPUMonitorBase(const ros::NodeHandle & nh, const ros::NodeHandle
   temp_error_(95.0),
   usage_warn_(0.90),
   usage_error_(1.00),
+  usage_avg_(true),
   load1_warn_(0.90),
   load5_warn_(0.80)
 {
@@ -59,6 +60,7 @@ CPUMonitorBase::CPUMonitorBase(const ros::NodeHandle & nh, const ros::NodeHandle
   pnh_.param<float>("temp_error", temp_error_, 95.0);
   pnh_.param<float>("usage_warn", usage_warn_, 0.90);
   pnh_.param<float>("usage_error", usage_error_, 1.00);
+  pnh_.param<bool>("usage_avg", usage_avg_, true);
   pnh_.param<float>("load1_warn", load1_warn_, 0.90);
   pnh_.param<float>("load5_warn", load5_warn_, 0.80);
 
@@ -147,7 +149,6 @@ void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & st
   float nice;
   float sys;
   float idle;
-  float all_usage;
   float usage;
   int level = DiagStatus::OK;
   int whole_level = DiagStatus::OK;
@@ -174,7 +175,6 @@ void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & st
           if (boost::optional<float> v = cpu_load.get_optional<float>("idle")) idle = v.get();
 
           usage = (usr + nice) * 1e-2;
-          if (cpu_name == "all") all_usage = usage;
 
           level = DiagStatus::OK;
           if (usage >= usage_error_)
@@ -188,7 +188,11 @@ void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & st
           stat.addf((boost::format("CPU %1%: sys") % cpu_name).str(), "%.2f%%", sys);
           stat.addf((boost::format("CPU %1%: idle") % cpu_name).str(), "%.2f%%", idle);
 
-          whole_level = std::max(whole_level, level);
+          if (usage_avg_ == true) {
+            if (cpu_name == "all") whole_level = level;
+          } else {
+            whole_level = std::max(whole_level, level);
+          }
         }
       }
     }
