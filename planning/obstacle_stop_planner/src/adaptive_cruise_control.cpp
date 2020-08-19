@@ -554,7 +554,10 @@ void AdaptiveCruiseController::insertMaxVelocityToPath(
       } else {
         next_pre_vel = std::max(pre_vel + diff_vel, target_vel);
       }
-      output_trajectory->points[i].twist.linear.x = next_pre_vel;
+
+      if (total_dist >= 0) {
+        output_trajectory->points[i].twist.linear.x = next_pre_vel;
+      }
       pre_vel = next_pre_vel;
     }
   }

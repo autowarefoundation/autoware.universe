@@ -28,4 +28,4 @@ valid_estimated_vel_diff_time: 1.0 # Maximum time difference treated as continuo
 valid_vel_que_time: 0.5 # Time width of information used for speed estimation in speed estimation using a point cloud [s]
 valid_estimated_vel_max: 20.0 # Maximum value of valid speed estimation results in speed estimation using a point cloud [m/s]
 valid_estimated_vel_min: -20.0 # Minimum value of valid speed estimation results in speed estimation using a point cloud [m/s]
-thresh_vel_to_stop: 0.5 # Embed a stop line if the maximum speed calculated by ACC is lowar than this speed [m/s]
+thresh_vel_to_stop: 1.5 # Embed a stop line if the maximum speed calculated by ACC is lowar than this speed [m/s]
