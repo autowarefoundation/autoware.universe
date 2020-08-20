@@ -316,6 +316,8 @@ lanelet::ConstLanelet BlindSpotModule::generateHalfLanelet(
   const auto left_bound = lanelet::LineString3d(lanelet::InvalId, lefts);
   const auto right_bound = lanelet::LineString3d(lanelet::InvalId, rights);
   auto half_lanelet = lanelet::Lanelet(lanelet::InvalId, left_bound, right_bound);
+  const auto centerline = lanelet::utils::generateFineCenterline(half_lanelet, 5.0);
+  half_lanelet.setCenterline(centerline);
   return half_lanelet;
 }
 
@@ -323,20 +325,15 @@ BlindSpotPolygons BlindSpotModule::generateBlindSpotPolygons(
   lanelet::LaneletMapConstPtr lanelet_map_ptr, lanelet::routing::RoutingGraphPtr routing_graph_ptr,
   const autoware_planning_msgs::PathWithLaneId & path, const int closest_idx) const
 {
-  std::set<int64_t> lane_ids;
+  std::vector<int64_t> lane_ids;
   lanelet::ConstLanelets blind_spot_lanelets;
-  for (int i = closest_idx; i < path.points.size(); ++i) {
-    lane_ids.insert(path.points[i].lane_ids.front());
-    if (path.points[i].lane_ids.front() == lane_id_) break;
+  /* get lane ids until intersection */
+  for (const auto & point : path.points) {
+    lane_ids.push_back(point.lane_ids.front());
+    if (point.lane_ids.front() == lane_id_) break;
   }
-
-  const auto current_lanelet =
-    planner_data_->lanelet_map->laneletLayer.get(path.points[closest_idx].lane_ids.front());
-
-  for (const auto & previous_lanelet : routing_graph_ptr->previous(current_lanelet)) {
-    const auto half_lanelet = generateHalfLanelet(previous_lanelet);
-    blind_spot_lanelets.push_back(half_lanelet);
-  }
+  /* remove adjacent duplicates */
+  lane_ids.erase(std::unique(lane_ids.begin(), lane_ids.end()), lane_ids.end());
 
   for (const auto & id : lane_ids) {
     const auto lanelet = lanelet_map_ptr->laneletLayer.get(id);
@@ -346,10 +343,14 @@ BlindSpotPolygons BlindSpotModule::generateBlindSpotPolygons(
   const auto current_arc =
     lanelet::utils::getArcCoordinates(blind_spot_lanelets, path.points[closest_idx].point.pose);
   const auto total_length = lanelet::utils::getLaneletLength3d(blind_spot_lanelets);
-  const auto conflict_area =
-    lanelet::utils::getPolygonFromArcLength(blind_spot_lanelets, current_arc.length, total_length);
+  const auto intersection_length =
+    lanelet::utils::getLaneletLength3d(lanelet_map_ptr->laneletLayer.get(lane_id_));
+  const auto detection_area_start_length = total_length - intersection_length - planner_param_.backward_length;
+  const auto conflict_area_start_length = std::max(detection_area_start_length, current_arc.length);
+  const auto conflict_area = lanelet::utils::getPolygonFromArcLength(
+    blind_spot_lanelets, conflict_area_start_length, total_length);
   const auto detection_area = lanelet::utils::getPolygonFromArcLength(
-    blind_spot_lanelets, current_arc.length - planner_param_.backward_length, total_length);
+    blind_spot_lanelets, detection_area_start_length, total_length);
 
   BlindSpotPolygons blind_spot_polygons;
   blind_spot_polygons.conflict_area = conflict_area;
