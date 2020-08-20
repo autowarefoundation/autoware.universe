@@ -12,6 +12,7 @@
     <remap from="~output/lane_change_path" to="path_with_lane_id" />
     <remap from="~output/lane_change_ready" to="/planning/scenario_planning/lane_driving/lane_change_ready" />
     <remap from="~output/lane_change_available" to="/planning/scenario_planning/lane_driving/lane_change_available" />
+    <remap from="~output/stop_reasons" to="/planning/scenario_planning/status/stop_reasons" />
     <remap from="~debug/lane_change_candidate_path" to="/planning/scenario_planning/lane_driving/lane_change_candidate_path" />
     <param name="min_stop_distance" value="5.0" />
     <param name="stop_time" value="2.0" />
