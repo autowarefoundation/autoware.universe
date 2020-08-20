@@ -46,7 +46,7 @@ void AutowareIvObstacleAvoidanceStatePublisher::getObstacleAvoidReadyInfo(
   const std_msgs::Bool::ConstPtr & ready_ptr, autoware_api_msgs::ObstacleAvoidanceStatus * status)
 {
   if (!ready_ptr) {
-    ROS_WARN_STREAM_THROTTLE(
+    ROS_DEBUG_STREAM_THROTTLE(
       5.0, "[AutowareIvObstacleAvoidanceStatePublisher] obstacle_avoidance_ready is nullptr");
     return;
   }
@@ -59,7 +59,7 @@ void AutowareIvObstacleAvoidanceStatePublisher::getCandidatePathInfo(
   autoware_api_msgs::ObstacleAvoidanceStatus * status)
 {
   if (!path_ptr) {
-    ROS_WARN_STREAM_THROTTLE(
+    ROS_DEBUG_STREAM_THROTTLE(
       5.0,
       "[AutowareIvObstacleAvoidanceStatePublisher] obstacle_avoidance_candidate_path is "
       "nullptr");

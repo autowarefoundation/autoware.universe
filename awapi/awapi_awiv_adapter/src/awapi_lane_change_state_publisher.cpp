@@ -45,7 +45,7 @@ void AutowareIvLaneChangeStatePublisher::getLaneChangeAvailableInfo(
   const std_msgs::Bool::ConstPtr & available_ptr, autoware_api_msgs::LaneChangeStatus * status)
 {
   if (!available_ptr) {
-    ROS_WARN_STREAM_THROTTLE(
+    ROS_DEBUG_STREAM_THROTTLE(
       5.0, "[AutowareIvLaneChangeStatePublisher] lane change available is nullptr");
     return;
   }
@@ -58,7 +58,7 @@ void AutowareIvLaneChangeStatePublisher::getLaneChangeReadyInfo(
   const std_msgs::Bool::ConstPtr & ready_ptr, autoware_api_msgs::LaneChangeStatus * status)
 {
   if (!ready_ptr) {
-    ROS_WARN_STREAM_THROTTLE(
+    ROS_DEBUG_STREAM_THROTTLE(
       5.0, "[AutowareIvLaneChangeStatePublisher] lane change ready is nullptr");
     return;
   }
@@ -72,7 +72,7 @@ void AutowareIvLaneChangeStatePublisher::getCandidatePathInfo(
   autoware_api_msgs::LaneChangeStatus * status)
 {
   if (!path_ptr) {
-    ROS_WARN_STREAM_THROTTLE(
+    ROS_DEBUG_STREAM_THROTTLE(
       5.0,
       "[AutowareIvLaneChangeStatePublisher] lane_change_candidate_path is "
       "nullptr");

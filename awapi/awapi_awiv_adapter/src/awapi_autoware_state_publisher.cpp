@@ -52,7 +52,7 @@ void AutowareIvAutowareStatePublisher::getAutowareStateInfo(
   autoware_api_msgs::AwapiAutowareStatus * status)
 {
   if (!autoware_state_ptr) {
-    ROS_WARN_STREAM_THROTTLE(5.0, "[AutowareIvAutowareStatePublisher] autoware_state is nullptr");
+    ROS_DEBUG_STREAM_THROTTLE(5.0, "[AutowareIvAutowareStatePublisher] autoware_state is nullptr");
     return;
   }
 
@@ -66,7 +66,7 @@ void AutowareIvAutowareStatePublisher::getControlModeInfo(
   autoware_api_msgs::AwapiAutowareStatus * status)
 {
   if (!control_mode_ptr) {
-    ROS_WARN_STREAM_THROTTLE(5.0, "[AutowareIvAutowareStatePublisher] control mode is nullptr");
+    ROS_DEBUG_STREAM_THROTTLE(5.0, "[AutowareIvAutowareStatePublisher] control mode is nullptr");
     return;
   }
 
@@ -79,7 +79,7 @@ void AutowareIvAutowareStatePublisher::getGateModeInfo(
   autoware_api_msgs::AwapiAutowareStatus * status)
 {
   if (!gate_mode_ptr) {
-    ROS_WARN_STREAM_THROTTLE(5.0, "[AutowareIvAutowareStatePublisher] gate mode is nullptr");
+    ROS_DEBUG_STREAM_THROTTLE(5.0, "[AutowareIvAutowareStatePublisher] gate mode is nullptr");
     return;
   }
 
@@ -92,7 +92,7 @@ void AutowareIvAutowareStatePublisher::getIsEmergencyInfo(
   autoware_api_msgs::AwapiAutowareStatus * status)
 {
   if (!is_emergency_ptr) {
-    ROS_WARN_STREAM_THROTTLE(5.0, "[AutowareIvAutowareStatePublisher] is_emergency is nullptr");
+    ROS_DEBUG_STREAM_THROTTLE(5.0, "[AutowareIvAutowareStatePublisher] is_emergency is nullptr");
     return;
   }
 
@@ -105,7 +105,7 @@ void AutowareIvAutowareStatePublisher::getStopReasonInfo(
   autoware_api_msgs::AwapiAutowareStatus * status)
 {
   if (!stop_reason_ptr) {
-    ROS_WARN_STREAM_THROTTLE(5.0, "[AutowareIvAutowareStatePublisher] stop reason is nullptr");
+    ROS_DEBUG_STREAM_THROTTLE(5.0, "[AutowareIvAutowareStatePublisher] stop reason is nullptr");
     return;
   }
 
@@ -117,7 +117,7 @@ void AutowareIvAutowareStatePublisher::getDiagInfo(
   autoware_api_msgs::AwapiAutowareStatus * status)
 {
   if (!diag_ptr) {
-    ROS_WARN_STREAM_THROTTLE(5.0, "[AutowareIvAutowareStatePublisher] diagnostics is nullptr");
+    ROS_DEBUG_STREAM_THROTTLE(5.0, "[AutowareIvAutowareStatePublisher] diagnostics is nullptr");
     return;
   }
 
@@ -130,7 +130,7 @@ void AutowareIvAutowareStatePublisher::getGlobalRptInfo(
   autoware_api_msgs::AwapiAutowareStatus * status)
 {
   if (!global_rpt_ptr) {
-    ROS_WARN_STREAM_THROTTLE(5.0, "[AutowareIvAutowareStatePublisher] global_rpt is nullptr");
+    ROS_DEBUG_STREAM_THROTTLE(5.0, "[AutowareIvAutowareStatePublisher] global_rpt is nullptr");
     return;
   }
 

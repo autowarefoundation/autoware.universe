@@ -51,7 +51,7 @@ void AutowareIvVehicleStatePublisher::getPoseInfo(
   autoware_api_msgs::AwapiVehicleStatus * status)
 {
   if (!pose_ptr) {
-    ROS_WARN_STREAM_THROTTLE(5.0, "[AutowareIvVehicleStatePublisher] current pose is nullptr");
+    ROS_DEBUG_STREAM_THROTTLE(5.0, "[AutowareIvVehicleStatePublisher] current pose is nullptr");
     return;
   }
 
@@ -71,7 +71,7 @@ void AutowareIvVehicleStatePublisher::getSteerInfo(
   autoware_api_msgs::AwapiVehicleStatus * status)
 {
   if (!steer_ptr) {
-    ROS_WARN_STREAM_THROTTLE(5.0, "[AutowareIvVehicleStatePublisher] steer is nullptr");
+    ROS_DEBUG_STREAM_THROTTLE(5.0, "[AutowareIvVehicleStatePublisher] steer is nullptr");
     return;
   }
 
@@ -99,7 +99,7 @@ void AutowareIvVehicleStatePublisher::getVehicleCmdInfo(
   autoware_api_msgs::AwapiVehicleStatus * status)
 {
   if (!vehicle_cmd_ptr) {
-    ROS_WARN_STREAM_THROTTLE(5.0, "[AutowareIvVehicleStatePublisher] vehicle cmd is nullptr");
+    ROS_DEBUG_STREAM_THROTTLE(5.0, "[AutowareIvVehicleStatePublisher] vehicle cmd is nullptr");
     return;
   }
 
@@ -115,7 +115,7 @@ void AutowareIvVehicleStatePublisher::getTurnSignalInfo(
   autoware_api_msgs::AwapiVehicleStatus * status)
 {
   if (!turn_signal_ptr) {
-    ROS_WARN_STREAM_THROTTLE(5.0, "[AutowareIvVehicleStatePublisher] turn signal is nullptr");
+    ROS_DEBUG_STREAM_THROTTLE(5.0, "[AutowareIvVehicleStatePublisher] turn signal is nullptr");
     return;
   }
 
@@ -128,7 +128,7 @@ void AutowareIvVehicleStatePublisher::getTwistInfo(
   autoware_api_msgs::AwapiVehicleStatus * status)
 {
   if (!twist_ptr) {
-    ROS_WARN_STREAM_THROTTLE(5.0, "[AutowareIvVehicleStatePublisher] twist is nullptr");
+    ROS_DEBUG_STREAM_THROTTLE(5.0, "[AutowareIvVehicleStatePublisher] twist is nullptr");
     return;
   }
 
@@ -157,7 +157,7 @@ void AutowareIvVehicleStatePublisher::getGearInfo(
   autoware_api_msgs::AwapiVehicleStatus * status)
 {
   if (!gear_ptr) {
-    ROS_WARN_STREAM_THROTTLE(5.0, "[AutowareIvVehicleStatePublisher] gear is nullptr");
+    ROS_DEBUG_STREAM_THROTTLE(5.0, "[AutowareIvVehicleStatePublisher] gear is nullptr");
     return;
   }
 
@@ -170,7 +170,7 @@ void AutowareIvVehicleStatePublisher::getGpsInfo(
   autoware_api_msgs::AwapiVehicleStatus * status)
 {
   if (!nav_sat_ptr) {
-    ROS_WARN_STREAM_THROTTLE(5.0, "[AutowareIvVehicleStatePublisher] nav_sat(gps) is nullptr");
+    ROS_DEBUG_STREAM_THROTTLE(5.0, "[AutowareIvVehicleStatePublisher] nav_sat(gps) is nullptr");
     return;
   }
 

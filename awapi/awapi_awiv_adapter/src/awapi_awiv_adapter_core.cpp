@@ -77,8 +77,8 @@ AutowareIvAdapter::AutowareIvAdapter() : nh_(), pnh_("~"), tf_listener_(tf_buffe
 void AutowareIvAdapter::emergencyParamCheck(const bool emergency_handling_param)
 {
   if (!emergency_handling_param) {
-    ROS_ERROR_STREAM("parameter[use_emergency_handling] is false.");
-    ROS_ERROR_STREAM("autoware/put/emergency is not valid");
+    ROS_WARN_STREAM("parameter[use_emergency_handling] is false.");
+    ROS_WARN_STREAM("autoware/put/emergency is not valid");
   }
 }
 
@@ -144,7 +144,7 @@ void AutowareIvAdapter::getCurrentPose()
     ps.pose.orientation = transform.transform.rotation;
     aw_info_.current_pose_ptr = std::make_shared<geometry_msgs::PoseStamped>(ps);
   } catch (tf2::TransformException & ex) {
-    ROS_WARN_STREAM_THROTTLE(2.0, "[awapi_autoware_adapter] cannot get self pose");
+    ROS_DEBUG_STREAM_THROTTLE(2.0, "[awapi_autoware_adapter] cannot get self pose");
   }
 }
 
