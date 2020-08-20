@@ -65,15 +65,15 @@ bool StopLineModule::modifyPathVelocity(
       point2 << path->points.at(i).point.pose.position.x, path->points.at(i).point.pose.position.y;
       length_sum += (point2 - point1).norm();
       for (size_t j = i; 0 < j; --j) {
-        if (stop_length < length_sum) {
-          insert_stop_point_idx = j + 1;
-          break;
-        }
         point1 << path->points.at(j).point.pose.position.x,
           path->points.at(j).point.pose.position.y;
         point2 << path->points.at(j - 1).point.pose.position.x,
           path->points.at(j - 1).point.pose.position.y;
         length_sum += (point2 - point1).norm();
+        if (stop_length < length_sum) {
+          insert_stop_point_idx = j;
+          break;
+        }
       }
 
       // create stop point
