@@ -8,6 +8,8 @@ string TRAFFIC_LIGHT="TrafficLight"
 string OBSTACLE_STOP="ObstacleStop"
 string SURROUND_OBSTACLE_CHECK="SurroundObstacleCheck"
 string BLIND_SPOT="BlindSpot"
+string BLOCKED_BY_OBSTACLE="BlockedByObstacle"
+string STOPPING_LANE_CHANGE="StoppingLaneChange"
 string REMOTE_EMERGENCY_STOP="RemoteEmergencyStop"
 string reason
 
