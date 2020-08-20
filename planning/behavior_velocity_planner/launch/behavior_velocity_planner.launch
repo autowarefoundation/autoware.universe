@@ -19,7 +19,7 @@
     <rosparam command="load" file="$(find behavior_velocity_planner)/config/crosswalk_param.yaml" />
     <rosparam command="load" file="$(find behavior_velocity_planner)/config/detection_area_param.yaml" />
     <rosparam command="load" file="$(find behavior_velocity_planner)/config/intersection_param.yaml" />
-    <rosparam command="load" file="$(find behavior_velocity_planner)/config/stop_liine_param.yaml" />
+    <rosparam command="load" file="$(find behavior_velocity_planner)/config/stop_line_param.yaml" />
     <rosparam command="load" file="$(find behavior_velocity_planner)/config/traffic_light_param.yaml" />
 
     <remap from="~input/path_with_lane_id" to="path_with_lane_id" />
