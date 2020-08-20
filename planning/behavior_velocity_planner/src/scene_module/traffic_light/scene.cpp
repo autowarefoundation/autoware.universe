@@ -188,8 +188,8 @@ bool TrafficLightModule::modifyPathVelocity(
         if (
           state_ != State::STOP &&
           calcSignedArcLength(input_path, self_pose.pose, stop_line_point) <
-            pass_judge_line_distance) {
-          ROS_WARN_THROTTLE(1.0, "[traffic_light] vehicle is over stop border");
+            pass_judge_line_distance + planner_data_->base_link2front) {
+          ROS_WARN_THROTTLE(1.0, "[traffic_light] vehicle is over stop border (%f m)", pass_judge_line_distance + planner_data_->base_link2front);
           return true;
         }
       }
