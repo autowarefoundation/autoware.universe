@@ -57,7 +57,7 @@ bool BlindSpotModule::modifyPathVelocity(
   debug_data_.path_raw = input_path;
 
   State current_state = state_machine_.getState();
-  ROS_DEBUG("[Blind Spot] lane_id = %ld, state = %d", lane_id_, static_cast<int>(current_state));
+  ROS_DEBUG("[Blind Spot] lane_id = %ld, state = %s", lane_id_, toString(current_state).c_str());
 
   /* get current pose */
   geometry_msgs::PoseStamped current_pose = planner_data_->current_pose;
@@ -221,7 +221,7 @@ bool BlindSpotModule::generateStopLine(
   }
 
   ROS_DEBUG(
-    "[intersection] generateStopLine() : stop_idx = %d, pass_judge_idx = %d, stop_idx_ip = %d, "
+    "[Blind Spot] generateStopLine() : stop_idx = %d, pass_judge_idx = %d, stop_idx_ip = %d, "
     "pass_judge_idx_ip = %d, has_prior_stopline = %d",
     *stop_line_idx, *pass_judge_line_idx, stop_idx_ip, pass_judge_idx_ip, has_prior_stopline);
 

@@ -50,7 +50,7 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(
 
   State current_state = state_machine_.getState();
   ROS_DEBUG(
-    "[MergeFromPrivateRoad] lane_id = %ld, state = %d", lane_id_, static_cast<int>(current_state));
+    "[MergeFromPrivateRoad] lane_id = %ld, state = %s", lane_id_, toString(current_state).c_str());
 
   /* get current pose */
   geometry_msgs::PoseStamped current_pose = planner_data_->current_pose;

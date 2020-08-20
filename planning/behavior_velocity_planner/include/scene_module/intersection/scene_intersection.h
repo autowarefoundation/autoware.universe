@@ -40,6 +40,15 @@ public:
     STOP = 0,
     GO,
   };
+  std::string toString(const State & state)
+  {
+    if (state == State::STOP)
+      return "STOP";
+    else if (state == State::GO)
+      return "GO";
+    else
+      return "UNKNOWN";
+  };
 
   /**
    * @brief Manage stop-go states with safety margin time.

@@ -43,6 +43,7 @@ IntersectionModule::IntersectionModule(
 bool IntersectionModule::modifyPathVelocity(
   autoware_planning_msgs::PathWithLaneId * path, autoware_planning_msgs::StopReason * stop_reason)
 {
+  ROS_DEBUG("[intersection] ===== plan start =====");
   debug_data_ = {};
   *stop_reason =
     planning_utils::initializeStopReason(autoware_planning_msgs::StopReason::INTERSECTION);
@@ -51,7 +52,7 @@ bool IntersectionModule::modifyPathVelocity(
   debug_data_.path_raw = input_path;
 
   State current_state = state_machine_.getState();
-  ROS_DEBUG("[Intersection] lane_id = %ld, state = %d", lane_id_, static_cast<int>(current_state));
+  ROS_DEBUG("[Intersection] lane_id = %ld, state = %s", lane_id_, toString(current_state).c_str());
 
   /* get current pose */
   geometry_msgs::PoseStamped current_pose = planner_data_->current_pose;
@@ -78,11 +79,13 @@ bool IntersectionModule::modifyPathVelocity(
         lane_id_, detection_areas, planner_data_, planner_param_, path, &stop_line_idx,
         &pass_judge_line_idx, &first_idx_inside_lane)) {
     ROS_WARN_DELAYED_THROTTLE(1.0, "[IntersectionModule::run] setStopLineIdx fail");
+    ROS_DEBUG("[intersection] ===== plan end =====");
     return false;
   }
 
   if (stop_line_idx <= 0 || pass_judge_line_idx <= 0) {
     ROS_DEBUG("[Intersection] stop line or pass judge line is at path[0], ignore planning.");
+    ROS_DEBUG("[intersection] ===== plan end =====");
     return true;
   }
 
@@ -90,6 +93,7 @@ bool IntersectionModule::modifyPathVelocity(
   int closest_idx = -1;
   if (!planning_utils::calcClosestIndex(input_path, current_pose.pose, closest_idx)) {
     ROS_WARN_DELAYED_THROTTLE(1.0, "[Intersection] calcClosestIndex fail");
+    ROS_DEBUG("[intersection] ===== plan end =====");
     return false;
   }
 
@@ -106,6 +110,7 @@ bool IntersectionModule::modifyPathVelocity(
   }
   if (current_state == State::GO && is_over_pass_judge_line) {
     ROS_DEBUG("[Intersection] over the pass judge line. no plan needed.");
+    ROS_DEBUG("[intersection] ===== plan end =====");
     return true;  // no plan needed.
   }
 
@@ -136,6 +141,7 @@ bool IntersectionModule::modifyPathVelocity(
     planning_utils::appendStopReason(stop_factor, stop_reason);
   }
 
+  ROS_DEBUG("[intersection] ===== plan end =====");
   return true;
 }
 

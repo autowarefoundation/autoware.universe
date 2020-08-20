@@ -249,7 +249,7 @@ bool generateStopLine(
     // get idx of first_inside_lane point
     first_idx_ip_inside_lane = getFirstPointInsidePolygons(path_ip, detection_areas);
     if (first_idx_ip_inside_lane == -1) {
-      ROS_DEBUG("[MergeFromPrivateRoad] generate stopline, but no intersect line found.");
+      ROS_DEBUG("[Intersection Util] generate stopline, but no intersect line found.");
       return false;
     }
     // only for visualization
@@ -257,7 +257,7 @@ bool generateStopLine(
     planning_utils::calcClosestIndex(*path, first_inside_point, *first_idx_inside_lane, 10.0);
     if (*first_idx_inside_lane == 0) {
       ROS_DEBUG(
-        "[intersection] path[0] is already in the detection area. This happens if you have already "
+        "[Intersection Util] path[0] is already in the detection area. This happens if you have already "
         "crossed the stop line or are very far from the intersection. Ignore computation.");
       *stop_line_idx = 0;
       *pass_judge_line_idx = 0;
@@ -290,7 +290,7 @@ bool generateStopLine(
   }
 
   ROS_DEBUG(
-    "[MergeFromPrivateRoad] generateStopLine() : stop_idx = %d, pass_judge_idx = %d, stop_idx_ip = "
+    "[Intersection Util] generateStopLine() : stop_idx = %d, pass_judge_idx = %d, stop_idx_ip = "
     "%d, "
     "pass_judge_idx_ip = %d, has_prior_stopline = %d",
     *stop_line_idx, *pass_judge_line_idx, stop_idx_ip, pass_judge_idx_ip, has_prior_stopline);
@@ -331,7 +331,7 @@ bool getObjectivePolygons(
 {
   const auto & assigned_lanelet = lanelet_map_ptr->laneletLayer.get(lane_id);
 
-  lanelet::ConstLanelets exclude_lanelets;
+  lanelet::ConstLanelets yield_lanelets;
 
   // for low priority lane
   // If ego_lane has right of way (i.e. is high priority),
@@ -339,23 +339,25 @@ bool getObjectivePolygons(
   const auto right_of_ways = assigned_lanelet.regulatoryElementsAs<lanelet::RightOfWay>();
   for (const auto & right_of_way : right_of_ways) {
     if (lanelet::utils::contains(right_of_way->rightOfWayLanelets(), assigned_lanelet)) {
-      for (const auto & yield_lanelets : right_of_way->yieldLanelets()) {
-        exclude_lanelets.push_back(yield_lanelets);
-        for (const auto & previous_lanelet : routing_graph_ptr->previous(yield_lanelets)) {
-          exclude_lanelets.push_back(previous_lanelet);
+      for (const auto & yield_lanelet : right_of_way->yieldLanelets()) {
+        yield_lanelets.push_back(yield_lanelet);
+        for (const auto & previous_lanelet : routing_graph_ptr->previous(yield_lanelet)) {
+          yield_lanelets.push_back(previous_lanelet);
         }
       }
     }
   }
 
+  lanelet::ConstLanelets ego_lanelets;
+
   // for the behind ego-car lane.
   for (const auto & previous_lanelet : routing_graph_ptr->previous(assigned_lanelet)) {
-    exclude_lanelets.push_back(previous_lanelet);
+    ego_lanelets.push_back(previous_lanelet);
     for (const auto & following_lanelet : routing_graph_ptr->following(previous_lanelet)) {
-      if (lanelet::utils::contains(exclude_lanelets, following_lanelet)) {
+      if (lanelet::utils::contains(ego_lanelets, following_lanelet)) {
         continue;
       }
-      exclude_lanelets.push_back(following_lanelet);
+      ego_lanelets.push_back(following_lanelet);
     }
   }
 
@@ -365,9 +367,12 @@ bool getObjectivePolygons(
 
   lanelet::ConstLanelets objective_lanelets;  // final objective lanelets
 
-  // remove exclude_lanelets from candidates
+  // exclude yield lanelets and ego lanelets from objective_lanelets
   for (const auto & conflicting_lanelet : conflicting_lanelets) {
-    if (lanelet::utils::contains(exclude_lanelets, conflicting_lanelet)) {
+    if (lanelet::utils::contains(yield_lanelets, conflicting_lanelet)) {
+      continue;
+    }
+    if (lanelet::utils::contains(ego_lanelets, conflicting_lanelet)) {
       continue;
     }
     objective_lanelets.push_back(conflicting_lanelet);
@@ -393,6 +398,20 @@ bool getObjectivePolygons(
     polygons->push_back(polygon3d);
   }
 
+  std::stringstream ss_c, ss_y, ss_e, ss_o, ss_os;
+  for (const auto l : conflicting_lanelets) ss_c << l.id() << ", ";
+  for (const auto l : yield_lanelets) ss_y << l.id() << ", ";
+  for (const auto l : ego_lanelets) ss_e << l.id() << ", ";
+  for (const auto l : objective_lanelets) ss_o << l.id() << ", ";
+  for (const auto l : objective_lanelets_sequences) {
+    for (const auto ll : l) ss_os << ll.id() << ", ";
+  }
+  ROS_DEBUG(
+    "[Intersection Util] getObjectivePolygons() conflict = %s yield = %s ego = %s",
+    ss_c.str().c_str(), ss_y.str().c_str(), ss_e.str().c_str());
+  ROS_DEBUG(
+    "[Intersection Util] getObjectivePolygons() object = %s object_sequences = %s",
+    ss_o.str().c_str(), ss_os.str().c_str());
   return true;
 }
 

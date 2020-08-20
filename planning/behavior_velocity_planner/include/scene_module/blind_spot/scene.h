@@ -48,6 +48,15 @@ public:
     STOP = 0,
     GO,
   };
+  std::string toString(const State & state)
+  {
+    if (state == State::STOP)
+      return "STOP";
+    else if (state == State::GO)
+      return "GO";
+    else
+      return "UNKNOWN";
+  };
 
   enum class TurnDirection { LEFT = 0, RIGHT, INVALID };
 
