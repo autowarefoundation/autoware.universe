@@ -152,31 +152,38 @@ bool TrafficLightModule::modifyPathVelocity(
   // check state
   if (state_ == State::GO_OUT) {
     return true;
-  } else {
-    for (size_t i = 0; i < lanelet_stop_line.size() - 1; i++) {
-      const Line stop_line = {
-        {lanelet_stop_line[i].x(), lanelet_stop_line[i].y()},
-        {lanelet_stop_line[i + 1].x(), lanelet_stop_line[i + 1].y()}};
-      // Check Dead Line
-      {
-        constexpr double dead_line_range = 5.0;
-        Eigen::Vector2d dead_line_point;
-        size_t dead_line_point_idx;
-        if (!createTargetPoint(
-              input_path, stop_line, -2.0 /*overline margin*/, dead_line_point_idx,
-              dead_line_point)) {
-          continue;
+  } else if (state_ == State::APPROACH) {
+    if (!getHighestConfidenceTrafficLightState(traffic_lights, tl_state_)) {
+      // Don't stop when UNKNOWN or TIMEOUT as discussed at #508
+      return true;
+    }
+
+    // Check Traffic Light
+    if (isStopRequired(tl_state_.state)) {
+      for (size_t i = 0; i < lanelet_stop_line.size() - 1; i++) {
+        const Line stop_line = {
+          {lanelet_stop_line[i].x(), lanelet_stop_line[i].y()},
+          {lanelet_stop_line[i + 1].x(), lanelet_stop_line[i + 1].y()}};
+        // Check Dead Line
+        {
+          constexpr double dead_line_range = 5.0;
+          Eigen::Vector2d dead_line_point;
+          size_t dead_line_point_idx;
+          if (!createTargetPoint(
+                input_path, stop_line, -2.0 /*overline margin*/, dead_line_point_idx,
+                dead_line_point)) {
+            continue;
+          }
+
+          if (isOverDeadLine(
+                self_pose.pose, input_path, dead_line_point_idx, dead_line_point,
+                dead_line_range)) {
+            state_ = State::GO_OUT;
+            return true;
+          }
         }
 
-        if (isOverDeadLine(
-              self_pose.pose, input_path, dead_line_point_idx, dead_line_point, dead_line_range)) {
-          state_ = State::GO_OUT;
-          return true;
-        }
-      }
-
-      // Check Stop Line
-      {
+        // Check Stop Line
         Eigen::Vector2d stop_line_point;
         size_t stop_line_point_idx;
         if (!createTargetPoint(
@@ -184,38 +191,32 @@ bool TrafficLightModule::modifyPathVelocity(
               stop_line_point)) {
           continue;
         }
-
+        // judge pass or stop
         if (
-          state_ != State::STOP &&
-          calcSignedArcLength(input_path, self_pose.pose, stop_line_point) <
-            pass_judge_line_distance + planner_data_->base_link2front) {
-          ROS_WARN_THROTTLE(1.0, "[traffic_light] vehicle is over stop border (%f m)", pass_judge_line_distance + planner_data_->base_link2front);
+          (calcSignedArcLength(input_path, self_pose.pose, stop_line_point) <
+           pass_judge_line_distance + planner_data_->base_link2front) &&
+          (1.25 /* =4.5km/h */ < self_twist_ptr->twist.linear.x)) {
+          ROS_WARN_THROTTLE(
+            1.0, "[traffic_light] vehicle is over stop border (%f m)",
+            pass_judge_line_distance + planner_data_->base_link2front);
           return true;
+        } else {
+          // Add Stop WayPoint
+          if (!insertTargetVelocityPoint(
+                input_path, stop_line, planner_param_.stop_margin, 0.0, *path)) {
+            ROS_WARN("[traffic_light] cannot insert stop waypoint");
+            continue;
+          }
         }
-      }
 
-      if (!getHighestConfidenceTrafficLightState(traffic_lights, tl_state_)) {
-        // Don't stop when UNKNOWN or TIMEOUT as discussed at #508
-        continue;
+        /* get stop point and stop factor */
+        autoware_planning_msgs::StopFactor stop_factor;
+        stop_factor.stop_pose = debug_data_.first_stop_pose;
+        stop_factor.stop_factor_points = debug_data_.traffic_light_points;
+        planning_utils::appendStopReason(stop_factor, stop_reason);
+        return true;
       }
-
-      // Check Traffic Light
-      if (!isStopRequired(tl_state_.state)) {
-        continue;
-      }
-
-      // Add Stop WayPoint
-      if (!insertTargetVelocityPoint(
-            input_path, stop_line, planner_param_.stop_margin, 0.0, *path)) {
-        ROS_WARN("[traffic_light] cannot insert stop waypoint");
-        continue;
-      }
-      state_ = State::STOP;
-      /* get stop point and stop factor */
-      autoware_planning_msgs::StopFactor stop_factor;
-      stop_factor.stop_pose = debug_data_.first_stop_pose;
-      stop_factor.stop_factor_points = debug_data_.traffic_light_points;
-      planning_utils::appendStopReason(stop_factor, stop_reason);
+    } else {
       return true;
     }
   }
