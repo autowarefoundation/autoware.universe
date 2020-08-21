@@ -97,15 +97,15 @@ bool insertTargetVelocityPoint(
     point2 << p0.x, p0.y;
     length_sum += (point2 - point1).norm();
     for (size_t j = i; 0 < j; --j) {
+      if (target_length < length_sum) {
+        insert_target_point_idx = j + 1;
+        break;
+      }
       const auto pj1 = output.points.at(j).point.pose.position;
       const auto pj2 = output.points.at(j - 1).point.pose.position;
       point1 << pj1.x, pj1.y;
       point2 << pj2.x, pj2.y;
       length_sum += (point2 - point1).norm();
-      if (target_length < length_sum) {
-        insert_target_point_idx = j;
-        break;
-      }
     }
 
     // create target point

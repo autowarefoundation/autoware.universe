@@ -426,15 +426,15 @@ bool TrafficLightModule::createTargetPoint(
       point2 << input.points.at(i).point.pose.position.x, input.points.at(i).point.pose.position.y;
       length_sum += (point2 - point1).norm();
       for (size_t j = i; 0 < j; --j) {
+        if (target_length < length_sum) {
+          target_point_idx = j + 1;
+          break;
+        }
         point1 << input.points.at(j).point.pose.position.x,
           input.points.at(j).point.pose.position.y;
         point2 << input.points.at(j - 1).point.pose.position.x,
           input.points.at(j - 1).point.pose.position.y;
         length_sum += (point2 - point1).norm();
-        if (target_length < length_sum) {
-          target_point_idx = j;
-          break;
-        }
       }
     } else {
       point1 << nearest_collision_point.x(), nearest_collision_point.y();
