@@ -165,6 +165,7 @@ AdaptiveCruiseController::AdaptiveCruiseController(
   param_.obstacle_min_standard_acceleration =
     getParam<double>(pnh_, "obstacle_min_standard_acceleration", -1.5);
   param_.margin_rate_to_change_vel = getParam<double>(pnh_, "margin_rate_to_change_vel", 0.3);
+  param_.lowpass_gain_ = getParam<double>(pnh_, "lowpass_gain_of_upper_velocity", 0.6);
 
   /* parameter for pid in acc */
   param_.p_coeff_pos = getParam<double>(pnh_, "p_coefficient_positive", 0.1);
@@ -233,6 +234,7 @@ void AdaptiveCruiseController::insertAdaptiveCruiseVelocity(
     //if failed to estimate velocity, need to stop
     ROS_DEBUG_THROTTLE(1.0, "Failed to estimate velocity of forward vehicle. Insert stop line.");
     *need_to_stop = true;
+    prev_upper_velocity_ = current_velocity;  //reset prev_upper_velocity
     pub_debug_.publish(debug_values_);
     return;
   }
@@ -246,6 +248,7 @@ void AdaptiveCruiseController::insertAdaptiveCruiseVelocity(
     //if upper velocity is too low, need to stop
     ROS_DEBUG_THROTTLE(1.0, "Upper velocity is too low. Insert stop line.");
     *need_to_stop = true;
+    prev_upper_velocity_ = current_velocity;  //reset prev_upper_velocity
     return;
   }
 
@@ -417,7 +420,13 @@ double AdaptiveCruiseController::calcUpperVelocity(
     ROS_DEBUG_THROTTLE(1.0, "Forward vehicle is too close. Insert stop line.");
     return 0.0;
   }
-  return calcTargetVelocityByPID(self_vel, dist_to_col, obj_vel);
+
+  const double upper_velocity = calcTargetVelocityByPID(self_vel, dist_to_col, obj_vel);
+  const double lowpass_upper_velocity =
+    lowpass_filter(upper_velocity, prev_upper_velocity_, param_.lowpass_gain_);
+  prev_upper_velocity_ = lowpass_upper_velocity;
+  debug_values_.data.at(DBGVAL::UPPER_VEL) = lowpass_upper_velocity;
+  return lowpass_upper_velocity;
 }
 
 double AdaptiveCruiseController::calcThreshDistToForwardObstacle(
@@ -518,7 +527,7 @@ double AdaptiveCruiseController::calcTargetVelocityByPID(
   debug_values_.data.at(DBGVAL::UPPER_VEL_P) = add_vel_p;
   debug_values_.data.at(DBGVAL::UPPER_VEL_I) = add_vel_i;
   debug_values_.data.at(DBGVAL::UPPER_VEL_D) = add_vel_d;
-  debug_values_.data.at(DBGVAL::UPPER_VEL) = target_vel;
+  debug_values_.data.at(DBGVAL::UPPER_VEL_RAW) = target_vel;
   return target_vel;
 };
 
@@ -556,7 +565,9 @@ void AdaptiveCruiseController::insertMaxVelocityToPath(
       }
 
       if (total_dist >= 0) {
-        output_trajectory->points[i].twist.linear.x = next_pre_vel;
+        const double max_velocity = std::max(target_vel, next_pre_vel);
+        if (output_trajectory->points[i].twist.linear.x > max_velocity)
+          output_trajectory->points[i].twist.linear.x = max_velocity;
       }
       pre_vel = next_pre_vel;
     }
@@ -614,6 +625,12 @@ double AdaptiveCruiseController::getMedianVel(
   }
 
   return med_vel;
+}
+
+double AdaptiveCruiseController::lowpass_filter(
+  const double current_value, const double prev_value, const double gain)
+{
+  return gain * prev_value + (1.0 - gain) * current_value;
 }
 
 }  // namespace motion_planning

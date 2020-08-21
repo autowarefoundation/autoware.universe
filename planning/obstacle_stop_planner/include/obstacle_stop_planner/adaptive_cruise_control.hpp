@@ -66,6 +66,7 @@ private:
   double prev_target_vehicle_dist_ = 0.0;
   bool prev_collsion_point_valid_ = false;
   std::vector<geometry_msgs::TwistStamped> est_vel_que_;
+  double prev_upper_velocity_ = 0.0;
 
   struct Param
   {
@@ -133,6 +134,9 @@ private:
     //!< @brief margin to insert upper velocity
     double margin_rate_to_change_vel;
 
+    //!< @brief gain of lowpass filter of upper velocity
+    double lowpass_gain_;
+
     /* parameter for pid used in acc */
     //!< @brief coefficient P in PID control (used when target dist -current_dist >=0)
     double p_coeff_pos;
@@ -153,6 +157,7 @@ private:
   Param param_;
 
   double getMedianVel(const std::vector<geometry_msgs::TwistStamped> vel_que);
+  double lowpass_filter(const double current_value, const double prev_value, const double gain);
   void calcDistanceToNearestPointOnPath(
     const autoware_planning_msgs::Trajectory & trajectory, const int nearest_point_idx,
     const geometry_msgs::Pose & self_pose, const pcl::PointXYZ & nearest_collision_point,
@@ -190,10 +195,11 @@ private:
     UPPER_VEL_P = 5,
     UPPER_VEL_I = 6,
     UPPER_VEL_D = 7,
-    UPPER_VEL = 8,
+    UPPER_VEL_RAW = 8,
+    UPPER_VEL = 9
 
   };
-  static constexpr unsigned int num_debug_values_ = 9;
+  static constexpr unsigned int num_debug_values_ = 10;
 };
 
 }  // namespace motion_planning
