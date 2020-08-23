@@ -104,7 +104,8 @@ bool StopLineModule::modifyPathVelocity(
     const double x = stop_point.x() - self_pose.pose.position.x;
     const double y = stop_point.y() - self_pose.pose.position.y;
     const double dist = std::sqrt(x * x + y * y);
-    if (dist < 2.0 && planner_data_->isVehicleStopping()) state_ = State::STOP;
+    if (dist < planner_param_.stop_check_dist && planner_data_->isVehicleStopping())
+      state_ = State::STOP;
     return true;
   } else if (state_ == State::STOP) {
     if (!planner_data_->isVehicleStopping()) state_ = State::START;

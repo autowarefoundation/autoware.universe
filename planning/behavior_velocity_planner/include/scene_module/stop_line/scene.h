@@ -48,6 +48,7 @@ public:
   struct PlannerParam
   {
     double stop_margin;
+    double stop_check_dist;
   };
 
 public:

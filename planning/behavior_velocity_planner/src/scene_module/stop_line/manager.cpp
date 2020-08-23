@@ -73,6 +73,7 @@ StopLineModuleManager::StopLineModuleManager() : SceneModuleManagerInterface(get
   const std::string ns(getModuleName());
   auto & p = planner_param_;
   pnh.param(ns + "/stop_margin", p.stop_margin, 0.0);
+  pnh.param(ns + "/stop_check_dist", p.stop_check_dist, 2.0);
 }
 
 void StopLineModuleManager::launchNewModules(const autoware_planning_msgs::PathWithLaneId & path)
