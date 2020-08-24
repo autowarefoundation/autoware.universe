@@ -29,4 +29,4 @@ valid_vel_que_time: 0.5 # Time width of information used for speed estimation in
 valid_estimated_vel_max: 20.0 # Maximum value of valid speed estimation results in speed estimation using a point cloud [m/s]
 valid_estimated_vel_min: -20.0 # Minimum value of valid speed estimation results in speed estimation using a point cloud [m/s]
 thresh_vel_to_stop: 1.5 # Embed a stop line if the maximum speed calculated by ACC is lowar than this speed [m/s]
-lowpass_gain_of_upper_velocity: 0.9 #Lowpass-gain of upper velocity
+lowpass_gain_of_upper_velocity: 0.75 #Lowpass-gain of upper velocity
