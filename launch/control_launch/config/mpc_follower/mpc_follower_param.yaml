@@ -35,6 +35,8 @@ input_delay: 0.24     # steering input delay time for delay compensation
 vehicle_model_steer_tau: 0.3     # steering dynamics time constant (1d approzimation) [s]
 steer_lim_deg: 40.0              # steering angle limit [deg]
 steer_rate_lim_deg: 600.0        # steering angle rate limit [deg/s]
+acceleration_limit: 2.0          # acceleration limit for trajectory velocity modification [m/ss]
+velocity_time_constant: 0.3      # velocity dynamics time constant  for trajectory velocity modification [s]
 
 # -- lowpass filter for noise reduction --
 steering_lpf_cutoff_hz: 3.0 # cutoff frequency of lowpass filter for steering command [Hz]
