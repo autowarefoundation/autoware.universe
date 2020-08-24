@@ -335,17 +335,34 @@ BlindSpotPolygons BlindSpotModule::generateBlindSpotPolygons(
   /* remove adjacent duplicates */
   lane_ids.erase(std::unique(lane_ids.begin(), lane_ids.end()), lane_ids.end());
 
-  for (const auto & id : lane_ids) {
-    const auto lanelet = lanelet_map_ptr->laneletLayer.get(id);
-    const auto half_lanelet = generateHalfLanelet(lanelet);
-    blind_spot_lanelets.push_back(half_lanelet);
+  /* reverse lane ids */
+  std::reverse(lane_ids.begin(), lane_ids.end());
+
+  /* add intersection lanelet */
+  const auto first_lanelet = lanelet_map_ptr->laneletLayer.get(lane_ids.front());
+  const auto first_half_lanelet = generateHalfLanelet(first_lanelet);
+  blind_spot_lanelets.push_back(first_half_lanelet);
+
+  if (lane_ids.size() > 1) {
+    for (size_t i = 0; i < lane_ids.size() - 1; ++i) {
+      const auto prev_lanelet = lanelet_map_ptr->laneletLayer.get(lane_ids.at(i));
+      const auto next_lanelet = lanelet_map_ptr->laneletLayer.get(lane_ids.at(i + 1));
+      /* end if next lanelet does not follow prev lanelet */
+      if (!lanelet::geometry::follows(prev_lanelet.invert(), next_lanelet.invert())) break;
+      const auto half_lanelet = generateHalfLanelet(next_lanelet);
+      blind_spot_lanelets.push_back(half_lanelet);
+    }
+    /* reset order of lanelets */
+    std::reverse(blind_spot_lanelets.begin(), blind_spot_lanelets.end());
   }
+
   const auto current_arc =
     lanelet::utils::getArcCoordinates(blind_spot_lanelets, path.points[closest_idx].point.pose);
   const auto total_length = lanelet::utils::getLaneletLength3d(blind_spot_lanelets);
   const auto intersection_length =
     lanelet::utils::getLaneletLength3d(lanelet_map_ptr->laneletLayer.get(lane_id_));
-  const auto detection_area_start_length = total_length - intersection_length - planner_param_.backward_length;
+  const auto detection_area_start_length =
+    total_length - intersection_length - planner_param_.backward_length;
   const auto conflict_area_start_length = std::max(detection_area_start_length, current_arc.length);
   const auto conflict_area = lanelet::utils::getPolygonFromArcLength(
     blind_spot_lanelets, conflict_area_start_length, total_length);
