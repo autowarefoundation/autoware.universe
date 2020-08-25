@@ -144,8 +144,10 @@ bool TrafficLightModule::modifyPathVelocity(
 
   // get vehicle info
   geometry_msgs::TwistStamped::ConstPtr self_twist_ptr = planner_data_->current_velocity;
+  const double max_acc = planner_data_->max_stop_acceleration_threshold_;
+  const double delay_response_time = planner_data_->delay_response_time_;
   const double pass_judge_line_distance =
-    planning_utils::calcJudgeLineDist(self_twist_ptr->twist.linear.x);
+    planning_utils::calcJudgeLineDist(self_twist_ptr->twist.linear.x, max_acc, delay_response_time);
 
   geometry_msgs::PoseStamped self_pose = planner_data_->current_pose;
 

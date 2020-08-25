@@ -152,6 +152,7 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode()
   pnh_.param(
     "max_accel", planner_data_.max_stop_acceleration_threshold_,
     -5.0);  // TODO read min_acc in velocity_controller_param.yaml?
+  pnh_.param("delay_response_time", planner_data_.delay_response_time_, 1.3);
   // TODO(Kenji Miyake): get from additional vehicle_info?
   planner_data_.base_link2front = planner_data_.front_overhang + planner_data_.wheel_base;
 

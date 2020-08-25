@@ -64,6 +64,7 @@ struct PlannerData
 
   // additional parameters
   double max_stop_acceleration_threshold_;
+  double delay_response_time_;
 
   bool isVehicleStopping() const
   {

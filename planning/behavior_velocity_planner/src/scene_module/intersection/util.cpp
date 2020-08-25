@@ -223,7 +223,9 @@ bool generateStopLine(
   /* set judge line dist */
   const double current_vel = planner_data->current_velocity->twist.linear.x;
   const double max_acc = planner_data->max_stop_acceleration_threshold_;
-  const double pass_judge_line_dist = planning_utils::calcJudgeLineDist(current_vel);
+  const double delay_response_time = planner_data->delay_response_time_;
+  const double pass_judge_line_dist =
+    planning_utils::calcJudgeLineDist(current_vel, max_acc, delay_response_time);
 
   /* set parameters */
   constexpr double interval = 0.2;
@@ -257,7 +259,8 @@ bool generateStopLine(
     planning_utils::calcClosestIndex(*path, first_inside_point, *first_idx_inside_lane, 10.0);
     if (*first_idx_inside_lane == 0) {
       ROS_DEBUG(
-        "[Intersection Util] path[0] is already in the detection area. This happens if you have already "
+        "[Intersection Util] path[0] is already in the detection area. This happens if you have "
+        "already "
         "crossed the stop line or are very far from the intersection. Ignore computation.");
       *stop_line_idx = 0;
       *pass_judge_line_idx = 0;

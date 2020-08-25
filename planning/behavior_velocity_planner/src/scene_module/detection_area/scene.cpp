@@ -147,9 +147,10 @@ bool DetectionAreaModule::modifyPathVelocity(
 
   // get vehicle info and compute pass_judge_line_distance
   geometry_msgs::TwistStamped::ConstPtr self_twist_ptr = planner_data_->current_velocity;
-
+  const double max_acc = planner_data_->max_stop_acceleration_threshold_;
+  const double delay_response_time = planner_data_->delay_response_time_;
   const double pass_judge_line_distance =
-    planning_utils::calcJudgeLineDist(self_twist_ptr->twist.linear.x);
+    planning_utils::calcJudgeLineDist(self_twist_ptr->twist.linear.x, max_acc, delay_response_time);
 
   geometry_msgs::PoseStamped self_pose = planner_data_->current_pose;
 
@@ -165,13 +166,13 @@ bool DetectionAreaModule::modifyPathVelocity(
       Eigen::Vector2d dead_line_point;
       size_t dead_line_point_idx;
       if (!createTargetPoint(
-          input_path, stop_line, -2.0 /*overline margin*/, dead_line_point_idx,
-          dead_line_point)) {
+            input_path, stop_line, -2.0 /*overline margin*/, dead_line_point_idx,
+            dead_line_point)) {
         continue;
       }
 
       if (isOverDeadLine(
-          self_pose.pose, input_path, dead_line_point_idx, dead_line_point, dead_line_range)) {
+            self_pose.pose, input_path, dead_line_point_idx, dead_line_point, dead_line_range)) {
         state_ = State::PASS;
         return true;
       }
@@ -182,8 +183,8 @@ bool DetectionAreaModule::modifyPathVelocity(
       Eigen::Vector2d stop_line_point;
       size_t stop_line_point_idx;
       if (!createTargetPoint(
-          input_path, stop_line, planner_param_.stop_margin, stop_line_point_idx,
-          stop_line_point)) {
+            input_path, stop_line, planner_param_.stop_margin, stop_line_point_idx,
+            stop_line_point)) {
         continue;
       }
 
@@ -256,7 +257,6 @@ bool DetectionAreaModule::isOverDeadLine(
 
   return false;
 }
-
 
 bool DetectionAreaModule::isPointsWithinDetectionArea(
   const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & no_ground_pointcloud_ptr,
