@@ -188,5 +188,12 @@ else()
   find_package(catkin REQUIRED)
   catkin_package()
   message("TrafficLightSSDFineDetector won't be built, CUDA and/or TensorRT were not found.")
+
+  install(
+    DIRECTORY
+      launch
+    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+  )
+
 endif()
 
