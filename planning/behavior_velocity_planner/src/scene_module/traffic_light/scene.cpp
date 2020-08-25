@@ -404,7 +404,7 @@ bool TrafficLightModule::createTargetPoint(
 
     // check nearest collision point
     Point nearest_collision_point;
-    double min_dist;
+    double min_dist = 0.0;
     for (size_t j = 0; j < collision_points.size(); ++j) {
       double dist = bg::distance(
         Point(input.points.at(i).point.pose.position.x, input.points.at(i).point.pose.position.y),

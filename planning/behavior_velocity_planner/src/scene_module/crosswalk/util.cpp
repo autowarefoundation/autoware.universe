@@ -75,7 +75,7 @@ bool insertTargetVelocityPoint(
 
     // check nearest collision point
     Point nearest_collision_point;
-    double min_dist;
+    double min_dist = 0.0;
     for (size_t j = 0; j < collision_points.size(); ++j) {
       double dist = bg::distance(Point(p0.x, p0.y), collision_points.at(j));
       if (j == 0 || dist < min_dist) {
