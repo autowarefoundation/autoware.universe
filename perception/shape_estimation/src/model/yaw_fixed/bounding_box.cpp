@@ -115,7 +115,7 @@ bool BoundingBoxModel::estimate(
   }
 
   double theta_star;  // col.10, Algo.2
-  double max_q;
+  double max_q = 0.0;
   for (size_t i = 0; i < Q.size(); ++i) {
     if (max_q < Q.at(i).second || i == 0) {
       max_q = Q.at(i).second;
