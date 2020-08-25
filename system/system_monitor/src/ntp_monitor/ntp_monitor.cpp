@@ -83,8 +83,8 @@ void NTPMonitor::checkOffset(diagnostic_updater::DiagnosticStatusWrapper & stat)
   }
 
   std::string line;
-  float offset;
-  float delay;
+  float offset = 0.0f;
+  float delay = 0.0f;
   boost::smatch match;
   const boost::regex filter("^server.*offset ([-+]?\\d+\\.\\d+), delay ([-+]?\\d+\\.\\d+)");
 
