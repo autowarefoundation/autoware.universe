@@ -117,6 +117,6 @@ private:
     pcl::PointXYZ * nearest_collision_point, ros::Time * nearest_collision_point_time);
   void getLateralNearestPoint(
     const pcl::PointCloud<pcl::PointXYZ> & pointcloud, const geometry_msgs::Pose & base_pose,
-    pcl::PointXYZ * lateral_nearest_point, double * deviation);
+    pcl::PointXYZ & lateral_nearest_point, double & deviation);
 };
 }  // namespace motion_planning
