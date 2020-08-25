@@ -661,7 +661,7 @@ bool ObstacleStopPlannerNode::trimTrajectoryWithIndexFromSelfPose(
   const autoware_planning_msgs::Trajectory & input_trajectory, const geometry_msgs::Pose self_pose,
   autoware_planning_msgs::Trajectory & output_trajectory, size_t & index)
 {
-  double min_distance;
+  double min_distance = 0.0;
   size_t min_dintance_index = 0;
   bool is_init = false;
   for (size_t i = 0; i < input_trajectory.points.size(); ++i) {
@@ -831,7 +831,7 @@ void ObstacleStopPlannerNode::getNearestPoint(
   const pcl::PointCloud<pcl::PointXYZ> & pointcloud, const geometry_msgs::Pose & base_pose,
   pcl::PointXYZ * nearest_collision_point, ros::Time * nearest_collision_point_time)
 {
-  double min_norm;
+  double min_norm = 0.0;
   bool is_init = false;
   const double yaw = getYawFromGeometryMsgsQuaternion(base_pose.orientation);
   Eigen::Vector2d base_pose_vec;
