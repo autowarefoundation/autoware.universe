@@ -42,12 +42,12 @@ public:
 
 private:
   void parametersCallback(traffic_light_classifier::HSVFilterConfig & config, uint32_t level);
-  void preProcess(cv::Mat & image, float * tensor, bool normalize = true);
+  void preProcess(cv::Mat & image, std::vector<float> &  tensor, bool normalize = true);
   bool postProcess(
-    float * output_data_host, std::vector<autoware_perception_msgs::LampState> & states);
+    std::vector<float> & output_data_host, std::vector<autoware_perception_msgs::LampState> & states);
   bool readLabelfile(std::string filepath, std::vector<std::string> & labels);
-  void calcSoftmax(float * data, std::vector<float> & probs, int num_output);
-  std::vector<size_t> argsort(float * tensor, int num_output);
+  void calcSoftmax(std::vector<float> & data, std::vector<float> & probs, int num_output);
+  std::vector<size_t> argsort(std::vector<float> & tensor, int num_output);
   void outputDebugImage(
     cv::Mat & debug_image, const std::vector<autoware_perception_msgs::LampState> & states);
 

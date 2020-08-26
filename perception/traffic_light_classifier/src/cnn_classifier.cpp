@@ -52,25 +52,21 @@ bool CNNClassifier::getLampState(
   int num_input = trt_->getNumInput();
   int num_output = trt_->getNumOutput();
 
-  float * input_data_host = (float *)malloc(num_input * sizeof(float));
+  std::vector<float> input_data_host(num_input);
 
   cv::Mat image = input_image.clone();
   preProcess(image, input_data_host, true);
 
-  float * input_data_device;
-  cudaMalloc((void **)&input_data_device, num_input * sizeof(float));
-  cudaMemcpy(input_data_device, input_data_host, num_input * sizeof(float), cudaMemcpyHostToDevice);
+  auto input_data_device = Tn::make_unique<float[]>(num_input);
+  cudaMemcpy(input_data_device.get(), input_data_host.data(), num_input * sizeof(float), cudaMemcpyHostToDevice);
 
-  float * output_data_device;
-  cudaMalloc((void **)&output_data_device, num_output * sizeof(float));
+  auto output_data_device = Tn::make_unique<float[]>(num_output);
 
   // do inference
-  void * bindings[2];
-  bindings[trt_->getInputBindingIndex()] = (void *)input_data_device;
-  bindings[trt_->getOutputBindingIndex()] = (void *)output_data_device;
+  std::vector<void *> bindings = {input_data_device.get(), output_data_device.get()};
 
   std::chrono::system_clock::time_point start = std::chrono::system_clock::now();
-  trt_->context_->executeV2(bindings);
+  trt_->context_->executeV2(bindings.data());
   std::chrono::system_clock::time_point end = std::chrono::system_clock::now();
   double elapsed_time =
     static_cast<double>(
@@ -78,9 +74,9 @@ bool CNNClassifier::getLampState(
     1000;
   // ROS_INFO("inference elapsed time: %f [ms]", elapsed_time);
 
-  float * output_data_host = (float *)malloc(num_output * sizeof(float));
+  std::vector<float> output_data_host(num_output);
   cudaMemcpy(
-    output_data_host, output_data_device, num_output * sizeof(float), cudaMemcpyDeviceToHost);
+    output_data_host.data(), output_data_device.get(), num_output * sizeof(float), cudaMemcpyDeviceToHost);
 
   postProcess(output_data_host, states);
 
@@ -89,9 +85,6 @@ bool CNNClassifier::getLampState(
     cv::Mat debug_image = input_image.clone();
     outputDebugImage(debug_image, states);
   }
-
-  cudaFree(input_data_device);
-  cudaFree(output_data_device);
 
   return true;
 }
@@ -124,7 +117,7 @@ void CNNClassifier::outputDebugImage(
   image_pub_.publish(debug_image_msg);
 }
 
-void CNNClassifier::preProcess(cv::Mat & image, float * input_tensor, bool normalize)
+void CNNClassifier::preProcess(cv::Mat & image, std::vector<float> & input_tensor, bool normalize)
 {
   /* normalize */
   /* ((channel[0] / 255) - mean[0]) / std[0] */
@@ -153,7 +146,7 @@ void CNNClassifier::preProcess(cv::Mat & image, float * input_tensor, bool norma
 }
 
 bool CNNClassifier::postProcess(
-  float * output_tensor, std::vector<autoware_perception_msgs::LampState> & states)
+  std::vector<float> & output_tensor, std::vector<autoware_perception_msgs::LampState> & states)
 {
   std::vector<float> probs;
   int num_output = trt_->getNumOutput();
@@ -201,7 +194,7 @@ bool CNNClassifier::readLabelfile(std::string filepath, std::vector<std::string>
   return true;
 }
 
-void CNNClassifier::calcSoftmax(float * data, std::vector<float> & probs, int num_output)
+void CNNClassifier::calcSoftmax(std::vector<float> & data, std::vector<float> & probs, int num_output)
 {
   float exp_sum = 0.0;
   for (int i = 0; i < num_output; ++i) {
@@ -213,7 +206,7 @@ void CNNClassifier::calcSoftmax(float * data, std::vector<float> & probs, int nu
   }
 }
 
-std::vector<size_t> CNNClassifier::argsort(float * tensor, int num_output)
+std::vector<size_t> CNNClassifier::argsort(std::vector<float> & tensor, int num_output)
 {
   std::vector<size_t> indices(num_output);
   for (int i = 0; i < num_output; i++) indices[i] = i;
