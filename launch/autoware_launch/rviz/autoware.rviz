@@ -262,7 +262,7 @@ Visualization Manager:
               Left: 196
               Name: TurnSignal
               Top: 350
-              Topic: /vehicle/turn_signal_cmd
+              Topic: /vehicle/status/turn_signal_cmd
               Unreliable: false
               Value: true
               Width: 512
