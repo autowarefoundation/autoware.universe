@@ -7,6 +7,7 @@ stop_state_velocity: 0.0
 stop_state_acc: -3.4
 stop_state_entry_ego_speed: 0.2
 stop_state_entry_target_speed: 0.1
+stop_state_keep_stopping_dist: 0.5
 
 # delay compensation
 delay_compensation_time: 0.17
@@ -17,6 +18,7 @@ emergency_stop_jerk: -3.0
 
 # smooth stop
 smooth_stop:
+  stop_dist: 3.0
   exit_ego_speed: 1.0
   entry_ego_speed: 0.8
   exit_target_speed: 1.0
