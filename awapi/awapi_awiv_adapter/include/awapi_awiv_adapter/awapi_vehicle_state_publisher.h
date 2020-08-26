@@ -33,6 +33,7 @@ private:
   // publisher
   ros::Publisher pub_state_;
 
+  autoware_api_msgs::AwapiVehicleStatus initVehicleStatus();
   void getPoseInfo(
     const std::shared_ptr<geometry_msgs::PoseStamped> & pose_ptr,
     autoware_api_msgs::AwapiVehicleStatus * status);
@@ -50,6 +51,9 @@ private:
     autoware_api_msgs::AwapiVehicleStatus * status);
   void getGearInfo(
     const autoware_vehicle_msgs::ShiftStamped::ConstPtr & gear_ptr,
+    autoware_api_msgs::AwapiVehicleStatus * status);
+  void getBatteryInfo(
+    const std_msgs::Float32::ConstPtr & battery_ptr,
     autoware_api_msgs::AwapiVehicleStatus * status);
   void getGpsInfo(
     const sensor_msgs::NavSatFix::ConstPtr & nav_sat_ptr,

@@ -9,39 +9,40 @@
 - get vehicle status
 - MessageType: awapi_awiv_adapter/AwapiVehicleStatus
 
-| ✓   | type                      | name                     | unit                                          | note                                         |
-| --- | :------------------------ | :----------------------- | :-------------------------------------------- | :------------------------------------------- |
-| ✓   | std_msgs/Header           | header                   |                                               |                                              |
-| ✓   | geometry_msgs/Pose        | pose                     | position:[m]                                  |                                              |
-| ✓   | awapi_awiv_adapter/Euler  | eulerangle               | [rad]                                         | roll/pitch/yaw                               |
-|     | awapi_awiv_adapter/Latlon | latlon                   |                                               | lat/lon/alt                                  |
-| ✓   | float64                   | velocity                 | [m/s]                                         |                                              |
-| ✓   | float64                   | acceleration             | [m/ss]                                        | calculate from velocity in awapi_adapter     |
-| ✓   | float64                   | steering                 | [rad]                                         |                                              |
-| ✓   | float64                   | steering_velocity        | [rad/s]                                       | calculate from steering in awapi_adapter     |
-| ✓   | float64                   | angular_velocity         | [rad/s]                                       |                                              |
-|     | int32                     | gear                     | accroding to autoware_vehicle_msgs/Shift      |                                              |
-| ✓   | int32                     | turn_signal              | accroding to autoware_vehicle_msgs/TurnSignal |                                              |
-| ✓   | float64                   | target_velocity          | [m/s]                                         |                                              |
-| ✓   | float64                   | target_acceleration      | [m/ss]                                        |                                              |
-| ✓   | float64                   | target_steering          | [rad]                                         |                                              |
-| ✓   | float64                   | target_steering_velocity | [rad/s]                                       |                                              |
+| ✓   | type                      | name                     | unit                                          | note                                     |
+| --- | :------------------------ | :----------------------- | :-------------------------------------------- | :--------------------------------------- |
+| ✓   | std_msgs/Header           | header                   |                                               |                                          |
+| ✓   | geometry_msgs/Pose        | pose                     | position:[m]                                  |                                          |
+| ✓   | awapi_awiv_adapter/Euler  | eulerangle               | [rad]                                         | roll/pitch/yaw                           |
+|     | awapi_awiv_adapter/Latlon | latlon                   |                                               | lat/lon/alt                              |
+| ✓   | float64                   | velocity                 | [m/s]                                         |                                          |
+| ✓   | float64                   | acceleration             | [m/ss]                                        | calculate from velocity in awapi_adapter |
+| ✓   | float64                   | steering                 | [rad]                                         |                                          |
+| ✓   | float64                   | steering_velocity        | [rad/s]                                       | calculate from steering in awapi_adapter |
+| ✓   | float64                   | angular_velocity         | [rad/s]                                       |                                          |
+|     | int32                     | gear                     | accroding to autoware_vehicle_msgs/Shift      |                                          |
+|     | float32                   | energy_level             |                                               | available only for golf-cart             |
+| ✓   | int32                     | turn_signal              | accroding to autoware_vehicle_msgs/TurnSignal |                                          |
+| ✓   | float64                   | target_velocity          | [m/s]                                         |                                          |
+| ✓   | float64                   | target_acceleration      | [m/ss]                                        |                                          |
+| ✓   | float64                   | target_steering          | [rad]                                         |                                          |
+| ✓   | float64                   | target_steering_velocity | [rad/s]                                       |                                          |
 
 ### /awapi/autoware/get/status
 
 - get autoware status
 - MessageType: awapi_awiv_adapter/AwapiVehicleStatus
 
-| ✓   | type                                   | name                 | unit                                           | note                                                                                                                                                                        |
-| --- | :------------------------------------- | :------------------- | :--------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ✓   | std_msgs/Header                        | header               |                                                |                                                                                                                                                                             |
-| ✓   | string                                 | autoware_state       |                                                |                                                                                                                                                                             |
-| ✓   | int32                                  | control_mode         | accroding to autoware_vehicle_msgs/ControlMode | manual/auto (changed by /awapi/autoware/put/engage)                                                                                                                         |
-|     | int32                                  | gate_mode            | autoware_vehicle_msgs/GateMode                 | auto/remote (it is valid only when control_mode=auto))                                                                                                                      |
-| ✓   | bool                                   | emergency_stopped    | True in emergency mode                         |                                                                                                                                                                             |
-| ✓   | autoware_planning_msgs/StopReasonArray | stop_reason          |                                                | "stop_pose" represents the position of "base_link" (not the head of the car)                                                                                                |
-| ✓   | diagnostic_msgs/DiagnosticStatus[]     | diagnostics          |                                                | output only diag. of leaf node (diag. of parent node are cut)                                                                                                               |
-| ✓   | bool                                   | arrived_goal         |                                                | True if the autoware_state is changed from Driving to ArrivedGoal or WairingForRoute. False if the autoware_state is changed to WaitingForEngage or Driving. Default False. |
+| ✓   | type                                   | name              | unit                                           | note                                                                                                                                                                        |
+| --- | :------------------------------------- | :---------------- | :--------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ✓   | std_msgs/Header                        | header            |                                                |                                                                                                                                                                             |
+| ✓   | string                                 | autoware_state    |                                                |                                                                                                                                                                             |
+| ✓   | int32                                  | control_mode      | accroding to autoware_vehicle_msgs/ControlMode | manual/auto (changed by /awapi/autoware/put/engage)                                                                                                                         |
+|     | int32                                  | gate_mode         | autoware_vehicle_msgs/GateMode                 | auto/remote (it is valid only when control_mode=auto))                                                                                                                      |
+| ✓   | bool                                   | emergency_stopped | True in emergency mode                         |                                                                                                                                                                             |
+| ✓   | autoware_planning_msgs/StopReasonArray | stop_reason       |                                                | "stop_pose" represents the position of "base_link" (not the head of the car)                                                                                                |
+| ✓   | diagnostic_msgs/DiagnosticStatus[]     | diagnostics       |                                                | output only diag. of leaf node (diag. of parent node are cut)                                                                                                               |
+| ✓   | bool                                   | arrived_goal      |                                                | True if the autoware_state is changed from Driving to ArrivedGoal or WairingForRoute. False if the autoware_state is changed to WaitingForEngage or Driving. Default False. |
 
 ### /awapi/autoware/get/route
 

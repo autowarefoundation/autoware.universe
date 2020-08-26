@@ -25,6 +25,7 @@
 #include <ros/ros.h>
 #include <sensor_msgs/NavSatFix.h>
 #include <std_msgs/Bool.h>
+#include <std_msgs/Float32.h>
 #include <tf2/utils.h>
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2_ros/transform_listener.h>
@@ -51,6 +52,7 @@ struct AutowareInfo
   autoware_vehicle_msgs::TurnSignal::ConstPtr turn_signal_ptr;
   geometry_msgs::TwistStamped::ConstPtr twist_ptr;
   autoware_vehicle_msgs::ShiftStamped::ConstPtr gear_ptr;
+  std_msgs::Float32::ConstPtr battery_ptr;
   sensor_msgs::NavSatFix::ConstPtr nav_sat_ptr;
   autoware_system_msgs::AutowareState::ConstPtr autoware_state_ptr;
   autoware_vehicle_msgs::ControlMode::ConstPtr control_mode_ptr;

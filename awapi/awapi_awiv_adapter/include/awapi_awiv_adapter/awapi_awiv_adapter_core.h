@@ -39,6 +39,7 @@ private:
   ros::Subscriber sub_turn_signal_cmd_;
   ros::Subscriber sub_twist_;
   ros::Subscriber sub_gear_;
+  ros::Subscriber sub_battery_;
   ros::Subscriber sub_nav_sat_;
   ros::Subscriber sub_autoware_state_;
   ros::Subscriber sub_control_mode_;
@@ -65,6 +66,7 @@ private:
   void callbackTurnSignal(const autoware_vehicle_msgs::TurnSignal::ConstPtr & msg_ptr);
   void callbackTwist(const geometry_msgs::TwistStamped::ConstPtr & msg_ptr);
   void callbackGear(const autoware_vehicle_msgs::ShiftStamped::ConstPtr & msg_ptr);
+  void callbackBattery(const std_msgs::Float32::ConstPtr & msg_ptr);
   void callbackNavSat(const sensor_msgs::NavSatFix::ConstPtr & msg_ptr);
   void callbackAutowareState(const autoware_system_msgs::AutowareState::ConstPtr & msg_ptr);
   void callbackControlMode(const autoware_vehicle_msgs::ControlMode::ConstPtr & msg_ptr);

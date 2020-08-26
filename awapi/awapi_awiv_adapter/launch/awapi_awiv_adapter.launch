@@ -9,6 +9,7 @@
   <arg name="input_turn_signal" default="/vehicle/status/turn_signal" />
   <arg name="input_twist" default="/localization/twist" />
   <arg name="input_gear" default="/vehicle/status/shift" />
+  <arg name="input_battery" default="/vehicle/status/battery_charge" />
   <arg name="input_nav_sat" default="/sensing/gnss/ublox/nav_sat_fix" />
   <arg name="input_autoware_state" default="/autoware/state" />
   <arg name="input_control_mode" default="/vehicle/status/control_mode" />
@@ -66,6 +67,7 @@
       <remap from="~input/turn_signal" to="$(arg input_turn_signal)" />
       <remap from="~input/twist" to="$(arg input_twist)" />
       <remap from="~input/gear" to="$(arg input_gear)" />
+      <remap from="~input/battery" to="$(arg input_battery)" />
       <remap from="~input/nav_sat" to="$(arg input_nav_sat)" />
       <remap from="~input/autoware_state" to="$(arg input_autoware_state)" />
       <remap from="~input/control_mode" to="$(arg input_control_mode)" />

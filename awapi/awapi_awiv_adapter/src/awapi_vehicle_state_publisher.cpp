@@ -27,7 +27,7 @@ AutowareIvVehicleStatePublisher::AutowareIvVehicleStatePublisher()
 
 void AutowareIvVehicleStatePublisher::statePublisher(const AutowareInfo & aw_info)
 {
-  autoware_api_msgs::AwapiVehicleStatus status;
+  autoware_api_msgs::AwapiVehicleStatus status = initVehicleStatus();
 
   //input header
   status.header.frame_id = "base_link";
@@ -40,10 +40,21 @@ void AutowareIvVehicleStatePublisher::statePublisher(const AutowareInfo & aw_inf
   getTurnSignalInfo(aw_info.turn_signal_ptr, &status);
   getTwistInfo(aw_info.twist_ptr, &status);
   getGearInfo(aw_info.gear_ptr, &status);
+  getBatteryInfo(aw_info.battery_ptr, &status);
   getGpsInfo(aw_info.nav_sat_ptr, &status);
 
   // publish info
   pub_state_.publish(status);
+}
+
+autoware_api_msgs::AwapiVehicleStatus AutowareIvVehicleStatePublisher::initVehicleStatus()
+{
+  autoware_api_msgs::AwapiVehicleStatus status;
+  // set default value
+  if (std::numeric_limits<float>::has_quiet_NaN) {
+    status.energy_level = std::numeric_limits<float>::quiet_NaN();
+  }
+  return status;
 }
 
 void AutowareIvVehicleStatePublisher::getPoseInfo(
@@ -163,6 +174,18 @@ void AutowareIvVehicleStatePublisher::getGearInfo(
 
   // get gear (shift)
   status->gear = gear_ptr->shift.data;
+}
+
+void AutowareIvVehicleStatePublisher::getBatteryInfo(
+  const std_msgs::Float32::ConstPtr & battery_ptr, autoware_api_msgs::AwapiVehicleStatus * status)
+{
+  if (!battery_ptr) {
+    ROS_DEBUG_STREAM_THROTTLE(5.0, "[AutowareIvVehicleStatePublisher] battery is nullptr");
+    return;
+  }
+
+  // get battery
+  status->energy_level = battery_ptr->data;
 }
 
 void AutowareIvVehicleStatePublisher::getGpsInfo(

@@ -42,6 +42,7 @@ AutowareIvAdapter::AutowareIvAdapter() : nh_(), pnh_("~"), tf_listener_(tf_buffe
     pnh_.subscribe("input/turn_signal", 1, &AutowareIvAdapter::callbackTurnSignal, this);
   sub_twist_ = pnh_.subscribe("input/twist", 1, &AutowareIvAdapter::callbackTwist, this);
   sub_gear_ = pnh_.subscribe("input/gear", 1, &AutowareIvAdapter::callbackGear, this);
+  sub_battery_ = pnh_.subscribe("input/battery", 1, &AutowareIvAdapter::callbackBattery, this);
   sub_nav_sat_ = pnh_.subscribe("input/nav_sat", 1, &AutowareIvAdapter::callbackNavSat, this);
   sub_autoware_state_ =
     pnh_.subscribe("input/autoware_state", 1, &AutowareIvAdapter::callbackAutowareState, this);
@@ -125,6 +126,11 @@ void AutowareIvAdapter::callbackTwist(const geometry_msgs::TwistStamped::ConstPt
 void AutowareIvAdapter::callbackGear(const autoware_vehicle_msgs::ShiftStamped::ConstPtr & msg_ptr)
 {
   aw_info_.gear_ptr = msg_ptr;
+}
+
+void AutowareIvAdapter::callbackBattery(const std_msgs::Float32::ConstPtr & msg_ptr)
+{
+  aw_info_.battery_ptr = msg_ptr;
 }
 
 void AutowareIvAdapter::callbackNavSat(const sensor_msgs::NavSatFix::ConstPtr & msg_ptr)
