@@ -75,6 +75,9 @@ private:
   double min_slow_down_vel_;
   double max_deceleration_;
   bool enable_slow_down_;
+  double step_length_;
+  double stop_search_radius_;
+  double slow_down_search_radius_;
   void obstaclePointcloudCallback(const sensor_msgs::PointCloud2::ConstPtr & input_msg);
   void pathCallback(const autoware_planning_msgs::Trajectory::ConstPtr & input_msg);
   void dynamicObjectCallback(
@@ -117,6 +120,7 @@ private:
     pcl::PointXYZ * nearest_collision_point, ros::Time * nearest_collision_point_time);
   void getLateralNearestPoint(
     const pcl::PointCloud<pcl::PointXYZ> & pointcloud, const geometry_msgs::Pose & base_pose,
-    pcl::PointXYZ & lateral_nearest_point, double & deviation);
+    pcl::PointXYZ * lateral_nearest_point, double * deviation);
+  geometry_msgs::Pose getVehicleCenterFromBase(const geometry_msgs::Pose & base_pose);
 };
 }  // namespace motion_planning

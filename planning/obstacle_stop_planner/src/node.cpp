@@ -117,9 +117,14 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode() : nh_(), pnh_("~"), tf_listen
   min_slow_down_vel_ = getParam<double>(pnh_, "min_slow_down_vel", 2.0);
   max_deceleration_ = getParam<double>(pnh_, "max_deceleration", 2.0);
   enable_slow_down_ = getParam<bool>(pnh_, "enable_slow_down", false);
+  step_length_ = getParam<double>(pnh_, "step_length", 1.0);
   stop_margin_ += wheel_base_ + front_overhang_;
   min_behavior_stop_margin_ += wheel_base_ + front_overhang_;
   slow_down_margin_ += wheel_base_ + front_overhang_;
+  stop_search_radius_ = step_length_ + std::hypot(vehicle_width_ / 2.0, vehicle_length_ / 2.0);
+  slow_down_search_radius_ =
+    step_length_ +
+    std::hypot(vehicle_width_ / 2.0 + expand_slow_down_range_, vehicle_length_ / 2.0);
   debug_ptr_ = std::make_shared<ObstacleStopPlannerDebugNode>(wheel_base_ + front_overhang_);
 
   // Initializer
@@ -192,10 +197,9 @@ void ObstacleStopPlannerNode::pathCallback(
    * decimate trajectory for calculation cost
    */
   autoware_planning_msgs::Trajectory decimate_trajectory;
-  const double step_length = 1.0;
   std::map<size_t /* decimate */, size_t /* origin */> decimate_trajectory_index_map;
   decimateTrajectory(
-    trim_trajectory, step_length, decimate_trajectory, decimate_trajectory_index_map);
+    trim_trajectory, step_length_, decimate_trajectory, decimate_trajectory_index_map);
 
   autoware_planning_msgs::Trajectory & trajectory = decimate_trajectory;
 
@@ -228,11 +232,9 @@ void ObstacleStopPlannerNode::pathCallback(
       new pcl::PointCloud<pcl::PointXYZ>);
     pcl::fromROSMsg(transformed_obstacle_ros_pointcloud, *transformed_obstacle_pointcloud_ptr);
     // search obstacle candidate pointcloud to reduce calculation cost
-    const double search_range =
-      step_length +
-      std::hypot((vehicle_width_ / 2.0 + expand_slow_down_range_), (wheel_base_ + front_overhang_));
+    const double search_radius = enable_slow_down_ ? slow_down_search_radius_ : stop_search_radius_;
     searchPointcloudNearTrajectory(
-      trajectory, search_range, transformed_obstacle_pointcloud_ptr,
+      trajectory, search_radius, transformed_obstacle_pointcloud_ptr,
       obstacle_candidate_pointcloud_ptr);
     obstacle_candidate_pointcloud_ptr->header = transformed_obstacle_pointcloud_ptr->header;
   }
@@ -254,6 +256,13 @@ void ObstacleStopPlannerNode::pathCallback(
   pcl::PointCloud<pcl::PointXYZ>::Ptr slow_down_pointcloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
   double lateral_deviation = 0.0;
   for (int i = 0; i < (int)(trajectory.points.size()) - 1; ++i) {
+    /*
+     * create one step circle center for vehicle
+     */
+    const auto prev_center_pose = getVehicleCenterFromBase(trajectory.points.at(i).pose);
+    Point prev_center_point(prev_center_pose.position.x, prev_center_pose.position.y);
+    const auto next_center_pose = getVehicleCenterFromBase(trajectory.points.at(i + 1).pose);
+    Point next_center_point(next_center_pose.position.x, next_center_pose.position.y);
     /*
      * create one step polygon for vehicle
      */
@@ -297,14 +306,17 @@ void ObstacleStopPlannerNode::pathCallback(
     pcl::PointCloud<pcl::PointXYZ>::Ptr collision_pointcloud_ptr(
       new pcl::PointCloud<pcl::PointXYZ>);
     collision_pointcloud_ptr->header = obstacle_candidate_pointcloud_ptr->header;
-
     if (!is_slow_down && enable_slow_down_) {
       for (size_t j = 0; j < obstacle_candidate_pointcloud_ptr->size(); ++j) {
         Point point(
           obstacle_candidate_pointcloud_ptr->at(j).x, obstacle_candidate_pointcloud_ptr->at(j).y);
-        if (bg::within(point, boost_one_step_move_slow_down_range_polygon)) {
-          slow_down_pointcloud_ptr->push_back(obstacle_candidate_pointcloud_ptr->at(j));
-          canditate_slow_down = true;
+        if (
+          bg::distance(prev_center_point, point) < slow_down_search_radius_ ||
+          bg::distance(next_center_point, point) < slow_down_search_radius_) {
+          if (bg::within(point, boost_one_step_move_slow_down_range_polygon)) {
+            slow_down_pointcloud_ptr->push_back(obstacle_candidate_pointcloud_ptr->at(j));
+            canditate_slow_down = true;
+          }
         }
       }
     } else {
@@ -312,12 +324,16 @@ void ObstacleStopPlannerNode::pathCallback(
     }
     for (size_t j = 0; j < slow_down_pointcloud_ptr->size(); ++j) {
       Point point(slow_down_pointcloud_ptr->at(j).x, slow_down_pointcloud_ptr->at(j).y);
-      if (bg::within(point, boost_one_step_move_vehicle_polygon)) {
-        collision_pointcloud_ptr->push_back(slow_down_pointcloud_ptr->at(j));
-        is_collision = true;
-        debug_ptr_->pushPolygon(
-          one_step_move_vehicle_polygon, trajectory.points.at(i).pose.position.z,
-          PolygonType::Collision);
+      if (
+        bg::distance(prev_center_point, point) < stop_search_radius_ ||
+        bg::distance(next_center_point, point) < stop_search_radius_) {
+        if (bg::within(point, boost_one_step_move_vehicle_polygon)) {
+          collision_pointcloud_ptr->push_back(slow_down_pointcloud_ptr->at(j));
+          is_collision = true;
+          debug_ptr_->pushPolygon(
+            one_step_move_vehicle_polygon, trajectory.points.at(i).pose.position.z,
+            PolygonType::Collision);
+        }
       }
     }
     if (canditate_slow_down && !is_collision && !is_slow_down) {
@@ -330,8 +346,8 @@ void ObstacleStopPlannerNode::pathCallback(
         *slow_down_pointcloud_ptr, trajectory.points.at(i).pose, &nearest_slow_down_point,
         &nearest_collision_point_time);
       getLateralNearestPoint(
-        *slow_down_pointcloud_ptr, trajectory.points.at(i).pose, lateral_nearest_slow_down_point,
-        lateral_deviation);
+        *slow_down_pointcloud_ptr, trajectory.points.at(i).pose, &lateral_nearest_slow_down_point,
+        &lateral_deviation);
       debug_ptr_->pushObstaclePoint(nearest_slow_down_point, PointType::SlowDown);
     }
 
@@ -362,7 +378,8 @@ void ObstacleStopPlannerNode::pathCallback(
    * insert stop point
    */
   if (need_to_stop) {
-    for (int i = decimate_trajectory_index_map.at(decimate_trajectory_collision_index) + trajectory_trim_index;
+    for (int i = decimate_trajectory_index_map.at(decimate_trajectory_collision_index) +
+                 trajectory_trim_index;
          i < (int)base_path.points.size(); ++i) {
       Eigen::Vector2d trajectory_vec;
       {
@@ -669,9 +686,10 @@ bool ObstacleStopPlannerNode::searchPointcloudNearTrajectory(
 {
   const double squared_radius = radius * radius;
   for (const auto & trajectory_point : trajectory.points) {
+    const auto center_pose = getVehicleCenterFromBase(trajectory_point.pose);
     for (const auto & point : input_pointcloud_ptr->points) {
-      const double x = trajectory_point.pose.position.x - point.x;
-      const double y = trajectory_point.pose.position.y - point.y;
+      const double x = center_pose.position.x - point.x;
+      const double y = center_pose.position.y - point.y;
       const double squared_distance = x * x + y * y;
       if (squared_distance < squared_radius) output_pointcloud_ptr->points.push_back(point);
     }
@@ -823,7 +841,7 @@ void ObstacleStopPlannerNode::getNearestPoint(
 
 void ObstacleStopPlannerNode::getLateralNearestPoint(
   const pcl::PointCloud<pcl::PointXYZ> & pointcloud, const geometry_msgs::Pose & base_pose,
-  pcl::PointXYZ & lateral_nearest_point, double & deviation)
+  pcl::PointXYZ * lateral_nearest_point, double * deviation)
 {
   double min_norm = std::numeric_limits<double>::max();
   const double yaw = getYawFromGeometryMsgsQuaternion(base_pose.orientation);
@@ -837,10 +855,24 @@ void ObstacleStopPlannerNode::getLateralNearestPoint(
       std::abs(base_pose_vec.x() * pointcloud_vec.y() - base_pose_vec.y() * pointcloud_vec.x());
     if (norm < min_norm) {
       min_norm = norm;
-      lateral_nearest_point = pointcloud.at(i);
+      *lateral_nearest_point = pointcloud.at(i);
     }
   }
-  deviation = min_norm;
+  *deviation = min_norm;
+}
+
+geometry_msgs::Pose ObstacleStopPlannerNode::getVehicleCenterFromBase(
+  const geometry_msgs::Pose & base_pose)
+{
+  geometry_msgs::Pose center_pose;
+  const double yaw = getYawFromGeometryMsgsQuaternion(base_pose.orientation);
+  center_pose.position.x =
+    base_pose.position.x + (vehicle_length_ / 2.0 - rear_overhang_) * std::cos(yaw);
+  center_pose.position.y =
+    base_pose.position.y + (vehicle_length_ / 2.0 - rear_overhang_) * std::sin(yaw);
+  center_pose.position.z = base_pose.position.z;
+  center_pose.orientation = base_pose.orientation;
+  return center_pose;
 }
 
 }  // namespace motion_planning

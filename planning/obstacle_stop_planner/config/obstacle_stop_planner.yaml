@@ -1,6 +1,7 @@
 # stop planner
 stop_margin: 5.0 # stop margin distance from obstacle on the path [m]
 min_behavior_stop_margin: 2.0 # stop margin distance when any other stop point is inserted in stop margin [m]
+step_length: 1.0 # step length for pointcloud search range [m]
 
 # slow down planner
 slow_down_margin: 5.0 # margin distance from slow down point [m]
