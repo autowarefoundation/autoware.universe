@@ -1,0 +1,25 @@
+#include "autoware_auto_msgs/msg/Trajectory.idl"
+#include "autoware_auto_msgs/msg/TrajectoryPoint.idl"
+
+module autoware_auto_msgs {
+  module PlanTrajectory_Constants {
+    const uint8 ARRIVED_GOAL = 0;
+    const uint8 ABORTED = 1;
+  };
+
+  module action {
+    struct PlanTrajectory_Goal {
+      autoware_auto_msgs::msg::Route sub_route;
+    };
+    struct PlanTrajectory_Result {
+      @verbatim(language = "comment", text =
+        "Report of end condition. Value should be one of PlanTrajectory_Constants")
+      uint8 result;
+    };
+    struct PlanTrajectory_Feedback {
+      @verbatim(language = "comment", text =
+        "Number of remaining trajectory points")
+      uint32 remaining_length;
+    };
+  };
+};

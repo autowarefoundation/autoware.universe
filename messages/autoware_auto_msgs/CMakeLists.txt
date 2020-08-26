@@ -15,6 +15,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/DiagnosticHeader.idl"
   "msg/Quaternion32.idl"
   "msg/TrajectoryPoint.idl"
+  "msg/MapPrimitive.idl"
   # Interfaces
   "msg/BoundingBoxArray.idl"
   "msg/ControlDiagnostic.idl"
@@ -27,7 +28,9 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/VehicleStateCommand.idl"
   "msg/VehicleStateReport.idl"
   "msg/HADMapBin.idl"
+  "msg/Route.idl"
   "srv/HADMapService.idl"
+  "action/PlanTrajectory.idl"
   # Implementation-specific messages
   "msg/PointClusters.idl"
   DEPENDENCIES "std_msgs" "geometry_msgs" "sensor_msgs"
