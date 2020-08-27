@@ -979,14 +979,14 @@ Visualization Manager:
       Displays:
         - Class: rviz/MarkerArray
           Enabled: false
-          Marker Topic: /control/mpc_follower/debug/markers
+          Marker Topic: /control/trajectory_follower/mpc_follower/debug/markers
           Name: Debug/MPC
           Namespaces: {}
           Queue Size: 100
           Value: false
         - Class: rviz/MarkerArray
           Enabled: false
-          Marker Topic: /control/pure_pursuit/debug/marker
+          Marker Topic: /control/trajectory_follower/pure_pursuit/debug/marker
           Name: Debug/PurePursuit
           Namespaces:
             {}
