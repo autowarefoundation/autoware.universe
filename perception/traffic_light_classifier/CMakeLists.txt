@@ -10,7 +10,9 @@ option(CUDA_AVAIL "CUDA available" OFF)
 find_package(CUDA)
 if (CUDA_FOUND)
   find_library(CUBLAS_LIBRARIES cublas HINTS
-    ${CUDA_TOOLKIT_ROOT_DIR}/lib)
+    ${CUDA_TOOLKIT_ROOT_DIR}/lib64
+    ${CUDA_TOOLKIT_ROOT_DIR}/lib
+  )
   if (CUDA_VERBOSE)
     message("CUDA is available!")
     message("CUDA Libs: ${CUDA_LIBRARIES}")
