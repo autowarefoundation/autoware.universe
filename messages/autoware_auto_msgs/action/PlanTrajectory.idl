@@ -1,13 +1,11 @@
-#include "autoware_auto_msgs/msg/Trajectory.idl"
-#include "autoware_auto_msgs/msg/TrajectoryPoint.idl"
+#include "autoware_auto_msgs/msg/Route.idl"
 
 module autoware_auto_msgs {
-  module PlanTrajectory_Constants {
-    const uint8 ARRIVED_GOAL = 0;
-    const uint8 ABORTED = 1;
-  };
-
   module action {
+    module PlanTrajectory_Result_Constants {
+      const uint8 ARRIVED_GOAL = 0;
+      const uint8 ABORTED = 1;
+    };
     struct PlanTrajectory_Goal {
       autoware_auto_msgs::msg::Route sub_route;
     };
