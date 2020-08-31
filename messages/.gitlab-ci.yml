@@ -1,7 +1,7 @@
 stages:
   - build
   - test
-  - deploy
+#  - deploy
 
 build:
   stage: build
@@ -49,32 +49,32 @@ test:
     paths:
       - log
 
-volume:
-  stage: deploy
-  image: docker
-  services:
-    - docker:dind
-  dependencies:
-    - build
-  before_script:
-    - ''
-  script:
-    - 'echo -e "*\n!opt.tar.gz" > .dockerignore'
-    - |
-      cat >Dockerfile <<EOF
-      FROM alpine
-      ADD opt.tar.gz /
-      VOLUME /opt/autoware_auto_msgs
-      CMD ["/bin/sh", "-c", "trap 'exit 147' TERM; tail -f /dev/null & wait ${!}"]
-      EOF
-    - '
-      docker build
-          --label ade_image_commit_sha="$CI_COMMIT_SHA"
-          --label ade_image_commit_tag="$CI_COMMIT_TAG"
-          -t image .
-      '
-    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
-    - docker tag image $CI_REGISTRY_IMAGE:commit-$CI_COMMIT_SHA
-    - docker tag image $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
-    - docker push $CI_REGISTRY_IMAGE:commit-$CI_COMMIT_SHA
-    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+#volume:
+#  stage: deploy
+#  image: docker
+#  services:
+#    - docker:dind
+#  dependencies:
+#    - build
+#  before_script:
+#    - ''
+#  script:
+#    - 'echo -e "*\n!opt.tar.gz" > .dockerignore'
+#    - |
+#      cat >Dockerfile <<EOF
+#      FROM alpine
+#      ADD opt.tar.gz /
+#      VOLUME /opt/autoware_auto_msgs
+#      CMD ["/bin/sh", "-c", "trap 'exit 147' TERM; tail -f /dev/null & wait ${!}"]
+#      EOF
+#    - '
+#      docker build
+#          --label ade_image_commit_sha="$CI_COMMIT_SHA"
+#          --label ade_image_commit_tag="$CI_COMMIT_TAG"
+#          -t image .
+#      '
+#    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+#    - docker tag image $CI_REGISTRY_IMAGE:commit-$CI_COMMIT_SHA
+#    - docker tag image $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+#    - docker push $CI_REGISTRY_IMAGE:commit-$CI_COMMIT_SHA
+#    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
