@@ -1,0 +1,25 @@
+analyzers:
+  safety:
+    type: diagnostic_aggregator/AnalyzerGroup
+    path: safety
+    analyzers:
+      emergency_stop_operation:
+        type: diagnostic_aggregator/GenericAnalyzer
+        path: emergency_stop_operation
+        contains: ": emergency_stop_operation"
+        timeout: 1.0
+        num_items: 0
+
+      bumper_pushed:
+        type: diagnostic_aggregator/GenericAnalyzer
+        path: bumper_pushed
+        contains: ": bumper_pushed"
+        timeout: 1.0
+        num_items: 0
+
+      off_course:
+        type: diagnostic_aggregator/GenericAnalyzer
+        path: off_course
+        contains: ": off_course"
+        timeout: 1.0
+        num_items: 0

@@ -1,0 +1,10 @@
+<launch>
+  <arg name="config_file" />
+
+  <node pkg="autoware_error_monitor" type="autoware_error_monitor" name="autoware_error_monitor" output="screen">
+    <remap from="~input/diag_array" to="/diagnostics_agg" />
+    <remap from="~output/driving_capability" to="/autoware/driving_capability" />
+
+    <rosparam command="load" file="$(arg config_file)" />
+  </node>
+</launch>
