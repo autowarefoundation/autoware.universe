@@ -1,0 +1,36 @@
+max_velocity: 20.0      # max velocity limit [m/s]
+max_accel: 1.0          # max acceleration limit [m/ss]
+min_decel: -1.0         # min deceleration limit [m/ss]
+
+# curve parameters
+max_lateral_accel: 0.5             # max lateral acceleration limit [m/ss]
+min_curve_velocity: 2.74           # min velocity at lateral acceleration limit [m/ss]
+decel_distance_before_curve: 3.5   # slow speed distance before a curve for lateral acceleration limit
+decel_distance_after_curve: 2.0    # slow speed distance after a curve for lateral acceleration limit
+
+# engage & replan parameters
+replan_vel_deviation: 5.53         # velocity deviation to replan initial velocity [m/s]
+engage_velocity: 0.25              # engage velocity threshold [m/s] (if the trajectory velocity is higher than this value, use this velocity for engage vehicle speed)
+engage_acceleration: 0.1           # engage acceleration [m/ss] (use this acceleration when engagement)
+engage_exit_ratio: 0.5             # exit engage sequence to normal velocity plannning when the velocity exceeds engage_exit_ratio x engage_velocity.
+stop_dist_to_prohibit_engage: 0.5  # if the stop point is in this distance, the speed is set to 0 not to move the vehicle [m]
+
+extract_ahead_dist: 200.0         # forward trajectory distance used for planning [m]
+extract_behind_dist: 5.0          # backward trajectory distance used for planning [m]
+delta_yaw_threshold: 1.0472       # Allowed delta yaw between ego pose and trajecotory pose [radian]
+
+max_trajectory_length: 200.0          # max trajectory length for resampling [m]
+min_trajectory_length: 30.0           # min trajectory length for resampling [m]
+resample_time: 10.0                   # resample total time [s]
+resample_dt: 0.1                      # resample time interval [s]
+min_trajectory_interval_distance: 0.1 # resample points-interval length [m]
+
+# default weights
+# L2: jerk = 100.0, v_weight = 100000.0, a_weight = 1000.0
+# Linf: jerk = 200.0, v_weight = 100000.0, a_weight = 5000.0
+
+pseudo_jerk_weight: 100.0 # weight for "smoothness" cost
+over_v_weight: 100000.0   # weight for "overspeed limit" cost
+over_a_weight: 1000.0     # weight for "overaccel limit" cost
+
+algorithm_type: "L2" # Option : L2, Linf
