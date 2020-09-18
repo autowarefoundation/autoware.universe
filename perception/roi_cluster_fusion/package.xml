@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>roi_cluster_fusion</name>
+  <version>0.1.0</version>
+  <description>The roi_cluster_fusion package</description>
+
+  <maintainer email="yukihiro.saito@tier4.jp">Yukihiro Saito</maintainer>
+  <license>Apache2</license>
+
+
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>autoware_perception_msgs</build_depend>
+  <build_depend>nodelet</build_depend>
+  <build_depend>pcl_conversions</build_depend>
+  <build_depend>pcl_ros</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>tf2</build_depend>
+  <build_depend>tf2_sensor_msgs</build_depend>
+  <build_depend>tf2_ros</build_depend>
+  <build_depend>message_filters</build_depend>
+  <build_export_depend>autoware_perception_msgs</build_export_depend>
+  <build_export_depend>nodelet</build_export_depend>
+  <build_export_depend>pcl_conversions</build_export_depend>
+  <build_export_depend>pcl_ros</build_export_depend>
+  <build_export_depend>roscpp</build_export_depend>
+  <build_export_depend>sensor_msgs</build_export_depend>
+  <build_export_depend>tf2</build_export_depend>
+  <build_export_depend>tf2_sensor_msgs</build_export_depend>
+  <build_export_depend>tf2_ros</build_export_depend>
+  <build_export_depend>message_filters</build_export_depend>
+  <exec_depend>autoware_perception_msgs</exec_depend>
+  <exec_depend>nodelet</exec_depend>
+  <exec_depend>pcl_conversions</exec_depend>
+  <exec_depend>pcl_ros</exec_depend>
+  <exec_depend>roscpp</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>tf2</exec_depend>
+  <exec_depend>tf2_sensor_msgs</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+  <exec_depend>message_filters</exec_depend>
+
+
+  <!-- The export tag contains other, unspecified, tags -->
+  <export>
+    <nodelet plugin="${prefix}/nodelets.xml"/>
+  </export>
+</package>
