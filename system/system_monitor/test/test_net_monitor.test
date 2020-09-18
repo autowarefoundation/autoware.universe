@@ -1,0 +1,6 @@
+<launch>
+  <arg name="config_file" default="$(find system_monitor)/test/config/test_net_monitor.yaml" />
+  <test test-name="test-net_monitor" pkg="system_monitor" type="test_net_monitor" name="test">
+    <rosparam command="load" file="$(arg config_file)" />
+  </test>
+</launch>
