@@ -1,0 +1,25 @@
+<launch>
+  <arg name="input_topic_name" default="/sensing/lidar/top/pointcloud_raw" />
+  <arg name="output_topic_name" default="/sensing/lidar/top/ring_passthrough_filterd/pointcloud" />
+
+  <arg name="filter_field_name" default="ring" />
+  <arg name="filter_limit_min" default="0" />
+  <arg name="filter_limit_max" default="127" />
+  <arg name="filter_limit_negative" default="False" />
+  <arg name="keep_organized" default="False" />
+  <arg name="input_frame" default="" />
+  <arg name="output_frame" default="base_link" />
+
+  <node pkg="pointcloud_preprocessor" type="passthrough_filter_uint16_node" name="passthrough_filter">
+    <remap from="~input" to="$(arg input_topic_name)" />
+    <remap from="~output" to="$(arg output_topic_name)" />
+
+    <param name="filter_field_name" value="$(arg filter_field_name)" />
+    <param name="filter_limit_min" value="$(arg filter_limit_min)" />
+    <param name="filter_limit_max" value="$(arg filter_limit_max)" />
+    <param name="filter_limit_negative" value="$(arg filter_limit_negative)" />
+    <param name="keep_organized" value="$(arg keep_organized)" />
+    <param name="input_frame" value="$(arg input_frame)" />
+    <param name="output_frame" value="$(arg output_frame)" />
+  </node>
+</launch>
