@@ -1,0 +1,9 @@
+intersection:
+  state_transit_mergin_time: 2.0
+  decel_velocoity: 8.33 # 8.33m/s = 30.0km/h
+  path_expand_width: 2.0
+  stop_line_margin: 1.0
+  stuck_vehicle_detect_dist: 5.0
+  stuck_vehicle_vel_thr: 0.833  # 0.833m/s = 3.0km/h
+  intersection_velocity: 2.778  # 2.778m/s = 10.0km/h
+  detection_area_length: 100.0  # [m]

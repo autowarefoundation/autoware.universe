@@ -1,0 +1,3 @@
+traffic_light:
+  stop_margin: 0.0
+  tl_state_timeout: 1.0
