@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+  <!-- Essential parameters -->
+  <arg name="map_path" doc="point cloud and lanelet2 map directory path"/>
+  <arg name="vehicle_model"/>
+  <arg name="sensor_model"/>
+  <!-- Optional parameters -->
+  <arg name="rviz" default="true" doc="launch rviz"/>
+
+  <!-- Vehicle -->
+  <include file="$(find vehicle_launch)/launch/vehicle.launch">
+    <arg name="vehicle_model" value="$(arg vehicle_model)"/>
+    <arg name="sensor_model" value="$(arg sensor_model)"/>
+    <arg name="simulation" value="true"/>
+  </include>
+
+  <!-- System -->
+  <include file="$(find system_launch)/launch/system.launch">
+    <arg name="run_mode" value="planning_simulation"/>
+  </include>
+
+  <!-- Map -->
+  <include file="$(find map_launch)/launch/map.launch">
+    <arg name="map_path" value="$(arg map_path)"/>
+  </include>
+
+  <!-- Dummy Perception -->
+  <include file="$(find dummy_perception_publisher)/launch/dummy_perception_publisher.launch" />
+
+  <!-- Planning -->
+  <include file="$(find planning_launch)/launch/planning.launch" />
+
+  <!-- Control -->
+  <include file="$(find control_launch)/launch/control.launch">
+    <arg name="lateral_controller_mode" value="mpc_follower" doc="options: mpc_follower, pure_pursuit"/>
+  </include>
+
+  <!-- Rviz -->
+  <node pkg="rviz" type="rviz" name="rviz" output="screen" args="-d $(find autoware_launch)/rviz/autoware.rviz" if="$(arg rviz)" />
+
+  <!-- Web Controller -->
+  <include file="$(find roswww)/launch/roswww.launch">
+    <arg name="cached" value="false"/>
+  </include>
+  <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" />
+</launch>
