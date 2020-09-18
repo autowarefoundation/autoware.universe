@@ -30,6 +30,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/HADMapBin.idl"
   "msg/Route.idl"
   "srv/HADMapService.idl"
+  "srv/ModifyTrajectory.idl"
   "action/PlanTrajectory.idl"
   # Implementation-specific messages
   "msg/PointClusters.idl"
