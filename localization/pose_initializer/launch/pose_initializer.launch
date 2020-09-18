@@ -1,0 +1,13 @@
+<launch>
+
+  <arg name="ndt_align_server_name" default="ndt_align_srv"/>
+  <node pkg="pose_initializer" type="pose_initializer" name="pose_initializer" output="log">
+    <remap from="initialpose" to="/initialpose" />
+    <remap from="initialpose3d" to="/initialpose3d" />
+    <remap from="gnss_pose_cov" to="/sensing/gnss/pose_with_covariance" />
+    <remap from="pointcloud_map" to="/map/pointcloud_map" />
+    <remap from="ndt_align_srv" to="/localization/pose_estimator/ndt_align_srv" />
+    <param name="use_first_gnss_topic" value="true" />
+  </node>
+
+</launch>
