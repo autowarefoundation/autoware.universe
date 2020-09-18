@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
-<launch>
-
-  <node pkg="tamagawa_imu_driver" name="tag_can_driver" type="tag_can_driver" />
-
-</launch>

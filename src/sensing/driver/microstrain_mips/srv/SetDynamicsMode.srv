@@ -1,6 +1,0 @@
-int8 PORTABLE=1
-int8 AUTOMOTIVE=2
-int8 AIRBORNE=3
-int8 mode
----
-bool success

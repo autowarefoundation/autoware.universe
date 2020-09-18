@@ -1,5 +1,0 @@
-<launch>
-
-  <test test-name="test-utilities" pkg="lanelet2_extension" type="utilities-test" name="test"/>
-
-</launch>

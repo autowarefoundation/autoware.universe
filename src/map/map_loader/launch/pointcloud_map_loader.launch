@@ -1,7 +1,0 @@
-<launch>
-  <arg name="pointcloud_map_path" />
-
-  <node pkg="map_loader" type="pointcloud_map_loader" name="pointcloud_map_loader" args="$(arg pointcloud_map_path)">
-    <remap from="~output/pointcloud_map" to="/map/pointcloud_map" />
-  </node>
-</launch>
