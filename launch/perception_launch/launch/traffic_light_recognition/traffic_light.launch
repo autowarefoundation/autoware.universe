@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+
+<launch>
+
+  <arg name="enable_fine_detection" default="true"/>
+  <arg name="input/image" default="/sensing/camera/traffic_light/image_raw"/>
+  <arg name="input/camera_info" default="/sensing/camera/traffic_light/camera_info"/>
+
+  <group if="$(arg enable_fine_detection)">
+    <include file="$(find traffic_light_map_based_detector)/launch/traffic_light_map_based_detector.launch">
+      <arg name="input/camera_info" default="$(arg input/camera_info)"/>
+      <arg name="output/rois" default="rough/rois"/>
+    </include>
+    <include file="$(find traffic_light_ssd_fine_detector)/launch/traffic_light_ssd_fine_detector.launch">
+      <arg name="input/image" default="$(arg input/image)"/>
+      <arg name="input/rois" default="rough/rois"/>
+      <arg name="output/rois" default="rois"/>
+    </include>
+  </group>
+
+  <group unless="$(arg enable_fine_detection)">
+    <include file="$(find traffic_light_map_based_detector)/launch/traffic_light_map_based_detector.launch">
+      <arg name="output/rois" default="rois"/>
+      <arg name="input/camera_info" default="$(arg input/camera_info)"/>
+    </include>
+  </group>
+
+  <include file="$(find traffic_light_visualization)/launch/traffic_light_roi_visualizer.launch">
+    <arg name="input/image" default="$(arg input/image)"/>
+    <arg name="input/rois" default="rois"/>
+    <arg name="enable_fine_detection" default="$(arg enable_fine_detection)"/>
+  </include>
+  <include file="$(find traffic_light_classifier)/launch/traffic_light_classifier.launch">
+    <arg name="input/rois" default="rois"/>
+    <arg name="input/image" default="$(arg input/image)" />
+    <arg name="output/traffic_light_states" default="traffic_light_states" />
+    <arg name="use_gpu" default="true"/>
+  </include>
+</launch>
