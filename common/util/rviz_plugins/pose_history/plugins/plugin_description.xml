@@ -1,0 +1,7 @@
+<library path="lib/libpose_history">
+
+  <class type="rviz_plugins::PoseHistory" base_class_type="rviz::Display">
+    <description>Display pose history</description>
+  </class>
+
+</library>
