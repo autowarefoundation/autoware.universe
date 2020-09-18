@@ -1,0 +1,89 @@
+<launch>
+
+  <arg name="launch_driver" default="true" />
+
+  <group ns="lidar">
+
+    <group ns="top">
+      <include file="$(find sensing_launch)/launch/velodyne_VLS128.launch">
+        <arg name="sensor_frame" default="velodyne_top" />
+        <arg name="device_ip" value="192.168.1.201"/>
+        <arg name="port" value="2368"/>
+        <arg name="launch_driver" value="$(arg launch_driver)" />
+      </include>
+    </group>
+
+    <group ns="left">
+      <include file="$(find sensing_launch)/launch/velodyne_VLP16.launch">
+        <arg name="sensor_frame" default="velodyne_left" />
+        <arg name="device_ip" value="192.168.1.202"/>
+        <arg name="port" value="2369"/>
+        <arg name="launch_driver" value="$(arg launch_driver)" />
+      </include>
+    </group>
+
+    <group ns="right">
+      <include file="$(find sensing_launch)/launch/velodyne_VLP16.launch">
+        <arg name="sensor_frame" default="velodyne_right" />
+        <arg name="device_ip" value="192.168.1.203"/>
+        <arg name="port" value="2370"/>
+        <arg name="launch_driver" value="$(arg launch_driver)" />
+      </include>
+    </group>
+
+
+    <!-- nodelet manager -->
+    <arg name="manager" default="lidar_nodelet_manager" />
+    <node pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" />
+
+
+    <!-- PointCloud PassThrough Filter -->
+    <!-- <node pkg="nodelet" type="nodelet" name="passthrough_filter" args="load pointcloud_preprocessor/passthrough_filter_nodelet $(arg manager)">
+      <remap from="~input" to="top/rectified/pointcloud" />
+      <remap from="~output" to="concatenated/pointcloud" />
+      <param name="output_frame" value="base_link" />
+    </node> -->
+
+    <!-- PointCloud Concat Filter -->
+    <node pkg="nodelet" type="nodelet" name="concatenate_data" args="load pointcloud_preprocessor/concatenate_data_nodelet $(arg manager)">
+      <rosparam param="input_topics" subst_value="true">
+        [/sensing/lidar/top/outlier_filtered/pointcloud,
+        /sensing/lidar/left/outlier_filtered/pointcloud,
+        /sensing/lidar/right/outlier_filtered/pointcloud]
+      </rosparam>
+      <remap from="~output" to="concatenated/pointcloud" />
+      <param name="output_frame" value="base_link" />
+    </node>
+
+
+    <!-- PointCloud Crop Mesurement Range -->
+    <node pkg="nodelet" type="nodelet" name="crop_box_filter" args="load pointcloud_preprocessor/crop_box_filter_nodelet $(arg manager)">
+      <remap from="~input" to="concatenated/pointcloud" />
+      <remap from="~output" to="mesurement_range_cropped/pointcloud" />
+      <param name="min_x" value="-50.0" />
+      <param name="max_x" value="100.0" />
+      <param name="min_y" value="-50.0" />
+      <param name="max_y" value="50.0" />
+      <remap from="~min_z" to="/vehicle_info/min_height_offset" />
+      <remap from="~max_z" to="/vehicle_info/max_height_offset" />
+
+      <param name="negative" value="False" />
+      <param name="input_frame" value="base_link" />
+      <param name="output_frame" value="base_link" />
+    </node>
+
+    <!-- PointCloud Ground Filter -->
+    <node pkg="nodelet" type="nodelet" name="ray_ground_filter" args="load pointcloud_preprocessor/ray_ground_filter_nodelet $(arg manager)">
+      <remap from="~input" to="mesurement_range_cropped/pointcloud" />
+      <remap from="~output" to="no_ground/pointcloud" />
+
+      <param name="general_max_slope" value="10.0" />
+      <param name="local_max_slope" value="10.0" />
+      <param name="min_height_threshold" value="0.2" />
+    </node>
+
+    <!-- Relay -->
+    <node pkg="topic_tools" type="relay" name="relay" args="/sensing/lidar/top/rectified/pointcloud /sensing/lidar/pointcloud" />
+
+  </group>
+</launch>

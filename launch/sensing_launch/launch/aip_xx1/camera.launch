@@ -1,0 +1,19 @@
+<launch>
+
+  <arg name="launch_driver" default="true" />
+  <arg name="camera_type" default="left" />
+
+  <group ns="camera">
+    <group ns="traffic_light">
+
+      <!-- (usb_cam_node is assumed to have launched on logging PC) -->
+
+      <node pkg="image_transport" type="republish" name="image_republish" output="screen"
+            args="compressed raw">
+        <remap from="in" to="$(arg camera_type)/image_raw" />
+        <remap from="out" to="image_raw" />
+      </node>
+      <node pkg="topic_tools" type="relay" name="tl_camera_info_relay" args="$(arg camera_type)/camera_info camera_info" />
+    </group>
+  </group>
+</launch>
