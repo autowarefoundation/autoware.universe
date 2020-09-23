@@ -12,6 +12,11 @@ module autoware_auto_msgs {
       @default (value=0.0)
       float long_accel_mps2;
 
+      @verbatim (language="comment", text=
+        " should be negative when reversed")
+      @default (value=0.0)
+      float velocity_mps;
+
       @default (value=0.0)
       float front_wheel_angle_rad;
 
