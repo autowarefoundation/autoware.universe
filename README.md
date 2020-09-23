@@ -1,22 +1,36 @@
-# autoware.proj
+# Autoware (Architecture Proposal)
 
-meta-repository for Tier IV's projects
+meta-repository for Autoware architecture proposal version
 
 ![autoware](https://user-images.githubusercontent.com/8327598/69472442-cca50b00-0ded-11ea-9da0-9e2302aa1061.png)
+
+# What's this
+
+This is the source code of the feasibility study for Autoware architecture proposal.
+
+> **WARNING**: This source is solely for demonstrating an architecture proposal. It should not be used to drive cars. 
+
+> **NOTE**: The features in [autoware.iv.universe](https://github.com/tier4/autoware.iv.universe) will be merged into Autoware.Auto.
+
+Architecture overview is [here](/design/Overview.md).
+
+# How to setup
 
 ## Requirements
 
 ### Hardware
 
-- x86 CPU (8 or more cores)
-- 16 GB or more of memory
-- Nvidia GPU (4GB or more of memory)
+ - x86 CPU (8 or more cores)
+ - 16 GB or more of memory
+ - Nvidia GPU (4GB or more of memory)
+
+If cuda or tensorRT is already installed, it is recommended to remove it.
 
 ### Software
 
-- Ubuntu 18.04
-- Nvidia driver
-
+ - Ubuntu 18.04
+ - Nvidia driver
+ 
 If cuda or tensorRT is already installed, it is recommended to remove it.
 
 ## How to setup
@@ -35,8 +49,8 @@ Set up the repository
 
 ```sh
 sudo apt install -y python3-vcstool
-git clone git@github.com:tier4/autoware.proj.git
-cd autoware.proj
+git clone git@github.com:tier4/AutowareArchitectureProposal.git
+cd AutowareArchitectureProposal
 mkdir -p src
 vcs import src < autoware.proj.repos
 ```
@@ -70,8 +84,8 @@ colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release --catkin-skip-building-test
 Prepare launch files and vehicle_description according to the sensor configuration of your hardware.  
 The following are the samples.
 
-- [sensing.launch](https://github.com/tier4/autoware_launcher/blob/master/sensing_launch/launch/sensing.launch)
-- [vehicle_description](https://github.com/tier4/Autoware-T4B/tree/master/vehicle/vehicle_description)
+- [sensing.launch](https://github.com/tier4/autoware_launcher.universe/blob/master/sensing_launch/launch/sensing.launch)
+- [lexus_description](https://github.com/tier4/lexus_description.iv.universe)
 
 ## How to run
 
@@ -89,10 +103,12 @@ The following are the samples.
 3. Launch Autoware
 
 ```sh
-cd autoware.proj
+cd AutowareArchitectureProposal
 source install/setup.bash
-roslaunch autoware_launch autoware.launch map_path:=[path] vehicle_model:=[vehicle_model] sensor_model:=[sensor_model] rosbag:=true
+roslaunch autoware_launch autoware.launch map_path:=[path] vehicle_model:=lexus sensor_model:=aip_xx1 rosbag:=true
 ```
+
+\* Absolute path is required for map_path.
 
 4. Play rosbag
 
@@ -115,10 +131,12 @@ rosbag play --clock [rosbag file] -r 0.2
 2. Launch Autoware
 
 ```sh
-cd autoware.proj
+cd AutowareArchitectureProposal
 source install/setup.bash
-roslaunch autoware_launch planning_simulator.launch map_path:=[path] vehicle_model:=[vehicle_model] sensor_model:=[sensor_model]
+roslaunch autoware_launch planning_simulator.launch map_path:=[path] vehicle_model:=lexus sensor_model:=aip_xx1
 ```
+
+\* Absolute path is required for map_path.
 
 3. Set initial pose
 4. Set goal pose
@@ -129,19 +147,18 @@ roslaunch autoware_launch planning_simulator.launch map_path:=[path] vehicle_mod
 
 - sample map : © 2020 TierIV inc.
 
+#### Running With AutowareAuto
+We are planning to merge both the architecture and reference implementation into AutowareAuto.
+Until then, please use ros_bridge to communicate with AutowareAuto modules.
+Since architecture is still not aligned, you would have to do the message conversion in order to properly communicate between AutowareAuto and AutowareArchitectureProposal modules for the time being.
+
+For setting up AutowareAuto, please follow the instruction in: https://gitlab.com/autowarefoundation/autoware.auto/AutowareAuto
+For setting up ros_bridge, please follow the instruction in: https://github.com/ros2/ros1_bridge
+
 #### Tutorial in detail
 
 See [here](./docs/SimulationTutorial.md). for more information.
 
-#### Real car
-
-1. Launch Autoware
-
-```sh
-cd autoware.proj
-source install/setup.bash
-roslaunch autoware_launch autoware.launch map_path:=[path] vehicle_model:=[vehicle_model] sensor_model:=[sensor_model]
-```
 
 ## References
 
@@ -158,7 +175,3 @@ roslaunch autoware_launch autoware.launch map_path:=[path] vehicle_model:=[vehic
 ### Credits
 
 - [Neural Network Weight Files](./docs/Credits.md)
-
-### For Tier IV Developpers
-
- - [Map data information (Confluence)](https://tier4.atlassian.net/wiki/spaces/KB4FAE/pages/33358143)
