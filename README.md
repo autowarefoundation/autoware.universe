@@ -148,17 +148,17 @@ roslaunch autoware_launch planning_simulator.launch map_path:=[path] vehicle_mod
 - sample map : © 2020 TierIV inc.
 
 #### Running With AutowareAuto
-We are planning to merge both the architecture and reference implementation into AutowareAuto.
-Until then, please use ros_bridge to communicate with AutowareAuto modules.
-Since architecture is still not aligned, you would have to do the message conversion in order to properly communicate between AutowareAuto and AutowareArchitectureProposal modules for the time being.
+We are planning propose the architecture and reference implementation to AutowareAuto.
+For the time being, use ros_bridge if you wish to use this repository with AutowareAuto modules.
+You would have to do the message type conversions in order to communicate between AutowareAuto and AutowareArchitectureProposal modules until the architecture is aligned.
 
 For setting up AutowareAuto, please follow the instruction in: https://gitlab.com/autowarefoundation/autoware.auto/AutowareAuto
+
 For setting up ros_bridge, please follow the instruction in: https://github.com/ros2/ros1_bridge
 
 #### Tutorial in detail
 
 See [here](./docs/SimulationTutorial.md). for more information.
-
 
 ## References
 
