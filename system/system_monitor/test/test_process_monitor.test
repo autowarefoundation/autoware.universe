@@ -1,3 +1,0 @@
-<launch>
-  <test test-name="test-process_monitor" pkg="system_monitor" type="test_process_monitor" name="test"/>
-</launch>

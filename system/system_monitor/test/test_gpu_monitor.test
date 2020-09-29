@@ -1,3 +1,0 @@
-<launch>
-  <test test-name="test-gpu_monitor" pkg="system_monitor" type="test_gpu_monitor" name="test"/>
-</launch>
