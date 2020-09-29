@@ -1,5 +1,0 @@
-bool manual_driving
-bool autonomous_driving
-bool remote_control
-bool safe_stop
-bool emergency_stop
