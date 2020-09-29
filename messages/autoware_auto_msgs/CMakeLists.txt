@@ -29,6 +29,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/VehicleStateReport.idl"
   "msg/HADMapBin.idl"
   "msg/Route.idl"
+  "srv/AutonomyModeChange.idl"
   "srv/HADMapService.idl"
   "srv/ModifyTrajectory.idl"
   "action/PlanTrajectory.idl"
