@@ -1,9 +1,0 @@
-<launch>
-  <group ns="/">
-    <node pkg="rqt_robot_monitor" type="rqt_robot_monitor" name="rqt_robot_monitor"/>
-
-    <include file="$(find dummy_diag_publisher)/launch/dummy_diag_publisher.launch">
-      <arg name="launch_rqt" value="true" />
-    </include>
-  </group>
-</launch>
