@@ -105,7 +105,7 @@ The following are the samples.
 ```sh
 cd AutowareArchitectureProposal
 source install/setup.bash
-roslaunch autoware_launch autoware.launch map_path:=[path] vehicle_model:=lexus sensor_model:=aip_xx1 rosbag:=true
+roslaunch autoware_launch logging_simulator.launch map_path:=[path] vehicle_model:=lexus sensor_model:=aip_xx1 rosbag:=true
 ```
 
 \* Absolute path is required for map_path.
