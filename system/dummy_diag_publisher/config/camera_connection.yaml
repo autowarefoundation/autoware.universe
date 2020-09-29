@@ -1,8 +1,0 @@
-update_rate: 10
-diag_config:
-  name: "camera_connection"
-  hardware_id: "camera_front"
-  msg_ok: ""
-  msg_warn: "connection is unstable"
-  msg_error: "connection is lost"
-  msg_stale: ""

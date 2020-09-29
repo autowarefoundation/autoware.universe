@@ -1,8 +1,0 @@
-update_rate: 10
-diag_config:
-  name: "velodyne_temperature"
-  hardware_id: "velodyne_main"
-  msg_ok: ""
-  msg_warn: "hot"
-  msg_error: "too hot"
-  msg_stale: ""

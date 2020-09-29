@@ -1,8 +1,0 @@
-update_rate: 10
-diag_config:
-  name: "bumper_pushed"
-  hardware_id: "bumper_pushed_checker"
-  msg_ok: ""
-  msg_warn: ""
-  msg_error: "bumper is pushed"
-  msg_stale: ""
