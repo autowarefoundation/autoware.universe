@@ -2,7 +2,7 @@
 
 module autoware_auto_msgs {
   module srv {
-    module AutonomyModeChange_Constants {
+    module AutonomyModeChange_Request_Constants {
       const uint8 MODE_MANUAL = 0;
       const uint8 MODE_AUTONOMOUS = 1;
     };
