@@ -1,3 +1,5 @@
+#include "std_msgs/msg/Empty.idl"
+
 module autoware_auto_msgs {
   module srv {
     module AutonomyModeChange_Constants {
@@ -13,8 +15,8 @@ module autoware_auto_msgs {
     struct AutonomyModeChange_Response
     {
       @verbatim(language = "comment", text =
-        "The autonomy mode after the request")
-      uint8 mode;
+        "No response is used because changing the autonomy mode requires non-trivial time")
+      std_msgs::msg::Empty empty;
     };
   };
 };
