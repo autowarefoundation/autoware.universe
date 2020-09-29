@@ -1,4 +1,0 @@
-blind_spot:
-  stop_line_margin: 1.0 # [m]
-  backward_length: 15.0 # [m]
-  max_future_movement_time: 10.0 # [second]

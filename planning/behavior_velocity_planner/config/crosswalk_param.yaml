@@ -1,9 +1,0 @@
-crosswalk:
-  crosswalk:
-    stop_margin: 1.0
-    slow_margin: 2.0
-    slow_velocity: 1.38 # 1.38 m/s = 5.0 kmph
-    stop_dynamic_object_prediction_time_margin: 3.0
-
-  walkway:
-    stop_margin: 1.0

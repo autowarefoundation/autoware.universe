@@ -1,3 +1,0 @@
-stop_line:
-  stop_margin: 0.0
-  stop_check_dist: 2.0  # stopline is released when the vehicle is stopped within this distance from stopline.
