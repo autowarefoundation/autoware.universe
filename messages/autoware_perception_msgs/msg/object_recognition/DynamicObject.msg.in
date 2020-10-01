@@ -1,4 +1,4 @@
-unique_identifier_msgs/UUID id
+@UUID_MSG_TYPE@ id
 Semantic semantic
 State state
 Shape shape
