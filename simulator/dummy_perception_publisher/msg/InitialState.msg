@@ -1,2 +1,0 @@
-geometry_msgs/PoseWithCovariance pose_covariance
-geometry_msgs/TwistWithCovariance twist_covariance
