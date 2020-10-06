@@ -3,52 +3,52 @@ repositories:
   autoware/autoware.iv:
     type: git
     url: git@github.com:tier4/autoware.iv.universe.git
-    version: master
+    version: ros2
   autoware/launcher:
     type: git
     url: git@github.com:tier4/autoware_launcher.iv.universe.git
-    version: master
+    version: ros2
   # description
   description/sensor/sensor_description:
     type: git
     url: git@github.com:tier4/sensor_description.iv.universe.git
-    version: master
+    version: ros2
   description/vehicle/lexus_description:
     type: git
     url: git@github.com:tier4/lexus_description.iv.universe.git
-    version: master
+    version: ros2
   # simulator
   simulator/planning_simulator:
     type: git
     url: git@github.com:tier4/planning_simulator.iv.universe.git
-    version: master
+    version: ros2
   simulator/planning_simulator_launcher:
     type: git
     url: git@github.com:tier4/planning_sim_launcher.iv.universe.git
-    version: master
+    version: ros2
   simulator/scenario_runner:
     type: git
     url: git@github.com:tier4/scenario_runner.iv.universe.git
-    version: master
+    version: ros2
   # vendor
-  vendor/lanelet2:
-    type: git
-    url: git@github.com:fzi-forschungszentrum-informatik/Lanelet2.git
-    version: 1.0.1
-  vendor/mrt_cmake_modules:
-    type: git
-    url: git@github.com:KIT-MRT/mrt_cmake_modules.git
-    version: 1.0.2
-  vendor/livox_ros_driver:
-    type: git
-    url: git@github.com:Livox-SDK/livox_ros_driver.git
-    version: v2.5.0
-  vendor/velodyne_vls:
-    type: git
-    url: git@github.com:tier4/velodyne_vls.git
-    version: tier4/master
+#  vendor/lanelet2:
+#    type: git
+#    url: git@github.com:fzi-forschungszentrum-informatik/Lanelet2.git
+#    version: master
+#  vendor/mrt_cmake_modules:
+#    type: git
+#    url: git@github.com:KIT-MRT/mrt_cmake_modules.git
+#    version: master
+#  vendor/livox_ros_driver:
+#    type: git
+#    url: git@github.com:Livox-SDK/livox_ros_driver.git
+#    version: v2.5.0
+#  vendor/velodyne_vls:
+#    type: git
+#    url: git@github.com:tier4/velodyne_vls.git
+#    version: tier4/ros2
   # calibration
-  calibration/tunable_static_tf_broadcaster:
-    type: git
-    url: git@github.com:tier4/tunable_static_tf_broadcaster.git
-    version: master
+#  calibration/tunable_static_tf_broadcaster:
+#    type: git
+#    url: git@github.com:tier4/tunable_static_tf_broadcaster.git
+#    version: ros2
