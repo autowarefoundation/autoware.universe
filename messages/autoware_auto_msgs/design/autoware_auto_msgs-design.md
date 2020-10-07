@@ -27,7 +27,7 @@ geometry_msgs/Point32[4] corners
 float32 value
 uint32 label
 ```
-<!-- # TODO refactor and add rationale -->
+See the [design document](bounding-box-design.md) for further details.
 
 ## BoundingBoxArray
 
