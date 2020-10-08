@@ -26,7 +26,7 @@ for repository in $repositories; do
 
   export commit_hash=$($git_command rev-parse HEAD)
 
-  if [ "$repository" == "autoware/autoware.iv" ] || [ "$repository" == "autoware/launcher" ]; then
+  if [ "$repository" == "autoware/pilot.auto" ] || [ "$repository" == "autoware/launcher" ]; then
     export new_version=$1
   else
     export new_version=$commit_hash

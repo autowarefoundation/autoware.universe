@@ -11,7 +11,7 @@ A trained model in this package is based on the following .weights file and was 
 \[Original URL] <br>
 https://pjreddie.com/media/files/yolov3.weights <br>
 After fine-tuning, the trained model is converted to ONNX file with the following script. <br>
-https://github.com/tier4/autoware.iv.universe/blob/master/src/perception/traffic_light_recognition/traffic_light_fine_detector/scripts/yolov3_to_onnx.py <br>
+https://github.com/tier4/Pilot.Auto/blob/master/src/perception/traffic_light_recognition/traffic_light_fine_detector/scripts/yolov3_to_onnx.py <br>
 
 - lidar_apollo_instance_segmentation <br>
 This package makes use of three pre-trained models provided by apollo. These files are automatically downloaded when you build. <br>

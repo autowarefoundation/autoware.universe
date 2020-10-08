@@ -1,8 +1,8 @@
 repositories:
   # autoware
-  autoware/autoware.iv:
+  autoware/pilot.auto:
     type: git
-    url: git@github.com:tier4/autoware.iv.universe.git
+    url: git@github.com:tier4/pilot.auto.git
     version: ros2
   autoware/launcher:
     type: git
