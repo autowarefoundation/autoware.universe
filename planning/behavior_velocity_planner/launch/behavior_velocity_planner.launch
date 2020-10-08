@@ -1,0 +1,49 @@
+<launch>
+  <arg name="input_route_topic_name" default="/planning/mission_planning/route" />
+  <arg name="input_traffic_light_topic_name" default="/perception/traffic_light_recognition/traffic_light_states" />
+  <arg name="map_topic_name" default="/map/vector_map" />
+
+  <arg name="launch_stop_line" default="true" />
+  <arg name="launch_crosswalk" default="true" />
+  <arg name="launch_traffic_light" default="true" />
+  <arg name="launch_intersection" default="true" />
+  <arg name="launch_blind_spot" default="true" />
+  <arg name="launch_detection_area" default="true" />
+
+  <arg name="forward_path_length" default="1000.0" />
+  <arg name="backward_path_length" default="5.0" />
+  <arg name="max_accel" default="-2.8" />
+  <arg name="delay_response_time" default="1.3" />
+
+
+  <node pkg="behavior_velocity_planner" type="behavior_velocity_planner_node" name="behavior_velocity_planner" output="screen">
+    <rosparam command="load" file="$(find behavior_velocity_planner)/config/blind_spot_param.yaml" />
+    <rosparam command="load" file="$(find behavior_velocity_planner)/config/crosswalk_param.yaml" />
+    <rosparam command="load" file="$(find behavior_velocity_planner)/config/detection_area_param.yaml" />
+    <rosparam command="load" file="$(find behavior_velocity_planner)/config/intersection_param.yaml" />
+    <rosparam command="load" file="$(find behavior_velocity_planner)/config/stop_line_param.yaml" />
+    <rosparam command="load" file="$(find behavior_velocity_planner)/config/traffic_light_param.yaml" />
+
+    <remap from="~input/path_with_lane_id" to="path_with_lane_id" />
+    <remap from="~input/vector_map" to="$(arg map_topic_name)" />
+    <remap from="~input/vehicle_velocity" to="/localization/twist" />
+    <remap from="~input/dynamic_objects" to="/perception/object_recognition/objects" />
+    <remap from="~input/no_ground_pointcloud" to="/sensing/lidar/no_ground/pointcloud" />
+    <remap from="~input/traffic_light_states" to="$(arg input_traffic_light_topic_name)" />
+    <remap from="~output/path" to="path" />
+    <remap from="~output/stop_reasons" to="/planning/scenario_planning/status/stop_reasons" />
+    <remap from="~output/traffic_light_state" to="debug/traffic_light_state" />
+
+    <param name="launch_stop_line" value="$(arg launch_stop_line)" />
+    <param name="launch_crosswalk" value="$(arg launch_crosswalk)" />
+    <param name="launch_traffic_light" value="$(arg launch_traffic_light)" />
+    <param name="launch_intersection" value="$(arg launch_intersection)" />
+    <param name="launch_blind_spot" value="$(arg launch_blind_spot)" />
+    <param name="launch_detection_area" value="$(arg launch_detection_area)" />
+
+    <param name="forward_path_length" value="$(arg forward_path_length)" />
+    <param name="backward_path_length" value="$(arg backward_path_length)" />
+    <param name="max_accel" value="$(arg max_accel)" />
+    <param name="delay_response_time" value="$(arg delay_response_time)" />
+  </node>
+</launch>
