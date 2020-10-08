@@ -1,0 +1,40 @@
+analyzers:
+  sensing:
+    type: diagnostic_aggregator/AnalyzerGroup
+    path: sensing
+    analyzers:
+      topic_status:
+        type: diagnostic_aggregator/GenericAnalyzer
+        path: topic_status
+        contains: ": sensing_topic_status"
+        num_items: 0
+
+      velodyne:
+        type: diagnostic_aggregator/AnalyzerGroup
+        path: velodyne
+        contains: ": velodyne"
+        analyzers:
+          connection:
+            type: diagnostic_aggregator/GenericAnalyzer
+            path: connection
+            contains: ": velodyne_connection"
+            timeout: 1.0
+            num_items: 0
+          temperature:
+            type: diagnostic_aggregator/GenericAnalyzer
+            path: temperature
+            contains: ": velodyne_temperature"
+            timeout: 1.0
+            num_items: 0
+
+      camera:
+        type: diagnostic_aggregator/AnalyzerGroup
+        path: camera
+        contains: ": camera"
+        analyzers:
+          connection:
+            type: diagnostic_aggregator/GenericAnalyzer
+            path: connection
+            contains: ": camera_connection"
+            timeout: 1.0
+            num_items: 0
