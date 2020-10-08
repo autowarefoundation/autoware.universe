@@ -1,0 +1,29 @@
+<launch>
+
+  <node pkg="vehicle_cmd_gate" type="vehicle_cmd_gate" name="vehicle_cmd_gate" output="screen">
+    <remap from="~input/engage" to="/autoware/engage"/>
+    <remap from="~input/emergency" to="/system/emergency/is_emergency"/>
+    <remap from="~input/gate_mode" to="/remote/gate_mode_cmd"/>
+
+    <remap from="~input/auto/control_cmd" to="trajectory_follower/control_cmd"/>
+    <remap from="~input/auto/turn_signal_cmd" to="/planning/turn_signal_decider/turn_signal_cmd"/>
+    <remap from="~input/auto/shift_cmd" to="/control/shift_decider/shift_cmd"/>
+
+    <remap from="~input/remote/control_cmd" to="/remote/control_cmd"/>
+    <remap from="~input/remote/turn_signal_cmd" to="/remote/turn_signal_cmd"/>
+    <remap from="~input/remote/shift_cmd" to="/remote/shift_cmd"/>
+
+    <remap from="~input/emergency/control_cmd" to="/system/emergency/control_cmd"/>
+    <remap from="~input/emergency/turn_signal_cmd" to="/system/emergency/turn_signal_cmd"/>
+    <remap from="~input/emergency/shift_cmd" to="/system/emergency/shift_cmd"/>
+
+    <remap from="~output/vehicle_cmd" to="vehicle_cmd"/>
+    <remap from="~output/control_cmd" to="/control/control_cmd"/>
+    <remap from="~output/shift_cmd" to="/control/shift_cmd"/>
+    <remap from="~output/turn_signal_cmd" to="/control/turn_signal_cmd"/>
+    <remap from="~output/gate_mode" to="/control/current_gate_mode"/>
+
+    <rosparam command="load" file="$(find vehicle_cmd_gate)/config/vehicle_cmd_gate.yaml" />
+  </node>
+
+</launch>
