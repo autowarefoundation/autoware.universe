@@ -1,0 +1,3 @@
+<launch>
+  <test test-name="test_autoware_utils" pkg="autoware_utils" type="test_autoware_utils"/>
+</launch>
