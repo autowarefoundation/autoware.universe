@@ -1,0 +1,11 @@
+<library path="lib/libroi_cluster_fusion">
+
+  <class name="roi_cluster_fusion/roi_cluster_fusion_nodelet"
+	 type="roi_cluster_fusion::RoiClusterFusionNodelet"
+	 base_class_type="nodelet::Nodelet">
+    <description>
+      fusion cluster and roi.
+    </description>
+  </class>
+
+</library>
