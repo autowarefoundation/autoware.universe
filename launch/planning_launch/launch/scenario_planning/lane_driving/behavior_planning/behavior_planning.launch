@@ -1,0 +1,48 @@
+<launch>
+  <arg name="input_route_topic_name" default="/planning/mission_planning/route" />
+  <arg name="map_topic_name" default="/map/vector_map" />
+
+  <node pkg="lane_change_planner" type="lane_change_planner" name="lane_change_planner" output="screen">
+    <remap from="~input/route" to="$(arg input_route_topic_name)" />
+    <remap from="~input/vector_map" to="$(arg map_topic_name)" />
+    <remap from="~input/perception" to="/perception/object_recognition/objects" />
+    <remap from="~input/velocity" to="/localization/twist" />
+    <remap from="~input/lane_change_approval" to="/planning/scenario_planning/lane_driving/lane_change_approval" />
+    <remap from="~input/force_lane_change" to="/planning/scenario_planning/lane_driving/force_lane_change" />
+    <remap from="~output/lane_change_path" to="path_with_lane_id" />
+    <remap from="~output/lane_change_ready" to="/planning/scenario_planning/lane_driving/lane_change_ready" />
+    <remap from="~output/lane_change_available" to="/planning/scenario_planning/lane_driving/lane_change_available" />
+    <remap from="~output/stop_reasons" to="/planning/scenario_planning/status/stop_reasons" />
+    <remap from="~debug/lane_change_candidate_path" to="/planning/scenario_planning/lane_driving/lane_change_candidate_path" />
+    <param name="min_stop_distance" value="5.0" />
+    <param name="stop_time" value="2.0" />
+    <param name="hysteresis_buffer_distance" value="2.0" />
+    <param name="backward_path_length" value="5.0" />
+    <param name="forward_path_length" value="200.0" />
+    <param name="max_accel" value="-5.0" />
+    <param name="lane_change_prepare_duration" value="4.0" />
+    <param name="lane_changing_duration" value="8.0" />
+    <param name="minimum_lane_change_length" value="12.0" />
+    <param name="prediction_duration" value="8.0" />
+    <param name="prediction_time_resolution" value="0.5" />
+    <param name="drivable_area_resolution" value="0.1" />
+    <param name="drivable_area_width" value="100.0" />
+    <param name="drivable_area_height" value="50.0" />
+    <param name="static_obstale_velocity_thresh" value="0.1" />
+    <param name="enable_abort_lane_change" value="true" />
+  </node>
+
+  <node pkg="rostopic" type="rostopic" name="auto_approve_lane_change" args="pub /planning/scenario_planning/lane_driving/lane_change_approval std_msgs/Bool 'data: true' -r 10" />
+
+  <node pkg="turn_signal_decider" type="turn_signal_decider" name="turn_signal_decider" output="screen">
+    <remap from="~input/path_with_lane_id" to="path_with_lane_id" />
+    <remap from="~input/vector_map" to="$(arg map_topic_name)" />
+    <remap from="~output/turn_signal_cmd" to="/planning/turn_signal_decider/turn_signal_cmd" />
+    <param name="lane_change_search_distance" value="30.0" />
+    <param name="intersection_search_distance" value="30.0" />
+  </node>
+
+  <include file="$(find behavior_velocity_planner)/launch/behavior_velocity_planner.launch">
+  </include>
+
+</launch>
