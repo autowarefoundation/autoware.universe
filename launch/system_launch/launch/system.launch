@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+  <arg name="run_mode" default="online" doc="options: online, planning_simulation"/>
+
+  <group ns="/system">
+    <!-- State Monitor -->
+    <include file="$(find autoware_state_monitor)/launch/autoware_state_monitor.launch">
+      <arg name="config_file" if="$(eval run_mode == 'online')" value="$(find autoware_state_monitor)/config/autoware_state_monitor.yaml" />
+      <arg name="config_file" if="$(eval run_mode == 'planning_simulation')" value="$(find autoware_state_monitor)/config/autoware_state_monitor.planning_simulation.yaml" />
+    </include>
+
+    <!-- Error Monitor -->
+    <include file="$(find autoware_error_monitor)/launch/autoware_error_monitor.launch">
+      <arg name="config_file" value="$(find autoware_error_monitor)/config/autoware_error_monitor.yaml" />
+    </include>
+
+    <!-- Emergency Handler -->
+    <include file="$(find emergency_handler)/launch/emergency_handler.launch">
+      <arg name="config_file" value="$(find emergency_handler)/config/emergency_handler.yaml" />
+    </include>
+  </group>
+</launch>
