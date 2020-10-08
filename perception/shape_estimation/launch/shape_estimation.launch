@@ -1,0 +1,23 @@
+<launch>
+
+  <arg name="input/objects" default="labeled_clusters"/>
+  <arg name="output/objects" default="shape_estimated_objects"/>
+  <arg name="use_map_corrent" default="true"/>
+  <arg name="use_corrector" default="true"/>
+  <arg name="map_corrector/use_rad_filter" default="true"/>
+  <arg name="map_corrector/rad_threshold" default="1.2217304763960306"/>
+  <arg name="node_name" default="shape_estimation"/>
+  <arg name="l_shape_fitting_search_angle_range" default="3"/>
+  <arg name="orientation_reliable" default="true"/>
+  <!-- 70 deg -->
+  <node pkg="shape_estimation" type="shape_estimation" name="$(arg node_name)" output="screen">
+    <remap from="input" to="$(arg input/objects)" />
+    <remap from="objects" to="$(arg output/objects)" />
+    <param name="use_corrector" value="$(arg use_corrector)" />
+    <param name="use_map_corrent" value="$(arg use_map_corrent)" />
+    <param name="map_corrector/use_rad_filter" value="$(arg map_corrector/use_rad_filter)" />
+    <param name="map_corrector/rad_threshold" value="$(arg map_corrector/rad_threshold)" />
+    <param name="l_shape_fitting_search_angle_range" value="$(arg l_shape_fitting_search_angle_range)"/>
+    <param name="orientation_reliable" value="$(arg orientation_reliable)"/>
+  </node>
+</launch>
