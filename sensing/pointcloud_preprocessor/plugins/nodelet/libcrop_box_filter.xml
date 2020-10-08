@@ -1,0 +1,10 @@
+<library path="lib/libcrop_box_filter">
+
+  <class name="pointcloud_preprocessor/crop_box_filter_nodelet"
+	 type="pointcloud_preprocessor::CropBoxFilterNodelet"
+	 base_class_type="nodelet::Nodelet">
+    <description>
+      crop_box filter.
+    </description>
+  </class>
+</library>

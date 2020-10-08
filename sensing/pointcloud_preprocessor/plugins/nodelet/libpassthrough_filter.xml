@@ -1,0 +1,19 @@
+<library path="lib/libpassthrough_filter">
+
+  <class name="pointcloud_preprocessor/passthrough_filter_nodelet"
+	 type="pointcloud_preprocessor::PassThroughFilterNodelet"
+	 base_class_type="nodelet::Nodelet">
+    <description>
+      passthrough filter.
+    </description>
+  </class>
+
+  <class name="pointcloud_preprocessor/passthrough_filter_uint16_nodelet"
+	 type="pointcloud_preprocessor::PassThroughFilterUInt16Nodelet"
+	 base_class_type="nodelet::Nodelet">
+    <description>
+      passthrough filter uint16.
+    </description>
+  </class>
+
+</library>

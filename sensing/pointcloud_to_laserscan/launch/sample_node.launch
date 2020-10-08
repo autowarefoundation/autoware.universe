@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+
+<launch>
+
+  <arg name="camera" default="camera" />
+
+  <!-- start sensor-->
+  <include file="$(find openni2_launch)/launch/openni2.launch">
+    <arg name="camera" default="$(arg camera)"/>
+  </include>
+
+  <!-- run pointcloud_to_laserscan node -->
+  <node pkg="pointcloud_to_laserscan" type="pointcloud_to_laserscan_node" name="pointcloud_to_laserscan">
+
+    <remap from="cloud_in" to="$(arg camera)/depth_registered/points_processed"/>
+    <remap from="scan" to="$(arg camera)/scan"/>
+    <rosparam>
+            target_frame: camera_link # Leave disabled to output scan in pointcloud frame
+            transform_tolerance: 0.01
+            min_height: 0.0
+            max_height: 1.0
+
+            angle_min: -1.5708 # -M_PI/2
+            angle_max: 1.5708 # M_PI/2
+            angle_increment: 0.0087 # M_PI/360.0
+            scan_time: 0.3333
+            range_min: 0.45
+            range_max: 4.0
+            use_inf: true
+            inf_epsilon: 1.0
+
+            # Concurrency level, affects number of pointclouds queued for processing and number of threads used
+            # 0 : Detect number of cores
+            # 1 : Single threaded
+            # 2->inf : Parallelism level
+            concurrency_level: 1
+    </rosparam>
+
+  </node>
+
+</launch>
