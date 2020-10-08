@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+
+<launch>
+  <arg name="input/image" default="/camera/image_raw"/>
+  <arg name="input/rois" default="input/rois"/>
+  <arg name="input/rough/rois" default="rough/rois"/>
+  <arg name="output/image" default="debug/rois"/>
+  <arg name="enable_fine_detection" default="false"/>
+  <arg name="manager" default="traffic_light_recognition_nodelet_manager"/>
+
+  <node pkg="nodelet" type="nodelet" name="traffic_light_roi_visualizer" args="load traffic_light/traffic_light_roi_visualizer $(arg manager)">
+    <remap from="~input/image" to="$(arg input/image)"/>
+    <remap from="~input/rois" to="$(arg input/rois)"/>
+    <remap from="~input/rough/rois" to="$(arg input/rough/rois)"/>
+    <remap from="~output/image" to="$(arg output/image)"/>
+    <param name="enable_fine_detection" value="$(arg enable_fine_detection)"/>
+  </node>
+</launch>
