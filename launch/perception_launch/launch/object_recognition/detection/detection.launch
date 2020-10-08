@@ -1,0 +1,64 @@
+<?xml version="1.0"?>
+
+<launch>
+  <arg name="mode" default="camera_lidar_fusion"/>
+  <!-- "camera_lidar_fusion", "lidar" or "camera" -->
+  <arg name="image_raw0" default="/image_raw"/>
+  <arg name="camera_info0" default="/camera_info"/>
+  <arg name="image_raw1" default=""/>
+  <arg name="camera_info1" default=""/>
+  <arg name="image_raw2" default=""/>
+  <arg name="camera_info2" default=""/>
+  <arg name="image_raw3" default=""/>
+  <arg name="camera_info3" default=""/>
+  <arg name="image_raw4" default=""/>
+  <arg name="camera_info4" default=""/>
+  <arg name="image_raw5" default=""/>
+  <arg name="camera_info5" default=""/>
+  <arg name="image_raw6" default=""/>
+  <arg name="camera_info6" default=""/>
+  <arg name="image_raw7" default=""/>
+  <arg name="camera_info7" default=""/>
+  <arg name="image_number" default="1"/>
+  <arg name="use_vector_map" default="true"/>
+
+  <!-- camera lidar fusion based detection-->
+  <group if="$(eval mode=='camera_lidar_fusion')">
+    <include file="$(find perception_launch)/launch/object_recognition/detection/camera_lidar_fusion_based_detection.launch">
+      <arg name="image_raw0" default="$(arg image_raw0)"/>
+      <arg name="camera_info0" default="$(arg camera_info0)"/>
+      <arg name="image_raw1" default="$(arg image_raw1)"/>
+      <arg name="camera_info1" default="$(arg camera_info1)"/>
+      <arg name="image_raw2" default="$(arg image_raw2)"/>
+      <arg name="camera_info2" default="$(arg camera_info2)"/>
+      <arg name="image_raw3" default="$(arg image_raw3)"/>
+      <arg name="camera_info3" default="$(arg camera_info3)"/>
+      <arg name="image_raw4" default="$(arg image_raw4)"/>
+      <arg name="camera_info4" default="$(arg camera_info4)"/>
+      <arg name="image_raw5" default="$(arg image_raw5)"/>
+      <arg name="camera_info5" default="$(arg camera_info5)"/>
+      <arg name="image_raw6" default="$(arg image_raw6)"/>
+      <arg name="camera_info6" default="$(arg camera_info6)"/>
+      <arg name="image_raw7" default="$(arg image_raw7)"/>
+      <arg name="camera_info7" default="$(arg camera_info7)"/>
+      <arg name="image_number" default="$(arg image_number)"/>
+      <arg name="use_vector_map" default="$(arg use_vector_map)"/>
+    </include>
+  </group>
+  <!-- lidar based detection-->
+  <group if="$(eval mode=='lidar')">
+    <include file="$(find perception_launch)/launch/object_recognition/detection/lidar_based_detection.launch">
+      <arg name="use_vector_map" default="$(arg use_vector_map)"/>
+    </include>
+  </group>
+  <!-- camera based detection-->
+  <group if="$(eval mode=='camera')">
+  </group>
+
+  <!-- visualization -->
+  <include file="$(find dynamic_object_visualization)/launch/dynamic_object_visualizer.launch">
+    <arg name="input" value="objects"/>
+    <arg name="with_feature" value="true"/>
+    <arg name="only_known_objects" default="false"/>
+  </include>
+</launch>

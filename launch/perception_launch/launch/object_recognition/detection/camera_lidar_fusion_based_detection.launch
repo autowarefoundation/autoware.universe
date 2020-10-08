@@ -1,0 +1,62 @@
+<?xml version="1.0"?>
+
+<launch>
+  <arg name="image_raw0" default="/image_raw"/>
+  <arg name="camera_info0" default="/camera_info"/>
+  <arg name="image_raw1" default=""/>
+  <arg name="camera_info1" default=""/>
+  <arg name="image_raw2" default=""/>
+  <arg name="camera_info2" default=""/>
+  <arg name="image_raw3" default=""/>
+  <arg name="camera_info3" default=""/>
+  <arg name="image_raw4" default=""/>
+  <arg name="camera_info4" default=""/>
+  <arg name="image_raw5" default=""/>
+  <arg name="camera_info5" default=""/>
+  <arg name="image_raw6" default=""/>
+  <arg name="camera_info6" default=""/>
+  <arg name="image_raw7" default=""/>
+  <arg name="camera_info7" default=""/>
+  <arg name="image_number" default="1"/>
+  <arg name="use_vector_map" default="true"/>
+
+  <!-- <include file="$(find euclidean_cluster)/launch/euclidean_cluster.launch"/> -->
+  <!-- or -->
+  <!-- <include file="$(find euclidean_cluster)/launch/voxel_grid_based_euclidean_cluster.launch" /> -->
+  <!-- or -->
+  <include file="$(find lidar_apollo_instance_segmentation)/launch/lidar_apollo_instance_segmentation.launch">
+    <arg name="output/objects" default="clusters"/>
+  </include>
+
+  <!-- Jetson AGX -->
+  <!-- <include file="$(find tensorrt_yolo3)/launch/yolo3.launch">
+    <arg name="image_raw0" default="$(arg image_raw0)"/>
+    <arg name="image_raw1" default="$(arg image_raw1)"/>
+    <arg name="image_raw2" default="$(arg image_raw2)"/>
+    <arg name="image_raw3" default="$(arg image_raw3)"/>
+    <arg name="image_raw4" default="$(arg image_raw4)"/>
+    <arg name="image_raw5" default="$(arg image_raw5)"/>
+    <arg name="image_raw6" default="$(arg image_raw6)"/>
+    <arg name="image_raw7" default="$(arg image_raw7)"/>
+    <arg name="image_number" default="$(arg image_number)"/>
+  </include> -->
+
+  <include file="$(find roi_cluster_fusion)/launch/roi_cluster_fusion.launch">
+    <arg name="input_camera_info0" default="$(arg camera_info0)"/>
+    <arg name="input_camera_info1" default="$(arg camera_info1)"/>
+    <arg name="input_camera_info2" default="$(arg camera_info2)"/>
+    <arg name="input_camera_info3" default="$(arg camera_info3)"/>
+    <arg name="input_camera_info4" default="$(arg camera_info4)"/>
+    <arg name="input_camera_info5" default="$(arg camera_info5)"/>
+    <arg name="input_camera_info6" default="$(arg camera_info6)"/>
+    <arg name="input_camera_info7" default="$(arg camera_info7)"/>
+    <arg name="input_rois_number" default="$(arg image_number)"/>
+  </include>
+    
+  <!-- <include file="$(find cluster_data_association)/launch/cluster_data_association.launch" /> -->
+
+  <include file="$(find shape_estimation)/launch/shape_estimation.launch">
+    <arg name="use_map_corrent" default="$(arg use_vector_map)"/>
+    <arg name="output/objects" default="objects" />
+  </include>
+</launch>
