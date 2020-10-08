@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+
+<launch>
+  <arg name="input" default="/perception/object_recognition/detection/objects"/>
+  <arg name="output" default="objects"/>
+  <arg name="world_frame_id" default="map"/>
+  <arg name="publish_rate" default="10"/>
+  <node pkg="multi_object_tracker" type="multi_object_tracker_node" name="multi_object_tracker" output="screen">
+    <remap from="~input" to="$(arg input)"/>
+    <remap from="~output" to="$(arg output)"/>
+    <param name="world_frame_id" value="$(arg world_frame_id)" />
+    <param name="publish_rate" value="$(arg publish_rate)" />
+  </node>
+
+</launch>
