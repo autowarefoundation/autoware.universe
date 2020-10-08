@@ -1,0 +1,15 @@
+<launch>
+  <arg name="machine_name" default="$(optenv HOSTNAME localhost)"/>
+  <arg name="config_file" default="$(find system_monitor)/config/system_monitor.yaml"/>
+  <arg name="output" default="log"/>
+
+  <node pkg="system_monitor" type="cpu_monitor" name="cpu_monitor" output="$(arg output)" respawn="true"/>
+  <node pkg="system_monitor" type="hdd_monitor" name="hdd_monitor" output="$(arg output)" respawn="true"/>
+  <node pkg="system_monitor" type="mem_monitor" name="mem_monitor" output="$(arg output)" respawn="true"/>
+  <node pkg="system_monitor" type="net_monitor" name="net_monitor" output="$(arg output)" respawn="true"/>
+  <node pkg="system_monitor" type="ntp_monitor" name="ntp_monitor" output="$(arg output)" respawn="true"/>
+  <node pkg="system_monitor" type="process_monitor" name="process_monitor" output="$(arg output)" respawn="true"/>
+  <node pkg="system_monitor" type="gpu_monitor" name="gpu_monitor" output="$(arg output)" respawn="true"/>
+
+  <rosparam command="load" file="$(arg config_file)"/>
+</launch>
