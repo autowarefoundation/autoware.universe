@@ -1,0 +1,29 @@
+<launch>
+  <arg name="input/image" default="image_raw" />
+  <arg name="input/rois" default="rois" />
+  <arg name="output/traffic_light_states" default="traffic_light_states" />
+  <arg name="manager" default="traffic_light_recognition_nodelet_manager" />
+
+  <arg name="use_gpu" default="false" />
+  <!-- classifier_type {hsv_filter: 0, cnn: 1} -->
+  <arg name="classifier_type" default="1" if="$(arg use_gpu)"/>
+  <arg name="classifier_type" default="0" unless="$(arg use_gpu)"/>
+
+  <node pkg="nodelet" type="nodelet" name="traffic_light_classifier" args="load traffic_light/traffic_light_classifier $(arg manager)">
+    <remap from="~input/image" to="$(arg input/image)" />
+    <remap from="~input/rois" to="$(arg input/rois)" />
+    <remap from="~output/traffic_light_states" to="$(arg output/traffic_light_states)" />
+    <param name="approximate_sync" value="false" />
+    <param name="classifier_type" value="$(arg classifier_type)" />
+  </node>
+
+  <group ns="traffic_light_classifier" if="$(arg use_gpu)">
+    <param name="model_file_path" value="$(find traffic_light_classifier)/data/traffic_light_classifier_mobilenetv2.onnx"/>
+    <param name="label_file_path" value="$(find traffic_light_classifier)/data/lamp_labels.txt"/>
+    <param name="precision" value="fp16"/>
+    <param name="input_c" value="3"/>
+    <param name="input_h" value="224"/>
+    <param name="input_w" value="224"/>
+  </group>
+
+</launch>
