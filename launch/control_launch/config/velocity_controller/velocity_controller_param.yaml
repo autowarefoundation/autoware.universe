@@ -1,0 +1,61 @@
+# closest waypoint threshold
+closest_waypoint_distance_threshold: 3.0
+closest_waypoint_angle_threshold: 0.7854
+
+# stop state
+stop_state_velocity: 0.0
+stop_state_acc: -3.4
+stop_state_entry_ego_speed: 0.2
+stop_state_entry_target_speed: 0.1
+stop_state_keep_stopping_dist: 0.5
+
+# delay compensation
+delay_compensation_time: 0.17
+
+# emergency stop by this controller
+emergency_stop_acc: -5.0
+emergency_stop_jerk: -3.0
+
+# smooth stop
+smooth_stop:
+  stop_dist: 3.0
+  exit_ego_speed: 1.0
+  entry_ego_speed: 0.8
+  exit_target_speed: 1.0
+  entry_target_speed: 0.2
+  weak_brake_time: 1.0
+  weak_brake_acc: -1.0
+  increasing_brake_time: 1.0
+  increasing_brake_gradient: -0.1
+  stop_brake_time: 1.0
+  stop_brake_acc: -3.4
+
+# acceleration limit
+max_acc: 3.0
+min_acc: -5.0
+
+# jerk limit
+max_jerk: 2.0
+min_jerk: -5.0
+
+# slope compensation
+enable_slope_compensation: true
+max_pitch_rad: 0.1
+min_pitch_rad: -0.1
+lpf_pitch_gain: 0.95
+
+# velocity feedback
+pid_controller:
+  kp: 1.0
+  ki: 0.1
+  kd: 0
+  max_out: 1.0
+  min_out: -1.0
+  max_p_effort: 1.0
+  min_p_effort: -1.0
+  max_i_effort: 0.3
+  min_i_effort: -0.3
+  max_d_effort: 0
+  min_d_effort: 0
+  current_velocity_threshold_pid_integration: 0.5
+  lpf_velocity_error_gain: 0.9
