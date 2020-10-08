@@ -1,0 +1,9 @@
+<launch>
+  <arg name="diag_name" />
+
+  <group ns="dummy_diag_publisher">
+    <node pkg="dummy_diag_publisher" type="dummy_diag_publisher" name="$(arg diag_name)" output="screen">
+      <rosparam command="load" file="$(find dummy_diag_publisher)/config/$(arg diag_name).yaml" />
+    </node>
+  </group>
+</launch>
