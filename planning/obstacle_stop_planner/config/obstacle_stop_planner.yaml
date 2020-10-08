@@ -1,0 +1,11 @@
+# stop planner
+stop_margin: 5.0 # stop margin distance from obstacle on the path [m]
+min_behavior_stop_margin: 2.0 # stop margin distance when any other stop point is inserted in stop margin [m]
+step_length: 1.0 # step length for pointcloud search range [m]
+
+# slow down planner
+slow_down_margin: 5.0 # margin distance from slow down point [m]
+expand_slow_down_range: 1.0 # offset from vehicle side edge for expanding the search area of the surrounding point cloud [m]
+max_slow_down_vel: 4.0 # max slow down velocity [m/s]
+min_slow_down_vel: 0.84 # min slow down velocity [m/s]
+max_deceleration: 2.0 # max slow down deceleration [m/s2]
