@@ -25,7 +25,7 @@ case $answer in
     fi
 
     cd $SCRIPT_DIR/ansible
-    ansible-playbook -i localhost, $SCRIPT_DIR/ansible/localhost-setup-ubuntu18.04-devpc.yml -i $SCRIPT_DIR/inventories/local-dev.ini -e AUTOWARE_DIR=$SCRIPT_DIR --ask-become-pass
+    ansible-playbook -i localhost, $SCRIPT_DIR/ansible/localhost-setup-ubuntu20.04-devpc.yml -i $SCRIPT_DIR/inventories/local-dev.ini -e AUTOWARE_DIR=$SCRIPT_DIR --ask-become-pass
     echo -e "\e[32mComplete \e[0m"
     ;;
   * )
