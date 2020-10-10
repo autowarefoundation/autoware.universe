@@ -15,7 +15,8 @@
   roles:
     - { role: cuda, when: yn_gpu == 'y' }
     - { role: tensorrt, when: yn_gpu == 'y' }
-    - { role: ros, release: melodic }
-    - osqp
-    - { role: autoware, rosdistro: melodic }
-    - { role: pacmod, rosdistro: melodic }
+    - { role: ros2, rosdistro: foxy }
+    - { role: osqp }
+    - { role: autoware, rosdistro: foxy }
+    # - { role: pacmod, rosdistro: foxy }
+    # - { role: ros, release: melodic }
