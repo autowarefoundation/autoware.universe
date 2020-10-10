@@ -13,8 +13,8 @@
         prompt: "[Warning]: Skip install GPU modules. Try manually installing these modules to execute nodes depending on TensorRT."
       when: yn_gpu != 'y'
   roles:
-    - { role: cuda, when: yn_gpu == 'y' }
-    - { role: tensorrt, when: yn_gpu == 'y' }
+    # - { role: cuda, when: yn_gpu == 'y' }
+    # - { role: tensorrt, when: yn_gpu == 'y' }
     - { role: ros2, rosdistro: foxy }
     - { role: osqp }
     - { role: autoware, rosdistro: foxy }
