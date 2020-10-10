@@ -28,7 +28,7 @@
 
 - name: Add kvaser library repo
   apt_repository:
-    repo: ppa:jwhitleyastuff/kvaser-linux
+    repo: ppa:astuff/kvaser-linux
   become: yes
 
 - name: Install kvaser library
