@@ -44,17 +44,18 @@ The migration guide covers this well. See also [here](https://www.ros.org/reps/r
 Pretty straightforward by following the example of the already ported `simple_planning_simulator` package and the [pub-sub tutorial](https://index.ros.org/doc/ros2/Tutorials/Writing-A-Simple-Cpp-Publisher-And-Subscriber/#cpppubsub). Better yet, use `ament_auto` to get terse `CMakeLists.txt` that do not have as much redundancy with `package.xml` as an explicit `CMakeLists.txt`. See [this commit](https://github.com/tier4/Pilot.Auto/pull/7/commits/ef382a9b430fd69cb0a0f7ca57016d66ed7ef29d) for an example.
 
 
-## Replacing `std_msgs`
+### Replacing `std_msgs`
 In ROS2, you should define semantically meaningful wrappers around primitive (number) types.
 
 
-## Changing the namespaces and header files for generated message types
-An additional `::msg` needed to be inserted between the package namespace and the class name.
+### Changing the namespaces and header files for generated message types
 
-The included headers similarly had to touched up with an extra `/msg` in the path and needed to be converted to `snake_case` – Sublime Text has a handy "Case Conversion" package for that. Unfortunately that gave a pretty cryptic error. Turns out _two_ files are being generated: One for C types (`.h` headers) and and one for CPP types (`.hpp` headers). So don't forget to change `.h` to `.hpp` too.
+If you follow the migration guide and change the included headers to have an extra `/msg` in the path and convert to `snake_case`, you might get a cryptic error. Turns out _two_ files are being generated: One for C types (`.h` headers) and and one for CPP types (`.hpp` headers). So don't forget to change `.h` to `.hpp` too. Also, don't forget to insert an additional `::msg` between the package namespace and the class name.
+
+A tip: Sublime Text has a handy "Case Conversion" package for converting to snake case.
 
 
-## Inheriting from Node instead of NodeHandle members
+### Inheriting from Node instead of NodeHandle members
 That's where differences start to show – I decided to make the `VehicleCmdGate` a `Node` even though the filename would suggest that `vehicle_cmd_gate_node.cpp` would be it. That's because it has publishers, subscribers, and logging. It previously had _two_ NodeHandles, a public one and a private one (`"~"`). The public one was unused and could be removed. Private nodes are not supported in ROS2, so I simply made it public, but that is an area that needs to be brought up in review.
 
 
