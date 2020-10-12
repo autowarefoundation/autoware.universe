@@ -16,38 +16,44 @@
 
 #include "raw_vehicle_cmd_converter/node.hpp"
 
-AccelMapConverter::AccelMapConverter() : nh_(""), pnh_("~")
-{
-  pub_cmd_ = nh_.advertise<autoware_vehicle_msgs::RawVehicleCommand>("/vehicle/raw_vehicle_cmd", 1);
-  sub_cmd_ = nh_.subscribe("/control/vehicle_cmd", 1, &AccelMapConverter::callbackVehicleCmd, this);
-  sub_velocity_ =
-    nh_.subscribe("/localization/twist", 1, &AccelMapConverter::callbackVelocity, this);
+#include <rclcpp/logging.hpp>
 
-  pnh_.param<double>("max_throttle", max_throttle_, 0.2);
-  pnh_.param<double>("max_brake", max_brake_, 0.8);
+#include <functional>
+
+using std::placeholders::_1;
+
+AccelMapConverter::AccelMapConverter() : Node("raw_vehicle_cmd_converter_node"), accel_map_(get_logger()), brake_map_(get_logger())
+{
+  pub_cmd_ = this->create_publisher<autoware_vehicle_msgs::msg::RawVehicleCommand>("/vehicle/raw_vehicle_cmd", rclcpp::QoS{1});
+  sub_cmd_ = this->create_subscription<autoware_vehicle_msgs::msg::VehicleCommand>("/control/vehicle_cmd", 1, std::bind(&AccelMapConverter::callbackVehicleCmd, this, _1));
+  sub_velocity_ =
+    this->create_subscription<geometry_msgs::msg::TwistStamped>("/localization/twist", 1, std::bind(&AccelMapConverter::callbackVelocity, this, _1));
+
+  max_throttle_ = declare_parameter("max_throttle", 0.2);
+  max_brake_ = declare_parameter("max_brake", 0.8);
 
   /* parameters for accel/brake map */
   std::string csv_path_accel_map, csv_path_brake_map;
-  pnh_.param<std::string>("csv_path_accel_map", csv_path_accel_map, std::string("empty"));
-  pnh_.param<std::string>("csv_path_brake_map", csv_path_brake_map, std::string("empty"));
+  csv_path_accel_map = declare_parameter("csv_path_accel_map", std::string("empty"));
+  csv_path_brake_map = declare_parameter("csv_path_brake_map", std::string("empty"));
   acc_map_initialized_ = true;
   if (!accel_map_.readAccelMapFromCSV(csv_path_accel_map)) {
-    ROS_ERROR("Cannot read accelmap. csv path = %s. stop calculation.", csv_path_accel_map.c_str());
+    RCLCPP_ERROR(get_logger(), "Cannot read accelmap. csv path = %s. stop calculation.", csv_path_accel_map.c_str());
     acc_map_initialized_ = false;
   }
   if (!brake_map_.readBrakeMapFromCSV(csv_path_brake_map)) {
-    ROS_ERROR("Cannot read brakemap. csv path = %s. stop calculation.", csv_path_brake_map.c_str());
+    RCLCPP_ERROR(get_logger(), "Cannot read brakemap. csv path = %s. stop calculation.", csv_path_brake_map.c_str());
     acc_map_initialized_ = false;
   }
 }
 
-void AccelMapConverter::callbackVelocity(const geometry_msgs::TwistStampedConstPtr msg)
+void AccelMapConverter::callbackVelocity(const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg)
 {
   current_velocity_ptr_ = std::make_shared<double>(msg->twist.linear.x);
 }
 
 void AccelMapConverter::callbackVehicleCmd(
-  const autoware_vehicle_msgs::VehicleCommandConstPtr vehicle_cmd_ptr)
+  const autoware_vehicle_msgs::msg::VehicleCommand::ConstSharedPtr vehicle_cmd_ptr)
 {
   if (!current_velocity_ptr_ || !acc_map_initialized_) {
     return;
@@ -59,7 +65,7 @@ void AccelMapConverter::callbackVehicleCmd(
     *current_velocity_ptr_, vehicle_cmd_ptr->control.acceleration, &desired_throttle,
     &desired_brake);
 
-  autoware_vehicle_msgs::RawVehicleCommand output;
+  autoware_vehicle_msgs::msg::RawVehicleCommand output;
   output.header = vehicle_cmd_ptr->header;
   output.shift = vehicle_cmd_ptr->shift;
   output.emergency = vehicle_cmd_ptr->emergency;
@@ -68,7 +74,7 @@ void AccelMapConverter::callbackVehicleCmd(
   output.control.throttle = desired_throttle;
   output.control.brake = desired_brake;
 
-  pub_cmd_.publish(output);
+  pub_cmd_->publish(output);
 }
 
 void AccelMapConverter::calculateAccelMap(

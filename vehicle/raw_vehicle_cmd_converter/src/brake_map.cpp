@@ -16,7 +16,7 @@
 
 #include "raw_vehicle_cmd_converter/brake_map.h"
 
-BrakeMap::BrakeMap() {}
+BrakeMap::BrakeMap(const rclcpp::Logger & logger) : logger_(logger), logger_ros_clock_(RCL_ROS_TIME){}
 
 BrakeMap::~BrakeMap() {}
 
@@ -26,12 +26,12 @@ bool BrakeMap::readBrakeMapFromCSV(std::string csv_path)
   std::vector<std::vector<std::string>> table;
 
   if (!csv.readCSV(table)) {
-    ROS_ERROR("[Brake Map] Cannot open %s", csv_path.c_str());
+    RCLCPP_ERROR(logger_, "[Brake Map] Cannot open %s", csv_path.c_str());
     return false;
   }
 
   if (table[0].size() < 2) {
-    ROS_ERROR(
+    RCLCPP_ERROR(logger_, 
       "[Brake Map] Cannot read %s. CSV file should have at least 2 column", csv_path.c_str());
     return false;
   }
@@ -43,7 +43,7 @@ bool BrakeMap::readBrakeMapFromCSV(std::string csv_path)
 
   for (unsigned int i = 1; i < table.size(); i++) {
     if (table[0].size() != table[i].size()) {
-      ROS_ERROR(
+      RCLCPP_ERROR(logger_, 
         "[Brake Map] Cannot read %s. Each row should have a same number of columns",
         csv_path.c_str());
       return false;
@@ -68,14 +68,18 @@ bool BrakeMap::getBrake(double acc, double vel, double & brake)
   std::vector<double> accs_interpolated;
 
   if (vel < vel_index_.front()) {
-    ROS_WARN_DELAYED_THROTTLE(
+    RCLCPP_WARN_SKIPFIRST_THROTTLE(
+      logger_,
+      logger_ros_clock_,
       1.0,
       "[Brake Map] Exceeding the vel range. Current vel: %f < min vel on map: %f. Use min "
       "velocity.",
       vel, vel_index_.front());
     vel = vel_index_.front();
   } else if (vel_index_.back() < vel) {
-    ROS_WARN_DELAYED_THROTTLE(
+    RCLCPP_WARN_SKIPFIRST_THROTTLE(
+      logger_,
+      logger_ros_clock_,
       1.0,
       "[Brake Map] Exceeding the vel range. Current vel: %f > max vel on map: %f. Use max "
       "velocity.",
@@ -94,7 +98,9 @@ bool BrakeMap::getBrake(double acc, double vel, double & brake)
   // When the desired acceleration is smaller than the brake area, return max brake on the map
   // When the desired acceleration is greater than the brake area, return min brake on the map
   if (acc < accs_interpolated.back()) {
-    ROS_WARN_DELAYED_THROTTLE(
+    RCLCPP_WARN_SKIPFIRST_THROTTLE(
+      logger_,
+      logger_ros_clock_,
       1.0,
       "[Brake Map] Exceeding the acc range. Desired acc: %f < min acc on map: %f. return max "
       "value.",
@@ -118,14 +124,18 @@ bool BrakeMap::getAcceleration(double brake, double vel, double & acc)
   std::vector<double> accs_interpolated;
 
   if (vel < vel_index_.front()) {
-    ROS_WARN_DELAYED_THROTTLE(
+    RCLCPP_WARN_SKIPFIRST_THROTTLE(
+      logger_,
+      logger_ros_clock_,
       1.0,
       "[Brake Map] Exceeding the vel range. Current vel: %f < min vel on map: %f. Use min "
       "velocity.",
       vel, vel_index_.front());
     vel = vel_index_.front();
   } else if (vel_index_.back() < vel) {
-    ROS_WARN_DELAYED_THROTTLE(
+    RCLCPP_WARN_SKIPFIRST_THROTTLE(
+      logger_,
+      logger_ros_clock_,
       1.0,
       "[Brake Map] Exceeding the vel range. Current vel: %f > max vel on map: %f. Use max "
       "velocity.",
@@ -146,7 +156,9 @@ bool BrakeMap::getAcceleration(double brake, double vel, double & acc)
   const double max_brake = brake_index_.back();
   const double min_brake = brake_index_.front();
   if (brake < min_brake || max_brake < brake) {
-    ROS_WARN_DELAYED_THROTTLE(
+    RCLCPP_WARN_SKIPFIRST_THROTTLE(
+      logger_,
+      logger_ros_clock_,
       1.0, "[Brake Map] Input brake: %f is out off range. use closest value.", brake);
     brake = std::min(std::max(brake, min_brake), max_brake);
   }

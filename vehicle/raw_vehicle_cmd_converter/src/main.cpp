@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-#include <ros/ros.h>
+
 #include <raw_vehicle_cmd_converter/node.hpp>
+
+#include <rclcpp/rclcpp.hpp>
 
 int main(int argc, char ** argv)
 {
-  ros::init(argc, argv, "raw_vehicle_cmd_converter_node");
-
-  AccelMapConverter node;
-
-  ros::spin();
+  rclcpp::init(argc, argv);
+  rclcpp::spin(std::make_shared<AccelMapConverter>());
+  rclcpp::shutdown();
 
   return 0;
 }
