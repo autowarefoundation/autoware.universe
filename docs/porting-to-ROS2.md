@@ -29,22 +29,22 @@ For instance, the `shift_decider` package is in the repository `github.com:tier4
 
 Now branch off `ros2` inside that subdirectory and delete the `COLCON_IGNORE` file in the package you want to port.
 
-The best source on migrating is the [migration guide](https://index.ros.org/doc/ros2/Contributing/Migration-Guide/), but some important changes are:
+
+## Important changes
+The best source on migrating is the [migration guide](https://index.ros.org/doc/ros2/Contributing/Migration-Guide/). It doesn't mention everything though, so this section lists some areas with important changes.
+
+A good general strategy is to try to implement those changes, then iteratively run `colcon build --packages-up-to <your_package>` and fix the first compiler error.
 
 
-## Rewriting package.xml
+### Rewriting `package.xml`
 The migration guide covers this well. See also [here](https://www.ros.org/reps/rep-0149.html) for a reference of the most recent version of this format.
 
 
-## Rewriting CMakeLists.txt
+### Rewriting `CMakeLists.txt`
 Pretty straightforward by following the example of the already ported `simple_planning_simulator` package and the [pub-sub tutorial](https://index.ros.org/doc/ros2/Tutorials/Writing-A-Simple-Cpp-Publisher-And-Subscriber/#cpppubsub). Better yet, use `ament_auto` to get terse `CMakeLists.txt` that do not have as much redundancy with `package.xml` as an explicit `CMakeLists.txt`. See [this commit](https://github.com/tier4/Pilot.Auto/pull/7/commits/ef382a9b430fd69cb0a0f7ca57016d66ed7ef29d) for an example.
 
 
-## ROS -> RCLCPP
-Search-and-replace "ros" with "rclcpp" and adjust everything that needs adjusting. From here on you can iteratively run `colcon build --packages-up-to vehicle_cmd_gate` and fix the first compiler error.
-
-
-## Replacing std_msgs
+## Replacing `std_msgs`
 In ROS2, you should define semantically meaningful wrappers around primitive (number) types.
 
 
@@ -58,16 +58,35 @@ The included headers similarly had to touched up with an extra `/msg` in the pat
 That's where differences start to show – I decided to make the `VehicleCmdGate` a `Node` even though the filename would suggest that `vehicle_cmd_gate_node.cpp` would be it. That's because it has publishers, subscribers, and logging. It previously had _two_ NodeHandles, a public one and a private one (`"~"`). The public one was unused and could be removed. Private nodes are not supported in ROS2, so I simply made it public, but that is an area that needs to be brought up in review.
 
 
-## Latched topics
+### Latched topics
 For each latched publisher, I just used `transient_local` QoS on the publisher, and we will need to do the same on all subscribers to that topic.
 
 
-## Timing issues
-One tricky item is `ros::Timer`. First, if the timer can be replaced with a data-driven pattern, it is [the preferred alternative for the long term](https://github.com/tier4/Pilot.Auto/pull/3#issuecomment-706732396).
+### Timing issues
+First, if the timer can be replaced with a data-driven pattern, it is the preferred alternative for the long term:
 
-Assuming you still want to replicate the existing `ros::Timer` functionality: There is `rclcpp::WallTimer`, but it doesn't allow for using the `/clock` topic. That means it's not equivalent, i.e. the timer doesn't stop when simulation time stops. You can, however, use the following:
+#### The Problem with Timer-Driven Patterns
 
-    auto timer_callback = std::bind(&MyClass::timer_callback, this);
+It is well understood that a polling or timer-driven pattern increases jitter (i.e. variance of latency). (Consider, for example: if every data processing node in a chain operates on a timer what is the best and worst case latency?) As a consequence for more timing-sensitive applications, it is generally not preferred to use a timer-driven pattern.
+
+On top of this, it is also reasonably well known that [use of the clock is nondeterministic](https://martinfowler.com/articles/nonDeterminism.html) and internally this has been a large source of frustration with bad, or timing sensitive tests. Such tests typically require specific timing and/or implicitly require a certain execution order (loosely enforced by timing assumptions rather than explicitly via the code).
+
+As a whole, introducing the clock explicitly (or implicitly via timers) is problematic because it introduces additional state, and thus assumptions on the requirements for the operation of the component. Consider also leap seconds and how that might ruin the operation and/or assumptions needed for the proper operation of the component.
+
+#### Preferred Patterns
+
+In general, a data-driven pattern should be preferred to a timer-driven pattern. One reasonable exception to this guideline is the state estimator/filter at the end of localization. A timer-driven pattern in this context is useful to provide smooth behavior and promote looser coupling between the planning stack and the remainder of the stack.
+
+The core idea behind a data-driven pattern is that as soon as data arrives, it should be appropriately processed. Furthermore, the system clock (or any other source of time) should not be used to manipulate data or the timestamps. This pattern is valuable since it implicitly cuts down on hidden state (being the clock), and thus simplifies assumptions needed for the node to work.
+
+For examples of this kind of pattern, see the lidar object detection stack in Autoware.Auto. By not using any mention of the clock save for in the drivers, the stack can run equivalently on bag data, simulation data, or live data. A similar pattern with multiple inputs can be seen in the MPC implementation both internally and externally.
+
+#### Replicating `ros::Timer`
+Assuming you still want to replicate the existing `ros::Timer` functionality: There is `rclcpp::WallTimer`, which has a similar interface, but it's not equivalent. The wall timer uses a wall clock (`RCL_STEADY_TIME` clock), i.e. it doesn't listen to the `/clock` topic populated by simulation time. That the timer doesn't stop when simulation time stops, and doesn't go faster/slower when simulation time goes faster or slower.
+
+By contrast, the `GenericTimer` provides an interface to supply a clock, but there is no convenient function for setting up such a timer, comparable to `Node::create_wall_timer`. For now, this works:
+
+    auto timer_callback = std::bind(&VehicleCmdGate::onTimer, this);
     auto period = std::chrono::duration_cast<std::chrono::nanoseconds>(
       std::chrono::duration<double>(update_period_));
     timer_ = std::make_shared<rclcpp::GenericTimer<decltype(timer_callback)>>(
@@ -75,14 +94,19 @@ Assuming you still want to replicate the existing `ros::Timer` functionality: Th
       this->get_node_base_interface()->get_context());
     this->get_node_timers_interface()->add_timer(timer_, nullptr);
 
-Note that the callback does not receive `const ros::TimerEvent &` anymore.
+
+#### Rosbag recording
+Unfortunately, one additional problem remains. `ros2 bag` does not record `/clock` (aka sim time) whereas `rosbag` does. This implies that in order to get the same behavior in ROS 2, either:
+
+    * `rosbag` along with the `ros1_brdge` must be used
+    * Some explicit time source must be used and explicitly recorded by `ros2 bag`
 
 
-## Parameters
+### Parameters
 It's not strictly necessary, but you probably want to make sure the filename is `xyz.param.yaml`. Then come two steps:
 
 
-### Adjust code
+#### Adjust code
     double vel_lim;
     pnh_.param<double>("vel_lim", vel_lim, 25.0);
 
@@ -95,7 +119,7 @@ which is equivalent to
     const double vel_lim = declare_parameter<double>("vel_lim", 25.0);
 
 
-## Adjust param file
+#### Adjust param file
 Two levels of hierarchy need to be added around the parameters themselves:
 
     <node name or /**>:
@@ -110,13 +134,12 @@ Also, ROS1 didn't have a problem when you specify an integer, e.g. `28` for a `d
 Best to just change `28` to `28.0` in the param file. See also [this issue](https://github.com/ros2/rclcpp/issues/979).
 
 
-## Launch file
+### Launch file
 There is a [migration guide](https://index.ros.org/doc/ros2/Tutorials/Launch-files-migration-guide/). One thing it doesn't mention is that the `.launch` file also needs to be renamed to `.launch.xml`.
 
 
-## Replacing tf2_ros::Buffer
-A `tf2_ros::Buffer` member that is filled by a `tf2_ros::TransformListener` can become a `tf2::BufferCore` instead.
-BufferCore https://github.com/tier4/Pilot.Auto/pull/11
+### Replacing `tf2_ros::Buffer`
+A `tf2_ros::Buffer` member that is filled by a `tf2_ros::TransformListener` can become a `tf2::BufferCore` instead. For an example, see [this PR](https://github.com/tier4/Pilot.Auto/pull/11)
 
 
 
