@@ -94,6 +94,10 @@ By contrast, the `GenericTimer` provides an interface to supply a clock, but the
       this->get_node_base_interface()->get_context());
     this->get_node_timers_interface()->add_timer(timer_, nullptr);
 
+Also, this doesn't work, even with a subsequent `add_timer()` call:
+
+    timer_ = rclcpp::create_timer(this, this->get_clock(), period, timer_callback);
+
 
 #### Rosbag recording
 Unfortunately, one additional problem remains. `ros2 bag` does not record `/clock` (aka sim time) whereas `rosbag` does. This implies that in order to get the same behavior in ROS 2, either:
