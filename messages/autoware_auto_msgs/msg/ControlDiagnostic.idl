@@ -5,7 +5,7 @@ module autoware_auto_msgs {
     @verbatim (language="comment", text=
       " Diagnostic information for the controller")
     struct ControlDiagnostic {
-      autoware_auto_msgs::msg::DiagnosticHeader header;
+      autoware_auto_msgs::msg::DiagnosticHeader diag_header;
 
       @verbatim (language="comment", text=
         " Controller specific information")

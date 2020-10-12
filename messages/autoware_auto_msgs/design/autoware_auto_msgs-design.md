@@ -94,7 +94,7 @@ For more details, see [Controller design](@ref controller-design)
 ## Control Diagnostic
 
 ```
-DiagnosticHeader header
+DiagnosticHeader diag_header
 bool new_trajectory
 string trajectory_source
 string pose_source
