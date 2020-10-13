@@ -1,5 +1,13 @@
 #!/bin/bash
 
+while getopts c OPT
+do
+  case $OPT in
+    "c" ) noninteractive=1
+          echo "run setup with a noninteractive mode";;
+  esac
+done
+
 SCRIPT_DIR=$(cd $(dirname $0); pwd)
 
 # Prevent root execution
@@ -8,7 +16,11 @@ if [ $(id -u) -eq 0 ]; then
   exit 1
 fi
 
-read -p ">  Do you run setup? This will take a while. [y/N] " answer
+if [ $noninteractive -eq 1 ]; then
+  answer="y"
+else
+  read -p ">  Do you run setup? This will take a while. [y/N] " answer
+fi
 
 if [[ $answer = [cC] ]]; then
   if !(command -v cowsay  > /dev/null 2>&1); then
@@ -25,7 +37,11 @@ case $answer in
     fi
 
     cd $SCRIPT_DIR/ansible
-    ansible-playbook -i localhost, $SCRIPT_DIR/ansible/localhost-setup-ubuntu20.04-devpc.yml -i $SCRIPT_DIR/inventories/local-dev.ini -e AUTOWARE_DIR=$SCRIPT_DIR --ask-become-pass
+    if [ $noninteractive -eq 1 ]; then
+      ansible-playbook -i localhost, $SCRIPT_DIR/ansible/localhost-setup-ubuntu20.04-devpc.yml -i $SCRIPT_DIR/inventories/local-dev.ini -e AUTOWARE_DIR=$SCRIPT_DIR --extra-vars "yn_gpu=y"
+    else
+      ansible-playbook -i localhost, $SCRIPT_DIR/ansible/localhost-setup-ubuntu20.04-devpc.yml -i $SCRIPT_DIR/inventories/local-dev.ini -e AUTOWARE_DIR=$SCRIPT_DIR --ask-become-pass
+    fi
     echo -e "\e[32mComplete \e[0m"
     ;;
   * )
