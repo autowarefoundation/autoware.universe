@@ -2,16 +2,16 @@
 - hosts: localhost
   connection: local
   become: no
-  vars_prompt:
-    - name: yn_gpu
-      prompt: "Do you install GPU modules(cuda: 10.2, cudnn: 7.6.5, TensorRT: 7.0.0)? (y/n)"
-      default: "y"
-      private: no
-  pre_tasks:
-    - pause:
-        seconds: 10
-        prompt: "[Warning]: Skip install GPU modules. Try manually installing these modules to execute nodes depending on TensorRT."
-      when: yn_gpu != 'y'
+  # vars_prompt:
+  #   - name: yn_gpu
+  #     prompt: "Do you install GPU modules(cuda: 10.2, cudnn: 7.6.5, TensorRT: 7.0.0)? (y/n)"
+  #     default: "y"
+  #     private: no
+  # pre_tasks:
+  #   - pause:
+  #       seconds: 10
+  #       prompt: "[Warning]: Skip install GPU modules. Try manually installing these modules to execute nodes depending on TensorRT."
+  #     when: yn_gpu != 'y'
   roles:
     # - { role: cuda, when: yn_gpu == 'y' }
     # - { role: tensorrt, when: yn_gpu == 'y' }
