@@ -62,15 +62,3 @@
     line: source /opt/ros/{{ rosdistro }}/setup.bash
     state: present
   become: no
-# - name: ROS2 (install dependencies for building packages)
-#   apt:
-#     name:
-#       - "ros-{{ rosdistro }}-velodyne-pointcloud"
-#       - "ros-{{ rosdistro }}-roswww"
-#       - "ros-{{ rosdistro }}-rosbridge-server"
-#       - build-essential
-#       - python3-colcon-common-extensions
-#       - python3-vcstool
-#     state: latest
-#     update_cache: yes
-#   become: yes
