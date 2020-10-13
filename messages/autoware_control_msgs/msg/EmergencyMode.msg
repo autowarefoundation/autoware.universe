@@ -1,0 +1,1 @@
+bool is_emergency
