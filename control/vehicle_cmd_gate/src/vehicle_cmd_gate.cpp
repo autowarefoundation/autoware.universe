@@ -28,7 +28,14 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "vehicle_cmd_gate/vehicle_cmd_gate.h"
+#include <chrono>
+#include <functional>
+
+#include <rclcpp/logging.hpp>
+
+#include <vehicle_cmd_gate/vehicle_cmd_gate.h>
+
+using std::placeholders::_1;
 
 namespace
 {
@@ -39,9 +46,9 @@ void fillFrameId(std::string * frame_id, const std::string & name)
   }
 }
 
-const char * getGateModeName(const autoware_control_msgs::GateMode::_data_type & gate_mode)
+const char * getGateModeName(const autoware_control_msgs::msg::GateMode::_data_type & gate_mode)
 {
-  using autoware_control_msgs::GateMode;
+  using autoware_control_msgs::msg::GateMode;
 
   if (gate_mode == GateMode::AUTO) return "AUTO";
   if (gate_mode == GateMode::REMOTE) return "REMOTE";
@@ -50,59 +57,71 @@ const char * getGateModeName(const autoware_control_msgs::GateMode::_data_type &
 }
 }  // namespace
 
-VehicleCmdGate::VehicleCmdGate() : nh_(""), pnh_("~"), is_engaged_(false), is_emergency_(false)
+VehicleCmdGate::VehicleCmdGate()
+: Node("vehicle_cmd_gate"), is_engaged_(false), is_emergency_(false)
 {
+  rclcpp::QoS durable_qos{1};
+  durable_qos.transient_local();
   // Publisher
-  vehicle_cmd_pub_ =
-    pnh_.advertise<autoware_vehicle_msgs::VehicleCommand>("output/vehicle_cmd", 1, true);
-  control_cmd_pub_ =
-    pnh_.advertise<autoware_control_msgs::ControlCommandStamped>("output/control_cmd", 1, true);
-  shift_cmd_pub_ = pnh_.advertise<autoware_vehicle_msgs::ShiftStamped>("output/shift_cmd", 1, true);
-  turn_signal_cmd_pub_ =
-    pnh_.advertise<autoware_vehicle_msgs::TurnSignal>("output/turn_signal_cmd", 1, true);
-  gate_mode_pub_ = pnh_.advertise<autoware_control_msgs::GateMode>("output/gate_mode", 1, true);
+  vehicle_cmd_pub_ = this->create_publisher<autoware_vehicle_msgs::msg::VehicleCommand>(
+    "output/vehicle_cmd", durable_qos);
+  control_cmd_pub_ = this->create_publisher<autoware_control_msgs::msg::ControlCommandStamped>(
+    "output/control_cmd", durable_qos);
+  shift_cmd_pub_ = this->create_publisher<autoware_vehicle_msgs::msg::ShiftStamped>(
+    "output/shift_cmd", durable_qos);
+  turn_signal_cmd_pub_ = this->create_publisher<autoware_vehicle_msgs::msg::TurnSignal>(
+    "output/turn_signal_cmd", durable_qos);
+  gate_mode_pub_ =
+    this->create_publisher<autoware_control_msgs::msg::GateMode>("output/gate_mode", durable_qos);
 
   // Subscriber
-  engage_sub_ = pnh_.subscribe("input/engage", 1, &VehicleCmdGate::onEngage, this);
-  emergency_sub_ = pnh_.subscribe("input/emergency", 1, &VehicleCmdGate::onEmergency, this);
-  gate_mode_sub_ = pnh_.subscribe("input/gate_mode", 1, &VehicleCmdGate::onGateMode, this);
+  engage_sub_ = this->create_subscription<autoware_control_msgs::msg::EngageMode>(
+    "input/engage", 1, std::bind(&VehicleCmdGate::onEngage, this, _1));
+  emergency_sub_ = this->create_subscription<autoware_control_msgs::msg::EmergencyMode>(
+    "input/emergency", 1, std::bind(&VehicleCmdGate::onEmergency, this, _1));
+  gate_mode_sub_ = this->create_subscription<autoware_control_msgs::msg::GateMode>(
+    "input/gate_mode", 1, std::bind(&VehicleCmdGate::onGateMode, this, _1));
 
   // Subscriber for auto
   auto_control_cmd_sub_ =
-    pnh_.subscribe("input/auto/control_cmd", 1, &VehicleCmdGate::onAutoCtrlCmd, this);
-  auto_turn_signal_cmd_sub_ =
-    pnh_.subscribe("input/auto/turn_signal_cmd", 1, &VehicleCmdGate::onAutoTurnSignalCmd, this);
-  auto_shift_cmd_sub_ =
-    pnh_.subscribe("input/auto/shift_cmd", 1, &VehicleCmdGate::onAutoShiftCmd, this);
+    this->create_subscription<autoware_control_msgs::msg::ControlCommandStamped>(
+      "input/auto/control_cmd", 1, std::bind(&VehicleCmdGate::onAutoCtrlCmd, this, _1));
+  auto_turn_signal_cmd_sub_ = this->create_subscription<autoware_vehicle_msgs::msg::TurnSignal>(
+    "input/auto/turn_signal_cmd", 1, std::bind(&VehicleCmdGate::onAutoTurnSignalCmd, this, _1));
+  auto_shift_cmd_sub_ = this->create_subscription<autoware_vehicle_msgs::msg::ShiftStamped>(
+    "input/auto/shift_cmd", 1, std::bind(&VehicleCmdGate::onAutoShiftCmd, this, _1));
 
   // Subscriber for remote
   remote_control_cmd_sub_ =
-    pnh_.subscribe("input/remote/control_cmd", 1, &VehicleCmdGate::onRemoteCtrlCmd, this);
-  remote_turn_signal_cmd_sub_ =
-    pnh_.subscribe("input/remote/turn_signal_cmd", 1, &VehicleCmdGate::onRemoteTurnSignalCmd, this);
-  remote_shift_cmd_sub_ =
-    pnh_.subscribe("input/remote/shift_cmd", 1, &VehicleCmdGate::onRemoteShiftCmd, this);
+    this->create_subscription<autoware_control_msgs::msg::ControlCommandStamped>(
+      "input/remote/control_cmd", 1, std::bind(&VehicleCmdGate::onRemoteCtrlCmd, this, _1));
+  remote_turn_signal_cmd_sub_ = this->create_subscription<autoware_vehicle_msgs::msg::TurnSignal>(
+    "input/remote/turn_signal_cmd", 1, std::bind(&VehicleCmdGate::onRemoteTurnSignalCmd, this, _1));
+  remote_shift_cmd_sub_ = this->create_subscription<autoware_vehicle_msgs::msg::ShiftStamped>(
+    "input/remote/shift_cmd", 1, std::bind(&VehicleCmdGate::onRemoteShiftCmd, this, _1));
 
   // Subscriber for emergency
   emergency_control_cmd_sub_ =
-    pnh_.subscribe("input/emergency/control_cmd", 1, &VehicleCmdGate::onEmergencyCtrlCmd, this);
-  emergency_turn_signal_cmd_sub_ = pnh_.subscribe(
-    "input/emergency/turn_signal_cmd", 1, &VehicleCmdGate::onEmergencyTurnSignalCmd, this);
-  emergency_shift_cmd_sub_ =
-    pnh_.subscribe("input/emergency/shift_cmd", 1, &VehicleCmdGate::onEmergencyShiftCmd, this);
+    this->create_subscription<autoware_control_msgs::msg::ControlCommandStamped>(
+      "input/emergency/control_cmd", 1, std::bind(&VehicleCmdGate::onEmergencyCtrlCmd, this, _1));
+  emergency_turn_signal_cmd_sub_ =
+    this->create_subscription<autoware_vehicle_msgs::msg::TurnSignal>(
+      "input/emergency/turn_signal_cmd", 1,
+      std::bind(&VehicleCmdGate::onEmergencyTurnSignalCmd, this, _1));
+  emergency_shift_cmd_sub_ = this->create_subscription<autoware_vehicle_msgs::msg::ShiftStamped>(
+    "input/emergency/shift_cmd", 1, std::bind(&VehicleCmdGate::onEmergencyShiftCmd, this, _1));
 
   // Parameter
-  pnh_.param("update_rate", update_rate_, 10.0);
-  pnh_.param("use_emergency_handling", use_emergency_handling_, false);
+  update_period_ = 1.0 / declare_parameter("update_rate", 10.0);
+  use_emergency_handling_ = declare_parameter("use_emergency_handling", false);
 
   // Vehicle Parameter
-  double wheel_base, vel_lim, lon_acc_lim, lon_jerk_lim, lat_acc_lim, lat_jerk_lim;
-  pnh_.param<double>("/vehicle_info/wheel_base", wheel_base, 2.79);
-  pnh_.param<double>("vel_lim", vel_lim, 25.0);
-  pnh_.param<double>("lon_acc_lim", lon_acc_lim, 5.0);
-  pnh_.param<double>("lon_jerk_lim", lon_jerk_lim, 5.0);
-  pnh_.param<double>("lat_acc_lim", lat_acc_lim, 5.0);
-  pnh_.param<double>("lat_jerk_lim", lat_jerk_lim, 5.0);
+  double wheel_base = declare_parameter("/vehicle_info/wheel_base", 2.79);
+  double vel_lim = declare_parameter("vel_lim", 25.0);
+  double lon_acc_lim = declare_parameter("lon_acc_lim", 5.0);
+  double lon_jerk_lim = declare_parameter("lon_jerk_lim", 5.0);
+  double lat_acc_lim = declare_parameter("lat_acc_lim", 5.0);
+  double lat_jerk_lim = declare_parameter("lat_jerk_lim", 5.0);
   filter_.setWheelBase(wheel_base);
   filter_.setVelLim(vel_lim);
   filter_.setLonAccLim(lon_acc_lim);
@@ -111,53 +130,60 @@ VehicleCmdGate::VehicleCmdGate() : nh_(""), pnh_("~"), is_engaged_(false), is_em
   filter_.setLatJerkLim(lat_jerk_lim);
 
   // Set default value
-  current_gate_mode_.data = autoware_control_msgs::GateMode::AUTO;
+  current_gate_mode_.data = autoware_control_msgs::msg::GateMode::AUTO;
 
   // Timer
-  timer_ = pnh_.createTimer(ros::Rate(update_rate_), &VehicleCmdGate::onTimer, this);
+  auto timer_callback = std::bind(&VehicleCmdGate::onTimer, this);
+  auto period = std::chrono::duration_cast<std::chrono::nanoseconds>(
+    std::chrono::duration<double>(update_period_));
+  timer_ = std::make_shared<rclcpp::GenericTimer<decltype(timer_callback)>>(
+    this->get_clock(), period, std::move(timer_callback),
+    this->get_node_base_interface()->get_context());
+  this->get_node_timers_interface()->add_timer(timer_, nullptr);
 }
 
 // for auto
 void VehicleCmdGate::onAutoCtrlCmd(
-  const autoware_control_msgs::ControlCommandStamped::ConstPtr & msg)
+  autoware_control_msgs::msg::ControlCommandStamped::ConstSharedPtr msg)
 {
   auto_commands_.control = *msg;
 
-  if (current_gate_mode_.data == autoware_control_msgs::GateMode::AUTO) {
+  if (current_gate_mode_.data == autoware_control_msgs::msg::GateMode::AUTO) {
     publishControlCommands(auto_commands_);
   }
 }
-void VehicleCmdGate::onAutoTurnSignalCmd(const autoware_vehicle_msgs::TurnSignal::ConstPtr & msg)
+void VehicleCmdGate::onAutoTurnSignalCmd(autoware_vehicle_msgs::msg::TurnSignal::ConstSharedPtr msg)
 {
   auto_commands_.turn_signal = *msg;
 }
-void VehicleCmdGate::onAutoShiftCmd(const autoware_vehicle_msgs::ShiftStamped::ConstPtr & msg)
+void VehicleCmdGate::onAutoShiftCmd(autoware_vehicle_msgs::msg::ShiftStamped::ConstSharedPtr msg)
 {
   auto_commands_.shift = *msg;
 }
 
 // for remote
 void VehicleCmdGate::onRemoteCtrlCmd(
-  const autoware_control_msgs::ControlCommandStamped::ConstPtr & msg)
+  autoware_control_msgs::msg::ControlCommandStamped::ConstSharedPtr msg)
 {
   remote_commands_.control = *msg;
 
-  if (current_gate_mode_.data == autoware_control_msgs::GateMode::REMOTE) {
+  if (current_gate_mode_.data == autoware_control_msgs::msg::GateMode::REMOTE) {
     publishControlCommands(remote_commands_);
   }
 }
-void VehicleCmdGate::onRemoteTurnSignalCmd(const autoware_vehicle_msgs::TurnSignal::ConstPtr & msg)
+void VehicleCmdGate::onRemoteTurnSignalCmd(
+  autoware_vehicle_msgs::msg::TurnSignal::ConstSharedPtr msg)
 {
   remote_commands_.turn_signal = *msg;
 }
-void VehicleCmdGate::onRemoteShiftCmd(const autoware_vehicle_msgs::ShiftStamped::ConstPtr & msg)
+void VehicleCmdGate::onRemoteShiftCmd(autoware_vehicle_msgs::msg::ShiftStamped::ConstSharedPtr msg)
 {
   remote_commands_.shift = *msg;
 }
 
 // for emergency
 void VehicleCmdGate::onEmergencyCtrlCmd(
-  const autoware_control_msgs::ControlCommandStamped::ConstPtr & msg)
+  autoware_control_msgs::msg::ControlCommandStamped::ConstSharedPtr msg)
 {
   emergency_commands_.control = *msg;
 
@@ -166,27 +192,28 @@ void VehicleCmdGate::onEmergencyCtrlCmd(
   }
 }
 void VehicleCmdGate::onEmergencyTurnSignalCmd(
-  const autoware_vehicle_msgs::TurnSignal::ConstPtr & msg)
+  autoware_vehicle_msgs::msg::TurnSignal::ConstSharedPtr msg)
 {
   emergency_commands_.turn_signal = *msg;
 }
-void VehicleCmdGate::onEmergencyShiftCmd(const autoware_vehicle_msgs::ShiftStamped::ConstPtr & msg)
+void VehicleCmdGate::onEmergencyShiftCmd(
+  autoware_vehicle_msgs::msg::ShiftStamped::ConstSharedPtr msg)
 {
   emergency_commands_.shift = *msg;
 }
 
-void VehicleCmdGate::onTimer(const ros::TimerEvent & event)
+void VehicleCmdGate::onTimer()
 {
   // Select commands
-  autoware_vehicle_msgs::TurnSignal turn_signal;
-  autoware_vehicle_msgs::ShiftStamped shift;
+  autoware_vehicle_msgs::msg::TurnSignal turn_signal;
+  autoware_vehicle_msgs::msg::ShiftStamped shift;
   if (use_emergency_handling_ && is_emergency_) {
     turn_signal = emergency_commands_.turn_signal;
     shift = emergency_commands_.shift;
-  } else if (current_gate_mode_.data == autoware_control_msgs::GateMode::AUTO) {
+  } else if (current_gate_mode_.data == autoware_control_msgs::msg::GateMode::AUTO) {
     turn_signal = auto_commands_.turn_signal;
     shift = auto_commands_.shift;
-  } else if (current_gate_mode_.data == autoware_control_msgs::GateMode::REMOTE) {
+  } else if (current_gate_mode_.data == autoware_control_msgs::msg::GateMode::REMOTE) {
     turn_signal = remote_commands_.turn_signal;
     shift = remote_commands_.shift;
   } else {
@@ -198,9 +225,9 @@ void VehicleCmdGate::onTimer(const ros::TimerEvent & event)
   fillFrameId(&turn_signal.header.frame_id, "base_link");
 
   // Publish topics
-  gate_mode_pub_.publish(current_gate_mode_);
-  turn_signal_cmd_pub_.publish(turn_signal);
-  shift_cmd_pub_.publish(shift);
+  gate_mode_pub_->publish(current_gate_mode_);
+  turn_signal_cmd_pub_->publish(turn_signal);
+  shift_cmd_pub_->publish(shift);
 }
 
 void VehicleCmdGate::publishControlCommands(const Commands & commands)
@@ -215,7 +242,8 @@ void VehicleCmdGate::publishControlCommands(const Commands & commands)
 
   // Check emergency
   if (use_emergency_handling_ && is_emergency_) {
-    ROS_INFO_THROTTLE(1.0, "Emergency!");
+    // TODO(nikolai.morin): Use RCLCPP_INFO_THROTTLE with period 1.0 after Foxy
+    RCLCPP_INFO(get_logger(), "Emergency!");
     filtered_commands.control = emergency_commands_.control;
     filtered_commands.shift = emergency_commands_.shift;  // tmp
   }
@@ -229,7 +257,7 @@ void VehicleCmdGate::publishControlCommands(const Commands & commands)
   filtered_commands.control.control = filterControlCommand(filtered_commands.control.control);
 
   // tmp: Create VehicleCmd
-  autoware_vehicle_msgs::VehicleCommand vehicle_cmd;
+  autoware_vehicle_msgs::msg::VehicleCommand vehicle_cmd;
   vehicle_cmd.header = filtered_commands.control.header;
   vehicle_cmd.control = filtered_commands.control.control;
   vehicle_cmd.shift = filtered_commands.shift.shift;
@@ -240,17 +268,17 @@ void VehicleCmdGate::publishControlCommands(const Commands & commands)
   fillFrameId(&filtered_commands.control.header.frame_id, "base_link");
 
   // Publish commands
-  vehicle_cmd_pub_.publish(vehicle_cmd);
-  control_cmd_pub_.publish(filtered_commands.control);
+  vehicle_cmd_pub_->publish(vehicle_cmd);
+  control_cmd_pub_->publish(filtered_commands.control);
 
   // Save ControlCmd to steering angle when disengaged
   prev_control_cmd_ = filtered_commands.control.control;
 }
 
-autoware_control_msgs::ControlCommand VehicleCmdGate::filterControlCommand(
-  const autoware_control_msgs::ControlCommand & in)
+autoware_control_msgs::msg::ControlCommand VehicleCmdGate::filterControlCommand(
+  const autoware_control_msgs::msg::ControlCommand & in)
 {
-  autoware_control_msgs::ControlCommand out = in;
+  autoware_control_msgs::msg::ControlCommand out = in;
   const double dt = getDt();
 
   filter_.limitLongitudinalWithVel(out);
@@ -263,9 +291,9 @@ autoware_control_msgs::ControlCommand VehicleCmdGate::filterControlCommand(
   return out;
 }
 
-autoware_control_msgs::ControlCommand VehicleCmdGate::createStopControlCmd() const
+autoware_control_msgs::msg::ControlCommand VehicleCmdGate::createStopControlCmd() const
 {
-  autoware_control_msgs::ControlCommand cmd;
+  autoware_control_msgs::msg::ControlCommand cmd;
 
   cmd.steering_angle = prev_control_cmd_.steering_angle;
   cmd.steering_angle_velocity = prev_control_cmd_.steering_angle_velocity;
@@ -275,18 +303,24 @@ autoware_control_msgs::ControlCommand VehicleCmdGate::createStopControlCmd() con
   return cmd;
 }
 
-void VehicleCmdGate::onEngage(const std_msgs::Bool::ConstPtr msg) { is_engaged_ = msg->data; }
+void VehicleCmdGate::onEngage(autoware_control_msgs::msg::EngageMode::ConstSharedPtr msg)
+{
+  is_engaged_ = msg->is_engaged;
+}
 
-void VehicleCmdGate::onEmergency(const std_msgs::Bool::ConstPtr msg) { is_emergency_ = msg->data; }
+void VehicleCmdGate::onEmergency(autoware_control_msgs::msg::EmergencyMode::ConstSharedPtr msg)
+{
+  is_emergency_ = msg->is_emergency;
+}
 
-void VehicleCmdGate::onGateMode(const autoware_control_msgs::GateMode::ConstPtr & msg)
+void VehicleCmdGate::onGateMode(autoware_control_msgs::msg::GateMode::ConstSharedPtr msg)
 {
   const auto prev_gate_mode = current_gate_mode_;
   current_gate_mode_ = *msg;
 
   if (current_gate_mode_.data != prev_gate_mode.data) {
-    ROS_INFO(
-      "GateMode changed: %s -> %s", getGateModeName(prev_gate_mode.data),
+    RCLCPP_INFO(
+      get_logger(), "GateMode changed: %s -> %s", getGateModeName(prev_gate_mode.data),
       getGateModeName(current_gate_mode_.data));
   }
 }
@@ -294,12 +328,12 @@ void VehicleCmdGate::onGateMode(const autoware_control_msgs::GateMode::ConstPtr 
 double VehicleCmdGate::getDt()
 {
   if (!prev_time_) {
-    prev_time_ = std::make_shared<ros::Time>(ros::Time::now());
+    prev_time_ = std::make_shared<rclcpp::Time>(this->now());
     return 0.0;
   }
 
-  const auto current_time = ros::Time::now();
-  const auto dt = (current_time - *prev_time_).toSec();
+  const auto current_time = this->now();
+  const auto dt = (current_time - *prev_time_).seconds();
   *prev_time_ = current_time;
 
   return dt;

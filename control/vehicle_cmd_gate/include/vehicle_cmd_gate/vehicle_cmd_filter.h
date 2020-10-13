@@ -17,10 +17,7 @@
 #ifndef VEHICLE_CMD_GATE_VEHICLE_CMD_FILTER_H
 #define VEHICLE_CMD_GATE_VEHICLE_CMD_FILTER_H
 
-#include <ros/ros.h>
-#include <std_msgs/Bool.h>
-
-#include "autoware_control_msgs/ControlCommandStamped.h"
+#include <autoware_control_msgs/msg/control_command_stamped.hpp>
 
 class VehicleCmdFilter
 {
@@ -34,13 +31,15 @@ public:
   void setLonJerkLim(double v) { lon_jerk_lim_ = v; };
   void setLatAccLim(double v) { lat_acc_lim_ = v; };
   void setLatJerkLim(double v) { lat_jerk_lim_ = v; };
-  void setPrevCmd(const autoware_control_msgs::ControlCommand & v) { prev_cmd_ = v; };
+  void setPrevCmd(const autoware_control_msgs::msg::ControlCommand & v) { prev_cmd_ = v; };
 
-  void limitLongitudinalWithVel(autoware_control_msgs::ControlCommand & input);
-  void limitLongitudinalWithAcc(const double dt, autoware_control_msgs::ControlCommand & input);
-  void limitLongitudinalWithJerk(const double dt, autoware_control_msgs::ControlCommand & input);
-  void limitLateralWithLatAcc(const double dt, autoware_control_msgs::ControlCommand & input);
-  void limitLateralWithLatJerk(const double dt, autoware_control_msgs::ControlCommand & input);
+  void limitLongitudinalWithVel(autoware_control_msgs::msg::ControlCommand & input);
+  void limitLongitudinalWithAcc(
+    const double dt, autoware_control_msgs::msg::ControlCommand & input);
+  void limitLongitudinalWithJerk(
+    const double dt, autoware_control_msgs::msg::ControlCommand & input);
+  void limitLateralWithLatAcc(const double dt, autoware_control_msgs::msg::ControlCommand & input);
+  void limitLateralWithLatJerk(const double dt, autoware_control_msgs::msg::ControlCommand & input);
 
 private:
   double wheel_base_;
@@ -49,9 +48,9 @@ private:
   double lon_jerk_lim_;
   double lat_acc_lim_;
   double lat_jerk_lim_;
-  autoware_control_msgs::ControlCommand prev_cmd_;
+  autoware_control_msgs::msg::ControlCommand prev_cmd_;
 
-  double calcLatAcc(const autoware_control_msgs::ControlCommand & cmd);
+  double calcLatAcc(const autoware_control_msgs::msg::ControlCommand & cmd);
   double limitDiff(const double curr, const double prev, const double diff_lim);
 };
 

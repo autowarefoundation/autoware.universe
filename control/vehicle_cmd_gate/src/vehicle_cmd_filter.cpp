@@ -13,31 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <cmath>
 
-#include "vehicle_cmd_gate/vehicle_cmd_filter.h"
+#include <vehicle_cmd_gate/vehicle_cmd_filter.h>
 
 VehicleCmdFilter::VehicleCmdFilter() {}
 
-void VehicleCmdFilter::limitLongitudinalWithVel(autoware_control_msgs::ControlCommand & input)
+void VehicleCmdFilter::limitLongitudinalWithVel(autoware_control_msgs::msg::ControlCommand & input)
 {
   input.velocity = std::max(std::min(input.velocity, vel_lim_), -vel_lim_);
 }
 
 void VehicleCmdFilter::limitLongitudinalWithAcc(
-  const double dt, autoware_control_msgs::ControlCommand & input)
+  const double dt, autoware_control_msgs::msg::ControlCommand & input)
 {
   input.acceleration = std::max(std::min(input.acceleration, lon_acc_lim_), -lon_acc_lim_);
   input.velocity = limitDiff(input.velocity, prev_cmd_.velocity, lon_acc_lim_ * dt);
 }
 
 void VehicleCmdFilter::VehicleCmdFilter::limitLongitudinalWithJerk(
-  const double dt, autoware_control_msgs::ControlCommand & input)
+  const double dt, autoware_control_msgs::msg::ControlCommand & input)
 {
   input.acceleration = limitDiff(input.acceleration, prev_cmd_.acceleration, lon_jerk_lim_ * dt);
 }
 
 void VehicleCmdFilter::limitLateralWithLatAcc(
-  const double dt, autoware_control_msgs::ControlCommand & input)
+  const double dt, autoware_control_msgs::msg::ControlCommand & input)
 {
   double latacc = calcLatAcc(input);
   if (std::fabs(latacc) > lat_acc_lim_) {
@@ -48,7 +49,7 @@ void VehicleCmdFilter::limitLateralWithLatAcc(
 }
 
 void VehicleCmdFilter::limitLateralWithLatJerk(
-  const double dt, autoware_control_msgs::ControlCommand & input)
+  const double dt, autoware_control_msgs::msg::ControlCommand & input)
 {
   double curr_latacc = calcLatAcc(input);
   double prev_latacc = calcLatAcc(prev_cmd_);
@@ -60,7 +61,7 @@ void VehicleCmdFilter::limitLateralWithLatJerk(
   }
 }
 
-double VehicleCmdFilter::calcLatAcc(const autoware_control_msgs::ControlCommand & cmd)
+double VehicleCmdFilter::calcLatAcc(const autoware_control_msgs::msg::ControlCommand & cmd)
 {
   double v = cmd.velocity;
   return v * v * std::tan(cmd.steering_angle) / wheel_base_;

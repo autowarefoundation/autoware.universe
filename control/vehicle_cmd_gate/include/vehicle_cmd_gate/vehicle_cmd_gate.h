@@ -19,100 +19,104 @@
 
 #include <memory>
 
-#include <ros/ros.h>
-#include <std_msgs/Bool.h>
+#include <rclcpp/rclcpp.hpp>
 
-#include "autoware_control_msgs/ControlCommandStamped.h"
-#include "autoware_control_msgs/GateMode.h"
-#include "autoware_vehicle_msgs/ShiftStamped.h"
-#include "autoware_vehicle_msgs/TurnSignal.h"
-#include "autoware_vehicle_msgs/VehicleCommand.h"
-#include "vehicle_cmd_gate/vehicle_cmd_filter.h"
+#include <autoware_control_msgs/msg/control_command_stamped.hpp>
+#include <autoware_control_msgs/msg/emergency_mode.hpp>
+#include <autoware_control_msgs/msg/engage_mode.hpp>
+#include <autoware_control_msgs/msg/gate_mode.hpp>
+#include <autoware_vehicle_msgs/msg/shift_stamped.hpp>
+#include <autoware_vehicle_msgs/msg/turn_signal.hpp>
+#include <autoware_vehicle_msgs/msg/vehicle_command.hpp>
+
+#include <vehicle_cmd_gate/vehicle_cmd_filter.h>
 
 struct Commands
 {
-  autoware_control_msgs::ControlCommandStamped control;
-  autoware_vehicle_msgs::TurnSignal turn_signal;
-  autoware_vehicle_msgs::ShiftStamped shift;
+  autoware_control_msgs::msg::ControlCommandStamped control;
+  autoware_vehicle_msgs::msg::TurnSignal turn_signal;
+  autoware_vehicle_msgs::msg::ShiftStamped shift;
 };
 
-class VehicleCmdGate
+class VehicleCmdGate : public rclcpp::Node
 {
 public:
   VehicleCmdGate();
 
 private:
-  // NodeHandle
-  ros::NodeHandle nh_;
-  ros::NodeHandle pnh_;
-
   // Publisher
-  ros::Publisher vehicle_cmd_pub_;
-  ros::Publisher control_cmd_pub_;
-  ros::Publisher shift_cmd_pub_;
-  ros::Publisher turn_signal_cmd_pub_;
-  ros::Publisher gate_mode_pub_;
+  rclcpp::Publisher<autoware_vehicle_msgs::msg::VehicleCommand>::SharedPtr vehicle_cmd_pub_;
+  rclcpp::Publisher<autoware_control_msgs::msg::ControlCommandStamped>::SharedPtr control_cmd_pub_;
+  rclcpp::Publisher<autoware_vehicle_msgs::msg::ShiftStamped>::SharedPtr shift_cmd_pub_;
+  rclcpp::Publisher<autoware_vehicle_msgs::msg::TurnSignal>::SharedPtr turn_signal_cmd_pub_;
+  rclcpp::Publisher<autoware_control_msgs::msg::GateMode>::SharedPtr gate_mode_pub_;
 
-  // Subscriber
-  ros::Subscriber engage_sub_;
-  ros::Subscriber emergency_sub_;
-  ros::Subscriber gate_mode_sub_;
+  // Subscription
+  rclcpp::Subscription<autoware_control_msgs::msg::EngageMode>::SharedPtr engage_sub_;
+  rclcpp::Subscription<autoware_control_msgs::msg::EmergencyMode>::SharedPtr emergency_sub_;
+  rclcpp::Subscription<autoware_control_msgs::msg::GateMode>::SharedPtr gate_mode_sub_;
 
-  void onGateMode(const autoware_control_msgs::GateMode::ConstPtr & msg);
-  void onEngage(const std_msgs::Bool::ConstPtr msg);
-  void onEmergency(const std_msgs::Bool::ConstPtr msg);
+  void onGateMode(autoware_control_msgs::msg::GateMode::ConstSharedPtr msg);
+  void onEngage(autoware_control_msgs::msg::EngageMode::ConstSharedPtr msg);
+  void onEmergency(autoware_control_msgs::msg::EmergencyMode::ConstSharedPtr msg);
 
   bool is_engaged_;
   bool is_emergency_;
-  autoware_control_msgs::GateMode current_gate_mode_;
+  autoware_control_msgs::msg::GateMode current_gate_mode_;
 
-  // Subscriber for auto
+  // Subscription for auto
   Commands auto_commands_;
-  ros::Subscriber auto_control_cmd_sub_;
-  ros::Subscriber auto_turn_signal_cmd_sub_;
-  ros::Subscriber auto_shift_cmd_sub_;
-  void onAutoCtrlCmd(const autoware_control_msgs::ControlCommandStamped::ConstPtr & msg);
-  void onAutoTurnSignalCmd(const autoware_vehicle_msgs::TurnSignal::ConstPtr & msg);
-  void onAutoShiftCmd(const autoware_vehicle_msgs::ShiftStamped::ConstPtr & msg);
+  rclcpp::Subscription<autoware_control_msgs::msg::ControlCommandStamped>::SharedPtr
+    auto_control_cmd_sub_;
+  rclcpp::Subscription<autoware_vehicle_msgs::msg::TurnSignal>::SharedPtr auto_turn_signal_cmd_sub_;
+  rclcpp::Subscription<autoware_vehicle_msgs::msg::ShiftStamped>::SharedPtr auto_shift_cmd_sub_;
+  void onAutoCtrlCmd(autoware_control_msgs::msg::ControlCommandStamped::ConstSharedPtr msg);
+  void onAutoTurnSignalCmd(autoware_vehicle_msgs::msg::TurnSignal::ConstSharedPtr msg);
+  void onAutoShiftCmd(autoware_vehicle_msgs::msg::ShiftStamped::ConstSharedPtr msg);
 
-  // Subscriber for remote
+  // Subscription for remote
   Commands remote_commands_;
-  ros::Subscriber remote_control_cmd_sub_;
-  ros::Subscriber remote_turn_signal_cmd_sub_;
-  ros::Subscriber remote_shift_cmd_sub_;
-  void onRemoteCtrlCmd(const autoware_control_msgs::ControlCommandStamped::ConstPtr & msg);
-  void onRemoteTurnSignalCmd(const autoware_vehicle_msgs::TurnSignal::ConstPtr & msg);
-  void onRemoteShiftCmd(const autoware_vehicle_msgs::ShiftStamped::ConstPtr & msg);
+  rclcpp::Subscription<autoware_control_msgs::msg::ControlCommandStamped>::SharedPtr
+    remote_control_cmd_sub_;
+  rclcpp::Subscription<autoware_vehicle_msgs::msg::TurnSignal>::SharedPtr
+    remote_turn_signal_cmd_sub_;
+  rclcpp::Subscription<autoware_vehicle_msgs::msg::ShiftStamped>::SharedPtr remote_shift_cmd_sub_;
+  void onRemoteCtrlCmd(autoware_control_msgs::msg::ControlCommandStamped::ConstSharedPtr msg);
+  void onRemoteTurnSignalCmd(autoware_vehicle_msgs::msg::TurnSignal::ConstSharedPtr msg);
+  void onRemoteShiftCmd(autoware_vehicle_msgs::msg::ShiftStamped::ConstSharedPtr msg);
 
-  // Subscriber for emergency
+  // Subscription for emergency
   Commands emergency_commands_;
-  ros::Subscriber emergency_control_cmd_sub_;
-  ros::Subscriber emergency_turn_signal_cmd_sub_;
-  ros::Subscriber emergency_shift_cmd_sub_;
-  void onEmergencyCtrlCmd(const autoware_control_msgs::ControlCommandStamped::ConstPtr & msg);
-  void onEmergencyTurnSignalCmd(const autoware_vehicle_msgs::TurnSignal::ConstPtr & msg);
-  void onEmergencyShiftCmd(const autoware_vehicle_msgs::ShiftStamped::ConstPtr & msg);
+  rclcpp::Subscription<autoware_control_msgs::msg::ControlCommandStamped>::SharedPtr
+    emergency_control_cmd_sub_;
+  rclcpp::Subscription<autoware_vehicle_msgs::msg::TurnSignal>::SharedPtr
+    emergency_turn_signal_cmd_sub_;
+  rclcpp::Subscription<autoware_vehicle_msgs::msg::ShiftStamped>::SharedPtr
+    emergency_shift_cmd_sub_;
+  void onEmergencyCtrlCmd(autoware_control_msgs::msg::ControlCommandStamped::ConstSharedPtr msg);
+  void onEmergencyTurnSignalCmd(autoware_vehicle_msgs::msg::TurnSignal::ConstSharedPtr msg);
+  void onEmergencyShiftCmd(autoware_vehicle_msgs::msg::ShiftStamped::ConstSharedPtr msg);
 
   // Parameter
-  double update_rate_;
+  double update_period_;
   bool use_emergency_handling_;
 
   // Timer / Event
-  ros::Timer timer_;
+  rclcpp::TimerBase::SharedPtr timer_;
 
-  void onTimer(const ros::TimerEvent & event);
+  void onTimer();
   void publishControlCommands(const Commands & input_msg);
 
   // Algorithm
-  autoware_control_msgs::ControlCommand prev_control_cmd_;
-  autoware_control_msgs::ControlCommand createStopControlCmd() const;
+  autoware_control_msgs::msg::ControlCommand prev_control_cmd_;
+  autoware_control_msgs::msg::ControlCommand createStopControlCmd() const;
 
-  std::shared_ptr<ros::Time> prev_time_;
+  std::shared_ptr<rclcpp::Time> prev_time_;
   double getDt();
 
   VehicleCmdFilter filter_;
-  autoware_control_msgs::ControlCommand filterControlCommand(
-    const autoware_control_msgs::ControlCommand & msg);
+  autoware_control_msgs::msg::ControlCommand filterControlCommand(
+    const autoware_control_msgs::msg::ControlCommand & msg);
 };
 
 #endif  // VEHICLE_CMD_GATE_VEHICLE_CMD_GATE_H

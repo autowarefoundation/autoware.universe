@@ -14,18 +14,19 @@
  * limitations under the License.
  */
 
-// ROS Includes
-#include <ros/ros.h>
+// System includes
+#include <memory>
+
+// ROS includes
+#include "rclcpp/rclcpp.hpp"
 
 // User defined includes
 #include "vehicle_cmd_gate/vehicle_cmd_gate.h"
 
 int main(int argc, char ** argv)
 {
-  ros::init(argc, argv, "vehicle_cmd_gate");
-
-  VehicleCmdGate vehicle_cmd_gate;
-
-  ros::spin();
+  rclcpp::init(argc, argv);
+  rclcpp::spin(std::make_shared<VehicleCmdGate>());
+  rclcpp::shutdown();
   return 0;
 }
