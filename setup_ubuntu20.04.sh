@@ -1,5 +1,6 @@
 #!/bin/bash
 
+noninteractive=0
 while getopts c OPT
 do
   case $OPT in
