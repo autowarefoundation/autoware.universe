@@ -20,12 +20,12 @@ Simulator::Simulator(const std::string & node_name, const rclcpp::NodeOptions & 
 : Node(node_name, options)
 {
   /* simple_planning_simulator parameters */
-  loop_rate_ = declare_parameter("loop_rate").get<double>();
-  wheelbase_ = declare_parameter("/vehicle_info/wheel_base").get<double>();
-  sim_steering_gear_ratio_ = declare_parameter("sim_steering_gear_ratio").get<double>();
-  simulation_frame_id_ = declare_parameter("simulation_frame_id").get<std::string>();
-  map_frame_id_ = declare_parameter("map_frame_id").get<std::string>();
-  add_measurement_noise_ = declare_parameter("add_measurement_noise").get<bool>();
+  loop_rate_ = declare_parameter("loop_rate", 30.0);
+  wheelbase_ = declare_parameter("vehicle_info.wheel_base", 4.0);
+  sim_steering_gear_ratio_ = declare_parameter("sim_steering_gear_ratio", 15.0);
+  simulation_frame_id_ = declare_parameter("simulation_frame_id", "base_link");
+  map_frame_id_ = declare_parameter("map_frame_id", "map");
+  add_measurement_noise_ = declare_parameter("add_measurement_noise", false);
 
   /* set pub sub topic name */
   pub_pose_ =
@@ -64,16 +64,16 @@ Simulator::Simulator(const std::string & node_name, const rclcpp::NodeOptions & 
     std::bind(&Simulator::callbackInitialPoseWithCov, this, std::placeholders::_1));
 
   const double dt = 1.0 / loop_rate_;
-  const int dt_ms = static_cast<int>(dt * 1000.0);
-  timer_simulation_ = create_wall_timer(
-    std::chrono::milliseconds(dt_ms), std::bind(&Simulator::timerCallbackSimulation, this));
 
-  bool use_trajectory_for_z_position_source =
-    declare_parameter("use_trajectory_for_z_position_source").get<bool>();
-  if (use_trajectory_for_z_position_source) {
-    sub_trajectory_ = create_subscription<autoware_planning_msgs::msg::Trajectory>(
-      "base_trajectory", rclcpp::QoS{1},
-      std::bind(&Simulator::callbackTrajectory, this, std::placeholders::_1));
+  /* Timer */
+  {
+    auto timer_callback = std::bind(&Simulator::timerCallbackSimulation, this);
+    auto period = std::chrono::duration_cast<std::chrono::nanoseconds>(
+      std::chrono::duration<double>(dt));
+    timer_simulation_ = std::make_shared<rclcpp::GenericTimer<decltype(timer_callback)>>(
+      this->get_clock(), period, std::move(timer_callback),
+      this->get_node_base_interface()->get_context());
+    this->get_node_timers_interface()->add_timer(timer_simulation_, nullptr);
   }
 
   /* tf setting */
@@ -84,28 +84,28 @@ Simulator::Simulator(const std::string & node_name, const rclcpp::NodeOptions & 
     tf_broadcaster_ = std::make_shared<tf2_ros::TransformBroadcaster>(
       std::shared_ptr<rclcpp::Node>(this, [](auto) {}));
   }
-    
+
   /* set vehicle model parameters */
   {
-    auto vehicle_model_type_str = declare_parameter("vehicle_model_type").get<std::string>();
+    auto vehicle_model_type_str = declare_parameter("vehicle_model_type", "IDEAL_STEER");
     RCLCPP_INFO(get_logger(), "vehicle_model_type = %s", vehicle_model_type_str.c_str());
-    auto tread_length = declare_parameter("tread_length").get<double>();
-    auto angvel_lim = declare_parameter("angvel_lim").get<double>();
-    auto vel_lim = declare_parameter("vel_lim").get<double>();
-    auto steer_lim = declare_parameter("steer_lim").get<double>();
-    auto accel_rate = declare_parameter("accel_rate").get<double>();
-    auto angvel_rate = declare_parameter("angvel_rate").get<double>();
-    auto steer_rate_lim = declare_parameter("steer_rate_lim").get<double>();
-    auto vel_time_delay = declare_parameter("vel_time_delay").get<double>();
-    auto vel_time_constant = declare_parameter("vel_time_constant").get<double>();
-    auto steer_time_delay = declare_parameter("steer_time_delay").get<double>();
-    auto steer_time_constant = declare_parameter("steer_time_constant").get<double>();
-    auto angvel_time_delay = declare_parameter("angvel_time_delay").get<double>();
-    auto angvel_time_constant = declare_parameter("angvel_time_constant").get<double>();
-    auto acc_time_delay = declare_parameter("acc_time_delay").get<double>();
-    auto acc_time_constant = declare_parameter("acc_time_constant").get<double>();
-    simulator_engage_ = declare_parameter("initial_engage_state").get<bool>();
-    auto deadzone_delta_steer = declare_parameter("deadzone_delta_steer").get<double>();
+    auto tread_length = declare_parameter("tread_length", 2.0);
+    auto angvel_lim = declare_parameter("angvel_lim", 3.0);
+    auto vel_lim = declare_parameter("vel_lim", 50.0);
+    auto steer_lim = declare_parameter("steer_lim", 1.0);
+    auto accel_rate = declare_parameter("accel_rate", 10.0);
+    auto angvel_rate = declare_parameter("angvel_rate", 1.0);
+    auto steer_rate_lim = declare_parameter("steer_rate_lim", 5.0);
+    auto vel_time_delay = declare_parameter("vel_time_delay", 0.25);
+    auto vel_time_constant = declare_parameter("vel_time_constant", 0.5);
+    auto steer_time_delay = declare_parameter("steer_time_delay", 0.3);
+    auto steer_time_constant = declare_parameter("steer_time_constant", 0.3);
+    auto angvel_time_delay = declare_parameter("angvel_time_delay", 0.3);
+    auto angvel_time_constant = declare_parameter("angvel_time_constant", 0.3);
+    auto acc_time_delay = declare_parameter("acc_time_delay", 0.1);
+    auto acc_time_constant = declare_parameter("acc_time_constant", 0.1);
+    simulator_engage_ = declare_parameter("initial_engage_state", true);
+    auto deadzone_delta_steer = declare_parameter("deadzone_delta_steer", 0.0);
 
     if (vehicle_model_type_str == "IDEAL_STEER") {
       vehicle_model_type_ = VehicleModelType::IDEAL_STEER;
@@ -124,21 +124,21 @@ Simulator::Simulator(const std::string & node_name, const rclcpp::NodeOptions & 
       RCLCPP_ERROR(get_logger(), "Invalid vehicle_model_type. Initialization failed.");
     }
   }
-    
+
   /* set normal distribution noises */
   {
-    int random_seed = declare_parameter("random_seed").get<int>();
+    int random_seed = declare_parameter("random_seed", 1);
     if (random_seed >= 0) {
       rand_engine_ptr_ = std::make_shared<std::mt19937>(random_seed);
     } else {
       std::random_device seed;
       rand_engine_ptr_ = std::make_shared<std::mt19937>(seed());
     }
-    auto pos_noise_stddev = declare_parameter("pos_noise_stddev").get<double>();
-    auto vel_noise_stddev = declare_parameter("vel_noise_stddev").get<double>();
-    auto rpy_noise_stddev = declare_parameter("rpy_noise_stddev").get<double>();
-    auto angvel_noise_stddev = declare_parameter("angvel_noise_stddev").get<double>();
-    auto steer_noise_stddev = declare_parameter("steer_noise_stddev").get<double>();
+    auto pos_noise_stddev = declare_parameter("pos_noise_stddev", 0.01);
+    auto vel_noise_stddev = declare_parameter("vel_noise_stddev", 0.0);
+    auto rpy_noise_stddev = declare_parameter("rpy_noise_stddev", 0.0001);
+    auto angvel_noise_stddev = declare_parameter("angvel_noise_stddev", 0.0);
+    auto steer_noise_stddev = declare_parameter("steer_noise_stddev", 0.0001);
     pos_norm_dist_ptr_ = std::make_shared<std::normal_distribution<>>(0.0, pos_noise_stddev);
     vel_norm_dist_ptr_ = std::make_shared<std::normal_distribution<>>(0.0, vel_noise_stddev);
     rpy_norm_dist_ptr_ = std::make_shared<std::normal_distribution<>>(0.0, rpy_noise_stddev);
@@ -163,7 +163,7 @@ void Simulator::callbackInitialPoseWithCov(
   if (initial_twist_ptr_) {
     initial_twist = initial_twist_ptr_->twist;
   }
-  //save initial pose
+  // save initial pose
   initial_pose_with_cov_ptr_ = msg;
   setInitialStateWithPoseTransform(*initial_pose_with_cov_ptr_, initial_twist);
 }
@@ -175,7 +175,7 @@ void Simulator::callbackInitialPoseStamped(
   if (initial_twist_ptr_) {
     initial_twist = initial_twist_ptr_->twist;
   }
-  //save initial pose
+  // save initial pose
   initial_pose_ptr_ = msg;
   setInitialStateWithPoseTransform(*initial_pose_ptr_, initial_twist);
 }
@@ -183,11 +183,11 @@ void Simulator::callbackInitialPoseStamped(
 void Simulator::callbackInitialTwistStamped(
   const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg)
 {
-  //save initial pose
+  // save initial pose
   initial_twist_ptr_ = msg;
   if (initial_pose_ptr_) {
     setInitialStateWithPoseTransform(*initial_pose_ptr_, initial_twist_ptr_->twist);
-    //input twist to simulator's internal parameter
+    // input twist to simulator's internal parameter
     current_pose_ = initial_pose_ptr_->pose;
     current_twist_ = initial_twist_ptr_->twist;
   } else if (initial_pose_with_cov_ptr_) {
