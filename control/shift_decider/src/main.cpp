@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
-#include <ros/ros.h>
-
 #include <shift_decider/shift_decider.h>
+
+#include <rclcpp/rclcpp.hpp>
+
+#include <memory>
 
 int main(int argc, char ** argv)
 {
-  ros::init(argc, argv, "shift_decider");
+  rclcpp::init(argc, argv);
 
-  ShiftDecider obj;
-  ros::spin();
+  rclcpp::spin(std::make_shared<ShiftDecider>());
+  rclcpp::shutdown();
 
   return 0;
 }

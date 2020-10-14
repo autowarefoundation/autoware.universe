@@ -17,31 +17,31 @@
 #ifndef CONTROL_SHIFT_DECIDER_INCLUDE_SHIFT_DECIDER_NODE_HPP_
 #define CONTROL_SHIFT_DECIDER_INCLUDE_SHIFT_DECIDER_NODE_HPP_
 
+#include <autoware_control_msgs/msg/control_command_stamped.hpp>
+#include <autoware_vehicle_msgs/msg/shift_stamped.hpp>
+
+#include <rclcpp/rclcpp.hpp>
+
 #include <memory>
 
-#include <ros/ros.h>
-
-#include <autoware_control_msgs/ControlCommandStamped.h>
-#include <autoware_vehicle_msgs/ShiftStamped.h>
-
-class ShiftDecider
+class ShiftDecider : public rclcpp::Node
 {
 public:
   ShiftDecider();
 
 private:
-  void onTimer(const ros::TimerEvent & e);
-  void onControlCmd(const autoware_control_msgs::ControlCommandStamped::ConstPtr msg);
+  void onTimer();
+  void onControlCmd(autoware_control_msgs::msg::ControlCommandStamped::SharedPtr msg);
   void updateCurrentShiftCmd();
+  void initTimer(double period_s);
 
-  ros::NodeHandle nh_{""};
-  ros::NodeHandle pnh_{"~"};
-  ros::Publisher pub_shift_cmd_;
-  ros::Subscriber sub_control_cmd_;
-  ros::Timer timer_;
+  rclcpp::Publisher<autoware_vehicle_msgs::msg::ShiftStamped>::SharedPtr pub_shift_cmd_;
+  rclcpp::Subscription<autoware_control_msgs::msg::ControlCommandStamped>::SharedPtr
+    sub_control_cmd_;
+  rclcpp::TimerBase::SharedPtr timer_;
 
-  autoware_control_msgs::ControlCommandStamped::ConstPtr control_cmd_;
-  autoware_vehicle_msgs::ShiftStamped shift_cmd_;
+  autoware_control_msgs::msg::ControlCommandStamped::SharedPtr control_cmd_;
+  autoware_vehicle_msgs::msg::ShiftStamped shift_cmd_;
 };
 
 #endif  // CONTROL_SHIFT_DECIDER_INCLUDE_SHIFT_DECIDER_NODE_HPP_
