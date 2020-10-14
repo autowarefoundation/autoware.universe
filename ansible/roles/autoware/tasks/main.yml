@@ -3,13 +3,13 @@
   command: rosdep update
   become: yes
 
-- name: Autoware (install dependencies)
+- name: Autoware (rosdep install dependencies)
   command: "rosdep install -y --from-paths {{ AUTOWARE_DIR }}/src --ignore-src --rosdistro {{ rosdistro }}"
   become: yes
 
 - name: Autoware (install pip)
   apt:
-    name: python-pip
+    name: python3-pip
     state: latest
     update_cache: yes
   become: yes
@@ -18,6 +18,13 @@
   pip:
     name:
       - gdown
+
+- name: Autoware (install geographiclib-tools)
+  apt:
+    name: geographiclib-tools
+    state: latest
+    update_cache: yes
+  become: yes
 
 - name: Autoware (install egm2008-1)
   shell: geographiclib-get-geoids egm2008-1

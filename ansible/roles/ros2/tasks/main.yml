@@ -1,0 +1,64 @@
+---
+# sudo apt update && sudo apt install curl gnupg2 lsb-release
+- name: ROS2 Install dependencies for setting up sources
+  apt:
+    name:
+      - curl
+      - gnupg2
+      - lsb-release
+    update_cache: yes
+  become: yes
+
+# curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo apt-key add -
+- name: ROS2 (set up your keys)
+  apt_key:
+    url: "{{ keyserver }}"
+  become: yes
+
+# get architecture for ros2-repo
+- name: Get DEB architecture
+  shell: dpkg --print-architecture
+  register: deb_architecture
+
+# sudo sh -c 'echo "deb [arch=$(dpkg --print-architecture)] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" > /etc/apt/sources.list.d/ros2-latest.list'
+- name: ROS2 (add source list)
+  apt_repository:
+    repo: "deb [arch={{ deb_architecture.stdout }}] {{ repository }} {{ ansible_lsb.codename }} main"
+    state: present
+    update_cache: yes
+  become: yes
+
+- name: ROS2 (install ros-{{ rosdistro }}-{{ package }})
+  apt:
+    name: "ros-{{ rosdistro }}-{{ package }}"
+    state: latest
+    update_cache: yes
+  become: yes
+
+- name: ROS2 (check rosdep file)
+  stat:
+    path: /etc/ros/rosdep/sources.list.d/20-default.list
+  register: ros_repository
+
+- name: ROS2 (install rosdep)
+  apt:
+    name: "python3-rosdep"
+    state: latest
+    update_cache: yes
+  become: yes
+
+- name: ROS2 (initilize rosdep)
+  command: rosdep init
+  when: ros_repository.stat.exists == false
+  become: yes
+
+- name: ROS2 (update rosdep)
+  command: rosdep update
+  become: no
+
+- name: ROS2 (add path >> bashrc)
+  lineinfile:
+    dest: ~/.bashrc
+    line: source /opt/ros/{{ rosdistro }}/setup.bash
+    state: present
+  become: no

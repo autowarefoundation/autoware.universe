@@ -1,3 +1,4 @@
+---
 - name: Install apt-transport-https
   apt:
     name: apt-transport-https
@@ -21,13 +22,13 @@
 - name: Add AS public repo
   lineinfile:
     path: /etc/apt/sources.list.d/autonomoustuff-public.list
-    line: 'deb [trusted=yes] https://s3.amazonaws.com/autonomoustuff-repo/ {{ lsb_release.stdout }} main'
+    line: "deb [trusted=yes] https://s3.amazonaws.com/autonomoustuff-repo/ {{ lsb_release.stdout }} main"
     state: present
   become: yes
 
 - name: Add kvaser library repo
   apt_repository:
-    repo: ppa:jwhitleyastuff/kvaser-linux
+    repo: ppa:astuff/kvaser-linux
   become: yes
 
 - name: Install kvaser library
