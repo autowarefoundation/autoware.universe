@@ -1,0 +1,7 @@
+export ADE_DOCKER_RUN_ARGS="--cap-add=SYS_PTRACE -e RMW_IMPLEMENTATION=rmw_cyclonedds_cpp"
+export ADE_GITLAB=gitlab.com
+export ADE_REGISTRY=registry.gitlab.com
+export ADE_DISABLE_NVIDIA_DOCKER=true
+export ADE_IMAGES="
+  registry.gitlab.com/autowarefoundation/autoware.auto/autowareauto/amd64/ade-foxy:master
+"

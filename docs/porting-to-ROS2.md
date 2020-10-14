@@ -2,23 +2,29 @@ Porting ROS1 code to ROS2
 =======================
 
 ## Setting up the environment
-Make sure you have an empty `.adehome` file in `~/ade-home`, then clone [`AutowareArchitectureProposal`](https://github.com/tier4/AutowareArchitectureProposal) into that directory.
+Do the following to setup and start ADE environment
 
-There is an ADE environment with ROS Foxy from AutowareAuto. In the root directory of the repo, put an `.aderc` file with the following contents:
+1. Setup ade home
+```
+$ cd ~
+$ mkdir ade-home
+$ cd ade-home
+$ touch .adehome
+```
 
-    export ADE_DOCKER_RUN_ARGS="--cap-add=SYS_PTRACE -e RMW_IMPLEMENTATION=rmw_cyclonedds_cpp"
-    export ADE_GITLAB=gitlab.com
-    export ADE_REGISTRY=registry.gitlab.com
-    export ADE_DISABLE_NVIDIA_DOCKER=true
-    export ADE_IMAGES="
-      registry.gitlab.com/autowarefoundation/autoware.auto/autowareauto/amd64/ade-foxy:master
-    "
+2. Setup AutowareArchitectureProposal
+```
+$ git clone https://github.com/tier4/AutowareArchitectureProposal
+$ cd AutowareArchitectureProposal
+$ git checkout ros2
+```
 
-Then start it:
-
-    cd ~/ade-home/AutowareArchitectureProposal
-    git checkout ros2
-    ade start --enter
+3. enter ADE
+```
+$ cd ~/ade-home/AutowareArchitectureProposal
+$ ade start --enter
+$ cd AutowareArchitectureProposal
+    ```
 
 All commands that follow are to be entered in ADE. Next step is to fetch the sub-repos:
 
