@@ -1,33 +1,42 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.5)
 project(ndt_pcl_modified)
 
-add_compile_options(-std=c++14)
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wno-unused-parameter -Wall -Wextra -Wpedantic -Werror)
+endif()
 
-find_package(catkin REQUIRED)
+find_package(ament_cmake REQUIRED) 
 find_package(PCL REQUIRED COMPONENTS common)
-
-catkin_package(
-  INCLUDE_DIRS include
-)
-
-include_directories(include ${PCL_INCLUDE_DIRS})
-link_directories(${PCL_LIBRARY_DIRS})
-add_definitions(${PCL_DEFINITIONS})
 
 add_library(ndt_pcl_modified
   src/ndt.cpp
 )
 
-target_link_libraries(ndt_pcl_modified ${catkin_LIBRARIES})
+target_include_directories(ndt_pcl_modified
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
+
+ament_target_dependencies(ndt_pcl_modified PCL)
+ament_export_targets(export_ndt_pcl_modified HAS_LIBRARY_TARGET)
+ament_export_dependencies(PCL)
 
 install(
-  TARGETS
-    ndt_pcl_modified
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  DIRECTORY include/
+  DESTINATION include
 )
 
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+install(
+  TARGETS ndt_pcl_modified
+  EXPORT export_ndt_pcl_modified
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+  RUNTIME DESTINATION bin
+  INCLUDES DESTINATION include
 )
+
+ament_package()
