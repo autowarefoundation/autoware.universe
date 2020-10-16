@@ -153,7 +153,29 @@ There is a [migration guide](https://index.ros.org/doc/ros2/Tutorials/Launch-fil
 A `tf2_ros::Buffer` member that is filled by a `tf2_ros::TransformListener` can become a `tf2::BufferCore` instead. For an example, see [this PR](https://github.com/tier4/Pilot.Auto/pull/11)
 
 
+### Service clients
+There is no synchronous API for service calls, and the futures API can not be used from inside a node, only the callback API.
 
+The futures API is what is used in tutorials such as [Writing a simple service and client](https://index.ros.org/doc/ros2/Tutorials/Writing-A-Simple-Cpp-Service-And-Client/#write-the-client-node), but note that the call to `rclcpp::spin_until_future_complete()` does not happen from inside any subscriber callback or similar. If you do call it from inside a node, you will get
+
+    terminate called after throwing an instance of 'std::runtime_error'
+      what():  Node has already been added to an executor.
+
+The node itself is already added to the executor in `rclcpp::spin()` function inside the main function, and `rclcpp::spin_until_future_complete()` tries to add the node to another executor.
+
+You might note that the function already returned a `std::shared_future` on which you could wait. But that just hangs forever.
+
+So you're left with using a [callback](http://docs.ros2.org/foxy/api/rclcpp/classrclcpp_1_1Client.html#a62e48edd618bcb73538bfdc3ee3d5e63). Unfortunately that leaves you with no option to handle failure: For instance, if the service dies, your callback will never get called. There's no easy way to say that you only want to wait for 2 seconds for a result.
+
+Another idea for a workaround is to do something similar to what is done in the `rclcpp::spin_until_future_complete()` function by ourselves. Another possible avenue is using multithreaded executors, see [this post](https://answers.ros.org/question/343279/ros2-how-to-implement-a-sync-service-client-in-a-node/) for some more detail.
+
+
+### Logging
+The node name is now automatically prepended to the log message, so that part can be removed.
+
+
+### Shutting down a subscriber
+The `shutdown()` method doesn't exist anymore, but you can just throw away the subscriber with `this->subscription_ = nullptr;` or similar, for instance inside the subscription callback. Curiously, this works even though the `subscription_` member variable is not the sole owner – the `use_count` is 3 in the `minimal_subscriber` example.
 
 
 ## Alternative: Semi-automated porting with ros2-migration-tools (not working yet)
