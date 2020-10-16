@@ -24,7 +24,7 @@ $ git checkout ros2
 $ cd ~/ade-home/AutowareArchitectureProposal
 $ ade start --enter
 $ cd AutowareArchitectureProposal
-    ```
+```
 
 All commands that follow are to be entered in ADE. Next step is to fetch the sub-repos:
 
