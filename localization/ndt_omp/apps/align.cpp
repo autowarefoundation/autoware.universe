@@ -26,13 +26,13 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * 
 */
+#include <iostream>
+#include <omp.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/registration/ndt.h>
-#include <ros/ros.h>
-#include <iostream>
 
 #include <ndt_omp/ndt_omp.h>
 
@@ -45,17 +45,16 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr align(
   registration->setInputTarget(target_cloud);
   registration->setInputSource(source_cloud);
   pcl::PointCloud<pcl::PointXYZ>::Ptr aligned(new pcl::PointCloud<pcl::PointXYZ>());
-
-  auto t1 = ros::WallTime::now();
+  auto t1 = std::chrono::steady_clock::now();
   registration->align(*aligned);
-  auto t2 = ros::WallTime::now();
-  std::cout << "single : " << (t2 - t1).toSec() * 1000 << "[msec]" << std::endl;
+  auto t2 = std::chrono::steady_clock::now();
+  std::cout << "single : " << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << "[msec]" << std::endl;
 
   for (int i = 0; i < 10; i++) {
     registration->align(*aligned);
   }
-  auto t3 = ros::WallTime::now();
-  std::cout << "10times: " << (t3 - t2).toSec() * 1000 << "[msec]" << std::endl;
+  auto t3 = std::chrono::steady_clock::now();
+  std::cout << "10times: " << std::chrono::duration_cast<std::chrono::milliseconds>(t3 - t2).count() << "[msec]" << std::endl;
   std::cout << "fitness: " << registration->getFitnessScore() << std::endl << std::endl;
 
   return aligned;
@@ -96,8 +95,6 @@ int main(int argc, char ** argv)
   voxelgrid.setInputCloud(source_cloud);
   voxelgrid.filter(*downsampled);
   source_cloud = downsampled;
-
-  ros::Time::init();
 
   // benchmark
   std::cout << "--- pcl::NDT ---" << std::endl;
