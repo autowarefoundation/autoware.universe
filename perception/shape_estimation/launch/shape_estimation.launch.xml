@@ -10,14 +10,14 @@
   <arg name="l_shape_fitting_search_angle_range" default="3"/>
   <arg name="orientation_reliable" default="true"/>
   <!-- 70 deg -->
-  <node pkg="shape_estimation" type="shape_estimation" name="$(arg node_name)" output="screen">
-    <remap from="input" to="$(arg input/objects)" />
-    <remap from="objects" to="$(arg output/objects)" />
-    <param name="use_corrector" value="$(arg use_corrector)" />
-    <param name="use_map_corrent" value="$(arg use_map_corrent)" />
-    <param name="map_corrector/use_rad_filter" value="$(arg map_corrector/use_rad_filter)" />
-    <param name="map_corrector/rad_threshold" value="$(arg map_corrector/rad_threshold)" />
-    <param name="l_shape_fitting_search_angle_range" value="$(arg l_shape_fitting_search_angle_range)"/>
-    <param name="orientation_reliable" value="$(arg orientation_reliable)"/>
+  <node pkg="shape_estimation" exec="shape_estimation" name="$(var node_name)" output="screen">
+    <remap from="input" to="$(var input/objects)" />
+    <remap from="objects" to="$(var output/objects)" />
+    <param name="use_corrector" value="$(var use_corrector)" />
+    <param name="use_map_corrent" value="$(var use_map_corrent)" />
+    <param name="map_corrector/use_rad_filter" value="$(var map_corrector/use_rad_filter)" />
+    <param name="map_corrector/rad_threshold" value="$(var map_corrector/rad_threshold)" />
+    <param name="l_shape_fitting_search_angle_range" value="$(var l_shape_fitting_search_angle_range)"/>
+    <param name="orientation_reliable" value="$(var orientation_reliable)"/>
   </node>
 </launch>

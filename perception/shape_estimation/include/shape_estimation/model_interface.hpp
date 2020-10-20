@@ -21,9 +21,9 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
+#include <geometry_msgs/msg/pose.hpp>
 #include <string>
-#include "autoware_perception_msgs/Shape.h"
-#include "geometry_msgs/Pose.h"
+#include <autoware_perception_msgs/msg/shape.hpp>
 
 class ShapeEstimationModelInterface
 {
@@ -33,6 +33,7 @@ public:
   virtual ~ShapeEstimationModelInterface(){};
 
   virtual bool estimate(
-    const pcl::PointCloud<pcl::PointXYZ> & cluster, autoware_perception_msgs::Shape & shape_output,
-    geometry_msgs::Pose & pose_output) = 0;
+    const pcl::PointCloud<pcl::PointXYZ> & cluster,
+    autoware_perception_msgs::msg::Shape & shape_output,
+    geometry_msgs::msg::Pose & pose_output) = 0;
 };

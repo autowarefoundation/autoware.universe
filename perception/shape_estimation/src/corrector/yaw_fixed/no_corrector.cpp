@@ -24,7 +24,7 @@
 
 namespace yaw_fixed {
 bool NoCorrector::correct(
-  autoware_perception_msgs::Shape & shape_output, geometry_msgs::Pose & pose_output)
+  autoware_perception_msgs::msg::Shape & shape_output, geometry_msgs::msg::Pose & pose_output)
 {
   return true;
 }

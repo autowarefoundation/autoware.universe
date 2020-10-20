@@ -1,25 +1,27 @@
 <?xml version="1.0"?>
-<package format="2">
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
   <name>shape_estimation</name>
   <version>0.1.0</version>
-  <description>This package implements an shape estimation</description>
+  <description>This package implements a shape estimation algorithm as a ROS2 node</description>
 
   <maintainer email="yukihiro.saito@tier4.jp">Yukihiro Saito</maintainer>
-  <license>Apache2</license>
+  <license>Apache License 2.0</license>
 
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <buildtool_depend>catkin</buildtool_depend>
-
-  <depend>roscpp</depend>
+  <depend>rclcpp</depend>
   <depend>autoware_perception_msgs</depend>
-  <depend>pcl_ros</depend>
   <depend>tf2</depend>
   <depend>tf2_geometry_msgs</depend>
-  <depend>eigen_conversions</depend>
+  <depend>tf2_eigen</depend>
+  <depend>pcl_conversions</depend>
+  <depend>libopencv-dev</depend>
+  <depend>libpcl-all-dev</depend>
+  <depend>eigen</depend>
 
-  <build_depend>rostest</build_depend>
-  <build_depend>rosunit</build_depend>
 
   <export>
+    <build_type>ament_cmake</build_type>
   </export>
 </package>

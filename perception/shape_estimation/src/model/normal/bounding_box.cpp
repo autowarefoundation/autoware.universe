@@ -26,16 +26,17 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-#include "autoware_perception_msgs/Shape.h"
+#include "autoware_perception_msgs/msg/shape.hpp"
 
 #define EIGEN_MPL2_ONLY
 
 #include <Eigen/Core>
 
-namespace normal {
+namespace normal
+{
 bool BoundingBoxModel::estimate(
-  const pcl::PointCloud<pcl::PointXYZ> & cluster, autoware_perception_msgs::Shape & shape_output,
-  geometry_msgs::Pose & pose_output)
+  const pcl::PointCloud<pcl::PointXYZ> & cluster,
+  autoware_perception_msgs::msg::Shape & shape_output, geometry_msgs::msg::Pose & pose_output)
 {
   // calc centroid point for height(z)
   pcl::PointXYZ centroid;
@@ -142,7 +143,7 @@ bool BoundingBoxModel::estimate(
   quat.setEuler(/* roll */ 0, /* pitch */ 0, /* yaw */ std::atan2(e_1_star.y(), e_1_star.x()));
 
   // output
-  shape_output.type = autoware_perception_msgs::Shape::BOUNDING_BOX;
+  shape_output.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
   pose_output.position.x = (intersection_x_1 + intersection_x_2) / 2.0;
   pose_output.position.y = (intersection_y_1 + intersection_y_2) / 2.0;
   pose_output.position.z = centroid.z;
@@ -337,4 +338,4 @@ double BoundingBoxModel::calcClosenessCriterion(
   }
   return beta;
 }
-}
+}  // namespace normal

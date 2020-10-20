@@ -27,7 +27,7 @@
 
 namespace normal {
 bool CarCorrector::correct(
-  autoware_perception_msgs::Shape & shape_output, geometry_msgs::Pose & pose_output)
+  autoware_perception_msgs::msg::Shape & shape_output, geometry_msgs::msg::Pose & pose_output)
 {
   Eigen::Translation<double, 2> trans =
     Eigen::Translation<double, 2>(pose_output.position.x, pose_output.position.y);

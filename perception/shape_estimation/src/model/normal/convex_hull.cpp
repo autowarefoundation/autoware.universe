@@ -18,19 +18,20 @@
  */
 
 #include "convex_hull.hpp"
-#include <geometry_msgs/Point32.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
+#include <geometry_msgs/msg/point32.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-#include "autoware_perception_msgs/Shape.h"
+#include "autoware_perception_msgs/msg/shape.hpp"
 
-namespace normal {
+namespace normal
+{
 bool ConvexHullModel::estimate(
-  const pcl::PointCloud<pcl::PointXYZ> & cluster, autoware_perception_msgs::Shape & shape_output,
-  geometry_msgs::Pose & pose_output)
+  const pcl::PointCloud<pcl::PointXYZ> & cluster, autoware_perception_msgs::msg::Shape & shape_output,
+  geometry_msgs::msg::Pose & pose_output)
 {
   // calc centroid point for convex hull height(z)
   pcl::PointXYZ centroid;
@@ -73,7 +74,7 @@ bool ConvexHullModel::estimate(
   polygon_centroid.y = polygon_centroid.y / (double)v_polygon_points.size();
 
   for (size_t i = 0; i < v_polygon_points.size(); ++i) {
-    geometry_msgs::Point32 point;
+    geometry_msgs::msg::Point32 point;
     point.x = (double)v_polygon_points.at(i).x / 1000.0 - polygon_centroid.x;
     point.y = (double)v_polygon_points.at(i).y / 1000.0 - polygon_centroid.y;
     point.z = 0.0;
@@ -81,7 +82,7 @@ bool ConvexHullModel::estimate(
   }
 
   constexpr double ep = 0.001;
-  shape_output.type = autoware_perception_msgs::Shape::POLYGON;
+  shape_output.type = autoware_perception_msgs::msg::Shape::POLYGON;
   pose_output.position.x = centroid.x + polygon_centroid.x;
   pose_output.position.y = centroid.y + polygon_centroid.y;
   pose_output.position.z = centroid.z;
@@ -94,4 +95,4 @@ bool ConvexHullModel::estimate(
   shape_output.dimensions.z = std::max((max_z - min_z), ep);
   return true;
 }
-}
+}  // namespace normal

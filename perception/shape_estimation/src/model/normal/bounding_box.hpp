@@ -21,7 +21,8 @@
 
 #include "shape_estimation/model_interface.hpp"
 
-namespace normal {
+namespace normal
+{
 class BoundingBoxModel : public ShapeEstimationModelInterface
 {
 private:
@@ -36,7 +37,8 @@ public:
    * minimum cluster size is 2.
    */
   bool estimate(
-    const pcl::PointCloud<pcl::PointXYZ> & cluster, autoware_perception_msgs::Shape & shape_output,
-    geometry_msgs::Pose & pose_output) override;
+    const pcl::PointCloud<pcl::PointXYZ> & cluster,
+    autoware_perception_msgs::msg::Shape & shape_output,
+    geometry_msgs::msg::Pose & pose_output) override;
 };
-}
+}  // namespace normal

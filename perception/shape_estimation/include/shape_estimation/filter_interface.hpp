@@ -19,8 +19,8 @@
 #pragma once
 
 #include <string>
-#include "autoware_perception_msgs/Shape.h"
-#include "geometry_msgs/Pose.h"
+#include <autoware_perception_msgs/msg/shape.hpp>
+#include <geometry_msgs/msg/pose.hpp>
 
 class ShapeEstimationFilterInterface
 {
@@ -30,5 +30,5 @@ public:
   virtual ~ShapeEstimationFilterInterface(){};
 
   virtual bool filter(
-    const autoware_perception_msgs::Shape & shape, const geometry_msgs::Pose & pose) = 0;
+    const autoware_perception_msgs::msg::Shape & shape, const geometry_msgs::msg::Pose & pose) = 0;
 };

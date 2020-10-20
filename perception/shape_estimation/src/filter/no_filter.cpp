@@ -20,7 +20,7 @@
 #include "no_filter.hpp"
 
 bool NoFilter::filter(
-  const autoware_perception_msgs::Shape & shape, const geometry_msgs::Pose & pose)
+  const autoware_perception_msgs::msg::Shape & shape, const geometry_msgs::msg::Pose & pose)
 {
   return true;
 }

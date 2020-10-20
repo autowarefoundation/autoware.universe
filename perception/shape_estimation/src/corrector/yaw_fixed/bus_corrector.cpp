@@ -15,11 +15,12 @@
  */
 
 #include "bus_corrector.hpp"
-#include <eigen_conversions/eigen_msg.h>
+#include <tf2_eigen/tf2_eigen.h>
 
-namespace yaw_fixed {
+namespace yaw_fixed
+{
 bool BusCorrector::correct(
-  autoware_perception_msgs::Shape & shape_output, geometry_msgs::Pose & pose_output)
+  autoware_perception_msgs::msg::Shape & shape_output, geometry_msgs::msg::Pose & pose_output)
 {
   double min_width = 2.0;
   double max_width = 2.9;
@@ -40,21 +41,25 @@ bool BusCorrector::correct(
   Eigen::Vector3d c1, c2, c3, c4;
 
   Eigen::Affine3d base2obj_transform;
-  tf::poseMsgToEigen(pose_output, base2obj_transform);
+  tf2::fromMsg(pose_output, base2obj_transform);
 
   std::vector<Eigen::Vector3d> v_point;
-  v_point.push_back
-    (base2obj_transform * Eigen::Vector3d(shape_output.dimensions.x * 0.5, shape_output.dimensions.y * 0.5, 0.0));
-  v_point.push_back
-    (base2obj_transform * Eigen::Vector3d(-shape_output.dimensions.x * 0.5, shape_output.dimensions.y * 0.5, 0.0));
-  v_point.push_back
-    (base2obj_transform * Eigen::Vector3d(shape_output.dimensions.x * 0.5, -shape_output.dimensions.y * 0.5, 0.0));
-  v_point.push_back
-    (base2obj_transform * Eigen::Vector3d(-shape_output.dimensions.x * 0.5, -shape_output.dimensions.y * 0.5, 0.0));
+  v_point.push_back(
+    base2obj_transform *
+    Eigen::Vector3d(shape_output.dimensions.x * 0.5, shape_output.dimensions.y * 0.5, 0.0));
+  v_point.push_back(
+    base2obj_transform *
+    Eigen::Vector3d(-shape_output.dimensions.x * 0.5, shape_output.dimensions.y * 0.5, 0.0));
+  v_point.push_back(
+    base2obj_transform *
+    Eigen::Vector3d(shape_output.dimensions.x * 0.5, -shape_output.dimensions.y * 0.5, 0.0));
+  v_point.push_back(
+    base2obj_transform *
+    Eigen::Vector3d(-shape_output.dimensions.x * 0.5, -shape_output.dimensions.y * 0.5, 0.0));
 
   double distance = std::pow(24, 24);
   size_t nearest_idx = 0;
-  for ( size_t i=0; i<v_point.size(); i++ ) {
+  for (size_t i = 0; i < v_point.size(); i++) {
     if (v_point.at(i).norm() < distance) {
       distance = v_point.at(i).norm();
       nearest_idx = i;
@@ -72,13 +77,13 @@ bool BusCorrector::correct(
   Eigen::Vector3d e1 = (Eigen::Vector3d(0, -ey, 0) - local_c1).normalized();
   Eigen::Vector3d e2 = (Eigen::Vector3d(-ex, 0, 0) - local_c1).normalized();
   double length = 0;
-  if ( min_length < shape_output.dimensions.x && shape_output.dimensions.x < max_length ) {
+  if (min_length < shape_output.dimensions.x && shape_output.dimensions.x < max_length) {
     length = shape_output.dimensions.x;
   } else {
     length = (max_length + min_length) * 0.5;
   }
   double width = 0;
-  if ( min_width < shape_output.dimensions.y && shape_output.dimensions.y < max_width ) {
+  if (min_width < shape_output.dimensions.y && shape_output.dimensions.y < max_width) {
     width = shape_output.dimensions.y;
   } else {
     width = (max_width + min_width) * 0.5;
@@ -97,4 +102,4 @@ bool BusCorrector::correct(
 
   return true;
 }
-}
+}  // namespace yaw_fixed

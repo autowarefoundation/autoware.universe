@@ -18,7 +18,8 @@
 
 #include "shape_estimation/corrector_interface.hpp"
 
-namespace yaw_fixed {
+namespace yaw_fixed
+{
 class BusCorrector : public ShapeEstimationCorrectorInterface
 {
 public:
@@ -27,6 +28,7 @@ public:
   ~BusCorrector(){};
 
   bool correct(
-    autoware_perception_msgs::Shape & shape_output, geometry_msgs::Pose & pose_output) override;
+    autoware_perception_msgs::msg::Shape & shape_output,
+    geometry_msgs::msg::Pose & pose_output) override;
 };
-}
+}  // namespace yaw_fixed

@@ -18,26 +18,23 @@
 
 #pragma once
 
-#include <ros/ros.h>
 #include "shape_estimation/shape_estimator.hpp"
-// #include "shape_estimation/map_corrector_node.hpp"
-#include "autoware_perception_msgs/DynamicObjectWithFeatureArray.h"
+#include <rclcpp/rclcpp.hpp>
+#include <autoware_perception_msgs/msg/dynamic_object_with_feature_array.hpp>
 
-class ShapeEstimationNode
+class ShapeEstimationNode : public rclcpp::Node
 {
 private:  // ros
-  ros::NodeHandle nh_;
-  ros::NodeHandle pnh_;
-  ros::Publisher pub_;
-  ros::Subscriber sub_;
+  rclcpp::Publisher<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>::SharedPtr pub_;
+  rclcpp::Subscription<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>::SharedPtr
+    sub_;
   // bool use_map_correct_;
 
   void callback(
-    const autoware_perception_msgs::DynamicObjectWithFeatureArray::ConstPtr & input_msg);
+    const autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr input_msg);
 
 private:
   std::unique_ptr<ShapeEstimator> estimator_;
-  // std::shared_ptr<MapCorrectorNode> map_corrector_node_ptr_;
 
 public:
   ShapeEstimationNode();

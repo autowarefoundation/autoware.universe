@@ -24,12 +24,13 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-#include "autoware_perception_msgs/Shape.h"
+#include "autoware_perception_msgs/msg/shape.hpp"
 
-namespace normal {
+namespace normal
+{
 bool CylinderModel::estimate(
-  const pcl::PointCloud<pcl::PointXYZ> & cluster, autoware_perception_msgs::Shape & shape_output,
-  geometry_msgs::Pose & pose_output)
+  const pcl::PointCloud<pcl::PointXYZ> & cluster,
+  autoware_perception_msgs::msg::Shape & shape_output, geometry_msgs::msg::Pose & pose_output)
 {
   // calc centroid point for cylinder height(z)
   pcl::PointXYZ centroid;
@@ -65,7 +66,7 @@ bool CylinderModel::estimate(
   constexpr double ep = 0.001;
   radius = std::max(radius, (float)ep);
 
-  shape_output.type = autoware_perception_msgs::Shape::CYLINDER;
+  shape_output.type = autoware_perception_msgs::msg::Shape::CYLINDER;
   pose_output.position.x = center.x;
   pose_output.position.y = center.y;
   pose_output.position.z = centroid.z;
@@ -78,4 +79,4 @@ bool CylinderModel::estimate(
   shape_output.dimensions.z = std::max((max_z - min_z), ep);
   return true;
 }
-}
+}  // namespace normal

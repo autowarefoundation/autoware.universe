@@ -20,58 +20,54 @@
 #include "shape_estimation/node.hpp"
 #include "shape_estimation/shape_estimator.hpp"
 
-ShapeEstimationNode::ShapeEstimationNode() : nh_(""), pnh_("~")
+ShapeEstimationNode::ShapeEstimationNode() : Node("shape_estimation")
 {
-  sub_ = nh_.subscribe("input", 1, &ShapeEstimationNode::callback, this);
-  pub_ = nh_.advertise<autoware_perception_msgs::DynamicObjectWithFeatureArray>("objects", 1, true);
-  // pnh_.param<bool>("use_map_corrent", use_map_correct_, true);
-  // if (use_map_correct_)
-  //   map_corrector_node_ptr_ = std::make_shared<MapCorrectorNode>();
+  using std::placeholders::_1;
+  sub_ = create_subscription<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>(
+    "input", rclcpp::QoS{1}, std::bind(&ShapeEstimationNode::callback, this, _1));
 
-  bool use_corrector;
-  double l_shape_fitting_search_angle_range;
-  bool orientation_reliable;
-  pnh_.param<bool>("use_corrector", use_corrector, true);
-  pnh_.param<double>("l_shape_fitting_search_angle_range", l_shape_fitting_search_angle_range, 3);
-  pnh_.param<bool>("orientation_reliable", orientation_reliable, true);
-  estimator_ = std::make_unique<ShapeEstimator>(l_shape_fitting_search_angle_range, use_corrector, orientation_reliable);
+  rclcpp::QoS durable_qos{1};
+  durable_qos.transient_local();  // to latch the topic
+  pub_ = create_publisher<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>(
+    "objects", durable_qos);
+
+  bool use_corrector = declare_parameter("use_corrector", true);
+  double l_shape_fitting_search_angle_range =
+    declare_parameter("l_shape_fitting_search_angle_range", 3.0);
+  bool orientation_reliable = declare_parameter("orientation_reliable", true);
+  estimator_ = std::make_unique<ShapeEstimator>(
+    l_shape_fitting_search_angle_range, use_corrector, orientation_reliable);
 }
 
 void ShapeEstimationNode::callback(
-  const autoware_perception_msgs::DynamicObjectWithFeatureArray::ConstPtr & input_msg)
+  const autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr input_msg)
 {
   // Guard
-  if (pub_.getNumSubscribers() < 1) return;
+  if (pub_->get_subscription_count() < 1) return;
 
   // Create output msg
-  autoware_perception_msgs::DynamicObjectWithFeatureArray output_msg;
+  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray output_msg;
   output_msg.header = input_msg->header;
 
   // Estimate shape for each object and pack msg
   for (const auto & feature_object : input_msg->feature_objects) {
-
     // convert ros to pcl
     pcl::PointCloud<pcl::PointXYZ>::Ptr cluster(new pcl::PointCloud<pcl::PointXYZ>);
     pcl::fromROSMsg(feature_object.feature.cluster, *cluster);
     // estimate shape and pose
-    autoware_perception_msgs::Shape shape;
-    geometry_msgs::Pose pose;
+    autoware_perception_msgs::msg::Shape shape;
+    geometry_msgs::msg::Pose pose;
 
     if (!estimator_->getShapeAndPose(
-           feature_object.object.semantic.type, *cluster,
-           feature_object.object.state, shape, pose))
+          feature_object.object.semantic.type, *cluster, feature_object.object.state, shape, pose))
       continue;
 
     output_msg.feature_objects.push_back(feature_object);
     output_msg.feature_objects.back().object.shape = shape;
     output_msg.feature_objects.back().object.state.pose_covariance.pose = pose;
   }
-  // if (use_map_correct_)
-  // {
-  //   map_corrector_node_ptr_->correct(output_msg);
-  // }
 
   // Publish
-  pub_.publish(output_msg);
+  pub_->publish(output_msg);
   return;
 }

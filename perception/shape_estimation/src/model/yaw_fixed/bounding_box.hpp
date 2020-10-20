@@ -18,7 +18,8 @@
 
 #include "shape_estimation/model_interface.hpp"
 
-namespace yaw_fixed {
+namespace yaw_fixed
+{
 class BoundingBoxModel : public ShapeEstimationModelInterface
 {
 private:
@@ -26,11 +27,10 @@ private:
   double l_shape_fitting_search_angle_range_;
 
 public:
-  BoundingBoxModel()
-    : l_shape_fitting_search_angle_range_(3){};
+  BoundingBoxModel() : l_shape_fitting_search_angle_range_(3){};
 
   BoundingBoxModel(double l_shape_fitting_search_angle_range)
-    : l_shape_fitting_search_angle_range_(l_shape_fitting_search_angle_range){};
+  : l_shape_fitting_search_angle_range_(l_shape_fitting_search_angle_range){};
 
   ~BoundingBoxModel(){};
 
@@ -38,7 +38,8 @@ public:
    * minimum cluster size is 2.
    */
   bool estimate(
-    const pcl::PointCloud<pcl::PointXYZ> & cluster, autoware_perception_msgs::Shape & shape_output,
-    geometry_msgs::Pose & pose_output) override;
+    const pcl::PointCloud<pcl::PointXYZ> & cluster,
+    autoware_perception_msgs::msg::Shape & shape_output,
+    geometry_msgs::msg::Pose & pose_output) override;
 };
-}
+}  // namespace yaw_fixed

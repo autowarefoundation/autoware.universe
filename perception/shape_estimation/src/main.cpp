@@ -17,13 +17,14 @@
  * v1.0 Yukihiro Saito
  */
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include "shape_estimation/node.hpp"
 
 int main(int argc, char ** argv)
 {
-  ros::init(argc, argv, "shape_estimator");
-  ShapeEstimationNode node;
-  ros::spin();
+  rclcpp::init(argc, argv);
+  auto node = std::make_shared<ShapeEstimationNode>();
+  rclcpp::spin(node);
+  rclcpp::shutdown();
   return 0;
 }

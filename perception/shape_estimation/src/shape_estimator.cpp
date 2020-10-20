@@ -20,7 +20,7 @@
 #include "shape_estimation/shape_estimator.hpp"
 #include <iostream>
 #include <memory>
-#include "autoware_perception_msgs/Semantic.h"
+#include "autoware_perception_msgs/msg/semantic.hpp"
 #include "corrector/normal/bus_corrector.hpp"
 #include "corrector/normal/car_corrector.hpp"
 #include "corrector/normal/no_corrector.hpp"
@@ -39,20 +39,22 @@
 #include "model/yaw_fixed/bounding_box.hpp"
 #include "shape_estimation/model_interface.hpp"
 
-ShapeEstimator::ShapeEstimator()
-  : ShapeEstimator::ShapeEstimator(3, true, true){}
+ShapeEstimator::ShapeEstimator() : ShapeEstimator::ShapeEstimator(3, true, true) {}
 
-ShapeEstimator::ShapeEstimator(double l_shape_fitting_search_angle_range, bool use_corrector, bool orientation_reliable)
-  : l_shape_fitting_search_angle_range_(l_shape_fitting_search_angle_range),
-    use_corrector_(use_corrector),
-    orientation_reliable_(orientation_reliable){}
+ShapeEstimator::ShapeEstimator(
+  double l_shape_fitting_search_angle_range, bool use_corrector, bool orientation_reliable)
+: l_shape_fitting_search_angle_range_(l_shape_fitting_search_angle_range),
+  use_corrector_(use_corrector),
+  orientation_reliable_(orientation_reliable)
+{
+}
 
 bool ShapeEstimator::getShapeAndPose(
   const int type, const pcl::PointCloud<pcl::PointXYZ> & cluster,
-  autoware_perception_msgs::Shape & shape_output, geometry_msgs::Pose & pose_output)
+  autoware_perception_msgs::msg::Shape & shape_output, geometry_msgs::msg::Pose & pose_output)
 {
-  autoware_perception_msgs::Shape shape;
-  geometry_msgs::Pose pose;
+  autoware_perception_msgs::msg::Shape shape;
+  geometry_msgs::msg::Pose pose;
   if (!process(type, cluster, shape, pose)) {
     return false;
   }
@@ -63,11 +65,11 @@ bool ShapeEstimator::getShapeAndPose(
 
 bool ShapeEstimator::getShapeAndPose(
   const int type, const pcl::PointCloud<pcl::PointXYZ> & cluster,
-  const autoware_perception_msgs::State & state,
-  autoware_perception_msgs::Shape & shape_output, geometry_msgs::Pose & pose_output)
+  const autoware_perception_msgs::msg::State & state,
+  autoware_perception_msgs::msg::Shape & shape_output, geometry_msgs::msg::Pose & pose_output)
 {
-  autoware_perception_msgs::Shape shape;
-  geometry_msgs::Pose pose = state.pose_covariance.pose;
+  autoware_perception_msgs::msg::Shape shape;
+  geometry_msgs::msg::Pose pose = state.pose_covariance.pose;
   if (!process(type, cluster, shape, pose)) {
     return false;
   }
@@ -78,7 +80,7 @@ bool ShapeEstimator::getShapeAndPose(
 
 bool ShapeEstimator::process(
   const int type, const pcl::PointCloud<pcl::PointXYZ> & cluster,
-  autoware_perception_msgs::Shape & shape, geometry_msgs::Pose & pose)
+  autoware_perception_msgs::msg::Shape & shape, geometry_msgs::msg::Pose & pose)
 {
   // check input
   if (cluster.empty()) return false;
@@ -105,24 +107,24 @@ bool ShapeEstimator::process(
 
 bool ShapeEstimator::estimateShape(
   const int type, const pcl::PointCloud<pcl::PointXYZ> & cluster,
-  autoware_perception_msgs::Shape & shape_output, geometry_msgs::Pose & pose_output)
+  autoware_perception_msgs::msg::Shape & shape_output, geometry_msgs::msg::Pose & pose_output)
 {
   // estimate shape
   std::unique_ptr<ShapeEstimationModelInterface> model_ptr;
   if (
-    type == autoware_perception_msgs::Semantic::CAR ||
-    type == autoware_perception_msgs::Semantic::TRUCK ||
-    type == autoware_perception_msgs::Semantic::BUS) {
+    type == autoware_perception_msgs::msg::Semantic::CAR ||
+    type == autoware_perception_msgs::msg::Semantic::TRUCK ||
+    type == autoware_perception_msgs::msg::Semantic::BUS) {
     if (orientation_reliable_) {
       model_ptr.reset(new yaw_fixed::BoundingBoxModel(l_shape_fitting_search_angle_range_));
     } else {
       model_ptr.reset(new normal::BoundingBoxModel);
     }
-  } else if (type == autoware_perception_msgs::Semantic::PEDESTRIAN) {
+  } else if (type == autoware_perception_msgs::msg::Semantic::PEDESTRIAN) {
     model_ptr.reset(new normal::CylinderModel);
-  } else if (type == autoware_perception_msgs::Semantic::MOTORBIKE) {
+  } else if (type == autoware_perception_msgs::msg::Semantic::MOTORBIKE) {
     model_ptr.reset(new normal::BoundingBoxModel);
-  } else if (type == autoware_perception_msgs::Semantic::BICYCLE) {
+  } else if (type == autoware_perception_msgs::msg::Semantic::BICYCLE) {
     model_ptr.reset(new normal::BoundingBoxModel);
   } else {
     model_ptr.reset(new normal::ConvexHullModel);
@@ -132,15 +134,15 @@ bool ShapeEstimator::estimateShape(
 }
 
 bool ShapeEstimator::applyFilter(
-  const int type, const autoware_perception_msgs::Shape & shape_output,
-  const geometry_msgs::Pose & pose_output)
+  const int type, const autoware_perception_msgs::msg::Shape & shape_output,
+  const geometry_msgs::msg::Pose & pose_output)
 {
   std::unique_ptr<ShapeEstimationFilterInterface> filter_ptr;
-  if (type == autoware_perception_msgs::Semantic::CAR) {
+  if (type == autoware_perception_msgs::msg::Semantic::CAR) {
     filter_ptr.reset(new CarFilter);
-  } else if (type == autoware_perception_msgs::Semantic::BUS) {
+  } else if (type == autoware_perception_msgs::msg::Semantic::BUS) {
     filter_ptr.reset(new BusFilter);
-  } else if (type == autoware_perception_msgs::Semantic::TRUCK) {
+  } else if (type == autoware_perception_msgs::msg::Semantic::TRUCK) {
     filter_ptr.reset(new TruckFilter);
   } else {
     filter_ptr.reset(new NoFilter);
@@ -150,20 +152,21 @@ bool ShapeEstimator::applyFilter(
 }
 
 bool ShapeEstimator::applyCorrector(
-  const int type, autoware_perception_msgs::Shape & shape_output, geometry_msgs::Pose & pose_output)
+  const int type, autoware_perception_msgs::msg::Shape & shape_output,
+  geometry_msgs::msg::Pose & pose_output)
 {
   std::unique_ptr<ShapeEstimationCorrectorInterface> corrector_ptr;
-  if (type == autoware_perception_msgs::Semantic::CAR) {
+  if (type == autoware_perception_msgs::msg::Semantic::CAR) {
     if (orientation_reliable_)
       corrector_ptr.reset(new yaw_fixed::CarCorrector);
     else
       corrector_ptr.reset(new normal::CarCorrector);
-  } else if (type == autoware_perception_msgs::Semantic::BUS) {
+  } else if (type == autoware_perception_msgs::msg::Semantic::BUS) {
     if (orientation_reliable_)
       corrector_ptr.reset(new yaw_fixed::BusCorrector);
     else
       corrector_ptr.reset(new normal::BusCorrector);
-  } else if (type == autoware_perception_msgs::Semantic::TRUCK) {
+  } else if (type == autoware_perception_msgs::msg::Semantic::TRUCK) {
     if (orientation_reliable_)
       corrector_ptr.reset(new yaw_fixed::TruckCorrector);
     else
