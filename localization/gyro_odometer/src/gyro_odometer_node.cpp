@@ -14,18 +14,16 @@
  * limitations under the License.
  */
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 
 #include "gyro_odometer/gyro_odometer_core.h"
 
 int main(int argc, char ** argv)
 {
-  ros::init(argc, argv, "gyro_odometer");
-  ros::NodeHandle nh;
-  ros::NodeHandle private_nh("~");
+  rclcpp::init(argc, argv);
+  auto node = std::make_shared<GyroOdometer>();
+  rclcpp::spin(node);
+  rclcpp::shutdown();
 
-  GyroOdometer node(nh, private_nh);
-
-  ros::spin();
   return 0;
 }
