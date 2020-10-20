@@ -16,33 +16,34 @@
 
 #pragma once
 
-#include <autoware_planning_msgs/Path.h>
-#include <autoware_planning_msgs/Trajectory.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/Quaternion.h>
+#include <autoware_planning_msgs/msg/path.hpp>
+#include <autoware_planning_msgs/msg/trajectory.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/quaternion.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2/LinearMath/Quaternion.h>
 
 namespace autoware_utils
 {
-inline geometry_msgs::Point getPoint(const geometry_msgs::Point & p) { return p; }
-inline geometry_msgs::Point getPoint(const geometry_msgs::Pose & p) { return p.position; }
-inline geometry_msgs::Point getPoint(const geometry_msgs::PoseStamped & p)
+inline geometry_msgs::msg::Point getPoint(const geometry_msgs::msg::Point & p) { return p; }
+inline geometry_msgs::msg::Point getPoint(const geometry_msgs::msg::Pose & p) { return p.position; }
+inline geometry_msgs::msg::Point getPoint(const geometry_msgs::msg::PoseStamped & p)
 {
   return p.pose.position;
 }
 
-inline geometry_msgs::Point getPoint(const autoware_planning_msgs::PathPoint & p)
+inline geometry_msgs::msg::Point getPoint(const autoware_planning_msgs::msg::PathPoint & p)
 {
   return p.pose.position;
 }
-inline geometry_msgs::Point getPoint(const autoware_planning_msgs::TrajectoryPoint & p)
+inline geometry_msgs::msg::Point getPoint(const autoware_planning_msgs::msg::TrajectoryPoint & p)
 {
   return p.pose.position;
 }
 
-inline geometry_msgs::Point createPoint(const double x, const double y, const double z)
+inline geometry_msgs::msg::Point createPoint(const double x, const double y, const double z)
 {
-  geometry_msgs::Point p;
+  geometry_msgs::msg::Point p;
   p.x = x;
   p.y = y;
   p.z = z;

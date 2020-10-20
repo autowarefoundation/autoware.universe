@@ -7,15 +7,15 @@
   <maintainer email="kenji.miyake@tier4.jp">Kenji Miyake</maintainer>
   <license>Apache 2</license>
 
-  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
   <depend>autoware_planning_msgs</depend>
+  <depend>builtin_interfaces</depend>
   <depend>geometry_msgs</depend>
   <depend>tf2</depend>
   <depend>tf2_geometry_msgs</depend>
 
-  <test_depend>rostest</test_depend>
-
   <export>
+    <build_type>ament_cmake</build_type>
   </export>
 </package>
