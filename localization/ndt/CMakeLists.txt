@@ -1,21 +1,18 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.5)
 project(ndt)
 
-add_compile_options(-std=c++14)
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+  add_compile_options(-Wno-unused-parameter)
+endif()
 
-find_package(catkin REQUIRED COMPONENTS
-  ndt_pcl_modified
-  ndt_omp
-)
-find_package(PCL REQUIRED COMPONENTS common)
-
-catkin_package(
-  INCLUDE_DIRS include
-)
-
-include_directories(include ${catkin_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
-link_directories(${PCL_LIBRARY_DIRS})
-add_definitions(${PCL_DEFINITIONS})
+find_package(ament_cmake REQUIRED)
+find_package(PCL REQUIRED COMPONENTS common io registration)
+find_package(ndt_omp REQUIRED)
+find_package(ndt_pcl_modified REQUIRED)
 
 add_library(ndt
   src/base.cpp
@@ -24,22 +21,34 @@ add_library(ndt
   src/omp.cpp
 )
 
-add_dependencies(ndt
-  ${${PROJECT_NAME}_EXPORTED_TARGETS}
-  ${catkin_EXPORTED_TARGETS}
+target_include_directories(ndt
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(ndt ${catkin_LIBRARIES})
+ament_target_dependencies(ndt PUBLIC ndt_omp ndt_pcl_modified)
+# Can't use ament_target_dependencies() here because it doesn't link PCL
+# properly, see ndt_omp for more information.
+target_compile_definitions(ndt PUBLIC ${PCL_DEFINITIONS})
+target_include_directories(ndt PUBLIC ${PCL_INCLUDE_DIRS})
+target_link_libraries(ndt PUBLIC ${PCL_LIBRARIES})
+target_link_directories(ndt PUBLIC ${PCL_LIBRARY_DIRS})
+
+ament_export_targets(export_ndt HAS_LIBRARY_TARGET)
+ament_export_dependencies(ndt_omp ndt_pcl_modified PCL)
 
 install(
-  TARGETS
-    ndt
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  DIRECTORY include/
+  DESTINATION include
 )
 
-## Install project namespaced headers
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+install(
+  TARGETS ndt
+  EXPORT export_ndt
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+  RUNTIME DESTINATION bin
 )
+
+ament_package()
