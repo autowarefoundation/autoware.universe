@@ -3,9 +3,9 @@
   <arg name="input_pose_topic" default="/localization/pose_estimator/pose" doc="" />
   <arg name="output_twist_topic" default="/estimate_twist" doc="" />
 
-  <node pkg="pose2twist" type="pose2twist" name="pose2twist" output="log">
-    <remap from="pose" to="$(arg input_pose_topic)" />
-    <remap from="twist" to="$(arg output_twist_topic)" />
+  <node pkg="pose2twist" exec="pose2twist" name="pose2twist" output="log">
+    <remap from="pose" to="$(var input_pose_topic)" />
+    <remap from="twist" to="$(var output_twist_topic)" />
   </node>
 
 </launch>

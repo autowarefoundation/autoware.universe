@@ -14,18 +14,16 @@
  * limitations under the License.
  */
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 
 #include "pose2twist/pose2twist_core.h"
 
 int main(int argc, char ** argv)
 {
-  ros::init(argc, argv, "pose2twist");
-  ros::NodeHandle nh;
-  ros::NodeHandle private_nh("~");
+  rclcpp::init(argc, argv);
 
-  Pose2Twist node(nh, private_nh);
+  rclcpp::spin(std::make_shared<Pose2Twist>());
+  rclcpp::shutdown();
 
-  ros::spin();
   return 0;
 }

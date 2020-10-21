@@ -1,22 +1,19 @@
 <?xml version="1.0"?>
-<package>
+<package format="2">
     <name>pose2twist</name>
     <version>0.1.0</version>
     <description>The pose2twist package</description>
     <maintainer email="yamato.ando@gmail.com">Yamato Ando</maintainer>
-    <license>Apache 2</license>
-    <buildtool_depend>catkin</buildtool_depend>
+    <license>Apache 2.0</license>
+    
+    <buildtool_depend>ament_cmake</buildtool_depend>
 
-    <build_depend>roscpp</build_depend>
-    <build_depend>tf2_geometry_msgs</build_depend>
-    <build_depend>std_msgs</build_depend>
-    <build_depend>geometry_msgs</build_depend>
-
-    <run_depend>roscpp</run_depend>
-    <run_depend>tf2_geometry_msgs</run_depend>
-    <run_depend>std_msgs</run_depend>
-    <run_depend>geometry_msgs</run_depend>
+    <depend>geometry_msgs</depend>
+    <depend>rclcpp</depend>
+    <depend>std_msgs</depend>
+    <depend>tf2_geometry_msgs</depend>
 
     <export>
+      <build_type>ament_cmake</build_type>
     </export>
 </package>

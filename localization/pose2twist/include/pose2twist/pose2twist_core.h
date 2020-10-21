@@ -14,30 +14,31 @@
  * limitations under the License.
  */
 
-#pragma once
+#ifndef POSE2TWIST_CORE_H
+#define POSE2TWIST_CORE_H
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 
-#include <std_msgs/Float32.h>
+#include <std_msgs/msg/float32.hpp>
 
-#include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/TwistStamped.h>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
 
-class Pose2Twist
+class Pose2Twist : public rclcpp::Node
 {
 public:
-  Pose2Twist(ros::NodeHandle nh, ros::NodeHandle private_nh);
-  ~Pose2Twist();
+  Pose2Twist();
+  ~Pose2Twist() = default;
 
 private:
-  void callbackPose(const geometry_msgs::PoseStamped::ConstPtr & pose_msg_ptr);
+  void callbackPose(geometry_msgs::msg::PoseStamped::SharedPtr pose_msg_ptr);
 
-  ros::NodeHandle nh_;
-  ros::NodeHandle private_nh_;
+  rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr pose_sub_;
 
-  ros::Subscriber pose_sub_;
+  rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr twist_pub_;
+  rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr linear_x_pub_;
+  rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr angular_z_pub_;
 
-  ros::Publisher twist_pub_;
-  ros::Publisher linear_x_pub_;
-  ros::Publisher angular_z_pub_;
 };
+
+#endif
