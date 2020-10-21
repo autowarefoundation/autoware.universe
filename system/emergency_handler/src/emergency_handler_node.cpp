@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 
-#include <emergency_handler/emergency_handler_node.h>
+#include "emergency_handler/emergency_handler_core.hpp"
 
-int main(int argc, char * argv[])
+int main(int argc, char ** argv)
 {
-  ros::init(argc, argv, "emergency_handler");
-
-  EmergencyHandlerNode node;
-
-  ros::spin();
+  rclcpp::init(argc, argv);
+  auto node = std::make_shared<EmergencyHandler>();
+  rclcpp::spin(node);
+  rclcpp::shutdown();
 
   return 0;
 }

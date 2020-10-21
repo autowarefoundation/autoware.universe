@@ -11,20 +11,20 @@
   <arg name="output_turn_signal" default="/system/emergency/turn_signal_cmd" />
   <arg name="output_is_emergency" default="/system/emergency/is_emergency" />
 
-  <arg name="config_file" default="$(find emergency_handler)/config/emergency_handler.yaml" />
+  <arg name="config_file" default="$(find-pkg-share emergency_handler)/config/emergency_handler.param.yaml" />
 
-  <node pkg="emergency_handler" type="emergency_handler" name="emergency_handler" output="screen">
-    <remap from="~input/autoware_state" to="$(arg input_autoware_state)"/>
-    <remap from="~input/driving_capability" to="$(arg input_driving_capability)"/>
-    <remap from="~input/prev_control_command" to="$(arg input_prev_control_command)"/>
-    <remap from="~input/current_gate_mode" to="$(arg input_current_gate_mode)"/>
-    <remap from="~input/twist" to="$(arg input_twist)"/>
+  <node pkg="emergency_handler" exec="emergency_handler" name="emergency_handler" output="screen">
+    <remap from="input/autoware_state" to="$(var input_autoware_state)"/>
+    <remap from="input/driving_capability" to="$(var input_driving_capability)"/>
+    <remap from="input/prev_control_command" to="$(var input_prev_control_command)"/>
+    <remap from="input/current_gate_mode" to="$(var input_current_gate_mode)"/>
+    <remap from="input/twist" to="$(var input_twist)"/>
 
-    <remap from="~output/control_command" to="$(arg output_control_command)"/>
-    <remap from="~output/shift" to="$(arg output_shift)"/>
-    <remap from="~output/turn_signal" to="$(arg output_turn_signal)"/>
-    <remap from="~output/is_emergency" to="$(arg output_is_emergency)"/>
+    <remap from="output/control_command" to="$(var output_control_command)"/>
+    <remap from="output/shift" to="$(var output_shift)"/>
+    <remap from="output/turn_signal" to="$(var output_turn_signal)"/>
+    <remap from="output/is_emergency" to="$(var output_is_emergency)"/>
 
-    <rosparam command="load" file="$(arg config_file)" />
+    <param from="$(var config_file)" />
   </node>
 </launch>
