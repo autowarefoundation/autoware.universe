@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+#include <chrono>
+#include <functional>
+
 #include "pose_initializer/pose_initializer_core.h"
 
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -38,47 +41,57 @@ double getGroundHeight(const pcl::PointCloud<pcl::PointXYZ>::Ptr pcdmap, const t
   return std::isfinite(height) ? height : point.getZ();
 }
 
-PoseInitializer::PoseInitializer(ros::NodeHandle nh, ros::NodeHandle private_nh)
-: nh_(nh), private_nh_(private_nh), tf2_listener_(tf2_buffer_), map_frame_("map")
+PoseInitializer::PoseInitializer()
+: Node("pose_initializer"), tf2_listener_(tf2_buffer_), map_frame_("map")
 {
-  initial_pose_sub_ = nh_.subscribe("initialpose", 10, &PoseInitializer::callbackInitialPose, this);
-  map_points_sub_ = nh_.subscribe("pointcloud_map", 1, &PoseInitializer::callbackMapPoints, this);
+  // We can't use _1 because pcl leaks an alias to boost::placeholders::_1, so it would be ambiguous
+  initial_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
+    "initialpose", 10,
+    std::bind(&PoseInitializer::callbackInitialPose, this, std::placeholders::_1));
+  map_points_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
+    "pointcloud_map", 1,
+    std::bind(&PoseInitializer::callbackMapPoints, this, std::placeholders::_1));
 
-  bool use_first_gnss_topic = true;
-  private_nh_.getParam("use_first_gnss_topic", use_first_gnss_topic);
+  const bool use_first_gnss_topic = this->declare_parameter("use_first_gnss_topic", true);
   if (use_first_gnss_topic) {
-    gnss_pose_sub_ = nh_.subscribe("gnss_pose_cov", 1, &PoseInitializer::callbackGNSSPoseCov, this);
+    gnss_pose_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
+      "gnss_pose_cov", 1,
+      std::bind(&PoseInitializer::callbackGNSSPoseCov, this, std::placeholders::_1));
   }
 
-  initial_pose_pub_ = nh_.advertise<geometry_msgs::PoseWithCovarianceStamped>("initialpose3d", 10);
+  initial_pose_pub_ =
+    this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("initialpose3d", 10);
 
-  ndt_client_ =
-    nh_.serviceClient<autoware_localization_srvs::PoseWithCovarianceStamped>("ndt_align_srv");
-  ndt_client_.waitForExistence(ros::Duration(1.0));  // TODO
+  ndt_client_ = this->create_client<autoware_localization_srvs::srv::PoseWithCovarianceStamped>(
+    "ndt_align_srv");
+  while (!ndt_client_->wait_for_service(std::chrono::seconds(1)) && rclcpp::ok()) {
+    RCLCPP_INFO(get_logger(), "Waiting for service...");
+  }
 
-  gnss_service_ =
-    nh.advertiseService("pose_initializer_srv", &PoseInitializer::serviceInitial, this);
+  gnss_service_ = this->create_service<autoware_localization_srvs::srv::PoseWithCovarianceStamped>(
+    "pose_initializer_srv",
+    std::bind(
+      &PoseInitializer::serviceInitial, this, std::placeholders::_1, std::placeholders::_2));
 }
 
 PoseInitializer::~PoseInitializer() {}
 
 void PoseInitializer::callbackMapPoints(
-  const sensor_msgs::PointCloud2::ConstPtr & map_points_msg_ptr)
+  sensor_msgs::msg::PointCloud2::ConstSharedPtr map_points_msg_ptr)
 {
   std::string map_frame_ = map_points_msg_ptr->header.frame_id;
   map_ptr_ = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
   pcl::fromROSMsg(*map_points_msg_ptr, *map_ptr_);
 }
 
-bool PoseInitializer::serviceInitial(
-  autoware_localization_srvs::PoseWithCovarianceStamped::Request & req,
-  autoware_localization_srvs::PoseWithCovarianceStamped::Response & res)
+void PoseInitializer::serviceInitial(
+  const std::shared_ptr<autoware_localization_srvs::srv::PoseWithCovarianceStamped::Request> req,
+  std::shared_ptr<autoware_localization_srvs::srv::PoseWithCovarianceStamped::Response> res)
 {
-  gnss_pose_sub_.shutdown();  // get only first topic
+  gnss_pose_sub_ = nullptr;  // get only first topic
 
-  geometry_msgs::PoseWithCovarianceStamped::Ptr add_height_pose_msg_ptr(
-    new geometry_msgs::PoseWithCovarianceStamped);
-  getHeight(req.pose_with_cov, add_height_pose_msg_ptr);
+  auto add_height_pose_msg_ptr = std::make_shared<geometry_msgs::msg::PoseWithCovarianceStamped>();
+  getHeight(req->pose_with_cov, add_height_pose_msg_ptr);
 
   // TODO
   add_height_pose_msg_ptr->pose.covariance[0] = 1.0;
@@ -88,25 +101,15 @@ bool PoseInitializer::serviceInitial(
   add_height_pose_msg_ptr->pose.covariance[4 * 6 + 4] = 0.01;
   add_height_pose_msg_ptr->pose.covariance[5 * 6 + 5] = 1.0;
 
-  geometry_msgs::PoseWithCovarianceStamped::Ptr aligned_pose_msg_ptr(
-    new geometry_msgs::PoseWithCovarianceStamped);
-  const bool succeeded_align = callAlignService(*add_height_pose_msg_ptr, aligned_pose_msg_ptr);
-
-  if (succeeded_align) {
-    initial_pose_pub_.publish(*aligned_pose_msg_ptr);
-    return true;
-  } else {
-    return false;
-  }
+  callAlignServiceAndPublishResult(add_height_pose_msg_ptr);
 }
 
 void PoseInitializer::callbackInitialPose(
-  const geometry_msgs::PoseWithCovarianceStamped::ConstPtr & pose_cov_msg_ptr)
+  geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose_cov_msg_ptr)
 {
-  gnss_pose_sub_.shutdown();  // get only first topic
+  gnss_pose_sub_ = nullptr;  // get only first topic
 
-  geometry_msgs::PoseWithCovarianceStamped::Ptr add_height_pose_msg_ptr(
-    new geometry_msgs::PoseWithCovarianceStamped);
+  auto add_height_pose_msg_ptr = std::make_shared<geometry_msgs::msg::PoseWithCovarianceStamped>();
   getHeight(*pose_cov_msg_ptr, add_height_pose_msg_ptr);
 
   // TODO
@@ -117,25 +120,18 @@ void PoseInitializer::callbackInitialPose(
   add_height_pose_msg_ptr->pose.covariance[4 * 6 + 4] = 0.01;
   add_height_pose_msg_ptr->pose.covariance[5 * 6 + 5] = 0.3;
 
-  geometry_msgs::PoseWithCovarianceStamped::Ptr aligned_pose_msg_ptr(
-    new geometry_msgs::PoseWithCovarianceStamped);
-  const bool succeeded_align = callAlignService(*add_height_pose_msg_ptr, aligned_pose_msg_ptr);
-
-  if (succeeded_align) {
-    initial_pose_pub_.publish(*aligned_pose_msg_ptr);
-  }
+  callAlignServiceAndPublishResult(add_height_pose_msg_ptr);
 }
 
 // NOTE Still not usable callback
 void PoseInitializer::callbackGNSSPoseCov(
-  const geometry_msgs::PoseWithCovarianceStamped::ConstPtr & pose_cov_msg_ptr)
+  geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose_cov_msg_ptr)
 {
-  gnss_pose_sub_.shutdown();  // get only first topic
+  gnss_pose_sub_ = nullptr;  // get only first topic
 
   // TODO check service is available
 
-  geometry_msgs::PoseWithCovarianceStamped::Ptr add_height_pose_msg_ptr(
-    new geometry_msgs::PoseWithCovarianceStamped);
+  auto add_height_pose_msg_ptr = std::make_shared<geometry_msgs::msg::PoseWithCovarianceStamped>();
   getHeight(*pose_cov_msg_ptr, add_height_pose_msg_ptr);
 
   // TODO
@@ -146,18 +142,12 @@ void PoseInitializer::callbackGNSSPoseCov(
   add_height_pose_msg_ptr->pose.covariance[4 * 6 + 4] = 0.01;
   add_height_pose_msg_ptr->pose.covariance[5 * 6 + 5] = 3.14;
 
-  geometry_msgs::PoseWithCovarianceStamped::Ptr aligned_pose_msg_ptr(
-    new geometry_msgs::PoseWithCovarianceStamped);
-  const bool succeeded_align = callAlignService(*add_height_pose_msg_ptr, aligned_pose_msg_ptr);
-
-  if (succeeded_align) {
-    initial_pose_pub_.publish(*aligned_pose_msg_ptr);
-  }
+  callAlignServiceAndPublishResult(add_height_pose_msg_ptr);
 }
 
 bool PoseInitializer::getHeight(
-  const geometry_msgs::PoseWithCovarianceStamped & input_pose_msg,
-  const geometry_msgs::PoseWithCovarianceStamped::Ptr & output_pose_msg_ptr)
+  const geometry_msgs::msg::PoseWithCovarianceStamped & input_pose_msg,
+  const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr output_pose_msg_ptr)
 {
   std::string fixed_frame = input_pose_msg.header.frame_id;
   tf2::Vector3 point(
@@ -167,11 +157,10 @@ bool PoseInitializer::getHeight(
   if (map_ptr_) {
     tf2::Transform transform;
     try {
-      const auto stamped =
-        tf2_buffer_.lookupTransform(map_frame_, fixed_frame, ros::Time(0), ros::Duration(1.0));
+      const auto stamped = tf2_buffer_.lookupTransform(map_frame_, fixed_frame, tf2::TimePointZero);
       tf2::fromMsg(stamped.transform, transform);
     } catch (tf2::TransformException & exception) {
-      ROS_WARN_STREAM("failed to lookup transform: " << exception.what());
+      RCLCPP_WARN_STREAM(get_logger(), "failed to lookup transform: " << exception.what());
     }
 
     point = transform * point;
@@ -187,27 +176,34 @@ bool PoseInitializer::getHeight(
   return true;
 }
 
-bool PoseInitializer::callAlignService(
-  const geometry_msgs::PoseWithCovarianceStamped & input_pose_msg,
-  const geometry_msgs::PoseWithCovarianceStamped::Ptr & output_pose_msg_ptr)
+void PoseInitializer::callAlignServiceAndPublishResult(
+  const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr input_pose_msg)
 {
-  autoware_localization_srvs::PoseWithCovarianceStamped srv;
-  srv.request.pose_with_cov = input_pose_msg;
-
-  ROS_INFO("[pose_initializer] call NDT Align Server");
-  if (ndt_client_.call(srv)) {
-    ROS_INFO("[pose_initializer] called NDT Align Server");
-    // NOTE temporary cov
-    srv.response.pose_with_cov.pose.covariance[0] = 1.0;
-    srv.response.pose_with_cov.pose.covariance[1 * 6 + 1] = 1.0;
-    srv.response.pose_with_cov.pose.covariance[2 * 6 + 2] = 0.01;
-    srv.response.pose_with_cov.pose.covariance[3 * 6 + 3] = 0.01;
-    srv.response.pose_with_cov.pose.covariance[4 * 6 + 4] = 0.01;
-    srv.response.pose_with_cov.pose.covariance[5 * 6 + 5] = 0.2;
-    *output_pose_msg_ptr = srv.response.pose_with_cov;
-    return true;
-  } else {
-    ROS_ERROR("[pose_initializer] could not call NDT Align Server");
-    return false;
+  if (request_id_ != response_id_) {
+    RCLCPP_ERROR(get_logger(), "Did not receive response for previous NDT Align Server call");
+    return;
   }
+  auto req =
+    std::make_shared<autoware_localization_srvs::srv::PoseWithCovarianceStamped::Request>();
+  req->pose_with_cov = *input_pose_msg;
+  req->seq = ++request_id_;
+
+  RCLCPP_INFO(get_logger(), "call NDT Align Server");
+
+  ndt_client_->async_send_request(
+    req,
+    [this](rclcpp::Client<autoware_localization_srvs::srv::PoseWithCovarianceStamped>::SharedFuture
+             result) {
+      RCLCPP_INFO(get_logger(), "called NDT Align Server");
+      response_id_ = result.get()->seq;
+      // NOTE temporary cov
+      geometry_msgs::msg::PoseWithCovarianceStamped & pose_with_cov = result.get()->pose_with_cov;
+      pose_with_cov.pose.covariance[0] = 1.0;
+      pose_with_cov.pose.covariance[1 * 6 + 1] = 1.0;
+      pose_with_cov.pose.covariance[2 * 6 + 2] = 0.01;
+      pose_with_cov.pose.covariance[3 * 6 + 3] = 0.01;
+      pose_with_cov.pose.covariance[4 * 6 + 4] = 0.01;
+      pose_with_cov.pose.covariance[5 * 6 + 5] = 0.2;
+      initial_pose_pub_->publish(pose_with_cov);
+    });
 }

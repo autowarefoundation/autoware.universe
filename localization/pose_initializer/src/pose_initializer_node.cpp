@@ -13,19 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <memory>
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 
 #include "pose_initializer/pose_initializer_core.h"
 
 int main(int argc, char ** argv)
 {
-  ros::init(argc, argv, "pose_initializer");
-  ros::NodeHandle nh;
-  ros::NodeHandle private_nh("~");
-
-  PoseInitializer node(nh, private_nh);
-
-  ros::spin();
+  rclcpp::init(argc, argv);
+  rclcpp::spin(std::make_shared<PoseInitializer>());
+  rclcpp::shutdown();
   return 0;
 }

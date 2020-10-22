@@ -16,62 +16,65 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 
 #include <tf2/transform_datatypes.h>
 #include <tf2_ros/transform_listener.h>
 
-#include <geometry_msgs/PoseWithCovarianceStamped.h>
-#include <sensor_msgs/PointCloud2.h>
-
-#include <dynamic_reconfigure/server.h>
+#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
-#include "autoware_localization_srvs/PoseWithCovarianceStamped.h"
+#include "autoware_localization_srvs/srv/pose_with_covariance_stamped.hpp"
 
-class PoseInitializer
+class PoseInitializer : public rclcpp::Node
 {
 public:
-  PoseInitializer(ros::NodeHandle nh, ros::NodeHandle private_nh);
+  PoseInitializer();
   ~PoseInitializer();
 
 private:
-  void callbackMapPoints(const sensor_msgs::PointCloud2::ConstPtr & pointcloud2_msg_ptr);
-  bool serviceInitial(
-    autoware_localization_srvs::PoseWithCovarianceStamped::Request & req,
-    autoware_localization_srvs::PoseWithCovarianceStamped::Response & res);
+  void callbackMapPoints(sensor_msgs::msg::PointCloud2::ConstSharedPtr pointcloud2_msg_ptr);
+  void serviceInitial(
+    const std::shared_ptr<autoware_localization_srvs::srv::PoseWithCovarianceStamped::Request> req,
+    std::shared_ptr<autoware_localization_srvs::srv::PoseWithCovarianceStamped::Response> res);
   void callbackInitialPose(
-    const geometry_msgs::PoseWithCovarianceStamped::ConstPtr & pose_cov_msg_ptr);
+    geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose_cov_msg_ptr);
   void callbackGNSSPoseCov(
-    const geometry_msgs::PoseWithCovarianceStamped::ConstPtr & pose_cov_msg_ptr);
+    geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose_cov_msg_ptr);
 
   bool getHeight(
-    const geometry_msgs::PoseWithCovarianceStamped & input_pose_msg,
-    const geometry_msgs::PoseWithCovarianceStamped::Ptr & output_pose_msg_ptr);
-  bool callAlignService(
-    const geometry_msgs::PoseWithCovarianceStamped & msg,
-    const geometry_msgs::PoseWithCovarianceStamped::Ptr & output_pose_msg_ptr);
+    const geometry_msgs::msg::PoseWithCovarianceStamped & input_pose_msg,
+    const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr output_pose_msg_ptr);
+  void callAlignServiceAndPublishResult(
+    const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg);
 
-  ros::NodeHandle nh_;
-  ros::NodeHandle private_nh_;
+  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr initial_pose_sub_;
+  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr gnss_pose_sub_;
+  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr map_points_sub_;
 
-  ros::Subscriber initial_pose_sub_;
-  ros::Subscriber gnss_pose_sub_;
-  ros::Subscriber map_points_sub_;
+  rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr initial_pose_pub_;
 
-  ros::Publisher initial_pose_pub_;
+  rclcpp::Client<autoware_localization_srvs::srv::PoseWithCovarianceStamped>::SharedPtr ndt_client_;
 
-  ros::ServiceClient ndt_client_;
+  rclcpp::Service<autoware_localization_srvs::srv::PoseWithCovarianceStamped>::SharedPtr
+    gnss_service_;
 
-  ros::ServiceServer gnss_service_;
-
-  tf2_ros::Buffer tf2_buffer_;
+  tf2::BufferCore tf2_buffer_;
   tf2_ros::TransformListener tf2_listener_;
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr map_ptr_;
   std::string map_frame_;
+
+  // With the currently available facilities for calling a service, there is no
+  // easy way of detecting whether an answer was received within a reasonable
+  // amount of time. So, as a sanity check, we check whether a response for the
+  // previous request was received when a new request is sent.
+  uint32_t request_id_ = 0;
+  uint32_t response_id_ = 0;
 };

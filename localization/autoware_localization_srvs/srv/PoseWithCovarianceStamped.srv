@@ -1,3 +1,6 @@
+# A sequence number is included to do primitive error checking
+uint32 seq
 geometry_msgs/PoseWithCovarianceStamped pose_with_cov
 ---
+uint32 seq
 geometry_msgs/PoseWithCovarianceStamped pose_with_cov

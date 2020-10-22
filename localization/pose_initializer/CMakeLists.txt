@@ -1,47 +1,61 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.5)
 project(pose_initializer)
 
-add_compile_options(-std=c++14)
+### Compile options
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+  add_compile_options(-Wno-unused-parameter)
+endif()
 
-find_package(catkin REQUIRED COMPONENTS
-  roscpp
-  tf2
-  tf2_ros
-  tf2_geometry_msgs
-  std_msgs
-  geometry_msgs
-  sensor_msgs
-  dynamic_reconfigure
-  pcl_ros
-  pcl_conversions
-  autoware_localization_srvs
-)
+### Dependencies
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(PCL REQUIRED)
+find_package(pcl_conversions REQUIRED)
+find_package(autoware_localization_srvs REQUIRED)
 
-catkin_package(
-  INCLUDE_DIRS include
-)
-
-include_directories(include ${catkin_INCLUDE_DIRS})
+### Includes
+include_directories(include)
 
 add_executable(pose_initializer
   src/pose_initializer_node.cpp
   src/pose_initializer_core.cpp
 )
 
-add_dependencies(pose_initializer ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+set(POSE_INITIALIZER_DEPENDENCIES
+  rclcpp
+  tf2
+  tf2_ros
+  tf2_geometry_msgs
+  std_msgs
+  geometry_msgs
+  sensor_msgs
+  PCL
+  pcl_conversions
+  autoware_localization_srvs
+)
 
-target_link_libraries(pose_initializer ${catkin_LIBRARIES})
+ament_target_dependencies(pose_initializer ${POSE_INITIALIZER_DEPENDENCIES})
+ament_export_dependencies(${POSE_INITIALIZER_DEPENDENCIES})
 
 install(
-  TARGETS
-    pose_initializer
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  TARGETS pose_initializer
+  DESTINATION lib/${PROJECT_NAME}
 )
 
 install(
   DIRECTORY
     launch
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+  DESTINATION share/${PROJECT_NAME}
 )
+
+ament_package()

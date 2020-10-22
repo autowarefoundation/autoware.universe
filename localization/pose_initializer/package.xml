@@ -1,34 +1,25 @@
 <?xml version="1.0"?>
-<package>
-    <name>pose_initializer</name>
-    <version>0.1.0</version>
-    <description>The pose_initializer package</description>
-    <maintainer email="yamato.ando@gmail.com">Yamato Ando</maintainer>
-    <license>Apache 2</license>
-    <buildtool_depend>catkin</buildtool_depend>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>pose_initializer</name>
+  <version>0.1.0</version>
+  <description>The pose_initializer package</description>
+  <maintainer email="yamato.ando@gmail.com">Yamato Ando</maintainer>
+  <license>Apache 2</license>
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
-    <build_depend>roscpp</build_depend>
-    <build_depend>tf2</build_depend>
-    <build_depend>tf2_ros</build_depend>
-    <build_depend>tf2_geometry_msgs</build_depend>
-    <build_depend>std_msgs</build_depend>
-    <build_depend>geometry_msgs</build_depend>
-    <build_depend>sensor_msgs</build_depend>
-    <build_depend>pcl_ros</build_depend>
-    <build_depend>pcl_conversions</build_depend>
-    <build_depend>autoware_localization_srvs</build_depend>
+  <depend>rclcpp</depend>
+  <depend>tf2</depend>
+  <depend>tf2_ros</depend>
+  <depend>tf2_geometry_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>libpcl-all-dev</depend>
+  <depend>pcl_conversions</depend>
+  <depend>autoware_localization_srvs</depend>
 
-    <run_depend>roscpp</run_depend>
-    <run_depend>tf2</run_depend>
-    <run_depend>tf2_ros</run_depend>
-    <run_depend>tf2_geometry_msgs</run_depend>
-    <run_depend>std_msgs</run_depend>
-    <run_depend>geometry_msgs</run_depend>
-    <run_depend>sensor_msgs</run_depend>
-    <run_depend>pcl_ros</run_depend>
-    <run_depend>pcl_conversions</run_depend>
-    <run_depend>autoware_localization_srvs</run_depend>
-
-    <export>
-    </export>
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>
