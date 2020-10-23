@@ -16,21 +16,21 @@
 
 #include <lanelet2_core/geometry/Lanelet.h>
 #include <mission_planner/lanelet2_impl/utility_functions.h>
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 
 bool exists(const std::unordered_set<lanelet::Id> & set, const lanelet::Id & id)
 {
   return set.find(id) != set.end();
 }
 
-std::string toString(const geometry_msgs::Pose & pose)
+std::string toString(const geometry_msgs::msg::Pose & pose)
 {
   std::stringstream ss;
   ss << "(" << pose.position.x << ", " << pose.position.y << "," << pose.position.z << ")";
   return ss.str();
 }
 
-void setColor(std_msgs::ColorRGBA * cl, double r, double g, double b, double a)
+void setColor(std_msgs::msg::ColorRGBA * cl, double r, double g, double b, double a)
 {
   cl->r = r;
   cl->g = g;
@@ -39,7 +39,7 @@ void setColor(std_msgs::ColorRGBA * cl, double r, double g, double b, double a)
 }
 
 void insertMarkerArray(
-  visualization_msgs::MarkerArray * a1, const visualization_msgs::MarkerArray & a2)
+  visualization_msgs::msg::MarkerArray * a1, const visualization_msgs::msg::MarkerArray & a2)
 {
   a1->markers.insert(a1->markers.end(), a2.markers.begin(), a2.markers.end());
 }
@@ -62,8 +62,8 @@ std::vector<std::pair<double, lanelet::Lanelet>> excludeSubtypeLaneletsWithDista
 }
 
 bool getClosestLanelet(
-  const geometry_msgs::Pose & search_pose, const lanelet::LaneletMapPtr & lanelet_map_ptr_,
-  lanelet::Lanelet * closest_lanelet, double distance_thresh)
+  const geometry_msgs::msg::Pose & search_pose, const lanelet::LaneletMapPtr & lanelet_map_ptr_,
+  lanelet::Lanelet * closest_lanelet, const rclcpp::Logger & logger, double distance_thresh)
 {
   lanelet::BasicPoint2d search_point(search_pose.position.x, search_pose.position.y);
   std::vector<std::pair<double, lanelet::Lanelet>> nearest_lanelet =
@@ -71,13 +71,13 @@ bool getClosestLanelet(
   const auto nearest_road_lanelet =
     excludeSubtypeLaneletsWithDistance(nearest_lanelet, lanelet::AttributeValueString::Crosswalk);
   if (nearest_road_lanelet.empty()) {
-    ROS_ERROR_STREAM(
+    RCLCPP_ERROR_STREAM(logger,
       "Failed to find the closest lane!" << std::endl
                                          << "search point: " << toString(search_pose) << std::endl);
     return false;
   }
   if (nearest_road_lanelet.front().first > distance_thresh) {
-    ROS_ERROR_STREAM(
+    RCLCPP_ERROR_STREAM(logger,
       "Closest lane is too far away!" << std::endl
                                       << "search point: " << toString(search_pose) << std::endl
                                       << "lane id: " << nearest_lanelet.front().second.id());

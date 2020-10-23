@@ -18,11 +18,11 @@
 #define MISSION_PLANNER_LANELET2_IMPL_MISSION_PLANNER_LANELET2_H
 
 // ROS
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include <tf2_ros/transform_listener.h>
 
 // Autoware
-#include <autoware_lanelet2_msgs/MapBin.h>
+#include <autoware_lanelet2_msgs/msg/map_bin.hpp>
 #include <mission_planner/lanelet2_impl/route_handler.h>
 #include <mission_planner/mission_planner_base.h>
 
@@ -34,7 +34,7 @@
 // others
 #include <string>
 
-using RouteSections = std::vector<autoware_planning_msgs::RouteSection>;
+using RouteSections = std::vector<autoware_planning_msgs::msg::RouteSection>;
 
 namespace mission_planner
 {
@@ -50,20 +50,20 @@ private:
   lanelet::routing::RoutingGraphPtr routing_graph_ptr_;
   lanelet::traffic_rules::TrafficRulesPtr traffic_rules_ptr_;
 
-  ros::Subscriber map_subscriber_;
+  rclcpp::Subscription<autoware_lanelet2_msgs::msg::MapBin>::SharedPtr map_subscriber_;
 
-  void mapCallback(const autoware_lanelet2_msgs::MapBin & msg);
+  void mapCallback(const autoware_lanelet2_msgs::msg::MapBin::ConstSharedPtr msg);
   bool isGoalValid() const;
 
   // virtual functions
   bool isRoutingGraphReady() const;
-  autoware_planning_msgs::Route planRoute();
-  void visualizeRoute(const autoware_planning_msgs::Route & route) const;
+  autoware_planning_msgs::msg::Route planRoute();
+  void visualizeRoute(const autoware_planning_msgs::msg::Route & route) const;
 
   // routing
   bool planPathBetweenCheckpoints(
-    const geometry_msgs::PoseStamped & start_checkpoint,
-    const geometry_msgs::PoseStamped & goal_checkpoint,
+    const geometry_msgs::msg::PoseStamped & start_checkpoint,
+    const geometry_msgs::msg::PoseStamped & goal_checkpoint,
     lanelet::ConstLanelets * path_lanelets_ptr) const;
   lanelet::ConstLanelets getMainLanelets(
     const lanelet::ConstLanelets & path_lanelets, const RouteHandler & lanelet_sequence_finder);

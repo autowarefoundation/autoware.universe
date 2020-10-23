@@ -18,12 +18,14 @@
 #define MISSION_PLANNER_LANELET2_IMPL_UTILITY_FUNCTIONS_H
 #include <string>
 
-#include <geometry_msgs/Pose.h>
-#include <std_msgs/ColorRGBA.h>
-#include <visualization_msgs/MarkerArray.h>
+#include <geometry_msgs/msg/pose.hpp>
+#include <std_msgs/msg/color_rgba.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_core/primitives/LaneletSequence.h>
+
+#include <rclcpp/rclcpp.hpp>
 
 #include <unordered_set>
 #include <vector>
@@ -40,11 +42,11 @@ bool exists(const std::vector<T> & vectors, const T & item)
   return false;
 }
 
-void setColor(std_msgs::ColorRGBA * cl, double r, double g, double b, double a);
+void setColor(std_msgs::msg::ColorRGBA * cl, double r, double g, double b, double a);
 void insertMarkerArray(
-  visualization_msgs::MarkerArray * a1, const visualization_msgs::MarkerArray & a2);
-std::string toString(const geometry_msgs::Pose & pose);
+  visualization_msgs::msg::MarkerArray * a1, const visualization_msgs::msg::MarkerArray & a2);
+std::string toString(const geometry_msgs::msg::Pose & pose);
 bool getClosestLanelet(
-  const geometry_msgs::Pose & search_pose, const lanelet::LaneletMapPtr & lanelet_map,
-  lanelet::Lanelet * closest_lanelet, double distance_thresh = 10.0);
+  const geometry_msgs::msg::Pose & search_pose, const lanelet::LaneletMapPtr & lanelet_map,
+  lanelet::Lanelet * closest_lanelet, const rclcpp::Logger & logger, double distance_thresh = 10.0);
 #endif  // MISSION_PLANNER_LANELET2_IMPL_UTILITY_FUNCTIONS_H

@@ -15,15 +15,17 @@
  */
 
 #include <mission_planner/lanelet2_impl/mission_planner_lanelet2.h>
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 
 int main(int argc, char ** argv)
 {
-  ros::init(argc, argv, "mission_planner_node");
+  rclcpp::init(argc, argv);
 
-  mission_planner::MissionPlannerLanelet2 mission_planner;
+  auto node = std::make_shared<mission_planner::MissionPlannerLanelet2>();
 
-  ros::spin();
+  rclcpp::spin(node);
+
+  rclcpp::shutdown();
 
   return 0;
 }
