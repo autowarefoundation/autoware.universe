@@ -13,20 +13,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <ros/ros.h>
+#ifndef GNSS_POSER_GNSS_STAT_HPP_
+#define GNSS_POSER_GNSS_STAT_HPP_
 
-#include "gnss_poser/gnss_poser_core.h"
-
-int main(int argc, char ** argv)
+namespace GNSSPoser
 {
-  ros::init(argc, argv, "gnss_poser");
+enum class CoordinateSystem {
+  UTM = 0,
+  MGRS = 1,
+  PLANE = 2,
+};
 
-  ros::NodeHandle nh;
-  ros::NodeHandle private_nh("~");
+struct GNSSStat
+{
+  GNSSStat()
+  : coordinate_system(CoordinateSystem::MGRS),
+    northup(true),
+    zone(0),
+    x(0),
+    y(0),
+    z(0),
+    latitude(0),
+    longitude(0),
+    altitude(0)
+  {
+  }
 
-  GNSSPoser::GNSSPoser node(nh, private_nh);
+  CoordinateSystem coordinate_system;
+  bool northup;
+  int zone;
+  double x;
+  double y;
+  double z;
+  double latitude;
+  double longitude;
+  double altitude;
+};
+}  // namespace GNSSPoser
 
-  ros::spin();
-
-  return 0;
-}
+#endif
