@@ -8,10 +8,6 @@ repositories:
     type: git
     url: https://github.com/tier4/autoware_launcher.iv.universe.git
     version: ros2
-  autoware/ublox:
-    type: git
-    url: https://github.com/tier4/ublox.git
-    version: foxy-devel
   # description
   description/sensor/sensor_description:
     type: git
@@ -34,11 +30,15 @@ repositories:
     type: git
     url: https://github.com/tier4/scenario_runner.iv.universe.git
     version: ros2
+  # vendor
   vendor/osqp:
     type: git
     url: https://github.com/tier4/osqp_vendor.git
     version: main
-  # vendor
+  vendor/ublox:
+    type: git
+    url: https://github.com/tier4/ublox.git
+    version: foxy-devel
 #  vendor/lanelet2:
 #    type: git
 #    url: https://github.com/fzi-forschungszentrum-informatik/Lanelet2.git
