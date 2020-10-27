@@ -34,11 +34,9 @@
 
 int main(int argc, char ** argv)
 {
-  ros::init(argc, argv, "freespace_planner");
-
-  AstarNavi node;
-
-  ros::spin();
-
+  rclcpp::init(argc, argv);
+  const auto node = std::make_shared<AstarNavi>();
+  rclcpp::spin(node);
+  rclcpp::shutdown();
   return 0;
 }

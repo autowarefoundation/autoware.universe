@@ -40,17 +40,17 @@
 #include <vector>
 
 #include <astar_search/astar_search.h>
-#include <ros/ros.h>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
+#include <rclcpp/rclcpp.hpp>
 
-#include <autoware_planning_msgs/Route.h>
-#include <autoware_planning_msgs/Scenario.h>
-#include <autoware_planning_msgs/Trajectory.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/TwistStamped.h>
-#include <nav_msgs/OccupancyGrid.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <autoware_planning_msgs/msg/route.hpp>
+#include <autoware_planning_msgs/msg/scenario.hpp>
+#include <autoware_planning_msgs/msg/trajectory.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
+#include <nav_msgs/msg/occupancy_grid.hpp>
 
 struct NodeParam
 {
@@ -64,29 +64,26 @@ struct NodeParam
   bool replan_when_course_out;
 };
 
-class AstarNavi
+class AstarNavi : public rclcpp::Node
 {
 public:
   AstarNavi();
 
 private:
   // ros
-  ros::NodeHandle nh_;
-  ros::NodeHandle private_nh_;
+  rclcpp::Publisher<autoware_planning_msgs::msg::Trajectory>::SharedPtr trajectory_pub_;
+  rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr debug_pose_array_pub_;
+  rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr debug_partial_pose_array_pub_;
 
-  ros::Publisher trajectory_pub_;
-  ros::Publisher debug_pose_array_pub_;
-  ros::Publisher debug_partial_pose_array_pub_;
+  rclcpp::Subscription<autoware_planning_msgs::msg::Route>::SharedPtr route_sub_;
+  rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr occupancy_grid_sub_;
+  rclcpp::Subscription<autoware_planning_msgs::msg::Scenario>::SharedPtr scenario_sub_;
+  rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr twist_sub_;
 
-  ros::Subscriber route_sub_;
-  ros::Subscriber occupancy_grid_sub_;
-  ros::Subscriber scenario_sub_;
-  ros::Subscriber twist_sub_;
+  rclcpp::TimerBase::SharedPtr timer_;
 
-  ros::Timer timer_;
-
-  tf2_ros::Buffer tf_buffer_;
-  tf2_ros::TransformListener tf_listener_;
+  std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
+  std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
 
   // params
   NodeParam node_param_;
@@ -94,37 +91,38 @@ private:
 
   // variables
   std::unique_ptr<AstarSearch> astar_;
-  geometry_msgs::PoseStamped current_pose_;
-  geometry_msgs::PoseStamped goal_pose_;
+  geometry_msgs::msg::PoseStamped current_pose_;
+  geometry_msgs::msg::PoseStamped goal_pose_;
 
-  autoware_planning_msgs::Trajectory trajectory_;
-  autoware_planning_msgs::Trajectory partial_trajectory_;
+  autoware_planning_msgs::msg::Trajectory trajectory_;
+  autoware_planning_msgs::msg::Trajectory partial_trajectory_;
   std::vector<size_t> reversing_indices_;
   size_t prev_target_index_;
   size_t target_index_;
   bool is_completed_ = false;
 
-  autoware_planning_msgs::Route::ConstPtr route_;
-  nav_msgs::OccupancyGrid::ConstPtr occupancy_grid_;
-  autoware_planning_msgs::Scenario::ConstPtr scenario_;
-  geometry_msgs::TwistStamped::ConstPtr twist_;
+  autoware_planning_msgs::msg::Route::ConstSharedPtr route_;
+  nav_msgs::msg::OccupancyGrid::ConstSharedPtr occupancy_grid_;
+  autoware_planning_msgs::msg::Scenario::ConstSharedPtr scenario_;
+  geometry_msgs::msg::TwistStamped::ConstSharedPtr twist_;
 
-  std::deque<geometry_msgs::TwistStamped::ConstPtr> twist_buffer_;
+  std::deque<geometry_msgs::msg::TwistStamped::ConstSharedPtr> twist_buffer_;
 
   // functions, callback
-  void onRoute(const autoware_planning_msgs::Route::ConstPtr & msg);
-  void onOccupancyGrid(const nav_msgs::OccupancyGrid::ConstPtr & msg);
-  void onScenario(const autoware_planning_msgs::Scenario::ConstPtr & msg);
-  void onTwist(const geometry_msgs::TwistStamped::ConstPtr & msg);
+  void onRoute(const autoware_planning_msgs::msg::Route::ConstSharedPtr msg);
+  void onOccupancyGrid(const nav_msgs::msg::OccupancyGrid::ConstSharedPtr msg);
+  void onScenario(const autoware_planning_msgs::msg::Scenario::ConstSharedPtr msg);
+  void onTwist(const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg);
 
-  void onTimer(const ros::TimerEvent & event);
+  void onTimer();
 
   void reset();
   bool isPlanRequired();
   void planTrajectory();
   void updateTargetIndex();
 
-  geometry_msgs::TransformStamped getTransform(const std::string & from, const std::string & to);
+  geometry_msgs::msg::TransformStamped getTransform(
+    const std::string & from, const std::string & to);
 };
 
 #endif
