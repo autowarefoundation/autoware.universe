@@ -51,14 +51,17 @@ Pretty straightforward by following the example of the already ported `simple_pl
 
 
 ### Replacing `std_msgs`
-In ROS2, you should define semantically meaningful wrappers around primitive (number) types.
+In ROS2, you should define semantically meaningful wrappers around primitive (number) types. They are deprecated in Foxy.
 
 
 ### Changing the namespaces and header files for generated message types
-
 If you follow the migration guide and change the included headers to have an extra `/msg` in the path and convert to `snake_case`, you might get a cryptic error. Turns out _two_ files are being generated: One for C types (`.h` headers) and and one for CPP types (`.hpp` headers). So don't forget to change `.h` to `.hpp` too. Also, don't forget to insert an additional `::msg` between the package namespace and the class name.
 
 A tip: Sublime Text has a handy "Case Conversion" package for converting to snake case.
+
+
+### Adapting message definitions
+If your message included something like `Header header`, it needs to be changed to `std_msgs/Header header`. Otherwise you'll see messages like `fatal error: autoware_api_msgs/msg/detail/header__struct.hpp: No such file or directory`.
 
 
 ### Inheriting from Node instead of NodeHandle members
@@ -73,7 +76,6 @@ For each latched publisher, I just used `transient_local` QoS on the publisher, 
 First, if the timer can be replaced with a data-driven pattern, it is the preferred alternative for the long term:
 
 #### The Problem with Timer-Driven Patterns
-
 It is well understood that a polling or timer-driven pattern increases jitter (i.e. variance of latency). (Consider, for example: if every data processing node in a chain operates on a timer what is the best and worst case latency?) As a consequence for more timing-sensitive applications, it is generally not preferred to use a timer-driven pattern.
 
 On top of this, it is also reasonably well known that [use of the clock is nondeterministic](https://martinfowler.com/articles/nonDeterminism.html) and internally this has been a large source of frustration with bad, or timing sensitive tests. Such tests typically require specific timing and/or implicitly require a certain execution order (loosely enforced by timing assumptions rather than explicitly via the code).
@@ -81,7 +83,6 @@ On top of this, it is also reasonably well known that [use of the clock is nonde
 As a whole, introducing the clock explicitly (or implicitly via timers) is problematic because it introduces additional state, and thus assumptions on the requirements for the operation of the component. Consider also leap seconds and how that might ruin the operation and/or assumptions needed for the proper operation of the component.
 
 #### Preferred Patterns
-
 In general, a data-driven pattern should be preferred to a timer-driven pattern. One reasonable exception to this guideline is the state estimator/filter at the end of localization. A timer-driven pattern in this context is useful to provide smooth behavior and promote looser coupling between the planning stack and the remainder of the stack.
 
 The core idea behind a data-driven pattern is that as soon as data arrives, it should be appropriately processed. Furthermore, the system clock (or any other source of time) should not be used to manipulate data or the timestamps. This pattern is valuable since it implicitly cuts down on hidden state (being the clock), and thus simplifies assumptions needed for the node to work.
@@ -150,7 +151,36 @@ There is a [migration guide](https://index.ros.org/doc/ros2/Tutorials/Launch-fil
 
 
 ### Replacing `tf2_ros::Buffer`
-A `tf2_ros::Buffer` member that is filled by a `tf2_ros::TransformListener` can become a `tf2::BufferCore` instead. For an example, see [this PR](https://github.com/tier4/Pilot.Auto/pull/11)
+A `tf2_ros::Buffer` member that is filled by a `tf2_ros::TransformListener` can become a `tf2::BufferCore` in most cases. This reduces porting effort, since the a `tf2::BufferCore` can be constructed like a ROS1 `tf2_ros::Buffer`. For an example, see [this PR](https://github.com/tier4/Pilot.Auto/pull/11).
+
+However, in some cases the extra functionality of `tf2_ros::Buffer` is needed. For instance, waiting for a transform to arrive.
+
+
+#### Waiting for a transform to arrive
+You might expect to be able to use `tf2_ros::Buffer::lookupTransform()` with a timeout out of the box, but this will throw an error:
+
+    Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. 
+    Without a dedicated thread it will always timeout. 
+    If you have a seperate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
+
+You could do therefore try setting up a dedicated thread, but you could also use the `waitForTransform()` function like this:
+
+    // In the node definition
+    tf2_ros::Buffer tf_buffer_;
+    tf2_ros::TransformListener tf_listener_;
+    ...
+    // In the constructor
+    auto cti = std::make_shared<tf2_ros::CreateTimerROS>(this->get_node_base_interface(), this->get_node_timers_interface());
+    tf_buffer_.setCreateTimerInterface(cti);
+    ...
+    // In the function processing data
+    tf_buffer_.waitForTransform(a, b, msg_time, std::chrono::milliseconds(1000), [this](const std::shared_future<geometry_msgs::msg::TransformStamped>& tf){
+        // Here the future is available
+    });
+
+The callback will always be called, but only after some time: when the transform becomes available or when the timeout is reached. In the latter case, if the transform is not ready yet, calling `.get()` on the future will throw a `tf2::TimeoutException`.
+
+The `waitForTransform()` function will return immediately and also return a future. However, calling `.get()` or `.wait()` on that future does not respect the timeout. That is, it will wait however long it takes until a transform arrives and never throw an exception.
 
 
 ### Service clients
@@ -216,3 +246,42 @@ Invoking "cmake" failed
 ```
 According to an expert:
 >  You should be able to compile it with colcon, cause it works for both ROS 1 and ROS 2 code. You are getting the same error with catkin so it's probably something related to ROS 1 and the build instructions.
+
+
+## Strange errors and their causes
+Some error messages are so unhelpful that it might help to collect them and their causes.
+
+
+### package.xml errors
+If you forget `<build_type>ament_cmake</build_type>`, or you use package format 2 in combination with a package format 3 tag like `<member_of_group>`, you'll get the unhelpful error
+
+    CMake Error at /usr/share/cmake-3.16/Modules/FindPackageHandleStandardArgs.cmake:146 (message):
+      Could NOT find FastRTPS (missing: FastRTPS_INCLUDE_DIR FastRTPS_LIBRARIES)
+
+
+### YAML param file
+Used tabs instead of spaces in your param.yaml file? _Clearly_, the most user-friendly error message is
+
+    $ ros2 launch mypackage mypackage.launch.xml
+    [INFO] [launch]: All log files can be found below /home/user/.ros/log/2020-10-19-19-09-13-676799-t4-30425
+    [INFO] [launch]: Default logging verbosity is set to INFO
+    [INFO] [mypackage-1]: process started with pid [30427]
+    [mypackage-1] [ERROR] [1603127353.755503075] [rcl]: Failed to parse global arguments
+    [mypackage-1]
+    [mypackage-1] >>> [rcutils|error_handling.c:108] rcutils_set_error_state()
+    [mypackage-1] This error state is being overwritten:
+    [mypackage-1]
+    [mypackage-1]   'Couldn't parse params file: '--params-file /home/user/workspace/install/mypackage/share/mypackage/param/myparameters.yaml'. Error: Error parsing a event near line 1, at /tmp/binarydeb/ros-foxy-rcl-yaml-param-parser-1.1.8/src/parse.c:599, at /tmp/binarydeb/ros-foxy-rcl-1.1.8/src/rcl/arguments.c:391'
+    [mypackage-1]
+    [mypackage-1] with this new error message:
+    [mypackage-1]
+    [mypackage-1]   'context is zero-initialized, at /tmp/binarydeb/ros-foxy-rcl-1.1.8/src/rcl/context.c:51'
+    [mypackage-1]
+    [mypackage-1] rcutils_reset_error() should be called after error handling to avoid this.
+    [mypackage-1] <<<
+    [mypackage-1] [ERROR] [1603127353.755523149] [rclcpp]: failed to finalize context: context is zero-initialized, at /tmp/binarydeb/ros-foxy-rcl-1.1.8/src/rcl/context.c:51
+    [mypackage-1] terminate called after throwing an instance of 'rclcpp::exceptions::RCLInvalidROSArgsError'
+    [mypackage-1]   what():  failed to initialize rcl: error not set
+    [ERROR] [mypackage-1]: process has died [pid 30427, exit code -6, cmd '/home/user/workspace/install/mypackage/lib/mypackage/mypackage --ros-args -r __node:=mypackage --params-file /home/user/workspace/install/mypackage/share/mypackage/param/myparameters.yaml'].
+
+and that is indeed what ROS2 will tell you.
