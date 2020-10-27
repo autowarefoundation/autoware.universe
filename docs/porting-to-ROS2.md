@@ -138,6 +138,19 @@ Two levels of hierarchy need to be added around the parameters themselves:
       ros__parameters:
         <params>
 
+
+##### Indendation
+Without proper indentation (4 spaces in the example above), there is a segfault when the YAML is
+parsed during `rclcpp::init(argc, argv)`:
+
+    [mpc_follower-1] free(): double free detected in tcache 2
+
+and the actual error message is well hidden
+
+    [mpc_follower-1]   'Couldn't parse params file: '--params-file /home/frederik.beaujean/AutowareArchitectureProposal/install/mpc_follower/share/mpc_follower/config/mpc_follower_param.yaml'. Error: Cannot have a value before ros__parameters at line 2, at /tmp/binarydeb/ros-foxy-rcl-yaml-param-parser-1.1.7/src/parser.c:1598, at /tmp/binarydeb/ros-foxy-rcl-1.1.7/src/rcl/arguments.c:391'
+
+
+##### Types
 Also, ROS1 didn't have a problem when you specify an integer, e.g. `28` for a `double` parameter, but ROS2 does:
 
     [vehicle_cmd_gate-1] terminate called after throwing an instance of 'rclcpp::exceptions::InvalidParameterTypeException'
@@ -183,6 +196,15 @@ The callback will always be called, but only after some time: when the transform
 The `waitForTransform()` function will return immediately and also return a future. However, calling `.get()` or `.wait()` on that future does not respect the timeout. That is, it will wait however long it takes until a transform arrives and never throw an exception.
 
 
+### Shared pointers
+Be careful in creating a `std::shared_ptr` to avoid a double-free situation when the constructor argument after porting is a dereferenced shared pointer. For example, if `msg` previously was a raw pointer and now is a shared pointer, the following would lead to both `msg` and `a` deleting the same resource.
+
+    auto a = std::make_shared<autoware_planning_msgs::Trajectory>(*msg);
+
+To avoid this, just copy the shared pointer
+
+    std::shared_ptr<autoware_planning_msgs::msg::Trajectory> = msg;
+
 ### Service clients
 There is no synchronous API for service calls, and the futures API can not be used from inside a node, only the callback API.
 
@@ -208,8 +230,10 @@ The node name is now automatically prepended to the log message, so that part ca
 The `shutdown()` method doesn't exist anymore, but you can just throw away the subscriber with `this->subscription_ = nullptr;` or similar, for instance inside the subscription callback. Curiously, this works even though the `subscription_` member variable is not the sole owner – the `use_count` is 3 in the `minimal_subscriber` example.
 
 
-## Alternative: Semi-automated porting with ros2-migration-tools (not working yet)
-Following the instructions at https://github.com/awslabs/ros2-migration-tools:
+## Alternative: Semi-automated porting with ros2-migration-tools (not working)
+**The following instructions to use `ros2-migration-tools` are given for completeness, we gave up and decided to port packages manually.**
+
+From https://github.com/awslabs/ros2-migration-tools:
 
     pip3 install parse_cmake
     git clone https://github.com/awslabs/ros2-migration-tools.git
