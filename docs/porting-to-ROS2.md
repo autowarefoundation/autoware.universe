@@ -49,6 +49,42 @@ The migration guide covers this well. See also [here](https://www.ros.org/reps/r
 ### Rewriting `CMakeLists.txt`
 Pretty straightforward by following the example of the already ported `simple_planning_simulator` package and the [pub-sub tutorial](https://index.ros.org/doc/ros2/Tutorials/Writing-A-Simple-Cpp-Publisher-And-Subscriber/#cpppubsub). Better yet, use `ament_auto` to get terse `CMakeLists.txt` that do not have as much redundancy with `package.xml` as an explicit `CMakeLists.txt`. See [this commit](https://github.com/tier4/Pilot.Auto/pull/7/commits/ef382a9b430fd69cb0a0f7ca57016d66ed7ef29d) for an example.
 
+#### C++ standard
+Add the following to ensure that a specific standard is required and extensions are not allowed
+
+```cmake
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
+  set(CMAKE_CXX_EXTENSIONS OFF)
+endif()
+```
+
+#### compiler flags
+Make sure that flags are only added explicitly that a compiler understands. Not everyone is using `gcc` or `clang`
+
+```cmake
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
+```
+
+#### headers
+It is good practice -- though not required for the build to succeed -- to add all source files explicity in `cmake` so e.g. IDE know if a file belongs to the project or not. For example,
+
+```cmake
+set(MPC_FOLLOWER_SRC
+  src/mpc_utils.cpp
+  src/interpolate.cpp
+  src/mpc_follower_node.cpp
+)
+
+set(MPC_FOLLOWER_HDR
+  include/mpc_follower/mpc_utils.h
+  include/mpc_follower/interpolate.h
+)  
+ament_auto_add_executable(mpc_follower ${MPC_FOLLOWER_SRC} ${MPC_FOLLOWER_HDR})
+```
 
 ### Replacing `std_msgs`
 In ROS2, you should define semantically meaningful wrappers around primitive (number) types. They are deprecated in Foxy.
@@ -187,14 +223,50 @@ You could do therefore try setting up a dedicated thread, but you could also use
     tf_buffer_.setCreateTimerInterface(cti);
     ...
     // In the function processing data
-    tf_buffer_.waitForTransform(a, b, msg_time, std::chrono::milliseconds(1000), [this](const std::shared_future<geometry_msgs::msg::TransformStamped>& tf){
+    auto tf_future = tf_buffer_.waitForTransform(a, b, msg_time, std::chrono::milliseconds(1000), [this](const std::shared_future<geometry_msgs::msg::TransformStamped>& tf){
         // Here the future is available
     });
 
-The callback will always be called, but only after some time: when the transform becomes available or when the timeout is reached. In the latter case, if the transform is not ready yet, calling `.get()` on the future will throw a `tf2::TimeoutException`.
+The callback will always be called, but only after some time: when the transform becomes available or when the timeout is reached. In the latter case, if the transform is not ready yet, calling `.get()` on the future will throw a `tf2::TimeoutException`. 
 
-The `waitForTransform()` function will return immediately and also return a future. However, calling `.get()` or `.wait()` on that future does not respect the timeout. That is, it will wait however long it takes until a transform arrives and never throw an exception.
+But there is a better way that doesn't need exceptions. The `waitForTransform()` function will
+return immediately and also return a future. However, calling `.get()` or `.wait()` on that future
+does not respect the timeout. That is, it will wait however long it takes until a transform arrives
+and never throw an exception. So, to wait on the returned future for a specified time,
 
+    tf_future.wait_for(timeout)
+
+Putting all pieces together, to block until a specific transform is available, create a separate method and call it at the end of the constructor to ensure that all members are properly initialized first
+
+```c++
+MPCFollower::MPCFollower()
+{
+...
+blockUntilVehiclePositionAvailable(tf2::durationFromSec(5.0));
+}
+
+void MPCFollower::blockUntilVehiclePositionAvailable(const tf2::Duration & timeout)
+{
+  auto cti = std::make_shared<tf2_ros::CreateTimerROS>(
+    this->get_node_base_interface(), this->get_node_timers_interface());
+  tf_buffer_.setCreateTimerInterface(cti);
+
+  while (rclcpp::ok()) {
+    static constexpr auto input = "map", output = "base_link";
+    auto tf_future = tf_buffer_.waitForTransform(
+      input, output, tf2::TimePointZero, tf2::durationFromSec(0.0), [](auto &) {});
+    const auto status = tf_future.wait_for(timeout);
+    if (status == std::future_status::ready) {
+      break;
+    } else {
+      RCLCPP_INFO(
+        get_logger(), "waiting another %d seconds for %s->%s transform",
+        std::chrono::duration_cast<std::chrono::seconds>(timeout).count(), input, output);
+    }
+  }
+}
+
+```
 
 ### Shared pointers
 Be careful in creating a `std::shared_ptr` to avoid a double-free situation when the constructor argument after porting is a dereferenced shared pointer. For example, if `msg` previously was a raw pointer and now is a shared pointer, the following would lead to both `msg` and `a` deleting the same resource.
@@ -203,7 +275,7 @@ Be careful in creating a `std::shared_ptr` to avoid a double-free situation when
 
 To avoid this, just copy the shared pointer
 
-    std::shared_ptr<autoware_planning_msgs::msg::Trajectory> = msg;
+    std::shared_ptr<autoware_planning_msgs::msg::Trajectory> a = msg;
 
 ### Service clients
 There is no synchronous API for service calls, and the futures API can not be used from inside a node, only the callback API.
