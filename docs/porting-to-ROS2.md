@@ -45,6 +45,27 @@ A good general strategy is to try to implement those changes, then iteratively r
 ### Rewriting `package.xml`
 The migration guide covers this well. See also [here](https://www.ros.org/reps/rep-0149.html) for a reference of the most recent version of this format.
 
+#### When to use which dependency tag
+
+Any build tool needed only to set up the build needs `buildtool_depend`; e.g.,
+
+    <buildtool_depend>ament_cmake</buildtool_depend>
+
+Any external package included with `#include` in the files (source or headers) needs to have a corresponding `<build_depend>`; e.g.,
+
+    <build_depend>logging</build_depend>
+
+Any external package included with `#include` in the header files also needs to have a corresponding `<build_export_depend>`; e.g.,
+
+    <build_export_depend>eigen</build_export_depend>
+
+Any shared library that needs to be linked when the code is executed needs to have a corresponding `<exec_depend>`: this describes the runtime dependencies; e.g.,
+
+    <exec_depend>std_msgs</exec_depend>
+
+If a package falls under all three categories (`<build_depend>`, `<build_export_depend>`, and `<exec_depend>`), it is possible to just use `<depend>`
+
+    <depend>shift_decider</depend>
 
 ### Rewriting `CMakeLists.txt`
 Pretty straightforward by following the example of the already ported `simple_planning_simulator` package and the [pub-sub tutorial](https://index.ros.org/doc/ros2/Tutorials/Writing-A-Simple-Cpp-Publisher-And-Subscriber/#cpppubsub). Better yet, use `ament_auto` to get terse `CMakeLists.txt` that do not have as much redundancy with `package.xml` as an explicit `CMakeLists.txt`. See [this commit](https://github.com/tier4/Pilot.Auto/pull/7/commits/ef382a9b430fd69cb0a0f7ca57016d66ed7ef29d) for an example.
@@ -82,7 +103,7 @@ set(MPC_FOLLOWER_SRC
 set(MPC_FOLLOWER_HDR
   include/mpc_follower/mpc_utils.h
   include/mpc_follower/interpolate.h
-)  
+)
 ament_auto_add_executable(mpc_follower ${MPC_FOLLOWER_SRC} ${MPC_FOLLOWER_HDR})
 ```
 
@@ -166,6 +187,10 @@ which is equivalent to
 
     const double vel_lim = declare_parameter<double>("vel_lim", 25.0);
 
+This makes the parameter visible to ros2 and its initial value can be set e.g. via a parameter file.
+
+**NOTE** Any change during runtime with e.g. `ros2 param set` will not alter `vel_lim`! See the
+section on *dynamic reconfigure* to achieve that.
 
 #### Adjust param file
 Two levels of hierarchy need to be added around the parameters themselves:
@@ -208,8 +233,8 @@ However, in some cases the extra functionality of `tf2_ros::Buffer` is needed. F
 #### Waiting for a transform to arrive
 You might expect to be able to use `tf2_ros::Buffer::lookupTransform()` with a timeout out of the box, but this will throw an error:
 
-    Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. 
-    Without a dedicated thread it will always timeout. 
+    Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data.
+    Without a dedicated thread it will always timeout.
     If you have a seperate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
 
 You could do therefore try setting up a dedicated thread, but you could also use the `waitForTransform()` function like this:
@@ -227,7 +252,7 @@ You could do therefore try setting up a dedicated thread, but you could also use
         // Here the future is available
     });
 
-The callback will always be called, but only after some time: when the transform becomes available or when the timeout is reached. In the latter case, if the transform is not ready yet, calling `.get()` on the future will throw a `tf2::TimeoutException`. 
+The callback will always be called, but only after some time: when the transform becomes available or when the timeout is reached. In the latter case, if the transform is not ready yet, calling `.get()` on the future will throw a `tf2::TimeoutException`.
 
 But there is a better way that doesn't need exceptions. The `waitForTransform()` function will
 return immediately and also return a future. However, calling `.get()` or `.wait()` on that future
@@ -295,8 +320,18 @@ Another idea for a workaround is to do something similar to what is done in the 
 
 
 ### Logging
-The node name is now automatically prepended to the log message, so that part can be removed.
+The node name is now automatically prepended to the log message, so that part can be removed. Get the logger from the node, and if necessary, update free functions to accept a logger as a new argument; e.g.,
 
+    ROS_INFO_COND(show_debug_info_, "[MPC] some message with a float value %g", some_member_);
+
+should become
+
+    RCLCPP_INFO_EXPRESSION(get_logger(), show_debug_info_, "some message with a float value %g", some_member_);
+
+The mapping of logger macros is basically just `ROS_FOO(...)` -> `RCLCPP_FOO(get_logger(), ...)` with the exception of
+
+    ROS_INFO_COND(cond, ...) -> RCLCPP_INFO_EXPRESSION(logger, cond, ...)
+    ROS_WARN_DELAYED_THROTTLE(timeout, ...) -> RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), timeout, ...)
 
 ### Shutting down a subscriber
 The `shutdown()` method doesn't exist anymore, but you can just throw away the subscriber with `this->subscription_ = nullptr;` or similar, for instance inside the subscription callback. Curiously, this works even though the `subscription_` member variable is not the sole owner – the `use_count` is 3 in the `minimal_subscriber` example.
