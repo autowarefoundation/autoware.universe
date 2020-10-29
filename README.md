@@ -28,7 +28,7 @@ If cuda or tensorRT is already installed, it is recommended to remove it.
 
 ### Software
 
- - Ubuntu 18.04
+ - Ubuntu 20.04
  - Nvidia driver
  
 If cuda or tensorRT is already installed, it is recommended to remove it.
@@ -55,16 +55,18 @@ mkdir -p src
 vcs import src < autoware.proj.repos
 ```
 
+In this step, [osqp](https://github.com/oxfordcontrol/osqp/blob/master/LICENSE) is installed.  
+Please check that the use is in agreement with its license before proceeding.
+
 2. Run the setup script
 
 ```sh
-./setup_ubuntu18.04.sh
+./setup_ubuntu20.04.sh
 ```
 
-In this step, the following software are installed.  
+In this step, the following software is installed.  
 Please confirm their licenses before using them.
 
-- [osqp](https://github.com/oxfordcontrol/osqp/blob/master/LICENSE)
 - [ROS Melodic](https://github.com/ros/ros/blob/noetic-devel/LICENSE)
 - [CUDA 10.2](https://docs.nvidia.com/cuda/eula/index.html)
 - [cuDNN 7](https://docs.nvidia.com/deeplearning/sdk/cudnn-sla/index.html)
