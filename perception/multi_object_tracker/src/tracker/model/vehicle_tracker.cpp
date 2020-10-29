@@ -19,15 +19,17 @@
 
 #include "multi_object_tracker/tracker/model/vehicle_tracker.hpp"
 #include "multi_object_tracker/utils/utils.hpp"
-#include "tf2/LinearMath/Matrix3x3.h"
-#include "tf2/LinearMath/Quaternion.h"
-#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
+
+#include <tf2/LinearMath/Matrix3x3.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+
 #define EIGEN_MPL2_ONLY
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
 VehicleTracker::VehicleTracker(
-  const ros::Time & time, const autoware_perception_msgs::DynamicObject & object)
+  const rclcpp::Time & time, const autoware_perception_msgs::msg::DynamicObject & object)
 : Tracker(time, object.semantic.type),
   filtered_yaw_(0.0),
   yaw_filter_gain_(0.7),
@@ -48,7 +50,7 @@ VehicleTracker::VehicleTracker(
 {
   object_ = object;
   // yaw
-  if (object.shape.type == autoware_perception_msgs::Shape::BOUNDING_BOX) {
+  if (object.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     double roll, pitch, yaw;
     tf2::Quaternion quaternion;
     tf2::fromMsg(object.state.pose_covariance.pose.orientation, quaternion);
@@ -57,7 +59,7 @@ VehicleTracker::VehicleTracker(
     filtered_yaw_ = yaw;
   }
   // dim
-  if (object.shape.type == autoware_perception_msgs::Shape::BOUNDING_BOX) {
+  if (object.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     is_fixed_dim_ = true;
     filtered_dim_x_ = object.shape.dimensions.x;
     filtered_dim_y_ = object.shape.dimensions.y;
@@ -66,9 +68,9 @@ VehicleTracker::VehicleTracker(
   filtered_area_ = utils::getArea(object.shape);
 }
 
-bool VehicleTracker::predict(const ros::Time & time)
+bool VehicleTracker::predict(const rclcpp::Time & time)
 {
-  double dt = (time - last_update_time_).toSec();
+  double dt = (time - last_update_time_).seconds();
   if (dt < 0.0) dt = 0.0;
   double vel = std::cos(filtered_yaw_) * filtered_vx_ + std::sin(filtered_yaw_) * filtered_vy_;
   if (vel < 0.0 && !is_fixed_yaw_) {
@@ -86,11 +88,11 @@ bool VehicleTracker::predict(const ros::Time & time)
   return true;
 }
 bool VehicleTracker::measure(
-  const autoware_perception_msgs::DynamicObject & object, const ros::Time & time)
+  const autoware_perception_msgs::msg::DynamicObject & object, const rclcpp::Time & time)
 {
   int type = object.semantic.type;
   bool is_changed_unknown_object = false;
-  if (type == autoware_perception_msgs::Semantic::UNKNOWN) {
+  if (type == autoware_perception_msgs::msg::Semantic::UNKNOWN) {
     type = getType();
     is_changed_unknown_object = true;
   }
@@ -98,7 +100,7 @@ bool VehicleTracker::measure(
   setType(type);
 
   // yaw
-  if (object.shape.type == autoware_perception_msgs::Shape::BOUNDING_BOX) {
+  if (object.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     double roll, pitch, yaw;
     tf2::Quaternion quaternion;
     tf2::fromMsg(object.state.pose_covariance.pose.orientation, quaternion);
@@ -130,7 +132,7 @@ bool VehicleTracker::measure(
     filtered_yaw_ = std::atan2(filtered_yaw_vector.y(), filtered_yaw_vector.x());
   }
   // dim
-  if (object.shape.type == autoware_perception_msgs::Shape::BOUNDING_BOX) {
+  if (object.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     if (!is_fixed_dim_) {
       filtered_dim_x_ = object.shape.dimensions.x;
       filtered_dim_y_ = object.shape.dimensions.y;
@@ -147,7 +149,7 @@ bool VehicleTracker::measure(
     area_filter_gain_ * filtered_area_ + (1.0 - area_filter_gain_) * utils::getArea(object.shape);
 
   // vx,vy
-  double dt = (time - last_measurement_time_).toSec();
+  double dt = (time - last_measurement_time_).seconds();
   last_measurement_time_ = time;
   last_update_time_ = time;
   if (0.0 < dt) {
@@ -205,13 +207,13 @@ bool VehicleTracker::measure(
 }
 
 bool VehicleTracker::getEstimatedDynamicObject(
-  const ros::Time & time, autoware_perception_msgs::DynamicObject & object)
+  const rclcpp::Time & time, autoware_perception_msgs::msg::DynamicObject & object)
 {
   object = object_;
-  object.id = unique_id::toMsg(getUUID());
+  object.id = getUUID();
   object.semantic.type = getType();
 
-  if (object.shape.type == autoware_perception_msgs::Shape::BOUNDING_BOX) {
+  if (object.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     double roll, pitch, yaw;
     tf2::Quaternion quaternion;
     tf2::fromMsg(object.state.pose_covariance.pose.orientation, quaternion);
@@ -221,14 +223,14 @@ bool VehicleTracker::getEstimatedDynamicObject(
     object.state.pose_covariance.pose.orientation = tf2::toMsg(filtered_quaternion);
     object.state.orientation_reliable = is_fixed_yaw_;
   }
-  if (is_fixed_dim_ && object.shape.type == autoware_perception_msgs::Shape::BOUNDING_BOX) {
+  if (is_fixed_dim_ && object.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     object.shape.dimensions.x = filtered_dim_x_;
     object.shape.dimensions.y = filtered_dim_y_;
   }
 
   object.state.pose_covariance.pose.position.x = filtered_posx_;
   object.state.pose_covariance.pose.position.y = filtered_posy_;
-  double dt = (time - last_update_time_).toSec();
+  double dt = (time - last_update_time_).seconds();
   if (dt < 0.0) dt = 0.0;
   double vel = std::cos(filtered_yaw_) * filtered_vx_ + std::sin(filtered_yaw_) * filtered_vy_;
   if (vel < 0.0 && !is_fixed_yaw_) {
@@ -247,7 +249,7 @@ bool VehicleTracker::getEstimatedDynamicObject(
   tf2::Quaternion quaternion;
   tf2::fromMsg(object.state.pose_covariance.pose.orientation, quaternion);
   tf2::Matrix3x3(quaternion).getRPY(roll, pitch, yaw);
-  if (object.shape.type == autoware_perception_msgs::Shape::BOUNDING_BOX) {
+  if (object.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     object.state.twist_covariance.twist.linear.x =
       filtered_vx_ * std::cos(-yaw) - filtered_vy_ * std::sin(-yaw);
     object.state.twist_covariance.twist.linear.y = 0.0;
@@ -263,9 +265,9 @@ bool VehicleTracker::getEstimatedDynamicObject(
   return true;
 }
 
-// geometry_msgs::Point VehicleTracker::getPosition(const ros::Time &time)
+// geometry_msgs::msg::Point VehicleTracker::getPosition(const rclcpp::Time &time)
 // {
-//     geometry_msgs::Point position;
+//     geometry_msgs::msg::Point position;
 //     position.x = filtered_posx_;
 //     position.y = filtered_posy_;
 //     position.z = object_.state.pose_covariance.pose.position.z;

@@ -19,15 +19,17 @@
 
 #include "multi_object_tracker/tracker/model/bicycle_tracker.hpp"
 #include "multi_object_tracker/utils/utils.hpp"
-#include "tf2/LinearMath/Matrix3x3.h"
-#include "tf2/LinearMath/Quaternion.h"
-#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
+
+#include <tf2/LinearMath/Matrix3x3.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+
 #define EIGEN_MPL2_ONLY
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
 BicycleTracker::BicycleTracker(
-  const ros::Time & time, const autoware_perception_msgs::DynamicObject & object)
+  const rclcpp::Time & time, const autoware_perception_msgs::msg::DynamicObject & object)
 : Tracker(time, object.semantic.type),
   filtered_posx_(object.state.pose_covariance.pose.position.x),
   filtered_posy_(object.state.pose_covariance.pose.position.y),
@@ -46,9 +48,9 @@ BicycleTracker::BicycleTracker(
   filtered_area_ = utils::getArea(object.shape);
 }
 
-bool BicycleTracker::predict(const ros::Time & time)
+bool BicycleTracker::predict(const rclcpp::Time & time)
 {
-  double dt = (time - last_update_time_).toSec();
+  double dt = (time - last_update_time_).seconds();
   if (dt < 0.0) dt = 0.0;
   filtered_posx_ += filtered_vx_ * dt;
   filtered_posy_ += filtered_vy_ * dt;
@@ -56,11 +58,11 @@ bool BicycleTracker::predict(const ros::Time & time)
   return true;
 }
 bool BicycleTracker::measure(
-  const autoware_perception_msgs::DynamicObject & object, const ros::Time & time)
+  const autoware_perception_msgs::msg::DynamicObject & object, const rclcpp::Time & time)
 {
   int type = object.semantic.type;
   bool is_changed_unknown_object = false;
-  if (type == autoware_perception_msgs::Semantic::UNKNOWN) {
+  if (type == autoware_perception_msgs::msg::Semantic::UNKNOWN) {
     type = getType();
     is_changed_unknown_object = true;
   }
@@ -72,7 +74,7 @@ bool BicycleTracker::measure(
     area_filter_gain_ * filtered_area_ + (1.0 - area_filter_gain_) * utils::getArea(object.shape);
 
   // vx,vy
-  double dt = (time - last_measurement_time_).toSec();
+  double dt = (time - last_measurement_time_).seconds();
   last_measurement_time_ = time;
   last_update_time_ = time;
   if (0.0 < dt) {
@@ -125,13 +127,13 @@ bool BicycleTracker::measure(
 }
 
 bool BicycleTracker::getEstimatedDynamicObject(
-  const ros::Time & time, autoware_perception_msgs::DynamicObject & object)
+  const rclcpp::Time & time, autoware_perception_msgs::msg::DynamicObject & object)
 {
   object = object_;
-  object.id = unique_id::toMsg(getUUID());
+  object.id = getUUID();
   object.semantic.type = getType();
 
-  double dt = (time - last_update_time_).toSec();
+  double dt = (time - last_update_time_).seconds();
   if (dt < 0.0) dt = 0.0;
 
   object.state.pose_covariance.pose.position.x = filtered_posx_;
@@ -155,9 +157,9 @@ bool BicycleTracker::getEstimatedDynamicObject(
   return true;
 }
 
-// geometry_msgs::Point BicycleTracker::getPosition(const ros::Time &time)
+// geometry_msgs::msg::Point BicycleTracker::getPosition(const rclcpp::Time &time)
 // {
-//     geometry_msgs::Point position;
+//     geometry_msgs::msg::Point position;
 //     position.x = filtered_posx_;
 //     position.y = filtered_posy_;
 //     position.z = object_.state.pose_covariance.pose.position.z;

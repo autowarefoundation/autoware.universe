@@ -16,20 +16,25 @@
  * v1.0 Yukihiro Saito
  */
 
-#pragma once
-#include <autoware_perception_msgs/DynamicObjectWithFeatureArray.h>
-#include <list>
-#include <unordered_map>
-#include <vector>
+#ifndef MULTI_OBJECT_TRACKER_DATA_ASSOCIATION_HPP_
+#define MULTI_OBJECT_TRACKER_DATA_ASSOCIATION_HPP_
+
 #include "multi_object_tracker/tracker/tracker.hpp"
+#include "autoware_perception_msgs/msg/dynamic_object_with_feature_array.hpp"
+
 #define EIGEN_MPL2_ONLY
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+
+#include <list>
+#include <unordered_map>
+#include <vector>
+
 class DataAssociation
 {
 private:
   double getDistance(
-    const geometry_msgs::Point & measurement, const geometry_msgs::Point & tracker);
+    const geometry_msgs::msg::Point & measurement, const geometry_msgs::msg::Point & tracker);
   Eigen::MatrixXi can_assgin_matrix_;
   Eigen::MatrixXd max_dist_matrix_;
   Eigen::MatrixXd max_area_matrix_;
@@ -38,11 +43,13 @@ private:
 
 public:
   DataAssociation();
-  bool assign(
+  void assign(
     const Eigen::MatrixXd & src, std::unordered_map<int, int> & direct_assignment,
     std::unordered_map<int, int> & reverse_assignment);
   Eigen::MatrixXd calcScoreMatrix(
-    const autoware_perception_msgs::DynamicObjectWithFeatureArray & measurements,
+    const autoware_perception_msgs::msg::DynamicObjectWithFeatureArray & measurements,
     const std::list<std::shared_ptr<Tracker>> & trackers);
   virtual ~DataAssociation(){};
 };
+
+#endif

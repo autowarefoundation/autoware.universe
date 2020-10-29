@@ -16,14 +16,16 @@
  * v1.0 Yukihiro Saito
  */
 
-#pragma once
-#include "autoware_perception_msgs/DynamicObject.h"
-#include "tracker_base.hpp"
+#ifndef MULTI_OBJECT_TRACKER_PEDESTRIAN_TRACKER_HPP_
+#define MULTI_OBJECT_TRACKER_PEDESTRIAN_TRACKER_HPP_
+
+#include "multi_object_tracker/tracker/model/tracker_base.hpp"
+#include "autoware_perception_msgs/msg/dynamic_object.hpp"
 
 class PedestrianTracker : public Tracker
 {
 private:
-  autoware_perception_msgs::DynamicObject object_;
+  autoware_perception_msgs::msg::DynamicObject object_;
   double filtered_posx_;
   double filtered_posy_;
   double pos_filter_gain_;
@@ -34,16 +36,20 @@ private:
   double area_filter_gain_;
   double last_measurement_posx_;
   double last_measurement_posy_;
-  ros::Time last_update_time_;
-  ros::Time last_measurement_time_;
+  rclcpp::Time last_update_time_;
+  rclcpp::Time last_measurement_time_;
 
 public:
-  PedestrianTracker(const ros::Time & time, const autoware_perception_msgs::DynamicObject & object);
+  PedestrianTracker(
+    const rclcpp::Time & time, const autoware_perception_msgs::msg::DynamicObject & object);
 
-  bool predict(const ros::Time & time) override;
+  bool predict(const rclcpp::Time & time) override;
   bool measure(
-    const autoware_perception_msgs::DynamicObject & object, const ros::Time & time) override;
+    const autoware_perception_msgs::msg::DynamicObject & object,
+    const rclcpp::Time & time) override;
   bool getEstimatedDynamicObject(
-    const ros::Time & time, autoware_perception_msgs::DynamicObject & object) override;
+    const rclcpp::Time & time, autoware_perception_msgs::msg::DynamicObject & object) override;
   virtual ~PedestrianTracker(){};
 };
+
+#endif

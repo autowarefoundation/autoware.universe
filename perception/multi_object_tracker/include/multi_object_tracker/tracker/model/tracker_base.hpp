@@ -16,50 +16,56 @@
  * v1.0 Yukihiro Saito
  */
 
-#pragma once
-#include <autoware_perception_msgs/DynamicObject.h>
-#include <geometry_msgs/Point.h>
-#include <ros/ros.h>
-#include <unique_id/unique_id.h>
+#ifndef MULTI_OBJECT_TRACKER_TRACKER_BASE_HPP_
+#define MULTI_OBJECT_TRACKER_TRACKER_BASE_HPP_
+
+#include "autoware_perception_msgs/msg/dynamic_object.hpp"
+
+#include <geometry_msgs/msg/point.hpp>
+#include <unique_identifier_msgs/msg/uuid.hpp>
+#include <rclcpp/rclcpp.hpp>
 
 class Tracker
 {
 protected:
-  boost::uuids::uuid getUUID() { return uuid_; }
+  unique_identifier_msgs::msg::UUID getUUID() { return uuid_; }
   void setType(int type) { type_ = type; }
 
 private:
-  boost::uuids::uuid uuid_;
+  unique_identifier_msgs::msg::UUID uuid_;
   int type_;
   int no_measurement_count_;
   int total_measurement_count_;
-  ros::Time last_update_with_measurement_time_;
+  rclcpp::Time last_update_with_measurement_time_;
 
 public:
-  Tracker(const ros::Time & time, const int type);
+  Tracker(const rclcpp::Time & time, const int type);
   virtual ~Tracker(){};
   bool updateWithMeasurement(
-    const autoware_perception_msgs::DynamicObject & object, const ros::Time & measurement_time);
+    const autoware_perception_msgs::msg::DynamicObject & object,
+    const rclcpp::Time & measurement_time);
   bool updateWithoutMeasurement();
   int getType() { return type_; }
   int getNoMeasurementCount() { return no_measurement_count_; }
   int getTotalMeasurementCount() { return total_measurement_count_; }
-  double getElapsedTimeFromLastUpdate()
+  double getElapsedTimeFromLastUpdate(const rclcpp::Time & current_time)
   {
-    return (ros::Time::now() - last_update_with_measurement_time_).toSec();
+    return (current_time - last_update_with_measurement_time_).seconds();
   }
-  virtual geometry_msgs::Point getPosition(const ros::Time & time);
-  virtual double getArea(const ros::Time & time);
+  virtual geometry_msgs::msg::Point getPosition(const rclcpp::Time & time);
+  virtual double getArea(const rclcpp::Time & time);
 
   /*
    *　Pure virtual function
    */
 protected:
   virtual bool measure(
-    const autoware_perception_msgs::DynamicObject & object, const ros::Time & time) = 0;
+    const autoware_perception_msgs::msg::DynamicObject & object, const rclcpp::Time & time) = 0;
 
 public:
   virtual bool getEstimatedDynamicObject(
-    const ros::Time & time, autoware_perception_msgs::DynamicObject & object) = 0;
-  virtual bool predict(const ros::Time & time) = 0;
+    const rclcpp::Time & time, autoware_perception_msgs::msg::DynamicObject & object) = 0;
+  virtual bool predict(const rclcpp::Time & time) = 0;
 };
+
+#endif

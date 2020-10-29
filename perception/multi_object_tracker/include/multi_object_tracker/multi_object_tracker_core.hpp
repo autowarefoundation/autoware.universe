@@ -16,44 +16,49 @@
  * v1.0 Yukihiro Saito
  */
 
-#pragma once
+#ifndef MULTI_OBJECT_TRACKER_CORE_HPP_
+#define MULTI_OBJECT_TRACKER_CORE_HPP_
 
-#include <ros/ros.h>
+#include "multi_object_tracker/data_association/data_association.hpp"
+#include "multi_object_tracker/tracker/model/tracker_base.hpp"
+#include "autoware_perception_msgs/msg/dynamic_object_array.hpp"
+#include "autoware_perception_msgs/msg/dynamic_object_with_feature_array.hpp"
+
 #include <tf2/LinearMath/Transform.h>
 #include <tf2/convert.h>
 #include <tf2/transform_datatypes.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <rclcpp/rclcpp.hpp>
+
 #include <memory>
 #include <vector>
-#include "autoware_perception_msgs/DynamicObjectArray.h"
-#include "autoware_perception_msgs/DynamicObjectWithFeatureArray.h"
-#include "geometry_msgs/PoseStamped.h"
-#include "multi_object_tracker/data_association/data_association.hpp"
-#include "multi_object_tracker/tracker/model/tracker_base.hpp"
 
-class MultiObjectTrackerNode
+class MultiObjectTracker : public rclcpp::Node
 {
-private:  // ros
-  ros::NodeHandle nh_;
-  ros::NodeHandle pnh_;
-  ros::Publisher pub_;
-  ros::Subscriber sub_;
-  ros::Timer publish_timer_;  // publish timer
+public:
+  explicit MultiObjectTracker(const rclcpp::NodeOptions & node_options);
+
+private:
+  rclcpp::Publisher<autoware_perception_msgs::msg::DynamicObjectArray>::SharedPtr
+    dynamic_object_pub_;
+  rclcpp::Subscription<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>::SharedPtr
+    dynamic_object_sub_;
+  rclcpp::TimerBase::SharedPtr publish_timer_;  // publish timer
+
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
 
   void measurementCallback(
-    const autoware_perception_msgs::DynamicObjectWithFeatureArray::ConstPtr & input_objects_msg);
-  void publishTimerCallback(const ros::TimerEvent & e);
+    const autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr
+      input_objects_msg);
+  void publishTimerCallback();
 
   std::string world_frame_id_;  // tracking frame
   std::list<std::shared_ptr<Tracker>> list_tracker_;
   DataAssociation data_association_;
-
-public:
-  MultiObjectTrackerNode();
-
-  ~MultiObjectTrackerNode(){};
 };
+
+#endif

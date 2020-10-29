@@ -16,16 +16,22 @@
  * v1.0 Yukihiro Saito
  */
 
-#pragma once
+#ifndef MULTI_OBJECT_TRACKER_UTILS_HPP_
+#define MULTI_OBJECT_TRACKER_UTILS_HPP_
+
+#include "autoware_perception_msgs/msg/shape.hpp"
+
+#include <geometry_msgs/msg/polygon.hpp>
+#include <geometry_msgs/msg/vector3.hpp>
+
 #include <cmath>
-#include "autoware_perception_msgs/Shape.h"
-#include "geometry_msgs/Polygon.h"
-#include "geometry_msgs/Vector3.h"
 
 namespace utils
 {
-double getPolygonArea(const geometry_msgs::Polygon & footprint);
-double getRectangleArea(const geometry_msgs::Vector3 & dimensions);
-double getCircleArea(const geometry_msgs::Vector3 & dimensions);
-double getArea(const autoware_perception_msgs::Shape & shape);
+double getPolygonArea(const geometry_msgs::msg::Polygon & footprint);
+double getRectangleArea(const geometry_msgs::msg::Vector3 & dimensions);
+double getCircleArea(const geometry_msgs::msg::Vector3 & dimensions);
+double getArea(const autoware_perception_msgs::msg::Shape & shape);
 }  // namespace utils
+
+#endif
