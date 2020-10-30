@@ -63,7 +63,8 @@ void GNSSPoser::callbackNavSatFix(
 
   if (!is_fixed) {
     RCLCPP_WARN_STREAM_THROTTLE(
-      this->get_logger(), *this->get_clock(), 1, "Not Fixed Topic. Skipping Calculate.");
+      this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
+      "Not Fixed Topic. Skipping Calculate.");
     return;
   }
 
@@ -75,7 +76,8 @@ void GNSSPoser::callbackNavSatFix(
   position_buffer_.push_front(position);
   if (!position_buffer_.full()) {
     RCLCPP_WARN_STREAM_THROTTLE(
-      this->get_logger(), *this->get_clock(), 1, "Buffering Position. Output Skipped.");
+      this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
+      "Buffering Position. Output Skipped.");
     return;
   }
   const auto median_position = getMedianPosition(position_buffer_);
@@ -162,7 +164,9 @@ GNSSStat GNSSPoser::convert(
   } else if (coordinate_system == CoordinateSystem::PLANE) {
     gnss_stat = NavSatFix2PLANE(nav_sat_fix_msg, plane_zone_, this->get_logger());
   } else {
-    RCLCPP_ERROR_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1, "Unknown Coordinate System");
+    RCLCPP_ERROR_STREAM_THROTTLE(
+      this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
+      "Unknown Coordinate System");
   }
   return gnss_stat;
 }
@@ -252,9 +256,10 @@ bool GNSSPoser::getTransform(
     *transform_stamped_ptr =
       tf2_buffer_.lookupTransform(target_frame, source_frame, tf2::TimePointZero);
   } catch (tf2::TransformException & ex) {
-    RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1, ex.what());
     RCLCPP_WARN_STREAM_THROTTLE(
-      this->get_logger(), *this->get_clock(), 1,
+      this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(), ex.what());
+    RCLCPP_WARN_STREAM_THROTTLE(
+      this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
       "Please publish TF " << target_frame.c_str() << " to " << source_frame.c_str());
 
     transform_stamped_ptr->header.stamp = this->now();
@@ -296,9 +301,10 @@ bool GNSSPoser::getStaticTransform(
       target_frame, source_frame,
       tf2::TimePoint(std::chrono::seconds(stamp.sec) + std::chrono::nanoseconds(stamp.nanosec)));
   } catch (tf2::TransformException & ex) {
-    RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1, ex.what());
     RCLCPP_WARN_STREAM_THROTTLE(
-      this->get_logger(), *this->get_clock(), 1,
+      this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(), ex.what());
+    RCLCPP_WARN_STREAM_THROTTLE(
+      this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
       "Please publish TF " << target_frame.c_str() << " to " << source_frame.c_str());
 
     transform_stamped_ptr->header.stamp = stamp;
