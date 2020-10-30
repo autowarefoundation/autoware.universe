@@ -1,82 +1,44 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.5)
 project(ekf_localizer)
 
-add_compile_options(-std=c++14)
+### Compile options
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  # add_compile_options(-Wall -Wextra -Wpedantic)
+  add_compile_options(-Wno-unused-parameter)
+endif()
 
-find_package(catkin REQUIRED
-  roscpp
-  std_msgs
-  tf2
-  tf2_ros
-  geometry_msgs
-  sensor_msgs
-  rostest
-  rosunit
-)
+# find dependencies
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
 
 find_package(Eigen3 REQUIRED)
 
-catkin_package(
-  INCLUDE_DIRS include
-  CATKIN_DEPENDS
-    roscpp
-    std_msgs
-    tf2
-    tf2_ros
-    geometry_msgs
-    sensor_msgs
+ament_auto_add_executable(ekf_localizer
+  src/ekf_localizer_node.cpp
+  src/ekf_localizer.cpp
+  src/kalman_filter/kalman_filter.cpp
+  src/kalman_filter/time_delay_kalman_filter.cpp)
+ament_target_dependencies(ekf_localizer Eigen3)
+
+# if(BUILD_TESTING)
+#   find_package(ament_cmake_gtest REQUIRED)
+#   ament_add_gtest(ekf_localizer-test test/test_ekf_localizer.test
+#     test/src/test_ekf_localizer.cpp
+#     src/ekf_localizer.cpp
+#     src/kalman_filter/kalman_filter.cpp
+#     src/kalman_filter/time_delay_kalman_filter.cpp
+#   )
+#   target_include_directories(ekf_localizer-test
+#     PRIVATE
+#     include
+#   )
+#   ament_target_dependencies(ekf_localizer-test geometry_msgs rclcpp tf2 tf2_ros)
+# endif()
+
+ament_auto_package(
+  INSTALL_TO_SHARE
+  launch
 )
-
-###########
-## Build ##
-###########
-
-include_directories(
-  include
-  ${catkin_INCLUDE_DIRS}
-  ${EIGEN3_INCLUDE_DIR}
-)
-
-add_executable(ekf_localizer
-src/ekf_localizer_node.cpp
-src/ekf_localizer.cpp
-src/kalman_filter/kalman_filter.cpp
-src/kalman_filter/time_delay_kalman_filter.cpp)
-add_dependencies(ekf_localizer ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(ekf_localizer ${catkin_LIBRARIES})
-
-#############
-## Install ##
-#############
-
-## Install executables and/or libraries
-install(TARGETS ekf_localizer
-        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
-
-## Install project namespaced headers
-install(DIRECTORY include/ekf_localizer/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
-
-install(
-  DIRECTORY
-    launch
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-)
-
-#############
-## Testing ##
-#############
-
-if(CATKIN_ENABLE_TESTING)
-  find_package(rostest REQUIRED)
-
-  add_rostest_gtest(ekf_localizer-test test/test_ekf_localizer.test
-    test/src/test_ekf_localizer.cpp
-    src/ekf_localizer.cpp
-    src/kalman_filter/kalman_filter.cpp
-    src/kalman_filter/time_delay_kalman_filter.cpp)
-
-  target_link_libraries(ekf_localizer-test ${catkin_LIBRARIES})
-endif()

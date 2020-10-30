@@ -44,56 +44,56 @@
   <arg name="output_twist_name" default="ekf_twist"/>
   <arg name="output_twist_with_covariance_name" default="ekf_twist_with_covariance"/>
 
-  <node pkg="ekf_localizer" type="ekf_localizer" name="ekf_localizer" output="screen">
+  <node pkg="ekf_localizer" exec="ekf_localizer" name="ekf_localizer" output="screen">
 
-    <remap unless="$(arg use_pose_with_covariance)" from="in_pose" to="$(arg input_pose_name)"/>
-    <remap unless="$(arg use_pose_with_covariance)" from="in_pose_with_covariance" to="input_pose_with_cov_UNUSED"/>
-    <remap if="$(arg use_pose_with_covariance)" from="in_pose" to="input_pose_UNUSED"/>
-    <remap if="$(arg use_pose_with_covariance)" from="in_pose_with_covariance" to="$(arg input_pose_with_cov_name)"/>
+    <remap unless="$(var use_pose_with_covariance)" from="in_pose" to="$(var input_pose_name)"/>
+    <remap unless="$(var use_pose_with_covariance)" from="in_pose_with_covariance" to="input_pose_with_cov_UNUSED"/>
+    <remap if="$(var use_pose_with_covariance)" from="in_pose" to="input_pose_UNUSED"/>
+    <remap if="$(var use_pose_with_covariance)" from="in_pose_with_covariance" to="$(var input_pose_with_cov_name)"/>
 
-    <remap unless="$(arg use_twist_with_covariance)" from="in_twist" to="$(arg input_twist_name)"/>
-    <remap unless="$(arg use_twist_with_covariance)" from="in_twist_with_covariance" to="input_twist_with_covariance_UNUSED"/>
-    <remap if="$(arg use_twist_with_covariance)" from="in_twist" to="input_twist_UNUSED"/>
-    <remap if="$(arg use_twist_with_covariance)" from="in_twist_with_covariance" to="$(arg input_twist_with_cov_name)"/>
+    <remap unless="$(var use_twist_with_covariance)" from="in_twist" to="$(var input_twist_name)"/>
+    <remap unless="$(var use_twist_with_covariance)" from="in_twist_with_covariance" to="input_twist_with_covariance_UNUSED"/>
+    <remap if="$(var use_twist_with_covariance)" from="in_twist" to="input_twist_UNUSED"/>
+    <remap if="$(var use_twist_with_covariance)" from="in_twist_with_covariance" to="$(var input_twist_with_cov_name)"/>
 
-    <remap from="initialpose" to="$(arg input_initial_pose_name)"/>
+    <remap from="initialpose" to="$(var input_initial_pose_name)"/>
 
     <param name="pose_frame_id" value="map"/>
 
-    <param name="show_debug_info" value="$(arg show_debug_info)"/>
-    <param name="enable_yaw_bias_estimation" value="$(arg enable_yaw_bias_estimation)"/>
+    <param name="show_debug_info" value="$(var show_debug_info)"/>
+    <param name="enable_yaw_bias_estimation" value="$(var enable_yaw_bias_estimation)"/>
 
-    <param name="predict_frequency" value="$(arg predict_frequency)"/>
-    <param name="tf_rate" value="$(arg tf_rate)"/>
-    <param name="extend_state_step" value="$(arg extend_state_step)"/>
+    <param name="predict_frequency" value="$(var predict_frequency)"/>
+    <param name="tf_rate" value="$(var tf_rate)"/>
+    <param name="extend_state_step" value="$(var extend_state_step)"/>
 
-    <param name="use_pose_with_covariance" value="$(arg use_pose_with_covariance)"/>
-    <param name="pose_additional_delay" value="$(arg pose_additional_delay)"/>
-    <param name="pose_measure_uncertainty_time" value="$(arg pose_measure_uncertainty_time)"/>
-    <param name="pose_rate" value="$(arg pose_rate)"/>
-    <param name="pose_gate_dist" value="$(arg pose_gate_dist)"/>
-    <param name="pose_stddev_x" value="$(arg pose_stddev_x)"/>
-    <param name="pose_stddev_y" value="$(arg pose_stddev_y)"/>
-    <param name="pose_stddev_yaw" value="$(arg pose_stddev_yaw)"/>
+    <param name="use_pose_with_covariance" value="$(var use_pose_with_covariance)"/>
+    <param name="pose_additional_delay" value="$(var pose_additional_delay)"/>
+    <param name="pose_measure_uncertainty_time" value="$(var pose_measure_uncertainty_time)"/>
+    <param name="pose_rate" value="$(var pose_rate)"/>
+    <param name="pose_gate_dist" value="$(var pose_gate_dist)"/>
+    <param name="pose_stddev_x" value="$(var pose_stddev_x)"/>
+    <param name="pose_stddev_y" value="$(var pose_stddev_y)"/>
+    <param name="pose_stddev_yaw" value="$(var pose_stddev_yaw)"/>
 
-    <param name="use_twist_with_covariance" value="$(arg use_twist_with_covariance)"/>
-    <param name="twist_additional_delay" value="$(arg twist_additional_delay)"/>
-    <param name="twist_rate" value="$(arg twist_rate)"/>
-    <param name="twist_gate_dist" value="$(arg twist_gate_dist)"/>
-    <param name="twist_stddev_vx" value="$(arg twist_stddev_vx)"/>
-    <param name="twist_stddev_wz" value="$(arg twist_stddev_wz)"/>
+    <param name="use_twist_with_covariance" value="$(var use_twist_with_covariance)"/>
+    <param name="twist_additional_delay" value="$(var twist_additional_delay)"/>
+    <param name="twist_rate" value="$(var twist_rate)"/>
+    <param name="twist_gate_dist" value="$(var twist_gate_dist)"/>
+    <param name="twist_stddev_vx" value="$(var twist_stddev_vx)"/>
+    <param name="twist_stddev_wz" value="$(var twist_stddev_wz)"/>
 
-    <param name="proc_stddev_yaw_c" value="$(arg proc_stddev_yaw_c)"/>
-    <param name="proc_stddev_yaw_bias_c" value="$(arg proc_stddev_yaw_bias_c)"/>
-    <param name="proc_stddev_vx_c" value="$(arg proc_stddev_vx_c)"/>
-    <param name="proc_stddev_wz_c" value="$(arg proc_stddev_wz_c)"/>
+    <param name="proc_stddev_yaw_c" value="$(var proc_stddev_yaw_c)"/>
+    <param name="proc_stddev_yaw_bias_c" value="$(var proc_stddev_yaw_bias_c)"/>
+    <param name="proc_stddev_vx_c" value="$(var proc_stddev_vx_c)"/>
+    <param name="proc_stddev_wz_c" value="$(var proc_stddev_wz_c)"/>
 
-    <remap from="ekf_pose" to="$(arg output_pose_name)"/>
-    <remap from="ekf_pose_with_covariance" to="$(arg output_pose_with_covariance_name)"/>
-    <remap from="ekf_pose_without_yawbias" to="$(arg output_pose_without_yawbias_name)"/>
-    <remap from="ekf_pose_with_covariance_without_yawbias" to="$(arg output_pose_with_covariance_without_yawbias_name)"/>
-    <remap from="ekf_twist" to="$(arg output_twist_name)"/>
-    <remap from="ekf_twist_with_covariance" to="$(arg output_twist_with_covariance_name)"/>
+    <remap from="ekf_pose" to="$(var output_pose_name)"/>
+    <remap from="ekf_pose_with_covariance" to="$(var output_pose_with_covariance_name)"/>
+    <remap from="ekf_pose_without_yawbias" to="$(var output_pose_without_yawbias_name)"/>
+    <remap from="ekf_pose_with_covariance_without_yawbias" to="$(var output_pose_with_covariance_without_yawbias_name)"/>
+    <remap from="ekf_twist" to="$(var output_twist_name)"/>
+    <remap from="ekf_twist_with_covariance" to="$(var output_twist_with_covariance_name)"/>
 
   </node>
 

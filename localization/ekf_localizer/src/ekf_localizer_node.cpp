@@ -18,10 +18,11 @@
 
 int main(int argc, char ** argv)
 {
-  ros::init(argc, argv, "ekf_localizer");
-  EKFLocalizer obj;
+  rclcpp::init(argc, argv);
+  rclcpp::NodeOptions node_options;
+  auto node = std::make_shared<EKFLocalizer>("ekf_localizer", node_options);
 
-  ros::spin();
+  rclcpp::spin(node);
 
   return 0;
 };

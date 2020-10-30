@@ -19,15 +19,15 @@
 #include <memory>
 #include <vector>
 
-#include <geometry_msgs/PoseArray.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/PoseWithCovarianceStamped.h>
-#include <geometry_msgs/TransformStamped.h>
-#include <geometry_msgs/TwistStamped.h>
-#include <geometry_msgs/TwistWithCovarianceStamped.h>
-#include <ros/ros.h>
-#include <std_msgs/Float64.h>
-#include <std_msgs/Float64MultiArray.h>
+#include <geometry_msgs/msg/pose_array.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+#include <geometry_msgs/msg/transform_stamped.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
+#include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <autoware_debug_msgs/msg/float64_stamped.hpp>
+#include <autoware_debug_msgs/msg/float64_multi_array_stamped.hpp>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/utils.h>
 #include <tf2_ros/transform_broadcaster.h>
@@ -36,32 +36,29 @@
 #include "kalman_filter/kalman_filter.hpp"
 #include "kalman_filter/time_delay_kalman_filter.hpp"
 
-class EKFLocalizer
+class EKFLocalizer : public rclcpp::Node
 {
 public:
-  EKFLocalizer();
-  ~EKFLocalizer();
+  EKFLocalizer(const std::string & node_name, const rclcpp::NodeOptions & options);
 
 private:
-  ros::NodeHandle nh_;                  //!< @brief ros public node handler
-  ros::NodeHandle pnh_;                 //!< @brief  ros private node handler
-  ros::Publisher pub_pose_;             //!< @brief ekf estimated pose publisher
-  ros::Publisher pub_pose_cov_;         //!< @brief estimated ekf pose with covariance publisher
-  ros::Publisher pub_twist_;            //!< @brief ekf estimated twist publisher
-  ros::Publisher pub_twist_cov_;        //!< @brief ekf estimated twist with covariance publisher
-  ros::Publisher pub_debug_;            //!< @brief debug info publisher
-  ros::Publisher pub_measured_pose_;    //!< @brief debug measurement pose publisher
-  ros::Publisher pub_yaw_bias_;         //!< @brief ekf estimated yaw bias publisher
-  ros::Publisher pub_pose_no_yawbias_;  //!< @brief ekf estimated yaw bias publisher
-  ros::Publisher pub_pose_cov_no_yawbias_;  //!< @brief ekf estimated yaw bias publisher
-  ros::Subscriber sub_initialpose_;         //!< @brief initial pose subscriber
-  ros::Subscriber sub_pose_;                //!< @brief measurement pose subscriber
-  ros::Subscriber sub_twist_;               //!< @brief measurement twist subscriber
-  ros::Subscriber sub_pose_with_cov_;       //!< @brief measurement pose with covariance subscriber
-  ros::Subscriber sub_twist_with_cov_;      //!< @brief measurement twist with covariance subscriber
-  ros::Timer timer_control_;                //!< @brief time for ekf calculation callback
-  ros::Timer timer_tf_;                     //!< @brief timer to send transform
-  tf2_ros::TransformBroadcaster tf_br_;     //!< @brief tf broadcaster
+  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_pose_;             //!< @brief ekf estimated pose publisher
+  rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pub_pose_cov_;         //!< @brief estimated ekf pose with covariance publisher
+  rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr pub_twist_;            //!< @brief ekf estimated twist publisher
+  rclcpp::Publisher<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr pub_twist_cov_;        //!< @brief ekf estimated twist with covariance publisher
+  rclcpp::Publisher<autoware_debug_msgs::msg::Float64MultiArrayStamped>::SharedPtr pub_debug_;            //!< @brief debug info publisher
+  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_measured_pose_;    //!< @brief debug measurement pose publisher
+  rclcpp::Publisher<autoware_debug_msgs::msg::Float64Stamped>::SharedPtr pub_yaw_bias_;         //!< @brief ekf estimated yaw bias publisher
+  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_pose_no_yawbias_;  //!< @brief ekf estimated yaw bias publisher
+  rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pub_pose_cov_no_yawbias_;  //!< @brief ekf estimated yaw bias publisher
+  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr sub_initialpose_;         //!< @brief initial pose subscriber
+  rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr sub_pose_;                //!< @brief measurement pose subscriber
+  rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr sub_twist_;               //!< @brief measurement twist subscriber
+  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr sub_pose_with_cov_;       //!< @brief measurement pose with covariance subscriber
+  rclcpp::Subscription<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr sub_twist_with_cov_;      //!< @brief measurement twist with covariance subscriber
+  rclcpp::TimerBase::SharedPtr timer_control_;                //!< @brief time for ekf calculation callback
+  rclcpp::TimerBase::SharedPtr timer_tf_;                     //!< @brief timer to send transform
+  std::shared_ptr<tf2_ros::TransformBroadcaster> tf_br_;     //!< @brief tf broadcaster
 
   TimeDelayKalmanFilter ekf_;  //!< @brief  extended kalman filter instance.
 
@@ -117,50 +114,50 @@ private:
   };
 
   /* for model prediction */
-  std::shared_ptr<geometry_msgs::TwistStamped>
+  geometry_msgs::msg::TwistStamped::SharedPtr
     current_twist_ptr_;                                           //!< @brief current measured twist
-  std::shared_ptr<geometry_msgs::PoseStamped> current_pose_ptr_;  //!< @brief current measured pose
-  geometry_msgs::PoseStamped current_ekf_pose_;                   //!< @brief current estimated pose
-  geometry_msgs::PoseStamped
+  geometry_msgs::msg::PoseStamped::SharedPtr current_pose_ptr_;  //!< @brief current measured pose
+  geometry_msgs::msg::PoseStamped current_ekf_pose_;                   //!< @brief current estimated pose
+  geometry_msgs::msg::PoseStamped
     current_ekf_pose_no_yawbias_;                  //!< @brief current estimated pose w/o yaw bias
-  geometry_msgs::TwistStamped current_ekf_twist_;  //!< @brief current estimated twist
-  boost::array<double, 36ul> current_pose_covariance_;
-  boost::array<double, 36ul> current_twist_covariance_;
+  geometry_msgs::msg::TwistStamped current_ekf_twist_;  //!< @brief current estimated twist
+  std::array<double, 36ul> current_pose_covariance_;
+  std::array<double, 36ul> current_twist_covariance_;
 
   /**
    * @brief computes update & prediction of EKF for each ekf_dt_[s] time
    */
-  void timerCallback(const ros::TimerEvent & e);
+  void timerCallback();
 
   /**
    * @brief publish tf for tf_rate [Hz]
    */
-  void timerTFCallback(const ros::TimerEvent & e);
+  void timerTFCallback();
 
   /**
    * @brief set pose measurement
    */
-  void callbackPose(const geometry_msgs::PoseStamped::ConstPtr & msg);
+  void callbackPose(geometry_msgs::msg::PoseStamped::SharedPtr msg);
 
   /**
    * @brief set twist measurement
    */
-  void callbackTwist(const geometry_msgs::TwistStamped::ConstPtr & msg);
+  void callbackTwist(geometry_msgs::msg::TwistStamped::SharedPtr msg);
 
   /**
    * @brief set poseWithCovariance measurement
    */
-  void callbackPoseWithCovariance(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr & msg);
+  void callbackPoseWithCovariance(geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg);
 
   /**
    * @brief set twistWithCovariance measurement
    */
-  void callbackTwistWithCovariance(const geometry_msgs::TwistWithCovarianceStamped::ConstPtr & msg);
+  void callbackTwistWithCovariance(geometry_msgs::msg::TwistWithCovarianceStamped::SharedPtr msg);
 
   /**
    * @brief set initial_pose to current EKF pose
    */
-  void callbackInitialPose(const geometry_msgs::PoseWithCovarianceStamped & msg);
+  void callbackInitialPose(geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg);
 
   /**
    * @brief initialization of EKF
@@ -176,13 +173,13 @@ private:
    * @brief compute EKF update with pose measurement
    * @param pose measurement value
    */
-  void measurementUpdatePose(const geometry_msgs::PoseStamped & pose);
+  void measurementUpdatePose(const geometry_msgs::msg::PoseStamped & pose);
 
   /**
    * @brief compute EKF update with pose measurement
    * @param twist measurement value
    */
-  void measurementUpdateTwist(const geometry_msgs::TwistStamped & twist);
+  void measurementUpdateTwist(const geometry_msgs::msg::TwistStamped & twist);
 
   /**
    * @brief check whether a measurement value falls within the mahalanobis distance threshold
@@ -200,7 +197,7 @@ private:
    * @brief get transform from frame_id
    */
   bool getTransformFromTF(
-    std::string parent_frame, std::string child_frame, geometry_msgs::TransformStamped & transform);
+    std::string parent_frame, std::string child_frame, geometry_msgs::msg::TransformStamped & transform);
 
   /**
    * @brief normalize yaw angle
@@ -212,7 +209,7 @@ private:
   /**
    * @brief create quaternion from roll, pitch and yaw.
    */
-  geometry_msgs::Quaternion createQuaternionFromRPY(double r, double p, double y) const;
+  geometry_msgs::msg::Quaternion createQuaternionFromRPY(double r, double p, double y) const;
 
   /**
    * @brief set current EKF estimation result to current_ekf_pose_ & current_ekf_twist_
