@@ -43,6 +43,10 @@ repositories:
     type: git
     url: https://github.com/tier4/ublox.git
     version: foxy-devel
+  vendor/geometry2:
+    type: git
+    url: https://github.com/ros2/geometry2.git
+    version: foxy
 #  vendor/lanelet2:
 #    type: git
 #    url: https://github.com/fzi-forschungszentrum-informatik/Lanelet2.git
