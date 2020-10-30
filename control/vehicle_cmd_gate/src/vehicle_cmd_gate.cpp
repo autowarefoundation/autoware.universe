@@ -242,8 +242,8 @@ void VehicleCmdGate::publishControlCommands(const Commands & commands)
 
   // Check emergency
   if (use_emergency_handling_ && is_emergency_) {
-    // TODO(nikolai.morin): Use RCLCPP_INFO_THROTTLE with period 1.0 after Foxy
-    RCLCPP_INFO(get_logger(), "Emergency!");
+    RCLCPP_INFO_THROTTLE(
+      get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(), "Emergency!");
     filtered_commands.control = emergency_commands_.control;
     filtered_commands.shift = emergency_commands_.shift;  // tmp
   }
