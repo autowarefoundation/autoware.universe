@@ -52,22 +52,30 @@ void EmergencyHandler::onTwist(const geometry_msgs::msg::TwistStamped::ConstShar
 bool EmergencyHandler::isDataReady()
 {
   if (!driving_capability_) {
-    RCLCPP_DEBUG_THROTTLE(this->get_logger(), *this->get_clock(), 1.0, "waiting for driving_capability msg...");
+    RCLCPP_DEBUG_THROTTLE(
+      this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
+      "waiting for driving_capability msg...");
     return false;
   }
 
   if (!prev_control_command_) {
-    RCLCPP_DEBUG_THROTTLE(this->get_logger(), *this->get_clock(), 1.0, "waiting for prev_control_command msg...");
+    RCLCPP_DEBUG_THROTTLE(
+      this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
+      "waiting for prev_control_command msg...");
     return false;
   }
 
   if (!current_gate_mode_) {
-    RCLCPP_DEBUG_THROTTLE(this->get_logger(), *this->get_clock(), 1.0, "waiting for current_gate_mode msg...");
+    RCLCPP_DEBUG_THROTTLE(
+      this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
+      "waiting for current_gate_mode msg...");
     return false;
   }
 
   if (!twist_) {
-    RCLCPP_DEBUG_THROTTLE(this->get_logger(), *this->get_clock(), 1.0, "waiting for twist msg...");
+    RCLCPP_DEBUG_THROTTLE(
+      this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
+      "waiting for twist msg...");
     return false;
   }
 
@@ -135,32 +143,42 @@ bool EmergencyHandler::isEmergency()
       (autoware_state_->state != AutowareState::PLANNING);
 
     if (is_in_target_state && !driving_capability_->autonomous_driving) {
-      RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1.0, "autonomous_driving is failed");
+      RCLCPP_WARN_THROTTLE(
+        this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
+        "autonomous_driving is failed");
       return true;
     }
   }
 
   if (current_gate_mode_->data == GateMode::REMOTE) {
     if (!driving_capability_->remote_control) {
-      RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1.0, "remote_control is failed");
+      RCLCPP_WARN_THROTTLE(
+        this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
+        "remote_control is failed");
       return true;
     }
   }
 
   if (!driving_capability_->manual_driving) {
-    RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1.0, "manual_driving is failed");
+    RCLCPP_WARN_THROTTLE(
+      this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
+      "manual_driving is failed");
     return true;
   }
 
   /* Currently not supported */
   // if (!driving_capability_->safe_stop) {
-  //   RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1.0, "safe_stop is failed");
+  //   RCLCPP_WARN_THROTTLE(
+  //     this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
+  //     "safe_stop is failed");
   //   return true;
   // }
   /* Currently not supported */
 
   if (!driving_capability_->emergency_stop) {
-    RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1.0, "emergency_stop is failed");
+    RCLCPP_WARN_THROTTLE(
+      this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
+      "emergency_stop is failed");
     return true;
   }
 
