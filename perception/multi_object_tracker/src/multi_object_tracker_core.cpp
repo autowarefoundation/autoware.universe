@@ -83,8 +83,8 @@ void MultiObjectTracker::measurementCallback(
     auto status = future.wait_for(tf2::durationFromSec(0.5));
     if (status != std::future_status::ready) {
       RCLCPP_WARN_THROTTLE(
-        this->get_logger(), *(this->get_clock()), 1.0, "cannot transform to world frame form %s",
-        input_transformed_objects.header.frame_id);
+        this->get_logger(), *(this->get_clock()), std::chrono::milliseconds(1000).count(),
+        "cannot transform to world frame form %s", input_transformed_objects.header.frame_id);
       return;
     }
 
