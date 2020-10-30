@@ -331,7 +331,12 @@ should become
 The mapping of logger macros is basically just `ROS_FOO(...)` -> `RCLCPP_FOO(get_logger(), ...)` with the exception of
 
     ROS_INFO_COND(cond, ...) -> RCLCPP_INFO_EXPRESSION(logger, cond, ...)
-    ROS_WARN_DELAYED_THROTTLE(timeout, ...) -> RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), timeout, ...)
+    ROS_WARN_DELAYED_THROTTLE(duration, ...) -> RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), duration, ...)
+
+where the `duration` is an integer interpreted as milliseconds. A readable way to formulate that is
+
+    static constexpr auto duration = std::chrono::milliseconds(5000).count();
+    RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), duration, ...)
 
 ### Shutting down a subscriber
 The `shutdown()` method doesn't exist anymore, but you can just throw away the subscriber with `this->subscription_ = nullptr;` or similar, for instance inside the subscription callback. Curiously, this works even though the `subscription_` member variable is not the sole owner – the `use_count` is 3 in the `minimal_subscriber` example.
