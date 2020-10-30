@@ -407,7 +407,8 @@ void AstarNavi::updateTargetIndex()
       // Finished publishing all partial trajectories
       is_completed_ = true;
       this->set_parameter(rclcpp::Parameter("is_completed", true));
-      RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 1, "Astar completed");
+      RCLCPP_INFO_THROTTLE(
+        get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(), "Astar completed");
     } else {
       // Switch to next partial trajectory
       prev_target_index_ = target_index_;
