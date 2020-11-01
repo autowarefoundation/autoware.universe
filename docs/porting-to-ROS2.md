@@ -345,44 +345,9 @@ You could do therefore try setting up a dedicated thread, but you could also use
 
 The callback will always be called, but only after some time: when the transform becomes available or when the timeout is reached. In the latter case, if the transform is not ready yet, calling `.get()` on the future will throw a `tf2::TimeoutException`.
 
-But there is a better way that doesn't need exceptions. The `waitForTransform()` function will
-return immediately and also return a future. However, calling `.get()` or `.wait()` on that future
-does not respect the timeout. That is, it will wait however long it takes until a transform arrives
-and never throw an exception. So, to wait on the returned future for a specified time,
-
-    tf_future.wait_for(timeout)
-
-Putting all pieces together, to block until a specific transform is available, create a separate method and call it at the end of the constructor to ensure that all members are properly initialized first
-
-```c++
-MPCFollower::MPCFollower()
-{
-...
-blockUntilVehiclePositionAvailable(tf2::durationFromSec(5.0));
-}
-
-void MPCFollower::blockUntilVehiclePositionAvailable(const tf2::Duration & timeout)
-{
-  auto cti = std::make_shared<tf2_ros::CreateTimerROS>(
-    this->get_node_base_interface(), this->get_node_timers_interface());
-  tf_buffer_.setCreateTimerInterface(cti);
-
-  while (rclcpp::ok()) {
-    static constexpr auto input = "map", output = "base_link";
-    auto tf_future = tf_buffer_.waitForTransform(
-      input, output, tf2::TimePointZero, tf2::durationFromSec(0.0), [](auto &) {});
-    const auto status = tf_future.wait_for(timeout);
-    if (status == std::future_status::ready) {
-      break;
-    } else {
-      RCLCPP_INFO(
-        get_logger(), "waiting another %d seconds for %s->%s transform",
-        std::chrono::duration_cast<std::chrono::seconds>(timeout).count(), input, output);
-    }
-  }
-}
-
-```
+The `waitForTransform()` function will return immediately and also return a future. However, calling
+`.get()` or `.wait()` on that future does not respect the timeout. That is, it will wait however
+long it takes until a transform arrives and never throw an exception.
 
 ### Shared pointers
 Be careful in creating a `std::shared_ptr` to avoid a double-free situation when the constructor argument after porting is a dereferenced shared pointer. For example, if `msg` previously was a raw pointer and now is a shared pointer, the following would lead to both `msg` and `a` deleting the same resource.
