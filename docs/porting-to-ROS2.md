@@ -82,29 +82,12 @@ endif()
 ```
 
 #### compiler flags
-Make sure that flags are only added explicitly that a compiler understands. Not everyone is using `gcc` or `clang`
+Make sure that flags are added only for specific compilers. Not everyone uses `gcc` or `clang`.
 
 ```cmake
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
+  add_compile_options(-Wall -Wextra -Wpedantic -Wno-unused-parameter)
 endif()
-```
-
-#### headers
-It is good practice -- though not required for the build to succeed -- to add all source files explicity in `cmake` so e.g. IDE know if a file belongs to the project or not. For example,
-
-```cmake
-set(MPC_FOLLOWER_SRC
-  src/mpc_utils.cpp
-  src/interpolate.cpp
-  src/mpc_follower_node.cpp
-)
-
-set(MPC_FOLLOWER_HDR
-  include/mpc_follower/mpc_utils.h
-  include/mpc_follower/interpolate.h
-)
-ament_auto_add_executable(mpc_follower ${MPC_FOLLOWER_SRC} ${MPC_FOLLOWER_HDR})
 ```
 
 ### Replacing `std_msgs`
@@ -193,23 +176,11 @@ This makes the parameter visible to ros2 and its initial value can be set e.g. v
 section on *dynamic reconfigure* to achieve that.
 
 #### Adjust param file
-Two levels of hierarchy need to be added around the parameters themselves:
+Two levels of hierarchy need to be added around the parameters themselves and each level has to be indented relative to its parent (by two spaces in this example):
 
     <node name or /**>:
       ros__parameters:
         <params>
-
-
-##### Indendation
-Without proper indentation (4 spaces in the example above), there is a segfault when the YAML is
-parsed during `rclcpp::init(argc, argv)`:
-
-    [mpc_follower-1] free(): double free detected in tcache 2
-
-and the actual error message is well hidden
-
-    [mpc_follower-1]   'Couldn't parse params file: '--params-file /home/frederik.beaujean/AutowareArchitectureProposal/install/mpc_follower/share/mpc_follower/config/mpc_follower_param.yaml'. Error: Cannot have a value before ros__parameters at line 2, at /tmp/binarydeb/ros-foxy-rcl-yaml-param-parser-1.1.7/src/parser.c:1598, at /tmp/binarydeb/ros-foxy-rcl-1.1.7/src/rcl/arguments.c:391'
-
 
 ##### Types
 Also, ROS1 didn't have a problem when you specify an integer, e.g. `28` for a `double` parameter, but ROS2 does:
@@ -328,10 +299,22 @@ should become
 
     RCLCPP_INFO_EXPRESSION(get_logger(), show_debug_info_, "some message with a float value %g", some_member_);
 
-The mapping of logger macros is basically just `ROS_FOO(...)` -> `RCLCPP_FOO(get_logger(), ...)` with the exception of
+The mapping of logger macros is basically just
 
-    ROS_INFO_COND(cond, ...) -> RCLCPP_INFO_EXPRESSION(logger, cond, ...)
-    ROS_WARN_DELAYED_THROTTLE(duration, ...) -> RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), duration, ...)
+```diff
+-ROS_INFO(...)
++RCLCPP_INFO(get_logger(), ...)
+```
+
+with the exception of
+
+```diff
+-ROS_INFO_COND(cond, ...)
++RCLCPP_INFO_EXPRESSION(logger, cond, ...)
+
+-ROS_WARN_DELAYED_THROTTLE(duration, ...)
++RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), duration, ...)
+```
 
 where the `duration` is an integer interpreted as milliseconds. A readable way to formulate that is
 
@@ -396,7 +379,7 @@ If you forget `<build_type>ament_cmake</build_type>`, or you use package format 
 
 
 ### YAML param file
-Used tabs instead of spaces in your param.yaml file? _Clearly_, the most user-friendly error message is
+Used tabs instead of spaces in your param.yaml file? Or didn't indent properly? _Clearly_, the most user-friendly error message is
 
     $ ros2 launch mypackage mypackage.launch.xml
     [INFO] [launch]: All log files can be found below /home/user/.ros/log/2020-10-19-19-09-13-676799-t4-30425
