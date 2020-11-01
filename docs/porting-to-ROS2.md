@@ -170,10 +170,129 @@ which is equivalent to
 
     const double vel_lim = declare_parameter<double>("vel_lim", 25.0);
 
-This makes the parameter visible to ros2 and its initial value can be set e.g. via a parameter file.
+This allows to set the initial value e.g. via a parameter file.
 
-**NOTE** Any change during runtime with e.g. `ros2 param set` will not alter `vel_lim`! See the
-section on *dynamic reconfigure* to achieve that.
+**NOTE** Calling `ros2 param set <NODE> vel_lim 1.234` after starting the node works but will not
+alter the member `vel_lim`! See the section below on *dynamic reconfigure* to achieve that.
+
+### dynamic reconfigure
+Dynamic reconfigure as it existed in ROS1 does not exist anymore in ROS2 and can be achieved by
+simpler means using a parameter callback.
+
+#### cfg files
+
+Remove the package's `.cfg` file and associated `cfg/` subdirectory.
+
+#### header file
+
+In the header file, remove includes of `dynamic_reconfigure` and the node-specific config file; e.g.
+
+```diff
+-#include <dynamic_reconfigure/server.h>
+-#include <mpc_follower/MPCFollowerConfig.h>
+```
+
+you need to set a parameter handler and callback function:
+
+```c++
+OnSetParametersCallbackHandle::SharedPtr set_param_res_;
+rcl_interfaces::msg::SetParametersResult paramCallback(const std::vector<rclcpp::Parameter> & parameters);
+```
+
+If there are many parameters (rule of thumb: more than 2), it is more practical to group them in a
+struct defined within the node's declaration:
+
+```c++
+class MPCFollower : public rclcpp::Node
+{
+
+  struct MPCParam
+  {
+    int prediction_horizon;
+    ...
+  } mpc_param;
+
+};
+
+```
+
+Add a method to declare all the parameters
+
+    void declareMPCparameters();
+
+#### implementation file
+
+Write the following into the definition of the class that inherits from `rclcpp::Node`.
+
+A few macro and a utility function help keep the following code and void of redundancy
+
+```c++
+#define DECLARE_MPC_PARAM(PARAM_STRUCT, NAME, VALUE) \
+  PARAM_STRUCT.NAME = declare_parameter("mpc_" #NAME, VALUE)
+
+#define UPDATE_MPC_PARAM(PARAM_STRUCT, NAME) \
+  update_param(parameters, "mpc_" #NAME, PARAM_STRUCT.NAME)
+
+namespace
+{
+template <typename T>
+void update_param(
+  const std::vector<rclcpp::Parameter> & parameters, const std::string & name, T & value)
+{
+  auto it = std::find_if(parameters.cbegin(), parameters.cend(),
+    [&name](const rclcpp::Parameter & parameter) { return parameter.get_name() == name; });
+  if (it != parameters.cend()) {
+    value = it->template get_value<T>();
+  }
+}
+}  // namespace
+```
+
+In the constructor, define the callback and declare parameters with default values
+
+```c++
+// the type of the ROS parameter is defined by the C++ type of the default value,
+// so 50 is not equivalent to 50.0!
+DECLARE_MPC_PARAM(mpc_param_, prediction_horizon, 50);
+
+// set parameter callback
+set_param_res_ = add_on_set_parameters_callback(std::bind(&MPCFollower::paramCallback, this, _1));
+```
+
+Inside the callback, you have to manually update each parameter for which you want to react to
+changes from the outside. You can (inadvertently) declare more parameters than you react to.
+
+```c++
+  rcl_interfaces::msg::SetParametersResult result;
+  result.successful = true;
+  result.reason = "success";
+
+  // strong exception safety wrt MPCParam
+  MPCParam param = mpc_param_;
+  try {
+    UPDATE_MPC_PARAM(param, prediction_horizon);
+    // update all parameters
+
+    // transaction succeeds, now assign values
+    mpc_param_ = param;
+  } catch (const rclcpp::exceptions::InvalidParameterTypeException & e) {
+    result.successful = false;
+    result.reason = e.what();
+  }
+
+  return result;
+```
+
+When the node is running, you can set the parameter dynamically with the following command. The
+value is converted to a type as in C++, so setting an `int` to 51.0 leads to an
+`InvalidParameterTypeException` in the callback.
+
+```
+$ ros2 param set /mpc_follower prediction_horizon 51
+```
+
+Make sure relevant parameters can be set from the command line or `rqt` and changes are reflected by
+the package.
 
 #### Adjust param file
 Two levels of hierarchy need to be added around the parameters themselves and each level has to be indented relative to its parent (by two spaces in this example):
@@ -189,6 +308,7 @@ Also, ROS1 didn't have a problem when you specify an integer, e.g. `28` for a `d
     [vehicle_cmd_gate-1]   what():  parameter 'vel_lim' has invalid type: expected [double] got [integer]
 
 Best to just change `28` to `28.0` in the param file. See also [this issue](https://github.com/ros2/rclcpp/issues/979).
+
 
 
 ### Launch file
