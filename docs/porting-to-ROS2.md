@@ -22,14 +22,18 @@ $ git checkout ros2
 3. enter ADE
 ```
 $ cd ~/ade-home/AutowareArchitectureProposal
-$ ade start --enter
+$ ade start --update --enter
 $ cd AutowareArchitectureProposal
 ```
 
 All commands that follow are to be entered in ADE. Next step is to fetch the sub-repos:
 
     cd ~/AutowareArchitectureProposal
-    vcs import < autoware.proj.repos
+    mkdir src
+    vcs import src < autoware.proj.repos
+    rosdep update
+    rosdep install -y --from-paths src --ignore-src --rosdistro foxy
+    colcon build --event-handlers console_cohesion+
 
 For instance, the `shift_decider` package is in the repository `github.com:tier4/pilot.auto.git`, which is now in the `autoware/pilot.auto` subdirectory.
 
