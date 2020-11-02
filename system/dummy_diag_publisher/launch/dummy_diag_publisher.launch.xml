@@ -1,46 +1,47 @@
 <launch>
   <arg name="launch_rqt" default="false"/>
 
-  <group if="$(arg launch_rqt)">
-    <node pkg="rqt_reconfigure" type="rqt_reconfigure" name="rqt_reconfigure"/>
-    <node pkg="rqt_runtime_monitor" type="rqt_runtime_monitor" name="rqt_runtime_monitor"/>
+  <group if="$(var launch_rqt)">
+    <node pkg="rqt_reconfigure" exec="rqt_reconfigure" name="rqt_reconfigure"/>
+    <!-- rqt_runtime_monitor has not been ported to ROS2 -->
+    <!-- <node pkg="rqt_runtime_monitor" type="rqt_runtime_monitor" name="rqt_runtime_monitor"/> -->
   </group>
 
   <!-- velodyne -->
-  <include file="$(find dummy_diag_publisher)/launch/dummy_diag_publisher_node.launch">
+  <include file="$(find-pkg-share dummy_diag_publisher)/launch/dummy_diag_publisher_node.launch.xml">
     <arg name="diag_name" value="velodyne_connection"/>
   </include>
-  <include file="$(find dummy_diag_publisher)/launch/dummy_diag_publisher_node.launch">
+  <include file="$(find-pkg-share dummy_diag_publisher)/launch/dummy_diag_publisher_node.launch.xml">
     <arg name="diag_name" value="velodyne_temperature"/>
   </include>
 
   <!-- camera -->
-  <include file="$(find dummy_diag_publisher)/launch/dummy_diag_publisher_node.launch">
+  <include file="$(find-pkg-share dummy_diag_publisher)/launch/dummy_diag_publisher_node.launch.xml">
     <arg name="diag_name" value="camera_connection"/>
   </include>
 
   <!-- bumper -->
-  <include file="$(find dummy_diag_publisher)/launch/dummy_diag_publisher_node.launch">
+  <include file="$(find-pkg-share dummy_diag_publisher)/launch/dummy_diag_publisher_node.launch.xml">
     <arg name="diag_name" value="bumper_pushed"/>
   </include>
 
   <!-- off course -->
-  <include file="$(find dummy_diag_publisher)/launch/dummy_diag_publisher_node.launch">
+  <include file="$(find-pkg-share dummy_diag_publisher)/launch/dummy_diag_publisher_node.launch.xml">
     <arg name="diag_name" value="off_course"/>
   </include>
 
   <!-- vehicle mcu -->
-  <include file="$(find dummy_diag_publisher)/launch/dummy_diag_publisher_node.launch">
+  <include file="$(find-pkg-share dummy_diag_publisher)/launch/dummy_diag_publisher_node.launch.xml">
     <arg name="diag_name" value="vehicle_mcu_connection"/>
   </include>
 
   <!-- internet connection -->
-  <include file="$(find dummy_diag_publisher)/launch/dummy_diag_publisher_node.launch">
+  <include file="$(find-pkg-share dummy_diag_publisher)/launch/dummy_diag_publisher_node.launch.xml">
     <arg name="diag_name" value="internet_connection"/>
   </include>
 
   <!-- speaker -->
-  <include file="$(find dummy_diag_publisher)/launch/dummy_diag_publisher_node.launch">
+  <include file="$(find-pkg-share dummy_diag_publisher)/launch/dummy_diag_publisher_node.launch.xml">
     <arg name="diag_name" value="speaker"/>
   </include>
 </launch>

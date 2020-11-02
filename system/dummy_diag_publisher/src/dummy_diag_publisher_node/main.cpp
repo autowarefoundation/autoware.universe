@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 
 #include <dummy_diag_publisher/dummy_diag_publisher_node.h>
 
 int main(int argc, char * argv[])
 {
-  ros::init(argc, argv, "dummy_diag_publisher");
-
-  DummyDiagPublisherNode node;
-
-  ros::spin();
+  rclcpp::init(argc, argv);
+  auto node = std::make_shared<DummyDiagPublisherNode>();
+  rclcpp::spin(node);
+  rclcpp::shutdown();
 
   return 0;
 }

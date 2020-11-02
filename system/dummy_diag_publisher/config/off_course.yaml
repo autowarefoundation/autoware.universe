@@ -1,8 +1,10 @@
-update_rate: 10
-diag_config:
-  name: "off_course"
-  hardware_id: "off_course_checker"
-  msg_ok: ""
-  msg_warn: "vehicle would be off course"
-  msg_error: "vehicle is off course"
-  msg_stale: ""
+/**:
+  ros__parameters:
+    update_rate: 10.0
+    diag_config:
+      name: "off_course"
+      hardware_id: "off_course_checker"
+      msg_ok: ""
+      msg_warn: "vehicle would be off course"
+      msg_error: "vehicle is off course"
+      msg_stale: ""

@@ -1,8 +1,10 @@
-update_rate: 10
-diag_config:
-  name: "speaker"
-  hardware_id: "speaker"
-  msg_ok: ""
-  msg_warn: "speaker is unstable"
-  msg_error: "speaker is broken"
-  msg_stale: ""
+/**:
+  ros__parameters:
+    update_rate: 10.0
+    diag_config:
+      name: "speaker"
+      hardware_id: "speaker"
+      msg_ok: ""
+      msg_warn: "speaker is unstable"
+      msg_error: "speaker is broken"
+      msg_stale: ""
