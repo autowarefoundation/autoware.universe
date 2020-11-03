@@ -81,7 +81,7 @@ if(NOT CMAKE_CXX_STANDARD)
 endif()
 ```
 
-#### compiler flags
+#### Compiler flags
 Make sure that flags are added only for specific compilers. Not everyone uses `gcc` or `clang`.
 
 ```cmake
@@ -185,7 +185,8 @@ Remove the package's `.cfg` file and associated `cfg/` subdirectory.
 
 #### header file
 
-In the header file, remove includes of `dynamic_reconfigure` and the node-specific config file; e.g.
+In the header file, remove includes of `dynamic_reconfigure` and the node-specific config file. As a concrete example,
+take the [MPC follower](https://github.com/tier4/Pilot.Auto/pull/52)
 
 ```diff
 -#include <dynamic_reconfigure/server.h>
@@ -224,7 +225,7 @@ Add a method to declare all the parameters
 
 Write the following into the definition of the class that inherits from `rclcpp::Node`.
 
-A few macro and a utility function help keep the following code and void of redundancy
+A few macros and a utility function can help keep the following code clean and void of redundancy. These macros are optional but help when many parameters are to be updated dynamically.
 
 ```c++
 #define DECLARE_MPC_PARAM(PARAM_STRUCT, NAME, VALUE) \
@@ -259,8 +260,7 @@ DECLARE_MPC_PARAM(mpc_param_, prediction_horizon, 50);
 set_param_res_ = add_on_set_parameters_callback(std::bind(&MPCFollower::paramCallback, this, _1));
 ```
 
-Inside the callback, you have to manually update each parameter for which you want to react to
-changes from the outside. You can (inadvertently) declare more parameters than you react to.
+Inside the callback, you have to manually update each parameter for which you want to react to changes from the outside. You can (inadvertently) declare more parameters than you react to.
 
 ```c++
   rcl_interfaces::msg::SetParametersResult result;
@@ -271,7 +271,7 @@ changes from the outside. You can (inadvertently) declare more parameters than y
   MPCParam param = mpc_param_;
   try {
     UPDATE_MPC_PARAM(param, prediction_horizon);
-    // update all parameters
+    // update all other parameters, too
 
     // transaction succeeds, now assign values
     mpc_param_ = param;
@@ -283,9 +283,7 @@ changes from the outside. You can (inadvertently) declare more parameters than y
   return result;
 ```
 
-When the node is running, you can set the parameter dynamically with the following command. The
-value is converted to a type as in C++, so setting an `int` to 51.0 leads to an
-`InvalidParameterTypeException` in the callback.
+When the node is running, you can set the parameter dynamically with the following command. The value is converted to a type as in C++, so setting an `int` to 51.0 leads to an `InvalidParameterTypeException` in the callback.
 
 ```
 $ ros2 param set /mpc_follower prediction_horizon 51
@@ -295,7 +293,7 @@ Make sure relevant parameters can be set from the command line or `rqt` and chan
 the package.
 
 #### Parameter client [discouraged]
-The parameter client is another way to dynamically set the parameter defined in the node. The client subscribes to the `/parameter_event` topic and call the callback function. This allows the client node to get all the information about parameter change in every node. The callback argument contains the target node name, which can be used to determine which node the parameter change is for.
+The parameter client is another way to dynamically set the parameter defined in the node. The client subscribes to the `/parameter_event` topic and call the callback function. This allows the client node to get all the information about parameter changes in every node. The callback argument contains the target node name, which can be used to determine which node the parameter change is for.
 
 In .hpp,
 
@@ -353,7 +351,6 @@ Also, ROS1 didn't have a problem when you specify an integer, e.g. `28` for a `d
 Best to just change `28` to `28.0` in the param file. See also [this issue](https://github.com/ros2/rclcpp/issues/979).
 
 
-
 ### Launch file
 There is a [migration guide](https://index.ros.org/doc/ros2/Tutorials/Launch-files-migration-guide/). One thing it doesn't mention is that the `.launch` file also needs to be renamed to `.launch.xml`.
 
@@ -388,9 +385,7 @@ You could do therefore try setting up a dedicated thread, but you could also use
 
 The callback will always be called, but only after some time: when the transform becomes available or when the timeout is reached. In the latter case, if the transform is not ready yet, calling `.get()` on the future will throw a `tf2::TimeoutException`.
 
-The `waitForTransform()` function will return immediately and also return a future. However, calling
-`.get()` or `.wait()` on that future does not respect the timeout. That is, it will wait however
-long it takes until a transform arrives and never throw an exception.
+The `waitForTransform()` function will return immediately and also return a future. However, calling `.get()` or `.wait()` on that future does not respect the timeout. That is, it will wait however long it takes until a transform arrives and never throw an exception.
 
 ### Shared pointers
 Be careful in creating a `std::shared_ptr` to avoid a double-free situation when the constructor argument after porting is a dereferenced shared pointer. For example, if `msg` previously was a raw pointer and now is a shared pointer, the following would lead to both `msg` and `a` deleting the same resource.
@@ -419,7 +414,9 @@ Another idea for a workaround is to do something similar to what is done in the 
 
 
 ### Logging
-The node name is now automatically prepended to the log message, so that part can be removed. Get the logger from the node, and if necessary, update free functions to accept a logger as a new argument; e.g.,
+The node name is now automatically prepended to the log message, so that part can be removed. In methods, get the logger from the node with `get_logger()`. In a free function `foo()`, use `rclcpp::get_logger("foo")`. To provide a further level of hierarchy, use `get_logger("foo").get_child("bar")`.
+
+For example,
 
     ROS_INFO_COND(show_debug_info_, "[MPC] some message with a float value %g", some_member_);
 
@@ -537,15 +534,14 @@ Used tabs instead of spaces in your param.yaml file? _Clearly_, the most user-fr
 
 and that is indeed what ROS2 will tell you.
 
+
 #### No indentation
 
-Without proper indentation of levels, there is a segfault when the YAML is parsed during `rclcpp::init(argc, argv)`. The
-error is similar to the above but begins with
+Without proper indentation of levels, there is a segfault when the YAML is parsed during `rclcpp::init(argc, argv)`. The error is similar to the above but begins with
 
     [mpc_follower-1] free(): double free detected in tcache 2
 
-Note that this message may be hidden when just launching with `ros2 launch`. It is shown running the node under
-`valgrind` which requires a `launch-prefix`. For example, modify `mpc_follower.launch.xml`
+Note that this message may be hidden when just launching with `ros2 launch`. It is shown running the node under `valgrind` which requires a `launch-prefix`. For example, modify `mpc_follower.launch.xml`
 
     <node pkg="mpc_follower" exec="mpc_follower" name="mpc_follower" output="screen" launch-prefix="valgrind">
 
