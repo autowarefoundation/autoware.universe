@@ -294,6 +294,49 @@ $ ros2 param set /mpc_follower prediction_horizon 51
 Make sure relevant parameters can be set from the command line or `rqt` and changes are reflected by
 the package.
 
+#### Parameter client [discouraged]
+The parameter client is another way to dynamically set the parameter defined in the node. The client subscribes to the `/parameter_event` topic and call the callback function. This allows the client node to get all the information about parameter change in every node. The callback argument contains the target node name, which can be used to determine which node the parameter change is for.
+
+In .hpp,
+
+```c++
+rclcpp::AsyncParametersClient::SharedPtr param_client_;
+rclcpp::Subscription<rcl_interfaces::msg::ParameterEvent>::SharedPtr sub_param_event_;
+
+void paramCallback(const rcl_interfaces::msg::ParameterEvent::SharedPtr event);
+```
+
+In .cpp,
+
+```c++
+// client setting
+param_client_ = std::make_shared<rclcpp::AsyncParametersClient>(this, "param_client");
+sub_param_event_ =
+  param_client_->on_parameter_event(std::bind(&VelocityController::paramCallback, this, std::placeholders::_1));
+
+// callback setting
+void paramCallback(const rcl_interfaces::msg::ParameterEvent::SharedPtr event)
+{
+  for (auto & new_parameter : event->new_parameters) {
+      std::cout << "  " << new_parameter.name << std::endl;
+  }
+  for (auto & changed_parameter : event->changed_parameters) {
+      std::cout << "  " << changed_parameter.name << std::endl;
+  }
+  for (auto & deleted_parameter : event->deleted_parameters) {
+      std::cout << "  " << deleted_parameter.name << std::endl;
+  }
+};
+```
+
+However, this method calls the callback for all parameter changes of all nodes. So the `add_on_set_parameters_callback` is recommended for the porting of the dynamic reconfigure.
+
+reference:
+
+https://discourse.ros.org/t/composition-and-parameters-best-practice-suggestions/1001
+
+https://github.com/ros2/rclcpp/issues/243 - Connect to preview
+
 #### Adjust param file
 Two levels of hierarchy need to be added around the parameters themselves and each level has to be indented relative to its parent (by two spaces in this example):
 
