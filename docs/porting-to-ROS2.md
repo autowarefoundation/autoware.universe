@@ -403,7 +403,9 @@ with the exception of
 
 where the `duration` is an integer interpreted as milliseconds. A readable way to formulate that is
 
-    static constexpr auto duration = std::chrono::milliseconds(5000).count();
+    using namespace std::literals;
+    ...
+    static constexpr auto duration = (5000ms).count();
     RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), duration, ...)
 
 ### Shutting down a subscriber
@@ -464,7 +466,9 @@ If you forget `<build_type>ament_cmake</build_type>`, or you use package format 
 
 
 ### YAML param file
-Used tabs instead of spaces in your param.yaml file? Or didn't indent properly? _Clearly_, the most user-friendly error message is
+
+#### Tabs instead of spaces
+Used tabs instead of spaces in your param.yaml file? _Clearly_, the most user-friendly error message is
 
     $ ros2 launch mypackage mypackage.launch.xml
     [INFO] [launch]: All log files can be found below /home/user/.ros/log/2020-10-19-19-09-13-676799-t4-30425
@@ -489,3 +493,21 @@ Used tabs instead of spaces in your param.yaml file? Or didn't indent properly? 
     [ERROR] [mypackage-1]: process has died [pid 30427, exit code -6, cmd '/home/user/workspace/install/mypackage/lib/mypackage/mypackage --ros-args -r __node:=mypackage --params-file /home/user/workspace/install/mypackage/share/mypackage/param/myparameters.yaml'].
 
 and that is indeed what ROS2 will tell you.
+
+#### No indentation
+
+Without proper indentation of levels, there is a segfault when the YAML is parsed during `rclcpp::init(argc, argv)`. The
+error is similar to the above but begins with
+
+    [mpc_follower-1] free(): double free detected in tcache 2
+
+Note that this message may be hidden when just launching with `ros2 launch`. It is shown running the node under
+`valgrind` which requires a `launch-prefix`. For example, modify `mpc_follower.launch.xml`
+
+    <node pkg="mpc_follower" exec="mpc_follower" name="mpc_follower" output="screen" launch-prefix="valgrind">
+
+Another helpful option for diagnosing segfaults is to run under `gdb` to get a backtrace. Change the prefix
+
+    <node pkg="mpc_follower" exec="mpc_follower" name="mpc_follower" output="screen" launch-prefix="xterm -e gdb -ex run --args">
+
+and after the segfault occured, you can enter `bt` in the `xterm` window.
