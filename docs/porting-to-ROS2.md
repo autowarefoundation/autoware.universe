@@ -49,10 +49,50 @@ A good general strategy is to try to implement those changes, then iteratively r
 ### Rewriting `package.xml`
 The migration guide covers this well. See also [here](https://www.ros.org/reps/rep-0149.html) for a reference of the most recent version of this format.
 
+#### When to use which dependency tag
+
+Any build tool needed only to set up the build needs `buildtool_depend`; e.g.,
+
+    <buildtool_depend>ament_cmake</buildtool_depend>
+
+Any external package included with `#include` in the files (source or headers) needs to have a corresponding `<build_depend>`; e.g.,
+
+    <build_depend>logging</build_depend>
+
+Any external package included with `#include` in the header files also needs to have a corresponding `<build_export_depend>`; e.g.,
+
+    <build_export_depend>eigen</build_export_depend>
+
+Any shared library that needs to be linked when the code is executed needs to have a corresponding `<exec_depend>`: this describes the runtime dependencies; e.g.,
+
+    <exec_depend>std_msgs</exec_depend>
+
+If a package falls under all three categories (`<build_depend>`, `<build_export_depend>`, and `<exec_depend>`), it is possible to just use `<depend>`
+
+    <depend>shift_decider</depend>
 
 ### Rewriting `CMakeLists.txt`
 Pretty straightforward by following the example of the already ported `simple_planning_simulator` package and the [pub-sub tutorial](https://index.ros.org/doc/ros2/Tutorials/Writing-A-Simple-Cpp-Publisher-And-Subscriber/#cpppubsub). Better yet, use `ament_auto` to get terse `CMakeLists.txt` that do not have as much redundancy with `package.xml` as an explicit `CMakeLists.txt`. See [this commit](https://github.com/tier4/Pilot.Auto/pull/7/commits/ef382a9b430fd69cb0a0f7ca57016d66ed7ef29d) for an example.
 
+#### C++ standard
+Add the following to ensure that a specific standard is required and extensions are not allowed
+
+```cmake
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
+  set(CMAKE_CXX_EXTENSIONS OFF)
+endif()
+```
+
+#### Compiler flags
+Make sure that flags are added only for specific compilers. Not everyone uses `gcc` or `clang`.
+
+```cmake
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic -Wno-unused-parameter)
+endif()
+```
 
 ### Replacing `std_msgs`
 In ROS2, you should define semantically meaningful wrappers around primitive (number) types. They are deprecated in Foxy.
@@ -134,14 +174,179 @@ which is equivalent to
 
     const double vel_lim = declare_parameter<double>("vel_lim", 25.0);
 
+This allows to set the initial value e.g. via a parameter file.
+
+**NOTE** Calling `ros2 param set <NODE> vel_lim 1.234` after starting the node works but will not
+alter the member `vel_lim`! See the section below on *dynamic reconfigure* to achieve that.
+
+### dynamic reconfigure
+Dynamic reconfigure as it existed in ROS1 does not exist anymore in ROS2 and can be achieved by
+simpler means using a parameter callback.
+
+#### cfg files
+
+Remove the package's `.cfg` file and associated `cfg/` subdirectory.
+
+#### header file
+
+In the header file, remove includes of `dynamic_reconfigure` and the node-specific config file. As a concrete example,
+take the [MPC follower](https://github.com/tier4/Pilot.Auto/pull/52)
+
+```diff
+-#include <dynamic_reconfigure/server.h>
+-#include <mpc_follower/MPCFollowerConfig.h>
+```
+
+you need to set a parameter handler and callback function:
+
+```c++
+OnSetParametersCallbackHandle::SharedPtr set_param_res_;
+rcl_interfaces::msg::SetParametersResult paramCallback(const std::vector<rclcpp::Parameter> & parameters);
+```
+
+If there are many parameters (rule of thumb: more than 2), it is more practical to group them in a
+struct defined within the node's declaration:
+
+```c++
+class MPCFollower : public rclcpp::Node
+{
+
+  struct MPCParam
+  {
+    int prediction_horizon;
+    ...
+  } mpc_param;
+
+};
+
+```
+
+Add a method to declare all the parameters
+
+    void declareMPCparameters();
+
+#### implementation file
+
+Write the following into the definition of the class that inherits from `rclcpp::Node`.
+
+A few macros and a utility function can help keep the following code clean and void of redundancy. These macros are optional but help when many parameters are to be updated dynamically.
+
+```c++
+#define DECLARE_MPC_PARAM(PARAM_STRUCT, NAME, VALUE) \
+  PARAM_STRUCT.NAME = declare_parameter("mpc_" #NAME, VALUE)
+
+#define UPDATE_MPC_PARAM(PARAM_STRUCT, NAME) \
+  update_param(parameters, "mpc_" #NAME, PARAM_STRUCT.NAME)
+
+namespace
+{
+template <typename T>
+void update_param(
+  const std::vector<rclcpp::Parameter> & parameters, const std::string & name, T & value)
+{
+  auto it = std::find_if(parameters.cbegin(), parameters.cend(),
+    [&name](const rclcpp::Parameter & parameter) { return parameter.get_name() == name; });
+  if (it != parameters.cend()) {
+    value = it->template get_value<T>();
+  }
+}
+}  // namespace
+```
+
+In the constructor, define the callback and declare parameters with default values
+
+```c++
+// the type of the ROS parameter is defined by the C++ type of the default value,
+// so 50 is not equivalent to 50.0!
+DECLARE_MPC_PARAM(mpc_param_, prediction_horizon, 50);
+
+// set parameter callback
+set_param_res_ = add_on_set_parameters_callback(std::bind(&MPCFollower::paramCallback, this, _1));
+```
+
+Inside the callback, you have to manually update each parameter for which you want to react to changes from the outside. You can (inadvertently) declare more parameters than you react to.
+
+```c++
+  rcl_interfaces::msg::SetParametersResult result;
+  result.successful = true;
+  result.reason = "success";
+
+  // strong exception safety wrt MPCParam
+  MPCParam param = mpc_param_;
+  try {
+    UPDATE_MPC_PARAM(param, prediction_horizon);
+    // update all other parameters, too
+
+    // transaction succeeds, now assign values
+    mpc_param_ = param;
+  } catch (const rclcpp::exceptions::InvalidParameterTypeException & e) {
+    result.successful = false;
+    result.reason = e.what();
+  }
+
+  return result;
+```
+
+When the node is running, you can set the parameter dynamically with the following command. The value is converted to a type as in C++, so setting an `int` to 51.0 leads to an `InvalidParameterTypeException` in the callback.
+
+```
+$ ros2 param set /mpc_follower prediction_horizon 51
+```
+
+Make sure relevant parameters can be set from the command line or `rqt` and changes are reflected by
+the package.
+
+#### Parameter client [discouraged]
+The parameter client is another way to dynamically set the parameter defined in the node. The client subscribes to the `/parameter_event` topic and call the callback function. This allows the client node to get all the information about parameter changes in every node. The callback argument contains the target node name, which can be used to determine which node the parameter change is for.
+
+In .hpp,
+
+```c++
+rclcpp::AsyncParametersClient::SharedPtr param_client_;
+rclcpp::Subscription<rcl_interfaces::msg::ParameterEvent>::SharedPtr sub_param_event_;
+
+void paramCallback(const rcl_interfaces::msg::ParameterEvent::SharedPtr event);
+```
+
+In .cpp,
+
+```c++
+// client setting
+param_client_ = std::make_shared<rclcpp::AsyncParametersClient>(this, "param_client");
+sub_param_event_ =
+  param_client_->on_parameter_event(std::bind(&VelocityController::paramCallback, this, std::placeholders::_1));
+
+// callback setting
+void paramCallback(const rcl_interfaces::msg::ParameterEvent::SharedPtr event)
+{
+  for (auto & new_parameter : event->new_parameters) {
+      std::cout << "  " << new_parameter.name << std::endl;
+  }
+  for (auto & changed_parameter : event->changed_parameters) {
+      std::cout << "  " << changed_parameter.name << std::endl;
+  }
+  for (auto & deleted_parameter : event->deleted_parameters) {
+      std::cout << "  " << deleted_parameter.name << std::endl;
+  }
+};
+```
+
+However, this method calls the callback for all parameter changes of all nodes. So the `add_on_set_parameters_callback` is recommended for the porting of the dynamic reconfigure.
+
+reference:
+
+https://discourse.ros.org/t/composition-and-parameters-best-practice-suggestions/1001
+
+https://github.com/ros2/rclcpp/issues/243 - Connect to preview
 
 #### Adjust param file
-Two levels of hierarchy need to be added around the parameters themselves:
+Two levels of hierarchy need to be added around the parameters themselves and each level has to be indented relative to its parent (by two spaces in this example):
 
     <node name or /**>:
       ros__parameters:
         <params>
 
+##### Types
 Also, ROS1 didn't have a problem when you specify an integer, e.g. `28` for a `double` parameter, but ROS2 does:
 
     [vehicle_cmd_gate-1] terminate called after throwing an instance of 'rclcpp::exceptions::InvalidParameterTypeException'
@@ -163,8 +368,8 @@ However, in some cases the extra functionality of `tf2_ros::Buffer` is needed. F
 #### Waiting for a transform to arrive
 You might expect to be able to use `tf2_ros::Buffer::lookupTransform()` with a timeout out of the box, but this will throw an error:
 
-    Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data. 
-    Without a dedicated thread it will always timeout. 
+    Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data.
+    Without a dedicated thread it will always timeout.
     If you have a seperate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
 
 You could do therefore try setting up a dedicated thread, but you could also use the `waitForTransform()` function like this:
@@ -178,7 +383,7 @@ You could do therefore try setting up a dedicated thread, but you could also use
     tf_buffer_.setCreateTimerInterface(cti);
     ...
     // In the function processing data
-    tf_buffer_.waitForTransform(a, b, msg_time, std::chrono::milliseconds(1000), [this](const std::shared_future<geometry_msgs::msg::TransformStamped>& tf){
+    auto tf_future = tf_buffer_.waitForTransform(a, b, msg_time, std::chrono::milliseconds(1000), [this](const std::shared_future<geometry_msgs::msg::TransformStamped>& tf){
         // Here the future is available
     });
 
@@ -186,6 +391,14 @@ The callback will always be called, but only after some time: when the transform
 
 The `waitForTransform()` function will return immediately and also return a future. However, calling `.get()` or `.wait()` on that future does not respect the timeout. That is, it will wait however long it takes until a transform arrives and never throw an exception.
 
+### Shared pointers
+Be careful in creating a `std::shared_ptr` to avoid a double-free situation when the constructor argument after porting is a dereferenced shared pointer. For example, if `msg` previously was a raw pointer and now is a shared pointer, the following would lead to both `msg` and `a` deleting the same resource.
+
+    auto a = std::make_shared<autoware_planning_msgs::Trajectory>(*msg);
+
+To avoid this, just copy the shared pointer
+
+    std::shared_ptr<autoware_planning_msgs::msg::Trajectory> a = msg;
 
 ### Service clients
 There is no synchronous API for service calls, and the futures API can not be used from inside a node, only the callback API.
@@ -205,15 +418,48 @@ Another idea for a workaround is to do something similar to what is done in the 
 
 
 ### Logging
-The node name is now automatically prepended to the log message, so that part can be removed.
+The node name is now automatically prepended to the log message, so that part can be removed. In methods, get the logger from the node with `get_logger()`. In a free function `foo()`, use `rclcpp::get_logger("foo")`. To provide a further level of hierarchy, use `get_logger("foo").get_child("bar")`.
 
+For example,
+
+    ROS_INFO_COND(show_debug_info_, "[MPC] some message with a float value %g", some_member_);
+
+should become
+
+    RCLCPP_INFO_EXPRESSION(get_logger(), show_debug_info_, "some message with a float value %g", some_member_);
+
+The mapping of logger macros is basically just
+
+```diff
+-ROS_INFO(...)
++RCLCPP_INFO(get_logger(), ...)
+```
+
+with the exception of
+
+```diff
+-ROS_INFO_COND(cond, ...)
++RCLCPP_INFO_EXPRESSION(logger, cond, ...)
+
+-ROS_WARN_DELAYED_THROTTLE(duration, ...)
++RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), duration, ...)
+```
+
+where the `duration` is an integer interpreted as milliseconds. A readable way to formulate that is
+
+    using namespace std::literals;
+    ...
+    static constexpr auto duration = (5000ms).count();
+    RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), duration, ...)
 
 ### Shutting down a subscriber
 The `shutdown()` method doesn't exist anymore, but you can just throw away the subscriber with `this->subscription_ = nullptr;` or similar, for instance inside the subscription callback. Curiously, this works even though the `subscription_` member variable is not the sole owner – the `use_count` is 3 in the `minimal_subscriber` example.
 
 
-## Alternative: Semi-automated porting with ros2-migration-tools (not working yet)
-Following the instructions at https://github.com/awslabs/ros2-migration-tools:
+## Alternative: Semi-automated porting with ros2-migration-tools (not working)
+**The following instructions to use `ros2-migration-tools` are given for completeness, we gave up and decided to port packages manually.**
+
+From https://github.com/awslabs/ros2-migration-tools:
 
     pip3 install parse_cmake
     git clone https://github.com/awslabs/ros2-migration-tools.git
@@ -264,6 +510,8 @@ If you forget `<build_type>ament_cmake</build_type>`, or you use package format 
 
 
 ### YAML param file
+
+#### Tabs instead of spaces
 Used tabs instead of spaces in your param.yaml file? _Clearly_, the most user-friendly error message is
 
     $ ros2 launch mypackage mypackage.launch.xml
@@ -289,3 +537,20 @@ Used tabs instead of spaces in your param.yaml file? _Clearly_, the most user-fr
     [ERROR] [mypackage-1]: process has died [pid 30427, exit code -6, cmd '/home/user/workspace/install/mypackage/lib/mypackage/mypackage --ros-args -r __node:=mypackage --params-file /home/user/workspace/install/mypackage/share/mypackage/param/myparameters.yaml'].
 
 and that is indeed what ROS2 will tell you.
+
+
+#### No indentation
+
+Without proper indentation of levels, there is a segfault when the YAML is parsed during `rclcpp::init(argc, argv)`. The error is similar to the above but begins with
+
+    [mpc_follower-1] free(): double free detected in tcache 2
+
+Note that this message may be hidden when just launching with `ros2 launch`. It is shown running the node under `valgrind` which requires a `launch-prefix`. For example, modify `mpc_follower.launch.xml`
+
+    <node pkg="mpc_follower" exec="mpc_follower" name="mpc_follower" output="screen" launch-prefix="valgrind">
+
+Another helpful option for diagnosing segfaults is to run under `gdb` to get a backtrace. Change the prefix
+
+    <node pkg="mpc_follower" exec="mpc_follower" name="mpc_follower" output="screen" launch-prefix="xterm -e gdb -ex run --args">
+
+and after the segfault occured, you can enter `bt` in the `xterm` window.
