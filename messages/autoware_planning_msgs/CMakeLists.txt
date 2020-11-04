@@ -29,6 +29,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/StopReasonArray.msg"
   "msg/Trajectory.msg"
   "msg/TrajectoryPoint.msg"
+  "msg/VelocityLimit.msg"
   DEPENDENCIES std_msgs geometry_msgs nav_msgs
 )
 
