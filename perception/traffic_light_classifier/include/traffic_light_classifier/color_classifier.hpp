@@ -15,12 +15,10 @@
  */
 #pragma once
 
-#include <autoware_perception_msgs/LampState.h>
+#include <autoware_perception_msgs/msg/lamp_state.hpp>
 #include <cv_bridge/cv_bridge.h>
-#include <dynamic_reconfigure/server.h>
-#include <image_transport/image_transport.h>
-#include <ros/ros.h>
-#include <traffic_light_classifier/HSVFilterConfig.h>
+#include <image_transport/image_transport.hpp>
+#include <rclcpp/rclcpp.hpp>
 #include <traffic_light_classifier/classifier_interface.hpp>
 
 #include <opencv2/core/core.hpp>
@@ -28,20 +26,42 @@
 
 namespace traffic_light
 {
+
+struct HSVConfig{
+  int green_min_h;
+  int green_min_s;
+  int green_min_v;
+  int green_max_h;
+  int green_max_s;
+  int green_max_v;
+  int yellow_min_h;
+  int yellow_min_s;
+  int yellow_min_v;
+  int yellow_max_h;
+  int yellow_max_s;
+  int yellow_max_v;
+  int red_min_h;
+  int red_min_s;
+  int red_min_v;
+  int red_max_h;
+  int red_max_s;
+  int red_max_v;  
+};
+
 class ColorClassifier : public ClassifierInterface
 {
 public:
-  explicit ColorClassifier(const ros::NodeHandle & nh, const ros::NodeHandle & pnh);
+  explicit ColorClassifier(rclcpp::Node * node_ptr);
 
   bool getLampState(
     const cv::Mat & input_image,
-    std::vector<autoware_perception_msgs::LampState> & states) override;
+    std::vector<autoware_perception_msgs::msg::LampState> & states) override;
 
 private:
   bool filterHSV(
     const cv::Mat & input_image, cv::Mat & green_image, cv::Mat & yellow_image,
     cv::Mat & red_image);
-  void parametersCallback(traffic_light_classifier::HSVFilterConfig & config, uint32_t level);
+  rcl_interfaces::msg::SetParametersResult parametersCallback( const std::vector<rclcpp::Parameter> & parameters);
 
 private:
   enum HSV {
@@ -49,12 +69,13 @@ private:
     Sat = 1,
     Val = 2,
   };
-  ros::NodeHandle nh_;
-  ros::NodeHandle pnh_;
-  image_transport::ImageTransport image_transport_;
   image_transport::Publisher image_pub_;
-  dynamic_reconfigure::Server<traffic_light_classifier::HSVFilterConfig> dynamic_reconfigure_;
   double ratio_threshold_;
+
+  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr set_param_res_;
+  rclcpp::Node * node_ptr_;
+
+  HSVConfig hsv_config_;
   cv::Scalar min_hsv_green_;
   cv::Scalar max_hsv_green_;
   cv::Scalar min_hsv_yellow_;

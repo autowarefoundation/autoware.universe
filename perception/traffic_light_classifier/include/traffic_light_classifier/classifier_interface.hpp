@@ -15,7 +15,7 @@
  */
 #pragma once
 
-#include <autoware_perception_msgs/LampState.h>
+#include <autoware_perception_msgs/msg/lamp_state.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
@@ -25,6 +25,6 @@ class ClassifierInterface
 {
 public:
   virtual bool getLampState(
-    const cv::Mat & input_image, std::vector<autoware_perception_msgs::LampState> & states) = 0;
+    const cv::Mat & input_image, std::vector<autoware_perception_msgs::msg::LampState> & states) = 0;
 };
 }  // namespace traffic_light

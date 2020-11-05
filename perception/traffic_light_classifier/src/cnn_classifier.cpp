@@ -19,33 +19,32 @@
 
 namespace traffic_light
 {
-CNNClassifier::CNNClassifier(const ros::NodeHandle & nh, const ros::NodeHandle & pnh)
-: nh_(nh), pnh_(pnh), image_transport_(pnh_)
+CNNClassifier::CNNClassifier(rclcpp::Node * node_ptr) : node_ptr_(node_ptr)
 {
-  image_pub_ = image_transport_.advertise("output/debug/image", 1);
+  image_pub_ = image_transport::create_publisher(node_ptr_, "output/debug/image", rclcpp::QoS{1}.get_rmw_qos_profile());
 
   std::string precision;
   std::string label_file_path;
   std::string model_file_path;
-  pnh_.param<std::string>("precision", precision, "fp16");
-  pnh_.param<std::string>("label_file_path", label_file_path, "labels.txt");
-  pnh_.param<std::string>("model_file_path", model_file_path, "model.onnx");
-  pnh_.param<int>("input_c", input_c_, 3);
-  pnh_.param<int>("input_h", input_h_, 224);
-  pnh_.param<int>("input_w", input_w_, 224);
+  precision = node_ptr_->declare_parameter("precision", "fp16");
+  label_file_path = node_ptr_->declare_parameter("label_file_path", "labels.txt");
+  model_file_path = node_ptr_->declare_parameter("model_file_path", "model.onnx");
+  input_c_ = node_ptr_->declare_parameter("input_c", 3);
+  input_h_ = node_ptr_->declare_parameter("input_h", 224);
+  input_w_ = node_ptr_->declare_parameter("input_w", 224);
 
   readLabelfile(label_file_path, labels_);
 
-  std::string cache_dir = ros::package::getPath("traffic_light_classifier") + "/data";
+  std::string cache_dir = "/tmp/traffic_light_classifier/data";
   trt_ = std::make_shared<Tn::TrtCommon>(model_file_path, cache_dir, precision);
   trt_->setup();
 }
 
 bool CNNClassifier::getLampState(
-  const cv::Mat & input_image, std::vector<autoware_perception_msgs::LampState> & states)
+  const cv::Mat & input_image, std::vector<autoware_perception_msgs::msg::LampState> & states)
 {
   if (!trt_->isInitialized()) {
-    ROS_WARN("failed to init tensorrt");
+    RCLCPP_WARN(node_ptr_->get_logger(), "failed to init tensorrt");
     return false;
   }
 
@@ -90,7 +89,7 @@ bool CNNClassifier::getLampState(
 }
 
 void CNNClassifier::outputDebugImage(
-  cv::Mat & debug_image, const std::vector<autoware_perception_msgs::LampState> & states)
+  cv::Mat & debug_image, const std::vector<autoware_perception_msgs::msg::LampState> & states)
 {
   float probability;
   std::string label;
@@ -112,8 +111,8 @@ void CNNClassifier::outputDebugImage(
     text_img, text, cv::Point(5, 25), cv::FONT_HERSHEY_COMPLEX, 0.5, cv::Scalar(0, 255, 0), 1);
   cv::vconcat(debug_image, text_img, debug_image);
 
-  sensor_msgs::ImagePtr debug_image_msg =
-    cv_bridge::CvImage(std_msgs::Header(), "rgb8", debug_image).toImageMsg();
+  const auto debug_image_msg =
+    cv_bridge::CvImage(std_msgs::msg::Header(), "rgb8", debug_image).toImageMsg();
   image_pub_.publish(debug_image_msg);
 }
 
@@ -146,7 +145,7 @@ void CNNClassifier::preProcess(cv::Mat & image, std::vector<float> & input_tenso
 }
 
 bool CNNClassifier::postProcess(
-  std::vector<float> & output_tensor, std::vector<autoware_perception_msgs::LampState> & states)
+  std::vector<float> & output_tensor, std::vector<autoware_perception_msgs::msg::LampState> & states)
 {
   std::vector<float> probs;
   int num_output = trt_->getNumOutput();
@@ -168,10 +167,10 @@ bool CNNClassifier::postProcess(
   boost::algorithm::split(splited_label, match_label, boost::is_any_of(","));
   for (auto label : splited_label) {
     if (label2state_.find(label) == label2state_.end()) {
-      ROS_DEBUG("cnn_classifier does not have a key [%s]", label.c_str());
+      RCLCPP_DEBUG(node_ptr_->get_logger(), "cnn_classifier does not have a key [%s]", label.c_str());
       continue;
     }
-    autoware_perception_msgs::LampState state;
+    autoware_perception_msgs::msg::LampState state;
     state.type = label2state_[label];
     state.confidence = probability;
     states.push_back(state);
@@ -184,7 +183,7 @@ bool CNNClassifier::readLabelfile(std::string filepath, std::vector<std::string>
 {
   std::ifstream labelsFile(filepath);
   if (!labelsFile.is_open()) {
-    ROS_ERROR("Could not open label file. [%s]", filepath.c_str());
+    RCLCPP_ERROR(node_ptr_->get_logger(), "Could not open label file. [%s]", filepath.c_str());
     return false;
   }
   std::string label;
