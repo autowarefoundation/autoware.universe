@@ -20,7 +20,7 @@
   <arg name="trans_epsilon" default="0.01" doc="The maximum difference between two consecutive transformations in order to consider convergence" />
   <arg name="step_size" default="0.1" doc="The newton line search maximum step length" />
   <arg name="resolution" default="2.0" doc="The ND voxel grid resolution" />
-  <arg name="max_iterations" default="30.0" doc="The number of iterations required to calculate alignment" />
+  <arg name="max_iterations" default="30" doc="The number of iterations required to calculate alignment" />
 
   <arg name="converged_param_transform_probability" default="3.0" doc="" />
 
@@ -29,36 +29,33 @@
   <arg name="omp_num_threads" default="4" doc="" />
 
 
-  <arg name="use_anonymous_node_name" default="false" doc="If True, launch with anonymous option" />
-  <arg name="node_name" value="ndt_scan_matcher" unless="$(arg use_anonymous_node_name)" doc="Not use anonymous option" />
-  <arg name="node_name" value="$(anon ndt_scan_matcher)" if="$(arg use_anonymous_node_name)" doc="Use anonymous option" />
+  <arg name="node_name" default="ndt_scan_matcher" doc="Use a different name for this node" />
 
+  <node pkg="ndt_scan_matcher" exec="ndt_scan_matcher" name="$(var node_name)" output="log">
 
-  <node pkg="ndt_scan_matcher" type="ndt_scan_matcher" name="$(arg node_name)" output="log">
+    <remap from="points_raw" to="$(var input_sensor_points_topic)" />
+    <param name="input_sensor_points_queue_size" value="$(var input_sensor_points_queue_size)" />
 
-    <remap from="points_raw" to="$(arg input_sensor_points_topic)" />
-    <param name="input_sensor_points_queue_size" value="$(arg input_sensor_points_queue_size)" />
+    <remap from="ekf_pose_with_covariance" to="$(var input_initial_pose_topic)" />
+    <remap from="pointcloud_map" to="$(var input_map_points_topic)" />
 
-    <remap from="ekf_pose_with_covariance" to="$(arg input_initial_pose_topic)" />
-    <remap from="pointcloud_map" to="$(arg input_map_points_topic)" />
+    <remap from="ndt_pose" to="$(var output_pose_topic)" />
+    <remap from="ndt_pose_with_covariance" to="$(var output_pose_with_covariance_topic)" />
+    <remap from="diagnostics" to="$(var output_diagnostics_topic)" />
 
-    <remap from="ndt_pose" to="$(arg output_pose_topic)" />
-    <remap from="ndt_pose_with_covariance" to="$(arg output_pose_with_covariance_topic)" />
-    <remap from="diagnostics" to="$(arg output_diagnostics_topic)" />
+    <param name="base_frame" value="$(var base_frame)" />
 
-    <param name="base_frame" value="$(arg base_frame)" />
+    <param name="ndt_implement_type" value="$(var ndt_implement_type)" />
 
-    <param name="ndt_implement_type" value="$(arg ndt_implement_type)" />
+    <param name="trans_epsilon" value="$(var trans_epsilon)" />
+    <param name="step_size" value="$(var step_size)" />
+    <param name="resolution" value="$(var resolution)" />
+    <param name="max_iterations" value="$(var max_iterations)" />
 
-    <param name="trans_epsilon" value="$(arg trans_epsilon)" />
-    <param name="step_size" value="$(arg step_size)" />
-    <param name="resolution" value="$(arg resolution)" />
-    <param name="max_iterations" value="$(arg max_iterations)" />
+    <param name="converged_param_transform_probability" value="$(var converged_param_transform_probability)" />
 
-    <param name="converged_param_transform_probability" value="$(arg converged_param_transform_probability)" />
-
-    <param name="omp_neighborhood_search_method" value="$(arg omp_neighborhood_search_method)" />
-    <param name="omp_num_threads" value="$(arg omp_num_threads)" />
+    <param name="omp_neighborhood_search_method" value="$(var omp_neighborhood_search_method)" />
+    <param name="omp_num_threads" value="$(var omp_num_threads)" />
   </node>
 
 </launch>

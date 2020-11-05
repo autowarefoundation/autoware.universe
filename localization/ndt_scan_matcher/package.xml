@@ -1,50 +1,31 @@
 <?xml version="1.0"?>
-<package>
+<package format="2">
     <name>ndt_scan_matcher</name>
     <version>0.1.0</version>
     <description>The ndt_scan_matcher package</description>
     <maintainer email="yamato.ando@gmail.com">Yamato Ando</maintainer>
     <license>Apache 2</license>
-    <buildtool_depend>catkin</buildtool_depend>
+    <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
-    <build_depend>roscpp</build_depend>
-    <build_depend>tf2</build_depend>
-    <build_depend>tf2_ros</build_depend>
-    <build_depend>tf2_sensor_msgs</build_depend>
-    <build_depend>tf2_geometry_msgs</build_depend>
-    <build_depend>std_msgs</build_depend>
-    <build_depend>geometry_msgs</build_depend>
-    <build_depend>sensor_msgs</build_depend>
-    <build_depend>nav_msgs</build_depend>
-    <build_depend>visualization_msgs</build_depend>
-    <build_depend>diagnostic_msgs</build_depend>
-    <build_depend>pcl_conversions</build_depend>
-    <build_depend>pcl_ros</build_depend>
-    <build_depend>libpcl-all-dev</build_depend>
-    <build_depend>ndt_pcl_modified</build_depend>
-    <build_depend>ndt_omp</build_depend>
-    <build_depend>ndt</build_depend>
-    <build_depend>autoware_localization_srvs</build_depend>
-
-    <run_depend>roscpp</run_depend>
-    <run_depend>tf2</run_depend>
-    <run_depend>tf2_ros</run_depend>
-    <run_depend>tf2_sensor_msgs</run_depend>
-    <run_depend>tf2_geometry_msgs</run_depend>
-    <run_depend>std_msgs</run_depend>
-    <run_depend>geometry_msgs</run_depend>
-    <run_depend>sensor_msgs</run_depend>
-    <run_depend>nav_msgs</run_depend>
-    <run_depend>visualization_msgs</run_depend>
-    <run_depend>diagnostic_msgs</run_depend>
-    <run_depend>pcl_conversions</run_depend>
-    <run_depend>pcl_ros</run_depend>
-    <run_depend>libpcl-all</run_depend>
-    <run_depend>ndt_pcl_modified</run_depend>
-    <run_depend>ndt_omp</run_depend>
-    <run_depend>ndt</run_depend>
-    <run_depend>autoware_localization_srvs</run_depend>
+    <depend>autoware_debug_msgs</depend>
+    <depend>autoware_localization_srvs</depend>
+    <depend>diagnostic_msgs</depend>
+    <depend>geometry_msgs</depend>
+    <depend>nav_msgs</depend>
+    <depend>ndt</depend>
+    <depend>ndt_omp</depend>
+    <depend>ndt_pcl_modified</depend>
+    <depend>pcl_conversions</depend>
+    <depend>rclcpp</depend>
+    <depend>sensor_msgs</depend>
+    <depend>std_msgs</depend>
+    <depend>tf2</depend>
+    <depend>tf2_geometry_msgs</depend>
+    <depend>tf2_ros</depend>
+    <depend>tf2_sensor_msgs</depend>
+    <depend>visualization_msgs</depend>
 
     <export>
+      <build_type>ament_cmake</build_type>
     </export>
 </package>

@@ -23,7 +23,7 @@
 #include <string>
 #include <thread>
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 
 #include <tf2/transform_datatypes.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -31,24 +31,23 @@
 #include <tf2_ros/transform_listener.h>
 #include <tf2_sensor_msgs/tf2_sensor_msgs.h>
 
-#include <dynamic_reconfigure/server.h>
+#include <diagnostic_msgs/msg/diagnostic_array.hpp>
+#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
+#include <nav_msgs/msg/odometry.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <autoware_debug_msgs/msg/int32_stamped.hpp>
+#include <autoware_debug_msgs/msg/float32_stamped.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
 
-#include <diagnostic_msgs/DiagnosticArray.h>
-#include <geometry_msgs/PoseWithCovarianceStamped.h>
-#include <geometry_msgs/TwistStamped.h>
-#include <nav_msgs/Odometry.h>
-#include <sensor_msgs/PointCloud2.h>
-#include <std_msgs/Float32.h>
-#include <visualization_msgs/MarkerArray.h>
-
-#include "autoware_localization_srvs/PoseWithCovarianceStamped.h"
+#include <autoware_localization_srvs/srv/pose_with_covariance_stamped.hpp>
 // #include <pcl/registration/ndt.h>
-// #include "pcl_registration/ndt.h"
-#include "ndt/omp.h"
-#include "ndt/pcl_generic.h"
-#include "ndt/pcl_modified.h"
+// #include <pcl_registration/ndt.h>
+#include <ndt/omp.h>
+#include <ndt/pcl_generic.h>
+#include <ndt/pcl_modified.h>
 
-class NDTScanMatcher
+class NDTScanMatcher : public rclcpp::Node
 {
   using PointSource = pcl::PointXYZ;
   using PointTarget = pcl::PointXYZ;
@@ -64,14 +63,14 @@ class NDTScanMatcher
   struct Particle
   {
     Particle(
-      const geometry_msgs::Pose & a_initial_pose, const geometry_msgs::Pose & a_result_pose,
-      const double a_score, const int a_iteration)
+      const geometry_msgs::msg::Pose & a_initial_pose,
+      const geometry_msgs::msg::Pose & a_result_pose, const double a_score, const int a_iteration)
     : initial_pose(a_initial_pose),
       result_pose(a_result_pose),
       score(a_score),
       iteration(a_iteration){};
-    geometry_msgs::Pose initial_pose;
-    geometry_msgs::Pose result_pose;
+    geometry_msgs::msg::Pose initial_pose;
+    geometry_msgs::msg::Pose result_pose;
     double score;
     int iteration;
   };
@@ -79,62 +78,62 @@ class NDTScanMatcher
   enum class NDTImplementType { PCL_GENERIC = 0, PCL_MODIFIED = 1, OMP = 2 };
 
 public:
-  NDTScanMatcher(ros::NodeHandle nh, ros::NodeHandle private_nh);
+  NDTScanMatcher();
   ~NDTScanMatcher();
 
 private:
-  bool serviceNDTAlign(
-    autoware_localization_srvs::PoseWithCovarianceStamped::Request & req,
-    autoware_localization_srvs::PoseWithCovarianceStamped::Response & res);
+  void serviceNDTAlign(
+    const autoware_localization_srvs::srv::PoseWithCovarianceStamped::Request::SharedPtr req,
+    autoware_localization_srvs::srv::PoseWithCovarianceStamped::Response::SharedPtr res);
 
-  void callbackMapPoints(const sensor_msgs::PointCloud2::ConstPtr & pointcloud2_msg_ptr);
-  void callbackSensorPoints(const sensor_msgs::PointCloud2::ConstPtr & pointcloud2_msg_ptr);
+  void callbackMapPoints(sensor_msgs::msg::PointCloud2::ConstSharedPtr pointcloud2_msg_ptr);
+  void callbackSensorPoints(sensor_msgs::msg::PointCloud2::ConstSharedPtr pointcloud2_msg_ptr);
   void callbackInitialPose(
-    const geometry_msgs::PoseWithCovarianceStamped::ConstPtr & pose_conv_msg_ptr);
+    geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose_conv_msg_ptr);
 
-  geometry_msgs::PoseWithCovarianceStamped alignUsingMonteCarlo(
+  geometry_msgs::msg::PoseWithCovarianceStamped alignUsingMonteCarlo(
     const std::shared_ptr<NormalDistributionsTransformBase<PointSource, PointTarget>> & ndt_ptr,
-    const geometry_msgs::PoseWithCovarianceStamped & initial_pose_with_cov);
+    const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_with_cov);
 
   void updateTransforms();
 
   void publishTF(
     const std::string & frame_id, const std::string & child_frame_id,
-    const geometry_msgs::PoseStamped & pose_msg);
+    const geometry_msgs::msg::PoseStamped & pose_msg);
   bool getTransform(
     const std::string & target_frame, const std::string & source_frame,
-    const geometry_msgs::TransformStamped::Ptr & transform_stamped_ptr,
-    const ros::Time & time_stamp);
+    const geometry_msgs::msg::TransformStamped::SharedPtr & transform_stamped_ptr,
+    const rclcpp::Time & time_stamp);
   bool getTransform(
     const std::string & target_frame, const std::string & source_frame,
-    const geometry_msgs::TransformStamped::Ptr & transform_stamped_ptr);
+    const geometry_msgs::msg::TransformStamped::SharedPtr & transform_stamped_ptr);
 
   void publishMarkerForDebug(const Particle & particle_array, const size_t i);
 
   void timerDiagnostic();
 
-  ros::NodeHandle nh_;
-  ros::NodeHandle private_nh_;
+  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr initial_pose_sub_;
+  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr map_points_sub_;
+  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sensor_points_sub_;
 
-  ros::Subscriber initial_pose_sub_;
-  ros::Subscriber map_points_sub_;
-  ros::Subscriber sensor_points_sub_;
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr sensor_aligned_pose_pub_;
+  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr ndt_pose_pub_;
+  rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
+    ndt_pose_with_covariance_pub_;
+  rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
+    initial_pose_with_covariance_pub_;
+  rclcpp::Publisher<autoware_debug_msgs::msg::Float32Stamped>::SharedPtr exe_time_pub_;
+  rclcpp::Publisher<autoware_debug_msgs::msg::Float32Stamped>::SharedPtr transform_probability_pub_;
+  rclcpp::Publisher<autoware_debug_msgs::msg::Int32Stamped>::SharedPtr iteration_num_pub_;
+  rclcpp::Publisher<autoware_debug_msgs::msg::Float32Stamped>::SharedPtr initial_to_result_distance_pub_;
+  rclcpp::Publisher<autoware_debug_msgs::msg::Float32Stamped>::SharedPtr initial_to_result_distance_old_pub_;
+  rclcpp::Publisher<autoware_debug_msgs::msg::Float32Stamped>::SharedPtr initial_to_result_distance_new_pub_;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr ndt_marker_pub_;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr
+    ndt_monte_carlo_initial_pose_marker_pub_;
+  rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr diagnostics_pub_;
 
-  ros::Publisher sensor_aligned_pose_pub_;
-  ros::Publisher ndt_pose_pub_;
-  ros::Publisher ndt_pose_with_covariance_pub_;
-  ros::Publisher initial_pose_with_covariance_pub_;
-  ros::Publisher exe_time_pub_;
-  ros::Publisher transform_probability_pub_;
-  ros::Publisher iteration_num_pub_;
-  ros::Publisher initial_to_result_distance_pub_;
-  ros::Publisher initial_to_result_distance_old_pub_;
-  ros::Publisher initial_to_result_distance_new_pub_;
-  ros::Publisher ndt_marker_pub_;
-  ros::Publisher ndt_monte_carlo_initial_pose_marker_pub_;
-  ros::Publisher diagnostics_pub_;
-
-  ros::ServiceServer service_;
+  rclcpp::Service<autoware_localization_srvs::srv::PoseWithCovarianceStamped>::SharedPtr service_;
 
   tf2_ros::Buffer tf2_buffer_;
   tf2_ros::TransformListener tf2_listener_;
@@ -149,7 +148,7 @@ private:
   std::string map_frame_;
   double converged_param_transform_probability_;
 
-  std::deque<boost::shared_ptr<const geometry_msgs::PoseWithCovarianceStamped>>
+  std::deque<geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr>
     initial_pose_msg_ptr_array_;
   std::mutex ndt_map_mtx_;
 
