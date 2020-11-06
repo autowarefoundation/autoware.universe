@@ -19,17 +19,15 @@
 
 #include <boost/optional.hpp>
 
-#include <autoware_planning_msgs/PathPoint.h>
-#include <autoware_planning_msgs/TrajectoryPoint.h>
-#include <geometry_msgs/Point32.h>
-#include <geometry_msgs/Pose.h>
-#include <nav_msgs/MapMetaData.h>
+#include <autoware_planning_msgs/msg/path_point.hpp>
+#include <autoware_planning_msgs/msg/trajectory_point.hpp>
+#include <geometry_msgs/msg/point32.hpp>
+#include <geometry_msgs/msg/pose.hpp>
+#include <nav_msgs/msg/map_meta_data.hpp>
 
 // #include <ros/console.h>;
 
 #include <tf2/utils.h>
-
-#include <Eigen/Core>
 
 #include <spline_interpolation/spline_interpolation.h>
 
@@ -40,16 +38,16 @@
 namespace util
 {
 template <typename T>
-geometry_msgs::Point transformToRelativeCoordinate2D(
-  const T & point, const geometry_msgs::Pose & origin)
+geometry_msgs::msg::Point transformToRelativeCoordinate2D(
+  const T & point, const geometry_msgs::msg::Pose & origin)
 {
-  geometry_msgs::Transform origin_coord2point;
+  geometry_msgs::msg::Transform origin_coord2point;
   origin_coord2point.translation.x = point.x;
   origin_coord2point.translation.y = point.y;
   tf2::Transform tf_origin_coord2point;
   tf2::fromMsg(origin_coord2point, tf_origin_coord2point);
 
-  geometry_msgs::Transform origin_coord2origin;
+  geometry_msgs::msg::Transform origin_coord2origin;
   origin_coord2origin.translation.x = origin.position.x;
   origin_coord2origin.translation.y = origin.position.y;
   origin_coord2origin.rotation = origin.orientation;
@@ -57,26 +55,26 @@ geometry_msgs::Point transformToRelativeCoordinate2D(
   tf2::fromMsg(origin_coord2origin, tf_origin_coord2origin);
 
   tf2::Transform tf_origin2origin_coord = tf_origin_coord2origin.inverse() * tf_origin_coord2point;
-  geometry_msgs::Pose rel_pose;
+  geometry_msgs::msg::Pose rel_pose;
   tf2::toMsg(tf_origin2origin_coord, rel_pose);
-  geometry_msgs::Point relative_p = rel_pose.position;
+  geometry_msgs::msg::Point relative_p = rel_pose.position;
   return relative_p;
 }
-template geometry_msgs::Point transformToRelativeCoordinate2D<geometry_msgs::Point>(
-  const geometry_msgs::Point &, const geometry_msgs::Pose & origin);
-template geometry_msgs::Point transformToRelativeCoordinate2D<geometry_msgs::Point32>(
-  const geometry_msgs::Point32 &, const geometry_msgs::Pose & origin);
+template geometry_msgs::msg::Point transformToRelativeCoordinate2D<geometry_msgs::msg::Point>(
+  const geometry_msgs::msg::Point &, const geometry_msgs::msg::Pose & origin);
+template geometry_msgs::msg::Point transformToRelativeCoordinate2D<geometry_msgs::msg::Point32>(
+  const geometry_msgs::msg::Point32 &, const geometry_msgs::msg::Pose & origin);
 
-geometry_msgs::Point transformToAbsoluteCoordinate2D(
-  const geometry_msgs::Point & point, const geometry_msgs::Pose & origin)
+geometry_msgs::msg::Point transformToAbsoluteCoordinate2D(
+  const geometry_msgs::msg::Point & point, const geometry_msgs::msg::Pose & origin)
 {
-  geometry_msgs::Transform origin2point;
+  geometry_msgs::msg::Transform origin2point;
   origin2point.translation.x = point.x;
   origin2point.translation.y = point.y;
   tf2::Transform tf_origin2point;
   tf2::fromMsg(origin2point, tf_origin2point);
 
-  geometry_msgs::Transform origin_coord2origin;
+  geometry_msgs::msg::Transform origin_coord2origin;
   origin_coord2origin.translation.x = origin.position.x;
   origin_coord2origin.translation.y = origin.position.y;
   origin_coord2origin.rotation = origin.orientation;
@@ -84,27 +82,27 @@ geometry_msgs::Point transformToAbsoluteCoordinate2D(
   tf2::fromMsg(origin_coord2origin, tf_origin_coord2origin);
   tf2::Transform tf_origin_coord2point = tf_origin_coord2origin * tf_origin2point;
 
-  geometry_msgs::Pose abs_pose;
+  geometry_msgs::msg::Pose abs_pose;
   tf2::toMsg(tf_origin_coord2point, abs_pose);
-  geometry_msgs::Point abs_p = abs_pose.position;
+  geometry_msgs::msg::Point abs_p = abs_pose.position;
   return abs_p;
 }
 
-double calculate2DDistance(const geometry_msgs::Point & a, const geometry_msgs::Point & b)
+double calculate2DDistance(const geometry_msgs::msg::Point & a, const geometry_msgs::msg::Point & b)
 {
   const double dx = a.x - b.x;
   const double dy = a.y - b.y;
   return std::sqrt(dx * dx + dy * dy);
 }
 
-double calculateSquaredDistance(const geometry_msgs::Point & a, const geometry_msgs::Point & b)
+double calculateSquaredDistance(const geometry_msgs::msg::Point & a, const geometry_msgs::msg::Point & b)
 {
   const double dx = a.x - b.x;
   const double dy = a.y - b.y;
   return dx * dx + dy * dy;
 }
 
-double getYawFromPoints(const geometry_msgs::Point & a, const geometry_msgs::Point & a_root)
+double getYawFromPoints(const geometry_msgs::msg::Point & a, const geometry_msgs::msg::Point & a_root)
 {
   const double dx = a.x - a_root.x;
   const double dy = a.y - a_root.y;
@@ -118,8 +116,8 @@ double normalizeRadian(const double angle)
   return n_angle;
 }
 
-geometry_msgs::Quaternion getQuaternionFromPoints(
-  const geometry_msgs::Point & a, const geometry_msgs::Point & a_root)
+geometry_msgs::msg::Quaternion getQuaternionFromPoints(
+  const geometry_msgs::msg::Point & a, const geometry_msgs::msg::Point & a_root)
 {
   const double roll = 0;
   const double pitch = 0;
@@ -130,30 +128,30 @@ geometry_msgs::Quaternion getQuaternionFromPoints(
 }
 
 template <typename T>
-geometry_msgs::Point transformMapToImage(
-  const T & map_point, const nav_msgs::MapMetaData & occupancy_grid_info)
+geometry_msgs::msg::Point transformMapToImage(
+  const T & map_point, const nav_msgs::msg::MapMetaData & occupancy_grid_info)
 {
-  geometry_msgs::Point relative_p =
+  geometry_msgs::msg::Point relative_p =
     transformToRelativeCoordinate2D(map_point, occupancy_grid_info.origin);
   double resolution = occupancy_grid_info.resolution;
   double map_y_height = occupancy_grid_info.height;
   double map_x_width = occupancy_grid_info.width;
   double map_x_in_image_resolution = relative_p.x / resolution;
   double map_y_in_image_resolution = relative_p.y / resolution;
-  geometry_msgs::Point image_point;
+  geometry_msgs::msg::Point image_point;
   image_point.x = map_y_height - map_y_in_image_resolution;
   image_point.y = map_x_width - map_x_in_image_resolution;
   return image_point;
 }
-template geometry_msgs::Point transformMapToImage<geometry_msgs::Point>(
-  const geometry_msgs::Point &, const nav_msgs::MapMetaData & map_info);
-template geometry_msgs::Point transformMapToImage<geometry_msgs::Point32>(
-  const geometry_msgs::Point32 &, const nav_msgs::MapMetaData & map_info);
+template geometry_msgs::msg::Point transformMapToImage<geometry_msgs::msg::Point>(
+  const geometry_msgs::msg::Point &, const nav_msgs::msg::MapMetaData & map_info);
+template geometry_msgs::msg::Point transformMapToImage<geometry_msgs::msg::Point32>(
+  const geometry_msgs::msg::Point32 &, const nav_msgs::msg::MapMetaData & map_info);
 
-boost::optional<geometry_msgs::Point> transformMapToOptionalImage(
-  const geometry_msgs::Point & map_point, const nav_msgs::MapMetaData & occupancy_grid_info)
+boost::optional<geometry_msgs::msg::Point> transformMapToOptionalImage(
+  const geometry_msgs::msg::Point & map_point, const nav_msgs::msg::MapMetaData & occupancy_grid_info)
 {
-  geometry_msgs::Point relative_p =
+  geometry_msgs::msg::Point relative_p =
     transformToRelativeCoordinate2D(map_point, occupancy_grid_info.origin);
   double resolution = occupancy_grid_info.resolution;
   double map_y_height = occupancy_grid_info.height;
@@ -163,7 +161,7 @@ boost::optional<geometry_msgs::Point> transformMapToOptionalImage(
   double image_x = map_y_height - map_y_in_image_resolution;
   double image_y = map_x_width - map_x_in_image_resolution;
   if (image_x >= 0 && image_x < (int)map_y_height && image_y >= 0 && image_y < (int)map_x_width) {
-    geometry_msgs::Point image_point;
+    geometry_msgs::msg::Point image_point;
     image_point.x = image_x;
     image_point.y = image_y;
     return image_point;
@@ -173,10 +171,10 @@ boost::optional<geometry_msgs::Point> transformMapToOptionalImage(
 }
 
 bool transformMapToImage(
-  const geometry_msgs::Point & map_point, const nav_msgs::MapMetaData & occupancy_grid_info,
-  geometry_msgs::Point & image_point)
+  const geometry_msgs::msg::Point & map_point, const nav_msgs::msg::MapMetaData & occupancy_grid_info,
+  geometry_msgs::msg::Point & image_point)
 {
-  geometry_msgs::Point relative_p =
+  geometry_msgs::msg::Point relative_p =
     transformToRelativeCoordinate2D(map_point, occupancy_grid_info.origin);
   const double map_y_height = occupancy_grid_info.height;
   const double map_x_width = occupancy_grid_info.width;
@@ -196,7 +194,7 @@ bool transformMapToImage(
 
 bool interpolate2DPoints(
   const std::vector<double> & base_x, const std::vector<double> & base_y, const double resolution,
-  std::vector<geometry_msgs::Point> & interpolated_points)
+  std::vector<geometry_msgs::msg::Point> & interpolated_points)
 {
   if (base_x.empty() || base_y.empty()) {
     return false;
@@ -230,20 +228,20 @@ bool interpolate2DPoints(
     }
   }
   for (size_t i = 0; i < interpolated_x.size(); i++) {
-    geometry_msgs::Point point;
+    geometry_msgs::msg::Point point;
     point.x = interpolated_x[i];
     point.y = interpolated_y[i];
     interpolated_points.push_back(point);
   }
 }
 
-std::vector<geometry_msgs::Point> getInterpolatedPoints(
-  const std::vector<geometry_msgs::Pose> & first_points,
-  const std::vector<geometry_msgs::Pose> & second_points, const double delta_arc_length)
+std::vector<geometry_msgs::msg::Point> getInterpolatedPoints(
+  const std::vector<geometry_msgs::msg::Pose> & first_points,
+  const std::vector<geometry_msgs::msg::Pose> & second_points, const double delta_arc_length)
 {
   std::vector<double> tmp_x;
   std::vector<double> tmp_y;
-  std::vector<geometry_msgs::Point> concat_points;
+  std::vector<geometry_msgs::msg::Point> concat_points;
   for (const auto point : first_points) {
     concat_points.push_back(point.position);
   }
@@ -262,13 +260,13 @@ std::vector<geometry_msgs::Point> getInterpolatedPoints(
     tmp_x.push_back(concat_points[i].x);
     tmp_y.push_back(concat_points[i].y);
   }
-  std::vector<geometry_msgs::Point> interpolated_points;
+  std::vector<geometry_msgs::msg::Point> interpolated_points;
   util::interpolate2DPoints(tmp_x, tmp_y, delta_arc_length, interpolated_points);
   return interpolated_points;
 }
 
-std::vector<geometry_msgs::Point> getInterpolatedPoints(
-  const std::vector<geometry_msgs::Pose> & points, const double delta_arc_length)
+std::vector<geometry_msgs::msg::Point> getInterpolatedPoints(
+  const std::vector<geometry_msgs::msg::Pose> & points, const double delta_arc_length)
 {
   std::vector<double> tmp_x;
   std::vector<double> tmp_y;
@@ -283,12 +281,12 @@ std::vector<geometry_msgs::Point> getInterpolatedPoints(
     tmp_x.push_back(points[i].position.x);
     tmp_y.push_back(points[i].position.y);
   }
-  std::vector<geometry_msgs::Point> interpolated_points;
+  std::vector<geometry_msgs::msg::Point> interpolated_points;
   util::interpolate2DPoints(tmp_x, tmp_y, delta_arc_length, interpolated_points);
   return interpolated_points;
 }
 
-std::vector<geometry_msgs::Point> getInterpolatedPoints(
+std::vector<geometry_msgs::msg::Point> getInterpolatedPoints(
   const std::vector<ReferencePoint> & points, const double delta_arc_length)
 {
   std::vector<double> tmp_x;
@@ -304,13 +302,13 @@ std::vector<geometry_msgs::Point> getInterpolatedPoints(
     tmp_x.push_back(points[i].p.x);
     tmp_y.push_back(points[i].p.y);
   }
-  std::vector<geometry_msgs::Point> interpolated_points;
+  std::vector<geometry_msgs::msg::Point> interpolated_points;
   util::interpolate2DPoints(tmp_x, tmp_y, delta_arc_length, interpolated_points);
   return interpolated_points;
 }
 
 template <typename T>
-std::vector<geometry_msgs::Point> getInterpolatedPoints(
+std::vector<geometry_msgs::msg::Point> getInterpolatedPoints(
   const T & points, const double delta_arc_length)
 {
   std::vector<double> tmp_x;
@@ -326,20 +324,20 @@ std::vector<geometry_msgs::Point> getInterpolatedPoints(
     tmp_x.push_back(points[i].pose.position.x);
     tmp_y.push_back(points[i].pose.position.y);
   }
-  std::vector<geometry_msgs::Point> interpolated_points;
+  std::vector<geometry_msgs::msg::Point> interpolated_points;
   util::interpolate2DPoints(tmp_x, tmp_y, delta_arc_length, interpolated_points);
   return interpolated_points;
 }
-template std::vector<geometry_msgs::Point>
-getInterpolatedPoints<std::vector<autoware_planning_msgs::TrajectoryPoint>>(
-  const std::vector<autoware_planning_msgs::TrajectoryPoint> &, const double);
-template std::vector<geometry_msgs::Point>
-getInterpolatedPoints<std::vector<autoware_planning_msgs::PathPoint>>(
-  const std::vector<autoware_planning_msgs::PathPoint> &, const double);
+template std::vector<geometry_msgs::msg::Point>
+getInterpolatedPoints<std::vector<autoware_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> &, const double);
+template std::vector<geometry_msgs::msg::Point>
+getInterpolatedPoints<std::vector<autoware_planning_msgs::msg::PathPoint>>(
+  const std::vector<autoware_planning_msgs::msg::PathPoint> &, const double);
 
 template <typename T>
 int getNearestIdx(
-  const T & points, const geometry_msgs::Pose & pose, const int default_idx,
+  const T & points, const geometry_msgs::msg::Pose & pose, const int default_idx,
   const double delta_yaw_threshold)
 {
   double min_dist = std::numeric_limits<double>::max();
@@ -357,15 +355,15 @@ int getNearestIdx(
   }
   return nearest_idx;
 }
-template int getNearestIdx<std::vector<autoware_planning_msgs::TrajectoryPoint>>(
-  const std::vector<autoware_planning_msgs::TrajectoryPoint> &, const geometry_msgs::Pose &,
+template int getNearestIdx<std::vector<autoware_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> &, const geometry_msgs::msg::Pose &,
   const int, const double);
-template int getNearestIdx<std::vector<autoware_planning_msgs::PathPoint>>(
-  const std::vector<autoware_planning_msgs::PathPoint> &, const geometry_msgs::Pose &, const int,
+template int getNearestIdx<std::vector<autoware_planning_msgs::msg::PathPoint>>(
+  const std::vector<autoware_planning_msgs::msg::PathPoint> &, const geometry_msgs::msg::Pose &, const int,
   const double);
 
 int getNearestIdx(
-  const std::vector<geometry_msgs::Point> & points, const geometry_msgs::Pose & pose,
+  const std::vector<geometry_msgs::msg::Point> & points, const geometry_msgs::msg::Pose & pose,
   const int default_idx, const double delta_yaw_threshold, const double delta_dist_threshold)
 {
   int nearest_idx = default_idx;
@@ -396,8 +394,8 @@ int getNearestIdx(
 }
 
 int getNearestIdxOverPoint(
-  const std::vector<autoware_planning_msgs::TrajectoryPoint> & points,
-  const geometry_msgs::Pose & pose, const int default_idx, const double delta_yaw_threshold)
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & points,
+  const geometry_msgs::msg::Pose & pose, const int default_idx, const double delta_yaw_threshold)
 {
   double min_dist = std::numeric_limits<double>::max();
   const double point_yaw = tf2::getYaw(pose.orientation);
@@ -424,7 +422,7 @@ int getNearestIdxOverPoint(
 }
 
 int getNearestIdx(
-  const std::vector<geometry_msgs::Point> & points, const geometry_msgs::Pose & pose,
+  const std::vector<geometry_msgs::msg::Point> & points, const geometry_msgs::msg::Pose & pose,
   const int default_idx, const double delta_yaw_threshold)
 {
   double min_dist = std::numeric_limits<double>::max();
@@ -446,7 +444,7 @@ int getNearestIdx(
 }
 
 template <typename T>
-int getNearestIdx(const T & points, const geometry_msgs::Point & point, const int default_idx)
+int getNearestIdx(const T & points, const geometry_msgs::msg::Point & point, const int default_idx)
 {
   double min_dist = std::numeric_limits<double>::max();
   int nearest_idx = default_idx;
@@ -469,15 +467,15 @@ int getNearestIdx(const T & points, const geometry_msgs::Point & point, const in
   }
   return nearest_idx;
 }
-template int getNearestIdx<std::vector<autoware_planning_msgs::TrajectoryPoint>>(
-  const std::vector<autoware_planning_msgs::TrajectoryPoint> & points,
-  const geometry_msgs::Point & point, const int default_idx);
-template int getNearestIdx<std::vector<autoware_planning_msgs::PathPoint>>(
-  const std::vector<autoware_planning_msgs::PathPoint> & points, const geometry_msgs::Point & point,
+template int getNearestIdx<std::vector<autoware_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & points,
+  const geometry_msgs::msg::Point & point, const int default_idx);
+template int getNearestIdx<std::vector<autoware_planning_msgs::msg::PathPoint>>(
+  const std::vector<autoware_planning_msgs::msg::PathPoint> & points, const geometry_msgs::msg::Point & point,
   const int default_idx);
 
 int getNearestIdx(
-  const std::vector<geometry_msgs::Point> & points, const geometry_msgs::Point & point)
+  const std::vector<geometry_msgs::msg::Point> & points, const geometry_msgs::msg::Point & point)
 {
   int nearest_idx = 0;
   double min_dist = std::numeric_limits<double>::max();
@@ -492,7 +490,7 @@ int getNearestIdx(
 }
 
 template <typename T>
-int getNearestIdx(const T & points, const geometry_msgs::Point & point)
+int getNearestIdx(const T & points, const geometry_msgs::msg::Point & point)
 {
   int nearest_idx = 0;
   double min_dist = std::numeric_limits<double>::max();
@@ -505,10 +503,10 @@ int getNearestIdx(const T & points, const geometry_msgs::Point & point)
   }
   return nearest_idx;
 }
-template int getNearestIdx<std::vector<autoware_planning_msgs::TrajectoryPoint>>(
-  const std::vector<autoware_planning_msgs::TrajectoryPoint> &, const geometry_msgs::Point &);
-template int getNearestIdx<std::vector<autoware_planning_msgs::PathPoint>>(
-  const std::vector<autoware_planning_msgs::PathPoint> &, const geometry_msgs::Point &);
+template int getNearestIdx<std::vector<autoware_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> &, const geometry_msgs::msg::Point &);
+template int getNearestIdx<std::vector<autoware_planning_msgs::msg::PathPoint>>(
+  const std::vector<autoware_planning_msgs::msg::PathPoint> &, const geometry_msgs::msg::Point &);
 
 int getNearestIdx(
   const std::vector<ReferencePoint> & points, const double target_s, const int begin_idx)
@@ -526,7 +524,7 @@ int getNearestIdx(
 }
 
 template <typename T>
-int getNearestPointIdx(const T & points, const geometry_msgs::Point & point)
+int getNearestPointIdx(const T & points, const geometry_msgs::msg::Point & point)
 {
   int nearest_idx = 0;
   double min_dist = std::numeric_limits<double>::max();
@@ -540,16 +538,16 @@ int getNearestPointIdx(const T & points, const geometry_msgs::Point & point)
   return nearest_idx;
 }
 template int getNearestPointIdx<std::vector<ReferencePoint>>(
-  const std::vector<ReferencePoint> &, const geometry_msgs::Point &);
+  const std::vector<ReferencePoint> &, const geometry_msgs::msg::Point &);
 template int getNearestPointIdx<std::vector<Footprint>>(
-  const std::vector<Footprint> &, const geometry_msgs::Point &);
+  const std::vector<Footprint> &, const geometry_msgs::msg::Point &);
 
-std::vector<autoware_planning_msgs::TrajectoryPoint> convertPathToTrajectory(
-  const std::vector<autoware_planning_msgs::PathPoint> & path_points)
+std::vector<autoware_planning_msgs::msg::TrajectoryPoint> convertPathToTrajectory(
+  const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points)
 {
-  std::vector<autoware_planning_msgs::TrajectoryPoint> traj_points;
+  std::vector<autoware_planning_msgs::msg::TrajectoryPoint> traj_points;
   for (const auto & point : path_points) {
-    autoware_planning_msgs::TrajectoryPoint tmp_point;
+    autoware_planning_msgs::msg::TrajectoryPoint tmp_point;
     tmp_point.pose = point.pose;
     tmp_point.twist = point.twist;
     traj_points.push_back(tmp_point);
@@ -557,12 +555,12 @@ std::vector<autoware_planning_msgs::TrajectoryPoint> convertPathToTrajectory(
   return traj_points;
 }
 
-std::vector<autoware_planning_msgs::TrajectoryPoint> convertPointsToTrajectoryPoinsWithYaw(
-  const std::vector<geometry_msgs::Point> & points)
+std::vector<autoware_planning_msgs::msg::TrajectoryPoint> convertPointsToTrajectoryPoinsWithYaw(
+  const std::vector<geometry_msgs::msg::Point> & points)
 {
-  std::vector<autoware_planning_msgs::TrajectoryPoint> traj_points;
+  std::vector<autoware_planning_msgs::msg::TrajectoryPoint> traj_points;
   for (size_t i = 0; i < points.size(); i++) {
-    autoware_planning_msgs::TrajectoryPoint traj_point;
+    autoware_planning_msgs::msg::TrajectoryPoint traj_point;
     traj_point.pose.position = points[i];
     double yaw = 0;
     if (i > 0) {
@@ -584,10 +582,10 @@ std::vector<autoware_planning_msgs::TrajectoryPoint> convertPointsToTrajectoryPo
   return traj_points;
 }
 
-std::vector<autoware_planning_msgs::TrajectoryPoint> fillTrajectoryWithVelocity(
-  const std::vector<autoware_planning_msgs::TrajectoryPoint> & traj_points, const double velocity)
+std::vector<autoware_planning_msgs::msg::TrajectoryPoint> fillTrajectoryWithVelocity(
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & traj_points, const double velocity)
 {
-  std::vector<autoware_planning_msgs::TrajectoryPoint> traj_with_velo;
+  std::vector<autoware_planning_msgs::msg::TrajectoryPoint> traj_with_velo;
   for (const auto & traj_point : traj_points) {
     auto tmp_point = traj_point;
     tmp_point.twist.linear.x = velocity;
@@ -597,8 +595,8 @@ std::vector<autoware_planning_msgs::TrajectoryPoint> fillTrajectoryWithVelocity(
 }
 
 template <typename T>
-std::vector<autoware_planning_msgs::TrajectoryPoint> alignVelocityWithPoints(
-  const std::vector<autoware_planning_msgs::TrajectoryPoint> & base_traj_points, const T & points,
+std::vector<autoware_planning_msgs::msg::TrajectoryPoint> alignVelocityWithPoints(
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & base_traj_points, const T & points,
   const int zero_velocity_traj_idx, const int max_skip_comparison_idx)
 {
   auto traj_points = base_traj_points;
@@ -630,14 +628,14 @@ std::vector<autoware_planning_msgs::TrajectoryPoint> alignVelocityWithPoints(
   }
   return traj_points;
 }
-template std::vector<autoware_planning_msgs::TrajectoryPoint>
-alignVelocityWithPoints<std::vector<autoware_planning_msgs::PathPoint>>(
-  const std::vector<autoware_planning_msgs::TrajectoryPoint> &,
-  const std::vector<autoware_planning_msgs::PathPoint> &, const int, const int);
-template std::vector<autoware_planning_msgs::TrajectoryPoint>
-alignVelocityWithPoints<std::vector<autoware_planning_msgs::TrajectoryPoint>>(
-  const std::vector<autoware_planning_msgs::TrajectoryPoint> &,
-  const std::vector<autoware_planning_msgs::TrajectoryPoint> &, const int, const int);
+template std::vector<autoware_planning_msgs::msg::TrajectoryPoint>
+alignVelocityWithPoints<std::vector<autoware_planning_msgs::msg::PathPoint>>(
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> &,
+  const std::vector<autoware_planning_msgs::msg::PathPoint> &, const int, const int);
+template std::vector<autoware_planning_msgs::msg::TrajectoryPoint>
+alignVelocityWithPoints<std::vector<autoware_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> &,
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> &, const int, const int);
 
 std::vector<std::vector<int>> getHistogramTable(const std::vector<std::vector<int>> & input)
 {
@@ -715,8 +713,8 @@ Rectangle getLargestRectangle(const std::vector<std::vector<int>> & input)
   return largest_rectangle;
 }
 
-boost::optional<geometry_msgs::Point> getLastExtendedPoint(
-  const autoware_planning_msgs::PathPoint & path_point, const geometry_msgs::Pose & pose,
+boost::optional<geometry_msgs::msg::Point> getLastExtendedPoint(
+  const autoware_planning_msgs::msg::PathPoint & path_point, const geometry_msgs::msg::Pose & pose,
   const double delta_yaw_threshold, const double delta_dist_threshold)
 {
   const double dist = calculate2DDistance(path_point.pose.position, pose.position);
@@ -730,8 +728,8 @@ boost::optional<geometry_msgs::Point> getLastExtendedPoint(
   }
 }
 
-boost::optional<autoware_planning_msgs::TrajectoryPoint> getLastExtendedTrajPoint(
-  const autoware_planning_msgs::PathPoint & path_point, const geometry_msgs::Pose & pose,
+boost::optional<autoware_planning_msgs::msg::TrajectoryPoint> getLastExtendedTrajPoint(
+  const autoware_planning_msgs::msg::PathPoint & path_point, const geometry_msgs::msg::Pose & pose,
   const double delta_yaw_threshold, const double delta_dist_threshold)
 {
   const double dist = calculate2DDistance(path_point.pose.position, pose.position);
@@ -739,7 +737,7 @@ boost::optional<autoware_planning_msgs::TrajectoryPoint> getLastExtendedTrajPoin
   const double norm_diff_yaw = normalizeRadian(diff_yaw);
   if (
     dist > 1e-6 && dist < delta_dist_threshold && std::fabs(norm_diff_yaw) < delta_yaw_threshold) {
-    autoware_planning_msgs::TrajectoryPoint tmp_traj_p;
+    autoware_planning_msgs::msg::TrajectoryPoint tmp_traj_p;
     tmp_traj_p.pose.position = path_point.pose.position;
     tmp_traj_p.pose.orientation =
       util::getQuaternionFromPoints(path_point.pose.position, pose.position);
@@ -751,7 +749,7 @@ boost::optional<autoware_planning_msgs::TrajectoryPoint> getLastExtendedTrajPoin
 }
 
 std::vector<Footprint> getVehicleFootprints(
-  const std::vector<autoware_planning_msgs::TrajectoryPoint> & optimzied_points,
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & optimzied_points,
   const VehicleParam & vehicle_param)
 {
   const double baselink_to_top = vehicle_param.length - vehicle_param.rear_overhang;
@@ -761,9 +759,9 @@ std::vector<Footprint> getVehicleFootprints(
   std::vector<Footprint> rects;
   for (int i = 0; i < optimzied_points.size(); i++) {
     // for (int i = nearest_idx; i < optimzied_points.size(); i++) {
-    std::vector<geometry_msgs::Point> abs_points;
+    std::vector<geometry_msgs::msg::Point> abs_points;
     for (int j = 0; j < rel_lon_offset.size(); j++) {
-      geometry_msgs::Point rel_point;
+      geometry_msgs::msg::Point rel_point;
       rel_point.x = rel_lon_offset[j];
       rel_point.y = rel_lat_offset[j];
       abs_points.push_back(
@@ -801,7 +799,7 @@ std::vector<double> calcEuclidDist(const std::vector<double> & x, const std::vec
 }
 
 bool hasValidNearestPointFromEgo(
-  const geometry_msgs::Pose & ego_pose, const Trajectories & trajs,
+  const geometry_msgs::msg::Pose & ego_pose, const Trajectories & trajs,
   const TrajectoryParam & traj_param)
 {
   const auto traj = concatTraj(trajs);
@@ -817,9 +815,9 @@ bool hasValidNearestPointFromEgo(
   return true;
 }
 
-std::vector<autoware_planning_msgs::TrajectoryPoint> concatTraj(const Trajectories & trajs)
+std::vector<autoware_planning_msgs::msg::TrajectoryPoint> concatTraj(const Trajectories & trajs)
 {
-  std::vector<autoware_planning_msgs::TrajectoryPoint> trajectory;
+  std::vector<autoware_planning_msgs::msg::TrajectoryPoint> trajectory;
   trajectory.insert(
     trajectory.end(), trajs.model_predictive_trajectory.begin(),
     trajs.model_predictive_trajectory.end());
@@ -829,8 +827,8 @@ std::vector<autoware_planning_msgs::TrajectoryPoint> concatTraj(const Trajectori
 }
 
 const int getZeroVelocityIdx(
-  const bool is_showing_debug_info, const std::vector<geometry_msgs::Point> & fine_points,
-  const std::vector<autoware_planning_msgs::PathPoint> & path_points,
+  const bool is_showing_debug_info, const std::vector<geometry_msgs::msg::Point> & fine_points,
+  const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points,
   const std::unique_ptr<Trajectories> & opt_trajs, const TrajectoryParam & traj_param)
 {
   const int default_idx = fine_points.size() - 1;
@@ -842,7 +840,7 @@ const int getZeroVelocityIdx(
     zero_velocity_idx_from_opt_points = getZeroVelocityIdxFromPoints(
       util::concatTraj(*opt_trajs), fine_points, default_idx, traj_param);
   }
-  ROS_INFO_COND(
+  RCLCPP_INFO_EXPRESSION(rclcpp::get_logger("util"),
     is_showing_debug_info, "0 m/s idx from path: %d from opt: %d total size %zu",
     zero_velocity_idx_from_path, zero_velocity_idx_from_opt_points, fine_points.size());
   // std::cout << "zero velo from path " << zero_velocity_idx_from_path << " from opt "
@@ -861,14 +859,14 @@ const int getZeroVelocityIdx(
     }
     const float debug_dist = util::calculate2DDistance(
       path_points[zero_velocity_path_idx].pose.position, fine_points[zero_velocity_idx]);
-    ROS_INFO("Dist from path 0 velocity point: = %f [m]", debug_dist);
+    RCLCPP_INFO(rclcpp::get_logger("util"),"Dist from path 0 velocity point: = %f [m]", debug_dist);
   }
   return zero_velocity_idx;
 }
 
 template <typename T>
 int getZeroVelocityIdxFromPoints(
-  const T & points, const std::vector<geometry_msgs::Point> & fine_points, const int default_idx,
+  const T & points, const std::vector<geometry_msgs::msg::Point> & fine_points, const int default_idx,
   const TrajectoryParam & traj_param)
 {
   int zero_velocity_points_idx = points.size() - 1;
@@ -885,12 +883,12 @@ int getZeroVelocityIdxFromPoints(
     traj_param.delta_dist_threshold_for_closest_point);
   return zero_velocity_fine_points_idx;
 }
-template int getZeroVelocityIdxFromPoints<std::vector<autoware_planning_msgs::PathPoint>>(
-  const std::vector<autoware_planning_msgs::PathPoint> &, const std::vector<geometry_msgs::Point> &,
+template int getZeroVelocityIdxFromPoints<std::vector<autoware_planning_msgs::msg::PathPoint>>(
+  const std::vector<autoware_planning_msgs::msg::PathPoint> &, const std::vector<geometry_msgs::msg::Point> &,
   const int, const TrajectoryParam &);
-template int getZeroVelocityIdxFromPoints<std::vector<autoware_planning_msgs::TrajectoryPoint>>(
-  const std::vector<autoware_planning_msgs::TrajectoryPoint> &,
-  const std::vector<geometry_msgs::Point> &, const int, const TrajectoryParam &);
+template int getZeroVelocityIdxFromPoints<std::vector<autoware_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> &,
+  const std::vector<geometry_msgs::msg::Point> &, const int, const TrajectoryParam &);
 
 template <typename T>
 double getArcLength(const T & points, const int initial_idx)
@@ -905,12 +903,12 @@ double getArcLength(const T & points, const int initial_idx)
   }
   return accum_arc_length;
 }
-template double getArcLength<std::vector<autoware_planning_msgs::PathPoint>>(
-  const std::vector<autoware_planning_msgs::PathPoint> &, const int);
-template double getArcLength<std::vector<autoware_planning_msgs::TrajectoryPoint>>(
-  const std::vector<autoware_planning_msgs::TrajectoryPoint> &, const int);
+template double getArcLength<std::vector<autoware_planning_msgs::msg::PathPoint>>(
+  const std::vector<autoware_planning_msgs::msg::PathPoint> &, const int);
+template double getArcLength<std::vector<autoware_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> &, const int);
 
-double getArcLength(const std::vector<geometry_msgs::Pose> & points, const int initial_idx)
+double getArcLength(const std::vector<geometry_msgs::msg::Pose> & points, const int initial_idx)
 {
   double accum_arc_length = 0;
   for (size_t i = initial_idx; i < points.size(); i++) {
@@ -937,25 +935,25 @@ void logOSQPSolutionStatus(const int solution_status)
   int OSQP_SIGINT = -5;            /* interrupted by user */
 
   if (solution_status == OSQP_SOLVED) {
-    // ROS_INFO("[Avoidance] OSQP solution status: OSQP_SOLVED");
+    // RCLCPP_INFO(rclcpp::get_logger("util"),"[Avoidance] OSQP solution status: OSQP_SOLVED");
   } else if (solution_status == OSQP_DUAL_INFEASIBLE_INACCURATE) {
-    ROS_WARN("[Avoidance] OSQP solution status: OSQP_DUAL_INFEASIBLE_INACCURATE");
+    RCLCPP_WARN(rclcpp::get_logger("util"),"[Avoidance] OSQP solution status: OSQP_DUAL_INFEASIBLE_INACCURATE");
   } else if (solution_status == OSQP_PRIMAL_INFEASIBLE_INACCURATE) {
-    ROS_WARN("[Avoidance] OSQP solution status: OSQP_PRIMAL_INFEASIBLE_INACCURATE");
+    RCLCPP_WARN(rclcpp::get_logger("util"),"[Avoidance] OSQP solution status: OSQP_PRIMAL_INFEASIBLE_INACCURATE");
   } else if (solution_status == OSQP_SOLVED_INACCURATE) {
-    ROS_WARN("[Avoidance] OSQP solution status: OSQP_SOLVED_INACCURATE");
+    RCLCPP_WARN(rclcpp::get_logger("util"),"[Avoidance] OSQP solution status: OSQP_SOLVED_INACCURATE");
   } else if (solution_status == OSQP_MAX_ITER_REACHED) {
-    ROS_WARN("[Avoidance] OSQP solution status: OSQP_ITER_REACHED");
+    RCLCPP_WARN(rclcpp::get_logger("util"),"[Avoidance] OSQP solution status: OSQP_ITER_REACHED");
   } else if (solution_status == OSQP_PRIMAL_INFEASIBLE) {
-    ROS_WARN("[Avoidance] OSQP solution status: OSQP_PRIMAL_INFEASIBLE");
+    RCLCPP_WARN(rclcpp::get_logger("util"),"[Avoidance] OSQP solution status: OSQP_PRIMAL_INFEASIBLE");
   } else if (solution_status == OSQP_DUAL_INFEASIBLE) {
-    ROS_WARN("[Avoidance] OSQP solution status: OSQP_DUAL_INFEASIBLE");
+    RCLCPP_WARN(rclcpp::get_logger("util"),"[Avoidance] OSQP solution status: OSQP_DUAL_INFEASIBLE");
   } else if (solution_status == OSQP_SIGINT) {
-    ROS_WARN("[Avoidance] OSQP solution status: OSQP_SIGINT");
-    ROS_WARN("[Avoidance] Interrupted by user, process will be finished.");
+    RCLCPP_WARN(rclcpp::get_logger("util"),"[Avoidance] OSQP solution status: OSQP_SIGINT");
+    RCLCPP_WARN(rclcpp::get_logger("util"),"[Avoidance] Interrupted by user, process will be finished.");
     std::exit(0);
   } else {
-    ROS_WARN("[Avoidance] OSQP solution status: Not defined %d", solution_status);
+    RCLCPP_WARN(rclcpp::get_logger("util"),"[Avoidance] OSQP solution status: Not defined %d", solution_status);
   }
 }
 

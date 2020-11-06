@@ -15,11 +15,11 @@
  */
 #pragma once
 
-#include <visualization_msgs/MarkerArray.h>
+#include <visualization_msgs/msg/marker_array.hpp>
 
-inline geometry_msgs::Vector3 createMarkerScale(double x, double y, double z)
+inline geometry_msgs::msg::Vector3 createMarkerScale(double x, double y, double z)
 {
-  geometry_msgs::Vector3 scale;
+  geometry_msgs::msg::Vector3 scale;
 
   scale.x = x;
   scale.y = y;
@@ -28,9 +28,9 @@ inline geometry_msgs::Vector3 createMarkerScale(double x, double y, double z)
   return scale;
 }
 
-inline std_msgs::ColorRGBA createMarkerColor(float r, float g, float b, float a)
+inline std_msgs::msg::ColorRGBA createMarkerColor(float r, float g, float b, float a)
 {
-  std_msgs::ColorRGBA color;
+  std_msgs::msg::ColorRGBA color;
 
   color.r = r;
   color.g = g;
@@ -41,8 +41,8 @@ inline std_msgs::ColorRGBA createMarkerColor(float r, float g, float b, float a)
 }
 
 inline void appendMarkerArray(
-  const visualization_msgs::MarkerArray & additional_marker_array,
-  visualization_msgs::MarkerArray * marker_array)
+  const visualization_msgs::msg::MarkerArray & additional_marker_array,
+  visualization_msgs::msg::MarkerArray * marker_array)
 {
   for (const auto & marker : additional_marker_array.markers) {
     marker_array->markers.push_back(marker);

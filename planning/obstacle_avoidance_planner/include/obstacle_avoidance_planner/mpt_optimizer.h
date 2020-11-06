@@ -42,7 +42,7 @@
 #ifndef MPTOPTIMIZER_H
 #define MPTOPTIMIZER_H
 
-#include <autoware_planning_msgs/TrajectoryPoint.h>
+#include <autoware_planning_msgs/msg/trajectory_point.hpp>
 
 namespace cv
 {
@@ -67,14 +67,14 @@ class VehicleModelInterface;
 
 struct ReferencePoint
 {
-  geometry_msgs::Point p;
+  geometry_msgs::msg::Point p;
   double k = 0;
   double v = 0;
   double yaw = 0;
-  geometry_msgs::Quaternion q;
+  geometry_msgs::msg::Quaternion q;
   double s = 0;
-  geometry_msgs::Pose top_pose;
-  geometry_msgs::Pose mid_pose;
+  geometry_msgs::msg::Pose top_pose;
+  geometry_msgs::msg::Pose mid_pose;
   double delta_yaw_from_p1;
   double delta_yaw_from_p2;
   bool is_fix = false;
@@ -158,18 +158,18 @@ private:
   std::unique_ptr<VehicleModelInterface> vehicle_model_ptr_;
 
   std::vector<ReferencePoint> convertToReferencePoints(
-    const std::vector<autoware_planning_msgs::TrajectoryPoint> & points,
-    const geometry_msgs::Pose & ego_pose, const std::unique_ptr<Trajectories> & prev_mpt_points,
+    const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & points,
+    const geometry_msgs::msg::Pose & ego_pose, const std::unique_ptr<Trajectories> & prev_mpt_points,
     DebugData * debug_data) const;
 
   std::vector<ReferencePoint> getReferencePoints(
-    const geometry_msgs::Pose & origin_pose, const geometry_msgs::Pose & ego_pose,
-    const std::vector<autoware_planning_msgs::TrajectoryPoint> & points,
+    const geometry_msgs::msg::Pose & origin_pose, const geometry_msgs::msg::Pose & ego_pose,
+    const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & points,
     const std::unique_ptr<Trajectories> & prev_mpt_points, DebugData * debug_data) const;
 
   std::vector<ReferencePoint> getBaseReferencePoints(
-    const std::vector<geometry_msgs::Point> & interpolated_points,
-    const std::vector<autoware_planning_msgs::TrajectoryPoint> & points) const;
+    const std::vector<geometry_msgs::msg::Point> & interpolated_points,
+    const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & points) const;
 
   void calcCurvature(std::vector<ReferencePoint> * ref_points) const;
 
@@ -178,7 +178,7 @@ private:
   void calcExtraPoints(std::vector<ReferencePoint> * ref_points) const;
 
   void calcFixPoints(
-    const std::unique_ptr<Trajectories> & prev_trajs, const geometry_msgs::Pose & ego_pose,
+    const std::unique_ptr<Trajectories> & prev_trajs, const geometry_msgs::msg::Pose & ego_pose,
     std::vector<ReferencePoint> * ref_points, DebugData * debug_data) const;
 
   /*
@@ -188,7 +188,7 @@ private:
  */
   boost::optional<MPTMatrix> generateMPTMatrix(
     const std::vector<ReferencePoint> & reference_points,
-    const std::vector<autoware_planning_msgs::PathPoint> & path_points) const;
+    const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points) const;
 
   void addSteerWeightR(Eigen::MatrixXd * R, const std::vector<ReferencePoint> & ref_points) const;
 
@@ -197,19 +197,19 @@ private:
   boost::optional<Eigen::VectorXd> executeOptimization(
     const bool enable_avoidance, const MPTMatrix & m,
     const std::vector<ReferencePoint> & ref_points,
-    const std::vector<autoware_planning_msgs::PathPoint> & path_points, const CVMaps & maps,
+    const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points, const CVMaps & maps,
     const Eigen::VectorXd & initial_state, DebugData * debug_data);
 
-  std::vector<autoware_planning_msgs::TrajectoryPoint> getMPTPoints(
+  std::vector<autoware_planning_msgs::msg::TrajectoryPoint> getMPTPoints(
     const std::vector<ReferencePoint> & ref_points, const Eigen::VectorXd & Uex,
     const MPTMatrix & mpc_matrix, const Eigen::VectorXd & initial_state,
-    const std::vector<autoware_planning_msgs::TrajectoryPoint> & optimized_points) const;
+    const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & optimized_points) const;
 
   double calcLateralError(
-    const geometry_msgs::Point & target_point, const ReferencePoint & ref_point) const;
+    const geometry_msgs::msg::Point & target_point, const ReferencePoint & ref_point) const;
 
   Eigen::VectorXd getInitialState(
-    const geometry_msgs::Pose & ego_pose, const ReferencePoint & nearest_ref_point) const;
+    const geometry_msgs::msg::Pose & ego_pose, const ReferencePoint & nearest_ref_point) const;
 
   std::vector<Bounds> getReferenceBounds(
     const bool enable_avoidance, const std::vector<ReferencePoint> & ref_points,
@@ -225,15 +225,15 @@ private:
 
   //TODO: refactor replace all relevant funcs
   double getClearance(
-    const cv::Mat & clearance_map, const geometry_msgs::Point & map_point,
-    const nav_msgs::MapMetaData & map_info, const double default_dist = 0.0) const;
+    const cv::Mat & clearance_map, const geometry_msgs::msg::Point & map_point,
+    const nav_msgs::msg::MapMetaData & map_info, const double default_dist = 0.0) const;
 
   ObjectiveMatrix getObjectiveMatrix(const Eigen::VectorXd & x0, const MPTMatrix & m) const;
 
   ConstraintMatrix getConstraintMatrix(
     const bool enable_avoidance, const Eigen::VectorXd & x0, const MPTMatrix & m,
     const CVMaps & maps, const std::vector<ReferencePoint> & ref_points,
-    const std::vector<autoware_planning_msgs::PathPoint> & path_points,
+    const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points,
     DebugData * debug_data) const;
 
 public:
@@ -243,13 +243,13 @@ public:
     const MPTParam & mpt_param);
   ~MPTOptimizer();
 
-  boost::optional<std::vector<autoware_planning_msgs::TrajectoryPoint>>
+  boost::optional<std::vector<autoware_planning_msgs::msg::TrajectoryPoint>>
   getModelPredictiveTrajectory(
     const bool enable_avoidance,
-    const std::vector<autoware_planning_msgs::TrajectoryPoint> & smoothed_points,
-    const std::vector<autoware_planning_msgs::PathPoint> & path_points,
+    const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & smoothed_points,
+    const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points,
     const std::unique_ptr<Trajectories> & prev_trajs, const CVMaps & maps,
-    const geometry_msgs::Pose & ego_pose, DebugData * debug_data);
+    const geometry_msgs::msg::Pose & ego_pose, DebugData * debug_data);
 };
 
 #endif
