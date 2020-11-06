@@ -47,19 +47,6 @@ repositories:
     type: git
     url: https://github.com/ros2/geometry2.git
     version: foxy
-  vendor/grid_map:
-    type: git
-    url: https://github.com:ANYbotics/grid_map.git
-    version: ros2
-  vendor/filters:
-    type: git
-    url: https://github.com:ros/filters.git
-    version: ros2
-  vendor/filters:
-    type: git
-    url: https://github.com:ros2/orocos_kinematics_dynamics.git
-    version: ros2
-
 #  vendor/lanelet2:
 #    type: git
 #    url: https://github.com/fzi-forschungszentrum-informatik/Lanelet2.git
