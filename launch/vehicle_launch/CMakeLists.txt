@@ -1,15 +1,15 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5)
 project(vehicle_launch)
 
 add_compile_options(-std=c++14)
 
-find_package(catkin REQUIRED)
+find_package(ament_cmake_auto REQUIRED)
+find_package(xacro REQUIRED)
 
-catkin_package()
+ament_auto_find_build_dependencies()
 
-install(DIRECTORY
+ament_auto_package(INSTALL_TO_SHARE
     launch
     config
     urdf
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )

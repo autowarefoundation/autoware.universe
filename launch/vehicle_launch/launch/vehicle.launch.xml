@@ -5,20 +5,22 @@
 
   <arg name="initial_engage_state" default="true"/>
   <arg name="simulation" default="false" />
-  <arg name ="vehicle_id" value="$(optenv VEHICLE_ID default)" />
+  <arg name ="vehicle_id" default="$(env VEHICLE_ID default)" />
 
   <!-- vehicle description -->
-  <include file="$(find vehicle_launch)/launch/vehicle_description.launch">
-    <arg name="vehicle_model" value="$(arg vehicle_model)"/>
-    <arg name="sensor_model" value="$(arg sensor_model)"/>
-    <arg name="vehicle_id" value="$(arg vehicle_id)"/>
-  </include>
+  <group>
+    <include file="$(find-pkg-share vehicle_launch)/launch/vehicle_description.launch.xml">
+      <arg name="vehicle_model" value="$(var vehicle_model)"/>
+      <arg name="sensor_model" value="$(var sensor_model)"/>
+      <arg name="vehicle_id" value="$(var vehicle_id)"/>
+    </include>
+  </group>
 
   <!-- vehicle interface -->
-  <include file="$(find vehicle_launch)/launch/vehicle_interface.launch">
-    <arg name="initial_engage_state" value="$(arg initial_engage_state)"/>
-    <arg name="simulation" value="$(arg simulation)"/>
-    <arg name="vehicle_model" value="$(arg vehicle_model)"/>
-    <arg name="vehicle_id" value="$(arg vehicle_id)"/>
+  <include file="$(find-pkg-share vehicle_launch)/launch/vehicle_interface.launch.xml">
+    <arg name="initial_engage_state" value="$(var initial_engage_state)"/>
+    <arg name="simulation" value="$(var simulation)"/>
+    <arg name="vehicle_model" value="$(var vehicle_model)"/>
+    <arg name="vehicle_id" value="$(var vehicle_id)"/>
   </include>
 </launch>

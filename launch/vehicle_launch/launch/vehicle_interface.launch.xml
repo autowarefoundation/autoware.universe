@@ -1,19 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
-  <arg name="simulation" />
-  <arg name="vehicle_model" />
-  <arg name="vehicle_id" />
+  <arg name="simulation"/>
+  <arg name="vehicle_model"/>
+  <arg name="vehicle_id"/>
   <arg name="initial_engage_state" default="true"/>
 
+  <arg name="vehicle_model_pkg" default="$(find-pkg-share $(var vehicle_model)_description)"/>
+
+
   <!-- simulation mode -->
-  <group if="$(eval simulation==true)">
-    <arg name="simulator_model" value="$(eval find(arg('vehicle_model')+'_description')+'/config/simulator_model.yaml')" />
-    <include file="$(find simple_planning_simulator)/launch/simple_planning_simulator.launch" pass_all_args="true"/>
+  <group if="$(var simulation)">
+    <arg name="simulator_model" default="$(var vehicle_model_pkg)/config/simulator_model.param.yaml" />
+    <include file="$(find-pkg-share simple_planning_simulator)/launch/simple_planning_simulator.launch.xml" pass_all_args="true"/>
   </group>
 
   <!-- real mode -->
-  <group unless="$(eval simulation==true)">
-    <include file="$(eval find(arg('vehicle_model')+'_description')+'/launch/vehicle_interface.launch')" >
+  <group unless="$(var simulation)">
+    <include file="$(var vehicle_model_pkg)/launch/vehicle_interface.launch.xml">
     </include>
   </group>
 </launch>
