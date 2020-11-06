@@ -1,15 +1,18 @@
 <launch>
   <!-- planning module -->
-  <group ns="planning">
+  <group>
+    <push-ros-namespace namespace="planning"/>
     <!-- mission planning module -->
-    <group ns="mission_planning">
-      <include file="$(find planning_launch)/launch/mission_planning/mission_planning.launch">
+    <group>
+      <push-ros-namespace namespace="mission_planning"/>
+      <include file="$(find-pkg-share planning_launch)/launch/mission_planning/mission_planning.launch.xml">
       </include>
     </group>
 
     <!-- scenario planning module -->
-    <group ns="scenario_planning">
-      <include file="$(find planning_launch)/launch/scenario_planning/scenario_planning.launch">
+    <group>
+      <push-ros-namespace namespace="scenario_planning"/>
+      <include file="$(find-pkg-share planning_launch)/launch/scenario_planning/scenario_planning.launch.xml">
       </include>
     </group>
   </group>

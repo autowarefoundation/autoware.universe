@@ -1,7 +1,8 @@
 <launch>
   <!-- parking scenario -->
-  <group ns="parking">
-    <include file="$(find costmap_generator)/launch/costmap_generator.launch">
+  <group>
+    <push-ros-namespace namespace="parking"/>
+    <include file="$(find-pkg-share costmap_generator)/launch/costmap_generator.launch.xml">
       <arg name="input_objects" value="/perception/object_recognition/objects"/>
       <arg name="input_points_no_ground" value="/sensing/lidar/no_ground/pointcloud"/>
       <arg name="input_lanelet_map" value="/map/vector_map"/>
@@ -10,7 +11,7 @@
       <arg name="output_occupancy_grid" value="~occupancy_grid"/>
     </include>
 
-    <include file="$(find freespace_planner)/launch/freespace_planner.launch">
+    <include file="$(find-pkg-share freespace_planner)/launch/freespace_planner.launch.xml">
       <arg name="input_route" value="/planning/mission_planning/route" />
       <arg name="input_occupancy_grid" value="costmap_generator/occupancy_grid" />
       <arg name="input_scenario" value="/planning/scenario_planning/scenario" />

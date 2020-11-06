@@ -1,15 +1,19 @@
 <launch>
 
   <!-- lane_driving scenario -->
-  <group ns="lane_driving">
+  <group>
+    <push-ros-namespace namespace="lane_driving"/>
     <!-- behavior planning module -->
-    <group ns="behavior_planning">
-      <include file="$(find planning_launch)/launch/scenario_planning/lane_driving/behavior_planning/behavior_planning.launch"></include>
+    <group>
+      <push-ros-namespace namespace="behavior_planning"/>
+      <include file="$(find-pkg-share planning_launch)/launch/scenario_planning/lane_driving/behavior_planning/behavior_planning.launch.xml">
+      </include>
     </group>
 
     <!-- motion planning module -->
-    <group ns="motion_planning">
-      <include file="$(find planning_launch)/launch/scenario_planning/lane_driving/motion_planning/motion_planning.launch">
+    <group>
+      <push-ros-namespace namespace="motion_planning"/>
+      <include file="$(find-pkg-share planning_launch)/launch/scenario_planning/lane_driving/motion_planning/motion_planning.launch.xml">
       </include>
     </group>
   </group>
