@@ -1,12 +1,35 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.5)
 project(surround_obstacle_checker)
 
-add_compile_options(-std=c++14)
+### Compile options
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wno-unused-parameter -Wall -Wextra -Wpedantic)
+endif()
 
-find_package(catkin REQUIRED COMPONENTS
+find_package(ament_cmake REQUIRED)
+find_package(eigen3_cmake_module REQUIRED)
+find_package(Eigen3 REQUIRED)
+find_package(PCL REQUIRED COMPONENTS common) 
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
+
+add_executable(${PROJECT_NAME}_node
+  src/debug_marker.cpp
+  src/node.cpp
+  src/main.cpp
+)
+
+set(${PROJECT_NAME}_DEPENDENCIES
+  eigen3_cmake_module
+  Eigen3
+  PCL
   autoware_perception_msgs
   autoware_planning_msgs
-  roscpp
+  diagnostic_msgs
+  rclcpp
   sensor_msgs
   std_msgs
   tf2
@@ -14,55 +37,36 @@ find_package(catkin REQUIRED COMPONENTS
   tf2_eigen
   tf2_ros
   visualization_msgs
-  pcl_ros
+  pcl_conversions
+  vehicle_info_util
 )
 
-find_package(Eigen3 REQUIRED)
-
-catkin_package(
-  INCLUDE_DIRS include
-  CATKIN_DEPENDS
-  autoware_perception_msgs
-    autoware_planning_msgs
-    roscpp
-    sensor_msgs
-    std_msgs
-    tf2
-    tf2_geometry_msgs
-    tf2_eigen
-    tf2_ros
-    visualization_msgs
-    pcl_ros
+target_include_directories(${PROJECT_NAME}_node
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
 )
 
-include_directories(
-  include
-  ${EIGEN3_INCLUDE_DIRS}
-  ${catkin_INCLUDE_DIRS}
-)
+ament_target_dependencies(${PROJECT_NAME}_node PUBLIC ${${PROJECT_NAME}_DEPENDENCIES})
 
-add_executable(surround_obstacle_checker_node
-  src/debug_marker.cpp
-  src/node.cpp
-  src/main.cpp
-)
-add_dependencies(surround_obstacle_checker_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_compile_definitions(${PROJECT_NAME}_node PUBLIC ${PCL_DEFINITIONS})
+target_include_directories(${PROJECT_NAME}_node PUBLIC ${PCL_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME}_node PUBLIC ${PCL_LIBRARIES})
+target_link_directories(${PROJECT_NAME}_node PUBLIC ${PCL_LIBRARY_DIRS})
 
-target_link_libraries(surround_obstacle_checker_node
-  ${catkin_LIBRARIES}
+install(
+  DIRECTORY include/
+  DESTINATION include
 )
 
 install(
-  TARGETS
-    surround_obstacle_checker_node
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  DIRECTORY launch config
+  DESTINATION share/${PROJECT_NAME}
 )
 
 install(
-  DIRECTORY
-    config
-    launch
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+  TARGETS ${PROJECT_NAME}_node
+  DESTINATION lib/${PROJECT_NAME}
 )
+
+ament_package() 

@@ -14,23 +14,24 @@
  * limitations under the License.
  */
 
-#include "surround_obstacle_checker/debug_marker.hpp"
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <surround_obstacle_checker/debug_marker.hpp>
 
-SurroundObstacleCheckerDebugNode::SurroundObstacleCheckerDebugNode(const double base_link2front)
-: nh_(), pnh_("~"), base_link2front_(base_link2front)
+SurroundObstacleCheckerDebugNode::SurroundObstacleCheckerDebugNode(
+  const double base_link2front, const rclcpp::Clock::SharedPtr clock, rclcpp::Node & node)
+: base_link2front_(base_link2front), clock_(clock)
 {
-  debug_viz_pub_ = pnh_.advertise<visualization_msgs::MarkerArray>("debug/marker", 1);
+  debug_viz_pub_ = node.create_publisher<visualization_msgs::msg::MarkerArray>("debug/marker", 1);
   stop_reason_pub_ =
-    pnh_.advertise<autoware_planning_msgs::StopReasonArray>("output/stop_reasons", 1);
+    node.create_publisher<autoware_planning_msgs::msg::StopReasonArray>("output/stop_reasons", 1);
 }
 
 bool SurroundObstacleCheckerDebugNode::pushPose(
-  const geometry_msgs::Pose & pose, const PoseType & type)
+  const geometry_msgs::msg::Pose & pose, const PoseType & type)
 {
   switch (type) {
     case PoseType::NoStart:
-      stop_pose_ptr_ = std::make_shared<geometry_msgs::Pose>(pose);
+      stop_pose_ptr_ = std::make_shared<geometry_msgs::msg::Pose>(pose);
       return true;
     default:
       return false;
@@ -38,11 +39,11 @@ bool SurroundObstacleCheckerDebugNode::pushPose(
 }
 
 bool SurroundObstacleCheckerDebugNode::pushObstaclePoint(
-  const geometry_msgs::Point & obstacle_point, const PointType & type)
+  const geometry_msgs::msg::Point & obstacle_point, const PointType & type)
 {
   switch (type) {
     case PointType::NoStart:
-      stop_obstacle_point_ptr_ = std::make_shared<geometry_msgs::Point>(obstacle_point);
+      stop_obstacle_point_ptr_ = std::make_shared<geometry_msgs::msg::Point>(obstacle_point);
       return true;
     default:
       return false;
@@ -53,34 +54,34 @@ void SurroundObstacleCheckerDebugNode::publish()
 {
   /* publish debug marker for rviz */
   const auto visualization_msg = makeVisualizationMarker();
-  debug_viz_pub_.publish(visualization_msg);
+  debug_viz_pub_->publish(visualization_msg);
 
   /* publish stop reason for autoware api */
   const auto stop_reason_msg = makeStopReasonArray();
-  stop_reason_pub_.publish(stop_reason_msg);
+  stop_reason_pub_->publish(stop_reason_msg);
 
   /* reset variables */
   stop_pose_ptr_ = nullptr;
   stop_obstacle_point_ptr_ = nullptr;
 }
 
-visualization_msgs::MarkerArray SurroundObstacleCheckerDebugNode::makeVisualizationMarker()
+visualization_msgs::msg::MarkerArray SurroundObstacleCheckerDebugNode::makeVisualizationMarker()
 {
-  visualization_msgs::MarkerArray msg;
-  ros::Time current_time = ros::Time::now();
+  visualization_msgs::msg::MarkerArray msg;
+  rclcpp::Time current_time = this->clock_->now();
   tf2::Transform tf_base_link2front(
     tf2::Quaternion(0.0, 0.0, 0.0, 1.0), tf2::Vector3(base_link2front_, 0.0, 0.0));
 
   //visualize stop line
   if (stop_pose_ptr_ != nullptr) {
-    visualization_msgs::Marker marker;
+    visualization_msgs::msg::Marker marker;
     marker.header.frame_id = "map";
     marker.header.stamp = current_time;
     marker.ns = "virtual_wall/no_start";
     marker.id = 0;
-    marker.lifetime = ros::Duration(0.5);
-    marker.type = visualization_msgs::Marker::CUBE;
-    marker.action = visualization_msgs::Marker::ADD;
+    marker.lifetime = rclcpp::Duration(0.5);
+    marker.type = visualization_msgs::msg::Marker::CUBE;
+    marker.action = visualization_msgs::msg::Marker::ADD;
     tf2::Transform tf_map2base_link;
     tf2::fromMsg(*stop_pose_ptr_, tf_map2base_link);
     tf2::Transform tf_map2front = tf_map2base_link * tf_base_link2front;
@@ -98,14 +99,14 @@ visualization_msgs::MarkerArray SurroundObstacleCheckerDebugNode::makeVisualizat
 
   //visualize stop reason
   if (stop_pose_ptr_ != nullptr) {
-    visualization_msgs::Marker marker;
+    visualization_msgs::msg::Marker marker;
     marker.header.frame_id = "map";
     marker.header.stamp = current_time;
     marker.ns = "factor_text/no_start";
     marker.id = 0;
-    marker.lifetime = ros::Duration(0.5);
-    marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-    marker.action = visualization_msgs::Marker::ADD;
+    marker.lifetime = rclcpp::Duration(0.5);
+    marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
+    marker.action = visualization_msgs::msg::Marker::ADD;
     tf2::Transform tf_map2base_link;
     tf2::fromMsg(*stop_pose_ptr_, tf_map2base_link);
     tf2::Transform tf_map2front = tf_map2base_link * tf_base_link2front;
@@ -124,14 +125,14 @@ visualization_msgs::MarkerArray SurroundObstacleCheckerDebugNode::makeVisualizat
 
   //visualize surround object
   if (stop_obstacle_point_ptr_ != nullptr) {
-    visualization_msgs::Marker marker;
+    visualization_msgs::msg::Marker marker;
     marker.header.frame_id = "map";
     marker.header.stamp = current_time;
     marker.ns = "no_start_obstacle_text";
     marker.id = 0;
-    marker.lifetime = ros::Duration(0.5);
-    marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-    marker.action = visualization_msgs::Marker::ADD;
+    marker.lifetime = rclcpp::Duration(0.5);
+    marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
+    marker.action = visualization_msgs::msg::Marker::ADD;
     marker.pose.position = *stop_obstacle_point_ptr_;
     marker.pose.position.z += 2.0;  //add half of the heights of obj roughly
     marker.pose.orientation.x = 0.0;
@@ -152,17 +153,17 @@ visualization_msgs::MarkerArray SurroundObstacleCheckerDebugNode::makeVisualizat
   return msg;
 }
 
-autoware_planning_msgs::StopReasonArray SurroundObstacleCheckerDebugNode::makeStopReasonArray()
+autoware_planning_msgs::msg::StopReasonArray SurroundObstacleCheckerDebugNode::makeStopReasonArray()
 {
   //create header
-  std_msgs::Header header;
+  std_msgs::msg::Header header;
   header.frame_id = "map";
-  header.stamp = ros::Time::now();
+  header.stamp = this->clock_->now();
 
   //create stop reason stamped
-  autoware_planning_msgs::StopReason stop_reason_msg;
-  stop_reason_msg.reason = autoware_planning_msgs::StopReason::SURROUND_OBSTACLE_CHECK;
-  autoware_planning_msgs::StopFactor stop_factor;
+  autoware_planning_msgs::msg::StopReason stop_reason_msg;
+  stop_reason_msg.reason = autoware_planning_msgs::msg::StopReason::SURROUND_OBSTACLE_CHECK;
+  autoware_planning_msgs::msg::StopFactor stop_factor;
 
   if (stop_pose_ptr_ != nullptr) {
     stop_factor.stop_pose = *stop_pose_ptr_;
@@ -173,7 +174,7 @@ autoware_planning_msgs::StopReasonArray SurroundObstacleCheckerDebugNode::makeSt
   }
 
   //create stop reason array
-  autoware_planning_msgs::StopReasonArray stop_reason_array;
+  autoware_planning_msgs::msg::StopReasonArray stop_reason_array;
   stop_reason_array.header = header;
   stop_reason_array.stop_reasons.emplace_back(stop_reason_msg);
   return stop_reason_array;

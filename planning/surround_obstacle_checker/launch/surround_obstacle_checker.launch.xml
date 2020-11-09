@@ -1,18 +1,17 @@
 <launch>
-
-  <arg name="param_path" default="$(find surround_obstacle_checker)/config/default_surround_obstacle_checker.yaml" />
+  <arg name="param_path" default="$(find-pkg-share surround_obstacle_checker)/config/default_surround_obstacle_checker.yaml" />
 
   <arg name="input_objects" default="/perception/object_recognition/objects" />
   <arg name="input_twist" default="/localization/twist" />
   <arg name="input_pointcloud" default="/sensing/lidar/no_ground/pointcloud" />
 
-  <node pkg="surround_obstacle_checker" type="surround_obstacle_checker_node" name="surround_obstacle_checker" output="screen">
-    <rosparam command="load" file="$(arg param_path)" />
-    <remap from="~output/no_start_reason" to="/planning/scenario_planning/status/no_start_reason" />
-    <remap from="~output/stop_reasons" to="/planning/scenario_planning/status/stop_reasons" />
-    <remap from="~input/pointcloud" to="$(arg input_pointcloud)" />
-    <remap from="~input/objects" to="$(arg input_objects)" />
-    <remap from="~input/twist" to="$(arg input_twist)" />
+  <node pkg="surround_obstacle_checker" exec="surround_obstacle_checker_node" name="surround_obstacle_checker" output="screen">
+    <param from="$(var param_path)" />
+    <remap from="output/no_start_reason" to="/planning/scenario_planning/status/no_start_reason" />
+    <remap from="output/stop_reasons" to="/planning/scenario_planning/status/stop_reasons" />
+    <remap from="input/pointcloud" to="$(var input_pointcloud)" />
+    <remap from="input/objects" to="$(var input_objects)" />
+    <remap from="input/twist" to="$(var input_twist)" />
   </node>
 
 </launch>

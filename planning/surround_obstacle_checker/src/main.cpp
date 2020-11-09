@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
+
 #include <surround_obstacle_checker/node.hpp>
 
 int main(int argc, char ** argv)
 {
-  ros::init(argc, argv, "surround_obstacle_checker_node");
-
-  SurroundObstacleCheckerNode node;
-
-  ros::spin();
+  rclcpp::init(argc, argv);
+  rclcpp::spin(std::make_shared<SurroundObstacleCheckerNode>());
+  rclcpp::shutdown();
 
   return 0;
 }
