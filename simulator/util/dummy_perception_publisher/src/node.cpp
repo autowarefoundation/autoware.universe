@@ -1,59 +1,76 @@
-/*
- * Copyright 2020 Tier IV, Inc. All rights reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-#include "dummy_perception_publisher/node.hpp"
+// Copyright 2020 Tier IV, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#include <dummy_perception_publisher/node.hpp>
+
 #include <pcl/filters/voxel_grid_occlusion_estimation.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
+#include <functional>
+#include <limits>
+#include <memory>
+#include <utility>
+#include <vector>
+
 DummyPerceptionPublisherNode::DummyPerceptionPublisherNode()
-: nh_(), pnh_("~"), tf_listener_(tf_buffer_)
+: Node("dummy_perception_publisher"), tf_buffer_(this->get_clock()), tf_listener_(tf_buffer_)
 {
   std::random_device seed_gen;
   random_generator_.seed(seed_gen());
-  dynamic_object_pub_ = pnh_.advertise<autoware_perception_msgs::DynamicObjectWithFeatureArray>(
-    "output/dynamic_object", 1, true);
-  pointcloud_pub_ = pnh_.advertise<sensor_msgs::PointCloud2>("output/points_raw", 1, true);
 
-  object_sub_ =
-    pnh_.subscribe("input/object", 100, &DummyPerceptionPublisherNode::objectCallback, this);
+  rclcpp::QoS qos{1};
+  qos.transient_local();
+  dynamic_object_pub_ =
+    this->create_publisher<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>(
+    "output/dynamic_object", qos);
+  pointcloud_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("output/points_raw", qos);
 
-  timer_ = nh_.createTimer(ros::Duration(0.1), &DummyPerceptionPublisherNode::timerCallback, this);
-  pnh_.param<double>("visible_range", visible_range_, double(100.0));
-  pnh_.param<double>("detection_successful_rate", detection_successful_rate_, 0.8);
-  pnh_.param<bool>("enable_ray_tracing", enable_ray_tracing_, true);
-  pnh_.param<bool>("use_object_recognition", use_object_recognition_, true);
+  object_sub_ = this->create_subscription<dummy_perception_publisher::msg::Object>(
+    "input/object", 100,
+    std::bind(&DummyPerceptionPublisherNode::objectCallback, this, std::placeholders::_1));
+
+  auto timer_callback = std::bind(&DummyPerceptionPublisherNode::timerCallback, this);
+  auto period = std::chrono::milliseconds(100);
+  timer_ = std::make_shared<rclcpp::GenericTimer<decltype(timer_callback)>>(
+    this->get_clock(), period, std::move(timer_callback),
+    this->get_node_base_interface()->get_context());
+  this->get_node_timers_interface()->add_timer(timer_, nullptr);
+
+  visible_range_ = this->declare_parameter("visible_range", 100.0);
+  detection_successful_rate_ = this->declare_parameter("detection_successful_rate", 0.8);
+  enable_ray_tracing_ = this->declare_parameter("enable_ray_tracing", true);
+  use_object_recognition_ = this->declare_parameter("use_object_recognition", true);
 }
 
-void DummyPerceptionPublisherNode::timerCallback(const ros::TimerEvent &)
+void DummyPerceptionPublisherNode::timerCallback()
 {
   // output msgs
-  autoware_perception_msgs::DynamicObjectWithFeatureArray output_dynamic_object_msg;
-  geometry_msgs::PoseStamped output_moved_object_pose;
-  sensor_msgs::PointCloud2 output_pointcloud_msg;
-  std_msgs::Header header;
-  ros::Time current_time = ros::Time::now();
+  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray output_dynamic_object_msg;
+  geometry_msgs::msg::PoseStamped output_moved_object_pose;
+  sensor_msgs::msg::PointCloud2 output_pointcloud_msg;
+  std_msgs::msg::Header header;
+  rclcpp::Time current_time = this->now();
 
   tf2::Transform tf_base_link2map;
   try {
-    geometry_msgs::TransformStamped ros_base_link2map;
+    geometry_msgs::msg::TransformStamped ros_base_link2map;
     ros_base_link2map = tf_buffer_.lookupTransform(
-      /*target*/ "base_link", /*src*/ "map", current_time, ros::Duration(0.5));
+      /*target*/ "base_link", /*src*/ "map", current_time, rclcpp::Duration(0.5));
     tf2::fromMsg(ros_base_link2map.transform, tf_base_link2map);
   } catch (tf2::TransformException & ex) {
-    ROS_WARN_THROTTLE(5.0, "%s", ex.what());
+    RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000, "%s", ex.what());
     return;
   }
 
@@ -61,7 +78,7 @@ void DummyPerceptionPublisherNode::timerCallback(const ros::TimerEvent &)
   std::vector<size_t> delete_idxs;
   static std::uniform_real_distribution<> detection_successful_random(0.0, 1.0);
   for (size_t i = 0; i < objects_.size(); ++i) {
-    if (detection_successful_rate_ < detection_successful_random(random_generator_)) continue;
+    if (detection_successful_rate_ < detection_successful_random(random_generator_)) {continue;}
     const double std_dev_x = std::sqrt(objects_.at(i).initial_state.pose_covariance.covariance[0]);
     const double std_dev_y = std::sqrt(objects_.at(i).initial_state.pose_covariance.covariance[7]);
     const double std_dev_z = std::sqrt(objects_.at(i).initial_state.pose_covariance.covariance[14]);
@@ -69,12 +86,12 @@ void DummyPerceptionPublisherNode::timerCallback(const ros::TimerEvent &)
       std::sqrt(objects_.at(i).initial_state.pose_covariance.covariance[35]);
     const double move_distance =
       objects_.at(i).initial_state.twist_covariance.twist.linear.x *
-      (current_time.toSec() - ros::Time(objects_.at(i).header.stamp).toSec());
+      (current_time.seconds() - rclcpp::Time(objects_.at(i).header.stamp).seconds());
     tf2::Transform tf_object_origin2moved_object;
     tf2::Transform tf_map2object_origin;
     tf2::Transform tf_map2moved_object;
     {
-      geometry_msgs::Transform ros_object_origin2moved_object;
+      geometry_msgs::msg::Transform ros_object_origin2moved_object;
       ros_object_origin2moved_object.translation.x = move_distance;
       ros_object_origin2moved_object.rotation.x = 0;
       ros_object_origin2moved_object.rotation.y = 0;
@@ -105,7 +122,7 @@ void DummyPerceptionPublisherNode::timerCallback(const ros::TimerEvent &)
     tf2::Transform tf_base_link2noised_moved_object;
     tf_base_link2noised_moved_object =
       tf_base_link2map * tf_map2moved_object * tf_moved_object2noised_moved_object;
-    autoware_perception_msgs::DynamicObjectWithFeature feature_object;
+    autoware_perception_msgs::msg::DynamicObjectWithFeature feature_object;
     feature_object.object.semantic = objects_.at(i).semantic;
     feature_object.object.state.pose_covariance = objects_.at(i).initial_state.pose_covariance;
     feature_object.object.state.twist_covariance = objects_.at(i).initial_state.twist_covariance;
@@ -123,7 +140,7 @@ void DummyPerceptionPublisherNode::timerCallback(const ros::TimerEvent &)
     double dist = std::sqrt(
       tf_base_link2moved_object.getOrigin().x() * tf_base_link2moved_object.getOrigin().x() +
       tf_base_link2moved_object.getOrigin().y() * tf_base_link2moved_object.getOrigin().y());
-    if (visible_range_ < dist) delete_idxs.push_back(i);
+    if (visible_range_ < dist) {delete_idxs.push_back(i);}
   }
   // delete
   for (int delete_idx = delete_idxs.size() - 1; 0 <= delete_idx; --delete_idx) {
@@ -155,8 +172,9 @@ void DummyPerceptionPublisherNode::timerCallback(const ros::TimerEvent &)
         Eigen::Vector3i grid_cordinates = ray_tracing_filter.getGridCoordinates(
           v_pointcloud.at(i)->at(j).x, v_pointcloud.at(i)->at(j).y, v_pointcloud.at(i)->at(j).z);
         int grid_state;
-        if (ray_tracing_filter.occlusionEstimation(grid_state, grid_cordinates) != 0)
-          ROS_ERROR("ray tracing failed");
+        if (ray_tracing_filter.occlusionEstimation(grid_state, grid_cordinates) != 0) {
+          RCLCPP_ERROR(get_logger(), "ray tracing failed");
+        }
         if (grid_state == 1) {  // occluded
           continue;
         } else {  // not occluded
@@ -182,9 +200,9 @@ void DummyPerceptionPublisherNode::timerCallback(const ros::TimerEvent &)
   output_pointcloud_msg.header.stamp = current_time;
 
   // publish
-  pointcloud_pub_.publish(output_pointcloud_msg);
+  pointcloud_pub_->publish(output_pointcloud_msg);
   if (use_object_recognition_) {
-    dynamic_object_pub_.publish(output_dynamic_object_msg);
+    dynamic_object_pub_->publish(output_dynamic_object_msg);
   }
 }
 
@@ -196,28 +214,25 @@ void DummyPerceptionPublisherNode::createObjectPointcloud(
   std::normal_distribution<> x_random(0.0, std_dev_x);
   std::normal_distribution<> y_random(0.0, std_dev_y);
   std::normal_distribution<> z_random(0.0, std_dev_z);
-  const double r = std::sqrt(
-    tf_base_link2moved_object.getOrigin().x() * tf_base_link2moved_object.getOrigin().x() +
-    tf_base_link2moved_object.getOrigin().y() * tf_base_link2moved_object.getOrigin().y());
   auto getBaseLinkTo2DPoint = [tf_base_link2moved_object](double x, double y) -> pcl::PointXYZ {
-    tf2::Transform tf_moved_object2point;
-    tf2::Transform tf_base_link2point;
-    geometry_msgs::Transform ros_moved_object2point;
-    ros_moved_object2point.translation.x = x;
-    ros_moved_object2point.translation.y = y;
-    ros_moved_object2point.translation.z = 0.0;
-    ros_moved_object2point.rotation.x = 0;
-    ros_moved_object2point.rotation.y = 0;
-    ros_moved_object2point.rotation.z = 0;
-    ros_moved_object2point.rotation.w = 1;
-    tf2::fromMsg(ros_moved_object2point, tf_moved_object2point);
-    tf_base_link2point = tf_base_link2moved_object * tf_moved_object2point;
-    pcl::PointXYZ point;
-    point.x = tf_base_link2point.getOrigin().x();
-    point.y = tf_base_link2point.getOrigin().y();
-    point.z = tf_base_link2point.getOrigin().z();
-    return point;
-  };
+      tf2::Transform tf_moved_object2point;
+      tf2::Transform tf_base_link2point;
+      geometry_msgs::msg::Transform ros_moved_object2point;
+      ros_moved_object2point.translation.x = x;
+      ros_moved_object2point.translation.y = y;
+      ros_moved_object2point.translation.z = 0.0;
+      ros_moved_object2point.rotation.x = 0;
+      ros_moved_object2point.rotation.y = 0;
+      ros_moved_object2point.rotation.z = 0;
+      ros_moved_object2point.rotation.w = 1;
+      tf2::fromMsg(ros_moved_object2point, tf_moved_object2point);
+      tf_base_link2point = tf_base_link2moved_object * tf_moved_object2point;
+      pcl::PointXYZ point;
+      point.x = tf_base_link2point.getOrigin().x();
+      point.y = tf_base_link2point.getOrigin().y();
+      point.z = tf_base_link2point.getOrigin().z();
+      return point;
+    };
   const double epsilon = 0.001;
   const double step = 0.05;
   const double vertical_theta_step = (1.0 / 180.0) * M_PI;
@@ -285,7 +300,8 @@ void DummyPerceptionPublisherNode::createObjectPointcloud(
         horizontal_candidate_pointcloud.at(pointcloud_index).x,
         horizontal_candidate_pointcloud.at(pointcloud_index).y);
       for (double vertical_theta = vertical_min_theta;
-           vertical_theta <= vertical_max_theta + epsilon; vertical_theta += vertical_theta_step) {
+        vertical_theta <= vertical_max_theta + epsilon; vertical_theta += vertical_theta_step)
+      {
         const double z = distance * std::tan(vertical_theta);
         if (min_z <= z && z <= max_z + epsilon) {
           pcl::PointXYZ point;
@@ -302,68 +318,69 @@ void DummyPerceptionPublisherNode::createObjectPointcloud(
 }
 
 void DummyPerceptionPublisherNode::objectCallback(
-  const dummy_perception_publisher::Object::ConstPtr & msg)
+  const dummy_perception_publisher::msg::Object::ConstSharedPtr msg)
 {
   switch (msg->action) {
-    case dummy_perception_publisher::Object::ADD: {
-      tf2::Transform tf_input2map;
-      tf2::Transform tf_input2object_origin;
-      tf2::Transform tf_map2object_origin;
-      try {
-        geometry_msgs::TransformStamped ros_input2map;
-        ros_input2map = tf_buffer_.lookupTransform(
-          /*target*/ msg->header.frame_id, /*src*/ "map", msg->header.stamp, ros::Duration(0.5));
-        tf2::fromMsg(ros_input2map.transform, tf_input2map);
-      } catch (tf2::TransformException & ex) {
-        ROS_WARN_THROTTLE(5.0, "%s", ex.what());
-        return;
-      }
-      tf2::fromMsg(msg->initial_state.pose_covariance.pose, tf_input2object_origin);
-      tf_map2object_origin = tf_input2map.inverse() * tf_input2object_origin;
-      dummy_perception_publisher::Object object;
-      object = *msg;
-      tf2::toMsg(tf_map2object_origin, object.initial_state.pose_covariance.pose);
-      objects_.push_back(object);
-      break;
-    }
-    case dummy_perception_publisher::Object::DELETE: {
-      for (size_t i = 0; i < objects_.size(); ++i) {
-        if (objects_.at(i).id.uuid == msg->id.uuid) {
-          objects_.erase(objects_.begin() + i);
-          break;
+    case dummy_perception_publisher::msg::Object::ADD: {
+        tf2::Transform tf_input2map;
+        tf2::Transform tf_input2object_origin;
+        tf2::Transform tf_map2object_origin;
+        try {
+          geometry_msgs::msg::TransformStamped ros_input2map;
+          ros_input2map = tf_buffer_.lookupTransform(
+            /*target*/ msg->header.frame_id, /*src*/ "map", msg->header.stamp,
+            rclcpp::Duration(0.5));
+          tf2::fromMsg(ros_input2map.transform, tf_input2map);
+        } catch (tf2::TransformException & ex) {
+          RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000, "%s", ex.what());
+          return;
         }
+        tf2::fromMsg(msg->initial_state.pose_covariance.pose, tf_input2object_origin);
+        tf_map2object_origin = tf_input2map.inverse() * tf_input2object_origin;
+        dummy_perception_publisher::msg::Object object;
+        object = *msg;
+        tf2::toMsg(tf_map2object_origin, object.initial_state.pose_covariance.pose);
+        objects_.push_back(object);
+        break;
       }
-      break;
-    }
-    case dummy_perception_publisher::Object::MODIFY: {
-      for (size_t i = 0; i < objects_.size(); ++i) {
-        if (objects_.at(i).id.uuid == msg->id.uuid) {
-          tf2::Transform tf_input2map;
-          tf2::Transform tf_input2object_origin;
-          tf2::Transform tf_map2object_origin;
-          try {
-            geometry_msgs::TransformStamped ros_input2map;
-            ros_input2map = tf_buffer_.lookupTransform(
-              /*target*/ msg->header.frame_id, /*src*/ "map", msg->header.stamp,
-              ros::Duration(0.5));
-            tf2::fromMsg(ros_input2map.transform, tf_input2map);
-          } catch (tf2::TransformException & ex) {
-            ROS_WARN_THROTTLE(5.0, "%s", ex.what());
-            return;
+    case dummy_perception_publisher::msg::Object::DELETE: {
+        for (size_t i = 0; i < objects_.size(); ++i) {
+          if (objects_.at(i).id.uuid == msg->id.uuid) {
+            objects_.erase(objects_.begin() + i);
+            break;
           }
-          tf2::fromMsg(msg->initial_state.pose_covariance.pose, tf_input2object_origin);
-          tf_map2object_origin = tf_input2map.inverse() * tf_input2object_origin;
-          dummy_perception_publisher::Object object;
-          objects_.at(i) = *msg;
-          tf2::toMsg(tf_map2object_origin, objects_.at(i).initial_state.pose_covariance.pose);
-          break;
         }
+        break;
       }
-      break;
-    }
-    case dummy_perception_publisher::Object::DELETEALL: {
-      objects_.clear();
-      break;
-    }
+    case dummy_perception_publisher::msg::Object::MODIFY: {
+        for (size_t i = 0; i < objects_.size(); ++i) {
+          if (objects_.at(i).id.uuid == msg->id.uuid) {
+            tf2::Transform tf_input2map;
+            tf2::Transform tf_input2object_origin;
+            tf2::Transform tf_map2object_origin;
+            try {
+              geometry_msgs::msg::TransformStamped ros_input2map;
+              ros_input2map = tf_buffer_.lookupTransform(
+                /*target*/ msg->header.frame_id, /*src*/ "map", msg->header.stamp,
+                rclcpp::Duration(0.5));
+              tf2::fromMsg(ros_input2map.transform, tf_input2map);
+            } catch (tf2::TransformException & ex) {
+              RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000, "%s", ex.what());
+              return;
+            }
+            tf2::fromMsg(msg->initial_state.pose_covariance.pose, tf_input2object_origin);
+            tf_map2object_origin = tf_input2map.inverse() * tf_input2object_origin;
+            dummy_perception_publisher::msg::Object object;
+            objects_.at(i) = *msg;
+            tf2::toMsg(tf_map2object_origin, objects_.at(i).initial_state.pose_covariance.pose);
+            break;
+          }
+        }
+        break;
+      }
+    case dummy_perception_publisher::msg::Object::DELETEALL: {
+        objects_.clear();
+        break;
+      }
   }
 }
