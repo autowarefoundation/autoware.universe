@@ -1,5 +1,5 @@
 std_msgs/Header header
-uuid_msgs/UniqueID id
+unique_identifier_msgs/UUID id
 dummy_perception_publisher/InitialState initial_state
 autoware_perception_msgs/Semantic semantic
 autoware_perception_msgs/Shape shape
