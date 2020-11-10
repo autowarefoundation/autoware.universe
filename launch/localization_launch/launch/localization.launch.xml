@@ -1,28 +1,37 @@
 <?xml version="1.0"?>
 <launch>
   <!-- localization module -->
-  <group ns="localization">
+  <group>
+    <push-ros-namespace namespace="localization"/>
     <!-- util module -->
-    <group ns="util">
-      <include file="$(find localization_launch)/launch/util/util.launch">
+    <group>
+      <push-ros-namespace namespace="util"/>
+      <include file="$(find-pkg-share localization_launch)/launch/util/util.launch.xml">
       </include>
     </group>
     <!-- pose_estimator module -->
-    <group ns="pose_estimator">
-      <include file="$(find localization_launch)/launch/pose_estimator/pose_estimator.launch">
+    <group>
+      <push-ros-namespace namespace="pose_estimator"/>
+      <include file="$(find-pkg-share localization_launch)/launch/pose_estimator/pose_estimator.launch.xml">
       </include>
     </group>
     <!-- twist_estimator module -->
-    <group ns="twist_estimator">
-      <include file="$(find localization_launch)/launch/twist_estimator/twist_estimator.launch">
+    <group>
+      <push-ros-namespace namespace="twist_estimator"/>
+      <include file="$(find-pkg-share localization_launch)/launch/twist_estimator/twist_estimator.launch.xml">
       </include>
     </group>
     <!-- pose_twist_fusion_filter module -->
-    <group ns="pose_twist_fusion_filter">
-      <include file="$(find localization_launch)/launch/pose_twist_fusion_filter/pose_twist_fusion_filter.launch">
+    <group>
+      <push-ros-namespace namespace="pose_twist_fusion_filter"/>
+      <include file="$(find-pkg-share localization_launch)/launch/pose_twist_fusion_filter/pose_twist_fusion_filter.launch.xml">
       </include>
     </group>
     <!-- final twist output of localization -->
-    <node pkg="topic_tools" type="relay" name="relay" args="/localization/pose_twist_fusion_filter/twist /localization/twist" />
+    <node pkg="topic_tools" exec="relay" name="relay">
+      <param name="input_topic" value="/localization/pose_twist_fusion_filter/twist" />
+      <param name="output_topic" value="/localization/twist" />
+      <param name="type" value="geometry_msgs/msg/TwistStamped" />
+    </node>
   </group>
 </launch>
