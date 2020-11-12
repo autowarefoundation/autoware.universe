@@ -25,14 +25,14 @@
 #include <string>
 #include <vector>
 
-ProcessMonitor::ProcessMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh)
-: nh_(nh), pnh_(pnh)
+ProcessMonitor::ProcessMonitor(const std::string & node_name, const rclcpp::NodeOptions & options) :
+Node(node_name, options),
+updater_(this),
+num_of_procs_(declare_parameter<int>("num_of_procs", 5))
 {
   int index;
 
   gethostname(hostname_, sizeof(hostname_));
-
-  pnh_.param<int>("num_of_procs", num_of_procs_, 5);
 
   updater_.setHardwareID(hostname_);
   updater_.add("Tasks Summary", this, &ProcessMonitor::monitorProcesses);
@@ -49,15 +49,9 @@ ProcessMonitor::ProcessMonitor(const ros::NodeHandle & nh, const ros::NodeHandle
   }
 }
 
-void ProcessMonitor::run(void)
+void ProcessMonitor::update()
 {
-  ros::Rate rate(1.0);
-
-  while (ros::ok()) {
-    ros::spinOnce();
     updater_.force_update();
-    rate.sleep();
-  }
 }
 
 void ProcessMonitor::monitorProcesses(diagnostic_updater::DiagnosticStatusWrapper & stat)

@@ -21,9 +21,10 @@
  * @brief HDD monitor class
  */
 
-#include <diagnostic_updater/diagnostic_updater.h>
+#include <diagnostic_updater/diagnostic_updater.hpp>
 #include <map>
 #include <string>
+#include <climits>
 
 /**
  * @brief error and warning temperature levels
@@ -36,23 +37,23 @@ struct TempParam
   TempParam() : temp_warn_(55.0), temp_error_(70.0) {}
 };
 
-class HDDMonitor
+class HDDMonitor : public rclcpp::Node
 {
 public:
   /**
    * @brief constructor
-   * @param [in] nh node handle to access global parameters
-   * @param [in] pnh node handle to access private parameters
+   * @param [in] node_name Name of the node.
+   * @param [in] options Options associated with this node.
    */
-  HDDMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh);
+  HDDMonitor(const std::string & node_name, const rclcpp::NodeOptions & options);
 
   /**
-   * @brief main loop
+   * @brief Update the diagnostic state.
    */
-  void run(void);
+  void update();
 
 protected:
-  using DiagStatus = diagnostic_msgs::DiagnosticStatus;
+  using DiagStatus = diagnostic_msgs::msg::DiagnosticStatus;
 
   /**
    * @brief check HDD temperature
@@ -76,8 +77,6 @@ protected:
    */
   void getTempParams(void);
 
-  ros::NodeHandle nh_;                   //!< @brief ros node handle
-  ros::NodeHandle pnh_;                  //!< @brief private ros node handle
   diagnostic_updater::Updater updater_;  //!< @brief Updater class which advertises to /diagnostics
 
   char hostname_[HOST_NAME_MAX + 1];  //!< @brief host name

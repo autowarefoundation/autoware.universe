@@ -171,7 +171,7 @@ void usage(void)
  */
 void swap_char(char * ptr, size_t size)
 {
-  for (int i = 0; i < size; i += 2) std::swap(ptr[i], ptr[i + 1]);
+  for (auto i = 0U; i < size; i += 2U) std::swap(ptr[i], ptr[i + 1]);
 }
 
 /**
@@ -556,7 +556,7 @@ int main(int argc, char ** argv)
 
     // /dev/sd[a-z] or /dev/nvme[0-9] ?
     if (boost::regex_match(dir, match, fsd) || boost::regex_match(dir, match, fnvme)) {
-      HDDInfo info = {0};
+      HDDInfo info{0, "", "", 0};
       list.insert(std::make_pair(path.generic_string(), info));
     }
   }

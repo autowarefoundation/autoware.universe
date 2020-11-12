@@ -32,30 +32,28 @@
 #include <boost/range/algorithm.hpp>
 #include <string>
 
-NetMonitor::NetMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh) : nh_(nh), pnh_(pnh)
+NetMonitor::NetMonitor(const std::string & node_name, const rclcpp::NodeOptions & options) :
+Node(node_name, options),
+updater_(this),
+last_update_time_{0, 0, this->get_clock()->get_clock_type()},
+device_params_(declare_parameter<std::vector<std::string>>("devices", {})),
+usage_warn_(declare_parameter<float>("usage_warn", 0.95))
 {
   gethostname(hostname_, sizeof(hostname_));
-
-  pnh_.getParam("devices", device_params_);
-  pnh_.param<float>("usage_warn", usage_warn_, 0.95);
-
   updater_.setHardwareID(hostname_);
   updater_.add("Network Usage", this, &NetMonitor::checkUsage);
 
   nl80211_.init();
 }
 
-void NetMonitor::run(void)
+void NetMonitor::update()
 {
-  ros::Rate rate(1.0);
-
-  while (ros::ok()) {
-    ros::spinOnce();
     updater_.force_update();
-    rate.sleep();
-  }
+}
 
-  nl80211_.shutdown();
+void NetMonitor::shutdown_nl80211()
+{
+    nl80211_.shutdown();
 }
 
 void NetMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
@@ -68,7 +66,7 @@ void NetMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
   const struct ifaddrs * ifa;
   struct ifaddrs * ifas = nullptr;
 
-  ros::Duration duration = ros::Time::now() - last_update_time_;
+  rclcpp::Duration duration = this->now() - last_update_time_;
 
   // Get network interfaces
   if (getifaddrs(&ifas) < 0) {
@@ -140,8 +138,8 @@ void NetMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
 
     struct rtnl_link_stats * stats = (struct rtnl_link_stats *)ifa->ifa_data;
     if (bytes_.find(ifa->ifa_name) != bytes_.end()) {
-      rx_traffic = toMbit(stats->rx_bytes - bytes_[ifa->ifa_name].rx_bytes) / duration.toSec();
-      tx_traffic = toMbit(stats->tx_bytes - bytes_[ifa->ifa_name].tx_bytes) / duration.toSec();
+      rx_traffic = toMbit(stats->rx_bytes - bytes_[ifa->ifa_name].rx_bytes) / duration.seconds();
+      tx_traffic = toMbit(stats->tx_bytes - bytes_[ifa->ifa_name].tx_bytes) / duration.seconds();
       rx_usage = rx_traffic / speed;
       tx_usage = tx_traffic / speed;
       if (rx_usage >= usage_warn_ || tx_usage > usage_warn_)
@@ -177,5 +175,5 @@ void NetMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
   else
     stat.summary(whole_level, usage_dict_.at(whole_level));
 
-  last_update_time_ = ros::Time::now();
+  last_update_time_ = this->now();
 }

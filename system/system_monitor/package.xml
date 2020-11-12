@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
-<package format="2">
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
   <name>system_monitor</name>
   <version>1.13.0</version>
   <description>The system_monitor package</description>
@@ -7,16 +8,16 @@
 
   <license>Apache 2.0</license>
 
-  <buildtool_depend>catkin</buildtool_depend>
-
-  <test_depend>rostest</test_depend>
+  <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
   <depend>diagnostic_msgs</depend>
-  <depend>roscpp</depend>
-  <depend>roslint</depend>
+  <depend>rclcpp</depend>
   <depend>std_msgs</depend>
   <depend>libnl-3-dev</depend>
 
   <exec_depend>sysstat</exec_depend>
   <exec_depend>ntpdate</exec_depend>
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>

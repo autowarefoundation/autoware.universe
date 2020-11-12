@@ -28,10 +28,10 @@ class CPUMonitor : public CPUMonitorBase
 public:
   /**
    * @brief constructor
-   * @param [in] nh node handle to access global parameters
-   * @param [in] pnh node handle to access private parameters
+   * @param [in] node_name Name of the node.
+   * @param [in] options Options associated with this node.
    */
-  CPUMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh);
+  CPUMonitor(const std::string & node_name, const rclcpp::NodeOptions & options);
 
   /**
    * @brief get names for core temperature files

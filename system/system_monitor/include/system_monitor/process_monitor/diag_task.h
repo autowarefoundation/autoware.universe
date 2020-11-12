@@ -21,13 +21,13 @@
  * @brief diagnostics task for high load/memory procs
  */
 
-#include <diagnostic_updater/diagnostic_updater.h>
+#include <diagnostic_updater/diagnostic_updater.hpp>
 #include <string>
 
 class DiagTask : public diagnostic_updater::DiagnosticTask
 {
 public:
-  using DiagStatus = diagnostic_msgs::DiagnosticStatus;
+  using DiagStatus = diagnostic_msgs::msg::DiagnosticStatus;
 
   /**
    * @brief constructor

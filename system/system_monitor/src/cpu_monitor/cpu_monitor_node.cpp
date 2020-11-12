@@ -19,8 +19,7 @@
  * @brief CPU monitor node class
  */
 
-#include <ros/ros.h>
-#include <string>
+#include <rclcpp/rclcpp.hpp>
 
 #if defined _CPU_INTEL_
 #include <system_monitor/cpu_monitor/intel_cpu_monitor.h>
@@ -33,20 +32,19 @@
 #else
 #include <system_monitor/cpu_monitor/unknown_cpu_monitor.h>
 #endif
+#include <system_monitor/utils.hpp>
 
 int main(int argc, char ** argv)
 {
-  ros::init(argc, argv, "cpu_monitor");
-  ros::NodeHandle nh;
-  ros::NodeHandle pnh("~");
-
-  std::shared_ptr<CPUMonitorBase> monitor;
-
-  monitor = std::make_shared<CPUMonitor>(nh, pnh);
+  rclcpp::init(argc, argv);
+  rclcpp::NodeOptions options;
+  std::shared_ptr<CPUMonitorBase> monitor = std::make_shared<CPUMonitor>("cpu_monitor", options);
 
   monitor->getTempNames();
   monitor->getFreqNames();
-  monitor->run();
 
+  spin_and_update(monitor, std::chrono::seconds(1U));
+
+  rclcpp::shutdown();
   return 0;
 }

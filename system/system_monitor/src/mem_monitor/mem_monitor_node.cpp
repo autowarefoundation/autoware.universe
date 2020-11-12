@@ -19,15 +19,16 @@
  * @brief Memory monitor node class
  */
 
+#include <rclcpp/rclcpp.hpp>
 #include <system_monitor/mem_monitor/mem_monitor.h>
+#include <system_monitor/utils.hpp>
 
 int main(int argc, char ** argv)
 {
-  ros::init(argc, argv, "mem_monitor");
-  ros::NodeHandle nh;
-  ros::NodeHandle pnh("~");
-  MemMonitor monitor(nh, pnh);
-  monitor.run();
-
+  rclcpp::init(argc, argv);
+  rclcpp::NodeOptions options;
+  std::shared_ptr<MemMonitor> monitor = std::make_shared<MemMonitor>("mem_monitor", options);
+  spin_and_update(monitor, std::chrono::seconds(1U));
+  rclcpp::shutdown();
   return 0;
 }

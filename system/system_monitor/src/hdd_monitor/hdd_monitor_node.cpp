@@ -20,14 +20,14 @@
  */
 
 #include <system_monitor/hdd_monitor/hdd_monitor.h>
+#include <system_monitor/utils.hpp>
 
 int main(int argc, char ** argv)
 {
-  ros::init(argc, argv, "hdd_monitor");
-  ros::NodeHandle nh;
-  ros::NodeHandle pnh("~");
-  HDDMonitor monitor(nh, pnh);
-  monitor.run();
-
+  rclcpp::init(argc, argv);
+  rclcpp::NodeOptions options;
+  auto monitor = std::make_shared<HDDMonitor>("hdd_monitor", options);
+  spin_and_update(monitor, std::chrono::seconds(1U));
+  rclcpp::shutdown();
   return 0;
 }

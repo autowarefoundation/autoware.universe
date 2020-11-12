@@ -29,7 +29,12 @@
 namespace bp = boost::process;
 namespace fs = boost::filesystem;
 
-NTPMonitor::NTPMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh) : nh_(nh), pnh_(pnh)
+NTPMonitor::NTPMonitor(const std::string & node_name, const rclcpp::NodeOptions & options) :
+Node(node_name, options),
+updater_(this),
+server_(declare_parameter<std::string>("server", "ntp.ubuntu.com")),
+offset_warn_(declare_parameter<float>("offset_warn", 0.1)),
+offset_error_(declare_parameter<float>("offset_error", 5.0))
 {
   gethostname(hostname_, sizeof(hostname_));
 
@@ -37,23 +42,13 @@ NTPMonitor::NTPMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh) 
   fs::path p = bp::search_path("ntpdate");
   ntpdate_exists_ = (p.empty()) ? false : true;
 
-  pnh_.param<std::string>("server", server_, "ntp.ubuntu.com");
-  pnh_.param<float>("offset_warn", offset_warn_, 0.1);
-  pnh_.param<float>("offset_error", offset_error_, 5.0);
-
   updater_.setHardwareID(hostname_);
   updater_.add("NTP Offset", this, &NTPMonitor::checkOffset);
 }
 
-void NTPMonitor::run(void)
+void NTPMonitor::update()
 {
-  ros::Rate rate(1.0);
-
-  while (ros::ok()) {
-    ros::spinOnce();
     updater_.force_update();
-    rate.sleep();
-  }
 }
 
 void NTPMonitor::checkOffset(diagnostic_updater::DiagnosticStatusWrapper & stat)

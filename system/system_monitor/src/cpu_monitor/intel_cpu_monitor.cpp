@@ -34,10 +34,10 @@
 
 namespace fs = boost::filesystem;
 
-CPUMonitor::CPUMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh)
-: CPUMonitorBase(nh, pnh)
+CPUMonitor::CPUMonitor(const std::string & node_name, const rclcpp::NodeOptions & options)
+: CPUMonitorBase(node_name, options)
 {
-  pnh_.param<int>("msr_reader_port", msr_reader_port_, 7634);
+  msr_reader_port_ = declare_parameter<int>("msr_reader_port", 7634);
 }
 
 void CPUMonitor::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & stat)

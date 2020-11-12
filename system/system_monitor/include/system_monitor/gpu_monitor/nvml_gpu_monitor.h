@@ -64,15 +64,16 @@ class GPUMonitor : public GPUMonitorBase
 public:
   /**
    * @brief constructor
-   * @param [in] nh node handle to access global parameters
-   * @param [in] pnh node handle to access private parameters
+   * @param [in] node_name Name of the node.
+   * @param [in] options Options associated with this node.
    */
-  GPUMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh);
+  GPUMonitor(const std::string & node_name, const rclcpp::NodeOptions & options);
 
-  /**
-   * @brief main loop
+   /**
+   * @brief Terminate the node, log final statements. An independent function is preferred to allow an explicit way
+   * to operate actions that require a valid rclcpp context. By default this method does nothing.
    */
-  void run(void) override;
+  void shut_down() override;
 
 protected:
   /**

@@ -26,8 +26,8 @@
 #include <string>
 #include <vector>
 
-GPUMonitor::GPUMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh)
-: GPUMonitorBase(nh, pnh)
+GPUMonitor::GPUMonitor(const std::string & node_name, const rclcpp::NodeOptions & options)
+: GPUMonitorBase(node_name, options)
 {
   // Include frequency into GPU Thermal Throttling thus remove.
   updater_.removeByName("GPU Frequency");
@@ -35,42 +35,39 @@ GPUMonitor::GPUMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh)
   nvmlReturn_t ret;
 
   ret = nvmlInit();
-  if (ret != NVML_SUCCESS) ROS_ERROR("Failed to initialize NVML: %s\n", nvmlErrorString(ret));
+  if (ret != NVML_SUCCESS) RCLCPP_ERROR(this->get_logger(), "Failed to initialize NVML: %s\n", nvmlErrorString(ret));
 
   unsigned int deviceCount = 0;
   ret = nvmlDeviceGetCount(&deviceCount);
   if (ret != NVML_SUCCESS)
-    ROS_ERROR("Failed to retrieve the number of compute devices: %s", nvmlErrorString(ret));
+    RCLCPP_ERROR(this->get_logger(), "Failed to retrieve the number of compute devices: %s", nvmlErrorString(ret));
 
   for (int index = 0; index < deviceCount; ++index) {
     gpu_info info;
     ret = nvmlDeviceGetHandleByIndex(index, &info.device);
     if (ret != NVML_SUCCESS) {
-      ROS_ERROR(
+      RCLCPP_ERROR(this->get_logger(), 
         "Failed to acquire the handle for a particular device [%d]: %s", index,
         nvmlErrorString(ret));
       continue;
     }
     ret = nvmlDeviceGetName(info.device, info.name, NVML_DEVICE_NAME_BUFFER_SIZE);
     if (ret != NVML_SUCCESS) {
-      ROS_ERROR("Failed to retrieve the name of this device [%d]: %s", index, nvmlErrorString(ret));
+      RCLCPP_ERROR(this->get_logger(), "Failed to retrieve the name of this device [%d]: %s", index, nvmlErrorString(ret));
       continue;
     }
     ret = nvmlDeviceGetPciInfo(info.device, &info.pci);
     if (ret != NVML_SUCCESS) {
-      ROS_ERROR("Failed to retrieve the PCI attributes [%d]: %s", index, nvmlErrorString(ret));
+      RCLCPP_ERROR(this->get_logger(), "Failed to retrieve the PCI attributes [%d]: %s", index, nvmlErrorString(ret));
       continue;
     }
     gpus_.push_back(info);
   }
 }
 
-void GPUMonitor::run(void)
-{
-  GPUMonitorBase::run();
-
-  nvmlReturn_t ret = nvmlShutdown();
-  if (ret != NVML_SUCCESS) ROS_ERROR("Failed to shut down NVML: %s", nvmlErrorString(ret));
+void GPUMonitor::shut_down(){
+    nvmlReturn_t ret = nvmlShutdown();
+    if (ret != NVML_SUCCESS) RCLCPP_ERROR(this->get_logger(), "Failed to shut down NVML: %s", nvmlErrorString(ret));
 }
 
 void GPUMonitor::checkTemp(diagnostic_updater::DiagnosticStatusWrapper & stat)

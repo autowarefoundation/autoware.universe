@@ -19,15 +19,16 @@
  * @brief NTP monitor node class
  */
 
+#include <rclcpp/rclcpp.hpp>
 #include <system_monitor/ntp_monitor/ntp_monitor.h>
+#include <system_monitor/utils.hpp>
 
 int main(int argc, char ** argv)
 {
-  ros::init(argc, argv, "ntp_monitor");
-  ros::NodeHandle nh;
-  ros::NodeHandle pnh("~");
-  NTPMonitor monitor(nh, pnh);
-  monitor.run();
-
+  rclcpp::init(argc, argv);
+  rclcpp::NodeOptions options;
+  std::shared_ptr<NTPMonitor> monitor = std::make_shared<NTPMonitor>("ntp_monitor", options);
+  spin_and_update(monitor, std::chrono::seconds(1U));
+  rclcpp::shutdown();
   return 0;
 }

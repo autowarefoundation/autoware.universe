@@ -21,7 +21,7 @@
 
 #include <system_monitor/gpu_monitor/unknown_gpu_monitor.h>
 
-GPUMonitor::GPUMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh)
-: GPUMonitorBase(nh, pnh)
+GPUMonitor::GPUMonitor(const std::string & node_name, const rclcpp::NodeOptions & options)
+: GPUMonitorBase(node_name, options)
 {
 }

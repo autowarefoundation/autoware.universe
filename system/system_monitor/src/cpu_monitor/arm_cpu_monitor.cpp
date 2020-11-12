@@ -23,8 +23,8 @@
 #include <system_monitor/system_monitor_utility.h>
 #include <vector>
 
-CPUMonitor::CPUMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh)
-: CPUMonitorBase(nh, pnh)
+CPUMonitor::CPUMonitor(const std::string & node_name, const rclcpp::NodeOptions & options)
+: CPUMonitorBase(node_name, options)
 {
 }
 

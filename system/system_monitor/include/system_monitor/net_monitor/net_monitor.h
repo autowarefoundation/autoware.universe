@@ -21,11 +21,12 @@
  * @brief Net monitor class
  */
 
-#include <diagnostic_updater/diagnostic_updater.h>
+#include <diagnostic_updater/diagnostic_updater.hpp>
 #include <system_monitor/net_monitor/nl80211.h>
 #include <map>
 #include <string>
 #include <vector>
+#include <climits>
 
 #define toMbit(X) (static_cast<float>(X) / 1000000 * 8)
 
@@ -40,23 +41,28 @@ typedef struct bytes
   bytes() : rx_bytes(0), tx_bytes(0) {}
 } bytes;
 
-class NetMonitor
+class NetMonitor : public rclcpp::Node
 {
 public:
   /**
    * @brief constructor
-   * @param [in] nh node handle to access global parameters
-   * @param [in] pnh node handle to access private parameters
+   * @param [in] node_name Name of the node.
+   * @param [in] options Options associated with this node.
    */
-  NetMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh);
+  NetMonitor(const std::string & node_name, const rclcpp::NodeOptions & options);
 
   /**
-   * @brief main loop
+   * @brief Update the diagnostic state.
    */
-  void run(void);
+  void update();
+
+   /**
+  * @brief Shutdown nl80211 object
+  */
+   void shutdown_nl80211();
 
 protected:
-  using DiagStatus = diagnostic_msgs::DiagnosticStatus;
+  using DiagStatus = diagnostic_msgs::msg::DiagnosticStatus;
 
   /**
    * @brief check CPU usage
@@ -74,13 +80,11 @@ protected:
    */
   float getWirelessSpeed(const char * ifa_name);
 
-  ros::NodeHandle nh_;                   //!< @brief ros node handle
-  ros::NodeHandle pnh_;                  //!< @brief private ros node handle
   diagnostic_updater::Updater updater_;  //!< @brief Updater class which advertises to /diagnostics
 
   char hostname_[HOST_NAME_MAX + 1];        //!< @brief host name
   std::map<std::string, bytes> bytes_;      //!< @brief list of bytes
-  ros::Time last_update_time_;              //!< @brief last update time
+  rclcpp::Time last_update_time_;              //!< @brief last update time
   std::vector<std::string> device_params_;  //!< @brief list of devices
   NL80211 nl80211_;                         // !< @brief 802.11 netlink-based interface
 

@@ -21,27 +21,28 @@
  * @brief NTP monitor class
  */
 
-#include <diagnostic_updater/diagnostic_updater.h>
+#include <diagnostic_updater/diagnostic_updater.hpp>
 #include <map>
 #include <string>
+#include <climits>
 
-class NTPMonitor
+class NTPMonitor : public rclcpp::Node
 {
 public:
   /**
    * @brief constructor
-   * @param [in] nh node handle to access global parameters
-   * @param [in] pnh node handle to access private parameters
+   * @param [in] node_name Name of the node.
+   * @param [in] options Options associated with this node.
    */
-  NTPMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh);
+  NTPMonitor(const std::string & node_name, const rclcpp::NodeOptions & options);
 
   /**
-   * @brief main loop
+   * @brief Update the diagnostic state.
    */
-  void run(void);
+  void update();
 
 protected:
-  using DiagStatus = diagnostic_msgs::DiagnosticStatus;
+  using DiagStatus = diagnostic_msgs::msg::DiagnosticStatus;
 
   /**
    * @brief check NTP Offset
@@ -52,8 +53,6 @@ protected:
   void checkOffset(
     diagnostic_updater::DiagnosticStatusWrapper & stat);  // NOLINT(runtime/references)
 
-  ros::NodeHandle nh_;                   //!< @brief ros node handle
-  ros::NodeHandle pnh_;                  //!< @brief private ros node handle
   diagnostic_updater::Updater updater_;  //!< @brief Updater class which advertises to /diagnostics
 
   char hostname_[HOST_NAME_MAX + 1];  //!< @brief host name

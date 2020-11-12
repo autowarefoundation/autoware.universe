@@ -27,26 +27,20 @@
 
 namespace bp = boost::process;
 
-MemMonitor::MemMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh) : nh_(nh), pnh_(pnh)
+MemMonitor::MemMonitor(const std::string & node_name, const rclcpp::NodeOptions & options) :
+Node(node_name, options),
+updater_(this),
+usage_warn_(declare_parameter<float>("usage_warn", 0.95)),
+usage_error_(declare_parameter<float>("usage_error", 0.99))
 {
   gethostname(hostname_, sizeof(hostname_));
-
-  pnh_.param<float>("usage_warn", usage_warn_, 0.95);
-  pnh_.param<float>("usage_error", usage_error_, 0.99);
-
   updater_.setHardwareID(hostname_);
   updater_.add("Memory Usage", this, &MemMonitor::checkUsage);
 }
 
-void MemMonitor::run(void)
+void MemMonitor::update()
 {
-  ros::Rate rate(1.0);
-
-  while (ros::ok()) {
-    ros::spinOnce();
-    updater_.force_update();
-    rate.sleep();
-  }
+  updater_.force_update();
 }
 
 void MemMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)

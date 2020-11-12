@@ -26,6 +26,8 @@ class NL80211
 public:
   /**
    * @brief constructor
+   * @param [in] node_name Name of the node.
+   * @param [in] options Options associated with this node.
    */
   NL80211();
 

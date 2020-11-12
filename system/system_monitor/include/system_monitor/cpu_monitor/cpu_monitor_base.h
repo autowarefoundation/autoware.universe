@@ -21,10 +21,11 @@
  * @brief CPU monitor base class
  */
 
-#include <diagnostic_updater/diagnostic_updater.h>
+#include <diagnostic_updater/diagnostic_updater.hpp>
 #include <map>
 #include <string>
 #include <vector>
+#include <climits>
 
 /**
  * @brief CPU temperature information
@@ -50,13 +51,13 @@ typedef struct cpu_freq_info
   cpu_freq_info(int index, const std::string & path) : index_(index), path_(path) {}
 } cpu_freq_info;
 
-class CPUMonitorBase
+class CPUMonitorBase : public rclcpp::Node
 {
 public:
   /**
-   * @brief main loop
+   * @brief Update the diagnostic state.
    */
-  void run(void);
+  void update(void);
 
   /**
    * @brief get names for core temperature files
@@ -69,14 +70,14 @@ public:
   virtual void getFreqNames(void);
 
 protected:
-  using DiagStatus = diagnostic_msgs::DiagnosticStatus;
+  using DiagStatus = diagnostic_msgs::msg::DiagnosticStatus;
 
   /**
    * @brief constructor
-   * @param [in] nh node handle to access global parameters
-   * @param [in] pnh node handle to access private parameters
+   * @param [in] node_name Name of the node.
+   * @param [in] options Options associated with this node.
    */
-  CPUMonitorBase(const ros::NodeHandle & nh, const ros::NodeHandle & pnh);
+  CPUMonitorBase(const std::string & node_name, const rclcpp::NodeOptions & options);
 
   /**
    * @brief check CPU temperature
@@ -121,8 +122,6 @@ protected:
   virtual void checkFrequency(
     diagnostic_updater::DiagnosticStatusWrapper & stat);  // NOLINT(runtime/references)
 
-  ros::NodeHandle nh_;                   //!< @brief ros node handle
-  ros::NodeHandle pnh_;                  //!< @brief private ros node handle
   diagnostic_updater::Updater updater_;  //!< @brief Updater class which advertises to /diagnostics
 
   char hostname_[HOST_NAME_MAX + 1];  //!< @brief host name

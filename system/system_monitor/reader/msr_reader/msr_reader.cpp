@@ -145,7 +145,7 @@ void run(int port, const std::vector<std::string> & list)
     ret = 0;
     std::ostringstream oss;
     boost::archive::text_oarchive oa(oss);
-    MSRInfo msr = {0};
+    MSRInfo msr{0, {}};
 
     for (auto itr = list.begin(); itr != list.end(); ++itr) {
       // Open a file

@@ -19,7 +19,7 @@
  * @brief GPU monitor node class
  */
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include <string>
 
 #if defined _GPU_NVML_
@@ -29,18 +29,15 @@
 #else
 #include <system_monitor/gpu_monitor/unknown_gpu_monitor.h>
 #endif
+#include <system_monitor/utils.hpp>
 
 int main(int argc, char ** argv)
 {
-  ros::init(argc, argv, "gpu_monitor");
-  ros::NodeHandle nh;
-  ros::NodeHandle pnh("~");
-
-  std::shared_ptr<GPUMonitorBase> monitor;
-
-  monitor = std::make_shared<GPUMonitor>(nh, pnh);
-
-  monitor->run();
-
+  rclcpp::init(argc, argv);
+  rclcpp::NodeOptions options;
+  std::shared_ptr<GPUMonitorBase> monitor = std::make_shared<GPUMonitor>("gpu_monitor", options);
+  spin_and_update(monitor, std::chrono::seconds(1U));
+  monitor->shut_down();  // Shut down before `rclcpp::shutdown()` so that any possible logging is not hindered.
+  rclcpp::shutdown();
   return 0;
 }

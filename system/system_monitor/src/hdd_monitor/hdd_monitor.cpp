@@ -31,29 +31,25 @@
 
 namespace bp = boost::process;
 
-HDDMonitor::HDDMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh) : nh_(nh), pnh_(pnh)
+HDDMonitor::HDDMonitor(const std::string & node_name, const rclcpp::NodeOptions & options) :
+Node(node_name, options),
+updater_(this),
+usage_warn_(declare_parameter<float>("usage_warn", 0.9)),
+usage_error_(declare_parameter<float>("usage_error", 1.1)),
+hdd_reader_port_(declare_parameter<int>("hdd_reader_port", 7635))
 {
   gethostname(hostname_, sizeof(hostname_));
 
   getTempParams();
-  pnh_.param<float>("usage_warn", usage_warn_, 0.9);
-  pnh_.param<float>("usage_error", usage_error_, 1.1);
-  pnh_.param<int>("hdd_reader_port", hdd_reader_port_, 7635);
 
   updater_.setHardwareID(hostname_);
   updater_.add("HDD Temperature", this, &HDDMonitor::checkTemp);
   updater_.add("HDD Usage", this, &HDDMonitor::checkUsage);
 }
 
-void HDDMonitor::run(void)
+void HDDMonitor::update()
 {
-  ros::Rate rate(1.0);
-
-  while (ros::ok()) {
-    ros::spinOnce();
     updater_.force_update();
-    rate.sleep();
-  }
 }
 
 void HDDMonitor::checkTemp(diagnostic_updater::DiagnosticStatusWrapper & stat)
@@ -240,27 +236,13 @@ void HDDMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
 
 void HDDMonitor::getTempParams(void)
 {
-  XmlRpc::XmlRpcValue params;
-
-  pnh_.getParam("disks", params);
-  if (params.getType() != XmlRpc::XmlRpcValue::TypeArray) return;
-
-  for (int i = 0; i < params.size(); ++i) {
-    std::string name;
-    TempParam param;
-
-    // Skip no name
-    if (!params[i]["name"].valid()) continue;
-
-    if (params[i]["name"].getType() == XmlRpc::XmlRpcValue::TypeString)
-      name = static_cast<std::string>(params[i]["name"]);
-
-    if (params[i]["temp_warn"].getType() == XmlRpc::XmlRpcValue::TypeDouble)
-      param.temp_warn_ = static_cast<double>(params[i]["temp_warn"]);
-
-    if (params[i]["temp_error"].getType() == XmlRpc::XmlRpcValue::TypeDouble)
-      param.temp_error_ = static_cast<double>(params[i]["temp_error"]);
-
-    temp_params_[name] = param;
-  }
+    const auto num_disks = this->declare_parameter("num_disks", 0);
+    for(auto i = 0; i < num_disks; ++i){
+        const auto prefix = "disks.disk" + std::to_string(i);
+        TempParam param;
+        param.temp_warn_ = declare_parameter(prefix + ".temp_warn").get<float>();
+        param.temp_error_ = declare_parameter(prefix + ".temp_error").get<float>();
+        const auto name = declare_parameter(prefix + ".name").get<std::string>();
+        temp_params_[name] = param;
+    }
 }

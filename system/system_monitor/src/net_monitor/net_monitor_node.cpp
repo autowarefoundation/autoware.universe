@@ -19,15 +19,17 @@
  * @brief Net monitor node class
  */
 
+#include <rclcpp/rclcpp.hpp>
 #include <system_monitor/net_monitor/net_monitor.h>
+#include <system_monitor/utils.hpp>
 
 int main(int argc, char ** argv)
 {
-  ros::init(argc, argv, "net_monitor");
-  ros::NodeHandle nh;
-  ros::NodeHandle pnh("~");
-  NetMonitor monitor(nh, pnh);
-  monitor.run();
-
+  rclcpp::init(argc, argv);
+  rclcpp::NodeOptions options;
+  std::shared_ptr<NetMonitor> monitor = std::make_shared<NetMonitor>("net_monitor", options);
+  spin_and_update(monitor, std::chrono::seconds(1U));
+  monitor->shutdown_nl80211();
+  rclcpp::shutdown();
   return 0;
 }

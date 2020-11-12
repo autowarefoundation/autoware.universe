@@ -21,7 +21,7 @@
  * @brief Process monitor class
  */
 
-#include <diagnostic_updater/diagnostic_updater.h>
+#include <diagnostic_updater/diagnostic_updater.hpp>
 #include <system_monitor/process_monitor/diag_task.h>
 #include <boost/process.hpp>
 #include <string>
@@ -29,23 +29,23 @@
 
 namespace bp = boost::process;
 
-class ProcessMonitor
+class ProcessMonitor : public rclcpp::Node
 {
 public:
   /**
    * @brief constructor
-   * @param [in] nh node handle to access global parameters
-   * @param [in] pnh node handle to access private parameters
+   * @param [in] node_name Name of the node.
+   * @param [in] options Options associated with this node.
    */
-  ProcessMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh);
+  ProcessMonitor(const std::string & node_name, const rclcpp::NodeOptions & options);
 
   /**
-   * @brief main loop
+   * @brief Update the diagnostic state
    */
-  void run(void);
+  void update();
 
 protected:
-  using DiagStatus = diagnostic_msgs::DiagnosticStatus;
+  using DiagStatus = diagnostic_msgs::msg::DiagnosticStatus;
 
   /**
    * @brief monitor processes
@@ -108,8 +108,6 @@ protected:
     std::vector<std::shared_ptr<DiagTask>> * tasks, const std::string & message,
     const std::string & error_command, const std::string & content);
 
-  ros::NodeHandle nh_;                   //!< @brief ros node handle
-  ros::NodeHandle pnh_;                  //!< @brief private ros node handle
   diagnostic_updater::Updater updater_;  //!< @brief Updater class which advertises to /diagnostics
 
   char hostname_[HOST_NAME_MAX + 1];  //!< @brief host name

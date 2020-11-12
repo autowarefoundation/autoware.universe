@@ -26,28 +26,28 @@
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/regex.hpp>
+#include <boost/thread.hpp>
 #include <string>
 
 namespace bp = boost::process;
 namespace fs = boost::filesystem;
 namespace pt = boost::property_tree;
 
-CPUMonitorBase::CPUMonitorBase(const ros::NodeHandle & nh, const ros::NodeHandle & pnh)
-: nh_(nh),
-  pnh_(pnh),
-  updater_(),
+CPUMonitorBase::CPUMonitorBase(const std::string & node_name, const rclcpp::NodeOptions & options)
+: Node(node_name, options),
+  updater_(this),
   hostname_(),
   num_cores_(0),
   temps_(),
   freqs_(),
   mpstat_exists_(false),
-  temp_warn_(90.0),
-  temp_error_(95.0),
-  usage_warn_(0.90),
-  usage_error_(1.00),
-  usage_avg_(true),
-  load1_warn_(0.90),
-  load5_warn_(0.80)
+  temp_warn_(declare_parameter<float>("temp_warn", 90.0)),
+  temp_error_(declare_parameter<float>("temp_error", 95.0)),
+  usage_warn_(declare_parameter<float>("usage_warn", 0.90)),
+  usage_error_(declare_parameter<float>("usage_error", 1.00)),
+  usage_avg_(declare_parameter<bool>("usage_avg", true)),
+  load1_warn_(declare_parameter<float>("load1_warn", 0.90)),
+  load5_warn_(declare_parameter<float>("load5_warn", 0.80))
 {
   gethostname(hostname_, sizeof(hostname_));
   num_cores_ = boost::thread::hardware_concurrency();
@@ -55,14 +55,6 @@ CPUMonitorBase::CPUMonitorBase(const ros::NodeHandle & nh, const ros::NodeHandle
   // Check if command exists
   fs::path p = bp::search_path("mpstat");
   mpstat_exists_ = (p.empty()) ? false : true;
-
-  pnh_.param<float>("temp_warn", temp_warn_, 90.0);
-  pnh_.param<float>("temp_error", temp_error_, 95.0);
-  pnh_.param<float>("usage_warn", usage_warn_, 0.90);
-  pnh_.param<float>("usage_error", usage_error_, 1.00);
-  pnh_.param<bool>("usage_avg", usage_avg_, true);
-  pnh_.param<float>("load1_warn", load1_warn_, 0.90);
-  pnh_.param<float>("load5_warn", load5_warn_, 0.80);
 
   updater_.setHardwareID(hostname_);
   updater_.add("CPU Temperature", this, &CPUMonitorBase::checkTemp);
@@ -72,15 +64,9 @@ CPUMonitorBase::CPUMonitorBase(const ros::NodeHandle & nh, const ros::NodeHandle
   updater_.add("CPU Frequency", this, &CPUMonitorBase::checkFrequency);
 }
 
-void CPUMonitorBase::run(void)
+void CPUMonitorBase::update()
 {
-  ros::Rate rate(1.0);
-
-  while (ros::ok()) {
-    ros::spinOnce();
     updater_.force_update();
-    rate.sleep();
-  }
 }
 
 void CPUMonitorBase::checkTemp(diagnostic_updater::DiagnosticStatusWrapper & stat)
@@ -230,7 +216,7 @@ void CPUMonitorBase::checkLoad(diagnostic_updater::DiagnosticStatusWrapper & sta
 
 void CPUMonitorBase::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
-  ROS_INFO("CPUMonitorBase::checkThrottling not implemented.");
+  RCLCPP_INFO(this->get_logger(), "CPUMonitorBase::checkThrottling not implemented.");
 }
 
 void CPUMonitorBase::checkFrequency(diagnostic_updater::DiagnosticStatusWrapper & stat)
@@ -258,7 +244,7 @@ void CPUMonitorBase::checkFrequency(diagnostic_updater::DiagnosticStatusWrapper 
 
 void CPUMonitorBase::getTempNames(void)
 {
-  ROS_INFO("CPUMonitorBase::getTempNames not implemented.");
+    RCLCPP_INFO(this->get_logger(), "CPUMonitorBase::getTempNames not implemented.");
 }
 
 void CPUMonitorBase::getFreqNames(void)

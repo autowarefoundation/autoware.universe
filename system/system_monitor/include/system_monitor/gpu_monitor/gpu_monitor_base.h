@@ -21,26 +21,33 @@
  * @brief GPU monitor class
  */
 
-#include <diagnostic_updater/diagnostic_updater.h>
+#include <diagnostic_updater/diagnostic_updater.hpp>
 #include <map>
+#include <climits>
 
-class GPUMonitorBase
+class GPUMonitorBase : public rclcpp::Node
 {
 public:
   /**
-   * @brief main loop
+   * @brief Update the diagnostic state.
    */
-  virtual void run(void);
+  virtual void update();
+
+   /**
+   * @brief Terminate the node, log final statements. An independent function is preferred to allow an explicit way
+   * to operate actions that require a valid rclcpp context. By default this method does nothing.
+   */
+  virtual void shut_down();
 
 protected:
-  using DiagStatus = diagnostic_msgs::DiagnosticStatus;
+  using DiagStatus = diagnostic_msgs::msg::DiagnosticStatus;
 
   /**
    * @brief constructor
-   * @param [in] nh node handle to access global parameters
-   * @param [in] pnh node handle to access private parameters
+   * @param [in] node_name Name of the node.
+   * @param [in] options Options associated with this node.
    */
-  GPUMonitorBase(const ros::NodeHandle & nh, const ros::NodeHandle & pnh);
+  GPUMonitorBase(const std::string & node_name, const rclcpp::NodeOptions & options);
 
   /**
    * @brief check GPU temperature
@@ -87,8 +94,6 @@ protected:
   virtual void checkFrequency(
     diagnostic_updater::DiagnosticStatusWrapper & stat);  // NOLINT(runtime/references)
 
-  ros::NodeHandle nh_;                   //!< @brief ros node handle
-  ros::NodeHandle pnh_;                  //!< @brief private ros node handle
   diagnostic_updater::Updater updater_;  //!< @brief Updater class which advertises to /diagnostics
 
   char hostname_[HOST_NAME_MAX + 1];  //!< @brief host name

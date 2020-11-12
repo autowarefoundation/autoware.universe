@@ -1,15 +1,28 @@
 <launch>
-  <arg name="machine_name" default="$(optenv HOSTNAME localhost)"/>
-  <arg name="config_file" default="$(find system_monitor)/config/system_monitor.yaml"/>
-  <arg name="output" default="log"/>
+  <arg name="config_file" default="$(find-pkg-share system_monitor)/config/system_monitor.yaml"/>
+<!--  <arg name="output" default="log"/>-->
+<!--TODO(yunus.caliskan): Figure out why a variable can't be used for the output type.-->
 
-  <node pkg="system_monitor" type="cpu_monitor" name="cpu_monitor" output="$(arg output)" respawn="true"/>
-  <node pkg="system_monitor" type="hdd_monitor" name="hdd_monitor" output="$(arg output)" respawn="true"/>
-  <node pkg="system_monitor" type="mem_monitor" name="mem_monitor" output="$(arg output)" respawn="true"/>
-  <node pkg="system_monitor" type="net_monitor" name="net_monitor" output="$(arg output)" respawn="true"/>
-  <node pkg="system_monitor" type="ntp_monitor" name="ntp_monitor" output="$(arg output)" respawn="true"/>
-  <node pkg="system_monitor" type="process_monitor" name="process_monitor" output="$(arg output)" respawn="true"/>
-  <node pkg="system_monitor" type="gpu_monitor" name="gpu_monitor" output="$(arg output)" respawn="true"/>
+  <node pkg="system_monitor" exec="cpu_monitor" name="cpu_monitor" output="log" respawn="true">
+    <param from="$(var config_file)" />
+  </node>
+  <node pkg="system_monitor" exec="hdd_monitor" name="hdd_monitor" output="log" respawn="true">
+    <param from="$(var config_file)" />
+  </node>
+  <node pkg="system_monitor" exec="mem_monitor" name="mem_monitor" output="log" respawn="true">
+    <param from="$(var config_file)" />
+  </node>
+  <node pkg="system_monitor" exec="net_monitor" name="net_monitor" output="log" respawn="true">
+    <param from="$(var config_file)" />
+  </node>
+  <node pkg="system_monitor" exec="ntp_monitor" name="ntp_monitor" output="log" respawn="true">
+    <param from="$(var config_file)" />
+  </node>
+  <node pkg="system_monitor" exec="process_monitor" name="process_monitor" output="log" respawn="true">
+    <param from="$(var config_file)" />
+  </node>
+  <node pkg="system_monitor" exec="gpu_monitor" name="gpu_monitor" output="log" respawn="true">
+    <param from="$(var config_file)" />
+  </node>
 
-  <rosparam command="load" file="$(arg config_file)"/>
 </launch>
