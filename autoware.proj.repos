@@ -54,11 +54,11 @@ repositories:
   vendor/rclcpp_generic:
     type: git
     url: https://github.com/ApexAI/rclcpp_generic.git
-    version: dfcb031f53728311e439079ad61e2d59d525b17f
+    version: autoware
   vendor/topic_tools:
     type: git
     url: https://github.com/ApexAI/topic_tools.git
-    version: 8fc11e5b7a8db42fbb13c47de9627424332b4fa7
+    version: autoware
 #  vendor/lanelet2:
 #    type: git
 #    url: https://github.com/fzi-forschungszentrum-informatik/Lanelet2.git
