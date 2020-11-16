@@ -50,10 +50,10 @@ A good general strategy is to try to implement those changes, then iteratively r
 The migration guide covers this well. See also [here](https://www.ros.org/reps/rep-0149.html) for a reference of the most recent version of this format.
 
 #### When to use which dependency tag
-
 Any build tool needed only to set up the build needs `buildtool_depend`; e.g.,
 
     <buildtool_depend>ament_cmake</buildtool_depend>
+    <buildtool_depend>rosidl_default_generators</buildtool_depend>
 
 Any external package included with `#include` in the files (source or headers) needs to have a corresponding `<build_depend>`; e.g.,
 
@@ -66,10 +66,12 @@ Any external package included with `#include` in the header files also needs to 
 Any shared library that needs to be linked when the code is executed needs to have a corresponding `<exec_depend>`: this describes the runtime dependencies; e.g.,
 
     <exec_depend>std_msgs</exec_depend>
+    <exec_depend>rosidl_default_runtime</exec_depend>
 
 If a package falls under all three categories (`<build_depend>`, `<build_export_depend>`, and `<exec_depend>`), it is possible to just use `<depend>`
 
     <depend>shift_decider</depend>
+
 
 ### Rewriting `CMakeLists.txt`
 Pretty straightforward by following the example of the already ported `simple_planning_simulator` package and the [pub-sub tutorial](https://index.ros.org/doc/ros2/Tutorials/Writing-A-Simple-Cpp-Publisher-And-Subscriber/#cpppubsub). Better yet, use `ament_auto` to get terse `CMakeLists.txt` that do not have as much redundancy with `package.xml` as an explicit `CMakeLists.txt`. See [this commit](https://github.com/tier4/Pilot.Auto/pull/7/commits/ef382a9b430fd69cb0a0f7ca57016d66ed7ef29d) for an example.
@@ -113,7 +115,16 @@ That's where differences start to show – I decided to make the `VehicleCmdGate
 
 
 ### Latched topics
-For each latched publisher, I just used `transient_local` QoS on the publisher, and we will need to do the same on all subscribers to that topic.
+For each latched publisher, you can use `transient_local` durability QoS on the publisher, e.g. when the history depth is 1:
+
+    rclcpp::QoS durable_qos{1};
+    durable_qos.transient_local();
+
+or
+
+    rclcpp::QoS durable_qos = rclcpp::QoS(1).transient_local();
+
+However, all subscribers to that topic will also need `transient_local` durability. If this is omitted, the connection between the two will be negotiated to be volatile, i.e. old messages will not be delivered when the subscriber comes online.
 
 
 ### Timing issues
@@ -150,7 +161,6 @@ Also, this doesn't work, even with a subsequent `add_timer()` call:
 
     timer_ = rclcpp::create_timer(this, this->get_clock(), period, timer_callback);
 
-
 #### Rosbag recording
 Unfortunately, one additional problem remains. `ros2 bag` does not record `/clock` (aka sim time) whereas `rosbag` does. This implies that in order to get the same behavior in ROS 2, either:
 
@@ -160,7 +170,6 @@ Unfortunately, one additional problem remains. `ros2 bag` does not record `/cloc
 
 ### Parameters
 It's not strictly necessary, but you probably want to make sure the filename is `xyz.param.yaml`. Then come two steps:
-
 
 #### Adjust code
     double vel_lim;
@@ -179,15 +188,17 @@ This allows to set the initial value e.g. via a parameter file.
 **NOTE** Calling `ros2 param set <NODE> vel_lim 1.234` after starting the node works but will not
 alter the member `vel_lim`! See the section below on *dynamic reconfigure* to achieve that.
 
-### dynamic reconfigure
+
+### `dynamic_reconfigure`
+
 Dynamic reconfigure as it existed in ROS1 does not exist anymore in ROS2 and can be achieved by
 simpler means using a parameter callback.
 
-#### cfg files
+#### `cfg` files
 
 Remove the package's `.cfg` file and associated `cfg/` subdirectory.
 
-#### header file
+#### Header file
 
 In the header file, remove includes of `dynamic_reconfigure` and the node-specific config file. As a concrete example,
 take the [MPC follower](https://github.com/tier4/Pilot.Auto/pull/52)
@@ -225,7 +236,7 @@ Add a method to declare all the parameters
 
     void declareMPCparameters();
 
-#### implementation file
+#### Implementation file
 
 Write the following into the definition of the class that inherits from `rclcpp::Node`.
 
@@ -362,17 +373,34 @@ There is a [migration guide](https://index.ros.org/doc/ros2/Tutorials/Launch-fil
 ### Replacing `tf2_ros::Buffer`
 A `tf2_ros::Buffer` member that is filled by a `tf2_ros::TransformListener` can become a `tf2::BufferCore` in most cases. This reduces porting effort, since the a `tf2::BufferCore` can be constructed like a ROS1 `tf2_ros::Buffer`. For an example, see [this PR](https://github.com/tier4/Pilot.Auto/pull/11).
 
-However, in some cases the extra functionality of `tf2_ros::Buffer` is needed. For instance, waiting for a transform to arrive.
+However, in some cases the extra functionality of `tf2_ros::Buffer` is needed. For instance, waiting for a transform to arrive, usually in the form of `lookupTransform()` with a timeout argument.
 
+#### Avoiding a lookup with timeout
+Often, code doesn't really need a transform lookup with timeout. For instance, [this package](https://github.com/tier4/Pilot.Auto/pull/80/files#diff-1fd60e4ec61c376d6b6b088a7878676408a5ac6a665977590610be92d5079e55L270-L277) has a "main" subscription callback, `onTrigger()`, that waits for the most recent transform (`tf2::TimePointZero`), then checks if auxiliary data from other subscriptions is there and returns early from the callback if it isn't. In that case, I think the callback can simply treat transforms the same way as this auxiliary data, i.e. just do a simple `lookupTransform()` with no timeout and return early from the callback if it fails. The node won't do any work anyway until it's ready (i.e. has all the auxiliary data). Note that this pattern works only when the node is waiting for the most recent transform – if your callback wants to use the transform at a specific time, e.g. the timestamp of the message that triggered the callback, this pattern doesn't make sense. In that case, avoiding `waitForTransform()` requires refactoring the architecture of your system, but that topic is currently out of scope.
 
-#### Waiting for a transform to arrive
-You might expect to be able to use `tf2_ros::Buffer::lookupTransform()` with a timeout out of the box, but this will throw an error:
+It's worth keeping in mind that waiting for transforms in general can be troublesome – it is only a probabilistic solution that fails in a bad way for latency spikes, makes it hard to reason about the behavior of the whole system and probably incurs more latency than necessary.
+
+#### When you can't avoid a lookup with timeout
+You should be able to use `tf2_ros::Buffer::lookupTransform()` with a timeout out of the box. There is one caveat, namely there has been at least one report of such an error:
 
     Do not call canTransform or lookupTransform with a timeout unless you are using another thread for populating data.
     Without a dedicated thread it will always timeout.
     If you have a seperate thread servicing tf messages, call setUsingDedicatedThread(true) on your Buffer instance.
 
-You could do therefore try setting up a dedicated thread, but you could also use the `waitForTransform()` function like this:
+There is also the drawback of spamming the console with warnings like
+
+    Warning: Invalid frame ID "a" passed to canTransform argument target_frame - frame does not exist
+             at line 133 in /tmp/binarydeb/ros-foxy-tf2-0.13.6/src/buffer_core.cpp
+
+if the frame has never been sent before.
+
+#### What about `waitForTransform()`?
+There is also a [`waitForTransform` API](http://docs.ros2.org/foxy/api/tf2_ros/classtf2__ros_1_1Buffer.html#a832b188dd65cbec52cabc1ec07856e49) involving futures, but it has bugs and limitations. In particular:
+* Its callback does not get called when the request can be answered immediately
+* You can not call `get()` on the future and expect it to return the transform or throw an exception when the timeout ends. It continues waiting after the timeout expires if the future is not ready yet (i.e. the transform hasn't arrived).
+
+This limits you to the following style of calling the API, which doesn't use the callback and limits the waiting time before calling `get()` on the future:
+
 
     // In the node definition
     tf2_ros::Buffer tf_buffer_;
@@ -383,13 +411,24 @@ You could do therefore try setting up a dedicated thread, but you could also use
     tf_buffer_.setCreateTimerInterface(cti);
     ...
     // In the function processing data
-    auto tf_future = tf_buffer_.waitForTransform(a, b, msg_time, std::chrono::milliseconds(1000), [this](const std::shared_future<geometry_msgs::msg::TransformStamped>& tf){
-        // Here the future is available
-    });
+    auto tf_future = tf_buffer_.waitForTransform(a, b, msg_time, std::chrono::milliseconds(0), [this](auto){});
+    auto status = tf_future.wait_for(timeout_);
+    if (status == std::future_status::deferred) {
+      // This never happened in experiments
+    } else if (status == std::future_status::timeout) {
+      // The transform did not arrive within the timeout duration
+    } else {
+      // The transform is here, and can now be accessed without triggering the waiting-infinitely bug
+      auto transform = tf_future.get();
+    }
+        
 
-The callback will always be called, but only after some time: when the transform becomes available or when the timeout is reached. In the latter case, if the transform is not ready yet, calling `.get()` on the future will throw a `tf2::TimeoutException`.
+The `waitForTransform()` function will return immediately. Note that the timeout passed to `waitForTransform()` does not matter, only the timeout passed to `wait_for()`.
 
-The `waitForTransform()` function will return immediately and also return a future. However, calling `.get()` or `.wait()` on that future does not respect the timeout. That is, it will wait however long it takes until a transform arrives and never throw an exception.
+There is a bug with this when `tf2::TimeStampZero` is requested instead of a nonzero time: the status will be `ready`, but accessing the result with `get()` throws an exception. There is another bug where this bug is not triggered under some conditions, for extra fun. So do not use `waitForTransform()` with `tf2::TimeStampZero` (or any other way of saying "time 0"). The silver lining is that this can be often avoided anyway since it is the scenario described in the section before.
+
+For more details, see https://github.com/nnmm/tf2_example and the [resulting table](https://docs.google.com/spreadsheets/d/1BvFIMwp0kSkQecw2dkkyj4kR9edFLRDDBBTGynHBAN8/edit?usp=sharing).
+
 
 ### Shared pointers
 Be careful in creating a `std::shared_ptr` to avoid a double-free situation when the constructor argument after porting is a dereferenced shared pointer. For example, if `msg` previously was a raw pointer and now is a shared pointer, the following would lead to both `msg` and `a` deleting the same resource.
@@ -399,6 +438,7 @@ Be careful in creating a `std::shared_ptr` to avoid a double-free situation when
 To avoid this, just copy the shared pointer
 
     std::shared_ptr<autoware_planning_msgs::msg::Trajectory> a = msg;
+
 
 ### Service clients
 There is no synchronous API for service calls, and the futures API can not be used from inside a node, only the callback API.
@@ -451,6 +491,7 @@ where the `duration` is an integer interpreted as milliseconds. A readable way t
     ...
     static constexpr auto duration = (5000ms).count();
     RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), duration, ...)
+
 
 ### Shutting down a subscriber
 The `shutdown()` method doesn't exist anymore, but you can just throw away the subscriber with `this->subscription_ = nullptr;` or similar, for instance inside the subscription callback. Curiously, this works even though the `subscription_` member variable is not the sole owner – the `use_count` is 3 in the `minimal_subscriber` example.
