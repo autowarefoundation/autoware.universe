@@ -35,14 +35,6 @@ repositories:
     url: https://github.com/tier4/scenario_runner.iv.universe.git
     version: ros2
   # vendor
-  vendor/osqp:
-    type: git
-    url: https://github.com/tier4/osqp_vendor.git
-    version: 0.0.1
-  vendor/ublox:
-    type: git
-    url: https://github.com/tier4/ublox.git
-    version: foxy-devel
   vendor/grid_map:
     type: git
     url: https://github.com/ANYbotics/grid_map.git
