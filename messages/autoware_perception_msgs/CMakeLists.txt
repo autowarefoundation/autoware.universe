@@ -22,6 +22,7 @@ set(TRAFFIC_LIGHT_RECOGNITION_MSG_FILES
   "TrafficLightRoiArray.msg"
   "TrafficLightState.msg"
   "TrafficLightStateArray.msg"
+  "TrafficLightStateStamped.msg"
 )
 
 if(${ROS_VERSION} EQUAL 1)
