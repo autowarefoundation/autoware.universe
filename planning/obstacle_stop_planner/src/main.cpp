@@ -14,16 +14,13 @@
  * limitations under the License.
  */
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include <obstacle_stop_planner/node.hpp>
 
 int main(int argc, char ** argv)
 {
-  ros::init(argc, argv, "obstacle_stop_planner_node");
-
-  motion_planning::ObstacleStopPlannerNode node;
-
-  ros::spin();
-
+  rclcpp::init(argc, argv);
+  rclcpp::spin(std::make_shared<motion_planning::ObstacleStopPlannerNode>());
+  rclcpp::shutdown();
   return 0;
 }

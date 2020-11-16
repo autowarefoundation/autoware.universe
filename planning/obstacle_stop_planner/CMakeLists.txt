@@ -1,73 +1,41 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.5)
 project(obstacle_stop_planner)
 
-add_compile_options(-std=c++14 -O3)
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic -O3)
+  add_compile_options(-Wno-unused-parameter)
+endif()
 
-find_package(catkin REQUIRED COMPONENTS
-  autoware_perception_msgs
-  autoware_planning_msgs
-  roscpp
-  sensor_msgs
-  std_msgs
-  tf2
-  tf2_geometry_msgs
-  tf2_eigen
-  tf2_ros
-  visualization_msgs
-  pcl_ros
-)
-
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
 
 find_package(Eigen3 REQUIRED)
 find_package(OpenCV REQUIRED)
-
-catkin_package(
-  INCLUDE_DIRS include
-  CATKIN_DEPENDS
-  autoware_perception_msgs
-    autoware_planning_msgs
-    roscpp
-    sensor_msgs
-    std_msgs
-    tf2
-    tf2_geometry_msgs
-    tf2_eigen
-    tf2_ros
-    visualization_msgs
-    pcl_ros
-)
-
-include_directories(
-  include
-  ${EIGEN3_INCLUDE_DIRS}
-  ${OpenCV_INCLUDE_DIRS}
-  ${catkin_INCLUDE_DIRS}
-)
-
-add_executable(obstacle_stop_planner_node
+find_package(PCL REQUIRED)
+  
+ament_auto_add_executable(obstacle_stop_planner_node
   src/debug_marker.cpp
   src/node.cpp
   src/main.cpp
   src/adaptive_cruise_control.cpp
 )
-add_dependencies(obstacle_stop_planner_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+target_include_directories(obstacle_stop_planner_node
+  PUBLIC
+    ${OpenCV_INCLUDE_DIRS}
+    ${PCL_INCLUDE_DIRS}
+)
 
 target_link_libraries(obstacle_stop_planner_node
-  ${catkin_LIBRARIES}
-  ${OpenCV_LIBS}
+    ${OpenCV_LIBRARIES}
+    ${PCL_LIBRARIES}
 )
 
-install(
-  TARGETS
-    obstacle_stop_planner_node
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-
-install(
-  DIRECTORY
-    launch
-    config
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+ament_auto_package(
+  INSTALL_TO_SHARE
+  config
+  launch
 )

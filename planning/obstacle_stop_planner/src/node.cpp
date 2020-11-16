@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <diagnostic_msgs/DiagnosticStatus.h>
-#include <diagnostic_msgs/KeyValue.h>
+#include <diagnostic_msgs/msg/key_value.hpp>
 #include <pcl/filters/voxel_grid.h>
 #include <tf2/utils.h>
 #include <tf2_eigen/tf2_eigen.h>
@@ -27,37 +26,11 @@
 #include <obstacle_stop_planner/node.hpp>
 #include <vector>
 #define EIGEN_MPL2_ONLY
-#include <Eigen/Core>
-#include <Eigen/Geometry>
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Geometry>
 namespace
 {
-template <class T>
-T getParam(const ros::NodeHandle & nh, const std::string & key, const T & default_value)
-{
-  T value;
-  nh.param<T>(key, value, default_value);
-  return value;
-}
-
-template <class T>
-T waitForParam(const ros::NodeHandle & nh, const std::string & key)
-{
-  T value;
-  ros::Rate rate(1.0);
-
-  while (ros::ok()) {
-    const auto result = nh.getParam(key, value);
-    if (result) {
-      return value;
-    }
-
-    ROS_WARN("waiting for parameter `%s` ...", key.c_str());
-    rate.sleep();
-  }
-
-  return {};
-}
-double getYawFromGeometryMsgsQuaternion(const geometry_msgs::Quaternion & quat)
+double getYawFromGeometryMsgsQuaternion(const geometry_msgs::msg::Quaternion & quat)
 {
   tf2::Quaternion tf2_quat(quat.x, quat.y, quat.z, quat.w);
   double roll, pitch, yaw;
@@ -65,7 +38,7 @@ double getYawFromGeometryMsgsQuaternion(const geometry_msgs::Quaternion & quat)
 
   return yaw;
 }
-std::string jsonDumpsPose(const geometry_msgs::Pose & pose)
+std::string jsonDumpsPose(const geometry_msgs::msg::Pose & pose)
 {
   const std::string json_dumps_pose =
     (boost::format(
@@ -75,12 +48,12 @@ std::string jsonDumpsPose(const geometry_msgs::Pose & pose)
       .str();
   return json_dumps_pose;
 }
-diagnostic_msgs::DiagnosticStatus makeStopReasonDiag(
-  const std::string stop_reason, const geometry_msgs::Pose & stop_pose)
+diagnostic_msgs::msg::DiagnosticStatus makeStopReasonDiag(
+  const std::string stop_reason, const geometry_msgs::msg::Pose & stop_pose)
 {
-  diagnostic_msgs::DiagnosticStatus stop_reason_diag;
-  diagnostic_msgs::KeyValue stop_reason_diag_kv;
-  stop_reason_diag.level = diagnostic_msgs::DiagnosticStatus::OK;
+  diagnostic_msgs::msg::DiagnosticStatus stop_reason_diag;
+  diagnostic_msgs::msg::KeyValue stop_reason_diag_kv;
+  stop_reason_diag.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
   stop_reason_diag.name = "stop_reason";
   stop_reason_diag.message = stop_reason;
   stop_reason_diag_kv.key = "stop_pose";
@@ -97,27 +70,28 @@ using Point = bg::model::d2::point_xy<double>;
 using Polygon = bg::model::polygon<Point, false>;
 using Line = bg::model::linestring<Point>;
 
-ObstacleStopPlannerNode::ObstacleStopPlannerNode() : nh_(), pnh_("~"), tf_listener_(tf_buffer_)
+ObstacleStopPlannerNode::ObstacleStopPlannerNode() 
+: Node("obstacle_stop_planner"),  tf_buffer_(this->get_clock()), tf_listener_(tf_buffer_)
 {
   // Vehicle Parameters
-  wheel_base_ = waitForParam<double>(pnh_, "/vehicle_info/wheel_base");
-  front_overhang_ = waitForParam<double>(pnh_, "/vehicle_info/front_overhang");
-  rear_overhang_ = waitForParam<double>(pnh_, "/vehicle_info/rear_overhang");
-  left_overhang_ = waitForParam<double>(pnh_, "/vehicle_info/left_overhang");
-  right_overhang_ = waitForParam<double>(pnh_, "/vehicle_info/right_overhang");
-  vehicle_width_ = waitForParam<double>(pnh_, "/vehicle_info/vehicle_width");
-  vehicle_length_ = waitForParam<double>(pnh_, "/vehicle_info/vehicle_length");
+  wheel_base_ = declare_parameter("/vehicle_info/wheel_base", 1.0);
+  front_overhang_ = declare_parameter("/vehicle_info/front_overhang", 0.5);
+  rear_overhang_ = declare_parameter("/vehicle_info/rear_overhang", 0.5);
+  left_overhang_ = declare_parameter("/vehicle_info/left_overhang", 0.5);
+  right_overhang_ = declare_parameter("/vehicle_info/right_overhang", 0.5);
+  vehicle_width_ = declare_parameter("/vehicle_info/vehicle_width", 1.5);
+  vehicle_length_ = declare_parameter("/vehicle_info/vehicle_length", 2.0);
 
   // Parameters
-  stop_margin_ = getParam<double>(pnh_, "stop_margin", 5.0);
-  slow_down_margin_ = getParam<double>(pnh_, "slow_down_margin", 5.0);
-  min_behavior_stop_margin_ = getParam<double>(pnh_, "min_behavior_stop_margin", 2.0);
-  expand_slow_down_range_ = getParam<double>(pnh_, "expand_slow_down_range", 1.0);
-  max_slow_down_vel_ = getParam<double>(pnh_, "max_slow_down_vel", 4.0);
-  min_slow_down_vel_ = getParam<double>(pnh_, "min_slow_down_vel", 2.0);
-  max_deceleration_ = getParam<double>(pnh_, "max_deceleration", 2.0);
-  enable_slow_down_ = getParam<bool>(pnh_, "enable_slow_down", false);
-  step_length_ = getParam<double>(pnh_, "step_length", 1.0);
+  stop_margin_ = declare_parameter("stop_margin", 5.0);
+  slow_down_margin_ = declare_parameter("slow_down_margin", 5.0);
+  min_behavior_stop_margin_ = declare_parameter("min_behavior_stop_margin", 2.0);
+  expand_slow_down_range_ = declare_parameter("expand_slow_down_range", 1.0);
+  max_slow_down_vel_ = declare_parameter("max_slow_down_vel", 4.0);
+  min_slow_down_vel_ = declare_parameter("min_slow_down_vel", 2.0);
+  max_deceleration_ = declare_parameter("max_deceleration", 2.0);
+  enable_slow_down_ = declare_parameter("enable_slow_down", false);
+  step_length_ = declare_parameter("step_length", 1.0);
   stop_margin_ += wheel_base_ + front_overhang_;
   min_behavior_stop_margin_ += wheel_base_ + front_overhang_;
   slow_down_margin_ += wheel_base_ + front_overhang_;
@@ -132,24 +106,32 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode() : nh_(), pnh_("~"), tf_listen
     vehicle_width_, vehicle_length_, wheel_base_, front_overhang_);
 
   // Publishers
-  path_pub_ = pnh_.advertise<autoware_planning_msgs::Trajectory>("output/trajectory", 1);
+  path_pub_ = 
+    this->create_publisher<autoware_planning_msgs::msg::Trajectory>("output/trajectory", 1);
   stop_reason_diag_pub_ =
-    pnh_.advertise<diagnostic_msgs::DiagnosticStatus>("output/stop_reason", 1);
+    this->create_publisher<diagnostic_msgs::msg::DiagnosticStatus>("output/stop_reason", 1);
 
   // Subscribers
-  obstacle_pointcloud_sub_ = pnh_.subscribe(
-    "input/pointcloud", 1, &ObstacleStopPlannerNode::obstaclePointcloudCallback, this);
-  path_sub_ = pnh_.subscribe("input/trajectory", 1, &ObstacleStopPlannerNode::pathCallback, this);
-  current_velocity_sub_ =
-    pnh_.subscribe("input/twist", 1, &ObstacleStopPlannerNode::currentVelocityCallback, this);
-  dynamic_object_sub_ =
-    pnh_.subscribe("input/objects", 1, &ObstacleStopPlannerNode::dynamicObjectCallback, this);
+  obstacle_pointcloud_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
+    "input/pointcloud", 1,
+    std::bind(&ObstacleStopPlannerNode::obstaclePointcloudCallback, this, std::placeholders::_1));
+  path_sub_ = this->create_subscription<autoware_planning_msgs::msg::Trajectory>(
+    "input/trajectory", 1, 
+    std::bind(&ObstacleStopPlannerNode::pathCallback, this, std::placeholders::_1));
+  current_velocity_sub_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
+    "input/twist", 1,
+    std::bind(&ObstacleStopPlannerNode::currentVelocityCallback, this, std::placeholders::_1)
+  );
+  dynamic_object_sub_ = this->create_subscription<autoware_perception_msgs::msg::DynamicObjectArray>(
+    "input/objects", 1,
+    std::bind(&ObstacleStopPlannerNode::dynamicObjectCallback, this, std::placeholders::_1)
+  );
 }
 
 void ObstacleStopPlannerNode::obstaclePointcloudCallback(
-  const sensor_msgs::PointCloud2::ConstPtr & input_msg)
+  const sensor_msgs::msg::PointCloud2::ConstSharedPtr input_msg)
 {
-  obstacle_ros_pointcloud_ptr_ = boost::make_shared<sensor_msgs::PointCloud2>();
+  obstacle_ros_pointcloud_ptr_ = std::make_shared<sensor_msgs::msg::PointCloud2>();
   pcl::VoxelGrid<pcl::PointXYZ> filter;
   pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
   pcl::PointCloud<pcl::PointXYZ>::Ptr no_height_pointcloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
@@ -167,28 +149,30 @@ void ObstacleStopPlannerNode::obstaclePointcloudCallback(
   obstacle_ros_pointcloud_ptr_->header = input_msg->header;
 }
 void ObstacleStopPlannerNode::pathCallback(
-  const autoware_planning_msgs::Trajectory::ConstPtr & input_msg)
+  const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr input_msg)
 {
   if (!obstacle_ros_pointcloud_ptr_) {
-    ROS_WARN_THROTTLE(1.0, "waiting for obstacle pointcloud...");
+    RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
+      "waiting for obstacle pointcloud...");
     return;
   }
 
   if (!current_velocity_ptr_ && enable_slow_down_) {
-    ROS_WARN_THROTTLE(1.0, "waiting for current velocity...");
+    RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
+      "waiting for current velocity...");
     return;
   }
 
-  const autoware_planning_msgs::Trajectory base_path = *input_msg;
-  autoware_planning_msgs::Trajectory output_msg = *input_msg;
-  diagnostic_msgs::DiagnosticStatus stop_reason_diag;
+  const autoware_planning_msgs::msg::Trajectory base_path = *input_msg;
+  autoware_planning_msgs::msg::Trajectory output_msg = *input_msg;
+  diagnostic_msgs::msg::DiagnosticStatus stop_reason_diag;
   const double epsilon = 0.00001;
   /*
    * trim trajectory from self pose
    */
-  geometry_msgs::Pose self_pose;
+  geometry_msgs::msg::Pose self_pose;
   getSelfPose(input_msg->header, tf_buffer_, self_pose);
-  autoware_planning_msgs::Trajectory trim_trajectory;
+  autoware_planning_msgs::msg::Trajectory trim_trajectory;
   size_t trajectory_trim_index;
   trimTrajectoryWithIndexFromSelfPose(
     *input_msg, self_pose, trim_trajectory, trajectory_trim_index);
@@ -196,12 +180,12 @@ void ObstacleStopPlannerNode::pathCallback(
   /*
    * decimate trajectory for calculation cost
    */
-  autoware_planning_msgs::Trajectory decimate_trajectory;
+  autoware_planning_msgs::msg::Trajectory decimate_trajectory;
   std::map<size_t /* decimate */, size_t /* origin */> decimate_trajectory_index_map;
   decimateTrajectory(
     trim_trajectory, step_length_, decimate_trajectory, decimate_trajectory_index_map);
 
-  autoware_planning_msgs::Trajectory & trajectory = decimate_trajectory;
+  autoware_planning_msgs::msg::Trajectory & trajectory = decimate_trajectory;
 
   /*
    * search candidate obstacle pointcloud
@@ -210,13 +194,13 @@ void ObstacleStopPlannerNode::pathCallback(
     new pcl::PointCloud<pcl::PointXYZ>);
   {
     // transform pointcloud
-    geometry_msgs::TransformStamped transform_stamped;
+    geometry_msgs::msg::TransformStamped transform_stamped;
     try {
       transform_stamped = tf_buffer_.lookupTransform(
         trajectory.header.frame_id, obstacle_ros_pointcloud_ptr_->header.frame_id,
-        obstacle_ros_pointcloud_ptr_->header.stamp, ros::Duration(0.5));
+        obstacle_ros_pointcloud_ptr_->header.stamp, rclcpp::Duration(0.5));
     } catch (tf2::TransformException & ex) {
-      ROS_ERROR_STREAM(
+      RCLCPP_ERROR_STREAM(get_logger(),
         "[obstacle_stop_plannnr] Failed to look up transform from "
         << trajectory.header.frame_id << " to " << obstacle_ros_pointcloud_ptr_->header.frame_id);
       // do not publish path
@@ -225,12 +209,13 @@ void ObstacleStopPlannerNode::pathCallback(
 
     Eigen::Matrix4f affine_matrix =
       tf2::transformToEigen(transform_stamped.transform).matrix().cast<float>();
-    sensor_msgs::PointCloud2 transformed_obstacle_ros_pointcloud;
-    pcl_ros::transformPointCloud(
-      affine_matrix, *obstacle_ros_pointcloud_ptr_, transformed_obstacle_ros_pointcloud);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr obstacle_pointcloud_pcl_ptr_(
+      new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::fromROSMsg(*obstacle_ros_pointcloud_ptr_, *obstacle_pointcloud_pcl_ptr_);
     pcl::PointCloud<pcl::PointXYZ>::Ptr transformed_obstacle_pointcloud_ptr(
       new pcl::PointCloud<pcl::PointXYZ>);
-    pcl::fromROSMsg(transformed_obstacle_ros_pointcloud, *transformed_obstacle_pointcloud_ptr);
+    pcl::transformPointCloud(*obstacle_pointcloud_pcl_ptr_, *transformed_obstacle_pointcloud_ptr, affine_matrix);
+
     // search obstacle candidate pointcloud to reduce calculation cost
     const double search_radius = enable_slow_down_ ? slow_down_search_radius_ : stop_search_radius_;
     searchPointcloudNearTrajectory(
@@ -246,7 +231,7 @@ void ObstacleStopPlannerNode::pathCallback(
   bool is_collision = false;
   size_t decimate_trajectory_collision_index;
   pcl::PointXYZ nearest_collision_point;
-  ros::Time nearest_collision_point_time;
+  rclcpp::Time nearest_collision_point_time;
   // for slow down
   bool canditate_slow_down = false;
   bool is_slow_down = false;
@@ -465,7 +450,7 @@ void ObstacleStopPlannerNode::pathCallback(
           !is_inserted_already_stop_point ? max_dist_stop_point_idx : min_dist_stop_point_idx;
         const Eigen::Vector2d stop_point =
           !is_inserted_already_stop_point ? max_dist_stop_point : min_dist_stop_point;
-        autoware_planning_msgs::TrajectoryPoint stop_trajectory_point =
+        autoware_planning_msgs::msg::TrajectoryPoint stop_trajectory_point =
           base_path.points.at(std::max((int)(insert_stop_point_index)-1, 0));
         stop_trajectory_point.pose.position.x = stop_point.x();
         stop_trajectory_point.pose.position.y = stop_point.y();
@@ -542,9 +527,9 @@ void ObstacleStopPlannerNode::pathCallback(
             current_velocity_ptr_->twist.linear.x);
         }
 
-        autoware_planning_msgs::TrajectoryPoint slow_down_start_trajectory_point =
+        autoware_planning_msgs::msg::TrajectoryPoint slow_down_start_trajectory_point =
           base_path.points.at(std::max((int)(slow_down_start_point_idx)-1, 0));
-        autoware_planning_msgs::TrajectoryPoint slow_down_end_trajectory_point;
+        autoware_planning_msgs::msg::TrajectoryPoint slow_down_end_trajectory_point;
         slow_down_start_trajectory_point.pose.position.x = slow_down_start_point.x();
         slow_down_start_trajectory_point.pose.position.y = slow_down_start_point.y();
         slow_down_start_trajectory_point.twist.linear.x = slow_down_vel;
@@ -574,34 +559,34 @@ void ObstacleStopPlannerNode::pathCallback(
       }
     }
   }
-  path_pub_.publish(output_msg);
-  stop_reason_diag_pub_.publish(stop_reason_diag);
+  path_pub_->publish(output_msg);
+  stop_reason_diag_pub_->publish(stop_reason_diag);
   debug_ptr_->publish();
 }
 
 void ObstacleStopPlannerNode::dynamicObjectCallback(
-  const autoware_perception_msgs::DynamicObjectArrayConstPtr & input_msg)
+  const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr input_msg)
 {
   object_ptr_ = input_msg;
 }
 
 void ObstacleStopPlannerNode::currentVelocityCallback(
-  const geometry_msgs::TwistStamped::ConstPtr & input_msg)
+  const geometry_msgs::msg::TwistStamped::ConstSharedPtr input_msg)
 {
   current_velocity_ptr_ = input_msg;
 }
 
 bool ObstacleStopPlannerNode::decimateTrajectory(
-  const autoware_planning_msgs::Trajectory & input_trajectory, const double step_length,
-  autoware_planning_msgs::Trajectory & output_trajectory)
+  const autoware_planning_msgs::msg::Trajectory & input_trajectory, const double step_length,
+  autoware_planning_msgs::msg::Trajectory & output_trajectory)
 {
   std::map<size_t /* decimate */, size_t /* origin */> index_map;
   decimateTrajectory(input_trajectory, step_length, output_trajectory, index_map);
 }
 
 bool ObstacleStopPlannerNode::decimateTrajectory(
-  const autoware_planning_msgs::Trajectory & input_trajectory, const double step_length,
-  autoware_planning_msgs::Trajectory & output_trajectory,
+  const autoware_planning_msgs::msg::Trajectory & input_trajectory, const double step_length,
+  autoware_planning_msgs::msg::Trajectory & output_trajectory,
   std::map<size_t /* decimate */, size_t /* origin */> & index_map)
 {
   output_trajectory.header = input_trajectory.header;
@@ -620,7 +605,7 @@ bool ObstacleStopPlannerNode::decimateTrajectory(
       getBackwordPointFromBasePoint(
         line_start_point, line_end_point, line_end_point,
         -1.0 * (trajectory_length_sum - next_length), interporated_point);
-      autoware_planning_msgs::TrajectoryPoint trajectory_point;
+      autoware_planning_msgs::msg::TrajectoryPoint trajectory_point;
       trajectory_point = input_trajectory.points.at(i);
       trajectory_point.pose.position.x = interporated_point.x();
       trajectory_point.pose.position.y = interporated_point.y();
@@ -646,8 +631,8 @@ bool ObstacleStopPlannerNode::decimateTrajectory(
 }
 
 bool ObstacleStopPlannerNode::trimTrajectoryWithIndexFromSelfPose(
-  const autoware_planning_msgs::Trajectory & input_trajectory, const geometry_msgs::Pose self_pose,
-  autoware_planning_msgs::Trajectory & output_trajectory, size_t & index)
+  const autoware_planning_msgs::msg::Trajectory & input_trajectory, const geometry_msgs::msg::Pose self_pose,
+  autoware_planning_msgs::msg::Trajectory & output_trajectory, size_t & index)
 {
   double min_distance = 0.0;
   size_t min_dintance_index = 0;
@@ -671,8 +656,8 @@ bool ObstacleStopPlannerNode::trimTrajectoryWithIndexFromSelfPose(
 }
 
 bool ObstacleStopPlannerNode::trimTrajectoryFromSelfPose(
-  const autoware_planning_msgs::Trajectory & input_trajectory, const geometry_msgs::Pose self_pose,
-  autoware_planning_msgs::Trajectory & output_trajectory)
+  const autoware_planning_msgs::msg::Trajectory & input_trajectory, const geometry_msgs::msg::Pose self_pose,
+  autoware_planning_msgs::msg::Trajectory & output_trajectory)
 {
   size_t index;
   return trimTrajectoryWithIndexFromSelfPose(
@@ -680,7 +665,7 @@ bool ObstacleStopPlannerNode::trimTrajectoryFromSelfPose(
 }
 
 bool ObstacleStopPlannerNode::searchPointcloudNearTrajectory(
-  const autoware_planning_msgs::Trajectory & trajectory, const double radius,
+  const autoware_planning_msgs::msg::Trajectory & trajectory, const double radius,
   const pcl::PointCloud<pcl::PointXYZ>::Ptr input_pointcloud_ptr,
   pcl::PointCloud<pcl::PointXYZ>::Ptr output_pointcloud_ptr)
 {
@@ -698,7 +683,7 @@ bool ObstacleStopPlannerNode::searchPointcloudNearTrajectory(
 }
 
 void ObstacleStopPlannerNode::createOneStepPolygon(
-  const geometry_msgs::Pose base_stap_pose, const geometry_msgs::Pose next_step_pose,
+  const geometry_msgs::msg::Pose base_stap_pose, const geometry_msgs::msg::Pose next_step_pose,
   std::vector<cv::Point2d> & polygon, const double expand_width)
 {
   std::vector<cv::Point2d> one_step_move_vehicle_corner_points;
@@ -786,13 +771,13 @@ bool ObstacleStopPlannerNode::convexHull(
 }
 
 bool ObstacleStopPlannerNode::getSelfPose(
-  const std_msgs::Header & header, const tf2_ros::Buffer & tf_buffer,
-  geometry_msgs::Pose & self_pose)
+  const std_msgs::msg::Header & header, const tf2_ros::Buffer & tf_buffer,
+  geometry_msgs::msg::Pose & self_pose)
 {
   try {
-    geometry_msgs::TransformStamped transform;
+    geometry_msgs::msg::TransformStamped transform;
     transform =
-      tf_buffer.lookupTransform(header.frame_id, "base_link", header.stamp, ros::Duration(0.1));
+      tf_buffer.lookupTransform(header.frame_id, "base_link", header.stamp, rclcpp::Duration(0.1));
     self_pose.position.x = transform.transform.translation.x;
     self_pose.position.y = transform.transform.translation.y;
     self_pose.position.z = transform.transform.translation.z;
@@ -816,8 +801,8 @@ bool ObstacleStopPlannerNode::getBackwordPointFromBasePoint(
 }
 
 void ObstacleStopPlannerNode::getNearestPoint(
-  const pcl::PointCloud<pcl::PointXYZ> & pointcloud, const geometry_msgs::Pose & base_pose,
-  pcl::PointXYZ * nearest_collision_point, ros::Time * nearest_collision_point_time)
+  const pcl::PointCloud<pcl::PointXYZ> & pointcloud, const geometry_msgs::msg::Pose & base_pose,
+  pcl::PointXYZ * nearest_collision_point, rclcpp::Time * nearest_collision_point_time)
 {
   double min_norm = 0.0;
   bool is_init = false;
@@ -840,7 +825,7 @@ void ObstacleStopPlannerNode::getNearestPoint(
 }
 
 void ObstacleStopPlannerNode::getLateralNearestPoint(
-  const pcl::PointCloud<pcl::PointXYZ> & pointcloud, const geometry_msgs::Pose & base_pose,
+  const pcl::PointCloud<pcl::PointXYZ> & pointcloud, const geometry_msgs::msg::Pose & base_pose,
   pcl::PointXYZ * lateral_nearest_point, double * deviation)
 {
   double min_norm = std::numeric_limits<double>::max();
@@ -861,10 +846,10 @@ void ObstacleStopPlannerNode::getLateralNearestPoint(
   *deviation = min_norm;
 }
 
-geometry_msgs::Pose ObstacleStopPlannerNode::getVehicleCenterFromBase(
-  const geometry_msgs::Pose & base_pose)
+geometry_msgs::msg::Pose ObstacleStopPlannerNode::getVehicleCenterFromBase(
+  const geometry_msgs::msg::Pose & base_pose)
 {
-  geometry_msgs::Pose center_pose;
+  geometry_msgs::msg::Pose center_pose;
   const double yaw = getYawFromGeometryMsgsQuaternion(base_pose.orientation);
   center_pose.position.x =
     base_pose.position.x + (vehicle_length_ / 2.0 - rear_overhang_) * std::cos(yaw);

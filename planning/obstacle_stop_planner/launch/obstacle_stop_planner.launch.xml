@@ -2,16 +2,16 @@
   <arg name="input_objects" default="/perception/object_recognition/objects" />
   <arg name="input_twist" default="/localization/twist" />
   <arg name="enable_slow_down" default="false" />
-  <arg name="param_file" default="$(find obstacle_stop_planner)/config/obstacle_stop_planner.yaml" />
+  <arg name="param_file" default="$(find-pkg-share obstacle_stop_planner)/config/obstacle_stop_planner.yaml" />
 
-  <node pkg="obstacle_stop_planner" type="obstacle_stop_planner_node" name="obstacle_stop_planner" output="screen">
-    <rosparam command="load" file="$(find obstacle_stop_planner)/config/adaptive_cruise_control.yaml" />
-    <rosparam command="load" file="$(arg param_file)" />
-    <remap from="~output/stop_reason" to="/planning/scenario_planning/status/stop_reason" />
-    <remap from="~output/stop_reasons" to="/planning/scenario_planning/status/stop_reasons" />
-    <remap from="~input/objects" to="$(arg input_objects)" />
-    <remap from="~input/twist" to="$(arg input_twist)" />
-    <param name="enable_slow_down" value="$(arg enable_slow_down)" />
+  <node pkg="obstacle_stop_planner" exec="obstacle_stop_planner_node" name="obstacle_stop_planner" output="screen">
+    <param from="$(find-pkg-share obstacle_stop_planner)/config/adaptive_cruise_control.yaml" />
+    <param from="$(var param_file)" />
+    <remap from="output/stop_reason" to="/planning/scenario_planning/status/stop_reason" />
+    <remap from="output/stop_reasons" to="/planning/scenario_planning/status/stop_reasons" />
+    <remap from="input/objects" to="$(var input_objects)" />
+    <remap from="input/twist" to="$(var input_twist)" />
+    <param name="enable_slow_down" value="$(var enable_slow_down)" />
   </node>
 
 </launch>
