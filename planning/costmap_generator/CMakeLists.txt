@@ -1,73 +1,40 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.5)
 
 project(costmap_generator)
 
-add_compile_options(-std=c++14)
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
 
-find_package(catkin REQUIRED COMPONENTS
-  autoware_perception_msgs
-  autoware_planning_msgs
-  grid_map_ros
-  pcl_ros
-  roscpp
-  tf2
-  tf2_ros
-  lanelet2_extension
-)
-
-catkin_package()
+find_package(ament_cmake_auto REQUIRED)
+find_package(PCL REQUIRED COMPONENTS common io)
+ament_auto_find_build_dependencies()
 
 include_directories(
   include
-  ${catkin_INCLUDE_DIRS}
+  ${GRID_MAP_INCLUDE_DIR}
+  ${PCL_COMMON_INCLUDE_DIRS}
+  ${PCL_INCLUDE_DIRS}
 )
 
-add_library(costmap_generator_lib STATIC
+ament_auto_add_library(costmap_generator_lib SHARED
   nodes/costmap_generator/points_to_costmap.cpp
   nodes/costmap_generator/objects_to_costmap.cpp
   nodes/costmap_generator/object_map_utils.cpp
 )
+target_link_libraries(costmap_generator_lib ${PCL_LIBRARIES})
 
-target_link_libraries(costmap_generator_lib
-  ${catkin_LIBRARIES}
-)
-
-add_dependencies(costmap_generator_lib
-  ${catkin_EXPORTED_TARGETS}
-)
-
-add_executable(costmap_generator
+ament_auto_add_executable(costmap_generator
   nodes/costmap_generator/costmap_generator_node.cpp
   nodes/costmap_generator/main.cpp
 )
+target_link_libraries(costmap_generator ${PCL_LIBRARIES})
 
-target_link_libraries(costmap_generator
-  costmap_generator_lib
-  ${catkin_LIBRARIES}
-)
-
-add_dependencies(costmap_generator
-  ${catkin_EXPORTED_TARGETS}
-)
-
-install(
-  TARGETS
-    costmap_generator
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-)
-
-install(
-  DIRECTORY
-    launch
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-)
-
-if (CATKIN_ENABLE_TESTING)
-  find_package(rostest REQUIRED)
+if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
 endif()
+
+ament_auto_package(INSTALL_TO_SHARE launch)

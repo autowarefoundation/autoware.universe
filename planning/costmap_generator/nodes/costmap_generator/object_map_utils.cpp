@@ -36,27 +36,26 @@
 
 namespace object_map
 {
-void PublishGridMap(const grid_map::GridMap & in_gridmap, const ros::Publisher & in_publisher)
+void PublishGridMap(const grid_map::GridMap & in_gridmap, const rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr in_publisher)
 {
-  grid_map_msgs::GridMap message;
-  grid_map::GridMapRosConverter::toMessage(in_gridmap, message);
-  in_publisher.publish(message);
+  auto message = grid_map::GridMapRosConverter::toMessage(in_gridmap);
+  in_publisher->publish(*message);
 }
 
 void PublishOccupancyGrid(
-  const grid_map::GridMap & in_gridmap, const ros::Publisher & in_publisher,
+  const grid_map::GridMap & in_gridmap, const rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr in_publisher,
   const std::string & in_layer, double in_min_value, double in_max_value, double in_height)
 {
-  nav_msgs::OccupancyGrid message;
+  nav_msgs::msg::OccupancyGrid message;
   grid_map::GridMapRosConverter::toOccupancyGrid(
     in_gridmap, in_layer, in_min_value, in_max_value, message);
   message.info.origin.position.z = in_height;
-  in_publisher.publish(message);
+  in_publisher->publish(message);
 }
 
 void FillPolygonAreas(
   grid_map::GridMap & out_grid_map,
-  const std::vector<std::vector<geometry_msgs::Point>> & in_area_points,
+  const std::vector<std::vector<geometry_msgs::msg::Point>> & in_area_points,
   const std::string & in_grid_layer_name, const int in_layer_background_value,
   const int in_layer_min_value, const int in_fill_color, const int in_layer_max_value,
   const std::string & in_tf_target_frame, const std::string & in_tf_source_frame,
@@ -74,13 +73,10 @@ void FillPolygonAreas(
 
   cv::Mat merged_filled_image = original_image.clone();
 
-  geometry_msgs::TransformStamped transform;
-  try {
-    transform = in_tf_buffer.lookupTransform(
-      in_tf_target_frame, in_tf_source_frame, ros::Time(0), ros::Duration(1.0));
-  } catch (tf2::TransformException ex) {
-    ROS_ERROR("%s", ex.what());
-  }
+  geometry_msgs::msg::TransformStamped transform;
+  transform = in_tf_buffer.lookupTransform(
+      in_tf_target_frame, in_tf_source_frame, rclcpp::Time(0), rclcpp::Duration(1.0));
+
 
   // calculate out_grid_map position
   grid_map::Position map_pos = out_grid_map.getPosition();
@@ -92,8 +88,11 @@ void FillPolygonAreas(
 
     for (const auto & p : points) {
       // transform to GridMap coordinate
-      geometry_msgs::Point transformed_point;
-      tf2::doTransform(p, transformed_point, transform);
+      geometry_msgs::msg::Point transformed_point;
+      geometry_msgs::msg::PointStamped output_stamped, input_stamped;
+      input_stamped.point = p;
+      tf2::doTransform(input_stamped, output_stamped, transform);
+      transformed_point  = output_stamped.point;
 
       // coordinate conversion for cv image
       const double cv_x = (out_grid_map.getLength().y() - origin_y_offset - transformed_point.y) /

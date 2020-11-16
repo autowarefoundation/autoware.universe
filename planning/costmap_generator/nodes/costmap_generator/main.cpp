@@ -46,14 +46,15 @@
  */
 
 #include <costmap_generator/costmap_generator.h>
+#include "rclcpp/rclcpp.hpp"
 
 int main(int argc, char ** argv)
 {
-  ros::init(argc, argv, "costmap_generator");
+  rclcpp::init(argc, argv);
 
-  CostmapGenerator costmap_generator;
+  rclcpp::spin(std::make_shared<CostmapGenerator>());
 
-  ros::spin();
+  rclcpp::shutdown();
 
   return 0;
 }
