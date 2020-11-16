@@ -15,21 +15,12 @@
  */
 #pragma once
 
+#include <functional>
 #include <memory>
-#include <set>
-#include <string>
-#include <vector>
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 
-#include <autoware_perception_msgs/DynamicObject.h>
-#include <autoware_perception_msgs/DynamicObjectArray.h>
-#include <autoware_planning_msgs/PathWithLaneId.h>
-#include <geometry_msgs/Point.h>
-#include <std_msgs/Float32MultiArray.h>
-
-#include <lanelet2_core/LaneletMap.h>
-#include <lanelet2_routing/RoutingGraph.h>
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <scene_module/blind_spot/scene.h>
 #include <scene_module/scene_module_interface.h>
@@ -37,15 +28,15 @@
 class BlindSpotModuleManager : public SceneModuleManagerInterface
 {
 public:
-  BlindSpotModuleManager();
+  BlindSpotModuleManager(rclcpp::Node & node);
 
   const char * getModuleName() override { return "blind_spot"; }
 
 private:
   BlindSpotModule::PlannerParam planner_param_;
 
-  void launchNewModules(const autoware_planning_msgs::PathWithLaneId & path) override;
+  void launchNewModules(const autoware_planning_msgs::msg::PathWithLaneId & path) override;
 
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
-    const autoware_planning_msgs::PathWithLaneId & path) override;
+    const autoware_planning_msgs::msg::PathWithLaneId & path) override;
 };

@@ -30,7 +30,7 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
-#include <autoware_perception_msgs/DynamicObjectArray.h>
+#include <autoware_perception_msgs/msg/dynamic_object_array.hpp>
 
 namespace bg = boost::geometry;
 using Point = bg::model::d2::point_xy<double>;
@@ -48,9 +48,9 @@ bool getBackwordPointFromBasePoint(
 }
 
 bool insertTargetVelocityPoint(
-  const autoware_planning_msgs::PathWithLaneId & input, const Polygon & polygon,
+  const autoware_planning_msgs::msg::PathWithLaneId & input, const Polygon & polygon,
   const double & margin, const double & velocity, const PlannerData & planner_data,
-  autoware_planning_msgs::PathWithLaneId & output, DebugData & debug_data,
+  autoware_planning_msgs::msg::PathWithLaneId & output, DebugData & debug_data,
   boost::optional<int> & first_stop_path_point_index)
 {
   output = input;
@@ -88,7 +88,7 @@ bool insertTargetVelocityPoint(
 
     // search target point index
     size_t insert_target_point_idx = 0;
-    const double base_link2front = planner_data.base_link2front;
+    const double base_link2front = planner_data.vehicle_info_.max_longitudinal_offset_m_;
     double length_sum = 0;
 
     const double target_length = margin + base_link2front;
@@ -110,7 +110,7 @@ bool insertTargetVelocityPoint(
 
     // create target point
     Eigen::Vector2d target_point;
-    autoware_planning_msgs::PathPointWithLaneId target_point_with_lane_id;
+    autoware_planning_msgs::msg::PathPointWithLaneId target_point_with_lane_id;
     getBackwordPointFromBasePoint(point2, point1, point2, length_sum - target_length, target_point);
     const int target_velocity_point_idx =
       std::max(static_cast<int>(insert_target_point_idx) - 1, 0);

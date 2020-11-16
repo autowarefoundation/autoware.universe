@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 
 #include <behavior_velocity_planner/node.h>
 
 int main(int argc, char ** argv)
 {
-  ros::init(argc, argv, "behavior_velocity_planner_node");
-
-  BehaviorVelocityPlannerNode node;
-
-  ros::spin();
+  rclcpp::init(argc, argv);
+  rclcpp::spin(std::make_shared<BehaviorVelocityPlannerNode>());
+  rclcpp::shutdown();
 
   return 0;
 }

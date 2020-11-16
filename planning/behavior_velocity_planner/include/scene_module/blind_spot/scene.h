@@ -17,23 +17,22 @@
 
 #include <memory>
 #include <string>
-#include <vector>
 
 #include <boost/optional.hpp>
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 
-#include <autoware_perception_msgs/DynamicObject.h>
-#include <autoware_perception_msgs/DynamicObjectArray.h>
-#include <autoware_planning_msgs/PathWithLaneId.h>
-#include <geometry_msgs/Point.h>
-#include <std_msgs/Float32MultiArray.h>
+#include <autoware_perception_msgs/msg/dynamic_object.hpp>
+#include <autoware_perception_msgs/msg/dynamic_object_array.hpp>
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <geometry_msgs/msg/point.hpp>
+#include <std_msgs/msg/float32_multi_array.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_routing/RoutingGraph.h>
 
 #include <scene_module/scene_module_interface.h>
-#include "utilization/boost_geometry_helper.h"
+#include <utilization/boost_geometry_helper.h>
 
 struct BlindSpotPolygons
 {
@@ -71,28 +70,28 @@ public:
       state_ = State::GO;
       margin_time_ = 0.0;
     }
-    void setStateWithMarginTime(State state);
+    void setStateWithMarginTime(State state, rclcpp::Logger logger, rclcpp::Clock & clock);
     void setState(State state);
     void setMarginTime(const double t);
     State getState();
 
   private:
-    State state_;                            //! current state
-    double margin_time_;                     //! margin time when transit to Go from Stop
-    std::shared_ptr<ros::Time> start_time_;  //! first time received GO when STOP state
+    State state_;                               //! current state
+    double margin_time_;                        //! margin time when transit to Go from Stop
+    std::shared_ptr<rclcpp::Time> start_time_;  //! first time received GO when STOP state
   };
 
   struct DebugData
   {
-    autoware_planning_msgs::PathWithLaneId path_raw;
+    autoware_planning_msgs::msg::PathWithLaneId path_raw;
 
-    geometry_msgs::Pose virtual_wall_pose;
-    geometry_msgs::Pose stop_point_pose;
-    geometry_msgs::Pose judge_point_pose;
+    geometry_msgs::msg::Pose virtual_wall_pose;
+    geometry_msgs::msg::Pose stop_point_pose;
+    geometry_msgs::msg::Pose judge_point_pose;
     lanelet::CompoundPolygon3d confict_area_for_blind_spot;
     lanelet::CompoundPolygon3d detection_area_for_blind_spot;
-    autoware_planning_msgs::PathWithLaneId spline_path;
-    autoware_perception_msgs::DynamicObjectArray conflicting_targets;
+    autoware_planning_msgs::msg::PathWithLaneId spline_path;
+    autoware_perception_msgs::msg::DynamicObjectArray conflicting_targets;
   };
 
 public:
@@ -107,17 +106,18 @@ public:
 
   BlindSpotModule(
     const int64_t module_id, const int64_t lane_id, std::shared_ptr<const PlannerData> planner_data,
-    const PlannerParam & planner_param);
+    const PlannerParam & planner_param, const rclcpp::Logger logger,
+    const rclcpp::Clock::SharedPtr clock);
 
   /**
    * @brief plan go-stop velocity at traffic crossing with collision check between reference path
    * and object predicted path
    */
   bool modifyPathVelocity(
-    autoware_planning_msgs::PathWithLaneId * path,
-    autoware_planning_msgs::StopReason * stop_reason) override;
+    autoware_planning_msgs::msg::PathWithLaneId * path,
+    autoware_planning_msgs::msg::StopReason * stop_reason) override;
 
-  visualization_msgs::MarkerArray createDebugMarkerArray() override;
+  visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
 
 private:
   int64_t lane_id_;
@@ -140,8 +140,8 @@ private:
   bool checkObstacleInBlindSpot(
     lanelet::LaneletMapConstPtr lanelet_map_ptr,
     lanelet::routing::RoutingGraphPtr routing_graph_ptr,
-    const autoware_planning_msgs::PathWithLaneId & path,
-    const autoware_perception_msgs::DynamicObjectArray::ConstPtr objects_ptr,
+    const autoware_planning_msgs::msg::PathWithLaneId & path,
+    const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr objects_ptr,
     const int closest_idx) const;
 
   /**
@@ -161,7 +161,7 @@ private:
   BlindSpotPolygons generateBlindSpotPolygons(
     lanelet::LaneletMapConstPtr lanelet_map_ptr,
     lanelet::routing::RoutingGraphPtr routing_graph_ptr,
-    const autoware_planning_msgs::PathWithLaneId & path, const int closest_idx) const;
+    const autoware_planning_msgs::msg::PathWithLaneId & path, const int closest_idx) const;
 
   /**
    * @brief Get vehicle edge
@@ -171,7 +171,7 @@ private:
    * @return edge of ego vehicle
    */
   lanelet::LineString2d getVehicleEdge(
-    const geometry_msgs::Pose & vehicle_pose, const double vehicle_width,
+    const geometry_msgs::msg::Pose & vehicle_pose, const double vehicle_width,
     const double base_link2front) const;
 
   /**
@@ -179,7 +179,7 @@ private:
    * @param object Dynamic object
    * @return True when object belong to targeted classes
    */
-  bool isTargetObjectType(const autoware_perception_msgs::DynamicObject & object) const;
+  bool isTargetObjectType(const autoware_perception_msgs::msg::DynamicObject & object) const;
 
   /**
    * @brief Check if at least one of object's predicted poistion is in area
@@ -188,7 +188,7 @@ private:
    * @return True when at least one of object's predicted position is in area
    */
   bool isPredictedPathInArea(
-    const autoware_perception_msgs::DynamicObject & object,
+    const autoware_perception_msgs::msg::DynamicObject & object,
     const lanelet::CompoundPolygon3d & area) const;
 
   /**
@@ -201,8 +201,9 @@ private:
    * @return false when generation failed
    */
   bool generateStopLine(
-    const lanelet::ConstLanelets straight_lanelets, autoware_planning_msgs::PathWithLaneId * path,
-    int * stop_line_idx, int * pass_judge_line_idx) const;
+    const lanelet::ConstLanelets straight_lanelets,
+    autoware_planning_msgs::msg::PathWithLaneId * path, int * stop_line_idx,
+    int * pass_judge_line_idx) const;
 
   /**
    * @brief Calculate first path index that is conflicting lanelets.
@@ -211,7 +212,7 @@ private:
    * @return path point index
    */
   boost::optional<int> getFirstPointConflictingLanelets(
-    const autoware_planning_msgs::PathWithLaneId & path,
+    const autoware_planning_msgs::msg::PathWithLaneId & path,
     const lanelet::ConstLanelets & lanelets) const;
 
   /**
@@ -219,7 +220,7 @@ private:
    * @param lane_id lane id of objective lanelet
    * @return end point of lanelet
    */
-  boost::optional<geometry_msgs::Point> getStartPointFromLaneLet(const int lane_id) const;
+  boost::optional<geometry_msgs::msg::Point> getStartPointFromLaneLet(const int lane_id) const;
 
   /**
    * @brief get straight lanelets in intersection
@@ -234,7 +235,7 @@ private:
    * @param time_thr    time threshold to cut path
    */
   void cutPredictPathWithDuration(
-    autoware_perception_msgs::DynamicObjectArray * objects_ptr, const double time_thr) const;
+    autoware_perception_msgs::msg::DynamicObjectArray * objects_ptr, const double time_thr) const;
 
   StateMachine state_machine_;  //! for state
 

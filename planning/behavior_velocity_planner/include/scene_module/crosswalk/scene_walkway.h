@@ -15,28 +15,10 @@
  */
 #pragma once
 
-#include <string>
-#include <unordered_map>
-#include <vector>
+#include <rclcpp/rclcpp.hpp>
 
-#include <boost/assert.hpp>
-#include <boost/assign/list_of.hpp>
-#include <boost/geometry.hpp>
-#include <boost/geometry/geometries/linestring.hpp>
-#include <boost/geometry/geometries/point_xy.hpp>
-
-#define EIGEN_MPL2_ONLY
-#include <Eigen/Core>
-#include <Eigen/Geometry>
-
-#include <pcl/point_types.h>
-#include <pcl_conversions/pcl_conversions.h>
-#include <pcl_ros/point_cloud.h>
-
-#include <ros/ros.h>
-
-#include <autoware_perception_msgs/DynamicObjectArray.h>
-#include <sensor_msgs/PointCloud2.h>
+#include <autoware_perception_msgs/msg/dynamic_object_array.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_extension/utility/query.h>
@@ -57,13 +39,14 @@ public:
   };
   WalkwayModule(
     const int64_t module_id, const lanelet::ConstLanelet & walkway,
-    const PlannerParam & planner_param);
+    const PlannerParam & planner_param, const rclcpp::Logger logger,
+    const rclcpp::Clock::SharedPtr clock);
 
   bool modifyPathVelocity(
-    autoware_planning_msgs::PathWithLaneId * path,
-    autoware_planning_msgs::StopReason * stop_reason) override;
+    autoware_planning_msgs::msg::PathWithLaneId * path,
+    autoware_planning_msgs::msg::StopReason * stop_reason) override;
 
-  visualization_msgs::MarkerArray createDebugMarkerArray() override;
+  visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
 
 private:
   int64_t module_id_;

@@ -24,43 +24,46 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
-#include <autoware_lanelet2_msgs/MapBin.h>
-#include <autoware_perception_msgs/DynamicObjectArray.h>
-#include <autoware_perception_msgs/TrafficLightStateArray.h>
-#include <autoware_perception_msgs/TrafficLightStateStamped.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/TwistStamped.h>
-#include <sensor_msgs/PointCloud2.h>
-#include <std_msgs/Header.h>
+#include <autoware_lanelet2_msgs/msg/map_bin.hpp>
+#include <autoware_perception_msgs/msg/dynamic_object_array.hpp>
+#include <autoware_perception_msgs/msg/traffic_light_state_array.hpp>
+#include <autoware_perception_msgs/msg/traffic_light_state_stamped.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <std_msgs/msg/header.hpp>
+#include <vehicle_info_util/vehicle_info.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_routing/RoutingGraph.h>
 #include <lanelet2_routing/RoutingGraphContainer.h>
 #include <lanelet2_traffic_rules/TrafficRulesFactory.h>
 
-
 struct PlannerData
 {
+  PlannerData(rclcpp::Node & node) : vehicle_info_(vehicle_info_util::VehicleInfo::create(node))
+  {
+    max_stop_acceleration_threshold_ = node.declare_parameter(
+      "max_accel", -5.0);  // TODO read min_acc in velocity_controller_param.yaml?
+    delay_response_time_ = node.declare_parameter("delay_response_time", 1.3);
+  }
   // tf
-  geometry_msgs::PoseStamped current_pose;
+  geometry_msgs::msg::PoseStamped current_pose;
 
   // msgs from callbacks that are used for data-ready
-  geometry_msgs::TwistStamped::ConstPtr current_velocity;
-  autoware_perception_msgs::DynamicObjectArray::ConstPtr dynamic_objects;
+  geometry_msgs::msg::TwistStamped::ConstSharedPtr current_velocity;
+  autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr dynamic_objects;
   pcl::PointCloud<pcl::PointXYZ>::ConstPtr no_ground_pointcloud;
   lanelet::LaneletMapPtr lanelet_map;
 
   // other internal data
-  std::map<int, autoware_perception_msgs::TrafficLightStateStamped> traffic_light_id_map_;
+  std::map<int, autoware_perception_msgs::msg::TrafficLightStateStamped> traffic_light_id_map_;
   lanelet::traffic_rules::TrafficRulesPtr traffic_rules;
   lanelet::routing::RoutingGraphPtr routing_graph;
   std::shared_ptr<const lanelet::routing::RoutingGraphContainer> overall_graphs;
 
   // parameters
-  double wheel_base;
-  double front_overhang;
-  double vehicle_width;
-  double base_link2front;
+  vehicle_info_util::VehicleInfo vehicle_info_;
 
   // additional parameters
   double max_stop_acceleration_threshold_;
@@ -72,11 +75,13 @@ struct PlannerData
     return current_velocity->twist.linear.x < 0.1;
   }
 
-  std::shared_ptr<autoware_perception_msgs::TrafficLightStateStamped> getTrafficLightState(const int id) const
+  std::shared_ptr<autoware_perception_msgs::msg::TrafficLightStateStamped> getTrafficLightState(
+    const int id) const
   {
     if (traffic_light_id_map_.count(id) == 0) {
       return {};
     }
-    return std::make_shared<autoware_perception_msgs::TrafficLightStateStamped>(traffic_light_id_map_.at(id));
+    return std::make_shared<autoware_perception_msgs::msg::TrafficLightStateStamped>(
+      traffic_light_id_map_.at(id));
   }
 };

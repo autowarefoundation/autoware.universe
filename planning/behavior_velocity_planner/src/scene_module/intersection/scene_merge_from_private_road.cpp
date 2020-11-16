@@ -21,17 +21,18 @@
 #include <lanelet2_extension/utility/query.h>
 #include <lanelet2_extension/utility/utilities.h>
 
-#include "scene_module/intersection/util.h"
-#include "utilization/boost_geometry_helper.h"
-#include "utilization/interpolate.h"
-#include "utilization/util.h"
+#include <scene_module/intersection/util.h>
+#include <utilization/boost_geometry_helper.h>
+#include <utilization/interpolate.h>
+#include <utilization/util.h>
 
 namespace bg = boost::geometry;
 
 MergeFromPrivateRoadModule::MergeFromPrivateRoadModule(
   const int64_t module_id, const int64_t lane_id, std::shared_ptr<const PlannerData> planner_data,
-  const IntersectionModule::PlannerParam & planner_param)
-: SceneModuleInterface(module_id), lane_id_(lane_id)
+  const IntersectionModule::PlannerParam & planner_param, const rclcpp::Logger logger,
+  const rclcpp::Clock::SharedPtr clock)
+: SceneModuleInterface(module_id, logger, clock), lane_id_(lane_id)
 {
   planner_param_ = planner_param;
   const auto & assigned_lanelet = planner_data->lanelet_map->laneletLayer.get(lane_id);
@@ -39,21 +40,23 @@ MergeFromPrivateRoadModule::MergeFromPrivateRoadModule(
 }
 
 bool MergeFromPrivateRoadModule::modifyPathVelocity(
-  autoware_planning_msgs::PathWithLaneId * path, autoware_planning_msgs::StopReason * stop_reason)
+  autoware_planning_msgs::msg::PathWithLaneId * path,
+  autoware_planning_msgs::msg::StopReason * stop_reason)
 {
-  debug_data_ = {};
+  debug_data_ = DebugData();
   *stop_reason = planning_utils::initializeStopReason(
-    autoware_planning_msgs::StopReason::MERGE_FROM_PRIVATE_ROAD);
+    autoware_planning_msgs::msg::StopReason::MERGE_FROM_PRIVATE_ROAD);
 
   const auto input_path = *path;
   debug_data_.path_raw = input_path;
 
   State current_state = state_machine_.getState();
-  ROS_DEBUG(
-    "[MergeFromPrivateRoad] lane_id = %ld, state = %s", lane_id_, toString(current_state).c_str());
+  RCLCPP_DEBUG(
+    logger_, "lane_id = %ld, state = %s", lane_id_,
+    toString(current_state).c_str());
 
   /* get current pose */
-  geometry_msgs::PoseStamped current_pose = planner_data_->current_pose;
+  geometry_msgs::msg::PoseStamped current_pose = planner_data_->current_pose;
 
   /* get lanelet map */
   const auto lanelet_map_ptr = planner_data_->lanelet_map;
@@ -62,9 +65,9 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(
   /* get detection area */
   std::vector<lanelet::CompoundPolygon3d> detection_areas;
   util::getObjectivePolygons(
-    lanelet_map_ptr, routing_graph_ptr, lane_id_, planner_param_, &detection_areas);
+    lanelet_map_ptr, routing_graph_ptr, lane_id_, planner_param_, &detection_areas, logger_);
   if (detection_areas.empty()) {
-    ROS_DEBUG("[MergeFromPrivateRoad] no detection area. skip computation.");
+    RCLCPP_DEBUG(logger_, "no detection area. skip computation.");
     return true;
   }
   debug_data_.detection_area = detection_areas;
@@ -75,18 +78,20 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(
   int first_idx_inside_lane = -1;
   if (!util::generateStopLine(
         lane_id_, detection_areas, planner_data_, planner_param_, path, &stop_line_idx,
-        &judge_line_idx, &first_idx_inside_lane)) {
-    ROS_WARN_DELAYED_THROTTLE(1.0, "[MergeFromPrivateRoadModule::run] setStopLineIdx fail");
+        &judge_line_idx, &first_idx_inside_lane, logger_.get_child("util"))) {
+    RCLCPP_WARN_SKIPFIRST_THROTTLE(
+      logger_, *clock_, 1000 /* ms */, "setStopLineIdx fail");
     return false;
   }
 
   if (stop_line_idx <= 0 || judge_line_idx <= 0) {
-    ROS_DEBUG("[MergeFromPrivateRoad] stop line or judge line is at path[0], ignore planning.");
+    RCLCPP_DEBUG(
+      logger_, "stop line or judge line is at path[0], ignore planning.");
     return true;
   }
 
-  debug_data_.virtual_wall_pose =
-    util::getAheadPose(stop_line_idx, planner_data_->base_link2front, *path);
+  debug_data_.virtual_wall_pose = util::getAheadPose(
+    stop_line_idx, planner_data_->vehicle_info_.max_longitudinal_offset_m_, *path);
   debug_data_.stop_point_pose = path->points.at(stop_line_idx).point.pose;
   if (first_idx_inside_lane != -1) {
     debug_data_.first_collision_point = path->points.at(first_idx_inside_lane).point.pose.position;
@@ -101,7 +106,7 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(
 
     /* get stop point and stop factor */
     if (v == stop_vel) {
-      autoware_planning_msgs::StopFactor stop_factor;
+      autoware_planning_msgs::msg::StopFactor stop_factor;
       stop_factor.stop_pose = debug_data_.stop_point_pose;
       stop_factor.stop_factor_points.emplace_back(debug_data_.first_collision_point);
       planning_utils::appendStopReason(stop_factor, stop_reason);
@@ -117,39 +122,6 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(
   }
 
   return true;
-}
-
-void MergeFromPrivateRoadModule::StateMachine::setStateWithMarginTime(State state)
-{
-  /* same state request */
-  if (state_ == state) {
-    start_time_ = nullptr;  // reset timer
-    return;
-  }
-
-  /* GO -> STOP */
-  if (state == State::STOP) {
-    state_ = State::STOP;
-    start_time_ = nullptr;  // reset timer
-    return;
-  }
-
-  /* STOP -> GO */
-  if (state == State::GO) {
-    if (start_time_ == nullptr) {
-      start_time_ = std::make_shared<ros::Time>(ros::Time::now());
-    } else {
-      const double duration = (ros::Time::now() - *start_time_).toSec();
-      if (duration > margin_time_) {
-        state_ = State::GO;
-        start_time_ = nullptr;  // reset timer
-      }
-    }
-    return;
-  }
-
-  ROS_ERROR("[StateMachine] : Unsuitable state. ignore request.");
-  return;
 }
 
 void MergeFromPrivateRoadModule::StateMachine::setState(State state) { state_ = state; }

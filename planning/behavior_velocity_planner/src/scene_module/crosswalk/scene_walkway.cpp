@@ -25,19 +25,25 @@ using Line = bg::model::linestring<Point>;
 
 WalkwayModule::WalkwayModule(
   const int64_t module_id, const lanelet::ConstLanelet & walkway,
-  const PlannerParam & planner_param)
-: SceneModuleInterface(module_id), module_id_(module_id), walkway_(walkway), state_(State::APPROACH)
+  const PlannerParam & planner_param, const rclcpp::Logger logger,
+  const rclcpp::Clock::SharedPtr clock)
+: SceneModuleInterface(module_id, logger, clock),
+  module_id_(module_id),
+  walkway_(walkway),
+  state_(State::APPROACH)
 {
   planner_param_ = planner_param;
 }
 
 bool WalkwayModule::modifyPathVelocity(
-  autoware_planning_msgs::PathWithLaneId * path, autoware_planning_msgs::StopReason * stop_reason)
+  autoware_planning_msgs::msg::PathWithLaneId * path,
+  autoware_planning_msgs::msg::StopReason * stop_reason)
 {
-  debug_data_ = {};
-  debug_data_.base_link2front = planner_data_->base_link2front;
+  debug_data_ = DebugData();
+  debug_data_.base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m_;
   first_stop_path_point_index_ = static_cast<int>(path->points.size()) - 1;
-  *stop_reason = planning_utils::initializeStopReason(autoware_planning_msgs::StopReason::WALKWAY);
+  *stop_reason =
+    planning_utils::initializeStopReason(autoware_planning_msgs::msg::StopReason::WALKWAY);
 
   const auto input = *path;
 
@@ -60,12 +66,11 @@ bool WalkwayModule::modifyPathVelocity(
       planner_data_->current_pose.pose.position.x, planner_data_->current_pose.pose.position.y};
     const double distance = bg::distance(polygon, self_pose);
     const double distance_threshold =
-      planner_param_.stop_margin + planner_data_->base_link2front + 1.0;
+      planner_param_.stop_margin + planner_data_->vehicle_info_.max_longitudinal_offset_m_ + 1.0;
     if (distance < distance_threshold && planner_data_->isVehicleStopping()) state_ = State::STOP;
-    return true;
   } else if (state_ == State::STOP) {
     /* get stop point and stop factor */
-    autoware_planning_msgs::StopFactor stop_factor;
+    autoware_planning_msgs::msg::StopFactor stop_factor;
     stop_factor.stop_pose = debug_data_.first_stop_pose;
     stop_factor.stop_factor_points.emplace_back(debug_data_.nearest_collision_point);
     planning_utils::appendStopReason(stop_factor, stop_reason);
@@ -73,8 +78,7 @@ bool WalkwayModule::modifyPathVelocity(
     if (planner_data_->isVehicleStopping()) {
       state_ = State::SURPASSED;
     }
-    return true;
   } else if (state_ == State::SURPASSED) {
-    return true;
   }
+  return true;
 }

@@ -18,51 +18,52 @@
 #include <memory>
 #include <string>
 
-#include <autoware_lanelet2_msgs/MapBin.h>
-#include <autoware_perception_msgs/DynamicObjectArray.h>
-#include <autoware_planning_msgs/Path.h>
-#include <autoware_planning_msgs/PathWithLaneId.h>
-#include <ros/ros.h>
-#include <sensor_msgs/PointCloud2.h>
+#include <autoware_lanelet2_msgs/msg/map_bin.hpp>
+#include <autoware_perception_msgs/msg/dynamic_object_array.hpp>
+#include <autoware_planning_msgs/msg/path.hpp>
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
 
 #include <behavior_velocity_planner/planner_data.h>
 #include <behavior_velocity_planner/planner_manager.h>
 
-class BehaviorVelocityPlannerNode
+class BehaviorVelocityPlannerNode : public rclcpp::Node
 {
 public:
   BehaviorVelocityPlannerNode();
 
 private:
-  // node handle
-  ros::NodeHandle nh_;
-  ros::NodeHandle pnh_;
-
   // tf
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
 
   // subscriber
-  ros::Subscriber trigger_sub_path_with_lane_id_;
-  ros::Subscriber sub_dynamic_objects_;
-  ros::Subscriber sub_no_ground_pointcloud_;
-  ros::Subscriber sub_vehicle_velocity_;
-  ros::Subscriber sub_traffic_light_states_;
-  ros::Subscriber sub_lanelet_map_;
+  rclcpp::Subscription<autoware_planning_msgs::msg::PathWithLaneId>::SharedPtr
+    trigger_sub_path_with_lane_id_;
+  rclcpp::Subscription<autoware_perception_msgs::msg::DynamicObjectArray>::SharedPtr
+    sub_dynamic_objects_;
+  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_no_ground_pointcloud_;
+  rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr sub_vehicle_velocity_;
+  rclcpp::Subscription<autoware_lanelet2_msgs::msg::MapBin>::SharedPtr sub_lanelet_map_;
+  rclcpp::Subscription<autoware_perception_msgs::msg::TrafficLightStateArray>::SharedPtr
+    sub_traffic_light_states_;
 
-  void onTrigger(const autoware_planning_msgs::PathWithLaneId & input_path_msg);
-  void onDynamicObjects(const autoware_perception_msgs::DynamicObjectArray::ConstPtr & msg);
-  void onNoGroundPointCloud(const sensor_msgs::PointCloud2::ConstPtr & msg);
-  void onVehicleVelocity(const geometry_msgs::TwistStamped::ConstPtr & msg);
-  void onLaneletMap(const autoware_lanelet2_msgs::MapBin::ConstPtr & msg);
-  void onTrafficLightStates(const autoware_perception_msgs::TrafficLightStateArray::ConstPtr & msg);
+  void onTrigger(const autoware_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg);
+  void onDynamicObjects(
+    const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr msg);
+  void onNoGroundPointCloud(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);
+  void onVehicleVelocity(const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg);
+  void onLaneletMap(const autoware_lanelet2_msgs::msg::MapBin::ConstSharedPtr msg);
+  void onTrafficLightStates(
+    const autoware_perception_msgs::msg::TrafficLightStateArray::ConstSharedPtr msg);
 
   // publisher
-  ros::Publisher path_pub_;
-  ros::Publisher stop_reason_diag_pub_;
-  ros::Publisher debug_viz_pub_;
+  rclcpp::Publisher<autoware_planning_msgs::msg::Path>::SharedPtr path_pub_;
+  rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticStatus>::SharedPtr stop_reason_diag_pub_;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_viz_pub_;
 
-  void publishDebugMarker(const autoware_planning_msgs::Path & path, const ros::Publisher & pub);
+  void publishDebugMarker(const autoware_planning_msgs::msg::Path & path);
 
   //  parameter
   double forward_path_length_;
@@ -73,6 +74,6 @@ private:
   BehaviorVelocityPlannerManager planner_manager_;
 
   // function
-  geometry_msgs::PoseStamped getCurrentPose();
+  geometry_msgs::msg::PoseStamped getCurrentPose();
   bool isDataReady();
 };

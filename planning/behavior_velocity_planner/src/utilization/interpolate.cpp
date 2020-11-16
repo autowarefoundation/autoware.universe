@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "utilization/interpolate.h"
-#include "utilization/util.h"
+#include <utilization/interpolate.h>
+#include <utilization/util.h>
 
 namespace interpolation
 {
@@ -69,7 +69,7 @@ bool isIncrease(const std::vector<double> & x)
     if (x[i] > x[i + 1]) return false;
   }
   return true;
-};
+}
 
 bool isValidInput(
   const std::vector<double> & base_index, const std::vector<double> & base_value,

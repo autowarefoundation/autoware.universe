@@ -16,7 +16,7 @@
  * Author: Robin Karlsson
  */
 
-#include "utilization/util.h"
+#include <utilization/util.h>
 
 namespace planning_utils
 {
@@ -33,7 +33,7 @@ double normalizeEulerAngle(double euler)
   return res;
 }
 
-geometry_msgs::Quaternion getQuaternionFromYaw(double yaw)
+geometry_msgs::msg::Quaternion getQuaternionFromYaw(double yaw)
 {
   tf2::Quaternion q;
   q.setRPY(0, 0, yaw);
@@ -42,7 +42,7 @@ geometry_msgs::Quaternion getQuaternionFromYaw(double yaw)
 
 template <class T>
 bool calcClosestIndex(
-  const T & path, const geometry_msgs::Pose & pose, int & closest, double dist_thr,
+  const T & path, const geometry_msgs::msg::Pose & pose, int & closest, double dist_thr,
   double angle_thr)
 {
   double dist_squared_min = std::numeric_limits<double>::max();
@@ -70,19 +70,19 @@ bool calcClosestIndex(
   return closest == -1 ? false : true;
 }
 
-template bool calcClosestIndex<autoware_planning_msgs::Trajectory>(
-  const autoware_planning_msgs::Trajectory & path, const geometry_msgs::Pose & pose, int & closest,
-  double dist_thr, double angle_thr);
-template bool calcClosestIndex<autoware_planning_msgs::PathWithLaneId>(
-  const autoware_planning_msgs::PathWithLaneId & path, const geometry_msgs::Pose & pose,
+template bool calcClosestIndex<autoware_planning_msgs::msg::Trajectory>(
+  const autoware_planning_msgs::msg::Trajectory & path, const geometry_msgs::msg::Pose & pose,
   int & closest, double dist_thr, double angle_thr);
-template bool calcClosestIndex<autoware_planning_msgs::Path>(
-  const autoware_planning_msgs::Path & path, const geometry_msgs::Pose & pose, int & closest,
-  double dist_thr, double angle_thr);
+template bool calcClosestIndex<autoware_planning_msgs::msg::PathWithLaneId>(
+  const autoware_planning_msgs::msg::PathWithLaneId & path, const geometry_msgs::msg::Pose & pose,
+  int & closest, double dist_thr, double angle_thr);
+template bool calcClosestIndex<autoware_planning_msgs::msg::Path>(
+  const autoware_planning_msgs::msg::Path & path, const geometry_msgs::msg::Pose & pose,
+  int & closest, double dist_thr, double angle_thr);
 
 template <class T>
 bool calcClosestIndex(
-  const T & path, const geometry_msgs::Point & point, int & closest, double dist_thr)
+  const T & path, const geometry_msgs::msg::Point & point, int & closest, double dist_thr)
 {
   double dist_squared_min = std::numeric_limits<double>::max();
   closest = -1;
@@ -101,28 +101,28 @@ bool calcClosestIndex(
 
   return closest == -1 ? false : true;
 }
-template bool calcClosestIndex<autoware_planning_msgs::Trajectory>(
-  const autoware_planning_msgs::Trajectory & path, const geometry_msgs::Point & point,
+template bool calcClosestIndex<autoware_planning_msgs::msg::Trajectory>(
+  const autoware_planning_msgs::msg::Trajectory & path, const geometry_msgs::msg::Point & point,
   int & closest, double dist_thr);
-template bool calcClosestIndex<autoware_planning_msgs::PathWithLaneId>(
-  const autoware_planning_msgs::PathWithLaneId & path, const geometry_msgs::Point & point,
+template bool calcClosestIndex<autoware_planning_msgs::msg::PathWithLaneId>(
+  const autoware_planning_msgs::msg::PathWithLaneId & path, const geometry_msgs::msg::Point & point,
   int & closest, double dist_thr);
-template bool calcClosestIndex<autoware_planning_msgs::Path>(
-  const autoware_planning_msgs::Path & path, const geometry_msgs::Point & point, int & closest,
-  double dist_thr);
+template bool calcClosestIndex<autoware_planning_msgs::msg::Path>(
+  const autoware_planning_msgs::msg::Path & path, const geometry_msgs::msg::Point & point,
+  int & closest, double dist_thr);
 
-geometry_msgs::Pose transformRelCoordinate2D(
-  const geometry_msgs::Pose & target, const geometry_msgs::Pose & origin)
+geometry_msgs::msg::Pose transformRelCoordinate2D(
+  const geometry_msgs::msg::Pose & target, const geometry_msgs::msg::Pose & origin)
 {
   // translation
-  geometry_msgs::Point trans_p;
+  geometry_msgs::msg::Point trans_p;
   trans_p.x = target.position.x - origin.position.x;
   trans_p.y = target.position.y - origin.position.y;
 
   // rotation (use inverse matrix of rotation)
   double yaw = tf2::getYaw(origin.orientation);
 
-  geometry_msgs::Pose res;
+  geometry_msgs::msg::Pose res;
   res.position.x = (std::cos(yaw) * trans_p.x) + (std::sin(yaw) * trans_p.y);
   res.position.y = ((-1.0) * std::sin(yaw) * trans_p.x) + (std::cos(yaw) * trans_p.y);
   res.position.z = target.position.z - origin.position.z;
@@ -131,17 +131,17 @@ geometry_msgs::Pose transformRelCoordinate2D(
   return res;
 }
 
-geometry_msgs::Pose transformAbsCoordinate2D(
-  const geometry_msgs::Pose & relative, const geometry_msgs::Pose & origin)
+geometry_msgs::msg::Pose transformAbsCoordinate2D(
+  const geometry_msgs::msg::Pose & relative, const geometry_msgs::msg::Pose & origin)
 {
   // rotation
-  geometry_msgs::Point rot_p;
+  geometry_msgs::msg::Point rot_p;
   double yaw = tf2::getYaw(origin.orientation);
   rot_p.x = (std::cos(yaw) * relative.position.x) + (-std::sin(yaw) * relative.position.y);
   rot_p.y = (std::sin(yaw) * relative.position.x) + (std::cos(yaw) * relative.position.y);
 
   // translation
-  geometry_msgs::Pose absolute;
+  geometry_msgs::msg::Pose absolute;
   absolute.position.x = rot_p.x + origin.position.x;
   absolute.position.y = rot_p.y + origin.position.y;
   absolute.position.z = relative.position.z + origin.position.z;
@@ -159,42 +159,42 @@ double calcJudgeLineDist(
   return judge_line_dist;
 }
 
-autoware_planning_msgs::StopReason initializeStopReason(const std::string & stop_reason)
+autoware_planning_msgs::msg::StopReason initializeStopReason(const std::string & stop_reason)
 {
-  autoware_planning_msgs::StopReason stop_reason_msg;
+  autoware_planning_msgs::msg::StopReason stop_reason_msg;
   stop_reason_msg.reason = stop_reason;
   return stop_reason_msg;
 }
 
 void appendStopReason(
-  const autoware_planning_msgs::StopFactor stop_factor,
-  autoware_planning_msgs::StopReason * stop_reason)
+  const autoware_planning_msgs::msg::StopFactor stop_factor,
+  autoware_planning_msgs::msg::StopReason * stop_reason)
 {
   stop_reason->stop_factors.emplace_back(stop_factor);
 }
 
-std::vector<geometry_msgs::Point> toRosPoints(
-  const autoware_perception_msgs::DynamicObjectArray & object)
+std::vector<geometry_msgs::msg::Point> toRosPoints(
+  const autoware_perception_msgs::msg::DynamicObjectArray & object)
 {
-  std::vector<geometry_msgs::Point> points;
+  std::vector<geometry_msgs::msg::Point> points;
   for (const auto obj : object.objects) {
     points.emplace_back(obj.state.pose_covariance.pose.position);
   }
   return points;
 }
 
-geometry_msgs::Point toRosPoint(const pcl::PointXYZ & pcl_point)
+geometry_msgs::msg::Point toRosPoint(const pcl::PointXYZ & pcl_point)
 {
-  geometry_msgs::Point point;
+  geometry_msgs::msg::Point point;
   point.x = pcl_point.x;
   point.y = pcl_point.y;
   point.z = pcl_point.z;
   return point;
 }
 
-geometry_msgs::Point toRosPoint(const Point2d & boost_point, const double z)
+geometry_msgs::msg::Point toRosPoint(const Point2d & boost_point, const double z)
 {
-  geometry_msgs::Point point;
+  geometry_msgs::msg::Point point;
   point.x = boost_point.x();
   point.y = boost_point.y();
   point.z = z;

@@ -19,7 +19,7 @@
 
 namespace
 {
-std::string jsonDumpsPose(const geometry_msgs::Pose & pose)
+std::string jsonDumpsPose(const geometry_msgs::msg::Pose & pose)
 {
   const std::string json_dumps_pose =
     (boost::format(
@@ -30,12 +30,12 @@ std::string jsonDumpsPose(const geometry_msgs::Pose & pose)
   return json_dumps_pose;
 }
 
-diagnostic_msgs::DiagnosticStatus makeStopReasonDiag(
-  const std::string stop_reason, const geometry_msgs::Pose & stop_pose)
+diagnostic_msgs::msg::DiagnosticStatus makeStopReasonDiag(
+  const std::string stop_reason, const geometry_msgs::msg::Pose & stop_pose)
 {
-  diagnostic_msgs::DiagnosticStatus stop_reason_diag;
-  diagnostic_msgs::KeyValue stop_reason_diag_kv;
-  stop_reason_diag.level = diagnostic_msgs::DiagnosticStatus::OK;
+  diagnostic_msgs::msg::DiagnosticStatus stop_reason_diag;
+  diagnostic_msgs::msg::KeyValue stop_reason_diag_kv;
+  stop_reason_diag.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
   stop_reason_diag.name = "stop_reason";
   stop_reason_diag.message = stop_reason;
   stop_reason_diag_kv.key = "stop_pose";
@@ -51,11 +51,11 @@ void BehaviorVelocityPlannerManager::launchSceneModule(
   scene_manager_ptrs_.push_back(scene_module_manager_ptr);
 }
 
-autoware_planning_msgs::PathWithLaneId BehaviorVelocityPlannerManager::planPathVelocity(
+autoware_planning_msgs::msg::PathWithLaneId BehaviorVelocityPlannerManager::planPathVelocity(
   const std::shared_ptr<const PlannerData> & planner_data,
-  const autoware_planning_msgs::PathWithLaneId & input_path_msg)
+  const autoware_planning_msgs::msg::PathWithLaneId & input_path_msg)
 {
-  autoware_planning_msgs::PathWithLaneId output_path_msg = input_path_msg;
+  autoware_planning_msgs::msg::PathWithLaneId output_path_msg = input_path_msg;
 
   int first_stop_path_point_index = static_cast<int>(output_path_msg.points.size() - 1);
   std::string stop_reason_msg("path_end");
@@ -79,7 +79,7 @@ autoware_planning_msgs::PathWithLaneId BehaviorVelocityPlannerManager::planPathV
   return output_path_msg;
 }
 
-diagnostic_msgs::DiagnosticStatus BehaviorVelocityPlannerManager::getStopReasonDiag()
+diagnostic_msgs::msg::DiagnosticStatus BehaviorVelocityPlannerManager::getStopReasonDiag()
 {
   return stop_reason_diag_;
 }

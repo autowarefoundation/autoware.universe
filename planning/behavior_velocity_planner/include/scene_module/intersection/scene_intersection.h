@@ -19,19 +19,18 @@
 #include <string>
 #include <vector>
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 
-#include <autoware_perception_msgs/DynamicObject.h>
-#include <autoware_perception_msgs/DynamicObjectArray.h>
-#include <autoware_planning_msgs/PathWithLaneId.h>
-#include <geometry_msgs/Point.h>
-#include <std_msgs/Float32MultiArray.h>
+#include <autoware_perception_msgs/msg/dynamic_object.hpp>
+#include <autoware_perception_msgs/msg/dynamic_object_array.hpp>
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <geometry_msgs/msg/point.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_routing/RoutingGraph.h>
 
 #include <scene_module/scene_module_interface.h>
-#include "utilization/boost_geometry_helper.h"
+#include <utilization/boost_geometry_helper.h>
 
 class IntersectionModule : public SceneModuleInterface
 {
@@ -61,30 +60,30 @@ public:
       state_ = State::GO;
       margin_time_ = 0.0;
     }
-    void setStateWithMarginTime(State state);
+    void setStateWithMarginTime(State state, rclcpp::Logger logger, rclcpp::Clock & clock);
     void setState(State state);
     void setMarginTime(const double t);
     State getState();
 
   private:
-    State state_;                            //! current state
-    double margin_time_;                     //! margin time when transit to Go from Stop
-    std::shared_ptr<ros::Time> start_time_;  //! first time received GO when STOP state
+    State state_;                               //! current state
+    double margin_time_;                        //! margin time when transit to Go from Stop
+    std::shared_ptr<rclcpp::Time> start_time_;  //! first time received GO when STOP state
   };
 
   struct DebugData
   {
-    autoware_planning_msgs::PathWithLaneId path_raw;
+    autoware_planning_msgs::msg::PathWithLaneId path_raw;
 
-    geometry_msgs::Pose virtual_wall_pose;
-    geometry_msgs::Pose stop_point_pose;
-    geometry_msgs::Pose judge_point_pose;
-    geometry_msgs::Polygon ego_lane_polygon;
-    geometry_msgs::Polygon stuck_vehicle_detect_area;
+    geometry_msgs::msg::Pose virtual_wall_pose;
+    geometry_msgs::msg::Pose stop_point_pose;
+    geometry_msgs::msg::Pose judge_point_pose;
+    geometry_msgs::msg::Polygon ego_lane_polygon;
+    geometry_msgs::msg::Polygon stuck_vehicle_detect_area;
     std::vector<lanelet::ConstLanelet> intersection_detection_lanelets;
     std::vector<lanelet::CompoundPolygon3d> detection_area;
-    autoware_perception_msgs::DynamicObjectArray conflicting_targets;
-    autoware_perception_msgs::DynamicObjectArray stuck_targets;
+    autoware_perception_msgs::msg::DynamicObjectArray conflicting_targets;
+    autoware_perception_msgs::msg::DynamicObjectArray stuck_targets;
   };
 
 public:
@@ -105,17 +104,18 @@ public:
 
   IntersectionModule(
     const int64_t module_id, const int64_t lane_id, std::shared_ptr<const PlannerData> planner_data,
-    const PlannerParam & planner_param);
+    const PlannerParam & planner_param, const rclcpp::Logger logger,
+    const rclcpp::Clock::SharedPtr clock);
 
   /**
    * @brief plan go-stop velocity at traffic crossing with collision check between reference path
    * and object predicted path
    */
   bool modifyPathVelocity(
-    autoware_planning_msgs::PathWithLaneId * path,
-    autoware_planning_msgs::StopReason * stop_reason) override;
+    autoware_planning_msgs::msg::PathWithLaneId * path,
+    autoware_planning_msgs::msg::StopReason * stop_reason) override;
 
-  visualization_msgs::MarkerArray createDebugMarkerArray() override;
+  visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
 
 private:
   int64_t lane_id_;
@@ -135,9 +135,9 @@ private:
    * @return true if collision is detected
    */
   bool checkCollision(
-    const autoware_planning_msgs::PathWithLaneId & path,
+    const autoware_planning_msgs::msg::PathWithLaneId & path,
     const std::vector<lanelet::CompoundPolygon3d> & detection_areas,
-    const autoware_perception_msgs::DynamicObjectArray::ConstPtr objects_ptr,
+    const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr objects_ptr,
     const int closest_idx);
 
   /**
@@ -148,8 +148,9 @@ private:
    * @return true if exists
    */
   bool checkStuckVehicleInIntersection(
-    const autoware_planning_msgs::PathWithLaneId & path, const int closest_idx, const int stop_idx,
-    const autoware_perception_msgs::DynamicObjectArray::ConstPtr objects_ptr) const;
+    const autoware_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
+    const int stop_idx,
+    const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr objects_ptr) const;
 
   /**
    * @brief Calculate the polygon of the path from the ego-car position to the end of the
@@ -161,8 +162,8 @@ private:
    * @return generated polygon
    */
   Polygon2d generateEgoIntersectionLanePolygon(
-    const autoware_planning_msgs::PathWithLaneId & path, const int closest_idx, const int start_idx,
-    const double extra_dist, const double ignore_dist) const;
+    const autoware_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
+    const int start_idx, const double extra_dist, const double ignore_dist) const;
 
   /**
    * @brief Modify objects predicted path. remove path point if the time exceeds timer_thr.
@@ -170,7 +171,7 @@ private:
    * @param time_thr    time threshold to cut path
    */
   void cutPredictPathWithDuration(
-    autoware_perception_msgs::DynamicObjectArray * objects_ptr, const double time_thr) const;
+    autoware_perception_msgs::msg::DynamicObjectArray * objects_ptr, const double time_thr) const;
 
   /**
    * @brief Calculate time that is needed for ego-vehicle to cross the intersection. (to be updated)
@@ -180,7 +181,7 @@ private:
    * @return calculated time [s]
    */
   double calcIntersectionPassingTime(
-    const autoware_planning_msgs::PathWithLaneId & path, const int closest_idx,
+    const autoware_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
     const int objective_lane_id) const;
 
   /**
@@ -188,7 +189,7 @@ private:
    * @param object target object
    * @return true if the object has a target type
    */
-  bool isTargetVehicleType(const autoware_perception_msgs::DynamicObject & object) const;
+  bool isTargetVehicleType(const autoware_perception_msgs::msg::DynamicObject & object) const;
 
   StateMachine state_machine_;  //! for state
 

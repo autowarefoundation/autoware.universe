@@ -15,23 +15,11 @@
  */
 #pragma once
 
-#include <string>
-#include <unordered_map>
+#include <functional>
+#include <memory>
 
-#include <boost/assert.hpp>
-#include <boost/geometry.hpp>
-#include <boost/geometry/geometries/linestring.hpp>
-#include <boost/geometry/geometries/point_xy.hpp>
-
-#define EIGEN_MPL2_ONLY
-#include <Eigen/Core>
-#include <Eigen/Geometry>
-
-#include <ros/ros.h>
-
-#include <lanelet2_core/LaneletMap.h>
-#include <lanelet2_extension/utility/query.h>
-#include <lanelet2_routing/RoutingGraph.h>
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <rclcpp/rclcpp.hpp>
 
 #include <scene_module/scene_module_interface.h>
 #include <scene_module/traffic_light/scene.h>
@@ -39,19 +27,20 @@
 class TrafficLightModuleManager : public SceneModuleManagerInterface
 {
 public:
-  TrafficLightModuleManager();
+  TrafficLightModuleManager(rclcpp::Node & node);
 
   const char * getModuleName() override { return "traffic_light"; }
 
-  virtual void modifyPathVelocity(autoware_planning_msgs::PathWithLaneId * path) override;
+  virtual void modifyPathVelocity(autoware_planning_msgs::msg::PathWithLaneId * path) override;
 
 private:
   TrafficLightModule::PlannerParam planner_param_;
-  void launchNewModules(const autoware_planning_msgs::PathWithLaneId & path) override;
+  void launchNewModules(const autoware_planning_msgs::msg::PathWithLaneId & path) override;
 
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
-    const autoware_planning_msgs::PathWithLaneId & path) override;
+    const autoware_planning_msgs::msg::PathWithLaneId & path) override;
 
   // Debug
-  ros::Publisher pub_tl_state_;
+  rclcpp::Publisher<autoware_perception_msgs::msg::TrafficLightStateStamped>::SharedPtr
+    pub_tl_state_;
 };

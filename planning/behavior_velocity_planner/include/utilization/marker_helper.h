@@ -15,11 +15,11 @@
  */
 #pragma once
 
-#include <visualization_msgs/MarkerArray.h>
+#include <visualization_msgs/msg/marker_array.hpp>
 
-inline geometry_msgs::Point createMarkerPosition(double x, double y, double z)
+inline geometry_msgs::msg::Point createMarkerPosition(double x, double y, double z)
 {
-  geometry_msgs::Point point;
+  geometry_msgs::msg::Point point;
 
   point.x = x;
   point.y = y;
@@ -28,9 +28,10 @@ inline geometry_msgs::Point createMarkerPosition(double x, double y, double z)
   return point;
 }
 
-inline geometry_msgs::Quaternion createMarkerOrientation(double x, double y, double z, double w)
+inline geometry_msgs::msg::Quaternion createMarkerOrientation(
+  double x, double y, double z, double w)
 {
-  geometry_msgs::Quaternion quaternion;
+  geometry_msgs::msg::Quaternion quaternion;
 
   quaternion.x = x;
   quaternion.y = y;
@@ -40,9 +41,9 @@ inline geometry_msgs::Quaternion createMarkerOrientation(double x, double y, dou
   return quaternion;
 }
 
-inline geometry_msgs::Vector3 createMarkerScale(double x, double y, double z)
+inline geometry_msgs::msg::Vector3 createMarkerScale(double x, double y, double z)
 {
-  geometry_msgs::Vector3 scale;
+  geometry_msgs::msg::Vector3 scale;
 
   scale.x = x;
   scale.y = y;
@@ -51,9 +52,9 @@ inline geometry_msgs::Vector3 createMarkerScale(double x, double y, double z)
   return scale;
 }
 
-inline std_msgs::ColorRGBA createMarkerColor(float r, float g, float b, float a)
+inline std_msgs::msg::ColorRGBA createMarkerColor(float r, float g, float b, float a)
 {
-  std_msgs::ColorRGBA color;
+  std_msgs::msg::ColorRGBA color;
 
   color.r = r;
   color.g = g;
@@ -63,34 +64,13 @@ inline std_msgs::ColorRGBA createMarkerColor(float r, float g, float b, float a)
   return color;
 }
 
-inline visualization_msgs::Marker createDefaultMarker(
-  const char * frame_id, const char * ns, const int32_t id, const int32_t type,
-  const std_msgs::ColorRGBA & color)
-{
-  visualization_msgs::Marker marker;
-
-  marker.header.frame_id = frame_id;
-  marker.header.stamp = ros::Time::now();
-  marker.ns = ns;
-  marker.id = id;
-  marker.type = type;
-  marker.action = visualization_msgs::Marker::ADD;
-  marker.lifetime = ros::Duration(0);
-
-  marker.pose.position = createMarkerPosition(0.0, 0.0, 0.0);
-  marker.pose.orientation = createMarkerOrientation(0.0, 0.0, 0.0, 1.0);
-  marker.scale = createMarkerScale(1.0, 1.0, 1.0);
-  marker.color = color;
-  marker.frame_locked = true;
-
-  return marker;
-}
-
 inline void appendMarkerArray(
-  const visualization_msgs::MarkerArray & additional_marker_array,
-  visualization_msgs::MarkerArray * marker_array)
+  const visualization_msgs::msg::MarkerArray & additional_marker_array,
+  const builtin_interfaces::msg::Time current_time,
+  visualization_msgs::msg::MarkerArray * marker_array)
 {
   for (const auto & marker : additional_marker_array.markers) {
     marker_array->markers.push_back(marker);
+    marker_array->markers.back().header.stamp = current_time;
   }
 }

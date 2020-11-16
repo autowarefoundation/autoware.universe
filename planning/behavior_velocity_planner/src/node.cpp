@@ -14,89 +14,35 @@
  * limitations under the License.
  */
 
+#include <functional>
+
 #include <behavior_velocity_planner/node.h>
 
-#include <pcl_ros/transforms.h>
+#include <pcl/common/transforms.h>
 #include <tf2_eigen/tf2_eigen.h>
 
 #include <lanelet2_extension/utility/message_conversion.h>
 #include <lanelet2_routing/Route.h>
 
-#include <diagnostic_msgs/DiagnosticStatus.h>
-#include <visualization_msgs/MarkerArray.h>
+#include <diagnostic_msgs/msg/diagnostic_status.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
 
 #include <utilization/path_utilization.h>
 
 // Scene modules
 #include <scene_module/blind_spot/manager.h>
 #include <scene_module/crosswalk/manager.h>
+#include <scene_module/detection_area/manager.h>
 #include <scene_module/intersection/manager.h>
 #include <scene_module/stop_line/manager.h>
 #include <scene_module/traffic_light/manager.h>
-#include <scene_module/detection_area/manager.h>
 
 namespace
 {
-template <class T>
-T getParam(const ros::NodeHandle & nh, const std::string & key, const T & default_value)
+geometry_msgs::msg::PoseStamped transform2pose(
+  const geometry_msgs::msg::TransformStamped & transform)
 {
-  T value;
-  nh.param<T>(key, value, default_value);
-  return value;
-}
-
-template <class T>
-T waitForParam(const ros::NodeHandle & nh, const std::string & key)
-{
-  T value;
-
-  ros::Rate rate(1.0);
-  while (ros::ok()) {
-    const auto result = nh.getParam(key, value);
-    if (result) {
-      return value;
-    }
-
-    ROS_INFO("waiting for parameter `%s` ...", key.c_str());
-    rate.sleep();
-  }
-
-  return {};
-}
-
-std::shared_ptr<geometry_msgs::TransformStamped> getTransform(
-  const tf2_ros::Buffer & tf_buffer, const std::string & from, const std::string & to,
-  const ros::Time & time = ros::Time(0), const ros::Duration & duration = ros::Duration(0.1))
-{
-  try {
-    return std::make_shared<geometry_msgs::TransformStamped>(
-      tf_buffer.lookupTransform(from, to, time, duration));
-  } catch (tf2::TransformException & ex) {
-    return {};
-  }
-}
-
-geometry_msgs::TransformStamped waitForTransform(
-  const tf2_ros::Buffer & tf_buffer, const std::string & from, const std::string & to,
-  const ros::Time & time = ros::Time(0), const ros::Duration & duration = ros::Duration(0.1))
-{
-  ros::Rate rate(1.0);
-  while (ros::ok()) {
-    const auto transform = getTransform(tf_buffer, from, to, time, duration);
-    if (transform) {
-      return *transform;
-    }
-
-    ROS_INFO(
-      "waiting for transform from `%s` to `%s` ... (time = %f, now = %f)", from.c_str(), to.c_str(),
-      time.toSec(), ros::Time::now().toSec());
-    rate.sleep();
-  }
-}
-
-geometry_msgs::PoseStamped transform2pose(const geometry_msgs::TransformStamped & transform)
-{
-  geometry_msgs::PoseStamped pose;
+  geometry_msgs::msg::PoseStamped pose;
   pose.header = transform.header;
   pose.pose.position.x = transform.transform.translation.x;
   pose.pose.position.y = transform.transform.translation.y;
@@ -105,9 +51,10 @@ geometry_msgs::PoseStamped transform2pose(const geometry_msgs::TransformStamped 
   return pose;
 }
 
-autoware_planning_msgs::Path to_path(const autoware_planning_msgs::PathWithLaneId & path_with_id)
+autoware_planning_msgs::msg::Path to_path(
+  const autoware_planning_msgs::msg::PathWithLaneId & path_with_id)
 {
-  autoware_planning_msgs::Path path;
+  autoware_planning_msgs::msg::Path path;
   for (const auto & path_point : path_with_id.points) {
     path.points.push_back(path_point.point);
   }
@@ -116,64 +63,58 @@ autoware_planning_msgs::Path to_path(const autoware_planning_msgs::PathWithLaneI
 }  // namespace
 
 BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode()
-: nh_(), pnh_("~"), tf_listener_(tf_buffer_)
+: Node("behavior_velocity_planner_node"),
+  tf_buffer_(this->get_clock()),
+  tf_listener_(tf_buffer_),
+  planner_data_(*this)
 {
+  using std::placeholders::_1;
   // Trigger Subscriber
   trigger_sub_path_with_lane_id_ =
-    pnh_.subscribe("input/path_with_lane_id", 1, &BehaviorVelocityPlannerNode::onTrigger, this);
+    this->create_subscription<autoware_planning_msgs::msg::PathWithLaneId>(
+      "input/path_with_lane_id", 1, std::bind(&BehaviorVelocityPlannerNode::onTrigger, this, _1));
 
   // Subscribers
-  sub_dynamic_objects_ = pnh_.subscribe(
-    "input/dynamic_objects", 1, &BehaviorVelocityPlannerNode::onDynamicObjects, this);
-  sub_no_ground_pointcloud_ = pnh_.subscribe(
-    "input/no_ground_pointcloud", 1, &BehaviorVelocityPlannerNode::onNoGroundPointCloud, this);
-  sub_vehicle_velocity_ = pnh_.subscribe(
-    "input/vehicle_velocity", 1, &BehaviorVelocityPlannerNode::onVehicleVelocity, this);
-  sub_lanelet_map_ =
-    pnh_.subscribe("input/vector_map", 10, &BehaviorVelocityPlannerNode::onLaneletMap, this);
-  sub_traffic_light_states_ = pnh_.subscribe(
-    "input/traffic_light_states", 10, &BehaviorVelocityPlannerNode::onTrafficLightStates, this);
+  sub_dynamic_objects_ =
+    this->create_subscription<autoware_perception_msgs::msg::DynamicObjectArray>(
+      "input/dynamic_objects", 1,
+      std::bind(&BehaviorVelocityPlannerNode::onDynamicObjects, this, _1));
+  sub_no_ground_pointcloud_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
+    "input/no_ground_pointcloud", 1,
+    std::bind(&BehaviorVelocityPlannerNode::onNoGroundPointCloud, this, _1));
+  sub_vehicle_velocity_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
+    "input/vehicle_velocity", 1,
+    std::bind(&BehaviorVelocityPlannerNode::onVehicleVelocity, this, _1));
+  sub_lanelet_map_ = this->create_subscription<autoware_lanelet2_msgs::msg::MapBin>(
+    "input/vector_map", 10, std::bind(&BehaviorVelocityPlannerNode::onLaneletMap, this, _1));
+  sub_traffic_light_states_ =
+    this->create_subscription<autoware_perception_msgs::msg::TrafficLightStateArray>(
+      "input/traffic_light_states", 10,
+      std::bind(&BehaviorVelocityPlannerNode::onTrafficLightStates, this, _1));
 
   // Publishers
-  path_pub_ = pnh_.advertise<autoware_planning_msgs::Path>("output/path", 1);
+  path_pub_ = this->create_publisher<autoware_planning_msgs::msg::Path>("output/path", 1);
   stop_reason_diag_pub_ =
-    pnh_.advertise<diagnostic_msgs::DiagnosticStatus>("output/stop_reason", 1);
-  debug_viz_pub_ = pnh_.advertise<visualization_msgs::MarkerArray>("debug/path", 1);
+    this->create_publisher<diagnostic_msgs::msg::DiagnosticStatus>("output/stop_reason", 1);
+  debug_viz_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("debug/path", 1);
 
   // Parameters
-  pnh_.param("forward_path_length", forward_path_length_, 1000.0);
-  pnh_.param("backward_path_length", backward_path_length_, 5.0);
-
-  // Vehicle Parameters
-  planner_data_.wheel_base = waitForParam<double>(pnh_, "/vehicle_info/wheel_base");
-  planner_data_.front_overhang = waitForParam<double>(pnh_, "/vehicle_info/front_overhang");
-  planner_data_.vehicle_width = waitForParam<double>(pnh_, "/vehicle_info/vehicle_width");
-  // Additional Vehicle Parameters
-  pnh_.param(
-    "max_accel", planner_data_.max_stop_acceleration_threshold_,
-    -5.0);  // TODO read min_acc in velocity_controller_param.yaml?
-  pnh_.param("delay_response_time", planner_data_.delay_response_time_, 1.3);
-  // TODO(Kenji Miyake): get from additional vehicle_info?
-  planner_data_.base_link2front = planner_data_.front_overhang + planner_data_.wheel_base;
+  forward_path_length_ = this->declare_parameter("forward_path_length", 1000.0);
+  backward_path_length_ = this->declare_parameter("backward_path_length", 5.0);
 
   // Initialize PlannerManager
-  if (getParam<bool>(pnh_, "launch_stop_line", true))
-    planner_manager_.launchSceneModule(std::make_shared<StopLineModuleManager>());
-  if (getParam<bool>(pnh_, "launch_crosswalk", true))
-    planner_manager_.launchSceneModule(std::make_shared<CrosswalkModuleManager>());
-  if (getParam<bool>(pnh_, "launch_traffic_light", true))
-    planner_manager_.launchSceneModule(std::make_shared<TrafficLightModuleManager>());
-  if (getParam<bool>(pnh_, "launch_intersection", true))
-    planner_manager_.launchSceneModule(std::make_shared<IntersectionModuleManager>());
-  if (getParam<bool>(pnh_, "launch_blind_spot", true))
-    planner_manager_.launchSceneModule(std::make_shared<BlindSpotModuleManager>());
-  if (getParam<bool>(pnh_, "launch_detection_area", true))
-    planner_manager_.launchSceneModule(std::make_shared<DetectionAreaModuleManager>());
-}
-
-geometry_msgs::PoseStamped BehaviorVelocityPlannerNode::getCurrentPose()
-{
-  return transform2pose(waitForTransform(tf_buffer_, "map", "base_link"));
+  if (this->declare_parameter("launch_stop_line", true))
+    planner_manager_.launchSceneModule(std::make_shared<StopLineModuleManager>(*this));
+  if (this->declare_parameter("launch_crosswalk", true))
+    planner_manager_.launchSceneModule(std::make_shared<CrosswalkModuleManager>(*this));
+  if (this->declare_parameter("launch_traffic_light", true))
+    planner_manager_.launchSceneModule(std::make_shared<TrafficLightModuleManager>(*this));
+  if (this->declare_parameter("launch_intersection", true))
+    planner_manager_.launchSceneModule(std::make_shared<IntersectionModuleManager>(*this));
+  if (this->declare_parameter("launch_blind_spot", true))
+    planner_manager_.launchSceneModule(std::make_shared<BlindSpotModuleManager>(*this));
+  if (this->declare_parameter("launch_detection_area", true))
+    planner_manager_.launchSceneModule(std::make_shared<DetectionAreaModuleManager>(*this));
 }
 
 bool BehaviorVelocityPlannerNode::isDataReady()
@@ -193,39 +134,41 @@ bool BehaviorVelocityPlannerNode::isDataReady()
 }
 
 void BehaviorVelocityPlannerNode::onDynamicObjects(
-  const autoware_perception_msgs::DynamicObjectArray::ConstPtr & msg)
+  const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr msg)
 {
   planner_data_.dynamic_objects = msg;
 }
 
 void BehaviorVelocityPlannerNode::onNoGroundPointCloud(
-  const sensor_msgs::PointCloud2::ConstPtr & msg)
+  const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)
 {
-  const auto transform =
-    getTransform(tf_buffer_, "map", msg->header.frame_id, msg->header.stamp, ros::Duration(0.1));
-  if (!transform) {
-    ROS_WARN("no transform found for no_ground_pointcloud");
+  geometry_msgs::msg::TransformStamped transform;
+  try {
+    transform = tf_buffer_.lookupTransform(
+      "map", msg->header.frame_id, msg->header.stamp, rclcpp::Duration(0.1));
+  } catch (tf2::LookupException & e) {
+    RCLCPP_WARN(get_logger(), "no transform found for no_ground_pointcloud");
     return;
   }
 
-  pcl::PointCloud<pcl::PointXYZ>::Ptr no_ground_pointcloud(new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::PointCloud<pcl::PointXYZ> pc;
+  pcl::fromROSMsg(*msg, pc);
 
-  Eigen::Matrix4f affine = tf2::transformToEigen(transform->transform).matrix().cast<float>();
-  sensor_msgs::PointCloud2 transformed_msg;
-  pcl_ros::transformPointCloud(affine, *msg, transformed_msg);
+  Eigen::Affine3f affine = tf2::transformToEigen(transform.transform).cast<float>();
+  pcl::PointCloud<pcl::PointXYZ>::Ptr pc_transformed(new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::transformPointCloud(pc, *pc_transformed, affine);
 
-  pcl::fromROSMsg(transformed_msg, *no_ground_pointcloud);
-
-  planner_data_.no_ground_pointcloud = no_ground_pointcloud;
+  planner_data_.no_ground_pointcloud = pc_transformed;
 }
 
 void BehaviorVelocityPlannerNode::onVehicleVelocity(
-  const geometry_msgs::TwistStamped::ConstPtr & msg)
+  const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg)
 {
   planner_data_.current_velocity = msg;
 }
 
-void BehaviorVelocityPlannerNode::onLaneletMap(const autoware_lanelet2_msgs::MapBin::ConstPtr & msg)
+void BehaviorVelocityPlannerNode::onLaneletMap(
+  const autoware_lanelet2_msgs::msg::MapBin::ConstSharedPtr msg)
 {
   // Load map
   planner_data_.lanelet_map = std::make_shared<lanelet::LaneletMap>();
@@ -257,10 +200,10 @@ void BehaviorVelocityPlannerNode::onLaneletMap(const autoware_lanelet2_msgs::Map
 }
 
 void BehaviorVelocityPlannerNode::onTrafficLightStates(
-  const autoware_perception_msgs::TrafficLightStateArray::ConstPtr & msg)
+  const autoware_perception_msgs::msg::TrafficLightStateArray::ConstSharedPtr msg)
 {
   for (const auto & state : msg->states) {
-    autoware_perception_msgs::TrafficLightStateStamped traffic_light_state;
+    autoware_perception_msgs::msg::TrafficLightStateStamped traffic_light_state;
     traffic_light_state.header = msg->header;
     traffic_light_state.state = state;
     planner_data_.traffic_light_id_map_[state.id] = traffic_light_state;
@@ -268,60 +211,68 @@ void BehaviorVelocityPlannerNode::onTrafficLightStates(
 }
 
 void BehaviorVelocityPlannerNode::onTrigger(
-  const autoware_planning_msgs::PathWithLaneId & input_path_msg)
+  const autoware_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg)
 {
   // Check ready
-  planner_data_.current_pose = getCurrentPose();
+  try {
+    planner_data_.current_pose =
+      transform2pose(tf_buffer_.lookupTransform("map", "base_link", tf2::TimePointZero));
+  } catch (tf2::LookupException & e) {
+    RCLCPP_INFO(get_logger(), "waiting for transform from `map` to `base_link`");
+    return;
+  }
+
   if (!isDataReady()) {
     return;
   }
 
   // Plan path velocity
   const auto velocity_planned_path = planner_manager_.planPathVelocity(
-    std::make_shared<const PlannerData>(planner_data_), input_path_msg);
+    std::make_shared<const PlannerData>(planner_data_), *input_path_msg);
 
   // screening
   const auto filtered_path = filterLitterPathPoint(to_path(velocity_planned_path));
 
   // interpolation
-  const auto interpolated_path_msg = interpolatePath(filtered_path, forward_path_length_);
+  const auto interpolated_path_msg =
+    interpolatePath(filtered_path, forward_path_length_, this->get_logger());
 
   // check stop point
   auto output_path_msg = filterStopPathPoint(interpolated_path_msg);
   output_path_msg.header.frame_id = "map";
-  output_path_msg.header.stamp = ros::Time::now();
+  output_path_msg.header.stamp = this->now();
 
   // TODO: This must be updated in each scene module, but copy from input message for now.
-  output_path_msg.drivable_area = input_path_msg.drivable_area;
+  output_path_msg.drivable_area = input_path_msg->drivable_area;
 
-  path_pub_.publish(output_path_msg);
-  stop_reason_diag_pub_.publish(planner_manager_.getStopReasonDiag());
-  publishDebugMarker(output_path_msg, debug_viz_pub_);
+  path_pub_->publish(output_path_msg);
+  stop_reason_diag_pub_->publish(planner_manager_.getStopReasonDiag());
+
+  if (debug_viz_pub_->get_subscription_count() > 0) {
+    publishDebugMarker(output_path_msg);
+  }
 
   return;
-};
+}
 
-void BehaviorVelocityPlannerNode::publishDebugMarker(
-  const autoware_planning_msgs::Path & path, const ros::Publisher & pub)
+void BehaviorVelocityPlannerNode::publishDebugMarker(const autoware_planning_msgs::msg::Path & path)
 {
-  if (pub.getNumSubscribers() < 1) return;
-
-  visualization_msgs::MarkerArray output_msg;
+  visualization_msgs::msg::MarkerArray output_msg;
   for (size_t i = 0; i < path.points.size(); ++i) {
-    visualization_msgs::Marker marker;
+    visualization_msgs::msg::Marker marker;
     marker.header = path.header;
     marker.id = i;
-    marker.type = visualization_msgs::Marker::ARROW;
+    marker.type = visualization_msgs::msg::Marker::ARROW;
     marker.pose = path.points.at(i).pose;
     marker.scale.y = marker.scale.z = 0.05;
     marker.scale.x = 0.25;
-    marker.action = visualization_msgs::Marker::ADD;
-    marker.lifetime = ros::Duration(0.5);
+    marker.action = visualization_msgs::msg::Marker::ADD;
+    marker.lifetime = rclcpp::Duration(0.5);
     marker.color.a = 0.999;  // Don't forget to set the alpha!
     marker.color.r = 1.0;
     marker.color.g = 1.0;
     marker.color.b = 1.0;
     output_msg.markers.push_back(marker);
   }
-  pub.publish(output_msg);
+  debug_viz_pub_->publish(output_msg);
 }

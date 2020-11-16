@@ -17,7 +17,6 @@
 #ifndef BEHAVIOR_VELOCITY_PLANNER_UTILIZATION_INTERPOLATE_H_
 #define BEHAVIOR_VELOCITY_PLANNER_UTILIZATION_INTERPOLATE_H_
 #include <cmath>
-#include <iostream>
 #include <vector>
 
 namespace interpolation
@@ -32,9 +31,6 @@ public:
   static bool interpolate(
     const std::vector<double> & base_index, const std::vector<double> & base_value,
     const std::vector<double> & return_index, std::vector<double> & return_value);
-  static bool interpolate(
-    const std::vector<double> & base_index, const std::vector<double> & base_value,
-    const double & return_index, double & return_value);
 };
 
 /*

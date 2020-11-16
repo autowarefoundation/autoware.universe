@@ -17,32 +17,30 @@
 
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
-#include "utilization/marker_helper.h"
-#include "utilization/util.h"
+#include <utilization/marker_helper.h>
+#include <utilization/util.h>
 
 namespace
 {
 using DebugData = TrafficLightModule::DebugData;
 
-visualization_msgs::MarkerArray createMarkerArray(
+visualization_msgs::msg::MarkerArray createMarkerArray(
   const DebugData & debug_data, const int64_t lane_id)
 {
   int32_t uid = planning_utils::bitShift(lane_id);
-  visualization_msgs::MarkerArray msg;
-  ros::Time current_time = ros::Time::now();
+  visualization_msgs::msg::MarkerArray msg;
   tf2::Transform tf_base_link2front(
     tf2::Quaternion(0.0, 0.0, 0.0, 1.0), tf2::Vector3(debug_data.base_link2front, 0.0, 0.0));
 
   // Stop VirtualWall
   for (size_t j = 0; j < debug_data.stop_poses.size(); ++j) {
-    visualization_msgs::Marker marker;
+    visualization_msgs::msg::Marker marker;
     marker.header.frame_id = "map";
-    marker.header.stamp = current_time;
     marker.ns = "stop_virtual_wall";
     marker.id = uid + j;
-    marker.lifetime = ros::Duration(0.5);
-    marker.type = visualization_msgs::Marker::CUBE;
-    marker.action = visualization_msgs::Marker::ADD;
+    marker.lifetime = rclcpp::Duration(0.5);
+    marker.type = visualization_msgs::msg::Marker::CUBE;
+    marker.action = visualization_msgs::msg::Marker::ADD;
     tf2::Transform tf_map2base_link;
     tf2::fromMsg(debug_data.stop_poses.at(j), tf_map2base_link);
     tf2::Transform tf_map2front = tf_map2base_link * tf_base_link2front;
@@ -59,14 +57,13 @@ visualization_msgs::MarkerArray createMarkerArray(
   }
   // Factor Text
   for (size_t j = 0; j < debug_data.stop_poses.size(); ++j) {
-    visualization_msgs::Marker marker;
+    visualization_msgs::msg::Marker marker;
     marker.header.frame_id = "map";
-    marker.header.stamp = current_time;
     marker.ns = "factor_text";
     marker.id = uid + j;
-    marker.lifetime = ros::Duration(0.5);
-    marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-    marker.action = visualization_msgs::Marker::ADD;
+    marker.lifetime = rclcpp::Duration(0.5);
+    marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
+    marker.action = visualization_msgs::msg::Marker::ADD;
     tf2::Transform tf_map2base_link;
     tf2::fromMsg(debug_data.stop_poses.at(j), tf_map2base_link);
     tf2::Transform tf_map2front = tf_map2base_link * tf_base_link2front;
@@ -84,14 +81,13 @@ visualization_msgs::MarkerArray createMarkerArray(
   }
   // Dead VirtualWall
   for (size_t j = 0; j < debug_data.dead_line_poses.size(); ++j) {
-    visualization_msgs::Marker marker;
+    visualization_msgs::msg::Marker marker;
     marker.header.frame_id = "map";
-    marker.header.stamp = current_time;
     marker.ns = "dead line virtual_wall";
     marker.id = uid + j;
-    marker.lifetime = ros::Duration(0.5);
-    marker.type = visualization_msgs::Marker::CUBE;
-    marker.action = visualization_msgs::Marker::ADD;
+    marker.lifetime = rclcpp::Duration(0.5);
+    marker.type = visualization_msgs::msg::Marker::CUBE;
+    marker.action = visualization_msgs::msg::Marker::ADD;
     tf2::Transform tf_map2base_link;
     tf2::fromMsg(debug_data.dead_line_poses.at(j), tf_map2base_link);
     tf2::Transform tf_map2front = tf_map2base_link * tf_base_link2front;
@@ -108,14 +104,13 @@ visualization_msgs::MarkerArray createMarkerArray(
   }
   // Facto Text
   for (size_t j = 0; j < debug_data.dead_line_poses.size(); ++j) {
-    visualization_msgs::Marker marker;
+    visualization_msgs::msg::Marker marker;
     marker.header.frame_id = "map";
-    marker.header.stamp = current_time;
     marker.ns = "dead line factor_text";
     marker.id = uid + j;
-    marker.lifetime = ros::Duration(0.5);
-    marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-    marker.action = visualization_msgs::Marker::ADD;
+    marker.lifetime = rclcpp::Duration(0.5);
+    marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
+    marker.action = visualization_msgs::msg::Marker::ADD;
     tf2::Transform tf_map2base_link;
     tf2::fromMsg(debug_data.dead_line_poses.at(j), tf_map2base_link);
     tf2::Transform tf_map2front = tf_map2base_link * tf_base_link2front;
@@ -137,11 +132,12 @@ visualization_msgs::MarkerArray createMarkerArray(
 
 }  // namespace
 
-visualization_msgs::MarkerArray TrafficLightModule::createDebugMarkerArray()
+visualization_msgs::msg::MarkerArray TrafficLightModule::createDebugMarkerArray()
 {
-  visualization_msgs::MarkerArray debug_marker_array;
+  visualization_msgs::msg::MarkerArray debug_marker_array;
 
-  appendMarkerArray(createMarkerArray(debug_data_, lane_id_), &debug_marker_array);
+  appendMarkerArray(
+    createMarkerArray(debug_data_, lane_id_), this->clock_->now(), &debug_marker_array);
 
   return debug_marker_array;
 }

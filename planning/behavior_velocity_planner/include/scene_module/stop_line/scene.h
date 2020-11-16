@@ -16,16 +16,13 @@
 #pragma once
 
 #include <string>
-#include <unordered_map>
+#include <vector>
 
-#include <boost/assert.hpp>
-#include <boost/assign/list_of.hpp>
-#include <boost/geometry.hpp>
-#include <boost/geometry/geometries/linestring.hpp>
-#include <boost/geometry/geometries/point_xy.hpp>
 #define EIGEN_MPL2_ONLY
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+
+#include <rclcpp/rclcpp.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_extension/utility/query.h>
@@ -41,8 +38,8 @@ public:
   struct DebugData
   {
     double base_link2front;
-    std::vector<geometry_msgs::Pose> stop_poses;
-    geometry_msgs::Pose first_stop_pose;
+    std::vector<geometry_msgs::msg::Pose> stop_poses;
+    geometry_msgs::msg::Pose first_stop_pose;
   };
 
   struct PlannerParam
@@ -54,13 +51,14 @@ public:
 public:
   StopLineModule(
     const int64_t module_id, const lanelet::ConstLineString3d & stop_line,
-    const PlannerParam & planner_param);
+    const PlannerParam & planner_param, const rclcpp::Logger logger,
+    const rclcpp::Clock::SharedPtr clock);
 
   bool modifyPathVelocity(
-    autoware_planning_msgs::PathWithLaneId * path,
-    autoware_planning_msgs::StopReason * stop_reason) override;
+    autoware_planning_msgs::msg::PathWithLaneId * path,
+    autoware_planning_msgs::msg::StopReason * stop_reason) override;
 
-  visualization_msgs::MarkerArray createDebugMarkerArray() override;
+  visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
 
 private:
   int64_t module_id_;
@@ -70,7 +68,7 @@ private:
     const Eigen::Vector2d & base_point, const double backward_length,
     Eigen::Vector2d & output_point);
 
-  geometry_msgs::Point getCenterOfStopLine(const lanelet::ConstLineString3d & stop_line);
+  geometry_msgs::msg::Point getCenterOfStopLine(const lanelet::ConstLineString3d & stop_line);
 
   lanelet::ConstLineString3d stop_line_;
   State state_;

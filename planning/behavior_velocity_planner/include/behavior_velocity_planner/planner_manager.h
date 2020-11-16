@@ -20,14 +20,14 @@
 #include <string>
 #include <vector>
 
-#include <autoware_lanelet2_msgs/MapBin.h>
-#include <autoware_perception_msgs/DynamicObjectArray.h>
-#include <autoware_planning_msgs/Path.h>
-#include <autoware_planning_msgs/PathWithLaneId.h>
-#include <diagnostic_msgs/DiagnosticStatus.h>
-#include <ros/ros.h>
-#include <sensor_msgs/PointCloud2.h>
 #include <tf2_ros/transform_listener.h>
+#include <autoware_lanelet2_msgs/msg/map_bin.hpp>
+#include <autoware_perception_msgs/msg/dynamic_object_array.hpp>
+#include <autoware_planning_msgs/msg/path.hpp>
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <diagnostic_msgs/msg/diagnostic_status.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_routing/RoutingGraph.h>
@@ -41,13 +41,13 @@ public:
   void launchSceneModule(
     const std::shared_ptr<SceneModuleManagerInterface> & scene_module_manager_ptr);
 
-  autoware_planning_msgs::PathWithLaneId planPathVelocity(
+  autoware_planning_msgs::msg::PathWithLaneId planPathVelocity(
     const std::shared_ptr<const PlannerData> & planner_data,
-    const autoware_planning_msgs::PathWithLaneId & input_path_msg);
+    const autoware_planning_msgs::msg::PathWithLaneId & input_path_msg);
 
-  diagnostic_msgs::DiagnosticStatus getStopReasonDiag();
+  diagnostic_msgs::msg::DiagnosticStatus getStopReasonDiag();
 
 private:
   std::vector<std::shared_ptr<SceneModuleManagerInterface>> scene_manager_ptrs_;
-  diagnostic_msgs::DiagnosticStatus stop_reason_diag_;
+  diagnostic_msgs::msg::DiagnosticStatus stop_reason_diag_;
 };

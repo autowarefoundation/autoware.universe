@@ -29,28 +29,28 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
-#include <autoware_planning_msgs/PathWithLaneId.h>
 #include <behavior_velocity_planner/planner_data.h>
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
 
 struct DebugData
 {
   double base_link2front;
   std::vector<Eigen::Vector3d> collision_points;
-  geometry_msgs::Pose first_stop_pose;
-  std::vector<geometry_msgs::Pose> stop_poses;
-  std::vector<geometry_msgs::Pose> slow_poses;
+  geometry_msgs::msg::Pose first_stop_pose;
+  std::vector<geometry_msgs::msg::Pose> stop_poses;
+  std::vector<geometry_msgs::msg::Pose> slow_poses;
   std::vector<std::vector<Eigen::Vector3d>> collision_lines;
   std::vector<std::vector<Eigen::Vector3d>> crosswalk_polygons;
   std::vector<std::vector<Eigen::Vector3d>> stop_polygons;
-  std::vector<geometry_msgs::Point> stop_factor_points;
+  std::vector<geometry_msgs::msg::Point> stop_factor_points;
   std::vector<std::vector<Eigen::Vector3d>> slow_polygons;
-  geometry_msgs::Point nearest_collision_point;
+  geometry_msgs::msg::Point nearest_collision_point;
 };
 
 bool insertTargetVelocityPoint(
-  const autoware_planning_msgs::PathWithLaneId & input,
+  const autoware_planning_msgs::msg::PathWithLaneId & input,
   const boost::geometry::model::polygon<boost::geometry::model::d2::point_xy<double>, false> &
     polygon,
   const double & margin, const double & velocity, const PlannerData & planner_data,
-  autoware_planning_msgs::PathWithLaneId & output, DebugData & debug_data,
+  autoware_planning_msgs::msg::PathWithLaneId & output, DebugData & debug_data,
   boost::optional<int> & first_stop_path_point_index);

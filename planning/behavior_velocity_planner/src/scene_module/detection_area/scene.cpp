@@ -22,7 +22,7 @@
 namespace
 {
 std::pair<int, double> findWayPointAndDistance(
-  const autoware_planning_msgs::PathWithLaneId & input_path, const Eigen::Vector2d & p)
+  const autoware_planning_msgs::msg::PathWithLaneId & input_path, const Eigen::Vector2d & p)
 {
   constexpr double max_lateral_dist = 3.0;
   for (size_t i = 0; i < input_path.points.size() - 1; ++i) {
@@ -60,7 +60,7 @@ std::pair<int, double> findWayPointAndDistance(
 }
 
 double calcArcLengthFromWayPoint(
-  const autoware_planning_msgs::PathWithLaneId & input_path, const int & src, const int & dst)
+  const autoware_planning_msgs::msg::PathWithLaneId & input_path, const int & src, const int & dst)
 {
   double length = 0;
   const size_t src_idx = src >= 0 ? static_cast<size_t>(src) : 0;
@@ -76,8 +76,8 @@ double calcArcLengthFromWayPoint(
 }
 
 double calcSignedArcLength(
-  const autoware_planning_msgs::PathWithLaneId & input_path, const geometry_msgs::Pose & p1,
-  const Eigen::Vector2d & p2)
+  const autoware_planning_msgs::msg::PathWithLaneId & input_path,
+  const geometry_msgs::msg::Pose & p1, const Eigen::Vector2d & p2)
 {
   std::pair<int, double> src =
     findWayPointAndDistance(input_path, Eigen::Vector2d(p1.position.x, p1.position.y));
@@ -98,7 +98,7 @@ double calcSignedArcLength(
   }
 }
 
-double calcSignedDistance(const geometry_msgs::Pose & p1, const Eigen::Vector2d & p2)
+double calcSignedDistance(const geometry_msgs::msg::Pose & p1, const Eigen::Vector2d & p2)
 {
   Eigen::Affine3d map2p1;
   tf2::fromMsg(p1, map2p1);
@@ -111,8 +111,9 @@ namespace bg = boost::geometry;
 
 DetectionAreaModule::DetectionAreaModule(
   const int64_t module_id, const lanelet::autoware::DetectionArea & detection_area_reg_elem,
-  const PlannerParam & planner_param)
-: SceneModuleInterface(module_id),
+  const PlannerParam & planner_param, const rclcpp::Logger logger,
+  const rclcpp::Clock::SharedPtr clock)
+: SceneModuleInterface(module_id, logger, clock),
   module_id_(module_id),
   detection_area_reg_elem_(detection_area_reg_elem),
   state_(State::APPROACH)
@@ -121,14 +122,15 @@ DetectionAreaModule::DetectionAreaModule(
 }
 
 bool DetectionAreaModule::modifyPathVelocity(
-  autoware_planning_msgs::PathWithLaneId * path, autoware_planning_msgs::StopReason * stop_reason)
+  autoware_planning_msgs::msg::PathWithLaneId * path,
+  autoware_planning_msgs::msg::StopReason * stop_reason)
 {
   const auto input_path = *path;
 
-  debug_data_ = {};
-  debug_data_.base_link2front = planner_data_->base_link2front;
+  debug_data_ = DebugData();
+  debug_data_.base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m_;
   *stop_reason =
-    planning_utils::initializeStopReason(autoware_planning_msgs::StopReason::DETECTION_AREA);
+    planning_utils::initializeStopReason(autoware_planning_msgs::msg::StopReason::DETECTION_AREA);
 
   if (state_ == State::PASS) {
     return true;
@@ -146,13 +148,13 @@ bool DetectionAreaModule::modifyPathVelocity(
   }
 
   // get vehicle info and compute pass_judge_line_distance
-  geometry_msgs::TwistStamped::ConstPtr self_twist_ptr = planner_data_->current_velocity;
+  geometry_msgs::msg::TwistStamped::ConstSharedPtr self_twist_ptr = planner_data_->current_velocity;
   const double max_acc = planner_data_->max_stop_acceleration_threshold_;
   const double delay_response_time = planner_data_->delay_response_time_;
   const double pass_judge_line_distance =
     planning_utils::calcJudgeLineDist(self_twist_ptr->twist.linear.x, max_acc, delay_response_time);
 
-  geometry_msgs::PoseStamped self_pose = planner_data_->current_pose;
+  geometry_msgs::msg::PoseStamped self_pose = planner_data_->current_pose;
 
   // insert stop point
   for (size_t stop_line_id = 0; stop_line_id < lanelet_stop_line.size() - 1; ++stop_line_id) {
@@ -191,7 +193,8 @@ bool DetectionAreaModule::modifyPathVelocity(
       if (
         state_ != State::STOP &&
         calcSignedDistance(self_pose.pose, stop_line_point) < pass_judge_line_distance) {
-        ROS_WARN_THROTTLE(1.0, "[detection_area] vehicle is over stop border");
+        RCLCPP_WARN_THROTTLE(
+          logger_, *clock_, 1000 /* ms */, "vehicle is over stop border");
         state_ = State::PASS;
         return true;
       }
@@ -204,7 +207,7 @@ bool DetectionAreaModule::modifyPathVelocity(
 
     state_ = State::STOP;
     /* get stop point and stop factor */
-    autoware_planning_msgs::StopFactor stop_factor;
+    autoware_planning_msgs::msg::StopFactor stop_factor;
     stop_factor.stop_pose = debug_data_.first_stop_pose;
     stop_factor.stop_factor_points = debug_data_.detection_points;
     planning_utils::appendStopReason(stop_factor, stop_reason);
@@ -215,7 +218,8 @@ bool DetectionAreaModule::modifyPathVelocity(
 }
 
 bool DetectionAreaModule::isOverDeadLine(
-  const geometry_msgs::Pose & self_pose, const autoware_planning_msgs::PathWithLaneId & input_path,
+  const geometry_msgs::msg::Pose & self_pose,
+  const autoware_planning_msgs::msg::PathWithLaneId & input_path,
   const size_t & dead_line_point_idx, const Eigen::Vector2d & dead_line_point,
   const double dead_line_range)
 {
@@ -245,13 +249,13 @@ bool DetectionAreaModule::isOverDeadLine(
     tf_dead_line_pose2self_pose = tf_map2dead_line_pose.inverse() * tf_map2self_pose;
 
     // debug code
-    geometry_msgs::Pose dead_line_pose;
+    geometry_msgs::msg::Pose dead_line_pose;
     tf2::toMsg(tf_map2dead_line_pose, dead_line_pose);
     debug_data_.dead_line_poses.push_back(dead_line_pose);
   }
 
   if (0 < tf_dead_line_pose2self_pose.getOrigin().x()) {
-    ROS_WARN("[traffic_light] vehicle is over dead line");
+    RCLCPP_WARN(logger_, "vehicle is over dead line");
     return true;
   }
 
@@ -284,15 +288,16 @@ bool DetectionAreaModule::isPointsWithinDetectionArea(
 }
 
 bool DetectionAreaModule::insertTargetVelocityPoint(
-  const autoware_planning_msgs::PathWithLaneId & input,
+  const autoware_planning_msgs::msg::PathWithLaneId & input,
   const boost::geometry::model::linestring<boost::geometry::model::d2::point_xy<double>> &
     stop_line,
-  const double & margin, const double & velocity, autoware_planning_msgs::PathWithLaneId & output)
+  const double & margin, const double & velocity,
+  autoware_planning_msgs::msg::PathWithLaneId & output)
 {
   // create target point
   Eigen::Vector2d target_point;
   size_t insert_target_point_idx;
-  autoware_planning_msgs::PathPointWithLaneId target_point_with_lane_id;
+  autoware_planning_msgs::msg::PathPointWithLaneId target_point_with_lane_id;
 
   if (!createTargetPoint(input, stop_line, margin, insert_target_point_idx, target_point))
     return false;
@@ -321,7 +326,7 @@ bool DetectionAreaModule::insertTargetVelocityPoint(
 }
 
 bool DetectionAreaModule::createTargetPoint(
-  const autoware_planning_msgs::PathWithLaneId & input,
+  const autoware_planning_msgs::msg::PathWithLaneId & input,
   const boost::geometry::model::linestring<boost::geometry::model::d2::point_xy<double>> &
     stop_line,
   const double & margin, size_t & target_point_idx, Eigen::Vector2d & target_point)
@@ -350,7 +355,7 @@ bool DetectionAreaModule::createTargetPoint(
 
     // search target point index
     target_point_idx = 0;
-    const double base_link2front = planner_data_->base_link2front;
+    const double base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m_;
     double length_sum = 0;
 
     const double target_length = margin + base_link2front;

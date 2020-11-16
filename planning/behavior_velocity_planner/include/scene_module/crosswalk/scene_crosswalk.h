@@ -15,28 +15,20 @@
  */
 #pragma once
 
-#include <string>
-#include <unordered_map>
-#include <vector>
-
 #include <boost/assert.hpp>
 #include <boost/assign/list_of.hpp>
 #include <boost/geometry.hpp>
 #include <boost/geometry/geometries/linestring.hpp>
 #include <boost/geometry/geometries/point_xy.hpp>
 
-#define EIGEN_MPL2_ONLY
-#include <Eigen/Core>
-#include <Eigen/Geometry>
-
+#include <pcl/common/distances.h>
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
-#include <pcl_ros/point_cloud.h>
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 
-#include <autoware_perception_msgs/DynamicObjectArray.h>
-#include <sensor_msgs/PointCloud2.h>
+#include <autoware_perception_msgs/msg/dynamic_object_array.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_extension/utility/query.h>
@@ -59,34 +51,35 @@ public:
 
   CrosswalkModule(
     const int64_t module_id, const lanelet::ConstLanelet & crosswalk,
-    const PlannerParam & planner_param);
+    const PlannerParam & planner_param, const rclcpp::Logger logger,
+    const rclcpp::Clock::SharedPtr clock);
 
   bool modifyPathVelocity(
-    autoware_planning_msgs::PathWithLaneId * path,
-    autoware_planning_msgs::StopReason * stop_reason) override;
+    autoware_planning_msgs::msg::PathWithLaneId * path,
+    autoware_planning_msgs::msg::StopReason * stop_reason) override;
 
-  visualization_msgs::MarkerArray createDebugMarkerArray() override;
+  visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
 
 private:
   int64_t module_id_;
 
   bool checkSlowArea(
-    const autoware_planning_msgs::PathWithLaneId & input,
+    const autoware_planning_msgs::msg::PathWithLaneId & input,
     const boost::geometry::model::polygon<boost::geometry::model::d2::point_xy<double>, false> &
       polygon,
-    const autoware_perception_msgs::DynamicObjectArray::ConstPtr & objects_ptr,
+    const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr & objects_ptr,
     const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & no_ground_pointcloud_ptr,
-    autoware_planning_msgs::PathWithLaneId & output);
+    autoware_planning_msgs::msg::PathWithLaneId & output);
 
   bool checkStopArea(
-    const autoware_planning_msgs::PathWithLaneId & input,
+    const autoware_planning_msgs::msg::PathWithLaneId & input,
     const boost::geometry::model::polygon<boost::geometry::model::d2::point_xy<double>, false> &
       polygon,
-    const autoware_perception_msgs::DynamicObjectArray::ConstPtr & objects_ptr,
+    const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr & objects_ptr,
     const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & no_ground_pointcloud_ptr,
-    autoware_planning_msgs::PathWithLaneId & output, bool * insert_stop);
+    autoware_planning_msgs::msg::PathWithLaneId & output, bool * insert_stop);
 
-  bool isTargetType(const autoware_perception_msgs::DynamicObject & obj);
+  bool isTargetType(const autoware_perception_msgs::msg::DynamicObject & obj);
 
   enum class State { APPROACH, INSIDE, GO_OUT };
 

@@ -18,52 +18,56 @@
 #ifndef COMMON_MATH_PLANNING_UTILS_H
 #define COMMON_MATH_PLANNING_UTILS_H
 
-#include <autoware_perception_msgs/DynamicObjectArray.h>
-#include <autoware_planning_msgs/Path.h>
-#include <autoware_planning_msgs/PathWithLaneId.h>
-#include <autoware_planning_msgs/StopReason.h>
-#include <autoware_planning_msgs/Trajectory.h>
-#include <autoware_planning_msgs/TrajectoryPoint.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/Quaternion.h>
-#include <pcl_ros/point_cloud.h>
+#include <vector>
+
+#include <pcl/point_types.h>
 #include <tf2/utils.h>
-#include <visualization_msgs/Marker.h>
+#include <autoware_perception_msgs/msg/dynamic_object_array.hpp>
+#include <autoware_planning_msgs/msg/path.hpp>
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_planning_msgs/msg/stop_reason.hpp>
+#include <autoware_planning_msgs/msg/trajectory.hpp>
+#include <autoware_planning_msgs/msg/trajectory_point.hpp>
 #include <boost/geometry.hpp>
 #include <boost/geometry/geometries/linestring.hpp>
 #include <boost/geometry/geometries/point_xy.hpp>
-#include <vector>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/quaternion.hpp>
+#include <visualization_msgs/msg/marker.hpp>
 
 using Point2d = boost::geometry::model::d2::point_xy<double>;
 namespace planning_utils
 {
-inline geometry_msgs::Point getPoint(const geometry_msgs::Point & p) { return p; }
-inline geometry_msgs::Point getPoint(const geometry_msgs::Pose & p) { return p.position; }
-inline geometry_msgs::Point getPoint(const geometry_msgs::PoseStamped & p)
+inline geometry_msgs::msg::Point getPoint(const geometry_msgs::msg::Point & p) { return p; }
+inline geometry_msgs::msg::Point getPoint(const geometry_msgs::msg::Pose & p) { return p.position; }
+inline geometry_msgs::msg::Point getPoint(const geometry_msgs::msg::PoseStamped & p)
 {
   return p.pose.position;
 }
-inline geometry_msgs::Point getPoint(const autoware_planning_msgs::PathPoint & p)
+inline geometry_msgs::msg::Point getPoint(const autoware_planning_msgs::msg::PathPoint & p)
 {
   return p.pose.position;
 }
-inline geometry_msgs::Point getPoint(const autoware_planning_msgs::PathPointWithLaneId & p)
+inline geometry_msgs::msg::Point getPoint(
+  const autoware_planning_msgs::msg::PathPointWithLaneId & p)
 {
   return p.point.pose.position;
 }
-inline geometry_msgs::Point getPoint(const autoware_planning_msgs::TrajectoryPoint & p)
+inline geometry_msgs::msg::Point getPoint(const autoware_planning_msgs::msg::TrajectoryPoint & p)
 {
   return p.pose.position;
 }
-inline geometry_msgs::Pose getPose(const autoware_planning_msgs::Path & path, int idx)
+inline geometry_msgs::msg::Pose getPose(const autoware_planning_msgs::msg::Path & path, int idx)
 {
   return path.points.at(idx).pose;
 }
-inline geometry_msgs::Pose getPose(const autoware_planning_msgs::PathWithLaneId & path, int idx)
+inline geometry_msgs::msg::Pose getPose(
+  const autoware_planning_msgs::msg::PathWithLaneId & path, int idx)
 {
   return path.points.at(idx).point.pose;
 }
-inline geometry_msgs::Pose getPose(const autoware_planning_msgs::Trajectory & traj, int idx)
+inline geometry_msgs::msg::Pose getPose(
+  const autoware_planning_msgs::msg::Trajectory & traj, int idx)
 {
   return traj.points.at(idx).pose;
 }
@@ -72,7 +76,7 @@ inline int64_t bitShift(int64_t original_id) { return (original_id << (sizeof(in
 
 inline double square(const double & a) { return a * a; }
 double normalizeEulerAngle(double euler);
-geometry_msgs::Quaternion getQuaternionFromYaw(double yaw);
+geometry_msgs::msg::Quaternion getQuaternionFromYaw(double yaw);
 
 template <class T1, class T2>
 double calcSquaredDist2d(const T1 & a, const T2 & b)
@@ -88,31 +92,31 @@ double calcDist2d(const T1 & a, const T2 & b)
 
 template <class T>
 bool calcClosestIndex(
-  const T & path, const geometry_msgs::Pose & pose, int & closest, double dist_thr = 3.0,
+  const T & path, const geometry_msgs::msg::Pose & pose, int & closest, double dist_thr = 3.0,
   double angle_thr = M_PI_4);
 
 template <class T>
 bool calcClosestIndex(
-  const T & path, const geometry_msgs::Point & point, int & closest, double dist_thr = 3.0);
+  const T & path, const geometry_msgs::msg::Point & point, int & closest, double dist_thr = 3.0);
 
-geometry_msgs::Pose transformRelCoordinate2D(
-  const geometry_msgs::Pose & target, const geometry_msgs::Pose & origin);
-geometry_msgs::Pose transformAbsCoordinate2D(
-  const geometry_msgs::Pose & relative, const geometry_msgs::Pose & origin);
+geometry_msgs::msg::Pose transformRelCoordinate2D(
+  const geometry_msgs::msg::Pose & target, const geometry_msgs::msg::Pose & origin);
+geometry_msgs::msg::Pose transformAbsCoordinate2D(
+  const geometry_msgs::msg::Pose & relative, const geometry_msgs::msg::Pose & origin);
 
 double calcJudgeLineDist(
   const double velocity, const double max_stop_acceleration, const double delay_response_time);
 
-autoware_planning_msgs::StopReason initializeStopReason(const std::string & stop_reason);
+autoware_planning_msgs::msg::StopReason initializeStopReason(const std::string & stop_reason);
 void appendStopReason(
-  const autoware_planning_msgs::StopFactor stop_factor,
-  autoware_planning_msgs::StopReason * stop_reason);
+  const autoware_planning_msgs::msg::StopFactor stop_factor,
+  autoware_planning_msgs::msg::StopReason * stop_reason);
 
-std::vector<geometry_msgs::Point> toRosPoints(
-  const autoware_perception_msgs::DynamicObjectArray & object);
+std::vector<geometry_msgs::msg::Point> toRosPoints(
+  const autoware_perception_msgs::msg::DynamicObjectArray & object);
 
-geometry_msgs::Point toRosPoint(const pcl::PointXYZ & pcl_point);
-geometry_msgs::Point toRosPoint(const Point2d & boost_point, const double z);
+geometry_msgs::msg::Point toRosPoint(const pcl::PointXYZ & pcl_point);
+geometry_msgs::msg::Point toRosPoint(const Point2d & boost_point, const double z);
 
 template <class T>
 std::vector<T> concatVector(const std::vector<T> & vec1, const std::vector<T> & vec2)
