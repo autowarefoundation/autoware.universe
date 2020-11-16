@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <rclcpp/rclcpp.hpp>
+
 #include <awapi_awiv_adapter/awapi_autoware_util.h>
 
 namespace autoware_api
@@ -23,23 +25,25 @@ namespace autoware_api
 class AutowareIvStopReasonAggregator
 {
 public:
-  AutowareIvStopReasonAggregator(const double timeout);
-  autoware_planning_msgs::StopReasonArray::ConstPtr updateStopReasonArray(
-    const autoware_planning_msgs::StopReasonArray::ConstPtr & msg_ptr);
+  AutowareIvStopReasonAggregator(rclcpp::Node& node, const double timeout);
+  autoware_planning_msgs::msg::StopReasonArray::ConstSharedPtr updateStopReasonArray(
+    const autoware_planning_msgs::msg::StopReasonArray::ConstSharedPtr & msg_ptr);
 
 private:
-  void applyUpdate(const autoware_planning_msgs::StopReasonArray::ConstPtr & msg_ptr);
+  void applyUpdate(const autoware_planning_msgs::msg::StopReasonArray::ConstSharedPtr & msg_ptr);
   bool checkMatchingReason(
-    const autoware_planning_msgs::StopReasonArray::ConstPtr & msg_stop_reason_array,
-    const autoware_planning_msgs::StopReasonArray & stop_reason_array);
+    const autoware_planning_msgs::msg::StopReasonArray::ConstSharedPtr & msg_stop_reason_array,
+    const autoware_planning_msgs::msg::StopReasonArray & stop_reason_array);
   void applyTimeOut();
   void appendStopReasonToArray(
-    const autoware_planning_msgs::StopReason & stop_reason,
-    autoware_planning_msgs::StopReasonArray * stop_reason_array);
-  autoware_planning_msgs::StopReasonArray::ConstPtr makeStopReasonArray();
+    const autoware_planning_msgs::msg::StopReason & stop_reason,
+    autoware_planning_msgs::msg::StopReasonArray * stop_reason_array);
+  autoware_planning_msgs::msg::StopReasonArray::ConstSharedPtr makeStopReasonArray();
 
+  rclcpp::Logger logger_;
+  rclcpp::Clock::SharedPtr clock_;
   double timeout_;
-  std::vector<autoware_planning_msgs::StopReasonArray> stop_reason_array_vec_;
+  std::vector<autoware_planning_msgs::msg::StopReasonArray> stop_reason_array_vec_;
 };
 
 }  // namespace autoware_api

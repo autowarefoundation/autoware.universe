@@ -19,20 +19,23 @@
 
 namespace autoware_api
 {
-AutowareIvAutowareStatePublisher::AutowareIvAutowareStatePublisher()
-: nh_(), pnh_("~"), arrived_goal_(false)
+AutowareIvAutowareStatePublisher::AutowareIvAutowareStatePublisher(rclcpp::Node& node)
+: logger_(node.get_logger().get_child("awapi_awiv_autoware_state_publisher")),
+  clock_(node.get_clock()),
+  arrived_goal_(false)
 {
   // publisher
-  pub_state_ = pnh_.advertise<autoware_api_msgs::AwapiAutowareStatus>("output/autoware_status", 1);
+  pub_state_ = node.create_publisher<autoware_api_msgs::msg::AwapiAutowareStatus>(
+    "output/autoware_status", 1);
 }
 
 void AutowareIvAutowareStatePublisher::statePublisher(const AutowareInfo & aw_info)
 {
-  autoware_api_msgs::AwapiAutowareStatus status;
+  autoware_api_msgs::msg::AwapiAutowareStatus status;
 
   //input header
   status.header.frame_id = "base_link";
-  status.header.stamp = ros::Time::now();
+  status.header.stamp = clock_->now();
 
   // get all info
   getAutowareStateInfo(aw_info.autoware_state_ptr, &status);
@@ -44,15 +47,16 @@ void AutowareIvAutowareStatePublisher::statePublisher(const AutowareInfo & aw_in
   getGlobalRptInfo(aw_info.global_rpt_ptr, &status);
 
   // publish info
-  pub_state_.publish(status);
+  pub_state_->publish(status);
 }
 
 void AutowareIvAutowareStatePublisher::getAutowareStateInfo(
-  const autoware_system_msgs::AutowareState::ConstPtr & autoware_state_ptr,
-  autoware_api_msgs::AwapiAutowareStatus * status)
+  const autoware_system_msgs::msg::AutowareState::ConstSharedPtr & autoware_state_ptr,
+  autoware_api_msgs::msg::AwapiAutowareStatus * status)
 {
   if (!autoware_state_ptr) {
-    ROS_DEBUG_STREAM_THROTTLE(5.0, "[AutowareIvAutowareStatePublisher] autoware_state is nullptr");
+    RCLCPP_DEBUG_STREAM_THROTTLE(
+      logger_, *clock_, 5000 /* ms */, "autoware_state is nullptr");
     return;
   }
 
@@ -62,11 +66,11 @@ void AutowareIvAutowareStatePublisher::getAutowareStateInfo(
 }
 
 void AutowareIvAutowareStatePublisher::getControlModeInfo(
-  const autoware_vehicle_msgs::ControlMode::ConstPtr & control_mode_ptr,
-  autoware_api_msgs::AwapiAutowareStatus * status)
+  const autoware_vehicle_msgs::msg::ControlMode::ConstSharedPtr & control_mode_ptr,
+  autoware_api_msgs::msg::AwapiAutowareStatus * status)
 {
   if (!control_mode_ptr) {
-    ROS_DEBUG_STREAM_THROTTLE(5.0, "[AutowareIvAutowareStatePublisher] control mode is nullptr");
+    RCLCPP_DEBUG_STREAM_THROTTLE(logger_, *clock_, 5000 /* ms */, "control mode is nullptr");
     return;
   }
 
@@ -75,11 +79,11 @@ void AutowareIvAutowareStatePublisher::getControlModeInfo(
 }
 
 void AutowareIvAutowareStatePublisher::getGateModeInfo(
-  const autoware_control_msgs::GateMode::ConstPtr & gate_mode_ptr,
-  autoware_api_msgs::AwapiAutowareStatus * status)
+  const autoware_control_msgs::msg::GateMode::ConstSharedPtr & gate_mode_ptr,
+  autoware_api_msgs::msg::AwapiAutowareStatus * status)
 {
   if (!gate_mode_ptr) {
-    ROS_DEBUG_STREAM_THROTTLE(5.0, "[AutowareIvAutowareStatePublisher] gate mode is nullptr");
+    RCLCPP_DEBUG_STREAM_THROTTLE(logger_, *clock_, 5000 /* ms */, "gate mode is nullptr");
     return;
   }
 
@@ -88,24 +92,24 @@ void AutowareIvAutowareStatePublisher::getGateModeInfo(
 }
 
 void AutowareIvAutowareStatePublisher::getIsEmergencyInfo(
-  const std_msgs::Bool::ConstPtr & is_emergency_ptr,
-  autoware_api_msgs::AwapiAutowareStatus * status)
+  const autoware_control_msgs::msg::EmergencyMode::ConstSharedPtr & is_emergency_ptr,
+  autoware_api_msgs::msg::AwapiAutowareStatus * status)
 {
   if (!is_emergency_ptr) {
-    ROS_DEBUG_STREAM_THROTTLE(5.0, "[AutowareIvAutowareStatePublisher] is_emergency is nullptr");
+    RCLCPP_DEBUG_STREAM_THROTTLE(logger_, *clock_, 5000 /* ms */, "is_emergency is nullptr");
     return;
   }
 
   // get emergency
-  status->emergency_stopped = is_emergency_ptr->data;
+  status->emergency_stopped = is_emergency_ptr->is_emergency;
 }
 
 void AutowareIvAutowareStatePublisher::getStopReasonInfo(
-  const autoware_planning_msgs::StopReasonArray::ConstPtr & stop_reason_ptr,
-  autoware_api_msgs::AwapiAutowareStatus * status)
+  const autoware_planning_msgs::msg::StopReasonArray::ConstSharedPtr & stop_reason_ptr,
+  autoware_api_msgs::msg::AwapiAutowareStatus * status)
 {
   if (!stop_reason_ptr) {
-    ROS_DEBUG_STREAM_THROTTLE(5.0, "[AutowareIvAutowareStatePublisher] stop reason is nullptr");
+    RCLCPP_DEBUG_STREAM_THROTTLE(logger_, *clock_, 5000 /* ms */, "stop reason is nullptr");
     return;
   }
 
@@ -113,11 +117,11 @@ void AutowareIvAutowareStatePublisher::getStopReasonInfo(
 }
 
 void AutowareIvAutowareStatePublisher::getDiagInfo(
-  const diagnostic_msgs::DiagnosticArray::ConstPtr & diag_ptr,
-  autoware_api_msgs::AwapiAutowareStatus * status)
+  const diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr & diag_ptr,
+  autoware_api_msgs::msg::AwapiAutowareStatus * status)
 {
   if (!diag_ptr) {
-    ROS_DEBUG_STREAM_THROTTLE(5.0, "[AutowareIvAutowareStatePublisher] diagnostics is nullptr");
+    RCLCPP_DEBUG_STREAM_THROTTLE(logger_, *clock_, 5000 /* ms */, "diagnostics is nullptr");
     return;
   }
 
@@ -126,11 +130,11 @@ void AutowareIvAutowareStatePublisher::getDiagInfo(
 }
 
 void AutowareIvAutowareStatePublisher::getGlobalRptInfo(
-  const pacmod_msgs::GlobalRpt::ConstPtr & global_rpt_ptr,
-  autoware_api_msgs::AwapiAutowareStatus * status)
+  const pacmod_msgs::msg::GlobalRpt::ConstSharedPtr & global_rpt_ptr,
+  autoware_api_msgs::msg::AwapiAutowareStatus * status)
 {
   if (!global_rpt_ptr) {
-    ROS_DEBUG_STREAM_THROTTLE(5.0, "[AutowareIvAutowareStatePublisher] global_rpt is nullptr");
+    RCLCPP_DEBUG_STREAM_THROTTLE(logger_, *clock_, 5000 /* ms */, "global_rpt is nullptr");
     return;
   }
 
@@ -139,22 +143,22 @@ void AutowareIvAutowareStatePublisher::getGlobalRptInfo(
 }
 
 bool AutowareIvAutowareStatePublisher::isGoal(
-  const autoware_system_msgs::AutowareState::ConstPtr & autoware_state)
+  const autoware_system_msgs::msg::AutowareState::ConstSharedPtr & autoware_state)
 {
   //rename
   const auto & aw_state = autoware_state->state;
 
-  if (aw_state == autoware_system_msgs::AutowareState::ArrivedGoal) {
+  if (aw_state == autoware_system_msgs::msg::AutowareState::ARRIVAL_GOAL) {
     arrived_goal_ = true;
   } else if (
-    prev_state_ == autoware_system_msgs::AutowareState::Driving &&
-    aw_state == autoware_system_msgs::AutowareState::WaitingForRoute) {
+    prev_state_ == autoware_system_msgs::msg::AutowareState::DRIVING &&
+    aw_state == autoware_system_msgs::msg::AutowareState::WAITING_FOR_ROUTE) {
     arrived_goal_ = true;
   }
 
   if (
-    aw_state == autoware_system_msgs::AutowareState::WaitingForEngage ||
-    aw_state == autoware_system_msgs::AutowareState::Driving) {
+    aw_state == autoware_system_msgs::msg::AutowareState::WAITING_FOR_ENGAGE ||
+    aw_state == autoware_system_msgs::msg::AutowareState::DRIVING) {
     //cancel goal state
     arrived_goal_ = false;
   }
@@ -164,12 +168,13 @@ bool AutowareIvAutowareStatePublisher::isGoal(
   return arrived_goal_;
 }
 
-std::vector<diagnostic_msgs::DiagnosticStatus> AutowareIvAutowareStatePublisher::extractLeafDiag(
-  const std::vector<diagnostic_msgs::DiagnosticStatus> & diag_vec)
+std::vector<diagnostic_msgs::msg::DiagnosticStatus>
+AutowareIvAutowareStatePublisher::extractLeafDiag(
+  const std::vector<diagnostic_msgs::msg::DiagnosticStatus> & diag_vec)
 {
   updateDiagNameSet(diag_vec);
 
-  std::vector<diagnostic_msgs::DiagnosticStatus> leaf_diag_info;
+  std::vector<diagnostic_msgs::msg::DiagnosticStatus> leaf_diag_info;
   for (const auto diag : diag_vec) {
     if (isLeaf(diag)) {
       leaf_diag_info.emplace_back(diag);
@@ -191,7 +196,7 @@ std::string AutowareIvAutowareStatePublisher::splitStringByLastSlash(const std::
 }
 
 void AutowareIvAutowareStatePublisher::updateDiagNameSet(
-  const std::vector<diagnostic_msgs::DiagnosticStatus> & diag_vec)
+  const std::vector<diagnostic_msgs::msg::DiagnosticStatus> & diag_vec)
 {
   // set diag name to diag_name_set_
   for (const auto & diag : diag_vec) {
@@ -199,7 +204,7 @@ void AutowareIvAutowareStatePublisher::updateDiagNameSet(
   }
 }
 
-bool AutowareIvAutowareStatePublisher::isLeaf(const diagnostic_msgs::DiagnosticStatus & diag)
+bool AutowareIvAutowareStatePublisher::isLeaf(const diagnostic_msgs::msg::DiagnosticStatus & diag)
 {
   //if not find diag.name in diag set, diag is leaf.
   return diag_name_set_.find(diag.name) == diag_name_set_.end();

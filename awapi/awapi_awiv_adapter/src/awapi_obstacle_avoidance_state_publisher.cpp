@@ -18,36 +18,38 @@
 
 namespace autoware_api
 {
-AutowareIvObstacleAvoidanceStatePublisher::AutowareIvObstacleAvoidanceStatePublisher()
-: nh_(), pnh_("~")
+AutowareIvObstacleAvoidanceStatePublisher::AutowareIvObstacleAvoidanceStatePublisher(rclcpp::Node& node)
+: logger_(node.get_logger().get_child("awapi_awiv_obstacle_avoidance_state_publisher")),
+  clock_(node.get_clock())
 {
   // publisher
-  pub_state_ =
-    pnh_.advertise<autoware_api_msgs::ObstacleAvoidanceStatus>("output/obstacle_avoid_status", 1);
+  pub_state_ = node.create_publisher<autoware_api_msgs::msg::ObstacleAvoidanceStatus>(
+    "output/obstacle_avoid_status", 1);
 }
 
 void AutowareIvObstacleAvoidanceStatePublisher::statePublisher(const AutowareInfo & aw_info)
 {
-  autoware_api_msgs::ObstacleAvoidanceStatus status;
+  autoware_api_msgs::msg::ObstacleAvoidanceStatus status;
 
   //input header
   status.header.frame_id = "base_link";
-  status.header.stamp = ros::Time::now();
+  status.header.stamp = clock_->now();
 
   // get all info
   getObstacleAvoidReadyInfo(aw_info.obstacle_avoid_ready_ptr, &status);
   getCandidatePathInfo(aw_info.obstacle_avoid_candidate_ptr, &status);
 
   // publish info
-  pub_state_.publish(status);
+  pub_state_->publish(status);
 }
 
 void AutowareIvObstacleAvoidanceStatePublisher::getObstacleAvoidReadyInfo(
-  const std_msgs::Bool::ConstPtr & ready_ptr, autoware_api_msgs::ObstacleAvoidanceStatus * status)
+  const std_msgs::msg::Bool::ConstSharedPtr & ready_ptr,
+  autoware_api_msgs::msg::ObstacleAvoidanceStatus * status)
 {
   if (!ready_ptr) {
-    ROS_DEBUG_STREAM_THROTTLE(
-      5.0, "[AutowareIvObstacleAvoidanceStatePublisher] obstacle_avoidance_ready is nullptr");
+    RCLCPP_DEBUG_STREAM_THROTTLE(
+      logger_, *clock_, 5000 /* ms */, "obstacle_avoidance_ready is nullptr");
     return;
   }
 
@@ -55,14 +57,13 @@ void AutowareIvObstacleAvoidanceStatePublisher::getObstacleAvoidReadyInfo(
 }
 
 void AutowareIvObstacleAvoidanceStatePublisher::getCandidatePathInfo(
-  const autoware_planning_msgs::Trajectory::ConstPtr & path_ptr,
-  autoware_api_msgs::ObstacleAvoidanceStatus * status)
+  const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr & path_ptr,
+  autoware_api_msgs::msg::ObstacleAvoidanceStatus * status)
 {
   if (!path_ptr) {
-    ROS_DEBUG_STREAM_THROTTLE(
-      5.0,
-      "[AutowareIvObstacleAvoidanceStatePublisher] obstacle_avoidance_candidate_path is "
-      "nullptr");
+    RCLCPP_DEBUG_STREAM_THROTTLE(
+      logger_, *clock_, 5000 /* ms */,
+      "obstacle_avoidance_candidate_path is nullptr");
     return;
   }
 

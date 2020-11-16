@@ -1,36 +1,17 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.5)
 project(awapi_awiv_adapter)
 
-add_compile_options(-std=c++14)
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wno-unused-parameter -Wall -Wextra -Wpedantic -Werror)
+endif()
 
-find_package(catkin REQUIRED COMPONENTS
-  message_generation
-  message_runtime
-  roscpp
-  autoware_api_msgs
-  autoware_system_msgs
-  autoware_planning_msgs
-  autoware_control_msgs
-  autoware_vehicle_msgs
-  diagnostic_msgs
-  geometry_msgs
-  pacmod_msgs
-  std_msgs
-  sensor_msgs
-  tf2
-  tf2_geometry_msgs
-)
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
 
-catkin_package(
-  INCLUDE_DIRS include
-)
-
-include_directories(
-  include
-  ${catkin_INCLUDE_DIRS}
-)
-
-add_executable(awapi_awiv_adapter
+ament_auto_add_executable(awapi_awiv_adapter
   src/awapi_awiv_adapter_node.cpp
   src/awapi_awiv_adapter_core.cpp
   src/awapi_vehicle_state_publisher.cpp
@@ -41,30 +22,4 @@ add_executable(awapi_awiv_adapter
   src/awapi_autoware_util.cpp
 )
 
-target_link_libraries(awapi_awiv_adapter
-  ${catkin_LIBRARIES}
-)
-
-add_dependencies(awapi_awiv_adapter
-  ${catkin_EXPORTED_TARGETS}
-)
-
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-)
-
-install(
-  DIRECTORY
-    launch
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-)
-
-install(TARGETS awapi_awiv_adapter
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-
-if(CATKIN_ENABLE_TESTING)
-  find_package(rostest REQUIRED)
-endif()
+ament_auto_package(INSTALL_TO_SHARE launch)

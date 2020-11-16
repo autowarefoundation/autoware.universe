@@ -43,7 +43,7 @@
   <arg name="output_force_obstacle_avoid" default="tmp" /> <!-- not implemented -->
   <arg name="output_overwrite_traffic_light_state" default="tmp" /> <!-- not implemented -->
 
-  <arg name="param_emergency_handling" default="/control/vehicle_cmd_gate/use_emergency_handling" />
+  <arg name="use_emergency_handling" default="false" />
 
   <arg name="set_upper_velocity" default="vehicle/put/velocity" />
   <arg name="set_gate_mode" default="autoware/put/gate_mode" />
@@ -61,50 +61,103 @@
 
 
   <group ns="awapi">
-    <node pkg="awapi_awiv_adapter" type="awapi_awiv_adapter" name="awapi_awiv_adapter" output="$(arg adapter_output)">
-      <remap from="~input/steer" to="$(arg input_steer)" />
-      <remap from="~input/vehicle_cmd" to="$(arg input_vehicle_cmd)" />
-      <remap from="~input/turn_signal" to="$(arg input_turn_signal)" />
-      <remap from="~input/twist" to="$(arg input_twist)" />
-      <remap from="~input/gear" to="$(arg input_gear)" />
-      <remap from="~input/battery" to="$(arg input_battery)" />
-      <remap from="~input/nav_sat" to="$(arg input_nav_sat)" />
-      <remap from="~input/autoware_state" to="$(arg input_autoware_state)" />
-      <remap from="~input/control_mode" to="$(arg input_control_mode)" />
-      <remap from="~input/gate_mode" to="$(arg input_gate_mode)" />
-      <remap from="~input/is_emergency" to="$(arg input_is_emergency)" />
-      <remap from="~input/stop_reason" to="$(arg input_stop_reason)" />
-      <remap from="~input/diagnostics" to="$(arg input_diagnostics)" />
-      <remap from="~input/global_rpt" to="$(arg input_global_rpt)" />
-      <remap from="~input/lane_change_avaiable" to="$(arg input_lane_change_avaiable)" />
-      <remap from="~input/lane_change_ready" to="$(arg input_lane_change_ready)" />
-      <remap from="~input/lane_change_candidate_path" to="$(arg input_lane_change_candidate_path)" />
-      <remap from="~input/obstacle_avoid_ready" to="$(arg input_obstacle_avoid_ready)" />
-      <remap from="~input/obstacle_avoid_candidate_path" to="$(arg input_obstacle_avoid_candidate_path)" />
-      <remap from="~output/vehicle_status" to="$(arg output_vehicle_status)" />
-      <remap from="~output/autoware_status" to="$(arg output_autoware_status)" />
-      <remap from="~output/lane_change_status" to="$(arg output_lane_change_status)" />
-      <remap from="~output/obstacle_avoid_status" to="$(arg output_obstacle_avoid_status)" />
-      <remap from="~param/emergency_handling" to="$(arg param_emergency_handling)" />
-      <param name="status_pub_hz" value="$(arg status_pub_hz)" />
+    <node pkg="awapi_awiv_adapter" exec="awapi_awiv_adapter" output="screen">
+      <remap from="input/steer" to="$(var input_steer)" />
+      <remap from="input/vehicle_cmd" to="$(var input_vehicle_cmd)" />
+      <remap from="input/turn_signal" to="$(var input_turn_signal)" />
+      <remap from="input/twist" to="$(var input_twist)" />
+      <remap from="input/gear" to="$(var input_gear)" />
+      <remap from="input/battery" to="$(var input_battery)" />
+      <remap from="input/nav_sat" to="$(var input_nav_sat)" />
+      <remap from="input/autoware_state" to="$(var input_autoware_state)" />
+      <remap from="input/control_mode" to="$(var input_control_mode)" />
+      <remap from="input/gate_mode" to="$(var input_gate_mode)" />
+      <remap from="input/is_emergency" to="$(var input_is_emergency)" />
+      <remap from="input/stop_reason" to="$(var input_stop_reason)" />
+      <remap from="input/diagnostics" to="$(var input_diagnostics)" />
+      <remap from="input/global_rpt" to="$(var input_global_rpt)" />
+      <remap from="input/lane_change_avaiable" to="$(var input_lane_change_avaiable)" />
+      <remap from="input/lane_change_ready" to="$(var input_lane_change_ready)" />
+      <remap from="input/lane_change_candidate_path" to="$(var input_lane_change_candidate_path)" />
+      <remap from="input/obstacle_avoid_ready" to="$(var input_obstacle_avoid_ready)" />
+      <remap from="input/obstacle_avoid_candidate_path" to="$(var input_obstacle_avoid_candidate_path)" />
+      <remap from="output/vehicle_status" to="$(var output_vehicle_status)" />
+      <remap from="output/autoware_status" to="$(var output_autoware_status)" />
+      <remap from="output/lane_change_status" to="$(var output_lane_change_status)" />
+      <remap from="output/obstacle_avoid_status" to="$(var output_obstacle_avoid_status)" />
+      <param name="use_emergency_handling" value="$(var use_emergency_handling)" />
+      <param name="status_pub_hz" value="$(var status_pub_hz)" />
     </node>
 
     <!-- relay get topic -->
-    <node pkg="topic_tools" type="relay" name="route_relay" args="$(arg input_route) $(arg get_route)" output="$(arg relay_output)" />
-    <node pkg="topic_tools" type="relay" name="predict_object_relay" args="$(arg input_object) $(arg get_predicted_object)" output="$(arg relay_output)" />
+     <node pkg="topic_tools" exec="relay" name="route_relay" output="log" >
+      <param name="input_topic" value="$(var input_route)" />
+      <param name="output_topic" value="$(var get_route)" />
+      <param name="type" value="autoware_planning_msgs/msg/Route" />
+    </node>
+    <node pkg="topic_tools" exec="relay" name="predict_object_relay" output="log" >
+      <param name="input_topic" value="$(var input_object)" />
+      <param name="output_topic" value="$(var get_predicted_object)" />
+      <param name="type" value="autoware_perception_msgs/msg/DynamicObjectArray" />
+    </node>
 
     <!-- relay put topic -->
-    <node pkg="topic_tools" type="relay" name="upper_vel_relay" args="$(arg set_upper_velocity) $(arg output_max_velocity)" output="$(arg relay_output)" />
-    <node pkg="topic_tools" type="relay" name="gate_mode_relay" args="$(arg set_gate_mode) $(arg output_gate_mode)" output="$(arg relay_output)" />
-    <node pkg="topic_tools" type="relay" name="emergency_relay" args="$(arg set_emergency) $(arg output_emergency)" output="$(arg relay_output)" />
-    <node pkg="topic_tools" type="relay" name="autoware_engage_relay" args="$(arg set_engage) $(arg output_autoware_engage)" output="$(arg relay_output)" />
-    <node pkg="topic_tools" type="relay" name="vehicle_engage_relay" args="$(arg set_engage) $(arg output_vehicle_engage)" output="$(arg relay_output)" />
-    <node pkg="topic_tools" type="relay" name="put_route_relay" args="$(arg set_route) $(arg output_route)" output="$(arg relay_output)" />
-    <node pkg="topic_tools" type="relay" name="lane_change_approval_relay" args="$(arg set_lane_change_approval) $(arg output_lane_change_approval)" output="$(arg relay_output)" />
-    <node pkg="topic_tools" type="relay" name="force_lane_change_relay" args="$(arg set_force_lane_change) $(arg output_force_lane_change)" output="$(arg relay_output)" />
-    <node pkg="topic_tools" type="relay" name="obstacle_avoid_approval_relay" args="$(arg set_obstacle_avoid_approval) $(arg output_obstacle_avoid_approval)" output="$(arg relay_output)" />
-    <node pkg="topic_tools" type="relay" name="force_obstacle_avoid_relay" args="$(arg set_force_obstacle_avoid) $(arg output_force_obstacle_avoid)" output="$(arg relay_output)" />
-    <node pkg="topic_tools" type="relay" name="overwrite_traffic_light_state_relay" args="$(arg set_overwrite_traffic_light_state) $(arg output_overwrite_traffic_light_state)" output="$(arg relay_output)" />
+    <node pkg="topic_tools" exec="relay" name="upper_vel_relay" output="log" >
+      <param name="input_topic" value="$(var set_upper_velocity)" />
+      <param name="output_topic" value="$(var output_max_velocity)" />
+      <param name="type" value="std_msgs/msg/Float32" />
+    </node>
+    <node pkg="topic_tools" exec="relay" name="gate_mode_relay" output="log" >
+      <param name="input_topic" value="$(var set_gate_mode)" />
+      <param name="output_topic" value="$(var output_gate_mode)" />
+      <param name="type" value="autoware_control_msgs/msg/GateMode" />
+    </node>
+    <node pkg="topic_tools" exec="relay" name="emergency_relay" output="log" >
+      <param name="input_topic" value="$(var set_emergency)" />
+      <param name="output_topic" value="$(var output_emergency)" />
+      <param name="type" value="autoware_control_msgs/msg/EmergencyMode" />
+    </node>
+    <node pkg="topic_tools" exec="relay" name="autoware_engage_relay" output="log" >
+      <param name="input_topic" value="$(var set_engage)" />
+      <param name="output_topic" value="$(var output_autoware_engage)" />
+      <param name="type" value="autoware_control_msgs/msg/EngageMode" />
+    </node>
+    <node pkg="topic_tools" exec="relay" name="vehicle_engage_relay" output="log" >
+      <param name="input_topic" value="$(var set_engage)" />
+      <param name="output_topic" value="$(var output_vehicle_engage)" />
+      <param name="type" value="autoware_control_msgs/msg/EngageMode" />
+    </node>
+    <node pkg="topic_tools" exec="relay" name="put_route_relay" output="log" >
+      <param name="input_topic" value="$(var set_route)" />
+      <param name="output_topic" value="$(var output_route)" />
+      <param name="type" value="autoware_planning_msgs/msg/Route" />
+    </node>
+    <node pkg="topic_tools" exec="relay" name="lane_change_approval_relay" output="log" >
+      <param name="input_topic" value="$(var set_lane_change_approval)" />
+      <param name="output_topic" value="$(var output_lane_change_approval)" />
+      <param name="type" value="std_msgs/msg/Bool" />
+    </node>
+    <node pkg="topic_tools" exec="relay" name="force_lane_change_relay" output="log" >
+      <param name="input_topic" value="$(var set_force_lane_change)" />
+      <param name="output_topic" value="$(var output_force_lane_change)" />
+      <param name="type" value="std_msgs/msg/Bool" />
+    </node>
+    <node pkg="topic_tools" exec="relay" name="obstacle_avoid_approval_relay" output="log" >
+      <param name="input_topic" value="$(var set_obstacle_avoid_approval)" />
+      <param name="output_topic" value="$(var output_obstacle_avoid_approval)" />
+      <param name="type" value="std_msgs/msg/Bool" />
+    </node>
+    <!-- not implemented
+    <node pkg="topic_tools" exec="relay" name="force_obstacle_avoid_relay" output="log" >
+      <param name="input_topic" value="$(var set_force_obstacle_avoid)" />
+      <param name="output_topic" value="$(var output_force_obstacle_avoid)" />
+      <param name="type" value="" />
+    </node>
+    <node pkg="topic_tools" exec="relay" name="overwrite_traffic_light_state_relay" output="log" >
+      <param name="input_topic" value="$(var set_overwrite_traffic_light_state)" />
+      <param name="output_topic" value="$(var output_overwrite_traffic_light_state)" />
+      <param name="type" value="" />
+    </node> -->
 
   </group>
 

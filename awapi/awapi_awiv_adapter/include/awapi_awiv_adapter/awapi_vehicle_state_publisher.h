@@ -14,54 +14,55 @@
  * limitations under the License.
  */
 
-#include <autoware_api_msgs/AwapiVehicleStatus.h>
+#include <rclcpp/rclcpp.hpp>
+
 #include <awapi_awiv_adapter/awapi_autoware_util.h>
+#include <autoware_api_msgs/msg/awapi_vehicle_status.hpp>
 
 namespace autoware_api
 {
 class AutowareIvVehicleStatePublisher
 {
 public:
-  AutowareIvVehicleStatePublisher();
+  AutowareIvVehicleStatePublisher(rclcpp::Node& node);
   void statePublisher(const AutowareInfo & aw_info);
 
 private:
-  // node handle
-  ros::NodeHandle nh_;
-  ros::NodeHandle pnh_;
-
   // publisher
-  ros::Publisher pub_state_;
+  rclcpp::Publisher<autoware_api_msgs::msg::AwapiVehicleStatus>::SharedPtr pub_state_;
 
-  autoware_api_msgs::AwapiVehicleStatus initVehicleStatus();
+  autoware_api_msgs::msg::AwapiVehicleStatus initVehicleStatus();
   void getPoseInfo(
-    const std::shared_ptr<geometry_msgs::PoseStamped> & pose_ptr,
-    autoware_api_msgs::AwapiVehicleStatus * status);
+    const std::shared_ptr<geometry_msgs::msg::PoseStamped> & pose_ptr,
+    autoware_api_msgs::msg::AwapiVehicleStatus * status);
   void getSteerInfo(
-    const autoware_vehicle_msgs::Steering::ConstPtr & steer_ptr,
-    autoware_api_msgs::AwapiVehicleStatus * status);
+    const autoware_vehicle_msgs::msg::Steering::ConstSharedPtr & steer_ptr,
+    autoware_api_msgs::msg::AwapiVehicleStatus * status);
   void getVehicleCmdInfo(
-    const autoware_vehicle_msgs::VehicleCommand::ConstPtr & vehicle_cmd_ptr,
-    autoware_api_msgs::AwapiVehicleStatus * status);
+    const autoware_vehicle_msgs::msg::VehicleCommand::ConstSharedPtr & vehicle_cmd_ptr,
+    autoware_api_msgs::msg::AwapiVehicleStatus * status);
   void getTurnSignalInfo(
-    const autoware_vehicle_msgs::TurnSignal::ConstPtr & turn_signal_ptr,
-    autoware_api_msgs::AwapiVehicleStatus * status);
+    const autoware_vehicle_msgs::msg::TurnSignal::ConstSharedPtr & turn_signal_ptr,
+    autoware_api_msgs::msg::AwapiVehicleStatus * status);
   void getTwistInfo(
-    const geometry_msgs::TwistStamped::ConstPtr & twist_ptr,
-    autoware_api_msgs::AwapiVehicleStatus * status);
+    const geometry_msgs::msg::TwistStamped::ConstSharedPtr & twist_ptr,
+    autoware_api_msgs::msg::AwapiVehicleStatus * status);
   void getGearInfo(
-    const autoware_vehicle_msgs::ShiftStamped::ConstPtr & gear_ptr,
-    autoware_api_msgs::AwapiVehicleStatus * status);
+    const autoware_vehicle_msgs::msg::ShiftStamped::ConstSharedPtr & gear_ptr,
+    autoware_api_msgs::msg::AwapiVehicleStatus * status);
   void getBatteryInfo(
-    const std_msgs::Float32::ConstPtr & battery_ptr,
-    autoware_api_msgs::AwapiVehicleStatus * status);
+    const std_msgs::msg::Float32::ConstSharedPtr & battery_ptr,
+    autoware_api_msgs::msg::AwapiVehicleStatus * status);
   void getGpsInfo(
-    const sensor_msgs::NavSatFix::ConstPtr & nav_sat_ptr,
-    autoware_api_msgs::AwapiVehicleStatus * status);
+    const sensor_msgs::msg::NavSatFix::ConstSharedPtr & nav_sat_ptr,
+    autoware_api_msgs::msg::AwapiVehicleStatus * status);
+
+  rclcpp::Logger logger_;
+  rclcpp::Clock::SharedPtr clock_;
 
   //parameters
-  geometry_msgs::TwistStamped::ConstPtr previous_twist_ptr_;
-  autoware_vehicle_msgs::Steering::ConstPtr previous_steer_ptr_;
+  geometry_msgs::msg::TwistStamped::ConstSharedPtr previous_twist_ptr_;
+  autoware_vehicle_msgs::msg::Steering::ConstSharedPtr previous_steer_ptr_;
   double prev_accel_;
   double prev_steer_vel_;
 

@@ -18,14 +18,16 @@
 
 namespace autoware_api
 {
-AutowareIvStopReasonAggregator::AutowareIvStopReasonAggregator(const double timeout)
-: timeout_(timeout)
+AutowareIvStopReasonAggregator::AutowareIvStopReasonAggregator(rclcpp::Node& node, const double timeout)
+: logger_(node.get_logger().get_child("awapi_awiv_stop_reason_aggregator")),
+  clock_(node.get_clock()),
+  timeout_(timeout)
 {
 }
 
-autoware_planning_msgs::StopReasonArray::ConstPtr
+autoware_planning_msgs::msg::StopReasonArray::ConstSharedPtr
 AutowareIvStopReasonAggregator::updateStopReasonArray(
-  const autoware_planning_msgs::StopReasonArray::ConstPtr & msg_ptr)
+  const autoware_planning_msgs::msg::StopReasonArray::ConstSharedPtr & msg_ptr)
 {
   applyUpdate(msg_ptr);
   applyTimeOut();
@@ -33,7 +35,7 @@ AutowareIvStopReasonAggregator::updateStopReasonArray(
 }
 
 void AutowareIvStopReasonAggregator::applyUpdate(
-  const autoware_planning_msgs::StopReasonArray::ConstPtr & msg_ptr)
+  const autoware_planning_msgs::msg::StopReasonArray::ConstSharedPtr & msg_ptr)
 {
   /* remove old stop_reason that matches reason with received msg */
   //make reason-matching msg list
@@ -57,8 +59,8 @@ void AutowareIvStopReasonAggregator::applyUpdate(
 }
 
 bool AutowareIvStopReasonAggregator::checkMatchingReason(
-  const autoware_planning_msgs::StopReasonArray::ConstPtr & msg_stop_reason_array,
-  const autoware_planning_msgs::StopReasonArray & stop_reason_array)
+  const autoware_planning_msgs::msg::StopReasonArray::ConstSharedPtr & msg_stop_reason_array,
+  const autoware_planning_msgs::msg::StopReasonArray & stop_reason_array)
 {
   for (const auto msg_stop_reason : msg_stop_reason_array->stop_reasons) {
     for (const auto stop_reason : stop_reason_array.stop_reasons) {
@@ -74,13 +76,15 @@ bool AutowareIvStopReasonAggregator::checkMatchingReason(
 
 void AutowareIvStopReasonAggregator::applyTimeOut()
 {
-  const auto current_time = ros::Time::now();
+  const auto current_time = clock_->now();
 
   //make timeout-msg list
   std::vector<size_t> remove_idx;
   if (!stop_reason_array_vec_.empty()) {
     for (int i = stop_reason_array_vec_.size() - 1; i >= 0; i--) {
-      if ((current_time - stop_reason_array_vec_.at(i).header.stamp).toSec() > timeout_) {
+      if (
+        (current_time - rclcpp::Time(stop_reason_array_vec_.at(i).header.stamp)).seconds() >
+        timeout_) {
         remove_idx.emplace_back(i);
       }
     }
@@ -92,8 +96,8 @@ void AutowareIvStopReasonAggregator::applyTimeOut()
 }
 
 void AutowareIvStopReasonAggregator::appendStopReasonToArray(
-  const autoware_planning_msgs::StopReason & stop_reason,
-  autoware_planning_msgs::StopReasonArray * stop_reason_array)
+  const autoware_planning_msgs::msg::StopReason & stop_reason,
+  autoware_planning_msgs::msg::StopReasonArray * stop_reason_array)
 {
   //if stop factors is empty, not append
   if (stop_reason.stop_factors.empty()) {
@@ -101,7 +105,7 @@ void AutowareIvStopReasonAggregator::appendStopReasonToArray(
   }
 
   //if already exists same reason msg in stop_reason_array_msg, append stop_factors to there
-  for (int i = 0; i < stop_reason_array->stop_reasons.size(); i++) {
+  for (size_t i = 0; i < stop_reason_array->stop_reasons.size(); i++) {
     if (stop_reason_array->stop_reasons.at(i).reason == stop_reason.reason) {
       stop_reason_array->stop_reasons.at(i).stop_factors.insert(
         stop_reason_array->stop_reasons.at(i).stop_factors.end(), stop_reason.stop_factors.begin(),
@@ -114,13 +118,13 @@ void AutowareIvStopReasonAggregator::appendStopReasonToArray(
   stop_reason_array->stop_reasons.emplace_back(stop_reason);
 }
 
-autoware_planning_msgs::StopReasonArray::ConstPtr
+autoware_planning_msgs::msg::StopReasonArray::ConstSharedPtr
 AutowareIvStopReasonAggregator::makeStopReasonArray()
 {
-  autoware_planning_msgs::StopReasonArray stop_reason_array_msg;
+  autoware_planning_msgs::msg::StopReasonArray stop_reason_array_msg;
   // input header
   stop_reason_array_msg.header.frame_id = "map";
-  stop_reason_array_msg.header.stamp = ros::Time::now();
+  stop_reason_array_msg.header.stamp = clock_->now();
 
   // input stop reason
   for (const auto stop_reason_array : stop_reason_array_vec_) {
@@ -128,7 +132,7 @@ AutowareIvStopReasonAggregator::makeStopReasonArray()
       appendStopReasonToArray(stop_reason, &stop_reason_array_msg);
     }
   }
-  return boost::make_shared<autoware_planning_msgs::StopReasonArray>(stop_reason_array_msg);
+  return std::make_shared<autoware_planning_msgs::msg::StopReasonArray>(stop_reason_array_msg);
 }
 
 }  // namespace autoware_api

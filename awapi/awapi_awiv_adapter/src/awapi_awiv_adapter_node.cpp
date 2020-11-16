@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 
 #include <awapi_awiv_adapter/awapi_awiv_adapter_core.h>
 
 int main(int argc, char ** argv)
 {
-  ros::init(argc, argv, "awapi_awiv_adapter_node");
-
-  autoware_api::AutowareIvAdapter node;
-
-  ros::spin();
+  rclcpp::init(argc, argv);
+  rclcpp::spin(std::make_shared<autoware_api::AutowareIvAdapter>());
+  rclcpp::shutdown();
 
   return 0;
 }

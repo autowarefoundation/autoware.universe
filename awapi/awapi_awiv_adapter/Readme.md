@@ -117,21 +117,21 @@
 ### /awapi/autoware/put/emergency
 
 - send emergency signal
-- MessageType: std_msgs/Bool
+- MessageType: autoware_control_msgs/EmergencyMode
 - <font color="Cyan">**To enable this functionality, autoware have to be in the Remote Mode or set _/control/vehicle_cmd_gate/use_emergency_handling_ to true.**</font>
 
-| ✓   | type          | name | unit | note |
-| --- | :------------ | :--- | :--- | :--- |
-| ✓   | std_msgs/Bool |      |      |      |
+| ✓   | type                                | name | unit | note |
+| --- | :---------------------------------- | :--- | :--- | :--- |
+| ✓   | autoware_control_msgs/EmergencyMode |      |      |      |
 
 ### /awapi/autoware/put/engage
 
 - send engage signal (both of autoware/engage and vehicle/engage)
-- MessageType: std_msgs/Bool
+- MessageType: autoware_control_msgs/EngageMode
 
-| ✓   | type          | name | unit | note |
-| --- | :------------ | :--- | :--- | :--- |
-| ✓   | std_msgs/Bool |      |      |      |
+| ✓   | type                             | name | unit | note |
+| --- | :------------------------------- | :--- | :--- | :--- |
+| ✓   | autoware_control_msgs/EngageMode |      |      |      |
 
 ### /awapi/autoware/put/route
 

@@ -14,6 +14,24 @@
  * limitations under the License.
  */
 
+#include <rclcpp/rclcpp.hpp>
+
+#include <autoware_control_msgs/msg/emergency_mode.hpp>
+#include <autoware_control_msgs/msg/gate_mode.hpp>
+#include <autoware_planning_msgs/msg/path.hpp>
+#include <autoware_planning_msgs/msg/stop_reason_array.hpp>
+#include <autoware_planning_msgs/msg/trajectory.hpp>
+#include <autoware_system_msgs/msg/autoware_state.hpp>
+#include <autoware_vehicle_msgs/msg/control_mode.hpp>
+#include <autoware_vehicle_msgs/msg/shift_stamped.hpp>
+#include <autoware_vehicle_msgs/msg/steering.hpp>
+#include <autoware_vehicle_msgs/msg/turn_signal.hpp>
+#include <autoware_vehicle_msgs/msg/vehicle_command.hpp>
+#include <diagnostic_msgs/msg/diagnostic_array.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
+#include <pacmod_msgs/msg/global_rpt.hpp>
+#include <sensor_msgs/msg/nav_sat_fix.hpp>
+
 #include <awapi_awiv_adapter/awapi_autoware_state_publisher.h>
 #include <awapi_awiv_adapter/awapi_autoware_util.h>
 #include <awapi_awiv_adapter/awapi_lane_change_state_publisher.h>
@@ -23,67 +41,67 @@
 
 namespace autoware_api
 {
-class AutowareIvAdapter
+class AutowareIvAdapter : public rclcpp::Node
 {
 public:
   AutowareIvAdapter();
 
 private:
-  // node handle
-  ros::NodeHandle nh_;
-  ros::NodeHandle pnh_;
-
   // subscriber
-  ros::Subscriber sub_steer_;
-  ros::Subscriber sub_vehicle_cmd_;
-  ros::Subscriber sub_turn_signal_cmd_;
-  ros::Subscriber sub_twist_;
-  ros::Subscriber sub_gear_;
-  ros::Subscriber sub_battery_;
-  ros::Subscriber sub_nav_sat_;
-  ros::Subscriber sub_autoware_state_;
-  ros::Subscriber sub_control_mode_;
-  ros::Subscriber sub_gate_mode_;
-  ros::Subscriber sub_emergency_;
-  ros::Subscriber sub_stop_reason_;
-  ros::Subscriber sub_diagnostics_;
-  ros::Subscriber sub_global_rpt_;
-  ros::Subscriber sub_lane_change_available_;
-  ros::Subscriber sub_lane_change_ready_;
-  ros::Subscriber sub_lane_change_candidate_;
-  ros::Subscriber sub_obstacle_avoid_ready_;
-  ros::Subscriber sub_obstacle_avoid_candidate_;
+  rclcpp::Subscription<autoware_vehicle_msgs::msg::Steering>::SharedPtr sub_steer_;
+  rclcpp::Subscription<autoware_vehicle_msgs::msg::VehicleCommand>::SharedPtr sub_vehicle_cmd_;
+  rclcpp::Subscription<autoware_vehicle_msgs::msg::TurnSignal>::SharedPtr sub_turn_signal_cmd_;
+  rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr sub_twist_;
+  rclcpp::Subscription<autoware_vehicle_msgs::msg::ShiftStamped>::SharedPtr sub_gear_;
+  rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr sub_battery_;
+  rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr sub_nav_sat_;
+  rclcpp::Subscription<autoware_system_msgs::msg::AutowareState>::SharedPtr sub_autoware_state_;
+  rclcpp::Subscription<autoware_vehicle_msgs::msg::ControlMode>::SharedPtr sub_control_mode_;
+  rclcpp::Subscription<autoware_control_msgs::msg::GateMode>::SharedPtr sub_gate_mode_;
+  rclcpp::Subscription<autoware_control_msgs::msg::EmergencyMode>::SharedPtr sub_emergency_;
+  rclcpp::Subscription<autoware_planning_msgs::msg::StopReasonArray>::SharedPtr sub_stop_reason_;
+  rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr sub_diagnostics_;
+  rclcpp::Subscription<pacmod_msgs::msg::GlobalRpt>::SharedPtr sub_global_rpt_;
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr sub_lane_change_available_;
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr sub_lane_change_ready_;
+  rclcpp::Subscription<autoware_planning_msgs::msg::Path>::SharedPtr sub_lane_change_candidate_;
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr sub_obstacle_avoid_ready_;
+  rclcpp::Subscription<autoware_planning_msgs::msg::Trajectory>::SharedPtr
+    sub_obstacle_avoid_candidate_;
   // timer
-  ros::Timer timer_;
+  rclcpp::TimerBase::SharedPtr timer_;
 
   // tf
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
 
   // callback function
-  void callbackSteer(const autoware_vehicle_msgs::Steering::ConstPtr & msg_ptr);
-  void callbackVehicleCmd(const autoware_vehicle_msgs::VehicleCommand::ConstPtr & msg_ptr);
-  void callbackTurnSignal(const autoware_vehicle_msgs::TurnSignal::ConstPtr & msg_ptr);
-  void callbackTwist(const geometry_msgs::TwistStamped::ConstPtr & msg_ptr);
-  void callbackGear(const autoware_vehicle_msgs::ShiftStamped::ConstPtr & msg_ptr);
-  void callbackBattery(const std_msgs::Float32::ConstPtr & msg_ptr);
-  void callbackNavSat(const sensor_msgs::NavSatFix::ConstPtr & msg_ptr);
-  void callbackAutowareState(const autoware_system_msgs::AutowareState::ConstPtr & msg_ptr);
-  void callbackControlMode(const autoware_vehicle_msgs::ControlMode::ConstPtr & msg_ptr);
-  void callbackGateMode(const autoware_control_msgs::GateMode::ConstPtr & msg_ptr);
-  void callbackIsEmergency(const std_msgs::Bool::ConstPtr & msg_ptr);
-  void callbackStopReason(const autoware_planning_msgs::StopReasonArray::ConstPtr & msg_ptr);
-  void callbackDiagnostics(const diagnostic_msgs::DiagnosticArray::ConstPtr & msg_ptr);
-  void callbackGlobalRpt(const pacmod_msgs::GlobalRpt::ConstPtr & msg_ptr);
-  void callbackLaneChangeAvailable(const std_msgs::Bool::ConstPtr & msg_ptr);
-  void callbackLaneChangeReady(const std_msgs::Bool::ConstPtr & msg_ptr);
-  void callbackLaneChangeCandidatePath(const autoware_planning_msgs::Path::ConstPtr & msg_ptr);
-  void callbackLaneObstacleAvoidReady(const std_msgs::Bool::ConstPtr & msg_ptr);
+  void callbackSteer(const autoware_vehicle_msgs::msg::Steering::ConstSharedPtr msg_ptr);
+  void callbackVehicleCmd(const autoware_vehicle_msgs::msg::VehicleCommand::ConstSharedPtr msg_ptr);
+  void callbackTurnSignal(const autoware_vehicle_msgs::msg::TurnSignal::ConstSharedPtr msg_ptr);
+  void callbackTwist(const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg_ptr);
+  void callbackGear(const autoware_vehicle_msgs::msg::ShiftStamped::ConstSharedPtr msg_ptr);
+  void callbackBattery(const std_msgs::msg::Float32::ConstSharedPtr msg_ptr);
+  void callbackNavSat(const sensor_msgs::msg::NavSatFix::ConstSharedPtr msg_ptr);
+  void callbackAutowareState(
+    const autoware_system_msgs::msg::AutowareState::ConstSharedPtr msg_ptr);
+  void callbackControlMode(const autoware_vehicle_msgs::msg::ControlMode::ConstSharedPtr msg_ptr);
+  void callbackGateMode(const autoware_control_msgs::msg::GateMode::ConstSharedPtr msg_ptr);
+  void callbackIsEmergency(const autoware_control_msgs::msg::EmergencyMode::ConstSharedPtr msg_ptr);
+  void callbackStopReason(
+    const autoware_planning_msgs::msg::StopReasonArray::ConstSharedPtr msg_ptr);
+  void callbackDiagnostics(const diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr msg_ptr);
+  void callbackGlobalRpt(const pacmod_msgs::msg::GlobalRpt::ConstSharedPtr msg_ptr);
+  void callbackLaneChangeAvailable(const std_msgs::msg::Bool::ConstSharedPtr msg_ptr);
+  void callbackLaneChangeReady(const std_msgs::msg::Bool::ConstSharedPtr msg_ptr);
+  void callbackLaneChangeCandidatePath(
+    const autoware_planning_msgs::msg::Path::ConstSharedPtr msg_ptr);
+  void callbackLaneObstacleAvoidReady(const std_msgs::msg::Bool::ConstSharedPtr msg_ptr);
   void callbackLaneObstacleAvoidCandidatePath(
-    const autoware_planning_msgs::Trajectory::ConstPtr & msg_ptr);
+    const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr msg_ptr);
 
   // timer function
-  void timerCallback(const ros::TimerEvent & e);
+  void timerCallback();
 
   void emergencyParamCheck(const bool emergency_handling_param);
   void getCurrentPose();

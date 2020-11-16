@@ -14,31 +14,32 @@
  * limitations under the License.
  */
 
-#include <autoware_api_msgs/ObstacleAvoidanceStatus.h>
+#include <rclcpp/rclcpp.hpp>
+
 #include <awapi_awiv_adapter/awapi_autoware_util.h>
+#include <autoware_api_msgs/msg/obstacle_avoidance_status.hpp>
 
 namespace autoware_api
 {
 class AutowareIvObstacleAvoidanceStatePublisher
 {
 public:
-  AutowareIvObstacleAvoidanceStatePublisher();
+  AutowareIvObstacleAvoidanceStatePublisher(rclcpp::Node& node);
   void statePublisher(const AutowareInfo & aw_info);
 
 private:
-  // node handle
-  ros::NodeHandle nh_;
-  ros::NodeHandle pnh_;
+  rclcpp::Logger logger_;
+  rclcpp::Clock::SharedPtr clock_;
 
   // publisher
-  ros::Publisher pub_state_;
+  rclcpp::Publisher<autoware_api_msgs::msg::ObstacleAvoidanceStatus>::SharedPtr pub_state_;
 
   void getObstacleAvoidReadyInfo(
-    const std_msgs::Bool::ConstPtr & ready_ptr,
-    autoware_api_msgs::ObstacleAvoidanceStatus * status);
+    const std_msgs::msg::Bool::ConstSharedPtr & ready_ptr,
+    autoware_api_msgs::msg::ObstacleAvoidanceStatus * status);
   void getCandidatePathInfo(
-    const autoware_planning_msgs::Trajectory::ConstPtr & path_ptr,
-    autoware_api_msgs::ObstacleAvoidanceStatus * status);
+    const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr & path_ptr,
+    autoware_api_msgs::msg::ObstacleAvoidanceStatus * status);
 };
 
 }  // namespace autoware_api

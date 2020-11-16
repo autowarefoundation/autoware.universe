@@ -19,81 +19,55 @@
 #ifndef AWAPI_AUTOWARE_UTIL_H
 #define AWAPI_AUTOWARE_UTIL_H
 
-#include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/TwistStamped.h>
-#include <pacmod_msgs/GlobalRpt.h>
-#include <ros/ros.h>
-#include <sensor_msgs/NavSatFix.h>
-#include <std_msgs/Bool.h>
-#include <std_msgs/Float32.h>
 #include <tf2/utils.h>
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2_ros/transform_listener.h>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
+#include <pacmod_msgs/msg/global_rpt.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <sensor_msgs/msg/nav_sat_fix.hpp>
+#include <std_msgs/msg/bool.hpp>
+#include <std_msgs/msg/float32.hpp>
 
-#include <autoware_control_msgs/GateMode.h>
-#include <autoware_planning_msgs/Path.h>
-#include <autoware_planning_msgs/StopReasonArray.h>
-#include <autoware_planning_msgs/Trajectory.h>
-#include <autoware_system_msgs/AutowareState.h>
-#include <autoware_vehicle_msgs/ControlMode.h>
-#include <autoware_vehicle_msgs/ShiftStamped.h>
-#include <autoware_vehicle_msgs/Steering.h>
-#include <autoware_vehicle_msgs/TurnSignal.h>
-#include <autoware_vehicle_msgs/VehicleCommand.h>
-#include <diagnostic_msgs/DiagnosticArray.h>
+#include <autoware_control_msgs/msg/emergency_mode.hpp>
+#include <autoware_control_msgs/msg/gate_mode.hpp>
+#include <autoware_planning_msgs/msg/path.hpp>
+#include <autoware_planning_msgs/msg/stop_reason_array.hpp>
+#include <autoware_planning_msgs/msg/trajectory.hpp>
+#include <autoware_system_msgs/msg/autoware_state.hpp>
+#include <autoware_vehicle_msgs/msg/control_mode.hpp>
+#include <autoware_vehicle_msgs/msg/shift_stamped.hpp>
+#include <autoware_vehicle_msgs/msg/steering.hpp>
+#include <autoware_vehicle_msgs/msg/turn_signal.hpp>
+#include <autoware_vehicle_msgs/msg/vehicle_command.hpp>
+#include <diagnostic_msgs/msg/diagnostic_array.hpp>
 
 namespace autoware_api
 {
 struct AutowareInfo
 {
-  std::shared_ptr<geometry_msgs::PoseStamped> current_pose_ptr;
-  autoware_vehicle_msgs::Steering::ConstPtr steer_ptr;
-  autoware_vehicle_msgs::VehicleCommand::ConstPtr vehicle_cmd_ptr;
-  autoware_vehicle_msgs::TurnSignal::ConstPtr turn_signal_ptr;
-  geometry_msgs::TwistStamped::ConstPtr twist_ptr;
-  autoware_vehicle_msgs::ShiftStamped::ConstPtr gear_ptr;
-  std_msgs::Float32::ConstPtr battery_ptr;
-  sensor_msgs::NavSatFix::ConstPtr nav_sat_ptr;
-  autoware_system_msgs::AutowareState::ConstPtr autoware_state_ptr;
-  autoware_vehicle_msgs::ControlMode::ConstPtr control_mode_ptr;
-  autoware_control_msgs::GateMode::ConstPtr gate_mode_ptr;
-  std_msgs::Bool::ConstPtr is_emergency_ptr;
-  autoware_planning_msgs::StopReasonArray::ConstPtr stop_reason_ptr;
-  diagnostic_msgs::DiagnosticArray::ConstPtr diagnostic_ptr;
-  pacmod_msgs::GlobalRpt::ConstPtr global_rpt_ptr;
-  std_msgs::Bool::ConstPtr lane_change_available_ptr;
-  std_msgs::Bool::ConstPtr lane_change_ready_ptr;
-  autoware_planning_msgs::Path::ConstPtr lane_change_candidate_ptr;
-  std_msgs::Bool::ConstPtr obstacle_avoid_ready_ptr;
-  autoware_planning_msgs::Trajectory::ConstPtr obstacle_avoid_candidate_ptr;
+  std::shared_ptr<geometry_msgs::msg::PoseStamped> current_pose_ptr;
+  autoware_vehicle_msgs::msg::Steering::ConstSharedPtr steer_ptr;
+  autoware_vehicle_msgs::msg::VehicleCommand::ConstSharedPtr vehicle_cmd_ptr;
+  autoware_vehicle_msgs::msg::TurnSignal::ConstSharedPtr turn_signal_ptr;
+  geometry_msgs::msg::TwistStamped::ConstSharedPtr twist_ptr;
+  autoware_vehicle_msgs::msg::ShiftStamped::ConstSharedPtr gear_ptr;
+  std_msgs::msg::Float32::ConstSharedPtr battery_ptr;
+  sensor_msgs::msg::NavSatFix::ConstSharedPtr nav_sat_ptr;
+  autoware_system_msgs::msg::AutowareState::ConstSharedPtr autoware_state_ptr;
+  autoware_vehicle_msgs::msg::ControlMode::ConstSharedPtr control_mode_ptr;
+  autoware_control_msgs::msg::GateMode::ConstSharedPtr gate_mode_ptr;
+  autoware_control_msgs::msg::EmergencyMode::ConstSharedPtr is_emergency_ptr;
+  autoware_planning_msgs::msg::StopReasonArray::ConstSharedPtr stop_reason_ptr;
+  diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr diagnostic_ptr;
+  pacmod_msgs::msg::GlobalRpt::ConstSharedPtr global_rpt_ptr;
+  std_msgs::msg::Bool::ConstSharedPtr lane_change_available_ptr;
+  std_msgs::msg::Bool::ConstSharedPtr lane_change_ready_ptr;
+  autoware_planning_msgs::msg::Path::ConstSharedPtr lane_change_candidate_ptr;
+  std_msgs::msg::Bool::ConstSharedPtr obstacle_avoid_ready_ptr;
+  autoware_planning_msgs::msg::Trajectory::ConstSharedPtr obstacle_avoid_candidate_ptr;
 };
-
-template <class T>
-T getParam(const ros::NodeHandle & nh, const std::string & key, const T & default_value)
-{
-  T value;
-  nh.param<T>(key, value, default_value);
-  return value;
-}
-
-template <class T>
-T waitForParam(const ros::NodeHandle & nh, const std::string & key)
-{
-  T value;
-  ros::Rate rate(1.0);
-
-  while (ros::ok()) {
-    const auto result = nh.getParam(key, value);
-    if (result) {
-      return value;
-    }
-
-    ROS_WARN("waiting for parameter `%s` ...", key.c_str());
-    rate.sleep();
-  }
-
-  return {};
-}
 
 double lowpass_filter(const double current_value, const double prev_value, const double gain);
 
