@@ -19,19 +19,13 @@
 #include <cmath>
 #include <unordered_map>
 
-#include <unique_id/unique_id.h>
-#include <uuid_msgs/UniqueID.h>
+#include <unique_identifier_msgs/msg/uuid.hpp>
 
 // headers in ROS
-#include <autoware_lanelet2_msgs/MapBin.h>
-#include <autoware_perception_msgs/DynamicObject.h>
-#include <autoware_perception_msgs/DynamicObjectArray.h>
-#include <geometry_msgs/Pose.h>
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include <tf2/utils.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2_ros/transform_listener.h>
-#include <visualization_msgs/MarkerArray.h>
 
 // lanelet
 #include <lanelet2_core/LaneletMap.h>
@@ -47,8 +41,16 @@
 #include "map_based_prediction.h"
 #include "map_based_prediction_ros.h"
 
+std::string toHexString(const unique_identifier_msgs::msg::UUID & id){
+  std::stringstream ss;
+    for (auto i = 0; i < 16; ++i) {
+        ss << std::hex << std::setfill('0') << std::setw(2) << +id.uuid[i];
+    }
+    return ss.str();
+}
+
 bool MapBasedPredictionROS::getClosestLanelets(
-  const autoware_perception_msgs::DynamicObject & object,
+  const autoware_perception_msgs::msg::DynamicObject & object,
   const lanelet::LaneletMapPtr & lanelet_map_ptr_, std::vector<lanelet::Lanelet> & closest_lanelets,
   std::string uuid_string)
 {
@@ -68,7 +70,6 @@ bool MapBasedPredictionROS::getClosestLanelets(
   if (uuid2laneids_.size() == 0 || uuid2laneids_.count(uuid_string) == 0) {
     bool is_found_target_closest_lanelet = false;
     const double max_delta_yaw_threshold = M_PI / 4.;
-    double min_delta_yaw = 999999999;
     const double max_dist_for_searching_lanelet = 3;
     lanelet::Lanelet target_closest_lanelet;
     for (const auto & lanelet : nearest_lanelets) {
@@ -76,8 +77,8 @@ bool MapBasedPredictionROS::getClosestLanelets(
       if (object.state.orientation_reliable) {
         object_yaw = tf2::getYaw(object.state.pose_covariance.pose.orientation);
       } else {
-        geometry_msgs::Pose object_frame_pose;
-        geometry_msgs::Pose map_frame_pose;
+        geometry_msgs::msg::Pose object_frame_pose;
+        geometry_msgs::msg::Pose map_frame_pose;
         object_frame_pose.position.x = object.state.twist_covariance.twist.linear.x * 0.1;
         object_frame_pose.position.y = object.state.twist_covariance.twist.linear.y * 0.1;
         tf2::Transform tf_object2future;
@@ -126,8 +127,8 @@ bool MapBasedPredictionROS::getClosestLanelets(
         if (object.state.orientation_reliable) {
           object_yaw = tf2::getYaw(object.state.pose_covariance.pose.orientation);
         } else {
-          geometry_msgs::Pose object_frame_pose;
-          geometry_msgs::Pose map_frame_pose;
+          geometry_msgs::msg::Pose object_frame_pose;
+          geometry_msgs::msg::Pose map_frame_pose;
           object_frame_pose.position.x = object.state.twist_covariance.twist.linear.x * 0.1;
           object_frame_pose.position.y = object.state.twist_covariance.twist.linear.y * 0.1;
           tf2::Transform tf_object2future;
@@ -168,7 +169,7 @@ bool MapBasedPredictionROS::getClosestLanelets(
   return false;
 }
 
-double calculateDistance(const geometry_msgs::Point & point1, const geometry_msgs::Point & point2)
+double calculateDistance(const geometry_msgs::msg::Point & point1, const geometry_msgs::msg::Point & point2)
 {
   double dx = point1.x - point2.x;
   double dy = point1.y - point2.y;
@@ -176,30 +177,31 @@ double calculateDistance(const geometry_msgs::Point & point1, const geometry_msg
   return distance;
 }
 
-MapBasedPredictionROS::MapBasedPredictionROS() : pnh_("~"), interpolating_resolution_(0.5)
+MapBasedPredictionROS::MapBasedPredictionROS() 
+: Node("map_based_prediction"), interpolating_resolution_(0.5)
 {
-  tf_buffer_ptr_ = std::make_shared<tf2_ros::Buffer>();
+  rclcpp::Clock::SharedPtr clock = std::make_shared<rclcpp::Clock>(RCL_ROS_TIME);
+  tf_buffer_ptr_ = std::make_shared<tf2_ros::Buffer>(clock);
   tf_listener_ptr_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_ptr_);
-  pnh_.param<bool>("map_based_prediction/has_subscribed_map", has_subscribed_map_, false);
-  pnh_.param<double>("prediction_time_horizon", prediction_time_horizon_, 10.0);
-  pnh_.param<double>("prediction_sampling_delta_time", prediction_sampling_delta_time_, 0.5);
+  has_subscribed_map_ = declare_parameter("map_based_prediction/has_subscribed_map", false);
+  prediction_time_horizon_ = declare_parameter("prediction_time_horizon", 10.0);
+  prediction_sampling_delta_time_ = declare_parameter("prediction_sampling_delta_time", 0.5);
   map_based_prediction_ = std::make_shared<MapBasedPrediction>(
     interpolating_resolution_, prediction_time_horizon_, prediction_sampling_delta_time_);
-}
 
-void MapBasedPredictionROS::createROSPubSub()
-{
-  sub_objects_ = nh_.subscribe<autoware_perception_msgs::DynamicObjectArray>(
-    "/perception/object_recognition/tracking/objects", 1, &MapBasedPredictionROS::objectsCallback,
-    this);
-  sub_map_ = nh_.subscribe("/vector_map", 10, &MapBasedPredictionROS::mapCallback, this);
+  sub_objects_ = this->create_subscription<autoware_perception_msgs::msg::DynamicObjectArray>(
+    "/perception/object_recognition/tracking/objects", 1, 
+    std::bind(&MapBasedPredictionROS::objectsCallback, this, std::placeholders::_1));
+  sub_map_ = this->create_subscription<autoware_lanelet2_msgs::msg::MapBin>(
+    "/vector_map", 10, 
+    std::bind(&MapBasedPredictionROS::mapCallback, this, std::placeholders::_1));
 
-  pub_objects_ = nh_.advertise<autoware_perception_msgs::DynamicObjectArray>("objects", 1);
-  pub_markers_ = nh_.advertise<visualization_msgs::MarkerArray>("objects_path_markers", 1);
+  pub_objects_ = this->create_publisher<autoware_perception_msgs::msg::DynamicObjectArray>("objects", 1);
+  pub_markers_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("objects_path_markers", 1);
 }
 
 void MapBasedPredictionROS::objectsCallback(
-  const autoware_perception_msgs::DynamicObjectArrayConstPtr & in_objects)
+  const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr in_objects)
 {
   debug_accumulated_time_ = 0.0;
   std::chrono::high_resolution_clock::time_point begin = std::chrono::high_resolution_clock::now();
@@ -208,27 +210,27 @@ void MapBasedPredictionROS::objectsCallback(
     return;
   }
 
-  geometry_msgs::TransformStamped world2map_transform;
-  geometry_msgs::TransformStamped map2world_transform;
-  geometry_msgs::TransformStamped debug_map2lidar_transform;
+  geometry_msgs::msg::TransformStamped world2map_transform;
+  geometry_msgs::msg::TransformStamped map2world_transform;
+  geometry_msgs::msg::TransformStamped debug_map2lidar_transform;
   try {
     world2map_transform = tf_buffer_ptr_->lookupTransform(
       "map",                        // target
       in_objects->header.frame_id,  // src
-      in_objects->header.stamp, ros::Duration(0.1));
+      in_objects->header.stamp, rclcpp::Duration(0.1));
     map2world_transform = tf_buffer_ptr_->lookupTransform(
       in_objects->header.frame_id,  // target
       "map",                        // src
-      in_objects->header.stamp, ros::Duration(0.1));
+      in_objects->header.stamp, rclcpp::Duration(0.1));
     debug_map2lidar_transform = tf_buffer_ptr_->lookupTransform(
       "base_link",  // target
       "map",        // src
-      ros::Time(), ros::Duration(0.1));
+      rclcpp::Time(), rclcpp::Duration(0.1));
   } catch (tf2::TransformException & ex) {
     return;
   }
 
-  autoware_perception_msgs::DynamicObjectArray tmp_objects_whitout_map;
+  autoware_perception_msgs::msg::DynamicObjectArray tmp_objects_whitout_map;
   tmp_objects_whitout_map.header = in_objects->header;
   DynamicObjectWithLanesArray prediction_input;
   prediction_input.header = in_objects->header;
@@ -237,30 +239,34 @@ void MapBasedPredictionROS::objectsCallback(
     DynamicObjectWithLanes tmp_object;
     tmp_object.object = object;
     if (in_objects->header.frame_id != "map") {
-      geometry_msgs::Pose pose_in_map;
-      tf2::doTransform(object.state.pose_covariance.pose, pose_in_map, world2map_transform);
-      tmp_object.object.state.pose_covariance.pose = pose_in_map;
+      geometry_msgs::msg::PoseStamped pose_in_map;
+      geometry_msgs::msg::PoseStamped pose_orig;
+      pose_orig.pose = object.state.pose_covariance.pose;
+      tf2::doTransform(pose_orig, pose_in_map, world2map_transform);
+      tmp_object.object.state.pose_covariance.pose = pose_in_map.pose;
     }
 
     if (
-      object.semantic.type != autoware_perception_msgs::Semantic::CAR &&
-      object.semantic.type != autoware_perception_msgs::Semantic::BUS &&
-      object.semantic.type != autoware_perception_msgs::Semantic::TRUCK) {
+      object.semantic.type != autoware_perception_msgs::msg::Semantic::CAR &&
+      object.semantic.type != autoware_perception_msgs::msg::Semantic::BUS &&
+      object.semantic.type != autoware_perception_msgs::msg::Semantic::TRUCK) {
       tmp_objects_whitout_map.objects.push_back(tmp_object.object);
       continue;
     }
 
     // generate non redundant lanelet vector
     std::vector<lanelet::Lanelet> start_lanelets;
-    geometry_msgs::Point closest_point;
-    std::vector<geometry_msgs::Pose> path_points;
-    std::vector<geometry_msgs::Pose> second_path_points;
-    std::vector<geometry_msgs::Pose> right_path_points;
-    std::string uuid_string = unique_id::toHexString(object.id);
+    geometry_msgs::msg::Point closest_point;
+    std::vector<geometry_msgs::msg::Pose> path_points;
+    std::vector<geometry_msgs::msg::Pose> second_path_points;
+    std::vector<geometry_msgs::msg::Pose> right_path_points;
+    std::string uuid_string = toHexString(object.id);
     if (!getClosestLanelets(tmp_object.object, lanelet_map_ptr_, start_lanelets, uuid_string)) {
-      geometry_msgs::Point debug_point;
+      geometry_msgs::msg::PointStamped debug_point;
+      geometry_msgs::msg::PointStamped point_orig;
+      point_orig.point = tmp_object.object.state.pose_covariance.pose.position;
       tf2::doTransform(
-        tmp_object.object.state.pose_covariance.pose.position, debug_point,
+        point_orig, debug_point,
         debug_map2lidar_transform);
       tmp_objects_whitout_map.objects.push_back(object);
       continue;
@@ -328,9 +334,11 @@ void MapBasedPredictionROS::objectsCallback(
       paths.insert(paths.end(), left_paths.begin(), left_paths.end());
     }
     if (paths.size() == 0) {
-      geometry_msgs::Point debug_point;
+      geometry_msgs::msg::PointStamped debug_point;
+      geometry_msgs::msg::PointStamped point_orig;
+      point_orig.point = tmp_object.object.state.pose_covariance.pose.position;
       tf2::doTransform(
-        tmp_object.object.state.pose_covariance.pose.position, debug_point,
+        point_orig, debug_point,
         debug_map2lidar_transform);
       tmp_objects_whitout_map.objects.push_back(object);
       continue;
@@ -343,7 +351,7 @@ void MapBasedPredictionROS::objectsCallback(
       }
     }
 
-    std::string uid_string = unique_id::toHexString(object.id);
+    std::string uid_string = toHexString(object.id);
     if (uuid2laneids_.count(uid_string) == 0) {
       uuid2laneids_.emplace(uid_string, lanelet_ids);
     } else {
@@ -364,15 +372,15 @@ void MapBasedPredictionROS::objectsCallback(
       }
     }
 
-    std::vector<std::vector<geometry_msgs::Pose>> tmp_paths;
+    std::vector<std::vector<geometry_msgs::msg::Pose>> tmp_paths;
     for (const auto & path : paths) {
-      std::vector<geometry_msgs::Pose> tmp_path;
+      std::vector<geometry_msgs::msg::Pose> tmp_path;
       if (!path.empty()) {
         lanelet::ConstLanelets prev_lanelets = routing_graph_ptr_->previous(path.front());
         if (!prev_lanelets.empty()) {
           lanelet::ConstLanelet prev_lanelet = prev_lanelets.front();
           for (const auto & point : prev_lanelet.centerline()) {
-            geometry_msgs::Pose tmp_pose;
+            geometry_msgs::msg::Pose tmp_pose;
             tmp_pose.position.x = point.x();
             tmp_pose.position.y = point.y();
             tmp_pose.position.z = point.z();
@@ -382,7 +390,7 @@ void MapBasedPredictionROS::objectsCallback(
       }
       for (const auto & lanelet : path) {
         for (const auto & point : lanelet.centerline()) {
-          geometry_msgs::Pose tmp_pose;
+          geometry_msgs::msg::Pose tmp_pose;
           tmp_pose.position.x = point.x();
           tmp_pose.position.y = point.y();
           tmp_pose.position.z = point.z();
@@ -398,26 +406,26 @@ void MapBasedPredictionROS::objectsCallback(
   std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
   std::chrono::nanoseconds time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin);
 
-  std::vector<autoware_perception_msgs::DynamicObject> out_objects_in_map;
-  std::vector<geometry_msgs::Point> interpolated_points;
+  std::vector<autoware_perception_msgs::msg::DynamicObject> out_objects_in_map;
+  std::vector<geometry_msgs::msg::Point> interpolated_points;
   map_based_prediction_->doPrediction(prediction_input, out_objects_in_map, interpolated_points);
-  autoware_perception_msgs::DynamicObjectArray output;
+  autoware_perception_msgs::msg::DynamicObjectArray output;
   output.header = in_objects->header;
   output.header.frame_id = "map";
   output.objects = out_objects_in_map;
 
-  std::vector<autoware_perception_msgs::DynamicObject> out_objects_without_map;
+  std::vector<autoware_perception_msgs::msg::DynamicObject> out_objects_without_map;
   map_based_prediction_->doLinearPrediction(tmp_objects_whitout_map, out_objects_without_map);
   output.objects.insert(
     output.objects.begin(), out_objects_without_map.begin(), out_objects_without_map.end());
-  pub_objects_.publish(output);
+  pub_objects_->publish(output);
 }
 
-void MapBasedPredictionROS::mapCallback(const autoware_lanelet2_msgs::MapBin & msg)
+void MapBasedPredictionROS::mapCallback(const autoware_lanelet2_msgs::msg::MapBin::ConstSharedPtr msg)
 {
-  ROS_INFO("Start loading lanelet");
+  RCLCPP_INFO(get_logger(), "Start loading lanelet");
   lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(
-    msg, lanelet_map_ptr_, &traffic_rules_ptr_, &routing_graph_ptr_);
-  ROS_INFO("Map is loaded");
+    *msg, lanelet_map_ptr_, &traffic_rules_ptr_, &routing_graph_ptr_);
+  RCLCPP_INFO(get_logger(), "Map is loaded");
 }

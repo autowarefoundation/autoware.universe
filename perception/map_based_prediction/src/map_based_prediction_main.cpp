@@ -16,14 +16,13 @@
  *
  */
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include "map_based_prediction_ros.h"
 
 int main(int argc, char ** argv)
 {
-  ros::init(argc, argv, "map_based_prediction");
-  MapBasedPredictionROS ros_node;
-  ros_node.createROSPubSub();
-  ros::spin();
+  rclcpp::init(argc, argv);
+  rclcpp::spin(std::make_shared<MapBasedPredictionROS>());
+  rclcpp::shutdown();
   return 0;
 }
