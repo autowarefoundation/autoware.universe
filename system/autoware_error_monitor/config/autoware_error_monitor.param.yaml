@@ -1,0 +1,26 @@
+## Default parameters for autoware_error_monitor node
+---
+/**:
+  ros__parameters:
+    update_rate: 10
+    required_conditions:
+      manual_driving: ['autoware/vehicle']
+      autonomous_driving: ['autoware/control', 
+        'autoware/localization', 
+        'autoware/map', 
+        'autoware/perception',
+        'autoware/planning',
+        'autoware/safety',
+        'autoware/sensing',
+        'autoware/vehicle'
+      ]
+      remote_control: ['autoware/control',
+        'autoware/remote_control',
+        'autoware/safety',
+        'autoware/vehicle'
+      ]
+      safe_stop: ['autoware/map',
+        'autoware/emergency_system',
+        'autoware/vehicle'
+      ]
+      emergency_stop: ['autoware/vehicle']

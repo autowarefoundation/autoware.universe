@@ -1,10 +1,10 @@
 <launch>
-  <arg name="config_file" />
+  <arg name="config_file" default="$(find-pkg-share autoware_error_monitor)/config/autoware_error_monitor.param.yaml" />
 
-  <node pkg="autoware_error_monitor" type="autoware_error_monitor" name="autoware_error_monitor" output="screen">
-    <remap from="~input/diag_array" to="/diagnostics_agg" />
-    <remap from="~output/driving_capability" to="/autoware/driving_capability" />
+  <node pkg="autoware_error_monitor" exec="autoware_error_monitor" name="autoware_error_monitor" output="screen">
+    <remap from="input/diag_array" to="/diagnostics_agg" />
+    <remap from="output/driving_capability" to="/autoware/driving_capability" />
 
-    <rosparam command="load" file="$(arg config_file)" />
+    <param from="$(var config_file)" />
   </node>
 </launch>

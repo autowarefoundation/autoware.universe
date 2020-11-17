@@ -1,10 +1,12 @@
-analyzers:
-  planning:
-    type: diagnostic_aggregator/AnalyzerGroup
-    path: planning
-    analyzers:
-      topic_status:
-        type: diagnostic_aggregator/GenericAnalyzer
-        path: topic_status
-        contains: ": planning_topic_status"
-        num_items: 0
+/**:
+  ros__parameters:
+    path: autoware
+    planning:
+      type: 'diagnostic_aggregator/AnalyzerGroup'
+      path: planning
+      analyzers:
+        topic_status:
+          type: 'diagnostic_aggregator/GenericAnalyzer'
+          path: topic_status
+          contains: [": planning_topic_status"]
+          num_items: 0

@@ -1,16 +1,17 @@
-analyzers:
-  remote_control:
-    type: diagnostic_aggregator/AnalyzerGroup
-    path: remote_control
-    analyzers:
-      topic_status:
-        type: diagnostic_aggregator/GenericAnalyzer
-        path: topic_status
-        contains: ": remote_control_topic_status"
-        num_items: 0
-
-      internet_connection:
-        type: diagnostic_aggregator/GenericAnalyzer
-        path: internet_connection
-        contains: ": internet_connection"
-        num_items: 0
+/**:
+  ros__parameters:
+    path: autoware
+    remote_control:
+      type: 'diagnostic_aggregator/AnalyzerGroup'
+      path: remote_control
+      analyzers:
+        topic_status:
+          type: 'diagnostic_aggregator/GenericAnalyzer'
+          path: topic_status
+          contains: [": remote_control_topic_status"]
+          num_items: 0
+        internet_connection:
+          type: 'diagnostic_aggregator/GenericAnalyzer'
+          path: internet_connection
+          contains: [": internet_connection"]
+          num_items: 0

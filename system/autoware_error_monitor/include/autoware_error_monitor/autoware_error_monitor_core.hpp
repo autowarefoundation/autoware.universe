@@ -14,23 +14,22 @@
  * limitations under the License.
  */
 
-#pragma once
+#ifndef AUTOWARE_ERROR_MONITOR_CORE_H_
+#define AUTOWARE_ERROR_MONITOR_CORE_H_
 
+#include <autoware_system_msgs/msg/driving_capability.hpp>
+#include <boost/optional.hpp>
 #include <deque>
+#include <diagnostic_msgs/msg/diagnostic_array.hpp>
+#include <rclcpp/create_timer.hpp>
+#include <rclcpp/rclcpp.hpp>
 #include <string>
 #include <unordered_map>
 
-#include <boost/optional.hpp>
-
-#include <ros/ros.h>
-
-#include <autoware_system_msgs/DrivingCapability.h>
-#include <diagnostic_msgs/DiagnosticArray.h>
-
 struct DiagStamped
 {
-  std_msgs::Header header;
-  diagnostic_msgs::DiagnosticStatus status;
+  std_msgs::msg::Header header;
+  diagnostic_msgs::msg::DiagnosticStatus status;
 };
 
 using RequiredConditions = std::vector<std::string>;
@@ -38,44 +37,41 @@ using DiagBuffer = std::deque<DiagStamped>;
 
 struct KeyName
 {
-  static constexpr const char * manual_driving = "/manual_driving";
-  static constexpr const char * autonomous_driving = "/autonomous_driving";
-  static constexpr const char * remote_control = "/remote_control";
-  static constexpr const char * safe_stop = "/safe_stop";
-  static constexpr const char * emergency_stop = "/emergency_stop";
+  static constexpr const char * manual_driving = "manual_driving";
+  static constexpr const char * autonomous_driving = "autonomous_driving";
+  static constexpr const char * remote_control = "remote_control";
+  static constexpr const char * safe_stop = "safe_stop";
+  static constexpr const char * emergency_stop = "emergency_stop";
 };
 
-class AutowareErrorMonitorNode
+class AutowareErrorMonitor : public rclcpp::Node
 {
 public:
-  AutowareErrorMonitorNode();
+  AutowareErrorMonitor();
 
 private:
-  // NodeHandle
-  ros::NodeHandle nh_{""};
-  ros::NodeHandle private_nh_{"~"};
-
   // Parameter
-  double update_rate_;
+  int update_rate_;
   std::unordered_map<std::string, RequiredConditions> required_conditions_map_;
 
   void loadRequiredConditions(const std::string & key);
 
   // Timer
-  ros::Timer timer_;
+  rclcpp::TimerBase::SharedPtr timer_;
 
-  void onTimer(const ros::TimerEvent & event);
+  void onTimer();
 
   // Subscriber
-  ros::Subscriber sub_diag_array_;
+  rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr sub_diag_array_;
 
-  void onDiagArray(const diagnostic_msgs::DiagnosticArray::ConstPtr & msg);
+  void onDiagArray(const diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr msg);
 
   const size_t diag_buffer_size_ = 100;
   std::unordered_map<std::string, DiagBuffer> diag_buffer_map_;
 
   // Publisher
-  ros::Publisher pub_driving_capability_;
+  rclcpp::Publisher<autoware_system_msgs::msg::DrivingCapability>::SharedPtr
+    pub_driving_capability_;
 
   // Algorithm
   bool judgeCapability(const std::string & key);
@@ -83,3 +79,5 @@ private:
 
   const double diag_timeout_sec_ = 1.0;
 };
+
+#endif

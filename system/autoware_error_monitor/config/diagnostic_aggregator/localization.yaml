@@ -1,22 +1,22 @@
-analyzers:
-  localization:
-    type: diagnostic_aggregator/AnalyzerGroup
-    path: localization
-    analyzers:
-      topic_status:
-        type: diagnostic_aggregator/GenericAnalyzer
-        path: topic_status
-        contains: ": localization_topic_status"
-        num_items: 0
-
-      tf_status:
-        type: diagnostic_aggregator/GenericAnalyzer
-        path: tf_status
-        contains: ": localization_tf_status"
-        num_items: 0
-
-      ndt_scan_matcher:
-        type: diagnostic_aggregator/GenericAnalyzer
-        path: ndt_scan_matcher
-        contains: "ndt_scan_matcher"
-        num_items: 0
+/**:
+  ros__parameters:
+    path: autoware
+    localization:
+      type: 'diagnostic_aggregator/AnalyzerGroup'
+      path: localization
+      analyzers:
+        topic_status:
+          type: 'diagnostic_aggregator/GenericAnalyzer'
+          path: topic_status
+          contains: [": localization_topic_status"]
+          num_items: 0
+        tf_status:
+          type: 'diagnostic_aggregator/GenericAnalyzer'
+          path: tf_status
+          contains: [": localization_tf_status"]
+          num_items: 0
+        ndt_scan_matcher:
+          type: 'diagnostic_aggregator/GenericAnalyzer'
+          path: ndt_scan_matcher
+          contains: ["ndt_scan_matcher"]
+          num_items: 0

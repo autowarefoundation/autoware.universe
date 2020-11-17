@@ -14,17 +14,14 @@
  * limitations under the License.
  */
 
-#include <ros/ros.h>
+#include <autoware_error_monitor/autoware_error_monitor_core.hpp>
 
-#include <autoware_error_monitor/autoware_error_monitor_node.h>
-
-int main(int argc, char * argv[])
+int main(int argc, char ** argv)
 {
-  ros::init(argc, argv, "autoware_error_monitor");
-
-  AutowareErrorMonitorNode node;
-
-  ros::spin();
+  rclcpp::init(argc, argv);
+  auto node = std::make_shared<AutowareErrorMonitor>();
+  rclcpp::spin(node);
+  rclcpp::shutdown();
 
   return 0;
 }
