@@ -55,6 +55,10 @@ repositories:
     type: git
     url: https://github.com/astuff/pacmod3.git
     version: dashing-devel
+  vendor/diagnostics: # TODO remove after https://github.com/ros/diagnostics/pull/168 is available in foxy
+    type: git
+    url: https://github.com/mitsudome-r/diagnostics.git
+    version: ros2-devel
 #  vendor/lanelet2:
 #    type: git
 #    url: https://github.com/fzi-forschungszentrum-informatik/Lanelet2.git
