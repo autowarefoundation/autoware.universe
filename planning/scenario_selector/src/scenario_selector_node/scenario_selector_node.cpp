@@ -20,8 +20,6 @@
 #include <utility>
 #include <vector>
 
-#include <boost/bind.hpp>
-
 #include <lanelet2_core/geometry/BoundingBox.h>
 #include <lanelet2_core/geometry/Lanelet.h>
 #include <lanelet2_core/geometry/LineString.h>
@@ -39,9 +37,9 @@ void onData(const T & data, T * buffer)
 }
 
 template <class T>
-boost::function<void(const T &)> createCallback(T * buffer)
+std::function<void(T)> createCallback(T * buffer)
 {
-  return static_cast<boost::function<void(const T &)>>(boost::bind(onData<T>, _1, buffer));
+  return static_cast<std::function<void(T)>>(std::bind(&onData<T>, std::placeholders::_1, buffer));
 }
 
 std::shared_ptr<lanelet::ConstPolygon3d> findNearestParkinglot(
@@ -69,31 +67,31 @@ std::shared_ptr<lanelet::ConstPolygon3d> findNearestParkinglot(
   }
 }
 
-geometry_msgs::PoseStamped::ConstPtr getCurrentPose(const tf2_ros::Buffer & tf_buffer)
+geometry_msgs::msg::PoseStamped::ConstSharedPtr getCurrentPose(const tf2_ros::Buffer & tf_buffer, const rclcpp::Logger & logger)
 {
-  geometry_msgs::TransformStamped tf_current_pose;
+  geometry_msgs::msg::TransformStamped tf_current_pose;
 
   try {
     tf_current_pose =
-      tf_buffer.lookupTransform("map", "base_link", ros::Time(0), ros::Duration(1.0));
-  } catch (tf2::TransformException ex) {
-    ROS_ERROR("[scenario_selector] %s", ex.what());
+      tf_buffer.lookupTransform("map", "base_link", tf2::TimePointZero);
+  } catch (tf2::TransformException & ex) {
+    RCLCPP_ERROR(logger, "%s", ex.what());
     return nullptr;
   }
 
-  geometry_msgs::PoseStamped::Ptr p(new geometry_msgs::PoseStamped());
+  geometry_msgs::msg::PoseStamped::SharedPtr p(new geometry_msgs::msg::PoseStamped());
   p->header = tf_current_pose.header;
   p->pose.orientation = tf_current_pose.transform.rotation;
   p->pose.position.x = tf_current_pose.transform.translation.x;
   p->pose.position.y = tf_current_pose.transform.translation.y;
   p->pose.position.z = tf_current_pose.transform.translation.z;
 
-  return geometry_msgs::PoseStamped::ConstPtr(p);
+  return geometry_msgs::msg::PoseStamped::ConstSharedPtr(p);
 }
 
 bool isInLane(
   const std::shared_ptr<lanelet::LaneletMap> & lanelet_map_ptr,
-  const geometry_msgs::Pose & current_pose)
+  const geometry_msgs::msg::Pose & current_pose)
 {
   const auto & p = current_pose.position;
   const lanelet::Point3d search_point(lanelet::InvalId, p.x, p.y, p.z);
@@ -112,7 +110,7 @@ bool isInLane(
 
 bool isInParkingLot(
   const std::shared_ptr<lanelet::LaneletMap> & lanelet_map_ptr,
-  const geometry_msgs::Pose & current_pose)
+  const geometry_msgs::msg::Pose & current_pose)
 {
   const auto & p = current_pose.position;
   const lanelet::Point3d search_point(lanelet::InvalId, p.x, p.y, p.z);
@@ -128,8 +126,8 @@ bool isInParkingLot(
 }
 
 bool isNearTrajectoryEnd(
-  const autoware_planning_msgs::Trajectory::ConstPtr & trajectory,
-  const geometry_msgs::Pose & current_pose, const double th_dist)
+  const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr trajectory,
+  const geometry_msgs::msg::Pose & current_pose, const double th_dist)
 {
   if (!trajectory || trajectory->points.empty()) {
     return false;
@@ -144,7 +142,7 @@ bool isNearTrajectoryEnd(
 }
 
 bool isStopped(
-  const std::deque<geometry_msgs::TwistStamped::ConstPtr> & twist_buffer,
+  const std::deque<geometry_msgs::msg::TwistStamped::ConstSharedPtr> & twist_buffer,
   const double th_stopped_velocity_mps)
 {
   for (const auto & twist : twist_buffer) {
@@ -159,9 +157,9 @@ bool isStopped(
 
 Input ScenarioSelectorNode::getScenarioInput(const std::string & scenario)
 {
-  if (scenario == autoware_planning_msgs::Scenario::LaneDriving) return input_lane_driving_;
-  if (scenario == autoware_planning_msgs::Scenario::Parking) return input_parking_;
-  ROS_ERROR_STREAM("invalid scenario argument: " << scenario);
+  if (scenario == autoware_planning_msgs::msg::Scenario::LANEDRIVING) return input_lane_driving_;
+  if (scenario == autoware_planning_msgs::msg::Scenario::PARKING) return input_parking_;
+  RCLCPP_ERROR_STREAM(this->get_logger(), "invalid scenario argument: " << scenario);
   return input_lane_driving_;
 }
 
@@ -171,32 +169,33 @@ std::string ScenarioSelectorNode::selectScenarioByPosition()
   const auto is_goal_in_lane = isInLane(lanelet_map_ptr_, route_->goal_pose);
   const auto is_in_parking_lot = isInParkingLot(lanelet_map_ptr_, current_pose_->pose);
 
-  if (current_scenario_ == autoware_planning_msgs::Scenario::Empty) {
+  if (current_scenario_ == autoware_planning_msgs::msg::Scenario::EMPTY) {
     if (is_in_parking_lot) {
-      return autoware_planning_msgs::Scenario::Parking;
+      return autoware_planning_msgs::msg::Scenario::PARKING;
     } else {
-      return autoware_planning_msgs::Scenario::LaneDriving;
+      return autoware_planning_msgs::msg::Scenario::LANEDRIVING;
     }
   }
 
-  if (current_scenario_ == autoware_planning_msgs::Scenario::LaneDriving) {
+  if (current_scenario_ == autoware_planning_msgs::msg::Scenario::LANEDRIVING) {
     if (is_in_parking_lot && !is_goal_in_lane) {
-      return autoware_planning_msgs::Scenario::Parking;
+      return autoware_planning_msgs::msg::Scenario::PARKING;
     }
   }
 
-  if (current_scenario_ == autoware_planning_msgs::Scenario::Parking) {
-    const auto is_parking_completed = nh_.param<bool>("is_parking_completed", false);
+  if (current_scenario_ == autoware_planning_msgs::msg::Scenario::PARKING) {
+    bool is_parking_completed;
+    this->get_parameter<bool>("is_parking_completed", is_parking_completed);
     if (is_parking_completed && is_in_lane) {
-      nh_.setParam("is_parking_completed", false);
-      return autoware_planning_msgs::Scenario::LaneDriving;
+      this->set_parameter(rclcpp::Parameter("is_parking_completed", false));
+      return autoware_planning_msgs::msg::Scenario::LANEDRIVING;
     }
   }
 
   return current_scenario_;
 }
 
-autoware_planning_msgs::Scenario ScenarioSelectorNode::selectScenario()
+autoware_planning_msgs::msg::Scenario ScenarioSelectorNode::selectScenario()
 {
   const auto prev_scenario = current_scenario_;
 
@@ -211,34 +210,35 @@ autoware_planning_msgs::Scenario ScenarioSelectorNode::selectScenario()
     current_scenario_ = selectScenarioByPosition();
   }
 
-  autoware_planning_msgs::Scenario scenario;
+  autoware_planning_msgs::msg::Scenario scenario;
   scenario.current_scenario = current_scenario_;
 
-  if (current_scenario_ == autoware_planning_msgs::Scenario::Parking) {
+  if (current_scenario_ == autoware_planning_msgs::msg::Scenario::PARKING) {
     scenario.activating_scenarios.push_back(current_scenario_);
   }
 
   if (current_scenario_ != prev_scenario) {
-    ROS_INFO_STREAM("scenario changed: " << prev_scenario << " -> " << current_scenario_);
+    RCLCPP_INFO_STREAM(
+      this->get_logger(), "scenario changed: " << prev_scenario << " -> " << current_scenario_);
   }
 
   return scenario;
 }
 
-void ScenarioSelectorNode::onMap(const autoware_lanelet2_msgs::MapBin & msg)
+void ScenarioSelectorNode::onMap(const autoware_lanelet2_msgs::msg::MapBin::ConstSharedPtr msg)
 {
   lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(
-    msg, lanelet_map_ptr_, &traffic_rules_ptr_, &routing_graph_ptr_);
+    *msg, lanelet_map_ptr_, &traffic_rules_ptr_, &routing_graph_ptr_);
 }
 
-void ScenarioSelectorNode::onRoute(const autoware_planning_msgs::Route::ConstPtr & msg)
+void ScenarioSelectorNode::onRoute(const autoware_planning_msgs::msg::Route::ConstSharedPtr msg)
 {
   route_ = msg;
-  current_scenario_ = autoware_planning_msgs::Scenario::Empty;
+  current_scenario_ = autoware_planning_msgs::msg::Scenario::EMPTY;
 }
 
-void ScenarioSelectorNode::onTwist(const geometry_msgs::TwistStamped::ConstPtr & msg)
+void ScenarioSelectorNode::onTwist(const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg)
 {
   twist_ = msg;
 
@@ -246,9 +246,9 @@ void ScenarioSelectorNode::onTwist(const geometry_msgs::TwistStamped::ConstPtr &
 
   // Delete old data in buffer
   while (true) {
-    const auto time_diff = msg->header.stamp - twist_buffer_.front()->header.stamp;
+    const auto time_diff = rclcpp::Time(msg->header.stamp) - rclcpp::Time(twist_buffer_.front()->header.stamp);
 
-    if (time_diff.toSec() < th_stopped_time_sec_) {
+    if (time_diff.seconds() < th_stopped_time_sec_) {
       break;
     }
 
@@ -256,9 +256,9 @@ void ScenarioSelectorNode::onTwist(const geometry_msgs::TwistStamped::ConstPtr &
   }
 }
 
-void ScenarioSelectorNode::onTimer(const ros::TimerEvent & event)
+void ScenarioSelectorNode::onTimer()
 {
-  current_pose_ = getCurrentPose(tf_buffer_);
+  current_pose_ = getCurrentPose(tf_buffer_, this->get_logger());
 
   // Check all inputs are ready
   if (!current_pose_ || !lanelet_map_ptr_ || !route_ || !twist_) {
@@ -266,13 +266,13 @@ void ScenarioSelectorNode::onTimer(const ros::TimerEvent & event)
   }
 
   // Initialize Scenario
-  if (current_scenario_ == autoware_planning_msgs::Scenario::Empty) {
+  if (current_scenario_ == autoware_planning_msgs::msg::Scenario::EMPTY) {
     current_scenario_ = selectScenarioByPosition();
   }
 
   // Select scenario
   const auto scenario = selectScenario();
-  output_.pub_scenario.publish(scenario);
+  output_.pub_scenario->publish(scenario);
 
   const auto & input = getScenarioInput(scenario.current_scenario);
 
@@ -281,58 +281,77 @@ void ScenarioSelectorNode::onTimer(const ros::TimerEvent & event)
   }
 
   // Output
-  const auto now = ros::Time::now();
-  const auto delay_sec = (now - input.buf_trajectory->header.stamp).toSec();
+  const auto now = this->now();
+  const auto delay_sec = (now - input.buf_trajectory->header.stamp).seconds();
   if (delay_sec <= th_max_message_delay_sec_) {
-    output_.pub_trajectory.publish(input.buf_trajectory);
+    output_.pub_trajectory->publish(*input.buf_trajectory);
   } else {
-    ROS_WARN_THROTTLE(
-      1.0, "trajectory is delayed: scenario = %s, delay = %f, th_max_message_delay = %f",
+    RCLCPP_WARN_THROTTLE(
+      this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
+      "trajectory is delayed: scenario = %s, delay = %f, th_max_message_delay = %f",
       current_scenario_.c_str(), delay_sec, th_max_message_delay_sec_);
   }
 }
 
 ScenarioSelectorNode::ScenarioSelectorNode()
-: nh_(""),
-  private_nh_("~"),
+: Node("scenario_selector"),
+  tf_buffer_(this->get_clock()),
   tf_listener_(tf_buffer_),
-  current_scenario_(autoware_planning_msgs::Scenario::Empty)
+  current_scenario_(autoware_planning_msgs::msg::Scenario::EMPTY),
+  update_rate_(this->declare_parameter<double>("update_rate", 10.0)),
+  th_max_message_delay_sec_(this->declare_parameter<double>("th_max_message_delay_sec", 1.0)),
+  th_arrived_distance_m_(this->declare_parameter<double>("th_arrived_distance_m", 1.0)),
+  th_stopped_time_sec_(this->declare_parameter<double>("th_stopped_time_sec", 1.0)),
+  th_stopped_velocity_mps_(this->declare_parameter<double>("th_stopped_velocity_mps", 0.01))
 {
   // Parameters
-  private_nh_.param<double>("update_rate", update_rate_, 10.0);
-  private_nh_.param<double>("th_max_message_delay_sec", th_max_message_delay_sec_, 1.0);
-  private_nh_.param<double>("th_arrived_distance_m", th_arrived_distance_m_, 1.0);
-  private_nh_.param<double>("th_stopped_time_sec", th_stopped_time_sec_, 1.0);
-  private_nh_.param<double>("th_stopped_velocity_mps", th_stopped_velocity_mps_, 0.01);
+
+  this->declare_parameter<bool>("is_parking_completed", false);
 
   // Input
-  input_lane_driving_.sub_trajectory = private_nh_.subscribe(
-    "input/lane_driving/trajectory", 1, createCallback(&input_lane_driving_.buf_trajectory));
+  input_lane_driving_.sub_trajectory =
+    this->create_subscription<autoware_planning_msgs::msg::Trajectory>(
+      "input/lane_driving/trajectory", rclcpp::QoS{1},
+      createCallback<autoware_planning_msgs::msg::Trajectory::ConstSharedPtr>(
+        &input_lane_driving_.buf_trajectory));
 
-  input_parking_.sub_trajectory = private_nh_.subscribe(
-    "input/parking/trajectory", 1, createCallback(&input_parking_.buf_trajectory));
+  input_parking_.sub_trajectory =
+    this->create_subscription<autoware_planning_msgs::msg::Trajectory>(
+      "input/parking/trajectory", rclcpp::QoS{1}, createCallback(&input_parking_.buf_trajectory));
 
-  sub_lanelet_map_ =
-    private_nh_.subscribe("input/lanelet_map", 1, &ScenarioSelectorNode::onMap, this);
-  sub_route_ = private_nh_.subscribe("input/route", 1, &ScenarioSelectorNode::onRoute, this);
-  sub_twist_ = private_nh_.subscribe("input/twist", 100, &ScenarioSelectorNode::onTwist, this);
+  sub_lanelet_map_ = this->create_subscription<autoware_lanelet2_msgs::msg::MapBin>(
+    "input/lanelet_map", rclcpp::QoS{1},
+    std::bind(&ScenarioSelectorNode::onMap, this, std::placeholders::_1));
+  sub_route_ = this->create_subscription<autoware_planning_msgs::msg::Route>(
+    "input/route", rclcpp::QoS{1},
+    std::bind(&ScenarioSelectorNode::onRoute, this, std::placeholders::_1));
+  sub_twist_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
+    "input/twist", rclcpp::QoS{100},
+    std::bind(&ScenarioSelectorNode::onTwist, this, std::placeholders::_1));
 
   // Output
-  output_.pub_scenario =
-    private_nh_.advertise<autoware_planning_msgs::Scenario>("output/scenario", 1);
-  output_.pub_trajectory =
-    private_nh_.advertise<autoware_planning_msgs::Trajectory>("output/trajectory", 1);
+  output_.pub_scenario = this->create_publisher<autoware_planning_msgs::msg::Scenario>(
+    "output/scenario", rclcpp::QoS{1});
+  output_.pub_trajectory = this->create_publisher<autoware_planning_msgs::msg::Trajectory>(
+    "output/trajectory", rclcpp::QoS{1});
 
   // Timer Callback
-  timer_ = private_nh_.createTimer(ros::Rate(update_rate_), &ScenarioSelectorNode::onTimer, this);
+  auto timer_callback = std::bind(&ScenarioSelectorNode::onTimer, this);
+  auto period = std::chrono::duration_cast<std::chrono::nanoseconds>(
+    std::chrono::duration<double>(update_rate_));
+
+  timer_ = std::make_shared<rclcpp::GenericTimer<decltype(timer_callback)>>(
+    this->get_clock(), period, std::move(timer_callback),
+    this->get_node_base_interface()->get_context());
+  this->get_node_timers_interface()->add_timer(timer_, nullptr);
 
   // Wait for first tf
-  while (ros::ok()) {
+  while (rclcpp::ok()) {
     try {
-      tf_buffer_.lookupTransform("map", "base_link", ros::Time(0), ros::Duration(10.0));
+      tf_buffer_.lookupTransform("map", "base_link", tf2::TimePointZero);
       break;
-    } catch (tf2::TransformException ex) {
-      ROS_DEBUG("waiting for initial pose...");
+    } catch (tf2::TransformException & ex) {
+      RCLCPP_DEBUG(this->get_logger(), "waiting for initial pose...");
     }
   }
 }

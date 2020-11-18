@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-#pragma once
+#ifndef SCENARIO_SELECTOR_SCENARIO_SELECTOR_NODE_H_
+#define SCENARIO_SELECTOR_SCENARIO_SELECTOR_NODE_H_
 
 #include <deque>
 #include <memory>
@@ -23,68 +24,65 @@
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_routing/RoutingGraph.h>
 #include <lanelet2_traffic_rules/TrafficRules.h>
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
-#include <autoware_lanelet2_msgs/MapBin.h>
-#include <autoware_planning_msgs/Route.h>
-#include <autoware_planning_msgs/Scenario.h>
-#include <autoware_planning_msgs/Trajectory.h>
-#include <geometry_msgs/TwistStamped.h>
+#include <autoware_lanelet2_msgs/msg/map_bin.hpp>
+#include <autoware_planning_msgs/msg/route.hpp>
+#include <autoware_planning_msgs/msg/scenario.hpp>
+#include <autoware_planning_msgs/msg/trajectory.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
 
 struct Input
 {
-  ros::Subscriber sub_trajectory;
-  autoware_planning_msgs::Trajectory::ConstPtr buf_trajectory;
+  rclcpp::Subscription<autoware_planning_msgs::msg::Trajectory>::SharedPtr sub_trajectory;
+  autoware_planning_msgs::msg::Trajectory::ConstSharedPtr buf_trajectory;
 };
 
 struct Output
 {
-  ros::Publisher pub_scenario;
-  ros::Publisher pub_trajectory;
+  rclcpp::Publisher<autoware_planning_msgs::msg::Scenario>::SharedPtr pub_scenario;
+  rclcpp::Publisher<autoware_planning_msgs::msg::Trajectory>::SharedPtr pub_trajectory;
 };
 
-class ScenarioSelectorNode
+class ScenarioSelectorNode : public rclcpp::Node
 {
 public:
   ScenarioSelectorNode();
 
-  void onMap(const autoware_lanelet2_msgs::MapBin & msg);
-  void onRoute(const autoware_planning_msgs::Route::ConstPtr & msg);
-  void onTwist(const geometry_msgs::TwistStamped::ConstPtr & msg);
+  void onMap(const autoware_lanelet2_msgs::msg::MapBin::ConstSharedPtr msg);
+  void onRoute(const autoware_planning_msgs::msg::Route::ConstSharedPtr msg);
+  void onTwist(const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg);
 
-  void onTimer(const ros::TimerEvent & event);
+  void onTimer();
 
-  autoware_planning_msgs::Scenario selectScenario();
+  autoware_planning_msgs::msg::Scenario selectScenario();
   std::string selectScenarioByPosition();
   Input getScenarioInput(const std::string & scenario);
 
 private:
-  ros::NodeHandle nh_;
-  ros::NodeHandle private_nh_;
-
-  ros::Timer timer_;
+  rclcpp::TimerBase::SharedPtr timer_;
 
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
 
-  ros::Subscriber sub_lanelet_map_;
-  ros::Subscriber sub_route_;
-  ros::Subscriber sub_twist_;
+  rclcpp::Subscription<autoware_lanelet2_msgs::msg::MapBin>::SharedPtr sub_lanelet_map_;
+  rclcpp::Subscription<autoware_planning_msgs::msg::Route>::SharedPtr sub_route_;
+  rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr sub_twist_;
 
   Input input_lane_driving_;
   Input input_parking_;
 
   Output output_;
 
-  autoware_planning_msgs::Route::ConstPtr route_;
-  geometry_msgs::PoseStamped::ConstPtr current_pose_;
-  geometry_msgs::TwistStamped::ConstPtr twist_;
+  autoware_planning_msgs::msg::Route::ConstSharedPtr route_;
+  geometry_msgs::msg::PoseStamped::ConstSharedPtr current_pose_;
+  geometry_msgs::msg::TwistStamped::ConstSharedPtr twist_;
 
   std::string current_scenario_;
-  std::deque<geometry_msgs::TwistStamped::ConstPtr> twist_buffer_;
+  std::deque<geometry_msgs::msg::TwistStamped::ConstSharedPtr> twist_buffer_;
 
   std::shared_ptr<lanelet::LaneletMap> lanelet_map_ptr_;
   std::shared_ptr<lanelet::routing::RoutingGraph> routing_graph_ptr_;
@@ -97,3 +95,5 @@ private:
   double th_stopped_time_sec_;
   double th_stopped_velocity_mps_;
 };
+
+#endif

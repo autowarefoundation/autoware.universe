@@ -1,69 +1,31 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.5)
 project(scenario_selector)
 
-add_compile_options(-std=c++14)
+### Compile options
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wno-unused-parameter -Wall -Wextra -Wpedantic)
+endif()
 
-find_package(catkin REQUIRED COMPONENTS
-  autoware_lanelet2_msgs
-  autoware_planning_msgs
-  lanelet2_extension
-  roscpp
-  tf2
-  tf2_ros
-  tf2_geometry_msgs
-)
-
-catkin_package(
-  INCLUDE_DIRS
-    include
-  CATKIN_DEPENDS
-    autoware_lanelet2_msgs
-    autoware_planning_msgs
-    lanelet2_extension
-    tf2
-    tf2_ros
-    tf2_geometry_msgs
-)
-
-include_directories(
-  include
-  ${catkin_INCLUDE_DIRS}
-)
+## Dependencies
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
 
 # Target
-## scenario_selector_node
-add_executable(scenario_selector
-  src/scenario_selector_node/main.cpp
+
+## Target executable
+set(SCENARIO_SELECTOR_SRC
   src/scenario_selector_node/scenario_selector_node.cpp
 )
 
-target_link_libraries(scenario_selector
-  ${catkin_LIBRARIES}
+## scenario_selector_node
+ament_auto_add_executable(scenario_selector
+  src/scenario_selector_node/main.cpp
+  ${SCENARIO_SELECTOR_SRC}
 )
 
-add_dependencies(scenario_selector
-  ${${PROJECT_NAME}_EXPORTED_TARGETS}
-  ${catkin_EXPORTED_TARGETS}
-)
-
-# Install
-## executables and libraries
-install(
-  TARGETS
-    scenario_selector
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-
-## project namespaced headers
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-)
-
-## launch files
-install(
-  DIRECTORY
-    launch
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+ament_auto_package(INSTALL_TO_SHARE
+  launch
 )

@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
+
 #include <scenario_selector/scenario_selector_node.h>
 
-int main(int argc, char * argv[])
+int main(int argc, char ** argv)
 {
-  ros::init(argc, argv, "scenario_selector");
-
-  ScenarioSelectorNode node;
-
-  ros::spin();
+  rclcpp::init(argc, argv);
+  auto node = std::make_shared<ScenarioSelectorNode>();
+  rclcpp::spin(node);
+  rclcpp::shutdown();
 
   return 0;
 }
