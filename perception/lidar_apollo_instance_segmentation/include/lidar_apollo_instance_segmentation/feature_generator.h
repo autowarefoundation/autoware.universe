@@ -16,7 +16,7 @@
 
 #pragma once
 #include <pcl/point_types.h>
-#include <pcl_ros/point_cloud.h>
+#include <pcl/point_cloud.h>
 #include <memory>
 #include "lidar_apollo_instance_segmentation/feature_map.h"
 #include "util.h"
@@ -24,10 +24,10 @@
 class FeatureGenerator
 {
 private:
-  bool use_intensity_feature_;
-  bool use_constant_feature_;
   float min_height_;
   float max_height_;
+  bool use_intensity_feature_;
+  bool use_constant_feature_;
   std::shared_ptr<FeatureMapInterface> map_ptr_;
 
 public:

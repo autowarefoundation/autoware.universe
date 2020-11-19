@@ -16,62 +16,63 @@
 
 #include "lidar_apollo_instance_segmentation/debugger.h"
 #include <pcl/point_types.h>
-#include <pcl_ros/point_cloud.h>
-#include <sensor_msgs/PointCloud2.h>
+#include <pcl/point_cloud.h>
+#include <pcl_conversions/pcl_conversions.h>
+#include <sensor_msgs/msg/point_cloud2.hpp>
 
-Debugger::Debugger() : nh_(""), pnh_("~")
+Debugger::Debugger(rclcpp::Node * node)
 {
   instance_pointcloud_pub_ =
-    pnh_.advertise<sensor_msgs::PointCloud2>("debug/instance_pointcloud", 1);
+    node->create_publisher<sensor_msgs::msg::PointCloud2>("debug/instance_pointcloud", 1);
 }
 
 void Debugger::publishColoredPointCloud(
-  const autoware_perception_msgs::DynamicObjectWithFeatureArray & input)
+  const autoware_perception_msgs::msg::DynamicObjectWithFeatureArray & input)
 {
   pcl::PointCloud<pcl::PointXYZRGB> colored_pointcloud;
   for (size_t i = 0; i < input.feature_objects.size(); i++) {
     pcl::PointCloud<pcl::PointXYZI> object_pointcloud;
     pcl::fromROSMsg(input.feature_objects.at(i).feature.cluster, object_pointcloud);
 
-    int red, green, blue;
+    int red = 0, green = 0, blue = 0;
     switch (input.feature_objects.at(i).object.semantic.type) {
-      case autoware_perception_msgs::Semantic::CAR: {
+      case autoware_perception_msgs::msg::Semantic::CAR: {
         red = 255;
         green = 0;
         blue = 0;
         break;
       }
-      case autoware_perception_msgs::Semantic::TRUCK: {
+      case autoware_perception_msgs::msg::Semantic::TRUCK: {
         red = 255;
         green = 127;
         blue = 0;
         break;
       }
-      case autoware_perception_msgs::Semantic::BUS: {
+      case autoware_perception_msgs::msg::Semantic::BUS: {
         red = 255;
         green = 0;
         blue = 127;
         break;
       }
-      case autoware_perception_msgs::Semantic::PEDESTRIAN: {
+      case autoware_perception_msgs::msg::Semantic::PEDESTRIAN: {
         red = 0;
         green = 255;
         blue = 0;
         break;
       }
-      case autoware_perception_msgs::Semantic::BICYCLE: {
+      case autoware_perception_msgs::msg::Semantic::BICYCLE: {
         red = 0;
         green = 0;
         blue = 255;
         break;
       }
-      case autoware_perception_msgs::Semantic::MOTORBIKE: {
+      case autoware_perception_msgs::msg::Semantic::MOTORBIKE: {
         red = 0;
         green = 127;
         blue = 255;
         break;
       }
-      case autoware_perception_msgs::Semantic::UNKNOWN: {
+      case autoware_perception_msgs::msg::Semantic::UNKNOWN: {
         red = 255;
         green = 255;
         blue = 255;
@@ -90,8 +91,8 @@ void Debugger::publishColoredPointCloud(
       colored_pointcloud.push_back(colored_point);
     }
   }
-  sensor_msgs::PointCloud2 output_msg;
+  sensor_msgs::msg::PointCloud2 output_msg;
   pcl::toROSMsg(colored_pointcloud, output_msg);
   output_msg.header = input.header;
-  instance_pointcloud_pub_.publish(output_msg);
+  instance_pointcloud_pub_->publish(output_msg);
 }

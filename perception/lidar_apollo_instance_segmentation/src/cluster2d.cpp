@@ -48,8 +48,9 @@
 
 #include "lidar_apollo_instance_segmentation/cluster2d.h"
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <pcl_conversions/pcl_conversions.h>
 
-geometry_msgs::Quaternion getQuaternionFromRPY(const double r, const double p, const double y){
+geometry_msgs::msg::Quaternion getQuaternionFromRPY(const double r, const double p, const double y){
   tf2::Quaternion q;
   q.setRPY(r, p, y);
   return tf2::toMsg(q);
@@ -106,7 +107,6 @@ void Cluster2D::cluster(
 
   std::vector<std::vector<Node>> nodes(rows_, std::vector<Node>(cols_, Node()));
 
-  size_t tot_point_num = pc_ptr_->size();
   valid_indices_in_pc_ = &(valid_indices.indices);
   point2grid_.assign(valid_indices_in_pc_->size(), -1);
 
@@ -240,24 +240,24 @@ void Cluster2D::classify(const std::shared_ptr<float> & inferred_data)
   }
 }
 
-autoware_perception_msgs::DynamicObjectWithFeature Cluster2D::obstacleToObject(
-  const Obstacle & in_obstacle, const std_msgs::Header & in_header)
+autoware_perception_msgs::msg::DynamicObjectWithFeature Cluster2D::obstacleToObject(
+  const Obstacle & in_obstacle, const std_msgs::msg::Header & in_header)
 {
-  autoware_perception_msgs::DynamicObjectWithFeature resulting_object;
+  autoware_perception_msgs::msg::DynamicObjectWithFeature resulting_object;
   // pcl::PointCloud<pcl::PointXYZI> in_cluster = *(in_obstacle.cloud_ptr);
 
   resulting_object.object.semantic.confidence = in_obstacle.score;
   if (in_obstacle.meta_type == MetaType::META_PEDESTRIAN) {
-    resulting_object.object.semantic.type = autoware_perception_msgs::Semantic::PEDESTRIAN;
+    resulting_object.object.semantic.type = autoware_perception_msgs::msg::Semantic::PEDESTRIAN;
   } else if (in_obstacle.meta_type == MetaType::META_NONMOT) {
-    resulting_object.object.semantic.type = autoware_perception_msgs::Semantic::MOTORBIKE;
+    resulting_object.object.semantic.type = autoware_perception_msgs::msg::Semantic::MOTORBIKE;
   } else if (in_obstacle.meta_type == MetaType::META_SMALLMOT) {
-    resulting_object.object.semantic.type = autoware_perception_msgs::Semantic::CAR;
+    resulting_object.object.semantic.type = autoware_perception_msgs::msg::Semantic::CAR;
   } else if (in_obstacle.meta_type == MetaType::META_BIGMOT) {
-    resulting_object.object.semantic.type = autoware_perception_msgs::Semantic::BUS;
+    resulting_object.object.semantic.type = autoware_perception_msgs::msg::Semantic::BUS;
   } else {
-    // resulting_object.object.semantic.type = autoware_perception_msgs::Semantic::PEDESTRIAN;
-    resulting_object.object.semantic.type = autoware_perception_msgs::Semantic::UNKNOWN;
+    // resulting_object.object.semantic.type = autoware_perception_msgs::msg::Semantic::PEDESTRIAN;
+    resulting_object.object.semantic.type = autoware_perception_msgs::msg::Semantic::UNKNOWN;
   }
 
   pcl::PointXYZ min_point;
@@ -285,7 +285,7 @@ autoware_perception_msgs::DynamicObjectWithFeature Cluster2D::obstacleToObject(
     if (pit->z < min_point.z) min_point.z = pit->z;
     if (pit->z > max_point.z) max_point.z = pit->z;
   }
-  sensor_msgs::PointCloud2 ros_pc;
+  sensor_msgs::msg::PointCloud2 ros_pc;
   pcl::toROSMsg(cluster, ros_pc);
   resulting_object.feature.cluster = ros_pc;
   resulting_object.feature.cluster.header = in_header;
@@ -306,8 +306,8 @@ autoware_perception_msgs::DynamicObjectWithFeature Cluster2D::obstacleToObject(
 
 void Cluster2D::getObjects(
   const float confidence_thresh, const float height_thresh, const int min_pts_num,
-  autoware_perception_msgs::DynamicObjectWithFeatureArray & objects,
-  const std_msgs::Header & in_header)
+  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray & objects,
+  const std_msgs::msg::Header & in_header)
 {
   for (size_t i = 0; i < point2grid_.size(); ++i) {
     int grid = point2grid_[i];
@@ -333,7 +333,7 @@ void Cluster2D::getObjects(
     if (static_cast<int>(obs->cloud_ptr->size()) < min_pts_num) {
       continue;
     }
-    autoware_perception_msgs::DynamicObjectWithFeature out_obj = obstacleToObject(*obs, in_header);
+    autoware_perception_msgs::msg::DynamicObjectWithFeature out_obj = obstacleToObject(*obs, in_header);
     objects.feature_objects.push_back(out_obj);
   }
   objects.header = in_header;

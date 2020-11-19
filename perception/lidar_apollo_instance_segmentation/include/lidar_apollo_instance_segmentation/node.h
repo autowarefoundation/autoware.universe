@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 #pragma once
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 
-#include <autoware_perception_msgs/DynamicObjectWithFeatureArray.h>
-#include <sensor_msgs/PointCloud2.h>
+#include <autoware_perception_msgs/msg/dynamic_object_with_feature_array.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
 #include <memory>
 
 #include "lidar_apollo_instance_segmentation/debugger.h"
@@ -28,20 +28,18 @@ public:
   LidarInstanceSegmentationInterface() {}
   virtual ~LidarInstanceSegmentationInterface() {}
   virtual bool detectDynamicObjects(
-    const sensor_msgs::PointCloud2 & input,
-    autoware_perception_msgs::DynamicObjectWithFeatureArray & output) = 0;
+    const sensor_msgs::msg::PointCloud2 & input,
+    autoware_perception_msgs::msg::DynamicObjectWithFeatureArray & output) = 0;
 };
 
-class LidarInstanceSegmentationNode
+class LidarInstanceSegmentationNode : public rclcpp::Node
 {
 private:
-  ros::NodeHandle nh_;
-  ros::NodeHandle pnh_;
-  ros::Subscriber pointcloud_sub_;
-  ros::Publisher dynamic_objects_pub_;
+  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_sub_;
+  rclcpp::Publisher<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>::SharedPtr dynamic_objects_pub_;
   std::shared_ptr<LidarInstanceSegmentationInterface> detector_ptr_;
-  Debugger debugger_;
-  void pointCloudCallback(const sensor_msgs::PointCloud2 & msg);
+  std::shared_ptr<Debugger> debugger_ptr_;
+  void pointCloudCallback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);
 
 public:
   LidarInstanceSegmentationNode();

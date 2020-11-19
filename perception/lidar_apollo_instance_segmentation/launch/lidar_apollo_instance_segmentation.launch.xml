@@ -2,64 +2,27 @@
   <arg name="model" default="model_128" />
   <arg name="output/objects" default="labeled_clusters" />
 
-  <arg if="$(eval model=='model_16')" name="trained_engine_file" default="$(find lidar_apollo_instance_segmentation)/data/vlp-16.engine" />
-  <arg if="$(eval model=='model_16')" name="trained_prototxt_file" default="$(find lidar_apollo_instance_segmentation)/data/vlp-16.prototxt" />
-  <arg if="$(eval model=='model_16')" name="trained_caffemodel_file" default="$(find lidar_apollo_instance_segmentation)/data/vlp-16.caffemodel" />
+  <arg if="$(eval &quot;'$(var model)'=='model_16'&quot;)" name="base_name" default="vlp-16" />
+  <arg if="$(eval &quot;'$(var model)'=='model_64'&quot;)" name="base_name" default="hdl-64" />
+  <arg if="$(eval &quot;'$(var model)'=='model_128'&quot;)" name="base_name" default="vls-128" />
 
-  <arg if="$(eval model=='model_64')" name="trained_engine_file" default="$(find lidar_apollo_instance_segmentation)/data/hdl-64.engine" />
-  <arg if="$(eval model=='model_64')" name="trained_prototxt_file" default="$(find lidar_apollo_instance_segmentation)/data/hdl-64.prototxt" />
-  <arg if="$(eval model=='model_64')" name="trained_caffemodel_file" default="$(find lidar_apollo_instance_segmentation)/data/hdl-64.caffemodel" />
+  <arg name="trained_engine_file" default="$(find-pkg-share lidar_apollo_instance_segmentation)/data/$(var base_name).engine" />
+  <arg name="trained_prototxt_file" default="$(find-pkg-share lidar_apollo_instance_segmentation)/data/$(var base_name).prototxt" />
+  <arg name="trained_caffemodel_file" default="$(find-pkg-share lidar_apollo_instance_segmentation)/data/$(var base_name).caffemodel" />
+  <arg name="param_file" default="$(find-pkg-share lidar_apollo_instance_segmentation)/config/$(var base_name).param.yaml"/>
 
-  <arg if="$(eval model=='model_128')" name="trained_engine_file" default="$(find lidar_apollo_instance_segmentation)/data/vls-128.engine" />
-  <arg if="$(eval model=='model_128')" name="trained_prototxt_file" default="$(find lidar_apollo_instance_segmentation)/data/vls-128.prototxt" />
-  <arg if="$(eval model=='model_128')" name="trained_caffemodel_file" default="$(find lidar_apollo_instance_segmentation)/data/vls-128.caffemodel" />
   <arg name="target_frame" default="base_link" />
   <arg name="z_offset" default="-2" />
 
-  <node pkg="lidar_apollo_instance_segmentation" type="lidar_apollo_instance_segmentation_node"
+  <node pkg="lidar_apollo_instance_segmentation" exec="lidar_apollo_instance_segmentation_node"
         name="lidar_apollo_instance_segmentation" output="screen" >
-    <remap from="~input/pointcloud" to="/sensing/lidar/top/rectified/pointcloud"/>
-    <remap from="~output/labeled_clusters" to="$(arg output/objects)"/>
-    <rosparam if="$(eval model=='model_16')" subst_value="true">
-      engine_file: $(arg trained_engine_file)
-      prototxt_file: $(arg trained_prototxt_file)
-      caffemodel_file: $(arg trained_caffemodel_file)
-      score_threshold: 0.1
-      range: 70
-      width: 672
-      height: 672
-      use_intensity_feature: true
-      use_constant_feature: false
-      z_offset: $(arg z_offset)
-      target_frame: $(arg target_frame)
-    </rosparam>
-
-    <rosparam if="$(eval model=='model_64')" subst_value="true">
-      engine_file: $(arg trained_engine_file)
-      prototxt_file: $(arg trained_prototxt_file)
-      caffemodel_file: $(arg trained_caffemodel_file)
-      score_threshold: 0.1
-      range: 70
-      width: 672
-      height: 672
-      use_intensity_feature: true
-      use_constant_feature: false
-      z_offset: $(arg z_offset)
-      target_frame: $(arg target_frame)
-    </rosparam>
-
-    <rosparam if="$(eval model=='model_128')" subst_value="true">
-      engine_file: $(arg trained_engine_file)
-      prototxt_file: $(arg trained_prototxt_file)
-      caffemodel_file: $(arg trained_caffemodel_file)
-      score_threshold: 0.1
-      range: 90
-      width: 864
-      height: 864
-      use_intensity_feature: false
-      use_constant_feature: false
-      z_offset: $(arg z_offset)
-      target_frame: $(arg target_frame)
-    </rosparam>
+    <remap from="input/pointcloud" to="/sensing/lidar/top/rectified/pointcloud"/>
+    <remap from="output/labeled_clusters" to="$(var output/objects)"/>
+    <param name="engine_file" value="$(var trained_engine_file)"/>
+    <param name="prototxt_file" value="$(var trained_prototxt_file)"/>
+    <param name="caffemodel_file" value="$(var trained_caffemodel_file)"/>
+    <param name="z_offset" value="$(var z_offset)"/>
+    <param name="target_frame" value="$(var target_frame)"/>
+    <param from="$(var param_file)"/>
   </node>
 </launch>

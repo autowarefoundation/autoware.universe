@@ -92,7 +92,6 @@ FeatureMapWithConstant::FeatureMapWithConstant(const int width, const int height
 }
 void FeatureMapWithConstant::initializeMap(std::vector<float> & map)
 {
-  const int size = width * height;
   for (int row = 0; row < height; ++row) {
     for (int col = 0; col < width; ++col) {
       int idx = row * width + col;
@@ -135,7 +134,6 @@ FeatureMapWithConstantAndIntensity::FeatureMapWithConstantAndIntensity(
 }
 void FeatureMapWithConstantAndIntensity::initializeMap(std::vector<float> & map)
 {
-  const int size = width * height;
   for (int row = 0; row < height; ++row) {
     for (int col = 0; col < width; ++col) {
       int idx = row * width + col;

@@ -18,9 +18,11 @@
 
 int main(int argc, char ** argv)
 {
-  ros::init(argc, argv, "lidar_apollo_instance_segmentation_node");
-  LidarInstanceSegmentationNode node;
-  ros::spin();
+  rclcpp::init(argc, argv);
+
+  rclcpp::spin(std::make_shared<LidarInstanceSegmentationNode>());
+
+  rclcpp::shutdown();
 
   return 0;
 }

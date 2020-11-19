@@ -15,19 +15,17 @@
  */
 
 #pragma once
-#include <ros/ros.h>
-#include "autoware_perception_msgs/DynamicObjectWithFeatureArray.h"
+#include <rclcpp/rclcpp.hpp>
+#include "autoware_perception_msgs/msg/dynamic_object_with_feature_array.hpp"
 
 class Debugger
 {
 public:
-  Debugger();
+  Debugger(rclcpp::Node * node);
   ~Debugger(){};
-  ros::Publisher instance_pointcloud_pub_;
   void publishColoredPointCloud(
-    const autoware_perception_msgs::DynamicObjectWithFeatureArray & input);
+    const autoware_perception_msgs::msg::DynamicObjectWithFeatureArray & input);
 
 private:
-  ros::NodeHandle nh_;
-  ros::NodeHandle pnh_;
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr instance_pointcloud_pub_;
 };

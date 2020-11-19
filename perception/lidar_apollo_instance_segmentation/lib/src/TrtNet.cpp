@@ -65,9 +65,10 @@ inline unsigned int getElementSize(nvinfer1::DataType t)
       return 2;
     case nvinfer1::DataType::kINT8:
       return 1;
+    default:
+      throw std::runtime_error("Invalid DataType.");
+      return 0;
   }
-  throw std::runtime_error("Invalid DataType.");
-  return 0;
 }
 
 namespace Tn

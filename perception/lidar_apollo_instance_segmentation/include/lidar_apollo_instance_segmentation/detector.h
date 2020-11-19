@@ -20,29 +20,28 @@
 #include "feature_generator.h"
 #include "lidar_apollo_instance_segmentation/node.h"
 
+#include <tf2_ros/buffer_interface.h>
 #include <tf2_ros/transform_listener.h>
 #include <tf2_eigen/tf2_eigen.h>
-#include <pcl_ros/transforms.h>
+#include <pcl/common/transforms.h>
 #include <memory>
 
 class LidarApolloInstanceSegmentation : public LidarInstanceSegmentationInterface
 {
 public:
-  LidarApolloInstanceSegmentation();
+  LidarApolloInstanceSegmentation(rclcpp::Node * node);
   ~LidarApolloInstanceSegmentation(){};
   bool detectDynamicObjects(
-    const sensor_msgs::PointCloud2 & input,
-    autoware_perception_msgs::DynamicObjectWithFeatureArray & output) override;
+    const sensor_msgs::msg::PointCloud2 & input,
+    autoware_perception_msgs::msg::DynamicObjectWithFeatureArray & output) override;
 
 private:
   bool transformCloud(
-    const sensor_msgs::PointCloud2 & input,
-    sensor_msgs::PointCloud2& transformed_cloud,
+    const sensor_msgs::msg::PointCloud2 & input,
+    sensor_msgs::msg::PointCloud2& transformed_cloud,
     float z_offset);
 
-  ros::NodeHandle nh_;
-  ros::NodeHandle pnh_;
-
+  rclcpp::Node * node_;
   std::unique_ptr<Tn::trtNet> net_ptr_;
   std::shared_ptr<Cluster2D> cluster2d_;
   std::shared_ptr<FeatureGenerator> feature_generator_;

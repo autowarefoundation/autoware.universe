@@ -17,32 +17,35 @@
 #include "lidar_apollo_instance_segmentation/detector.h"
 #include <NvCaffeParser.h>
 #include <NvInfer.h>
-#include <boost/filesystem.hpp>
 #include "lidar_apollo_instance_segmentation/feature_map.h"
+#include <pcl_conversions/pcl_conversions.h>
 
-LidarApolloInstanceSegmentation::LidarApolloInstanceSegmentation() : nh_(""), pnh_("~"), tf_listener_(tf_buffer_)
+LidarApolloInstanceSegmentation::LidarApolloInstanceSegmentation(rclcpp::Node * node) 
+: node_(node),
+  tf_buffer_(node_->get_clock()),
+  tf_listener_(tf_buffer_)
 {
   int range, width, height;
   bool use_intensity_feature, use_constant_feature;
   std::string engine_file;
   std::string prototxt_file;
   std::string caffemodel_file;
-  pnh_.param<float>("score_threshold", score_threshold_, 0.8);
-  pnh_.param<int>("range", range, 60);
-  pnh_.param<int>("width", width, 640);
-  pnh_.param<int>("height", height, 640);
-  pnh_.param<std::string>("engine_file", engine_file, "vls-128.engine");
-  pnh_.param<std::string>("prototxt_file", prototxt_file, "vls-128.prototxt");
-  pnh_.param<std::string>("caffemodel_file", caffemodel_file, "vls-128.caffemodel");
-  pnh_.param<bool>("use_intensity_feature", use_intensity_feature, true);
-  pnh_.param<bool>("use_constant_feature", use_constant_feature, true);
-  pnh_.param<std::string>("target_frame", target_frame_, "base_link");
-  pnh_.param<float>("z_offset", z_offset_, 2);
+  score_threshold_ = node_->declare_parameter("score_threshold", 0.8);
+  range = node_->declare_parameter("range", 60);
+  width = node_->declare_parameter("width", 640);
+  height = node_->declare_parameter("height", 640);
+  engine_file = node_->declare_parameter("engine_file", "vls-128.engine");
+  prototxt_file = node_->declare_parameter("prototxt_file", "vls-128.prototxt");
+  caffemodel_file = node_->declare_parameter("caffemodel_file", "vls-128.caffemodel");
+  use_intensity_feature = node_->declare_parameter("use_intensity_feature", true);
+  use_constant_feature = node_->declare_parameter("use_constant_feature", true);
+  target_frame_ = node_->declare_parameter("target_frame", "base_link");
+  z_offset_ = node_->declare_parameter("z_offset", 2);
 
   // load weight file
   std::ifstream fs(engine_file);
   if (!fs.is_open()) {
-    ROS_INFO(
+    RCLCPP_INFO( node_->get_logger(),
       "Could not find %s. try making TensorRT engine from caffemodel and prototxt",
       engine_file.c_str());
     Tn::Logger logger;
@@ -54,7 +57,7 @@ LidarApolloInstanceSegmentation::LidarApolloInstanceSegmentation() : nh_(""), pn
       prototxt_file.c_str(), caffemodel_file.c_str(), *network, nvinfer1::DataType::kFLOAT);
     std::string output_node = "deconv0";
     auto output = blob_name2tensor->find(output_node.c_str());
-    if (output == nullptr) ROS_ERROR("can not find output named %s", output_node.c_str());
+    if (output == nullptr) RCLCPP_ERROR(node_->get_logger(), "can not find output named %s", output_node.c_str());
     network->markOutput(*output);
     const int batch_size = 1;
     builder->setMaxBatchSize(batch_size);
@@ -82,43 +85,49 @@ LidarApolloInstanceSegmentation::LidarApolloInstanceSegmentation() : nh_(""), pn
 }
 
 bool LidarApolloInstanceSegmentation::transformCloud(
-  const sensor_msgs::PointCloud2 & input,
-  sensor_msgs::PointCloud2& transformed_cloud,
+  const sensor_msgs::msg::PointCloud2 & input,
+  sensor_msgs::msg::PointCloud2& transformed_cloud,
   float z_offset)
 {
+  // TODO(mitsudome-r): remove conversion once pcl_ros transform are available.
+  pcl::PointCloud<pcl::PointXYZI> pcl_input, pcl_transformed_cloud;
+  pcl::fromROSMsg(input, pcl_input);
+
   // transform pointcloud to tagret_frame
   if (target_frame_ != input.header.frame_id) {
     try {
-      geometry_msgs::TransformStamped transform_stamped;
+      geometry_msgs::msg::TransformStamped transform_stamped;
       transform_stamped = tf_buffer_.lookupTransform(target_frame_, input.header.frame_id,
-                                                     input.header.stamp, ros::Duration(0.5));
+                                                     input.header.stamp, std::chrono::milliseconds(500));
       Eigen::Matrix4f affine_matrix =
         tf2::transformToEigen(transform_stamped.transform).matrix().cast<float>();
-      pcl_ros::transformPointCloud(affine_matrix, input, transformed_cloud);
+      pcl::transformPointCloud(pcl_input, pcl_transformed_cloud, affine_matrix);
       transformed_cloud.header.frame_id = target_frame_;
     } catch (tf2::TransformException &ex) {
-      ROS_WARN("%s",ex.what());
+      RCLCPP_WARN(node_->get_logger(), "%s",ex.what());
       return false;
     }
   } else {
-    transformed_cloud = input;
+    pcl_transformed_cloud = pcl_input;
   }
 
   // move pointcloud z_offset in z axis
-  sensor_msgs::PointCloud2 pointcloud_with_z_offset;
+  pcl::PointCloud<pcl::PointXYZI> pointcloud_with_z_offset;
   Eigen::Affine3f z_up_translation(Eigen::Translation3f(0, 0, z_offset));
   Eigen::Matrix4f z_up_transform = z_up_translation.matrix();
-  pcl_ros::transformPointCloud(z_up_transform, transformed_cloud, transformed_cloud);
+  pcl::transformPointCloud(pcl_transformed_cloud, pcl_transformed_cloud, z_up_transform);
+
+  pcl::toROSMsg(pcl_transformed_cloud, transformed_cloud);
 
   return true;
 }
 
 bool LidarApolloInstanceSegmentation::detectDynamicObjects(
-  const sensor_msgs::PointCloud2 & input,
-  autoware_perception_msgs::DynamicObjectWithFeatureArray & output)
+  const sensor_msgs::msg::PointCloud2 & input,
+  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray & output)
 {
   // move up pointcloud z_offset in z axis
-  sensor_msgs::PointCloud2 transformed_cloud;
+  sensor_msgs::msg::PointCloud2 transformed_cloud;
   transformCloud(input, transformed_cloud, z_offset_);
 
   // convert from ros to pcl
@@ -146,8 +155,8 @@ bool LidarApolloInstanceSegmentation::detectDynamicObjects(
   cluster2d_->getObjects(score_threshold_, height_thresh, min_pts_num, output, transformed_cloud.header);
 
   // move down pointcloud z_offset in z axis
-  for (int i=0; i<output.feature_objects.size(); i++) {
-    sensor_msgs::PointCloud2 transformed_cloud;
+  for (std::size_t i=0; i<output.feature_objects.size(); i++) {
+    sensor_msgs::msg::PointCloud2 transformed_cloud;
     transformCloud(output.feature_objects.at(i).feature.cluster, transformed_cloud, -z_offset_);
     output.feature_objects.at(i).feature.cluster = transformed_cloud;
   }

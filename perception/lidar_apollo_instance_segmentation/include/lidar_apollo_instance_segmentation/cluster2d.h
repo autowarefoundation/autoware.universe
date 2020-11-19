@@ -49,17 +49,18 @@
 #define CLUSTER2D_H
 
 #include <pcl/point_types.h>
-#include <pcl_ros/point_cloud.h>
+#include <pcl/point_cloud.h>
+#include <pcl/PointIndices.h>
 #include <memory>
 #include <vector>
 
 #include "disjoint_set.h"
 #include "util.h"
 
-#include <autoware_perception_msgs/DynamicObjectWithFeature.h>
-#include <autoware_perception_msgs/DynamicObjectWithFeatureArray.h>
+#include <autoware_perception_msgs/msg/dynamic_object_with_feature.hpp>
+#include <autoware_perception_msgs/msg/dynamic_object_with_feature_array.hpp>
 
-#include <std_msgs/Header.h>
+#include <std_msgs/msg/header.hpp>
 
 enum MetaType {
   META_UNKNOWN,
@@ -104,11 +105,11 @@ public:
 
   void getObjects(
     const float confidence_thresh, const float height_thresh, const int min_pts_num,
-    autoware_perception_msgs::DynamicObjectWithFeatureArray & objects,
-    const std_msgs::Header & in_header);
+    autoware_perception_msgs::msg::DynamicObjectWithFeatureArray & objects,
+    const std_msgs::msg::Header & in_header);
 
-  autoware_perception_msgs::DynamicObjectWithFeature obstacleToObject(
-    const Obstacle & in_obstacle, const std_msgs::Header & in_header);
+  autoware_perception_msgs::msg::DynamicObjectWithFeature obstacleToObject(
+    const Obstacle & in_obstacle, const std_msgs::msg::Header & in_header);
 
 private:
   int rows_;
