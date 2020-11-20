@@ -5,48 +5,50 @@
   <arg name="lateral_controller_mode" default="mpc_follower" doc="options: mpc_follower, pure_pursuit"/>
 
   <!-- control parameter -->
-  <arg name="mpc_follower_param_path" default="$(find control_launch)/config/mpc_follower/mpc_follower_param.yaml"/>
-  <arg name="pure_pursuit_param_path" default="$(find control_launch)/config/pure_pursuit/pure_pursuit_param.yaml"/>
-  <arg name="velocity_controller_param_path" default="$(find control_launch)/config/velocity_controller/velocity_controller_param.yaml"/>
+  <arg name="mpc_follower_param_path" default="$(find-pkg-share control_launch)/config/mpc_follower/mpc_follower_param.yaml"/>
+  <arg name="pure_pursuit_param_path" default="$(find-pkg-share control_launch)/config/pure_pursuit/pure_pursuit_param.yaml"/>
+  <arg name="velocity_controller_param_path" default="$(find-pkg-share control_launch)/config/velocity_controller/velocity_controller_param.yaml"/>
 
   <!-- control module -->
-  <group ns="control">
+  <group>
+    <push-ros-namespace namespace="control"/>
 
     <!-- trajectory follower -->
-    <group ns="trajectory_follower">
+    <group>
+      <push-ros-namespace namespace="trajectory_follower"/>
 
       <!-- lateral controller -->
-      <group if="$(eval lateral_controller_mode == 'mpc_follower')">
-        <include file="$(find mpc_follower)/launch/mpc_follower.launch" pass_all_args="true"/>
+      <group if="$(eval &quot;'$(var lateral_controller_mode)'=='mpc_follower'&quot;)">
+        <include file="$(find-pkg-share mpc_follower)/launch/mpc_follower.launch.xml" pass_all_args="true"/>
       </group>
 
-      <group if="$(eval lateral_controller_mode == 'pure_pursuit')">
-        <include file="$(find pure_pursuit)/launch/pure_pursuit.launch" pass_all_args="true"/>
+      <group if="$(eval &quot;'$(var lateral_controller_mode)'=='pure_pursuit'&quot;)">
+        <include file="$(find-pkg-share pure_pursuit)/launch/pure_pursuit.launch.xml" pass_all_args="true"/>
       </group>
 
       <!-- longitudinal controller -->
-      <include file="$(find velocity_controller)/launch/velocity_controller.launch">
-        <arg name="velocity_controller_param_path" value="$(arg velocity_controller_param_path)"/>
+      <include file="$(find-pkg-share velocity_controller)/launch/velocity_controller.launch.xml">
+        <arg name="velocity_controller_param_path" value="$(var velocity_controller_param_path)"/>
       </include>
 
       <!-- latlon coupler -->
-      <node pkg="latlon_muxer" type="latlon_muxer" name="latlon_muxer" output="screen">
-        <remap from="~input/lateral/control_cmd" to="lateral/control_cmd"/>
-        <remap from="~input/longitudinal/control_cmd" to="longitudinal/control_cmd"/>
-        <remap from="~output/control_cmd" to="control_cmd"/>
+      <node pkg="latlon_muxer" exec="latlon_muxer" name="latlon_muxer" output="screen">
+        <remap from="input/lateral/control_cmd" to="lateral/control_cmd"/>
+        <remap from="input/longitudinal/control_cmd" to="longitudinal/control_cmd"/>
+        <remap from="output/control_cmd" to="control_cmd"/>
       </node>
     </group>
 
     <!-- shift decider -->
-    <include file="$(find shift_decider)/launch/shift_decider.launch">
+    <include file="$(find-pkg-share shift_decider)/launch/shift_decider.launch.xml">
     </include>
 
     <!-- vehicle cmd gate -->
-    <include file="$(find vehicle_cmd_gate)/launch/vehicle_cmd_gate.launch">
+    <include file="$(find-pkg-share vehicle_cmd_gate)/launch/vehicle_cmd_gate.launch.xml">
     </include>
 
     <!-- remote_cmd_converter -->
-    <include file="$(find remote_cmd_converter)/launch/remote_cmd_converter.launch">
+    <include file="$(find-pkg-share remote_cmd_converter)/launch/remote_cmd_converter.launch.xml">
     </include>
   </group>
 </launch>
