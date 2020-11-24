@@ -7,7 +7,7 @@
   <arg name="map_corrector/use_rad_filter" default="true"/>
   <arg name="map_corrector/rad_threshold" default="1.2217304763960306"/>
   <arg name="node_name" default="shape_estimation"/>
-  <arg name="l_shape_fitting_search_angle_range" default="3"/>
+  <arg name="l_shape_fitting_search_angle_range" default="3.0"/>
   <arg name="orientation_reliable" default="true"/>
   <!-- 70 deg -->
   <node pkg="shape_estimation" exec="shape_estimation" name="$(var node_name)" output="screen">
