@@ -15,41 +15,44 @@
  */
 
 #include "traffic_light_ssd_fine_detector/nodelet.hpp"
-#include <ros/package.h>
+#include <ament_index_cpp/get_package_share_directory.hpp>
 #include "cuda_utils.h"
 
 namespace traffic_light
 {
-void TrafficLightSSDFineDetectorNodelet::onInit()
+
+inline std::vector<float> toFloatVector(const std::vector<double> double_vector)
 {
-  nh_ = getNodeHandle();
-  pnh_ = getPrivateNodeHandle();
-  image_transport_.reset(new image_transport::ImageTransport(nh_));
-  std::string package_path = ros::package::getPath("traffic_light_ssd_fine_detector");
+  return std::vector<float>(double_vector.begin(), double_vector.end());
+}
+
+TrafficLightSSDFineDetectorNodelet::TrafficLightSSDFineDetectorNodelet(const rclcpp::NodeOptions & options) 
+: Node("traffic_light_ssd_fine_detector_node", options)
+{
+  using std::placeholders::_1;
+  using std::placeholders::_2;
+
+  std::string package_path = ament_index_cpp::get_package_share_directory("traffic_light_ssd_fine_detector");
   std::string data_path = package_path + "/data/";
   std::string engine_path = package_path + "/data/mb2-ssd-lite.engine";
   std::ifstream fs(engine_path);
-  int max_batch_size;
-  std::string onnx_file;
-  std::string label_file;
-  std::string mode;
   std::vector<std::string> labels;
-  pnh_.param<int>("max_batch_size", max_batch_size, 8);
-  pnh_.param<std::string>("onnx_file", onnx_file, "");
-  pnh_.param<std::string>("label_file", label_file, "");
-  pnh_.param<std::string>("mode", mode, "FP32");
+  const int max_batch_size = this->declare_parameter("max_batch_size", 8);
+  const std::string onnx_file = this->declare_parameter("onnx_file").get<std::string>();
+  const std::string label_file = this->declare_parameter("label_file").get<std::string>();
+  const std::string mode = this->declare_parameter("mode", "FP32");
 
   if (readLabelFile(label_file, labels)) {
     if (!getTlrIdFromLabel(labels, tlr_id_)) {
-      NODELET_ERROR("Could not find tlr id");
+      RCLCPP_ERROR(this->get_logger(), "Could not find tlr id");
     }
   }
 
   if (fs.is_open()) {
-    NODELET_INFO("Found %s", engine_path.c_str());
+    RCLCPP_INFO(this->get_logger(), "Found %s", engine_path.c_str());
     net_ptr_.reset(new ssd::Net(engine_path, false));
     if (max_batch_size != net_ptr_->getMaxBatchSize()) {
-      NODELET_INFO(
+      RCLCPP_INFO(this->get_logger(), 
         "Required max batch size %d does not correspond to Profile max batch size %d. Rebuild "
         "engine "
         "from onnx",
@@ -58,30 +61,34 @@ void TrafficLightSSDFineDetectorNodelet::onInit()
       net_ptr_->save(engine_path);
     }
   } else {
-    NODELET_INFO("Could not find %s, try making TensorRT engine from onnx", engine_path.c_str());
+    RCLCPP_INFO(this->get_logger(), "Could not find %s, try making TensorRT engine from onnx", engine_path.c_str());
     net_ptr_.reset(new ssd::Net(onnx_file, mode, max_batch_size));
     net_ptr_->save(engine_path);
   }
-  pnh_.param<bool>("approximate_sync", is_approximate_sync_, false);
-  pnh_.param<double>("score_thresh", score_thresh_, 0.7);
-  if (!pnh_.getParam("mean", mean_)) {
-    mean_ = {0.5, 0.5, 0.5};
-  }
-  if (!pnh_.getParam("std", std_)) {
-    std_ = {0.5, 0.5, 0.5};
-  }
-  ros::SubscriberStatusCallback connect_cb = boost::bind(&TrafficLightSSDFineDetectorNodelet::connectCb, this);
+  is_approximate_sync_ = this->declare_parameter<bool>("approximate_sync", false);
+  score_thresh_ = this->declare_parameter<double>("score_thresh", 0.7);
+  mean_ = toFloatVector(this->declare_parameter("mean", std::vector<double>({0.5, 0.5, 0.5})));
+  std_ = toFloatVector(this->declare_parameter("std", std::vector<double>({0.5, 0.5, 0.5})));
+
+  auto timer_callback = std::bind(&TrafficLightSSDFineDetectorNodelet::connectCb, this);
+  const auto period_s = 0.1;
+  const auto period_ns =
+    std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(period_s));
+  timer_ = std::make_shared<rclcpp::GenericTimer<decltype(timer_callback)>>(
+    this->get_clock(), period_ns, std::move(timer_callback),
+    this->get_node_base_interface()->get_context());
+  this->get_node_timers_interface()->add_timer(timer_, nullptr);
+
   std::lock_guard<std::mutex> lock(connect_mutex_);
-  output_roi_pub_ =
-    pnh_.advertise<autoware_perception_msgs::TrafficLightRoiArray>("output/rois", 1, connect_cb, connect_cb);
-  exe_time_pub_ = pnh_.advertise<std_msgs::Float32>("debug/exe_time_ms", 1, connect_cb, connect_cb);
+  output_roi_pub_ = this->create_publisher<autoware_perception_msgs::msg::TrafficLightRoiArray>("output/rois", 1);
+  exe_time_pub_ = this->create_publisher<std_msgs::msg::Float32>("debug/exe_time_ms", 1);
   if (is_approximate_sync_) {
     approximate_sync_.reset(new ApproximateSync(ApproximateSyncPolicy(10), image_sub_, roi_sub_));
     approximate_sync_->registerCallback(
-      boost::bind(&TrafficLightSSDFineDetectorNodelet::callback, this, _1, _2));
+      std::bind(&TrafficLightSSDFineDetectorNodelet::callback, this, _1, _2));
   } else {
     sync_.reset(new Sync(SyncPolicy(10), image_sub_, roi_sub_));
-    sync_->registerCallback(boost::bind(&TrafficLightSSDFineDetectorNodelet::callback, this, _1, _2));
+    sync_->registerCallback(std::bind(&TrafficLightSSDFineDetectorNodelet::callback, this, _1, _2));
   }
 
   channel_ = net_ptr_->getInputSize()[0];
@@ -94,24 +101,24 @@ void TrafficLightSSDFineDetectorNodelet::onInit()
 void TrafficLightSSDFineDetectorNodelet::connectCb()
 {
   std::lock_guard<std::mutex> lock(connect_mutex_);
-  if (output_roi_pub_.getNumSubscribers() == 0) {
+  if (output_roi_pub_->get_subscription_count() == 0) {
     image_sub_.unsubscribe();
     roi_sub_.unsubscribe();
   } else if (!image_sub_.getSubscriber()) {
-    image_sub_.subscribe(*image_transport_, "input/image", 1);
-    roi_sub_.subscribe(pnh_, "input/rois", 1);
+    image_sub_.subscribe(this, "input/image", "raw", rclcpp::QoS{1}.get_rmw_qos_profile());
+    roi_sub_.subscribe(this, "input/rois", rclcpp::QoS{1}.get_rmw_qos_profile());
   }
 }
 
 void TrafficLightSSDFineDetectorNodelet::callback(
-  const sensor_msgs::Image::ConstPtr & in_image_msg,
-  const autoware_perception_msgs::TrafficLightRoiArray::ConstPtr & in_roi_msg)
+  const sensor_msgs::msg::Image::ConstSharedPtr in_image_msg,
+  const autoware_perception_msgs::msg::TrafficLightRoiArray::ConstSharedPtr in_roi_msg)
 {
   using std::chrono::high_resolution_clock;
   using std::chrono::milliseconds;
   const auto exe_start_time = high_resolution_clock::now();
   cv::Mat original_image;
-  autoware_perception_msgs::TrafficLightRoiArray out_rois;
+  autoware_perception_msgs::msg::TrafficLightRoiArray out_rois;
 
   rosMsg2CvMat(in_image_msg, original_image);
   int num_rois = in_roi_msg->rois.size();
@@ -139,7 +146,7 @@ void TrafficLightSSDFineDetectorNodelet::callback(
 
     std::vector<float> data(num_infer * channel_ * width_ * height_);
     if (!cvMat2CnnInput(cropped_imgs, num_infer, data)) {
-      NODELET_ERROR("Fail to preprocess image");
+      RCLCPP_ERROR(this->get_logger(), "Fail to preprocess image");
       return;
     }
 
@@ -148,7 +155,7 @@ void TrafficLightSSDFineDetectorNodelet::callback(
     try {
       net_ptr_->infer(buffers, num_infer);
     } catch (std::exception & e) {
-      NODELET_ERROR("%s", e.what());
+      RCLCPP_ERROR(this->get_logger(), "%s", e.what());
       return;
     }
 
@@ -164,7 +171,7 @@ void TrafficLightSSDFineDetectorNodelet::callback(
     std::vector<Detection> detections;
     if (!cnnOutput2BoxDetection(
           scores.get(), boxes.get(), tlr_id_, cropped_imgs, num_infer, detections)) {
-      NODELET_ERROR("Fail to postprocess image");
+      RCLCPP_ERROR(this->get_logger(), "Fail to postprocess image");
       return;
     }
 
@@ -176,7 +183,7 @@ void TrafficLightSSDFineDetectorNodelet::callback(
           lts.at(i).x + detections.at(i).x + detections.at(i).w,
           lts.at(i).y + detections.at(i).y + detections.at(i).h);
         fitInFrame(lt_roi, rb_roi, cv::Size(original_image.size()));
-        autoware_perception_msgs::TrafficLightRoi tl_roi;
+        autoware_perception_msgs::msg::TrafficLightRoi tl_roi;
         cvRect2TlRoiMsg(
           cv::Rect(lt_roi, rb_roi), in_roi_msg->rois.at(i + batch_count * batch_size).id, tl_roi);
         out_rois.rois.push_back(tl_roi);
@@ -186,13 +193,13 @@ void TrafficLightSSDFineDetectorNodelet::callback(
     ++batch_count;
   }
   out_rois.header = in_roi_msg->header;
-  output_roi_pub_.publish(out_rois);
+  output_roi_pub_->publish(out_rois);
   const auto exe_end_time = high_resolution_clock::now();
   const double exe_time =
     std::chrono::duration_cast<milliseconds>(exe_end_time - exe_start_time).count();
-  std_msgs::Float32 exe_time_msg;
+  std_msgs::msg::Float32 exe_time_msg;
   exe_time_msg.data = exe_time;
-  exe_time_pub_.publish(exe_time_msg);
+  exe_time_pub_->publish(exe_time_msg);
 }
 
 bool TrafficLightSSDFineDetectorNodelet::cvMat2CnnInput(
@@ -250,13 +257,13 @@ bool TrafficLightSSDFineDetectorNodelet::cnnOutput2BoxDetection(
 }
 
 bool TrafficLightSSDFineDetectorNodelet::rosMsg2CvMat(
-  const sensor_msgs::Image::ConstPtr & image_msg, cv::Mat & image)
+  const sensor_msgs::msg::Image::ConstSharedPtr image_msg, cv::Mat & image)
 {
   try {
     cv_bridge::CvImagePtr cv_image = cv_bridge::toCvCopy(image_msg, "rgb8");
     image = cv_image->image;
   } catch (cv_bridge::Exception & e) {
-    NODELET_ERROR("Failed to convert sensor_msgs::Image to cv::Mat \n%s", e.what());
+    RCLCPP_ERROR(this->get_logger(), "Failed to convert sensor_msgs::msg::Image to cv::Mat \n%s", e.what());
     return false;
   }
 
@@ -271,7 +278,7 @@ bool TrafficLightSSDFineDetectorNodelet::fitInFrame(cv::Point & lt, cv::Point & 
     if (lt.x < 0) lt.x = 0;
     if (lt.y < 0) lt.y = 0;
   } catch (cv::Exception & e) {
-    NODELET_ERROR(
+    RCLCPP_ERROR(this->get_logger(), 
       "Failed to fit bounding rect in size [%d, %d] \n%s", size.width, size.height, e.what());
     return false;
   }
@@ -280,7 +287,7 @@ bool TrafficLightSSDFineDetectorNodelet::fitInFrame(cv::Point & lt, cv::Point & 
 }
 
 void TrafficLightSSDFineDetectorNodelet::cvRect2TlRoiMsg(
-  const cv::Rect & rect, const int32_t id, autoware_perception_msgs::TrafficLightRoi & tl_roi)
+  const cv::Rect & rect, const int32_t id, autoware_perception_msgs::msg::TrafficLightRoi & tl_roi)
 {
   tl_roi.id = id;
   tl_roi.roi.x_offset = rect.x;
@@ -294,7 +301,7 @@ bool TrafficLightSSDFineDetectorNodelet::readLabelFile(
 {
   std::ifstream labelsFile(filepath);
   if (!labelsFile.is_open()) {
-    NODELET_ERROR("Could not open label file. [%s]", filepath.c_str());
+    RCLCPP_ERROR(this->get_logger(), "Could not open label file. [%s]", filepath.c_str());
     return false;
   }
   std::string label;
@@ -318,5 +325,5 @@ bool TrafficLightSSDFineDetectorNodelet::getTlrIdFromLabel(
 
 }  // namespace traffic_light
 
-#include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(traffic_light::TrafficLightSSDFineDetectorNodelet, nodelet::Nodelet)
+#include <rclcpp_components/register_node_macro.hpp>
+RCLCPP_COMPONENTS_REGISTER_NODE(traffic_light::TrafficLightSSDFineDetectorNodelet)

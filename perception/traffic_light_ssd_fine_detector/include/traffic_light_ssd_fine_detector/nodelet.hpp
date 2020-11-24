@@ -22,29 +22,26 @@
 #include <mutex>
 #include <string>
 
-#include <opencv/cv.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
 #include "trt_ssd.h"
 
-#include <image_transport/image_transport.h>
-#include <image_transport/subscriber_filter.h>
+#include <image_transport/image_transport.hpp>
+#include <image_transport/subscriber_filter.hpp>
 #include <message_filters/subscriber.h>
 #include <message_filters/sync_policies/approximate_time.h>
 #include <message_filters/synchronizer.h>
 #include <message_filters/time_synchronizer.h>
-#include <nodelet/nodelet.h>
-#include <pluginlib/class_list_macros.h>
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 
 #include <cv_bridge/cv_bridge.h>
-#include <sensor_msgs/Image.h>
-#include <sensor_msgs/image_encodings.h>
-#include <std_msgs/Float32.h>
-#include <std_msgs/Header.h>
+#include <sensor_msgs/msg/image.hpp>
+#include <sensor_msgs/image_encodings.hpp>
+#include <std_msgs/msg/float32.hpp>
+#include <std_msgs/msg/header.hpp>
 
-#include <autoware_perception_msgs/TrafficLightRoiArray.h>
+#include <autoware_perception_msgs/msg/traffic_light_roi_array.hpp>
 
 typedef struct Detection
 {
@@ -53,14 +50,14 @@ typedef struct Detection
 
 namespace traffic_light
 {
-class TrafficLightSSDFineDetectorNodelet : public nodelet::Nodelet
+class TrafficLightSSDFineDetectorNodelet : public rclcpp::Node
 {
 public:
-  virtual void onInit();
+  TrafficLightSSDFineDetectorNodelet(const rclcpp::NodeOptions & options);
   void connectCb();
   void callback(
-    const sensor_msgs::Image::ConstPtr & image_msg,
-    const autoware_perception_msgs::TrafficLightRoiArray::ConstPtr & traffic_light_roi_msg);
+    const sensor_msgs::msg::Image::ConstSharedPtr image_msg,
+    const autoware_perception_msgs::msg::TrafficLightRoiArray::ConstSharedPtr traffic_light_roi_msg);
 
 private:
   bool cvMat2CnnInput(
@@ -68,30 +65,30 @@ private:
   bool cnnOutput2BoxDetection(
     const float * scores, const float * boxes, const int tlr_id,
     const std::vector<cv::Mat> & in_imgs, const int num_rois, std::vector<Detection> & detctions);
-  bool rosMsg2CvMat(const sensor_msgs::Image::ConstPtr & image_msg, cv::Mat & image);
+  bool rosMsg2CvMat(const sensor_msgs::msg::Image::ConstSharedPtr image_msg, cv::Mat & image);
   bool fitInFrame(cv::Point & lt, cv::Point & rb, const cv::Size & size);
   void cvRect2TlRoiMsg(
-    const cv::Rect & rect, const int32_t id, autoware_perception_msgs::TrafficLightRoi & tl_roi);
+    const cv::Rect & rect, const int32_t id, autoware_perception_msgs::msg::TrafficLightRoi & tl_roi);
   bool readLabelFile(std::string filepath, std::vector<std::string> & labels);
   bool getTlrIdFromLabel(const std::vector<std::string> & labels, int & tlr_id);
 
   // variables
-  ros::NodeHandle nh_, pnh_;
   std::shared_ptr<image_transport::ImageTransport> image_transport_;
   image_transport::SubscriberFilter image_sub_;
-  message_filters::Subscriber<autoware_perception_msgs::TrafficLightRoiArray> roi_sub_;
+  message_filters::Subscriber<autoware_perception_msgs::msg::TrafficLightRoiArray> roi_sub_;
   std::mutex connect_mutex_;
-  ros::Publisher output_roi_pub_;
-  ros::Publisher exe_time_pub_;
+  rclcpp::Publisher<autoware_perception_msgs::msg::TrafficLightRoiArray>::SharedPtr output_roi_pub_;
+  rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr exe_time_pub_;
+  rclcpp::TimerBase::SharedPtr timer_;
 
   typedef message_filters::sync_policies::ExactTime<
-    sensor_msgs::Image, autoware_perception_msgs::TrafficLightRoiArray>
+    sensor_msgs::msg::Image, autoware_perception_msgs::msg::TrafficLightRoiArray>
     SyncPolicy;
   typedef message_filters::Synchronizer<SyncPolicy> Sync;
   std::shared_ptr<Sync> sync_;
 
   typedef message_filters::sync_policies::ApproximateTime<
-    sensor_msgs::Image, autoware_perception_msgs::TrafficLightRoiArray>
+    sensor_msgs::msg::Image, autoware_perception_msgs::msg::TrafficLightRoiArray>
     ApproximateSyncPolicy;
   typedef message_filters::Synchronizer<ApproximateSyncPolicy> ApproximateSync;
   std::shared_ptr<ApproximateSync> approximate_sync_;

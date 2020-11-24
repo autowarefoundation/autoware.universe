@@ -1,7 +1,7 @@
 <launch>
 
-  <arg name="onnx_file" default="$(find traffic_light_ssd_fine_detector)/data/mb2-ssd-lite-tlr.onnx"/>
-  <arg name="label_file" default="$(find traffic_light_ssd_fine_detector)/data/voc_labels_tl.txt"/>
+  <arg name="onnx_file" default="$(find-pkg-share traffic_light_ssd_fine_detector)/data/mb2-ssd-lite-tlr.onnx"/>
+  <arg name="label_file" default="$(find-pkg-share traffic_light_ssd_fine_detector)/data/voc_labels_tl.txt"/>
   <arg name="mode" default="FP32"/>
   <arg name="input/image" default="/image_raw"/>
   <arg name="input/rois" default="/traffic_light_map_based_detector/output/rois" />
@@ -14,24 +14,24 @@
   <arg name="save_rough_roi_image" default="false"/>
   <arg name="manager" default="traffic_light_recognition_nodelet_manager"/>
 
-  <node pkg="nodelet" type="nodelet" name="traffic_light_ssd_fine_detector" args="load traffic_light/traffic_light_ssd_fine_detector $(arg manager)">
-    <remap from="input/image" to="$(arg input/image)" />
-    <remap from="~input/rois" to="$(arg input/rois)" />
-    <remap from="~output/rois" to="$(arg output/rois)" />
-    <param name="onnx_file" type="str" value="$(arg onnx_file)"/>
-    <param name="label_file" type="str" value="$(arg label_file)"/>
-    <param name="mode" type="str" value="$(arg mode)"/>
-    <param name="score_thresh" value="$(arg score_thresh)"/>
-    <param name="max_batch_size" value="$(arg max_batch_size)"/>
-    <param name="approximate_sync" value="$(arg approximate_sync)"/>
-    <rosparam param="mean" subst_value="True">$(arg mean)</rosparam>
-    <rosparam param="std" subst_value="True">$(arg std)</rosparam>
+  <node pkg="traffic_light_ssd_fine_detector" exec="traffic_light_ssd_fine_detector_node" name="traffic_light_ssd_fine_detector">
+    <remap from="input/image" to="$(var input/image)" />
+    <remap from="input/rois" to="$(var input/rois)" />
+    <remap from="output/rois" to="$(var output/rois)" />
+    <param name="onnx_file" type="str" value="$(var onnx_file)"/>
+    <param name="label_file" type="str" value="$(var label_file)"/>
+    <param name="mode" type="str" value="$(var mode)"/>
+    <param name="score_thresh" value="$(var score_thresh)"/>
+    <param name="max_batch_size" value="$(var max_batch_size)"/>
+    <param name="approximate_sync" value="$(var approximate_sync)"/>
+    <param name="mean" value="$(var mean)" />
+    <param name="std" value="$(var std)" />
   </node>
 
-  <node if="$(eval save_rough_roi_image)" pkg="roi_image_saver" type="traffic_light_roi_image_saver_node" name="$(anon traffic_light_roi_image_saver)" output="screen">
-    <remap from="~input/image" to="$(arg input/image)"/>
-    <remap from="~input/rois" to="$(arg input/rois)"/>
-    <param name="save_dir" value="$(find roi_image_saver)/train_image"/>
+  <node if="$(var save_rough_roi_image)" pkg="roi_image_saver" exec="traffic_light_roi_image_saver_node" name="$(anon traffic_light_roi_image_saver)" output="screen">
+    <remap from="input/image" to="$(var input/image)"/>
+    <remap from="input/rois" to="$(var input/rois)"/>
+    <param name="save_dir" value="$(find-pkg-share roi_image_saver)/train_image"/>
     <param name="save_rate" value="1.0"/>
   </node>
 </launch>
