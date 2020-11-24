@@ -186,7 +186,7 @@ target_link_libraries(scene_module_manager scene_module_lib)
 
 
 # Node
-add_executable(behavior_velocity_planner_node
+ament_auto_add_executable(behavior_velocity_planner_node
   src/node.cpp
   src/main.cpp
 )
@@ -211,4 +211,7 @@ target_link_libraries(behavior_velocity_planner_node
 )
 
 ament_export_dependencies(${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
-ament_package()
+ament_auto_package(INSTALL_TO_SHARE
+  launch
+  config
+)

@@ -1,2 +1,4 @@
-detection_area:
-  stop_margin: 0.0
+/**:
+  ros__parameters:
+    detection_area:
+      stop_margin: 0.0
