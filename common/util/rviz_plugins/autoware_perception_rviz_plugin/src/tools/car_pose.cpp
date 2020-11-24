@@ -27,40 +27,39 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <tf/transform_listener.h>
+#include <algorithm>
+#include <random>
 
-#include "dummy_perception_publisher/Object.h"
+#include <tf2_ros/transform_listener.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
-#include "rviz/display_context.h"
-#include "rviz/properties/float_property.h"
-#include "rviz/properties/string_property.h"
-
-#include <unique_id/unique_id.h>
+#include <unique_identifier_msgs/msg/uuid.hpp>
 
 #include "car_pose.hpp"
 
-namespace rviz
+namespace rviz_plugins
 {
 CarInitialPoseTool::CarInitialPoseTool()
 {
   shortcut_key_ = 'k';
 
-  topic_property_ = new StringProperty(
-    "Pose Topic", "/simulation/dummy_perceotion/publisher/object_info",
-    "The topic on which to publish dummy object info.", getPropertyContainer(), SLOT(updateTopic()),
-    this);
-  std_dev_x_ = new FloatProperty(
+  topic_property_ = new rviz_common::properties::StringProperty(
+    "Pose Topic", "/simulation/dummy_perception/publisher/object_info",
+    "The topic on which to publish dummy object info.", 
+    getPropertyContainer(), SLOT(updateTopic()), this);
+  std_dev_x_ = new rviz_common::properties::FloatProperty(
     "X std deviation", 0.03, "X standard deviation for initial pose [m]", getPropertyContainer());
-  std_dev_y_ = new FloatProperty(
+  std_dev_y_ = new rviz_common::properties::FloatProperty(
     "Y std deviation", 0.03, "Y standard deviation for initial pose [m]", getPropertyContainer());
-  std_dev_z_ = new FloatProperty(
+  std_dev_z_ = new rviz_common::properties::FloatProperty(
     "Z std deviation", 0.03, "Z standard deviation for initial pose [m]", getPropertyContainer());
-  std_dev_theta_ = new FloatProperty(
+  std_dev_theta_ = new rviz_common::properties::FloatProperty(
     "Theta std deviation", 5.0 * M_PI / 180.0, "Theta standard deviation for initial pose [rad]",
     getPropertyContainer());
-  position_z_ =
-    new FloatProperty("Z position", 0.0, "Z position for initial pose [m]", getPropertyContainer());
-  velocity_ = new FloatProperty("Velocity", 0.0, "velocity [m/s]", getPropertyContainer());
+  position_z_ = new rviz_common::properties::FloatProperty(
+    "Z position", 0.0, "Z position for initial pose [m]", getPropertyContainer());
+  velocity_ = new rviz_common::properties::FloatProperty(
+    "Velocity", 0.0, "velocity [m/s]", getPropertyContainer());
   std_dev_x_->setMin(0);
   std_dev_y_->setMin(0);
   std_dev_z_->setMin(0);
@@ -77,26 +76,28 @@ void CarInitialPoseTool::onInitialize()
 
 void CarInitialPoseTool::updateTopic()
 {
-  dummy_object_info_pub_ =
-    nh_.advertise<dummy_perception_publisher::Object>(topic_property_->getStdString(), 1);
+  rclcpp::Node::SharedPtr raw_node = 
+    context_->getRosNodeAbstraction().lock()->get_raw_node();
+  dummy_object_info_pub_ = raw_node->
+    create_publisher<dummy_perception_publisher::msg::Object>(topic_property_->getStdString(), 1);
+  clock_ = raw_node->get_clock();
 }
 
 void CarInitialPoseTool::onPoseSet(double x, double y, double theta)
 {
-  const ros::Time current_time = ros::Time::now();
-  dummy_perception_publisher::Object output_msg;
+  dummy_perception_publisher::msg::Object output_msg;
   std::string fixed_frame = context_->getFixedFrame().toStdString();
 
   // header
   output_msg.header.frame_id = fixed_frame;
-  output_msg.header.stamp = current_time;
+  output_msg.header.stamp = clock_->now();
 
   // semantic
-  output_msg.semantic.type = autoware_perception_msgs::Semantic::CAR;
+  output_msg.semantic.type = autoware_perception_msgs::msg::Semantic::CAR;
   output_msg.semantic.confidence = 1.0;
 
   // shape
-  output_msg.shape.type = autoware_perception_msgs::Shape::BOUNDING_BOX;
+  output_msg.shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
   const double width = 1.8;
   const double length = 4.0;
   output_msg.shape.dimensions.x = length;
@@ -116,30 +117,32 @@ void CarInitialPoseTool::onPoseSet(double x, double y, double theta)
     std_dev_z_->getFloat() * std_dev_z_->getFloat();
   output_msg.initial_state.pose_covariance.covariance[35] =
     std_dev_theta_->getFloat() * std_dev_theta_->getFloat();
-  tf::Quaternion quat;
+  tf2::Quaternion quat;
   quat.setRPY(0.0, 0.0, theta);
-  tf::quaternionTFToMsg(quat, output_msg.initial_state.pose_covariance.pose.orientation);
-  ROS_INFO(
+  output_msg.initial_state.pose_covariance.pose.orientation = tf2::toMsg(quat);
+  RCLCPP_INFO(rclcpp::get_logger("CarInitialPoseTool"),
     "Setting pose: %.3f %.3f %.3f %.3f [frame=%s]", x, y, position_z_->getFloat(), theta,
     fixed_frame.c_str());
   // twist
   output_msg.initial_state.twist_covariance.twist.linear.x = velocity_->getFloat();
   output_msg.initial_state.twist_covariance.twist.linear.y = 0.0;
   output_msg.initial_state.twist_covariance.twist.linear.z = 0.0;
-  ROS_INFO(
+  RCLCPP_INFO(rclcpp::get_logger("CarInitialPoseTool"),
     "Setting twist: %.3f %.3f %.3f [frame=%s]", velocity_->getFloat(), 0.0, 0.0,
     fixed_frame.c_str());
 
   // action
-  output_msg.action = dummy_perception_publisher::Object::ADD;
+  output_msg.action = dummy_perception_publisher::msg::Object::ADD;
 
   // id
-  output_msg.id = unique_id::toMsg(unique_id::fromRandom());
+  std::mt19937 gen(std::random_device{}());
+  std::independent_bits_engine<std::mt19937, 8, uint8_t> bit_eng(gen);
+  std::generate(output_msg.id.uuid.begin(), output_msg.id.uuid.end(), bit_eng);
 
-  dummy_object_info_pub_.publish(output_msg);
+  dummy_object_info_pub_->publish(output_msg);
 }
 
-}  // end namespace rviz
+}  // end namespace rviz_plugins
 
 #include <pluginlib/class_list_macros.hpp>
-PLUGINLIB_EXPORT_CLASS(rviz::CarInitialPoseTool, rviz::Tool)
+PLUGINLIB_EXPORT_CLASS(rviz_plugins::CarInitialPoseTool, rviz_common::Tool)
