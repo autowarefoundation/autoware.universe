@@ -23,6 +23,7 @@
   <exec_depend>rclcpp_components</exec_depend>
   <exec_depend>launch_ros</exec_depend>
   <exec_depend>rosidl_default_runtime</exec_depend>
+  <exec_depend>topic_tools</exec_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

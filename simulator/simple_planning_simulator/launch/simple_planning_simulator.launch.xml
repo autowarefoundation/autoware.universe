@@ -33,5 +33,10 @@
     <param name="initial_engage_state" value="$(var initial_engage_state)"/>
   </node>
 
-  <!-- <node pkg="topic_tools" exec="relay" name="relay" args="/vehicle/status/twist /localization/twist" /> -->
+  <node pkg="topic_tools" exec="relay" name="twist_relay" output="log" >
+    <param name="input_topic" value="/vehicle/status/twist" />
+    <param name="output_topic" value="/localization/twist" />
+    <param name="type" value="geometry_msgs/msg/TwistStamped" />
+  </node>
+
 </launch>
