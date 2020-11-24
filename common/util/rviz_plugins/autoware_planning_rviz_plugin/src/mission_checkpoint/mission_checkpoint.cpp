@@ -27,34 +27,28 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <tf/transform_listener.h>
-
-#include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/TwistStamped.h>
-
-#include <rviz/display_context.h>
-#include <rviz/properties/float_property.h>
-#include <rviz/properties/string_property.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 #include <mission_checkpoint/mission_checkpoint.hpp>
 
-namespace rviz
+namespace rviz_plugins
 {
 MissionCheckpointTool::MissionCheckpointTool()
 {
   shortcut_key_ = 'c';
 
-  pose_topic_property_ = new StringProperty(
+  pose_topic_property_ = new rviz_common::properties::StringProperty(
     "Pose Topic", "mission_checkpoint", "The topic on which to publish checkpoint.",
     getPropertyContainer(), SLOT(updateTopic()), this);
-  std_dev_x_ = new FloatProperty(
+  std_dev_x_ = new rviz_common::properties::FloatProperty(
     "X std deviation", 0.5, "X standard deviation for checkpoint pose [m]", getPropertyContainer());
-  std_dev_y_ = new FloatProperty(
+  std_dev_y_ = new rviz_common::properties::FloatProperty(
     "Y std deviation", 0.5, "Y standard deviation for checkpoint pose [m]", getPropertyContainer());
-  std_dev_theta_ = new FloatProperty(
+  std_dev_theta_ = new rviz_common::properties::FloatProperty(
     "Theta std deviation", M_PI / 12.0, "Theta standard deviation for checkpoint pose [rad]",
     getPropertyContainer());
-  position_z_ = new FloatProperty(
+  position_z_ = new rviz_common::properties::FloatProperty(
     "Z position", 0.0, "Z position for checkpoint pose [m]", getPropertyContainer());
   std_dev_x_->setMin(0);
   std_dev_y_->setMin(0);
@@ -71,31 +65,34 @@ void MissionCheckpointTool::onInitialize()
 
 void MissionCheckpointTool::updateTopic()
 {
-  pose_pub_ = nh_.advertise<geometry_msgs::PoseStamped>(pose_topic_property_->getStdString(), 1);
+  rclcpp::Node::SharedPtr raw_node = 
+    context_->getRosNodeAbstraction().lock()->get_raw_node();
+  pose_pub_ = raw_node->
+    create_publisher<geometry_msgs::msg::PoseStamped>(pose_topic_property_->getStdString(), 1);
+  clock_ = raw_node->get_clock();
 }
 
 void MissionCheckpointTool::onPoseSet(double x, double y, double theta)
 {
-  const ros::Time current_time = ros::Time::now();
   // pose
   std::string fixed_frame = context_->getFixedFrame().toStdString();
-  geometry_msgs::PoseStamped pose;
+  geometry_msgs::msg::PoseStamped pose;
   pose.header.frame_id = fixed_frame;
-  pose.header.stamp = current_time;
+  pose.header.stamp = clock_->now();
   pose.pose.position.x = x;
   pose.pose.position.y = y;
   pose.pose.position.z = position_z_->getFloat();
 
-  tf::Quaternion quat;
+  tf2::Quaternion quat;
   quat.setRPY(0.0, 0.0, theta);
-  tf::quaternionTFToMsg(quat, pose.pose.orientation);
-  ROS_INFO(
+  pose.pose.orientation = tf2::toMsg(quat);
+  RCLCPP_INFO(rclcpp::get_logger("MissionCheckpointTool"),
     "Setting pose: %.3f %.3f %.3f %.3f [frame=%s]", x, y, position_z_->getFloat(), theta,
     fixed_frame.c_str());
-  pose_pub_.publish(pose);
+  pose_pub_->publish(pose);
 }
 
-}  // end namespace rviz
+}  // end namespace rviz_plugins
 
 #include <pluginlib/class_list_macros.hpp>
-PLUGINLIB_EXPORT_CLASS(rviz::MissionCheckpointTool, rviz::Tool)
+PLUGINLIB_EXPORT_CLASS(rviz_plugins::MissionCheckpointTool, rviz_common::Tool)

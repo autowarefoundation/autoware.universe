@@ -18,25 +18,27 @@
 
 #include <OgreBillboardSet.h>
 #include <OgreManualObject.h>
+#include <OgreMaterialManager.h>
 #include <OgreSceneManager.h>
 #include <OgreSceneNode.h>
-#include <ros/ros.h>
-#include <rviz/display_context.h>
-#include <rviz/frame_manager.h>
-#include <rviz/message_filter_display.h>
-#include <rviz/properties/bool_property.h>
-#include <rviz/properties/color_property.h>
-#include <rviz/properties/float_property.h>
-#include <rviz/validate_floats.h>
+#include <rclcpp/rclcpp.hpp>
+#include <rviz_common/display_context.hpp>
+#include <rviz_common/frame_manager_iface.hpp>
+#include <rviz_common/message_filter_display.hpp>
+#include <rviz_common/properties/bool_property.hpp>
+#include <rviz_common/properties/color_property.hpp>
+#include <rviz_common/properties/float_property.hpp>
+#include <rviz_common/properties/parse_color.hpp>
+#include <rviz_common/validate_floats.hpp>
 
 #include <deque>
 #include <memory>
 
-#include "autoware_planning_msgs/Path.h"
+#include "autoware_planning_msgs/msg/path.hpp"
 
 namespace rviz_plugins
 {
-class AutowarePathDisplay : public rviz::MessageFilterDisplay<autoware_planning_msgs::Path>
+class AutowarePathDisplay : public rviz_common::MessageFilterDisplay<autoware_planning_msgs::msg::Path>
 {
   Q_OBJECT
 
@@ -51,28 +53,28 @@ private Q_SLOTS:
   void updateVisualization();
 
 protected:
-  void processMessage(const autoware_planning_msgs::PathConstPtr & msg_ptr) override;
+  void processMessage(const autoware_planning_msgs::msg::Path::ConstSharedPtr msg_ptr) override;
   std::unique_ptr<Ogre::ColourValue> setColorDependsOnVelocity(
     const double vel_max, const double cmd_vel);
   std::unique_ptr<Ogre::ColourValue> gradation(
     const QColor & color_min, const QColor & color_max, const double ratio);
   Ogre::ManualObject * path_manual_object_;
   Ogre::ManualObject * velocity_manual_object_;
-  rviz::BoolProperty * property_path_view_;
-  rviz::BoolProperty * property_velocity_view_;
-  rviz::FloatProperty * property_path_width_;
-  rviz::ColorProperty * property_path_color_;
-  rviz::ColorProperty * property_velocity_color_;
-  rviz::FloatProperty * property_path_alpha_;
-  rviz::FloatProperty * property_velocity_alpha_;
-  rviz::FloatProperty * property_velocity_scale_;
-  rviz::BoolProperty * property_path_color_view_;
-  rviz::BoolProperty * property_velocity_color_view_;
-  rviz::FloatProperty * property_vel_max_;
+  rviz_common::properties::BoolProperty * property_path_view_;
+  rviz_common::properties::BoolProperty * property_velocity_view_;
+  rviz_common::properties::FloatProperty * property_path_width_;
+  rviz_common::properties::ColorProperty * property_path_color_;
+  rviz_common::properties::ColorProperty * property_velocity_color_;
+  rviz_common::properties::FloatProperty * property_path_alpha_;
+  rviz_common::properties::FloatProperty * property_velocity_alpha_;
+  rviz_common::properties::FloatProperty * property_velocity_scale_;
+  rviz_common::properties::BoolProperty * property_path_color_view_;
+  rviz_common::properties::BoolProperty * property_velocity_color_view_;
+  rviz_common::properties::FloatProperty * property_vel_max_;
 
 private:
-  autoware_planning_msgs::PathConstPtr last_msg_ptr_;
-  bool validateFloats(const autoware_planning_msgs::PathConstPtr & msg_ptr);
+  autoware_planning_msgs::msg::Path::ConstSharedPtr last_msg_ptr_;
+  bool validateFloats(const autoware_planning_msgs::msg::Path::ConstSharedPtr & msg_ptr);
 };
 
 }  // namespace rviz_plugins

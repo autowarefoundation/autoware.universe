@@ -16,8 +16,8 @@
 
 #include "path/display.hpp"
 #define EIGEN_MPL2_ONLY
-#include <Eigen/Core>
-#include <Eigen/Geometry>
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Geometry>
 
 namespace rviz_plugins
 {
@@ -56,36 +56,36 @@ std::unique_ptr<Ogre::ColourValue> AutowarePathDisplay::setColorDependsOnVelocit
 
 AutowarePathDisplay::AutowarePathDisplay()
 {
-  property_path_view_ =
-    new rviz::BoolProperty("View Path", true, "", this, SLOT(updateVisualization()));
-  property_path_width_ = new rviz::FloatProperty(
+  property_path_view_ = new rviz_common::properties::BoolProperty(
+    "View Path", true, "", this, SLOT(updateVisualization()));
+  property_path_width_ = new rviz_common::properties::FloatProperty(
     "Width", 2.0, "", property_path_view_, SLOT(updateVisualization()), this);
   property_path_width_->setMin(0.0);
-  property_path_alpha_ = new rviz::FloatProperty(
+  property_path_alpha_ = new rviz_common::properties::FloatProperty(
     "Alpha", 1.0, "", property_path_view_, SLOT(updateVisualization()), this);
   property_path_alpha_->setMin(0.0);
   property_path_alpha_->setMax(1.0);
-  property_path_color_view_ = new rviz::BoolProperty(
+  property_path_color_view_ = new rviz_common::properties::BoolProperty(
     "Constant Color", false, "", property_path_view_, SLOT(updateVisualization()), this);
-  property_path_color_ = new rviz::ColorProperty(
+  property_path_color_ = new rviz_common::properties::ColorProperty(
     "Color", Qt::black, "", property_path_view_, SLOT(updateVisualization()), this);
 
-  property_velocity_view_ =
-    new rviz::BoolProperty("View Velocity", true, "", this, SLOT(updateVisualization()), this);
-  property_velocity_alpha_ = new rviz::FloatProperty(
+  property_velocity_view_ = new rviz_common::properties::BoolProperty(
+    "View Velocity", true, "", this, SLOT(updateVisualization()), this);
+  property_velocity_alpha_ = new rviz_common::properties::FloatProperty(
     "Alpha", 1.0, "", property_velocity_view_, SLOT(updateVisualization()), this);
   property_velocity_alpha_->setMin(0.0);
   property_velocity_alpha_->setMax(1.0);
-  property_velocity_scale_ = new rviz::FloatProperty(
+  property_velocity_scale_ = new rviz_common::properties::FloatProperty(
     "Scale", 0.3, "", property_velocity_view_, SLOT(updateVisualization()), this);
   property_velocity_scale_->setMin(0.1);
   property_velocity_scale_->setMax(10.0);
-  property_velocity_color_view_ = new rviz::BoolProperty(
+  property_velocity_color_view_ = new rviz_common::properties::BoolProperty(
     "Constant Color", false, "", property_velocity_view_, SLOT(updateVisualization()), this);
-  property_velocity_color_ = new rviz::ColorProperty(
+  property_velocity_color_ = new rviz_common::properties::ColorProperty(
     "Color", Qt::black, "", property_velocity_view_, SLOT(updateVisualization()), this);
 
-  property_vel_max_ = new rviz::FloatProperty(
+  property_vel_max_ = new rviz_common::properties::FloatProperty(
     "Color Border Vel Max", 3.0, "[m/s]", this, SLOT(updateVisualization()), this);
   property_vel_max_->setMin(0.0);
 }
@@ -117,20 +117,20 @@ void AutowarePathDisplay::reset()
   velocity_manual_object_->clear();
 }
 
-bool AutowarePathDisplay::validateFloats(const autoware_planning_msgs::PathConstPtr & msg_ptr)
+bool AutowarePathDisplay::validateFloats(const autoware_planning_msgs::msg::Path::ConstSharedPtr & msg_ptr)
 {
   for (auto && path_point : msg_ptr->points) {
-    if (!rviz::validateFloats(path_point.pose) && !rviz::validateFloats(path_point.twist))
+    if (!rviz_common::validateFloats(path_point.pose) && !rviz_common::validateFloats(path_point.twist))
       return false;
   }
   return true;
 }
 
-void AutowarePathDisplay::processMessage(const autoware_planning_msgs::PathConstPtr & msg_ptr)
+void AutowarePathDisplay::processMessage(const autoware_planning_msgs::msg::Path::ConstSharedPtr msg_ptr)
 {
   if (!validateFloats(msg_ptr)) {
     setStatus(
-      rviz::StatusProperty::Error, "Topic",
+      rviz_common::properties::StatusProperty::Error, "Topic",
       "Message contained invalid floating point values (nans or infs)");
     return;
   }
@@ -138,7 +138,7 @@ void AutowarePathDisplay::processMessage(const autoware_planning_msgs::PathConst
   Ogre::Vector3 position;
   Ogre::Quaternion orientation;
   if (!context_->getFrameManager()->getTransform(msg_ptr->header, position, orientation)) {
-    ROS_DEBUG(
+    RCLCPP_DEBUG(rclcpp::get_logger("AutowarePathDisplay"),
       "Error transforming from frame '%s' to frame '%s'", msg_ptr->header.frame_id.c_str(),
       qPrintable(fixed_frame_));
   }
@@ -148,7 +148,7 @@ void AutowarePathDisplay::processMessage(const autoware_planning_msgs::PathConst
 
   path_manual_object_->clear();
   velocity_manual_object_->clear();
-
+  
   Ogre::MaterialPtr material = Ogre::MaterialManager::getSingleton().getByName(
     "BaseWhiteNoLighting", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
   material->setSceneBlending(Ogre::SBT_TRANSPARENT_ALPHA);
@@ -168,7 +168,7 @@ void AutowarePathDisplay::processMessage(const autoware_planning_msgs::PathConst
       if (property_path_view_->getBool()) {
         Ogre::ColourValue color;
         if (property_path_color_view_->getBool()) {
-          color = rviz::qtToOgre(property_path_color_->getColor());
+          color = rviz_common::properties::qtToOgre(property_path_color_->getColor());
         } else {
           /* color change depending on velocity */
           std::unique_ptr<Ogre::ColourValue> dynamic_color_ptr =
@@ -213,7 +213,7 @@ void AutowarePathDisplay::processMessage(const autoware_planning_msgs::PathConst
       if (property_velocity_view_->getBool()) {
         Ogre::ColourValue color;
         if (property_velocity_color_view_->getBool()) {
-          color = rviz::qtToOgre(property_velocity_color_->getColor());
+          color = rviz_common::properties::qtToOgre(property_velocity_color_->getColor());
         } else {
           /* color change depending on velocity */
           std::unique_ptr<Ogre::ColourValue> dynamic_color_ptr =
@@ -243,5 +243,5 @@ void AutowarePathDisplay::updateVisualization()
 
 }  // namespace rviz_plugins
 
-#include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(rviz_plugins::AutowarePathDisplay, rviz::Display)
+#include <pluginlib/class_list_macros.hpp>
+PLUGINLIB_EXPORT_CLASS(rviz_plugins::AutowarePathDisplay, rviz_common::Display)

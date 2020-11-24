@@ -32,19 +32,19 @@
 #ifndef Q_MOC_RUN  // See: https://bugreports.qt-project.org/browse/QTBUG-22829
 #include <QObject>
 
-#include <ros/ros.h>
+#include <rclcpp/node.hpp>
 
-#include <rviz/default_plugin/tools/pose_tool.h>
+#include <rviz_default_plugins/tools/pose/pose_tool.hpp>
+#include <rviz_common/display_context.hpp>
+#include <rviz_common/properties/float_property.hpp>
+#include <rviz_common/properties/string_property.hpp>
 #endif
 
-namespace rviz
-{
-class Arrow;
-class DisplayContext;
-class StringProperty;
-class FloatProperty;
+#include <geometry_msgs/msg/pose_stamped.hpp>
 
-class MissionCheckpointTool : public PoseTool
+namespace rviz_plugins
+{
+class MissionCheckpointTool : public rviz_default_plugins::tools::PoseTool
 {
   Q_OBJECT
 public:
@@ -59,15 +59,15 @@ private Q_SLOTS:
   void updateTopic();
 
 private:
-  ros::NodeHandle nh_;
-  ros::Publisher pose_pub_;
+  rclcpp::Clock::SharedPtr clock_;
+  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pose_pub_;
 
-  StringProperty * pose_topic_property_;
-  StringProperty * twist_topic_property_;
-  FloatProperty * std_dev_x_;
-  FloatProperty * std_dev_y_;
-  FloatProperty * std_dev_theta_;
-  FloatProperty * position_z_;
+  rviz_common::properties::StringProperty * pose_topic_property_;
+  rviz_common::properties::StringProperty * twist_topic_property_;
+  rviz_common::properties::FloatProperty * std_dev_x_;
+  rviz_common::properties::FloatProperty * std_dev_y_;
+  rviz_common::properties::FloatProperty * std_dev_theta_;
+  rviz_common::properties::FloatProperty * position_z_;
 };
 
-}  // namespace rviz
+}  // namespace rviz_plugins
