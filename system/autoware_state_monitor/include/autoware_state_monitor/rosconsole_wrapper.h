@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-#pragma once
+#ifndef AUTOWARE_STATE_MONITOR_ROSCONSOLE_WRAPPER_H_
+#define AUTOWARE_STATE_MONITOR_ROSCONSOLE_WRAPPER_H_
 
 #include <string>
 #include <unordered_map>
@@ -22,22 +23,25 @@
 #include <vector>
 
 #include <fmt/format.h>
-#include <ros/console.h>
-#include <ros/time.h>
+// #include <ros/console.h>
+// #include <ros/time.h>
 
-inline void logThrottleNamed(
-  const ros::console::levels::Level & log_level, const double duration,
-  const std::string & log_name, const std::string & msg)
-{
-  static std::unordered_map<std::string, ros::Time> last_output_time;
+// TODO: This method is never used... delete?
+// inline void logThrottleNamed(
+//   const ros::console::levels::Level & log_level, const double duration,
+//   const std::string & log_name, const std::string & msg)
+// {
+//   static std::unordered_map<std::string, ros::Time> last_output_time;
 
-  if (last_output_time.count(log_name) != 0) {
-    const auto time_from_last_output = ros::Time::now() - last_output_time.at(log_name);
-    if (time_from_last_output.toSec() < duration) {
-      return;
-    }
-  }
+//   if (last_output_time.count(log_name) != 0) {
+//     const auto time_from_last_output = ros::Time::now() - last_output_time.at(log_name);
+//     if (time_from_last_output.toSec() < duration) {
+//       return;
+//     }
+//   }
 
-  last_output_time[log_name] = ros::Time::now();
-  ROS_LOG_STREAM(log_level, ROSCONSOLE_DEFAULT_NAME, msg);
-}
+//   last_output_time[log_name] = ros::Time::now();
+//   ROS_LOG_STREAM(log_level, ROSCONSOLE_DEFAULT_NAME, msg);
+// }
+
+#endif

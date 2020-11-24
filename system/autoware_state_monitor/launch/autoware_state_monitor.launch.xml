@@ -8,19 +8,19 @@
   <arg name="output_autoware_state" default="/autoware/state" />
   <arg name="output_autoware_engage" default="/autoware/engage" />
 
-  <arg name="config_file" default="$(find autoware_state_monitor)/config/autoware_state_monitor.yaml" />
+  <arg name="config_file" default="$(find-pkg-share autoware_state_monitor)/config/autoware_state_monitor.yaml" />
 
-  <node pkg="autoware_state_monitor" type="autoware_state_monitor" name="autoware_state_monitor" output="screen">
-    <remap from="~input/autoware_engage" to="$(arg input_autoware_engage)"/>
-    <remap from="~input/vehicle_control_mode" to="$(arg input_vehicle_control_mode)"/>
-    <remap from="~input/is_emergency" to="$(arg input_is_emergency)"/>
-    <remap from="~input/route" to="$(arg input_route)"/>
-    <remap from="~input/twist" to="$(arg input_twist)"/>
+  <node pkg="autoware_state_monitor" exec="autoware_state_monitor" name="autoware_state_monitor" output="screen">
+    <remap from="input/autoware_engage" to="$(var input_autoware_engage)"/>
+    <remap from="input/vehicle_control_mode" to="$(var input_vehicle_control_mode)"/>
+    <remap from="input/is_emergency" to="$(var input_is_emergency)"/>
+    <remap from="input/route" to="$(var input_route)"/>
+    <remap from="input/twist" to="$(var input_twist)"/>
 
-    <remap from="~output/autoware_state" to="$(arg output_autoware_state)"/>
-    <remap from="~output/autoware_engage" to="$(arg output_autoware_engage)"/>
+    <remap from="output/autoware_state" to="$(var output_autoware_state)"/>
+    <remap from="output/autoware_engage" to="$(var output_autoware_engage)"/>
 
-    <rosparam command="load" file="$(arg config_file)" />
+    <param from="$(var config_file)" />
 
     <param name="update_rate" value="10.0" />
     <param name="th_arrived_distance_m" value="1.0" />

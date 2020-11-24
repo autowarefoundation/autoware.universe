@@ -14,69 +14,64 @@
  * limitations under the License.
  */
 
-#include <autoware_state_monitor/autoware_state_monitor_node.h>
+#include "autoware_state_monitor/autoware_state_monitor_node.h"
+
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 #include <numeric>
 #include <string>
 #include <utility>
 #include <vector>
 
-#include <boost/bind.hpp>
-
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-
-#include <autoware_state_monitor/rosconsole_wrapper.h>
-
 namespace
 {
 template <class Config>
-std::vector<Config> getConfigs(const ros::NodeHandle & nh, const std::string & config_name)
+std::vector<Config> getConfigs(
+  rclcpp::node_interfaces::NodeParametersInterface::SharedPtr interface,
+  const std::string & config_namespace)
 {
-  XmlRpc::XmlRpcValue xml;
-  if (!nh.getParam(config_name, xml)) {
-    const auto msg = std::string("no parameter found: ") + config_name;
-    throw std::runtime_error(msg);
-  }
+  std::string names_key = config_namespace + ".names";
+  interface->declare_parameter(names_key);
+  std::vector<std::string> config_names = interface->get_parameter(names_key).as_string_array();
 
   std::vector<Config> configs;
-  configs.reserve(xml.size());
+  configs.reserve(config_names.size());
 
-  for (size_t i = 0; i < xml.size(); ++i) {
-    auto & value = xml[i];
-    configs.emplace_back(value);
+  for (auto config_name : config_names) {
+    configs.emplace_back(interface, config_namespace + ".configs." + config_name, config_name);
   }
 
   return configs;
 }
 
-double calcTopicRate(const std::deque<ros::Time> & topic_received_time_buffer)
+double calcTopicRate(const std::deque<rclcpp::Time> & topic_received_time_buffer)
 {
   assert(topic_received_time_buffer.size() >= 2);
 
   const auto & buf = topic_received_time_buffer;
   const auto time_diff = buf.back() - buf.front();
 
-  return static_cast<double>(buf.size() - 1) / time_diff.toSec();
+  return static_cast<double>(buf.size() - 1) / time_diff.seconds();
 }
 
-geometry_msgs::PoseStamped::ConstPtr getCurrentPose(const tf2_ros::Buffer & tf_buffer)
+geometry_msgs::msg::PoseStamped::SharedPtr getCurrentPose(const tf2_ros::Buffer & tf_buffer)
 {
-  geometry_msgs::TransformStamped tf_current_pose;
+  geometry_msgs::msg::TransformStamped tf_current_pose;
 
   try {
-    tf_current_pose = tf_buffer.lookupTransform("map", "base_link", ros::Time(0), ros::Duration(0));
-  } catch (tf2::TransformException ex) {
+    tf_current_pose = tf_buffer.lookupTransform("map", "base_link", tf2::TimePointZero);
+  } catch (tf2::TransformException & ex) {
     return nullptr;
   }
 
-  geometry_msgs::PoseStamped::Ptr p(new geometry_msgs::PoseStamped());
+  auto p = std::make_shared<geometry_msgs::msg::PoseStamped>();
   p->header = tf_current_pose.header;
   p->pose.orientation = tf_current_pose.transform.rotation;
   p->pose.position.x = tf_current_pose.transform.translation.x;
   p->pose.position.y = tf_current_pose.transform.translation.y;
   p->pose.position.z = tf_current_pose.transform.translation.z;
 
-  return geometry_msgs::PoseStamped::ConstPtr(p);
+  return p;
 }
 
 std::string getStateMessage(const AutowareState & state)
@@ -115,31 +110,31 @@ std::string getStateMessage(const AutowareState & state)
 
 }  // namespace
 
-void AutowareStateMonitorNode::onAutowareEngage(const std_msgs::Bool::ConstPtr & msg)
+void AutowareStateMonitorNode::onAutowareEngage(const std_msgs::msg::Bool::ConstSharedPtr msg)
 {
   state_input_.autoware_engage = msg;
 }
 
 void AutowareStateMonitorNode::onVehicleControlMode(
-  const autoware_vehicle_msgs::ControlMode::ConstPtr & msg)
+  const autoware_vehicle_msgs::msg::ControlMode::ConstSharedPtr msg)
 {
   state_input_.vehicle_control_mode = msg;
 }
 
-void AutowareStateMonitorNode::onIsEmergency(const std_msgs::Bool::ConstPtr & msg)
+void AutowareStateMonitorNode::onIsEmergency(const std_msgs::msg::Bool::ConstSharedPtr msg)
 {
   state_input_.is_emergency = msg;
 }
 
-void AutowareStateMonitorNode::onRoute(const autoware_planning_msgs::Route::ConstPtr & msg)
+void AutowareStateMonitorNode::onRoute(const autoware_planning_msgs::msg::Route::ConstSharedPtr msg)
 {
   state_input_.route = msg;
 
   // Get goal pose
   {
-    geometry_msgs::Pose::Ptr p(new geometry_msgs::Pose());
+    geometry_msgs::msg::Pose::SharedPtr p = std::make_shared<geometry_msgs::msg::Pose>();
     *p = msg->goal_pose;
-    state_input_.goal_pose = geometry_msgs::Pose::ConstPtr(p);
+    state_input_.goal_pose = geometry_msgs::msg::Pose::ConstPtr(p);
   }
 
   if (disengage_on_route_) {
@@ -147,7 +142,7 @@ void AutowareStateMonitorNode::onRoute(const autoware_planning_msgs::Route::Cons
   }
 }
 
-void AutowareStateMonitorNode::onTwist(const geometry_msgs::TwistStamped::ConstPtr & msg)
+void AutowareStateMonitorNode::onTwist(const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg)
 {
   state_input_.twist = msg;
 
@@ -155,9 +150,9 @@ void AutowareStateMonitorNode::onTwist(const geometry_msgs::TwistStamped::ConstP
 
   // Delete old data in buffer
   while (true) {
-    const auto time_diff = msg->header.stamp - state_input_.twist_buffer.front()->header.stamp;
+    const auto time_diff = rclcpp::Time(msg->header.stamp) - rclcpp::Time(state_input_.twist_buffer.front()->header.stamp);
 
-    if (time_diff.toSec() < state_param_.th_stopped_time_sec) {
+    if (time_diff.seconds() < state_param_.th_stopped_time_sec) {
       break;
     }
 
@@ -165,7 +160,7 @@ void AutowareStateMonitorNode::onTwist(const geometry_msgs::TwistStamped::ConstP
   }
 }
 
-void AutowareStateMonitorNode::onTimer(const ros::TimerEvent & event)
+void AutowareStateMonitorNode::onTimer()
 {
   // Prepare state input
   state_input_.current_pose = getCurrentPose(tf_buffer_);
@@ -179,12 +174,12 @@ void AutowareStateMonitorNode::onTimer(const ros::TimerEvent & event)
   const auto autoware_state = state_machine_->updateState(state_input_);
 
   if (autoware_state != prev_autoware_state) {
-    ROS_INFO(
-      "state changed: %s -> %s", toString(prev_autoware_state).c_str(),
+    RCLCPP_INFO(
+      this->get_logger(), "state changed: %s -> %s", toString(prev_autoware_state).c_str(),
       toString(autoware_state).c_str());
   }
 
-  // Disengage on event
+  // // Disengage on event
   if (disengage_on_complete_ && autoware_state == AutowareState::ArrivedGoal) {
     setDisengage();
   }
@@ -195,7 +190,7 @@ void AutowareStateMonitorNode::onTimer(const ros::TimerEvent & event)
 
   // Publish state message
   {
-    autoware_system_msgs::AutowareState autoware_state_msg;
+    autoware_system_msgs::msg::AutowareState autoware_state_msg;
     autoware_state_msg.state = toString(autoware_state);
 
     // Add messages line by line
@@ -209,17 +204,18 @@ void AutowareStateMonitorNode::onTimer(const ros::TimerEvent & event)
 
     autoware_state_msg.msg = oss.str();
 
-    pub_autoware_state_.publish(autoware_state_msg);
+    pub_autoware_state_->publish(autoware_state_msg);
   }
 
   // Publish diag message
   updater_.force_update();
 }
 
+// TODO: Use generic subscription base
 void AutowareStateMonitorNode::onTopic(
-  const topic_tools::ShapeShifter::ConstPtr & msg, const std::string & topic_name)
+  const std::shared_ptr<rclcpp::SerializedMessage> msg, const std::string & topic_name)
 {
-  const auto now = ros::Time::now();
+  const auto now = this->now();
 
   auto & buf = topic_received_time_buffer_.at(topic_name);
   buf.push_back(now);
@@ -230,22 +226,23 @@ void AutowareStateMonitorNode::onTopic(
   }
 }
 
-void AutowareStateMonitorNode::registerTopicCallback(const std::string & topic_name)
+void AutowareStateMonitorNode::registerTopicCallback(const std::string & topic_name, const std::string & topic_type)
 {
   // Initialize buffer
   topic_received_time_buffer_[topic_name] = {};
 
   // Register callback
-  using Callback = boost::function<void(const topic_tools::ShapeShifter::ConstPtr &)>;
+  using Callback = std::function<void(const std::shared_ptr<rclcpp::SerializedMessage>)>;
   const auto callback =
-    static_cast<Callback>(boost::bind(&AutowareStateMonitorNode::onTopic, this, _1, topic_name));
-  sub_topic_map_[topic_name] = nh_.subscribe(topic_name, 10, callback);
+    static_cast<Callback>(std::bind(&AutowareStateMonitorNode::onTopic, this, std::placeholders::_1, topic_name));
+  sub_topic_map_[topic_name] = rclcpp_generic::GenericSubscription::create(
+    this->get_node_topics_interface(), topic_name, topic_type, rclcpp::QoS{1}, callback);
 }
 
 TopicStats AutowareStateMonitorNode::getTopicStats() const
 {
   TopicStats topic_stats;
-  topic_stats.checked_time = ros::Time::now();
+  topic_stats.checked_time = this->now();
 
   for (const auto & topic_config : topic_configs_) {
     // Alias
@@ -259,7 +256,7 @@ TopicStats AutowareStateMonitorNode::getTopicStats() const
 
     // Check timeout
     const auto last_received_time = buf.back();
-    const auto time_diff = (topic_stats.checked_time - last_received_time).toSec();
+    const auto time_diff = (topic_stats.checked_time - last_received_time).seconds();
     const auto is_timeout = (topic_config.timeout != 0) && (time_diff > topic_config.timeout);
     if (is_timeout) {
       topic_stats.timeout_list.emplace_back(topic_config, last_received_time);
@@ -285,11 +282,10 @@ TopicStats AutowareStateMonitorNode::getTopicStats() const
 ParamStats AutowareStateMonitorNode::getParamStats() const
 {
   ParamStats param_stats;
-  param_stats.checked_time = ros::Time::now();
+  param_stats.checked_time = this->now();
 
   for (const auto & param_config : param_configs_) {
-    XmlRpc::XmlRpcValue xml;
-    const auto result = nh_.getParam(param_config.name, xml);
+    const bool result = this->has_parameter("param_configs.configs." + param_config.name);
     if (!result) {
       param_stats.non_set_list.push_back(param_config);
       continue;
@@ -305,20 +301,20 @@ ParamStats AutowareStateMonitorNode::getParamStats() const
 TfStats AutowareStateMonitorNode::getTfStats() const
 {
   TfStats tf_stats;
-  tf_stats.checked_time = ros::Time::now();
+  tf_stats.checked_time = this->now();
 
   for (const auto & tf_config : tf_configs_) {
     try {
       const auto transform =
-        tf_buffer_.lookupTransform(tf_config.from, tf_config.to, ros::Time(0), ros::Duration(0));
+        tf_buffer_.lookupTransform(tf_config.from, tf_config.to, tf2::TimePointZero);
 
       const auto last_received_time = transform.header.stamp;
-      const auto time_diff = (tf_stats.checked_time - last_received_time).toSec();
+      const auto time_diff = (tf_stats.checked_time - last_received_time).seconds();
       if (time_diff > tf_config.timeout) {
         tf_stats.timeout_list.emplace_back(tf_config, last_received_time);
         continue;
       }
-    } catch (tf2::TransformException ex) {
+    } catch (tf2::TransformException & ex) {
       tf_stats.non_received_list.push_back(tf_config);
       continue;
     }
@@ -332,59 +328,77 @@ TfStats AutowareStateMonitorNode::getTfStats() const
 
 void AutowareStateMonitorNode::setDisengage()
 {
-  std_msgs::Bool msg;
+  std_msgs::msg::Bool msg;
   msg.data = false;
-  pub_autoware_engage_.publish(msg);
+  pub_autoware_engage_->publish(msg);
 }
 
 AutowareStateMonitorNode::AutowareStateMonitorNode()
+: Node("autoware_state_monitor"),
+  tf_buffer_(this->get_clock()),
+  tf_listener_(tf_buffer_),
+  updater_(this)
 {
   // Parameter
-  private_nh_.param("update_rate", update_rate_, 10.0);
-  private_nh_.param("disengage_on_route", disengage_on_route_, true);
-  private_nh_.param("disengage_on_complete", disengage_on_complete_, false);
-  private_nh_.param("disengage_on_emergency", disengage_on_emergency_, false);
+  update_rate_ = this->declare_parameter("update_rate", 10.0);
+  disengage_on_route_ = this->declare_parameter("disengage_on_route", true);
+  disengage_on_complete_ = this->declare_parameter("disengage_on_complete", false);
+  disengage_on_emergency_ = this->declare_parameter("disengage_on_emergency", false);
 
   // Parameter for StateMachine
-  private_nh_.param("th_arrived_distance_m", state_param_.th_arrived_distance_m, 1.0);
-  private_nh_.param("th_stopped_time_sec", state_param_.th_stopped_time_sec, 1.0);
-  private_nh_.param("th_stopped_velocity_mps", state_param_.th_stopped_velocity_mps, 0.01);
+  state_param_.th_arrived_distance_m = this->declare_parameter("th_arrived_distance_m", 1.0);
+  state_param_.th_stopped_time_sec = this->declare_parameter("th_stopped_time_sec", 1.0);
+  state_param_.th_stopped_velocity_mps = this->declare_parameter("th_stopped_velocity_mps", 0.01);
 
   // State Machine
   state_machine_ = std::make_shared<StateMachine>(state_param_);
 
   // Config
-  topic_configs_ = getConfigs<TopicConfig>(private_nh_, "topic_configs");
-  param_configs_ = getConfigs<ParamConfig>(private_nh_, "param_configs");
-  tf_configs_ = getConfigs<TfConfig>(private_nh_, "tf_configs");
+  topic_configs_ = getConfigs<TopicConfig>(
+    this->get_node_parameters_interface(), "topic_configs");
+  param_configs_ = getConfigs<ParamConfig>(
+    this->get_node_parameters_interface(), "param_configs");
+  tf_configs_ = getConfigs<TfConfig>(
+    this->get_node_parameters_interface(), "tf_configs");
 
   // Topic Callback
   for (const auto & topic_config : topic_configs_) {
-    registerTopicCallback(topic_config.name);
+    registerTopicCallback(topic_config.name, topic_config.type);
   }
 
   // Subscriber
-  sub_autoware_engage_ = private_nh_.subscribe(
-    "input/autoware_engage", 1, &AutowareStateMonitorNode::onAutowareEngage, this);
-  sub_vehicle_control_mode_ = private_nh_.subscribe(
-    "input/vehicle_control_mode", 1, &AutowareStateMonitorNode::onVehicleControlMode, this);
-  sub_is_emergency_ =
-    private_nh_.subscribe("input/is_emergency", 1, &AutowareStateMonitorNode::onIsEmergency, this);
-  sub_route_ = private_nh_.subscribe("input/route", 1, &AutowareStateMonitorNode::onRoute, this);
-  sub_twist_ = private_nh_.subscribe("input/twist", 100, &AutowareStateMonitorNode::onTwist, this);
+  sub_autoware_engage_ = this->create_subscription<std_msgs::msg::Bool>(
+    "input/autoware_engage", 1,
+    std::bind(&AutowareStateMonitorNode::onAutowareEngage, this, std::placeholders::_1));
+  sub_vehicle_control_mode_ = this->create_subscription<autoware_vehicle_msgs::msg::ControlMode>(
+    "input/vehicle_control_mode", 1,
+    std::bind(&AutowareStateMonitorNode::onVehicleControlMode, this, std::placeholders::_1));
+  sub_is_emergency_ = this->create_subscription<std_msgs::msg::Bool>(
+    "input/is_emergency", 1,
+    std::bind(&AutowareStateMonitorNode::onIsEmergency, this, std::placeholders::_1));
+  sub_route_ = this->create_subscription<autoware_planning_msgs::msg::Route>(
+    "input/route", 1, std::bind(&AutowareStateMonitorNode::onRoute, this, std::placeholders::_1));
+  sub_twist_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
+    "input/twist", 100, std::bind(&AutowareStateMonitorNode::onTwist, this, std::placeholders::_1));
 
   // Publisher
   pub_autoware_state_ =
-    private_nh_.advertise<autoware_system_msgs::AutowareState>("output/autoware_state", 1);
-  pub_autoware_engage_ = private_nh_.advertise<std_msgs::Bool>("output/autoware_engage", 1);
+    this->create_publisher<autoware_system_msgs::msg::AutowareState>("output/autoware_state", 1);
+  pub_autoware_engage_ = this->create_publisher<std_msgs::msg::Bool>("output/autoware_engage", 1);
 
   // Diagnostic Updater
   setupDiagnosticUpdater();
 
   // Wait for first topics
-  ros::Duration(1.0).sleep();
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
   // Timer
-  timer_ =
-    private_nh_.createTimer(ros::Rate(update_rate_), &AutowareStateMonitorNode::onTimer, this);
+  auto timer_callback = std::bind(&AutowareStateMonitorNode::onTimer, this);
+  auto period = std::chrono::duration_cast<std::chrono::nanoseconds>(
+    std::chrono::duration<double>(update_rate_));
+
+  timer_ = std::make_shared<rclcpp::GenericTimer<decltype(timer_callback)>>(
+    this->get_clock(), period, std::move(timer_callback),
+    this->get_node_base_interface()->get_context());
+  this->get_node_timers_interface()->add_timer(timer_, nullptr);
 }

@@ -14,7 +14,27 @@
  * limitations under the License.
  */
 
-#pragma once
+#ifndef AUTOWARE_STATE_MONITOR_AUTOWARE_STATE_MONITOR_CORE_HPP_
+#define AUTOWARE_STATE_MONITOR_AUTOWARE_STATE_MONITOR_CORE_HPP_
+
+#include "autoware_state_monitor/autoware_state.h"
+#include "autoware_state_monitor/config.h"
+#include "autoware_state_monitor/state_machine.h"
+
+#include "autoware_planning_msgs/msg/route.hpp"
+#include "autoware_planning_msgs/msg/trajectory.hpp"
+#include "autoware_system_msgs/msg/autoware_state.hpp"
+#include "autoware_vehicle_msgs/msg/control_mode.hpp"
+
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
+#include <std_msgs/msg/bool.hpp>
+
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
+#include <diagnostic_updater/diagnostic_updater.hpp>
+#include <rclcpp_generic/generic_subscription.hpp>
+#include <rclcpp/rclcpp.hpp>
 
 #include <deque>
 #include <map>
@@ -22,34 +42,12 @@
 #include <string>
 #include <vector>
 
-#include <diagnostic_updater/diagnostic_updater.h>
-#include <ros/ros.h>
-#include <tf2_ros/buffer.h>
-#include <tf2_ros/transform_listener.h>
-#include <topic_tools/shape_shifter.h>
-
-#include <autoware_planning_msgs/Route.h>
-#include <autoware_planning_msgs/Trajectory.h>
-#include <autoware_system_msgs/AutowareState.h>
-#include <autoware_vehicle_msgs/ControlMode.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/TwistStamped.h>
-#include <std_msgs/Bool.h>
-
-#include <autoware_state_monitor/autoware_state.h>
-#include <autoware_state_monitor/config.h>
-#include <autoware_state_monitor/state_machine.h>
-
-class AutowareStateMonitorNode
+class AutowareStateMonitorNode : public rclcpp::Node
 {
 public:
   AutowareStateMonitorNode();
 
 private:
-  // NodeHandle
-  ros::NodeHandle nh_{""};
-  ros::NodeHandle private_nh_{"~"};
-
   // Parameter
   double update_rate_;
   bool disengage_on_route_;
@@ -62,38 +60,41 @@ private:
 
   // TF
   tf2_ros::Buffer tf_buffer_;
-  tf2_ros::TransformListener tf_listener_{tf_buffer_};
-  geometry_msgs::PoseStamped::ConstPtr current_pose_;
+  tf2_ros::TransformListener tf_listener_;
+  geometry_msgs::msg::PoseStamped::ConstSharedPtr current_pose_;
 
   // Subscriber
-  ros::Subscriber sub_autoware_engage_;
-  ros::Subscriber sub_vehicle_control_mode_;
-  ros::Subscriber sub_is_emergency_;
-  ros::Subscriber sub_route_;
-  ros::Subscriber sub_twist_;
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr sub_autoware_engage_;
+  rclcpp::Subscription<autoware_vehicle_msgs::msg::ControlMode>::SharedPtr
+    sub_vehicle_control_mode_;
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr sub_is_emergency_;
+  rclcpp::Subscription<autoware_planning_msgs::msg::Route>::SharedPtr sub_route_;
+  rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr sub_twist_;
 
-  void onAutowareEngage(const std_msgs::Bool::ConstPtr & msg);
-  void onVehicleControlMode(const autoware_vehicle_msgs::ControlMode::ConstPtr & msg);
-  void onIsEmergency(const std_msgs::Bool::ConstPtr & msg);
-  void onRoute(const autoware_planning_msgs::Route::ConstPtr & msg);
-  void onTwist(const geometry_msgs::TwistStamped::ConstPtr & msg);
+  void onAutowareEngage(const std_msgs::msg::Bool::ConstSharedPtr msg);
+  void onVehicleControlMode(const autoware_vehicle_msgs::msg::ControlMode::ConstSharedPtr msg);
+  void onIsEmergency(const std_msgs::msg::Bool::ConstSharedPtr msg);
+  void onRoute(const autoware_planning_msgs::msg::Route::ConstSharedPtr msg);
+  void onTwist(const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg);
 
   // Topic Buffer
-  void onTopic(const topic_tools::ShapeShifter::ConstPtr & msg, const std::string & topic_name);
-  void registerTopicCallback(const std::string & topic_name);
+  void onTopic(
+    const std::shared_ptr<rclcpp::SerializedMessage> msg, const std::string & topic_name);
+  void registerTopicCallback(
+    const std::string & topic_name, const std::string & topic_type);
 
-  std::map<std::string, ros::Subscriber> sub_topic_map_;
-  std::map<std::string, std::deque<ros::Time>> topic_received_time_buffer_;
+  std::map<std::string, rclcpp_generic::GenericSubscription::SharedPtr> sub_topic_map_;
+  std::map<std::string, std::deque<rclcpp::Time>> topic_received_time_buffer_;
 
   // Publisher
-  ros::Publisher pub_autoware_state_;
-  ros::Publisher pub_autoware_engage_;
+  rclcpp::Publisher<autoware_system_msgs::msg::AutowareState>::SharedPtr pub_autoware_state_;
+  rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr pub_autoware_engage_;
 
   void setDisengage();
 
   // Timer
-  void onTimer(const ros::TimerEvent & event);
-  ros::Timer timer_;
+  void onTimer();
+  rclcpp::TimerBase::SharedPtr timer_;
 
   // Stats
   TopicStats getTopicStats() const;
@@ -111,6 +112,8 @@ private:
   void setupDiagnosticUpdater();
   void checkTopicStatus(
     diagnostic_updater::DiagnosticStatusWrapper & stat, const std::string & module_name);
-  void checkTfStatus(
+  void checkTFStatus(
     diagnostic_updater::DiagnosticStatusWrapper & stat, const std::string & module_name);
 };
+
+#endif

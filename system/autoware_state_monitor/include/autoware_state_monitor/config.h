@@ -14,35 +14,43 @@
  * limitations under the License.
  */
 
-#pragma once
+#ifndef AUTOWARE_STATE_MONITOR_CONFIG_H_
+#define AUTOWARE_STATE_MONITOR_CONFIG_H_
 
 #include <string>
 #include <utility>
 #include <vector>
 
-#include <ros/time.h>
-#include <xmlrpcpp/XmlRpcValue.h>
+#include <rclcpp/time.hpp>
+#include <rclcpp/rclcpp.hpp>
 
 struct TopicConfig
 {
-  explicit TopicConfig(XmlRpc::XmlRpcValue value)
-  : module(static_cast<std::string>(value["module"])),
-    name(static_cast<std::string>(value["name"])),
-    timeout(static_cast<double>(value["timeout"])),
-    warn_rate(static_cast<double>(value["warn_rate"]))
+  explicit TopicConfig(
+    rclcpp::node_interfaces::NodeParametersInterface::SharedPtr interface,
+    const std::string & namespace_prefix, const std::string & name)
+  : module(interface->declare_parameter(namespace_prefix + ".module").get<std::string>()),
+    name(name),
+    type(interface->declare_parameter(namespace_prefix + ".type").get<std::string>()),
+    timeout(interface->declare_parameter(namespace_prefix + ".timeout").get<double>()),
+    warn_rate(interface->declare_parameter(namespace_prefix + ".warn_rate").get<double>())
   {
   }
 
   std::string module;
   std::string name;
+  std::string type;
   double timeout;
   double warn_rate;
 };
 
 struct ParamConfig
 {
-  explicit ParamConfig(XmlRpc::XmlRpcValue value)
-  : module(static_cast<std::string>(value["module"])), name(static_cast<std::string>(value["name"]))
+  explicit ParamConfig(
+    rclcpp::node_interfaces::NodeParametersInterface::SharedPtr interface,
+    const std::string & namespace_prefix, const std::string & name)
+  : module(interface->declare_parameter(namespace_prefix + ".module").get<std::string>()),
+    name(name)
   {
   }
 
@@ -52,11 +60,13 @@ struct ParamConfig
 
 struct TfConfig
 {
-  explicit TfConfig(XmlRpc::XmlRpcValue value)
-  : module(static_cast<std::string>(value["module"])),
-    from(static_cast<std::string>(value["from"])),
-    to(static_cast<std::string>(value["to"])),
-    timeout(static_cast<double>(value["timeout"]))
+  explicit TfConfig(
+    rclcpp::node_interfaces::NodeParametersInterface::SharedPtr interface,
+    const std::string & namespace_prefix, const std::string & name)
+  : module(interface->declare_parameter(namespace_prefix + ".module").get<std::string>()),
+    from(interface->declare_parameter(namespace_prefix + ".from").get<std::string>()),
+    to(interface->declare_parameter(namespace_prefix + ".to").get<std::string>()),
+    timeout(interface->declare_parameter(namespace_prefix + ".timeout").get<double>())
   {
   }
 
@@ -68,24 +78,26 @@ struct TfConfig
 
 struct TopicStats
 {
-  ros::Time checked_time;
+  rclcpp::Time checked_time;
   std::vector<TopicConfig> ok_list;
   std::vector<TopicConfig> non_received_list;
-  std::vector<std::pair<TopicConfig, ros::Time>> timeout_list;  // pair<TfConfig, last_received>
+  std::vector<std::pair<TopicConfig, rclcpp::Time>> timeout_list;  // pair<TfConfig, last_received>
   std::vector<std::pair<TopicConfig, double>> slow_rate_list;   // pair<TfConfig, rate>
 };
 
 struct ParamStats
 {
-  ros::Time checked_time;
+  rclcpp::Time checked_time;
   std::vector<ParamConfig> ok_list;
   std::vector<ParamConfig> non_set_list;
 };
 
 struct TfStats
 {
-  ros::Time checked_time;
+  rclcpp::Time checked_time;
   std::vector<TfConfig> ok_list;
   std::vector<TfConfig> non_received_list;
-  std::vector<std::pair<TfConfig, ros::Time>> timeout_list;  // pair<TfConfig, last_received>
+  std::vector<std::pair<TfConfig, rclcpp::Time>> timeout_list;  // pair<TfConfig, last_received>
 };
+
+#endif

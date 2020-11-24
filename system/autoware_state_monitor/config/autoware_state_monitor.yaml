@@ -1,100 +1,158 @@
-module_names:
-  - "map"
-  - "sensing"
-  - "perception"
-  - "localization"
-  - "planning"
-  - "control"
-  - "vehicle"
-  - "emergency_system"
+# Autoware State Monitor Parameters
+/**:
+  ros__parameters:
+    # modules_names: string array
+    module_names: [
+      "map",
+      "sensing",
+      "perception",
+      "localization",
+      "planning",
+      "control",
+      "vehicle",
+      "emergency_system"
+    ]
 
-# Topic Config
-## module: string
-## name: string
-## timeout[s]: double (0: none)
-## warn_rate[hz]: double (0: none)
-topic_configs:
-  - module: "map"
-    name: "/map/vector_map"
-    timeout: 0.0
-    warn_rate: 0.0
+    # Topic Config
+    ## names: string array
+    ## configs: top level
+    ### names used to declare parameter group
+    #### module: string
+    #### timeout[s]: double (0: none)
+    #### warn_rate[hz]: double (0: none)
+    topic_configs:
+      names: [
+        "/map/vector_map",
+        "/map/pointcloud_map",
+        "/sensing/lidar/pointcloud",
+        "/sensing/lidar/no_ground/pointcloud",
+        "/localization/pose_twist_fusion_filter/pose",
+        "/perception/object_recognition/detection/objects",
+        "/perception/object_recognition/tracking/objects",
+        "/perception/object_recognition/objects",
+        "/planning/mission_planning/route",
+        "/planning/scenario_planning/trajectory",
+        "/control/vehicle_cmd",
+        "/vehicle/status/twist",
+        "/vehicle/status/steering",
+        "/system/emergency/control_cmd"
+      ]
 
-  - module: "map"
-    name: "/map/pointcloud_map"
-    timeout: 0.0
-    warn_rate: 0.0
+      configs:
+        /map/vector_map:
+          module: "map"
+          timeout: 0.0
+          warn_rate: 0.0
+          type: "autoware_lanelet2_msgs/msg/MapBin"
 
-  - module: "sensing"
-    name: "/sensing/lidar/pointcloud"
-    timeout: 1.0
-    warn_rate: 5.0
+        /map/pointcloud_map:
+          module: "map"
+          timeout: 0.0
+          warn_rate: 0.0
+          type: "sensor_msgs/msg/PointCloud2"
 
-  - module: "sensing"
-    name: "/sensing/lidar/no_ground/pointcloud"
-    timeout: 1.0
-    warn_rate: 5.0
+        /sensing/lidar/pointcloud:
+          module: "sensing"
+          timeout: 1.0
+          warn_rate: 5.0
+          type: "sensor_msgs/msg/PointCloud2"
 
-  - module: "localization"
-    name: "/localization/pose_twist_fusion_filter/pose"
-    timeout: 1.0
-    warn_rate: 5.0
+        /sensing/lidar/no_ground/pointcloud:
+          module: "sensing"
+          timeout: 1.0
+          warn_rate: 5.0
+          type: "sensor_msgs/msg/PointCloud2"
 
-  - module: "perception"
-    name: "/perception/object_recognition/detection/objects"
-    timeout: 1.0
-    warn_rate: 5.0
+        /localization/pose_twist_fusion_filter/pose:
+          module: "localization"
+          timeout: 1.0
+          warn_rate: 5.0
+          type: "geometry_msgs/msg/PoseStamped"
 
-  - module: "perception"
-    name: "/perception/object_recognition/tracking/objects"
-    timeout: 1.0
-    warn_rate: 5.0
+        /perception/object_recognition/detection/objects:
+          module: "perception"
+          timeout: 1.0
+          warn_rate: 5.0
+          type: "autoware_perception_msgs/msg/DynamicObjectWithFeatureArray"
 
-  - module: "perception"
-    name: "/perception/object_recognition/objects"
-    timeout: 1.0
-    warn_rate: 5.0
+        /perception/object_recognition/tracking/objects:
+          module: "perception"
+          timeout: 1.0
+          warn_rate: 5.0
+          type: "autoware_perception_msgs/msg/DynamicObjectArray"
 
-  - module: "planning"
-    name: "/planning/mission_planning/route"
-    timeout: 0.0
-    warn_rate: 0.0
+        # Can be both with feature array or without
+        # In prediction.launch.xml this is set to without
+        /perception/object_recognition/objects:
+          module: "perception"
+          timeout: 1.0
+          warn_rate: 5.0
+          type: "autoware_perception_msgs/msg/DynamicObjectArray"
+          # This topic could have two different types depending on the launch flags used.
+          # The implementation of subscriptions in ROS2 does not allow for multiple types
+          # to be defined for a topic. By default the this is set to not use have features.
+          # type: ["autoware_perception_msgs/msg/DynamicObjectArray", "autoware_perception_msgs/msg/DynamicObjectWithFeatureArray"]
 
-  - module: "planning"
-    name: "/planning/scenario_planning/trajectory"
-    timeout: 1.0
-    warn_rate: 5.0
+        /planning/mission_planning/route:
+          module: "planning"
+          timeout: 0.0
+          warn_rate: 0.0
+          type: "autoware_planning_msgs/msg/Route"
 
-  - module: "control"
-    name: "/control/vehicle_cmd"
-    timeout: 1.0
-    warn_rate: 5.0
+        /planning/scenario_planning/trajectory:
+          module: "planning"
+          timeout: 1.0
+          warn_rate: 5.0
+          type: "autoware_planning_msgs/msg/Trajectory"
 
-  - module: "vehicle"
-    name: "/vehicle/status/twist"
-    timeout: 1.0
-    warn_rate: 5.0
+        /control/vehicle_cmd:
+          module: "control"
+          timeout: 1.0
+          warn_rate: 5.0
+          type: "autoware_vehicle_msgs/msg/VehicleCommand"
 
-  - module: "vehicle"
-    name: "/vehicle/status/steering"
-    timeout: 1.0
-    warn_rate: 5.0
+        /vehicle/status/twist:
+          module: "vehicle"
+          timeout: 1.0
+          warn_rate: 5.0
+          type: "geometry_msgs/msg/TwistStamped"
 
-  - module: "emergency_system"
-    name: "/system/emergency/control_cmd"
-    timeout: 1.0
-    warn_rate: 5.0
+        /vehicle/status/steering:
+          module: "vehicle"
+          timeout: 1.0
+          warn_rate: 5.0
+          type: "autoware_vehicle_msgs/msg/Steering"
 
-# Param Config
-## name: string
-param_configs:
-  - module: "vehicle"
-    name: "/vehicle_info"
+        /system/emergency/control_cmd:
+          module: "emergency_system"
+          timeout: 1.0
+          warn_rate: 5.0
+          type: "autoware_control_msgs/msg/ControlCommandStamped"
 
-# TF Config
-## from: string
-## to: string
-tf_configs:
-  - module: "localization"
-    from: "map"
-    to: "base_link"
-    timeout: 1.0
+    # Param Config
+    ## names: string array
+    ## configs: top level
+    ### names used to declare parameter group
+    #### module: string
+    param_configs:
+      names: ["/vehicle_info"]
+      configs:
+        /vehicle_info:
+          module: "vehicle"
+
+    # TF Config
+    ## names: string array
+    ## configs: top level
+    ### names used to declare parameter group
+    #### module: string
+    #### from: string
+    #### to: string
+    #### timeout[s]: double (0: none)
+    tf_configs:
+      names: ["map_to_base_link"]
+      configs:
+        map_to_base_link:
+          module: "localization"
+          from: "map"
+          to: "base_link"
+          timeout: 1.0

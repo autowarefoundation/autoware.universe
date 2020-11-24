@@ -14,19 +14,21 @@
  * limitations under the License.
  */
 
-#pragma once
+#ifndef AUTOWARE_STATE_MONITOR_STATE_MACHINE_H_
+#define AUTOWARE_STATE_MONITOR_STATE_MACHINE_H_ 
 
 #include <deque>
 #include <string>
 #include <vector>
 
-#include <autoware_planning_msgs/Route.h>
-#include <autoware_planning_msgs/Trajectory.h>
-#include <autoware_system_msgs/AutowareState.h>
-#include <autoware_vehicle_msgs/ControlMode.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/TwistStamped.h>
-#include <std_msgs/Bool.h>
+#include <autoware_planning_msgs/msg/route.hpp>
+#include <autoware_planning_msgs/msg/trajectory.hpp>
+#include <autoware_system_msgs/msg/autoware_state.hpp>
+#include <autoware_vehicle_msgs/msg/control_mode.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
+#include <std_msgs/msg/bool.hpp>
+#include <rclcpp/time.hpp>
 
 #include <autoware_state_monitor/autoware_state.h>
 #include <autoware_state_monitor/config.h>
@@ -37,15 +39,17 @@ struct StateInput
   ParamStats param_stats;
   TfStats tf_stats;
 
-  geometry_msgs::PoseStamped::ConstPtr current_pose;
-  geometry_msgs::Pose::ConstPtr goal_pose;
+  rclcpp::Time current_time;
 
-  std_msgs::Bool::ConstPtr autoware_engage;
-  autoware_vehicle_msgs::ControlMode::ConstPtr vehicle_control_mode;
-  std_msgs::Bool::ConstPtr is_emergency;
-  autoware_planning_msgs::Route::ConstPtr route;
-  geometry_msgs::TwistStamped::ConstPtr twist;
-  std::deque<geometry_msgs::TwistStamped::ConstPtr> twist_buffer;
+  geometry_msgs::msg::PoseStamped::ConstSharedPtr current_pose;
+  geometry_msgs::msg::Pose::ConstSharedPtr goal_pose;
+
+  std_msgs::msg::Bool::ConstSharedPtr autoware_engage;
+  autoware_vehicle_msgs::msg::ControlMode::ConstSharedPtr vehicle_control_mode;
+  std_msgs::msg::Bool::ConstSharedPtr is_emergency;
+  autoware_planning_msgs::msg::Route::ConstSharedPtr route;
+  geometry_msgs::msg::TwistStamped::ConstSharedPtr twist;
+  std::deque<geometry_msgs::msg::TwistStamped::ConstSharedPtr> twist_buffer;
 };
 
 struct StateParam
@@ -57,8 +61,8 @@ struct StateParam
 
 struct Times
 {
-  ros::Time arrived_goal;
-  ros::Time planning_completed;
+  rclcpp::Time arrived_goal;
+  rclcpp::Time planning_completed;
 };
 
 class StateMachine
@@ -77,7 +81,7 @@ private:
 
   mutable std::vector<std::string> msgs_;
   mutable Times times_;
-  mutable autoware_planning_msgs::Route::ConstPtr executing_route_ = nullptr;
+  mutable autoware_planning_msgs::msg::Route::ConstSharedPtr executing_route_ = nullptr;
   mutable bool waiting_after_planning_ = false;
 
   AutowareState judgeAutowareState() const;
@@ -91,3 +95,5 @@ private:
   bool isEmergency() const;
   bool hasArrivedGoal() const;
 };
+
+#endif

@@ -1,85 +1,123 @@
-module_names:
-  - "map"
-  - "sensing"
-  - "perception"
-  - "localization"
-  - "planning"
-  - "control"
-  - "vehicle"
-  - "emergency_system"
+# Autoware State Monitor: Planning Simulator Parameters
+/**:
+  ros__parameters:
+    # modules_names: string array
+    module_names: [
+      "map",
+      "sensing",
+      "perception",
+      "localization",
+      "planning",
+      "control",
+      "vehicle",
+      "emergency_system"
+    ]
 
 # Topic Config
-## module: string
-## name: string
-## timeout[s]: double (0: none)
-## warn_rate[hz]: double (0: none)
-topic_configs:
-  - module: "map"
-    name: "/map/vector_map"
-    timeout: 0.0
-    warn_rate: 0.0
+    ## names: string array
+    ## configs: top level
+    ### names used to declare parameter group
+    #### module: string
+    #### timeout[s]: double (0: none)
+    #### warn_rate[hz]: double (0: none)
+    topic_configs:
+      names: [
+        "/map/vector_map",
+        "/map/pointcloud_map",
+        "/sensing/lidar/pointcloud",
+        "/sensing/lidar/no_ground/pointcloud",
+        "/localization/pose_twist_fusion_filter/pose",
+        "/perception/object_recognition/detection/objects",
+        "/perception/object_recognition/tracking/objects",
+        "/perception/object_recognition/objects",
+        "/planning/mission_planning/route",
+        "/planning/scenario_planning/trajectory",
+        "/control/vehicle_cmd",
+        "/vehicle/status/twist",
+        "/vehicle/status/steering",
+        "/system/emergency/control_cmd"
+      ]
 
-  - module: "map"
-    name: "/map/pointcloud_map"
-    timeout: 0.0
-    warn_rate: 0.0
+      configs:
+        /map/vector_map:
+          module: "map"
+          timeout: 0.0
+          warn_rate: 0.0
 
-  - module: "perception"
-    name: "/perception/object_recognition/detection/objects"
-    timeout: 1.0
-    warn_rate: 5.0
+        /map/pointcloud_map:
+          module: "map"
+          timeout: 0.0
+          warn_rate: 0.0
 
-  - module: "perception"
-    name: "/perception/object_recognition/tracking/objects"
-    timeout: 1.0
-    warn_rate: 5.0
+        /perception/object_recognition/detection/objects:
+          module: "perception"
+          timeout: 1.0
+          warn_rate: 5.0
 
-  - module: "perception"
-    name: "/perception/object_recognition/objects"
-    timeout: 1.0
-    warn_rate: 5.0
+        /perception/object_recognition/tracking/objects:
+          module: "perception"
+          timeout: 1.0
+          warn_rate: 5.0
 
-  - module: "planning"
-    name: "/planning/mission_planning/route"
-    timeout: 0.0
-    warn_rate: 0.0
+        /perception/object_recognition/objects:
+          module: "perception"
+          timeout: 1.0
+          warn_rate: 5.0
 
-  - module: "planning"
-    name: "/planning/scenario_planning/trajectory"
-    timeout: 1.0
-    warn_rate: 5.0
+        /planning/mission_planning/route:
+          module: "planning"
+          timeout: 0.0
+          warn_rate: 0.0
 
-  - module: "control"
-    name: "/control/vehicle_cmd"
-    timeout: 1.0
-    warn_rate: 5.0
+        /planning/scenario_planning/trajectory:
+          module: "planning"
+          timeout: 1.0
+          warn_rate: 5.0
 
-  - module: "vehicle"
-    name: "/vehicle/status/twist"
-    timeout: 1.0
-    warn_rate: 5.0
+        /control/vehicle_cmd:
+          module: "control"
+          timeout: 1.0
+          warn_rate: 5.0
 
-  - module: "vehicle"
-    name: "/vehicle/status/steering"
-    timeout: 1.0
-    warn_rate: 5.0
+        /vehicle/status/twist:
+          module: "vehicle"
+          timeout: 1.0
+          warn_rate: 5.0
 
-  - module: "emergency_system"
-    name: "/system/emergency/control_cmd"
-    timeout: 1.0
-    warn_rate: 5.0
+        /vehicle/status/steering:
+          module: "vehicle"
+          timeout: 1.0
+          warn_rate: 5.0
 
-# Param Config
-## name: string
-param_configs:
-  - module: "vehicle"
-    name: "/vehicle_info"
+        /system/emergency/control_cmd:
+          module: "emergency_system"
+          timeout: 1.0
+          warn_rate: 5.0
 
-# TF Config
-## from: string
-## to: string
-tf_configs:
-  - module: "localization"
-    from: "map"
-    to: "base_link"
-    timeout: 1.0
+    # Param Config
+    ## names: string array
+    ## configs: top level
+    ### names used to declare parameter group
+    #### module: string
+    param_configs:
+      names: ["/vehicle_info"]
+      configs:
+        /vehicle_info:
+          module: "vehicle"
+
+    # TF Config
+    ## names: string array
+    ## configs: top level
+    ### names used to declare parameter group
+    #### module: string
+    #### from: string
+    #### to: string
+    #### timeout[s]: double (0: none)
+    tf_configs:
+      names: ["map_to_base_link"]
+      configs:
+        map_to_base_link:
+          module: "localization"
+          from: "map"
+          to: "base_link"
+          timeout: 1.0
