@@ -12,12 +12,12 @@
 
     <!-- Error Monitor -->
     <include file="$(find-pkg-share autoware_error_monitor)/launch/autoware_error_monitor.launch.xml">
-      <arg name="config_file" value="$(find-pkg-share autoware_error_monitor)/config/autoware_error_monitor.yaml" />
+      <arg name="config_file" value="$(find-pkg-share autoware_error_monitor)/config/autoware_error_monitor.param.yaml" />
     </include>
 
     <!-- Emergency Handler -->
     <include file="$(find-pkg-share emergency_handler)/launch/emergency_handler.launch.xml">
-      <arg name="config_file" value="$(find-pkg-share emergency_handler)/config/emergency_handler.yaml" />
+      <arg name="config_file" value="$(find-pkg-share emergency_handler)/config/emergency_handler.param.yaml" />
     </include>
   </group>
 </launch>
