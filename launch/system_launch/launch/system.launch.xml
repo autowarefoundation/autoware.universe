@@ -5,10 +5,10 @@
   <group>
     <!-- State Monitor -->
     <push-ros-namespace namespace="/system"/>
-    <!-- <include file="$(find-pkg-share autoware_state_monitor)/launch/autoware_state_monitor.launch.xml">
-      <arg name="config_file" if="$(eval run_mode == 'online')" value="$(find-pkg-share autoware_state_monitor)/config/autoware_state_monitor.yaml" />
-      <arg name="config_file" if="$(eval run_mode == 'planning_simulation')" value="$(find-pkg-share autoware_state_monitor)/config/autoware_state_monitor.planning_simulation.yaml" />
-    </include> -->
+    <include file="$(find-pkg-share autoware_state_monitor)/launch/autoware_state_monitor.launch.xml">
+      <arg name="config_file" if="$(eval "'$(var run_mode)'=='online'")" value="$(find-pkg-share autoware_state_monitor)/config/autoware_state_monitor.yaml" />
+      <arg name="config_file" if="$(eval "'$(var run_mode)'=='planning_simulation'")" value="$(find-pkg-share autoware_state_monitor)/config/autoware_state_monitor.planning_simulation.yaml" />
+    </include>
 
     <!-- Error Monitor -->
     <include file="$(find-pkg-share autoware_error_monitor)/launch/autoware_error_monitor.launch.xml">
