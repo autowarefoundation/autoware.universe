@@ -69,13 +69,13 @@
 
     # optimization param for mpt
     is_hard_fixing_terminal_point: true # hard fixing terminal point
-    base_point_weight: 2000 # slack weight for lateral error around base_link
-    top_point_weight: 1000 # slack weight for lateral error around vehicle-top point
-    mid_point_weight: 1000 # slack weight for lateral error around the middle point
+    base_point_weight: 2000.0 # slack weight for lateral error around base_link
+    top_point_weight: 1000.0 # slack weight for lateral error around vehicle-top point
+    mid_point_weight: 1000.0 # slack weight for lateral error around the middle point
     lat_error_weight: 10.0 # weight for lateral error
     yaw_error_weight: 0.0 # weight for yaw error
     steer_input_weight: 0.01 # weight for steering input
-    steer_rate_weight: 1 # weight for sttering rate
+    steer_rate_weight: 1.0 # weight for steering rate
     steer_acc_weight: 0.000001 # weight for steering acceration
     terminal_lat_error_weight: 0.0 # weight for lateral error at terminal point
     terminal_yaw_error_weight: 100.0 # weight for yaw errror at terminal point
