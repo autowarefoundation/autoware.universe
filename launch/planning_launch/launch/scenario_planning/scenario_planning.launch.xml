@@ -13,9 +13,9 @@
 
   <!-- velocity planning with max velocity, acceleration, jerk, stop point constraint -->
   <group>
-    <remap from="~/input/trajectory" to="/planning/scenario_planning/scenario_selector/trajectory"/>
-    <remap from="~/output/trajectory" to="/planning/scenario_planning/trajectory"/>
     <include file="$(find-pkg-share motion_velocity_optimizer)/launch/motion_velocity_optimizer.launch.xml">
+      <arg name="input_trajectory" value="/planning/scenario_planning/scenario_selector/trajectory"/>
+      <arg name="output_trajectory" value="/planning/scenario_planning/trajectory"/>
       <arg name="param_path" value="$(find-pkg-share planning_launch)/config/scenario_planning/common/motion_velocity_optimizer/motion_velocity_optimizer.yaml"/>
     </include>
 
