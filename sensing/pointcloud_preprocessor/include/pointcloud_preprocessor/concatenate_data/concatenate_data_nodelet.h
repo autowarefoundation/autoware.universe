@@ -62,90 +62,89 @@
 #include <message_filters/sync_policies/approximate_time.h>
 #include <message_filters/sync_policies/exact_time.h>
 #include <message_filters/synchronizer.h>
-#include <nodelet_topic_tools/nodelet_lazy.h>
-#include <tf/transform_listener.h>
+#include <pcl_conversions/pcl_conversions.h>
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
 
-#include <geometry_msgs/TwistStamped.h>
-#include <sensor_msgs/PointCloud2.h>
-#include <std_msgs/Int32.h>
-#include <std_msgs/String.h>
+#include <geometry_msgs/msg/twist_stamped.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <std_msgs/msg/int32.hpp>
+#include <std_msgs/msg/string.hpp>
 
 namespace pointcloud_preprocessor
 {
-/** \brief @b PointCloudConcatenateFieldsSynchronizer is a special form of data
+/** \brief @b PointCloudConcatenateDataSynchronizerComponent is a special form of data
  * synchronizer: it listens for a set of input PointCloud messages on the same topic,
  * checks their timestamps, and concatenates their fields together into a single
  * PointCloud output message.
  * \author Radu Bogdan Rusu
  */
-class PointCloudConcatenateDataSynchronizerNodelet : public nodelet_topic_tools::NodeletLazy
+class PointCloudConcatenateDataSynchronizerComponent : public rclcpp::Node
 {
 public:
-  typedef sensor_msgs::PointCloud2 PointCloud2;
-  typedef PointCloud2::Ptr PointCloud2Ptr;
-  typedef PointCloud2::ConstPtr PointCloud2ConstPtr;
+  typedef sensor_msgs::msg::PointCloud2 PointCloud2;
 
-  /** \brief Empty constructor. */
-  PointCloudConcatenateDataSynchronizerNodelet() : maximum_queue_size_(3), timeout_sec_(0.1){};
+  /** \brief constructor. */
+  PointCloudConcatenateDataSynchronizerComponent(const rclcpp::NodeOptions & node_options);
 
-  /** \brief Empty constructor.
+  /** \brief constructor.
    * \param queue_size the maximum queue size
    */
-  PointCloudConcatenateDataSynchronizerNodelet(int queue_size)
-  : maximum_queue_size_(queue_size), timeout_sec_(0.1){};
+  PointCloudConcatenateDataSynchronizerComponent(
+    const rclcpp::NodeOptions & node_options, int queue_size);
 
   /** \brief Empty destructor. */
-  virtual ~PointCloudConcatenateDataSynchronizerNodelet(){};
-
-  void onInit();
-  void subscribe();
-  void unsubscribe();
+  virtual ~PointCloudConcatenateDataSynchronizerComponent(){};
 
 private:
   /** \brief The output PointCloud publisher. */
-  ros::Publisher pub_output_;
+  rclcpp::Publisher<PointCloud2>::SharedPtr pub_output_;
 
-  ros::Publisher pub_concat_num_;
-  ros::Publisher pub_not_subscribed_topic_name_;
+  rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr pub_concat_num_;
+  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr pub_not_subscribed_topic_name_;
 
   /** \brief The maximum number of messages that we can store in the queue. */
-  int maximum_queue_size_;
+  int maximum_queue_size_ = 3;
 
-  double timeout_sec_;
+  double timeout_sec_ = 0.1;
 
   /** \brief A vector of subscriber. */
-  std::vector<boost::shared_ptr<ros::Subscriber> > filters_;
+  std::vector<rclcpp::Subscription<PointCloud2>::SharedPtr> filters_;
 
-  ros::Subscriber sub_twist_;
+  rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr sub_twist_;
 
-  ros::Timer timer_;
+  rclcpp::TimerBase::SharedPtr timer_;
 
   /** \brief Output TF frame the concatenated points should be transformed to. */
   std::string output_frame_;
 
   /** \brief Input point cloud topics. */
-  XmlRpc::XmlRpcValue input_topics_;
+  // XmlRpc::XmlRpcValue input_topics_;
+  std::vector<std::string> input_topics_;
 
   /** \brief TF listener object. */
-  tf::TransformListener tf_;
+  std::shared_ptr<tf2_ros::Buffer> tf2_buffer_;
+  std::shared_ptr<tf2_ros::TransformListener> tf2_listener_;
 
-  std::deque<geometry_msgs::TwistStamped::ConstPtr> twist_ptr_queue_;
+  std::deque<geometry_msgs::msg::TwistStamped::ConstSharedPtr> twist_ptr_queue_;
 
-  std::map<std::string, sensor_msgs::PointCloud2::ConstPtr> cloud_stdmap_;
-  std::map<std::string, sensor_msgs::PointCloud2::ConstPtr> cloud_stdmap_tmp_;
+  std::map<std::string, sensor_msgs::msg::PointCloud2::ConstSharedPtr> cloud_stdmap_;
+  std::map<std::string, sensor_msgs::msg::PointCloud2::ConstSharedPtr> cloud_stdmap_tmp_;
   std::mutex mutex_;
 
-  void transformPointCloud(const PointCloud2::ConstPtr & in, PointCloud2::Ptr & out);
+  void transformPointCloud(const PointCloud2::ConstSharedPtr & in, PointCloud2::SharedPtr & out);
   void combineClouds(
-    const PointCloud2::ConstPtr & in1, const PointCloud2::ConstPtr & in2, PointCloud2::Ptr & out);
+    const PointCloud2::ConstSharedPtr & in1, const PointCloud2::ConstSharedPtr & in2,
+    PointCloud2::SharedPtr & out);
   void publish();
 
   void convertToXYZCloud(
-    const sensor_msgs::PointCloud2 & input_cloud,
-    sensor_msgs::PointCloud2 & output_cloud);
+    const sensor_msgs::msg::PointCloud2 & input_cloud,
+    sensor_msgs::msg::PointCloud2 & output_cloud);
   void cloud_callback(
-    const sensor_msgs::PointCloud2::ConstPtr & input_ptr, const std::string & topic_name);
-  void twist_callback(const geometry_msgs::TwistStamped::ConstPtr & input);
-  void timer_callback(const ros::TimerEvent &);
+    const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_ptr,
+    const std::string & topic_name);
+  void twist_callback(const geometry_msgs::msg::TwistStamped::ConstSharedPtr input);
+  void timer_callback();
 };
 }  // namespace pointcloud_preprocessor

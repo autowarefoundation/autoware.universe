@@ -1,25 +1,28 @@
 #pragma once
 
 #include <pcl/search/pcl_search.h>
-#include "pointcloud_preprocessor/PassThroughFilterUInt16Config.h"
-#include "pointcloud_preprocessor/passthrough_filter/passthrough_uint16.h"
 #include "pointcloud_preprocessor/filter.h"
+#include "pointcloud_preprocessor/passthrough_filter/passthrough_uint16.h"
 
-namespace pointcloud_preprocessor {
-class PassThroughFilterUInt16Nodelet : public pointcloud_preprocessor::Filter {
- protected:
-  boost::shared_ptr<dynamic_reconfigure::Server<pointcloud_preprocessor::PassThroughFilterUInt16Config> > srv_;
-  virtual void filter(const PointCloud2::ConstPtr& input, const IndicesPtr& indices, PointCloud2& output);
-  virtual void subscribe();
-  virtual void unsubscribe();
+namespace pointcloud_preprocessor
+{
+class PassThroughFilterUInt16Component : public pointcloud_preprocessor::Filter
+{
+protected:
+  virtual void filter(
+    const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output);
 
-  bool child_init(ros::NodeHandle& nh, bool& has_service);
-  void config_callback(pointcloud_preprocessor::PassThroughFilterUInt16Config& config, uint32_t level);
+  /** \brief Parameter service callback result : needed to be hold */
+  OnSetParametersCallbackHandle::SharedPtr set_param_res_;
 
- private:
+  /** \brief Parameter service callback */
+  rcl_interfaces::msg::SetParametersResult paramCallback(const std::vector<rclcpp::Parameter> & p);
+
+private:
   pcl::PassThroughUInt16<pcl::PCLPointCloud2> impl_;
 
- public:
+public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  PassThroughFilterUInt16Component(const rclcpp::NodeOptions & options);
 };
 }  // namespace pointcloud_preprocessor

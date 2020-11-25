@@ -17,25 +17,21 @@
 
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/search/pcl_search.h>
-#include "pointcloud_preprocessor/VoxelGridOutlierFilterConfig.h"
 #include "pointcloud_preprocessor/filter.h"
 
 namespace pointcloud_preprocessor
 {
-class VoxelGridOutlierFilterNodelet : public pointcloud_preprocessor::Filter
+class VoxelGridOutlierFilterComponent : public pointcloud_preprocessor::Filter
 {
 protected:
-  boost::shared_ptr<
-    dynamic_reconfigure::Server<pointcloud_preprocessor::VoxelGridOutlierFilterConfig> >
-    srv_;
   virtual void filter(
-    const PointCloud2::ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output);
-  virtual void subscribe();
-  virtual void unsubscribe();
+    const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output);
 
-  bool child_init(ros::NodeHandle & nh, bool & has_service);
-  void config_callback(
-    pointcloud_preprocessor::VoxelGridOutlierFilterConfig & config, uint32_t level);
+  /** \brief Parameter service callback result : needed to be hold */
+  OnSetParametersCallbackHandle::SharedPtr set_param_res_;
+
+  /** \brief Parameter service callback */
+  rcl_interfaces::msg::SetParametersResult paramCallback(const std::vector<rclcpp::Parameter> & p);
 
 private:
   double voxel_size_x_;
@@ -47,5 +43,6 @@ private:
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  VoxelGridOutlierFilterComponent(const rclcpp::NodeOptions & option);
 };
 }  // namespace pointcloud_preprocessor

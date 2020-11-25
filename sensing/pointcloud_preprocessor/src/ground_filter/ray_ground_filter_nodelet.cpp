@@ -33,36 +33,51 @@
 
 #include "pointcloud_preprocessor/ground_filter/ray_ground_filter_nodelet.h"
 
-#include <pluginlib/class_list_macros.h>
-
-#include <pcl_ros/transforms.h>
+#include <pcl_ros/transforms.hpp>
 
 namespace pointcloud_preprocessor
 {
-RayGroundFilterNodelet::RayGroundFilterNodelet() : tf_listener_(tf_buffer_)
+RayGroundFilterComponent::RayGroundFilterComponent(const rclcpp::NodeOptions & options)
+: Filter("RayGroundFilter", options)
 {
-  grid_width_ = 1000;
-  grid_height_ = 1000;
-  grid_precision_ = 0.2;
-  ray_ground_filter::generateColors(colors_, color_num_);
+  // set initial parameters
+  {
+    grid_width_ = 1000;
+    grid_height_ = 1000;
+    grid_precision_ = 0.2;
+    ray_ground_filter::generateColors(colors_, color_num_);
+
+    base_frame_ = declare_parameter("base_frame", "base_link");
+    general_max_slope_ = declare_parameter("general_max_slope", 8.0);
+    local_max_slope_ = declare_parameter("local_max_slope", 6.0);
+    radial_divider_angle_ = declare_parameter("radial_divider_angle", 0.08);
+    min_height_threshold_ = declare_parameter("min_height_threshold", 0.15);
+    concentric_divider_distance_ = declare_parameter("concentric_divider_distance", 0.0);
+    reclass_distance_threshold_ = declare_parameter("reclass_distance_threshold", 0.1);
+  }
+
+  using std::placeholders::_1;
+  set_param_res_ = this->add_on_set_parameters_callback(
+    std::bind(&RayGroundFilterComponent::paramCallback, this, _1));
 }
 
-bool RayGroundFilterNodelet::TransformPointCloud(
-  const std::string & in_target_frame, const sensor_msgs::PointCloud2::ConstPtr & in_cloud_ptr,
-  const sensor_msgs::PointCloud2::Ptr & out_cloud_ptr)
+bool RayGroundFilterComponent::TransformPointCloud(
+  const std::string & in_target_frame,
+  const sensor_msgs::msg::PointCloud2::ConstSharedPtr & in_cloud_ptr,
+  const sensor_msgs::msg::PointCloud2::SharedPtr & out_cloud_ptr)
 {
   if (in_target_frame == in_cloud_ptr->header.frame_id) {
     *out_cloud_ptr = *in_cloud_ptr;
     return true;
   }
 
-  geometry_msgs::TransformStamped transform_stamped;
+  geometry_msgs::msg::TransformStamped transform_stamped;
   try {
-    transform_stamped = tf_buffer_.lookupTransform(
+    transform_stamped = tf_buffer_->lookupTransform(
       in_target_frame, in_cloud_ptr->header.frame_id, in_cloud_ptr->header.stamp,
-      ros::Duration(1.0));
+      rclcpp::Duration::from_seconds(1.0));
   } catch (tf2::TransformException & ex) {
-    ROS_WARN("%s", ex.what());
+    RCLCPP_WARN(this->get_logger(), "%s", ex.what());
     return false;
   }
   // tf2::doTransform(*in_cloud_ptr, *out_cloud_ptr, transform_stamped);
@@ -72,7 +87,7 @@ bool RayGroundFilterNodelet::TransformPointCloud(
   return true;
 }
 
-void RayGroundFilterNodelet::ConvertXYZIToRTZColor(
+void RayGroundFilterComponent::ConvertXYZIToRTZColor(
   const pcl::PointCloud<PointType_>::Ptr in_cloud, PointCloudXYZRTColor & out_organized_points,
   std::vector<pcl::PointIndices> & out_radial_divided_indices,
   std::vector<PointCloudXYZRTColor> & out_radial_ordered_clouds)
@@ -128,7 +143,7 @@ void RayGroundFilterNodelet::ConvertXYZIToRTZColor(
   }
 }
 
-void RayGroundFilterNodelet::ClassifyPointCloud(
+void RayGroundFilterComponent::ClassifyPointCloud(
   std::vector<PointCloudXYZRTColor> & in_radial_ordered_clouds,
   pcl::PointIndices & out_ground_indices, pcl::PointIndices & out_no_ground_indices)
 {
@@ -201,19 +216,20 @@ void RayGroundFilterNodelet::ClassifyPointCloud(
   }
 }
 
-bool RayGroundFilterNodelet::child_init(ros::NodeHandle & nh, bool & has_service)
-{
-  // Enable the dynamic reconfigure service
-  has_service = true;
-  srv_ = boost::make_shared<
-    dynamic_reconfigure::Server<pointcloud_preprocessor::RayGroundFilterConfig> >(nh);
-  dynamic_reconfigure::Server<pointcloud_preprocessor::RayGroundFilterConfig>::CallbackType f =
-    boost::bind(&RayGroundFilterNodelet::config_callback, this, _1, _2);
-  srv_->setCallback(f);
-  return (true);
-}
+// [ROS2-port]: removed
+// bool RayGroundFilterComponent::child_init()
+// {
+//   // Enable the dynamic reconfigure service
+//   has_service = true;
+//   srv_ = boost::make_shared<
+//     dynamic_reconfigure::Server<pointcloud_preprocessor::RayGroundFilterConfig> >(nh);
+//   dynamic_reconfigure::Server<pointcloud_preprocessor::RayGroundFilterConfig>::CallbackType f =
+//     boost::bind(&RayGroundFilterComponent::config_callback, this, _1, _2);
+//   srv_->setCallback(f);
+//   return (true);
+// }
 
-void RayGroundFilterNodelet::ExtractPointsIndices(
+void RayGroundFilterComponent::ExtractPointsIndices(
   const pcl::PointCloud<PointType_>::Ptr in_cloud_ptr, const pcl::PointIndices & in_indices,
   pcl::PointCloud<PointType_>::Ptr out_only_indices_cloud_ptr,
   pcl::PointCloud<PointType_>::Ptr out_removed_indices_cloud_ptr)
@@ -229,16 +245,17 @@ void RayGroundFilterNodelet::ExtractPointsIndices(
   extract_ground.filter(*out_removed_indices_cloud_ptr);
 }
 
-void RayGroundFilterNodelet::filter(
-  const PointCloud2::ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output)
+void RayGroundFilterComponent::filter(
+  const PointCloud2::ConstSharedPtr & input, const IndicesPtr & indices, PointCloud2 & output)
 {
   boost::mutex::scoped_lock lock(mutex_);
 
-  sensor_msgs::PointCloud2::Ptr input_transed_ptr(new sensor_msgs::PointCloud2);
+  sensor_msgs::msg::PointCloud2::SharedPtr input_transed_ptr(new sensor_msgs::msg::PointCloud2);
   bool succeeded = TransformPointCloud(base_frame_, input, input_transed_ptr);
   if (!succeeded) {
-    ROS_ERROR_STREAM_THROTTLE(
-      10, "Failed transform from " << base_frame_ << " to " << input->header.frame_id);
+    RCLCPP_ERROR_STREAM_THROTTLE(
+      this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
+      "Failed transform from " << base_frame_ << " to " << input->header.frame_id);
     return;
   }
 
@@ -265,74 +282,61 @@ void RayGroundFilterNodelet::filter(
   ExtractPointsIndices(
     current_sensor_cloud_ptr, ground_indices, ground_cloud_ptr, no_ground_cloud_ptr);
 
-  sensor_msgs::PointCloud2::Ptr no_ground_cloud_msg_ptr(new sensor_msgs::PointCloud2);
+  sensor_msgs::msg::PointCloud2::SharedPtr no_ground_cloud_msg_ptr(
+    new sensor_msgs::msg::PointCloud2);
   pcl::toROSMsg(*no_ground_cloud_ptr, *no_ground_cloud_msg_ptr);
   no_ground_cloud_msg_ptr->header = input->header;
-  sensor_msgs::PointCloud2::Ptr no_ground_cloud_transed_msg_ptr(new sensor_msgs::PointCloud2);
+  sensor_msgs::msg::PointCloud2::SharedPtr no_ground_cloud_transed_msg_ptr(
+    new sensor_msgs::msg::PointCloud2);
   succeeded =
     TransformPointCloud(base_frame_, no_ground_cloud_msg_ptr, no_ground_cloud_transed_msg_ptr);
   if (!succeeded) {
-    ROS_ERROR_STREAM_THROTTLE(
-      10, "Failed transform from " << base_frame_ << " to "
-                                   << no_ground_cloud_msg_ptr->header.frame_id);
+    RCLCPP_ERROR_STREAM_THROTTLE(
+      this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
+      "Failed transform from " << base_frame_ << " to "
+                               << no_ground_cloud_msg_ptr->header.frame_id);
     return;
   }
   output = *no_ground_cloud_transed_msg_ptr;
 }
 
-void RayGroundFilterNodelet::subscribe() { Filter::subscribe(); }
-
-void RayGroundFilterNodelet::unsubscribe() { Filter::unsubscribe(); }
-
-void RayGroundFilterNodelet::config_callback(
-  pointcloud_preprocessor::RayGroundFilterConfig & config, uint32_t level)
+rcl_interfaces::msg::SetParametersResult RayGroundFilterComponent::paramCallback(
+  const std::vector<rclcpp::Parameter> & p)
 {
   boost::mutex::scoped_lock lock(mutex_);
 
-  if (base_frame_ != config.base_frame) {
-    base_frame_ = config.base_frame;
-    NODELET_DEBUG(
-      "[%s::config_callback] Setting base_frame to: %s.", getName().c_str(),
-      config.base_frame.c_str());
+  if (get_param(p, "base_frame", base_frame_)) {
+    RCLCPP_DEBUG(get_logger(), "Setting base_frame to: %s.", base_frame_);
   }
-  if (general_max_slope_ != config.general_max_slope) {
-    general_max_slope_ = config.general_max_slope;
-    NODELET_DEBUG(
-      "[%s::config_callback] Setting general_max_slope to: %f.", getName().c_str(),
-      config.general_max_slope);
+  if (get_param(p, "general_max_slope", general_max_slope_)) {
+    RCLCPP_DEBUG(get_logger(), "Setting general_max_slope to: %f.", general_max_slope_);
   }
-  if (local_max_slope_ != config.local_max_slope) {
-    local_max_slope_ = config.local_max_slope;
-    NODELET_DEBUG(
-      "[%s::config_callback] Setting local_max_slope to: %f.", getName().c_str(),
-      config.local_max_slope);
+  if (get_param(p, "local_max_slope", local_max_slope_)) {
+    RCLCPP_DEBUG(get_logger(), "Setting local_max_slope to: %f.", local_max_slope_);
   }
-  if (radial_divider_angle_ != config.radial_divider_angle) {
-    radial_divider_angle_ = config.radial_divider_angle;
-    NODELET_DEBUG(
-      "[%s::config_callback] Setting radial_divider_angle to: %f.", getName().c_str(),
-      config.radial_divider_angle);
+  if (get_param(p, "radial_divider_angle", radial_divider_angle_)) {
+    RCLCPP_DEBUG(get_logger(), "Setting radial_divider_angle to: %f.", radial_divider_angle_);
   }
-  if (concentric_divider_distance_ != config.concentric_divider_distance) {
-    concentric_divider_distance_ = config.concentric_divider_distance;
-    NODELET_DEBUG(
-      "[%s::config_callback] Setting concentric_divider_distance to: %f.", getName().c_str(),
-      config.concentric_divider_distance);
+  if (get_param(p, "concentric_divider_distance", concentric_divider_distance_)) {
+    RCLCPP_DEBUG(
+      get_logger(), "Setting concentric_divider_distance to: %f.", concentric_divider_distance_);
   }
-  if (min_height_threshold_ != config.min_height_threshold) {
-    min_height_threshold_ = config.min_height_threshold;
-    NODELET_DEBUG(
-      "[%s::config_callback] Setting min_height_threshold_ to: %f.", getName().c_str(),
-      config.min_height_threshold);
+  if (get_param(p, "min_height_threshold", min_height_threshold_)) {
+    RCLCPP_DEBUG(get_logger(), "Setting min_height_threshold_ to: %f.", min_height_threshold_);
   }
-  if (reclass_distance_threshold_ != config.reclass_distance_threshold) {
-    reclass_distance_threshold_ = config.reclass_distance_threshold;
-    NODELET_DEBUG(
-      "[%s::config_callback] Setting reclass_distance_threshold to: %f.", getName().c_str(),
-      config.reclass_distance_threshold);
+  if (get_param(p, "reclass_distance_threshold", reclass_distance_threshold_)) {
+    RCLCPP_DEBUG(
+      get_logger(), "Setting reclass_distance_threshold to: %f.", reclass_distance_threshold_);
   }
+
+  rcl_interfaces::msg::SetParametersResult result;
+  result.successful = true;
+  result.reason = "success";
+
+  return result;
 }
 
 }  // namespace pointcloud_preprocessor
 
-PLUGINLIB_EXPORT_CLASS(pointcloud_preprocessor::RayGroundFilterNodelet, nodelet::Nodelet);
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(pointcloud_preprocessor::RayGroundFilterComponent)

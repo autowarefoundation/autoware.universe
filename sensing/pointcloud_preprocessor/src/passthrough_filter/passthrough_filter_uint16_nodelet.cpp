@@ -29,25 +29,38 @@
  */
 
 #include "pointcloud_preprocessor/passthrough_filter/passthrough_filter_uint16_nodelet.h"
-#include <pluginlib/class_list_macros.h>
 
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/search/kdtree.h>
 #include <pcl/segmentation/segment_differences.h>
 
-namespace pointcloud_preprocessor {
-bool PassThroughFilterUInt16Nodelet::child_init(ros::NodeHandle& nh, bool& has_service) {
-  // Enable the dynamic reconfigure service
-  has_service = true;
-  srv_ = boost::make_shared<dynamic_reconfigure::Server<pointcloud_preprocessor::PassThroughFilterUInt16Config> >(nh);
-  dynamic_reconfigure::Server<pointcloud_preprocessor::PassThroughFilterUInt16Config>::CallbackType f =
-      boost::bind(&PassThroughFilterUInt16Nodelet::config_callback, this, _1, _2);
-  srv_->setCallback(f);
-  return (true);
+namespace pointcloud_preprocessor
+{
+PassThroughFilterUInt16Component::PassThroughFilterUInt16Component(
+  const rclcpp::NodeOptions & options)
+: Filter("PassThroughFilterUInt16", options)
+{
+  // set initial parameters
+  {
+    int filter_min = static_cast<int>(declare_parameter("filter_limit_min", 0));
+    int filter_max = static_cast<int>(declare_parameter("filter_limit_max", 127));
+    impl_.setFilterLimits(filter_min, filter_max);
+
+    impl_.setFilterFieldName(
+      static_cast<std::string>(declare_parameter("filter_field_name", "ring")));
+    impl_.setKeepOrganized(static_cast<bool>(declare_parameter("keep_organized", false)));
+    impl_.setFilterLimitsNegative(
+      static_cast<bool>(declare_parameter("filter_limit_negative", false)));
+  }
+
+  using std::placeholders::_1;
+  set_param_res_ = this->add_on_set_parameters_callback(
+    std::bind(&PassThroughFilterUInt16Component::paramCallback, this, _1));
 }
 
-void PassThroughFilterUInt16Nodelet::filter(const PointCloud2::ConstPtr& input, const IndicesPtr& indices,
-                                      PointCloud2& output) {
+void PassThroughFilterUInt16Component::filter(
+  const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output)
+{
   boost::mutex::scoped_lock lock(mutex_);
 
   pcl::PCLPointCloud2::Ptr pcl_input(new pcl::PCLPointCloud2);
@@ -57,75 +70,71 @@ void PassThroughFilterUInt16Nodelet::filter(const PointCloud2::ConstPtr& input, 
   pcl::PCLPointCloud2 pcl_output;
   impl_.filter(pcl_output);
   pcl_conversions::moveFromPCL(pcl_output, output);
-
 }
 
-void PassThroughFilterUInt16Nodelet::subscribe() { Filter::subscribe(); }
-
-void PassThroughFilterUInt16Nodelet::unsubscribe() { Filter::unsubscribe(); }
-
-void PassThroughFilterUInt16Nodelet::config_callback(pointcloud_preprocessor::PassThroughFilterUInt16Config& config,
-                                               uint32_t level) {
+rcl_interfaces::msg::SetParametersResult PassThroughFilterUInt16Component::paramCallback(
+  const std::vector<rclcpp::Parameter> & p)
+{
   boost::mutex::scoped_lock lock(mutex_);
 
-  uint16_t filter_min, filter_max;
-  impl_.getFilterLimits (filter_min, filter_max);
+  std::uint16_t filter_min, filter_max;
+  impl_.getFilterLimits(filter_min, filter_max);
 
   // Check the current values for filter min-max
-  if (filter_min != config.filter_limit_min)
-  {
-    filter_min = config.filter_limit_min;
-    NODELET_DEBUG ("[%s::config_callback] Setting the minimum filtering value a point will be considered from to: %d.", getName ().c_str (), filter_min);
+  if (get_param(p, "filter_limit_min", filter_min)) {
+    RCLCPP_DEBUG(
+      get_logger(), "Setting the minimum filtering value a point will be considered from to: %d.",
+      filter_min);
     // Set the filter min-max if different
-    impl_.setFilterLimits (filter_min, filter_max);
+    impl_.setFilterLimits(filter_min, filter_max);
   }
   // Check the current values for filter min-max
-  if (filter_max != config.filter_limit_max)
-  {
-    filter_max = config.filter_limit_max;
-    NODELET_DEBUG ("[%s::config_callback] Setting the maximum filtering value a point will be considered from to: %d.", getName ().c_str (), filter_max);
+  if (get_param(p, "filter_limit_max", filter_max)) {
+    RCLCPP_DEBUG(
+      get_logger(), "Setting the maximum filtering value a point will be considered from to: %d.",
+      filter_max);
     // Set the filter min-max if different
-    impl_.setFilterLimits (filter_min, filter_max);
+    impl_.setFilterLimits(filter_min, filter_max);
   }
 
   // Check the current value for the filter field
-  //std::string filter_field = impl_.getFilterFieldName ();
-  if (impl_.getFilterFieldName () != config.filter_field_name)
-  {
+  std::string filter_field_name;
+  get_param(p, "filter_field_name", filter_field_name);
+  if (impl_.getFilterFieldName() != filter_field_name) {
     // Set the filter field if different
-    impl_.setFilterFieldName (config.filter_field_name);
-    NODELET_DEBUG ("[%s::config_callback] Setting the filter field name to: %s.", getName ().c_str (), config.filter_field_name.c_str ());
+    impl_.setFilterFieldName(filter_field_name);
+    RCLCPP_DEBUG(get_logger(), "Setting the filter field name to: %s.", filter_field_name.c_str());
   }
 
   // Check the current value for keep_organized
-  if (impl_.getKeepOrganized () != config.keep_organized)
-  {
-    NODELET_DEBUG ("[%s::config_callback] Setting the filter keep_organized value to: %s.", getName ().c_str (), config.keep_organized ? "true" : "false");
+  bool keep_organized;
+  get_param(p, "keep_organized", keep_organized);
+  if (impl_.getKeepOrganized() != keep_organized) {
+    RCLCPP_DEBUG(
+      get_logger(), "Setting the filter keep_organized value to: %s.",
+      keep_organized ? "true" : "false");
     // Call the virtual method in the child
-    impl_.setKeepOrganized (config.keep_organized);
+    impl_.setKeepOrganized(keep_organized);
   }
 
   // Check the current value for the negative flag
-  if (impl_.getFilterLimitsNegative () != config.filter_limit_negative)
-  {
-    NODELET_DEBUG ("[%s::config_callback] Setting the filter negative flag to: %s.", getName ().c_str (), config.filter_limit_negative ? "true" : "false");
+  bool filter_limit_negative;
+  get_param(p, "filter_limit_negative", filter_limit_negative);
+  if (impl_.getFilterLimitsNegative() != filter_limit_negative) {
+    RCLCPP_DEBUG(
+      get_logger(), "Setting the filter negative flag to: %s.",
+      filter_limit_negative ? "true" : "false");
     // Call the virtual method in the child
-    impl_.setFilterLimitsNegative (config.filter_limit_negative);
+    impl_.setFilterLimitsNegative(filter_limit_negative);
   }
 
-  // ---[ These really shouldn't be here, and as soon as dynamic_reconfigure improves, we'll remove them and inherit
-  // from Filter
-  if (tf_input_frame_ != config.input_frame) {
-    tf_input_frame_ = config.input_frame;
-    NODELET_DEBUG("[config_callback] Setting the input TF frame to: %s.", tf_input_frame_.c_str());
-  }
-  if (tf_output_frame_ != config.output_frame) {
-    tf_output_frame_ = config.output_frame;
-    NODELET_DEBUG("[config_callback] Setting the output TF frame to: %s.", tf_output_frame_.c_str());
-  }
-  // ]---
+  rcl_interfaces::msg::SetParametersResult result;
+  result.successful = true;
+  result.reason = "success";
+
+  return result;
 }
-
 }  // namespace pointcloud_preprocessor
 
-PLUGINLIB_EXPORT_CLASS(pointcloud_preprocessor::PassThroughFilterUInt16Nodelet, nodelet::Nodelet);
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(pointcloud_preprocessor::PassThroughFilterUInt16Component)

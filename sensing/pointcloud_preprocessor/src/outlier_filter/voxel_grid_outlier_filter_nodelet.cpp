@@ -15,7 +15,6 @@
  */
 
 #include "pointcloud_preprocessor/outlier_filter/voxel_grid_outlier_filter_nodelet.h"
-#include <pluginlib/class_list_macros.h>
 
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/search/kdtree.h>
@@ -23,20 +22,24 @@
 
 namespace pointcloud_preprocessor
 {
-bool VoxelGridOutlierFilterNodelet::child_init(ros::NodeHandle & nh, bool & has_service)
+VoxelGridOutlierFilterComponent::VoxelGridOutlierFilterComponent(
+  const rclcpp::NodeOptions & options)
+: Filter("VoxelGridOutlierFilter", options)
 {
-  // Enable the dynamic reconfigure service
-  has_service = true;
-  srv_ = boost::make_shared<
-    dynamic_reconfigure::Server<pointcloud_preprocessor::VoxelGridOutlierFilterConfig> >(nh);
-  dynamic_reconfigure::Server<pointcloud_preprocessor::VoxelGridOutlierFilterConfig>::CallbackType
-    f = boost::bind(&VoxelGridOutlierFilterNodelet::config_callback, this, _1, _2);
-  srv_->setCallback(f);
-  return (true);
-}
+  // set initial parameters
+  {
+    voxel_size_x_ = static_cast<double>(declare_parameter("voxel_size_x", 0.3));
+    voxel_size_y_ = static_cast<double>(declare_parameter("voxel_size_y", 0.3));
+    voxel_size_z_ = static_cast<double>(declare_parameter("voxel_size_z", 0.1));
+    voxel_points_threshold_ = static_cast<int>(declare_parameter("voxel_points_threshold", 2));
+  }
 
-void VoxelGridOutlierFilterNodelet::filter(
-  const PointCloud2::ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output)
+  using std::placeholders::_1;
+  set_param_res_ = this->add_on_set_parameters_callback(
+    std::bind(&VoxelGridOutlierFilterComponent::paramCallback, this, _1));
+}
+void VoxelGridOutlierFilterComponent::filter(
+  const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output)
 {
   boost::mutex::scoped_lock lock(mutex_);
   pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_input(new pcl::PointCloud<pcl::PointXYZ>);
@@ -64,53 +67,31 @@ void VoxelGridOutlierFilterNodelet::filter(
   output.header = input->header;
 }
 
-void VoxelGridOutlierFilterNodelet::subscribe() { Filter::subscribe(); }
-
-void VoxelGridOutlierFilterNodelet::unsubscribe() { Filter::unsubscribe(); }
-
-void VoxelGridOutlierFilterNodelet::config_callback(
-  pointcloud_preprocessor::VoxelGridOutlierFilterConfig & config, uint32_t level)
+rcl_interfaces::msg::SetParametersResult VoxelGridOutlierFilterComponent::paramCallback(
+  const std::vector<rclcpp::Parameter> & p)
 {
   boost::mutex::scoped_lock lock(mutex_);
 
-  if (voxel_size_x_ != config.voxel_size_x) {
-    voxel_size_x_ = config.voxel_size_x;
-    NODELET_DEBUG(
-      "[%s::config_callback] Setting new distance threshold to: %f.", getName().c_str(),
-      config.voxel_size_x);
+  if (get_param(p, "voxel_size_x", voxel_size_x_)) {
+    RCLCPP_DEBUG(get_logger(), "Setting new distance threshold to: %f.", voxel_size_x_);
   }
-  if (voxel_size_y_ != config.voxel_size_y) {
-    voxel_size_y_ = config.voxel_size_y;
-    NODELET_DEBUG(
-      "[%s::config_callback] Setting new distance threshold to: %f.", getName().c_str(),
-      config.voxel_size_y);
+  if (get_param(p, "voxel_size_y", voxel_size_y_)) {
+    RCLCPP_DEBUG(get_logger(), "Setting new distance threshold to: %f.", voxel_size_y_);
   }
-  if (voxel_size_z_ != config.voxel_size_z) {
-    voxel_size_z_ = config.voxel_size_z;
-    NODELET_DEBUG(
-      "[%s::config_callback] Setting new distance threshold to: %f.", getName().c_str(),
-      config.voxel_size_z);
+  if (get_param(p, "voxel_size_z", voxel_size_z_)) {
+    RCLCPP_DEBUG(get_logger(), "Setting new distance threshold to: %f.", voxel_size_z_);
   }
-  if (voxel_points_threshold_ != config.voxel_points_threshold) {
-    voxel_points_threshold_ = config.voxel_points_threshold;
-    NODELET_DEBUG(
-      "[%s::config_callback] Setting new distance threshold to: %d.", getName().c_str(),
-      config.voxel_points_threshold);
+  if (get_param(p, "voxel_points_threshold", voxel_points_threshold_)) {
+    RCLCPP_DEBUG(get_logger(), "Setting new distance threshold to: %d.", voxel_points_threshold_);
   }
-  // ---[ These really shouldn't be here, and as soon as dynamic_reconfigure improves, we'll remove them and inherit
-  // from Filter
-  if (tf_input_frame_ != config.input_frame) {
-    tf_input_frame_ = config.input_frame;
-    NODELET_DEBUG("[config_callback] Setting the input TF frame to: %s.", tf_input_frame_.c_str());
-  }
-  if (tf_output_frame_ != config.output_frame) {
-    tf_output_frame_ = config.output_frame;
-    NODELET_DEBUG(
-      "[config_callback] Setting the output TF frame to: %s.", tf_output_frame_.c_str());
-  }
-  // ]---
-}
 
+  rcl_interfaces::msg::SetParametersResult result;
+  result.successful = true;
+  result.reason = "success";
+
+  return result;
+}
 }  // namespace pointcloud_preprocessor
 
-PLUGINLIB_EXPORT_CLASS(pointcloud_preprocessor::VoxelGridOutlierFilterNodelet, nodelet::Nodelet);
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(pointcloud_preprocessor::VoxelGridOutlierFilterComponent)
