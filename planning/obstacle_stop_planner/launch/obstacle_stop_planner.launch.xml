@@ -1,6 +1,9 @@
 <launch>
   <arg name="input_objects" default="/perception/object_recognition/objects" />
+  <arg name="input_pointcloud" default="input/pointcloud" />
+  <arg name="input_trajectory" default="input/trajectory" />
   <arg name="input_twist" default="/localization/twist" />
+  <arg name="output_trajectory" default="output/trajectory" />
   <arg name="enable_slow_down" default="false" />
   <arg name="param_file" default="$(find-pkg-share obstacle_stop_planner)/config/obstacle_stop_planner.yaml" />
 
@@ -9,7 +12,10 @@
     <param from="$(var param_file)" />
     <remap from="output/stop_reason" to="/planning/scenario_planning/status/stop_reason" />
     <remap from="output/stop_reasons" to="/planning/scenario_planning/status/stop_reasons" />
+    <remap from="output/trajectory" to="$(var output_trajectory)" />
     <remap from="input/objects" to="$(var input_objects)" />
+    <remap from="input/pointcloud" to="$(var input_pointcloud)" />
+    <remap from="input/trajectory" to="$(var input_trajectory)" />
     <remap from="input/twist" to="$(var input_twist)" />
     <param name="enable_slow_down" value="$(var enable_slow_down)" />
   </node>
