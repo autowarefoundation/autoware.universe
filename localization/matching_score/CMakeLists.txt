@@ -1,25 +1,22 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.5)
 project(matching_score)
 
-add_compile_options(-std=c++14)
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
 
-find_package(catkin REQUIRED)
-find_package(PCL REQUIRED COMPONENTS common)
+find_package(ament_cmake_auto REQUIRED)
+find_package(PCL REQUIRED COMPONENTS common io)
+ament_auto_find_build_dependencies()
 
-catkin_package()
 
 include_directories(include ${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
-add_library(matching_score src/matching_score.cpp)
+ament_auto_add_library(matching_score src/matching_score.cpp)
 
-target_link_libraries(matching_score ${catkin_LIBRARIES})
-
-install(
-  TARGETS
-    matching_score
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+ament_auto_package()
