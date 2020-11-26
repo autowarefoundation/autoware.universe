@@ -17,15 +17,17 @@
  *
  */
 
-#include <ros/ros.h>
 #include <traffic_light_map_based_detector/node.hpp>
+#include <rclcpp/rclcpp.hpp>
 
 int main(int argc, char ** argv)
-{
-  ros::init(argc, argv, "traffic_light_map_based_detector");
-  traffic_light::MapBasedDetector node;
-
-  ros::spin();
+{  
+  rclcpp::init(argc, argv);
+  
+  auto node = std::make_shared<traffic_light::MapBasedDetector>();
+  
+  rclcpp::spin(node);  
+  rclcpp::shutdown();
 
   return 0;
 }

@@ -7,11 +7,10 @@
   <arg name="input/route" default="/planning/mission_planning/route" />
   <arg name="output/rois" default="output/rois" />
 
-  <node pkg="traffic_light_map_based_detector" type="traffic_light_map_based_detector_node" name="traffic_light_map_based_detector" output="screen">
-    <remap from="~input/vector_map" to="$(arg input/vector_map)" />
-    <remap from="~input/camera_info" to="$(arg input/camera_info)" />
-    <remap from="~input/route" to="$(arg input/route)" />
-    <remap from="~output/rois" to="$(arg output/rois)" />
-    <rosparam command="load" file="$(find traffic_light_map_based_detector)/config/traffic_light_map_based_detector.yaml" />
+  <node pkg="traffic_light_map_based_detector" exec="traffic_light_map_based_detector_node" name="traffic_light_map_based_detector" output="screen">
+    <remap from="/input/vector_map" to="$(var input/vector_map)" />
+    <remap from="/input/camera_info" to="$(var input/camera_info)" />
+    <remap from="/input/route" to="$(var input/route)" />
+    <remap from="/output/rois" to="$(var output/rois)" />
   </node>
 </launch>

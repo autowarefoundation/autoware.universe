@@ -17,54 +17,71 @@
  *
  */
 
-#include <ros/ros.h>
-
-#include <lanelet2_core/LaneletMap.h>
-#include <lanelet2_core/geometry/Point.h>
 #include <lanelet2_extension/utility/message_conversion.h>
 #include <lanelet2_extension/utility/utilities.h>
 #include <lanelet2_extension/visualization/visualization.h>
+
+#include <lanelet2_core/LaneletMap.h>
+#include <lanelet2_core/geometry/Point.h>
 #include <lanelet2_projection/UTM.h>
 #include <lanelet2_routing/RoutingGraphContainer.h>
 #include <lanelet2_traffic_rules/TrafficRulesFactory.h>
 
-#include <autoware_perception_msgs/TrafficLightRoi.h>
+#include <autoware_perception_msgs/msg/traffic_light_roi.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2/LinearMath/Transform.h>
 #include <traffic_light_map_based_detector/node.hpp>
+
+#include <rclcpp/rclcpp.hpp>
+
 #define EIGEN_MPL2_ONLY
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
 namespace traffic_light
 {
-MapBasedDetector::MapBasedDetector() : nh_(""), pnh_("~"), tf_listener_(tf_buffer_)
+  MapBasedDetector::MapBasedDetector() : Node("traffic_light_map_based_detector"), tf_buffer_(this->get_clock()), tf_listener_(tf_buffer_)
 {
-  map_sub_ = pnh_.subscribe("input/vector_map", 1, &MapBasedDetector::mapCallback, this);
-  camera_info_sub_ =
-    pnh_.subscribe("input/camera_info", 1, &MapBasedDetector::cameraInfoCallback, this);
-  route_sub_ = pnh_.subscribe("input/route", 1, &MapBasedDetector::routeCallback, this);
-  roi_pub_ = pnh_.advertise<autoware_perception_msgs::TrafficLightRoiArray>("output/rois", 1);
-  viz_pub_ = pnh_.advertise<visualization_msgs::MarkerArray>("debug/markers", 1);
-  pnh_.getParam("max_vibration_pitch", config_.max_vibration_pitch);
-  pnh_.getParam("max_vibration_yaw", config_.max_vibration_yaw);
-  pnh_.getParam("max_vibration_height", config_.max_vibration_height);
-  pnh_.getParam("max_vibration_width", config_.max_vibration_width);
-  pnh_.getParam("max_vibration_depth", config_.max_vibration_depth);
+
+  using std::placeholders::_1;
+
+  // subscribers
+  map_sub_ = create_subscription<autoware_lanelet2_msgs::msg::MapBin>(
+    "input/vector_map", 1, std::bind(&MapBasedDetector::mapCallback, this, _1));
+  camera_info_sub_ = create_subscription<sensor_msgs::msg::CameraInfo>(
+    "input/camera_info", 1, std::bind(&MapBasedDetector::cameraInfoCallback, this, _1));
+  route_sub_ = create_subscription<autoware_planning_msgs::msg::Route>(
+    "input/route", 1, std::bind(&MapBasedDetector::routeCallback, this, _1));
+
+  // publishers
+  roi_pub_ = this->create_publisher<autoware_perception_msgs::msg::TrafficLightRoiArray>(
+    "output/rois", 1);
+  viz_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>(
+    "debug/markers", 1);
+
+  // parameter declaration needs default values: are 0.0 goof defaults for this?
+  config_.max_vibration_pitch = declare_parameter<double>("max_vibration_pitch", 0.0);
+  config_.max_vibration_yaw = declare_parameter<double>("max_vibration_yaw", 0.0);
+  config_.max_vibration_height = declare_parameter<double>("max_vibration_height", 0.0);
+  config_.max_vibration_width = declare_parameter<double>("max_vibration_width", 0.0);
+  config_.max_vibration_depth = declare_parameter<double>("max_vibration_depth", 0.0);
 }
 
-void MapBasedDetector::cameraInfoCallback(const sensor_msgs::CameraInfo::ConstPtr & input_msg)
+  void MapBasedDetector::cameraInfoCallback(const sensor_msgs::msg::CameraInfo::ConstSharedPtr input_msg)
 {
   camera_info_ptr_ = input_msg;
   if (lanelet_map_ptr_ == nullptr || camera_info_ptr_ == nullptr) return;
 
-  autoware_perception_msgs::TrafficLightRoiArray output_msg;
+  autoware_perception_msgs::msg::TrafficLightRoiArray output_msg;
   output_msg.header = camera_info_ptr_->header;
-  geometry_msgs::PoseStamped camera_pose_stamped;
+  geometry_msgs::msg::PoseStamped camera_pose_stamped;
   try {
-    geometry_msgs::TransformStamped transform;
+    geometry_msgs::msg::TransformStamped transform;
     transform = tf_buffer_.lookupTransform(
-      "map", input_msg->header.frame_id, input_msg->header.stamp, ros::Duration(0.2));
+      "map",
+      input_msg->header.frame_id,
+      input_msg->header.stamp,
+      rclcpp::Duration(0.2));
     camera_pose_stamped.header = input_msg->header;
     camera_pose_stamped.pose.position.x = transform.transform.translation.x;
     camera_pose_stamped.pose.position.y = transform.transform.translation.y;
@@ -74,11 +91,12 @@ void MapBasedDetector::cameraInfoCallback(const sensor_msgs::CameraInfo::ConstPt
     camera_pose_stamped.pose.orientation.z = transform.transform.rotation.z;
     camera_pose_stamped.pose.orientation.w = transform.transform.rotation.w;
   } catch (tf2::TransformException & ex) {
-    ROS_WARN_THROTTLE(5, "cannot get transform frome map frame to camera frame");
+    RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000,
+      "cannot get transform frome map frame to camera frame");
     return;
   }
 
-  const sensor_msgs::CameraInfo & camera_info = *input_msg;
+  const sensor_msgs::msg::CameraInfo & camera_info = *input_msg;
   std::vector<lanelet::ConstLineString3d> visible_traffic_lights;
   if (route_traffic_lights_ptr_ != nullptr)
     isInVisibility(
@@ -90,26 +108,28 @@ void MapBasedDetector::cameraInfoCallback(const sensor_msgs::CameraInfo::ConstPt
     return;
 
   for (const auto & traffic_light : visible_traffic_lights) {
-    autoware_perception_msgs::TrafficLightRoi tl_roi;
+    autoware_perception_msgs::msg::TrafficLightRoi tl_roi;
     if (!getTrafficLightRoi(camera_pose_stamped.pose, camera_info, traffic_light, config_, tl_roi))
       continue;
 
     output_msg.rois.push_back(tl_roi);
   }
-  roi_pub_.publish(output_msg);
+  roi_pub_->publish(output_msg);
   publishVisibleTrafficLights(camera_pose_stamped, visible_traffic_lights, viz_pub_);
 }
 
 bool MapBasedDetector::getTrafficLightRoi(
-  const geometry_msgs::Pose & camera_pose, const sensor_msgs::CameraInfo & camera_info,
-  const lanelet::ConstLineString3d traffic_light, const Config & config,
-  autoware_perception_msgs::TrafficLightRoi & tl_roi)
+  const geometry_msgs::msg::Pose & camera_pose,
+  const sensor_msgs::msg::CameraInfo & camera_info,
+  const lanelet::ConstLineString3d traffic_light,
+  const Config & config,
+  autoware_perception_msgs::msg::TrafficLightRoi & tl_roi)
 {
   const double tl_height = traffic_light.attributeOr("height", 0.0);
-  const double & fx = camera_info.K[(0 * 3) + 0];
-  const double & fy = camera_info.K[(1 * 3) + 1];
-  const double & cx = camera_info.K[(0 * 3) + 2];
-  const double & cy = camera_info.K[(1 * 3) + 2];
+  const double & fx = camera_info.k[(0 * 3) + 0];
+  const double & fy = camera_info.k[(1 * 3) + 1];
+  const double & cx = camera_info.k[(0 * 3) + 2];
+  const double & cy = camera_info.k[(1 * 3) + 2];
   const auto & tl_left_down_point = traffic_light.front();
   const auto & tl_right_down_point = traffic_light.back();
   tf2::Transform tf_map2camera(
@@ -175,11 +195,12 @@ bool MapBasedDetector::getTrafficLightRoi(
   return true;
 }
 
-void MapBasedDetector::mapCallback(const autoware_lanelet2_msgs::MapBin & input_msg)
+void MapBasedDetector::mapCallback(
+  const autoware_lanelet2_msgs::msg::MapBin::ConstSharedPtr input_msg)
 {
   lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
-  lanelet::utils::conversion::fromBinMsg(
-    input_msg, lanelet_map_ptr_, &traffic_rules_ptr_, &routing_graph_ptr_);
+
+  lanelet::utils::conversion::fromBinMsg(*input_msg, lanelet_map_ptr_);
   lanelet::ConstLanelets all_lanelets = lanelet::utils::query::laneletLayer(lanelet_map_ptr_);
   std::vector<lanelet::AutowareTrafficLightConstPtr> all_lanelet_traffic_lights =
     lanelet::utils::query::autowareTrafficLights(all_lanelets);
@@ -198,10 +219,11 @@ void MapBasedDetector::mapCallback(const autoware_lanelet2_msgs::MapBin & input_
   }
 }
 
-void MapBasedDetector::routeCallback(const autoware_planning_msgs::Route::ConstPtr & input_msg)
+void MapBasedDetector::routeCallback(
+  const autoware_planning_msgs::msg::Route::ConstSharedPtr input_msg)
 {
   if (lanelet_map_ptr_ == nullptr) {
-    ROS_WARN("cannot set traffic light in route because don't recieve map");
+    RCLCPP_WARN(get_logger(), "cannot set traffic light in route because don't recieve map");
     return;
   }
   lanelet::ConstLanelets route_lanelets;
@@ -228,7 +250,8 @@ void MapBasedDetector::routeCallback(const autoware_planning_msgs::Route::ConstP
 
 void MapBasedDetector::isInVisibility(
   const MapBasedDetector::TrafficLightSet & all_traffic_lights,
-  const geometry_msgs::Pose & camera_pose, const sensor_msgs::CameraInfo & camera_info,
+  const geometry_msgs::msg::Pose & camera_pose,
+  const sensor_msgs::msg::CameraInfo & camera_info,
   std::vector<lanelet::ConstLineString3d> & visible_traffic_lights)
 {
   for (const auto & traffic_light : all_traffic_lights) {
@@ -237,7 +260,7 @@ void MapBasedDetector::isInVisibility(
     const double tl_height = traffic_light.attributeOr("height", 0.0);
 
     // check distance range
-    geometry_msgs::Point tl_central_point;
+    geometry_msgs::msg::Point tl_central_point;
     tl_central_point.x = (tl_right_down_point.x() + tl_left_down_point.x()) / 2.0;
     tl_central_point.y = (tl_right_down_point.y() + tl_left_down_point.y()) / 2.0;
     tl_central_point.z = (tl_right_down_point.z() + tl_left_down_point.z() + tl_height) / 2.0;
@@ -274,7 +297,7 @@ void MapBasedDetector::isInVisibility(
     tf2::Transform tf_camera2tl;
     tf_camera2tl = tf_map2camera.inverse() * tf_map2tl;
 
-    geometry_msgs::Point camera2tl_point;
+    geometry_msgs::msg::Point camera2tl_point;
     camera2tl_point.x = tf_camera2tl.getOrigin().x();
     camera2tl_point.y = tf_camera2tl.getOrigin().y();
     camera2tl_point.z = tf_camera2tl.getOrigin().z();
@@ -284,7 +307,8 @@ void MapBasedDetector::isInVisibility(
 }
 
 bool MapBasedDetector::isInDistanceRange(
-  const geometry_msgs::Point & tl_point, const geometry_msgs::Point & camera_point,
+  const geometry_msgs::msg::Point & tl_point,
+  const geometry_msgs::msg::Point & camera_point,
   const double max_distance_range)
 {
   const double sq_dist = (tl_point.x - camera_point.x) * (tl_point.x - camera_point.x) +
@@ -293,7 +317,9 @@ bool MapBasedDetector::isInDistanceRange(
 }
 
 bool MapBasedDetector::isInAngleRange(
-  const double & tl_yaw, const double & camera_yaw, const double max_angele_range)
+  const double & tl_yaw,
+  const double & camera_yaw,
+  const double max_angele_range)
 {
   Eigen::Vector2d vec1, vec2;
   vec1 << std::cos(tl_yaw), std::sin(tl_yaw);
@@ -303,15 +329,16 @@ bool MapBasedDetector::isInAngleRange(
 }
 
 bool MapBasedDetector::isInImageFrame(
-  const sensor_msgs::CameraInfo & camera_info, const geometry_msgs::Point & point)
+  const sensor_msgs::msg::CameraInfo & camera_info,
+  const geometry_msgs::msg::Point & point)
 {
   const double & camera_x = point.x;
   const double & camera_y = point.y;
   const double & camera_z = point.z;
-  const double & fx = camera_info.K[(0 * 3) + 0];
-  const double & fy = camera_info.K[(1 * 3) + 1];
-  const double & cx = camera_info.K[(0 * 3) + 2];
-  const double & cy = camera_info.K[(1 * 3) + 2];
+  const double & fx = camera_info.k[(0 * 3) + 0];
+  const double & fy = camera_info.k[(1 * 3) + 1];
+  const double & cx = camera_info.k[(0 * 3) + 2];
+  const double & cy = camera_info.k[(1 * 3) + 2];
   if (camera_z <= 0.0) return false;
   const double image_u = (fx * camera_x + cx * camera_z) / camera_z;
   const double image_v = (fy * camera_y + cy * camera_z) / camera_z;
@@ -321,23 +348,23 @@ bool MapBasedDetector::isInImageFrame(
 }
 
 void MapBasedDetector::publishVisibleTrafficLights(
-  const geometry_msgs::PoseStamped camera_pose_stamped,
+  const geometry_msgs::msg::PoseStamped camera_pose_stamped,
   const std::vector<lanelet::ConstLineString3d> & visible_traffic_lights,
-  const ros::Publisher & pub)
+  const rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub)
 {
-  visualization_msgs::MarkerArray output_msg;
+  visualization_msgs::msg::MarkerArray output_msg;
   for (const auto & traffic_light : visible_traffic_lights) {
     const auto & tl_left_down_point = traffic_light.front();
     const auto & tl_right_down_point = traffic_light.back();
     const double tl_height = traffic_light.attributeOr("height", 0.0);
     const int id = traffic_light.id();
 
-    geometry_msgs::Point tl_central_point;
+    geometry_msgs::msg::Point tl_central_point;
     tl_central_point.x = (tl_right_down_point.x() + tl_left_down_point.x()) / 2.0;
     tl_central_point.y = (tl_right_down_point.y() + tl_left_down_point.y()) / 2.0;
     tl_central_point.z = (tl_right_down_point.z() + tl_left_down_point.z() + tl_height) / 2.0;
 
-    visualization_msgs::Marker marker;
+    visualization_msgs::msg::Marker marker;
 
     tf2::Transform tf_map2camera(
       tf2::Quaternion(
@@ -354,10 +381,10 @@ void MapBasedDetector::publishVisibleTrafficLights(
 
     marker.header = camera_pose_stamped.header;
     marker.id = id;
-    marker.type = visualization_msgs::Marker::LINE_LIST;
+    marker.type = visualization_msgs::msg::Marker::LINE_LIST;
     marker.ns = std::string("beam");
     marker.scale.x = 0.05;
-    marker.action = visualization_msgs::Marker::MODIFY;
+    marker.action = visualization_msgs::msg::Marker::MODIFY;
     marker.pose.position.x = 0.0;
     marker.pose.position.y = 0.0;
     marker.pose.position.z = 0.0;
@@ -365,7 +392,7 @@ void MapBasedDetector::publishVisibleTrafficLights(
     marker.pose.orientation.y = 0.0;
     marker.pose.orientation.z = 0.0;
     marker.pose.orientation.w = 1.0;
-    geometry_msgs::Point point;
+    geometry_msgs::msg::Point point;
     point.x = 0.0;
     point.y = 0.0;
     point.z = 0.0;
@@ -375,7 +402,7 @@ void MapBasedDetector::publishVisibleTrafficLights(
     point.z = tf_camera2tl.getOrigin().z();
     marker.points.push_back(point);
 
-    marker.lifetime = ros::Duration(0.2);
+    marker.lifetime = rclcpp::Duration::from_seconds(0.2);
     marker.color.a = 1.0;  // Don't forget to set the alpha!
     marker.color.r = 0.0;
     marker.color.g = 1.0;
@@ -383,7 +410,7 @@ void MapBasedDetector::publishVisibleTrafficLights(
 
     output_msg.markers.push_back(marker);
   }
-  pub.publish(output_msg);
+  pub->publish(output_msg);
 
   return;
 }
