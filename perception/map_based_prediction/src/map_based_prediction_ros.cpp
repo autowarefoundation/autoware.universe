@@ -217,15 +217,15 @@ void MapBasedPredictionROS::objectsCallback(
     world2map_transform = tf_buffer_ptr_->lookupTransform(
       "map",                        // target
       in_objects->header.frame_id,  // src
-      in_objects->header.stamp, rclcpp::Duration(0.1));
+      in_objects->header.stamp, rclcpp::Duration::from_seconds(0.1));
     map2world_transform = tf_buffer_ptr_->lookupTransform(
       in_objects->header.frame_id,  // target
       "map",                        // src
-      in_objects->header.stamp, rclcpp::Duration(0.1));
+      in_objects->header.stamp, rclcpp::Duration::from_seconds(0.1));
     debug_map2lidar_transform = tf_buffer_ptr_->lookupTransform(
       "base_link",  // target
       "map",        // src
-      rclcpp::Time(), rclcpp::Duration(0.1));
+      rclcpp::Time(), rclcpp::Duration::from_seconds(0.1));
   } catch (tf2::TransformException & ex) {
     return;
   }
