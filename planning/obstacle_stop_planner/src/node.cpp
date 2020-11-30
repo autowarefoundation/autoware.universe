@@ -198,7 +198,7 @@ void ObstacleStopPlannerNode::pathCallback(
     try {
       transform_stamped = tf_buffer_.lookupTransform(
         trajectory.header.frame_id, obstacle_ros_pointcloud_ptr_->header.frame_id,
-        obstacle_ros_pointcloud_ptr_->header.stamp, rclcpp::Duration(0.5));
+        obstacle_ros_pointcloud_ptr_->header.stamp, rclcpp::Duration::from_seconds(0.5));
     } catch (tf2::TransformException & ex) {
       RCLCPP_ERROR_STREAM(get_logger(),
         "[obstacle_stop_plannnr] Failed to look up transform from "
@@ -777,7 +777,7 @@ bool ObstacleStopPlannerNode::getSelfPose(
   try {
     geometry_msgs::msg::TransformStamped transform;
     transform =
-      tf_buffer.lookupTransform(header.frame_id, "base_link", header.stamp, rclcpp::Duration(0.1));
+      tf_buffer.lookupTransform(header.frame_id, "base_link", header.stamp, rclcpp::Duration::from_seconds(0.1));
     self_pose.position.x = transform.transform.translation.x;
     self_pose.position.y = transform.transform.translation.y;
     self_pose.position.z = transform.transform.translation.z;
