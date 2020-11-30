@@ -526,7 +526,7 @@ geometry_msgs::msg::TransformStamped AstarNavi::getTransform(
 {
   geometry_msgs::msg::TransformStamped tf;
   try {
-    tf = tf_buffer_->lookupTransform(from, to, rclcpp::Time(0), rclcpp::Duration(1.0));
+    tf = tf_buffer_->lookupTransform(from, to, rclcpp::Time(0), rclcpp::Duration::from_seconds(1.0));
   } catch (const tf2::TransformException & ex) {
     RCLCPP_ERROR(get_logger(), "%s", ex.what());
   }
