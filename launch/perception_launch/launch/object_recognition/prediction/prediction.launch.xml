@@ -3,17 +3,19 @@
 <launch>
   <arg name="use_vector_map" default="false"/>
 
-  <remap from="objects" to="/perception/object_recognition/objects" />
-
-  <group if="$(eval use_vector_map)">
-    <include file="$(find map_based_prediction)/launch/map_based_prediction.launch" />
+  <group if="$(var use_vector_map)">
+    <include file="$(find-pkg-share map_based_prediction)/launch/map_based_prediction.launch.xml">
+      <remap from="objects" to="/perception/object_recognition/objects"/>
+    </include>
   </group>
-  <group unless="$(eval use_vector_map)">
-    <include file="$(find naive_path_prediction)/launch/naive_path_prediction.launch" />
+  <group unless="$(var use_vector_map)">
+    <include file="$(find-pkg-share naive_path_prediction)/launch/naive_path_prediction.launch.xml">
+      <remap from="objects" to="/perception/object_recognition/objects"/>
+    </include>
   </group>
 
   <!-- visualization -->
-  <include file="$(find dynamic_object_visualization)/launch/dynamic_object_visualizer.launch">
+  <include file="$(find-pkg-share dynamic_object_visualization)/launch/dynamic_object_visualizer.launch.xml">
     <arg name="input" value="/perception/object_recognition/objects"/>
     <arg name="with_feature" value="false"/>
     <arg name="only_known_objects" default="true"/>

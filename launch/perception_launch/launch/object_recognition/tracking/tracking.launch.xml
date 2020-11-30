@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 
 <launch>
-  <include file="$(find multi_object_tracker)/launch/multi_object_tracker.launch">
+  <include file="$(find-pkg-share multi_object_tracker)/launch/multi_object_tracker.launch.xml">
   </include>
   <!-- visualization -->
-  <include file="$(find dynamic_object_visualization)/launch/dynamic_object_visualizer.launch">
+  <include file="$(find-pkg-share dynamic_object_visualization)/launch/dynamic_object_visualizer.launch.xml">
     <arg name="input" value="objects"/>
     <arg name="with_feature" value="false"/>
     <arg name="only_known_objects" default="true"/>

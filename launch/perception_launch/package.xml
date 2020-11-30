@@ -1,27 +1,27 @@
 <?xml version="1.0"?>
-<package format="2">
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
   <name>perception_launch</name>
   <version>0.1.0</version>
   <description>The perception_launch package</description>
 
   <maintainer email="yukihiro.saito@tier4.jp">Yukihiro Saito</maintainer>
-  <license>Apache2</license>
+  <license>Apache License 2.0</license>
 
+  <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
-  <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>dynamic_object_visualization</build_depend>
-  <build_depend>euclidean_cluster</build_depend>
-  <build_depend>pointcloud_to_laserscan</build_depend>
-  <build_depend>shape_estimation</build_depend>
-  <build_export_depend>dynamic_object_visualization</build_export_depend>
-  <build_export_depend>euclidean_cluster</build_export_depend>
-  <build_export_depend>pointcloud_to_laserscan</build_export_depend>
-  <build_export_depend>shape_estimation</build_export_depend>
-  <exec_depend>dynamic_object_visualization</exec_depend>
-  <exec_depend>euclidean_cluster</exec_depend>
-  <exec_depend>pointcloud_to_laserscan</exec_depend>
-  <exec_depend>shape_estimation</exec_depend>
+  <depend>dynamic_object_visualization</depend>
+  <depend>image_transport_plugins</depend>
+  <!--
+    <build_depend>euclidean_cluster</build_depend>
+    <build_depend>pointcloud_to_laserscan</build_depend>
+    <build_depend>shape_estimation</build_depend>
+  -->
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
 
   <export>
+    <build_type>ament_cmake</build_type>
   </export>
 </package>
