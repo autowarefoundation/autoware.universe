@@ -67,7 +67,7 @@ void DummyPerceptionPublisherNode::timerCallback()
   try {
     geometry_msgs::msg::TransformStamped ros_base_link2map;
     ros_base_link2map = tf_buffer_.lookupTransform(
-      /*target*/ "base_link", /*src*/ "map", current_time, rclcpp::Duration(0.5));
+      /*target*/ "base_link", /*src*/ "map", current_time, rclcpp::Duration::from_seconds(0.5));
     tf2::fromMsg(ros_base_link2map.transform, tf_base_link2map);
   } catch (tf2::TransformException & ex) {
     RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000, "%s", ex.what());
@@ -329,7 +329,7 @@ void DummyPerceptionPublisherNode::objectCallback(
           geometry_msgs::msg::TransformStamped ros_input2map;
           ros_input2map = tf_buffer_.lookupTransform(
             /*target*/ msg->header.frame_id, /*src*/ "map", msg->header.stamp,
-            rclcpp::Duration(0.5));
+            rclcpp::Duration::from_seconds(0.5));
           tf2::fromMsg(ros_input2map.transform, tf_input2map);
         } catch (tf2::TransformException & ex) {
           RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000, "%s", ex.what());
@@ -362,7 +362,7 @@ void DummyPerceptionPublisherNode::objectCallback(
               geometry_msgs::msg::TransformStamped ros_input2map;
               ros_input2map = tf_buffer_.lookupTransform(
                 /*target*/ msg->header.frame_id, /*src*/ "map", msg->header.stamp,
-                rclcpp::Duration(0.5));
+                rclcpp::Duration::from_seconds(0.5));
               tf2::fromMsg(ros_input2map.transform, tf_input2map);
             } catch (tf2::TransformException & ex) {
               RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000, "%s", ex.what());
