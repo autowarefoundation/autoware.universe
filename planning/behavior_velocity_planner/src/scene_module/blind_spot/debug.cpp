@@ -34,7 +34,7 @@ visualization_msgs::msg::MarkerArray createPolygonMarkerArray(
 
   marker.ns = ns;
   marker.id = uid;
-  marker.lifetime = rclcpp::Duration(0.3);
+  marker.lifetime = rclcpp::Duration::from_seconds(0.3);
   marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
   marker.action = visualization_msgs::msg::Marker::ADD;
   marker.pose.orientation = createMarkerOrientation(0, 0, 0, 1.0);
@@ -69,7 +69,7 @@ visualization_msgs::msg::MarkerArray createObjectsMarkerArray(
   int32_t i = 0;
   for (const auto & object : objects.objects) {
     marker.id = uid + i++;
-    marker.lifetime = rclcpp::Duration(1.0);
+    marker.lifetime = rclcpp::Duration::from_seconds(1.0);
     marker.type = visualization_msgs::msg::Marker::SPHERE;
     marker.action = visualization_msgs::msg::Marker::ADD;
     marker.pose = object.state.pose_covariance.pose;
@@ -91,7 +91,7 @@ visualization_msgs::msg::MarkerArray createPathMarkerArray(
   marker.header.frame_id = "map";
   marker.ns = ns;
   marker.id = lane_id;
-  marker.lifetime = rclcpp::Duration(0.3);
+  marker.lifetime = rclcpp::Duration::from_seconds(0.3);
   marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
   marker.action = visualization_msgs::msg::Marker::ADD;
   marker.pose.orientation = createMarkerOrientation(0, 0, 0, 1.0);
@@ -116,7 +116,7 @@ visualization_msgs::msg::MarkerArray createVirtualWallMarkerArray(
   marker_virtual_wall.header.frame_id = "map";
   marker_virtual_wall.ns = "stop_virtual_wall";
   marker_virtual_wall.id = lane_id;
-  marker_virtual_wall.lifetime = rclcpp::Duration(0.5);
+  marker_virtual_wall.lifetime = rclcpp::Duration::from_seconds(0.5);
   marker_virtual_wall.type = visualization_msgs::msg::Marker::CUBE;
   marker_virtual_wall.action = visualization_msgs::msg::Marker::ADD;
   marker_virtual_wall.pose = pose;
@@ -129,7 +129,7 @@ visualization_msgs::msg::MarkerArray createVirtualWallMarkerArray(
   marker_factor_text.header.frame_id = "map";
   marker_factor_text.ns = "factor_text";
   marker_factor_text.id = lane_id;
-  marker_factor_text.lifetime = rclcpp::Duration(0.5);
+  marker_factor_text.lifetime = rclcpp::Duration::from_seconds(0.5);
   marker_factor_text.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
   marker_factor_text.action = visualization_msgs::msg::Marker::ADD;
   marker_factor_text.pose = pose;
@@ -153,7 +153,7 @@ visualization_msgs::msg::MarkerArray createPoseMarkerArray(
     marker_line.header.frame_id = "map";
     marker_line.ns = ns + "_line";
     marker_line.id = id;
-    marker_line.lifetime = rclcpp::Duration(0.3);
+    marker_line.lifetime = rclcpp::Duration::from_seconds(0.3);
     marker_line.type = visualization_msgs::msg::Marker::LINE_STRIP;
     marker_line.action = visualization_msgs::msg::Marker::ADD;
     marker_line.pose.orientation = createMarkerOrientation(0, 0, 0, 1.0);

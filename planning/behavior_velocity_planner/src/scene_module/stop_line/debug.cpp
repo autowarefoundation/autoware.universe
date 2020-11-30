@@ -38,7 +38,7 @@ visualization_msgs::msg::MarkerArray createMarkers(
     marker.header.frame_id = "map";
     marker.ns = "stop_virtual_wall";
     marker.id = uid + j;
-    marker.lifetime = rclcpp::Duration(0.5);
+    marker.lifetime = rclcpp::Duration::from_seconds(0.5);
     marker.type = visualization_msgs::msg::Marker::CUBE;
     marker.action = visualization_msgs::msg::Marker::ADD;
     tf2::Transform tf_map2base_link;
@@ -61,7 +61,7 @@ visualization_msgs::msg::MarkerArray createMarkers(
     marker.header.frame_id = "map";
     marker.ns = "factor_text";
     marker.id = uid + j;
-    marker.lifetime = rclcpp::Duration(0.5);
+    marker.lifetime = rclcpp::Duration::from_seconds(0.5);
     marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
     marker.action = visualization_msgs::msg::Marker::ADD;
     tf2::Transform tf_map2base_link;

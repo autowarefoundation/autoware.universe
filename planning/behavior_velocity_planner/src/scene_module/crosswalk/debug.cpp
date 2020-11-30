@@ -38,7 +38,7 @@ visualization_msgs::msg::MarkerArray createCrosswalkMarkers(
 
     marker.ns = "crosswalk polygon line";
     marker.id = uid + i;
-    marker.lifetime = rclcpp::Duration(0.5);
+    marker.lifetime = rclcpp::Duration::from_seconds(0.5);
     marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
     marker.action = visualization_msgs::msg::Marker::ADD;
     marker.pose.position.x = 0;
@@ -65,7 +65,7 @@ visualization_msgs::msg::MarkerArray createCrosswalkMarkers(
 
     marker.ns = "crosswalk polygon point";
     marker.id = i;
-    marker.lifetime = rclcpp::Duration(0.5);
+    marker.lifetime = rclcpp::Duration::from_seconds(0.5);
     marker.type = visualization_msgs::msg::Marker::POINTS;
     marker.action = visualization_msgs::msg::Marker::ADD;
     marker.pose.position.x = 0;
@@ -97,7 +97,7 @@ visualization_msgs::msg::MarkerArray createCrosswalkMarkers(
     marker.header.frame_id = "map";
     marker.ns = "collision line";
     marker.id = uid + i;
-    marker.lifetime = rclcpp::Duration(0.5);
+    marker.lifetime = rclcpp::Duration::from_seconds(0.5);
     marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
     marker.action = visualization_msgs::msg::Marker::ADD;
     marker.pose.position.x = 0;
@@ -128,7 +128,7 @@ visualization_msgs::msg::MarkerArray createCrosswalkMarkers(
     marker.header.frame_id = "map";
     marker.ns = "collision point";
     marker.id = 0;
-    marker.lifetime = rclcpp::Duration(0.5);
+    marker.lifetime = rclcpp::Duration::from_seconds(0.5);
     marker.type = visualization_msgs::msg::Marker::POINTS;
     marker.action = visualization_msgs::msg::Marker::ADD;
     marker.pose.position.x = 0;
@@ -163,7 +163,7 @@ visualization_msgs::msg::MarkerArray createCrosswalkMarkers(
 
     marker.ns = "slow polygon line";
     marker.id = uid + i;
-    marker.lifetime = rclcpp::Duration(0.5);
+    marker.lifetime = rclcpp::Duration::from_seconds(0.5);
     marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
     marker.action = visualization_msgs::msg::Marker::ADD;
     marker.pose.position.x = 0;
@@ -195,7 +195,7 @@ visualization_msgs::msg::MarkerArray createCrosswalkMarkers(
     marker.header.frame_id = "map";
     marker.ns = "slow point";
     marker.id = 0;
-    marker.lifetime = rclcpp::Duration(0.5);
+    marker.lifetime = rclcpp::Duration::from_seconds(0.5);
     marker.type = visualization_msgs::msg::Marker::POINTS;
     marker.action = visualization_msgs::msg::Marker::ADD;
     marker.pose.position.x = 0;
@@ -230,7 +230,7 @@ visualization_msgs::msg::MarkerArray createCrosswalkMarkers(
 
     marker.ns = "stop polygon line";
     marker.id = uid + i;
-    marker.lifetime = rclcpp::Duration(0.5);
+    marker.lifetime = rclcpp::Duration::from_seconds(0.5);
     marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
     marker.action = visualization_msgs::msg::Marker::ADD;
     marker.pose.position.x = 0;
@@ -262,7 +262,7 @@ visualization_msgs::msg::MarkerArray createCrosswalkMarkers(
     marker.header.frame_id = "map";
     marker.ns = "stop point";
     marker.id = module_id;
-    marker.lifetime = rclcpp::Duration(0.5);
+    marker.lifetime = rclcpp::Duration::from_seconds(0.5);
     marker.type = visualization_msgs::msg::Marker::POINTS;
     marker.action = visualization_msgs::msg::Marker::ADD;
     marker.pose.position.x = 0;
@@ -294,7 +294,7 @@ visualization_msgs::msg::MarkerArray createCrosswalkMarkers(
     marker.header.frame_id = "map";
     marker.ns = "stop_virtual_wall";
     marker.id = uid + j;
-    marker.lifetime = rclcpp::Duration(0.5);
+    marker.lifetime = rclcpp::Duration::from_seconds(0.5);
     marker.type = visualization_msgs::msg::Marker::CUBE;
     marker.action = visualization_msgs::msg::Marker::ADD;
     tf2::Transform tf_map2base_link;
@@ -317,7 +317,7 @@ visualization_msgs::msg::MarkerArray createCrosswalkMarkers(
     marker.header.frame_id = "map";
     marker.ns = "factor_text";
     marker.id = uid + j;
-    marker.lifetime = rclcpp::Duration(0.5);
+    marker.lifetime = rclcpp::Duration::from_seconds(0.5);
     marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
     marker.action = visualization_msgs::msg::Marker::ADD;
     tf2::Transform tf_map2base_link;
@@ -342,7 +342,7 @@ visualization_msgs::msg::MarkerArray createCrosswalkMarkers(
     marker.header.frame_id = "map";
     marker.ns = "slow virtual_wall";
     marker.id = uid + j;
-    marker.lifetime = rclcpp::Duration(0.5);
+    marker.lifetime = rclcpp::Duration::from_seconds(0.5);
     marker.type = visualization_msgs::msg::Marker::CUBE;
     marker.action = visualization_msgs::msg::Marker::ADD;
     tf2::Transform tf_map2base_link;
@@ -365,7 +365,7 @@ visualization_msgs::msg::MarkerArray createCrosswalkMarkers(
     marker.header.frame_id = "map";
     marker.ns = "slow factor_text";
     marker.id = uid + j;
-    marker.lifetime = rclcpp::Duration(0.5);
+    marker.lifetime = rclcpp::Duration::from_seconds(0.5);
     marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
     marker.action = visualization_msgs::msg::Marker::ADD;
     tf2::Transform tf_map2base_link;
@@ -401,7 +401,7 @@ visualization_msgs::msg::MarkerArray createWalkwayMarkers(
     marker.header.frame_id = "map";
     marker.ns = "stop point";
     marker.id = module_id;
-    marker.lifetime = rclcpp::Duration(0.5);
+    marker.lifetime = rclcpp::Duration::from_seconds(0.5);
     marker.type = visualization_msgs::msg::Marker::POINTS;
     marker.action = visualization_msgs::msg::Marker::ADD;
     marker.pose.position.x = 0;
@@ -433,7 +433,7 @@ visualization_msgs::msg::MarkerArray createWalkwayMarkers(
     marker.header.frame_id = "map";
     marker.ns = "stop_virtual_wall";
     marker.id = uid + j;
-    marker.lifetime = rclcpp::Duration(0.5);
+    marker.lifetime = rclcpp::Duration::from_seconds(0.5);
     marker.type = visualization_msgs::msg::Marker::CUBE;
     marker.action = visualization_msgs::msg::Marker::ADD;
     tf2::Transform tf_map2base_link;
@@ -456,7 +456,7 @@ visualization_msgs::msg::MarkerArray createWalkwayMarkers(
     marker.header.frame_id = "map";
     marker.ns = "factor_text";
     marker.id = uid + j;
-    marker.lifetime = rclcpp::Duration(0.5);
+    marker.lifetime = rclcpp::Duration::from_seconds(0.5);
     marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
     marker.action = visualization_msgs::msg::Marker::ADD;
     tf2::Transform tf_map2base_link;

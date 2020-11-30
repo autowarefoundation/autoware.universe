@@ -145,7 +145,7 @@ void BehaviorVelocityPlannerNode::onNoGroundPointCloud(
   geometry_msgs::msg::TransformStamped transform;
   try {
     transform = tf_buffer_.lookupTransform(
-      "map", msg->header.frame_id, msg->header.stamp, rclcpp::Duration(0.1));
+      "map", msg->header.frame_id, msg->header.stamp, rclcpp::Duration::from_seconds(0.1));
   } catch (tf2::LookupException & e) {
     RCLCPP_WARN(get_logger(), "no transform found for no_ground_pointcloud");
     return;
@@ -267,7 +267,7 @@ void BehaviorVelocityPlannerNode::publishDebugMarker(const autoware_planning_msg
     marker.scale.y = marker.scale.z = 0.05;
     marker.scale.x = 0.25;
     marker.action = visualization_msgs::msg::Marker::ADD;
-    marker.lifetime = rclcpp::Duration(0.5);
+    marker.lifetime = rclcpp::Duration::from_seconds(0.5);
     marker.color.a = 0.999;  // Don't forget to set the alpha!
     marker.color.r = 1.0;
     marker.color.g = 1.0;
