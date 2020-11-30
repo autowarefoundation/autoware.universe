@@ -75,7 +75,7 @@ void FillPolygonAreas(
 
   geometry_msgs::msg::TransformStamped transform;
   transform = in_tf_buffer.lookupTransform(
-      in_tf_target_frame, in_tf_source_frame, rclcpp::Time(0), rclcpp::Duration(1.0));
+      in_tf_target_frame, in_tf_source_frame, rclcpp::Time(0), rclcpp::Duration::from_seconds(1.0));
 
 
   // calculate out_grid_map position

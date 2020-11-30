@@ -143,7 +143,7 @@ CostmapGenerator::CostmapGenerator() :
   // Wait for first tf
   while (rclcpp::ok()) {
     try {
-      tf_buffer_.lookupTransform(map_frame_, vehicle_frame_, rclcpp::Time(0), rclcpp::Duration(10.0));
+      tf_buffer_.lookupTransform(map_frame_, vehicle_frame_, rclcpp::Time(0), rclcpp::Duration::from_seconds(10.0));
       break;
     } catch (tf2::TransformException ex) {
       RCLCPP_ERROR(this->get_logger(),"waiting for initial pose...");
@@ -225,7 +225,7 @@ void CostmapGenerator::onTimer()
   geometry_msgs::msg::TransformStamped tf;
   try {
     tf =
-      tf_buffer_.lookupTransform(costmap_frame_, vehicle_frame_, rclcpp::Time(0), rclcpp::Duration(1.0));
+      tf_buffer_.lookupTransform(costmap_frame_, vehicle_frame_, rclcpp::Time(0), rclcpp::Duration::from_seconds(1.0));
   } catch (tf2::TransformException ex) {
     RCLCPP_ERROR(rclcpp::get_logger("Exception: "), "%s", ex.what());
     return;
@@ -290,7 +290,7 @@ autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr transformObjec
   geometry_msgs::msg::TransformStamped objects2costmap;
   try {
     objects2costmap =
-      tf_buffer.lookupTransform(target_frame_id, src_frame_id, rclcpp::Time(0), rclcpp::Duration(1.0));
+      tf_buffer.lookupTransform(target_frame_id, src_frame_id, rclcpp::Time(0), rclcpp::Duration::from_seconds(1.0));
   } catch (tf2::TransformException ex) {
     RCLCPP_ERROR(rclcpp::get_logger("Exception: "), "%s", ex.what());
   }
