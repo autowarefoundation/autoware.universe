@@ -385,7 +385,7 @@ visualization_msgs::msg::MarkerArray getObjectsMarkerArray(
   int32_t i = 0;
   for (const auto & object : objects) {
     marker.id = i++;
-    marker.lifetime = rclcpp::Duration(1.0);
+    marker.lifetime = rclcpp::Duration::from_seconds(1.0);
     marker.type = visualization_msgs::msg::Marker::CUBE;
     marker.action = visualization_msgs::msg::Marker::ADD;
     marker.pose = object.state.pose_covariance.pose;
@@ -412,7 +412,7 @@ visualization_msgs::msg::MarkerArray getRectanglesMarkerArray(
   int unique_id = 0;
   for (const auto & rect : rects) {
     marker.id = unique_id++;
-    marker.lifetime = rclcpp::Duration(1.0);
+    marker.lifetime = rclcpp::Duration::from_seconds(1.0);
     marker.action = visualization_msgs::msg::Marker::ADD;
     marker.pose.orientation.w = 1.0;
     marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
@@ -672,7 +672,7 @@ visualization_msgs::msg::MarkerArray getVirtualWallMarkerArray(
   marker.header.frame_id = "map";
   marker.header.stamp = current_time;
   marker.ns = ns;
-  marker.lifetime = rclcpp::Duration(1.0);
+  marker.lifetime = rclcpp::Duration::from_seconds(1.0);
   marker.type = visualization_msgs::msg::Marker::CUBE;
   marker.action = visualization_msgs::msg::Marker::ADD;
   marker.pose = pose;
@@ -694,7 +694,7 @@ visualization_msgs::msg::MarkerArray getVirtualWallTextMarkerArray(
   marker.header.frame_id = "map";
   marker.header.stamp = current_time;
   marker.ns = ns;
-  marker.lifetime = rclcpp::Duration(1.0);
+  marker.lifetime = rclcpp::Duration::from_seconds(1.0);
   marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
   marker.action = visualization_msgs::msg::Marker::ADD;
   marker.pose = pose;

@@ -374,7 +374,7 @@ std::unique_ptr<geometry_msgs::msg::Pose> ObstacleAvoidancePlanner::getCurrentEg
 
   try {
     tf_current_pose =
-      tf_buffer_ptr_->lookupTransform("map", "base_link", rclcpp::Time(0), rclcpp::Duration(1.0));
+      tf_buffer_ptr_->lookupTransform("map", "base_link", rclcpp::Time(0), rclcpp::Duration::from_seconds(1.0));
   } catch (tf2::TransformException ex) {
     RCLCPP_ERROR(get_logger(), "[ObstacleAvoidancePlanner] %s", ex.what());
     return nullptr;
