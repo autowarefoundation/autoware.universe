@@ -59,6 +59,11 @@ repositories:
     type: git
     url: https://github.com/mitsudome-r/diagnostics.git
     version: ros2-devel
+  vendor/usb_cam: # TODO remove after https://github.com/ros-drivers/usb_cam/pull/132 is available in foxy
+    type: git
+    url: https://github.com/flynneva/usb_cam.git
+    version: foxy
+
 #  vendor/lanelet2:
 #    type: git
 #    url: https://github.com/fzi-forschungszentrum-informatik/Lanelet2.git
