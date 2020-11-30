@@ -81,7 +81,7 @@ namespace traffic_light
       "map",
       input_msg->header.frame_id,
       input_msg->header.stamp,
-      rclcpp::Duration(0.2));
+      rclcpp::Duration::from_seconds(0.2));
     camera_pose_stamped.header = input_msg->header;
     camera_pose_stamped.pose.position.x = transform.transform.translation.x;
     camera_pose_stamped.pose.position.y = transform.transform.translation.y;
