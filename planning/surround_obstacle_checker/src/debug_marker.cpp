@@ -79,7 +79,7 @@ visualization_msgs::msg::MarkerArray SurroundObstacleCheckerDebugNode::makeVisua
     marker.header.stamp = current_time;
     marker.ns = "virtual_wall/no_start";
     marker.id = 0;
-    marker.lifetime = rclcpp::Duration(0.5);
+    marker.lifetime = rclcpp::Duration::from_seconds(0.5);
     marker.type = visualization_msgs::msg::Marker::CUBE;
     marker.action = visualization_msgs::msg::Marker::ADD;
     tf2::Transform tf_map2base_link;
@@ -104,7 +104,7 @@ visualization_msgs::msg::MarkerArray SurroundObstacleCheckerDebugNode::makeVisua
     marker.header.stamp = current_time;
     marker.ns = "factor_text/no_start";
     marker.id = 0;
-    marker.lifetime = rclcpp::Duration(0.5);
+    marker.lifetime = rclcpp::Duration::from_seconds(0.5);
     marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
     marker.action = visualization_msgs::msg::Marker::ADD;
     tf2::Transform tf_map2base_link;
@@ -130,7 +130,7 @@ visualization_msgs::msg::MarkerArray SurroundObstacleCheckerDebugNode::makeVisua
     marker.header.stamp = current_time;
     marker.ns = "no_start_obstacle_text";
     marker.id = 0;
-    marker.lifetime = rclcpp::Duration(0.5);
+    marker.lifetime = rclcpp::Duration::from_seconds(0.5);
     marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
     marker.action = visualization_msgs::msg::Marker::ADD;
     marker.pose.position = *stop_obstacle_point_ptr_;
