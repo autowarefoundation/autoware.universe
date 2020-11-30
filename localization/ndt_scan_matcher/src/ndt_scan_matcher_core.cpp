@@ -691,7 +691,7 @@ bool NDTScanMatcher::getTransform(
 
   try {
     *transform_stamped_ptr =
-      tf2_buffer_.lookupTransform(target_frame, source_frame, time_stamp, rclcpp::Duration(1.0));
+      tf2_buffer_.lookupTransform(target_frame, source_frame, time_stamp, rclcpp::Duration::from_seconds(1.0));
   } catch (tf2::TransformException & ex) {
     RCLCPP_WARN(get_logger(), "%s", ex.what());
     RCLCPP_ERROR(
