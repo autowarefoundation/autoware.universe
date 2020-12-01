@@ -110,6 +110,7 @@ rclcpp_components_register_node(downsample_filter
 ament_auto_add_library(ray_ground_filter SHARED
   src/ground_filter/ray_ground_filter_nodelet.cpp
   src/filter.cpp)
+target_link_libraries(ray_ground_filter ${OpenCV_LIBS})
 if (OPENMP_FOUND)
   set_target_properties(ray_ground_filter PROPERTIES
     COMPILE_FLAGS ${OpenMP_CXX_FLAGS}
