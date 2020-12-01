@@ -512,6 +512,10 @@ where the `duration` is an integer interpreted as milliseconds. A readable way t
 The `shutdown()` method doesn't exist anymore, but you can just throw away the subscriber with `this->subscription_ = nullptr;` or similar, for instance inside the subscription callback. Curiously, this works even though the `subscription_` member variable is not the sole owner – the `use_count` is 3 in the `minimal_subscriber` example.
 
 
+### Durations
+Beware of just replacing `ros::Duration` with `rclcpp::Duration` – it compiles, but now expects nanoseconds instead of seconds. Use `rclcpp::Duration::from_seconds` instead.
+
+
 ## Alternative: Semi-automated porting with ros2-migration-tools (not working)
 **The following instructions to use `ros2-migration-tools` are given for completeness, we gave up and decided to port packages manually.**
 
