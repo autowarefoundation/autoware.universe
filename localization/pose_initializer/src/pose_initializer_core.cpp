@@ -1,27 +1,28 @@
-/*
- * Copyright 2015-2019 Autoware Foundation. All rights reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2020 Autoware Foundation
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
+#include <algorithm>
 #include <chrono>
 #include <functional>
+#include <memory>
+#include <string>
 
-#include "pose_initializer/pose_initializer_core.h"
+#include "pose_initializer/pose_initializer_core.hpp"
 
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 
-#include <pcl_conversions/pcl_conversions.h>
+#include "pcl_conversions/pcl_conversions.h"
 
 double getGroundHeight(const pcl::PointCloud<pcl::PointXYZ>::Ptr pcdmap, const tf2::Vector3 & point)
 {
@@ -93,7 +94,7 @@ void PoseInitializer::serviceInitial(
   auto add_height_pose_msg_ptr = std::make_shared<geometry_msgs::msg::PoseWithCovarianceStamped>();
   getHeight(req->pose_with_cov, add_height_pose_msg_ptr);
 
-  // TODO
+  // TODO(YamatoAndo)
   add_height_pose_msg_ptr->pose.covariance[0] = 1.0;
   add_height_pose_msg_ptr->pose.covariance[1 * 6 + 1] = 1.0;
   add_height_pose_msg_ptr->pose.covariance[2 * 6 + 2] = 0.01;
@@ -112,7 +113,7 @@ void PoseInitializer::callbackInitialPose(
   auto add_height_pose_msg_ptr = std::make_shared<geometry_msgs::msg::PoseWithCovarianceStamped>();
   getHeight(*pose_cov_msg_ptr, add_height_pose_msg_ptr);
 
-  // TODO
+  // TODO(YamatoAndo)
   add_height_pose_msg_ptr->pose.covariance[0] = 2.0;
   add_height_pose_msg_ptr->pose.covariance[1 * 6 + 1] = 2.0;
   add_height_pose_msg_ptr->pose.covariance[2 * 6 + 2] = 0.01;
@@ -129,12 +130,12 @@ void PoseInitializer::callbackGNSSPoseCov(
 {
   gnss_pose_sub_ = nullptr;  // get only first topic
 
-  // TODO check service is available
+  // TODO(YamatoAndo) check service is available
 
   auto add_height_pose_msg_ptr = std::make_shared<geometry_msgs::msg::PoseWithCovarianceStamped>();
   getHeight(*pose_cov_msg_ptr, add_height_pose_msg_ptr);
 
-  // TODO
+  // TODO(YamatoAndo)
   add_height_pose_msg_ptr->pose.covariance[0] = 1.0;
   add_height_pose_msg_ptr->pose.covariance[1 * 6 + 1] = 1.0;
   add_height_pose_msg_ptr->pose.covariance[2 * 6 + 2] = 0.01;
@@ -193,7 +194,7 @@ void PoseInitializer::callAlignServiceAndPublishResult(
   ndt_client_->async_send_request(
     req,
     [this](rclcpp::Client<autoware_localization_srvs::srv::PoseWithCovarianceStamped>::SharedFuture
-             result) {
+    result) {
       RCLCPP_INFO(get_logger(), "called NDT Align Server");
       response_id_ = result.get()->seq;
       // NOTE temporary cov
