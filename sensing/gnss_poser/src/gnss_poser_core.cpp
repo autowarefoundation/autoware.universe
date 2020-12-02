@@ -24,7 +24,7 @@ namespace GNSSPoser
 GNSSPoser::GNSSPoser(const rclcpp::NodeOptions & node_options)
 : rclcpp::Node("gnss_poser", node_options),
   tf2_listener_(tf2_buffer_),
-  tf2_broadcaster_(std::make_shared<tf2_ros::TransformBroadcaster>(shared_from_this())),
+  tf2_broadcaster_(*this),
   base_frame_(declare_parameter("base_frame", "base_link")),
   gnss_frame_(declare_parameter("gnss_frame", "gnss")),
   gnss_base_frame_(declare_parameter("gnss_base_frame", "gnss_base_link")),
@@ -342,7 +342,7 @@ void GNSSPoser::publishTF(
   transform_stamped.transform.rotation.z = tf_quaternion.z();
   transform_stamped.transform.rotation.w = tf_quaternion.w();
 
-  tf2_broadcaster_->sendTransform(transform_stamped);
+  tf2_broadcaster_.sendTransform(transform_stamped);
 }
 
 RCLCPP_COMPONENTS_REGISTER_NODE(GNSSPoser)

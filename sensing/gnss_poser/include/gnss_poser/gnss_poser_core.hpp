@@ -67,7 +67,7 @@ private:
 
   tf2::BufferCore tf2_buffer_;
   tf2_ros::TransformListener tf2_listener_;
-  std::shared_ptr<tf2_ros::TransformBroadcaster> tf2_broadcaster_;
+  tf2_ros::TransformBroadcaster tf2_broadcaster_;
 
   rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr nav_sat_fix_sub_;
   rclcpp::Subscription<ublox_msgs::msg::NavPVT>::SharedPtr nav_pvt_sub_;

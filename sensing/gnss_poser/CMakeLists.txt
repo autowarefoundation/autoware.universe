@@ -18,8 +18,8 @@ set(GNSS_POSER_HEADERS
   include/gnss_poser/gnss_stat.hpp
  )
 
-ament_auto_add_library(gnss_poser_node SHARED 
-	src/gnss_poser_core.cpp 
+ament_auto_add_library(gnss_poser_node SHARED
+	src/gnss_poser_core.cpp
 	${GNSS_POSER_HEADERS}
 )
 
