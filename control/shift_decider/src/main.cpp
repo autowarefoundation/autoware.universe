@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <shift_decider/shift_decider.h>
+#include <shift_decider/shift_decider.hpp>
 
 #include <rclcpp/rclcpp.hpp>
 
