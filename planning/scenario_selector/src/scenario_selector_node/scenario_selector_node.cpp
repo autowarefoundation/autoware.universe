@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <scenario_selector/scenario_selector_node.h>
+#include <scenario_selector/scenario_selector_node.hpp>
 
 #include <string>
 #include <utility>
@@ -25,8 +25,8 @@
 #include <lanelet2_core/geometry/LineString.h>
 #include <lanelet2_core/geometry/Point.h>
 #include <lanelet2_core/geometry/Polygon.h>
-#include <lanelet2_extension/utility/message_conversion.h>
-#include <lanelet2_extension/utility/query.h>
+#include <lanelet2_extension/utility/message_conversion.hpp>
+#include <lanelet2_extension/utility/query.hpp>
 
 namespace
 {

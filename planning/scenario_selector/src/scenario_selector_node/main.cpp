@@ -16,7 +16,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <scenario_selector/scenario_selector_node.h>
+#include <scenario_selector/scenario_selector_node.hpp>
 
 int main(int argc, char ** argv)
 {
