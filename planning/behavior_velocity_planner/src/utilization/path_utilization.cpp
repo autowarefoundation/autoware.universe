@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <utilization/path_utilization.h>
+#include <utilization/path_utilization.hpp>
 
 #include <memory>
 

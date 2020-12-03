@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <scene_module/blind_spot/scene.h>
+#include <scene_module/blind_spot/scene.hpp>
 
-#include <utilization/marker_helper.h>
-#include <utilization/util.h>
+#include <utilization/marker_helper.hpp>
+#include <utilization/util.hpp>
 
 namespace
 {

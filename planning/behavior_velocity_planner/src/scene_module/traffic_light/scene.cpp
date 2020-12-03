@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <scene_module/traffic_light/scene.h>
+#include <scene_module/traffic_light/scene.hpp>
 
 #include <map>
 
 #include <tf2/utils.h>
 #include <tf2_eigen/tf2_eigen.h>
 
-#include <utilization/util.h>
+#include <utilization/util.hpp>
 
 namespace
 {

@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <scene_module/detection_area/scene.h>
+#include <scene_module/detection_area/scene.hpp>
 
 #include <tf2_eigen/tf2_eigen.h>
 
-#include <utilization/util.h>
+#include <utilization/util.hpp>
 
 namespace
 {

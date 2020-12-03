@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <scene_module/crosswalk/manager.h>
+#include <scene_module/crosswalk/manager.hpp>
 
 namespace
 {

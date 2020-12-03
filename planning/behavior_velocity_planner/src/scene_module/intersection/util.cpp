@@ -17,13 +17,13 @@
 
 #include <lanelet2_core/geometry/Polygon.h>
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
-#include <lanelet2_extension/regulatory_elements/road_marking.h>
-#include <lanelet2_extension/utility/query.h>
-#include <lanelet2_extension/utility/utilities.h>
+#include <lanelet2_extension/regulatory_elements/road_marking.hpp>
+#include <lanelet2_extension/utility/query.hpp>
+#include <lanelet2_extension/utility/utilities.hpp>
 
-#include <scene_module/intersection/util.h>
-#include <utilization/interpolate.h>
-#include <utilization/util.h>
+#include <scene_module/intersection/util.hpp>
+#include <utilization/interpolate.hpp>
+#include <utilization/util.hpp>
 
 namespace bg = boost::geometry;
 

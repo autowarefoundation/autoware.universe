@@ -21,20 +21,18 @@
 #include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <scene_module/intersection/scene_intersection.h>
-#include <scene_module/intersection/scene_merge_from_private_road.h>
-#include <scene_module/scene_module_interface.h>
+#include <scene_module/detection_area/scene.hpp>
+#include <scene_module/scene_module_interface.hpp>
 
-class IntersectionModuleManager : public SceneModuleManagerInterface
+class DetectionAreaModuleManager : public SceneModuleManagerInterface
 {
 public:
-  IntersectionModuleManager(rclcpp::Node & node);
+  DetectionAreaModuleManager(rclcpp::Node & node);
 
-  const char * getModuleName() override { return "intersection"; }
+  const char * getModuleName() override { return "detection_area"; }
 
 private:
-  IntersectionModule::PlannerParam planner_param_;
-
+  DetectionAreaModule::PlannerParam planner_param_;
   void launchNewModules(const autoware_planning_msgs::msg::PathWithLaneId & path) override;
 
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(

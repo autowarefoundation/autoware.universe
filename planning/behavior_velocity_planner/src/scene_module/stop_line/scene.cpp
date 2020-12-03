@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <scene_module/stop_line/scene.h>
-#include <utilization/util.h>
+#include <scene_module/stop_line/scene.hpp>
+#include <utilization/util.hpp>
 
 namespace bg = boost::geometry;
 using Point = bg::model::d2::point_xy<double>;

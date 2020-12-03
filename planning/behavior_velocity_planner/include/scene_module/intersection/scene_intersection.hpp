@@ -29,8 +29,8 @@
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_routing/RoutingGraph.h>
 
-#include <scene_module/scene_module_interface.h>
-#include <utilization/boost_geometry_helper.h>
+#include <scene_module/scene_module_interface.hpp>
+#include <utilization/boost_geometry_helper.hpp>
 
 class IntersectionModule : public SceneModuleInterface
 {

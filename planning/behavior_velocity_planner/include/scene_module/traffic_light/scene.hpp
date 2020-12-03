@@ -15,7 +15,8 @@
  */
 #pragma once
 
-#include <vector>
+#include <memory>
+#include <string>
 
 #include <boost/assert.hpp>
 #include <boost/geometry.hpp>
@@ -29,35 +30,39 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
-#include <lanelet2_extension/regulatory_elements/detection_area.h>
-#include <lanelet2_extension/utility/query.h>
+#include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_routing/RoutingGraph.h>
 
-#include <scene_module/scene_module_interface.h>
+#include <scene_module/scene_module_interface.hpp>
 
-class DetectionAreaModule : public SceneModuleInterface
+class TrafficLightModule : public SceneModuleInterface
 {
 public:
-  enum class State { APPROACH, STOP, PASS };
+  enum class State { APPROACH, GO_OUT };
 
   struct DebugData
   {
     double base_link2front;
+    std::vector<std::tuple<
+      std::shared_ptr<const lanelet::TrafficLight>,
+      autoware_perception_msgs::msg::TrafficLightState>>
+      tl_state;  // TODO: replace tuple with struct
     std::vector<geometry_msgs::msg::Pose> stop_poses;
-    std::vector<geometry_msgs::msg::Pose> dead_line_poses;
     geometry_msgs::msg::Pose first_stop_pose;
-    std::vector<geometry_msgs::msg::Point> detection_points;
+    std::vector<geometry_msgs::msg::Pose> dead_line_poses;
+    std::vector<geometry_msgs::msg::Point> traffic_light_points;
   };
 
   struct PlannerParam
   {
     double stop_margin;
+    double tl_state_timeout;
   };
 
 public:
-  DetectionAreaModule(
-    const int64_t module_id, const lanelet::autoware::DetectionArea & detection_area_reg_elem,
-    const PlannerParam & planner_param, const rclcpp::Logger logger,
+  TrafficLightModule(
+    const int64_t module_id, const lanelet::TrafficLight & traffic_light_reg_elem,
+    lanelet::ConstLanelet lane, const PlannerParam & planner_param, const rclcpp::Logger logger,
     const rclcpp::Clock::SharedPtr clock);
 
   bool modifyPathVelocity(
@@ -66,16 +71,14 @@ public:
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
 
+  inline autoware_perception_msgs::msg::TrafficLightStateStamped getTrafficLightState() const
+  {
+    return tl_state_;
+  };
+  inline State getTrafficLightModuleState() const { return state_; };
+
 private:
-  int64_t module_id_;
-
-  using Point = boost::geometry::model::d2::point_xy<double>;
-  using Line = boost::geometry::model::linestring<Point>;
-  using Polygon = boost::geometry::model::polygon<Point, false>;
-
-  bool isPointsWithinDetectionArea(
-    const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & no_ground_pointcloud_ptr,
-    const lanelet::ConstPolygons3d & detection_areas);
+  int64_t lane_id_;
 
   bool getBackwordPointFromBasePoint(
     const Eigen::Vector2d & line_point1, const Eigen::Vector2d & line_point2,
@@ -89,11 +92,9 @@ private:
     const double & margin, const double & velocity,
     autoware_planning_msgs::msg::PathWithLaneId & output);
 
-  bool createTargetPoint(
-    const autoware_planning_msgs::msg::PathWithLaneId & input,
-    const boost::geometry::model::linestring<boost::geometry::model::d2::point_xy<double>> &
-      stop_line,
-    const double & margin, size_t & target_point_idx, Eigen::Vector2d & target_point);
+  bool getHighestConfidenceTrafficLightState(
+    const lanelet::ConstLineStringsOrPolygons3d & traffic_lights,
+    autoware_perception_msgs::msg::TrafficLightStateStamped & highest_confidence_tl_state);
 
   bool isOverDeadLine(
     const geometry_msgs::msg::Pose & self_pose,
@@ -101,8 +102,23 @@ private:
     const size_t & dead_line_point_idx, const Eigen::Vector2d & dead_line_point,
     const double dead_line_range);
 
+  bool isStopRequired(const autoware_perception_msgs::msg::TrafficLightState & tl_state);
+
+  bool createTargetPoint(
+    const autoware_planning_msgs::msg::PathWithLaneId & input,
+    const boost::geometry::model::linestring<boost::geometry::model::d2::point_xy<double>> &
+      stop_line,
+    const double & margin, size_t & target_point_idx, Eigen::Vector2d & target_point);
+
+  bool hasLamp(
+    const autoware_perception_msgs::msg::TrafficLightState & tl_state, const uint8_t & lamp_color);
+
+  geometry_msgs::msg::Point getTrafficLightPosition(
+    const lanelet::ConstLineStringOrPolygon3d traffic_light);
+
   // Key Feature
-  const lanelet::autoware::DetectionArea & detection_area_reg_elem_;
+  const lanelet::TrafficLight & traffic_light_reg_elem_;
+  lanelet::ConstLanelet lane_;
 
   // State
   State state_;
@@ -112,4 +128,7 @@ private:
 
   // Debug
   DebugData debug_data_;
+
+  // Traffic Light State
+  autoware_perception_msgs::msg::TrafficLightStateStamped tl_state_;
 };

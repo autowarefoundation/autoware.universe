@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <behavior_velocity_planner/planner_manager.h>
+#include <behavior_velocity_planner/planner_manager.hpp>
 #include <boost/format.hpp>
 
 namespace

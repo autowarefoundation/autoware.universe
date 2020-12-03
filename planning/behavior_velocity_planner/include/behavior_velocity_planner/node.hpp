@@ -25,8 +25,8 @@
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
-#include <behavior_velocity_planner/planner_data.h>
-#include <behavior_velocity_planner/planner_manager.h>
+#include <behavior_velocity_planner/planner_data.hpp>
+#include <behavior_velocity_planner/planner_manager.hpp>
 
 class BehaviorVelocityPlannerNode : public rclcpp::Node
 {

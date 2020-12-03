@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <scene_module/traffic_light/scene.h>
+#include <scene_module/traffic_light/scene.hpp>
 
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
-#include <utilization/marker_helper.h>
-#include <utilization/util.h>
+#include <utilization/marker_helper.hpp>
+#include <utilization/util.hpp>
 
 namespace
 {

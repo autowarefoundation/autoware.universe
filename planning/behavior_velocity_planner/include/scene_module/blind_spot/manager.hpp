@@ -22,8 +22,8 @@
 
 #include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
 
-#include <scene_module/blind_spot/scene.h>
-#include <scene_module/scene_module_interface.h>
+#include <scene_module/blind_spot/scene.hpp>
+#include <scene_module/scene_module_interface.hpp>
 
 class BlindSpotModuleManager : public SceneModuleManagerInterface
 {

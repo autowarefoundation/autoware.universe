@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <scene_module/traffic_light/manager.h>
+#include <scene_module/traffic_light/manager.hpp>
 
 #include <tf2/utils.h>
 

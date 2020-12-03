@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include <utilization/interpolate.h>
-#include <utilization/util.h>
+#include <utilization/interpolate.hpp>
+#include <utilization/util.hpp>
 
 namespace interpolation
 {

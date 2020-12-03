@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <scene_module/intersection/scene_intersection.h>
-#include <scene_module/intersection/scene_merge_from_private_road.h>
+#include <scene_module/intersection/scene_intersection.hpp>
+#include <scene_module/intersection/scene_merge_from_private_road.hpp>
 
-#include <utilization/marker_helper.h>
-#include <utilization/util.h>
+#include <utilization/marker_helper.hpp>
+#include <utilization/util.hpp>
 
 namespace
 {

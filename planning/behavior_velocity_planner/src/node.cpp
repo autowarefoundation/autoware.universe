@@ -16,26 +16,26 @@
 
 #include <functional>
 
-#include <behavior_velocity_planner/node.h>
+#include <behavior_velocity_planner/node.hpp>
 
 #include <pcl/common/transforms.h>
 #include <tf2_eigen/tf2_eigen.h>
 
-#include <lanelet2_extension/utility/message_conversion.h>
+#include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_routing/Route.h>
 
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
-#include <utilization/path_utilization.h>
+#include <utilization/path_utilization.hpp>
 
 // Scene modules
-#include <scene_module/blind_spot/manager.h>
-#include <scene_module/crosswalk/manager.h>
-#include <scene_module/detection_area/manager.h>
-#include <scene_module/intersection/manager.h>
-#include <scene_module/stop_line/manager.h>
-#include <scene_module/traffic_light/manager.h>
+#include <scene_module/blind_spot/manager.hpp>
+#include <scene_module/crosswalk/manager.hpp>
+#include <scene_module/detection_area/manager.hpp>
+#include <scene_module/intersection/manager.hpp>
+#include <scene_module/stop_line/manager.hpp>
+#include <scene_module/traffic_light/manager.hpp>
 
 namespace
 {

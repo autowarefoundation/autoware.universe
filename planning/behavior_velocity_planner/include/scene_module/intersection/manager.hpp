@@ -21,20 +21,20 @@
 #include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <scene_module/crosswalk/scene_crosswalk.h>
-#include <scene_module/crosswalk/scene_walkway.h>
-#include <scene_module/scene_module_interface.h>
+#include <scene_module/intersection/scene_intersection.hpp>
+#include <scene_module/intersection/scene_merge_from_private_road.hpp>
+#include <scene_module/scene_module_interface.hpp>
 
-class CrosswalkModuleManager : public SceneModuleManagerInterface
+class IntersectionModuleManager : public SceneModuleManagerInterface
 {
 public:
-  CrosswalkModuleManager(rclcpp::Node & node);
+  IntersectionModuleManager(rclcpp::Node & node);
 
-  const char * getModuleName() override { return "crosswalk"; }
+  const char * getModuleName() override { return "intersection"; }
 
 private:
-  CrosswalkModule::PlannerParam crosswalk_planner_param_;
-  WalkwayModule::PlannerParam walkway_planner_param_;
+  IntersectionModule::PlannerParam planner_param_;
+
   void launchNewModules(const autoware_planning_msgs::msg::PathWithLaneId & path) override;
 
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(

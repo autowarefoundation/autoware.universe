@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <scene_module/blind_spot/manager.h>
+#include <scene_module/blind_spot/manager.hpp>
 
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
 
-#include <utilization/boost_geometry_helper.h>
-#include <utilization/util.h>
+#include <utilization/boost_geometry_helper.hpp>
+#include <utilization/util.hpp>
 
 namespace
 {

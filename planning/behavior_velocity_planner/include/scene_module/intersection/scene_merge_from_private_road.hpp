@@ -29,9 +29,9 @@
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_routing/RoutingGraph.h>
 
-#include <scene_module/intersection/scene_intersection.h>
-#include <scene_module/scene_module_interface.h>
-#include <utilization/boost_geometry_helper.h>
+#include <scene_module/intersection/scene_intersection.hpp>
+#include <scene_module/scene_module_interface.hpp>
+#include <utilization/boost_geometry_helper.hpp>
 
 /**
  * @brief This module makes sure that vehicle will stop before entering public road from private road.

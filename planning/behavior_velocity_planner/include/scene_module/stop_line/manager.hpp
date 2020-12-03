@@ -21,18 +21,18 @@
 #include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <scene_module/detection_area/scene.h>
-#include <scene_module/scene_module_interface.h>
+#include <scene_module/scene_module_interface.hpp>
+#include <scene_module/stop_line/scene.hpp>
 
-class DetectionAreaModuleManager : public SceneModuleManagerInterface
+class StopLineModuleManager : public SceneModuleManagerInterface
 {
 public:
-  DetectionAreaModuleManager(rclcpp::Node & node);
+  StopLineModuleManager(rclcpp::Node & node);
 
-  const char * getModuleName() override { return "detection_area"; }
+  const char * getModuleName() override { return "stop_line"; }
 
 private:
-  DetectionAreaModule::PlannerParam planner_param_;
+  StopLineModule::PlannerParam planner_param_;
   void launchNewModules(const autoware_planning_msgs::msg::PathWithLaneId & path) override;
 
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(

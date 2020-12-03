@@ -21,8 +21,8 @@
 #include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <scene_module/scene_module_interface.h>
-#include <scene_module/traffic_light/scene.h>
+#include <scene_module/scene_module_interface.hpp>
+#include <scene_module/traffic_light/scene.hpp>
 
 class TrafficLightModuleManager : public SceneModuleManagerInterface
 {

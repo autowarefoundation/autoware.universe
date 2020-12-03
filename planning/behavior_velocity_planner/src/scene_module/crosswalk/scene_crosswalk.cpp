@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <scene_module/crosswalk/scene_crosswalk.h>
-#include <utilization/util.h>
+#include <scene_module/crosswalk/scene_crosswalk.hpp>
+#include <utilization/util.hpp>
 
 #include <cmath>
 

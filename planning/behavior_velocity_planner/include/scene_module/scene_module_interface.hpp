@@ -23,7 +23,7 @@
 #include <autoware_planning_msgs/msg/stop_reason.hpp>
 #include <autoware_planning_msgs/msg/stop_reason_array.hpp>
 
-#include <behavior_velocity_planner/planner_data.h>
+#include <behavior_velocity_planner/planner_data.hpp>
 
 // Debug
 #include <rclcpp/rclcpp.hpp>

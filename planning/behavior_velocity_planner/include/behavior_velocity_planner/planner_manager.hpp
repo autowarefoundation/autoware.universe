@@ -33,7 +33,7 @@
 #include <lanelet2_routing/RoutingGraph.h>
 #include <lanelet2_traffic_rules/TrafficRulesFactory.h>
 
-#include <scene_module/scene_module_interface.h>
+#include <scene_module/scene_module_interface.hpp>
 
 class BehaviorVelocityPlannerManager
 {

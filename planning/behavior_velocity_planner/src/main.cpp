@@ -16,7 +16,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <behavior_velocity_planner/node.h>
+#include <behavior_velocity_planner/node.hpp>
 
 int main(int argc, char ** argv)
 {

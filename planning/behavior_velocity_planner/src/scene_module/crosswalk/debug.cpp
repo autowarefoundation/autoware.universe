@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <scene_module/crosswalk/scene_crosswalk.h>
-#include <scene_module/crosswalk/scene_walkway.h>
+#include <scene_module/crosswalk/scene_crosswalk.hpp>
+#include <scene_module/crosswalk/scene_walkway.hpp>
 
-#include <utilization/marker_helper.h>
-#include <utilization/util.h>
+#include <utilization/marker_helper.hpp>
+#include <utilization/util.hpp>
 
 namespace
 {

@@ -21,13 +21,13 @@
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
-#include <lanelet2_extension/utility/query.h>
+#include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_routing/RoutingGraph.h>
 #include <lanelet2_routing/RoutingGraphContainer.h>
 
-#include <scene_module/crosswalk/scene_crosswalk.h>
-#include <scene_module/crosswalk/util.h>
-#include <scene_module/scene_module_interface.h>
+#include <scene_module/crosswalk/scene_crosswalk.hpp>
+#include <scene_module/crosswalk/util.hpp>
+#include <scene_module/scene_module_interface.hpp>
 
 class WalkwayModule : public SceneModuleInterface
 {
