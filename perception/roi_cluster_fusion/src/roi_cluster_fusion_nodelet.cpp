@@ -18,7 +18,7 @@
 #include <pcl_ros/point_cloud.h>
 #include <pcl_ros/transforms.h>
 #include <pluginlib/class_list_macros.h>
-#include <roi_cluster_fusion/roi_cluster_fusion_nodelet.h>
+#include <roi_cluster_fusion/roi_cluster_fusion_nodelet.hpp>
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/point_cloud2_iterator.h>
 #include <tf2/LinearMath/Transform.h>
