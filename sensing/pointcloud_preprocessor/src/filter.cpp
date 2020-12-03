@@ -51,7 +51,7 @@
  *
  */
 
-#include "pointcloud_preprocessor/filter.h"
+#include "pointcloud_preprocessor/filter.hpp"
 #include <pcl/io/io.h>
 #include "pcl_ros/transforms.hpp"
 

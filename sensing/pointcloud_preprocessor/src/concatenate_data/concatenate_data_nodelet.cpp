@@ -51,7 +51,7 @@
  *
  */
 
-#include "pointcloud_preprocessor/concatenate_data/concatenate_data_nodelet.h"
+#include "pointcloud_preprocessor/concatenate_data/concatenate_data_nodelet.hpp"
 
 #include <pcl_ros/transforms.hpp>
 

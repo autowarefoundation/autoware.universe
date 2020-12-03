@@ -50,7 +50,7 @@
  *
  */
 
-#include "pointcloud_preprocessor/passthrough_filter/passthrough_filter_nodelet.h"
+#include "pointcloud_preprocessor/passthrough_filter/passthrough_filter_nodelet.hpp"
 
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/search/kdtree.h>

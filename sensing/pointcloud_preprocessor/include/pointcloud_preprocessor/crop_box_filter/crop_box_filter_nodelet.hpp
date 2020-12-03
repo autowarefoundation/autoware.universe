@@ -55,7 +55,7 @@
 
 #include <pcl/filters/crop_box.h>
 
-#include "pointcloud_preprocessor/filter.h"
+#include "pointcloud_preprocessor/filter.hpp"
 
 #include <geometry_msgs/msg/polygon_stamped.hpp>
 

@@ -15,16 +15,29 @@
  */
 #pragma once
 
-#include <boost/circular_buffer.hpp>
-#include "pointcloud_preprocessor/filter.h"
+#include <pcl/filters/voxel_grid.h>
+#include <pcl/search/pcl_search.h>
+#include "pointcloud_preprocessor/filter.hpp"
 
 namespace pointcloud_preprocessor
 {
-class PointcloudAccumulatorComponent : public pointcloud_preprocessor::Filter
+class VoxelDistanceBasedCompareMapFilterComponent : public pointcloud_preprocessor::Filter
 {
 protected:
   virtual void filter(
     const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output);
+
+  void input_target_callback(const PointCloud2ConstPtr map);
+
+private:
+  // pcl::SegmentDifferences<pcl::PointXYZ> impl_;
+  rclcpp::Subscription<PointCloud2>::SharedPtr sub_map_;
+  PointCloudPtr voxel_map_ptr_;
+  PointCloudConstPtr map_ptr_;
+  double distance_threshold_;
+  pcl::search::Search<pcl::PointXYZ>::Ptr tree_;
+  pcl::VoxelGrid<pcl::PointXYZ> voxel_grid_;
+  bool set_map_in_voxel_grid_;
 
   /** \brief Parameter service callback result : needed to be hold */
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
@@ -32,12 +45,8 @@ protected:
   /** \brief Parameter service callback */
   rcl_interfaces::msg::SetParametersResult paramCallback(const std::vector<rclcpp::Parameter> & p);
 
-private:
-  double accumulation_time_sec_;
-  boost::circular_buffer<PointCloud2ConstPtr> pointcloud_buffer_;
-
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  PointcloudAccumulatorComponent(const rclcpp::NodeOptions & options);
+  VoxelDistanceBasedCompareMapFilterComponent(const rclcpp::NodeOptions & options);
 };
 }  // namespace pointcloud_preprocessor

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "pointcloud_preprocessor/outlier_filter/ring_outlier_filter_nodelet.h"
+#include "pointcloud_preprocessor/outlier_filter/ring_outlier_filter_nodelet.hpp"
 
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/search/kdtree.h>

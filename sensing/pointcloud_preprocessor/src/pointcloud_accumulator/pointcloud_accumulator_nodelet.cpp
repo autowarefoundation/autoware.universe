@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "pointcloud_preprocessor/pointcloud_accumulator/pointcloud_accumulator_nodelet.h"
+#include "pointcloud_preprocessor/pointcloud_accumulator/pointcloud_accumulator_nodelet.hpp"
 
 namespace pointcloud_preprocessor
 {

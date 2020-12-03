@@ -42,7 +42,7 @@
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl_ros/point_cloud.h>
 #include <pluginlib/class_list_macros.h>
-#include <pointcloud_to_laserscan/pointcloud_to_laserscan_nodelet.h>
+#include <pointcloud_to_laserscan/pointcloud_to_laserscan_nodelet.hpp>
 #include <sensor_msgs/LaserScan.h>
 #include <sensor_msgs/point_cloud2_iterator.h>
 #include <tf2_sensor_msgs/tf2_sensor_msgs.h>

@@ -17,20 +17,15 @@
 
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/search/pcl_search.h>
-#include "pointcloud_preprocessor/filter.h"
+#include "pointcloud_preprocessor/filter.hpp"
 
 namespace pointcloud_preprocessor
 {
-class RingOutlierFilterComponent : public pointcloud_preprocessor::Filter
+class VoxelGridOutlierFilterComponent : public pointcloud_preprocessor::Filter
 {
 protected:
   virtual void filter(
     const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output);
-
-private:
-  double distance_ratio_;
-  double object_length_threshold_;
-  int num_points_threshold_;
 
   /** \brief Parameter service callback result : needed to be hold */
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
@@ -38,28 +33,16 @@ private:
   /** \brief Parameter service callback */
   rcl_interfaces::msg::SetParametersResult paramCallback(const std::vector<rclcpp::Parameter> & p);
 
+private:
+  double voxel_size_x_;
+  double voxel_size_y_;
+  double voxel_size_z_;
+  int voxel_points_threshold_;
+
+  pcl::VoxelGrid<pcl::PointXYZ> voxel_filter;
+
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  RingOutlierFilterComponent(const rclcpp::NodeOptions & options);
+  VoxelGridOutlierFilterComponent(const rclcpp::NodeOptions & option);
 };
-
 }  // namespace pointcloud_preprocessor
-
-namespace pcl
-{
-struct PointXYZIRADT
-{
-  PCL_ADD_POINT4D;
-  float intensity;
-  std::uint16_t ring;
-  float azimuth;
-  float distance;
-  double time_stamp;
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-} EIGEN_ALIGN16;
-}  // namespace pcl
-
-POINT_CLOUD_REGISTER_POINT_STRUCT(
-  pcl::PointXYZIRADT,
-  (float, x, x)(float, y, y)(float, z, z)(float, intensity, intensity)(std::uint16_t, ring, ring)(
-    float, azimuth, azimuth)(float, distance, distance)(double, time_stamp, time_stamp))

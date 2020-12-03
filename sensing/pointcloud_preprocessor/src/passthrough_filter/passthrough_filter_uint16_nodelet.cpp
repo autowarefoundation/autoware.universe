@@ -28,7 +28,7 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "pointcloud_preprocessor/passthrough_filter/passthrough_filter_uint16_nodelet.h"
+#include "pointcloud_preprocessor/passthrough_filter/passthrough_filter_uint16_nodelet.hpp"
 
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/search/kdtree.h>

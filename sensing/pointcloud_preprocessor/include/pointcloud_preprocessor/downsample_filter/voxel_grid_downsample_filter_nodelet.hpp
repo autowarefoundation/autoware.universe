@@ -16,7 +16,7 @@
 /*
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2010, Willow Garage, Inc.
+ *  Copyright (c) 2009, Willow Garage, Inc.
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -46,22 +46,27 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: passthrough.cpp 36194 2011-02-23 07:49:21Z rusu $
+ * $Id: voxel_grid.cpp 35876 2011-02-09 01:04:36Z rusu $
  *
  */
-
 #pragma once
 
+#include <pcl/filters/voxel_grid.h>
 #include <pcl/search/pcl_search.h>
-#include "pointcloud_preprocessor/filter.h"
+#include "pointcloud_preprocessor/filter.hpp"
 
 namespace pointcloud_preprocessor
 {
-class PassThroughFilterComponent : public pointcloud_preprocessor::Filter
+class VoxelGridDownsampleFilterComponent : public pointcloud_preprocessor::Filter
 {
 protected:
   virtual void filter(
     const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output);
+
+private:
+  double voxel_size_x_;
+  double voxel_size_y_;
+  double voxel_size_z_;
 
   /** \brief Parameter service callback result : needed to be hold */
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
@@ -71,6 +76,6 @@ protected:
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  PassThroughFilterComponent(const rclcpp::NodeOptions & options);
+  VoxelGridDownsampleFilterComponent(const rclcpp::NodeOptions & options);
 };
 }  // namespace pointcloud_preprocessor

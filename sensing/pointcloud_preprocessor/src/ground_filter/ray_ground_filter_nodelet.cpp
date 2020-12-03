@@ -31,7 +31,7 @@
  *  v1.0: amc-nu (abrahammonrroy@yahoo.com)
  */
 
-#include "pointcloud_preprocessor/ground_filter/ray_ground_filter_nodelet.h"
+#include "pointcloud_preprocessor/ground_filter/ray_ground_filter_nodelet.hpp"
 
 #include <pcl_ros/transforms.hpp>
 

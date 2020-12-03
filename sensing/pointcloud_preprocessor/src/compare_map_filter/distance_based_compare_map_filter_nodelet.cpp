@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "pointcloud_preprocessor/compare_map_filter/distance_based_compare_map_filter_nodelet.h"
+#include "pointcloud_preprocessor/compare_map_filter/distance_based_compare_map_filter_nodelet.hpp"
 
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/search/kdtree.h>

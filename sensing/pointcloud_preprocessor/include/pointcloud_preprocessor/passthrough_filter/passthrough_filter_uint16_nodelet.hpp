@@ -1,7 +1,7 @@
 #pragma once
 
 #include <pcl/search/pcl_search.h>
-#include "pointcloud_preprocessor/filter.h"
+#include "pointcloud_preprocessor/filter.hpp"
 #include "pointcloud_preprocessor/passthrough_filter/passthrough_uint16.h"
 
 namespace pointcloud_preprocessor

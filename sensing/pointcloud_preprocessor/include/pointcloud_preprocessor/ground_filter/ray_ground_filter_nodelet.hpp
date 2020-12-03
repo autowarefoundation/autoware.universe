@@ -63,7 +63,7 @@
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
 
-#include "pointcloud_preprocessor/filter.h"
+#include "pointcloud_preprocessor/filter.hpp"
 #include "pointcloud_preprocessor/ground_filter/gencolors.hpp"
 
 namespace pointcloud_preprocessor
