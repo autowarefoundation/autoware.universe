@@ -48,7 +48,7 @@
 
 #include <tf2/utils.h>
 
-#include <costmap_generator/objects_to_costmap.h>
+#include <costmap_generator/objects_to_costmap.hpp>
 
 // Constructor
 ObjectsToCostmap::ObjectsToCostmap()

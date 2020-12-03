@@ -50,9 +50,9 @@
 #include <memory>
 #include <string>
 
-#include <costmap_generator/objects_to_costmap.h>
-#include <costmap_generator/points_to_costmap.h>
-#include <lanelet2_extension/utility/message_conversion.h>
+#include <costmap_generator/objects_to_costmap.hpp>
+#include <costmap_generator/points_to_costmap.hpp>
+#include <lanelet2_extension/utility/message_conversion.hpp>
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
 #include <rclcpp/rclcpp.hpp>
