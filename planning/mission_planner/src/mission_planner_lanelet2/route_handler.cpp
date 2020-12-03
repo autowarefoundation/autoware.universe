@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <mission_planner/lanelet2_impl/route_handler.h>
+#include <mission_planner/lanelet2_impl/route_handler.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 namespace mission_planner

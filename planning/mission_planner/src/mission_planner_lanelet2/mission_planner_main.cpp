@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <mission_planner/lanelet2_impl/mission_planner_lanelet2.h>
+#include <mission_planner/lanelet2_impl/mission_planner_lanelet2.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 int main(int argc, char ** argv)
