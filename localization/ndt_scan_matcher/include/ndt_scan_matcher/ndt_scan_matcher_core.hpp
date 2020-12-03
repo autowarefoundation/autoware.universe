@@ -43,9 +43,9 @@
 #include <autoware_localization_srvs/srv/pose_with_covariance_stamped.hpp>
 // #include <pcl/registration/ndt.h>
 // #include <pcl_registration/ndt.h>
-#include <ndt/omp.h>
-#include <ndt/pcl_generic.h>
-#include <ndt/pcl_modified.h>
+#include <ndt/omp.hpp>
+#include <ndt/pcl_generic.hpp>
+#include <ndt/pcl_modified.hpp>
 
 class NDTScanMatcher : public rclcpp::Node
 {

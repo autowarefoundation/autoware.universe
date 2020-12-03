@@ -40,7 +40,7 @@
 #include <pcl/point_types.h>
 #include <pcl/impl/instantiate.hpp>
 
-#include "ndt_pcl_modified/ndt.h"
+#include "ndt_pcl_modified/ndt.hpp"
 
 template class PCL_EXPORTS pcl::NormalDistributionsTransformModified<pcl::PointXYZ, pcl::PointXYZ>;
 template class PCL_EXPORTS

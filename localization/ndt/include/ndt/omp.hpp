@@ -17,9 +17,9 @@
 #ifndef NORMAL_DISTRIBUTIONS_TRANSFORM_OMP_H
 #define NORMAL_DISTRIBUTIONS_TRANSFORM_OMP_H
 
-#include "ndt/base.h"
+#include "ndt/base.hpp"
 
-#include <ndt_omp/ndt_omp.h>
+#include <ndt_omp/ndt_omp.hpp>
 #include <pcl/io/io.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>

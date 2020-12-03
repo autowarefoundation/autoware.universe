@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "ndt/pcl_modified.h"
+#include "ndt/pcl_modified.hpp"
 #include "ndt/impl/pcl_modified.hpp"
 
 template class NormalDistributionsTransformPCLModified<pcl::PointXYZ, pcl::PointXYZ>;

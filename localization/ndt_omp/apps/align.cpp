@@ -34,7 +34,7 @@
 #include <pcl/point_types.h>
 #include <pcl/registration/ndt.h>
 
-#include <ndt_omp/ndt_omp.h>
+#include <ndt_omp/ndt_omp.hpp>
 
 // align point clouds and measure processing time
 pcl::PointCloud<pcl::PointXYZ>::Ptr align(

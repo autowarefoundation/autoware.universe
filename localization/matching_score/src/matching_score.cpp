@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "matching_score/matching_score.h"
+#include "matching_score/matching_score.hpp"
 
 #include <pcl/point_types.h>
 

@@ -16,7 +16,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <ndt_scan_matcher/ndt_scan_matcher_core.h>
+#include <ndt_scan_matcher/ndt_scan_matcher_core.hpp>
 
 int main(int argc, char ** argv)
 {

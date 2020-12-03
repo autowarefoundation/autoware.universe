@@ -42,7 +42,7 @@
 #include <pcl/filters/boost.h>
 #include <Eigen/Cholesky>
 #include <Eigen/Dense>
-#include "voxel_grid_covariance_omp.h"
+#include "voxel_grid_covariance_omp.hpp"
 
 //////////////////////////////////////////////////////////////////////////////////////////
 template <typename PointT>

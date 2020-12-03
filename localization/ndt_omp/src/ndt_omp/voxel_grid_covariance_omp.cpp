@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <ndt_omp/voxel_grid_covariance_omp.h>
+#include <ndt_omp/voxel_grid_covariance_omp.hpp>
 #include <ndt_omp/voxel_grid_covariance_omp_impl.hpp>
 
 template class ndt_omp::VoxelGridCovariance<pcl::PointXYZ>;

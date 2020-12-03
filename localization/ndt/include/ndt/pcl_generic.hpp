@@ -14,24 +14,23 @@
  * limitations under the License.
  */
 
-#ifndef NORMAL_DISTRIBUTIONS_TRANSFORM_PCL_MODIFIED_H
-#define NORMAL_DISTRIBUTIONS_TRANSFORM_PCL_MODIFIED_H
+#ifndef NORMAL_DISTRIBUTIONS_TRANSFORM_PCL_GENERIC_H
+#define NORMAL_DISTRIBUTIONS_TRANSFORM_PCL_GENERIC_H
 
-#include "ndt/base.h"
+#include "ndt/base.hpp"
 
 #include <pcl/io/io.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
-
-#include "ndt_pcl_modified/ndt.h"
+#include <pcl/registration/ndt.h>
 
 template <class PointSource, class PointTarget>
-class NormalDistributionsTransformPCLModified
+class NormalDistributionsTransformPCLGeneric
 : public NormalDistributionsTransformBase<PointSource, PointTarget>
 {
 public:
-  NormalDistributionsTransformPCLModified();
-  ~NormalDistributionsTransformPCLModified() = default;
+  NormalDistributionsTransformPCLGeneric();
+  ~NormalDistributionsTransformPCLGeneric() = default;
 
   void align(pcl::PointCloud<PointSource> & output, const Eigen::Matrix4f & guess) override;
   void setInputTarget(const boost::shared_ptr<pcl::PointCloud<PointTarget>> & map_ptr) override;
@@ -59,9 +58,9 @@ public:
   boost::shared_ptr<pcl::search::KdTree<PointTarget>> getSearchMethodTarget() const override;
 
 private:
-  boost::shared_ptr<pcl::NormalDistributionsTransformModified<PointSource, PointTarget>> ndt_ptr_;
+  boost::shared_ptr<pcl::NormalDistributionsTransform<PointSource, PointTarget>> ndt_ptr_;
 };
 
-#include "ndt/impl/pcl_modified.hpp"
+#include "ndt/impl/pcl_generic.hpp"
 
 #endif

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <ndt_scan_matcher/ndt_scan_matcher_core.h>
+#include <ndt_scan_matcher/ndt_scan_matcher_core.hpp>
 
 #include <algorithm>
 #include <cmath>
@@ -27,7 +27,7 @@
 
 #include <pcl_conversions/pcl_conversions.h>
 
-#include <ndt_scan_matcher/util_func.h>
+#include <ndt_scan_matcher/util_func.hpp>
 
 NDTScanMatcher::NDTScanMatcher()
 : Node("ndt_scan_matcher"),
