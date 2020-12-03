@@ -16,7 +16,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <dummy_diag_publisher/dummy_diag_publisher_node.h>
+#include <dummy_diag_publisher/dummy_diag_publisher_node.hpp>
 
 int main(int argc, char * argv[])
 {

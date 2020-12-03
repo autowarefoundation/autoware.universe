@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "dummy_diag_publisher/dummy_diag_publisher_node.h"
+#include "dummy_diag_publisher/dummy_diag_publisher_node.hpp"
 
 #include <rclcpp/create_timer.hpp>
 
