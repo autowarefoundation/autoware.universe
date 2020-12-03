@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <awapi_awiv_adapter/awapi_autoware_util.h>
+#include <awapi_awiv_adapter/awapi_autoware_util.hpp>
 
 namespace autoware_api
 {

@@ -16,7 +16,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <awapi_awiv_adapter/awapi_awiv_adapter_core.h>
+#include <awapi_awiv_adapter/awapi_awiv_adapter_core.hpp>
 
 int main(int argc, char ** argv)
 {

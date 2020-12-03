@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <awapi_awiv_adapter/awapi_stop_reason_aggregator.h>
+#include <awapi_awiv_adapter/awapi_stop_reason_aggregator.hpp>
 
 namespace autoware_api
 {

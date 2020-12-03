@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <awapi_awiv_adapter/awapi_autoware_state_publisher.h>
+#include <awapi_awiv_adapter/awapi_autoware_state_publisher.hpp>
 #include <regex>
 
 namespace autoware_api

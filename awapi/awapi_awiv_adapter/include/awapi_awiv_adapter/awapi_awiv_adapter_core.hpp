@@ -32,12 +32,12 @@
 #include <pacmod_msgs/msg/global_rpt.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
 
-#include <awapi_awiv_adapter/awapi_autoware_state_publisher.h>
-#include <awapi_awiv_adapter/awapi_autoware_util.h>
-#include <awapi_awiv_adapter/awapi_lane_change_state_publisher.h>
-#include <awapi_awiv_adapter/awapi_obstacle_avoidance_state_publisher.h>
-#include <awapi_awiv_adapter/awapi_stop_reason_aggregator.h>
-#include <awapi_awiv_adapter/awapi_vehicle_state_publisher.h>
+#include <awapi_awiv_adapter/awapi_autoware_state_publisher.hpp>
+#include <awapi_awiv_adapter/awapi_autoware_util.hpp>
+#include <awapi_awiv_adapter/awapi_lane_change_state_publisher.hpp>
+#include <awapi_awiv_adapter/awapi_obstacle_avoidance_state_publisher.hpp>
+#include <awapi_awiv_adapter/awapi_stop_reason_aggregator.hpp>
+#include <awapi_awiv_adapter/awapi_vehicle_state_publisher.hpp>
 
 namespace autoware_api
 {
