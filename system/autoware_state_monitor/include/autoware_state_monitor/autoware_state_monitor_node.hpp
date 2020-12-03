@@ -17,9 +17,9 @@
 #ifndef AUTOWARE_STATE_MONITOR_AUTOWARE_STATE_MONITOR_CORE_HPP_
 #define AUTOWARE_STATE_MONITOR_AUTOWARE_STATE_MONITOR_CORE_HPP_
 
-#include "autoware_state_monitor/autoware_state.h"
-#include "autoware_state_monitor/config.h"
-#include "autoware_state_monitor/state_machine.h"
+#include "autoware_state_monitor/autoware_state.hpp"
+#include "autoware_state_monitor/config.hpp"
+#include "autoware_state_monitor/state_machine.hpp"
 
 #include "autoware_planning_msgs/msg/route.hpp"
 #include "autoware_planning_msgs/msg/trajectory.hpp"

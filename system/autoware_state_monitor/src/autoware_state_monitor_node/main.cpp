@@ -16,7 +16,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_state_monitor/autoware_state_monitor_node.h>
+#include <autoware_state_monitor/autoware_state_monitor_node.hpp>
 
 int main(int argc, char * argv[])
 {
