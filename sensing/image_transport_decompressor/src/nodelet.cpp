@@ -48,7 +48,7 @@
 *  POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************/
 
-#include "image_transport_decompressor/nodelet.h"
+#include "image_transport_decompressor/nodelet.hpp"
 
 namespace image_preprocessor
 {
