@@ -31,7 +31,7 @@
 #include <sensor_msgs/Joy.h>
 #include <std_msgs/Bool.h>
 
-#include <autoware_joy_controller/joy_converter/joy_converter_base.h>
+#include <autoware_joy_controller/joy_converter/joy_converter_base.hpp>
 
 // tmp
 #include <autoware_vehicle_msgs/RawVehicleCommand.h>
