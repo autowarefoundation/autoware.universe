@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "ekf_localizer/ekf_localizer.h"
+#include "ekf_localizer/ekf_localizer.hpp"
 
 int main(int argc, char ** argv)
 {

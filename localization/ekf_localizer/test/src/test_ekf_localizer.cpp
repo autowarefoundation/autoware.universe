@@ -23,7 +23,7 @@
 #include <eigen3/Eigen/LU>
 #include <tf2_ros/transform_broadcaster.h>
 
-#include "ekf_localizer/ekf_localizer.h"
+#include "ekf_localizer/ekf_localizer.hpp"
 
 using std::placeholders::_1;
 
