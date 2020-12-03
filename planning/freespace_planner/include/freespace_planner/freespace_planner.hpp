@@ -39,7 +39,7 @@
 #include <string>
 #include <vector>
 
-#include <astar_search/astar_search.h>
+#include <astar_search/astar_search.hpp>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 #include <rclcpp/rclcpp.hpp>

@@ -30,7 +30,7 @@
  * limitations under the License.
  */
 
-#include <freespace_planner/freespace_planner.h>
+#include <freespace_planner/freespace_planner.hpp>
 
 int main(int argc, char ** argv)
 {
