@@ -15,7 +15,7 @@
  */
 #include <cmath>
 
-#include <vehicle_cmd_gate/vehicle_cmd_filter.h>
+#include <vehicle_cmd_gate/vehicle_cmd_filter.hpp>
 
 VehicleCmdFilter::VehicleCmdFilter() {}
 

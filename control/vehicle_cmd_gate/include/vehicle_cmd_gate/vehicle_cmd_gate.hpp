@@ -29,7 +29,7 @@
 #include <autoware_vehicle_msgs/msg/turn_signal.hpp>
 #include <autoware_vehicle_msgs/msg/vehicle_command.hpp>
 
-#include <vehicle_cmd_gate/vehicle_cmd_filter.h>
+#include <vehicle_cmd_gate/vehicle_cmd_filter.hpp>
 
 struct Commands
 {

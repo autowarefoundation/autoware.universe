@@ -21,7 +21,7 @@
 #include "rclcpp/rclcpp.hpp"
 
 // User defined includes
-#include "vehicle_cmd_gate/vehicle_cmd_gate.h"
+#include "vehicle_cmd_gate/vehicle_cmd_gate.hpp"
 
 int main(int argc, char ** argv)
 {
