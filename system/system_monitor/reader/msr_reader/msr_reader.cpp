@@ -22,7 +22,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <getopt.h>
-#include <msr_reader/msr_reader.h>
+#include <msr_reader/msr_reader.hpp>
 #include <netinet/in.h>
 #include <stdio.h>
 #include <stdlib.h>

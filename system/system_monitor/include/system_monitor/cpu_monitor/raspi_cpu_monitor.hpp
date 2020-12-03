@@ -21,7 +21,7 @@
  * @brief Raspberry Pi CPU monitor class
  */
 
-#include <system_monitor/cpu_monitor/cpu_monitor_base.h>
+#include <system_monitor/cpu_monitor/cpu_monitor_base.hpp>
 
 #define raspiUnderVoltageDetected (1 << 0)              // 0x00001
 #define raspiArmFrequencyCapped (1 << 1)                // 0x00002

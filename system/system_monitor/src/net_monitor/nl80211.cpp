@@ -24,7 +24,7 @@
 #include <netlink/genl/ctrl.h>
 #include <netlink/genl/genl.h>
 #include <netlink/socket.h>
-#include <system_monitor/net_monitor/nl80211.h>
+#include <system_monitor/net_monitor/nl80211.hpp>
 
 NL80211::NL80211() : bitrate_(0.0), initialized_(false), socket_(nullptr), id_(-1), cb_(nullptr) {}
 

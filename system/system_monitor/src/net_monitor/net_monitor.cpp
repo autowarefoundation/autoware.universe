@@ -26,7 +26,7 @@
 #include <net/if.h>
 #include <netdb.h>
 #include <sys/ioctl.h>
-#include <system_monitor/net_monitor/net_monitor.h>
+#include <system_monitor/net_monitor/net_monitor.hpp>
 #include <algorithm>
 #include <boost/format.hpp>
 #include <boost/range/algorithm.hpp>

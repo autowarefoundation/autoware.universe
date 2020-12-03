@@ -15,10 +15,10 @@
  */
 
 #include <gtest/gtest.h>
-#include <msr_reader/msr_reader.h>
+#include <msr_reader/msr_reader.hpp>
 #include <pthread.h>
 #include <ros/ros.h>
-#include <system_monitor/cpu_monitor/intel_cpu_monitor.h>
+#include <system_monitor/cpu_monitor/intel_cpu_monitor.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/filesystem.hpp>

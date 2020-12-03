@@ -16,7 +16,7 @@
 
 #include <gtest/gtest.h>
 #include <ros/ros.h>
-#include <system_monitor/gpu_monitor/unknown_gpu_monitor.h>
+#include <system_monitor/gpu_monitor/unknown_gpu_monitor.hpp>
 
 using DiagStatus = diagnostic_msgs::DiagnosticStatus;
 

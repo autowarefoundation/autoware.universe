@@ -16,7 +16,7 @@
 
 #include <gtest/gtest.h>
 #include <ros/ros.h>
-#include <system_monitor/gpu_monitor/nvml_gpu_monitor.h>
+#include <system_monitor/gpu_monitor/nvml_gpu_monitor.hpp>
 #include <boost/algorithm/string.hpp>
 #include <string>
 

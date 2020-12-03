@@ -19,7 +19,7 @@
  * @brief HDD monitor node class
  */
 
-#include <system_monitor/hdd_monitor/hdd_monitor.h>
+#include <system_monitor/hdd_monitor/hdd_monitor.hpp>
 #include <system_monitor/utils.hpp>
 
 int main(int argc, char ** argv)

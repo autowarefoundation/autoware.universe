@@ -19,8 +19,8 @@
  * @brief Tegra GPU monitor class
  */
 
-#include <system_monitor/gpu_monitor/tegra_gpu_monitor.h>
-#include <system_monitor/system_monitor_utility.h>
+#include <system_monitor/gpu_monitor/tegra_gpu_monitor.hpp>
+#include <system_monitor/system_monitor_utility.hpp>
 #include <algorithm>
 #include <boost/filesystem.hpp>
 #include <boost/format.hpp>

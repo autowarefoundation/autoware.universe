@@ -19,7 +19,7 @@
  * @brief CPU monitor base class
  */
 
-#include <system_monitor/cpu_monitor/cpu_monitor_base.h>
+#include <system_monitor/cpu_monitor/cpu_monitor_base.hpp>
 #include <algorithm>
 #include <boost/filesystem.hpp>
 #include <boost/process.hpp>

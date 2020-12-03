@@ -19,10 +19,10 @@
  * @brief  CPU monitor class
  */
 
-#include <msr_reader/msr_reader.h>
+#include <msr_reader/msr_reader.hpp>
 #include <netinet/in.h>
 #include <sys/socket.h>
-#include <system_monitor/cpu_monitor/intel_cpu_monitor.h>
+#include <system_monitor/cpu_monitor/intel_cpu_monitor.hpp>
 #include <algorithm>
 #include <boost/algorithm/string.hpp>
 #include <boost/archive/text_iarchive.hpp>

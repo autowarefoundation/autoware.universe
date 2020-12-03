@@ -1,5 +1,5 @@
-#ifndef SYSTEM_MONITOR_CPU_MONITOR_UNKNOWN_CPU_MONITOR_H
-#define SYSTEM_MONITOR_CPU_MONITOR_UNKNOWN_CPU_MONITOR_H
+#ifndef SYSTEM_MONITOR_GPU_MONITOR_UNKNOWN_GPU_MONITOR_H
+#define SYSTEM_MONITOR_GPU_MONITOR_UNKNOWN_GPU_MONITOR_H
 /*
  * Copyright 2020 Autoware Foundation. All rights reserved.
  *
@@ -17,13 +17,13 @@
  */
 
 /**
- * @file unknown_cpu_monitor.h
- * @brief Unknown CPU monitor class
+ * @file unknown_gpu_monitor.h
+ * @brief Unknown GPU monitor class
  */
 
-#include <system_monitor/cpu_monitor/cpu_monitor_base.h>
+#include <system_monitor/gpu_monitor/gpu_monitor_base.hpp>
 
-class CPUMonitor : public CPUMonitorBase
+class GPUMonitor : public GPUMonitorBase
 {
 public:
   /**
@@ -31,7 +31,7 @@ public:
    * @param [in] node_name Name of the node.
    * @param [in] options Options associated with this node.
    */
-  CPUMonitor(const std::string & node_name, const rclcpp::NodeOptions & options);
+  GPUMonitor(const std::string & node_name, const rclcpp::NodeOptions & options);
 };
 
-#endif  // SYSTEM_MONITOR_CPU_MONITOR_UNKNOWN_CPU_MONITOR_H
+#endif  // SYSTEM_MONITOR_GPU_MONITOR_UNKNOWN_GPU_MONITOR_H

@@ -19,7 +19,7 @@
  * @brief GPU monitor class
  */
 
-#include <system_monitor/gpu_monitor/nvml_gpu_monitor.h>
+#include <system_monitor/gpu_monitor/nvml_gpu_monitor.hpp>
 #include <algorithm>
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>

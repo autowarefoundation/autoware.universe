@@ -19,8 +19,8 @@
  * @brief HDD monitor class
  */
 
-#include <hdd_reader/hdd_reader.h>
-#include <system_monitor/hdd_monitor/hdd_monitor.h>
+#include <hdd_reader/hdd_reader.hpp>
+#include <system_monitor/hdd_monitor/hdd_monitor.hpp>
 #include <algorithm>
 #include <boost/algorithm/string.hpp>
 #include <boost/archive/text_iarchive.hpp>

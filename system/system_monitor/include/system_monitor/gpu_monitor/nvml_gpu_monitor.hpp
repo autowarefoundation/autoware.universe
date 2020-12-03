@@ -22,7 +22,7 @@
  */
 
 #include <nvml.h>
-#include <system_monitor/gpu_monitor/gpu_monitor_base.h>
+#include <system_monitor/gpu_monitor/gpu_monitor_base.hpp>
 #include <map>
 #include <string>
 #include <vector>

@@ -21,7 +21,7 @@
  * @brief Tegra TGPU monitor class
  */
 
-#include <system_monitor/gpu_monitor/gpu_monitor_base.h>
+#include <system_monitor/gpu_monitor/gpu_monitor_base.hpp>
 #include <string>
 #include <vector>
 

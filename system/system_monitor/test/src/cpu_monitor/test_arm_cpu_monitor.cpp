@@ -16,7 +16,7 @@
 
 #include <gtest/gtest.h>
 #include <ros/ros.h>
-#include <system_monitor/cpu_monitor/arm_cpu_monitor.h>
+#include <system_monitor/cpu_monitor/arm_cpu_monitor.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/format.hpp>

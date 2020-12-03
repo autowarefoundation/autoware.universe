@@ -20,7 +20,7 @@
  */
 
 #include <rclcpp/rclcpp.hpp>
-#include <system_monitor/process_monitor/process_monitor.h>
+#include <system_monitor/process_monitor/process_monitor.hpp>
 #include <system_monitor/utils.hpp>
 
 int main(int argc, char ** argv)

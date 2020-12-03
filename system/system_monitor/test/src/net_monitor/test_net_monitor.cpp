@@ -16,7 +16,7 @@
 
 #include <gtest/gtest.h>
 #include <ros/ros.h>
-#include <system_monitor/net_monitor/net_monitor.h>
+#include <system_monitor/net_monitor/net_monitor.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
 #include <string>

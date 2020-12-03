@@ -22,7 +22,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <getopt.h>
-#include <hdd_reader/hdd_reader.h>
+#include <hdd_reader/hdd_reader.hpp>
 #include <linux/nvme_ioctl.h>
 #include <netinet/in.h>
 #include <scsi/sg.h>

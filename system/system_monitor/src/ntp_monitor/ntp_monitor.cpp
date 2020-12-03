@@ -19,7 +19,7 @@
  * @brief NTP monitor class
  */
 
-#include <system_monitor/ntp_monitor/ntp_monitor.h>
+#include <system_monitor/ntp_monitor/ntp_monitor.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/format.hpp>
 #include <boost/process.hpp>

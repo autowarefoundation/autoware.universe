@@ -22,7 +22,7 @@
  */
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
-#include <system_monitor/process_monitor/diag_task.h>
+#include <system_monitor/process_monitor/diag_task.hpp>
 #include <boost/process.hpp>
 #include <string>
 #include <vector>

@@ -1,5 +1,5 @@
-#ifndef SYSTEM_MONITOR_CPU_MONITOR_ARM_CPU_MONITOR_H
-#define SYSTEM_MONITOR_CPU_MONITOR_ARM_CPU_MONITOR_H
+#ifndef SYSTEM_MONITOR_CPU_MONITOR_TEGRA_CPU_MONITOR_H
+#define SYSTEM_MONITOR_CPU_MONITOR_TEGRA_CPU_MONITOR_H
 /*
  * Copyright 2020 Autoware Foundation. All rights reserved.
  *
@@ -17,11 +17,11 @@
  */
 
 /**
- * @file arm_cpu_monitor.h
- * @brief ARM CPU monitor class
+ * @file tegra_cpu_monitor.h
+ * @brief TEGRA CPU monitor class
  */
 
-#include <system_monitor/cpu_monitor/cpu_monitor_base.h>
+#include <system_monitor/cpu_monitor/cpu_monitor_base.hpp>
 
 class CPUMonitor : public CPUMonitorBase
 {
@@ -49,4 +49,4 @@ protected:
     diagnostic_updater::DiagnosticStatusWrapper & stat) override;  // NOLINT(runtime/references)
 };
 
-#endif  // SYSTEM_MONITOR_CPU_MONITOR_ARM_CPU_MONITOR_H
+#endif  // SYSTEM_MONITOR_CPU_MONITOR_TEGRA_CPU_MONITOR_H
