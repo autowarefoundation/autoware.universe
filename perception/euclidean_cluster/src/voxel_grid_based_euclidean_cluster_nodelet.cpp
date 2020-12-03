@@ -15,7 +15,7 @@
  */
 #include <autoware_perception_msgs/DynamicObjectWithFeature.h>
 #include <autoware_perception_msgs/DynamicObjectWithFeatureArray.h>
-#include <euclidean_cluster/voxel_grid_based_euclidean_cluster_nodelet.h>
+#include <euclidean_cluster/voxel_grid_based_euclidean_cluster_nodelet.hpp>
 #include <pcl/kdtree/kdtree.h>
 #include <pcl/segmentation/extract_clusters.h>
 #include <pcl_conversions/pcl_conversions.h>

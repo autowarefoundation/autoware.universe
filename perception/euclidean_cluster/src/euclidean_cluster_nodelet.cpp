@@ -15,7 +15,7 @@
  */
 #include <autoware_perception_msgs/DynamicObjectWithFeature.h>
 #include <autoware_perception_msgs/DynamicObjectWithFeatureArray.h>
-#include <euclidean_cluster/euclidean_cluster_nodelet.h>
+#include <euclidean_cluster/euclidean_cluster_nodelet.hpp>
 #include <pcl/kdtree/kdtree.h>
 #include <pcl/point_types.h>
 #include <pcl/segmentation/extract_clusters.h>
