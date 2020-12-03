@@ -38,12 +38,12 @@
 
 #include <opencv2/core.hpp>
 
-#include "obstacle_avoidance_planner/debug.h"
-#include "obstacle_avoidance_planner/eb_path_optimizer.h"
-#include "obstacle_avoidance_planner/mpt_optimizer.h"
-#include "obstacle_avoidance_planner/node.h"
-#include "obstacle_avoidance_planner/process_cv.h"
-#include "obstacle_avoidance_planner/util.h"
+#include "obstacle_avoidance_planner/debug.hpp"
+#include "obstacle_avoidance_planner/eb_path_optimizer.hpp"
+#include "obstacle_avoidance_planner/mpt_optimizer.hpp"
+#include "obstacle_avoidance_planner/node.hpp"
+#include "obstacle_avoidance_planner/process_cv.hpp"
+#include "obstacle_avoidance_planner/util.hpp"
 
 ObstacleAvoidancePlanner::ObstacleAvoidancePlanner()
 : Node("obstacle_avoidance_planner"), min_num_points_for_getting_yaw_(2) 

@@ -16,7 +16,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include "obstacle_avoidance_planner/node.h"
+#include "obstacle_avoidance_planner/node.hpp"
 
 int main(int argc, char ** argv)
 {

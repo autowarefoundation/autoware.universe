@@ -26,12 +26,12 @@
 #include <visualization_msgs/msg/marker.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
-#include "obstacle_avoidance_planner/debug.h"
-#include "obstacle_avoidance_planner/eb_path_optimizer.h"
-#include "obstacle_avoidance_planner/marker_helper.h"
-#include "obstacle_avoidance_planner/mpt_optimizer.h"
-#include "obstacle_avoidance_planner/process_cv.h"
-#include "obstacle_avoidance_planner/util.h"
+#include "obstacle_avoidance_planner/debug.hpp"
+#include "obstacle_avoidance_planner/eb_path_optimizer.hpp"
+#include "obstacle_avoidance_planner/marker_helper.hpp"
+#include "obstacle_avoidance_planner/mpt_optimizer.hpp"
+#include "obstacle_avoidance_planner/process_cv.hpp"
+#include "obstacle_avoidance_planner/util.hpp"
 
 visualization_msgs::msg::MarkerArray getDebugVisualizationMarker(
   const DebugData & debug_data,

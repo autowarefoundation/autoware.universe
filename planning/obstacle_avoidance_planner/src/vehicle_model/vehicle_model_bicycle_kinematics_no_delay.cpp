@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-#include "obstacle_avoidance_planner/vehicle_model/vehicle_model_bicycle_kinematics_no_delay.h"
+#include "obstacle_avoidance_planner/vehicle_model/vehicle_model_bicycle_kinematics_no_delay.hpp"
 
 KinematicsBicycleModelNoDelay::KinematicsBicycleModelNoDelay(
   const double & wheelbase, const double & steer_lim)

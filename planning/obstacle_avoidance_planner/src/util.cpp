@@ -29,11 +29,11 @@
 
 #include <tf2/utils.h>
 
-#include <spline_interpolation/spline_interpolation.h>
+#include <spline_interpolation/spline_interpolation.hpp>
 
-#include "obstacle_avoidance_planner/eb_path_optimizer.h"
-#include "obstacle_avoidance_planner/mpt_optimizer.h"
-#include "obstacle_avoidance_planner/util.h"
+#include "obstacle_avoidance_planner/eb_path_optimizer.hpp"
+#include "obstacle_avoidance_planner/mpt_optimizer.hpp"
+#include "obstacle_avoidance_planner/util.hpp"
 
 namespace util
 {

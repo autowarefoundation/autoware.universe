@@ -23,14 +23,14 @@
 
 #include <opencv2/core.hpp>
 
-#include <osqp_interface/osqp_interface.h>
+#include <osqp_interface/osqp_interface.hpp>
 
-#include "obstacle_avoidance_planner/eb_path_optimizer.h"
-#include "obstacle_avoidance_planner/mpt_optimizer.h"
-#include "obstacle_avoidance_planner/process_cv.h"
-#include "obstacle_avoidance_planner/util.h"
-#include "obstacle_avoidance_planner/vehicle_model/vehicle_model_bicycle_kinematics.h"
-#include "obstacle_avoidance_planner/vehicle_model/vehicle_model_bicycle_kinematics_no_delay.h"
+#include "obstacle_avoidance_planner/eb_path_optimizer.hpp"
+#include "obstacle_avoidance_planner/mpt_optimizer.hpp"
+#include "obstacle_avoidance_planner/process_cv.hpp"
+#include "obstacle_avoidance_planner/util.hpp"
+#include "obstacle_avoidance_planner/vehicle_model/vehicle_model_bicycle_kinematics.hpp"
+#include "obstacle_avoidance_planner/vehicle_model/vehicle_model_bicycle_kinematics_no_delay.hpp"
 
 MPTOptimizer::MPTOptimizer(
   const bool is_showing_debug_info, const QPParam & qp_param, const TrajectoryParam & traj_param,

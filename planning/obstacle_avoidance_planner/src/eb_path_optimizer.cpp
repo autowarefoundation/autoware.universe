@@ -34,12 +34,12 @@
 
 #include <tf2/utils.h>
 
-#include <osqp_interface/osqp_interface.h>
+#include <osqp_interface/osqp_interface.hpp>
 
-#include "obstacle_avoidance_planner/eb_path_optimizer.h"
-#include "obstacle_avoidance_planner/mpt_optimizer.h"
-#include "obstacle_avoidance_planner/process_cv.h"
-#include "obstacle_avoidance_planner/util.h"
+#include "obstacle_avoidance_planner/eb_path_optimizer.hpp"
+#include "obstacle_avoidance_planner/mpt_optimizer.hpp"
+#include "obstacle_avoidance_planner/process_cv.hpp"
+#include "obstacle_avoidance_planner/util.hpp"
 
 EBPathOptimizer::EBPathOptimizer(
   const bool is_showing_debug_info, const QPParam qp_param, const TrajectoryParam traj_pram,

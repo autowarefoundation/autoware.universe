@@ -24,9 +24,9 @@
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <tf2/utils.h>
 
-#include "obstacle_avoidance_planner/eb_path_optimizer.h"
-#include "obstacle_avoidance_planner/process_cv.h"
-#include "obstacle_avoidance_planner/util.h"
+#include "obstacle_avoidance_planner/eb_path_optimizer.hpp"
+#include "obstacle_avoidance_planner/process_cv.hpp"
+#include "obstacle_avoidance_planner/util.hpp"
 
 namespace process_cv
 {

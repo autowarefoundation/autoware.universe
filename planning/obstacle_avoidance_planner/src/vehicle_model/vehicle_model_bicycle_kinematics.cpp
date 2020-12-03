@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "obstacle_avoidance_planner/vehicle_model/vehicle_model_bicycle_kinematics.h"
+#include "obstacle_avoidance_planner/vehicle_model/vehicle_model_bicycle_kinematics.hpp"
 #include <iostream>
 
 KinematicsBicycleModel::KinematicsBicycleModel(

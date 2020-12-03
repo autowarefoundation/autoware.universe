@@ -46,7 +46,7 @@
 #pragma once
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/LU>
-#include "obstacle_avoidance_planner/vehicle_model/vehicle_model_interface.h"
+#include "obstacle_avoidance_planner/vehicle_model/vehicle_model_interface.hpp"
 
 /**
  * @class vehicle model class of bicycle kinematics without steering delay
