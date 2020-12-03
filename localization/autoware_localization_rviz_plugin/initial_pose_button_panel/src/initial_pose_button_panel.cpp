@@ -45,7 +45,7 @@
 #include <QTimer>
 #include <QVBoxLayout>
 
-#include "initial_pose_button_panel.h"
+#include "initial_pose_button_panel.hpp"
 
 namespace autoware_localization_rviz_plugin
 {
