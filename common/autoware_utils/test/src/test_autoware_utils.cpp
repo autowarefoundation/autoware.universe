@@ -16,7 +16,7 @@
 
 #include <gtest/gtest.h>
 
-#include <autoware_utils/autoware_utils.h>
+#include <autoware_utils/autoware_utils.hpp>
 
 int main(int argc, char * argv[])
 {

@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <autoware_utils/constants.h>
+#include <autoware_utils/constants.hpp>
 
 namespace autoware_utils
 {

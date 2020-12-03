@@ -16,6 +16,6 @@
 
 #pragma once
 
-#include <autoware_utils/geometry.h>
-#include <autoware_utils/normalization.h>
-#include <autoware_utils/unit_conversion.h>
+#include <autoware_utils/geometry.hpp>
+#include <autoware_utils/normalization.hpp>
+#include <autoware_utils/unit_conversion.hpp>

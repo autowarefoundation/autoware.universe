@@ -16,7 +16,7 @@
 
 #include <gtest/gtest.h>
 
-#include <autoware_utils/normalization.h>
+#include <autoware_utils/normalization.hpp>
 
 TEST(normalization, normalizeDegree)
 {
