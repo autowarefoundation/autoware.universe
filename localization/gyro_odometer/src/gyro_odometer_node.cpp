@@ -16,7 +16,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include "gyro_odometer/gyro_odometer_core.h"
+#include "gyro_odometer/gyro_odometer_core.hpp"
 
 int main(int argc, char ** argv)
 {

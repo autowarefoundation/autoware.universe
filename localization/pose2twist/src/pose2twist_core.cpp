@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "pose2twist/pose2twist_core.h"
+#include "pose2twist/pose2twist_core.hpp"
 
 #include <cmath>
 #include <cstddef>

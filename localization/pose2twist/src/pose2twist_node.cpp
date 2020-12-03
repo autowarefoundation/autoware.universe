@@ -16,7 +16,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include "pose2twist/pose2twist_core.h"
+#include "pose2twist/pose2twist_core.hpp"
 
 int main(int argc, char ** argv)
 {

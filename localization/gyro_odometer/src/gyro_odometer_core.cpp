@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "gyro_odometer/gyro_odometer_core.h"
+#include "gyro_odometer/gyro_odometer_core.hpp"
 
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
