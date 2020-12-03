@@ -24,7 +24,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-#include <trt_common.h>
+#include <trt_common.hpp>
 
 namespace traffic_light
 {

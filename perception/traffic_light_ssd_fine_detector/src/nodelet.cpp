@@ -16,7 +16,7 @@
 
 #include "traffic_light_ssd_fine_detector/nodelet.hpp"
 #include <ament_index_cpp/get_package_share_directory.hpp>
-#include "cuda_utils.h"
+#include "cuda_utils.hpp"
 
 namespace traffic_light
 {

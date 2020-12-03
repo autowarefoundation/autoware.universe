@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "trt_ssd.h"
+#include "trt_ssd.hpp"
 
 #include <fstream>
 #include <stdexcept>
