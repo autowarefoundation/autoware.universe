@@ -19,7 +19,7 @@
 
 #include "cubic_spline.hpp"
 
-#include "map_based_prediction.h"
+#include "map_based_prediction.hpp"
 
 MapBasedPrediction::MapBasedPrediction(
   double interpolating_resolution, double time_horizon, double sampling_delta_time)

@@ -32,14 +32,14 @@
 #include <lanelet2_core/geometry/BoundingBox.h>
 #include <lanelet2_core/geometry/Lanelet.h>
 #include <lanelet2_core/geometry/Point.h>
-#include <lanelet2_extension/utility/message_conversion.h>
-#include <lanelet2_extension/utility/utilities.h>
+#include <lanelet2_extension/utility/message_conversion.hpp>
+#include <lanelet2_extension/utility/utilities.hpp>
 #include <lanelet2_routing/RoutingGraph.h>
 #include <lanelet2_traffic_rules/TrafficRulesFactory.h>
 
 // headers in local files
-#include "map_based_prediction.h"
-#include "map_based_prediction_ros.h"
+#include "map_based_prediction.hpp"
+#include "map_based_prediction_ros.hpp"
 
 std::string toHexString(const unique_identifier_msgs::msg::UUID & id){
   std::stringstream ss;
