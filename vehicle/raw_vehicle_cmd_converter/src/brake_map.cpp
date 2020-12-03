@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "raw_vehicle_cmd_converter/brake_map.h"
+#include "raw_vehicle_cmd_converter/brake_map.hpp"
 
 BrakeMap::BrakeMap(const rclcpp::Logger & logger) : logger_(logger), logger_ros_clock_(RCL_ROS_TIME){}
 
