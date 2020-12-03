@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "lidar_apollo_instance_segmentation/debugger.h"
+#include "lidar_apollo_instance_segmentation/debugger.hpp"
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
 #include <pcl_conversions/pcl_conversions.h>

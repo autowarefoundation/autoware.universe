@@ -46,7 +46,7 @@
  * limitations under the License.
  *****************************************************************************/
 
-#include "lidar_apollo_instance_segmentation/cluster2d.h"
+#include "lidar_apollo_instance_segmentation/cluster2d.hpp"
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <pcl_conversions/pcl_conversions.h>
 

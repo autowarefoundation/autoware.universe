@@ -20,7 +20,7 @@
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <memory>
 
-#include "lidar_apollo_instance_segmentation/debugger.h"
+#include "lidar_apollo_instance_segmentation/debugger.hpp"
 
 class LidarInstanceSegmentationInterface
 {

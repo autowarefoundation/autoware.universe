@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "lidar_apollo_instance_segmentation/node.h"
+#include "lidar_apollo_instance_segmentation/node.hpp"
 
 int main(int argc, char ** argv)
 {

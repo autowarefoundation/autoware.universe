@@ -15,10 +15,10 @@
  */
 
 #pragma once
-#include "TrtNet.h"
+#include "TrtNet.hpppp"
 #include "cluster2d.h"
 #include "feature_generator.h"
-#include "lidar_apollo_instance_segmentation/node.h"
+#include "lidar_apollo_instance_segmentation/node.hpp"
 
 #include <tf2_ros/buffer_interface.h>
 #include <tf2_ros/transform_listener.h>

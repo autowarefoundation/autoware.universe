@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "lidar_apollo_instance_segmentation/node.h"
-#include "lidar_apollo_instance_segmentation/detector.h"
+#include "lidar_apollo_instance_segmentation/node.hpp"
+#include "lidar_apollo_instance_segmentation/detector.hpp"
 
 LidarInstanceSegmentationNode::LidarInstanceSegmentationNode() : Node("lidar_apollo_instance_segmentation_node")
 {

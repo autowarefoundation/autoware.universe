@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "lidar_apollo_instance_segmentation/feature_generator.h"
-#include "lidar_apollo_instance_segmentation/log_table.h"
+#include "lidar_apollo_instance_segmentation/feature_generator.hpp"
+#include "lidar_apollo_instance_segmentation/log_table.hpp"
 
 namespace
 {
