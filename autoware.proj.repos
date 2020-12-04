@@ -63,6 +63,10 @@ repositories:
     type: git
     url: https://github.com/flynneva/usb_cam.git
     version: foxy
+  vendor/tamagawa_imu_driver:
+    type: git
+    url: https://github.com/tier4/tamagawa_imu_driver.git
+    version: ros2
 
 #  vendor/lanelet2:
 #    type: git
