@@ -155,5 +155,5 @@ void ImageTransportDecompressorNodelet::compressedImageCallback(
 }
 }  // namespace image_preprocessor
 
-#include <pluginlib/class_list_macros.h>
+#include "pluginlib/class_list_macros.h"
 PLUGINLIB_EXPORT_CLASS(image_preprocessor::ImageTransportDecompressorNodelet, nodelet::Nodelet)
