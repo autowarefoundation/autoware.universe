@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include <autoware_joy_controller/joy_converter/joy_converter_base.hpp>
+#include "autoware_joy_controller/joy_converter/joy_converter_base.hpp"
 
 class G29JoyConverter : public JoyConverterBase
 {

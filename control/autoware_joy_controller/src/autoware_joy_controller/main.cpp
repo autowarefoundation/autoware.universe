@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ros/ros.h>
+#include "ros/ros.h"
 
-#include <autoware_joy_controller/autoware_joy_controller.hpp>
+#include "autoware_joy_controller/autoware_joy_controller.hpp"
 
 int main(int argc, char * argv[])
 {

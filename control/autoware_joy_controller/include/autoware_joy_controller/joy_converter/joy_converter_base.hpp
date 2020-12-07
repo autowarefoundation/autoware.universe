@@ -16,7 +16,7 @@
 
 #include <algorithm>
 
-#include <sensor_msgs/Joy.h>
+#include "sensor_msgs/Joy.h"
 
 class JoyConverterBase
 {
