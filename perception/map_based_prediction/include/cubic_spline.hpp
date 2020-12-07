@@ -24,7 +24,7 @@
 #ifndef CUBIC_SPLINE_H
 #define CUBIC_SPLINE_H
 
-#include <eigen3/Eigen/Eigen>
+#include "eigen3/Eigen/Eigen"
 #include <algorithm>
 #include <array>
 #include <iostream>

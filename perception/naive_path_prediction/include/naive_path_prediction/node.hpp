@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include <ros/ros.h>
+#include "ros/ros.h"
 #include "autoware_perception_msgs/DynamicObjectArray.h"
 
 class NaivePathPredictionNode
