@@ -24,7 +24,7 @@
 #ifndef __TRT_UTILS_H_
 #define __TRT_UTILS_H_
 
-#include <cudnn.h>
+#include "cudnn.h"
 #include <algorithm>
 #include <iostream>
 #include <vector>
