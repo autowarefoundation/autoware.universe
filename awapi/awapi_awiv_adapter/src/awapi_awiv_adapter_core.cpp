@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <awapi_awiv_adapter/awapi_awiv_adapter_core.hpp>
+#include "awapi_awiv_adapter/awapi_awiv_adapter_core.hpp"
 #include <functional>
 
 namespace autoware_api

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <awapi_awiv_adapter/awapi_vehicle_state_publisher.hpp>
+#include "awapi_awiv_adapter/awapi_vehicle_state_publisher.hpp"
 
 namespace autoware_api
 {

@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <rclcpp/rclcpp.hpp>
+#include "rclcpp/rclcpp.hpp"
 
-#include <awapi_awiv_adapter/awapi_awiv_adapter_core.hpp>
+#include "awapi_awiv_adapter/awapi_awiv_adapter_core.hpp"
 
 int main(int argc, char ** argv)
 {
