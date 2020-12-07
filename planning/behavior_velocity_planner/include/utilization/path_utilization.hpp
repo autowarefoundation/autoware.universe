@@ -13,9 +13,9 @@
 // limitations under the License.
 #pragma once
 
-#include <rclcpp/rclcpp.hpp>
+#include "rclcpp/rclcpp.hpp"
 
-#include <autoware_planning_msgs/msg/path.hpp>
+#include "autoware_planning_msgs/msg/path.hpp"
 
 autoware_planning_msgs::msg::Path interpolatePath(
   const autoware_planning_msgs::msg::Path & path, const double length,

@@ -11,9 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#include <scene_module/detection_area/manager.hpp>
+#include "scene_module/detection_area/manager.hpp"
 
-#include <tf2/utils.h>
+#include "tf2/utils.h"
 
 namespace
 {

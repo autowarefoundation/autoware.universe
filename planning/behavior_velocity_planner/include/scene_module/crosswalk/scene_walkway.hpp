@@ -13,19 +13,19 @@
 // limitations under the License.
 #pragma once
 
-#include <rclcpp/rclcpp.hpp>
+#include "rclcpp/rclcpp.hpp"
 
-#include <autoware_perception_msgs/msg/dynamic_object_array.hpp>
-#include <sensor_msgs/msg/point_cloud2.hpp>
+#include "autoware_perception_msgs/msg/dynamic_object_array.hpp"
+#include "sensor_msgs/msg/point_cloud2.hpp"
 
-#include <lanelet2_core/LaneletMap.h>
-#include <lanelet2_extension/utility/query.hpp>
-#include <lanelet2_routing/RoutingGraph.h>
-#include <lanelet2_routing/RoutingGraphContainer.h>
+#include "lanelet2_core/LaneletMap.h"
+#include "lanelet2_extension/utility/query.hpp"
+#include "lanelet2_routing/RoutingGraph.h"
+#include "lanelet2_routing/RoutingGraphContainer.h"
 
-#include <scene_module/crosswalk/scene_crosswalk.hpp>
-#include <scene_module/crosswalk/util.hpp>
-#include <scene_module/scene_module_interface.hpp>
+#include "scene_module/crosswalk/scene_crosswalk.hpp"
+#include "scene_module/crosswalk/util.hpp"
+#include "scene_module/scene_module_interface.hpp"
 
 class WalkwayModule : public SceneModuleInterface
 {

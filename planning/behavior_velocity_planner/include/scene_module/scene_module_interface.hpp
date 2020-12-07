@@ -16,16 +16,16 @@
 #include <memory>
 #include <set>
 
-#include <autoware_planning_msgs/msg/path.hpp>
-#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
-#include <autoware_planning_msgs/msg/stop_reason.hpp>
-#include <autoware_planning_msgs/msg/stop_reason_array.hpp>
+#include "autoware_planning_msgs/msg/path.hpp"
+#include "autoware_planning_msgs/msg/path_with_lane_id.hpp"
+#include "autoware_planning_msgs/msg/stop_reason.hpp"
+#include "autoware_planning_msgs/msg/stop_reason_array.hpp"
 
-#include <behavior_velocity_planner/planner_data.hpp>
+#include "behavior_velocity_planner/planner_data.hpp"
 
 // Debug
-#include <rclcpp/rclcpp.hpp>
-#include <visualization_msgs/msg/marker_array.hpp>
+#include "rclcpp/rclcpp.hpp"
+#include "visualization_msgs/msg/marker_array.hpp"
 
 class SceneModuleInterface
 {

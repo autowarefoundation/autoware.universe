@@ -16,11 +16,11 @@
 #include <functional>
 #include <memory>
 
-#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
-#include <rclcpp/rclcpp.hpp>
+#include "autoware_planning_msgs/msg/path_with_lane_id.hpp"
+#include "rclcpp/rclcpp.hpp"
 
-#include <scene_module/scene_module_interface.hpp>
-#include <scene_module/stop_line/scene.hpp>
+#include "scene_module/scene_module_interface.hpp"
+#include "scene_module/stop_line/scene.hpp"
 
 class StopLineModuleManager : public SceneModuleManagerInterface
 {

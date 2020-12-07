@@ -15,23 +15,23 @@
 
 #include <vector>
 
-#include <boost/assert.hpp>
-#include <boost/geometry.hpp>
-#include <boost/geometry/geometries/linestring.hpp>
-#include <boost/geometry/geometries/point_xy.hpp>
+#include "boost/assert.hpp"
+#include "boost/geometry.hpp"
+#include "boost/geometry/geometries/linestring.hpp"
+#include "boost/geometry/geometries/point_xy.hpp"
 
 #define EIGEN_MPL2_ONLY
-#include <Eigen/Core>
-#include <Eigen/Geometry>
+#include "Eigen/Core"
+#include "Eigen/Geometry"
 
-#include <rclcpp/rclcpp.hpp>
+#include "rclcpp/rclcpp.hpp"
 
-#include <lanelet2_core/LaneletMap.h>
-#include <lanelet2_extension/regulatory_elements/detection_area.hpp>
-#include <lanelet2_extension/utility/query.hpp>
-#include <lanelet2_routing/RoutingGraph.h>
+#include "lanelet2_core/LaneletMap.h"
+#include "lanelet2_extension/regulatory_elements/detection_area.hpp"
+#include "lanelet2_extension/utility/query.hpp"
+#include "lanelet2_routing/RoutingGraph.h"
 
-#include <scene_module/scene_module_interface.hpp>
+#include "scene_module/scene_module_interface.hpp"
 
 class DetectionAreaModule : public SceneModuleInterface
 {

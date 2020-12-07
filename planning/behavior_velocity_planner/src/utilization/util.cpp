@@ -16,7 +16,7 @@
  * Author: Robin Karlsson
  */
 
-#include <utilization/util.hpp>
+#include "utilization/util.hpp"
 
 namespace planning_utils
 {
