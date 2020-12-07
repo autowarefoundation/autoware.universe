@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 #include "gnss_poser/gnss_poser_core.hpp"
-#include <rclcpp_components/register_node_macro.hpp>
+#include "rclcpp_components/register_node_macro.hpp"
 
 #include <algorithm>
 #include <string>

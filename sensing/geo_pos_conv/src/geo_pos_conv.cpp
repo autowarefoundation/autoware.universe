@@ -27,7 +27,7 @@
  * limitations under the License.
  */
 
-#include <geo_pos_conv/geo_pos_conv.hpp>
+#include "geo_pos_conv/geo_pos_conv.hpp"
 
 geo_pos_conv::geo_pos_conv()
 : m_x(0), m_y(0), m_z(0), m_lat(0), m_lon(0), m_h(0), m_PLato(0), m_PLo(0)
