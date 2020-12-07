@@ -28,7 +28,7 @@
  * limitations under the License.
  */
 
-#include <freespace_planner/freespace_planner.hpp>
+#include "freespace_planner/freespace_planner.hpp"
 
 namespace
 {
