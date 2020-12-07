@@ -16,7 +16,7 @@
 
 #include <cmath>
 
-#include <autoware_utils/constants.hpp>
+#include "autoware_utils/constants.hpp"
 
 namespace autoware_utils
 {

@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
-#include <autoware_utils/autoware_utils.hpp>
+#include "autoware_utils/autoware_utils.hpp"
 
 int main(int argc, char * argv[])
 {
