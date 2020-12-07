@@ -43,7 +43,7 @@
  ********************
  */
 
-#include <costmap_generator/costmap_generator.hpp>
+#include "costmap_generator/costmap_generator.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 int main(int argc, char ** argv)
