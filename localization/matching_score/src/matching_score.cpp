@@ -14,7 +14,7 @@
 
 #include "matching_score/matching_score.hpp"
 
-#include <pcl/point_types.h>
+#include "pcl/point_types.h"
 
 template <class PointType>
 MatchingScore<PointType>::MatchingScore() : fermi_kT_(0.05), fermi_mu_(0.25)

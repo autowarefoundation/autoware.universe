@@ -41,10 +41,10 @@
 #ifndef PCL_REGISTRATION_NDT_OMP_H_
 #define PCL_REGISTRATION_NDT_OMP_H_
 
-#include <pcl/registration/registration.h>
+#include "pcl/registration/registration.h"
 #include "voxel_grid_covariance_omp.hpp"
 
-#include <unsupported/Eigen/NonLinearOptimization>
+#include "unsupported/Eigen/NonLinearOptimization"
 
 namespace ndt_omp
 {

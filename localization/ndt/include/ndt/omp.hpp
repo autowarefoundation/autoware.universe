@@ -17,10 +17,10 @@
 
 #include "ndt/base.hpp"
 
-#include <ndt_omp/ndt_omp.hpp>
-#include <pcl/io/io.h>
-#include <pcl/io/pcd_io.h>
-#include <pcl/point_types.h>
+#include "ndt_omp/ndt_omp.hpp"
+#include "pcl/io/io.h"
+#include "pcl/io/pcd_io.h"
+#include "pcl/point_types.h"
 
 template <class PointSource, class PointTarget>
 class NormalDistributionsTransformOMP

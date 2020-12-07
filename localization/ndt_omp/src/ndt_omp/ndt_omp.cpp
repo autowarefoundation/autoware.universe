@@ -11,8 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#include <ndt_omp/ndt_omp.hpp>
-#include <ndt_omp/ndt_omp_impl.hpp>
+#include "ndt_omp/ndt_omp.hpp"
+#include "ndt_omp/ndt_omp_impl.hpp"
 
 template class ndt_omp::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ>;
 template class ndt_omp::NormalDistributionsTransform<pcl::PointXYZI, pcl::PointXYZI>;

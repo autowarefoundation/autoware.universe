@@ -37,8 +37,8 @@
  *
  */
 
-#include <pcl/point_types.h>
-#include <pcl/impl/instantiate.hpp>
+#include "pcl/point_types.h"
+#include "pcl/impl/instantiate.hpp"
 
 #include "ndt_pcl_modified/ndt.hpp"
 

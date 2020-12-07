@@ -27,14 +27,14 @@
  * 
 */
 #include <iostream>
-#include <omp.h>
-#include <pcl/filters/voxel_grid.h>
-#include <pcl/io/pcd_io.h>
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-#include <pcl/registration/ndt.h>
+#include "omp.h"
+#include "pcl/filters/voxel_grid.h"
+#include "pcl/io/pcd_io.h"
+#include "pcl/point_cloud.h"
+#include "pcl/point_types.h"
+#include "pcl/registration/ndt.h"
 
-#include <ndt_omp/ndt_omp.hpp>
+#include "ndt_omp/ndt_omp.hpp"
 
 // align point clouds and measure processing time
 pcl::PointCloud<pcl::PointXYZ>::Ptr align(
