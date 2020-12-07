@@ -42,8 +42,8 @@
  */
 
 #pragma once
-#include <eigen3/Eigen/Core>
-#include <eigen3/Eigen/LU>
+#include "eigen3/Eigen/Core"
+#include "eigen3/Eigen/LU"
 #include "obstacle_avoidance_planner/vehicle_model/vehicle_model_interface.hpp"
 
 /**

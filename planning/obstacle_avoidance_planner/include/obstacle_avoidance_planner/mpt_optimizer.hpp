@@ -40,7 +40,7 @@
 #ifndef MPTOPTIMIZER_H
 #define MPTOPTIMIZER_H
 
-#include <autoware_planning_msgs/msg/trajectory_point.hpp>
+#include "autoware_planning_msgs/msg/trajectory_point.hpp"
 
 namespace cv
 {

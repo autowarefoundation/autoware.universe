@@ -16,12 +16,12 @@
 #ifndef OBSTACLE_AVOIDANCE_PLANNER_UTIL_H
 #define OBSTACLE_AVOIDANCE_PLANNER_UTIL_H
 
-#include <eigen3/Eigen/Core>
+#include "eigen3/Eigen/Core"
 
-#include <boost/optional/optional_fwd.hpp>
+#include "boost/optional/optional_fwd.hpp"
 
-#include <autoware_planning_msgs/msg/path_point.hpp>
-#include <autoware_planning_msgs/msg/trajectory.hpp>
+#include "autoware_planning_msgs/msg/path_point.hpp"
+#include "autoware_planning_msgs/msg/trajectory.hpp"
 
 struct VehicleParam;
 struct ReferencePoint;
