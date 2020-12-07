@@ -17,8 +17,8 @@
 #include <fstream>
 #include <stdexcept>
 
-#include <NvOnnxConfig.h>
-#include <NvOnnxParser.h>
+#include "NvOnnxConfig.h"
+#include "NvOnnxParser.h"
 
 namespace ssd
 {

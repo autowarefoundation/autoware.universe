@@ -18,7 +18,7 @@
  * https://creativecommons.org/publicdomain/zero/1.0/deed.en
  */
 
-#include <cuda_runtime_api.h>
+#include "cuda_runtime_api.h"
 #include <memory>
 #include <sstream>
 #include <stdexcept>

@@ -19,9 +19,9 @@
 #include <string>
 #include <vector>
 
-#include <NvInfer.h>
+#include "NvInfer.h"
 
-#include <cuda_runtime.h>
+#include "cuda_runtime.h"
 
 namespace ssd
 {

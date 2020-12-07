@@ -15,7 +15,7 @@
 
 #include <stdio.h>
 #include <algorithm>
-#include <boost/filesystem.hpp>
+#include "boost/filesystem.hpp"
 #include <chrono>
 #include <fstream>
 #include <iostream>
@@ -23,12 +23,12 @@
 #include <numeric>
 #include <sstream>
 
-#include <NvInfer.h>
-#include <NvOnnxParser.h>
-#include <cudnn.h>
+#include "NvInfer.h"
+#include "NvOnnxParser.h"
+#include "cudnn.h"
 
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
+#include "opencv2/core/core.hpp"
+#include "opencv2/highgui/highgui.hpp"
 
 #define CHECK_CUDA_ERROR(e) (Tn::check_error(e, __FILE__, __LINE__))
 
