@@ -15,7 +15,7 @@
 #ifndef VEHICLE_CMD_GATE_VEHICLE_CMD_FILTER_H
 #define VEHICLE_CMD_GATE_VEHICLE_CMD_FILTER_H
 
-#include <autoware_control_msgs/msg/control_command_stamped.hpp>
+#include "autoware_control_msgs/msg/control_command_stamped.hpp"
 
 class VehicleCmdFilter
 {
