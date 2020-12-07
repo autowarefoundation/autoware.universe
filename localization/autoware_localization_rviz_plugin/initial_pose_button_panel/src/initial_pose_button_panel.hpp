@@ -30,16 +30,16 @@
 
 #include <string>
 
-#include <QLabel>
-#include <QLineEdit>
-#include <QPushButton>
-#include <QSettings>
+#include "QLabel"
+#include "QLineEdit"
+#include "QPushButton"
+#include "QSettings"
 #ifndef Q_MOC_RUN
-#include <ros/ros.h>
-#include <rviz/panel.h>
-#include <rviz/properties/ros_topic_property.h>
+#include "ros/ros.h"
+#include "rviz/panel.h"
+#include "rviz/properties/ros_topic_property.h"
 #endif
-#include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include "geometry_msgs/PoseWithCovarianceStamped.h"
 
 #include "autoware_localization_srvs/PoseWithCovarianceStamped.h"
 
