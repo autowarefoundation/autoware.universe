@@ -14,18 +14,18 @@
 
 #pragma once
 
-#include <OgreBillboardSet.h>
-#include <OgreManualObject.h>
-#include <OgreSceneManager.h>
-#include <OgreSceneNode.h>
-#include <ros/ros.h>
-#include <rviz/display_context.h>
-#include <rviz/frame_manager.h>
-#include <rviz/message_filter_display.h>
-#include <rviz/properties/bool_property.h>
-#include <rviz/properties/color_property.h>
-#include <rviz/properties/float_property.h>
-#include <rviz/validate_floats.h>
+#include "OgreBillboardSet.h"
+#include "OgreManualObject.h"
+#include "OgreSceneManager.h"
+#include "OgreSceneNode.h"
+#include "ros/ros.h"
+#include "rviz/display_context.h"
+#include "rviz/frame_manager.h"
+#include "rviz/message_filter_display.h"
+#include "rviz/properties/bool_property.h"
+#include "rviz/properties/color_property.h"
+#include "rviz/properties/float_property.h"
+#include "rviz/validate_floats.h"
 
 #include <deque>
 #include <memory>

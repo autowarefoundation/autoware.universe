@@ -30,10 +30,10 @@
 #include <stdint.h>
 
 #include <math.h>
-#include <boost/bind.hpp>
+#include "boost/bind.hpp"
 
-#include <OgreSceneManager.h>
-#include <OgreSceneNode.h>
+#include "OgreSceneManager.h"
+#include "OgreSceneNode.h"
 
 #include "rviz/display_context.h"
 #include "rviz/frame_manager.h"
@@ -216,5 +216,5 @@ void PolarGridDisplay::updatePlane()
 
 }  // namespace rviz
 
-#include <pluginlib/class_list_macros.hpp>
+#include "pluginlib/class_list_macros.hpp"
 PLUGINLIB_EXPORT_CLASS(rviz::PolarGridDisplay, rviz::Display)

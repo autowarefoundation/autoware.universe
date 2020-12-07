@@ -14,8 +14,8 @@
 
 #include "velocity_history.hpp"
 #define EIGEN_MPL2_ONLY
-#include <Eigen/Core>
-#include <Eigen/Geometry>
+#include "Eigen/Core"
+#include "Eigen/Geometry"
 
 namespace rviz_plugins
 {
@@ -179,5 +179,5 @@ void VelocityHistoryDisplay::updateVisualization()
 
 }  // namespace rviz_plugins
 
-#include <pluginlib/class_list_macros.h>
+#include "pluginlib/class_list_macros.h"
 PLUGINLIB_EXPORT_CLASS(rviz_plugins::VelocityHistoryDisplay, rviz::Display)

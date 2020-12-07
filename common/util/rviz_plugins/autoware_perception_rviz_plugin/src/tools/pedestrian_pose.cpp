@@ -30,14 +30,14 @@
 #include <algorithm>
 #include <random>
 
-#include <tf2_ros/transform_listener.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include "tf2_ros/transform_listener.h"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 
-#include <rviz_common/display_context.hpp>
-#include <rviz_common/properties/float_property.hpp>
-#include <rviz_common/properties/string_property.hpp>
+#include "rviz_common/display_context.hpp"
+#include "rviz_common/properties/float_property.hpp"
+#include "rviz_common/properties/string_property.hpp"
 
-#include <unique_identifier_msgs/msg/uuid.hpp>
+#include "unique_identifier_msgs/msg/uuid.hpp"
 
 #include "pedestrian_pose.hpp"
 
@@ -152,5 +152,5 @@ void PedestrianInitialPoseTool::onPoseSet(double x, double y, double theta)
 
 }  // end namespace rviz_plugins
 
-#include <pluginlib/class_list_macros.hpp>
+#include "pluginlib/class_list_macros.hpp"
 PLUGINLIB_EXPORT_CLASS(rviz_plugins::PedestrianInitialPoseTool, rviz_common::Tool)

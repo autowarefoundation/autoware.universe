@@ -34,7 +34,7 @@
  *********************************************************************/
 
 #include "jsk_overlay_utils.hpp"
-#include <ros/ros.h>
+#include "ros/ros.h"
 
 namespace jsk_rviz_plugins
 {

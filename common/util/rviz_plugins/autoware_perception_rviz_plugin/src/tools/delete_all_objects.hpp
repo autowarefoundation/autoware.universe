@@ -30,14 +30,14 @@
 #pragma once
 
 #ifndef Q_MOC_RUN  // See: https://bugreports.qt-project.org/browse/QTBUG-22829
-#include <QObject>
+#include "QObject"
 
-#include <rclcpp/node.hpp>
+#include "rclcpp/node.hpp"
 
-#include <rviz_default_plugins/tools/pose/pose_tool.hpp>
-#include <rviz_common/display_context.hpp>
-#include <rviz_common/properties/float_property.hpp>
-#include <rviz_common/properties/string_property.hpp>
+#include "rviz_default_plugins/tools/pose/pose_tool.hpp"
+#include "rviz_common/display_context.hpp"
+#include "rviz_common/properties/float_property.hpp"
+#include "rviz_common/properties/string_property.hpp"
 #endif
 
 #include "dummy_perception_publisher/msg/object.hpp"

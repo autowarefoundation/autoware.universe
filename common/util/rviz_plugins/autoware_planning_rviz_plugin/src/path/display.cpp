@@ -14,8 +14,8 @@
 
 #include "path/display.hpp"
 #define EIGEN_MPL2_ONLY
-#include <eigen3/Eigen/Core>
-#include <eigen3/Eigen/Geometry>
+#include "eigen3/Eigen/Core"
+#include "eigen3/Eigen/Geometry"
 
 namespace rviz_plugins
 {
@@ -241,5 +241,5 @@ void AutowarePathDisplay::updateVisualization()
 
 }  // namespace rviz_plugins
 
-#include <pluginlib/class_list_macros.hpp>
+#include "pluginlib/class_list_macros.hpp"
 PLUGINLIB_EXPORT_CLASS(rviz_plugins::AutowarePathDisplay, rviz_common::Display)

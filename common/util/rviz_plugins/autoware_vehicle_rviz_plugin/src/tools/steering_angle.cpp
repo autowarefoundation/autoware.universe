@@ -13,11 +13,11 @@
 // limitations under the License.
 
 #include "steering_angle.hpp"
-#include <OGRE/OgreHardwarePixelBuffer.h>
-#include <ros/package.h>
-#include <rviz/display_context.h>
-#include <rviz/uniform_string_stream.h>
-#include <QPainter>
+#include "OGRE/OgreHardwarePixelBuffer.h"
+#include "ros/package.h"
+#include "rviz/display_context.h"
+#include "rviz/uniform_string_stream.h"
+#include "QPainter"
 
 namespace rviz_plugins
 {
@@ -204,5 +204,5 @@ void SteeringAngleDisplay::updateVisualization()
 
 }  // namespace rviz_plugins
 
-#include <pluginlib/class_list_macros.h>
+#include "pluginlib/class_list_macros.h"
 PLUGINLIB_EXPORT_CLASS(rviz_plugins::SteeringAngleDisplay, rviz::Display)

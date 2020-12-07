@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <tf2_ros/transform_listener.h>
+#include "tf2_ros/transform_listener.h"
 
 #include "delete_all_objects.hpp"
 
@@ -76,5 +76,5 @@ void DeleteAllObjectsTool::onPoseSet(double x, double y, double theta)
 
 }  // end namespace rviz_plugins
 
-#include <pluginlib/class_list_macros.hpp>
+#include "pluginlib/class_list_macros.hpp"
 PLUGINLIB_EXPORT_CLASS(rviz_plugins::DeleteAllObjectsTool, rviz_common::Tool)

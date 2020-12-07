@@ -29,11 +29,11 @@
 
 #pragma once
 
-#include <OgreBillboardSet.h>
-#include <OgreManualObject.h>
-#include <OgreSceneManager.h>
-#include <OgreSceneNode.h>
-#include <rviz/display_context.h>
+#include "OgreBillboardSet.h"
+#include "OgreManualObject.h"
+#include "OgreSceneManager.h"
+#include "OgreSceneNode.h"
+#include "rviz/display_context.h"
 #include "rviz/display.h"
 #include "rviz/properties/color_property.h"
 #include "rviz/properties/enum_property.h"
