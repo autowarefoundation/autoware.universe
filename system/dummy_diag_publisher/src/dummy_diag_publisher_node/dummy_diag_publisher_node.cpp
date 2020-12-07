@@ -14,7 +14,7 @@
 
 #include "dummy_diag_publisher/dummy_diag_publisher_node.hpp"
 
-#include <rclcpp/create_timer.hpp>
+#include "rclcpp/create_timer.hpp"
 
 namespace
 {

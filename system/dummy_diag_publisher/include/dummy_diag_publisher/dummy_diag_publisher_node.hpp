@@ -17,9 +17,9 @@
 
 #include <string>
 
-#include <rclcpp/rclcpp.hpp>
+#include "rclcpp/rclcpp.hpp"
 
-#include <diagnostic_updater/diagnostic_updater.hpp>
+#include "diagnostic_updater/diagnostic_updater.hpp"
 
 struct DiagConfig
 {
