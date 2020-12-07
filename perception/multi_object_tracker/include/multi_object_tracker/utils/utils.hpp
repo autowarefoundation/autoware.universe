@@ -21,8 +21,8 @@
 
 #include "autoware_perception_msgs/msg/shape.hpp"
 
-#include <geometry_msgs/msg/polygon.hpp>
-#include <geometry_msgs/msg/vector3.hpp>
+#include "geometry_msgs/msg/polygon.hpp"
+#include "geometry_msgs/msg/vector3.hpp"
 
 #include <cmath>
 

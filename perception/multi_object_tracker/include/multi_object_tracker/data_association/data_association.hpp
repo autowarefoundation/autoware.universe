@@ -23,8 +23,8 @@
 #include "autoware_perception_msgs/msg/dynamic_object_with_feature_array.hpp"
 
 #define EIGEN_MPL2_ONLY
-#include <Eigen/Core>
-#include <Eigen/Geometry>
+#include "Eigen/Core"
+#include "Eigen/Geometry"
 
 #include <list>
 #include <unordered_map>
