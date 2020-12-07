@@ -17,7 +17,7 @@
  * v1.0 Yukihiro Saito
  */
 
-#include <rclcpp/rclcpp.hpp>
+#include "rclcpp/rclcpp.hpp"
 #include "shape_estimation/node.hpp"
 
 int main(int argc, char ** argv)
