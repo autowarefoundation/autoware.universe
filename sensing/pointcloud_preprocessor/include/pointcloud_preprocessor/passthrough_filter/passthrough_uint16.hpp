@@ -40,7 +40,7 @@
 #ifndef PCL_FILTERS_IMPL_PASSTHROUGH_UINT16_HPP_
 #define PCL_FILTERS_IMPL_PASSTHROUGH_UINT16_HPP_
 
-#include <pcl/common/io.h>
+#include "pcl/common/io.h"
 #include "pointcloud_preprocessor/passthrough_filter/passthrough_uint16.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

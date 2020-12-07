@@ -40,7 +40,7 @@
 #ifndef PCL_FILTERS_PASSTHROUGH_UINT16_H_
 #define PCL_FILTERS_PASSTHROUGH_UINT16_H_
 
-#include <pcl/filters/filter_indices.h>
+#include "pcl/filters/filter_indices.h"
 
 namespace pcl
 {
@@ -325,7 +325,7 @@ private:
 }  // namespace pcl
 
 #ifdef PCL_NO_PRECOMPILE
-#include <pcl/filters/impl/passthrough.hpp>
+#include "pcl/filters/impl/passthrough.hpp"
 #endif
 
 #endif  // PCL_FILTERS_PASSTHROUGH_H_

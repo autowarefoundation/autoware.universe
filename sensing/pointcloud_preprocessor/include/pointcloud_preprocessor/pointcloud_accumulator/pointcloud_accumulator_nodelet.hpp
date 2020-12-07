@@ -13,7 +13,7 @@
 // limitations under the License.
 #pragma once
 
-#include <boost/circular_buffer.hpp>
+#include "boost/circular_buffer.hpp"
 #include "pointcloud_preprocessor/filter.hpp"
 
 namespace pointcloud_preprocessor
