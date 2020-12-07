@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <rclcpp/rclcpp.hpp>
+#include "rclcpp/rclcpp.hpp"
 
-#include <autoware_state_monitor/autoware_state_monitor_node.hpp>
+#include "autoware_state_monitor/autoware_state_monitor_node.hpp"
 
 int main(int argc, char * argv[])
 {

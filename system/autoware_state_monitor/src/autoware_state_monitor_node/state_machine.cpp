@@ -13,9 +13,9 @@
 // limitations under the License.
 
 #define FMT_HEADER_ONLY
-#include <fmt/format.h>
+#include "fmt/format.h"
 
-#include <autoware_state_monitor/state_machine.hpp>
+#include "autoware_state_monitor/state_machine.hpp"
 
 namespace
 {

@@ -17,7 +17,7 @@
 
 #include <string>
 
-#include <autoware_system_msgs/msg/autoware_state.hpp>
+#include "autoware_system_msgs/msg/autoware_state.hpp"
 
 enum class AutowareState : int8_t {
   InitializingVehicle,

@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <autoware_state_monitor/autoware_state_monitor_node.hpp>
+#include "autoware_state_monitor/autoware_state_monitor_node.hpp"
 
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 
 #include <numeric>
 #include <regex>
@@ -23,7 +23,7 @@
 #include <vector>
 
 #define FMT_HEADER_ONLY
-#include <fmt/format.h>
+#include "fmt/format.h"
 
 void AutowareStateMonitorNode::setupDiagnosticUpdater()
 {
