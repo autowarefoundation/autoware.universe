@@ -21,8 +21,8 @@
  * @brief Net monitor class
  */
 
-#include <diagnostic_updater/diagnostic_updater.hpp>
-#include <system_monitor/net_monitor/nl80211.hpp>
+#include "diagnostic_updater/diagnostic_updater.hpp"
+#include "system_monitor/net_monitor/nl80211.hpp"
 #include <map>
 #include <string>
 #include <vector>

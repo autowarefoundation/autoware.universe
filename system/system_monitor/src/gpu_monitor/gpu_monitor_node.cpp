@@ -17,17 +17,17 @@
  * @brief GPU monitor node class
  */
 
-#include <rclcpp/rclcpp.hpp>
+#include "rclcpp/rclcpp.hpp"
 #include <string>
 
 #if defined _GPU_NVML_
-#include <system_monitor/gpu_monitor/nvml_gpu_monitor.hpp>
+#include "system_monitor/gpu_monitor/nvml_gpu_monitor.hpp"
 #elif defined _GPU_TEGRA_
-#include <system_monitor/gpu_monitor/tegra_gpu_monitor.hpp>
+#include "system_monitor/gpu_monitor/tegra_gpu_monitor.hpp"
 #else
-#include <system_monitor/gpu_monitor/unknown_gpu_monitor.hpp>
+#include "system_monitor/gpu_monitor/unknown_gpu_monitor.hpp"
 #endif
-#include <system_monitor/utils.hpp>
+#include "system_monitor/utils.hpp"
 
 int main(int argc, char ** argv)
 {

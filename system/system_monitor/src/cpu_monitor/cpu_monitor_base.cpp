@@ -17,14 +17,14 @@
  * @brief CPU monitor base class
  */
 
-#include <system_monitor/cpu_monitor/cpu_monitor_base.hpp>
+#include "system_monitor/cpu_monitor/cpu_monitor_base.hpp"
 #include <algorithm>
-#include <boost/filesystem.hpp>
-#include <boost/process.hpp>
-#include <boost/property_tree/json_parser.hpp>
-#include <boost/property_tree/ptree.hpp>
-#include <boost/regex.hpp>
-#include <boost/thread.hpp>
+#include "boost/filesystem.hpp"
+#include "boost/process.hpp"
+#include "boost/property_tree/json_parser.hpp"
+#include "boost/property_tree/ptree.hpp"
+#include "boost/regex.hpp"
+#include "boost/thread.hpp"
 #include <string>
 
 namespace bp = boost::process;

@@ -17,11 +17,11 @@
  * @brief NTP monitor class
  */
 
-#include <system_monitor/ntp_monitor/ntp_monitor.hpp>
-#include <boost/filesystem.hpp>
-#include <boost/format.hpp>
-#include <boost/process.hpp>
-#include <boost/regex.hpp>
+#include "system_monitor/ntp_monitor/ntp_monitor.hpp"
+#include "boost/filesystem.hpp"
+#include "boost/format.hpp"
+#include "boost/process.hpp"
+#include "boost/regex.hpp"
 #include <string>
 
 namespace bp = boost::process;

@@ -17,9 +17,9 @@
  * @brief Process monitor class
  */
 
-#include <system_monitor/process_monitor/process_monitor.hpp>
-#include <boost/format.hpp>
-#include <boost/regex.hpp>
+#include "system_monitor/process_monitor/process_monitor.hpp"
+#include "boost/format.hpp"
+#include "boost/regex.hpp"
 #include <string>
 #include <vector>
 

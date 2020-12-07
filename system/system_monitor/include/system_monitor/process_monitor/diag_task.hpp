@@ -21,7 +21,7 @@
  * @brief diagnostics task for high load/memory procs
  */
 
-#include <diagnostic_updater/diagnostic_updater.hpp>
+#include "diagnostic_updater/diagnostic_updater.hpp"
 #include <string>
 
 class DiagTask : public diagnostic_updater::DiagnosticTask

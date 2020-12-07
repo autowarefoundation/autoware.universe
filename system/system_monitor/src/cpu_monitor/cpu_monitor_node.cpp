@@ -17,20 +17,20 @@
  * @brief CPU monitor node class
  */
 
-#include <rclcpp/rclcpp.hpp>
+#include "rclcpp/rclcpp.hpp"
 
 #if defined _CPU_INTEL_
-#include <system_monitor/cpu_monitor/intel_cpu_monitor.hpp>
+#include "system_monitor/cpu_monitor/intel_cpu_monitor.hpp"
 #elif defined _CPU_ARM_
-#include <system_monitor/cpu_monitor/arm_cpu_monitor.hpp>
+#include "system_monitor/cpu_monitor/arm_cpu_monitor.hpp"
 #elif defined _CPU_RASPI_
-#include <system_monitor/cpu_monitor/raspi_cpu_monitor.hpp>
+#include "system_monitor/cpu_monitor/raspi_cpu_monitor.hpp"
 #elif defined _CPU_TEGRA_
-#include <system_monitor/cpu_monitor/tegra_cpu_monitor.hpp>
+#include "system_monitor/cpu_monitor/tegra_cpu_monitor.hpp"
 #else
-#include <system_monitor/cpu_monitor/unknown_cpu_monitor.hpp>
+#include "system_monitor/cpu_monitor/unknown_cpu_monitor.hpp"
 #endif
-#include <system_monitor/utils.hpp>
+#include "system_monitor/utils.hpp"
 
 int main(int argc, char ** argv)
 {

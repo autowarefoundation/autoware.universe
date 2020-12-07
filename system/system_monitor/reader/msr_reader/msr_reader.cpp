@@ -18,22 +18,22 @@
  */
 
 #include <errno.h>
-#include <fcntl.h>
-#include <getopt.h>
-#include <msr_reader/msr_reader.hpp>
-#include <netinet/in.h>
+#include "fcntl.h"
+#include "getopt.h"
+#include "msr_reader/msr_reader.hpp"
+#include "netinet/in.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/socket.h>
-#include <syslog.h>
-#include <unistd.h>
+#include "sys/socket.h"
+#include "syslog.h"
+#include "unistd.h"
 #include <algorithm>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/filesystem.hpp>
-#include <boost/format.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/regex.hpp>
+#include "boost/archive/text_oarchive.hpp"
+#include "boost/filesystem.hpp"
+#include "boost/format.hpp"
+#include "boost/lexical_cast.hpp"
+#include "boost/regex.hpp"
 #include <iostream>
 #include <sstream>
 #include <string>

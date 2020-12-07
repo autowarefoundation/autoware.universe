@@ -21,7 +21,7 @@
  * @brief TEGRA CPU monitor class
  */
 
-#include <system_monitor/cpu_monitor/cpu_monitor_base.hpp>
+#include "system_monitor/cpu_monitor/cpu_monitor_base.hpp"
 
 class CPUMonitor : public CPUMonitorBase
 {

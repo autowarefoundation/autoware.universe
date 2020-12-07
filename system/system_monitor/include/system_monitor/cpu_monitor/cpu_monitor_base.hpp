@@ -21,7 +21,7 @@
  * @brief CPU monitor base class
  */
 
-#include <diagnostic_updater/diagnostic_updater.hpp>
+#include "diagnostic_updater/diagnostic_updater.hpp"
 #include <map>
 #include <string>
 #include <vector>

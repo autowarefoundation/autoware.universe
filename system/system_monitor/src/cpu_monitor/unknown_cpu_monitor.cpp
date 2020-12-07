@@ -17,7 +17,7 @@
  * @brief Unknown CPU monitor class
  */
 
-#include <system_monitor/cpu_monitor/unknown_cpu_monitor.hpp>
+#include "system_monitor/cpu_monitor/unknown_cpu_monitor.hpp"
 
 CPUMonitor::CPUMonitor(const std::string & node_name, const rclcpp::NodeOptions & options)
 : CPUMonitorBase(node_name, options)

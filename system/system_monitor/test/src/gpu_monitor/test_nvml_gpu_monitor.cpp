@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <gtest/gtest.h>
-#include <ros/ros.h>
-#include <system_monitor/gpu_monitor/nvml_gpu_monitor.hpp>
-#include <boost/algorithm/string.hpp>
+#include "gtest/gtest.h"
+#include "ros/ros.h"
+#include "system_monitor/gpu_monitor/nvml_gpu_monitor.hpp"
+#include "boost/algorithm/string.hpp"
 #include <string>
 
 using DiagStatus = diagnostic_msgs::DiagnosticStatus;
