@@ -30,12 +30,14 @@ target_include_directories(ndt_omp
     $<INSTALL_INTERFACE:include> 
 )
 
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  target_compile_options(ndt_omp
-    PRIVATE
-      # -mavx causes a lot of errors!!
-      -msse -msse2 -msse3 -msse4 -msse4.1 -msse4.2
-  )
+if (CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)")
+  if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    target_compile_options(ndt_omp
+      PRIVATE
+        # -mavx causes a lot of errors!!
+        -msse -msse2 -msse3 -msse4 -msse4.1 -msse4.2
+    )
+  endif()
 endif()
 
 set(NDT_OMP_DEPENDENCIES
