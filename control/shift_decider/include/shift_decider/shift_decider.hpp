@@ -15,10 +15,10 @@
 #ifndef CONTROL_SHIFT_DECIDER_INCLUDE_SHIFT_DECIDER_NODE_HPP_
 #define CONTROL_SHIFT_DECIDER_INCLUDE_SHIFT_DECIDER_NODE_HPP_
 
-#include <autoware_control_msgs/msg/control_command_stamped.hpp>
-#include <autoware_vehicle_msgs/msg/shift_stamped.hpp>
+#include "autoware_control_msgs/msg/control_command_stamped.hpp"
+#include "autoware_vehicle_msgs/msg/shift_stamped.hpp"
 
-#include <rclcpp/rclcpp.hpp>
+#include "rclcpp/rclcpp.hpp"
 
 #include <memory>
 

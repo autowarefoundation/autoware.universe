@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <shift_decider/shift_decider.hpp>
+#include "shift_decider/shift_decider.hpp"
 
-#include <rclcpp/timer.hpp>
+#include "rclcpp/timer.hpp"
 
 #include <cstddef>
 #include <functional>
