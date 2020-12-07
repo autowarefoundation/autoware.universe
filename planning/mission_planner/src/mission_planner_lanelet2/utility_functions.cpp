@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <lanelet2_core/geometry/Lanelet.h>
-#include <mission_planner/lanelet2_impl/utility_functions.hpp>
-#include <rclcpp/rclcpp.hpp>
+#include "lanelet2_core/geometry/Lanelet.h"
+#include "mission_planner/lanelet2_impl/utility_functions.hpp"
+#include "rclcpp/rclcpp.hpp"
 
 bool exists(const std::unordered_set<lanelet::Id> & set, const lanelet::Id & id)
 {
