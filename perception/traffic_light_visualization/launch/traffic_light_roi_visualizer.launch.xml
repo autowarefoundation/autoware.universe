@@ -8,11 +8,11 @@
   <arg name="enable_fine_detection" default="false"/>
   <arg name="manager" default="traffic_light_recognition_nodelet_manager"/>
 
-  <node pkg="nodelet" type="nodelet" name="traffic_light_roi_visualizer" args="load traffic_light/traffic_light_roi_visualizer $(arg manager)">
-    <remap from="~input/image" to="$(arg input/image)"/>
-    <remap from="~input/rois" to="$(arg input/rois)"/>
-    <remap from="~input/rough/rois" to="$(arg input/rough/rois)"/>
-    <remap from="~output/image" to="$(arg output/image)"/>
-    <param name="enable_fine_detection" value="$(arg enable_fine_detection)"/>
+  <node pkg="traffic_light_visualization" exec="traffic_light_visualization_node" name="traffic_light_visualization">
+    <remap from="input/image" to="$(var input/image)"/>
+    <remap from="input/rois" to="$(var input/rois)"/>
+    <remap from="input/rough/rois" to="$(var input/rough/rois)"/>
+    <remap from="output/image" to="$(var output/image)"/>
+    <param name="enable_fine_detection" value="$(var enable_fine_detection)"/>
   </node>
 </launch>
