@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #ifndef DUMMY_DIAG_PUBLISHER_DUMMY_DIAG_PUBLISHER_H_
-#define DUMMY_DIAG_PUBLISHER_DUMMY_DIAG_PUBLISHER_H_ 
+#define DUMMY_DIAG_PUBLISHER_DUMMY_DIAG_PUBLISHER_H_
 
 #include <string>
 
@@ -50,7 +50,8 @@ public:
   DummyDiagPublisherNode();
 
 private:
-  enum Status {
+  enum Status
+  {
     OK,
     WARN,
     ERROR,
