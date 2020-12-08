@@ -45,7 +45,7 @@ CarInitialPoseTool::CarInitialPoseTool()
 
   topic_property_ = new rviz_common::properties::StringProperty(
     "Pose Topic", "/simulation/dummy_perception/publisher/object_info",
-    "The topic on which to publish dummy object info.", 
+    "The topic on which to publish dummy object info.",
     getPropertyContainer(), SLOT(updateTopic()), this);
   std_dev_x_ = new rviz_common::properties::FloatProperty(
     "X std deviation", 0.03, "X standard deviation for initial pose [m]", getPropertyContainer());
@@ -76,7 +76,7 @@ void CarInitialPoseTool::onInitialize()
 
 void CarInitialPoseTool::updateTopic()
 {
-  rclcpp::Node::SharedPtr raw_node = 
+  rclcpp::Node::SharedPtr raw_node =
     context_->getRosNodeAbstraction().lock()->get_raw_node();
   dummy_object_info_pub_ = raw_node->
     create_publisher<dummy_perception_publisher::msg::Object>(topic_property_->getStdString(), 1);
@@ -120,14 +120,16 @@ void CarInitialPoseTool::onPoseSet(double x, double y, double theta)
   tf2::Quaternion quat;
   quat.setRPY(0.0, 0.0, theta);
   output_msg.initial_state.pose_covariance.pose.orientation = tf2::toMsg(quat);
-  RCLCPP_INFO(rclcpp::get_logger("CarInitialPoseTool"),
+  RCLCPP_INFO(
+    rclcpp::get_logger("CarInitialPoseTool"),
     "Setting pose: %.3f %.3f %.3f %.3f [frame=%s]", x, y, position_z_->getFloat(), theta,
     fixed_frame.c_str());
   // twist
   output_msg.initial_state.twist_covariance.twist.linear.x = velocity_->getFloat();
   output_msg.initial_state.twist_covariance.twist.linear.y = 0.0;
   output_msg.initial_state.twist_covariance.twist.linear.z = 0.0;
-  RCLCPP_INFO(rclcpp::get_logger("CarInitialPoseTool"),
+  RCLCPP_INFO(
+    rclcpp::get_logger("CarInitialPoseTool"),
     "Setting twist: %.3f %.3f %.3f [frame=%s]", velocity_->getFloat(), 0.0, 0.0,
     fixed_frame.c_str());
 
@@ -135,7 +137,7 @@ void CarInitialPoseTool::onPoseSet(double x, double y, double theta)
   output_msg.action = dummy_perception_publisher::msg::Object::ADD;
 
   // id
-  std::mt19937 gen(std::random_device{}());
+  std::mt19937 gen(std::random_device{} ());
   std::independent_bits_engine<std::mt19937, 8, uint8_t> bit_eng(gen);
   std::generate(output_msg.id.uuid.begin(), output_msg.id.uuid.end(), bit_eng);
 

@@ -47,7 +47,6 @@ protected:
   void update(float wall_dt, float ros_dt) override;
 
 private Q_SLOTS:
-
   void updateTopic();
   void subscribe();
   void unsubscribe();

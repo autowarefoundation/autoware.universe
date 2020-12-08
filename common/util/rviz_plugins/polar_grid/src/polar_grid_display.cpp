@@ -46,7 +46,8 @@
 
 namespace rviz
 {
-PolarGridDisplay::PolarGridDisplay() : Display(), wave_range_(0.0)
+PolarGridDisplay::PolarGridDisplay()
+: Display(), wave_range_(0.0)
 {
   frame_property_ = new TfFrameProperty(
     "Reference Frame", TfFrameProperty::FIXED_FRAME_STRING,
@@ -160,7 +161,7 @@ void PolarGridDisplay::update(float /*dt*/, float ros_dt)
   wave_manual_object_->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_LINE_STRIP);
 
   color.a = d_alpha * (1.0 - (wave_range_ / max_range_property_->getFloat())) +
-            min_wave_alpha_property_->getFloat();
+    min_wave_alpha_property_->getFloat();
   color.a = std::max(color.a, min_wave_alpha_property_->getFloat());
   for (float theta = 0.0; theta < 2.0 * M_PI + d_theta; theta += d_theta) {
     wave_manual_object_->position(

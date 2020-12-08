@@ -115,16 +115,21 @@ void AutowarePathDisplay::reset()
   velocity_manual_object_->clear();
 }
 
-bool AutowarePathDisplay::validateFloats(const autoware_planning_msgs::msg::Path::ConstSharedPtr & msg_ptr)
+bool AutowarePathDisplay::validateFloats(
+  const autoware_planning_msgs::msg::Path::ConstSharedPtr & msg_ptr)
 {
   for (auto && path_point : msg_ptr->points) {
-    if (!rviz_common::validateFloats(path_point.pose) && !rviz_common::validateFloats(path_point.twist))
+    if (!rviz_common::validateFloats(path_point.pose) &&
+      !rviz_common::validateFloats(path_point.twist))
+    {
       return false;
+    }
   }
   return true;
 }
 
-void AutowarePathDisplay::processMessage(const autoware_planning_msgs::msg::Path::ConstSharedPtr msg_ptr)
+void AutowarePathDisplay::processMessage(
+  const autoware_planning_msgs::msg::Path::ConstSharedPtr msg_ptr)
 {
   if (!validateFloats(msg_ptr)) {
     setStatus(
@@ -136,7 +141,8 @@ void AutowarePathDisplay::processMessage(const autoware_planning_msgs::msg::Path
   Ogre::Vector3 position;
   Ogre::Quaternion orientation;
   if (!context_->getFrameManager()->getTransform(msg_ptr->header, position, orientation)) {
-    RCLCPP_DEBUG(rclcpp::get_logger("AutowarePathDisplay"),
+    RCLCPP_DEBUG(
+      rclcpp::get_logger("AutowarePathDisplay"),
       "Error transforming from frame '%s' to frame '%s'", msg_ptr->header.frame_id.c_str(),
       qPrintable(fixed_frame_));
   }
@@ -146,7 +152,7 @@ void AutowarePathDisplay::processMessage(const autoware_planning_msgs::msg::Path
 
   path_manual_object_->clear();
   velocity_manual_object_->clear();
-  
+
   Ogre::MaterialPtr material = Ogre::MaterialManager::getSingleton().getByName(
     "BaseWhiteNoLighting", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
   material->setSceneBlending(Ogre::SBT_TRANSPARENT_ALPHA);
@@ -223,7 +229,7 @@ void AutowarePathDisplay::processMessage(const autoware_planning_msgs::msg::Path
         velocity_manual_object_->position(
           path_point.pose.position.x, path_point.pose.position.y,
           path_point.pose.position.z +
-            path_point.twist.linear.x * property_velocity_scale_->getFloat());
+          path_point.twist.linear.x * property_velocity_scale_->getFloat());
         velocity_manual_object_->colour(color);
       }
     }
@@ -236,7 +242,7 @@ void AutowarePathDisplay::processMessage(const autoware_planning_msgs::msg::Path
 
 void AutowarePathDisplay::updateVisualization()
 {
-  if (last_msg_ptr_ != nullptr) processMessage(last_msg_ptr_);
+  if (last_msg_ptr_ != nullptr) {processMessage(last_msg_ptr_);}
 }
 
 }  // namespace rviz_plugins

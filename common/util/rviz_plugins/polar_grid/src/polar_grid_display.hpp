@@ -53,6 +53,7 @@ namespace rviz
 class PolarGridDisplay : public Display
 {
   Q_OBJECT
+
 public:
   PolarGridDisplay();
   virtual ~PolarGridDisplay();

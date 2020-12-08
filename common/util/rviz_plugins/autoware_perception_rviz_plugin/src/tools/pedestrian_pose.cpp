@@ -55,7 +55,7 @@ PedestrianInitialPoseTool::PedestrianInitialPoseTool()
     "X std deviation", 0.03, "X standard deviation for initial pose [m]",
     getPropertyContainer());
   std_dev_y_ = new rviz_common::properties::FloatProperty(
-    "Y std deviation", 0.03, "Y standard deviation for initial pose [m]", 
+    "Y std deviation", 0.03, "Y standard deviation for initial pose [m]",
     getPropertyContainer());
   std_dev_z_ = new rviz_common::properties::FloatProperty(
     "Z std deviation", 0.03, "Z standard deviation for initial pose [m]",
@@ -64,7 +64,7 @@ PedestrianInitialPoseTool::PedestrianInitialPoseTool()
     "Theta std deviation", 5.0 * M_PI / 180.0, "Theta standard deviation for initial pose [rad]",
     getPropertyContainer());
   position_z_ = new rviz_common::properties::FloatProperty(
-    "Z position", 0.0, "Z position for initial pose [m]", 
+    "Z position", 0.0, "Z position for initial pose [m]",
     getPropertyContainer());
   velocity_ = new rviz_common::properties::FloatProperty(
     "Velocity", 0.0, "velocity [m/s]", getPropertyContainer());
@@ -84,7 +84,7 @@ void PedestrianInitialPoseTool::onInitialize()
 
 void PedestrianInitialPoseTool::updateTopic()
 {
-  rclcpp::Node::SharedPtr raw_node = 
+  rclcpp::Node::SharedPtr raw_node =
     context_->getRosNodeAbstraction().lock()->get_raw_node();
   dummy_object_info_pub_ = raw_node->
     create_publisher<dummy_perception_publisher::msg::Object>(topic_property_->getStdString(), 1);
@@ -98,7 +98,7 @@ void PedestrianInitialPoseTool::onPoseSet(double x, double y, double theta)
 
   // header
   output_msg.header.frame_id = fixed_frame;
-  output_msg.header.stamp = clock_->now();;
+  output_msg.header.stamp = clock_->now();
 
   // semantic
   output_msg.semantic.type = autoware_perception_msgs::msg::Semantic::PEDESTRIAN;
@@ -128,14 +128,16 @@ void PedestrianInitialPoseTool::onPoseSet(double x, double y, double theta)
   tf2::Quaternion quat;
   quat.setRPY(0.0, 0.0, theta);
   output_msg.initial_state.pose_covariance.pose.orientation = tf2::toMsg(quat);
-  RCLCPP_INFO(rclcpp::get_logger("PedestrianInitialPoseTool"),
+  RCLCPP_INFO(
+    rclcpp::get_logger("PedestrianInitialPoseTool"),
     "Setting pose: %.3f %.3f %.3f %.3f [frame=%s]", x, y, position_z_->getFloat(), theta,
     fixed_frame.c_str());
   // twist
   output_msg.initial_state.twist_covariance.twist.linear.x = velocity_->getFloat();
   output_msg.initial_state.twist_covariance.twist.linear.y = 0.0;
   output_msg.initial_state.twist_covariance.twist.linear.z = 0.0;
-  RCLCPP_INFO(rclcpp::get_logger("PedestrianInitialPoseTool"),
+  RCLCPP_INFO(
+    rclcpp::get_logger("PedestrianInitialPoseTool"),
     "Setting twist: %.3f %.3f %.3f [frame=%s]", velocity_->getFloat(), 0.0, 0.0,
     fixed_frame.c_str());
 
@@ -143,7 +145,7 @@ void PedestrianInitialPoseTool::onPoseSet(double x, double y, double theta)
   output_msg.action = dummy_perception_publisher::msg::Object::ADD;
 
   // id
-  std::mt19937 gen(std::random_device{}());
+  std::mt19937 gen(std::random_device{} ());
   std::independent_bits_engine<std::mt19937, 8, uint8_t> bit_eng(gen);
   std::generate(output_msg.id.uuid.begin(), output_msg.id.uuid.end(), bit_eng);
 

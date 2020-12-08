@@ -46,6 +46,7 @@ namespace rviz_plugins
 class PedestrianInitialPoseTool : public rviz_default_plugins::tools::PoseTool
 {
   Q_OBJECT
+
 public:
   PedestrianInitialPoseTool();
   virtual ~PedestrianInitialPoseTool() {}

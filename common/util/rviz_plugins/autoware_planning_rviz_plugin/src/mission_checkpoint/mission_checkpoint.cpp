@@ -65,7 +65,7 @@ void MissionCheckpointTool::onInitialize()
 
 void MissionCheckpointTool::updateTopic()
 {
-  rclcpp::Node::SharedPtr raw_node = 
+  rclcpp::Node::SharedPtr raw_node =
     context_->getRosNodeAbstraction().lock()->get_raw_node();
   pose_pub_ = raw_node->
     create_publisher<geometry_msgs::msg::PoseStamped>(pose_topic_property_->getStdString(), 1);
@@ -86,7 +86,8 @@ void MissionCheckpointTool::onPoseSet(double x, double y, double theta)
   tf2::Quaternion quat;
   quat.setRPY(0.0, 0.0, theta);
   pose.pose.orientation = tf2::toMsg(quat);
-  RCLCPP_INFO(rclcpp::get_logger("MissionCheckpointTool"),
+  RCLCPP_INFO(
+    rclcpp::get_logger("MissionCheckpointTool"),
     "Setting pose: %.3f %.3f %.3f %.3f [frame=%s]", x, y, position_z_->getFloat(), theta,
     fixed_frame.c_str());
   pose_pub_->publish(pose);

@@ -120,8 +120,11 @@ bool AutowareTrajectoryDisplay::validateFloats(
 {
   for (auto && trajectory_point : msg_ptr->points) {
     if (
-      !rviz_common::validateFloats(trajectory_point.pose) && !rviz_common::validateFloats(trajectory_point.twist))
+      !rviz_common::validateFloats(trajectory_point.pose) &&
+      !rviz_common::validateFloats(trajectory_point.twist))
+    {
       return false;
+    }
   }
   return true;
 }
@@ -139,7 +142,8 @@ void AutowareTrajectoryDisplay::processMessage(
   Ogre::Vector3 position;
   Ogre::Quaternion orientation;
   if (!context_->getFrameManager()->getTransform(msg_ptr->header, position, orientation)) {
-    RCLCPP_DEBUG(rclcpp::get_logger("AutowareTrajectoryDisplay"),
+    RCLCPP_DEBUG(
+      rclcpp::get_logger("AutowareTrajectoryDisplay"),
       "Error transforming from frame '%s' to frame '%s'", msg_ptr->header.frame_id.c_str(),
       qPrintable(fixed_frame_));
   }
@@ -225,7 +229,7 @@ void AutowareTrajectoryDisplay::processMessage(
         velocity_manual_object_->position(
           path_point.pose.position.x, path_point.pose.position.y,
           path_point.pose.position.z +
-            path_point.twist.linear.x * property_velocity_scale_->getFloat());
+          path_point.twist.linear.x * property_velocity_scale_->getFloat());
         velocity_manual_object_->colour(color);
       }
     }
@@ -238,7 +242,7 @@ void AutowareTrajectoryDisplay::processMessage(
 
 void AutowareTrajectoryDisplay::updateVisualization()
 {
-  if (last_msg_ptr_ != nullptr) processMessage(last_msg_ptr_);
+  if (last_msg_ptr_ != nullptr) {processMessage(last_msg_ptr_);}
 }
 
 }  // namespace rviz_plugins

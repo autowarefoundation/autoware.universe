@@ -47,6 +47,7 @@ namespace rviz_plugins
 class DeleteAllObjectsTool : public rviz_default_plugins::tools::PoseTool
 {
   Q_OBJECT
+
 public:
   DeleteAllObjectsTool();
   virtual ~DeleteAllObjectsTool() {}

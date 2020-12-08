@@ -37,7 +37,7 @@
 namespace rviz_plugins
 {
 class AutowareTrajectoryDisplay
-: public rviz_common::MessageFilterDisplay<autoware_planning_msgs::msg::Trajectory>
+  : public rviz_common::MessageFilterDisplay<autoware_planning_msgs::msg::Trajectory>
 {
   Q_OBJECT
 
@@ -52,7 +52,8 @@ private Q_SLOTS:
   void updateVisualization();
 
 protected:
-  void processMessage(const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr msg_ptr) override;
+  void processMessage(const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr msg_ptr)
+  override;
   std::unique_ptr<Ogre::ColourValue> setColorDependsOnVelocity(
     const double vel_max, const double cmd_vel);
   std::unique_ptr<Ogre::ColourValue> gradation(

@@ -42,9 +42,9 @@ void PoseHistory::onInitialize()
   lines_.reset(new rviz::BillboardLine(scene_manager_, scene_node_));
 }
 
-void PoseHistory::onEnable() { subscribe(); }
+void PoseHistory::onEnable() {subscribe();}
 
-void PoseHistory::onDisable() { unsubscribe(); }
+void PoseHistory::onDisable() {unsubscribe();}
 
 void PoseHistory::update(float wall_dt, float ros_dt)
 {
