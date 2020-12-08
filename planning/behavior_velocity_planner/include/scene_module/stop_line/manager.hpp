@@ -27,7 +27,7 @@ class StopLineModuleManager : public SceneModuleManagerInterface
 public:
   StopLineModuleManager(rclcpp::Node & node);
 
-  const char * getModuleName() override { return "stop_line"; }
+  const char * getModuleName() override {return "stop_line";}
 
 private:
   StopLineModule::PlannerParam planner_param_;

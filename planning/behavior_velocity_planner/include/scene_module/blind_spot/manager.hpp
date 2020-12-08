@@ -28,7 +28,7 @@ class BlindSpotModuleManager : public SceneModuleManagerInterface
 public:
   BlindSpotModuleManager(rclcpp::Node & node);
 
-  const char * getModuleName() override { return "blind_spot"; }
+  const char * getModuleName() override {return "blind_spot";}
 
 private:
   BlindSpotModule::PlannerParam planner_param_;

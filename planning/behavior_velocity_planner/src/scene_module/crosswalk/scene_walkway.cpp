@@ -55,9 +55,11 @@ bool WalkwayModule::modifyPathVelocity(
     polygon.outer().push_back(polygon.outer().front());
 
     if (!insertTargetVelocityPoint(
-          input, polygon, planner_param_.stop_margin, 0.0, *planner_data_, *path, debug_data_,
-          first_stop_path_point_index_))
+        input, polygon, planner_param_.stop_margin, 0.0, *planner_data_, *path, debug_data_,
+        first_stop_path_point_index_))
+    {
       return false;
+    }
 
     // update state
     const Point self_pose = {
@@ -65,7 +67,7 @@ bool WalkwayModule::modifyPathVelocity(
     const double distance = bg::distance(polygon, self_pose);
     const double distance_threshold =
       planner_param_.stop_margin + planner_data_->vehicle_info_.max_longitudinal_offset_m_ + 1.0;
-    if (distance < distance_threshold && planner_data_->isVehicleStopping()) state_ = State::STOP;
+    if (distance < distance_threshold && planner_data_->isVehicleStopping()) {state_ = State::STOP;}
   } else if (state_ == State::STOP) {
     /* get stop point and stop factor */
     autoware_planning_msgs::msg::StopFactor stop_factor;

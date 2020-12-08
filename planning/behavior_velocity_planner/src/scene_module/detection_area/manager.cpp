@@ -58,12 +58,15 @@ void DetectionAreaModuleManager::launchNewModules(
   const autoware_planning_msgs::msg::PathWithLaneId & path)
 {
   for (const auto & detection_area_reg_elem :
-       getDetectionAreaRegElemsOnPath(path, planner_data_->lanelet_map)) {
+    getDetectionAreaRegElemsOnPath(path, planner_data_->lanelet_map))
+  {
     // Use lanelet_id to unregister module when the route is changed
     const auto module_id = detection_area_reg_elem.first;
     if (!isModuleRegistered(module_id)) {
-      registerModule(std::make_shared<DetectionAreaModule>(
-        module_id, *(detection_area_reg_elem.second), planner_param_, logger_.get_child("detection_area_module"), clock_));
+      registerModule(
+        std::make_shared<DetectionAreaModule>(
+          module_id, *(detection_area_reg_elem.second), planner_param_,
+          logger_.get_child("detection_area_module"), clock_));
     }
   }
 }
@@ -75,6 +78,6 @@ DetectionAreaModuleManager::getModuleExpiredFunction(
   const auto lanelet_id_set = getLaneletIdSetOnPath(path, planner_data_->lanelet_map);
 
   return [lanelet_id_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
-    return lanelet_id_set.count(scene_module->getModuleId()) == 0;
-  };
+           return lanelet_id_set.count(scene_module->getModuleId()) == 0;
+         };
 }

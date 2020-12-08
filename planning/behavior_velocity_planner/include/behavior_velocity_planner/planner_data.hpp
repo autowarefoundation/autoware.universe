@@ -39,7 +39,8 @@
 
 struct PlannerData
 {
-  PlannerData(rclcpp::Node & node) : vehicle_info_(vehicle_info_util::VehicleInfo::create(node))
+  PlannerData(rclcpp::Node & node)
+  : vehicle_info_(vehicle_info_util::VehicleInfo::create(node))
   {
     max_stop_acceleration_threshold_ = node.declare_parameter(
       "max_accel", -5.0);  // TODO read min_acc in velocity_controller_param.yaml?
@@ -69,7 +70,7 @@ struct PlannerData
 
   bool isVehicleStopping() const
   {
-    if (!current_velocity) return false;
+    if (!current_velocity) {return false;}
     return current_velocity->twist.linear.x < 0.1;
   }
 

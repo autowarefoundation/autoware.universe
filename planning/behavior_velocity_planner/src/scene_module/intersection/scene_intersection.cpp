@@ -76,8 +76,9 @@ bool IntersectionModule::modifyPathVelocity(
   int pass_judge_line_idx = -1;
   int first_idx_inside_lane = -1;
   if (!util::generateStopLine(
-        lane_id_, detection_areas, planner_data_, planner_param_, path, &stop_line_idx,
-        &pass_judge_line_idx, &first_idx_inside_lane, logger_.get_child("util"))) {
+      lane_id_, detection_areas, planner_data_, planner_param_, path, &stop_line_idx,
+      &pass_judge_line_idx, &first_idx_inside_lane, logger_.get_child("util")))
+  {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       logger_, *clock_, 1000 /* ms */, "setStopLineIdx fail");
     RCLCPP_DEBUG(logger_, "===== plan end =====");
@@ -179,7 +180,7 @@ bool IntersectionModule::checkCollision(
   autoware_perception_msgs::msg::DynamicObjectArray target_objects;
   for (const auto & object : objects_ptr->objects) {
     // ignore non-vehicle type objects, such as pedestrian.
-    if (!isTargetVehicleType(object)) continue;
+    if (!isTargetVehicleType(object)) {continue;}
 
     // ignore vehicle in ego-lane. (TODO update check algorithm)
     const auto object_pose = object.state.pose_covariance.pose;
@@ -254,7 +255,7 @@ Polygon2d IntersectionModule::generateEgoIntersectionLanePolygon(
     for (size_t i = assigned_lane_start_idx + 1; i < assigned_lane_end_idx; ++i) {
       dist_sum += planning_utils::calcDist2d(path.points.at(i), path.points.at(i - 1));
       ++ego_area_start_idx;
-      if (dist_sum > ignore_dist) break;
+      if (dist_sum > ignore_dist) {break;}
     }
   }
 
@@ -269,7 +270,7 @@ Polygon2d IntersectionModule::generateEgoIntersectionLanePolygon(
     double dist_sum = 0.0;
     for (size_t i = assigned_lane_end_idx + 1; i < path.points.size(); ++i) {
       dist_sum += planning_utils::calcDist2d(path.points.at(i), path.points.at(i - 1));
-      if (dist_sum > extra_dist) break;
+      if (dist_sum > extra_dist) {break;}
       ++ego_area_end_idx;
     }
   }
@@ -283,7 +284,7 @@ Polygon2d IntersectionModule::generateEgoIntersectionLanePolygon(
     ego_area.outer().push_back(Point2d(x, y));
   }
   for (int i = ego_area_end_idx; i >= static_cast<int>(ego_area_start_idx); --i) {
-    if (i < 0) break;
+    if (i < 0) {break;}
     double yaw = tf2::getYaw(path.points.at(i).point.pose.orientation);
     double x = path.points.at(i).point.pose.position.x - width * std::sin(yaw);
     double y = path.points.at(i).point.pose.position.y + width * std::cos(yaw);
@@ -309,8 +310,10 @@ double IntersectionModule::calcIntersectionPassingTime(
     }
     assigned_lane_found = has_objective_lane_id;
   }
-  if (!assigned_lane_found) return 0.0;  // has already passed the intersection.
+  if (!assigned_lane_found) {
+    return 0.0;                          // has already passed the intersection.
 
+  }
   // TODO set to be reasonable
   const double passing_time = dist_sum / planner_param_.intersection_velocity;
 
@@ -355,7 +358,8 @@ bool IntersectionModule::isTargetVehicleType(
     object.semantic.type == autoware_perception_msgs::msg::Semantic::BUS ||
     object.semantic.type == autoware_perception_msgs::msg::Semantic::TRUCK ||
     object.semantic.type == autoware_perception_msgs::msg::Semantic::MOTORBIKE ||
-    object.semantic.type == autoware_perception_msgs::msg::Semantic::BICYCLE) {
+    object.semantic.type == autoware_perception_msgs::msg::Semantic::BICYCLE)
+  {
     return true;
   }
   return false;
@@ -392,11 +396,10 @@ void IntersectionModule::StateMachine::setStateWithMarginTime(
   }
 
   RCLCPP_ERROR(logger, "Unsuitable state. ignore request.");
-  return;
 }
 
-void IntersectionModule::StateMachine::setState(State state) { state_ = state; }
+void IntersectionModule::StateMachine::setState(State state) {state_ = state;}
 
-void IntersectionModule::StateMachine::setMarginTime(const double t) { margin_time_ = t; }
+void IntersectionModule::StateMachine::setMarginTime(const double t) {margin_time_ = t;}
 
-IntersectionModule::State IntersectionModule::StateMachine::getState() { return state_; }
+IntersectionModule::State IntersectionModule::StateMachine::getState() {return state_;}

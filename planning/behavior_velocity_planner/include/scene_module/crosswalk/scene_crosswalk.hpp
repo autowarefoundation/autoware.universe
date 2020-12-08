@@ -64,7 +64,7 @@ private:
   bool checkSlowArea(
     const autoware_planning_msgs::msg::PathWithLaneId & input,
     const boost::geometry::model::polygon<boost::geometry::model::d2::point_xy<double>, false> &
-      polygon,
+    polygon,
     const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr & objects_ptr,
     const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & no_ground_pointcloud_ptr,
     autoware_planning_msgs::msg::PathWithLaneId & output);
@@ -72,7 +72,7 @@ private:
   bool checkStopArea(
     const autoware_planning_msgs::msg::PathWithLaneId & input,
     const boost::geometry::model::polygon<boost::geometry::model::d2::point_xy<double>, false> &
-      polygon,
+    polygon,
     const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr & objects_ptr,
     const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & no_ground_pointcloud_ptr,
     autoware_planning_msgs::msg::PathWithLaneId & output, bool * insert_stop);

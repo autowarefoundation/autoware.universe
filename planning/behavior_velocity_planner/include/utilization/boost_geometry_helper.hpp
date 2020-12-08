@@ -58,13 +58,13 @@ BOOST_GEOMETRY_REGISTER_POINT_3D(
   autoware_planning_msgs::msg::TrajectoryPoint, double, cs::cartesian, pose.position.x,
   pose.position.y, pose.position.z)
 
-template <class T>
+template<class T>
 Point2d to_bg2d(const T & p)
 {
   return Point2d(boost::geometry::get<0>(p), boost::geometry::get<1>(p));
 }
 
-template <class T>
+template<class T>
 LineString2d to_bg2d(const std::vector<T> & vec)
 {
   LineString2d ps;
@@ -119,7 +119,7 @@ inline Polygon2d obj2polygon(
 
   // rotate polygon(yaw)
   boost::geometry::strategy::transform::rotate_transformer<boost::geometry::radian, double, 2, 2>
-    rotate(-yaw);  // anti-clockwise -> :clockwise rotation
+  rotate(-yaw);    // anti-clockwise -> :clockwise rotation
   Polygon2d rotate_obj_poly;
   boost::geometry::transform(obj_poly, rotate_obj_poly, rotate);
 

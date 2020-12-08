@@ -32,10 +32,11 @@ autoware_planning_msgs::msg::Path interpolatePath(
   std::vector<double> y;
   std::vector<double> z;
   std::vector<double> v;
-  if (200 < path.points.size())
+  if (200 < path.points.size()) {
     RCLCPP_WARN(
       logger, "because path size is too large, calculation cost is high. size is %d.",
       (int)path.points.size());
+  }
   for (const auto & path_point : path.points) {
     x.push_back(path_point.pose.position.x);
     y.push_back(path_point.pose.position.y);
@@ -52,9 +53,11 @@ autoware_planning_msgs::msg::Path interpolatePath(
   double reference_velocity;
   const double interpolation_interval = 1.0;
   for (s_t = interpolation_interval; s_t < std::min(length, spline_ptr->s.back());
-       s_t += interpolation_interval) {
+    s_t += interpolation_interval)
+  {
     while (reference_velocity_idx < spline_ptr->s.size() &&
-           spline_ptr->s.at(reference_velocity_idx) < s_t) {
+      spline_ptr->s.at(reference_velocity_idx) < s_t)
+    {
       ++reference_velocity_idx;
     }
     reference_velocity = spline_ptr->calc_trajectory_point(
@@ -95,7 +98,7 @@ autoware_planning_msgs::msg::Path interpolatePath(
 
     interpolated_path.points.push_back(path_point);
   }
-  if (spline_ptr->s.back() <= s_t) interpolated_path.points.push_back(path.points.back());
+  if (spline_ptr->s.back() <= s_t) {interpolated_path.points.push_back(path.points.back());}
 
   return interpolated_path;
 }
@@ -133,8 +136,8 @@ autoware_planning_msgs::msg::Path filterStopPathPoint(
   autoware_planning_msgs::msg::Path filtered_path = path;
   bool found_stop = false;
   for (size_t i = 0; i < filtered_path.points.size(); ++i) {
-    if (std::fabs(filtered_path.points.at(i).twist.linear.x) < 0.01) found_stop = true;
-    if (found_stop) filtered_path.points.at(i).twist.linear.x = 0.0;
+    if (std::fabs(filtered_path.points.at(i).twist.linear.x) < 0.01) {found_stop = true;}
+    if (found_stop) {filtered_path.points.at(i).twist.linear.x = 0.0;}
   }
   return filtered_path;
 }

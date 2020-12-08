@@ -49,10 +49,10 @@ bool StopLineModule::modifyPathVelocity(
       bg::model::linestring<Point> line = {
         {path->points.at(i).point.pose.position.x, path->points.at(i).point.pose.position.y},
         {path->points.at(i + 1).point.pose.position.x,
-         path->points.at(i + 1).point.pose.position.y}};
+          path->points.at(i + 1).point.pose.position.y}};
       std::vector<Point> collision_points;
       bg::intersection(stop_line, line, collision_points);
-      if (collision_points.empty()) continue;
+      if (collision_points.empty()) {continue;}
 
       // search stop point index
       size_t insert_stop_point_idx = 0;
@@ -94,8 +94,9 @@ bool StopLineModule::modifyPathVelocity(
       path->points.insert(path->points.begin() + insert_stop_point_idx, stop_point_with_lane_id);
 
       // insert 0 velocity after stop point
-      for (size_t j = insert_stop_point_idx; j < path->points.size(); ++j)
+      for (size_t j = insert_stop_point_idx; j < path->points.size(); ++j) {
         path->points.at(j).point.twist.linear.x = 0.0;
+      }
       break;
     }
 
@@ -104,10 +105,11 @@ bool StopLineModule::modifyPathVelocity(
     const double x = stop_point.x() - self_pose.pose.position.x;
     const double y = stop_point.y() - self_pose.pose.position.y;
     const double dist = std::sqrt(x * x + y * y);
-    if (dist < planner_param_.stop_check_dist && planner_data_->isVehicleStopping())
+    if (dist < planner_param_.stop_check_dist && planner_data_->isVehicleStopping()) {
       state_ = State::STOP;
+    }
   } else if (state_ == State::STOP) {
-    if (!planner_data_->isVehicleStopping()) state_ = State::START;
+    if (!planner_data_->isVehicleStopping()) {state_ = State::START;}
     /* get stop point and stop factor */
     autoware_planning_msgs::msg::StopFactor stop_factor;
     stop_factor.stop_pose = debug_data_.first_stop_pose;

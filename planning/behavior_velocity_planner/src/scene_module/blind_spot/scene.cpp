@@ -42,7 +42,7 @@ BlindSpotModule::BlindSpotModule(
     turn_direction_ = TurnDirection::LEFT;
   } else if (!turn_direction.compare("right")) {
     turn_direction_ = TurnDirection::RIGHT;
-  };
+  }
   has_traffic_light_ =
     !(assigned_lanelet.regulatoryElementsAs<const lanelet::TrafficLight>().empty());
 }
@@ -115,7 +115,9 @@ bool BlindSpotModule::modifyPathVelocity(
   /* calculate dynamic collision around detection area */
   bool has_obstacle =
     checkObstacleInBlindSpot(lanelet_map_ptr, routing_graph_ptr, *path, objects_ptr, closest_idx);
-  state_machine_.setStateWithMarginTime(has_obstacle ? State::STOP : State::GO, logger_.get_child("state_machine"), *clock_);
+  state_machine_.setStateWithMarginTime(
+    has_obstacle ? State::STOP : State::GO,
+    logger_.get_child("state_machine"), *clock_);
 
   /* set stop speed */
   if (state_machine_.getState() == State::STOP) {
@@ -181,7 +183,7 @@ bool BlindSpotModule::generateStopLine(
 
   /* spline interpolation */
   autoware_planning_msgs::msg::PathWithLaneId path_ip;
-  if (!util::splineInterpolate(*path, interval, &path_ip, logger_)) return false;
+  if (!util::splineInterpolate(*path, interval, &path_ip, logger_)) {return false;}
   debug_data_.spline_path = path_ip;
 
   /* generate stop point */
@@ -279,7 +281,7 @@ bool BlindSpotModule::checkObstacleInBlindSpot(
   // check objects in blind spot areas
   bool obstacle_detected = false;
   for (const auto & object : objects.objects) {
-    if (!isTargetObjectType(object)) continue;
+    if (!isTargetObjectType(object)) {continue;}
 
     bool exist_in_detection_area = bg::within(
       to_bg2d(object.state.pose_covariance.pose.position),
@@ -302,7 +304,7 @@ bool BlindSpotModule::isPredictedPathInArea(
     for (const auto & predicted_point : predicted_path.path) {
       exist_in_conflict_area =
         bg::within(to_bg2d(predicted_point.pose.pose.position), lanelet::utils::to2D(area));
-      if (exist_in_conflict_area) return true;
+      if (exist_in_conflict_area) {return true;}
     }
   }
   return false;
@@ -341,7 +343,7 @@ BlindSpotPolygons BlindSpotModule::generateBlindSpotPolygons(
   /* get lane ids until intersection */
   for (const auto & point : path.points) {
     lane_ids.push_back(point.lane_ids.front());
-    if (point.lane_ids.front() == lane_id_) break;
+    if (point.lane_ids.front() == lane_id_) {break;}
   }
   /* remove adjacent duplicates */
   lane_ids.erase(std::unique(lane_ids.begin(), lane_ids.end()), lane_ids.end());
@@ -359,7 +361,7 @@ BlindSpotPolygons BlindSpotModule::generateBlindSpotPolygons(
       const auto prev_lanelet = lanelet_map_ptr->laneletLayer.get(lane_ids.at(i));
       const auto next_lanelet = lanelet_map_ptr->laneletLayer.get(lane_ids.at(i + 1));
       /* end if next lanelet does not follow prev lanelet */
-      if (!lanelet::geometry::follows(prev_lanelet.invert(), next_lanelet.invert())) break;
+      if (!lanelet::geometry::follows(prev_lanelet.invert(), next_lanelet.invert())) {break;}
       const auto half_lanelet = generateHalfLanelet(next_lanelet);
       blind_spot_lanelets.push_back(half_lanelet);
     }
@@ -425,7 +427,8 @@ bool BlindSpotModule::isTargetObjectType(
   if (
     object.semantic.type == autoware_perception_msgs::msg::Semantic::BICYCLE ||
     object.semantic.type == autoware_perception_msgs::msg::Semantic::PEDESTRIAN ||
-    object.semantic.type == autoware_perception_msgs::msg::Semantic::MOTORBIKE) {
+    object.semantic.type == autoware_perception_msgs::msg::Semantic::MOTORBIKE)
+  {
     return true;
   }
   return false;
@@ -435,7 +438,7 @@ boost::optional<geometry_msgs::msg::Point> BlindSpotModule::getStartPointFromLan
   const int lane_id) const
 {
   lanelet::ConstLanelet lanelet = planner_data_->lanelet_map->laneletLayer.get(lane_id);
-  if (lanelet.centerline().empty()) return boost::none;
+  if (lanelet.centerline().empty()) {return boost::none;}
   const auto p = lanelet.centerline().front();
   geometry_msgs::msg::Point start_point;
   start_point.x = p.x();
@@ -452,7 +455,7 @@ lanelet::ConstLanelets BlindSpotModule::getStraightLanelets(
   lanelet::ConstLanelets straight_lanelets;
   const auto intersection_lanelet = lanelet_map_ptr->laneletLayer.get(lane_id);
   const auto prev_intersection_lanelets = routing_graph_ptr->previous(intersection_lanelet);
-  if (prev_intersection_lanelets.empty()) return straight_lanelets;
+  if (prev_intersection_lanelets.empty()) {return straight_lanelets;}
 
   const auto next_lanelets = routing_graph_ptr->following(prev_intersection_lanelets.front());
   for (const auto & ll : next_lanelets) {
@@ -495,11 +498,10 @@ void BlindSpotModule::StateMachine::setStateWithMarginTime(
   }
 
   RCLCPP_ERROR(logger, "Unsuitable state. ignore request.");
-  return;
 }
 
-void BlindSpotModule::StateMachine::setState(State state) { state_ = state; }
+void BlindSpotModule::StateMachine::setState(State state) {state_ = state;}
 
-void BlindSpotModule::StateMachine::setMarginTime(const double t) { margin_time_ = t; }
+void BlindSpotModule::StateMachine::setMarginTime(const double t) {margin_time_ = t;}
 
-BlindSpotModule::State BlindSpotModule::StateMachine::getState() { return state_; }
+BlindSpotModule::State BlindSpotModule::StateMachine::getState() {return state_;}

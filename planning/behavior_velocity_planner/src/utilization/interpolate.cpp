@@ -36,7 +36,7 @@ bool LinearInterpolate::interpolate(
       return_value.push_back(base_value[i]);
       continue;
     }
-    while (base_index[i] < idx) ++i;
+    while (base_index[i] < idx) {++i;}
     if (i <= 0 || static_cast<int>(base_index.size()) - 1 < i) {
       std::cerr << "[interpolate] undesired condition. skip this idx!" << std::endl;
       continue;
@@ -47,8 +47,9 @@ bool LinearInterpolate::interpolate(
     const double to_backward = idx - base_index[i - 1];
     if (to_forward < 0.0 || to_backward < 0.0) {
       std::cerr << "[interpolate] undesired condition. skip this idx!!" << std::endl;
-      std::cerr << "i = " << i << ", base_index[i - 1] = " << base_index[i - 1] << ", idx = " << idx
-                << ", base_index[i] = " << base_index[i] << std::endl;
+      std::cerr << "i = " << i << ", base_index[i - 1] = " << base_index[i - 1] << ", idx = " <<
+        idx <<
+        ", base_index[i] = " << base_index[i] << std::endl;
       continue;
     }
 
@@ -64,7 +65,7 @@ bool LinearInterpolate::interpolate(
 bool isIncrease(const std::vector<double> & x)
 {
   for (int i = 0; i < static_cast<int>(x.size()) - 1; ++i) {
-    if (x[i] > x[i + 1]) return false;
+    if (x[i] > x[i + 1]) {return false;}
   }
   return true;
 }
@@ -74,19 +75,19 @@ bool isValidInput(
   const std::vector<double> & return_index, std::vector<double> & return_value)
 {
   if (base_index.empty() || base_value.empty() || return_index.empty()) {
-    std::cout << "bad index : some vector is empty. base_index: " << base_index.size()
-              << ", base_value: " << base_value.size() << ", return_index: " << return_index.size()
-              << std::endl;
+    std::cout << "bad index : some vector is empty. base_index: " << base_index.size() <<
+      ", base_value: " << base_value.size() << ", return_index: " << return_index.size() <<
+      std::endl;
     return false;
   }
   if (!isIncrease(base_index)) {
-    std::cout << "bad index : base_index is not monotonically increasing. base_index = ["
-              << base_index.front() << ", " << base_index.back() << "]" << std::endl;
+    std::cout << "bad index : base_index is not monotonically increasing. base_index = [" <<
+      base_index.front() << ", " << base_index.back() << "]" << std::endl;
     return false;
   }
   if (!isIncrease(return_index)) {
-    std::cout << "bad index : base_index is not monotonically increasing. return_index = ["
-              << return_index.front() << ", " << return_index.back() << "]" << std::endl;
+    std::cout << "bad index : base_index is not monotonically increasing. return_index = [" <<
+      return_index.front() << ", " << return_index.back() << "]" << std::endl;
     return false;
   }
   if (return_index.front() < base_index.front()) {

@@ -70,13 +70,13 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode()
   // Trigger Subscriber
   trigger_sub_path_with_lane_id_ =
     this->create_subscription<autoware_planning_msgs::msg::PathWithLaneId>(
-      "input/path_with_lane_id", 1, std::bind(&BehaviorVelocityPlannerNode::onTrigger, this, _1));
+    "input/path_with_lane_id", 1, std::bind(&BehaviorVelocityPlannerNode::onTrigger, this, _1));
 
   // Subscribers
   sub_dynamic_objects_ =
     this->create_subscription<autoware_perception_msgs::msg::DynamicObjectArray>(
-      "input/dynamic_objects", 1,
-      std::bind(&BehaviorVelocityPlannerNode::onDynamicObjects, this, _1));
+    "input/dynamic_objects", 1,
+    std::bind(&BehaviorVelocityPlannerNode::onDynamicObjects, this, _1));
   sub_no_ground_pointcloud_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "input/no_ground_pointcloud", 1,
     std::bind(&BehaviorVelocityPlannerNode::onNoGroundPointCloud, this, _1));
@@ -87,8 +87,8 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode()
     "input/vector_map", 10, std::bind(&BehaviorVelocityPlannerNode::onLaneletMap, this, _1));
   sub_traffic_light_states_ =
     this->create_subscription<autoware_perception_msgs::msg::TrafficLightStateArray>(
-      "input/traffic_light_states", 10,
-      std::bind(&BehaviorVelocityPlannerNode::onTrafficLightStates, this, _1));
+    "input/traffic_light_states", 10,
+    std::bind(&BehaviorVelocityPlannerNode::onTrafficLightStates, this, _1));
 
   // Publishers
   path_pub_ = this->create_publisher<autoware_planning_msgs::msg::Path>("output/path", 1);
@@ -101,18 +101,24 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode()
   backward_path_length_ = this->declare_parameter("backward_path_length", 5.0);
 
   // Initialize PlannerManager
-  if (this->declare_parameter("launch_stop_line", true))
+  if (this->declare_parameter("launch_stop_line", true)) {
     planner_manager_.launchSceneModule(std::make_shared<StopLineModuleManager>(*this));
-  if (this->declare_parameter("launch_crosswalk", true))
+  }
+  if (this->declare_parameter("launch_crosswalk", true)) {
     planner_manager_.launchSceneModule(std::make_shared<CrosswalkModuleManager>(*this));
-  if (this->declare_parameter("launch_traffic_light", true))
+  }
+  if (this->declare_parameter("launch_traffic_light", true)) {
     planner_manager_.launchSceneModule(std::make_shared<TrafficLightModuleManager>(*this));
-  if (this->declare_parameter("launch_intersection", true))
+  }
+  if (this->declare_parameter("launch_intersection", true)) {
     planner_manager_.launchSceneModule(std::make_shared<IntersectionModuleManager>(*this));
-  if (this->declare_parameter("launch_blind_spot", true))
+  }
+  if (this->declare_parameter("launch_blind_spot", true)) {
     planner_manager_.launchSceneModule(std::make_shared<BlindSpotModuleManager>(*this));
-  if (this->declare_parameter("launch_detection_area", true))
+  }
+  if (this->declare_parameter("launch_detection_area", true)) {
     planner_manager_.launchSceneModule(std::make_shared<DetectionAreaModuleManager>(*this));
+  }
 }
 
 bool BehaviorVelocityPlannerNode::isDataReady()
@@ -120,13 +126,13 @@ bool BehaviorVelocityPlannerNode::isDataReady()
   const auto & d = planner_data_;
 
   // from tf
-  if (d.current_pose.header.frame_id == "") return false;
+  if (d.current_pose.header.frame_id == "") {return false;}
 
   // from callbacks
-  if (!d.current_velocity) return false;
-  if (!d.dynamic_objects) return false;
-  if (!d.no_ground_pointcloud) return false;
-  if (!d.lanelet_map) return false;
+  if (!d.current_velocity) {return false;}
+  if (!d.dynamic_objects) {return false;}
+  if (!d.no_ground_pointcloud) {return false;}
+  if (!d.lanelet_map) {return false;}
 
   return true;
 }
@@ -250,7 +256,6 @@ void BehaviorVelocityPlannerNode::onTrigger(
     publishDebugMarker(output_path_msg);
   }
 
-  return;
 }
 
 void BehaviorVelocityPlannerNode::publishDebugMarker(const autoware_planning_msgs::msg::Path & path)

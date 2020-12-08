@@ -27,7 +27,7 @@ class DetectionAreaModuleManager : public SceneModuleManagerInterface
 public:
   DetectionAreaModuleManager(rclcpp::Node & node);
 
-  const char * getModuleName() override { return "detection_area"; }
+  const char * getModuleName() override {return "detection_area";}
 
 private:
   DetectionAreaModule::PlannerParam planner_param_;

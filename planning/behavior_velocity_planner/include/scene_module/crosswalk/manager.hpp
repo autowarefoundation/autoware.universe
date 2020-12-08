@@ -28,7 +28,7 @@ class CrosswalkModuleManager : public SceneModuleManagerInterface
 public:
   CrosswalkModuleManager(rclcpp::Node & node);
 
-  const char * getModuleName() override { return "crosswalk"; }
+  const char * getModuleName() override {return "crosswalk";}
 
 private:
   CrosswalkModule::PlannerParam crosswalk_planner_param_;

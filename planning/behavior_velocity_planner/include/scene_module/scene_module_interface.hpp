@@ -42,13 +42,13 @@ public:
     autoware_planning_msgs::msg::StopReason * stop_reason) = 0;
   virtual visualization_msgs::msg::MarkerArray createDebugMarkerArray() = 0;
 
-  int64_t getModuleId() const { return module_id_; }
+  int64_t getModuleId() const {return module_id_;}
   void setPlannerData(const std::shared_ptr<const PlannerData> & planner_data)
   {
     planner_data_ = planner_data;
   }
 
-  boost::optional<int> getFirstStopPathPointIndex() { return first_stop_path_point_index_; }
+  boost::optional<int> getFirstStopPathPointIndex() {return first_stop_path_point_index_;}
 
 protected:
   const int64_t module_id_;
@@ -74,7 +74,7 @@ public:
 
   virtual const char * getModuleName() = 0;
 
-  boost::optional<int> getFirstStopPathPointIndex() { return first_stop_path_point_index_; }
+  boost::optional<int> getFirstStopPathPointIndex() {return first_stop_path_point_index_;}
 
   void updateSceneModuleInstances(
     const std::shared_ptr<const PlannerData> & planner_data,

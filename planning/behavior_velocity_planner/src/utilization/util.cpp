@@ -40,7 +40,7 @@ geometry_msgs::msg::Quaternion getQuaternionFromYaw(double yaw)
   return tf2::toMsg(q);
 }
 
-template <class T>
+template<class T>
 bool calcClosestIndex(
   const T & path, const geometry_msgs::msg::Pose & pose, int & closest, double dist_thr,
   double angle_thr)
@@ -53,13 +53,13 @@ bool calcClosestIndex(
     const double dist_squared = calcSquaredDist2d(getPose(path, i), pose);
 
     /* check distance threshold */
-    if (dist_squared > dist_thr * dist_thr) continue;
+    if (dist_squared > dist_thr * dist_thr) {continue;}
 
     /* check angle threshold */
     double yaw_i = tf2::getYaw(getPose(path, i).orientation);
     double yaw_diff = normalizeEulerAngle(yaw_pose - yaw_i);
 
-    if (std::fabs(yaw_diff) > angle_thr) continue;
+    if (std::fabs(yaw_diff) > angle_thr) {continue;}
 
     if (dist_squared < dist_squared_min) {
       dist_squared_min = dist_squared;
@@ -80,7 +80,7 @@ template bool calcClosestIndex<autoware_planning_msgs::msg::Path>(
   const autoware_planning_msgs::msg::Path & path, const geometry_msgs::msg::Pose & pose,
   int & closest, double dist_thr, double angle_thr);
 
-template <class T>
+template<class T>
 bool calcClosestIndex(
   const T & path, const geometry_msgs::msg::Point & point, int & closest, double dist_thr)
 {
@@ -91,7 +91,7 @@ bool calcClosestIndex(
     const double dist_squared = calcSquaredDist2d(getPose(path, i), point);
 
     /* check distance threshold */
-    if (dist_squared > dist_thr * dist_thr) continue;
+    if (dist_squared > dist_thr * dist_thr) {continue;}
 
     if (dist_squared < dist_squared_min) {
       dist_squared_min = dist_squared;

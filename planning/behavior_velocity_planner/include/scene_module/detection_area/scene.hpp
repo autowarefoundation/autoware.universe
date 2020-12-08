@@ -83,14 +83,14 @@ private:
   bool insertTargetVelocityPoint(
     const autoware_planning_msgs::msg::PathWithLaneId & input,
     const boost::geometry::model::linestring<boost::geometry::model::d2::point_xy<double>> &
-      stop_line,
+    stop_line,
     const double & margin, const double & velocity,
     autoware_planning_msgs::msg::PathWithLaneId & output);
 
   bool createTargetPoint(
     const autoware_planning_msgs::msg::PathWithLaneId & input,
     const boost::geometry::model::linestring<boost::geometry::model::d2::point_xy<double>> &
-      stop_line,
+    stop_line,
     const double & margin, size_t & target_point_idx, Eigen::Vector2d & target_point);
 
   bool isOverDeadLine(

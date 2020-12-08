@@ -75,8 +75,10 @@ void BlindSpotModuleManager::launchNewModules(
       continue;
     }
 
-    registerModule(std::make_shared<BlindSpotModule>(
-      module_id, lane_id, planner_data_, planner_param_, logger_.get_child("blind_spot_module"), clock_));
+    registerModule(
+      std::make_shared<BlindSpotModule>(
+        module_id, lane_id, planner_data_, planner_param_, logger_.get_child("blind_spot_module"),
+        clock_));
   }
 }
 
@@ -87,6 +89,6 @@ BlindSpotModuleManager::getModuleExpiredFunction(
   const auto lane_id_set = getLaneIdSetOnPath(path);
 
   return [lane_id_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
-    return lane_id_set.count(scene_module->getModuleId()) == 0;
-  };
+           return lane_id_set.count(scene_module->getModuleId()) == 0;
+         };
 }

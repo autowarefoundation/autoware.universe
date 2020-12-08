@@ -27,9 +27,9 @@ std::pair<int, double> findWayPointAndDistance(
     const double dx = p.x() - input_path.points.at(i).point.pose.position.x;
     const double dy = p.y() - input_path.points.at(i).point.pose.position.y;
     const double dx_wp = input_path.points.at(i + 1).point.pose.position.x -
-                         input_path.points.at(i).point.pose.position.x;
+      input_path.points.at(i).point.pose.position.x;
     const double dy_wp = input_path.points.at(i + 1).point.pose.position.y -
-                         input_path.points.at(i).point.pose.position.y;
+      input_path.points.at(i).point.pose.position.y;
 
     const double theta = std::atan2(dy, dx) - std::atan2(dy_wp, dx_wp);
 
@@ -65,9 +65,9 @@ double calcArcLengthFromWayPoint(
   const size_t dst_idx = dst >= 0 ? static_cast<size_t>(dst) : 0;
   for (size_t i = src_idx; i < dst_idx; ++i) {
     const double dx_wp = input_path.points.at(i + 1).point.pose.position.x -
-                         input_path.points.at(i).point.pose.position.x;
+      input_path.points.at(i).point.pose.position.x;
     const double dy_wp = input_path.points.at(i + 1).point.pose.position.y -
-                         input_path.points.at(i).point.pose.position.y;
+      input_path.points.at(i).point.pose.position.y;
     length += std::hypot(dx_wp, dy_wp);
   }
   return length;
@@ -166,13 +166,15 @@ bool DetectionAreaModule::modifyPathVelocity(
       Eigen::Vector2d dead_line_point;
       size_t dead_line_point_idx;
       if (!createTargetPoint(
-            input_path, stop_line, -2.0 /*overline margin*/, dead_line_point_idx,
-            dead_line_point)) {
+          input_path, stop_line, -2.0 /*overline margin*/, dead_line_point_idx,
+          dead_line_point))
+      {
         continue;
       }
 
       if (isOverDeadLine(
-            self_pose.pose, input_path, dead_line_point_idx, dead_line_point, dead_line_range)) {
+          self_pose.pose, input_path, dead_line_point_idx, dead_line_point, dead_line_range))
+      {
         state_ = State::PASS;
         return true;
       }
@@ -183,14 +185,16 @@ bool DetectionAreaModule::modifyPathVelocity(
       Eigen::Vector2d stop_line_point;
       size_t stop_line_point_idx;
       if (!createTargetPoint(
-            input_path, stop_line, planner_param_.stop_margin, stop_line_point_idx,
-            stop_line_point)) {
+          input_path, stop_line, planner_param_.stop_margin, stop_line_point_idx,
+          stop_line_point))
+      {
         continue;
       }
 
       if (
         state_ != State::STOP &&
-        calcSignedDistance(self_pose.pose, stop_line_point) < pass_judge_line_distance) {
+        calcSignedDistance(self_pose.pose, stop_line_point) < pass_judge_line_distance)
+      {
         RCLCPP_WARN_THROTTLE(
           logger_, *clock_, 1000 /* ms */, "vehicle is over stop border");
         state_ = State::PASS;
@@ -226,14 +230,15 @@ bool DetectionAreaModule::isOverDeadLine(
   }
 
   double yaw;
-  if (dead_line_point_idx == 0)
+  if (dead_line_point_idx == 0) {
     yaw = std::atan2(
       input_path.points.at(dead_line_point_idx + 1).point.pose.position.y - dead_line_point.y(),
       input_path.points.at(dead_line_point_idx + 1).point.pose.position.x - dead_line_point.x());
-  else
+  } else {
     yaw = std::atan2(
       dead_line_point.y() - input_path.points.at(dead_line_point_idx - 1).point.pose.position.y,
       dead_line_point.x() - input_path.points.at(dead_line_point_idx - 1).point.pose.position.x);
+  }
 
   // Calculate transform from dead_line_pose to self_pose
   tf2::Transform tf_dead_line_pose2self_pose;
@@ -288,7 +293,7 @@ bool DetectionAreaModule::isPointsWithinDetectionArea(
 bool DetectionAreaModule::insertTargetVelocityPoint(
   const autoware_planning_msgs::msg::PathWithLaneId & input,
   const boost::geometry::model::linestring<boost::geometry::model::d2::point_xy<double>> &
-    stop_line,
+  stop_line,
   const double & margin, const double & velocity,
   autoware_planning_msgs::msg::PathWithLaneId & output)
 {
@@ -297,8 +302,9 @@ bool DetectionAreaModule::insertTargetVelocityPoint(
   size_t insert_target_point_idx;
   autoware_planning_msgs::msg::PathPointWithLaneId target_point_with_lane_id;
 
-  if (!createTargetPoint(input, stop_line, margin, insert_target_point_idx, target_point))
+  if (!createTargetPoint(input, stop_line, margin, insert_target_point_idx, target_point)) {
     return false;
+  }
   const int target_velocity_point_idx = std::max(static_cast<int>(insert_target_point_idx - 1), 0);
   target_point_with_lane_id = output.points.at(target_velocity_point_idx);
   target_point_with_lane_id.point.pose.position.x = target_point.x();
@@ -310,15 +316,16 @@ bool DetectionAreaModule::insertTargetVelocityPoint(
   output.points.insert(output.points.begin() + insert_target_point_idx, target_point_with_lane_id);
 
   // insert 0 velocity after target point
-  for (size_t j = insert_target_point_idx; j < output.points.size(); ++j)
+  for (size_t j = insert_target_point_idx; j < output.points.size(); ++j) {
     output.points.at(j).point.twist.linear.x =
       std::min(velocity, output.points.at(j).point.twist.linear.x);
+  }
   if (velocity == 0.0 && target_velocity_point_idx < first_stop_path_point_index_) {
     debug_data_.first_stop_pose = target_point_with_lane_id.point.pose;
     first_stop_path_point_index_ = target_velocity_point_idx;
   }
   // -- debug code --
-  if (velocity == 0.0) debug_data_.stop_poses.push_back(target_point_with_lane_id.point.pose);
+  if (velocity == 0.0) {debug_data_.stop_poses.push_back(target_point_with_lane_id.point.pose);}
   // ----------------
   return true;
 }
@@ -326,7 +333,7 @@ bool DetectionAreaModule::insertTargetVelocityPoint(
 bool DetectionAreaModule::createTargetPoint(
   const autoware_planning_msgs::msg::PathWithLaneId & input,
   const boost::geometry::model::linestring<boost::geometry::model::d2::point_xy<double>> &
-    stop_line,
+  stop_line,
   const double & margin, size_t & target_point_idx, Eigen::Vector2d & target_point)
 {
   for (size_t i = 0; i < input.points.size() - 1; ++i) {
@@ -336,7 +343,7 @@ bool DetectionAreaModule::createTargetPoint(
     std::vector<Point> collision_points;
     bg::intersection(stop_line, path_line, collision_points);
 
-    if (collision_points.empty()) continue;
+    if (collision_points.empty()) {continue;}
 
     // check nearest collision point
     Point nearest_collision_point;

@@ -85,7 +85,9 @@ void StopLineModuleManager::launchNewModules(
     const auto module_id = stop_line.id();
     if (!isModuleRegistered(module_id)) {
       registerModule(
-        std::make_shared<StopLineModule>(module_id, stop_line, planner_param_, logger_.get_child("stop_line_module"), clock_));
+        std::make_shared<StopLineModule>(
+          module_id, stop_line, planner_param_,
+          logger_.get_child("stop_line_module"), clock_));
     }
   }
 }
@@ -97,6 +99,6 @@ StopLineModuleManager::getModuleExpiredFunction(
   const auto stop_line_id_set = getStopLineIdSetOnPath(path, planner_data_->lanelet_map);
 
   return [stop_line_id_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
-    return stop_line_id_set.count(scene_module->getModuleId()) == 0;
-  };
+           return stop_line_id_set.count(scene_module->getModuleId()) == 0;
+         };
 }

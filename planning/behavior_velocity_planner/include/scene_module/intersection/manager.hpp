@@ -28,7 +28,7 @@ class IntersectionModuleManager : public SceneModuleManagerInterface
 public:
   IntersectionModuleManager(rclcpp::Node & node);
 
-  const char * getModuleName() override { return "intersection"; }
+  const char * getModuleName() override {return "intersection";}
 
 private:
   IntersectionModule::PlannerParam planner_param_;

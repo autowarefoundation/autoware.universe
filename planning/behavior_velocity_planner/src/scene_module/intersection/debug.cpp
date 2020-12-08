@@ -48,7 +48,7 @@ visualization_msgs::msg::MarkerArray createLaneletPolygonsMarkerArray(
       point.z = p.z();
       marker.points.push_back(point);
     }
-    if (!marker.points.empty()) marker.points.push_back(marker.points.front());
+    if (!marker.points.empty()) {marker.points.push_back(marker.points.front());}
     msg.markers.push_back(marker);
   }
 
@@ -79,7 +79,7 @@ visualization_msgs::msg::MarkerArray createPolygonMarkerArray(
     point.z = p.z;
     marker.points.push_back(point);
   }
-  if (!marker.points.empty()) marker.points.push_back(marker.points.front());
+  if (!marker.points.empty()) {marker.points.push_back(marker.points.front());}
   msg.markers.push_back(marker);
 
   return msg;

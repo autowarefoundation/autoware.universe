@@ -38,8 +38,8 @@
 using Point2d = boost::geometry::model::d2::point_xy<double>;
 namespace planning_utils
 {
-inline geometry_msgs::msg::Point getPoint(const geometry_msgs::msg::Point & p) { return p; }
-inline geometry_msgs::msg::Point getPoint(const geometry_msgs::msg::Pose & p) { return p.position; }
+inline geometry_msgs::msg::Point getPoint(const geometry_msgs::msg::Point & p) {return p;}
+inline geometry_msgs::msg::Point getPoint(const geometry_msgs::msg::Pose & p) {return p.position;}
 inline geometry_msgs::msg::Point getPoint(const geometry_msgs::msg::PoseStamped & p)
 {
   return p.pose.position;
@@ -72,30 +72,30 @@ inline geometry_msgs::msg::Pose getPose(
   return traj.points.at(idx).pose;
 }
 
-inline int64_t bitShift(int64_t original_id) { return (original_id << (sizeof(int32_t) * 8 / 2)); }
+inline int64_t bitShift(int64_t original_id) {return original_id << (sizeof(int32_t) * 8 / 2);}
 
-inline double square(const double & a) { return a * a; }
+inline double square(const double & a) {return a * a;}
 double normalizeEulerAngle(double euler);
 geometry_msgs::msg::Quaternion getQuaternionFromYaw(double yaw);
 
-template <class T1, class T2>
+template<class T1, class T2>
 double calcSquaredDist2d(const T1 & a, const T2 & b)
 {
   return square(getPoint(a).x - getPoint(b).x) + square(getPoint(a).y - getPoint(b).y);
 }
 
-template <class T1, class T2>
+template<class T1, class T2>
 double calcDist2d(const T1 & a, const T2 & b)
 {
   return std::sqrt(calcSquaredDist2d<T1, T2>(a, b));
 }
 
-template <class T>
+template<class T>
 bool calcClosestIndex(
   const T & path, const geometry_msgs::msg::Pose & pose, int & closest, double dist_thr = 3.0,
   double angle_thr = M_PI_4);
 
-template <class T>
+template<class T>
 bool calcClosestIndex(
   const T & path, const geometry_msgs::msg::Point & point, int & closest, double dist_thr = 3.0);
 
@@ -118,7 +118,7 @@ std::vector<geometry_msgs::msg::Point> toRosPoints(
 geometry_msgs::msg::Point toRosPoint(const pcl::PointXYZ & pcl_point);
 geometry_msgs::msg::Point toRosPoint(const Point2d & boost_point, const double z);
 
-template <class T>
+template<class T>
 std::vector<T> concatVector(const std::vector<T> & vec1, const std::vector<T> & vec2)
 {
   auto concat_vec = vec1;
