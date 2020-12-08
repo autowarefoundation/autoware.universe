@@ -69,16 +69,18 @@ bool getClosestLanelet(
   const auto nearest_road_lanelet =
     excludeSubtypeLaneletsWithDistance(nearest_lanelet, lanelet::AttributeValueString::Crosswalk);
   if (nearest_road_lanelet.empty()) {
-    RCLCPP_ERROR_STREAM(logger,
-      "Failed to find the closest lane!" << std::endl
-                                         << "search point: " << toString(search_pose) << std::endl);
+    RCLCPP_ERROR_STREAM(
+      logger,
+      "Failed to find the closest lane!" << std::endl <<
+        "search point: " << toString(search_pose) << std::endl);
     return false;
   }
   if (nearest_road_lanelet.front().first > distance_thresh) {
-    RCLCPP_ERROR_STREAM(logger,
-      "Closest lane is too far away!" << std::endl
-                                      << "search point: " << toString(search_pose) << std::endl
-                                      << "lane id: " << nearest_lanelet.front().second.id());
+    RCLCPP_ERROR_STREAM(
+      logger,
+      "Closest lane is too far away!" << std::endl <<
+        "search point: " << toString(search_pose) << std::endl <<
+        "lane id: " << nearest_lanelet.front().second.id());
     return false;
   }
 

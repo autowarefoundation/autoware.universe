@@ -67,10 +67,11 @@ constexpr double normalizeRadian(
   const double rad, const double min_rad = -M_PI, const double max_rad = M_PI)
 {
   const auto value = std::fmod(rad, 2 * M_PI);
-  if (min_rad < value && value <= max_rad)
+  if (min_rad < value && value <= max_rad) {
     return value;
-  else
+  } else {
     return value - std::copysign(2 * M_PI, value);
+  }
 }
 
 bool isInLane(const lanelet::ConstLanelet & lanelet, const lanelet::ConstPoint3d & point)
@@ -124,10 +125,14 @@ MissionPlannerLanelet2::MissionPlannerLanelet2()
 : MissionPlanner("mission_planner_node"), is_graph_ready_(false)
 {
   using std::placeholders::_1;
-  map_subscriber_ = create_subscription<autoware_lanelet2_msgs::msg::MapBin>("input/vector_map", 10, std::bind(&MissionPlannerLanelet2::mapCallback, this, _1));
+  map_subscriber_ = create_subscription<autoware_lanelet2_msgs::msg::MapBin>(
+    "input/vector_map", 10, std::bind(
+      &MissionPlannerLanelet2::mapCallback, this,
+      _1));
 }
 
-void MissionPlannerLanelet2::mapCallback(const autoware_lanelet2_msgs::msg::MapBin::ConstSharedPtr msg)
+void MissionPlannerLanelet2::mapCallback(
+  const autoware_lanelet2_msgs::msg::MapBin::ConstSharedPtr msg)
 {
   lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(
@@ -135,7 +140,7 @@ void MissionPlannerLanelet2::mapCallback(const autoware_lanelet2_msgs::msg::MapB
   is_graph_ready_ = true;
 }
 
-bool MissionPlannerLanelet2::isRoutingGraphReady() const { return (is_graph_ready_); }
+bool MissionPlannerLanelet2::isRoutingGraphReady() const {return is_graph_ready_;}
 
 void MissionPlannerLanelet2::visualizeRoute(const autoware_planning_msgs::msg::Route & route) const
 {
@@ -171,13 +176,13 @@ void MissionPlannerLanelet2::visualizeRoute(const autoware_planning_msgs::msg::R
     lanelet::visualization::laneletsBoundaryAsMarkerArray(route_lanelets, cl_ll_borders, false));
   insertMarkerArray(
     &route_marker_array, lanelet::visualization::laneletsAsTriangleMarkerArray(
-                           "route_lanelets", route_lanelets, cl_route));
+      "route_lanelets", route_lanelets, cl_route));
   insertMarkerArray(
     &route_marker_array,
     lanelet::visualization::laneletsAsTriangleMarkerArray("end_lanelets", end_lanelets, cl_end));
   insertMarkerArray(
     &route_marker_array, lanelet::visualization::laneletsAsTriangleMarkerArray(
-                           "normal_lanelets", normal_lanelets, cl_normal));
+      "normal_lanelets", normal_lanelets, cl_normal));
   insertMarkerArray(
     &route_marker_array,
     lanelet::visualization::laneletsAsTriangleMarkerArray("goal_lanelets", goal_lanelets, cl_goal));
@@ -224,12 +229,12 @@ autoware_planning_msgs::msg::Route MissionPlannerLanelet2::planRoute()
 {
   std::stringstream ss;
   for (const auto & checkpoint : checkpoints_) {
-    ss << "x: " << checkpoint.pose.position.x << " "
-       << "y: " << checkpoint.pose.position.y << std::endl;
+    ss << "x: " << checkpoint.pose.position.x << " " <<
+      "y: " << checkpoint.pose.position.y << std::endl;
   }
   RCLCPP_INFO_STREAM(
-    get_logger(), "start planning route with checkpoints: " << std::endl
-                                                            << ss.str());
+    get_logger(), "start planning route with checkpoints: " << std::endl <<
+      ss.str());
 
   autoware_planning_msgs::msg::Route route_msg;
   RouteSections route_sections;
@@ -287,12 +292,12 @@ bool MissionPlannerLanelet2::planPathBetweenCheckpoints(
     routing_graph_ptr_->getRoute(start_lanelet, goal_lanelet, 0);
   if (!optional_route) {
     RCLCPP_ERROR_STREAM(
-      get_logger(), "Failed to find a proper path!"
-                      << std::endl
-                      << "start checkpoint: " << toString(start_pose_.pose) << std::endl
-                      << "goal checkpoint: " << toString(goal_pose_.pose) << std::endl
-                      << "start lane id: " << start_lanelet.id() << std::endl
-                      << "goal lane id: " << goal_lanelet.id() << std::endl);
+      get_logger(), "Failed to find a proper path!" <<
+        std::endl <<
+        "start checkpoint: " << toString(start_pose_.pose) << std::endl <<
+        "goal checkpoint: " << toString(goal_pose_.pose) << std::endl <<
+        "start lane id: " << start_lanelet.id() << std::endl <<
+        "goal lane id: " << goal_lanelet.id() << std::endl);
     return false;
   }
 
@@ -320,7 +325,7 @@ RouteSections MissionPlannerLanelet2::createRouteSections(
 {
   RouteSections route_sections;
 
-  if (main_path.empty()) return route_sections;
+  if (main_path.empty()) {return route_sections;}
 
   for (const auto & main_llt : main_path) {
     autoware_planning_msgs::msg::RouteSection route_section_msg;

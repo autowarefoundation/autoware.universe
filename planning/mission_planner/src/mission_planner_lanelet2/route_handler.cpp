@@ -73,7 +73,8 @@ void RouteHandler::setRouteLanelets(
       is_connected_to_candidate_prev = false;
     }
     while (!previous_lanelets.empty() && is_connected_to_candidate_prev &&
-           !is_connected_to_main_lanes_prev) {
+      !is_connected_to_main_lanes_prev)
+    {
       is_connected_to_candidate_prev = false;
 
       for (const auto & prev_lanelet : previous_lanelets) {
@@ -100,7 +101,8 @@ void RouteHandler::setRouteLanelets(
       is_connected_to_candidate_next = false;
     }
     while (!following_lanelets.empty() && is_connected_to_candidate_next &&
-           !is_connected_to_main_lanes_next) {
+      !is_connected_to_main_lanes_next)
+    {
       is_connected_to_candidate_next = false;
       for (const auto & next_lanelet : following_lanelets) {
         if (route_lanelets_id.find(next_lanelet.id()) != route_lanelets_id.end()) {
@@ -128,7 +130,7 @@ void RouteHandler::setRouteLanelets(
   }
 }
 
-lanelet::ConstLanelets RouteHandler::getRouteLanelets() const { return route_lanelets_; }
+lanelet::ConstLanelets RouteHandler::getRouteLanelets() const {return route_lanelets_;}
 
 lanelet::ConstLanelets RouteHandler::getLaneletSequenceAfter(
   const lanelet::ConstLanelet & lanelet) const
@@ -206,7 +208,7 @@ lanelet::ConstLanelets RouteHandler::getPreviousLaneletSequence(
   const lanelet::ConstLanelets & lanelet_sequence) const
 {
   lanelet::ConstLanelets previous_lanelet_sequence;
-  if (lanelet_sequence.empty()) return previous_lanelet_sequence;
+  if (lanelet_sequence.empty()) {return previous_lanelet_sequence;}
 
   auto first_lane = lanelet_sequence.front();
   if (exists(start_lanelets_, first_lane)) {
@@ -392,7 +394,7 @@ lanelet::ConstLanelets RouteHandler::getNextLaneSequence(
   const lanelet::ConstLanelets & lane_sequence) const
 {
   lanelet::ConstLanelets next_lane_sequence;
-  if (lane_sequence.empty()) return next_lane_sequence;
+  if (lane_sequence.empty()) {return next_lane_sequence;}
   lanelet::ConstLanelet final_lanelet = lane_sequence.back();
   lanelet::ConstLanelet next_lanelet;
   if (!getNextLaneletWithinRoute(final_lanelet, &next_lanelet)) {
