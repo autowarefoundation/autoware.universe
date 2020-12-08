@@ -23,9 +23,9 @@
 
 #include "ndt_pcl_modified/ndt.hpp"
 
-template <class PointSource, class PointTarget>
+template<class PointSource, class PointTarget>
 class NormalDistributionsTransformPCLModified
-: public NormalDistributionsTransformBase<PointSource, PointTarget>
+  : public NormalDistributionsTransformBase<PointSource, PointTarget>
 {
 public:
   NormalDistributionsTransformPCLModified();

@@ -59,9 +59,9 @@
 
 namespace pcl
 {
-template <typename PointSource, typename PointTarget>
+template<typename PointSource, typename PointTarget>
 class NormalDistributionsTransformModified
-: public NormalDistributionsTransform<PointSource, PointTarget>
+  : public NormalDistributionsTransform<PointSource, PointTarget>
 {
 protected:
   typedef typename Registration<PointSource, PointTarget>::PointCloudSource PointCloudSource;
@@ -70,7 +70,7 @@ public:
   virtual void computeTransformation(
     PointCloudSource & output, const Eigen::Matrix4f & guess) override;
 
-  inline const Eigen::Matrix<double, 6, 6> getHessian() const { return hessian_; }
+  inline const Eigen::Matrix<double, 6, 6> getHessian() const {return hessian_;}
 
   inline const std::vector<Eigen::Matrix4f> getFinalTransformationArray() const
   {

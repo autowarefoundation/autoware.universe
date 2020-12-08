@@ -53,7 +53,8 @@ class NDTScanMatcher : public rclcpp::Node
   // TODO move file
   struct OMPParams
   {
-    OMPParams() : search_method(ndt_omp::NeighborSearchMethod::KDTREE), num_threads(1){};
+    OMPParams()
+    : search_method(ndt_omp::NeighborSearchMethod::KDTREE), num_threads(1) {}
     ndt_omp::NeighborSearchMethod search_method;
     int num_threads;
   };
@@ -66,7 +67,7 @@ class NDTScanMatcher : public rclcpp::Node
     : initial_pose(a_initial_pose),
       result_pose(a_result_pose),
       score(a_score),
-      iteration(a_iteration){};
+      iteration(a_iteration) {}
     geometry_msgs::msg::Pose initial_pose;
     geometry_msgs::msg::Pose result_pose;
     double score;
@@ -123,9 +124,12 @@ private:
   rclcpp::Publisher<autoware_debug_msgs::msg::Float32Stamped>::SharedPtr exe_time_pub_;
   rclcpp::Publisher<autoware_debug_msgs::msg::Float32Stamped>::SharedPtr transform_probability_pub_;
   rclcpp::Publisher<autoware_debug_msgs::msg::Int32Stamped>::SharedPtr iteration_num_pub_;
-  rclcpp::Publisher<autoware_debug_msgs::msg::Float32Stamped>::SharedPtr initial_to_result_distance_pub_;
-  rclcpp::Publisher<autoware_debug_msgs::msg::Float32Stamped>::SharedPtr initial_to_result_distance_old_pub_;
-  rclcpp::Publisher<autoware_debug_msgs::msg::Float32Stamped>::SharedPtr initial_to_result_distance_new_pub_;
+  rclcpp::Publisher<autoware_debug_msgs::msg::Float32Stamped>::SharedPtr
+    initial_to_result_distance_pub_;
+  rclcpp::Publisher<autoware_debug_msgs::msg::Float32Stamped>::SharedPtr
+    initial_to_result_distance_old_pub_;
+  rclcpp::Publisher<autoware_debug_msgs::msg::Float32Stamped>::SharedPtr
+    initial_to_result_distance_new_pub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr ndt_marker_pub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr
     ndt_monte_carlo_initial_pose_marker_pub_;
@@ -147,7 +151,7 @@ private:
   double converged_param_transform_probability_;
 
   std::deque<geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr>
-    initial_pose_msg_ptr_array_;
+  initial_pose_msg_ptr_array_;
   std::mutex ndt_map_mtx_;
 
   OMPParams omp_params_;

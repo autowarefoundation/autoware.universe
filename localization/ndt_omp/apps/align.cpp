@@ -1,19 +1,19 @@
 /*
  * BSD 2-Clause License
- * 
+ *
  * Copyright (c) 2019, k.koide
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -24,7 +24,7 @@
  * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
 */
 #include <iostream>
 #include "omp.h"
@@ -48,13 +48,15 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr align(
   auto t1 = std::chrono::steady_clock::now();
   registration->align(*aligned);
   auto t2 = std::chrono::steady_clock::now();
-  std::cout << "single : " << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << "[msec]" << std::endl;
+  std::cout << "single : " <<
+    std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << "[msec]" << std::endl;
 
   for (int i = 0; i < 10; i++) {
     registration->align(*aligned);
   }
   auto t3 = std::chrono::steady_clock::now();
-  std::cout << "10times: " << std::chrono::duration_cast<std::chrono::milliseconds>(t3 - t2).count() << "[msec]" << std::endl;
+  std::cout << "10times: " <<
+    std::chrono::duration_cast<std::chrono::milliseconds>(t3 - t2).count() << "[msec]" << std::endl;
   std::cout << "fitness: " << registration->getFitnessScore() << std::endl << std::endl;
 
   return aligned;
@@ -113,8 +115,8 @@ int main(int argc, char ** argv)
 
   for (int n : num_threads) {
     for (const auto & search_method : search_methods) {
-      std::cout << "--- ndt_omp::NDT (" << search_method.first << ", " << n << " threads) ---"
-                << std::endl;
+      std::cout << "--- ndt_omp::NDT (" << search_method.first << ", " << n << " threads) ---" <<
+        std::endl;
       ndt_omp->setNumThreads(n);
       ndt_omp->setNeighborhoodSearchMethod(search_method.second);
       aligned = align(ndt_omp, target_cloud, source_cloud);

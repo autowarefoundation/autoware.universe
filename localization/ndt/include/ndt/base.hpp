@@ -22,7 +22,7 @@
 #include "pcl/point_types.h"
 #include "pcl/search/kdtree.h"
 
-template <class PointSource, class PointTarget>
+template<class PointSource, class PointTarget>
 class NormalDistributionsTransformBase
 {
 public:

@@ -22,9 +22,9 @@
 #include "pcl/io/pcd_io.h"
 #include "pcl/point_types.h"
 
-template <class PointSource, class PointTarget>
+template<class PointSource, class PointTarget>
 class NormalDistributionsTransformOMP
-: public NormalDistributionsTransformBase<PointSource, PointTarget>
+  : public NormalDistributionsTransformBase<PointSource, PointTarget>
 {
 public:
   NormalDistributionsTransformOMP();

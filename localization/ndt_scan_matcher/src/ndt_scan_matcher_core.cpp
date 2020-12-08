@@ -111,10 +111,10 @@ NDTScanMatcher::NDTScanMatcher()
   ndt_pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("ndt_pose", 10);
   ndt_pose_with_covariance_pub_ =
     this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
-      "ndt_pose_with_covariance", 10);
+    "ndt_pose_with_covariance", 10);
   initial_pose_with_covariance_pub_ =
     this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
-      "initial_pose_with_covariance", 10);
+    "initial_pose_with_covariance", 10);
   exe_time_pub_ =
     this->create_publisher<autoware_debug_msgs::msg::Float32Stamped>("exe_time_ms", 10);
   transform_probability_pub_ =
@@ -123,17 +123,17 @@ NDTScanMatcher::NDTScanMatcher()
     this->create_publisher<autoware_debug_msgs::msg::Int32Stamped>("iteration_num", 10);
   initial_to_result_distance_pub_ =
     this->create_publisher<autoware_debug_msgs::msg::Float32Stamped>(
-      "initial_to_result_distance", 10);
+    "initial_to_result_distance", 10);
   initial_to_result_distance_old_pub_ =
     this->create_publisher<autoware_debug_msgs::msg::Float32Stamped>(
-      "initial_to_result_distance_old", 10);
+    "initial_to_result_distance_old", 10);
   initial_to_result_distance_new_pub_ =
     this->create_publisher<autoware_debug_msgs::msg::Float32Stamped>(
-      "initial_to_result_distance_new", 10);
+    "initial_to_result_distance_new", 10);
   ndt_marker_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("ndt_marker", 10);
   ndt_monte_carlo_initial_pose_marker_pub_ =
     this->create_publisher<visualization_msgs::msg::MarkerArray>(
-      "monte_carlo_initial_pose_marker", 10);
+    "monte_carlo_initial_pose_marker", 10);
   diagnostics_pub_ =
     this->create_publisher<diagnostic_msgs::msg::DiagnosticArray>("/diagnostics", 10);
 
@@ -171,13 +171,15 @@ void NDTScanMatcher::timerDiagnostic()
     }
     if (
       key_value_stdmap_.count("skipping_publish_num") &&
-      std::stoi(key_value_stdmap_["skipping_publish_num"]) > 1) {
+      std::stoi(key_value_stdmap_["skipping_publish_num"]) > 1)
+    {
       diag_status_msg.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
       diag_status_msg.message += "skipping_publish_num > 1. ";
     }
     if (
       key_value_stdmap_.count("skipping_publish_num") &&
-      std::stoi(key_value_stdmap_["skipping_publish_num"]) >= 5) {
+      std::stoi(key_value_stdmap_["skipping_publish_num"]) >= 5)
+    {
       diag_status_msg.level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
       diag_status_msg.message += "skipping_publish_num exceed limit. ";
     }
@@ -360,7 +362,7 @@ void NDTScanMatcher::callbackSensorPoints(
   const auto align_end_time = std::chrono::system_clock::now();
   const double align_time =
     std::chrono::duration_cast<std::chrono::microseconds>(align_end_time - align_start_time)
-      .count() /
+    .count() /
     1000.0;
 
   const Eigen::Matrix4f result_pose_matrix = ndt_ptr_->getFinalTransformation();
@@ -391,7 +393,8 @@ void NDTScanMatcher::callbackSensorPoints(
   static size_t skipping_publish_num = 0;
   if (
     iteration_num >= ndt_ptr_->getMaximumIterations() + 2 ||
-    transform_probability < converged_param_transform_probability_) {
+    transform_probability < converged_param_transform_probability_)
+  {
     is_converged = false;
     ++skipping_publish_num;
     std::cout << "Not Converged" << std::endl;
@@ -454,7 +457,7 @@ void NDTScanMatcher::callbackSensorPoints(
     marker_array.markers.push_back(marker);
   }
   // TODO delete old marker
-  for (; i < ndt_ptr_->getMaximumIterations() + 2;) {
+  for (; i < ndt_ptr_->getMaximumIterations() + 2; ) {
     marker.id = i++;
     marker.pose = geometry_msgs::msg::Pose();
     marker.color = ExchangeColorCrc(0);
@@ -496,15 +499,15 @@ void NDTScanMatcher::callbackSensorPoints(
   initial_to_result_distance_old_msg.data = std::sqrt(
     std::pow(
       initial_pose_old_msg_ptr->pose.pose.position.x -
-        result_pose_with_cov_msg.pose.pose.position.x,
+      result_pose_with_cov_msg.pose.pose.position.x,
       2.0) +
     std::pow(
       initial_pose_old_msg_ptr->pose.pose.position.y -
-        result_pose_with_cov_msg.pose.pose.position.y,
+      result_pose_with_cov_msg.pose.pose.position.y,
       2.0) +
     std::pow(
       initial_pose_old_msg_ptr->pose.pose.position.z -
-        result_pose_with_cov_msg.pose.pose.position.z,
+      result_pose_with_cov_msg.pose.pose.position.z,
       2.0));
   initial_to_result_distance_old_pub_->publish(initial_to_result_distance_old_msg);
 
@@ -513,15 +516,15 @@ void NDTScanMatcher::callbackSensorPoints(
   initial_to_result_distance_new_msg.data = std::sqrt(
     std::pow(
       initial_pose_new_msg_ptr->pose.pose.position.x -
-        result_pose_with_cov_msg.pose.pose.position.x,
+      result_pose_with_cov_msg.pose.pose.position.x,
       2.0) +
     std::pow(
       initial_pose_new_msg_ptr->pose.pose.position.y -
-        result_pose_with_cov_msg.pose.pose.position.y,
+      result_pose_with_cov_msg.pose.pose.position.y,
       2.0) +
     std::pow(
       initial_pose_new_msg_ptr->pose.pose.position.z -
-        result_pose_with_cov_msg.pose.pose.position.z,
+      result_pose_with_cov_msg.pose.pose.position.z,
       2.0));
   initial_to_result_distance_new_pub_->publish(initial_to_result_distance_new_msg);
 
@@ -585,7 +588,7 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::alignUsingMonteCar
 
   auto best_particle_ptr = std::max_element(
     std::begin(particle_array), std::end(particle_array),
-    [](const Particle & lhs, const Particle & rhs) { return lhs.score < rhs.score; });
+    [](const Particle & lhs, const Particle & rhs) {return lhs.score < rhs.score;});
   // std::cout << "best score" << best_particle_ptr->score << std::endl;
 
   geometry_msgs::msg::PoseWithCovarianceStamped result_pose_with_cov_msg;
@@ -689,7 +692,9 @@ bool NDTScanMatcher::getTransform(
 
   try {
     *transform_stamped_ptr =
-      tf2_buffer_.lookupTransform(target_frame, source_frame, time_stamp, rclcpp::Duration::from_seconds(1.0));
+      tf2_buffer_.lookupTransform(
+      target_frame, source_frame, time_stamp, rclcpp::Duration::from_seconds(
+        1.0));
   } catch (tf2::TransformException & ex) {
     RCLCPP_WARN(get_logger(), "%s", ex.what());
     RCLCPP_ERROR(

@@ -61,7 +61,7 @@ enum NeighborSearchMethod { KDTREE, DIRECT26, DIRECT7, DIRECT1 };
  * \note Math refactored by Todor Stoyanov.
  * \author Brian Okorn (Space and Naval Warfare Systems Center Pacific)
  */
-template <typename PointSource, typename PointTarget>
+template<typename PointSource, typename PointTarget>
 class NormalDistributionsTransform : public pcl::Registration<PointSource, PointTarget>
 {
 protected:
@@ -86,8 +86,8 @@ protected:
   typedef typename TargetGrid::LeafConstPtr TargetGridLeafConstPtr;
 
 public:
-  typedef boost::shared_ptr<NormalDistributionsTransform<PointSource, PointTarget> > Ptr;
-  typedef boost::shared_ptr<const NormalDistributionsTransform<PointSource, PointTarget> > ConstPtr;
+  typedef boost::shared_ptr<NormalDistributionsTransform<PointSource, PointTarget>> Ptr;
+  typedef boost::shared_ptr<const NormalDistributionsTransform<PointSource, PointTarget>> ConstPtr;
 
   /** \brief Constructor.
    * Sets \ref outlier_ratio_ to 0.35, \ref step_size_ to 0.05 and \ref resolution_ to 1.0
@@ -97,9 +97,9 @@ public:
   /** \brief Empty destructor */
   virtual ~NormalDistributionsTransform() {}
 
-  inline void setNumThreads(int n) { num_threads_ = n; }
+  inline void setNumThreads(int n) {num_threads_ = n;}
 
-  inline int getNumThreads() const { return (num_threads_); }
+  inline int getNumThreads() const {return num_threads_;}
 
   /** \brief Provide a pointer to the input target (e.g., the point cloud that we want to align the input source to).
    * \param[in] cloud the input point cloud target
@@ -118,51 +118,51 @@ public:
     // Prevents unnessary voxel initiations
     if (resolution_ != resolution) {
       resolution_ = resolution;
-      if (input_) init();
+      if (input_) {init();}
     }
   }
 
   /** \brief Get voxel grid resolution.
    * \return side length of voxels
    */
-  inline float getResolution() const { return (resolution_); }
+  inline float getResolution() const {return resolution_;}
 
   /** \brief Get the newton line search maximum step length.
    * \return maximum step length
    */
-  inline double getStepSize() const { return (step_size_); }
+  inline double getStepSize() const {return step_size_;}
 
   /** \brief Set/change the newton line search maximum step length.
    * \param[in] step_size maximum step length
    */
-  inline void setStepSize(double step_size) { step_size_ = step_size; }
+  inline void setStepSize(double step_size) {step_size_ = step_size;}
 
   /** \brief Get the point cloud outlier ratio.
    * \return outlier ratio
    */
-  inline double getOulierRatio() const { return (outlier_ratio_); }
+  inline double getOulierRatio() const {return outlier_ratio_;}
 
   /** \brief Set/change the point cloud outlier ratio.
    * \param[in] outlier_ratio outlier ratio
    */
-  inline void setOulierRatio(double outlier_ratio) { outlier_ratio_ = outlier_ratio; }
+  inline void setOulierRatio(double outlier_ratio) {outlier_ratio_ = outlier_ratio;}
 
-  inline void setNeighborhoodSearchMethod(NeighborSearchMethod method) { search_method = method; }
+  inline void setNeighborhoodSearchMethod(NeighborSearchMethod method) {search_method = method;}
 
-  inline NeighborSearchMethod getNeighborhoodSearchMethod() const { return (search_method); }
+  inline NeighborSearchMethod getNeighborhoodSearchMethod() const {return search_method;}
 
   /** \brief Get the registration alignment probability.
    * \return transformation probability
    */
-  inline double getTransformationProbability() const { return (trans_probability_); }
+  inline double getTransformationProbability() const {return trans_probability_;}
 
   /** \brief Get the number of iterations required to calculate alignment.
    * \return final number of iterations
    */
-  inline int getFinalNumIteration() const { return (nr_iterations_); }
+  inline int getFinalNumIteration() const {return nr_iterations_;}
 
   /** \brief Return the hessian matrix */
-  inline Eigen::Matrix<double, 6, 6> getHessian() const { return hessian_; }
+  inline Eigen::Matrix<double, 6, 6> getHessian() const {return hessian_;}
 
   /** \brief Return the transformation array*/
   inline const std::vector<Eigen::Matrix4f> getFinalTransformationArray() const
@@ -177,9 +177,9 @@ public:
   static void convertTransform(const Eigen::Matrix<double, 6, 1> & x, Eigen::Affine3f & trans)
   {
     trans = Eigen::Translation<float, 3>(float(x(0)), float(x(1)), float(x(2))) *
-            Eigen::AngleAxis<float>(float(x(3)), Eigen::Vector3f::UnitX()) *
-            Eigen::AngleAxis<float>(float(x(4)), Eigen::Vector3f::UnitY()) *
-            Eigen::AngleAxis<float>(float(x(5)), Eigen::Vector3f::UnitZ());
+      Eigen::AngleAxis<float>(float(x(3)), Eigen::Vector3f::UnitX()) *
+      Eigen::AngleAxis<float>(float(x(4)), Eigen::Vector3f::UnitY()) *
+      Eigen::AngleAxis<float>(float(x(5)), Eigen::Vector3f::UnitZ());
   }
 
   /** \brief Convert 6 element transformation vector to transformation matrix.
@@ -376,7 +376,7 @@ protected:
   inline double auxilaryFunction_PsiMT(
     double a, double f_a, double f_0, double g_0, double mu = 1.e-4)
   {
-    return (f_a - f_0 - mu * g_0 * a);
+    return f_a - f_0 - mu * g_0 * a;
   }
 
   /** \brief Auxilary function derivative used to determin endpoints of More-Thuente interval.
@@ -388,7 +388,7 @@ protected:
    */
   inline double auxilaryFunction_dPsiMT(double g_a, double g_0, double mu = 1.e-4)
   {
-    return (g_a - mu * g_0);
+    return g_a - mu * g_0;
   }
 
   /** \brief The voxel grid generated from target cloud containing point means and covariances. */

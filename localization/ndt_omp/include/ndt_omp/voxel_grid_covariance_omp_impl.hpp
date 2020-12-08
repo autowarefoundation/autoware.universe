@@ -45,7 +45,7 @@
 #include "voxel_grid_covariance_omp.hpp"
 
 //////////////////////////////////////////////////////////////////////////////////////////
-template <typename PointT>
+template<typename PointT>
 void ndt_omp::VoxelGridCovariance<PointT>::applyFilter(PointCloud & output)
 {
   voxel_centroids_leaf_indices_.clear();
@@ -65,12 +65,13 @@ void ndt_omp::VoxelGridCovariance<PointT>::applyFilter(PointCloud & output)
 
   Eigen::Vector4f min_p, max_p;
   // Get the minimum and maximum dimensions
-  if (!filter_field_name_.empty())  // If we don't want to process the entire cloud...
+  if (!filter_field_name_.empty()) { // If we don't want to process the entire cloud...
     pcl::getMinMax3D<PointT>(
       input_, filter_field_name_, static_cast<float>(filter_limit_min_),
       static_cast<float>(filter_limit_max_), min_p, max_p, filter_limit_negative_);
-  else
+  } else {
     pcl::getMinMax3D<PointT>(*input_, min_p, max_p);
+  }
 
   // Check that the leaf size is not too small, given the size of the data
   int64_t dx = static_cast<int64_t>((max_p[0] - min_p[0]) * inverse_leaf_size_[0]) + 1;
@@ -107,13 +108,13 @@ void ndt_omp::VoxelGridCovariance<PointT>::applyFilter(PointCloud & output)
 
   int centroid_size = 4;
 
-  if (downsample_all_data_) centroid_size = boost::mpl::size<FieldList>::value;
+  if (downsample_all_data_) {centroid_size = boost::mpl::size<FieldList>::value;}
 
   // ---[ RGB special case
   std::vector<pcl::PCLPointField> fields;
   int rgba_index = -1;
   rgba_index = pcl::getFieldIndex(*input_, "rgb", fields);
-  if (rgba_index == -1) rgba_index = pcl::getFieldIndex(*input_, "rgba", fields);
+  if (rgba_index == -1) {rgba_index = pcl::getFieldIndex(*input_, "rgba", fields);}
   if (rgba_index >= 0) {
     rgba_index = fields[rgba_index].offset;
     centroid_size += 3;
@@ -124,19 +125,23 @@ void ndt_omp::VoxelGridCovariance<PointT>::applyFilter(PointCloud & output)
     // Get the distance field index
     std::vector<pcl::PCLPointField> fields;
     int distance_idx = pcl::getFieldIndex(*input_, filter_field_name_, fields);
-    if (distance_idx == -1)
+    if (distance_idx == -1) {
       PCL_WARN(
         "[pcl::%s::applyFilter] Invalid filter field name. Index is %d.\n", getClassName().c_str(),
         distance_idx);
+    }
 
     // First pass: go over all points and insert them into the right leaf
     for (size_t cp = 0; cp < input_->points.size(); ++cp) {
-      if (!input_->is_dense)
+      if (!input_->is_dense) {
         // Check if the point is invalid
         if (
           !pcl_isfinite(input_->points[cp].x) || !pcl_isfinite(input_->points[cp].y) ||
           !pcl_isfinite(input_->points[cp].z))
+        {
           continue;
+        }
+      }
 
       // Get the distance value
       const uint8_t * pt_data = reinterpret_cast<const uint8_t *>(&input_->points[cp]);
@@ -145,10 +150,14 @@ void ndt_omp::VoxelGridCovariance<PointT>::applyFilter(PointCloud & output)
 
       if (filter_limit_negative_) {
         // Use a threshold for cutting out points which inside the interval
-        if ((distance_value < filter_limit_max_) && (distance_value > filter_limit_min_)) continue;
+        if ((distance_value < filter_limit_max_) && (distance_value > filter_limit_min_)) {
+          continue;
+        }
       } else {
         // Use a threshold for cutting out points which are too close/far away
-        if ((distance_value > filter_limit_max_) || (distance_value < filter_limit_min_)) continue;
+        if ((distance_value > filter_limit_max_) || (distance_value < filter_limit_min_)) {
+          continue;
+        }
       }
 
       int ijk0 = static_cast<int>(
@@ -188,7 +197,7 @@ void ndt_omp::VoxelGridCovariance<PointT>::applyFilter(PointCloud & output)
             &rgb, reinterpret_cast<const char *>(&input_->points[cp]) + rgba_index, sizeof(int));
           centroid[centroid_size - 3] = static_cast<float>((rgb >> 16) & 0x0000ff);
           centroid[centroid_size - 2] = static_cast<float>((rgb >> 8) & 0x0000ff);
-          centroid[centroid_size - 1] = static_cast<float>((rgb)&0x0000ff);
+          centroid[centroid_size - 1] = static_cast<float>((rgb) & 0x0000ff);
         }
         pcl::for_each_type<FieldList>(
           pcl::NdCopyPointEigenFunctor<PointT>(input_->points[cp], centroid));
@@ -201,12 +210,15 @@ void ndt_omp::VoxelGridCovariance<PointT>::applyFilter(PointCloud & output)
   else {
     // First pass: go over all points and insert them into the right leaf
     for (size_t cp = 0; cp < input_->points.size(); ++cp) {
-      if (!input_->is_dense)
+      if (!input_->is_dense) {
         // Check if the point is invalid
         if (
           !pcl_isfinite(input_->points[cp].x) || !pcl_isfinite(input_->points[cp].y) ||
           !pcl_isfinite(input_->points[cp].z))
+        {
           continue;
+        }
+      }
 
       int ijk0 = static_cast<int>(
         floor(input_->points[cp].x * inverse_leaf_size_[0]) - static_cast<float>(min_b_[0]));
@@ -247,7 +259,7 @@ void ndt_omp::VoxelGridCovariance<PointT>::applyFilter(PointCloud & output)
             &rgb, reinterpret_cast<const char *>(&input_->points[cp]) + rgba_index, sizeof(int));
           centroid[centroid_size - 3] = static_cast<float>((rgb >> 16) & 0x0000ff);
           centroid[centroid_size - 2] = static_cast<float>((rgb >> 8) & 0x0000ff);
-          centroid[centroid_size - 1] = static_cast<float>((rgb)&0x0000ff);
+          centroid[centroid_size - 1] = static_cast<float>((rgb) & 0x0000ff);
         }
         pcl::for_each_type<FieldList>(
           pcl::NdCopyPointEigenFunctor<PointT>(input_->points[cp], centroid));
@@ -259,9 +271,9 @@ void ndt_omp::VoxelGridCovariance<PointT>::applyFilter(PointCloud & output)
 
   // Second pass: go over all leaves and compute centroids and covariance matrices
   output.points.reserve(leaves_.size());
-  if (searchable_) voxel_centroids_leaf_indices_.reserve(leaves_.size());
+  if (searchable_) {voxel_centroids_leaf_indices_.reserve(leaves_.size());}
   int cp = 0;
-  if (save_leaf_layout_) leaf_layout_.resize(div_b_[0] * div_b_[1] * div_b_[2], -1);
+  if (save_leaf_layout_) {leaf_layout_.resize(div_b_[0] * div_b_[1] * div_b_[2], -1);}
 
   // Eigen values and vectors calculated to prevent near singluar matrices
   Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> eigensolver;
@@ -286,7 +298,7 @@ void ndt_omp::VoxelGridCovariance<PointT>::applyFilter(PointCloud & output)
     // output clouds. Points with less than the minimum points will have a can not be accuratly approximated using a
     // normal distribution.
     if (leaf.nr_points >= min_points_per_voxel_) {
-      if (save_leaf_layout_) leaf_layout_[it->first] = cp++;
+      if (save_leaf_layout_) {leaf_layout_[it->first] = cp++;}
 
       output.push_back(PointT());
 
@@ -302,7 +314,7 @@ void ndt_omp::VoxelGridCovariance<PointT>::applyFilter(PointCloud & output)
         if (rgba_index >= 0) {
           // pack r/g/b into rgb
           float r = leaf.centroid[centroid_size - 3], g = leaf.centroid[centroid_size - 2],
-                b = leaf.centroid[centroid_size - 1];
+            b = leaf.centroid[centroid_size - 1];
           int rgb =
             (static_cast<int>(r)) << 16 | (static_cast<int>(g)) << 8 | (static_cast<int>(b));
           memcpy(reinterpret_cast<char *>(&output.points.back()) + rgba_index, &rgb, sizeof(float));
@@ -310,11 +322,11 @@ void ndt_omp::VoxelGridCovariance<PointT>::applyFilter(PointCloud & output)
       }
 
       // Stores the voxel indice for fast access searching
-      if (searchable_) voxel_centroids_leaf_indices_.push_back(static_cast<int>(it->first));
+      if (searchable_) {voxel_centroids_leaf_indices_.push_back(static_cast<int>(it->first));}
 
       // Single pass covariance calculation
       leaf.cov_ = (leaf.cov_ - 2 * (pt_sum * leaf.mean_.transpose())) / leaf.nr_points +
-                  leaf.mean_ * leaf.mean_.transpose();
+        leaf.mean_ * leaf.mean_.transpose();
       leaf.cov_ *= (leaf.nr_points - 1.0) / leaf.nr_points;
 
       // Normalize Eigen Val such that max no more than 100x min.
@@ -344,7 +356,8 @@ void ndt_omp::VoxelGridCovariance<PointT>::applyFilter(PointCloud & output)
       leaf.icov_ = leaf.cov_.inverse();
       if (
         leaf.icov_.maxCoeff() == std::numeric_limits<float>::infinity() ||
-        leaf.icov_.minCoeff() == -std::numeric_limits<float>::infinity()) {
+        leaf.icov_.minCoeff() == -std::numeric_limits<float>::infinity())
+      {
         leaf.nr_points = -1;
       }
     }
@@ -354,7 +367,7 @@ void ndt_omp::VoxelGridCovariance<PointT>::applyFilter(PointCloud & output)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
-template <typename PointT>
+template<typename PointT>
 int ndt_omp::VoxelGridCovariance<PointT>::getNeighborhoodAtPoint(
   const Eigen::MatrixXi & relative_coordinates, const PointT & reference_point,
   std::vector<LeafConstPtr> & neighbors) const
@@ -385,11 +398,11 @@ int ndt_omp::VoxelGridCovariance<PointT>::getNeighborhoodAtPoint(
     }
   }
 
-  return (static_cast<int>(neighbors.size()));
+  return static_cast<int>(neighbors.size());
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
-template <typename PointT>
+template<typename PointT>
 int ndt_omp::VoxelGridCovariance<PointT>::getNeighborhoodAtPoint(
   const PointT & reference_point, std::vector<LeafConstPtr> & neighbors) const
 {
@@ -401,7 +414,7 @@ int ndt_omp::VoxelGridCovariance<PointT>::getNeighborhoodAtPoint(
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
-template <typename PointT>
+template<typename PointT>
 int ndt_omp::VoxelGridCovariance<PointT>::getNeighborhoodAtPoint7(
   const PointT & reference_point, std::vector<LeafConstPtr> & neighbors) const
 {
@@ -420,7 +433,7 @@ int ndt_omp::VoxelGridCovariance<PointT>::getNeighborhoodAtPoint7(
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
-template <typename PointT>
+template<typename PointT>
 int ndt_omp::VoxelGridCovariance<PointT>::getNeighborhoodAtPoint1(
   const PointT & reference_point, std::vector<LeafConstPtr> & neighbors) const
 {
@@ -429,7 +442,7 @@ int ndt_omp::VoxelGridCovariance<PointT>::getNeighborhoodAtPoint1(
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
-template <typename PointT>
+template<typename PointT>
 void ndt_omp::VoxelGridCovariance<PointT>::getDisplayCloud(
   pcl::PointCloud<pcl::PointXYZ> & cell_cloud)
 {
@@ -438,7 +451,7 @@ void ndt_omp::VoxelGridCovariance<PointT>::getDisplayCloud(
   int pnt_per_cell = 1000;
   boost::mt19937 rng;
   boost::normal_distribution<> nd(0.0, leaf_size_.head(3).norm());
-  boost::variate_generator<boost::mt19937 &, boost::normal_distribution<> > var_nor(rng, nd);
+  boost::variate_generator<boost::mt19937 &, boost::normal_distribution<>> var_nor(rng, nd);
 
   Eigen::LLT<Eigen::Matrix3d> llt_of_cov;
   Eigen::Matrix3d cholesky_decomp;
@@ -459,9 +472,10 @@ void ndt_omp::VoxelGridCovariance<PointT>::getDisplayCloud(
       for (int i = 0; i < pnt_per_cell; i++) {
         rand_point = Eigen::Vector3d(var_nor(), var_nor(), var_nor());
         dist_point = cell_mean + cholesky_decomp * rand_point;
-        cell_cloud.push_back(pcl::PointXYZ(
-          static_cast<float>(dist_point(0)), static_cast<float>(dist_point(1)),
-          static_cast<float>(dist_point(2))));
+        cell_cloud.push_back(
+          pcl::PointXYZ(
+            static_cast<float>(dist_point(0)), static_cast<float>(dist_point(1)),
+            static_cast<float>(dist_point(2))));
       }
     }
   }
