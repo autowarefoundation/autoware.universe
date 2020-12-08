@@ -83,7 +83,8 @@ bool MapBasedPrediction::doPrediction(
     const double min_lon_velocity_ms_for_map_based_prediction = 1;
     if (
       std::fabs(object_with_lanes.object.state.twist_covariance.twist.linear.x) <
-      min_lon_velocity_ms_for_map_based_prediction) {
+      min_lon_velocity_ms_for_map_based_prediction)
+    {
       autoware_perception_msgs::msg::PredictedPath predicted_path;
       getLinearPredictedPath(
         object_with_lanes.object.state.pose_covariance.pose,
@@ -141,7 +142,7 @@ bool MapBasedPrediction::doPrediction(
         double lane_yaw = spline2d.calc_yaw(current_s_position);
         std::vector<double> origin_v = {std::cos(lane_yaw), std::sin(lane_yaw)};
         std::vector<double> object_v = {object_point.x - nearest_point.x,
-                                        object_point.y - nearest_point.y};
+          object_point.y - nearest_point.y};
         double cross2d = object_v[0] * origin_v[1] - object_v[1] * origin_v[0];
         if (cross2d < 0) {
           current_d_position *= -1;
@@ -262,9 +263,9 @@ bool MapBasedPrediction::getPredictedPath(
   double calculated_d, calculated_s;
   for (double i = 0; i < t; i += dt) {
     calculated_d = current_d_position + current_d_velocity * i + 0 * 2 * i * i +
-                   x_3(0) * i * i * i + x_3(1) * i * i * i * i + x_3(2) * i * i * i * i * i;
+      x_3(0) * i * i * i + x_3(1) * i * i * i * i + x_3(2) * i * i * i * i * i;
     calculated_s = current_s_position + current_s_velocity * i + 2 * 0 * i * i +
-                   x_2(0) * i * i * i + x_2(1) * i * i * i * i;
+      x_2(0) * i * i * i + x_2(1) * i * i * i * i;
 
     geometry_msgs::msg::PoseWithCovarianceStamped tmp_point;
     if (calculated_s > spline2d.s.back()) {
@@ -290,7 +291,8 @@ bool MapBasedPrediction::getPredictedPath(
 
 bool MapBasedPrediction::getLinearPredictedPath(
   const geometry_msgs::msg::Pose & object_pose, const geometry_msgs::msg::Twist & object_twist,
-  const std_msgs::msg::Header & origin_header, autoware_perception_msgs::msg::PredictedPath & predicted_path)
+  const std_msgs::msg::Header & origin_header,
+  autoware_perception_msgs::msg::PredictedPath & predicted_path)
 {
   const double yaw = tf2::getYaw(object_pose.orientation);
   const double & sampling_delta_time = sampling_delta_time_;

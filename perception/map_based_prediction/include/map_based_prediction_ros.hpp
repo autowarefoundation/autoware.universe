@@ -76,7 +76,8 @@ private:
   bool getSelfPose(geometry_msgs::msg::Pose & self_pose, const std_msgs::msg::Header & header);
   bool getSelfPoseInMap(geometry_msgs::msg::Pose & self_pose);
 
-  void objectsCallback(const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr in_objects);
+  void objectsCallback(
+    const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr in_objects);
   void mapCallback(const autoware_lanelet2_msgs::msg::MapBin::ConstSharedPtr msg);
 
   bool getClosestLanelets(

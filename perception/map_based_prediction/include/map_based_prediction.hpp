@@ -45,7 +45,8 @@ private:
   bool getPredictedPath(
     const double height, const double current_d_position, const double current_d_velocity,
     const double current_s_position, const double current_s_velocity,
-    const double target_s_position, const std_msgs::msg::Header & origin_header, Spline2D & spline2d,
+    const double target_s_position, const std_msgs::msg::Header & origin_header,
+    Spline2D & spline2d,
     autoware_perception_msgs::msg::PredictedPath & path);
 
   bool getLinearPredictedPath(

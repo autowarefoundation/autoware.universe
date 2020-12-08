@@ -39,12 +39,13 @@
 #include "map_based_prediction.hpp"
 #include "map_based_prediction_ros.hpp"
 
-std::string toHexString(const unique_identifier_msgs::msg::UUID & id){
+std::string toHexString(const unique_identifier_msgs::msg::UUID & id)
+{
   std::stringstream ss;
-    for (auto i = 0; i < 16; ++i) {
-        ss << std::hex << std::setfill('0') << std::setw(2) << +id.uuid[i];
-    }
-    return ss.str();
+  for (auto i = 0; i < 16; ++i) {
+    ss << std::hex << std::setfill('0') << std::setw(2) << +id.uuid[i];
+  }
+  return ss.str();
 }
 
 bool MapBasedPredictionROS::getClosestLanelets(
@@ -102,7 +103,8 @@ bool MapBasedPredictionROS::getClosestLanelets(
       double abs_norm_delta = std::fabs(normalized_delta_yaw);
       if (
         lanelet.first < max_dist_for_searching_lanelet &&
-        abs_norm_delta < max_delta_yaw_threshold) {
+        abs_norm_delta < max_delta_yaw_threshold)
+      {
         target_closest_lanelet = lanelet.second;
         is_found_target_closest_lanelet = true;
         closest_lanelets.push_back(target_closest_lanelet);
@@ -152,7 +154,8 @@ bool MapBasedPredictionROS::getClosestLanelets(
         double abs_norm_delta = std::fabs(normalized_delta_yaw);
         if (
           lanelet.first < max_dist_for_searching_lanelet &&
-          abs_norm_delta < max_delta_yaw_threshold) {
+          abs_norm_delta < max_delta_yaw_threshold)
+        {
           target_closest_lanelet = lanelet.second;
           is_found_target_closest_lanelet = true;
           closest_lanelets.push_back(target_closest_lanelet);
@@ -167,7 +170,9 @@ bool MapBasedPredictionROS::getClosestLanelets(
   return false;
 }
 
-double calculateDistance(const geometry_msgs::msg::Point & point1, const geometry_msgs::msg::Point & point2)
+double calculateDistance(
+  const geometry_msgs::msg::Point & point1,
+  const geometry_msgs::msg::Point & point2)
 {
   double dx = point1.x - point2.x;
   double dy = point1.y - point2.y;
@@ -175,7 +180,7 @@ double calculateDistance(const geometry_msgs::msg::Point & point1, const geometr
   return distance;
 }
 
-MapBasedPredictionROS::MapBasedPredictionROS() 
+MapBasedPredictionROS::MapBasedPredictionROS()
 : Node("map_based_prediction"), interpolating_resolution_(0.5)
 {
   rclcpp::Clock::SharedPtr clock = std::make_shared<rclcpp::Clock>(RCL_ROS_TIME);
@@ -188,14 +193,16 @@ MapBasedPredictionROS::MapBasedPredictionROS()
     interpolating_resolution_, prediction_time_horizon_, prediction_sampling_delta_time_);
 
   sub_objects_ = this->create_subscription<autoware_perception_msgs::msg::DynamicObjectArray>(
-    "/perception/object_recognition/tracking/objects", 1, 
+    "/perception/object_recognition/tracking/objects", 1,
     std::bind(&MapBasedPredictionROS::objectsCallback, this, std::placeholders::_1));
   sub_map_ = this->create_subscription<autoware_lanelet2_msgs::msg::MapBin>(
-    "/vector_map", 10, 
+    "/vector_map", 10,
     std::bind(&MapBasedPredictionROS::mapCallback, this, std::placeholders::_1));
 
-  pub_objects_ = this->create_publisher<autoware_perception_msgs::msg::DynamicObjectArray>("objects", 1);
-  pub_markers_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("objects_path_markers", 1);
+  pub_objects_ = this->create_publisher<autoware_perception_msgs::msg::DynamicObjectArray>(
+    "objects", 1);
+  pub_markers_ = this->create_publisher<visualization_msgs::msg::MarkerArray>(
+    "objects_path_markers", 1);
 }
 
 void MapBasedPredictionROS::objectsCallback(
@@ -247,7 +254,8 @@ void MapBasedPredictionROS::objectsCallback(
     if (
       object.semantic.type != autoware_perception_msgs::msg::Semantic::CAR &&
       object.semantic.type != autoware_perception_msgs::msg::Semantic::BUS &&
-      object.semantic.type != autoware_perception_msgs::msg::Semantic::TRUCK) {
+      object.semantic.type != autoware_perception_msgs::msg::Semantic::TRUCK)
+    {
       tmp_objects_whitout_map.objects.push_back(tmp_object.object);
       continue;
     }
@@ -310,7 +318,8 @@ void MapBasedPredictionROS::objectsCallback(
       lanelet::routing::LaneletPaths center_paths;
       double delta_sampling_meters = 20;
       for (double minimum_dist_for_route_search = 100; minimum_dist_for_route_search >= 20;
-           minimum_dist_for_route_search -= delta_sampling_meters) {
+        minimum_dist_for_route_search -= delta_sampling_meters)
+      {
         lanelet::routing::LaneletPaths tmp_paths = routing_graph_ptr_->possiblePaths(
           origin_lanelet, minimum_dist_for_route_search, 0, false);
         for (const auto & tmp_path : tmp_paths) {
@@ -419,7 +428,8 @@ void MapBasedPredictionROS::objectsCallback(
   pub_objects_->publish(output);
 }
 
-void MapBasedPredictionROS::mapCallback(const autoware_lanelet2_msgs::msg::MapBin::ConstSharedPtr msg)
+void MapBasedPredictionROS::mapCallback(
+  const autoware_lanelet2_msgs::msg::MapBin::ConstSharedPtr msg)
 {
   RCLCPP_INFO(get_logger(), "Start loading lanelet");
   lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
