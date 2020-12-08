@@ -48,12 +48,14 @@ private:
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_measured_pose_;    //!< @brief debug measurement pose publisher
   rclcpp::Publisher<autoware_debug_msgs::msg::Float64Stamped>::SharedPtr pub_yaw_bias_;         //!< @brief ekf estimated yaw bias publisher
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_pose_no_yawbias_;  //!< @brief ekf estimated yaw bias publisher
-  rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pub_pose_cov_no_yawbias_;  //!< @brief ekf estimated yaw bias publisher
+  rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
+    pub_pose_cov_no_yawbias_;                                                                            //!< @brief ekf estimated yaw bias publisher
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr sub_initialpose_;         //!< @brief initial pose subscriber
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr sub_pose_;                //!< @brief measurement pose subscriber
   rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr sub_twist_;               //!< @brief measurement twist subscriber
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr sub_pose_with_cov_;       //!< @brief measurement pose with covariance subscriber
-  rclcpp::Subscription<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr sub_twist_with_cov_;      //!< @brief measurement twist with covariance subscriber
+  rclcpp::Subscription<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr
+    sub_twist_with_cov_;                                                                                    //!< @brief measurement twist with covariance subscriber
   rclcpp::TimerBase::SharedPtr timer_control_;                //!< @brief time for ekf calculation callback
   rclcpp::TimerBase::SharedPtr timer_tf_;                     //!< @brief timer to send transform
   std::shared_ptr<tf2_ros::TransformBroadcaster> tf_br_;     //!< @brief tf broadcaster
@@ -102,7 +104,8 @@ private:
   double proc_cov_vx_d_;        //!< @brief  discrete process noise in d_vx=0
   double proc_cov_wz_d_;        //!< @brief  discrete process noise in d_wz=0
 
-  enum IDX {
+  enum IDX
+  {
     X = 0,
     Y = 1,
     YAW = 2,
@@ -195,7 +198,8 @@ private:
    * @brief get transform from frame_id
    */
   bool getTransformFromTF(
-    std::string parent_frame, std::string child_frame, geometry_msgs::msg::TransformStamped & transform);
+    std::string parent_frame, std::string child_frame,
+    geometry_msgs::msg::TransformStamped & transform);
 
   /**
    * @brief normalize yaw angle

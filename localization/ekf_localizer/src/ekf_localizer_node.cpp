@@ -23,4 +23,4 @@ int main(int argc, char ** argv)
   rclcpp::spin(node);
 
   return 0;
-};
+}
