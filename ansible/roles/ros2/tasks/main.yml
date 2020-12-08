@@ -62,3 +62,10 @@
     line: source /opt/ros/{{ rosdistro }}/setup.bash
     state: present
   become: no
+
+- name: ROS2 (install colcon)
+  apt:
+    name: "python3-colcon-common-extensions"
+    state: latest
+    update_cache: yes
+  become: yes
