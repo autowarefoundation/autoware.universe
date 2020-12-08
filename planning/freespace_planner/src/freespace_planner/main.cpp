@@ -28,6 +28,8 @@
  * limitations under the License.
  */
 
+#include <memory>
+
 #include "freespace_planner/freespace_planner.hpp"
 
 int main(int argc, char ** argv)

@@ -28,8 +28,8 @@
  * limitations under the License.
  */
 
-#ifndef FREESPACE_PLANNER_H
-#define FREESPACE_PLANNER_H
+#ifndef FREESPACE_PLANNER__FREESPACE_PLANNER_HPP_
+#define FREESPACE_PLANNER__FREESPACE_PLANNER_HPP_
 
 #include <deque>
 #include <iostream>
@@ -123,4 +123,4 @@ private:
     const std::string & from, const std::string & to);
 };
 
-#endif
+#endif  // FREESPACE_PLANNER__FREESPACE_PLANNER_HPP_
