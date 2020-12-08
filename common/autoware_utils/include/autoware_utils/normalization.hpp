@@ -25,10 +25,11 @@ constexpr double normalizeDegree(const double deg, const double min_deg = -180)
   const auto max_deg = min_deg + 360.0;
 
   const auto value = std::fmod(deg, 360.0);
-  if (min_deg <= value && value < max_deg)
+  if (min_deg <= value && value < max_deg) {
     return value;
-  else
+  } else {
     return value - std::copysign(360.0, value);
+  }
 }
 
 constexpr double normalizeRadian(const double rad, const double min_rad = -pi)
@@ -36,10 +37,11 @@ constexpr double normalizeRadian(const double rad, const double min_rad = -pi)
   const auto max_rad = min_rad + 2 * pi;
 
   const auto value = std::fmod(rad, 2 * pi);
-  if (min_rad <= value && value < max_rad)
+  if (min_rad <= value && value < max_rad) {
     return value;
-  else
+  } else {
     return value - std::copysign(2 * pi, value);
+  }
 }
 
 }  // namespace autoware_utils
