@@ -28,7 +28,7 @@ class LidarApolloInstanceSegmentation : public LidarInstanceSegmentationInterfac
 {
 public:
   LidarApolloInstanceSegmentation(rclcpp::Node * node);
-  ~LidarApolloInstanceSegmentation(){};
+  ~LidarApolloInstanceSegmentation() {}
   bool detectDynamicObjects(
     const sensor_msgs::msg::PointCloud2 & input,
     autoware_perception_msgs::msg::DynamicObjectWithFeatureArray & output) override;
@@ -36,7 +36,7 @@ public:
 private:
   bool transformCloud(
     const sensor_msgs::msg::PointCloud2 & input,
-    sensor_msgs::msg::PointCloud2& transformed_cloud,
+    sensor_msgs::msg::PointCloud2 & transformed_cloud,
     float z_offset);
 
   rclcpp::Node * node_;

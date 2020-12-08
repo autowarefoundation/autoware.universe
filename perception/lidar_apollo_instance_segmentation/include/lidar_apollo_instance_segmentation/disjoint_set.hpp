@@ -17,14 +17,14 @@
 #ifndef MODULES_PERCEPTION_OBSTACLE_COMMON_DISJOINT_SET_H_
 #define MODULES_PERCEPTION_OBSTACLE_COMMON_DISJOINT_SET_H_
 
-template <class T>
+template<class T>
 void DisjointSetMakeSet(T * x)
 {
   x->parent = x;
   x->node_rank = 0;
 }
 
-template <class T>
+template<class T>
 T * DisjointSetFindRecursive(T * x)
 {
   if (x->parent != x) {
@@ -33,7 +33,7 @@ T * DisjointSetFindRecursive(T * x)
   return x->parent;
 }
 
-template <class T>
+template<class T>
 T * DisjointSetFind(T * x)
 {
   T * y = x->parent;
@@ -46,12 +46,12 @@ T * DisjointSetFind(T * x)
   return root;
 }
 
-template <class T>
+template<class T>
 void DisjointSetMerge(T * x, const T * y)
 {
 }
 
-template <class T>
+template<class T>
 void DisjointSetUnion(T * x, T * y)
 {
   x = DisjointSetFind(x);

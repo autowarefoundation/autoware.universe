@@ -60,7 +60,8 @@
 
 #include "std_msgs/msg/header.hpp"
 
-enum MetaType {
+enum MetaType
+{
   META_UNKNOWN,
   META_SMALLMOT,
   META_BIGMOT,
@@ -79,7 +80,8 @@ struct Obstacle
   MetaType meta_type;
   std::vector<float> meta_type_probs;
 
-  Obstacle() : score(0.0), height(-5.0), heading(0.0), meta_type(META_UNKNOWN)
+  Obstacle()
+  : score(0.0), height(-5.0), heading(0.0), meta_type(META_UNKNOWN)
   {
     cloud_ptr.reset(new pcl::PointCloud<pcl::PointXYZI>);
     meta_type_probs.assign(MAX_META_TYPE, 0.0);
@@ -91,7 +93,7 @@ class Cluster2D
 public:
   Cluster2D(const int rows, const int cols, const float range);
 
-  ~Cluster2D(){};
+  ~Cluster2D() {}
 
   void cluster(
     const std::shared_ptr<float> & inferred_data,
@@ -148,13 +150,13 @@ private:
     }
   };
 
-  inline bool IsValidRowCol(int row, int col) const { return IsValidRow(row) && IsValidCol(col); }
+  inline bool IsValidRowCol(int row, int col) const {return IsValidRow(row) && IsValidCol(col);}
 
-  inline bool IsValidRow(int row) const { return row >= 0 && row < rows_; }
+  inline bool IsValidRow(int row) const {return row >= 0 && row < rows_;}
 
-  inline bool IsValidCol(int col) const { return col >= 0 && col < cols_; }
+  inline bool IsValidCol(int col) const {return col >= 0 && col < cols_;}
 
-  inline int RowCol2Grid(int row, int col) const { return row * cols_ + col; }
+  inline int RowCol2Grid(int row, int col) const {return row * cols_ + col;}
 
   void traverse(Node * x);
 };

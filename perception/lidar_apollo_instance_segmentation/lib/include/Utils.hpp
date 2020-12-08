@@ -1,18 +1,18 @@
 /*
  * MIT License
- * 
+ *
  * Copyright (c) 2018 lewes6369
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -31,13 +31,13 @@
 
 #ifndef CUDA_CHECK
 
-#define CUDA_CHECK(callstr)                                                              \
-  {                                                                                      \
-    cudaError_t error_code = callstr;                                                    \
-    if (error_code != cudaSuccess) {                                                     \
+#define CUDA_CHECK(callstr) \
+  { \
+    cudaError_t error_code = callstr; \
+    if (error_code != cudaSuccess) { \
       std::cerr << "CUDA error " << error_code << " at " << __FILE__ << ":" << __LINE__; \
-      assert(0);                                                                         \
-    }                                                                                    \
+      assert(0); \
+    } \
   }
 
 #endif
@@ -64,11 +64,12 @@ private:
   virtual void reportLayerTime(const char * layerName, float ms)
   {
     auto record = std::find_if(
-      mProfile.begin(), mProfile.end(), [&](const Record & r) { return r.first == layerName; });
-    if (record == mProfile.end())
+      mProfile.begin(), mProfile.end(), [&](const Record & r) {return r.first == layerName;});
+    if (record == mProfile.end()) {
       mProfile.push_back(std::make_pair(layerName, ms));
-    else
+    } else {
       record->second += ms;
+    }
   }
 };
 
@@ -76,14 +77,16 @@ private:
 class Logger : public nvinfer1::ILogger
 {
 public:
-  Logger() : Logger(Severity::kWARNING) {}
+  Logger()
+  : Logger(Severity::kWARNING) {}
 
-  Logger(Severity severity) : reportableSeverity(severity) {}
+  Logger(Severity severity)
+  : reportableSeverity(severity) {}
 
   void log(Severity severity, const char * msg) override
   {
     // suppress messages with severity enum value greater than the reportable
-    if (severity > reportableSeverity) return;
+    if (severity > reportableSeverity) {return;}
 
     switch (severity) {
       case Severity::kINTERNAL_ERROR:
@@ -108,15 +111,15 @@ public:
   Severity reportableSeverity{Severity::kWARNING};
 };
 
-template <typename T>
-void write(char *& buffer, const T & val)
+template<typename T>
+void write(char * & buffer, const T & val)
 {
   *reinterpret_cast<T *>(buffer) = val;
   buffer += sizeof(T);
 }
 
-template <typename T>
-void read(const char *& buffer, T & val)
+template<typename T>
+void read(const char * & buffer, T & val)
 {
   val = *reinterpret_cast<const T *>(buffer);
   buffer += sizeof(T);
