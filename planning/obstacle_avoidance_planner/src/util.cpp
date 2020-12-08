@@ -37,7 +37,7 @@
 
 namespace util
 {
-template <typename T>
+template<typename T>
 geometry_msgs::msg::Point transformToRelativeCoordinate2D(
   const T & point, const geometry_msgs::msg::Pose & origin)
 {
@@ -95,14 +95,18 @@ double calculate2DDistance(const geometry_msgs::msg::Point & a, const geometry_m
   return std::sqrt(dx * dx + dy * dy);
 }
 
-double calculateSquaredDistance(const geometry_msgs::msg::Point & a, const geometry_msgs::msg::Point & b)
+double calculateSquaredDistance(
+  const geometry_msgs::msg::Point & a,
+  const geometry_msgs::msg::Point & b)
 {
   const double dx = a.x - b.x;
   const double dy = a.y - b.y;
   return dx * dx + dy * dy;
 }
 
-double getYawFromPoints(const geometry_msgs::msg::Point & a, const geometry_msgs::msg::Point & a_root)
+double getYawFromPoints(
+  const geometry_msgs::msg::Point & a,
+  const geometry_msgs::msg::Point & a_root)
 {
   const double dx = a.x - a_root.x;
   const double dy = a.y - a_root.y;
@@ -127,7 +131,7 @@ geometry_msgs::msg::Quaternion getQuaternionFromPoints(
   return tf2::toMsg(quaternion);
 }
 
-template <typename T>
+template<typename T>
 geometry_msgs::msg::Point transformMapToImage(
   const T & map_point, const nav_msgs::msg::MapMetaData & occupancy_grid_info)
 {
@@ -149,7 +153,8 @@ template geometry_msgs::msg::Point transformMapToImage<geometry_msgs::msg::Point
   const geometry_msgs::msg::Point32 &, const nav_msgs::msg::MapMetaData & map_info);
 
 boost::optional<geometry_msgs::msg::Point> transformMapToOptionalImage(
-  const geometry_msgs::msg::Point & map_point, const nav_msgs::msg::MapMetaData & occupancy_grid_info)
+  const geometry_msgs::msg::Point & map_point,
+  const nav_msgs::msg::MapMetaData & occupancy_grid_info)
 {
   geometry_msgs::msg::Point relative_p =
     transformToRelativeCoordinate2D(map_point, occupancy_grid_info.origin);
@@ -171,7 +176,8 @@ boost::optional<geometry_msgs::msg::Point> transformMapToOptionalImage(
 }
 
 bool transformMapToImage(
-  const geometry_msgs::msg::Point & map_point, const nav_msgs::msg::MapMetaData & occupancy_grid_info,
+  const geometry_msgs::msg::Point & map_point,
+  const nav_msgs::msg::MapMetaData & occupancy_grid_info,
   geometry_msgs::msg::Point & image_point)
 {
   geometry_msgs::msg::Point relative_p =
@@ -253,7 +259,8 @@ std::vector<geometry_msgs::msg::Point> getInterpolatedPoints(
     if (i > 0) {
       if (
         std::fabs(concat_points[i].x - concat_points[i - 1].x) < 1e-6 &&
-        std::fabs(concat_points[i].y - concat_points[i - 1].y) < 1e-6) {
+        std::fabs(concat_points[i].y - concat_points[i - 1].y) < 1e-6)
+      {
         continue;
       }
     }
@@ -274,7 +281,8 @@ std::vector<geometry_msgs::msg::Point> getInterpolatedPoints(
     if (i > 0) {
       if (
         std::fabs(points[i].position.x - points[i - 1].position.x) < 1e-6 &&
-        std::fabs(points[i].position.y - points[i - 1].position.y) < 1e-6) {
+        std::fabs(points[i].position.y - points[i - 1].position.y) < 1e-6)
+      {
         continue;
       }
     }
@@ -295,7 +303,8 @@ std::vector<geometry_msgs::msg::Point> getInterpolatedPoints(
     if (i > 0) {
       if (
         std::fabs(points[i].p.x - points[i - 1].p.x) < 1e-6 &&
-        std::fabs(points[i].p.y - points[i - 1].p.y) < 1e-6) {
+        std::fabs(points[i].p.y - points[i - 1].p.y) < 1e-6)
+      {
         continue;
       }
     }
@@ -307,7 +316,7 @@ std::vector<geometry_msgs::msg::Point> getInterpolatedPoints(
   return interpolated_points;
 }
 
-template <typename T>
+template<typename T>
 std::vector<geometry_msgs::msg::Point> getInterpolatedPoints(
   const T & points, const double delta_arc_length)
 {
@@ -317,7 +326,8 @@ std::vector<geometry_msgs::msg::Point> getInterpolatedPoints(
     if (i > 0) {
       if (
         std::fabs(points[i].pose.position.x - points[i - 1].pose.position.x) < 1e-6 &&
-        std::fabs(points[i].pose.position.y - points[i - 1].pose.position.y) < 1e-6) {
+        std::fabs(points[i].pose.position.y - points[i - 1].pose.position.y) < 1e-6)
+      {
         continue;
       }
     }
@@ -335,7 +345,7 @@ template std::vector<geometry_msgs::msg::Point>
 getInterpolatedPoints<std::vector<autoware_planning_msgs::msg::PathPoint>>(
   const std::vector<autoware_planning_msgs::msg::PathPoint> &, const double);
 
-template <typename T>
+template<typename T>
 int getNearestIdx(
   const T & points, const geometry_msgs::msg::Pose & pose, const int default_idx,
   const double delta_yaw_threshold)
@@ -356,10 +366,12 @@ int getNearestIdx(
   return nearest_idx;
 }
 template int getNearestIdx<std::vector<autoware_planning_msgs::msg::TrajectoryPoint>>(
-  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> &, const geometry_msgs::msg::Pose &,
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> &,
+  const geometry_msgs::msg::Pose &,
   const int, const double);
 template int getNearestIdx<std::vector<autoware_planning_msgs::msg::PathPoint>>(
-  const std::vector<autoware_planning_msgs::msg::PathPoint> &, const geometry_msgs::msg::Pose &, const int,
+  const std::vector<autoware_planning_msgs::msg::PathPoint> &, const geometry_msgs::msg::Pose &,
+  const int,
   const double);
 
 int getNearestIdx(
@@ -385,7 +397,8 @@ int getNearestIdx(
     const double norm_diff_yaw = normalizeRadian(diff_yaw);
     if (
       dist < min_dist && dist < delta_dist_threshold &&
-      std::fabs(norm_diff_yaw) < delta_yaw_threshold) {
+      std::fabs(norm_diff_yaw) < delta_yaw_threshold)
+    {
       min_dist = dist;
       nearest_idx = i;
     }
@@ -443,7 +456,7 @@ int getNearestIdx(
   return nearest_idx;
 }
 
-template <typename T>
+template<typename T>
 int getNearestIdx(const T & points, const geometry_msgs::msg::Point & point, const int default_idx)
 {
   double min_dist = std::numeric_limits<double>::max();
@@ -471,7 +484,8 @@ template int getNearestIdx<std::vector<autoware_planning_msgs::msg::TrajectoryPo
   const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & points,
   const geometry_msgs::msg::Point & point, const int default_idx);
 template int getNearestIdx<std::vector<autoware_planning_msgs::msg::PathPoint>>(
-  const std::vector<autoware_planning_msgs::msg::PathPoint> & points, const geometry_msgs::msg::Point & point,
+  const std::vector<autoware_planning_msgs::msg::PathPoint> & points,
+  const geometry_msgs::msg::Point & point,
   const int default_idx);
 
 int getNearestIdx(
@@ -489,7 +503,7 @@ int getNearestIdx(
   return nearest_idx;
 }
 
-template <typename T>
+template<typename T>
 int getNearestIdx(const T & points, const geometry_msgs::msg::Point & point)
 {
   int nearest_idx = 0;
@@ -504,7 +518,8 @@ int getNearestIdx(const T & points, const geometry_msgs::msg::Point & point)
   return nearest_idx;
 }
 template int getNearestIdx<std::vector<autoware_planning_msgs::msg::TrajectoryPoint>>(
-  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> &, const geometry_msgs::msg::Point &);
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> &,
+  const geometry_msgs::msg::Point &);
 template int getNearestIdx<std::vector<autoware_planning_msgs::msg::PathPoint>>(
   const std::vector<autoware_planning_msgs::msg::PathPoint> &, const geometry_msgs::msg::Point &);
 
@@ -523,7 +538,7 @@ int getNearestIdx(
   return nearest_idx;
 }
 
-template <typename T>
+template<typename T>
 int getNearestPointIdx(const T & points, const geometry_msgs::msg::Point & point)
 {
   int nearest_idx = 0;
@@ -583,7 +598,8 @@ std::vector<autoware_planning_msgs::msg::TrajectoryPoint> convertPointsToTraject
 }
 
 std::vector<autoware_planning_msgs::msg::TrajectoryPoint> fillTrajectoryWithVelocity(
-  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & traj_points, const double velocity)
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & traj_points,
+  const double velocity)
 {
   std::vector<autoware_planning_msgs::msg::TrajectoryPoint> traj_with_velo;
   for (const auto & traj_point : traj_points) {
@@ -594,9 +610,10 @@ std::vector<autoware_planning_msgs::msg::TrajectoryPoint> fillTrajectoryWithVelo
   return traj_with_velo;
 }
 
-template <typename T>
+template<typename T>
 std::vector<autoware_planning_msgs::msg::TrajectoryPoint> alignVelocityWithPoints(
-  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & base_traj_points, const T & points,
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & base_traj_points,
+  const T & points,
   const int zero_velocity_traj_idx, const int max_skip_comparison_idx)
 {
   auto traj_points = base_traj_points;
@@ -721,7 +738,8 @@ boost::optional<geometry_msgs::msg::Point> getLastExtendedPoint(
   const double diff_yaw = tf2::getYaw(path_point.pose.orientation) - tf2::getYaw(pose.orientation);
   const double norm_diff_yaw = normalizeRadian(diff_yaw);
   if (
-    dist > 1e-6 && dist < delta_dist_threshold && std::fabs(norm_diff_yaw) < delta_yaw_threshold) {
+    dist > 1e-6 && dist < delta_dist_threshold && std::fabs(norm_diff_yaw) < delta_yaw_threshold)
+  {
     return path_point.pose.position;
   } else {
     return boost::none;
@@ -736,7 +754,8 @@ boost::optional<autoware_planning_msgs::msg::TrajectoryPoint> getLastExtendedTra
   const double diff_yaw = tf2::getYaw(path_point.pose.orientation) - tf2::getYaw(pose.orientation);
   const double norm_diff_yaw = normalizeRadian(diff_yaw);
   if (
-    dist > 1e-6 && dist < delta_dist_threshold && std::fabs(norm_diff_yaw) < delta_yaw_threshold) {
+    dist > 1e-6 && dist < delta_dist_threshold && std::fabs(norm_diff_yaw) < delta_yaw_threshold)
+  {
     autoware_planning_msgs::msg::TrajectoryPoint tmp_traj_p;
     tmp_traj_p.pose.position = path_point.pose.position;
     tmp_traj_p.pose.orientation =
@@ -840,7 +859,8 @@ const int getZeroVelocityIdx(
     zero_velocity_idx_from_opt_points = getZeroVelocityIdxFromPoints(
       util::concatTraj(*opt_trajs), fine_points, default_idx, traj_param);
   }
-  RCLCPP_INFO_EXPRESSION(rclcpp::get_logger("util"),
+  RCLCPP_INFO_EXPRESSION(
+    rclcpp::get_logger("util"),
     is_showing_debug_info, "0 m/s idx from path: %d from opt: %d total size %zu",
     zero_velocity_idx_from_path, zero_velocity_idx_from_opt_points, fine_points.size());
   // std::cout << "zero velo from path " << zero_velocity_idx_from_path << " from opt "
@@ -859,14 +879,17 @@ const int getZeroVelocityIdx(
     }
     const float debug_dist = util::calculate2DDistance(
       path_points[zero_velocity_path_idx].pose.position, fine_points[zero_velocity_idx]);
-    RCLCPP_INFO(rclcpp::get_logger("util"),"Dist from path 0 velocity point: = %f [m]", debug_dist);
+    RCLCPP_INFO(
+      rclcpp::get_logger("util"), "Dist from path 0 velocity point: = %f [m]",
+      debug_dist);
   }
   return zero_velocity_idx;
 }
 
-template <typename T>
+template<typename T>
 int getZeroVelocityIdxFromPoints(
-  const T & points, const std::vector<geometry_msgs::msg::Point> & fine_points, const int default_idx,
+  const T & points, const std::vector<geometry_msgs::msg::Point> & fine_points,
+  const int default_idx,
   const TrajectoryParam & traj_param)
 {
   int zero_velocity_points_idx = points.size() - 1;
@@ -884,13 +907,15 @@ int getZeroVelocityIdxFromPoints(
   return zero_velocity_fine_points_idx;
 }
 template int getZeroVelocityIdxFromPoints<std::vector<autoware_planning_msgs::msg::PathPoint>>(
-  const std::vector<autoware_planning_msgs::msg::PathPoint> &, const std::vector<geometry_msgs::msg::Point> &,
+  const std::vector<autoware_planning_msgs::msg::PathPoint> &,
+  const std::vector<geometry_msgs::msg::Point> &,
   const int, const TrajectoryParam &);
 template int getZeroVelocityIdxFromPoints<std::vector<autoware_planning_msgs::msg::TrajectoryPoint>>(
   const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> &,
-  const std::vector<geometry_msgs::msg::Point> &, const int, const TrajectoryParam &);
+  const std::vector<geometry_msgs::msg::Point> &, const int,
+  const TrajectoryParam &);
 
-template <typename T>
+template<typename T>
 double getArcLength(const T & points, const int initial_idx)
 {
   double accum_arc_length = 0;
@@ -937,23 +962,37 @@ void logOSQPSolutionStatus(const int solution_status)
   if (solution_status == OSQP_SOLVED) {
     // RCLCPP_INFO(rclcpp::get_logger("util"),"[Avoidance] OSQP solution status: OSQP_SOLVED");
   } else if (solution_status == OSQP_DUAL_INFEASIBLE_INACCURATE) {
-    RCLCPP_WARN(rclcpp::get_logger("util"),"[Avoidance] OSQP solution status: OSQP_DUAL_INFEASIBLE_INACCURATE");
+    RCLCPP_WARN(
+      rclcpp::get_logger(
+        "util"), "[Avoidance] OSQP solution status: OSQP_DUAL_INFEASIBLE_INACCURATE");
   } else if (solution_status == OSQP_PRIMAL_INFEASIBLE_INACCURATE) {
-    RCLCPP_WARN(rclcpp::get_logger("util"),"[Avoidance] OSQP solution status: OSQP_PRIMAL_INFEASIBLE_INACCURATE");
+    RCLCPP_WARN(
+      rclcpp::get_logger(
+        "util"), "[Avoidance] OSQP solution status: OSQP_PRIMAL_INFEASIBLE_INACCURATE");
   } else if (solution_status == OSQP_SOLVED_INACCURATE) {
-    RCLCPP_WARN(rclcpp::get_logger("util"),"[Avoidance] OSQP solution status: OSQP_SOLVED_INACCURATE");
+    RCLCPP_WARN(
+      rclcpp::get_logger(
+        "util"), "[Avoidance] OSQP solution status: OSQP_SOLVED_INACCURATE");
   } else if (solution_status == OSQP_MAX_ITER_REACHED) {
-    RCLCPP_WARN(rclcpp::get_logger("util"),"[Avoidance] OSQP solution status: OSQP_ITER_REACHED");
+    RCLCPP_WARN(rclcpp::get_logger("util"), "[Avoidance] OSQP solution status: OSQP_ITER_REACHED");
   } else if (solution_status == OSQP_PRIMAL_INFEASIBLE) {
-    RCLCPP_WARN(rclcpp::get_logger("util"),"[Avoidance] OSQP solution status: OSQP_PRIMAL_INFEASIBLE");
+    RCLCPP_WARN(
+      rclcpp::get_logger(
+        "util"), "[Avoidance] OSQP solution status: OSQP_PRIMAL_INFEASIBLE");
   } else if (solution_status == OSQP_DUAL_INFEASIBLE) {
-    RCLCPP_WARN(rclcpp::get_logger("util"),"[Avoidance] OSQP solution status: OSQP_DUAL_INFEASIBLE");
+    RCLCPP_WARN(
+      rclcpp::get_logger("util"),
+      "[Avoidance] OSQP solution status: OSQP_DUAL_INFEASIBLE");
   } else if (solution_status == OSQP_SIGINT) {
-    RCLCPP_WARN(rclcpp::get_logger("util"),"[Avoidance] OSQP solution status: OSQP_SIGINT");
-    RCLCPP_WARN(rclcpp::get_logger("util"),"[Avoidance] Interrupted by user, process will be finished.");
+    RCLCPP_WARN(rclcpp::get_logger("util"), "[Avoidance] OSQP solution status: OSQP_SIGINT");
+    RCLCPP_WARN(
+      rclcpp::get_logger(
+        "util"), "[Avoidance] Interrupted by user, process will be finished.");
     std::exit(0);
   } else {
-    RCLCPP_WARN(rclcpp::get_logger("util"),"[Avoidance] OSQP solution status: Not defined %d", solution_status);
+    RCLCPP_WARN(
+      rclcpp::get_logger(
+        "util"), "[Avoidance] OSQP solution status: Not defined %d", solution_status);
   }
 }
 

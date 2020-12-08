@@ -59,7 +59,10 @@ MPTOptimizer::getModelPredictiveTrajectory(
 {
   auto t_start1 = std::chrono::high_resolution_clock::now();
   if (smoothed_points.empty()) {
-    RCLCPP_INFO_EXPRESSION(rclcpp::get_logger("MPTOptimizer"), is_showing_debug_info_, "return boost::none since smoothed_points is empty");
+    RCLCPP_INFO_EXPRESSION(
+      rclcpp::get_logger(
+        "MPTOptimizer"), is_showing_debug_info_,
+      "return boost::none since smoothed_points is empty");
     return boost::none;
   }
 
@@ -72,13 +75,17 @@ MPTOptimizer::getModelPredictiveTrajectory(
   std::vector<ReferencePoint> ref_points =
     getReferencePoints(origin_pose, ego_pose, smoothed_points, prev_trajs, debug_data);
   if (ref_points.empty()) {
-    RCLCPP_INFO_EXPRESSION(rclcpp::get_logger("MPTOptimizer"), is_showing_debug_info_, "return boost::none since ref_points is empty");
+    RCLCPP_INFO_EXPRESSION(
+      rclcpp::get_logger(
+        "MPTOptimizer"), is_showing_debug_info_, "return boost::none since ref_points is empty");
     return boost::none;
   }
 
   const auto mpt_matrix = generateMPTMatrix(ref_points, path_points);
   if (!mpt_matrix) {
-    RCLCPP_INFO_EXPRESSION(rclcpp::get_logger("MPTOptimizer"), is_showing_debug_info_, "return boost::none since matrix has nan");
+    RCLCPP_INFO_EXPRESSION(
+      rclcpp::get_logger(
+        "MPTOptimizer"), is_showing_debug_info_, "return boost::none since matrix has nan");
     return boost::none;
   }
   const auto initial_state = getInitialState(origin_pose, ref_points.front());
@@ -86,7 +93,9 @@ MPTOptimizer::getModelPredictiveTrajectory(
   const auto optimized_control_variables = executeOptimization(
     enable_avoidance, mpt_matrix.get(), ref_points, path_points, maps, initial_state, debug_data);
   if (!optimized_control_variables) {
-    RCLCPP_INFO_EXPRESSION(rclcpp::get_logger("MPTOptimizer"), is_showing_debug_info_, "return boost::none since could not solve qp");
+    RCLCPP_INFO_EXPRESSION(
+      rclcpp::get_logger(
+        "MPTOptimizer"), is_showing_debug_info_, "return boost::none since could not solve qp");
     return boost::none;
   }
 
@@ -96,7 +105,9 @@ MPTOptimizer::getModelPredictiveTrajectory(
 
   auto t_end1 = std::chrono::high_resolution_clock::now();
   float elapsed_ms1 = std::chrono::duration<float, std::milli>(t_end1 - t_start1).count();
-  RCLCPP_INFO_EXPRESSION(rclcpp::get_logger("MPTOptimizer"), is_showing_debug_info_, "MPT time: = %f [ms]", elapsed_ms1);
+  RCLCPP_INFO_EXPRESSION(
+    rclcpp::get_logger(
+      "MPTOptimizer"), is_showing_debug_info_, "MPT time: = %f [ms]", elapsed_ms1);
   return mpt_points;
 }
 
@@ -152,7 +163,7 @@ void MPTOptimizer::calcCurvature(std::vector<ReferencePoint> * ref_points) const
     p3 = ref_points->at(i + L).p;
     double den = std::max(
       util::calculate2DDistance(p1, p2) * util::calculate2DDistance(p2, p3) *
-        util::calculate2DDistance(p3, p1),
+      util::calculate2DDistance(p3, p1),
       0.0001);
     const double curvature =
       2.0 * ((p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x)) / den;
@@ -236,12 +247,15 @@ void MPTOptimizer::calcFixPoints(
   }
   auto t_end1 = std::chrono::high_resolution_clock::now();
   float elapsed_ms1 = std::chrono::duration<float, std::milli>(t_end1 - t_start1).count();
-  RCLCPP_INFO_EXPRESSION(rclcpp::get_logger("MPTOptimizer"), is_showing_debug_info_, "fine interpo time: = %f [ms]", elapsed_ms1);
+  RCLCPP_INFO_EXPRESSION(
+    rclcpp::get_logger(
+      "MPTOptimizer"), is_showing_debug_info_, "fine interpo time: = %f [ms]", elapsed_ms1);
 
   for (int i = 0; i < ref_points->size(); i++) {
     if (
       i >= nearest_idx_from_ego - (int)traj_param_ptr_->num_fix_points_for_mpt / 2 &&
-      i < nearest_idx_from_ego + (int)traj_param_ptr_->num_fix_points_for_mpt / 2) {
+      i < nearest_idx_from_ego + (int)traj_param_ptr_->num_fix_points_for_mpt / 2)
+    {
       ref_points->at(i).is_fix = true;
       const int nearest_idx = util::getNearestIdx(fine_interpolated_points, ref_points->at(i).p);
       ref_points->at(i).fixing_lat =
@@ -371,7 +385,8 @@ boost::optional<MPTMatrix> MPTOptimizer::generateMPTMatrix(
   if (
     m.Aex.array().isNaN().any() || m.Bex.array().isNaN().any() || m.Cex.array().isNaN().any() ||
     m.Wex.array().isNaN().any() || m.Qex.array().isNaN().any() || m.R1ex.array().isNaN().any() ||
-    m.R2ex.array().isNaN().any() || m.Urefex.array().isNaN().any()) {
+    m.R2ex.array().isNaN().any() || m.Urefex.array().isNaN().any())
+  {
     RCLCPP_WARN(rclcpp::get_logger("MPTOptimizer"), "[Avoidance] MPT matrix includes NaN.");
     return boost::none;
   }
@@ -483,7 +498,9 @@ boost::optional<Eigen::VectorXd> MPTOptimizer::executeOptimization(
 
   auto t_end1 = std::chrono::high_resolution_clock::now();
   float elapsed_ms1 = std::chrono::duration<float, std::milli>(t_end1 - t_start1).count();
-  RCLCPP_INFO_EXPRESSION(rclcpp::get_logger("MPTOptimizer"), is_showing_debug_info_, "mpt opt time: = %f [ms]", elapsed_ms1);
+  RCLCPP_INFO_EXPRESSION(
+    rclcpp::get_logger(
+      "MPTOptimizer"), is_showing_debug_info_, "mpt opt time: = %f [ms]", elapsed_ms1);
   return optimized_control_variables;
 }
 
@@ -580,13 +597,17 @@ std::vector<Bounds> MPTOptimizer::getReferenceBounds(
     auto lat_bounds_2 = getBound(enable_avoidance, ref_mid_point, maps);
     if (
       lat_bounds_0[0] == lat_bounds_0[1] || lat_bounds_1[0] == lat_bounds_1[1] ||
-      lat_bounds_2[0] == lat_bounds_2[1]) {
+      lat_bounds_2[0] == lat_bounds_2[1])
+    {
       auto clock = rclcpp::Clock(RCL_ROS_TIME);
-      RCLCPP_WARN_THROTTLE(rclcpp::get_logger("MPTOptimizer"),
+      RCLCPP_WARN_THROTTLE(
+        rclcpp::get_logger("MPTOptimizer"),
         clock,
         std::chrono::milliseconds(1000).count(),
         "[Avoidance] Could not find driveable area for %i th point", cnt);
-      RCLCPP_INFO_EXPRESSION(rclcpp::get_logger("MPTOptimizer"), is_showing_debug_info_, "Path is blocked at %i ", cnt);
+      RCLCPP_INFO_EXPRESSION(
+        rclcpp::get_logger(
+          "MPTOptimizer"), is_showing_debug_info_, "Path is blocked at %i ", cnt);
       Bounds bounds;
       bounds.c0 = {1, -1};
       bounds.c1 = {1, -1};
@@ -624,7 +645,8 @@ std::vector<double> MPTOptimizer::getBound(
     getClearance(maps.only_objects_clearance_map, new_position, maps.map_info);
   if (
     original_clearance > mpt_param_ptr_->clearance_from_road &&
-    original_object_clearance > mpt_param_ptr_->clearance_from_object) {
+    original_object_clearance > mpt_param_ptr_->clearance_from_object)
+  {
     const double initial_dist = 0;
     right_bound =
       -1 * getTraversedDistance(enable_avoidance, ref_point, right_angle, initial_dist, maps);
@@ -703,11 +725,12 @@ ObjectiveMatrix MPTOptimizer::getObjectiveMatrix(
 ConstraintMatrix MPTOptimizer::getConstraintMatrix(
   const bool enable_avoidance, const Eigen::VectorXd & x0, const MPTMatrix & m, const CVMaps & maps,
   const std::vector<ReferencePoint> & ref_points,
-  const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points, DebugData * debug_data) const
+  const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points,
+  DebugData * debug_data) const
 {
   std::vector<double> dist_vec{mpt_param_ptr_->base_point_dist_from_base_link,
-                               mpt_param_ptr_->top_point_dist_from_base_link,
-                               mpt_param_ptr_->mid_point_dist_from_base_link};
+    mpt_param_ptr_->top_point_dist_from_base_link,
+    mpt_param_ptr_->mid_point_dist_from_base_link};
 
   const size_t N_ref = m.Urefex.rows();
   const size_t N_state = vehicle_model_ptr_->getDimX();
@@ -907,14 +930,16 @@ double MPTOptimizer::getTraversedDistance(
     if (search_expanding_side) {
       if (
         clearance > mpt_param_ptr_->clearance_from_road &&
-        object_clearance > mpt_param_ptr_->clearance_from_object) {
+        object_clearance > mpt_param_ptr_->clearance_from_object)
+      {
         traversed_dist += ds;
         break;
       }
     } else {
       if (
         clearance < mpt_param_ptr_->clearance_from_road ||
-        object_clearance < mpt_param_ptr_->clearance_from_object) {
+        object_clearance < mpt_param_ptr_->clearance_from_object)
+      {
         break;
       }
     }

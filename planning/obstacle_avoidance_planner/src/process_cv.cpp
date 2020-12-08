@@ -73,8 +73,9 @@ cv::Mat drawObstaclesOnImage(
   for (const auto & object : objects) {
     const PolygonPoints polygon_points = getPolygonPoints(object, map_info);
     if (isAvoidingObject(
-          polygon_points, object, clearance_map, map_info, path_points_inside_area,
-          max_avoiding_objects_velocity_ms, center_line_width)) {
+        polygon_points, object, clearance_map, map_info, path_points_inside_area,
+        max_avoiding_objects_velocity_ms, center_line_width))
+    {
       cv_polygons.push_back(
         getCVPolygon(object, polygon_points, path_points_inside_area, clearance_map, map_info));
       debug_avoiding_objects->push_back(object);
@@ -115,19 +116,21 @@ bool isAvoidingObject(
   }
   const float nearest_path_point_clearance =
     clearance_map.ptr<float>(
-      (int)nearest_path_point_image.get().y)[(int)nearest_path_point_image.get().x] *
+    (int)nearest_path_point_image.get().y)[(int)nearest_path_point_image.get().x] *
     map_info.resolution;
   if (
     nearest_path_point_clearance - center_line_width * 0.5 < object_clearance_from_road ||
     vel > max_avoiding_objects_velocity_ms ||
-    !arePointsInsideDriveableArea(polygon_points.points_in_image, clearance_map)) {
+    !arePointsInsideDriveableArea(polygon_points.points_in_image, clearance_map))
+  {
     return false;
   }
   return true;
 }
 
 PolygonPoints getPolygonPoints(
-  const autoware_perception_msgs::msg::DynamicObject & object, const nav_msgs::msg::MapMetaData & map_info)
+  const autoware_perception_msgs::msg::DynamicObject & object,
+  const nav_msgs::msg::MapMetaData & map_info)
 {
   std::vector<geometry_msgs::msg::Point> points_in_image;
   std::vector<geometry_msgs::msg::Point> points_in_map;
@@ -143,7 +146,8 @@ PolygonPoints getPolygonPoints(
 }
 
 PolygonPoints getPolygonPointsFromBB(
-  const autoware_perception_msgs::msg::DynamicObject & object, const nav_msgs::msg::MapMetaData & map_info)
+  const autoware_perception_msgs::msg::DynamicObject & object,
+  const nav_msgs::msg::MapMetaData & map_info)
 {
   std::vector<geometry_msgs::msg::Point> points_in_image;
   std::vector<geometry_msgs::msg::Point> points_in_map;
@@ -170,7 +174,8 @@ PolygonPoints getPolygonPointsFromBB(
 }
 
 PolygonPoints getPolygonPointsFromCircle(
-  const autoware_perception_msgs::msg::DynamicObject & object, const nav_msgs::msg::MapMetaData & map_info)
+  const autoware_perception_msgs::msg::DynamicObject & object,
+  const nav_msgs::msg::MapMetaData & map_info)
 {
   std::vector<geometry_msgs::msg::Point> points_in_image;
   std::vector<geometry_msgs::msg::Point> points_in_map;
@@ -182,15 +187,15 @@ PolygonPoints getPolygonPointsFromCircle(
     for (const auto & delta : deltas) {
       geometry_msgs::msg::Point point;
       point.x = std::cos(
-                  ((double)(i + delta) / (double)num_sampling_points) * 2.0 * M_PI +
-                  M_PI / (double)num_sampling_points) *
-                  (radius / 2.0) +
-                center.x;
+        ((double)(i + delta) / (double)num_sampling_points) * 2.0 * M_PI +
+        M_PI / (double)num_sampling_points) *
+        (radius / 2.0) +
+        center.x;
       point.y = std::sin(
-                  ((double)(i + delta) / (double)num_sampling_points) * 2.0 * M_PI +
-                  M_PI / (double)num_sampling_points) *
-                  (radius / 2.0) +
-                center.y;
+        ((double)(i + delta) / (double)num_sampling_points) * 2.0 * M_PI +
+        M_PI / (double)num_sampling_points) *
+        (radius / 2.0) +
+        center.y;
       point.z = center.z;
       geometry_msgs::msg::Point image_point;
       if (util::transformMapToImage(point, map_info, image_point)) {
@@ -206,7 +211,8 @@ PolygonPoints getPolygonPointsFromCircle(
 }
 
 PolygonPoints getPolygonPointsFromPolygon(
-  const autoware_perception_msgs::msg::DynamicObject & object, const nav_msgs::msg::MapMetaData & map_info)
+  const autoware_perception_msgs::msg::DynamicObject & object,
+  const nav_msgs::msg::MapMetaData & map_info)
 {
   std::vector<geometry_msgs::msg::Point> points_in_image;
   std::vector<geometry_msgs::msg::Point> points_in_map;
@@ -228,7 +234,8 @@ PolygonPoints getPolygonPointsFromPolygon(
 
 std::vector<cv::Point> getCVPolygon(
   const autoware_perception_msgs::msg::DynamicObject & object, const PolygonPoints & polygon_points,
-  const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points, const cv::Mat & clearance_map,
+  const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points,
+  const cv::Mat & clearance_map,
   const nav_msgs::msg::MapMetaData & map_info)
 {
   const int nearest_idx =
@@ -341,7 +348,7 @@ boost::optional<Edges> getEdges(
   const Eigen::Vector2d obj_vec(
     object.state.pose_covariance.pose.position.x, object.state.pose_covariance.pose.position.y);
   const double inner_product = rel_path_vec[0] * (obj_vec[0] - nearest_path_point_pose.position.x) +
-                               rel_path_vec[1] * (obj_vec[1] - nearest_path_point_pose.position.y);
+    rel_path_vec[1] * (obj_vec[1] - nearest_path_point_pose.position.y);
   geometry_msgs::msg::Point origin;
   origin.x = nearest_path_point_pose.position.x + rel_path_vec[0] * inner_product;
   origin.y = nearest_path_point_pose.position.y + rel_path_vec[1] * inner_product;
@@ -404,7 +411,8 @@ boost::optional<Edges> getEdges(
   const double dist2back_edge = point2back_edge.norm() * map_info.resolution;
   if (
     dist2extended_front_edge < clearance * 2 || dist2extended_back_edge < clearance * 2 ||
-    dist2front_edge > dist2extended_front_edge || dist2back_edge > dist2extended_back_edge) {
+    dist2front_edge > dist2extended_front_edge || dist2back_edge > dist2extended_back_edge)
+  {
     return boost::none;
   }
   geometry_msgs::msg::Point extended_front;
@@ -436,9 +444,10 @@ cv::Mat getDrivableAreaInCV(const nav_msgs::msg::OccupancyGrid & occupancy_grid)
 {
   cv::Mat drivable_area = cv::Mat(occupancy_grid.info.width, occupancy_grid.info.height, CV_8UC1);
 
-  drivable_area.forEach<unsigned char>([&](unsigned char & value, const int * position) -> void {
-    getOccupancyGridValue(occupancy_grid, position[0], position[1], value);
-  });
+  drivable_area.forEach<unsigned char>(
+    [&](unsigned char & value, const int * position) -> void {
+      getOccupancyGridValue(occupancy_grid, position[0], position[1], value);
+    });
   return drivable_area;
 }
 
@@ -473,7 +482,8 @@ boost::optional<int> getStopIdx(
     const double epsilon = 1e-8;
     if (
       top_left_dist < epsilon || top_right_dist < epsilon || bottom_left_dist < epsilon ||
-      bottom_right_dist < epsilon) {
+      bottom_right_dist < epsilon)
+    {
       return std::max(i - 1, 0);
     }
   }

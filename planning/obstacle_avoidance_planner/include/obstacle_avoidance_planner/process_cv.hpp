@@ -62,14 +62,18 @@ cv::Mat drawObstaclesOnImage(
   std::vector<autoware_perception_msgs::msg::DynamicObject> * debug_avoiding_objects);
 
 PolygonPoints getPolygonPoints(
-  const autoware_perception_msgs::msg::DynamicObject & object, const nav_msgs::msg::MapMetaData & map_info);
+  const autoware_perception_msgs::msg::DynamicObject & object,
+  const nav_msgs::msg::MapMetaData & map_info);
 
 PolygonPoints getPolygonPointsFromBB(
-  const autoware_perception_msgs::msg::DynamicObject & object, const nav_msgs::msg::MapMetaData & map_info);
+  const autoware_perception_msgs::msg::DynamicObject & object,
+  const nav_msgs::msg::MapMetaData & map_info);
 PolygonPoints getPolygonPointsFromCircle(
-  const autoware_perception_msgs::msg::DynamicObject & object, const nav_msgs::msg::MapMetaData & map_info);
+  const autoware_perception_msgs::msg::DynamicObject & object,
+  const nav_msgs::msg::MapMetaData & map_info);
 PolygonPoints getPolygonPointsFromPolygon(
-  const autoware_perception_msgs::msg::DynamicObject & object, const nav_msgs::msg::MapMetaData & map_info);
+  const autoware_perception_msgs::msg::DynamicObject & object,
+  const nav_msgs::msg::MapMetaData & map_info);
 
 bool isAvoidingObject(
   const PolygonPoints & polygon_points, const autoware_perception_msgs::msg::DynamicObject & object,
@@ -79,7 +83,8 @@ bool isAvoidingObject(
 
 std::vector<cv::Point> getCVPolygon(
   const autoware_perception_msgs::msg::DynamicObject & object, const PolygonPoints & polygon_points,
-  const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points, const cv::Mat & clearance_map,
+  const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points,
+  const cv::Mat & clearance_map,
   const nav_msgs::msg::MapMetaData & map_info);
 
 std::vector<cv::Point> getDefaultCVPolygon(
@@ -113,7 +118,8 @@ double getDistance(
   const nav_msgs::msg::MapMetaData & map_info, const double default_dist = 0);
 
 boost::optional<int> getStopIdx(
-  const std::vector<util::Footprint> & vehicle_footprints, const geometry_msgs::msg::Pose & ego_pose,
+  const std::vector<util::Footprint> & vehicle_footprints,
+  const geometry_msgs::msg::Pose & ego_pose,
   const cv::Mat & road_clearance_map, const nav_msgs::msg::MapMetaData & map_info);
 
 CVMaps getMaps(

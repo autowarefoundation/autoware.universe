@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2018-2019 Autoware Foundation. All rights reserved.
  *
@@ -29,11 +28,11 @@ void KinematicsBicycleModelNoDelay::calculateDiscreteMatrix(
   Eigen::MatrixXd * Ad, Eigen::MatrixXd * Bd, Eigen::MatrixXd * Cd, Eigen::MatrixXd * Wd,
   const double ds)
 {
-  auto sign = [](double x) { return (x > 0.0) - (x < 0.0); };
+  auto sign = [](double x) {return (x > 0.0) - (x < 0.0);};
 
   /* Linearize delta around delta_r (referece delta) */
   double delta_r = atan(wheelbase_ * curvature_);
-  if (abs(delta_r) >= steer_lim_) delta_r = steer_lim_ * (double)sign(delta_r);
+  if (abs(delta_r) >= steer_lim_) {delta_r = steer_lim_ * (double)sign(delta_r);}
   double cos_delta_r_squared_inv = 1 / (cos(delta_r) * cos(delta_r));
 
   *Ad << 1.0, ds, 0.0, 1.0;
