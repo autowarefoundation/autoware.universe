@@ -36,7 +36,8 @@ public:
     const double front_overhang);
 
   void insertAdaptiveCruiseVelocity(
-    const autoware_planning_msgs::msg::Trajectory & trajectory, const int nearest_collision_point_idx,
+    const autoware_planning_msgs::msg::Trajectory & trajectory,
+    const int nearest_collision_point_idx,
     const geometry_msgs::msg::Pose self_pose, const pcl::PointXYZ & nearest_collision_point,
     const rclcpp::Time nearest_collision_point_time,
     const autoware_perception_msgs::msg::DynamicObjectArray::ConstPtr object_ptr,
@@ -159,7 +160,8 @@ private:
   double calcTrajYaw(
     const autoware_planning_msgs::msg::Trajectory & trajectory, const int collsion_point_idx);
   bool estimatePointVelocityFromObject(
-    const autoware_perception_msgs::msg::DynamicObjectArray::ConstPtr object_ptr, const double traj_yaw,
+    const autoware_perception_msgs::msg::DynamicObjectArray::ConstPtr object_ptr,
+    const double traj_yaw,
     const pcl::PointXYZ & nearest_collision_point, double * velocity);
   bool estimatePointVelocityFromPcl(
     const double traj_yaw, const pcl::PointXYZ & nearest_collision_point,
@@ -180,7 +182,8 @@ private:
 
   /* Debug */
   mutable autoware_debug_msgs::msg::Float32MultiArrayStamped debug_values_;
-  enum DBGVAL {
+  enum DBGVAL
+  {
     ESTIMATED_VEL_PCL = 0,
     ESTIMATED_VEL_OBJ = 1,
     ESTIMATED_VEL_FINAL = 2,

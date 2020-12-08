@@ -13,7 +13,7 @@
 // limitations under the License.
 #pragma once
 
-#include<memory>
+#include <memory>
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -50,7 +50,8 @@ private:
   rclcpp::Subscription<autoware_planning_msgs::msg::Trajectory>::SharedPtr path_sub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr obstacle_pointcloud_sub_;
   rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr current_velocity_sub_;
-  rclcpp::Subscription<autoware_perception_msgs::msg::DynamicObjectArray>::SharedPtr dynamic_object_sub_;
+  rclcpp::Subscription<autoware_perception_msgs::msg::DynamicObjectArray>::SharedPtr
+    dynamic_object_sub_;
 
   rclcpp::Publisher<autoware_planning_msgs::msg::Trajectory>::SharedPtr path_pub_;
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticStatus>::SharedPtr stop_reason_diag_pub_;
@@ -99,10 +100,12 @@ private:
     std::map<size_t /* decimate */, size_t /* origin */> & index_map);
   bool trimTrajectoryFromSelfPose(
     const autoware_planning_msgs::msg::Trajectory & input_trajectory,
-    const geometry_msgs::msg::Pose self_pose, autoware_planning_msgs::msg::Trajectory & output_trajectory);
+    const geometry_msgs::msg::Pose self_pose,
+    autoware_planning_msgs::msg::Trajectory & output_trajectory);
   bool trimTrajectoryWithIndexFromSelfPose(
     const autoware_planning_msgs::msg::Trajectory & input_trajectory,
-    const geometry_msgs::msg::Pose self_pose, autoware_planning_msgs::msg::Trajectory & output_trajectory,
+    const geometry_msgs::msg::Pose self_pose,
+    autoware_planning_msgs::msg::Trajectory & output_trajectory,
     size_t & index);
   bool searchPointcloudNearTrajectory(
     const autoware_planning_msgs::msg::Trajectory & trajectory, const double radius,

@@ -39,7 +39,7 @@ class ObstacleStopPlannerDebugNode : public rclcpp::Node
 {
 public:
   ObstacleStopPlannerDebugNode(const double base_link2front);
-  ~ObstacleStopPlannerDebugNode(){};
+  ~ObstacleStopPlannerDebugNode() {}
   bool pushPolygon(
     const std::vector<cv::Point2d> & polygon, const double z, const PolygonType & type);
   bool pushPolygon(const std::vector<Eigen::Vector3d> & polygon, const PolygonType & type);

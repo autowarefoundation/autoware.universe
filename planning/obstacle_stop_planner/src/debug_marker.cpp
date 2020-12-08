@@ -43,23 +43,25 @@ bool ObstacleStopPlannerDebugNode::pushPolygon(
 {
   switch (type) {
     case PolygonType::Vehicle:
-      if (!polygon.empty()) vehicle_polygons_.push_back(polygon);
+      if (!polygon.empty()) {vehicle_polygons_.push_back(polygon);}
       return true;
     case PolygonType::Collision:
-      if (!polygon.empty()) collision_polygons_.push_back(polygon);
+      if (!polygon.empty()) {collision_polygons_.push_back(polygon);}
       return true;
     case PolygonType::SlowDownRange:
-      if (!polygon.empty()) slow_down_range_polygons_.push_back(polygon);
+      if (!polygon.empty()) {slow_down_range_polygons_.push_back(polygon);}
       return true;
     case PolygonType::SlowDown:
-      if (!polygon.empty()) slow_down_polygons_.push_back(polygon);
+      if (!polygon.empty()) {slow_down_polygons_.push_back(polygon);}
       return true;
     default:
       return false;
   }
 }
 
-bool ObstacleStopPlannerDebugNode::pushPose(const geometry_msgs::msg::Pose & pose, const PoseType & type)
+bool ObstacleStopPlannerDebugNode::pushPose(
+  const geometry_msgs::msg::Pose & pose,
+  const PoseType & type)
 {
   switch (type) {
     case PoseType::Stop:
