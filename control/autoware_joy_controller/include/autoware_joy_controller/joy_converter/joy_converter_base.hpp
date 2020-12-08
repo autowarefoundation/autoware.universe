@@ -16,14 +16,14 @@
 
 #include <algorithm>
 
-#include "sensor_msgs/Joy.h"
+#include "sensor_msgs/msg/joy.hpp"
 
 class JoyConverterBase
 {
 public:
-  virtual const float accel() const = 0;
+  virtual float accel() const = 0;
 
-  virtual const float brake() const = 0;
+  virtual float brake() const = 0;
 
   virtual float steer() const = 0;
 

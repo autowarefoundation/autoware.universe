@@ -19,9 +19,9 @@
 class DS4JoyConverter : public JoyConverterBase
 {
 public:
-  explicit DS4JoyConverter(const sensor_msgs::Joy & j) : j_(j) {}
+  explicit DS4JoyConverter(const sensor_msgs::msg::Joy & j) : j_(j) {}
 
-  const float accel() const
+  float accel() const
   {
     const auto button = static_cast<float>(Cross());
     const auto stick = std::max(0.0f, RStickUpDown());
@@ -29,7 +29,7 @@ public:
     return std::max({button, stick, trigger});
   }
 
-  const float brake() const
+  float brake() const
   {
     const auto button = static_cast<float>(Square());
     const auto stick = std::max(0.0f, -RStickUpDown());
@@ -81,7 +81,7 @@ private:
   bool Options() const { return j_.buttons.at(9); }
   bool PS() const { return j_.buttons.at(10); }
 
-  const sensor_msgs::Joy j_;
+  const sensor_msgs::msg::Joy j_;
 
   bool reverse() const { return Share(); }
 };

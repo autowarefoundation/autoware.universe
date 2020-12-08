@@ -4,18 +4,19 @@
   <version>0.1.0</version>
   <description>The autoware_joy_controller package</description>
   <maintainer email="kenji.miyake@tier4.jp">Kenji Miyake</maintainer>
-  <license>Apache 2</license>
+  <license>Apache License 2.0</license>
 
-  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
   <depend>autoware_control_msgs</depend>
   <depend>autoware_vehicle_msgs</depend>
+  <depend>autoware_debug_msgs</depend>
   <depend>joy</depend>
   <depend>geometry_msgs</depend>
-  <depend>roscpp</depend>
+  <depend>rclcpp</depend>
   <depend>sensor_msgs</depend>
-  <depend>std_msgs</depend>
 
   <export>
+    <build_type>ament_cmake</build_type>
   </export>
 </package>

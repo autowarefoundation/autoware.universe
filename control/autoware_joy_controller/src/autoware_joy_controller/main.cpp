@@ -12,17 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "ros/ros.h"
 
+#include "rclcpp/rclcpp.hpp"
 #include "autoware_joy_controller/autoware_joy_controller.hpp"
 
 int main(int argc, char * argv[])
 {
-  ros::init(argc, argv, "autoware_joy_controller");
-
-  AutowareJoyControllerNode node;
-
-  ros::spin();
+  rclcpp::init(argc, argv);
+  rclcpp::spin(std::make_shared<AutowareJoyControllerNode>());
+  rclcpp::shutdown();
 
   return 0;
 }

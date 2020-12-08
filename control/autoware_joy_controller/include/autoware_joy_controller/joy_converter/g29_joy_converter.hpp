@@ -19,16 +19,16 @@
 class G29JoyConverter : public JoyConverterBase
 {
 public:
-  explicit G29JoyConverter(const sensor_msgs::Joy & j) : j_(j) {}
+  explicit G29JoyConverter(const sensor_msgs::msg::Joy & j) : j_(j) {}
 
-  const float accel() const
+  float accel() const
   {
     constexpr float eps = 0.0000001;
     if(std::fabs(AccelPedal()) < eps) return 0.0f;
     return (AccelPedal() + 1.0f) / 2;
   }
 
-  const float brake() const
+  float brake() const
   { 
     constexpr float eps = 0.0000001;
     if(std::fabs(BrakePedal()) < eps) return 0.0f;
@@ -77,7 +77,7 @@ private:
   bool Options() const { return j_.buttons.at(9); }
   bool PS() const { return j_.buttons.at(24); }
 
-  const sensor_msgs::Joy j_;
+  const sensor_msgs::msg::Joy j_;
 
   bool reverse() const { return Share(); }
 };

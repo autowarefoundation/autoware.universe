@@ -18,37 +18,30 @@
 #include <memory>
 #include <string>
 
-#include "ros/ros.h"
+#include "rclcpp/rclcpp.hpp"
 
-#include "autoware_control_msgs/ControlCommandStamped.h"
-#include "autoware_control_msgs/GateMode.h"
-#include "autoware_vehicle_msgs/RawControlCommandStamped.h"
-#include "autoware_vehicle_msgs/ShiftStamped.h"
-#include "autoware_vehicle_msgs/TurnSignal.h"
-#include "geometry_msgs/TwistStamped.h"
-#include "sensor_msgs/Joy.h"
-#include "std_msgs/Bool.h"
-
+#include "autoware_control_msgs/msg/control_command_stamped.hpp"
+#include "autoware_control_msgs/msg/gate_mode.hpp"
+#include "autoware_debug_msgs/msg/bool_stamped.hpp"
+#include "autoware_vehicle_msgs/msg/raw_control_command_stamped.hpp"
+#include "autoware_vehicle_msgs/msg/shift_stamped.hpp"
+#include "autoware_vehicle_msgs/msg/turn_signal.hpp"
+#include "geometry_msgs/msg/twist_stamped.hpp"
+#include "sensor_msgs/msg/joy.hpp"
 #include "autoware_joy_controller/joy_converter/joy_converter_base.hpp"
+#include "autoware_vehicle_msgs/msg/raw_vehicle_command.hpp"
+#include "autoware_vehicle_msgs/msg/vehicle_command.hpp"
 
-// tmp
-#include "autoware_vehicle_msgs/RawVehicleCommand.h"
-#include "autoware_vehicle_msgs/VehicleCommand.h"
+using ShiftType = autoware_vehicle_msgs::msg::Shift::_data_type;
+using TurnSignalType = autoware_vehicle_msgs::msg::TurnSignal::_data_type;
+using GateModeType = autoware_control_msgs::msg::GateMode::_data_type;
 
-using ShiftType = autoware_vehicle_msgs::Shift::_data_type;
-using TurnSignalType = autoware_vehicle_msgs::TurnSignal::_data_type;
-using GateModeType = autoware_control_msgs::GateMode::_data_type;
-
-class AutowareJoyControllerNode
+class AutowareJoyControllerNode : public rclcpp::Node
 {
 public:
   AutowareJoyControllerNode();
 
 private:
-  // NodeHandle
-  ros::NodeHandle nh_{""};
-  ros::NodeHandle private_nh_{"~"};
-
   // Parameter
   std::string joy_type_;
   double update_rate_;
@@ -64,25 +57,25 @@ private:
   double backward_accel_ratio_;
 
   // Subscriber
-  ros::Subscriber sub_joy_;
-  ros::Subscriber sub_twist_;
+  rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr sub_joy_;
+  rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr sub_twist_;
 
-  ros::Time last_joy_received_time_;
+  rclcpp::Time last_joy_received_time_;
   std::shared_ptr<const JoyConverterBase> joy_;
-  geometry_msgs::TwistStamped::ConstPtr twist_;
+  geometry_msgs::msg::TwistStamped::ConstSharedPtr twist_;
 
-  void onJoy(const sensor_msgs::Joy::ConstPtr & msg);
-  void onTwist(const geometry_msgs::TwistStamped::ConstPtr & msg);
+  void onJoy(const sensor_msgs::msg::Joy::ConstSharedPtr msg);
+  void onTwist(const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg);
 
   // Publisher
-  ros::Publisher pub_control_command_;
-  ros::Publisher pub_raw_control_command_;
-  ros::Publisher pub_shift_;
-  ros::Publisher pub_turn_signal_;
-  ros::Publisher pub_gate_mode_;
-  ros::Publisher pub_emergency_;
-  ros::Publisher pub_autoware_engage_;
-  ros::Publisher pub_vehicle_engage_;
+  rclcpp::Publisher<autoware_control_msgs::msg::ControlCommandStamped>::SharedPtr pub_control_command_;
+  rclcpp::Publisher<autoware_vehicle_msgs::msg::RawControlCommandStamped>::SharedPtr pub_raw_control_command_;
+  rclcpp::Publisher<autoware_vehicle_msgs::msg::ShiftStamped>::SharedPtr pub_shift_;
+  rclcpp::Publisher<autoware_vehicle_msgs::msg::TurnSignal>::SharedPtr pub_turn_signal_;
+  rclcpp::Publisher<autoware_control_msgs::msg::GateMode>::SharedPtr pub_gate_mode_;
+  rclcpp::Publisher<autoware_debug_msgs::msg::BoolStamped>::SharedPtr pub_emergency_;
+  rclcpp::Publisher<autoware_debug_msgs::msg::BoolStamped>::SharedPtr pub_autoware_engage_;
+  rclcpp::Publisher<autoware_debug_msgs::msg::BoolStamped>::SharedPtr pub_vehicle_engage_;
 
   void publishControlCommand();
   void publishRawControlCommand();
@@ -94,21 +87,22 @@ private:
   void publishVehicleEngage();
 
   // Previous State
-  autoware_control_msgs::ControlCommand prev_control_command_;
-  autoware_vehicle_msgs::RawControlCommand prev_raw_control_command_;
-  ShiftType prev_shift_ = autoware_vehicle_msgs::Shift::NONE;
-  TurnSignalType prev_turn_signal_ = autoware_vehicle_msgs::TurnSignal::NONE;
-  GateModeType prev_gate_mode_ = autoware_control_msgs::GateMode::AUTO;
+  autoware_control_msgs::msg::ControlCommand prev_control_command_;
+  autoware_vehicle_msgs::msg::RawControlCommand prev_raw_control_command_;
+  ShiftType prev_shift_ = autoware_vehicle_msgs::msg::Shift::NONE;
+  TurnSignalType prev_turn_signal_ = autoware_vehicle_msgs::msg::TurnSignal::NONE;
+  GateModeType prev_gate_mode_ = autoware_control_msgs::msg::GateMode::AUTO;
 
   // tmp
-  ros::Publisher pub_vehicle_command_;
-  ros::Publisher pub_raw_vehicle_command_;
+  rclcpp::Publisher<autoware_vehicle_msgs::msg::VehicleCommand>::SharedPtr pub_vehicle_command_;
+  rclcpp::Publisher<autoware_vehicle_msgs::msg::RawVehicleCommand>::SharedPtr pub_raw_vehicle_command_;
   void publishVehicleCommand();
   void publishRawVehicleCommand();
 
   // Timer
-  ros::Timer timer_;
+  rclcpp::TimerBase::SharedPtr timer_;
+  void initTimer(double period_s);
 
   bool isDataReady();
-  void onTimer(const ros::TimerEvent & event);
+  void onTimer();
 };
