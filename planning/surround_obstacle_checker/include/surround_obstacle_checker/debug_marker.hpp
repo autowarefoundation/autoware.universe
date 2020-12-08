@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef SURROUND_OBSTACLE_CHECKER__DEBUG_MARKER_HPP_
+#define SURROUND_OBSTACLE_CHECKER__DEBUG_MARKER_HPP_
 
+#include <memory>
 #include <string>
 
 #include "autoware_planning_msgs/msg/stop_reason_array.hpp"
@@ -46,3 +48,5 @@ private:
   std::shared_ptr<geometry_msgs::msg::Pose> stop_pose_ptr_;
   rclcpp::Clock::SharedPtr clock_;
 };
+
+#endif  // SURROUND_OBSTACLE_CHECKER__DEBUG_MARKER_HPP_

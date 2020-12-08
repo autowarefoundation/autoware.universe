@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef SURROUND_OBSTACLE_CHECKER__NODE_HPP_
+#define SURROUND_OBSTACLE_CHECKER__NODE_HPP_
 
 #include <memory>
 #include <string>
@@ -61,7 +62,7 @@ private:
     const geometry_msgs::msg::Pose & pose, const std::string & source, const std::string & target,
     const rclcpp::Time & time, geometry_msgs::msg::Pose & conv_pose);
   bool getPose(
-    const std::string & source, const std::string & target, const rclcpp::Time & time,
+    const std::string & source, const std::string & target,
     geometry_msgs::msg::Pose & pose);
   void getNearestObstacle(double * min_dist_to_obj, geometry_msgs::msg::Point * nearest_obj_point);
   void getNearestObstacleByPointCloud(
@@ -118,3 +119,5 @@ private:
   State state_ = State::PASS;
   std::shared_ptr<const rclcpp::Time> last_obstacle_found_time_;
 };
+
+#endif  // SURROUND_OBSTACLE_CHECKER__NODE_HPP_

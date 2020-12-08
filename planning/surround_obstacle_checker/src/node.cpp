@@ -12,7 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <algorithm>
 #include <functional>
+#include <limits>
+#include <memory>
+#include <string>
 
 #include "pcl/common/transforms.h"
 #include "pcl/point_cloud.h"
@@ -59,8 +63,8 @@ SurroundObstacleCheckerNode::SurroundObstacleCheckerNode()
     std::bind(&SurroundObstacleCheckerNode::pointCloudCallback, this, std::placeholders::_1));
   dynamic_object_sub_ =
     this->create_subscription<autoware_perception_msgs::msg::DynamicObjectArray>(
-      "input/objects", 1,
-      std::bind(&SurroundObstacleCheckerNode::dynamicObjectCallback, this, std::placeholders::_1));
+    "input/objects", 1,
+    std::bind(&SurroundObstacleCheckerNode::dynamicObjectCallback, this, std::placeholders::_1));
   current_velocity_sub_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
     "input/twist", 1,
     std::bind(&SurroundObstacleCheckerNode::currentVelocityCallback, this, std::placeholders::_1));
@@ -93,7 +97,7 @@ void SurroundObstacleCheckerNode::pathCallback(
 
   // get current pose in traj frame
   geometry_msgs::msg::Pose current_pose;
-  if (!getPose(input_msg->header.frame_id, "base_link", input_msg->header.stamp, current_pose)) {
+  if (!getPose(input_msg->header.frame_id, "base_link", current_pose)) {
     return;
   }
 
@@ -160,14 +164,14 @@ void SurroundObstacleCheckerNode::currentVelocityCallback(
 void SurroundObstacleCheckerNode::insertStopVelocity(
   const size_t closest_idx, autoware_planning_msgs::msg::Trajectory * traj)
 {
-  //set zero velocity from closest idx to last idx
+  // set zero velocity from closest idx to last idx
   for (size_t i = closest_idx; i < traj->points.size(); i++) {
     traj->points.at(i).twist.linear.x = 0.0;
   }
 }
 
 bool SurroundObstacleCheckerNode::getPose(
-  const std::string & source, const std::string & target, const rclcpp::Time & time,
+  const std::string & source, const std::string & target,
   geometry_msgs::msg::Pose & pose)
 {
   try {
@@ -275,7 +279,7 @@ void SurroundObstacleCheckerNode::getNearestObstacleByPointCloud(
   pcl::PointCloud<pcl::PointXYZ> pcl;
   pcl::fromROSMsg(*pointcloud_ptr_, pcl);
   pcl::transformPointCloud(pcl, pcl, isometry);
-  for (const auto& p : pcl) {
+  for (const auto & p : pcl) {
     // create boost point
     Point2d boost_p(p.x, p.y);
 
@@ -297,15 +301,16 @@ void SurroundObstacleCheckerNode::getNearestObstacleByDynamicObject(
 {
   const auto obj_frame = object_ptr_->header.frame_id;
   const auto obj_time = object_ptr_->header.stamp;
-  for (const auto obj : object_ptr_->objects) {
-    //change frame of obj_pose to base_link
+  for (const auto & obj : object_ptr_->objects) {
+    // change frame of obj_pose to base_link
     geometry_msgs::msg::Pose pose_baselink;
     if (!convertPose(
-          obj.state.pose_covariance.pose, obj_frame, "base_link", obj_time, pose_baselink)) {
+        obj.state.pose_covariance.pose, obj_frame, "base_link", obj_time, pose_baselink))
+    {
       return;
     }
 
-    //create obj polygon
+    // create obj polygon
     Polygon2d obj_poly;
     if (obj.shape.type == autoware_perception_msgs::msg::Shape::POLYGON) {
       obj_poly = createObjPolygon(pose_baselink, obj.shape.footprint);
@@ -313,10 +318,10 @@ void SurroundObstacleCheckerNode::getNearestObstacleByDynamicObject(
       obj_poly = createObjPolygon(pose_baselink, obj.shape.dimensions);
     }
 
-    //calc distance
+    // calc distance
     const double dist_to_obj = boost::geometry::distance(self_poly_, obj_poly);
 
-    //get minimum distance to obj
+    // get minimum distance to obj
     if (dist_to_obj < *min_dist_to_obj) {
       *min_dist_to_obj = dist_to_obj;
       *nearest_obj_point = obj.state.pose_covariance.pose.position;
@@ -372,7 +377,7 @@ bool SurroundObstacleCheckerNode::checkStop(
   const autoware_planning_msgs::msg::TrajectoryPoint & closest_point)
 {
   if (std::fabs(current_velocity_ptr_->twist.linear.x) > stop_state_ego_speed_) {
-    //ego vehicle has high velocity now. not stop.
+    // ego vehicle has high velocity now. not stop.
     return false;
   }
 
@@ -380,7 +385,7 @@ bool SurroundObstacleCheckerNode::checkStop(
   const double closest_acc = closest_point.accel.linear.x;
 
   if (closest_vel * closest_acc < 0) {
-    //ego vehicle is about to stop (during deceleration). not stop.
+    // ego vehicle is about to stop (during deceleration). not stop.
     return false;
   }
 
@@ -403,7 +408,7 @@ Polygon2d SurroundObstacleCheckerNode::createSelfPolygon()
 Polygon2d SurroundObstacleCheckerNode::createObjPolygon(
   const geometry_msgs::msg::Pose & pose, const geometry_msgs::msg::Vector3 & size)
 {
-  //rename
+  // rename
   const double x = pose.position.x;
   const double y = pose.position.y;
   const double h = size.x;
@@ -417,7 +422,7 @@ Polygon2d SurroundObstacleCheckerNode::createObjPolygon(
 
   // rotate polygon(yaw)
   boost::geometry::strategy::transform::rotate_transformer<boost::geometry::radian, double, 2, 2>
-    rotate(-yaw);  // anti-clockwise -> :clockwise rotation
+  rotate(-yaw);    // anti-clockwise -> :clockwise rotation
   Polygon2d rotate_obj_poly;
   boost::geometry::transform(obj_poly, rotate_obj_poly, rotate);
 
@@ -431,7 +436,7 @@ Polygon2d SurroundObstacleCheckerNode::createObjPolygon(
 Polygon2d SurroundObstacleCheckerNode::createObjPolygon(
   const geometry_msgs::msg::Pose & pose, const geometry_msgs::msg::Polygon & footprint)
 {
-  //rename
+  // rename
   const double x = pose.position.x;
   const double y = pose.position.y;
   const double yaw = tf2::getYaw(pose.orientation);
@@ -445,7 +450,7 @@ Polygon2d SurroundObstacleCheckerNode::createObjPolygon(
 
   // rotate polygon(yaw)
   boost::geometry::strategy::transform::rotate_transformer<boost::geometry::radian, double, 2, 2>
-    rotate(-yaw);  // anti-clockwise -> :clockwise rotation
+  rotate(-yaw);    // anti-clockwise -> :clockwise rotation
   Polygon2d rotate_obj_poly;
   boost::geometry::transform(obj_poly, rotate_obj_poly, rotate);
 
@@ -474,9 +479,9 @@ std::string SurroundObstacleCheckerNode::jsonDumpsPose(const geometry_msgs::msg:
 {
   const std::string json_dumps_pose =
     (boost::format(
-       R"({"position":{"x":%lf,"y":%lf,"z":%lf},"orientation":{"w":%lf,"x":%lf,"y":%lf,"z":%lf}})") %
-     pose.position.x % pose.position.y % pose.position.z % pose.orientation.w % pose.orientation.x %
-     pose.orientation.y % pose.orientation.z)
-      .str();
+      R"({"position":{"x":%lf,"y":%lf,"z":%lf},"orientation":{"w":%lf,"x":%lf,"y":%lf,"z":%lf}})") %
+    pose.position.x % pose.position.y % pose.position.z % pose.orientation.w % pose.orientation.x %
+    pose.orientation.y % pose.orientation.z)
+    .str();
   return json_dumps_pose;
 }
