@@ -48,7 +48,7 @@ bool isStopped(
   return true;
 }
 
-template <class T>
+template<class T>
 std::vector<T> filterConfigByModuleName(const std::vector<T> & configs, const char * module_name)
 {
   std::vector<T> filtered;
@@ -139,7 +139,7 @@ bool StateMachine::isVehicleInitialized() const
   return true;
 }
 
-bool StateMachine::isRouteReceived() const { return state_input_.route != executing_route_; }
+bool StateMachine::isRouteReceived() const {return state_input_.route != executing_route_;}
 
 bool StateMachine::isPlanningCompleted() const
 {
@@ -175,7 +175,7 @@ bool StateMachine::isEngaged() const
   return true;
 }
 
-bool StateMachine::isOverridden() const { return !isEngaged(); }
+bool StateMachine::isOverridden() const {return !isEngaged();}
 
 bool StateMachine::isEmergency() const
 {
@@ -212,101 +212,101 @@ AutowareState StateMachine::judgeAutowareState() const
 {
   switch (autoware_state_) {
     case (AutowareState::InitializingVehicle): {
-      if (isVehicleInitialized()) {
-        return AutowareState::WaitingForRoute;
-      }
+        if (isVehicleInitialized()) {
+          return AutowareState::WaitingForRoute;
+        }
 
-      break;
-    }
+        break;
+      }
 
     case (AutowareState::WaitingForRoute): {
-      if (isRouteReceived()) {
-        return AutowareState::Planning;
-      }
+        if (isRouteReceived()) {
+          return AutowareState::Planning;
+        }
 
-      break;
-    }
+        break;
+      }
 
     case (AutowareState::Planning): {
-      executing_route_ = state_input_.route;
+        executing_route_ = state_input_.route;
 
-      if (isPlanningCompleted()) {
-        if (!waiting_after_planning_) {
-          waiting_after_planning_ = true;
-          times_.planning_completed = state_input_.current_time;
-          break;
+        if (isPlanningCompleted()) {
+          if (!waiting_after_planning_) {
+            waiting_after_planning_ = true;
+            times_.planning_completed = state_input_.current_time;
+            break;
+          }
+
+          // Wait after planning completed to avoid sync error
+          constexpr double wait_time_after_planning = 1.0;
+          const auto time_from_planning = state_input_.current_time - times_.planning_completed;
+          if (time_from_planning.seconds() > wait_time_after_planning) {
+            waiting_after_planning_ = false;
+            return AutowareState::WaitingForEngage;
+          }
         }
 
-        // Wait after planning completed to avoid sync error
-        constexpr double wait_time_after_planning = 1.0;
-        const auto time_from_planning = state_input_.current_time - times_.planning_completed;
-        if (time_from_planning.seconds() > wait_time_after_planning) {
-          waiting_after_planning_ = false;
-          return AutowareState::WaitingForEngage;
-        }
+        break;
       }
-
-      break;
-    }
 
     case (AutowareState::WaitingForEngage): {
-      if (isEmergency()) {
-        return AutowareState::Emergency;
-      }
+        if (isEmergency()) {
+          return AutowareState::Emergency;
+        }
 
-      if (isRouteReceived()) {
-        return AutowareState::Planning;
-      }
+        if (isRouteReceived()) {
+          return AutowareState::Planning;
+        }
 
-      if (isEngaged()) {
-        return AutowareState::Driving;
-      }
+        if (isEngaged()) {
+          return AutowareState::Driving;
+        }
 
-      break;
-    }
+        break;
+      }
 
     case (AutowareState::Driving): {
-      if (isEmergency()) {
-        return AutowareState::Emergency;
-      }
+        if (isEmergency()) {
+          return AutowareState::Emergency;
+        }
 
-      if (isRouteReceived()) {
-        return AutowareState::Planning;
-      }
+        if (isRouteReceived()) {
+          return AutowareState::Planning;
+        }
 
-      if (isOverridden()) {
-        return AutowareState::WaitingForEngage;
-      }
+        if (isOverridden()) {
+          return AutowareState::WaitingForEngage;
+        }
 
-      if (hasArrivedGoal()) {
-        times_.arrived_goal = state_input_.current_time;
-        return AutowareState::ArrivedGoal;
-      }
+        if (hasArrivedGoal()) {
+          times_.arrived_goal = state_input_.current_time;
+          return AutowareState::ArrivedGoal;
+        }
 
-      break;
-    }
+        break;
+      }
 
     case (AutowareState::ArrivedGoal): {
-      constexpr double wait_time_after_arrived_goal = 2.0;
-      const auto time_from_arrived_goal = state_input_.current_time - times_.arrived_goal;
-      if (time_from_arrived_goal.seconds() > wait_time_after_arrived_goal) {
-        return AutowareState::WaitingForRoute;
-      }
+        constexpr double wait_time_after_arrived_goal = 2.0;
+        const auto time_from_arrived_goal = state_input_.current_time - times_.arrived_goal;
+        if (time_from_arrived_goal.seconds() > wait_time_after_arrived_goal) {
+          return AutowareState::WaitingForRoute;
+        }
 
-      break;
-    }
+        break;
+      }
 
     case (AutowareState::Emergency): {
-      if (!isEmergency()) {
-        return AutowareState::WaitingForEngage;
+        if (!isEmergency()) {
+          return AutowareState::WaitingForEngage;
+        }
+
+        break;
       }
 
-      break;
-    }
-
     default: {
-      throw std::runtime_error("invalid state");
-    }
+        throw std::runtime_error("invalid state");
+      }
   }
 
   // continue previous state when break

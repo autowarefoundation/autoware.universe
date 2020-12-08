@@ -37,13 +37,18 @@ void AutowareStateMonitorNode::setupDiagnosticUpdater()
     const auto diag_name = fmt::format("{}_topic_status", module_name);
 
     updater_.add(
-      diag_name, std::bind(&AutowareStateMonitorNode::checkTopicStatus, this, std::placeholders::_1, module_name));
+      diag_name,
+      std::bind(
+        &AutowareStateMonitorNode::checkTopicStatus, this, std::placeholders::_1,
+        module_name));
   }
 
   // TF
   updater_.add(
     "localization_tf_status",
-    std::bind(&AutowareStateMonitorNode::checkTFStatus, this, std::placeholders::_1, "localization"));
+    std::bind(
+      &AutowareStateMonitorNode::checkTFStatus, this, std::placeholders::_1,
+      "localization"));
 }
 
 void AutowareStateMonitorNode::checkTopicStatus(
