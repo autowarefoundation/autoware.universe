@@ -22,12 +22,12 @@ ShiftType getUpperShift(const ShiftType & shift)
 {
   using autoware_vehicle_msgs::msg::Shift;
 
-  if (shift == Shift::NONE) return Shift::PARKING;
-  if (shift == Shift::PARKING) return Shift::REVERSE;
-  if (shift == Shift::REVERSE) return Shift::NEUTRAL;
-  if (shift == Shift::NEUTRAL) return Shift::DRIVE;
-  if (shift == Shift::DRIVE) return Shift::LOW;
-  if (shift == Shift::LOW) return Shift::LOW;
+  if (shift == Shift::NONE) {return Shift::PARKING;}
+  if (shift == Shift::PARKING) {return Shift::REVERSE;}
+  if (shift == Shift::REVERSE) {return Shift::NEUTRAL;}
+  if (shift == Shift::NEUTRAL) {return Shift::DRIVE;}
+  if (shift == Shift::DRIVE) {return Shift::LOW;}
+  if (shift == Shift::LOW) {return Shift::LOW;}
 
   return Shift::NONE;
 }
@@ -36,12 +36,12 @@ ShiftType getLowerShift(const ShiftType & shift)
 {
   using autoware_vehicle_msgs::msg::Shift;
 
-  if (shift == Shift::NONE) return Shift::PARKING;
-  if (shift == Shift::PARKING) return Shift::PARKING;
-  if (shift == Shift::REVERSE) return Shift::PARKING;
-  if (shift == Shift::NEUTRAL) return Shift::REVERSE;
-  if (shift == Shift::DRIVE) return Shift::NEUTRAL;
-  if (shift == Shift::LOW) return Shift::DRIVE;
+  if (shift == Shift::NONE) {return Shift::PARKING;}
+  if (shift == Shift::PARKING) {return Shift::PARKING;}
+  if (shift == Shift::REVERSE) {return Shift::PARKING;}
+  if (shift == Shift::NEUTRAL) {return Shift::REVERSE;}
+  if (shift == Shift::DRIVE) {return Shift::NEUTRAL;}
+  if (shift == Shift::LOW) {return Shift::DRIVE;}
 
   return Shift::NONE;
 }
@@ -50,12 +50,12 @@ const char * getShiftName(const ShiftType & shift)
 {
   using autoware_vehicle_msgs::msg::Shift;
 
-  if (shift == Shift::NONE) return "NONE";
-  if (shift == Shift::PARKING) return "PARKING";
-  if (shift == Shift::REVERSE) return "REVERSE";
-  if (shift == Shift::NEUTRAL) return "NEUTRAL";
-  if (shift == Shift::DRIVE) return "DRIVE";
-  if (shift == Shift::LOW) return "LOW";
+  if (shift == Shift::NONE) {return "NONE";}
+  if (shift == Shift::PARKING) {return "PARKING";}
+  if (shift == Shift::REVERSE) {return "REVERSE";}
+  if (shift == Shift::NEUTRAL) {return "NEUTRAL";}
+  if (shift == Shift::DRIVE) {return "DRIVE";}
+  if (shift == Shift::LOW) {return "LOW";}
 
   return "NOT_SUPPORTED";
 }
@@ -64,10 +64,10 @@ const char * getTurnSignalName(const TurnSignalType & turn_signal)
 {
   using autoware_vehicle_msgs::msg::TurnSignal;
 
-  if (turn_signal == TurnSignal::NONE) return "NONE";
-  if (turn_signal == TurnSignal::LEFT) return "LEFT";
-  if (turn_signal == TurnSignal::RIGHT) return "RIGHT";
-  if (turn_signal == TurnSignal::HAZARD) return "HAZARD";
+  if (turn_signal == TurnSignal::NONE) {return "NONE";}
+  if (turn_signal == TurnSignal::LEFT) {return "LEFT";}
+  if (turn_signal == TurnSignal::RIGHT) {return "RIGHT";}
+  if (turn_signal == TurnSignal::HAZARD) {return "HAZARD";}
 
   return "NOT_SUPPORTED";
 }
@@ -76,8 +76,8 @@ const char * getGateModeName(const GateModeType & gate_mode)
 {
   using autoware_control_msgs::msg::GateMode;
 
-  if (gate_mode == GateMode::AUTO) return "AUTO";
-  if (gate_mode == GateMode::REMOTE) return "REMOTE";
+  if (gate_mode == GateMode::AUTO) {return "AUTO";}
+  if (gate_mode == GateMode::REMOTE) {return "REMOTE";}
 
   return "NOT_SUPPORTED";
 }
@@ -128,7 +128,8 @@ bool AutowareJoyControllerNode::isDataReady()
   // Joy
   {
     if (!joy_) {
-      RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
+      RCLCPP_WARN_THROTTLE(
+        get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
         "waiting for joy msg...");
       return false;
     }
@@ -136,7 +137,8 @@ bool AutowareJoyControllerNode::isDataReady()
     constexpr auto timeout = 2.0;
     const auto time_diff = this->now() - last_joy_received_time_;
     if (time_diff.seconds() > timeout) {
-      RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
+      RCLCPP_WARN_THROTTLE(
+        get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
         "joy msg is timeout");
       return false;
     }
@@ -145,7 +147,8 @@ bool AutowareJoyControllerNode::isDataReady()
   // Twist
   {
     if (!twist_) {
-      RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
+      RCLCPP_WARN_THROTTLE(
+        get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
         "waiting for twist msg...");
       return false;
     }
@@ -153,7 +156,8 @@ bool AutowareJoyControllerNode::isDataReady()
     constexpr auto timeout = 0.5;
     const auto time_diff = this->now() - twist_->header.stamp;
     if (time_diff.seconds() > timeout) {
-      RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
+      RCLCPP_WARN_THROTTLE(
+        get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
         "twist msg is timeout");
       return false;
     }
@@ -406,31 +410,40 @@ AutowareJoyControllerNode::AutowareJoyControllerNode()
 
   // Subscriber
   sub_joy_ = this->create_subscription<sensor_msgs::msg::Joy>(
-    "input/joy", 1, 
+    "input/joy", 1,
     std::bind(&AutowareJoyControllerNode::onJoy, this, std::placeholders::_1));
   sub_twist_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
-    "input/twist", 1, 
+    "input/twist", 1,
     std::bind(&AutowareJoyControllerNode::onTwist, this, std::placeholders::_1));
 
   // Publisher
   pub_control_command_ = this->create_publisher<autoware_control_msgs::msg::ControlCommandStamped>(
     "output/control_command", 1);
-  pub_raw_control_command_ = this->create_publisher<autoware_vehicle_msgs::msg::RawControlCommandStamped>(
+  pub_raw_control_command_ =
+    this->create_publisher<autoware_vehicle_msgs::msg::RawControlCommandStamped>(
     "output/raw_control_command", 1);
   pub_shift_ = this->create_publisher<autoware_vehicle_msgs::msg::ShiftStamped>("output/shift", 1);
   pub_turn_signal_ =
     this->create_publisher<autoware_vehicle_msgs::msg::TurnSignal>("output/turn_signal", 1);
-  pub_gate_mode_ = this->create_publisher<autoware_control_msgs::msg::GateMode>("output/gate_mode", 1);
-  pub_emergency_ = this->create_publisher<autoware_debug_msgs::msg::BoolStamped>("output/emergency", 1);
-  pub_autoware_engage_ = this->create_publisher<autoware_debug_msgs::msg::BoolStamped>("output/autoware_engage", 1);
-  pub_vehicle_engage_ = this->create_publisher<autoware_debug_msgs::msg::BoolStamped>("output/vehicle_engage", 1);
+  pub_gate_mode_ = this->create_publisher<autoware_control_msgs::msg::GateMode>(
+    "output/gate_mode",
+    1);
+  pub_emergency_ = this->create_publisher<autoware_debug_msgs::msg::BoolStamped>(
+    "output/emergency",
+    1);
+  pub_autoware_engage_ = this->create_publisher<autoware_debug_msgs::msg::BoolStamped>(
+    "output/autoware_engage", 1);
+  pub_vehicle_engage_ = this->create_publisher<autoware_debug_msgs::msg::BoolStamped>(
+    "output/vehicle_engage", 1);
 
   // tmp
   pub_vehicle_command_ =
     this->create_publisher<autoware_vehicle_msgs::msg::VehicleCommand>("output/vehicle_cmd", 1);
   pub_raw_vehicle_command_ =
-    this->create_publisher<autoware_vehicle_msgs::msg::RawVehicleCommand>("output/raw_vehicle_cmd", 1);
+    this->create_publisher<autoware_vehicle_msgs::msg::RawVehicleCommand>(
+    "output/raw_vehicle_cmd",
+    1);
 
   // Timer
-  initTimer(1.0/update_rate_);
+  initTimer(1.0 / update_rate_);
 }

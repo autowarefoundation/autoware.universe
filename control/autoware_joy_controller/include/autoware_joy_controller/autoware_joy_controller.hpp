@@ -68,8 +68,10 @@ private:
   void onTwist(const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg);
 
   // Publisher
-  rclcpp::Publisher<autoware_control_msgs::msg::ControlCommandStamped>::SharedPtr pub_control_command_;
-  rclcpp::Publisher<autoware_vehicle_msgs::msg::RawControlCommandStamped>::SharedPtr pub_raw_control_command_;
+  rclcpp::Publisher<autoware_control_msgs::msg::ControlCommandStamped>::SharedPtr
+    pub_control_command_;
+  rclcpp::Publisher<autoware_vehicle_msgs::msg::RawControlCommandStamped>::SharedPtr
+    pub_raw_control_command_;
   rclcpp::Publisher<autoware_vehicle_msgs::msg::ShiftStamped>::SharedPtr pub_shift_;
   rclcpp::Publisher<autoware_vehicle_msgs::msg::TurnSignal>::SharedPtr pub_turn_signal_;
   rclcpp::Publisher<autoware_control_msgs::msg::GateMode>::SharedPtr pub_gate_mode_;
@@ -95,7 +97,8 @@ private:
 
   // tmp
   rclcpp::Publisher<autoware_vehicle_msgs::msg::VehicleCommand>::SharedPtr pub_vehicle_command_;
-  rclcpp::Publisher<autoware_vehicle_msgs::msg::RawVehicleCommand>::SharedPtr pub_raw_vehicle_command_;
+  rclcpp::Publisher<autoware_vehicle_msgs::msg::RawVehicleCommand>::SharedPtr
+    pub_raw_vehicle_command_;
   void publishVehicleCommand();
   void publishRawVehicleCommand();
 
