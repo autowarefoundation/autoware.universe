@@ -21,7 +21,8 @@
 #include "successive_shortest_path/successive_shortest_path.hpp"
 #include "multi_object_tracker/utils/utils.hpp"
 
-DataAssociation::DataAssociation() : score_threshold_(0.1)
+DataAssociation::DataAssociation()
+: score_threshold_(0.1)
 {
   can_assgin_matrix_ = Eigen::MatrixXi::Identity(20, 20);
   can_assgin_matrix_(
@@ -278,7 +279,7 @@ void DataAssociation::assign(
   // Solve
   assignment_problem::MaximizeLinearAssignment(score, &direct_assignment, &reverse_assignment);
 
-  for (auto itr = direct_assignment.begin(); itr != direct_assignment.end();) {
+  for (auto itr = direct_assignment.begin(); itr != direct_assignment.end(); ) {
     if (src(itr->first, itr->second) < score_threshold_) {
       itr = direct_assignment.erase(itr);
       continue;
@@ -286,7 +287,7 @@ void DataAssociation::assign(
       ++itr;
     }
   }
-  for (auto itr = reverse_assignment.begin(); itr != reverse_assignment.end();) {
+  for (auto itr = reverse_assignment.begin(); itr != reverse_assignment.end(); ) {
     if (src(itr->second, itr->first) < score_threshold_) {
       itr = reverse_assignment.erase(itr);
       continue;
@@ -304,13 +305,16 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
     Eigen::MatrixXd::Zero(trackers.size(), measurements.feature_objects.size());
   size_t tracker_idx = 0;
   for (auto tracker_itr = trackers.begin(); tracker_itr != trackers.end();
-       ++tracker_itr, ++tracker_idx) {
+    ++tracker_itr, ++tracker_idx)
+  {
     for (size_t measurement_idx = 0; measurement_idx < measurements.feature_objects.size();
-         ++measurement_idx) {
+      ++measurement_idx)
+    {
       double score = 0.0;
       if (can_assgin_matrix_(
-            (*tracker_itr)->getType(),
-            measurements.feature_objects.at(measurement_idx).object.semantic.type)) {
+          (*tracker_itr)->getType(),
+          measurements.feature_objects.at(measurement_idx).object.semantic.type))
+      {
         double max_dist = max_dist_matrix_(
           (*tracker_itr)->getType(),
           measurements.feature_objects.at(measurement_idx).object.semantic.type);
@@ -322,13 +326,13 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
           measurements.feature_objects.at(measurement_idx).object.semantic.type);
         double dist = getDistance(
           measurements.feature_objects.at(measurement_idx)
-            .object.state.pose_covariance.pose.position,
+          .object.state.pose_covariance.pose.position,
           (*tracker_itr)->getPosition(measurements.header.stamp));
         double area = utils::getArea(measurements.feature_objects.at(measurement_idx).object.shape);
         score = (max_dist - std::min(dist, max_dist)) / max_dist;
 
-        if (max_dist < dist) score = 0.0;
-        if (area < min_area || max_area < area) score = 0.0;
+        if (max_dist < dist) {score = 0.0;}
+        if (area < min_area || max_area < area) {score = 0.0;}
         // if ((*tracker_itr)->getType() == measurements.feature_objects.at(measurement_idx).object.semantic.type &&
         //     measurements.feature_objects.at(measurement_idx).object.semantic.type !=
         //     autoware_perception_msgs::msg::Semantic::UNKNOWN) score += 1.0;

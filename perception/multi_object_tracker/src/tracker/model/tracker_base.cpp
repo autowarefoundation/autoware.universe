@@ -30,7 +30,7 @@ Tracker::Tracker(const rclcpp::Time & time, const int type)
   last_update_with_measurement_time_(time)
 {
   // Generate random number
-  std::mt19937 gen(std::random_device{}());
+  std::mt19937 gen(std::random_device{} ());
   std::independent_bits_engine<std::mt19937, 8, uint8_t> bit_eng(gen);
   std::generate(uuid_.uuid.begin(), uuid_.uuid.end(), bit_eng);
 }

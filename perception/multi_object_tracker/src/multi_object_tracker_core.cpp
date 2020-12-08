@@ -38,8 +38,8 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   durable_qos.transient_local();
   dynamic_object_sub_ =
     create_subscription<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>(
-      "input", durable_qos,
-      std::bind(&MultiObjectTracker::measurementCallback, this, std::placeholders::_1));
+    "input", durable_qos,
+    std::bind(&MultiObjectTracker::measurementCallback, this, std::placeholders::_1));
   dynamic_object_pub_ =
     create_publisher<autoware_perception_msgs::msg::DynamicObjectArray>("output", rclcpp::QoS{1});
 
@@ -47,7 +47,8 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   double publish_rate = declare_parameter<double>("publish_rate", 30.0);
   world_frame_id_ = declare_parameter<std::string>("world_frame_id", "world");
 
-  auto cti = std::make_shared<tf2_ros::CreateTimerROS>(this->get_node_base_interface(), this->get_node_timers_interface());
+  auto cti = std::make_shared<tf2_ros::CreateTimerROS>(
+    this->get_node_base_interface(), this->get_node_timers_interface());
   tf_buffer_.setCreateTimerInterface(cti);
 
   // Create ROS time based timer
@@ -63,7 +64,7 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
 
 void MultiObjectTracker::measurementCallback(
   const autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr
-    input_objects_msg)
+  input_objects_msg)
 {
   autoware_perception_msgs::msg::DynamicObjectWithFeatureArray input_transformed_objects =
     *input_objects_msg;
@@ -122,46 +123,52 @@ void MultiObjectTracker::measurementCallback(
   /* tracker measurement update */
   int tracker_idx = 0;
   for (auto tracker_itr = list_tracker_.begin(); tracker_itr != list_tracker_.end();
-       ++tracker_itr, ++tracker_idx) {
-    if (direct_assignment.find(tracker_idx) != direct_assignment.end())  // found
-    {
+    ++tracker_itr, ++tracker_idx)
+  {
+    if (direct_assignment.find(tracker_idx) != direct_assignment.end()) { // found
       (*(tracker_itr))
-        ->updateWithMeasurement(
-          input_transformed_objects.feature_objects.at(direct_assignment.find(tracker_idx)->second)
-            .object,
-          measurement_time);
-    } else  // not found
-    {
+      ->updateWithMeasurement(
+        input_transformed_objects.feature_objects.at(direct_assignment.find(tracker_idx)->second)
+        .object,
+        measurement_time);
+    } else { // not found
       (*(tracker_itr))->updateWithoutMeasurement();
     }
   }
 
   /* new tracker */
   for (size_t i = 0; i < input_transformed_objects.feature_objects.size(); ++i) {
-    if (reverse_assignment.find(i) != reverse_assignment.end())  // found
+    if (reverse_assignment.find(i) != reverse_assignment.end()) { // found
       continue;
+    }
 
     if (
       input_transformed_objects.feature_objects.at(i).object.semantic.type ==
-        autoware_perception_msgs::msg::Semantic::CAR ||
+      autoware_perception_msgs::msg::Semantic::CAR ||
       input_transformed_objects.feature_objects.at(i).object.semantic.type ==
-        autoware_perception_msgs::msg::Semantic::TRUCK ||
+      autoware_perception_msgs::msg::Semantic::TRUCK ||
       input_transformed_objects.feature_objects.at(i).object.semantic.type ==
-        autoware_perception_msgs::msg::Semantic::BUS) {
-      list_tracker_.push_back(std::make_shared<VehicleTracker>(
-        measurement_time, input_transformed_objects.feature_objects.at(i).object));
+      autoware_perception_msgs::msg::Semantic::BUS)
+    {
+      list_tracker_.push_back(
+        std::make_shared<VehicleTracker>(
+          measurement_time, input_transformed_objects.feature_objects.at(i).object));
     } else if (
       input_transformed_objects.feature_objects.at(i).object.semantic.type ==
-      autoware_perception_msgs::msg::Semantic::PEDESTRIAN) {
-      list_tracker_.push_back(std::make_shared<PedestrianTracker>(
-        measurement_time, input_transformed_objects.feature_objects.at(i).object));
+      autoware_perception_msgs::msg::Semantic::PEDESTRIAN)
+    {
+      list_tracker_.push_back(
+        std::make_shared<PedestrianTracker>(
+          measurement_time, input_transformed_objects.feature_objects.at(i).object));
     } else if (
       input_transformed_objects.feature_objects.at(i).object.semantic.type ==
-        autoware_perception_msgs::msg::Semantic::BICYCLE ||
+      autoware_perception_msgs::msg::Semantic::BICYCLE ||
       input_transformed_objects.feature_objects.at(i).object.semantic.type ==
-        autoware_perception_msgs::msg::Semantic::MOTORBIKE) {
-      list_tracker_.push_back(std::make_shared<BicycleTracker>(
-        measurement_time, input_transformed_objects.feature_objects.at(i).object));
+      autoware_perception_msgs::msg::Semantic::MOTORBIKE)
+    {
+      list_tracker_.push_back(
+        std::make_shared<BicycleTracker>(
+          measurement_time, input_transformed_objects.feature_objects.at(i).object));
     } else {
       // list_tracker_.push_back(std::make_shared<PedestrianTracker>(input_transformed_objects.feature_objects.at(i).object));
     }
@@ -171,7 +178,7 @@ void MultiObjectTracker::measurementCallback(
 void MultiObjectTracker::publishTimerCallback()
 {
   // Guard
-  if (dynamic_object_pub_->get_subscription_count() < 1) return;
+  if (dynamic_object_pub_->get_subscription_count() < 1) {return;}
 
   /* life cycle check */
   for (auto itr = list_tracker_.begin(); itr != list_tracker_.end(); ++itr) {
@@ -188,7 +195,7 @@ void MultiObjectTracker::publishTimerCallback()
   output_msg.header.frame_id = world_frame_id_;
   output_msg.header.stamp = current_time;
   for (auto itr = list_tracker_.begin(); itr != list_tracker_.end(); ++itr) {
-    if ((*itr)->getTotalMeasurementCount() < 3) continue;
+    if ((*itr)->getTotalMeasurementCount() < 3) {continue;}
     autoware_perception_msgs::msg::DynamicObject object;
     (*itr)->getEstimatedDynamicObject(current_time, object);
     output_msg.objects.push_back(object);
@@ -196,7 +203,6 @@ void MultiObjectTracker::publishTimerCallback()
 
   // Publish
   dynamic_object_pub_->publish(output_msg);
-  return;
 }
 
 RCLCPP_COMPONENTS_REGISTER_NODE(MultiObjectTracker)

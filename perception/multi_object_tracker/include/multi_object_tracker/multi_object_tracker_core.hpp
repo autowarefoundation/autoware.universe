@@ -53,7 +53,7 @@ private:
 
   void measurementCallback(
     const autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr
-      input_objects_msg);
+    input_objects_msg);
   void publishTimerCallback();
 
   std::string world_frame_id_;  // tracking frame

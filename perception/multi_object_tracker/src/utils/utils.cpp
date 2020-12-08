@@ -40,7 +40,7 @@ double getPolygonArea(const geometry_msgs::msg::Polygon & footprint)
   for (int i = 0; i < (int)footprint.points.size(); ++i) {
     int j = (i + 1) % (int)footprint.points.size();
     area += 0.5 * (footprint.points.at(i).x * footprint.points.at(j).y -
-                   footprint.points.at(j).x * footprint.points.at(i).y);
+      footprint.points.at(j).x * footprint.points.at(i).y);
   }
 
   return area;

@@ -28,8 +28,8 @@
 class Tracker
 {
 protected:
-  unique_identifier_msgs::msg::UUID getUUID() { return uuid_; }
-  void setType(int type) { type_ = type; }
+  unique_identifier_msgs::msg::UUID getUUID() {return uuid_;}
+  void setType(int type) {type_ = type;}
 
 private:
   unique_identifier_msgs::msg::UUID uuid_;
@@ -40,14 +40,14 @@ private:
 
 public:
   Tracker(const rclcpp::Time & time, const int type);
-  virtual ~Tracker(){};
+  virtual ~Tracker() {}
   bool updateWithMeasurement(
     const autoware_perception_msgs::msg::DynamicObject & object,
     const rclcpp::Time & measurement_time);
   bool updateWithoutMeasurement();
-  int getType() { return type_; }
-  int getNoMeasurementCount() { return no_measurement_count_; }
-  int getTotalMeasurementCount() { return total_measurement_count_; }
+  int getType() {return type_;}
+  int getNoMeasurementCount() {return no_measurement_count_;}
+  int getTotalMeasurementCount() {return total_measurement_count_;}
   double getElapsedTimeFromLastUpdate(const rclcpp::Time & current_time)
   {
     return (current_time - last_update_with_measurement_time_).seconds();
@@ -58,6 +58,7 @@ public:
   /*
    *　Pure virtual function
    */
+
 protected:
   virtual bool measure(
     const autoware_perception_msgs::msg::DynamicObject & object, const rclcpp::Time & time) = 0;

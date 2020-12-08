@@ -51,7 +51,7 @@ PedestrianTracker::PedestrianTracker(
 bool PedestrianTracker::predict(const rclcpp::Time & time)
 {
   double dt = (time - last_update_time_).seconds();
-  if (dt < 0.0) dt = 0.0;
+  if (dt < 0.0) {dt = 0.0;}
   filtered_posx_ += filtered_vx_ * dt;
   filtered_posy_ += filtered_vy_ * dt;
   last_update_time_ = time;
@@ -80,9 +80,9 @@ bool PedestrianTracker::measure(
   if (0.0 < dt) {
     double current_vel = std::sqrt(
       (object.state.pose_covariance.pose.position.x - last_measurement_posx_) *
-        (object.state.pose_covariance.pose.position.x - last_measurement_posx_) +
+      (object.state.pose_covariance.pose.position.x - last_measurement_posx_) +
       (object.state.pose_covariance.pose.position.y - last_measurement_posy_) *
-        (object.state.pose_covariance.pose.position.y - last_measurement_posy_));
+      (object.state.pose_covariance.pose.position.y - last_measurement_posy_));
     const double max_vel = 15.0; /* [m/s]*/
     const double vel_scale =
       current_vel < 0.01 ? 1.0 : std::min(max_vel, current_vel) / current_vel;
@@ -90,24 +90,24 @@ bool PedestrianTracker::measure(
       filtered_vx_ =
         0.9 * filtered_vx_ +
         (1.0 - 0.9) *
-          ((object.state.pose_covariance.pose.position.x - last_measurement_posx_) / dt) *
-          vel_scale;
+        ((object.state.pose_covariance.pose.position.x - last_measurement_posx_) / dt) *
+        vel_scale;
       filtered_vy_ =
         0.9 * filtered_vy_ +
         (1.0 - 0.9) *
-          ((object.state.pose_covariance.pose.position.y - last_measurement_posy_) / dt) *
-          vel_scale;
+        ((object.state.pose_covariance.pose.position.y - last_measurement_posy_) / dt) *
+        vel_scale;
     } else {
       filtered_vx_ =
         v_filter_gain_ * filtered_vx_ +
         (1.0 - v_filter_gain_) *
-          ((object.state.pose_covariance.pose.position.x - last_measurement_posx_) / dt) *
-          vel_scale;
+        ((object.state.pose_covariance.pose.position.x - last_measurement_posx_) / dt) *
+        vel_scale;
       filtered_vy_ =
         v_filter_gain_ * filtered_vy_ +
         (1.0 - v_filter_gain_) *
-          ((object.state.pose_covariance.pose.position.y - last_measurement_posy_) / dt) *
-          vel_scale;
+        ((object.state.pose_covariance.pose.position.y - last_measurement_posy_) / dt) *
+        vel_scale;
       v_filter_gain_ = std::min(0.9, v_filter_gain_ + 0.05);
     }
   }
@@ -118,9 +118,9 @@ bool PedestrianTracker::measure(
   last_measurement_posx_ = object.state.pose_covariance.pose.position.x;
   last_measurement_posy_ = object.state.pose_covariance.pose.position.y;
   filtered_posx_ = pos_filter_gain_ * filtered_posx_ +
-                   (1.0 - pos_filter_gain_) * object.state.pose_covariance.pose.position.x;
+    (1.0 - pos_filter_gain_) * object.state.pose_covariance.pose.position.x;
   filtered_posy_ = pos_filter_gain_ * filtered_posy_ +
-                   (1.0 - pos_filter_gain_) * object.state.pose_covariance.pose.position.y;
+    (1.0 - pos_filter_gain_) * object.state.pose_covariance.pose.position.y;
   pos_filter_gain_ = std::min(0.8, pos_filter_gain_ + 0.05);
 
   return true;
@@ -133,7 +133,7 @@ bool PedestrianTracker::getEstimatedDynamicObject(
   object.id = getUUID();
   object.semantic.type = getType();
   double dt = (time - last_update_time_).seconds();
-  if (dt < 0.0) dt = 0.0;
+  if (dt < 0.0) {dt = 0.0;}
 
   object.state.pose_covariance.pose.position.x = filtered_posx_;
   object.state.pose_covariance.pose.position.y = filtered_posy_;

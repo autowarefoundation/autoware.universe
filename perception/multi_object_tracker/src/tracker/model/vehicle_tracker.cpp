@@ -71,7 +71,7 @@ VehicleTracker::VehicleTracker(
 bool VehicleTracker::predict(const rclcpp::Time & time)
 {
   double dt = (time - last_update_time_).seconds();
-  if (dt < 0.0) dt = 0.0;
+  if (dt < 0.0) {dt = 0.0;}
   double vel = std::cos(filtered_yaw_) * filtered_vx_ + std::sin(filtered_yaw_) * filtered_vy_;
   if (vel < 0.0 && !is_fixed_yaw_) {
     filtered_posx_ += std::cos(filtered_yaw_ + M_PI) * std::fabs(vel) * dt;
@@ -109,22 +109,28 @@ bool VehicleTracker::measure(
     if (!is_fixed_yaw_ && object.state.orientation_reliable) {
       if (
         Eigen::Vector2d(std::cos(filtered_yaw_), std::sin(filtered_yaw_))
-          .dot(Eigen::Vector2d(std::cos(yaw), std::sin(yaw))) < 0.0)
+        .dot(Eigen::Vector2d(std::cos(yaw), std::sin(yaw))) < 0.0)
+      {
         filtered_yaw_ += M_PI;
+      }
     } else if (!is_fixed_yaw_ && !object.state.orientation_reliable) {
       if (
         Eigen::Vector2d(std::cos(filtered_yaw_), std::sin(filtered_yaw_))
-          .dot(Eigen::Vector2d(std::cos(yaw), std::sin(yaw))) < 0.0)
+        .dot(Eigen::Vector2d(std::cos(yaw), std::sin(yaw))) < 0.0)
+      {
         yaw += M_PI;
+      }
     } else if (is_fixed_yaw_ && object.state.orientation_reliable) {
     } else if (is_fixed_yaw_ && !object.state.orientation_reliable) {
       if (
         Eigen::Vector2d(std::cos(filtered_yaw_), std::sin(filtered_yaw_))
-          .dot(Eigen::Vector2d(std::cos(yaw), std::sin(yaw))) < 0.0)
+        .dot(Eigen::Vector2d(std::cos(yaw), std::sin(yaw))) < 0.0)
+      {
         yaw += M_PI;
+      }
     }
 
-    if (object.state.orientation_reliable) is_fixed_yaw_ = object.state.orientation_reliable;
+    if (object.state.orientation_reliable) {is_fixed_yaw_ = object.state.orientation_reliable;}
 
     Eigen::Vector2d filtered_yaw_vector =
       yaw_filter_gain_ * Eigen::Vector2d(std::cos(filtered_yaw_), std::sin(filtered_yaw_)) +
@@ -155,9 +161,9 @@ bool VehicleTracker::measure(
   if (0.0 < dt) {
     double current_vel = std::sqrt(
       (object.state.pose_covariance.pose.position.x - last_measurement_posx_) *
-        (object.state.pose_covariance.pose.position.x - last_measurement_posx_) +
+      (object.state.pose_covariance.pose.position.x - last_measurement_posx_) +
       (object.state.pose_covariance.pose.position.y - last_measurement_posy_) *
-        (object.state.pose_covariance.pose.position.y - last_measurement_posy_));
+      (object.state.pose_covariance.pose.position.y - last_measurement_posy_));
     const double max_vel = 20.0; /* [m/s]*/
     const double vel_scale =
       current_vel < 0.01 ? 1.0 : std::min(max_vel, current_vel) / current_vel;
@@ -166,24 +172,24 @@ bool VehicleTracker::measure(
       filtered_vx_ =
         0.95 * filtered_vx_ +
         (1.0 - 0.95) *
-          ((object.state.pose_covariance.pose.position.x - last_measurement_posx_) / dt) *
-          vel_scale;
+        ((object.state.pose_covariance.pose.position.x - last_measurement_posx_) / dt) *
+        vel_scale;
       filtered_vy_ =
         0.95 * filtered_vy_ +
         (1.0 - 0.95) *
-          ((object.state.pose_covariance.pose.position.y - last_measurement_posy_) / dt) *
-          vel_scale;
+        ((object.state.pose_covariance.pose.position.y - last_measurement_posy_) / dt) *
+        vel_scale;
     } else {
       filtered_vx_ =
         v_filter_gain_ * filtered_vx_ +
         (1.0 - v_filter_gain_) *
-          ((object.state.pose_covariance.pose.position.x - last_measurement_posx_) / dt) *
-          vel_scale;
+        ((object.state.pose_covariance.pose.position.x - last_measurement_posx_) / dt) *
+        vel_scale;
       filtered_vy_ =
         v_filter_gain_ * filtered_vy_ +
         (1.0 - v_filter_gain_) *
-          ((object.state.pose_covariance.pose.position.y - last_measurement_posy_) / dt) *
-          vel_scale;
+        ((object.state.pose_covariance.pose.position.y - last_measurement_posy_) / dt) *
+        vel_scale;
       v_filter_gain_ = std::min(0.9, v_filter_gain_ + 0.15);
     }
 
@@ -198,9 +204,9 @@ bool VehicleTracker::measure(
   last_measurement_posx_ = object.state.pose_covariance.pose.position.x;
   last_measurement_posy_ = object.state.pose_covariance.pose.position.y;
   filtered_posx_ = pos_filter_gain_ * filtered_posx_ +
-                   (1.0 - pos_filter_gain_) * object.state.pose_covariance.pose.position.x;
+    (1.0 - pos_filter_gain_) * object.state.pose_covariance.pose.position.x;
   filtered_posy_ = pos_filter_gain_ * filtered_posy_ +
-                   (1.0 - pos_filter_gain_) * object.state.pose_covariance.pose.position.y;
+    (1.0 - pos_filter_gain_) * object.state.pose_covariance.pose.position.y;
   pos_filter_gain_ = std::min(0.8, pos_filter_gain_ + 0.05);
 
   return true;
@@ -231,7 +237,7 @@ bool VehicleTracker::getEstimatedDynamicObject(
   object.state.pose_covariance.pose.position.x = filtered_posx_;
   object.state.pose_covariance.pose.position.y = filtered_posy_;
   double dt = (time - last_update_time_).seconds();
-  if (dt < 0.0) dt = 0.0;
+  if (dt < 0.0) {dt = 0.0;}
   double vel = std::cos(filtered_yaw_) * filtered_vx_ + std::sin(filtered_yaw_) * filtered_vy_;
   if (vel < 0.0 && !is_fixed_yaw_) {
     object.state.pose_covariance.pose.position.x +=

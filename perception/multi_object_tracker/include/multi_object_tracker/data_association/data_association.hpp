@@ -49,7 +49,7 @@ public:
   Eigen::MatrixXd calcScoreMatrix(
     const autoware_perception_msgs::msg::DynamicObjectWithFeatureArray & measurements,
     const std::list<std::shared_ptr<Tracker>> & trackers);
-  virtual ~DataAssociation(){};
+  virtual ~DataAssociation() {}
 };
 
 #endif
