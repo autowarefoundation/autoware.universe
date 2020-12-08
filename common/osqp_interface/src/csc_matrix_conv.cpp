@@ -41,10 +41,8 @@ CSC_Matrix calCSCMatrix(const Eigen::MatrixXd & mat)
 
   col_idxs.push_back(0);
 
-  for (int j = 0; j < cols; j++)  // col iteration
-  {
-    for (int i = 0; i < rows; i++)  // row iteration
-    {
+  for (int j = 0; j < cols; j++) { // col iteration
+    for (int i = 0; i < rows; i++) { // row iteration
       // Get values of nonzero elements
       val = mat(i, j);
       if (std::fabs(val) < 1e-9) {
@@ -89,10 +87,8 @@ CSC_Matrix calCSCMatrixTrapesoidal(const Eigen::MatrixXd & mat)
 
   col_idxs.push_back(0);
 
-  for (int j = 0; j < cols; j++)  // col iteration
-  {
-    for (int i = 0; i <= trap_last_idx; i++)  // row iteration
-    {
+  for (int j = 0; j < cols; j++) { // col iteration
+    for (int i = 0; i <= trap_last_idx; i++) { // row iteration
       // Get values of nonzero elements
       val = mat(i, j);
       if (std::fabs(val) < 1e-9) {
@@ -118,21 +114,24 @@ void printCSCMatrix(CSC_Matrix & csc_mat)
 {
   std::cout << "[";
   for (std::vector<c_float>::const_iterator it = csc_mat.vals.begin(); it != csc_mat.vals.end();
-       it++) {
+    it++)
+  {
     std::cout << *it << ", ";
   }
   std::cout << "]" << std::endl;
 
   std::cout << "[";
   for (std::vector<c_int>::const_iterator it = csc_mat.row_idxs.begin();
-       it != csc_mat.row_idxs.end(); it++) {
+    it != csc_mat.row_idxs.end(); it++)
+  {
     std::cout << *it << ", ";
   }
   std::cout << "]" << std::endl;
 
   std::cout << "[";
   for (std::vector<c_int>::const_iterator it = csc_mat.col_idxs.begin();
-       it != csc_mat.col_idxs.end(); it++) {
+    it != csc_mat.col_idxs.end(); it++)
+  {
     std::cout << *it << ", ";
   }
   std::cout << "]" << std::endl;

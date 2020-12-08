@@ -54,7 +54,7 @@ void SplineInterpolator::generateSpline(
   b_.push_back(0.0);
 
   initialized_ = true;
-};
+}
 
 double SplineInterpolator::getValue(
   const double & query, const std::vector<double> & base_index) const
@@ -65,7 +65,7 @@ double SplineInterpolator::getValue(
   }
 
   size_t j = 0;
-  while (base_index[j] <= query) ++j;
+  while (base_index[j] <= query) {++j;}
   --j;
   const double ds = query - base_index[j];
   return a_[j] + (b_[j] + (c_[j] + d_[j] * ds) * ds) * ds;
@@ -95,37 +95,37 @@ bool SplineInterpolator::interpolate(
 bool SplineInterpolator::isIncrease(const std::vector<double> & x) const
 {
   for (int i = 0; i < static_cast<int>(x.size()) - 1; ++i) {
-    if (x[i] >= x[i + 1]) return false;
+    if (x[i] >= x[i + 1]) {return false;}
   }
   return true;
-};
+}
 
 bool SplineInterpolator::isNonDecrease(const std::vector<double> & x) const
 {
   for (int i = 0; i < static_cast<int>(x.size()) - 1; ++i) {
-    if (x[i] > x[i + 1]) return false;
+    if (x[i] > x[i + 1]) {return false;}
   }
   return true;
-};
+}
 
 bool SplineInterpolator::isValidInput(
   const std::vector<double> & base_index, const std::vector<double> & base_value,
   const std::vector<double> & return_index, std::vector<double> & return_value) const
 {
   if (base_index.empty() || base_value.empty() || return_index.empty()) {
-    std::cout << "bad index : some vector is empty. base_index: " << base_index.size()
-              << ", base_value: " << base_value.size() << ", return_index: " << return_index.size()
-              << std::endl;
+    std::cout << "bad index : some vector is empty. base_index: " << base_index.size() <<
+      ", base_value: " << base_value.size() << ", return_index: " << return_index.size() <<
+      std::endl;
     return false;
   }
   if (!isIncrease(base_index)) {
-    std::cout << "bad index : base_index is not monotonically increasing. base_index = ["
-              << base_index.front() << ", " << base_index.back() << "]" << std::endl;
+    std::cout << "bad index : base_index is not monotonically increasing. base_index = [" <<
+      base_index.front() << ", " << base_index.back() << "]" << std::endl;
     return false;
   }
   if (!isNonDecrease(return_index)) {
-    std::cout << "bad index : base_index is not monotonically nondecreasing. return_index = ["
-              << return_index.front() << ", " << return_index.back() << "]" << std::endl;
+    std::cout << "bad index : base_index is not monotonically nondecreasing. return_index = [" <<
+      return_index.front() << ", " << return_index.back() << "]" << std::endl;
     return false;
   }
   if (return_index.front() < base_index.front()) {
@@ -149,7 +149,9 @@ std::vector<double> SplineInterpolator::solveLinearSystemExplicit()
   const size_t N = a_.size();
   std::vector<double> ans;
   ans.push_back(0.0);
-  for (size_t i = 1; i < N - 1; i++) ans.push_back(3.0 * (a_[i - 1] - 2.0 * a_[i] + a_[i + 1]));
+  for (size_t i = 1; i < N - 1; i++) {
+    ans.push_back(3.0 * (a_[i - 1] - 2.0 * a_[i] + a_[i + 1]));
+  }
   ans.push_back(0.0);
 
   std::vector<double> w;
@@ -161,7 +163,9 @@ std::vector<double> SplineInterpolator::solveLinearSystemExplicit()
     w.push_back(tmp);
   }
 
-  for (size_t i = N - 2; i > 0; --i) ans[i] = ans[i] - ans[i + 1] * w[i];
+  for (size_t i = N - 2; i > 0; --i) {
+    ans[i] = ans[i] - ans[i + 1] * w[i];
+  }
 
   return ans;
 }
@@ -225,7 +229,7 @@ std::vector<double> PreconditionedConjugateGradient::solve() const
   // r = rhs - Ax
   const std::vector<double> Ax = calcMatrixVectorProduct(x_in);
   std::transform(rhs_in.begin(), rhs_in.end(), Ax.begin(), r.begin(), std::minus<double>());
-  if (isConvergeL1(rhs_in, Ax)) return x;
+  if (isConvergeL1(rhs_in, Ax)) {return x;}
   // p0 = DiagonalScaling(r)
   // z0 = p0
   p = calcDiagonalScaling(r);
@@ -236,15 +240,17 @@ std::vector<double> PreconditionedConjugateGradient::solve() const
     const std::vector<double> y = calcMatrixVectorProduct(p);
     // (2) alpha = (r_k' * z_k) / (p_k' * y_k);
     const double alpha = std::inner_product(r.begin(), r.end(), z.begin(), 0.0f) /
-                         std::inner_product(p.begin(), p.end(), y.begin(), 0.0f);
+      std::inner_product(p.begin(), p.end(), y.begin(), 0.0f);
     // (3) x_k+1 = x_k + alpha * p_k
-    std::transform(x_in.begin(), x_in.end(), p.begin(), x_in.begin(), [alpha](double x, double p) {
-      return x + alpha * p;
-    });
+    std::transform(
+      x_in.begin(), x_in.end(), p.begin(), x_in.begin(), [alpha](double x, double p) {
+        return x + alpha * p;
+      });
     // (4) r_k+1 = r_k - alpha * y_k
-    std::transform(r.begin(), r.end(), y.begin(), rn.begin(), [alpha](double r, double y) {
-      return r - alpha * y;
-    });
+    std::transform(
+      r.begin(), r.end(), y.begin(), rn.begin(), [alpha](double r, double y) {
+        return r - alpha * y;
+      });
     // (5) check convergence
     if (isConvergeL1(rn, zeros)) {
       num_iter = iter;
@@ -254,18 +260,25 @@ std::vector<double> PreconditionedConjugateGradient::solve() const
     zn = calcDiagonalScaling(rn);
     // (7) beta = (r_k+1' * z_k+1) / (r_k * z_k)
     const double beta = std::inner_product(rn.begin(), rn.end(), zn.begin(), 0.0f) /
-                        std::inner_product(r.begin(), r.end(), z.begin(), 0.0f);
+      std::inner_product(r.begin(), r.end(), z.begin(), 0.0f);
     // (8) p_k+1 = z_k+1 + beta * p_k
-    std::transform(zn.begin(), zn.end(), p.begin(), p.begin(), [beta](double zn, double p) {
-      return zn + beta * p;
-    });
+    std::transform(
+      zn.begin(), zn.end(), p.begin(), p.begin(), [beta](double zn, double p) {
+        return zn + beta * p;
+      });
     r = rn;
     z = zn;
   }
 
-  for (size_t i = 1; i < x.size(); ++i) x[i] = x_in[i - 1];
+  for (size_t i = 1; i < x.size(); ++i) {
+    x[i] = x_in[i - 1];
+  }
 
-  if (num_iter == max_iter_) RCLCPP_WARN(rclcpp::get_logger("PreconditionedConjugateGradient"), "[interpolate (PCG)] unconverged!");
+  if (num_iter == max_iter_) {
+    RCLCPP_WARN(
+      rclcpp::get_logger(
+        "PreconditionedConjugateGradient"), "[interpolate (PCG)] unconverged!");
+  }
   return x;
 }
 
@@ -274,9 +287,9 @@ std::vector<double> PreconditionedConjugateGradient::calcMatrixVectorProduct(
 {
   std::vector<double> dst(src.size(), 0.0);
   for (size_t i = 0; i < src.size(); ++i) {
-    if (i != 0) dst[i] += coef_prev_[i + 1] * src[i - 1];
+    if (i != 0) {dst[i] += coef_prev_[i + 1] * src[i - 1];}
     dst[i] += coef_diag_[i + 1] * src[i];
-    if (i != (src.size() - 1)) dst[i] += coef_next_[i + 1] * src[i + 1];
+    if (i != (src.size() - 1)) {dst[i] += coef_next_[i + 1] * src[i + 1];}
   }
   return dst;
 }
@@ -302,12 +315,14 @@ std::vector<double> SOR::solve() const
     ans = ans_next;
     for (size_t i = 1; i < rhs_.size() - 1; ++i) {
       ans_next[i] += omega_ / (coef_diag_[i]) *
-                     (rhs_[i] - (coef_prev_[i] * ans_next[i - 1] + coef_diag_[i] * ans[i] +
-                                 coef_next_[i] * ans[i + 1]));
+        (rhs_[i] - (coef_prev_[i] * ans_next[i - 1] + coef_diag_[i] * ans[i] +
+        coef_next_[i] * ans[i + 1]));
     }
     ++num_iter;
   }
-  if (num_iter > max_iter_) RCLCPP_WARN(rclcpp::get_logger("SOR"), "[interpolate (SOR)] unconverged!");
+  if (num_iter > max_iter_) {
+    RCLCPP_WARN(rclcpp::get_logger("SOR"), "[interpolate (SOR)] unconverged!");
+  }
   return ans_next;
 }
 

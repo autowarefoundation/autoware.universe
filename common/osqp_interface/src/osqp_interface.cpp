@@ -122,7 +122,7 @@ OSQPInterface::~OSQPInterface()
     }
     c_free(data);
   }
-  if (settings) c_free(settings);
+  if (settings) {c_free(settings);}
 }
 
 void OSQPInterface::updateP(const Eigen::MatrixXd & P_new)
@@ -184,15 +184,15 @@ void OSQPInterface::updateBounds(
   osqp_update_bounds(work, l_dyn, u_dyn);
 }
 
-void OSQPInterface::updateEpsAbs(const double eps_abs) { osqp_update_eps_abs(work, eps_abs); }
+void OSQPInterface::updateEpsAbs(const double eps_abs) {osqp_update_eps_abs(work, eps_abs);}
 
-void OSQPInterface::updateEpsRel(const double eps_rel) { osqp_update_eps_rel(work, eps_rel); }
+void OSQPInterface::updateEpsRel(const double eps_rel) {osqp_update_eps_rel(work, eps_rel);}
 
-void OSQPInterface::updateMaxIter(const int max_iter) { osqp_update_max_iter(work, max_iter); }
+void OSQPInterface::updateMaxIter(const int max_iter) {osqp_update_max_iter(work, max_iter);}
 
-void OSQPInterface::updateVerbose(const bool is_verbose) { osqp_update_verbose(work, is_verbose); }
+void OSQPInterface::updateVerbose(const bool is_verbose) {osqp_update_verbose(work, is_verbose);}
 
-int OSQPInterface::getTakenIter() { return work->info->iter; }
+int OSQPInterface::getTakenIter() {return work->info->iter;}
 
 std::tuple<std::vector<double>, std::vector<double>, int, int> OSQPInterface::solve()
 {
@@ -245,6 +245,6 @@ inline bool OSQPInterface::isEqual(double x, double y)
   return std::abs(x - y) <= epsilon * std::abs(x);
 }
 
-c_int OSQPInterface::getExitFlag(void) { return exitflag; }
+c_int OSQPInterface::getExitFlag(void) {return exitflag;}
 
 }  // namespace osqp
