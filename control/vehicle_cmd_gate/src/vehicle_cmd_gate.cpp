@@ -50,8 +50,8 @@ const char * getGateModeName(const autoware_control_msgs::msg::GateMode::_data_t
 {
   using autoware_control_msgs::msg::GateMode;
 
-  if (gate_mode == GateMode::AUTO) return "AUTO";
-  if (gate_mode == GateMode::REMOTE) return "REMOTE";
+  if (gate_mode == GateMode::AUTO) {return "AUTO";}
+  if (gate_mode == GateMode::REMOTE) {return "REMOTE";}
 
   return "NOT_SUPPORTED";
 }
@@ -85,7 +85,7 @@ VehicleCmdGate::VehicleCmdGate()
   // Subscriber for auto
   auto_control_cmd_sub_ =
     this->create_subscription<autoware_control_msgs::msg::ControlCommandStamped>(
-      "input/auto/control_cmd", 1, std::bind(&VehicleCmdGate::onAutoCtrlCmd, this, _1));
+    "input/auto/control_cmd", 1, std::bind(&VehicleCmdGate::onAutoCtrlCmd, this, _1));
   auto_turn_signal_cmd_sub_ = this->create_subscription<autoware_vehicle_msgs::msg::TurnSignal>(
     "input/auto/turn_signal_cmd", 1, std::bind(&VehicleCmdGate::onAutoTurnSignalCmd, this, _1));
   auto_shift_cmd_sub_ = this->create_subscription<autoware_vehicle_msgs::msg::ShiftStamped>(
@@ -94,7 +94,7 @@ VehicleCmdGate::VehicleCmdGate()
   // Subscriber for remote
   remote_control_cmd_sub_ =
     this->create_subscription<autoware_control_msgs::msg::ControlCommandStamped>(
-      "input/remote/control_cmd", 1, std::bind(&VehicleCmdGate::onRemoteCtrlCmd, this, _1));
+    "input/remote/control_cmd", 1, std::bind(&VehicleCmdGate::onRemoteCtrlCmd, this, _1));
   remote_turn_signal_cmd_sub_ = this->create_subscription<autoware_vehicle_msgs::msg::TurnSignal>(
     "input/remote/turn_signal_cmd", 1, std::bind(&VehicleCmdGate::onRemoteTurnSignalCmd, this, _1));
   remote_shift_cmd_sub_ = this->create_subscription<autoware_vehicle_msgs::msg::ShiftStamped>(
@@ -103,11 +103,11 @@ VehicleCmdGate::VehicleCmdGate()
   // Subscriber for emergency
   emergency_control_cmd_sub_ =
     this->create_subscription<autoware_control_msgs::msg::ControlCommandStamped>(
-      "input/emergency/control_cmd", 1, std::bind(&VehicleCmdGate::onEmergencyCtrlCmd, this, _1));
+    "input/emergency/control_cmd", 1, std::bind(&VehicleCmdGate::onEmergencyCtrlCmd, this, _1));
   emergency_turn_signal_cmd_sub_ =
     this->create_subscription<autoware_vehicle_msgs::msg::TurnSignal>(
-      "input/emergency/turn_signal_cmd", 1,
-      std::bind(&VehicleCmdGate::onEmergencyTurnSignalCmd, this, _1));
+    "input/emergency/turn_signal_cmd", 1,
+    std::bind(&VehicleCmdGate::onEmergencyTurnSignalCmd, this, _1));
   emergency_shift_cmd_sub_ = this->create_subscription<autoware_vehicle_msgs::msg::ShiftStamped>(
     "input/emergency/shift_cmd", 1, std::bind(&VehicleCmdGate::onEmergencyShiftCmd, this, _1));
 
