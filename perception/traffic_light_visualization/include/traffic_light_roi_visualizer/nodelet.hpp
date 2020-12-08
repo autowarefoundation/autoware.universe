@@ -49,9 +49,9 @@ public:
 
 private:
   bool createRect(
-    cv::Mat& image,
-    const autoware_perception_msgs::msg::TrafficLightRoi& tl_roi,
-    const cv::Scalar& color);
+    cv::Mat & image,
+    const autoware_perception_msgs::msg::TrafficLightRoi & tl_roi,
+    const cv::Scalar & color);
 
   rclcpp::TimerBase::SharedPtr timer_;
   image_transport::SubscriberFilter image_sub_;
@@ -59,15 +59,15 @@ private:
   message_filters::Subscriber<autoware_perception_msgs::msg::TrafficLightRoiArray> rough_roi_sub_;
   image_transport::Publisher image_pub_;
   typedef message_filters::sync_policies::ApproximateTime<
-    sensor_msgs::msg::Image, autoware_perception_msgs::msg::TrafficLightRoiArray>
+      sensor_msgs::msg::Image, autoware_perception_msgs::msg::TrafficLightRoiArray>
     SyncPolicy;
   typedef message_filters::Synchronizer<SyncPolicy> Sync;
   std::shared_ptr<Sync> sync_;
 
   typedef message_filters::sync_policies::ApproximateTime<
-    sensor_msgs::msg::Image,
-    autoware_perception_msgs::msg::TrafficLightRoiArray,
-    autoware_perception_msgs::msg::TrafficLightRoiArray>
+      sensor_msgs::msg::Image,
+      autoware_perception_msgs::msg::TrafficLightRoiArray,
+      autoware_perception_msgs::msg::TrafficLightRoiArray>
     SyncPolicyWithRoughRoi;
   typedef message_filters::Synchronizer<SyncPolicyWithRoughRoi> SyncWithRoughRoi;
   std::shared_ptr<SyncWithRoughRoi> sync_with_rough_roi_;
