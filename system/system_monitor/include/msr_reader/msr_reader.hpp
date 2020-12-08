@@ -40,7 +40,7 @@ struct MSRInfo
    * @note NOLINT syntax is needed since this is an interface to serialization and
    * used inside boost serialization.
    */
-  template <typename archive>
+  template<typename archive>
   void serialize(archive & ar, const unsigned /*version*/)  // NOLINT(runtime/references)
   {
     ar & error_code_;

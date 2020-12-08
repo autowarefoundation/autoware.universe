@@ -39,29 +39,30 @@ class TestCPUMonitor : public CPUMonitor
   friend class CPUMonitorTestSuite;
 
 public:
-  TestCPUMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh) : CPUMonitor(nh, pnh) {}
+  TestCPUMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh)
+  : CPUMonitor(nh, pnh) {}
 
   void diagCallback(const diagnostic_msgs::DiagnosticArray::ConstPtr & diag_msg)
   {
     array_ = *diag_msg;
   }
 
-  void addTempName(const std::string & path) { temps_.emplace_back(path, path); }
-  void clearTempNames(void) { temps_.clear(); }
-  bool isTempNamesEmpty(void) { temps_.empty(); }
+  void addTempName(const std::string & path) {temps_.emplace_back(path, path);}
+  void clearTempNames(void) {temps_.clear();}
+  bool isTempNamesEmpty(void) {temps_.empty();}
 
-  void addFreqName(int index, const std::string & path) { freqs_.emplace_back(index, path); }
-  void clearFreqNames(void) { freqs_.clear(); }
+  void addFreqName(int index, const std::string & path) {freqs_.emplace_back(index, path);}
+  void clearFreqNames(void) {freqs_.clear();}
 
-  void setMpstatExists(bool mpstat_exists) { mpstat_exists_ = mpstat_exists; }
+  void setMpstatExists(bool mpstat_exists) {mpstat_exists_ = mpstat_exists;}
 
-  void changeUsageWarn(float usage_warn) { usage_warn_ = usage_warn; }
-  void changeUsageError(float usage_error) { usage_error_ = usage_error; }
+  void changeUsageWarn(float usage_warn) {usage_warn_ = usage_warn;}
+  void changeUsageError(float usage_error) {usage_error_ = usage_error;}
 
-  void changeLoad1Warn(float load1_warn) { load1_warn_ = load1_warn; }
-  void changeLoad5Warn(float load5_warn) { load5_warn_ = load5_warn; }
+  void changeLoad1Warn(float load1_warn) {load1_warn_ = load1_warn;}
+  void changeLoad5Warn(float load5_warn) {load5_warn_ = load5_warn;}
 
-  void update(void) { updater_.force_update(); }
+  void update(void) {updater_.force_update();}
 
   const std::string removePrefix(const std::string & name)
   {
@@ -87,7 +88,8 @@ private:
 class CPUMonitorTestSuite : public ::testing::Test
 {
 public:
-  CPUMonitorTestSuite() : nh_(""), pnh_("~")
+  CPUMonitorTestSuite()
+  : nh_(""), pnh_("~")
   {
     // Get directory of executable
     const fs::path exe_path(argv_[0]);
@@ -111,17 +113,17 @@ protected:
     monitor_->getFreqNames();
 
     // Remove test file if exists
-    if (fs::exists(TEST_FILE)) fs::remove(TEST_FILE);
+    if (fs::exists(TEST_FILE)) {fs::remove(TEST_FILE);}
     // Remove dummy executable if exists
-    if (fs::exists(mpstat_)) fs::remove(mpstat_);
+    if (fs::exists(mpstat_)) {fs::remove(mpstat_);}
   }
 
   void TearDown(void)
   {
     // Remove test file if exists
-    if (fs::exists(TEST_FILE)) fs::remove(TEST_FILE);
+    if (fs::exists(TEST_FILE)) {fs::remove(TEST_FILE);}
     // Remove dummy executable if exists
-    if (fs::exists(mpstat_)) fs::remove(mpstat_);
+    if (fs::exists(mpstat_)) {fs::remove(mpstat_);}
   }
 
   bool findValue(const DiagStatus status, const std::string & key, std::string & value)  // NOLINT
@@ -145,7 +147,8 @@ protected:
   }
 };
 
-enum ThreadTestMode {
+enum ThreadTestMode
+{
   Normal = 0,
   Throttling,
   ReturnsError,
@@ -163,7 +166,7 @@ void * msr_reader(void * args)
 
   // Create a new socket
   int sock = socket(AF_INET, SOCK_STREAM, 0);
-  if (sock < 0) return nullptr;
+  if (sock < 0) {return nullptr;}
 
   // Allow address reuse
   int ret = 0;
@@ -234,7 +237,7 @@ void * msr_reader(void * args)
       // Wait for recv timeout
       while (true) {
         pthread_mutex_lock(&mutex);
-        if (stop_thread) break;
+        if (stop_thread) {break;}
         pthread_mutex_unlock(&mutex);
         sleep(1);
       }
@@ -264,7 +267,7 @@ void * msr_reader(void * args)
 TEST_F(CPUMonitorTestSuite, tempWarnTest)
 {
   // Skip test if process runs inside CI environment
-  if (monitor_->isTempNamesEmpty() && fs::exists(DOCKER_ENV)) return;
+  if (monitor_->isTempNamesEmpty() && fs::exists(DOCKER_ENV)) {return;}
 
   // Verify normal behavior
   {
@@ -326,7 +329,7 @@ TEST_F(CPUMonitorTestSuite, tempWarnTest)
 TEST_F(CPUMonitorTestSuite, tempErrorTest)
 {
   // Skip test if process runs inside CI environment
-  if (monitor_->isTempNamesEmpty() && fs::exists(DOCKER_ENV)) return;
+  if (monitor_->isTempNamesEmpty() && fs::exists(DOCKER_ENV)) {return;}
 
   // Verify normal behavior
   {
@@ -942,10 +945,11 @@ class DummyCPUMonitor : public CPUMonitorBase
   friend class CPUMonitorTestSuite;
 
 public:
-  DummyCPUMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh) : CPUMonitorBase(nh, pnh)
+  DummyCPUMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh)
+  : CPUMonitorBase(nh, pnh)
   {
   }
-  void update(void) { updater_.force_update(); }
+  void update(void) {updater_.force_update();}
 };
 
 TEST_F(CPUMonitorTestSuite, dummyCPUMonitorTest)

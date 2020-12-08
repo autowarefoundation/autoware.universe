@@ -37,7 +37,8 @@ typedef struct thermal_zone
   std::string label_;  //!< @brief thermal_zone[0-9]
   std::string path_;   //!< @brief sysfs path to temperature
 
-  thermal_zone() : type_(), label_(), path_() {}
+  thermal_zone()
+  : type_(), label_(), path_() {}
   thermal_zone(const std::string & type, const std::string & label, const std::string & path)
   : type_(type), label_(label), path_(path)
   {
@@ -54,33 +55,34 @@ public:
    */
   static void getThermalZone(const std::string & t, std::vector<thermal_zone> * therm)
   {
-    if (therm == nullptr) return;
+    if (therm == nullptr) {return;}
 
     therm->clear();
 
     const fs::path root("/sys/class/thermal");
 
     for (const fs::path & path :
-         boost::make_iterator_range(fs::directory_iterator(root), fs::directory_iterator())) {
-      if (!fs::is_directory(path)) continue;
+      boost::make_iterator_range(fs::directory_iterator(root), fs::directory_iterator()))
+    {
+      if (!fs::is_directory(path)) {continue;}
 
       boost::smatch match;
       const boost::regex filter(".*/thermal_zone(\\d+)");
       const std::string therm_dir = path.generic_string();
 
       // not thermal_zone[0-9]
-      if (!boost::regex_match(therm_dir, match, filter)) continue;
+      if (!boost::regex_match(therm_dir, match, filter)) {continue;}
 
       std::string type;
       const fs::path type_path = path / "type";
       fs::ifstream ifs(type_path, std::ios::in);
       if (ifs) {
         std::string line;
-        if (std::getline(ifs, line)) type = line;
+        if (std::getline(ifs, line)) {type = line;}
       }
       ifs.close();
 
-      if (type != t) continue;
+      if (type != t) {continue;}
 
       const fs::path temp_path = path / "temp";
       therm->emplace_back(t, path.filename().generic_string(), temp_path.generic_string());

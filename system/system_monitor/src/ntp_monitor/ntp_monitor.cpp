@@ -27,12 +27,12 @@
 namespace bp = boost::process;
 namespace fs = boost::filesystem;
 
-NTPMonitor::NTPMonitor(const std::string & node_name, const rclcpp::NodeOptions & options) :
-Node(node_name, options),
-updater_(this),
-server_(declare_parameter<std::string>("server", "ntp.ubuntu.com")),
-offset_warn_(declare_parameter<float>("offset_warn", 0.1)),
-offset_error_(declare_parameter<float>("offset_error", 5.0))
+NTPMonitor::NTPMonitor(const std::string & node_name, const rclcpp::NodeOptions & options)
+: Node(node_name, options),
+  updater_(this),
+  server_(declare_parameter<std::string>("server", "ntp.ubuntu.com")),
+  offset_warn_(declare_parameter<float>("offset_warn", 0.1)),
+  offset_error_(declare_parameter<float>("offset_error", 5.0))
 {
   gethostname(hostname_, sizeof(hostname_));
 
@@ -46,7 +46,7 @@ offset_error_(declare_parameter<float>("offset_error", 5.0))
 
 void NTPMonitor::update()
 {
-    updater_.force_update();
+  updater_.force_update();
 }
 
 void NTPMonitor::checkOffset(diagnostic_updater::DiagnosticStatusWrapper & stat)
@@ -95,10 +95,11 @@ void NTPMonitor::checkOffset(diagnostic_updater::DiagnosticStatusWrapper & stat)
 
   // Check an earlier offset as well
   float abs = std::abs(offset);
-  if (abs >= offset_error_)
+  if (abs >= offset_error_) {
     level = DiagStatus::ERROR;
-  else if (abs >= offset_warn_)
+  } else if (abs >= offset_warn_) {
     level = DiagStatus::WARN;
+  }
 
   stat.addf("NTP Offset", "%.6f sec", offset);
   stat.addf("NTP Delay", "%.6f sec", delay);

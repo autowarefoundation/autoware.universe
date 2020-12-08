@@ -33,7 +33,8 @@ class TestHDDMonitor : public HDDMonitor
   friend class HDDMonitorTestSuite;
 
 public:
-  TestHDDMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh) : HDDMonitor(nh, pnh) {}
+  TestHDDMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh)
+  : HDDMonitor(nh, pnh) {}
 
   void diagCallback(const diagnostic_msgs::DiagnosticArray::ConstPtr & diag_msg)
   {
@@ -54,12 +55,12 @@ public:
       itr->second.temp_error_ = temp_error;
     }
   }
-  void clearTempParams(void) { temp_params_.clear(); }
+  void clearTempParams(void) {temp_params_.clear();}
 
-  void changeUsageWarn(float usage_warn) { usage_warn_ = usage_warn; }
-  void changeUsageError(float usage_error) { usage_error_ = usage_error; }
+  void changeUsageWarn(float usage_warn) {usage_warn_ = usage_warn;}
+  void changeUsageError(float usage_error) {usage_error_ = usage_error;}
 
-  void update(void) { updater_.force_update(); }
+  void update(void) {updater_.force_update();}
 
   const std::string removePrefix(const std::string & name)
   {
@@ -85,7 +86,8 @@ private:
 class HDDMonitorTestSuite : public ::testing::Test
 {
 public:
-  HDDMonitorTestSuite() : nh_(""), pnh_("~")
+  HDDMonitorTestSuite()
+  : nh_(""), pnh_("~")
   {
     // Get directory of executable
     const fs::path exe_path(argv_[0]);
@@ -107,13 +109,13 @@ protected:
     sub_ = nh_.subscribe("/diagnostics", 1000, &TestHDDMonitor::diagCallback, monitor_.get());
 
     // Remove dummy executable if exists
-    if (fs::exists(df_)) fs::remove(df_);
+    if (fs::exists(df_)) {fs::remove(df_);}
   }
 
   void TearDown(void)
   {
     // Remove dummy executable if exists
-    if (fs::exists(df_)) fs::remove(df_);
+    if (fs::exists(df_)) {fs::remove(df_);}
   }
 
   bool findValue(const DiagStatus status, const std::string & key, std::string & value)  // NOLINT
@@ -137,7 +139,8 @@ protected:
   }
 };
 
-enum ThreadTestMode {
+enum ThreadTestMode
+{
   Normal = 0,
   Hot,
   CriticalHot,
@@ -156,7 +159,7 @@ void * hdd_reader(void * args)
 
   // Create a new socket
   int sock = socket(AF_INET, SOCK_STREAM, 0);
-  if (sock < 0) return nullptr;
+  if (sock < 0) {return nullptr;}
 
   // Allow address reuse
   int ret = 0;
@@ -239,7 +242,7 @@ void * hdd_reader(void * args)
       // Wait for recv timeout
       while (true) {
         pthread_mutex_lock(&mutex);
-        if (stop_thread) break;
+        if (stop_thread) {break;}
         pthread_mutex_unlock(&mutex);
         sleep(1);
       }

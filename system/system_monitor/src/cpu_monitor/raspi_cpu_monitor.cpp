@@ -49,15 +49,16 @@ void CPUMonitor::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & s
   ifs.close();
 
   // Consider only thermal throttling as an error
-  if ((throttled & raspiThermalThrottlingMask) == raspiThermalThrottlingMask)
+  if ((throttled & raspiThermalThrottlingMask) == raspiThermalThrottlingMask) {
     level = DiagStatus::ERROR;
+  }
 
   while (throttled) {
     int flag = throttled & ((~throttled) + 1);
     throttled ^= flag;
     status.push_back(throttledToString(flag));
   }
-  if (status.empty()) status.emplace_back("All clear");
+  if (status.empty()) {status.emplace_back("All clear");}
 
   stat.add("status", boost::algorithm::join(status, ", "));
 

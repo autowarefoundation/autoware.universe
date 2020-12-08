@@ -35,28 +35,29 @@ class TestCPUMonitor : public CPUMonitor
   friend class CPUMonitorTestSuite;
 
 public:
-  TestCPUMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh) : CPUMonitor(nh, pnh) {}
+  TestCPUMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh)
+  : CPUMonitor(nh, pnh) {}
 
   void diagCallback(const diagnostic_msgs::DiagnosticArray::ConstPtr & diag_msg)
   {
     array_ = *diag_msg;
   }
 
-  void addTempName(const std::string & path) { temps_.emplace_back(path, path); }
-  void clearTempNames(void) { temps_.clear(); }
+  void addTempName(const std::string & path) {temps_.emplace_back(path, path);}
+  void clearTempNames(void) {temps_.clear();}
 
-  void addFreqName(int index, const std::string & path) { freqs_.emplace_back(index, path); }
-  void clearFreqNames(void) { freqs_.clear(); }
+  void addFreqName(int index, const std::string & path) {freqs_.emplace_back(index, path);}
+  void clearFreqNames(void) {freqs_.clear();}
 
-  void setMpstatExists(bool mpstat_exists) { mpstat_exists_ = mpstat_exists; }
+  void setMpstatExists(bool mpstat_exists) {mpstat_exists_ = mpstat_exists;}
 
-  void changeUsageWarn(float usage_warn) { usage_warn_ = usage_warn; }
-  void changeUsageError(float usage_error) { usage_error_ = usage_error; }
+  void changeUsageWarn(float usage_warn) {usage_warn_ = usage_warn;}
+  void changeUsageError(float usage_error) {usage_error_ = usage_error;}
 
-  void changeLoad1Warn(float load1_warn) { load1_warn_ = load1_warn; }
-  void changeLoad5Warn(float load5_warn) { load5_warn_ = load5_warn; }
+  void changeLoad1Warn(float load1_warn) {load1_warn_ = load1_warn;}
+  void changeLoad5Warn(float load5_warn) {load5_warn_ = load5_warn;}
 
-  void update(void) { updater_.force_update(); }
+  void update(void) {updater_.force_update();}
 
   const std::string removePrefix(const std::string & name)
   {
@@ -82,7 +83,8 @@ private:
 class CPUMonitorTestSuite : public ::testing::Test
 {
 public:
-  CPUMonitorTestSuite() : nh_(""), pnh_("~")
+  CPUMonitorTestSuite()
+  : nh_(""), pnh_("~")
   {
     // Get directory of executable
     const fs::path exe_path(argv_[0]);
@@ -106,17 +108,17 @@ protected:
     monitor_->getFreqNames();
 
     // Remove test file if exists
-    if (fs::exists(TEST_FILE)) fs::remove(TEST_FILE);
+    if (fs::exists(TEST_FILE)) {fs::remove(TEST_FILE);}
     // Remove dummy executable if exists
-    if (fs::exists(mpstat_)) fs::remove(mpstat_);
+    if (fs::exists(mpstat_)) {fs::remove(mpstat_);}
   }
 
   void TearDown(void)
   {
     // Remove test file if exists
-    if (fs::exists(TEST_FILE)) fs::remove(TEST_FILE);
+    if (fs::exists(TEST_FILE)) {fs::remove(TEST_FILE);}
     // Remove dummy executable if exists
-    if (fs::exists(mpstat_)) fs::remove(mpstat_);
+    if (fs::exists(mpstat_)) {fs::remove(mpstat_);}
   }
 
   bool findValue(const DiagStatus status, const std::string & key, std::string & value)  // NOLINT
@@ -633,10 +635,11 @@ class DummyCPUMonitor : public CPUMonitorBase
   friend class CPUMonitorTestSuite;
 
 public:
-  DummyCPUMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh) : CPUMonitorBase(nh, pnh)
+  DummyCPUMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh)
+  : CPUMonitorBase(nh, pnh)
   {
   }
-  void update(void) { updater_.force_update(); }
+  void update(void) {updater_.force_update();}
 };
 
 TEST_F(CPUMonitorTestSuite, dummyCPUMonitorTest)

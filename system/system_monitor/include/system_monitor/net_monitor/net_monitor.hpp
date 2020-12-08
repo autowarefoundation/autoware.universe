@@ -38,7 +38,8 @@ typedef struct bytes
   unsigned int rx_bytes;  //!< @brief total bytes received
   unsigned int tx_bytes;  //!< @brief total bytes transmitted
 
-  bytes() : rx_bytes(0), tx_bytes(0) {}
+  bytes()
+  : rx_bytes(0), tx_bytes(0) {}
 } bytes;
 
 class NetMonitor : public rclcpp::Node
@@ -56,10 +57,10 @@ public:
    */
   void update();
 
-   /**
-  * @brief Shutdown nl80211 object
-  */
-   void shutdown_nl80211();
+  /**
+ * @brief Shutdown nl80211 object
+ */
+  void shutdown_nl80211();
 
 protected:
   using DiagStatus = diagnostic_msgs::msg::DiagnosticStatus;

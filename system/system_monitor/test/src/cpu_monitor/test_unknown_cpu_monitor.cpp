@@ -23,14 +23,15 @@ class TestCPUMonitor : public CPUMonitor
   friend class CPUMonitorTestSuite;
 
 public:
-  TestCPUMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh) : CPUMonitor(nh, pnh) {}
+  TestCPUMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh)
+  : CPUMonitor(nh, pnh) {}
 
   void diagCallback(const diagnostic_msgs::DiagnosticArray::ConstPtr & diag_msg)
   {
     array_ = *diag_msg;
   }
 
-  void update(void) { updater_.force_update(); }
+  void update(void) {updater_.force_update();}
 
 private:
   diagnostic_msgs::DiagnosticArray array_;
@@ -39,7 +40,8 @@ private:
 class CPUMonitorTestSuite : public ::testing::Test
 {
 public:
-  CPUMonitorTestSuite() : nh_(""), pnh_("~") {}
+  CPUMonitorTestSuite()
+  : nh_(""), pnh_("~") {}
 
 protected:
   ros::NodeHandle nh_, pnh_;
@@ -57,7 +59,9 @@ protected:
   void TearDown(void) {}
 };
 
-TEST_F(CPUMonitorTestSuite, test) { ASSERT_TRUE(true); }
+TEST_F(CPUMonitorTestSuite, test) {
+  ASSERT_TRUE(true);
+}
 
 int main(int argc, char ** argv)
 {

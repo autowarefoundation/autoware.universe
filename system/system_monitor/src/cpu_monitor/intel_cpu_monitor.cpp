@@ -124,11 +124,13 @@ void CPUMonitor::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & s
   int index = 0;
 
   for (auto itr = info.pkg_thermal_status_.begin(); itr != info.pkg_thermal_status_.end();
-       ++itr, ++index) {
-    if (*itr)
+    ++itr, ++index)
+  {
+    if (*itr) {
       level = DiagStatus::ERROR;
-    else
+    } else {
       level = DiagStatus::OK;
+    }
 
     stat.add((boost::format("CPU %1%: Pkg Thermal Status") % index).str(), thermal_dict_.at(level));
 
@@ -143,15 +145,16 @@ void CPUMonitor::getTempNames(void)
   const fs::path root("/sys/devices/platform/coretemp.0");
 
   for (const fs::path & path : boost::make_iterator_range(
-         fs::recursive_directory_iterator(root), fs::recursive_directory_iterator())) {
-    if (fs::is_directory(path)) continue;
+      fs::recursive_directory_iterator(root), fs::recursive_directory_iterator()))
+  {
+    if (fs::is_directory(path)) {continue;}
 
     boost::smatch match;
     boost::regex filter(".*temp(\\d+)_input");
     std::string temp_input = path.generic_string();
 
     // /sys/devices/platform/coretemp.0/hwmon/hwmon[0-9]/temp[0-9]_input ?
-    if (!boost::regex_match(temp_input, match, filter)) continue;
+    if (!boost::regex_match(temp_input, match, filter)) {continue;}
 
     cpu_temp_info temp;
     temp.path_ = temp_input;
@@ -162,19 +165,20 @@ void CPUMonitor::getTempNames(void)
     fs::ifstream ifs(label_path, std::ios::in);
     if (ifs) {
       std::string line;
-      if (std::getline(ifs, line)) temp.label_ = line;
+      if (std::getline(ifs, line)) {temp.label_ = line;}
     }
     ifs.close();
     temps_.push_back(temp);
   }
 
-  std::sort(temps_.begin(), temps_.end(), [](const cpu_temp_info & c1, const cpu_temp_info & c2) {
-    boost::smatch match;
-    boost::regex filter(".*temp(\\d+)_input");
-    int n1 = 0;
-    int n2 = 0;
-    if (boost::regex_match(c1.path_, match, filter)) n1 = std::stoi(match[1].str());
-    if (boost::regex_match(c2.path_, match, filter)) n2 = std::stoi(match[1].str());
-    return n1 < n2;
-  });  // NOLINT
+  std::sort(
+    temps_.begin(), temps_.end(), [](const cpu_temp_info & c1, const cpu_temp_info & c2) {
+      boost::smatch match;
+      boost::regex filter(".*temp(\\d+)_input");
+      int n1 = 0;
+      int n2 = 0;
+      if (boost::regex_match(c1.path_, match, filter)) {n1 = std::stoi(match[1].str());}
+      if (boost::regex_match(c2.path_, match, filter)) {n2 = std::stoi(match[1].str());}
+      return n1 < n2;
+    }); // NOLINT
 }

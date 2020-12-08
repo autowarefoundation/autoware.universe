@@ -30,19 +30,20 @@ class TestNetMonitor : public NetMonitor
   friend class NetMonitorTestSuite;
 
 public:
-  TestNetMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh) : NetMonitor(nh, pnh) {}
+  TestNetMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh)
+  : NetMonitor(nh, pnh) {}
 
   void diagCallback(const diagnostic_msgs::DiagnosticArray::ConstPtr & diag_msg)
   {
     array_ = *diag_msg;
   }
 
-  void changeUsageWarn(float usage_warn) { usage_warn_ = usage_warn; }
+  void changeUsageWarn(float usage_warn) {usage_warn_ = usage_warn;}
 
-  const std::vector<std::string> getDeviceParams(void) { return device_params_; }
-  void clearDeviceParams(void) { device_params_.clear(); }
+  const std::vector<std::string> getDeviceParams(void) {return device_params_;}
+  void clearDeviceParams(void) {device_params_.clear();}
 
-  void update(void) { updater_.force_update(); }
+  void update(void) {updater_.force_update();}
 
   const std::string removePrefix(const std::string & name)
   {
@@ -68,7 +69,8 @@ private:
 class NetMonitorTestSuite : public ::testing::Test
 {
 public:
-  NetMonitorTestSuite() : nh_(""), pnh_("~") {}
+  NetMonitorTestSuite()
+  : nh_(""), pnh_("~") {}
 
 protected:
   ros::NodeHandle nh_, pnh_;
@@ -130,7 +132,7 @@ TEST_F(NetMonitorTestSuite, usageWarnTest)
     ASSERT_TRUE(monitor_->findDiagStatus("Network Usage", status));
     // Skip test if process runs inside docker
     // Don't know what interface should be monitored.
-    if (!fs::exists(DOCKER_ENV)) ASSERT_EQ(status.level, DiagStatus::WARN);
+    if (!fs::exists(DOCKER_ENV)) {ASSERT_EQ(status.level, DiagStatus::WARN);}
   }
 
   // Verify normal behavior

@@ -169,7 +169,9 @@ void usage(void)
  */
 void swap_char(char * ptr, size_t size)
 {
-  for (auto i = 0U; i < size; i += 2U) std::swap(ptr[i], ptr[i + 1]);
+  for (auto i = 0U; i < size; i += 2U) {
+    std::swap(ptr[i], ptr[i + 1]);
+  }
 }
 
 /**
@@ -546,7 +548,8 @@ int main(int argc, char ** argv)
   const fs::path root("/dev");
 
   for (const fs::path & path :
-       boost::make_iterator_range(fs::directory_iterator(root), fs::directory_iterator())) {
+    boost::make_iterator_range(fs::directory_iterator(root), fs::directory_iterator()))
+  {
     boost::smatch match;
     const boost::regex fsd("sd([a-z]+)");
     const boost::regex fnvme("nvme(\\d+)");

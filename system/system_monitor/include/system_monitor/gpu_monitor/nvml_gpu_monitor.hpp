@@ -27,26 +27,26 @@
 #include <string>
 #include <vector>
 
-#define reasonToString(X)                                                            \
-  (((X)&nvmlClocksThrottleReasonGpuIdle)                                             \
-     ? "GpuIdle"                                                                     \
-     : ((X)&nvmlClocksThrottleReasonApplicationsClocksSetting)                       \
-         ? "ApplicationsClocksSetting"                                               \
-         : ((X)&nvmlClocksThrottleReasonSwPowerCap)                                  \
-             ? "SwPowerCap"                                                          \
-             : ((X)&nvmlClocksThrottleReasonHwSlowdown)                              \
-                 ? "HwSlowdown"                                                      \
-                 : ((X)&nvmlClocksThrottleReasonSyncBoost)                           \
-                     ? "SyncBoost"                                                   \
-                     : ((X)&nvmlClocksThrottleReasonSwThermalSlowdown)               \
-                         ? "SwThermalSlowdown"                                       \
-                         : ((X)&nvmlClocksThrottleReasonHwThermalSlowdown)           \
-                             ? "HwThermalSlowdown"                                   \
-                             : ((X)&nvmlClocksThrottleReasonHwPowerBrakeSlowdown)    \
-                                 ? "HwPowerBrakeSlowdown"                            \
-                                 : ((X)&nvmlClocksThrottleReasonDisplayClockSetting) \
-                                     ? "DisplayClockSetting"                         \
-                                     : "UNKNOWN")
+#define reasonToString(X) \
+  (((X)&nvmlClocksThrottleReasonGpuIdle) \
+  ? "GpuIdle" \
+  : ((X)&nvmlClocksThrottleReasonApplicationsClocksSetting) \
+  ? "ApplicationsClocksSetting" \
+  : ((X)&nvmlClocksThrottleReasonSwPowerCap) \
+  ? "SwPowerCap" \
+  : ((X)&nvmlClocksThrottleReasonHwSlowdown) \
+  ? "HwSlowdown" \
+  : ((X)&nvmlClocksThrottleReasonSyncBoost) \
+  ? "SyncBoost" \
+  : ((X)&nvmlClocksThrottleReasonSwThermalSlowdown) \
+  ? "SwThermalSlowdown" \
+  : ((X)&nvmlClocksThrottleReasonHwThermalSlowdown) \
+  ? "HwThermalSlowdown" \
+  : ((X)&nvmlClocksThrottleReasonHwPowerBrakeSlowdown) \
+  ? "HwPowerBrakeSlowdown" \
+  : ((X)&nvmlClocksThrottleReasonDisplayClockSetting) \
+  ? "DisplayClockSetting" \
+  : "UNKNOWN")
 
 /**
  * @brief GPU information
@@ -69,10 +69,10 @@ public:
    */
   GPUMonitor(const std::string & node_name, const rclcpp::NodeOptions & options);
 
-   /**
-   * @brief Terminate the node, log final statements. An independent function is preferred to allow an explicit way
-   * to operate actions that require a valid rclcpp context. By default this method does nothing.
-   */
+  /**
+  * @brief Terminate the node, log final statements. An independent function is preferred to allow an explicit way
+  * to operate actions that require a valid rclcpp context. By default this method does nothing.
+  */
   void shut_down() override;
 
 protected:

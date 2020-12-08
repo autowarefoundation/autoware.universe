@@ -230,28 +230,30 @@ int main(int argc, char ** argv)
   const fs::path root("/dev/cpu");
 
   for (const fs::path & path : boost::make_iterator_range(
-         fs::recursive_directory_iterator(root), fs::recursive_directory_iterator())) {
-    if (fs::is_directory(path)) continue;
+      fs::recursive_directory_iterator(root), fs::recursive_directory_iterator()))
+  {
+    if (fs::is_directory(path)) {continue;}
 
     boost::smatch match;
     boost::regex filter(".*msr");
     std::string msr = path.generic_string();
 
     // /dev/cpu/[0-9]/msr ?
-    if (!boost::regex_match(msr, match, filter)) continue;
+    if (!boost::regex_match(msr, match, filter)) {continue;}
 
     list.push_back(path.generic_string());
   }
 
-  std::sort(list.begin(), list.end(), [](const std::string & c1, const std::string & c2) {
-    boost::smatch match;
-    boost::regex filter(".*/(\\d+)/msr");
-    int n1 = 0;
-    int n2 = 0;
-    if (boost::regex_match(c1, match, filter)) n1 = std::stoi(match[1].str());
-    if (boost::regex_match(c2, match, filter)) n2 = std::stoi(match[1].str());
-    return n1 < n2;
-  });  // NOLINT
+  std::sort(
+    list.begin(), list.end(), [](const std::string & c1, const std::string & c2) {
+      boost::smatch match;
+      boost::regex filter(".*/(\\d+)/msr");
+      int n1 = 0;
+      int n2 = 0;
+      if (boost::regex_match(c1, match, filter)) {n1 = std::stoi(match[1].str());}
+      if (boost::regex_match(c2, match, filter)) {n2 = std::stoi(match[1].str());}
+      return n1 < n2;
+    }); // NOLINT
 
   if (list.empty()) {
     printf("No msr found in /dev/cpu.\n");

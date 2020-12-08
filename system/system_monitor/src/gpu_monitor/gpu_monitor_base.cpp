@@ -43,10 +43,10 @@ GPUMonitorBase::GPUMonitorBase(const std::string & node_name, const rclcpp::Node
 
 void GPUMonitorBase::update()
 {
-    updater_.force_update();
+  updater_.force_update();
 }
 
-void GPUMonitorBase::shut_down(){/*NOOP by default.*/}
+void GPUMonitorBase::shut_down() { /*NOOP by default.*/}
 
 void GPUMonitorBase::checkTemp(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {

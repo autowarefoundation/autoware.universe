@@ -25,29 +25,30 @@ class TestGPUMonitor : public GPUMonitor
   friend class GPUMonitorTestSuite;
 
 public:
-  TestGPUMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh) : GPUMonitor(nh, pnh) {}
+  TestGPUMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh)
+  : GPUMonitor(nh, pnh) {}
 
   void diagCallback(const diagnostic_msgs::DiagnosticArray::ConstPtr & diag_msg)
   {
     array_ = *diag_msg;
   }
 
-  void addGPU(const gpu_info & info) { gpus_.push_back(info); }
-  void clearGPU(void) { gpus_.clear(); }
+  void addGPU(const gpu_info & info) {gpus_.push_back(info);}
+  void clearGPU(void) {gpus_.clear();}
 
-  void changeTempWarn(float temp_warn) { temp_warn_ = temp_warn; }
-  void changeTempError(float temp_error) { temp_error_ = temp_error; }
+  void changeTempWarn(float temp_warn) {temp_warn_ = temp_warn;}
+  void changeTempError(float temp_error) {temp_error_ = temp_error;}
 
-  void changeGPUUsageWarn(float gpu_usage_warn) { gpu_usage_warn_ = gpu_usage_warn; }
-  void changeGPUUsageError(float gpu_usage_error) { gpu_usage_error_ = gpu_usage_error; }
+  void changeGPUUsageWarn(float gpu_usage_warn) {gpu_usage_warn_ = gpu_usage_warn;}
+  void changeGPUUsageError(float gpu_usage_error) {gpu_usage_error_ = gpu_usage_error;}
 
-  void changeMemoryUsageWarn(float memory_usage_warn) { memory_usage_warn_ = memory_usage_warn; }
+  void changeMemoryUsageWarn(float memory_usage_warn) {memory_usage_warn_ = memory_usage_warn;}
   void changeMemoryUsageError(float memory_usage_error)
   {
     memory_usage_error_ = memory_usage_error;
   }
 
-  void update(void) { updater_.force_update(); }
+  void update(void) {updater_.force_update();}
 
   const std::string removePrefix(const std::string & name)
   {
@@ -73,7 +74,8 @@ private:
 class GPUMonitorTestSuite : public ::testing::Test
 {
 public:
-  GPUMonitorTestSuite() : nh_(""), pnh_("~") {}
+  GPUMonitorTestSuite()
+  : nh_(""), pnh_("~") {}
 
 protected:
   ros::NodeHandle nh_, pnh_;
@@ -517,10 +519,11 @@ class DummyGPUMonitor : public GPUMonitorBase
   friend class GPUMonitorTestSuite;
 
 public:
-  DummyGPUMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh) : GPUMonitorBase(nh, pnh)
+  DummyGPUMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh)
+  : GPUMonitorBase(nh, pnh)
   {
   }
-  void update(void) { updater_.force_update(); }
+  void update(void) {updater_.force_update();}
 };
 
 TEST_F(GPUMonitorTestSuite, dummyGPUMonitorTest)

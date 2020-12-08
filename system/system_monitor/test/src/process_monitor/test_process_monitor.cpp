@@ -42,9 +42,9 @@ public:
     array_ = *diag_msg;
   }
 
-  int getNumOfProcs(void) const { return num_of_procs_; }
+  int getNumOfProcs(void) const {return num_of_procs_;}
 
-  void update(void) { updater_.force_update(); }
+  void update(void) {updater_.force_update();}
 
   const std::string removePrefix(const std::string & name)
   {
@@ -70,7 +70,8 @@ private:
 class ProcessMonitorTestSuite : public ::testing::Test
 {
 public:
-  ProcessMonitorTestSuite() : nh_(""), pnh_("~")
+  ProcessMonitorTestSuite()
+  : nh_(""), pnh_("~")
   {
     // Get directory of executable
     const fs::path exe_path(argv_[0]);
@@ -98,19 +99,19 @@ protected:
     sub_ = nh_.subscribe("/diagnostics", 1000, &TestProcessMonitor::diagCallback, monitor_.get());
 
     // Remove dummy executable if exists
-    if (fs::exists(top_)) fs::remove(top_);
-    if (fs::exists(echo_)) fs::remove(echo_);
-    if (fs::exists(sed_)) fs::remove(sed_);
-    if (fs::exists(sort_)) fs::remove(sort_);
+    if (fs::exists(top_)) {fs::remove(top_);}
+    if (fs::exists(echo_)) {fs::remove(echo_);}
+    if (fs::exists(sed_)) {fs::remove(sed_);}
+    if (fs::exists(sort_)) {fs::remove(sort_);}
   }
 
   void TearDown(void)
   {
     // Remove dummy executable if exists
-    if (fs::exists(top_)) fs::remove(top_);
-    if (fs::exists(echo_)) fs::remove(echo_);
-    if (fs::exists(sed_)) fs::remove(sed_);
-    if (fs::exists(sort_)) fs::remove(sort_);
+    if (fs::exists(top_)) {fs::remove(top_);}
+    if (fs::exists(echo_)) {fs::remove(echo_);}
+    if (fs::exists(sed_)) {fs::remove(sed_);}
+    if (fs::exists(sort_)) {fs::remove(sort_);}
   }
 
   bool findValue(const DiagStatus status, const std::string & key, std::string & value)  // NOLINT

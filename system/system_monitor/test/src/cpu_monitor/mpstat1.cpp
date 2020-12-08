@@ -17,4 +17,4 @@
  * @brief dummy mpstat mpstat to return error
  */
 
-int main(int argc, char ** argv) { return -1; }
+int main(int argc, char ** argv) {return -1;}

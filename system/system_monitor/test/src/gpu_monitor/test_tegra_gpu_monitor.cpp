@@ -29,23 +29,24 @@ class TestGPUMonitor : public GPUMonitor
   friend class GPUMonitorTestSuite;
 
 public:
-  TestGPUMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh) : GPUMonitor(nh, pnh) {}
+  TestGPUMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh)
+  : GPUMonitor(nh, pnh) {}
 
   void diagCallback(const diagnostic_msgs::DiagnosticArray::ConstPtr & diag_msg)
   {
     array_ = *diag_msg;
   }
 
-  void addTempName(const std::string & path) { temps_.emplace_back(path, path); }
-  void clearTempNames(void) { temps_.clear(); }
+  void addTempName(const std::string & path) {temps_.emplace_back(path, path);}
+  void clearTempNames(void) {temps_.clear();}
 
-  void addLoadName(const std::string & path) { loads_.emplace_back(path, path); }
-  void clearLoadNames(void) { loads_.clear(); }
+  void addLoadName(const std::string & path) {loads_.emplace_back(path, path);}
+  void clearLoadNames(void) {loads_.clear();}
 
-  void addFreqName(const std::string & path) { freqs_.emplace_back(path, path); }
-  void clearFreqNames(void) { freqs_.clear(); }
+  void addFreqName(const std::string & path) {freqs_.emplace_back(path, path);}
+  void clearFreqNames(void) {freqs_.clear();}
 
-  void update(void) { updater_.force_update(); }
+  void update(void) {updater_.force_update();}
 
   const std::string removePrefix(const std::string & name)
   {
@@ -71,7 +72,8 @@ private:
 class GPUMonitorTestSuite : public ::testing::Test
 {
 public:
-  GPUMonitorTestSuite() : nh_(""), pnh_("~") {}
+  GPUMonitorTestSuite()
+  : nh_(""), pnh_("~") {}
 
 protected:
   ros::NodeHandle nh_, pnh_;
@@ -84,13 +86,13 @@ protected:
     sub_ = nh_.subscribe("/diagnostics", 1000, &TestGPUMonitor::diagCallback, monitor_.get());
 
     // Remove test file if exists
-    if (fs::exists(TEST_FILE)) fs::remove(TEST_FILE);
+    if (fs::exists(TEST_FILE)) {fs::remove(TEST_FILE);}
   }
 
   void TearDown(void)
   {
     // Remove test file if exists
-    if (fs::exists(TEST_FILE)) fs::remove(TEST_FILE);
+    if (fs::exists(TEST_FILE)) {fs::remove(TEST_FILE);}
   }
 
   bool findValue(const DiagStatus status, const std::string & key, std::string & value)  // NOLINT
@@ -464,10 +466,11 @@ class DummyGPUMonitor : public GPUMonitorBase
   friend class GPUMonitorTestSuite;
 
 public:
-  DummyGPUMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh) : GPUMonitorBase(nh, pnh)
+  DummyGPUMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh)
+  : GPUMonitorBase(nh, pnh)
   {
   }
-  void update(void) { updater_.force_update(); }
+  void update(void) {updater_.force_update();}
 };
 
 TEST_F(GPUMonitorTestSuite, dummyGPUMonitorTest)

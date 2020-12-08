@@ -31,17 +31,18 @@ class TestMemMonitor : public MemMonitor
   friend class MemMonitorTestSuite;
 
 public:
-  TestMemMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh) : MemMonitor(nh, pnh) {}
+  TestMemMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh)
+  : MemMonitor(nh, pnh) {}
 
   void diagCallback(const diagnostic_msgs::DiagnosticArray::ConstPtr & diag_msg)
   {
     array_ = *diag_msg;
   }
 
-  void changeUsageWarn(float usage_warn) { usage_warn_ = usage_warn; }
-  void changeUsageError(float usage_error) { usage_error_ = usage_error; }
+  void changeUsageWarn(float usage_warn) {usage_warn_ = usage_warn;}
+  void changeUsageError(float usage_error) {usage_error_ = usage_error;}
 
-  void update(void) { updater_.force_update(); }
+  void update(void) {updater_.force_update();}
 
   const std::string removePrefix(const std::string & name)
   {
@@ -67,7 +68,8 @@ private:
 class MemMonitorTestSuite : public ::testing::Test
 {
 public:
-  MemMonitorTestSuite() : nh_(""), pnh_("~")
+  MemMonitorTestSuite()
+  : nh_(""), pnh_("~")
   {
     // Get directory of executable
     const fs::path exe_path(argv_[0]);
@@ -89,13 +91,13 @@ protected:
     sub_ = nh_.subscribe("/diagnostics", 1000, &TestMemMonitor::diagCallback, monitor_.get());
 
     // Remove dummy executable if exists
-    if (fs::exists(free_)) fs::remove(free_);
+    if (fs::exists(free_)) {fs::remove(free_);}
   }
 
   void TearDown(void)
   {
     // Remove dummy executable if exists
-    if (fs::exists(free_)) fs::remove(free_);
+    if (fs::exists(free_)) {fs::remove(free_);}
   }
 
   bool findValue(const DiagStatus status, const std::string & key, std::string & value)  // NOLINT

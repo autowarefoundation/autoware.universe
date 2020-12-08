@@ -114,9 +114,9 @@ protected:
 
   int num_of_procs_;  //!< @brief number of processes to show
   std::vector<std::shared_ptr<DiagTask>>
-    load_tasks_;  //!< @brief list of diagnostics tasks for high load procs
+  load_tasks_;    //!< @brief list of diagnostics tasks for high load procs
   std::vector<std::shared_ptr<DiagTask>>
-    memory_tasks_;  //!< @brief list of diagnostics tasks for high memory procs
+  memory_tasks_;    //!< @brief list of diagnostics tasks for high memory procs
 };
 
 #endif  // SYSTEM_MONITOR_PROCESS_MONITOR_PROCESS_MONITOR_H

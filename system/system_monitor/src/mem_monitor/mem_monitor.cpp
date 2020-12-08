@@ -25,11 +25,11 @@
 
 namespace bp = boost::process;
 
-MemMonitor::MemMonitor(const std::string & node_name, const rclcpp::NodeOptions & options) :
-Node(node_name, options),
-updater_(this),
-usage_warn_(declare_parameter<float>("usage_warn", 0.95)),
-usage_error_(declare_parameter<float>("usage_error", 0.99))
+MemMonitor::MemMonitor(const std::string & node_name, const rclcpp::NodeOptions & options)
+: Node(node_name, options),
+  updater_(this),
+  usage_warn_(declare_parameter<float>("usage_warn", 0.95)),
+  usage_error_(declare_parameter<float>("usage_error", 0.99))
 {
   gethostname(hostname_, sizeof(hostname_));
   updater_.setHardwareID(hostname_);
@@ -76,10 +76,11 @@ void MemMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
       // used divided by total is usage
       usage = std::atof(list[2].c_str()) / std::atof(list[1].c_str());
 
-      if (usage >= usage_error_)
+      if (usage >= usage_error_) {
         level = DiagStatus::ERROR;
-      else if (usage >= usage_warn_)
+      } else if (usage >= usage_warn_) {
         level = DiagStatus::WARN;
+      }
 
       stat.addf((boost::format("%1% usage") % list[0]).str(), "%.2f%%", usage * 1e+2);
     }

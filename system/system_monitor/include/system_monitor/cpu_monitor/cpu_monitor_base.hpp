@@ -35,8 +35,10 @@ typedef struct cpu_temp_info
   std::string label_;  //!< @brief cpu label
   std::string path_;   //!< @brief sysfs path to cpu temperature
 
-  cpu_temp_info() : label_(), path_() {}
-  cpu_temp_info(const std::string & label, const std::string & path) : label_(label), path_(path) {}
+  cpu_temp_info()
+  : label_(), path_() {}
+  cpu_temp_info(const std::string & label, const std::string & path)
+  : label_(label), path_(path) {}
 } cpu_temp_info;
 
 /**
@@ -47,8 +49,10 @@ typedef struct cpu_freq_info
   int index_;         //!< @brief cpu index
   std::string path_;  //!< @brief sysfs path to cpu frequency
 
-  cpu_freq_info() : index_(0), path_() {}
-  cpu_freq_info(int index, const std::string & path) : index_(index), path_(path) {}
+  cpu_freq_info()
+  : index_(0), path_() {}
+  cpu_freq_info(int index, const std::string & path)
+  : index_(index), path_(path) {}
 } cpu_freq_info;
 
 class CPUMonitorBase : public rclcpp::Node

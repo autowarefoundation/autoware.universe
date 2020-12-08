@@ -23,10 +23,10 @@
 #include <string>
 #include <vector>
 
-ProcessMonitor::ProcessMonitor(const std::string & node_name, const rclcpp::NodeOptions & options) :
-Node(node_name, options),
-updater_(this),
-num_of_procs_(declare_parameter<int>("num_of_procs", 5))
+ProcessMonitor::ProcessMonitor(const std::string & node_name, const rclcpp::NodeOptions & options)
+: Node(node_name, options),
+  updater_(this),
+  num_of_procs_(declare_parameter<int>("num_of_procs", 5))
 {
   int index;
 
@@ -49,7 +49,7 @@ num_of_procs_(declare_parameter<int>("num_of_procs", 5))
 
 void ProcessMonitor::update()
 {
-    updater_.force_update();
+  updater_.force_update();
 }
 
 void ProcessMonitor::monitorProcesses(diagnostic_updater::DiagnosticStatusWrapper & stat)
@@ -243,7 +243,7 @@ void ProcessMonitor::getHighMemoryProcesses(const std::string & output)
 void ProcessMonitor::getTopratedProcesses(
   std::vector<std::shared_ptr<DiagTask>> * tasks, bp::pipe * p)
 {
-  if (tasks == nullptr || p == nullptr) return;
+  if (tasks == nullptr || p == nullptr) {return;}
 
   bp::ipstream is_out;
   bp::ipstream is_err;
@@ -290,7 +290,7 @@ void ProcessMonitor::setErrorContent(
   std::vector<std::shared_ptr<DiagTask>> * tasks, const std::string & message,
   const std::string & error_command, const std::string & content)
 {
-  if (tasks == nullptr) return;
+  if (tasks == nullptr) {return;}
 
   for (auto itr = tasks->begin(); itr != tasks->end(); ++itr) {
     (*itr)->setDiagnosticsStatus(DiagStatus::ERROR, message);

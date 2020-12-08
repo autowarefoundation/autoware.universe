@@ -33,39 +33,52 @@ GPUMonitor::GPUMonitor(const std::string & node_name, const rclcpp::NodeOptions 
   nvmlReturn_t ret;
 
   ret = nvmlInit();
-  if (ret != NVML_SUCCESS) RCLCPP_ERROR(this->get_logger(), "Failed to initialize NVML: %s\n", nvmlErrorString(ret));
+  if (ret != NVML_SUCCESS) {
+    RCLCPP_ERROR(this->get_logger(), "Failed to initialize NVML: %s\n", nvmlErrorString(ret));
+  }
 
   unsigned int deviceCount = 0;
   ret = nvmlDeviceGetCount(&deviceCount);
-  if (ret != NVML_SUCCESS)
-    RCLCPP_ERROR(this->get_logger(), "Failed to retrieve the number of compute devices: %s", nvmlErrorString(ret));
+  if (ret != NVML_SUCCESS) {
+    RCLCPP_ERROR(
+      this->get_logger(), "Failed to retrieve the number of compute devices: %s",
+      nvmlErrorString(ret));
+  }
 
   for (int index = 0; index < deviceCount; ++index) {
     gpu_info info;
     ret = nvmlDeviceGetHandleByIndex(index, &info.device);
     if (ret != NVML_SUCCESS) {
-      RCLCPP_ERROR(this->get_logger(), 
+      RCLCPP_ERROR(
+        this->get_logger(),
         "Failed to acquire the handle for a particular device [%d]: %s", index,
         nvmlErrorString(ret));
       continue;
     }
     ret = nvmlDeviceGetName(info.device, info.name, NVML_DEVICE_NAME_BUFFER_SIZE);
     if (ret != NVML_SUCCESS) {
-      RCLCPP_ERROR(this->get_logger(), "Failed to retrieve the name of this device [%d]: %s", index, nvmlErrorString(ret));
+      RCLCPP_ERROR(
+        this->get_logger(), "Failed to retrieve the name of this device [%d]: %s", index, nvmlErrorString(
+          ret));
       continue;
     }
     ret = nvmlDeviceGetPciInfo(info.device, &info.pci);
     if (ret != NVML_SUCCESS) {
-      RCLCPP_ERROR(this->get_logger(), "Failed to retrieve the PCI attributes [%d]: %s", index, nvmlErrorString(ret));
+      RCLCPP_ERROR(
+        this->get_logger(), "Failed to retrieve the PCI attributes [%d]: %s", index, nvmlErrorString(
+          ret));
       continue;
     }
     gpus_.push_back(info);
   }
 }
 
-void GPUMonitor::shut_down(){
-    nvmlReturn_t ret = nvmlShutdown();
-    if (ret != NVML_SUCCESS) RCLCPP_ERROR(this->get_logger(), "Failed to shut down NVML: %s", nvmlErrorString(ret));
+void GPUMonitor::shut_down()
+{
+  nvmlReturn_t ret = nvmlShutdown();
+  if (ret != NVML_SUCCESS) {
+    RCLCPP_ERROR(this->get_logger(), "Failed to shut down NVML: %s", nvmlErrorString(ret));
+  }
 }
 
 void GPUMonitor::checkTemp(diagnostic_updater::DiagnosticStatusWrapper & stat)
@@ -92,10 +105,11 @@ void GPUMonitor::checkTemp(diagnostic_updater::DiagnosticStatusWrapper & stat)
 
     level = DiagStatus::OK;
     stat.addf(itr->name, "%d.0 DegC", temp);
-    if (temp >= temp_error_)
+    if (temp >= temp_error_) {
       level = std::max(level, static_cast<int>(DiagStatus::ERROR));
-    else if (temp >= temp_warn_)
+    } else if (temp >= temp_warn_) {
       level = std::max(level, static_cast<int>(DiagStatus::WARN));
+    }
   }
 
   stat.summary(level, temp_dict_.at(level));
@@ -125,10 +139,11 @@ void GPUMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
 
     level = DiagStatus::OK;
     float usage = static_cast<float>(itr->utilization.gpu) / 100.0;
-    if (usage >= gpu_usage_error_)
+    if (usage >= gpu_usage_error_) {
       level = std::max(level, static_cast<int>(DiagStatus::ERROR));
-    else if (usage >= gpu_usage_warn_)
+    } else if (usage >= gpu_usage_warn_) {
       level = std::max(level, static_cast<int>(DiagStatus::WARN));
+    }
 
     stat.add((boost::format("GPU %1%: status") % index).str(), load_dict_.at(level));
     stat.add((boost::format("GPU %1%: name") % index).str(), itr->name);
@@ -166,10 +181,11 @@ void GPUMonitor::checkMemoryUsage(diagnostic_updater::DiagnosticStatusWrapper & 
 
     level = DiagStatus::OK;
     float usage = static_cast<float>(itr->utilization.memory) / 100.0;
-    if (usage >= memory_usage_error_)
+    if (usage >= memory_usage_error_) {
       level = std::max(level, static_cast<int>(DiagStatus::ERROR));
-    else if (usage >= memory_usage_warn_)
+    } else if (usage >= memory_usage_warn_) {
       level = std::max(level, static_cast<int>(DiagStatus::WARN));
+    }
 
     stat.add((boost::format("GPU %1%: status") % index).str(), load_dict_.at(level));
     stat.add((boost::format("GPU %1%: name") % index).str(), itr->name);
@@ -238,7 +254,7 @@ void GPUMonitor::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & s
     stat.add((boost::format("GPU %1%: name") % index).str(), itr->name);
     stat.addf((boost::format("GPU %1%: graphics clock") % index).str(), "%d MHz", clock);
 
-    if (reasons.empty()) reasons.emplace_back("ReasonNone");
+    if (reasons.empty()) {reasons.emplace_back("ReasonNone");}
 
     stat.add(
       (boost::format("GPU %1%: reasons") % index).str(), boost::algorithm::join(reasons, ", "));

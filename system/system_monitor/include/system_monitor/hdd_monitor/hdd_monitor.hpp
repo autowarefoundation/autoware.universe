@@ -34,7 +34,8 @@ struct TempParam
   float temp_warn_;   //!< @brief HDD temperature(DegC) to generate warning
   float temp_error_;  //!< @brief HDD temperature(DegC) to generate error
 
-  TempParam() : temp_warn_(55.0), temp_error_(70.0) {}
+  TempParam()
+  : temp_warn_(55.0), temp_error_(70.0) {}
 };
 
 class HDDMonitor : public rclcpp::Node
@@ -96,8 +97,8 @@ protected:
    * @brief HDD usage status messages
    */
   const std::map<int, const char *> usage_dict_ = {{DiagStatus::OK, "OK"},
-                                                   {DiagStatus::WARN, "low disk space"},
-                                                   {DiagStatus::ERROR, "very low disk space"}};
+    {DiagStatus::WARN, "low disk space"},
+    {DiagStatus::ERROR, "very low disk space"}};
 };
 
 #endif  // SYSTEM_MONITOR_HDD_MONITOR_HDD_MONITOR_H

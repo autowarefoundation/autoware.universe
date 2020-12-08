@@ -29,12 +29,12 @@
 
 namespace bp = boost::process;
 
-HDDMonitor::HDDMonitor(const std::string & node_name, const rclcpp::NodeOptions & options) :
-Node(node_name, options),
-updater_(this),
-usage_warn_(declare_parameter<float>("usage_warn", 0.9)),
-usage_error_(declare_parameter<float>("usage_error", 1.1)),
-hdd_reader_port_(declare_parameter<int>("hdd_reader_port", 7635))
+HDDMonitor::HDDMonitor(const std::string & node_name, const rclcpp::NodeOptions & options)
+: Node(node_name, options),
+  updater_(this),
+  usage_warn_(declare_parameter<float>("usage_warn", 0.9)),
+  usage_error_(declare_parameter<float>("usage_error", 1.1)),
+  hdd_reader_port_(declare_parameter<int>("hdd_reader_port", 7635))
 {
   gethostname(hostname_, sizeof(hostname_));
 
@@ -47,7 +47,7 @@ hdd_reader_port_(declare_parameter<int>("hdd_reader_port", 7635))
 
 void HDDMonitor::update()
 {
-    updater_.force_update();
+  updater_.force_update();
 }
 
 void HDDMonitor::checkTemp(diagnostic_updater::DiagnosticStatusWrapper & stat)
@@ -157,10 +157,11 @@ void HDDMonitor::checkTemp(diagnostic_updater::DiagnosticStatusWrapper & stat)
     float temp = static_cast<float>(itrh->second.temp_);
 
     level = DiagStatus::OK;
-    if (temp >= itr->second.temp_error_)
+    if (temp >= itr->second.temp_error_) {
       level = DiagStatus::ERROR;
-    else if (temp >= itr->second.temp_warn_)
+    } else if (temp >= itr->second.temp_warn_) {
       level = DiagStatus::WARN;
+    }
 
     stat.add((boost::format("HDD %1%: status") % index).str(), temp_dict_.at(level));
     stat.add((boost::format("HDD %1%: name") % index).str(), itr->first.c_str());
@@ -171,10 +172,11 @@ void HDDMonitor::checkTemp(diagnostic_updater::DiagnosticStatusWrapper & stat)
     whole_level = std::max(whole_level, level);
   }
 
-  if (!error_str.empty())
+  if (!error_str.empty()) {
     stat.summary(DiagStatus::ERROR, error_str);
-  else
+  } else {
     stat.summary(whole_level, temp_dict_.at(whole_level));
+  }
 }
 
 void HDDMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
@@ -212,10 +214,11 @@ void HDDMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
     usage = std::atof(boost::trim_copy_if(list[4], boost::is_any_of("%")).c_str()) * 1e-2;
 
     level = DiagStatus::OK;
-    if (usage >= usage_error_)
+    if (usage >= usage_error_) {
       level = DiagStatus::ERROR;
-    else if (usage >= usage_warn_)
+    } else if (usage >= usage_warn_) {
       level = DiagStatus::WARN;
+    }
 
     stat.add((boost::format("HDD %1%: status") % (index - 1)).str(), usage_dict_.at(level));
     stat.add((boost::format("HDD %1%: filesystem") % (index - 1)).str(), list[0].c_str());
@@ -234,13 +237,13 @@ void HDDMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
 
 void HDDMonitor::getTempParams(void)
 {
-    const auto num_disks = this->declare_parameter("num_disks", 0);
-    for(auto i = 0; i < num_disks; ++i){
-        const auto prefix = "disks.disk" + std::to_string(i);
-        TempParam param;
-        param.temp_warn_ = declare_parameter(prefix + ".temp_warn").get<float>();
-        param.temp_error_ = declare_parameter(prefix + ".temp_error").get<float>();
-        const auto name = declare_parameter(prefix + ".name").get<std::string>();
-        temp_params_[name] = param;
-    }
+  const auto num_disks = this->declare_parameter("num_disks", 0);
+  for (auto i = 0; i < num_disks; ++i) {
+    const auto prefix = "disks.disk" + std::to_string(i);
+    TempParam param;
+    param.temp_warn_ = declare_parameter(prefix + ".temp_warn").get<float>();
+    param.temp_error_ = declare_parameter(prefix + ".temp_error").get<float>();
+    const auto name = declare_parameter(prefix + ".name").get<std::string>();
+    temp_params_[name] = param;
+  }
 }
