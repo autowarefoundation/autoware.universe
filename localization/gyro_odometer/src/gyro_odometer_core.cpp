@@ -24,12 +24,21 @@ GyroOdometer::GyroOdometer()
   tf_listener_(tf_buffer_),
   output_frame_(declare_parameter("base_link", "base_link"))
 {
-  vehicle_twist_sub_ = create_subscription<geometry_msgs::msg::TwistStamped>("vehicle/twist", rclcpp::QoS{100}, std::bind(&GyroOdometer::callbackTwist, this, std::placeholders::_1));
-  imu_sub_ = create_subscription<sensor_msgs::msg::Imu>("imu", rclcpp::QoS{100}, std::bind(&GyroOdometer::callbackImu, this, std::placeholders::_1));
+  vehicle_twist_sub_ = create_subscription<geometry_msgs::msg::TwistStamped>(
+    "vehicle/twist",
+    rclcpp::QoS{100}, std::bind(
+      &GyroOdometer::callbackTwist, this,
+      std::placeholders::_1));
+  imu_sub_ =
+    create_subscription<sensor_msgs::msg::Imu>(
+    "imu", rclcpp::QoS{100},
+    std::bind(&GyroOdometer::callbackImu, this, std::placeholders::_1));
 
   twist_pub_ = create_publisher<geometry_msgs::msg::TwistStamped>("twist", rclcpp::QoS{10});
   twist_with_covariance_pub_ =
-    create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>("twist_with_covariance", rclcpp::QoS{10});
+    create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>(
+    "twist_with_covariance",
+    rclcpp::QoS{10});
   // linear_x_pub_ = create_publisher<std_msgs::Float32>("linear_x", rclcpp::QoS{10});
   // angular_z_pub_ = create_publisher<std_msgs::Float32>("angular_z", rclcpp::QoS{10});
 
@@ -38,7 +47,8 @@ GyroOdometer::GyroOdometer()
 
 GyroOdometer::~GyroOdometer() {}
 
-void GyroOdometer::callbackTwist(const geometry_msgs::msg::TwistStamped::ConstSharedPtr twist_msg_ptr)
+void GyroOdometer::callbackTwist(
+  const geometry_msgs::msg::TwistStamped::ConstSharedPtr twist_msg_ptr)
 {
   // TODO trans from twist_msg_ptr->header to base_frame
   twist_msg_ptr_ = twist_msg_ptr;
@@ -50,7 +60,8 @@ void GyroOdometer::callbackImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_m
     return;
   }
 
-  geometry_msgs::msg::TransformStamped::SharedPtr tf_base2imu_ptr = std::make_shared<geometry_msgs::msg::TransformStamped>();
+  geometry_msgs::msg::TransformStamped::SharedPtr tf_base2imu_ptr =
+    std::make_shared<geometry_msgs::msg::TransformStamped>();
   getTransform(output_frame_, imu_msg_ptr->header.frame_id, tf_base2imu_ptr);
 
   geometry_msgs::msg::Vector3Stamped angular_velocity;
@@ -65,7 +76,8 @@ void GyroOdometer::callbackImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_m
   // clear imu yaw bias if vehicle is stopped
   if (
     std::fabs(transed_angular_velocity.vector.z) < 0.01 &&
-    std::fabs(twist_msg_ptr_->twist.linear.x) < 0.01) {
+    std::fabs(twist_msg_ptr_->twist.linear.x) < 0.01)
+  {
     transed_angular_velocity.vector.z = 0.0;
   }
 
@@ -116,7 +128,9 @@ bool GyroOdometer::getTransform(
       tf_buffer_.lookupTransform(target_frame, source_frame, tf2::TimePointZero);
   } catch (tf2::TransformException & ex) {
     RCLCPP_WARN(this->get_logger(), "%s", ex.what());
-    RCLCPP_ERROR(this->get_logger(), "Please publish TF %s to %s", target_frame.c_str(), source_frame.c_str());
+    RCLCPP_ERROR(
+      this->get_logger(), "Please publish TF %s to %s",
+      target_frame.c_str(), source_frame.c_str());
 
     transform_stamped_ptr->header.stamp = this->get_clock()->now();
     transform_stamped_ptr->header.frame_id = target_frame;

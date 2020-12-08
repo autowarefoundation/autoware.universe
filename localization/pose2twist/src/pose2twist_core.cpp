@@ -20,7 +20,8 @@
 
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 
-Pose2Twist::Pose2Twist() : Node("pose2twist_core")
+Pose2Twist::Pose2Twist()
+: Node("pose2twist_core")
 {
   using std::placeholders::_1;
 
@@ -28,7 +29,10 @@ Pose2Twist::Pose2Twist() : Node("pose2twist_core")
   rclcpp::QoS durable_qos(queue_size);
   durable_qos.transient_local();
 
-  pose_sub_ = create_subscription<geometry_msgs::msg::PoseStamped>("pose", queue_size, std::bind(&Pose2Twist::callbackPose, this, _1));
+  pose_sub_ =
+    create_subscription<geometry_msgs::msg::PoseStamped>(
+    "pose", queue_size,
+    std::bind(&Pose2Twist::callbackPose, this, _1));
 
 
   twist_pub_ = create_publisher<geometry_msgs::msg::TwistStamped>("twist", durable_qos);
@@ -51,15 +55,20 @@ double calcDiffForRadian(const double lhs_rad, const double rhs_rad)
 geometry_msgs::msg::Vector3 getRPY(geometry_msgs::msg::Pose::SharedPtr pose)
 {
   geometry_msgs::msg::Vector3 rpy;
-  tf2::Quaternion q(pose->orientation.x, pose->orientation.y, pose->orientation.z, pose->orientation.w);
+  tf2::Quaternion q(pose->orientation.x, pose->orientation.y, pose->orientation.z,
+    pose->orientation.w);
   tf2::Matrix3x3(q).getRPY(rpy.x, rpy.y, rpy.z);
   return rpy;
 }
 
-geometry_msgs::msg::Vector3 getRPY(geometry_msgs::msg::PoseStamped::SharedPtr pose) { return getRPY(pose); }
+geometry_msgs::msg::Vector3 getRPY(geometry_msgs::msg::PoseStamped::SharedPtr pose)
+{
+  return getRPY(pose);
+}
 
 geometry_msgs::msg::TwistStamped calcTwist(
-  geometry_msgs::msg::PoseStamped::SharedPtr pose_a, geometry_msgs::msg::PoseStamped::SharedPtr pose_b)
+  geometry_msgs::msg::PoseStamped::SharedPtr pose_a,
+  geometry_msgs::msg::PoseStamped::SharedPtr pose_b)
 {
   const double dt = (pose_b->header.stamp.sec - pose_a->header.stamp.sec);
 
