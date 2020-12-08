@@ -14,14 +14,14 @@
 
 /*********************************************************************
 * Software License Agreement (BSD License)
-* 
+*
 *  Copyright (c) 20012, Willow Garage, Inc.
 *  All rights reserved.
-* 
+*
 *  Redistribution and use in source and binary forms, with or without
 *  modification, are permitted provided that the following conditions
 *  are met:
-* 
+*
 *   * Redistributions of source code must retain the above copyright
 *     notice, this list of conditions and the following disclaimer.
 *   * Redistributions in binary form must reproduce the above
@@ -31,7 +31,7 @@
 *   * Neither the name of the Willow Garage nor the names of its
 *     contributors may be used to endorse or promote products derived
 *     from this software without specific prior written permission.
-* 
+*
 *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -63,7 +63,6 @@ void ImageTransportDecompressorNodelet::onInit()
 
 void ImageTransportDecompressorNodelet::compressedImageCallback(
   const sensor_msgs::CompressedImageConstPtr & input_compressed_image_msg)
-
 {
   cv_bridge::CvImagePtr cv_ptr(new cv_bridge::CvImage);
   // Copy message header
@@ -90,14 +89,15 @@ void ImageTransportDecompressorNodelet::compressedImageCallback(
       }
     } else {
       std::string image_encoding;
-      if (enc_ == std::string("default"))
+      if (enc_ == std::string("default")) {
         image_encoding = input_compressed_image_msg->format.substr(0, split_pos);
-      else if (enc_ == std::string("rgb8"))
+      } else if (enc_ == std::string("rgb8")) {
         image_encoding = "rgb8";
-      else if (enc_ == std::string("bgr8"))
+      } else if (enc_ == std::string("bgr8")) {
         image_encoding = "bgr8";
-      else
+      } else {
         image_encoding = input_compressed_image_msg->format.substr(0, split_pos);
+      }
 
       cv_ptr->encoding = image_encoding;
 
@@ -112,33 +112,45 @@ void ImageTransportDecompressorNodelet::compressedImageCallback(
           if (
             (image_encoding == sensor_msgs::image_encodings::RGB8) ||
             (image_encoding == sensor_msgs::image_encodings::RGB16))
+          {
             cv::cvtColor(cv_ptr->image, cv_ptr->image, CV_BGR2RGB);
+          }
 
           if (
             (image_encoding == sensor_msgs::image_encodings::RGBA8) ||
             (image_encoding == sensor_msgs::image_encodings::RGBA16))
+          {
             cv::cvtColor(cv_ptr->image, cv_ptr->image, CV_BGR2RGBA);
+          }
 
           if (
             (image_encoding == sensor_msgs::image_encodings::BGRA8) ||
             (image_encoding == sensor_msgs::image_encodings::BGRA16))
+          {
             cv::cvtColor(cv_ptr->image, cv_ptr->image, CV_BGR2BGRA);
+          }
         } else {
           // if necessary convert colors from rgb to bgr
           if (
             (image_encoding == sensor_msgs::image_encodings::BGR8) ||
             (image_encoding == sensor_msgs::image_encodings::BGR16))
+          {
             cv::cvtColor(cv_ptr->image, cv_ptr->image, CV_RGB2BGR);
+          }
 
           if (
             (image_encoding == sensor_msgs::image_encodings::BGRA8) ||
             (image_encoding == sensor_msgs::image_encodings::BGRA16))
+          {
             cv::cvtColor(cv_ptr->image, cv_ptr->image, CV_RGB2BGRA);
+          }
 
           if (
             (image_encoding == sensor_msgs::image_encodings::RGBA8) ||
             (image_encoding == sensor_msgs::image_encodings::RGBA16))
+          {
             cv::cvtColor(cv_ptr->image, cv_ptr->image, CV_RGB2RGBA);
+          }
         }
       }
     }
@@ -149,9 +161,10 @@ void ImageTransportDecompressorNodelet::compressedImageCallback(
   size_t rows = cv_ptr->image.rows;
   size_t cols = cv_ptr->image.cols;
 
-  if ((rows > 0) && (cols > 0))
+  if ((rows > 0) && (cols > 0)) {
     // Publish message to user callback
     raw_image_pub_.publish(cv_ptr->toImageMsg());
+  }
 }
 }  // namespace image_preprocessor
 
