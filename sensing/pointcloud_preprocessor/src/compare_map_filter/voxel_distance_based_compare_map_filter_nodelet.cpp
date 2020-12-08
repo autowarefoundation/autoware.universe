@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "pointcloud_preprocessor/compare_map_filter/voxel_distance_based_compare_map_filter_nodelet.hpp"
+#include \
+  "pointcloud_preprocessor/compare_map_filter/voxel_distance_based_compare_map_filter_nodelet.hpp"
 
 #include "pcl/kdtree/kdtree_flann.h"
 #include "pcl/search/kdtree.h"
@@ -48,10 +49,10 @@ void VoxelDistanceBasedCompareMapFilterComponent::filter(
   pcl::fromROSMsg(*input, *pcl_input);
   pcl_output->points.reserve(pcl_input->points.size());
   for (size_t i = 0; i < pcl_input->points.size(); ++i) {
-    const int index = voxel_grid_.getCentroidIndexAt(voxel_grid_.getGridCoordinates(
-      pcl_input->points.at(i).x, pcl_input->points.at(i).y, pcl_input->points.at(i).z));
-    if (index == -1)  // empty voxel
-    {
+    const int index = voxel_grid_.getCentroidIndexAt(
+      voxel_grid_.getGridCoordinates(
+        pcl_input->points.at(i).x, pcl_input->points.at(i).y, pcl_input->points.at(i).z));
+    if (index == -1) { // empty voxel
       std::vector<int> nn_indices(1);
       std::vector<float> nn_dists(1);
       tree_->nearestKSearch(pcl_input->points.at(i), 1, nn_indices, nn_dists);
@@ -100,7 +101,7 @@ rcl_interfaces::msg::SetParametersResult VoxelDistanceBasedCompareMapFilterCompo
   if (get_param(p, "distance_threshold", distance_threshold_)) {
     voxel_grid_.setLeafSize(distance_threshold_, distance_threshold_, distance_threshold_);
     voxel_grid_.setSaveLeafLayout(true);
-    if (set_map_in_voxel_grid_) voxel_grid_.filter(*voxel_map_ptr_);
+    if (set_map_in_voxel_grid_) {voxel_grid_.filter(*voxel_map_ptr_);}
     RCLCPP_DEBUG(get_logger(), "Setting new distance threshold to: %f.", distance_threshold_);
   }
 

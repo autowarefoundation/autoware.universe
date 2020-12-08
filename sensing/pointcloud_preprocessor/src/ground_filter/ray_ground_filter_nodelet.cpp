@@ -137,7 +137,7 @@ void RayGroundFilterComponent::ConvertXYZIToRTZColor(
   for (size_t i = 0; i < radial_dividers_num_; i++) {
     std::sort(
       out_radial_ordered_clouds[i].begin(), out_radial_ordered_clouds[i].end(),
-      [](const PointXYZRTColor & a, const PointXYZRTColor & b) { return a.radius < b.radius; });
+      [](const PointXYZRTColor & a, const PointXYZRTColor & b) {return a.radius < b.radius;});
   }
 }
 
@@ -149,14 +149,14 @@ void RayGroundFilterComponent::ClassifyPointCloud(
   out_no_ground_indices.indices.clear();
 #pragma omp for
   for (size_t i = 0; i < in_radial_ordered_clouds.size();
-       i++)  // sweep through each radial division
+    i++)     // sweep through each radial division
   {
     float prev_radius = 0.f;
     float prev_height = 0.f;
     bool prev_ground = false;
     bool current_ground = false;
     for (size_t j = 0; j < in_radial_ordered_clouds[i].size();
-         j++)  // loop through each point in the radial div
+      j++)     // loop through each point in the radial div
     {
       float points_distance = in_radial_ordered_clouds[i][j].radius - prev_radius;
       float height_threshold = tan(DEG2RAD(local_max_slope_)) * points_distance;
@@ -175,12 +175,14 @@ void RayGroundFilterComponent::ClassifyPointCloud(
         // check current point height against the LOCAL threshold (previous point)
         if (
           current_height <= (prev_height + height_threshold) &&
-          current_height >= (prev_height - height_threshold)) {
+          current_height >= (prev_height - height_threshold))
+        {
           // Check again using general geometry (radius from origin) if previous points wasn't ground
           if (!prev_ground) {
             if (
               current_height <= general_height_threshold &&
-              current_height >= -general_height_threshold) {
+              current_height >= -general_height_threshold)
+            {
               current_ground = true;
             } else {
               current_ground = false;
@@ -192,7 +194,8 @@ void RayGroundFilterComponent::ClassifyPointCloud(
           // check if previous point is too far from previous one, if so classify again
           if (
             points_distance > reclass_distance_threshold_ &&
-            (current_height <= height_threshold && current_height >= -height_threshold)) {
+            (current_height <= height_threshold && current_height >= -height_threshold))
+          {
             current_ground = true;
           } else {
             current_ground = false;
@@ -291,8 +294,8 @@ void RayGroundFilterComponent::filter(
   if (!succeeded) {
     RCLCPP_ERROR_STREAM_THROTTLE(
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
-      "Failed transform from " << base_frame_ << " to "
-                               << no_ground_cloud_msg_ptr->header.frame_id);
+      "Failed transform from " << base_frame_ << " to " <<
+        no_ground_cloud_msg_ptr->header.frame_id);
     return;
   }
   output = *no_ground_cloud_transed_msg_ptr;

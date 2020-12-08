@@ -71,12 +71,12 @@ pointcloud_preprocessor::Filter::Filter(
 
     RCLCPP_INFO_STREAM(
       this->get_logger(),
-      "Filter (as Component) successfully created with the following parameters:"
-        << std::endl
-        << " - approximate_sync : " << (approximate_sync_ ? "true" : "false") << std::endl
-        << " - use_indices      : " << (use_indices_ ? "true" : "false") << std::endl
-        << " - latched_indices  : " << (latched_indices_ ? "true" : "false") << std::endl
-        << " - max_queue_size   : " << max_queue_size_);
+      "Filter (as Component) successfully created with the following parameters:" <<
+        std::endl <<
+        " - approximate_sync : " << (approximate_sync_ ? "true" : "false") << std::endl <<
+        " - use_indices      : " << (use_indices_ ? "true" : "false") << std::endl <<
+        " - latched_indices  : " << (latched_indices_ ? "true" : "false") << std::endl <<
+        " - max_queue_size   : " << max_queue_size_);
   }
 
   // Set publisher
@@ -96,13 +96,15 @@ pointcloud_preprocessor::Filter::Filter(
       if (approximate_sync_) {
         sync_input_indices_a_ = std::make_shared<ApproximateTimeSyncPolicy>(max_queue_size_);
         sync_input_indices_a_->connectInput(sub_input_filter_, sub_indices_filter_);
-        sync_input_indices_a_->registerCallback(std::bind(
-          &Filter::input_indices_callback, this, std::placeholders::_1, std::placeholders::_2));
+        sync_input_indices_a_->registerCallback(
+          std::bind(
+            &Filter::input_indices_callback, this, std::placeholders::_1, std::placeholders::_2));
       } else {
         sync_input_indices_e_ = std::make_shared<ExactTimeSyncPolicy>(max_queue_size_);
         sync_input_indices_e_->connectInput(sub_input_filter_, sub_indices_filter_);
-        sync_input_indices_e_->registerCallback(std::bind(
-          &Filter::input_indices_callback, this, std::placeholders::_1, std::placeholders::_2));
+        sync_input_indices_e_->registerCallback(
+          std::bind(
+            &Filter::input_indices_callback, this, std::placeholders::_1, std::placeholders::_2));
       }
     } else {
       // Subscribe in an old fashion to input only (no filters)
@@ -158,16 +160,16 @@ void pointcloud_preprocessor::Filter::computePublish(
     }
     cloud_tf.reset(new PointCloud2(cloud_transformed));
   }
-  if (tf_output_frame_.empty() && output.header.frame_id != tf_input_orig_frame_)
-  // no tf_output_frame given, transform the dataset to its original frame
-  {
+  if (tf_output_frame_.empty() && output.header.frame_id != tf_input_orig_frame_) {
+    // no tf_output_frame given, transform the dataset to its original frame
     RCLCPP_DEBUG(
       this->get_logger(), "[computePublish] Transforming output dataset from %s back to %s.",
       output.header.frame_id.c_str(), tf_input_orig_frame_.c_str());
     // Convert the cloud into the different frame
     PointCloud2 cloud_transformed;
     if (!pcl_ros::transformPointCloud(
-          tf_input_orig_frame_, output, cloud_transformed, *tf_buffer_)) {
+        tf_input_orig_frame_, output, cloud_transformed, *tf_buffer_))
+    {
       RCLCPP_ERROR(
         this->get_logger(), "[computePublish] Error converting output dataset from %s back to %s.",
         output.header.frame_id.c_str(), tf_input_orig_frame_.c_str());
@@ -219,7 +221,7 @@ void pointcloud_preprocessor::Filter::input_indices_callback(
   }
 
   /// DEBUG
-  if (indices)
+  if (indices) {
     RCLCPP_DEBUG(
       this->get_logger(),
       "[input_indices_callback]\n"
@@ -229,12 +231,13 @@ void pointcloud_preprocessor::Filter::input_indices_callback(
       rclcpp::Time(cloud->header.stamp).seconds(), cloud->header.frame_id.c_str(),
       indices->indices.size(), rclcpp::Time(indices->header.stamp).seconds(),
       indices->header.frame_id.c_str());
-  else
+  } else {
     RCLCPP_DEBUG(
       this->get_logger(),
       "[input_indices_callback] PointCloud with %d data points and frame %s on input topic "
       "received.",
       cloud->width * cloud->height, cloud->header.frame_id.c_str());
+  }
   ///
 
   // Check whether the user has given a different input TF frame
@@ -248,10 +251,10 @@ void pointcloud_preprocessor::Filter::input_indices_callback(
     // Convert the cloud into the different frame
     PointCloud2 cloud_transformed;
     auto status = tf_buffer_
-                    ->waitForTransform(
-                      tf_input_frame_, cloud->header.frame_id, cloud->header.stamp,
-                      std::chrono::milliseconds(0), [this](auto) {})
-                    .wait_for(std::chrono::milliseconds(1000));
+      ->waitForTransform(
+      tf_input_frame_, cloud->header.frame_id, cloud->header.stamp,
+      std::chrono::milliseconds(0), [this](auto) {})
+      .wait_for(std::chrono::milliseconds(1000));
     if (status != std::future_status::ready) {
       RCLCPP_ERROR(this->get_logger(), "[input_indices_callback] timeout tf");
       return;
@@ -270,7 +273,7 @@ void pointcloud_preprocessor::Filter::input_indices_callback(
   }
   // Need setInputCloud () here because we have to extract x/y/z
   IndicesPtr vindices;
-  if (indices) vindices.reset(new std::vector<int>(indices->indices));
+  if (indices) {vindices.reset(new std::vector<int>(indices->indices));}
 
   computePublish(cloud_tf, vindices);
 }

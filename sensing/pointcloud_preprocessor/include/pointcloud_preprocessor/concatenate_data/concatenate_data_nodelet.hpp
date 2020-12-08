@@ -92,7 +92,7 @@ public:
     const rclcpp::NodeOptions & node_options, int queue_size);
 
   /** \brief Empty destructor. */
-  virtual ~PointCloudConcatenateDataSynchronizerComponent(){};
+  virtual ~PointCloudConcatenateDataSynchronizerComponent() {}
 
 private:
   /** \brief The output PointCloud publisher. */

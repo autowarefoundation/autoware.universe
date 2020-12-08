@@ -40,8 +40,9 @@ void PointcloudAccumulatorComponent::filter(
   pcl::PointCloud<pcl::PointXYZ> pcl_input;
   pcl::PointCloud<pcl::PointXYZ> pcl_output;
   for (size_t i = 0; i < pointcloud_buffer_.size(); i++) {
-    if (accumulation_time_sec_ < (last_time - pointcloud_buffer_.at(i)->header.stamp).seconds())
+    if (accumulation_time_sec_ < (last_time - pointcloud_buffer_.at(i)->header.stamp).seconds()) {
       break;
+    }
     pcl::fromROSMsg(*pointcloud_buffer_.at(i), pcl_input);
     pcl_output += pcl_input;
   }

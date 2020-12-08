@@ -106,12 +106,12 @@ void CropBoxFilterComponent::filter(
 void CropBoxFilterComponent::publishCropBoxPolygon()
 {
   auto generatePoint = [](double x, double y, double z) {
-    geometry_msgs::msg::Point32 point;
-    point.x = x;
-    point.y = y;
-    point.z = z;
-    return point;
-  };
+      geometry_msgs::msg::Point32 point;
+      point.x = x;
+      point.y = y;
+      point.z = z;
+      return point;
+    };
 
   const double x1 = impl_.getMax()(0);
   const double x2 = impl_.getMin()(0);
@@ -169,7 +169,8 @@ rcl_interfaces::msg::SetParametersResult CropBoxFilterComponent::paramCallback(
   // Check the current values for minimum point
   if (
     get_param(p, "min_x", new_min_point(0)) && get_param(p, "min_y", new_min_point(1)) &&
-    get_param(p, "min_z", new_min_point(3))) {
+    get_param(p, "min_z", new_min_point(3)))
+  {
     if (min_point != new_min_point) {
       RCLCPP_DEBUG(
         get_logger(), "[%s::paramCallback] Setting the minimum point to: %f %f %f.", get_name(),
@@ -182,7 +183,8 @@ rcl_interfaces::msg::SetParametersResult CropBoxFilterComponent::paramCallback(
   // Check the current values for the maximum point
   if (
     get_param(p, "max_x", new_max_point(0)) && get_param(p, "max_y", new_max_point(1)) &&
-    get_param(p, "max_z", new_max_point(3))) {
+    get_param(p, "max_z", new_max_point(3)))
+  {
     if (max_point != new_max_point) {
       RCLCPP_DEBUG(
         get_logger(), "[%s::paramCallback] Setting the maximum point to: %f %f %f.", get_name(),

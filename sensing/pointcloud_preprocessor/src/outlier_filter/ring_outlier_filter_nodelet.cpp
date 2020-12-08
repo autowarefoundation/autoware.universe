@@ -63,7 +63,8 @@ void RingOutlierFilterComponent::filter(
     }
 
     for (auto iter = std::begin(ring_pointcloud.points);
-         iter != std::end(ring_pointcloud.points) - 1; ++iter) {
+      iter != std::end(ring_pointcloud.points) - 1; ++iter)
+    {
       p.x = iter->x;
       p.y = iter->y;
       p.z = iter->z;
@@ -76,19 +77,21 @@ void RingOutlierFilterComponent::filter(
 
       if (
         min_dist > 0.f && max_dist > 0.f && azimuth_diff < 100.f &&
-        max_dist / min_dist < distance_ratio_) {
+        max_dist / min_dist < distance_ratio_)
+      {
         continue;
       } else {
         // same code
         if (
           static_cast<int>(pcl_tmp.points.size()) > num_points_threshold_ ||
           (pcl_tmp.points.front().x - pcl_tmp.points.back().x) *
-                (pcl_tmp.points.front().x - pcl_tmp.points.back().x) +
-              (pcl_tmp.points.front().y - pcl_tmp.points.back().y) *
-                (pcl_tmp.points.front().y - pcl_tmp.points.back().y) +
-              (pcl_tmp.points.front().z - pcl_tmp.points.back().z) *
-                (pcl_tmp.points.front().z - pcl_tmp.points.back().z) >=
-            object_length_threshold_ * object_length_threshold_) {
+          (pcl_tmp.points.front().x - pcl_tmp.points.back().x) +
+          (pcl_tmp.points.front().y - pcl_tmp.points.back().y) *
+          (pcl_tmp.points.front().y - pcl_tmp.points.back().y) +
+          (pcl_tmp.points.front().z - pcl_tmp.points.back().z) *
+          (pcl_tmp.points.front().z - pcl_tmp.points.back().z) >=
+          object_length_threshold_ * object_length_threshold_)
+        {
           for (const auto & tmp_p : pcl_tmp.points) {
             pcl_output->points.push_back(tmp_p);
           }
@@ -101,12 +104,13 @@ void RingOutlierFilterComponent::filter(
     if (
       static_cast<int>(pcl_tmp.points.size()) > num_points_threshold_ ||
       (pcl_tmp.points.front().x - pcl_tmp.points.back().x) *
-            (pcl_tmp.points.front().x - pcl_tmp.points.back().x) +
-          (pcl_tmp.points.front().y - pcl_tmp.points.back().y) *
-            (pcl_tmp.points.front().y - pcl_tmp.points.back().y) +
-          (pcl_tmp.points.front().z - pcl_tmp.points.back().z) *
-            (pcl_tmp.points.front().z - pcl_tmp.points.back().z) >=
-        object_length_threshold_ * object_length_threshold_) {
+      (pcl_tmp.points.front().x - pcl_tmp.points.back().x) +
+      (pcl_tmp.points.front().y - pcl_tmp.points.back().y) *
+      (pcl_tmp.points.front().y - pcl_tmp.points.back().y) +
+      (pcl_tmp.points.front().z - pcl_tmp.points.back().z) *
+      (pcl_tmp.points.front().z - pcl_tmp.points.back().z) >=
+      object_length_threshold_ * object_length_threshold_)
+    {
       for (const auto & tmp_p : pcl_tmp.points) {
         pcl_output->points.push_back(tmp_p);
       }

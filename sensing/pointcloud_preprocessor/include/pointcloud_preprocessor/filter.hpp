@@ -80,12 +80,13 @@ namespace pointcloud_preprocessor
 namespace sync_policies = message_filters::sync_policies;
 
 /** \brief For parameter service callback */
-template <typename T>
+template<typename T>
 bool get_param(const std::vector<rclcpp::Parameter> & p, const std::string & name, T & value)
 {
-  auto it = std::find_if(p.cbegin(), p.cend(), [&name](const rclcpp::Parameter & parameter) {
-    return parameter.get_name() == name;
-  });
+  auto it = std::find_if(
+    p.cbegin(), p.cend(), [&name](const rclcpp::Parameter & parameter) {
+      return parameter.get_name() == name;
+    });
   if (it != p.cend()) {
     value = it->template get_value<T>();
     return true;
@@ -220,21 +221,21 @@ protected:
         "and frame %sreceived!",
         cloud->data.size(), cloud->width, cloud->height, cloud->point_step,
         rclcpp::Time(cloud->header.stamp).seconds(), cloud->header.frame_id.c_str());
-      return (false);
+      return false;
     }
-    return (true);
+    return true;
   }
 
   inline bool isValid(
     const PointIndicesConstPtr & /*indices*/, const std::string & /*topic_name*/ = "indices")
   {
-    return (true);
+    return true;
   }
 
   inline bool isValid(
     const ModelCoefficientsConstPtr & /*model*/, const std::string & /*topic_name*/ = "model")
   {
-    return (true);
+    return true;
   }
 
 private:

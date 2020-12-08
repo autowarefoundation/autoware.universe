@@ -76,7 +76,7 @@ namespace pcl
  * \author Radu Bogdan Rusu
  * \ingroup filters
  */
-template <typename PointT>
+template<typename PointT>
 class PassThroughUInt16 : public FilterIndices<PointT>
 {
 protected:
@@ -86,8 +86,8 @@ protected:
   typedef typename pcl::traits::fieldList<PointT>::type FieldList;
 
 public:
-  typedef boost::shared_ptr<PassThroughUInt16<PointT> > Ptr;
-  typedef boost::shared_ptr<const PassThroughUInt16<PointT> > ConstPtr;
+  typedef boost::shared_ptr<PassThroughUInt16<PointT>> Ptr;
+  typedef boost::shared_ptr<const PassThroughUInt16<PointT>> ConstPtr;
 
   /** \brief Constructor.
    * \param[in] extract_removed_indices Set to true if you want to be able to extract the indices of points being removed (default = false).
@@ -113,7 +113,7 @@ public:
   /** \brief Retrieve the name of the field to be used for filtering data.
    * \return The name of the field that will be used for filtering.
    */
-  inline std::string const getFilterFieldName() { return (filter_field_name_); }
+  inline std::string const getFilterFieldName() {return filter_field_name_;}
 
   /** \brief Set the numerical limits for the field for filtering data.
    * \details In conjunction with setFilterFieldName(), points having values outside this interval for this field will be discarded.
@@ -141,19 +141,19 @@ public:
    * \warning This method will be removed in the future. Use setNegative() instead.
    * \param[in] limit_negative return data inside the interval (false) or outside (true)
    */
-  inline void setFilterLimitsNegative(const bool limit_negative) { negative_ = limit_negative; }
+  inline void setFilterLimitsNegative(const bool limit_negative) {negative_ = limit_negative;}
 
-  /** \brief Get whether the data outside the interval (min/max) is to be returned (true) or inside (false). 
+  /** \brief Get whether the data outside the interval (min/max) is to be returned (true) or inside (false).
    * \warning This method will be removed in the future. Use getNegative() instead.
    * \param[out] limit_negative true if data \b outside the interval [min; max] is to be returned, false otherwise
    */
-  inline void getFilterLimitsNegative(bool & limit_negative) { limit_negative = negative_; }
+  inline void getFilterLimitsNegative(bool & limit_negative) {limit_negative = negative_;}
 
-  /** \brief Get whether the data outside the interval (min/max) is to be returned (true) or inside (false). 
+  /** \brief Get whether the data outside the interval (min/max) is to be returned (true) or inside (false).
    * \warning This method will be removed in the future. Use getNegative() instead.
    * \return true if data \b outside the interval [min; max] is to be returned, false otherwise
    */
-  inline bool getFilterLimitsNegative() { return (negative_); }
+  inline bool getFilterLimitsNegative() {return negative_;}
 
 protected:
   using PCLBase<PointT>::input_;
@@ -174,7 +174,7 @@ protected:
   /** \brief Filtered results are indexed by an indices array.
    * \param[out] indices The resultant indices.
    */
-  void applyFilter(std::vector<int> & indices) { applyFilterIndices(indices); }
+  void applyFilter(std::vector<int> & indices) {applyFilterIndices(indices);}
 
   /** \brief Filtered results are indexed by an indices array.
    * \param[out] indices The resultant indices.
@@ -198,8 +198,8 @@ private:
  * \author Radu B. Rusu
  * \ingroup filters
  */
-template <>
-class PCL_EXPORTS PassThroughUInt16<pcl::PCLPointCloud2> : public Filter<pcl::PCLPointCloud2>
+template<>
+class PCL_EXPORTS PassThroughUInt16<pcl::PCLPointCloud2>: public Filter<pcl::PCLPointCloud2>
 {
   typedef pcl::PCLPointCloud2 PCLPointCloud2;
   typedef PCLPointCloud2::Ptr PCLPointCloud2Ptr;
@@ -230,17 +230,17 @@ public:
    * \param[in] val set to true whether the filtered points should be kept and
    * set to a user given value (default: NaN)
    */
-  inline void setKeepOrganized(bool val) { keep_organized_ = val; }
+  inline void setKeepOrganized(bool val) {keep_organized_ = val;}
 
   /** \brief Obtain the value of the internal \a keep_organized_ parameter. */
-  inline bool getKeepOrganized() { return (keep_organized_); }
+  inline bool getKeepOrganized() {return keep_organized_;}
 
   /** \brief Provide a value that the filtered points should be set to
    * instead of removing them.  Used in conjunction with \a
    * setKeepOrganized ().
    * \param[in] val the user given value that the filtered point dimensions should be set to
    */
-  inline void setUserFilterValue(float val) { user_filter_value_ = val; }
+  inline void setUserFilterValue(float val) {user_filter_value_ = val;}
 
   /** \brief Provide the name of the field to be used for filtering data. In conjunction with  \a setFilterLimits,
    * points having values outside this interval will be discarded.
@@ -252,7 +252,7 @@ public:
   }
 
   /** \brief Get the name of the field used for filtering. */
-  inline std::string const getFilterFieldName() { return (filter_field_name_); }
+  inline std::string const getFilterFieldName() {return filter_field_name_;}
 
   /** \brief Set the field filter limits. All points having field values outside this interval will be discarded.
    * \param[in] limit_min the minimum allowed field value
@@ -264,7 +264,7 @@ public:
     filter_limit_max_ = limit_max;
   }
 
-  /** \brief Get the field filter limits (min/max) set by the user. The default values are -FLT_MAX, FLT_MAX. 
+  /** \brief Get the field filter limits (min/max) set by the user. The default values are -FLT_MAX, FLT_MAX.
    * \param[out] limit_min the minimum allowed field value
    * \param[out] limit_max the maximum allowed field value
    */
@@ -283,7 +283,7 @@ public:
     filter_limit_negative_ = limit_negative;
   }
 
-  /** \brief Get whether the data outside the interval (min/max) is to be returned (true) or inside (false). 
+  /** \brief Get whether the data outside the interval (min/max) is to be returned (true) or inside (false).
    * \param[out] limit_negative true if data \b outside the interval [min; max] is to be returned, false otherwise
    */
   inline void getFilterLimitsNegative(bool & limit_negative)
@@ -291,22 +291,22 @@ public:
     limit_negative = filter_limit_negative_;
   }
 
-  /** \brief Get whether the data outside the interval (min/max) is to be returned (true) or inside (false). 
+  /** \brief Get whether the data outside the interval (min/max) is to be returned (true) or inside (false).
    * \return true if data \b outside the interval [min; max] is to be returned, false otherwise
    */
-  inline bool getFilterLimitsNegative() { return (filter_limit_negative_); }
+  inline bool getFilterLimitsNegative() {return filter_limit_negative_;}
 
 protected:
   void applyFilter(PCLPointCloud2 & output);
 
 private:
   /** \brief Keep the structure of the data organized, by setting the
-   * filtered points to a user given value (NaN by default). 
+   * filtered points to a user given value (NaN by default).
    */
   bool keep_organized_;
 
   /** \brief User given value to be set to any filtered point. Casted to
-   * the correct field type. 
+   * the correct field type.
    */
   float user_filter_value_;
 

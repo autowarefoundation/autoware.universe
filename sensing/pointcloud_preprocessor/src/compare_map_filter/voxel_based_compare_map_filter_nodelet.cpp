@@ -52,131 +52,185 @@ void VoxelBasedCompareMapFilterComponent::filter(
   for (size_t i = 0; i < pcl_input->points.size(); ++i) {
     const pcl::PointXYZ point = pcl_input->points.at(i);
     if (is_in_voxel(
-          pcl::PointXYZ(point.x, point.y, point.z), point, distance_threshold_, voxel_map_ptr_,
-          voxel_grid_))
+        pcl::PointXYZ(point.x, point.y, point.z), point, distance_threshold_, voxel_map_ptr_,
+        voxel_grid_))
+    {
       continue;
+    }
     if (is_in_voxel(
-          pcl::PointXYZ(point.x, point.y - distance_threshold_, point.z - distance_threshold_),
-          point, distance_threshold_, voxel_map_ptr_, voxel_grid_))
+        pcl::PointXYZ(point.x, point.y - distance_threshold_, point.z - distance_threshold_),
+        point, distance_threshold_, voxel_map_ptr_, voxel_grid_))
+    {
       continue;
+    }
     if (is_in_voxel(
-          pcl::PointXYZ(point.x, point.y - distance_threshold_, point.z), point,
-          distance_threshold_, voxel_map_ptr_, voxel_grid_))
+        pcl::PointXYZ(point.x, point.y - distance_threshold_, point.z), point,
+        distance_threshold_, voxel_map_ptr_, voxel_grid_))
+    {
       continue;
+    }
     if (is_in_voxel(
-          pcl::PointXYZ(point.x, point.y - distance_threshold_, point.z + distance_threshold_),
-          point, distance_threshold_, voxel_map_ptr_, voxel_grid_))
+        pcl::PointXYZ(point.x, point.y - distance_threshold_, point.z + distance_threshold_),
+        point, distance_threshold_, voxel_map_ptr_, voxel_grid_))
+    {
       continue;
+    }
     if (is_in_voxel(
-          pcl::PointXYZ(point.x, point.y, point.z - distance_threshold_), point,
-          distance_threshold_, voxel_map_ptr_, voxel_grid_))
+        pcl::PointXYZ(point.x, point.y, point.z - distance_threshold_), point,
+        distance_threshold_, voxel_map_ptr_, voxel_grid_))
+    {
       continue;
+    }
     if (is_in_voxel(
-          pcl::PointXYZ(point.x, point.y, point.z + distance_threshold_), point,
-          distance_threshold_, voxel_map_ptr_, voxel_grid_))
+        pcl::PointXYZ(point.x, point.y, point.z + distance_threshold_), point,
+        distance_threshold_, voxel_map_ptr_, voxel_grid_))
+    {
       continue;
+    }
     if (is_in_voxel(
-          pcl::PointXYZ(point.x, point.y + distance_threshold_, point.z - distance_threshold_),
-          point, distance_threshold_, voxel_map_ptr_, voxel_grid_))
+        pcl::PointXYZ(point.x, point.y + distance_threshold_, point.z - distance_threshold_),
+        point, distance_threshold_, voxel_map_ptr_, voxel_grid_))
+    {
       continue;
+    }
     if (is_in_voxel(
-          pcl::PointXYZ(point.x, point.y + distance_threshold_, point.z), point,
-          distance_threshold_, voxel_map_ptr_, voxel_grid_))
+        pcl::PointXYZ(point.x, point.y + distance_threshold_, point.z), point,
+        distance_threshold_, voxel_map_ptr_, voxel_grid_))
+    {
       continue;
+    }
     if (is_in_voxel(
-          pcl::PointXYZ(point.x, point.y + distance_threshold_, point.z + distance_threshold_),
-          point, distance_threshold_, voxel_map_ptr_, voxel_grid_))
+        pcl::PointXYZ(point.x, point.y + distance_threshold_, point.z + distance_threshold_),
+        point, distance_threshold_, voxel_map_ptr_, voxel_grid_))
+    {
       continue;
+    }
 
     if (is_in_voxel(
-          pcl::PointXYZ(
-            point.x - distance_threshold_, point.y - distance_threshold_,
-            point.z - distance_threshold_),
-          point, distance_threshold_, voxel_map_ptr_, voxel_grid_))
+        pcl::PointXYZ(
+          point.x - distance_threshold_, point.y - distance_threshold_,
+          point.z - distance_threshold_),
+        point, distance_threshold_, voxel_map_ptr_, voxel_grid_))
+    {
       continue;
+    }
     if (is_in_voxel(
-          pcl::PointXYZ(point.x - distance_threshold_, point.y - distance_threshold_, point.z),
-          point, distance_threshold_, voxel_map_ptr_, voxel_grid_))
+        pcl::PointXYZ(point.x - distance_threshold_, point.y - distance_threshold_, point.z),
+        point, distance_threshold_, voxel_map_ptr_, voxel_grid_))
+    {
       continue;
+    }
     if (is_in_voxel(
-          pcl::PointXYZ(
-            point.x - distance_threshold_, point.y - distance_threshold_,
-            point.z + distance_threshold_),
-          point, distance_threshold_, voxel_map_ptr_, voxel_grid_))
+        pcl::PointXYZ(
+          point.x - distance_threshold_, point.y - distance_threshold_,
+          point.z + distance_threshold_),
+        point, distance_threshold_, voxel_map_ptr_, voxel_grid_))
+    {
       continue;
+    }
     if (is_in_voxel(
-          pcl::PointXYZ(point.x - distance_threshold_, point.y, point.z - distance_threshold_),
-          point, distance_threshold_, voxel_map_ptr_, voxel_grid_))
+        pcl::PointXYZ(point.x - distance_threshold_, point.y, point.z - distance_threshold_),
+        point, distance_threshold_, voxel_map_ptr_, voxel_grid_))
+    {
       continue;
+    }
     if (is_in_voxel(
-          pcl::PointXYZ(point.x - distance_threshold_, point.y, point.z), point,
-          distance_threshold_, voxel_map_ptr_, voxel_grid_))
+        pcl::PointXYZ(point.x - distance_threshold_, point.y, point.z), point,
+        distance_threshold_, voxel_map_ptr_, voxel_grid_))
+    {
       continue;
+    }
     if (is_in_voxel(
-          pcl::PointXYZ(point.x - distance_threshold_, point.y, point.z + distance_threshold_),
-          point, distance_threshold_, voxel_map_ptr_, voxel_grid_))
+        pcl::PointXYZ(point.x - distance_threshold_, point.y, point.z + distance_threshold_),
+        point, distance_threshold_, voxel_map_ptr_, voxel_grid_))
+    {
       continue;
+    }
     if (is_in_voxel(
-          pcl::PointXYZ(
-            point.x - distance_threshold_, point.y + distance_threshold_,
-            point.z - distance_threshold_),
-          point, distance_threshold_, voxel_map_ptr_, voxel_grid_))
+        pcl::PointXYZ(
+          point.x - distance_threshold_, point.y + distance_threshold_,
+          point.z - distance_threshold_),
+        point, distance_threshold_, voxel_map_ptr_, voxel_grid_))
+    {
       continue;
+    }
     if (is_in_voxel(
-          pcl::PointXYZ(point.x - distance_threshold_, point.y + distance_threshold_, point.z),
-          point, distance_threshold_, voxel_map_ptr_, voxel_grid_))
+        pcl::PointXYZ(point.x - distance_threshold_, point.y + distance_threshold_, point.z),
+        point, distance_threshold_, voxel_map_ptr_, voxel_grid_))
+    {
       continue;
+    }
     if (is_in_voxel(
-          pcl::PointXYZ(
-            point.x - distance_threshold_, point.y + distance_threshold_,
-            point.z + distance_threshold_),
-          point, distance_threshold_, voxel_map_ptr_, voxel_grid_))
+        pcl::PointXYZ(
+          point.x - distance_threshold_, point.y + distance_threshold_,
+          point.z + distance_threshold_),
+        point, distance_threshold_, voxel_map_ptr_, voxel_grid_))
+    {
       continue;
+    }
 
     if (is_in_voxel(
-          pcl::PointXYZ(
-            point.x + distance_threshold_, point.y - distance_threshold_,
-            point.z - distance_threshold_),
-          point, distance_threshold_, voxel_map_ptr_, voxel_grid_))
+        pcl::PointXYZ(
+          point.x + distance_threshold_, point.y - distance_threshold_,
+          point.z - distance_threshold_),
+        point, distance_threshold_, voxel_map_ptr_, voxel_grid_))
+    {
       continue;
+    }
     if (is_in_voxel(
-          pcl::PointXYZ(point.x + distance_threshold_, point.y - distance_threshold_, point.z),
-          point, distance_threshold_, voxel_map_ptr_, voxel_grid_))
+        pcl::PointXYZ(point.x + distance_threshold_, point.y - distance_threshold_, point.z),
+        point, distance_threshold_, voxel_map_ptr_, voxel_grid_))
+    {
       continue;
+    }
     if (is_in_voxel(
-          pcl::PointXYZ(
-            point.x + distance_threshold_, point.y - distance_threshold_,
-            point.z + distance_threshold_),
-          point, distance_threshold_, voxel_map_ptr_, voxel_grid_))
+        pcl::PointXYZ(
+          point.x + distance_threshold_, point.y - distance_threshold_,
+          point.z + distance_threshold_),
+        point, distance_threshold_, voxel_map_ptr_, voxel_grid_))
+    {
       continue;
+    }
     if (is_in_voxel(
-          pcl::PointXYZ(point.x + distance_threshold_, point.y, point.z - distance_threshold_),
-          point, distance_threshold_, voxel_map_ptr_, voxel_grid_))
+        pcl::PointXYZ(point.x + distance_threshold_, point.y, point.z - distance_threshold_),
+        point, distance_threshold_, voxel_map_ptr_, voxel_grid_))
+    {
       continue;
+    }
     if (is_in_voxel(
-          pcl::PointXYZ(point.x + distance_threshold_, point.y, point.z), point,
-          distance_threshold_, voxel_map_ptr_, voxel_grid_))
+        pcl::PointXYZ(point.x + distance_threshold_, point.y, point.z), point,
+        distance_threshold_, voxel_map_ptr_, voxel_grid_))
+    {
       continue;
+    }
     if (is_in_voxel(
-          pcl::PointXYZ(point.x + distance_threshold_, point.y, point.z + distance_threshold_),
-          point, distance_threshold_, voxel_map_ptr_, voxel_grid_))
+        pcl::PointXYZ(point.x + distance_threshold_, point.y, point.z + distance_threshold_),
+        point, distance_threshold_, voxel_map_ptr_, voxel_grid_))
+    {
       continue;
+    }
     if (is_in_voxel(
-          pcl::PointXYZ(
-            point.x + distance_threshold_, point.y + distance_threshold_,
-            point.z - distance_threshold_),
-          point, distance_threshold_, voxel_map_ptr_, voxel_grid_))
+        pcl::PointXYZ(
+          point.x + distance_threshold_, point.y + distance_threshold_,
+          point.z - distance_threshold_),
+        point, distance_threshold_, voxel_map_ptr_, voxel_grid_))
+    {
       continue;
+    }
     if (is_in_voxel(
-          pcl::PointXYZ(point.x + distance_threshold_, point.y + distance_threshold_, point.z),
-          point, distance_threshold_, voxel_map_ptr_, voxel_grid_))
+        pcl::PointXYZ(point.x + distance_threshold_, point.y + distance_threshold_, point.z),
+        point, distance_threshold_, voxel_map_ptr_, voxel_grid_))
+    {
       continue;
+    }
     if (is_in_voxel(
-          pcl::PointXYZ(
-            point.x + distance_threshold_, point.y + distance_threshold_,
-            point.z + distance_threshold_),
-          point, distance_threshold_, voxel_map_ptr_, voxel_grid_))
+        pcl::PointXYZ(
+          point.x + distance_threshold_, point.y + distance_threshold_,
+          point.z + distance_threshold_),
+        point, distance_threshold_, voxel_map_ptr_, voxel_grid_))
+    {
       continue;
+    }
 
     pcl_output->points.push_back(pcl_input->points.at(i));
   }
@@ -191,8 +245,7 @@ bool VoxelBasedCompareMapFilterComponent::is_in_voxel(
 {
   int voxel_index =
     voxel.getCentroidIndexAt(voxel.getGridCoordinates(src_point.x, src_point.y, src_point.z));
-  if (voxel_index != -1)  // not empty voxel
-  {
+  if (voxel_index != -1) { // not empty voxel
     const double dist_x = map->points.at(voxel_index).x - target_point.x;
     const double dist_y = map->points.at(voxel_index).y - target_point.y;
     const double dist_z = map->points.at(voxel_index).z - target_point.z;
@@ -228,7 +281,7 @@ rcl_interfaces::msg::SetParametersResult VoxelBasedCompareMapFilterComponent::pa
   if (get_param(p, "distance_threshold", distance_threshold_)) {
     voxel_grid_.setLeafSize(distance_threshold_, distance_threshold_, distance_threshold_);
     voxel_grid_.setSaveLeafLayout(true);
-    if (set_map_in_voxel_grid_) voxel_grid_.filter(*voxel_map_ptr_);
+    if (set_map_in_voxel_grid_) {voxel_grid_.filter(*voxel_map_ptr_);}
     RCLCPP_DEBUG(get_logger(), "Setting new distance threshold to: %f.", distance_threshold_);
   }
 

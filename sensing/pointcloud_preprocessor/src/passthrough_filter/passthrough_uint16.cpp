@@ -74,10 +74,11 @@ void pcl::PassThroughUInt16<pcl::PCLPointCloud2>::applyFilter(PCLPointCloud2 & o
     output.width = input_->width;
     output.height = input_->height;
     // Check what the user value is: if !finite, set is_dense to false, true otherwise
-    if (!std::isfinite(user_filter_value_))
+    if (!std::isfinite(user_filter_value_)) {
       output.is_dense = false;
-    else
+    } else {
       output.is_dense = input_->is_dense;
+    }
   } else {
     // Copy the header (and thus the frame_id) + allocate enough space for points
     output.height = 1;  // filtering breaks the organized structure
@@ -148,7 +149,7 @@ void pcl::PassThroughUInt16<pcl::PCLPointCloud2>::applyFilter(PCLPointCloud2 & o
             memcpy(&output.data[xyz_offset[2]], &badpt, sizeof(std::uint16_t));
             continue;
           } else {
-            if (extract_removed_indices_) (*removed_indices_)[nr_removed_p++] = cp;
+            if (extract_removed_indices_) {(*removed_indices_)[nr_removed_p++] = cp;}
           }
         } else {
           // Use a threshold for cutting out points which are too close/far away
@@ -159,7 +160,7 @@ void pcl::PassThroughUInt16<pcl::PCLPointCloud2>::applyFilter(PCLPointCloud2 & o
             memcpy(&output.data[xyz_offset[2]], &badpt, sizeof(std::uint16_t));
             continue;
           } else {
-            if (extract_removed_indices_) (*removed_indices_)[nr_removed_p++] = cp;
+            if (extract_removed_indices_) {(*removed_indices_)[nr_removed_p++] = cp;}
           }
         }
       }
@@ -177,7 +178,7 @@ void pcl::PassThroughUInt16<pcl::PCLPointCloud2>::applyFilter(PCLPointCloud2 & o
 
         // Remove NAN/INF/-INF values. We expect passthrough to output clean valid data.
         if (!std::isfinite(distance_value)) {
-          if (extract_removed_indices_) (*removed_indices_)[nr_removed_p++] = cp;
+          if (extract_removed_indices_) {(*removed_indices_)[nr_removed_p++] = cp;}
           continue;
         }
 

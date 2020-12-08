@@ -63,11 +63,11 @@ inline static void downsamplePoints(const Mat & src, Mat & dst, size_t count)
   dst.create(1, (int)count, CV_8UC3);
   // TODO: optimize by exploiting symmetry in the distance matrix
   Mat dists((int)src.total(), (int)src.total(), CV_32FC1, Scalar(0));
-  if (dists.empty()) std::cerr << "Such big matrix cann't be created." << std::endl;
+  if (dists.empty()) {std::cerr << "Such big matrix cann't be created." << std::endl;}
 
   for (int i = 0; i < dists.rows; i++) {
     for (int j = i; j < dists.cols; j++) {
-      float dist = (float)norm(src.at<Point3_<uchar> >(i) - src.at<Point3_<uchar> >(j));
+      float dist = (float)norm(src.at<Point3_<uchar>>(i) - src.at<Point3_<uchar>>(j));
       dists.at<float>(j, i) = dists.at<float>(i, j) = dist;
     }
   }
@@ -76,8 +76,8 @@ inline static void downsamplePoints(const Mat & src, Mat & dst, size_t count)
   Point maxLoc;
   minMaxLoc(dists, 0, &maxVal, 0, &maxLoc);
 
-  dst.at<Point3_<uchar> >(0) = src.at<Point3_<uchar> >(maxLoc.x);
-  dst.at<Point3_<uchar> >(1) = src.at<Point3_<uchar> >(maxLoc.y);
+  dst.at<Point3_<uchar>>(0) = src.at<Point3_<uchar>>(maxLoc.x);
+  dst.at<Point3_<uchar>>(1) = src.at<Point3_<uchar>>(maxLoc.y);
 
   Mat activedDists(0, dists.cols, dists.type());
   Mat candidatePointsMask(1, dists.cols, CV_8UC1, Scalar(255));
@@ -91,13 +91,13 @@ inline static void downsamplePoints(const Mat & src, Mat & dst, size_t count)
     Mat minDists;
     reduce(activedDists, minDists, 0, CV_REDUCE_MIN);
     minMaxLoc(minDists, 0, &maxVal, 0, &maxLoc, candidatePointsMask);
-    dst.at<Point3_<uchar> >((int)i) = src.at<Point3_<uchar> >(maxLoc.x);
+    dst.at<Point3_<uchar>>((int)i) = src.at<Point3_<uchar>>(maxLoc.x);
   }
 }
 
 inline void generateColors(std::vector<Scalar> & colors, size_t count, size_t factor = 100)
 {
-  if (count < 1) return;
+  if (count < 1) {return;}
 
   colors.resize(count);
 
@@ -133,7 +133,7 @@ inline void generateColors(std::vector<Scalar> & colors, size_t count, size_t fa
 
   CV_Assert(bgr_subset.total() == count);
   for (size_t i = 0; i < count; i++) {
-    Point3_<uchar> c = bgr_subset.at<Point3_<uchar> >((int)i);
+    Point3_<uchar> c = bgr_subset.at<Point3_<uchar>>((int)i);
     colors[i] = Scalar(c.x, c.y, c.z);
   }
 }

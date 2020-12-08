@@ -44,7 +44,7 @@
 #include "pointcloud_preprocessor/passthrough_filter/passthrough_uint16.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-template <typename PointT>
+template<typename PointT>
 void pcl::PassThroughUInt16<PointT>::applyFilter(PointCloud & output)
 {
   std::vector<int> indices;
@@ -56,10 +56,12 @@ void pcl::PassThroughUInt16<PointT>::applyFilter(PointCloud & output)
 
     output = *input_;
     for (int rii = 0; rii < static_cast<int>(removed_indices_->size());
-         ++rii)  // rii = removed indices iterator
+      ++rii)     // rii = removed indices iterator
+    {
       output.points[(*removed_indices_)[rii]].x = output.points[(*removed_indices_)[rii]].y =
         output.points[(*removed_indices_)[rii]].z = user_filter_value_;
-    if (!std::isfinite(user_filter_value_)) output.is_dense = false;
+    }
+    if (!std::isfinite(user_filter_value_)) {output.is_dense = false;}
   } else {
     output.is_dense = true;
     applyFilterIndices(indices);
@@ -68,7 +70,7 @@ void pcl::PassThroughUInt16<PointT>::applyFilter(PointCloud & output)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-template <typename PointT>
+template<typename PointT>
 void pcl::PassThroughUInt16<PointT>::applyFilterIndices(std::vector<int> & indices)
 {
   // The arrays to be used
@@ -80,14 +82,15 @@ void pcl::PassThroughUInt16<PointT>::applyFilterIndices(std::vector<int> & indic
   if (filter_field_name_.empty()) {
     // Only filter for non-finite entries then
     for (int iii = 0; iii < static_cast<int>(indices_->size());
-         ++iii)  // iii = input indices iterator
+      ++iii)     // iii = input indices iterator
     {
       // Non-finite entries are always passed to removed indices
       if (
         !std::isfinite(input_->points[(*indices_)[iii]].x) ||
         !std::isfinite(input_->points[(*indices_)[iii]].y) ||
-        !std::isfinite(input_->points[(*indices_)[iii]].z)) {
-        if (extract_removed_indices_) (*removed_indices_)[rii++] = (*indices_)[iii];
+        !std::isfinite(input_->points[(*indices_)[iii]].z))
+      {
+        if (extract_removed_indices_) {(*removed_indices_)[rii++] = (*indices_)[iii];}
         continue;
       }
       indices[oii++] = (*indices_)[iii];
@@ -107,14 +110,15 @@ void pcl::PassThroughUInt16<PointT>::applyFilterIndices(std::vector<int> & indic
 
     // Filter for non-finite entries and the specified field limits
     for (int iii = 0; iii < static_cast<int>(indices_->size());
-         ++iii)  // iii = input indices iterator
+      ++iii)     // iii = input indices iterator
     {
       // Non-finite entries are always passed to removed indices
       if (
         !std::isfinite(input_->points[(*indices_)[iii]].x) ||
         !std::isfinite(input_->points[(*indices_)[iii]].y) ||
-        !std::isfinite(input_->points[(*indices_)[iii]].z)) {
-        if (extract_removed_indices_) (*removed_indices_)[rii++] = (*indices_)[iii];
+        !std::isfinite(input_->points[(*indices_)[iii]].z))
+      {
+        if (extract_removed_indices_) {(*removed_indices_)[rii++] = (*indices_)[iii];}
         continue;
       }
 
@@ -126,19 +130,19 @@ void pcl::PassThroughUInt16<PointT>::applyFilterIndices(std::vector<int> & indic
 
       // Remove NAN/INF/-INF values. We expect passthrough to output clean valid data.
       if (!std::isfinite(field_value)) {
-        if (extract_removed_indices_) (*removed_indices_)[rii++] = (*indices_)[iii];
+        if (extract_removed_indices_) {(*removed_indices_)[rii++] = (*indices_)[iii];}
         continue;
       }
 
       // Outside of the field limits are passed to removed indices
       if (!negative_ && (field_value < filter_limit_min_ || field_value > filter_limit_max_)) {
-        if (extract_removed_indices_) (*removed_indices_)[rii++] = (*indices_)[iii];
+        if (extract_removed_indices_) {(*removed_indices_)[rii++] = (*indices_)[iii];}
         continue;
       }
 
       // Inside of the field limits are passed to removed indices if negative was set
       if (negative_ && field_value >= filter_limit_min_ && field_value <= filter_limit_max_) {
-        if (extract_removed_indices_) (*removed_indices_)[rii++] = (*indices_)[iii];
+        if (extract_removed_indices_) {(*removed_indices_)[rii++] = (*indices_)[iii];}
         continue;
       }
 

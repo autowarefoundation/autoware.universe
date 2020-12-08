@@ -13,7 +13,7 @@
 // limitations under the License.
 
 /*
- * 
+ *
  * Software License Agreement (BSD License)
  *
  *  Copyright (c) 2010, Willow Garage, Inc.
@@ -46,7 +46,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: cropbox.cpp 
+ * $Id: cropbox.cpp
  *
  */
 #pragma once

@@ -98,8 +98,9 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
   {
     RCLCPP_INFO_STREAM(
       get_logger(), "Subscribing to " << input_topics_.size() << " user given topics as inputs:");
-    for (size_t d = 0; d < input_topics_.size(); ++d)
+    for (size_t d = 0; d < input_topics_.size(); ++d) {
       RCLCPP_INFO_STREAM(get_logger(), " - " << input_topics_[d]);
+    }
 
     // Subscribe to the filters
     filters_.resize(input_topics_.size());
@@ -186,9 +187,9 @@ void PointCloudConcatenateDataSynchronizerComponent::combineClouds(
   double x = 0.0, y = 0.0, yaw = 0.0;
   for (auto twist_ptr_it = old_twist_ptr_it; twist_ptr_it != new_twist_ptr_it + 1; ++twist_ptr_it) {
     const double dt =
-      (twist_ptr_it != new_twist_ptr_it)
-        ? (rclcpp::Time((*twist_ptr_it)->header.stamp) - rclcpp::Time(prev_time)).seconds()
-        : (rclcpp::Time(new_stamp) - rclcpp::Time(prev_time)).seconds();
+      (twist_ptr_it != new_twist_ptr_it) ?
+      (rclcpp::Time((*twist_ptr_it)->header.stamp) - rclcpp::Time(prev_time)).seconds() :
+      (rclcpp::Time(new_stamp) - rclcpp::Time(prev_time)).seconds();
 
     if (std::fabs(dt) > 0.1) {
       RCLCPP_WARN_STREAM_THROTTLE(
@@ -255,8 +256,8 @@ void PointCloudConcatenateDataSynchronizerComponent::publish()
   if (!not_subscribed_topic_name.empty()) {
     RCLCPP_WARN_STREAM_THROTTLE(
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
-      "Skipped " << not_subscribed_topic_name << ". Please confirm topic."
-                 << "(not_subscribed_topic_name size = )" << not_subscribed_topic_name.size());
+      "Skipped " << not_subscribed_topic_name << ". Please confirm topic." <<
+        "(not_subscribed_topic_name size = )" << not_subscribed_topic_name.size());
   }
 
   pub_output_->publish(*concat_cloud_ptr_);
@@ -270,9 +271,10 @@ void PointCloudConcatenateDataSynchronizerComponent::publish()
   pub_not_subscribed_topic_name_->publish(not_subscribed_topic_name_msg);
 
   cloud_stdmap_ = cloud_stdmap_tmp_;
-  std::for_each(std::begin(cloud_stdmap_tmp_), std::end(cloud_stdmap_tmp_), [](auto & e) {
-    e.second = nullptr;
-  });
+  std::for_each(
+    std::begin(cloud_stdmap_tmp_), std::end(cloud_stdmap_tmp_), [](auto & e) {
+      e.second = nullptr;
+    });
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -315,7 +317,7 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
 
     const bool is_subscribed_all = std::all_of(
       std::begin(cloud_stdmap_), std::end(cloud_stdmap_),
-      [](const auto & e) { return e.second != nullptr; });
+      [](const auto & e) {return e.second != nullptr;});
 
     if (is_subscribed_all) {
       for (const auto & e : cloud_stdmap_tmp_) {
@@ -323,9 +325,10 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
           cloud_stdmap_[e.first] = e.second;
         }
       }
-      std::for_each(std::begin(cloud_stdmap_tmp_), std::end(cloud_stdmap_tmp_), [](auto & e) {
-        e.second = nullptr;
-      });
+      std::for_each(
+        std::begin(cloud_stdmap_tmp_), std::end(cloud_stdmap_tmp_), [](auto & e) {
+          e.second = nullptr;
+        });
 
       // [ROS2 port]: generic time on callback handles timer issues
       // timer_.stop();
@@ -362,7 +365,8 @@ void PointCloudConcatenateDataSynchronizerComponent::twist_callback(
   while (!twist_ptr_queue_.empty()) {
     if (
       rclcpp::Time(twist_ptr_queue_.front()->header.stamp) + rclcpp::Duration::from_seconds(1.0) >
-      rclcpp::Time(input->header.stamp)) {
+      rclcpp::Time(input->header.stamp))
+    {
       break;
     }
     twist_ptr_queue_.pop_front();

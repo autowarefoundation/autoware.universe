@@ -97,8 +97,7 @@ void PointCloudToLaserScanNodelet::onInit()
       boost::bind(&PointCloudToLaserScanNodelet::cloudCb, this, _1));
     message_filter_->registerFailureCallback(
       boost::bind(&PointCloudToLaserScanNodelet::failureCb, this, _1, _2));
-  } else  // otherwise setup direct subscription
-  {
+  } else { // otherwise setup direct subscription
     sub_.registerCallback(boost::bind(&PointCloudToLaserScanNodelet::cloudCb, this, _1));
   }
 
@@ -121,8 +120,9 @@ void PointCloudToLaserScanNodelet::connectCb()
   boost::mutex::scoped_lock lock(connect_mutex_);
   if (
     (laserscan_pub_.getNumSubscribers() > 0 || pointcloud_pub_.getNumSubscribers() > 0 ||
-     ray_viz_pub_.getNumSubscribers() > 0 || stixel_viz_pub_.getNumSubscribers() > 0) &&
-    sub_.getSubscriber().getNumPublishers() == 0) {
+    ray_viz_pub_.getNumSubscribers() > 0 || stixel_viz_pub_.getNumSubscribers() > 0) &&
+    sub_.getSubscriber().getNumPublishers() == 0)
+  {
     NODELET_INFO("Got a subscriber to scan, starting subscriber to pointcloud");
     sub_.subscribe(nh_, "cloud_in", input_queue_size_);
   }
@@ -133,7 +133,8 @@ void PointCloudToLaserScanNodelet::disconnectCb()
   boost::mutex::scoped_lock lock(connect_mutex_);
   if (
     laserscan_pub_.getNumSubscribers() == 0 && pointcloud_pub_.getNumSubscribers() == 0 &&
-    ray_viz_pub_.getNumSubscribers() == 0 && stixel_viz_pub_.getNumSubscribers() == 0) {
+    ray_viz_pub_.getNumSubscribers() == 0 && stixel_viz_pub_.getNumSubscribers() == 0)
+  {
     NODELET_INFO("No subscibers to scan, shutting down subscriber to pointcloud");
     sub_.unsubscribe();
   }
@@ -144,9 +145,9 @@ void PointCloudToLaserScanNodelet::failureCb(
   tf2_ros::filter_failure_reasons::FilterFailureReason reason)
 {
   NODELET_WARN_STREAM_THROTTLE(
-    1.0, "Can't transform pointcloud from frame "
-           << cloud_msg->header.frame_id << " to " << message_filter_->getTargetFramesString()
-           << " at time " << cloud_msg->header.stamp << ", reason: " << reason);
+    1.0, "Can't transform pointcloud from frame " <<
+      cloud_msg->header.frame_id << " to " << message_filter_->getTargetFramesString() <<
+      " at time " << cloud_msg->header.stamp << ", reason: " << reason);
 }
 
 void PointCloudToLaserScanNodelet::cloudCb(const sensor_msgs::PointCloud2ConstPtr & cloud_msg)
@@ -209,8 +210,9 @@ void PointCloudToLaserScanNodelet::cloudCb(const sensor_msgs::PointCloud2ConstPt
   // Iterate through pointcloud
   int pointcloud_index = 0;
   for (sensor_msgs::PointCloud2ConstIterator<float> iter_x(*cloud_out, "x"),
-       iter_y(*cloud_out, "y"), iter_z(*cloud_out, "z");
-       iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z, ++pointcloud_index) {
+    iter_y(*cloud_out, "y"), iter_z(*cloud_out, "z");
+    iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z, ++pointcloud_index)
+  {
     if (std::isnan(*iter_x) || std::isnan(*iter_y) || std::isnan(*iter_z)) {
       NODELET_DEBUG("rejected for nan in point(%f, %f, %f)\n", *iter_x, *iter_y, *iter_z);
       continue;
@@ -254,7 +256,7 @@ void PointCloudToLaserScanNodelet::cloudCb(const sensor_msgs::PointCloud2ConstPt
 
   pcl::PointCloud<pcl::PointXYZ> pcl_pointcloud;
   sensor_msgs::PointCloud2ConstIterator<float> iter_x(*cloud_out, "x"), iter_y(*cloud_out, "y"),
-    iter_z(*cloud_out, "z");
+  iter_z(*cloud_out, "z");
   for (size_t i = 0; i < v_pointcloud_index.size(); ++i) {
     if (v_pointcloud_index.at(i) != no_data) {
       pcl::PointXYZ point;
