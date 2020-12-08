@@ -64,7 +64,8 @@ bool isActive(const autoware_planning_msgs::msg::Scenario::ConstSharedPtr scenar
   const auto & s = scenario->activating_scenarios;
   if (
     std::find(std::begin(s), std::end(s), autoware_planning_msgs::msg::Scenario::PARKING) !=
-    std::end(s)) {
+    std::end(s))
+  {
     return true;
   }
 
@@ -87,8 +88,8 @@ std::vector<geometry_msgs::msg::Point> poly2vector(const geometry_msgs::msg::Pol
 
 }  // namespace
 
-CostmapGenerator::CostmapGenerator() :
-  Node("costmap_generator"),
+CostmapGenerator::CostmapGenerator()
+: Node("costmap_generator"),
   tf_buffer_(this->get_clock()),
   tf_listener_(tf_buffer_)
 {
@@ -125,7 +126,8 @@ CostmapGenerator::CostmapGenerator() :
 
   // Publishers
   pub_costmap_ = this->create_publisher<grid_map_msgs::msg::GridMap>("output/grid_map", 1);
-  pub_occupancy_grid_ = this->create_publisher<nav_msgs::msg::OccupancyGrid>("output/occupancy_grid", 1);
+  pub_occupancy_grid_ = this->create_publisher<nav_msgs::msg::OccupancyGrid>(
+    "output/occupancy_grid", 1);
 
   // Timer
   auto timer_callback = std::bind(&CostmapGenerator::onTimer, this);
@@ -143,10 +145,12 @@ CostmapGenerator::CostmapGenerator() :
   // Wait for first tf
   while (rclcpp::ok()) {
     try {
-      tf_buffer_.lookupTransform(map_frame_, vehicle_frame_, rclcpp::Time(0), rclcpp::Duration::from_seconds(10.0));
+      tf_buffer_.lookupTransform(
+        map_frame_, vehicle_frame_, rclcpp::Time(
+          0), rclcpp::Duration::from_seconds(10.0));
       break;
     } catch (tf2::TransformException ex) {
-      RCLCPP_ERROR(this->get_logger(),"waiting for initial pose...");
+      RCLCPP_ERROR(this->get_logger(), "waiting for initial pose...");
     }
   }
 }
@@ -192,7 +196,8 @@ void CostmapGenerator::loadParkingAreasFromLaneletMap(
   }
 }
 
-void CostmapGenerator::onLaneletMapBin(const autoware_lanelet2_msgs::msg::MapBin::ConstSharedPtr msg)
+void CostmapGenerator::onLaneletMapBin(
+  const autoware_lanelet2_msgs::msg::MapBin::ConstSharedPtr msg)
 {
   lanelet_map_ = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(*msg, lanelet_map_);
@@ -203,12 +208,16 @@ void CostmapGenerator::onLaneletMapBin(const autoware_lanelet2_msgs::msg::MapBin
   }
 }
 
-void CostmapGenerator::onObjects(const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr msg)
+void CostmapGenerator::onObjects(
+  const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr msg)
 {
   objects_ = msg;
 }
 
-void CostmapGenerator::onPoints(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg) { points_ = msg; }
+void CostmapGenerator::onPoints(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)
+{
+  points_ = msg;
+}
 
 void CostmapGenerator::onScenario(const autoware_planning_msgs::msg::Scenario::ConstSharedPtr msg)
 {
@@ -225,7 +234,9 @@ void CostmapGenerator::onTimer()
   geometry_msgs::msg::TransformStamped tf;
   try {
     tf =
-      tf_buffer_.lookupTransform(costmap_frame_, vehicle_frame_, rclcpp::Time(0), rclcpp::Duration::from_seconds(1.0));
+      tf_buffer_.lookupTransform(
+      costmap_frame_, vehicle_frame_, rclcpp::Time(
+        0), rclcpp::Duration::from_seconds(1.0));
   } catch (tf2::TransformException ex) {
     RCLCPP_ERROR(rclcpp::get_logger("Exception: "), "%s", ex.what());
     return;
@@ -279,7 +290,7 @@ grid_map::Matrix CostmapGenerator::generatePointsCostmap(
 }
 
 autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr transformObjects(
-  const tf2_ros::Buffer &tf_buffer,
+  const tf2_ros::Buffer & tf_buffer,
   const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr in_objects,
   const std::string & target_frame_id, const std::string & src_frame_id)
 {
@@ -290,13 +301,15 @@ autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr transformObjec
   geometry_msgs::msg::TransformStamped objects2costmap;
   try {
     objects2costmap =
-      tf_buffer.lookupTransform(target_frame_id, src_frame_id, rclcpp::Time(0), rclcpp::Duration::from_seconds(1.0));
+      tf_buffer.lookupTransform(
+      target_frame_id, src_frame_id, rclcpp::Time(
+        0), rclcpp::Duration::from_seconds(1.0));
   } catch (tf2::TransformException ex) {
     RCLCPP_ERROR(rclcpp::get_logger("Exception: "), "%s", ex.what());
   }
 
   for (auto & object : objects->objects) {
-    
+
     geometry_msgs::msg::PoseStamped output_stamped, input_stamped;
     input_stamped.pose = object.state.pose_covariance.pose;
     tf2::doTransform(input_stamped, output_stamped, objects2costmap);
@@ -354,7 +367,7 @@ void CostmapGenerator::publishCostmap(const grid_map::GridMap & costmap)
   // Set header
   std_msgs::msg::Header header;
   header.frame_id = costmap_frame_;
-  header.stamp = this->now();;
+  header.stamp = this->now();
 
   // Publish OccupancyGrid
   nav_msgs::msg::OccupancyGrid out_occupancy_grid;

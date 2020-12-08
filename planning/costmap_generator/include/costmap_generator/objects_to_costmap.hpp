@@ -77,14 +77,16 @@ private:
   /// \param[in] expand_rectangle_size: expanding 4 points
   /// \param[out] 4 rectangle points
   Eigen::MatrixXd makeRectanglePoints(
-    const autoware_perception_msgs::msg::DynamicObject & in_object, const double expand_rectangle_size);
+    const autoware_perception_msgs::msg::DynamicObject & in_object,
+    const double expand_rectangle_size);
 
   /// \brief make polygon(grid_map::Polygon) from 4 rectangle's points
   /// \param[in] in_object: subscribed one of DynamicObjectArray
   /// \param[in] expand_rectangle_size: expanding 4 points
   /// \param[out] polygon with 4 rectangle points
   grid_map::Polygon makePolygonFromObjectBox(
-    const std_msgs::msg::Header & header, const autoware_perception_msgs::msg::DynamicObject & in_object,
+    const std_msgs::msg::Header & header,
+    const autoware_perception_msgs::msg::DynamicObject & in_object,
     const double expand_rectangle_size);
 
   /// \brief make expanded point from convex hull's point
@@ -93,7 +95,8 @@ private:
   /// \param[in] expand_polygon_size  the param for expanding convex_hull points
   /// \param[out] expanded point
   geometry_msgs::msg::Point makeExpandedPoint(
-    const geometry_msgs::msg::Point & in_centroid, const geometry_msgs::msg::Point32 & in_corner_point,
+    const geometry_msgs::msg::Point & in_centroid,
+    const geometry_msgs::msg::Point32 & in_corner_point,
     const double expand_polygon_size);
 
   /// \brief make polygon(grid_map::Polygon) from convex hull points
@@ -101,7 +104,8 @@ private:
   /// \param[in] expand_polygon_size: expanding convex_hull points
   /// \param[out] polygon object with convex hull points
   grid_map::Polygon makePolygonFromObjectConvexHull(
-    const std_msgs::msg::Header & header, const autoware_perception_msgs::msg::DynamicObject & in_object,
+    const std_msgs::msg::Header & header,
+    const autoware_perception_msgs::msg::DynamicObject & in_object,
     const double expand_polygon_size);
 
   /// \brief set cost in polygon by using DynamicObject's score

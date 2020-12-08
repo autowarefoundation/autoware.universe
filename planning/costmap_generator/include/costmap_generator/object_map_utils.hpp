@@ -50,7 +50,9 @@ namespace object_map
  * @param[in] in_gridmap GridMap object to publish
  * @param[in] in_publisher Valid Publisher object to use
  */
-void PublishGridMap(const grid_map::GridMap & in_gridmap, const rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr in_publisher);
+void PublishGridMap(
+  const grid_map::GridMap & in_gridmap,
+  const rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr in_publisher);
 
 /*!
  * Convert and publishes a GridMap layer to a standard Ros OccupancyGrid
@@ -62,7 +64,8 @@ void PublishGridMap(const grid_map::GridMap & in_gridmap, const rclcpp::Publishe
  */
 
 void PublishOccupancyGrid(
-  const grid_map::GridMap & in_gridmap, const rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr in_publisher,
+  const grid_map::GridMap & in_gridmap,
+  const rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr in_publisher,
   const std::string & in_layer, double in_min_value, double in_max_value, double in_height);
 
 /*!
