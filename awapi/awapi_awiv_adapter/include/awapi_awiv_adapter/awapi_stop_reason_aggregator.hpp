@@ -23,7 +23,7 @@ namespace autoware_api
 class AutowareIvStopReasonAggregator
 {
 public:
-  AutowareIvStopReasonAggregator(rclcpp::Node& node, const double timeout);
+  AutowareIvStopReasonAggregator(rclcpp::Node & node, const double timeout);
   autoware_planning_msgs::msg::StopReasonArray::ConstSharedPtr updateStopReasonArray(
     const autoware_planning_msgs::msg::StopReasonArray::ConstSharedPtr & msg_ptr);
 

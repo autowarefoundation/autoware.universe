@@ -16,7 +16,7 @@
 
 namespace autoware_api
 {
-AutowareIvVehicleStatePublisher::AutowareIvVehicleStatePublisher(rclcpp::Node& node)
+AutowareIvVehicleStatePublisher::AutowareIvVehicleStatePublisher(rclcpp::Node & node)
 : logger_(node.get_logger().get_child("awapi_awiv_vehicle_state_publisher")),
   clock_(node.get_clock()),
   prev_accel_(0.0)
@@ -96,7 +96,7 @@ void AutowareIvVehicleStatePublisher::getSteerInfo(
     const double ds = steer_ptr->data - previous_steer_ptr_->data;
     const double dt = std::max(
       (rclcpp::Time(steer_ptr->header.stamp) - rclcpp::Time(previous_steer_ptr_->header.stamp))
-        .seconds(),
+      .seconds(),
       1e-03);
     const double steer_vel = ds / dt;
 
@@ -156,7 +156,7 @@ void AutowareIvVehicleStatePublisher::getTwistInfo(
     const double dv = twist_ptr->twist.linear.x - previous_twist_ptr_->twist.linear.x;
     const double dt = std::max(
       (rclcpp::Time(twist_ptr->header.stamp) - rclcpp::Time(previous_twist_ptr_->header.stamp))
-        .seconds(),
+      .seconds(),
       1e-03);
     const double accel = dv / dt;
 

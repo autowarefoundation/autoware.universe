@@ -22,7 +22,7 @@ namespace autoware_api
 class AutowareIvAutowareStatePublisher
 {
 public:
-  AutowareIvAutowareStatePublisher(rclcpp::Node& node);
+  AutowareIvAutowareStatePublisher(rclcpp::Node & node);
   void statePublisher(const AutowareInfo & aw_info);
 
 private:

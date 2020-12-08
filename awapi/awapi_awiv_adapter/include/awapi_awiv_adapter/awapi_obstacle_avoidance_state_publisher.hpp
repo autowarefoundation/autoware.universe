@@ -22,7 +22,7 @@ namespace autoware_api
 class AutowareIvObstacleAvoidanceStatePublisher
 {
 public:
-  AutowareIvObstacleAvoidanceStatePublisher(rclcpp::Node& node);
+  AutowareIvObstacleAvoidanceStatePublisher(rclcpp::Node & node);
   void statePublisher(const AutowareInfo & aw_info);
 
 private:

@@ -16,7 +16,7 @@
 
 namespace autoware_api
 {
-AutowareIvLaneChangeStatePublisher::AutowareIvLaneChangeStatePublisher(rclcpp::Node& node)
+AutowareIvLaneChangeStatePublisher::AutowareIvLaneChangeStatePublisher(rclcpp::Node & node)
 : logger_(node.get_logger().get_child("awapi_awiv_lane_change_state_publisher")),
   clock_(node.get_clock())
 {

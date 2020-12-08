@@ -16,7 +16,9 @@
 
 namespace autoware_api
 {
-AutowareIvStopReasonAggregator::AutowareIvStopReasonAggregator(rclcpp::Node& node, const double timeout)
+AutowareIvStopReasonAggregator::AutowareIvStopReasonAggregator(
+  rclcpp::Node & node,
+  const double timeout)
 : logger_(node.get_logger().get_child("awapi_awiv_stop_reason_aggregator")),
   clock_(node.get_clock()),
   timeout_(timeout)
@@ -82,7 +84,8 @@ void AutowareIvStopReasonAggregator::applyTimeOut()
     for (int i = stop_reason_array_vec_.size() - 1; i >= 0; i--) {
       if (
         (current_time - rclcpp::Time(stop_reason_array_vec_.at(i).header.stamp)).seconds() >
-        timeout_) {
+        timeout_)
+      {
         remove_idx.emplace_back(i);
       }
     }

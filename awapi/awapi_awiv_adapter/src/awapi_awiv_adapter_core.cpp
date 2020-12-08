@@ -31,7 +31,9 @@ AutowareIvAdapter::AutowareIvAdapter()
   // setup instance
   vehicle_state_publisher_ = std::make_unique<AutowareIvVehicleStatePublisher>(*this);
   autoware_state_publisher_ = std::make_unique<AutowareIvAutowareStatePublisher>(*this);
-  stop_reason_aggreagator_ = std::make_unique<AutowareIvStopReasonAggregator>(*this, stop_reason_timeout_);
+  stop_reason_aggreagator_ = std::make_unique<AutowareIvStopReasonAggregator>(
+    *this,
+    stop_reason_timeout_);
   lane_change_state_publisher_ = std::make_unique<AutowareIvLaneChangeStatePublisher>(*this);
   obstacle_avoidance_state_publisher_ =
     std::make_unique<AutowareIvObstacleAvoidanceStatePublisher>(*this);
@@ -78,8 +80,8 @@ AutowareIvAdapter::AutowareIvAdapter()
     std::bind(&AutowareIvAdapter::callbackLaneObstacleAvoidReady, this, _1));
   sub_obstacle_avoid_candidate_ =
     this->create_subscription<autoware_planning_msgs::msg::Trajectory>(
-      "input/obstacle_avoid_candidate_path", 1,
-      std::bind(&AutowareIvAdapter::callbackLaneObstacleAvoidCandidatePath, this, _1));
+    "input/obstacle_avoid_candidate_path", 1,
+    std::bind(&AutowareIvAdapter::callbackLaneObstacleAvoidCandidatePath, this, _1));
 
   // timer
   auto timer_callback = std::bind(&AutowareIvAdapter::timerCallback, this);
@@ -169,7 +171,9 @@ void AutowareIvAdapter::getCurrentPose()
     ps.pose.orientation = transform.transform.rotation;
     aw_info_.current_pose_ptr = std::make_shared<geometry_msgs::msg::PoseStamped>(ps);
   } catch (tf2::TransformException & ex) {
-    RCLCPP_DEBUG_STREAM_THROTTLE(get_logger(), *this->get_clock(), 2000 /* ms */, "cannot get self pose");
+    RCLCPP_DEBUG_STREAM_THROTTLE(
+      get_logger(),
+      *this->get_clock(), 2000 /* ms */, "cannot get self pose");
   }
 }
 

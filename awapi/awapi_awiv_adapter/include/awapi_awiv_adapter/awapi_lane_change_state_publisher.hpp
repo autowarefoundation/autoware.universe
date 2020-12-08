@@ -22,7 +22,7 @@ namespace autoware_api
 class AutowareIvLaneChangeStatePublisher
 {
 public:
-  AutowareIvLaneChangeStatePublisher(rclcpp::Node& node);
+  AutowareIvLaneChangeStatePublisher(rclcpp::Node & node);
   void statePublisher(const AutowareInfo & aw_info);
 
 private:
