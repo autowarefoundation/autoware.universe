@@ -26,7 +26,8 @@
 
 namespace GNSSPoser
 {
-enum class MGRSPrecision {
+enum class MGRSPrecision
+{
   _10_KIRO_METER = 1,
   _1_KIRO_METER = 2,
   _100_METER = 3,
@@ -89,14 +90,15 @@ GNSSStat UTM2MGRS(
       utm.zone, utm.northup, utm.x, utm.y, utm.latitude, static_cast<int>(precision), mgrs_code);
     mgrs.zone = std::stod(mgrs_code.substr(0, GZD_ID_size));
     mgrs.x = std::stod(mgrs_code.substr(GZD_ID_size, static_cast<int>(precision))) *
-             std::pow(
-               10, static_cast<int>(MGRSPrecision::_1_METER) -
-                     static_cast<int>(precision));  // set unit as [m]
-    mgrs.y = std::stod(mgrs_code.substr(
-               GZD_ID_size + static_cast<int>(precision), static_cast<int>(precision))) *
-             std::pow(
-               10, static_cast<int>(MGRSPrecision::_1_METER) -
-                     static_cast<int>(precision));  // set unit as [m]
+      std::pow(
+      10, static_cast<int>(MGRSPrecision::_1_METER) -
+      static_cast<int>(precision));                 // set unit as [m]
+    mgrs.y = std::stod(
+      mgrs_code.substr(
+        GZD_ID_size + static_cast<int>(precision), static_cast<int>(precision))) *
+      std::pow(
+      10, static_cast<int>(MGRSPrecision::_1_METER) -
+      static_cast<int>(precision));                 // set unit as [m]
     mgrs.z = utm.z;                                 // TODO
   } catch (const GeographicLib::GeographicErr & err) {
     RCLCPP_ERROR_STREAM(logger, "Failed to convert from UTM to MGRS" << err.what());

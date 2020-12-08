@@ -182,13 +182,13 @@ geometry_msgs::msg::Point GNSSPoser::getMedianPosition(
   const boost::circular_buffer<geometry_msgs::msg::Point> & position_buffer)
 {
   auto getMedian = [](std::vector<double> array) {
-    std::sort(std::begin(array), std::end(array));
-    const size_t median_index = array.size() / 2;
-    double median = (array.size() % 2)
-                      ? (array.at(median_index))
-                      : ((array.at(median_index) + array.at(median_index - 1)) / 2);
-    return median;
-  };
+      std::sort(std::begin(array), std::end(array));
+      const size_t median_index = array.size() / 2;
+      double median = (array.size() % 2) ?
+        (array.at(median_index)) :
+        ((array.at(median_index) + array.at(median_index - 1)) / 2);
+      return median;
+    };
 
   std::vector<double> array_x;
   std::vector<double> array_y;
