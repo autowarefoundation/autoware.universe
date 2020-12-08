@@ -23,11 +23,11 @@ bool LinearInterpolate::interpolate(
   const double & return_index, double & return_value)
 {
   auto isIncrease = [](const std::vector<double> & x) {
-    for (int i = 0; i < (int)x.size() - 1; ++i) {
-      if (x[i] > x[i + 1]) return false;
-    }
-    return true;
-  };
+      for (int i = 0; i < (int)x.size() - 1; ++i) {
+        if (x[i] > x[i + 1]) {return false;}
+      }
+      return true;
+    };
 
   if (base_index.size() == 0 || base_value.size() == 0) {
     printf(
@@ -39,7 +39,8 @@ bool LinearInterpolate::interpolate(
   // check if inputs are valid
   if (
     !isIncrease(base_index) || return_index < base_index.front() ||
-    base_index.back() < return_index || base_index.size() != base_value.size()) {
+    base_index.back() < return_index || base_index.size() != base_value.size())
+  {
     std::cerr << "[isIncrease] bad index, return false" << std::endl;
     bool b1 = !isIncrease(base_index);
     bool b3 = return_index < base_index.front();
@@ -81,14 +82,14 @@ bool LinearInterpolate::interpolate(
   const double dist_to_forward = base_index[i] - return_index;
   const double dist_to_backward = return_index - base_index[i - 1];
   if (dist_to_forward < 0.0 || dist_to_backward < 0.0) {
-    std::cerr << "?? something wrong. skip this return_index. base_index[i - 1] = "
-              << base_index[i - 1] << ", return_index = " << return_index
-              << ", base_index[i] = " << base_index[i] << std::endl;
+    std::cerr << "?? something wrong. skip this return_index. base_index[i - 1] = " <<
+      base_index[i - 1] << ", return_index = " << return_index <<
+      ", base_index[i] = " << base_index[i] << std::endl;
     return false;
   }
 
   const double value = (dist_to_backward * base_value[i] + dist_to_forward * base_value[i - 1]) /
-                       dist_base_return_index;
+    dist_base_return_index;
   return_value = value;
 
   return true;

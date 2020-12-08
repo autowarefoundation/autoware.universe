@@ -20,12 +20,17 @@
 
 using std::placeholders::_1;
 
-AccelMapConverter::AccelMapConverter() : Node("raw_vehicle_cmd_converter_node"), accel_map_(get_logger()), brake_map_(get_logger())
+AccelMapConverter::AccelMapConverter()
+: Node("raw_vehicle_cmd_converter_node"), accel_map_(get_logger()), brake_map_(get_logger())
 {
-  pub_cmd_ = this->create_publisher<autoware_vehicle_msgs::msg::RawVehicleCommand>("/vehicle/raw_vehicle_cmd", rclcpp::QoS{1});
-  sub_cmd_ = this->create_subscription<autoware_vehicle_msgs::msg::VehicleCommand>("/control/vehicle_cmd", 1, std::bind(&AccelMapConverter::callbackVehicleCmd, this, _1));
+  pub_cmd_ = this->create_publisher<autoware_vehicle_msgs::msg::RawVehicleCommand>(
+    "/vehicle/raw_vehicle_cmd", rclcpp::QoS{1});
+  sub_cmd_ = this->create_subscription<autoware_vehicle_msgs::msg::VehicleCommand>(
+    "/control/vehicle_cmd", 1, std::bind(&AccelMapConverter::callbackVehicleCmd, this, _1));
   sub_velocity_ =
-    this->create_subscription<geometry_msgs::msg::TwistStamped>("/localization/twist", 1, std::bind(&AccelMapConverter::callbackVelocity, this, _1));
+    this->create_subscription<geometry_msgs::msg::TwistStamped>(
+    "/localization/twist", 1,
+    std::bind(&AccelMapConverter::callbackVelocity, this, _1));
 
   max_throttle_ = declare_parameter("max_throttle", 0.2);
   max_brake_ = declare_parameter("max_brake", 0.8);
@@ -36,11 +41,15 @@ AccelMapConverter::AccelMapConverter() : Node("raw_vehicle_cmd_converter_node"),
   csv_path_brake_map = declare_parameter("csv_path_brake_map", std::string("empty"));
   acc_map_initialized_ = true;
   if (!accel_map_.readAccelMapFromCSV(csv_path_accel_map)) {
-    RCLCPP_ERROR(get_logger(), "Cannot read accelmap. csv path = %s. stop calculation.", csv_path_accel_map.c_str());
+    RCLCPP_ERROR(
+      get_logger(), "Cannot read accelmap. csv path = %s. stop calculation.",
+      csv_path_accel_map.c_str());
     acc_map_initialized_ = false;
   }
   if (!brake_map_.readBrakeMapFromCSV(csv_path_brake_map)) {
-    RCLCPP_ERROR(get_logger(), "Cannot read brakemap. csv path = %s. stop calculation.", csv_path_brake_map.c_str());
+    RCLCPP_ERROR(
+      get_logger(), "Cannot read brakemap. csv path = %s. stop calculation.",
+      csv_path_brake_map.c_str());
     acc_map_initialized_ = false;
   }
 }
