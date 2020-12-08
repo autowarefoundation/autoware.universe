@@ -19,7 +19,8 @@
 #include <cstddef>
 #include <functional>
 
-ShiftDecider::ShiftDecider() : Node("shift_decider")
+ShiftDecider::ShiftDecider()
+: Node("shift_decider")
 {
   using std::placeholders::_1;
 
@@ -42,7 +43,7 @@ void ShiftDecider::onControlCmd(autoware_control_msgs::msg::ControlCommandStampe
 
 void ShiftDecider::onTimer()
 {
-  if (!control_cmd_) return;
+  if (!control_cmd_) {return;}
 
   updateCurrentShiftCmd();
   pub_shift_cmd_->publish(shift_cmd_);
