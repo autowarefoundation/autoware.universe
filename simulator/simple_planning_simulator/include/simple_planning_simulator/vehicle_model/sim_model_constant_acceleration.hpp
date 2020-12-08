@@ -50,14 +50,16 @@ public:
   ~SimModelConstantAccelTwist() = default;
 
 private:
-  enum IDX {
+  enum IDX
+  {
     X = 0,
     Y,
     YAW,
     VX,
     WZ,
   };
-  enum IDX_U {
+  enum IDX_U
+  {
     VX_DES = 0,
     WZ_DES,
   };

@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2018-2019 Autoware Foundation. All rights reserved.
  *
@@ -39,20 +38,22 @@ SimModelTimeDelayTwist::SimModelTimeDelayTwist(
   deadzone_delta_steer_(deadzone_delta_steer)
 {
   if (vx_time_constant < MIN_TIME_CONSTANT) {
-    std::cout << "Settings vx_time_constant is too small, replace it by " << MIN_TIME_CONSTANT << std::endl;
+    std::cout << "Settings vx_time_constant is too small, replace it by " << MIN_TIME_CONSTANT <<
+      std::endl;
   }
   if (wz_time_constant < MIN_TIME_CONSTANT) {
-    std::cout << "Settings wz_time_constant is too small, replace it by " << MIN_TIME_CONSTANT << std::endl;
+    std::cout << "Settings wz_time_constant is too small, replace it by " << MIN_TIME_CONSTANT <<
+      std::endl;
   }
   initializeInputQueue(dt);
-};
+}
 
-double SimModelTimeDelayTwist::getX() { return state_(IDX::X); };
-double SimModelTimeDelayTwist::getY() { return state_(IDX::Y); };
-double SimModelTimeDelayTwist::getYaw() { return state_(IDX::YAW); };
-double SimModelTimeDelayTwist::getVx() { return state_(IDX::VX); };
-double SimModelTimeDelayTwist::getWz() { return state_(IDX::WZ); };
-double SimModelTimeDelayTwist::getSteer() { return 0.0; };
+double SimModelTimeDelayTwist::getX() {return state_(IDX::X);}
+double SimModelTimeDelayTwist::getY() {return state_(IDX::Y);}
+double SimModelTimeDelayTwist::getYaw() {return state_(IDX::YAW);}
+double SimModelTimeDelayTwist::getVx() {return state_(IDX::VX);}
+double SimModelTimeDelayTwist::getWz() {return state_(IDX::WZ);}
+double SimModelTimeDelayTwist::getSteer() {return 0.0;}
 void SimModelTimeDelayTwist::update(const double & dt)
 {
   Eigen::VectorXd delayed_input = Eigen::VectorXd::Zero(dim_u_);
@@ -65,7 +66,7 @@ void SimModelTimeDelayTwist::update(const double & dt)
   wz_input_queue_.pop_front();
   // do not use deadzone_delta_steer (Steer IF does not exist in this model)
   updateRungeKutta(dt, delayed_input);
-};
+}
 void SimModelTimeDelayTwist::initializeInputQueue(const double & dt)
 {
   size_t vx_input_queue_size = static_cast<size_t>(round(vx_delay_ / dt));
@@ -101,7 +102,7 @@ Eigen::VectorXd SimModelTimeDelayTwist::calcModel(
   d_state(IDX::WZ) = wz_rate;
 
   return d_state;
-};
+}
 
 /*
  *
@@ -126,24 +127,26 @@ SimModelTimeDelaySteer::SimModelTimeDelaySteer(
   deadzone_delta_steer_(deadzone_delta_steer)
 {
   if (vx_time_constant < MIN_TIME_CONSTANT) {
-    std::cout << "Settings vx_time_constant is too small, replace it by " << MIN_TIME_CONSTANT << std::endl;
+    std::cout << "Settings vx_time_constant is too small, replace it by " << MIN_TIME_CONSTANT <<
+      std::endl;
   }
   if (steer_time_constant < MIN_TIME_CONSTANT) {
-    std::cout << "Settings steer_time_constant is too small, replace it by " << MIN_TIME_CONSTANT << std::endl;
+    std::cout << "Settings steer_time_constant is too small, replace it by " << MIN_TIME_CONSTANT <<
+      std::endl;
   }
 
   initializeInputQueue(dt);
-};
+}
 
-double SimModelTimeDelaySteer::getX() { return state_(IDX::X); };
-double SimModelTimeDelaySteer::getY() { return state_(IDX::Y); };
-double SimModelTimeDelaySteer::getYaw() { return state_(IDX::YAW); };
-double SimModelTimeDelaySteer::getVx() { return state_(IDX::VX); };
+double SimModelTimeDelaySteer::getX() {return state_(IDX::X);}
+double SimModelTimeDelaySteer::getY() {return state_(IDX::Y);}
+double SimModelTimeDelaySteer::getYaw() {return state_(IDX::YAW);}
+double SimModelTimeDelaySteer::getVx() {return state_(IDX::VX);}
 double SimModelTimeDelaySteer::getWz()
 {
   return state_(IDX::VX) * std::tan(state_(IDX::STEER)) / wheelbase_;
-};
-double SimModelTimeDelaySteer::getSteer() { return state_(IDX::STEER); };
+}
+double SimModelTimeDelaySteer::getSteer() {return state_(IDX::STEER);}
 void SimModelTimeDelaySteer::update(const double & dt)
 {
   Eigen::VectorXd delayed_input = Eigen::VectorXd::Zero(dim_u_);
@@ -158,7 +161,7 @@ void SimModelTimeDelaySteer::update(const double & dt)
   steer_input_queue_.pop_front();
 
   updateRungeKutta(dt, delayed_input);
-};
+}
 void SimModelTimeDelaySteer::initializeInputQueue(const double & dt)
 {
   size_t vx_input_queue_size = static_cast<size_t>(round(vx_delay_ / dt));
@@ -194,7 +197,7 @@ Eigen::VectorXd SimModelTimeDelaySteer::calcModel(
   d_state(IDX::STEER) = steer_rate;
 
   return d_state;
-};
+}
 
 SimModelTimeDelaySteerAccel::SimModelTimeDelaySteerAccel(
   double vx_lim, double steer_lim, double vx_rate_lim, double steer_rate_lim, double wheelbase,
@@ -214,24 +217,26 @@ SimModelTimeDelaySteerAccel::SimModelTimeDelaySteerAccel(
   deadzone_delta_steer_(deadzone_delta_steer)
 {
   if (acc_time_constant < MIN_TIME_CONSTANT) {
-    std::cout << "Settings acc_time_constant is too small, replace it by" <<  MIN_TIME_CONSTANT << std::endl;
+    std::cout << "Settings acc_time_constant is too small, replace it by" << MIN_TIME_CONSTANT <<
+      std::endl;
   }
   if (steer_time_constant < MIN_TIME_CONSTANT) {
-    std::cout << "Settings steer_time_constant is too small, replace it by" <<  MIN_TIME_CONSTANT << std::endl;
+    std::cout << "Settings steer_time_constant is too small, replace it by" << MIN_TIME_CONSTANT <<
+      std::endl;
   }
 
   initializeInputQueue(dt);
-};
+}
 
-double SimModelTimeDelaySteerAccel::getX() { return state_(IDX::X); };
-double SimModelTimeDelaySteerAccel::getY() { return state_(IDX::Y); };
-double SimModelTimeDelaySteerAccel::getYaw() { return state_(IDX::YAW); };
-double SimModelTimeDelaySteerAccel::getVx() { return state_(IDX::VX); };
+double SimModelTimeDelaySteerAccel::getX() {return state_(IDX::X);}
+double SimModelTimeDelaySteerAccel::getY() {return state_(IDX::Y);}
+double SimModelTimeDelaySteerAccel::getYaw() {return state_(IDX::YAW);}
+double SimModelTimeDelaySteerAccel::getVx() {return state_(IDX::VX);}
 double SimModelTimeDelaySteerAccel::getWz()
 {
   return state_(IDX::VX) * std::tan(state_(IDX::STEER)) / wheelbase_;
-};
-double SimModelTimeDelaySteerAccel::getSteer() { return state_(IDX::STEER); };
+}
+double SimModelTimeDelaySteerAccel::getSteer() {return state_(IDX::STEER);}
 void SimModelTimeDelaySteerAccel::update(const double & dt)
 {
   Eigen::VectorXd delayed_input = Eigen::VectorXd::Zero(dim_u_);
@@ -251,14 +256,16 @@ void SimModelTimeDelaySteerAccel::update(const double & dt)
   if (delayed_input(IDX_U::DRIVE_SHIFT) >= 0.0) {
     state_(IDX::VX) = std::max(0.0, std::min(state_(IDX::VX), vx_lim_));
     if (
-      std::abs((state_(IDX::VX) - 0.0)) < 10e-9 || std::abs((state_(IDX::VX) - vx_lim_)) < 10e-9) {
+      std::abs((state_(IDX::VX) - 0.0)) < 10e-9 || std::abs((state_(IDX::VX) - vx_lim_)) < 10e-9)
+    {
       state_(IDX::ACCX) = 0.0;
     }
   } else {
     state_(IDX::VX) = std::min(0.0, std::max(state_(IDX::VX), -vx_lim_));
     if (
       std::abs((state_(IDX::VX) - 0.0)) < 10e-9 ||
-      std::abs((state_(IDX::VX) - (-vx_lim_))) < 10e-9) {
+      std::abs((state_(IDX::VX) - (-vx_lim_))) < 10e-9)
+    {
       state_(IDX::ACCX) = 0.0;
     }
   }
@@ -287,7 +294,9 @@ Eigen::VectorXd SimModelTimeDelaySteerAccel::calcModel(
   const double delay_input_steer = input(IDX_U::STEER_DES);
   const double drive_shift = input(IDX_U::DRIVE_SHIFT);
   double delay_acc_des = std::max(std::min(delay_input_acc, vx_rate_lim_), -vx_rate_lim_);
-  if (!(drive_shift >= 0.0)) delay_acc_des *= -1;  // reverse front-back
+  if (!(drive_shift >= 0.0)) {
+    delay_acc_des *= -1;                           // reverse front-back
+  }
   double delay_steer_des = std::max(std::min(delay_input_steer, steer_lim_), -steer_lim_);
   double accx_rate = -(acc - delay_acc_des) / acc_time_constant_;
   double steer_rate = -(steer - delay_steer_des) / steer_time_constant_;
@@ -309,4 +318,4 @@ Eigen::VectorXd SimModelTimeDelaySteerAccel::calcModel(
   d_state(IDX::ACCX) = accx_rate;
 
   return d_state;
-};
+}

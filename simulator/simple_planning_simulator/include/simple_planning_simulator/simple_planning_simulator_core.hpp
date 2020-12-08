@@ -121,7 +121,8 @@ private:
   std::shared_ptr<rclcpp::Time> prev_update_time_ptr_;  //!< @brief previously updated time
 
   /* vehicle model */
-  enum class VehicleModelType {
+  enum class VehicleModelType
+  {
     IDEAL_TWIST = 0,
     IDEAL_STEER = 1,
     DELAY_TWIST = 2,
@@ -137,15 +138,15 @@ private:
   /* to generate measurement noise */
   std::shared_ptr<std::mt19937> rand_engine_ptr_;  //!< @brief random engine for measurement noise
   std::shared_ptr<std::normal_distribution<>>
-    pos_norm_dist_ptr_;  //!< @brief Gaussian noise for position
+  pos_norm_dist_ptr_;    //!< @brief Gaussian noise for position
   std::shared_ptr<std::normal_distribution<>>
-    vel_norm_dist_ptr_;  //!< @brief Gaussian noise for velocity
+  vel_norm_dist_ptr_;    //!< @brief Gaussian noise for velocity
   std::shared_ptr<std::normal_distribution<>>
-    rpy_norm_dist_ptr_;  //!< @brief Gaussian noise for roll-pitch-yaw
+  rpy_norm_dist_ptr_;    //!< @brief Gaussian noise for roll-pitch-yaw
   std::shared_ptr<std::normal_distribution<>>
-    angvel_norm_dist_ptr_;  //!< @brief Gaussian noise for angular velocity
+  angvel_norm_dist_ptr_;    //!< @brief Gaussian noise for angular velocity
   std::shared_ptr<std::normal_distribution<>>
-    steer_norm_dist_ptr_;  //!< @brief Gaussian noise for steering angle
+  steer_norm_dist_ptr_;    //!< @brief Gaussian noise for steering angle
 
   /**
    * @brief set current_vehicle_cmd_ptr_ with received message
@@ -165,7 +166,8 @@ private:
   /**
    * @brief set initial pose for simulation with received message
    */
-  void callbackInitialPoseWithCov(const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr msg);
+  void callbackInitialPoseWithCov(
+    const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr msg);
 
   /**
    * @brief set initial pose with received message
@@ -202,7 +204,9 @@ private:
    * @param [in] pose initial position and orientation
    * @param [in] twist initial velocity and angular velocity
    */
-  void setInitialState(const geometry_msgs::msg::Pose & pose, const geometry_msgs::msg::Twist & twist);
+  void setInitialState(
+    const geometry_msgs::msg::Pose & pose,
+    const geometry_msgs::msg::Twist & twist);
 
   /**
    * @brief set initial state of simulated vehicle with pose transformation based on frame_id
@@ -218,14 +222,17 @@ private:
    * @param [in] twist initial velocity and angular velocity
    */
   void setInitialStateWithPoseTransform(
-    const geometry_msgs::msg::PoseWithCovarianceStamped & pose, const geometry_msgs::msg::Twist & twist);
+    const geometry_msgs::msg::PoseWithCovarianceStamped & pose,
+    const geometry_msgs::msg::Twist & twist);
 
   /**
    * @brief publish pose and twist
    * @param [in] pose pose to be published
    * @param [in] twist twist to be published
    */
-  void publishPoseTwist(const geometry_msgs::msg::Pose & pose, const geometry_msgs::msg::Twist & twist);
+  void publishPoseTwist(
+    const geometry_msgs::msg::Pose & pose,
+    const geometry_msgs::msg::Twist & twist);
 
   /**
    * @brief publish tf

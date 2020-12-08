@@ -47,12 +47,14 @@ public:
   ~SimModelIdealTwist() = default;
 
 private:
-  enum IDX {
+  enum IDX
+  {
     X = 0,
     Y,
     YAW,
   };
-  enum IDX_U {
+  enum IDX_U
+  {
     VX_DES = 0,
     WZ_DES,
   };
@@ -120,12 +122,14 @@ public:
   ~SimModelIdealSteer() = default;
 
 private:
-  enum IDX {
+  enum IDX
+  {
     X = 0,
     Y,
     YAW,
   };
-  enum IDX_U {
+  enum IDX_U
+  {
     VX_DES = 0,
     STEER_DES,
   };
@@ -195,13 +199,15 @@ public:
   ~SimModelIdealAccel() = default;
 
 private:
-  enum IDX {
+  enum IDX
+  {
     X = 0,
     Y,
     YAW,
     VX,
   };
-  enum IDX_U {
+  enum IDX_U
+  {
     AX_DES = 0,
     STEER_DES,
   };

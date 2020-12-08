@@ -282,7 +282,8 @@ void Simulator::timerCallbackSimulation()
     if (
       cmd == autoware_vehicle_msgs::msg::TurnSignal::LEFT ||
       cmd == autoware_vehicle_msgs::msg::TurnSignal::RIGHT ||
-      cmd == autoware_vehicle_msgs::msg::TurnSignal::HAZARD) {
+      cmd == autoware_vehicle_msgs::msg::TurnSignal::HAZARD)
+    {
       turn_signal_msg.data = cmd;
     }
   }
@@ -291,9 +292,9 @@ void Simulator::timerCallbackSimulation()
   autoware_vehicle_msgs::msg::ShiftStamped shift_msg;
   shift_msg.header.frame_id = simulation_frame_id_;
   shift_msg.header.stamp = get_clock()->now();
-  shift_msg.shift.data = current_twist_.linear.x >= 0.0
-                           ? autoware_vehicle_msgs::msg::Shift::DRIVE
-                           : autoware_vehicle_msgs::msg::Shift::REVERSE;
+  shift_msg.shift.data = current_twist_.linear.x >= 0.0 ?
+    autoware_vehicle_msgs::msg::Shift::DRIVE :
+    autoware_vehicle_msgs::msg::Shift::REVERSE;
   pub_shift_->publish(shift_msg);
 
   /* publish control mode */
@@ -307,7 +308,8 @@ void Simulator::callbackVehicleCmd(
 
   if (
     vehicle_model_type_ == VehicleModelType::IDEAL_STEER ||
-    vehicle_model_type_ == VehicleModelType::DELAY_STEER) {
+    vehicle_model_type_ == VehicleModelType::DELAY_STEER)
+  {
     Eigen::VectorXd input(2);
     input << msg->control.velocity, msg->control.steering_angle;
     vehicle_model_ptr_->setInput(input);
@@ -452,10 +454,11 @@ double Simulator::getPosZFromTrajectory(const double x, const double y)
         found = true;
       }
     }
-    if (found)
+    if (found) {
       return current_trajectory_ptr_->points.at(index).pose.position.z;
-    else
+    } else {
       return 0;
+    }
   } else {
     return 0.0;
   }

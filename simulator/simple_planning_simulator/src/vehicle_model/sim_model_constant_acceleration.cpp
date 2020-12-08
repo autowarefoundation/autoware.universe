@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2018-2019 Autoware Foundation. All rights reserved.
  *
@@ -23,15 +22,15 @@ SimModelConstantAccelTwist::SimModelConstantAccelTwist(
   vx_lim_(vx_lim),
   wz_lim_(wz_lim),
   vx_rate_(vx_rate),
-  wz_rate_(wz_rate){};
+  wz_rate_(wz_rate) {}
 
-double SimModelConstantAccelTwist::getX() { return state_(IDX::X); };
-double SimModelConstantAccelTwist::getY() { return state_(IDX::Y); };
-double SimModelConstantAccelTwist::getYaw() { return state_(IDX::YAW); };
-double SimModelConstantAccelTwist::getVx() { return state_(IDX::VX); };
-double SimModelConstantAccelTwist::getWz() { return state_(IDX::WZ); };
-double SimModelConstantAccelTwist::getSteer() { return 0.0; };
-void SimModelConstantAccelTwist::update(const double & dt) { updateRungeKutta(dt, input_); }
+double SimModelConstantAccelTwist::getX() {return state_(IDX::X);}
+double SimModelConstantAccelTwist::getY() {return state_(IDX::Y);}
+double SimModelConstantAccelTwist::getYaw() {return state_(IDX::YAW);}
+double SimModelConstantAccelTwist::getVx() {return state_(IDX::VX);}
+double SimModelConstantAccelTwist::getWz() {return state_(IDX::WZ);}
+double SimModelConstantAccelTwist::getSteer() {return 0.0;}
+void SimModelConstantAccelTwist::update(const double & dt) {updateRungeKutta(dt, input_);}
 Eigen::VectorXd SimModelConstantAccelTwist::calcModel(
   const Eigen::VectorXd & state, const Eigen::VectorXd & input)
 {
@@ -62,4 +61,4 @@ Eigen::VectorXd SimModelConstantAccelTwist::calcModel(
   d_state(IDX::WZ) = wz_rate;
 
   return d_state;
-};
+}

@@ -64,14 +64,16 @@ public:
 private:
   const double MIN_TIME_CONSTANT;  //!< @brief minimum time constant
 
-  enum IDX {
+  enum IDX
+  {
     X = 0,
     Y,
     YAW,
     VX,
     WZ,
   };
-  enum IDX_U {
+  enum IDX_U
+  {
     VX_DES = 0,
     WZ_DES,
   };
@@ -170,14 +172,16 @@ public:
 private:
   const double MIN_TIME_CONSTANT;  //!< @brief minimum time constant
 
-  enum IDX {
+  enum IDX
+  {
     X = 0,
     Y,
     YAW,
     VX,
     STEER,
   };
-  enum IDX_U {
+  enum IDX_U
+  {
     VX_DES = 0,
     STEER_DES,
   };
@@ -276,7 +280,8 @@ public:
 private:
   const double MIN_TIME_CONSTANT;  //!< @brief minimum time constant
 
-  enum IDX {
+  enum IDX
+  {
     X = 0,
     Y,
     YAW,
@@ -284,7 +289,8 @@ private:
     STEER,
     ACCX,
   };
-  enum IDX_U {
+  enum IDX_U
+  {
     ACCX_DES = 0,
     STEER_DES,
     DRIVE_SHIFT,
