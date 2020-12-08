@@ -52,13 +52,14 @@ public:
   ShapeEstimator(
     double l_shape_fitting_search_angle_range, bool use_corrector, bool orientation_reliable);
 
-  ~ShapeEstimator(){};
+  ~ShapeEstimator() {}
 
   bool getShapeAndPose(
     const int type, const pcl::PointCloud<pcl::PointXYZ> & cluster,
     autoware_perception_msgs::msg::Shape & shape_output, geometry_msgs::msg::Pose & pose_output);
   bool getShapeAndPose(
     const int type, const pcl::PointCloud<pcl::PointXYZ> & cluster,
-    const autoware_perception_msgs::msg::State & state, autoware_perception_msgs::msg::Shape & shape_output,
+    const autoware_perception_msgs::msg::State & state,
+    autoware_perception_msgs::msg::Shape & shape_output,
     geometry_msgs::msg::Pose & pose_output);
 };

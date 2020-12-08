@@ -16,15 +16,17 @@
 
 #include "shape_estimation/corrector_interface.hpp"
 
-namespace yaw_fixed {
-  class CarCorrector : public ShapeEstimationCorrectorInterface
-  {
-  public:
-    CarCorrector(){};
+namespace yaw_fixed
+{
+class CarCorrector : public ShapeEstimationCorrectorInterface
+{
+public:
+  CarCorrector() {}
 
-    ~CarCorrector(){};
+  ~CarCorrector() {}
 
-    bool correct(
-      autoware_perception_msgs::msg::Shape & shape_output, geometry_msgs::msg::Pose & pose_output) override;
-  };
+  bool correct(
+    autoware_perception_msgs::msg::Shape & shape_output,
+    geometry_msgs::msg::Pose & pose_output) override;
+};
 }

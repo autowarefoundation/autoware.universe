@@ -16,15 +16,17 @@
 
 #include "shape_estimation/corrector_interface.hpp"
 
-namespace yaw_fixed {
+namespace yaw_fixed
+{
 class TruckCorrector : public ShapeEstimationCorrectorInterface
 {
 public:
-  TruckCorrector(){};
+  TruckCorrector() {}
 
-  ~TruckCorrector(){};
+  ~TruckCorrector() {}
 
   bool correct(
-    autoware_perception_msgs::msg::Shape & shape_output, geometry_msgs::msg::Pose & pose_output) override;
+    autoware_perception_msgs::msg::Shape & shape_output,
+    geometry_msgs::msg::Pose & pose_output) override;
 };
 }

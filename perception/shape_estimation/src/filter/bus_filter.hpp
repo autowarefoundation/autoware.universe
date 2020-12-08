@@ -24,9 +24,9 @@
 class BusFilter : public ShapeEstimationFilterInterface
 {
 public:
-  BusFilter(){};
+  BusFilter() {}
 
-  ~BusFilter(){};
+  ~BusFilter() {}
 
   bool filter(
     const autoware_perception_msgs::msg::Shape & shape_output,

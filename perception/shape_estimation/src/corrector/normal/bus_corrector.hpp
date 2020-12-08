@@ -21,15 +21,17 @@
 
 #include "shape_estimation/corrector_interface.hpp"
 
-namespace normal {
+namespace normal
+{
 class BusCorrector : public ShapeEstimationCorrectorInterface
 {
 public:
-  BusCorrector(){};
+  BusCorrector() {}
 
-  ~BusCorrector(){};
+  ~BusCorrector() {}
 
   bool correct(
-    autoware_perception_msgs::msg::Shape & shape_output, geometry_msgs::msg::Pose & pose_output) override;
+    autoware_perception_msgs::msg::Shape & shape_output,
+    geometry_msgs::msg::Pose & pose_output) override;
 };
 }

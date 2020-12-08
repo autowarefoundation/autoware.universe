@@ -24,9 +24,9 @@
 class NoFilter : public ShapeEstimationFilterInterface
 {
 public:
-  NoFilter(){};
+  NoFilter() {}
 
-  ~NoFilter(){};
+  ~NoFilter() {}
 
   bool filter(
     const autoware_perception_msgs::msg::Shape & shape,

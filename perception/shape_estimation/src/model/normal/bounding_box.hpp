@@ -29,9 +29,9 @@ private:
   double calcClosenessCriterion(const std::vector<double> & C_1, const std::vector<double> & C_2);
 
 public:
-  BoundingBoxModel(){};
+  BoundingBoxModel() {}
 
-  ~BoundingBoxModel(){};
+  ~BoundingBoxModel() {}
 
   /*
    * minimum cluster size is 2.

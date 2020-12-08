@@ -21,9 +21,9 @@ namespace yaw_fixed
 class BusCorrector : public ShapeEstimationCorrectorInterface
 {
 public:
-  BusCorrector(){};
+  BusCorrector() {}
 
-  ~BusCorrector(){};
+  ~BusCorrector() {}
 
   bool correct(
     autoware_perception_msgs::msg::Shape & shape_output,

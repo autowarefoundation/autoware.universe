@@ -20,7 +20,8 @@
 #include "shape_estimation/node.hpp"
 #include "shape_estimation/shape_estimator.hpp"
 
-ShapeEstimationNode::ShapeEstimationNode() : Node("shape_estimation")
+ShapeEstimationNode::ShapeEstimationNode()
+: Node("shape_estimation")
 {
   using std::placeholders::_1;
   sub_ = create_subscription<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>(
@@ -43,7 +44,7 @@ void ShapeEstimationNode::callback(
   const autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr input_msg)
 {
   // Guard
-  if (pub_->get_subscription_count() < 1) return;
+  if (pub_->get_subscription_count() < 1) {return;}
 
   // Create output msg
   autoware_perception_msgs::msg::DynamicObjectWithFeatureArray output_msg;
@@ -59,8 +60,10 @@ void ShapeEstimationNode::callback(
     geometry_msgs::msg::Pose pose;
 
     if (!estimator_->getShapeAndPose(
-          feature_object.object.semantic.type, *cluster, feature_object.object.state, shape, pose))
+        feature_object.object.semantic.type, *cluster, feature_object.object.state, shape, pose))
+    {
       continue;
+    }
 
     output_msg.feature_objects.push_back(feature_object);
     output_msg.feature_objects.back().object.shape = shape;
@@ -69,5 +72,4 @@ void ShapeEstimationNode::callback(
 
   // Publish
   pub_->publish(output_msg);
-  return;
 }

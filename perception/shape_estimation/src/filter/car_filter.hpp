@@ -24,9 +24,9 @@
 class CarFilter : public ShapeEstimationFilterInterface
 {
 public:
-  CarFilter(){};
+  CarFilter() {}
 
-  ~CarFilter(){};
+  ~CarFilter() {}
 
   bool filter(
     const autoware_perception_msgs::msg::Shape & shape,

@@ -39,7 +39,8 @@
 #include "model/yaw_fixed/bounding_box.hpp"
 #include "shape_estimation/model_interface.hpp"
 
-ShapeEstimator::ShapeEstimator() : ShapeEstimator::ShapeEstimator(3, true, true) {}
+ShapeEstimator::ShapeEstimator()
+: ShapeEstimator::ShapeEstimator(3, true, true) {}
 
 ShapeEstimator::ShapeEstimator(
   double l_shape_fitting_search_angle_range, bool use_corrector, bool orientation_reliable)
@@ -83,7 +84,7 @@ bool ShapeEstimator::process(
   autoware_perception_msgs::msg::Shape & shape, geometry_msgs::msg::Pose & pose)
 {
   // check input
-  if (cluster.empty()) return false;
+  if (cluster.empty()) {return false;}
 
   // estimate shape
   if (!estimateShape(type, cluster, shape, pose)) {
@@ -114,7 +115,8 @@ bool ShapeEstimator::estimateShape(
   if (
     type == autoware_perception_msgs::msg::Semantic::CAR ||
     type == autoware_perception_msgs::msg::Semantic::TRUCK ||
-    type == autoware_perception_msgs::msg::Semantic::BUS) {
+    type == autoware_perception_msgs::msg::Semantic::BUS)
+  {
     if (orientation_reliable_) {
       model_ptr.reset(new yaw_fixed::BoundingBoxModel(l_shape_fitting_search_angle_range_));
     } else {
@@ -157,25 +159,29 @@ bool ShapeEstimator::applyCorrector(
 {
   std::unique_ptr<ShapeEstimationCorrectorInterface> corrector_ptr;
   if (type == autoware_perception_msgs::msg::Semantic::CAR) {
-    if (orientation_reliable_)
+    if (orientation_reliable_) {
       corrector_ptr.reset(new yaw_fixed::CarCorrector);
-    else
+    } else {
       corrector_ptr.reset(new normal::CarCorrector);
+    }
   } else if (type == autoware_perception_msgs::msg::Semantic::BUS) {
-    if (orientation_reliable_)
+    if (orientation_reliable_) {
       corrector_ptr.reset(new yaw_fixed::BusCorrector);
-    else
+    } else {
       corrector_ptr.reset(new normal::BusCorrector);
+    }
   } else if (type == autoware_perception_msgs::msg::Semantic::TRUCK) {
-    if (orientation_reliable_)
+    if (orientation_reliable_) {
       corrector_ptr.reset(new yaw_fixed::TruckCorrector);
-    else
+    } else {
       corrector_ptr.reset(new normal::TruckCorrector);
+    }
   } else {
-    if (orientation_reliable_)
+    if (orientation_reliable_) {
       corrector_ptr.reset(new yaw_fixed::NoCorrector);
-    else
+    } else {
       corrector_ptr.reset(new normal::NoCorrector);
+    }
   }
 
   return corrector_ptr->correct(shape_output, pose_output);

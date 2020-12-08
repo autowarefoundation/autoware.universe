@@ -57,8 +57,8 @@ bool BoundingBoxModel::estimate(
   double min_z = 0;
   double max_z = 0;
   for (size_t i = 0; i < cluster.size(); ++i) {
-    if (cluster.at(i).z < min_z || i == 0) min_z = cluster.at(i).z;
-    if (max_z < cluster.at(i).z || i == 0) max_z = cluster.at(i).z;
+    if (cluster.at(i).z < min_z || i == 0) {min_z = cluster.at(i).z;}
+    if (max_z < cluster.at(i).z || i == 0) {max_z = cluster.at(i).z;}
   }
 
   double min_angle = 0;
@@ -192,7 +192,7 @@ bool BoundingBoxModel::estimate(
     Eigen::Affine3d base2obj_transform;
     tf2::fromMsg(lshape_pose, base2obj_transform);
     Eigen::Matrix3d refine_rotation;
-    if (lshape_yaw > M_PI) lshape_yaw = lshape_yaw - (2 * M_PI);
+    if (lshape_yaw > M_PI) {lshape_yaw = lshape_yaw - (2 * M_PI);}
     double angle = lshape_yaw - original_yaw;
 
     if (std::fabs(angle) < M_PI_4 /* same direction */) {
@@ -202,7 +202,7 @@ bool BoundingBoxModel::estimate(
       std::swap(refined_shape.dimensions.x, refined_shape.dimensions.y);
     } else if ((3 * M_PI / 4) < std::fabs(angle) /* opposite direction */) {
       refine_rotation = Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitZ());
-    } else /* -90 direction */ {
+    } else { /* -90 direction */
       refine_rotation = Eigen::AngleAxisd(M_PI_2, Eigen::Vector3d::UnitZ());
       std::swap(refined_shape.dimensions.x, refined_shape.dimensions.y);
     }
@@ -220,7 +220,7 @@ bool BoundingBoxModel::estimate(
   shape_output = refined_shape;
 
   // check wrong output
-  if (shape_output.dimensions.x < ep && shape_output.dimensions.y < ep) return false;
+  if (shape_output.dimensions.x < ep && shape_output.dimensions.y < ep) {return false;}
   shape_output.dimensions.x = std::max(shape_output.dimensions.x, ep);
   shape_output.dimensions.y = std::max(shape_output.dimensions.y, ep);
   return true;

@@ -25,12 +25,13 @@ private:
   double l_shape_fitting_search_angle_range_;
 
 public:
-  BoundingBoxModel() : l_shape_fitting_search_angle_range_(3){};
+  BoundingBoxModel()
+  : l_shape_fitting_search_angle_range_(3) {}
 
   BoundingBoxModel(double l_shape_fitting_search_angle_range)
-  : l_shape_fitting_search_angle_range_(l_shape_fitting_search_angle_range){};
+  : l_shape_fitting_search_angle_range_(l_shape_fitting_search_angle_range) {}
 
-  ~BoundingBoxModel(){};
+  ~BoundingBoxModel() {}
 
   /*
    * minimum cluster size is 2.

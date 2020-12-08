@@ -56,8 +56,8 @@ bool BoundingBoxModel::estimate(
   double min_z = 0;
   double max_z = 0;
   for (size_t i = 0; i < cluster.size(); ++i) {
-    if (cluster.at(i).z < min_z || i == 0) min_z = cluster.at(i).z;
-    if (max_z < cluster.at(i).z || i == 0) max_z = cluster.at(i).z;
+    if (cluster.at(i).z < min_z || i == 0) {min_z = cluster.at(i).z;}
+    if (max_z < cluster.at(i).z || i == 0) {max_z = cluster.at(i).z;}
   }
 
   /*
@@ -154,7 +154,7 @@ bool BoundingBoxModel::estimate(
   shape_output.dimensions.z = std::max((max_z - min_z), ep);
 
   // check wrong output
-  if (shape_output.dimensions.x < ep && shape_output.dimensions.y < ep) return false;
+  if (shape_output.dimensions.x < ep && shape_output.dimensions.y < ep) {return false;}
   shape_output.dimensions.x = std::max(shape_output.dimensions.x, ep);
   shape_output.dimensions.y = std::max(shape_output.dimensions.y, ep);
   return true;

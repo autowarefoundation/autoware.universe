@@ -21,19 +21,21 @@
 
 #include "shape_estimation/model_interface.hpp"
 
-namespace normal {
+namespace normal
+{
 class CylinderModel : public ShapeEstimationModelInterface
 {
 public:
-  CylinderModel(){};
+  CylinderModel() {}
 
-  ~CylinderModel(){};
+  ~CylinderModel() {}
 
   /*
    * if cluster size is 1, it can be calculated using the lower limit of the size of the object
    */
   bool estimate(
-    const pcl::PointCloud<pcl::PointXYZ> & cluster, autoware_perception_msgs::msg::Shape & shape_output,
+    const pcl::PointCloud<pcl::PointXYZ> & cluster,
+    autoware_perception_msgs::msg::Shape & shape_output,
     geometry_msgs::msg::Pose & pose_output) override;
 };
 }

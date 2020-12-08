@@ -28,9 +28,9 @@
 class ShapeEstimationModelInterface
 {
 public:
-  ShapeEstimationModelInterface(){};
+  ShapeEstimationModelInterface() {}
 
-  virtual ~ShapeEstimationModelInterface(){};
+  virtual ~ShapeEstimationModelInterface() {}
 
   virtual bool estimate(
     const pcl::PointCloud<pcl::PointXYZ> & cluster,

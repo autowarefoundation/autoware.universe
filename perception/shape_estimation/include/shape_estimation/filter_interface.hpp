@@ -25,9 +25,9 @@
 class ShapeEstimationFilterInterface
 {
 public:
-  ShapeEstimationFilterInterface(){};
+  ShapeEstimationFilterInterface() {}
 
-  virtual ~ShapeEstimationFilterInterface(){};
+  virtual ~ShapeEstimationFilterInterface() {}
 
   virtual bool filter(
     const autoware_perception_msgs::msg::Shape & shape, const geometry_msgs::msg::Pose & pose) = 0;

@@ -25,9 +25,9 @@
 class ShapeEstimationCorrectorInterface
 {
 public:
-  ShapeEstimationCorrectorInterface(){};
+  ShapeEstimationCorrectorInterface() {}
 
-  virtual ~ShapeEstimationCorrectorInterface(){};
+  virtual ~ShapeEstimationCorrectorInterface() {}
 
   virtual bool correct(
     autoware_perception_msgs::msg::Shape & shape_output,

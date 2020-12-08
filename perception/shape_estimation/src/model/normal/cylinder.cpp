@@ -50,8 +50,8 @@ bool CylinderModel::estimate(
   double min_z = 0;
   double max_z = 0;
   for (size_t i = 0; i < cluster.size(); ++i) {
-    if (cluster.at(i).z < min_z || i == 0) min_z = cluster.at(i).z;
-    if (max_z < cluster.at(i).z || i == 0) max_z = cluster.at(i).z;
+    if (cluster.at(i).z < min_z || i == 0) {min_z = cluster.at(i).z;}
+    if (max_z < cluster.at(i).z || i == 0) {max_z = cluster.at(i).z;}
   }
 
   // calc circumscribed circle on x-y plane

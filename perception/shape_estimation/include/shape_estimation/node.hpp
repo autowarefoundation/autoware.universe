@@ -24,7 +24,8 @@
 
 class ShapeEstimationNode : public rclcpp::Node
 {
-private:  // ros
+private:
+  // ros
   rclcpp::Publisher<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>::SharedPtr pub_;
   rclcpp::Subscription<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>::SharedPtr
     sub_;
@@ -39,5 +40,5 @@ private:
 public:
   ShapeEstimationNode();
 
-  ~ShapeEstimationNode(){};
+  ~ShapeEstimationNode() {}
 };

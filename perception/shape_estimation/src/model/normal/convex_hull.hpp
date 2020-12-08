@@ -26,9 +26,9 @@ namespace normal
 class ConvexHullModel : public ShapeEstimationModelInterface
 {
 public:
-  ConvexHullModel(){};
+  ConvexHullModel() {}
 
-  ~ConvexHullModel(){};
+  ~ConvexHullModel() {}
 
   bool estimate(
     const pcl::PointCloud<pcl::PointXYZ> & cluster,

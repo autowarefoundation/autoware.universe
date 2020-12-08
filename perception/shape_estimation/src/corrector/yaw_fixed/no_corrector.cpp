@@ -22,7 +22,8 @@
 #include "Eigen/Core"
 #include "Eigen/Geometry"
 
-namespace yaw_fixed {
+namespace yaw_fixed
+{
 bool NoCorrector::correct(
   autoware_perception_msgs::msg::Shape & shape_output, geometry_msgs::msg::Pose & pose_output)
 {
