@@ -12,6 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <algorithm>
+#include <string>
+#include <vector>
+
 #include "raw_vehicle_cmd_converter/brake_map.hpp"
 
 BrakeMap::BrakeMap(const rclcpp::Logger & logger)

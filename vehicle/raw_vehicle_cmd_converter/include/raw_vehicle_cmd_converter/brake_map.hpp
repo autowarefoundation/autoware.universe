@@ -12,23 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef RAW_VEHICLE_CMD_CONVERTER_BRAKE_MAP_H
-#define RAW_VEHICLE_CMD_CONVERTER_BRAKE_MAP_H
-
-#include "raw_vehicle_cmd_converter/csv_loader.hpp"
-#include "raw_vehicle_cmd_converter/interpolate.hpp"
-
-#include "rclcpp/rclcpp.hpp"
+#ifndef RAW_VEHICLE_CMD_CONVERTER__BRAKE_MAP_HPP_
+#define RAW_VEHICLE_CMD_CONVERTER__BRAKE_MAP_HPP_
 
 #include <algorithm>
 #include <iostream>
 #include <string>
 #include <vector>
 
+#include "rclcpp/rclcpp.hpp"
+
+#include "raw_vehicle_cmd_converter/csv_loader.hpp"
+#include "raw_vehicle_cmd_converter/interpolate.hpp"
+
 class BrakeMap
 {
 public:
-  BrakeMap(const rclcpp::Logger & logger);
+  explicit BrakeMap(const rclcpp::Logger & logger);
   ~BrakeMap();
 
   bool readBrakeMapFromCSV(std::string csv_path);
@@ -45,4 +45,4 @@ private:
   std::vector<std::vector<double>> brake_map_;
 };
 
-#endif
+#endif  // RAW_VEHICLE_CMD_CONVERTER__BRAKE_MAP_HPP_
