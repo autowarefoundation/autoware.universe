@@ -50,7 +50,7 @@ PoseInitializer::PoseInitializer()
     "initialpose", 10,
     std::bind(&PoseInitializer::callbackInitialPose, this, std::placeholders::_1));
   map_points_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
-    "pointcloud_map", 1,
+    "pointcloud_map", rclcpp::QoS{1}.transient_local(),
     std::bind(&PoseInitializer::callbackMapPoints, this, std::placeholders::_1));
 
   const bool use_first_gnss_topic = this->declare_parameter("use_first_gnss_topic", true);
