@@ -101,7 +101,7 @@ NDTScanMatcher::NDTScanMatcher()
     "ekf_pose_with_covariance", 100,
     std::bind(&NDTScanMatcher::callbackInitialPose, this, std::placeholders::_1));
   map_points_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
-    "pointcloud_map", 1,
+    "pointcloud_map", rclcpp::QoS{1}.transient_local(),
     std::bind(&NDTScanMatcher::callbackMapPoints, this, std::placeholders::_1));
   sensor_points_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "points_raw", 1, std::bind(&NDTScanMatcher::callbackSensorPoints, this, std::placeholders::_1));
