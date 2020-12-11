@@ -84,7 +84,7 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode()
     "input/vehicle_velocity", 1,
     std::bind(&BehaviorVelocityPlannerNode::onVehicleVelocity, this, _1));
   sub_lanelet_map_ = this->create_subscription<autoware_lanelet2_msgs::msg::MapBin>(
-    "input/vector_map", 10, std::bind(&BehaviorVelocityPlannerNode::onLaneletMap, this, _1));
+    "input/vector_map", rclcpp::QoS(10).transient_local(), std::bind(&BehaviorVelocityPlannerNode::onLaneletMap, this, _1));
   sub_traffic_light_states_ =
     this->create_subscription<autoware_perception_msgs::msg::TrafficLightStateArray>(
     "input/traffic_light_states", 10,
