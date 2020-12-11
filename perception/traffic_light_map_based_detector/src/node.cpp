@@ -47,7 +47,7 @@ namespace traffic_light
 
   // subscribers
   map_sub_ = create_subscription<autoware_lanelet2_msgs::msg::MapBin>(
-    "input/vector_map", 1, std::bind(&MapBasedDetector::mapCallback, this, _1));
+    "input/vector_map", rclcpp::QoS{1}.transient_local(), std::bind(&MapBasedDetector::mapCallback, this, _1));
   camera_info_sub_ = create_subscription<sensor_msgs::msg::CameraInfo>(
     "input/camera_info", 1, std::bind(&MapBasedDetector::cameraInfoCallback, this, _1));
   route_sub_ = create_subscription<autoware_planning_msgs::msg::Route>(
