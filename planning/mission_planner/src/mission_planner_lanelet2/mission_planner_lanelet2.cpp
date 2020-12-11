@@ -126,7 +126,7 @@ MissionPlannerLanelet2::MissionPlannerLanelet2()
 {
   using std::placeholders::_1;
   map_subscriber_ = create_subscription<autoware_lanelet2_msgs::msg::MapBin>(
-    "input/vector_map", 10, std::bind(
+    "input/vector_map", rclcpp::QoS{10}.transient_local(), std::bind(
       &MissionPlannerLanelet2::mapCallback, this,
       _1));
 }
