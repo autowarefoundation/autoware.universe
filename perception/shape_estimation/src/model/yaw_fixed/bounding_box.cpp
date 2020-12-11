@@ -111,7 +111,7 @@ bool BoundingBoxModel::estimate(
     Q.push_back(std::make_pair(theta, q));        // col.8, Algo.2
   }
 
-  double theta_star;  // col.10, Algo.2
+  double theta_star = 0.0;  // col.10, Algo.2
   double max_q = 0.0;
   for (size_t i = 0; i < Q.size(); ++i) {
     if (max_q < Q.at(i).second || i == 0) {
