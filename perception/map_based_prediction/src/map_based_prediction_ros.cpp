@@ -196,7 +196,7 @@ MapBasedPredictionROS::MapBasedPredictionROS()
     "/perception/object_recognition/tracking/objects", 1,
     std::bind(&MapBasedPredictionROS::objectsCallback, this, std::placeholders::_1));
   sub_map_ = this->create_subscription<autoware_lanelet2_msgs::msg::MapBin>(
-    "/vector_map", 10,
+    "/vector_map", rclcpp::QoS{10}.transient_local(),
     std::bind(&MapBasedPredictionROS::mapCallback, this, std::placeholders::_1));
 
   pub_objects_ = this->create_publisher<autoware_perception_msgs::msg::DynamicObjectArray>(
