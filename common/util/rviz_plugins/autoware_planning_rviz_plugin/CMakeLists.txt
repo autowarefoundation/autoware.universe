@@ -19,7 +19,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 add_definitions(-DQT_NO_KEYWORDS)
 find_package(Eigen3 REQUIRED)
 
-ament_auto_add_library(autoware_planning_rviz_plugin
+ament_auto_add_library(autoware_planning_rviz_plugin SHARED
   include/path/display.hpp
   src/path/display.cpp
   include/trajectory/display.hpp

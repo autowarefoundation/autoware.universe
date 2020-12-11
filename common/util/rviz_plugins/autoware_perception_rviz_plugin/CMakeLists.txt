@@ -26,7 +26,7 @@ ament_auto_add_library(autoware_perception_rviz_plugin
   src/tools/delete_all_objects.cpp
 )
 
-target_link_libraries(autoware_perception_rviz_plugin 
+target_link_libraries(autoware_perception_rviz_plugin SHARED
   ${QT_LIBRARIES})
 
 # Export the plugin to be imported by rviz2

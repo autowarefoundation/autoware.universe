@@ -1,4 +1,4 @@
-<library path="lib/libautoware_perception_rviz_plugin">
+<library path="autoware_perception_rviz_plugin">
   <class name="rviz_plugins/PedestrianInitialPoseTool"
          type="rviz_plugins::PedestrianInitialPoseTool"
          base_class_type="rviz_common::Tool">
