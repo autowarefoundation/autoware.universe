@@ -111,6 +111,41 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 ```
 
+#### Linters
+Add only `ament_cmake_cppcheck` to the list of linters in `package.xml`
+
+```xml
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_cmake_cppcheck</test_depend>
+```
+
+And the corresponding code in `CMakeLists.txt`
+
+```cmake
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
+endif()
+```
+
+Additionally, we use `clang-tidy`, in order for it to work, we need to build packages with the following:
+
+```shell
+colcon build --packages-up-to <pkg_name> --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+```
+
+And then:
+
+```shell
+clang-tidy -p build/compile_commands.json <path_to_pkg_source>
+```
+
+To check the output of the linters we can just run the tests with:
+
+```shell
+colcon test --packages-select <pkg_name> && colcon test-result --verbose
+```
+
 ### Replacing `std_msgs`
 In ROS2, you should define semantically meaningful wrappers around primitive (number) types. They are deprecated in Foxy.
 
