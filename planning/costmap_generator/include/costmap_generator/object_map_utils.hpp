@@ -30,8 +30,11 @@
  *
  */
 
-#ifndef PROJECT_OBJECT_MAP_UTILS_H
-#define PROJECT_OBJECT_MAP_UTILS_H
+#ifndef COSTMAP_GENERATOR__OBJECT_MAP_UTILS_HPP_
+#define COSTMAP_GENERATOR__OBJECT_MAP_UTILS_HPP_
+
+#include <string>
+#include <vector>
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -91,4 +94,4 @@ void FillPolygonAreas(
 
 }  // namespace object_map
 
-#endif  // PROJECT_OBJECT_MAP_UTILS_H
+#endif  // COSTMAP_GENERATOR__OBJECT_MAP_UTILS_HPP_

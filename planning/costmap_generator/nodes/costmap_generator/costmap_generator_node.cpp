@@ -1,18 +1,16 @@
-/*
- * Copyright 2020 Tier IV, Inc. All rights reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use private_node file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2020 Tier IV, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 /*
  *  Copyright (c) 2018, Nagoya University
@@ -45,6 +43,11 @@
  ********************/
 
 #include "costmap_generator/costmap_generator.hpp"
+
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include "lanelet2_extension/utility/message_conversion.hpp"
 #include "lanelet2_extension/utility/query.hpp"
@@ -120,7 +123,7 @@ CostmapGenerator::CostmapGenerator()
   sub_points_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "input/points_no_ground", 1, std::bind(&CostmapGenerator::onPoints, this, _1));
   sub_lanelet_bin_map_ = this->create_subscription<autoware_lanelet2_msgs::msg::MapBin>(
-    "input/vector_map", rclcpp::QoS(1).transient_local(), std::bind(&CostmapGenerator::onLaneletMapBin, this, _1));
+    "input/vector_map", 1, std::bind(&CostmapGenerator::onLaneletMapBin, this, _1));
   sub_scenario_ = this->create_subscription<autoware_planning_msgs::msg::Scenario>(
     "input/scenario", 1, std::bind(&CostmapGenerator::onScenario, this, _1));
 
@@ -149,7 +152,7 @@ CostmapGenerator::CostmapGenerator()
         map_frame_, vehicle_frame_, rclcpp::Time(
           0), rclcpp::Duration::from_seconds(10.0));
       break;
-    } catch (tf2::TransformException ex) {
+    } catch (tf2::TransformException & ex) {
       RCLCPP_ERROR(this->get_logger(), "waiting for initial pose...");
     }
   }
@@ -237,7 +240,7 @@ void CostmapGenerator::onTimer()
       tf_buffer_.lookupTransform(
       costmap_frame_, vehicle_frame_, rclcpp::Time(
         0), rclcpp::Duration::from_seconds(1.0));
-  } catch (tf2::TransformException ex) {
+  } catch (tf2::TransformException & ex) {
     RCLCPP_ERROR(rclcpp::get_logger("Exception: "), "%s", ex.what());
     return;
   }
@@ -304,12 +307,11 @@ autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr transformObjec
       tf_buffer.lookupTransform(
       target_frame_id, src_frame_id, rclcpp::Time(
         0), rclcpp::Duration::from_seconds(1.0));
-  } catch (tf2::TransformException ex) {
+  } catch (tf2::TransformException & ex) {
     RCLCPP_ERROR(rclcpp::get_logger("Exception: "), "%s", ex.what());
   }
 
   for (auto & object : objects->objects) {
-
     geometry_msgs::msg::PoseStamped output_stamped, input_stamped;
     input_stamped.pose = object.state.pose_covariance.pose;
     tf2::doTransform(input_stamped, output_stamped, objects2costmap);

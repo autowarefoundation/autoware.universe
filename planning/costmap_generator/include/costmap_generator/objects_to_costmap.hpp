@@ -42,13 +42,15 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ********************/
 
-#ifndef OBJECTS_TO_COSTMAP_H
-#define OBJECTS_TO_COSTMAP_H
+#ifndef COSTMAP_GENERATOR__OBJECTS_TO_COSTMAP_HPP_
+#define COSTMAP_GENERATOR__OBJECTS_TO_COSTMAP_HPP_
+
+#include <string>
+
+#include "autoware_perception_msgs/msg/dynamic_object_array.hpp"
 
 #include "rclcpp/rclcpp.hpp"
 #include "grid_map_ros/grid_map_ros.hpp"
-
-#include "autoware_perception_msgs/msg/dynamic_object_array.hpp"
 
 class ObjectsToCostmap
 {
@@ -118,4 +120,4 @@ private:
     grid_map::GridMap & objects_costmap);
 };
 
-#endif  // OBJECTS_TO_COSTMAP_H
+#endif  // COSTMAP_GENERATOR__OBJECTS_TO_COSTMAP_HPP_

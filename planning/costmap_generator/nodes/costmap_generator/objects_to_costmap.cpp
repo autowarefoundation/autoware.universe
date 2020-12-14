@@ -43,6 +43,7 @@
  ********************/
 
 #include <cmath>
+#include <string>
 
 #include "tf2/utils.h"
 

@@ -44,6 +44,9 @@
 
 #include "costmap_generator/points_to_costmap.hpp"
 
+#include <string>
+#include <vector>
+
 // Constructor
 PointsToCostmap::PointsToCostmap() {}
 
@@ -89,7 +92,7 @@ grid_map::Index PointsToCostmap::fetchGridIndexFromPoint(const pcl::PointXYZ & p
 }
 
 std::vector<std::vector<std::vector<double>>> PointsToCostmap::assignPoints2GridCell(
-  const grid_map::GridMap & gridmap, const pcl::PointCloud<pcl::PointXYZ>::Ptr & in_sensor_points)
+  const pcl::PointCloud<pcl::PointXYZ>::Ptr & in_sensor_points)
 {
   double y_cell_size = std::ceil(grid_length_y_ * (1 / grid_resolution_));
   double x_cell_size = std::ceil(grid_length_x_ * (1 / grid_resolution_));
@@ -139,7 +142,7 @@ grid_map::Matrix PointsToCostmap::makeCostmapFromPoints(
 {
   initGridmapParam(gridmap);
   std::vector<std::vector<std::vector<double>>> grid_vec =
-    assignPoints2GridCell(gridmap, in_sensor_points);
+    assignPoints2GridCell(in_sensor_points);
   grid_map::Matrix costmap = calculateCostmap(
     maximum_height_thres, minimum_lidar_height_thres, grid_min_value, grid_max_value, gridmap,
     gridmap_layer_name, grid_vec);

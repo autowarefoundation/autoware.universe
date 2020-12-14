@@ -42,8 +42,11 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ********************/
 
-#ifndef POINTS_TO_COSTMAP_H
-#define POINTS_TO_COSTMAP_H
+#ifndef COSTMAP_GENERATOR__POINTS_TO_COSTMAP_HPP_
+#define COSTMAP_GENERATOR__POINTS_TO_COSTMAP_HPP_
+
+#include <string>
+#include <vector>
 
 #include "rclcpp/rclcpp.hpp"
 #include "grid_map_ros/grid_map_ros.hpp"
@@ -94,12 +97,10 @@ private:
   grid_map::Index fetchGridIndexFromPoint(const pcl::PointXYZ & point);
 
   /// \brief Assign pointcloud to appropriate cell in gridmap
-  /// \param[in] gridmap: costmap based on gridmap
   /// \param[in] in_sensor_points: subscribed pointcloud
   /// \param[out] grid-x-length x grid-y-length size grid stuffed with point's height in
   /// corresponding grid cell
   std::vector<std::vector<std::vector<double>>> assignPoints2GridCell(
-    const grid_map::GridMap & gridmap,
     const pcl::PointCloud<pcl::PointXYZ>::Ptr & in_sensor_points);
 
   /// \brief calculate costmap from subscribed pointcloud
@@ -118,4 +119,4 @@ private:
     const std::vector<std::vector<std::vector<double>>> grid_vec);
 };
 
-#endif  // POINTS_TO_COSTMAP_H
+#endif  // COSTMAP_GENERATOR__POINTS_TO_COSTMAP_HPP_

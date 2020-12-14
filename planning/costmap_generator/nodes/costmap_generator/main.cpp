@@ -43,6 +43,8 @@
  ********************
  */
 
+#include <memory>
+
 #include "costmap_generator/costmap_generator.hpp"
 #include "rclcpp/rclcpp.hpp"
 

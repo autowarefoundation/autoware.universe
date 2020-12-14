@@ -32,6 +32,9 @@
 
 #include "costmap_generator/object_map_utils.hpp"
 
+#include <string>
+#include <vector>
+
 namespace object_map
 {
 void PublishGridMap(
