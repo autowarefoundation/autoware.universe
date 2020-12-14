@@ -18,6 +18,9 @@
     <exec_depend>rclcpp</exec_depend>
     <exec_depend>rclcpp_components</exec_depend>
 
+    <test_depend>ament_lint_auto</test_depend>
+    <test_depend>ament_cmake_cppcheck</test_depend>
+
     <export>
         <build_type>ament_cmake</build_type>
     </export>
