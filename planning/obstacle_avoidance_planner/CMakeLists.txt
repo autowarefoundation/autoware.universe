@@ -3,6 +3,8 @@ project(obstacle_avoidance_planner)
 
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
+  set(CMAKE_CXX_EXTENSIONS OFF)
 endif()
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -36,6 +38,11 @@ target_include_directories(obstacle_avoidance_planner_node
 target_link_libraries(obstacle_avoidance_planner_node
   ${OpenCV_LIBRARIES}
 )
+
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
+endif()
 
 ament_auto_package(
   INSTALL_TO_SHARE

@@ -19,7 +19,9 @@
  * @date 2019.05.01
  */
 
-#pragma once
+#ifndef OBSTACLE_AVOIDANCE_PLANNER__VEHICLE_MODEL__VEHICLE_MODEL_INTERFACE_HPP_
+#define OBSTACLE_AVOIDANCE_PLANNER__VEHICLE_MODEL__VEHICLE_MODEL_INTERFACE_HPP_
+
 #include "eigen3/Eigen/Core"
 
 /**
@@ -86,3 +88,5 @@ public:
    */
   virtual void calculateReferenceInput(Eigen::MatrixXd * Uref) = 0;
 };
+
+#endif  // OBSTACLE_AVOIDANCE_PLANNER__VEHICLE_MODEL__VEHICLE_MODEL_INTERFACE_HPP_

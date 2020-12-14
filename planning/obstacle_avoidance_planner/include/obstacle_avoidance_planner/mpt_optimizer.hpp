@@ -37,10 +37,17 @@
  * SOFTWARE.
  */
 
-#ifndef MPTOPTIMIZER_H
-#define MPTOPTIMIZER_H
+#ifndef OBSTACLE_AVOIDANCE_PLANNER__MPT_OPTIMIZER_HPP_
+#define OBSTACLE_AVOIDANCE_PLANNER__MPT_OPTIMIZER_HPP_
 
+#include <memory>
+#include <vector>
+
+#include "autoware_planning_msgs/msg/path_point.hpp"
 #include "autoware_planning_msgs/msg/trajectory_point.hpp"
+#include "boost/optional/optional_fwd.hpp"
+#include "eigen3/Eigen/Core"
+#include "nav_msgs/msg/map_meta_data.hpp"
 
 namespace cv
 {
@@ -73,10 +80,10 @@ struct ReferencePoint
   double s = 0;
   geometry_msgs::msg::Pose top_pose;
   geometry_msgs::msg::Pose mid_pose;
-  double delta_yaw_from_p1;
-  double delta_yaw_from_p2;
+  double delta_yaw_from_p1 = 0;
+  double delta_yaw_from_p2 = 0;
   bool is_fix = false;
-  double fixing_lat;
+  double fixing_lat = 0;
 };
 
 struct Bounds
@@ -158,8 +165,7 @@ private:
   std::vector<ReferencePoint> convertToReferencePoints(
     const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & points,
     const geometry_msgs::msg::Pose & ego_pose,
-    const std::unique_ptr<Trajectories> & prev_mpt_points,
-    DebugData * debug_data) const;
+    const std::unique_ptr<Trajectories> & prev_mpt_points, DebugData * debug_data) const;
 
   std::vector<ReferencePoint> getReferencePoints(
     const geometry_msgs::msg::Pose & origin_pose, const geometry_msgs::msg::Pose & ego_pose,
@@ -222,7 +228,7 @@ private:
     const double initial_value, const CVMaps & maps,
     const bool search_expanding_side = false) const;
 
-  //TODO: refactor replace all relevant funcs
+  // TODO(unknown): refactor replace all relevant funcs
   double getClearance(
     const cv::Mat & clearance_map, const geometry_msgs::msg::Point & map_point,
     const nav_msgs::msg::MapMetaData & map_info, const double default_dist = 0.0) const;
@@ -251,4 +257,4 @@ public:
     const geometry_msgs::msg::Pose & ego_pose, DebugData * debug_data);
 };
 
-#endif
+#endif  // OBSTACLE_AVOIDANCE_PLANNER__MPT_OPTIMIZER_HPP_

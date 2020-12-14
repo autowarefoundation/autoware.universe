@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "obstacle_avoidance_planner/vehicle_model/vehicle_model_bicycle_kinematics.hpp"
+
 #include <iostream>
 
 KinematicsBicycleModel::KinematicsBicycleModel(
@@ -33,7 +34,7 @@ void KinematicsBicycleModel::calculateDiscreteMatrix(
   /* Linearize delta around delta_r (referece delta) */
   double delta_r = atan(wheelbase_ * curvature_);
   if (abs(delta_r) >= steer_lim_) {
-    delta_r = steer_lim_ * (double)sign(delta_r);
+    delta_r = steer_lim_ * static_cast<double>(sign(delta_r));
   }
   double cos_delta_r_squared_inv = 1 / (cos(delta_r) * cos(delta_r));
 
@@ -42,7 +43,7 @@ void KinematicsBicycleModel::calculateDiscreteMatrix(
   // Eigen::MatrixXd I = Eigen::MatrixXd::Identity(dim_x_, dim_x_);
   // Ad = (I - dt * 0.5 * Ad).inverse() * (I + dt * 0.5 * Ad);  // bilinear discretization
 
-  //assuming delta time for steer tau
+  // assuming delta time for steer tau
   constexpr double dt = 0.03;
   *Ad << 1.0, ds, 0, 0.0, 1, ds / (wheelbase_ * cos_delta_r_squared_inv), 0.0, 0,
     1 - dt / steer_tau_;

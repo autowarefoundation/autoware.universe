@@ -12,36 +12,34 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "obstacle_avoidance_planner/node.hpp"
+
 #include <algorithm>
 #include <chrono>
 #include <limits>
 #include <memory>
-
-#include "boost/optional.hpp"
+#include <string>
+#include <vector>
 
 #include "autoware_perception_msgs/msg/dynamic_object.hpp"
 #include "autoware_perception_msgs/msg/dynamic_object_array.hpp"
 #include "autoware_planning_msgs/msg/path.hpp"
 #include "autoware_planning_msgs/msg/trajectory.hpp"
+#include "boost/optional.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "geometry_msgs/msg/twist_stamped.hpp"
-#include "std_msgs/msg/bool.hpp"
-#include "visualization_msgs/msg/marker_array.hpp"
-
-#include "rclcpp/rclcpp.hpp"
-#include "rclcpp/time.hpp"
-
-#include "tf2/utils.h"
-#include "tf2_ros/transform_listener.h"
-
-#include "opencv2/core.hpp"
-
 #include "obstacle_avoidance_planner/debug.hpp"
 #include "obstacle_avoidance_planner/eb_path_optimizer.hpp"
 #include "obstacle_avoidance_planner/mpt_optimizer.hpp"
-#include "obstacle_avoidance_planner/node.hpp"
 #include "obstacle_avoidance_planner/process_cv.hpp"
 #include "obstacle_avoidance_planner/util.hpp"
+#include "opencv2/core.hpp"
+#include "rclcpp/rclcpp.hpp"
+#include "rclcpp/time.hpp"
+#include "std_msgs/msg/bool.hpp"
+#include "tf2/utils.h"
+#include "tf2_ros/transform_listener.h"
+#include "visualization_msgs/msg/marker_array.hpp"
 
 ObstacleAvoidancePlanner::ObstacleAvoidancePlanner()
 : Node("obstacle_avoidance_planner"), min_num_points_for_getting_yaw_(2)
@@ -61,9 +59,8 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner()
     create_publisher<autoware_planning_msgs::msg::Trajectory>("debug/smoothed_poins", durable_qos);
   is_avoidance_possible_pub_ = create_publisher<autoware_planning_msgs::msg::IsAvoidancePossible>(
     "/planning/scenario_planning/lane_driving/obstacle_avoidance_ready", durable_qos);
-  debug_markers_pub_ = create_publisher<visualization_msgs::msg::MarkerArray>(
-    "debug/marker",
-    durable_qos);
+  debug_markers_pub_ =
+    create_publisher<visualization_msgs::msg::MarkerArray>("debug/marker", durable_qos);
   debug_clearance_map_pub_ =
     create_publisher<nav_msgs::msg::OccupancyGrid>("debug/clearance_map", durable_qos);
   debug_object_clearance_map_pub_ =
@@ -88,9 +85,8 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner()
   is_publishing_clearance_map_ = declare_parameter("is_publishing_clearance_map", false);
   is_showing_debug_info_ = declare_parameter("is_showing_debug_info", true);
   is_using_vehicle_config_ = declare_parameter("is_using_vehicle_config", false);
-  is_stopping_if_outside_drivable_area_ = declare_parameter(
-    "is_stopping_if_outside_drivable_area",
-    true);
+  is_stopping_if_outside_drivable_area_ =
+    declare_parameter("is_stopping_if_outside_drivable_area", true);
   enable_avoidance_ = declare_parameter("enable_avoidance", true);
 
   qp_param_ = std::make_unique<QPParam>();
@@ -108,74 +104,68 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner()
 
   traj_param_->num_sampling_points = declare_parameter("num_sampling_points", 100);
   traj_param_->num_joint_buffer_points = declare_parameter("num_joint_buffer_points", 2);
-  traj_param_->num_joint_buffer_points_for_extending = declare_parameter(
-    "num_joint_buffer_points_for_extending", 4);
+  traj_param_->num_joint_buffer_points_for_extending =
+    declare_parameter("num_joint_buffer_points_for_extending", 4);
   traj_param_->num_offset_for_begin_idx = declare_parameter("num_offset_for_begin_idx", 2);
   traj_param_->num_fix_points_for_extending = declare_parameter("num_fix_points_for_extending", 2);
   traj_param_->num_fix_points_for_mpt = declare_parameter("num_fix_points_for_mpt", 8);
-  traj_param_->delta_arc_length_for_optimization = declare_parameter(
-    "delta_arc_length_for_optimization", 1.0);
-  traj_param_->delta_arc_length_for_mpt_points = declare_parameter(
-    "delta_arc_length_for_mpt_points", 1.0);
-  traj_param_->delta_arc_length_for_trajectory = declare_parameter(
-    "delta_arc_length_for_trajectory", 0.1);
-  traj_param_->delta_dist_threshold_for_closest_point = declare_parameter(
-    "delta_dist_threshold_for_closest_point",
-    3.0);
-  traj_param_->delta_yaw_threshold_for_closest_point = declare_parameter(
-    "delta_yaw_threshold_for_closest_point",
-    1.0);
-  traj_param_->delta_yaw_threshold_for_straight = declare_parameter(
-    "delta_yaw_threshold_for_straight", 0.02);
+  traj_param_->delta_arc_length_for_optimization =
+    declare_parameter("delta_arc_length_for_optimization", 1.0);
+  traj_param_->delta_arc_length_for_mpt_points =
+    declare_parameter("delta_arc_length_for_mpt_points", 1.0);
+  traj_param_->delta_arc_length_for_trajectory =
+    declare_parameter("delta_arc_length_for_trajectory", 0.1);
+  traj_param_->delta_dist_threshold_for_closest_point =
+    declare_parameter("delta_dist_threshold_for_closest_point", 3.0);
+  traj_param_->delta_yaw_threshold_for_closest_point =
+    declare_parameter("delta_yaw_threshold_for_closest_point", 1.0);
+  traj_param_->delta_yaw_threshold_for_straight =
+    declare_parameter("delta_yaw_threshold_for_straight", 0.02);
   traj_param_->trajectory_length = declare_parameter("trajectory_length", 200);
   traj_param_->forward_fixing_distance = declare_parameter("forward_fixing_distance", 10.0);
   traj_param_->backward_fixing_distance = declare_parameter("backward_fixing_distance", 5.0);
   traj_param_->max_avoiding_ego_velocity_ms =
     declare_parameter("max_avoiding_ego_velocity_ms", 6.0);
-  traj_param_->max_avoiding_objects_velocity_ms = declare_parameter(
-    "max_avoiding_objects_velocity_ms", 0.1);
+  traj_param_->max_avoiding_objects_velocity_ms =
+    declare_parameter("max_avoiding_objects_velocity_ms", 0.1);
   traj_param_->center_line_width = declare_parameter("center_line_width", 1.7);
-  traj_param_->acceleration_for_non_deceleration_range = declare_parameter(
-    "acceleration_for_non_deceleration_range",
-    1.0);
-  traj_param_->max_dist_for_extending_end_point = declare_parameter(
-    "max_dist_for_extending_end_point", 5.0);
+  traj_param_->acceleration_for_non_deceleration_range =
+    declare_parameter("acceleration_for_non_deceleration_range", 1.0);
+  traj_param_->max_dist_for_extending_end_point =
+    declare_parameter("max_dist_for_extending_end_point", 5.0);
 
-  constrain_param_->is_getting_constraints_close2path_points = declare_parameter(
-    "is_getting_constraints_close2path_points", false);
-  constrain_param_->clearance_for_straight_line = declare_parameter(
-    "clearance_for_straight_line",
-    0.05);
+  constrain_param_->is_getting_constraints_close2path_points =
+    declare_parameter("is_getting_constraints_close2path_points", false);
+  constrain_param_->clearance_for_straight_line =
+    declare_parameter("clearance_for_straight_line", 0.05);
   constrain_param_->clearance_for_joint = declare_parameter("clearance_for_joint", 3.2);
   constrain_param_->range_for_extend_joint = declare_parameter("range_for_extend_joint", 1.6);
-  constrain_param_->clearance_for_only_smoothing = declare_parameter(
-    "clearance_for_only_smoothing",
-    0.1);
-  constrain_param_->clearance_from_object_for_straight = declare_parameter(
-    "clearance_from_object_for_straight", 10.0);
+  constrain_param_->clearance_for_only_smoothing =
+    declare_parameter("clearance_for_only_smoothing", 0.1);
+  constrain_param_->clearance_from_object_for_straight =
+    declare_parameter("clearance_from_object_for_straight", 10.0);
   constrain_param_->clearance_from_road = declare_parameter("clearance_from_road", 0.1);
   constrain_param_->clearance_from_object = declare_parameter("clearance_from_object", 0.6);
-  constrain_param_->extra_desired_clearance_from_road = declare_parameter(
-    "extra_desired_clearance_from_road", 0.2);
-  constrain_param_->min_object_clearance_for_joint = declare_parameter(
-    "min_object_clearance_for_joint", 3.2);
-  constrain_param_->max_x_constrain_search_range = declare_parameter(
-    "max_x_constrain_search_range",
-    0.4);
-  constrain_param_->coef_x_cosntrain_search_resolution = declare_parameter(
-    "coef_x_cosntrain_search_resolution", 1.0);
-  constrain_param_->coef_y_cosntrain_search_resolution = declare_parameter(
-    "coef_y_cosntrain_search_resolution", 0.5);
+  constrain_param_->extra_desired_clearance_from_road =
+    declare_parameter("extra_desired_clearance_from_road", 0.2);
+  constrain_param_->min_object_clearance_for_joint =
+    declare_parameter("min_object_clearance_for_joint", 3.2);
+  constrain_param_->max_x_constrain_search_range =
+    declare_parameter("max_x_constrain_search_range", 0.4);
+  constrain_param_->coef_x_cosntrain_search_resolution =
+    declare_parameter("coef_x_cosntrain_search_resolution", 1.0);
+  constrain_param_->coef_y_cosntrain_search_resolution =
+    declare_parameter("coef_y_cosntrain_search_resolution", 0.5);
   constrain_param_->keep_space_shape_x = declare_parameter("keep_space_shape_x", 3.0);
   constrain_param_->keep_space_shape_y = declare_parameter("keep_space_shape_y", 2.0);
-  constrain_param_->max_lon_space_for_driveable_constraint = declare_parameter(
-    "max_lon_space_for_driveable_constraint", 0.5);
+  constrain_param_->max_lon_space_for_driveable_constraint =
+    declare_parameter("max_lon_space_for_driveable_constraint", 0.5);
   constrain_param_->clearance_for_fixing = 0.0;
 
   min_delta_dist_for_replan_ = declare_parameter("min_delta_dist_for_replan", 5.0);
   min_delta_time_sec_for_replan_ = declare_parameter("min_delta_time_sec_for_replan", 1.0);
-  distance_for_path_shape_change_detection_ = declare_parameter(
-    "distance_for_path_shape_chagne_detection", 2.0);
+  distance_for_path_shape_change_detection_ =
+    declare_parameter("distance_for_path_shape_chagne_detection", 2.0);
 
   if (is_using_vehicle_config_) {
     double vehicle_width = 1.5;
@@ -185,7 +175,7 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner()
   constrain_param_->min_object_clearance_for_deceleration =
     constrain_param_->clearance_from_object + constrain_param_->keep_space_shape_y * 0.5;
 
-  //vehicle param
+  // vehicle param
   vehicle_param_->width = declare_parameter("/vehicle_info/vehicle_width", 1.5);
   vehicle_param_->length = declare_parameter("/vehicle_info/vehicle_length", 2.0);
   vehicle_param_->wheelbase = declare_parameter("/vehicle_info/wheel_base", 1.0);
@@ -210,12 +200,10 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner()
   mpt_param_->steer_acc_weight = declare_parameter("steer_acc_weight", 0.000001);
   mpt_param_->terminal_lat_error_weight = declare_parameter("terminal_lat_error_weight", 0.0);
   mpt_param_->terminal_yaw_error_weight = declare_parameter("terminal_yaw_error_weight", 100.0);
-  mpt_param_->terminal_path_lat_error_weight = declare_parameter(
-    "terminal_path_lat_error_weight",
-    1000.0);
-  mpt_param_->terminal_path_yaw_error_weight = declare_parameter(
-    "terminal_path_yaw_error_weight",
-    1000.0);
+  mpt_param_->terminal_path_lat_error_weight =
+    declare_parameter("terminal_path_lat_error_weight", 1000.0);
+  mpt_param_->terminal_path_yaw_error_weight =
+    declare_parameter("terminal_path_yaw_error_weight", 1000.0);
   mpt_param_->zero_ff_steer_angle = declare_parameter("zero_ff_steer_angle", 0.5);
 
   mpt_param_->clearance_from_road = vehicle_param_->width * 0.5 +
@@ -264,16 +252,14 @@ rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::paramCallback
   update_param("clearance_for_joint", constrain_param_->clearance_for_joint);
   update_param("clearance_for_only_smoothing", constrain_param_->clearance_for_only_smoothing);
   update_param(
-    "clearance_from_object_for_straight",
-    constrain_param_->clearance_from_object_for_straight);
+    "clearance_from_object_for_straight", constrain_param_->clearance_from_object_for_straight);
 
   // clearance(distance) when generating trajectory
   update_param("clearance_from_road", constrain_param_->clearance_from_road);
   update_param("clearance_from_object", constrain_param_->clearance_from_object);
   update_param("min_object_clearance_for_joint", constrain_param_->min_object_clearance_for_joint);
   update_param(
-    "extra_desired_clearance_from_road",
-    constrain_param_->extra_desired_clearance_from_road);
+    "extra_desired_clearance_from_road", constrain_param_->extra_desired_clearance_from_road);
 
   // avoiding param
   update_param("max_avoiding_objects_velocity_ms", traj_param_->max_avoiding_objects_velocity_ms);
@@ -352,8 +338,8 @@ autoware_planning_msgs::msg::Trajectory ObstacleAvoidancePlanner::generateTrajec
   auto t_end = std::chrono::high_resolution_clock::now();
   float elapsed_ms = std::chrono::duration<float, std::milli>(t_end - t_start).count();
   RCLCPP_INFO_EXPRESSION(
-    get_logger(),
-    is_showing_debug_info_, "Total time: = %f [ms]\n==========================", elapsed_ms);
+    get_logger(), is_showing_debug_info_,
+    "Total time: = %f [ms]\n==========================", elapsed_ms);
   return output;
 }
 
@@ -416,10 +402,8 @@ std::unique_ptr<geometry_msgs::msg::Pose> ObstacleAvoidancePlanner::getCurrentEg
   geometry_msgs::msg::TransformStamped tf_current_pose;
 
   try {
-    tf_current_pose =
-      tf_buffer_ptr_->lookupTransform(
-      "map", "base_link", rclcpp::Time(
-        0), rclcpp::Duration::from_seconds(1.0));
+    tf_current_pose = tf_buffer_ptr_->lookupTransform(
+      "map", "base_link", rclcpp::Time(0), rclcpp::Duration::from_seconds(1.0));
   } catch (tf2::TransformException ex) {
     RCLCPP_ERROR(get_logger(), "[ObstacleAvoidancePlanner] %s", ex.what());
     return nullptr;
@@ -613,9 +597,7 @@ void ObstacleAvoidancePlanner::publishingDebugData(
   }
   if (is_publishing_clearance_map_) {
     debug_clearance_map_pub_->publish(
-      getDebugCostmap(
-        debug_data.clearance_map,
-        path.drivable_area));
+      getDebugCostmap(debug_data.clearance_map, path.drivable_area));
     debug_object_clearance_map_pub_->publish(
       getDebugCostmap(debug_data.only_object_clearance_map, path.drivable_area));
   }
@@ -631,7 +613,9 @@ int ObstacleAvoidancePlanner::calculateNonDecelerationRange(
   const double non_decelerating_arc_length =
     (ego_twist.linear.x - traj_param_->max_avoiding_ego_velocity_ms) /
     traj_param_->acceleration_for_non_deceleration_range;
-  if (non_decelerating_arc_length < 0 || traj_points.size() < 2) {return 0;}
+  if (non_decelerating_arc_length < 0 || traj_points.size() < 2) {
+    return 0;
+  }
 
   double accum_arc_length = 0;
   for (int i = nearest_idx + 1; i < traj_points.size(); i++) {
@@ -679,9 +663,7 @@ boost::optional<Trajectories> ObstacleAvoidancePlanner::calcTrajectoryInsideArea
     if (stop_idx) {
       auto clock = rclcpp::Clock(RCL_ROS_TIME);
       RCLCPP_WARN_THROTTLE(
-        get_logger(),
-        clock,
-        std::chrono::milliseconds(1000).count(),
+        get_logger(), clock, std::chrono::milliseconds(1000).count(),
         "[Avoidance] Expecting over drivable area");
     }
     return getBaseTrajectory(path_points, trajs);
@@ -725,8 +707,8 @@ Trajectories ObstacleAvoidancePlanner::getPrevTrajs(
   }
 }
 
-std::vector<autoware_planning_msgs::msg::TrajectoryPoint> ObstacleAvoidancePlanner::
-getPrevTrajectory(
+std::vector<autoware_planning_msgs::msg::TrajectoryPoint>
+ObstacleAvoidancePlanner::getPrevTrajectory(
   const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points) const
 {
   std::vector<autoware_planning_msgs::msg::TrajectoryPoint> traj;
@@ -793,9 +775,8 @@ Trajectories ObstacleAvoidancePlanner::getBaseTrajectory(
 
 boost::optional<int> ObstacleAvoidancePlanner::getStopIdx(
   const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points,
-  const Trajectories & trajs,
-  const nav_msgs::msg::MapMetaData & map_info, const cv::Mat & road_clearance_map,
-  DebugData * debug_data) const
+  const Trajectories & trajs, const nav_msgs::msg::MapMetaData & map_info,
+  const cv::Mat & road_clearance_map, DebugData * debug_data) const
 {
   const int nearest_idx = util::getNearestIdx(
     path_points, *current_ego_pose_ptr_, 0, traj_param_->delta_yaw_threshold_for_closest_point);

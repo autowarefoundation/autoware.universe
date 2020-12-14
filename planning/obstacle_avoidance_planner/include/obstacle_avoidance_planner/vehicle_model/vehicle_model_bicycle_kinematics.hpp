@@ -45,7 +45,9 @@
  *
  */
 
-#pragma once
+#ifndef OBSTACLE_AVOIDANCE_PLANNER__VEHICLE_MODEL__VEHICLE_MODEL_BICYCLE_KINEMATICS_HPP_
+#define OBSTACLE_AVOIDANCE_PLANNER__VEHICLE_MODEL__VEHICLE_MODEL_BICYCLE_KINEMATICS_HPP_
+
 #include "eigen3/Eigen/Core"
 #include "eigen3/Eigen/LU"
 #include "obstacle_avoidance_planner/vehicle_model/vehicle_model_interface.hpp"
@@ -93,3 +95,4 @@ private:
   double steer_lim_;  //!< @brief steering angle limit [rad]
   double steer_tau_;  //!< @brief steering time constant for 1d-model
 };
+#endif  // OBSTACLE_AVOIDANCE_PLANNER__VEHICLE_MODEL__VEHICLE_MODEL_BICYCLE_KINEMATICS_HPP_

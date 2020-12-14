@@ -13,15 +13,16 @@
 // limitations under the License.
 // #ifndef UTIL_H
 // #define UTIL_H
-#ifndef OBSTACLE_AVOIDANCE_PLANNER_UTIL_H
-#define OBSTACLE_AVOIDANCE_PLANNER_UTIL_H
+#ifndef OBSTACLE_AVOIDANCE_PLANNER__UTIL_HPP_
+#define OBSTACLE_AVOIDANCE_PLANNER__UTIL_HPP_
 
-#include "eigen3/Eigen/Core"
-
-#include "boost/optional/optional_fwd.hpp"
+#include <memory>
+#include <vector>
 
 #include "autoware_planning_msgs/msg/path_point.hpp"
 #include "autoware_planning_msgs/msg/trajectory.hpp"
+#include "boost/optional/optional_fwd.hpp"
+#include "eigen3/Eigen/Core"
 
 struct VehicleParam;
 struct ReferencePoint;
@@ -36,16 +37,13 @@ geometry_msgs::msg::Point transformToAbsoluteCoordinate2D(
   const geometry_msgs::msg::Point & point, const geometry_msgs::msg::Pose & origin);
 
 double calculate2DDistance(
-  const geometry_msgs::msg::Point & a,
-  const geometry_msgs::msg::Point & b);
+  const geometry_msgs::msg::Point & a, const geometry_msgs::msg::Point & b);
 
 double calculateSquaredDistance(
-  const geometry_msgs::msg::Point & a,
-  const geometry_msgs::msg::Point & b);
+  const geometry_msgs::msg::Point & a, const geometry_msgs::msg::Point & b);
 
 double getYawFromPoints(
-  const geometry_msgs::msg::Point & a,
-  const geometry_msgs::msg::Point & a_root);
+  const geometry_msgs::msg::Point & a, const geometry_msgs::msg::Point & a_root);
 
 double normalizeRadian(const double angle);
 
@@ -62,8 +60,7 @@ boost::optional<geometry_msgs::msg::Point> transformMapToOptionalImage(
 
 bool transformMapToImage(
   const geometry_msgs::msg::Point & map_point,
-  const nav_msgs::msg::MapMetaData & occupancy_grid_info,
-  geometry_msgs::msg::Point & image_point);
+  const nav_msgs::msg::MapMetaData & occupancy_grid_info, geometry_msgs::msg::Point & image_point);
 
 bool interpolate2DPoints(
   const std::vector<double> & x, const std::vector<double> & y, const double resolution,
@@ -171,7 +168,7 @@ bool hasValidNearestPointFromEgo(
 
 std::vector<autoware_planning_msgs::msg::TrajectoryPoint> concatTraj(const Trajectories & trajs);
 
-const int getZeroVelocityIdx(
+int getZeroVelocityIdx(
   const bool is_showing_debug_info, const std::vector<geometry_msgs::msg::Point> & fine_points,
   const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points,
   const std::unique_ptr<Trajectories> & opt_trajs, const TrajectoryParam & traj_param);
@@ -179,18 +176,16 @@ const int getZeroVelocityIdx(
 template<typename T>
 int getZeroVelocityIdxFromPoints(
   const T & points, const std::vector<geometry_msgs::msg::Point> & fine_points,
-  const int default_idx,
-  const TrajectoryParam & traj_param);
+  const int default_idx, const TrajectoryParam & traj_param);
 
 template<typename T>
 double getArcLength(const T & points, const int initial_idx = 0);
 
 double getArcLength(
-  const std::vector<geometry_msgs::msg::Pose> & points,
-  const int initial_idx = 0);
+  const std::vector<geometry_msgs::msg::Pose> & points, const int initial_idx = 0);
 
 void logOSQPSolutionStatus(const int solution_status);
 
 }  // namespace util
 
-#endif
+#endif  // OBSTACLE_AVOIDANCE_PLANNER__UTIL_HPP_

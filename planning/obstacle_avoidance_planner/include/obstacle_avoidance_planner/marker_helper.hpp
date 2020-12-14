@@ -11,7 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#pragma once
+#ifndef OBSTACLE_AVOIDANCE_PLANNER__MARKER_HELPER_HPP_
+#define OBSTACLE_AVOIDANCE_PLANNER__MARKER_HELPER_HPP_
 
 #include "visualization_msgs/msg/marker_array.hpp"
 
@@ -46,3 +47,4 @@ inline void appendMarkerArray(
     marker_array->markers.push_back(marker);
   }
 }
+#endif  // OBSTACLE_AVOIDANCE_PLANNER__MARKER_HELPER_HPP_

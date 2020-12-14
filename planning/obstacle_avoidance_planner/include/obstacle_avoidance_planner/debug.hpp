@@ -11,8 +11,17 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef DEBUG_OBSTACLEA_AVOIDANCE_PLANNER_H
-#define DEBUG_OBSTACLEA_AVOIDANCE_PLANNER_H
+#ifndef OBSTACLE_AVOIDANCE_PLANNER__DEBUG_HPP_
+#define OBSTACLE_AVOIDANCE_PLANNER__DEBUG_HPP_
+
+#include <string>
+#include <vector>
+
+#include "autoware_perception_msgs/msg/dynamic_object.hpp"
+#include "autoware_planning_msgs/msg/trajectory_point.hpp"
+#include "nav_msgs/msg/occupancy_grid.hpp"
+#include "opencv2/core.hpp"
+#include "visualization_msgs/msg/marker_array.hpp"
 
 struct ConstrainRectangle;
 struct Bounds;
@@ -83,4 +92,4 @@ visualization_msgs::msg::MarkerArray getVirtualWallTextMarkerArray(
 
 nav_msgs::msg::OccupancyGrid getDebugCostmap(
   const cv::Mat & clearance_map, const nav_msgs::msg::OccupancyGrid & occupancy_grid);
-#endif
+#endif  // OBSTACLE_AVOIDANCE_PLANNER__DEBUG_HPP_

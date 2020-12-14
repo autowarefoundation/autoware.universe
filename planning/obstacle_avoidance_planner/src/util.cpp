@@ -15,25 +15,26 @@
  *
  */
 
+#include <algorithm>
+#include <limits>
+#include <memory>
 #include <stack>
-
-#include "boost/optional.hpp"
+#include <vector>
 
 #include "autoware_planning_msgs/msg/path_point.hpp"
 #include "autoware_planning_msgs/msg/trajectory_point.hpp"
+#include "boost/optional.hpp"
 #include "geometry_msgs/msg/point32.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 #include "nav_msgs/msg/map_meta_data.hpp"
 
 // #include "ros/console.h";
 
-#include "tf2/utils.h"
-
-#include "spline_interpolation/spline_interpolation.hpp"
-
 #include "obstacle_avoidance_planner/eb_path_optimizer.hpp"
 #include "obstacle_avoidance_planner/mpt_optimizer.hpp"
 #include "obstacle_avoidance_planner/util.hpp"
+#include "spline_interpolation/spline_interpolation.hpp"
+#include "tf2/utils.h"
 
 namespace util
 {
@@ -96,8 +97,7 @@ double calculate2DDistance(const geometry_msgs::msg::Point & a, const geometry_m
 }
 
 double calculateSquaredDistance(
-  const geometry_msgs::msg::Point & a,
-  const geometry_msgs::msg::Point & b)
+  const geometry_msgs::msg::Point & a, const geometry_msgs::msg::Point & b)
 {
   const double dx = a.x - b.x;
   const double dy = a.y - b.y;
@@ -105,8 +105,7 @@ double calculateSquaredDistance(
 }
 
 double getYawFromPoints(
-  const geometry_msgs::msg::Point & a,
-  const geometry_msgs::msg::Point & a_root)
+  const geometry_msgs::msg::Point & a, const geometry_msgs::msg::Point & a_root)
 {
   const double dx = a.x - a_root.x;
   const double dy = a.y - a_root.y;
@@ -165,7 +164,9 @@ boost::optional<geometry_msgs::msg::Point> transformMapToOptionalImage(
   double map_y_in_image_resolution = relative_p.y / resolution;
   double image_x = map_y_height - map_y_in_image_resolution;
   double image_y = map_x_width - map_x_in_image_resolution;
-  if (image_x >= 0 && image_x < (int)map_y_height && image_y >= 0 && image_y < (int)map_x_width) {
+  if (image_x >= 0 && image_x < static_cast<int>(map_y_height) && image_y >= 0 &&
+    image_y < static_cast<int>(map_x_width))
+  {
     geometry_msgs::msg::Point image_point;
     image_point.x = image_x;
     image_point.y = image_y;
@@ -177,8 +178,7 @@ boost::optional<geometry_msgs::msg::Point> transformMapToOptionalImage(
 
 bool transformMapToImage(
   const geometry_msgs::msg::Point & map_point,
-  const nav_msgs::msg::MapMetaData & occupancy_grid_info,
-  geometry_msgs::msg::Point & image_point)
+  const nav_msgs::msg::MapMetaData & occupancy_grid_info, geometry_msgs::msg::Point & image_point)
 {
   geometry_msgs::msg::Point relative_p =
     transformToRelativeCoordinate2D(map_point, occupancy_grid_info.origin);
@@ -189,7 +189,9 @@ bool transformMapToImage(
   const double map_y_in_image_resolution = relative_p.y * scale;
   const double image_x = map_y_height - map_y_in_image_resolution;
   const double image_y = map_x_width - map_x_in_image_resolution;
-  if (image_x >= 0 && image_x < (int)map_y_height && image_y >= 0 && image_y < (int)map_x_width) {
+  if (image_x >= 0 && image_x < static_cast<int>(map_y_height) && image_y >= 0 &&
+    image_y < static_cast<int>(map_x_width))
+  {
     image_point.x = image_x;
     image_point.y = image_y;
     return true;
@@ -367,12 +369,10 @@ int getNearestIdx(
 }
 template int getNearestIdx<std::vector<autoware_planning_msgs::msg::TrajectoryPoint>>(
   const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> &,
-  const geometry_msgs::msg::Pose &,
-  const int, const double);
+  const geometry_msgs::msg::Pose &, const int, const double);
 template int getNearestIdx<std::vector<autoware_planning_msgs::msg::PathPoint>>(
   const std::vector<autoware_planning_msgs::msg::PathPoint> &, const geometry_msgs::msg::Pose &,
-  const int,
-  const double);
+  const int, const double);
 
 int getNearestIdx(
   const std::vector<geometry_msgs::msg::Point> & points, const geometry_msgs::msg::Pose & pose,
@@ -485,8 +485,7 @@ template int getNearestIdx<std::vector<autoware_planning_msgs::msg::TrajectoryPo
   const geometry_msgs::msg::Point & point, const int default_idx);
 template int getNearestIdx<std::vector<autoware_planning_msgs::msg::PathPoint>>(
   const std::vector<autoware_planning_msgs::msg::PathPoint> & points,
-  const geometry_msgs::msg::Point & point,
-  const int default_idx);
+  const geometry_msgs::msg::Point & point, const int default_idx);
 
 int getNearestIdx(
   const std::vector<geometry_msgs::msg::Point> & points, const geometry_msgs::msg::Point & point)
@@ -613,8 +612,7 @@ std::vector<autoware_planning_msgs::msg::TrajectoryPoint> fillTrajectoryWithVelo
 template<typename T>
 std::vector<autoware_planning_msgs::msg::TrajectoryPoint> alignVelocityWithPoints(
   const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & base_traj_points,
-  const T & points,
-  const int zero_velocity_traj_idx, const int max_skip_comparison_idx)
+  const T & points, const int zero_velocity_traj_idx, const int max_skip_comparison_idx)
 {
   auto traj_points = base_traj_points;
   int prev_begin_idx = 0;
@@ -845,7 +843,7 @@ std::vector<autoware_planning_msgs::msg::TrajectoryPoint> concatTraj(const Traje
   return trajectory;
 }
 
-const int getZeroVelocityIdx(
+int getZeroVelocityIdx(
   const bool is_showing_debug_info, const std::vector<geometry_msgs::msg::Point> & fine_points,
   const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points,
   const std::unique_ptr<Trajectories> & opt_trajs, const TrajectoryParam & traj_param)
@@ -860,9 +858,9 @@ const int getZeroVelocityIdx(
       util::concatTraj(*opt_trajs), fine_points, default_idx, traj_param);
   }
   RCLCPP_INFO_EXPRESSION(
-    rclcpp::get_logger("util"),
-    is_showing_debug_info, "0 m/s idx from path: %d from opt: %d total size %zu",
-    zero_velocity_idx_from_path, zero_velocity_idx_from_opt_points, fine_points.size());
+    rclcpp::get_logger("util"), is_showing_debug_info,
+    "0 m/s idx from path: %d from opt: %d total size %zu", zero_velocity_idx_from_path,
+    zero_velocity_idx_from_opt_points, fine_points.size());
   // std::cout << "zero velo from path " << zero_velocity_idx_from_path << " from opt "
   //           << zero_velocity_idx_from_opt_points << " total size  " << fine_points.size()
   //           << std::endl;
@@ -880,8 +878,7 @@ const int getZeroVelocityIdx(
     const float debug_dist = util::calculate2DDistance(
       path_points[zero_velocity_path_idx].pose.position, fine_points[zero_velocity_idx]);
     RCLCPP_INFO(
-      rclcpp::get_logger("util"), "Dist from path 0 velocity point: = %f [m]",
-      debug_dist);
+      rclcpp::get_logger("util"), "Dist from path 0 velocity point: = %f [m]", debug_dist);
   }
   return zero_velocity_idx;
 }
@@ -889,8 +886,7 @@ const int getZeroVelocityIdx(
 template<typename T>
 int getZeroVelocityIdxFromPoints(
   const T & points, const std::vector<geometry_msgs::msg::Point> & fine_points,
-  const int default_idx,
-  const TrajectoryParam & traj_param)
+  const int default_idx, const TrajectoryParam & traj_param)
 {
   int zero_velocity_points_idx = points.size() - 1;
   for (int i = 0; i < points.size(); i++) {
@@ -908,12 +904,11 @@ int getZeroVelocityIdxFromPoints(
 }
 template int getZeroVelocityIdxFromPoints<std::vector<autoware_planning_msgs::msg::PathPoint>>(
   const std::vector<autoware_planning_msgs::msg::PathPoint> &,
-  const std::vector<geometry_msgs::msg::Point> &,
-  const int, const TrajectoryParam &);
-template int getZeroVelocityIdxFromPoints<std::vector<autoware_planning_msgs::msg::TrajectoryPoint>>(
+  const std::vector<geometry_msgs::msg::Point> &, const int, const TrajectoryParam &);
+template int
+getZeroVelocityIdxFromPoints<std::vector<autoware_planning_msgs::msg::TrajectoryPoint>>(
   const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> &,
-  const std::vector<geometry_msgs::msg::Point> &, const int,
-  const TrajectoryParam &);
+  const std::vector<geometry_msgs::msg::Point> &, const int, const TrajectoryParam &);
 
 template<typename T>
 double getArcLength(const T & points, const int initial_idx)
@@ -963,36 +958,32 @@ void logOSQPSolutionStatus(const int solution_status)
     // RCLCPP_INFO(rclcpp::get_logger("util"),"[Avoidance] OSQP solution status: OSQP_SOLVED");
   } else if (solution_status == OSQP_DUAL_INFEASIBLE_INACCURATE) {
     RCLCPP_WARN(
-      rclcpp::get_logger(
-        "util"), "[Avoidance] OSQP solution status: OSQP_DUAL_INFEASIBLE_INACCURATE");
+      rclcpp::get_logger("util"),
+      "[Avoidance] OSQP solution status: OSQP_DUAL_INFEASIBLE_INACCURATE");
   } else if (solution_status == OSQP_PRIMAL_INFEASIBLE_INACCURATE) {
     RCLCPP_WARN(
-      rclcpp::get_logger(
-        "util"), "[Avoidance] OSQP solution status: OSQP_PRIMAL_INFEASIBLE_INACCURATE");
+      rclcpp::get_logger("util"),
+      "[Avoidance] OSQP solution status: OSQP_PRIMAL_INFEASIBLE_INACCURATE");
   } else if (solution_status == OSQP_SOLVED_INACCURATE) {
     RCLCPP_WARN(
-      rclcpp::get_logger(
-        "util"), "[Avoidance] OSQP solution status: OSQP_SOLVED_INACCURATE");
+      rclcpp::get_logger("util"), "[Avoidance] OSQP solution status: OSQP_SOLVED_INACCURATE");
   } else if (solution_status == OSQP_MAX_ITER_REACHED) {
     RCLCPP_WARN(rclcpp::get_logger("util"), "[Avoidance] OSQP solution status: OSQP_ITER_REACHED");
   } else if (solution_status == OSQP_PRIMAL_INFEASIBLE) {
     RCLCPP_WARN(
-      rclcpp::get_logger(
-        "util"), "[Avoidance] OSQP solution status: OSQP_PRIMAL_INFEASIBLE");
+      rclcpp::get_logger("util"), "[Avoidance] OSQP solution status: OSQP_PRIMAL_INFEASIBLE");
   } else if (solution_status == OSQP_DUAL_INFEASIBLE) {
     RCLCPP_WARN(
-      rclcpp::get_logger("util"),
-      "[Avoidance] OSQP solution status: OSQP_DUAL_INFEASIBLE");
+      rclcpp::get_logger("util"), "[Avoidance] OSQP solution status: OSQP_DUAL_INFEASIBLE");
   } else if (solution_status == OSQP_SIGINT) {
     RCLCPP_WARN(rclcpp::get_logger("util"), "[Avoidance] OSQP solution status: OSQP_SIGINT");
     RCLCPP_WARN(
-      rclcpp::get_logger(
-        "util"), "[Avoidance] Interrupted by user, process will be finished.");
+      rclcpp::get_logger("util"), "[Avoidance] Interrupted by user, process will be finished.");
     std::exit(0);
   } else {
     RCLCPP_WARN(
-      rclcpp::get_logger(
-        "util"), "[Avoidance] OSQP solution status: Not defined %d", solution_status);
+      rclcpp::get_logger("util"), "[Avoidance] OSQP solution status: Not defined %d",
+      solution_status);
   }
 }
 

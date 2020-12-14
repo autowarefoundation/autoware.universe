@@ -12,24 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "opencv2/core.hpp"
-#include <rclcpp/clock.hpp>
+#include <string>
+#include <vector>
 
-#include "tf2/utils.h"
-
+#include "obstacle_avoidance_planner/debug.hpp"
+#include "rclcpp/clock.hpp"
 #include "autoware_perception_msgs/msg/dynamic_object.hpp"
 #include "autoware_planning_msgs/msg/trajectory_point.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 #include "nav_msgs/msg/occupancy_grid.hpp"
-#include "visualization_msgs/msg/marker.hpp"
-#include "visualization_msgs/msg/marker_array.hpp"
-
-#include "obstacle_avoidance_planner/debug.hpp"
 #include "obstacle_avoidance_planner/eb_path_optimizer.hpp"
 #include "obstacle_avoidance_planner/marker_helper.hpp"
 #include "obstacle_avoidance_planner/mpt_optimizer.hpp"
 #include "obstacle_avoidance_planner/process_cv.hpp"
 #include "obstacle_avoidance_planner/util.hpp"
+#include "opencv2/core.hpp"
+#include "tf2/utils.h"
+#include "visualization_msgs/msg/marker.hpp"
+#include "visualization_msgs/msg/marker_array.hpp"
 
 visualization_msgs::msg::MarkerArray getDebugVisualizationMarker(
   const DebugData & debug_data,
@@ -645,15 +645,13 @@ visualization_msgs::msg::MarkerArray getTopBoundsLineMarkerArray(
     geometry_msgs::msg::Point rel_lb;
     rel_lb.x = 0;
     rel_lb.y = bounds[i].c1.lb;
-    geometry_msgs::msg::Point abs_lb = util::transformToAbsoluteCoordinate2D(
-      rel_lb,
-      candidate_top[i]);
+    geometry_msgs::msg::Point abs_lb =
+      util::transformToAbsoluteCoordinate2D(rel_lb, candidate_top[i]);
     geometry_msgs::msg::Point rel_ub;
     rel_ub.x = 0;
     rel_ub.y = bounds[i].c1.ub;
-    geometry_msgs::msg::Point abs_ub = util::transformToAbsoluteCoordinate2D(
-      rel_ub,
-      candidate_top[i]);
+    geometry_msgs::msg::Point abs_ub =
+      util::transformToAbsoluteCoordinate2D(rel_ub, candidate_top[i]);
     marker.points.push_back(abs_lb);
     marker.points.push_back(abs_ub);
     msg.markers.push_back(marker);

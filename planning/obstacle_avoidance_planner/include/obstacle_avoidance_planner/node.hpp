@@ -11,25 +11,28 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef NODE_H
-#define NODE_H
+#ifndef OBSTACLE_AVOIDANCE_PLANNER__NODE_HPP_
+#define OBSTACLE_AVOIDANCE_PLANNER__NODE_HPP_
 
-#include "boost/optional/optional_fwd.hpp"
+#include <memory>
 #include <mutex>
+#include <vector>
 
+#include "autoware_perception_msgs/msg/dynamic_object_array.hpp"
 #include "autoware_planning_msgs/msg/enable_avoidance.hpp"
 #include "autoware_planning_msgs/msg/is_avoidance_possible.hpp"
 #include "autoware_planning_msgs/msg/path.hpp"
 #include "autoware_planning_msgs/msg/path_point.hpp"
-#include "autoware_planning_msgs/msg/trajectory_point.hpp"
 #include "autoware_planning_msgs/msg/trajectory.hpp"
-#include "autoware_perception_msgs/msg/dynamic_object_array.hpp"
-#include "geometry_msgs/msg/pose.hpp"
+#include "autoware_planning_msgs/msg/trajectory_point.hpp"
+#include "boost/optional/optional_fwd.hpp"
 #include "geometry_msgs/msg/point.hpp"
-#include "geometry_msgs/msg/twist_stamped.hpp"
+#include "geometry_msgs/msg/pose.hpp"
 #include "geometry_msgs/msg/twist.hpp"
+#include "geometry_msgs/msg/twist_stamped.hpp"
 #include "nav_msgs/msg/map_meta_data.hpp"
 #include "nav_msgs/msg/occupancy_grid.hpp"
+#include "rclcpp/rclcpp.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
 
 namespace ros
@@ -123,11 +126,12 @@ private:
 
   void initialize();
 
-  //generate fine trajectory
+  // generate fine trajectory
   std::vector<autoware_planning_msgs::msg::TrajectoryPoint> generatePostProcessedTrajectory(
     const geometry_msgs::msg::Pose & ego_pose,
     const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points,
-    const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & merged_optimized_points) const;
+    const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & merged_optimized_points)
+  const;
 
   bool needReplan(
     const geometry_msgs::msg::Pose & ego_pose,
@@ -192,9 +196,8 @@ private:
 
   boost::optional<int> getStopIdx(
     const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points,
-    const Trajectories & trajs,
-    const nav_msgs::msg::MapMetaData & map_info, const cv::Mat & road_clearance_map,
-    DebugData * debug_data) const;
+    const Trajectories & trajs, const nav_msgs::msg::MapMetaData & map_info,
+    const cv::Mat & road_clearance_map, DebugData * debug_data) const;
 
   void declareObstacleAvoidancePlannerParameters();
 
@@ -206,4 +209,4 @@ public:
   ~ObstacleAvoidancePlanner();
 };
 
-#endif
+#endif  // OBSTACLE_AVOIDANCE_PLANNER__NODE_HPP_
