@@ -15,17 +15,16 @@
 #pragma once
 
 #ifndef Q_MOC_RUN
-#include "ros/ros.h"
-#include "rviz/message_filter_display.h"
-// #include "rviz/properties/ros_topic_property.h"
-#include "rviz/display_context.h"
-#include "rviz/frame_manager.h"
-#include "rviz/properties/bool_property.h"
-#include "rviz/properties/color_property.h"
-#include "rviz/properties/enum_property.h"
-#include "rviz/properties/float_property.h"
-#include "rviz/properties/int_property.h"
-#include "rviz/validate_floats.h"
+#include "rclcpp/rclcpp.hpp"
+#include "rviz_common/message_filter_display.hpp"
+#include "rviz_common/display_context.hpp"
+#include "rviz_common/frame_manager_iface.hpp"
+#include "rviz_common/properties/bool_property.hpp"
+#include "rviz_common/properties/color_property.hpp"
+#include "rviz_common/properties/enum_property.hpp"
+#include "rviz_common/properties/float_property.hpp"
+#include "rviz_common/properties/int_property.hpp"
+#include "rviz_common/validate_floats.hpp"
 
 #include "OgreBillboardSet.h"
 #include "OgreManualObject.h"
@@ -35,14 +34,14 @@
 #include <deque>
 #include <memory>
 
-#include "autoware_vehicle_msgs/TurnSignal.h"
+#include "autoware_vehicle_msgs/msg/turn_signal.hpp"
 
 #include "jsk_overlay_utils.hpp"
 #endif
 
 namespace rviz_plugins
 {
-class TurnSignalDisplay : public rviz::MessageFilterDisplay<autoware_vehicle_msgs::TurnSignal>
+class TurnSignalDisplay : public rviz_common::MessageFilterDisplay<autoware_vehicle_msgs::msg::TurnSignal>
 {
   Q_OBJECT
 
@@ -58,16 +57,16 @@ private Q_SLOTS:
   void updateVisualization();
 
 protected:
-  void processMessage(const autoware_vehicle_msgs::TurnSignalConstPtr & msg_ptr) override;
+  void processMessage(const autoware_vehicle_msgs::msg::TurnSignal::ConstSharedPtr msg_ptr) override;
   jsk_rviz_plugins::OverlayObject::Ptr overlay_;
-  rviz::IntProperty * property_left_;
-  rviz::IntProperty * property_top_;
-  rviz::IntProperty * property_width_;
-  rviz::IntProperty * property_height_;
+  rviz_common::properties::IntProperty * property_left_;
+  rviz_common::properties::IntProperty * property_top_;
+  rviz_common::properties::IntProperty * property_width_;
+  rviz_common::properties::IntProperty * property_height_;
   // QImage hud_;
 
 private:
-  autoware_vehicle_msgs::TurnSignalConstPtr last_msg_ptr_;
+  autoware_vehicle_msgs::msg::TurnSignal::ConstSharedPtr last_msg_ptr_;
 };
 
 }  // namespace rviz_plugins

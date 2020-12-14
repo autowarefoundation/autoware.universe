@@ -13,27 +13,26 @@
 // limitations under the License.
 
 #include "turn_signal.hpp"
-#include "OGRE/OgreHardwarePixelBuffer.h"
-#include "ros/package.h"
-#include "rviz/display_context.h"
-#include "rviz/uniform_string_stream.h"
+#include "OgreHardwarePixelBuffer.h"
+#include "ament_index_cpp/get_package_share_directory.hpp"
+#include "rviz_common/uniform_string_stream.hpp"
 #include "QPainter"
 
 namespace rviz_plugins
 {
 TurnSignalDisplay::TurnSignalDisplay()
 {
-  property_left_ = new rviz::IntProperty(
+  property_left_ = new rviz_common::properties::IntProperty(
     "Left", 128, "Left of the plotter window", this, SLOT(updateVisualization()), this);
   property_left_->setMin(0);
-  property_top_ = new rviz::IntProperty(
+  property_top_ = new rviz_common::properties::IntProperty(
     "Top", 128, "Top of the plotter window", this, SLOT(updateVisualization()));
   property_top_->setMin(0);
 
-  property_width_ = new rviz::IntProperty(
+  property_width_ = new rviz_common::properties::IntProperty(
     "Width", 256, "Width of the plotter window", this, SLOT(updateVisualization()), this);
   property_width_->setMin(10);
-  property_height_ = new rviz::IntProperty(
+  property_height_ = new rviz_common::properties::IntProperty(
     "Height", 256, "Width of the plotter window", this, SLOT(updateVisualization()), this);
   property_height_->setMin(10);
 }
@@ -49,7 +48,7 @@ void TurnSignalDisplay::onInitialize()
 {
   MFDClass::onInitialize();
   static int count = 0;
-  rviz::UniformStringStream ss;
+  rviz_common::UniformStringStream ss;
   ss << "TurnSignalDisplayObject" << count++;
   overlay_.reset(new jsk_rviz_plugins::OverlayObject(ss.str()));
 
@@ -73,7 +72,7 @@ void TurnSignalDisplay::onDisable()
   overlay_->hide();
 }
 
-void TurnSignalDisplay::processMessage(const autoware_vehicle_msgs::TurnSignalConstPtr & msg_ptr)
+void TurnSignalDisplay::processMessage(const autoware_vehicle_msgs::msg::TurnSignal::ConstSharedPtr msg_ptr)
 {
   if (!isEnabled()) {
     return;
@@ -97,7 +96,7 @@ void TurnSignalDisplay::processMessage(const autoware_vehicle_msgs::TurnSignalCo
   // turn signal color
   QColor white_color(Qt::white);
   white_color.setAlpha(255);
-  if (msg_ptr->data == autoware_vehicle_msgs::TurnSignal::RIGHT) {
+  if (msg_ptr->data == autoware_vehicle_msgs::msg::TurnSignal::RIGHT) {
     QPointF * line = new QPointF[7];
     painter.setPen(QPen(white_color, int(2), Qt::DotLine));
     line[0].setX((double)w * 0.0 / 5.0);
@@ -132,7 +131,7 @@ void TurnSignalDisplay::processMessage(const autoware_vehicle_msgs::TurnSignalCo
     line[6].setX((double)w * 4.0 / 5.0);
     line[6].setY((double)h * 4.0 / 5.0);
     painter.drawPolygon(line, 7);
-  } else if (msg_ptr->data == autoware_vehicle_msgs::TurnSignal::LEFT) {
+  } else if (msg_ptr->data == autoware_vehicle_msgs::msg::TurnSignal::LEFT) {
     QPointF * line = new QPointF[7];
     painter.setPen(QPen(white_color, int(2), Qt::DotLine));
     line[0].setX((double)w * 5.0 / 5.0);
@@ -167,7 +166,7 @@ void TurnSignalDisplay::processMessage(const autoware_vehicle_msgs::TurnSignalCo
     line[6].setX((double)w * 1.0 / 5.0);
     line[6].setY((double)h * 4.0 / 5.0);
     painter.drawPolygon(line, 7);
-  } else if (msg_ptr->data == autoware_vehicle_msgs::TurnSignal::HAZARD) {
+  } else if (msg_ptr->data == autoware_vehicle_msgs::msg::TurnSignal::HAZARD) {
     painter.setBrush(QBrush(Qt::white, Qt::SolidPattern));
     painter.setPen(QPen(white_color, int(2), Qt::SolidLine));
     QPointF * line = new QPointF[7];
@@ -250,5 +249,5 @@ void TurnSignalDisplay::updateVisualization()
 
 }  // namespace rviz_plugins
 
-#include "pluginlib/class_list_macros.h"
-PLUGINLIB_EXPORT_CLASS(rviz_plugins::TurnSignalDisplay, rviz::Display)
+#include <pluginlib/class_list_macros.hpp>
+PLUGINLIB_EXPORT_CLASS(rviz_plugins::TurnSignalDisplay, rviz_common::Display)

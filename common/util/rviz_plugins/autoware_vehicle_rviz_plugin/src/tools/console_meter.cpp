@@ -13,10 +13,9 @@
 // limitations under the License.
 
 #include "console_meter.hpp"
-#include "OGRE/OgreHardwarePixelBuffer.h"
-#include "ros/package.h"
-#include "rviz/display_context.h"
-#include "rviz/uniform_string_stream.h"
+#include "OgreHardwarePixelBuffer.h"
+#include "rviz_common/display_context.hpp"
+#include "rviz_common/uniform_string_stream.hpp"
 #include "QPainter"
 
 namespace rviz_plugins
@@ -60,22 +59,22 @@ ConsoleMeterDisplay::ConsoleMeterDisplay()
   meter_min_angle_(0.698132 /* 40deg */),
   meter_max_angle_(5.58505 /* 320deg */)
 {
-  property_text_color_ = new rviz::ColorProperty(
+  property_text_color_ = new rviz_common::properties::ColorProperty(
     "Text Color", QColor(25, 255, 240), "text color", this, SLOT(updateVisualization()), this);
-  property_left_ = new rviz::IntProperty(
+  property_left_ = new rviz_common::properties::IntProperty(
     "Left", 128, "Left of the plotter window", this, SLOT(updateVisualization()), this);
   property_left_->setMin(0);
-  property_top_ = new rviz::IntProperty(
+  property_top_ = new rviz_common::properties::IntProperty(
     "Top", 128, "Top of the plotter window", this, SLOT(updateVisualization()));
   property_top_->setMin(0);
 
-  property_length_ = new rviz::IntProperty(
+  property_length_ = new rviz_common::properties::IntProperty(
     "Length", 256, "Length of the plotter window", this, SLOT(updateVisualization()), this);
   property_length_->setMin(10);
-  property_value_height_offset_ = new rviz::IntProperty(
+  property_value_height_offset_ = new rviz_common::properties::IntProperty(
     "Value height offset", 0, "Height offset of the plotter window", this,
     SLOT(updateVisualization()));
-  property_handle_angle_scale_ = new rviz::FloatProperty(
+  property_handle_angle_scale_ = new rviz_common::properties::FloatProperty(
     "Scale", 3.0, "Scale is steering andle to handle angle ", this, SLOT(updateVisualization()),
     this);
   property_handle_angle_scale_->setMin(0.1);
@@ -92,7 +91,7 @@ void ConsoleMeterDisplay::onInitialize()
 {
   MFDClass::onInitialize();
   static int count = 0;
-  rviz::UniformStringStream ss;
+  rviz_common::UniformStringStream ss;
   ss << "ConsoleMeterDisplayObject" << count++;
   overlay_.reset(new jsk_rviz_plugins::OverlayObject(ss.str()));
 
@@ -128,7 +127,7 @@ void ConsoleMeterDisplay::onDisable()
   overlay_->hide();
 }
 
-void ConsoleMeterDisplay::processMessage(const geometry_msgs::TwistStampedConstPtr & msg_ptr)
+void ConsoleMeterDisplay::processMessage(const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg_ptr)
 {
   if (!isEnabled()) {
     return;
@@ -224,5 +223,5 @@ void ConsoleMeterDisplay::updateVisualization()
 
 }  // namespace rviz_plugins
 
-#include "pluginlib/class_list_macros.h"
-PLUGINLIB_EXPORT_CLASS(rviz_plugins::ConsoleMeterDisplay, rviz::Display)
+#include <pluginlib/class_list_macros.hpp>
+PLUGINLIB_EXPORT_CLASS(rviz_plugins::ConsoleMeterDisplay, rviz_common::Display)

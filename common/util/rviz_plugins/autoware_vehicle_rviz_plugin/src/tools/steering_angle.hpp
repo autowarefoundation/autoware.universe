@@ -15,17 +15,16 @@
 #pragma once
 
 #ifndef Q_MOC_RUN
-#include "ros/ros.h"
-#include "rviz/message_filter_display.h"
-// #include "rviz/properties/ros_topic_property.h"
-#include "rviz/display_context.h"
-#include "rviz/frame_manager.h"
-#include "rviz/properties/bool_property.h"
-#include "rviz/properties/color_property.h"
-#include "rviz/properties/enum_property.h"
-#include "rviz/properties/float_property.h"
-#include "rviz/properties/int_property.h"
-#include "rviz/validate_floats.h"
+#include "rclcpp/rclcpp.hpp"
+#include "rviz_common/message_filter_display.hpp"
+#include "rviz_common/display_context.hpp"
+#include "rviz_common/frame_manager_iface.hpp"
+#include "rviz_common/properties/bool_property.hpp"
+#include "rviz_common/properties/color_property.hpp"
+#include "rviz_common/properties/enum_property.hpp"
+#include "rviz_common/properties/float_property.hpp"
+#include "rviz_common/properties/int_property.hpp"
+#include "rviz_common/validate_floats.hpp"
 
 #include "OgreBillboardSet.h"
 #include "OgreManualObject.h"
@@ -34,15 +33,16 @@
 
 #include <deque>
 #include <memory>
+#include <iomanip>
 
-#include "autoware_vehicle_msgs/Steering.h"
+#include "autoware_vehicle_msgs/msg/steering.hpp"
 
 #include "jsk_overlay_utils.hpp"
 #endif
 
 namespace rviz_plugins
 {
-class SteeringAngleDisplay : public rviz::MessageFilterDisplay<autoware_vehicle_msgs::Steering>
+class SteeringAngleDisplay : public rviz_common::MessageFilterDisplay<autoware_vehicle_msgs::msg::Steering>
 {
   Q_OBJECT
 
@@ -58,23 +58,23 @@ private Q_SLOTS:
   void updateVisualization();
 
 protected:
-  void processMessage(const autoware_vehicle_msgs::SteeringConstPtr & msg_ptr) override;
+  void processMessage(const autoware_vehicle_msgs::msg::Steering::ConstSharedPtr msg_ptr) override;
   std::unique_ptr<Ogre::ColourValue> setColorDependsOnVelocity(
     const double vel_max, const double cmd_vel);
   std::unique_ptr<Ogre::ColourValue> gradation(
     const QColor & color_min, const QColor & color_max, const double ratio);
   jsk_rviz_plugins::OverlayObject::Ptr overlay_;
-  rviz::ColorProperty * property_text_color_;
-  rviz::IntProperty * property_left_;
-  rviz::IntProperty * property_top_;
-  rviz::IntProperty * property_length_;
-  rviz::FloatProperty * property_handle_angle_scale_;
-  rviz::IntProperty * property_value_height_offset_;
+  rviz_common::properties::ColorProperty * property_text_color_;
+  rviz_common::properties::IntProperty * property_left_;
+  rviz_common::properties::IntProperty * property_top_;
+  rviz_common::properties::IntProperty * property_length_;
+  rviz_common::properties::FloatProperty * property_handle_angle_scale_;
+  rviz_common::properties::IntProperty * property_value_height_offset_;
   QPixmap handle_image_;
   // QImage hud_;
 
 private:
-  autoware_vehicle_msgs::SteeringConstPtr last_msg_ptr_;
+  autoware_vehicle_msgs::msg::Steering::ConstSharedPtr last_msg_ptr_;
 };
 
 }  // namespace rviz_plugins

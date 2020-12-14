@@ -54,23 +54,23 @@ std::unique_ptr<Ogre::ColourValue> VelocityHistoryDisplay::setColorDependsOnVelo
 
 VelocityHistoryDisplay::VelocityHistoryDisplay()
 {
-  property_velocity_timeout_ =
-    new rviz::FloatProperty("Timeout", 10.0, "", this, SLOT(updateVisualization()), this);
+  property_velocity_timeout_ = new rviz_common::properties::FloatProperty(
+    "Timeout", 10.0, "", this, SLOT(updateVisualization()), this);
   property_velocity_timeout_->setMin(0.0);
   property_velocity_timeout_->setMax(100000.0);
-  property_velocity_alpha_ =
-    new rviz::FloatProperty("Alpha", 1.0, "", this, SLOT(updateVisualization()), this);
+  property_velocity_alpha_ = new rviz_common::properties::FloatProperty(
+    "Alpha", 1.0, "", this, SLOT(updateVisualization()), this);
   property_velocity_alpha_->setMin(0.0);
   property_velocity_alpha_->setMax(1.0);
-  property_velocity_scale_ =
-    new rviz::FloatProperty("Scale", 0.3, "", this, SLOT(updateVisualization()), this);
+  property_velocity_scale_ = new rviz_common::properties::FloatProperty(
+    "Scale", 0.3, "", this, SLOT(updateVisualization()), this);
   property_velocity_scale_->setMin(0.1);
   property_velocity_scale_->setMax(10.0);
-  property_velocity_color_view_ =
-    new rviz::BoolProperty("Constant Color", false, "", this, SLOT(updateVisualization()), this);
-  property_velocity_color_ = new rviz::ColorProperty(
+  property_velocity_color_view_ = new rviz_common::properties::BoolProperty(
+    "Constant Color", false, "", this, SLOT(updateVisualization()), this);
+  property_velocity_color_ = new rviz_common::properties::ColorProperty(
     "Color", Qt::black, "", property_velocity_color_view_, SLOT(updateVisualization()), this);
-  property_vel_max_ = new rviz::FloatProperty(
+  property_vel_max_ = new rviz_common::properties::FloatProperty(
     "Color Border Vel Max", 3.0, "[m/s]", this, SLOT(updateVisualization()), this);
   property_vel_max_->setMin(0.0);
 }
@@ -97,29 +97,29 @@ void VelocityHistoryDisplay::reset()
   velocity_manual_object_->clear();
 }
 
-bool VelocityHistoryDisplay::validateFloats(const geometry_msgs::TwistStampedConstPtr & msg_ptr)
+bool VelocityHistoryDisplay::validateFloats(const geometry_msgs::msg::TwistStamped::ConstSharedPtr & msg_ptr)
 {
-  if (!rviz::validateFloats(msg_ptr->twist.linear.x)) return false;
+  if (!rviz_common::validateFloats(msg_ptr->twist.linear.x)) return false;
 
   return true;
 }
 
-void VelocityHistoryDisplay::processMessage(const geometry_msgs::TwistStampedConstPtr & msg_ptr)
+void VelocityHistoryDisplay::processMessage(const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg_ptr)
 {
   if (!validateFloats(msg_ptr)) {
     setStatus(
-      rviz::StatusProperty::Error, "Topic",
+      rviz_common::properties::StatusProperty::Error, "Topic",
       "Message contained invalid floating point values (nans or infs)");
     return;
   }
 
   Ogre::Vector3 position;
   Ogre::Quaternion orientation;
-  std_msgs::Header header;
+  std_msgs::msg::Header header;
   header = msg_ptr->header;
   header.frame_id = "base_link";
   if (!context_->getFrameManager()->getTransform(header, position, orientation)) {
-    ROS_DEBUG(
+    RCLCPP_DEBUG(rclcpp::get_logger("VelocityHistoryDisplay"),
       "Error transforming from frame '%s' to frame '%s'", header.frame_id.c_str(),
       qPrintable(fixed_frame_));
   }
@@ -137,12 +137,12 @@ void VelocityHistoryDisplay::updateVisualization()
     "BaseWhiteNoLighting", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
   material->setSceneBlending(Ogre::SBT_TRANSPARENT_ALPHA);
   material->setDepthWriteEnabled(false);
-  ros::Time current_time = ros::Time::now();
+  rclcpp::Time current_time = rclcpp::Clock().now();
 
   while (!history_.empty()) {
     if (
       property_velocity_timeout_->getFloat() <
-      (current_time - std::get<0>(history_.front())->header.stamp).toSec())
+      (current_time - std::get<0>(history_.front())->header.stamp).seconds())
       history_.pop_front();
     else
       break;
@@ -155,14 +155,14 @@ void VelocityHistoryDisplay::updateVisualization()
   for (size_t i = 0; i < history_.size(); ++i) {
     Ogre::ColourValue color;
     if (property_velocity_color_view_->getBool()) {
-      color = rviz::qtToOgre(property_velocity_color_->getColor());
+      color = rviz_common::properties::qtToOgre(property_velocity_color_->getColor());
     } else {
       /* color change depending on velocity */
       std::unique_ptr<Ogre::ColourValue> dynamic_color_ptr = setColorDependsOnVelocity(
         property_vel_max_->getFloat(), std::get<0>(history_.at(i))->twist.linear.x);
       color = *dynamic_color_ptr;
     }
-    color.a = 1.0 - (current_time - std::get<0>(history_.at(i))->header.stamp).toSec() /
+    color.a = 1.0 - (current_time - std::get<0>(history_.at(i))->header.stamp).seconds() /
                       property_velocity_timeout_->getFloat();
     color.a = std::min(std::max(color.a, float(0.0)), float(1.0));
     // std::cout << __LINE__ << ":" <<std::get<1>(history_.front()) <<std::endl;
@@ -179,5 +179,5 @@ void VelocityHistoryDisplay::updateVisualization()
 
 }  // namespace rviz_plugins
 
-#include "pluginlib/class_list_macros.h"
-PLUGINLIB_EXPORT_CLASS(rviz_plugins::VelocityHistoryDisplay, rviz::Display)
+#include <pluginlib/class_list_macros.hpp>
+PLUGINLIB_EXPORT_CLASS(rviz_plugins::VelocityHistoryDisplay, rviz_common::Display)

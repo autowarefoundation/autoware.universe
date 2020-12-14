@@ -36,11 +36,11 @@
 #ifndef JSK_RVIZ_PLUGIN_OVERLAY_UTIL_H_
 #define JSK_RVIZ_PLUGIN_OVERLAY_UTIL_H_
 
-#include "OGRE/OgreHardwarePixelBuffer.h"
-#include "OGRE/OgreMaterialManager.h"
-#include "OGRE/OgreTechnique.h"
-#include "OGRE/OgreTexture.h"
-#include "OGRE/OgreTextureManager.h"
+#include "OgreHardwarePixelBuffer.h"
+#include "OgreMaterialManager.h"
+#include "OgreTechnique.h"
+#include "OgreTexture.h"
+#include "OgreTextureManager.h"
 // see OGRE/OgrePrerequisites.h
 //#define OGRE_VERSION    ((OGRE_VERSION_MAJOR << 16) | (OGRE_VERSION_MINOR << 8) | OGRE_VERSION_PATCH)
 #if OGRE_VERSION < ((1 << 16) | (9 << 8) | 0)
@@ -49,16 +49,17 @@
 #include "OGRE/OgreOverlayManager.h"
 #include "OGRE/OgrePanelOverlayElement.h"
 #else
-#include "OGRE/Overlay/OgreOverlayContainer.h"
-#include "OGRE/Overlay/OgreOverlayElement.h"
-#include "OGRE/Overlay/OgreOverlayManager.h"
-#include "OGRE/Overlay/OgrePanelOverlayElement.h"
+#include "Overlay/OgreOverlay.h"
+#include "Overlay/OgreOverlayContainer.h"
+#include "Overlay/OgreOverlayElement.h"
+#include "Overlay/OgreOverlayManager.h"
+#include "Overlay/OgrePanelOverlayElement.h"
 #endif
 
 #include "QColor"
 #include "QImage"
 
-#include "ros/ros.h"
+#include "rclcpp/rclcpp.hpp"
 
 namespace jsk_rviz_plugins
 {
@@ -87,11 +88,8 @@ private:
 class OverlayObject
 {
 public:
-#if ROS_VERSION_MINIMUM(1, 12, 0)
+
   typedef std::shared_ptr<OverlayObject> Ptr;
-#else
-  typedef boost::shared_ptr<OverlayObject> Ptr;
-#endif
 
   OverlayObject(const std::string & name);
   virtual ~OverlayObject();
@@ -100,7 +98,7 @@ public:
   virtual void hide();
   virtual void show();
   virtual bool isTextureReady();
-  virtual bool updateTextureSize(unsigned int width, unsigned int height);
+  virtual void updateTextureSize(unsigned int width, unsigned int height);
   virtual ScopedPixelBuffer getBuffer();
   virtual void setPosition(double left, double top);
   virtual void setDimensions(double width, double height);
