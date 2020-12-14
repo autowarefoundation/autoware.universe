@@ -368,7 +368,7 @@ ObstacleAvoidancePlanner::generateOptimizedTrajectory(
     return getPrevTrajectory(path.points);
   }
   prev_ego_pose_ptr_ = std::make_unique<geometry_msgs::msg::Pose>(ego_pose);
-  prev_replanned_time_ptr_ = std::make_unique<rclcpp::Time>(rclcpp::Clock().now());
+  prev_replanned_time_ptr_ = std::make_unique<rclcpp::Time>(this->now());
 
   DebugData debug_data;
   const auto optional_trajs = eb_path_optimizer_ptr_->generateOptimizedTrajectory(
