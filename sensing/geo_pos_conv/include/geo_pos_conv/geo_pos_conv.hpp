@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef __GEO_POS_CONV__
-#define __GEO_POS_CONV__
+#ifndef GEO_POS_CONV__GEO_POS_CONV_HPP_
+#define GEO_POS_CONV__GEO_POS_CONV_HPP_
 
 #include <math.h>
 
@@ -53,4 +53,4 @@ public:
   void conv_xyz2llh(void);
 };
 
-#endif
+#endif  // GEO_POS_CONV__GEO_POS_CONV_HPP_
