@@ -11,8 +11,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef GNSS_POSER_GNSS_POSER_CORE_HPP_
-#define GNSS_POSER_GNSS_POSER_CORE_HPP_
+#ifndef GNSS_POSER__GNSS_POSER_CORE_HPP_
+#define GNSS_POSER__GNSS_POSER_CORE_HPP_
+
+#include <string>
 
 #include "gnss_poser/convert.hpp"
 #include "gnss_poser/gnss_stat.hpp"
@@ -89,4 +91,4 @@ private:
 };
 }  // namespace GNSSPoser
 
-#endif
+#endif  // GNSS_POSER__GNSS_POSER_CORE_HPP_

@@ -11,8 +11,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef GNSS_POSER_CONVERT_HPP_
-#define GNSS_POSER_CONVERT_HPP_
+#ifndef GNSS_POSER__CONVERT_HPP_
+#define GNSS_POSER__CONVERT_HPP_
+
+#include <string>
 
 #include "gnss_poser/gnss_stat.hpp"
 #include "geo_pos_conv/geo_pos_conv.hpp"
@@ -99,7 +101,7 @@ GNSSStat UTM2MGRS(
       std::pow(
       10, static_cast<int>(MGRSPrecision::_1_METER) -
       static_cast<int>(precision));                 // set unit as [m]
-    mgrs.z = utm.z;                                 // TODO
+    mgrs.z = utm.z;                                 // TODO(ryo.watanabe)
   } catch (const GeographicLib::GeographicErr & err) {
     RCLCPP_ERROR_STREAM(logger, "Failed to convert from UTM to MGRS" << err.what());
   }
@@ -131,4 +133,4 @@ GNSSStat NavSatFix2PLANE(
 }
 }  // namespace GNSSPoser
 
-#endif
+#endif  // GNSS_POSER__CONVERT_HPP_
