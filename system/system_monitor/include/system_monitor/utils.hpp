@@ -21,6 +21,12 @@
 /// \tparam MonitorT Monitor type
 /// \param monitor_ptr Shared pointer of a monitor node to be spinned.
 /// \param period Spin period.
+
+#include <memory>
+#include <chrono>
+
+#include "rclcpp/rclcpp.hpp"
+
 template<typename MonitorT>
 void spin_and_update(const std::shared_ptr<MonitorT> & monitor_ptr, std::chrono::seconds period)
 {

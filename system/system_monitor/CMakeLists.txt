@@ -4,6 +4,8 @@ project(system_monitor)
 ## Compile as C++14, supported in ROS Melodic and newer
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
+  set(CMAKE_CXX_EXTENSIONS OFF)
 endif()
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic -Wno-unused-parameter)
@@ -151,8 +153,11 @@ target_link_libraries(gpu_monitor ${GPU_LIBRARY})
 target_link_libraries(msr_reader ${Boost_LIBRARIES})
 target_link_libraries(hdd_reader ${Boost_LIBRARIES})
 
-
-# TODO(yunus.caliskan): Port the tests to ROS2, robustify the tests, fix linter issues.
+# TODO(yunus.caliskan): Port the tests to ROS2, robustify the tests.
+if(BUILD_TESTING)                                                                                                                                                                                                  
+  find_package(ament_lint_auto REQUIRED)                                                                                                                                                                           
+  ament_lint_auto_find_test_dependencies()                                                                                                                                                                         
+endif()  
 
 #############
 ## Install ##
