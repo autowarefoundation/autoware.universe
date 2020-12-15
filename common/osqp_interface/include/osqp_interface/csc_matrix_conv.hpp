@@ -14,6 +14,8 @@
 #ifndef CSC_MATRIX_CONV_H
 #define CSC_MATRIX_CONV_H
 
+#include <vector>
+
 #include "eigen3/Eigen/Core"
 #include "types.h"  // for 'c_int' type ('long' or 'long long')
 
