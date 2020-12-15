@@ -4,9 +4,11 @@
   <arg name="prediction_time_horizon" default="10.0" />
   <arg name="prediction_sampling_delta_time" default="0.5" />
   <arg name="vector_map_topic" default="/map/vector_map" />
+  <arg name="output_topic" default="objects"/>
   <node pkg="map_based_prediction" exec="map_based_prediction" name="map_based_prediction" output="screen">
     <param name="perception_time_horizon" value="$(var prediction_time_horizon)" />
     <param name="prediction_sampling_delta_time" value="$(var prediction_sampling_delta_time)" />
     <remap from="/vector_map" to="$(var vector_map_topic)"/>
+    <remap from="objects" to="$(var output_topic)"/>
   </node>
 </launch>
