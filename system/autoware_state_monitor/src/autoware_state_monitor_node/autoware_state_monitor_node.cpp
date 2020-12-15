@@ -132,7 +132,7 @@ void AutowareStateMonitorNode::onRoute(const autoware_planning_msgs::msg::Route:
   {
     geometry_msgs::msg::Pose::SharedPtr p = std::make_shared<geometry_msgs::msg::Pose>();
     *p = msg->goal_pose;
-    state_input_.goal_pose = geometry_msgs::msg::Pose::ConstPtr(p);
+    state_input_.goal_pose = geometry_msgs::msg::Pose::ConstSharedPtr(p);
   }
 
   if (disengage_on_route_) {
