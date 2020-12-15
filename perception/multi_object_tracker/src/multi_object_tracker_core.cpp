@@ -54,7 +54,7 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   // Create ROS time based timer
   auto timer_callback = std::bind(&MultiObjectTracker::publishTimerCallback, this);
   auto period = std::chrono::duration_cast<std::chrono::nanoseconds>(
-    std::chrono::duration<double>(publish_rate));
+    std::chrono::duration<double>(1.0 / publish_rate));
 
   publish_timer_ = std::make_shared<rclcpp::GenericTimer<decltype(timer_callback)>>(
     this->get_clock(), period, std::move(timer_callback),
