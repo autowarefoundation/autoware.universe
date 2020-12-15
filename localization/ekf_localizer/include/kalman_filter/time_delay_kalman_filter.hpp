@@ -12,12 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef KALMAN_FILTER__TIME_DELAY_KALMAN_FILTER_HPP_
+#define KALMAN_FILTER__TIME_DELAY_KALMAN_FILTER_HPP_
 
-#include "eigen3/Eigen/Core"
-#include "eigen3/Eigen/LU"
 #include <iostream>
 #include "kalman_filter/kalman_filter.hpp"
+#include "eigen3/Eigen/Core"
+#include "eigen3/Eigen/LU"
 
 /**
  * @file time_delay_kalman_filter.h
@@ -81,3 +82,4 @@ private:
   int dim_x_;           //!< @brief dimension of latest state
   int dim_x_ex_;        //!< @brief dimension of extended state with dime delay
 };
+#endif  // KALMAN_FILTER__TIME_DELAY_KALMAN_FILTER_HPP_

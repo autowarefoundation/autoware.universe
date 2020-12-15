@@ -4,6 +4,8 @@ project(ekf_localizer)
 ### Compile options
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
+  set(CMAKE_CXX_EXTENSIONS OFF)
 endif()
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   # add_compile_options(-Wall -Wextra -Wpedantic)
@@ -37,6 +39,11 @@ ament_target_dependencies(ekf_localizer Eigen3)
 #   )
 #   ament_target_dependencies(ekf_localizer-test geometry_msgs rclcpp tf2 tf2_ros)
 # endif()
+
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
+endif()
 
 ament_auto_package(
   INSTALL_TO_SHARE

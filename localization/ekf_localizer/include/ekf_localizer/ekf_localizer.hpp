@@ -12,10 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifndef EKF_LOCALIZER__EKF_LOCALIZER_HPP_
+#define EKF_LOCALIZER__EKF_LOCALIZER_HPP_
+
 #include <chrono>
 #include <iostream>
 #include <memory>
 #include <vector>
+#include <string>
 
 #include "geometry_msgs/msg/pose_array.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
@@ -40,27 +44,46 @@ public:
   EKFLocalizer(const std::string & node_name, const rclcpp::NodeOptions & options);
 
 private:
-  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_pose_;             //!< @brief ekf estimated pose publisher
-  rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pub_pose_cov_;         //!< @brief estimated ekf pose with covariance publisher
-  rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr pub_twist_;            //!< @brief ekf estimated twist publisher
-  rclcpp::Publisher<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr pub_twist_cov_;        //!< @brief ekf estimated twist with covariance publisher
-  rclcpp::Publisher<autoware_debug_msgs::msg::Float64MultiArrayStamped>::SharedPtr pub_debug_;            //!< @brief debug info publisher
-  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_measured_pose_;    //!< @brief debug measurement pose publisher
-  rclcpp::Publisher<autoware_debug_msgs::msg::Float64Stamped>::SharedPtr pub_yaw_bias_;         //!< @brief ekf estimated yaw bias publisher
-  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_pose_no_yawbias_;  //!< @brief ekf estimated yaw bias publisher
+  //!< @brief ekf estimated pose publisher
+  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_pose_;
+  //!< @brief estimated ekf pose with covariance publisher
+  rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pub_pose_cov_;
+  //!< @brief ekf estimated twist publisher
+  rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr pub_twist_;
+  //!< @brief ekf estimated twist with covariance publisher
+  rclcpp::Publisher<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr pub_twist_cov_;
+  //!< @brief debug info publisher
+  rclcpp::Publisher<autoware_debug_msgs::msg::Float64MultiArrayStamped>::SharedPtr pub_debug_;
+  //!< @brief debug measurement pose publisher
+  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_measured_pose_;
+  //!< @brief ekf estimated yaw bias publisher
+  rclcpp::Publisher<autoware_debug_msgs::msg::Float64Stamped>::SharedPtr pub_yaw_bias_;
+  //!< @brief ekf estimated yaw bias publisher
+  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_pose_no_yawbias_;
+  //!< @brief ekf estimated yaw bias publisher
   rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
-    pub_pose_cov_no_yawbias_;                                                                            //!< @brief ekf estimated yaw bias publisher
-  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr sub_initialpose_;         //!< @brief initial pose subscriber
-  rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr sub_pose_;                //!< @brief measurement pose subscriber
-  rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr sub_twist_;               //!< @brief measurement twist subscriber
-  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr sub_pose_with_cov_;       //!< @brief measurement pose with covariance subscriber
+    pub_pose_cov_no_yawbias_;
+  //!< @brief initial pose subscriber
+  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
+    sub_initialpose_;
+  //!< @brief measurement pose subscriber
+  rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr sub_pose_;
+  //!< @brief measurement twist subscriber
+  rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr sub_twist_;
+  //!< @brief measurement pose with covariance subscriber
+  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
+    sub_pose_with_cov_;
+  //!< @brief measurement twist with covariance subscriber
   rclcpp::Subscription<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr
-    sub_twist_with_cov_;                                                                                    //!< @brief measurement twist with covariance subscriber
-  rclcpp::TimerBase::SharedPtr timer_control_;                //!< @brief time for ekf calculation callback
-  rclcpp::TimerBase::SharedPtr timer_tf_;                     //!< @brief timer to send transform
-  std::shared_ptr<tf2_ros::TransformBroadcaster> tf_br_;     //!< @brief tf broadcaster
-
-  TimeDelayKalmanFilter ekf_;  //!< @brief  extended kalman filter instance.
+    sub_twist_with_cov_;
+  //!< @brief time for ekf calculation callback
+  rclcpp::TimerBase::SharedPtr timer_control_;
+  //!< @brief timer to send transform
+  rclcpp::TimerBase::SharedPtr timer_tf_;
+  //!< @brief tf broadcaster
+  std::shared_ptr<tf2_ros::TransformBroadcaster> tf_br_;
+  //!< @brief  extended kalman filter instance.
+  TimeDelayKalmanFilter ekf_;
 
   /* parameters */
   bool show_debug_info_;
@@ -68,7 +91,8 @@ private:
   double ekf_dt_;    //!< @brief  = 1 / ekf_rate_
   double tf_rate_;   //!< @brief  tf publish rate
   bool
-    enable_yaw_bias_estimation_;  //!< @brief  for LiDAR mount error. if true, publish /estimate_yaw_bias
+    enable_yaw_bias_estimation_;  //!< @brief for LiDAR mount error.
+                                  //!< if true,publish /estimate_yaw_bias
   std::string pose_frame_id_;
 
   int dim_x_;              //!< @brief  dimension of EKF state
@@ -77,12 +101,12 @@ private:
 
   /* Pose */
   double
-    pose_additional_delay_;  //!< @brief  compensated pose delay time = (pose.header.stamp - now) +
-                             //!< additional_delay [s]
+    pose_additional_delay_;  //!< @brief  compensated pose delay time =
+                             //!< (pose.header.stamp - now) + additional_delay [s]
   double pose_measure_uncertainty_time_;  //!< @brief  added for measurement covariance
   double pose_rate_;  //!< @brief  pose rate [s], used for covariance calculation
-  double
-    pose_gate_dist_;      //!< @brief  the maharanobis distance threshold to ignore pose measurement
+  //!< @brief  the maharanobis distance threshold to ignore pose measurement
+  double pose_gate_dist_;
   double pose_stddev_x_;  //!< @brief  standard deviation for pose position x [m]
   double pose_stddev_y_;  //!< @brief  standard deviation for pose position y [m]
   double pose_stddev_yaw_;          //!< @brief  standard deviation for pose position yaw [rad]
@@ -91,10 +115,11 @@ private:
 
   /* twist */
   double
-    twist_additional_delay_;  //!< @brief  compensated delay = (twist.header.stamp - now) + additional_delay [s]
+    twist_additional_delay_;  //!< @brief  compensated delay = (twist.header.stamp - now)
+                              //!< + additional_delay [s]
   double twist_rate_;  //!< @brief  rate [s], used for covariance calculation
-  double
-    twist_gate_dist_;  //!< @brief  measurement is ignored if the maharanobis distance is larger than this value.
+  //!< @brief  measurement is ignored if the maharanobis distance is larger than this value.
+  double twist_gate_dist_;
   double twist_stddev_vx_;  //!< @brief  standard deviation for linear vx
   double twist_stddev_wz_;  //!< @brief  standard deviation for angular wx
 
@@ -118,7 +143,7 @@ private:
   geometry_msgs::msg::TwistStamped::SharedPtr
     current_twist_ptr_;                                           //!< @brief current measured twist
   geometry_msgs::msg::PoseStamped::SharedPtr current_pose_ptr_;  //!< @brief current measured pose
-  geometry_msgs::msg::PoseStamped current_ekf_pose_;                   //!< @brief current estimated pose
+  geometry_msgs::msg::PoseStamped current_ekf_pose_;             //!< @brief current estimated pose
   geometry_msgs::msg::PoseStamped
     current_ekf_pose_no_yawbias_;                  //!< @brief current estimated pose w/o yaw bias
   geometry_msgs::msg::TwistStamped current_ekf_twist_;  //!< @brief current estimated twist
@@ -230,3 +255,4 @@ private:
 
   friend class EKFLocalizerTestSuite;  // for test code
 };
+#endif  // EKF_LOCALIZER__EKF_LOCALIZER_HPP_

@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef KALMAN_FILTER__KALMAN_FILTER_HPP_
+#define KALMAN_FILTER__KALMAN_FILTER_HPP_
 
 #include "eigen3/Eigen/Core"
 #include "eigen3/Eigen/LU"
@@ -204,3 +205,4 @@ protected:
   Eigen::MatrixXd R_;  //!< @brief covariance matrix for measurement model y[k] = C * x[k]
   Eigen::MatrixXd P_;  //!< @brief covariance of estimated state
 };
+#endif  // KALMAN_FILTER__KALMAN_FILTER_HPP_

@@ -12,9 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "rclcpp/logging.hpp"
-
+#include <algorithm>
+#include <functional>
+#include <memory>
+#include <string>
+#include <utility>
 #include "ekf_localizer/ekf_localizer.hpp"
+#include "rclcpp/logging.hpp"
 
 // clang-format off
 #define PRINT_MAT(X) std::cout << #X << ":\n" << X << std::endl << std::endl
@@ -23,44 +27,51 @@
 
 // clang-format on
 
-#include <functional>
 using std::placeholders::_1;
 
 EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOptions & node_options)
 : rclcpp::Node(node_name, node_options), dim_x_(6 /* x, y, yaw, yaw_bias, vx, wz */)
 {
-  show_debug_info_ = declare_parameter("show_debug_info", bool(false));
-  ekf_rate_ = declare_parameter("predict_frequency", double(50.0));
+  show_debug_info_ = declare_parameter("show_debug_info", false);
+  ekf_rate_ = declare_parameter("predict_frequency", 50.0);
   ekf_dt_ = 1.0 / std::max(ekf_rate_, 0.1);
-  tf_rate_ = declare_parameter("tf_rate", double(10.0));
-  enable_yaw_bias_estimation_ = declare_parameter("enable_yaw_bias_estimation", bool(true));
-  extend_state_step_ = declare_parameter("extend_state_step", int(50));
+  tf_rate_ = declare_parameter("tf_rate", 10.0);
+  enable_yaw_bias_estimation_ =
+    declare_parameter("enable_yaw_bias_estimation", true);
+  extend_state_step_ = declare_parameter("extend_state_step", 50);
   pose_frame_id_ = declare_parameter("pose_frame_id", std::string("map"));
 
   /* pose measurement */
-  pose_additional_delay_ = declare_parameter("pose_additional_delay", double(0.0));
-  pose_measure_uncertainty_time_ = declare_parameter("pose_measure_uncertainty_time", double(0.01));
-  pose_rate_ = declare_parameter("pose_rate", double(10.0));  // used for covariance calculation
-  pose_gate_dist_ = declare_parameter("pose_gate_dist", double(10000.0));  // Mahalanobis limit
-  pose_stddev_x_ = declare_parameter("pose_stddev_x", double(0.05));
-  pose_stddev_y_ = declare_parameter("pose_stddev_y", double(0.05));
-  pose_stddev_yaw_ = declare_parameter("pose_stddev_yaw", double(0.035));
-  use_pose_with_covariance_ = declare_parameter("use_pose_with_covariance", bool(false));
+  pose_additional_delay_ = declare_parameter("pose_additional_delay", 0.0);
+  pose_measure_uncertainty_time_ =
+    declare_parameter("pose_measure_uncertainty_time", 0.01);
+  pose_rate_ =
+    declare_parameter("pose_rate", 10.0);  // used for covariance calculation
+  pose_gate_dist_ =
+    declare_parameter("pose_gate_dist", 10000.0);  // Mahalanobis limit
+  pose_stddev_x_ = declare_parameter("pose_stddev_x", 0.05);
+  pose_stddev_y_ = declare_parameter("pose_stddev_y", 0.05);
+  pose_stddev_yaw_ = declare_parameter("pose_stddev_yaw", 0.035);
+  use_pose_with_covariance_ =
+    declare_parameter("use_pose_with_covariance", false);
 
   /* twist measurement */
-  twist_additional_delay_ = declare_parameter("twist_additional_delay", double(0.0));
-  twist_rate_ = declare_parameter("twist_rate", double(10.0));  // used for covariance calculation
-  twist_gate_dist_ = declare_parameter("twist_gate_dist", double(10000.0));  // Mahalanobis limit
-  twist_stddev_vx_ = declare_parameter("twist_stddev_vx", double(0.2));
-  twist_stddev_wz_ = declare_parameter("twist_stddev_wz", double(0.03));
-  use_twist_with_covariance_ = declare_parameter("use_twist_with_covariance", bool(false));
+  twist_additional_delay_ = declare_parameter("twist_additional_delay", 0.0);
+  twist_rate_ =
+    declare_parameter("twist_rate", 10.0);  // used for covariance calculation
+  twist_gate_dist_ =
+    declare_parameter("twist_gate_dist", 10000.0);  // Mahalanobis limit
+  twist_stddev_vx_ = declare_parameter("twist_stddev_vx", 0.2);
+  twist_stddev_wz_ = declare_parameter("twist_stddev_wz", 0.03);
+  use_twist_with_covariance_ =
+    declare_parameter("use_twist_with_covariance", false);
 
   /* process noise */
   double proc_stddev_yaw_c, proc_stddev_yaw_bias_c, proc_stddev_vx_c, proc_stddev_wz_c;
-  proc_stddev_yaw_c = declare_parameter("proc_stddev_yaw_c", double(0.005));
-  proc_stddev_yaw_bias_c = declare_parameter("proc_stddev_yaw_bias_c", double(0.001));
-  proc_stddev_vx_c = declare_parameter("proc_stddev_vx_c", double(5.0));
-  proc_stddev_wz_c = declare_parameter("proc_stddev_wz_c", double(1.0));
+  proc_stddev_yaw_c = declare_parameter("proc_stddev_yaw_c", 0.005);
+  proc_stddev_yaw_bias_c = declare_parameter("proc_stddev_yaw_bias_c", 0.001);
+  proc_stddev_vx_c = declare_parameter("proc_stddev_vx_c", 5.0);
+  proc_stddev_wz_c = declare_parameter("proc_stddev_wz_c", 1.0);
   if (!enable_yaw_bias_estimation_) {
     proc_stddev_yaw_bias_c = 0.0;
   }
@@ -222,7 +233,7 @@ void EKFLocalizer::setCurrentResult()
   current_ekf_pose_.pose.position.y = ekf_.getXelement(IDX::Y);
 
   tf2::Quaternion q_tf;
-  double roll, pitch, yaw;
+  double roll = 0.0, pitch = 0.0, yaw = 0.0;
   if (current_pose_ptr_ != nullptr) {
     current_ekf_pose_.pose.position.z = current_pose_ptr_->pose.position.z;
     tf2::fromMsg(current_pose_ptr_->pose.orientation, q_tf); /* use Pose pitch and roll */
@@ -310,7 +321,7 @@ void EKFLocalizer::callbackInitialPose(
   Eigen::MatrixXd X(dim_x_, 1);
   Eigen::MatrixXd P = Eigen::MatrixXd::Zero(dim_x_, dim_x_);
 
-  // TODO need mutex
+  // TODO(mitsudome-r) need mutex
 
   X(IDX::X) = initialpose->pose.pose.position.x + transform.transform.translation.x;
   X(IDX::Y) = initialpose->pose.pose.position.y + transform.transform.translation.y;
@@ -434,7 +445,6 @@ void EKFLocalizer::predictKinematicsModel()
   Eigen::MatrixXd P_curr;
   ekf_.getLatestP(P_curr);
 
-  const int d_dim_x = dim_x_ex_ - dim_x_;
   const double yaw = X_curr(IDX::YAW);
   const double yaw_bias = X_curr(IDX::YAWB);
   const double vx = X_curr(IDX::VX);
@@ -517,7 +527,6 @@ void EKFLocalizer::measurementUpdatePose(const geometry_msgs::msg::PoseStamped &
   DEBUG_INFO(this->get_logger(), "delay_time: %f [s]", delay_time);
 
   /* Set yaw */
-  const double yaw_curr = ekf_.getXelement((unsigned int)(delay_step * dim_x_ + IDX::YAW));
   double yaw = tf2::getYaw(pose.pose.orientation);
   const double ekf_yaw = ekf_.getXelement(delay_step * dim_x_ + IDX::YAW);
   const double yaw_error = normalizeYaw(yaw - ekf_yaw);  // normalize the error not to exceed 2 pi
@@ -583,8 +592,8 @@ void EKFLocalizer::measurementUpdatePose(const geometry_msgs::msg::PoseStamped &
     R(2, 2) = (pose_stddev_yaw_ * pose_stddev_yaw_) + cov_tu_yaw;  // yaw
   }
 
-  /* In order to avoid a large change at the time of updating, measuremeent update is performed by dividing at every
-   * step. */
+  /* In order to avoid a large change at the time of updating,
+   * measuremeent update is performed by dividing at every step. */
   R *= (ekf_rate_ / pose_rate_);
 
   ekf_.updateWithDelay(y, C, R, delay_step);
@@ -680,7 +689,8 @@ void EKFLocalizer::measurementUpdateTwist(const geometry_msgs::msg::TwistStamped
     R(1, 1) = twist_stddev_wz_ * twist_stddev_wz_;  // for wz
   }
 
-  /* In order to avoid a large change by update, measurement update is performed by dividing at every step. */
+  /* In order to avoid a large change by update, measurement update is performed
+  * by dividing at every step. measuremeent update is performed by dividing at every step. */
   R *= (ekf_rate_ / twist_rate_);
 
   ekf_.updateWithDelay(y, C, R, delay_step);
