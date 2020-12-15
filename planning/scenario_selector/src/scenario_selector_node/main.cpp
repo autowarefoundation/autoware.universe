@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include "rclcpp/rclcpp.hpp"
-
 #include "scenario_selector/scenario_selector_node.hpp"
 
 int main(int argc, char ** argv)

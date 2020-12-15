@@ -65,13 +65,13 @@ std::shared_ptr<lanelet::ConstPolygon3d> findNearestParkinglot(
   }
 }
 
-geometry_msgs::msg::PoseStamped::ConstSharedPtr getCurrentPose(const tf2_ros::Buffer & tf_buffer, const rclcpp::Logger & logger)
+geometry_msgs::msg::PoseStamped::ConstSharedPtr getCurrentPose(
+  const tf2_ros::Buffer & tf_buffer, const rclcpp::Logger & logger)
 {
   geometry_msgs::msg::TransformStamped tf_current_pose;
 
   try {
-    tf_current_pose =
-      tf_buffer.lookupTransform("map", "base_link", tf2::TimePointZero);
+    tf_current_pose = tf_buffer.lookupTransform("map", "base_link", tf2::TimePointZero);
   } catch (tf2::TransformException & ex) {
     RCLCPP_ERROR(logger, "%s", ex.what());
     return nullptr;
@@ -244,7 +244,8 @@ void ScenarioSelectorNode::onTwist(const geometry_msgs::msg::TwistStamped::Const
 
   // Delete old data in buffer
   while (true) {
-    const auto time_diff = rclcpp::Time(msg->header.stamp) - rclcpp::Time(twist_buffer_.front()->header.stamp);
+    const auto time_diff =
+      rclcpp::Time(msg->header.stamp) - rclcpp::Time(twist_buffer_.front()->header.stamp);
 
     if (time_diff.seconds() < th_stopped_time_sec_) {
       break;
