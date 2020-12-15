@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
 */
-#include "TrtNet.hpppp"
+#include "TrtNet.hpp"
 #include "cublas_v2.h"
 #include "cudnn.h"
 #include <string.h>

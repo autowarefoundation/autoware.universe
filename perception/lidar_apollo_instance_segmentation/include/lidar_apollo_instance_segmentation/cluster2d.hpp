@@ -52,8 +52,8 @@
 #include <memory>
 #include <vector>
 
-#include "disjoint_set.h"
-#include "util.h"
+#include "disjoint_set.hpp"
+#include "util.hpp"
 
 #include "autoware_perception_msgs/msg/dynamic_object_with_feature.hpp"
 #include "autoware_perception_msgs/msg/dynamic_object_with_feature_array.hpp"
