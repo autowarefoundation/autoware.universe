@@ -49,13 +49,13 @@ PoseInitializer::PoseInitializer()
   initial_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
     "initialpose", 10,
     std::bind(&PoseInitializer::callbackInitialPose, this, std::placeholders::_1));
-  map_points_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
+  map_points_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "pointcloud_map", rclcpp::QoS{1}.transient_local(),
     std::bind(&PoseInitializer::callbackMapPoints, this, std::placeholders::_1));
 
   const bool use_first_gnss_topic = this->declare_parameter("use_first_gnss_topic", true);
   if (use_first_gnss_topic) {
-    gnss_pose_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
+    gnss_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
       "gnss_pose_cov", 1,
       std::bind(&PoseInitializer::callbackGNSSPoseCov, this, std::placeholders::_1));
   }
