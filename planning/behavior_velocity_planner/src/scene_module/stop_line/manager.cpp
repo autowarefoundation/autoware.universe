@@ -13,6 +13,11 @@
 // limitations under the License.
 #include "scene_module/stop_line/manager.hpp"
 
+#include <vector>
+#include <set>
+#include <string>
+#include <memory>
+
 namespace
 {
 std::vector<lanelet::TrafficSignConstPtr> getTrafficSignRegElemsOnPath(

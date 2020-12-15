@@ -11,7 +11,11 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 #include "scene_module/intersection/scene_intersection.hpp"
+
+#include <memory>
+#include <vector>
 
 #include "lanelet2_core/geometry/Polygon.h"
 #include "lanelet2_core/primitives/BasicRegulatoryElements.h"
@@ -250,7 +254,7 @@ Polygon2d IntersectionModule::generateEgoIntersectionLanePolygon(
 
   size_t ego_area_start_idx = assigned_lane_start_idx;
   {
-    //decide start idx with considering ignore_dist
+// decide start idx with considering ignore_dist
     double dist_sum = 0.0;
     for (size_t i = assigned_lane_start_idx + 1; i < assigned_lane_end_idx; ++i) {
       dist_sum += planning_utils::calcDist2d(path.points.at(i), path.points.at(i - 1));
@@ -266,7 +270,7 @@ Polygon2d IntersectionModule::generateEgoIntersectionLanePolygon(
 
   size_t ego_area_end_idx = assigned_lane_end_idx;
   {
-    //decide end idx with cosidering extra_dist
+// decide end idx with cosidering extra_dist
     double dist_sum = 0.0;
     for (size_t i = assigned_lane_end_idx + 1; i < path.points.size(); ++i) {
       dist_sum += planning_utils::calcDist2d(path.points.at(i), path.points.at(i - 1));

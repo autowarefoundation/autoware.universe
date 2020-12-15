@@ -14,6 +14,7 @@
 
 #ifndef BEHAVIOR_VELOCITY_PLANNER_UTILIZATION_INTERPOLATE_H_
 #define BEHAVIOR_VELOCITY_PLANNER_UTILIZATION_INTERPOLATE_H_
+
 #include <cmath>
 #include <vector>
 
@@ -37,7 +38,7 @@ public:
 bool isIncrease(const std::vector<double> & x);
 bool isValidInput(
   const std::vector<double> & base_index, const std::vector<double> & base_value,
-  const std::vector<double> & return_index, std::vector<double> & return_value);
+  const std::vector<double> & return_index);
 std::vector<double> calcEuclidDist(const std::vector<double> & x, const std::vector<double> & y);
 
 }  // namespace interpolation

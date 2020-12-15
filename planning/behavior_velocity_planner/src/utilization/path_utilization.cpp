@@ -14,6 +14,9 @@
 
 #include "utilization/path_utilization.hpp"
 
+#include <vector>
+#include <algorithm>
+
 #include <memory>
 
 #include "tf2/LinearMath/Quaternion.h"
@@ -111,7 +114,7 @@ autoware_planning_msgs::msg::Path filterLitterPathPoint(
   const double epsilon = 0.01;
   size_t latest_id = 0;
   for (size_t i = 0; i < path.points.size(); ++i) {
-    double dist;
+    double dist = 0.0;
     if (i != 0) {
       const double x =
         path.points.at(i).pose.position.x - path.points.at(latest_id).pose.position.x;
@@ -119,7 +122,7 @@ autoware_planning_msgs::msg::Path filterLitterPathPoint(
         path.points.at(i).pose.position.y - path.points.at(latest_id).pose.position.y;
       dist = std::sqrt(x * x + y * y);
     }
-    if (epsilon < dist || i == 0 /*init*/) {
+    if (i == 0 || epsilon < dist /*init*/) {
       latest_id = i;
       filtered_path.points.push_back(path.points.at(latest_id));
     } else {

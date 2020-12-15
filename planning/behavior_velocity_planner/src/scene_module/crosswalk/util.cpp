@@ -11,12 +11,15 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#include "scene_module/crosswalk/util.hpp"
-#include "utilization/util.hpp"
 
+#include "scene_module/crosswalk/util.hpp"
+
+#include <algorithm>
 #include <cmath>
 #include <string>
 #include <vector>
+
+#include "utilization/util.hpp"
 
 #include "boost/assert.hpp"
 #include "boost/assign/list_of.hpp"
@@ -116,8 +119,8 @@ bool insertTargetVelocityPoint(
     target_point_with_lane_id.point.pose.position.x = target_point.x();
     target_point_with_lane_id.point.pose.position.y = target_point.y();
     if (insert_target_point_idx > 0) {
-      //calculate z-position of the target point (Internal division point of point1/point2)
-      //if insert_target_point_idx is zero, use z-position of target_velocity_point_idx
+      // calculate z-position of the target point (Internal division point of point1/point2)
+      // if insert_target_point_idx is zero, use z-position of target_velocity_point_idx
       const double internal_div_ratio =
         (point1 - target_point).norm() /
         ((point1 - target_point).norm() + (point2 - target_point).norm());

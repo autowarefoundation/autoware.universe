@@ -11,7 +11,14 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 #include "scene_module/detection_area/manager.hpp"
+
+#include <memory>
+#include <set>
+#include <string>
+#include <unordered_map>
+#include <utility>
 
 #include "tf2/utils.h"
 

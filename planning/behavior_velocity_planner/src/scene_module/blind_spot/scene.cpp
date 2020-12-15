@@ -11,19 +11,25 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 #include "scene_module/blind_spot/scene.hpp"
-#include "boost/geometry/algorithms/distance.hpp"
+
+#include <memory>
+#include <string>
+#include <algorithm>
+#include <vector>
+
+#include "scene_module/intersection/util.hpp"
+#include "utilization/boost_geometry_helper.hpp"
+#include "utilization/interpolate.hpp"
+#include "utilization/util.hpp"
 
 #include "lanelet2_core/geometry/Polygon.h"
 #include "lanelet2_core/primitives/BasicRegulatoryElements.h"
 #include "lanelet2_extension/regulatory_elements/road_marking.hpp"
 #include "lanelet2_extension/utility/query.hpp"
 #include "lanelet2_extension/utility/utilities.hpp"
-
-#include "scene_module/intersection/util.hpp"
-#include "utilization/boost_geometry_helper.hpp"
-#include "utilization/interpolate.hpp"
-#include "utilization/util.hpp"
+#include "boost/geometry/algorithms/distance.hpp"
 
 namespace bg = boost::geometry;
 
@@ -331,7 +337,7 @@ lanelet::ConstLanelet BlindSpotModule::generateHalfLanelet(
   auto half_lanelet = lanelet::Lanelet(lanelet::InvalId, left_bound, right_bound);
   const auto centerline = lanelet::utils::generateFineCenterline(half_lanelet, 5.0);
   half_lanelet.setCenterline(centerline);
-  return half_lanelet;
+  return std::move(half_lanelet);
 }
 
 BlindSpotPolygons BlindSpotModule::generateBlindSpotPolygons(

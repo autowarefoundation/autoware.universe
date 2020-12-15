@@ -14,6 +14,8 @@
 
 #include "rclcpp/rclcpp.hpp"
 
+#include <memory>
+
 #include "behavior_velocity_planner/node.hpp"
 
 int main(int argc, char ** argv)

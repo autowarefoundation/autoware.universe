@@ -11,10 +11,12 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 #include "scene_module/crosswalk/scene_walkway.hpp"
-#include "utilization/util.hpp"
 
 #include <cmath>
+
+#include "utilization/util.hpp"
 
 namespace bg = boost::geometry;
 using Point = bg::model::d2::point_xy<double>;

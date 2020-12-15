@@ -11,7 +11,13 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 #include "scene_module/blind_spot/manager.hpp"
+
+#include <vector>
+#include <set>
+#include <string>
+#include <memory>
 
 #include "lanelet2_core/primitives/BasicRegulatoryElements.h"
 

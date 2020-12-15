@@ -11,7 +11,13 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#include "rclcpp/rclcpp.hpp"
+
+#include "scene_module/intersection/util.hpp"
+
+#include <algorithm>
+#include <memory>
+#include <string>
+#include <vector>
 
 #include "lanelet2_core/geometry/Polygon.h"
 #include "lanelet2_core/primitives/BasicRegulatoryElements.h"
@@ -19,7 +25,7 @@
 #include "lanelet2_extension/utility/query.hpp"
 #include "lanelet2_extension/utility/utilities.hpp"
 
-#include "scene_module/intersection/util.hpp"
+#include "rclcpp/rclcpp.hpp"
 #include "utilization/interpolate.hpp"
 #include "utilization/util.hpp"
 
@@ -405,20 +411,20 @@ bool getObjectivePolygons(
   }
 
   std::stringstream ss_c, ss_y, ss_e, ss_o, ss_os;
-  for (const auto l : conflicting_lanelets) {
+  for (const auto & l : conflicting_lanelets) {
     ss_c << l.id() << ", ";
   }
-  for (const auto l : yield_lanelets) {
+  for (const auto & l : yield_lanelets) {
     ss_y << l.id() << ", ";
   }
-  for (const auto l : ego_lanelets) {
+  for (const auto & l : ego_lanelets) {
     ss_e << l.id() << ", ";
   }
-  for (const auto l : objective_lanelets) {
+  for (const auto & l : objective_lanelets) {
     ss_o << l.id() << ", ";
   }
-  for (const auto l : objective_lanelets_sequences) {
-    for (const auto ll : l) {
+  for (const auto & l : objective_lanelets_sequences) {
+    for (const auto & ll : l) {
       ss_os << ll.id() << ", ";
     }
   }

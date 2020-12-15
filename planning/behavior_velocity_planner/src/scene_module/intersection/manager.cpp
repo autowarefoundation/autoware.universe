@@ -11,8 +11,13 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 #include "scene_module/intersection/manager.hpp"
 
+#include <memory>
+#include <set>
+#include <string>
+#include <vector>
 #include "lanelet2_core/primitives/BasicRegulatoryElements.h"
 
 #include "utilization/boost_geometry_helper.hpp"

@@ -15,6 +15,8 @@
 
 #include <memory>
 #include <string>
+#include <tuple>
+#include <vector>
 
 #include "boost/assert.hpp"
 #include "boost/geometry.hpp"

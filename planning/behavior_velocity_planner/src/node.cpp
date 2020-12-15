@@ -14,6 +14,8 @@
 
 #include <functional>
 
+#include <memory>
+
 #include "behavior_velocity_planner/node.hpp"
 
 #include "pcl/common/transforms.h"

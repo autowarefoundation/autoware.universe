@@ -11,7 +11,11 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 #include "scene_module/intersection/scene_merge_from_private_road.hpp"
+
+#include <memory>
+#include <vector>
 
 #include "lanelet2_core/geometry/Polygon.h"
 #include "lanelet2_core/primitives/BasicRegulatoryElements.h"

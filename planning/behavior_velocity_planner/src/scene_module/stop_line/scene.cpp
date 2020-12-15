@@ -12,6 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 #include "scene_module/stop_line/scene.hpp"
+
+#include <algorithm>
+#include <vector>
+
 #include "utilization/util.hpp"
 
 namespace bg = boost::geometry;

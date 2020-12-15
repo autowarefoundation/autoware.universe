@@ -13,7 +13,11 @@
 // limitations under the License.
 #include "scene_module/traffic_light/scene.hpp"
 
+#include <algorithm>
 #include <map>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include "tf2/utils.h"
 #include "tf2_eigen/tf2_eigen.h"
@@ -501,7 +505,7 @@ geometry_msgs::msg::Point TrafficLightModule::getTrafficLightPosition(
   const lanelet::ConstLineStringOrPolygon3d traffic_light)
 {
   geometry_msgs::msg::Point tl_center;
-  for (const auto tl_point : *traffic_light.lineString()) {
+  for (const auto & tl_point : *traffic_light.lineString()) {
     tl_center.x += tl_point.x() / (*traffic_light.lineString()).size();
     tl_center.y += tl_point.y() / (*traffic_light.lineString()).size();
     tl_center.z += tl_point.z() / (*traffic_light.lineString()).size();

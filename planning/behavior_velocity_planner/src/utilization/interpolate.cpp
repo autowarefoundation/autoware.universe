@@ -13,6 +13,8 @@
 // limitations under the License.
 
 #include "utilization/interpolate.hpp"
+
+#include <vector>
 #include "utilization/util.hpp"
 
 namespace interpolation
@@ -24,7 +26,7 @@ bool LinearInterpolate::interpolate(
   const std::vector<double> & base_index, const std::vector<double> & base_value,
   const std::vector<double> & return_index, std::vector<double> & return_value)
 {
-  if (!isValidInput(base_index, base_value, return_index, return_value)) {
+  if (!isValidInput(base_index, base_value, return_index)) {
     std::cerr << "[interpolate] invalid input. interpolation failed." << std::endl;
     return false;
   }
@@ -72,7 +74,7 @@ bool isIncrease(const std::vector<double> & x)
 
 bool isValidInput(
   const std::vector<double> & base_index, const std::vector<double> & base_value,
-  const std::vector<double> & return_index, std::vector<double> & return_value)
+  const std::vector<double> & return_index)
 {
   if (base_index.empty() || base_value.empty() || return_index.empty()) {
     std::cout << "bad index : some vector is empty. base_index: " << base_index.size() <<

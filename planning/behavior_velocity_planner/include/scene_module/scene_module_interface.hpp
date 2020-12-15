@@ -15,6 +15,7 @@
 
 #include <memory>
 #include <set>
+#include <string>
 
 #include "autoware_planning_msgs/msg/path.hpp"
 #include "autoware_planning_msgs/msg/path_with_lane_id.hpp"
