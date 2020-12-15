@@ -17,6 +17,9 @@
   <exec_depend>diagnostic_aggregator</exec_depend>
   <exec_depend>rqt_robot_monitor</exec_depend>
 
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_cmake_cppcheck</test_depend>
+
   <export>
     <build_type>ament_cmake</build_type>
   </export>
