@@ -1,19 +1,34 @@
 ---
+# https://developer.nvidia.com/cuda-downloads?target_os=Linux&target_arch=x86_64&target_distro=Ubuntu&target_version=2004&target_type=debnetwork
+# sudo apt update && sudo apt install curl gnupg2 lsb-release
+- name: install software-properties-common
+  apt:
+    name:
+      - software-properties-common
+    update_cache: yes
+  become: yes
+
+- name: CUDA (download pin file)
+  become: yes
+  get_url:
+    url: https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-ubuntu2004.pin
+    dest: /etc/apt/preferences.d/cuda-repository-pin-600
+
 - name: CUDA (add nvidia key)
   become: yes
   apt_key:
-    url: http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub
+    url: https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/7fa2af80.pub
 
-- name: CUDA (install CUDA 10.2 repository)
+- name: CUDA (add CUDA repository into sources.list)
+  become: yes
+  apt_repository:
+    repo: deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/ /
+    state: present
+
+- name: CUDA (install CUDA 11.1)
   become: yes
   apt:
-    deb: http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-repo-ubuntu1804_10.2.89-1_amd64.deb
-    force: yes
-
-- name: CUDA (install CUDA 10.2)
-  become: yes
-  apt:
-    name: cuda-10-2
+    name: cuda-11-1  # nvidia-driver should be greater than 455
     update_cache: yes
 
 - name: CUDA (add path >> bashrc)
