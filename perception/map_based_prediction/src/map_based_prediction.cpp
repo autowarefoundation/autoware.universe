@@ -11,13 +11,16 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#include <chrono>
 
-#include "tf2/utils.h"
+#include "map_based_prediction.hpp"
+
+#include <algorithm>
+#include <chrono>
+#include <vector>
 
 #include "cubic_spline.hpp"
 
-#include "map_based_prediction.hpp"
+#include "tf2/utils.h"
 
 MapBasedPrediction::MapBasedPrediction(
   double interpolating_resolution, double time_horizon, double sampling_delta_time)
@@ -78,7 +81,6 @@ bool MapBasedPrediction::doPrediction(
   std::vector<autoware_perception_msgs::msg::DynamicObject> & out_objects,
   std::vector<geometry_msgs::msg::Point> & debug_interpolated_points)
 {
-  std::chrono::high_resolution_clock::time_point begin = std::chrono::high_resolution_clock::now();
   for (auto & object_with_lanes : in_objects.objects) {
     const double min_lon_velocity_ms_for_map_based_prediction = 1;
     if (
@@ -165,12 +167,9 @@ bool MapBasedPrediction::doPrediction(
         continue;
       }
     }
-    normalizeLikelyhood(tmp_object.state.predicted_paths);
+    normalizeLikelihood(tmp_object.state.predicted_paths);
     out_objects.push_back(tmp_object);
   }
-  std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
-  std::chrono::nanoseconds time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin);
-  // std::cerr <<"prediction time " <<time.count()/(1000.0*1000.0)<< " milli sec" << std::endl;
   return true;
 }
 
@@ -178,9 +177,7 @@ bool MapBasedPrediction::doLinearPrediction(
   const autoware_perception_msgs::msg::DynamicObjectArray & in_objects,
   std::vector<autoware_perception_msgs::msg::DynamicObject> & out_objects)
 {
-  std::chrono::high_resolution_clock::time_point begin = std::chrono::high_resolution_clock::now();
-
-  for (const auto object : in_objects.objects) {
+  for (const auto & object : in_objects.objects) {
     autoware_perception_msgs::msg::PredictedPath path;
     getLinearPredictedPath(
       object.state.pose_covariance.pose, object.state.twist_covariance.twist, in_objects.header,
@@ -191,16 +188,13 @@ bool MapBasedPrediction::doLinearPrediction(
     out_objects.push_back(tmp_object);
   }
 
-  std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
-  std::chrono::nanoseconds time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin);
-  // std::cerr <<"prediction time " <<time.count()/(1000.0*1000.0)<< " milli sec" << std::endl;
   return true;
 }
 
-bool MapBasedPrediction::normalizeLikelyhood(
+void MapBasedPrediction::normalizeLikelihood(
   std::vector<autoware_perception_msgs::msg::PredictedPath> & paths)
 {
-  // TODO: is could not be the smartest way
+  // might not be the smartest way
   double sum_confidence = 0;
   for (const auto & path : paths) {
     sum_confidence += 1 / path.confidence;
@@ -284,17 +278,16 @@ bool MapBasedPrediction::getPredictedPath(
     tmp_point.header.stamp = rclcpp::Time(origin_header.stamp) + rclcpp::Duration(i);
     path.path.push_back(tmp_point);
   }
-  path.confidence = calculateLikelyhood(current_d_position);
+  path.confidence = calculateLikelihood(current_d_position);
 
   return false;
 }
 
-bool MapBasedPrediction::getLinearPredictedPath(
+void MapBasedPrediction::getLinearPredictedPath(
   const geometry_msgs::msg::Pose & object_pose, const geometry_msgs::msg::Twist & object_twist,
   const std_msgs::msg::Header & origin_header,
   autoware_perception_msgs::msg::PredictedPath & predicted_path)
 {
-  const double yaw = tf2::getYaw(object_pose.orientation);
   const double & sampling_delta_time = sampling_delta_time_;
   const double & time_horizon = time_horizon_;
   const double ep = 0.001;
@@ -327,7 +320,7 @@ bool MapBasedPrediction::getLinearPredictedPath(
   predicted_path.confidence = 1.0;
 }
 
-double MapBasedPrediction::calculateLikelyhood(const double current_d)
+double MapBasedPrediction::calculateLikelihood(const double current_d)
 {
   double d_std = 0.5;
   double likelyhood = std::abs(current_d) / d_std;

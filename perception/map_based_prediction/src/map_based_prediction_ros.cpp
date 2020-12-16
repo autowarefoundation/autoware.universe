@@ -12,18 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// headers in local files
+#include "map_based_prediction.hpp"
+#include "map_based_prediction_ros.hpp"
+
 // headers in STL
 #include <chrono>
 #include <cmath>
+#include <memory>
+#include <string>
 #include <unordered_map>
-
-#include "unique_identifier_msgs/msg/uuid.hpp"
+#include <utility>
+#include <vector>
 
 // headers in ROS
 #include "rclcpp/rclcpp.hpp"
 #include "tf2/utils.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 #include "tf2_ros/transform_listener.h"
+#include "unique_identifier_msgs/msg/uuid.hpp"
 
 // lanelet
 #include "lanelet2_core/LaneletMap.h"
@@ -35,9 +42,6 @@
 #include "lanelet2_routing/RoutingGraph.h"
 #include "lanelet2_traffic_rules/TrafficRulesFactory.h"
 
-// headers in local files
-#include "map_based_prediction.hpp"
-#include "map_based_prediction_ros.hpp"
 
 std::string toHexString(const unique_identifier_msgs::msg::UUID & id)
 {

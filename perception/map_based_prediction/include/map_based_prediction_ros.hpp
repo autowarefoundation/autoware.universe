@@ -12,17 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MAP_BASED_PREDICTION_ROS_H
-#define MAP_BASED_PREDICTION_ROS_H
+#ifndef MAP_BASED_PREDICTION_ROS_HPP_
+#define MAP_BASED_PREDICTION_ROS_HPP_
 
+#include <memory>
+#include <string>
 #include <unordered_map>
+#include <vector>
 
-#include "rclcpp/rclcpp.hpp"
-
-#include "autoware_lanelet2_msgs/msg/map_bin.hpp"
 #include "autoware_perception_msgs/msg/dynamic_object_array.hpp"
 #include "autoware_perception_msgs/msg/dynamic_object.hpp"
+
+#include "autoware_lanelet2_msgs/msg/map_bin.hpp"
 #include "geometry_msgs/msg/pose.hpp"
+#include "rclcpp/rclcpp.hpp"
 #include "unique_identifier_msgs/msg/uuid.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
 
@@ -89,4 +92,4 @@ public:
   MapBasedPredictionROS();
 };
 
-#endif  // MAP_BASED_PREDICTION_H
+#endif  // MAP_BASED_PREDICTION_ROS_HPP_
