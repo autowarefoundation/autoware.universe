@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef VEHICLE_CMD_GATE_VEHICLE_CMD_FILTER_H
-#define VEHICLE_CMD_GATE_VEHICLE_CMD_FILTER_H
+#ifndef VEHICLE_CMD_GATE__VEHICLE_CMD_FILTER_HPP_
+#define VEHICLE_CMD_GATE__VEHICLE_CMD_FILTER_HPP_
 
 #include "autoware_control_msgs/msg/control_command_stamped.hpp"
 
@@ -52,4 +52,4 @@ private:
   double limitDiff(const double curr, const double prev, const double diff_lim);
 };
 
-#endif  // VEHICLE_CMD_GATE_VEHICLE_CMD_FILTER_H
+#endif  // VEHICLE_CMD_GATE__VEHICLE_CMD_FILTER_HPP_

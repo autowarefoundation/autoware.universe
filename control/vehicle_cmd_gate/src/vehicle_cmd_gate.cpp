@@ -30,6 +30,9 @@
 
 #include <chrono>
 #include <functional>
+#include <memory>
+#include <string>
+#include <utility>
 
 #include "rclcpp/logging.hpp"
 

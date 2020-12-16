@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef VEHICLE_CMD_GATE_VEHICLE_CMD_GATE_H
-#define VEHICLE_CMD_GATE_VEHICLE_CMD_GATE_H
+#ifndef VEHICLE_CMD_GATE__VEHICLE_CMD_GATE_HPP_
+#define VEHICLE_CMD_GATE__VEHICLE_CMD_GATE_HPP_
 
 #include <memory>
 
@@ -117,4 +117,4 @@ private:
     const autoware_control_msgs::msg::ControlCommand & msg);
 };
 
-#endif  // VEHICLE_CMD_GATE_VEHICLE_CMD_GATE_H
+#endif  // VEHICLE_CMD_GATE__VEHICLE_CMD_GATE_HPP_
