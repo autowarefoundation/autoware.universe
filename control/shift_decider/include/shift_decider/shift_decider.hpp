@@ -12,15 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef CONTROL_SHIFT_DECIDER_INCLUDE_SHIFT_DECIDER_NODE_HPP_
-#define CONTROL_SHIFT_DECIDER_INCLUDE_SHIFT_DECIDER_NODE_HPP_
+#ifndef SHIFT_DECIDER__SHIFT_DECIDER_HPP_
+#define SHIFT_DECIDER__SHIFT_DECIDER_HPP_
+
+#include <memory>
 
 #include "autoware_control_msgs/msg/control_command_stamped.hpp"
 #include "autoware_vehicle_msgs/msg/shift_stamped.hpp"
 
 #include "rclcpp/rclcpp.hpp"
 
-#include <memory>
 
 class ShiftDecider : public rclcpp::Node
 {
@@ -42,4 +43,4 @@ private:
   autoware_vehicle_msgs::msg::ShiftStamped shift_cmd_;
 };
 
-#endif  // CONTROL_SHIFT_DECIDER_INCLUDE_SHIFT_DECIDER_NODE_HPP_
+#endif  // SHIFT_DECIDER__SHIFT_DECIDER_HPP_
