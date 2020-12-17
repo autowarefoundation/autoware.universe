@@ -136,8 +136,8 @@ void ndt_omp::VoxelGridCovariance<PointT>::applyFilter(PointCloud & output)
       if (!input_->is_dense) {
         // Check if the point is invalid
         if (
-          !pcl_isfinite(input_->points[cp].x) || !pcl_isfinite(input_->points[cp].y) ||
-          !pcl_isfinite(input_->points[cp].z))
+          !std::isfinite(input_->points[cp].x) || !std::isfinite(input_->points[cp].y) ||
+          !std::isfinite(input_->points[cp].z))
         {
           continue;
         }
@@ -213,8 +213,8 @@ void ndt_omp::VoxelGridCovariance<PointT>::applyFilter(PointCloud & output)
       if (!input_->is_dense) {
         // Check if the point is invalid
         if (
-          !pcl_isfinite(input_->points[cp].x) || !pcl_isfinite(input_->points[cp].y) ||
-          !pcl_isfinite(input_->points[cp].z))
+          !std::isfinite(input_->points[cp].x) || !std::isfinite(input_->points[cp].y) ||
+          !std::isfinite(input_->points[cp].z))
         {
           continue;
         }

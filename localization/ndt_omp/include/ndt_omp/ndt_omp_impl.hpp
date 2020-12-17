@@ -266,7 +266,7 @@ double ndt_omp::NormalDistributionsTransform<PointSource, PointTarget>::computeD
 
   // Update gradient and hessian for each point, line 17 in Algorithm 2 [Magnusson 2009]
 #pragma omp parallel for num_threads(num_threads_) schedule(guided, 8)
-  for (int idx = 0; idx < input_->points.size(); idx++) {
+  for (unsigned long idx = 0; idx < input_->points.size(); idx++) {
     int thread_n = omp_get_thread_num();
 
     // Original Point and Transformed Point
@@ -987,7 +987,7 @@ double ndt_omp::NormalDistributionsTransform<PointSource, PointTarget>::calculat
 {
   double score = 0;
 
-  for (int idx = 0; idx < trans_cloud.points.size(); idx++) {
+  for (unsigned long idx = 0; idx < trans_cloud.points.size(); idx++) {
     PointSource x_trans_pt = trans_cloud.points[idx];
 
     // Find nieghbors (Radius search has been experimentally faster than direct neighbor checking.
