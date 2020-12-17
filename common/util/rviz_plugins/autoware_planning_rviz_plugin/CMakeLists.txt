@@ -3,6 +3,8 @@ project(autoware_planning_rviz_plugin)
 
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
+  set(CMAKE_CXX_EXTENSIONS OFF)
 endif()
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -34,6 +36,11 @@ target_link_libraries(autoware_planning_rviz_plugin
 
 # Export the plugin to be imported by rviz2
 pluginlib_export_plugin_description_file(rviz_common plugins/plugin_description.xml)
+
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
+endif()
 
 ament_auto_package(
   INSTALL_TO_SHARE
