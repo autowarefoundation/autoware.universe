@@ -3,12 +3,21 @@
   <arg name="launch_driver" default="true" />
   <arg name="camera_type" default="left" />
 
-  <group ns="camera">
-    <group ns="traffic_light">
+  <group>
+    <push-ros-namespace namespace="camera"/>
+    <group>
+      <push-ros-namespace namespace="traffic_light"/>
 
       <!-- (usb_cam_node is assumed to have launched on logging PC) -->
-      <node pkg="topic_tools" type="relay" name="tl_camera_info_relay" args="$(arg camera_type)/camera_info camera_info" />
-      <node pkg="topic_tools" type="relay" name="tl_compressed_image_relay" args="$(arg camera_type)/image_raw/compressed image_raw/compressed" />
+
+      <!-- TODO(fred-apex-ai) The camera info is not available anymore in the ros2 usb_cam package -->
+      <!-- <node pkg="topic_tools" exec="relay" name="tl_camera_info_relay" args="$(var camera_type)/camera_info camera_info" /> -->
+
+      <node pkg="topic_tools" exec="relay" name="tl_compressed_image_relay" output="log" >
+        <param name="input_topic" value="$(var camera_type)/image_raw/compressed" />
+        <param name="output_topic" value="image_raw/compressed" />
+        <param name="type" value="sensor_msgs/msg/Image" />
+      </node>
     </group>
   </group>
 </launch>

@@ -3,26 +3,27 @@
   <arg name="launch_driver" default="true" />
   <arg name="sensor_model" />
 
-  <group ns="sensing">
+  <group>
+    <push-ros-namespace namespace="sensing"/>
 
     <!-- LiDAR Driver -->
-    <include file="$(find sensing_launch)/launch/$(arg sensor_model)/lidar.launch">
-      <arg name="launch_driver" value="$(arg launch_driver)" />
+    <include file="$(find-pkg-share sensing_launch)/launch/$(var sensor_model)/lidar.launch.xml">
+      <arg name="launch_driver" value="$(var launch_driver)" />
     </include>
 
     <!-- Camera Driver -->
-    <include file="$(find sensing_launch)/launch/$(arg sensor_model)/camera.launch">
-      <arg name="launch_driver" value="$(arg launch_driver)" />
+    <include file="$(find-pkg-share sensing_launch)/launch/$(var sensor_model)/camera.launch.xml">
+      <arg name="launch_driver" value="$(var launch_driver)" />
     </include>
 
     <!-- IMU Driver -->
-    <include file="$(find sensing_launch)/launch/$(arg sensor_model)/imu.launch">
-      <arg name="launch_driver" value="$(arg launch_driver)" />
+    <include file="$(find-pkg-share sensing_launch)/launch/$(var sensor_model)/imu.launch.xml">
+      <arg name="launch_driver" value="$(var launch_driver)" />
     </include>
 
     <!-- GNSS Driver -->
-    <include file="$(find sensing_launch)/launch/$(arg sensor_model)/gnss.launch">
-      <arg name="launch_driver" value="$(arg launch_driver)" />
+    <include file="$(find-pkg-share sensing_launch)/launch/$(var sensor_model)/gnss.launch.xml">
+      <arg name="launch_driver" value="$(var launch_driver)" />
     </include>
 
   </group>

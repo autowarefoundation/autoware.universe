@@ -8,20 +8,20 @@
   <arg name="data_src" default="0"/>
   <arg name="publish_freq" default="10.0"/>
   <arg name="output_type" default="0"/>
-  <arg name="cmdline_arg" default="$(arg bd_list)"/>
+  <arg name="cmdline_arg" default="$(var bd_list)"/>
 
   <group>
-    <param name="xfer_format" value="$(arg xfer_format)"/>
-    <param name="multi_topic" value="$(arg multi_topic)"/>
-    <param name="data_src" value="$(arg data_src)"/>
-    <param name="publish_freq" type="double" value="$(arg publish_freq)"/>
-    <param name="output_data_type" value="$(arg output_type)"/>
-    <param name="cmdline_str" type="string" value="$(arg bd_list)"/>
-    <param name="cmdline_file_path" type="string" value="$(arg lvx_file_path)"/>
-    <param name="user_config_path" type="string" value="$(find livox_ros_driver)/config/livox_lidar_config.json"/>
-    <param name="frame_id" value="$(arg sensor_frame)" />
-
-    <node name="livox_lidar_publisher" pkg="livox_ros_driver" type="livox_ros_driver_node" required="true" output="screen" args="$(arg cmdline_arg)">
+    <node name="livox_lidar_publisher" pkg="livox_ros2_driver" exec="livox_ros2_driver_node" required="true" output="screen" args="$(var cmdline_arg)">
+      <param name="xfer_format" value="$(var xfer_format)"/>
+      <param name="multi_topic" value="$(var multi_topic)"/>
+      <param name="data_src" value="$(var data_src)"/>
+      <param name="publish_freq" value="$(var publish_freq)"/>
+      <param name="output_data_type" value="$(var output_type)"/>
+      <!-- TODO(fred-apex-ai) parameter not declared in livox_ros2_driver -->
+      <!-- <param name="cmdline_str" value="$(var bd_list)"/>  -->
+      <param name="cmdline_file_path" value="$(var lvx_file_path)"/>
+      <param name="user_config_path" value="$(find-pkg-share livox_ros2_driver)/config/livox_lidar_config.json"/>
+      <param name="frame_id" value="$(var sensor_frame)" />
     </node>
   </group>
 </launch>

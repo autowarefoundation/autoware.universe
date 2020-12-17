@@ -2,10 +2,12 @@
 
   <arg name="launch_driver" default="true" />
 
-  <group ns="imu">
+  <group>
+    <push-ros-namespace namespace="imu"/>
 
-    <group ns="tamagawa">
-      <node pkg="tamagawa_imu_driver" name="tag_serial_driver" type="tag_serial_driver" if="$(eval launch_driver==true)">
+    <group>
+      <push-ros-namespace namespace="tamagawa"/>
+      <node pkg="tamagawa_imu_driver" name="tag_serial_driver" exec="tag_serial_driver" if="$(var launch_driver)">
         <remap from="imu/data_raw" to="imu_raw" />
         <param name="port" value="/dev/imu" />
         <param name="imu_frame_id" value="tamagawa/imu_link" />
@@ -14,7 +16,11 @@
 
 
     <!-- Relay -->
-    <node pkg="topic_tools" type="relay" name="relay" args="/sensing/imu/tamagawa/imu_raw /sensing/imu/imu_data" />
+    <node pkg="topic_tools" exec="relay" name="twist_relay" output="log" >
+      <param name="input_topic" value="/sensing/imu/tamagawa/imu_raw" />
+      <param name="output_topic" value="/sensing/imu/imu_data" />
+      <param name="type" value="sensor_msgs/msg/Imu" />
+    </node>
   </group>
 
 </launch>

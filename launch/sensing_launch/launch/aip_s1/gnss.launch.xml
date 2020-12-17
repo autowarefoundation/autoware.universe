@@ -2,17 +2,17 @@
 
   <arg name="launch_driver" default="true" />
 
-    <group ns="gnss">
+    <group>
+      <push-ros-namespace namespace="gnss"/>
 
       <!-- Ublox Driver -->
-      <remap from="ublox/fix" to="ublox/nav_sat_fix" />
-      <include file="$(find ublox_gps)/launch/ublox_device.launch" if="$(eval launch_driver==true)">
-        <arg name="node_name" value="ublox" />
-        <arg name="param_file_name" value="c94_f9p_rover" />
-      </include>
+      <node pkg="ublox_gps" name="ublox" exec="ublox_gps_node" if="$(var launch_driver)">
+        <remap from="ublox/fix" to="ublox/nav_sat_fix" />
+        <param from="$(find-pkg-share ublox_gps)/c94_f9p_rover.yaml"/>
+      </node>
 
       <!-- NavSatFix to MGRS Pose -->
-      <include file="$(find gnss_poser)/launch/gnss_poser.launch">
+      <include file="$(find-pkg-share gnss_poser)/launch/gnss_poser.launch.xml">
         <arg name="input_topic_fix" value="ublox/nav_sat_fix" />
         <arg name="input_topic_navpvt" value="ublox/navpvt" />
 
