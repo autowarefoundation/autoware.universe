@@ -20,10 +20,10 @@
 #include "mission_planner/lanelet2_impl/utility_functions.hpp"
 
 // lnanelet
+#include <vector>
+
 #include "lanelet2_routing/Route.h"
 #include "lanelet2_routing/RoutingCost.h"
-
-#include <vector>
 
 namespace mission_planner
 {

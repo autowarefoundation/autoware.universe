@@ -63,8 +63,7 @@ private:
   void checkpointCallback(const geometry_msgs::msg::PoseStamped::ConstSharedPtr checkpoint_msg_ptr);
   bool transformPose(
     const geometry_msgs::msg::PoseStamped & input_pose,
-    geometry_msgs::msg::PoseStamped * output_pose,
-    const std::string target_frame);
+    geometry_msgs::msg::PoseStamped * output_pose, const std::string target_frame);
 };
 
 }  // namespace mission_planner
