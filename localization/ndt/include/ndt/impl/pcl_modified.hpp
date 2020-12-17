@@ -15,6 +15,8 @@
 #ifndef NORMAL_DISTRIBUTIONS_TRANSFORM_PCL_MODIFIED_HPP
 #define NORMAL_DISTRIBUTIONS_TRANSFORM_PCL_MODIFIED_HPP
 
+#include "ndt/pcl_modified.hpp"
+
 template<class PointSource, class PointTarget>
 NormalDistributionsTransformPCLModified<
   PointSource, PointTarget>::NormalDistributionsTransformPCLModified()
@@ -155,4 +157,4 @@ NormalDistributionsTransformPCLModified<PointSource, PointTarget>::getSearchMeth
   return ndt_ptr_->getSearchMethodTarget();
 }
 
-#endif
+#endif  // NORMAL_DISTRIBUTIONS_TRANSFORM_PCL_MODIFIED_HPP

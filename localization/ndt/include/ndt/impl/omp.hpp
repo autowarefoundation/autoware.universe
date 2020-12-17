@@ -15,6 +15,8 @@
 #ifndef NORMAL_DISTRIBUTIONS_TRANSFORM_OMP_HPP
 #define NORMAL_DISTRIBUTIONS_TRANSFORM_OMP_HPP
 
+#include "ndt/omp.hpp"
+
 template<class PointSource, class PointTarget>
 NormalDistributionsTransformOMP<PointSource, PointTarget>::NormalDistributionsTransformOMP()
 : ndt_ptr_(new ndt_omp::NormalDistributionsTransform<PointSource, PointTarget>)
@@ -179,4 +181,4 @@ NormalDistributionsTransformOMP<PointSource, PointTarget>::getNeighborhoodSearch
   return ndt_ptr_->getNeighborhoodSearchMethod();
 }
 
-#endif
+#endif  // NORMAL_DISTRIBUTIONS_TRANSFORM_OMP_HPP

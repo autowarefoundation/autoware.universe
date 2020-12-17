@@ -15,6 +15,8 @@
 #ifndef NORMAL_DISTRIBUTIONS_TRANSFORM_PCL_GENERIC_HPP
 #define NORMAL_DISTRIBUTIONS_TRANSFORM_PCL_GENERIC_HPP
 
+#include "ndt/pcl_generic.hpp"
+
 template<class PointSource, class PointTarget>
 NormalDistributionsTransformPCLGeneric<
   PointSource, PointTarget>::NormalDistributionsTransformPCLGeneric()
@@ -155,4 +157,4 @@ NormalDistributionsTransformPCLGeneric<PointSource, PointTarget>::getSearchMetho
   return ndt_ptr_->getSearchMethodTarget();
 }
 
-#endif
+#endif  // NORMAL_DISTRIBUTIONS_TRANSFORM_PCL_GENERIC_HPP
