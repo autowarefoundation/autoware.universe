@@ -12,6 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <algorithm>
+#include <limits>
+#include <vector>
+
 #include "boost/algorithm/clamp.hpp"
 #include "boost/assert.hpp"
 #include "boost/assign/list_of.hpp"
@@ -106,7 +110,7 @@ constexpr double sign(const double value)
     return 0.0;
   }
 }
-} //namespace
+}  // namespace
 
 namespace motion_planning
 {
@@ -168,8 +172,8 @@ void AdaptiveCruiseController::insertAdaptiveCruiseVelocity(
   const autoware_planning_msgs::msg::Trajectory & trajectory, const int nearest_collision_point_idx,
   const geometry_msgs::msg::Pose self_pose, const pcl::PointXYZ & nearest_collision_point,
   const rclcpp::Time nearest_collision_point_time,
-  const autoware_perception_msgs::msg::DynamicObjectArray::ConstPtr object_ptr,
-  const geometry_msgs::msg::TwistStamped::ConstPtr current_velocity_ptr, bool * need_to_stop,
+  const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr object_ptr,
+  const geometry_msgs::msg::TwistStamped::ConstSharedPtr current_velocity_ptr, bool * need_to_stop,
   autoware_planning_msgs::msg::Trajectory * output_trajectory)
 {
   debug_values_.data.clear();
@@ -211,28 +215,28 @@ void AdaptiveCruiseController::insertAdaptiveCruiseVelocity(
   }
 
   if (!success_estm_vel) {
-    //if failed to estimate velocity, need to stop
+    // if failed to estimate velocity, need to stop
     RCLCPP_DEBUG_THROTTLE(
       get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
       "Failed to estimate velocity of forward vehicle. Insert stop line.");
     *need_to_stop = true;
-    prev_upper_velocity_ = current_velocity;  //reset prev_upper_velocity
+    prev_upper_velocity_ = current_velocity;  // reset prev_upper_velocity
     pub_debug_->publish(debug_values_);
     return;
   }
 
-  //calculate max(target) velocity of self
+  // calculate max(target) velocity of self
   const double upper_velocity =
     calcUpperVelocity(col_point_distance, point_velocity, current_velocity);
   pub_debug_->publish(debug_values_);
 
   if (upper_velocity <= param_.thresh_vel_to_stop) {
-    //if upper velocity is too low, need to stop
+    // if upper velocity is too low, need to stop
     RCLCPP_DEBUG_THROTTLE(
       get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
       "Upper velocity is too low. Insert stop line.");
     *need_to_stop = true;
-    prev_upper_velocity_ = current_velocity;  //reset prev_upper_velocity
+    prev_upper_velocity_ = current_velocity;  // reset prev_upper_velocity
     return;
   }
 
@@ -275,7 +279,7 @@ void AdaptiveCruiseController::calcDistanceToNearestPointOnPath(
 
   /* get total distance to collision point */
   double dist_to_point = 0;
-  //get distance from self to next nearest point
+  // get distance from self to next nearest point
   dist_to_point += boost::geometry::distance(
     convertPointRosToBoost(self_pose.position),
     convertPointRosToBoost(trajectory.points.at(1).pose.position));
@@ -305,7 +309,7 @@ double AdaptiveCruiseController::calcTrajYaw(
 }
 
 bool AdaptiveCruiseController::estimatePointVelocityFromObject(
-  const autoware_perception_msgs::msg::DynamicObjectArray::ConstPtr object_ptr,
+  const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr object_ptr,
   const double traj_yaw,
   const pcl::PointXYZ & nearest_collision_point, double * velocity)
 {
@@ -535,7 +539,7 @@ void AdaptiveCruiseController::insertMaxVelocityToPath(
     target_acc, param_.min_standard_acceleration, param_.max_standard_acceleration);
   double pre_vel = current_vel;
   double total_dist = -margin_to_insert;
-  for (int i = 1; i < output_trajectory->points.size(); i++) {
+  for (size_t i = 1; i < output_trajectory->points.size(); i++) {
     // calc velocity of each point by gradient deceleration
     const auto current_p = output_trajectory->points[i];
     const auto prev_p = output_trajectory->points[i - 1];
@@ -572,7 +576,7 @@ void AdaptiveCruiseController::registerQueToVelocity(
 {
   // remove old msg from que
   std::vector<int> delete_idxs;
-  for (int i = 0; i < est_vel_que_.size(); i++) {
+  for (size_t i = 0; i < est_vel_que_.size(); i++) {
     if (
       rclcpp::Clock().now().seconds() - est_vel_que_.at(i).header.stamp.sec >
       param_.valid_vel_que_time)

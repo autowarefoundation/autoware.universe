@@ -11,6 +11,15 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+#include <algorithm>
+#include <limits>
+#include <map>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "diagnostic_msgs/msg/key_value.hpp"
 #include "pcl/filters/voxel_grid.h"
 #include "tf2/utils.h"
@@ -22,7 +31,6 @@
 #include "boost/geometry/geometries/linestring.hpp"
 #include "boost/geometry/geometries/point_xy.hpp"
 #include "obstacle_stop_planner/node.hpp"
-#include <vector>
 #define EIGEN_MPL2_ONLY
 #include "eigen3/Eigen/Core"
 #include "eigen3/Eigen/Geometry"
@@ -168,7 +176,6 @@ void ObstacleStopPlannerNode::pathCallback(
   const autoware_planning_msgs::msg::Trajectory base_path = *input_msg;
   autoware_planning_msgs::msg::Trajectory output_msg = *input_msg;
   diagnostic_msgs::msg::DiagnosticStatus stop_reason_diag;
-  const double epsilon = 0.00001;
   /*
    * trim trajectory from self pose
    */
@@ -245,7 +252,7 @@ void ObstacleStopPlannerNode::pathCallback(
   pcl::PointXYZ lateral_nearest_slow_down_point;
   pcl::PointCloud<pcl::PointXYZ>::Ptr slow_down_pointcloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
   double lateral_deviation = 0.0;
-  for (int i = 0; i < (int)(trajectory.points.size()) - 1; ++i) {
+  for (int i = 0; i < static_cast<int>(trajectory.points.size()) - 1; ++i) {
     /*
      * create one step circle center for vehicle
      */
@@ -372,9 +379,9 @@ void ObstacleStopPlannerNode::pathCallback(
    * insert stop point
    */
   if (need_to_stop) {
-    for (int i = decimate_trajectory_index_map.at(decimate_trajectory_collision_index) +
+    for (size_t i = decimate_trajectory_index_map.at(decimate_trajectory_collision_index) +
       trajectory_trim_index;
-      i < (int)base_path.points.size(); ++i)
+      i < base_path.points.size(); ++i)
     {
       Eigen::Vector2d trajectory_vec;
       {
@@ -450,7 +457,7 @@ void ObstacleStopPlannerNode::pathCallback(
 
         // check already insert stop point
         bool is_inserted_already_stop_point = false;
-        for (int j = max_dist_stop_point_idx - 1; j < (int)i; ++j) {
+        for (int j = max_dist_stop_point_idx - 1; j < static_cast<int>(i); ++j) {
           if (base_path.points.at(std::max(j, 0)).twist.linear.x == 0.0) {
             is_inserted_already_stop_point = true;
             break;
@@ -462,7 +469,7 @@ void ObstacleStopPlannerNode::pathCallback(
         const Eigen::Vector2d stop_point =
           !is_inserted_already_stop_point ? max_dist_stop_point : min_dist_stop_point;
         autoware_planning_msgs::msg::TrajectoryPoint stop_trajectory_point =
-          base_path.points.at(std::max((int)(insert_stop_point_index) - 1, 0));
+          base_path.points.at(std::max(static_cast<int>(insert_stop_point_index) - 1, 0));
         stop_trajectory_point.pose.position.x = stop_point.x();
         stop_trajectory_point.pose.position.y = stop_point.y();
         stop_trajectory_point.twist.linear.x = 0.0;
@@ -483,8 +490,8 @@ void ObstacleStopPlannerNode::pathCallback(
    * insert slow_down point
    */
   if (is_slow_down) {
-    for (int i = decimate_trajectory_index_map.at(decimate_trajectory_slow_down_index);
-      i < (int)base_path.points.size(); ++i)
+    for (size_t i = decimate_trajectory_index_map.at(decimate_trajectory_slow_down_index);
+      i < base_path.points.size(); ++i)
     {
       Eigen::Vector2d trajectory_vec;
       {
@@ -502,7 +509,6 @@ void ObstacleStopPlannerNode::pathCallback(
       {
         Eigen::Vector2d slow_down_start_point;
         // search insert point
-        size_t slow_down_point_idx = i;
         size_t slow_down_start_point_idx = 0;
         double slow_down_vel = 0.0;
         const double slow_down_target_vel =
@@ -541,7 +547,7 @@ void ObstacleStopPlannerNode::pathCallback(
         }
 
         autoware_planning_msgs::msg::TrajectoryPoint slow_down_start_trajectory_point =
-          base_path.points.at(std::max((int)(slow_down_start_point_idx) - 1, 0));
+          base_path.points.at(std::max(static_cast<int>(slow_down_start_point_idx) - 1, 0));
         autoware_planning_msgs::msg::TrajectoryPoint slow_down_end_trajectory_point;
         slow_down_start_trajectory_point.pose.position.x = slow_down_start_point.x();
         slow_down_start_trajectory_point.pose.position.y = slow_down_start_point.y();
@@ -594,7 +600,7 @@ bool ObstacleStopPlannerNode::decimateTrajectory(
   autoware_planning_msgs::msg::Trajectory & output_trajectory)
 {
   std::map<size_t /* decimate */, size_t /* origin */> index_map;
-  decimateTrajectory(input_trajectory, step_length, output_trajectory, index_map);
+  return decimateTrajectory(input_trajectory, step_length, output_trajectory, index_map);
 }
 
 bool ObstacleStopPlannerNode::decimateTrajectory(
@@ -608,7 +614,7 @@ bool ObstacleStopPlannerNode::decimateTrajectory(
   const double epsilon = 0.001;
   Eigen::Vector2d point1, point2;
 
-  for (int i = 0; i < (int)(input_trajectory.points.size()) - 1; ++i) {
+  for (int i = 0; i < static_cast<int>(input_trajectory.points.size()) - 1; ++i) {
     if (next_length <= trajectory_length_sum + epsilon) {
       Eigen::Vector2d line_start_point, line_end_point, interporated_point;
       line_start_point << input_trajectory.points.at(i).pose.position.x,
@@ -759,7 +765,6 @@ void ObstacleStopPlannerNode::createOneStepPolygon(
         std::cos(yaw) * (vehicle_width_ / 2.0 + expand_width)));
   }
   convexHull(one_step_move_vehicle_corner_points, polygon);
-
 }
 
 bool ObstacleStopPlannerNode::convexHull(
@@ -772,8 +777,8 @@ bool ObstacleStopPlannerNode::convexHull(
     centroid.x += point.x;
     centroid.y += point.y;
   }
-  centroid.x = centroid.x / (double)pointcloud.size();
-  centroid.y = centroid.y / (double)pointcloud.size();
+  centroid.x = centroid.x / static_cast<double>(pointcloud.size());
+  centroid.y = centroid.y / static_cast<double>(pointcloud.size());
 
   std::vector<cv::Point> normalized_pointcloud;
   std::vector<cv::Point> normalized_polygon_points;

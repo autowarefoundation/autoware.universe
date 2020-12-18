@@ -11,9 +11,12 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#pragma once
+#ifndef OBSTACLE_STOP_PLANNER__NODE_HPP_
+#define OBSTACLE_STOP_PLANNER__NODE_HPP_
 
+#include <map>
 #include <memory>
+#include <vector>
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -64,9 +67,9 @@ private:
    * Parameter
    */
   std::unique_ptr<motion_planning::AdaptiveCruiseController> acc_controller_;
-  sensor_msgs::msg::PointCloud2::Ptr obstacle_ros_pointcloud_ptr_;
-  geometry_msgs::msg::TwistStamped::ConstPtr current_velocity_ptr_;
-  autoware_perception_msgs::msg::DynamicObjectArray::ConstPtr object_ptr_;
+  sensor_msgs::msg::PointCloud2::SharedPtr obstacle_ros_pointcloud_ptr_;
+  geometry_msgs::msg::TwistStamped::ConstSharedPtr current_velocity_ptr_;
+  autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr object_ptr_;
   double wheel_base_, front_overhang_, rear_overhang_, left_overhang_, right_overhang_,
     vehicle_width_, vehicle_length_;
   double stop_margin_;
@@ -130,3 +133,5 @@ private:
   geometry_msgs::msg::Pose getVehicleCenterFromBase(const geometry_msgs::msg::Pose & base_pose);
 };
 }  // namespace motion_planning
+
+#endif  // OBSTACLE_STOP_PLANNER__NODE_HPP_

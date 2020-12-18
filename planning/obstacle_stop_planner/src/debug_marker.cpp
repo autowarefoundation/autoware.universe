@@ -11,11 +11,17 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+#include <memory>
+#include <vector>
+
 #include "obstacle_stop_planner/debug_marker.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
+
 // namespace {
 // convertPose2Transform
 // }
+
 namespace motion_planning
 {
 ObstacleStopPlannerDebugNode::ObstacleStopPlannerDebugNode(const double base_link2front)
@@ -589,12 +595,12 @@ visualization_msgs::msg::MarkerArray ObstacleStopPlannerDebugNode::makeVisualiza
 
 autoware_planning_msgs::msg::StopReasonArray ObstacleStopPlannerDebugNode::makeStopReasonArray()
 {
-  //create header
+  // create header
   std_msgs::msg::Header header;
   header.frame_id = "map";
   header.stamp = rclcpp::Clock().now();
 
-  //create stop reason stamped
+  // create stop reason stamped
   autoware_planning_msgs::msg::StopReason stop_reason_msg;
   stop_reason_msg.reason = autoware_planning_msgs::msg::StopReason::OBSTACLE_STOP;
   autoware_planning_msgs::msg::StopFactor stop_factor;
@@ -607,7 +613,7 @@ autoware_planning_msgs::msg::StopReasonArray ObstacleStopPlannerDebugNode::makeS
     stop_reason_msg.stop_factors.emplace_back(stop_factor);
   }
 
-  //create stop reason array
+  // create stop reason array
   autoware_planning_msgs::msg::StopReasonArray stop_reason_array;
   stop_reason_array.header = header;
   stop_reason_array.stop_reasons.emplace_back(stop_reason_msg);
