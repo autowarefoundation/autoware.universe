@@ -5,7 +5,7 @@
   <description>The vehicle_launch package</description>
 
   <maintainer email="yukihiro.saito@tier4.jp">Yukihiro Saito</maintainer>
-  <license>Apache2</license>
+  <license>Apache License 2.0</license>
 
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
@@ -17,6 +17,10 @@
   <exec_depend>livox_description</exec_depend>
   <exec_depend>velodyne_description</exec_depend>
   <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>simple_planning_simulator</exec_depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
 
   <export>
     <build_type>ament_cmake</build_type>
