@@ -1,0 +1,23 @@
+---
+- name: livox_sdk (clone repository)
+  become: no
+  git:
+    repo: https://github.com/Livox-SDK/Livox-SDK.git
+    dest: "{{ role_path }}/livox_sdk"
+    version: v2.3.0
+
+- name: livox_sdk (cmake)
+  become: no
+  command: cmake .. chdir={{ role_path }}/livox_sdk/build
+
+- name: livox_sdk (make)
+  become: no
+  command: make
+  args:
+    chdir: "{{ role_path }}/livox_sdk/build"
+
+- name: livox_sdk (install)
+  become: yes
+  command: make install
+  args:
+    chdir: "{{ role_path }}/livox_sdk/build"
