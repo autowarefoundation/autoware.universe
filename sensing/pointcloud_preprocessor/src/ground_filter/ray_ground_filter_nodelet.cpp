@@ -287,6 +287,7 @@ void RayGroundFilterComponent::filter(
     new sensor_msgs::msg::PointCloud2);
   pcl::toROSMsg(*no_ground_cloud_ptr, *no_ground_cloud_msg_ptr);
   no_ground_cloud_msg_ptr->header = input->header;
+  no_ground_cloud_msg_ptr->header.frame_id = base_frame_;
   sensor_msgs::msg::PointCloud2::SharedPtr no_ground_cloud_transed_msg_ptr(
     new sensor_msgs::msg::PointCloud2);
   succeeded =
