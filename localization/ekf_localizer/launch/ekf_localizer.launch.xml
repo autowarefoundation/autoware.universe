@@ -46,15 +46,11 @@
 
   <node pkg="ekf_localizer" exec="ekf_localizer" name="ekf_localizer" output="screen">
 
-    <remap unless="$(var use_pose_with_covariance)" from="in_pose" to="$(var input_pose_name)"/>
-    <remap unless="$(var use_pose_with_covariance)" from="in_pose_with_covariance" to="input_pose_with_cov_UNUSED"/>
-    <remap if="$(var use_pose_with_covariance)" from="in_pose" to="input_pose_UNUSED"/>
-    <remap if="$(var use_pose_with_covariance)" from="in_pose_with_covariance" to="$(var input_pose_with_cov_name)"/>
+    <remap from="in_pose" to="$(var input_pose_name)"/>
+    <remap from="in_pose_with_covariance" to="$(var input_pose_with_cov_name)"/>
 
-    <remap unless="$(var use_twist_with_covariance)" from="in_twist" to="$(var input_twist_name)"/>
-    <remap unless="$(var use_twist_with_covariance)" from="in_twist_with_covariance" to="input_twist_with_covariance_UNUSED"/>
-    <remap if="$(var use_twist_with_covariance)" from="in_twist" to="input_twist_UNUSED"/>
-    <remap if="$(var use_twist_with_covariance)" from="in_twist_with_covariance" to="$(var input_twist_with_cov_name)"/>
+    <remap from="in_twist" to="$(var input_twist_name)"/>
+    <remap from="in_twist_with_covariance" to="$(var input_twist_with_cov_name)"/>
 
     <remap from="initialpose" to="$(var input_initial_pose_name)"/>
 

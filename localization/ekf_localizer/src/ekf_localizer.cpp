@@ -233,17 +233,14 @@ void EKFLocalizer::setCurrentResult()
   current_ekf_pose_.pose.position.y = ekf_.getXelement(IDX::Y);
 
   tf2::Quaternion q_tf;
-  double roll = 0.0, pitch = 0.0, yaw = 0.0;
+  double roll = 0.0, pitch = 0.0;
   if (current_pose_ptr_ != nullptr) {
     current_ekf_pose_.pose.position.z = current_pose_ptr_->pose.position.z;
     tf2::fromMsg(current_pose_ptr_->pose.orientation, q_tf); /* use Pose pitch and roll */
-    tf2::Matrix3x3(q_tf).getRPY(roll, pitch, yaw);
-  } else {
-    // current_ekf_pose_.pose.position.z = 0.0;
-    // roll = 0;
-    // pitch = 0;
+    double yaw_tmp;
+    tf2::Matrix3x3(q_tf).getRPY(roll, pitch, yaw_tmp);
   }
-  yaw = ekf_.getXelement(IDX::YAW) + ekf_.getXelement(IDX::YAWB);
+  double yaw = ekf_.getXelement(IDX::YAW) + ekf_.getXelement(IDX::YAWB);
   current_ekf_pose_.pose.orientation = createQuaternionFromRPY(roll, pitch, yaw);
 
   current_ekf_pose_no_yawbias_ = current_ekf_pose_;
