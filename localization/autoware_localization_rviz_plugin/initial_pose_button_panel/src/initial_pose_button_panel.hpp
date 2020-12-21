@@ -35,41 +35,41 @@
 #include "QPushButton"
 #include "QSettings"
 #ifndef Q_MOC_RUN
-#include "ros/ros.h"
-#include "rviz/panel.h"
-#include "rviz/properties/ros_topic_property.h"
-#endif
-#include "geometry_msgs/PoseWithCovarianceStamped.h"
 
-#include "autoware_localization_srvs/PoseWithCovarianceStamped.h"
+#include "rclcpp/rclcpp.hpp"
+#include "rviz_common/panel.hpp"
+#include "rviz_common/properties/ros_topic_property.hpp"
+#endif
+#include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
+
+#include "autoware_localization_srvs/srv/pose_with_covariance_stamped.hpp"
 
 namespace autoware_localization_rviz_plugin
 {
-class InitialPoseButtonPanel : public rviz::Panel
+class InitialPoseButtonPanel : public rviz_common::Panel
 {
   Q_OBJECT
 public:
   InitialPoseButtonPanel(QWidget * parent = 0);
-  void callbackPoseCov(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr & msg);
+  void callbackPoseCov(const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr msg);
 
 public Q_SLOTS:
   void editTopic();
-  void pushInitialzeButton();
+  void pushInitializeButton();
 
 protected:
-  ros::NodeHandle nh_;
-  ros::Subscriber pose_cov_sub_;
+  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pose_cov_sub_;
 
-  ros::ServiceClient client_;
+  rclcpp::Client<autoware_localization_srvs::srv::PoseWithCovarianceStamped>::SharedPtr client_;
 
   QLabel * topic_label_;
   QLineEdit * topic_edit_;
   QPushButton * initialize_button_;
   QLabel * status_label_;
 
-  rviz::RosTopicProperty * property_topic_;
+  rviz_common::properties::RosTopicProperty * property_topic_;
 
-  geometry_msgs::PoseWithCovarianceStamped pose_cov_msg_;
+  geometry_msgs::msg::PoseWithCovarianceStamped pose_cov_msg_;
 };
 
 }  // end namespace autoware_localization_rviz_plugin

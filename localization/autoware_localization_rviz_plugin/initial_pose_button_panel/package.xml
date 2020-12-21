@@ -7,18 +7,19 @@
   <maintainer email="yamato.ando@gmail.com">Yamato ANDO</maintainer>
   <author>Yamato ANDO</author>
 
-  <license>Apache 2</license>
+  <license>Apache License 2.0</license>
 
-  <buildtool_depend>catkin</buildtool_depend>
-  <depend>rviz</depend>
+  <buildtool_depend>ament_cmake_auto</buildtool_depend>
+  <depend>rviz_common</depend>
+  <depend>libqt5-core</depend>
+  <depend>libqt5-widgets</depend>
   <depend>qtbase5-dev</depend>
   <depend>geometry_msgs</depend>
   <depend>autoware_localization_srvs</depend>
 
-  <exec_depend>libqt5-core</exec_depend>
-  <exec_depend>libqt5-widgets</exec_depend>
 
   <export>
+    <build_type>ament_cmake</build_type>
     <rviz plugin="${prefix}/plugins/plugin_description.xml"/>
   </export>
 </package>

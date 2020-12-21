@@ -1,54 +1,32 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.5)
 project(initial_pose_button_panel)
 
-add_compile_options(-std=c++14)
-
-find_package(catkin REQUIRED COMPONENTS
-  rviz
-  std_msgs
-  geometry_msgs
-  autoware_localization_srvs
-)
-
-if(rviz_QT_VERSION VERSION_LESS "5")
-  message(STATUS "Using Qt4 based on the rviz_QT_VERSION: ${rviz_QT_VERSION}")
-  find_package(Qt4 ${rviz_QT_VERSION} EXACT REQUIRED QtCore QtGui)
-  include(${QT_USE_FILE})
-else()
-  message(STATUS "Using Qt5 based on the rviz_QT_VERSION: ${rviz_QT_VERSION}")
-  find_package(Qt5 ${rviz_QT_VERSION} EXACT REQUIRED Core Widgets)
-  set(QT_LIBRARIES Qt5::Widgets)
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+  add_compile_options(-Wno-unused-parameter)
 endif()
 
-catkin_package(
-  DEPENDS rviz
-)
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
 
-include_directories(
-  ${catkin_INCLUDE_DIRS}
-)
-SET(CMAKE_CXX_FLAGS "-O2 -g -Wall -Wno-unused-result -DROS ${CMAKE_CXX_FLAGS}")
-
+find_package(Qt5 ${rviz_QT_VERSION} EXACT REQUIRED Core Widgets)
+set(QT_LIBRARIES Qt5::Widgets)
 
 add_definitions(-DQT_NO_KEYWORDS -g)
-
 set(CMAKE_AUTOMOC ON)
-set(SOURCE_FILES
-  src/initial_pose_button_panel.cpp
-)
 
-add_library(initial_pose_button_panel ${SOURCE_FILES} ${UIC_FILES})
-target_link_libraries(initial_pose_button_panel ${QT_LIBRARIES} ${catkin_LIBRARIES} ${rviz_DEFAULT_PLUGIN_LIBRARIES})
+ament_auto_add_library(initial_pose_button_panel 
+  src/initial_pose_button_panel.cpp)
+target_link_libraries(initial_pose_button_panel 
+  ${QT_LIBRARIES})
 
-install(TARGETS
-  ${PROJECT_NAME}
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+# Export the plugin to be imported by rviz2
+pluginlib_export_plugin_description_file(rviz_common plugins/plugin_description.xml)
 
-install(
-  DIRECTORY
-    plugins
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+ament_auto_package(
+  INSTALL_TO_SHARE
+  plugins
 )
