@@ -94,6 +94,7 @@ struct Bounds
     {
       ub = bounds[0];
       lb = bounds[1];
+      return *this;
     }
     double ub;  // left
     double lb;  // right

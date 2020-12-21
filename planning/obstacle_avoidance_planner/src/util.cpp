@@ -241,6 +241,7 @@ bool interpolate2DPoints(
     point.y = interpolated_y[i];
     interpolated_points.push_back(point);
   }
+  return true;
 }
 
 std::vector<geometry_msgs::msg::Point> getInterpolatedPoints(
