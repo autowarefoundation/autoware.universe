@@ -123,7 +123,8 @@ CostmapGenerator::CostmapGenerator()
   sub_points_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "input/points_no_ground", 1, std::bind(&CostmapGenerator::onPoints, this, _1));
   sub_lanelet_bin_map_ = this->create_subscription<autoware_lanelet2_msgs::msg::MapBin>(
-    "input/vector_map", 1, std::bind(&CostmapGenerator::onLaneletMapBin, this, _1));
+    "input/vector_map", rclcpp::QoS{1}.transient_local(),
+    std::bind(&CostmapGenerator::onLaneletMapBin, this, _1));
   sub_scenario_ = this->create_subscription<autoware_planning_msgs::msg::Scenario>(
     "input/scenario", 1, std::bind(&CostmapGenerator::onScenario, this, _1));
 
