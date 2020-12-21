@@ -130,10 +130,7 @@ void pointcloud_preprocessor::Filter::setupTF()
 {
   tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(
-    *tf_buffer_, std::shared_ptr<rclcpp::Node>(this, [](auto) {}), false);
-  auto cti = std::make_shared<tf2_ros::CreateTimerROS>(
-    this->get_node_base_interface(), this->get_node_timers_interface());
-  tf_buffer_->setCreateTimerInterface(cti);
+    *tf_buffer_);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -250,13 +247,15 @@ void pointcloud_preprocessor::Filter::input_indices_callback(
     // Save the original frame ID
     // Convert the cloud into the different frame
     PointCloud2 cloud_transformed;
-    auto status = tf_buffer_
-      ->waitForTransform(
-      tf_input_frame_, cloud->header.frame_id, cloud->header.stamp,
-      std::chrono::milliseconds(0), [this](auto) {})
-      .wait_for(std::chrono::milliseconds(1000));
-    if (status != std::future_status::ready) {
-      RCLCPP_ERROR(this->get_logger(), "[input_indices_callback] timeout tf");
+
+    if (!tf_buffer_->canTransform(
+        tf_input_frame_, cloud->header.frame_id, this->now(),
+        rclcpp::Duration::from_seconds(1.0)))
+    {
+      RCLCPP_ERROR_STREAM(
+        this->get_logger(),
+        "[input_indices_callback] timeout tf: " <<
+          cloud->header.frame_id << "->" << tf_input_frame_);
       return;
     }
 
