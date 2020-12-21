@@ -18,33 +18,36 @@
  */
 
 #include "naive_path_prediction/node.hpp"
-#include "tf2/LinearMath/Transform.h"
-#include "tf2/convert.h"
-#include "tf2/transform_datatypes.h"
-#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
-#include "geometry_msgs/PoseWithCovarianceStamped.h"
+#include <tf2/LinearMath/Transform.h>
+#include <tf2/convert.h>
+#include <tf2/transform_datatypes.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
 
-NaivePathPredictionNode::NaivePathPredictionNode() : nh_(""), pnh_("~")
+NaivePathPredictionNode::NaivePathPredictionNode() : Node("naive_path_prediction_node")
 {
-  sub_ = nh_.subscribe("input", 1, &NaivePathPredictionNode::callback, this);
-  pub_ = nh_.advertise<autoware_perception_msgs::DynamicObjectArray>("output", 1, true);
+  using std::placeholders::_1;
+  sub_ = this->create_subscription<autoware_perception_msgs::msg::DynamicObjectArray>("input", 1, std::bind(&NaivePathPredictionNode::callback, this, _1));
+  pub_ = this->create_publisher<autoware_perception_msgs::msg::DynamicObjectArray>("output", 1);
 }
 
 void NaivePathPredictionNode::callback(
-  const autoware_perception_msgs::DynamicObjectArray::ConstPtr & input_msg)
+  const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr input_msg)
 {
-  autoware_perception_msgs::DynamicObjectArray output_msg = *input_msg;
+  autoware_perception_msgs::msg::DynamicObjectArray output_msg = *input_msg;
 
   for (size_t i = 0; i < output_msg.objects.size(); ++i) {
-    autoware_perception_msgs::PredictedPath predicted_path;
+    autoware_perception_msgs::msg::PredictedPath predicted_path;
     predicted_path.confidence = 1.0;
     const double ep = 0.001;
     for (double dt = 0.0; dt < 3.0 + ep; dt += 0.5) {
-      geometry_msgs::PoseWithCovarianceStamped pose_cov_stamped;
+      geometry_msgs::msg::PoseWithCovarianceStamped pose_cov_stamped;
       pose_cov_stamped.header = output_msg.header;
-      pose_cov_stamped.header.stamp = output_msg.header.stamp + ros::Duration(dt);
-      geometry_msgs::Pose object_frame_pose;
-      geometry_msgs::Pose world_frame_pose;
+      rclcpp::Duration delta_t_ = rclcpp::Duration(dt);
+      pose_cov_stamped.header.stamp.sec = output_msg.header.stamp.sec + delta_t_.seconds();
+      pose_cov_stamped.header.stamp.nanosec = output_msg.header.stamp.nanosec + delta_t_.nanoseconds();
+      geometry_msgs::msg::Pose object_frame_pose;
+      geometry_msgs::msg::Pose world_frame_pose;
       object_frame_pose.position.x =
         output_msg.objects.at(i).state.twist_covariance.twist.linear.x * dt;
       object_frame_pose.position.y =
@@ -65,15 +68,16 @@ void NaivePathPredictionNode::callback(
   }
 
   // Publish
-  pub_.publish(output_msg);
+  pub_->publish(output_msg);
   return;
 }
 
 int main(int argc, char ** argv)
 {
-  ros::init(argc, argv, "naive_path_prediction_node");
-  NaivePathPredictionNode node;
-  ros::spin();
+  rclcpp::init(argc, argv);
+  rclcpp::spin(std::make_shared<NaivePathPredictionNode>());
+
+  rclcpp::shutdown();
 
   return 0;
 }

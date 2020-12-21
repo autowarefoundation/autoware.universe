@@ -18,18 +18,16 @@
 
 #pragma once
 
-#include "ros/ros.h"
-#include "autoware_perception_msgs/DynamicObjectArray.h"
+#include <rclcpp/rclcpp.hpp>
+#include "autoware_perception_msgs/msg/dynamic_object_array.hpp"
 
-class NaivePathPredictionNode
+class NaivePathPredictionNode : public rclcpp::Node
 {
-private:  // ros
-  ros::NodeHandle nh_;
-  ros::NodeHandle pnh_;
-  ros::Publisher pub_;
-  ros::Subscriber sub_;
+private:
+  rclcpp::Publisher<autoware_perception_msgs::msg::DynamicObjectArray>::SharedPtr pub_;
+  rclcpp::Subscription<autoware_perception_msgs::msg::DynamicObjectArray>::SharedPtr sub_;
 
-  void callback(const autoware_perception_msgs::DynamicObjectArray::ConstPtr & input_msg);
+  void callback(const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr input_msg);
 
 public:
   NaivePathPredictionNode();
