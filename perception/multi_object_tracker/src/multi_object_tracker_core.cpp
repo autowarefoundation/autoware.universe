@@ -74,24 +74,19 @@ void MultiObjectTracker::measurementCallback(
     tf2::Transform tf_world2objects_world;
     tf2::Transform tf_world2objects;
     tf2::Transform tf_objects_world2objects;
-    geometry_msgs::msg::TransformStamped ros_world2objects_world;
-    // Create the future object
-    auto future = tf_buffer_.waitForTransform(
-      world_frame_id_, input_transformed_objects.header.frame_id,
-      input_transformed_objects.header.stamp, tf2::durationFromSec(0.0), [](auto &) {});
-
-    // Check for transform ready status
-    auto status = future.wait_for(tf2::durationFromSec(0.5));
-    if (status != std::future_status::ready) {
+    try {
+      geometry_msgs::msg::TransformStamped ros_world2objects_world = tf_buffer_.lookupTransform(
+        /*target*/ world_frame_id_, /*src*/ input_transformed_objects.header.frame_id,
+        input_transformed_objects.header.stamp, tf2::durationFromSec(0.5));
+      tf2::fromMsg(ros_world2objects_world.transform, tf_world2objects_world);
+    } catch (tf2::TransformException & ex) {
       RCLCPP_WARN_THROTTLE(
-        this->get_logger(), *(this->get_clock()), std::chrono::milliseconds(1000).count(),
-        "cannot transform to world frame form %s", input_transformed_objects.header.frame_id.c_str());
+        this->get_logger(), *this->get_clock(), 1000 /* ms */,
+        "cannot transform to world frame from %s",
+        input_transformed_objects.header.frame_id.c_str());
       return;
     }
 
-    // Get and process the transform
-    ros_world2objects_world = future.get();
-    tf2::fromMsg(ros_world2objects_world.transform, tf_world2objects_world);
 
     for (size_t i = 0; i < input_transformed_objects.feature_objects.size(); ++i) {
       tf2::fromMsg(
