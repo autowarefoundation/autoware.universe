@@ -17,15 +17,13 @@
   <node pkg="pointcloud_preprocessor" exec="crop_box_filter_node" name="crop_box_filter_mesurement_range" output="log">
     <remap from="input" to="$(var input_sensor_points_topic)" />
     <remap from="output" to="$(var output_mesurement_range_sensor_points_topic)" />
-    <rosparam>
-        min_x: -60.0
-        max_x: 60.0
-        min_y: -60.0
-        max_y: 60.0
-        min_z: -30.0
-        max_z: 50.0
-        negative: False
-    </rosparam>
+    <param name="min_x" value="-60.0" />
+    <param name="max_x" value="60.0" />
+    <param name="min_y" value="-60.0" />
+    <param name="max_y" value="60.0" />
+    <param name="min_z" value="-30.0" />
+    <param name="max_z" value="50.0" />
+    <param name= "negative" value="False" />
     <param name="input_frame" value="$(var base_frame)" />
     <param name="output_frame" value="$(var base_frame)" />
   </node>
@@ -35,11 +33,9 @@
   <node pkg="pointcloud_preprocessor" exec="downsample_filter_node" name="voxel_grid_filter" output="log">
     <remap from="input" to="$(var output_mesurement_range_sensor_points_topic)" />
     <remap from="output" to="$(var output_downsample_sensor_points_topic)" />
-    <rosparam>
-      voxel_size_x: 3.0
-      voxel_size_y: 3.0
-      voxel_size_z: 3.0
-    </rosparam>
+    <param name="voxel_size_x" value="3.0" />
+    <param name="voxel_size_y" value="3.0" />
+    <param name="voxel_size_z" value="3.0" />
   </node>
 
 </launch>
