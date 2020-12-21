@@ -84,7 +84,7 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
 
   /* initialize ros system */
   auto timer_control_callback = std::bind(&EKFLocalizer::timerCallback, this);
-  auto period_control = std::chrono::duration_cast<std::chrono::seconds>(
+  auto period_control = std::chrono::duration_cast<std::chrono::nanoseconds>(
     std::chrono::duration<double>(ekf_dt_));
   timer_control_ = std::make_shared<rclcpp::GenericTimer<decltype(timer_control_callback)>>(
     this->get_clock(), period_control, std::move(timer_control_callback),
@@ -92,7 +92,7 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
   this->get_node_timers_interface()->add_timer(timer_control_, nullptr);
 
   auto timer_tf_callback = std::bind(&EKFLocalizer::timerTFCallback, this);
-  auto period_tf = std::chrono::duration_cast<std::chrono::seconds>(
+  auto period_tf = std::chrono::duration_cast<std::chrono::nanoseconds>(
     std::chrono::duration<double>(1.0 / tf_rate_));
   timer_tf_ = std::make_shared<rclcpp::GenericTimer<decltype(timer_tf_callback)>>(
     this->get_clock(), period_tf, std::move(timer_tf_callback),
