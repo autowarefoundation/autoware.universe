@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
-<package format="2">
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
   <name>control_launch</name>
   <version>0.1.0</version>
   <description>The control_launch package</description>
@@ -9,6 +10,17 @@
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
+
+  <exec_depend>latlon_muxer</exec_depend>
+  <exec_depend>mpc_follower</exec_depend>
+  <exec_depend>pure_pursuit</exec_depend>
+  <exec_depend>remote_cmd_converter</exec_depend>
+  <exec_depend>shift_decider</exec_depend>
+  <exec_depend>vehicle_cmd_gate</exec_depend>
+  <exec_depend>velocity_controller</exec_depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
 
   <export>
     <build_type>ament_cmake</build_type>
