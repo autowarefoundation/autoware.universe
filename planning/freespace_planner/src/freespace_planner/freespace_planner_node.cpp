@@ -255,6 +255,7 @@ AstarNavi::AstarNavi()
     node_param_.th_course_out_distance_m = declare_parameter("th_course_out_distance_m", 3.0);
     node_param_.replan_when_obstacle_found = declare_parameter("replan_when_obstacle_found", true);
     node_param_.replan_when_course_out = declare_parameter("replan_when_course_out", true);
+    declare_parameter("is_completed");
   }
 
   // AstarParam
