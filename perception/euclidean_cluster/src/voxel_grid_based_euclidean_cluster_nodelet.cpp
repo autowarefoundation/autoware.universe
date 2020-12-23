@@ -11,43 +11,38 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#include "autoware_perception_msgs/DynamicObjectWithFeature.h"
-#include "autoware_perception_msgs/DynamicObjectWithFeatureArray.h"
+#include "autoware_perception_msgs/msg/dynamic_object_with_feature.hpp"
+#include "autoware_perception_msgs/msg/dynamic_object_with_feature_array.hpp"
 #include "euclidean_cluster/voxel_grid_based_euclidean_cluster_nodelet.hpp"
 #include "pcl/kdtree/kdtree.h"
 #include "pcl/segmentation/extract_clusters.h"
 #include "pcl_conversions/pcl_conversions.h"
-#include "pcl_ros/point_cloud.h"
-#include "pluginlib/class_list_macros.h"
-#include "sensor_msgs/point_cloud2_iterator.h"
 #include <unordered_map>
 
 namespace euclidean_cluster
 {
-VoxelGridBasedEuclideanClusterNodelet::VoxelGridBasedEuclideanClusterNodelet() {}
-
-void VoxelGridBasedEuclideanClusterNodelet::onInit()
+VoxelGridBasedEuclideanClusterNodelet::VoxelGridBasedEuclideanClusterNodelet(const rclcpp::NodeOptions & options)
+: Node("voxel_grid_based_euclidean_cluster_node", options)
 {
-  private_nh_ = getPrivateNodeHandle();
 
-  private_nh_.param<std::string>("target_frame", target_frame_, "base_link");
-  private_nh_.param<int>("min_cluster_size", min_cluster_size_, 1);
-  private_nh_.param<int>("max_cluster_size", max_cluster_size_, 500);
-  private_nh_.param<float>("tolerance", tolerance_, 1.0);
-  private_nh_.param<float>("voxel_leaf_size", voxel_leaf_size_, 0.5);
-  private_nh_.param<int>("min_points_number_per_voxel", min_points_number_per_voxel_, 3);
+  target_frame_ = this->declare_parameter("target_frame", "base_link");
+//  bool use_height_ = this->declare_parameter("use_height", false);
+  min_cluster_size_ = this->declare_parameter("min_cluster_size", 1);
+  max_cluster_size_ = this->declare_parameter("max_cluster_size", 500);
+  tolerance_ = this->declare_parameter("tolerance", 1.0);
+  voxel_leaf_size_ = this->declare_parameter("voxel_leaf_size", 0.5);
+  min_points_number_per_voxel_ = this->declare_parameter("min_points_number_per_voxel", 3);
 
-  nh_ = getNodeHandle();
-  pointcloud_sub_ = private_nh_.subscribe(
-    "input", 1, &VoxelGridBasedEuclideanClusterNodelet::pointcloudCallback, this);
+  using std::placeholders::_1;
+  pointcloud_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
+    "input", rclcpp::QoS{1}.transient_local(), std::bind(&VoxelGridBasedEuclideanClusterNodelet::pointcloudCallback, this, _1));
 
-  cluster_pub_ =
-    private_nh_.advertise<autoware_perception_msgs::DynamicObjectWithFeatureArray>("output", 10);
-  debug_pub_ = private_nh_.advertise<sensor_msgs::PointCloud2>("debug/clusters", 1);
+  cluster_pub_ = this->create_publisher<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>("output", 10);
+  debug_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("debug/clusters", 1);
 }
 
 void VoxelGridBasedEuclideanClusterNodelet::pointcloudCallback(
-  const sensor_msgs::PointCloud2ConstPtr & input_msg)
+  const sensor_msgs::msg::PointCloud2::ConstSharedPtr input_msg)
 {
   // convert ros to pcl
   pcl::PointCloud<pcl::PointXYZ>::Ptr raw_pointcloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
@@ -111,7 +106,7 @@ void VoxelGridBasedEuclideanClusterNodelet::pointcloudCallback(
 
   // build output msg
   {
-    autoware_perception_msgs::DynamicObjectWithFeatureArray output;
+    autoware_perception_msgs::msg::DynamicObjectWithFeatureArray output;
     output.header = input_msg->header;
     for (std::vector<pcl::PointCloud<pcl::PointXYZ>>::const_iterator cluster_itr =
            v_cluster.begin();
@@ -128,20 +123,20 @@ void VoxelGridBasedEuclideanClusterNodelet::pointcloudCallback(
       cloud_cluster->width = cloud_cluster->points.size();
       cloud_cluster->height = 1;
       cloud_cluster->is_dense = true;
-      sensor_msgs::PointCloud2 ros_pointcloud;
-      autoware_perception_msgs::DynamicObjectWithFeature feature_object;
+      sensor_msgs::msg::PointCloud2 ros_pointcloud;
+      autoware_perception_msgs::msg::DynamicObjectWithFeature feature_object;
       pcl::toROSMsg(*cloud_cluster, ros_pointcloud);
       ros_pointcloud.header = input_msg->header;
       feature_object.feature.cluster = ros_pointcloud;
       output.feature_objects.push_back(feature_object);
     }
-    cluster_pub_.publish(output);
+    cluster_pub_->publish(output);
   }
 
   // build debug msg
-  if (debug_pub_.getNumSubscribers() < 1) return;
+  if (debug_pub_->get_subscription_count() < 1) return;
   {
-    sensor_msgs::PointCloud2 pointcloud_output;
+    sensor_msgs::msg::PointCloud2 pointcloud_output;
 
     int i = 0;
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_cluster(new pcl::PointCloud<pcl::PointXYZI>);
@@ -164,10 +159,12 @@ void VoxelGridBasedEuclideanClusterNodelet::pointcloudCallback(
     }
     pcl::toROSMsg(*cloud_cluster, pointcloud_output);
     pointcloud_output.header = input_msg->header;
-    debug_pub_.publish(pointcloud_output);
+    debug_pub_->publish(pointcloud_output);
   }
 }
 
 }  // namespace euclidean_cluster
 
-PLUGINLIB_EXPORT_CLASS(euclidean_cluster::VoxelGridBasedEuclideanClusterNodelet, nodelet::Nodelet)
+#include <rclcpp_components/register_node_macro.hpp>
+
+RCLCPP_COMPONENTS_REGISTER_NODE(euclidean_cluster::VoxelGridBasedEuclideanClusterNodelet)

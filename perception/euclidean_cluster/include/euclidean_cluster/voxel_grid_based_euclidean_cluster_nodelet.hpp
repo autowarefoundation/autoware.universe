@@ -13,33 +13,30 @@
 // limitations under the License.
 
 #pragma once
-#include "ros/ros.h"
+#include "rclcpp/rclcpp.hpp"
 
-#include "nodelet/nodelet.h"
 // #include "tf2_ros/buffer.h"
 // #include "tf2_ros/transform_listener.h"
 // #include "tf2_ros/message_filter.h"
 // #include "message_filters/subscriber.h"
 #include "pcl/filters/voxel_grid.h"
 #include "pcl/point_types.h"
-#include "sensor_msgs/PointCloud2.h"
+#include "sensor_msgs/msg/point_cloud2.h"
 
 namespace euclidean_cluster
 {
-class VoxelGridBasedEuclideanClusterNodelet : public nodelet::Nodelet
+class VoxelGridBasedEuclideanClusterNodelet : public rclcpp::Node
 {
 public:
-  VoxelGridBasedEuclideanClusterNodelet();
+  VoxelGridBasedEuclideanClusterNodelet(const rclcpp::NodeOptions & options);
 
 private:
-  virtual void onInit();
 
-  void pointcloudCallback(const sensor_msgs::PointCloud2ConstPtr & input_msg);
+  void pointcloudCallback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr input_msg);
 
-  ros::NodeHandle nh_, private_nh_;
-  ros::Subscriber pointcloud_sub_;
-  ros::Publisher cluster_pub_;
-  ros::Publisher debug_pub_;
+  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_sub_;
+  rclcpp::Publisher<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>::SharedPtr cluster_pub_;
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr debug_pub_;
 
   // ROS Parameters
   std::string target_frame_;
