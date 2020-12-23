@@ -1,7 +1,7 @@
 <launch>
 
   <!-- Topics -->
-  <arg name="input_sensor_points_topic" default="/points_raw" doc="Sensor points topic"/>
+  <arg name="input_sensor_points_topic" default="/points_raw" doc="Sensor points topic" />
 
   <arg name="input_sensor_points_queue_size" default="1" doc="Subscriber queue size" />
   <arg name="input_initial_pose_topic" default="/ekf_pose_with_covariance" doc="Initial position topic to align" />
@@ -32,7 +32,7 @@
   <arg name="node_name" default="ndt_scan_matcher" doc="Use a different name for this node" />
 
   <node pkg="ndt_scan_matcher" exec="ndt_scan_matcher" name="$(var node_name)" output="log">
-
+    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)" />
     <remap from="points_raw" to="$(var input_sensor_points_topic)" />
     <param name="input_sensor_points_queue_size" value="$(var input_sensor_points_queue_size)" />
 
