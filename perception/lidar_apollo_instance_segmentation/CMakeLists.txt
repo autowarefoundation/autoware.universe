@@ -96,6 +96,8 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
   
   if(NOT CMAKE_CXX_STANDARD)
     set(CMAKE_CXX_STANDARD 14)
+    set(CMAKE_CXX_STANDARD_REQUIRED ON)
+    set(CMAKE_CXX_EXTENSIONS OFF)
   endif()
   if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     add_compile_options(-Wall -Wextra -Wpedantic -Wno-unused-parameter)
@@ -142,6 +144,10 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     tensorrt_apollo_cnn_lib
   )
 
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
+endif()
 
   ament_auto_package(INSTALL_TO_SHARE
     launch
@@ -152,6 +158,11 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
 else()
   find_package(ament_cmake_auto REQUIRED)
   ament_auto_find_build_dependencies()
+
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
+endif()
 
   # to avoid launch file missing without a gpu
   ament_auto_package(INSTALL_TO_SHARE

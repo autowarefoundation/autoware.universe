@@ -43,8 +43,8 @@
  * limitations under the License.
  *****************************************************************************/
 
-#ifndef CLUSTER2D_H
-#define CLUSTER2D_H
+#ifndef LIDAR_APOLLO_INSTANCE_SEGMENTATION__CLUSTER2D_HPP_
+#define LIDAR_APOLLO_INSTANCE_SEGMENTATION__CLUSTER2D_HPP_
 
 #include "pcl/point_types.h"
 #include "pcl/point_cloud.h"
@@ -161,4 +161,4 @@ private:
   void traverse(Node * x);
 };
 
-#endif  // CLUSTER_2D_H
+#endif  // LIDAR_APOLLO_INSTANCE_SEGMENTATION__CLUSTER2D_HPP_
