@@ -201,7 +201,9 @@ void Simulator::callbackEngage(const std_msgs::msg::Bool::ConstSharedPtr msg)
 void Simulator::timerCallbackSimulation()
 {
   if (!is_initialized_) {
-    RCLCPP_INFO(get_logger(), "[simple_planning_simulator] waiting initial position...");
+    RCLCPP_INFO_THROTTLE(
+      get_logger(), *this->get_clock(), 3000 /*ms*/,
+      "waiting initial position...");
     return;
   }
 
@@ -386,15 +388,14 @@ void Simulator::getTransformFromTF(
   const std::string parent_frame, const std::string child_frame,
   geometry_msgs::msg::TransformStamped & transform)
 {
-  while (1) {
+  while (rclcpp::ok()) {
     try {
       const auto time_point = tf2::TimePoint(std::chrono::milliseconds(0));
       transform = tf_buffer_->lookupTransform(
-        parent_frame, child_frame, time_point, tf2::durationFromSec(0.0));
+        parent_frame, child_frame, time_point);
       break;
     } catch (tf2::TransformException & ex) {
       RCLCPP_ERROR(this->get_logger(), "%s", ex.what());
-      rclcpp::sleep_for(std::chrono::milliseconds(500));
     }
   }
 }
