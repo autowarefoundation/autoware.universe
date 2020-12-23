@@ -1,6 +1,9 @@
 <launch>
+  <arg name="vehicle_model" />
+  <let name="vehicle_param_file" value="$(find-pkg-share $(var vehicle_model)_description)/config/vehicle_info.yaml"/>
 
   <node pkg="vehicle_cmd_gate" exec="vehicle_cmd_gate" name="vehicle_cmd_gate" output="screen">
+    <param from="$(var vehicle_param_file)" />
     <remap from="input/engage" to="/autoware/engage"/>
     <remap from="input/emergency" to="/system/emergency/is_emergency"/>
     <remap from="input/gate_mode" to="/remote/gate_mode_cmd"/>
