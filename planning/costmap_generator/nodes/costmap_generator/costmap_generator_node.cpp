@@ -116,6 +116,19 @@ CostmapGenerator::CostmapGenerator()
   expand_polygon_size_ = this->declare_parameter<double>("expand_polygon_size", 1.0);
   size_of_expansion_kernel_ = this->declare_parameter<int>("size_of_expansion_kernel", 9);
 
+  // Wait for first tf
+  // We want to do this before creating subscriptions
+  while (rclcpp::ok()) {
+    try {
+      tf_buffer_.lookupTransform(map_frame_, vehicle_frame_, rclcpp::Time(0));
+      break;
+    } catch (tf2::TransformException & ex) {
+      RCLCPP_ERROR(this->get_logger(), "waiting for initial pose...");
+    }
+    rclcpp::sleep_for(std::chrono::milliseconds(5000));
+  }
+
+
   // Subscribers
   using std::placeholders::_1;
   sub_objects_ = this->create_subscription<autoware_perception_msgs::msg::DynamicObjectArray>(
@@ -145,18 +158,6 @@ CostmapGenerator::CostmapGenerator()
 
   // Initialize
   initGridmap();
-
-  // Wait for first tf
-  while (rclcpp::ok()) {
-    try {
-      tf_buffer_.lookupTransform(
-        map_frame_, vehicle_frame_, rclcpp::Time(
-          0), rclcpp::Duration::from_seconds(10.0));
-      break;
-    } catch (tf2::TransformException & ex) {
-      RCLCPP_ERROR(this->get_logger(), "waiting for initial pose...");
-    }
-  }
 }
 
 void CostmapGenerator::loadRoadAreasFromLaneletMap(
