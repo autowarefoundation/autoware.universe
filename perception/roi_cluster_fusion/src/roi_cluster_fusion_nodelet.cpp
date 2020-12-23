@@ -13,12 +13,8 @@
 // limitations under the License.
 #include "pcl/point_types.h"
 #include "pcl_conversions/pcl_conversions.h"
-#include "pcl_ros/point_cloud.h"
-#include "pcl_ros/transforms.h"
-#include "pluginlib/class_list_macros.h"
 #include "roi_cluster_fusion/roi_cluster_fusion_nodelet.hpp"
-#include "sensor_msgs/PointCloud2.h"
-#include "sensor_msgs/point_cloud2_iterator.h"
+#include "sensor_msgs/msg/point_cloud2.h"
 #include "tf2/LinearMath/Transform.h"
 #include "tf2/convert.h"
 #include "tf2/transform_datatypes.h"
@@ -29,8 +25,6 @@
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/opencv.hpp"
-// #include "image_transport/image_transport.h"
-// #include "cv_bridge/cv_bridge.h"
 #include <chrono>
 
 #define EIGEN_MPL2_ONLY
@@ -39,41 +33,33 @@
 
 namespace roi_cluster_fusion
 {
-RoiClusterFusionNodelet::RoiClusterFusionNodelet() {}
-
-void RoiClusterFusionNodelet::onInit()
+RoiClusterFusionNodelet::RoiClusterFusionNodelet(const rclcpp::NodeOptions & options)
+: Node("roi_cluster_fusion_node", options), tf_buffer_(this->get_clock()),
+  tf_listener_ptr_(tf_buffer_)
 {
-  nh_ = getNodeHandle();
-  private_nh_ = getPrivateNodeHandle();
-
-  private_nh_.param<bool>("use_iou_x", use_iou_x_, true);
-  private_nh_.param<bool>("use_iou_y", use_iou_y_, false);
-  private_nh_.param<bool>("use_iou", use_iou_, false);
-  private_nh_.param<bool>("use_cluster_semantic_type", use_cluster_semantic_type_, false);
-  private_nh_.param<double>("iou_threshold", iou_threshold_, 0.1);
-  private_nh_.param<int>("rois_number", rois_number_, 1);
+  use_iou_x_ = this->declare_parameter("use_iou_x", true);
+  use_iou_y_ = this->declare_parameter("use_iou_y", false);
+  use_iou_ = this->declare_parameter("use_iou", false);
+  use_cluster_semantic_type_ = this->declare_parameter("use_cluster_semantic_type",false);
+  int rois_number_ = this->declare_parameter("rois_number", 1);
   if (rois_number_ < 1) {
-    ROS_WARN("minimum roi_num is 1. current roi_num is %d", rois_number_);
+    RCLCPP_WARN(this->get_logger(), "minimum roi_num is 1. current roi_num is %d", rois_number_);
     rois_number_ = 1;
   }
   if (8 < rois_number_) {
-    ROS_WARN("maximum roi_num is 8. current roi_num is %d", rois_number_);
+    RCLCPP_WARN(this->get_logger(), "maximum roi_num is 8. current roi_num is %d", rois_number_);
     rois_number_ = 8;
   }
 
-  tf_listener_ptr_ = std::make_shared<tf2_ros::TransformListener>(tf_buffer_);
-  cluster_sub_.subscribe(nh_, "clusters", 1);
+  cluster_sub_.subscribe(this, "clusters", rclcpp::QoS{1}.get_rmw_qos_profile());
   for (int id = 0; id < rois_number_; ++id) {
-    v_camera_info_sub_.push_back(
-      std::make_shared<ros::Subscriber>(nh_.subscribe<sensor_msgs::CameraInfo>(
-        "camera_info" + std::to_string(id), 1,
-        boost::bind(&RoiClusterFusionNodelet::cameraInfoCallback, this, _1, id))));
+    std::function<void(const sensor_msgs::msg::CameraInfo::ConstSharedPtr msg)> fcn = std::bind(&RoiClusterFusionNodelet::cameraInfoCallback, this, std::placeholders::_1, id);
+    v_camera_info_sub_.push_back(this->create_subscription<sensor_msgs::msg::CameraInfo>("camera_info" + std::to_string(id), 1, fcn));
   }
   v_roi_sub_.resize(rois_number_);
   for (int id = 0; id < (int)v_roi_sub_.size(); ++id) {
     v_roi_sub_.at(id) = std::make_shared<
-      message_filters::Subscriber<autoware_perception_msgs::DynamicObjectWithFeatureArray>>();
-    v_roi_sub_.at(id)->subscribe(nh_, "rois" + std::to_string(id), 1);
+      message_filters::Subscriber<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>>(this, "rois" + std::to_string(id), rclcpp::QoS{1}.get_rmw_qos_profile());
   }
   // add dummy callback to enable passthrough filter
   v_roi_sub_.at(0)->registerCallback(bind(&RoiClusterFusionNodelet::dummyCallback, this, _1));
@@ -129,37 +115,37 @@ void RoiClusterFusionNodelet::onInit()
     std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6,
     std::placeholders::_7, std::placeholders::_8, std::placeholders::_9));
   labeled_cluster_pub_ =
-    nh_.advertise<autoware_perception_msgs::DynamicObjectWithFeatureArray>("labeled_clusters", 10);
+    this->create_publisher<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>("labeled_clusters", 10);
 }
 
 void RoiClusterFusionNodelet::cameraInfoCallback(
-  const sensor_msgs::CameraInfoConstPtr & input_camera_info_msg, const int id)
+  const sensor_msgs::msg::CameraInfo::ConstSharedPtr input_camera_info_msg, const int id)
 {
   m_camera_info_[id] = *input_camera_info_msg;
 }
 
 void RoiClusterFusionNodelet::fusionCallback(
-  const autoware_perception_msgs::DynamicObjectWithFeatureArray::ConstPtr & input_cluster_msg,
-  const autoware_perception_msgs::DynamicObjectWithFeatureArray::ConstPtr & input_roi0_msg,
-  const autoware_perception_msgs::DynamicObjectWithFeatureArray::ConstPtr & input_roi1_msg,
-  const autoware_perception_msgs::DynamicObjectWithFeatureArray::ConstPtr & input_roi2_msg,
-  const autoware_perception_msgs::DynamicObjectWithFeatureArray::ConstPtr & input_roi3_msg,
-  const autoware_perception_msgs::DynamicObjectWithFeatureArray::ConstPtr & input_roi4_msg,
-  const autoware_perception_msgs::DynamicObjectWithFeatureArray::ConstPtr & input_roi5_msg,
-  const autoware_perception_msgs::DynamicObjectWithFeatureArray::ConstPtr & input_roi6_msg,
-  const autoware_perception_msgs::DynamicObjectWithFeatureArray::ConstPtr & input_roi7_msg)
+  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr input_cluster_msg,
+  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr input_roi0_msg,
+  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr input_roi1_msg,
+  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr input_roi2_msg,
+  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr input_roi3_msg,
+  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr input_roi4_msg,
+  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr input_roi5_msg,
+  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr input_roi6_msg,
+  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr input_roi7_msg)
 {
   // Guard
-  if (labeled_cluster_pub_.getNumSubscribers() < 1) return;
+  if (labeled_cluster_pub_->get_subscription_count() < 1) return;
 
   // build output msg
-  autoware_perception_msgs::DynamicObjectWithFeatureArray output_msg;
+  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray output_msg;
   output_msg = *input_cluster_msg;
 
   // reset cluster semantic type
   if (!use_cluster_semantic_type_) {
     for (auto & feature_object : output_msg.feature_objects) {
-      feature_object.object.semantic.type = autoware_perception_msgs::Semantic::UNKNOWN;
+      feature_object.object.semantic.type = autoware_perception_msgs::msg::Semantic::UNKNOWN;
       feature_object.object.semantic.confidence = 0.0;
     }
   }
@@ -168,35 +154,35 @@ void RoiClusterFusionNodelet::fusionCallback(
   for (int id = 0; id < (int)v_roi_sub_.size(); ++id) {
     // cannot find camera info
     if (m_camera_info_.find(id) == m_camera_info_.end()) {
-      ROS_WARN("no camera info. id is %d", id);
+      RCLCPP_WARN(this->get_logger(),"no camera info. id is %d", id);
       continue;
     }
 
     // projection matrix
     Eigen::Matrix4d projection;
-    projection << m_camera_info_.at(id).P.at(0), m_camera_info_.at(id).P.at(1),
-      m_camera_info_.at(id).P.at(2), m_camera_info_.at(id).P.at(3), m_camera_info_.at(id).P.at(4),
-      m_camera_info_.at(id).P.at(5), m_camera_info_.at(id).P.at(6), m_camera_info_.at(id).P.at(7),
-      m_camera_info_.at(id).P.at(8), m_camera_info_.at(id).P.at(9), m_camera_info_.at(id).P.at(10),
-      m_camera_info_.at(id).P.at(11);
+    projection << m_camera_info_.at(id).p.at(0), m_camera_info_.at(id).p.at(1),
+      m_camera_info_.at(id).p.at(2), m_camera_info_.at(id).p.at(3), m_camera_info_.at(id).p.at(4),
+      m_camera_info_.at(id).p.at(5), m_camera_info_.at(id).p.at(6), m_camera_info_.at(id).p.at(7),
+      m_camera_info_.at(id).p.at(8), m_camera_info_.at(id).p.at(9), m_camera_info_.at(id).p.at(10),
+      m_camera_info_.at(id).p.at(11);
 
     // get transform from cluster frame id to camera optical frame id
-    geometry_msgs::TransformStamped transform_stamped;
+    geometry_msgs::msg::TransformStamped transform_stamped;
     try {
       transform_stamped = tf_buffer_.lookupTransform(
         /*target*/ m_camera_info_.at(id).header.frame_id,
-        /*src*/ input_cluster_msg->header.frame_id, ros::Time(0));
+        /*src*/ input_cluster_msg->header.frame_id, rclcpp::Time(0));
     } catch (tf2::TransformException & ex) {
-      ROS_WARN("%s", ex.what());
+      RCLCPP_WARN(this->get_logger(),"%s", ex.what());
       return;
     }
 
     // build cluster roi
-    std::map<size_t, sensor_msgs::RegionOfInterest> m_cluster_roi;
+    std::map<size_t, sensor_msgs::msg::RegionOfInterest> m_cluster_roi;
     for (size_t i = 0; i < input_cluster_msg->feature_objects.size(); ++i) {
       if (input_cluster_msg->feature_objects.at(i).feature.cluster.data.empty()) continue;
 
-      sensor_msgs::PointCloud2 transformed_cluster;
+      sensor_msgs::msg::PointCloud2 transformed_cluster;
       tf2::doTransform(
         input_cluster_msg->feature_objects.at(i).feature.cluster, transformed_cluster,
         transform_stamped);
@@ -240,7 +226,7 @@ void RoiClusterFusionNodelet::fusionCallback(
       }
       if (projected_points.empty()) continue;
 
-      sensor_msgs::RegionOfInterest roi;
+      sensor_msgs::msg::RegionOfInterest roi;
       // roi.do_rectify = m_camera_info_.at(id).do_rectify;
       roi.x_offset = min_x;
       roi.y_offset = min_y;
@@ -250,24 +236,24 @@ void RoiClusterFusionNodelet::fusionCallback(
     }
 
     // calc iou
-    autoware_perception_msgs::DynamicObjectWithFeatureArray::ConstPtr input_roi_msg;
+    autoware_perception_msgs::msg::DynamicObjectWithFeatureArray input_roi_msg;
     if (id == 0)
-      input_roi_msg = input_roi0_msg;
+      input_roi_msg = *input_roi0_msg;
     else if (id == 1)
-      input_roi_msg = input_roi1_msg;
+      input_roi_msg = *input_roi1_msg;
     else if (id == 2)
-      input_roi_msg = input_roi2_msg;
+      input_roi_msg = *input_roi2_msg;
     else if (id == 3)
-      input_roi_msg = input_roi3_msg;
+      input_roi_msg = *input_roi3_msg;
     else if (id == 4)
-      input_roi_msg = input_roi4_msg;
+      input_roi_msg = *input_roi4_msg;
     else if (id == 5)
-      input_roi_msg = input_roi5_msg;
+      input_roi_msg = *input_roi5_msg;
     else if (id == 6)
-      input_roi_msg = input_roi6_msg;
+      input_roi_msg = *input_roi6_msg;
     else if (id == 7)
-      input_roi_msg = input_roi7_msg;
-    for (size_t i = 0; i < input_roi_msg->feature_objects.size(); ++i) {
+      input_roi_msg = *input_roi7_msg;
+    for (size_t i = 0; i < input_roi_msg.feature_objects.size(); ++i) {
       int index;
       double max_iou = 0.0;
       for (auto m_cluster_roi_itr = m_cluster_roi.begin(); m_cluster_roi_itr != m_cluster_roi.end();
@@ -275,13 +261,13 @@ void RoiClusterFusionNodelet::fusionCallback(
         double iou(0.0), iou_x(0.0), iou_y(0.0);
         if (use_iou_)
           iou =
-            calcIoU(m_cluster_roi_itr->second, input_roi_msg->feature_objects.at(i).feature.roi);
+            calcIoU(m_cluster_roi_itr->second, input_roi_msg.feature_objects.at(i).feature.roi);
         if (use_iou_x_)
           iou_x =
-            calcIoUX(m_cluster_roi_itr->second, input_roi_msg->feature_objects.at(i).feature.roi);
+            calcIoUX(m_cluster_roi_itr->second, input_roi_msg.feature_objects.at(i).feature.roi);
         if (use_iou_y_)
           iou_y =
-            calcIoUY(m_cluster_roi_itr->second, input_roi_msg->feature_objects.at(i).feature.roi);
+            calcIoUY(m_cluster_roi_itr->second, input_roi_msg.feature_objects.at(i).feature.roi);
         if (max_iou < iou + iou_x + iou_y) {
           index = m_cluster_roi_itr->first;
           max_iou = iou + iou_x + iou_y;
@@ -290,9 +276,9 @@ void RoiClusterFusionNodelet::fusionCallback(
       if (
         iou_threshold_ < max_iou &&
         output_msg.feature_objects.at(index).object.semantic.confidence <=
-          input_roi_msg->feature_objects.at(i).object.semantic.confidence)
+          input_roi_msg.feature_objects.at(i).object.semantic.confidence)
         output_msg.feature_objects.at(index).object.semantic =
-          input_roi_msg->feature_objects.at(i).object.semantic;
+          input_roi_msg.feature_objects.at(i).object.semantic;
     }
 
 #if 0
@@ -378,7 +364,7 @@ void RoiClusterFusionNodelet::fusionCallback(
 #endif
   }
   // publish output msg
-  labeled_cluster_pub_.publish(output_msg);
+  labeled_cluster_pub_->publish(output_msg);
 
 #if 0
         // build output msg
@@ -579,7 +565,7 @@ void RoiClusterFusionNodelet::fusionCallback(
 }
 
 double RoiClusterFusionNodelet::calcIoU(
-  const sensor_msgs::RegionOfInterest & roi_1, const sensor_msgs::RegionOfInterest & roi_2)
+  const sensor_msgs::msg::RegionOfInterest & roi_1, const sensor_msgs::msg::RegionOfInterest & roi_2)
 {
   double s_1, s_2;
   s_1 = (double)roi_1.width * (double)roi_1.height;
@@ -600,7 +586,7 @@ double RoiClusterFusionNodelet::calcIoU(
   return overlap_s / (s_1 + s_2 - overlap_s);
 }
 double RoiClusterFusionNodelet::calcIoUX(
-  const sensor_msgs::RegionOfInterest & roi_1, const sensor_msgs::RegionOfInterest & roi_2)
+  const sensor_msgs::msg::RegionOfInterest & roi_1, const sensor_msgs::msg::RegionOfInterest & roi_2)
 {
   double s_1, s_2;
   s_1 = (double)roi_1.width;
@@ -620,7 +606,7 @@ double RoiClusterFusionNodelet::calcIoUX(
   return overlap_s / (s_1 + s_2 - overlap_s);
 }
 double RoiClusterFusionNodelet::calcIoUY(
-  const sensor_msgs::RegionOfInterest & roi_1, const sensor_msgs::RegionOfInterest & roi_2)
+  const sensor_msgs::msg::RegionOfInterest & roi_1, const sensor_msgs::msg::RegionOfInterest & roi_2)
 {
   double s_1, s_2;
   s_1 = (double)roi_1.height;
@@ -641,4 +627,6 @@ double RoiClusterFusionNodelet::calcIoUY(
 }
 }  // namespace roi_cluster_fusion
 
-PLUGINLIB_EXPORT_CLASS(roi_cluster_fusion::RoiClusterFusionNodelet, nodelet::Nodelet)
+#include <rclcpp_components/register_node_macro.hpp>
+
+RCLCPP_COMPONENTS_REGISTER_NODE(roi_cluster_fusion::RoiClusterFusionNodelet)

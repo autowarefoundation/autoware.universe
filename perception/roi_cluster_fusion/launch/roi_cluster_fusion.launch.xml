@@ -1,5 +1,3 @@
-<?xml version="1.0"?>
-
 <launch>
   <arg name="input_rois_number" default="1"/>
   <arg name="input_rois0" default="rois0"/>
@@ -23,7 +21,7 @@
 
 
 
-  <node pkg="roi_cluster_fusion" type="roi_cluster_fusion_node" name="roi_cluster_fusion" output="screen">
+  <node pkg="roi_cluster_fusion" exec="roi_cluster_fusion_node" name="roi_cluster_fusion">
     <rosparam>
             use_iou: true
             use_iou_x: false
@@ -36,25 +34,25 @@
             use_iou_y: false
             iou_threshold: 0.7
         </rosparam> -->
-    <remap from="clusters" to="$(arg input_clusters)"/>
-    <remap if="$(eval input_rois_number >= 1)" from="rois0" to="$(arg input_rois0)"/>
-    <remap if="$(eval input_rois_number >= 1)" from="camera_info0" to="$(arg input_camera_info0)"/>
-    <remap if="$(eval input_rois_number >= 2)" from="rois1" to="$(arg input_rois1)"/>
-    <remap if="$(eval input_rois_number >= 2)" from="camera_info1" to="$(arg input_camera_info1)"/>
-    <remap if="$(eval input_rois_number >= 3)" from="rois2" to="$(arg input_rois2)"/>
-    <remap if="$(eval input_rois_number >= 3)" from="camera_info2" to="$(arg input_camera_info2)"/>
-    <remap if="$(eval input_rois_number >= 4)" from="rois3" to="$(arg input_rois3)"/>
-    <remap if="$(eval input_rois_number >= 4)" from="camera_info3" to="$(arg input_camera_info3)"/>
-    <remap if="$(eval input_rois_number >= 5)" from="rois4" to="$(arg input_rois4)"/>
-    <remap if="$(eval input_rois_number >= 5)" from="camera_info4" to="$(arg input_camera_info4)"/>
-    <remap if="$(eval input_rois_number >= 6)" from="rois5" to="$(arg input_rois5)"/>
-    <remap if="$(eval input_rois_number >= 6)" from="camera_info5" to="$(arg input_camera_info5)"/>
-    <remap if="$(eval input_rois_number >= 7)" from="rois6" to="$(arg input_rois6)"/>
-    <remap if="$(eval input_rois_number >= 7)" from="camera_info6" to="$(arg input_camera_info6)"/>
-    <remap if="$(eval input_rois_number >= 8)" from="rois7" to="$(arg input_rois7)"/>
-    <remap if="$(eval input_rois_number >= 8)" from="camera_info7" to="$(arg input_camera_info7)"/>
-    <remap from="labeled_clusters" to="$(arg output)"/>
-    <param name="rois_number" value="$(arg input_rois_number)" />
+    <remap from="clusters" to="$(var input_clusters)"/>
+    <remap if="$(eval input_rois_number >= 1)" from="rois0" to="$(var input_rois0)"/>
+    <remap if="$(eval input_rois_number >= 1)" from="camera_info0" to="$(var input_camera_info0)"/>
+    <remap if="$(eval input_rois_number >= 2)" from="rois1" to="$(var input_rois1)"/>
+    <remap if="$(eval input_rois_number >= 2)" from="camera_info1" to="$(var input_camera_info1)"/>
+    <remap if="$(eval input_rois_number >= 3)" from="rois2" to="$(var input_rois2)"/>
+    <remap if="$(eval input_rois_number >= 3)" from="camera_info2" to="$(var input_camera_info2)"/>
+    <remap if="$(eval input_rois_number >= 4)" from="rois3" to="$(var input_rois3)"/>
+    <remap if="$(eval input_rois_number >= 4)" from="camera_info3" to="$(var input_camera_info3)"/>
+    <remap if="$(eval input_rois_number >= 5)" from="rois4" to="$(var input_rois4)"/>
+    <remap if="$(eval input_rois_number >= 5)" from="camera_info4" to="$(var input_camera_info4)"/>
+    <remap if="$(eval input_rois_number >= 6)" from="rois5" to="$(var input_rois5)"/>
+    <remap if="$(eval input_rois_number >= 6)" from="camera_info5" to="$(var input_camera_info5)"/>
+    <remap if="$(eval input_rois_number >= 7)" from="rois6" to="$(var input_rois6)"/>
+    <remap if="$(eval input_rois_number >= 7)" from="camera_info6" to="$(var input_camera_info6)"/>
+    <remap if="$(eval input_rois_number >= 8)" from="rois7" to="$(var input_rois7)"/>
+    <remap if="$(eval input_rois_number >= 8)" from="camera_info7" to="$(var input_camera_info7)"/>
+    <remap from="labeled_clusters" to="$(var output)"/>
+    <param name="rois_number" value="$(var input_rois_number)" />
   </node>
 
 </launch>
