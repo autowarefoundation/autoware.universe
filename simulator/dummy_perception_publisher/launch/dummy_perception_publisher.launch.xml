@@ -20,8 +20,8 @@
         <param name="use_object_recognition" value="$(var use_object_recognition)" />
       </node>
       <include file="$(find-pkg-share shape_estimation)/launch/shape_estimation.launch.xml">
-        <let var="input/objects" value="/perception/object_recognition/detection/labeled_clusters" />
-        <let var="output/objects" value="/perception/object_recognition/detection/objects" />
+        <arg name="input/objects" value="/perception/object_recognition/detection/labeled_clusters" />
+        <arg name="output/objects" value="/perception/object_recognition/detection/objects" />
       </include>
     </group>
     <group unless="$(var real)">
