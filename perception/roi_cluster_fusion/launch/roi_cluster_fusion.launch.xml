@@ -22,19 +22,12 @@
 
 
   <node pkg="roi_cluster_fusion" exec="roi_cluster_fusion_node" name="roi_cluster_fusion">
-    <rosparam>
-            use_iou: true
-            use_iou_x: false
-            use_iou_y: false
-            iou_threshold: 0.35
-    </rosparam>
-    <!-- <rosparam>
-            use_iou: false
-            use_iou_x: true
-            use_iou_y: false
-            iou_threshold: 0.7
-        </rosparam> -->
+    <param name="use_iou" value="true"/>
+    <param name="use_iou_x" value="false"/>
+    <param name="use_iou_y" value="false"/>
+    <param name="iou_threshold" value="0.35"/>
     <remap from="clusters" to="$(var input_clusters)"/>
+
     <remap if="$(eval input_rois_number >= 1)" from="rois0" to="$(var input_rois0)"/>
     <remap if="$(eval input_rois_number >= 1)" from="camera_info0" to="$(var input_camera_info0)"/>
     <remap if="$(eval input_rois_number >= 2)" from="rois1" to="$(var input_rois1)"/>
