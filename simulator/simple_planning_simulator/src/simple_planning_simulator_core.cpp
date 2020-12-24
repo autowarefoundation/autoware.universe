@@ -24,6 +24,8 @@ Simulator::Simulator(const std::string & node_name, const rclcpp::NodeOptions & 
   simulation_frame_id_ = declare_parameter("simulation_frame_id", "base_link");
   map_frame_id_ = declare_parameter("map_frame_id", "map");
   add_measurement_noise_ = declare_parameter("add_measurement_noise", false);
+  use_trajectory_for_z_position_source_ =
+    declare_parameter("use_trajectory_for_z_position_source", true);
 
   /* set pub sub topic name */
   pub_pose_ =
@@ -60,7 +62,11 @@ Simulator::Simulator(const std::string & node_name, const rclcpp::NodeOptions & 
   sub_initialpose_ = create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
     "input/initial_pose", rclcpp::QoS{1},
     std::bind(&Simulator::callbackInitialPoseWithCov, this, std::placeholders::_1));
-
+  if (use_trajectory_for_z_position_source_) {
+    sub_trajectory_ = create_subscription<autoware_planning_msgs::msg::Trajectory>(
+      "base_trajectory", rclcpp::QoS{1},
+      std::bind(&Simulator::callbackTrajectory, this, std::placeholders::_1));
+  }
   const double dt = 1.0 / loop_rate_;
 
   /* Timer */

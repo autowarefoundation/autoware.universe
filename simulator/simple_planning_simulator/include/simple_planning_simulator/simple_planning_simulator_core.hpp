@@ -116,6 +116,7 @@ private:
   bool is_initialized_ = false;         //!< @brief flag to check the initial position is set
   bool add_measurement_noise_;  //!< @brief flag to add measurement noise
   bool simulator_engage_;       //!< @brief flag to engage simulator
+  bool use_trajectory_for_z_position_source_; //!< @brief flag to get z positon from trajectory
 
   /* saved values */
   std::shared_ptr<rclcpp::Time> prev_update_time_ptr_;  //!< @brief previously updated time
