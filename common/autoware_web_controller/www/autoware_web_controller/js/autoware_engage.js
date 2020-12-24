@@ -15,18 +15,25 @@ if (!AutowareEngagePublisher) {
             });
             this.ros.connect('ws://' + location.hostname + ':9090');
         },
-        send: function() {
+        send: function(value) {
             var pub = new ROSLIB.Topic({
                 ros: this.ros,
                 name: '/autoware/engage',
-                messageType: 'std_msgs/Bool',
+                messageType: 'autoware_control_msgs/EngageMode',
                 latch: 'true'
             });
 
-            var str = new ROSLIB.Message({
-                data: true
-            });
-            pub.publish(str);
+            if(value == 'Engage'){
+                var str = new ROSLIB.Message({
+                    is_engaged: true
+                });
+                pub.publish(str);
+            } else {
+                var str = new ROSLIB.Message({
+                    is_engaged: false
+                });
+                pub.publish(str);
+            }
         }
     }
     AutowareEngagePublisher.init();
@@ -34,44 +41,6 @@ if (!AutowareEngagePublisher) {
     window.onload = function() {};
     window.onunload = function() {
         AutowareEngagePublisher.ros.close();
-    };
-}
-if (!AutowareDisengagePublisher) {
-    var AutowareDisengagePublisher = {
-        ros: null,
-        name: "",
-        init: function() {
-            this.ros = new ROSLIB.Ros();
-            this.ros.on('error', function(error) {
-                document.getElementById('state').innerHTML = "Error";
-            });
-            this.ros.on('connection', function(error) {
-                document.getElementById('state').innerHTML = "Connected";
-            });
-            this.ros.on('close', function(error) {
-                document.getElementById('state').innerHTML = "Closed";
-            });
-            this.ros.connect('ws://' + location.hostname + ':9090');
-        },
-        send: function() {
-            var pub = new ROSLIB.Topic({
-                ros: this.ros,
-                name: '/autoware/engage',
-                messageType: 'std_msgs/Bool',
-                latch: 'true'
-            });
-
-            var str = new ROSLIB.Message({
-                data: false
-            });
-            pub.publish(str);
-        }
-    }
-    AutowareDisengagePublisher.init();
-
-    window.onload = function() {};
-    window.onunload = function() {
-        AutowareDisengagePublisher.ros.close();
     };
 }
 if (!AutowareEngageStatusSubscriber) {
@@ -94,14 +63,14 @@ if (!AutowareEngageStatusSubscriber) {
             var sub = new ROSLIB.Topic({
                 ros: this.ros,
                 name: '/autoware/engage',
-                messageType: 'std_msgs/Bool'
+                messageType: 'autoware_control_msgs/EngageMode'
             });
             sub.subscribe(function(message) {
                 const div = document.getElementById("autoware_engage_status");
                 if (div.hasChildNodes()) {
                     div.removeChild(div.firstChild);
                 }
-                var res = message.data;
+                var res = message.is_engaged;
                 var el = document.createElement("span");
                 el.innerHTML = res
                 document.getElementById("autoware_engage_status").appendChild(el);

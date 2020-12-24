@@ -50,10 +50,10 @@
             <textarea readonly id="autoware_state_msg" rows="20", cols="200"></textarea>
 
             <h3>Autoware Engage :<span id="autoware_engage_info"> - </span></h3>
-            <form action="javascript:AutowareEngagePublisher.send();" id="ui">
+            <form action="javascript:AutowareEngagePublisher.send('Engage');" id="ui">
                 <input type="submit" value="Engage" id="btn" /><br />
             </form>
-            <form action="javascript:AutowareDisengagePublisher.send();" id="ui">
+            <form action="javascript:AutowareEngagePublisher.send('Disengage');" id="ui">
                 <input type="submit" value="Disengage" id="btn" /><br />
             </form>
             <div>
@@ -61,10 +61,10 @@
                 <span id="autoware_engage_status"> - </span>
             </div>
             <h3>Vehicle Engage</h3>
-            <form action="javascript:VehicleEngagePublisher.send();" id="ui">
+            <form action="javascript:VehicleEngagePublisher.send('Engage');" id="ui">
                 <input type="submit" value="Engage" id="btn" /><br />
             </form>
-            <form action="javascript:VehicleDisengagePublisher.send();" id="ui">
+            <form action="javascript:VehicleEngagePublisher.send('Disengage');" id="ui">
                 <input type="submit" value="Disengage" id="btn" /><br />
             </form>
             <div>

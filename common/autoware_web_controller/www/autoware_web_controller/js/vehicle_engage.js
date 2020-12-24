@@ -15,17 +15,24 @@ if (!VehicleEngagePublisher) {
             });
             this.ros.connect('ws://' + location.hostname + ':9090');
         },
-        send: function() {
+        send: function('value') {
             var pub = new ROSLIB.Topic({
                 ros: this.ros,
                 name: '/vehicle/engage',
                 messageType: 'std_msgs/Bool'
             });
 
-            var str = new ROSLIB.Message({
-                data: true
-            });
-            pub.publish(str);
+            if(value == 'Engage') {
+                var str = new ROSLIB.Message({
+                    data: true
+                });
+                pub.publish(str);
+            } else {
+                var str = new ROSLIB.Message({
+                    data: false
+                });
+                pub.publish(str);
+            }
         }
     }
     VehicleEngagePublisher.init();

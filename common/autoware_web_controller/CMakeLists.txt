@@ -1,12 +1,13 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.5)
 project(autoware_web_controller)
 
-find_package(catkin REQUIRED)
+find_package(ament_cmake REQUIRED)
 
-catkin_package()
+install(DIRECTORY
+  launch
+  www
+  DESTINATION share/${PROJECT_NAME}/
+)
 
-install(
-  DIRECTORY
-    www
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+ament_package(
 )
