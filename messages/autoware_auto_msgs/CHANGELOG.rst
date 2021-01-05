@@ -2,8 +2,8 @@
 Changelog for package autoware_auto_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.0.0 (2021-01-05)
+------------------
 * Merge branch 'BoundingBoxArray-design' into 'master'
   Add design doc for bounding-box message
   See merge request `autowarefoundation/autoware.auto/autoware_auto_msgs!12 <https://gitlab.com/autowarefoundation/autoware.auto/autoware_auto_msgs/-/merge_requests/12>`_
