@@ -1,4 +1,5 @@
 <launch>
+  <arg name="vehicle_param_file" />
 
   <!-- lane_driving scenario -->
   <group>
@@ -7,6 +8,7 @@
     <group>
       <push-ros-namespace namespace="behavior_planning"/>
       <include file="$(find-pkg-share planning_launch)/launch/scenario_planning/lane_driving/behavior_planning/behavior_planning.launch.xml">
+        <arg name="vehicle_param_file" value="$(var vehicle_param_file)" />
       </include>
     </group>
 
@@ -14,6 +16,7 @@
     <group>
       <push-ros-namespace namespace="motion_planning"/>
       <include file="$(find-pkg-share planning_launch)/launch/scenario_planning/lane_driving/motion_planning/motion_planning.launch.xml">
+        <arg name="vehicle_param_file" value="$(var vehicle_param_file)" />
       </include>
     </group>
   </group>

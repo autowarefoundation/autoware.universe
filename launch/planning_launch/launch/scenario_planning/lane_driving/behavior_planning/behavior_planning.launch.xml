@@ -1,6 +1,7 @@
 <launch>
   <arg name="input_route_topic_name" default="/planning/mission_planning/route" />
   <arg name="map_topic_name" default="/map/vector_map" />
+  <arg name="vehicle_param_file" />
 
   <node pkg="lane_change_planner" exec="lane_change_planner" name="lane_change_planner" output="screen">
     <remap from="input/route" to="$(var input_route_topic_name)" />
@@ -43,6 +44,7 @@
   </node>
 
   <include file="$(find-pkg-share behavior_velocity_planner)/launch/behavior_velocity_planner.launch.xml">
+    <arg name="vehicle_param_file" value="$(var vehicle_param_file)" />
   </include>
 
 </launch>

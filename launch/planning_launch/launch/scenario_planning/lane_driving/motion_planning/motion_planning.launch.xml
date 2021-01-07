@@ -1,5 +1,6 @@
 <launch>
   <arg name="input_path_topic" default="/planning/scenario_planning/lane_driving/behavior_planning/path" />
+  <arg name="vehicle_param_file" />
 
   <!-- path planning for avoiding obstacle with dynamic object info -->
   <group>
@@ -7,7 +8,8 @@
       <arg name="param_path" value="$(find-pkg-share planning_launch)/config/scenario_planning/lane_driving/motion_planning/obstacle_avoidance_planner/obstacle_avoidance_planner.yaml"/>
       <arg name="input_path_topic" value="$(var input_path_topic)" />
       <arg name="output_path_topic" value="obstacle_avoidance_planner/trajectory" />
-      </include>
+      <arg name="vehicle_param_file" value="$(var vehicle_param_file)" />
+    </include>
   </group>
 
 
@@ -16,7 +18,8 @@
     <include file="$(find-pkg-share surround_obstacle_checker)/launch/surround_obstacle_checker.launch.xml">
       <arg name="input_trajectory" value="obstacle_avoidance_planner/trajectory" />
       <arg name="output_trajectory" value="surround_obstacle_checker/trajectory" />
-      </include>
+      <arg name="vehicle_param_file" value="$(var vehicle_param_file)" />
+    </include>
   </group>
 
 
@@ -27,7 +30,8 @@
       <arg name="input_trajectory" value="surround_obstacle_checker/trajectory" />
       <arg name="input_pointcloud" value="/sensing/lidar/no_ground/pointcloud" />
       <arg name="output_trajectory" value="/planning/scenario_planning/lane_driving/trajectory" />
-      </include>
+      <arg name="vehicle_param_file" value="$(var vehicle_param_file)" />
+    </include>
   </group>
 
 </launch>
