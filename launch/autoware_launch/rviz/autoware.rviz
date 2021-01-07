@@ -1,54 +1,49 @@
 Panels:
-  - Class: rviz/Displays
-    Help Height: 0
+  - Class: rviz_common/Displays
+    Help Height: 138
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /Sensing1/LiDAR1/ConcatenatePointCloud1/Autocompute Value Bounds1
-        - /Sensing1/GNSS1/PoseWithCovariance1/Covariance1/Position1
-        - /Localization1/NDT1/PoseHistory1/Line1
-        - /Localization1/NDT1/MonteCarloInitialPose1/Namespaces1
-        - /Localization1/EKF1/PoseHistory1/Line1
+        - /Perception1/Detection1
+        - /Perception1/Tracking1
+        - /Perception1/Prediction1
         - /Planning1/ScenarioPlanning1
-        - /Control1/Debug/MPC1/Namespaces1
-      Splitter Ratio: 0.557669460773468
-    Tree Height: 435
-  - Class: rviz/Selection
+        - /Planning1/ScenarioPlanning1/LaneDriving1
+        - /Planning1/ScenarioPlanning1/LaneDriving1/MotionPlanning1
+        - /Planning1/ScenarioPlanning1/Parking1
+      Splitter Ratio: 0.5345016717910767
+    Tree Height: 334
+  - Class: rviz_common/Selection
     Name: Selection
-  - Class: rviz/Tool Properties
+  - Class: rviz_common/Tool Properties
     Expanded:
-      - /2D Pose Estimate1
-      - /2D Nav Goal1
+      - /2D Goal Pose1
+      - /Publish Point1
       - /2D Dummy Pedestrian1
       - /2D Dummy Car1
       - /2D Checkpoint Pose1
       - /Delete All Objects1
     Name: Tool Properties
     Splitter Ratio: 0.5886790156364441
-  - Class: rviz/Views
+  - Class: rviz_common/Views
     Expanded:
       - /Current View1
     Name: Views
     Splitter Ratio: 0.5
-  - Class: rviz/Time
-    Experimental: false
-    Name: Time
-    SyncMode: 0
-    SyncSource: PointCloudMap
-  - Class: autoware_localization_rviz_plugin/InitialPoseButtonPanel
-    Name: InitialPoseButtonPanel
-  - Class: autoware_localization_rviz_plugin/InitialPoseButtonPanel
-    Name: InitialPoseButtonPanel
-Preferences:
-  PromptSaveOnExit: true
-Toolbars:
-  toolButtonStyle: 2
+  - Class: rviz_common/Tool Properties
+    Expanded:
+      - /2D Dummy Pedestrian1
+      - /2D Dummy Car1
+      - /2D Checkpoint Pose1
+      - /Delete All Objects1
+    Name: Tool Properties
+    Splitter Ratio: 0.5
 Visualization Manager:
   Class: ""
   Displays:
-    - Class: rviz/Group
+    - Class: rviz_common/Group
       Displays:
-        - Class: rviz/TF
+        - Class: rviz_default_plugins/TF
           Enabled: false
           Frame Timeout: 15
           Frames:
@@ -58,12 +53,13 @@ Visualization Manager:
           Show Arrows: true
           Show Axes: true
           Show Names: true
-          Tree: {}
+          Tree:
+            {}
           Update Interval: 0
           Value: false
         - Alpha: 0.5
           Cell Size: 1
-          Class: rviz/Grid
+          Class: rviz_default_plugins/Grid
           Color: 160; 160; 164
           Enabled: false
           Line Style:
@@ -79,48 +75,49 @@ Visualization Manager:
           Plane Cell Count: 10
           Reference Frame: <Fixed Frame>
           Value: false
-        - Class: rviz/Group
+        - Class: rviz_common/Group
           Displays:
-            - Class: rviz_plugins/SteeringAngle
-              Enabled: true
-              Left: 128
-              Length: 256
-              Name: SteeringAngle
-              Scale: 17
-              Text Color: 25; 255; 240
-              Top: 128
-              Topic: /vehicle/status/steering
-              Unreliable: false
-              Value: true
-              Value height offset: 0
             - Class: rviz_plugins/ConsoleMeter
               Enabled: true
-              Left: 512
+              Left: 128
               Length: 256
               Name: ConsoleMeter
               Scale: 3
               Text Color: 25; 255; 240
               Top: 128
-              Topic: /vehicle/status/twist
-              Unreliable: false
+              Topic:
+                Depth: 5
+                Durability Policy: Volatile
+                History Policy: Keep Last
+                Reliability Policy: Reliable
+                Value: /vehicle/status/twist
               Value: true
               Value height offset: 0
-            - Alpha: 1
-              Class: rviz_plugins/VelocityHistory
-              Color Border Vel Max: 3
-              Constant Color:
-                Color: 255; 255; 255
-                Value: true
+            - Class: rviz_plugins/TurnSignal
               Enabled: true
-              Name: VelocityHistory
-              Scale: 0.30000001192092896
-              Timeout: 10
-              Topic: /vehicle/status/twist
-              Unreliable: false
+              Height: 256
+              Left: 128
+              Name: TurnSignal
+              Top: 128
+              Topic:
+                Depth: 5
+                Durability Policy: Volatile
+                History Policy: Keep Last
+                Reliability Policy: Reliable
+                Value: /control/turn_signal_cmd
               Value: true
+              Width: 256
             - Alpha: 0.30000001192092896
-              Class: rviz/RobotModel
+              Class: rviz_default_plugins/RobotModel
               Collision Enabled: false
+              Description File: ""
+              Description Source: Topic
+              Description Topic:
+                Depth: 5
+                Durability Policy: Volatile
+                History Policy: Keep Last
+                Reliability Policy: Reliable
+                Value: /robot_description
               Enabled: true
               Links:
                 All Links Enabled: true
@@ -133,6 +130,15 @@ Visualization Manager:
                   Show Axes: false
                   Show Trail: false
                   Value: true
+                camera0/camera_link:
+                  Alpha: 1
+                  Show Axes: false
+                  Show Trail: false
+                  Value: true
+                camera0/camera_optical_link:
+                  Alpha: 1
+                  Show Axes: false
+                  Show Trail: false
                 camera1/camera_link:
                   Alpha: 1
                   Show Axes: false
@@ -178,31 +184,53 @@ Visualization Manager:
                   Alpha: 1
                   Show Axes: false
                   Show Trail: false
-                camera6/camera_link:
-                  Alpha: 1
-                  Show Axes: false
-                  Show Trail: false
-                  Value: true
-                camera6/camera_optical_link:
-                  Alpha: 1
-                  Show Axes: false
-                  Show Trail: false
                 gnss_link:
                   Alpha: 1
                   Show Axes: false
                   Show Trail: false
                   Value: true
+                livox_front_left:
+                  Alpha: 1
+                  Show Axes: false
+                  Show Trail: false
+                livox_front_left_base_link:
+                  Alpha: 1
+                  Show Axes: false
+                  Show Trail: false
+                  Value: true
+                livox_front_right:
+                  Alpha: 1
+                  Show Axes: false
+                  Show Trail: false
+                livox_front_right_base_link:
+                  Alpha: 1
+                  Show Axes: false
+                  Show Trail: false
+                  Value: true
+                sensor_kit_base_link:
+                  Alpha: 1
+                  Show Axes: false
+                  Show Trail: false
                 tamagawa/imu_link:
                   Alpha: 1
                   Show Axes: false
                   Show Trail: false
                   Value: true
-                traffic_light/camera_link:
+                traffic_light_left_camera/camera_link:
                   Alpha: 1
                   Show Axes: false
                   Show Trail: false
                   Value: true
-                traffic_light/camera_optical_link:
+                traffic_light_left_camera/camera_optical_link:
+                  Alpha: 1
+                  Show Axes: false
+                  Show Trail: false
+                traffic_light_right_camera/camera_link:
+                  Alpha: 1
+                  Show Axes: false
+                  Show Trail: false
+                  Value: true
+                traffic_light_right_camera/camera_optical_link:
                   Alpha: 1
                   Show Axes: false
                   Show Trail: false
@@ -212,6 +240,16 @@ Visualization Manager:
                   Show Trail: false
                   Value: true
                 velodyne_left_base_link:
+                  Alpha: 1
+                  Show Axes: false
+                  Show Trail: false
+                  Value: true
+                velodyne_rear:
+                  Alpha: 1
+                  Show Axes: false
+                  Show Trail: false
+                  Value: true
+                velodyne_rear_base_link:
                   Alpha: 1
                   Show Axes: false
                   Show Trail: false
@@ -237,106 +275,88 @@ Visualization Manager:
                   Show Trail: false
                   Value: true
               Name: VehicleModel
-              Robot Description: robot_description
               TF Prefix: ""
               Update Interval: 0
               Value: true
               Visual Enabled: true
-            - Class: rviz/PolarGridDisplay
-              Color: 255; 255; 255
-              Delta Range: 10
-              Enabled: true
-              Max Alpha: 1
-              Max Range: 100
-              Max Wave Alpha: 1
-              Min Alpha: 0.20000000298023224
-              Min Wave Alpha: 0.20000000298023224
-              Name: PolarGridDisplay
-              Reference Frame: base_link
-              Value: true
-              Wave Color: 255; 255; 255
-              Wave Velocity: 40
-            - Class: rviz_plugins/TurnSignal
-              Enabled: true
-              Height: 256
-              Left: 196
-              Name: TurnSignal
-              Top: 350
-              Topic: /control/turn_signal_cmd
-              Unreliable: false
-              Value: true
-              Width: 512
           Enabled: true
           Name: Vehicle
       Enabled: true
       Name: System
-    - Class: rviz/Group
+    - Class: rviz_common/Group
       Displays:
-        - Alpha: 0.20000000298023224
+        - Alpha: 1
           Autocompute Intensity Bounds: true
           Autocompute Value Bounds:
-            Max Value: 28.71826171875
-            Min Value: -7.4224700927734375
+            Max Value: 10
+            Min Value: -10
             Value: true
           Axis: Z
           Channel Name: intensity
-          Class: rviz/PointCloud2
+          Class: rviz_default_plugins/PointCloud2
           Color: 255; 255; 255
           Color Transformer: Intensity
           Decay Time: 0
           Enabled: true
           Invert Rainbow: false
           Max Color: 255; 255; 255
-          Max Intensity: 237
-          Min Color: 211; 215; 207
+          Max Intensity: 4096
+          Min Color: 0; 0; 0
           Min Intensity: 0
           Name: PointCloudMap
           Position Transformer: XYZ
-          Queue Size: 10
           Selectable: true
-          Size (Pixels): 1
-          Size (m): 0.05000000074505806
-          Style: Points
-          Topic: /map/pointcloud_map
-          Unreliable: false
+          Size (Pixels): 3
+          Size (m): 0.009999999776482582
+          Style: Flat Squares
+          Topic:
+            Depth: 5
+            Durability Policy: Transient Local
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /map/pointcloud_map
           Use Fixed Frame: true
-          Use rainbow: false
+          Use rainbow: true
           Value: true
-        - Class: rviz/MarkerArray
+        - Class: rviz_default_plugins/MarkerArray
           Enabled: true
-          Marker Topic: /map/vector_map_marker
           Name: Lanelet2VectorMap
           Namespaces:
             center_lane_line: true
             crosswalk_lanelets: true
+            detection_area: true
             lanelet direction: true
             left_lane_bound: true
-            parking_lots: true
-            parking_space: true
             right_lane_bound: true
-            road_lanelets: false
+            road_lanelets: true
             stop_lines: true
             traffic_light: true
             traffic_light_triangle: true
-          Queue Size: 100
+            walkway_lanelets: true
+          Topic:
+            Depth: 5
+            Durability Policy: Transient Local
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /map/vector_map_marker
           Value: true
       Enabled: true
       Name: Map
-    - Class: rviz/Group
+    - Class: rviz_common/Group
       Displays:
-        - Class: rviz/Group
+        - Class: rviz_common/Group
           Displays:
-            - Alpha: 1
+            - Alpha: 0.9990000128746033
               Autocompute Intensity Bounds: true
               Autocompute Value Bounds:
-                Max Value: 30
-                Min Value: -2
-                Value: false
+                Max Value: 10
+                Min Value: -10
+                Value: true
               Axis: Z
               Channel Name: intensity
-              Class: rviz/PointCloud2
+              Class: rviz_default_plugins/PointCloud2
               Color: 255; 255; 255
-              Color Transformer: AxisColor
+              Color Transformer: Intensity
               Decay Time: 0
               Enabled: true
               Invert Rainbow: false
@@ -346,62 +366,72 @@ Visualization Manager:
               Min Intensity: 0
               Name: ConcatenatePointCloud
               Position Transformer: XYZ
-              Queue Size: 10
               Selectable: true
               Size (Pixels): 2
-              Size (m): 0.009999999776482582
+              Size (m): 0.20000000298023224
               Style: Points
-              Topic: /sensing/lidar/concatenated/pointcloud
-              Unreliable: false
+              Topic:
+                Depth: 5
+                Durability Policy: Volatile
+                History Policy: Keep Last
+                Reliability Policy: Reliable
+                Value: /sensing/lidar/concatenated/pointcloud
               Use Fixed Frame: true
               Use rainbow: true
               Value: true
-            - Alpha: 1
-              Autocompute Intensity Bounds: false
+            - Alpha: 0.9990000128746033
+              Autocompute Intensity Bounds: true
               Autocompute Value Bounds:
-                Max Value: 15
-                Min Value: -2
-                Value: false
+                Max Value: 10
+                Min Value: -10
+                Value: true
               Axis: Z
-              Channel Name: z
-              Class: rviz/PointCloud2
-              Color: 0; 240; 255
-              Color Transformer: FlatColor
+              Channel Name: intensity
+              Class: rviz_default_plugins/PointCloud2
+              Color: 255; 255; 255
+              Color Transformer: Intensity
               Decay Time: 0
               Enabled: true
               Invert Rainbow: false
               Max Color: 255; 255; 255
-              Max Intensity: 15
+              Max Intensity: 4096
               Min Color: 0; 0; 0
-              Min Intensity: -5
+              Min Intensity: 0
               Name: NoGroundPointCloud
               Position Transformer: XYZ
-              Queue Size: 10
               Selectable: true
-              Size (Pixels): 10
-              Size (m): 0.009999999776482582
+              Size (Pixels): 5
+              Size (m): 0.20000000298023224
               Style: Points
-              Topic: /sensing/lidar/no_ground/pointcloud
-              Unreliable: false
+              Topic:
+                Depth: 5
+                Durability Policy: Volatile
+                History Policy: Keep Last
+                Reliability Policy: Reliable
+                Value: /sensing/lidar/no_ground/pointcloud
               Use Fixed Frame: true
               Use rainbow: true
               Value: true
             - Alpha: 1
-              Class: rviz/Polygon
+              Class: rviz_default_plugins/Polygon
               Color: 25; 255; 0
               Enabled: false
-              Name: MesurementRange
-              Topic: /sensing/lidar/crop_box_filter/crop_box_polygon
-              Unreliable: false
+              Name: MeasurementRange
+              Topic:
+                Depth: 5
+                Durability Policy: Volatile
+                History Policy: Keep Last
+                Reliability Policy: Reliable
+                Value: /sensing/lidar/crop_box_filter/crop_box_polygon
               Value: false
           Enabled: true
           Name: LiDAR
-        - Class: rviz/Group
+        - Class: rviz_common/Group
           Displays:
-            - Alpha: 1
+            - Alpha: 0.9990000128746033
               Axes Length: 1
               Axes Radius: 0.10000000149011612
-              Class: rviz/PoseWithCovariance
+              Class: rviz_default_plugins/PoseWithCovariance
               Color: 233; 185; 110
               Covariance:
                 Orientation:
@@ -411,9 +441,9 @@ Visualization Manager:
                   Frame: Local
                   Offset: 1
                   Scale: 1
-                  Value: false
+                  Value: true
                 Position:
-                  Alpha: 0.20000000298023224
+                  Alpha: 0.30000001192092896
                   Color: 204; 51; 204
                   Scale: 1
                   Value: true
@@ -425,21 +455,25 @@ Visualization Manager:
               Shaft Length: 1
               Shaft Radius: 0.5
               Shape: Arrow
-              Topic: /sensing/gnss/pose_with_covariance
-              Unreliable: false
+              Topic:
+                Depth: 5
+                Durability Policy: Volatile
+                History Policy: Keep Last
+                Reliability Policy: Reliable
+                Value: /sensing/gnss/pose_with_covariance
               Value: true
           Enabled: false
           Name: GNSS
       Enabled: true
       Name: Sensing
-    - Class: rviz/Group
+    - Class: rviz_common/Group
       Displays:
-        - Class: rviz/Group
+        - Class: rviz_common/Group
           Displays:
-            - Alpha: 1
+            - Alpha: 0.9990000128746033
               Axes Length: 1
               Axes Radius: 0.10000000149011612
-              Class: rviz/PoseWithCovariance
+              Class: rviz_default_plugins/PoseWithCovariance
               Color: 0; 170; 255
               Covariance:
                 Orientation:
@@ -463,13 +497,17 @@ Visualization Manager:
               Shaft Length: 0.6000000238418579
               Shaft Radius: 0.30000001192092896
               Shape: Arrow
-              Topic: /localization/pose_estimator/initial_pose_with_covariance
-              Unreliable: false
+              Topic:
+                Depth: 5
+                Durability Policy: Volatile
+                History Policy: Keep Last
+                Reliability Policy: Reliable
+                Value: /localization/pose_estimator/initial_pose_with_covariance
               Value: true
-            - Alpha: 1
+            - Alpha: 0.9990000128746033
               Axes Length: 1
               Axes Radius: 0.10000000149011612
-              Class: rviz/PoseWithCovariance
+              Class: rviz_default_plugins/PoseWithCovariance
               Color: 0; 255; 0
               Covariance:
                 Orientation:
@@ -493,20 +531,14 @@ Visualization Manager:
               Shaft Length: 0.6000000238418579
               Shaft Radius: 0.30000001192092896
               Shape: Arrow
-              Topic: /localization/pose_estimator/pose_with_covariance
-              Unreliable: false
+              Topic:
+                Depth: 5
+                Durability Policy: Volatile
+                History Policy: Keep Last
+                Reliability Policy: Reliable
+                Value: /localization/pose_estimator/pose_with_covariance
               Value: true
-            - Buffer Size: 200
-              Class: rviz_plugins::PoseHistory
-              Enabled: true
-              Line:
-                Color: 170; 255; 127
-                Value: true
-                Width: 0.10000000149011612
-              Name: PoseHistory
-              Topic: /localization/pose_estimator/pose
-              Value: true
-            - Alpha: 1
+            - Alpha: 0.9990000128746033
               Autocompute Intensity Bounds: true
               Autocompute Value Bounds:
                 Max Value: 10
@@ -514,9 +546,9 @@ Visualization Manager:
                 Value: true
               Axis: Z
               Channel Name: intensity
-              Class: rviz/PointCloud2
-              Color: 0; 255; 255
-              Color Transformer: FlatColor
+              Class: rviz_default_plugins/PointCloud2
+              Color: 255; 255; 255
+              Color Transformer: ""
               Decay Time: 0
               Enabled: false
               Invert Rainbow: false
@@ -525,18 +557,21 @@ Visualization Manager:
               Min Color: 0; 0; 0
               Min Intensity: 0
               Name: Initial
-              Position Transformer: XYZ
-              Queue Size: 10
+              Position Transformer: ""
               Selectable: true
               Size (Pixels): 10
               Size (m): 0.009999999776482582
               Style: Points
-              Topic: /localization/util/downsample/pointcloud
-              Unreliable: false
+              Topic:
+                Depth: 5
+                Durability Policy: Volatile
+                History Policy: Keep Last
+                Reliability Policy: Reliable
+                Value: /localization/util/downsample/pointcloud
               Use Fixed Frame: true
               Use rainbow: true
               Value: false
-            - Alpha: 1
+            - Alpha: 0.9990000128746033
               Autocompute Intensity Bounds: true
               Autocompute Value Bounds:
                 Max Value: 10
@@ -544,158 +579,182 @@ Visualization Manager:
                 Value: true
               Axis: Z
               Channel Name: intensity
-              Class: rviz/PointCloud2
-              Color: 85; 255; 0
-              Color Transformer: FlatColor
+              Class: rviz_default_plugins/PointCloud2
+              Color: 255; 255; 255
+              Color Transformer: ""
               Decay Time: 0
               Enabled: false
               Invert Rainbow: false
-              Max Color: 85; 255; 127
-              Max Intensity: 0
+              Max Color: 255; 255; 255
+              Max Intensity: 4096
               Min Color: 0; 0; 0
               Min Intensity: 0
               Name: Aligned
-              Position Transformer: XYZ
-              Queue Size: 10
+              Position Transformer: ""
               Selectable: true
               Size (Pixels): 10
               Size (m): 0.009999999776482582
               Style: Points
-              Topic: /localization/pose_estimator/points_aligned
-              Unreliable: false
+              Topic:
+                Depth: 5
+                Durability Policy: Volatile
+                History Policy: Keep Last
+                Reliability Policy: Reliable
+                Value: /localization/pose_estimator/points_aligned
               Use Fixed Frame: true
               Use rainbow: true
               Value: false
-            - Class: rviz/MarkerArray
+            - Class: rviz_default_plugins/MarkerArray
               Enabled: true
-              Marker Topic: /localization/pose_estimator/monte_carlo_initial_pose_marker
               Name: MonteCarloInitialPose
-              Namespaces: {}
-              Queue Size: 1
+              Namespaces:
+                {}
+              Topic:
+                Depth: 5
+                Durability Policy: Volatile
+                History Policy: Keep Last
+                Reliability Policy: Reliable
+                Value: /localization/pose_estimator/monte_calro_initial_pose_marker
               Value: true
           Enabled: true
           Name: NDT
-        - Class: rviz/Group
-          Displays:
-            - Buffer Size: 1000
-              Class: rviz_plugins::PoseHistory
-              Enabled: true
-              Line:
-                Color: 0; 255; 255
-                Value: true
-                Width: 0.10000000149011612
-              Name: PoseHistory
-              Topic: /localization/pose_twist_fusion_filter/pose
-              Value: true
+        - Class: rviz_common/Group
+          Displays: ~
           Enabled: true
           Name: EKF
       Enabled: true
       Name: Localization
-    - Class: rviz/Group
+    - Class: rviz_common/Group
       Displays:
-        - Class: rviz/Group
+        - Class: rviz_common/Group
           Displays:
-            - Class: rviz/MarkerArray
+            - Class: rviz_default_plugins/MarkerArray
               Enabled: true
-              Marker Topic: /perception/object_recognition/detection/objects/visualization
               Name: DynamicObjects
-              Namespaces: {}
-              Queue Size: 100
+              Namespaces:
+                {}
+              Topic:
+                Depth: 5
+                Durability Policy: Volatile
+                History Policy: Keep Last
+                Reliability Policy: Reliable
+                Value: /perception/object_recognition/detection/objects/visualization
               Value: true
           Enabled: false
           Name: Detection
-        - Class: rviz/Group
+        - Class: rviz_common/Group
           Displays:
-            - Class: rviz/MarkerArray
+            - Class: rviz_default_plugins/MarkerArray
               Enabled: true
-              Marker Topic: /perception/object_recognition/tracking/objects/visualization
               Name: DynamicObjects
-              Namespaces: {}
-              Queue Size: 100
+              Namespaces:
+                {}
+              Topic:
+                Depth: 5
+                Durability Policy: Volatile
+                History Policy: Keep Last
+                Reliability Policy: Reliable
+                Value: /perception/object_recognition/tracking/objects/visualization
               Value: true
           Enabled: false
           Name: Tracking
-        - Class: rviz/Group
+        - Class: rviz_common/Group
           Displays:
-            - Class: rviz/MarkerArray
+            - Class: rviz_default_plugins/MarkerArray
               Enabled: true
-              Marker Topic: /perception/object_recognition/objects/visualization
               Name: DynamicObjects
               Namespaces:
-                label: true
-                path: true
-                path confidence: true
-                shape: true
-                twist: true
-              Queue Size: 100
+                {}
+              Topic:
+                Depth: 5
+                Durability Policy: Volatile
+                History Policy: Keep Last
+                Reliability Policy: Reliable
+                Value: /perception/object_recognition/objects/visualization
               Value: true
           Enabled: true
           Name: Prediction
-        - Class: rviz/Group
+        - Class: rviz_common/Group
           Displays:
-            - Class: rviz/Image
+            - Class: rviz_default_plugins/Image
               Enabled: true
-              Image Topic: /perception/traffic_light_recognition/debug/rois
               Max Value: 1
               Median window: 5
               Min Value: 0
               Name: Image
               Normalize Range: true
-              Queue Size: 2
-              Transport Hint: raw
-              Unreliable: false
+              Topic:
+                Depth: 5
+                Durability Policy: Volatile
+                History Policy: Keep Last
+                Reliability Policy: Reliable
+                Value: /perception/traffic_light_recognition/debug/rois
               Value: true
-            - Class: rviz/MarkerArray
+            - Class: rviz_default_plugins/MarkerArray
               Enabled: true
-              Marker Topic: /perception/traffic_light_recognition/traffic_light_map_based_detector/debug/markers
               Name: Beam
-              Namespaces: {}
-              Queue Size: 100
+              Namespaces:
+                {}
+              Topic:
+                Depth: 5
+                Durability Policy: Volatile
+                History Policy: Keep Last
+                Reliability Policy: Reliable
+                Value: /perception/traffic_light_recognition/traffic_light_map_based_detector/debug/markers
               Value: true
           Enabled: true
           Name: TrafficLight
       Enabled: true
       Name: Perception
-    - Class: rviz/Group
+    - Class: rviz_common/Group
       Displays:
-        - Class: rviz/Group
+        - Class: rviz_common/Group
           Displays:
-            - Class: rviz/MarkerArray
+            - Class: rviz_default_plugins/MarkerArray
               Enabled: true
-              Marker Topic: /planning/mission_planning/route_marker
               Name: RouteArea
               Namespaces:
-                goal_lanelets: true
-                left_lane_bound: true
-                right_lane_bound: true
-                route_lanelets: true
-              Queue Size: 100
+                {}
+              Topic:
+                Depth: 5
+                Durability Policy: Volatile
+                History Policy: Keep Last
+                Reliability Policy: Reliable
+                Value: /planning/mission_planning/route_marker
               Value: true
             - Alpha: 1
               Axes Length: 1
               Axes Radius: 0.30000001192092896
-              Class: rviz/Pose
+              Class: rviz_default_plugins/Pose
               Color: 255; 25; 0
               Enabled: true
               Head Length: 0.30000001192092896
-              Head Radius: 0.5
+              Head Radius: 0.10000000149011612
               Name: GoalPose
-              Shaft Length: 3
-              Shaft Radius: 0.20000000298023224
+              Shaft Length: 1
+              Shaft Radius: 0.05000000074505806
               Shape: Axes
-              Topic: /planning/mission_planning/goal
-              Unreliable: false
+              Topic:
+                Depth: 5
+                Durability Policy: Volatile
+                History Policy: Keep Last
+                Reliability Policy: Reliable
+                Value: /planning/mission_planning/goal
               Value: true
           Enabled: true
           Name: MissionPlanning
-        - Class: rviz/Group
+        - Class: rviz_common/Group
           Displays:
             - Class: rviz_plugins/Trajectory
               Color Border Vel Max: 3
               Enabled: true
               Name: ScenarioTrajectory
-              Topic: /planning/scenario_planning/trajectory
-              Unreliable: false
+              Topic:
+                Depth: 5
+                Durability Policy: Volatile
+                History Policy: Keep Last
+                Reliability Policy: Reliable
+                Value: /planning/scenario_planning/trajectory
               Value: true
               View Path:
                 Alpha: 1
@@ -709,145 +768,166 @@ Visualization Manager:
                 Constant Color: false
                 Scale: 0.30000001192092896
                 Value: true
-            - Class: rviz/Group
+            - Class: rviz_common/Group
               Displays:
-                - Class: rviz/Group
+                - Class: rviz_common/Group
                   Displays:
                     - Class: rviz_plugins/Path
                       Color Border Vel Max: 3
                       Enabled: true
                       Name: Path
-                      Topic: /planning/scenario_planning/lane_driving/behavior_planning/path
-                      Unreliable: false
+                      Topic:
+                        Depth: 5
+                        Durability Policy: Volatile
+                        History Policy: Keep Last
+                        Reliability Policy: Reliable
+                        Value: /planning/scenario_planning/lane_driving/behavior_planning/path
                       Value: true
                       View Path:
-                        Alpha: 0.4000000059604645
+                        Alpha: 1
                         Color: 0; 0; 0
                         Constant Color: false
-                        Value: true
-                        Width: 2
-                      View Velocity:
-                        Alpha: 0.4000000059604645
-                        Color: 0; 0; 0
-                        Constant Color: false
-                        Scale: 0.30000001192092896
-                        Value: true
-                    - Class: rviz/MarkerArray
-                      Enabled: false
-                      Marker Topic: /planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/path
-                      Name: Arrow
-                      Namespaces: {}
-                      Queue Size: 100
-                      Value: false
-                    - Class: rviz/MarkerArray
-                      Enabled: true
-                      Marker Topic: /planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/crosswalk
-                      Name: Crosswalk
-                      Namespaces: {}
-                      Queue Size: 100
-                      Value: true
-                    - Class: rviz/MarkerArray
-                      Enabled: true
-                      Marker Topic: /planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/intersection
-                      Name: Intersection
-                      Namespaces:
-                        conflicting_targets: true
-                        detection_area: false
-                        ego_lane: false
-                        factor_text: true
-                        judge_point_pose_line: true
-                        path_raw: false
-                        spline: false
-                        stop_point_pose_line: false
-                        stop_virtual_wall: true
-                        stuck_vehicle_detect_area: false
-                      Queue Size: 100
-                      Value: true
-                    - Class: rviz/MarkerArray
-                      Enabled: true
-                      Marker Topic: /planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/blind_spot
-                      Name: Blind Spot
-                      Namespaces:
-                        conflict_area_for_blind_spot: false
-                        conflicting_targets: true
-                        detection_area: false
-                        detection_area_for_blind_spot: false
-                        factor_text: true
-                        judge_point_pose_line: true
-                        path_raw: false
-                        stop_virtual_wall: true
-                        spline: false
-                        stop_point_pose_line: false
-                      Queue Size: 100
-                      Value: true
-                    - Class: rviz/MarkerArray
-                      Enabled: true
-                      Marker Topic: /planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/traffic_light
-                      Name: TrafficLight
-                      Namespaces: {}
-                      Queue Size: 100
-                      Value: true
-                    - Class: rviz/MarkerArray
-                      Enabled: true
-                      Marker Topic: /planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/stop_line
-                      Name: StopLine
-                      Namespaces:
-                        factor_text: true
-                        stop_virtual_wall: true
-                      Queue Size: 100
-                      Value: true
-                    - Class: rviz/MarkerArray
-                      Enabled: true
-                      Marker Topic: /planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/detection_area
-                      Name: DetectionArea
-                      Namespaces:
-                        factor_text: true
-                        stop_virtual_wall: true
-                      Queue Size: 100
-                      Value: true
-                    - Class: rviz/MarkerArray
-                      Enabled: true
-                      Marker Topic: /planning/scenario_planning/lane_driving/behavior_planning/lane_change_planner/debug/predicted_path_markers
-                      Name: LaneChange
-                      Namespaces:
-                        candidate_lane_change_path: false
-                        ego_lane_change_path: false
-                        ego_lane_follow_path: false
-                        factor_text: true
-                        object_predicted_path: false
-                        selected_path: false
-                        stop_virtual_wall: true
-                      Queue Size: 100
-                      Value: true
-                    - Class: rviz_plugins/Path
-                      Color Border Vel Max: 3
-                      Enabled: true
-                      Name: LaneChangeCandidate
-                      Topic: /planning/scenario_planning/lane_driving/lane_change_candidate_path
-                      Unreliable: false
-                      Value: true
-                      View Path:
-                        Alpha: 0.30000001192092896
-                        Color: 115; 210; 22
-                        Constant Color: true
                         Value: true
                         Width: 2
                       View Velocity:
                         Alpha: 1
                         Color: 0; 0; 0
-                        Constant Color: true
+                        Constant Color: false
+                        Scale: 0.30000001192092896
+                        Value: true
+                    - Class: rviz_default_plugins/MarkerArray
+                      Enabled: false
+                      Name: Arrow
+                      Namespaces:
+                        {}
+                      Topic:
+                        Depth: 5
+                        Durability Policy: Volatile
+                        History Policy: Keep Last
+                        Reliability Policy: Reliable
+                        Value: /planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/path
+                      Value: false
+                    - Class: rviz_default_plugins/MarkerArray
+                      Enabled: true
+                      Name: Crosswalk
+                      Namespaces:
+                        {}
+                      Topic:
+                        Depth: 5
+                        Durability Policy: Volatile
+                        History Policy: Keep Last
+                        Reliability Policy: Reliable
+                        Value: /planning/scenario_planning/lane_driving/behavior_planning/debug/crosswalk
+                      Value: true
+                    - Class: rviz_default_plugins/MarkerArray
+                      Enabled: true
+                      Name: Intersection
+                      Namespaces:
+                        {}
+                      Topic:
+                        Depth: 5
+                        Durability Policy: Volatile
+                        History Policy: Keep Last
+                        Reliability Policy: Reliable
+                        Value: /planning/scenario_planning/lane_driving/behavior_planning/debug/intersection
+                      Value: true
+                    - Class: rviz_default_plugins/MarkerArray
+                      Enabled: true
+                      Name: Blind Spot
+                      Namespaces:
+                        {}
+                      Topic:
+                        Depth: 5
+                        Durability Policy: Volatile
+                        History Policy: Keep Last
+                        Reliability Policy: Reliable
+                        Value: /planning/scenario_planning/lane_driving/behavior_planning/debug/blind_spot
+                      Value: true
+                    - Class: rviz_default_plugins/MarkerArray
+                      Enabled: true
+                      Name: TrafficLight
+                      Namespaces:
+                        {}
+                      Topic:
+                        Depth: 5
+                        Durability Policy: Volatile
+                        History Policy: Keep Last
+                        Reliability Policy: Reliable
+                        Value: /planning/scenario_planning/lane_driving/behavior_planning/debug/traffic_light
+                      Value: true
+                    - Class: rviz_default_plugins/MarkerArray
+                      Enabled: true
+                      Name: StopLine
+                      Namespaces:
+                        {}
+                      Topic:
+                        Depth: 5
+                        Durability Policy: Volatile
+                        History Policy: Keep Last
+                        Reliability Policy: Reliable
+                        Value: /planning/scenario_planning/lane_driving/behavior_planning/debug/stop_line
+                      Value: true
+                    - Class: rviz_default_plugins/MarkerArray
+                      Enabled: true
+                      Name: DetectionArea
+                      Namespaces:
+                        {}
+                      Topic:
+                        Depth: 5
+                        Durability Policy: Volatile
+                        History Policy: Keep Last
+                        Reliability Policy: Reliable
+                        Value: /planning/scenario_planning/lane_driving/behavior_planning/debug/detection_area
+                      Value: true
+                    - Class: rviz_default_plugins/MarkerArray
+                      Enabled: true
+                      Name: LaneChange
+                      Namespaces:
+                        {}
+                      Topic:
+                        Depth: 5
+                        Durability Policy: Volatile
+                        History Policy: Keep Last
+                        Reliability Policy: Reliable
+                        Value: /planning/scenario_planning/lane_driving/behavior_planning/lane_change_planner/debug/predicted_path_markers
+                      Value: true
+                    - Class: rviz_plugins/Trajectory
+                      Color Border Vel Max: 3
+                      Enabled: true
+                      Name: LaneChangeCanditate
+                      Topic:
+                        Depth: 5
+                        Durability Policy: Volatile
+                        History Policy: Keep Last
+                        Reliability Policy: Reliable
+                        Value: /planning/scenario_planning/lane_driving/lane_change_candidate_path
+                      Value: true
+                      View Path:
+                        Alpha: 1
+                        Color: 0; 0; 0
+                        Constant Color: false
+                        Value: true
+                        Width: 2
+                      View Velocity:
+                        Alpha: 1
+                        Color: 0; 0; 0
+                        Constant Color: false
                         Scale: 0.30000001192092896
                         Value: false
                   Enabled: true
                   Name: BehaviorPlanning
-                - Class: rviz/Group
+                - Class: rviz_common/Group
                   Displays:
                     - Class: rviz_plugins/Trajectory
                       Color Border Vel Max: 3
                       Enabled: false
                       Name: Trajectory
-                      Topic: /planning/scenario_planning/lane_driving/trajectory
-                      Unreliable: false
+                      Topic:
+                        Depth: 5
+                        Durability Policy: Volatile
+                        History Policy: Keep Last
+                        Reliability Policy: Reliable
+                        Value: /planning/scenario_planning/lane_driving/trajectory
                       Value: false
                       View Path:
                         Alpha: 1
@@ -861,87 +941,73 @@ Visualization Manager:
                         Constant Color: false
                         Scale: 0.30000001192092896
                         Value: true
-                    - Class: rviz/MarkerArray
+                    - Class: rviz_default_plugins/MarkerArray
                       Enabled: true
-                      Marker Topic: /planning/scenario_planning/lane_driving/motion_planning/obstacle_stop_planner/debug/marker
-                      Name: ObstaclePointCloudStop
+                      Name: ObstaclePointCLoudStop
                       Namespaces:
-                        collision_polygons: true
-                        detection_polygons: true
-                        factor_text: true
-                        stop_virtual_wall: true
-                        stop_obstacle_point: true
-                        stop_obstacle_text: true
-                      Queue Size: 100
+                        {}
+                      Topic:
+                        Depth: 5
+                        Durability Policy: Volatile
+                        History Policy: Keep Last
+                        Reliability Policy: Reliable
+                        Value: /planning/scenario_planning/lane_driving/motion_planning/obststacle_stop_planner/debug/marker
                       Value: true
-                    - Class: rviz/MarkerArray
+                    - Class: rviz_default_plugins/MarkerArray
                       Enabled: true
-                      Marker Topic: /planning/scenario_planning/lane_driving/motion_planning/surround_obstacle_checker/debug/marker
                       Name: SurroundObstacleCheck
                       Namespaces:
-                        factor_text: true
-                        virtual_wall: true
-                        obstacle_point: true
-                        no_start_obstacle_text: true
-                      Queue Size: 100
+                        {}
+                      Topic:
+                        Depth: 5
+                        Durability Policy: Volatile
+                        History Policy: Keep Last
+                        Reliability Policy: Reliable
+                        Value: /planning/scenario_planning/lane_driving/motion_planning/surround_obstacle_checker/debug/marker
                       Value: true
-                    - Class: rviz/MarkerArray
+                    - Class: rviz_default_plugins/MarkerArray
                       Enabled: true
-                      Marker Topic: /planning/scenario_planning/lane_driving/motion_planning/obstacle_avoidance_planner/debug/marker
                       Name: ObstacleAvoidance
                       Namespaces:
-                        base_bounds_line: false
-                        bounds_candidate_base_text: false
-                        bounds_candidate_for_base: false
-                        bounds_candidate_for_top: false
-                        bounds_candidate_top_text: false
-                        constrain_rect: false
-                        constrain_rect_text: false
-                        constrain_rectlocation: false
-                        current_vehicle_footprint: false
-                        extending_constrain_rect: false
-                        extending_constrain_rect_text: false
-                        extending_constrain_rectlocation: false
-                        fixed_mpt_points: false
-                        fixed_points_for_extending: false
-                        fixed_points_marker: false
-                        interpolated_points_for_extending: false
-                        interpolated_points_marker: false
-                        interpolated_points_text_marker: false
-                        non_fixed_points_for_extending: false
-                        non_fixed_points_marker: false
-                        num_vehicle_footprint: false
-                        optimized_points_marker: false
-                        optimized_points_text_marker: false
-                        smoothed_points_text: false
-                        straight_points_marker: false
-                        top_bounds_line: false
-                        vehicle_footprint: false
-                        virtual_wall: true
-                        virtual_wall_text: true
-                      Queue Size: 100
+                        {}
+                      Topic:
+                        Depth: 5
+                        Durability Policy: Volatile
+                        History Policy: Keep Last
+                        Reliability Policy: Reliable
+                        Value: /planning/scenario_planning/lane_driving/motion_planning/obststacle_avoidance_planner/debug/marker
                       Value: true
                   Enabled: true
                   Name: MotionPlanning
               Enabled: true
               Name: LaneDriving
-            - Class: rviz/Group
+            - Class: rviz_common/Group
               Displays:
                 - Alpha: 0.699999988079071
-                  Class: rviz/Map
+                  Class: rviz_default_plugins/Map
                   Color Scheme: map
                   Draw Behind: false
                   Enabled: false
                   Name: Costmap
-                  Topic: /planning/scenario_planning/parking/costmap_generator/occupancy_grid
-                  Unreliable: false
+                  Topic:
+                    Depth: 5
+                    Durability Policy: Volatile
+                    History Policy: Keep Last
+                    Reliability Policy: Reliable
+                    Value: /planning/scenario_planning/parking/costmap_generator/occupancy_grid
+                  Update Topic:
+                    Depth: 5
+                    Durability Policy: Volatile
+                    History Policy: Keep Last
+                    Reliability Policy: Reliable
+                    Value: /planning/scenario_planning/parking/costmap_generator/occupancy_grid_updates
                   Use Timestamp: false
                   Value: false
-                - Alpha: 1
+                - Alpha: 0.9990000128746033
                   Arrow Length: 0.30000001192092896
                   Axes Length: 0.30000001192092896
-                  Axes Radius: 0.05000000074505806
-                  Class: rviz/PoseArray
+                  Axes Radius: 0.009999999776482582
+                  Class: rviz_default_plugins/PoseArray
                   Color: 255; 25; 0
                   Enabled: true
                   Head Length: 0.10000000149011612
@@ -950,24 +1016,32 @@ Visualization Manager:
                   Shaft Length: 0.20000000298023224
                   Shaft Radius: 0.05000000074505806
                   Shape: Arrow (3D)
-                  Topic: /planning/scenario_planning/parking/freespace_planner/debug/partial_pose_array
-                  Unreliable: false
+                  Topic:
+                    Depth: 5
+                    Durability Policy: Volatile
+                    History Policy: Keep Last
+                    Reliability Policy: Reliable
+                    Value: /planning/scenario_planning/parking/debug/partial_pose_array
                   Value: true
-                - Alpha: 1
+                - Alpha: 0.9990000128746033
                   Arrow Length: 0.5
                   Axes Length: 0.30000001192092896
                   Axes Radius: 0.009999999776482582
-                  Class: rviz/PoseArray
+                  Class: rviz_default_plugins/PoseArray
                   Color: 0; 0; 255
                   Enabled: true
-                  Head Length: 0.10000000149011612
-                  Head Radius: 0.20000000298023224
+                  Head Length: 0.07000000029802322
+                  Head Radius: 0.029999999329447746
                   Name: PoseArray
-                  Shaft Length: 0.20000000298023224
-                  Shaft Radius: 0.05000000074505806
+                  Shaft Length: 0.23000000417232513
+                  Shaft Radius: 0.009999999776482582
                   Shape: Arrow (Flat)
-                  Topic: /planning/scenario_planning/parking/freespace_planner/debug/pose_array
-                  Unreliable: false
+                  Topic:
+                    Depth: 5
+                    Durability Policy: Volatile
+                    History Policy: Keep Last
+                    Reliability Policy: Reliable
+                    Value: /planning/scenario_planning/parking/debug/pose_array
                   Value: true
               Enabled: true
               Name: Parking
@@ -975,75 +1049,125 @@ Visualization Manager:
           Name: ScenarioPlanning
       Enabled: true
       Name: Planning
-    - Class: rviz/Group
+    - Class: rviz_common/Group
       Displays:
-        - Class: rviz/MarkerArray
+        - Class: rviz_plugins/Trajectory
+          Color Border Vel Max: 3
+          Enabled: true
+          Name: Predicted Trajectory
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /control/trajectory_follower/predicted_trajectory
+          Value: true
+          View Path:
+            Alpha: 1
+            Color: 0; 0; 0
+            Constant Color: false
+            Value: true
+            Width: 2
+          View Velocity:
+            Alpha: 1
+            Color: 0; 0; 0
+            Constant Color: false
+            Scale: 0.30000001192092896
+            Value: false
+        - Class: rviz_default_plugins/MarkerArray
           Enabled: false
-          Marker Topic: /control/trajectory_follower/mpc_follower/debug/markers
           Name: Debug/MPC
-          Namespaces: {}
-          Queue Size: 100
+          Namespaces:
+            {}
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /control/trajectory_follower/mpc_follower/debug/markers
           Value: false
-        - Class: rviz/MarkerArray
+        - Class: rviz_default_plugins/MarkerArray
           Enabled: false
-          Marker Topic: /control/trajectory_follower/pure_pursuit/debug/marker
           Name: Debug/PurePursuit
           Namespaces:
             {}
-          Queue Size: 100
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /control/trajectory_follower/pure_pursuit/debug/markers
           Value: false
       Enabled: true
       Name: Control
   Enabled: true
   Global Options:
-    Background Color: 48; 48; 48
-    Default Light: true
+    Background Color: 10; 10; 10
     Fixed Frame: viewer
     Frame Rate: 30
   Name: root
   Tools:
-    - Class: rviz/Interact
+    - Class: rviz_default_plugins/Interact
       Hide Inactive Objects: true
-    - Class: rviz/MoveCamera
-    - Class: rviz/Select
-    - Class: rviz/FocusCamera
-    - Class: rviz/Measure
-    - Class: rviz/SetInitialPose
-      Theta std deviation: 0.2617993950843811
-      Topic: initialpose
-      X std deviation: 0.5
-      Y std deviation: 0.5
-    - Class: rviz/SetGoal
-      Topic: /planning/mission_planning/goal
-    - Class: rviz/PedestrianInitialPoseTool
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/Select
+    - Class: rviz_default_plugins/FocusCamera
+    - Class: rviz_default_plugins/Measure
+      Line color: 128; 128; 0
+    - Class: rviz_default_plugins/SetInitialPose
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /initialpose
+    - Class: rviz_default_plugins/SetGoal
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /planning/mission_planning/goal
+    - Class: rviz_default_plugins/PublishPoint
+      Single click: true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /clicked_point
+    - Class: rviz_plugins/PedestrianInitialPoseTool
       Pose Topic: /simulation/dummy_perception_publisher/object_info
       Theta std deviation: 0.0872664600610733
-      Velocity: 1
-      X std deviation: 0.009999999776482582
-      Y std deviation: 0.009999999776482582
-      Z position: 0
-      Z std deviation: 0.009999999776482582
-    - Class: rviz/CarInitialPoseTool
+      Velocity: 0
+      X std deviation: 0.029999999329447746
+      Y std deviation: 0.029999999329447746
+      Z position: 1
+      Z std deviation: 0.029999999329447746
+    - Class: rviz_plugins/CarInitialPoseTool
       Pose Topic: /simulation/dummy_perception_publisher/object_info
       Theta std deviation: 0.0872664600610733
       Velocity: 3
-      X std deviation: 0.009999999776482582
-      Y std deviation: 0.009999999776482582
+      X std deviation: 0.029999999329447746
+      Y std deviation: 0.029999999329447746
       Z position: 0
-      Z std deviation: 0.009999999776482582
-    - Class: rviz/MissionCheckpointTool
-      Pose Topic: /planning/mission_planning/checkpoint
+      Z std deviation: 0.029999999329447746
+    - Class: rviz_plugins/MissionCheckpointTool
+      Pose Topic: mission_checkpoint
       Theta std deviation: 0.2617993950843811
       X std deviation: 0.5
       Y std deviation: 0.5
       Z position: 0
-    - Class: rviz/DeleteAllObjectsTool
+    - Class: rviz_plugins/DeleteAllObjectsTool
       Pose Topic: /simulation/dummy_perception_publisher/object_info
+  Transformation:
+    Current:
+      Class: rviz_default_plugins/TF
   Value: true
   Views:
     Current:
-      Angle: 0
-      Class: rviz/TopDownOrtho
+      Angle: 0.07999998331069946
+      Class: rviz_default_plugins/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -1052,31 +1176,27 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 10
+      Scale: -5.74001932144165
       Target Frame: viewer
-      Value: TopDownOrtho (rviz)
-      X: 0
-      Y: 0
+      Value: TopDownOrtho (rviz_default_plugins)
+      X: -38.261173248291016
+      Y: 29.38650894165039
     Saved: ~
 Window Geometry:
   Displays:
     collapsed: false
-  Height: 1565
+  Height: 2032
   Hide Left Dock: false
   Hide Right Dock: false
   Image:
     collapsed: false
-  InitialPoseButtonPanel:
-    collapsed: false
-  QMainWindow State: 000000ff00000000fd00000004000000000000033c00000563fc020000000dfb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003d000001f0000000c900fffffffb0000000a005600690065007700730100000233000000f2000000a400fffffffb0000001e0054006f006f006c002000500072006f0070006500720074006900650073010000032b000000a10000005c00fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000c00430061006d0065007200610100000682000000eb0000000000000000fb0000000a0049006d00610067006501000003d2000001ce0000001600fffffffb0000002c0049006e0069007400690061006c0050006f007300650042007500740074006f006e00500061006e0065006c000000068f000000de0000007700fffffffb0000002c0049006e0069007400690061006c0050006f007300650042007500740074006f006e00500061006e0065006c000000068f000000de0000007700ffffff000000010000015f000006fffc0200000002fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e1000001970000000300000afd0000005afc0100000002fb0000000800540069006d0065010000000000000afd000002eb00fffffffb0000000800540069006d00650100000000000004500000000000000000000007bb0000056300000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd00000004000000000000055e0000075efc020000000afb0000001200530065006c0065006300740069006f006e00000001e10000009b000000ab00fffffffb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c00610079007301000000690000023c0000017800fffffffc000002b10000026c0000015801000034fa000000000100000002fb0000000a005600690065007700730100000000ffffffff0000014f00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007301000000000000055e000000f500fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000001e0054006f006f006c002000500072006f0070006500720074006900650073000000035400000090000000ab00fffffffb0000000a0049006d00610067006501000005290000029e0000004500ffffff00000001000001570000075efc0200000001fb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000004420000003efc0100000002fb0000000800540069006d00650100000000000004420000000000000000fb0000000800540069006d00650100000000000004500000000000000000000009060000075e00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
-    collapsed: false
-  Time:
     collapsed: false
   Tool Properties:
     collapsed: false
   Views:
     collapsed: false
-  Width: 2813
-  X: 67
-  Y: 27
+  Width: 3696
+  X: 144
+  Y: 54

@@ -1,17 +1,11 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5)
 project(autoware_launch)
 
-find_package(catkin REQUIRED COMPONENTS
-  vehicle_launch
-  perception_launch
-  sensing_launch
-)
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
 
-catkin_package()
-
-install(
-  DIRECTORY
-    launch
-    rviz
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+ament_auto_package(
+  INSTALL_TO_SHARE
+  launch
+  rviz
 )

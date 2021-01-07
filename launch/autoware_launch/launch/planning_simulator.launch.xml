@@ -6,58 +6,57 @@
   <arg name="sensor_model"/>
   <!-- Optional parameters -->
   <arg name="rviz" default="true" doc="launch rviz"/>
-  <arg name="rviz_args" default="-d $(find autoware_launch)/rviz/autoware.rviz"/>
   <arg name="lanelet2_map_file" default="lanelet2_map.osm" />
   <arg name="pointcloud_map_file" default="pointcloud_map.pcd" />
   <!-- Optional parameters for scenario simulation -->
   <arg name="initial_engage_state" default="true"/>
   <arg name="perception/enable_detection_failure" default="true"/>
   <arg name="perception/enable_object_recognition" default="true"/>
-  <arg name="sensing/visible_range" default="300"/>
+  <arg name="sensing/visible_range" default="300.0"/>
 
   <!-- Vehicle -->
-  <include file="$(find vehicle_launch)/launch/vehicle.launch">
-    <arg name="vehicle_model" value="$(arg vehicle_model)"/>
-    <arg name="sensor_model" value="$(arg sensor_model)"/>
+  <include file="$(find-pkg-share vehicle_launch)/launch/vehicle.launch.xml">
+    <arg name="vehicle_model" value="$(var vehicle_model)"/>
+    <arg name="sensor_model" value="$(var sensor_model)"/>
     <arg name="simulation" value="true"/>
-    <arg name="initial_engage_state" value="$(arg initial_engage_state)"/>
+    <arg name="initial_engage_state" value="$(var initial_engage_state)"/>
   </include>
 
   <!-- System -->
-  <include file="$(find system_launch)/launch/system.launch">
+  <include file="$(find-pkg-share system_launch)/launch/system.launch.xml">
     <arg name="run_mode" value="planning_simulation"/>
   </include>
 
   <!-- Map -->
-  <include file="$(find map_launch)/launch/map.launch">
-    <arg name="lanelet2_map_path" value="$(arg map_path)/$(arg lanelet2_map_file)" />
-    <arg name="pointcloud_map_path" value="$(arg map_path)/$(arg pointcloud_map_file)"/>
+  <include file="$(find-pkg-share map_launch)/launch/map.launch.xml">
+    <arg name="lanelet2_map_path" value="$(var map_path)/$(var lanelet2_map_file)" />
+    <arg name="pointcloud_map_path" value="$(var map_path)/$(var pointcloud_map_file)"/>
   </include>
 
   <!-- Dummy Perception -->
-  <include file="$(find dummy_perception_publisher)/launch/dummy_perception_publisher.launch">
-    <arg name="real" value="$(arg perception/enable_detection_failure)"/>
-    <arg name="use_object_recognition" value="$(arg perception/enable_object_recognition)"/>
-    <arg name="visible_range" value="$(arg sensing/visible_range)"/>
+  <include file="$(find-pkg-share dummy_perception_publisher)/launch/dummy_perception_publisher.launch.xml">
+    <arg name="real" value="$(var perception/enable_detection_failure)"/>
+    <arg name="use_object_recognition" value="$(var perception/enable_object_recognition)"/>
+    <arg name="visible_range" value="$(var sensing/visible_range)"/>
   </include>
 
   <!-- Planning -->
-  <include file="$(find planning_launch)/launch/planning.launch" />
+  <include file="$(find-pkg-share planning_launch)/launch/planning.launch.xml">
+    <arg name="vehicle_param_file" value="$(find-pkg-share $(var vehicle_model)_description)/config/vehicle_info.yaml"/>
+  </include>
 
   <!-- Control -->
-  <include file="$(find control_launch)/launch/control.launch">
+  <include file="$(find-pkg-share control_launch)/launch/control.launch.xml">
+    <arg name="vehicle_param_file" value="$(find-pkg-share $(var vehicle_model)_description)/config/vehicle_info.yaml"/>
     <arg name="lateral_controller_mode" value="mpc_follower" doc="options: mpc_follower, pure_pursuit"/>
   </include>
 
   <!-- AutowareAPI -->
-  <include file="$(find awapi_awiv_adapter)/launch/awapi_awiv_adapter.launch" />
+  <include file="$(find-pkg-share awapi_awiv_adapter)/launch/awapi_awiv_adapter.launch.xml" />
 
   <!-- Rviz -->
-  <node pkg="rviz" type="rviz" name="rviz" output="screen" args="$(arg rviz_args)" if="$(arg rviz)" />
+  <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen" args="-d $(find-pkg-share autoware_launch)/rviz/autoware.rviz" if="$(var rviz)" />
 
   <!-- Web Controller -->
-  <include file="$(find roswww)/launch/roswww.launch">
-    <arg name="cached" value="false"/>
-  </include>
-  <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" />
+  <include file="$(find-pkg-share autoware_web_controller)/launch/autoware_web_controller.launch.xml" />
 </launch>
