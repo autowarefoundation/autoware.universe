@@ -38,6 +38,7 @@
 
 #include "OgreHardwarePixelBuffer.h"
 #include "OgreMaterialManager.h"
+#include "OgreSceneManager.h"
 #include "OgreTechnique.h"
 #include "OgreTexture.h"
 #include "OgreTextureManager.h"
@@ -60,6 +61,7 @@
 #include "QImage"
 
 #include "rclcpp/rclcpp.hpp"
+#include "rviz_rendering/render_system.hpp"
 
 namespace jsk_rviz_plugins
 {
@@ -91,7 +93,7 @@ public:
 
   typedef std::shared_ptr<OverlayObject> Ptr;
 
-  OverlayObject(const std::string & name);
+  OverlayObject(Ogre::SceneManager* manager, rclcpp::Logger logger, const std::string & name);
   virtual ~OverlayObject();
 
   virtual std::string getName();
@@ -108,6 +110,7 @@ public:
 
 protected:
   const std::string name_;
+  rclcpp::Logger logger_;
   Ogre::Overlay * overlay_;
   Ogre::PanelOverlayElement * panel_;
   Ogre::MaterialPtr panel_material_;

@@ -56,7 +56,7 @@ std::unique_ptr<Ogre::ColourValue> SteeringAngleDisplay::setColorDependsOnVeloci
 
 SteeringAngleDisplay::SteeringAngleDisplay()
 : handle_image_(
-    std::string(ament_index_cpp::get_package_share_directory("autoware_vehicle_rviz_plugin") 
+    std::string(ament_index_cpp::get_package_share_directory("autoware_vehicle_rviz_plugin")
       + "/images/handle.png").c_str())
 {
   property_text_color_ = new rviz_common::properties::ColorProperty(
@@ -90,10 +90,12 @@ SteeringAngleDisplay::~SteeringAngleDisplay()
 void SteeringAngleDisplay::onInitialize()
 {
   MFDClass::onInitialize();
+  rviz_ros_node_ = context_->getRosNodeAbstraction();
+  auto logger = rviz_ros_node_.lock()->get_raw_node()->get_logger();
   static int count = 0;
   rviz_common::UniformStringStream ss;
   ss << "SteeringAngleDisplayObject" << count++;
-  overlay_.reset(new jsk_rviz_plugins::OverlayObject(ss.str()));
+  overlay_.reset(new jsk_rviz_plugins::OverlayObject(scene_manager_, logger, ss.str()));
 
   overlay_->show();
 
@@ -152,8 +154,8 @@ void SteeringAngleDisplay::processMessage(const autoware_vehicle_msgs::msg::Stee
   int h = overlay_->getTextureHeight();
 
   QMatrix rotation_matrix;
-  rotation_matrix.rotate(
-    std::round(property_handle_angle_scale_->getFloat() * (msg_ptr->data / M_PI) * -180.0));
+  rotation_matrix.rotate(static_cast<qreal>(
+    std::round(property_handle_angle_scale_->getFloat() * (msg_ptr->data / M_PI) * -180.0)));
   // else
   // rotation_matrix.rotate((property_handle_angle_scale_->getFloat() * (msg_ptr->data / M_PI) * -180.0));
   int handle_image_width = handle_image_.width(), handle_image_height = handle_image_.height();

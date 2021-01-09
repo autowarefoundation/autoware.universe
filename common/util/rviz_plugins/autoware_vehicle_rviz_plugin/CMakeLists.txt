@@ -37,7 +37,7 @@ ament_auto_add_library(autoware_vehicle_rviz_plugin SHARED
   ${HEADERS}
 )
 
-target_link_libraries(autoware_vehicle_rviz_plugin 
+target_link_libraries(autoware_vehicle_rviz_plugin
   ${QT_LIBRARIES})
 
 # Export the plugin to be imported by rviz2

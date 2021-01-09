@@ -90,10 +90,12 @@ ConsoleMeterDisplay::~ConsoleMeterDisplay()
 void ConsoleMeterDisplay::onInitialize()
 {
   MFDClass::onInitialize();
+  rviz_ros_node_ = context_->getRosNodeAbstraction();
+  auto logger = rviz_ros_node_.lock()->get_raw_node()->get_logger();
   static int count = 0;
   rviz_common::UniformStringStream ss;
   ss << "ConsoleMeterDisplayObject" << count++;
-  overlay_.reset(new jsk_rviz_plugins::OverlayObject(ss.str()));
+  overlay_.reset(new jsk_rviz_plugins::OverlayObject(scene_manager_, logger, ss.str()));
 
   overlay_->show();
 
