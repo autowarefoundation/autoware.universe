@@ -79,7 +79,7 @@ Visualization Manager:
           Displays:
             - Class: rviz_plugins/ConsoleMeter
               Enabled: true
-              Left: 128
+              Left: 512
               Length: 256
               Name: ConsoleMeter
               Scale: 3
@@ -93,12 +93,28 @@ Visualization Manager:
                 Value: /vehicle/status/twist
               Value: true
               Value height offset: 0
+            - Class: rviz_plugins/SteeringAngle
+              Enabled: true
+              Left: 128
+              Length: 256
+              Name: SteeringAngle
+              Scale: 3
+              Text Color: 25; 255; 240
+              Top: 128
+              Topic:
+                Depth: 5
+                Durability Policy: Volatile
+                History Policy: Keep Last
+                Reliability Policy: Reliable
+                Value: /vehicle/status/steering
+              Value: true
+              Value height offset: 0
             - Class: rviz_plugins/TurnSignal
               Enabled: true
               Height: 256
-              Left: 128
+              Left: 196
               Name: TurnSignal
-              Top: 128
+              Top: 350
               Topic:
                 Depth: 5
                 Durability Policy: Volatile
@@ -106,7 +122,7 @@ Visualization Manager:
                 Reliability Policy: Reliable
                 Value: /control/turn_signal_cmd
               Value: true
-              Width: 256
+              Width: 512
             - Alpha: 0.30000001192092896
               Class: rviz_default_plugins/RobotModel
               Collision Enabled: false
@@ -279,6 +295,23 @@ Visualization Manager:
               Update Interval: 0
               Value: true
               Visual Enabled: true
+            - Alpha: 0.9990000128746033
+              Class: rviz_plugins/VelocityHistory
+              Color Border Vel Max: 3
+              Constant Color:
+                Color: 0; 0; 0
+                Value: false
+              Enabled: true
+              Name: VelocityHistory
+              Scale: 0.30000001192092896
+              Timeout: 10
+              Topic:
+                Depth: 5
+                Durability Policy: Volatile
+                History Policy: Keep Last
+                Reliability Policy: Reliable
+                Value: /vehicle/status/twist
+              Value: true
           Enabled: true
           Name: Vehicle
       Enabled: true
