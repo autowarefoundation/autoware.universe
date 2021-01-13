@@ -6,9 +6,15 @@
 
   <maintainer email="ryohsuke.mitsudome@tier4.jp">mitsudome-r</maintainer>
 
-  <license>Apache 2</license>
+  <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
+
+  <exec_depend>map_loader</exec_depend>
+  <exec_depend>map_tf_generator</exec_depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
 
   <export>
     <build_type>ament_cmake</build_type>
