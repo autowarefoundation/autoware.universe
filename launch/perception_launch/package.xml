@@ -10,13 +10,16 @@
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
-  <depend>dynamic_object_visualization</depend>
-  <depend>image_transport_plugins</depend>
-  <!--
-    <build_depend>euclidean_cluster</build_depend>
-    <build_depend>pointcloud_to_laserscan</build_depend>
-    <build_depend>shape_estimation</build_depend>
-  -->
+  <exec_depend>cluster_data_association</exec_depend>
+  <exec_depend>dynamic_object_visualization</exec_depend>
+  <exec_depend>euclidean_cluster</exec_depend>
+  <exec_depend>lidar_apollo_instance_segmentation</exec_depend>
+  <exec_depend>map_based_prediction</exec_depend>
+  <exec_depend>multi_object_tracker</exec_depend>
+  <exec_depend>naive_path_prediction</exec_depend>
+  <exec_depend>roi_cluster_fusion</exec_depend>
+  <exec_depend>shape_estimation</exec_depend>
+  <exec_depend>tensorrt_yolo3</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
