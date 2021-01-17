@@ -162,10 +162,10 @@ bool CNNClassifier::postProcess(
   // label names are assumed to be comma-separated to represent each lamp
   // e.g.
   // match_label: "left,red,right,straight"
-  // splited_label: ["left","red","right","straight"]
-  std::vector<std::string> splited_label;
-  boost::algorithm::split(splited_label, match_label, boost::is_any_of(","));
-  for (auto label : splited_label) {
+  // split_label: ["left","red","right","straight"]
+  std::vector<std::string> split_label;
+  boost::algorithm::split(split_label, match_label, boost::is_any_of(","));
+  for (auto label : split_label) {
     if (label2state_.find(label) == label2state_.end()) {
       RCLCPP_DEBUG(node_ptr_->get_logger(), "cnn_classifier does not have a key [%s]", label.c_str());
       continue;

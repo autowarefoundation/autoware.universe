@@ -54,7 +54,7 @@ bool ColorClassifier::getLampState(
   cv::Mat yellow_image;
   cv::Mat red_image;
   filterHSV(input_image, green_image, yellow_image, red_image);
-  // binalize
+  // binarize
   cv::Mat green_bin_image;
   cv::Mat yellow_bin_image;
   cv::Mat red_bin_image;
