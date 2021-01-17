@@ -20,10 +20,11 @@ namespace yaw_fixed
 bool BusCorrector::correct(
   autoware_perception_msgs::msg::Shape & shape_output, geometry_msgs::msg::Pose & pose_output)
 {
-  double min_width = 2.0;
-  double max_width = 2.9;
-  double min_length = 5.0;
-  double max_length = 17.0;
+  const double min_width = 2.0;
+  const double max_width = 2.9;
+  const double min_length = 5.0;
+  const double max_length = 17.0;
+  const double avg_length = 7.0;
 
   /*
     c1 is nearest point and other points are arranged like below
@@ -78,7 +79,7 @@ bool BusCorrector::correct(
   if (min_length < shape_output.dimensions.x && shape_output.dimensions.x < max_length) {
     length = shape_output.dimensions.x;
   } else {
-    length = (max_length + min_length) * 0.5;
+    length = avg_length;
   }
   double width = 0;
   if (min_width < shape_output.dimensions.y && shape_output.dimensions.y < max_width) {

@@ -94,9 +94,9 @@ bool BoundingBoxModel::estimate(
 
   // Paper : Algo.2 Search-Based Rectangle Fitting
   std::vector<std::pair<double /*theta*/, double /*q*/>> Q;
-  const double eplison = 0.001;
+  const double epsilon = 0.001;
   const double angle_reso = M_PI / 180.0;
-  for (double theta = min_angle; theta <= max_angle + eplison; theta += angle_reso) {
+  for (double theta = min_angle; theta <= max_angle + epsilon; theta += angle_reso) {
     Eigen::Vector2d e_1;
     e_1 << std::cos(theta), std::sin(theta);  // col.3, Algo.2
     Eigen::Vector2d e_2;
@@ -156,7 +156,7 @@ bool BoundingBoxModel::estimate(
   double intersection_x_2 = (b_3 * c_4 - b_4 * c_3) / (a_4 * b_3 - a_3 * b_4);
   double intersection_y_2 = (a_3 * c_4 - a_4 * c_3) / (a_3 * b_4 - a_4 * b_3);
 
-  // calc dimention of bounding box
+  // calc dimension of bounding box
   Eigen::Vector2d e_x;
   Eigen::Vector2d e_y;
   e_x << a_1 / (std::sqrt(a_1 * a_1 + b_1 * b_1)), b_1 / (std::sqrt(a_1 * a_1 + b_1 * b_1));
