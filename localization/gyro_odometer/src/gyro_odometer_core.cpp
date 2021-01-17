@@ -99,8 +99,8 @@ void GyroOdometer::callbackImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_m
   const double vx_covariance = 0.2;
   const double wz_covariance = 0.03;
   twist_with_covariance.twist.covariance[0] = vx_covariance * vx_covariance;
-  twist_with_covariance.twist.covariance[0 * 6 + 5] = vx_covariance * wz_covariance;
-  twist_with_covariance.twist.covariance[5 * 6 + 0] = wz_covariance * vx_covariance;
+  twist_with_covariance.twist.covariance[0 * 6 + 5] = 0.0;
+  twist_with_covariance.twist.covariance[5 * 6 + 0] = 0.0;
   twist_with_covariance.twist.covariance[5 * 6 + 5] = wz_covariance * wz_covariance;
   twist_with_covariance_pub_->publish(twist_with_covariance);
 }
