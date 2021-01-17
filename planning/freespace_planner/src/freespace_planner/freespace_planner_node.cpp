@@ -452,7 +452,7 @@ void AstarNavi::onTimer()
   if (isPlanRequired()) {
     reset();
 
-    // Stop before planning new trajectoryg
+    // Stop before planning new trajectory
     const auto stop_trajectory = createStopTrajectory(current_pose_);
     trajectory_pub_->publish(stop_trajectory);
     debug_pose_array_pub_->publish(trajectory2PoseArray(stop_trajectory));
