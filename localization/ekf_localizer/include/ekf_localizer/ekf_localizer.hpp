@@ -105,20 +105,20 @@ private:
                              //!< (pose.header.stamp - now) + additional_delay [s]
   double pose_measure_uncertainty_time_;  //!< @brief  added for measurement covariance
   double pose_rate_;  //!< @brief  pose rate [s], used for covariance calculation
-  //!< @brief  the maharanobis distance threshold to ignore pose measurement
+  //!< @brief  the mahalanobis distance threshold to ignore pose measurement
   double pose_gate_dist_;
   double pose_stddev_x_;  //!< @brief  standard deviation for pose position x [m]
   double pose_stddev_y_;  //!< @brief  standard deviation for pose position y [m]
   double pose_stddev_yaw_;          //!< @brief  standard deviation for pose position yaw [rad]
-  bool use_pose_with_covariance_;   //!< @brief  use covariance in pose_with_covarianve message
-  bool use_twist_with_covariance_;  //!< @brief  use covariance in twist_with_covarianve message
+  bool use_pose_with_covariance_;   //!< @brief  use covariance in pose_with_covariance message
+  bool use_twist_with_covariance_;  //!< @brief  use covariance in twist_with_covariance message
 
   /* twist */
   double
     twist_additional_delay_;  //!< @brief  compensated delay = (twist.header.stamp - now)
                               //!< + additional_delay [s]
   double twist_rate_;  //!< @brief  rate [s], used for covariance calculation
-  //!< @brief  measurement is ignored if the maharanobis distance is larger than this value.
+  //!< @brief  measurement is ignored if the mahalanobis distance is larger than this value.
   double twist_gate_dist_;
   double twist_stddev_vx_;  //!< @brief  standard deviation for linear vx
   double twist_stddev_wz_;  //!< @brief  standard deviation for angular wx

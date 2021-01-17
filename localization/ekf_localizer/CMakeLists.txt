@@ -21,9 +21,8 @@ find_package(Eigen3 REQUIRED)
 ament_auto_add_executable(ekf_localizer
   src/ekf_localizer_node.cpp
   src/ekf_localizer.cpp
-  src/kalman_filter/kalman_filter.cpp
-  src/kalman_filter/time_delay_kalman_filter.cpp)
-ament_target_dependencies(ekf_localizer Eigen3)
+)
+ament_target_dependencies(ekf_localizer kalman_filter)
 
 # if(BUILD_TESTING)
 #   find_package(ament_cmake_gtest REQUIRED)

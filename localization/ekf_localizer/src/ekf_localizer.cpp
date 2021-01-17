@@ -434,7 +434,7 @@ void EKFLocalizer::predictKinematicsModel()
    *     [ 0, 0,                 0,                 0,             0,  1]
    */
 
-  Eigen::MatrixXd X_curr(dim_x_, 1);  // curent state
+  Eigen::MatrixXd X_curr(dim_x_, 1);  // current state
   Eigen::MatrixXd X_next(dim_x_, 1);  // predicted state
   ekf_.getLatestX(X_curr);
   DEBUG_PRINT_MAT(X_curr.transpose());
@@ -497,7 +497,7 @@ void EKFLocalizer::measurementUpdatePose(const geometry_msgs::msg::PoseStamped &
       "pose frame_id is %s, but pose_frame is set as %s. They must be same.",
       pose.header.frame_id.c_str(), pose_frame_id_.c_str());
   }
-  Eigen::MatrixXd X_curr(dim_x_, 1);  // curent state
+  Eigen::MatrixXd X_curr(dim_x_, 1);  // current state
   ekf_.getLatestX(X_curr);
   DEBUG_PRINT_MAT(X_curr.transpose());
 
@@ -565,7 +565,7 @@ void EKFLocalizer::measurementUpdatePose(const geometry_msgs::msg::PoseStamped &
   C(1, IDX::Y) = 1.0;    // for pos y
   C(2, IDX::YAW) = 1.0;  // for yaw
 
-  /* Set measurement noise covariancs */
+  /* Set measurement noise covariance */
   Eigen::MatrixXd R = Eigen::MatrixXd::Zero(dim_y, dim_y);
   if (use_pose_with_covariance_) {
     R(0, 0) = current_pose_covariance_.at(0);   // x - x
@@ -590,7 +590,7 @@ void EKFLocalizer::measurementUpdatePose(const geometry_msgs::msg::PoseStamped &
   }
 
   /* In order to avoid a large change at the time of updating,
-   * measuremeent update is performed by dividing at every step. */
+   * measurement update is performed by dividing at every step. */
   R *= (ekf_rate_ / pose_rate_);
 
   ekf_.updateWithDelay(y, C, R, delay_step);
@@ -613,7 +613,7 @@ void EKFLocalizer::measurementUpdateTwist(const geometry_msgs::msg::TwistStamped
       "twist frame_id must be base_link");
   }
 
-  Eigen::MatrixXd X_curr(dim_x_, 1);  // curent state
+  Eigen::MatrixXd X_curr(dim_x_, 1);  // current state
   ekf_.getLatestX(X_curr);
   DEBUG_PRINT_MAT(X_curr.transpose());
 
@@ -674,7 +674,7 @@ void EKFLocalizer::measurementUpdateTwist(const geometry_msgs::msg::TwistStamped
   C(0, IDX::VX) = 1.0;  // for vx
   C(1, IDX::WZ) = 1.0;  // for wz
 
-  /* Set measurement noise covariancs */
+  /* Set measurement noise covariance */
   Eigen::MatrixXd R = Eigen::MatrixXd::Zero(dim_y, dim_y);
   if (use_twist_with_covariance_) {
     R(0, 0) = current_twist_covariance_.at(0);   // vx - vx

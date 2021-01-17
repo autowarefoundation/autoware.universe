@@ -128,7 +128,7 @@ The parameters are set in `launch/ekf_localizer.launch` .
 |:---|:---|:---|:---|
 |show_debug_info|bool|Flag to display debug info|false|
 |predict_frequency|double|Frequency for filtering and publishing [Hz]|50.0|
-|tf_rate|double|Frqcuency for tf broadcasting [Hz]|10.0|
+|tf_rate|double|Frequency for tf broadcasting [Hz]|10.0|
 |extend_state_step|int|Max delay step which can be dealt with in EKF. Large number increases computational cost. |50|
 |enable_yaw_bias_estimation| bool |Flag to enable yaw bias estimation|true|
 
@@ -140,7 +140,7 @@ The parameters are set in `launch/ekf_localizer.launch` .
 |pose_measure_uncertainty_time|double|Measured time uncertainty used for covariance calculation [s]|0.01|
 |pose_rate|double|Approximated input pose rate used for covariance calculation [Hz]|10.0|
 |pose_gate_dist|double|Limit of Mahalanobis distance used for outliers detection|10000.0|
-|use_pose_with_covariance|bool|Flag to use covariance in pose_with_covarianve message|false|
+|use_pose_with_covariance|bool|Flag to use covariance in pose_with_covariance message|false|
 |pose_stddev_x|double|Standard deviation for pose position x [m] (used when use_pose_with_covariance is false)|0.05|
 |pose_stddev_y|double|Standard deviation for pose position y [m] (used when use_pose_with_covariance is false)|0.05|
 |pose_stddev_yaw|double|Standard deviation for pose yaw angle [rad] (used when use_pose_with_covariance is false)|0.025|
@@ -160,7 +160,7 @@ The parameters are set in `launch/ekf_localizer.launch` .
 |:---|:---|:---|:---|
 |proc_stddev_vx_c|double|Standard deviation of process noise in time differentiation expression of linear velocity x, noise for d_vx = 0|2.0|
 |proc_stddev_wz_c|double|Standard deviation of process noise in time differentiation expression of angular velocity z, noise for d_wz = 0|0.2|
-|proc_stddev_yaw_c|double|Standard deviation of process noise in time differentiation expression of yaw, noise for d_yaw = omege |0.005|
+|proc_stddev_yaw_c|double|Standard deviation of process noise in time differentiation expression of yaw, noise for d_yaw = omega |0.005|
 |proc_stddev_yaw_bias_c|double|Standard deviation of process noise in time differentiation expression of yaw_bias, noise for d_yaw_bias = 0|0.001|
 
 note: process noise for position x & y are calculated automatically from nonlinear dynamics.
@@ -169,7 +169,7 @@ note: process noise for position x & y are calculated automatically from nonline
 
 **0. Preliminaries**
  - Check header time in pose and twist message is set to sensor time appropriately, because time delay is calculated from this value. If it is difficult to set appropriate time due to timer synchronization problem, use `twist_additional_delay` and `pose_additional_delay` to correct the time.
- - Check the relation between measurement pose and twist is appropriate (whether the derivative of pose has similar value to twist). This discrepancy is caused mainly by unit error (such as comfusing radian/degree) or bias noise, and it causes large estimation errors.
+ - Check the relation between measurement pose and twist is appropriate (whether the derivative of pose has similar value to twist). This discrepancy is caused mainly by unit error (such as confusing radian/degree) or bias noise, and it causes large estimation errors.
 
 
 **1. Set sensor parameters** 
@@ -190,7 +190,7 @@ Set sensor-rate and standard-deviation from the basic information of the sensor.
 
  - `proc_stddev_vx_c` : set to maximum linear acceleration
  - `proc_stddev_wz_c` : set to maximum angular acceleration
- - `proc_stddev_yaw_c` : This parameter describes the correlation between the yaw and yaw-rate. Large value means the change in yaw does not correlate to the estiamted yaw-rate. If this is set to 0, it means the change in estimate yaw is equal to yaw-rate. Usually this should be set to 0.
+ - `proc_stddev_yaw_c` : This parameter describes the correlation between the yaw and yaw-rate. Large value means the change in yaw does not correlate to the estimated yaw-rate. If this is set to 0, it means the change in estimate yaw is equal to yaw-rate. Usually this should be set to 0.
  - `proc_stddev_yaw_bias_c` : This parameter is the standard deviation for the rate of change in yaw bias. In most cases, yaw bias is constant, so it can be very small, but must be non-zero. 
 
  **3. Tune sensor standard deviation parameters with rosbag simulation.**
