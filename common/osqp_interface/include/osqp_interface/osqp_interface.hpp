@@ -19,6 +19,7 @@
 #define OSQP_INTERFACE_H
 
 #include "eigen3/Eigen/Core"
+#include <string>
 #include <vector>
 #include "osqp.h"
 
@@ -33,7 +34,7 @@ namespace osqp
 /**
  * Implementation of a native C++ interface for the OSQP solver.
  *
- * The interface takes in the problem formalation as Eigen matrices and vectors, converts these objects into C-style
+ * The interface takes in the problem formulation as Eigen matrices and vectors, converts these objects into C-style
  * CSC matrices and dynamic arrays, loads the data into the OSQP workspace dataholder, and runs the optimizer.
  *
  * The optimization results are return as a vector tuple by the optimization function.
@@ -76,11 +77,18 @@ private:
   OSQPWorkspace * work;
   OSQPSettings * settings;
   OSQPData * data;
+
+  // store last work info since work is cleaned up at every execution to prevent memory leak.
+  OSQPInfo latest_work_info;
+
   // Number of parameters to optimize
   c_int param_n;
 
   // For destructor to know if matrices P, A are in
   bool problem_in_memory = false;
+
+  // Flag to check if the currnet work exists
+  bool work_initialized = false;
 
   // Runs the solver on the stored problem.
   std::tuple<std::vector<double>, std::vector<double>, int, int> solve();
@@ -220,8 +228,14 @@ public:
   void updateEpsRel(const double eps_rel);
   void updateMaxIter(const int iter);
   void updateVerbose(const bool verbose);
+  void updateRhoInterval(const int rho_interval);
 
-  int getTakenIter();
+  int getTakenIter() { return static_cast<int>(latest_work_info.iter); }
+  std::string getStatusMessage() { return static_cast<std::string>(latest_work_info.status); }
+  int getStatus() { return static_cast<int>(latest_work_info.status_val); }
+  int getStatusPolish() { return static_cast<int>(latest_work_info.status_polish); }
+  double getRunTime() { return static_cast<double>(latest_work_info.run_time); }
+  double getObjVal() { return static_cast<double>(latest_work_info.obj_val); }
 };
 
 }  // namespace osqp

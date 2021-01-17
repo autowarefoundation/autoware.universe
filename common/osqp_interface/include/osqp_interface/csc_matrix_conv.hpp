@@ -35,7 +35,7 @@ struct CSC_Matrix
 };
 
 CSC_Matrix calCSCMatrix(const Eigen::MatrixXd & mat);
-CSC_Matrix calCSCMatrixTrapesoidal(const Eigen::MatrixXd & mat);
+CSC_Matrix calCSCMatrixTrapezoidal(const Eigen::MatrixXd & mat);
 
 void printCSCMatrix(CSC_Matrix & csc_mat);
 

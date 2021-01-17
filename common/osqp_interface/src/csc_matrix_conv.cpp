@@ -63,7 +63,7 @@ CSC_Matrix calCSCMatrix(const Eigen::MatrixXd & mat)
   return csc_matrix;
 }
 
-CSC_Matrix calCSCMatrixTrapesoidal(const Eigen::MatrixXd & mat)
+CSC_Matrix calCSCMatrixTrapezoidal(const Eigen::MatrixXd & mat)
 {
   int elem = mat.nonZeros();
   int rows = mat.rows();
