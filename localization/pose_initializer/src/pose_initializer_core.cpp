@@ -128,8 +128,6 @@ void PoseInitializer::callbackInitialPose(
 void PoseInitializer::callbackGNSSPoseCov(
   geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose_cov_msg_ptr)
 {
-  gnss_pose_sub_ = nullptr;  // get only first topic
-
   // TODO(YamatoAndo) check service is available
 
   auto add_height_pose_msg_ptr = std::make_shared<geometry_msgs::msg::PoseWithCovarianceStamped>();
@@ -206,5 +204,6 @@ void PoseInitializer::callAlignServiceAndPublishResult(
       pose_with_cov.pose.covariance[4 * 6 + 4] = 0.01;
       pose_with_cov.pose.covariance[5 * 6 + 5] = 0.2;
       initial_pose_pub_->publish(pose_with_cov);
+      gnss_pose_sub_ = nullptr;
     });
 }
