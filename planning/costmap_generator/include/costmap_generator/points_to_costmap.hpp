@@ -111,7 +111,7 @@ private:
   /// \param[in] gridmap: costmap based on gridmap
   /// \param[in] gridmap_layer_name: gridmap layer name for gridmap
   /// \param[in] grid_vec: grid-x-length x grid-y-length size grid stuffed with point's height in
-  /// corresponding grid cell \param[out] caculated costmap in grid_map::Matrix format
+  /// corresponding grid cell \param[out] calculated costmap in grid_map::Matrix format
   grid_map::Matrix calculateCostmap(
     const double maximum_height_thres, const double minimum_lidar_height_thres,
     const double grid_min_value, const double grid_max_value, const grid_map::GridMap & gridmap,

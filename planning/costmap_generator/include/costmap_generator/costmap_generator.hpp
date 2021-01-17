@@ -133,7 +133,7 @@ private:
   /// \brief wait for lanelet2 map to load and build routing graph
   void initLaneletMap();
 
-  /// \brief callback for loading landlet2 map
+  /// \brief callback for loading lanelet2 map
   void onLaneletMapBin(const autoware_lanelet2_msgs::msg::MapBin::ConstSharedPtr msg);
 
   /// \brief callback for DynamicObjectArray
@@ -142,7 +142,7 @@ private:
   void onObjects(const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr msg);
 
   /// \brief callback for sensor_msgs::PointCloud2
-  /// \param[in] in_points input sensot_msgs::PointCloud2. Assuming groud-fitered pointcloud
+  /// \param[in] in_points input sensor_msgs::PointCloud2. Assuming ground-filtered pointcloud
   /// by default
   void onPoints(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);
 
