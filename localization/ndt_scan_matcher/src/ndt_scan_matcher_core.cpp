@@ -397,7 +397,7 @@ void NDTScanMatcher::callbackSensorPoints(
   {
     is_converged = false;
     ++skipping_publish_num;
-    std::cout << "Not Converged" << std::endl;
+    RCLCPP_WARN(get_logger(), "Not Converged");
   } else {
     skipping_publish_num = 0;
   }
@@ -532,12 +532,6 @@ void NDTScanMatcher::callbackSensorPoints(
   key_value_stdmap_["iteration_num"] = std::to_string(iteration_num);
   key_value_stdmap_["skipping_publish_num"] = std::to_string(skipping_publish_num);
 
-  std::cout << "------------------------------------------------" << std::endl;
-  std::cout << "align_time: " << align_time << "ms" << std::endl;
-  std::cout << "exe_time: " << exe_time << "ms" << std::endl;
-  std::cout << "trans_prob: " << transform_probability << std::endl;
-  std::cout << "iter_num: " << iteration_num << std::endl;
-  std::cout << "skipping_publish_num: " << skipping_publish_num << std::endl;
 }
 
 geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::alignUsingMonteCarlo(
@@ -589,7 +583,6 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::alignUsingMonteCar
   auto best_particle_ptr = std::max_element(
     std::begin(particle_array), std::end(particle_array),
     [](const Particle & lhs, const Particle & rhs) {return lhs.score < rhs.score;});
-  // std::cout << "best score" << best_particle_ptr->score << std::endl;
 
   geometry_msgs::msg::PoseWithCovarianceStamped result_pose_with_cov_msg;
   result_pose_with_cov_msg.header.frame_id = map_frame_;

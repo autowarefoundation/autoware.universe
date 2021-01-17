@@ -130,14 +130,8 @@ void pcl::NormalDistributionsTransformModified<PointSource, PointTarget>::comput
     Eigen::Matrix<double, 6, 1> score_gradient_rotation = score_gradient;
     score_gradient_rotation(0) = score_gradient_rotation(1) = score_gradient_rotation(2) = 0;
 
-    // std::cout << "delta_p: "<< delta_p << std::endl;
-    // std::cout << "score_gradient: "<< score_gradient << std::endl;
     delta_p.normalize();
     delta_p_rotation.normalize();
-    std::cout << "score: " << score << std::endl;
-    std::cout << "delta_p_norm: " << delta_p_norm << std::endl;
-    std::cout << "delta_p_rotation: " << delta_p_rotation_norm << std::endl;
-    // std::cout << "converged_rotation: " << converged_rotation << std::endl;
 
     if (!converged_rotation && delta_p_rotation_norm > 0.001 && nr_iterations_ < 10) {
       delta_p = delta_p_rotation;

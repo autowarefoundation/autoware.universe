@@ -1,9 +1,8 @@
 <launch>
+  <arg name="param_file" default="$(find-pkg-share ndt_scan_matcher)/config/ndt_scan_matcher.yaml" />
 
   <!-- Topics -->
   <arg name="input_sensor_points_topic" default="/points_raw" doc="Sensor points topic" />
-
-  <arg name="input_sensor_points_queue_size" default="1" doc="Subscriber queue size" />
   <arg name="input_initial_pose_topic" default="/ekf_pose_with_covariance" doc="Initial position topic to align" />
   <arg name="input_map_points_topic" default="/pointcloud_map" doc="Map points topic" />
 
@@ -11,30 +10,12 @@
   <arg name="output_pose_with_covariance_topic" default="ndt_pose_with_covariance" doc="Estimated self position with covariance" />
   <arg name="output_diagnostics_topic" default="/diagnostics" doc="Diagnostic topic" />
 
-  <!-- tf -->
-  <arg name="base_frame" default="base_link" doc="Vehicle reference frame" />
-
-  <!-- NDT Params -->
-  <arg name="ndt_implement_type" default="2" doc="0: PCL_GENERIC, 1: PCL_MODIFIED, 2: OMP" />
-
-  <arg name="trans_epsilon" default="0.01" doc="The maximum difference between two consecutive transformations in order to consider convergence" />
-  <arg name="step_size" default="0.1" doc="The newton line search maximum step length" />
-  <arg name="resolution" default="2.0" doc="The ND voxel grid resolution" />
-  <arg name="max_iterations" default="30" doc="The number of iterations required to calculate alignment" />
-
-  <arg name="converged_param_transform_probability" default="3.0" doc="" />
-
-  <!-- OMP Params -->
-  <arg name="omp_neighborhood_search_method" default="0" doc="0:KDTREE, 1:DIRECT26, 2:DIRECT7, 3:DIRECT1" />
-  <arg name="omp_num_threads" default="4" doc="" />
-
 
   <arg name="node_name" default="ndt_scan_matcher" doc="Use a different name for this node" />
 
   <node pkg="ndt_scan_matcher" exec="ndt_scan_matcher" name="$(var node_name)" output="log">
     <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)" />
     <remap from="points_raw" to="$(var input_sensor_points_topic)" />
-    <param name="input_sensor_points_queue_size" value="$(var input_sensor_points_queue_size)" />
 
     <remap from="ekf_pose_with_covariance" to="$(var input_initial_pose_topic)" />
     <remap from="pointcloud_map" to="$(var input_map_points_topic)" />
@@ -43,19 +24,7 @@
     <remap from="ndt_pose_with_covariance" to="$(var output_pose_with_covariance_topic)" />
     <remap from="diagnostics" to="$(var output_diagnostics_topic)" />
 
-    <param name="base_frame" value="$(var base_frame)" />
-
-    <param name="ndt_implement_type" value="$(var ndt_implement_type)" />
-
-    <param name="trans_epsilon" value="$(var trans_epsilon)" />
-    <param name="step_size" value="$(var step_size)" />
-    <param name="resolution" value="$(var resolution)" />
-    <param name="max_iterations" value="$(var max_iterations)" />
-
-    <param name="converged_param_transform_probability" value="$(var converged_param_transform_probability)" />
-
-    <param name="omp_neighborhood_search_method" value="$(var omp_neighborhood_search_method)" />
-    <param name="omp_num_threads" value="$(var omp_num_threads)" />
+    <param from="$(var param_file)" />
   </node>
 
 </launch>
