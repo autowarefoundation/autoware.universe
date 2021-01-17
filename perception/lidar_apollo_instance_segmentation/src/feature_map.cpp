@@ -94,12 +94,12 @@ void FeatureMapWithConstant::initializeMap(std::vector<float> & map)
     for (int col = 0; col < width; ++col) {
       int idx = row * width + col;
       // * row <-> x, column <-> y
-      // retutn the distance from my car to center of the grid.
+      // return the distance from my car to center of the grid.
       // Pc means point cloud = real world scale. so transform pixel scale to
       // real world scale
       float center_x = Pixel2Pc(row, height, range);
       float center_y = Pixel2Pc(col, width, range);
-      // normaliztion. -0.5~0.5
+      // normalization. -0.5~0.5
       direction_data[idx] = static_cast<float>(std::atan2(center_y, center_x) / (2.0 * M_PI));
       distance_data[idx] = static_cast<float>(std::hypot(center_x, center_y) / 60.0 - 0.5);
     }
@@ -136,12 +136,12 @@ void FeatureMapWithConstantAndIntensity::initializeMap(std::vector<float> & map)
     for (int col = 0; col < width; ++col) {
       int idx = row * width + col;
       // * row <-> x, column <-> y
-      // retutn the distance from my car to center of the grid.
+      // return the distance from my car to center of the grid.
       // Pc means point cloud = real world scale. so transform pixel scale to
       // real world scale
       float center_x = Pixel2Pc(row, height, range);
       float center_y = Pixel2Pc(col, width, range);
-      // normaliztion. -0.5~0.5
+      // normalization. -0.5~0.5
       direction_data[idx] = static_cast<float>(std::atan2(center_y, center_x) / (2.0 * M_PI));
       distance_data[idx] = static_cast<float>(std::hypot(center_x, center_y) / 60.0 - 0.5);
     }

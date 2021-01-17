@@ -34,7 +34,7 @@
 #include <cmath>
 #include <string>
 
-// project point cloud to 2d map. clac in which grid point is.
+// project point cloud to 2d map. calc in which grid point is.
 // pointcloud to pixel
 inline int F2I(float val, float ori, float scale)
 {
@@ -47,7 +47,7 @@ inline int Pc2Pixel(float in_pc, float in_range, float out_size)
   return static_cast<int>(std::floor((in_range - in_pc) * inv_res));
 }
 
-// retutn the distance from my car to center of the grid.
+// return the distance from my car to center of the grid.
 // Pc means point cloud = real world scale. so transform pixel scale to real
 // world scale
 inline float Pixel2Pc(int in_pixel, float in_size, float out_range)
