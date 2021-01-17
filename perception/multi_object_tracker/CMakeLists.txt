@@ -45,8 +45,8 @@ set(MULTI_OBJECT_TRACKER_HEADERS
   include/multi_object_tracker/multi_object_tracker_core.hpp
 )
 
-ament_auto_add_library(multi_object_tracker_node SHARED 
-  ${MULTI_OBJECT_TRACKER_SRC} 
+ament_auto_add_library(multi_object_tracker_node SHARED
+  ${MULTI_OBJECT_TRACKER_SRC}
   ${MULTI_OBJECT_TRACKER_HEADERS}
 )
 
@@ -64,4 +64,5 @@ endif()
 
 ament_auto_package(INSTALL_TO_SHARE
   launch
-) 
+  config
+)

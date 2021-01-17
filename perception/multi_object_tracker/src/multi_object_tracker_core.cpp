@@ -46,6 +46,7 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   // Parameters
   double publish_rate = declare_parameter<double>("publish_rate", 30.0);
   world_frame_id_ = declare_parameter<std::string>("world_frame_id", "world");
+  enable_delay_compensation_ = declare_parameter<bool>("enable_delay_compensation", false);
 
   auto cti = std::make_shared<tf2_ros::CreateTimerROS>(
     this->get_node_base_interface(), this->get_node_timers_interface());
@@ -60,6 +61,22 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
     this->get_clock(), period, std::move(timer_callback),
     this->get_node_base_interface()->get_context());
   this->get_node_timers_interface()->add_timer(publish_timer_, nullptr);
+
+  this->declare_parameter("can_assign_matrix");
+  this->declare_parameter("max_dist_matrix");
+  this->declare_parameter("max_area_matrix");
+  this->declare_parameter("min_area_matrix");
+  auto can_assign_matrix_tmp =
+    this->get_parameter("can_assign_matrix").as_integer_array();
+  std::vector<int> can_assign_matrix(can_assign_matrix_tmp.begin(), can_assign_matrix_tmp.end());
+  std::vector<double> max_dist_matrix =
+    this->get_parameter("max_dist_matrix").as_double_array();
+  std::vector<double> max_area_matrix =
+    this->get_parameter("max_area_matrix").as_double_array();
+  std::vector<double> min_area_matrix =
+    this->get_parameter("max_area_matrix").as_double_array();
+  data_association_ = std::make_unique<DataAssociation>(
+    can_assign_matrix, max_dist_matrix, max_area_matrix, min_area_matrix);
 }
 
 void MultiObjectTracker::measurementCallback(
@@ -106,14 +123,20 @@ void MultiObjectTracker::measurementCallback(
   }
 
   /* life cycle check */
-  // TODO
+  for (auto itr = list_tracker_.begin(); itr != list_tracker_.end(); ++itr) {
+    if (1.0 < (*itr)->getElapsedTimeFromLastUpdate(rclcpp::Node::now())) {
+      auto erase_itr = itr;
+      --itr;
+      list_tracker_.erase(erase_itr);
+    }
+  }
 
-  /* global nearest neighboor */
+  /* global nearest neighbor */
   std::unordered_map<int, int> direct_assignment;
   std::unordered_map<int, int> reverse_assignment;
-  Eigen::MatrixXd score_matrix = data_association_.calcScoreMatrix(
+  Eigen::MatrixXd score_matrix = data_association_->calcScoreMatrix(
     input_transformed_objects, list_tracker_);  // row : tracker, col : measurement
-  data_association_.assign(score_matrix, direct_assignment, reverse_assignment);
+  data_association_->assign(score_matrix, direct_assignment, reverse_assignment);
 
   /* tracker measurement update */
   int tracker_idx = 0;
@@ -165,8 +188,25 @@ void MultiObjectTracker::measurementCallback(
         std::make_shared<BicycleTracker>(
           measurement_time, input_transformed_objects.feature_objects.at(i).object));
     } else {
-      // list_tracker_.push_back(std::make_shared<PedestrianTracker>(input_transformed_objects.feature_objects.at(i).object));
+      list_tracker_.push_back(std::make_shared<PedestrianTracker>(
+        measurement_time, input_transformed_objects.feature_objects.at(i).object));
     }
+  }
+
+  if (!enable_delay_compensation_) {
+    // Create output msg
+    autoware_perception_msgs::msg::DynamicObjectArray output_msg;
+    output_msg.header.frame_id = world_frame_id_;
+    output_msg.header.stamp = measurement_time;
+    for (auto itr = list_tracker_.begin(); itr != list_tracker_.end(); ++itr) {
+      if ((*itr)->getTotalMeasurementCount() < 3) continue;
+      autoware_perception_msgs::msg::DynamicObject object;
+      (*itr)->getEstimatedDynamicObject(measurement_time, object);
+      output_msg.objects.push_back(object);
+    }
+
+    // Publish
+    dynamic_object_pub_->publish(output_msg);
   }
 }
 
@@ -175,29 +215,31 @@ void MultiObjectTracker::publishTimerCallback()
   // Guard
   if (dynamic_object_pub_->get_subscription_count() < 1) {return;}
 
-  /* life cycle check */
-  for (auto itr = list_tracker_.begin(); itr != list_tracker_.end(); ++itr) {
-    if (1.0 < (*itr)->getElapsedTimeFromLastUpdate(rclcpp::Node::now())) {
-      auto erase_itr = itr;
-      --itr;
-      list_tracker_.erase(erase_itr);
+  if (enable_delay_compensation_) {
+    /* life cycle check */
+    for (auto itr = list_tracker_.begin(); itr != list_tracker_.end(); ++itr) {
+      if (1.0 < (*itr)->getElapsedTimeFromLastUpdate(rclcpp::Node::now())) {
+        auto erase_itr = itr;
+        --itr;
+        list_tracker_.erase(erase_itr);
+      }
     }
-  }
 
-  // Create output msg
-  rclcpp::Time current_time = rclcpp::Node::now();
-  autoware_perception_msgs::msg::DynamicObjectArray output_msg;
-  output_msg.header.frame_id = world_frame_id_;
-  output_msg.header.stamp = current_time;
-  for (auto itr = list_tracker_.begin(); itr != list_tracker_.end(); ++itr) {
-    if ((*itr)->getTotalMeasurementCount() < 3) {continue;}
-    autoware_perception_msgs::msg::DynamicObject object;
-    (*itr)->getEstimatedDynamicObject(current_time, object);
-    output_msg.objects.push_back(object);
-  }
+    // Create output msg
+    rclcpp::Time current_time = rclcpp::Node::now();
+    autoware_perception_msgs::msg::DynamicObjectArray output_msg;
+    output_msg.header.frame_id = world_frame_id_;
+    output_msg.header.stamp = current_time;
+    for (auto itr = list_tracker_.begin(); itr != list_tracker_.end(); ++itr) {
+      if ((*itr)->getTotalMeasurementCount() < 3) {continue;}
+      autoware_perception_msgs::msg::DynamicObject object;
+      (*itr)->getEstimatedDynamicObject(current_time, object);
+      output_msg.objects.push_back(object);
+    }
 
-  // Publish
-  dynamic_object_pub_->publish(output_msg);
+    // Publish
+    dynamic_object_pub_->publish(output_msg);
+  }
 }
 
 RCLCPP_COMPONENTS_REGISTER_NODE(MultiObjectTracker)

@@ -35,14 +35,16 @@ class DataAssociation
 private:
   double getDistance(
     const geometry_msgs::msg::Point & measurement, const geometry_msgs::msg::Point & tracker);
-  Eigen::MatrixXi can_assgin_matrix_;
+  Eigen::MatrixXi can_assign_matrix_;
   Eigen::MatrixXd max_dist_matrix_;
   Eigen::MatrixXd max_area_matrix_;
   Eigen::MatrixXd min_area_matrix_;
   const double score_threshold_;
 
 public:
-  DataAssociation();
+  DataAssociation(
+    std::vector<int> can_assign_vector, std::vector<double> max_dist_vector,
+    std::vector<double> max_area_vector, std::vector<double> min_area_vector);
   void assign(
     const Eigen::MatrixXd & src, std::unordered_map<int, int> & direct_assignment,
     std::unordered_map<int, int> & reverse_assignment);

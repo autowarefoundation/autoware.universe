@@ -84,8 +84,7 @@ bool BicycleTracker::measure(
       (object.state.pose_covariance.pose.position.y - last_measurement_posy_) *
       (object.state.pose_covariance.pose.position.y - last_measurement_posy_));
     const double max_vel = 15.0; /* [m/s]*/
-    const double vel_scale =
-      current_vel < 0.01 ? 1.0 : std::min(max_vel, current_vel) / current_vel;
+    const double vel_scale = max_vel < current_vel ? max_vel / current_vel : 1.0;
     if (is_changed_unknown_object) {
       filtered_vx_ =
         0.9 * filtered_vx_ +

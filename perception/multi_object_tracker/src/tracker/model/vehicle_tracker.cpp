@@ -41,7 +41,7 @@ VehicleTracker::VehicleTracker(
   pos_filter_gain_(0.2),
   filtered_vx_(0.0),
   filtered_vy_(0.0),
-  v_filter_gain_(0.7),
+  v_filter_gain_(0.4),
   area_filter_gain_(0.8),
   last_measurement_posx_(object.state.pose_covariance.pose.position.x),
   last_measurement_posy_(object.state.pose_covariance.pose.position.y),
@@ -165,9 +165,7 @@ bool VehicleTracker::measure(
       (object.state.pose_covariance.pose.position.y - last_measurement_posy_) *
       (object.state.pose_covariance.pose.position.y - last_measurement_posy_));
     const double max_vel = 20.0; /* [m/s]*/
-    const double vel_scale =
-      current_vel < 0.01 ? 1.0 : std::min(max_vel, current_vel) / current_vel;
-
+    const double vel_scale = max_vel < current_vel ? max_vel / current_vel : 1.0;
     if (is_changed_unknown_object) {
       filtered_vx_ =
         0.95 * filtered_vx_ +
@@ -264,6 +262,15 @@ bool VehicleTracker::getEstimatedDynamicObject(
       filtered_vx_ * std::cos(-yaw) - filtered_vy_ * std::sin(-yaw);
     object.state.twist_covariance.twist.linear.y =
       filtered_vx_ * std::sin(-yaw) + filtered_vy_ * std::cos(-yaw);
+  }
+
+  // cut microspeed
+  constexpr float min_velocity = 0.56;  // 2.0 kmph
+  if (std::fabs(object.state.twist_covariance.twist.linear.x) < min_velocity) {
+    object.state.twist_covariance.twist.linear.x = 0.0;
+  }
+  if (std::fabs(object.state.twist_covariance.twist.linear.y) < min_velocity) {
+    object.state.twist_covariance.twist.linear.y = 0.0;
   }
 
   object.state.twist_reliable = true;
