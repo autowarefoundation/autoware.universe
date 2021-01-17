@@ -1,10 +1,10 @@
-### Note
-There's a fine detector implementation of Mobilenet SSD.
+# traffic\_light\_ssd\_fine\_detector
 
-The model of Mobilenet SSD is based on [pytorch-ssd] (https://github.com/qfgaohao/pytorch-ssd).
+This is a traffic light fine detector implementation of MobileNetV2 + SSDLite.
 
-## Training
-The model of Mobilenet SSD used in this package was trained by [AutowareMLPlatform/detection_2d](https://github.com/tier4/AutowareMLPlatform/tree/master/tasks/detection_2d)
+The trained model is based on [pytorch-ssd](https://github.com/qfgaohao/pytorch-ssd).
 
-## model detail
-TODO: atach AWS URL here for quick reference when, where and how the model was trained.
+## Reference
+
+M. Sandler, A. Howard, M. Zhu, A. Zhmoginov and L. Chen, "MobileNetV2: Inverted Residuals and Linear Bottlenecks," 2018 IEEE/CVF Conference on Computer Vision and Pattern Recognition, Salt Lake City, UT, 2018, pp. 4510-4520, doi: 10.1109/CVPR.2018.00474.
+

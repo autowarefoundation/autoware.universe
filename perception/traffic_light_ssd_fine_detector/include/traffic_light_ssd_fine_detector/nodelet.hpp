@@ -62,7 +62,7 @@ private:
     const std::vector<cv::Mat> & in_imgs, const int num_rois, std::vector<float> & data);
   bool cnnOutput2BoxDetection(
     const float * scores, const float * boxes, const int tlr_id,
-    const std::vector<cv::Mat> & in_imgs, const int num_rois, std::vector<Detection> & detctions);
+    const std::vector<cv::Mat> & in_imgs, const int num_rois, std::vector<Detection> & detections);
   bool rosMsg2CvMat(const sensor_msgs::msg::Image::ConstSharedPtr image_msg, cv::Mat & image);
   bool fitInFrame(cv::Point & lt, cv::Point & rb, const cv::Size & size);
   void cvRect2TlRoiMsg(
