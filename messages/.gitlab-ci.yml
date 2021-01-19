@@ -1,11 +1,9 @@
 stages:
   - build
   - test
-#  - deploy
 
-build:
+.build_base: &build_base
   stage: build
-  image: osrf/ros:dashing-desktop
   script:
     - apt-get update
     - rosdep update
@@ -29,11 +27,8 @@ build:
       - build
       - opt.tar.gz
 
-test:
+.test_base: &test_base
   stage: test
-  image: osrf/ros:dashing-desktop
-  dependencies:
-    - build
   script:
     - tar xf opt.tar.gz -C /
     - '
@@ -49,32 +44,22 @@ test:
     paths:
       - log
 
-#volume:
-#  stage: deploy
-#  image: docker
-#  services:
-#    - docker:dind
-#  dependencies:
-#    - build
-#  before_script:
-#    - ''
-#  script:
-#    - 'echo -e "*\n!opt.tar.gz" > .dockerignore'
-#    - |
-#      cat >Dockerfile <<EOF
-#      FROM alpine
-#      ADD opt.tar.gz /
-#      VOLUME /opt/autoware_auto_msgs
-#      CMD ["/bin/sh", "-c", "trap 'exit 147' TERM; tail -f /dev/null & wait ${!}"]
-#      EOF
-#    - '
-#      docker build
-#          --label ade_image_commit_sha="$CI_COMMIT_SHA"
-#          --label ade_image_commit_tag="$CI_COMMIT_TAG"
-#          -t image .
-#      '
-#    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
-#    - docker tag image $CI_REGISTRY_IMAGE:commit-$CI_COMMIT_SHA
-#    - docker tag image $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
-#    - docker push $CI_REGISTRY_IMAGE:commit-$CI_COMMIT_SHA
-#    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+build_dashing:
+  image: ros:dashing
+  <<: *build_base
+
+build_foxy:
+  image: ros:foxy
+  <<: *build_base
+
+test_dashing:
+  image: ros:dashing
+  <<: *test_base
+  needs:
+    - build_dashing
+
+test_foxy:
+  image: ros:foxy
+  <<: *test_base
+  needs:
+    - build_foxy
