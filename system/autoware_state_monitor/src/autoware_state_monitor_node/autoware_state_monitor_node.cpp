@@ -29,6 +29,8 @@ std::vector<Config> getConfigs(
   const std::string & config_namespace)
 {
   std::string names_key = config_namespace + ".names";
+  if(!interface->has_parameter(names_key))
+    return std::vector<Config>{};
   interface->declare_parameter(names_key);
   std::vector<std::string> config_names = interface->get_parameter(names_key).as_string_array();
 
@@ -167,7 +169,7 @@ void AutowareStateMonitorNode::onTimer()
   state_input_.topic_stats = getTopicStats();
   state_input_.param_stats = getParamStats();
   state_input_.tf_stats = getTfStats();
-
+  state_input_.current_time = this->now();
   // Update state
   const auto prev_autoware_state = state_machine_->getCurrentState();
   const auto autoware_state = state_machine_->updateState(state_input_);
@@ -380,7 +382,7 @@ AutowareStateMonitorNode::AutowareStateMonitorNode()
     "input/is_emergency", 1,
     std::bind(&AutowareStateMonitorNode::onIsEmergency, this, std::placeholders::_1));
   sub_route_ = this->create_subscription<autoware_planning_msgs::msg::Route>(
-    "input/route", 1, std::bind(&AutowareStateMonitorNode::onRoute, this, std::placeholders::_1));
+    "input/route", rclcpp::QoS{1}.transient_local(), std::bind(&AutowareStateMonitorNode::onRoute, this, std::placeholders::_1));
   sub_twist_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
     "input/twist", 100, std::bind(&AutowareStateMonitorNode::onTwist, this, std::placeholders::_1));
 
@@ -398,7 +400,7 @@ AutowareStateMonitorNode::AutowareStateMonitorNode()
   // Timer
   auto timer_callback = std::bind(&AutowareStateMonitorNode::onTimer, this);
   auto period = std::chrono::duration_cast<std::chrono::nanoseconds>(
-    std::chrono::duration<double>(update_rate_));
+    std::chrono::duration<double>(1.0/update_rate_));
 
   timer_ = std::make_shared<rclcpp::GenericTimer<decltype(timer_callback)>>(
     this->get_clock(), period, std::move(timer_callback),

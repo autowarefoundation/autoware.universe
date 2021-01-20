@@ -134,11 +134,11 @@
     ## configs: top level
     ### names used to declare parameter group
     #### module: string
-    param_configs:
-      names: ["/vehicle_info"]
-      configs:
-        /vehicle_info:
-          module: "vehicle"
+    # param_configs:
+    #   names: ["/vehicle_info"]
+    #   configs:
+    #     /vehicle_info:
+    #       module: "vehicle"
 
     # TF Config
     ## names: string array
