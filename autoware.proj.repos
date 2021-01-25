@@ -67,6 +67,10 @@ repositories:
     type: git
     url: https://github.com/tier4/tamagawa_imu_driver.git
     version: ros2
+  vendor/ublox:
+    type: git
+    url: https://github.com/tier4/ublox.git
+    version: tier4/ros2
   vendor/livox-driver:
     type: git
     url: https://github.com/Livox-SDK/livox_ros2_driver.git
