@@ -32,7 +32,7 @@
 
 #include "boost/circular_buffer.hpp"
 
-namespace GNSSPoser
+namespace gnss_poser
 {
 class GNSSPoser : public rclcpp::Node
 {
@@ -89,6 +89,6 @@ private:
   boost::circular_buffer<geometry_msgs::msg::Point> position_buffer_;
   ublox_msgs::msg::NavPVT::ConstSharedPtr nav_pvt_msg_ptr_;
 };
-}  // namespace GNSSPoser
+}  // namespace gnss_poser
 
 #endif  // GNSS_POSER__GNSS_POSER_CORE_HPP_

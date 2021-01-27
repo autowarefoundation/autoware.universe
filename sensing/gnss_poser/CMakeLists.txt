@@ -26,7 +26,7 @@ ament_auto_add_library(gnss_poser_node SHARED
 )
 
 rclcpp_components_register_node(gnss_poser_node
-  PLUGIN "GNSSPoser"
+  PLUGIN "gnss_poser::GNSSPoser"
   EXECUTABLE gnss_poser
 )
 

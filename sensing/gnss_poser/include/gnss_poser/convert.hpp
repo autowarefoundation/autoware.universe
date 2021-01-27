@@ -26,7 +26,7 @@
 #include "sensor_msgs/msg/nav_sat_fix.hpp"
 #include "rclcpp/logging.hpp"
 
-namespace GNSSPoser
+namespace gnss_poser
 {
 enum class MGRSPrecision
 {
@@ -131,6 +131,6 @@ GNSSStat NavSatFix2PLANE(
   plane.z = EllipsoidHeight2OrthometricHeight(nav_sat_fix_msg, logger);
   return plane;
 }
-}  // namespace GNSSPoser
+}  // namespace gnss_poser
 
 #endif  // GNSS_POSER__CONVERT_HPP_

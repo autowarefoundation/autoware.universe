@@ -19,7 +19,7 @@
 
 #include "gnss_poser/gnss_poser_core.hpp"
 
-namespace GNSSPoser
+namespace gnss_poser
 {
 GNSSPoser::GNSSPoser(const rclcpp::NodeOptions & node_options)
 : rclcpp::Node("gnss_poser", node_options),
@@ -344,8 +344,7 @@ void GNSSPoser::publishTF(
 
   tf2_broadcaster_.sendTransform(transform_stamped);
 }
+}  // namespace gnss_poser
 
 #include "rclcpp_components/register_node_macro.hpp"
-
-RCLCPP_COMPONENTS_REGISTER_NODE(GNSSPoser)
-}  // namespace GNSSPoser
+RCLCPP_COMPONENTS_REGISTER_NODE(gnss_poser::GNSSPoser)
