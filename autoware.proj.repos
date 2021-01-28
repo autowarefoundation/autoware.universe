@@ -83,7 +83,10 @@ repositories:
     type: git
     url: https://github.com/GT-RAIL/rosauth.git
     version: ros2
-
+  vendor/clock_publisher:
+    type: git
+    url: https://github.com/mitsudome-r/clock_publisher.git
+    version: master
 #  vendor/lanelet2:
 #    type: git
 #    url: https://github.com/fzi-forschungszentrum-informatik/Lanelet2.git
