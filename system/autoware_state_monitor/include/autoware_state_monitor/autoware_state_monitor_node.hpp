@@ -21,6 +21,7 @@
 
 #include "autoware_planning_msgs/msg/route.hpp"
 #include "autoware_planning_msgs/msg/trajectory.hpp"
+#include "autoware_control_msgs/msg/engage_mode.hpp"
 #include "autoware_system_msgs/msg/autoware_state.hpp"
 #include "autoware_vehicle_msgs/msg/control_mode.hpp"
 
@@ -62,14 +63,14 @@ private:
   geometry_msgs::msg::PoseStamped::ConstSharedPtr current_pose_;
 
   // Subscriber
-  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr sub_autoware_engage_;
+  rclcpp::Subscription<autoware_control_msgs::msg::EngageMode>::SharedPtr sub_autoware_engage_;
   rclcpp::Subscription<autoware_vehicle_msgs::msg::ControlMode>::SharedPtr
     sub_vehicle_control_mode_;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr sub_is_emergency_;
   rclcpp::Subscription<autoware_planning_msgs::msg::Route>::SharedPtr sub_route_;
   rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr sub_twist_;
 
-  void onAutowareEngage(const std_msgs::msg::Bool::ConstSharedPtr msg);
+  void onAutowareEngage(const autoware_control_msgs::msg::EngageMode::ConstSharedPtr msg);
   void onVehicleControlMode(const autoware_vehicle_msgs::msg::ControlMode::ConstSharedPtr msg);
   void onIsEmergency(const std_msgs::msg::Bool::ConstSharedPtr msg);
   void onRoute(const autoware_planning_msgs::msg::Route::ConstSharedPtr msg);
@@ -86,7 +87,7 @@ private:
 
   // Publisher
   rclcpp::Publisher<autoware_system_msgs::msg::AutowareState>::SharedPtr pub_autoware_state_;
-  rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr pub_autoware_engage_;
+  rclcpp::Publisher<autoware_control_msgs::msg::EngageMode>::SharedPtr pub_autoware_engage_;
 
   void setDisengage();
 

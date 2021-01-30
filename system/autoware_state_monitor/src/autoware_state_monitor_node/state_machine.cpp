@@ -160,7 +160,7 @@ bool StateMachine::isEngaged() const
     return false;
   }
 
-  if (state_input_.autoware_engage->data != 1) {
+  if (state_input_.autoware_engage->is_engaged != 1) {
     return false;
   }
 

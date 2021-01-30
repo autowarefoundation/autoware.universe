@@ -110,7 +110,7 @@ std::string getStateMessage(const AutowareState & state)
 
 }  // namespace
 
-void AutowareStateMonitorNode::onAutowareEngage(const std_msgs::msg::Bool::ConstSharedPtr msg)
+void AutowareStateMonitorNode::onAutowareEngage(const autoware_control_msgs::msg::EngageMode::ConstSharedPtr msg)
 {
   state_input_.autoware_engage = msg;
 }
@@ -333,8 +333,8 @@ TfStats AutowareStateMonitorNode::getTfStats() const
 
 void AutowareStateMonitorNode::setDisengage()
 {
-  std_msgs::msg::Bool msg;
-  msg.data = false;
+  autoware_control_msgs::msg::EngageMode msg;
+  msg.is_engaged = false;
   pub_autoware_engage_->publish(msg);
 }
 
@@ -372,7 +372,7 @@ AutowareStateMonitorNode::AutowareStateMonitorNode()
   }
 
   // Subscriber
-  sub_autoware_engage_ = this->create_subscription<std_msgs::msg::Bool>(
+  sub_autoware_engage_ = this->create_subscription<autoware_control_msgs::msg::EngageMode>(
     "input/autoware_engage", 1,
     std::bind(&AutowareStateMonitorNode::onAutowareEngage, this, std::placeholders::_1));
   sub_vehicle_control_mode_ = this->create_subscription<autoware_vehicle_msgs::msg::ControlMode>(
@@ -389,7 +389,7 @@ AutowareStateMonitorNode::AutowareStateMonitorNode()
   // Publisher
   pub_autoware_state_ =
     this->create_publisher<autoware_system_msgs::msg::AutowareState>("output/autoware_state", 1);
-  pub_autoware_engage_ = this->create_publisher<std_msgs::msg::Bool>("output/autoware_engage", 1);
+  pub_autoware_engage_ = this->create_publisher<autoware_control_msgs::msg::EngageMode>("output/autoware_engage", 1);
 
   // Diagnostic Updater
   setupDiagnosticUpdater();

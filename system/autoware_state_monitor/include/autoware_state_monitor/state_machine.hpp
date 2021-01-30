@@ -21,6 +21,7 @@
 
 #include "autoware_planning_msgs/msg/route.hpp"
 #include "autoware_planning_msgs/msg/trajectory.hpp"
+#include "autoware_control_msgs/msg/engage_mode.hpp"
 #include "autoware_system_msgs/msg/autoware_state.hpp"
 #include "autoware_vehicle_msgs/msg/control_mode.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
@@ -42,7 +43,7 @@ struct StateInput
   geometry_msgs::msg::PoseStamped::ConstSharedPtr current_pose;
   geometry_msgs::msg::Pose::ConstSharedPtr goal_pose;
 
-  std_msgs::msg::Bool::ConstSharedPtr autoware_engage;
+  autoware_control_msgs::msg::EngageMode::ConstSharedPtr autoware_engage;
   autoware_vehicle_msgs::msg::ControlMode::ConstSharedPtr vehicle_control_mode;
   std_msgs::msg::Bool::ConstSharedPtr is_emergency;
   autoware_planning_msgs::msg::Route::ConstSharedPtr route;
