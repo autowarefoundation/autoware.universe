@@ -28,7 +28,7 @@ NaivePathPredictionNode::NaivePathPredictionNode() : Node("naive_path_prediction
 {
   using std::placeholders::_1;
   sub_ = this->create_subscription<autoware_perception_msgs::msg::DynamicObjectArray>("input", 1, std::bind(&NaivePathPredictionNode::callback, this, _1));
-  pub_ = this->create_publisher<autoware_perception_msgs::msg::DynamicObjectArray>("output", 1);
+  pub_ = this->create_publisher<autoware_perception_msgs::msg::DynamicObjectArray>("objects", 1);
 }
 
 void NaivePathPredictionNode::callback(
