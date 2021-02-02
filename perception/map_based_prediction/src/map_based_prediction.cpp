@@ -230,10 +230,10 @@ bool MapBasedPrediction::getPredictedPath(
     1 / (2 * std::pow(t, 3));
 
   double target_d_velocity = current_d_velocity;
-  double target_d_accerelation = 0;
+  double target_d_acceleration = 0;
   Eigen::Vector3d b_3;
   b_3 << target_d_position - current_d_position - current_d_velocity * t,
-    target_d_velocity - current_d_velocity, target_d_accerelation;
+    target_d_velocity - current_d_velocity, target_d_acceleration;
 
   Eigen::Vector3d x_3;
   x_3 = a_3_inv * b_3;
@@ -323,6 +323,6 @@ void MapBasedPrediction::getLinearPredictedPath(
 double MapBasedPrediction::calculateLikelihood(const double current_d)
 {
   double d_std = 0.5;
-  double likelyhood = std::abs(current_d) / d_std;
-  return likelyhood;
+  double likelihood = std::abs(current_d) / d_std;
+  return likelihood;
 }

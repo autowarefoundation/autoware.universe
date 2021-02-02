@@ -239,8 +239,8 @@ void MapBasedPredictionROS::objectsCallback(
     return;
   }
 
-  autoware_perception_msgs::msg::DynamicObjectArray tmp_objects_whitout_map;
-  tmp_objects_whitout_map.header = in_objects->header;
+  autoware_perception_msgs::msg::DynamicObjectArray tmp_objects_without_map;
+  tmp_objects_without_map.header = in_objects->header;
   DynamicObjectWithLanesArray prediction_input;
   prediction_input.header = in_objects->header;
 
@@ -258,9 +258,8 @@ void MapBasedPredictionROS::objectsCallback(
     if (
       object.semantic.type != autoware_perception_msgs::msg::Semantic::CAR &&
       object.semantic.type != autoware_perception_msgs::msg::Semantic::BUS &&
-      object.semantic.type != autoware_perception_msgs::msg::Semantic::TRUCK)
-    {
-      tmp_objects_whitout_map.objects.push_back(tmp_object.object);
+      object.semantic.type != autoware_perception_msgs::msg::Semantic::TRUCK) {
+      tmp_objects_without_map.objects.push_back(tmp_object.object);
       continue;
     }
 
@@ -278,7 +277,7 @@ void MapBasedPredictionROS::objectsCallback(
       tf2::doTransform(
         point_orig, debug_point,
         debug_map2lidar_transform);
-      tmp_objects_whitout_map.objects.push_back(object);
+      tmp_objects_without_map.objects.push_back(object);
       continue;
     }
 
@@ -351,7 +350,7 @@ void MapBasedPredictionROS::objectsCallback(
       tf2::doTransform(
         point_orig, debug_point,
         debug_map2lidar_transform);
-      tmp_objects_whitout_map.objects.push_back(object);
+      tmp_objects_without_map.objects.push_back(object);
       continue;
     }
 
@@ -369,8 +368,8 @@ void MapBasedPredictionROS::objectsCallback(
       // add if not yet having lanelet_id
       for (const auto & current_uid : lanelet_ids) {
         bool is_redundant = false;
-        for (const auto & chached_uid : uuid2laneids_.at(uid_string)) {
-          if (chached_uid == current_uid) {
+        for (const auto & cached_uid : uuid2laneids_.at(uid_string)) {
+          if (cached_uid == current_uid) {
             is_redundant = true;
             break;
           }
@@ -426,7 +425,7 @@ void MapBasedPredictionROS::objectsCallback(
   output.objects = out_objects_in_map;
 
   std::vector<autoware_perception_msgs::msg::DynamicObject> out_objects_without_map;
-  map_based_prediction_->doLinearPrediction(tmp_objects_whitout_map, out_objects_without_map);
+  map_based_prediction_->doLinearPrediction(tmp_objects_without_map, out_objects_without_map);
   output.objects.insert(
     output.objects.begin(), out_objects_without_map.begin(), out_objects_without_map.end());
   pub_objects_->publish(output);
