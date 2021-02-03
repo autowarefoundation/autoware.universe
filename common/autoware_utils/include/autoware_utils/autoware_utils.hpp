@@ -12,8 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef AUTOWARE_UTILS__AUTOWARE_UTILS_HPP_
+#define AUTOWARE_UTILS__AUTOWARE_UTILS_HPP_
 
-#include "autoware_utils/geometry.hpp"
-#include "autoware_utils/normalization.hpp"
-#include "autoware_utils/unit_conversion.hpp"
+#include "autoware_utils/geometry/boost_geometry.hpp"
+#include "autoware_utils/geometry/geometry.hpp"
+#include "autoware_utils/geometry/pose_deviation.hpp"
+#include "autoware_utils/math/constants.hpp"
+#include "autoware_utils/math/normalization.hpp"
+#include "autoware_utils/math/unit_conversion.hpp"
+#include "autoware_utils/ros/debug_publisher.hpp"
+#include "autoware_utils/ros/marker_helper.hpp"
+#include "autoware_utils/ros/processing_time_publisher.hpp"
+#include "autoware_utils/ros/self_pose_listener.hpp"
+#include "autoware_utils/ros/transform_listener.hpp"
+#include "autoware_utils/ros/vehicle_info.hpp"
+#include "autoware_utils/ros/wait_for_param.hpp"
+#include "autoware_utils/system/stop_watch.hpp"
+
+#endif  // AUTOWARE_UTILS__AUTOWARE_UTILS_HPP_

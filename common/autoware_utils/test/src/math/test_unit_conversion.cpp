@@ -14,7 +14,7 @@
 
 #include "gtest/gtest.h"
 
-#include "autoware_utils/unit_conversion.hpp"
+#include "autoware_utils/math/unit_conversion.hpp"
 
 using autoware_utils::pi;
 

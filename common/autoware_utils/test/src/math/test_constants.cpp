@@ -1,4 +1,4 @@
-// Copyright 2020 TierIV
+// Copyright 2020 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,15 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#include "gtest/gtest.h"
 
-#include "autoware_utils/constants.hpp"
+#include "autoware_utils/math/constants.hpp"
 
-namespace autoware_utils
+TEST(constants, constants)
 {
-constexpr double deg2rad(const double deg) {return deg * pi / 180.0;}
-constexpr double rad2deg(const double rad) {return rad * 180.0 / pi;}
+  using autoware_utils::pi;
 
-constexpr double kmph2mps(const double kmph) {return kmph * 1000.0 / 3600.0;}
-constexpr double mps2kmph(const double mps) {return mps * 3600.0 / 1000.0;}
-}  // namespace autoware_utils
+  EXPECT_DOUBLE_EQ(pi, 3.14159265358979323846);
+}

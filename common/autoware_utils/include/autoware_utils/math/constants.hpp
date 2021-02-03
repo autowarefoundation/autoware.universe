@@ -12,9 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef AUTOWARE_UTILS__MATH__CONSTANTS_HPP_
+#define AUTOWARE_UTILS__MATH__CONSTANTS_HPP_
 
 namespace autoware_utils
 {
 constexpr double pi = 3.14159265358979323846;  // To be replaced by std::numbers::pi in C++20
 }  // namespace autoware_utils
+
+#endif  // AUTOWARE_UTILS__MATH__CONSTANTS_HPP_

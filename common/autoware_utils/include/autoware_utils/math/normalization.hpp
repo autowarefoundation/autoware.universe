@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef AUTOWARE_UTILS__MATH__NORMALIZATION_HPP_
+#define AUTOWARE_UTILS__MATH__NORMALIZATION_HPP_
 
 #include <cmath>
 
-#include "autoware_utils/constants.hpp"
+#include "autoware_utils/math/constants.hpp"
 
 namespace autoware_utils
 {
@@ -45,3 +46,5 @@ constexpr double normalizeRadian(const double rad, const double min_rad = -pi)
 }
 
 }  // namespace autoware_utils
+
+#endif  // AUTOWARE_UTILS__MATH__NORMALIZATION_HPP_
