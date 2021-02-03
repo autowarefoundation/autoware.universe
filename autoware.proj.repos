@@ -55,6 +55,10 @@ repositories:
     type: git
     url: https://github.com/astuff/pacmod3.git
     version: dashing-devel
+  vendor/kvaser_interface: # TODO remove after foxy-version is released
+    type: git
+    url: https://github.com/tier4/kvaser_interface.git
+    version: tier4/ros2
   vendor/diagnostics: # TODO remove after https://github.com/ros/diagnostics/pull/168 is available in foxy
     type: git
     url: https://github.com/mitsudome-r/diagnostics.git
