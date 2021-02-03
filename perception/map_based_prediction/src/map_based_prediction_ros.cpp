@@ -258,7 +258,8 @@ void MapBasedPredictionROS::objectsCallback(
     if (
       object.semantic.type != autoware_perception_msgs::msg::Semantic::CAR &&
       object.semantic.type != autoware_perception_msgs::msg::Semantic::BUS &&
-      object.semantic.type != autoware_perception_msgs::msg::Semantic::TRUCK) {
+      object.semantic.type != autoware_perception_msgs::msg::Semantic::TRUCK)
+    {
       tmp_objects_without_map.objects.push_back(tmp_object.object);
       continue;
     }
