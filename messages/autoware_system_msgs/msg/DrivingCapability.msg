@@ -1,5 +1,3 @@
-bool manual_driving
-bool autonomous_driving
-bool remote_control
-bool safe_stop
-bool emergency_stop
+std_msgs/Header header
+autoware_system_msgs/HazardStatus autonomous_driving
+autoware_system_msgs/HazardStatus remote_control

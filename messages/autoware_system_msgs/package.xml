@@ -13,6 +13,8 @@
   <exec_depend>rosidl_default_runtime</exec_depend>
   <member_of_group>rosidl_interface_packages</member_of_group>
 
+  <build_depend>diagnostic_msgs</build_depend>
+  <exec_depend>diagnostic_msgs</exec_depend>
   <build_depend>std_msgs</build_depend>
   <exec_depend>std_msgs</exec_depend>
 
