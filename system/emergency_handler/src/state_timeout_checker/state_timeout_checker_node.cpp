@@ -12,14 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <memory>
+
 #include "rclcpp/rclcpp.hpp"
 
-#include "emergency_handler/emergency_handler_core.hpp"
+#include "emergency_handler/state_timeout_checker_core.hpp"
 
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
-  auto node = std::make_shared<EmergencyHandler>();
+  auto node = std::make_shared<StateTimeoutChecker>();
   rclcpp::spin(node);
   rclcpp::shutdown();
 

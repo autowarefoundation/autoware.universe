@@ -1,0 +1,8 @@
+---
+/**:
+    ros__parameters:
+      update_rate: 10
+      timeout:
+        InitializingVehicle: 0.0
+        WaitingForRoute: 0.0
+        Planning: 0.0
