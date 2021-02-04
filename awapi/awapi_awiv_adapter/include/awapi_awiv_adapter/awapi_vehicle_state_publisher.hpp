@@ -12,6 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifndef AWAPI_AWIV_ADAPTER__AWAPI_VEHICLE_STATE_PUBLISHER_HPP_
+#define AWAPI_AWIV_ADAPTER__AWAPI_VEHICLE_STATE_PUBLISHER_HPP_
+
+#include <memory>
+
 #include "rclcpp/rclcpp.hpp"
 
 #include "awapi_awiv_adapter/awapi_autoware_util.hpp"
@@ -22,7 +27,7 @@ namespace autoware_api
 class AutowareIvVehicleStatePublisher
 {
 public:
-  AutowareIvVehicleStatePublisher(rclcpp::Node & node);
+  explicit AutowareIvVehicleStatePublisher(rclcpp::Node & node);
   void statePublisher(const AutowareInfo & aw_info);
 
 private:
@@ -58,7 +63,7 @@ private:
   rclcpp::Logger logger_;
   rclcpp::Clock::SharedPtr clock_;
 
-  //parameters
+  // parameters
   geometry_msgs::msg::TwistStamped::ConstSharedPtr previous_twist_ptr_;
   autoware_vehicle_msgs::msg::Steering::ConstSharedPtr previous_steer_ptr_;
   double prev_accel_;
@@ -70,3 +75,5 @@ private:
 };
 
 }  // namespace autoware_api
+
+#endif  // AWAPI_AWIV_ADAPTER__AWAPI_VEHICLE_STATE_PUBLISHER_HPP_

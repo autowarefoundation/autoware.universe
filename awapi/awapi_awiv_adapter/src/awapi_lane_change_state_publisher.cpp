@@ -29,7 +29,7 @@ void AutowareIvLaneChangeStatePublisher::statePublisher(const AutowareInfo & aw_
 {
   autoware_api_msgs::msg::LaneChangeStatus status;
 
-  //input header
+  // input header
   status.header.frame_id = "base_link";
   status.header.stamp = clock_->now();
 

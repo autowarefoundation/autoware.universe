@@ -12,6 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifndef AWAPI_AWIV_ADAPTER__AWAPI_AUTOWARE_STATE_PUBLISHER_HPP_
+#define AWAPI_AWIV_ADAPTER__AWAPI_AUTOWARE_STATE_PUBLISHER_HPP_
+
+#include <set>
+#include <string>
+#include <vector>
+
 #include "rclcpp/rclcpp.hpp"
 
 #include "awapi_awiv_adapter/awapi_autoware_util.hpp"
@@ -22,7 +29,7 @@ namespace autoware_api
 class AutowareIvAutowareStatePublisher
 {
 public:
-  AutowareIvAutowareStatePublisher(rclcpp::Node & node);
+  explicit AutowareIvAutowareStatePublisher(rclcpp::Node & node);
   void statePublisher(const AutowareInfo & aw_info);
 
 private:
@@ -50,14 +57,18 @@ private:
     const autoware_control_msgs::msg::GateMode::ConstSharedPtr & gate_mode_ptr,
     autoware_api_msgs::msg::AwapiAutowareStatus * status);
   void getIsEmergencyInfo(
-    const autoware_control_msgs::msg::EmergencyMode::ConstSharedPtr & is_emergency_ptr,
+    const std_msgs::msg::Bool::ConstSharedPtr & is_emergency_ptr,
+    autoware_api_msgs::msg::AwapiAutowareStatus * status);
+  void getHazardStatusInfo(
+    const autoware_system_msgs::msg::HazardStatusStamped::ConstSharedPtr & hazard_status_ptr,
     autoware_api_msgs::msg::AwapiAutowareStatus * status);
   void getStopReasonInfo(
     const autoware_planning_msgs::msg::StopReasonArray::ConstSharedPtr & stop_reason_ptr,
     autoware_api_msgs::msg::AwapiAutowareStatus * status);
   void getDiagInfo(
-    const diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr & diag_ptr,
-    autoware_api_msgs::msg::AwapiAutowareStatus * status);
+    const AutowareInfo & aw_info, autoware_api_msgs::msg::AwapiAutowareStatus * status);
+  void getErrorDiagInfo(
+    const AutowareInfo & aw_info, autoware_api_msgs::msg::AwapiAutowareStatus * status);
   void getGlobalRptInfo(
     const pacmod_msgs::msg::GlobalRpt::ConstSharedPtr & global_rpt_ptr,
     autoware_api_msgs::msg::AwapiAutowareStatus * status);
@@ -71,3 +82,5 @@ private:
 };
 
 }  // namespace autoware_api
+
+#endif  // AWAPI_AWIV_ADAPTER__AWAPI_AUTOWARE_STATE_PUBLISHER_HPP_

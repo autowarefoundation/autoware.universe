@@ -3,6 +3,7 @@
   <arg name="relay_output" default="log" />
   <arg name="status_pub_hz" default="5.0" />
   <arg name="stop_reason_timeout" default="0.5" />
+  <arg name="stop_reason_thresh_dist" default="100.0" />
 
   <arg name="input_steer" default="/vehicle/status/steering" />
   <arg name="input_vehicle_cmd" default="/control/vehicle_cmd" />
@@ -15,6 +16,7 @@
   <arg name="input_control_mode" default="/vehicle/status/control_mode" />
   <arg name="input_gate_mode" default="/control/current_gate_mode" />
   <arg name="input_is_emergency" default="/system/emergency/is_emergency" />
+  <arg name="input_hazard_status" default="/system/emergency/hazard_status" />
   <arg name="input_stop_reason" default="/planning/scenario_planning/status/stop_reasons" />
   <arg name="input_diagnostics" default="/diagnostics_agg" />
   <arg name="input_global_rpt" default="/pacmod/parsed_tx/global_rpt" />
@@ -26,6 +28,13 @@
   <arg name="input_route" default="/planning/mission_planning/route" />
   <arg name="input_object" default="/perception/object_recognition/objects" />
   <arg name="input_traffic_light_state" default="/perception/traffic_light_recognition/traffic_light_states" />
+  <arg name="input_nearest_traffic_light_state" default="/planning/scenario_planning/lane_driving/behavior_planning/debug/traffic_light_state" />
+  <arg name="input_trajectory" default="/planning/scenario_planning/trajectory" />
+  <arg name="input_door_status" default="/pacmod/parsed_tx/rear_pass_door_rpt" />
+  <arg name="input_stop_speed_exceeded" default="/planning/scenario_planning/motion_velocity_optimizer/stop_speed_exceeded" />
+  <arg name="input_external_crosswalk_status" default="/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/input/external_crosswalk_states" />
+  <arg name="input_external_intersection_status" default="/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/input/external_intersection_states" />
+  <arg name="input_expand_stop_range" default="/planning/scenario_planning/lane_driving/motion_planning/obstacle_stop_planner/input/expand_stop_range" />
 
   <arg name="output_vehicle_status" default="vehicle/get/status" />
   <arg name="output_autoware_status" default="autoware/get/status" />
@@ -33,32 +42,46 @@
   <arg name="output_obstacle_avoid_status" default="object_avoidance/get/status" />
   <arg name="output_max_velocity" default="/planning/scenario_planning/max_velocity" />
   <arg name="output_gate_mode" default="/remote/gate_mode_cmd" />
-  <arg name="output_emergency" default="/remote/emergency" />
+  <arg name="output_emergency_stop" default="/remote/emergency_stop" />
   <arg name="output_autoware_engage" default="/autoware/engage" />
   <arg name="output_vehicle_engage" default="/vehicle/engage" />
+  <arg name="output_goal" default="/planning/mission_planning/goal" />
   <arg name="output_route" default="/planning/mission_planning/route" />
   <arg name="output_lane_change_approval" default="/planning/scenario_planning/lane_driving/lane_change_approval" />
   <arg name="output_force_lane_change" default="/planning/scenario_planning/lane_driving/force_lane_change" />
   <arg name="output_obstacle_avoid_approval" default="/planning/scenario_planning/lane_driving/obstacle_avoidance_approval" />
+  <arg name="output_door_control" default="/pacmod/as_rx/rear_pass_door_cmd" />
   <arg name="output_force_obstacle_avoid" default="tmp" /> <!-- not implemented -->
-  <arg name="output_overwrite_traffic_light_state" default="tmp" /> <!-- not implemented -->
+  <arg name="output_overwrite_traffic_light_state" default="/foa/traffic_light_recognition/traffic_light_states" />
 
-  <arg name="use_emergency_handling" default="false" />
+  <arg name="node_emergency_stop" default="/control/vehicle_cmd_gate" />
+  <arg name="param_emergency_stop" default="use_external_emergency_stop" />
+  <arg name="node_max_velocity" default="/planning/scenario_planning/motion_velocity_optimizer" />
+  <arg name="param_max_velocity" default="max_velocity" />
 
-  <arg name="set_upper_velocity" default="vehicle/put/velocity" />
+  <arg name="set_max_velocity" default="vehicle/put/velocity" />
+  <arg name="set_temporary_stop" default="vehicle/put/stop" />
   <arg name="set_gate_mode" default="autoware/put/gate_mode" />
-  <arg name="set_emergency" default="autoware/put/emergency" />
+  <arg name="set_emergency_stop" default="autoware/put/emergency_stop" />
   <arg name="set_engage" default="autoware/put/engage" />
   <arg name="set_route" default="autoware/put/route" />
+  <arg name="set_goal" default="autoware/put/goal" />
   <arg name="set_lane_change_approval" default="lane_change/put/approval" />
   <arg name="set_force_lane_change" default="lane_change/put/force" />
   <arg name="set_obstacle_avoid_approval" default="object_avoidance/put/approval" />
   <arg name="set_force_obstacle_avoid" default="object_avoidance/put/force" />
-  <arg name="set_overwrite_traffic_light_state" default="traffic_light/put/traffic_light" />
+  <arg name="set_overwrite_traffic_light_state" default="traffic_light/put/traffic_light_status" />
+  <arg name="set_door_control" default="vehicle/put/door" />
+  <arg name="set_crosswalk_status" default="autoware/put/crosswalk_states" />
+  <arg name="set_intersection_status" default="autoware/put/intersection_states" />
+  <arg name="set_expand_stop_range" default="autoware/put/expand_stop_range" />
 
   <arg name="get_route" default="autoware/get/route" />
   <arg name="get_predicted_object" default="prediction/get/objects" />
-
+  <arg name="get_door_status" default="vehicle/get/door" />
+  <arg name="get_stop_speed_exceeded" default="autoware/get/stop_speed_exceeded" />
+  <arg name="get_traffic_light_status" default="traffic_light/get/status" />
+  <arg name="get_nearest_traffic_light_status" default="traffic_light/get/nearest_traffic_light_status" />
 
   <group ns="awapi">
     <node pkg="awapi_awiv_adapter" exec="awapi_awiv_adapter" output="screen">
@@ -73,6 +96,7 @@
       <remap from="input/control_mode" to="$(var input_control_mode)" />
       <remap from="input/gate_mode" to="$(var input_gate_mode)" />
       <remap from="input/is_emergency" to="$(var input_is_emergency)" />
+      <remap from="input/hazard_status" to="$(var input_hazard_status)" />
       <remap from="input/stop_reason" to="$(var input_stop_reason)" />
       <remap from="input/diagnostics" to="$(var input_diagnostics)" />
       <remap from="input/global_rpt" to="$(var input_global_rpt)" />
@@ -81,16 +105,26 @@
       <remap from="input/lane_change_candidate_path" to="$(var input_lane_change_candidate_path)" />
       <remap from="input/obstacle_avoid_ready" to="$(var input_obstacle_avoid_ready)" />
       <remap from="input/obstacle_avoid_candidate_path" to="$(var input_obstacle_avoid_candidate_path)" />
+      <remap from="input/door_control" to="$(var set_door_control)" />
+      <remap from="input/door_status" to="$(var input_door_status)" />
       <remap from="output/vehicle_status" to="$(var output_vehicle_status)" />
       <remap from="output/autoware_status" to="$(var output_autoware_status)" />
       <remap from="output/lane_change_status" to="$(var output_lane_change_status)" />
       <remap from="output/obstacle_avoid_status" to="$(var output_obstacle_avoid_status)" />
-      <param name="use_emergency_handling" value="$(var use_emergency_handling)" />
+      <remap from="output/max_velocity" to="$(var output_max_velocity)" />
+      <remap from="output/door_control" to="$(var output_door_control)" />
+      <remap from="output/door_status" to="$(var get_door_status)" />
+      <param name="node/emergency_stop" value="$(var node_emergency_stop)" />
+      <param name="param/emergency_stop" value="$(var param_emergency_stop)" />
+      <param name="node/max_velocity" value="$(var node_max_velocity)" />
+      <param name="param/max_velocity" value="$(var param_max_velocity)" />
       <param name="status_pub_hz" value="$(var status_pub_hz)" />
+      <param name="stop_reason_timeout" value="$(var stop_reason_timeout)" />
+      <param name="stop_reason_thresh_dist" value="$(var stop_reason_thresh_dist)" />
     </node>
 
     <!-- relay get topic -->
-     <node pkg="topic_tools" exec="relay" name="route_relay" output="log" >
+    <node pkg="topic_tools" exec="relay" name="route_relay" output="log" >
       <param name="input_topic" value="$(var input_route)" />
       <param name="output_topic" value="$(var get_route)" />
       <param name="type" value="autoware_planning_msgs/msg/Route" />
@@ -100,21 +134,21 @@
       <param name="output_topic" value="$(var get_predicted_object)" />
       <param name="type" value="autoware_perception_msgs/msg/DynamicObjectArray" />
     </node>
+    <node pkg="topic_tools" exec="relay" name="nearest_traffic_light_relay" output="log" >
+      <param name="input_topic" value="$(var input_nearest_traffic_light_state)" />
+      <param name="output_topic" value="$(var get_nearest_traffic_light_status)" />
+      <param name="type" value="autoware_perception_msgs/msg/TrafficLightStateStamped" />
+    </node>
 
     <!-- relay put topic -->
-    <node pkg="topic_tools" exec="relay" name="upper_vel_relay" output="log" >
-      <param name="input_topic" value="$(var set_upper_velocity)" />
-      <param name="output_topic" value="$(var output_max_velocity)" />
-      <param name="type" value="std_msgs/msg/Float32" />
-    </node>
     <node pkg="topic_tools" exec="relay" name="gate_mode_relay" output="log" >
       <param name="input_topic" value="$(var set_gate_mode)" />
       <param name="output_topic" value="$(var output_gate_mode)" />
       <param name="type" value="autoware_control_msgs/msg/GateMode" />
     </node>
-    <node pkg="topic_tools" exec="relay" name="emergency_relay" output="log" >
-      <param name="input_topic" value="$(var set_emergency)" />
-      <param name="output_topic" value="$(var output_emergency)" />
+    <node pkg="topic_tools" exec="relay" name="emergency_stop_relay" output="log" >
+      <param name="input_topic" value="$(var set_emergency_stop)" />
+      <param name="output_topic" value="$(var output_emergency_stop)" />
       <param name="type" value="autoware_control_msgs/msg/EmergencyMode" />
     </node>
     <node pkg="topic_tools" exec="relay" name="autoware_engage_relay" output="log" >
@@ -131,6 +165,11 @@
       <param name="input_topic" value="$(var set_route)" />
       <param name="output_topic" value="$(var output_route)" />
       <param name="type" value="autoware_planning_msgs/msg/Route" />
+    </node>
+    <node pkg="topic_tools" exec="relay" name="put_goal_relay" output="log" >
+      <param name="input_topic" value="$(var set_goal)" />
+      <param name="output_topic" value="$(var output_goal)" />
+      <param name="type" value="geometry_msgs/msg/PoseStamped" />
     </node>
     <node pkg="topic_tools" exec="relay" name="lane_change_approval_relay" output="log" >
       <param name="input_topic" value="$(var set_lane_change_approval)" />
@@ -152,12 +191,32 @@
       <param name="input_topic" value="$(var set_force_obstacle_avoid)" />
       <param name="output_topic" value="$(var output_force_obstacle_avoid)" />
       <param name="type" value="" />
-    </node>
-    <node pkg="topic_tools" exec="relay" name="overwrite_traffic_light_state_relay" output="log" >
-      <param name="input_topic" value="$(var set_overwrite_traffic_light_state)" />
-      <param name="output_topic" value="$(var output_overwrite_traffic_light_state)" />
-      <param name="type" value="" />
     </node> -->
+    <node pkg="topic_tools" exec="relay" name="traffic_light_relay" output="log" >
+      <param name="input_topic" value="$(var input_traffic_light_state)" />
+      <param name="output_topic" value="$(var get_traffic_light_status)" />
+      <param name="type" value="autoware_perception_msgs/msg/TrafficLightStateArray" />
+    </node>
+    <node pkg="topic_tools" exec="relay" name="speed_exceeded_relay" output="log" >
+      <param name="input_topic" value="$(var input_stop_speed_exceeded)" />
+      <param name="output_topic" value="$(var get_stop_speed_exceeded)" />
+      <param name="type" value="std_msgs/msg/Bool" />
+    </node>
+    <node pkg="topic_tools" exec="relay" name="crosswalk_status_relay" output="log" >
+      <param name="input_topic" value="$(var set_crosswalk_status)" />
+      <param name="output_topic" value="$(var input_external_crosswalk_status)" />
+      <param name="type" value="autoware_api_msgs/msg/CrosswalkStatus" />
+    </node>
+    <node pkg="topic_tools" exec="relay" name="intersection_status_relay" output="log" >
+      <param name="input_topic" value="$(var set_intersection_status)" />
+      <param name="output_topic" value="$(var input_external_intersection_status)" />
+      <param name="type" value="autoware_api_msgs/msg/IntersectionStatus" />
+    </node>
+    <node pkg="topic_tools" exec="relay" name="expand_stop_range_relay" output="log" >
+      <param name="input_topic" value="$(var set_expand_stop_range)" />
+      <param name="output_topic" value="$(var input_expand_stop_range)" />
+      <param name="type" value="std_msgs/msg/Float32" />
+    </node>
 
   </group>
 

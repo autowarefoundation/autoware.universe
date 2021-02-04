@@ -30,7 +30,7 @@ void AutowareIvObstacleAvoidanceStatePublisher::statePublisher(const AutowareInf
 {
   autoware_api_msgs::msg::ObstacleAvoidanceStatus status;
 
-  //input header
+  // input header
   status.header.frame_id = "base_link";
   status.header.stamp = clock_->now();
 

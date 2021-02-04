@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <limits>
+#include <memory>
+
 #include "awapi_awiv_adapter/awapi_vehicle_state_publisher.hpp"
 
 namespace autoware_api
@@ -30,7 +33,7 @@ void AutowareIvVehicleStatePublisher::statePublisher(const AutowareInfo & aw_inf
 {
   autoware_api_msgs::msg::AwapiVehicleStatus status = initVehicleStatus();
 
-  //input header
+  // input header
   status.header.frame_id = "base_link";
   status.header.stamp = clock_->now();
 
@@ -92,7 +95,7 @@ void AutowareIvVehicleStatePublisher::getSteerInfo(
 
   // get steer vel
   if (previous_steer_ptr_) {
-    //calculate steer vel from steer
+    // calculate steer vel from steer
     const double ds = steer_ptr->data - previous_steer_ptr_->data;
     const double dt = std::max(
       (rclcpp::Time(steer_ptr->header.stamp) - rclcpp::Time(previous_steer_ptr_->header.stamp))
@@ -100,7 +103,7 @@ void AutowareIvVehicleStatePublisher::getSteerInfo(
       1e-03);
     const double steer_vel = ds / dt;
 
-    //apply lowpass filter
+    // apply lowpass filter
     const double lowpass_steer =
       lowpass_filter(steer_vel, prev_steer_vel_, steer_vel_lowpass_gain_);
     prev_steer_vel_ = lowpass_steer;
@@ -133,7 +136,7 @@ void AutowareIvVehicleStatePublisher::getTurnSignalInfo(
     return;
   }
 
-  //get turn singnal
+  // get turn signal
   status->turn_signal = turn_signal_ptr->data;
 }
 
@@ -152,7 +155,7 @@ void AutowareIvVehicleStatePublisher::getTwistInfo(
 
   // get accel
   if (previous_twist_ptr_) {
-    //calculate accleration from velocity
+    // calculate acceleration from velocity
     const double dv = twist_ptr->twist.linear.x - previous_twist_ptr_->twist.linear.x;
     const double dt = std::max(
       (rclcpp::Time(twist_ptr->header.stamp) - rclcpp::Time(previous_twist_ptr_->header.stamp))
@@ -203,10 +206,10 @@ void AutowareIvVehicleStatePublisher::getGpsInfo(
     return;
   }
 
-  // get position (latlon)
-  status->latlon.lat = nav_sat_ptr->latitude;
-  status->latlon.lon = nav_sat_ptr->longitude;
-  status->latlon.alt = nav_sat_ptr->altitude;
+  // get geo_point
+  status->geo_point.latitude = nav_sat_ptr->latitude;
+  status->geo_point.longitude = nav_sat_ptr->longitude;
+  status->geo_point.altitude = nav_sat_ptr->altitude;
 }
 
 }  // namespace autoware_api
