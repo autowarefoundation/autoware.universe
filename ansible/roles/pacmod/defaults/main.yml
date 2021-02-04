@@ -1,2 +1,3 @@
 ---
 rosdistro: "foxy"
+kvaser_library_only: true

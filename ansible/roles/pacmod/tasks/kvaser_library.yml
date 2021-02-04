@@ -1,0 +1,15 @@
+---
+- name: Add kvaser library repo
+  apt_repository:
+    repo: ppa:astuff/kvaser-linux
+  become: yes
+  tags: kvaser_library
+
+- name: Install kvaser library
+  become: yes
+  apt:
+    name:
+      - kvaser-canlib-dev
+      - kvaser-drivers-dkms
+    update_cache: yes
+  tags: kvaser_library
