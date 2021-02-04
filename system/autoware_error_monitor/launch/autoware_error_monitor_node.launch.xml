@@ -1,10 +1,14 @@
 <launch>
   <arg name="config_file" default="$(find-pkg-share autoware_error_monitor)/config/autoware_error_monitor.param.yaml" />
+  <arg name="ignore_missing_diagnostics" />
+  <arg name="add_leaf_diagnostics" />
 
   <node pkg="autoware_error_monitor" exec="autoware_error_monitor" name="autoware_error_monitor" output="screen">
     <remap from="input/diag_array" to="/diagnostics_agg" />
     <remap from="output/driving_capability" to="/autoware/driving_capability" />
 
     <param from="$(var config_file)" />
+    <param name="ignore_missing_diagnostics" value="$(var ignore_missing_diagnostics)" />
+    <param name="add_leaf_diagnostics" value="$(var add_leaf_diagnostics)" />
   </node>
 </launch>

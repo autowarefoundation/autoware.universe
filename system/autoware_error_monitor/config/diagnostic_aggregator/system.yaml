@@ -1,0 +1,112 @@
+/**:
+  ros__parameters:
+    path: autoware
+    system:
+      type: 'diagnostic_aggregator/AnalyzerGroup'
+      path: system
+      analyzers:
+        alive_monitoring:
+          type: 'diagnostic_aggregator/AnalyzerGroup'
+          path: alive_monitoring
+          analyzers:
+            topic_status:
+              type: 'diagnostic_aggregator/GenericAnalyzer'
+              path: topic_status
+              contains: [": system_topic_status"]
+              timeout: 1.0
+              num_items: 0
+
+        emergency_stop_operation:
+          type: 'diagnostic_aggregator/GenericAnalyzer'
+          path: emergency_stop_operation
+          contains: [": emergency_stop_operation"]
+          timeout: 1.0
+          num_items: 0
+
+        logging:
+          type: 'diagnostic_aggregator/AnalyzerGroup'
+          path: logging
+          analyzers:
+            bagpacker:
+              type: diagnostic_aggregator/GenericAnalyzer
+              path: bagpacker
+              contains: ["bagpacker"]
+              timeout: 3.0
+              num_items: 0
+
+        resource_monitoring:
+          type: 'diagnostic_aggregator/AnalyzerGroup'
+          path: resource_monitoring
+          analyzers:
+            cpu_temperature:
+              type: 'diagnostic_aggregator/GenericAnalyzer'
+              path: cpu_temperature
+              contains: [": CPU Temperature"]
+              timeout: 3.0
+              num_items: 0
+            cpu_usage:
+              type: 'diagnostic_aggregator/GenericAnalyzer'
+              path: cpu_usage
+              contains: [": CPU Usage"]
+              timeout: 3.0
+              num_items: 0
+            cpu_thermal_throttling:
+              type: 'diagnostic_aggregator/GenericAnalyzer'
+              path: cpu_thermal_throttling
+              contains: [": CPU Thermal Throttling"]
+              timeout: 3.0
+              num_items: 0
+            hdd_temperature:
+              type: 'diagnostic_aggregator/GenericAnalyzer'
+              path: hdd_temperature
+              contains: [": HDD Temperature"]
+              timeout: 3.0
+              num_items: 0
+            hdd_usage:
+              type: 'diagnostic_aggregator/GenericAnalyzer'
+              path: hdd_usage
+              contains: [": HDD Usage"]
+              timeout: 3.0
+              num_items: 0
+            memory_usage:
+              type: 'diagnostic_aggregator/GenericAnalyzer'
+              path: memory_usage
+              contains: [": Memory Usage"]
+              timeout: 3.0
+              num_items: 0
+            network_usage:
+              type: 'diagnostic_aggregator/GenericAnalyzer'
+              path: network_usage
+              contains: [": Network Usage"]
+              timeout: 3.0
+              num_items: 0
+            ntp_offset:
+              type: 'diagnostic_aggregator/GenericAnalyzer'
+              path: ntp_offset
+              contains: [": NTP Offset"]
+              timeout: 10.0
+              num_items: 0
+            gpu_temperature:
+              type: 'diagnostic_aggregator/GenericAnalyzer'
+              path: gpu_temperature
+              contains: [": GPU Temperature"]
+              timeout: 3.0
+              num_items: 0
+            gpu_usage:
+              type: 'diagnostic_aggregator/GenericAnalyzer'
+              path: gpu_usage
+              contains: [": GPU Usage"]
+              timeout: 3.0
+              num_items: 0
+            gpu_memory_usage:
+              type: 'diagnostic_aggregator/GenericAnalyzer'
+              path: gpu_memory_usage
+              contains: [": GPU Memory Usage"]
+              timeout: 3.0
+              num_items: 0
+            gpu_thermal_throttling:
+              type: 'diagnostic_aggregator/GenericAnalyzer'
+              path: gpu_thermal_throttling
+              contains: [": GPU Thermal Throttling"]
+              timeout: 3.0
+              num_items: 0

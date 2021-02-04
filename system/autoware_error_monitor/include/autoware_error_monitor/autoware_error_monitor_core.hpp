@@ -12,17 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_ERROR_MONITOR_CORE_H_
-#define AUTOWARE_ERROR_MONITOR_CORE_H_
+#ifndef AUTOWARE_ERROR_MONITOR__AUTOWARE_ERROR_MONITOR_CORE_HPP_
+#define AUTOWARE_ERROR_MONITOR__AUTOWARE_ERROR_MONITOR_CORE_HPP_
+
+#include <deque>
+#include <map>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
+#include "boost/optional.hpp"
 
 #include "autoware_system_msgs/msg/driving_capability.hpp"
-#include "boost/optional.hpp"
-#include <deque>
 #include "diagnostic_msgs/msg/diagnostic_array.hpp"
 #include "rclcpp/create_timer.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include <string>
-#include <unordered_map>
+
 
 struct DiagStamped
 {
@@ -30,16 +35,36 @@ struct DiagStamped
   diagnostic_msgs::msg::DiagnosticStatus status;
 };
 
-using RequiredConditions = std::vector<std::string>;
 using DiagBuffer = std::deque<DiagStamped>;
+
+using DiagLevel = std::map<std::string, std::string>;
+
+struct DiagConfig
+{
+  explicit DiagConfig(const std::string & module_name, DiagLevel & diag_level)
+  : name(module_name),
+    sf_at(diag_level["sf_at"]),
+    lf_at(diag_level["lf_at"]),
+    spf_at(diag_level["spf_at"])
+  {
+    // Set default values
+    if (sf_at == "") {sf_at = "none";}
+    if (lf_at == "") {lf_at = "warn";}
+    if (spf_at == "") {spf_at = "error";}
+  }
+
+  std::string name;
+  std::string sf_at;
+  std::string lf_at;
+  std::string spf_at;
+};
+
+using RequiredModules = std::vector<DiagConfig>;
 
 struct KeyName
 {
-  static constexpr const char * manual_driving = "manual_driving";
   static constexpr const char * autonomous_driving = "autonomous_driving";
   static constexpr const char * remote_control = "remote_control";
-  static constexpr const char * safe_stop = "safe_stop";
-  static constexpr const char * emergency_stop = "emergency_stop";
 };
 
 class AutowareErrorMonitor : public rclcpp::Node
@@ -50,13 +75,16 @@ public:
 private:
   // Parameter
   int update_rate_;
-  std::unordered_map<std::string, RequiredConditions> required_conditions_map_;
+  bool ignore_missing_diagnostics_;
+  bool add_leaf_diagnostics_;
+  std::unordered_map<std::string, RequiredModules> required_modules_map_;
 
-  void loadRequiredConditions(const std::string & key);
+  void loadRequiredModules(const std::string & key);
 
   // Timer
   rclcpp::TimerBase::SharedPtr timer_;
 
+  bool isDataReady();
   void onTimer();
 
   // Subscriber
@@ -66,16 +94,21 @@ private:
 
   const size_t diag_buffer_size_ = 100;
   std::unordered_map<std::string, DiagBuffer> diag_buffer_map_;
+  diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr diag_array_;
 
   // Publisher
   rclcpp::Publisher<autoware_system_msgs::msg::DrivingCapability>::SharedPtr
     pub_driving_capability_;
 
   // Algorithm
-  bool judgeCapability(const std::string & key);
   boost::optional<DiagStamped> getLatestDiag(const std::string & diag_name);
+  int getHazardLevel(const DiagConfig & required_module, const int diag_level);
+  void appendHazardDiag(
+    const DiagConfig & required_module, const diagnostic_msgs::msg::DiagnosticStatus & diag,
+    autoware_system_msgs::msg::HazardStatus * hazard_status);
+  autoware_system_msgs::msg::HazardStatus judgeHazardStatus(const std::string & key);
 
   const double diag_timeout_sec_ = 1.0;
 };
 
-#endif
+#endif  // AUTOWARE_ERROR_MONITOR__AUTOWARE_ERROR_MONITOR_CORE_HPP_

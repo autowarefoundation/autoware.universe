@@ -36,8 +36,9 @@
           '/autoware/system/logging',
           '/autoware/system/resource_monitoring/cpu_temperature',
           '/autoware/system/resource_monitoring/cpu_usage',
-          '/autoware/system/resource_monitoring/cpu_thermal_throttling',
-          '/autoware/system/resource_monitoring/hdd_temperature',
+          '/autoware/system/resource_monitoring/cpu_load_average',
+          # '/autoware/system/resource_monitoring/cpu_thermal_throttling', # Require setup
+          # '/autoware/system/resource_monitoring/hdd_temperature', # Require setup
           '/autoware/system/resource_monitoring/hdd_usage',
           '/autoware/system/resource_monitoring/memory_usage',
           '/autoware/system/resource_monitoring/network_usage',
@@ -55,16 +56,16 @@
           /autoware/system/logging: { sf_at: "warn", lf_at: "error", spf_at: "none" }
           /autoware/system/resource_monitoring/cpu_temperature: { sf_at: "warn", lf_at: "error", spf_at: "none" }
           /autoware/system/resource_monitoring/cpu_usage: {sf_at: "warn", lf_at: "error", spf_at: "none" }
-          /autoware/system/resource_monitoring/cpu_thermal_throttling: { sf_at: "warn", lf_at: "error", spf_at: "none" }
-          /autoware/system/resource_monitoring/hdd_temperature: { sf_at: "warn", lf_at: "error", spf_at: "none" }
+          # /autoware/system/resource_monitoring/cpu_thermal_throttling: { sf_at: "warn", lf_at: "error", spf_at: "none" } # Require setup
+          # /autoware/system/resource_monitoring/hdd_temperature: { sf_at: "warn", lf_at: "error", spf_at: "none" } # Require setup
           /autoware/system/resource_monitoring/hdd_usage: { sf_at: "warn", lf_at: "error", spf_at: "none" }
           /autoware/system/resource_monitoring/memory_usage: { sf_at: "warn", lf_at: "error", spf_at: "none" }
           /autoware/system/resource_monitoring/network_usage: { sf_at: "warn", lf_at: "error", spf_at: "none" }
           /autoware/system/resource_monitoring/ntp_offset: { sf_at: "warn", lf_at: "error", spf_at: "none" }
-          /autoware/system/resource_monitoring/gpu_temperature: { sf_at: "warn", lf_at: "error", spf_at: "none" }
-          /autoware/system/resource_monitoring/gpu_usage: { sf_at: "warn", lf_at: "error", spf_at: "none" }
-          /autoware/system/resource_monitoring/gpu_memory_usage: { sf_at: "warn", lf_at: "error", spf_at: "none" }
-          /autoware/system/resource_monitoring/gpu_thermal_throttling: { sf_at: "warn", lf_at: "error", spf_at: "none" }
+          # /autoware/system/resource_monitoring/gpu_temperature: { sf_at: "warn", lf_at: "error", spf_at: "none" } # Require GPU
+          # /autoware/system/resource_monitoring/gpu_usage: { sf_at: "warn", lf_at: "error", spf_at: "none" } # Require GPU
+          # /autoware/system/resource_monitoring/gpu_memory_usage: { sf_at: "warn", lf_at: "error", spf_at: "none" } # Require GPU
+          # /autoware/system/resource_monitoring/gpu_thermal_throttling: { sf_at: "warn", lf_at: "error", spf_at: "none" } # Require GPU
 
       remote_control:
         names:  ['/autoware/control/command_gate/alive_monitoring',

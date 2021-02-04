@@ -24,7 +24,7 @@ set(AUTOWARE_ERROR_MONITOR_SRC
 ament_auto_add_executable(${PROJECT_NAME}
   src/autoware_error_monitor_node.cpp
   ${AUTOWARE_ERROR_MONITOR_SRC}
- )
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

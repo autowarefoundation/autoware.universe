@@ -1,24 +1,36 @@
 <launch>
   <arg name="config_file" default="$(find-pkg-share autoware_error_monitor)/config/autoware_error_monitor.param.yaml" />
+  <arg name="ignore_missing_diagnostics" default="false" />
+  <arg name="add_leaf_diagnostics" default="true" />
+
+  <arg name="agg_config_file_discard" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/_discard.yaml" />
+  <arg name="agg_config_file_control" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/control.yaml" />
+  <arg name="agg_config_file_localization" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/localization.yaml" />
+  <arg name="agg_config_file_map" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/map.yaml" />
+  <arg name="agg_config_file_perception" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/perception.yaml" />
+  <arg name="agg_config_file_planning" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/planning.yaml" />
+  <arg name="agg_config_file_sensing" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/sensing.yaml" />
+  <arg name="agg_config_file_system" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/system.yaml" />
+  <arg name="agg_config_file_vehicle" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/vehicle.yaml" />
 
   <group ns="/">
     <node pkg="diagnostic_aggregator" exec="aggregator_node" name="aggregator_node" output="screen">
       <param name="pub_rate" value="10.0"/>
-      <param from="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/_discard.yaml" />
-      <param from="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/control.yaml" />
-      <param from="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/emergency_system.yaml" />
-      <param from="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/localization.yaml" />
-      <param from="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/map.yaml" />
-      <param from="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/perception.yaml" />
-      <param from="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/planning.yaml" />
-      <param from="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/remote_control.yaml" />
-      <param from="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/safety.yaml" />
-      <param from="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/sensing.yaml" />
-      <param from="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/vehicle.yaml" />
+      <param from="$(var agg_config_file_discard)" />
+      <param from="$(var agg_config_file_control)" />
+      <param from="$(var agg_config_file_localization)" />
+      <param from="$(var agg_config_file_map)" />
+      <param from="$(var agg_config_file_perception)" />
+      <param from="$(var agg_config_file_planning)" />
+      <param from="$(var agg_config_file_sensing)" />
+      <param from="$(var agg_config_file_system)" />
+      <param from="$(var agg_config_file_vehicle)" />
     </node>
   </group>
 
   <include file="$(find-pkg-share autoware_error_monitor)/launch/autoware_error_monitor_node.launch.xml">
     <arg name="config_file" value="$(var config_file)"/>
+    <arg name="ignore_missing_diagnostics" value="$(var ignore_missing_diagnostics)"/>
+    <arg name="add_leaf_diagnostics" value="$(var add_leaf_diagnostics)"/>
   </include>
 </launch>

@@ -5,11 +5,7 @@
       type: 'diagnostic_aggregator/AnalyzerGroup'
       path: discard
       analyzers:
-        speaker:
-          type: 'diagnostic_aggregator/DiscardAnalyzer'
-          path: speaker
-          contains: [": speaker"]
-        joystick:
-          type: 'diagnostic_aggregator/DiscardAnalyzer'
-          path: joystick
-          contains: [": Joystick"]
+        discard_all:
+          type: diagnostic_aggregator/DiscardAnalyzer
+          path: discard_all
+          regex: [".*"]

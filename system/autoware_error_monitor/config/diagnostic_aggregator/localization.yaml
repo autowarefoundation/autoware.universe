@@ -5,18 +5,34 @@
       type: 'diagnostic_aggregator/AnalyzerGroup'
       path: localization
       analyzers:
-        topic_status:
-          type: 'diagnostic_aggregator/GenericAnalyzer'
-          path: topic_status
-          contains: [": localization_topic_status"]
-          num_items: 0
+        alive_monitoring:
+          type: 'diagnostic_aggregator/AnalyzerGroup'
+          path: alive_monitoring
+          analyzers:
+            topic_status:
+              type: 'diagnostic_aggregator/GenericAnalyzer'
+              path: topic_status
+              contains: [": localization_topic_status"]
+              timeout: 1.0
+              num_items: 0
+
         tf_status:
           type: 'diagnostic_aggregator/GenericAnalyzer'
           path: tf_status
           contains: [": localization_tf_status"]
+          timeout: 1.0
           num_items: 0
-        ndt_scan_matcher:
+
+        matching_score:
           type: 'diagnostic_aggregator/GenericAnalyzer'
-          path: ndt_scan_matcher
+          path: matching_score
           contains: ["ndt_scan_matcher"]
+          timeout: 1.0
+          num_items: 0
+
+        localization_accuracy:
+          type: 'diagnostic_aggregator/GenericAnalyzer'
+          path: localization_accuracy
+          contains: [": localization_accuracy"]
+          timeout: 1.0
           num_items: 0

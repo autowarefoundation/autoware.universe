@@ -5,13 +5,34 @@
       type: 'diagnostic_aggregator/AnalyzerGroup'
       path: vehicle
       analyzers:
-        topic_status:
+        alive_monitoring:
+          type: 'diagnostic_aggregator/AnalyzerGroup'
+          path: alive_monitoring
+          analyzers:
+            topic_status:
+              type: 'diagnostic_aggregator/GenericAnalyzer'
+              path: topic_status
+              contains: [": vehicle_topic_status"]
+              timeout: 1.0
+              num_items: 0
+
+            control_command_topic_status:
+              type: 'diagnostic_aggregator/GenericAnalyzer'
+              path: control_command_topic_status
+              contains: [": control_command_topic_status"]
+              timeout: 1.0
+              num_items: 0
+
+            can_bus_connection:
+              type: 'diagnostic_aggregator/GenericAnalyzer'
+              path: can_bus_connection
+              contains: [": can_bus_connection"]
+              timeout: 1.0
+              num_items: 0
+
+        vehicle_errors:
           type: 'diagnostic_aggregator/GenericAnalyzer'
-          path: topic_status
-          contains: [": vehicle_topic_status"]
-          num_items: 0
-        vehicle_mcu_connection:
-          type: 'diagnostic_aggregator/GenericAnalyzer'
-          path: vehicle_mcu_connection
-          contains: [": vehicle_mcu_connection"]
+          path: vehicle_errors
+          contains: [": vehicle_errors"]
+          timeout: 1.0
           num_items: 0

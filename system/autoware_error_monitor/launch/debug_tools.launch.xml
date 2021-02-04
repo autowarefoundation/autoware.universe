@@ -2,7 +2,7 @@
   <group ns="/">
     <node pkg="rqt_robot_monitor" exec="rqt_robot_monitor" name="rqt_robot_monitor"/>
 
-    <include file="$(find-pkg-share dummy_diag_publisher)/launch/dummy_diag_publisher.launch">
+    <include file="$(find-pkg-share dummy_diag_publisher)/launch/dummy_diag_publisher.launch.xml">
       <arg name="launch_rqt" value="true" />
     </include>
   </group>

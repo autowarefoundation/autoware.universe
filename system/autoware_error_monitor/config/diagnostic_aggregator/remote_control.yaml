@@ -9,9 +9,12 @@
           type: 'diagnostic_aggregator/GenericAnalyzer'
           path: topic_status
           contains: [": remote_control_topic_status"]
+          timeout: 1.0
           num_items: 0
+
         internet_connection:
           type: 'diagnostic_aggregator/GenericAnalyzer'
           path: internet_connection
           contains: [": internet_connection"]
+          timeout: 1.0
           num_items: 0
