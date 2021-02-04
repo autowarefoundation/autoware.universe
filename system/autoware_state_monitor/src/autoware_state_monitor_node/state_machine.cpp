@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <deque>
+#include <vector>
+
 #define FMT_HEADER_ONLY
 #include "fmt/format.h"
 
@@ -63,17 +66,6 @@ std::vector<T> filterConfigByModuleName(const std::vector<T> & configs, const ch
 }
 
 }  // namespace
-
-struct ModuleName
-{
-  static constexpr const char * map = "map";
-  static constexpr const char * sensing = "sensing";
-  static constexpr const char * localization = "localization";
-  static constexpr const char * perception = "perception";
-  static constexpr const char * planning = "planning";
-  static constexpr const char * control = "control";
-  static constexpr const char * vehicle = "vehicle";
-};
 
 bool StateMachine::isModuleInitialized(const char * module_name) const
 {
@@ -139,6 +131,8 @@ bool StateMachine::isVehicleInitialized() const
   return true;
 }
 
+bool StateMachine::hasRoute() const {return state_input_.route != nullptr;}
+
 bool StateMachine::isRouteReceived() const {return state_input_.route != executing_route_;}
 
 bool StateMachine::isPlanningCompleted() const
@@ -179,11 +173,11 @@ bool StateMachine::isOverridden() const {return !isEngaged();}
 
 bool StateMachine::isEmergency() const
 {
-  if (!state_input_.is_emergency) {
+  if (!state_input_.emergency_mode) {
     return false;
   }
 
-  return state_input_.is_emergency->data;
+  return state_input_.emergency_mode->is_emergency;
 }
 
 bool StateMachine::hasArrivedGoal() const
@@ -200,6 +194,8 @@ bool StateMachine::hasArrivedGoal() const
   return false;
 }
 
+bool StateMachine::isFinalizing() const {return state_input_.is_finalizing;}
+
 AutowareState StateMachine::updateState(const StateInput & state_input)
 {
   msgs_ = {};
@@ -210,10 +206,32 @@ AutowareState StateMachine::updateState(const StateInput & state_input)
 
 AutowareState StateMachine::judgeAutowareState() const
 {
+  if (isFinalizing()) {
+    return AutowareState::Finalizing;
+  }
+
+  if (autoware_state_ != AutowareState::Emergency && isEmergency()) {
+    state_before_emergency_ = autoware_state_;
+    return AutowareState::Emergency;
+  }
+
   switch (autoware_state_) {
     case (AutowareState::InitializingVehicle): {
         if (isVehicleInitialized()) {
-          return AutowareState::WaitingForRoute;
+          if (!flags_.waiting_after_initializing) {
+            flags_.waiting_after_initializing = true;
+            times_.initializing_completed = state_input_.current_time;
+            break;
+          }
+
+          // Wait after initialize completed to avoid sync error
+          constexpr double wait_time_after_initializing = 1.0;
+          const auto time_from_initializing =
+            state_input_.current_time - times_.initializing_completed;
+          if (time_from_initializing.seconds() > wait_time_after_initializing) {
+            flags_.waiting_after_initializing = false;
+            return AutowareState::WaitingForRoute;
+          }
         }
 
         break;
@@ -224,6 +242,10 @@ AutowareState StateMachine::judgeAutowareState() const
           return AutowareState::Planning;
         }
 
+        if (hasRoute() && isEngaged() && !hasArrivedGoal()) {
+          return AutowareState::Driving;
+        }
+
         break;
       }
 
@@ -231,8 +253,8 @@ AutowareState StateMachine::judgeAutowareState() const
         executing_route_ = state_input_.route;
 
         if (isPlanningCompleted()) {
-          if (!waiting_after_planning_) {
-            waiting_after_planning_ = true;
+          if (!flags_.waiting_after_planning) {
+            flags_.waiting_after_planning = true;
             times_.planning_completed = state_input_.current_time;
             break;
           }
@@ -241,7 +263,7 @@ AutowareState StateMachine::judgeAutowareState() const
           constexpr double wait_time_after_planning = 1.0;
           const auto time_from_planning = state_input_.current_time - times_.planning_completed;
           if (time_from_planning.seconds() > wait_time_after_planning) {
-            waiting_after_planning_ = false;
+            flags_.waiting_after_planning = false;
             return AutowareState::WaitingForEngage;
           }
         }
@@ -250,26 +272,19 @@ AutowareState StateMachine::judgeAutowareState() const
       }
 
     case (AutowareState::WaitingForEngage): {
-        if (isEmergency()) {
-          return AutowareState::Emergency;
-        }
-
         if (isRouteReceived()) {
           return AutowareState::Planning;
         }
 
-        if (isEngaged()) {
-          return AutowareState::Driving;
+        if (hasArrivedGoal()) {
+          times_.arrived_goal = state_input_.current_time;
+          return AutowareState::ArrivedGoal;
         }
 
         break;
       }
 
     case (AutowareState::Driving): {
-        if (isEmergency()) {
-          return AutowareState::Emergency;
-        }
-
         if (isRouteReceived()) {
           return AutowareState::Planning;
         }
@@ -298,9 +313,13 @@ AutowareState StateMachine::judgeAutowareState() const
 
     case (AutowareState::Emergency): {
         if (!isEmergency()) {
-          return AutowareState::WaitingForEngage;
+          return state_before_emergency_;
         }
 
+        break;
+      }
+
+    case (AutowareState::Finalizing): {
         break;
       }
 

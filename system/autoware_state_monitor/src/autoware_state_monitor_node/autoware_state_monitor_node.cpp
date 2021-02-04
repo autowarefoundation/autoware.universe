@@ -12,14 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_state_monitor/autoware_state_monitor_node.hpp"
-
-#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
-
-#include <numeric>
+#include <deque>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
+
+#include "autoware_state_monitor/autoware_state_monitor_node.hpp"
+
+#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 
 namespace
 {
@@ -29,8 +30,9 @@ std::vector<Config> getConfigs(
   const std::string & config_namespace)
 {
   std::string names_key = config_namespace + ".names";
-  if(!interface->has_parameter(names_key))
+  if (!interface->has_parameter(names_key)) {
     return std::vector<Config>{};
+  }
   interface->declare_parameter(names_key);
   std::vector<std::string> config_names = interface->get_parameter(names_key).as_string_array();
 
@@ -105,12 +107,17 @@ std::string getStateMessage(const AutowareState & state)
     return "Emergency! Please recover the system.";
   }
 
+  if (state == AutowareState::Finalizing) {
+    return "Finalizing Autoware...";
+  }
+
   throw std::runtime_error("invalid state");
 }
 
 }  // namespace
 
-void AutowareStateMonitorNode::onAutowareEngage(const autoware_control_msgs::msg::EngageMode::ConstSharedPtr msg)
+void AutowareStateMonitorNode::onAutowareEngage(
+  const autoware_control_msgs::msg::EngageMode::ConstSharedPtr msg)
 {
   state_input_.autoware_engage = msg;
 }
@@ -121,9 +128,10 @@ void AutowareStateMonitorNode::onVehicleControlMode(
   state_input_.vehicle_control_mode = msg;
 }
 
-void AutowareStateMonitorNode::onIsEmergency(const std_msgs::msg::Bool::ConstSharedPtr msg)
+void AutowareStateMonitorNode::onIsEmergency(
+  const autoware_control_msgs::msg::EmergencyMode::ConstSharedPtr msg)
 {
-  state_input_.is_emergency = msg;
+  state_input_.emergency_mode = msg;
 }
 
 void AutowareStateMonitorNode::onRoute(const autoware_planning_msgs::msg::Route::ConstSharedPtr msg)
@@ -137,7 +145,8 @@ void AutowareStateMonitorNode::onRoute(const autoware_planning_msgs::msg::Route:
     state_input_.goal_pose = geometry_msgs::msg::Pose::ConstSharedPtr(p);
   }
 
-  if (disengage_on_route_) {
+  if (disengage_on_route_ && isEngaged()) {
+    RCLCPP_INFO(this->get_logger(), "new route received and disengage Autoware");
     setDisengage();
   }
 }
@@ -161,6 +170,39 @@ void AutowareStateMonitorNode::onTwist(const geometry_msgs::msg::TwistStamped::C
   }
 }
 
+bool AutowareStateMonitorNode::onShutdownService(
+  const std::shared_ptr<rmw_request_id_t> request_header,
+  const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
+  const std::shared_ptr<std_srvs::srv::Trigger::Response> response)
+{
+  (void)request_header;
+  state_input_.is_finalizing = true;
+
+  const auto t_start = this->get_clock()->now();
+  constexpr double timeout = 3.0;
+  while (rclcpp::ok()) {
+    rclcpp::spin_some(this->get_node_base_interface());
+
+    if (state_machine_->getCurrentState() == AutowareState::Finalizing) {
+      response->success = true;
+      response->message = "Shutdown Autoware.";
+      return true;
+    }
+
+    if ((this->get_clock()->now() - t_start).seconds() > timeout) {
+      response->success = false;
+      response->message = "Shutdown timeout.";
+      return true;
+    }
+
+    rclcpp::Rate(10.0).sleep();
+  }
+
+  response->success = false;
+  response->message = "Shutdown failure.";
+  return true;
+}
+
 void AutowareStateMonitorNode::onTimer()
 {
   // Prepare state input
@@ -180,12 +222,9 @@ void AutowareStateMonitorNode::onTimer()
       toString(autoware_state).c_str());
   }
 
-  // // Disengage on event
-  if (disengage_on_complete_ && autoware_state == AutowareState::ArrivedGoal) {
-    setDisengage();
-  }
-
-  if (disengage_on_emergency_ && autoware_state == AutowareState::Emergency) {
+  // Disengage on event
+  if (disengage_on_goal_ && isEngaged() && autoware_state == AutowareState::ArrivedGoal) {
+    RCLCPP_INFO(this->get_logger(), "arrived goal and disengage Autoware");
     setDisengage();
   }
 
@@ -212,7 +251,7 @@ void AutowareStateMonitorNode::onTimer()
   updater_.force_update();
 }
 
-// TODO: Use generic subscription base
+// TODO(jilaada): Use generic subscription base
 void AutowareStateMonitorNode::onTopic(
   const std::shared_ptr<rclcpp::SerializedMessage> msg, const std::string & topic_name)
 {
@@ -331,6 +370,15 @@ TfStats AutowareStateMonitorNode::getTfStats() const
   return tf_stats;
 }
 
+bool AutowareStateMonitorNode::isEngaged()
+{
+  if (!state_input_.autoware_engage) {
+    return false;
+  }
+
+  return state_input_.autoware_engage->is_engaged;
+}
+
 void AutowareStateMonitorNode::setDisengage()
 {
   autoware_control_msgs::msg::EngageMode msg;
@@ -344,11 +392,13 @@ AutowareStateMonitorNode::AutowareStateMonitorNode()
   tf_listener_(tf_buffer_),
   updater_(this)
 {
+  using std::placeholders::_1;
+  using std::placeholders::_2;
+  using std::placeholders::_3;
   // Parameter
   update_rate_ = this->declare_parameter("update_rate", 10.0);
   disengage_on_route_ = this->declare_parameter("disengage_on_route", true);
-  disengage_on_complete_ = this->declare_parameter("disengage_on_complete", false);
-  disengage_on_emergency_ = this->declare_parameter("disengage_on_emergency", false);
+  disengage_on_goal_ = this->declare_parameter("disengage_on_goal", true);
 
   // Parameter for StateMachine
   state_param_.th_arrived_distance_m = this->declare_parameter("th_arrived_distance_m", 1.0);
@@ -374,22 +424,28 @@ AutowareStateMonitorNode::AutowareStateMonitorNode()
   // Subscriber
   sub_autoware_engage_ = this->create_subscription<autoware_control_msgs::msg::EngageMode>(
     "input/autoware_engage", 1,
-    std::bind(&AutowareStateMonitorNode::onAutowareEngage, this, std::placeholders::_1));
+    std::bind(&AutowareStateMonitorNode::onAutowareEngage, this, _1));
   sub_vehicle_control_mode_ = this->create_subscription<autoware_vehicle_msgs::msg::ControlMode>(
     "input/vehicle_control_mode", 1,
-    std::bind(&AutowareStateMonitorNode::onVehicleControlMode, this, std::placeholders::_1));
-  sub_is_emergency_ = this->create_subscription<std_msgs::msg::Bool>(
+    std::bind(&AutowareStateMonitorNode::onVehicleControlMode, this, _1));
+  sub_is_emergency_ = this->create_subscription<autoware_control_msgs::msg::EmergencyMode>(
     "input/is_emergency", 1,
-    std::bind(&AutowareStateMonitorNode::onIsEmergency, this, std::placeholders::_1));
+    std::bind(&AutowareStateMonitorNode::onIsEmergency, this, _1));
   sub_route_ = this->create_subscription<autoware_planning_msgs::msg::Route>(
-    "input/route", rclcpp::QoS{1}.transient_local(), std::bind(&AutowareStateMonitorNode::onRoute, this, std::placeholders::_1));
+    "input/route", rclcpp::QoS{1}.transient_local(),
+    std::bind(&AutowareStateMonitorNode::onRoute, this, _1));
   sub_twist_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
-    "input/twist", 100, std::bind(&AutowareStateMonitorNode::onTwist, this, std::placeholders::_1));
+    "input/twist", 100, std::bind(&AutowareStateMonitorNode::onTwist, this, _1));
+
+  // Service
+  srv_shutdown_ = this->create_service<std_srvs::srv::Trigger>(
+    "service/shutdown", std::bind(&AutowareStateMonitorNode::onShutdownService, this, _1, _2, _3));
 
   // Publisher
   pub_autoware_state_ =
     this->create_publisher<autoware_system_msgs::msg::AutowareState>("output/autoware_state", 1);
-  pub_autoware_engage_ = this->create_publisher<autoware_control_msgs::msg::EngageMode>("output/autoware_engage", 1);
+  pub_autoware_engage_ =
+    this->create_publisher<autoware_control_msgs::msg::EngageMode>("output/autoware_engage", 1);
 
   // Diagnostic Updater
   setupDiagnosticUpdater();
@@ -400,7 +456,7 @@ AutowareStateMonitorNode::AutowareStateMonitorNode()
   // Timer
   auto timer_callback = std::bind(&AutowareStateMonitorNode::onTimer, this);
   auto period = std::chrono::duration_cast<std::chrono::nanoseconds>(
-    std::chrono::duration<double>(1.0/update_rate_));
+    std::chrono::duration<double>(1.0 / update_rate_));
 
   timer_ = std::make_shared<rclcpp::GenericTimer<decltype(timer_callback)>>(
     this->get_clock(), period, std::move(timer_callback),

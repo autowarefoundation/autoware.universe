@@ -8,6 +8,8 @@
   <arg name="output_autoware_state" default="/autoware/state" />
   <arg name="output_autoware_engage" default="/autoware/engage" />
 
+  <arg name="service_shutdown" default="/autoware/shutdown" />
+
   <arg name="config_file" default="$(find-pkg-share autoware_state_monitor)/config/autoware_state_monitor.yaml" />
 
   <node pkg="autoware_state_monitor" exec="autoware_state_monitor" name="autoware_state_monitor" output="screen">
@@ -20,6 +22,8 @@
     <remap from="output/autoware_state" to="$(var output_autoware_state)"/>
     <remap from="output/autoware_engage" to="$(var output_autoware_engage)"/>
 
+    <remap from="service/shutdown" to="$(var service_shutdown)"/>
+
     <param from="$(var config_file)" />
 
     <param name="update_rate" value="10.0" />
@@ -28,7 +32,6 @@
     <param name="th_stopped_velocity_mps" value="0.01" />
 
     <param name="disengage_on_route" value="true" />
-    <param name="disengage_on_complete" value="false" />
-    <param name="disengage_on_emergency" value="false" />
+    <param name="disengage_on_goal" value="true" />
   </node>
 </launch>

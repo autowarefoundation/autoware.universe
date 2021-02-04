@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_STATE_MONITOR_CONFIG_H_
-#define AUTOWARE_STATE_MONITOR_CONFIG_H_
+#ifndef AUTOWARE_STATE_MONITOR__CONFIG_HPP_
+#define AUTOWARE_STATE_MONITOR__CONFIG_HPP_
 
 #include <string>
 #include <utility>
@@ -98,4 +98,4 @@ struct TfStats
   std::vector<std::pair<TfConfig, rclcpp::Time>> timeout_list;  // pair<TfConfig, last_received>
 };
 
-#endif
+#endif  // AUTOWARE_STATE_MONITOR__CONFIG_HPP_

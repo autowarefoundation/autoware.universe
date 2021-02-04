@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_STATE_MONITOR_AUTOWARE_STATE_H_
-#define AUTOWARE_STATE_MONITOR_AUTOWARE_STATE_H_
+#ifndef AUTOWARE_STATE_MONITOR__AUTOWARE_STATE_HPP_
+#define AUTOWARE_STATE_MONITOR__AUTOWARE_STATE_HPP_
 
 #include <string>
 
@@ -28,6 +28,7 @@ enum class AutowareState : int8_t
   Driving,
   ArrivedGoal,
   Emergency,
+  Finalizing,
 };
 
 inline AutowareState fromString(const std::string & state)
@@ -41,6 +42,7 @@ inline AutowareState fromString(const std::string & state)
   if (state == StateMessage::DRIVING) {return AutowareState::Driving;}
   if (state == StateMessage::ARRIVAL_GOAL) {return AutowareState::ArrivedGoal;}
   if (state == StateMessage::EMERGENCY) {return AutowareState::Emergency;}
+  if (state == StateMessage::FINALIZING) {return AutowareState::Finalizing;}
 
   throw std::runtime_error("invalid state");
 }
@@ -56,8 +58,9 @@ inline std::string toString(const AutowareState & state)
   if (state == AutowareState::Driving) {return StateMessage::DRIVING;}
   if (state == AutowareState::ArrivedGoal) {return StateMessage::ARRIVAL_GOAL;}
   if (state == AutowareState::Emergency) {return StateMessage::EMERGENCY;}
+  if (state == AutowareState::Finalizing) {return StateMessage::FINALIZING;}
 
   throw std::runtime_error("invalid state");
 }
 
-#endif
+#endif  // AUTOWARE_STATE_MONITOR__AUTOWARE_STATE_HPP_

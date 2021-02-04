@@ -24,7 +24,7 @@ set(AUTOWARE_STATE_MONITOR_SRC
 )
 
 ## Add executables
-ament_auto_add_executable(autoware_state_monitor 
+ament_auto_add_executable(autoware_state_monitor
   src/autoware_state_monitor_node/main.cpp
   ${AUTOWARE_STATE_MONITOR_SRC}
 )

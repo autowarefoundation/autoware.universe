@@ -12,8 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_STATE_MONITOR_AUTOWARE_STATE_MONITOR_CORE_HPP_
-#define AUTOWARE_STATE_MONITOR_AUTOWARE_STATE_MONITOR_CORE_HPP_
+#ifndef AUTOWARE_STATE_MONITOR__AUTOWARE_STATE_MONITOR_NODE_HPP_
+#define AUTOWARE_STATE_MONITOR__AUTOWARE_STATE_MONITOR_NODE_HPP_
+
+#include <deque>
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
 
 #include "autoware_state_monitor/autoware_state.hpp"
 #include "autoware_state_monitor/config.hpp"
@@ -21,25 +27,20 @@
 
 #include "autoware_planning_msgs/msg/route.hpp"
 #include "autoware_planning_msgs/msg/trajectory.hpp"
+#include "autoware_control_msgs/msg/emergency_mode.hpp"
 #include "autoware_control_msgs/msg/engage_mode.hpp"
 #include "autoware_system_msgs/msg/autoware_state.hpp"
 #include "autoware_vehicle_msgs/msg/control_mode.hpp"
 
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/twist_stamped.hpp"
-#include "std_msgs/msg/bool.hpp"
+#include "std_srvs/srv/trigger.hpp"
 
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
 #include "diagnostic_updater/diagnostic_updater.hpp"
 #include "rclcpp_generic/generic_subscription.hpp"
 #include "rclcpp/rclcpp.hpp"
-
-#include <deque>
-#include <map>
-#include <memory>
-#include <string>
-#include <vector>
 
 class AutowareStateMonitorNode : public rclcpp::Node
 {
@@ -50,8 +51,7 @@ private:
   // Parameter
   double update_rate_;
   bool disengage_on_route_;
-  bool disengage_on_complete_;
-  bool disengage_on_emergency_;
+  bool disengage_on_goal_;
 
   std::vector<TopicConfig> topic_configs_;
   std::vector<ParamConfig> param_configs_;
@@ -66,13 +66,13 @@ private:
   rclcpp::Subscription<autoware_control_msgs::msg::EngageMode>::SharedPtr sub_autoware_engage_;
   rclcpp::Subscription<autoware_vehicle_msgs::msg::ControlMode>::SharedPtr
     sub_vehicle_control_mode_;
-  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr sub_is_emergency_;
+  rclcpp::Subscription<autoware_control_msgs::msg::EmergencyMode>::SharedPtr sub_is_emergency_;
   rclcpp::Subscription<autoware_planning_msgs::msg::Route>::SharedPtr sub_route_;
   rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr sub_twist_;
 
   void onAutowareEngage(const autoware_control_msgs::msg::EngageMode::ConstSharedPtr msg);
   void onVehicleControlMode(const autoware_vehicle_msgs::msg::ControlMode::ConstSharedPtr msg);
-  void onIsEmergency(const std_msgs::msg::Bool::ConstSharedPtr msg);
+  void onIsEmergency(const autoware_control_msgs::msg::EmergencyMode::ConstSharedPtr msg);
   void onRoute(const autoware_planning_msgs::msg::Route::ConstSharedPtr msg);
   void onTwist(const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg);
 
@@ -85,10 +85,19 @@ private:
   std::map<std::string, rclcpp_generic::GenericSubscription::SharedPtr> sub_topic_map_;
   std::map<std::string, std::deque<rclcpp::Time>> topic_received_time_buffer_;
 
+  // Service
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr srv_shutdown_;
+
+  bool onShutdownService(
+    const std::shared_ptr<rmw_request_id_t> request_header,
+    const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
+    std::shared_ptr<std_srvs::srv::Trigger::Response> response);
+
   // Publisher
   rclcpp::Publisher<autoware_system_msgs::msg::AutowareState>::SharedPtr pub_autoware_state_;
   rclcpp::Publisher<autoware_control_msgs::msg::EngageMode>::SharedPtr pub_autoware_engage_;
 
+  bool isEngaged();
   void setDisengage();
 
   // Timer
@@ -115,4 +124,4 @@ private:
     diagnostic_updater::DiagnosticStatusWrapper & stat, const std::string & module_name);
 };
 
-#endif
+#endif  // AUTOWARE_STATE_MONITOR__AUTOWARE_STATE_MONITOR_NODE_HPP_
