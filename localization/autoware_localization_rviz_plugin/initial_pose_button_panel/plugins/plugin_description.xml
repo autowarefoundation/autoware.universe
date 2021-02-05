@@ -1,4 +1,4 @@
-<library path="lib/libinitial_pose_button_panel">
+<library path="initial_pose_button_panel">
     <class name="autoware_localization_rviz_plugin/InitialPoseButtonPanel"
            type="autoware_localization_rviz_plugin::InitialPoseButtonPanel"
            base_class_type="rviz_common::Panel">

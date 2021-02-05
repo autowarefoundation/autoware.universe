@@ -18,13 +18,18 @@ set(QT_LIBRARIES Qt5::Widgets)
 add_definitions(-DQT_NO_KEYWORDS -g)
 set(CMAKE_AUTOMOC ON)
 
-ament_auto_add_library(initial_pose_button_panel 
+ament_auto_add_library(initial_pose_button_panel SHARED
   src/initial_pose_button_panel.cpp)
-target_link_libraries(initial_pose_button_panel 
+target_link_libraries(initial_pose_button_panel
   ${QT_LIBRARIES})
 
 # Export the plugin to be imported by rviz2
 pluginlib_export_plugin_description_file(rviz_common plugins/plugin_description.xml)
+
+if(BUILD_TESTING)
+find_package(ament_lint_auto REQUIRED)
+ament_lint_auto_find_test_dependencies()
+endif()
 
 ament_auto_package(
   INSTALL_TO_SHARE
