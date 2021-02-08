@@ -1,15 +1,11 @@
-## PRの種類
+## PR Type
 
-- [ ] 新機能
-- [ ] 既存機能の性能向上
-- [ ] バグフィックス
+- [ ] New Feature
+- [ ] Improvement
+- [ ] Bug fix
 
-## Jiraリンク
+## Description
 
-## 変更概要
+## Review Procedure
 
-## レビュー方法
-
-## その他
-
-- [ ] [リリースノート](https://tier4.atlassian.net/wiki/spaces/AIP/pages/563774416)への記載
+## Remarks
