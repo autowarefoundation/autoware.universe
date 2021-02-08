@@ -17,6 +17,6 @@
     - { role: tensorrt, when: yn_gpu == 'y' }
     - { role: ros2, rosdistro: foxy }
     - { role: autoware, rosdistro: foxy }
-    - { role: kvaser }
+    - { role: kvaser }  # Temporary for ros2 porting
     # - { role: pacmod, rosdistro: foxy }  # Temporary for ros2 porting
     # - { role: ros, release: melodic }
