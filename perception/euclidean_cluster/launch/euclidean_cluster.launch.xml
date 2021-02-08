@@ -1,44 +1,16 @@
------ NOT PORTED TO ROS2 YET: SHOULD USE CONTAINER IN PYTHON -----
-
 <?xml version="1.0"?>
 
 <launch>
-  <arg name="input/pointcloud" default="/sensing/lidar/no_ground/pointcloud"/>
-  <arg name="input/map" default="/map/pointcloud_map" />
-  <arg name="output/clusters" default="clusters"/>
+  <arg name="input_pointcloud" default="/sensing/lidar/no_ground/pointcloud"/>
+  <arg name="input_map" default="/map/pointcloud_map" />
+  <arg name="output_clusters" default="clusters"/>
   <arg name="use_pointcloud_map" default="false"/>
 
-  <node pkg="nodelet" type="nodelet" name="euclidean_cluster_manager" args="manager" output="screen" />
-  <node pkg="nodelet" type="nodelet" name="$(anon voxel_grid_filter)" args="load pcl/VoxelGrid euclidean_cluster_manager" output="screen">
-    <remap from="~input" to="$(arg input/pointcloud)" />
-    <remap from="~output" to="voxel_grid_filtered/pointcloud" />
-    <rosparam>
-        filter_field_name: z
-        filter_limit_min: 0.1
-        filter_limit_max: 2.5
-        filter_limit_negative: False
-        leaf_size: 0.1
-        input_frame: base_link
-        output_frame: base_link
-    </rosparam>
-  </node>
-  <node if="$(arg use_pointcloud_map)" pkg="nodelet" type="nodelet" name="$(anon compare_map_filter)" args="load points_preprocessor/voxel_based_compare_map_filter_nodelet euclidean_cluster_manager" output="screen">
-    <remap from="~input" to="voxel_grid_filtered/pointcloud"/>
-    <remap from="~map" to="$(arg input/map)"/>
-    <remap from="~output" to="compare_map_filtered/pointcloud"/>
-  </node>
+  <include file="$(find-pkg-share euclidean_cluster)/launch/euclidean_cluster.launch.py">
+      <param name="input_points_raw_list" value="$(var input_pointcloud)" />
+      <param name="input_map" value="$(var input_map)" />
+      <param name="output_clusters" value="$(var output_clusters)" />
+      <param name="use_pointcloud_map" value="$(var use_pointcloud_map)" />
+  </include>  
 
-  <node pkg="nodelet" type="nodelet" name="$(anon euclidean_cluster)" args="load euclidean_cluster/euclidean_cluster_nodelet euclidean_cluster_manager" output="screen">
-    <remap if="$(arg use_pointcloud_map)" from="~input" to="compare_map_filtered/pointcloud"/>
-    <remap unless="$(arg use_pointcloud_map)" from="~input" to="voxel_grid_filtered/pointcloud"/>
-    <remap from="~output" to="$(arg output/clusters)"/>
-    <remap from="~debug/clusters" to="debug/clusters" />
-    <rosparam>
-            target_frame: base_link
-            use_height: false
-            tolerance: 0.7
-            min_cluster_size: 10
-            max_cluster_size: 1000
-    </rosparam>
-  </node>
 </launch>

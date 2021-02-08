@@ -19,7 +19,9 @@
 // #include "tf2_ros/transform_listener.h"
 // #include "tf2_ros/message_filter.h"
 // #include "message_filters/subscriber.h"
-#include "sensor_msgs/msg/point_cloud2.h"
+#include "sensor_msgs/msg/point_cloud2.hpp"
+#include "geometry_msgs/msg/pose_stamped.hpp"
+#include "autoware_perception_msgs/msg/dynamic_object_with_feature_array.hpp"
 
 namespace euclidean_cluster
 {
@@ -31,6 +33,7 @@ public:
 private:
 
   void pointcloudCallback(sensor_msgs::msg::PointCloud2::ConstSharedPtr input_msg);
+  geometry_msgs::msg::Point getCentroid(const sensor_msgs::msg::PointCloud2 & pointcloud);
 
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_sub_;
   rclcpp::Publisher<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>::SharedPtr cluster_pub_;
