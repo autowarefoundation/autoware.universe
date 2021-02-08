@@ -180,10 +180,10 @@ void DummyPerceptionPublisherNode::timerCallback()
       pcl::PointCloud<pcl::PointXYZ>::Ptr ray_traced_pointcloud_ptr(
         new pcl::PointCloud<pcl::PointXYZ>);
       for (size_t j = 0; j < v_pointcloud.at(i)->size(); ++j) {
-        Eigen::Vector3i grid_cordinates = ray_tracing_filter.getGridCoordinates(
+        Eigen::Vector3i grid_coordinates = ray_tracing_filter.getGridCoordinates(
           v_pointcloud.at(i)->at(j).x, v_pointcloud.at(i)->at(j).y, v_pointcloud.at(i)->at(j).z);
         int grid_state;
-        if (ray_tracing_filter.occlusionEstimation(grid_state, grid_cordinates) != 0) {
+        if (ray_tracing_filter.occlusionEstimation(grid_state, grid_coordinates) != 0) {
           RCLCPP_ERROR(get_logger(), "ray tracing failed");
         }
         if (grid_state == 1) {  // occluded
@@ -351,6 +351,21 @@ void DummyPerceptionPublisherNode::objectCallback(
         dummy_perception_publisher::msg::Object object;
         object = *msg;
         tf2::toMsg(tf_map2object_origin, object.initial_state.pose_covariance.pose);
+
+        // Use base_link Z
+        geometry_msgs::msg::TransformStamped ros_map2base_link;
+        try {
+          ros_map2base_link =
+            tf_buffer_.lookupTransform(
+            "map", "base_link", rclcpp::Time(0), rclcpp::Duration::from_seconds(0.5));
+          object.initial_state.pose_covariance.pose.position.z =
+            ros_map2base_link.transform.translation.z;
+        } catch (tf2::TransformException & ex) {
+          RCLCPP_WARN_SKIPFIRST_THROTTLE(
+            get_logger(), *get_clock(), 5000, "%s", ex.what());
+          return;
+        }
+
         objects_.push_back(object);
         break;
       }
