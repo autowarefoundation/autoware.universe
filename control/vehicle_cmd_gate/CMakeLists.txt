@@ -17,6 +17,9 @@ find_package(ament_cmake REQUIRED)
 find_package(autoware_control_msgs REQUIRED)
 find_package(autoware_vehicle_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(std_srvs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(diagnostic_updater REQUIRED)
 
 # Add path of include dir
 include_directories(include)
@@ -27,7 +30,10 @@ add_executable(vehicle_cmd_gate src/vehicle_cmd_gate_node.cpp src/vehicle_cmd_ga
 set(VEHICLE_CMD_GATE_DEPENDENCIES
 	autoware_control_msgs
 	autoware_vehicle_msgs
-	rclcpp
+  rclcpp
+  std_srvs
+  geometry_msgs
+  diagnostic_updater
 )
 ament_target_dependencies(vehicle_cmd_gate ${VEHICLE_CMD_GATE_DEPENDENCIES})
 ament_export_dependencies(${VEHICLE_CMD_GATE_DEPENDENCIES})

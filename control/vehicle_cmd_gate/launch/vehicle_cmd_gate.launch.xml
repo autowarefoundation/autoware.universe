@@ -1,11 +1,17 @@
 <launch>
   <arg name="vehicle_param_file" />
+  <arg name="config_file" default="$(find vehicle_cmd_gate)/config/vehicle_cmd_gate.param.yaml" />
+  <arg name="use_emergency_handling" default="false" />
+  <arg name="use_external_emergency_stop" default="true" />
 
   <node pkg="vehicle_cmd_gate" exec="vehicle_cmd_gate" name="vehicle_cmd_gate" output="screen">
     <param from="$(var vehicle_param_file)" />
     <remap from="input/engage" to="/autoware/engage"/>
+    <remap from="input/system_emergency" to="/system/emergency/is_emergency"/>
+    <remap from="input/external_emergency_stop" to="/remote/emergency_stop"/>
     <remap from="input/emergency" to="/system/emergency/is_emergency"/>
     <remap from="input/gate_mode" to="/remote/gate_mode_cmd"/>
+    <remap from="input/steering" to="/vehicle/status/steering"/>
 
     <remap from="input/auto/control_cmd" to="trajectory_follower/control_cmd"/>
     <remap from="input/auto/turn_signal_cmd" to="/planning/turn_signal_decider/turn_signal_cmd"/>
@@ -25,7 +31,12 @@
     <remap from="output/turn_signal_cmd" to="/control/turn_signal_cmd"/>
     <remap from="output/gate_mode" to="/control/current_gate_mode"/>
 
-    <param from="$(find-pkg-share vehicle_cmd_gate)/config/vehicle_cmd_gate.param.yaml" />
+    <remap from="service/external_emergency_stop" to="external_emergency_stop"/>
+    <remap from="service/clear_external_emergency_stop" to="clear_external_emergency_stop"/>
+
+    <param from="$(var config_file)" />
+    <param name="use_emergency_handling" value="$(var use_emergency_handling)" />
+    <param name="use_external_emergency_stop" value="$(var use_external_emergency_stop)" />
   </node>
 
 </launch>
