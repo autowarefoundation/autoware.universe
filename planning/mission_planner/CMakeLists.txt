@@ -23,6 +23,11 @@ ament_auto_add_executable(mission_planner
   src/mission_planner_lanelet2/utility_functions.cpp
 )
 
+ament_auto_add_executable(goal_pose_visualizer
+  src/goal_pose_visualizer/main.cpp
+  src/goal_pose_visualizer/goal_pose_visualizer.cpp
+)
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()

@@ -59,33 +59,3 @@ std::vector<std::pair<double, lanelet::Lanelet>> excludeSubtypeLaneletsWithDista
 
   return exclude_subtype_lanelets;
 }
-
-bool getClosestLanelet(
-  const geometry_msgs::msg::Pose & search_pose, const lanelet::LaneletMapPtr & lanelet_map_ptr_,
-  lanelet::Lanelet * closest_lanelet, const rclcpp::Logger & logger, double distance_thresh)
-{
-  lanelet::BasicPoint2d search_point(search_pose.position.x, search_pose.position.y);
-  std::vector<std::pair<double, lanelet::Lanelet>> nearest_lanelet =
-    lanelet::geometry::findNearest(lanelet_map_ptr_->laneletLayer, search_point, 1);
-  const auto nearest_road_lanelet =
-    excludeSubtypeLaneletsWithDistance(nearest_lanelet, lanelet::AttributeValueString::Crosswalk);
-  if (nearest_road_lanelet.empty()) {
-    RCLCPP_ERROR_STREAM(
-      logger, "Failed to find the closest lane!" << std::endl
-                                                 << "search point: " << toString(search_pose)
-                                                 << std::endl);
-    return false;
-  }
-  if (nearest_road_lanelet.front().first > distance_thresh) {
-    RCLCPP_ERROR_STREAM(
-      logger, "Closest lane is too far away!"
-                << std::endl
-                << "search point: " << toString(search_pose) << std::endl
-                << "lane id: " << nearest_lanelet.front().second.id());
-    return false;
-  }
-
-  *closest_lanelet = nearest_road_lanelet.front().second;
-
-  return true;
-}

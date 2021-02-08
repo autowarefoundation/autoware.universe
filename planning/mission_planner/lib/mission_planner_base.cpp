@@ -131,7 +131,7 @@ void MissionPlanner::checkpointCallback(
 void MissionPlanner::publishRoute(const autoware_planning_msgs::msg::Route & route) const
 {
   if (!route.route_sections.empty()) {
-    RCLCPP_INFO(get_logger(), "Route successfuly planned. Publishing...");
+    RCLCPP_INFO(get_logger(), "Route successfully planned. Publishing...");
     route_publisher_->publish(route);
     visualizeRoute(route);
   } else {

@@ -19,7 +19,7 @@
 #include "lanelet2_extension/utility/query.hpp"
 #include "mission_planner/lanelet2_impl/utility_functions.hpp"
 
-// lnanelet
+// lanelet
 #include <vector>
 
 #include "lanelet2_routing/Route.h"

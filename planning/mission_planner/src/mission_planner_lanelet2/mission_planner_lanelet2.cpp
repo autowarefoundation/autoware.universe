@@ -135,6 +135,8 @@ void MissionPlannerLanelet2::mapCallback(
   lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(
     *msg, lanelet_map_ptr_, &traffic_rules_ptr_, &routing_graph_ptr_);
+  lanelet::ConstLanelets all_lanelets = lanelet::utils::query::laneletLayer(lanelet_map_ptr_);
+  road_lanelets_ = lanelet::utils::query::roadLanelets(all_lanelets);
   is_graph_ready_ = true;
 }
 
@@ -162,10 +164,10 @@ void MissionPlannerLanelet2::visualizeRoute(const autoware_planning_msgs::msg::R
   }
 
   std_msgs::msg::ColorRGBA cl_route, cl_ll_borders, cl_end, cl_normal, cl_goal;
-  setColor(&cl_route, 0.0, 0.7, 0.2, 0.2);
-  setColor(&cl_goal, 0.0, 0.7, 0.7, 0.2);
-  setColor(&cl_end, 0.0, 0.2, 0.7, 0.2);
-  setColor(&cl_normal, 0.0, 0.7, 0.2, 0.2);
+  setColor(&cl_route, 0.2, 0.4, 0.2, 0.05);
+  setColor(&cl_goal, 0.2, 0.4, 0.4, 0.05);
+  setColor(&cl_end, 0.2, 0.2, 0.4, 0.05);
+  setColor(&cl_normal, 0.2, 0.4, 0.2, 0.05);
   setColor(&cl_ll_borders, 1.0, 1.0, 1.0, 0.999);
 
   visualization_msgs::msg::MarkerArray route_marker_array;
@@ -190,7 +192,7 @@ void MissionPlannerLanelet2::visualizeRoute(const autoware_planning_msgs::msg::R
 bool MissionPlannerLanelet2::isGoalValid() const
 {
   lanelet::Lanelet closest_lanelet;
-  if (!getClosestLanelet(goal_pose_.pose, lanelet_map_ptr_, &closest_lanelet, get_logger())) {
+  if (!lanelet::utils::query::getClosestLanelet(road_lanelets_, goal_pose_.pose, &closest_lanelet)) {
     return false;
   }
   const auto goal_lanelet_pt = lanelet::utils::conversion::toLaneletPoint(goal_pose_.pose.position);
@@ -277,11 +279,11 @@ bool MissionPlannerLanelet2::planPathBetweenCheckpoints(
   lanelet::ConstLanelets * path_lanelets_ptr) const
 {
   lanelet::Lanelet start_lanelet;
-  if (!getClosestLanelet(start_checkpoint.pose, lanelet_map_ptr_, &start_lanelet, get_logger())) {
+  if (!lanelet::utils::query::getClosestLanelet(road_lanelets_, start_checkpoint.pose, &start_lanelet)) {
     return false;
   }
   lanelet::Lanelet goal_lanelet;
-  if (!getClosestLanelet(goal_checkpoint.pose, lanelet_map_ptr_, &goal_lanelet, get_logger())) {
+  if (!lanelet::utils::query::getClosestLanelet(road_lanelets_, goal_checkpoint.pose, &goal_lanelet)) {
     return false;
   }
 
