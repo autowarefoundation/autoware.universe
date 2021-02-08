@@ -88,7 +88,7 @@ void GNSSPoser::callbackNavSatFix(
     orientation = getQuaternionByHeading(nav_pvt_msg_ptr_->heading);
   } else {
     static auto prev_position = median_position;
-    orientation = getQuaternionByPositionDiffence(median_position, prev_position);
+    orientation = getQuaternionByPositionDifference(median_position, prev_position);
     prev_position = median_position;
   }
 
@@ -225,7 +225,7 @@ geometry_msgs::msg::Quaternion GNSSPoser::getQuaternionByHeading(const int headi
   return tf2::toMsg(quta);
 }
 
-geometry_msgs::msg::Quaternion GNSSPoser::getQuaternionByPositionDiffence(
+geometry_msgs::msg::Quaternion GNSSPoser::getQuaternionByPositionDifference(
   const geometry_msgs::msg::Point & point, const geometry_msgs::msg::Point & prev_point)
 {
   const double yaw = std::atan2(point.y - prev_point.y, point.x - prev_point.x);

@@ -27,8 +27,8 @@ This package use GeographicLib to calculate coordinates.
 
 ### Ublox
 
-If you use ublox GNSS receriver, install below package.
-This allow to obtain heading while vehicle is stopping.
+If you use ublox GNSS receiver, install below package.
+This allows to obtain heading while vehicle is stopping.
 
 1. Download package <https://github.com/KumarRobotics/ublox.git>
 2. build package
@@ -43,7 +43,7 @@ This package use gnss package in autoware.
 ## Usage
 
     roslaunch gnss_poser gnss_poser.launch
-For ublox GNSS receriver
+For ublox GNSS receiver
 
     roslaunch gnss_poser ubloxfix2mgrs.launch
 
