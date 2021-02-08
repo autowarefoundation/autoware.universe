@@ -14,6 +14,8 @@
 
 #include "scenario_selector/scenario_selector_node.hpp"
 
+#include <deque>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -28,16 +30,17 @@
 
 namespace
 {
-template <class T>
+template<class T>
 void onData(const T & data, T * buffer)
 {
   *buffer = data;
 }
 
-template <class T>
+template<class T>
 std::function<void(T)> createCallback(T * buffer)
 {
-  return static_cast<std::function<void(T)>>(std::bind(&onData<T>, std::placeholders::_1, buffer));
+  using Func = std::function<void (T)>;
+  return static_cast<Func>(std::bind(&onData<T>, std::placeholders::_1, buffer));
 }
 
 std::shared_ptr<lanelet::ConstPolygon3d> findNearestParkinglot(
@@ -155,8 +158,8 @@ bool isStopped(
 
 Input ScenarioSelectorNode::getScenarioInput(const std::string & scenario)
 {
-  if (scenario == autoware_planning_msgs::msg::Scenario::LANEDRIVING) return input_lane_driving_;
-  if (scenario == autoware_planning_msgs::msg::Scenario::PARKING) return input_parking_;
+  if (scenario == autoware_planning_msgs::msg::Scenario::LANEDRIVING) {return input_lane_driving_;}
+  if (scenario == autoware_planning_msgs::msg::Scenario::PARKING) {return input_parking_;}
   RCLCPP_ERROR_STREAM(this->get_logger(), "invalid scenario argument: " << scenario);
   return input_lane_driving_;
 }
@@ -310,13 +313,13 @@ ScenarioSelectorNode::ScenarioSelectorNode()
   // Input
   input_lane_driving_.sub_trajectory =
     this->create_subscription<autoware_planning_msgs::msg::Trajectory>(
-      "input/lane_driving/trajectory", rclcpp::QoS{1},
-      createCallback<autoware_planning_msgs::msg::Trajectory::ConstSharedPtr>(
-        &input_lane_driving_.buf_trajectory));
+    "input/lane_driving/trajectory", rclcpp::QoS{1},
+    createCallback<autoware_planning_msgs::msg::Trajectory::ConstSharedPtr>(
+      &input_lane_driving_.buf_trajectory));
 
   input_parking_.sub_trajectory =
     this->create_subscription<autoware_planning_msgs::msg::Trajectory>(
-      "input/parking/trajectory", rclcpp::QoS{1}, createCallback(&input_parking_.buf_trajectory));
+    "input/parking/trajectory", rclcpp::QoS{1}, createCallback(&input_parking_.buf_trajectory));
 
   sub_lanelet_map_ = this->create_subscription<autoware_lanelet2_msgs::msg::MapBin>(
     "input/lanelet_map", rclcpp::QoS{1}.transient_local(),

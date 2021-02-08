@@ -30,7 +30,7 @@ None
 
 1. Write your remapping info in `scenario_selector.launch` or add args when executing `roslaunch`
 2. `roslaunch scenario_selector scenario_selector.launch`
-   - If you would like to use only a single scenrio, `roslaunch scenario_selector dummy_scenario_selector_{scenario_name}.launch`
+   - If you would like to use only a single scenario, `roslaunch scenario_selector dummy_scenario_selector_{scenario_name}.launch`
 
 ### Parameters
 

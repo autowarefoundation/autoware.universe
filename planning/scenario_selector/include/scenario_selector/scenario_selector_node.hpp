@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCENARIO_SELECTOR_SCENARIO_SELECTOR_NODE_H_
-#define SCENARIO_SELECTOR_SCENARIO_SELECTOR_NODE_H_
+#ifndef SCENARIO_SELECTOR__SCENARIO_SELECTOR_NODE_HPP_
+#define SCENARIO_SELECTOR__SCENARIO_SELECTOR_NODE_HPP_
 
 #include <deque>
 #include <memory>
@@ -93,4 +93,4 @@ private:
   double th_stopped_velocity_mps_;
 };
 
-#endif
+#endif  // SCENARIO_SELECTOR__SCENARIO_SELECTOR_NODE_HPP_
