@@ -82,6 +82,12 @@ const char * getGateModeName(const GateModeType & gate_mode)
   return "NOT_SUPPORTED";
 }
 
+double calcMapping(const double input, const double sensitivity)
+{
+  const double exponent = 1.0 / (std::max(0.001, std::min(1.0, sensitivity)));
+  return std::pow(input, exponent);
+}
+
 }  // namespace
 
 void AutowareJoyControllerNode::onJoy(const sensor_msgs::msg::Joy::ConstSharedPtr msg)
@@ -103,10 +109,6 @@ void AutowareJoyControllerNode::onJoy(const sensor_msgs::msg::Joy::ConstSharedPt
 
   if (joy_->gate_mode()) {
     publishGateMode();
-  }
-
-  if (joy_->emergency() || joy_->clear_emergency()) {
-    publishEmergency();
   }
 
   if (joy_->autoware_engage() || joy_->autoware_disengage()) {
@@ -174,6 +176,7 @@ void AutowareJoyControllerNode::onTimer()
 
   publishControlCommand();
   publishRawControlCommand();
+  publishEmergencyStop();
 
   // tmp
   publishVehicleCommand();
@@ -224,8 +227,9 @@ void AutowareJoyControllerNode::publishRawControlCommand()
 
     cmd.steering_angle = steer_ratio_ * joy_->steer();
     cmd.steering_angle_velocity = steering_angle_velocity_;
-    cmd.throttle = accel_ratio_ * joy_->accel();
-    cmd.brake = brake_ratio_ * joy_->brake();
+    cmd.throttle =
+      accel_ratio_ * calcMapping(static_cast<double>(joy_->accel()), accel_sensitivity_);
+    cmd.brake = brake_ratio_ * calcMapping(static_cast<double>(joy_->brake()), brake_sensitivity_);
   }
 
   pub_raw_control_command_->publish(cmd_stamped);
@@ -308,21 +312,35 @@ void AutowareJoyControllerNode::publishGateMode()
   prev_gate_mode_ = gate_mode.data;
 }
 
-void AutowareJoyControllerNode::publishEmergency()
+void AutowareJoyControllerNode::publishEmergencyStop()
 {
   autoware_debug_msgs::msg::BoolStamped emergency;
 
-  if (joy_->emergency()) {
+  if (joy_->emergency_stop()) {
     emergency.data = true;
     RCLCPP_INFO(get_logger(), "Emergency");
   }
 
-  if (joy_->clear_emergency()) {
+  if (joy_->clear_emergency_stop()) {
     emergency.data = false;
-    RCLCPP_INFO(get_logger(), "Clear Emergency");
+
+    auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
+    auto result = client_clear_emergency_stop_->async_send_request(
+      request,
+      std::bind(&AutowareJoyControllerNode::clearEmergencyResponse, this, std::placeholders::_1));
   }
 
-  pub_emergency_->publish(emergency);
+  pub_emergency_stop_->publish(emergency);
+}
+
+void AutowareJoyControllerNode::clearEmergencyResponse(
+  rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture result)
+{
+  if (result.get()->success) {
+    RCLCPP_INFO(get_logger(), "Clear Emergency Stop");
+  } else {
+    RCLCPP_WARN(get_logger(), "failed to clear emergency stop: %s", result.get()->message.c_str());
+  }
 }
 
 void AutowareJoyControllerNode::publishAutowareEngage()
@@ -401,6 +419,8 @@ AutowareJoyControllerNode::AutowareJoyControllerNode()
   brake_ratio_ = declare_parameter("brake_ratio", 5.0);
   steer_ratio_ = declare_parameter("steer_ratio", 0.5);
   steering_angle_velocity_ = declare_parameter("steering_angle_velocity", 0.1);
+  accel_sensitivity_ = declare_parameter("accel_sensitivity", 1.0);
+  brake_sensitivity_ = declare_parameter("brake_sensitivity", 1.0);
   velocity_gain_ = declare_parameter("control_command/velocity_gain", 3.0);
   max_forward_velocity_ = declare_parameter("control_command/max_forward_velocity", 20.0);
   max_backward_velocity_ = declare_parameter("control_command/max_backward_velocity", 3.0);
@@ -428,8 +448,8 @@ AutowareJoyControllerNode::AutowareJoyControllerNode()
   pub_gate_mode_ = this->create_publisher<autoware_control_msgs::msg::GateMode>(
     "output/gate_mode",
     1);
-  pub_emergency_ = this->create_publisher<autoware_debug_msgs::msg::BoolStamped>(
-    "output/emergency",
+  pub_emergency_stop_ = this->create_publisher<autoware_debug_msgs::msg::BoolStamped>(
+    "output/emergency_stop",
     1);
   pub_autoware_engage_ = this->create_publisher<autoware_debug_msgs::msg::BoolStamped>(
     "output/autoware_engage", 1);
@@ -443,6 +463,17 @@ AutowareJoyControllerNode::AutowareJoyControllerNode()
     this->create_publisher<autoware_vehicle_msgs::msg::RawVehicleCommand>(
     "output/raw_vehicle_cmd",
     1);
+
+  // Service Client
+  client_clear_emergency_stop_ = this->create_client<std_srvs::srv::Trigger>("service/clear_emergency_stop");
+  while (!client_clear_emergency_stop_->wait_for_service(std::chrono::seconds(1))) {
+    if (!rclcpp::ok()) {
+      RCLCPP_ERROR(get_logger(), "Interrupted while waiting for service.");
+      rclcpp::shutdown();
+      return;
+    }
+    RCLCPP_INFO(get_logger(), "Waiting for clear_emergency_stop service connection...");
+  }
 
   // Timer
   initTimer(1.0 / update_rate_);

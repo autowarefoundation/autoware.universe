@@ -9,7 +9,7 @@
   <arg name="output_shift" default="/remote/shift_cmd" />
   <arg name="output_turn_signal" default="/remote/turn_signal_cmd" />
   <arg name="output_gate_mode" default="/remote/gate_mode_cmd" />
-  <arg name="output_emergency" default="/remote/emergency" />
+  <arg name="output_emergency_stop" default="/remote/emergency_stop" />
   <arg name="output_autoware_engage" default="/autoware/engage" />
   <arg name="output_vehicle_engage" default="/vehicle/engage" />
 
@@ -24,7 +24,7 @@
     <remap from="output/shift" to="$(var output_shift)"/>
     <remap from="output/turn_signal" to="$(var output_turn_signal)"/>
     <remap from="output/gate_mode" to="$(var output_gate_mode)"/>
-    <remap from="output/emergency" to="$(var output_emergency)"/>
+    <remap from="output/emergency_stop" to="$(var output_emergency_stop)"/>
     <remap from="output/vehicle_engage" to="$(var output_vehicle_engage)"/>
     <remap from="output/autoware_engage" to="$(var output_autoware_engage)"/>
     <remap from="output/vehicle_engage" to="$(var output_vehicle_engage)"/>
@@ -32,6 +32,8 @@
     <!-- tmp -->
     <remap from="output/vehicle_cmd" to="/remote/vehicle_cmd"/>
     <remap from="output/raw_vehicle_cmd" to="/remote/raw_vehicle_cmd"/>
+
+    <remap from="service/clear_emergency_stop" to="/control/vehicle_cmd_gate/clear_external_emergency_stop"/>
 
     <param from="$(var config_file)" />
     <param name="joy_type" value="$(var joy_type)" />

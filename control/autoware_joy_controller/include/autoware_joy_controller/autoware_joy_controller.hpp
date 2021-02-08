@@ -32,6 +32,9 @@
 #include "autoware_vehicle_msgs/msg/raw_vehicle_command.hpp"
 #include "autoware_vehicle_msgs/msg/vehicle_command.hpp"
 
+#include "std_srvs/srv/trigger.hpp"
+
+
 using ShiftType = autoware_vehicle_msgs::msg::Shift::_data_type;
 using TurnSignalType = autoware_vehicle_msgs::msg::TurnSignal::_data_type;
 using GateModeType = autoware_control_msgs::msg::GateMode::_data_type;
@@ -49,6 +52,8 @@ private:
   double brake_ratio_;
   double steer_ratio_;
   double steering_angle_velocity_;
+  double accel_sensitivity_;
+  double brake_sensitivity_;
 
   // ControlCommand Parameter
   double velocity_gain_;
@@ -75,7 +80,7 @@ private:
   rclcpp::Publisher<autoware_vehicle_msgs::msg::ShiftStamped>::SharedPtr pub_shift_;
   rclcpp::Publisher<autoware_vehicle_msgs::msg::TurnSignal>::SharedPtr pub_turn_signal_;
   rclcpp::Publisher<autoware_control_msgs::msg::GateMode>::SharedPtr pub_gate_mode_;
-  rclcpp::Publisher<autoware_debug_msgs::msg::BoolStamped>::SharedPtr pub_emergency_;
+  rclcpp::Publisher<autoware_debug_msgs::msg::BoolStamped>::SharedPtr pub_emergency_stop_;
   rclcpp::Publisher<autoware_debug_msgs::msg::BoolStamped>::SharedPtr pub_autoware_engage_;
   rclcpp::Publisher<autoware_debug_msgs::msg::BoolStamped>::SharedPtr pub_vehicle_engage_;
 
@@ -84,9 +89,13 @@ private:
   void publishShift();
   void publishTurnSignal();
   void publishGateMode();
-  void publishEmergency();
+  void publishEmergencyStop();
   void publishAutowareEngage();
   void publishVehicleEngage();
+  void clearEmergencyResponse(rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture result);
+
+  // Service Client
+  rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr client_clear_emergency_stop_;
 
   // Previous State
   autoware_control_msgs::msg::ControlCommand prev_control_command_;

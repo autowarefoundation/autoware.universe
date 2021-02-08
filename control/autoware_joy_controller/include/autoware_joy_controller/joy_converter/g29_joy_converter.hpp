@@ -49,8 +49,8 @@ public:
 
   bool gate_mode() const {return Options();}
 
-  bool emergency() const {return !reverse() && PS();}
-  bool clear_emergency() const {return reverse() && PS();}
+  bool emergency_stop() const {return !reverse() && PS();}
+  bool clear_emergency_stop() const {return reverse() && PS();}
 
   bool autoware_engage() const {return !reverse() && Circle();}
   bool autoware_disengage() const {return reverse() && Circle();}

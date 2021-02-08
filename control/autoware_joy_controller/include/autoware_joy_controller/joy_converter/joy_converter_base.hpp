@@ -38,8 +38,8 @@ public:
 
   virtual bool gate_mode() const = 0;
 
-  virtual bool emergency() const = 0;
-  virtual bool clear_emergency() const = 0;
+  virtual bool emergency_stop() const = 0;
+  virtual bool clear_emergency_stop() const = 0;
 
   virtual bool autoware_engage() const = 0;
   virtual bool autoware_disengage() const = 0;
