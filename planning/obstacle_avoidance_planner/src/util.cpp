@@ -1,19 +1,16 @@
-/*
- * Copyright 2018 Autoware Foundation. All rights reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
+// Copyright 2020 Tier IV, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #include <algorithm>
 #include <limits>
@@ -112,6 +109,13 @@ double getYawFromPoints(
   return std::atan2(dy, dx);
 }
 
+geometry_msgs::msg::Quaternion getQuaternionFromYaw(const double yaw)
+{
+  tf2::Quaternion q;
+  q.setRPY(0, 0, yaw);
+  return tf2::toMsg(q);
+}
+
 double normalizeRadian(const double angle)
 {
   double n_angle = std::fmod(angle, 2 * M_PI);
@@ -164,7 +168,8 @@ boost::optional<geometry_msgs::msg::Point> transformMapToOptionalImage(
   double map_y_in_image_resolution = relative_p.y / resolution;
   double image_x = map_y_height - map_y_in_image_resolution;
   double image_y = map_x_width - map_x_in_image_resolution;
-  if (image_x >= 0 && image_x < static_cast<int>(map_y_height) && image_y >= 0 &&
+  if (
+    image_x >= 0 && image_x < static_cast<int>(map_y_height) && image_y >= 0 &&
     image_y < static_cast<int>(map_x_width))
   {
     geometry_msgs::msg::Point image_point;
@@ -189,7 +194,8 @@ bool transformMapToImage(
   const double map_y_in_image_resolution = relative_p.y * scale;
   const double image_x = map_y_height - map_y_in_image_resolution;
   const double image_y = map_x_width - map_x_in_image_resolution;
-  if (image_x >= 0 && image_x < static_cast<int>(map_y_height) && image_y >= 0 &&
+  if (
+    image_x >= 0 && image_x < static_cast<int>(map_y_height) && image_y >= 0 &&
     image_y < static_cast<int>(map_x_width))
   {
     image_point.x = image_x;
@@ -269,6 +275,28 @@ std::vector<geometry_msgs::msg::Point> getInterpolatedPoints(
     }
     tmp_x.push_back(concat_points[i].x);
     tmp_y.push_back(concat_points[i].y);
+  }
+  std::vector<geometry_msgs::msg::Point> interpolated_points;
+  util::interpolate2DPoints(tmp_x, tmp_y, delta_arc_length, interpolated_points);
+  return interpolated_points;
+}
+
+std::vector<geometry_msgs::msg::Point> getInterpolatedPoints(
+  const std::vector<geometry_msgs::msg::Point> & points, const double delta_arc_length)
+{
+  std::vector<double> tmp_x;
+  std::vector<double> tmp_y;
+  for (int i = 0; i < points.size(); i++) {
+    if (i > 0) {
+      if (
+        std::fabs(points[i].x - points[i - 1].x) < 1e-6 &&
+        std::fabs(points[i].y - points[i - 1].y) < 1e-6)
+      {
+        continue;
+      }
+    }
+    tmp_x.push_back(points[i].x);
+    tmp_y.push_back(points[i].y);
   }
   std::vector<geometry_msgs::msg::Point> interpolated_points;
   util::interpolate2DPoints(tmp_x, tmp_y, delta_arc_length, interpolated_points);

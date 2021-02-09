@@ -13,7 +13,7 @@
 
     # clearance for unique points
     clearance_for_straight_line_: 0.05 # minimum optimizing range around straight points
-    clearance_for_joint_: 3.2 # minimum optimizing range around joint points
+    clearance_for_joint_: 0.1 # minimum optimizing range around joint points
     clearance_for_only_smoothing: 0.1 # minimum optimizing range when applygin only smoothing
     range_for_extend_joint: 0.1 # minimum optimizing range around joint points for extending
     clearance_from_object_for_straight: 10.0 # minimum clearance from object when judging straight line
@@ -21,9 +21,17 @@
     # avoiding param
     max_avoiding_objects_velocity_ms: .5 # maximum velocity for avoiding objects[m/s]
     max_avoiding_ego_velocity_ms: 6.0 # maximum ego velocity when avoiding objects[m/s]
-    center_line_width: 1.7 # replaced with /vehicle_info/vehicle_width when is_using_vehicle_config is true
-                          # center line width around path points used for judging that object is required to avoid or not
+    center_line_width: 1.7 # replaced with /vehicle_info/vehicle_width when is_using_vehicle_config is true. center line width around path points used for judging that object is required to avoid or not
     acceleration_for_non_deceleration_range: 1.0 # assumed acceleration for calculating non deceleration range
+    avoiding_object_type: # avoiding object class
+      unknown: true
+      car: true
+      truck: true
+      bus: true
+      bicycle: true
+      motorbike: true
+      pedestrian: true
+      animal: true
 
     # solving quadratic programming
     qp_max_iteration: 10000 # max iteration when solving QP
@@ -40,8 +48,7 @@
     coef_x_cosntrain_search_resolution: 1.0 # coef for fine sampling when exploring x direction
     coef_y_cosntrain_search_resolution: 0.5 # coef for fine sampling when exploring y direction
     keep_space_shape_x: 0.2 # keep space for x direction from base_link[m]
-    keep_space_shape_y: 0.1 # replaced with /vehicle_info/vehicle_width when is_using_vehicle_config is true
-                            # keep space for y direction from base_link[m]
+    keep_space_shape_y: 0.1 # replaced with /vehicle_info/vehicle_width when is_using_vehicle_config is true. keep space for y direction from base_link[m]
     max_lon_space_for_driveable_constraint: 0.5 # maximum lon(x) space when optimizing point[m]
 
     is_publishing_clearance_map: true # publish clearance map as nav_msgs::OccupancyGrid
@@ -56,35 +63,34 @@
     delta_arc_length_for_optimization: 1.0 # delta arc length when optimizing[m]
     delta_arc_length_for_trajectory: 0.1 # delta arc length for trajectory[m]
     delta_dist_threshold_for_closest_point: 3.0 # delta dist thres for closest point[m]
-    delta_yaw_threshold_for_closest_point: 1.046  #M_PI/3.0
-                                                  # delta yaw thres for closest point
+    delta_yaw_threshold_for_closest_point: 1.046 #M_PI/3.0. delta yaw thres for closest point
     delta_yaw_threshold_for_straight: 0.02 # delta dist thres for straight point
 
     # mpt param
     # vehicle param for mpt
-    max_steer_deg: 30.0   # max steering angle [deg]
-    steer_tau: 0.1        # steering dynamics time constant (1d approzimation) [s]
+    max_steer_deg: 40.0 # max steering angle [deg]
+    steer_tau: 0.1 # steering dynamics time constant (1d approzimation) [s]
 
     # trajectory param for mpt
-    num_curvature_sampling_points: 5        # number of sampling points when calculating curvature
-    delta_arc_length_for_mpt_points: 0.5    # delta arc length when generating mpt[m]
-    num_fix_points_for_mpt: 8               # number of fixing points around ego vehicle
+    num_curvature_sampling_points: 5 # number of sampling points when calculating curvature
+    delta_arc_length_for_mpt_points: 0.5 # delta arc length when generating mpt[m]
+    forward_fixing_mpt_distance: 10 # forward fixing distance for MPT
 
     # optimization param for mpt
-    is_hard_fixing_terminal_point: true     # hard fixing terminal point
-    base_point_weight: 2000.0               # slack weight for lateral error around base_link
-    top_point_weight: 1000.0                # slack weight for lateral error around vehicle-top point
-    mid_point_weight: 1000.0                # slack weight for lateral error around the middle point
-    lat_error_weight: 10.0                  # weight for lateral error
-    yaw_error_weight: 0.0                   # weight for yaw error
-    steer_input_weight: 0.01                # weight for steering input
-    steer_rate_weight: 1.0                  # weight for steering rate
-    steer_acc_weight: 0.000001              # weight for steering acceleration
-    terminal_lat_error_weight: 0.0          # weight for lateral error at terminal point
-    terminal_yaw_error_weight: 100.0        # weight for yaw error at terminal point
-    terminal_path_lat_error_weight: 1000.0  # weight for lateral error at path end point
-    terminal_path_yaw_error_weight: 1000.0  # weight for yaw error at path end point
-    zero_ff_steer_angle: 0.5                # threshold that feed-forward angle becomes zero
+    is_hard_fixing_terminal_point: false # hard fixing terminal point
+    base_point_weight: 2000.0 # slack weight for lateral error around base_link
+    top_point_weight: 1000.0 # slack weight for lateral error around vehicle-top point
+    mid_point_weight: 1000.0 # slack weight for lateral error around the middle point
+    lat_error_weight: 10.0 # weight for lateral error
+    yaw_error_weight: 0.0 # weight for yaw error
+    steer_input_weight: 0.01 # weight for steering input
+    steer_rate_weight: 1.0 # weight for steering rate
+    steer_acc_weight: 0.000001 # weight for steering acceleration
+    terminal_lat_error_weight: 0.0 # weight for lateral error at terminal point
+    terminal_yaw_error_weight: 100.0 # weight for yaw error at terminal point
+    terminal_path_lat_error_weight: 1000.0 # weight for lateral error at path end point
+    terminal_path_yaw_error_weight: 1000.0 # weight for yaw error at path end point
+    zero_ff_steer_angle: 0.5 # threshold that feed-forward angle becomes zero
 
     # replanning & trimming trajectory param outside algorithm
     min_delta_dist_for_replan: 10.0 # minimum delta dist thres for replan[m]

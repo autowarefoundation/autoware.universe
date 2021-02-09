@@ -50,6 +50,8 @@ double normalizeRadian(const double angle);
 geometry_msgs::msg::Quaternion getQuaternionFromPoints(
   const geometry_msgs::msg::Point & a, const geometry_msgs::msg::Point & a_root);
 
+geometry_msgs::msg::Quaternion getQuaternionFromYaw(const double yaw);
+
 template<typename T>
 geometry_msgs::msg::Point transformMapToImage(
   const T & map_point, const nav_msgs::msg::MapMetaData & occupancy_grid_info);
@@ -72,6 +74,9 @@ std::vector<geometry_msgs::msg::Point> getInterpolatedPoints(
 
 std::vector<geometry_msgs::msg::Point> getInterpolatedPoints(
   const std::vector<geometry_msgs::msg::Pose> & points, const double delta_arc_length);
+
+std::vector<geometry_msgs::msg::Point> getInterpolatedPoints(
+  const std::vector<geometry_msgs::msg::Point> & points, const double delta_arc_length);
 
 std::vector<geometry_msgs::msg::Point> getInterpolatedPoints(
   const std::vector<ReferencePoint> & points, const double delta_arc_length);

@@ -5,6 +5,7 @@
   <arg name="is_showing_debug_info" default="false"/>
   <arg name="is_stopping_if_outside_drivable_area" default="true"/>
   <arg name="param_path" default="$(find-pkg-share obstacle_avoidance_planner)/config/default_obstacle_avoidance_planner.yaml" />
+  <arg name="vehicle_info_param" default="$(find-pkg-share lexus_description)/config/vehicle_info.yaml" />
 
   <node pkg="obstacle_avoidance_planner" exec="obstacle_avoidance_planner_node"
     name="obstacle_avoidance_planner" output="screen">
@@ -13,6 +14,7 @@
     <remap from="output/path" to="$(var output_path_topic)" />
 
     <param from="$(var param_path)" />
+    <param from="$(var vehicle_info_param)" />
     <param name="is_showing_debug_info" value="$(var is_showing_debug_info)"/>
     <param name="is_stopping_if_outside_drivable_area" value="$(var is_stopping_if_outside_drivable_area)"/>
   </node>

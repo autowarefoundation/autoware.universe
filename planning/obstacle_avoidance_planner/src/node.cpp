@@ -39,6 +39,7 @@
 #include "std_msgs/msg/bool.hpp"
 #include "tf2/utils.h"
 #include "tf2_ros/transform_listener.h"
+#include "vehicle_info_util/vehicle_info.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
 
 ObstacleAvoidancePlanner::ObstacleAvoidancePlanner()
@@ -108,7 +109,7 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner()
     declare_parameter("num_joint_buffer_points_for_extending", 4);
   traj_param_->num_offset_for_begin_idx = declare_parameter("num_offset_for_begin_idx", 2);
   traj_param_->num_fix_points_for_extending = declare_parameter("num_fix_points_for_extending", 2);
-  traj_param_->num_fix_points_for_mpt = declare_parameter("num_fix_points_for_mpt", 8);
+  traj_param_->forward_fixing_mpt_distance = declare_parameter("forward_fixing_mpt_distance", 10);
   traj_param_->delta_arc_length_for_optimization =
     declare_parameter("delta_arc_length_for_optimization", 1.0);
   traj_param_->delta_arc_length_for_mpt_points =
@@ -133,6 +134,14 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner()
     declare_parameter("acceleration_for_non_deceleration_range", 1.0);
   traj_param_->max_dist_for_extending_end_point =
     declare_parameter("max_dist_for_extending_end_point", 5.0);
+  traj_param_->is_avoiding_unknown = declare_parameter("avoiding_object_type.unknown", true);
+  traj_param_->is_avoiding_car = declare_parameter("avoiding_object_type.car", true);
+  traj_param_->is_avoiding_truck = declare_parameter("avoiding_object_type.truck", true);
+  traj_param_->is_avoiding_bus = declare_parameter("avoiding_object_type.bus", true);
+  traj_param_->is_avoiding_bicycle = declare_parameter("avoiding_object_type.bicycle", true);
+  traj_param_->is_avoiding_motorbike = declare_parameter("avoiding_object_type.motorbike", true);
+  traj_param_->is_avoiding_pedestrian = declare_parameter("avoiding_object_type.pedestrian", true);
+  traj_param_->is_avoiding_animal = declare_parameter("avoiding_object_type.animal", true);
 
   constrain_param_->is_getting_constraints_close2path_points =
     declare_parameter("is_getting_constraints_close2path_points", false);
@@ -176,11 +185,12 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner()
     constrain_param_->clearance_from_object + constrain_param_->keep_space_shape_y * 0.5;
 
   // vehicle param
-  vehicle_param_->width = declare_parameter("/vehicle_info/vehicle_width", 1.5);
-  vehicle_param_->length = declare_parameter("/vehicle_info/vehicle_length", 2.0);
-  vehicle_param_->wheelbase = declare_parameter("/vehicle_info/wheel_base", 1.0);
-  vehicle_param_->rear_overhang = declare_parameter("/vehicle_info/rear_overhang", 0.5);
-  vehicle_param_->front_overhang = declare_parameter("/vehicle_info/front_overhang", 0.5);
+  vehicle_info_util::VehicleInfo vehicle_info = vehicle_info_util::VehicleInfo::create(*this);
+  vehicle_param_->width = vehicle_info.vehicle_width_m_;
+  vehicle_param_->length = vehicle_info.vehicle_length_m_;
+  vehicle_param_->wheelbase = vehicle_info.wheel_base_m_;
+  vehicle_param_->rear_overhang = vehicle_info.rear_overhang_m_;
+  vehicle_param_->front_overhang = vehicle_info.front_overhang_m_;
 
   double max_steer_deg = 0;
   max_steer_deg = declare_parameter("max_steer_deg", 30.0);
@@ -188,7 +198,8 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner()
   vehicle_param_->steer_tau = declare_parameter("steer_tau", 0.1);
 
   // mpt param
-  mpt_param_->is_hard_fix_terminal_point = declare_parameter("is_hard_fix_terminal_point", true);
+  mpt_param_->is_hard_fixing_terminal_point =
+    declare_parameter("is_hard_fixing_terminal_point", true);
   mpt_param_->num_curvature_sampling_points = declare_parameter("num_curvature_sampling_points", 5);
   mpt_param_->base_point_weight = declare_parameter("base_point_weight", 2000.0);
   mpt_param_->top_point_weight = declare_parameter("top_point_weight", 1000.0);
@@ -372,7 +383,7 @@ ObstacleAvoidancePlanner::generateOptimizedTrajectory(
       makePrevTrajectories(*current_ego_pose_ptr_, path.points, prev_trajs_inside_area.get()));
 
     const auto prev_traj = util::concatTraj(prev_trajs_inside_area.get());
-    publishingDebugData(debug_data, path, prev_traj);
+    publishingDebugData(debug_data, path, prev_traj, *vehicle_param_);
     return prev_traj;
   }
 
@@ -383,7 +394,7 @@ ObstacleAvoidancePlanner::generateOptimizedTrajectory(
   prev_trajectories_ptr_ = std::make_unique<Trajectories>(
     makePrevTrajectories(*current_ego_pose_ptr_, path.points, trajs_inside_area));
   const auto optimized_trajectory = util::concatTraj(trajs_inside_area);
-  publishingDebugData(debug_data, path, optimized_trajectory);
+  publishingDebugData(debug_data, path, optimized_trajectory, *vehicle_param_);
   return optimized_trajectory;
 }
 
@@ -574,7 +585,8 @@ ObstacleAvoidancePlanner::convertPointsToTrajectory(
 
 void ObstacleAvoidancePlanner::publishingDebugData(
   const DebugData & debug_data, const autoware_planning_msgs::msg::Path & path,
-  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & traj_points)
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & traj_points,
+  const VehicleParam & vehicle_param)
 {
   autoware_planning_msgs::msg::Trajectory traj;
   traj.header = path.header;
@@ -590,7 +602,16 @@ void ObstacleAvoidancePlanner::publishingDebugData(
   is_avoidance_possible.is_avoidance_possible = debug_data.foa_data.is_avoidance_possible;
   is_avoidance_possible_pub_->publish(is_avoidance_possible);
 
-  debug_markers_pub_->publish(getDebugVisualizationMarker(debug_data, traj_points));
+  std::vector<autoware_planning_msgs::msg::TrajectoryPoint> traj_points_debug = traj_points;
+  // Add z infomation for virtual wall
+  if (!traj_points_debug.empty()) {
+    const int idx = util::getNearestIdx(
+      path.points, traj_points.back().pose, 0, traj_param_->delta_yaw_threshold_for_closest_point);
+    traj_points_debug.back().pose.position.z = path.points.at(idx).pose.position.z + 1.0;
+  }
+
+  debug_markers_pub_->publish(
+    getDebugVisualizationMarker(debug_data, traj_points_debug, vehicle_param));
   if (is_publishing_area_with_objects_) {
     debug_area_with_objects_pub_->publish(
       getDebugCostmap(debug_data.area_with_objects_map, path.drivable_area));
@@ -728,6 +749,7 @@ Trajectories ObstacleAvoidancePlanner::makePrevTrajectories(
     generatePostProcessedTrajectory(ego_pose, path_points, trajs.smoothed_trajectory);
   Trajectories trajectories;
   trajectories.smoothed_trajectory = post_processed_smoothed_traj;
+  trajectories.mpt_ref_points = trajs.mpt_ref_points;
   trajectories.model_predictive_trajectory = trajs.model_predictive_trajectory;
   trajectories.extended_trajectory = trajs.extended_trajectory;
   return trajectories;

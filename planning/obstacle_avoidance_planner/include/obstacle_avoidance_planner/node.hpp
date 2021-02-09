@@ -161,7 +161,8 @@ private:
 
   void publishingDebugData(
     const DebugData & debug_data, const autoware_planning_msgs::msg::Path & path,
-    const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & traj_points);
+    const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & traj_points,
+    const VehicleParam & vehicle_param);
 
   int calculateNonDecelerationRange(
     const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & traj_points,

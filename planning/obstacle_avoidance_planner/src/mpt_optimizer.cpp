@@ -18,10 +18,10 @@
 #include <memory>
 #include <vector>
 
-#include "obstacle_avoidance_planner/mpt_optimizer.hpp"
 #include "boost/optional.hpp"
 #include "nav_msgs/msg/map_meta_data.hpp"
 #include "obstacle_avoidance_planner/eb_path_optimizer.hpp"
+#include "obstacle_avoidance_planner/mpt_optimizer.hpp"
 #include "obstacle_avoidance_planner/process_cv.hpp"
 #include "obstacle_avoidance_planner/util.hpp"
 #include "obstacle_avoidance_planner/vehicle_model/vehicle_model_bicycle_kinematics.hpp"
@@ -49,8 +49,7 @@ MPTOptimizer::MPTOptimizer(
 
 MPTOptimizer::~MPTOptimizer() {}
 
-boost::optional<std::vector<autoware_planning_msgs::msg::TrajectoryPoint>>
-MPTOptimizer::getModelPredictiveTrajectory(
+boost::optional<MPTTrajs> MPTOptimizer::getModelPredictiveTrajectory(
   const bool enable_avoidance,
   const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & smoothed_points,
   const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points,
@@ -71,8 +70,8 @@ MPTOptimizer::getModelPredictiveTrajectory(
       prev_trajs->model_predictive_trajectory, smoothed_points.front().pose.position);
     origin_pose = prev_trajs->model_predictive_trajectory.at(prev_nearest_idx).pose;
   }
-  std::vector<ReferencePoint> ref_points =
-    getReferencePoints(origin_pose, ego_pose, smoothed_points, prev_trajs, debug_data);
+  std::vector<ReferencePoint> ref_points = getReferencePoints(
+    origin_pose, ego_pose, smoothed_points, path_points, prev_trajs, maps, debug_data);
   if (ref_points.empty()) {
     RCLCPP_INFO_EXPRESSION(
       rclcpp::get_logger("MPTOptimizer"), is_showing_debug_info_,
@@ -80,17 +79,16 @@ MPTOptimizer::getModelPredictiveTrajectory(
     return boost::none;
   }
 
-  const auto mpt_matrix = generateMPTMatrix(ref_points, path_points);
+  const auto mpt_matrix = generateMPTMatrix(ref_points, path_points, prev_trajs);
   if (!mpt_matrix) {
     RCLCPP_INFO_EXPRESSION(
       rclcpp::get_logger("MPTOptimizer"), is_showing_debug_info_,
       "return boost::none since matrix has nan");
     return boost::none;
   }
-  const auto initial_state = getInitialState(origin_pose, ref_points.front());
 
   const auto optimized_control_variables = executeOptimization(
-    enable_avoidance, mpt_matrix.get(), ref_points, path_points, maps, initial_state, debug_data);
+    enable_avoidance, mpt_matrix.get(), ref_points, path_points, maps, debug_data);
   if (!optimized_control_variables) {
     RCLCPP_INFO_EXPRESSION(
       rclcpp::get_logger("MPTOptimizer"), is_showing_debug_info_,
@@ -98,36 +96,44 @@ MPTOptimizer::getModelPredictiveTrajectory(
     return boost::none;
   }
 
-  const auto mpt_points = getMPTPoints(
-    ref_points, optimized_control_variables.get(), mpt_matrix.get(), initial_state,
-    smoothed_points);
+  const auto mpt_points =
+    getMPTPoints(ref_points, optimized_control_variables.get(), mpt_matrix.get(), smoothed_points);
 
   auto t_end1 = std::chrono::high_resolution_clock::now();
   float elapsed_ms1 = std::chrono::duration<float, std::milli>(t_end1 - t_start1).count();
   RCLCPP_INFO_EXPRESSION(
     rclcpp::get_logger("MPTOptimizer"), is_showing_debug_info_, "MPT time: = %f [ms]", elapsed_ms1);
-  return mpt_points;
+  MPTTrajs mpt_trajs;
+  mpt_trajs.mpt = mpt_points;
+  mpt_trajs.ref_points = ref_points;
+  return mpt_trajs;
 }
 
 std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
   const geometry_msgs::msg::Pose & origin_pose, const geometry_msgs::msg::Pose & ego_pose,
   const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & points,
-  const std::unique_ptr<Trajectories> & prev_trajs, DebugData * debug_data) const
+  const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points,
+  const std::unique_ptr<Trajectories> & prev_trajs, const CVMaps & maps,
+  DebugData * debug_data) const
 {
-  const auto ref_points = convertToReferencePoints(points, ego_pose, prev_trajs, debug_data);
+  const auto ref_points =
+    convertToReferencePoints(points, path_points, prev_trajs, ego_pose, maps, debug_data);
 
   const int begin_idx = util::getNearestPointIdx(ref_points, origin_pose.position);
   const auto first_it = ref_points.begin() + begin_idx;
-  const int num_points =
-    std::min(
+  int num_points = std::min(
     static_cast<int>(ref_points.size()) - 1 - begin_idx, traj_param_ptr_->num_sampling_points);
-  return std::vector<ReferencePoint>(first_it, first_it + num_points);
+  num_points = std::max(num_points, 0);
+  std::vector<ReferencePoint> truncated_points(first_it, first_it + num_points);
+  calcInitialState(&truncated_points, origin_pose);
+  return truncated_points;
 }
 
 std::vector<ReferencePoint> MPTOptimizer::convertToReferencePoints(
   const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & points,
-  const geometry_msgs::msg::Pose & ego_pose, const std::unique_ptr<Trajectories> & prev_trajs,
-  DebugData * debug_data) const
+  const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points,
+  const std::unique_ptr<Trajectories> & prev_trajs, const geometry_msgs::msg::Pose & ego_pose,
+  const CVMaps & maps, DebugData * debug_data) const
 {
   const auto interpolated_points =
     util::getInterpolatedPoints(points, traj_param_ptr_->delta_arc_length_for_mpt_points);
@@ -135,13 +141,47 @@ std::vector<ReferencePoint> MPTOptimizer::convertToReferencePoints(
     return std::vector<ReferencePoint>{};
   }
 
-  auto reference_points = getBaseReferencePoints(interpolated_points, points);
+  auto reference_points = getBaseReferencePoints(interpolated_points, prev_trajs, debug_data);
 
+  calcOrientation(&reference_points);
+  calcVelocity(&reference_points, points);
   calcCurvature(&reference_points);
   calcArcLength(&reference_points);
   calcExtraPoints(&reference_points);
-  calcFixPoints(prev_trajs, ego_pose, &reference_points, debug_data);
   return reference_points;
+}
+
+void MPTOptimizer::calcOrientation(std::vector<ReferencePoint> * ref_points) const
+{
+  if (!ref_points) {
+    return;
+  }
+  for (int i = 0; i < ref_points->size(); i++) {
+    if (ref_points->at(i).fix_state) {
+      continue;
+    }
+
+    if (i > 0) {
+      ref_points->at(i).q =
+        util::getQuaternionFromPoints(ref_points->at(i).p, ref_points->at(i - 1).p);
+    } else if (i == 0 && ref_points->size() > 1) {
+      ref_points->at(i).q =
+        util::getQuaternionFromPoints(ref_points->at(i + 1).p, ref_points->at(i).p);
+    }
+    ref_points->at(i).yaw = tf2::getYaw(ref_points->at(i).q);
+  }
+}
+
+void MPTOptimizer::calcVelocity(
+  std::vector<ReferencePoint> * ref_points,
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & points) const
+{
+  if (!ref_points) {
+    return;
+  }
+  for (int i = 0; i < ref_points->size(); i++) {
+    ref_points->at(i).v = points[util::getNearestIdx(points, ref_points->at(i).p)].twist.linear.x;
+  }
 }
 
 void MPTOptimizer::calcCurvature(std::vector<ReferencePoint> * ref_points) const
@@ -166,13 +206,19 @@ void MPTOptimizer::calcCurvature(std::vector<ReferencePoint> * ref_points) const
       0.0001);
     const double curvature =
       2.0 * ((p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x)) / den;
-    ref_points->at(i).k = curvature;
+    if (!ref_points->at(i).fix_state) {
+      ref_points->at(i).k = curvature;
+    }
   }
 
   /* first and last curvature is copied from next value */
   for (int i = 0; i < std::min(L, num_points); ++i) {
-    ref_points->at(i).k = ref_points->at(std::min(L, num_points - 1)).k;
-    ref_points->at(num_points - i - 1).k = ref_points->at(std::max(num_points - L - 1, 0)).k;
+    if (!ref_points->at(i).fix_state) {
+      ref_points->at(i).k = ref_points->at(std::min(L, num_points - 1)).k;
+    }
+    if (!ref_points->at(num_points - i - 1).fix_state) {
+      ref_points->at(num_points - i - 1).k = ref_points->at(std::max(num_points - L - 1, 0)).k;
+    }
   }
 }
 
@@ -223,52 +269,42 @@ void MPTOptimizer::calcExtraPoints(std::vector<ReferencePoint> * ref_points) con
   }
 }
 
-void MPTOptimizer::calcFixPoints(
-  const std::unique_ptr<Trajectories> & prev_trajs, const geometry_msgs::msg::Pose & ego_pose,
-  std::vector<ReferencePoint> * ref_points, DebugData * debug_data) const
+void MPTOptimizer::calcInitialState(
+  std::vector<ReferencePoint> * ref_points, const geometry_msgs::msg::Pose & origin_pose) const
 {
   if (!ref_points) {
     return;
   }
 
-  const int nearest_idx_from_ego = util::getNearestPointIdx(*ref_points, ego_pose.position);
-  auto t_start1 = std::chrono::high_resolution_clock::now();
-  constexpr double fine_resolution = 0.005;
-  std::vector<geometry_msgs::msg::Point> fine_interpolated_points;
-  if (prev_trajs) {
-    fine_interpolated_points =
-      util::getInterpolatedPoints(prev_trajs->model_predictive_trajectory, fine_resolution);
-  } else {
-    fine_interpolated_points = util::getInterpolatedPoints(*ref_points, fine_resolution);
-  }
-  if (fine_interpolated_points.empty()) {
+  if (ref_points->empty()) {
     return;
   }
-  auto t_end1 = std::chrono::high_resolution_clock::now();
-  float elapsed_ms1 = std::chrono::duration<float, std::milli>(t_end1 - t_start1).count();
-  RCLCPP_INFO_EXPRESSION(
-    rclcpp::get_logger("MPTOptimizer"), is_showing_debug_info_, "fine interpo time: = %f [ms]",
-    elapsed_ms1);
+
+  boost::optional<int> begin_idx = boost::none;
+  double accum_s = 0;
 
   for (int i = 0; i < ref_points->size(); i++) {
-    if (
-      i >= nearest_idx_from_ego - traj_param_ptr_->num_fix_points_for_mpt / 2 &&
-      i < nearest_idx_from_ego + traj_param_ptr_->num_fix_points_for_mpt / 2)
-    {
-      ref_points->at(i).is_fix = true;
-      const int nearest_idx = util::getNearestIdx(fine_interpolated_points, ref_points->at(i).p);
-      ref_points->at(i).fixing_lat =
-        calcLateralError(fine_interpolated_points[nearest_idx], ref_points->at(i));
-
-      geometry_msgs::msg::Pose debug_pose;
-      geometry_msgs::msg::Point rel_point;
-      rel_point.y = ref_points->at(i).fixing_lat;
-      geometry_msgs::msg::Pose origin;
-      origin.position = ref_points->at(i).p;
-      origin.orientation = ref_points->at(i).q;
-      debug_pose.position = util::transformToAbsoluteCoordinate2D(rel_point, origin);
-      debug_data->fixed_mpt_points.push_back(debug_pose);
+    double ds = 0.0;
+    if (i < ref_points->size() - 1) {
+      ds = ref_points->at(i + 1).s - ref_points->at(i).s;
+    } else if (i == ref_points->size() - 1 && ref_points->size() > 1) {
+      ds = ref_points->at(i).s - ref_points->at(i - 1).s;
     }
+    accum_s += ds;
+    constexpr double max_s_for_prev_point = 3;
+    if (accum_s < max_s_for_prev_point && ref_points->at(i).fix_state) {
+      begin_idx = i;
+      break;
+    }
+  }
+
+  Eigen::VectorXd initial_state;
+  if (begin_idx) {
+    *ref_points =
+      std::vector<ReferencePoint>{ref_points->begin() + begin_idx.get(), ref_points->end()};
+    ref_points->front().optimized_state = ref_points->front().fix_state.get();
+  } else {
+    ref_points->front().optimized_state = getState(origin_pose, ref_points->front());
   }
 }
 
@@ -279,14 +315,15 @@ void MPTOptimizer::calcFixPoints(
  */
 boost::optional<MPTMatrix> MPTOptimizer::generateMPTMatrix(
   const std::vector<ReferencePoint> & reference_points,
-  const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points) const
+  const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points,
+  const std::unique_ptr<Trajectories> & prev_trajs) const
 {
   const int N = reference_points.size();
   const int DIM_X = vehicle_model_ptr_->getDimX();
   const int DIM_U = vehicle_model_ptr_->getDimU();
   const int DIM_Y = vehicle_model_ptr_->getDimY();
 
-  Eigen::MatrixXd Aex = Eigen::MatrixXd::Zero(DIM_X * N, DIM_X);  // state transition
+  Eigen::MatrixXd Aex = Eigen::MatrixXd::Zero(DIM_X * N, DIM_X);      // state transition
   Eigen::MatrixXd Bex = Eigen::MatrixXd::Zero(DIM_X * N, DIM_U * N);  // control input
   Eigen::MatrixXd Wex = Eigen::MatrixXd::Zero(DIM_X * N, 1);
   Eigen::MatrixXd Cex = Eigen::MatrixXd::Zero(DIM_Y * N, DIM_X * N);
@@ -301,6 +338,10 @@ boost::optional<MPTMatrix> MPTOptimizer::generateMPTMatrix(
   Eigen::MatrixXd Q_adaptive = Eigen::MatrixXd::Zero(DIM_Y, DIM_Y);
   Eigen::MatrixXd R_adaptive = Eigen::MatrixXd::Zero(DIM_U, DIM_U);
   Q(0, 0) = mpt_param_ptr_->lat_error_weight;
+  if (!prev_trajs) {
+    const double initial_lat_error_weight = mpt_param_ptr_->lat_error_weight * 1000;
+    Q(0, 0) = initial_lat_error_weight;
+  }
   Q(1, 1) = mpt_param_ptr_->yaw_error_weight;
   R(0, 0) = mpt_param_ptr_->steer_input_weight;
 
@@ -321,7 +362,9 @@ boost::optional<MPTMatrix> MPTOptimizer::generateMPTMatrix(
   for (int i = 0; i < N; ++i) {
     const double ref_k = reference_points[i].k;
     double ds = 0.0;
-    if (i > 0) {
+    if (i < N - 1) {
+      ds = reference_points[i + 1].s - reference_points[i].s;
+    } else if (i == N - 1 && N > 1) {
       ds = reference_points[i].s - reference_points[i - 1].s;
     }
 
@@ -471,10 +514,11 @@ void MPTOptimizer::addSteerWeightF(Eigen::VectorXd * f) const
 boost::optional<Eigen::VectorXd> MPTOptimizer::executeOptimization(
   const bool enable_avoidance, const MPTMatrix & m, const std::vector<ReferencePoint> & ref_points,
   const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points, const CVMaps & maps,
-  const Eigen::VectorXd & x0, DebugData * debug_data)
+  DebugData * debug_data)
 {
   auto t_start1 = std::chrono::high_resolution_clock::now();
 
+  const auto x0 = ref_points.front().optimized_state;
   ObjectiveMatrix obj_m = getObjectiveMatrix(x0, m);
   ConstraintMatrix const_m =
     getConstraintMatrix(enable_avoidance, x0, m, maps, ref_points, path_points, debug_data);
@@ -513,31 +557,44 @@ double MPTOptimizer::calcLateralError(
   return lat_err;
 }
 
-Eigen::VectorXd MPTOptimizer::getInitialState(
+Eigen::VectorXd MPTOptimizer::getState(
   const geometry_msgs::msg::Pose & target_pose, const ReferencePoint & nearest_ref_point) const
 {
   const double lat_error = calcLateralError(target_pose.position, nearest_ref_point);
   const double yaw_error =
     util::normalizeRadian(tf2::getYaw(target_pose.orientation) - nearest_ref_point.yaw);
   Eigen::VectorXd x0 = Eigen::VectorXd::Zero(3);
-  x0 << lat_error, yaw_error, vehicle_param_ptr_->wheelbase * nearest_ref_point.k;
+  x0 << lat_error, yaw_error, std::atan(vehicle_param_ptr_->wheelbase * nearest_ref_point.k);
   return x0;
 }
 
 std::vector<autoware_planning_msgs::msg::TrajectoryPoint> MPTOptimizer::getMPTPoints(
-  const std::vector<ReferencePoint> & ref_points, const Eigen::VectorXd & Uex,
-  const MPTMatrix & mpt_matrix, const Eigen::VectorXd & x0,
+  std::vector<ReferencePoint> & ref_points, const Eigen::VectorXd & Uex,
+  const MPTMatrix & mpt_matrix,
   const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & optimized_points) const
 {
   const int DIM_X = vehicle_model_ptr_->getDimX();
+  const auto x0 = ref_points.front().optimized_state;
   Eigen::VectorXd Xex = mpt_matrix.Aex * x0 + mpt_matrix.Bex * Uex + mpt_matrix.Wex;
 
   const int N = ref_points.size();
 
   std::vector<autoware_planning_msgs::msg::TrajectoryPoint> traj_points;
-  for (int i = 0; i < ref_points.size(); ++i) {
-    const double lat_error = Xex(i * DIM_X);
-    const double yaw_error = Xex(i * DIM_X + 1);
+  {
+    const double lat_error = x0(0);
+    const double yaw_error = x0(1);
+    autoware_planning_msgs::msg::TrajectoryPoint traj_point;
+    traj_point.pose.position.x = ref_points[0].p.x - std::sin(ref_points[0].yaw) * lat_error;
+    traj_point.pose.position.y = ref_points[0].p.y + std::cos(ref_points[0].yaw) * lat_error;
+    traj_point.twist.linear.x = ref_points.front().v;
+    traj_points.push_back(traj_point);
+  }
+
+  for (int i = 1; i < ref_points.size(); ++i) {
+    const double lat_error = Xex((i - 1) * DIM_X);
+    const double yaw_error = Xex((i - 1) * DIM_X + 1);
+    Eigen::Vector3d state = Xex.segment((i - 1) * DIM_X, DIM_X);
+    setOptimizedState(&ref_points[i], state);
     autoware_planning_msgs::msg::TrajectoryPoint traj_point;
     traj_point.pose.position.x = ref_points[i].p.x - std::sin(ref_points[i].yaw) * lat_error;
     traj_point.pose.position.y = ref_points[i].p.y + std::cos(ref_points[i].yaw) * lat_error;
@@ -559,6 +616,12 @@ std::vector<autoware_planning_msgs::msg::TrajectoryPoint> MPTOptimizer::getMPTPo
   return traj_points;
 }
 
+void MPTOptimizer::setOptimizedState(
+  ReferencePoint * ref_point, const Eigen::Vector3d & optimized_state) const
+{
+  ref_point->optimized_state = optimized_state;
+}
+
 std::vector<Bounds> MPTOptimizer::getReferenceBounds(
   const bool enable_avoidance, const std::vector<ReferencePoint> & ref_points, const CVMaps & maps,
   DebugData * debug_data) const
@@ -566,6 +629,7 @@ std::vector<Bounds> MPTOptimizer::getReferenceBounds(
   std::vector<Bounds> ref_bounds;
   std::vector<geometry_msgs::msg::Pose> debug_bounds_candidata_for_base_points;
   std::vector<geometry_msgs::msg::Pose> debug_bounds_candidata_for_top_points;
+  std::vector<geometry_msgs::msg::Pose> debug_bounds_candidate_for_mid_points;
   int cnt = 0;
   for (const auto & point : ref_points) {
     ReferencePoint ref_base_point;
@@ -590,14 +654,29 @@ std::vector<Bounds> MPTOptimizer::getReferenceBounds(
     debug_for_top_point.orientation = point.top_pose.orientation;
     debug_bounds_candidata_for_top_points.push_back(debug_for_top_point);
 
+    geometry_msgs::msg::Pose debug_for_mid_point;
+    debug_for_mid_point.position = ref_mid_point.p;
+    debug_for_mid_point.orientation = point.top_pose.orientation;
+    debug_bounds_candidate_for_mid_points.push_back(debug_for_mid_point);
+
+    if (
+      !util::transformMapToOptionalImage(ref_base_point.p, maps.map_info) ||
+      !util::transformMapToOptionalImage(ref_mid_point.p, maps.map_info) ||
+      !util::transformMapToOptionalImage(ref_top_point.p, maps.map_info))
+    {
+      Bounds bounds;
+      bounds.c0 = {1, -1};
+      bounds.c1 = {1, -1};
+      bounds.c2 = {1, -1};
+      ref_bounds.emplace_back(bounds);
+      continue;
+    }
+
     // Calculate boundaries.
     auto lat_bounds_0 = getBound(enable_avoidance, ref_base_point, maps);
     auto lat_bounds_1 = getBound(enable_avoidance, ref_top_point, maps);
     auto lat_bounds_2 = getBound(enable_avoidance, ref_mid_point, maps);
-    if (
-      lat_bounds_0[0] == lat_bounds_0[1] || lat_bounds_1[0] == lat_bounds_1[1] ||
-      lat_bounds_2[0] == lat_bounds_2[1])
-    {
+    if (!lat_bounds_0 || !lat_bounds_1 || !lat_bounds_2) {
       auto clock = rclcpp::Clock(RCL_ROS_TIME);
       RCLCPP_WARN_THROTTLE(
         rclcpp::get_logger("MPTOptimizer"), clock, std::chrono::milliseconds(1000).count(),
@@ -613,19 +692,97 @@ std::vector<Bounds> MPTOptimizer::getReferenceBounds(
       continue;
     }
     Bounds bounds;
-    bounds.c0 = lat_bounds_0;
-    bounds.c1 = lat_bounds_1;
-    bounds.c2 = lat_bounds_2;
+    bounds.c0 = lat_bounds_0.get();
+    bounds.c1 = lat_bounds_1.get();
+    bounds.c2 = lat_bounds_2.get();
     ref_bounds.emplace_back(bounds);
     cnt++;
   }
   debug_data->bounds = ref_bounds;
   debug_data->bounds_candidate_for_base_points = debug_bounds_candidata_for_base_points;
   debug_data->bounds_candidate_for_top_points = debug_bounds_candidata_for_top_points;
+  debug_data->bounds_candidate_for_mid_points = debug_bounds_candidate_for_mid_points;
   return ref_bounds;
 }
 
-std::vector<double> MPTOptimizer::getBound(
+boost::optional<std::vector<double>> MPTOptimizer::getBound(
+  const bool enable_avoidance, const ReferencePoint & ref_point, const CVMaps & maps) const
+{
+  const auto rough_road_bound = getRoughBound(enable_avoidance, ref_point, maps);
+
+  if (!rough_road_bound) {
+    return boost::none;
+  }
+
+  std::vector<double> broad_bound;
+  // initialize right bound with rough left bound
+  double rel_right_bound = rough_road_bound.get()[0];
+  auto t_start = std::chrono::high_resolution_clock::now();
+  float elapsed_ms = 0.0;
+  while (true) {
+    const auto bound_candidate = getBoundCandidate(
+      enable_avoidance, ref_point, maps, mpt_param_ptr_->clearance_from_road,
+      mpt_param_ptr_->clearance_from_object, rel_right_bound, rough_road_bound.get());
+
+    if (!bound_candidate) {
+      break;
+    }
+
+    if (broad_bound.empty()) {
+      broad_bound = bound_candidate.get();
+    } else {
+      const double bound_candidate_diff =
+        std::fabs(bound_candidate.get()[0] - bound_candidate.get()[1]);
+      const double broad_bound_diff = std::fabs(broad_bound[0] - broad_bound[1]);
+      if (bound_candidate_diff > broad_bound_diff) {
+        broad_bound = bound_candidate.get();
+      }
+    }
+    rel_right_bound = bound_candidate.get()[1];
+    auto t_end = std::chrono::high_resolution_clock::now();
+    elapsed_ms = std::chrono::duration<float, std::milli>(t_end - t_start).count();
+    constexpr float max_ms = 10;
+    if (elapsed_ms > max_ms) {
+      // ROS_WARN_THROTTLE(1.0, "take too much time for calculating bound");
+      return boost::none;
+    }
+  }
+
+  if (broad_bound.empty()) {
+    return boost::none;
+  } else {
+    return broad_bound;
+  }
+}
+
+boost::optional<std::vector<double>> MPTOptimizer::getBoundCandidate(
+  const bool enable_avoidance, const ReferencePoint & ref_point, const CVMaps & maps,
+  const double min_road_clearance, const double min_obj_clearance, const double rel_initial_lat,
+  const std::vector<double> & rough_road_bound) const
+{
+  const bool search_expanding_side = true;
+  const auto left_bound = getValidLatError(
+    enable_avoidance, ref_point, rel_initial_lat, maps, min_road_clearance, min_obj_clearance,
+    rough_road_bound, search_expanding_side);
+  if (!left_bound) {
+    return boost::none;
+  }
+  constexpr double min_valid_lat_error = 0.1;
+  const double initial_right_bound = left_bound.get() - min_valid_lat_error;
+  const auto right_bound = getValidLatError(
+    enable_avoidance, ref_point, initial_right_bound, maps, min_road_clearance, min_obj_clearance,
+    rough_road_bound);
+  if (!right_bound) {
+    return boost::none;
+  }
+  if (std::fabs(left_bound.get() - right_bound.get()) < 1e-5) {
+    return boost::none;
+  }
+  std::vector<double> bound{left_bound.get(), right_bound.get()};
+  return bound;
+}
+
+boost::optional<std::vector<double>> MPTOptimizer::getRoughBound(
   const bool enable_avoidance, const ReferencePoint & ref_point, const CVMaps & maps) const
 {
   double left_bound = 0;
@@ -636,48 +793,69 @@ std::vector<double> MPTOptimizer::getBound(
   geometry_msgs::msg::Point new_position;
   new_position.x = ref_point.p.x;
   new_position.y = ref_point.p.y;
-  double original_clearance = getClearance(maps.clearance_map, new_position, maps.map_info);
-  double original_object_clearance =
+  auto original_clearance = getClearance(maps.clearance_map, new_position, maps.map_info);
+  auto original_object_clearance =
     getClearance(maps.only_objects_clearance_map, new_position, maps.map_info);
+  if (!original_clearance || !original_object_clearance) {
+    return boost::none;
+  }
+  if (!enable_avoidance) {
+    *original_object_clearance = std::numeric_limits<double>::max();
+  }
+  constexpr double min_road_clearance = 0.1;
+  constexpr double min_obj_clearance = 0.1;
   if (
-    original_clearance > mpt_param_ptr_->clearance_from_road &&
-    original_object_clearance > mpt_param_ptr_->clearance_from_object)
+    original_clearance.get() > min_road_clearance &&
+    original_object_clearance.get() > min_obj_clearance)
   {
     const double initial_dist = 0;
-    right_bound =
-      -1 * getTraversedDistance(enable_avoidance, ref_point, right_angle, initial_dist, maps);
-    left_bound = getTraversedDistance(enable_avoidance, ref_point, left_angle, initial_dist, maps);
+    right_bound = -1 * getTraversedDistance(
+      enable_avoidance, ref_point, right_angle, initial_dist, maps,
+      min_road_clearance, min_obj_clearance);
+    left_bound = getTraversedDistance(
+      enable_avoidance, ref_point, left_angle, initial_dist, maps, min_road_clearance,
+      min_obj_clearance);
   } else {
     const double initial_dist = 0;
     const bool search_expanding_side = true;
     const double right_s = getTraversedDistance(
-      enable_avoidance, ref_point, right_angle, initial_dist, maps, search_expanding_side);
+      enable_avoidance, ref_point, right_angle, initial_dist, maps, min_road_clearance,
+      min_obj_clearance, search_expanding_side);
     const double left_s = getTraversedDistance(
-      enable_avoidance, ref_point, left_angle, initial_dist, maps, search_expanding_side);
+      enable_avoidance, ref_point, left_angle, initial_dist, maps, min_road_clearance,
+      min_obj_clearance, search_expanding_side);
     if (left_s < right_s) {
       // Pick left side:
       right_bound = left_s;
-      left_bound = getTraversedDistance(enable_avoidance, ref_point, left_angle, left_s, maps);
+      left_bound = getTraversedDistance(
+        enable_avoidance, ref_point, left_angle, left_s, maps, min_road_clearance,
+        min_obj_clearance);
     } else {
       // Pick right side:
       left_bound = -right_s;
-      right_bound = -getTraversedDistance(enable_avoidance, ref_point, right_angle, right_s, maps);
+      right_bound = -getTraversedDistance(
+        enable_avoidance, ref_point, right_angle, right_s, maps, min_road_clearance,
+        min_obj_clearance);
     }
   }
-  return {left_bound, right_bound};
+  if (std::fabs(left_bound - right_bound) < 1e-6) {
+    return boost::none;
+  }
+  std::vector<double> bound{left_bound, right_bound};
+  return bound;
 }
 
-double MPTOptimizer::getClearance(
+boost::optional<double> MPTOptimizer::getClearance(
   const cv::Mat & clearance_map, const geometry_msgs::msg::Point & map_point,
-  const nav_msgs::msg::MapMetaData & map_info, const double default_dist) const
+  const nav_msgs::msg::MapMetaData & map_info) const
 {
   const auto image_point = util::transformMapToOptionalImage(map_point, map_info);
   if (!image_point) {
-    return default_dist;
+    return boost::none;
   }
-  const float clearance =
-    clearance_map.ptr<float>(
-      static_cast<int>(image_point.get().y))[static_cast<int>(image_point.get().x)] *
+  const float clearance = clearance_map.ptr<float>(
+    static_cast<int>(
+      image_point.get().y))[static_cast<int>(image_point.get().x)] *
     map_info.resolution;
   return clearance;
 }
@@ -767,8 +945,13 @@ ConstraintMatrix MPTOptimizer::getConstraintMatrix(
     //             0]
     Eigen::VectorXd lb_blk = Eigen::VectorXd::Zero(3 * N_ref);
     for (size_t i = 0; i < N_ref; ++i) {
-      lb_blk(i) = -bias(i) + bounds[i].c0.lb;
-      lb_blk(N_ref + i) = bias(i) - bounds[i].c0.ub;
+      if (i == N_ref - 1) {
+        lb_blk(i) = -bias(i) + bounds[i].c0.lb;
+        lb_blk(N_ref + i) = bias(i) - bounds[i].c0.ub;
+      } else {
+        lb_blk(i) = -bias(i) + bounds[i + 1].c0.lb;
+        lb_blk(N_ref + i) = bias(i) - bounds[i + 1].c0.ub;
+      }
     }
     // Assign
     A.block(0, 0, 3 * N_ref, N_dec) = A_blk;
@@ -781,14 +964,23 @@ ConstraintMatrix MPTOptimizer::getConstraintMatrix(
     Eigen::MatrixXd C = Eigen::MatrixXd::Zero(N_ref, N_ref * N_state);
     for (size_t i = 0; i < N_ref; ++i) {
       Eigen::MatrixXd Cast = Eigen::MatrixXd::Zero(1, N_state);
-      Cast(0, 0) = std::cos(ref_points[i].delta_yaw_from_p1);
-      Cast(0, 1) = dist_vec[1] * std::cos(ref_points[i].delta_yaw_from_p1);
+      if (i == N_ref - 1) {
+        Cast(0, 0) = std::cos(ref_points[i].delta_yaw_from_p1);
+        Cast(0, 1) = dist_vec[1] * std::cos(ref_points[i].delta_yaw_from_p1);
+      } else {
+        Cast(0, 0) = std::cos(ref_points[i + 1].delta_yaw_from_p1);
+        Cast(0, 1) = dist_vec[1] * std::cos(ref_points[i + 1].delta_yaw_from_p1);
+      }
       C.block(i, N_state * i, 1, N_state) = Cast;
     }
     // bias := Cast * (Aex * x0 + Wex) - l1 * sin(alpha1)
     Eigen::VectorXd bias = C * (m.Aex * x0 + m.Wex);
     for (size_t i = 0; i < N_ref; ++i) {
-      bias(i) -= dist_vec[1] * std::sin(ref_points[i].delta_yaw_from_p1);
+      if (i == N_ref - 1) {
+        bias(i) -= dist_vec[1] * std::sin(ref_points[i].delta_yaw_from_p1);
+      } else {
+        bias(i) -= dist_vec[1] * std::sin(ref_points[i + 1].delta_yaw_from_p1);
+      }
     }
     // A_blk := [C * Bex | O | I | O
     //          -C * Bex | O | I | O
@@ -804,8 +996,13 @@ ConstraintMatrix MPTOptimizer::getConstraintMatrix(
     //             0]
     Eigen::VectorXd lb_blk = Eigen::VectorXd::Zero(3 * N_ref);
     for (size_t i = 0; i < N_ref; ++i) {
-      lb_blk(i) = -bias(i) + bounds[i].c1.lb;
-      lb_blk(N_ref + i) = bias(i) - bounds[i].c1.ub;
+      if (i == N_ref - 1) {
+        lb_blk(i) = -bias(i) + bounds[i].c1.lb;
+        lb_blk(N_ref + i) = bias(i) - bounds[i].c1.ub;
+      } else {
+        lb_blk(i) = -bias(i) + bounds[i + 1].c1.lb;
+        lb_blk(N_ref + i) = bias(i) - bounds[i + 1].c1.ub;
+      }
     }
     // Assign
     A.block(3 * N_ref, 0, 3 * N_ref, N_dec) = A_blk;
@@ -817,14 +1014,23 @@ ConstraintMatrix MPTOptimizer::getConstraintMatrix(
     Eigen::MatrixXd C = Eigen::MatrixXd::Zero(N_ref, N_ref * N_state);
     for (size_t i = 0; i < N_ref; ++i) {
       Eigen::MatrixXd Cast = Eigen::MatrixXd::Zero(1, N_state);
-      Cast(0, 0) = std::cos(ref_points[i].delta_yaw_from_p2);
-      Cast(0, 1) = dist_vec[2] * std::cos(ref_points[i].delta_yaw_from_p2);
+      if (i == N_ref - 1) {
+        Cast(0, 0) = std::cos(ref_points[i].delta_yaw_from_p2);
+        Cast(0, 1) = dist_vec[2] * std::cos(ref_points[i].delta_yaw_from_p2);
+      } else {
+        Cast(0, 0) = std::cos(ref_points[i + 1].delta_yaw_from_p2);
+        Cast(0, 1) = dist_vec[2] * std::cos(ref_points[i + 1].delta_yaw_from_p2);
+      }
       C.block(i, N_state * i, 1, N_state) = Cast;
     }
     // bias := Cast * (Aex * x0 + Wex) - l2 * sin(alpha2)
     Eigen::VectorXd bias = C * (m.Aex * x0 + m.Wex);
     for (size_t i = 0; i < N_ref; ++i) {
-      bias(i) -= dist_vec[2] * std::sin(ref_points[i].delta_yaw_from_p2);
+      if (i == N_ref - 1) {
+        bias(i) -= dist_vec[2] * std::sin(ref_points[i].delta_yaw_from_p2);
+      } else {
+        bias(i) -= dist_vec[2] * std::sin(ref_points[i + 1].delta_yaw_from_p2);
+      }
     }
     // A_blk := [C * Bex | O | O | I
     //          -C * Bex | O | O | I
@@ -840,8 +1046,13 @@ ConstraintMatrix MPTOptimizer::getConstraintMatrix(
     //             0]
     Eigen::VectorXd lb_blk = Eigen::VectorXd::Zero(3 * N_ref);
     for (size_t i = 0; i < N_ref; ++i) {
-      lb_blk(i) = -bias(i) + bounds[i].c2.lb;
-      lb_blk(N_ref + i) = bias(i) - bounds[i].c2.ub;
+      if (i == N_ref - 1) {
+        lb_blk(i) = -bias(i) + bounds[i].c2.lb;
+        lb_blk(N_ref + i) = bias(i) - bounds[i].c2.ub;
+      } else {
+        lb_blk(i) = -bias(i) + bounds[i + 1].c2.lb;
+        lb_blk(N_ref + i) = bias(i) - bounds[i + 1].c2.ub;
+      }
     }
     // Assign
     A.block(2 * 3 * N_ref, 0, 3 * N_ref, N_dec) = A_blk;
@@ -860,11 +1071,11 @@ ConstraintMatrix MPTOptimizer::getConstraintMatrix(
 
     // Assign
     A.block(3 * N_point * N_ref, 0, N_ref, N_ref) = C * m.Bex;
-    for (size_t i = 0; i < ref_points.size(); ++i) {
-      if (ref_points[i].is_fix) {
-        lb(3 * N_point * N_ref + i) = ref_points[i].fixing_lat - bias(i);
-        ub(3 * N_point * N_ref + i) = ref_points[i].fixing_lat - bias(i);
-      } else if (i == ref_points.size() - 1 && mpt_param_ptr_->is_hard_fix_terminal_point) {
+    for (size_t i = 0; i < N_ref; ++i) {
+      if (ref_points[i + 1].fix_state && i + 1 < N_ref) {
+        lb(3 * N_point * N_ref + i) = ref_points[i + 1].fix_state.get()(0) - bias(i);
+        ub(3 * N_point * N_ref + i) = ref_points[i + 1].fix_state.get()(0) - bias(i);
+      } else if (i == ref_points.size() - 1 && mpt_param_ptr_->is_hard_fixing_terminal_point) {
         lb(3 * N_point * N_ref + i) = -bias(i);
         ub(3 * N_point * N_ref + i) = -bias(i);
       }
@@ -885,64 +1096,172 @@ ConstraintMatrix MPTOptimizer::getConstraintMatrix(
 
 std::vector<ReferencePoint> MPTOptimizer::getBaseReferencePoints(
   const std::vector<geometry_msgs::msg::Point> & interpolated_points,
-  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & points) const
+  const std::unique_ptr<Trajectories> & prev_trajs, DebugData * debug_data) const
 {
   std::vector<ReferencePoint> reference_points;
   for (int i = 0; i < interpolated_points.size(); i++) {
     ReferencePoint ref_point;
     ref_point.p = interpolated_points[i];
-
-    if (i > 0) {
-      ref_point.q =
-        util::getQuaternionFromPoints(interpolated_points[i], interpolated_points[i - 1]);
-    } else if (i == 0 && interpolated_points.size() > 1) {
-      ref_point.q =
-        util::getQuaternionFromPoints(interpolated_points[i + 1], interpolated_points[i]);
-    }
-    ref_point.yaw = tf2::getYaw(ref_point.q);
-
-    ref_point.v = points[util::getNearestIdx(points, interpolated_points[i])].twist.linear.x;
     reference_points.push_back(ref_point);
   }
-  return reference_points;
+  if (!prev_trajs) {
+    return reference_points;
+  }
+  if (prev_trajs->model_predictive_trajectory.size() != prev_trajs->mpt_ref_points.size()) {
+    return reference_points;
+  }
+
+  // re-calculating points' position for fixing
+  std::vector<geometry_msgs::msg::Point> cropped_interpolated_points;
+  double accum_s_for_interpolated = 0;
+  for (int i = 0; i < interpolated_points.size(); i++) {
+    if (i > 0) {
+      accum_s_for_interpolated +=
+        util::calculate2DDistance(interpolated_points[i], interpolated_points[i - 1]);
+    }
+    if (
+      accum_s_for_interpolated >
+      traj_param_ptr_->num_sampling_points * traj_param_ptr_->delta_arc_length_for_mpt_points)
+    {
+      break;
+    }
+    cropped_interpolated_points.push_back(interpolated_points[i]);
+  }
+  constexpr double fine_resolution = 0.005;
+  std::vector<geometry_msgs::msg::Point> fine_interpolated_points;
+  fine_interpolated_points =
+    util::getInterpolatedPoints(cropped_interpolated_points, fine_resolution);
+  const double max_s =
+    traj_param_ptr_->backward_fixing_distance + traj_param_ptr_->forward_fixing_mpt_distance;
+  const int num_points = std::min(
+    static_cast<int>(reference_points.size()),
+    static_cast<int>(max_s / traj_param_ptr_->delta_arc_length_for_mpt_points));
+
+  for (int i = 0; i < num_points; i++) {
+    const int nearest_prev_idx =
+      util::getNearestPointIdx(prev_trajs->mpt_ref_points, reference_points[i].p);
+    if (
+      util::calculate2DDistance(
+        prev_trajs->mpt_ref_points[nearest_prev_idx].p, reference_points[i].p) >=
+      std::fabs(traj_param_ptr_->delta_arc_length_for_mpt_points))
+    {
+      continue;
+    }
+    const int nearest_idx =
+      util::getNearestIdx(fine_interpolated_points, prev_trajs->mpt_ref_points[nearest_prev_idx].p);
+    if (
+      util::calculate2DDistance(
+        fine_interpolated_points[nearest_idx], prev_trajs->mpt_ref_points[nearest_prev_idx].p) <
+      fine_resolution)
+    {
+      reference_points[i] = prev_trajs->mpt_ref_points[nearest_prev_idx];
+      reference_points[i].fix_state = prev_trajs->mpt_ref_points[nearest_prev_idx].optimized_state;
+    }
+  }
+
+  std::vector<ReferencePoint> trimmed_reference_points;
+  for (int i = 0; i < reference_points.size(); i++) {
+    if (i > 0) {
+      const double dx = reference_points[i].p.x - reference_points[i - 1].p.x;
+      const double dy = reference_points[i].p.y - reference_points[i - 1].p.y;
+      if (std::fabs(dx) < 1e-6 && std::fabs(dy) < 1e-6) {
+        continue;
+      }
+    }
+    trimmed_reference_points.push_back(reference_points[i]);
+  }
+
+  for (int i = 0; i < trimmed_reference_points.size(); i++) {
+    if (trimmed_reference_points[i].fix_state) {
+      geometry_msgs::msg::Point rel_point;
+      rel_point.y = trimmed_reference_points[i].fix_state.get()(0);
+      geometry_msgs::msg::Pose origin;
+      origin.position = trimmed_reference_points[i].p;
+      origin.orientation = trimmed_reference_points[i].q;
+      geometry_msgs::msg::Pose debug_pose;
+      debug_pose.position = util::transformToAbsoluteCoordinate2D(rel_point, origin);
+      debug_data->fixed_mpt_points.push_back(debug_pose);
+      continue;
+    }
+  }
+  return trimmed_reference_points;
 }
 
 double MPTOptimizer::getTraversedDistance(
   const bool enable_avoidance, const ReferencePoint & ref_point, const double traverse_angle,
-  const double initial_value, const CVMaps & maps, const bool search_expanding_side) const
+  const double initial_value, const CVMaps & maps, const double min_road_clearance,
+  const double min_obj_clearance, const bool search_expanding_side) const
 {
-  constexpr double ds = 0.01;
-  constexpr double lane_width = 10;
-  auto n = static_cast<size_t>(lane_width / ds);
+  constexpr double ds = 0.1;
+  constexpr double lane_width = 7.5;
+  int n = static_cast<int>(lane_width / ds);
 
   double traversed_dist = initial_value;
-  for (size_t i = 0; i < n; ++i) {
+  for (int i = 0; i < n; ++i) {
     traversed_dist += ds;
     geometry_msgs::msg::Point new_position;
     new_position.x = ref_point.p.x + traversed_dist * std::cos(traverse_angle);
     new_position.y = ref_point.p.y + traversed_dist * std::sin(traverse_angle);
-    const double clearance = getClearance(maps.clearance_map, new_position, maps.map_info);
-    double object_clearance =
-      getClearance(maps.only_objects_clearance_map, new_position, maps.map_info);
+    auto clearance = getClearance(maps.clearance_map, new_position, maps.map_info);
+    auto obj_clearance = getClearance(maps.only_objects_clearance_map, new_position, maps.map_info);
+    if (!clearance || !obj_clearance) {
+      *clearance = 0;
+      *obj_clearance = 0;
+    }
     if (!enable_avoidance) {
-      object_clearance = std::numeric_limits<double>::max();
+      *obj_clearance = std::numeric_limits<double>::max();
     }
     if (search_expanding_side) {
-      if (
-        clearance > mpt_param_ptr_->clearance_from_road &&
-        object_clearance > mpt_param_ptr_->clearance_from_object)
-      {
-        traversed_dist += ds;
+      if (clearance.get() > min_road_clearance && obj_clearance.get() > min_obj_clearance) {
         break;
       }
     } else {
-      if (
-        clearance < mpt_param_ptr_->clearance_from_road ||
-        object_clearance < mpt_param_ptr_->clearance_from_object)
-      {
+      if (clearance.get() < min_road_clearance || obj_clearance.get() < min_obj_clearance) {
         break;
       }
     }
   }
   return traversed_dist;
+}
+
+boost::optional<double> MPTOptimizer::getValidLatError(
+  const bool enable_avoidance, const ReferencePoint & ref_point, const double initial_value,
+  const CVMaps & maps, const double min_road_clearance, const double min_obj_clearance,
+  const std::vector<double> & rough_road_bound, const bool search_expanding_side) const
+{
+  constexpr double ds = 0.01;
+  constexpr double lane_width = 7.5;
+  int n = static_cast<int>(lane_width / ds);
+
+  double rel_value = initial_value;
+  for (int i = 0; i < n; ++i) {
+    rel_value -= ds;
+    if (rel_value > rough_road_bound[0] || rel_value < rough_road_bound[1]) {
+      return boost::none;
+    }
+    geometry_msgs::msg::Point rel_point;
+    rel_point.y = rel_value;
+    geometry_msgs::msg::Pose origin;
+    origin.position = ref_point.p;
+    origin.orientation = util::getQuaternionFromYaw(ref_point.yaw);
+    const auto new_position = util::transformToAbsoluteCoordinate2D(rel_point, origin);
+    auto clearance = getClearance(maps.clearance_map, new_position, maps.map_info);
+    auto obj_clearance = getClearance(maps.only_objects_clearance_map, new_position, maps.map_info);
+    if (!clearance || !obj_clearance) {
+      return boost::none;
+    }
+    if (!enable_avoidance) {
+      *obj_clearance = std::numeric_limits<double>::max();
+    }
+    if (search_expanding_side) {
+      if (clearance.get() > min_road_clearance && obj_clearance.get() > min_obj_clearance) {
+        break;
+      }
+    } else {
+      if (clearance.get() < min_road_clearance || obj_clearance.get() < min_obj_clearance) {
+        break;
+      }
+    }
+  }
+  return rel_value;
 }

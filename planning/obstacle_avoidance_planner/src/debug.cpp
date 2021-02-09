@@ -15,18 +15,18 @@
 #include <string>
 #include <vector>
 
-#include "obstacle_avoidance_planner/debug.hpp"
-#include "rclcpp/clock.hpp"
 #include "autoware_perception_msgs/msg/dynamic_object.hpp"
 #include "autoware_planning_msgs/msg/trajectory_point.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 #include "nav_msgs/msg/occupancy_grid.hpp"
+#include "obstacle_avoidance_planner/debug.hpp"
 #include "obstacle_avoidance_planner/eb_path_optimizer.hpp"
 #include "obstacle_avoidance_planner/marker_helper.hpp"
 #include "obstacle_avoidance_planner/mpt_optimizer.hpp"
 #include "obstacle_avoidance_planner/process_cv.hpp"
 #include "obstacle_avoidance_planner/util.hpp"
 #include "opencv2/core.hpp"
+#include "rclcpp/clock.hpp"
 #include "tf2/utils.h"
 #include "visualization_msgs/msg/marker.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
@@ -35,7 +35,8 @@ visualization_msgs::msg::MarkerArray getDebugVisualizationMarker(
   const DebugData & debug_data,
   // const std::vector<geometry_msgs::msg::Point> & interpolated_points,
   // const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & smoothed_points,
-  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & optimized_points)
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & optimized_points,
+  const VehicleParam & vehicle_param)
 {
   const auto points_marker_array = getDebugPointsMarkers(
     debug_data.interpolated_points, optimized_points, debug_data.straight_points,
@@ -47,12 +48,11 @@ visualization_msgs::msg::MarkerArray getDebugVisualizationMarker(
 
   visualization_msgs::msg::MarkerArray vis_marker_array;
   if (debug_data.is_expected_to_over_drivable_area && !optimized_points.empty()) {
+    const auto virtual_wall_pose = getVirtualWallPose(optimized_points.back().pose, vehicle_param);
     appendMarkerArray(
-      getVirtualWallMarkerArray(optimized_points.back().pose, "virtual_wall", 1.0, 0, 0),
-      &vis_marker_array);
+      getVirtualWallMarkerArray(virtual_wall_pose, "virtual_wall", 1.0, 0, 0), &vis_marker_array);
     appendMarkerArray(
-      getVirtualWallTextMarkerArray(
-        optimized_points.back().pose, "virtual_wall_text", 1.0, 1.0, 1.0),
+      getVirtualWallTextMarkerArray(virtual_wall_pose, "virtual_wall_text", 1.0, 1.0, 1.0),
       &vis_marker_array);
   }
   appendMarkerArray(points_marker_array, &vis_marker_array);
@@ -117,8 +117,27 @@ visualization_msgs::msg::MarkerArray getDebugVisualizationMarker(
       debug_data.bounds, debug_data.bounds_candidate_for_top_points, "top_bounds_line", 0.99, 0.99,
       0.2),
     &vis_marker_array);
+  appendMarkerArray(
+    getMidBoundsLineMarkerArray(
+      debug_data.bounds, debug_data.bounds_candidate_for_mid_points, "mid_bounds_line", 0.99, 0.99,
+      0.2),
+    &vis_marker_array);
 
   return vis_marker_array;
+}
+
+geometry_msgs::msg::Pose getVirtualWallPose(
+  const geometry_msgs::msg::Pose & target_pose, const VehicleParam & vehicle_param)
+{
+  const double base_link2front = vehicle_param.wheelbase + vehicle_param.front_overhang;
+  tf2::Transform tf_base_link2front(
+    tf2::Quaternion(0.0, 0.0, 0.0, 1.0), tf2::Vector3(base_link2front, 0.0, 0.0));
+  tf2::Transform tf_map2base_link;
+  tf2::fromMsg(target_pose, tf_map2base_link);
+  tf2::Transform tf_map2front = tf_map2base_link * tf_base_link2front;
+  geometry_msgs::msg::Pose virtual_wall_pose;
+  tf2::toMsg(tf_map2front, virtual_wall_pose);
+  return virtual_wall_pose;
 }
 
 visualization_msgs::msg::MarkerArray getDebugPointsMarkers(
@@ -480,7 +499,7 @@ visualization_msgs::msg::MarkerArray getPointsMarkerArray(
   marker.action = visualization_msgs::msg::Marker::ADD;
   marker.pose.orientation.w = 1.0;
   marker.type = visualization_msgs::msg::Marker::SPHERE_LIST;
-  marker.scale = createMarkerScale(0.2, 0.2, 0.2);
+  marker.scale = createMarkerScale(0.5, 0.5, 0.5);
   marker.color = createMarkerColor(r, g, b, 0.99);
   for (const auto & p : points) {
     marker.points.push_back(p.position);
@@ -510,7 +529,7 @@ visualization_msgs::msg::MarkerArray getPointsMarkerArray(
   marker.action = visualization_msgs::msg::Marker::ADD;
   marker.pose.orientation.w = 1.0;
   marker.type = visualization_msgs::msg::Marker::SPHERE_LIST;
-  marker.scale = createMarkerScale(0.2, 0.2, 0.2);
+  marker.scale = createMarkerScale(0.7, 0.7, 0.7);
   marker.color = createMarkerColor(r, g, b, 0.99);
   for (const auto & p : points) {
     marker.points.push_back(p);
@@ -650,6 +669,45 @@ visualization_msgs::msg::MarkerArray getTopBoundsLineMarkerArray(
     geometry_msgs::msg::Point rel_ub;
     rel_ub.x = 0;
     rel_ub.y = bounds[i].c1.ub;
+    geometry_msgs::msg::Point abs_ub =
+      util::transformToAbsoluteCoordinate2D(rel_ub, candidate_top[i]);
+    marker.points.push_back(abs_lb);
+    marker.points.push_back(abs_ub);
+    msg.markers.push_back(marker);
+    marker.points.clear();
+  }
+  return msg;
+}
+
+visualization_msgs::msg::MarkerArray getMidBoundsLineMarkerArray(
+  const std::vector<Bounds> & bounds, const std::vector<geometry_msgs::msg::Pose> & candidate_top,
+  const std::string & ns, const double r, const double g, const double b)
+{
+  const auto current_time = rclcpp::Clock().now();
+  visualization_msgs::msg::MarkerArray msg;
+
+  visualization_msgs::msg::Marker marker{};
+  marker.header.frame_id = "map";
+  marker.header.stamp = current_time;
+  marker.ns = ns;
+
+  int unique_id = 0;
+  for (int i = 0; i < bounds.size(); i++) {
+    marker.id = unique_id++;
+    marker.lifetime = rclcpp::Duration(-1);
+    marker.action = visualization_msgs::msg::Marker::ADD;
+    marker.pose.orientation.w = 1.0;
+    marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
+    marker.scale = createMarkerScale(0.05, 0, 0);
+    marker.color = createMarkerColor(r, g, b, 0.6);
+    geometry_msgs::msg::Point rel_lb;
+    rel_lb.x = 0;
+    rel_lb.y = bounds[i].c2.lb;
+    geometry_msgs::msg::Point abs_lb =
+      util::transformToAbsoluteCoordinate2D(rel_lb, candidate_top[i]);
+    geometry_msgs::msg::Point rel_ub;
+    rel_ub.x = 0;
+    rel_ub.y = bounds[i].c2.ub;
     geometry_msgs::msg::Point abs_ub =
       util::transformToAbsoluteCoordinate2D(rel_ub, candidate_top[i]);
     marker.points.push_back(abs_lb);

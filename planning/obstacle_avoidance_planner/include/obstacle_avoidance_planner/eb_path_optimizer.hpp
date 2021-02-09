@@ -17,7 +17,6 @@
 #include <memory>
 #include <vector>
 
-#include "rclcpp/clock.hpp"
 #include "autoware_perception_msgs/msg/dynamic_object.hpp"
 #include "autoware_planning_msgs/msg/path.hpp"
 #include "autoware_planning_msgs/msg/path_point.hpp"
@@ -28,9 +27,11 @@
 #include "geometry_msgs/msg/pose.hpp"
 #include "nav_msgs/msg/map_meta_data.hpp"
 #include "opencv2/core.hpp"
+#include "rclcpp/clock.hpp"
 
 struct Bounds;
 struct MPTParam;
+struct ReferencePoint;
 
 struct Anchor
 {
@@ -117,12 +118,19 @@ struct QPParam
 
 struct TrajectoryParam
 {
+  bool is_avoiding_unknown;
+  bool is_avoiding_car;
+  bool is_avoiding_truck;
+  bool is_avoiding_bus;
+  bool is_avoiding_bicycle;
+  bool is_avoiding_motorbike;
+  bool is_avoiding_pedestrian;
+  bool is_avoiding_animal;
   int num_sampling_points;
   int num_joint_buffer_points;
   int num_joint_buffer_points_for_extending;
   int num_offset_for_begin_idx;
   int num_fix_points_for_extending;
-  int num_fix_points_for_mpt;
   double delta_arc_length_for_optimization;
   double delta_arc_length_for_mpt_points;
   double delta_arc_length_for_trajectory;
@@ -131,6 +139,7 @@ struct TrajectoryParam
   double delta_yaw_threshold_for_straight;
   double trajectory_length;
   double forward_fixing_distance;
+  double forward_fixing_mpt_distance;
   double backward_fixing_distance;
   double max_avoiding_ego_velocity_ms;
   double max_avoiding_objects_velocity_ms;
@@ -142,6 +151,7 @@ struct TrajectoryParam
 struct Trajectories
 {
   std::vector<autoware_planning_msgs::msg::TrajectoryPoint> smoothed_trajectory;
+  std::vector<ReferencePoint> mpt_ref_points;
   std::vector<autoware_planning_msgs::msg::TrajectoryPoint> model_predictive_trajectory;
   std::vector<autoware_planning_msgs::msg::TrajectoryPoint> extended_trajectory;
 };
@@ -206,6 +216,7 @@ struct DebugData
   std::vector<Bounds> bounds;
   std::vector<geometry_msgs::msg::Pose> bounds_candidate_for_base_points;
   std::vector<geometry_msgs::msg::Pose> bounds_candidate_for_top_points;
+  std::vector<geometry_msgs::msg::Pose> bounds_candidate_for_mid_points;
   std::vector<geometry_msgs::msg::Pose> fixed_mpt_points;
   cv::Mat clearance_map;
   cv::Mat only_object_clearance_map;
@@ -360,6 +371,12 @@ private:
     const std::vector<geometry_msgs::msg::Point> & interpolated_points, const int num_fixed_points,
     const int farrest_point_idx, const int straight_idx, const cv::Mat & clearnce_map,
     const cv::Mat & only_objects_clearance_map, DebugData * debug_data);
+
+  boost::optional<std::vector<ConstrainRectangle>> getConstrainRectangleVec(
+    const autoware_planning_msgs::msg::Path & path,
+    const std::vector<geometry_msgs::msg::Point> & interpolated_points, const int num_fixed_points,
+    const int farrest_point_idx, const int straight_idx, const cv::Mat & clearance_map,
+    const cv::Mat & only_objects_clearance_map);
 
   std::vector<ConstrainRectangle> getConstrainRectangleVec(
     const std::vector<autoware_planning_msgs::msg::PathPoint> & input_path,
