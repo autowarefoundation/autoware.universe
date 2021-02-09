@@ -1,0 +1,14 @@
+<launch>
+  <arg name="input_objects" default="/perception/object_recognition/objects" />
+  <arg name="input_path_topic" default="/planning/scenario_planning/lane_driving/behavior_planning/path" />
+  <arg name="output_path_topic" default="output/path" />
+  <arg name="param_path" default="$(find-pkg-share frenet_planner_node)/config/frenet_planner_node.param.yaml" />
+
+  <node pkg="frenet_planner_node" exec="frenet_planner_node_exe" name="frenet_planner_node" output="screen" launch-prefix="konsole -e gdb -ex run --args">
+    <remap from="~/input/objects" to="$(var input_objects)"/>
+    <remap from="~/input/path" to="$(var input_path_topic)" />
+    <remap from="~/output/path" to="$(var output_path_topic)" />
+
+    <param from="$(var param_path)" />
+  </node>
+</launch>
