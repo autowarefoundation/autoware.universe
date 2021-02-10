@@ -38,7 +38,7 @@ struct NodeParam
 class GoalDistanceCalculatorNode : public rclcpp::Node
 {
 public:
-  GoalDistanceCalculatorNode();
+  explicit GoalDistanceCalculatorNode(const rclcpp::NodeOptions & options);
 
 private:
   // Subscriber

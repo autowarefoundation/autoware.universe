@@ -10,10 +10,14 @@ if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_EXTENSIONS OFF)
 endif()
 
-ament_auto_add_executable(goal_distance_calculator
-  src/main.cpp
+ament_auto_add_library(goal_distance_calculator SHARED
   src/goal_distance_calculator_node.cpp
   src/goal_distance_calculator.cpp
+)
+
+rclcpp_components_register_node(goal_distance_calculator
+  PLUGIN "goal_distance_calculator::GoalDistanceCalculatorNode"
+  EXECUTABLE goal_distance_calculator_node
 )
 
 if(BUILD_TESTING)
