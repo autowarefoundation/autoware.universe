@@ -1,6 +1,6 @@
 <launch>
   <arg name="vehicle_param_file" />
-  <arg name="config_file" default="$(find vehicle_cmd_gate)/config/vehicle_cmd_gate.param.yaml" />
+  <arg name="config_file" default="$(find-pkg-share vehicle_cmd_gate)/config/vehicle_cmd_gate.param.yaml" />
   <arg name="use_emergency_handling" default="false" />
   <arg name="use_external_emergency_stop" default="true" />
 
