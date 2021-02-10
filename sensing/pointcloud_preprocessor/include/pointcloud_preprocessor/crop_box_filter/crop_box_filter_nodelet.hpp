@@ -49,7 +49,11 @@
  * $Id: cropbox.cpp
  *
  */
-#pragma once
+
+#ifndef POINTCLOUD_PREPROCESSOR__CROP_BOX_FILTER__CROP_BOX_FILTER_NODELET_HPP_
+#define POINTCLOUD_PREPROCESSOR__CROP_BOX_FILTER__CROP_BOX_FILTER_NODELET_HPP_
+
+#include <vector>
 
 #include "pcl/filters/crop_box.h"
 
@@ -80,6 +84,8 @@ private:
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  CropBoxFilterComponent(const rclcpp::NodeOptions & options);
+  explicit CropBoxFilterComponent(const rclcpp::NodeOptions & options);
 };
 }  // namespace pointcloud_preprocessor
+
+#endif  // POINTCLOUD_PREPROCESSOR__CROP_BOX_FILTER__CROP_BOX_FILTER_NODELET_HPP_

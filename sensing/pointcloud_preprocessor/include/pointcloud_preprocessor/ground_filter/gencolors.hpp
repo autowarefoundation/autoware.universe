@@ -1,6 +1,16 @@
-#ifndef GENCOLORS_CPP_
-#define GENCOLORS_CPP_
-
+// Copyright 2020 Tier IV, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 /*M///////////////////////////////////////////////////////////////////////////////////////
 //
 //  IMPORTANT: READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING.
@@ -42,16 +52,22 @@
 // the use of this software, even if advised of the possibility of such damage.
 //
 //M*/
-#include "opencv2/core/core.hpp"
-#include "opencv2/core/core_c.h"
-//#include "precomp.hpp"
-#include "opencv2/opencv.hpp"
+
+#ifndef POINTCLOUD_PREPROCESSOR__GROUND_FILTER__GENCOLORS_HPP_
+#define POINTCLOUD_PREPROCESSOR__GROUND_FILTER__GENCOLORS_HPP_
 
 #include <iostream>
+#include <vector>
+
+#include "opencv2/core/core.hpp"
+#include "opencv2/core/core_c.h"
+//  #include "precomp.hpp"
+#include "opencv2/opencv.hpp"
+
 
 namespace ray_ground_filter
 {
-using namespace cv;
+using namespace cv;  // NOLINT
 
 inline static void downsamplePoints(const Mat & src, Mat & dst, size_t count)
 {
@@ -60,14 +76,14 @@ inline static void downsamplePoints(const Mat & src, Mat & dst, size_t count)
   CV_Assert(src.total() >= count);
   CV_Assert(src.type() == CV_8UC3);
 
-  dst.create(1, (int)count, CV_8UC3);
-  // TODO: optimize by exploiting symmetry in the distance matrix
-  Mat dists((int)src.total(), (int)src.total(), CV_32FC1, Scalar(0));
-  if (dists.empty()) {std::cerr << "Such big matrix cann't be created." << std::endl;}
+  dst.create(1, static_cast<int>(count), CV_8UC3);
+  // TODO(YamatoAndo): optimize by exploiting symmetry in the distance matrix
+  Mat dists(static_cast<int>(src.total()), static_cast<int>(src.total()), CV_32FC1, Scalar(0));
+  if (dists.empty()) {std::cerr << "Such big matrix can't be created." << std::endl;}
 
   for (int i = 0; i < dists.rows; i++) {
     for (int j = i; j < dists.cols; j++) {
-      float dist = (float)norm(src.at<Point3_<uchar>>(i) - src.at<Point3_<uchar>>(j));
+      float dist = static_cast<float>(norm(src.at<Point3_<uchar>>(i) - src.at<Point3_<uchar>>(j)));
       dists.at<float>(j, i) = dists.at<float>(i, j) = dist;
     }
   }
@@ -91,7 +107,7 @@ inline static void downsamplePoints(const Mat & src, Mat & dst, size_t count)
     Mat minDists;
     reduce(activedDists, minDists, 0, CV_REDUCE_MIN);
     minMaxLoc(minDists, 0, &maxVal, 0, &maxLoc, candidatePointsMask);
-    dst.at<Point3_<uchar>>((int)i) = src.at<Point3_<uchar>>(maxLoc.x);
+    dst.at<Point3_<uchar>>(static_cast<int>(i)) = src.at<Point3_<uchar>>(maxLoc.x);
   }
 }
 
@@ -111,9 +127,9 @@ inline void generateColors(std::vector<Scalar> & colors, size_t count, size_t fa
     return;
   }
 
-  // Generate a set of colors in RGB space. A size of the set is severel times (=factor) larger then
+  // Generate a set of colors in RGB space. A size of the set is several times (=factor) larger then
   // the needed count of colors.
-  Mat bgr(1, (int)(count * factor), CV_8UC3);
+  Mat bgr(1, static_cast<int>(count * factor), CV_8UC3);
   randu(bgr, 0, 256);
 
   // Convert the colors set to Lab space.
@@ -133,9 +149,9 @@ inline void generateColors(std::vector<Scalar> & colors, size_t count, size_t fa
 
   CV_Assert(bgr_subset.total() == count);
   for (size_t i = 0; i < count; i++) {
-    Point3_<uchar> c = bgr_subset.at<Point3_<uchar>>((int)i);
+    Point3_<uchar> c = bgr_subset.at<Point3_<uchar>>(static_cast<int>(i));
     colors[i] = Scalar(c.x, c.y, c.z);
   }
 }
 }  // namespace ray_ground_filter
-#endif  // GENCOLORS_CPP
+#endif  // POINTCLOUD_PREPROCESSOR__GROUND_FILTER__GENCOLORS_HPP_

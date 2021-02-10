@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef POINTCLOUD_PREPROCESSOR__OUTLIER_FILTER__RING_OUTLIER_FILTER_NODELET_HPP_
-#define POINTCLOUD_PREPROCESSOR__OUTLIER_FILTER__RING_OUTLIER_FILTER_NODELET_HPP_
+#ifndef POINTCLOUD_PREPROCESSOR__OUTLIER_FILTER__RADIUS_SEARCH_2D_OUTLIER_FILTER_NODELET_HPP_
+#define POINTCLOUD_PREPROCESSOR__OUTLIER_FILTER__RADIUS_SEARCH_2D_OUTLIER_FILTER_NODELET_HPP_
 
 #include <vector>
 
@@ -21,18 +21,26 @@
 #include "pcl/search/pcl_search.h"
 #include "pointcloud_preprocessor/filter.hpp"
 
+#include "pcl/common/impl/common.hpp"
+#include "pcl/filters/radius_outlier_removal.h"
+#include "pcl/filters/extract_indices.h"
+
+
 namespace pointcloud_preprocessor
 {
-class RingOutlierFilterComponent : public pointcloud_preprocessor::Filter
+class RadiusSearch2DOutlierFilterComponent : public pointcloud_preprocessor::Filter
 {
 protected:
   virtual void filter(
     const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output);
 
 private:
-  double distance_ratio_;
-  double object_length_threshold_;
-  int num_points_threshold_;
+  double search_radius_;
+  size_t min_neighbors_;
+
+  // pcl::RadiusOutlierRemoval<pcl::PCLPointCloud2> radius_outlier_removal_;
+  pcl::search::Search<pcl::PointXY>::Ptr kd_tree_;
+  // pcl::ExtractIndices<pcl::PCLPointCloud2> extract_indices_;
 
   /** \brief Parameter service callback result : needed to be hold */
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
@@ -42,28 +50,8 @@ private:
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  explicit RingOutlierFilterComponent(const rclcpp::NodeOptions & options);
+  explicit RadiusSearch2DOutlierFilterComponent(const rclcpp::NodeOptions & options);
 };
-
 }  // namespace pointcloud_preprocessor
 
-namespace pcl
-{
-struct PointXYZIRADT
-{
-  PCL_ADD_POINT4D;
-  float intensity;
-  std::uint16_t ring;
-  float azimuth;
-  float distance;
-  double time_stamp;
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-} EIGEN_ALIGN16;
-}  // namespace pcl
-
-POINT_CLOUD_REGISTER_POINT_STRUCT(
-  pcl::PointXYZIRADT,
-  (float, x, x)(float, y, y)(float, z, z)(float, intensity, intensity)(std::uint16_t, ring, ring)(
-    float, azimuth, azimuth)(float, distance, distance)(double, time_stamp, time_stamp))
-
-#endif  // POINTCLOUD_PREPROCESSOR__OUTLIER_FILTER__RING_OUTLIER_FILTER_NODELET_HPP_
+#endif  // POINTCLOUD_PREPROCESSOR__OUTLIER_FILTER__RADIUS_SEARCH_2D_OUTLIER_FILTER_NODELET_HPP_

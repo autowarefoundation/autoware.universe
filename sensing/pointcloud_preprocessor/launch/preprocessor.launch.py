@@ -13,101 +13,100 @@
 # limitations under the License.
 
 import launch
-from launch import LaunchContext
-from launch_ros.actions import ComposableNodeContainer
-from launch_ros.descriptions import ComposableNode
 from launch.actions import DeclareLaunchArgument, LogInfo
 from launch.substitutions import LaunchConfiguration, PythonExpression
 
-
-context = LaunchContext()
+from launch_ros.actions import ComposableNodeContainer
+from launch_ros.descriptions import ComposableNode
 
 
 def generate_launch_description():
 
-  ns = 'pointcloud_preprocessor'
-  pkg = 'pointcloud_preprocessor'
+    ns = 'pointcloud_preprocessor'
+    pkg = 'pointcloud_preprocessor'
 
-  # declare launch arguments
-  input_points_raw_list_param = DeclareLaunchArgument(
-      'input_points_raw_list',
-      default_value="['/points_raw']",
-      description="Input pointcloud topic_name list as a string_array. "
-      "To subscribe miultiple topics, write as: \"['/points_raw0', '/points_raw1', '/points_raw2', ...]\"")
+    # declare launch arguments
+    input_points_raw_list_param = DeclareLaunchArgument(
+        'input_points_raw_list',
+        default_value="['/points_raw']",
+        description='Input pointcloud topic_name list as a string_array. '
+        "To subscribe miultiple topics, write as: \"['/points_raw0', '/points_raw1', ...]\"")
 
-  output_points_raw_param = DeclareLaunchArgument(
-      'output_points_raw',
-      default_value='/points_raw/cropbox/filtered')
+    output_points_raw_param = DeclareLaunchArgument(
+        'output_points_raw',
+        default_value='/points_raw/cropbox/filtered')
 
-  tf_output_frame_param = DeclareLaunchArgument(
-      'tf_output_frame',
-      default_value='base_link')
+    tf_output_frame_param = DeclareLaunchArgument(
+        'tf_output_frame',
+        default_value='base_link')
 
-  # set concat filter as a component
-  concat_component = ComposableNode(
-      package=pkg,
-      plugin='pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent',
-      name='concatnate_filter',
-      remappings=[('output', 'points_raw/concatenated')],
-      parameters=[
-          {
-              'input_topics': LaunchConfiguration('input_points_raw_list'),
-              'output_frame': LaunchConfiguration('tf_output_frame'),
-              'approximate_sync': True,
-          }
-      ]
-  )
+    # set concat filter as a component
+    concat_component = ComposableNode(
+        package=pkg,
+        plugin='pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent',
+        name='concatnate_filter',
+        remappings=[('output', 'points_raw/concatenated')],
+        parameters=[
+            {
+                'input_topics': LaunchConfiguration('input_points_raw_list'),
+                'output_frame': LaunchConfiguration('tf_output_frame'),
+                'approximate_sync': True,
+            }
+        ]
+    )
 
-  # set crop box filter as a component
-  cropbox_component = ComposableNode(
-      package=pkg,
-      plugin='pointcloud_preprocessor::CropBoxFilterComponent',
-      name='crop_box_filter',
-      remappings=[
-          ('input',  PythonExpression(["'points_raw/concatenated' if len(",
-                                       LaunchConfiguration('input_points_raw_list'), ") > 1 else 'input_points_raw0'"])),
-          ('output', LaunchConfiguration('output_points_raw'))
-      ],
-      parameters=[
-          {
-              'input_frame': LaunchConfiguration('tf_output_frame'),
-              'output_frame': LaunchConfiguration('tf_output_frame'),
-              'min_x': -200.0,
-              'max_x': 1000.0,
-              'min_y': -50.0,
-              'max_y': 50.0,
-              'min_z': -2.0,
-              'max_z': 3.0,
-              'negative': False,
-          }
-      ]
-  )
+    # set crop box filter as a component
+    cropbox_component = ComposableNode(
+        package=pkg,
+        plugin='pointcloud_preprocessor::CropBoxFilterComponent',
+        name='crop_box_filter',
+        remappings=[
+            ('input',
+             PythonExpression(["'points_raw/concatenated' if len(",
+                              LaunchConfiguration('input_points_raw_list'),
+                              ") > 1 else 'input_points_raw0'"])),
+            ('output', LaunchConfiguration('output_points_raw'))
+        ],
+        parameters=[
+            {
+                'input_frame': LaunchConfiguration('tf_output_frame'),
+                'output_frame': LaunchConfiguration('tf_output_frame'),
+                'min_x': -200.0,
+                'max_x': 1000.0,
+                'min_y': -50.0,
+                'max_y': 50.0,
+                'min_z': -2.0,
+                'max_z': 3.0,
+                'negative': False,
+            }
+        ]
+    )
 
-  # set container to run all required components in the same process
-  container = ComposableNodeContainer(
-      name='pointcloud_preprocessor_container',
-      namespace=ns,
-      package='rclcpp_components',
-      executable='component_container',
-      composable_node_descriptions=[
-              concat_component,
-              cropbox_component
-      ],
-      output='screen',
-  )
+    # set container to run all required components in the same process
+    container = ComposableNodeContainer(
+        name='pointcloud_preprocessor_container',
+        namespace=ns,
+        package='rclcpp_components',
+        executable='component_container',
+        composable_node_descriptions=[
+                concat_component,
+                cropbox_component
+        ],
+        output='screen',
+    )
 
-  # check the size of input_points_raw_list
-  log_info = LogInfo(
-      msg=PythonExpression(
-          ["'input_points_raw_list size = ' + str(len(", LaunchConfiguration(
-              'input_points_raw_list'), "))"]
-      )
-  )
+    # check the size of input_points_raw_list
+    log_info = LogInfo(
+        msg=PythonExpression(
+            ["'input_points_raw_list size = ' + str(len(", LaunchConfiguration(
+                'input_points_raw_list'), '))']
+        )
+    )
 
-  return launch.LaunchDescription([
-      input_points_raw_list_param,
-      output_points_raw_param,
-      tf_output_frame_param,
-      container,
-      log_info
-  ])
+    return launch.LaunchDescription([
+        input_points_raw_list_param,
+        output_points_raw_param,
+        tf_output_frame_param,
+        container,
+        log_info
+    ])

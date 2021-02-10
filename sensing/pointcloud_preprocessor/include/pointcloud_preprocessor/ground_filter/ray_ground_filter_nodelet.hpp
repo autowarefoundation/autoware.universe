@@ -41,9 +41,13 @@
  ********************
  *  v1.0: amc-nu (abrahammonrroy@yahoo.com)
 */
-#pragma once
+
+#ifndef POINTCLOUD_PREPROCESSOR__GROUND_FILTER__RAY_GROUND_FILTER_NODELET_HPP_
+#define POINTCLOUD_PREPROCESSOR__GROUND_FILTER__RAY_GROUND_FILTER_NODELET_HPP_
 
 #include <chrono>
+#include <string>
+#include <vector>
 
 #include "sensor_msgs/msg/point_cloud2.hpp"
 
@@ -59,8 +63,17 @@
 #include "opencv2/core.hpp"
 #include "opencv2/imgproc.hpp"
 
+#include "boost/geometry.hpp"
+#include "boost/geometry/geometries/linestring.hpp"
+#include "boost/geometry/geometries/point_xy.hpp"
+#include "boost/optional.hpp"
+
 #include "pointcloud_preprocessor/filter.hpp"
 #include "pointcloud_preprocessor/ground_filter/gencolors.hpp"
+
+namespace bg = boost::geometry;
+using Point = bg::model::d2::point_xy<double>;
+using Polygon = bg::model::polygon<Point>;
 
 namespace pointcloud_preprocessor
 {
@@ -77,7 +90,7 @@ class RayGroundFilterComponent : public pointcloud_preprocessor::Filter
     float radius;  // cylindric coords on XY Plane
     float theta;   // angle deg on XY plane
 
-    size_t radial_div;      // index of the radial divsion to which this point belongs to
+    size_t radial_div;      // index of the radial division to which this point belongs to
     size_t concentric_div;  // index of the concentric division to which this points belongs to
 
     size_t red;    // Red component  [0-255]
@@ -96,10 +109,11 @@ private:
   std::string base_frame_ = "base_link";
   double general_max_slope_;            // degrees
   double local_max_slope_;              // degrees
+  double initial_max_slope_;              // degrees
   double radial_divider_angle_;         // distance in rads between dividers
   double concentric_divider_distance_;  // distance in meters between concentric divisions
-  double
-    min_height_threshold_;  // minimum height threshold regardless the slope, useful for close points
+  double                    // minimum height threshold regardless the slope
+    min_height_threshold_;  // useful for close points
   double
     reclass_distance_threshold_;  // distance between points at which re classification will occur
 
@@ -112,6 +126,14 @@ private:
   cv::Mat previous_occupancy_mat_;
   cv::Mat accumulated_occupancy_mat_;
 
+  double min_x_;
+  double max_x_;
+  double min_y_;
+  double max_y_;
+
+  Polygon vehicle_footprint_;
+  bool use_vehicle_footprint_;
+
   std::vector<cv::Scalar> colors_;
   const size_t color_num_ = 10;  // different number of color to generate
   pcl::PointCloud<PointType_>::Ptr
@@ -123,8 +145,8 @@ private:
    * @param[in] in_target_frame Coordinate system to perform transform
    * @param[in] in_cloud_ptr PointCloud to perform transform
    * @param[out] out_cloud_ptr Resulting transformed PointCloud
-   * @retval true transform successed
-   * @retval false transform faild
+   * @retval true transform succeeded
+   * @retval false transform failed
    */
   bool TransformPointCloud(
     const std::string & in_target_frame, const PointCloud2ConstPtr & in_cloud_ptr,
@@ -143,7 +165,7 @@ private:
     std::vector<PointCloudXYZRTColor> & out_radial_ordered_clouds);
 
   /*!
-   * Classifies Points in the PointCoud as Ground and Not Ground
+   * Classifies Points in the PointCloud as Ground and Not Ground
    * @param in_radial_ordered_clouds Vector of an Ordered PointsCloud ordered by radial distance from the origin
    * @param out_ground_indices Returns the indices of the points classified as ground in the original PointCloud
    * @param out_no_ground_indices Returns the indices of the points classified as not ground in the original PointCloud
@@ -165,6 +187,11 @@ private:
     pcl::PointCloud<PointType_>::Ptr out_only_indices_cloud_ptr,
     pcl::PointCloud<PointType_>::Ptr out_removed_indices_cloud_ptr);
 
+  boost::optional<float> calcPointVehicleIntersection(const Point & point);
+
+  void setVehicleFootprint(
+    const double min_x, const double max_x, const double min_y, const double max_y);
+
   /** \brief Parameter service callback result : needed to be hold */
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
 
@@ -173,6 +200,8 @@ private:
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  RayGroundFilterComponent(const rclcpp::NodeOptions & options);
+  explicit RayGroundFilterComponent(const rclcpp::NodeOptions & options);
 };
 }  // namespace pointcloud_preprocessor
+
+#endif  // POINTCLOUD_PREPROCESSOR__GROUND_FILTER__RAY_GROUND_FILTER_NODELET_HPP_

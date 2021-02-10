@@ -29,6 +29,9 @@
  *  v1.0: amc-nu (abrahammonrroy@yahoo.com)
  */
 
+#include <string>
+#include <vector>
+
 #include "pointcloud_preprocessor/ground_filter/ray_ground_filter_nodelet.hpp"
 
 #include "pcl_ros/transforms.hpp"
@@ -45,10 +48,20 @@ RayGroundFilterComponent::RayGroundFilterComponent(const rclcpp::NodeOptions & o
     grid_precision_ = 0.2;
     ray_ground_filter::generateColors(colors_, color_num_);
 
+    min_x_ = declare_parameter("min_x", -0.01);
+    max_x_ = declare_parameter("max_x", 0.01);
+    min_y_ = declare_parameter("min_y", -0.01);
+    max_y_ = declare_parameter("max_y", 0.01);
+
+    setVehicleFootprint(min_x_, max_x_, min_y_, max_y_);
+
+    use_vehicle_footprint_ = declare_parameter("use_vehicle_footprint", false);
+
     base_frame_ = declare_parameter("base_frame", "base_link");
     general_max_slope_ = declare_parameter("general_max_slope", 8.0);
     local_max_slope_ = declare_parameter("local_max_slope", 6.0);
-    radial_divider_angle_ = declare_parameter("radial_divider_angle", 0.08);
+    initial_max_slope_ = declare_parameter("initial_max_slope", 3.0);
+    radial_divider_angle_ = declare_parameter("radial_divider_angle", 1.0);
     min_height_threshold_ = declare_parameter("min_height_threshold", 0.15);
     concentric_divider_distance_ = declare_parameter("concentric_divider_distance", 0.0);
     reclass_distance_threshold_ = declare_parameter("reclass_distance_threshold", 0.1);
@@ -97,10 +110,11 @@ void RayGroundFilterComponent::ConvertXYZIToRTZColor(
 
   for (size_t i = 0; i < in_cloud->points.size(); i++) {
     PointXYZRTColor new_point;
-    auto radius = (float)sqrt(
-      in_cloud->points[i].x * in_cloud->points[i].x +
-      in_cloud->points[i].y * in_cloud->points[i].y);
-    auto theta = (float)atan2(in_cloud->points[i].y, in_cloud->points[i].x) * 180 / M_PI;
+    auto radius = static_cast<float>(sqrt(
+        in_cloud->points[i].x * in_cloud->points[i].x +
+        in_cloud->points[i].y * in_cloud->points[i].y));
+    auto theta =
+      static_cast<float>(atan2(in_cloud->points[i].y, in_cloud->points[i].x)) * 180 / M_PI;
     if (theta < 0) {
       theta += 360;
     }
@@ -129,7 +143,6 @@ void RayGroundFilterComponent::ConvertXYZIToRTZColor(
     out_radial_divided_indices[radial_div].indices.push_back(i);
 
     out_radial_ordered_clouds[radial_div].push_back(new_point);
-
   }  // end for
 
   // order radial points on each division
@@ -139,6 +152,34 @@ void RayGroundFilterComponent::ConvertXYZIToRTZColor(
       out_radial_ordered_clouds[i].begin(), out_radial_ordered_clouds[i].end(),
       [](const PointXYZRTColor & a, const PointXYZRTColor & b) {return a.radius < b.radius;});
   }
+}
+
+boost::optional<float> RayGroundFilterComponent::calcPointVehicleIntersection(const Point & point)
+{
+  float distance_to_intersection_point = 0.0;
+  if (base_frame_ != "base_link") {
+    return distance_to_intersection_point;
+  }
+  bg::model::linestring<Point> ls = {{0.0, 0.0}, point};
+  std::vector<Point> collision_points;
+  bg::intersection(ls, vehicle_footprint_, collision_points);
+
+  if (collision_points.size() < 1) {
+    return {};
+  }
+  return bg::distance(Point(0, 0), collision_points.front());
+}
+
+void RayGroundFilterComponent::setVehicleFootprint(
+  const double min_x, const double max_x, const double min_y, const double max_y)
+{
+  // create vehicle footprint polygon
+  vehicle_footprint_.outer().clear();
+  vehicle_footprint_.outer().push_back(Point(min_x, min_y));  // left back
+  vehicle_footprint_.outer().push_back(Point(min_x, max_y));  // right back
+  vehicle_footprint_.outer().push_back(Point(max_x, max_y));  // right front
+  vehicle_footprint_.outer().push_back(Point(max_x, min_y));  // left front
+  vehicle_footprint_.outer().push_back(Point(min_x, min_y));  // left back
 }
 
 void RayGroundFilterComponent::ClassifyPointCloud(
@@ -158,13 +199,33 @@ void RayGroundFilterComponent::ClassifyPointCloud(
     for (size_t j = 0; j < in_radial_ordered_clouds[i].size();
       j++)     // loop through each point in the radial div
     {
+      double local_max_slope = local_max_slope_;
+      if (j == 0) {
+        local_max_slope = initial_max_slope_;
+        if (use_vehicle_footprint_) {
+          // calc intersection of vehicle footprint and initial point vector
+          const auto radius = calcPointVehicleIntersection(
+            Point{in_radial_ordered_clouds[i][j].point.x, in_radial_ordered_clouds[i][j].point.y});
+          if (radius) {
+            prev_radius = *radius;
+          } else {
+            // This case may happen if point was detected inside vehicle footprint for example
+            // RCLCPP_ERROR(
+            //   this->get_logger(),
+            //   "failed to find intersection of initial point line and vehicle footprint");
+            continue;
+          }
+        }
+      }
+
       float points_distance = in_radial_ordered_clouds[i][j].radius - prev_radius;
-      float height_threshold = tan(DEG2RAD(local_max_slope_)) * points_distance;
+      float height_threshold = tan(DEG2RAD(local_max_slope)) * points_distance;
       float current_height = in_radial_ordered_clouds[i][j].point.z;
       float general_height_threshold =
         tan(DEG2RAD(general_max_slope_)) * in_radial_ordered_clouds[i][j].radius;
 
-      // for points which are very close causing the height threshold to be tiny, set a minimum value
+      // for points which are very close causing the height threshold to be tiny,
+      // set a minimum value
       if (height_threshold < min_height_threshold_) {
         height_threshold = min_height_threshold_;
       }
@@ -177,7 +238,8 @@ void RayGroundFilterComponent::ClassifyPointCloud(
           current_height <= (prev_height + height_threshold) &&
           current_height >= (prev_height - height_threshold))
         {
-          // Check again using general geometry (radius from origin) if previous points wasn't ground
+          // Check again using general geometry (radius from origin)
+          // if previous points wasn't ground
           if (!prev_ground) {
             if (
               current_height <= general_height_threshold &&
@@ -307,6 +369,21 @@ rcl_interfaces::msg::SetParametersResult RayGroundFilterComponent::paramCallback
 {
   boost::mutex::scoped_lock lock(mutex_);
 
+  if (get_param(p, "min_x", min_x_)) {
+    RCLCPP_DEBUG(get_logger(), "Setting min_x to: %f.", min_x_);
+  }
+  if (get_param(p, "max_x", max_x_)) {
+    RCLCPP_DEBUG(get_logger(), "Setting max_x to: %f.", max_x_);
+  }
+  if (get_param(p, "min_y", min_y_)) {
+    RCLCPP_DEBUG(get_logger(), "Setting min_y to: %f.", min_y_);
+  }
+  if (get_param(p, "max_y", max_y_)) {
+    RCLCPP_DEBUG(get_logger(), "Setting max_y to: %f.", max_y_);
+  }
+
+  setVehicleFootprint(min_x_, max_x_, min_y_, max_y_);
+
   if (get_param(p, "base_frame", base_frame_)) {
     RCLCPP_DEBUG(get_logger(), "Setting base_frame to: %s.", base_frame_);
   }
@@ -315,6 +392,9 @@ rcl_interfaces::msg::SetParametersResult RayGroundFilterComponent::paramCallback
   }
   if (get_param(p, "local_max_slope", local_max_slope_)) {
     RCLCPP_DEBUG(get_logger(), "Setting local_max_slope to: %f.", local_max_slope_);
+  }
+  if (get_param(p, "initial_max_slope", initial_max_slope_)) {
+    RCLCPP_DEBUG(get_logger(), "Setting initial_max_slope to: %f.", initial_max_slope_);
   }
   if (get_param(p, "radial_divider_angle", radial_divider_angle_)) {
     RCLCPP_DEBUG(get_logger(), "Setting radial_divider_angle to: %f.", radial_divider_angle_);
@@ -329,6 +409,10 @@ rcl_interfaces::msg::SetParametersResult RayGroundFilterComponent::paramCallback
   if (get_param(p, "reclass_distance_threshold", reclass_distance_threshold_)) {
     RCLCPP_DEBUG(
       get_logger(), "Setting reclass_distance_threshold to: %f.", reclass_distance_threshold_);
+  }
+  if (get_param(p, "use_vehicle_footprint", use_vehicle_footprint_)) {
+    RCLCPP_DEBUG(
+      get_logger(), "Setting use_vehicle_footprint to: %d.", use_vehicle_footprint_);
   }
 
   rcl_interfaces::msg::SetParametersResult result;

@@ -1,3 +1,16 @@
+// Copyright 2020 Tier IV, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 /*
  * Software License Agreement (BSD License)
  *
@@ -99,7 +112,8 @@ void pcl::PassThroughUInt16<pcl::PCLPointCloud2>::applyFilter(PCLPointCloud2 & o
     input_->fields[x_idx_].offset, input_->fields[y_idx_].offset, input_->fields[z_idx_].offset, 0);
 
   Eigen::Vector4f pt = Eigen::Vector4f::Zero();
-  // If we don't want to process the entire cloud, but rather filter points far away from the viewpoint first...
+  // If we don't want to process the entire cloud,
+  // but rather filter points far away from the viewpoint first...
   if (!filter_field_name_.empty()) {
     // Get the distance field index
     int distance_idx = pcl::getFieldIndex(*input_, filter_field_name_);
@@ -164,9 +178,7 @@ void pcl::PassThroughUInt16<pcl::PCLPointCloud2>::applyFilter(PCLPointCloud2 & o
           }
         }
       }
-    }
-    // Remove filtered points
-    else {
+    } else {  // Remove filtered points
       // Go over all points
       std::uint16_t distance_value = 0;
       for (int cp = 0; cp < nr_points; ++cp, xyz_offset += input_->point_step) {
@@ -224,9 +236,8 @@ void pcl::PassThroughUInt16<pcl::PCLPointCloud2>::applyFilter(PCLPointCloud2 & o
       }
       output.width = nr_p;
     }  // !keep_organized_
-  }
-  // No distance filtering, process all data. No need to check for is_organized here as we did it above
-  else {
+  } else { // No distance filtering, process all data.
+           // No need to check for is_organized here as we did it above
     for (int cp = 0; cp < nr_points; ++cp, xyz_offset += input_->point_step) {
       // Unoptimized memcpys: assume fields x, y, z are in random order
       memcpy(&pt[0], &input_->data[xyz_offset[0]], sizeof(std::uint16_t));

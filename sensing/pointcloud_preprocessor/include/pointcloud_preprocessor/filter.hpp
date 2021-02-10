@@ -49,15 +49,18 @@
  *
  */
 
-#ifndef POINTS_PREPROCESSOR_PCL_ROS_FILTER_H_
-#define POINTS_PREPROCESSOR_PCL_ROS_FILTER_H_
+#ifndef POINTCLOUD_PREPROCESSOR__FILTER_HPP_
+#define POINTCLOUD_PREPROCESSOR__FILTER_HPP_
+
+#include <memory>
+#include <string>
+#include <vector>
 
 // PCL includes
 #include "pcl/filters/filter.h"
 
 #include "sensor_msgs/msg/point_cloud2.h"
 #include "boost/thread/mutex.hpp"
-#include <string>
 // PCL includes
 #include "pcl/pcl_base.h"
 #include "pcl/point_types.h"
@@ -150,17 +153,19 @@ protected:
   /** \brief The maximum allowed filter value a point will be considered from. */
   double filter_limit_max_;
 
-  /** \brief Set to true if we want to return the data outside (\a filter_limit_min_;\a filter_limit_max_). Default:
-   * false. */
+  /** \brief Set to true if we want to return the data outside (\a filter_limit_min_;\a filter_limit_max_).
+   * Default: false. */
   bool filter_limit_negative_;
 
-  /** \brief The input TF frame the data should be transformed into, if input.header.frame_id is different. */
+  /** \brief The input TF frame the data should be transformed into,
+   * if input.header.frame_id is different. */
   std::string tf_input_frame_;
 
   /** \brief The original data input TF frame. */
   std::string tf_input_orig_frame_;
 
-  /** \brief The output TF frame the data should be transformed into, if input.header.frame_id is different. */
+  /** \brief The output TF frame the data should be transformed into,
+   * if input.header.frame_id is different. */
   std::string tf_output_frame_;
 
   /** \brief Internal mutex. */
@@ -206,7 +211,8 @@ protected:
   /** \brief The maximum queue size (default: 3). */
   size_t max_queue_size_ = 3;
 
-  /** \brief True if we use an approximate time synchronizer versus an exact one (false by default). */
+  /** \brief True if we use an approximate time synchronizer
+   * versus an exact one (false by default). */
   bool approximate_sync_ = false;
 
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
@@ -260,4 +266,4 @@ public:
 };
 }  // namespace pointcloud_preprocessor
 
-#endif  //#ifndef POINTS_PREPROCESSOR_PCL_ROS_FILTER_H_
+#endif  // POINTCLOUD_PREPROCESSOR__FILTER_HPP_

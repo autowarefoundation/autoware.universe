@@ -49,6 +49,12 @@
  *
  */
 
+#include <algorithm>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "pointcloud_preprocessor/concatenate_data/concatenate_data_nodelet.hpp"
 
 #include "pcl_ros/transforms.hpp"
@@ -142,7 +148,7 @@ void PointCloudConcatenateDataSynchronizerComponent::transformPointCloud(
 {
   // Transform the point clouds into the specified output frame
   if (output_frame_ != in->header.frame_id) {
-    // TODO use TF2
+    // TODO(YamatoAndo): use TF2
     if (!pcl_ros::transformPointCloud(output_frame_, *in, *out, *tf2_buffer_)) {
       RCLCPP_ERROR(
         this->get_logger(),
@@ -194,7 +200,7 @@ void PointCloudConcatenateDataSynchronizerComponent::combineClouds(
     if (std::fabs(dt) > 0.1) {
       RCLCPP_WARN_STREAM_THROTTLE(
         get_logger(), *get_clock(), std::chrono::milliseconds(10000).count(),
-        "Time difference is too large. Cloud not interpolate. Please comfirm twist topic and "
+        "Time difference is too large. Cloud not interpolate. Please confirm twist topic and "
         "timestamp");
       break;
     }
@@ -211,7 +217,7 @@ void PointCloudConcatenateDataSynchronizerComponent::combineClouds(
   Eigen::Translation3f translation(x, y, 0);
   Eigen::Matrix4f rotation_matrix = (translation * rotation_z * rotation_y * rotation_x).matrix();
 
-  // TODO if output_frame_ is not base_link, we must transform
+  // TODO(YamatoAndo): if output_frame_ is not base_link, we must transform
 
   if (rclcpp::Time(in1->header.stamp) > rclcpp::Time(in2->header.stamp)) {
     sensor_msgs::msg::PointCloud2::SharedPtr in1_t(new sensor_msgs::msg::PointCloud2());

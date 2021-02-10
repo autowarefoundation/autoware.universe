@@ -11,7 +11,11 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#pragma once
+
+#ifndef POINTCLOUD_PREPROCESSOR__POINTCLOUD_ACCUMULATOR__POINTCLOUD_ACCUMULATOR_NODELET_HPP_
+#define POINTCLOUD_PREPROCESSOR__POINTCLOUD_ACCUMULATOR__POINTCLOUD_ACCUMULATOR_NODELET_HPP_
+
+#include <vector>
 
 #include "boost/circular_buffer.hpp"
 #include "pointcloud_preprocessor/filter.hpp"
@@ -36,6 +40,8 @@ private:
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  PointcloudAccumulatorComponent(const rclcpp::NodeOptions & options);
+  explicit PointcloudAccumulatorComponent(const rclcpp::NodeOptions & options);
 };
 }  // namespace pointcloud_preprocessor
+
+#endif  // POINTCLOUD_PREPROCESSOR__POINTCLOUD_ACCUMULATOR__POINTCLOUD_ACCUMULATOR_NODELET_HPP_

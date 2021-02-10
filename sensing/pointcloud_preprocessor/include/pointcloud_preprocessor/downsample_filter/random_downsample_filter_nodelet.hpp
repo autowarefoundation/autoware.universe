@@ -14,7 +14,7 @@
 /*
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2010, Willow Garage, Inc.
+ *  Copyright (c) 2009, Willow Garage, Inc.
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -44,49 +44,39 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: passthrough.cpp 36194 2011-02-23 07:49:21Z rusu $
+ * $Id: voxel_grid.cpp 35876 2011-02-09 01:04:36Z rusu $
  *
  */
 
+#ifndef POINTCLOUD_PREPROCESSOR__DOWNSAMPLE_FILTER__RANDOM_DOWNSAMPLE_FILTER_NODELET_HPP_
+#define POINTCLOUD_PREPROCESSOR__DOWNSAMPLE_FILTER__RANDOM_DOWNSAMPLE_FILTER_NODELET_HPP_
+
 #include <vector>
 
-#include "pointcloud_preprocessor/passthrough_filter/passthrough_filter_nodelet.hpp"
-
-#include "pcl/kdtree/kdtree_flann.h"
-#include "pcl/search/kdtree.h"
-#include "pcl/segmentation/segment_differences.h"
+#include "pcl/filters/random_sample.h"
+#include "pointcloud_preprocessor/filter.hpp"
 
 namespace pointcloud_preprocessor
 {
-PassThroughFilterComponent::PassThroughFilterComponent(const rclcpp::NodeOptions & options)
-: Filter("PassThroughFilter", options)
+class RandomDownsampleFilterComponent : public pointcloud_preprocessor::Filter
 {
-  using std::placeholders::_1;
-  set_param_res_ = this->add_on_set_parameters_callback(
-    std::bind(&PassThroughFilterComponent::paramCallback, this, _1));
-}
+protected:
+  virtual void filter(
+    const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output);
 
-void PassThroughFilterComponent::filter(
-  const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output)
-{
-  boost::mutex::scoped_lock lock(mutex_);
-  output = *input;
-}
+private:
+  size_t sample_num_;
 
-rcl_interfaces::msg::SetParametersResult PassThroughFilterComponent::paramCallback(
-  const std::vector<rclcpp::Parameter> & p)
-{
-  boost::mutex::scoped_lock lock(mutex_);
+  /** \brief Parameter service callback result : needed to be hold */
+  OnSetParametersCallbackHandle::SharedPtr set_param_res_;
 
-  // write me
+  /** \brief Parameter service callback */
+  rcl_interfaces::msg::SetParametersResult paramCallback(const std::vector<rclcpp::Parameter> & p);
 
-  rcl_interfaces::msg::SetParametersResult result;
-  result.successful = true;
-  result.reason = "success";
-
-  return result;
-}
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  explicit RandomDownsampleFilterComponent(const rclcpp::NodeOptions & options);
+};
 }  // namespace pointcloud_preprocessor
 
-#include "rclcpp_components/register_node_macro.hpp"
-RCLCPP_COMPONENTS_REGISTER_NODE(pointcloud_preprocessor::PassThroughFilterComponent)
+#endif  // POINTCLOUD_PREPROCESSOR__DOWNSAMPLE_FILTER__RANDOM_DOWNSAMPLE_FILTER_NODELET_HPP_

@@ -11,7 +11,11 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#pragma once
+
+#ifndef POINTCLOUD_PREPROCESSOR__COMPARE_MAP_FILTER__VOXEL_BASED_APPROXIMATE_COMPARE_MAP_FILTER_NODELET_HPP_
+#define POINTCLOUD_PREPROCESSOR__COMPARE_MAP_FILTER__VOXEL_BASED_APPROXIMATE_COMPARE_MAP_FILTER_NODELET_HPP_
+
+#include <vector>
 
 #include "pcl/filters/voxel_grid.h"
 #include "pcl/search/pcl_search.h"
@@ -43,6 +47,8 @@ private:
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  VoxelBasedApproximateCompareMapFilterComponent(const rclcpp::NodeOptions & options);
+  explicit VoxelBasedApproximateCompareMapFilterComponent(const rclcpp::NodeOptions & options);
 };
 }  // namespace pointcloud_preprocessor
+
+#endif  // POINTCLOUD_PREPROCESSOR__COMPARE_MAP_FILTER__VOXEL_BASED_APPROXIMATE_COMPARE_MAP_FILTER_NODELET_HPP_

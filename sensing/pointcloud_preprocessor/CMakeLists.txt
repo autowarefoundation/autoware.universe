@@ -30,154 +30,148 @@ include_directories(
   ${Boost_INCLUDE_DIRS}
   ${PCL_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
-  ${OpenCV_INCLUDE_DIRS})
+  ${OpenCV_INCLUDE_DIRS}
+)
 
+ament_auto_add_library(pointcloud_preprocessor_filter SHARED
+  src/filter.cpp
+  src/compare_map_filter/distance_based_compare_map_filter_nodelet.cpp
+  src/compare_map_filter/voxel_based_approximate_compare_map_filter_nodelet.cpp
+  src/compare_map_filter/voxel_based_compare_map_filter_nodelet.cpp
+  src/compare_map_filter/voxel_distance_based_compare_map_filter_nodelet.cpp
+  src/concatenate_data/concatenate_data_nodelet.cpp
+  src/crop_box_filter/crop_box_filter_nodelet.cpp
+  src/downsample_filter/voxel_grid_downsample_filter_nodelet.cpp
+  src/downsample_filter/random_downsample_filter_nodelet.cpp
+  src/ground_filter/ray_ground_filter_nodelet.cpp
+  src/ground_filter/ransac_ground_filter_nodelet.cpp
+  src/outlier_filter/ring_outlier_filter_nodelet.cpp
+  src/outlier_filter/voxel_grid_outlier_filter_nodelet.cpp
+  src/outlier_filter/radius_search_2d_outlier_filter_nodelet.cpp
+  src/passthrough_filter/passthrough_filter_nodelet.cpp
+  src/passthrough_filter/passthrough_filter_uint16_nodelet.cpp
+  src/passthrough_filter/passthrough_uint16.cpp
+  src/pointcloud_accumulator/pointcloud_accumulator_nodelet.cpp
+  src/vector_map_filter/lanelet2_map_filter_nodelet.cpp
+)
+
+target_link_libraries(pointcloud_preprocessor_filter
+  ${Boost_LIBRARIES}
+  ${OpenCV_LIBRARIES}
+  ${PCL_LIBRARIES}
+)
+
+if(OPENMP_FOUND)
+  set_target_properties(pointcloud_preprocessor_filter PROPERTIES
+    COMPILE_FLAGS ${OpenMP_CXX_FLAGS}
+    LINK_FLAGS ${OpenMP_CXX_FLAGS}
+  )
+endif()
 
 # ========== Compare Map Filter ==========
-ament_auto_add_library(pointcloud_preprocessor_filter_base SHARED
-  src/filter.cpp
-  )
-target_link_libraries(pointcloud_preprocessor_filter_base ${Boost_LIBRARIES} ${PCL_LIBRARIES})
-
-
 # -- Distance Based Compare Map Filter --
-ament_auto_add_library(distance_based_compare_map_filter SHARED
-  src/compare_map_filter/distance_based_compare_map_filter_nodelet.cpp
-  )
-target_link_libraries(distance_based_compare_map_filter pointcloud_preprocessor_filter_base ${Boost_LIBRARIES} ${PCL_LIBRARIES})
-rclcpp_components_register_node(distance_based_compare_map_filter
+rclcpp_components_register_node(pointcloud_preprocessor_filter
   PLUGIN "pointcloud_preprocessor::DistanceBasedCompareMapFilterComponent"
   EXECUTABLE distance_based_compare_map_filter_node)
 
 # -- Voxel Based Approximate Compare Map Filter --
-ament_auto_add_library(voxel_based_approximate_compare_map_filter SHARED
-  src/compare_map_filter/voxel_based_approximate_compare_map_filter_nodelet.cpp
-  )
-target_link_libraries(voxel_based_approximate_compare_map_filter pointcloud_preprocessor_filter_base ${Boost_LIBRARIES} ${PCL_LIBRARIES})
-rclcpp_components_register_node(voxel_based_approximate_compare_map_filter
+rclcpp_components_register_node(pointcloud_preprocessor_filter
   PLUGIN "pointcloud_preprocessor::VoxelBasedApproximateCompareMapFilterComponent"
   EXECUTABLE voxel_based_approximate_compare_map_filter_node)
 
 # -- Voxel Based Compare Map Filter --
-ament_auto_add_library(voxel_based_compare_map_filter SHARED
-  src/compare_map_filter/voxel_based_compare_map_filter_nodelet.cpp
-  )
-target_link_libraries(voxel_based_compare_map_filter pointcloud_preprocessor_filter_base ${Boost_LIBRARIES} ${PCL_LIBRARIES})
-rclcpp_components_register_node(voxel_based_compare_map_filter
+rclcpp_components_register_node(pointcloud_preprocessor_filter
   PLUGIN "pointcloud_preprocessor::VoxelBasedCompareMapFilterComponent"
   EXECUTABLE voxel_based_compare_map_filter_node)
 
 # -- Voxel Distance Based Compare Map Filter --
-ament_auto_add_library(voxel_distance_based_compare_map_filter SHARED
-  src/compare_map_filter/voxel_distance_based_compare_map_filter_nodelet.cpp
-  )
-target_link_libraries(voxel_distance_based_compare_map_filter pointcloud_preprocessor_filter_base ${Boost_LIBRARIES} ${PCL_LIBRARIES})
-rclcpp_components_register_node(voxel_distance_based_compare_map_filter
+rclcpp_components_register_node(pointcloud_preprocessor_filter
   PLUGIN "pointcloud_preprocessor::VoxelDistanceBasedCompareMapFilterComponent"
   EXECUTABLE voxel_distance_based_compare_map_filter_node)
 
 
 # ========== Concatenate data ==========
-ament_auto_add_library(concatenate_data SHARED
-  src/concatenate_data/concatenate_data_nodelet.cpp
-  )
-target_link_libraries(concatenate_data ${Boost_LIBRARIES} ${PCL_LIBRARIES})
-rclcpp_components_register_node(concatenate_data
+rclcpp_components_register_node(pointcloud_preprocessor_filter
   PLUGIN "pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent"
   EXECUTABLE concatenate_data_node)
 
 
 # ========== CropBox ==========
-ament_auto_add_library(crop_box_filter SHARED
-  src/crop_box_filter/crop_box_filter_nodelet.cpp
-  )
-target_link_libraries(crop_box_filter pointcloud_preprocessor_filter_base ${Boost_LIBRARIES} ${PCL_LIBRARIES})
-rclcpp_components_register_node(crop_box_filter
+rclcpp_components_register_node(pointcloud_preprocessor_filter
   PLUGIN "pointcloud_preprocessor::CropBoxFilterComponent"
   EXECUTABLE crop_box_filter_node)
 
 
 # ========== Down Sampler Filter ==========
-ament_auto_add_library(downsample_filter SHARED
-  src/downsample_filter/voxel_grid_downsample_filter_nodelet.cpp
-  )
-target_link_libraries(downsample_filter pointcloud_preprocessor_filter_base ${Boost_LIBRARIES} ${PCL_LIBRARIES})
-rclcpp_components_register_node(downsample_filter
+# -- Voxel Grid Downsample Filter --
+rclcpp_components_register_node(pointcloud_preprocessor_filter
   PLUGIN "pointcloud_preprocessor::VoxelGridDownsampleFilterComponent"
-  EXECUTABLE downsample_filter_node)
+  EXECUTABLE voxel_grid_downsample_filter_node)
+
+# -- Random Downsample Filter --
+rclcpp_components_register_node(pointcloud_preprocessor_filter
+  PLUGIN "pointcloud_preprocessor::RandomDownsampleFilterComponent"
+  EXECUTABLE random_downsample_filter_node)
 
 
-# ========== Ray Ground Filter ==========
-ament_auto_add_library(ray_ground_filter SHARED
-  src/ground_filter/ray_ground_filter_nodelet.cpp
-  )
-target_link_libraries(ray_ground_filter pointcloud_preprocessor_filter_base ${OpenCV_LIBS} ${PCL_LIBRARIES})
-if (OPENMP_FOUND)
-  set_target_properties(ray_ground_filter PROPERTIES
-    COMPILE_FLAGS ${OpenMP_CXX_FLAGS}
-    LINK_FLAGS ${OpenMP_CXX_FLAGS}
-    )
-endif ()
-rclcpp_components_register_node(ray_ground_filter
+# ========== Ground Filter ==========
+# -- Ray Ground Filter --
+rclcpp_components_register_node(pointcloud_preprocessor_filter
   PLUGIN "pointcloud_preprocessor::RayGroundFilterComponent"
   EXECUTABLE ray_ground_filter_node)
+
+# -- RANSAC Ground Filter --
+rclcpp_components_register_node(pointcloud_preprocessor_filter
+  PLUGIN "pointcloud_preprocessor::RANSACGroundFilterComponent"
+  EXECUTABLE ransac_ground_filter_node)
 
 
 # ========== Outlier Filter ==========
 # -- Ring Outlier Filter --
-ament_auto_add_library(ring_outlier_filter SHARED
-  src/outlier_filter/ring_outlier_filter_nodelet.cpp
-  )
-target_link_libraries(ring_outlier_filter pointcloud_preprocessor_filter_base ${Boost_LIBRARIES} ${PCL_LIBRARIES})
-rclcpp_components_register_node(ring_outlier_filter
+rclcpp_components_register_node(pointcloud_preprocessor_filter
   PLUGIN "pointcloud_preprocessor::RingOutlierFilterComponent"
   EXECUTABLE ring_outlier_filter_node)
 
 # -- Voxel Grid Outlier Filter --
-ament_auto_add_library(voxel_grid_outlier_filter SHARED
-  src/outlier_filter/voxel_grid_outlier_filter_nodelet.cpp
-  )
-target_link_libraries(voxel_grid_outlier_filter pointcloud_preprocessor_filter_base ${Boost_LIBRARIES} ${PCL_LIBRARIES})
-rclcpp_components_register_node(voxel_grid_outlier_filter
+rclcpp_components_register_node(pointcloud_preprocessor_filter
   PLUGIN "pointcloud_preprocessor::VoxelGridOutlierFilterComponent"
   EXECUTABLE voxel_grid_outlier_filter_node)
+
+# -- Radius Search 2D Outlier Filter --
+rclcpp_components_register_node(pointcloud_preprocessor_filter
+  PLUGIN "pointcloud_preprocessor::RadiusSearch2DOutlierFilterComponent"
+  EXECUTABLE radius_search_2d_outlier_filter_node)
 
 
 # ========== Passthrough Filter ==========
 # -- Passthrough Filter --
-ament_auto_add_library(passthrough_filter SHARED
-  src/passthrough_filter/passthrough_filter_nodelet.cpp
-  )
-target_link_libraries(passthrough_filter pointcloud_preprocessor_filter_base ${Boost_LIBRARIES} ${PCL_LIBRARIES})
-rclcpp_components_register_node(passthrough_filter
+rclcpp_components_register_node(pointcloud_preprocessor_filter
   PLUGIN "pointcloud_preprocessor::PassThroughFilterComponent"
   EXECUTABLE passthrough_filter_node)
 
 # -- Passthrough Filter Uint16 --
-ament_auto_add_library(passthrough_filter_uint16 SHARED
-  src/passthrough_filter/passthrough_filter_uint16_nodelet.cpp
-  src/passthrough_filter/passthrough_uint16.cpp
-  src/passthrough_filter/passthrough_filter_uint16_nodelet.cpp
-  )
-target_link_libraries(passthrough_filter_uint16 pointcloud_preprocessor_filter_base ${Boost_LIBRARIES} ${PCL_LIBRARIES})
-rclcpp_components_register_node(passthrough_filter_uint16
+rclcpp_components_register_node(pointcloud_preprocessor_filter
   PLUGIN "pointcloud_preprocessor::PassThroughFilterUInt16Component"
   EXECUTABLE passthrough_filter_uint16_node)
 
 
 # ========== Pointcloud Accumulator Filter ==========
-ament_auto_add_library(pointcloud_accumulator SHARED
-  src/pointcloud_accumulator/pointcloud_accumulator_nodelet.cpp
-  )
-target_link_libraries(pointcloud_accumulator pointcloud_preprocessor_filter_base ${Boost_LIBRARIES})
-rclcpp_components_register_node(pointcloud_accumulator
+rclcpp_components_register_node(pointcloud_preprocessor_filter
   PLUGIN "pointcloud_preprocessor::PointcloudAccumulatorComponent"
   EXECUTABLE pointcloud_accumulator_node)
 
 
+# ========== Vector Map Filter ==========
+rclcpp_components_register_node(pointcloud_preprocessor_filter
+  PLUGIN "pointcloud_preprocessor::Lanelet2MapFilterComponent"
+  EXECUTABLE vector_map_filter_node)
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
+  list(APPEND AMENT_LINT_AUTO_EXCLUDE
+    ament_cmake_uncrustify
+  )
 endif()
 
 #############

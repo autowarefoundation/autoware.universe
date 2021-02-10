@@ -48,11 +48,16 @@
  * $Id: concatenate_data.cpp 35231 2011-01-14 05:33:20Z rusu $
  *
  */
-#pragma once
+
+#ifndef POINTCLOUD_PREPROCESSOR__CONCATENATE_DATA__CONCATENATE_DATA_NODELET_HPP_
+#define POINTCLOUD_PREPROCESSOR__CONCATENATE_DATA__CONCATENATE_DATA_NODELET_HPP_
 
 #include <deque>
 #include <map>
+#include <memory>
 #include <mutex>
+#include <string>
+#include <vector>
 
 // ROS includes
 #include "message_filters/pass_through.h"
@@ -83,7 +88,7 @@ public:
   typedef sensor_msgs::msg::PointCloud2 PointCloud2;
 
   /** \brief constructor. */
-  PointCloudConcatenateDataSynchronizerComponent(const rclcpp::NodeOptions & node_options);
+  explicit PointCloudConcatenateDataSynchronizerComponent(const rclcpp::NodeOptions & node_options);
 
   /** \brief constructor.
    * \param queue_size the maximum queue size
@@ -146,3 +151,5 @@ private:
   void timer_callback();
 };
 }  // namespace pointcloud_preprocessor
+
+#endif  // POINTCLOUD_PREPROCESSOR__CONCATENATE_DATA__CONCATENATE_DATA_NODELET_HPP_

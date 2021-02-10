@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include \
-  "pointcloud_preprocessor/compare_map_filter/voxel_based_approximate_compare_map_filter_nodelet.hpp"
+#include <vector>
+
+#include "pointcloud_preprocessor/compare_map_filter/voxel_based_approximate_compare_map_filter_nodelet.hpp"
 
 #include "pcl/kdtree/kdtree_flann.h"
 #include "pcl/search/kdtree.h"
@@ -54,7 +55,7 @@ void VoxelBasedApproximateCompareMapFilterComponent::filter(
     const int index = voxel_grid_.getCentroidIndexAt(
       voxel_grid_.getGridCoordinates(
         pcl_input->points.at(i).x, pcl_input->points.at(i).y, pcl_input->points.at(i).z));
-    if (index == -1) { // empty voxel
+    if (index == -1) {  // empty voxel
       // map_ptr_->points.at(index)
       pcl_output->points.push_back(pcl_input->points.at(i));
     }

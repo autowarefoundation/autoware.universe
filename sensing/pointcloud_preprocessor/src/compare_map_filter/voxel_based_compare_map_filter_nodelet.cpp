@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <vector>
+
 #include "pointcloud_preprocessor/compare_map_filter/voxel_based_compare_map_filter_nodelet.hpp"
 
 #include "pcl/kdtree/kdtree_flann.h"
@@ -245,7 +247,7 @@ bool VoxelBasedCompareMapFilterComponent::is_in_voxel(
 {
   int voxel_index =
     voxel.getCentroidIndexAt(voxel.getGridCoordinates(src_point.x, src_point.y, src_point.z));
-  if (voxel_index != -1) { // not empty voxel
+  if (voxel_index != -1) {  // not empty voxel
     const double dist_x = map->points.at(voxel_index).x - target_point.x;
     const double dist_y = map->points.at(voxel_index).y - target_point.y;
     const double dist_z = map->points.at(voxel_index).z - target_point.z;

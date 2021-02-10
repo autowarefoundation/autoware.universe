@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <vector>
+
 #include "pointcloud_preprocessor/pointcloud_accumulator/pointcloud_accumulator_nodelet.hpp"
 
 namespace pointcloud_preprocessor

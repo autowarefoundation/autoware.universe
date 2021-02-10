@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <vector>
+
 #include \
   "pointcloud_preprocessor/compare_map_filter/voxel_distance_based_compare_map_filter_nodelet.hpp"
 
@@ -52,7 +54,7 @@ void VoxelDistanceBasedCompareMapFilterComponent::filter(
     const int index = voxel_grid_.getCentroidIndexAt(
       voxel_grid_.getGridCoordinates(
         pcl_input->points.at(i).x, pcl_input->points.at(i).y, pcl_input->points.at(i).z));
-    if (index == -1) { // empty voxel
+    if (index == -1) {  // empty voxel
       std::vector<int> nn_indices(1);
       std::vector<float> nn_dists(1);
       tree_->nearestKSearch(pcl_input->points.at(i), 1, nn_indices, nn_dists);

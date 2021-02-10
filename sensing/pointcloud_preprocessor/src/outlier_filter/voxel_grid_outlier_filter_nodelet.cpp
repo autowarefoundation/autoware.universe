@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <vector>
+
 #include "pointcloud_preprocessor/outlier_filter/voxel_grid_outlier_filter_nodelet.hpp"
 
 #include "pcl/kdtree/kdtree_flann.h"
@@ -56,7 +58,7 @@ void VoxelGridOutlierFilterComponent::filter(
     const int index = voxel_filter.getCentroidIndexAt(
       voxel_filter.getGridCoordinates(
         pcl_input->points.at(i).x, pcl_input->points.at(i).y, pcl_input->points.at(i).z));
-    if (index != -1) { // not empty voxel
+    if (index != -1) {  // not empty voxel
       pcl_output->points.push_back(pcl_input->points.at(i));
     }
   }

@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <algorithm>
+#include <vector>
+
 #include "pointcloud_preprocessor/outlier_filter/ring_outlier_filter_nodelet.hpp"
 
 #include "pcl/kdtree/kdtree_flann.h"
@@ -47,7 +50,7 @@ void RingOutlierFilterComponent::filter(
     return;
   }
   std::vector<pcl::PointCloud<pcl::PointXYZIRADT>> pcl_input_ring_array;
-  pcl_input_ring_array.resize(128);  // TODO
+  pcl_input_ring_array.resize(128);  // TODO(Yamato Ando)
   for (const auto & p : pcl_input->points) {
     pcl_input_ring_array.at(p.ring).push_back(p);
   }
@@ -75,10 +78,7 @@ void RingOutlierFilterComponent::filter(
       float azimuth_diff = (iter + 1)->azimuth - iter->azimuth;
       azimuth_diff = azimuth_diff < 0.f ? azimuth_diff + 36000.f : azimuth_diff;
 
-      if (
-        min_dist > 0.f && max_dist > 0.f && azimuth_diff < 100.f &&
-        max_dist / min_dist < distance_ratio_)
-      {
+      if (max_dist < min_dist * distance_ratio_ && azimuth_diff < 100.f) {
         continue;
       } else {
         // same code

@@ -1,3 +1,16 @@
+// Copyright 2020 Tier IV, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 /*
  * Software License Agreement (BSD License)
  *
@@ -37,8 +50,12 @@
  *
  */
 
-#ifndef PCL_FILTERS_PASSTHROUGH_UINT16_H_
-#define PCL_FILTERS_PASSTHROUGH_UINT16_H_
+#ifndef POINTCLOUD_PREPROCESSOR__PASSTHROUGH_FILTER__PASSTHROUGH_UINT16_HPP_
+#define POINTCLOUD_PREPROCESSOR__PASSTHROUGH_FILTER__PASSTHROUGH_UINT16_HPP_
+
+#include <limits>
+#include <string>
+#include <vector>
 
 #include "pcl/common/io.h"
 #include "pcl/filters/filter_indices.h"
@@ -93,7 +110,7 @@ public:
   /** \brief Constructor.
    * \param[in] extract_removed_indices Set to true if you want to be able to extract the indices of points being removed (default = false).
    */
-  PassThroughUInt16(bool extract_removed_indices = false)
+  explicit PassThroughUInt16(bool extract_removed_indices = false)
   : FilterIndices<PointT>::FilterIndices(extract_removed_indices),
     filter_field_name_(""),
     filter_limit_min_(0),
@@ -211,7 +228,7 @@ class PCL_EXPORTS PassThroughUInt16<pcl::PCLPointCloud2>: public Filter<pcl::PCL
 
 public:
   /** \brief Constructor. */
-  PassThroughUInt16(bool extract_removed_indices = false)
+  explicit PassThroughUInt16(bool extract_removed_indices = false)
   : Filter<pcl::PCLPointCloud2>::Filter(extract_removed_indices),
     keep_organized_(false),
     user_filter_value_(std::numeric_limits<float>::quiet_NaN()),
@@ -320,7 +337,8 @@ private:
   /** \brief The maximum allowed filter value a point will be considered from. */
   std::uint16_t filter_limit_max_;
 
-  /** \brief Set to true if we want to return the data outside (\a filter_limit_min_;\a filter_limit_max_). Default: false. */
+  /** \brief Set to true if we want to return the data outside (\a filter_limit_min_;\a filter_limit_max_).
+   * Default: false. */
   bool filter_limit_negative_;
 };
 }  // namespace pcl
@@ -443,4 +461,4 @@ void pcl::PassThroughUInt16<PointT>::applyFilterIndices(std::vector<int> & indic
 #include "pcl/filters/impl/passthrough.hpp"
 #endif
 
-#endif  // PCL_FILTERS_PASSTHROUGH_H_
+#endif  // POINTCLOUD_PREPROCESSOR__PASSTHROUGH_FILTER__PASSTHROUGH_UINT16_HPP_

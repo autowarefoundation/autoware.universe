@@ -14,7 +14,7 @@
 /*
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2010, Willow Garage, Inc.
+ *  Copyright (c) 2009, Willow Garage, Inc.
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -44,41 +44,54 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: passthrough.cpp 36194 2011-02-23 07:49:21Z rusu $
- *
  */
 
 #include <vector>
 
-#include "pointcloud_preprocessor/passthrough_filter/passthrough_filter_nodelet.hpp"
-
-#include "pcl/kdtree/kdtree_flann.h"
-#include "pcl/search/kdtree.h"
-#include "pcl/segmentation/segment_differences.h"
+#include "pointcloud_preprocessor/downsample_filter/random_downsample_filter_nodelet.hpp"
 
 namespace pointcloud_preprocessor
 {
-PassThroughFilterComponent::PassThroughFilterComponent(const rclcpp::NodeOptions & options)
-: Filter("PassThroughFilter", options)
+RandomDownsampleFilterComponent::RandomDownsampleFilterComponent(
+  const rclcpp::NodeOptions & options)
+: Filter("RandomDownsampleFilter", options)
 {
+  // set initial parameters
+  {
+    sample_num_ = static_cast<size_t>(declare_parameter("sample_num", 1500));
+  }
+
   using std::placeholders::_1;
   set_param_res_ = this->add_on_set_parameters_callback(
-    std::bind(&PassThroughFilterComponent::paramCallback, this, _1));
+    std::bind(&RandomDownsampleFilterComponent::paramCallback, this, _1));
 }
 
-void PassThroughFilterComponent::filter(
+void RandomDownsampleFilterComponent::filter(
   const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output)
 {
   boost::mutex::scoped_lock lock(mutex_);
-  output = *input;
+  pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_input(new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_output(new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::fromROSMsg(*input, *pcl_input);
+  pcl_output->points.reserve(pcl_input->points.size());
+  pcl::RandomSample<pcl::PointXYZ> filter;
+  filter.setInputCloud(pcl_input);
+  // filter.setSaveLeafLayout(true);
+  filter.setSample(sample_num_);
+  filter.filter(*pcl_output);
+
+  pcl::toROSMsg(*pcl_output, output);
+  output.header = input->header;
 }
 
-rcl_interfaces::msg::SetParametersResult PassThroughFilterComponent::paramCallback(
+rcl_interfaces::msg::SetParametersResult RandomDownsampleFilterComponent::paramCallback(
   const std::vector<rclcpp::Parameter> & p)
 {
   boost::mutex::scoped_lock lock(mutex_);
 
-  // write me
+  if (get_param(p, "sample_num", sample_num_)) {
+    RCLCPP_DEBUG(get_logger(), "Setting new sample num to: %zu.", sample_num_);
+  }
 
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = true;
@@ -86,7 +99,7 @@ rcl_interfaces::msg::SetParametersResult PassThroughFilterComponent::paramCallba
 
   return result;
 }
-}  // namespace pointcloud_preprocessor
 
+}  // namespace pointcloud_preprocessor
 #include "rclcpp_components/register_node_macro.hpp"
-RCLCPP_COMPONENTS_REGISTER_NODE(pointcloud_preprocessor::PassThroughFilterComponent)
+RCLCPP_COMPONENTS_REGISTER_NODE(pointcloud_preprocessor::RandomDownsampleFilterComponent)

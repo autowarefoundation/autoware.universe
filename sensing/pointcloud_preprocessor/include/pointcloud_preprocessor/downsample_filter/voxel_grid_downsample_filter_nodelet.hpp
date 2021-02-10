@@ -47,8 +47,11 @@
  * $Id: voxel_grid.cpp 35876 2011-02-09 01:04:36Z rusu $
  *
  */
-#pragma once
 
+#ifndef POINTCLOUD_PREPROCESSOR__DOWNSAMPLE_FILTER__VOXEL_GRID_DOWNSAMPLE_FILTER_NODELET_HPP_
+#define POINTCLOUD_PREPROCESSOR__DOWNSAMPLE_FILTER__VOXEL_GRID_DOWNSAMPLE_FILTER_NODELET_HPP_
+
+#include <vector>
 #include "pcl/filters/voxel_grid.h"
 #include "pcl/search/pcl_search.h"
 #include "pointcloud_preprocessor/filter.hpp"
@@ -74,6 +77,8 @@ private:
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  VoxelGridDownsampleFilterComponent(const rclcpp::NodeOptions & options);
+  explicit VoxelGridDownsampleFilterComponent(const rclcpp::NodeOptions & options);
 };
 }  // namespace pointcloud_preprocessor
+
+#endif  // POINTCLOUD_PREPROCESSOR__DOWNSAMPLE_FILTER__VOXEL_GRID_DOWNSAMPLE_FILTER_NODELET_HPP_

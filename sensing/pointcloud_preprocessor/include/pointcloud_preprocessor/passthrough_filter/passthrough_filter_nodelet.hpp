@@ -48,7 +48,10 @@
  *
  */
 
-#pragma once
+#ifndef POINTCLOUD_PREPROCESSOR__PASSTHROUGH_FILTER__PASSTHROUGH_FILTER_NODELET_HPP_
+#define POINTCLOUD_PREPROCESSOR__PASSTHROUGH_FILTER__PASSTHROUGH_FILTER_NODELET_HPP_
+
+#include <vector>
 
 #include "pcl/search/pcl_search.h"
 #include "pointcloud_preprocessor/filter.hpp"
@@ -69,6 +72,8 @@ protected:
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  PassThroughFilterComponent(const rclcpp::NodeOptions & options);
+  explicit PassThroughFilterComponent(const rclcpp::NodeOptions & options);
 };
 }  // namespace pointcloud_preprocessor
+
+#endif  // POINTCLOUD_PREPROCESSOR__PASSTHROUGH_FILTER__PASSTHROUGH_FILTER_NODELET_HPP_

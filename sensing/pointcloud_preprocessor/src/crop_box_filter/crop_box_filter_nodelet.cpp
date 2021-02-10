@@ -49,6 +49,8 @@
  *
  */
 
+#include <vector>
+
 #include "pointcloud_preprocessor/crop_box_filter/crop_box_filter_nodelet.hpp"
 
 namespace pointcloud_preprocessor
@@ -169,7 +171,7 @@ rcl_interfaces::msg::SetParametersResult CropBoxFilterComponent::paramCallback(
   // Check the current values for minimum point
   if (
     get_param(p, "min_x", new_min_point(0)) && get_param(p, "min_y", new_min_point(1)) &&
-    get_param(p, "min_z", new_min_point(3)))
+    get_param(p, "min_z", new_min_point(2)))
   {
     if (min_point != new_min_point) {
       RCLCPP_DEBUG(
@@ -183,7 +185,7 @@ rcl_interfaces::msg::SetParametersResult CropBoxFilterComponent::paramCallback(
   // Check the current values for the maximum point
   if (
     get_param(p, "max_x", new_max_point(0)) && get_param(p, "max_y", new_max_point(1)) &&
-    get_param(p, "max_z", new_max_point(3)))
+    get_param(p, "max_z", new_max_point(2)))
   {
     if (max_point != new_max_point) {
       RCLCPP_DEBUG(

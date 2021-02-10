@@ -1,6 +1,6 @@
 <launch>
   <arg name="input_topic_name" default="/sensing/lidar/top/pointcloud_raw" />
-  <arg name="output_topic_name" default="/sensing/lidar/top/ring_passthrough_filterd/pointcloud" />
+  <arg name="output_topic_name" default="/sensing/lidar/top/ring_passthrough_filtered/pointcloud" />
 
   <arg name="filter_field_name" default="ring" />
   <arg name="filter_limit_min" default="0" />
