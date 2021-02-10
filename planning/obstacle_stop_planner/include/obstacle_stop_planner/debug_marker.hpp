@@ -39,10 +39,10 @@ enum class PointType : int8_t { Stop = 0, SlowDown };
 
 enum class PoseType : int8_t { Stop = 0, SlowDownStart, SlowDownEnd };
 
-class ObstacleStopPlannerDebugNode : public rclcpp::Node
+class ObstacleStopPlannerDebugNode
 {
 public:
-  explicit ObstacleStopPlannerDebugNode(const double base_link2front);
+  explicit ObstacleStopPlannerDebugNode(rclcpp::Node * node, const double base_link2front);
   ~ObstacleStopPlannerDebugNode() {}
   bool pushPolygon(
     const std::vector<cv::Point2d> & polygon, const double z, const PolygonType & type);
@@ -58,6 +58,7 @@ public:
 private:
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_viz_pub_;
   rclcpp::Publisher<autoware_planning_msgs::msg::StopReasonArray>::SharedPtr stop_reason_pub_;
+  rclcpp::Node * node_;
   double base_link2front_;
 
   std::shared_ptr<geometry_msgs::msg::Pose> stop_pose_ptr_;

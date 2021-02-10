@@ -123,7 +123,7 @@
                                 <type>0</type>
                             </style>
                             <subscriber_queue_size>1000</subscriber_queue_size>
-                            <title>Esimated Object Velocity(from dynamic object)</title>
+                            <title>Estimated Object Velocity(from dynamic object)</title>
                         </curve_1>
                         <curve_2>
                             <axes>
@@ -174,7 +174,7 @@
                                 <type>0</type>
                             </style>
                             <subscriber_queue_size>1000</subscriber_queue_size>
-                            <title>Esimated Object Velocity(final)</title>
+                            <title>Estimated Object Velocity(final)</title>
                         </curve_2>
                     </curves>
                     <legend>

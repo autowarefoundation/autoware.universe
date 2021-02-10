@@ -24,6 +24,7 @@
 #include "autoware_planning_msgs/msg/trajectory.hpp"
 #include "diagnostic_msgs/msg/diagnostic_status.hpp"
 #include "geometry_msgs/msg/twist_stamped.hpp"
+#include "autoware_debug_msgs/msg/float32_stamped.hpp"
 #include "pcl/point_types.h"
 #include "pcl_conversions/pcl_conversions.h"
 #include "pcl/point_cloud.h"
@@ -40,6 +41,19 @@
 
 namespace motion_planning
 {
+struct StopPoint
+{
+  size_t index;
+  Eigen::Vector2d point;
+};
+
+struct SlowDownPoint
+{
+  size_t index;
+  Eigen::Vector2d point;
+  double velocity;
+};
+
 class ObstacleStopPlannerNode : public rclcpp::Node
 {
 public:
@@ -55,7 +69,7 @@ private:
   rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr current_velocity_sub_;
   rclcpp::Subscription<autoware_perception_msgs::msg::DynamicObjectArray>::SharedPtr
     dynamic_object_sub_;
-
+  rclcpp::Subscription<autoware_debug_msgs::msg::Float32Stamped>::SharedPtr expand_stop_range_sub_;
   rclcpp::Publisher<autoware_planning_msgs::msg::Trajectory>::SharedPtr path_pub_;
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticStatus>::SharedPtr stop_reason_diag_pub_;
 
@@ -78,10 +92,12 @@ private:
   rclcpp::Time prev_col_point_time_;
   pcl::PointXYZ prev_col_point_;
   double expand_slow_down_range_;
+  double expand_stop_range_;
   double max_slow_down_vel_;
   double min_slow_down_vel_;
   double max_deceleration_;
   bool enable_slow_down_;
+  double extend_distance_;
   double step_length_;
   double stop_search_radius_;
   double slow_down_search_radius_;
@@ -90,6 +106,8 @@ private:
   void dynamicObjectCallback(
     const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr input_msg);
   void currentVelocityCallback(const geometry_msgs::msg::TwistStamped::ConstSharedPtr input_msg);
+  void externalExpandStopRangeCallback(
+    const autoware_debug_msgs::msg::Float32Stamped::ConstSharedPtr input_msg);
 
 private:
   bool convexHull(
@@ -115,12 +133,12 @@ private:
     const pcl::PointCloud<pcl::PointXYZ>::Ptr input_pointcloud_ptr,
     pcl::PointCloud<pcl::PointXYZ>::Ptr output_pointcloud_ptr);
   void createOneStepPolygon(
-    const geometry_msgs::msg::Pose base_stap_pose, const geometry_msgs::msg::Pose next_step_pose,
+    const geometry_msgs::msg::Pose base_step_pose, const geometry_msgs::msg::Pose next_step_pose,
     std::vector<cv::Point2d> & polygon, const double expand_width = 0.0);
   bool getSelfPose(
     const std_msgs::msg::Header & header, const tf2_ros::Buffer & tf_buffer,
     geometry_msgs::msg::Pose & self_pose);
-  bool getBackwordPointFromBasePoint(
+  bool getBackwardPointFromBasePoint(
     const Eigen::Vector2d & line_point1, const Eigen::Vector2d & line_point2,
     const Eigen::Vector2d & base_point, const double backward_length,
     Eigen::Vector2d & output_point);
@@ -131,6 +149,43 @@ private:
     const pcl::PointCloud<pcl::PointXYZ> & pointcloud, const geometry_msgs::msg::Pose & base_pose,
     pcl::PointXYZ * lateral_nearest_point, double * deviation);
   geometry_msgs::msg::Pose getVehicleCenterFromBase(const geometry_msgs::msg::Pose & base_pose);
+
+  void insertStopPoint(
+    const StopPoint & stop_point, const autoware_planning_msgs::msg::Trajectory & base_path,
+    autoware_planning_msgs::msg::Trajectory & output_path,
+    diagnostic_msgs::msg::DiagnosticStatus & stop_reason_diag);
+
+  StopPoint searchInsertPoint(
+    const int idx, const autoware_planning_msgs::msg::Trajectory & base_path,
+    const Eigen::Vector2d & trajectory_vec, const Eigen::Vector2d & collision_point_vec);
+
+  StopPoint createTargetPoint(
+    const int idx, const double margin, const Eigen::Vector2d & trajectory_vec,
+    const Eigen::Vector2d & collision_point_vec,
+    const autoware_planning_msgs::msg::Trajectory & base_path);
+
+  SlowDownPoint createSlowDownStartPoint(
+    const int idx, const double margin, const double slow_down_target_vel,
+    const Eigen::Vector2d & trajectory_vec, const Eigen::Vector2d & slow_down_point_vec,
+    const autoware_planning_msgs::msg::Trajectory & base_path);
+
+  void insertSlowDownStartPoint(
+    const SlowDownPoint & slow_down_start_point,
+    const autoware_planning_msgs::msg::Trajectory & base_path,
+    autoware_planning_msgs::msg::Trajectory & output_path);
+
+  void insertSlowDownVelocity(
+    const size_t slow_down_start_point_idx, const double slow_down_target_vel, double slow_down_vel,
+    autoware_planning_msgs::msg::Trajectory & output_path);
+
+  double calcSlowDownTargetVel(const double lateral_deviation);
+  bool extendTrajectory(
+    const autoware_planning_msgs::msg::Trajectory & input_trajectory,
+    const double extend_distance,
+    autoware_planning_msgs::msg::Trajectory & output_trajectory);
+
+  autoware_planning_msgs::msg::TrajectoryPoint getExtendTrajectoryPoint(
+    double extend_distance, const autoware_planning_msgs::msg::TrajectoryPoint & goal_point);
 };
 }  // namespace motion_planning
 
