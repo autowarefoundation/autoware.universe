@@ -2,7 +2,7 @@ cpu_monitor:
   ros__parameters:
     temp_warn: 90.0
     temp_error: 95.0
-    usage_warn:  0.90
+    usage_warn: 0.90
     usage_error: 1.00
     usage_avg: true
     load1_warn: 0.90
@@ -17,10 +17,6 @@ hdd_monitor:
         name: /dev/sda
         temp_warn: 55.0
         temp_error: 70.0
-      disk1:
-        name: /dev/nvme0
-        temp_warn: 55.0
-        temp_error: 70.0
     usage_warn: 0.95
     usage_error: 0.99
 mem_monitor:
@@ -29,7 +25,7 @@ mem_monitor:
     usage_error: 0.99
 net_monitor:
   ros__parameters:
-    devices: [ '*' ]
+    devices: ["*"]
     usage_warn: 0.95
 ntp_monitor:
   ros__parameters:
@@ -43,7 +39,7 @@ gpu_monitor:
   ros__parameters:
     temp_warn: 90.0
     temp_error: 95.0
-    gpu_usage_warn:  0.90
+    gpu_usage_warn: 0.90
     gpu_usage_error: 1.00
     memory_usage_warn: 0.95
     memory_usage_error: 0.99

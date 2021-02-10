@@ -12,28 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <memory>
+#include <string>
+#include <vector>
+
 #include "gtest/gtest.h"
-#include "ros/ros.h"
+#include "rclcpp/rclcpp.hpp"
 #include "system_monitor/net_monitor/net_monitor.hpp"
 #include "boost/algorithm/string.hpp"
 #include "boost/filesystem.hpp"
-#include <string>
-#include <vector>
 
 static constexpr const char * DOCKER_ENV = "/.dockerenv";
 
 namespace fs = boost::filesystem;
-using DiagStatus = diagnostic_msgs::DiagnosticStatus;
+using DiagStatus = diagnostic_msgs::msg::DiagnosticStatus;
 
 class TestNetMonitor : public NetMonitor
 {
   friend class NetMonitorTestSuite;
 
 public:
-  TestNetMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh)
-  : NetMonitor(nh, pnh) {}
+  TestNetMonitor(const std::string & node_name, const rclcpp::NodeOptions & options)
+  : NetMonitor(node_name, options) {}
 
-  void diagCallback(const diagnostic_msgs::DiagnosticArray::ConstPtr & diag_msg)
+  void diagCallback(const diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr diag_msg)
   {
     array_ = *diag_msg;
   }
@@ -62,28 +64,34 @@ public:
   }
 
 private:
-  diagnostic_msgs::DiagnosticArray array_;
-  const std::string prefix_ = ros::this_node::getName().substr(1) + ": ";
+  diagnostic_msgs::msg::DiagnosticArray array_;
+  const std::string prefix_ = std::string(this->get_name()) + ": ";
 };
 
 class NetMonitorTestSuite : public ::testing::Test
 {
 public:
-  NetMonitorTestSuite()
-  : nh_(""), pnh_("~") {}
+  NetMonitorTestSuite() {}
 
 protected:
-  ros::NodeHandle nh_, pnh_;
   std::unique_ptr<TestNetMonitor> monitor_;
-  ros::Subscriber sub_;
+  rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr
+    sub_;
 
   void SetUp(void)
   {
-    monitor_ = std::make_unique<TestNetMonitor>(nh_, pnh_);
-    sub_ = nh_.subscribe("/diagnostics", 1000, &TestNetMonitor::diagCallback, monitor_.get());
+    using std::placeholders::_1;
+    rclcpp::init(0, nullptr);
+    rclcpp::NodeOptions node_options;
+    monitor_ = std::make_unique<TestNetMonitor>("test_net_monitor", node_options);
+    sub_ = monitor_->create_subscription<diagnostic_msgs::msg::DiagnosticArray>(
+      "/diagnostics", 1000, std::bind(&TestNetMonitor::diagCallback, monitor_.get(), _1));
   }
 
-  void TearDown(void) {}
+  void TearDown(void)
+  {
+    rclcpp::shutdown();
+  }
 
   bool findValue(const DiagStatus status, const std::string & key, std::string & value)  // NOLINT
   {
@@ -105,8 +113,8 @@ TEST_F(NetMonitorTestSuite, usageWarnTest)
     monitor_->update();
 
     // Give time to publish
-    ros::WallDuration(0.5).sleep();
-    ros::spinOnce();
+    rclcpp::WallRate(2).sleep();
+    rclcpp::spin_some(monitor_->get_node_base_interface());
 
     // Verify
     DiagStatus status;
@@ -124,8 +132,8 @@ TEST_F(NetMonitorTestSuite, usageWarnTest)
     monitor_->update();
 
     // Give time to publish
-    ros::WallDuration(0.5).sleep();
-    ros::spinOnce();
+    rclcpp::WallRate(2).sleep();
+    rclcpp::spin_some(monitor_->get_node_base_interface());
 
     // Verify
     DiagStatus status;
@@ -144,8 +152,8 @@ TEST_F(NetMonitorTestSuite, usageWarnTest)
     monitor_->update();
 
     // Give time to publish
-    ros::WallDuration(0.5).sleep();
-    ros::spinOnce();
+    rclcpp::WallRate(2).sleep();
+    rclcpp::spin_some(monitor_->get_node_base_interface());
 
     // Verify
     DiagStatus status;
@@ -163,8 +171,8 @@ TEST_F(NetMonitorTestSuite, usageInvalidDeviceParameterTest)
   monitor_->update();
 
   // Give time to publish
-  ros::WallDuration(0.5).sleep();
-  ros::spinOnce();
+  rclcpp::WallRate(2).sleep();
+  rclcpp::spin_some(monitor_->get_node_base_interface());
 
   // Verify
   DiagStatus status;
@@ -176,7 +184,6 @@ TEST_F(NetMonitorTestSuite, usageInvalidDeviceParameterTest)
 int main(int argc, char ** argv)
 {
   testing::InitGoogleTest(&argc, argv);
-  ros::init(argc, argv, "NetMonitorTestNode");
 
   return RUN_ALL_TESTS();
 }

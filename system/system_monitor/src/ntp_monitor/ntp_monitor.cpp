@@ -17,13 +17,15 @@
  * @brief NTP monitor class
  */
 
-#include "system_monitor/ntp_monitor/ntp_monitor.hpp"
-#include "boost/filesystem.hpp"
-#include "boost/format.hpp"
-#include "boost/process.hpp"
-#include "boost/regex.hpp"
+#include <regex>
 #include <string>
 
+#include "boost/filesystem.hpp"
+#include "boost/process.hpp"
+
+#include "fmt/format.h"
+
+#include "system_monitor/ntp_monitor/ntp_monitor.hpp"
 namespace bp = boost::process;
 namespace fs = boost::filesystem;
 
@@ -64,8 +66,7 @@ void NTPMonitor::checkOffset(diagnostic_updater::DiagnosticStatusWrapper & stat)
   // Query NTP server
   bp::ipstream is_out;
   bp::ipstream is_err;
-  bp::child c(
-    (boost::format("ntpdate -q %1%") % server_).str(), bp::std_out > is_out, bp::std_err > is_err);
+  bp::child c(fmt::format("ntpdate -q {}", server_), bp::std_out > is_out, bp::std_err > is_err);
   c.wait();
   if (c.exit_code() != 0) {
     std::ostringstream os;
@@ -78,11 +79,11 @@ void NTPMonitor::checkOffset(diagnostic_updater::DiagnosticStatusWrapper & stat)
   std::string line;
   float offset = 0.0f;
   float delay = 0.0f;
-  boost::smatch match;
-  const boost::regex filter("^server.*offset ([-+]?\\d+\\.\\d+), delay ([-+]?\\d+\\.\\d+)");
+  std::cmatch match;
+  const std::regex filter("^server.*offset ([-+]?\\d+\\.\\d+), delay ([-+]?\\d+\\.\\d+)");
 
   while (std::getline(is_out, line) && !line.empty()) {
-    if (boost::regex_match(line, match, filter)) {
+    if (std::regex_match(line.c_str(), match, filter)) {
       float ofs = std::atof(match[1].str().c_str());
       float dly = std::atof(match[2].str().c_str());
       // Choose better network performance

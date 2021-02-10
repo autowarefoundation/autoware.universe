@@ -16,6 +16,8 @@ ament_auto_find_build_dependencies()
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 find_package(NVML)
+find_package(fmt REQUIRED)
+set(LIBRARIES fmt)
 
 ###########
 ## Build ##
@@ -28,7 +30,7 @@ find_path(LIBNL3_INCLUDE_DIRS
   PATH_SUFFIXES libnl3
 )
 
-if (NVML_FOUND)
+if(NVML_FOUND)
   include_directories(
     include
     ${LIBNL3_INCLUDE_DIRS}
@@ -43,32 +45,32 @@ endif()
 
 ## Declare a C++ executable
 
-if (CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
+if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
   set(CMAKE_CPU_PLATFORM "intel")
-  ADD_DEFINITIONS(-D_CPU_INTEL_)
-elseif (CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "arm")
-  if (CMAKE_HOST_SYSTEM_VERSION MATCHES ".*raspi.*")
+  add_definitions(-D_CPU_INTEL_)
+elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "arm")
+  if(CMAKE_HOST_SYSTEM_VERSION MATCHES ".*raspi.*")
     set(CMAKE_CPU_PLATFORM "raspi")
-    ADD_DEFINITIONS(-D_CPU_RASPI_)
-  elseif (CMAKE_HOST_SYSTEM_VERSION MATCHES ".*tegra.*")
+    add_definitions(-D_CPU_RASPI_)
+  elseif(CMAKE_HOST_SYSTEM_VERSION MATCHES ".*tegra.*")
     set(CMAKE_CPU_PLATFORM "tegra")
-    ADD_DEFINITIONS(-D_CPU_TEGRA_)
+    add_definitions(-D_CPU_TEGRA_)
   else()
     set(CMAKE_CPU_PLATFORM "arm")
-    ADD_DEFINITIONS(-D_CPU_ARM_)
+    add_definitions(-D_CPU_ARM_)
   endif()
 else()
   set(CMAKE_CPU_PLATFORM "unknown")
 endif()
 
-if (NVML_FOUND)
+if(NVML_FOUND)
   set(CMAKE_GPU_PLATFORM "nvml")
-  ADD_DEFINITIONS(-D_GPU_NVML_)
+  add_definitions(-D_GPU_NVML_)
   set(GPU_LIBRARY ${NVML_LIBRARIES})
 else()
-  if (CMAKE_CPU_PLATFORM STREQUAL "tegra")
+  if(CMAKE_CPU_PLATFORM STREQUAL "tegra")
     set(CMAKE_GPU_PLATFORM "tegra")
-    ADD_DEFINITIONS(-D_GPU_TEGRA_)
+    add_definitions(-D_GPU_TEGRA_)
   else()
     set(CMAKE_GPU_PLATFORM "unknown")
   endif()
@@ -144,20 +146,136 @@ find_package(Boost REQUIRED COMPONENTS
 )
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(cpu_monitor ${Boost_LIBRARIES})
-target_link_libraries(hdd_monitor ${Boost_LIBRARIES})
-target_link_libraries(net_monitor ${NL_LIBS})
-target_link_libraries(ntp_monitor ${Boost_LIBRARIES})
-target_link_libraries(process_monitor ${Boost_LIBRARIES})
-target_link_libraries(gpu_monitor ${GPU_LIBRARY})
-target_link_libraries(msr_reader ${Boost_LIBRARIES})
-target_link_libraries(hdd_reader ${Boost_LIBRARIES})
+target_link_libraries(cpu_monitor ${Boost_LIBRARIES} ${LIBRARIES})
+target_link_libraries(hdd_monitor ${Boost_LIBRARIES} ${LIBRARIES})
+target_link_libraries(mem_monitor ${LIBRARIES})
+target_link_libraries(net_monitor ${NL_LIBS} ${LIBRARIES})
+target_link_libraries(ntp_monitor ${Boost_LIBRARIES} ${LIBRARIES})
+target_link_libraries(process_monitor ${LIBRARIES})
+target_link_libraries(gpu_monitor ${GPU_LIBRARY} ${LIBRARIES})
+target_link_libraries(msr_reader ${Boost_LIBRARIES} ${LIBRARIES})
+target_link_libraries(hdd_reader ${Boost_LIBRARIES} ${LIBRARIES})
 
 # TODO(yunus.caliskan): Port the tests to ROS2, robustify the tests.
-if(BUILD_TESTING)                                                                                                                                                                                                  
-  find_package(ament_lint_auto REQUIRED)                                                                                                                                                                           
-  ament_lint_auto_find_test_dependencies()                                                                                                                                                                         
-endif()  
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
+
+  # ament_add_gtest(test_cpu_monitor
+  #   test/src/cpu_monitor/test_${CMAKE_CPU_PLATFORM}_cpu_monitor.cpp
+  #   ${CPU_MONITOR_SOURCE}
+  # )
+
+  # ament_target_dependencies(test_cpu_monitor
+  #   "rclcpp"
+  #   "diagnostic_msgs"
+  # )
+
+  # target_include_directories(test_cpu_monitor
+  #   PRIVATE "include"
+  # )
+
+  # target_link_libraries(test_cpu_monitor ${Boost_LIBRARIES} ${LIBRARIES})
+
+  # ament_add_gtest(test_hdd_monitor
+  #   test/src/hdd_monitor/test_hdd_monitor.cpp
+  #   src/hdd_monitor/hdd_monitor.cpp
+  # )
+
+  # ament_target_dependencies(test_hdd_monitor
+  #   "rclcpp"
+  #   "diagnostic_msgs"
+  # )
+
+  # target_include_directories(test_hdd_monitor
+  #   PRIVATE "include"
+  # )
+
+  # target_link_libraries(test_hdd_monitor ${Boost_LIBRARIES} ${LIBRARIES}
+  # )
+
+  # ament_add_gtest(test_mem_monitor
+  #   test/src/mem_monitor/test_mem_monitor.cpp
+  #   src/mem_monitor/mem_monitor.cpp
+  # )
+
+  # ament_target_dependencies(test_mem_monitor
+  #   "rclcpp"
+  #   "diagnostic_msgs"
+  # )
+
+  # target_include_directories(test_mem_monitor
+  #   PRIVATE "include"
+  # )
+
+  # target_link_libraries(test_mem_monitor ${Boost_LIBRARIES} ${LIBRARIES})
+
+  # ament_add_gtest(test_net_monitor
+  #   test/src/net_monitor/test_net_monitor.cpp
+  #   src/net_monitor/net_monitor.cpp
+  #   src/net_monitor/nl80211.cpp
+  # )
+
+  # ament_target_dependencies(test_net_monitor
+  #   "rclcpp"
+  #   "diagnostic_msgs"
+  # )
+
+  # target_include_directories(test_net_monitor
+  #   PRIVATE "include"
+  # )
+
+  # target_link_libraries(test_net_monitor ${Boost_LIBRARIES} ${NL_LIBS} ${LIBRARIES})
+
+  # ament_add_gtest(test_ntp_monitor
+  #   test/src/ntp_monitor/test_ntp_monitor.cpp
+  #   src/ntp_monitor/ntp_monitor.cpp
+  # )
+
+  # ament_target_dependencies(test_ntp_monitor
+  #   "rclcpp"
+  #   "diagnostic_msgs"
+  # )
+
+  # target_include_directories(test_ntp_monitor
+  #   PRIVATE "include"
+  # )
+
+  # target_link_libraries(test_ntp_monitor ${Boost_LIBRARIES} ${LIBRARIES})
+
+  # ament_add_gtest(test_process_monitor
+  #   test/src/process_monitor/test_process_monitor.cpp
+  #   src/process_monitor/process_monitor.cpp
+  # )
+
+  # ament_target_dependencies(test_process_monitor
+  #   "rclcpp"
+  #   "diagnostic_msgs"
+  # )
+
+  # target_include_directories(test_process_monitor
+  #   PRIVATE "include"
+  # )
+
+  # target_link_libraries(test_process_monitor ${Boost_LIBRARIES} ${LIBRARIES})
+
+  # ament_add_gtest(test_gpu_monitor
+  #   test/src/gpu_monitor/test_${CMAKE_GPU_PLATFORM}_gpu_monitor.cpp
+  #   ${GPU_MONITOR_SOURCE}
+  # )
+
+  # ament_target_dependencies(test_gpu_monitor
+  #   "rclcpp"
+  #   "diagnostic_msgs"
+  # )
+
+  # target_include_directories(test_gpu_monitor
+  #   PRIVATE "include"
+  # )
+
+  # target_link_libraries(test_gpu_monitor ${GPU_LIBRARY} ${LIBRARIES})
+
+endif()
 
 #############
 ## Install ##

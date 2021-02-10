@@ -17,12 +17,15 @@
  * @brief GPU monitor class
  */
 
-#include "system_monitor/gpu_monitor/nvml_gpu_monitor.hpp"
 #include <algorithm>
-#include "boost/algorithm/string.hpp"
-#include "boost/format.hpp"
 #include <string>
 #include <vector>
+
+#include "boost/algorithm/string.hpp"
+
+#include "fmt/format.h"
+
+#include "system_monitor/gpu_monitor/nvml_gpu_monitor.hpp"
 
 GPUMonitor::GPUMonitor(const std::string & node_name, const rclcpp::NodeOptions & options)
 : GPUMonitorBase(node_name, options)
@@ -58,15 +61,15 @@ GPUMonitor::GPUMonitor(const std::string & node_name, const rclcpp::NodeOptions 
     ret = nvmlDeviceGetName(info.device, info.name, NVML_DEVICE_NAME_BUFFER_SIZE);
     if (ret != NVML_SUCCESS) {
       RCLCPP_ERROR(
-        this->get_logger(), "Failed to retrieve the name of this device [%d]: %s", index, nvmlErrorString(
-          ret));
+        this->get_logger(),
+        "Failed to retrieve the name of this device [%d]: %s", index, nvmlErrorString(ret));
       continue;
     }
     ret = nvmlDeviceGetPciInfo(info.device, &info.pci);
     if (ret != NVML_SUCCESS) {
       RCLCPP_ERROR(
-        this->get_logger(), "Failed to retrieve the PCI attributes [%d]: %s", index, nvmlErrorString(
-          ret));
+        this->get_logger(),
+        "Failed to retrieve the PCI attributes [%d]: %s", index, nvmlErrorString(ret));
       continue;
     }
     gpus_.push_back(info);
@@ -97,9 +100,9 @@ void GPUMonitor::checkTemp(diagnostic_updater::DiagnosticStatusWrapper & stat)
     ret = nvmlDeviceGetTemperature(itr->device, NVML_TEMPERATURE_GPU, &temp);
     if (ret != NVML_SUCCESS) {
       stat.summary(DiagStatus::ERROR, "Failed to retrieve the current temperature");
-      stat.add((boost::format("GPU %1%: name") % index).str(), itr->name);
-      stat.add((boost::format("GPU %1%: bus-id") % index).str(), itr->pci.busId);
-      stat.add((boost::format("GPU %1%: content") % index).str(), nvmlErrorString(ret));
+      stat.add(fmt::format("GPU {}: name", index), itr->name);
+      stat.add(fmt::format("GPU {}: bus-id", index), itr->pci.busId);
+      stat.add(fmt::format("GPU {}: content", index), nvmlErrorString(ret));
       return;
     }
 
@@ -131,9 +134,9 @@ void GPUMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
     ret = nvmlDeviceGetUtilizationRates(itr->device, &itr->utilization);
     if (ret != NVML_SUCCESS) {
       stat.summary(DiagStatus::ERROR, "Failed to retrieve the current utilization rates");
-      stat.add((boost::format("GPU %1%: name") % index).str(), itr->name);
-      stat.add((boost::format("GPU %1%: bus-id") % index).str(), itr->pci.busId);
-      stat.add((boost::format("GPU %1%: content") % index).str(), nvmlErrorString(ret));
+      stat.add(fmt::format("GPU {}: name", index), itr->name);
+      stat.add(fmt::format("GPU {}: bus-id", index), itr->pci.busId);
+      stat.add(fmt::format("GPU {}: content", index), nvmlErrorString(ret));
       return;
     }
 
@@ -145,9 +148,9 @@ void GPUMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
       level = std::max(level, static_cast<int>(DiagStatus::WARN));
     }
 
-    stat.add((boost::format("GPU %1%: status") % index).str(), load_dict_.at(level));
-    stat.add((boost::format("GPU %1%: name") % index).str(), itr->name);
-    stat.addf((boost::format("GPU %1%: usage") % index).str(), "%d.0%%", itr->utilization.gpu);
+    stat.add(fmt::format("GPU {}: status", index), load_dict_.at(level));
+    stat.add(fmt::format("GPU {}: name", index), itr->name);
+    stat.addf(fmt::format("GPU {}: usage", index), "%d.0%%", itr->utilization.gpu);
 
     whole_level = std::max(whole_level, level);
   }
@@ -173,9 +176,9 @@ void GPUMonitor::checkMemoryUsage(diagnostic_updater::DiagnosticStatusWrapper & 
     if (ret != NVML_SUCCESS) {
       stat.summary(
         DiagStatus::ERROR, "Failed to retrieve the amount of used, free and total memory");
-      stat.add((boost::format("GPU %1%: name") % index).str(), itr->name);
-      stat.add((boost::format("GPU %1%: bus-id") % index).str(), itr->pci.busId);
-      stat.add((boost::format("GPU %1%: content") % index).str(), nvmlErrorString(ret));
+      stat.add(fmt::format("GPU {}: name", index), itr->name);
+      stat.add(fmt::format("GPU {}: bus-id", index), itr->pci.busId);
+      stat.add(fmt::format("GPU {}: content", index), nvmlErrorString(ret));
       return;
     }
 
@@ -187,12 +190,12 @@ void GPUMonitor::checkMemoryUsage(diagnostic_updater::DiagnosticStatusWrapper & 
       level = std::max(level, static_cast<int>(DiagStatus::WARN));
     }
 
-    stat.add((boost::format("GPU %1%: status") % index).str(), load_dict_.at(level));
-    stat.add((boost::format("GPU %1%: name") % index).str(), itr->name);
-    stat.addf((boost::format("GPU %1%: usage") % index).str(), "%d.0%%", itr->utilization.memory);
-    stat.add((boost::format("GPU %1%: total") % index).str(), toHumanReadable(memory.total));
-    stat.add((boost::format("GPU %1%: used") % index).str(), toHumanReadable(memory.used));
-    stat.add((boost::format("GPU %1%: free") % index).str(), toHumanReadable(memory.free));
+    stat.add(fmt::format("GPU {}: status", index), load_dict_.at(level));
+    stat.add(fmt::format("GPU {}: name", index), itr->name);
+    stat.addf(fmt::format("GPU {}: usage", index), "%d.0%%", itr->utilization.memory);
+    stat.add(fmt::format("GPU {}: total", index), toHumanReadable(memory.total));
+    stat.add(fmt::format("GPU {}: used", index), toHumanReadable(memory.used));
+    stat.add(fmt::format("GPU {}: free", index), toHumanReadable(memory.free));
 
     whole_level = std::max(whole_level, level);
   }
@@ -218,9 +221,9 @@ void GPUMonitor::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & s
     ret = nvmlDeviceGetClockInfo(itr->device, NVML_CLOCK_GRAPHICS, &clock);
     if (ret != NVML_SUCCESS) {
       stat.summary(DiagStatus::ERROR, "Failed to retrieve the current clock speeds");
-      stat.add((boost::format("GPU %1%: name") % index).str(), itr->name);
-      stat.add((boost::format("GPU %1%: bus-id") % index).str(), itr->pci.busId);
-      stat.add((boost::format("GPU %1%: content") % index).str(), nvmlErrorString(ret));
+      stat.add(fmt::format("GPU {}: name", index), itr->name);
+      stat.add(fmt::format("GPU {}: bus-id", index), itr->pci.busId);
+      stat.add(fmt::format("GPU {}: content", index), nvmlErrorString(ret));
       return;
     }
 
@@ -228,9 +231,9 @@ void GPUMonitor::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & s
     ret = nvmlDeviceGetCurrentClocksThrottleReasons(itr->device, &clocksThrottleReasons);
     if (ret != NVML_SUCCESS) {
       stat.summary(DiagStatus::ERROR, "Failed to retrieve current clocks throttling reasons");
-      stat.add((boost::format("GPU %1%: name") % index).str(), itr->name);
-      stat.add((boost::format("GPU %1%: bus-id") % index).str(), itr->pci.busId);
-      stat.add((boost::format("GPU %1%: content") % index).str(), nvmlErrorString(ret));
+      stat.add(fmt::format("GPU {}: name", index), itr->name);
+      stat.add(fmt::format("GPU {}: bus-id", index), itr->pci.busId);
+      stat.add(fmt::format("GPU {}: content", index), nvmlErrorString(ret));
       return;
     }
 
@@ -250,14 +253,13 @@ void GPUMonitor::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & s
       }
     }
 
-    stat.add((boost::format("GPU %1%: status") % index).str(), throttling_dict_.at(level));
-    stat.add((boost::format("GPU %1%: name") % index).str(), itr->name);
-    stat.addf((boost::format("GPU %1%: graphics clock") % index).str(), "%d MHz", clock);
+    stat.add(fmt::format("GPU {}: status", index), throttling_dict_.at(level));
+    stat.add(fmt::format("GPU {}: name", index), itr->name);
+    stat.addf(fmt::format("GPU {}: graphics clock", index), "%d MHz", clock);
 
     if (reasons.empty()) {reasons.emplace_back("ReasonNone");}
 
-    stat.add(
-      (boost::format("GPU %1%: reasons") % index).str(), boost::algorithm::join(reasons, ", "));
+    stat.add(fmt::format("GPU {}: reasons", index), boost::algorithm::join(reasons, ", "));
 
     whole_level = std::max(whole_level, level);
   }
@@ -269,11 +271,12 @@ std::string GPUMonitor::toHumanReadable(unsigned long long size)  // NOLINT
 {
   const char * units[] = {"B", "K", "M", "G", "T"};
   int count = 0;
+  double dsize = size;
 
-  while (size > 1024) {
-    size /= 1024;
+  while (dsize > 1024) {
+    dsize /= 1024;
     ++count;
   }
-  const char * format = (size > 0 && size < 10) ? "%.1f%s" : "%.0f%s";
-  return (boost::format(format) % size % units[count]).str();
+  const char * format = (dsize > 0 && dsize < 10) ? "{:.1f}{}" : "{:.0f}{}";
+  return fmt::format(format, dsize, units[count]);
 }

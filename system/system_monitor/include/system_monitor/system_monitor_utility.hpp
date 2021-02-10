@@ -1,33 +1,32 @@
-#ifndef SYSTEM_MONITOR_SYSTEM_MONITOR_UTILITY_H
-#define SYSTEM_MONITOR_SYSTEM_MONITOR_UTILITY_H
-/*
- * Copyright 2020 Autoware Foundation. All rights reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2020 Tier IV, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 /**
  * @file system_monitor_utility.h
  * @brief System Monitor Utility class
  */
 
-#include "boost/filesystem.hpp"
-#include "boost/foreach.hpp"
-#include "boost/format.hpp"
-#include "boost/range.hpp"
-#include "boost/regex.hpp"
+#ifndef SYSTEM_MONITOR__SYSTEM_MONITOR_UTILITY_HPP_
+#define SYSTEM_MONITOR__SYSTEM_MONITOR_UTILITY_HPP_
+
+#include <regex>
 #include <string>
 #include <vector>
+
+#include "boost/filesystem.hpp"
+#include "boost/foreach.hpp"
+#include "boost/range.hpp"
 
 namespace fs = boost::filesystem;
 
@@ -49,9 +48,9 @@ class SystemMonitorUtility
 {
 public:
   /**
-   * @brief get thermal zone informaton
+   * @brief get thermal zone information
    * @param [in] t thermal zone name
-   * @param [in] pointer to thermal zone informaton
+   * @param [in] pointer to thermal zone information
    */
   static void getThermalZone(const std::string & t, std::vector<thermal_zone> * therm)
   {
@@ -66,12 +65,11 @@ public:
     {
       if (!fs::is_directory(path)) {continue;}
 
-      boost::smatch match;
-      const boost::regex filter(".*/thermal_zone(\\d+)");
-      const std::string therm_dir = path.generic_string();
+      std::cmatch match;
+      const char * therm_dir = path.generic_string().c_str();
 
       // not thermal_zone[0-9]
-      if (!boost::regex_match(therm_dir, match, filter)) {continue;}
+      if (!std::regex_match(therm_dir, match, std::regex(".*/thermal_zone(\\d+)"))) {continue;}
 
       std::string type;
       const fs::path type_path = path / "type";
@@ -90,4 +88,4 @@ public:
   }
 };
 
-#endif  // SYSTEM_MONITOR_SYSTEM_MONITOR_UTILITY_H
+#endif  // SYSTEM_MONITOR__SYSTEM_MONITOR_UTILITY_HPP_

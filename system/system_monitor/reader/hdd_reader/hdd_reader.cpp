@@ -18,28 +18,32 @@
  */
 
 #include <errno.h>
-#include "fcntl.h"
-#include "getopt.h"
-#include "hdd_reader/hdd_reader.hpp"
-#include "linux/nvme_ioctl.h"
-#include "netinet/in.h"
-#include "scsi/sg.h"
+#include <fcntl.h>
+#include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
+#include <unistd.h>
+
+#include <algorithm>
+#include <regex>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "linux/nvme_ioctl.h"
+#include "netinet/in.h"
+#include "scsi/sg.h"
 #include "sys/ioctl.h"
 #include "sys/socket.h"
-#include "syslog.h"
-#include "unistd.h"
-#include <algorithm>
+
 #include "boost/algorithm/string.hpp"
 #include "boost/archive/text_oarchive.hpp"
 #include "boost/filesystem.hpp"
-#include "boost/format.hpp"
 #include "boost/lexical_cast.hpp"
-#include "boost/regex.hpp"
-#include <string>
-#include <vector>
+
+#include "hdd_reader/hdd_reader.hpp"
 
 namespace fs = boost::filesystem;
 
@@ -66,7 +70,7 @@ typedef struct
 {
   uint8_t operation_code_;      //!< @brief OPERATION CODE (A1h)
   uint8_t reserved0_ : 1;       //!< @brief Reserved
-  uint8_t protool_ : 4;         //!< @brief PROTOCOL
+  uint8_t protocol_ : 4;         //!< @brief PROTOCOL
   uint8_t multiple_count_ : 3;  //!< @brief MULTIPLE_COUNT
   uint8_t t_length_ : 2;        //!< @brief T_LENGTH
   uint8_t byt_blok_ : 1;        //!< @brief BYT_BLOK
@@ -95,7 +99,7 @@ typedef struct __attribute__((packed))  // Minimize total struct memory 16 to 12
 {
   uint8_t attribute_id_;  //!< @brief Attribute ID
   //  Flags
-  uint16_t sarranty_ : 1;           //!< @brief Bit 0 – Warranty
+  uint16_t warranty_ : 1;           //!< @brief Bit 0 – Warranty
   uint16_t offline_ : 1;            //!< @brief Bit 1 – Offline
   uint16_t performance_ : 1;        //!< @brief Bit 2 – Performance
   uint16_t error_rate_ : 1;         //!< @brief Bit 3 – Error rate
@@ -136,8 +140,8 @@ typedef struct __attribute__((packed))  // Minimize total struct memory 514 to 5
   uint8_t extended_self_test_polling_time_;  //!< @brief Extended self-test polling time in minutes
   uint8_t
     conveyance_self_test_polling_time_;  //!< @brief Conveyance self-test polling time in minutes
-  uint16_t
-    extended_self_test_polling_time_word_;  //!< @brief Extended self-test polling time in minutes (word)
+  uint16_t                                  //!< @brief Extended self-test polling time
+    extended_self_test_polling_time_word_;  //!<   in minutes (word)
   uint8_t reserved_[9];                     //!< @brief Reserved
   uint8_t vendor_specific3_[125];           //!< @brief Vendor specific
   uint8_t data_structure_checksum_;         //!< @brief Data structure checksum
@@ -194,7 +198,7 @@ int get_ata_identify(int fd, HDDInfo * info)
   // Create a command descriptor block(CDB)
   memset(&ata, 0, sizeof(ata));
   ata.operation_code_ = 0xA1;  // ATA PASS-THROUGH (12) command
-  ata.protool_ = 0x4;          // PIO Data-In
+  ata.protocol_ = 0x4;          // PIO Data-In
   ata.t_dir_ = 0x1;            // from the ATA device to the application client
   ata.byt_blok_ = 0x1;         // the number of blocks specified in the T_LENGTH field
   ata.t_length_ = 0x2;         // length is specified in the SECTOR_COUNT field
@@ -258,7 +262,7 @@ int get_ata_SMARTData(int fd, HDDInfo * info)
   // Create a command descriptor block(CDB)
   memset(&ata, 0, sizeof(ata));
   ata.operation_code_ = 0xA1;  // ATA PASS-THROUGH (12) command
-  ata.protool_ = 0x4;          // PIO Data-In
+  ata.protocol_ = 0x4;          // PIO Data-In
   ata.t_dir_ = 0x1;            // from the ATA device to the application client
   ata.byt_blok_ = 0x1;         // the number of blocks specified in the T_LENGTH field
   ata.t_length_ = 0x2;         // length is specified in the SECTOR_COUNT field
@@ -286,7 +290,7 @@ int get_ata_SMARTData(int fd, HDDInfo * info)
   // Retrieve C2h Enclosure Temperature
   for (int i = 0; i < 30; ++i) {
     if (data.attribute_entry_[i].attribute_id_ == 0xC2) {
-      info->temp_ = data.attribute_entry_[i].data_;
+      info->temp_ = static_cast<uint8_t>(data.attribute_entry_[i].data_);
       return EXIT_SUCCESS;
     }
   }
@@ -370,7 +374,7 @@ int get_nvme_SMARTData(int fd, HDDInfo * info)
   // Bytes 2:1 Composite Temperature
   // Convert kelvin to celsius
   unsigned int temperature = ((data[2] << 8) | data[1]) - 273;
-  info->temp_ = temperature;
+  info->temp_ = static_cast<uint8_t>(temperature);
 
   return EXIT_SUCCESS;
 }
@@ -467,9 +471,7 @@ void run(int port, HDDInfoList * list)
           close(fd);
           continue;
         }
-      }
-      // NVMe device
-      else if (boost::starts_with(itr->first.c_str(), "/dev/nvme")) {
+      } else if (boost::starts_with(itr->first.c_str(), "/dev/nvme")) {  // NVMe device
         // Get Identify for NVMe drive
         info->error_code_ = get_nvme_identify(fd, info);
         if (info->error_code_ != 0) {
@@ -550,13 +552,13 @@ int main(int argc, char ** argv)
   for (const fs::path & path :
     boost::make_iterator_range(fs::directory_iterator(root), fs::directory_iterator()))
   {
-    boost::smatch match;
-    const boost::regex fsd("sd([a-z]+)");
-    const boost::regex fnvme("nvme(\\d+)");
-    const std::string dir = path.filename().generic_string();
+    std::cmatch match;
+    const std::regex fsd("sd([a-z]+)");
+    const std::regex fnvme("nvme(\\d+)");
+    const char * dir = path.filename().generic_string().c_str();
 
     // /dev/sd[a-z] or /dev/nvme[0-9] ?
-    if (boost::regex_match(dir, match, fsd) || boost::regex_match(dir, match, fnvme)) {
+    if (std::regex_match(dir, match, fsd) || std::regex_match(dir, match, fnvme)) {
       HDDInfo info{0, "", "", 0};
       list.insert(std::make_pair(path.generic_string(), info));
     }

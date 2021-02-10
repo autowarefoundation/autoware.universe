@@ -22,6 +22,9 @@
 /// \param monitor_ptr Shared pointer of a monitor node to be spinned.
 /// \param period Spin period.
 
+#ifndef SYSTEM_MONITOR__UTILS_HPP_
+#define SYSTEM_MONITOR__UTILS_HPP_
+
 #include <memory>
 #include <chrono>
 
@@ -36,3 +39,5 @@ void spin_and_update(const std::shared_ptr<MonitorT> & monitor_ptr, std::chrono:
     std::this_thread::sleep_for(period);
   }
 }
+
+#endif  // SYSTEM_MONITOR__UTILS_HPP_

@@ -12,27 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <memory>
+#include <string>
+
 #include "gtest/gtest.h"
-#include "ros/ros.h"
+#include "rclcpp/rclcpp.hpp"
 #include "system_monitor/gpu_monitor/tegra_gpu_monitor.hpp"
 #include "boost/algorithm/string.hpp"
 #include "boost/filesystem.hpp"
-#include <string>
 
 static constexpr const char * TEST_FILE = "test";
 
 namespace fs = boost::filesystem;
-using DiagStatus = diagnostic_msgs::DiagnosticStatus;
+using DiagStatus = diagnostic_msgs::msg::DiagnosticStatus;
 
 class TestGPUMonitor : public GPUMonitor
 {
   friend class GPUMonitorTestSuite;
 
 public:
-  TestGPUMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh)
-  : GPUMonitor(nh, pnh) {}
+  TestGPUMonitor(const std::string & node_name, const rclcpp::NodeOptions & options)
+  : GPUMonitor(node_name, options) {}
 
-  void diagCallback(const diagnostic_msgs::DiagnosticArray::ConstPtr & diag_msg)
+  void diagCallback(const diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr diag_msg)
   {
     array_ = *diag_msg;
   }
@@ -65,34 +67,35 @@ public:
   }
 
 private:
-  diagnostic_msgs::DiagnosticArray array_;
-  const std::string prefix_ = ros::this_node::getName().substr(1) + ": ";
+  diagnostic_msgs::msg::DiagnosticArray array_;
+  const std::string prefix_ = std::string(this->get_name()) + ": ";
 };
 
 class GPUMonitorTestSuite : public ::testing::Test
 {
 public:
-  GPUMonitorTestSuite()
-  : nh_(""), pnh_("~") {}
+  GPUMonitorTestSuite() {}
 
 protected:
-  ros::NodeHandle nh_, pnh_;
   std::unique_ptr<TestGPUMonitor> monitor_;
-  ros::Subscriber sub_;
+  rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr
+    sub_;
 
   void SetUp(void)
   {
-    monitor_ = std::make_unique<TestGPUMonitor>(nh_, pnh_);
-    sub_ = nh_.subscribe("/diagnostics", 1000, &TestGPUMonitor::diagCallback, monitor_.get());
-
-    // Remove test file if exists
-    if (fs::exists(TEST_FILE)) {fs::remove(TEST_FILE);}
+    using std::placeholders::_1;
+    rclcpp::init(0, nullptr);
+    rclcpp::NodeOptions node_options;
+    monitor_ = std::make_unique<TestGPUMonitor>("test_gpu_monitor", node_options);
+    sub_ = monitor_->create_subscription<diagnostic_msgs::msg::DiagnosticArray>(
+      "/diagnostics", 1000, std::bind(&TestGPUMonitor::diagCallback, monitor_.get(), _1));
   }
 
   void TearDown(void)
   {
     // Remove test file if exists
     if (fs::exists(TEST_FILE)) {fs::remove(TEST_FILE);}
+    rclcpp::shutdown();
   }
 
   bool findValue(const DiagStatus status, const std::string & key, std::string & value)  // NOLINT
@@ -115,8 +118,8 @@ TEST_F(GPUMonitorTestSuite, tempWarnTest)
     monitor_->update();
 
     // Give time to publish
-    ros::WallDuration(0.5).sleep();
-    ros::spinOnce();
+    rclcpp::WallRate(2).sleep();
+    rclcpp::spin_some(monitor_->get_node_base_interface());
 
     // Verify
     DiagStatus status;
@@ -137,8 +140,8 @@ TEST_F(GPUMonitorTestSuite, tempWarnTest)
     monitor_->update();
 
     // Give time to publish
-    ros::WallDuration(0.5).sleep();
-    ros::spinOnce();
+    rclcpp::WallRate(2).sleep();
+    rclcpp::spin_some(monitor_->get_node_base_interface());
 
     // Verify
     DiagStatus status;
@@ -156,8 +159,8 @@ TEST_F(GPUMonitorTestSuite, tempWarnTest)
     monitor_->update();
 
     // Give time to publish
-    ros::WallDuration(0.5).sleep();
-    ros::spinOnce();
+    rclcpp::WallRate(2).sleep();
+    rclcpp::spin_some(monitor_->get_node_base_interface());
 
     // Verify
     DiagStatus status;
@@ -174,8 +177,8 @@ TEST_F(GPUMonitorTestSuite, tempErrorTest)
     monitor_->update();
 
     // Give time to publish
-    ros::WallDuration(0.5).sleep();
-    ros::spinOnce();
+    rclcpp::WallRate(2).sleep();
+    rclcpp::spin_some(monitor_->get_node_base_interface());
 
     // Verify
     DiagStatus status;
@@ -196,8 +199,8 @@ TEST_F(GPUMonitorTestSuite, tempErrorTest)
     monitor_->update();
 
     // Give time to publish
-    ros::WallDuration(0.5).sleep();
-    ros::spinOnce();
+    rclcpp::WallRate(2).sleep();
+    rclcpp::spin_some(monitor_->get_node_base_interface());
 
     // Verify
     DiagStatus status;
@@ -215,8 +218,8 @@ TEST_F(GPUMonitorTestSuite, tempErrorTest)
     monitor_->update();
 
     // Give time to publish
-    ros::WallDuration(0.5).sleep();
-    ros::spinOnce();
+    rclcpp::WallRate(2).sleep();
+    rclcpp::spin_some(monitor_->get_node_base_interface());
 
     // Verify
     DiagStatus status;
@@ -234,8 +237,8 @@ TEST_F(GPUMonitorTestSuite, tempTemperatureFilesNotFoundTest)
   monitor_->update();
 
   // Give time to publish
-  ros::WallDuration(0.5).sleep();
-  ros::spinOnce();
+  rclcpp::WallRate(2).sleep();
+  rclcpp::spin_some(monitor_->get_node_base_interface());
 
   // Verify
   DiagStatus status;
@@ -253,8 +256,8 @@ TEST_F(GPUMonitorTestSuite, tempFileOpenErrorTest)
   monitor_->update();
 
   // Give time to publish
-  ros::WallDuration(0.5).sleep();
-  ros::spinOnce();
+  rclcpp::WallRate(2).sleep();
+  rclcpp::spin_some(monitor_->get_node_base_interface());
 
   // Verify
   DiagStatus status;
@@ -274,8 +277,8 @@ TEST_F(GPUMonitorTestSuite, usageWarnTest)
     monitor_->update();
 
     // Give time to publish
-    ros::WallDuration(0.5).sleep();
-    ros::spinOnce();
+    rclcpp::WallRate(2).sleep();
+    rclcpp::spin_some(monitor_->get_node_base_interface());
 
     // Verify
     DiagStatus status;
@@ -296,8 +299,8 @@ TEST_F(GPUMonitorTestSuite, usageWarnTest)
     monitor_->update();
 
     // Give time to publish
-    ros::WallDuration(0.5).sleep();
-    ros::spinOnce();
+    rclcpp::WallRate(2).sleep();
+    rclcpp::spin_some(monitor_->get_node_base_interface());
 
     // Verify
     DiagStatus status;
@@ -315,8 +318,8 @@ TEST_F(GPUMonitorTestSuite, usageWarnTest)
     monitor_->update();
 
     // Give time to publish
-    ros::WallDuration(0.5).sleep();
-    ros::spinOnce();
+    rclcpp::WallRate(2).sleep();
+    rclcpp::spin_some(monitor_->get_node_base_interface());
 
     // Verify
     DiagStatus status;
@@ -333,8 +336,8 @@ TEST_F(GPUMonitorTestSuite, usageErrorTest)
     monitor_->update();
 
     // Give time to publish
-    ros::WallDuration(0.5).sleep();
-    ros::spinOnce();
+    rclcpp::WallRate(2).sleep();
+    rclcpp::spin_some(monitor_->get_node_base_interface());
 
     // Verify
     DiagStatus status;
@@ -355,8 +358,8 @@ TEST_F(GPUMonitorTestSuite, usageErrorTest)
     monitor_->update();
 
     // Give time to publish
-    ros::WallDuration(0.5).sleep();
-    ros::spinOnce();
+    rclcpp::WallRate(2).sleep();
+    rclcpp::spin_some(monitor_->get_node_base_interface());
 
     // Verify
     DiagStatus status;
@@ -374,8 +377,8 @@ TEST_F(GPUMonitorTestSuite, usageErrorTest)
     monitor_->update();
 
     // Give time to publish
-    ros::WallDuration(0.5).sleep();
-    ros::spinOnce();
+    rclcpp::WallRate(2).sleep();
+    rclcpp::spin_some(monitor_->get_node_base_interface());
 
     // Verify
     DiagStatus status;
@@ -393,8 +396,8 @@ TEST_F(GPUMonitorTestSuite, usageTemperatureFilesNotFoundTest)
   monitor_->update();
 
   // Give time to publish
-  ros::WallDuration(0.5).sleep();
-  ros::spinOnce();
+  rclcpp::WallRate(2).sleep();
+  rclcpp::spin_some(monitor_->get_node_base_interface());
 
   // Verify
   DiagStatus status;
@@ -412,8 +415,8 @@ TEST_F(GPUMonitorTestSuite, usageFileOpenErrorTest)
   monitor_->update();
 
   // Give time to publish
-  ros::WallDuration(0.5).sleep();
-  ros::spinOnce();
+  rclcpp::WallRate(2).sleep();
+  rclcpp::spin_some(monitor_->get_node_base_interface());
 
   // Verify
   DiagStatus status;
@@ -431,8 +434,8 @@ TEST_F(GPUMonitorTestSuite, freqTest)
   monitor_->update();
 
   // Give time to publish
-  ros::WallDuration(0.5).sleep();
-  ros::spinOnce();
+  rclcpp::WallRate(2).sleep();
+  rclcpp::spin_some(monitor_->get_node_base_interface());
 
   // Verify
   DiagStatus status;
@@ -449,8 +452,8 @@ TEST_F(GPUMonitorTestSuite, freqFrequencyFilesNotFoundTest)
   monitor_->update();
 
   // Give time to publish
-  ros::WallDuration(0.5).sleep();
-  ros::spinOnce();
+  rclcpp::WallRate(2).sleep();
+  rclcpp::spin_some(monitor_->get_node_base_interface());
 
   // Verify
   DiagStatus status;
@@ -466,8 +469,8 @@ class DummyGPUMonitor : public GPUMonitorBase
   friend class GPUMonitorTestSuite;
 
 public:
-  DummyGPUMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh)
-  : GPUMonitorBase(nh, pnh)
+  DummyGPUMonitor(const std::string & node_name, const rclcpp::NodeOptions & options)
+  : GPUMonitorBase(node_name, options)
   {
   }
   void update(void) {updater_.force_update();}
@@ -475,7 +478,10 @@ public:
 
 TEST_F(GPUMonitorTestSuite, dummyGPUMonitorTest)
 {
-  std::unique_ptr<DummyGPUMonitor> monitor = std::make_unique<DummyGPUMonitor>(nh_, pnh_);
+  rclcpp::NodeOptions options;
+  std::unique_ptr<DummyGPUMonitor> monitor = std::make_unique<DummyGPUMonitor>(
+    "dummy_gpu_monitor",
+    options);
   // Publish topic
   monitor->update();
 }
@@ -483,7 +489,6 @@ TEST_F(GPUMonitorTestSuite, dummyGPUMonitorTest)
 int main(int argc, char ** argv)
 {
   testing::InitGoogleTest(&argc, argv);
-  ros::init(argc, argv, "GPUMonitorTestNode");
 
   return RUN_ALL_TESTS();
 }

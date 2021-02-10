@@ -17,6 +17,8 @@
  * @brief NTP monitor node class
  */
 
+#include <memory>
+
 #include "rclcpp/rclcpp.hpp"
 #include "system_monitor/ntp_monitor/ntp_monitor.hpp"
 #include "system_monitor/utils.hpp"

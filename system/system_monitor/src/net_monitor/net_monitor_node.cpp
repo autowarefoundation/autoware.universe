@@ -17,6 +17,8 @@
  * @brief Net monitor node class
  */
 
+#include <memory>
+
 #include "rclcpp/rclcpp.hpp"
 #include "system_monitor/net_monitor/net_monitor.hpp"
 #include "system_monitor/utils.hpp"

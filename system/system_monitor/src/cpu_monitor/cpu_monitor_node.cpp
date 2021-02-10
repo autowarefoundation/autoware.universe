@@ -17,6 +17,8 @@
  * @brief CPU monitor node class
  */
 
+#include <memory>
+
 #include "rclcpp/rclcpp.hpp"
 
 #if defined _CPU_INTEL_

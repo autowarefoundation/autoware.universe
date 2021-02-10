@@ -12,14 +12,16 @@
 
   <depend>diagnostic_msgs</depend>
   <depend>rclcpp</depend>
+  <depend>fmt</depend>
   <depend>std_msgs</depend>
   <depend>libnl-3-dev</depend>
 
   <exec_depend>sysstat</exec_depend>
   <exec_depend>ntpdate</exec_depend>
-  
+
   <test_depend>ament_lint_auto</test_depend>
-  <test_depend>ament_cmake_cppcheck</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+  <test_depend>ament_cmake_gtest</test_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

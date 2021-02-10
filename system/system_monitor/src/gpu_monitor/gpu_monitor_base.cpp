@@ -17,8 +17,11 @@
  * @brief GPU monitor class
  */
 
+#include <unistd.h>
+
+#include <string>
+
 #include "system_monitor/gpu_monitor/gpu_monitor_base.hpp"
-#include "unistd.h"
 
 GPUMonitorBase::GPUMonitorBase(const std::string & node_name, const rclcpp::NodeOptions & options)
 : Node(node_name, options),

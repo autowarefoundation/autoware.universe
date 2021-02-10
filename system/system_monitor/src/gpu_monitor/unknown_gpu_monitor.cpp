@@ -17,6 +17,8 @@
  * @brief Unknown GPU monitor class
  */
 
+#include <string>
+
 #include "system_monitor/gpu_monitor/unknown_gpu_monitor.hpp"
 
 GPUMonitor::GPUMonitor(const std::string & node_name, const rclcpp::NodeOptions & options)

@@ -21,7 +21,6 @@
 #include "net/if.h"
 #include "netlink/genl/ctrl.h"
 #include "netlink/genl/genl.h"
-#include "netlink/socket.h"
 #include "system_monitor/net_monitor/nl80211.hpp"
 
 NL80211::NL80211()
@@ -34,12 +33,12 @@ static struct nla_policy rate_policy[NL80211_RATE_INFO_MAX + 1];
 static int callback(struct nl_msg * msg, void * arg)
 {
   int ret;
-  float * rate = reinterpret_cast<float *>(arg);
+  auto * rate = reinterpret_cast<float *>(arg);
 
   // Return actual netlink message.
   struct nlmsghdr * nlh = nlmsg_hdr(msg);
   // Return pointer to message payload.
-  struct genlmsghdr * ghdr = static_cast<genlmsghdr *>(nlmsg_data(nlh));
+  auto * ghdr = static_cast<genlmsghdr *>(nlmsg_data(nlh));
 
   struct nlattr * tb[NL80211_ATTR_MAX + 1];
   struct nlattr * sinfo[NL80211_STA_INFO_MAX + 1];
@@ -77,22 +76,19 @@ static int callback(struct nl_msg * msg, void * arg)
   return NL_SKIP;
 }
 
-void NL80211::init(void)
+void NL80211::init()
 {
-  int ret = 0;
-
   // Allocate new netlink socket.
   socket_ = nl_socket_alloc();
   // Returns newly allocated netlink socket or NULL.
   if (!socket_) {return;}
 
   // Connect a generic netlink socket.
-  if (genl_connect(socket_)) {
-    // Returns 0 on success or a negative error code.
-    if (ret < 0) {
-      shutdown();
-      return;
-    }
+  // Returns 0 on success or a negative error code.
+  int ret = genl_connect(socket_);
+  if (ret < 0) {
+    shutdown();
+    return;
   }
 
   // Resolve generic netlink family name to its identifier.
@@ -135,7 +131,8 @@ float NL80211::getBitrate(const char * ifa_name)
 
   // Get index of the network interface
   index = if_nametoindex(ifa_name);
-  // Returns index number of the network interface on success or 0 on error and errno is set appropriately
+  // Returns index number of the network interface on success
+  // or 0 on error and errno is set appropriately
   if (!index) {return bitrate_;}
 
   // Allocate a new netlink message with the default maximum payload size.
@@ -179,7 +176,7 @@ float NL80211::getBitrate(const char * ifa_name)
   return bitrate_;
 }
 
-void NL80211::shutdown(void)
+void NL80211::shutdown()
 {
   if (cb_) {nl_cb_put(cb_);}
   nl_close(socket_);

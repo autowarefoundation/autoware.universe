@@ -17,6 +17,8 @@
  * @brief Process monitor node class
  */
 
+#include <memory>
+
 #include "rclcpp/rclcpp.hpp"
 #include "system_monitor/process_monitor/process_monitor.hpp"
 #include "system_monitor/utils.hpp"

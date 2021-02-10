@@ -14,7 +14,7 @@ This package provides the following nodes for monitoring system:
 - Process Monitor
 - GPU Monitor
 
-### Suppoted architecture
+### Supported architecture
 
 - x86_64
 - arm64v8/aarch64
@@ -170,7 +170,7 @@ install/system_monitor/lib/system_monitor/hdd_reader
 
 Currently GPU monitor for intel platform only supports NVIDIA GPU whose information can be accessed by NVML API.
 
-Also you need to instal CUDA libraries.
+Also you need to install CUDA libraries.
 For installation instructions for CUDA 10.0, see [NVIDIA CUDA Installation Guide for Linux](https://docs.nvidia.com/cuda/archive/10.0/cuda-installation-guide-linux/index.html).
 
 # UML diagrams

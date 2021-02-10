@@ -17,9 +17,11 @@
  * @brief TEGRA PU monitor class
  */
 
+#include <string>
+#include <vector>
+
 #include "system_monitor/cpu_monitor/tegra_cpu_monitor.hpp"
 #include "system_monitor/system_monitor_utility.hpp"
-#include <vector>
 
 CPUMonitor::CPUMonitor(const std::string & node_name, const rclcpp::NodeOptions & options)
 : CPUMonitorBase(node_name, options)

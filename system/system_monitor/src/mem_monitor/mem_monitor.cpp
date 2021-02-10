@@ -17,11 +17,14 @@
  * @brief Memory monitor class
  */
 
-#include "system_monitor/mem_monitor/mem_monitor.hpp"
-#include "boost/format.hpp"
-#include "boost/process.hpp"
 #include <string>
 #include <vector>
+
+#include "boost/process.hpp"
+
+#include "fmt/format.h"
+
+#include "system_monitor/mem_monitor/mem_monitor.hpp"
 
 namespace bp = boost::process;
 
@@ -82,12 +85,12 @@ void MemMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
         level = DiagStatus::WARN;
       }
 
-      stat.addf((boost::format("%1% usage") % list[0]).str(), "%.2f%%", usage * 1e+2);
+      stat.addf(fmt::format("{} usage", list[0]), "%.2f%%", usage * 1e+2);
     }
 
-    stat.add((boost::format("%1% total") % list[0]).str(), toHumanReadable(list[1]));
-    stat.add((boost::format("%1% used") % list[0]).str(), toHumanReadable(list[2]));
-    stat.add((boost::format("%1% free") % list[0]).str(), toHumanReadable(list[3]));
+    stat.add(fmt::format("{} total", list[0]), toHumanReadable(list[1]));
+    stat.add(fmt::format("{} used", list[0]), toHumanReadable(list[2]));
+    stat.add(fmt::format("{} free", list[0]), toHumanReadable(list[3]));
 
     ++index;
   }
@@ -105,6 +108,6 @@ std::string MemMonitor::toHumanReadable(const std::string & str)
     size /= 1024;
     ++count;
   }
-  const char * format = (size > 0 && size < 10) ? "%.1f%s" : "%.0f%s";
-  return (boost::format(format) % size % units[count]).str();
+  const char * format = (size > 0 && size < 10) ? "{:.1f}{}" : "{:.0f}{}";
+  return fmt::format(format, size, units[count]);
 }

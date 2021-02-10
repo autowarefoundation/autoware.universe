@@ -1,4 +1,4 @@
-// Copyright 2020 Autoware Foundation
+// Copyright 2020 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,21 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <memory>
+#include <string>
+
 #include "gtest/gtest.h"
-#include "ros/ros.h"
+#include "rclcpp/rclcpp.hpp"
 #include "system_monitor/cpu_monitor/unknown_cpu_monitor.hpp"
 
-using DiagStatus = diagnostic_msgs::DiagnosticStatus;
+using DiagStatus = diagnostic_msgs::msg::DiagnosticStatus;
 
 class TestCPUMonitor : public CPUMonitor
 {
   friend class CPUMonitorTestSuite;
 
 public:
-  TestCPUMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh)
-  : CPUMonitor(nh, pnh) {}
+  TestCPUMonitor(const std::string & node_name, const rclcpp::NodeOptions & options)
+  : CPUMonitor(node_name, options) {}
 
-  void diagCallback(const diagnostic_msgs::DiagnosticArray::ConstPtr & diag_msg)
+  void diagCallback(const diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr diag_msg)
   {
     array_ = *diag_msg;
   }
@@ -34,29 +37,35 @@ public:
   void update(void) {updater_.force_update();}
 
 private:
-  diagnostic_msgs::DiagnosticArray array_;
+  diagnostic_msgs::msg::DiagnosticArray array_;
 };
 
 class CPUMonitorTestSuite : public ::testing::Test
 {
 public:
-  CPUMonitorTestSuite()
-  : nh_(""), pnh_("~") {}
+  CPUMonitorTestSuite() {}
 
 protected:
-  ros::NodeHandle nh_, pnh_;
   std::unique_ptr<TestCPUMonitor> monitor_;
-  ros::Subscriber sub_;
+  rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr
+    sub_;
 
   void SetUp(void)
   {
-    monitor_ = std::make_unique<TestCPUMonitor>(nh_, pnh_);
-    sub_ = nh_.subscribe("/diagnostics", 1000, &TestCPUMonitor::diagCallback, monitor_.get());
+    using std::placeholders::_1;
+    rclcpp::init(0, nullptr);
+    rclcpp::NodeOptions node_options;
+    monitor_ = std::make_unique<TestCPUMonitor>("test_cpu_monitor", node_options);
+    sub_ = monitor_->create_subscription<diagnostic_msgs::msg::DiagnosticArray>(
+      "/diagnostics", 1000, std::bind(&TestCPUMonitor::diagCallback, monitor_.get(), _1));
     monitor_->getTempNames();
     monitor_->getFreqNames();
   }
 
-  void TearDown(void) {}
+  void TearDown(void)
+  {
+    rclcpp::shutdown();
+  }
 };
 
 TEST_F(CPUMonitorTestSuite, test) {
@@ -66,7 +75,6 @@ TEST_F(CPUMonitorTestSuite, test) {
 int main(int argc, char ** argv)
 {
   testing::InitGoogleTest(&argc, argv);
-  ros::init(argc, argv, "CPUMonitorTestNode");
 
   return RUN_ALL_TESTS();
 }

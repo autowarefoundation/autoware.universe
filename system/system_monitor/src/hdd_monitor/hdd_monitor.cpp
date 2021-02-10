@@ -17,15 +17,18 @@
  * @brief HDD monitor class
  */
 
-#include "hdd_reader/hdd_reader.hpp"
-#include "system_monitor/hdd_monitor/hdd_monitor.hpp"
 #include <algorithm>
-#include "boost/algorithm/string.hpp"
-#include "boost/archive/text_iarchive.hpp"
-#include "boost/format.hpp"
-#include "boost/process.hpp"
 #include <string>
 #include <vector>
+
+#include "boost/algorithm/string.hpp"
+#include "boost/archive/text_iarchive.hpp"
+#include "boost/process.hpp"
+
+#include "fmt/format.h"
+
+#include "hdd_reader/hdd_reader.hpp"
+#include "system_monitor/hdd_monitor/hdd_monitor.hpp"
 
 namespace bp = boost::process;
 
@@ -138,18 +141,17 @@ void HDDMonitor::checkTemp(diagnostic_updater::DiagnosticStatusWrapper & stat)
     // Retrieve HDD information
     auto itrh = list.find(itr->first);
     if (itrh == list.end()) {
-      stat.add((boost::format("HDD %1%: status") % index).str(), "hdd_reader error");
-      stat.add((boost::format("HDD %1%: name") % index).str(), itr->first.c_str());
-      stat.add((boost::format("HDD %1%: hdd_reader") % index).str(), strerror(ENOENT));
+      stat.add(fmt::format("HDD {}: status", index), "hdd_reader error");
+      stat.add(fmt::format("HDD {}: name", index), itr->first.c_str());
+      stat.add(fmt::format("HDD {}: hdd_reader", index), strerror(ENOENT));
       error_str = "hdd_reader error";
       continue;
     }
 
     if (itrh->second.error_code_ != 0) {
-      stat.add((boost::format("HDD %1%: status") % index).str(), "hdd_reader error");
-      stat.add((boost::format("HDD %1%: name") % index).str(), itr->first.c_str());
-      stat.add(
-        (boost::format("HDD %1%: hdd_reader") % index).str(), strerror(itrh->second.error_code_));
+      stat.add(fmt::format("HDD {}: status", index), "hdd_reader error");
+      stat.add(fmt::format("HDD {}: name", index), itr->first.c_str());
+      stat.add(fmt::format("HDD {}: hdd_reader", index), strerror(itrh->second.error_code_));
       error_str = "hdd_reader error";
       continue;
     }
@@ -163,11 +165,11 @@ void HDDMonitor::checkTemp(diagnostic_updater::DiagnosticStatusWrapper & stat)
       level = DiagStatus::WARN;
     }
 
-    stat.add((boost::format("HDD %1%: status") % index).str(), temp_dict_.at(level));
-    stat.add((boost::format("HDD %1%: name") % index).str(), itr->first.c_str());
-    stat.add((boost::format("HDD %1%: model") % index).str(), itrh->second.model_.c_str());
-    stat.add((boost::format("HDD %1%: serial") % index).str(), itrh->second.serial_.c_str());
-    stat.addf((boost::format("HDD %1%: temperature") % index).str(), "%.1f DegC", temp);
+    stat.add(fmt::format("HDD {}: status", index), temp_dict_.at(level));
+    stat.add(fmt::format("HDD {}: name", index), itr->first.c_str());
+    stat.add(fmt::format("HDD {}: model", index), itrh->second.model_.c_str());
+    stat.add(fmt::format("HDD {}: serial", index), itrh->second.serial_.c_str());
+    stat.addf(fmt::format("HDD {}: temperature", index), "%.1f DegC", temp);
 
     whole_level = std::max(whole_level, level);
   }
@@ -220,13 +222,13 @@ void HDDMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
       level = DiagStatus::WARN;
     }
 
-    stat.add((boost::format("HDD %1%: status") % (index - 1)).str(), usage_dict_.at(level));
-    stat.add((boost::format("HDD %1%: filesystem") % (index - 1)).str(), list[0].c_str());
-    stat.add((boost::format("HDD %1%: size") % (index - 1)).str(), list[1].c_str());
-    stat.add((boost::format("HDD %1%: used") % (index - 1)).str(), list[2].c_str());
-    stat.add((boost::format("HDD %1%: avail") % (index - 1)).str(), list[3].c_str());
-    stat.add((boost::format("HDD %1%: use") % (index - 1)).str(), list[4].c_str());
-    stat.add((boost::format("HDD %1%: mounted on") % (index - 1)).str(), list[5].c_str());
+    stat.add(fmt::format("HDD {}: status", index - 1), usage_dict_.at(level));
+    stat.add(fmt::format("HDD {}: filesystem", index - 1), list[0].c_str());
+    stat.add(fmt::format("HDD {}: size", index - 1), list[1].c_str());
+    stat.add(fmt::format("HDD {}: used", index - 1), list[2].c_str());
+    stat.add(fmt::format("HDD {}: avail", index - 1), list[3].c_str());
+    stat.add(fmt::format("HDD {}: use", index - 1), list[4].c_str());
+    stat.add(fmt::format("HDD {}: mounted on", index - 1), list[5].c_str());
 
     whole_level = std::max(whole_level, level);
     ++index;
@@ -235,7 +237,7 @@ void HDDMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
   stat.summary(whole_level, usage_dict_.at(whole_level));
 }
 
-void HDDMonitor::getTempParams(void)
+void HDDMonitor::getTempParams()
 {
   const auto num_disks = this->declare_parameter("num_disks", 0);
   for (auto i = 0; i < num_disks; ++i) {

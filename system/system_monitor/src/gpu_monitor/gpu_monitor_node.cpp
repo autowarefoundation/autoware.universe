@@ -17,8 +17,10 @@
  * @brief GPU monitor node class
  */
 
-#include "rclcpp/rclcpp.hpp"
+#include <memory>
 #include <string>
+
+#include "rclcpp/rclcpp.hpp"
 
 #if defined _GPU_NVML_
 #include "system_monitor/gpu_monitor/nvml_gpu_monitor.hpp"
@@ -35,7 +37,8 @@ int main(int argc, char ** argv)
   rclcpp::NodeOptions options;
   std::shared_ptr<GPUMonitorBase> monitor = std::make_shared<GPUMonitor>("gpu_monitor", options);
   spin_and_update(monitor, std::chrono::seconds(1U));
-  monitor->shut_down();  // Shut down before `rclcpp::shutdown()` so that any possible logging is not hindered.
+  monitor->shut_down();  // Shut down before `rclcpp::shutdown()`
+                         // so that any possible logging is not hindered.
   rclcpp::shutdown();
   return 0;
 }

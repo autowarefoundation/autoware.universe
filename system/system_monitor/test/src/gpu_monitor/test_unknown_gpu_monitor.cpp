@@ -12,21 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <memory>
+#include <string>
+
 #include "gtest/gtest.h"
-#include "ros/ros.h"
+#include "rclcpp/rclcpp.hpp"
 #include "system_monitor/gpu_monitor/unknown_gpu_monitor.hpp"
 
-using DiagStatus = diagnostic_msgs::DiagnosticStatus;
+using DiagStatus = diagnostic_msgs::msg::DiagnosticStatus;
 
 class TestGPUMonitor : public GPUMonitor
 {
   friend class GPUMonitorTestSuite;
 
 public:
-  TestGPUMonitor(const ros::NodeHandle & nh, const ros::NodeHandle & pnh)
-  : GPUMonitor(nh, pnh) {}
+  TestGPUMonitor(const std::string & node_name, const rclcpp::NodeOptions & options)
+  : GPUMonitor(node_name, options) {}
 
-  void diagCallback(const diagnostic_msgs::DiagnosticArray::ConstPtr & diag_msg)
+  void diagCallback(const diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr diag_msg)
   {
     array_ = *diag_msg;
   }
@@ -34,27 +37,33 @@ public:
   void update(void) {updater_.force_update();}
 
 private:
-  diagnostic_msgs::DiagnosticArray array_;
+  diagnostic_msgs::msg::DiagnosticArray array_;
 };
 
 class GPUMonitorTestSuite : public ::testing::Test
 {
 public:
-  GPUMonitorTestSuite()
-  : nh_(""), pnh_("~") {}
+  GPUMonitorTestSuite() {}
 
 protected:
-  ros::NodeHandle nh_, pnh_;
   std::unique_ptr<TestGPUMonitor> monitor_;
-  ros::Subscriber sub_;
+  rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr
+    sub_;
 
   void SetUp(void)
   {
-    monitor_ = std::make_unique<TestGPUMonitor>(nh_, pnh_);
-    sub_ = nh_.subscribe("/diagnostics", 1000, &TestGPUMonitor::diagCallback, monitor_.get());
+    using std::placeholders::_1;
+    rclcpp::init(0, nullptr);
+    rclcpp::NodeOptions node_options;
+    monitor_ = std::make_unique<TestGPUMonitor>("test_gpu_monitor", node_options);
+    sub_ = monitor_->create_subscription<diagnostic_msgs::msg::DiagnosticArray>(
+      "/diagnostics", 1000, std::bind(&TestGPUMonitor::diagCallback, monitor_.get(), _1));
   }
 
-  void TearDown(void) {}
+  void TearDown(void)
+  {
+    rclcpp::shutdown();
+  }
 };
 
 TEST_F(GPUMonitorTestSuite, test) {
@@ -64,7 +73,6 @@ TEST_F(GPUMonitorTestSuite, test) {
 int main(int argc, char ** argv)
 {
   testing::InitGoogleTest(&argc, argv);
-  ros::init(argc, argv, "GPUMonitorTestNode");
 
   return RUN_ALL_TESTS();
 }

@@ -17,18 +17,23 @@
  * @brief Net monitor class
  */
 
-#include "ifaddrs.h"
+#include <ifaddrs.h>
+
+#include <algorithm>
+#include <string>
+#include <vector>
+
 #include "linux/ethtool.h"
 #include "linux/if_link.h"
 #include "linux/sockios.h"
 #include "net/if.h"
-#include "netdb.h"
 #include "sys/ioctl.h"
-#include "system_monitor/net_monitor/net_monitor.hpp"
-#include <algorithm>
-#include "boost/format.hpp"
+
 #include "boost/range/algorithm.hpp"
-#include <string>
+
+#include "fmt/format.h"
+
+#include "system_monitor/net_monitor/net_monitor.hpp"
 
 NetMonitor::NetMonitor(const std::string & node_name, const rclcpp::NodeOptions & options)
 : Node(node_name, options),
@@ -76,7 +81,7 @@ void NetMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
   int level = DiagStatus::OK;
   int whole_level = DiagStatus::OK;
   int index = 0;
-  std::string error_str = "";
+  std::string error_str;
   float rx_traffic;
   float tx_traffic;
   float rx_usage;
@@ -106,11 +111,18 @@ void NetMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
     fd = socket(AF_INET, SOCK_DGRAM, 0);
     strncpy(ifrm.ifr_name, ifa->ifa_name, IFNAMSIZ - 1);
     if (ioctl(fd, SIOCGIFMTU, &ifrm) < 0) {
-      stat.add((boost::format("Network %1%: status") % index).str(), "Error");
-      stat.add((boost::format("Network %1%: interface name") % index).str(), ifa->ifa_name);
+      if (errno == ENOTSUP) {
+        stat.add(fmt::format("Network {}: status", index), "Not Supported");
+      } else {
+        stat.add(fmt::format("Network {}: status", index), "Error");
+        error_str = "ioctl error";
+      }
+
+      stat.add(fmt::format("Network {}: interface name", index), ifa->ifa_name);
       stat.add("ioctl(SIOCGIFMTU)", strerror(errno));
-      error_str = "ioctl error";
+
       ++index;
+      close(fd);
       continue;
     }
 
@@ -123,11 +135,18 @@ void NetMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
       // possibly wireless connection, get bitrate(MBit/s)
       speed = nl80211_.getBitrate(ifa->ifa_name);
       if (speed <= 0) {
-        stat.add((boost::format("Network %1%: status") % index).str(), "Error");
-        stat.add((boost::format("Network %1%: interface name") % index).str(), ifa->ifa_name);
+        if (errno == ENOTSUP) {
+          stat.add(fmt::format("Network {}: status", index), "Not Supported");
+        } else {
+          stat.add(fmt::format("Network {}: status", index), "Error");
+          error_str = "ioctl error";
+        }
+
+        stat.add(fmt::format("Network {}: interface name", index), ifa->ifa_name);
         stat.add("ioctl(SIOCETHTOOL)", strerror(errno));
-        error_str = "ioctl error";
+
         ++index;
+        close(fd);
         continue;
       }
     } else {
@@ -136,7 +155,7 @@ void NetMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
 
     level = (ifa->ifa_flags & IFF_RUNNING) ? DiagStatus::OK : DiagStatus::ERROR;
 
-    struct rtnl_link_stats * stats = (struct rtnl_link_stats *)ifa->ifa_data;
+    auto * stats = (struct rtnl_link_stats *)ifa->ifa_data;
     if (bytes_.find(ifa->ifa_name) != bytes_.end()) {
       rx_traffic = toMbit(stats->rx_bytes - bytes_[ifa->ifa_name].rx_bytes) / duration.seconds();
       tx_traffic = toMbit(stats->tx_bytes - bytes_[ifa->ifa_name].tx_bytes) / duration.seconds();
@@ -147,19 +166,19 @@ void NetMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
       }
     }
 
-    stat.add((boost::format("Network %1%: status") % index).str(), usage_dict_.at(level));
-    stat.add((boost::format("Network %1%: interface name") % index).str(), ifa->ifa_name);
-    stat.addf((boost::format("Network %1%: rx_usage") % index).str(), "%.2f%%", rx_usage * 1e+2);
-    stat.addf((boost::format("Network %1%: tx_usage") % index).str(), "%.2f%%", tx_usage * 1e+2);
-    stat.addf((boost::format("Network %1%: rx_traffic") % index).str(), "%.2f MBit/s", rx_traffic);
-    stat.addf((boost::format("Network %1%: tx_traffic") % index).str(), "%.2f MBit/s", tx_traffic);
-    stat.addf((boost::format("Network %1%: capacity") % index).str(), "%.1f MBit/s", speed);
-    stat.add((boost::format("Network %1%: mtu") % index).str(), ifrm.ifr_mtu);
-    stat.add((boost::format("Network %1%: rx_bytes") % index).str(), stats->rx_bytes);
-    stat.add((boost::format("Network %1%: rx_errors") % index).str(), stats->rx_errors);
-    stat.add((boost::format("Network %1%: tx_bytes") % index).str(), stats->tx_bytes);
-    stat.add((boost::format("Network %1%: tx_errors") % index).str(), stats->tx_errors);
-    stat.add((boost::format("Network %1%: collisions") % index).str(), stats->collisions);
+    stat.add(fmt::format("Network {}: status", index), usage_dict_.at(level));
+    stat.add(fmt::format("Network {}: interface name", index), ifa->ifa_name);
+    stat.addf(fmt::format("Network {}: rx_usage", index), "%.2f%%", rx_usage * 1e+2);
+    stat.addf(fmt::format("Network {}: tx_usage", index), "%.2f%%", tx_usage * 1e+2);
+    stat.addf(fmt::format("Network {}: rx_traffic", index), "%.2f MBit/s", rx_traffic);
+    stat.addf(fmt::format("Network {}: tx_traffic", index), "%.2f MBit/s", tx_traffic);
+    stat.addf(fmt::format("Network {}: capacity", index), "%.1f MBit/s", speed);
+    stat.add(fmt::format("Network {}: mtu", index), ifrm.ifr_mtu);
+    stat.add(fmt::format("Network {}: rx_bytes", index), stats->rx_bytes);
+    stat.add(fmt::format("Network {}: rx_errors", index), stats->rx_errors);
+    stat.add(fmt::format("Network {}: tx_bytes", index), stats->tx_bytes);
+    stat.add(fmt::format("Network {}: tx_errors", index), stats->tx_errors);
+    stat.add(fmt::format("Network {}: collisions", index), stats->collisions);
 
     close(fd);
 

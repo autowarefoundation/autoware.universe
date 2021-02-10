@@ -17,13 +17,17 @@
  * @brief Tegra GPU monitor class
  */
 
-#include "system_monitor/gpu_monitor/tegra_gpu_monitor.hpp"
-#include "system_monitor/system_monitor_utility.hpp"
 #include <algorithm>
-#include "boost/filesystem.hpp"
-#include "boost/format.hpp"
+#include <regex>
 #include <string>
 #include <vector>
+
+#include "boost/filesystem.hpp"
+
+#include "fmt/format.h"
+
+#include "system_monitor/gpu_monitor/tegra_gpu_monitor.hpp"
+#include "system_monitor/system_monitor_utility.hpp"
 
 namespace fs = boost::filesystem;
 
@@ -143,7 +147,7 @@ void GPUMonitor::checkFrequency(diagnostic_updater::DiagnosticStatusWrapper & st
       std::string line;
       if (std::getline(ifs, line)) {
         stat.addf(
-          (boost::format("GPU %1%: clock") % itr->label_).str(), "%d MHz",
+          (std::format("GPU %1%: clock") % itr->label_), "%d MHz",
           std::stoi(line) / 1000000);
       }
     }
@@ -153,7 +157,7 @@ void GPUMonitor::checkFrequency(diagnostic_updater::DiagnosticStatusWrapper & st
   stat.summary(DiagStatus::OK, "OK");
 }
 
-void GPUMonitor::getTempNames(void)
+void GPUMonitor::getTempNames()
 {
   // Jetson TX1 TX2 Nano: thermal_zone1, Xavier: thermal_zone0
   std::vector<thermal_zone> therms;
@@ -164,7 +168,7 @@ void GPUMonitor::getTempNames(void)
   }
 }
 
-void GPUMonitor::getLoadNames(void)
+void GPUMonitor::getLoadNames()
 {
   const fs::path root("/sys/devices");
 
@@ -173,12 +177,11 @@ void GPUMonitor::getLoadNames(void)
   {
     if (!fs::is_directory(path)) {continue;}
 
-    boost::smatch match;
-    const boost::regex filter(".*gpu\\.(\\d+)");
-    const std::string str_path = path.generic_string();
+    std::cmatch match;
+    const char * str_path = path.generic_string().c_str();
 
     // /sys/devices/gpu.[0-9] ?
-    if (!boost::regex_match(str_path, match, filter)) {continue;}
+    if (!std::regex_match(str_path, match, std::regex(".*gpu\\.(\\d+)"))) {continue;}
 
     // /sys/devices/gpu.[0-9]/load
     const fs::path load_path = path / "load";
@@ -186,7 +189,7 @@ void GPUMonitor::getLoadNames(void)
   }
 }
 
-void GPUMonitor::getFreqNames(void)
+void GPUMonitor::getFreqNames()
 {
   const fs::path root("/sys/class/devfreq");
 

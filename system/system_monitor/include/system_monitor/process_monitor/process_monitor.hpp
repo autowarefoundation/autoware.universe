@@ -1,31 +1,32 @@
-#ifndef SYSTEM_MONITOR_PROCESS_MONITOR_PROCESS_MONITOR_H
-#define SYSTEM_MONITOR_PROCESS_MONITOR_PROCESS_MONITOR_H
-/*
- * Copyright 2020 Autoware Foundation. All rights reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2020 Tier IV, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 /**
  * @file process_monitor.h
  * @brief Process monitor class
  */
 
-#include "diagnostic_updater/diagnostic_updater.hpp"
-#include "system_monitor/process_monitor/diag_task.hpp"
-#include "boost/process.hpp"
+#ifndef SYSTEM_MONITOR__PROCESS_MONITOR__PROCESS_MONITOR_HPP_
+#define SYSTEM_MONITOR__PROCESS_MONITOR__PROCESS_MONITOR_HPP_
+
+#include <memory>
 #include <string>
 #include <vector>
+
+#include "boost/process.hpp"
+#include "diagnostic_updater/diagnostic_updater.hpp"
+#include "system_monitor/process_monitor/diag_task.hpp"
 
 namespace bp = boost::process;
 
@@ -119,4 +120,4 @@ protected:
   memory_tasks_;    //!< @brief list of diagnostics tasks for high memory procs
 };
 
-#endif  // SYSTEM_MONITOR_PROCESS_MONITOR_PROCESS_MONITOR_H
+#endif  // SYSTEM_MONITOR__PROCESS_MONITOR__PROCESS_MONITOR_HPP_

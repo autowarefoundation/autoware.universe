@@ -1,28 +1,28 @@
-#ifndef SYSTEM_MONITOR_PROCESS_MONITOR_DIAG_TASK_H
-#define SYSTEM_MONITOR_PROCESS_MONITOR_DIAG_TASK_H
-/*
- * Copyright 2020 Autoware Foundation. All rights reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2020 Tier IV, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 /**
  * @file diag_task.h
  * @brief diagnostics task for high load/memory procs
  */
 
-#include "diagnostic_updater/diagnostic_updater.hpp"
+#ifndef SYSTEM_MONITOR__PROCESS_MONITOR__DIAG_TASK_HPP_
+#define SYSTEM_MONITOR__PROCESS_MONITOR__DIAG_TASK_HPP_
+
 #include <string>
+
+#include "diagnostic_updater/diagnostic_updater.hpp"
 
 class DiagTask : public diagnostic_updater::DiagnosticTask
 {
@@ -64,7 +64,7 @@ public:
   }
 
   /**
-   * @brief set dagnostics status
+   * @brief set diagnostics status
    * @param [in] status Diagnostics error level
    * @param [in] message Diagnostics status message
    */
@@ -177,4 +177,4 @@ private:
   std::string command_;  //!< @brief Command name/line
 };
 
-#endif  // SYSTEM_MONITOR_PROCESS_MONITOR_DIAG_TASK_H
+#endif  // SYSTEM_MONITOR__PROCESS_MONITOR__DIAG_TASK_HPP_
