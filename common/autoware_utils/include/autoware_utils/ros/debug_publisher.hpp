@@ -21,7 +21,7 @@
 
 #include "rclcpp/publisher_base.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "rclcpp/serialization.hpp"
+#include "rosidl_runtime_cpp/traits.hpp"
 
 namespace debug_publisher
 {
@@ -44,7 +44,7 @@ public:
 
   template<
     class T, std::enable_if_t<
-      !rclcpp::serialization_traits::is_serialized_message_class<T>::value,
+      rosidl_generator_traits::is_message<T>::value,
       std::nullptr_t> = nullptr>
   void publish(const std::string & name, const T & data, const rclcpp::QoS & qos = rclcpp::QoS(1))
   {
@@ -58,7 +58,7 @@ public:
   template<
     class T_msg, class T,
     std::enable_if_t<
-      !rclcpp::serialization_traits::is_serialized_message_class<T>::value, std::nullptr_t> =
+      !rosidl_generator_traits::is_message<T>::value, std::nullptr_t> =
     nullptr>
   void publish(const std::string & name, const T & data, const rclcpp::QoS & qos = rclcpp::QoS(1))
   {
