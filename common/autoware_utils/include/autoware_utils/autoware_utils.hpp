@@ -22,6 +22,7 @@
 #include "autoware_utils/math/normalization.hpp"
 #include "autoware_utils/math/unit_conversion.hpp"
 #include "autoware_utils/ros/debug_publisher.hpp"
+#include "autoware_utils/ros/debug_traits.hpp"
 #include "autoware_utils/ros/marker_helper.hpp"
 #include "autoware_utils/ros/processing_time_publisher.hpp"
 #include "autoware_utils/ros/self_pose_listener.hpp"
