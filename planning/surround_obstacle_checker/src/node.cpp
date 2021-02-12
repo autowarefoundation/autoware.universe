@@ -75,19 +75,22 @@ void SurroundObstacleCheckerNode::pathCallback(
 {
   if (use_pointcloud_ && !pointcloud_ptr_) {
     RCLCPP_WARN_THROTTLE(
-      this->get_logger(), *this->get_clock(), 1.0, "waiting for pointcloud info...");
+      this->get_logger(), *this->get_clock(), 1000 /* ms */,
+      "waiting for pointcloud info...");
     return;
   }
 
   if (use_dynamic_object_ && !object_ptr_) {
     RCLCPP_WARN_THROTTLE(
-      this->get_logger(), *this->get_clock(), 1.0, "waiting for dynamic object info...");
+      this->get_logger(), *this->get_clock(), 1000 /* ms */,
+      "waiting for dynamic object info...");
     return;
   }
 
   if (!current_velocity_ptr_) {
     RCLCPP_WARN_THROTTLE(
-      this->get_logger(), *this->get_clock(), 1.0, "waiting for current velocity...");
+      this->get_logger(), *this->get_clock(), 1000 /* ms */,
+      "waiting for current velocity...");
     return;
   }
 
@@ -123,7 +126,7 @@ void SurroundObstacleCheckerNode::pathCallback(
 
     // do not start when there is a obstacle near the ego vehicle.
     RCLCPP_WARN_THROTTLE(
-      get_logger(), *this->get_clock(), 0.5,
+      get_logger(), *this->get_clock(), 500 /* ms */,
       "do not start because there is obstacle near the ego vehicle.");
     insertStopVelocity(closest_idx, &output_msg);
 
@@ -184,7 +187,8 @@ bool SurroundObstacleCheckerNode::getPose(
     tf2::toMsg(transform, pose);
   } catch (tf2::TransformException & ex) {
     RCLCPP_WARN_STREAM_THROTTLE(
-      get_logger(), *this->get_clock(), 0.5, "cannot get tf from " << source << " to " << target);
+      get_logger(), *this->get_clock(), 500 /* ms */,
+      "cannot get tf from " << source << " to " << target);
     return false;
   }
   return true;
@@ -202,7 +206,8 @@ bool SurroundObstacleCheckerNode::convertPose(
     tf2::fromMsg(ros_src2tgt.transform, src2tgt);
   } catch (tf2::TransformException & ex) {
     RCLCPP_WARN_STREAM_THROTTLE(
-      get_logger(), *this->get_clock(), 0.5, "cannot get tf from " << source << " to " << target);
+      get_logger(), *this->get_clock(), 500 /* ms */,
+      "cannot get tf from " << source << " to " << target);
     return false;
   }
 
@@ -245,7 +250,7 @@ void SurroundObstacleCheckerNode::getNearestObstacle(
 void SurroundObstacleCheckerNode::getNearestObstacleByPointCloud(
   double * min_dist_to_obj, geometry_msgs::msg::Point * nearest_obj_point)
 {
-  // waint to transform pointcloud
+  // wait to transform pointcloud
   geometry_msgs::msg::TransformStamped transform_stamped;
   try {
     transform_stamped = tf_buffer_.lookupTransform(
@@ -253,7 +258,7 @@ void SurroundObstacleCheckerNode::getNearestObstacleByPointCloud(
       tf2::durationFromSec(0.5));
   } catch (tf2::TransformException & ex) {
     RCLCPP_WARN_STREAM_THROTTLE(
-      get_logger(), *this->get_clock(), 0.5,
+      get_logger(), *this->get_clock(), 500 /* ms */,
       "failed to get base_link to " << pointcloud_ptr_->header.frame_id << " transform.");
     return;
   }
