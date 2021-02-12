@@ -22,7 +22,7 @@
 #include "goal_distance_calculator/goal_distance_calculator_node.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp/timer.hpp"
-#include "std_msgs/msg/float64.hpp"
+#include "autoware_debug_msgs/msg/float64_stamped.hpp"
 
 namespace goal_distance_calculator
 {
@@ -113,11 +113,14 @@ void GoalDistanceCalculatorNode::onTimer()
     using autoware_utils::rad2deg;
     const auto & deviation = output_.goal_deviation;
 
-    debug_publisher_.publish<std_msgs::msg::Float64>("deviation/lateral", deviation.lateral);
-    debug_publisher_.publish<std_msgs::msg::Float64>(
+    debug_publisher_.publish<autoware_debug_msgs::msg::Float64Stamped>(
+      "deviation/lateral", deviation.lateral);
+    debug_publisher_.publish<autoware_debug_msgs::msg::Float64Stamped>(
       "deviation/longitudinal", deviation.longitudinal);
-    debug_publisher_.publish<std_msgs::msg::Float64>("deviation/yaw", deviation.yaw);
-    debug_publisher_.publish<std_msgs::msg::Float64>("deviation/yaw_deg", rad2deg(deviation.yaw));
+    debug_publisher_.publish<autoware_debug_msgs::msg::Float64Stamped>(
+      "deviation/yaw", deviation.yaw);
+    debug_publisher_.publish<autoware_debug_msgs::msg::Float64Stamped>(
+      "deviation/yaw_deg", rad2deg(deviation.yaw));
     RCLCPP_INFO_THROTTLE(
       this->get_logger(), *this->get_clock(), 1000,
       "lateral: %f[mm], longitudinal: %f[mm], yaw: %f[deg]", 1000 * deviation.lateral,

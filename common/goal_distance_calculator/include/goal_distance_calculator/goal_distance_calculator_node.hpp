@@ -23,8 +23,7 @@
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "goal_distance_calculator/goal_distance_calculator.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "std_msgs/msg/float64.hpp"
-#include "std_msgs/msg/string.hpp"
+#include "autoware_debug_msgs/msg/float64_stamped.hpp"
 #include "tf2_ros/transform_listener.h"
 
 namespace goal_distance_calculator
