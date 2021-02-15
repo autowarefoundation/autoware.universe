@@ -43,6 +43,11 @@ target_link_libraries(autoware_vehicle_rviz_plugin
 # Export the plugin to be imported by rviz2
 pluginlib_export_plugin_description_file(rviz_common plugins/plugin_description.xml)
 
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
+endif()
+
 ament_auto_package(
   INSTALL_TO_SHARE
   icons

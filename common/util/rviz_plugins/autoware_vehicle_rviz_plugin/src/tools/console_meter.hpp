@@ -12,13 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef TOOLS__CONSOLE_METER_HPP_
+#define TOOLS__CONSOLE_METER_HPP_
+
+#include <deque>
+#include <iomanip>
+#include <memory>
 
 #ifndef Q_MOC_RUN
 #include "rclcpp/rclcpp.hpp"
-#include "rviz_common/message_filter_display.hpp"
 #include "rviz_common/display_context.hpp"
 #include "rviz_common/frame_manager_iface.hpp"
+#include "rviz_common/message_filter_display.hpp"
 #include "rviz_common/properties/bool_property.hpp"
 #include "rviz_common/properties/color_property.hpp"
 #include "rviz_common/properties/enum_property.hpp"
@@ -31,10 +36,7 @@
 #include "OgreSceneManager.h"
 #include "OgreSceneNode.h"
 
-#include <deque>
-#include <memory>
-#include <iomanip>
-
+#include "autoware_utils/autoware_utils.hpp"
 #include "geometry_msgs/msg/twist_stamped.hpp"
 
 #include "jsk_overlay_utils.hpp"
@@ -42,13 +44,14 @@
 
 namespace rviz_plugins
 {
-class ConsoleMeterDisplay : public rviz_common::MessageFilterDisplay<geometry_msgs::msg::TwistStamped>
+class ConsoleMeterDisplay
+  : public rviz_common::MessageFilterDisplay<geometry_msgs::msg::TwistStamped>
 {
   Q_OBJECT
 
 public:
   ConsoleMeterDisplay();
-  virtual ~ConsoleMeterDisplay();
+  ~ConsoleMeterDisplay() override;
 
   void onInitialize() override;
   void onDisable() override;
@@ -59,25 +62,40 @@ private Q_SLOTS:
 
 protected:
   void processMessage(const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg_ptr) override;
-  std::unique_ptr<Ogre::ColourValue> setColorDependsOnVelocity(
-    const double vel_max, const double cmd_vel);
-  std::unique_ptr<Ogre::ColourValue> gradation(
-    const QColor & color_min, const QColor & color_max, const double ratio);
   jsk_rviz_plugins::OverlayObject::Ptr overlay_;
   rviz_common::properties::ColorProperty * property_text_color_;
   rviz_common::properties::IntProperty * property_left_;
   rviz_common::properties::IntProperty * property_top_;
   rviz_common::properties::IntProperty * property_length_;
-  rviz_common::properties::FloatProperty * property_handle_angle_scale_;
   rviz_common::properties::IntProperty * property_value_height_offset_;
+  rviz_common::properties::FloatProperty * property_value_scale_;
   // QImage hud_;
 
 private:
-  const double meter_min_velocity_;
-  const double meter_max_velocity_;
-  const double meter_min_angle_;
-  const double meter_max_angle_;
+  static constexpr float meter_min_velocity_ = autoware_utils::kmph2mps(0.f);
+  static constexpr float meter_max_velocity_ = autoware_utils::kmph2mps(60.f);
+  static constexpr float meter_min_angle_ = autoware_utils::deg2rad(40.f);
+  static constexpr float meter_max_angle_ = autoware_utils::deg2rad(320.f);
+  static constexpr int line_width_ = 2;
+  static constexpr int hand_width_ = 4;
+  struct Line  // for drawLine
+  {
+    int x0, y0;
+    int x1, y1;
+  };
+  Line min_range_line_;
+  Line max_range_line_;
+  struct Arc  // for drawArc
+  {
+    int x0, y0;
+    int x1, y1;
+    float start_angle, end_angle;
+  };
+  Arc inner_arc_;
+  Arc outer_arc_;
   geometry_msgs::msg::TwistStamped::ConstSharedPtr last_msg_ptr_;
 };
 
 }  // namespace rviz_plugins
+
+#endif  // TOOLS__CONSOLE_METER_HPP_

@@ -12,13 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef TOOLS__TURN_SIGNAL_HPP_
+#define TOOLS__TURN_SIGNAL_HPP_
+
+#include <deque>
+#include <memory>
 
 #ifndef Q_MOC_RUN
 #include "rclcpp/rclcpp.hpp"
-#include "rviz_common/message_filter_display.hpp"
 #include "rviz_common/display_context.hpp"
 #include "rviz_common/frame_manager_iface.hpp"
+#include "rviz_common/message_filter_display.hpp"
 #include "rviz_common/properties/bool_property.hpp"
 #include "rviz_common/properties/color_property.hpp"
 #include "rviz_common/properties/enum_property.hpp"
@@ -31,9 +35,6 @@
 #include "OgreSceneManager.h"
 #include "OgreSceneNode.h"
 
-#include <deque>
-#include <memory>
-
 #include "autoware_vehicle_msgs/msg/turn_signal.hpp"
 
 #include "jsk_overlay_utils.hpp"
@@ -41,13 +42,14 @@
 
 namespace rviz_plugins
 {
-class TurnSignalDisplay : public rviz_common::MessageFilterDisplay<autoware_vehicle_msgs::msg::TurnSignal>
+class TurnSignalDisplay
+  : public rviz_common::MessageFilterDisplay<autoware_vehicle_msgs::msg::TurnSignal>
 {
   Q_OBJECT
 
 public:
   TurnSignalDisplay();
-  virtual ~TurnSignalDisplay();
+  ~TurnSignalDisplay() override;
 
   void onInitialize() override;
   void onDisable() override;
@@ -57,7 +59,8 @@ private Q_SLOTS:
   void updateVisualization();
 
 protected:
-  void processMessage(const autoware_vehicle_msgs::msg::TurnSignal::ConstSharedPtr msg_ptr) override;
+  void processMessage(
+    const autoware_vehicle_msgs::msg::TurnSignal::ConstSharedPtr msg_ptr) override;
   jsk_rviz_plugins::OverlayObject::Ptr overlay_;
   rviz_common::properties::IntProperty * property_left_;
   rviz_common::properties::IntProperty * property_top_;
@@ -66,7 +69,11 @@ protected:
   // QImage hud_;
 
 private:
+  QPointF right_arrow_polygon_[7];
+  QPointF left_arrow_polygon_[7];
   autoware_vehicle_msgs::msg::TurnSignal::ConstSharedPtr last_msg_ptr_;
 };
 
 }  // namespace rviz_plugins
+
+#endif  // TOOLS__TURN_SIGNAL_HPP_

@@ -12,13 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef TOOLS__STEERING_ANGLE_HPP_
+#define TOOLS__STEERING_ANGLE_HPP_
+
+#include <deque>
+#include <iomanip>
+#include <memory>
 
 #ifndef Q_MOC_RUN
 #include "rclcpp/rclcpp.hpp"
-#include "rviz_common/message_filter_display.hpp"
 #include "rviz_common/display_context.hpp"
 #include "rviz_common/frame_manager_iface.hpp"
+#include "rviz_common/message_filter_display.hpp"
 #include "rviz_common/properties/bool_property.hpp"
 #include "rviz_common/properties/color_property.hpp"
 #include "rviz_common/properties/enum_property.hpp"
@@ -31,10 +36,6 @@
 #include "OgreSceneManager.h"
 #include "OgreSceneNode.h"
 
-#include <deque>
-#include <memory>
-#include <iomanip>
-
 #include "autoware_vehicle_msgs/msg/steering.hpp"
 
 #include "jsk_overlay_utils.hpp"
@@ -42,13 +43,14 @@
 
 namespace rviz_plugins
 {
-class SteeringAngleDisplay : public rviz_common::MessageFilterDisplay<autoware_vehicle_msgs::msg::Steering>
+class SteeringAngleDisplay
+  : public rviz_common::MessageFilterDisplay<autoware_vehicle_msgs::msg::Steering>
 {
   Q_OBJECT
 
 public:
   SteeringAngleDisplay();
-  virtual ~SteeringAngleDisplay();
+  ~SteeringAngleDisplay() override;
 
   void onInitialize() override;
   void onDisable() override;
@@ -70,6 +72,7 @@ protected:
   rviz_common::properties::IntProperty * property_length_;
   rviz_common::properties::FloatProperty * property_handle_angle_scale_;
   rviz_common::properties::IntProperty * property_value_height_offset_;
+  rviz_common::properties::FloatProperty * property_value_scale_;
   QPixmap handle_image_;
   // QImage hud_;
 
@@ -78,3 +81,5 @@ private:
 };
 
 }  // namespace rviz_plugins
+
+#endif  // TOOLS__STEERING_ANGLE_HPP_

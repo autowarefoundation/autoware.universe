@@ -13,10 +13,9 @@
 // limitations under the License.
 
 #include "turn_signal.hpp"
-#include "OgreHardwarePixelBuffer.h"
+#include "QPainter"
 #include "ament_index_cpp/get_package_share_directory.hpp"
 #include "rviz_common/uniform_string_stream.hpp"
-#include "QPainter"
 
 namespace rviz_plugins
 {
@@ -74,7 +73,8 @@ void TurnSignalDisplay::onDisable()
   overlay_->hide();
 }
 
-void TurnSignalDisplay::processMessage(const autoware_vehicle_msgs::msg::TurnSignal::ConstSharedPtr msg_ptr)
+void TurnSignalDisplay::processMessage(
+  const autoware_vehicle_msgs::msg::TurnSignal::ConstSharedPtr msg_ptr)
 {
   if (!isEnabled()) {
     return;
@@ -92,152 +92,34 @@ void TurnSignalDisplay::processMessage(const autoware_vehicle_msgs::msg::TurnSig
   QPainter painter(&hud);
   painter.setRenderHint(QPainter::Antialiasing, true);
 
-  int w = overlay_->getTextureWidth();
-  int h = overlay_->getTextureHeight();
-
   // turn signal color
   QColor white_color(Qt::white);
   white_color.setAlpha(255);
   if (msg_ptr->data == autoware_vehicle_msgs::msg::TurnSignal::RIGHT) {
-    QPointF * line = new QPointF[7];
-    painter.setPen(QPen(white_color, int(2), Qt::DotLine));
-    line[0].setX((double)w * 0.0 / 5.0);
-    line[0].setY((double)h * 1.0 / 2.0);
-    line[1].setX((double)w * 1.0 / 5.0);
-    line[1].setY((double)h * 1.0 / 5.0);
-    line[2].setX((double)w * 1.0 / 5.0);
-    line[2].setY((double)h * 2.0 / 5.0);
-    line[3].setX((double)w * 2.0 / 5.0);
-    line[3].setY((double)h * 2.0 / 5.0);
-    line[4].setX((double)w * 2.0 / 5.0);
-    line[4].setY((double)h * 3.0 / 5.0);
-    line[5].setX((double)w * 1.0 / 5.0);
-    line[5].setY((double)h * 3.0 / 5.0);
-    line[6].setX((double)w * 1.0 / 5.0);
-    line[6].setY((double)h * 4.0 / 5.0);
-    painter.drawPolygon(line, 7);
+    painter.setPen(QPen(white_color, static_cast<int>(2), Qt::DotLine));
+    painter.drawPolygon(left_arrow_polygon_, 7);
     painter.setBrush(QBrush(Qt::white, Qt::SolidPattern));
-    painter.setPen(QPen(white_color, int(2), Qt::SolidLine));
-    line[0].setX((double)w * 5.0 / 5.0);
-    line[0].setY((double)h * 1.0 / 2.0);
-    line[1].setX((double)w * 4.0 / 5.0);
-    line[1].setY((double)h * 1.0 / 5.0);
-    line[2].setX((double)w * 4.0 / 5.0);
-    line[2].setY((double)h * 2.0 / 5.0);
-    line[3].setX((double)w * 3.0 / 5.0);
-    line[3].setY((double)h * 2.0 / 5.0);
-    line[4].setX((double)w * 3.0 / 5.0);
-    line[4].setY((double)h * 3.0 / 5.0);
-    line[5].setX((double)w * 4.0 / 5.0);
-    line[5].setY((double)h * 3.0 / 5.0);
-    line[6].setX((double)w * 4.0 / 5.0);
-    line[6].setY((double)h * 4.0 / 5.0);
-    painter.drawPolygon(line, 7);
+    painter.setPen(QPen(white_color, static_cast<int>(2), Qt::SolidLine));
+    painter.drawPolygon(right_arrow_polygon_, 7);
   } else if (msg_ptr->data == autoware_vehicle_msgs::msg::TurnSignal::LEFT) {
-    QPointF * line = new QPointF[7];
-    painter.setPen(QPen(white_color, int(2), Qt::DotLine));
-    line[0].setX((double)w * 5.0 / 5.0);
-    line[0].setY((double)h * 1.0 / 2.0);
-    line[1].setX((double)w * 4.0 / 5.0);
-    line[1].setY((double)h * 1.0 / 5.0);
-    line[2].setX((double)w * 4.0 / 5.0);
-    line[2].setY((double)h * 2.0 / 5.0);
-    line[3].setX((double)w * 3.0 / 5.0);
-    line[3].setY((double)h * 2.0 / 5.0);
-    line[4].setX((double)w * 3.0 / 5.0);
-    line[4].setY((double)h * 3.0 / 5.0);
-    line[5].setX((double)w * 4.0 / 5.0);
-    line[5].setY((double)h * 3.0 / 5.0);
-    line[6].setX((double)w * 4.0 / 5.0);
-    line[6].setY((double)h * 4.0 / 5.0);
-    painter.drawPolygon(line, 7);
+    painter.setPen(QPen(white_color, static_cast<int>(2), Qt::DotLine));
+    painter.drawPolygon(right_arrow_polygon_, 7);
     painter.setBrush(QBrush(Qt::white, Qt::SolidPattern));
-    painter.setPen(QPen(white_color, int(2), Qt::SolidLine));
-    line[0].setX((double)w * 0.0 / 5.0);
-    line[0].setY((double)h * 1.0 / 2.0);
-    line[1].setX((double)w * 1.0 / 5.0);
-    line[1].setY((double)h * 1.0 / 5.0);
-    line[2].setX((double)w * 1.0 / 5.0);
-    line[2].setY((double)h * 2.0 / 5.0);
-    line[3].setX((double)w * 2.0 / 5.0);
-    line[3].setY((double)h * 2.0 / 5.0);
-    line[4].setX((double)w * 2.0 / 5.0);
-    line[4].setY((double)h * 3.0 / 5.0);
-    line[5].setX((double)w * 1.0 / 5.0);
-    line[5].setY((double)h * 3.0 / 5.0);
-    line[6].setX((double)w * 1.0 / 5.0);
-    line[6].setY((double)h * 4.0 / 5.0);
-    painter.drawPolygon(line, 7);
+    painter.setPen(QPen(white_color, static_cast<int>(2), Qt::SolidLine));
+    painter.drawPolygon(left_arrow_polygon_, 7);
   } else if (msg_ptr->data == autoware_vehicle_msgs::msg::TurnSignal::HAZARD) {
     painter.setBrush(QBrush(Qt::white, Qt::SolidPattern));
-    painter.setPen(QPen(white_color, int(2), Qt::SolidLine));
-    QPointF * line = new QPointF[7];
-    line[0].setX((double)w * 5.0 / 5.0);
-    line[0].setY((double)h * 1.0 / 2.0);
-    line[1].setX((double)w * 4.0 / 5.0);
-    line[1].setY((double)h * 1.0 / 5.0);
-    line[2].setX((double)w * 4.0 / 5.0);
-    line[2].setY((double)h * 2.0 / 5.0);
-    line[3].setX((double)w * 3.0 / 5.0);
-    line[3].setY((double)h * 2.0 / 5.0);
-    line[4].setX((double)w * 3.0 / 5.0);
-    line[4].setY((double)h * 3.0 / 5.0);
-    line[5].setX((double)w * 4.0 / 5.0);
-    line[5].setY((double)h * 3.0 / 5.0);
-    line[6].setX((double)w * 4.0 / 5.0);
-    line[6].setY((double)h * 4.0 / 5.0);
-    painter.drawPolygon(line, 7);
-    line[0].setX((double)w * 0.0 / 5.0);
-    line[0].setY((double)h * 1.0 / 2.0);
-    line[1].setX((double)w * 1.0 / 5.0);
-    line[1].setY((double)h * 1.0 / 5.0);
-    line[2].setX((double)w * 1.0 / 5.0);
-    line[2].setY((double)h * 2.0 / 5.0);
-    line[3].setX((double)w * 2.0 / 5.0);
-    line[3].setY((double)h * 2.0 / 5.0);
-    line[4].setX((double)w * 2.0 / 5.0);
-    line[4].setY((double)h * 3.0 / 5.0);
-    line[5].setX((double)w * 1.0 / 5.0);
-    line[5].setY((double)h * 3.0 / 5.0);
-    line[6].setX((double)w * 1.0 / 5.0);
-    line[6].setY((double)h * 4.0 / 5.0);
-    painter.drawPolygon(line, 7);
+    painter.setPen(QPen(white_color, static_cast<int>(2), Qt::SolidLine));
+    painter.drawPolygon(right_arrow_polygon_, 7);
+    painter.drawPolygon(left_arrow_polygon_, 7);
   } else {
-    painter.setPen(QPen(white_color, int(2), Qt::DotLine));
-    QPointF * line = new QPointF[7];
-    line[0].setX((double)w * 5.0 / 5.0);
-    line[0].setY((double)h * 1.0 / 2.0);
-    line[1].setX((double)w * 4.0 / 5.0);
-    line[1].setY((double)h * 1.0 / 5.0);
-    line[2].setX((double)w * 4.0 / 5.0);
-    line[2].setY((double)h * 2.0 / 5.0);
-    line[3].setX((double)w * 3.0 / 5.0);
-    line[3].setY((double)h * 2.0 / 5.0);
-    line[4].setX((double)w * 3.0 / 5.0);
-    line[4].setY((double)h * 3.0 / 5.0);
-    line[5].setX((double)w * 4.0 / 5.0);
-    line[5].setY((double)h * 3.0 / 5.0);
-    line[6].setX((double)w * 4.0 / 5.0);
-    line[6].setY((double)h * 4.0 / 5.0);
-    painter.drawPolygon(line, 7);
-    line[0].setX((double)w * 0.0 / 5.0);
-    line[0].setY((double)h * 1.0 / 2.0);
-    line[1].setX((double)w * 1.0 / 5.0);
-    line[1].setY((double)h * 1.0 / 5.0);
-    line[2].setX((double)w * 1.0 / 5.0);
-    line[2].setY((double)h * 2.0 / 5.0);
-    line[3].setX((double)w * 2.0 / 5.0);
-    line[3].setY((double)h * 2.0 / 5.0);
-    line[4].setX((double)w * 2.0 / 5.0);
-    line[4].setY((double)h * 3.0 / 5.0);
-    line[5].setX((double)w * 1.0 / 5.0);
-    line[5].setY((double)h * 3.0 / 5.0);
-    line[6].setX((double)w * 1.0 / 5.0);
-    line[6].setY((double)h * 4.0 / 5.0);
-    painter.drawPolygon(line, 7);
+    painter.setPen(QPen(white_color, static_cast<int>(2), Qt::DotLine));
+    painter.drawPolygon(right_arrow_polygon_, 7);
+    painter.drawPolygon(left_arrow_polygon_, 7);
   }
   painter.end();
   last_msg_ptr_ = msg_ptr;
+  updateVisualization();
 }
 
 void TurnSignalDisplay::updateVisualization()
@@ -246,10 +128,41 @@ void TurnSignalDisplay::updateVisualization()
   overlay_->setPosition(property_left_->getInt(), property_top_->getInt());
   overlay_->setDimensions(overlay_->getTextureWidth(), overlay_->getTextureHeight());
 
-  if (last_msg_ptr_ != nullptr) processMessage(last_msg_ptr_);
+  const int w = overlay_->getTextureWidth();
+  const int h = overlay_->getTextureHeight();
+
+  right_arrow_polygon_[0].setX(static_cast<float>(w) * 5.0 / 5.0);
+  right_arrow_polygon_[0].setY(static_cast<float>(h) * 1.0 / 2.0);
+  right_arrow_polygon_[1].setX(static_cast<float>(w) * 4.0 / 5.0);
+  right_arrow_polygon_[1].setY(static_cast<float>(h) * 1.0 / 5.0);
+  right_arrow_polygon_[2].setX(static_cast<float>(w) * 4.0 / 5.0);
+  right_arrow_polygon_[2].setY(static_cast<float>(h) * 2.0 / 5.0);
+  right_arrow_polygon_[3].setX(static_cast<float>(w) * 3.0 / 5.0);
+  right_arrow_polygon_[3].setY(static_cast<float>(h) * 2.0 / 5.0);
+  right_arrow_polygon_[4].setX(static_cast<float>(w) * 3.0 / 5.0);
+  right_arrow_polygon_[4].setY(static_cast<float>(h) * 3.0 / 5.0);
+  right_arrow_polygon_[5].setX(static_cast<float>(w) * 4.0 / 5.0);
+  right_arrow_polygon_[5].setY(static_cast<float>(h) * 3.0 / 5.0);
+  right_arrow_polygon_[6].setX(static_cast<float>(w) * 4.0 / 5.0);
+  right_arrow_polygon_[6].setY(static_cast<float>(h) * 4.0 / 5.0);
+
+  left_arrow_polygon_[0].setX(static_cast<float>(w) * 0.0 / 5.0);
+  left_arrow_polygon_[0].setY(static_cast<float>(h) * 1.0 / 2.0);
+  left_arrow_polygon_[1].setX(static_cast<float>(w) * 1.0 / 5.0);
+  left_arrow_polygon_[1].setY(static_cast<float>(h) * 1.0 / 5.0);
+  left_arrow_polygon_[2].setX(static_cast<float>(w) * 1.0 / 5.0);
+  left_arrow_polygon_[2].setY(static_cast<float>(h) * 2.0 / 5.0);
+  left_arrow_polygon_[3].setX(static_cast<float>(w) * 2.0 / 5.0);
+  left_arrow_polygon_[3].setY(static_cast<float>(h) * 2.0 / 5.0);
+  left_arrow_polygon_[4].setX(static_cast<float>(w) * 2.0 / 5.0);
+  left_arrow_polygon_[4].setY(static_cast<float>(h) * 3.0 / 5.0);
+  left_arrow_polygon_[5].setX(static_cast<float>(w) * 1.0 / 5.0);
+  left_arrow_polygon_[5].setY(static_cast<float>(h) * 3.0 / 5.0);
+  left_arrow_polygon_[6].setX(static_cast<float>(w) * 1.0 / 5.0);
+  left_arrow_polygon_[6].setY(static_cast<float>(h) * 4.0 / 5.0);
 }
 
 }  // namespace rviz_plugins
 
-#include <pluginlib/class_list_macros.hpp>
+#include "pluginlib/class_list_macros.hpp"
 PLUGINLIB_EXPORT_CLASS(rviz_plugins::TurnSignalDisplay, rviz_common::Display)

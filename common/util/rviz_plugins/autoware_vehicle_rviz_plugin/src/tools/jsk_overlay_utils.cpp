@@ -1,37 +1,37 @@
-// -*- mode: c++ -*-
-/*********************************************************************
- * Software License Agreement (BSD License)
- *
- *  Copyright (c) 2014, JSK Lab
- *  All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
- *  are met:
- *
- *   * Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above
- *     copyright notice, this list of conditions and the following
- *     disclaimer in the documentation and/o2r other materials provided
- *     with the distribution.
- *   * Neither the name of the JSK Lab nor the names of its
- *     contributors may be used to endorse or promote products derived
- *     from this software without specific prior written permission.
- *
- *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- *  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- *  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- *  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
- *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- *  POSSIBILITY OF SUCH DAMAGE.
- *********************************************************************/
+// Copyright (c) 2014, JSK Lab
+// All rights reserved.
+//
+// Software License Agreement (BSD License 2.0)
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+//
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above
+//    copyright notice, this list of conditions and the following
+//    disclaimer in the documentation and/or other materials provided
+//    with the distribution.
+//  * Neither the name of {copyright_holder} nor the names of its
+//    contributors may be used to endorse or promote products derived
+//    from this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+// FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+// COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+// BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.S SOFTWARE, EVEN IF ADVISED OF THE
+//  POSSIBILITY OF SUCH DAMAGE.
+
+#include <string>
 
 #include "jsk_overlay_utils.hpp"
 
@@ -43,9 +43,9 @@ ScopedPixelBuffer::ScopedPixelBuffer(Ogre::HardwarePixelBufferSharedPtr pixel_bu
   pixel_buffer_->lock(Ogre::HardwareBuffer::HBL_NORMAL);
 }
 
-ScopedPixelBuffer::~ScopedPixelBuffer() { pixel_buffer_->unlock(); }
+ScopedPixelBuffer::~ScopedPixelBuffer() {pixel_buffer_->unlock();}
 
-Ogre::HardwarePixelBufferSharedPtr ScopedPixelBuffer::getPixelBuffer() { return pixel_buffer_; }
+Ogre::HardwarePixelBufferSharedPtr ScopedPixelBuffer::getPixelBuffer() {return pixel_buffer_;}
 
 QImage ScopedPixelBuffer::getQImage(unsigned int width, unsigned int height)
 {
@@ -76,9 +76,9 @@ QImage ScopedPixelBuffer::getQImage(OverlayObject & overlay, QColor & bg_color)
   return getQImage(overlay.getTextureWidth(), overlay.getTextureHeight(), bg_color);
 }
 
-OverlayObject::OverlayObject(Ogre::SceneManager* manager, rclcpp::Logger logger, const std::string & name)
-: name_(name),
-  logger_(logger)
+OverlayObject::OverlayObject(
+  Ogre::SceneManager * manager, rclcpp::Logger logger, const std::string & name)
+: name_(name), logger_(logger)
 {
   rviz_rendering::RenderSystem::get()->prepareOverlays(manager);
   std::string material_name = name_ + "Material";
@@ -105,7 +105,7 @@ OverlayObject::~OverlayObject()
   // delete overlay_;
 }
 
-std::string OverlayObject::getName() { return name_; }
+std::string OverlayObject::getName() {return name_;}
 
 void OverlayObject::hide()
 {
@@ -121,19 +121,17 @@ void OverlayObject::show()
   }
 }
 
-bool OverlayObject::isTextureReady() { return bool(texture_); }
+bool OverlayObject::isTextureReady() {return static_cast<bool>(texture_);}
 
 void OverlayObject::updateTextureSize(unsigned int width, unsigned int height)
 {
   const std::string texture_name = name_ + "Texture";
   if (width == 0) {
-    RCLCPP_WARN(logger_,
-      "width=0 is specified as texture size");
+    RCLCPP_WARN(logger_, "width=0 is specified as texture size");
     width = 1;
   }
   if (height == 0) {
-    RCLCPP_WARN(logger_,
-      "height=0 is specified as texture size");
+    RCLCPP_WARN(logger_, "height=0 is specified as texture size");
     height = 1;
   }
   if (!isTextureReady() || ((width != texture_->getWidth()) || (height != texture_->getHeight()))) {
@@ -165,14 +163,14 @@ ScopedPixelBuffer OverlayObject::getBuffer()
   }
 }
 
-void OverlayObject::setPosition(double left, double top) { panel_->setPosition(left, top); }
+void OverlayObject::setPosition(double left, double top) {panel_->setPosition(left, top);}
 
 void OverlayObject::setDimensions(double width, double height)
 {
   panel_->setDimensions(width, height);
 }
 
-bool OverlayObject::isVisible() { return overlay_->isVisible(); }
+bool OverlayObject::isVisible() {return overlay_->isVisible();}
 
 unsigned int OverlayObject::getTextureWidth()
 {
