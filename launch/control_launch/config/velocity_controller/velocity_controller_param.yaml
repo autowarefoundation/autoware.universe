@@ -20,7 +20,7 @@
 
     # smooth stop
     smooth_stop:
-      stop_dist: 3.0
+      stop_dist: 0.5
       exit_ego_speed: 1.0
       entry_ego_speed: 0.8
       exit_target_speed: 1.0

@@ -10,6 +10,7 @@
   <arg name="mpc_follower_param_path" default="$(find-pkg-share control_launch)/config/mpc_follower/mpc_follower_param.yaml"/>
   <arg name="pure_pursuit_param_path" default="$(find-pkg-share control_launch)/config/pure_pursuit/pure_pursuit_param.yaml"/>
   <arg name="velocity_controller_param_path" default="$(find-pkg-share control_launch)/config/velocity_controller/velocity_controller_param.yaml"/>
+  <arg name="vehicle_cmd_gate_param_path" default="$(find-pkg-share control_launch)/config/vehicle_cmd_gate/vehicle_cmd_gate.yaml"/>
 
   <!-- control module -->
   <group>
@@ -21,16 +22,23 @@
 
       <!-- lateral controller -->
       <group if="$(eval &quot;'$(var lateral_controller_mode)'=='mpc_follower'&quot;)">
-        <include file="$(find-pkg-share mpc_follower)/launch/mpc_follower.launch.xml" pass_all_args="true"/>
+        <include file="$(find-pkg-share mpc_follower)/launch/mpc_follower.launch.xml">
+          <arg name="mpc_follower_param_path" value="$(var mpc_follower_param_path)" />
+          <arg name="vehicle_param_file" value="$(var vehicle_param_file)" />
+        </include>
       </group>
 
       <group if="$(eval &quot;'$(var lateral_controller_mode)'=='pure_pursuit'&quot;)">
-        <include file="$(find-pkg-share pure_pursuit)/launch/pure_pursuit.launch.xml" pass_all_args="true"/>
+        <include file="$(find-pkg-share pure_pursuit)/launch/pure_pursuit.launch.xml">
+          <arg name="pure_pursuit_param_path" value="$(var pure_pursuit_param_path)" />
+          <arg name="vehicle_param_file" value="$(var vehicle_param_file)" />
+        </include>
       </group>
 
       <!-- longitudinal controller -->
       <include file="$(find-pkg-share velocity_controller)/launch/velocity_controller.launch.xml">
         <arg name="velocity_controller_param_path" value="$(var velocity_controller_param_path)"/>
+        <arg name="vehicle_param_file" value="$(var vehicle_param_file)" />
       </include>
 
       <!-- latlon coupler -->
@@ -39,6 +47,11 @@
         <remap from="input/longitudinal/control_cmd" to="longitudinal/control_cmd"/>
         <remap from="output/control_cmd" to="control_cmd"/>
       </node>
+
+      <!-- lane departure checker -->
+      <include file="$(find-pkg-share lane_departure_checker)/launch/lane_departure_checker.launch.xml">
+        <arg name="vehicle_param_file" value="$(var vehicle_param_file)" />
+      </include>
     </group>
 
     <!-- shift decider -->
@@ -48,6 +61,9 @@
     <!-- vehicle cmd gate -->
     <include file="$(find-pkg-share vehicle_cmd_gate)/launch/vehicle_cmd_gate.launch.xml">
       <arg name="vehicle_param_file" value="$(var vehicle_param_file)" />
+      <arg name="config_file" value="$(var vehicle_cmd_gate_param_path)"/>
+      <arg name="use_emergency_handling" value="false"/>
+      <arg name="use_external_emergency_stop" value="true"/>
     </include>
 
     <!-- remote_cmd_converter -->
