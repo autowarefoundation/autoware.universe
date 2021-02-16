@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <memory>
+
 #include "path/display.hpp"
 #define EIGEN_MPL2_ONLY
 #include "eigen3/Eigen/Core"

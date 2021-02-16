@@ -12,7 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef TRAJECTORY__DISPLAY_HPP_
+#define TRAJECTORY__DISPLAY_HPP_
+
+#include <deque>
+#include <memory>
 
 #include "OgreBillboardSet.h"
 #include "OgreManualObject.h"
@@ -28,9 +32,6 @@
 #include "rviz_common/properties/float_property.hpp"
 #include "rviz_common/properties/parse_color.hpp"
 #include "rviz_common/validate_floats.hpp"
-
-#include <deque>
-#include <memory>
 
 #include "autoware_planning_msgs/msg/trajectory.hpp"
 
@@ -78,3 +79,5 @@ private:
 };
 
 }  // namespace rviz_plugins
+
+#endif  // TRAJECTORY__DISPLAY_HPP_

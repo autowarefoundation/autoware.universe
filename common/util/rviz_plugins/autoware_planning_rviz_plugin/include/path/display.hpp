@@ -12,7 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef PATH__DISPLAY_HPP_
+#define PATH__DISPLAY_HPP_
+
+#include <deque>
+#include <memory>
 
 #include "OgreBillboardSet.h"
 #include "OgreManualObject.h"
@@ -29,14 +33,12 @@
 #include "rviz_common/properties/parse_color.hpp"
 #include "rviz_common/validate_floats.hpp"
 
-#include <deque>
-#include <memory>
-
 #include "autoware_planning_msgs/msg/path.hpp"
 
 namespace rviz_plugins
 {
-class AutowarePathDisplay : public rviz_common::MessageFilterDisplay<autoware_planning_msgs::msg::Path>
+class AutowarePathDisplay
+  : public rviz_common::MessageFilterDisplay<autoware_planning_msgs::msg::Path>
 {
   Q_OBJECT
 
@@ -76,3 +78,5 @@ private:
 };
 
 }  // namespace rviz_plugins
+
+#endif  // PATH__DISPLAY_HPP_

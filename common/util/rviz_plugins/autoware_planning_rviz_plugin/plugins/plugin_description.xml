@@ -9,6 +9,11 @@
     base_class_type="rviz_common::Display">
     <description>Display autoware_planning_msg::Trajectory</description>
   </class>
+  <class name="rviz_plugins/MaxVelocity"
+    type="rviz_plugins::MaxVelocityDisplay"
+    base_class_type="rviz_common::Display">
+    <description>Display external max velocity limit</description>
+  </class>
   <class name="rviz_plugins/MissionCheckpointTool"
     type="rviz_plugins::MissionCheckpointTool"
     base_class_type="rviz_common::Tool">
