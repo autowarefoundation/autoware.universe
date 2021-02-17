@@ -3,3 +3,5 @@
     traffic_light:
       stop_margin: 0.0
       tl_state_timeout: 1.0
+      external_tl_state_timeout: 1.0
+      enable_pass_judge: true

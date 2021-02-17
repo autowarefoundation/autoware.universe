@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef BEHAVIOR_VELOCITY_PLANNER__PLANNER_MANAGER_HPP_
+#define BEHAVIOR_VELOCITY_PLANNER__PLANNER_MANAGER_HPP_
 
 #include <memory>
 #include <string>
@@ -49,3 +50,5 @@ private:
   std::vector<std::shared_ptr<SceneModuleManagerInterface>> scene_manager_ptrs_;
   diagnostic_msgs::msg::DiagnosticStatus stop_reason_diag_;
 };
+
+#endif  // BEHAVIOR_VELOCITY_PLANNER__PLANNER_MANAGER_HPP_

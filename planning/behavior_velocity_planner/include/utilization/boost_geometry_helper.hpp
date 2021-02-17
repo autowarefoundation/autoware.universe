@@ -11,7 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#pragma once
+
+#ifndef UTILIZATION__BOOST_GEOMETRY_HELPER_HPP_
+#define UTILIZATION__BOOST_GEOMETRY_HELPER_HPP_
 
 #include <algorithm>
 #include <vector>
@@ -203,3 +205,4 @@ inline Polygon2d toBoostPoly(const lanelet::BasicPolygon2d & polygon)
 
   return boost_poly;
 }
+#endif  // UTILIZATION__BOOST_GEOMETRY_HELPER_HPP_

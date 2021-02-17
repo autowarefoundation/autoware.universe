@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef BEHAVIOR_VELOCITY_PLANNER__PLANNER_DATA_HPP_
+#define BEHAVIOR_VELOCITY_PLANNER__PLANNER_DATA_HPP_
 
+#include <boost/optional.hpp>
 #include <map>
 #include <memory>
 
@@ -22,6 +24,8 @@
 #include "pcl/point_cloud.h"
 #include "pcl/point_types.h"
 
+#include "autoware_api_msgs/msg/crosswalk_status.hpp"
+#include "autoware_api_msgs/msg/intersection_status.hpp"
 #include "autoware_lanelet2_msgs/msg/map_bin.hpp"
 #include "autoware_perception_msgs/msg/dynamic_object_array.hpp"
 #include "autoware_perception_msgs/msg/traffic_light_state_array.hpp"
@@ -39,11 +43,11 @@
 
 struct PlannerData
 {
-  PlannerData(rclcpp::Node & node)
+  explicit PlannerData(rclcpp::Node & node)
   : vehicle_info_(vehicle_info_util::VehicleInfo::create(node))
   {
     max_stop_acceleration_threshold_ = node.declare_parameter(
-      "max_accel", -5.0);  // TODO read min_acc in velocity_controller_param.yaml?
+      "max_accel", -5.0);  // TODO(someone): read min_acc in velocity_controller_param.yaml?
     delay_response_time_ = node.declare_parameter("delay_response_time", 1.3);
   }
   // tf
@@ -61,6 +65,12 @@ struct PlannerData
   lanelet::routing::RoutingGraphPtr routing_graph;
   std::shared_ptr<const lanelet::routing::RoutingGraphContainer> overall_graphs;
 
+  // external data
+  std::map<int, autoware_perception_msgs::msg::TrafficLightStateStamped>
+  external_traffic_light_id_map_;
+  boost::optional<autoware_api_msgs::msg::CrosswalkStatus> external_crosswalk_status_input;
+  boost::optional<autoware_api_msgs::msg::IntersectionStatus> external_intersection_status_input;
+
   // parameters
   vehicle_info_util::VehicleInfo vehicle_info_;
 
@@ -70,7 +80,9 @@ struct PlannerData
 
   bool isVehicleStopping() const
   {
-    if (!current_velocity) {return false;}
+    if (!current_velocity) {
+      return false;
+    }
     return current_velocity->twist.linear.x < 0.1;
   }
 
@@ -83,4 +95,15 @@ struct PlannerData
     return std::make_shared<autoware_perception_msgs::msg::TrafficLightStateStamped>(
       traffic_light_id_map_.at(id));
   }
+
+  std::shared_ptr<autoware_perception_msgs::msg::TrafficLightStateStamped>
+  getExternalTrafficLightState(const int id) const
+  {
+    if (external_traffic_light_id_map_.count(id) == 0) {
+      return {};
+    }
+    return std::make_shared<autoware_perception_msgs::msg::TrafficLightStateStamped>(
+      external_traffic_light_id_map_.at(id));
+  }
 };
+#endif  // BEHAVIOR_VELOCITY_PLANNER__PLANNER_DATA_HPP_

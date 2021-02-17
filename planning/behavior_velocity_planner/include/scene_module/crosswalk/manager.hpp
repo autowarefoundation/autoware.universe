@@ -11,11 +11,14 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#pragma once
+
+#ifndef SCENE_MODULE__CROSSWALK__MANAGER_HPP_
+#define SCENE_MODULE__CROSSWALK__MANAGER_HPP_
 
 #include <functional>
 #include <memory>
 
+#include "autoware_api_msgs/msg/crosswalk_status.hpp"
 #include "autoware_planning_msgs/msg/path_with_lane_id.hpp"
 #include "rclcpp/rclcpp.hpp"
 
@@ -26,7 +29,7 @@
 class CrosswalkModuleManager : public SceneModuleManagerInterface
 {
 public:
-  CrosswalkModuleManager(rclcpp::Node & node);
+  explicit CrosswalkModuleManager(rclcpp::Node & node);
 
   const char * getModuleName() override {return "crosswalk";}
 
@@ -38,3 +41,4 @@ private:
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
     const autoware_planning_msgs::msg::PathWithLaneId & path) override;
 };
+#endif  // SCENE_MODULE__CROSSWALK__MANAGER_HPP_

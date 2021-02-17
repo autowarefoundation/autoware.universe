@@ -11,7 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#pragma once
+
+#ifndef SCENE_MODULE__SCENE_MODULE_INTERFACE_HPP_
+#define SCENE_MODULE__SCENE_MODULE_INTERFACE_HPP_
 
 #include <memory>
 #include <set>
@@ -126,7 +128,8 @@ protected:
   {
     const auto isModuleExpired = getModuleExpiredFunction(path);
 
-    // Copy container to avoid iterator corruption due to scene_modules_.erase() in unregisterModule()
+    // Copy container to avoid iterator corruption
+    // due to scene_modules_.erase() in unregisterModule()
     const auto copied_scene_modules = scene_modules_;
 
     for (const auto & scene_module : copied_scene_modules) {
@@ -171,3 +174,4 @@ protected:
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_debug_;
   rclcpp::Publisher<autoware_planning_msgs::msg::StopReasonArray>::SharedPtr pub_stop_reason_;
 };
+#endif  // SCENE_MODULE__SCENE_MODULE_INTERFACE_HPP_

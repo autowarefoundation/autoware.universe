@@ -118,7 +118,9 @@ TrafficLightModule::TrafficLightModule(
   lane_id_(lane.id()),
   traffic_light_reg_elem_(traffic_light_reg_elem),
   lane_(lane),
-  state_(State::APPROACH)
+  state_(State::APPROACH),
+  is_prev_state_stop_(false),
+  input_(Input::PERCEPTION)
 {
   planner_param_ = planner_param;
 }
@@ -152,8 +154,13 @@ bool TrafficLightModule::modifyPathVelocity(
   if (state_ == State::GO_OUT) {
     return true;
   } else if (state_ == State::APPROACH) {
-    if (!getHighestConfidenceTrafficLightState(traffic_lights, tl_state_)) {
+    if (getExternalTrafficLightState(traffic_lights, tl_state_)) {
+      input_ = Input::EXTERNAL;
+    } else if (getHighestConfidenceTrafficLightState(traffic_lights, tl_state_)) {
+      input_ = Input::PERCEPTION;
+    } else {
       // Don't stop when UNKNOWN or TIMEOUT as discussed at #508
+      input_ = Input::NONE;
       return true;
     }
 
@@ -195,9 +202,10 @@ bool TrafficLightModule::modifyPathVelocity(
         }
         // judge pass or stop
         if (
+          planner_param_.enable_pass_judge && input_ == Input::PERCEPTION &&
           (calcSignedArcLength(input_path, self_pose.pose, stop_line_point) <
           pass_judge_line_distance + planner_data_->vehicle_info_.max_longitudinal_offset_m_) &&
-          (3.0 /* =10.8km/h */ < self_twist_ptr->twist.linear.x))
+          (3.0 /* =10.8km/h */ < self_twist_ptr->twist.linear.x && !is_prev_state_stop_))
         {
           RCLCPP_WARN_THROTTLE(
             logger_, *clock_, 1000 /* ms */, "vehicle is over stop border (%f m)",
@@ -211,6 +219,7 @@ bool TrafficLightModule::modifyPathVelocity(
             RCLCPP_WARN(logger_, "cannot insert stop waypoint");
             continue;
           }
+          is_prev_state_stop_ = true;
         }
 
         /* get stop point and stop factor */
@@ -221,6 +230,7 @@ bool TrafficLightModule::modifyPathVelocity(
         return true;
       }
     } else {
+      is_prev_state_stop_ = false;
       return true;
     }
   }
@@ -401,7 +411,9 @@ bool TrafficLightModule::insertTargetVelocityPoint(
     debug_data_.first_stop_pose = target_point_with_lane_id.point.pose;
   }
   // -- debug code --
-  if (velocity == 0.0) {debug_data_.stop_poses.push_back(target_point_with_lane_id.point.pose);}
+  if (velocity == 0.0) {
+    debug_data_.stop_poses.push_back(target_point_with_lane_id.point.pose);
+  }
   // ----------------
   return true;
 }
@@ -419,7 +431,9 @@ bool TrafficLightModule::createTargetPoint(
     std::vector<Point> collision_points;
     bg::intersection(stop_line, path_line, collision_points);
 
-    if (collision_points.empty()) {continue;}
+    if (collision_points.empty()) {
+      continue;
+    }
 
     // check nearest collision point
     Point nearest_collision_point;
@@ -474,14 +488,14 @@ bool TrafficLightModule::createTargetPoint(
       }
     }
     // create target point
-    getBackwordPointFromBasePoint(
+    getBackwardPointFromBasePoint(
       point2, point1, point2, std::fabs(length_sum - target_length), target_point);
     return true;
   }
   return false;
 }
 
-bool TrafficLightModule::getBackwordPointFromBasePoint(
+bool TrafficLightModule::getBackwardPointFromBasePoint(
   const Eigen::Vector2d & line_point1, const Eigen::Vector2d & line_point2,
   const Eigen::Vector2d & base_point, const double backward_length, Eigen::Vector2d & output_point)
 {
@@ -511,4 +525,44 @@ geometry_msgs::msg::Point TrafficLightModule::getTrafficLightPosition(
     tl_center.z += tl_point.z() / (*traffic_light.lineString()).size();
   }
   return tl_center;
+}
+
+bool TrafficLightModule::getExternalTrafficLightState(
+  const lanelet::ConstLineStringsOrPolygons3d & traffic_lights,
+  autoware_perception_msgs::msg::TrafficLightStateStamped & external_tl_state)
+{
+  // search traffic light state
+  bool found = false;
+  std::string reason;
+  for (const auto & traffic_light : traffic_lights) {
+    // traffic light must be linestrings
+    if (!traffic_light.isLineString()) {
+      reason = "NotLineString";
+      continue;
+    }
+
+    const int id = static_cast<lanelet::ConstLineString3d>(traffic_light).id();
+    const auto tl_state_stamped = planner_data_->getExternalTrafficLightState(id);
+    if (!tl_state_stamped) {
+      reason = "TrafficLightStateNotFound";
+      continue;
+    }
+
+    const auto header = tl_state_stamped->header;
+    const auto tl_state = tl_state_stamped->state;
+    if (!((clock_->now() - header.stamp).seconds() < planner_param_.external_tl_state_timeout)) {
+      reason = "TimeOut";
+      continue;
+    }
+
+    external_tl_state = *tl_state_stamped;
+    found = true;
+  }
+  if (!found) {
+    RCLCPP_WARN_THROTTLE(
+      logger_, *clock_, 1000 /* ms */,
+      "[traffic_light] cannot find external traffic light lamp state (%s).", reason.c_str());
+    return false;
+  }
+  return true;
 }

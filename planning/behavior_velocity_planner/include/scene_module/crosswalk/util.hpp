@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef SCENE_MODULE__CROSSWALK__UTIL_HPP_
+#define SCENE_MODULE__CROSSWALK__UTIL_HPP_
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -27,8 +29,8 @@
 #include "Eigen/Core"
 #include "Eigen/Geometry"
 
-#include "behavior_velocity_planner/planner_data.hpp"
 #include "autoware_planning_msgs/msg/path_with_lane_id.hpp"
+#include "behavior_velocity_planner/planner_data.hpp"
 
 struct DebugData
 {
@@ -43,12 +45,30 @@ struct DebugData
   std::vector<geometry_msgs::msg::Point> stop_factor_points;
   std::vector<std::vector<Eigen::Vector3d>> slow_polygons;
   geometry_msgs::msg::Point nearest_collision_point;
+  double stop_judge_range;
 };
 
 bool insertTargetVelocityPoint(
   const autoware_planning_msgs::msg::PathWithLaneId & input,
-  const boost::geometry::model::polygon<boost::geometry::model::d2::point_xy<double>, false> &
-  polygon,
+  const boost::geometry::model::polygon<boost::geometry::model::d2::point_xy<double>> & polygon,
   const double & margin, const double & velocity, const PlannerData & planner_data,
   autoware_planning_msgs::msg::PathWithLaneId & output, DebugData & debug_data,
   boost::optional<int> & first_stop_path_point_index);
+
+lanelet::Optional<lanelet::ConstLineString3d> getStopLineFromMap(
+  const int lane_id, const std::shared_ptr<const PlannerData> & planner_data,
+  const std::string & attribute_name);
+
+bool insertTargetVelocityPoint(
+  const autoware_planning_msgs::msg::PathWithLaneId & input,
+  const lanelet::ConstLineString3d & stop_line, const double & margin, const double & velocity,
+  const PlannerData & planner_data, autoware_planning_msgs::msg::PathWithLaneId & output,
+  DebugData & debug_data, boost::optional<int> & first_stop_path_point_index);
+
+bool isClockWise(
+  const boost::geometry::model::polygon<boost::geometry::model::d2::point_xy<double>> & polygon);
+
+boost::geometry::model::polygon<boost::geometry::model::d2::point_xy<double>> inverseClockWise(
+  const boost::geometry::model::polygon<boost::geometry::model::d2::point_xy<double>> & polygon);
+
+#endif  // SCENE_MODULE__CROSSWALK__UTIL_HPP_

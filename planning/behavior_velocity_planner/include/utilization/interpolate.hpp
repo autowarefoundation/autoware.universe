@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BEHAVIOR_VELOCITY_PLANNER_UTILIZATION_INTERPOLATE_H_
-#define BEHAVIOR_VELOCITY_PLANNER_UTILIZATION_INTERPOLATE_H_
+#ifndef UTILIZATION__INTERPOLATE_HPP_
+#define UTILIZATION__INTERPOLATE_HPP_
 
 #include <cmath>
 #include <vector>
@@ -43,4 +43,4 @@ std::vector<double> calcEuclidDist(const std::vector<double> & x, const std::vec
 
 }  // namespace interpolation
 
-#endif  // BEHAVIOR_VELOCITY_PLANNER_UTILIZATION_INTERPOLATE_H_
+#endif  // UTILIZATION__INTERPOLATE_HPP_

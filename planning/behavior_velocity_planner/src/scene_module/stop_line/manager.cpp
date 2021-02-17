@@ -79,8 +79,8 @@ StopLineModuleManager::StopLineModuleManager(rclcpp::Node & node)
 {
   const std::string ns(getModuleName());
   auto & p = planner_param_;
-  p.stop_margin = node.declare_parameter(ns + "/stop_margin", 0.0);
-  p.stop_check_dist = node.declare_parameter(ns + "/stop_check_dist", 2.0);
+  p.stop_margin = node.declare_parameter(ns + ".stop_margin", 0.0);
+  p.stop_check_dist = node.declare_parameter(ns + ".stop_check_dist", 2.0);
 }
 
 void StopLineModuleManager::launchNewModules(

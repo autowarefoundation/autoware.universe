@@ -11,7 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#pragma once
+
+#ifndef SCENE_MODULE__STOP_LINE__MANAGER_HPP_
+#define SCENE_MODULE__STOP_LINE__MANAGER_HPP_
 
 #include <functional>
 #include <memory>
@@ -25,7 +27,7 @@
 class StopLineModuleManager : public SceneModuleManagerInterface
 {
 public:
-  StopLineModuleManager(rclcpp::Node & node);
+  explicit StopLineModuleManager(rclcpp::Node & node);
 
   const char * getModuleName() override {return "stop_line";}
 
@@ -36,3 +38,4 @@ private:
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
     const autoware_planning_msgs::msg::PathWithLaneId & path) override;
 };
+#endif  // SCENE_MODULE__STOP_LINE__MANAGER_HPP_

@@ -14,13 +14,12 @@
 
 #include "scene_module/blind_spot/manager.hpp"
 
-#include <vector>
+#include <memory>
 #include <set>
 #include <string>
-#include <memory>
+#include <vector>
 
 #include "lanelet2_core/primitives/BasicRegulatoryElements.h"
-
 #include "utilization/boost_geometry_helper.hpp"
 #include "utilization/util.hpp"
 
@@ -58,10 +57,12 @@ BlindSpotModuleManager::BlindSpotModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterface(node, getModuleName())
 {
   const std::string ns(getModuleName());
-  planner_param_.stop_line_margin = node.declare_parameter(ns + "/stop_line_margin", 1.0);
-  planner_param_.backward_length = node.declare_parameter(ns + "/backward_length", 15.0);
+  planner_param_.stop_line_margin = node.declare_parameter(ns + ".stop_line_margin", 1.0);
+  planner_param_.backward_length = node.declare_parameter(ns + ".backward_length", 15.0);
+  planner_param_.ignore_width_from_center_line =
+    node.declare_parameter(ns + ".ignore_width_from_center_line", 1.0);
   planner_param_.max_future_movement_time =
-    node.declare_parameter(ns + "/max_future_movement_time", 10.0);
+    node.declare_parameter(ns + ".max_future_movement_time", 10.0);
 }
 
 void BlindSpotModuleManager::launchNewModules(

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COMMON_MATH_PLANNING_UTILS_H
-#define COMMON_MATH_PLANNING_UTILS_H
+#ifndef UTILIZATION__UTIL_HPP_
+#define UTILIZATION__UTIL_HPP_
 
 #include <string>
 #include <vector>
@@ -125,4 +125,4 @@ std::vector<T> concatVector(const std::vector<T> & vec1, const std::vector<T> & 
 }
 }  // namespace planning_utils
 
-#endif  // COMMON_MATH_PLANNING_UTILS_H
+#endif  // UTILIZATION__UTIL_HPP_

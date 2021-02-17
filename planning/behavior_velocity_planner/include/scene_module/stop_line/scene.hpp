@@ -11,7 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#pragma once
+
+#ifndef SCENE_MODULE__STOP_LINE__SCENE_HPP_
+#define SCENE_MODULE__STOP_LINE__SCENE_HPP_
 
 #include <string>
 #include <vector>
@@ -61,7 +63,7 @@ public:
 private:
   int64_t module_id_;
 
-  bool getBackwordPointFromBasePoint(
+  bool getBackwardPointFromBasePoint(
     const Eigen::Vector2d & line_point1, const Eigen::Vector2d & line_point2,
     const Eigen::Vector2d & base_point, const double backward_length,
     Eigen::Vector2d & output_point);
@@ -71,9 +73,10 @@ private:
   lanelet::ConstLineString3d stop_line_;
   State state_;
 
-  // Paramter
+  // Parameter
   PlannerParam planner_param_;
 
   // Debug
   DebugData debug_data_;
 };
+#endif  // SCENE_MODULE__STOP_LINE__SCENE_HPP_

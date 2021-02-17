@@ -11,7 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#pragma once
+
+#ifndef SCENE_MODULE__INTERSECTION__SCENE_MERGE_FROM_PRIVATE_ROAD_HPP_
+#define SCENE_MODULE__INTERSECTION__SCENE_MERGE_FROM_PRIVATE_ROAD_HPP_
 
 #include <memory>
 #include <string>
@@ -33,7 +35,7 @@
 
 /**
  * @brief This module makes sure that vehicle will stop before entering public road from private road.
- *        This module is meant to be regesistered with intersection module, which looks at intersecting lanes
+ *        This module is meant to be registered with intersection module, which looks at intersecting lanes
  *        before entering intersection
  */
 
@@ -122,3 +124,4 @@ private:
   // Debug
   mutable DebugData debug_data_;
 };
+#endif  // SCENE_MODULE__INTERSECTION__SCENE_MERGE_FROM_PRIVATE_ROAD_HPP_

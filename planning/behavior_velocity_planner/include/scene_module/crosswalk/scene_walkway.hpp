@@ -11,7 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#pragma once
+
+#ifndef SCENE_MODULE__CROSSWALK__SCENE_WALKWAY_HPP_
+#define SCENE_MODULE__CROSSWALK__SCENE_WALKWAY_HPP_
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -34,6 +36,8 @@ public:
   struct PlannerParam
   {
     double stop_margin;
+    double stop_line_distance;
+    double external_input_timeout;
   };
   WalkwayModule(
     const int64_t module_id, const lanelet::ConstLanelet & walkway,
@@ -60,3 +64,4 @@ private:
   // Debug
   DebugData debug_data_;
 };
+#endif  // SCENE_MODULE__CROSSWALK__SCENE_WALKWAY_HPP_

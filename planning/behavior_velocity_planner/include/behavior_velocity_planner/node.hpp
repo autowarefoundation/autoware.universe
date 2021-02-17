@@ -11,11 +11,15 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#pragma once
+
+#ifndef BEHAVIOR_VELOCITY_PLANNER__NODE_HPP_
+#define BEHAVIOR_VELOCITY_PLANNER__NODE_HPP_
 
 #include <memory>
 #include <string>
 
+#include "autoware_api_msgs/msg/crosswalk_status.hpp"
+#include "autoware_api_msgs/msg/intersection_status.hpp"
 #include "autoware_lanelet2_msgs/msg/map_bin.hpp"
 #include "autoware_perception_msgs/msg/dynamic_object_array.hpp"
 #include "autoware_planning_msgs/msg/path.hpp"
@@ -46,6 +50,12 @@ private:
   rclcpp::Subscription<autoware_lanelet2_msgs::msg::MapBin>::SharedPtr sub_lanelet_map_;
   rclcpp::Subscription<autoware_perception_msgs::msg::TrafficLightStateArray>::SharedPtr
     sub_traffic_light_states_;
+  rclcpp::Subscription<autoware_api_msgs::msg::CrosswalkStatus>::SharedPtr
+    sub_external_crosswalk_states_;
+  rclcpp::Subscription<autoware_api_msgs::msg::IntersectionStatus>::SharedPtr
+    sub_external_intersection_states_;
+  rclcpp::Subscription<autoware_perception_msgs::msg::TrafficLightStateArray>::SharedPtr
+    sub_external_traffic_light_states_;
 
   void onTrigger(const autoware_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg);
   void onDynamicObjects(
@@ -55,6 +65,11 @@ private:
   void onLaneletMap(const autoware_lanelet2_msgs::msg::MapBin::ConstSharedPtr msg);
   void onTrafficLightStates(
     const autoware_perception_msgs::msg::TrafficLightStateArray::ConstSharedPtr msg);
+  void onExternalTrafficLightStates(
+    const autoware_perception_msgs::msg::TrafficLightStateArray::ConstSharedPtr msg);
+  void onExternalCrosswalkStates(const autoware_api_msgs::msg::CrosswalkStatus::ConstSharedPtr msg);
+  void onExternalIntersectionStates(
+    const autoware_api_msgs::msg::IntersectionStatus::ConstSharedPtr msg);
 
   // publisher
   rclcpp::Publisher<autoware_planning_msgs::msg::Path>::SharedPtr path_pub_;
@@ -75,3 +90,4 @@ private:
   geometry_msgs::msg::PoseStamped getCurrentPose();
   bool isDataReady();
 };
+#endif  // BEHAVIOR_VELOCITY_PLANNER__NODE_HPP_

@@ -53,9 +53,7 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(
   debug_data_.path_raw = input_path;
 
   State current_state = state_machine_.getState();
-  RCLCPP_DEBUG(
-    logger_, "lane_id = %ld, state = %s", lane_id_,
-    toString(current_state).c_str());
+  RCLCPP_DEBUG(logger_, "lane_id = %ld, state = %s", lane_id_, toString(current_state).c_str());
 
   /* get current pose */
   geometry_msgs::msg::PoseStamped current_pose = planner_data_->current_pose;
@@ -79,17 +77,15 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(
   int judge_line_idx = -1;
   int first_idx_inside_lane = -1;
   if (!util::generateStopLine(
-      lane_id_, detection_areas, planner_data_, planner_param_, path, &stop_line_idx,
+      lane_id_, detection_areas, planner_data_, planner_param_, path, *path, &stop_line_idx,
       &judge_line_idx, &first_idx_inside_lane, logger_.get_child("util")))
   {
-    RCLCPP_WARN_SKIPFIRST_THROTTLE(
-      logger_, *clock_, 1000 /* ms */, "setStopLineIdx fail");
+    RCLCPP_WARN_SKIPFIRST_THROTTLE(logger_, *clock_, 1000 /* ms */, "setStopLineIdx fail");
     return false;
   }
 
   if (stop_line_idx <= 0 || judge_line_idx <= 0) {
-    RCLCPP_DEBUG(
-      logger_, "stop line or judge line is at path[0], ignore planning.");
+    RCLCPP_DEBUG(logger_, "stop line or judge line is at path[0], ignore planning.");
     return true;
   }
 
@@ -103,7 +99,7 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(
   /* set stop speed */
   if (state_machine_.getState() == State::STOP) {
     constexpr double stop_vel = 0.0;
-    const double decel_vel = planner_param_.decel_velocoity;
+    const double decel_vel = planner_param_.decel_velocity;
     double v = (has_traffic_light_ && turn_direction_ == "straight") ? decel_vel : stop_vel;
     util::setVelocityFrom(stop_line_idx, v, path);
 

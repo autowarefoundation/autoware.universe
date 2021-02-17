@@ -14,10 +14,10 @@
 
 #include "scene_module/crosswalk/manager.hpp"
 
-#include <vector>
 #include <memory>
 #include <set>
 #include <string>
+#include <vector>
 
 namespace
 {
@@ -64,14 +64,21 @@ CrosswalkModuleManager::CrosswalkModuleManager(rclcpp::Node & node)
 
   // for crosswalk parameters
   auto & cp = crosswalk_planner_param_;
-  cp.stop_margin = node.declare_parameter(ns + "/crosswalk/stop_margin", 1.0);
-  cp.slow_margin = node.declare_parameter(ns + "/crosswalk/slow_margin", 2.0);
-  cp.slow_velocity = node.declare_parameter(ns + "/crosswalk/slow_velocity", 5.0 / 3.6);
+  cp.stop_line_distance = node.declare_parameter(ns + ".crosswalk.stop_line_distance", 1.5);
+  cp.stop_margin = node.declare_parameter(ns + ".crosswalk.stop_margin", 1.0);
+  cp.slow_margin = node.declare_parameter(ns + ".crosswalk.slow_margin", 2.0);
+  cp.slow_velocity = node.declare_parameter(ns + ".crosswalk.slow_velocity", 5.0 / 3.6);
   cp.stop_dynamic_object_prediction_time_margin =
-    node.declare_parameter(ns + "/crosswalk/stop_dynamic_object_prediction_time_margin", 3.0);
+    node.declare_parameter(ns + ".crosswalk.stop_dynamic_object_prediction_time_margin", 3.0);
+  cp.external_input_timeout = node.declare_parameter(ns + ".crosswalk.external_input_timeout", 1.0);
 
   // for walkway parameters
-  walkway_planner_param_.stop_margin = node.declare_parameter(ns + "/walkway/stop_margin", 1.0);
+  auto & wp = walkway_planner_param_;
+  wp.stop_margin = node.declare_parameter(ns + ".walkway.stop_margin", 1.0);
+  wp.stop_line_distance =
+    node.declare_parameter(ns + ".walkway.stop_line_distance", 1.0);
+  wp.external_input_timeout =
+    node.declare_parameter(ns + ".walkway.external_input_timeout", 1.0);
 }
 
 void CrosswalkModuleManager::launchNewModules(

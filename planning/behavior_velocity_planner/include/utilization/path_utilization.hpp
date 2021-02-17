@@ -11,7 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#pragma once
+
+#ifndef UTILIZATION__PATH_UTILIZATION_HPP_
+#define UTILIZATION__PATH_UTILIZATION_HPP_
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -24,3 +26,5 @@ autoware_planning_msgs::msg::Path filterLitterPathPoint(
   const autoware_planning_msgs::msg::Path & path);
 autoware_planning_msgs::msg::Path filterStopPathPoint(
   const autoware_planning_msgs::msg::Path & path);
+
+#endif  // UTILIZATION__PATH_UTILIZATION_HPP_

@@ -22,6 +22,7 @@ find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
 set(BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES
+  autoware_api_msgs
   autoware_perception_msgs
   autoware_planning_msgs
   Boost
@@ -199,7 +200,7 @@ target_include_directories(behavior_velocity_planner_node
     $<INSTALL_INTERFACE:include>
 )
 
-ament_target_dependencies(behavior_velocity_planner_node ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES} )
+ament_target_dependencies(behavior_velocity_planner_node ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
 
 target_link_libraries(behavior_velocity_planner_node
   scene_module_lib

@@ -12,15 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "scene_module/crosswalk/scene_walkway.hpp"
-
 #include <cmath>
 
+#include "scene_module/crosswalk/scene_walkway.hpp"
 #include "utilization/util.hpp"
 
 namespace bg = boost::geometry;
 using Point = bg::model::d2::point_xy<double>;
-using Polygon = bg::model::polygon<Point, false>;
+using Polygon = bg::model::polygon<Point>;
 using Line = bg::model::linestring<Point>;
 
 WalkwayModule::WalkwayModule(
@@ -55,13 +54,31 @@ bool WalkwayModule::modifyPathVelocity(
       polygon.outer().push_back(bg::make<Point>(lanelet_point.x(), lanelet_point.y()));
     }
     polygon.outer().push_back(polygon.outer().front());
+    polygon = isClockWise(polygon) ? polygon : inverseClockWise(polygon);
 
-    if (!insertTargetVelocityPoint(
-        input, polygon, planner_param_.stop_margin, 0.0, *planner_data_, *path, debug_data_,
-        first_stop_path_point_index_))
-    {
-      return false;
+    lanelet::Optional<lanelet::ConstLineString3d> stop_line_opt =
+      getStopLineFromMap(module_id_, planner_data_, "crosswalk_id");
+    if (!!stop_line_opt) {
+      if (!insertTargetVelocityPoint(
+          input, stop_line_opt.get(), planner_param_.stop_margin, 0.0, *planner_data_, *path,
+          debug_data_, first_stop_path_point_index_))
+      {
+        return false;
+      }
+    } else {
+      if (!insertTargetVelocityPoint(
+          input, polygon, planner_param_.stop_line_distance + planner_param_.stop_margin, 0.0,
+          *planner_data_, *path, debug_data_, first_stop_path_point_index_))
+      {
+        return false;
+      }
     }
+
+    /* get stop point and stop factor */
+    autoware_planning_msgs::msg::StopFactor stop_factor;
+    stop_factor.stop_pose = debug_data_.first_stop_pose;
+    stop_factor.stop_factor_points.emplace_back(debug_data_.nearest_collision_point);
+    planning_utils::appendStopReason(stop_factor, stop_reason);
 
     // update state
     const Point self_pose = {
@@ -69,14 +86,11 @@ bool WalkwayModule::modifyPathVelocity(
     const double distance = bg::distance(polygon, self_pose);
     const double distance_threshold =
       planner_param_.stop_margin + planner_data_->vehicle_info_.max_longitudinal_offset_m_ + 1.0;
-    if (distance < distance_threshold && planner_data_->isVehicleStopping()) {state_ = State::STOP;}
+    if (distance < distance_threshold && planner_data_->isVehicleStopping()) {
+      state_ = State::STOP;
+      return true;
+    }
   } else if (state_ == State::STOP) {
-    /* get stop point and stop factor */
-    autoware_planning_msgs::msg::StopFactor stop_factor;
-    stop_factor.stop_pose = debug_data_.first_stop_pose;
-    stop_factor.stop_factor_points.emplace_back(debug_data_.nearest_collision_point);
-    planning_utils::appendStopReason(stop_factor, stop_reason);
-
     if (planner_data_->isVehicleStopping()) {
       state_ = State::SURPASSED;
     }

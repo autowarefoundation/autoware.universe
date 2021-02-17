@@ -11,7 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#pragma once
+
+#ifndef SCENE_MODULE__INTERSECTION__UTIL_HPP_
+#define SCENE_MODULE__INTERSECTION__UTIL_HPP_
 
 #include <memory>
 #include <string>
@@ -44,6 +46,9 @@ geometry_msgs::msg::Pose getAheadPose(
 
 bool isAheadOf(const geometry_msgs::msg::Pose & target, const geometry_msgs::msg::Pose & origin);
 bool hasLaneId(const autoware_planning_msgs::msg::PathPointWithLaneId & p, const int id);
+bool hasDuplicatedPoint(
+  const autoware_planning_msgs::msg::PathWithLaneId & path,
+  const geometry_msgs::msg::Point & point);
 
 /**
    * @brief get objective polygons for detection area
@@ -57,7 +62,8 @@ bool getObjectivePolygons(
    * @brief Generate a stop line and insert it into the path. If the stop line is defined in the map,
    * read it from the map; otherwise, generate a stop line at a position where it will not collide.
    * @param detection_areas used to generate stop line
-   * @param path            ego-car lane
+   * @param original_path   ego-car lane
+   * @param target_path     target lane to insert stop point (part of ego-car lane or same to ego-car lane)
    * @param stop_line_idx   generated stop line index
    * @param pass_judge_line_idx  generated stop line index
    * @return false when generation failed
@@ -66,7 +72,8 @@ bool generateStopLine(
   const int lane_id, const std::vector<lanelet::CompoundPolygon3d> detection_areas,
   const std::shared_ptr<const PlannerData> & planner_data,
   const IntersectionModule::PlannerParam & planner_param,
-  autoware_planning_msgs::msg::PathWithLaneId * path, int * stop_line_idx,
+  autoware_planning_msgs::msg::PathWithLaneId * original_path,
+  const autoware_planning_msgs::msg::PathWithLaneId & target_path, int * stop_line_idx,
   int * pass_judge_line_idx, int * first_idx_inside_lane, const rclcpp::Logger logger);
 
 /**
@@ -89,3 +96,4 @@ bool getStopPoseFromMap(
   const std::shared_ptr<const PlannerData> & planner_data);
 
 }  // namespace util
+#endif  // SCENE_MODULE__INTERSECTION__UTIL_HPP_

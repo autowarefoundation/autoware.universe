@@ -152,7 +152,7 @@ geometry_msgs::msg::Pose transformAbsCoordinate2D(
 
 double calcJudgeLineDist(
   const double velocity, const double max_stop_acceleration,
-  const double delay_response_time)  // TODO: also consider jerk
+  const double delay_response_time)  // TODO(someone): also consider jerk
 {
   double judge_line_dist =
     (velocity * velocity) / (2.0 * (-max_stop_acceleration)) + delay_response_time * velocity;

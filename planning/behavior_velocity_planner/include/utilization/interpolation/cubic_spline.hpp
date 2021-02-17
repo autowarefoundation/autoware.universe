@@ -18,16 +18,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef CUBIC_SPLINE_H
-#define CUBIC_SPLINE_H
+#ifndef UTILIZATION__INTERPOLATION__CUBIC_SPLINE_HPP_
+#define UTILIZATION__INTERPOLATION__CUBIC_SPLINE_HPP_
 
-#include "Eigen/Eigen"
+
 #include <algorithm>
 #include <array>
 #include <iostream>
 #include <stdexcept>
 #include <string>
 #include <vector>
+
+#include "Eigen/Eigen"
 
 static std::vector<double> vec_diff(const std::vector<double> & input)
 {
@@ -373,4 +375,4 @@ private:
   double max_s_value_;
 };
 
-#endif  // CUBIC_SPLINE_H
+#endif  // UTILIZATION__INTERPOLATION__CUBIC_SPLINE_HPP_

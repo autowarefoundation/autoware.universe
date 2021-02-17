@@ -11,11 +11,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#include "scene_module/stop_line/scene.hpp"
 
+#include "scene_module/stop_line/scene.hpp"
 #include "utilization/marker_helper.hpp"
 #include "utilization/util.hpp"
-
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 
 namespace

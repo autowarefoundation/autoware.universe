@@ -11,7 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#pragma once
+
+#ifndef SCENE_MODULE__BLIND_SPOT__MANAGER_HPP_
+#define SCENE_MODULE__BLIND_SPOT__MANAGER_HPP_
 
 #include <functional>
 #include <memory>
@@ -26,7 +28,7 @@
 class BlindSpotModuleManager : public SceneModuleManagerInterface
 {
 public:
-  BlindSpotModuleManager(rclcpp::Node & node);
+  explicit BlindSpotModuleManager(rclcpp::Node & node);
 
   const char * getModuleName() override {return "blind_spot";}
 
@@ -38,3 +40,4 @@ private:
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
     const autoware_planning_msgs::msg::PathWithLaneId & path) override;
 };
+#endif  // SCENE_MODULE__BLIND_SPOT__MANAGER_HPP_

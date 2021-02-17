@@ -207,7 +207,7 @@ visualization_msgs::msg::MarkerArray BlindSpotModule::createDebugMarkerArray()
 
   appendMarkerArray(
     createPolygonMarkerArray(
-      debug_data_.confict_area_for_blind_spot, "conflict_area_for_blind_spot", lane_id_, 0.0, 0.5,
+      debug_data_.conflict_area_for_blind_spot, "conflict_area_for_blind_spot", lane_id_, 0.0, 0.5,
       0.5),
     current_time, &debug_marker_array);
 

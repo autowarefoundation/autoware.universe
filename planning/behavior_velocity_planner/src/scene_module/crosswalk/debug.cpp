@@ -450,6 +450,40 @@ visualization_msgs::msg::MarkerArray createWalkwayMarkers(
     marker.color.g = 0.0;
     marker.color.b = 0.0;
     msg.markers.push_back(marker);
+
+    visualization_msgs::msg::Marker range_marker;
+    range_marker.header.frame_id = "map";
+    range_marker.ns = "walkway stop judge range";
+    range_marker.id = uid + debug_data.stop_poses.size() + j;
+    range_marker.lifetime = rclcpp::Duration::from_seconds(0.5);
+    range_marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
+    range_marker.action = visualization_msgs::msg::Marker::ADD;
+    range_marker.pose.position.x = 0;
+    range_marker.pose.position.y = 0;
+    range_marker.pose.position.z = 0;
+    range_marker.pose.orientation.x = 0.0;
+    range_marker.pose.orientation.y = 0.0;
+    range_marker.pose.orientation.z = 0.0;
+    range_marker.pose.orientation.w = 1.0;
+    range_marker.scale.x = 0.1;
+    range_marker.scale.y = 0.1;
+    range_marker.color.a = 0.5;  // Don't forget to set the alpha!
+    range_marker.color.r = 1.0;
+    range_marker.color.g = 0.0;
+    range_marker.color.b = 0.0;
+    geometry_msgs::msg::Point point;
+    point.x = debug_data.stop_poses.at(j).position.x;
+    point.y = debug_data.stop_poses.at(j).position.y;
+    point.z = debug_data.stop_poses.at(j).position.z;
+    for (size_t i = 0; i < 50; ++i) {
+      geometry_msgs::msg::Point range_point;
+      range_point.x = point.x + debug_data.stop_judge_range * std::cos(M_PI * 2 / 50 * i);
+      range_point.y = point.y + debug_data.stop_judge_range * std::sin(M_PI * 2 / 50 * i);
+      range_point.z = point.z;
+      range_marker.points.push_back(range_point);
+    }
+    range_marker.points.push_back(range_marker.points.front());
+    msg.markers.push_back(range_marker);
   }
   // Factor Text
   for (size_t j = 0; j < debug_data.stop_poses.size(); ++j) {
