@@ -31,6 +31,11 @@ rclcpp_components_register_node(traffic_light_roi_visualizer_nodelet
   EXECUTABLE traffic_light_visualization_node
 )
 
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
+endif()
+
 #############
 ## Install ##
 #############

@@ -4,6 +4,7 @@
   <arg name="input/image" default="/camera/image_raw"/>
   <arg name="input/rois" default="input/rois"/>
   <arg name="input/rough/rois" default="rough/rois"/>
+  <arg name="input/traffic_light_states" default="input/traffic_light_states"/>
   <arg name="output/image" default="debug/rois"/>
   <arg name="enable_fine_detection" default="false"/>
   <arg name="manager" default="traffic_light_recognition_nodelet_manager"/>
@@ -12,6 +13,7 @@
     <remap from="input/image" to="$(var input/image)"/>
     <remap from="input/rois" to="$(var input/rois)"/>
     <remap from="input/rough/rois" to="$(var input/rough/rois)"/>
+    <remap from="input/traffic_light_states" to="$(var input/traffic_light_states)"/>
     <remap from="output/image" to="$(var output/image)"/>
     <param name="enable_fine_detection" value="$(var enable_fine_detection)"/>
   </node>
