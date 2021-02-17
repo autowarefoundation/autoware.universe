@@ -18,6 +18,8 @@ find_package(nav_msgs REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/EnableAvoidance.msg"
   "msg/IsAvoidancePossible.msg"
+  "msg/LaneChangeCommand.msg"
+  "msg/LaneChangeStatus.msg"
   "msg/LaneSequence.msg"
   "msg/Path.msg"
   "msg/PathPoint.msg"
