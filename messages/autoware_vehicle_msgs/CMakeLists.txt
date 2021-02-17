@@ -16,6 +16,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(autoware_control_msgs REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/Engage.msg"
   "msg/VehicleCommand.msg"
   "msg/Shift.msg"
   "msg/ShiftStamped.msg"
