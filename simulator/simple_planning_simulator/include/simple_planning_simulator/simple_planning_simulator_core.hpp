@@ -27,10 +27,6 @@
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
 #include "geometry_msgs/msg/twist_stamped.hpp"
-#include "std_msgs/msg/bool.hpp"
-#include "std_msgs/msg/float32.hpp"
-#include "std_msgs/msg/int32.hpp"
-#include "std_msgs/msg/string.hpp"
 #include "tf2/LinearMath/Quaternion.h"
 #include "tf2/utils.h"
 #include "tf2_ros/transform_broadcaster.h"
@@ -39,8 +35,10 @@
 #include "eigen3/Eigen/LU"
 #include <random>
 
+#include "autoware_debug_msgs/msg/float32_stamped.hpp"
 #include "autoware_planning_msgs/msg/trajectory.hpp"
 #include "autoware_vehicle_msgs/msg/control_mode.hpp"
+#include "autoware_vehicle_msgs/msg/engage.hpp"
 #include "autoware_vehicle_msgs/msg/shift_stamped.hpp"
 #include "autoware_vehicle_msgs/msg/steering.hpp"
 #include "autoware_vehicle_msgs/msg/turn_signal.hpp"
@@ -69,7 +67,7 @@ private:
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_pose_;   //!< @brief topic ros publisher for current pose
   rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr pub_twist_;  //!< @brief topic ros publisher for current twist
   rclcpp::Publisher<autoware_vehicle_msgs::msg::Steering>::SharedPtr pub_steer_;
-  rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr pub_velocity_;
+  rclcpp::Publisher<autoware_debug_msgs::msg::Float32Stamped>::SharedPtr pub_velocity_;
   rclcpp::Publisher<autoware_vehicle_msgs::msg::TurnSignal>::SharedPtr pub_turn_signal_;
   rclcpp::Publisher<autoware_vehicle_msgs::msg::ShiftStamped>::SharedPtr pub_shift_;
   rclcpp::Publisher<autoware_vehicle_msgs::msg::ControlMode>::SharedPtr pub_control_mode_;
@@ -79,7 +77,7 @@ private:
   rclcpp::Subscription<autoware_planning_msgs::msg::Trajectory>::SharedPtr sub_trajectory_;   //!< @brief topic subscriber for trajectory used for z ppsition
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr sub_initialpose_;  //!< @brief topic subscriber for initialpose topic
   rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr sub_initialtwist_;  //!< @brief topic subscriber for initialtwist topic
-  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr sub_engage_;        //!< @brief topic subscriber for engage topic
+  rclcpp::Subscription<autoware_vehicle_msgs::msg::Engage>::SharedPtr sub_engage_;        //!< @brief topic subscriber for engage topic
   rclcpp::TimerBase::SharedPtr timer_simulation_;       //!< @brief timer for simulation
 
   /* tf */
@@ -183,7 +181,7 @@ private:
   /**
    * @brief set simulator engage with received message
    */
-  void callbackEngage(const std_msgs::msg::Bool::ConstSharedPtr msg);
+  void callbackEngage(const autoware_vehicle_msgs::msg::Engage::ConstSharedPtr msg);
 
   /**
    * @brief get transform from two frame_ids

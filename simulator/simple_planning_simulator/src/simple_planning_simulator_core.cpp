@@ -36,8 +36,8 @@ Simulator::Simulator(const std::string & node_name, const rclcpp::NodeOptions & 
     "output/control_mode", rclcpp::QoS{1});
   pub_steer_ = create_publisher<autoware_vehicle_msgs::msg::Steering>(
     "/vehicle/status/steering", rclcpp::QoS{1});
-  pub_velocity_ =
-    create_publisher<std_msgs::msg::Float32>("/vehicle/status/velocity", rclcpp::QoS{1});
+  pub_velocity_ = create_publisher<autoware_debug_msgs::msg::Float32Stamped>(
+    "/vehicle/status/velocity", rclcpp::QoS{1});
   pub_turn_signal_ = create_publisher<autoware_vehicle_msgs::msg::TurnSignal>(
     "/vehicle/status/turn_signal", rclcpp::QoS{1});
   pub_shift_ = create_publisher<autoware_vehicle_msgs::msg::ShiftStamped>(
@@ -56,7 +56,7 @@ Simulator::Simulator(const std::string & node_name, const rclcpp::NodeOptions & 
     "input/initial_twist", rclcpp::QoS{1},
     std::bind(&Simulator::callbackInitialTwistStamped, this, std::placeholders::_1));
 
-  sub_engage_ = create_subscription<std_msgs::msg::Bool>(
+  sub_engage_ = create_subscription<autoware_vehicle_msgs::msg::Engage>(
     "input/engage", rclcpp::QoS{1},
     std::bind(&Simulator::callbackEngage, this, std::placeholders::_1));
   sub_initialpose_ = create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
@@ -199,9 +199,9 @@ void Simulator::callbackInitialTwistStamped(
   }
 }
 
-void Simulator::callbackEngage(const std_msgs::msg::Bool::ConstSharedPtr msg)
+void Simulator::callbackEngage(const autoware_vehicle_msgs::msg::Engage::ConstSharedPtr msg)
 {
-  simulator_engage_ = msg->data;
+  simulator_engage_ = msg->engage;
 }
 
 void Simulator::timerCallbackSimulation()
@@ -276,7 +276,8 @@ void Simulator::timerCallbackSimulation()
   pub_steer_->publish(steer_msg);
 
   /* float info publishers */
-  std_msgs::msg::Float32 velocity_msg;
+  autoware_debug_msgs::msg::Float32Stamped velocity_msg;
+  velocity_msg.stamp = this->now();
   velocity_msg.data = current_twist_.linear.x;
   pub_velocity_->publish(velocity_msg);
 

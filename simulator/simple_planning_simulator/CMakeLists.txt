@@ -17,6 +17,7 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
+find_package(autoware_debug_msgs REQUIRED)
 find_package(autoware_planning_msgs REQUIRED)
 find_package(autoware_control_msgs REQUIRED)
 find_package(autoware_vehicle_msgs REQUIRED)
@@ -42,6 +43,7 @@ set(SIMPLE_PLANNING_SIMULATOR_DEPENDENCIES
   geometry_msgs
   tf2
   tf2_ros
+  autoware_debug_msgs
   autoware_planning_msgs
   autoware_control_msgs
   autoware_vehicle_msgs
