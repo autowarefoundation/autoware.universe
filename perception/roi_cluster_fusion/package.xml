@@ -17,9 +17,15 @@
   <depend>tf2</depend>
   <depend>tf2_sensor_msgs</depend>
   <depend>tf2_ros</depend>
+  <depend>cv_bridge</depend>
+  <depend>image_transport</depend>
   <depend>message_filters</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
+  
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+  
   <export>
     <build_type>ament_cmake</build_type>
   </export>

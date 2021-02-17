@@ -11,67 +11,100 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#pragma once
-#include "rclcpp/rclcpp.hpp"
-#include "tf2_ros/buffer.h"
-#include "tf2_ros/transform_listener.h"
+
+#ifndef ROI_CLUSTER_FUSION__ROI_CLUSTER_FUSION_NODELET_HPP_
+#define ROI_CLUSTER_FUSION__ROI_CLUSTER_FUSION_NODELET_HPP_
+
+#include <map>
 #include <memory>
+#include <vector>
+
+#include "boost/circular_buffer.hpp"
 #include "autoware_perception_msgs/msg/dynamic_object_with_feature.hpp"
 #include "autoware_perception_msgs/msg/dynamic_object_with_feature_array.hpp"
+#include "cv_bridge/cv_bridge.h"
+#include "image_transport/image_transport.hpp"
 #include "message_filters/pass_through.h"
 #include "message_filters/subscriber.h"
 #include "message_filters/sync_policies/approximate_time.h"
 #include "message_filters/synchronizer.h"
+#include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/camera_info.hpp"
+#include "tf2_ros/buffer.h"
+#include "tf2_ros/transform_listener.h"
 
 namespace roi_cluster_fusion
 {
+class Debugger
+{
+public:
+  explicit Debugger(rclcpp::Node * node, const int camera_num);
+  ~Debugger() = default;
+  rclcpp::Node * node_;
+  void showImage(
+    const int id, const rclcpp::Time & time,
+    const std::vector<sensor_msgs::msg::RegionOfInterest> & image_rois,
+    const std::vector<sensor_msgs::msg::RegionOfInterest> & pointcloud_rois,
+    const std::vector<Eigen::Vector2d> & points);
+
+private:
+  void imageCallback(const sensor_msgs::msg::Image::ConstSharedPtr & input_image_msg, const int id);
+  std::shared_ptr<image_transport::ImageTransport> image_transport_;
+  std::vector<image_transport::Subscriber> image_subs_;
+  std::vector<image_transport::Publisher> image_pubs_;
+  std::vector<boost::circular_buffer<sensor_msgs::msg::Image::ConstSharedPtr>> image_buffers_;
+};
+
 class RoiClusterFusionNodelet : public rclcpp::Node
 {
 public:
-  RoiClusterFusionNodelet(const rclcpp::NodeOptions & options);
+  explicit RoiClusterFusionNodelet(const rclcpp::NodeOptions & options);
 
 private:
-
   void fusionCallback(
-  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr input_cluster_msg,
-  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr input_roi0_msg,
-  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr input_roi1_msg,
-  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr input_roi2_msg,
-  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr input_roi3_msg,
-  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr input_roi4_msg,
-  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr input_roi5_msg,
-  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr input_roi6_msg,
-  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr input_roi7_msg);
-  void cameraInfoCallback(const
-    sensor_msgs::msg::CameraInfo::ConstSharedPtr input_camera_info_msg, const int id);
+    autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr input_cluster_msg,
+    autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr input_roi0_msg,
+    autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr input_roi1_msg,
+    autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr input_roi2_msg,
+    autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr input_roi3_msg,
+    autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr input_roi4_msg,
+    autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr input_roi5_msg,
+    autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr input_roi6_msg,
+    autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr input_roi7_msg);
+  void cameraInfoCallback(
+    const sensor_msgs::msg::CameraInfo::ConstSharedPtr input_camera_info_msg, const int id);
   double calcIoU(
-    const sensor_msgs::msg::RegionOfInterest & roi_1, const sensor_msgs::msg::RegionOfInterest & roi_2);
+    const sensor_msgs::msg::RegionOfInterest & roi_1,
+    const sensor_msgs::msg::RegionOfInterest & roi_2);
   double calcIoUX(
-    const sensor_msgs::msg::RegionOfInterest & roi_1, const sensor_msgs::msg::RegionOfInterest & roi_2);
+    const sensor_msgs::msg::RegionOfInterest & roi_1,
+    const sensor_msgs::msg::RegionOfInterest & roi_2);
   double calcIoUY(
-    const sensor_msgs::msg::RegionOfInterest & roi_1, const sensor_msgs::msg::RegionOfInterest & roi_2);
+    const sensor_msgs::msg::RegionOfInterest & roi_1,
+    const sensor_msgs::msg::RegionOfInterest & roi_2);
 
-  rclcpp::Publisher<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>::SharedPtr labeled_cluster_pub_;
+  rclcpp::Publisher<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>::SharedPtr
+    labeled_cluster_pub_;
   std::vector<rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr> v_camera_info_sub_;
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_ptr_;
-  message_filters::Subscriber<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray> cluster_sub_;
+  message_filters::Subscriber<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>
+  cluster_sub_;
   std::vector<std::shared_ptr<
-    message_filters::Subscriber<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray> > >
-    v_roi_sub_;
+      message_filters::Subscriber<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>>>
+  v_roi_sub_;
   message_filters::PassThrough<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>
-    passthrough_;
+  passthrough_;
   typedef message_filters::sync_policies::ApproximateTime<
-    autoware_perception_msgs::msg::DynamicObjectWithFeatureArray,
-    autoware_perception_msgs::msg::DynamicObjectWithFeatureArray,
-    autoware_perception_msgs::msg::DynamicObjectWithFeatureArray,
-    autoware_perception_msgs::msg::DynamicObjectWithFeatureArray,
-    autoware_perception_msgs::msg::DynamicObjectWithFeatureArray,
-    autoware_perception_msgs::msg::DynamicObjectWithFeatureArray,
-    autoware_perception_msgs::msg::DynamicObjectWithFeatureArray,
-    autoware_perception_msgs::msg::DynamicObjectWithFeatureArray,
-    autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>
+      autoware_perception_msgs::msg::DynamicObjectWithFeatureArray,
+      autoware_perception_msgs::msg::DynamicObjectWithFeatureArray,
+      autoware_perception_msgs::msg::DynamicObjectWithFeatureArray,
+      autoware_perception_msgs::msg::DynamicObjectWithFeatureArray,
+      autoware_perception_msgs::msg::DynamicObjectWithFeatureArray,
+      autoware_perception_msgs::msg::DynamicObjectWithFeatureArray,
+      autoware_perception_msgs::msg::DynamicObjectWithFeatureArray,
+      autoware_perception_msgs::msg::DynamicObjectWithFeatureArray,
+      autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>
     SyncPolicy;
   typedef message_filters::Synchronizer<SyncPolicy> Sync;
   std::shared_ptr<Sync> sync_ptr_;
@@ -89,6 +122,9 @@ private:
   double iou_threshold_;
   int rois_number_;
   std::map<int, sensor_msgs::msg::CameraInfo> m_camera_info_;
+  std::shared_ptr<Debugger> debuger_;
 };
 
 }  // namespace roi_cluster_fusion
+
+#endif  // ROI_CLUSTER_FUSION__ROI_CLUSTER_FUSION_NODELET_HPP_
