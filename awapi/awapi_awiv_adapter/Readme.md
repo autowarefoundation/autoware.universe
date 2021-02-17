@@ -183,11 +183,11 @@
 ### /awapi/autoware/put/engage
 
 - send engage signal (both of autoware/engage and vehicle/engage)
-- MessageType: autoware_control_msgs/EngageMode
+- MessageType: autoware_vehicle_msgs/Engage
 
 | ✓   | type                             | name | unit | note |
 | --- | :------------------------------- | :--- | :--- | :--- |
-| ✓   | autoware_control_msgs/EngageMode |      |      |      |
+| ✓   | autoware_vehicle_msgs/Engage |      |      |      |
 
 ### /awapi/autoware/put/goal
 

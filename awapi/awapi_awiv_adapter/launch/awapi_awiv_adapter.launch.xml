@@ -154,12 +154,12 @@
     <node pkg="topic_tools" exec="relay" name="autoware_engage_relay" output="log" >
       <param name="input_topic" value="$(var set_engage)" />
       <param name="output_topic" value="$(var output_autoware_engage)" />
-      <param name="type" value="autoware_control_msgs/msg/EngageMode" />
+      <param name="type" value="autoware_vehicle_msgs/msg/Engage" />
     </node>
     <node pkg="topic_tools" exec="relay" name="vehicle_engage_relay" output="log" >
       <param name="input_topic" value="$(var set_engage)" />
       <param name="output_topic" value="$(var output_vehicle_engage)" />
-      <param name="type" value="autoware_control_msgs/msg/EngageMode" />
+      <param name="type" value="autoware_vehicle_msgs/msg/Engage" />
     </node>
     <node pkg="topic_tools" exec="relay" name="put_route_relay" output="log" >
       <param name="input_topic" value="$(var set_route)" />
