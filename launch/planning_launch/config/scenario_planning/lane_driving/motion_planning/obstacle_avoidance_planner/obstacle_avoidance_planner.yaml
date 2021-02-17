@@ -13,7 +13,7 @@
 
     # clearance for unique points
     clearance_for_straight_line_: 0.05 # minimum optimizing range around straight points
-    clearance_for_joint_: 3.2 # minimum optimizing range around joint points
+    clearance_for_joint_: 0.1 # minimum optimizing range around joint points
     clearance_for_only_smoothing: 0.1 # minimum optimizing range when applygin only smoothing
     range_for_extend_joint: 0.1 # minimum optimizing range around joint points for extending
     clearance_from_object_for_straight: 10.0 # minimum clearance from object when judging straight line
@@ -59,16 +59,16 @@
 
     # mpt param
     # vehicle param for mpt
-    max_steer_deg: 30.0 # max steering angle [deg]
+    max_steer_deg: 40.0 # max steering angle [deg]
     steer_tau: 0.1 # steering dynamics time constant (1d approzimation) [s]
 
     # trajectory param for mpt
     num_curvature_sampling_points: 5 # number of sampling points when calculating curvature
     delta_arc_length_for_mpt_points: 0.5 # delta arc length when generating mpt[m]
-    num_fix_points_for_mpt: 8 # number of fixing points around ego vehicle
+    forward_fixing_mpt_distance: 10 # number of fixing points around ego vehicle
 
     # optimization param for mpt
-    is_hard_fixing_terminal_point: true # hard fixing terminal point
+    is_hard_fixing_terminal_point: false # hard fixing terminal point
     base_point_weight: 2000.0 # slack weight for lateral error around base_link
     top_point_weight: 1000.0 # slack weight for lateral error around vehicle-top point
     mid_point_weight: 1000.0 # slack weight for lateral error around the middle point

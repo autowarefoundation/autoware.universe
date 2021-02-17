@@ -1,16 +1,7 @@
 <launch>
-  <arg name="input_topic_name" default="/planning/mission_planning/goal"/>
-  <arg name="output_topic_name" default="/planning/mission_planning/route"/>
-  <arg name="map_topic_name" default="/map/vector_map"/>
-  <arg name="visualization_topic_name" default="/planning/mission_planning/route_marker"/>
-  <arg name="checkpoint_topic_name" default="/planning/mission_planning/checkpoint"/>
-  <node pkg="mission_planner" exec="mission_planner" name="mission_planner" output="screen">
-    <param name="map_frame" value="map"/>
-    <param name="base_link_frame" value="base_link"/>
-    <remap from="input/goal_pose" to="$(var input_topic_name)"/>
-    <remap from="input/checkpoint" to="$(var checkpoint_topic_name)"/>
-    <remap from="input/vector_map" to="$(var map_topic_name)"/>
-    <remap from="output/route" to="$(var output_topic_name)"/>
-    <remap from="debug/route_marker" to="$(var visualization_topic_name)"/>
-  </node>
+  <include file="$(find-pkg-share mission_planner)/launch/mission_planner.launch.xml">
+  </include>
+
+  <include file="$(find-pkg-share mission_planner)/launch/goal_pose_visualizer.launch.xml">
+  </include>
 </launch>
