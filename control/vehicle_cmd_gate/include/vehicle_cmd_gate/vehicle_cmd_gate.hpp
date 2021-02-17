@@ -22,8 +22,8 @@
 
 #include "autoware_control_msgs/msg/control_command_stamped.hpp"
 #include "autoware_control_msgs/msg/emergency_mode.hpp"
-#include "autoware_control_msgs/msg/engage_mode.hpp"
 #include "autoware_control_msgs/msg/gate_mode.hpp"
+#include "autoware_vehicle_msgs/msg/engage.hpp"
 #include "autoware_vehicle_msgs/msg/shift_stamped.hpp"
 #include "autoware_vehicle_msgs/msg/steering.hpp"
 #include "autoware_vehicle_msgs/msg/turn_signal.hpp"
@@ -53,17 +53,17 @@ private:
   rclcpp::Publisher<autoware_control_msgs::msg::GateMode>::SharedPtr gate_mode_pub_;
 
   // Subscription
-  rclcpp::Subscription<autoware_control_msgs::msg::EngageMode>::SharedPtr engage_sub_;
   rclcpp::Subscription<autoware_control_msgs::msg::EmergencyMode>::SharedPtr system_emergency_sub_;
   rclcpp::Subscription<autoware_control_msgs::msg::EmergencyMode>::SharedPtr
     external_emergency_stop_sub_;
   rclcpp::Subscription<autoware_control_msgs::msg::GateMode>::SharedPtr gate_mode_sub_;
+  rclcpp::Subscription<autoware_vehicle_msgs::msg::Engage>::SharedPtr engage_sub_;
   rclcpp::Subscription<autoware_vehicle_msgs::msg::Steering>::SharedPtr steer_sub_;
 
   void onGateMode(autoware_control_msgs::msg::GateMode::ConstSharedPtr msg);
-  void onEngage(autoware_control_msgs::msg::EngageMode::ConstSharedPtr msg);
   void onSystemEmergency(autoware_control_msgs::msg::EmergencyMode::ConstSharedPtr msg);
   void onExternalEmergencyStop(autoware_control_msgs::msg::EmergencyMode::ConstSharedPtr msg);
+  void onEngage(autoware_vehicle_msgs::msg::Engage::ConstSharedPtr msg);
   void onSteering(autoware_vehicle_msgs::msg::Steering::ConstSharedPtr msg);
 
   bool is_engaged_;

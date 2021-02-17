@@ -79,8 +79,6 @@ VehicleCmdGate::VehicleCmdGate()
     this->create_publisher<autoware_control_msgs::msg::GateMode>("output/gate_mode", durable_qos);
 
   // Subscriber
-  engage_sub_ = this->create_subscription<autoware_control_msgs::msg::EngageMode>(
-    "input/engage", 1, std::bind(&VehicleCmdGate::onEngage, this, _1));
   system_emergency_sub_ = this->create_subscription<autoware_control_msgs::msg::EmergencyMode>(
     "input/system_emergency", 1, std::bind(&VehicleCmdGate::onSystemEmergency, this, _1));
   external_emergency_stop_sub_ =
@@ -89,6 +87,8 @@ VehicleCmdGate::VehicleCmdGate()
       std::bind(&VehicleCmdGate::onExternalEmergencyStop, this, _1));
   gate_mode_sub_ = this->create_subscription<autoware_control_msgs::msg::GateMode>(
     "input/gate_mode", 1, std::bind(&VehicleCmdGate::onGateMode, this, _1));
+  engage_sub_ = this->create_subscription<autoware_vehicle_msgs::msg::Engage>(
+    "input/engage", 1, std::bind(&VehicleCmdGate::onEngage, this, _1));
   steer_sub_ = this->create_subscription<autoware_vehicle_msgs::msg::Steering>(
     "input/steering", 1, std::bind(&VehicleCmdGate::onSteering, this, _1));
 
@@ -462,11 +462,6 @@ autoware_control_msgs::msg::ControlCommand VehicleCmdGate::createEmergencyStopCo
   return cmd;
 }
 
-void VehicleCmdGate::onEngage(autoware_control_msgs::msg::EngageMode::ConstSharedPtr msg)
-{
-  is_engaged_ = msg->is_engaged;
-}
-
 void VehicleCmdGate::onSystemEmergency(
   autoware_control_msgs::msg::EmergencyMode::ConstSharedPtr msg)
 {
@@ -493,6 +488,11 @@ void VehicleCmdGate::onGateMode(autoware_control_msgs::msg::GateMode::ConstShare
       get_logger(), "GateMode changed: %s -> %s", getGateModeName(prev_gate_mode.data),
       getGateModeName(current_gate_mode_.data));
   }
+}
+
+void VehicleCmdGate::onEngage(autoware_vehicle_msgs::msg::Engage::ConstSharedPtr msg)
+{
+  is_engaged_ = msg->engage;
 }
 
 void VehicleCmdGate::onSteering(autoware_vehicle_msgs::msg::Steering::ConstSharedPtr msg)
