@@ -49,8 +49,8 @@ repositories:
     version: autoware
   vendor/topic_tools:
     type: git
-    url: https://github.com/ApexAI/topic_tools.git
-    version: autoware
+    url: https://github.com/tier4/topic_tools.git
+    version: tier4/main
   vendor/pacmod3: # TODO remove after foxy-version is released
     type: git
     url: https://github.com/astuff/pacmod3.git
