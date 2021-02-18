@@ -6,12 +6,10 @@
   <arg name="input/image" default="/sensing/camera/traffic_light/image_raw"/>
   <arg name="input/camera_info" default="/sensing/camera/traffic_light/camera_info"/>
 
-  <!-- nodelet manager -->
-  <arg name="manager" default="traffic_light_recognition_nodelet_manager"/>
-  <!-- <node pkg="nodelet" exec="nodelet" name="$(var manager)" args="manager" /> -->
-
   <!-- compressed to raw image-->
-  <node pkg="image_transport" exec="republish" name="traffic_light_image_decompressor" args="compressed in:=$(var input/image)/compressed raw out:=$(var input/image)">
+  <node pkg="image_transport" exec="republish" name="traffic_light_image_decompressor" args="compressed raw">
+    <remap from="in/compressed" to="$(var input/image)/compressed"/>
+    <remap from="out" to="$(var input/image)"/>
   </node>
 
 
@@ -19,12 +17,6 @@
     <include file="$(find-pkg-share traffic_light_map_based_detector)/launch/traffic_light_map_based_detector.launch.xml">
       <arg name="input/camera_info" value="$(var input/camera_info)"/>
       <arg name="output/rois" value="rough/rois"/>
-    </include>
-    <include file="$(find-pkg-share traffic_light_ssd_fine_detector)/launch/traffic_light_ssd_fine_detector.launch.xml">
-      <arg name="manager" value="$(var manager)"/>
-      <arg name="input/image" value="$(var input/image)"/>
-      <arg name="input/rois" value="rough/rois"/>
-      <arg name="output/rois" value="rois"/>
     </include>
   </group>
 
@@ -35,17 +27,8 @@
     </include>
   </group>
 
-  <include file="$(find-pkg-share traffic_light_visualization)/launch/traffic_light_roi_visualizer.launch.xml">
-    <arg name="manager" value="$(var manager)"/>
+  <include file="$(find-pkg-share perception_launch)/launch/traffic_light_recognition/traffic_light_node_container.launch.py">
     <arg name="input/image" value="$(var input/image)"/>
-    <arg name="input/rois" value="rois"/>
     <arg name="enable_fine_detection" value="$(var enable_fine_detection)"/>
-  </include>
-  <include file="$(find-pkg-share traffic_light_classifier)/launch/traffic_light_classifier.launch.xml">
-    <arg name="manager" value="$(var manager)"/>
-    <arg name="input/rois" value="rois"/>
-    <arg name="input/image" value="$(var input/image)" />
-    <arg name="output/traffic_light_states" value="traffic_light_states" />
-    <arg name="use_gpu" value="true"/>
   </include>
 </launch>
