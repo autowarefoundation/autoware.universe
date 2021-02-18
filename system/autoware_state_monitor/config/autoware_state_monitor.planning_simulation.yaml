@@ -24,8 +24,6 @@
       names: [
         "/map/vector_map",
         "/map/pointcloud_map",
-        "/perception/object_recognition/detection/objects",
-        "/perception/object_recognition/tracking/objects",
         "/perception/object_recognition/objects",
         "/planning/mission_planning/route",
         "/planning/scenario_planning/trajectory",

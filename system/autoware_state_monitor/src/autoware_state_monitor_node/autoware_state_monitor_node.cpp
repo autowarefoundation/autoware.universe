@@ -30,9 +30,6 @@ std::vector<Config> getConfigs(
   const std::string & config_namespace)
 {
   std::string names_key = config_namespace + ".names";
-  if (!interface->has_parameter(names_key)) {
-    return std::vector<Config>{};
-  }
   interface->declare_parameter(names_key);
   std::vector<std::string> config_names = interface->get_parameter(names_key).as_string_array();
 
@@ -412,8 +409,6 @@ AutowareStateMonitorNode::AutowareStateMonitorNode()
   // Config
   topic_configs_ = getConfigs<TopicConfig>(
     this->get_node_parameters_interface(), "topic_configs");
-  param_configs_ = getConfigs<ParamConfig>(
-    this->get_node_parameters_interface(), "param_configs");
   tf_configs_ = getConfigs<TfConfig>(
     this->get_node_parameters_interface(), "tf_configs");
 
