@@ -69,3 +69,10 @@
     state: latest
     update_cache: yes
   become: yes
+
+- name: ROS2 (install vcstool)
+  apt:
+    name: "python3-vcstool"
+    state: latest
+    update_cache: yes
+  become: yes
