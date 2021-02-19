@@ -74,7 +74,7 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   std::vector<double> max_area_matrix =
     this->get_parameter("max_area_matrix").as_double_array();
   std::vector<double> min_area_matrix =
-    this->get_parameter("max_area_matrix").as_double_array();
+    this->get_parameter("min_area_matrix").as_double_array();
   data_association_ = std::make_unique<DataAssociation>(
     can_assign_matrix, max_dist_matrix, max_area_matrix, min_area_matrix);
 }
