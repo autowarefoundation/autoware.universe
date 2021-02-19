@@ -4,22 +4,22 @@
   <!-- common parameters -->
   <arg name="mode" default="camera_lidar_fusion"/>
   <!-- "camera_lidar_fusion", "lidar" or "camera" -->
-  <arg name="image_raw0" default="/sensing/camera/0/image_raw"/>
-  <arg name="camera_info0" default="/sensing/camera/0/camera_info"/>
-  <arg name="image_raw1" default="/sensing/camera/1/image_raw"/>
-  <arg name="camera_info1" default="/sensing/camera/1/camera_info"/>
-  <arg name="image_raw2" default="/sensing/camera/2/image_raw"/>
-  <arg name="camera_info2" default="/sensing/camera/2/camera_info"/>
-  <arg name="image_raw3" default="/sensing/camera/3/image_raw"/>
-  <arg name="camera_info3" default="/sensing/camera/3/camera_info"/>
-  <arg name="image_raw4" default="/sensing/camera/4/image_raw"/>
-  <arg name="camera_info4" default="/sensing/camera/4/camera_info"/>
-  <arg name="image_raw5" default="/sensing/camera/5/image_raw"/>
-  <arg name="camera_info5" default="/sensing/camera/5/camera_info"/>
-  <arg name="image_raw6" default=""/>
-  <arg name="camera_info6" default=""/>
-  <arg name="image_raw7" default=""/>
-  <arg name="camera_info7" default=""/>
+  <arg name="image_raw0" default="/sensing/camera/camera0/image_rect_color"/>
+  <arg name="camera_info0" default="/sensing/camera/camera0/camera_info"/>
+  <arg name="image_raw1" default="/sensing/camera/camera1/image_rect_color"/>
+  <arg name="camera_info1" default="/sensing/camera/camera1/camera_info"/>
+  <arg name="image_raw2" default="/sensing/camera/camera2/image_rect_color"/>
+  <arg name="camera_info2" default="/sensing/camera/camera2/camera_info"/>
+  <arg name="image_raw3" default="/sensing/camera/camera3/image_rect_color"/>
+  <arg name="camera_info3" default="/sensing/camera/camera3/camera_info"/>
+  <arg name="image_raw4" default="/sensing/camera/camera4/image_rect_color"/>
+  <arg name="camera_info4" default="/sensing/camera/camera4/camera_info"/>
+  <arg name="image_raw5" default="/sensing/camera/camera5/image_rect_color"/>
+  <arg name="camera_info5" default="/sensing/camera/camera5/camera_info"/>
+  <arg name="image_raw6" default="/sensing/camera/camera6/image_rect_color"/>
+  <arg name="camera_info6" default="/sensing/camera/camera6/camera_info"/>
+  <arg name="image_raw7" default="/sensing/camera/camera7/image_rect_color"/>
+  <arg name="camera_info7" default="/sensing/camera/camera7/camera_info"/>
   <arg name="image_number" default="6"/>
   <arg name="use_vector_map" default="true"/>
 

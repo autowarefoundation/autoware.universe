@@ -59,6 +59,6 @@
   <!-- <include file="$(find-pkg-share dynamic_object_visualization)/launch/dynamic_object_visualizer.launch.xml">
     <arg name="input" value="objects"/>
     <arg name="with_feature" value="true"/>
-    <arg name="only_known_objects" default="false"/>
+    <arg name="only_known_objects" value="false"/>
   </include> -->
 </launch>

@@ -96,9 +96,11 @@ def generate_launch_description():
                 remappings=[('input/image', LaunchConfiguration('input/image')),
                             ('input/rois', 'rois'),
                             ('input/rough/rois', 'rough/rois'),
+                            ('input/traffic_light_states', 'traffic_light_states'),
                             ('output/image', 'debug/rois'),
                             ('output/image/compressed', 'debug/rois/compressed'),
-                            ('output/image/compressedDepth', 'debug/rois/compressedDepth')]
+                            ('output/image/compressedDepth', 'debug/rois/compressedDepth'),
+                            ('output/image/theora', 'debug/rois/theora')]
             )
         ],
         output='both',

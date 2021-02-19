@@ -3,33 +3,25 @@
 <launch>
   <arg name="image_raw0" default="/image_raw"/>
   <arg name="camera_info0" default="/camera_info"/>
-  <arg name="image_raw1" default=""/>
-  <arg name="camera_info1" default=""/>
-  <arg name="image_raw2" default=""/>
-  <arg name="camera_info2" default=""/>
-  <arg name="image_raw3" default=""/>
-  <arg name="camera_info3" default=""/>
-  <arg name="image_raw4" default=""/>
-  <arg name="camera_info4" default=""/>
-  <arg name="image_raw5" default=""/>
-  <arg name="camera_info5" default=""/>
-  <arg name="image_raw6" default=""/>
-  <arg name="camera_info6" default=""/>
-  <arg name="image_raw7" default=""/>
-  <arg name="camera_info7" default=""/>
+  <arg name="image_raw1" default="/image_raw1"/>
+  <arg name="camera_info1" default="/camera_info1"/>
+  <arg name="image_raw2" default="/image_raw2"/>
+  <arg name="camera_info2" default="/camera_info2"/>
+  <arg name="image_raw3" default="/image_raw3"/>
+  <arg name="camera_info3" default="/camera_info3"/>
+  <arg name="image_raw4" default="/image_raw4"/>
+  <arg name="camera_info4" default="/camera_info4"/>
+  <arg name="image_raw5" default="/image_raw5"/>
+  <arg name="camera_info5" default="/camera_info5"/>
+  <arg name="image_raw6" default="/image_raw6"/>
+  <arg name="camera_info6" default="/camera_info6"/>
+  <arg name="image_raw7" default="/image_raw7"/>
+  <arg name="camera_info7" default="/camera_info7"/>
   <arg name="image_number" default="1"/>
   <arg name="use_vector_map" default="true"/>
 
-  <!-- <include file="$(find-pkg-share euclidean_cluster)/launch/euclidean_cluster.launch.xml"/> -->
-  <!-- or -->
-  <!-- <include file="$(find-pkg-share euclidean_cluster)/launch/voxel_grid_based_euclidean_cluster.launch.xml" /> -->
-  <!-- or -->
-  <include file="$(find-pkg-share lidar_apollo_instance_segmentation)/launch/lidar_apollo_instance_segmentation.launch.xml">
-    <arg name="output/objects" value="clusters"/>
-  </include>
-
   <!-- Jetson AGX -->
-  <!-- <include file="$(find-pkg-share tensorrt_yolo3)/launch/yolo3.launch.xml">
+  <!-- <include file="$(find-pkg-share tensorrt_yolo)/launch/yolo.launch.xml">
     <arg name="image_raw0" value="$(var image_raw0)"/>
     <arg name="image_raw1" value="$(var image_raw1)"/>
     <arg name="image_raw2" value="$(var image_raw2)"/>
@@ -41,22 +33,111 @@
     <arg name="image_number" value="$(var image_number)"/>
   </include> -->
 
-  <include file="$(find-pkg-share roi_cluster_fusion)/launch/roi_cluster_fusion.launch.xml">
-    <arg name="input_camera_info0" value="$(var camera_info0)"/>
-    <arg name="input_camera_info1" value="$(var camera_info1)"/>
-    <arg name="input_camera_info2" value="$(var camera_info2)"/>
-    <arg name="input_camera_info3" value="$(var camera_info3)"/>
-    <arg name="input_camera_info4" value="$(var camera_info4)"/>
-    <arg name="input_camera_info5" value="$(var camera_info5)"/>
-    <arg name="input_camera_info6" value="$(var camera_info6)"/>
-    <arg name="input_camera_info7" value="$(var camera_info7)"/>
-    <arg name="input_rois_number" value="$(var image_number)"/>
+  <group>
+    <push-ros-namespace namespace="euclidean"/>
+    <include file="$(find-pkg-share euclidean_cluster)/launch/voxel_grid_based_euclidean_cluster.launch.xml" >
+      <arg name="output/clusters" value="lidar/clusters"/>
+    </include>
+    <include file="$(find-pkg-share roi_cluster_fusion)/launch/roi_cluster_fusion.launch.xml">
+      <arg name="input/camera_info0" value="$(var camera_info0)"/>
+      <arg name="input/rois0" value="/perception/object_recognition/detection/rois0"/>
+      <arg name="input/camera_info1" value="$(var camera_info1)"/>
+      <arg name="input/rois1" value="/perception/object_recognition/detection/rois1"/>
+      <arg name="input/camera_info2" value="$(var camera_info2)"/>
+      <arg name="input/rois2" value="/perception/object_recognition/detection/rois2"/>
+      <arg name="input/camera_info3" value="$(var camera_info3)"/>
+      <arg name="input/rois3" value="/perception/object_recognition/detection/rois3"/>
+      <arg name="input/camera_info4" value="$(var camera_info4)"/>
+      <arg name="input/rois4" value="/perception/object_recognition/detection/rois4"/>
+      <arg name="input/camera_info5" value="$(var camera_info5)"/>
+      <arg name="input/rois5" value="/perception/object_recognition/detection/rois5"/>
+      <arg name="input/camera_info6" value="$(var camera_info6)"/>
+      <arg name="input/rois6" value="/perception/object_recognition/detection/rois6"/>
+      <arg name="input/camera_info7" value="$(var camera_info7)"/>
+      <arg name="input/rois7" value="/perception/object_recognition/detection/rois7"/>
+      <arg name="input/rois_number" value="$(var image_number)"/>
+      <arg name="input/clusters" value="lidar/clusters"/>
+      <arg name="input/image0" value="$(var image_raw0)"/>
+      <arg name="input/image1" value="$(var image_raw1)"/>
+      <arg name="input/image2" value="$(var image_raw2)"/>
+      <arg name="input/image3" value="$(var image_raw3)"/>
+      <arg name="input/image4" value="$(var image_raw4)"/>
+      <arg name="input/image5" value="$(var image_raw5)"/>
+      <arg name="input/image6" value="$(var image_raw6)"/>
+      <arg name="input/image7" value="$(var image_raw7)"/>
+      <arg name="output" value="camera_lidar_fusion/clusters"/>
+    </include>
+    <include file="$(find-pkg-share shape_estimation)/launch/shape_estimation.launch.xml">
+      <arg name="use_map_corrent" value="$(var use_vector_map)"/>
+      <arg name="input/objects" value="camera_lidar_fusion/clusters" />
+      <arg name="output/objects" value="camera_lidar_fusion/objects" />
+      <arg name="orientation_reliable" value="false"/>
+    </include>
+    <include file="$(find-pkg-share object_range_splitter)/launch/object_range_splitter.launch.xml">
+      <arg name="input/object" value="camera_lidar_fusion/objects"/>
+      <arg name="output/long_range_object" value="camera_lidar_fusion/long_range_objects"/>
+      <arg name="output/short_range_object" value="camera_lidar_fusion/short_range_objects"/>
+      <arg name="split_range" value="10.0"/>
+    </include>
+  </group>
+
+  <group>
+    <push-ros-namespace namespace="apollo"/>
+    <include file="$(find-pkg-share lidar_apollo_instance_segmentation)/launch/lidar_apollo_instance_segmentation.launch.xml">
+      <arg name="output/objects" value="lidar/clusters"/>
+    </include>
+    <include file="$(find-pkg-share shape_estimation)/launch/shape_estimation.launch.xml">
+      <arg name="use_map_corrent" value="$(var use_vector_map)"/>
+      <arg name="input/objects" value="lidar/clusters" />
+      <arg name="output/objects" value="lidar/objects" />
+      <arg name="orientation_reliable" value="true"/>
+    </include>
+    <include file="$(find-pkg-share object_range_splitter)/launch/object_range_splitter.launch.xml">
+      <arg name="input/object" value="lidar/objects"/>
+      <arg name="output/long_range_object" value="lidar/long_range_objects"/>
+      <arg name="output/short_range_object" value="lidar/short_range_objects"/>
+      <arg name="split_range" value="15.0"/>
+    </include>
+    <include file="$(find-pkg-share roi_cluster_fusion)/launch/roi_cluster_fusion.launch.xml">
+      <arg name="input/camera_info0" value="$(var camera_info0)"/>
+      <arg name="input/rois0" value="/perception/object_recognition/detection/rois0"/>
+      <arg name="input/camera_info1" value="$(var camera_info1)"/>
+      <arg name="input/rois1" value="/perception/object_recognition/detection/rois1"/>
+      <arg name="input/camera_info2" value="$(var camera_info2)"/>
+      <arg name="input/rois2" value="/perception/object_recognition/detection/rois2"/>
+      <arg name="input/camera_info3" value="$(var camera_info3)"/>
+      <arg name="input/rois3" value="/perception/object_recognition/detection/rois3"/>
+      <arg name="input/camera_info4" value="$(var camera_info4)"/>
+      <arg name="input/rois4" value="/perception/object_recognition/detection/rois4"/>
+      <arg name="input/camera_info5" value="$(var camera_info5)"/>
+      <arg name="input/rois5" value="/perception/object_recognition/detection/rois5"/>
+      <arg name="input/camera_info6" value="$(var camera_info6)"/>
+      <arg name="input/rois6" value="/perception/object_recognition/detection/rois6"/>
+      <arg name="input/camera_info7" value="$(var camera_info7)"/>
+      <arg name="input/rois7" value="/perception/object_recognition/detection/rois7"/>
+      <arg name="input/rois_number" value="$(var image_number)"/>
+      <arg name="input/clusters" value="lidar/short_range_objects"/>
+      <arg name="output" value="camera_lidar_fusion/short_range_objects"/>
+      <arg name="input/image0" value="$(var image_raw0)"/>
+      <arg name="input/image1" value="$(var image_raw1)"/>
+      <arg name="input/image2" value="$(var image_raw2)"/>
+      <arg name="input/image3" value="$(var image_raw3)"/>
+      <arg name="input/image4" value="$(var image_raw4)"/>
+      <arg name="input/image5" value="$(var image_raw5)"/>
+      <arg name="input/image6" value="$(var image_raw6)"/>
+      <arg name="input/image7" value="$(var image_raw7)"/>
+    </include>
+    <include file="$(find-pkg-share object_merger)/launch/object_association_merger.launch.xml">
+      <arg name="input/object0" value="camera_lidar_fusion/short_range_objects"/>
+      <arg name="input/object1" value="lidar/long_range_objects"/>
+      <arg name="output/object" value="camera_lidar_fusion/objects"/>
+    </include>
+  </group>
+
+  <include file="$(find-pkg-share object_merger)/launch/object_association_merger.launch.xml">
+    <arg name="input/object0" value="apollo/camera_lidar_fusion/objects"/>
+    <arg name="input/object1" value="euclidean/camera_lidar_fusion/short_range_objects"/>
+    <arg name="output/object" value="objects"/>
   </include>
 
-  <!-- <include file="$(find-pkg-share cluster_data_association)/launch/cluster_data_association.launch.xml" /> -->
-
-  <include file="$(find-pkg-share shape_estimation)/launch/shape_estimation.launch.xml">
-    <arg name="use_map_corrent" value="$(var use_vector_map)"/>
-    <arg name="output/objects" value="objects" />
-  </include>
 </launch>
