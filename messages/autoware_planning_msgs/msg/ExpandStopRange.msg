@@ -1,2 +1,2 @@
 builtin_interfaces/Time stamp
-float32 max_velocity
+float32 expand_stop_range

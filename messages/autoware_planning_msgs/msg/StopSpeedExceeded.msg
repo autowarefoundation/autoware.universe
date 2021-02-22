@@ -1,2 +1,2 @@
 builtin_interfaces/Time stamp
-float32 max_velocity
+bool stop_speed_exceeded

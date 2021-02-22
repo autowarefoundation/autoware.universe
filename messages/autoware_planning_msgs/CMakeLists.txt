@@ -17,6 +17,7 @@ find_package(nav_msgs REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/EnableAvoidance.msg"
+  "msg/ExpandStopRange.msg"
   "msg/IsAvoidancePossible.msg"
   "msg/LaneChangeCommand.msg"
   "msg/LaneChangeStatus.msg"
@@ -31,6 +32,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/StopFactor.msg"
   "msg/StopReason.msg"
   "msg/StopReasonArray.msg"
+  "msg/StopSpeedExceeded.msg"
   "msg/Trajectory.msg"
   "msg/TrajectoryPoint.msg"
   "msg/VelocityLimit.msg"
