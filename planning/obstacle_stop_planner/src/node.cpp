@@ -140,7 +140,7 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode()
     this->create_subscription<autoware_perception_msgs::msg::DynamicObjectArray>(
     "input/objects", 1,
     std::bind(&ObstacleStopPlannerNode::dynamicObjectCallback, this, std::placeholders::_1));
-  expand_stop_range_sub_ = this->create_subscription<autoware_debug_msgs::msg::Float32Stamped>(
+  expand_stop_range_sub_ = this->create_subscription<autoware_planning_msgs::msg::ExpandStopRange>(
     "input/expand_stop_range", 1,
     std::bind(
       &ObstacleStopPlannerNode::externalExpandStopRangeCallback, this, std::placeholders::_1));
@@ -466,9 +466,9 @@ void ObstacleStopPlannerNode::pathCallback(
 }
 
 void ObstacleStopPlannerNode::externalExpandStopRangeCallback(
-  const autoware_debug_msgs::msg::Float32Stamped::ConstSharedPtr input_msg)
+  const autoware_planning_msgs::msg::ExpandStopRange::ConstSharedPtr input_msg)
 {
-  expand_stop_range_ = input_msg->data;
+  expand_stop_range_ = input_msg->expand_stop_range;
   stop_search_radius_ =
     step_length_ + std::hypot(vehicle_width_ / 2.0 + expand_stop_range_, vehicle_length_ / 2.0);
 }
