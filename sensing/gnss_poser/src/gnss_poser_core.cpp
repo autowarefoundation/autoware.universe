@@ -47,7 +47,8 @@ GNSSPoser::GNSSPoser(const rclcpp::NodeOptions & node_options)
   pose_pub_ = create_publisher<geometry_msgs::msg::PoseStamped>("gnss_pose", rclcpp::QoS{1});
   pose_cov_pub_ = create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
     "gnss_pose_cov", rclcpp::QoS{1});
-  fixed_pub_ = create_publisher<std_msgs::msg::Bool>("gnss_fixed", rclcpp::QoS{1});
+  fixed_pub_ =
+    create_publisher<autoware_debug_msgs::msg::BoolStamped>("gnss_fixed", rclcpp::QoS{1});
 }
 
 void GNSSPoser::callbackNavSatFix(
@@ -57,7 +58,8 @@ void GNSSPoser::callbackNavSatFix(
   const bool is_fixed = isFixed(nav_sat_fix_msg_ptr->status);
 
   // publish is_fixed topic
-  std_msgs::msg::Bool is_fixed_msg;
+  autoware_debug_msgs::msg::BoolStamped is_fixed_msg;
+  is_fixed_msg.stamp = this->now();
   is_fixed_msg.data = is_fixed;
   fixed_pub_->publish(is_fixed_msg);
 
