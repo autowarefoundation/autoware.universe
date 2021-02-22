@@ -83,7 +83,8 @@
   <arg name="get_traffic_light_status" default="traffic_light/get/status" />
   <arg name="get_nearest_traffic_light_status" default="traffic_light/get/nearest_traffic_light_status" />
 
-  <group ns="awapi">
+  <group>
+    <push-ros-namespace namespace="awapi"/>
     <node pkg="awapi_awiv_adapter" exec="awapi_awiv_adapter" output="screen">
       <remap from="input/steer" to="$(var input_steer)" />
       <remap from="input/vehicle_cmd" to="$(var input_vehicle_cmd)" />
@@ -105,6 +106,9 @@
       <remap from="input/lane_change_candidate_path" to="$(var input_lane_change_candidate_path)" />
       <remap from="input/obstacle_avoid_ready" to="$(var input_obstacle_avoid_ready)" />
       <remap from="input/obstacle_avoid_candidate_path" to="$(var input_obstacle_avoid_candidate_path)" />
+      <remap from="input/max_velocity" to="$(var set_max_velocity)" />
+      <remap from="input/temporary_stop" to="$(var set_temporary_stop)" />
+      <remap from="input/autoware_trajectory" to="$(var input_trajectory)" />
       <remap from="input/door_control" to="$(var set_door_control)" />
       <remap from="input/door_status" to="$(var input_door_status)" />
       <remap from="output/vehicle_status" to="$(var output_vehicle_status)" />
@@ -174,17 +178,17 @@
     <node pkg="topic_tools" exec="relay" name="lane_change_approval_relay" output="log" >
       <param name="input_topic" value="$(var set_lane_change_approval)" />
       <param name="output_topic" value="$(var output_lane_change_approval)" />
-      <param name="type" value="std_msgs/msg/Bool" />
+      <param name="type" value="autoware_planning_msgs/msg/LaneChangeCommand" />
     </node>
     <node pkg="topic_tools" exec="relay" name="force_lane_change_relay" output="log" >
       <param name="input_topic" value="$(var set_force_lane_change)" />
       <param name="output_topic" value="$(var output_force_lane_change)" />
-      <param name="type" value="std_msgs/msg/Bool" />
+      <param name="type" value="autoware_planning_msgs/msg/LaneChangeCommand" />
     </node>
     <node pkg="topic_tools" exec="relay" name="obstacle_avoid_approval_relay" output="log" >
       <param name="input_topic" value="$(var set_obstacle_avoid_approval)" />
       <param name="output_topic" value="$(var output_obstacle_avoid_approval)" />
-      <param name="type" value="std_msgs/msg/Bool" />
+      <param name="type" value="autoware_planning_msgs/msg/EnableAvoidance" />
     </node>
     <!-- not implemented
     <node pkg="topic_tools" exec="relay" name="force_obstacle_avoid_relay" output="log" >
@@ -200,7 +204,7 @@
     <node pkg="topic_tools" exec="relay" name="speed_exceeded_relay" output="log" >
       <param name="input_topic" value="$(var input_stop_speed_exceeded)" />
       <param name="output_topic" value="$(var get_stop_speed_exceeded)" />
-      <param name="type" value="std_msgs/msg/Bool" />
+      <param name="type" value="autoware_planning_msgs/msg/StopSpeedExceeded" />
     </node>
     <node pkg="topic_tools" exec="relay" name="crosswalk_status_relay" output="log" >
       <param name="input_topic" value="$(var set_crosswalk_status)" />
@@ -215,7 +219,7 @@
     <node pkg="topic_tools" exec="relay" name="expand_stop_range_relay" output="log" >
       <param name="input_topic" value="$(var set_expand_stop_range)" />
       <param name="output_topic" value="$(var input_expand_stop_range)" />
-      <param name="type" value="std_msgs/msg/Float32" />
+      <param name="type" value="autoware_planning_msgs/msg/ExpandStopRange" />
     </node>
 
   </group>

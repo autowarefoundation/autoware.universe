@@ -65,7 +65,7 @@ pacmod_msgs::msg::SystemCmdInt createClearOverrideDoorCommand(
 
 pacmod_msgs::msg::SystemCmdInt createDoorCommand(
   const rclcpp::Clock::SharedPtr & clock,
-  const std_msgs::msg::Bool::ConstSharedPtr & msg_ptr)
+  const autoware_api_msgs::msg::DoorControlCommand::ConstSharedPtr & msg_ptr)
 {
   using pacmod_msgs::msg::SystemCmdInt;
 
@@ -77,7 +77,7 @@ pacmod_msgs::msg::SystemCmdInt createDoorCommand(
 
   if (!msg_ptr) {return door_cmd;}
 
-  if (msg_ptr->data) {
+  if (msg_ptr->open) {
     door_cmd.command = SystemCmdInt::DOOR_OPEN;
   } else {
     door_cmd.command = SystemCmdInt::DOOR_CLOSE;

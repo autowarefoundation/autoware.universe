@@ -18,6 +18,7 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include "awapi_awiv_adapter/awapi_autoware_util.hpp"
+#include "autoware_planning_msgs/msg/velocity_limit.hpp"
 
 namespace autoware_api
 {
@@ -29,11 +30,12 @@ public:
 
 private:
   // publisher
-  rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr pub_state_;
+  rclcpp::Publisher<autoware_planning_msgs::msg::VelocityLimit>::SharedPtr pub_state_;
 
   bool calcMaxVelocity(
-    const std_msgs::msg::Float32::ConstSharedPtr & max_velocity_ptr,
-    const std_msgs::msg::Bool::ConstSharedPtr & temporary_stop_ptr, float * max_velocity);
+    const autoware_api_msgs::msg::VelocityLimit::ConstSharedPtr & max_velocity_ptr,
+    const autoware_api_msgs::msg::StopCommand::ConstSharedPtr & temporary_stop_ptr,
+    float * max_velocity);
 
   double default_max_velocity_;
 };

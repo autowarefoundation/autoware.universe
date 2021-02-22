@@ -21,22 +21,26 @@ AutowareIvMaxVelocityPublisher::AutowareIvMaxVelocityPublisher(
 : default_max_velocity_(default_max_velocity)
 {
   // publisher
-  pub_state_ = node.create_publisher<std_msgs::msg::Float32>("output/max_velocity", 1);
+  pub_state_ = node.create_publisher<autoware_planning_msgs::msg::VelocityLimit>(
+    "output/max_velocity", 1);
 }
 
 void AutowareIvMaxVelocityPublisher::statePublisher(const AutowareInfo & aw_info)
 {
-  std_msgs::msg::Float32 max_velocity;
+  autoware_planning_msgs::msg::VelocityLimit max_velocity;
   if (calcMaxVelocity(
-      aw_info.max_velocity_ptr, aw_info.temporary_stop_ptr, &max_velocity.data))  // publish info
+      aw_info.max_velocity_ptr,
+      aw_info.temporary_stop_ptr,
+      &max_velocity.max_velocity))                  // publish info
   {
     pub_state_->publish(max_velocity);
   }
 }
 
 bool AutowareIvMaxVelocityPublisher::calcMaxVelocity(
-  const std_msgs::msg::Float32::ConstSharedPtr & max_velocity_ptr,
-  const std_msgs::msg::Bool::ConstSharedPtr & temporary_stop_ptr, float * max_velocity)
+  const autoware_api_msgs::msg::VelocityLimit::ConstSharedPtr & max_velocity_ptr,
+  const autoware_api_msgs::msg::StopCommand::ConstSharedPtr & temporary_stop_ptr,
+  float * max_velocity)
 {
   if (!max_velocity_ptr && !temporary_stop_ptr) {
     // receive no max velocity information
@@ -45,9 +49,9 @@ bool AutowareIvMaxVelocityPublisher::calcMaxVelocity(
 
   // input max velocity
   *max_velocity =
-    static_cast<float>(max_velocity_ptr ? max_velocity_ptr->data : default_max_velocity_);
+    static_cast<float>(max_velocity_ptr ? max_velocity_ptr->max_velocity : default_max_velocity_);
 
-  if (temporary_stop_ptr && temporary_stop_ptr->data) {
+  if (temporary_stop_ptr && temporary_stop_ptr->stop) {
     // if temporary_stop is true, max velocity is 0
     *max_velocity = static_cast<float>(0.0);
   }

@@ -57,7 +57,7 @@ private:
     const autoware_control_msgs::msg::GateMode::ConstSharedPtr & gate_mode_ptr,
     autoware_api_msgs::msg::AwapiAutowareStatus * status);
   void getIsEmergencyInfo(
-    const std_msgs::msg::Bool::ConstSharedPtr & is_emergency_ptr,
+    const autoware_control_msgs::msg::EmergencyMode::ConstSharedPtr & is_emergency_ptr,
     autoware_api_msgs::msg::AwapiAutowareStatus * status);
   void getHazardStatusInfo(
     const autoware_system_msgs::msg::HazardStatusStamped::ConstSharedPtr & hazard_status_ptr,

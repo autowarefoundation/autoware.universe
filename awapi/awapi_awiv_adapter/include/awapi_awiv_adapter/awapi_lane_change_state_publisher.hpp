@@ -36,10 +36,10 @@ private:
   rclcpp::Publisher<autoware_api_msgs::msg::LaneChangeStatus>::SharedPtr pub_state_;
 
   void getLaneChangeAvailableInfo(
-    const std_msgs::msg::Bool::ConstSharedPtr & available_ptr,
+    const autoware_planning_msgs::msg::LaneChangeStatus::ConstSharedPtr & available_ptr,
     autoware_api_msgs::msg::LaneChangeStatus * status);
   void getLaneChangeReadyInfo(
-    const std_msgs::msg::Bool::ConstSharedPtr & ready_ptr,
+    const autoware_planning_msgs::msg::LaneChangeStatus::ConstSharedPtr & ready_ptr,
     autoware_api_msgs::msg::LaneChangeStatus * status);
   void getCandidatePathInfo(
     const autoware_planning_msgs::msg::Path::ConstSharedPtr & path_ptr,

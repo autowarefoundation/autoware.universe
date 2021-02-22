@@ -43,7 +43,7 @@ void AutowareIvObstacleAvoidanceStatePublisher::statePublisher(const AutowareInf
 }
 
 void AutowareIvObstacleAvoidanceStatePublisher::getObstacleAvoidReadyInfo(
-  const std_msgs::msg::Bool::ConstSharedPtr & ready_ptr,
+  const autoware_planning_msgs::msg::IsAvoidancePossible::ConstSharedPtr & ready_ptr,
   autoware_api_msgs::msg::ObstacleAvoidanceStatus * status)
 {
   if (!ready_ptr) {
@@ -52,7 +52,7 @@ void AutowareIvObstacleAvoidanceStatePublisher::getObstacleAvoidReadyInfo(
     return;
   }
 
-  status->obstacle_avoidance_ready = ready_ptr->data;
+  status->obstacle_avoidance_ready = ready_ptr->is_avoidance_possible;
 }
 
 void AutowareIvObstacleAvoidanceStatePublisher::getCandidatePathInfo(

@@ -95,7 +95,7 @@ void AutowareIvAutowareStatePublisher::getGateModeInfo(
 }
 
 void AutowareIvAutowareStatePublisher::getIsEmergencyInfo(
-  const std_msgs::msg::Bool::ConstSharedPtr & is_emergency_ptr,
+  const autoware_control_msgs::msg::EmergencyMode::ConstSharedPtr & is_emergency_ptr,
   autoware_api_msgs::msg::AwapiAutowareStatus * status)
 {
   if (!is_emergency_ptr) {
@@ -104,7 +104,7 @@ void AutowareIvAutowareStatePublisher::getIsEmergencyInfo(
   }
 
   // get emergency
-  status->emergency_stopped = is_emergency_ptr->data;
+  status->emergency_stopped = is_emergency_ptr->is_emergency;
 }
 
 void AutowareIvAutowareStatePublisher::getHazardStatusInfo(

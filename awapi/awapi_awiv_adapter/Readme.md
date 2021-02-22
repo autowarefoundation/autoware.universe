@@ -65,11 +65,11 @@
 - get flag of exceeding stop speed or not
   - True: exceed the stop speed ( = "cannot stop before the stop line")
   - False: not exceed the stop speed ( = "no stop line in the trajectory" or "possible to stop before the stop line" )
-- MessageType: std_msgs/Bool
+- MessageType: autoware_planning_msgs/StopSpeedExceedStatus
 
 | ✓   | type          | name | unit | note |
 | --- | :------------ | :--- | :--- | :--- |
-|     | std_msgs/Bool |      | -    |      |
+|     | autoware_planning_msgs/StopSpeedExceedStatus |      | -    |      |
 
 ### /awapi/prediction/get/objects
 
@@ -140,16 +140,16 @@
 ### /awapi/vehicle/put/velocity
 
 - set upper velocity
-- MessageType: std_msgs/Float32
+- MessageType: autoware_api_msgs/VelocityLimit
 
 | ✓   | type             | name | unit | note         |
 | --- | :--------------- | :--- | :--- | :----------- |
-| ✓   | std_msgs/Float32 |      |      | max velocity |
+| ✓   | autoware_api_msgs/VelocityLimit |      |      | max velocity |
 
 ### /awapi/vehicle/put/stop
 
 - set temporary stop signal
-- MessageType: std_msgs/bool
+- MessageType: autoware_api_msgs/StopCommand
 - Specification
 
   - send True: send upper velocity to 0
@@ -159,7 +159,7 @@
 
   | ✓   | type          | name | unit | note |
   | --- | :------------ | :--- | :--- | :--- |
-  | ✓   | std_msgs/Bool |      |      |      |
+  | ✓   | autoware_api_msgs/StopCommand |      |      |      |
 
 ### /awapi/autoware/put/gate_mode
 
@@ -173,7 +173,7 @@
 ### /awapi/autoware/put/emergency_stop
 
 - send emergency_stop signal
-- MessageType: std_msgs/Bool
+- MessageType: autoware_control_msgs/EmergencyMode
 - <font color="Cyan">**To enable this functionality, autoware have to be in the Remote Mode or set _/control/vehicle_cmd_gate/use_external_emergency_stop_ to true.**</font>
 
 | ✓   | type                                | name | unit | note |
@@ -211,30 +211,30 @@
 
 - send lane change approval flag
 - send True: start lane change when **lane_change_ready** is true
-- MessageType: std_msgs/Bool
+- MessageType: autoware_planning_msgs/LaneChangeCommand
 
 | ✓   | type          | name | unit | note |
 | --- | :------------ | :--- | :--- | :--- |
-|     | std_msgs/Bool |      |      |      |
+|     | autoware_planning_msgs/msg/LaneChangeCommand |      |      |      |
 
 ### /awapi/lane_change/put/force
 
 - send force lane change flag
 - send True: start lane change when **force_lane_change_available** is true
-- MessageType: std_msgs/Bool
+- MessageType: autoware_planning_msgs/LaneChangeCommand
 
 | ✓   | type          | name | unit | note |
 | --- | :------------ | :--- | :--- | :--- |
-|     | std_msgs/Bool |      |      |      |
+|     | autoware_planning_msgs/LaneChangeCommand |      |      |      |
 
 ### /awapi/object_avoidance/put/approval
 
 - send object avoidance approval flag
-- MessageType: std_msgs/Bool
+- MessageType: autoware_planning_msgs/EnableAvoidance
 
 | ✓   | type          | name | unit | note |
 | --- | :------------ | :--- | :--- | :--- |
-|     | std_msgs/Bool |      |      |      |
+|     | autoware_planning_msgs/EnableAvoidance |      |      |      |
 
 ### /awapi/object_avoidance/put/force
 
@@ -256,13 +256,13 @@
 ### /awapi/vehicle/put/door
 
 - send door command
-- MessageType: std_msgs/Bool
+- MessageType: autoware_api_msgs/DoorCommand
   - send True: open door
   - send False: close door
 
 | ✓   | type          | name | unit | note                                        |
 | --- | :------------ | :--- | :--- | :------------------------------------------ |
-|     | std_msgs/Bool |      |      | available only for the vehicle using pacmod |
+|     | autoware_api_msgs/DoorCommand |      |      | available only for the vehicle using pacmod |
 
 ### /awapi/autoware/put/crosswalk_states
 
@@ -289,8 +289,8 @@
 ### /awapi/autoware/put/expand_stop_range
 
 - send expand range of the polygon used by obstacle stop [m]
-- MessageType: std_msgs/Float32
+- MessageType: autoware_planning_msgs/ExpandStopRange
 
 | ✓   | type    | name | unit | note |
 | --- | :------ | :--- | :--- | :--- |
-|     | Float32 |      |      |      |
+|     | autoware_planning_msgs/ExpandStopRange |      |      |      |

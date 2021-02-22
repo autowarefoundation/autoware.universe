@@ -54,7 +54,7 @@ private:
     const autoware_vehicle_msgs::msg::ShiftStamped::ConstSharedPtr & gear_ptr,
     autoware_api_msgs::msg::AwapiVehicleStatus * status);
   void getBatteryInfo(
-    const std_msgs::msg::Float32::ConstSharedPtr & battery_ptr,
+    const autoware_vehicle_msgs::msg::BatteryStatus::ConstSharedPtr & battery_ptr,
     autoware_api_msgs::msg::AwapiVehicleStatus * status);
   void getGpsInfo(
     const sensor_msgs::msg::NavSatFix::ConstSharedPtr & nav_sat_ptr,

@@ -185,7 +185,7 @@ void AutowareIvVehicleStatePublisher::getGearInfo(
 }
 
 void AutowareIvVehicleStatePublisher::getBatteryInfo(
-  const std_msgs::msg::Float32::ConstSharedPtr & battery_ptr,
+  const autoware_vehicle_msgs::msg::BatteryStatus::ConstSharedPtr & battery_ptr,
   autoware_api_msgs::msg::AwapiVehicleStatus * status)
 {
   if (!battery_ptr) {
@@ -194,7 +194,7 @@ void AutowareIvVehicleStatePublisher::getBatteryInfo(
   }
 
   // get battery
-  status->energy_level = battery_ptr->data;
+  status->energy_level = battery_ptr->energy_level;
 }
 
 void AutowareIvVehicleStatePublisher::getGpsInfo(

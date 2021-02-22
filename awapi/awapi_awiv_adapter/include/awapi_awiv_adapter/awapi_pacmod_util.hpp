@@ -20,7 +20,7 @@
 #include "autoware_api_msgs/msg/door_status.hpp"
 #include "pacmod_msgs/msg/system_cmd_int.hpp"
 #include "pacmod_msgs/msg/system_rpt_int.hpp"
-#include "std_msgs/msg/bool.hpp"
+#include "autoware_api_msgs/msg/door_control_command.hpp"
 
 namespace autoware_api
 {
@@ -31,7 +31,8 @@ autoware_api_msgs::msg::DoorStatus getDoorStatusMsg(
 pacmod_msgs::msg::SystemCmdInt createClearOverrideDoorCommand(
   const rclcpp::Clock::SharedPtr & clock);
 pacmod_msgs::msg::SystemCmdInt createDoorCommand(
-  const rclcpp::Clock::SharedPtr & clock, const std_msgs::msg::Bool::ConstSharedPtr & msg_ptr);
+  const rclcpp::Clock::SharedPtr & clock,
+  const autoware_api_msgs::msg::DoorControlCommand::ConstSharedPtr & msg_ptr);
 }  // namespace pacmod_util
 
 }  // namespace autoware_api

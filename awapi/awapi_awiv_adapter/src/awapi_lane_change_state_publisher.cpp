@@ -43,7 +43,7 @@ void AutowareIvLaneChangeStatePublisher::statePublisher(const AutowareInfo & aw_
 }
 
 void AutowareIvLaneChangeStatePublisher::getLaneChangeAvailableInfo(
-  const std_msgs::msg::Bool::ConstSharedPtr & available_ptr,
+  const autoware_planning_msgs::msg::LaneChangeStatus::ConstSharedPtr & available_ptr,
   autoware_api_msgs::msg::LaneChangeStatus * status)
 {
   if (!available_ptr) {
@@ -53,11 +53,11 @@ void AutowareIvLaneChangeStatePublisher::getLaneChangeAvailableInfo(
   }
 
   // get lane change available info
-  status->force_lane_change_available = available_ptr->data;
+  status->force_lane_change_available = available_ptr->status;
 }
 
 void AutowareIvLaneChangeStatePublisher::getLaneChangeReadyInfo(
-  const std_msgs::msg::Bool::ConstSharedPtr & ready_ptr,
+  const autoware_planning_msgs::msg::LaneChangeStatus::ConstSharedPtr & ready_ptr,
   autoware_api_msgs::msg::LaneChangeStatus * status)
 {
   if (!ready_ptr) {
@@ -67,7 +67,7 @@ void AutowareIvLaneChangeStatePublisher::getLaneChangeReadyInfo(
   }
 
   // get lane change available info
-  status->lane_change_ready = ready_ptr->data;
+  status->lane_change_ready = ready_ptr->status;
 }
 
 void AutowareIvLaneChangeStatePublisher::getCandidatePathInfo(
