@@ -800,7 +800,7 @@ boost::optional<std::vector<double>> MPTOptimizer::getRoughBound(
     return boost::none;
   }
   if (!enable_avoidance) {
-    *original_object_clearance = std::numeric_limits<double>::max();
+    original_object_clearance.emplace(std::numeric_limits<double>::max());
   }
   constexpr double min_road_clearance = 0.1;
   constexpr double min_obj_clearance = 0.1;
@@ -1205,11 +1205,11 @@ double MPTOptimizer::getTraversedDistance(
     auto clearance = getClearance(maps.clearance_map, new_position, maps.map_info);
     auto obj_clearance = getClearance(maps.only_objects_clearance_map, new_position, maps.map_info);
     if (!clearance || !obj_clearance) {
-      *clearance = 0;
-      *obj_clearance = 0;
+      clearance.emplace(0);
+      obj_clearance.emplace(0);
     }
     if (!enable_avoidance) {
-      *obj_clearance = std::numeric_limits<double>::max();
+      obj_clearance.emplace(std::numeric_limits<double>::max());
     }
     if (search_expanding_side) {
       if (clearance.get() > min_road_clearance && obj_clearance.get() > min_obj_clearance) {
@@ -1251,7 +1251,7 @@ boost::optional<double> MPTOptimizer::getValidLatError(
       return boost::none;
     }
     if (!enable_avoidance) {
-      *obj_clearance = std::numeric_limits<double>::max();
+      obj_clearance.emplace(std::numeric_limits<double>::max());
     }
     if (search_expanding_side) {
       if (clearance.get() > min_road_clearance && obj_clearance.get() > min_obj_clearance) {
