@@ -161,7 +161,7 @@ void MaxVelocityDisplay::processMessage(
   painter.setFont(font);
   std::ostringstream velocity_ss;
   velocity_ss << std::fixed << std::setprecision(0) << "limited" << std::endl <<
-    msg_ptr->data * 3.6 << "km/h";
+    msg_ptr->max_velocity * 3.6 << "km/h";
   painter.drawText(
     static_cast<int>(line_width * 0.5), std::min(static_cast<int>(line_width * 0.5), h - 1), w,
     std::max(h, 1), Qt::AlignCenter | Qt::AlignVCenter, velocity_ss.str().c_str());
