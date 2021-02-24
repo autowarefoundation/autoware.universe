@@ -3,7 +3,7 @@
 
   <group ns="dummy_diag_publisher">
     <node pkg="dummy_diag_publisher" exec="dummy_diag_publisher" name="$(var diag_name)" output="screen">
-      <param from="$(find-pkg-share dummy_diag_publisher)/config/$(var diag_name).yaml" />
+      <param from="$(find-pkg-share dummy_diag_publisher)/config/$(var diag_name).param.yaml" />
     </node>
   </group>
 </launch>
