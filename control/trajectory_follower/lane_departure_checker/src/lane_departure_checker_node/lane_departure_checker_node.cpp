@@ -162,7 +162,8 @@ LaneDepartureCheckerNode::LaneDepartureCheckerNode(const rclcpp::NodeOptions & o
   sub_twist_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
     "input/twist", 1, std::bind(&LaneDepartureCheckerNode::onTwist, this, _1));
   sub_lanelet_map_bin_ = this->create_subscription<autoware_lanelet2_msgs::msg::MapBin>(
-    "input/lanelet_map_bin", 1, std::bind(&LaneDepartureCheckerNode::onLaneletMapBin, this, _1));
+    "input/lanelet_map_bin", rclcpp::QoS{1}.transient_local(),
+    std::bind(&LaneDepartureCheckerNode::onLaneletMapBin, this, _1));
   sub_route_ = this->create_subscription<autoware_planning_msgs::msg::Route>(
     "input/route", 1, std::bind(&LaneDepartureCheckerNode::onRoute, this, _1));
   sub_reference_trajectory_ = this->create_subscription<autoware_planning_msgs::msg::Trajectory>(
