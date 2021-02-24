@@ -6,7 +6,7 @@
   <arg name="input/camera_info" default="/camera/camera_info" />
   <arg name="input/route" default="/planning/mission_planning/route" />
   <arg name="output/rois" default="output/rois" />
-  <arg name="param_path" default="$(find-pkg-share traffic_light_map_based_detector)/config/traffic_light_map_based_detector.yaml" />
+  <arg name="param_path" default="$(find-pkg-share traffic_light_map_based_detector)/config/traffic_light_map_based_detector.param.yaml" />
 
   <node pkg="traffic_light_map_based_detector" exec="traffic_light_map_based_detector_node" name="traffic_light_map_based_detector" output="screen">
     <remap from="input/vector_map" to="$(var input/vector_map)" />
