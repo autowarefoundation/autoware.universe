@@ -47,7 +47,7 @@ struct PlannerData
   : vehicle_info_(vehicle_info_util::VehicleInfo::create(node))
   {
     max_stop_acceleration_threshold_ = node.declare_parameter(
-      "max_accel", -5.0);  // TODO(someone): read min_acc in velocity_controller_param.yaml?
+      "max_accel", -5.0);  // TODO(someone): read min_acc in velocity_controller.param.yaml?
     delay_response_time_ = node.declare_parameter("delay_response_time", 1.3);
   }
   // tf
