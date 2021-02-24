@@ -1,6 +1,6 @@
 <launch>
-  <arg name="param_path" default="$(find-pkg-share surround_obstacle_checker)/config/default_surround_obstacle_checker.yaml" />
-  <arg name="vehicle_info_param" default="$(find-pkg-share lexus_description)/config/vehicle_info.yaml" />
+  <arg name="param_path" default="$(find-pkg-share surround_obstacle_checker)/config/surround_obstacle_checker.param.yaml" />
+  <arg name="vehicle_info_param" default="$(find-pkg-share lexus_description)/config/vehicle_info.param.yaml" />
 
   <arg name="input_trajectory" default="input/trajectory" />
   <arg name="input_objects" default="/perception/object_recognition/objects" />
