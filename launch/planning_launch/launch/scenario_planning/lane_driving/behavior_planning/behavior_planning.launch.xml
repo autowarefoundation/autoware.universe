@@ -39,6 +39,7 @@
     <param name="use_predicted_path_outside_lanelet" value="false" />
     <param name="use_all_predicted_path" value="false" />
     <param name="refine_goal_search_radius_range" value="7.5" />
+    <param from="$(var vehicle_param_file)" />
   </node>
 
   <executable cmd="ros2 topic pub /planning/scenario_planning/lane_driving/lane_change_approval
