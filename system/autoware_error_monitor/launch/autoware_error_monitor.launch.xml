@@ -3,15 +3,15 @@
   <arg name="ignore_missing_diagnostics" default="false" />
   <arg name="add_leaf_diagnostics" default="true" />
 
-  <arg name="agg_config_file_discard" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/_discard.yaml" />
-  <arg name="agg_config_file_control" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/control.yaml" />
-  <arg name="agg_config_file_localization" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/localization.yaml" />
-  <arg name="agg_config_file_map" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/map.yaml" />
-  <arg name="agg_config_file_perception" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/perception.yaml" />
-  <arg name="agg_config_file_planning" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/planning.yaml" />
-  <arg name="agg_config_file_sensing" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/sensing.yaml" />
-  <arg name="agg_config_file_system" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/system.yaml" />
-  <arg name="agg_config_file_vehicle" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/vehicle.yaml" />
+  <arg name="agg_config_file_discard" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/_discard.param.yaml" />
+  <arg name="agg_config_file_control" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/control.param.yaml" />
+  <arg name="agg_config_file_localization" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/localization.param.yaml" />
+  <arg name="agg_config_file_map" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/map.param.yaml" />
+  <arg name="agg_config_file_perception" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/perception.param.yaml" />
+  <arg name="agg_config_file_planning" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/planning.param.yaml" />
+  <arg name="agg_config_file_sensing" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/sensing.param.yaml" />
+  <arg name="agg_config_file_system" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/system.param.yaml" />
+  <arg name="agg_config_file_vehicle" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/vehicle.param.yaml" />
 
   <group ns="/">
     <node pkg="diagnostic_aggregator" exec="aggregator_node" name="aggregator_node" output="screen">
