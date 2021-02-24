@@ -16,7 +16,7 @@
         <param name="image_width" value="2880" />
         <param name="image_height" value="1860" />
         <param name="pixel_format" value="yuyv" />
-        <param name="framerate" value="24" />
+        <param name="frame_rate" value="24" />
       </node>
     </group>
   </group>

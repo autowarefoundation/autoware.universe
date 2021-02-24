@@ -2,26 +2,37 @@
   <!-- Params -->
   <arg name="sensor_frame" default="livox_frame" />
   <arg name="lvx_file_path" default="livox_test.lvx"/>
-  <arg name="bd_list" default="100000000000000"/>
+  <arg name="bd_code_param_path"/>
   <arg name="xfer_format" default="0"/>
   <arg name="multi_topic" default="0"/>
   <arg name="data_src" default="0"/>
   <arg name="publish_freq" default="10.0"/>
   <arg name="output_type" default="0"/>
-  <arg name="cmdline_arg" default="$(var bd_list)"/>
 
-  <group>
-    <node name="livox_lidar_publisher" pkg="livox_ros2_driver" exec="livox_ros2_driver_node" required="true" output="screen" args="$(var cmdline_arg)">
+  <arg name="base_frame" default="base_link" />
+  <arg name="manager" default="livox_nodelet_manager" />
+  <arg name="launch_driver" default="true" />
+  <arg name="vehicle_param_file" />
+  <arg name="vehicle_mirror_param_file" />
+
+  <group if="$(var launch_driver)">
+    <node name="livox_lidar_publisher" pkg="livox_ros2_driver" exec="livox_ros2_driver_node" output="screen">
       <param name="xfer_format" value="$(var xfer_format)"/>
       <param name="multi_topic" value="$(var multi_topic)"/>
       <param name="data_src" value="$(var data_src)"/>
       <param name="publish_freq" value="$(var publish_freq)"/>
       <param name="output_data_type" value="$(var output_type)"/>
-      <!-- TODO(fred-apex-ai) parameter not declared in livox_ros2_driver -->
-      <!-- <param name="cmdline_str" value="$(var bd_list)"/>  -->
-      <param name="cmdline_file_path" value="$(var lvx_file_path)"/>
+      <param name="lvx_file_path" value="$(var lvx_file_path)"/>
       <param name="user_config_path" value="$(find-pkg-share livox_ros2_driver)/config/livox_lidar_config.json"/>
       <param name="frame_id" value="$(var sensor_frame)" />
+      <param from="$(var bd_code_param_path)"/>
     </node>
   </group>
+
+  <include file="$(find-pkg-share sensing_launch)/launch/livox_horizon_pointcloud_preprocessor.launch.py">
+    <arg name="base_frame" value="$(var base_frame)" />
+    <arg name="vehicle_param_file" value="$(var vehicle_param_file)" />
+    <arg name="vehicle_mirror_param_file" value="$(var vehicle_mirror_param_file)" />
+  </include>
+
 </launch>

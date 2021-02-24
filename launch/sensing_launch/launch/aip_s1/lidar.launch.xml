@@ -1,6 +1,9 @@
 <launch>
 
   <arg name="launch_driver" default="true" />
+  <arg name="use_concat_filter" default="true" />
+  <arg name="vehicle_param_file" />
+  <arg name="vehicle_mirror_param_file" />
 
   <group>
     <push-ros-namespace namespace="lidar"/>
@@ -12,6 +15,8 @@
         <arg name="device_ip" value="192.168.1.201"/>
         <arg name="port" value="2368"/>
         <arg name="launch_driver" value="$(var launch_driver)" />
+        <arg name="vehicle_param_file" value="$(var vehicle_param_file)" />
+        <arg name="vehicle_mirror_param_file" value="$(var vehicle_mirror_param_file)" />
       </include>
     </group>
 
@@ -22,6 +27,8 @@
         <arg name="device_ip" value="192.168.1.202"/>
         <arg name="port" value="2369"/>
         <arg name="launch_driver" value="$(var launch_driver)" />
+        <arg name="vehicle_param_file" value="$(var vehicle_param_file)" />
+        <arg name="vehicle_mirror_param_file" value="$(var vehicle_mirror_param_file)" />
       </include>
     </group>
 
@@ -32,11 +39,15 @@
         <arg name="device_ip" value="192.168.1.203"/>
         <arg name="port" value="2370"/>
         <arg name="launch_driver" value="$(var launch_driver)" />
+        <arg name="vehicle_param_file" value="$(var vehicle_param_file)" />
+        <arg name="vehicle_mirror_param_file" value="$(var vehicle_mirror_param_file)" />
       </include>
     </group>
 
     <include file="$(find-pkg-share sensing_launch)/launch/aip_s1/pointcloud_preprocessor.launch.py">
       <arg name="base_frame" value="base_link" />
+      <arg name="use_concat_filter" value="$(var use_concat_filter)" />
+      <arg name="vehicle_param_file" value="$(var vehicle_param_file)" />
     </include>
 
   </group>

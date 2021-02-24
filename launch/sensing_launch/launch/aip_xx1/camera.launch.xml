@@ -9,9 +9,11 @@
       <push-ros-namespace namespace="traffic_light"/>
 
       <!-- (usb_cam_node is assumed to have launched on logging PC) -->
-
-      <!-- TODO(fred-apex-ai) The camera info is not available anymore in the ros2 usb_cam package -->
-      <!-- <node pkg="topic_tools" exec="relay" name="tl_camera_info_relay" args="$(var camera_type)/camera_info camera_info" /> -->
+      <node pkg="topic_tools" exec="relay" name="tl_camera_info_relay" output="log" >
+        <param name="input_topic" value="$(var camera_type)/camera_info" />
+        <param name="output_topic" value="camera_info" />
+        <param name="type" value="sensor_msgs/msg/CameraInfo" />
+      </node>
 
       <node pkg="topic_tools" exec="relay" name="tl_compressed_image_relay" output="log" >
         <param name="input_topic" value="$(var camera_type)/image_raw/compressed" />

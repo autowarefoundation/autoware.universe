@@ -19,9 +19,13 @@
     <arg name="max_range" value="$(var max_range)"/>
     <arg name="min_range" value="$(var min_range)"/>
     <arg name="invalid_intensity" value="$(var invalid_intensity)"/>
-    <arg name="sensor_frame" value="$(var sensor_frame)"/>
+    <arg name="frame_id" value="$(var sensor_frame)"/>
     <arg name="device_ip" value="$(var device_ip)"/>
     <arg name="port" value="$(var port)"/>
   </include>
 
+  <!-- Velodyne Monitor -->
+  <include file="$(find-pkg-share velodyne_monitor)/launch/velodyne_monitor.launch.xml" if="$(var launch_driver)">
+    <arg name="ip_address" value="$(var device_ip)" />
+  </include>
 </launch>

@@ -2,29 +2,29 @@
 
   <arg name="launch_driver" default="true" />
 
-    <group>
-      <push-ros-namespace namespace="gnss"/>
+  <group>
+    <push-ros-namespace namespace="gnss"/>
 
-      <!-- Ublox Driver -->
-      <node pkg="ublox_gps" name="ublox" exec="ublox_gps_node" if="$(var launch_driver)">
-        <remap from="ublox/fix" to="ublox/nav_sat_fix" />
-        <param from="$(find-pkg-share ublox_gps)/c94_f9p_rover.yaml"/>
-      </node>
+    <!-- Ublox Driver -->
+    <node pkg="ublox_gps" name="ublox" exec="ublox_gps_node" if="$(var launch_driver)">
+      <remap from="ublox/fix" to="ublox/nav_sat_fix" />
+      <param from="$(find-pkg-share ublox_gps)/c94_f9p_rover.yaml"/>
+    </node>
 
-      <!-- NavSatFix to MGRS Pose -->
-      <include file="$(find-pkg-share gnss_poser)/launch/gnss_poser.launch.xml">
-        <arg name="input_topic_fix" value="ublox/nav_sat_fix" />
-        <arg name="input_topic_navpvt" value="ublox/navpvt" />
+    <!-- NavSatFix to MGRS Pose -->
+    <include file="$(find-pkg-share gnss_poser)/launch/gnss_poser.launch.xml">
+      <arg name="input_topic_fix" value="ublox/nav_sat_fix" />
+      <arg name="input_topic_navpvt" value="ublox/navpvt" />
 
-        <arg name="output_topic_gnss_pose" value="pose" />
-        <arg name="output_topic_gnss_pose_cov" value="pose_with_covariance" />
-        <arg name="output_topic_gnss_fixed" value="fixed" />
+      <arg name="output_topic_gnss_pose" value="pose" />
+      <arg name="output_topic_gnss_pose_cov" value="pose_with_covariance" />
+      <arg name="output_topic_gnss_fixed" value="fixed" />
 
-        <arg name="coordinate_system" value="1" doc="0:UTM, 1:MGRS, 2:PLANE" />
-        <arg name="use_ublox_receiver" value="true" />
+      <arg name="coordinate_system" value="1" doc="0:UTM, 1:MGRS, 2:PLANE" />
+      <arg name="use_ublox_receiver" value="true" />
 
-        <arg name="gnss_frame" value="gnss_link" />
-      </include>
+      <arg name="gnss_frame" value="gnss_link" />
+    </include>
 
-    </group>
+  </group>
 </launch>
