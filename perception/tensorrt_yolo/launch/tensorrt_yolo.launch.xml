@@ -15,6 +15,6 @@
     <param name="calib_image_directory" type="str" value="$(var calib_image_directory)"/>
     <param name="calib_cache_file" type="str" value="$(find-pkg-share tensorrt_yolo)/data/$(var yolo_type).cache" />
     <param name="mode" type="str" value="$(var mode)"/>
-    <param from="$(find-pkg-share tensorrt_yolo)/config/$(var yolo_type)_param.yaml"/>
+    <param from="$(find-pkg-share tensorrt_yolo)/config/$(var yolo_type).param.yaml"/>
   </node>
 </launch>
