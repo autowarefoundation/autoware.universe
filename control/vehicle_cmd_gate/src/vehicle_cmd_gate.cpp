@@ -1,32 +1,16 @@
-/*
- *  Copyright (c) 2017, Tier IV, Inc.
- *  All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions are met:
- *
- *  * Redistributions of source code must retain the above copyright notice, this
- *    list of conditions and the following disclaimer.
- *
- *  * Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
- *
- *  * Neither the name of Autoware nor the names of its
- *    contributors may be used to endorse or promote products derived from
- *    this software without specific prior written permission.
- *
- *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- *  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- *  DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- *  FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- *  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- *  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+// Copyright 2015-2019 Autoware Foundation
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #include <chrono>
 #include <functional>
@@ -83,8 +67,8 @@ VehicleCmdGate::VehicleCmdGate()
     "input/system_emergency", 1, std::bind(&VehicleCmdGate::onSystemEmergency, this, _1));
   external_emergency_stop_sub_ =
     this->create_subscription<autoware_control_msgs::msg::EmergencyMode>(
-      "input/external_emergency_stop", 1,
-      std::bind(&VehicleCmdGate::onExternalEmergencyStop, this, _1));
+    "input/external_emergency_stop", 1,
+    std::bind(&VehicleCmdGate::onExternalEmergencyStop, this, _1));
   gate_mode_sub_ = this->create_subscription<autoware_control_msgs::msg::GateMode>(
     "input/gate_mode", 1, std::bind(&VehicleCmdGate::onGateMode, this, _1));
   engage_sub_ = this->create_subscription<autoware_vehicle_msgs::msg::Engage>(
@@ -131,7 +115,7 @@ VehicleCmdGate::VehicleCmdGate()
     declare_parameter("external_emergency_stop_heartbeat_timeout", 0.5);
 
   // Vehicle Parameter
-  double wheel_base = declare_parameter("/vehicle_info/wheel_base", 2.79);
+  double wheel_base = vehicle_info_util::VehicleInfo::create(*this).wheel_base_m_;
   double vel_lim = declare_parameter("vel_lim", 25.0);
   double lon_acc_lim = declare_parameter("lon_acc_lim", 5.0);
   double lon_jerk_lim = declare_parameter("lon_jerk_lim", 5.0);
@@ -160,9 +144,10 @@ VehicleCmdGate::VehicleCmdGate()
 
   // Diagnostics Updater
   updater_.setHardwareID("vehicle_cmd_gate");
-  updater_.add("heartbeat", [](auto & stat) {
-    stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "Alive");
-  });
+  updater_.add(
+    "heartbeat", [](auto & stat) {
+      stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "Alive");
+    });
   updater_.add("emergency_stop_operation", this, &VehicleCmdGate::checkExternalEmergencyStop);
 
   // Timer
@@ -262,7 +247,7 @@ void VehicleCmdGate::onTimer()
 
     if (is_system_emergency_heartbeat_timeout_) {
       RCLCPP_WARN_THROTTLE(
-        get_logger(), *get_clock(), 1000/*ms*/, "system_emergency heartbeat is timeout.");
+        get_logger(), *get_clock(), 1000 /*ms*/, "system_emergency heartbeat is timeout.");
       publishEmergencyStopControlCommands();
       return;
     }
@@ -275,7 +260,7 @@ void VehicleCmdGate::onTimer()
 
     if (is_external_emergency_stop_heartbeat_timeout_) {
       RCLCPP_WARN_THROTTLE(
-        get_logger(), *get_clock(), 1000/*ms*/, "external_emergency_stop heartbeat is timeout.");
+        get_logger(), *get_clock(), 1000 /*ms*/, "external_emergency_stop heartbeat is timeout.");
       is_external_emergency_stop_ = true;
     }
   }
@@ -284,7 +269,7 @@ void VehicleCmdGate::onTimer()
   if (is_external_emergency_stop_) {
     if (!is_external_emergency_stop_heartbeat_timeout_) {
       RCLCPP_INFO_THROTTLE(
-        get_logger(), *get_clock(), 1000/*ms*/,
+        get_logger(), *get_clock(), 1000 /*ms*/,
         "Please call `clear_external_emergency_stop` service to clear state.");
     }
 

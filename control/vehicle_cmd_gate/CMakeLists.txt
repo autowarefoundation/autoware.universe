@@ -13,46 +13,29 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 ### Dependencies
-find_package(ament_cmake REQUIRED)
-find_package(autoware_control_msgs REQUIRED)
-find_package(autoware_vehicle_msgs REQUIRED)
-find_package(rclcpp REQUIRED)
-find_package(std_srvs REQUIRED)
-find_package(geometry_msgs REQUIRED)
-find_package(diagnostic_updater REQUIRED)
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
 
 # Add path of include dir
 include_directories(include)
 
 # Generate exe file
-add_executable(vehicle_cmd_gate src/vehicle_cmd_gate_node.cpp src/vehicle_cmd_gate.cpp src/vehicle_cmd_filter.cpp)
-
-set(VEHICLE_CMD_GATE_DEPENDENCIES
-	autoware_control_msgs
-	autoware_vehicle_msgs
-  rclcpp
-  std_srvs
-  geometry_msgs
-  diagnostic_updater
+ament_auto_add_executable(vehicle_cmd_gate
+  src/vehicle_cmd_gate_node.cpp
+  src/vehicle_cmd_gate.cpp
+  src/vehicle_cmd_filter.cpp
 )
+
 ament_target_dependencies(vehicle_cmd_gate ${VEHICLE_CMD_GATE_DEPENDENCIES})
 ament_export_dependencies(${VEHICLE_CMD_GATE_DEPENDENCIES})
-
-install(
-  TARGETS vehicle_cmd_gate
-  DESTINATION lib/${PROJECT_NAME}
-)
-
-install(
-  DIRECTORY
-    launch
-    config
-  DESTINATION share/${PROJECT_NAME}
-)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
 endif()
 
-ament_package()
+ament_auto_package(
+  INSTALL_TO_SHARE
+    launch
+    config
+)
