@@ -13,7 +13,7 @@
   <arg name="output_autoware_engage" default="/autoware/engage" />
   <arg name="output_vehicle_engage" default="/vehicle/engage" />
 
-  <arg name="config_file" default="$(find-pkg-share autoware_joy_controller)/config/autoware_joy_controller.yaml" />
+  <arg name="config_file" default="$(find-pkg-share autoware_joy_controller)/config/autoware_joy_controller.param.yaml" />
 
   <node pkg="autoware_joy_controller" exec="autoware_joy_controller" name="autoware_joy_controller" output="screen">
     <remap from="input/joy" to="$(var input_joy)"/>
