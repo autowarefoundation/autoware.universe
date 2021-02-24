@@ -1,5 +1,5 @@
 <launch>
-  <arg name="param_file" default="$(find-pkg-share ndt_scan_matcher)/config/ndt_scan_matcher.yaml" />
+  <arg name="param_file" default="$(find-pkg-share ndt_scan_matcher)/config/ndt_scan_matcher.param.yaml" />
 
   <!-- Topics -->
   <arg name="input_sensor_points_topic" default="/points_raw" doc="Sensor points topic" />
