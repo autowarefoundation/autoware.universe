@@ -7,10 +7,10 @@
   <maintainer email="horibe.takamasa@gmail.com">Takamasa HORIBE</maintainer>
   <license>Apache License 2.0</license>
 
-  <buildtool_depend>ament_cmake</buildtool_depend>
-  <build_depend>rclcpp</build_depend>
-  <build_depend>rclcpp_components</build_depend>
+  <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
+  <depend>rclcpp</depend>
+  <depend>rclcpp_components</depend>
   <depend>std_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>tf2</depend>
@@ -19,12 +19,14 @@
   <depend>autoware_planning_msgs</depend>
   <depend>autoware_control_msgs</depend>
   <depend>autoware_vehicle_msgs</depend>
+  <depend>vehicle_info_util</depend>
 
-  <exec_depend>rclcpp</exec_depend>
-  <exec_depend>rclcpp_components</exec_depend>
   <exec_depend>launch_ros</exec_depend>
   <exec_depend>rosidl_default_runtime</exec_depend>
   <exec_depend>topic_tools</exec_depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

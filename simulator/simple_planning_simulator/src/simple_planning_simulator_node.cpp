@@ -1,4 +1,4 @@
-// Copyright 2015-2019 Autoware Foundation
+// Copyright 2015-2020 Autoware Foundation. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <memory>
 #include "simple_planning_simulator/simple_planning_simulator_core.hpp"
 
 int main(int argc, char ** argv)

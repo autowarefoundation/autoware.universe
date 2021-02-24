@@ -1,4 +1,4 @@
-// Copyright 2015-2019 Autoware Foundation
+// Copyright 2015-2020 Autoware Foundation. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,19 +14,20 @@
 
 /**
  * @file sim_model_constant_acceleration.hpp
- * @brief simple planning simulator model with constant acceleration for velocity & steeiring
+ * @brief simple planning simulator model with constant acceleration for velocity & steering
  * @author Takamasa Horibe
  * @date 2019.08.17
  */
 
-#ifndef SIMPLE_PLANNING_SIMULATOR_SIM_MODEL_CONSTANT_ACCELERATION_H_
-#define SIMPLE_PLANNING_SIMULATOR_SIM_MODEL_CONSTANT_ACCELERATION_H_
+#ifndef SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_CONSTANT_ACCELERATION_HPP_
+#define SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_CONSTANT_ACCELERATION_HPP_
+
+#include <iostream>
 
 #include "simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
 
 #include "eigen3/Eigen/Core"
 #include "eigen3/Eigen/LU"
-#include <iostream>
 
 /**
  * @class simple_planning_simulator constant acceleration twist model
@@ -113,4 +114,4 @@ private:
   Eigen::VectorXd calcModel(const Eigen::VectorXd & state, const Eigen::VectorXd & input) override;
 };
 
-#endif
+#endif  // SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_CONSTANT_ACCELERATION_HPP_

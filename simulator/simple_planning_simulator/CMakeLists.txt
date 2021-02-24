@@ -11,16 +11,8 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 ### Dependencies
-find_package(ament_cmake REQUIRED)
-find_package(geometry_msgs REQUIRED)
-find_package(rclcpp REQUIRED)
-find_package(std_msgs REQUIRED)
-find_package(tf2 REQUIRED)
-find_package(tf2_ros REQUIRED)
-find_package(autoware_debug_msgs REQUIRED)
-find_package(autoware_planning_msgs REQUIRED)
-find_package(autoware_control_msgs REQUIRED)
-find_package(autoware_vehicle_msgs REQUIRED)
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
 
 # Add path of include dir
 include_directories(include)
@@ -34,22 +26,7 @@ set(SIMPLE_PLANNING_SIMULATOR_SRC
   src/vehicle_model/sim_model_time_delay.cpp
   src/vehicle_model/sim_model_util.cpp
 )
-add_executable(simple_planning_simulator_exe src/simple_planning_simulator_node.cpp ${SIMPLE_PLANNING_SIMULATOR_SRC})
-
-# Add dependencies. use target_link_libaries() before Crystal
-set(SIMPLE_PLANNING_SIMULATOR_DEPENDENCIES
-  rclcpp
-  std_msgs
-  geometry_msgs
-  tf2
-  tf2_ros
-  autoware_debug_msgs
-  autoware_planning_msgs
-  autoware_control_msgs
-  autoware_vehicle_msgs
-)
-ament_target_dependencies(simple_planning_simulator_exe ${SIMPLE_PLANNING_SIMULATOR_DEPENDENCIES})
-
+ament_auto_add_executable(simple_planning_simulator_exe src/simple_planning_simulator_node.cpp ${SIMPLE_PLANNING_SIMULATOR_SRC})
 
 ## Install executables and/or libraries
 install(TARGETS simple_planning_simulator_exe
@@ -66,5 +43,10 @@ install(DIRECTORY config launch
   DESTINATION share/${PROJECT_NAME}
 )
 
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
+endif()
+
 # set at the end of cmakelists
-ament_package()
+ament_auto_package()

@@ -1,4 +1,4 @@
-// Copyright 2018-2019 Autoware Foundation
+// Copyright 2015-2020 Autoware Foundation. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@
  * @date 2019.08.17
  */
 
-#ifndef SIMPLE_PLANNING_SIMULATOR_SIM_MODEL_INTERFACE_H_
-#define SIMPLE_PLANNING_SIMULATOR_SIM_MODEL_INTERFACE_H_
+#ifndef SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_INTERFACE_HPP_
+#define SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_INTERFACE_HPP_
 
 #include "rclcpp/rclcpp.hpp"
 #include "eigen3/Eigen/Core"
@@ -133,4 +133,4 @@ public:
     const Eigen::VectorXd & state, const Eigen::VectorXd & input) = 0;
 };
 
-#endif
+#endif  // SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_INTERFACE_HPP_

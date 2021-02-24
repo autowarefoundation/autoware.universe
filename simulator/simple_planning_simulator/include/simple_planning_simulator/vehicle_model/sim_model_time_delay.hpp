@@ -1,4 +1,4 @@
-// Copyright 2015-2019 Autoware Foundation
+// Copyright 2015-2020 Autoware Foundation. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,17 +19,18 @@
  * @date 2019.08.17
  */
 
-#ifndef SIMPLE_PLANNING_SIMULATOR_SIM_MODEL_TIME_DELAY_H_
-#define SIMPLE_PLANNING_SIMULATOR_SIM_MODEL_TIME_DELAY_H_
+#ifndef SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_TIME_DELAY_HPP_
+#define SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_TIME_DELAY_HPP_
+
+#include <iostream>
+#include <queue>
+#include <deque>
 
 #include "simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
 #include "simple_planning_simulator/vehicle_model/sim_model_util.hpp"
 
-#include <deque>
 #include "eigen3/Eigen/Core"
 #include "eigen3/Eigen/LU"
-#include <iostream>
-#include <queue>
 
 /**
  * @class simple_planning_simulator time delay twist model
@@ -360,4 +361,4 @@ private:
   Eigen::VectorXd calcModel(const Eigen::VectorXd & state, const Eigen::VectorXd & input) override;
 };
 
-#endif
+#endif  // SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_TIME_DELAY_HPP_

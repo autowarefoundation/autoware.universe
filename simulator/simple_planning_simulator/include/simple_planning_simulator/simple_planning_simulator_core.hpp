@@ -1,4 +1,4 @@
-// Copyright 2015-2019 Autoware Foundation
+// Copyright 2015-2020 Autoware Foundation. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,11 +19,17 @@
  * @date 2019.08.17
  */
 
-#ifndef SIMPLE_PLANNING_SIMULATOR_CORE_H_
-#define SIMPLE_PLANNING_SIMULATOR_CORE_H_
+#ifndef SIMPLE_PLANNING_SIMULATOR__SIMPLE_PLANNING_SIMULATOR_CORE_HPP_
+#define SIMPLE_PLANNING_SIMULATOR__SIMPLE_PLANNING_SIMULATOR_CORE_HPP_
+
+#include <memory>
+#include <random>
+#include <string>
 
 #include "rclcpp/rclcpp.hpp"
 
+#include "eigen3/Eigen/Core"
+#include "eigen3/Eigen/LU"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
 #include "geometry_msgs/msg/twist_stamped.hpp"
@@ -31,9 +37,6 @@
 #include "tf2/utils.h"
 #include "tf2_ros/transform_broadcaster.h"
 #include "tf2_ros/transform_listener.h"
-#include "eigen3/Eigen/Core"
-#include "eigen3/Eigen/LU"
-#include <random>
 
 #include "autoware_debug_msgs/msg/float32_stamped.hpp"
 #include "autoware_planning_msgs/msg/trajectory.hpp"
@@ -48,6 +51,7 @@
 #include "simple_planning_simulator/vehicle_model/sim_model_ideal.hpp"
 #include "simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
 #include "simple_planning_simulator/vehicle_model/sim_model_time_delay.hpp"
+#include "vehicle_info_util/vehicle_info.hpp"
 
 class Simulator : public rclcpp::Node
 {
@@ -64,21 +68,29 @@ public:
 
 private:
   /* ros system */
-  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_pose_;   //!< @brief topic ros publisher for current pose
-  rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr pub_twist_;  //!< @brief topic ros publisher for current twist
+  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr
+    pub_pose_;  //!< @brief topic ros publisher for current pose
+  rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr
+    pub_twist_;  //!< @brief topic ros publisher for current twist
   rclcpp::Publisher<autoware_vehicle_msgs::msg::Steering>::SharedPtr pub_steer_;
   rclcpp::Publisher<autoware_debug_msgs::msg::Float32Stamped>::SharedPtr pub_velocity_;
   rclcpp::Publisher<autoware_vehicle_msgs::msg::TurnSignal>::SharedPtr pub_turn_signal_;
   rclcpp::Publisher<autoware_vehicle_msgs::msg::ShiftStamped>::SharedPtr pub_shift_;
   rclcpp::Publisher<autoware_vehicle_msgs::msg::ControlMode>::SharedPtr pub_control_mode_;
 
-  rclcpp::Subscription<autoware_vehicle_msgs::msg::VehicleCommand>::SharedPtr sub_vehicle_cmd_;      //!< @brief topic subscriber for vehicle_cmd
-  rclcpp::Subscription<autoware_vehicle_msgs::msg::TurnSignal>::SharedPtr sub_turn_signal_cmd_;  //!< @brief topic subscriber for turn_signal_cmd
-  rclcpp::Subscription<autoware_planning_msgs::msg::Trajectory>::SharedPtr sub_trajectory_;   //!< @brief topic subscriber for trajectory used for z ppsition
-  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr sub_initialpose_;  //!< @brief topic subscriber for initialpose topic
-  rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr sub_initialtwist_;  //!< @brief topic subscriber for initialtwist topic
-  rclcpp::Subscription<autoware_vehicle_msgs::msg::Engage>::SharedPtr sub_engage_;        //!< @brief topic subscriber for engage topic
-  rclcpp::TimerBase::SharedPtr timer_simulation_;       //!< @brief timer for simulation
+  rclcpp::Subscription<autoware_vehicle_msgs::msg::VehicleCommand>::SharedPtr
+    sub_vehicle_cmd_;  //!< @brief topic subscriber for vehicle_cmd
+  rclcpp::Subscription<autoware_vehicle_msgs::msg::TurnSignal>::SharedPtr
+    sub_turn_signal_cmd_;  //!< @brief topic subscriber for turn_signal_cmd
+  rclcpp::Subscription<autoware_planning_msgs::msg::Trajectory>::SharedPtr
+    sub_trajectory_;  //!< @brief topic subscriber for trajectory used for z ppsition
+  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
+    sub_initialpose_;  //!< @brief topic subscriber for initialpose topic
+  rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr
+    sub_initialtwist_;  //!< @brief topic subscriber for initialtwist topic
+  rclcpp::Subscription<autoware_vehicle_msgs::msg::Engage>::SharedPtr
+    sub_engage_;                                   //!< @brief topic subscriber for engage topic
+  rclcpp::TimerBase::SharedPtr timer_simulation_;  //!< @brief timer for simulation
 
   /* tf */
   std::shared_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
@@ -86,10 +98,12 @@ private:
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
 
   /* received & published topics */
-  geometry_msgs::msg::PoseStamped::ConstSharedPtr initial_pose_ptr_;  //!< @brief initial vehicle pose
+  geometry_msgs::msg::PoseStamped::ConstSharedPtr
+    initial_pose_ptr_;  //!< @brief initial vehicle pose
   geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr
-    initial_pose_with_cov_ptr_;                            //!< @brief initial vehicle pose with cov
-  geometry_msgs::msg::TwistStamped::ConstSharedPtr initial_twist_ptr_;  //!< @brief initial vehicle velocity
+    initial_pose_with_cov_ptr_;  //!< @brief initial vehicle pose with cov
+  geometry_msgs::msg::TwistStamped::ConstSharedPtr
+    initial_twist_ptr_;                      //!< @brief initial vehicle velocity
   geometry_msgs::msg::Pose current_pose_;    //!< @brief current vehicle position and angle
   geometry_msgs::msg::Twist current_twist_;  //!< @brief current vehicle velocity
   autoware_vehicle_msgs::msg::VehicleCommand::ConstSharedPtr
@@ -111,10 +125,10 @@ private:
   double sim_steering_gear_ratio_;  //!< @brief for steering wheel angle calcultion
 
   /* flags */
-  bool is_initialized_ = false;         //!< @brief flag to check the initial position is set
-  bool add_measurement_noise_;  //!< @brief flag to add measurement noise
-  bool simulator_engage_;       //!< @brief flag to engage simulator
-  bool use_trajectory_for_z_position_source_; //!< @brief flag to get z positon from trajectory
+  bool is_initialized_ = false;                //!< @brief flag to check the initial position is set
+  bool add_measurement_noise_;                 //!< @brief flag to add measurement noise
+  bool simulator_engage_;                      //!< @brief flag to engage simulator
+  bool use_trajectory_for_z_position_source_;  //!< @brief flag to get z positon from trajectory
 
   /* saved values */
   std::shared_ptr<rclcpp::Time> prev_update_time_ptr_;  //!< @brief previously updated time
@@ -204,8 +218,7 @@ private:
    * @param [in] twist initial velocity and angular velocity
    */
   void setInitialState(
-    const geometry_msgs::msg::Pose & pose,
-    const geometry_msgs::msg::Twist & twist);
+    const geometry_msgs::msg::Pose & pose, const geometry_msgs::msg::Twist & twist);
 
   /**
    * @brief set initial state of simulated vehicle with pose transformation based on frame_id
@@ -230,8 +243,7 @@ private:
    * @param [in] twist twist to be published
    */
   void publishPoseTwist(
-    const geometry_msgs::msg::Pose & pose,
-    const geometry_msgs::msg::Twist & twist);
+    const geometry_msgs::msg::Pose & pose, const geometry_msgs::msg::Twist & twist);
 
   /**
    * @brief publish tf
@@ -254,4 +266,4 @@ private:
     const double & roll, const double & pitch, const double & yaw);
 };
 
-#endif
+#endif  // SIMPLE_PLANNING_SIMULATOR__SIMPLE_PLANNING_SIMULATOR_CORE_HPP_
