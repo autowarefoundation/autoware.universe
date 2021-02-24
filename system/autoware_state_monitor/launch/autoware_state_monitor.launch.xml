@@ -10,7 +10,7 @@
 
   <arg name="service_shutdown" default="/autoware/shutdown" />
 
-  <arg name="config_file" default="$(find-pkg-share autoware_state_monitor)/config/autoware_state_monitor.yaml" />
+  <arg name="config_file" default="$(find-pkg-share autoware_state_monitor)/config/autoware_state_monitor.param.yaml" />
 
   <node pkg="autoware_state_monitor" exec="autoware_state_monitor" name="autoware_state_monitor" output="screen">
     <remap from="input/autoware_engage" to="$(var input_autoware_engage)"/>
