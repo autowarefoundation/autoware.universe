@@ -6,7 +6,7 @@
   <!-- path planning for avoiding obstacle with dynamic object info -->
   <group>
     <include file="$(find-pkg-share obstacle_avoidance_planner)/launch/obstacle_avoidance_planner.launch.xml">
-      <arg name="param_path" value="$(find-pkg-share planning_launch)/config/scenario_planning/lane_driving/motion_planning/obstacle_avoidance_planner/obstacle_avoidance_planner.yaml"/>
+      <arg name="param_path" value="$(find-pkg-share planning_launch)/config/scenario_planning/lane_driving/motion_planning/obstacle_avoidance_planner/obstacle_avoidance_planner.param.yaml"/>
       <arg name="input_path_topic" value="$(var input_path_topic)" />
       <arg name="output_path_topic" value="obstacle_avoidance_planner/trajectory" />
       <arg name="vehicle_param_file" value="$(var vehicle_param_file)" />
@@ -20,7 +20,7 @@
       <arg name="input_trajectory" value="obstacle_avoidance_planner/trajectory" />
       <arg name="output_trajectory" value="surround_obstacle_checker/trajectory" />
       <arg name="vehicle_param_file" value="$(var vehicle_param_file)" />
-      <arg name="param_path" value="$(find-pkg-share planning_launch)/config/scenario_planning/lane_driving/motion_planning/surround_obstacle_checker/surround_obstacle_checker.yaml"/>
+      <arg name="param_path" value="$(find-pkg-share planning_launch)/config/scenario_planning/lane_driving/motion_planning/surround_obstacle_checker/surround_obstacle_checker.param.yaml"/>
     </include>
   </group>
 
@@ -40,8 +40,8 @@
       <arg name="input_pointcloud" value="/sensing/lidar/no_ground/pointcloud" />
       <arg name="output_trajectory" value="/planning/scenario_planning/lane_driving/trajectory" />
       <arg name="vehicle_param_file" value="$(var vehicle_param_file)" />
-      <arg name="acc_param_file" value="$(find-pkg-share planning_launch)/config/adaptive_cruise_control.yaml" />
-      <arg name="param_file" value="$(find-pkg-share planning_launch)/config/obstacle_stop_planner.yaml" />
+      <arg name="acc_param_file" value="$(find-pkg-share planning_launch)/config/adaptive_cruise_control.param.yaml" />
+      <arg name="param_file" value="$(find-pkg-share planning_launch)/config/obstacle_stop_planner.param.yaml" />
       <arg name="enable_slow_down" value="false" />
     </include>
   </group>
