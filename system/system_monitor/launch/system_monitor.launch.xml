@@ -1,5 +1,5 @@
 <launch>
-  <arg name="config_file" default="$(find-pkg-share system_monitor)/config/system_monitor.yaml"/>
+  <arg name="config_file" default="$(find-pkg-share system_monitor)/config/system_monitor.param.yaml"/>
 <!--  <arg name="output" default="log"/>-->
 <!--TODO(yunus.caliskan): Figure out why a variable can't be used for the output type.-->
 
