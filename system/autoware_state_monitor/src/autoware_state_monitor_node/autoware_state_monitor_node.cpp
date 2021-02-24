@@ -277,7 +277,8 @@ void AutowareStateMonitorNode::registerTopicCallback(
       &AutowareStateMonitorNode::onTopic, this, std::placeholders::_1,
       topic_name));
   sub_topic_map_[topic_name] = rclcpp_generic::GenericSubscription::create(
-    this->get_node_topics_interface(), topic_name, topic_type, rclcpp::QoS{1}, callback);
+    this->get_node_topics_interface(), topic_name, topic_type,
+    rclcpp::QoS{1}.transient_local(), callback);
 }
 
 TopicStats AutowareStateMonitorNode::getTopicStats() const
