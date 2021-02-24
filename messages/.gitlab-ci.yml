@@ -44,19 +44,9 @@ stages:
     paths:
       - log
 
-build_dashing:
-  image: ros:dashing
-  <<: *build_base
-
 build_foxy:
   image: ros:foxy
   <<: *build_base
-
-test_dashing:
-  image: ros:dashing
-  <<: *test_base
-  needs:
-    - build_dashing
 
 test_foxy:
   image: ros:foxy
