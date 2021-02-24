@@ -5,8 +5,7 @@
   <arg name="input/reference_trajectory" default="/planning/scenario_planning/trajectory" />
   <arg name="input/predicted_trajectory" default="/control/trajectory_follower/predicted_trajectory" />
   <arg name="vehicle_param_file"/>
-  <arg name="config_file" default="$(find-pkg-share lane_departure_checker)/config/lane_departure_checker.yaml" />
-
+  <arg name="config_file" default="$(find-pkg-share lane_departure_checker)/config/lane_departure_checker.param.yaml" />
 
   <node pkg="lane_departure_checker" exec="lane_departure_checker_node" name="lane_departure_checker_node" output="screen">
     <remap from="input/twist" to="$(var input/twist)"/>
