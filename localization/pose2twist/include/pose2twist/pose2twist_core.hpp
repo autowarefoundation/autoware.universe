@@ -17,7 +17,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 
-#include "std_msgs/msg/float32.hpp"
+#include "autoware_debug_msgs/msg/float32_stamped.hpp"
 
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/twist_stamped.hpp"
@@ -34,9 +34,8 @@ private:
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr pose_sub_;
 
   rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr twist_pub_;
-  rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr linear_x_pub_;
-  rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr angular_z_pub_;
-
+  rclcpp::Publisher<autoware_debug_msgs::msg::Float32Stamped>::SharedPtr linear_x_pub_;
+  rclcpp::Publisher<autoware_debug_msgs::msg::Float32Stamped>::SharedPtr angular_z_pub_;
 };
 
 #endif
