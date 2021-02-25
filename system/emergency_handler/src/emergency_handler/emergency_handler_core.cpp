@@ -356,10 +356,10 @@ autoware_system_msgs::msg::HazardStatus EmergencyHandler::judgeHazardStatus()
     using autoware_system_msgs::msg::HazardStatus;
 
     const auto is_in_auto_ignore_state =
-      (autoware_state_->state != AutowareState::INITIALIZING_VEHICLE) &&
-      (autoware_state_->state != AutowareState::WAITING_FOR_ROUTE) &&
-      (autoware_state_->state != AutowareState::PLANNING) &&
-      (autoware_state_->state != AutowareState::FINALIZING);
+      (autoware_state_->state == AutowareState::INITIALIZING_VEHICLE) ||
+      (autoware_state_->state == AutowareState::WAITING_FOR_ROUTE) ||
+      (autoware_state_->state == AutowareState::PLANNING) ||
+      (autoware_state_->state == AutowareState::FINALIZING);
 
     if (current_gate_mode_->data == GateMode::AUTO && is_in_auto_ignore_state) {
       hazard_status.level = HazardStatus::NO_FAULT;
