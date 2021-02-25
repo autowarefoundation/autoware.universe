@@ -5,7 +5,7 @@
   <arg name="input_prev_control_command" default="/control/vehicle_cmd" />
   <arg name="input_current_gate_mode" default="/control/current_gate_mode" />
   <arg name="input_twist" default="/localization/twist" />
-  <arg name="input_is_state_timeout" default="state_timeout_checker/is_state_timeout" />
+  <arg name="input_is_state_timeout" default="is_state_timeout" />
 
   <arg name="output_control_command" default="/system/emergency/control_cmd" />
   <arg name="output_shift" default="/system/emergency/shift_cmd" />
