@@ -49,6 +49,9 @@ Debugger::Debugger(rclcpp::Node * node, const int camera_num)
       node, "input/image_raw" + std::to_string(id),
       boost::bind(&Debugger::imageCallback, this, _1, id), "raw");
     image_subs_.push_back(sub);
+    if (node->has_parameter("format")) {node->undeclare_parameter("format");}
+    if (node->has_parameter("jpeg_quality")) {node->undeclare_parameter("jpeg_quality");}
+    if (node->has_parameter("png_level")) {node->undeclare_parameter("png_level");}
     auto pub = image_transport::create_publisher(node, "output/image_raw" + std::to_string(id));
     image_pubs_.push_back(pub);
     image_buffers_.at(id).set_capacity(5);
