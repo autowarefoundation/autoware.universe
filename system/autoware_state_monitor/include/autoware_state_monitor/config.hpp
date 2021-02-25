@@ -19,8 +19,8 @@
 #include <utility>
 #include <vector>
 
-#include "rclcpp/time.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "rclcpp/time.hpp"
 
 struct TopicConfig
 {
@@ -30,6 +30,9 @@ struct TopicConfig
   : module(interface->declare_parameter(namespace_prefix + ".module").get<std::string>()),
     name(name),
     type(interface->declare_parameter(namespace_prefix + ".type").get<std::string>()),
+    transient_local(
+      interface->declare_parameter(namespace_prefix + ".transient_local",
+      static_cast<rclcpp::ParameterValue>(false)).get<bool>()),
     timeout(interface->declare_parameter(namespace_prefix + ".timeout").get<double>()),
     warn_rate(interface->declare_parameter(namespace_prefix + ".warn_rate").get<double>())
   {
@@ -38,6 +41,7 @@ struct TopicConfig
   std::string module;
   std::string name;
   std::string type;
+  bool transient_local;
   double timeout;
   double warn_rate;
 };
@@ -80,7 +84,7 @@ struct TopicStats
   std::vector<TopicConfig> ok_list;
   std::vector<TopicConfig> non_received_list;
   std::vector<std::pair<TopicConfig, rclcpp::Time>> timeout_list;  // pair<TfConfig, last_received>
-  std::vector<std::pair<TopicConfig, double>> slow_rate_list;   // pair<TfConfig, rate>
+  std::vector<std::pair<TopicConfig, double>> slow_rate_list;      // pair<TfConfig, rate>
 };
 
 struct ParamStats
