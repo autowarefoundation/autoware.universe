@@ -64,9 +64,6 @@ public:
   void changeUsageWarn(float usage_warn) {usage_warn_ = usage_warn;}
   void changeUsageError(float usage_error) {usage_error_ = usage_error;}
 
-  void changeLoad1Warn(float load1_warn) {load1_warn_ = load1_warn;}
-  void changeLoad5Warn(float load5_warn) {load5_warn_ = load5_warn;}
-
   void update(void) {updater_.force_update();}
 
   const std::string removePrefix(const std::string & name)
@@ -584,47 +581,9 @@ TEST_F(CPUMonitorTestSuite, load1WarnTest)
 
     // Verify
     DiagStatus status;
-    std::string value;
     ASSERT_TRUE(monitor_->findDiagStatus("CPU Load Average", status));
     // Depending on running situation of machine.
-    ASSERT_TRUE(status.level == DiagStatus::OK || status.level == DiagStatus::WARN);
-  }
-
-  // Verify warning
-  {
-    // Change warning level
-    monitor_->changeLoad1Warn(0.0);
-
-    // Publish topic
-    monitor_->update();
-
-    // Give time to publish
-    rclcpp::WallRate(2).sleep();
-    rclcpp::spin_some(monitor_->get_node_base_interface());
-
-    // Verify
-    DiagStatus status;
-    ASSERT_TRUE(monitor_->findDiagStatus("CPU Load Average", status));
-    ASSERT_EQ(status.level, DiagStatus::WARN);
-  }
-
-  // Verify normal behavior
-  {
-    // Change back to normal
-    monitor_->changeLoad1Warn(0.90);
-
-    // Publish topic
-    monitor_->update();
-
-    // Give time to publish
-    rclcpp::WallRate(2).sleep();
-    rclcpp::spin_some(monitor_->get_node_base_interface());
-
-    // Verify
-    DiagStatus status;
-    ASSERT_TRUE(monitor_->findDiagStatus("CPU Load Average", status));
-    // Depending on running situation of machine.
-    ASSERT_TRUE(status.level == DiagStatus::OK || status.level == DiagStatus::WARN);
+    ASSERT_TRUE(status.level == DiagStatus::OK);
   }
 }
 
@@ -644,44 +603,7 @@ TEST_F(CPUMonitorTestSuite, load5WarnTest)
     std::string value;
     ASSERT_TRUE(monitor_->findDiagStatus("CPU Load Average", status));
     // Depending on running situation of machine.
-    ASSERT_TRUE(status.level == DiagStatus::OK || status.level == DiagStatus::WARN);
-  }
-
-  // Verify warning
-  {
-    // Change warning level
-    monitor_->changeLoad5Warn(0.0);
-
-    // Publish topic
-    monitor_->update();
-
-    // Give time to publish
-    rclcpp::WallRate(2).sleep();
-    rclcpp::spin_some(monitor_->get_node_base_interface());
-
-    // Verify
-    DiagStatus status;
-    ASSERT_TRUE(monitor_->findDiagStatus("CPU Load Average", status));
-    ASSERT_EQ(status.level, DiagStatus::WARN);
-  }
-
-  // Verify normal behavior
-  {
-    // Change back to normal
-    monitor_->changeLoad5Warn(0.80);
-
-    // Publish topic
-    monitor_->update();
-
-    // Give time to publish
-    rclcpp::WallRate(2).sleep();
-    rclcpp::spin_some(monitor_->get_node_base_interface());
-
-    // Verify
-    DiagStatus status;
-    ASSERT_TRUE(monitor_->findDiagStatus("CPU Load Average", status));
-    // Depending on running situation of machine.
-    ASSERT_TRUE(status.level == DiagStatus::OK || status.level == DiagStatus::WARN);
+    ASSERT_TRUE(status.level == DiagStatus::OK);
   }
 }
 

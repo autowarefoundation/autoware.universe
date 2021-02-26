@@ -47,9 +47,7 @@ CPUMonitorBase::CPUMonitorBase(const std::string & node_name, const rclcpp::Node
   temp_error_(declare_parameter<float>("temp_error", 95.0)),
   usage_warn_(declare_parameter<float>("usage_warn", 0.90)),
   usage_error_(declare_parameter<float>("usage_error", 1.00)),
-  usage_avg_(declare_parameter<bool>("usage_avg", true)),
-  load1_warn_(declare_parameter<float>("load1_warn", 0.90)),
-  load5_warn_(declare_parameter<float>("load5_warn", 0.80))
+  usage_avg_(declare_parameter<bool>("usage_avg", true))
 {
   gethostname(hostname_, sizeof(hostname_));
   num_cores_ = boost::thread::hardware_concurrency();
@@ -227,10 +225,7 @@ void CPUMonitorBase::checkLoad(diagnostic_updater::DiagnosticStatusWrapper & sta
   loadavg[1] /= num_cores_;
   loadavg[2] /= num_cores_;
 
-  int level = DiagStatus::OK;
-  if (loadavg[0] > load1_warn_ || loadavg[1] > load5_warn_) {level = DiagStatus::WARN;}
-
-  stat.summary(level, load_dict_.at(level));
+  stat.summary(DiagStatus::OK, "OK");
   stat.addf("1min", "%.2f%%", loadavg[0] * 1e2);
   stat.addf("5min", "%.2f%%", loadavg[1] * 1e2);
   stat.addf("15min", "%.2f%%", loadavg[2] * 1e2);

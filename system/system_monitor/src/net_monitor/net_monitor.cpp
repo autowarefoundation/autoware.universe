@@ -86,6 +86,7 @@ void NetMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
   float tx_traffic;
   float rx_usage;
   float tx_usage;
+  std::vector<std::string> entried;
 
   for (ifa = ifas; ifa; ifa = ifa->ifa_next) {
     // Skip no addr
@@ -123,6 +124,7 @@ void NetMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
 
       ++index;
       close(fd);
+      entried.push_back(ifa->ifa_name);
       continue;
     }
 
@@ -147,6 +149,7 @@ void NetMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
 
         ++index;
         close(fd);
+        entried.push_back(ifa->ifa_name);
         continue;
       }
     } else {
@@ -186,9 +189,24 @@ void NetMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
     bytes_[ifa->ifa_name].tx_bytes = stats->tx_bytes;
     whole_level = std::max(whole_level, level);
     ++index;
+
+    entried.push_back(ifa->ifa_name);
   }
 
   freeifaddrs(ifas);
+
+  // Check if specified device exists
+  for (const auto & device : device_params_) {
+    // Skip if all devices specified
+    if (device == "*") {continue;}
+    // Skip if device already entried
+    if (boost::find(entried, device) != entried.end()) {continue;}
+
+    stat.add(fmt::format("Network {}: status", index), "No Such Device");
+    stat.add(fmt::format("Network {}: interface name", index), device);
+    error_str = "no such device";
+    ++index;
+  }
 
   if (!error_str.empty()) {
     stat.summary(DiagStatus::ERROR, error_str);

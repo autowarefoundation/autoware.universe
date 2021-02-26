@@ -139,8 +139,6 @@ protected:
   float usage_warn_;   //!< @brief CPU usage(%) to generate warning
   float usage_error_;  //!< @brief CPU usage(%) to generate error
   bool usage_avg_;     //!< @brief Check CPU usage calculated as averages among all processors
-  float load1_warn_;   //!< @brief CPU load average 1min(%) to generate warning
-  float load5_warn_;   //!< @brief CPU load average 5min(%) to generate warning
 
   /**
    * @brief CPU temperature status messages

@@ -148,6 +148,8 @@ void CPUMonitor::getTempNames(void)
 {
   const fs::path root("/sys/devices/platform/coretemp.0");
 
+  if (!fs::exists(root)) {return;}
+
   for (const fs::path & path : boost::make_iterator_range(
       fs::recursive_directory_iterator(root), fs::recursive_directory_iterator()))
   {
