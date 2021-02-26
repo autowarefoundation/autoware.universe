@@ -1,23 +1,22 @@
 /**:
   ros__parameters:
-    path: autoware
     sensing:
-      type: 'diagnostic_aggregator/AnalyzerGroup'
+      type: diagnostic_aggregator/AnalyzerGroup
       path: sensing
       analyzers:
         alive_monitoring:
-          type: 'diagnostic_aggregator/AnalyzerGroup'
+          type: diagnostic_aggregator/AnalyzerGroup
           path: alive_monitoring
           analyzers:
             topic_status:
-              type: 'diagnostic_aggregator/GenericAnalyzer'
+              type: diagnostic_aggregator/GenericAnalyzer
               path: topic_status
               contains: [": sensing_topic_status"]
               timeout: 1.0
               num_items: 0
 
         lidar:
-          type: 'diagnostic_aggregator/AnalyzerGroup'
+          type: diagnostic_aggregator/AnalyzerGroup
           path: lidar
           analyzers:
             velodyne:
@@ -31,153 +30,153 @@
                   timeout: 3.0
                   num_items: 0
                 temperature:
-                  type: 'diagnostic_aggregator/GenericAnalyzer'
+                  type: diagnostic_aggregator/GenericAnalyzer
                   path: temperature
                   contains: [": velodyne_temperature"]
                   timeout: 3.0
                   num_items: 0
                 rpm:
-                  type: 'diagnostic_aggregator/GenericAnalyzer'
+                  type: diagnostic_aggregator/GenericAnalyzer
                   path: rpm
                   contains: [": velodyne_rpm"]
                   timeout: 3.0
                   num_items: 0
 
             livox:
-              type: 'diagnostic_aggregator/AnalyzerGroup'
+              type: diagnostic_aggregator/AnalyzerGroup
               path: livox
               analyzers:
                 connection:
-                  type: 'diagnostic_aggregator/GenericAnalyzer'
+                  type: diagnostic_aggregator/GenericAnalyzer
                   path: connection
                   contains: [": livox_connection"]
                   timeout: 3.0
                   num_items: 0
                 temperature:
-                  type: 'diagnostic_aggregator/GenericAnalyzer'
+                  type: diagnostic_aggregator/GenericAnalyzer
                   path: temperature
                   contains: [": livox_temperature"]
                   timeout: 3.0
                   num_items: 0
                 internal_voltage:
-                  type: 'diagnostic_aggregator/GenericAnalyzer'
+                  type: diagnostic_aggregator/GenericAnalyzer
                   path: internal_voltage
                   contains: [": livox_internal_voltage"]
                   timeout: 3.0
                   num_items: 0
                 motor_status:
-                  type: 'diagnostic_aggregator/GenericAnalyzer'
+                  type: diagnostic_aggregator/GenericAnalyzer
                   path: motor_status
                   contains: [": livox_motor_status"]
                   timeout: 3.0
                   num_items: 0
                 firmware_staus:
-                  type: 'diagnostic_aggregator/GenericAnalyzer'
+                  type: diagnostic_aggregator/GenericAnalyzer
                   path: firmware_staus
                   contains: [": livox_firmware_staus"]
                   timeout: 3.0
                   num_items: 0
                 pps_signal:
-                  type: 'diagnostic_aggregator/GenericAnalyzer'
+                  type: diagnostic_aggregator/GenericAnalyzer
                   path: pps_signal
                   contains: [": livox_pps_signal"]
                   timeout: 3.0
                   num_items: 0
                 service_life:
-                  type: 'diagnostic_aggregator/GenericAnalyzer'
+                  type: diagnostic_aggregator/GenericAnalyzer
                   path: service_life
                   contains: [": livox_service_life"]
                   timeout: 3.0
                   num_items: 0
                 fan_status:
-                  type: 'diagnostic_aggregator/GenericAnalyzer'
+                  type: diagnostic_aggregator/GenericAnalyzer
                   path: fan_status
                   contains: [": livox_fan_status"]
                   timeout: 3.0
                   num_items: 0
                 ptp_signal:
-                  type: 'diagnostic_aggregator/GenericAnalyzer'
+                  type: diagnostic_aggregator/GenericAnalyzer
                   path: ptp_signal
                   contains: [": livox_ptp_signal"]
                   timeout: 3.0
                   num_items: 0
                 time_sync:
-                  type: 'diagnostic_aggregator/GenericAnalyzer'
+                  type: diagnostic_aggregator/GenericAnalyzer
                   path: time_sync
                   contains: [": livox_time_sync"]
                   timeout: 3.0
                   num_items: 0
 
         camera:
-          type: 'diagnostic_aggregator/AnalyzerGroup'
+          type: diagnostic_aggregator/AnalyzerGroup
           path: camera
           analyzers:
             connection:
-              type: 'diagnostic_aggregator/GenericAnalyzer'
+              type: diagnostic_aggregator/GenericAnalyzer
               path: connection
               contains: [": camera_connection"]
               timeout: 3.0
               num_items: 0
 
         imu:
-          type: 'diagnostic_aggregator/AnalyzerGroup'
+          type: diagnostic_aggregator/AnalyzerGroup
           path: imu
           analyzers:
             connection:
-              type: 'diagnostic_aggregator/GenericAnalyzer'
+              type: diagnostic_aggregator/GenericAnalyzer
               path: connection
               contains: [": imu_connection"]
               timeout: 3.0
               num_items: 0
             data:
-              type: 'diagnostic_aggregator/GenericAnalyzer'
+              type: diagnostic_aggregator/GenericAnalyzer
               path: data
               contains: [": imu_data"]
               timeout: 3.0
               num_items: 0
 
         gnss:
-          type: 'diagnostic_aggregator/AnalyzerGroup'
+          type: diagnostic_aggregator/AnalyzerGroup
           path: gnss
           analyzers:
             connection:
-              type: 'diagnostic_aggregator/GenericAnalyzer'
+              type: diagnostic_aggregator/GenericAnalyzer
               path: connection
               contains: [": gnss_connection"]
               timeout: 3.0
               num_items: 0
             data:
-              type: 'diagnostic_aggregator/GenericAnalyzer'
+              type: diagnostic_aggregator/GenericAnalyzer
               path: data
               contains: [": gnss_data"]
               timeout: 3.0
               num_items: 0
             antenna:
-              type: 'diagnostic_aggregator/GenericAnalyzer'
+              type: diagnostic_aggregator/GenericAnalyzer
               path: antenna
               contains: [": gnss_antenna"]
               timeout: 3.0
               num_items: 0
             tx_usage:
-              type: 'diagnostic_aggregator/GenericAnalyzer'
+              type: diagnostic_aggregator/GenericAnalyzer
               path: tx_usage
               contains: [": gnss_tx_usage"]
               timeout: 3.0
               num_items: 0
             spoofing:
-              type: 'diagnostic_aggregator/GenericAnalyzer'
+              type: diagnostic_aggregator/GenericAnalyzer
               path: spoofing
               contains: [": gnss_spoofing"]
               timeout: 3.0
               num_items: 0
             jamming:
-              type: 'diagnostic_aggregator/GenericAnalyzer'
+              type: diagnostic_aggregator/GenericAnalyzer
               path: jamming
               contains: [": gnss_jamming"]
               timeout: 3.0
               num_items: 0
             fix_topic_status:
-              type: 'diagnostic_aggregator/GenericAnalyzer'
+              type: diagnostic_aggregator/GenericAnalyzer
               path: fix_topic_status
               contains: [": fix topic status"]
               timeout: 3.0

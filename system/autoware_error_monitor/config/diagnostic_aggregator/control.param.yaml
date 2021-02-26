@@ -1,64 +1,63 @@
 /**:
   ros__parameters:
-    path: autoware
     control:
-      type: 'diagnostic_aggregator/AnalyzerGroup'
+      type: diagnostic_aggregator/AnalyzerGroup
       path: control
       analyzers:
         command_gate:
-          type: 'diagnostic_aggregator/AnalyzerGroup'
+          type: diagnostic_aggregator/AnalyzerGroup
           path: command_gate
           analyzers:
             alive_monitoring:
-              type: 'diagnostic_aggregator/AnalyzerGroup'
+              type: diagnostic_aggregator/AnalyzerGroup
               path: alive_monitoring
               analyzers:
                 heartbeat:
-                  type: 'diagnostic_aggregator/GenericAnalyzer'
+                  type: diagnostic_aggregator/GenericAnalyzer
                   path: heartbeat
                   contains: ["vehicle_cmd_gate: heartbeat"]
                   timeout: 1.0
                   num_items: 0
 
         autonomous_driving:
-          type: 'diagnostic_aggregator/AnalyzerGroup'
+          type: diagnostic_aggregator/AnalyzerGroup
           path: autonomous_driving
           analyzers:
             alive_monitoring:
-              type: 'diagnostic_aggregator/AnalyzerGroup'
+              type: diagnostic_aggregator/AnalyzerGroup
               path: alive_monitoring
               analyzers:
                 topic_status:
-                  type: 'diagnostic_aggregator/GenericAnalyzer'
+                  type: diagnostic_aggregator/GenericAnalyzer
                   path: topic_status
                   contains: [": control_topic_status"]
                   timeout: 1.0
                   num_items: 0
 
             lane_departure:
-              type: 'diagnostic_aggregator/GenericAnalyzer'
+              type: diagnostic_aggregator/GenericAnalyzer
               path: lane_departure
               contains: [": lane_departure"]
               timeout: 1.0
               num_items: 0
 
             trajectory_deviation:
-              type: 'diagnostic_aggregator/GenericAnalyzer'
+              type: diagnostic_aggregator/GenericAnalyzer
               path: trajectory_deviation
               contains: [": trajectory_deviation"]
               timeout: 1.0
               num_items: 0
 
         remote_control:
-          type: 'diagnostic_aggregator/AnalyzerGroup'
+          type: diagnostic_aggregator/AnalyzerGroup
           path: remote_control
           analyzers:
             alive_monitoring:
-              type: 'diagnostic_aggregator/AnalyzerGroup'
+              type: diagnostic_aggregator/AnalyzerGroup
               path: alive_monitoring
               analyzers:
                 topic_status:
-                  type: 'diagnostic_aggregator/GenericAnalyzer'
+                  type: diagnostic_aggregator/GenericAnalyzer
                   path: topic_status
                   contains: [": remote_control_topic_status"]
                   timeout: 1.0
