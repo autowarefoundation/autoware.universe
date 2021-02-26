@@ -53,7 +53,7 @@
         diag_level:
           /autoware/localization/matching_score: { sf_at: "warn", lf_at: "error", spf_at: "none" }
           /autoware/sensing/gnss: { sf_at: "warn", lf_at: "error", spf_at: "none" }
-          /autoware/system/logging: { sf_at: "warn", lf_at: "error", spf_at: "none" }
+          /autoware/system/logging: { sf_at: "warn", lf_at: "none", spf_at: "none" }
           /autoware/system/resource_monitoring/cpu_temperature: { sf_at: "warn", lf_at: "error", spf_at: "none" }
           /autoware/system/resource_monitoring/cpu_usage: { sf_at: "warn", lf_at: "error", spf_at: "none" }
           /autoware/system/resource_monitoring/cpu_thermal_throttling: { sf_at: "warn", lf_at: "error", spf_at: "none" }
