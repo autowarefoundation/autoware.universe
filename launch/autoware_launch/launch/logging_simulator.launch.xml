@@ -4,7 +4,7 @@
   <arg name="map_path" doc="point cloud and lanelet2 map directory path"/>
   <arg name="vehicle_model"/>
   <arg name="sensor_model"/>
-  <arg name="vehicle_id" value="$(optenv VEHICLE_ID default)"/>
+  <arg name="vehicle_id" value="$(env VEHICLE_ID default)"/>
   <!-- Optional parameters -->
   <arg name="vehicle" default="true" doc="launch vehicle" />
   <arg name="system" default="true" doc="launch system" />
@@ -17,55 +17,56 @@
   <arg name="rviz" default="true" doc="launch rviz" />
   <arg name="lanelet2_map_file" default="lanelet2_map.osm" />
   <arg name="pointcloud_map_file" default="pointcloud_map.pcd" />
-  <param name="/use_sim_time" value="true" />
+  <set_env name="AW_ROS2_USE_SIM_TIME" value="true" />
 
   <!-- Vehicle -->
-  <include file="$(find vehicle_launch)/launch/vehicle_description.launch" if="$(arg vehicle)">
-    <arg name="vehicle_model" value="$(arg vehicle_model)"/>
-    <arg name="sensor_model" value="$(arg sensor_model)"/>
-    <arg name="vehicle_id" value="$(arg vehicle_id)"/>
+  <include file="$(find-pkg-share vehicle_launch)/launch/vehicle_description.launch.xml" if="$(var vehicle)">
+    <arg name="vehicle_model" value="$(var vehicle_model)"/>
+    <arg name="sensor_model" value="$(var sensor_model)"/>
+    <arg name="vehicle_id" value="$(var vehicle_id)"/>
+    <arg name="vehicle_param_file" value="$(find-pkg-share $(var vehicle_model)_description)/config/vehicle_info.param.yaml"/>
   </include>
 
   <!-- System -->
-  <include file="$(find system_launch)/launch/system.launch" if="$(arg system)">
+  <include file="$(find-pkg-share system_launch)/launch/system.launch.xml" if="$(var system)">
     <arg name="run_mode" value="online"/>
   </include>
 
   <!-- Map -->
-  <include file="$(find map_launch)/launch/map.launch" if="$(arg map)">
-    <arg name="lanelet2_map_path" value="$(arg map_path)/$(arg lanelet2_map_file)" />
-    <arg name="pointcloud_map_path" value="$(arg map_path)/$(arg pointcloud_map_file)"/>
+  <include file="$(find-pkg-share map_launch)/launch/map.launch.xml" if="$(var map)">
+    <arg name="lanelet2_map_path" value="$(var map_path)/$(var lanelet2_map_file)" />
+    <arg name="pointcloud_map_path" value="$(var map_path)/$(var pointcloud_map_file)"/>
   </include>
 
   <!-- Sensing -->
-  <include file="$(find sensing_launch)/launch/sensing.launch" if="$(arg sensing)">
+  <include file="$(find-pkg-share sensing_launch)/launch/sensing.launch.xml" if="$(var sensing)">
     <arg name="launch_driver" value="false"/>
-    <arg name="sensor_model" value="$(arg sensor_model)"/>
+    <arg name="sensor_model" value="$(var sensor_model)"/>
   </include>
 
   <!-- Localization -->
-  <include file="$(find localization_launch)/launch/localization.launch" if="$(arg localization)">
+  <include file="$(find-pkg-share localization_launch)/launch/localization.launch.xml" if="$(var localization)">
   </include>
 
   <!-- Perception -->
-  <include file="$(find perception_launch)/launch/perception.launch" if="$(arg perception)">
+  <include file="$(find-pkg-share perception_launch)/launch/perception.launch.xml" if="$(var perception)">
     <arg name="mode" value="lidar" doc="options: camera_lidar_fusion, lidar, camera"/>
   </include>
 
   <!-- Planning -->
-  <include file="$(find planning_launch)/launch/planning.launch" if="$(arg planning)"/>
+  <include file="$(find-pkg-share planning_launch)/launch/planning.launch.xml" if="$(var planning)">
+    <arg name="vehicle_param_file" value="$(find-pkg-share $(var vehicle_model)_description)/config/vehicle_info.param.yaml"/>
+  </include>
 
   <!-- Control -->
-  <include file="$(find control_launch)/launch/control.launch" if="$(arg control)">
+  <include file="$(find-pkg-share control_launch)/launch/control.launch" if="$(var control)">
+    <arg name="vehicle_param_file" value="$(find-pkg-share $(var vehicle_model)_description)/config/vehicle_info.param.yaml"/>
     <arg name="lateral_controller_mode" value="mpc_follower" doc="options: mpc_follower, pure_pursuit"/>
   </include>
 
   <!-- Rviz -->
-  <node pkg="rviz" type="rviz" name="rviz" output="screen" args="-d $(find autoware_launch)/rviz/autoware.rviz" if="$(arg rviz)" />
+  <node pkg="rviz2" type="rviz2" name="rviz2" output="screen" args="-d $(find-pkg-share autoware_launch)/rviz/autoware.rviz -s $(find-pkg-share autoware_launch)/rviz/image/autoware.png" if="$(var rviz)" />
 
   <!-- Web Controller -->
-  <include file="$(find roswww)/launch/roswww.launch">
-    <arg name="cached" value="false"/>
-  </include>
-  <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" />
+  <include file="$(find-pkg-share autoware_web_controller)/launch/autoware_web_controller.launch.xml" />
 </launch>
