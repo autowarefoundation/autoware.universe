@@ -32,20 +32,6 @@ bool CylinderModel::estimate(
   const pcl::PointCloud<pcl::PointXYZ> & cluster,
   autoware_perception_msgs::msg::Shape & shape_output, geometry_msgs::msg::Pose & pose_output)
 {
-  // calc centroid point for cylinder height(z)
-  pcl::PointXYZ centroid;
-  centroid.x = 0;
-  centroid.y = 0;
-  centroid.z = 0;
-  for (const auto & pcl_point : cluster) {
-    centroid.x += pcl_point.x;
-    centroid.y += pcl_point.y;
-    centroid.z += pcl_point.z;
-  }
-  centroid.x = centroid.x / (double)cluster.size();
-  centroid.y = centroid.y / (double)cluster.size();
-  centroid.z = centroid.z / (double)cluster.size();
-
   // calc min and max z for cylinder length
   double min_z = 0;
   double max_z = 0;
@@ -69,7 +55,7 @@ bool CylinderModel::estimate(
   shape_output.type = autoware_perception_msgs::msg::Shape::CYLINDER;
   pose_output.position.x = center.x;
   pose_output.position.y = center.y;
-  pose_output.position.z = centroid.z;
+  pose_output.position.z = min_z + (max_z - min_z) / 2.0f;
   pose_output.orientation.x = 0;
   pose_output.orientation.y = 0;
   pose_output.orientation.z = 0;
