@@ -42,6 +42,8 @@
   <include file="$(find-pkg-share sensing_launch)/launch/sensing.launch.xml" if="$(var sensing)">
     <arg name="launch_driver" value="false"/>
     <arg name="sensor_model" value="$(var sensor_model)"/>
+    <arg name="vehicle_param_file" value="$(find-pkg-share $(var vehicle_model)_description)/config/vehicle_info.param.yaml"/>
+    <arg name="vehicle_mirror_param_file" value="$(find-pkg-share $(var vehicle_model)_description)/config/mirror.param.yaml"/>
   </include>
 
   <!-- Localization -->
