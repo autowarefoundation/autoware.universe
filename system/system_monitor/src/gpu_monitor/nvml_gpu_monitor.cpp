@@ -245,6 +245,7 @@ void GPUMonitor::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & s
       switch (flag) {
         case nvmlClocksThrottleReasonGpuIdle:
         case nvmlClocksThrottleReasonApplicationsClocksSetting:
+        case nvmlClocksThrottleReasonSwPowerCap:
           // we do not treat as error
           break;
         default:
