@@ -12,10 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef AUTOWARE_JOY_CONTROLLER__JOY_CONVERTER__DS4_JOY_CONVERTER_HPP_
+#define AUTOWARE_JOY_CONTROLLER__JOY_CONVERTER__DS4_JOY_CONVERTER_HPP_
 
+#include <algorithm>
 #include "autoware_joy_controller/joy_converter/joy_converter_base.hpp"
 
+namespace autoware_joy_controller
+{
 class DS4JoyConverter : public JoyConverterBase
 {
 public:
@@ -86,3 +90,6 @@ private:
 
   bool reverse() const {return Share();}
 };
+}  // namespace autoware_joy_controller
+
+#endif  // AUTOWARE_JOY_CONTROLLER__JOY_CONVERTER__DS4_JOY_CONVERTER_HPP_

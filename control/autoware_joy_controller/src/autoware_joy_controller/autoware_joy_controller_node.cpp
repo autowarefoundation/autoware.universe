@@ -12,12 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <algorithm>
+#include <memory>
+#include <string>
+#include <utility>
+
 #include "autoware_joy_controller/autoware_joy_controller.hpp"
 #include "autoware_joy_controller/joy_converter/g29_joy_converter.hpp"
 #include "autoware_joy_controller/joy_converter/ds4_joy_converter.hpp"
 
 namespace
 {
+using autoware_joy_controller::GateModeType;
+using autoware_joy_controller::ShiftType;
+using autoware_joy_controller::TurnSignalType;
+
 ShiftType getUpperShift(const ShiftType & shift)
 {
   using autoware_vehicle_msgs::msg::Shift;
@@ -90,6 +99,8 @@ double calcMapping(const double input, const double sensitivity)
 
 }  // namespace
 
+namespace autoware_joy_controller
+{
 void AutowareJoyControllerNode::onJoy(const sensor_msgs::msg::Joy::ConstSharedPtr msg)
 {
   last_joy_received_time_ = msg->header.stamp;
@@ -465,7 +476,8 @@ AutowareJoyControllerNode::AutowareJoyControllerNode()
     1);
 
   // Service Client
-  client_clear_emergency_stop_ = this->create_client<std_srvs::srv::Trigger>("service/clear_emergency_stop");
+  client_clear_emergency_stop_ = this->create_client<std_srvs::srv::Trigger>(
+    "service/clear_emergency_stop");
   while (!client_clear_emergency_stop_->wait_for_service(std::chrono::seconds(1))) {
     if (!rclcpp::ok()) {
       RCLCPP_ERROR(get_logger(), "Interrupted while waiting for service.");
@@ -478,3 +490,4 @@ AutowareJoyControllerNode::AutowareJoyControllerNode()
   // Timer
   initTimer(1.0 / update_rate_);
 }
+}  // namespace autoware_joy_controller
