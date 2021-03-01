@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <map>
 #include <memory>
 #include <string>
 #include <utility>
@@ -21,6 +22,7 @@
 
 #include "autoware_utils/math/unit_conversion.hpp"
 #include "autoware_utils/ros/marker_helper.hpp"
+#include "autoware_utils/system/stop_watch.hpp"
 #include "lanelet2_extension/utility/query.hpp"
 #include "lanelet2_extension/visualization/visualization.hpp"
 #include "vehicle_info_util/vehicle_info.hpp"
@@ -286,6 +288,10 @@ bool LaneDepartureCheckerNode::isDataTimeout()
 
 void LaneDepartureCheckerNode::onTimer()
 {
+  std::map<std::string, double> processing_time_map;
+  autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
+  stop_watch.tic("Total");
+
   current_pose_ = self_pose_listener_.getCurrentPose();
 
   if (!isDataReady()) {
@@ -296,12 +302,15 @@ void LaneDepartureCheckerNode::onTimer()
     return;
   }
 
+  processing_time_map["Node: checkData"] = stop_watch.toc(true);
+
   // In order to wait for both of map and route will be ready, write this not in callback but here
   if (last_route_ != route_) {
     route_lanelets_ = getRouteLanelets(
       *lanelet_map_, routing_graph_, route_->route_sections, param_.vehicle_info.vehicle_length);
     last_route_ = route_;
   }
+  processing_time_map["Node: getRouteLanelets"] = stop_watch.toc(true);
 
   input_.current_pose = current_pose_;
   input_.current_twist = current_twist_;
@@ -310,10 +319,13 @@ void LaneDepartureCheckerNode::onTimer()
   input_.route_lanelets = route_lanelets_;
   input_.reference_trajectory = reference_trajectory_;
   input_.predicted_trajectory = predicted_trajectory_;
+  processing_time_map["Node: setInputData"] = stop_watch.toc(true);
 
   output_ = lane_departure_checker_->update(input_);
+  processing_time_map["Node: update"] = stop_watch.toc(true);
 
   updater_.force_update();
+  processing_time_map["Node: updateDiagnostics"] = stop_watch.toc(true);
 
   {
     const auto & deviation = output_.trajectory_deviation;
@@ -324,11 +336,13 @@ void LaneDepartureCheckerNode::onTimer()
     debug_publisher_.publish<autoware_debug_msgs::msg::Float64Stamped>(
       "deviation/yaw_deg", rad2deg(deviation.yaw));
   }
+  processing_time_map["Node: publishTrajectoryDeviation"] = stop_watch.toc(true);
 
   debug_publisher_.publish<visualization_msgs::msg::MarkerArray>(
     std::string("marker_array"), createMarkerArray());
 
-  processing_time_publisher_.publish(output_.processing_time_map);
+  processing_time_map["Total"] = stop_watch.toc("Total");
+  processing_time_publisher_.publish(processing_time_map);
 }
 
 rcl_interfaces::msg::SetParametersResult LaneDepartureCheckerNode::onParameter(
