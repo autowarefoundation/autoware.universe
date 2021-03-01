@@ -1,23 +1,28 @@
-/*
- * Copyright 2018 Autoware Foundation. All rights reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- * v1.0 Yukihiro Saito
- */
+// Copyright 2020 Tier IV, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+//
+// Author: v1.0 Yukihiro Saito
+///
 
-#ifndef MULTI_OBJECT_TRACKER_CORE_HPP_
-#define MULTI_OBJECT_TRACKER_CORE_HPP_
+#ifndef MULTI_OBJECT_TRACKER__MULTI_OBJECT_TRACKER_CORE_HPP_
+#define MULTI_OBJECT_TRACKER__MULTI_OBJECT_TRACKER_CORE_HPP_
+
+#include <list>
+#include <memory>
+#include <string>
+#include <vector>
 
 #include "multi_object_tracker/data_association/data_association.hpp"
 #include "multi_object_tracker/tracker/model/tracker_base.hpp"
@@ -32,9 +37,6 @@
 #include "tf2_ros/transform_listener.h"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "rclcpp/rclcpp.hpp"
-
-#include <memory>
-#include <vector>
 
 class MultiObjectTracker : public rclcpp::Node
 {
@@ -60,6 +62,13 @@ private:
   std::list<std::shared_ptr<Tracker>> list_tracker_;
   std::unique_ptr<DataAssociation> data_association_;
   bool enable_delay_compensation_;
+  bool transformDynamicObjects(
+    const autoware_perception_msgs::msg::DynamicObjectWithFeatureArray & input_msg,
+    const std::string & target_frame_id,
+    autoware_perception_msgs::msg::DynamicObjectWithFeatureArray & output_msg);
+  void checkTrackerLifeCycle(
+    std::list<std::shared_ptr<Tracker>> & list_tracker, const rclcpp::Time & time);
+  void publish(const rclcpp::Time & time);
 };
 
-#endif
+#endif  // MULTI_OBJECT_TRACKER__MULTI_OBJECT_TRACKER_CORE_HPP_

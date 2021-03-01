@@ -1,21 +1,26 @@
-/*
- * Copyright 2018 Autoware Foundation. All rights reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- *
- * v1.0 Yukihiro Saito
- */
+// Copyright 2020 Tier IV, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+//
+// Author: v1.0 Yukihiro Saito
+//
+
+#include <algorithm>
+#include <list>
+#include <memory>
+#include <unordered_map>
+#include <vector>
 
 #include "multi_object_tracker/data_association/data_association.hpp"
 #include "successive_shortest_path/successive_shortest_path.hpp"
@@ -24,7 +29,7 @@
 DataAssociation::DataAssociation(
   std::vector<int> can_assign_vector, std::vector<double> max_dist_vector,
   std::vector<double> max_area_vector, std::vector<double> min_area_vector)
-: score_threshold_(0.1)
+: score_threshold_(0.01)
 {
   {
     const int assign_label_num = static_cast<int>(std::sqrt(can_assign_vector.size()));
@@ -118,14 +123,20 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
         double area = utils::getArea(measurements.feature_objects.at(measurement_idx).object.shape);
         score = (max_dist - std::min(dist, max_dist)) / max_dist;
 
+        // dist gate
         if (max_dist < dist) {score = 0.0;}
+        // area gate
         if (area < min_area || max_area < area) {score = 0.0;}
-        // if ((*tracker_itr)->getType() == measurements.feature_objects.at(measurement_idx).object.semantic.type &&
-        //     measurements.feature_objects.at(measurement_idx).object.semantic.type !=
-        //     autoware_perception_msgs::msg::Semantic::UNKNOWN) score += 1.0;
-        // if (measurements.feature_objects.at(measurement_idx).object.semantic.type !=
-        // autoware_perception_msgs::msg::Semantic::UNKNOWN)
-        //     score += 1.0;
+        // mahalanobis dist gate
+        if (score < score_threshold_) {
+          double mahalanobis_dist = getMahalanobisDistance(
+            measurements.feature_objects.at(measurement_idx)
+            .object.state.pose_covariance.pose.position,
+            (*tracker_itr)->getPosition(measurements.header.stamp),
+            (*tracker_itr)->getXYCovariance(measurements.header.stamp));
+
+          if (2.448 <= mahalanobis_dist) {score = 0.0;}
+        }
       }
       score_matrix(tracker_idx, measurement_idx) = score;
     }
@@ -141,4 +152,17 @@ double DataAssociation::getDistance(
   const double diff_y = tracker.y - measurement.y;
   // const double diff_z = tracker.z - measurement.z;
   return std::sqrt(diff_x * diff_x + diff_y * diff_y);
+}
+
+double DataAssociation::getMahalanobisDistance(
+  const geometry_msgs::msg::Point & measurement, const geometry_msgs::msg::Point & tracker,
+  const Eigen::Matrix2d & covariance)
+{
+  Eigen::Vector2d measurement_point;
+  measurement_point << measurement.x, measurement.y;
+  Eigen::Vector2d tracker_point;
+  tracker_point << tracker.x, tracker.y;
+  Eigen::MatrixXd mahalanobis_squared = (measurement_point - tracker_point).transpose() *
+    covariance.inverse() * (measurement_point - tracker_point);
+  return std::sqrt(mahalanobis_squared(0));
 }

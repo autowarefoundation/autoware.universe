@@ -26,28 +26,19 @@ set(MULTI_OBJECT_TRACKER_SRC
   src/multi_object_tracker_core.cpp
   src/utils/utils.cpp
   src/tracker/model/tracker_base.cpp
-  src/tracker/model/vehicle_tracker.cpp
+  src/tracker/model/big_vehicle_tracker.cpp
+  src/tracker/model/normal_vehicle_tracker.cpp
+  src/tracker/model/multiple_vehicle_tracker.cpp
   src/tracker/model/bicycle_tracker.cpp
   src/tracker/model/pedestrian_tracker.cpp
+  src/tracker/model/pedestrian_and_bicycle_tracker.cpp
   src/data_association/data_association.cpp
-  src/data_association/successive_shortest_path/successive_shortest_path.cpp
-)
-
-set(MULTI_OBJECT_TRACKER_HEADERS
   src/data_association/successive_shortest_path/successive_shortest_path.hpp
-  include/multi_object_tracker/data_association/data_association.hpp
-  include/multi_object_tracker/tracker/tracker.hpp
-  include/multi_object_tracker/tracker/model/tracker_base.hpp
-  include/multi_object_tracker/tracker/model/bicycle_tracker.hpp
-  include/multi_object_tracker/tracker/model/pedestrian_tracker.hpp
-  include/multi_object_tracker/tracker/model/vehicle_tracker.hpp
-  include/multi_object_tracker/utils/utils.hpp
-  include/multi_object_tracker/multi_object_tracker_core.hpp
+  src/data_association/successive_shortest_path/successive_shortest_path.cpp
 )
 
 ament_auto_add_library(multi_object_tracker_node SHARED
   ${MULTI_OBJECT_TRACKER_SRC}
-  ${MULTI_OBJECT_TRACKER_HEADERS}
 )
 
 target_link_libraries(multi_object_tracker_node Eigen3::Eigen)

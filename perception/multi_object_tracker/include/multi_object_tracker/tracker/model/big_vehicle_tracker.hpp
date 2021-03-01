@@ -16,14 +16,14 @@
 // Author: v1.0 Yukihiro Saito
 //
 
-#ifndef MULTI_OBJECT_TRACKER__TRACKER__MODEL__PEDESTRIAN_TRACKER_HPP_
-#define MULTI_OBJECT_TRACKER__TRACKER__MODEL__PEDESTRIAN_TRACKER_HPP_
+#ifndef MULTI_OBJECT_TRACKER__TRACKER__MODEL__BIG_VEHICLE_TRACKER_HPP_
+#define MULTI_OBJECT_TRACKER__TRACKER__MODEL__BIG_VEHICLE_TRACKER_HPP_
 
-#include "autoware_perception_msgs/msg/dynamic_object.hpp"
 #include "kalman_filter/kalman_filter.hpp"
+#include "autoware_perception_msgs/msg/dynamic_object.hpp"
 #include "multi_object_tracker/tracker/model/tracker_base.hpp"
 
-class PedestrianTracker : public Tracker
+class BigVehicleTracker : public Tracker
 {
 private:
   autoware_perception_msgs::msg::DynamicObject object_;
@@ -67,17 +67,12 @@ private:
     double length;
     double height;
   };
-  struct Cylinder
-  {
-    double width;
-    double height;
-  };
   BoundingBox bounding_box_;
-  Cylinder cylinder_;
 
 public:
-  PedestrianTracker(
-    const rclcpp::Time & time, const autoware_perception_msgs::msg::DynamicObject & object);
+  BigVehicleTracker(
+    const rclcpp::Time & time,
+    const autoware_perception_msgs::msg::DynamicObject & object);
 
   bool predict(const rclcpp::Time & time) override;
   bool predict(const double dt, KalmanFilter & ekf);
@@ -88,7 +83,7 @@ public:
   bool measureWithShape(const autoware_perception_msgs::msg::DynamicObject & object);
   bool getEstimatedDynamicObject(
     const rclcpp::Time & time, autoware_perception_msgs::msg::DynamicObject & object) override;
-  virtual ~PedestrianTracker() {}
+  virtual ~BigVehicleTracker() {}
 };
 
-#endif  // MULTI_OBJECT_TRACKER__TRACKER__MODEL__PEDESTRIAN_TRACKER_HPP_
+#endif  // MULTI_OBJECT_TRACKER__TRACKER__MODEL__BIG_VEHICLE_TRACKER_HPP_

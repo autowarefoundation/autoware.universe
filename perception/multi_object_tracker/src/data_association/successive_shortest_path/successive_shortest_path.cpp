@@ -12,17 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "successive_shortest_path.hpp"
-
-// #include <algorithm>
-// #include <cstdio>
-// #include <limits>
-#include <queue>
-#include <vector>
-// #include <unordered_set>
-// #include <iostream>
+#include <algorithm>
 #include <cassert>
-// #include <chrono>
+#include <functional>
+#include <queue>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+
+#include "successive_shortest_path.hpp"
 
 namespace assignment_problem
 {
@@ -98,7 +96,8 @@ void MaximizeLinearAssignment(
   //     - {1, ...,  n_agents}: agent nodes
   //     - {n_agents+1, ...,  n_agents+n_tasks}: task nodes
   //     - n_agents+n_tasks+1: sink node
-  //     - {n_agents+n_tasks+2, ..., n_agents+n_tasks+1+n_agents}: dummy node (when sparse_cost is true)
+  //     - {n_agents+n_tasks+2, ..., n_agents+n_tasks+1+n_agents}:
+  //       dummy node (when sparse_cost is true)
   std::vector<std::vector<ResidualEdge>> adjacency_list(n_nodes);
 
   // Reserve memory
@@ -182,23 +181,6 @@ void MaximizeLinearAssignment(
     }
   }
 
-  // // Print adjacency list
-  // std::cout << std::endl;
-  // for (int v = 0; v < n_nodes; v++)
-  // {
-  //   std::cout << v << ": ";
-  //   for (auto it_incident_edge = adjacency_list.at(v).cbegin(); it_incident_edge != adjacency_list.at(v).cend();
-  //   it_incident_edge++)
-  //   {
-  //     std::cout << "(" << it_incident_edge->first << ", " << it_incident_edge->second.cost << ")";
-  //   }
-  //   std::cout << std::endl;
-  // }
-
-  // end_time = std::chrono::system_clock::now();
-  // double time = static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(end_time -
-  // start_time).count() / 1000.0); std::cout << " " << time << " ";
-
   // Maximum flow value
   const int max_flow = std::min(n_agents, n_tasks);
 
@@ -277,7 +259,8 @@ void MaximizeLinearAssignment(
       }
     }
 
-    // Shortest path length to sink is greater than MAX_COST, which means no non-dummy routes left ,terminate
+    // Shortest path length to sink is greater than MAX_COST,
+    // which means no non-dummy routes left, terminate
     if (potentials.at(sink) >= MAX_COST) {
       break;
     }
@@ -385,6 +368,5 @@ void MaximizeLinearAssignment(
     }
   }
 #endif
-
 }
 }  // namespace assignment_problem

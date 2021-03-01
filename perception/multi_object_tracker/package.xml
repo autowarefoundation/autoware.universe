@@ -12,6 +12,8 @@
   <buildtool_depend>eigen3_cmake_module</buildtool_depend>
 
   <depend>autoware_perception_msgs</depend>
+  <depend>autoware_utils</depend>
+  <depend>kalman_filter</depend>
   <depend>tf2</depend>
   <depend>tf2_ros</depend>
   <depend>eigen</depend>
@@ -21,7 +23,7 @@
   <exec_depend>rclcpp_components</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
-  <test_depend>ament_cmake_cppcheck</test_depend>
+  <test_depend>ament_lint_common</test_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

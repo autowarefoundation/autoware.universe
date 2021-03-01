@@ -1,40 +1,44 @@
-/*
- * Copyright 2018 Autoware Foundation. All rights reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- * v1.0 Yukihiro Saito
- */
+// Copyright 2020 Tier IV, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+//
+// Author: v1.0 Yukihiro Saito
+//
 
-#ifndef MULTI_OBJECT_TRACKER_DATA_ASSOCIATION_HPP_
-#define MULTI_OBJECT_TRACKER_DATA_ASSOCIATION_HPP_
+#ifndef MULTI_OBJECT_TRACKER__DATA_ASSOCIATION__DATA_ASSOCIATION_HPP_
+#define MULTI_OBJECT_TRACKER__DATA_ASSOCIATION__DATA_ASSOCIATION_HPP_
 
-#include "multi_object_tracker/tracker/tracker.hpp"
-#include "autoware_perception_msgs/msg/dynamic_object_with_feature_array.hpp"
+#include <list>
+#include <memory>
+#include <unordered_map>
+#include <vector>
 
 #define EIGEN_MPL2_ONLY
 #include "Eigen/Core"
 #include "Eigen/Geometry"
 
-#include <list>
-#include <unordered_map>
-#include <vector>
+#include "multi_object_tracker/tracker/tracker.hpp"
+#include "autoware_perception_msgs/msg/dynamic_object_with_feature_array.hpp"
 
 class DataAssociation
 {
 private:
   double getDistance(
     const geometry_msgs::msg::Point & measurement, const geometry_msgs::msg::Point & tracker);
+  double getMahalanobisDistance(
+    const geometry_msgs::msg::Point & measurement, const geometry_msgs::msg::Point & tracker,
+    const Eigen::Matrix2d & covariance);
   Eigen::MatrixXi can_assign_matrix_;
   Eigen::MatrixXd max_dist_matrix_;
   Eigen::MatrixXd max_area_matrix_;
@@ -54,4 +58,4 @@ public:
   virtual ~DataAssociation() {}
 };
 
-#endif
+#endif  // MULTI_OBJECT_TRACKER__DATA_ASSOCIATION__DATA_ASSOCIATION_HPP_
