@@ -42,6 +42,7 @@
 
     # slope compensation
     enable_slope_compensation: true
+    use_trajectory_for_pitch_calculation: false
     max_pitch_rad: 0.1
     min_pitch_rad: -0.1
     lpf_pitch_gain: 0.95
