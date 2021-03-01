@@ -59,10 +59,6 @@ repositories:
     type: git
     url: https://github.com/tier4/kvaser_interface.git
     version: tier4/ros2
-  vendor/diagnostics: # TODO remove after https://github.com/ros/diagnostics/pull/168 is available in foxy
-    type: git
-    url: https://github.com/mitsudome-r/diagnostics.git
-    version: ros2-devel
   vendor/usb_cam: # TODO remove after https://github.com/ros-drivers/usb_cam/pull/132 is available in foxy
     type: git
     url: https://github.com/tier4/usb_cam.git
@@ -91,23 +87,15 @@ repositories:
     type: git
     url: https://github.com/mitsudome-r/clock_publisher.git
     version: master
-#  vendor/lanelet2:
-#    type: git
-#    url: https://github.com/fzi-forschungszentrum-informatik/Lanelet2.git
-#    version: master
-#  vendor/mrt_cmake_modules:
-#    type: git
-#    url: https://github.com/KIT-MRT/mrt_cmake_modules.git
-#    version: master
-#  vendor/livox_ros_driver:
-#    type: git
-#    url: https://github.com/Livox-SDK/livox_ros_driver.git
-#    version: v2.5.0
-#  vendor/velodyne_vls:
-#    type: git
-#    url: https://github.com/tier4/velodyne_vls.git
-#    version: tier4/ros2
-  # calibration
+  vendor/velodyne_vls:
+    type: git
+    url: https://github.com/tier4/velodyne_vls.git
+    version: ros2
+  vendor/rqt_runtime_monitor:
+    type: git
+    url: https://github.com/tier4/rqt_runtime_monitor.git
+    version: dashing-devel
+# calibration
 #  calibration/tunable_static_tf_broadcaster:
 #    type: git
 #    url: https://github.com/tier4/tunable_static_tf_broadcaster.git
