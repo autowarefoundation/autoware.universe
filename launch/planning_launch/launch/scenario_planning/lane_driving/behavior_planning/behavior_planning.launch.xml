@@ -39,6 +39,7 @@
     <param name="use_predicted_path_outside_lanelet" value="false" />
     <param name="use_all_predicted_path" value="false" />
     <param name="refine_goal_search_radius_range" value="7.5" />
+    <param name="enable_blocked_by_obstacle" value="false" />
     <param from="$(var vehicle_param_file)" />
   </node>
 
