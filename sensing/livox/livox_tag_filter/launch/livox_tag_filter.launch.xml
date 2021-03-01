@@ -1,0 +1,12 @@
+<launch>
+  <arg name="input" doc="input topic name" />
+  <arg name="output" doc="output topic name" />
+
+  <arg name="ignore_tags" doc="tags to be ignored" />
+
+  <node pkg="livox_tag_filter" exec="livox_tag_filter_node" name="livox_tag_filter_node" output="screen">
+    <remap from="input" to="$(var input)"/>
+    <remap from="output" to="$(var output)"/>
+    <param name="ignore_tags" value="$(var ignore_tags)"/>
+  </node>
+</launch>
