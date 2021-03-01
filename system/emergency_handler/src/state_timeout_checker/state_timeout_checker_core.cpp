@@ -34,7 +34,8 @@ StateTimeoutChecker::StateTimeoutChecker()
 
   // Publisher
   pub_is_state_timeout_ =
-    create_publisher<std_msgs::msg::Bool>("output/is_state_timeout", rclcpp::QoS{1});
+    create_publisher<autoware_system_msgs::msg::TimeoutNotification>(
+    "output/is_state_timeout", rclcpp::QoS{1});
 
   // Timer
   auto timer_callback = std::bind(&StateTimeoutChecker::onTimer, this);
@@ -77,8 +78,9 @@ void StateTimeoutChecker::onTimer()
   }
 
   // Check timeout
-  std_msgs::msg::Bool is_state_timeout;
-  is_state_timeout.data = isStateTimeout();
+  autoware_system_msgs::msg::TimeoutNotification is_state_timeout;
+  is_state_timeout.is_timeout = isStateTimeout();
+  is_state_timeout.stamp = this->now();
   pub_is_state_timeout_->publish(is_state_timeout);
 }
 
