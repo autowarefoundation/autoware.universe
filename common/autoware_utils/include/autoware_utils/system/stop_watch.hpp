@@ -22,7 +22,7 @@
 namespace autoware_utils
 {
 template<
-  class Unit = std::chrono::seconds, class Duration = std::chrono::microseconds,
+  class OutputUnit = std::chrono::seconds, class InternalUnit = std::chrono::microseconds,
   class Clock = std::chrono::steady_clock>
 class StopWatch
 {
@@ -35,13 +35,13 @@ public:
   {
     const auto t_start = t_start_.at(name);
     const auto t_end = Clock::now();
-    const auto duration = std::chrono::duration_cast<Duration>(t_end - t_start).count();
+    const auto duration = std::chrono::duration_cast<InternalUnit>(t_end - t_start).count();
 
     if (reset) {
       t_start_[name] = Clock::now();
     }
 
-    const auto one_sec = std::chrono::duration_cast<Duration>(Unit(1)).count();
+    const auto one_sec = std::chrono::duration_cast<InternalUnit>(OutputUnit(1)).count();
 
     return static_cast<double>(duration) / one_sec;
   }
