@@ -522,7 +522,7 @@ Visualization Manager:
                   Scale: 1
                   Value: true
                 Value: true
-              Enabled: true
+              Enabled: false
               Head Length: 0.4000000059604645
               Head Radius: 0.6000000238418579
               Name: PoseWithCovInitial
@@ -556,7 +556,7 @@ Visualization Manager:
                   Scale: 1
                   Value: true
                 Value: true
-              Enabled: true
+              Enabled: false
               Head Length: 0.4000000059604645
               Head Radius: 0.6000000238418579
               Name: PoseWithCovAligned
@@ -569,6 +569,22 @@ Visualization Manager:
                 History Policy: Keep Last
                 Reliability Policy: Reliable
                 Value: /localization/pose_estimator/pose_with_covariance
+              Value: true
+            - Buffer Size: 200
+              Class: rviz_plugins::PoseHistory
+              Enabled: false
+              Line:
+                Color: 170; 255; 127
+                Value: true
+                Width: 0.10000000149011612
+                Alpha: 0.999
+              Name: PoseHistory
+              Topic:
+                Depth: 5
+                Durability Policy: Volatile
+                History Policy: Keep Last
+                Reliability Policy: Reliable
+                Value: /localization/pose_estimator/pose
               Value: true
             - Alpha: 0.999
               Autocompute Intensity Bounds: true
@@ -651,7 +667,23 @@ Visualization Manager:
           Enabled: true
           Name: NDT
         - Class: rviz_common/Group
-          Displays: ~
+          Displays:
+            - Buffer Size: 1000
+              Class: rviz_plugins::PoseHistory
+              Enabled: true
+              Line:
+                Color: 0; 255; 255
+                Value: true
+                Width: 0.10000000149011612
+                Alpha: 0.999
+              Name: PoseHistory
+              Topic:
+                Depth: 5
+                Durability Policy: Volatile
+                History Policy: Keep Last
+                Reliability Policy: Reliable
+                Value: /localization/pose_twist_fusion_filter/pose
+              Value: true
           Enabled: true
           Name: EKF
       Enabled: true
@@ -664,7 +696,12 @@ Visualization Manager:
               Enabled: true
               Name: DynamicObjects
               Namespaces:
-                {}
+                label: true
+                path: false
+                path confidence: true
+                position covariance: true
+                shape: true
+                twist: true
               Topic:
                 Depth: 5
                 Durability Policy: Volatile
@@ -680,7 +717,12 @@ Visualization Manager:
               Enabled: true
               Name: DynamicObjects
               Namespaces:
-                {}
+                label: true
+                path: false
+                path confidence: true
+                position covariance: true
+                shape: true
+                twist: true
               Topic:
                 Depth: 5
                 Durability Policy: Volatile
@@ -696,7 +738,12 @@ Visualization Manager:
               Enabled: true
               Name: DynamicObjects
               Namespaces:
-                {}
+                label: true
+                path: false
+                path confidence: true
+                position covariance: true
+                shape: true
+                twist: true
               Topic:
                 Depth: 5
                 Durability Policy: Volatile
@@ -713,7 +760,7 @@ Visualization Manager:
               Max Value: 1
               Median window: 5
               Min Value: 0
-              Name: Image
+              Name: RecognitionResultOnImage
               Normalize Range: true
               Topic:
                 Depth: 5
@@ -724,7 +771,7 @@ Visualization Manager:
               Value: true
             - Class: rviz_default_plugins/MarkerArray
               Enabled: true
-              Name: Beam
+              Name: MapBasedDetectionResult
               Namespaces:
                 {}
               Topic:
@@ -1221,7 +1268,7 @@ Visualization Manager:
   Global Options:
     Background Color: 10; 10; 10
     Default Light: true
-    Fixed Frame: viewer
+    Fixed Frame: map
     Frame Rate: 30
   Name: root
   Tools:
