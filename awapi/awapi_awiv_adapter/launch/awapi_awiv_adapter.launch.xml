@@ -30,6 +30,7 @@
   <arg name="input_traffic_light_state" default="/perception/traffic_light_recognition/traffic_light_states" />
   <arg name="input_nearest_traffic_light_state" default="/planning/scenario_planning/lane_driving/behavior_planning/debug/traffic_light_state" />
   <arg name="input_trajectory" default="/planning/scenario_planning/trajectory" />
+  <arg name="input_current_max_velocity" default="/planning/scenario_planning/current_max_velocity" />
   <arg name="input_door_status" default="/pacmod/parsed_tx/rear_pass_door_rpt" />
   <arg name="input_stop_speed_exceeded" default="/planning/scenario_planning/motion_velocity_optimizer/stop_speed_exceeded" />
   <arg name="input_external_crosswalk_status" default="/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/input/external_crosswalk_states" />
@@ -107,6 +108,7 @@
       <remap from="input/obstacle_avoid_ready" to="$(var input_obstacle_avoid_ready)" />
       <remap from="input/obstacle_avoid_candidate_path" to="$(var input_obstacle_avoid_candidate_path)" />
       <remap from="input/max_velocity" to="$(var set_max_velocity)" />
+      <remap from="input/current_max_velocity" to="$(arg input_current_max_velocity)" />
       <remap from="input/temporary_stop" to="$(var set_temporary_stop)" />
       <remap from="input/autoware_trajectory" to="$(var input_trajectory)" />
       <remap from="input/door_control" to="$(var set_door_control)" />

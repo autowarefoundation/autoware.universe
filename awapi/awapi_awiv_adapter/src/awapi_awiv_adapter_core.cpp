@@ -107,6 +107,8 @@ AutowareIvAdapter::AutowareIvAdapter()
     std::bind(&AutowareIvAdapter::callbackLaneObstacleAvoidCandidatePath, this, _1));
   sub_max_velocity_ = this->create_subscription<autoware_api_msgs::msg::VelocityLimit>(
     "input/max_velocity", 1, std::bind(&AutowareIvAdapter::callbackMaxVelocity, this, _1));
+  sub_current_max_velocity_ = this->create_subscription<autoware_planning_msgs::msg::VelocityLimit>(
+    "input/max_velocity", 1, std::bind(&AutowareIvAdapter::callbackCurrentMaxVelocity, this, _1));
   sub_temporary_stop_ = this->create_subscription<autoware_api_msgs::msg::StopCommand>(
     "input/temporary_stop", 1, std::bind(&AutowareIvAdapter::callbackTemporaryStop, this, _1));
   sub_autoware_traj_ =
@@ -296,6 +298,12 @@ void AutowareIvAdapter::callbackMaxVelocity(
 {
   aw_info_.max_velocity_ptr = msg_ptr;
   max_velocity_publisher_->statePublisher(aw_info_);
+}
+
+void AutowareIvAdapter::callbackCurrentMaxVelocity(
+  const autoware_planning_msgs::msg::VelocityLimit::ConstSharedPtr msg_ptr)
+{
+  aw_info_.current_max_velocity_ptr = msg_ptr;
 }
 
 void AutowareIvAdapter::callbackTemporaryStop(
