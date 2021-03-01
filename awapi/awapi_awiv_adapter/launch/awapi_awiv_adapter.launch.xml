@@ -108,7 +108,7 @@
       <remap from="input/obstacle_avoid_ready" to="$(var input_obstacle_avoid_ready)" />
       <remap from="input/obstacle_avoid_candidate_path" to="$(var input_obstacle_avoid_candidate_path)" />
       <remap from="input/max_velocity" to="$(var set_max_velocity)" />
-      <remap from="input/current_max_velocity" to="$(arg input_current_max_velocity)" />
+      <remap from="input/current_max_velocity" to="$(var input_current_max_velocity)" />
       <remap from="input/temporary_stop" to="$(var set_temporary_stop)" />
       <remap from="input/autoware_trajectory" to="$(var input_trajectory)" />
       <remap from="input/door_control" to="$(var set_door_control)" />
