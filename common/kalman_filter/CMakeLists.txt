@@ -16,7 +16,7 @@ ament_auto_find_build_dependencies()
 find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
 
-ament_auto_add_library(kalman_filter
+ament_auto_add_library(kalman_filter SHARED
   src/kalman_filter.cpp
   src/time_delay_kalman_filter.cpp
   include/kalman_filter/kalman_filter.hpp
