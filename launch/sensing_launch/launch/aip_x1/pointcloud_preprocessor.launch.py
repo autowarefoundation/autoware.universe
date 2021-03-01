@@ -24,6 +24,7 @@ from launch_ros.actions import ComposableNodeContainer, LoadComposableNodes
 from launch_ros.descriptions import ComposableNode
 from launch.substitutions import EnvironmentVariable
 
+
 def get_vehicle_info(context):
     path = LaunchConfiguration('vehicle_param_file').perform(context)
     with open(path, 'r') as f:
@@ -38,12 +39,12 @@ def get_vehicle_info(context):
     p['max_height_offset'] = p['vehicle_height']
     return p
 
+
 def get_vehicle_mirror_info(context):
     path = LaunchConfiguration('vehicle_mirror_param_file').perform(context)
     with open(path, 'r') as f:
         p = yaml.safe_load(f)['/**']['ros__parameters']
     return p
-
 
 
 def launch_setup(context, *args, **kwargs):
@@ -60,10 +61,10 @@ def launch_setup(context, *args, **kwargs):
         remappings=[('/output', 'concatenated/pointcloud')],
         parameters=[{
             'input_topics': ['/sensing/lidar/top/outlier_filtered/pointcloud',
-                            '/sensing/lidar/front_left/mirror_cropped/pointcloud',
-                            '/sensing/lidar/front_right/mirror_cropped/pointcloud',
-                            '/sensing/lidar/front_center/mirror_cropped/pointcloud'],
-            'output_frame': 'base_link',
+                             '/sensing/lidar/front_left/mirror_cropped/pointcloud',
+                             '/sensing/lidar/front_right/mirror_cropped/pointcloud',
+                             '/sensing/lidar/front_center/mirror_cropped/pointcloud'],
+            'output_frame': LaunchConfiguration('base_frame'),
             'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False'),
         }]
     )
@@ -78,7 +79,7 @@ def launch_setup(context, *args, **kwargs):
             ('output', 'concatenated/pointcloud'),
         ],
         parameters=[{
-            'output_frame': 'base_link',
+            'output_frame': LaunchConfiguration('base_frame'),
             'min_z': vehicle_info['min_height_offset'],
             'max_z': vehicle_info['max_height_offset'],
             'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False'),
@@ -101,26 +102,28 @@ def launch_setup(context, *args, **kwargs):
             'max_x': 100.0,
             'min_y': -50.0,
             'max_y': 50.0,
-            'min_z': vehicle_info['min_height_offset'],
+            'min_z': -0.5,
             'max_z': vehicle_info['max_height_offset'],
             'negative': False,
             'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False'),
         }]
     )
 
-    ground_component = ComposableNode(
+    ray_ground_filter_component = ComposableNode(
         package=pkg,
         plugin='pointcloud_preprocessor::RayGroundFilterComponent',
         name='ray_ground_filter',
         remappings=[
             ('input', 'measurement_range_cropped/pointcloud'),
-            ('output', 'no_ground/pointcloud_with_outlier'),
+            ('output', 'rough/no_ground/pointcloud'),
         ],
         parameters=[{
-            "initial_max_slope": 1.0,
+            "initial_max_slope": 10.0,
             "general_max_slope": 10.0,
             "local_max_slope": 10.0,
-            "min_height_threshold": 0.1,
+            "min_height_threshold": 0.3,
+            "radial_devider_angle": 1.0,
+            "concentric_devider_distance": 0.0,
             "use_vehicle_footprint": True,
             "min_x": vehicle_info['min_longitudinal_offset'],
             "max_x": vehicle_info['max_longitudinal_offset'],
@@ -130,13 +133,87 @@ def launch_setup(context, *args, **kwargs):
         }]
     )
 
+    short_height_obstacle_detection_area_filter_component = ComposableNode(
+        package=pkg,
+        plugin='pointcloud_preprocessor::CropBoxFilterComponent',
+        name='short_height_obstacle_detection_area_filter',
+        remappings=[
+            ('input', 'front_center/mirror_cropped/pointcloud'),
+            ('output', 'short_height_obstacle_detection_area/pointcloud'),
+        ],
+        parameters=[{
+            'input_frame': LaunchConfiguration('base_frame'),
+            'output_frame': LaunchConfiguration('base_frame'),
+            'min_x': 0.0,
+            'max_x': 15.6,  # max_x: 14.0m + base_link2livox_front_center distance 1.6m
+            'min_y': -4.0,
+            'max_y': 4.0,
+            'min_z': -0.5,
+            'max_z': 0.5,
+            'negative': False,
+            'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False'),
+        }]
+    )
+
+    vector_map_filter_component = ComposableNode(
+        package=pkg,
+        plugin='pointcloud_preprocessor::Lanelet2MapFilterComponent',
+        name='vector_map_filter',
+        remappings=[
+            ('input/pointcloud', 'short_height_obstacle_detection_area/pointcloud'),
+            ('input/vector_map', '/map/vector_map'),
+            ('output', 'vector_map_filtered/pointcloud'),
+        ],
+        parameters=[{
+            'voxel_size_x': 0.25,
+            'voxel_size_y': 0.25,
+            'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False'),
+        }]
+    )
+
+    ransac_ground_filter_component = ComposableNode(
+        package=pkg,
+        plugin='pointcloud_preprocessor::RANSACGroundFilterComponent',
+        name='ransac_ground_filter',
+        remappings=[
+            ('input', 'vector_map_filtered/pointcloud'),
+            ('output', 'short_height/no_ground/pointcloud'),
+        ],
+        parameters=[{
+            'outlier_threshold': 0.1,
+            'min_points': 400,
+            'min_inliers': 200,
+            'max_iterations': 50,
+            'height_threshold': 0.12,
+            'plane_slope_threshold': 10.0,
+            'voxel_size_x': 0.2,
+            'voxel_size_y': 0.2,
+            'voxel_size_z': 0.2,
+            'debug': False,
+            'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False'),
+        }]
+    )
+
+    concat_no_ground_component = ComposableNode(
+        package=pkg,
+        plugin='pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent',
+        name='concatenate_no_ground_data',
+        remappings=[('output', 'no_ground/concatenated/pointcloud')],
+        parameters=[{
+            'input_topics': ['/sensing/lidar/rough/no_ground/pointcloud',
+                             '/sensing/lidar/short_height/no_ground/pointcloud'],
+            'output_frame': LaunchConfiguration('base_frame'),
+            'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False'),
+        }]
+    )
+
     voxel_grid_filter_component = ComposableNode(
         package=pkg,
         plugin='pointcloud_preprocessor::VoxelGridDownsampleFilterComponent',
         name='voxel_grid_filter',
         remappings=[
-            ('/input', 'no_ground/pointcloud_with_outlier'),
-            ('/output', 'voxel_grid_filtered/pointcloud'),
+            ('input', 'no_ground/concatenated/pointcloud'),
+            ('output', 'voxel_grid_filtered/pointcloud'),
         ],
         parameters=[{
             "input_frame": LaunchConfiguration('base_frame'),
@@ -185,7 +262,7 @@ def launch_setup(context, *args, **kwargs):
         plugin='topic_tools::RelayNode',
         name='relay',
         parameters=[{
-            "input_topic": "/sensing/lidar/top/rectified/pointcloud",
+            "input_topic": "/sensing/lidar/top/outlier_filtered/pointcloud",
             "output_topic": "/sensing/lidar/pointcloud",
             "type": "sensor_msgs/msg/PointCloud2",
             'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False'),
@@ -200,7 +277,12 @@ def launch_setup(context, *args, **kwargs):
         executable='component_container',
         composable_node_descriptions=[
             cropbox_component,
-            ground_component,
+            ray_ground_filter_component,
+            short_height_obstacle_detection_area_filter_component,
+            vector_map_filter_component,
+            ransac_ground_filter_component,
+            concat_no_ground_component,
+            voxel_grid_filter_component,
             relay_component,
         ],
         output='screen',
