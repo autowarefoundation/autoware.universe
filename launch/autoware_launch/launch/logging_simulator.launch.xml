@@ -4,7 +4,7 @@
   <arg name="map_path" doc="point cloud and lanelet2 map directory path"/>
   <arg name="vehicle_model"/>
   <arg name="sensor_model"/>
-  <arg name="vehicle_id" value="$(env VEHICLE_ID default)"/>
+  <arg name="vehicle_id" default="$(env VEHICLE_ID default)"/>
   <!-- Optional parameters -->
   <arg name="vehicle" default="true" doc="launch vehicle" />
   <arg name="system" default="true" doc="launch system" />
@@ -67,7 +67,7 @@
   </include>
 
   <!-- Rviz -->
-  <node pkg="rviz2" type="rviz2" name="rviz2" output="screen" args="-d $(find-pkg-share autoware_launch)/rviz/autoware.rviz -s $(find-pkg-share autoware_launch)/rviz/image/autoware.png" if="$(var rviz)" />
+  <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen" args="-d $(find-pkg-share autoware_launch)/rviz/autoware.rviz -s $(find-pkg-share autoware_launch)/rviz/image/autoware.png" if="$(var rviz)" />
 
   <!-- Web Controller -->
   <include file="$(find-pkg-share autoware_web_controller)/launch/autoware_web_controller.launch.xml" />
