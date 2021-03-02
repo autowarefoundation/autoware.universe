@@ -62,7 +62,7 @@ Visualization Manager:
         - Class: rviz_common/Group
           Displays:
             - Class: rviz_plugins/SteeringAngle
-              Enabled: true
+              Enabled: false
               Left: 128
               Length: 256
               Name: SteeringAngle
