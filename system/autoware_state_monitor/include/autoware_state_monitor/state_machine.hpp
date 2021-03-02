@@ -48,6 +48,7 @@ struct StateInput
   autoware_vehicle_msgs::msg::ControlMode::ConstSharedPtr vehicle_control_mode;
   autoware_control_msgs::msg::EmergencyMode::ConstSharedPtr emergency_mode;
   bool is_finalizing = false;
+  bool is_route_reset_required = false;
   autoware_planning_msgs::msg::Route::ConstSharedPtr route;
   geometry_msgs::msg::TwistStamped::ConstSharedPtr twist;
   std::deque<geometry_msgs::msg::TwistStamped::ConstSharedPtr> twist_buffer;
@@ -106,6 +107,7 @@ private:
   bool isEmergency() const;
   bool hasArrivedGoal() const;
   bool isFinalizing() const;
+  bool isRouteResetRequired() const;
 };
 
 #endif  // AUTOWARE_STATE_MONITOR__STATE_MACHINE_HPP_

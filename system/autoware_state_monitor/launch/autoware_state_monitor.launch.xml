@@ -12,6 +12,7 @@
 
   <!-- Service -->
   <arg name="service_shutdown" default="/autoware/shutdown" />
+  <arg name="service_reset_route" default="/autoware/reset_route" />
 
   <!-- Config -->
   <arg name="config_file" default="$(find-pkg-share autoware_state_monitor)/config/autoware_state_monitor.param.yaml" />
@@ -35,6 +36,7 @@
     <remap from="output/autoware_engage" to="$(var output_autoware_engage)"/>
 
     <remap from="service/shutdown" to="$(var service_shutdown)"/>
+    <remap from="service/reset_route" to="$(var service_reset_route)"/>
 
     <param from="$(var config_file)" />
 
