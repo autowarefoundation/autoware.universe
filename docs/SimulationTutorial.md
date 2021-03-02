@@ -4,6 +4,9 @@ Autoware provides 2 types of simulations. Rosbag is used for testing/validation 
 ![sim](https://user-images.githubusercontent.com/8327598/79709776-0bd47b00-82fe-11ea-872e-d94ef25bc3bf.png)
 
 ## How to use rosbag for simulation
+
+\* Currently this feature is not available for ROS 2.
+
 Assuming already completed [Autoware setup](https://github.com/tier4/AutowareArchitectureProposal#autoware-setup).
 
 1. Download sample map from [here](https://drive.google.com/open?id=1ovrJcFS5CZ2H51D8xVWNtEvj_oiXW-zk).
@@ -28,14 +31,14 @@ Note: Image data are removed due to privacy concerns.
 
 3. Launch Autoware with rosbag mode.
 
-```
+```sh
 source devel/setup.bash
 roslaunch autoware_launch logging_simulator.launch map_path:=[path]
 ```
 
 4. Play sample rosbag.
 
-```
+```sh
 rosbag play --clock -r 0.2　sample.bag
 ```
 
@@ -53,7 +56,7 @@ Assuming already completed [Autoware setup](https://github.com/tier4/AutowareArc
 1. Download sample map from [here](https://drive.google.com/open?id=197kgRfSomZzaSbRrjWTx614le2qN-oxx) and extract the zip file.
 2. Launch Autoware with Planning Simulator
 
-```
+```sh
 source devel/setup.bash
 roslaunch autoware_launch planning_simulator.launch map_path:=[path]
 ```
@@ -77,9 +80,9 @@ roslaunch autoware_launch planning_simulator.launch map_path:=[path]
 ### Simulate dummy obstacles
 
 - Set obstacles' position by using `2D Dummy Pedestrian` or `2D Dummy Car` in rviz.
-  - Shorcut keys `l` and `k` are assigned respectively.
-  - Can adjust obstacles' infomation including velocity, position/orientation error and etc, via `Tool Properties` in rviz.
-  - Can delete all the objects by using `Delte All Objects` in rviz.
+  - Shortcut keys `l` and `k` are assigned respectively.
+  - Can adjust obstacles' information including velocity, position/orientation error and etc, via `Tool Properties` in rviz.
+  - Can delete all the objects by using `Delete All Objects` in rviz.
     ![dummy](https://user-images.githubusercontent.com/10920881/79742437-c9cb2980-833d-11ea-8ad7-7c3ed1a96540.png)
 
 ### Simulate parking maneuver
