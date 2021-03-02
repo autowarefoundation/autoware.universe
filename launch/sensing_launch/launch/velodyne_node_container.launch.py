@@ -211,4 +211,6 @@ def generate_launch_description():
     add_launch_arg('gps_time', 'False')
     add_launch_arg('input_frame', LaunchConfiguration('base_frame'))
     add_launch_arg('output_frame', LaunchConfiguration('base_frame'))
+    add_launch_arg('vehicle_param_file')
+    add_launch_arg('vehicle_mirror_param_file')
     return launch.LaunchDescription(launch_arguments + [OpaqueFunction(function=launch_setup)])

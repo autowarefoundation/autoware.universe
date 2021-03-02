@@ -11,6 +11,9 @@
   <arg name="sensor_frame" default="velodyne" />
   <arg name="device_ip" default="192.168.1.201"/>
   <arg name="port" default="2368"/>
+  <arg name="scan_phase" default="0.0"/>
+  <arg name="vehicle_param_file" />
+  <arg name="vehicle_mirror_param_file" />
 
   <include file="$(find-pkg-share sensing_launch)/launch/velodyne_node_container.launch.py">
     <arg name="launch_driver" value="$(var launch_driver)"/>
@@ -22,6 +25,9 @@
     <arg name="frame_id" value="$(var sensor_frame)"/>
     <arg name="device_ip" value="$(var device_ip)"/>
     <arg name="port" value="$(var port)"/>
+    <arg name="scan_phase" value="$(var scan_phase)"/>
+    <arg name="vehicle_param_file" value="$(var vehicle_param_file)" />
+    <arg name="vehicle_mirror_param_file" value="$(var vehicle_mirror_param_file)" />
   </include>
 
   <!-- Velodyne Monitor -->
