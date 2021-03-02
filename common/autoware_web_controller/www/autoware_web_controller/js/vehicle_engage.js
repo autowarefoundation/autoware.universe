@@ -15,21 +15,27 @@ if (!VehicleEngagePublisher) {
             });
             this.ros.connect('ws://' + location.hostname + ':9090');
         },
-        send: function('value') {
+        send: function(value) {
             var pub = new ROSLIB.Topic({
                 ros: this.ros,
                 name: '/vehicle/engage',
-                messageType: 'std_msgs/Bool'
+                messageType: 'autoware_vehicle_msgs/Engage'
             });
 
-            if(value == 'Engage') {
+            if(value == 'Engage'){
                 var str = new ROSLIB.Message({
-                    data: true
+                    stamp:{
+                        sec: 0,
+                        nanosec: 0},
+                    engage: true
                 });
                 pub.publish(str);
             } else {
                 var str = new ROSLIB.Message({
-                    data: false
+                    stamp:{
+                        sec: 0,
+                        nanosec: 0},
+                    engage: false
                 });
                 pub.publish(str);
             }
@@ -63,11 +69,14 @@ if (!VehicleDisengagePublisher) {
             var pub = new ROSLIB.Topic({
                 ros: this.ros,
                 name: '/vehicle/engage',
-                messageType: 'std_msgs/Bool'
+                messageType: 'autoware_vehicle_msgs/Engage'
             });
 
             var str = new ROSLIB.Message({
-                data: false
+                stamp:{
+                    sec: 0,
+                    nanosec: 0},
+                engage: false
             });
             pub.publish(str);
         }
@@ -99,14 +108,14 @@ if (!VehicleEngageStatusSubscriber) {
             var sub = new ROSLIB.Topic({
                 ros: this.ros,
                 name: '/vehicle/engage',
-                messageType: 'std_msgs/Bool'
+                messageType: 'autoware_vehicle_msgs/Engage'
             });
             sub.subscribe(function(message) {
                 const div = document.getElementById("vehicle_engage_status");
                 if (div.hasChildNodes()) {
                     div.removeChild(div.firstChild);
                 }
-                var res = message.data;
+                var res = message.engage;
                 var el = document.createElement("span");
                 el.innerHTML = res
                 document.getElementById("vehicle_engage_status").appendChild(el);

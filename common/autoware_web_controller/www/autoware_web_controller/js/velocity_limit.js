@@ -19,10 +19,13 @@ if (!VelocityLimitPublisher) {
             var pub = new ROSLIB.Topic({
                 ros: this.ros,
                 name: '/planning/scenario_planning/max_velocity',
-                messageType: 'std_msgs/Float32'
+                messageType: 'autoware_planning_msgs/VelocityLimit'
             });
             var str = new ROSLIB.Message({
-                data: parseFloat(velocity_limit_form.velocity_limit.value) / 3.6
+                stamp:{
+                    sec: 0,
+                    nanosec: 0},
+                max_velocity: parseFloat(velocity_limit_form.velocity_limit.value) / 3.6
             });
             pub.publish(str);
         }
@@ -54,14 +57,14 @@ if (!VelocityLimitSubscriber) {
             var sub = new ROSLIB.Topic({
                 ros: this.ros,
                 name: '/planning/scenario_planning/max_velocity',
-                messageType: 'std_msgs/Float32'
+                messageType: 'autoware_planning_msgs/VelocityLimit'
             });
             sub.subscribe(function(message) {
                 const div = document.getElementById("velocity_limit_status");
                 if (div.hasChildNodes()) {
                     div.removeChild(div.firstChild);
                 }
-                var res = message.data;
+                var res = message.max_velocity;
                 var el = document.createElement("span");
                 el.innerHTML = res * 3.6;
                 document.getElementById("velocity_limit_status").appendChild(el);

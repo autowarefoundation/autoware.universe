@@ -19,10 +19,13 @@ if (!LaneChangeApprovalPublisher) {
             var pub = new ROSLIB.Topic({
                 ros: this.ros,
                 name: '/planning/scenario_planning/lane_driving/lane_change_approval',
-                messageType: 'std_msgs/Bool'
+                messageType: 'autoware_planning_msgs/LaneChangeCommand'
             });
             var str = new ROSLIB.Message({
-                data: true
+                stamp:{
+                    sec: 0,
+                    nanosec: 0},
+                command: true
             });
             pub.publish(str);
         }
@@ -54,14 +57,14 @@ if (!LaneChangeApprovalStateSubscriber) {
             var sub = new ROSLIB.Topic({
                 ros: this.ros,
                 name: '/planning/scenario_planning/lane_driving/lane_change_approval',
-                messageType: 'std_msgs/Bool'
+                messageType: 'autoware_planning_msgs/LaneChangeCommand'
             });
             sub.subscribe(function(message) {
                 const div = document.getElementById("lane_change_approval_status");
                 if (div.hasChildNodes()) {
                     div.removeChild(div.firstChild);
                 }
-                var res = message.data;
+                var res = message.command;
                 var el = document.createElement("span");
                 el.innerHTML = res
                 document.getElementById("lane_change_approval_status").appendChild(el);
