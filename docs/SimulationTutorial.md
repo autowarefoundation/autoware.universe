@@ -32,7 +32,7 @@ Note: Image data are removed due to privacy concerns.
 3. Launch Autoware with rosbag mode.
 
 ```sh
-source devel/setup.bash
+source install/setup.bash
 roslaunch autoware_launch logging_simulator.launch map_path:=[path]
 ```
 
@@ -57,7 +57,7 @@ Assuming already completed [Autoware setup](https://github.com/tier4/AutowareArc
 2. Launch Autoware with Planning Simulator
 
 ```sh
-source devel/setup.bash
+source install/setup.bash
 roslaunch autoware_launch planning_simulator.launch map_path:=[path]
 ```
 
