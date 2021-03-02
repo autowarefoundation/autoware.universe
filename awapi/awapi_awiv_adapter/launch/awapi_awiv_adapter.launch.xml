@@ -36,6 +36,7 @@
   <arg name="input_external_crosswalk_status" default="/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/input/external_crosswalk_states" />
   <arg name="input_external_intersection_status" default="/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/input/external_intersection_states" />
   <arg name="input_expand_stop_range" default="/planning/scenario_planning/lane_driving/motion_planning/obstacle_stop_planner/input/expand_stop_range" />
+  <arg name="input_pose_initialization_request" default="/localization/util/pose_initialization_request" />
 
   <arg name="output_vehicle_status" default="vehicle/get/status" />
   <arg name="output_autoware_status" default="autoware/get/status" />
@@ -76,6 +77,7 @@
   <arg name="set_crosswalk_status" default="autoware/put/crosswalk_states" />
   <arg name="set_intersection_status" default="autoware/put/intersection_states" />
   <arg name="set_expand_stop_range" default="autoware/put/expand_stop_range" />
+  <arg name="set_pose_initialization_request" default="autoware/put/pose_initialization_request" />
 
   <arg name="get_route" default="autoware/get/route" />
   <arg name="get_predicted_object" default="prediction/get/objects" />
@@ -222,6 +224,11 @@
       <param name="input_topic" value="$(var set_expand_stop_range)" />
       <param name="output_topic" value="$(var input_expand_stop_range)" />
       <param name="type" value="autoware_planning_msgs/msg/ExpandStopRange" />
+    </node>
+    <node pkg="topic_tools" exec="relay" name="pose_initialization_request_relay" output="log" >
+      <param name="input_topic" value="$(var set_pose_initialization_request)" />
+      <param name="output_topic" value="$(var input_pose_initialization_request)" />
+      <param name="type" value="autoware_localization_msgs/msg/PoseInitializationRequest" />
     </node>
 
   </group>
