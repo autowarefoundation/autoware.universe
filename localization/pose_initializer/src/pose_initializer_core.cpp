@@ -45,6 +45,8 @@ double getGroundHeight(const pcl::PointCloud<pcl::PointXYZ>::Ptr pcdmap, const t
 PoseInitializer::PoseInitializer()
 : Node("pose_initializer"), tf2_listener_(tf2_buffer_), map_frame_("map")
 {
+  enable_gnss_callback_ = this->declare_parameter("enable_gnss_callback", true);
+
   // We can't use _1 because pcl leaks an alias to boost::placeholders::_1, so it would be ambiguous
   initial_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
     "initialpose", 10,
@@ -52,13 +54,10 @@ PoseInitializer::PoseInitializer()
   map_points_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "pointcloud_map", rclcpp::QoS{1}.transient_local(),
     std::bind(&PoseInitializer::callbackMapPoints, this, std::placeholders::_1));
-
-  const bool use_first_gnss_topic = this->declare_parameter("use_first_gnss_topic", true);
-  if (use_first_gnss_topic) {
-    gnss_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
-      "gnss_pose_cov", 1,
-      std::bind(&PoseInitializer::callbackGNSSPoseCov, this, std::placeholders::_1));
-  }
+  pose_initialization_request_sub_ =
+    this->create_subscription<autoware_localization_msgs::msg::PoseInitializationRequest>(
+    "pose_initialization_request", rclcpp::QoS{1}.transient_local(),
+    std::bind(&PoseInitializer::callbackPoseInitializationRequest, this, std::placeholders::_1));
 
   initial_pose_pub_ =
     this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("initialpose3d", 10);
@@ -89,7 +88,7 @@ void PoseInitializer::serviceInitial(
   const std::shared_ptr<autoware_localization_srvs::srv::PoseWithCovarianceStamped::Request> req,
   std::shared_ptr<autoware_localization_srvs::srv::PoseWithCovarianceStamped::Response> res)
 {
-  gnss_pose_sub_ = nullptr;  // get only first topic
+  enable_gnss_callback_ = false;  // get only first topic
 
   auto add_height_pose_msg_ptr = std::make_shared<geometry_msgs::msg::PoseWithCovarianceStamped>();
   getHeight(req->pose_with_cov, add_height_pose_msg_ptr);
@@ -108,7 +107,7 @@ void PoseInitializer::serviceInitial(
 void PoseInitializer::callbackInitialPose(
   geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose_cov_msg_ptr)
 {
-  gnss_pose_sub_ = nullptr;  // get only first topic
+  enable_gnss_callback_ = false;  // get only first topic
 
   auto add_height_pose_msg_ptr = std::make_shared<geometry_msgs::msg::PoseWithCovarianceStamped>();
   getHeight(*pose_cov_msg_ptr, add_height_pose_msg_ptr);
@@ -128,6 +127,10 @@ void PoseInitializer::callbackInitialPose(
 void PoseInitializer::callbackGNSSPoseCov(
   geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose_cov_msg_ptr)
 {
+  if (!enable_gnss_callback_) {
+    return;
+  }
+
   // TODO(YamatoAndo) check service is available
 
   auto add_height_pose_msg_ptr = std::make_shared<geometry_msgs::msg::PoseWithCovarianceStamped>();
@@ -142,6 +145,13 @@ void PoseInitializer::callbackGNSSPoseCov(
   add_height_pose_msg_ptr->pose.covariance[5 * 6 + 5] = 3.14;
 
   callAlignServiceAndPublishResult(add_height_pose_msg_ptr);
+}
+
+void PoseInitializer::callbackPoseInitializationRequest(
+  const autoware_localization_msgs::msg::PoseInitializationRequest::ConstSharedPtr request_msg_ptr)
+{
+  RCLCPP_INFO(this->get_logger(), "Called Pose Initialize");
+  enable_gnss_callback_ = request_msg_ptr->data;
 }
 
 bool PoseInitializer::getHeight(
@@ -204,6 +214,6 @@ void PoseInitializer::callAlignServiceAndPublishResult(
       pose_with_cov.pose.covariance[4 * 6 + 4] = 0.01;
       pose_with_cov.pose.covariance[5 * 6 + 5] = 0.2;
       initial_pose_pub_->publish(pose_with_cov);
-      gnss_pose_sub_ = nullptr;
+      enable_gnss_callback_ = false;
     });
 }

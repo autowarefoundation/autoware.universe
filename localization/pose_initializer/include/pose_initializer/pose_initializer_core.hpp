@@ -22,6 +22,7 @@
 
 #include "tf2/transform_datatypes.h"
 #include "tf2_ros/transform_listener.h"
+#include "autoware_localization_msgs/msg/pose_initialization_request.hpp"
 
 #include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
@@ -46,6 +47,8 @@ private:
     geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose_cov_msg_ptr);
   void callbackGNSSPoseCov(
     geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose_cov_msg_ptr);
+  void callbackPoseInitializationRequest(
+    const autoware_localization_msgs::msg::PoseInitializationRequest::ConstSharedPtr request_msg_ptr);  // NOLINT
 
   bool getHeight(
     const geometry_msgs::msg::PoseWithCovarianceStamped & input_pose_msg,
@@ -56,6 +59,8 @@ private:
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr initial_pose_sub_;
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr gnss_pose_sub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr map_points_sub_;
+  rclcpp::Subscription<autoware_localization_msgs::msg::PoseInitializationRequest>::SharedPtr
+    pose_initialization_request_sub_;
 
   rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr initial_pose_pub_;
 
@@ -76,6 +81,8 @@ private:
   // previous request was received when a new request is sent.
   uint32_t request_id_ = 0;
   uint32_t response_id_ = 0;
+
+  bool enable_gnss_callback_;
 };
 
 #endif  // POSE_INITIALIZER__POSE_INITIALIZER_CORE_HPP_
