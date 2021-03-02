@@ -27,6 +27,10 @@
       <include file="$(find-pkg-share localization_launch)/launch/pose_twist_fusion_filter/pose_twist_fusion_filter.launch.xml">
       </include>
     </group>
+    <!-- localization_error_monitor_module -->
+    <include file="$(find-pkg-share localization_error_monitor)/launch/localization_error_monitor.launch.xml">
+      <arg name="input/pose_with_cov" value="pose_twist_fusion_filter/pose_with_covariance" />
+    </include>
     <!-- final twist output of localization -->
     <node pkg="topic_tools" exec="relay" name="relay">
       <param name="input_topic" value="/localization/pose_twist_fusion_filter/twist" />
