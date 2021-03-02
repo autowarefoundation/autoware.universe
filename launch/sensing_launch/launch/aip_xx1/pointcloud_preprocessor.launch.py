@@ -61,7 +61,7 @@ def launch_setup(context, *args, **kwargs):
             'input_topics': ['/sensing/lidar/top/outlier_filtered/pointcloud',
                             '/sensing/lidar/left/outlier_filtered/pointcloud',
                             '/sensing/lidar/right/outlier_filtered/pointcloud'],
-            'output_frame': 'base_link',
+            'output_frame': LaunchConfiguration('base_frame'),
             'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False'),
         }]
     )
@@ -75,7 +75,7 @@ def launch_setup(context, *args, **kwargs):
             ('output', 'concatenated/pointcloud'),
         ],
         parameters=[{
-            'output_frame': 'base_link',
+            'output_frame': LaunchConfiguration('base_frame'),
             'min_z': vehicle_info['min_height_offset'],
             'max_z': vehicle_info['max_height_offset'],
             'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False'),
