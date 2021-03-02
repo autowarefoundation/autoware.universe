@@ -47,7 +47,7 @@
     update_cache: yes
   become: yes
 
-- name: ROS2 (initilize rosdep)
+- name: ROS2 (initialize rosdep)
   command: rosdep init
   when: ros_repository.stat.exists == false
   become: yes

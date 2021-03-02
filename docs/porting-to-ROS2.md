@@ -645,4 +645,4 @@ Another helpful option for diagnosing segfaults is to run under `gdb` to get a b
 
     <node pkg="mpc_follower" exec="mpc_follower" name="mpc_follower" output="screen" launch-prefix="xterm -e gdb -ex run --args">
 
-and after the segfault occured, you can enter `bt` in the `xterm` window.
+and after the segfault occurred, you can enter `bt` in the `xterm` window.

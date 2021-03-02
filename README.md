@@ -8,7 +8,7 @@ meta-repository for Autoware architecture proposal version
 
 This is the source code of the feasibility study for Autoware architecture proposal.
 
-> **WARNING**: This source is solely for demonstrating an architecture proposal. It should not be used to drive cars. 
+> **WARNING**: This source is solely for demonstrating an architecture proposal. It should not be used to drive cars.
 
 > **NOTE**: The features in [autoware.iv.universe](https://github.com/tier4/autoware.iv.universe) will be merged into Autoware.Auto.
 
@@ -22,37 +22,23 @@ Architecture overview is [here](/design/Overview.md).
 
  - x86 CPU (8 or more cores)
  - 16 GB or more of memory
- - Nvidia GPU (4GB or more of memory)
-
-If cuda or tensorRT is already installed, it is recommended to remove it.
+ - NVIDIA GPU (4GB or more of memory)
 
 ### Software
 
  - Ubuntu 20.04
- - Nvidia driver
- 
-If cuda or tensorRT is already installed, it is recommended to remove it.
+ - NVIDIA driver
+
+If CUDA or TensorRT is already installed, it is recommended to remove it.
 
 ## How to setup
 
 1. Set up the repository
 
-If ROS hasn't been installed yet in PC, at first run commands of 1.2 ~ 1.4, described in [ROS wiki](http://wiki.ros.org/melodic/Installation/Ubuntu).
-
 ```sh
-sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
-sudo apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
-sudo apt update
-```
-
-Set up the repository
-
-```sh
-sudo apt install -y python3-vcstool
 git clone git@github.com:tier4/AutowareArchitectureProposal.git
 cd AutowareArchitectureProposal
-mkdir -p src
-vcs import src < autoware.proj.repos
+git checkout ros2
 ```
 
 In this step, [osqp](https://github.com/oxfordcontrol/osqp/blob/master/LICENSE) is installed.  
@@ -67,9 +53,9 @@ Please check that the use is in agreement with its license before proceeding.
 In this step, the following software is installed.  
 Please confirm their licenses before using them.
 
-- [ROS Melodic](https://github.com/ros/ros/blob/noetic-devel/LICENSE)
-- [CUDA 10.2](https://docs.nvidia.com/cuda/eula/index.html)
-- [cuDNN 7](https://docs.nvidia.com/deeplearning/sdk/cudnn-sla/index.html)
+- [ROS 2 Foxy](https://index.ros.org/doc/ros2/Releases/Release-Foxy-Fitzroy/)
+- [CUDA 11.1](https://docs.nvidia.com/cuda/eula/index.html)
+- [cuDNN 8](https://docs.nvidia.com/deeplearning/sdk/cudnn-sla/index.html)
 - [TensorRT 7](https://docs.nvidia.com/deeplearning/sdk/tensorrt-sla/index.html)
 
 3. Build the source
@@ -98,6 +84,8 @@ The following are the samples.
 ### Quick Start
 
 #### Rosbag
+
+\* Currently this feature is not available for ROS 2.
 
 1. Download sample map from [here](https://drive.google.com/open?id=1ovrJcFS5CZ2H51D8xVWNtEvj_oiXW-zk).
 
@@ -135,7 +123,7 @@ rosbag play --clock [rosbag file] -r 0.2
 ```sh
 cd AutowareArchitectureProposal
 source install/setup.bash
-roslaunch autoware_launch planning_simulator.launch map_path:=[path] vehicle_model:=lexus sensor_model:=aip_xx1
+ros2 launch autoware_launch planning_simulator.launch.xml map_path:=[path] vehicle_model:=lexus sensor_model:=aip_xx1
 ```
 
 \* Absolute path is required for map_path.
@@ -160,7 +148,7 @@ For setting up ros_bridge, please follow the instruction in: https://github.com/
 
 #### Tutorial in detail
 
-See [here](./docs/SimulationTutorial.md). for more information.
+See [here](./docs/SimulationTutorial.md) for more information.
 
 ## References
 
@@ -171,7 +159,7 @@ See [here](./docs/SimulationTutorial.md). for more information.
 - [Obstacle avoidance by lane change](https://youtu.be/SCIceXW9sqM)
 - [Object recognition](https://youtu.be/uhhMIxe1zxQ)
 - [Auto parking](https://youtu.be/e9R0F0ZJbWE)
-- [360° FOV perception(Camera Lidar Fuison)](https://youtu.be/whzx-2RkVBA)
+- [360° FOV perception (Camera Lidar Fusion)](https://youtu.be/whzx-2RkVBA)
 - [Robustness of localization](https://youtu.be/ydPxWB2jVnM)
 
 ### Credits

@@ -30,7 +30,7 @@ ROS set [REP-105](https://www.ros.org/reps/rep-0105.html
 ) regarding TF, and the above explanation follows REP-105, but with the significant change that we removed the odom frame.
 
 ### What is Odom frame?
-Odom frame is defined as following in the REP: 
+Odom frame is defined as following in the REP:
 ```
 The coordinate frame called odom is a world-fixed frame. The pose of a mobile platform in the odom frame can drift over time, without any bounds. This drift makes the odom frame useless as a long-term global reference. However, the pose of a robot in the odom frame is guaranteed to be continuous, meaning that the pose of a mobile platform in the odom frame always evolves in a smooth way, without discrete jumps.
 
@@ -38,7 +38,7 @@ In a typical setup the odom frame is computed based on an odometry source, such 
 
 The odom frame is useful as an accurate, short-term local reference, but drift makes it a poor frame for long-term reference.
 ```
-There are also discussions regarding the existance of odom frame in the following discussions:
+There are also discussions regarding the existence of odom frame in the following discussions:
 * https://discourse.ros.org/t/localization-architecture/8602/28
 + https://gitlab.com/autowarefoundation/autoware.auto/AutowareAuto/issues/292
 
@@ -48,14 +48,14 @@ Within the above discussions, the main reason for using odom frame is that:
 * odom->base_link is independent of localization algorithm and therefore it is safe at the failure of localization as long as control is done in odom frame.
 
 ### Why we removed the odom frame
-However, our view is that it doesn't mean that control is not affected by localization as long as trajectory following is done in the odom frame. For example, if a trajectory is calculated from the shape of the lane specified in an HD map, the localization result will be indirectly used when projecting trajectory into odom frame, and thus will be "blown off" when localization fails. Also, if any other map information is before trajectory calculation, such as shape optimization using map drivable area and velocity optimization using predicted trajectory of other vehicles which is derived from lane shape information, then localization failure will still affect the trajectory. Therefore, to make control independent of localization failure, we have to require all preceding calculation to not use map->odom transform. However, since trajectory following comes after planning in Autoware, it is almost impossible that map->odom isn't involved in trajectory calculation. Although it might be possible if Autoware plans like a human, who uses only route graph information from the map and obtain geometry information from perception, it is very unlikely that autonomous driving stack is capable of not using geometry information with safety ensured. 
+However, our view is that it doesn't mean that control is not affected by localization as long as trajectory following is done in the odom frame. For example, if a trajectory is calculated from the shape of the lane specified in an HD map, the localization result will be indirectly used when projecting trajectory into odom frame, and thus will be "blown off" when localization fails. Also, if any other map information is before trajectory calculation, such as shape optimization using map drivable area and velocity optimization using predicted trajectory of other vehicles which is derived from lane shape information, then localization failure will still affect the trajectory. Therefore, to make control independent of localization failure, we have to require all preceding calculation to not use map->odom transform. However, since trajectory following comes after planning in Autoware, it is almost impossible that map->odom isn't involved in trajectory calculation. Although it might be possible if Autoware plans like a human, who uses only route graph information from the map and obtain geometry information from perception, it is very unlikely that autonomous driving stack is capable of not using geometry information with safety ensured.
 
 Therefore, regardless of any frame that control is done, it will still have effects of localization results. To make control not to jerk or do sudden steering at localization failure, we set the following requirements to Localization module:
-* localizatoin result must be continuous
+* localization result must be continuous
 * localization must detect localization failure and should not use the result to update vehicle pose.
 
-Additionally, Localization architecture assumes sequential Bayesian Filter, such as EKF and particle filter, to be used to integrate twist and pose. Since it can also integrate odometry information, it can update TF at high frequency. 
-As a result, all the merits of odom->base_link stated in REP-105 can be satisfied by map->base_link, and thus there is no need of setting odom frame. 
+Additionally, Localization architecture assumes sequential Bayesian Filter, such as EKF and particle filter, to be used to integrate twist and pose. Since it can also integrate odometry information, it can update TF at high frequency.
+As a result, all the merits of odom->base_link stated in REP-105 can be satisfied by map->base_link, and thus there is no need of setting odom frame.
 
 As a conclusion, we removed odom frame from this architecture proposal due to the following reasons:
 1. It is almost impossible to not use map information in Planning module, and trajectory will have a dependency on map->odom(or map->base_link)
