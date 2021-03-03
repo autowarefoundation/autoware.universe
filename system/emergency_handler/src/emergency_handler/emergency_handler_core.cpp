@@ -281,7 +281,7 @@ bool EmergencyHandler::isDataReady()
     return false;
   }
 
-  if (!(is_state_timeout_->is_timeout)) {
+  if (!is_state_timeout_) {
     RCLCPP_INFO_THROTTLE(
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(5000).count(),
       "waiting for is_state_timeout msg...");
