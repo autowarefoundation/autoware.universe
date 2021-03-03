@@ -16,6 +16,7 @@ find_package(std_msgs REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/AutowareState.msg"
+  "msg/AutowareVersion.msg"
   "msg/DrivingCapability.msg"
   "msg/HazardStatus.msg"
   "msg/HazardStatusStamped.msg"
