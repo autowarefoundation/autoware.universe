@@ -13,10 +13,11 @@
         prompt: "[Warning]: Skip install GPU modules. Try manually installing these modules to execute nodes depending on TensorRT."
       when: yn_gpu != 'y'
   roles:
-    - { role: cuda, when: yn_gpu == 'y' }
-    - { role: tensorrt, when: yn_gpu == 'y' }
-    - { role: ros2, rosdistro: foxy }
-    - { role: autoware, rosdistro: foxy }
-    - { role: kvaser }  # Temporary for ros2 porting
-    # - { role: pacmod, rosdistro: foxy }  # Temporary for ros2 porting
-    # - { role: ros, release: melodic }
+    - { role: cuda, when: yn_gpu == 'y', tags: ["cuda"] }
+    - { role: tensorrt, when: yn_gpu == 'y', tags: ["tensorrt"] }
+    - { role: ros2, rosdistro: foxy, tags: ["ros2"] }
+    - { role: vcs, tags: ["vcs"] }
+    - { role: autoware, rosdistro: foxy, tags: ["autoware"] }
+    - { role: kvaser, tags: ["kvaser"] }  # Temporary for ros2 porting
+    # - { role: pacmod, rosdistro: foxy, tags: ["pacmod"] }  # Temporary for ros2 porting
+    # - { role: ros, release: melodic, tags: ["ros"] }

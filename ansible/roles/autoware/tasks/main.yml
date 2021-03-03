@@ -1,12 +1,4 @@
 ---
-- name: Autoware (make directory)
-  file:
-    path: "{{ AUTOWARE_DIR }}/src"
-    state: directory
-
-- name: Autoware  (vcs import)
-  shell: vcs import {{ AUTOWARE_DIR }}/src < {{ AUTOWARE_DIR }}/autoware.proj.repos
-
 - name: Autoware (update rosdep)
   command: rosdep update
   become: yes
