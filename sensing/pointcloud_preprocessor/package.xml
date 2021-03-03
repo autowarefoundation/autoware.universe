@@ -29,6 +29,7 @@
   <depend>pcl_ros</depend>
   <depend>libopencv-dev</depend>
   <depend>libpcl-all-dev</depend>
+  <depend>autoware_debug_msgs</depend>
   <depend>autoware_utils</depend>
   <depend>tier4_pcl_extensions</depend>
   <depend>lanelet2_extension</depend>

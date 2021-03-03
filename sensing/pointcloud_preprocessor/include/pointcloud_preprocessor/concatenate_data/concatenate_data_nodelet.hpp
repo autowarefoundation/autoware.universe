@@ -71,8 +71,8 @@
 
 #include "geometry_msgs/msg/twist_stamped.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
-#include "std_msgs/msg/int32.hpp"
-#include "std_msgs/msg/string.hpp"
+#include "autoware_debug_msgs/msg/int32_stamped.hpp"
+#include "autoware_debug_msgs/msg/string_stamped.hpp"
 
 namespace pointcloud_preprocessor
 {
@@ -103,8 +103,9 @@ private:
   /** \brief The output PointCloud publisher. */
   rclcpp::Publisher<PointCloud2>::SharedPtr pub_output_;
 
-  rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr pub_concat_num_;
-  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr pub_not_subscribed_topic_name_;
+  rclcpp::Publisher<autoware_debug_msgs::msg::Int32Stamped>::SharedPtr pub_concat_num_;
+  rclcpp::Publisher<autoware_debug_msgs::msg::StringStamped>::SharedPtr
+    pub_not_subscribed_topic_name_;
 
   /** \brief The maximum number of messages that we can store in the queue. */
   int maximum_queue_size_ = 3;
@@ -144,6 +145,7 @@ private:
   void convertToXYZCloud(
     const sensor_msgs::msg::PointCloud2 & input_cloud,
     sensor_msgs::msg::PointCloud2 & output_cloud);
+  void setPeriod(const int64_t new_period);
   void cloud_callback(
     const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_ptr,
     const std::string & topic_name);

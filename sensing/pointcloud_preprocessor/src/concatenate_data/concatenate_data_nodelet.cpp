@@ -95,9 +95,11 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
   // Publishers
   {
     pub_output_ = this->create_publisher<PointCloud2>("output", maximum_queue_size_);
-    pub_concat_num_ = this->create_publisher<std_msgs::msg::Int32>("concat_num", 10);
+    pub_concat_num_ =
+      this->create_publisher<autoware_debug_msgs::msg::Int32Stamped>("concat_num", 10);
     pub_not_subscribed_topic_name_ =
-      this->create_publisher<std_msgs::msg::String>("not_subscribed_topic_name", 10);
+      this->create_publisher<autoware_debug_msgs::msg::StringStamped>(
+        "not_subscribed_topic_name", 10);
   }
 
   // Subscribers
@@ -272,11 +274,13 @@ void PointCloudConcatenateDataSynchronizerComponent::publish()
     RCLCPP_WARN(this->get_logger(), "concat_cloud_ptr_ is nullptr, skipping pointcloud publish.");
   }
 
-  std_msgs::msg::Int32 concat_num_msg;
+  autoware_debug_msgs::msg::Int32Stamped concat_num_msg;
+  concat_num_msg.stamp = this->now();
   concat_num_msg.data = concat_num;
   pub_concat_num_->publish(concat_num_msg);
 
-  std_msgs::msg::String not_subscribed_topic_name_msg;
+  autoware_debug_msgs::msg::StringStamped not_subscribed_topic_name_msg;
+  not_subscribed_topic_name_msg.stamp = this->now();
   not_subscribed_topic_name_msg.data = not_subscribed_topic_name;
   pub_not_subscribed_topic_name_->publish(not_subscribed_topic_name_msg);
 
@@ -298,6 +302,20 @@ void PointCloudConcatenateDataSynchronizerComponent::convertToXYZCloud(
   output_cloud.header = input_cloud.header;
 }
 
+void PointCloudConcatenateDataSynchronizerComponent::setPeriod(const int64_t new_period)
+{
+  if (!timer_) {return;}
+  int64_t old_period = 0;
+  rcl_ret_t ret = rcl_timer_get_period(timer_->get_timer_handle().get(), &old_period);
+  if (ret != RCL_RET_OK) {
+    rclcpp::exceptions::throw_from_rcl_error(ret, "Couldn't get old period");
+  }
+  ret = rcl_timer_exchange_period(timer_->get_timer_handle().get(), new_period, &old_period);
+  if (ret != RCL_RET_OK) {
+    rclcpp::exceptions::throw_from_rcl_error(ret, "Couldn't exchange_period");
+  }
+}
+
 void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_ptr, const std::string & topic_name)
 {
@@ -309,19 +327,23 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
     new sensor_msgs::msg::PointCloud2(xyz_cloud));
 
   const bool is_already_subscribed_this = (cloud_stdmap_[topic_name] != nullptr);
-  // [ROS2 port]: No API to change timer period.
-  // const bool is_already_subscribed_tmp = std::any_of(
-  //   std::begin(cloud_stdmap_tmp_), std::end(cloud_stdmap_tmp_),
-  //   [](const auto & e) { return e.second != nullptr; });
+  const bool is_already_subscribed_tmp = std::any_of(
+    std::begin(cloud_stdmap_tmp_), std::end(cloud_stdmap_tmp_),
+    [](const auto & e) { return e.second != nullptr; });
 
   if (is_already_subscribed_this) {
     cloud_stdmap_tmp_[topic_name] = xyz_input_ptr;
 
-    // [ROS2 port]: No API to change timer period.
-    //  if (!is_already_subscribed_tmp) {
-    //   timer_->setPeriod(ros::Duration(timeout_sec_), true);
-    //  timer_->start();
-    // }
+    if (!is_already_subscribed_tmp) {
+      auto period = std::chrono::duration_cast<std::chrono::nanoseconds>(
+        std::chrono::duration<double>(timeout_sec_));
+      try {
+        setPeriod(period.count());
+      } catch (rclcpp::exceptions::RCLError & ex) {
+        RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000, ex.what());
+      }
+      timer_->reset();
+    }
   } else {
     cloud_stdmap_[topic_name] = xyz_input_ptr;
 
@@ -340,8 +362,7 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
           e.second = nullptr;
         });
 
-      // [ROS2 port]: generic time on callback handles timer issues
-      // timer_.stop();
+      timer_->cancel();
       publish();
     }
   }
@@ -349,16 +370,20 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
 
 void PointCloudConcatenateDataSynchronizerComponent::timer_callback()
 {
-  // [ROS2 port]: assumes all timer issues handled by generic timer - no need to manage
-  // timer_.stop();
+  using std::chrono_literals::operator""ms;
+  timer_->cancel();
   if (mutex_.try_lock()) {
     publish();
     mutex_.unlock();
+  } else {
+    try {
+      std::chrono::nanoseconds period = 10ms;
+      setPeriod(period.count());
+    } catch (rclcpp::exceptions::RCLError & ex) {
+      RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000, ex.what());
+    }
+    timer_->reset();
   }
-  // else {
-  //   timer_.setPeriod(ros::Duration(0.01), true);
-  //   timer_.start();
-  // }
 }
 
 void PointCloudConcatenateDataSynchronizerComponent::twist_callback(
