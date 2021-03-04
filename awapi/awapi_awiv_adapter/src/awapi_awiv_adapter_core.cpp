@@ -108,7 +108,8 @@ AutowareIvAdapter::AutowareIvAdapter()
   sub_max_velocity_ = this->create_subscription<autoware_api_msgs::msg::VelocityLimit>(
     "input/max_velocity", 1, std::bind(&AutowareIvAdapter::callbackMaxVelocity, this, _1));
   sub_current_max_velocity_ = this->create_subscription<autoware_planning_msgs::msg::VelocityLimit>(
-    "input/max_velocity", 1, std::bind(&AutowareIvAdapter::callbackCurrentMaxVelocity, this, _1));
+    "input/current_max_velocity", 1,
+    std::bind(&AutowareIvAdapter::callbackCurrentMaxVelocity, this, _1));
   sub_temporary_stop_ = this->create_subscription<autoware_api_msgs::msg::StopCommand>(
     "input/temporary_stop", 1, std::bind(&AutowareIvAdapter::callbackTemporaryStop, this, _1));
   sub_autoware_traj_ =
