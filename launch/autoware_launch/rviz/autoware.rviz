@@ -338,8 +338,8 @@ Visualization Manager:
           Position Transformer: XYZ
           Selectable: true
           Size (Pixels): 1
-          Size (m): 0.05000000074505806
-          Style: Points
+          Size (m): 0.1
+          Style: Squares
           Topic:
             Depth: 5
             Durability Policy: Transient Local
@@ -361,7 +361,7 @@ Visualization Manager:
             parking_lots: true
             parking_space: true
             right_lane_bound: true
-            road_lanelets: true
+            road_lanelets: false
             stop_lines: true
             traffic_light: true
             traffic_light_triangle: true
@@ -400,8 +400,8 @@ Visualization Manager:
               Position Transformer: XYZ
               Selectable: true
               Size (Pixels): 2
-              Size (m): 0.009999999776482582
-              Style: Points
+              Size (m): 0.1
+              Style: Squares
               Topic:
                 Depth: 5
                 Durability Policy: Volatile
@@ -433,8 +433,8 @@ Visualization Manager:
               Position Transformer: XYZ
               Selectable: true
               Size (Pixels): 5
-              Size (m): 0.009999999776482582
-              Style: Points
+              Size (m): 0.1
+              Style: Squares
               Topic:
                 Depth: 5
                 Durability Policy: Volatile
@@ -608,8 +608,8 @@ Visualization Manager:
               Position Transformer: XYZ
               Selectable: true
               Size (Pixels): 10
-              Size (m): 0.009999999776482582
-              Style: Points
+              Size (m): 0.1
+              Style: Squares
               Topic:
                 Depth: 5
                 Durability Policy: Volatile
@@ -641,8 +641,8 @@ Visualization Manager:
               Position Transformer: XYZ
               Selectable: true
               Size (Pixels): 10
-              Size (m): 0.009999999776482582
-              Style: Points
+              Size (m): 0.1
+              Style: Squares
               Topic:
                 Depth: 5
                 Durability Policy: Volatile
@@ -739,9 +739,9 @@ Visualization Manager:
               Name: DynamicObjects
               Namespaces:
                 label: true
-                path: false
+                path: true
                 path confidence: true
-                position covariance: true
+                position covariance: false
                 shape: true
                 twist: true
               Topic:
@@ -799,7 +799,7 @@ Visualization Manager:
                 route_lanelets: true
               Topic:
                 Depth: 5
-                Durability Policy: Volatile
+                Durability Policy: Transient Local
                 History Policy: Keep Last
                 Reliability Policy: Reliable
                 Value: /planning/mission_planning/route_marker
@@ -1082,7 +1082,7 @@ Visualization Manager:
                         Durability Policy: Volatile
                         History Policy: Keep Last
                         Reliability Policy: Reliable
-                        Value: /planning/scenario_planning/lane_driving/motion_planning/obststacle_stop_planner/debug/marker
+                        Value: /planning/scenario_planning/lane_driving/motion_planning/obstacle_stop_planner/debug/marker
                       Value: true
                     - Class: rviz_default_plugins/MarkerArray
                       Enabled: true
@@ -1139,7 +1139,7 @@ Visualization Manager:
                         Durability Policy: Volatile
                         History Policy: Keep Last
                         Reliability Policy: Reliable
-                        Value: /planning/scenario_planning/lane_driving/motion_planning/obststacle_avoidance_planner/debug/marker
+                        Value: /planning/scenario_planning/lane_driving/motion_planning/obstacle_avoidance_planner/debug/marker
                       Value: true
                   Enabled: true
                   Name: MotionPlanning
@@ -1313,7 +1313,7 @@ Visualization Manager:
       Z position: 0
       Z std deviation: 0.029999999329447746
     - Class: rviz_plugins/MissionCheckpointTool
-      Pose Topic: mission_checkpoint
+      Pose Topic: /planning/mission_planning/checkpoint
       Theta std deviation: 0.2617993950843811
       X std deviation: 0.5
       Y std deviation: 0.5
