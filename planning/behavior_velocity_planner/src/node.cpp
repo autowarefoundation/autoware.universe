@@ -175,8 +175,8 @@ void BehaviorVelocityPlannerNode::onNoGroundPointCloud(
   try {
     transform = tf_buffer_.lookupTransform(
       "map", msg->header.frame_id, msg->header.stamp, rclcpp::Duration::from_seconds(0.1));
-  } catch (tf2::LookupException & e) {
-    RCLCPP_WARN(get_logger(), "no transform found for no_ground_pointcloud");
+  } catch (tf2::TransformException & e) {
+    RCLCPP_WARN(get_logger(), "no transform found for no_ground_pointcloud: %s", e.what());
     return;
   }
 
@@ -269,7 +269,7 @@ void BehaviorVelocityPlannerNode::onTrigger(
   try {
     planner_data_.current_pose =
       transform2pose(tf_buffer_.lookupTransform("map", "base_link", tf2::TimePointZero));
-  } catch (tf2::LookupException & e) {
+  } catch (tf2::TransformException & e) {
     RCLCPP_INFO(get_logger(), "waiting for transform from `map` to `base_link`");
     return;
   }
