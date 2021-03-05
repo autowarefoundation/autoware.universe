@@ -61,13 +61,15 @@
   </include>
 
   <!-- Control -->
-  <include file="$(find-pkg-share control_launch)/launch/control.launch" if="$(var control)">
+  <include file="$(find-pkg-share control_launch)/launch/control.launch.xml" if="$(var control)">
     <arg name="vehicle_param_file" value="$(find-pkg-share $(var vehicle_model)_description)/config/vehicle_info.param.yaml"/>
     <arg name="lateral_controller_mode" value="mpc_follower" doc="options: mpc_follower, pure_pursuit"/>
   </include>
 
   <!-- Rviz -->
-  <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen" args="-d $(find-pkg-share autoware_launch)/rviz/autoware.rviz -s $(find-pkg-share autoware_launch)/rviz/image/autoware.png" if="$(var rviz)" />
+  <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen" args="-d $(find-pkg-share autoware_launch)/rviz/autoware.rviz -s $(find-pkg-share autoware_launch)/rviz/image/autoware.png" if="$(var rviz)"  >
+    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
+  </node>
 
   <!-- Web Controller -->
   <include file="$(find-pkg-share autoware_web_controller)/launch/autoware_web_controller.launch.xml" />
