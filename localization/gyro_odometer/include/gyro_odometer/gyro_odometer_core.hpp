@@ -18,7 +18,6 @@
 #include "geometry_msgs/msg/twist_stamped.hpp"
 #include "geometry_msgs/msg/twist_with_covariance_stamped.hpp"
 #include "sensor_msgs/msg/imu.hpp"
-#include "std_msgs/msg/float32.hpp"
 
 #include "tf2/transform_datatypes.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
@@ -46,8 +45,6 @@ private:
   rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr twist_pub_;
   rclcpp::Publisher<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr
     twist_with_covariance_pub_;
-  // rclcpp::Publisher<std_msgs::Float32>::SharedPtr linear_x_pub_;
-  // rclcpp::Publisher<std_msgs::Float32>::SharedPtr angular_z_pub_;
 
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;

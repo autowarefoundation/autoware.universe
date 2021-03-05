@@ -39,8 +39,6 @@ GyroOdometer::GyroOdometer()
     create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>(
     "twist_with_covariance",
     rclcpp::QoS{10});
-  // linear_x_pub_ = create_publisher<std_msgs::Float32>("linear_x", rclcpp::QoS{10});
-  // angular_z_pub_ = create_publisher<std_msgs::Float32>("angular_z", rclcpp::QoS{10});
 
   // TODO createTimer
 }
