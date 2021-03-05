@@ -26,7 +26,6 @@
 #include "autoware_perception_msgs/msg/dynamic_object_array.hpp"
 #include "autoware_planning_msgs/msg/path_with_lane_id.hpp"
 #include "geometry_msgs/msg/point.hpp"
-#include "std_msgs/msg/float32_multi_array.hpp"
 
 #include "lanelet2_core/LaneletMap.h"
 #include "lanelet2_routing/RoutingGraph.h"

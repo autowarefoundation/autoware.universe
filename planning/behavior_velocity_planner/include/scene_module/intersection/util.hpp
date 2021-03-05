@@ -25,7 +25,6 @@
 #include "spline_interpolation/spline_interpolation.hpp"
 
 #include "geometry_msgs/msg/point.hpp"
-#include "std_msgs/msg/float32_multi_array.hpp"
 
 namespace util
 {
