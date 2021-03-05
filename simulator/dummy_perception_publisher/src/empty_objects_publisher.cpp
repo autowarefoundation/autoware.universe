@@ -43,7 +43,7 @@ private:
   void timerCallback()
   {
     autoware_perception_msgs::msg::DynamicObjectArray empty_objects;
-    empty_objects.header.frame_id = "/map";
+    empty_objects.header.frame_id = "map";
     empty_objects.header.stamp = this->now();
     empty_objects_pub_->publish(empty_objects);
   }
