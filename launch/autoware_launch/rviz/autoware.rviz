@@ -662,7 +662,7 @@ Visualization Manager:
                 Durability Policy: Volatile
                 History Policy: Keep Last
                 Reliability Policy: Reliable
-                Value: /localization/pose_estimator/monte_calro_initial_pose_marker
+                Value: /localization/pose_estimator/monte_carlo_initial_pose_marker
               Value: true
           Enabled: true
           Name: NDT
