@@ -191,7 +191,7 @@ void ObstacleStopPlannerNode::pathCallback(
   autoware_planning_msgs::msg::Trajectory extended_trajectory;
   extendTrajectory(*input_msg, extend_distance_, extended_trajectory);
 
-  const autoware_planning_msgs::msg::Trajectory base_path = *input_msg;
+  const autoware_planning_msgs::msg::Trajectory base_path = extended_trajectory;
   autoware_planning_msgs::msg::Trajectory output_msg = *input_msg;
   diagnostic_msgs::msg::DiagnosticStatus stop_reason_diag;
 
