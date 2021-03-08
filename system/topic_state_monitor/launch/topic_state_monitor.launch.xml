@@ -1,9 +1,5 @@
 <launch>
-  <arg name="node_name_suffix" default="" doc="node name suffix" />
-
-  <arg name="node_name" default="$(anon topic_state_monitor)" if="$(eval &quot;'$(var node_name_suffix)' == ''&quot;)" />
-  <arg name="node_name" default="topic_state_monitor_$(var node_name_suffix)" unless="$(eval &quot;'$(var node_name_suffix)' == ''&quot;)" />
-
+  <arg name="node_name_suffix" doc="node name suffix" />
   <arg name="topic" doc="input topic name" />
   <arg name="topic_type" doc="input topic type" />
   <arg name="diag_name" doc="diag name" />
@@ -12,7 +8,7 @@
   <arg name="timeout" doc="timeout period[s]" />
   <arg name="window_size" default="10" doc="warn rate[Hz]" />
 
-  <node pkg="topic_state_monitor" exec="topic_state_monitor_node" name="$(var node_name)" output="screen">
+  <node pkg="topic_state_monitor" exec="topic_state_monitor_node" name="topic_state_monitor_$(var node_name_suffix)" output="screen">
     <param name="topic" value="$(var topic)" />
     <param name="topic_type" value="$(var topic_type)" />
     <param name="diag_name" value="$(var diag_name)" />
