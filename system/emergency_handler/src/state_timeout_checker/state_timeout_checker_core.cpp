@@ -23,9 +23,9 @@ StateTimeoutChecker::StateTimeoutChecker()
 {
   using std::placeholders::_1;
 
-  th_timeout_.InitializingVehicle = declare_parameter<double>("timeout/InitializingVehicle", 60.0);
-  th_timeout_.WaitingForRoute = declare_parameter<double>("timeout/WaitingForRoute", 60.0);
-  th_timeout_.Planning = declare_parameter<double>("timeout/Planning", 60.0);
+  th_timeout_.InitializingVehicle = declare_parameter<double>("timeout.InitializingVehicle", 60.0);
+  th_timeout_.WaitingForRoute = declare_parameter<double>("timeout.WaitingForRoute", 60.0);
+  th_timeout_.Planning = declare_parameter<double>("timeout.Planning", 60.0);
 
   // Subscriber
   sub_autoware_state_ = create_subscription<autoware_system_msgs::msg::AutowareState>(
