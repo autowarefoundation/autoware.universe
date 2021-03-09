@@ -2,6 +2,7 @@
   <arg name="node_name_suffix" doc="node name suffix" />
   <arg name="topic" doc="input topic name" />
   <arg name="topic_type" doc="input topic type" />
+  <arg name="transient_local" default="false" doc="add transient_local option to subscriber or not" />
   <arg name="diag_name" doc="diag name" />
   <arg name="warn_rate" doc="warn rate[Hz]" />
   <arg name="error_rate" doc="error rate[Hz]" />
@@ -11,6 +12,7 @@
   <node pkg="topic_state_monitor" exec="topic_state_monitor_node" name="topic_state_monitor_$(var node_name_suffix)" output="screen">
     <param name="topic" value="$(var topic)" />
     <param name="topic_type" value="$(var topic_type)" />
+    <param name="transient_local" value="$(var transient_local)" />
     <param name="diag_name" value="$(var diag_name)" />
     <param name="warn_rate" value="$(var warn_rate)" />
     <param name="error_rate" value="$(var error_rate)" />

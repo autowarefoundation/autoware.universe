@@ -37,14 +37,14 @@ void update_param(
 namespace topic_state_monitor
 {
 TopicStateMonitorNode::TopicStateMonitorNode()
-: Node("topic_state_monitor"),
-  updater_(this)
+: Node("topic_state_monitor"), updater_(this)
 {
   using std::placeholders::_1;
   // Parameter
   node_param_.update_rate = declare_parameter("update_rate", 10.0);
   param_.topic = declare_parameter("topic").get<std::string>();
   param_.topic_type = declare_parameter("topic_type").get<std::string>();
+  param_.transient_local = declare_parameter("transient_local", false);
   param_.diag_name = declare_parameter("diag_name").get<std::string>();
   param_.warn_rate = declare_parameter("warn_rate", 0.5);
   param_.error_rate = declare_parameter("error_rate", 0.1);
@@ -55,17 +55,16 @@ TopicStateMonitorNode::TopicStateMonitorNode()
   set_param_res_ =
     this->add_on_set_parameters_callback(std::bind(&TopicStateMonitorNode::onParameter, this, _1));
 
-
   // Core
   topic_state_monitor_ = std::make_unique<TopicStateMonitor>(*this);
   topic_state_monitor_->setParam(param_);
 
   // Subscriber
+  rclcpp::QoS qos = rclcpp::QoS{1};
+  if (param_.transient_local) {qos.transient_local();}
   sub_topic_ = rclcpp_generic::GenericSubscription::create(
-    get_node_topics_interface(), param_.topic, param_.topic_type, 1,
-    [this](std::shared_ptr<rclcpp::SerializedMessage> msg) {
-      topic_state_monitor_->update();
-    });
+    get_node_topics_interface(), param_.topic, param_.topic_type, qos,
+    [this](std::shared_ptr<rclcpp::SerializedMessage> msg) {topic_state_monitor_->update();});
 
   // Diagnostic Updater
   updater_.setHardwareID("topic_state_monitor");
