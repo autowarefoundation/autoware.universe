@@ -338,7 +338,7 @@ Visualization Manager:
           Position Transformer: XYZ
           Selectable: true
           Size (Pixels): 1
-          Size (m): 0.1
+          Size (m): 0.02
           Style: Squares
           Topic:
             Depth: 5
@@ -400,7 +400,7 @@ Visualization Manager:
               Position Transformer: XYZ
               Selectable: true
               Size (Pixels): 2
-              Size (m): 0.1
+              Size (m): 0.02
               Style: Squares
               Topic:
                 Depth: 5
@@ -433,7 +433,7 @@ Visualization Manager:
               Position Transformer: XYZ
               Selectable: true
               Size (Pixels): 5
-              Size (m): 0.1
+              Size (m): 0.02
               Style: Squares
               Topic:
                 Depth: 5
@@ -608,7 +608,7 @@ Visualization Manager:
               Position Transformer: XYZ
               Selectable: true
               Size (Pixels): 10
-              Size (m): 0.1
+              Size (m): 0.02
               Style: Squares
               Topic:
                 Depth: 5
@@ -641,7 +641,7 @@ Visualization Manager:
               Position Transformer: XYZ
               Selectable: true
               Size (Pixels): 10
-              Size (m): 0.1
+              Size (m): 0.02
               Style: Squares
               Topic:
                 Depth: 5
