@@ -243,7 +243,7 @@ def launch_setup(context, *args, **kwargs):
     voxel_grid_outlier_filter_component = ComposableNode(
         package=pkg,
         plugin='pointcloud_preprocessor::VoxelGridOutlierFilterComponent',
-        name='voxel_grid_filter',
+        name='voxel_grid_outlier_filter',
         remappings=[
             ('input', 'voxel_grid_filtered/pointcloud'),
             ('output', 'no_ground/pointcloud'),
