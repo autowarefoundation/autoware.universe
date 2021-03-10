@@ -432,10 +432,10 @@ AutowareJoyControllerNode::AutowareJoyControllerNode()
   steering_angle_velocity_ = declare_parameter("steering_angle_velocity", 0.1);
   accel_sensitivity_ = declare_parameter("accel_sensitivity", 1.0);
   brake_sensitivity_ = declare_parameter("brake_sensitivity", 1.0);
-  velocity_gain_ = declare_parameter("control_command/velocity_gain", 3.0);
-  max_forward_velocity_ = declare_parameter("control_command/max_forward_velocity", 20.0);
-  max_backward_velocity_ = declare_parameter("control_command/max_backward_velocity", 3.0);
-  backward_accel_ratio_ = declare_parameter("control_command/backward_accel_ratio", 1.0);
+  velocity_gain_ = declare_parameter("control_command.velocity_gain", 3.0);
+  max_forward_velocity_ = declare_parameter("control_command.max_forward_velocity", 20.0);
+  max_backward_velocity_ = declare_parameter("control_command.max_backward_velocity", 3.0);
+  backward_accel_ratio_ = declare_parameter("control_command.backward_accel_ratio", 1.0);
 
   RCLCPP_INFO(get_logger(), "Joy type: %s", joy_type_.c_str());
 
