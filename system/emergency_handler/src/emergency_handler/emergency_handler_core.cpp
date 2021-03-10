@@ -18,7 +18,6 @@
 
 #include "emergency_handler/emergency_handler_core.hpp"
 
-
 namespace
 {
 diagnostic_msgs::msg::DiagnosticStatus createDiagnosticStatus(
@@ -35,8 +34,7 @@ diagnostic_msgs::msg::DiagnosticStatus createDiagnosticStatus(
 }
 
 diagnostic_msgs::msg::DiagnosticArray convertHazardStatusToDiagnosticArray(
-  rclcpp::Clock::SharedPtr clock,
-  const autoware_system_msgs::msg::HazardStatus & hazard_status)
+  rclcpp::Clock::SharedPtr clock, const autoware_system_msgs::msg::HazardStatus & hazard_status)
 {
   using diagnostic_msgs::msg::DiagnosticStatus;
 
@@ -96,10 +94,8 @@ EmergencyHandler::EmergencyHandler()
     "input/current_gate_mode", rclcpp::QoS{1},
     std::bind(&EmergencyHandler::onCurrentGateMode, this, _1));
   sub_twist_ = create_subscription<geometry_msgs::msg::TwistStamped>(
-    "input/twist", rclcpp::QoS{1},
-    std::bind(&EmergencyHandler::onTwist, this, _1));
-  sub_is_state_timeout_ =
-    create_subscription<autoware_system_msgs::msg::TimeoutNotification>(
+    "input/twist", rclcpp::QoS{1}, std::bind(&EmergencyHandler::onTwist, this, _1));
+  sub_is_state_timeout_ = create_subscription<autoware_system_msgs::msg::TimeoutNotification>(
     "input/is_state_timeout", rclcpp::QoS{1},
     std::bind(&EmergencyHandler::onIsStateTimeout, this, _1));
 
@@ -108,10 +104,8 @@ EmergencyHandler::EmergencyHandler()
     std::make_shared<HeaderlessHeartbeatChecker<autoware_system_msgs::msg::DrivingCapability>>(
     *this, "input/driving_capability", timeout_driving_capability_);
   heartbeat_is_state_timeout_ =
-    std::make_shared<HeaderlessHeartbeatChecker
-      <autoware_system_msgs::msg::TimeoutNotification>>(
-    *this, "input/is_state_timeout",
-    timeout_is_state_timeout_);
+    std::make_shared<HeaderlessHeartbeatChecker<autoware_system_msgs::msg::TimeoutNotification>>(
+    *this, "input/is_state_timeout", timeout_is_state_timeout_);
 
   // Service
   srv_clear_emergency_ = this->create_service<std_srvs::srv::Trigger>(
@@ -382,10 +376,14 @@ autoware_system_msgs::msg::HazardStatus EmergencyHandler::judgeHazardStatus()
 
   // Check timeout
   {
+    using autoware_system_msgs::msg::AutowareState;
     using autoware_system_msgs::msg::HazardStatus;
     using diagnostic_msgs::msg::DiagnosticStatus;
 
-    if (heartbeat_driving_capability_->isTimeout()) {
+    const auto is_in_heartbeat_timeout_ignore_state =
+      (autoware_state_->state == AutowareState::INITIALIZING_VEHICLE);
+
+    if (!is_in_heartbeat_timeout_ignore_state && heartbeat_driving_capability_->isTimeout()) {
       RCLCPP_WARN_THROTTLE(
         this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
         "heartbeat_driving_capability is timeout");
@@ -396,7 +394,7 @@ autoware_system_msgs::msg::HazardStatus EmergencyHandler::judgeHazardStatus()
           "heartbeat_driving_capability is timeout"));
     }
 
-    if (heartbeat_is_state_timeout_->isTimeout()) {
+    if (!is_in_heartbeat_timeout_ignore_state && heartbeat_is_state_timeout_->isTimeout()) {
       RCLCPP_WARN_THROTTLE(
         this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
         "heartbeat_is_state_timeout is timeout");
@@ -414,8 +412,7 @@ autoware_system_msgs::msg::HazardStatus EmergencyHandler::judgeHazardStatus()
       hazard_status.level = HazardStatus::SINGLE_POINT_FAULT;
       hazard_status.diagnostics_spf.push_back(
         createDiagnosticStatus(
-          DiagnosticStatus::ERROR, "emergency_handler/state_timeout",
-          "state is timeout"));
+          DiagnosticStatus::ERROR, "emergency_handler/state_timeout", "state is timeout"));
     }
   }
 
