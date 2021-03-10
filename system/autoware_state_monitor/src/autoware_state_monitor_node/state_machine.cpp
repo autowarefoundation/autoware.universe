@@ -262,7 +262,7 @@ AutowareState StateMachine::judgeAutowareState() const
           }
 
           // Wait after planning completed to avoid sync error
-          constexpr double wait_time_after_planning = 1.0;
+          constexpr double wait_time_after_planning = 3.0;
           const auto time_from_planning = state_input_.current_time - times_.planning_completed;
           if (time_from_planning.seconds() > wait_time_after_planning) {
             flags_.waiting_after_planning = false;
