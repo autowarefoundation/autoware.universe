@@ -57,10 +57,13 @@ AutowareIvAdapter::AutowareIvAdapter()
     this->create_publisher<autoware_api_msgs::msg::DoorStatus>("output/door_status", 1);
 
   // subscriber
+
+  auto durable_qos = rclcpp::QoS{1}.transient_local();
+
   sub_steer_ = this->create_subscription<autoware_vehicle_msgs::msg::Steering>(
     "input/steer", 1, std::bind(&AutowareIvAdapter::callbackSteer, this, _1));
   sub_vehicle_cmd_ = this->create_subscription<autoware_vehicle_msgs::msg::VehicleCommand>(
-    "input/vehicle_cmd", 1, std::bind(&AutowareIvAdapter::callbackVehicleCmd, this, _1));
+    "input/vehicle_cmd", durable_qos, std::bind(&AutowareIvAdapter::callbackVehicleCmd, this, _1));
   sub_turn_signal_cmd_ = this->create_subscription<autoware_vehicle_msgs::msg::TurnSignal>(
     "input/turn_signal", 1, std::bind(&AutowareIvAdapter::callbackTurnSignal, this, _1));
   sub_twist_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
@@ -76,7 +79,7 @@ AutowareIvAdapter::AutowareIvAdapter()
   sub_control_mode_ = this->create_subscription<autoware_vehicle_msgs::msg::ControlMode>(
     "input/control_mode", 1, std::bind(&AutowareIvAdapter::callbackControlMode, this, _1));
   sub_gate_mode_ = this->create_subscription<autoware_control_msgs::msg::GateMode>(
-    "input/gate_mode", 1, std::bind(&AutowareIvAdapter::callbackGateMode, this, _1));
+    "input/gate_mode", durable_qos, std::bind(&AutowareIvAdapter::callbackGateMode, this, _1));
   sub_emergency_ = this->create_subscription<autoware_control_msgs::msg::EmergencyMode>(
     "input/is_emergency", 1, std::bind(&AutowareIvAdapter::callbackIsEmergency, this, _1));
   sub_hazard_status_ =
@@ -99,16 +102,16 @@ AutowareIvAdapter::AutowareIvAdapter()
     std::bind(&AutowareIvAdapter::callbackLaneChangeCandidatePath, this, _1));
   sub_obstacle_avoid_ready_ =
     this->create_subscription<autoware_planning_msgs::msg::IsAvoidancePossible>(
-    "input/obstacle_avoid_ready", 1,
+    "input/obstacle_avoid_ready", durable_qos,
     std::bind(&AutowareIvAdapter::callbackLaneObstacleAvoidReady, this, _1));
   sub_obstacle_avoid_candidate_ =
     this->create_subscription<autoware_planning_msgs::msg::Trajectory>(
-    "input/obstacle_avoid_candidate_path", 1,
+    "input/obstacle_avoid_candidate_path", durable_qos,
     std::bind(&AutowareIvAdapter::callbackLaneObstacleAvoidCandidatePath, this, _1));
   sub_max_velocity_ = this->create_subscription<autoware_api_msgs::msg::VelocityLimit>(
     "input/max_velocity", 1, std::bind(&AutowareIvAdapter::callbackMaxVelocity, this, _1));
   sub_current_max_velocity_ = this->create_subscription<autoware_planning_msgs::msg::VelocityLimit>(
-    "input/current_max_velocity", 1,
+    "input/current_max_velocity", durable_qos,
     std::bind(&AutowareIvAdapter::callbackCurrentMaxVelocity, this, _1));
   sub_temporary_stop_ = this->create_subscription<autoware_api_msgs::msg::StopCommand>(
     "input/temporary_stop", 1, std::bind(&AutowareIvAdapter::callbackTemporaryStop, this, _1));

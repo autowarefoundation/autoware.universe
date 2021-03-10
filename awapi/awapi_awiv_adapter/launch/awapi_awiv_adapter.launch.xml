@@ -173,6 +173,7 @@
       <param name="input_topic" value="$(var set_route)" />
       <param name="output_topic" value="$(var output_route)" />
       <param name="type" value="autoware_planning_msgs/msg/Route" />
+      <param name="durability" value="transient_local" />
     </node>
     <node pkg="topic_tools" exec="relay" name="put_goal_relay" output="log" >
       <param name="input_topic" value="$(var set_goal)" />
