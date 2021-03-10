@@ -77,8 +77,8 @@ repositories:
     version: master
   vendor/rosbridge_suite:
     type: git
-    url: https://github.com/RobotWebTools/rosbridge_suite.git
-    version: ros2
+    url: https://github.com/tier4/rosbridge_suite.git
+    version: tier4/ros2
   vendor/rosauth:
     type: git
     url: https://github.com/GT-RAIL/rosauth.git
