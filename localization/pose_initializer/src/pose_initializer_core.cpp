@@ -54,6 +54,10 @@ PoseInitializer::PoseInitializer()
   map_points_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "pointcloud_map", rclcpp::QoS{1}.transient_local(),
     std::bind(&PoseInitializer::callbackMapPoints, this, std::placeholders::_1));
+  gnss_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
+    "gnss_pose_cov", 1, std::bind(
+      &PoseInitializer::callbackGNSSPoseCov, this,
+      std::placeholders::_1));
   pose_initialization_request_sub_ =
     this->create_subscription<autoware_localization_msgs::msg::PoseInitializationRequest>(
     "pose_initialization_request", rclcpp::QoS{1}.transient_local(),
