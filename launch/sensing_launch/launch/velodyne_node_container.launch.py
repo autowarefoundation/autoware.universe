@@ -89,7 +89,6 @@ def launch_setup(context, *args, **kwargs):
         name='crop_box_filter_self',
         remappings=[('input', 'pointcloud_raw_ex'),
                     ('output', 'self_cropped/pointcloud_ex'),
-                    ('crop_box_polygon', 'self_cropped/crop_box_polygon'),
                     ],
         parameters=[cropbox_parameters],
     )
@@ -109,7 +108,6 @@ def launch_setup(context, *args, **kwargs):
         name='crop_box_filter_mirror',
         remappings=[('input', 'self_cropped/pointcloud_ex'),
                     ('output', 'mirror_cropped/pointcloud_ex'),
-                    ('crop_box_polygon', 'mirror_cropped/crop_box_polygon'),
                     ],
         parameters=[cropbox_parameters],
     )
