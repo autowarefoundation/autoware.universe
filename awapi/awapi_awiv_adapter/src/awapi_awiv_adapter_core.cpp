@@ -207,7 +207,7 @@ void AutowareIvAdapter::callbackNavSat(const sensor_msgs::msg::NavSatFix::ConstS
 void AutowareIvAdapter::getCurrentPose()
 {
   try {
-    auto transform = tf_buffer_.lookupTransform("map", "base_link", rclcpp::Time(0));
+    auto transform = tf_buffer_.lookupTransform("map", "base_link", tf2::TimePointZero);
     geometry_msgs::msg::PoseStamped ps;
     ps.header = transform.header;
     ps.pose.position.x = transform.transform.translation.x;
