@@ -33,6 +33,9 @@ struct TopicConfig
     transient_local(
       interface->declare_parameter(namespace_prefix + ".transient_local",
       static_cast<rclcpp::ParameterValue>(false)).get<bool>()),
+    best_effort(
+      interface->declare_parameter(namespace_prefix + ".best_effort",
+      static_cast<rclcpp::ParameterValue>(false)).get<bool>()),
     timeout(interface->declare_parameter(namespace_prefix + ".timeout").get<double>()),
     warn_rate(interface->declare_parameter(namespace_prefix + ".warn_rate").get<double>())
   {
@@ -42,6 +45,7 @@ struct TopicConfig
   std::string name;
   std::string type;
   bool transient_local;
+  bool best_effort;
   double timeout;
   double warn_rate;
 };

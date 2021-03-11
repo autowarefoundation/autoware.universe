@@ -301,7 +301,8 @@ void AutowareStateMonitorNode::onTopic(
 }
 
 void AutowareStateMonitorNode::registerTopicCallback(
-  const std::string & topic_name, const std::string & topic_type, const bool transient_local)
+  const std::string & topic_name, const std::string & topic_type,
+  const bool transient_local, const bool best_effort)
 {
   // Initialize buffer
   topic_received_time_buffer_[topic_name] = {};
@@ -313,6 +314,9 @@ void AutowareStateMonitorNode::registerTopicCallback(
   auto qos = rclcpp::QoS{1};
   if (transient_local) {
     qos.transient_local();
+  }
+  if (best_effort) {
+    qos.best_effort();
   }
   sub_topic_map_[topic_name] = rclcpp_generic::GenericSubscription::create(
     this->get_node_topics_interface(), topic_name, topic_type, qos, callback,
@@ -459,7 +463,9 @@ AutowareStateMonitorNode::AutowareStateMonitorNode()
 
   // Topic Callback
   for (const auto & topic_config : topic_configs_) {
-    registerTopicCallback(topic_config.name, topic_config.type, topic_config.transient_local);
+    registerTopicCallback(
+      topic_config.name, topic_config.type,
+      topic_config.transient_local, topic_config.best_effort);
   }
 
   // Subscriber

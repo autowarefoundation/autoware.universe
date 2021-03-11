@@ -84,7 +84,8 @@ private:
   void onTopic(
     const std::shared_ptr<rclcpp::SerializedMessage> msg, const std::string & topic_name);
   void registerTopicCallback(
-    const std::string & topic_name, const std::string & topic_type, const bool transient_local);
+    const std::string & topic_name, const std::string & topic_type,
+    const bool transient_local, const bool best_effort);
 
   std::map<std::string, rclcpp_generic::GenericSubscription::SharedPtr> sub_topic_map_;
   std::map<std::string, std::deque<rclcpp::Time>> topic_received_time_buffer_;
