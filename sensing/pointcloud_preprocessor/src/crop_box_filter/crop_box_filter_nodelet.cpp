@@ -79,7 +79,7 @@ CropBoxFilterComponent::CropBoxFilterComponent(const rclcpp::NodeOptions & optio
   // set additional publishers
   {
     crop_box_polygon_pub_ =
-      this->create_publisher<geometry_msgs::msg::PolygonStamped>("crop_box_polygon", 10);
+      this->create_publisher<geometry_msgs::msg::PolygonStamped>("~/crop_box_polygon", 10);
   }
 
   // set parameter service callback
