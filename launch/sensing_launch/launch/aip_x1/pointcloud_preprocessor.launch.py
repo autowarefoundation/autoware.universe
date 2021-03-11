@@ -265,6 +265,9 @@ def launch_setup(context, *args, **kwargs):
             "input_topic": "/sensing/lidar/top/outlier_filtered/pointcloud",
             "output_topic": "/sensing/lidar/pointcloud",
             "type": "sensor_msgs/msg/PointCloud2",
+            "history": "keep_last",
+            "depth": 5,
+            "reliability": "best_effort",
             'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False'),
         }],
     )
