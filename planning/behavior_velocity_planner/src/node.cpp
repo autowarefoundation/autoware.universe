@@ -80,7 +80,7 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode()
     "input/dynamic_objects", 1,
     std::bind(&BehaviorVelocityPlannerNode::onDynamicObjects, this, _1));
   sub_no_ground_pointcloud_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
-    "input/no_ground_pointcloud", 1,
+    "input/no_ground_pointcloud", rclcpp::SensorDataQoS(),
     std::bind(&BehaviorVelocityPlannerNode::onNoGroundPointCloud, this, _1));
   sub_vehicle_velocity_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
     "input/vehicle_velocity", 1,
