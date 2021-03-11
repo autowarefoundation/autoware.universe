@@ -37,6 +37,22 @@ public:
     tf_buffer_->setCreateTimerInterface(timer_interface);
     tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
   }
+
+  geometry_msgs::msg::TransformStamped::ConstSharedPtr getLatestTransform(
+    const std::string & from, const std::string & to)
+  {
+    geometry_msgs::msg::TransformStamped tf;
+    try {
+      tf = tf_buffer_->lookupTransform(from, to, tf2::TimePointZero);
+    } catch (tf2::TransformException & ex) {
+      RCLCPP_WARN(
+        logger_, "failed to get transform from %s to %s: %s", from.c_str(), to.c_str(), ex.what());
+      return {};
+    }
+
+    return std::make_shared<const geometry_msgs::msg::TransformStamped>(tf);
+  }
+
   geometry_msgs::msg::TransformStamped::ConstSharedPtr getTransform(
     const std::string & from, const std::string & to, const rclcpp::Time & time,
     const rclcpp::Duration & duration)
@@ -50,12 +66,9 @@ public:
       return {};
     }
 
-    geometry_msgs::msg::TransformStamped::SharedPtr transform(
-      new geometry_msgs::msg::TransformStamped());
-    *transform = tf;
-
-    return transform;
+    return std::make_shared<const geometry_msgs::msg::TransformStamped>(tf);
   }
+
   rclcpp::Logger getLogger() {return logger_;}
 
 private:

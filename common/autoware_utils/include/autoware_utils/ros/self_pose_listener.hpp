@@ -15,6 +15,8 @@
 #ifndef AUTOWARE_UTILS__ROS__SELF_POSE_LISTENER_HPP_
 #define AUTOWARE_UTILS__ROS__SELF_POSE_LISTENER_HPP_
 
+#include <memory>
+
 #include "rclcpp/rclcpp.hpp"
 
 #include "autoware_utils/geometry/geometry.hpp"
@@ -27,35 +29,26 @@ class SelfPoseListener
 public:
   explicit SelfPoseListener(rclcpp::Node * node)
   : transform_listener_(node) {}
+
   void waitForFirstPose()
   {
     while (rclcpp::ok()) {
-      const auto pose = getPoseAt(rclcpp::Time(0), rclcpp::Duration::from_seconds(5.0));
-      if (pose) {
+      if (getCurrentPose()) {
         return;
       }
       RCLCPP_INFO(transform_listener_.getLogger(), "waiting for self pose...");
+      rclcpp::Rate(0.2).sleep();
     }
   }
 
   geometry_msgs::msg::PoseStamped::ConstSharedPtr getCurrentPose()
   {
-    return getPoseAt(rclcpp::Time(0), rclcpp::Duration::from_seconds(0.0));
-  }
-
-  geometry_msgs::msg::PoseStamped::ConstSharedPtr getPoseAt(
-    const rclcpp::Time & time, const rclcpp::Duration & duration)
-  {
-    const auto tf = transform_listener_.getTransform("map", "base_link", time, duration);
-
+    const auto tf = transform_listener_.getLatestTransform("map", "base_link");
     if (!tf) {
       return {};
     }
 
-    geometry_msgs::msg::PoseStamped::SharedPtr pose(new geometry_msgs::msg::PoseStamped());
-    *pose = transform2pose(*tf);
-
-    return geometry_msgs::msg::PoseStamped::ConstSharedPtr(pose);
+    return std::make_shared<const geometry_msgs::msg::PoseStamped>(transform2pose(*tf));
   }
 
 private:
