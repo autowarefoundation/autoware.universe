@@ -59,7 +59,7 @@ SurroundObstacleCheckerNode::SurroundObstacleCheckerNode()
     "input/trajectory", 1,
     std::bind(&SurroundObstacleCheckerNode::pathCallback, this, std::placeholders::_1));
   pointcloud_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
-    "input/pointcloud", 1,
+    "input/pointcloud", rclcpp::SensorDataQoS(),
     std::bind(&SurroundObstacleCheckerNode::pointCloudCallback, this, std::placeholders::_1));
   dynamic_object_sub_ =
     this->create_subscription<autoware_perception_msgs::msg::DynamicObjectArray>(
