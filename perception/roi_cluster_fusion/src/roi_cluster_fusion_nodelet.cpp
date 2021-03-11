@@ -289,7 +289,7 @@ void RoiClusterFusionNodelet::fusionCallback(
     try {
       transform_stamped = tf_buffer_.lookupTransform(
         /*target*/ m_camera_info_.at(id).header.frame_id,
-        /*src*/ input_cluster_msg->header.frame_id, rclcpp::Time(0));
+        /*src*/ input_cluster_msg->header.frame_id, tf2::TimePointZero);
     } catch (tf2::TransformException & ex) {
       RCLCPP_WARN(this->get_logger(), "%s", ex.what());
       return;
