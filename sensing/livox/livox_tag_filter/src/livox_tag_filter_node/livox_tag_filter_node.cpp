@@ -45,11 +45,12 @@ LivoxTagFilterNode::LivoxTagFilterNode(const rclcpp::NodeOptions & node_options)
   using std::placeholders::_1;
   sub_pointcloud_ =
     this->create_subscription<sensor_msgs::msg::PointCloud2>(
-    "input", 1,
+    "input", rclcpp::SensorDataQoS(),
     std::bind(&LivoxTagFilterNode::onPointCloud, this, _1));
 
   // Publisher
-  pub_pointcloud_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("output", 1);
+  pub_pointcloud_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
+    "output", rclcpp::SensorDataQoS());
 }
 
 void LivoxTagFilterNode::onPointCloud(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)

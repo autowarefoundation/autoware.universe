@@ -66,7 +66,7 @@ pointcloud_preprocessor::Filter::Filter(
   {
     tf_input_frame_ = static_cast<std::string>(declare_parameter("input_frame", ""));
     tf_output_frame_ = static_cast<std::string>(declare_parameter("output_frame", ""));
-    max_queue_size_ = static_cast<std::size_t>(declare_parameter("max_queue_size", 3));
+    max_queue_size_ = static_cast<std::size_t>(declare_parameter("max_queue_size", 5));
 
     // ---[ Optional parameters
     use_indices_ = static_cast<bool>(declare_parameter("use_indices", false));
@@ -85,7 +85,8 @@ pointcloud_preprocessor::Filter::Filter(
 
   // Set publisher
   {
-    pub_output_ = this->create_publisher<PointCloud2>("output", max_queue_size_);
+    pub_output_ = this->create_publisher<PointCloud2>(
+      "output", rclcpp::SensorDataQoS().keep_last(max_queue_size_));
   }
 
   // Set subscriber
@@ -93,9 +94,9 @@ pointcloud_preprocessor::Filter::Filter(
     if (use_indices_) {
       // Subscribe to the input using a filter
       sub_input_filter_.subscribe(
-        this, "input", rclcpp::QoS{max_queue_size_}.get_rmw_qos_profile());
+        this, "input", rclcpp::SensorDataQoS().keep_last(max_queue_size_).get_rmw_qos_profile());
       sub_indices_filter_.subscribe(
-        this, "indices", rclcpp::QoS{max_queue_size_}.get_rmw_qos_profile());
+        this, "indices", rclcpp::SensorDataQoS().keep_last(max_queue_size_).get_rmw_qos_profile());
 
       if (approximate_sync_) {
         sync_input_indices_a_ = std::make_shared<ApproximateTimeSyncPolicy>(max_queue_size_);
@@ -115,7 +116,8 @@ pointcloud_preprocessor::Filter::Filter(
       // CAN'T use auto-type here.
       std::function<void(const PointCloud2ConstPtr msg)> cb = std::bind(
         &Filter::input_indices_callback, this, std::placeholders::_1, PointIndicesConstPtr());
-      sub_input_ = create_subscription<PointCloud2>("input", rclcpp::QoS{max_queue_size_}, cb);
+      sub_input_ = create_subscription<PointCloud2>(
+        "input", rclcpp::SensorDataQoS().keep_last(max_queue_size_), cb);
     }
   }
 

@@ -88,13 +88,14 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
     }
 
     // Optional parameters
-    maximum_queue_size_ = static_cast<int>(declare_parameter("max_queue_size", 3));
+    maximum_queue_size_ = static_cast<int>(declare_parameter("max_queue_size", 5));
     timeout_sec_ = static_cast<double>(declare_parameter("timeout_sec", 0.1));
   }
 
   // Publishers
   {
-    pub_output_ = this->create_publisher<PointCloud2>("output", maximum_queue_size_);
+    pub_output_ = this->create_publisher<PointCloud2>(
+      "output", rclcpp::SensorDataQoS().keep_last(maximum_queue_size_));
     pub_concat_num_ =
       this->create_publisher<autoware_debug_msgs::msg::Int32Stamped>("concat_num", 10);
     pub_not_subscribed_topic_name_ =
@@ -125,7 +126,7 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
 
       filters_[d].reset();
       filters_[d] = this->create_subscription<sensor_msgs::msg::PointCloud2>(
-        input_topics_[d], rclcpp::QoS(maximum_queue_size_), cb);
+        input_topics_[d], rclcpp::SensorDataQoS().keep_last(maximum_queue_size_), cb);
     }
     auto twist_cb = std::bind(
       &PointCloudConcatenateDataSynchronizerComponent::twist_callback, this, std::placeholders::_1);

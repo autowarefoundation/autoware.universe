@@ -43,7 +43,8 @@ Lanelet2MapFilterComponent::Lanelet2MapFilterComponent(const rclcpp::NodeOptions
 
   // Set publisher
   {
-    filtered_pointcloud_pub_ = this->create_publisher<PointCloud2>("output", 1);
+    filtered_pointcloud_pub_ = this->create_publisher<PointCloud2>(
+      "output", rclcpp::SensorDataQoS());
   }
 
   // Set subscriber
@@ -52,7 +53,8 @@ Lanelet2MapFilterComponent::Lanelet2MapFilterComponent(const rclcpp::NodeOptions
       "input/vector_map", rclcpp::QoS{1}.transient_local(),
       std::bind(&Lanelet2MapFilterComponent::mapCallback, this, _1));
     pointcloud_sub_ = this->create_subscription<PointCloud2>(
-      "input/pointcloud", 1, std::bind(&Lanelet2MapFilterComponent::pointcloudCallback, this, _1));
+      "input/pointcloud", rclcpp::SensorDataQoS(),
+      std::bind(&Lanelet2MapFilterComponent::pointcloudCallback, this, _1));
   }
 
   // Set parameter reconfigure
