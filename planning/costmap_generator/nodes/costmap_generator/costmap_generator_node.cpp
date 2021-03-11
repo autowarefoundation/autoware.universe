@@ -92,9 +92,7 @@ std::vector<geometry_msgs::msg::Point> poly2vector(const geometry_msgs::msg::Pol
 }  // namespace
 
 CostmapGenerator::CostmapGenerator()
-: Node("costmap_generator"),
-  tf_buffer_(this->get_clock()),
-  tf_listener_(tf_buffer_)
+: Node("costmap_generator"), tf_buffer_(this->get_clock()), tf_listener_(tf_buffer_)
 {
   // Parameters
   costmap_frame_ = this->declare_parameter<std::string>("costmap_frame", "map");
@@ -120,14 +118,13 @@ CostmapGenerator::CostmapGenerator()
   // We want to do this before creating subscriptions
   while (rclcpp::ok()) {
     try {
-      tf_buffer_.lookupTransform(map_frame_, vehicle_frame_, rclcpp::Time(0));
+      tf_buffer_.lookupTransform("map", "base_link", tf2::TimePointZero);
       break;
     } catch (tf2::TransformException & ex) {
-      RCLCPP_ERROR(this->get_logger(), "waiting for initial pose...");
+      RCLCPP_INFO(this->get_logger(), "waiting for initial pose...");
     }
     rclcpp::sleep_for(std::chrono::milliseconds(5000));
   }
-
 
   // Subscribers
   using std::placeholders::_1;
@@ -144,8 +141,8 @@ CostmapGenerator::CostmapGenerator()
 
   // Publishers
   pub_costmap_ = this->create_publisher<grid_map_msgs::msg::GridMap>("output/grid_map", 1);
-  pub_occupancy_grid_ = this->create_publisher<nav_msgs::msg::OccupancyGrid>(
-    "output/occupancy_grid", 1);
+  pub_occupancy_grid_ =
+    this->create_publisher<nav_msgs::msg::OccupancyGrid>("output/occupancy_grid", 1);
 
   // Timer
   auto timer_callback = std::bind(&CostmapGenerator::onTimer, this);
@@ -155,7 +152,6 @@ CostmapGenerator::CostmapGenerator()
     this->get_clock(), period, std::move(timer_callback),
     this->get_node_base_interface()->get_context());
   this->get_node_timers_interface()->add_timer(timer_, nullptr);
-
 
   // Initialize
   initGridmap();
@@ -239,10 +235,8 @@ void CostmapGenerator::onTimer()
   // Get current pose
   geometry_msgs::msg::TransformStamped tf;
   try {
-    tf =
-      tf_buffer_.lookupTransform(
-      costmap_frame_, vehicle_frame_, rclcpp::Time(
-        0), rclcpp::Duration::from_seconds(1.0));
+    tf = tf_buffer_.lookupTransform(
+      costmap_frame_, vehicle_frame_, rclcpp::Time(0), rclcpp::Duration::from_seconds(1.0));
   } catch (tf2::TransformException & ex) {
     RCLCPP_ERROR(rclcpp::get_logger("Exception: "), "%s", ex.what());
     return;
@@ -306,10 +300,8 @@ autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr transformObjec
 
   geometry_msgs::msg::TransformStamped objects2costmap;
   try {
-    objects2costmap =
-      tf_buffer.lookupTransform(
-      target_frame_id, src_frame_id, rclcpp::Time(
-        0), rclcpp::Duration::from_seconds(1.0));
+    objects2costmap = tf_buffer.lookupTransform(
+      target_frame_id, src_frame_id, rclcpp::Time(0), rclcpp::Duration::from_seconds(1.0));
   } catch (tf2::TransformException & ex) {
     RCLCPP_ERROR(rclcpp::get_logger("Exception: "), "%s", ex.what());
   }
