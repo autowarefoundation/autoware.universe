@@ -129,7 +129,7 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode()
 
   // Subscribers
   obstacle_pointcloud_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
-    "input/pointcloud", 1,
+    "input/pointcloud", rclcpp::SensorDataQoS(),
     std::bind(&ObstacleStopPlannerNode::obstaclePointcloudCallback, this, std::placeholders::_1));
   path_sub_ = this->create_subscription<autoware_planning_msgs::msg::Trajectory>(
     "input/trajectory", 1,
