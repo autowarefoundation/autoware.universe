@@ -17,6 +17,7 @@
 #include <functional>
 #include <limits>
 #include <memory>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -68,7 +69,9 @@ void DummyPerceptionPublisherNode::timerCallback()
   if ( (this->now() - failed_tf_time).seconds() < 5.0) {
     return;
   }
-  if (!tf_buffer_.canTransform("base_link", /*src*/ "map", rclcpp::Time(0))) {
+
+  std::string error;
+  if (!tf_buffer_.canTransform("base_link", /*src*/ "map", tf2::TimePointZero, &error)) {
     failed_tf_time = this->now();
     RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000, "map->base_link is not available yet");
     return;
