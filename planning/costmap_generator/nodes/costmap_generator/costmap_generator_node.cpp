@@ -134,7 +134,8 @@ CostmapGenerator::CostmapGenerator()
   sub_objects_ = this->create_subscription<autoware_perception_msgs::msg::DynamicObjectArray>(
     "input/objects", 1, std::bind(&CostmapGenerator::onObjects, this, _1));
   sub_points_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
-    "input/points_no_ground", 1, std::bind(&CostmapGenerator::onPoints, this, _1));
+    "input/points_no_ground", rclcpp::SensorDataQoS(),
+    std::bind(&CostmapGenerator::onPoints, this, _1));
   sub_lanelet_bin_map_ = this->create_subscription<autoware_lanelet2_msgs::msg::MapBin>(
     "input/vector_map", rclcpp::QoS{1}.transient_local(),
     std::bind(&CostmapGenerator::onLaneletMapBin, this, _1));
