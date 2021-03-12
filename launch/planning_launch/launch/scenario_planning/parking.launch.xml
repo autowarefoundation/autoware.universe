@@ -7,8 +7,8 @@
       <arg name="input_points_no_ground" value="/sensing/lidar/no_ground/pointcloud"/>
       <arg name="input_lanelet_map" value="/map/vector_map"/>
       <arg name="input_scenario" value="/planning/scenario_planning/scenario"/>
-      <arg name="output_grid_map" value="grid_map"/>
-      <arg name="output_occupancy_grid" value="occupancy_grid"/>
+      <arg name="output_grid_map" value="costmap_generator/grid_map"/>
+      <arg name="output_occupancy_grid" value="costmap_generator/occupancy_grid"/>
     </include>
 
     <include file="$(find-pkg-share freespace_planner)/launch/freespace_planner.launch.xml">
