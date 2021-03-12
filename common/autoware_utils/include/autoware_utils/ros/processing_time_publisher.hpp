@@ -30,7 +30,8 @@ class ProcessingTimePublisher
 public:
   explicit ProcessingTimePublisher(
     rclcpp::Node * node,
-    const std::string & name = "debug/processing_time_ms", const rclcpp::QoS & qos = rclcpp::QoS(1))
+    const std::string & name = "~/debug/processing_time_ms",
+    const rclcpp::QoS & qos = rclcpp::QoS(1))
   {
     pub_processing_time_ =
       node->create_publisher<diagnostic_msgs::msg::DiagnosticStatus>(name, qos);
