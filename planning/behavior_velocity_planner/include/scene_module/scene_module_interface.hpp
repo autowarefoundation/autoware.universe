@@ -67,10 +67,10 @@ public:
   SceneModuleManagerInterface(rclcpp::Node & node, const char * module_name)
   : clock_(node.get_clock()), logger_(node.get_logger())
   {
-    const auto ns = std::string("debug/") + module_name;
+    const auto ns = std::string("~/debug/") + module_name;
     pub_debug_ = node.create_publisher<visualization_msgs::msg::MarkerArray>(ns, 20);
     pub_stop_reason_ = node.create_publisher<autoware_planning_msgs::msg::StopReasonArray>(
-      "output/stop_reasons", 20);
+      "~/output/stop_reasons", 20);
   }
 
   virtual ~SceneModuleManagerInterface() = default;

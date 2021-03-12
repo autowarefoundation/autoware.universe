@@ -66,7 +66,7 @@ TrafficLightModuleManager::TrafficLightModuleManager(rclcpp::Node & node)
     node.declare_parameter(ns + ".external_tl_state_timeout", 1.0);
   planner_param_.enable_pass_judge = node.declare_parameter(ns + ".enable_pass_judge", true);
   pub_tl_state_ = node.create_publisher<autoware_perception_msgs::msg::TrafficLightStateStamped>(
-    "output/traffic_light_state", 1);
+    "~/output/traffic_light_state", 1);
 }
 
 void TrafficLightModuleManager::modifyPathVelocity(
