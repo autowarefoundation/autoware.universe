@@ -129,20 +129,20 @@ CostmapGenerator::CostmapGenerator()
   // Subscribers
   using std::placeholders::_1;
   sub_objects_ = this->create_subscription<autoware_perception_msgs::msg::DynamicObjectArray>(
-    "input/objects", 1, std::bind(&CostmapGenerator::onObjects, this, _1));
+    "~/input/objects", 1, std::bind(&CostmapGenerator::onObjects, this, _1));
   sub_points_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
-    "input/points_no_ground", rclcpp::SensorDataQoS(),
+    "~/input/points_no_ground", rclcpp::SensorDataQoS(),
     std::bind(&CostmapGenerator::onPoints, this, _1));
   sub_lanelet_bin_map_ = this->create_subscription<autoware_lanelet2_msgs::msg::MapBin>(
-    "input/vector_map", rclcpp::QoS{1}.transient_local(),
+    "~/input/vector_map", rclcpp::QoS{1}.transient_local(),
     std::bind(&CostmapGenerator::onLaneletMapBin, this, _1));
   sub_scenario_ = this->create_subscription<autoware_planning_msgs::msg::Scenario>(
-    "input/scenario", 1, std::bind(&CostmapGenerator::onScenario, this, _1));
+    "~/input/scenario", 1, std::bind(&CostmapGenerator::onScenario, this, _1));
 
   // Publishers
-  pub_costmap_ = this->create_publisher<grid_map_msgs::msg::GridMap>("output/grid_map", 1);
-  pub_occupancy_grid_ =
-    this->create_publisher<nav_msgs::msg::OccupancyGrid>("output/occupancy_grid", 1);
+  pub_costmap_ = this->create_publisher<grid_map_msgs::msg::GridMap>("~/output/grid_map", 1);
+  pub_occupancy_grid_ = this->create_publisher<nav_msgs::msg::OccupancyGrid>(
+    "~/output/occupancy_grid", 1);
 
   // Timer
   auto timer_callback = std::bind(&CostmapGenerator::onTimer, this);
