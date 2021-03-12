@@ -598,7 +598,7 @@ std::vector<autoware_planning_msgs::msg::TrajectoryPoint> convertPathToTrajector
   return traj_points;
 }
 
-std::vector<autoware_planning_msgs::msg::TrajectoryPoint> convertPointsToTrajectoryPoinsWithYaw(
+std::vector<autoware_planning_msgs::msg::TrajectoryPoint> convertPointsToTrajectoryPointsWithYaw(
   const std::vector<geometry_msgs::msg::Point> & points)
 {
   std::vector<autoware_planning_msgs::msg::TrajectoryPoint> traj_points;

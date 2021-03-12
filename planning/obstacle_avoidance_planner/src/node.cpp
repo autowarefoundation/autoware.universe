@@ -52,31 +52,31 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner()
   rclcpp::QoS durable_qos{1};
   durable_qos.transient_local();
 
-  trajectory_pub_ = create_publisher<autoware_planning_msgs::msg::Trajectory>("output/path", 1);
+  trajectory_pub_ = create_publisher<autoware_planning_msgs::msg::Trajectory>("~/output/path", 1);
   avoiding_traj_pub_ = create_publisher<autoware_planning_msgs::msg::Trajectory>(
     "/planning/scenario_planning/lane_driving/obstacle_avoidance_candidate_trajectory",
     durable_qos);
-  debug_smoothed_points_pub_ =
-    create_publisher<autoware_planning_msgs::msg::Trajectory>("debug/smoothed_poins", durable_qos);
+  debug_smoothed_points_pub_ = create_publisher<autoware_planning_msgs::msg::Trajectory>(
+    "~/debug/smoothed_points", durable_qos);
   is_avoidance_possible_pub_ = create_publisher<autoware_planning_msgs::msg::IsAvoidancePossible>(
     "/planning/scenario_planning/lane_driving/obstacle_avoidance_ready", durable_qos);
   debug_markers_pub_ =
-    create_publisher<visualization_msgs::msg::MarkerArray>("debug/marker", durable_qos);
+    create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/marker", durable_qos);
   debug_clearance_map_pub_ =
-    create_publisher<nav_msgs::msg::OccupancyGrid>("debug/clearance_map", durable_qos);
+    create_publisher<nav_msgs::msg::OccupancyGrid>("~/debug/clearance_map", durable_qos);
   debug_object_clearance_map_pub_ =
-    create_publisher<nav_msgs::msg::OccupancyGrid>("debug/object_clearance_map", durable_qos);
+    create_publisher<nav_msgs::msg::OccupancyGrid>("~/debug/object_clearance_map", durable_qos);
   debug_area_with_objects_pub_ =
-    create_publisher<nav_msgs::msg::OccupancyGrid>("debug/area_with_objects", durable_qos);
+    create_publisher<nav_msgs::msg::OccupancyGrid>("~/debug/area_with_objects", durable_qos);
 
   path_sub_ = create_subscription<autoware_planning_msgs::msg::Path>(
-    "input/path", rclcpp::QoS{1},
+    "~/input/path", rclcpp::QoS{1},
     std::bind(&ObstacleAvoidancePlanner::pathCallback, this, std::placeholders::_1));
   twist_sub_ = create_subscription<geometry_msgs::msg::TwistStamped>(
     "/localization/twist", rclcpp::QoS{1},
     std::bind(&ObstacleAvoidancePlanner::twistCallback, this, std::placeholders::_1));
   objects_sub_ = create_subscription<autoware_perception_msgs::msg::DynamicObjectArray>(
-    "input/objects", rclcpp::QoS{10},
+    "~/input/objects", rclcpp::QoS{10},
     std::bind(&ObstacleAvoidancePlanner::objectsCallback, this, std::placeholders::_1));
   is_avoidance_sub_ = create_subscription<autoware_planning_msgs::msg::EnableAvoidance>(
     "/planning/scenario_planning/lane_driving/obstacle_avoidance_approval", rclcpp::QoS{10},
@@ -566,19 +566,19 @@ ObstacleAvoidancePlanner::convertPointsToTrajectory(
   const int zero_velocity_idx = util::getZeroVelocityIdx(
     is_showing_debug_info_, candidate_points, path_points, prev_trajectories_ptr_, *traj_param_);
 
-  auto traj_points = util::convertPointsToTrajectoryPoinsWithYaw(candidate_points);
+  auto traj_points = util::convertPointsToTrajectoryPointsWithYaw(candidate_points);
   traj_points = util::fillTrajectoryWithVelocity(traj_points, 1e4);
   if (prev_trajectories_ptr_) {
-    const int max_skip_comparison_velocity_idx_for_optimized_poins =
+    const int max_skip_comparison_velocity_idx_for_optimized_points =
       calculateNonDecelerationRange(traj_points, *current_ego_pose_ptr_, current_twist_ptr_->twist);
     const auto optimized_trajectory = util::concatTraj(*prev_trajectories_ptr_);
     traj_points = util::alignVelocityWithPoints(
       traj_points, optimized_trajectory, zero_velocity_idx,
-      max_skip_comparison_velocity_idx_for_optimized_poins);
+      max_skip_comparison_velocity_idx_for_optimized_points);
   }
-  const int max_skip_comparison_idx_for_path_poins = -1;
+  const int max_skip_comparison_idx_for_path_points = -1;
   traj_points = util::alignVelocityWithPoints(
-    traj_points, path_points, zero_velocity_idx, max_skip_comparison_idx_for_path_poins);
+    traj_points, path_points, zero_velocity_idx, max_skip_comparison_idx_for_path_points);
 
   return traj_points;
 }

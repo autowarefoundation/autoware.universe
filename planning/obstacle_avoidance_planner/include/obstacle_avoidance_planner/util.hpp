@@ -116,7 +116,7 @@ int getNearestPointIdx(const T & points, const geometry_msgs::msg::Point & point
 std::vector<autoware_planning_msgs::msg::TrajectoryPoint> convertPathToTrajectory(
   const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points);
 
-std::vector<autoware_planning_msgs::msg::TrajectoryPoint> convertPointsToTrajectoryPoinsWithYaw(
+std::vector<autoware_planning_msgs::msg::TrajectoryPoint> convertPointsToTrajectoryPointsWithYaw(
   const std::vector<geometry_msgs::msg::Point> & points);
 
 std::vector<autoware_planning_msgs::msg::TrajectoryPoint> fillTrajectoryWithVelocity(
