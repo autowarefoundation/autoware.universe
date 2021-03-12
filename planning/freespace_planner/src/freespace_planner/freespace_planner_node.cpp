@@ -288,13 +288,13 @@ AstarNavi::AstarNavi()
   // Subscribers
   {
     route_sub_ = create_subscription<autoware_planning_msgs::msg::Route>(
-      "input/route", rclcpp::QoS{1}, std::bind(&AstarNavi::onRoute, this, _1));
+      "~/input/route", rclcpp::QoS{1}, std::bind(&AstarNavi::onRoute, this, _1));
     occupancy_grid_sub_ = create_subscription<nav_msgs::msg::OccupancyGrid>(
-      "input/occupancy_grid", rclcpp::QoS{1}, std::bind(&AstarNavi::onOccupancyGrid, this, _1));
+      "~/input/occupancy_grid", rclcpp::QoS{1}, std::bind(&AstarNavi::onOccupancyGrid, this, _1));
     scenario_sub_ = create_subscription<autoware_planning_msgs::msg::Scenario>(
-      "input/scenario", rclcpp::QoS{1}, std::bind(&AstarNavi::onScenario, this, _1));
+      "~/input/scenario", rclcpp::QoS{1}, std::bind(&AstarNavi::onScenario, this, _1));
     twist_sub_ = create_subscription<geometry_msgs::msg::TwistStamped>(
-      "input/twist", rclcpp::QoS{100}, std::bind(&AstarNavi::onTwist, this, _1));
+      "~/input/twist", rclcpp::QoS{100}, std::bind(&AstarNavi::onTwist, this, _1));
   }
 
   // Publishers
@@ -302,11 +302,11 @@ AstarNavi::AstarNavi()
     rclcpp::QoS qos{1};
     qos.transient_local();  // latch
     trajectory_pub_ =
-      create_publisher<autoware_planning_msgs::msg::Trajectory>("output/trajectory", qos);
+      create_publisher<autoware_planning_msgs::msg::Trajectory>("~/output/trajectory", qos);
     debug_pose_array_pub_ =
-      create_publisher<geometry_msgs::msg::PoseArray>("debug/pose_array", qos);
+      create_publisher<geometry_msgs::msg::PoseArray>("~/debug/pose_array", qos);
     debug_partial_pose_array_pub_ =
-      create_publisher<geometry_msgs::msg::PoseArray>("debug/partial_pose_array", qos);
+      create_publisher<geometry_msgs::msg::PoseArray>("~/debug/partial_pose_array", qos);
   }
 
   // TF
