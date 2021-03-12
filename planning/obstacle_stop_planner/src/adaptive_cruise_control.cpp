@@ -183,7 +183,7 @@ AdaptiveCruiseController::AdaptiveCruiseController(
 
   /* publisher */
   pub_debug_ = node_->create_publisher<autoware_debug_msgs::msg::Float32MultiArrayStamped>(
-    "debug_values",
+    "~/debug_values",
     1);
 }
 

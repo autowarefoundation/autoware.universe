@@ -123,26 +123,26 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode()
 
   // Publishers
   path_pub_ =
-    this->create_publisher<autoware_planning_msgs::msg::Trajectory>("output/trajectory", 1);
+    this->create_publisher<autoware_planning_msgs::msg::Trajectory>("~/output/trajectory", 1);
   stop_reason_diag_pub_ =
-    this->create_publisher<diagnostic_msgs::msg::DiagnosticStatus>("output/stop_reason", 1);
+    this->create_publisher<diagnostic_msgs::msg::DiagnosticStatus>("~/output/stop_reason", 1);
 
   // Subscribers
   obstacle_pointcloud_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
-    "input/pointcloud", rclcpp::SensorDataQoS(),
+    "~/input/pointcloud", rclcpp::SensorDataQoS(),
     std::bind(&ObstacleStopPlannerNode::obstaclePointcloudCallback, this, std::placeholders::_1));
   path_sub_ = this->create_subscription<autoware_planning_msgs::msg::Trajectory>(
-    "input/trajectory", 1,
+    "~/input/trajectory", 1,
     std::bind(&ObstacleStopPlannerNode::pathCallback, this, std::placeholders::_1));
   current_velocity_sub_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
-    "input/twist", 1,
+    "~/input/twist", 1,
     std::bind(&ObstacleStopPlannerNode::currentVelocityCallback, this, std::placeholders::_1));
   dynamic_object_sub_ =
     this->create_subscription<autoware_perception_msgs::msg::DynamicObjectArray>(
-    "input/objects", 1,
+    "~/input/objects", 1,
     std::bind(&ObstacleStopPlannerNode::dynamicObjectCallback, this, std::placeholders::_1));
   expand_stop_range_sub_ = this->create_subscription<autoware_planning_msgs::msg::ExpandStopRange>(
-    "input/expand_stop_range", 1,
+    "~/input/expand_stop_range", 1,
     std::bind(
       &ObstacleStopPlannerNode::externalExpandStopRangeCallback, this, std::placeholders::_1));
 }

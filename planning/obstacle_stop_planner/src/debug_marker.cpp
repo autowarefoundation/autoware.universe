@@ -28,9 +28,10 @@ ObstacleStopPlannerDebugNode::ObstacleStopPlannerDebugNode(
   rclcpp::Node * node, const double base_link2front)
 : node_(node), base_link2front_(base_link2front)
 {
-  debug_viz_pub_ = node_->create_publisher<visualization_msgs::msg::MarkerArray>("debug/marker", 1);
-  stop_reason_pub_ =
-    node_->create_publisher<autoware_planning_msgs::msg::StopReasonArray>("output/stop_reasons", 1);
+  debug_viz_pub_ = node_->create_publisher<visualization_msgs::msg::MarkerArray>(
+    "~/debug/marker", 1);
+  stop_reason_pub_ = node_->create_publisher<autoware_planning_msgs::msg::StopReasonArray>(
+    "~/output/stop_reasons", 1);
 }
 
 bool ObstacleStopPlannerDebugNode::pushPolygon(
