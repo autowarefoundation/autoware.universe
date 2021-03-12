@@ -8,11 +8,11 @@
   <arg name="config_file" default="$(find-pkg-share lane_departure_checker)/config/lane_departure_checker.param.yaml" />
 
   <node pkg="lane_departure_checker" exec="lane_departure_checker_node" name="lane_departure_checker_node" output="screen">
-    <remap from="input/twist" to="$(var input/twist)"/>
-    <remap from="input/lanelet_map_bin" to="$(var input/lanelet_map_bin)"/>
-    <remap from="input/route" to="$(var input/route)"/>
-    <remap from="input/reference_trajectory" to="$(var input/reference_trajectory)"/>
-    <remap from="input/predicted_trajectory" to="$(var input/predicted_trajectory)"/>
+    <remap from="~/input/twist" to="$(var input/twist)"/>
+    <remap from="~/input/lanelet_map_bin" to="$(var input/lanelet_map_bin)"/>
+    <remap from="~/input/route" to="$(var input/route)"/>
+    <remap from="~/input/reference_trajectory" to="$(var input/reference_trajectory)"/>
+    <remap from="~/input/predicted_trajectory" to="$(var input/predicted_trajectory)"/>
     <param from="$(var vehicle_param_file)" />
     <param from="$(var config_file)" />
   </node>
