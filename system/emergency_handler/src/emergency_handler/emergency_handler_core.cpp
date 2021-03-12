@@ -82,30 +82,30 @@ EmergencyHandler::EmergencyHandler()
 
   // Subscriber
   sub_autoware_state_ = create_subscription<autoware_system_msgs::msg::AutowareState>(
-    "input/autoware_state", rclcpp::QoS{1},
+    "~/input/autoware_state", rclcpp::QoS{1},
     std::bind(&EmergencyHandler::onAutowareState, this, _1));
   sub_driving_capability_ = create_subscription<autoware_system_msgs::msg::DrivingCapability>(
-    "input/driving_capability", rclcpp::QoS{1},
+    "~/input/driving_capability", rclcpp::QoS{1},
     std::bind(&EmergencyHandler::onDrivingCapability, this, _1));
   sub_prev_control_command_ = create_subscription<autoware_vehicle_msgs::msg::VehicleCommand>(
-    "input/prev_control_command", rclcpp::QoS{1},
+    "~/input/prev_control_command", rclcpp::QoS{1},
     std::bind(&EmergencyHandler::onPrevControlCommand, this, _1));
   sub_current_gate_mode_ = create_subscription<autoware_control_msgs::msg::GateMode>(
-    "input/current_gate_mode", rclcpp::QoS{1},
+    "~/input/current_gate_mode", rclcpp::QoS{1},
     std::bind(&EmergencyHandler::onCurrentGateMode, this, _1));
   sub_twist_ = create_subscription<geometry_msgs::msg::TwistStamped>(
-    "input/twist", rclcpp::QoS{1}, std::bind(&EmergencyHandler::onTwist, this, _1));
+    "~/input/twist", rclcpp::QoS{1}, std::bind(&EmergencyHandler::onTwist, this, _1));
   sub_is_state_timeout_ = create_subscription<autoware_system_msgs::msg::TimeoutNotification>(
-    "input/is_state_timeout", rclcpp::QoS{1},
+    "~/input/is_state_timeout", rclcpp::QoS{1},
     std::bind(&EmergencyHandler::onIsStateTimeout, this, _1));
 
   // Heartbeat
   heartbeat_driving_capability_ =
     std::make_shared<HeaderlessHeartbeatChecker<autoware_system_msgs::msg::DrivingCapability>>(
-    *this, "input/driving_capability", timeout_driving_capability_);
+    *this, "~/input/driving_capability", timeout_driving_capability_);
   heartbeat_is_state_timeout_ =
     std::make_shared<HeaderlessHeartbeatChecker<autoware_system_msgs::msg::TimeoutNotification>>(
-    *this, "input/is_state_timeout", timeout_is_state_timeout_);
+    *this, "~/input/is_state_timeout", timeout_is_state_timeout_);
 
   // Service
   srv_clear_emergency_ = this->create_service<std_srvs::srv::Trigger>(
@@ -114,17 +114,17 @@ EmergencyHandler::EmergencyHandler()
 
   // Publisher
   pub_control_command_ = create_publisher<autoware_control_msgs::msg::ControlCommandStamped>(
-    "output/control_command", rclcpp::QoS{1});
-  pub_shift_ =
-    create_publisher<autoware_vehicle_msgs::msg::ShiftStamped>("output/shift", rclcpp::QoS{1});
-  pub_turn_signal_ =
-    create_publisher<autoware_vehicle_msgs::msg::TurnSignal>("output/turn_signal", rclcpp::QoS{1});
+    "~/output/control_command", rclcpp::QoS{1});
+  pub_shift_ = create_publisher<autoware_vehicle_msgs::msg::ShiftStamped>(
+    "~/output/shift", rclcpp::QoS{1});
+  pub_turn_signal_ = create_publisher<autoware_vehicle_msgs::msg::TurnSignal>(
+    "~/output/turn_signal", rclcpp::QoS{1});
   pub_is_emergency_ = create_publisher<autoware_control_msgs::msg::EmergencyMode>(
-    "output/is_emergency", rclcpp::QoS{1});
+    "~/output/is_emergency", rclcpp::QoS{1});
   pub_hazard_status_ = create_publisher<autoware_system_msgs::msg::HazardStatusStamped>(
-    "output/hazard_status", rclcpp::QoS{1});
+    "~/output/hazard_status", rclcpp::QoS{1});
   pub_diagnostics_err_ = create_publisher<diagnostic_msgs::msg::DiagnosticArray>(
-    "output/diagnostics_err", rclcpp::QoS{1});
+    "~/output/diagnostics_err", rclcpp::QoS{1});
 
   // Initialize
   twist_ = geometry_msgs::msg::TwistStamped::ConstSharedPtr(new geometry_msgs::msg::TwistStamped);

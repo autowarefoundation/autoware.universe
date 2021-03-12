@@ -29,13 +29,13 @@ StateTimeoutChecker::StateTimeoutChecker()
 
   // Subscriber
   sub_autoware_state_ = create_subscription<autoware_system_msgs::msg::AutowareState>(
-    "input/autoware_state", rclcpp::QoS{1},
+    "~/input/autoware_state", rclcpp::QoS{1},
     std::bind(&StateTimeoutChecker::onAutowareState, this, _1));
 
   // Publisher
   pub_is_state_timeout_ =
     create_publisher<autoware_system_msgs::msg::TimeoutNotification>(
-    "output/is_state_timeout", rclcpp::QoS{1});
+    "~/output/is_state_timeout", rclcpp::QoS{1});
 
   // Timer
   auto timer_callback = std::bind(&StateTimeoutChecker::onTimer, this);
