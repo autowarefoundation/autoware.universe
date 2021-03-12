@@ -15,9 +15,11 @@
 
 import launch
 import yaml
+import os
+from ament_index_python.packages import get_package_share_directory
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.substitutions import LaunchConfiguration
-from launch_ros.actions import ComposableNodeContainer
+from launch_ros.actions import ComposableNodeContainer, LoadComposableNodes
 from launch_ros.descriptions import ComposableNode
 from launch.substitutions import EnvironmentVariable
 
@@ -50,6 +52,32 @@ def launch_setup(context, *args, **kwargs):
 
     vehicle_info = get_vehicle_info(context)
     vehicle_mirror_info = get_vehicle_mirror_info(context)
+
+    bd_code_param_path = LaunchConfiguration('bd_code_param_path').perform(context)
+    with open(bd_code_param_path, 'r') as f:
+        bd_code_param = yaml.safe_load(f)['/**']['ros__parameters']
+
+    # livox driver
+    livox_driver_component = ComposableNode(
+        package='livox_ros2_driver',
+        plugin='livox_ros::LivoxDriver',
+        name='livox_driver',
+        parameters=[
+            {
+                'xfe_format': LaunchConfiguration('xfe_format'),
+                'multi_topic': LaunchConfiguration('multi_topic'),
+                'data_src': LaunchConfiguration('data_src'),
+                'publish_freq': LaunchConfiguration('publish_freq'),
+                'output_data_type': LaunchConfiguration('output_type'),
+                'lvx_file_path': LaunchConfiguration('lvx_file_path'),
+                'user_config_path': LaunchConfiguration('user_config_path'),
+                'frame_id': LaunchConfiguration('sensor_frame'),
+                'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME',
+                                                    default_value='False'),
+            },
+            bd_code_param,
+        ]
+    )
 
     # set self crop box filter as a component
     cropbox_self_component = ComposableNode(
@@ -113,7 +141,13 @@ def launch_setup(context, *args, **kwargs):
         }],
     )
 
-    return [container]
+    loader = LoadComposableNodes(
+        composable_node_descriptions=[livox_driver_component],
+        target_container=container,
+        condition=launch.conditions.IfCondition(LaunchConfiguration('launch_driver')),
+    )
+
+    return [container, loader]
 
 
 def generate_launch_description():
@@ -123,7 +157,18 @@ def generate_launch_description():
     def add_launch_arg(name: str, default_value=None):
         launch_arguments.append(DeclareLaunchArgument(name, default_value=default_value))
 
+    add_launch_arg('xfe_format', '0')
+    add_launch_arg('multi_topic', '0')
+    add_launch_arg('data_src', '0')
+    add_launch_arg('publish_freq', '10.0')
+    add_launch_arg('output_type', '0')
+    add_launch_arg('lvx_file_path', 'livox_test.lvx')
+    add_launch_arg('user_config_path', os.path.join(get_package_share_directory(
+        "livox_ros2_driver"), "config/livox_lidar_config.json"))
+    add_launch_arg('bd_code_param_path')
+    add_launch_arg('launch_driver')
     add_launch_arg('base_frame', 'base_link')
+    add_launch_arg('sensor_frame', 'livox_frame')
     add_launch_arg('vehicle_param_file')
     add_launch_arg('vehicle_mirror_param_file')
 
