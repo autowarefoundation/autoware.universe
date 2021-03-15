@@ -45,6 +45,7 @@ TopicStateMonitorNode::TopicStateMonitorNode()
   param_.topic = declare_parameter("topic").get<std::string>();
   param_.topic_type = declare_parameter("topic_type").get<std::string>();
   param_.transient_local = declare_parameter("transient_local", false);
+  param_.best_effort = declare_parameter("best_effort", false);
   param_.diag_name = declare_parameter("diag_name").get<std::string>();
   param_.warn_rate = declare_parameter("warn_rate", 0.5);
   param_.error_rate = declare_parameter("error_rate", 0.1);
@@ -62,6 +63,7 @@ TopicStateMonitorNode::TopicStateMonitorNode()
   // Subscriber
   rclcpp::QoS qos = rclcpp::QoS{1};
   if (param_.transient_local) {qos.transient_local();}
+  if (param_.best_effort) {qos.best_effort();}
   sub_topic_ = rclcpp_generic::GenericSubscription::create(
     get_node_topics_interface(), param_.topic, param_.topic_type, qos,
     [this](std::shared_ptr<rclcpp::SerializedMessage> msg) {topic_state_monitor_->update();});

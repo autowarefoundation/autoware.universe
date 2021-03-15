@@ -3,6 +3,7 @@
   <arg name="topic" doc="input topic name" />
   <arg name="topic_type" doc="input topic type" />
   <arg name="transient_local" default="false" doc="add transient_local option to subscriber or not" />
+  <arg name="best_effort" default="false" doc="add best_effort option to subscriber or not" />
   <arg name="diag_name" doc="diag name" />
   <arg name="warn_rate" doc="warn rate[Hz]" />
   <arg name="error_rate" doc="error rate[Hz]" />
@@ -13,6 +14,7 @@
     <param name="topic" value="$(var topic)" />
     <param name="topic_type" value="$(var topic_type)" />
     <param name="transient_local" value="$(var transient_local)" />
+    <param name="best_effort" value="$(var best_effort)" />
     <param name="diag_name" value="$(var diag_name)" />
     <param name="warn_rate" value="$(var warn_rate)" />
     <param name="error_rate" value="$(var error_rate)" />

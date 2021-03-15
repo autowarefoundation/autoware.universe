@@ -27,6 +27,7 @@ struct Param
   std::string topic;
   std::string topic_type;
   bool transient_local;
+  bool best_effort;
   std::string diag_name;
   double warn_rate;
   double error_rate;
