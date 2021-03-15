@@ -49,7 +49,7 @@
   <node pkg="emergency_handler" exec="state_timeout_checker" name="state_timeout_checker" output="screen">
     <remap from="~/input/autoware_state" to="$(var input_autoware_state)"/>
 
-    <remap from="~/output/is_state_timeout" to=" input_is_state_timeout)"/>
+    <remap from="~/output/is_state_timeout" to="$(var input_is_state_timeout)"/>
 
     <param from="$(var state_timeout_checker_config_file)" />
   </node>
