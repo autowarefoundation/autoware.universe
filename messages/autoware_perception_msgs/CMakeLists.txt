@@ -53,7 +53,7 @@ if(${ROS_VERSION} EQUAL 1)
   )
 
   add_message_files(FILES
-    ${TRAFFIC_LIHIT_RECOGNITION_MSG_FILES}
+    ${TRAFFIC_LIGHT_RECOGNITION_MSG_FILES}
     DIRECTORY msg/traffic_light_recognition
   )
 
