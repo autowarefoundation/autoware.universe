@@ -115,7 +115,7 @@ void AutowareIvAutowareStatePublisher::getCurrentMaxVelInfo(
   if (!current_max_velocity_ptr) {
     RCLCPP_DEBUG_STREAM_THROTTLE(
       logger_, *clock_, 5000 /* ms */,
-      "[AutowareIvAutowareStatePublisher] currrent_max_velocity is nullptr");
+      "[AutowareIvAutowareStatePublisher] current_max_velocity is nullptr");
     return;
   }
 
@@ -252,7 +252,7 @@ void AutowareIvAutowareStatePublisher::getGlobalRptInfo(
   }
 
   // get global_rpt
-  status->autonomous_overriden = global_rpt_ptr->override_active;
+  status->autonomous_overridden = global_rpt_ptr->override_active;
 }
 
 bool AutowareIvAutowareStatePublisher::isGoal(

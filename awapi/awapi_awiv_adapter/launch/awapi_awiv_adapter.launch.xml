@@ -20,7 +20,7 @@
   <arg name="input_stop_reason" default="/planning/scenario_planning/status/stop_reasons" />
   <arg name="input_diagnostics" default="/diagnostics_agg" />
   <arg name="input_global_rpt" default="/pacmod/parsed_tx/global_rpt" />
-  <arg name="input_lane_change_avaiable" default="/planning/scenario_planning/lane_driving/lane_change_available" />
+  <arg name="input_lane_change_available" default="/planning/scenario_planning/lane_driving/lane_change_available" />
   <arg name="input_lane_change_ready" default="/planning/scenario_planning/lane_driving/lane_change_ready" />
   <arg name="input_lane_change_candidate_path" default="/planning/scenario_planning/lane_driving/lane_change_candidate_path" />
   <arg name="input_obstacle_avoid_ready" default="/planning/scenario_planning/lane_driving/obstacle_avoidance_ready" />
@@ -104,7 +104,7 @@
       <remap from="input/stop_reason" to="$(var input_stop_reason)" />
       <remap from="input/diagnostics" to="$(var input_diagnostics)" />
       <remap from="input/global_rpt" to="$(var input_global_rpt)" />
-      <remap from="input/lane_change_avaiable" to="$(var input_lane_change_avaiable)" />
+      <remap from="input/lane_change_available" to="$(var input_lane_change_available)" />
       <remap from="input/lane_change_ready" to="$(var input_lane_change_ready)" />
       <remap from="input/lane_change_candidate_path" to="$(var input_lane_change_candidate_path)" />
       <remap from="input/obstacle_avoid_ready" to="$(var input_obstacle_avoid_ready)" />

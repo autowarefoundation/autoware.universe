@@ -93,7 +93,7 @@ AutowareIvAdapter::AutowareIvAdapter()
     "input/global_rpt", 1, std::bind(&AutowareIvAdapter::callbackGlobalRpt, this, _1));
   sub_lane_change_available_ =
     this->create_subscription<autoware_planning_msgs::msg::LaneChangeStatus>(
-    "input/lane_change_avaiable", 1,
+    "input/lane_change_available", 1,
     std::bind(&AutowareIvAdapter::callbackLaneChangeAvailable, this, _1));
   sub_lane_change_ready_ = this->create_subscription<autoware_planning_msgs::msg::LaneChangeStatus>(
     "input/lane_change_ready", 1, std::bind(&AutowareIvAdapter::callbackLaneChangeReady, this, _1));
