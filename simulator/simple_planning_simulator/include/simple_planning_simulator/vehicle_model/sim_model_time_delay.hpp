@@ -14,7 +14,7 @@
 
 /**
  * @file sim_model_time_delay.hpp
- * @brief simple planning simulator model with time delay and 1-dimensional dynamics for velocity & steeiring
+ * @brief simple planning simulator model with time delay and 1-dimensional dynamics for velocity & steering
  * @author Takamasa Horibe, Kim-Ngoc-Khanh Nguyen
  * @date 2019.08.17
  */
@@ -44,7 +44,7 @@ public:
    * @param [in] vx_lim velocity limit [m/s]
    * @param [in] angvel_lim angular velocity limit [m/s]
    * @param [in] vx_rate_lim acceleration limit [m/ss]
-   * @param [in] wz_rate_lim angular acceleration llimit [rad/ss]
+   * @param [in] wz_rate_lim angular acceleration limit [rad/ss]
    * @param [in] dt delta time information to set input buffer for delay
    * @param [in] vx_delay time delay for velocity command [s]
    * @param [in] vx_time_constant time constant for 1D model of velocity dynamics

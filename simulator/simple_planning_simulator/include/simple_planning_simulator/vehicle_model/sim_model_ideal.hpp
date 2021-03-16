@@ -14,7 +14,7 @@
 
 /**
  * @file sim_model_ideal.hpp
- * @brief simple planning simulator ideal velocity model (no dynamics for desired velocity & anguler-velocity or
+ * @brief simple planning simulator ideal velocity model (no dynamics for desired velocity & angular-velocity or
  * steering)
  * @author Takamasa Horibe
  * @date 2019.08.17

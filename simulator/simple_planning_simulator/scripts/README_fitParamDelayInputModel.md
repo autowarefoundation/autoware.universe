@@ -19,7 +19,7 @@ python fitParamDelayInputModel.py --help # for more information
   * vehicle_status/speed is the measured vehicle speed [km/h]
 
 ## Description 
-* Paramter fitting for Input Delay Model (First Order System with Dead Time) with rosbag file input
+* Parameter fitting for Input Delay Model (First Order System with Dead Time) with rosbag file input
 * Arguments explaining:
   * CUTOFF_TIME: Cutoff time[sec]. Rosbag file often was start recording before autoware was run. Time before autoware was run should be cut off. This script will only consider data from t=cutoff_time to the end of the bag file (default is 1.0)
   * CUTOFF_FREQ: Cutoff freq for low-pass filter[Hz], negative value will disable low-pass filter (default is 0.1)

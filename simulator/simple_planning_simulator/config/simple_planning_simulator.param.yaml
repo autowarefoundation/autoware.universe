@@ -29,7 +29,7 @@ simulation:
 
       # Option for vehicle_model_type:
       # - IDEAL_STEER : reads velocity command. The steering and velocity changes exactly the same as commanded.
-      # - DELAY_STEER : reads velocity command. The steering and elocity changes with delay model.
+      # - DELAY_STEER : reads velocity command. The steering and velocity changes with delay model.
       # - DELAY_STEER_ACC : reads acceleration command. The steering and acceleration changes with delay model.
       vehicle_model_type: DELAY_STEER_ACC
       vel_lim: 50.0

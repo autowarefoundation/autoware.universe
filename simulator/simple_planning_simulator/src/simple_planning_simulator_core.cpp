@@ -409,7 +409,7 @@ void Simulator::publishPoseTwist(
   const geometry_msgs::msg::Pose & pose, const geometry_msgs::msg::Twist & twist)
 {
   rclcpp::Time current_time = get_clock()->now();
-  // simulatied pose
+  // simulated pose
   geometry_msgs::msg::PoseStamped ps;
   ps.header.frame_id = map_frame_id_;
   ps.header.stamp = current_time;
@@ -441,7 +441,7 @@ void Simulator::publishTF(const geometry_msgs::msg::Pose & pose)
 
 double Simulator::getPosZFromTrajectory(const double x, const double y)
 {
-  // calculae cloest point on trajectory
+  // calculate closest point on trajectory
   /*
          write me...
   */

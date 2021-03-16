@@ -155,7 +155,7 @@ if __name__ == '__main__':
               'vehicle_cmd/ctrl_cmd/linear_velocity', 'vehicle_status/speed']
     pd_data = [None] * len(topics)
     parser = argparse.ArgumentParser(
-        description='Paramter fitting for Input Delay Model'
+        description='Parameter fitting for Input Delay Model'
         ' (First Order System with Dead Time) with rosbag file input')
     parser.add_argument(
         '--bag_file',

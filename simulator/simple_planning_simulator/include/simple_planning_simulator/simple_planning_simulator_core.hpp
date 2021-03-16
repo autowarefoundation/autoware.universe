@@ -83,7 +83,7 @@ private:
   rclcpp::Subscription<autoware_vehicle_msgs::msg::TurnSignal>::SharedPtr
     sub_turn_signal_cmd_;  //!< @brief topic subscriber for turn_signal_cmd
   rclcpp::Subscription<autoware_planning_msgs::msg::Trajectory>::SharedPtr
-    sub_trajectory_;  //!< @brief topic subscriber for trajectory used for z ppsition
+    sub_trajectory_;  //!< @brief topic subscriber for trajectory used for z position
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
     sub_initialpose_;  //!< @brief topic subscriber for initialpose topic
   rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr
@@ -120,15 +120,15 @@ private:
   std::string map_frame_id_;  //!< @brief map frame_id
 
   /* simple_planning_simulator parameters */
-  double loop_rate_;  //!< @brief frequency to calculate vehicle model & pubish result
+  double loop_rate_;  //!< @brief frequency to calculate vehicle model & publish result
   double wheelbase_;  //!< @brief wheelbase length to convert angular-velocity & steering
-  double sim_steering_gear_ratio_;  //!< @brief for steering wheel angle calcultion
+  double sim_steering_gear_ratio_;  //!< @brief for steering wheel angle calculation
 
   /* flags */
   bool is_initialized_ = false;                //!< @brief flag to check the initial position is set
   bool add_measurement_noise_;                 //!< @brief flag to add measurement noise
   bool simulator_engage_;                      //!< @brief flag to engage simulator
-  bool use_trajectory_for_z_position_source_;  //!< @brief flag to get z positon from trajectory
+  bool use_trajectory_for_z_position_source_;  //!< @brief flag to get z position from trajectory
 
   /* saved values */
   std::shared_ptr<rclcpp::Time> prev_update_time_ptr_;  //!< @brief previously updated time
@@ -257,7 +257,7 @@ private:
   double getPosZFromTrajectory(const double x, const double y);
 
   /**
-   * @brief convert roll-pitch-yaw Eular angle to ros Quaternion
+   * @brief convert roll-pitch-yaw Euler angle to ros Quaternion
    * @param [in] roll roll angle [rad]
    * @param [in] pitch pitch angle [rad]
    * @param [in] yaw yaw angle [rad]
