@@ -101,7 +101,7 @@ pose:
 
 ### stop_reason2tf
 
-This is a all-in-one script that uses `tf2pose`, `pose2tf`, and `stop_reason2pose`.  
+This is an all-in-one script that uses `tf2pose`, `pose2tf`, and `stop_reason2pose`.  
 With this tool, you can view the relative position from base_link to the nearest stop_reason.
 
 ```sh
