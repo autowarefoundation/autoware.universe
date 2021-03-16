@@ -85,8 +85,8 @@ repositories:
     version: tier4/ros2
   vendor/livox-driver:
     type: git
-    url: https://github.com/Livox-SDK/livox_ros2_driver.git
-    version: master
+    url: https://github.com/tier4/livox_ros2_driver.git
+    version: tier4/master
   vendor/rosbridge_suite:
     type: git
     url: https://github.com/tier4/rosbridge_suite.git
