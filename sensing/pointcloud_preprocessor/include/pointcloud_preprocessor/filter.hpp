@@ -186,7 +186,7 @@ protected:
   void computePublish(const PointCloud2ConstPtr & input, const IndicesPtr & indices);
 
   //////////////////////
-  // from PCLNopdelet //
+  // from PCLNodelet //
   //////////////////////
   /** \brief Set to true if point indices are used.
    *

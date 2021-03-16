@@ -30,7 +30,7 @@ def generate_launch_description():
         'input_points_raw_list',
         default_value="['/points_raw']",
         description='Input pointcloud topic_name list as a string_array. '
-        "To subscribe miultiple topics, write as: \"['/points_raw0', '/points_raw1', ...]\"")
+        "To subscribe multiple topics, write as: \"['/points_raw0', '/points_raw1', ...]\"")
 
     output_points_raw_param = DeclareLaunchArgument(
         'output_points_raw',
@@ -44,7 +44,7 @@ def generate_launch_description():
     concat_component = ComposableNode(
         package=pkg,
         plugin='pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent',
-        name='concatnate_filter',
+        name='concatenate_filter',
         remappings=[('output', 'points_raw/concatenated')],
         parameters=[
             {

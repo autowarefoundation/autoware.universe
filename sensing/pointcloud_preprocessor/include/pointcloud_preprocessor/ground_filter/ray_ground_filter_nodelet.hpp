@@ -87,7 +87,7 @@ class RayGroundFilterComponent : public pointcloud_preprocessor::Filter
 
     size_t ring;  // ring number if available
 
-    float radius;  // cylindric coords on XY Plane
+    float radius;  // cylindrical coords on XY Plane
     float theta;   // angle deg on XY plane
 
     size_t radial_div;      // index of the radial division to which this point belongs to

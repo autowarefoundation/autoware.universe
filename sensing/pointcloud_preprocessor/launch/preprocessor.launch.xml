@@ -2,7 +2,7 @@
 <launch>
 
 <!-- Input pointcloud topic_name list as a string_array.
-     To subscribe miultiple topics, write as: 
+     To subscribe multiple topics, write as:
      "['/points_raw0', '/points_raw1', '/points_raw2', ...]"
      This syntax is also available from command line -->
     <arg name="input_points_raw_list" default="['/points_raw']" desc="define as string_array"/>

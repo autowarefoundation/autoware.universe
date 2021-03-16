@@ -26,7 +26,7 @@
 
 namespace
 {
-Eigen::Vector3d getArbitralyOrthogonalVector(const Eigen::Vector3d & input)
+Eigen::Vector3d getArbitraryOrthogonalVector(const Eigen::Vector3d & input)
 {
   const double x = input.x();
   const double y = input.y();
@@ -59,7 +59,7 @@ pointcloud_preprocessor::PlaneBasis getPlaneBasis(const Eigen::Vector3d & plane_
 {
   pointcloud_preprocessor::PlaneBasis basis;
   basis.e_z = plane_normal;
-  basis.e_x = getArbitralyOrthogonalVector(plane_normal);
+  basis.e_x = getArbitraryOrthogonalVector(plane_normal);
   basis.e_y = basis.e_x.cross(basis.e_z);
   return basis;
 }
@@ -120,12 +120,12 @@ RANSACGroundFilterComponent::RANSACGroundFilterComponent(const rclcpp::NodeOptio
 
 void RANSACGroundFilterComponent::setDebugPublisher()
 {
-  if (is_initilized_debug_message_) {return;}
+  if (is_initialized_debug_message_) {return;}
   debug_pose_array_pub_ =
     create_publisher<geometry_msgs::msg::PoseArray>("debug/plane_pose_array", max_queue_size_);
   debug_ground_cloud_pub_ =
     create_publisher<sensor_msgs::msg::PointCloud2>("debug/ground/pointcloud", max_queue_size_);
-  is_initilized_debug_message_ = true;
+  is_initialized_debug_message_ = true;
 }
 
 void RANSACGroundFilterComponent::publishDebugMessage(
