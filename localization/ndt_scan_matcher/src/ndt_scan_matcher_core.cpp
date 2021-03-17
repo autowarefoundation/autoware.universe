@@ -36,7 +36,9 @@ NDTScanMatcher::NDTScanMatcher()
   base_frame_("base_link"),
   ndt_base_frame_("ndt_base_link"),
   map_frame_("map"),
-  converged_param_transform_probability_(4.5)
+  converged_param_transform_probability_(4.5),
+  inversion_vector_threshold_(-0.9),
+  oscillation_threshold_(10)
 {
   key_value_stdmap_["state"] = "Initializing";
 
@@ -183,6 +185,14 @@ void NDTScanMatcher::timerDiagnostic()
     {
       diag_status_msg.level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
       diag_status_msg.message += "skipping_publish_num exceed limit. ";
+    }
+    // Ignore local optimal solution
+    if (
+      key_value_stdmap_.count("is_local_optimal_solution_oscillation") &&
+      std::stoi(key_value_stdmap_["is_local_optimal_solution_oscillation"]))
+    {
+      diag_status_msg.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
+      diag_status_msg.message = "local optimal solution oscillation occurred";
     }
 
     diagnostic_msgs::msg::DiagnosticArray diag_msg;
@@ -362,8 +372,9 @@ void NDTScanMatcher::callbackSensorPoints(
   key_value_stdmap_["state"] = "Sleeping";
   const auto align_end_time = std::chrono::system_clock::now();
   const double align_time =
-    std::chrono::duration_cast<std::chrono::microseconds>(align_end_time - align_start_time)
-    .count() /
+    std::chrono::duration_cast<std::chrono::microseconds>(
+    align_end_time -
+    align_start_time).count() /
     1000.0;
 
   const Eigen::Matrix4f result_pose_matrix = ndt_ptr_->getFinalTransformation();
@@ -389,6 +400,23 @@ void NDTScanMatcher::callbackSensorPoints(
   const float transform_probability = ndt_ptr_->getTransformationProbability();
 
   const int iteration_num = ndt_ptr_->getFinalNumIteration();
+
+  /*****************************************************************************
+  The reason the add 2 to the ndt_ptr_->getMaximumIterations() is that there are bugs in implementation of ndt.
+  1. gradient descent method ends when the iteration is greater than max_iteration if it does not converge
+     (be careful it's 'greater than' instead of 'greater equal than'.)
+     https://github.com/tier4/autoware.iv/blob/2323e5baa0b680d43a9219f5fb3b7a11dd9edc82/localization/pose_estimator/ndt_scan_matcher/ndt_omp/include/ndt_omp/ndt_omp_impl.hpp#L212
+  2. iterate iteration count when end of gradient descent function.
+     https://github.com/tier4/autoware.iv/blob/2323e5baa0b680d43a9219f5fb3b7a11dd9edc82/localization/pose_estimator/ndt_scan_matcher/ndt_omp/include/ndt_omp/ndt_omp_impl.hpp#L217
+
+  These bugs are now resolved in original pcl implementation.
+  https://github.com/PointCloudLibrary/pcl/blob/424c1c6a0ca97d94ca63e5daff4b183a4db8aae4/registration/include/pcl/registration/impl/ndt.hpp#L73-L180
+  *****************************************************************************/
+  bool is_local_optimal_solution_oscillation = false;
+  if (iteration_num >= ndt_ptr_->getMaximumIterations() + 2) {
+    is_local_optimal_solution_oscillation =
+      isLocalOptimalSolutionOscillation(result_pose_matrix_array);
+  }
 
   bool is_converged = true;
   static size_t skipping_publish_num = 0;
@@ -532,7 +560,11 @@ void NDTScanMatcher::callbackSensorPoints(
   key_value_stdmap_["transform_probability"] = std::to_string(transform_probability);
   key_value_stdmap_["iteration_num"] = std::to_string(iteration_num);
   key_value_stdmap_["skipping_publish_num"] = std::to_string(skipping_publish_num);
-
+  if (is_local_optimal_solution_oscillation) {
+    key_value_stdmap_["is_local_optimal_solution_oscillation"] = "1";
+  } else {
+    key_value_stdmap_["is_local_optimal_solution_oscillation"] = "0";
+  }
 }
 
 geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::alignUsingMonteCarlo(
@@ -748,4 +780,29 @@ bool NDTScanMatcher::getTransform(
     return false;
   }
   return true;
+}
+
+bool NDTScanMatcher::isLocalOptimalSolutionOscillation(
+  const std::vector<Eigen::Matrix4f> & result_pose_matrix_array)
+{
+  bool prev_oscillation = false;
+  int oscillation_cnt = 0;
+  for (size_t i = 2; i < result_pose_matrix_array.size(); ++i) {
+    const Eigen::Vector3f current_pose = result_pose_matrix_array.at(i).block(0, 3, 3, 1);
+    const Eigen::Vector3f prev_pose = result_pose_matrix_array.at(i - 1).block(0, 3, 3, 1);
+    const Eigen::Vector3f prev_prev_pose = result_pose_matrix_array.at(i - 2).block(0, 3, 3, 1);
+    const auto current_vec = (current_pose - prev_pose).normalized();
+    const auto prev_vec = (prev_pose - prev_prev_pose).normalized();
+    const bool oscillation = prev_vec.dot(current_vec) < inversion_vector_threshold_;
+    if (prev_oscillation && oscillation) {
+      if (oscillation_cnt > oscillation_threshold_) {
+        return true;
+      }
+      ++oscillation_cnt;
+    } else {
+      oscillation_cnt = 0;
+    }
+    prev_oscillation = oscillation;
+  }
+  return false;
 }
