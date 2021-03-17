@@ -15,8 +15,8 @@ hdd_monitor:
         name: /dev/sda
         temp_warn: 55.0
         temp_error: 70.0
-    usage_warn: 0.95
-    usage_error: 0.99
+        usage_warn: 0.95
+        usage_error: 0.99
 mem_monitor:
   ros__parameters:
     usage_warn: 0.95

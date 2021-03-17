@@ -65,6 +65,15 @@ void MemMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
   std::vector<std::string> list;
   float usage;
 
+  /*
+   Output example of `free -tb`
+
+             list[0]     list[1]     list[2]     list[3]     list[4]     list[5]     list[6]
+   index 0 |               total        used        free      shared  buff/cache   available
+   index 1 | Mem:       32809744    12554780    13090376      292840     7164588    19622092
+   index 2 | Swap:      33554428     1767680    31786748
+   index 3 | Total:     66364172    14322460    44877124
+  */
   while (std::getline(is_out, line) && !line.empty()) {
     // Skip header
     if (index <= 0) {
@@ -76,8 +85,9 @@ void MemMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
 
     // Physical memory
     if (index == 1) {
-      // used divided by total is usage
-      usage = std::atof(list[2].c_str()) / std::atof(list[1].c_str());
+      // available divided by total is available memory including calculation for buff/cache,
+      // so the substraction of this from 1 gives real usage.
+      usage = 1.0f - std::atof(list[6].c_str()) / std::atof(list[1].c_str());
 
       if (usage >= usage_error_) {
         level = DiagStatus::ERROR;
@@ -92,6 +102,12 @@ void MemMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
     stat.add(fmt::format("{} used", list[0]), toHumanReadable(list[2]));
     stat.add(fmt::format("{} free", list[0]), toHumanReadable(list[3]));
 
+    // Add an additional information for physical memory
+    if (index == 1) {
+      stat.add(fmt::format("{} shared", list[0]), toHumanReadable(list[4]));
+      stat.add(fmt::format("{} buff/cache", list[0]), toHumanReadable(list[5]));
+      stat.add(fmt::format("{} available", list[0]), toHumanReadable(list[6]));
+    }
     ++index;
   }
 

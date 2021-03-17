@@ -39,9 +39,11 @@
 #include "sys/socket.h"
 
 #include "boost/algorithm/string.hpp"
+#include "boost/archive/text_iarchive.hpp"
 #include "boost/archive/text_oarchive.hpp"
 #include "boost/filesystem.hpp"
 #include "boost/lexical_cast.hpp"
+#include "boost/serialization/vector.hpp"
 
 #include "hdd_reader/hdd_reader.hpp"
 
@@ -70,7 +72,7 @@ typedef struct
 {
   uint8_t operation_code_;      //!< @brief OPERATION CODE (A1h)
   uint8_t reserved0_ : 1;       //!< @brief Reserved
-  uint8_t protocol_ : 4;         //!< @brief PROTOCOL
+  uint8_t protocol_ : 4;        //!< @brief PROTOCOL
   uint8_t multiple_count_ : 3;  //!< @brief MULTIPLE_COUNT
   uint8_t t_length_ : 2;        //!< @brief T_LENGTH
   uint8_t byt_blok_ : 1;        //!< @brief BYT_BLOK
@@ -198,7 +200,7 @@ int get_ata_identify(int fd, HDDInfo * info)
   // Create a command descriptor block(CDB)
   memset(&ata, 0, sizeof(ata));
   ata.operation_code_ = 0xA1;  // ATA PASS-THROUGH (12) command
-  ata.protocol_ = 0x4;          // PIO Data-In
+  ata.protocol_ = 0x4;         // PIO Data-In
   ata.t_dir_ = 0x1;            // from the ATA device to the application client
   ata.byt_blok_ = 0x1;         // the number of blocks specified in the T_LENGTH field
   ata.t_length_ = 0x2;         // length is specified in the SECTOR_COUNT field
@@ -262,7 +264,7 @@ int get_ata_SMARTData(int fd, HDDInfo * info)
   // Create a command descriptor block(CDB)
   memset(&ata, 0, sizeof(ata));
   ata.operation_code_ = 0xA1;  // ATA PASS-THROUGH (12) command
-  ata.protocol_ = 0x4;          // PIO Data-In
+  ata.protocol_ = 0x4;         // PIO Data-In
   ata.t_dir_ = 0x1;            // from the ATA device to the application client
   ata.byt_blok_ = 0x1;         // the number of blocks specified in the T_LENGTH field
   ata.t_length_ = 0x2;         // length is specified in the SECTOR_COUNT field
@@ -382,9 +384,8 @@ int get_nvme_SMARTData(int fd, HDDInfo * info)
 /**
  * @brief check HDD temperature
  * @param [in] port port to listen
- * @param [inout] list a pointer to HDD information list
  */
-void run(int port, HDDInfoList * list)
+void run(int port)
 {
   // Create a new socket
   int sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -438,69 +439,99 @@ void run(int port, HDDInfoList * list)
       return;
     }
 
+    // Receive list of device from a socket
+    char buf[1024] = "";
+    ret = recv(new_sock, buf, sizeof(buf) - 1, 0);
+    if (ret < 0) {
+      syslog(LOG_ERR, "Failed to receive. %s\n", strerror(errno));
+      close(sock);
+      return;
+    }
+    // No data received
+    if (ret == 0) {
+      syslog(LOG_ERR, "No data received. %s\n", strerror(errno));
+      close(sock);
+      return;
+    }
+
+    // Restore list of devices
+    std::vector<std::string> hdd_devices;
+
+    try {
+      std::istringstream iss(buf);
+      boost::archive::text_iarchive oa(iss);
+      oa & hdd_devices;
+    } catch (const std::exception & e) {
+      syslog(LOG_ERR, "exception. %s\n", e.what());
+      close(sock);
+      return;
+    }
+
+    HDDInfoList list;
     std::ostringstream oss;
     boost::archive::text_oarchive oa(oss);
 
-    for (auto itr = list->begin(); itr != list->end(); ++itr) {
-      HDDInfo * info = &itr->second;
+    for (auto itr = hdd_devices.begin(); itr != hdd_devices.end(); ++itr) {
+      HDDInfo info;
 
       // Open a file
-      int fd = open(itr->first.c_str(), O_RDONLY);
+      int fd = open(itr->c_str(), O_RDONLY);
       if (fd < 0) {
-        info->error_code_ = errno;
-        syslog(LOG_ERR, "Failed to open a file. %s\n", strerror(info->error_code_));
+        info.error_code_ = errno;
+        syslog(LOG_ERR, "Failed to open a file. %s\n", strerror(info.error_code_));
         continue;
       }
 
       // AHCI device
-      if (boost::starts_with(itr->first.c_str(), "/dev/sd")) {
+      if (boost::starts_with(itr->c_str(), "/dev/sd")) {
         // Get IDENTIFY DEVICE for ATA drive
-        info->error_code_ = get_ata_identify(fd, info);
-        if (info->error_code_ != 0) {
+        info.error_code_ = get_ata_identify(fd, &info);
+        if (info.error_code_ != 0) {
           syslog(
             LOG_ERR, "Failed to get IDENTIFY DEVICE for ATA drive. %s\n",
-            strerror(info->error_code_));
+            strerror(info.error_code_));
           close(fd);
           continue;
         }
         // Get SMART DATA for ATA drive
-        info->error_code_ = get_ata_SMARTData(fd, info);
-        if (info->error_code_ != 0) {
+        info.error_code_ = get_ata_SMARTData(fd, &info);
+        if (info.error_code_ != 0) {
           syslog(
-            LOG_ERR, "Failed to get SMART LOG for ATA drive. %s\n", strerror(info->error_code_));
+            LOG_ERR, "Failed to get SMART LOG for ATA drive. %s\n", strerror(info.error_code_));
           close(fd);
           continue;
         }
-      } else if (boost::starts_with(itr->first.c_str(), "/dev/nvme")) {  // NVMe device
+      } else if (boost::starts_with(itr->c_str(), "/dev/nvme")) {     // NVMe device
         // Get Identify for NVMe drive
-        info->error_code_ = get_nvme_identify(fd, info);
-        if (info->error_code_ != 0) {
+        info.error_code_ = get_nvme_identify(fd, &info);
+        if (info.error_code_ != 0) {
           syslog(
-            LOG_ERR, "Failed to get Identify for NVMe drive. %s\n", strerror(info->error_code_));
+            LOG_ERR, "Failed to get Identify for NVMe drive. %s\n", strerror(info.error_code_));
           close(fd);
           continue;
         }
         // Get SMART / Health Information for NVMe drive
-        info->error_code_ = get_nvme_SMARTData(fd, info);
-        if (info->error_code_ != 0) {
+        info.error_code_ = get_nvme_SMARTData(fd, &info);
+        if (info.error_code_ != 0) {
           syslog(
             LOG_ERR, "Failed to get SMART / Health Information for NVMe drive. %s\n",
-            strerror(info->error_code_));
+            strerror(info.error_code_));
           close(fd);
           continue;
         }
       }
 
       // Close the file descriptor FD
-      info->error_code_ = close(fd);
-      if (info->error_code_ < 0) {
-        info->error_code_ = errno;
-        syslog(
-          LOG_ERR, "Failed to close the file descriptor FD. %s\n", strerror(info->error_code_));
+      info.error_code_ = close(fd);
+      if (info.error_code_ < 0) {
+        info.error_code_ = errno;
+        syslog(LOG_ERR, "Failed to close the file descriptor FD. %s\n", strerror(info.error_code_));
       }
+
+      list[*itr] = info;
     }
 
-    oa << *list;
+    oa << list;
     // Write N bytes of BUF to FD
     ret = write(new_sock, oss.str().c_str(), oss.str().length());
     if (ret < 0) {
@@ -546,24 +577,6 @@ int main(int argc, char ** argv)
     }
   }
 
-  HDDInfoList list;
-  const fs::path root("/dev");
-
-  for (const fs::path & path :
-    boost::make_iterator_range(fs::directory_iterator(root), fs::directory_iterator()))
-  {
-    std::cmatch match;
-    const std::regex fsd("sd([a-z]+)");
-    const std::regex fnvme("nvme(\\d+)");
-    const char * dir = path.filename().generic_string().c_str();
-
-    // /dev/sd[a-z] or /dev/nvme[0-9] ?
-    if (std::regex_match(dir, match, fsd) || std::regex_match(dir, match, fnvme)) {
-      HDDInfo info{0, "", "", 0};
-      list.insert(std::make_pair(path.generic_string(), info));
-    }
-  }
-
   // Put the program in the background
   if (daemon(0, 0) < 0) {
     printf("Failed to put the program in the background. %s\n", strerror(errno));
@@ -573,7 +586,7 @@ int main(int argc, char ** argv)
   // Open connection to system logger
   openlog(nullptr, LOG_PID, LOG_DAEMON);
 
-  run(port, &list);
+  run(port);
 
   // Close descriptor used to write to system logger
   closelog();
