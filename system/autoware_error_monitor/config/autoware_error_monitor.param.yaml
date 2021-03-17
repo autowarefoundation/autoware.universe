@@ -49,6 +49,7 @@
             "/autoware/system/resource_monitoring/gpu_thermal_throttling",
             "/autoware/vehicle/alive_monitoring",
             "/autoware/vehicle/vehicle_errors",
+            "/autoware/vehicle/obstacle_crush",
           ]
         diag_level:
           /autoware/localization/matching_score: { sf_at: "warn", lf_at: "error", spf_at: "none" }
