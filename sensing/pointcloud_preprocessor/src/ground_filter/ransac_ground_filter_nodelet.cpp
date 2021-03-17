@@ -267,6 +267,7 @@ void RANSACGroundFilterComponent::filter(
       std::acos(plane_normal.dot(unit_vec_) / (plane_normal.norm() * unit_vec_.norm())) * 180 /
       M_PI);
     if (plane_slope > plane_slope_threshold_) {
+      output = *input;
       return;
     }
   }
