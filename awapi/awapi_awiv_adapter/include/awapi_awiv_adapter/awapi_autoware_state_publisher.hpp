@@ -44,9 +44,6 @@ private:
   bool arrived_goal_;
   autoware_system_msgs::msg::AutowareState::_state_type prev_state_;
 
-  /* parameter for judging diag leaf */
-  std::set<std::string> diag_name_set_;
-
   void getAutowareStateInfo(
     const autoware_system_msgs::msg::AutowareState::ConstSharedPtr & autoware_state_ptr,
     autoware_api_msgs::msg::AwapiAutowareStatus * status);
@@ -63,8 +60,7 @@ private:
     const autoware_planning_msgs::msg::VelocityLimit::ConstSharedPtr & current_max_velocity_ptr,
     autoware_api_msgs::msg::AwapiAutowareStatus * status);
   void getHazardStatusInfo(
-    const autoware_system_msgs::msg::HazardStatusStamped::ConstSharedPtr & hazard_status_ptr,
-    autoware_api_msgs::msg::AwapiAutowareStatus * status);
+    const AutowareInfo & aw_info, autoware_api_msgs::msg::AwapiAutowareStatus * status);
   void getStopReasonInfo(
     const autoware_planning_msgs::msg::StopReasonArray::ConstSharedPtr & stop_reason_ptr,
     autoware_api_msgs::msg::AwapiAutowareStatus * status);
@@ -77,11 +73,6 @@ private:
     autoware_api_msgs::msg::AwapiAutowareStatus * status);
 
   bool isGoal(const autoware_system_msgs::msg::AutowareState::ConstSharedPtr & autoware_state);
-  std::vector<diagnostic_msgs::msg::DiagnosticStatus> extractLeafDiag(
-    const std::vector<diagnostic_msgs::msg::DiagnosticStatus> & diag_vec);
-  std::string splitStringByLastSlash(const std::string & str);
-  void updateDiagNameSet(const std::vector<diagnostic_msgs::msg::DiagnosticStatus> & diag_vec);
-  bool isLeaf(const diagnostic_msgs::msg::DiagnosticStatus & diag);
 };
 
 }  // namespace autoware_api
