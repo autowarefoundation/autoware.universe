@@ -1,7 +1,7 @@
 # Planning Architecture Rationale
 
 ## Requirements for Planning
-Plannig architecture must be able to support any functions required to achieve the overall use case stated in [Overview](/Overview.md)
+Planning architecture must be able to support any functions required to achieve the overall use case stated in [Overview](/Overview.md)
 
 This includes: 
 - Calculates route that navigates to the desired goal
@@ -24,7 +24,7 @@ System overview of Boss is explained in this [paper](https://www.ri.cmu.edu/pub_
 The planner is decomposed into three layers: mission, behavior, and motion. Mission calculates the high-level global path from starting point to goal point, behavior makes tactical decisions such as lane change decisions and maneuvers at an intersection, and motion calculates low-level trajectory with consideration of kinematic model of the vehicle.
 
 **pros**
-* It is intuitive. Data flow is one-directional from mission to behavior to motion. Simlar approach was taken by different teams in the DARPA Urban Challenge.
+* It is intuitive. Data flow is one-directional from mission to behavior to motion. Similar approach was taken by different teams in the DARPA Urban Challenge.
 * It is suitable for OSS used world-wide since all traffic rule handling is done in the behavior layer, and developers only need to modify the behavior layer to support their local rules.
   
 **cons** 
@@ -63,7 +63,7 @@ Apollo kept updating the planning module at each version update. In version 5.0,
 ## Autoware Planning Architecture
 Considering pros and cons of different approaches, we have concluded to take the hybrid approach of Apollo and Boss. 
 
-We divided planning modules into scenarios just like Apollo, but into a more high-level scenario, such as LaneDriving and Parking. Apollo has smaller units of scenarios, such as intersection and traffic lights, but we expect that those scenarios may occur in parallel(e.g. intsection with traffic lights and crosswalks) and preparing combined-scenario modules would make scenario-selector too complex to be maintained. Instead, we made a scenario to be a more broad concept to keep the number of scenarios to be lower to keep scenario selector comprehensible. Currently, we only have LaneDriving and Parking, and we anticipate to have HighWay and InEmergency scenarios in the future. 
+We divided planning modules into scenarios just like Apollo, but into a more high-level scenario, such as LaneDriving and Parking. Apollo has smaller units of scenarios, such as intersection and traffic lights, but we expect that those scenarios may occur in parallel(e.g. intersection with traffic lights and crosswalks) and preparing combined-scenario modules would make scenario-selector too complex to be maintained. Instead, we made a scenario to be a more broad concept to keep the number of scenarios to be lower to keep scenario selector comprehensible. Currently, we only have LaneDriving and Parking, and we anticipate to have HighWay and InEmergency scenarios in the future. 
 
 More investigation is required to establish the definition of a “Scenario”, but the convention is that a new scenario must only be added whenever a different "paradigm" is needed for planning. 
 

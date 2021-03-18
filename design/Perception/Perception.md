@@ -15,7 +15,7 @@ Perception stack has 2 main roles.
 ## Use Cases
 Perception must provide enough information to support following use cases:
 
-| Usecase                                                 | Required output from  `Perception`                                                                                                              | How the output is used                                                                                                                                                                                                                                        |
+| Use case                                                | Required output from  `Perception`                                                                                                              | How the output is used                                                                                                                                                                                                                                        |
 | ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1. Changing lane                                        | **Object Recognition-Prediction**:<br>-  Predicted paths of objects on target lane                                                                   | To decide `when` and `where` changing lane depending on objects' predicted paths. <br>`when`: which timing to trigger lane change  depending on obstacles position and velocity.  <br> `where`: where to go depending on objects' position and shape. |
 | 2. Turning at intersection                              | **Object Recognition- Prediction**:<br>- Predicted paths of objects at an intersection                                                               | To decide `when` turning at an intersection depending on objects' predicted path.  <br>`when`: which timing to turning depending on objects' future paths.                                                                                            |
@@ -76,7 +76,7 @@ This Perception stack consists of 2 separated modules and each module can be sub
 
 **Key points of the structure**
 
-- Interfaces are separated accoriding to the current algorithm level.
+- Interfaces are separated according to the current algorithm level.
 - Enable complex autonomous driving use cases by including information like objects' future movement.
 - Depends on technology development in the future, this structure might be changed (e.g. E2E).
 
@@ -125,7 +125,7 @@ Prediction component is responsible for clarifying the following objects' proper
 
 | Property       | Definition                             | Data Type                                    | Parent Data Type                  |
 | -------------- | -------------------------------------- | -------------------------------------------- | --------------------------------- |
-| predicted_path | Predicted furuter paths for an object. | `autoware_perception_msgs::PredictedPath[]   ` | `autoware_perception_msgs::State` |
+| predicted_path | Predicted future paths for an object.  | `autoware_perception_msgs::PredictedPath[]   ` | `autoware_perception_msgs::State` |
 
 Necessary information is defined in `autoware_perception_msg::DynamicObjectArray.msg` with layered msg structure.
 

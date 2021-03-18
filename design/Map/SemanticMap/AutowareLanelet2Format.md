@@ -6,7 +6,7 @@ In addition to default Lanelet2 Format, users should add following mandatory/opt
 
 ## Additional Conventions
 ### Lane length
-Original Lanelet2 format does not specify the minimum or maximum length of lane. However, without the limit, it is very difficult to extimate memory size and computation time using lane information. Therefore, we set general convention that a lanelet should have length between 1m ~ 50m.
+Original Lanelet2 format does not specify the minimum or maximum length of lane. However, without the limit, it is very difficult to estimate memory size and computation time using lane information. Therefore, we set general convention that a lanelet should have length between 1m ~ 50m.
 
 ### No Self Crossing Lanes
 In order to make geometrical calculation of lane easier (e.g. getting drivable area, operating triangulation, etc) we set a convention that no lanes should overlap itself. Whenever, it overlaps itself, the lane should be separated into two different lanes with same attributes.
@@ -39,7 +39,7 @@ Here is an example osm syntax for a lanelet object.
 ```
 
 ### TrafficLights
-Default Lanelet2 format uses LineString(`way`) or Polygon class to represent the shape of a traffic light. For Autoware, traffic light objects must be represented only by LineString to avoid confusion, where start point is at bottom left edge and end point is at bottom right edge. Also, "height" tag must be added in order to represent the size in verticle direction(not the position). 
+Default Lanelet2 format uses LineString(`way`) or Polygon class to represent the shape of a traffic light. For Autoware, traffic light objects must be represented only by LineString to avoid confusion, where start point is at bottom left edge and end point is at bottom right edge. Also, "height" tag must be added in order to represent the size in vertical direction(not the position). 
 
 The Following image illustrates how LineString is used to represent shape of Traffic Light in Autoware.
 <img src="./docs/traffic_light.png" width="600">
@@ -56,7 +56,7 @@ Here is an example osm syntax for traffic light object.
 </way>
 ```
 
-### Turn Diretions
+### Turn Directions
 Users must add "turn_direction" tags to lanelets within intersections to indicate vehicle's turning direction. You do not need this tags for lanelets that are not in intersections. If you do not have this tag, Autoware will not be able to light up turning indicators. 
 This tags only take following values:
 * left
@@ -67,7 +67,7 @@ Following image illustrates how lanelets should be tagged.
 
 <img src="./docs/turn_direction.png" width="600">
 
-Here is an example of osm sytax for lanelets in intersections. 
+Here is an example of osm syntax for lanelets in intersections. 
 ```
 <relation id='1' visible='true' version='1'>
   <member type='way' ref='2' role='left' />
@@ -85,7 +85,7 @@ Here is an example of osm sytax for lanelets in intersections.
 Following tags are optional tags that you may want to add depending on how you want to use your map in Autoware. 
 
 ### Meta Info
-Users may add the `MetaInfo` element to their OSM file to indicate format version and map version of their OSM file. This information is not meant to influence Autoware vehicle's behavior, but is published as ROS message so that developers could know which map was used from ROSBAG log files. MetaInfo elements exists in the same hiararchy with `node`, `way`, and `relation` elements, otherwise JOSM wouldn't be able to load the file correctly.
+Users may add the `MetaInfo` element to their OSM file to indicate format version and map version of their OSM file. This information is not meant to influence Autoware vehicle's behavior, but is published as ROS message so that developers could know which map was used from ROSBAG log files. MetaInfo elements exists in the same hierarchy with `node`, `way`, and `relation` elements, otherwise JOSM wouldn't be able to load the file correctly.
 
 Here is an example of MetaInfo in osm file:
 ```

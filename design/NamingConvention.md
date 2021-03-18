@@ -18,18 +18,18 @@ Also, it is strongly recommended that the default topic names specified in sourc
 * All topics must be specified under following namespace in the node's private namespace. This allows users to easily understand which topics are inputs and outputs when they look at remapping in launch files for example.
   * `input`: subscribed topics
   * `output`: published topics 
-  * `debug`: published topics that are meant for debugging (e.g. for visulization)
+  * `debug`: published topics that are meant for debugging (e.g. for visualization)
 
-For example, if there is a node that subsribes pointcloud and filter it will voxel grid filter, the topics should be:
+For example, if there is a node that subscribes pointcloud and filter it will voxel grid filter, the topics should be:
 * ~input/points_original
 * ~output/points_filtered
 
 ### Remapped Topics
-The default topics of each nodes may be remapped to other topic names in launch file.
+The default topics of each node may be remapped to other topic names in launch file.
 In general, the topics should be published under namespaces of belonging modules in layered architecture for encapsulation.
 This allows the developers and users to easily understand where in the architecture topic is used.
 
-Some of other key topics are listed below:
+Some other key topics are listed below:
 ```
 /control/vehicle_cmd
 /perception/object_recognition/detection/objects

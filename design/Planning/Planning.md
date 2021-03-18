@@ -20,7 +20,7 @@ Planning stack must satisfy following use cases:
 3. Driving along lane
 4. Following speed limit of lane
 5. Follow traffic light
-6. Follow yeild/stop signs
+6. Follow yield/stop signs
 7. Turning left/right at intersections
 8. Park vehicle at parking space (either reverse parking or forward first parking)
 
@@ -60,16 +60,16 @@ Planning stack must satisfy following use cases:
      * i.e. All points in planned trajectory has enough distance from other objects with ego vehicle's footprint taken into account
 
 8. **General requirements to trajectory**
-   * Planned trajectory must satisfy requirments from Control stack:
+   * Planned trajectory must satisfy requirements from Control stack:
      * Planned trajectory must have speed profile that satisfies given acceleration and jerk limits unless vehicle is under emergency e.g. when pedestrian suddenly jumps into driving lane or front vehicle suddenly stops.
      * Planned trajectory must be feasible by the given vehicle kinematic model
-     * Planned trajectory must to satisfy given lateral acceleration and jerk limit
+     * Planned trajectory must satisfy given lateral acceleration and jerk limit
      * Planned trajectory points within *n* [m] from ego vehicle should not change over time unless sudden steering or sudden acceleration is required to avoid collision with other vehicles.
        * *n*[m] = *velocity_of_ego_vehicle* * *configured_time_horizon*
 
 ## Input
 
-The table below summarizes the overal input into Planning stack:
+The table below summarizes the overall input into Planning stack:
 
 | Input                           | Topic Name(Data Type)                                                                                                   | Explanation                                                                                                                                                                                                                                                                                                         |
 | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -92,11 +92,11 @@ The table below summarizes the final output from Planning stack:
 # Design
 
 In order to achieve the requirements stated above, Planning stack is decomposed into the diagram below. 
-Each requirements are met in following modules:
+Each requirement is met in following modules:
 * Requirement 1: Mission calculates the overall route to reach goal from starting position 
-* Requirement 2-7: LaneDriving scanario plans trajectory along lanes in planned route
+* Requirement 2-7: LaneDriving scenario plans trajectory along lanes in planned route
 * Requirement 8: Parking scenario plans trajectory in free space to park into parking space 
-* Requirement 9: Both LaneDriving and Parking should output trajectory that sastifies the requirement
+* Requirement 9: Both LaneDriving and Parking should output trajectory that satisfies the requirement
 
 We have looked into different autonomous driving stacks and concluded that it is technically difficult to use unified planner to handle every possible situation. (See [here](/design/Planning/DesignRationale.md) for more details). Therefore, we have decided to set different planners in parallel dedicated for each use case, and let scenario selector to decide depending on situations. Currently, we have reference implementation with two scenarios, on-road planner and parking planner, but any scenarios (e.g. highway, in-emergency, etc.) can be added as needed. 
 
@@ -116,7 +116,7 @@ This module is responsible for calculating full route to goal, and therefore onl
 ### Input
 - current pose: `/tf` (map->base_link): <br> This is current pose in map frame calculated by Localization stack.
 - goal pose: geometry_msgs::PoseStamped <br> This is goal pose given from the Operator/Fleet Management Software
-- map: autoware_lanelet_msgs::MapBin <br> This is binary data of map from Map stack. This should include geometry information of each lanes to match input start/goal pose to corresponding lane, and lane connection information to calculate sequence of lanes to reach goal lane.
+- map: autoware_lanelet_msgs::MapBin <br> This is binary data of map from Map stack. This should include geometry information of each lane to match input start/goal pose to corresponding lane, and lane connection information to calculate sequence of lanes to reach goal lane.
 
 ### Output
 
@@ -130,7 +130,7 @@ route: `autoware_planning_msgs::Route` <br> Message type is described below. Rou
 ### Role
 
 The role of scenario selector is to select appropriate scenario planner depending on situation. For example, if current pose is within road, then scenario selector should choose on-road planner, and if vehicle is within parking lot, then scenario selector should choose parking scenario.
-Note that all trajectory calculated by each scenario module passes is collected by scenario selector, and scenario selector chooses which trajectory to be passed down to Control module. This ensures that trajectory from unselected scenario is not passed down to Control when scenario is changed even if there is a delay when scenario planner recieves notification that it is unselected by the scenario selector. 
+Note that all trajectory calculated by each scenario module passes is collected by scenario selector, and scenario selector chooses which trajectory to be passed down to Control module. This ensures that trajectory from unselected scenario is not passed down to Control when scenario is changed even if there is a delay when scenario planner receives notification that it is unselected by the scenario selector. 
 
 ### Input
 

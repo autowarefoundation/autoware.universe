@@ -4,13 +4,13 @@ Behavior velocity planner is responsible for modifying velocity so that ego vehi
 
 ## Inputs
 topic name:  "path_with_lane_id"
-type: autoware_palnning_msgs::PathWithLaneId
+type: autoware_planning_msgs::PathWithLaneId
 frequency: 10Hz
 
 ## Outputs
 Behavior velocity planner should output path with velocity profile using following message type.
 topic name:  "path"
-type: autoware_palnning_msgs::Path
+type: autoware_planning_msgs::Path
 frequency: 10Hz
 
 ## Use Cases
@@ -30,7 +30,7 @@ Again, traffic rules might be different depending on country, and the requiremen
    * Ego vehicle must stop if a pedestrian is within stop area shown in the image.
    * Ego vehicle must stop if a pedestrian is expected to enter the stop area. (e.g. within 3 seconds)
    * Ego vehicle must slow down (e.g. to 5km/h) when there is a pedestrian in the deceleration area shown in the image.
-  **raitonale:** We don't want to make vehicle keep waiting for pedestrian to pass crosswalk completely. We want vehicle to start driving when pedestrian walks past the car.
+  **rationale:** We don't want to make vehicle keep waiting for pedestrian to pass crosswalk completely. We want vehicle to start driving when pedestrian walks past the car.
 
 ![Crosswalk](/design/img/Crosswalk.png)
 
@@ -56,7 +56,7 @@ The example node diagram of the behavior velocity planner is shown as the diagra
 ![BehaviorVelocityPlanner](/design/img/BehaviorVelocityPlanner.svg)
 
 The node consist of two steps.
-1. **Module Instance Update** From the given path, the planner will look up the HD Map to see if there are upcomming traffic rule features in the map. For each detected traffic rule features, respective scene module instance will be generated. Also, scene module instances from past features will be deleted. 
+1. **Module Instance Update** From the given path, the planner will look up the HD Map to see if there are upcoming traffic rule features in the map. For each detected traffic rule features, respective scene module instance will be generated. Also, scene module instances from past features will be deleted. 
 
 2. **Velocity Update** Actual modification of the velocity profile of the path happens in this step. Path message will be passed to each traffic rule scene modules, and each module will update velocity according to its traffic rule. Minimum value of all scene modules will become the final velocity profile.
 

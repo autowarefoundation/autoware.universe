@@ -1,7 +1,7 @@
 Detection
 =====
 ## Use Cases and Requirements
-Prediction in Object Recognition is required for usecases involved with obstacles:
+Prediction in Object Recognition is required for use cases involved with obstacles:
 * Changing lane
 * Turning at intersection
 * Stopping at a crosswalk when pedestrians are walking
@@ -25,7 +25,7 @@ Prediction in Object Recognition estimate objects' intention. Intentions are rep
 
 ## Output
 
-| Output       | Data Type| Output Componenet | TF Frame | Topic|
+| Output       | Data Type| Output Component | TF Frame | Topic|
 |----|-|-|-|-|
 |Dynamic Objects|`autoware_perception_msgs::DynamicObjectArray`|Planning| `map`|/perception/object_recognition/objects|
 
@@ -42,4 +42,4 @@ Designated objects' property in autoware_perception_msgs::DynamicObject needs to
 
 | Property  | Definition |Data Type                                 | Parent Data Type|
 |-------------|--|-------------------------------------------|----|
-| predicted_path      | Predicted furuter paths for an object.|`autoware_perception_msgs::PredictedPath[]	`|`autoware_perception_msgs::State` |
+| predicted_path      | Predicted future paths for an object.|`autoware_perception_msgs::PredictedPath[]	`|`autoware_perception_msgs::State` |

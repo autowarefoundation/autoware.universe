@@ -2,7 +2,7 @@
 
 # Overview
 
-For following target trajectory, control stack needs to output lateral control commands (steering angle, steering angle velocty), and logitudinal control commands (acceleration, velocity). Lateral controller module is responsible for calculation of lateral control commands.
+For following target trajectory, control stack needs to output lateral control commands (steering angle, steering angle velocity), and longitudinal control commands (acceleration, velocity). Lateral controller module is responsible for calculation of lateral control commands.
 
 ## Role
 

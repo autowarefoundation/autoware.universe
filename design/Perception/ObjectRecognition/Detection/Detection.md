@@ -1,7 +1,7 @@
 Detection
 =====
 ## Use Cases and Requirements
-Detection in Object Recognition is required for usecases involved with obstacles:
+Detection in Object Recognition is required for use cases involved with obstacles:
 * Changing lane
 * Turning at intersection
 * Avoiding parked vehicles

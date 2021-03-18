@@ -1,7 +1,7 @@
 Classification
 =====
 ## Use Cases and Requirements
-Classification in Traffic Light Recognition is required for usecases involved with traffic light:
+Classification in Traffic Light Recognition is required for use cases involved with traffic light:
 * Passing the intersection when traffic light is green
 * Stopping at the intersection when traffic signal is red
 

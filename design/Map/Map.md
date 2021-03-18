@@ -10,11 +10,11 @@ Map is responsible for distributing static information about the environment tha
 ## Use Cases
 
 ### Pointcloud Map
-Uses cases of the maps are the following:
-* Localization: Autoware must always be aware of its position in Earth frame. Poincloud map is used for local localization with LiDAR based localization algorithm such as NDT matching.
+Use cases of the maps are the following:
+* Localization: Autoware must always be aware of its position in Earth frame. Pointcloud map is used for local localization with LiDAR based localization algorithm such as NDT matching.
 
 ### Vector Map
-Vector map provides sematinc information about roads and is used for various uses cases in both Planning and Perception. Note that some of the following use cases might be removed as performance of perception improves. For example, retrieving lane shapes and detecting traffic lights can be done online e.g. using camera images. However, with consideration of [spoofing attacks](https://www.nassiben.com/mobilbye) and reliablilty of current Perception stack, following uses cases must be supported by vector map for now.
+Vector map provides semantic information about roads and is used for various uses cases in both Planning and Perception. Note that some of the following use cases might be removed as performance of perception improves. For example, retrieving lane shapes and detecting traffic lights can be done online e.g. using camera images. However, with consideration of [spoofing attacks](https://www.nassiben.com/mobilbye) and reliability of current Perception stack, following uses cases must be supported by vector map for now.
 
 * Planning:
   * Calculating route from start to goal
@@ -29,15 +29,15 @@ Vector map provides sematinc information about roads and is used for various use
 The role of map is to publish map information to other stacks. In order to satisfy use cases above, the following requirements must be met.
 
 ### PointCloud map 
-  * The map should provide goemetric information of surrounding environment that includes any region 200m away from any possible route that the vehicle might take.
+  * The map should provide geometric information of surrounding environment that includes any region 200m away from any possible route that the vehicle might take.
   * Resolution of pointcloud map must be at least 0.2m. (from past experience)
-  * Size of the map should be less than 1GB in binary format. (Limit of ROS messsage)
+  * Size of the map should be less than 1GB in binary format. (Limit of ROS message)
   * Pointcloud must be georeferenced.
 
 ### Vector Map
   * The map should be georeferenced.
   * The map should include region within 200m away from any possible route that autonomous vehicle might drive with following information:
-    * Routing: the map should be able to retrieve next lane, previous lane, right lane, and left lane of a lane with availablility of lane change.
+    * Routing: the map should be able to retrieve next lane, previous lane, right lane, and left lane of a lane with availability of lane change.
     * Geometry: shape and position of following objects must be provided:
       * lanes
       * traffic lights

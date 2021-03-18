@@ -2,7 +2,7 @@ Pose Estimator
 ==============
 
 ### Role
-Pose estimator is a component to estimate ego vehicle pose which includes position and orientation. The final output should also include covariance, which represesents the estimator's confidence on estimated pose. A pose estimator could either be estimate pose on local map, or it can estimate absolute pose using global localizer. The output pose can be publihsed in any frame as long as /tf is provided to project into the "map" frame. Also, pose estimator should stop publishing pose if it is possible to calculate reliability of estimated pose(e.g. matching score with map) and the reliability is low.
+Pose estimator is a component to estimate ego vehicle pose which includes position and orientation. The final output should also include covariance, which represents the estimator's confidence on estimated pose. A pose estimator could either be estimate pose on local map, or it can estimate absolute pose using global localizer. The output pose can be published in any frame as long as /tf is provided to project into the "map" frame. Also, pose estimator should stop publishing pose if it is possible to calculate reliability of estimated pose(e.g. matching score with map) and the reliability is low.
 
 ## Input
 
@@ -25,7 +25,7 @@ Pose estimator is a component to estimate ego vehicle pose which includes positi
 This is a sample design of our implementation using NDT Scan Matcher. 
 ![Pose_Estimator](/design/img/PoseEstimator.svg)
 
-We integrated 3D NDT registration method for sample pose estimation algorithm. The NDT registration method is an local localization method that requires a good intial guess before optimizing pose. In order to realize fully automatic localization, GNSS is used for first initialization. After first loop of pose estimation, the output of pose twist fusion filter is used as next initial guess of NDT registration.
+We integrated 3D NDT registration method for sample pose estimation algorithm. The NDT registration method is a local localization method that requires a good initial guess before optimizing pose. In order to realize fully automatic localization, GNSS is used for first initialization. After first loop of pose estimation, the output of pose twist fusion filter is used as next initial guess of NDT registration.
 
 Note that NDT scan matcher does not publish pose when matching score calculated in alignment is less than threshold value to avoid publishing wrong estimated pose to Pose Twist Fusion Filter.
 

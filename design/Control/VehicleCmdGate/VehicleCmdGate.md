@@ -9,7 +9,7 @@ Vehicle Cmd Gate module is responsible for Systematic post-processing.
 Roles of Vehicle Cmd Gate module are as follows.
 
 - Reshape the vehicle control command
-  - Vehicle Cmd Gate module convert `autoware_control_msgs/ControlCommandStamped` to `autoware_vehicle_msgs/VehicleCommand`. This conversion includes the addtion of gear shifting command.
+  - Vehicle Cmd Gate module convert `autoware_control_msgs/ControlCommandStamped` to `autoware_vehicle_msgs/VehicleCommand`. This conversion includes the addition of gear shifting command.
 - Reflect engage command to control signal for vehicles
   - Until true command is sent as engage command, Vehicle Cmd Gate module does not pass the input command information as output.
 - Select the command values (Trajectory follow command, Remote manual command)
@@ -46,4 +46,4 @@ The main inputs included in `autoware_vehicle_msgs/VehicleCommand` are as follow
 | Gear shifting command   | std_msgs/Int32   |
 | Emergency command       | std_msgs/Int32   |
 
-Note that most of above commands are ouput as 0 until true command is sent as engage command.
+Note that most of above commands are output as 0 until true command is sent as engage command.

@@ -7,7 +7,7 @@ Input : topic "route" with type autoware_planning_msgs::Route
 
 ## Outputs
 topic name:  "path_with_lane_id"
-type: autoware_palnning_msgs::PathWithLaneId
+type: autoware_planning_msgs::PathWithLaneId
 frequency: 10Hz
 
 ## Assumptions

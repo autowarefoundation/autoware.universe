@@ -1,5 +1,5 @@
 # Parking Scenario
-This scenario is meant to be used to plan manuevers to park vehicle in parking space. Compared to LaneDrivingScenario, this scenario has relative less constraints about the shape of trajectory.
+This scenario is meant to be used to plan maneuvers to park vehicle in parking space. Compared to LaneDrivingScenario, this scenario has relative fewer constraints about the shape of trajectory.
 
 ## Requirements:
 Lane Driving Scenario must satisfy the following use cases:
@@ -28,7 +28,7 @@ This gives spacial constraints to freespace planner.
 - Scenario: `autoware_planning_msgs::Scenario` <br> This is the message from scenario selector. All modules only run when Parking scenario is selected by this topic.
 
 #### Output
-* Costmap: `nav_msgs::OccupancyGrid.msg`<br> This contains spaces that can be used for trajectory planning. The grid is considered not passable(occupied) if it is outside of parking lot polygon specified map, and percepted objects lie on the grid.
+* Costmap: `nav_msgs::OccupancyGrid.msg`<br> This contains spaces that can be used for trajectory planning. The grid is considered not passable(occupied) if it is outside of parking lot polygon specified map, and perceived objects lie on the grid.
 
 ### Freespace Planner
 Freespace planner calculates trajectory that navigates vehicle to goal pose given by route. It must consider vehicle's kinematic model.

@@ -77,9 +77,9 @@ The input to Vehicle stack:
 
 The detailed contents in Vehicle Command are as follows.
 
-| Input                  | Data Type        | Explanation                            |
+| Input                   | Data Type        | Explanation                            |
 | ----------------------- | ---------------- | -----------                            |
-| Velocity                | std_msgs/Float64 | Target veocity [m/s]                   |
+| Velocity                | std_msgs/Float64 | Target velocity [m/s]                  |
 | Acceleration            | std_msgs/Float64 | Target acceleration [m/s2]             |
 | Steering angle          | std_msgs/Float64 | Target steering angle [rad]            |
 | Steering angle velocity | std_msgs/Float64 | Target steering angle velocity [rad/s] |

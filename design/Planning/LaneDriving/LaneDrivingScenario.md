@@ -46,11 +46,11 @@ It is decomposed into:
 
 
 ### MotionPlanner
-Motion planner is resposible for following functions:
+Motion planner is responsible for following functions:
 * Optimize the shape of trajectory with given lateral acceleration and jerk limit
   * Motion planner should not manipulate position of trajectory points from behavior planner outside given drivable area
-* Optimize the velocity of trajectory with given acceleraiton and jerk limit
-  * Motion planner is only allowed to decrease the speed profile given from behavior planner since all traffic rules(such as speedlimits) are considered in behavior planner. 
+* Optimize the velocity of trajectory with given acceleration and jerk limit
+  * Motion planner is only allowed to decrease the speed profile given from behavior planner since all traffic rules(such as speed limits) are considered in behavior planner. 
 * Interpolate trajectory points with enough resolution for Control
 
 #### Input

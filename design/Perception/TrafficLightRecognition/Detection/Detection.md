@@ -2,7 +2,7 @@ Detection
 =====
 
 ## Use Cases and Requirements
-Detection in Traffic Light Recognition is required for usecases involved with traffic light:
+Detection in Traffic Light Recognition is required for use cases involved with traffic light:
 * Passing intersection when traffic signal is green
 * Stopping at intersection when traffic signal is red
 
