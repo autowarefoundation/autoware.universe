@@ -62,7 +62,7 @@ private:
   geometry_msgs::msg::PoseStamped::ConstSharedPtr current_pose_;
   geometry_msgs::msg::TwistStamped::ConstSharedPtr current_twist_;
   lanelet::LaneletMapPtr lanelet_map_;
-  lanelet::traffic_rules::TrafficRulesPtr traffif_rules_;
+  lanelet::traffic_rules::TrafficRulesPtr traffic_rules_;
   lanelet::routing::RoutingGraphPtr routing_graph_;
   autoware_planning_msgs::msg::Route::ConstSharedPtr route_;
   autoware_planning_msgs::msg::Route::ConstSharedPtr last_route_;

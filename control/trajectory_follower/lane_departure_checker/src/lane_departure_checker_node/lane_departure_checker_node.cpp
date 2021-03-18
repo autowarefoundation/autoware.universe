@@ -57,11 +57,11 @@ lanelet::ConstLanelets getRouteLanelets(
 
   // Add preceding lanes of front route_section to prevent detection errors
   {
-    const auto extention_length = 2 * vehicle_length;
+    const auto extension_length = 2 * vehicle_length;
 
     for (const auto & lane_id : route_sections.front().lane_ids) {
       for (const auto & lanelet_sequence : lanelet::utils::query::getPrecedingLaneletSequences(
-          routing_graph, lanelet_map.laneletLayer.get(lane_id), extention_length))
+          routing_graph, lanelet_map.laneletLayer.get(lane_id), extension_length))
       {
         for (const auto & preceding_lanelet : lanelet_sequence) {
           route_lanelets.push_back(preceding_lanelet);
@@ -78,11 +78,11 @@ lanelet::ConstLanelets getRouteLanelets(
 
   // Add succeeding lanes of last route_section to prevent detection errors
   {
-    const auto extention_length = 2 * vehicle_length;
+    const auto extension_length = 2 * vehicle_length;
 
     for (const auto & lane_id : route_sections.back().lane_ids) {
       for (const auto & lanelet_sequence : lanelet::utils::query::getSucceedingLaneletSequences(
-          routing_graph, lanelet_map.laneletLayer.get(lane_id), extention_length))
+          routing_graph, lanelet_map.laneletLayer.get(lane_id), extension_length))
       {
         for (const auto & succeeding_lanelet : lanelet_sequence) {
           route_lanelets.push_back(succeeding_lanelet);
@@ -210,7 +210,7 @@ void LaneDepartureCheckerNode::onLaneletMapBin(
   const autoware_lanelet2_msgs::msg::MapBin::ConstSharedPtr msg)
 {
   lanelet_map_ = std::make_shared<lanelet::LaneletMap>();
-  lanelet::utils::conversion::fromBinMsg(*msg, lanelet_map_, &traffif_rules_, &routing_graph_);
+  lanelet::utils::conversion::fromBinMsg(*msg, lanelet_map_, &traffic_rules_, &routing_graph_);
 }
 
 void LaneDepartureCheckerNode::onRoute(const autoware_planning_msgs::msg::Route::ConstSharedPtr msg)
@@ -354,7 +354,7 @@ rcl_interfaces::msg::SetParametersResult LaneDepartureCheckerNode::onParameter(
 
   try {
     // Node
-    update_param(parameters, "vizualize_lanelet", node_param_.visualize_lanelet);
+    update_param(parameters, "visualize_lanelet", node_param_.visualize_lanelet);
 
     // Core
     update_param(parameters, "footprint_margin", param_.footprint_margin);
