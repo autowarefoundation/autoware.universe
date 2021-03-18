@@ -139,8 +139,8 @@ struct Rectangle
 
 std::vector<std::vector<int>> getHistogramTable(const std::vector<std::vector<int>> & input);
 
-Rectangle getLargestRectancleInRow(
-  const std::vector<int> & histo, const int curret_row, const int row_size);
+Rectangle getLargestRectangleInRow(
+  const std::vector<int> & histo, const int current_row, const int row_size);
 
 Rectangle getLargestRectangle(const std::vector<std::vector<int>> & input);
 
@@ -162,7 +162,7 @@ struct Footprint
 };
 
 std::vector<Footprint> getVehicleFootprints(
-  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & optimzied_points,
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & optimized_points,
   const VehicleParam & vehicle_param);
 
 std::vector<double> calcEuclidDist(const std::vector<double> & x, const std::vector<double> & y);

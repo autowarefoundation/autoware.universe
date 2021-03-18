@@ -703,8 +703,8 @@ struct HistogramBin
   int original_pos;
 };
 
-Rectangle getLargestRectancleInRow(
-  const std::vector<int> & histo, const int curret_row, const int row_size)
+Rectangle getLargestRectangleInRow(
+  const std::vector<int> & histo, const int current_row, const int row_size)
 {
   std::vector<int> search_histo = histo;
   search_histo.push_back(0);
@@ -729,8 +729,8 @@ Rectangle getLargestRectancleInRow(
           if (area > largest_rect.area) {
             largest_rect.max_y_idx = tmp_bin.variable_pos;
             largest_rect.min_y_idx = i - 1;
-            largest_rect.max_x_idx = curret_row - tmp_bin.height + 1;
-            largest_rect.min_x_idx = curret_row;
+            largest_rect.max_x_idx = current_row - tmp_bin.height + 1;
+            largest_rect.min_x_idx = current_row;
             largest_rect.area = area;
           }
 
@@ -749,7 +749,7 @@ Rectangle getLargestRectangle(const std::vector<std::vector<int>> & input)
   std::vector<std::vector<int>> histogram_table = getHistogramTable(input);
   Rectangle largest_rectangle;
   for (int i = 0; i < histogram_table.size(); i++) {
-    Rectangle rect = getLargestRectancleInRow(histogram_table[i], i, input.size());
+    Rectangle rect = getLargestRectangleInRow(histogram_table[i], i, input.size());
     if (rect.area > largest_rectangle.area) {
       largest_rectangle = rect;
     }
@@ -795,7 +795,7 @@ boost::optional<autoware_planning_msgs::msg::TrajectoryPoint> getLastExtendedTra
 }
 
 std::vector<Footprint> getVehicleFootprints(
-  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & optimzied_points,
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & optimized_points,
   const VehicleParam & vehicle_param)
 {
   const double baselink_to_top = vehicle_param.length - vehicle_param.rear_overhang;
@@ -803,18 +803,18 @@ std::vector<Footprint> getVehicleFootprints(
   std::vector<double> rel_lon_offset{baselink_to_top, baselink_to_top, 0, 0};
   std::vector<double> rel_lat_offset{half_width, -half_width, -half_width, half_width};
   std::vector<Footprint> rects;
-  for (int i = 0; i < optimzied_points.size(); i++) {
-    // for (int i = nearest_idx; i < optimzied_points.size(); i++) {
+  for (int i = 0; i < optimized_points.size(); i++) {
+    // for (int i = nearest_idx; i < optimized_points.size(); i++) {
     std::vector<geometry_msgs::msg::Point> abs_points;
     for (int j = 0; j < rel_lon_offset.size(); j++) {
       geometry_msgs::msg::Point rel_point;
       rel_point.x = rel_lon_offset[j];
       rel_point.y = rel_lat_offset[j];
       abs_points.push_back(
-        util::transformToAbsoluteCoordinate2D(rel_point, optimzied_points[i].pose));
+        util::transformToAbsoluteCoordinate2D(rel_point, optimized_points[i].pose));
     }
     Footprint rect;
-    rect.p = optimzied_points[i].pose.position;
+    rect.p = optimized_points[i].pose.position;
     rect.top_left = abs_points[0];
     rect.top_right = abs_points[1];
     rect.bottom_right = abs_points[2];

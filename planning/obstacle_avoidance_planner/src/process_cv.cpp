@@ -321,7 +321,7 @@ std::vector<cv::Point> getExtendedCVPolygon(
       for (int i = edges.back_idx + 1; i < edges.front_idx; i++) {
         cv_polygon.push_back(cv::Point(points_in_image[i].x, points_in_image[i].y));
       }
-      // back_idx -> vector_front -> vecotr_back -> nearest_idx -> frond_idx
+      // back_idx -> vector_front -> vector_back -> nearest_idx -> frond_idx
     } else if (edges.back_idx < edges.front_idx && nearest_polygon_idx > edges.front_idx) {
       for (int i = edges.back_idx - 1; i >= 0; i--) {
         cv_polygon.push_back(cv::Point(points_in_image[i].x, points_in_image[i].y));

@@ -627,8 +627,8 @@ std::vector<Bounds> MPTOptimizer::getReferenceBounds(
   DebugData * debug_data) const
 {
   std::vector<Bounds> ref_bounds;
-  std::vector<geometry_msgs::msg::Pose> debug_bounds_candidata_for_base_points;
-  std::vector<geometry_msgs::msg::Pose> debug_bounds_candidata_for_top_points;
+  std::vector<geometry_msgs::msg::Pose> debug_bounds_candidate_for_base_points;
+  std::vector<geometry_msgs::msg::Pose> debug_bounds_candidate_for_top_points;
   std::vector<geometry_msgs::msg::Pose> debug_bounds_candidate_for_mid_points;
   int cnt = 0;
   for (const auto & point : ref_points) {
@@ -647,12 +647,12 @@ std::vector<Bounds> MPTOptimizer::getReferenceBounds(
     geometry_msgs::msg::Pose debug_for_base_point;
     debug_for_base_point.position = ref_base_point.p;
     debug_for_base_point.orientation = point.q;
-    debug_bounds_candidata_for_base_points.push_back(debug_for_base_point);
+    debug_bounds_candidate_for_base_points.push_back(debug_for_base_point);
 
     geometry_msgs::msg::Pose debug_for_top_point;
     debug_for_top_point.position = ref_top_point.p;
     debug_for_top_point.orientation = point.top_pose.orientation;
-    debug_bounds_candidata_for_top_points.push_back(debug_for_top_point);
+    debug_bounds_candidate_for_top_points.push_back(debug_for_top_point);
 
     geometry_msgs::msg::Pose debug_for_mid_point;
     debug_for_mid_point.position = ref_mid_point.p;
@@ -699,8 +699,8 @@ std::vector<Bounds> MPTOptimizer::getReferenceBounds(
     cnt++;
   }
   debug_data->bounds = ref_bounds;
-  debug_data->bounds_candidate_for_base_points = debug_bounds_candidata_for_base_points;
-  debug_data->bounds_candidate_for_top_points = debug_bounds_candidata_for_top_points;
+  debug_data->bounds_candidate_for_base_points = debug_bounds_candidate_for_base_points;
+  debug_data->bounds_candidate_for_top_points = debug_bounds_candidate_for_top_points;
   debug_data->bounds_candidate_for_mid_points = debug_bounds_candidate_for_mid_points;
   return ref_bounds;
 }

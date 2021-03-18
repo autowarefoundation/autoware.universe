@@ -147,7 +147,7 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner()
     declare_parameter("is_getting_constraints_close2path_points", false);
   constrain_param_->clearance_for_straight_line =
     declare_parameter("clearance_for_straight_line", 0.05);
-  constrain_param_->clearance_for_joint = declare_parameter("clearance_for_joint", 3.2);
+  constrain_param_->clearance_for_joint = declare_parameter("clearance_for_joint", 0.1);
   constrain_param_->range_for_extend_joint = declare_parameter("range_for_extend_joint", 1.6);
   constrain_param_->clearance_for_only_smoothing =
     declare_parameter("clearance_for_only_smoothing", 0.1);
@@ -161,10 +161,10 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner()
     declare_parameter("min_object_clearance_for_joint", 3.2);
   constrain_param_->max_x_constrain_search_range =
     declare_parameter("max_x_constrain_search_range", 0.4);
-  constrain_param_->coef_x_cosntrain_search_resolution =
-    declare_parameter("coef_x_cosntrain_search_resolution", 1.0);
-  constrain_param_->coef_y_cosntrain_search_resolution =
-    declare_parameter("coef_y_cosntrain_search_resolution", 0.5);
+  constrain_param_->coef_x_constrain_search_resolution =
+    declare_parameter("coef_x_constrain_search_resolution", 1.0);
+  constrain_param_->coef_y_constrain_search_resolution =
+    declare_parameter("coef_y_constrain_search_resolution", 0.5);
   constrain_param_->keep_space_shape_x = declare_parameter("keep_space_shape_x", 3.0);
   constrain_param_->keep_space_shape_y = declare_parameter("keep_space_shape_y", 2.0);
   constrain_param_->max_lon_space_for_driveable_constraint =
@@ -174,7 +174,7 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner()
   min_delta_dist_for_replan_ = declare_parameter("min_delta_dist_for_replan", 5.0);
   min_delta_time_sec_for_replan_ = declare_parameter("min_delta_time_sec_for_replan", 1.0);
   distance_for_path_shape_change_detection_ =
-    declare_parameter("distance_for_path_shape_chagne_detection", 2.0);
+    declare_parameter("distance_for_path_shape_change_detection", 2.0);
 
   if (is_using_vehicle_config_) {
     double vehicle_width = 1.5;
@@ -472,7 +472,7 @@ bool ObstacleAvoidancePlanner::needReplan(
   }
 
   if (isPathShapeChanged(ego_pose, path_points, prev_path_points)) {
-    RCLCPP_INFO(get_logger(), "[Avoidance] Path shanpe is changed, reset prev trajs");
+    RCLCPP_INFO(get_logger(), "[Avoidance] Path shape is changed, reset prev trajs");
     prev_trajs = nullptr;
     return true;
   }
@@ -481,7 +481,7 @@ bool ObstacleAvoidancePlanner::needReplan(
       *current_ego_pose_ptr_, *prev_trajectories_ptr_, *traj_param_))
   {
     RCLCPP_INFO(
-      get_logger(), "[Avoidnace] Could not find valid nearest point from ego, reset prev trajs");
+      get_logger(), "[Avoidance] Could not find valid nearest point from ego, reset prev trajs");
     prev_trajs = nullptr;
     return true;
   }
@@ -603,7 +603,7 @@ void ObstacleAvoidancePlanner::publishingDebugData(
   is_avoidance_possible_pub_->publish(is_avoidance_possible);
 
   std::vector<autoware_planning_msgs::msg::TrajectoryPoint> traj_points_debug = traj_points;
-  // Add z infomation for virtual wall
+  // Add z information for virtual wall
   if (!traj_points_debug.empty()) {
     const int idx = util::getNearestIdx(
       path.points, traj_points.back().pose, 0, traj_param_->delta_yaw_threshold_for_closest_point);

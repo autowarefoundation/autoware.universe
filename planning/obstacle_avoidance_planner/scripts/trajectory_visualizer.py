@@ -28,7 +28,7 @@
 # def quaternion_to_euler(quaternion):
 #     """Convert Quaternion to Euler Angles
 
-#     quarternion: geometry_msgs/Quaternion
+#     quaternion: geometry_msgs/Quaternion
 #     euler: geometry_msgs/Vector3
 #     """
 #     e = tf.transformations.euler_from_quaternion(

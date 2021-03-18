@@ -24,7 +24,7 @@
  * e      : lateral error
  * th     : heading angle error
  * steer  : steering angle
- * steer_d: desired steering agle (input)
+ * steer_d: desired steering angle (input)
  * v      : velocity
  * W      : wheelbase length
  * tau    : time constant for steering dynamics
