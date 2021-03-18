@@ -12,14 +12,14 @@
     extra_desired_clearance_from_road: 0.0 # extra desired clearance from road
 
     # clearance for unique points
-    clearance_for_straight_line_: 0.05 # minimum optimizing range around straight points
-    clearance_for_joint_: 0.1 # minimum optimizing range around joint points
+    clearance_for_straight_line: 0.05 # minimum optimizing range around straight points
+    clearance_for_joint: 0.1 # minimum optimizing range around joint points
     clearance_for_only_smoothing: 0.1 # minimum optimizing range when applygin only smoothing
     range_for_extend_joint: 0.1 # minimum optimizing range around joint points for extending
     clearance_from_object_for_straight: 10.0 # minimum clearance from object when judging straight line
 
     # avoiding param
-    max_avoiding_objects_velocity_ms: .5 # maximum velocity for avoiding objects[m/s]
+    max_avoiding_objects_velocity_ms: 0.5 # maximum velocity for avoiding objects[m/s]
     max_avoiding_ego_velocity_ms: 6.0 # maximum ego velocity when avoiding objects[m/s]
     center_line_width: 1.7 # replaced with /vehicle_info/vehicle_width when is_using_vehicle_config is true, center line width around path points used for judging that object is required to avoid or not
     acceleration_for_non_deceleration_range: 1.0 # assumed acceleration for calculating non deceleration range
@@ -36,8 +36,8 @@
     # constrain space
     is_getting_constraints_close2path_points: true # generate trajectory closer to path points
     max_x_constrain_search_range: 0.0 # maximum x search range in local coordinate
-    coef_x_cosntrain_search_resolution: 1.0 # coef for fine sampling when exploring x direction
-    coef_y_cosntrain_search_resolution: 0.5 # coef for fine sampling when exploring y direction
+    coef_x_constrain_search_resolution: 1.0 # coef for fine sampling when exploring x direction
+    coef_y_constrain_search_resolution: 0.5 # coef for fine sampling when exploring y direction
     keep_space_shape_x: 0.2 # keep space for x direction from base_link[m]
     keep_space_shape_y: 0.1 # replaced with /vehicle_info/vehicle_width when is_using_vehicle_config is true, keep space for y direction from base_link[m]
     max_lon_space_for_driveable_constraint: 0.5 # maximum lon(x) space when optimizing point[m]
@@ -87,4 +87,4 @@
     min_delta_dist_for_replan: 10.0 # minimum delta dist thres for replan[m]
     min_delta_time_sec_for_replan: 1.0 # minimum delta time for replan[second]
     max_dist_for_extending_end_point: 5.0 # minimum delta dist thres for extending last point[m]
-    distance_for_path_shape_chagne_detection: 2.0 # minimum delta dist thres for detecting path shape change
+    distance_for_path_shape_change_detection: 2.0 # minimum delta dist thres for detecting path shape change
