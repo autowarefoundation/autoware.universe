@@ -7,7 +7,7 @@
 
     <!-- Relay -->
     <node pkg="topic_tools" exec="relay" name="twist_relay" output="log" >
-      <param name="input_topic" value="sensing/lidar/front_center/livox/imu" />
+      <param name="input_topic" value="/sensing/lidar/front_center/livox/imu" />
       <param name="output_topic" value="/sensing/imu/imu_data" />
       <param name="type" value="sensor_msgs/msg/Imu" />
     </node>
