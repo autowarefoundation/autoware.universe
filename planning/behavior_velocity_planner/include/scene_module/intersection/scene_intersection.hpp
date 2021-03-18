@@ -104,7 +104,7 @@ public:
     double intersection_velocity;  //! used for intersection passing time
     double intersection_max_acc;   //! used for calculating intersection velocity
     double detection_area_length;  //! used to create detection area polygon
-    double external_input_timeout;  //! used to disenable external input
+    double external_input_timeout;  //! used to disable external input
   };
 
   IntersectionModule(
@@ -206,7 +206,7 @@ private:
     const autoware_perception_msgs::msg::DynamicObject & object) const;
 
   /**
-   * @brief check if the object has a terget type for stuck check
+   * @brief check if the object has a target type for stuck check
    * @param object target object
    * @return true if the object has a target type
    */
