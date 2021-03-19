@@ -43,7 +43,7 @@ void NaivePathPredictionNode::callback(
     for (double dt = 0.0; dt < 3.0 + ep; dt += 0.5) {
       geometry_msgs::msg::PoseWithCovarianceStamped pose_cov_stamped;
       pose_cov_stamped.header = output_msg.header;
-      rclcpp::Duration delta_t_ = rclcpp::Duration(dt);
+      rclcpp::Duration delta_t_ = rclcpp::Duration::from_seconds(dt);
       pose_cov_stamped.header.stamp.sec = output_msg.header.stamp.sec + delta_t_.seconds();
       pose_cov_stamped.header.stamp.nanosec = output_msg.header.stamp.nanosec + delta_t_.nanoseconds();
       geometry_msgs::msg::Pose object_frame_pose;
