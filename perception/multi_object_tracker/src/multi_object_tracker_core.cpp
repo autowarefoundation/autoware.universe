@@ -189,7 +189,7 @@ bool MultiObjectTracker::transformDynamicObjects(
       geometry_msgs::msg::TransformStamped ros_target2objets_world;
       ros_target2objets_world = tf_buffer_.lookupTransform(
         /*target*/ target_frame_id, /*src*/ input_msg.header.frame_id, input_msg.header.stamp,
-        rclcpp::Duration(0.5));
+        rclcpp::Duration::from_seconds(0.5));
       tf2::fromMsg(ros_target2objets_world.transform, tf_target2objets_world);
     } catch (tf2::TransformException & ex) {
       RCLCPP_WARN(this->get_logger(), "%s", ex.what());
