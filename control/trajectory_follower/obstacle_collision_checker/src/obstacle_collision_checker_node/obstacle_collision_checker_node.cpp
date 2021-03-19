@@ -197,7 +197,7 @@ void ObstacleCollisionCheckerNode::onTimer()
   if (obstacle_pointcloud_) {
     const auto & header = obstacle_pointcloud_->header;
     obstacle_transform_ = transform_listener_->getTransform(
-      "map", header.frame_id, header.stamp, rclcpp::Duration(0.01));
+      "map", header.frame_id, header.stamp, rclcpp::Duration::from_seconds(0.01));
   }
 
   if (!isDataReady()) {
