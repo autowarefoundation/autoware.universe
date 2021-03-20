@@ -76,11 +76,9 @@ QImage ScopedPixelBuffer::getQImage(OverlayObject & overlay, QColor & bg_color)
   return getQImage(overlay.getTextureWidth(), overlay.getTextureHeight(), bg_color);
 }
 
-OverlayObject::OverlayObject(
-  Ogre::SceneManager * manager, rclcpp::Logger logger, const std::string & name)
-: name_(name), logger_(logger)
+OverlayObject::OverlayObject(const std::string & name)
+: name_(name)
 {
-  rviz_rendering::RenderSystem::get()->prepareOverlays(manager);
   std::string material_name = name_ + "Material";
   Ogre::OverlayManager * mOverlayMgr = Ogre::OverlayManager::getSingletonPtr();
   overlay_ = mOverlayMgr->create(name_);
@@ -127,11 +125,15 @@ void OverlayObject::updateTextureSize(unsigned int width, unsigned int height)
 {
   const std::string texture_name = name_ + "Texture";
   if (width == 0) {
-    RCLCPP_WARN(logger_, "width=0 is specified as texture size");
+    RCLCPP_WARN(
+      rclcpp::get_logger("OverlayObject"),
+      "width=0 is specified as texture size");
     width = 1;
   }
   if (height == 0) {
-    RCLCPP_WARN(logger_, "height=0 is specified as texture size");
+    RCLCPP_WARN(
+      rclcpp::get_logger("OverlayObject"),
+      "height=0 is specified as texture size");
     height = 1;
   }
   if (!isTextureReady() || ((width != texture_->getWidth()) || (height != texture_->getHeight()))) {

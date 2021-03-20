@@ -86,8 +86,7 @@ VelocityHistoryDisplay::~VelocityHistoryDisplay()
 
 void VelocityHistoryDisplay::onInitialize()
 {
-  MFDClass::onInitialize();
-  rviz_ros_node_ = context_->getRosNodeAbstraction();
+  RTDClass::onInitialize();
 
   velocity_manual_object_ = scene_manager_->createManualObject();
   velocity_manual_object_->setDynamic(true);
@@ -96,7 +95,7 @@ void VelocityHistoryDisplay::onInitialize()
 
 void VelocityHistoryDisplay::reset()
 {
-  MFDClass::reset();
+  RTDClass::reset();
   velocity_manual_object_->clear();
 }
 
@@ -123,11 +122,10 @@ void VelocityHistoryDisplay::processMessage(
   std_msgs::msg::Header header;
   header = msg_ptr->header;
   header.frame_id = "base_link";
-
   if (!context_->getFrameManager()->getTransform(header, position, orientation)) {
-    auto logger = rviz_ros_node_.lock()->get_raw_node()->get_logger();
     RCLCPP_DEBUG(
-      logger, "Error transforming from frame '%s' to frame '%s'", header.frame_id.c_str(),
+      rclcpp::get_logger("VelocityHistoryDisplay"),
+      "Error transforming from frame '%s' to frame '%s'", header.frame_id.c_str(),
       qPrintable(fixed_frame_));
   }
 
