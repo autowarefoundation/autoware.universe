@@ -25,6 +25,7 @@
 
   <!-- traffic light recognition -->
   <exec_depend>image_transport</exec_depend>
+  <exec_depend>image_transport_plugins</exec_depend>
   <exec_depend>traffic_light_map_based_detector</exec_depend>
   <exec_depend>traffic_light_ssd_fine_detector</exec_depend>
   <exec_depend>traffic_light_classifier</exec_depend>
