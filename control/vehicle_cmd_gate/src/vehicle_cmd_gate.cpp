@@ -136,10 +136,10 @@ VehicleCmdGate::VehicleCmdGate()
   using std::placeholders::_2;
   using std::placeholders::_3;
   srv_external_emergency_stop_ = this->create_service<std_srvs::srv::Trigger>(
-    "service/external_emergency_stop",
+    "~/service/external_emergency_stop",
     std::bind(&VehicleCmdGate::onExternalEmergencyStopService, this, _1, _2, _3));
-  srv_external_emergency_stop_ = this->create_service<std_srvs::srv::Trigger>(
-    "service/clear_external_emergency_stop",
+  srv_clear_external_emergency_stop_ = this->create_service<std_srvs::srv::Trigger>(
+    "~/service/clear_external_emergency_stop",
     std::bind(&VehicleCmdGate::onClearExternalEmergencyStopService, this, _1, _2, _3));
 
   // Diagnostics Updater

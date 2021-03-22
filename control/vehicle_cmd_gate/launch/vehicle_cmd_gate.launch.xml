@@ -31,8 +31,8 @@
     <remap from="output/turn_signal_cmd" to="/control/turn_signal_cmd"/>
     <remap from="output/gate_mode" to="/control/current_gate_mode"/>
 
-    <remap from="service/external_emergency_stop" to="external_emergency_stop"/>
-    <remap from="service/clear_external_emergency_stop" to="clear_external_emergency_stop"/>
+    <remap from="~/service/external_emergency_stop" to="~/external_emergency_stop"/>
+    <remap from="~/service/clear_external_emergency_stop" to="~/clear_external_emergency_stop"/>
 
     <param from="$(var config_file)" />
     <param name="use_emergency_handling" value="$(var use_emergency_handling)" />
