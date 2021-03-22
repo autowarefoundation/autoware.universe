@@ -151,7 +151,7 @@ In ROS2, you should define semantically meaningful wrappers around primitive (nu
 
 
 ### Changing the namespaces and header files for generated message types
-If you follow the migration guide and change the included headers to have an extra `/msg` in the path and convert to `snake_case`, you might get a cryptic error. Turns out _two_ files are being generated: One for C types (`.h` headers) and and one for CPP types (`.hpp` headers). So don't forget to change `.h` to `.hpp` too. Also, don't forget to insert an additional `::msg` between the package namespace and the class name.
+If you follow the migration guide and change the included headers to have an extra `/msg` in the path and convert to `snake_case`, you might get a cryptic error. Turns out _two_ files are being generated: One for C types (`.h` headers) and one for CPP types (`.hpp` headers). So don't forget to change `.h` to `.hpp` too. Also, don't forget to insert an additional `::msg` between the package namespace and the class name.
 
 A tip: Sublime Text has a handy "Case Conversion" package for converting to snake case.
 
@@ -325,7 +325,7 @@ DECLARE_MPC_PARAM(mpc_param_, prediction_horizon, 50);
 set_param_res_ = add_on_set_parameters_callback(std::bind(&MPCFollower::paramCallback, this, _1));
 ```
 
-Inside the callback, you have to manually update each parameter for which you want to react to changes from the outside. You can (inadvertently) declare more parameters than you react to.
+Inside the callback, you have to manually update each parameter for which you want to react to change from the outside. You can (inadvertently) declare more parameters than you react to.
 
 ```c++
   rcl_interfaces::msg::SetParametersResult result;
