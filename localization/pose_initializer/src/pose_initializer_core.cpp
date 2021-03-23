@@ -207,17 +207,22 @@ void PoseInitializer::callAlignServiceAndPublishResult(
     req,
     [this](rclcpp::Client<autoware_localization_srvs::srv::PoseWithCovarianceStamped>::SharedFuture
     result) {
-      RCLCPP_INFO(get_logger(), "called NDT Align Server");
-      response_id_ = result.get()->seq;
-      // NOTE temporary cov
-      geometry_msgs::msg::PoseWithCovarianceStamped & pose_with_cov = result.get()->pose_with_cov;
-      pose_with_cov.pose.covariance[0] = 1.0;
-      pose_with_cov.pose.covariance[1 * 6 + 1] = 1.0;
-      pose_with_cov.pose.covariance[2 * 6 + 2] = 0.01;
-      pose_with_cov.pose.covariance[3 * 6 + 3] = 0.01;
-      pose_with_cov.pose.covariance[4 * 6 + 4] = 0.01;
-      pose_with_cov.pose.covariance[5 * 6 + 5] = 0.2;
-      initial_pose_pub_->publish(pose_with_cov);
-      enable_gnss_callback_ = false;
+      if (result.get()->success) {
+        RCLCPP_INFO(get_logger(), "called NDT Align Server");
+        response_id_ = result.get()->seq;
+        // NOTE temporary cov
+        geometry_msgs::msg::PoseWithCovarianceStamped & pose_with_cov = result.get()->pose_with_cov;
+        pose_with_cov.pose.covariance[0] = 1.0;
+        pose_with_cov.pose.covariance[1 * 6 + 1] = 1.0;
+        pose_with_cov.pose.covariance[2 * 6 + 2] = 0.01;
+        pose_with_cov.pose.covariance[3 * 6 + 3] = 0.01;
+        pose_with_cov.pose.covariance[4 * 6 + 4] = 0.01;
+        pose_with_cov.pose.covariance[5 * 6 + 5] = 0.2;
+        initial_pose_pub_->publish(pose_with_cov);
+        enable_gnss_callback_ = false;
+      } else {
+        RCLCPP_INFO(get_logger(), "failed NDT Align Server");
+        response_id_ = result.get()->seq;
+      }
     });
 }
