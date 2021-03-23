@@ -219,13 +219,17 @@ void NDTScanMatcher::serviceNDTAlign(
   tf2::doTransform(req->pose_with_cov, *mapTF_initial_pose_msg_ptr, *TF_pose_to_map_ptr);
 
   if (ndt_ptr_->getInputTarget() == nullptr) {
-    // TODO wait for map pointcloud
-    throw std::runtime_error("No InputTarget");
+    res->success = false;
+    res->seq = req->seq;
+    RCLCPP_WARN(get_logger(), "No InputTarget");
+    return;
   }
 
   if (ndt_ptr_->getInputSource() == nullptr) {
-    // TODO wait for sensor pointcloud
-    throw std::runtime_error("No InputSource");
+    res->success = false;
+    res->seq = req->seq;
+    RCLCPP_WARN(get_logger(), "No InputSource");
+    return;
   }
 
   // mutex Map
@@ -234,6 +238,7 @@ void NDTScanMatcher::serviceNDTAlign(
   key_value_stdmap_["state"] = "Aligning";
   res->pose_with_cov = alignUsingMonteCarlo(ndt_ptr_, *mapTF_initial_pose_msg_ptr);
   key_value_stdmap_["state"] = "Sleeping";
+  res->success = true;
   res->seq = req->seq;
   res->pose_with_cov.pose.covariance = req->pose_with_cov.pose.covariance;
 }
