@@ -33,7 +33,6 @@ template<typename MonitorT>
 void spin_and_update(const std::shared_ptr<MonitorT> & monitor_ptr, std::chrono::seconds period)
 {
   while (rclcpp::ok()) {
-    monitor_ptr->update();
     rclcpp::spin_some(monitor_ptr);
     std::this_thread::sleep_for(period);
   }
