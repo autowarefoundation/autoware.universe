@@ -8,6 +8,10 @@ repositories:
     type: git
     url: https://github.com/tier4/autoware_launcher.iv.universe.git
     version: ros2
+  autoware/individual_params:
+    type: git
+    url: https://github.com/tier4/autoware_individual_params.git
+    version: main
   # description
   description/sensor/sensor_description:
     type: git
