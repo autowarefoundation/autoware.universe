@@ -91,7 +91,7 @@ void MaximizeLinearAssignment(
   // std::chrono::system_clock::time_point start_time, end_time;
   // start_time = std::chrono::system_clock::now();
 
-  // Adjacency list of residual graph (indice: nodes)
+  // Adjacency list of residual graph (index: nodes)
   //     - 0: source node
   //     - {1, ...,  n_agents}: agent nodes
   //     - {n_agents+1, ...,  n_agents+n_tasks}: task nodes

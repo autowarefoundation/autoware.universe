@@ -97,11 +97,11 @@ double get2dIoU(
 
 autoware_utils::Polygon2d inverseClockWise(const autoware_utils::Polygon2d & polygon)
 {
-  autoware_utils::Polygon2d inversed_polygon;
+  autoware_utils::Polygon2d inverted_polygon;
   for (int i = polygon.outer().size() - 1; 0 <= i; --i) {
-    inversed_polygon.outer().push_back(polygon.outer().at(i));
+    inverted_polygon.outer().push_back(polygon.outer().at(i));
   }
-  return inversed_polygon;
+  return inverted_polygon;
 }
 
 bool isClockWise(const autoware_utils::Polygon2d & polygon)

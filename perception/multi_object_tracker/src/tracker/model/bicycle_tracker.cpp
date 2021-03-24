@@ -33,7 +33,7 @@
 BicycleTracker::BicycleTracker(
   const rclcpp::Time & time, const autoware_perception_msgs::msg::DynamicObject & object)
 : Tracker(time, object.semantic.type),
-  logger_(rclcpp::get_logger("BycleTracker")),
+  logger_(rclcpp::get_logger("BicycleTracker")),
   last_update_time_(time)
 {
   object_ = object;
