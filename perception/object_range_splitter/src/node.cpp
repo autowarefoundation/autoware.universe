@@ -47,7 +47,7 @@ void ObjectRangeSplitterNode::objectCallback(
   output_long_range_object_msg.header = input_msg->header;
   output_short_range_object_msg.header = input_msg->header;
 
-  // spilit
+  // split
   for (const auto & feature_object : input_msg->feature_objects) {
     const auto & position = feature_object.object.state.pose_covariance.pose.position;
     const auto object_sq_dist = position.x * position.x + position.y * position.y;
