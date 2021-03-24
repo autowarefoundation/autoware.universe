@@ -34,7 +34,7 @@
     mpc_low_curvature_weight_lat_jerk: 0.0                     # lateral jerk weight in matrix R in low curvature point
     mpc_low_curvature_weight_steer_rate: 0.0                   # steering rate weight in matrix R in low curvature point
     mpc_low_curvature_weight_steer_acc: 0.000001               # steering angular acceleration weight in matrix R in low curvature point
-    mpc_low_curvature_thresh_curvature: 0.00                   # threshold of curvature to use "low vurvature" parameter (0: do not use low curvature parameter)
+    mpc_low_curvature_thresh_curvature: 0.00                   # threshold of curvature to use "low curvature" parameter (0: do not use low curvature parameter)
     mpc_weight_terminal_lat_error: 1.0           # terminal lateral error weight in matrix Q to improve mpc stability
     mpc_weight_terminal_heading_error: 0.1       # terminal heading error weight in matrix Q to improve mpc stability
     mpc_zero_ff_steer_deg: 0.5                   # threshold that feed-forward angle becomes zero
