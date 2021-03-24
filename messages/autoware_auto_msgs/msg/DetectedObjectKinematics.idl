@@ -1,0 +1,19 @@
+#include "geometry_msgs/msg/AccelWithCovariance.idl"
+#include "geometry_msgs/msg/PoseWithCovariance.idl"
+#include "geometry_msgs/msg/TwistWithCovariance.idl"
+
+module autoware_auto_msgs {
+  module msg {
+    struct DetectedObjectKinematics {
+      geometry_msgs::msg::PoseWithCovariance pose;
+
+      boolean has_pose;
+      boolean has_pose_covariance;
+
+      geometry_msgs::msg::TwistWithCovariance twist;
+
+      boolean has_twist;
+      boolean has_twist_covariance;
+    };
+  };
+};

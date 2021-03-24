@@ -16,10 +16,15 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/Quaternion32.idl"
   "msg/TrajectoryPoint.idl"
   "msg/MapPrimitive.idl"
+  "msg/Shape.idl"
   # Interfaces
   "msg/BoundingBoxArray.idl"
   "msg/ControlDiagnostic.idl"
+  "msg/DetectedDynamicObject.idl"
+  "msg/DetectedDynamicObjectArray.idl"
+  "msg/DetectedObjectKinematics.idl"
   "msg/HighLevelControlCommand.idl"
+  "msg/ObjectClassification.idl"
   "msg/RawControlCommand.idl"
   "msg/Trajectory.idl"
   "msg/VehicleControlCommand.idl"
@@ -36,7 +41,11 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "action/PlanTrajectory.idl"
   # Implementation-specific messages
   "msg/PointClusters.idl"
-  DEPENDENCIES "std_msgs" "geometry_msgs" "sensor_msgs"
+  DEPENDENCIES
+    "geometry_msgs"
+    "sensor_msgs"
+    "shape_msgs"
+    "std_msgs"
   ADD_LINTER_TESTS
 )
 
