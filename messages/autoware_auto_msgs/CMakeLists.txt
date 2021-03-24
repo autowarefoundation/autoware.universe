@@ -26,6 +26,9 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/HighLevelControlCommand.idl"
   "msg/ObjectClassification.idl"
   "msg/RawControlCommand.idl"
+  "msg/TrackedDynamicObject.idl"
+  "msg/TrackedDynamicObjectArray.idl"
+  "msg/TrackedObjectKinematics.idl"
   "msg/Trajectory.idl"
   "msg/VehicleControlCommand.idl"
   "msg/VehicleKinematicState.idl"
@@ -42,6 +45,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   # Implementation-specific messages
   "msg/PointClusters.idl"
   DEPENDENCIES
+    "builtin_interfaces"
     "geometry_msgs"
     "sensor_msgs"
     "shape_msgs"
