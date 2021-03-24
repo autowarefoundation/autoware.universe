@@ -176,14 +176,6 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner()
   distance_for_path_shape_change_detection_ =
     declare_parameter("distance_for_path_shape_change_detection", 2.0);
 
-  if (is_using_vehicle_config_) {
-    double vehicle_width = 1.5;
-    traj_param_->center_line_width = vehicle_width;
-    constrain_param_->keep_space_shape_y = vehicle_width;
-  }
-  constrain_param_->min_object_clearance_for_deceleration =
-    constrain_param_->clearance_from_object + constrain_param_->keep_space_shape_y * 0.5;
-
   // vehicle param
   vehicle_info_util::VehicleInfo vehicle_info = vehicle_info_util::VehicleInfo::create(*this);
   vehicle_param_->width = vehicle_info.vehicle_width_m_;
@@ -191,6 +183,14 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner()
   vehicle_param_->wheelbase = vehicle_info.wheel_base_m_;
   vehicle_param_->rear_overhang = vehicle_info.rear_overhang_m_;
   vehicle_param_->front_overhang = vehicle_info.front_overhang_m_;
+
+  if (is_using_vehicle_config_) {
+    double vehicle_width = vehicle_info.vehicle_width_m_;
+    traj_param_->center_line_width = vehicle_width;
+    constrain_param_->keep_space_shape_y = vehicle_width;
+  }
+  constrain_param_->min_object_clearance_for_deceleration =
+    constrain_param_->clearance_from_object + constrain_param_->keep_space_shape_y * 0.5;
 
   double max_steer_deg = 0;
   max_steer_deg = declare_parameter("max_steer_deg", 30.0);
