@@ -60,7 +60,7 @@
     # mpt param
     # vehicle param for mpt
     max_steer_deg: 40.0 # max steering angle [deg]
-    steer_tau: 0.1 # steering dynamics time constant (1d approzimation) [s]
+    steer_tau: 0.1 # steering dynamics time constant (1d approximation) [s]
 
     # trajectory param for mpt
     num_curvature_sampling_points: 5 # number of sampling points when calculating curvature
@@ -76,11 +76,11 @@
     yaw_error_weight: 0.0 # weight for yaw error
     steer_input_weight: 0.01 # weight for steering input
     steer_rate_weight: 1.0 # weight for steering rate
-    steer_acc_weight: 0.000001 # weight for steering acceration
+    steer_acc_weight: 0.000001 # weight for steering acceleration
     terminal_lat_error_weight: 0.0 # weight for lateral error at terminal point
-    terminal_yaw_error_weight: 100.0 # weight for yaw errror at terminal point
-    terminal_path_lat_error_weight: 1000.0 # weight for lateral errro at path end point
-    terminal_path_yaw_error_weight: 1000.0 # weight for yaw errro at path end point
+    terminal_yaw_error_weight: 100.0 # weight for yaw error at terminal point
+    terminal_path_lat_error_weight: 1000.0 # weight for lateral error at path end point
+    terminal_path_yaw_error_weight: 1000.0 # weight for yaw error at path end point
     zero_ff_steer_angle: 0.5 # threshold that feed-forward angle becomes zero
 
     # replanning & trimming trajectory param outside algorithm
