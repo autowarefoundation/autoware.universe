@@ -226,7 +226,7 @@ RoiClusterFusionNodelet::RoiClusterFusionNodelet(const rclcpp::NodeOptions & opt
     this->create_publisher<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>(
     "output/labeled_clusters", 10);
   if (use_iou_) {
-    debuger_ = std::make_shared<Debugger>(this, rois_number);
+    debugger_ = std::make_shared<Debugger>(this, rois_number);
   }
 }
 
@@ -422,7 +422,7 @@ void RoiClusterFusionNodelet::fusionCallback(
       debug_image_rois.push_back(input_roi_msg->feature_objects.at(i).feature.roi);
     }
 
-    debuger_->showImage(
+    debugger_->showImage(
       id, input_roi_msg->header.stamp, debug_image_rois, debug_pointcloud_rois, debug_image_points);
   }
   // publish output msg

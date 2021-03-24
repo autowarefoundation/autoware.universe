@@ -122,7 +122,7 @@ private:
   double iou_threshold_;
   int rois_number_;
   std::map<int, sensor_msgs::msg::CameraInfo> m_camera_info_;
-  std::shared_ptr<Debugger> debuger_;
+  std::shared_ptr<Debugger> debugger_;
 };
 
 }  // namespace roi_cluster_fusion
