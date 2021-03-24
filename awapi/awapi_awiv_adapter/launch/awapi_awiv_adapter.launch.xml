@@ -206,6 +206,12 @@
       <param name="output_topic" value="$(var get_traffic_light_status)" />
       <param name="type" value="autoware_perception_msgs/msg/TrafficLightStateArray" />
     </node>
+    <node pkg="topic_tools" exec="relay" name="overwrite_traffic_light_state_relay" output="log" >
+      <param name="input_topic" value="$(var set_overwrite_traffic_light_state)" />
+      <param name="output_topic" value="$(var output_overwrite_traffic_light_state)" />
+      <param name="type" value="autoware_perception_msgs/msg/TrafficLightStateArray" />
+    </node>
+
     <node pkg="topic_tools" exec="relay" name="speed_exceeded_relay" output="log" >
       <param name="input_topic" value="$(var input_stop_speed_exceeded)" />
       <param name="output_topic" value="$(var get_stop_speed_exceeded)" />

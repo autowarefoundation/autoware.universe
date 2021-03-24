@@ -245,7 +245,7 @@
 | ✓   | type | name | unit | note |
 | --- | :--- | :--- | :--- | :--- |
 
-### /awapi/traffic_light/put/traffic_light
+### /awapi/traffic_light/put/traffic_light_status
 
 - Overwrite the recognition result of traffic light
 - MessageType: autoware_perception_msgs/TrafficLightStateArray
