@@ -678,9 +678,6 @@ std::vector<Bounds> MPTOptimizer::getReferenceBounds(
     auto lat_bounds_2 = getBound(enable_avoidance, ref_mid_point, maps);
     if (!lat_bounds_0 || !lat_bounds_1 || !lat_bounds_2) {
       auto clock = rclcpp::Clock(RCL_ROS_TIME);
-      RCLCPP_WARN_THROTTLE(
-        rclcpp::get_logger("MPTOptimizer"), clock, std::chrono::milliseconds(1000).count(),
-        "[Avoidance] Could not find driveable area for %i th point", cnt);
       RCLCPP_INFO_EXPRESSION(
         rclcpp::get_logger("MPTOptimizer"), is_showing_debug_info_, "Path is blocked at %i ", cnt);
       Bounds bounds;
