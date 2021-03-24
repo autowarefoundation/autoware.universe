@@ -68,7 +68,7 @@
       <arg name="output" value="camera_lidar_fusion/clusters"/>
     </include>
     <include file="$(find-pkg-share shape_estimation)/launch/shape_estimation.launch.xml">
-      <arg name="use_map_corrent" value="$(var use_vector_map)"/>
+      <arg name="use_map_current" value="$(var use_vector_map)"/>
       <arg name="input/objects" value="camera_lidar_fusion/clusters" />
       <arg name="output/objects" value="camera_lidar_fusion/objects" />
       <arg name="orientation_reliable" value="false"/>
@@ -87,7 +87,7 @@
       <arg name="output/objects" value="lidar/clusters"/>
     </include>
     <include file="$(find-pkg-share shape_estimation)/launch/shape_estimation.launch.xml">
-      <arg name="use_map_corrent" value="$(var use_vector_map)"/>
+      <arg name="use_map_current" value="$(var use_vector_map)"/>
       <arg name="input/objects" value="lidar/clusters" />
       <arg name="output/objects" value="lidar/objects" />
       <arg name="orientation_reliable" value="true"/>
