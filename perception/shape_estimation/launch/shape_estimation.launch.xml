@@ -2,7 +2,7 @@
 
   <arg name="input/objects" default="labeled_clusters"/>
   <arg name="output/objects" default="shape_estimated_objects"/>
-  <arg name="use_map_corrent" default="true"/>
+  <arg name="use_map_current" default="true"/>
   <arg name="use_corrector" default="true"/>
   <arg name="map_corrector/use_rad_filter" default="true"/>
   <arg name="map_corrector/rad_threshold" default="1.2217304763960306"/>
@@ -14,7 +14,7 @@
     <remap from="input" to="$(var input/objects)" />
     <remap from="objects" to="$(var output/objects)" />
     <param name="use_corrector" value="$(var use_corrector)" />
-    <param name="use_map_corrent" value="$(var use_map_corrent)" />
+    <param name="use_map_current" value="$(var use_map_current)" />
     <param name="map_corrector/use_rad_filter" value="$(var map_corrector/use_rad_filter)" />
     <param name="map_corrector/rad_threshold" value="$(var map_corrector/rad_threshold)" />
     <param name="l_shape_fitting_search_angle_range" value="$(var l_shape_fitting_search_angle_range)"/>
