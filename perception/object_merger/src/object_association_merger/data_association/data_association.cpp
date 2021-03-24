@@ -24,53 +24,53 @@
 DataAssociation::DataAssociation()
 : score_threshold_(0.1)
 {
-  can_assgin_matrix_ = Eigen::MatrixXi::Identity(20, 20);
-  can_assgin_matrix_(
+  can_assign_matrix_ = Eigen::MatrixXi::Identity(20, 20);
+  can_assign_matrix_(
     autoware_perception_msgs::msg::Semantic::UNKNOWN,
     autoware_perception_msgs::msg::Semantic::UNKNOWN) = 1;
-  can_assgin_matrix_(
+  can_assign_matrix_(
     autoware_perception_msgs::msg::Semantic::CAR,
     autoware_perception_msgs::msg::Semantic::UNKNOWN) = 0;
-  can_assgin_matrix_(
+  can_assign_matrix_(
     autoware_perception_msgs::msg::Semantic::CAR,
     autoware_perception_msgs::msg::Semantic::TRUCK) = 1;
-  can_assgin_matrix_(
+  can_assign_matrix_(
     autoware_perception_msgs::msg::Semantic::CAR,
     autoware_perception_msgs::msg::Semantic::BUS) = 1;
-  can_assgin_matrix_(
+  can_assign_matrix_(
     autoware_perception_msgs::msg::Semantic::TRUCK,
     autoware_perception_msgs::msg::Semantic::UNKNOWN) = 0;
-  can_assgin_matrix_(
+  can_assign_matrix_(
     autoware_perception_msgs::msg::Semantic::TRUCK,
     autoware_perception_msgs::msg::Semantic::CAR) = 1;
-  can_assgin_matrix_(
+  can_assign_matrix_(
     autoware_perception_msgs::msg::Semantic::TRUCK,
     autoware_perception_msgs::msg::Semantic::BUS) = 1;
-  can_assgin_matrix_(
+  can_assign_matrix_(
     autoware_perception_msgs::msg::Semantic::BUS,
     autoware_perception_msgs::msg::Semantic::UNKNOWN) = 0;
-  can_assgin_matrix_(
+  can_assign_matrix_(
     autoware_perception_msgs::msg::Semantic::BUS,
     autoware_perception_msgs::msg::Semantic::CAR) = 1;
-  can_assgin_matrix_(
+  can_assign_matrix_(
     autoware_perception_msgs::msg::Semantic::BUS,
     autoware_perception_msgs::msg::Semantic::TRUCK) = 1;
-  can_assgin_matrix_(
+  can_assign_matrix_(
     autoware_perception_msgs::msg::Semantic::BICYCLE,
     autoware_perception_msgs::msg::Semantic::UNKNOWN) = 0;
-  can_assgin_matrix_(
+  can_assign_matrix_(
     autoware_perception_msgs::msg::Semantic::BICYCLE,
     autoware_perception_msgs::msg::Semantic::MOTORBIKE) = 1;
-  can_assgin_matrix_(
+  can_assign_matrix_(
     autoware_perception_msgs::msg::Semantic::MOTORBIKE,
     autoware_perception_msgs::msg::Semantic::UNKNOWN) = 0;
-  can_assgin_matrix_(
+  can_assign_matrix_(
     autoware_perception_msgs::msg::Semantic::MOTORBIKE,
     autoware_perception_msgs::msg::Semantic::BICYCLE) = 1;
-  can_assgin_matrix_(
+  can_assign_matrix_(
     autoware_perception_msgs::msg::Semantic::PEDESTRIAN,
     autoware_perception_msgs::msg::Semantic::UNKNOWN) = 0;
-  can_assgin_matrix_(
+  can_assign_matrix_(
     autoware_perception_msgs::msg::Semantic::ANIMAL,
     autoware_perception_msgs::msg::Semantic::UNKNOWN) = 0;
   max_dist_matrix_ = Eigen::MatrixXd::Constant(20, 20, 1.0);
@@ -312,7 +312,7 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
   for (size_t object1_idx = 0; object1_idx < object1.feature_objects.size(); ++object1_idx) {
     for (size_t object0_idx = 0; object0_idx < object0.feature_objects.size(); ++object0_idx) {
       double score = 0.0;
-      if (can_assgin_matrix_(
+      if (can_assign_matrix_(
           object1.feature_objects.at(object1_idx).object.semantic.type,
           object0.feature_objects.at(object0_idx).object.semantic.type))
       {

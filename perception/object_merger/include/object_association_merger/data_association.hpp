@@ -31,7 +31,7 @@ private:
     const geometry_msgs::msg::Point & point0,
     const geometry_msgs::msg::Point & point1);
   geometry_msgs::msg::Point getCentroid(const sensor_msgs::msg::PointCloud2 & pointcloud);
-  Eigen::MatrixXi can_assgin_matrix_;
+  Eigen::MatrixXi can_assign_matrix_;
   Eigen::MatrixXd max_dist_matrix_;
   Eigen::MatrixXd max_area_matrix_;
   Eigen::MatrixXd min_area_matrix_;
