@@ -20,7 +20,7 @@
   <exec_depend>system_launch</exec_depend>
   <exec_depend>vehicle_launch</exec_depend>
 
-  <!-- vizualization -->
+  <!-- visualization -->
   <exec_depend>rviz2</exec_depend>
 
   <!-- web controller -->
