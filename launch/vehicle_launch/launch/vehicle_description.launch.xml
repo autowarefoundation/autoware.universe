@@ -8,7 +8,7 @@
 
   <!-- tf publisher -->
   <arg name="model" default="$(find-pkg-share vehicle_launch)/urdf/vehicle.xacro"/>
-  <arg name="config_dir" default="$(find-pkg-share vehicle_launch)/config/$(var vehicle_id)/$(var sensor_model)"/>
+  <arg name="config_dir" default="$(find-pkg-share individual_params)/config/$(var vehicle_id)/$(var sensor_model)"/>
   <node name="robot_state_publisher" pkg="robot_state_publisher" exec="robot_state_publisher">
     <param name="robot_description" value="$(command 'xacro $(var model) vehicle_model:=$(var vehicle_model) sensor_model:=$(var sensor_model) config_dir:=$(var config_dir)')"/>
   </node>
