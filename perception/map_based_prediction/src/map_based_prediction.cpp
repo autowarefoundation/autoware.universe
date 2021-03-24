@@ -238,7 +238,7 @@ bool MapBasedPrediction::getPredictedPath(
   Eigen::Vector3d x_3;
   x_3 = a_3_inv * b_3;
 
-  // Quatric polynominal
+  // Quadric polynominal
   // A_inv = np.matrix([[1/(T**2), -1/(3*T)],
   //                         [-1/(2*T**3), 1/(4*T**2)]])
   // b = np.matrix([[vxe - self.a1 - 2 * self.a2 * T],
