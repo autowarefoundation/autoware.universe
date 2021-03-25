@@ -29,6 +29,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/PointClusters.idl"
   "msg/Quaternion32.idl"
   "msg/RawControlCommand.idl"
+  "msg/RelativePositionWithCovarianceStamped.idl"
   "msg/Route.idl"
   "msg/Shape.idl"
   "msg/StationaryLockingCommand.idl"
