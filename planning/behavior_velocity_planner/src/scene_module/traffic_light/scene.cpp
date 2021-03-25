@@ -519,7 +519,8 @@ geometry_msgs::msg::Point TrafficLightModule::getTrafficLightPosition(
   const lanelet::ConstLineStringOrPolygon3d traffic_light)
 {
   geometry_msgs::msg::Point tl_center;
-  for (const auto & tl_point : *traffic_light.lineString()) {
+  const auto tl_linestring = *traffic_light.lineString();
+  for (const auto & tl_point : tl_linestring) {
     tl_center.x += tl_point.x() / (*traffic_light.lineString()).size();
     tl_center.y += tl_point.y() / (*traffic_light.lineString()).size();
     tl_center.z += tl_point.z() / (*traffic_light.lineString()).size();
