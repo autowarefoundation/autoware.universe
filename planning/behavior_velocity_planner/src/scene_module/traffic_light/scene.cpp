@@ -560,8 +560,8 @@ bool TrafficLightModule::getExternalTrafficLightState(
     found = true;
   }
   if (!found) {
-    RCLCPP_WARN_THROTTLE(
-      logger_, *clock_, 1000 /* ms */,
+    RCLCPP_DEBUG_THROTTLE(
+      logger_, *clock_, 5000 /* ms */,
       "[traffic_light] cannot find external traffic light lamp state (%s).", reason.c_str());
     return false;
   }
