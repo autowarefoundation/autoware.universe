@@ -8,6 +8,7 @@
   <arg name="data_association_matrix_path" default="$(find-pkg-share multi_object_tracker)/config/data_association_matrix.param.yaml" />
 
   <node pkg="multi_object_tracker" exec="multi_object_tracker" name="multi_object_tracker" output="screen">
+    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
     <remap from="input" to="$(var input)"/>
     <remap from="output" to="$(var output)"/>
     <param name="world_frame_id" value="$(var world_frame_id)" />
