@@ -3,6 +3,7 @@
   <arg name="output/objects" default="objects"/>
 
   <node pkg="naive_path_prediction" exec="naive_path_prediction_node" name="naive_path_prediction" output="screen">
+    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
     <remap from="input" to="$(var input/objects)"/>
     <remap from="output" to="$(var output/objects)"/>
   </node>
