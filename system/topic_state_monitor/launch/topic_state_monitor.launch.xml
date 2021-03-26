@@ -11,6 +11,7 @@
   <arg name="window_size" default="10" doc="warn rate[Hz]" />
 
   <node pkg="topic_state_monitor" exec="topic_state_monitor_node" name="topic_state_monitor_$(var node_name_suffix)" output="screen">
+    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
     <param name="topic" value="$(var topic)" />
     <param name="topic_type" value="$(var topic_type)" />
     <param name="transient_local" value="$(var transient_local)" />
