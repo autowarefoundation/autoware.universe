@@ -16,6 +16,7 @@
   <arg name="config_file" default="$(find-pkg-share autoware_joy_controller)/config/autoware_joy_controller.param.yaml" />
 
   <node pkg="autoware_joy_controller" exec="autoware_joy_controller" name="autoware_joy_controller" output="screen">
+    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
     <remap from="input/joy" to="$(var input_joy)"/>
     <remap from="input/twist" to="$(var input_twist)"/>
 
@@ -40,6 +41,7 @@
   </node>
 
   <node pkg="joy" exec="joy_node" name="joy_node" output="screen">
+    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
     <param name="autorepeat_rate" value="1.0" />
     <param name="deadzone" value="0.0" />
   </node>
