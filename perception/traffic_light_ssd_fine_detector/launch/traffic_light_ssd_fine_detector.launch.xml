@@ -15,6 +15,7 @@
   <arg name="manager" default="traffic_light_recognition_nodelet_manager"/>
 
   <node pkg="traffic_light_ssd_fine_detector" exec="traffic_light_ssd_fine_detector_node" name="traffic_light_ssd_fine_detector">
+    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
     <remap from="input/image" to="$(var input/image)" />
     <remap from="input/rois" to="$(var input/rois)" />
     <remap from="output/rois" to="$(var output/rois)" />
@@ -29,6 +30,7 @@
   </node>
 
   <node if="$(var save_rough_roi_image)" pkg="roi_image_saver" exec="traffic_light_roi_image_saver_node" name="$(anon traffic_light_roi_image_saver)" output="screen">
+    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
     <remap from="input/image" to="$(var input/image)"/>
     <remap from="input/rois" to="$(var input/rois)"/>
     <param name="save_dir" value="$(find-pkg-share roi_image_saver)/train_image"/>
