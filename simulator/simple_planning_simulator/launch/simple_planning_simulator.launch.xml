@@ -13,6 +13,7 @@
 
   <!-- simple_planning_simulator node -->
   <node pkg="simple_planning_simulator" exec="simple_planning_simulator_exe" name="simple_planning_simulator" output="screen">
+    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
     <remap from="/base_trajectory" to="/planning/scenario_planning/trajectory" />
     <remap from="output/current_pose" to="current_pose" />
     <remap from="output/current_twist" to="/vehicle/status/twist" />
@@ -36,6 +37,7 @@
   </node>
 
   <node pkg="topic_tools" exec="relay" name="twist_relay" output="log" >
+    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
     <param name="input_topic" value="/vehicle/status/twist" />
     <param name="output_topic" value="/localization/twist" />
     <param name="type" value="geometry_msgs/msg/TwistStamped" />
