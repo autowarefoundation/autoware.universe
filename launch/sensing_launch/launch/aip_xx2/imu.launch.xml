@@ -8,6 +8,7 @@
     <group>
       <push-ros-namespace namespace="tamagawa"/>
       <node pkg="tamagawa_imu_driver" name="tag_serial_driver" exec="tag_serial_driver" if="$(var launch_driver)">
+        <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
         <remap from="imu/data_raw" to="imu_raw" />
         <param name="port" value="/dev/imu" />
         <param name="imu_frame_id" value="tamagawa/imu_link" />
@@ -17,6 +18,7 @@
 
     <!-- Relay -->
     <node pkg="topic_tools" exec="relay" name="twist_relay" output="log" >
+      <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
       <param name="input_topic" value="/sensing/imu/tamagawa/imu_raw" />
       <param name="output_topic" value="/sensing/imu/imu_data" />
       <param name="type" value="sensor_msgs/msg/Imu" />
