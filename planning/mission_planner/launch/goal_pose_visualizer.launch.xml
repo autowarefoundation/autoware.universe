@@ -3,6 +3,7 @@
   <arg name="echo_back_goal_pose_topic_name" default="/planning/mission_planning/echo_back_goal_pose" />
 
   <node pkg="mission_planner" exec="goal_pose_visualizer" name="goal_pose_visualizer" output="screen">
+    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
     <remap from="input/route" to="$(var rout_topic_name)" />
     <remap from="output/goal_pose" to="$(var echo_back_goal_pose_topic_name)" />
   </node>
