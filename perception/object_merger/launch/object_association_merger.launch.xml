@@ -6,6 +6,7 @@
   <arg name="output/object" default="merged_object"/>
 
   <node pkg="object_merger" exec="object_association_merger_node" name="object_association_merger" output="screen">
+    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
     <remap from="input/object0" to="$(var input/object0)"/>
     <remap from="input/object1" to="$(var input/object1)"/>
     <remap from="output/object" to="$(var output/object)"/>
