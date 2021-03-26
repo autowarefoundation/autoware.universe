@@ -10,6 +10,7 @@
   <arg name="is_parking_completed" default="" />
 
   <node pkg="topic_tools" exec="relay" name="scenario_trajectory_relay" output="log" >
+    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
     <param name="input_topic" value="$(var input_lane_driving_trajectory)" />
     <param name="output_topic" value="$(var output_trajectory)" />
     <param name="type" value="autoware_planning_msgs/msg/Trajectory" />
