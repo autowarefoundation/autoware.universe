@@ -15,6 +15,7 @@
 
   <group ns="/">
     <node pkg="diagnostic_aggregator" exec="aggregator_node" name="aggregator_node" output="screen" args="--ros-args --log-level WARN">
+      <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
       <param name="pub_rate" value="10.0"/>
       <param name="path" value="autoware"/>
       <param from="$(var agg_config_file_discard)" />

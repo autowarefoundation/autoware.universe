@@ -4,6 +4,7 @@
   <arg name="add_leaf_diagnostics" />
 
   <node pkg="autoware_error_monitor" exec="autoware_error_monitor" name="autoware_error_monitor" output="screen">
+    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
     <remap from="input/diag_array" to="/diagnostics_agg" />
     <remap from="output/driving_capability" to="/autoware/driving_capability" />
 
