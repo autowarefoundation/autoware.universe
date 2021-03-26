@@ -10,6 +10,7 @@
   <arg name="vehicle_param_file"/>
 
   <node pkg="obstacle_stop_planner" exec="obstacle_stop_planner_node" name="obstacle_stop_planner" output="screen">
+    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
     <param from="$(var vehicle_param_file)" />
     <param from="$(var acc_param_file)" />
     <param from="$(var param_file)" />
