@@ -16,6 +16,7 @@
 
   <node pkg="lidar_apollo_instance_segmentation" exec="lidar_apollo_instance_segmentation_node"
         name="lidar_apollo_instance_segmentation" output="screen" >
+    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
     <remap from="input/pointcloud" to="/sensing/lidar/top/rectified/pointcloud"/>
     <remap from="output/labeled_clusters" to="$(var output/objects)"/>
     <param name="engine_file" value="$(var trained_engine_file)"/>
