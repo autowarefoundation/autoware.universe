@@ -26,6 +26,7 @@
   <arg name="disengage_on_goal" default="true" />
 
   <node pkg="autoware_state_monitor" exec="autoware_state_monitor" name="autoware_state_monitor" output="screen">
+    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
     <remap from="input/autoware_engage" to="$(var input_autoware_engage)"/>
     <remap from="input/vehicle_control_mode" to="$(var input_vehicle_control_mode)"/>
     <remap from="input/is_emergency" to="$(var input_is_emergency)"/>
