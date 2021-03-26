@@ -7,6 +7,7 @@
   <arg name="split_range" default="30.0"/>
 
   <node pkg="object_range_splitter" exec="object_range_splitter_node" name="object_range_splitter" output="screen">
+    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
     <remap from="input/object" to="$(var input/object)"/>
     <remap from="output/long_range_object" to="$(var output/long_range_object)"/>
     <remap from="output/short_range_object" to="$(var output/short_range_object)"/>
