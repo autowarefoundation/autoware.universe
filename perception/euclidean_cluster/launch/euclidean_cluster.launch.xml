@@ -7,6 +7,7 @@
   <arg name="use_pointcloud_map" default="false"/>
 
   <include file="$(find-pkg-share euclidean_cluster)/launch/euclidean_cluster.launch.py">
+      <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
       <param name="input_points_raw_list" value="$(var input_pointcloud)" />
       <param name="input_map" value="$(var input_map)" />
       <param name="output_clusters" value="$(var output_clusters)" />
