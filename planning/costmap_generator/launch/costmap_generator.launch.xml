@@ -7,6 +7,7 @@
   <arg name="output_occupancy_grid" default="~/output/occupancy_grid"/>
 
   <node pkg="costmap_generator" exec="costmap_generator" name="costmap_generator" output="screen">
+    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
     <remap from="~/input/objects" to="$(var input_objects)" />
     <remap from="~/input/points_no_ground" to="$(var input_points_no_ground)" />
     <remap from="~/input/vector_map" to="$(var input_lanelet_map)" />
