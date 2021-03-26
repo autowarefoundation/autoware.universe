@@ -22,6 +22,8 @@
 
   <!-- emergency_handler -->
   <node pkg="emergency_handler" exec="emergency_handler" name="emergency_handler" output="screen">
+    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
+
     <remap from="~/input/autoware_state" to="$(var input_autoware_state)"/>
     <remap from="~/input/driving_capability" to="$(var input_driving_capability)"/>
     <remap from="~/input/prev_control_command" to="$(var input_prev_control_command)"/>
@@ -47,6 +49,8 @@
   <arg name="state_timeout_checker_config_file" default="$(find-pkg-share emergency_handler)/config/state_timeout_checker.param.yaml" />
 
   <node pkg="emergency_handler" exec="state_timeout_checker" name="state_timeout_checker" output="screen">
+    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
+
     <remap from="~/input/autoware_state" to="$(var input_autoware_state)"/>
 
     <remap from="~/output/is_state_timeout" to="$(var input_is_state_timeout)"/>
