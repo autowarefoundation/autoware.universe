@@ -42,6 +42,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/VehicleControlCommand.idl"
   "msg/VehicleKinematicState.idl"
   "msg/VehicleOdometry.idl"
+  "msg/VehicleStateCommand.idl"
   "msg/VehicleStateReport.idl"
   "msg/WheelEncoder.idl"
   "msg/WipersCommand.idl"
