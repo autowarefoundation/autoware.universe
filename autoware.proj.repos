@@ -1,13 +1,13 @@
 repositories:
   # autoware
-  autoware/AutowareArchitectureProposal.iv:
+  autoware/autoware.iv:
     type: git
-    url: https://github.com/tier4/AutowareArchitectureProposal.iv.git
-    version: ros2
+    url: git@github.com:tier4/autoware.iv.git
+    version: main
   autoware/launcher:
     type: git
-    url: https://github.com/tier4/autoware_launcher.iv.universe.git
-    version: ros2
+    url: git@github.com:tier4/autoware_launcher.git
+    version: main
   autoware/individual_params:
     type: git
     url: https://github.com/tier4/autoware_individual_params.git
@@ -15,29 +15,33 @@ repositories:
   # description
   description/sensor/sensor_description:
     type: git
-    url: https://github.com/tier4/sensor_description.iv.universe.git
-    version: ros2
+    url: git@github.com:tier4/sensor_description.iv.git
+    version: main
   description/sensor/velodyne_simulator:
     type: git
     url: https://github.com/tier4/velodyne_simulator.git
     version: ros2
   description/vehicle/lexus_description:
     type: git
-    url: https://github.com/tier4/lexus_description.iv.universe.git
-    version: ros2
+    url: git@github.com:tier4/lexus_description.iv.git
+    version: main
   # simulator
   simulator/planning_simulator:
     type: git
-    url: https://github.com/tier4/planning_simulator.iv.universe.git
-    version: ros2
+    url: git@github.com:tier4/planning_simulator.git
+    version: main
   simulator/planning_simulator_launcher:
     type: git
-    url: https://github.com/tier4/planning_sim_launcher.iv.universe.git
-    version: ros2
+    url: git@github.com:tier4/planning_sim_launcher.git
+    version: main
   simulator/scenario_runner:
     type: git
-    url: https://github.com/tier4/scenario_runner.iv.universe.git
-    version: ros2
+    url: git@github.com:tier4/AutowareT4BScenario.git
+    version: main
+  simulator/logsim:
+    type: git
+    url: git@github.com:tier4/logsim.git
+    version: master
   # vendor
   vendor/grid_map:
     type: git
