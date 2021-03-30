@@ -41,8 +41,12 @@ repositories:
   simulator/logsim:
     type: git
     url: git@github.com:tier4/logsim.git
-    version: master
+    version: ros2
   # vendor
+  vendor/quaternion_operation:
+    type: git
+    url: https://github.com/OUXT-Polaris/quaternion_operation.git
+    version: f08cd28b357f9feede55f1fb485cb21964f5d594
   vendor/grid_map:
     type: git
     url: https://github.com/ANYbotics/grid_map.git
