@@ -9,14 +9,14 @@
       <push-ros-namespace namespace="traffic_light"/>
 
       <!-- (usb_cam_node is assumed to have launched on logging PC) -->
-      <node pkg="topic_tools" exec="relay" name="tl_camera_info_relay" output="log" >
+      <node pkg="topic_tools" exec="relay" name="tl_camera_info_relay" output="log">
         <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
         <param name="input_topic" value="$(var camera_type)/camera_info" />
         <param name="output_topic" value="camera_info" />
         <param name="type" value="sensor_msgs/msg/CameraInfo" />
       </node>
 
-      <node pkg="topic_tools" exec="relay" name="tl_compressed_image_relay" output="log" >
+      <node pkg="topic_tools" exec="relay" name="tl_compressed_image_relay" output="log">
         <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
         <param name="input_topic" value="$(var camera_type)/image_raw/compressed" />
         <param name="output_topic" value="image_raw/compressed" />
