@@ -54,7 +54,7 @@ def launch_setup(context, *args, **kwargs):
         package=pkg,
         plugin='pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent',
         name='concatenate_data',
-        remappings=[('/output', 'concatenated/pointcloud')],
+        remappings=[('output', 'concatenated/pointcloud')],
         parameters=[{
             'input_topics': ['/sensing/lidar/top/outlier_filtered/pointcloud',
                              '/sensing/lidar/front_left/mirror_cropped/pointcloud',
