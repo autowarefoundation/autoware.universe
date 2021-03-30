@@ -7,8 +7,7 @@
   <arg name="param_path" default="$(find-pkg-share obstacle_avoidance_planner)/config/obstacle_avoidance_planner.param.yaml" />
   <arg name="vehicle_param_file" default="$(find-pkg-share lexus_description)/config/vehicle_info.param.yaml" />
 
-  <node pkg="obstacle_avoidance_planner" exec="obstacle_avoidance_planner_node"
-    name="obstacle_avoidance_planner" output="screen">
+  <node pkg="obstacle_avoidance_planner" exec="obstacle_avoidance_planner_node" name="obstacle_avoidance_planner" output="screen">
     <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
     <remap from="~/input/objects" to="$(var input_objects)"/>
     <remap from="~/input/path" to="$(var input_path_topic)" />
