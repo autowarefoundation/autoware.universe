@@ -35,7 +35,7 @@
 
   <group>
     <push-ros-namespace namespace="euclidean"/>
-    <include file="$(find-pkg-share euclidean_cluster)/launch/voxel_grid_based_euclidean_cluster.launch.xml" >
+    <include file="$(find-pkg-share euclidean_cluster)/launch/voxel_grid_based_euclidean_cluster.launch.xml">
       <arg name="output/clusters" value="lidar/clusters"/>
     </include>
     <include file="$(find-pkg-share roi_cluster_fusion)/launch/roi_cluster_fusion.launch.xml">
