@@ -59,7 +59,7 @@
     <remap from="labeled_clusters" to="$(var output)"/>
     <param name="rois_number" value="$(var input/rois_number)" />
 
-        
+
     <!-- debug -->
     <param name="debug_mode" value="$(var debug_mode)"/>
     <remap if="$(eval &quot; '$(var input_rois_number)' >= '1' &quot;)" from="input/image_raw0" to="$(var input/image0)"/>
