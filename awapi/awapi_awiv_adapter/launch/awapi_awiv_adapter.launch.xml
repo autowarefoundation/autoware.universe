@@ -53,7 +53,8 @@
   <arg name="output_force_lane_change" default="/planning/scenario_planning/lane_driving/force_lane_change" />
   <arg name="output_obstacle_avoid_approval" default="/planning/scenario_planning/lane_driving/obstacle_avoidance_approval" />
   <arg name="output_door_control" default="/pacmod/as_rx/rear_pass_door_cmd" />
-  <arg name="output_force_obstacle_avoid" default="tmp" /> <!-- not implemented -->
+  <!-- output_force_obstacle_avoid is not implemented -->
+  <arg name="output_force_obstacle_avoid" default="tmp" />
   <arg name="output_overwrite_traffic_light_state" default="/foa/traffic_light_recognition/traffic_light_states" />
 
   <arg name="node_emergency_stop" default="/control/vehicle_cmd_gate" />
@@ -133,19 +134,19 @@
     </node>
 
     <!-- relay get topic -->
-    <node pkg="topic_tools" exec="relay" name="route_relay" output="log" >
+    <node pkg="topic_tools" exec="relay" name="route_relay" output="log">
       <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
       <param name="input_topic" value="$(var input_route)" />
       <param name="output_topic" value="$(var get_route)" />
       <param name="type" value="autoware_planning_msgs/msg/Route" />
     </node>
-    <node pkg="topic_tools" exec="relay" name="predict_object_relay" output="log" >
+    <node pkg="topic_tools" exec="relay" name="predict_object_relay" output="log">
       <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
       <param name="input_topic" value="$(var input_object)" />
       <param name="output_topic" value="$(var get_predicted_object)" />
       <param name="type" value="autoware_perception_msgs/msg/DynamicObjectArray" />
     </node>
-    <node pkg="topic_tools" exec="relay" name="nearest_traffic_light_relay" output="log" >
+    <node pkg="topic_tools" exec="relay" name="nearest_traffic_light_relay" output="log">
       <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
       <param name="input_topic" value="$(var input_nearest_traffic_light_state)" />
       <param name="output_topic" value="$(var get_nearest_traffic_light_status)" />
@@ -153,105 +154,105 @@
     </node>
 
     <!-- relay put topic -->
-    <node pkg="topic_tools" exec="relay" name="gate_mode_relay" output="log" >
+    <node pkg="topic_tools" exec="relay" name="gate_mode_relay" output="log">
       <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
       <param name="input_topic" value="$(var set_gate_mode)" />
       <param name="output_topic" value="$(var output_gate_mode)" />
       <param name="type" value="autoware_control_msgs/msg/GateMode" />
     </node>
-    <node pkg="topic_tools" exec="relay" name="emergency_stop_relay" output="log" >
+    <node pkg="topic_tools" exec="relay" name="emergency_stop_relay" output="log">
       <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
       <param name="input_topic" value="$(var set_emergency_stop)" />
       <param name="output_topic" value="$(var output_emergency_stop)" />
       <param name="type" value="autoware_control_msgs/msg/EmergencyMode" />
     </node>
-    <node pkg="topic_tools" exec="relay" name="autoware_engage_relay" output="log" >
+    <node pkg="topic_tools" exec="relay" name="autoware_engage_relay" output="log">
       <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
       <param name="input_topic" value="$(var set_engage)" />
       <param name="output_topic" value="$(var output_autoware_engage)" />
       <param name="type" value="autoware_vehicle_msgs/msg/Engage" />
     </node>
-    <node pkg="topic_tools" exec="relay" name="vehicle_engage_relay" output="log" >
+    <node pkg="topic_tools" exec="relay" name="vehicle_engage_relay" output="log">
       <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
       <param name="input_topic" value="$(var set_engage)" />
       <param name="output_topic" value="$(var output_vehicle_engage)" />
       <param name="type" value="autoware_vehicle_msgs/msg/Engage" />
     </node>
-    <node pkg="topic_tools" exec="relay" name="put_route_relay" output="log" >
+    <node pkg="topic_tools" exec="relay" name="put_route_relay" output="log">
       <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
       <param name="input_topic" value="$(var set_route)" />
       <param name="output_topic" value="$(var output_route)" />
       <param name="type" value="autoware_planning_msgs/msg/Route" />
       <param name="durability" value="transient_local" />
     </node>
-    <node pkg="topic_tools" exec="relay" name="put_goal_relay" output="log" >
+    <node pkg="topic_tools" exec="relay" name="put_goal_relay" output="log">
       <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
       <param name="input_topic" value="$(var set_goal)" />
       <param name="output_topic" value="$(var output_goal)" />
       <param name="type" value="geometry_msgs/msg/PoseStamped" />
     </node>
-    <node pkg="topic_tools" exec="relay" name="lane_change_approval_relay" output="log" >
+    <node pkg="topic_tools" exec="relay" name="lane_change_approval_relay" output="log">
       <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
       <param name="input_topic" value="$(var set_lane_change_approval)" />
       <param name="output_topic" value="$(var output_lane_change_approval)" />
       <param name="type" value="autoware_planning_msgs/msg/LaneChangeCommand" />
     </node>
-    <node pkg="topic_tools" exec="relay" name="force_lane_change_relay" output="log" >
+    <node pkg="topic_tools" exec="relay" name="force_lane_change_relay" output="log">
       <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
       <param name="input_topic" value="$(var set_force_lane_change)" />
       <param name="output_topic" value="$(var output_force_lane_change)" />
       <param name="type" value="autoware_planning_msgs/msg/LaneChangeCommand" />
     </node>
-    <node pkg="topic_tools" exec="relay" name="obstacle_avoid_approval_relay" output="log" >
+    <node pkg="topic_tools" exec="relay" name="obstacle_avoid_approval_relay" output="log">
       <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
       <param name="input_topic" value="$(var set_obstacle_avoid_approval)" />
       <param name="output_topic" value="$(var output_obstacle_avoid_approval)" />
       <param name="type" value="autoware_planning_msgs/msg/EnableAvoidance" />
     </node>
     <!-- not implemented
-    <node pkg="topic_tools" exec="relay" name="force_obstacle_avoid_relay" output="log" >
+    <node pkg="topic_tools" exec="relay" name="force_obstacle_avoid_relay" output="log">
       <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
       <param name="input_topic" value="$(var set_force_obstacle_avoid)" />
       <param name="output_topic" value="$(var output_force_obstacle_avoid)" />
       <param name="type" value="" />
     </node> -->
-    <node pkg="topic_tools" exec="relay" name="traffic_light_relay" output="log" >
+    <node pkg="topic_tools" exec="relay" name="traffic_light_relay" output="log">
       <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
       <param name="input_topic" value="$(var input_traffic_light_state)" />
       <param name="output_topic" value="$(var get_traffic_light_status)" />
       <param name="type" value="autoware_perception_msgs/msg/TrafficLightStateArray" />
     </node>
-    <node pkg="topic_tools" exec="relay" name="overwrite_traffic_light_state_relay" output="log" >
+    <node pkg="topic_tools" exec="relay" name="overwrite_traffic_light_state_relay" output="log">
       <param name="input_topic" value="$(var set_overwrite_traffic_light_state)" />
       <param name="output_topic" value="$(var output_overwrite_traffic_light_state)" />
       <param name="type" value="autoware_perception_msgs/msg/TrafficLightStateArray" />
     </node>
 
-    <node pkg="topic_tools" exec="relay" name="speed_exceeded_relay" output="log" >
+    <node pkg="topic_tools" exec="relay" name="speed_exceeded_relay" output="log">
       <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
       <param name="input_topic" value="$(var input_stop_speed_exceeded)" />
       <param name="output_topic" value="$(var get_stop_speed_exceeded)" />
       <param name="type" value="autoware_planning_msgs/msg/StopSpeedExceeded" />
     </node>
-    <node pkg="topic_tools" exec="relay" name="crosswalk_status_relay" output="log" >
+    <node pkg="topic_tools" exec="relay" name="crosswalk_status_relay" output="log">
       <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
       <param name="input_topic" value="$(var set_crosswalk_status)" />
       <param name="output_topic" value="$(var input_external_crosswalk_status)" />
       <param name="type" value="autoware_api_msgs/msg/CrosswalkStatus" />
     </node>
-    <node pkg="topic_tools" exec="relay" name="intersection_status_relay" output="log" >
+    <node pkg="topic_tools" exec="relay" name="intersection_status_relay" output="log">
       <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
       <param name="input_topic" value="$(var set_intersection_status)" />
       <param name="output_topic" value="$(var input_external_intersection_status)" />
       <param name="type" value="autoware_api_msgs/msg/IntersectionStatus" />
     </node>
-    <node pkg="topic_tools" exec="relay" name="expand_stop_range_relay" output="log" >
+    <node pkg="topic_tools" exec="relay" name="expand_stop_range_relay" output="log">
       <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
       <param name="input_topic" value="$(var set_expand_stop_range)" />
       <param name="output_topic" value="$(var input_expand_stop_range)" />
       <param name="type" value="autoware_planning_msgs/msg/ExpandStopRange" />
     </node>
-    <node pkg="topic_tools" exec="relay" name="pose_initialization_request_relay" output="log" >
+    <node pkg="topic_tools" exec="relay" name="pose_initialization_request_relay" output="log">
       <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
       <param name="input_topic" value="$(var set_pose_initialization_request)" />
       <param name="output_topic" value="$(var input_pose_initialization_request)" />
