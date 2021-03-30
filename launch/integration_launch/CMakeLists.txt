@@ -1,14 +1,16 @@
-cmake_minimum_required(VERSION 2.8.3)
+
+cmake_minimum_required(VERSION 3.5)
 project(integration_launch)
 
-find_package(catkin REQUIRED COMPONENTS
-  autoware_launch
-)
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
 
-catkin_package()
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
+endif()
 
-install(
-  DIRECTORY
-    launch
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+ament_auto_package(
+  INSTALL_TO_SHARE
+  launch
 )
