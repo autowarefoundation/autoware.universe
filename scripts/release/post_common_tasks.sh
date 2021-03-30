@@ -10,4 +10,4 @@ source $SCRIPT_DIR/update_vcs_versions.sh
 # Commit autoware.proj
 git checkout --detach --quiet HEAD
 git add $(get_repos_file_path)
-git commit -m "Update $(get_repos_file_path)"
+git commit -m "Update $(basename $(get_repos_file_path))"

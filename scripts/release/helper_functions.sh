@@ -10,7 +10,7 @@ function install_yq_if_not_installed() {
 }
 
 function is_release_branch_name() {
-  if ! [[ "$1" =~ ^(rc|release)\/.*$ ]]; then
+  if ! [[ "$1" =~ ^(experiment|rc|release)\/.*$ ]]; then
     return 1
   fi
 
@@ -26,16 +26,24 @@ function is_sem_ver() {
   return 0
 }
 
-function is_valid_autoware_rc_version() {
-  if ! [[ "$1" =~ ^v([0-9]+)\.([0-9]+)$ ]]; then
+function is_valid_autoware_experiment_version() {
+  if ! [[ "$1" =~ ^[0-9a-zA-Z][0-9a-zA-Z-]+$ ]]; then
     return 1
   fi
 
   return 0
 }
 
-function is_valid_autoware_version() {
-  if ! [[ "$1" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+function is_valid_autoware_rc_version() {
+  if ! [[ "$1" =~ ^v([0-9]+)\.([0-9]+)(\.([0-9]+))?$ ]]; then
+    return 1
+  fi
+
+  return 0
+}
+
+function is_valid_autoware_release_version() {
+  if ! [[ "$1" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+)(\.([0-9]+))?$ ]]; then
     return 1
   fi
 
@@ -63,11 +71,11 @@ function show_workspace_diff() {
 }
 
 function get_autoware_repositories() {
-  echo "src/autoware/pilot.auto" "src/autoware/launcher"
+  echo "src/autoware/autoware.iv" "src/autoware/launcher"
 }
 
 function get_vcs_repositories() {
-  echo "$(yq r $(get_repos_file_path) repositories | grep -E "^[a-zA-Z]+" | sed "s/://g")"
+  echo "$(yq e '.repositories' $(get_repos_file_path) | grep -E "^[a-zA-Z]+" | sed "s/://g")"
 }
 
 function is_on_rc_branch() {
@@ -105,7 +113,7 @@ function update_version_in_repos() {
     return 1
   fi
 
-  yq w --inplace $(get_repos_file_path) "repositories.[$repository].version" "$version"
+  yq eval --inplace ".repositories.\"$repository\".version = \"$version\"" $(get_repos_file_path)
 
   return 0
 }
