@@ -62,7 +62,7 @@
           /autoware/system/resource_monitoring/hdd_usage: { sf_at: "warn", lf_at: "error", spf_at: "none" }
           /autoware/system/resource_monitoring/memory_usage: { sf_at: "warn", lf_at: "error", spf_at: "none" }
           /autoware/system/resource_monitoring/network_usage: { sf_at: "warn", lf_at: "error", spf_at: "none" }
-          /autoware/system/resource_monitoring/ntp_offset: { sf_at: "warn", lf_at: "error", spf_at: "none" }
+          /autoware/system/resource_monitoring/ntp_offset: { sf_at: "warn", lf_at: "none", spf_at: "none" }
           /autoware/system/resource_monitoring/gpu_temperature: { sf_at: "warn", lf_at: "error", spf_at: "none" }
           /autoware/system/resource_monitoring/gpu_usage: { sf_at: "warn", lf_at: "error", spf_at: "none" }
           /autoware/system/resource_monitoring/gpu_memory_usage: { sf_at: "warn", lf_at: "error", spf_at: "none" }
