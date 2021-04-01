@@ -26,6 +26,7 @@
         "/map/pointcloud_map",
         "/sensing/lidar/pointcloud",
         "/sensing/lidar/no_ground/pointcloud",
+        "/initialpose3d",
         "/localization/pose_twist_fusion_filter/pose",
         "/perception/object_recognition/objects",
         "/planning/mission_planning/route",
