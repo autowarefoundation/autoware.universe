@@ -354,6 +354,7 @@ ScenarioSelectorNode::ScenarioSelectorNode()
       break;
     } catch (tf2::TransformException & ex) {
       RCLCPP_DEBUG(this->get_logger(), "waiting for initial pose...");
+      rclcpp::sleep_for(std::chrono::milliseconds(100));
     }
   }
 }
