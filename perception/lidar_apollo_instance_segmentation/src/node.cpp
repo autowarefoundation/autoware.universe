@@ -23,7 +23,7 @@ LidarInstanceSegmentationNode::LidarInstanceSegmentationNode()
   debugger_ptr_ = std::make_shared<Debugger>(this);
   pointcloud_sub_ =
     this->create_subscription<sensor_msgs::msg::PointCloud2>(
-    "input/pointcloud", 1,
+    "input/pointcloud", rclcpp::SensorDataQoS(),
     std::bind(&LidarInstanceSegmentationNode::pointCloudCallback, this, _1));
   dynamic_objects_pub_ =
     this->create_publisher<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>(
