@@ -1,0 +1,20 @@
+#include "autoware_auto_msgs/msg/Complex32.idl"
+#include "geometry_msgs/msg/Point.idl"
+
+module autoware_auto_msgs {
+  module msg {
+    @verbatim (language="comment", text=
+      " Representation of a position and heading")
+    struct RoutePoint {
+      @verbatim (language="comment", text=
+      " This position is the position of the CoG frame origin of"
+      " the vehicle with relation to the frame in which the Route exists.")
+      geometry_msgs::msg::Point position;
+
+      @verbatim (language="comment", text=
+      " This heading is relative to the X or East-facing axis of"
+      " the frame in which the Route exists.")
+      autoware_auto_msgs::msg::Complex32 heading;
+    };
+  };
+};

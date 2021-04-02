@@ -1,4 +1,4 @@
-#include "autoware_auto_msgs/msg/Route.idl"
+#include "autoware_auto_msgs/msg/HADMapRoute.idl"
 #include "autoware_auto_msgs/msg/Trajectory.idl"
 
 module autoware_auto_msgs {
@@ -8,7 +8,7 @@ module autoware_auto_msgs {
       const uint8 FAIL = 1;
     };
     struct PlanTrajectory_Goal {
-      autoware_auto_msgs::msg::Route sub_route;
+      autoware_auto_msgs::msg::HADMapRoute sub_route;
     };
 
     struct PlanTrajectory_Result {
