@@ -6,8 +6,12 @@ services:
   autoware:
     type: roslaunch
     package_name: autoware_launch
-    file_name: autoware.launch
+    file_name: autoware.launch.xml
   planning_simulator:
     type: roslaunch
     package_name: integration_launch
-    file_name: ci_planning_simulator.launch
+    file_name: ci_planning_simulator.launch.xml
+  planning_simulator_v2:
+    type: roslaunch
+    package_name: scenario_test_runner
+    file_name: autoware.launch.xml

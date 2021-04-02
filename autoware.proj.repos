@@ -36,8 +36,12 @@ repositories:
     version: main
   simulator/scenario_runner:
     type: git
-    url: git@github.com:tier4/AutowareT4BScenario.git
+    url: git@github.com:tier4/scenario_simulator_v1.git
     version: main
+  simulator/scenario_simulator:
+    type: git
+    url: git@github.com:tier4/scenario_simulator.auto.git
+    version: master
   simulator/logsim:
     type: git
     url: git@github.com:tier4/logsim.git
@@ -107,6 +111,9 @@ repositories:
     type: git
     url: https://github.com/tier4/rqt_runtime_monitor.git
     version: dashing-devel
+  vendor/operational-design-domains:
+    type: git
+    url: https://gitlab.com/autowarefoundation/operational-design-domains
 # calibration
 #  calibration/tunable_static_tf_broadcaster:
 #    type: git
