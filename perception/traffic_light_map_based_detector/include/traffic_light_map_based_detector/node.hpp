@@ -31,6 +31,7 @@
 #include "autoware_planning_msgs/msg/route.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "sensor_msgs/msg/camera_info.hpp"
+#include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
 #include "visualization_msgs/msg/marker_array.hpp"
 
