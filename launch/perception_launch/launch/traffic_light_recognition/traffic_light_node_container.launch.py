@@ -84,23 +84,23 @@ def generate_launch_description():
                 parameters=[create_parameter_dict('approximate_sync', 'classifier_type',
                                                   'model_file_path', 'label_file_path',
                                                   'precision', 'input_c', 'input_h', 'input_w')],
-                remappings=[('input/image', LaunchConfiguration('input/image')),
-                            ('input/rois', 'rois'),
-                            ('output/traffic_light_states', 'traffic_light_states')]
+                remappings=[('~/input/image', LaunchConfiguration('input/image')),
+                            ('~/input/rois', 'rois'),
+                            ('~/output/traffic_light_states', 'traffic_light_states')]
             ),
             ComposableNode(
                 package='traffic_light_visualization',
                 plugin='traffic_light::TrafficLightRoiVisualizerNodelet',
                 name='traffic_light_roi_visualizer',
                 parameters=[create_parameter_dict('enable_fine_detection')],
-                remappings=[('input/image', LaunchConfiguration('input/image')),
-                            ('input/rois', 'rois'),
-                            ('input/rough/rois', 'rough/rois'),
-                            ('input/traffic_light_states', 'traffic_light_states'),
-                            ('output/image', 'debug/rois'),
-                            ('output/image/compressed', 'debug/rois/compressed'),
-                            ('output/image/compressedDepth', 'debug/rois/compressedDepth'),
-                            ('output/image/theora', 'debug/rois/theora')]
+                remappings=[('~/input/image', LaunchConfiguration('input/image')),
+                            ('~/input/rois', 'rois'),
+                            ('~/input/rough/rois', 'rough/rois'),
+                            ('~/input/traffic_light_states', 'traffic_light_states'),
+                            ('~/output/image', 'debug/rois'),
+                            ('~/output/image/compressed', 'debug/rois/compressed'),
+                            ('~/output/image/compressedDepth', 'debug/rois/compressedDepth'),
+                            ('~/output/image/theora', 'debug/rois/theora')]
             )
         ],
         output='both',
@@ -118,9 +118,9 @@ def generate_launch_description():
                 plugin='traffic_light::TrafficLightSSDFineDetectorNodelet',
                 name='traffic_light_ssd_fine_detector',
                 parameters=[ssd_fine_detector_param],
-                remappings=[('input/image', LaunchConfiguration('input/image')),
-                            ('input/rois', 'rough/rois'),
-                            ('output/rois', 'rois')]
+                remappings=[('~/input/image', LaunchConfiguration('input/image')),
+                            ('~/input/rois', 'rough/rois'),
+                            ('~/output/rois', 'rois')]
             ),
         ],
         target_container=container,
