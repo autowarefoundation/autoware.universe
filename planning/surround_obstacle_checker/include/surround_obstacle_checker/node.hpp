@@ -20,6 +20,7 @@
 
 #include "pcl_conversions/pcl_conversions.h"
 #include "tf2/utils.h"
+#include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
 #include "boost/assert.hpp"
 #include "boost/assign/list_of.hpp"
