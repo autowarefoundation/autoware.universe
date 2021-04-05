@@ -2,7 +2,6 @@
 <launch>
   <arg name="simulation"/>
   <arg name="vehicle_model"/>
-  <arg name="vehicle_param_file" />
   <arg name="vehicle_id"/>
   <arg name="initial_engage_state" default="true"/>
 
@@ -14,7 +13,6 @@
     <arg name="simulator_model" default="$(var vehicle_model_pkg)/config/simulator_model.param.yaml" />
     <include file="$(find-pkg-share simple_planning_simulator)/launch/simple_planning_simulator.launch.xml">
       <arg name="simulator_model" value="$(var simulator_model)"/>
-      <arg name="vehicle_param_file" value="$(var vehicle_param_file)"/>
       <arg name="initial_engage_state" value="$(var initial_engage_state)"/>
     </include>
   </group>
