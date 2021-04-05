@@ -9,7 +9,6 @@
 
   <!-- model parameters -->
   <arg name="simulator_model" default="$(find-pkg-share simple_planning_simulator)/config/simple_planning_simulator.param.yaml"/>
-  <arg name="vehicle_param_file"/>
 
   <!-- simple_planning_simulator node -->
   <node pkg="simple_planning_simulator" exec="simple_planning_simulator_exe" name="simple_planning_simulator" output="screen">
@@ -26,7 +25,6 @@
     <remap from="input/engage" to="/vehicle/engage" />
 
     <param from="$(var simulator_model)"/>
-    <param from="$(var vehicle_param_file)"/>
 
     <param name="loop_rate" value="$(var loop_rate)"/>
     <param name="simulation_frame_id" value="$(var simulation_frame_id)"/>
