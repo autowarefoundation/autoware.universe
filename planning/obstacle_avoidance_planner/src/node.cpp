@@ -38,6 +38,7 @@
 #include "rclcpp/time.hpp"
 #include "std_msgs/msg/bool.hpp"
 #include "tf2/utils.h"
+#include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
 #include "vehicle_info_util/vehicle_info.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
@@ -415,7 +416,7 @@ std::unique_ptr<geometry_msgs::msg::Pose> ObstacleAvoidancePlanner::getCurrentEg
   try {
     tf_current_pose = tf_buffer_ptr_->lookupTransform(
       "map", "base_link", rclcpp::Time(0), rclcpp::Duration::from_seconds(1.0));
-  } catch (tf2::TransformException ex) {
+  } catch (tf2::TransformException & ex) {
     RCLCPP_ERROR(get_logger(), "[ObstacleAvoidancePlanner] %s", ex.what());
     return nullptr;
   }
