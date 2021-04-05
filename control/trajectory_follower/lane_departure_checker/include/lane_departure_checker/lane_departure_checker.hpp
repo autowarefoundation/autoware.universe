@@ -18,6 +18,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <memory>
 
 #include "boost/optional.hpp"
 
@@ -31,7 +32,7 @@
 
 #include "autoware_utils/geometry/boost_geometry.hpp"
 #include "autoware_utils/geometry/pose_deviation.hpp"
-#include "autoware_utils/ros/vehicle_info.hpp"
+#include "vehicle_info_util/vehicle_info.hpp"
 
 namespace lane_departure_checker
 {
@@ -40,7 +41,6 @@ using autoware_utils::PoseDeviation;
 
 struct Param
 {
-  VehicleInfo vehicle_info;
   double footprint_margin;
   double resample_interval;
   double max_deceleration;
@@ -80,10 +80,17 @@ class LaneDepartureChecker
 public:
   Output update(const Input & input);
 
+  void setParam(const Param & param, const vehicle_info_util::VehicleInfo vehicle_info)
+  {
+    param_ = param;
+    vehicle_info_ptr_ = std::make_shared<vehicle_info_util::VehicleInfo>(vehicle_info);
+  }
+
   void setParam(const Param & param) {param_ = param;}
 
 private:
   Param param_;
+  std::shared_ptr<vehicle_info_util::VehicleInfo> vehicle_info_ptr_;
 
   static PoseDeviation calcTrajectoryDeviation(
     const autoware_planning_msgs::msg::Trajectory & trajectory,
@@ -96,7 +103,7 @@ private:
   static autoware_planning_msgs::msg::Trajectory cutTrajectory(
     const autoware_planning_msgs::msg::Trajectory & trajectory, const double length);
 
-  static std::vector<LinearRing2d> createVehicleFootprints(
+  std::vector<LinearRing2d> createVehicleFootprints(
     const autoware_planning_msgs::msg::Trajectory & trajectory, const Param & param);
 
   static std::vector<LinearRing2d> createVehiclePassingAreas(

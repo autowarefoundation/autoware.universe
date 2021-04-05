@@ -25,8 +25,6 @@
 #include "autoware_utils/system/stop_watch.hpp"
 #include "lanelet2_extension/utility/query.hpp"
 #include "lanelet2_extension/visualization/visualization.hpp"
-#include "vehicle_info_util/vehicle_info.hpp"
-
 
 using autoware_utils::rad2deg;
 
@@ -61,8 +59,7 @@ lanelet::ConstLanelets getRouteLanelets(
 
     for (const auto & lane_id : route_sections.front().lane_ids) {
       for (const auto & lanelet_sequence : lanelet::utils::query::getPrecedingLaneletSequences(
-          routing_graph, lanelet_map.laneletLayer.get(lane_id), extension_length))
-      {
+             routing_graph, lanelet_map.laneletLayer.get(lane_id), extension_length)) {
         for (const auto & preceding_lanelet : lanelet_sequence) {
           route_lanelets.push_back(preceding_lanelet);
         }
@@ -82,8 +79,7 @@ lanelet::ConstLanelets getRouteLanelets(
 
     for (const auto & lane_id : route_sections.back().lane_ids) {
       for (const auto & lanelet_sequence : lanelet::utils::query::getSucceedingLaneletSequences(
-          routing_graph, lanelet_map.laneletLayer.get(lane_id), extension_length))
-      {
+             routing_graph, lanelet_map.laneletLayer.get(lane_id), extension_length)) {
         for (const auto & succeeding_lanelet : lanelet_sequence) {
           route_lanelets.push_back(succeeding_lanelet);
         }
@@ -94,13 +90,13 @@ lanelet::ConstLanelets getRouteLanelets(
   return route_lanelets;
 }
 
-template<typename T>
+template <typename T>
 void update_param(
   const std::vector<rclcpp::Parameter> & parameters, const std::string & name, T & value)
 {
   auto it = std::find_if(
     parameters.cbegin(), parameters.cend(),
-    [&name](const rclcpp::Parameter & parameter) {return parameter.get_name() == name;});
+    [&name](const rclcpp::Parameter & parameter) { return parameter.get_name() == name; });
   if (it != parameters.cend()) {
     value = it->template get_value<T>();
   }
@@ -125,24 +121,8 @@ LaneDepartureCheckerNode::LaneDepartureCheckerNode(const rclcpp::NodeOptions & o
   // Core Parameter
 
   // Vehicle Info
-  auto i = vehicle_info_util::VehicleInfo::create(*this);
-  param_.vehicle_info.wheel_radius = i.wheel_radius_m_;
-  param_.vehicle_info.wheel_width = i.wheel_width_m_;
-  param_.vehicle_info.wheel_base = i.wheel_base_m_;
-  param_.vehicle_info.wheel_tread = i.wheel_tread_m_;
-  param_.vehicle_info.front_overhang = i.front_overhang_m_;
-  param_.vehicle_info.rear_overhang = i.rear_overhang_m_;
-  param_.vehicle_info.left_overhang = i.left_overhang_m_;
-  param_.vehicle_info.right_overhang = i.right_overhang_m_;
-  param_.vehicle_info.vehicle_height = i.vehicle_height_m_;
-  param_.vehicle_info.vehicle_length = i.vehicle_length_m_;
-  param_.vehicle_info.vehicle_width = i.vehicle_width_m_;
-  param_.vehicle_info.min_longitudinal_offset = i.min_longitudinal_offset_m_;
-  param_.vehicle_info.max_longitudinal_offset = i.max_longitudinal_offset_m_;
-  param_.vehicle_info.min_lateral_offset = i.min_lateral_offset_m_;
-  param_.vehicle_info.max_lateral_offset = i.max_lateral_offset_m_;
-  param_.vehicle_info.min_height_offset = i.min_height_offset_m_;
-  param_.vehicle_info.max_height_offset = i.max_height_offset_m_;
+  auto vehicle_info = vehicle_info_util::VehicleInfo::create(*this);
+  vehicle_length_m_ = vehicle_info.vehicle_length_m_;
 
   param_.footprint_margin = declare_parameter("footprint_margin", 0.0);
   param_.resample_interval = declare_parameter("resample_interval", 0.3);
@@ -158,7 +138,7 @@ LaneDepartureCheckerNode::LaneDepartureCheckerNode(const rclcpp::NodeOptions & o
 
   // Core
   lane_departure_checker_ = std::make_unique<LaneDepartureChecker>();
-  lane_departure_checker_->setParam(param_);
+  lane_departure_checker_->setParam(param_, vehicle_info);
 
   // Subscriber
   sub_twist_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
@@ -181,11 +161,9 @@ LaneDepartureCheckerNode::LaneDepartureCheckerNode(const rclcpp::NodeOptions & o
   // Diagnostic Updater
   updater_.setHardwareID("lane_departure_checker");
 
-  updater_.add(
-    "lane_departure", this, &LaneDepartureCheckerNode::checkLaneDeparture);
+  updater_.add("lane_departure", this, &LaneDepartureCheckerNode::checkLaneDeparture);
 
-  updater_.add(
-    "trajectory_deviation", this, &LaneDepartureCheckerNode::checkTrajectoryDeviation);
+  updater_.add("trajectory_deviation", this, &LaneDepartureCheckerNode::checkTrajectoryDeviation);
 
   // Wait for first self pose
   self_pose_listener_.waitForFirstPose();
@@ -233,26 +211,22 @@ void LaneDepartureCheckerNode::onPredictedTrajectory(
 bool LaneDepartureCheckerNode::isDataReady()
 {
   if (!current_pose_) {
-    RCLCPP_INFO_THROTTLE(
-      get_logger(), *get_clock(), 5000, "waiting for current_pose...");
+    RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for current_pose...");
     return false;
   }
 
   if (!current_twist_) {
-    RCLCPP_INFO_THROTTLE(
-      get_logger(), *get_clock(), 5000, "waiting for current_twist msg...");
+    RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for current_twist msg...");
     return false;
   }
 
   if (!lanelet_map_) {
-    RCLCPP_INFO_THROTTLE(
-      get_logger(), *get_clock(), 5000, "waiting for lanelet_map msg...");
+    RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for lanelet_map msg...");
     return false;
   }
 
   if (!route_) {
-    RCLCPP_INFO_THROTTLE(
-      get_logger(), *get_clock(), 5000, "waiting for route msg...");
+    RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for route msg...");
     return false;
   }
 
@@ -278,8 +252,7 @@ bool LaneDepartureCheckerNode::isDataTimeout()
   constexpr double th_pose_timeout = 1.0;
   const auto pose_time_diff = rclcpp::Time(current_pose_->header.stamp) - now;
   if (pose_time_diff.seconds() > th_pose_timeout) {
-    RCLCPP_WARN_THROTTLE(
-      get_logger(), *get_clock(), 5000, "pose is timeout...");
+    RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000, "pose is timeout...");
     return true;
   }
 
@@ -306,8 +279,8 @@ void LaneDepartureCheckerNode::onTimer()
 
   // In order to wait for both of map and route will be ready, write this not in callback but here
   if (last_route_ != route_) {
-    route_lanelets_ = getRouteLanelets(
-      *lanelet_map_, routing_graph_, route_->route_sections, param_.vehicle_info.vehicle_length);
+    route_lanelets_ =
+      getRouteLanelets(*lanelet_map_, routing_graph_, route_->route_sections, vehicle_length_m_);
     last_route_ = route_;
   }
   processing_time_map["Node: getRouteLanelets"] = stop_watch.toc(true);
@@ -487,8 +460,8 @@ visualization_msgs::msg::MarkerArray LaneDepartureCheckerNode::createMarkerArray
     {
       auto marker = createDefaultMarker(
         "map", this->now(), "resampled_trajectory_line", 0,
-        visualization_msgs::msg::Marker::LINE_STRIP,
-        createMarkerScale(0.05, 0, 0), createMarkerColor(1.0, 1.0, 1.0, 0.999));
+        visualization_msgs::msg::Marker::LINE_STRIP, createMarkerScale(0.05, 0, 0),
+        createMarkerColor(1.0, 1.0, 1.0, 0.999));
 
       for (const auto & p : output_.resampled_trajectory.points) {
         marker.points.push_back(p.pose.position);
@@ -502,8 +475,8 @@ visualization_msgs::msg::MarkerArray LaneDepartureCheckerNode::createMarkerArray
     {
       auto marker = createDefaultMarker(
         "map", this->now(), "resampled_trajectory_points", 0,
-        visualization_msgs::msg::Marker::SPHERE_LIST,
-        createMarkerScale(0.1, 0.1, 0.1), createMarkerColor(0.0, 1.0, 0.0, 0.999));
+        visualization_msgs::msg::Marker::SPHERE_LIST, createMarkerScale(0.1, 0.1, 0.1),
+        createMarkerColor(0.0, 1.0, 0.0, 0.999));
 
       for (const auto & p : output_.resampled_trajectory.points) {
         marker.points.push_back(p.pose.position);
@@ -529,8 +502,7 @@ visualization_msgs::msg::MarkerArray LaneDepartureCheckerNode::createMarkerArray
     }
 
     auto marker = createDefaultMarker(
-      "map", this->now(), "vehicle_footprints", 0,
-      visualization_msgs::msg::Marker::LINE_LIST,
+      "map", this->now(), "vehicle_footprints", 0, visualization_msgs::msg::Marker::LINE_LIST,
       createMarkerScale(0.05, 0, 0), color);
 
     for (const auto & vehicle_footprint : output_.vehicle_footprints) {

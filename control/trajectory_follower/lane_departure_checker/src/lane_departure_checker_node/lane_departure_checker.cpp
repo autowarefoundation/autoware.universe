@@ -232,7 +232,7 @@ std::vector<LinearRing2d> LaneDepartureChecker::createVehicleFootprints(
 {
   // Create vehicle footprint in base_link coordinate
   const auto local_vehicle_footprint =
-    createVehicleFootprint(param.vehicle_info, param.footprint_margin);
+    createVehicleFootprint(*vehicle_info_ptr_, param.footprint_margin);
 
   // Create vehicle footprint on each TrajectoryPoint
   std::vector<LinearRing2d> vehicle_footprints;
