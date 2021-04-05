@@ -42,6 +42,7 @@ IntersectionModule::IntersectionModule(
   turn_direction_ = assigned_lanelet.attributeOr("turn_direction", "else");
   has_traffic_light_ =
     !(assigned_lanelet.regulatoryElementsAs<const lanelet::TrafficLight>().empty());
+  state_machine_.setMarginTime(planner_param_.state_transit_margin_time);
 }
 
 bool IntersectionModule::modifyPathVelocity(
