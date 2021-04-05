@@ -1,7 +1,6 @@
 <?xml version="1.0"?>
 
 <launch>
-  <arg name="vehicle_param_file" />
 
   <!-- common parameters -->
   <arg name="lateral_controller_mode" default="mpc_follower" description="options: mpc_follower, pure_pursuit"/>
@@ -24,21 +23,18 @@
       <group if="$(eval &quot;'$(var lateral_controller_mode)'=='mpc_follower'&quot;)">
         <include file="$(find-pkg-share mpc_follower)/launch/mpc_follower.launch.xml">
           <arg name="mpc_follower_param_path" value="$(var mpc_follower_param_path)" />
-          <arg name="vehicle_param_file" value="$(var vehicle_param_file)" />
         </include>
       </group>
 
       <group if="$(eval &quot;'$(var lateral_controller_mode)'=='pure_pursuit'&quot;)">
         <include file="$(find-pkg-share pure_pursuit)/launch/pure_pursuit.launch.xml">
           <arg name="pure_pursuit_param_path" value="$(var pure_pursuit_param_path)" />
-          <arg name="vehicle_param_file" value="$(var vehicle_param_file)" />
         </include>
       </group>
 
       <!-- longitudinal controller -->
       <include file="$(find-pkg-share velocity_controller)/launch/velocity_controller.launch.xml">
         <arg name="velocity_controller_param_path" value="$(var velocity_controller_param_path)"/>
-        <arg name="vehicle_param_file" value="$(var vehicle_param_file)" />
       </include>
 
       <!-- latlon coupler -->
@@ -51,7 +47,6 @@
 
       <!-- lane departure checker -->
       <include file="$(find-pkg-share lane_departure_checker)/launch/lane_departure_checker.launch.xml">
-        <arg name="vehicle_param_file" value="$(var vehicle_param_file)" />
       </include>
     </group>
 
@@ -61,7 +56,6 @@
 
     <!-- vehicle cmd gate -->
     <include file="$(find-pkg-share vehicle_cmd_gate)/launch/vehicle_cmd_gate.launch.xml">
-      <arg name="vehicle_param_file" value="$(var vehicle_param_file)" />
       <arg name="config_file" value="$(var vehicle_cmd_gate_param_path)"/>
       <arg name="use_emergency_handling" value="false"/>
       <arg name="use_external_emergency_stop" value="true"/>
