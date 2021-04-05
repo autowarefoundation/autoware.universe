@@ -47,12 +47,10 @@
 
   <!-- Planning -->
   <include file="$(find-pkg-share planning_launch)/launch/planning.launch.xml">
-    <arg name="vehicle_param_file" value="$(find-pkg-share $(var vehicle_model)_description)/config/vehicle_info.param.yaml"/>
   </include>
 
   <!-- Control -->
   <include file="$(find-pkg-share control_launch)/launch/control.launch.xml">
-    <arg name="vehicle_param_file" value="$(find-pkg-share $(var vehicle_model)_description)/config/vehicle_info.param.yaml"/>
     <!-- options for lateral_controller_mode: mpc_follower, pure_pursuit -->
     <arg name="lateral_controller_mode" value="mpc_follower" />
   </include>
