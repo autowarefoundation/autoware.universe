@@ -9,8 +9,11 @@ services:
     file_name: autoware.launch.xml
   planning_simulator:
     type: roslaunch
-    package_name: integration_launch
-    file_name: ci_planning_simulator.launch.xml
+    package_name: autoware_launch
+    file_name: planning_simulator.launch.xml
+    params:
+      vehicle_model: lexus
+      sensor_model: aip_xx1
   planning_simulator_v2:
     type: roslaunch
     package_name: scenario_test_runner
