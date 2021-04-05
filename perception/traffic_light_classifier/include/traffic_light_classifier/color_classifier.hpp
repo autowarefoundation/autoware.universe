@@ -11,7 +11,12 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#pragma once
+
+
+#ifndef TRAFFIC_LIGHT_CLASSIFIER__COLOR_CLASSIFIER_HPP_
+#define TRAFFIC_LIGHT_CLASSIFIER__COLOR_CLASSIFIER_HPP_
+
+#include <vector>
 
 #include "autoware_perception_msgs/msg/lamp_state.hpp"
 #include "cv_bridge/cv_bridge.h"
@@ -25,7 +30,8 @@
 namespace traffic_light
 {
 
-struct HSVConfig{
+struct HSVConfig
+{
   int green_min_h;
   int green_min_s;
   int green_min_v;
@@ -43,7 +49,7 @@ struct HSVConfig{
   int red_min_v;
   int red_max_h;
   int red_max_s;
-  int red_max_v;  
+  int red_max_v;
 };
 
 class ColorClassifier : public ClassifierInterface
@@ -59,10 +65,12 @@ private:
   bool filterHSV(
     const cv::Mat & input_image, cv::Mat & green_image, cv::Mat & yellow_image,
     cv::Mat & red_image);
-  rcl_interfaces::msg::SetParametersResult parametersCallback( const std::vector<rclcpp::Parameter> & parameters);
+  rcl_interfaces::msg::SetParametersResult parametersCallback(
+    const std::vector<rclcpp::Parameter> & parameters);
 
 private:
-  enum HSV {
+  enum HSV
+  {
     Hue = 0,
     Sat = 1,
     Val = 2,
@@ -83,3 +91,5 @@ private:
 };
 
 }  // namespace traffic_light
+
+#endif  // TRAFFIC_LIGHT_CLASSIFIER__COLOR_CLASSIFIER_HPP_

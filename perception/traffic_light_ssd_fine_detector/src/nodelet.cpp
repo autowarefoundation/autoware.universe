@@ -13,6 +13,11 @@
 // limitations under the License.
 
 #include "traffic_light_ssd_fine_detector/nodelet.hpp"
+#include <memory>
+#include <string>
+#include <vector>
+#include <utility>
+
 #include "ament_index_cpp/get_package_share_directory.hpp"
 #include "cuda_utils.hpp"
 
@@ -24,13 +29,15 @@ inline std::vector<float> toFloatVector(const std::vector<double> double_vector)
   return std::vector<float>(double_vector.begin(), double_vector.end());
 }
 
-TrafficLightSSDFineDetectorNodelet::TrafficLightSSDFineDetectorNodelet(const rclcpp::NodeOptions & options) 
+TrafficLightSSDFineDetectorNodelet::TrafficLightSSDFineDetectorNodelet(
+  const rclcpp::NodeOptions & options)
 : Node("traffic_light_ssd_fine_detector_node", options)
 {
   using std::placeholders::_1;
   using std::placeholders::_2;
 
-  std::string package_path = ament_index_cpp::get_package_share_directory("traffic_light_ssd_fine_detector");
+  std::string package_path =
+    ament_index_cpp::get_package_share_directory("traffic_light_ssd_fine_detector");
   std::string data_path = package_path + "/data/";
   std::string engine_path = package_path + "/data/mb2-ssd-lite.engine";
   std::ifstream fs(engine_path);
@@ -50,7 +57,8 @@ TrafficLightSSDFineDetectorNodelet::TrafficLightSSDFineDetectorNodelet(const rcl
     RCLCPP_INFO(this->get_logger(), "Found %s", engine_path.c_str());
     net_ptr_.reset(new ssd::Net(engine_path, false));
     if (max_batch_size != net_ptr_->getMaxBatchSize()) {
-      RCLCPP_INFO(this->get_logger(), 
+      RCLCPP_INFO(
+        this->get_logger(),
         "Required max batch size %d does not correspond to Profile max batch size %d. Rebuild "
         "engine "
         "from onnx",
@@ -59,7 +67,9 @@ TrafficLightSSDFineDetectorNodelet::TrafficLightSSDFineDetectorNodelet(const rcl
       net_ptr_->save(engine_path);
     }
   } else {
-    RCLCPP_INFO(this->get_logger(), "Could not find %s, try making TensorRT engine from onnx", engine_path.c_str());
+    RCLCPP_INFO(
+      this->get_logger(),
+      "Could not find %s, try making TensorRT engine from onnx", engine_path.c_str());
     net_ptr_.reset(new ssd::Net(onnx_file, mode, max_batch_size));
     net_ptr_->save(engine_path);
   }
@@ -78,8 +88,10 @@ TrafficLightSSDFineDetectorNodelet::TrafficLightSSDFineDetectorNodelet(const rcl
   this->get_node_timers_interface()->add_timer(timer_, nullptr);
 
   std::lock_guard<std::mutex> lock(connect_mutex_);
-  output_roi_pub_ = this->create_publisher<autoware_perception_msgs::msg::TrafficLightRoiArray>("output/rois", 1);
-  exe_time_pub_ = this->create_publisher<autoware_debug_msgs::msg::Float32Stamped>("debug/exe_time_ms", 1);
+  output_roi_pub_ = this->create_publisher<autoware_perception_msgs::msg::TrafficLightRoiArray>(
+    "~/output/rois", 1);
+  exe_time_pub_ = this->create_publisher<autoware_debug_msgs::msg::Float32Stamped>(
+    "~/debug/exe_time_ms", 1);
   if (is_approximate_sync_) {
     approximate_sync_.reset(new ApproximateSync(ApproximateSyncPolicy(10), image_sub_, roi_sub_));
     approximate_sync_->registerCallback(
@@ -103,8 +115,8 @@ void TrafficLightSSDFineDetectorNodelet::connectCb()
     image_sub_.unsubscribe();
     roi_sub_.unsubscribe();
   } else if (!image_sub_.getSubscriber()) {
-    image_sub_.subscribe(this, "input/image", "raw", rclcpp::QoS{1}.get_rmw_qos_profile());
-    roi_sub_.subscribe(this, "input/rois", rclcpp::QoS{1}.get_rmw_qos_profile());
+    image_sub_.subscribe(this, "~/input/image", "raw", rclcpp::QoS{1}.get_rmw_qos_profile());
+    roi_sub_.subscribe(this, "~/input/rois", rclcpp::QoS{1}.get_rmw_qos_profile());
   }
 }
 
@@ -133,11 +145,14 @@ void TrafficLightSSDFineDetectorNodelet::callback(
 
     for (int i = 0; i < num_infer; ++i) {
       int roi_index = i + batch_count * batch_size;
-      lts.push_back(cv::Point(
-        in_roi_msg->rois.at(roi_index).roi.x_offset, in_roi_msg->rois.at(roi_index).roi.y_offset));
-      rbs.push_back(cv::Point(
-        in_roi_msg->rois.at(roi_index).roi.x_offset + in_roi_msg->rois.at(roi_index).roi.width,
-        in_roi_msg->rois.at(roi_index).roi.y_offset + in_roi_msg->rois.at(roi_index).roi.height));
+      lts.push_back(
+        cv::Point(
+          in_roi_msg->rois.at(roi_index).roi.x_offset,
+          in_roi_msg->rois.at(roi_index).roi.y_offset));
+      rbs.push_back(
+        cv::Point(
+          in_roi_msg->rois.at(roi_index).roi.x_offset + in_roi_msg->rois.at(roi_index).roi.width,
+          in_roi_msg->rois.at(roi_index).roi.y_offset + in_roi_msg->rois.at(roi_index).roi.height));
       fitInFrame(lts.at(i), rbs.at(i), cv::Size(original_image.size()));
       cropped_imgs.push_back(cv::Mat(original_image, cv::Rect(lts.at(i), rbs.at(i))));
     }
@@ -168,7 +183,8 @@ void TrafficLightSSDFineDetectorNodelet::callback(
     // Get Output
     std::vector<Detection> detections;
     if (!cnnOutput2BoxDetection(
-          scores.get(), boxes.get(), tlr_id_, cropped_imgs, num_infer, detections)) {
+        scores.get(), boxes.get(), tlr_id_, cropped_imgs, num_infer, detections))
+    {
       RCLCPP_ERROR(this->get_logger(), "Fail to postprocess image");
       return;
     }
@@ -214,7 +230,9 @@ bool TrafficLightSSDFineDetectorNodelet::cvMat2CnnInput(
     resized.convertTo(pixels, CV_32FC3, 1.0 / 255, 0);
     std::vector<float> img;
     if (pixels.isContinuous()) {
-      img.assign((float *)pixels.datastart, (float *)pixels.dataend);
+      img.assign(
+        reinterpret_cast<const float *>(pixels.datastart),
+        reinterpret_cast<const float *>(pixels.dataend));
     } else {
       return false;
     }
@@ -262,22 +280,26 @@ bool TrafficLightSSDFineDetectorNodelet::rosMsg2CvMat(
     cv_bridge::CvImagePtr cv_image = cv_bridge::toCvCopy(image_msg, "rgb8");
     image = cv_image->image;
   } catch (cv_bridge::Exception & e) {
-    RCLCPP_ERROR(this->get_logger(), "Failed to convert sensor_msgs::msg::Image to cv::Mat \n%s", e.what());
+    RCLCPP_ERROR(
+      this->get_logger(),
+      "Failed to convert sensor_msgs::msg::Image to cv::Mat \n%s", e.what());
     return false;
   }
 
   return true;
 }
 
-bool TrafficLightSSDFineDetectorNodelet::fitInFrame(cv::Point & lt, cv::Point & rb, const cv::Size & size)
+bool TrafficLightSSDFineDetectorNodelet::fitInFrame(
+  cv::Point & lt, cv::Point & rb, const cv::Size & size)
 {
   try {
-    if (rb.x > size.width) rb.x = size.width;
-    if (rb.y > size.height) rb.y = size.height;
-    if (lt.x < 0) lt.x = 0;
-    if (lt.y < 0) lt.y = 0;
+    if (rb.x > size.width) {rb.x = size.width;}
+    if (rb.y > size.height) {rb.y = size.height;}
+    if (lt.x < 0) {lt.x = 0;}
+    if (lt.y < 0) {lt.y = 0;}
   } catch (cv::Exception & e) {
-    RCLCPP_ERROR(this->get_logger(), 
+    RCLCPP_ERROR(
+      this->get_logger(),
       "Failed to fit bounding rect in size [%d, %d] \n%s", size.width, size.height, e.what());
     return false;
   }

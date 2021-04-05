@@ -11,7 +11,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 #include "trt_common.hpp"
+#include <functional>
+#include <string>
 
 namespace Tn
 {
@@ -19,8 +22,8 @@ void check_error(const ::cudaError_t e, decltype(__FILE__) f, decltype(__LINE__)
 {
   if (e != ::cudaSuccess) {
     std::stringstream s;
-    s << ::cudaGetErrorName(e) << " (" << e << ")@" << f << "#L" << n << ": "
-      << ::cudaGetErrorString(e);
+    s << ::cudaGetErrorName(e) << " (" << e << ")@" << f << "#L" << n << ": " <<
+      ::cudaGetErrorString(e);
     throw std::runtime_error{s.str()};
   }
 }
@@ -77,7 +80,8 @@ bool TrtCommon::loadEngine(std::string engine_file_path)
   std::string engine_str = engine_buffer.str();
   runtime_ = UniquePtr<nvinfer1::IRuntime>(nvinfer1::createInferRuntime(logger_));
   engine_ = UniquePtr<nvinfer1::ICudaEngine>(
-    runtime_->deserializeCudaEngine((void *)engine_str.data(), engine_str.size(), nullptr));
+    runtime_->deserializeCudaEngine(
+      reinterpret_cast<const void *>(engine_str.data()), engine_str.size(), nullptr));
   return true;
 }
 
@@ -91,7 +95,8 @@ bool TrtCommon::buildEngineFromOnnx(std::string onnx_file_path, std::string outp
 
   auto parser = UniquePtr<nvonnxparser::IParser>(nvonnxparser::createParser(*network, logger_));
   if (!parser->parseFromFile(
-        onnx_file_path.c_str(), static_cast<int>(nvinfer1::ILogger::Severity::kERROR))) {
+      onnx_file_path.c_str(), static_cast<int>(nvinfer1::ILogger::Severity::kERROR)))
+  {
     return false;
   }
 
@@ -107,26 +112,25 @@ bool TrtCommon::buildEngineFromOnnx(std::string onnx_file_path, std::string outp
   }
 
   engine_ = UniquePtr<nvinfer1::ICudaEngine>(builder->buildEngineWithConfig(*network, *config));
-  if (!engine_) return false;
+  if (!engine_) {return false;}
 
   // save engine
   nvinfer1::IHostMemory * data = engine_->serialize();
   std::ofstream file;
   file.open(output_engine_file_path, std::ios::binary | std::ios::out);
-  if (!file.is_open()) return false;
+  if (!file.is_open()) {return false;}
   file.write((const char *)data->data(), data->size());
   file.close();
 
   return true;
 }
 
-bool TrtCommon::isInitialized() { return is_initialized_; };
+bool TrtCommon::isInitialized() {return is_initialized_;}
 
 int TrtCommon::getNumInput()
 {
   return std::accumulate(
     input_dims_.d, input_dims_.d + input_dims_.nbDims, 1, std::multiplies<int>());
-  ;
 }
 
 int TrtCommon::getNumOutput()
@@ -135,8 +139,8 @@ int TrtCommon::getNumOutput()
     output_dims_.d, output_dims_.d + output_dims_.nbDims, 1, std::multiplies<int>());
 }
 
-int TrtCommon::getInputBindingIndex() { return engine_->getBindingIndex(input_name_.c_str()); }
+int TrtCommon::getInputBindingIndex() {return engine_->getBindingIndex(input_name_.c_str());}
 
-int TrtCommon::getOutputBindingIndex() { return engine_->getBindingIndex(output_name_.c_str()); }
+int TrtCommon::getOutputBindingIndex() {return engine_->getBindingIndex(output_name_.c_str());}
 
 }  // namespace Tn

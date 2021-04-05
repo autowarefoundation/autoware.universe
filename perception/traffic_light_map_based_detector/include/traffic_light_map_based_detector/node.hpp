@@ -20,6 +20,10 @@
 #ifndef TRAFFIC_LIGHT_MAP_BASED_DETECTOR__NODE_HPP_
 #define TRAFFIC_LIGHT_MAP_BASED_DETECTOR__NODE_HPP_
 
+#include <memory>
+#include <vector>
+#include <set>
+
 #include "lanelet2_core/LaneletMap.h"
 #include "lanelet2_extension/regulatory_elements/autoware_traffic_light.hpp"
 #include "lanelet2_extension/utility/query.hpp"
@@ -36,8 +40,6 @@
 #include "visualization_msgs/msg/marker_array.hpp"
 
 #include "rclcpp/rclcpp.hpp"
-
-#include <memory>
 
 namespace traffic_light
 {

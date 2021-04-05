@@ -17,6 +17,11 @@
  *
  */
 
+#include <algorithm>
+#include <memory>
+#include <string>
+#include <vector>
+
 #include "lanelet2_extension/utility/message_conversion.hpp"
 #include "lanelet2_extension/utility/utilities.hpp"
 #include "lanelet2_extension/visualization/visualization.hpp"
@@ -43,22 +48,22 @@ namespace traffic_light
 MapBasedDetector::MapBasedDetector()
 : Node("traffic_light_map_based_detector"), tf_buffer_(this->get_clock()), tf_listener_(tf_buffer_)
 {
-
   using std::placeholders::_1;
 
   // subscribers
   map_sub_ = create_subscription<autoware_lanelet2_msgs::msg::MapBin>(
-    "input/vector_map", rclcpp::QoS{1}.transient_local(), std::bind(&MapBasedDetector::mapCallback, this, _1));
+    "~/input/vector_map", rclcpp::QoS{1}.transient_local(),
+    std::bind(&MapBasedDetector::mapCallback, this, _1));
   camera_info_sub_ = create_subscription<sensor_msgs::msg::CameraInfo>(
-    "input/camera_info", 1, std::bind(&MapBasedDetector::cameraInfoCallback, this, _1));
+    "~/input/camera_info", 1, std::bind(&MapBasedDetector::cameraInfoCallback, this, _1));
   route_sub_ = create_subscription<autoware_planning_msgs::msg::Route>(
-    "input/route", 1, std::bind(&MapBasedDetector::routeCallback, this, _1));
+    "~/input/route", 1, std::bind(&MapBasedDetector::routeCallback, this, _1));
 
   // publishers
   roi_pub_ = this->create_publisher<autoware_perception_msgs::msg::TrafficLightRoiArray>(
-    "output/rois", 1);
+    "~/output/rois", 1);
   viz_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>(
-    "debug/markers", 1);
+    "~/debug/markers", 1);
 
   // parameter declaration needs default values: are 0.0 goof defaults for this?
   config_.max_vibration_pitch = declare_parameter<double>("max_vibration_pitch", 0.0);
@@ -170,8 +175,8 @@ bool MapBasedDetector::getTrafficLightRoi(
     const double image_u = (fx * camera_x + cx * camera_z) / camera_z;
     const double image_v = (fy * camera_y + cy * camera_z) / camera_z;
 
-    tl_roi.roi.x_offset = std::max(std::min(image_u, (double)camera_info.width), 0.0);
-    tl_roi.roi.y_offset = std::max(std::min(image_v, (double)camera_info.height), 0.0);
+    tl_roi.roi.x_offset = std::max(std::min(image_u, static_cast<double>(camera_info.width)), 0.0);
+    tl_roi.roi.y_offset = std::max(std::min(image_v, static_cast<double>(camera_info.height)), 0.0);
   }
 
   // for roi.width and roi.height
@@ -194,10 +199,12 @@ bool MapBasedDetector::getTrafficLightRoi(
     if (camera_z <= 0.0) {return false;}
     const double image_u = (fx * camera_x + cx * camera_z) / camera_z;
     const double image_v = (fy * camera_y + cy * camera_z) / camera_z;
-    tl_roi.roi.width =
-      std::max(std::min(image_u, (double)camera_info.width), 0.0) - tl_roi.roi.x_offset;
-    tl_roi.roi.height =
-      std::max(std::min(image_v, (double)camera_info.height), 0.0) - tl_roi.roi.y_offset;
+    tl_roi.roi.width = std::max(
+      std::min(
+        image_u, static_cast<double>(camera_info.width)), 0.0) - tl_roi.roi.x_offset;
+    tl_roi.roi.height = std::max(
+      std::min(
+        image_v, static_cast<double>(camera_info.height)), 0.0) - tl_roi.roi.y_offset;
     if (tl_roi.roi.width <= 0 || tl_roi.roi.height <= 0) {return false;}
   }
   return true;
@@ -221,7 +228,7 @@ void MapBasedDetector::mapCallback(
 
     auto lights = tl->trafficLights();
     for (auto lsp : lights) {
-      if (!lsp.isLineString()) { // traffic lights must be linestrings
+      if (!lsp.isLineString()) {  // traffic lights must be linestrings
         continue;
       }
       all_traffic_lights_ptr_->insert(static_cast<lanelet::ConstLineString3d>(lsp));
@@ -252,7 +259,7 @@ void MapBasedDetector::routeCallback(
 
     auto lights = tl->trafficLights();
     for (auto lsp : lights) {
-      if (!lsp.isLineString()) { // traffic lights must be linestrings
+      if (!lsp.isLineString()) {  // traffic lights must be linestrings
         continue;
       }
       route_traffic_lights_ptr_->insert(static_cast<lanelet::ConstLineString3d>(lsp));
@@ -423,7 +430,6 @@ void MapBasedDetector::publishVisibleTrafficLights(
     output_msg.markers.push_back(marker);
   }
   pub->publish(output_msg);
-
 }
 
 double MapBasedDetector::normalizeAngle(const double & angle)

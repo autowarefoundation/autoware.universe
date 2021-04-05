@@ -17,6 +17,7 @@
  *
  */
 
+#include <memory>
 #include "traffic_light_map_based_detector/node.hpp"
 #include "rclcpp/rclcpp.hpp"
 

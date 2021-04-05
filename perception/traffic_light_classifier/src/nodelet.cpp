@@ -13,6 +13,9 @@
 // limitations under the License.
 #include "traffic_light_classifier/nodelet.hpp"
 #include <iostream>
+#include <memory>
+#include <vector>
+#include <utility>
 
 namespace traffic_light
 {
@@ -34,7 +37,7 @@ TrafficLightClassifierNodelet::TrafficLightClassifierNodelet(const rclcpp::NodeO
 
 
   tl_states_pub_ = this->create_publisher<autoware_perception_msgs::msg::TrafficLightStateArray>(
-    "output/traffic_light_states", rclcpp::QoS{1});
+    "~/output/traffic_light_states", rclcpp::QoS{1});
 
   //
   auto timer_callback = std::bind(&TrafficLightClassifierNodelet::connectCb, this);
@@ -63,12 +66,14 @@ TrafficLightClassifierNodelet::TrafficLightClassifierNodelet(const rclcpp::NodeO
 void TrafficLightClassifierNodelet::connectCb()
 {
   // set callbacks only when there are subscribers to this node
-  if (tl_states_pub_->get_subscription_count() == 0 && tl_states_pub_->get_intra_process_subscription_count() == 0) {
+  if (tl_states_pub_->get_subscription_count() == 0 &&
+    tl_states_pub_->get_intra_process_subscription_count() == 0)
+  {
     image_sub_.unsubscribe();
     roi_sub_.unsubscribe();
   } else if (!image_sub_.getSubscriber()) {
-    image_sub_.subscribe(this, "input/image", "raw", rclcpp::QoS{1}.get_rmw_qos_profile());
-    roi_sub_.subscribe(this, "input/rois", rclcpp::QoS{1}.get_rmw_qos_profile());
+    image_sub_.subscribe(this, "~/input/image", "raw", rclcpp::QoS{1}.get_rmw_qos_profile());
+    roi_sub_.subscribe(this, "~/input/rois", rclcpp::QoS{1}.get_rmw_qos_profile());
   }
 }
 

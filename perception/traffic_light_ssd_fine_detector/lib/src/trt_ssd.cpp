@@ -16,6 +16,9 @@
 
 #include <fstream>
 #include <stdexcept>
+#include <memory>
+#include <string>
+#include <vector>
 
 #include "NvOnnxConfig.h"
 #include "NvOnnxParser.h"
@@ -57,11 +60,11 @@ Net::Net(const std::string & path, bool verbose)
 
 Net::~Net()
 {
-  if (stream_) cudaStreamDestroy(stream_);
+  if (stream_) {cudaStreamDestroy(stream_);}
 }
 
 Net::Net(
-  const std::string & onnx_file_path, const std::string & precision, const int max_batch_size, 
+  const std::string & onnx_file_path, const std::string & precision, const int max_batch_size,
   bool verbose, size_t workspace_size)
 {
   Logger logger(verbose);
@@ -85,7 +88,7 @@ Net::Net(
     return;
   }
   // Allow use of FP16 layers when running in INT8
-  if (fp16 || int8) config->setFlag(nvinfer1::BuilderFlag::kFP16);
+  if (fp16 || int8) {config->setFlag(nvinfer1::BuilderFlag::kFP16);}
   config->setMaxWorkspaceSize(workspace_size);
 
   // Parse ONNX FCN
@@ -105,7 +108,7 @@ Net::Net(
   parser->parseFromFile(
     onnx_file_path.c_str(), static_cast<int>(nvinfer1::ILogger::Severity::kERROR));
 
-  // TODO: int8 calibrator
+  // TODO(someone): int8 calibrator
   /* std::unique_ptr<nvinfer1::Int8EntropyCalibrator> calib;
     if (int8) {
         config->setFlag(BuilderFlag::kINT8);
@@ -116,12 +119,15 @@ Net::Net(
 
   // create profile
   auto profile = builder->createOptimizationProfile();
-  profile->setDimensions(network->getInput(0)->getName(), nvinfer1::OptProfileSelector::kMIN,
-                         nvinfer1::Dims4{1, 3, 300, 300});
-  profile->setDimensions(network->getInput(0)->getName(), nvinfer1::OptProfileSelector::kOPT,
-                         nvinfer1::Dims4{max_batch_size, 3, 300, 300});
-  profile->setDimensions(network->getInput(0)->getName(), nvinfer1::OptProfileSelector::kMAX,
-                         nvinfer1::Dims4{max_batch_size, 3, 300, 300});
+  profile->setDimensions(
+    network->getInput(0)->getName(), nvinfer1::OptProfileSelector::kMIN,
+    nvinfer1::Dims4{1, 3, 300, 300});
+  profile->setDimensions(
+    network->getInput(0)->getName(), nvinfer1::OptProfileSelector::kOPT,
+    nvinfer1::Dims4{max_batch_size, 3, 300, 300});
+  profile->setDimensions(
+    network->getInput(0)->getName(), nvinfer1::OptProfileSelector::kMAX,
+    nvinfer1::Dims4{max_batch_size, 3, 300, 300});
   config->addOptimizationProfile(profile);
 
   // Build engine
@@ -152,7 +158,8 @@ void Net::infer(std::vector<void *> & buffers, const int batch_size)
     throw std::runtime_error("Fail to create context");
   }
   auto input_dims = engine_->getBindingDimensions(0);
-  context_->setBindingDimensions(0, nvinfer1::Dims4(batch_size, input_dims.d[1], input_dims.d[2], input_dims.d[3]));
+  context_->setBindingDimensions(
+    0, nvinfer1::Dims4(batch_size, input_dims.d[1], input_dims.d[2], input_dims.d[3]));
   context_->enqueueV2(buffers.data(), stream_, nullptr);
   cudaStreamSynchronize(stream_);
 }
@@ -169,8 +176,14 @@ std::vector<int> Net::getOutputScoreSize()
   return {dims.d[1], dims.d[2]};
 }
 
-int Net::getMaxBatchSize() { return engine_->getProfileDimensions(0, 0, nvinfer1::OptProfileSelector::kMAX).d[0]; }
+int Net::getMaxBatchSize()
+{
+  return engine_->getProfileDimensions(0, 0, nvinfer1::OptProfileSelector::kMAX).d[0];
+}
 
-int Net::getMaxDetections() { return engine_->getBindingDimensions(1).d[1]; }
+int Net::getMaxDetections()
+{
+  return engine_->getBindingDimensions(1).d[1];
+}
 
 }  // namespace ssd

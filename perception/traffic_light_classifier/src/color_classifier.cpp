@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 #include "traffic_light_classifier/color_classifier.hpp"
-
+#include <algorithm>
+#include <string>
+#include <vector>
 #include "opencv2/imgproc/imgproc_c.h"
 
 namespace traffic_light
@@ -21,7 +23,8 @@ ColorClassifier::ColorClassifier(rclcpp::Node * node_ptr)
 : ratio_threshold_(0.02), node_ptr_(node_ptr)
 {
   using std::placeholders::_1;
-  image_pub_ = image_transport::create_publisher(node_ptr_, "debug/image", rclcpp::QoS{1}.get_rmw_qos_profile());
+  image_pub_ = image_transport::create_publisher(
+    node_ptr_, "~/debug/image", rclcpp::QoS{1}.get_rmw_qos_profile());
 
   hsv_config_.green_min_h = node_ptr_->declare_parameter("green_min_h", 50);
   hsv_config_.green_min_s = node_ptr_->declare_parameter("green_min_s", 100);
@@ -143,28 +146,29 @@ bool ColorClassifier::getLampState(
   const int yellow_pixel_num = cv::countNonZero(yellow_filtered_bin_image);
   const int red_pixel_num = cv::countNonZero(red_filtered_bin_image);
   const double green_ratio =
-    (double)green_pixel_num /
-    (double)(green_filtered_bin_image.rows * green_filtered_bin_image.cols);
+    static_cast<double>(green_pixel_num) /
+    static_cast<double>(green_filtered_bin_image.rows * green_filtered_bin_image.cols);
   const double yellow_ratio =
-    (double)yellow_pixel_num /
-    (double)(yellow_filtered_bin_image.rows * yellow_filtered_bin_image.cols);
+    static_cast<double>(yellow_pixel_num) /
+    static_cast<double>(yellow_filtered_bin_image.rows * yellow_filtered_bin_image.cols);
   const double red_ratio =
-    (double)red_pixel_num / (double)(red_filtered_bin_image.rows * red_filtered_bin_image.cols);
+    static_cast<double>(red_pixel_num) /
+    static_cast<double>(red_filtered_bin_image.rows * red_filtered_bin_image.cols);
 
   if (yellow_ratio < green_ratio && red_ratio < green_ratio) {
     autoware_perception_msgs::msg::LampState state;
     state.type = autoware_perception_msgs::msg::LampState::GREEN;
-    state.confidence = std::min(1.0, double(green_pixel_num) / (20.0 * 20.0));
+    state.confidence = std::min(1.0, static_cast<double>(green_pixel_num) / (20.0 * 20.0));
     states.push_back(state);
   } else if (green_ratio < yellow_ratio && red_ratio < yellow_ratio) {
     autoware_perception_msgs::msg::LampState state;
     state.type = autoware_perception_msgs::msg::LampState::YELLOW;
-    state.confidence = std::min(1.0, double(yellow_pixel_num) / (20.0 * 20.0));
+    state.confidence = std::min(1.0, static_cast<double>(yellow_pixel_num) / (20.0 * 20.0));
     states.push_back(state);
   } else if (green_ratio < red_ratio && yellow_ratio < red_ratio) {
     autoware_perception_msgs::msg::LampState state;
     state.type = autoware_perception_msgs::msg::LampState::RED;
-    state.confidence = std::min(1.0, double(red_pixel_num) / (20.0 * 20.0));
+    state.confidence = std::min(1.0, static_cast<double>(red_pixel_num) / (20.0 * 20.0));
     states.push_back(state);
   } else {
     autoware_perception_msgs::msg::LampState state;
@@ -194,15 +198,15 @@ rcl_interfaces::msg::SetParametersResult ColorClassifier::parametersCallback(
   const std::vector<rclcpp::Parameter> & parameters)
 {
   auto update_param = [&](const std::string & name, int & v) {
-    auto it = std::find_if(
-      parameters.cbegin(), parameters.cend(),
-      [&name](const rclcpp::Parameter & parameter) { return parameter.get_name() == name; });
-    if (it != parameters.cend()) {
-      v = it->as_int();
-      return true;
-    }
-    return false;
-  };
+      auto it = std::find_if(
+        parameters.cbegin(), parameters.cend(),
+        [&name](const rclcpp::Parameter & parameter) {return parameter.get_name() == name;});
+      if (it != parameters.cend()) {
+        v = it->as_int();
+        return true;
+      }
+      return false;
+    };
 
   update_param("green_min_h", hsv_config_.green_min_h);
   update_param("green_min_s", hsv_config_.green_min_s);
@@ -222,13 +226,31 @@ rcl_interfaces::msg::SetParametersResult ColorClassifier::parametersCallback(
   update_param("red_max_h", hsv_config_.red_max_h);
   update_param("red_max_s", hsv_config_.red_max_s);
   update_param("red_max_v", hsv_config_.red_max_v);
-  
-  min_hsv_green_ = cv::Scalar(hsv_config_.green_min_h, hsv_config_.green_min_s, hsv_config_.green_min_v);
-  max_hsv_green_ = cv::Scalar(hsv_config_.green_max_h, hsv_config_.green_max_s, hsv_config_.green_max_v);
-  min_hsv_yellow_ = cv::Scalar(hsv_config_.yellow_min_h, hsv_config_.yellow_min_s, hsv_config_.yellow_min_v);
-  max_hsv_yellow_ = cv::Scalar(hsv_config_.yellow_max_h, hsv_config_.yellow_max_s, hsv_config_.yellow_max_v);
-  min_hsv_red_ = cv::Scalar(hsv_config_.red_min_h, hsv_config_.red_min_s, hsv_config_.red_min_v);
-  max_hsv_red_ = cv::Scalar(hsv_config_.red_max_h, hsv_config_.red_max_s, hsv_config_.red_max_v);
+
+  min_hsv_green_ = cv::Scalar(
+    hsv_config_.green_min_h,
+    hsv_config_.green_min_s,
+    hsv_config_.green_min_v);
+  max_hsv_green_ = cv::Scalar(
+    hsv_config_.green_max_h,
+    hsv_config_.green_max_s,
+    hsv_config_.green_max_v);
+  min_hsv_yellow_ = cv::Scalar(
+    hsv_config_.yellow_min_h,
+    hsv_config_.yellow_min_s,
+    hsv_config_.yellow_min_v);
+  max_hsv_yellow_ = cv::Scalar(
+    hsv_config_.yellow_max_h,
+    hsv_config_.yellow_max_s,
+    hsv_config_.yellow_max_v);
+  min_hsv_red_ = cv::Scalar(
+    hsv_config_.red_min_h,
+    hsv_config_.red_min_s,
+    hsv_config_.red_min_v);
+  max_hsv_red_ = cv::Scalar(
+    hsv_config_.red_max_h,
+    hsv_config_.red_max_s,
+    hsv_config_.red_max_v);
 
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = true;

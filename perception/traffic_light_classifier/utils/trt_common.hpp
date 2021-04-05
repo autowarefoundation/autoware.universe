@@ -11,22 +11,25 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#pragma once
+
+#ifndef PERCEPTION__TRAFFIC_LIGHT_RECOGNITION__TRAFFIC_LIGHT_CLASSIFIER__UTILS__TRT_COMMON_HPP_
+#define PERCEPTION__TRAFFIC_LIGHT_RECOGNITION__TRAFFIC_LIGHT_CLASSIFIER__UTILS__TRT_COMMON_HPP_
 
 #include <stdio.h>
 #include <algorithm>
-#include "boost/filesystem.hpp"
 #include <chrono>
 #include <fstream>
 #include <iostream>
 #include <memory>
 #include <numeric>
 #include <sstream>
+#include <string>
 
 #include "NvInfer.h"
 #include "NvOnnxParser.h"
-#include "cudnn.h"
+#include "./cudnn.h"
 
+#include "boost/filesystem.hpp"
 #include "opencv2/core/core.hpp"
 #include "opencv2/highgui/highgui.hpp"
 
@@ -37,14 +40,16 @@ namespace Tn
 class Logger : public nvinfer1::ILogger
 {
 public:
-  Logger() : Logger(Severity::kINFO) {}
+  Logger()
+  : Logger(Severity::kINFO) {}
 
-  Logger(Severity severity) : reportableSeverity(severity) {}
+  explicit Logger(Severity severity)
+  : reportableSeverity(severity) {}
 
   void log(Severity severity, const char * msg) override
   {
     // suppress messages with severity enum value greater than the reportable
-    if (severity > reportableSeverity) return;
+    if (severity > reportableSeverity) {return;}
 
     switch (severity) {
       case Severity::kINTERNAL_ERROR:
@@ -73,15 +78,15 @@ void check_error(const ::cudaError_t e, decltype(__FILE__) f, decltype(__LINE__)
 
 struct InferDeleter
 {
-  void operator()(void * p) const { ::cudaFree(p); }
+  void operator()(void * p) const {::cudaFree(p);}
 };
 
-template <typename T>
+template<typename T>
 using UniquePtr = std::unique_ptr<T, InferDeleter>;
 
 // auto array = Tn::make_unique<float[]>(n);
 // ::cudaMemcpy(array.get(), src_array, sizeof(float)*n, ::cudaMemcpyHostToDevice);
-template <typename T>
+template<typename T>
 typename std::enable_if<std::is_array<T>::value, Tn::UniquePtr<T>>::type make_unique(
   const std::size_t n)
 {
@@ -93,7 +98,7 @@ typename std::enable_if<std::is_array<T>::value, Tn::UniquePtr<T>>::type make_un
 
 // auto value = Tn::make_unique<my_class>();
 // ::cudaMemcpy(value.get(), src_value, sizeof(my_class), ::cudaMemcpyHostToDevice);
-template <typename T>
+template<typename T>
 Tn::UniquePtr<T> make_unique()
 {
   T * p;
@@ -105,7 +110,7 @@ class TrtCommon
 {
 public:
   TrtCommon(std::string model_path, std::string cache_dir, std::string precision);
-  ~TrtCommon(){};
+  ~TrtCommon() {}
 
   bool loadEngine(std::string engine_file_path);
   bool buildEngineFromOnnx(std::string onnx_file_path, std::string output_engine_file_path);
@@ -121,18 +126,20 @@ public:
 
 private:
   Logger logger_;
-  bool is_initialized_;
-  size_t max_batch_size_;
   std::string model_file_path_;
   UniquePtr<nvinfer1::IRuntime> runtime_;
   UniquePtr<nvinfer1::ICudaEngine> engine_;
 
   nvinfer1::Dims input_dims_;
   nvinfer1::Dims output_dims_;
+  std::string cache_dir_;
+  std::string precision_;
   std::string input_name_;
   std::string output_name_;
-  std::string precision_;
-  std::string cache_dir_;
+  bool is_initialized_;
+  size_t max_batch_size_;
 };
 
 }  // namespace Tn
+
+#endif  // PERCEPTION__TRAFFIC_LIGHT_RECOGNITION__TRAFFIC_LIGHT_CLASSIFIER__UTILS__TRT_COMMON_HPP_

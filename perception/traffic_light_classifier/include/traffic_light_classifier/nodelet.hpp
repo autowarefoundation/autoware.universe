@@ -11,7 +11,12 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#pragma once
+
+#ifndef TRAFFIC_LIGHT_CLASSIFIER__NODELET_HPP_
+#define TRAFFIC_LIGHT_CLASSIFIER__NODELET_HPP_
+
+#include <memory>
+#include <mutex>
 
 #include "autoware_perception_msgs/msg/lamp_state.hpp"
 #include "autoware_perception_msgs/msg/traffic_light_roi_array.hpp"
@@ -40,21 +45,20 @@
 #include "opencv2/core/core.hpp"
 #include "opencv2/highgui/highgui.hpp"
 
-#include <memory>
-#include <mutex>
 
 namespace traffic_light
 {
-class TrafficLightClassifierNodelet: public rclcpp::Node
+class TrafficLightClassifierNodelet : public rclcpp::Node
 {
 public:
-  TrafficLightClassifierNodelet(const rclcpp::NodeOptions & options);
+  explicit TrafficLightClassifierNodelet(const rclcpp::NodeOptions & options);
   void imageRoiCallback(
     const sensor_msgs::msg::Image::ConstSharedPtr & input_image_msg,
     const autoware_perception_msgs::msg::TrafficLightRoiArray::ConstSharedPtr & input_rois_msg);
 
 private:
-  enum ClassifierType {
+  enum ClassifierType
+  {
     HSVFilter = 0,
     CNN = 1,
   };
@@ -64,18 +68,21 @@ private:
   image_transport::SubscriberFilter image_sub_;
   message_filters::Subscriber<autoware_perception_msgs::msg::TrafficLightRoiArray> roi_sub_;
   typedef message_filters::sync_policies::ExactTime<
-    sensor_msgs::msg::Image, autoware_perception_msgs::msg::TrafficLightRoiArray>
+      sensor_msgs::msg::Image, autoware_perception_msgs::msg::TrafficLightRoiArray>
     SyncPolicy;
   typedef message_filters::Synchronizer<SyncPolicy> Sync;
   std::shared_ptr<Sync> sync_;
   typedef message_filters::sync_policies::ApproximateTime<
-    sensor_msgs::msg::Image, autoware_perception_msgs::msg::TrafficLightRoiArray>
+      sensor_msgs::msg::Image, autoware_perception_msgs::msg::TrafficLightRoiArray>
     ApproximateSyncPolicy;
   typedef message_filters::Synchronizer<ApproximateSyncPolicy> ApproximateSync;
   std::shared_ptr<ApproximateSync> approximate_sync_;
   bool is_approximate_sync_;
-  rclcpp::Publisher<autoware_perception_msgs::msg::TrafficLightStateArray>::SharedPtr tl_states_pub_;
+  rclcpp::Publisher<autoware_perception_msgs::msg::TrafficLightStateArray>::SharedPtr
+    tl_states_pub_;
   std::shared_ptr<ClassifierInterface> classifier_ptr_;
 };
 
 }  // namespace traffic_light
+
+#endif  // TRAFFIC_LIGHT_CLASSIFIER__NODELET_HPP_

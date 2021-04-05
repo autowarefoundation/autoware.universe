@@ -11,7 +11,14 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#pragma once
+
+#ifndef TRAFFIC_LIGHT_CLASSIFIER__CNN_CLASSIFIER_HPP_
+#define TRAFFIC_LIGHT_CLASSIFIER__CNN_CLASSIFIER_HPP_
+
+#include <memory>
+#include <string>
+#include <vector>
+#include <map>
 
 #include "autoware_perception_msgs/msg/lamp_state.hpp"
 #include "cv_bridge/cv_bridge.h"
@@ -36,9 +43,10 @@ public:
     std::vector<autoware_perception_msgs::msg::LampState> & states) override;
 
 private:
-  void preProcess(cv::Mat & image, std::vector<float> &  tensor, bool normalize = true);
+  void preProcess(cv::Mat & image, std::vector<float> & tensor, bool normalize = true);
   bool postProcess(
-    std::vector<float> & output_data_host, std::vector<autoware_perception_msgs::msg::LampState> & states);
+    std::vector<float> & output_data_host,
+    std::vector<autoware_perception_msgs::msg::LampState> & states);
   bool readLabelfile(std::string filepath, std::vector<std::string> & labels);
   void calcSoftmax(std::vector<float> & data, std::vector<float> & probs, int num_output);
   std::vector<size_t> argsort(std::vector<float> & tensor, int num_output);
@@ -79,3 +87,5 @@ private:
 };
 
 }  // namespace traffic_light
+
+#endif  // TRAFFIC_LIGHT_CLASSIFIER__CNN_CLASSIFIER_HPP_

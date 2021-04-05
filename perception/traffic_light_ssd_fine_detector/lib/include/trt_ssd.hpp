@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef TRT_SSD_HPP_
+#define TRT_SSD_HPP_
 
 #include <iostream>
 #include <memory>
@@ -21,13 +22,13 @@
 
 #include "NvInfer.h"
 
-#include "cuda_runtime.h"
+#include "./cuda_runtime.h"
 
 namespace ssd
 {
 struct Deleter
 {
-  template <typename T>
+  template<typename T>
   void operator()(T * obj) const
   {
     if (obj) {
@@ -36,18 +37,20 @@ struct Deleter
   }
 };
 
-template <typename T>
+template<typename T>
 using unique_ptr = std::unique_ptr<T, Deleter>;
 
 class Logger : public nvinfer1::ILogger
 {
 public:
-  Logger(bool verbose) : verbose_(verbose) {}
+  explicit Logger(bool verbose)
+  : verbose_(verbose) {}
 
   void log(Severity severity, const char * msg) override
   {
-    if (verbose_ || ((severity != Severity::kINFO) && (severity != Severity::kVERBOSE)))
+    if (verbose_ || ((severity != Severity::kINFO) && (severity != Severity::kVERBOSE))) {
       std::cout << msg << std::endl;
+    }
   }
 
 private:
@@ -58,7 +61,7 @@ class Net
 {
 public:
   // Create engine from engine path
-  Net(const std::string & engine_path, bool verbose = false);
+  explicit Net(const std::string & engine_path, bool verbose = false);
 
   // Create engine from serialized onnx model
   Net(
@@ -95,3 +98,5 @@ private:
 };
 
 }  // namespace ssd
+
+#endif  // TRT_SSD_HPP_
