@@ -1,7 +1,6 @@
 <launch>
   <arg name="input_route_topic_name" default="/planning/mission_planning/route" />
   <arg name="map_topic_name" default="/map/vector_map" />
-  <arg name="vehicle_param_file" />
 
   <node pkg="lane_change_planner" exec="lane_change_planner" name="lane_change_planner" output="screen">
     <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
@@ -41,7 +40,6 @@
     <param name="use_all_predicted_path" value="false" />
     <param name="refine_goal_search_radius_range" value="7.5" />
     <param name="enable_blocked_by_obstacle" value="false" />
-    <param from="$(var vehicle_param_file)" />
   </node>
 
   <executable cmd="ros2 topic pub /planning/scenario_planning/lane_driving/lane_change_approval
@@ -54,11 +52,9 @@
     <remap from="output/turn_signal_cmd" to="/planning/turn_signal_decider/turn_signal_cmd" />
     <param name="lane_change_search_distance" value="30.0" />
     <param name="intersection_search_distance" value="30.0" />
-    <param from="$(var vehicle_param_file)" />
   </node>
 
   <include file="$(find-pkg-share behavior_velocity_planner)/launch/behavior_velocity_planner.launch.xml">
-    <arg name="vehicle_param_file" value="$(var vehicle_param_file)" />
   </include>
 
 </launch>

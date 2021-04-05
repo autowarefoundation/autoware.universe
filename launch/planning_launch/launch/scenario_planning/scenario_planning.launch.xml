@@ -1,5 +1,4 @@
 <launch>
-  <arg name="vehicle_param_file" />
 
   <!-- scenario selector -->
   <include file="$(find-pkg-share scenario_selector)/launch/scenario_selector.launch.xml">
@@ -27,7 +26,6 @@
   <group>
     <!-- lane driving -->
     <include file="$(find-pkg-share planning_launch)/launch/scenario_planning/lane_driving.launch.xml">
-      <arg name="vehicle_param_file" value="$(var vehicle_param_file)" />
     </include>
     <!-- parking -->
     <include file="$(find-pkg-share planning_launch)/launch/scenario_planning/parking.launch.xml">
