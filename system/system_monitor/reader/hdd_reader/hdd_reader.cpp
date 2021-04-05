@@ -17,14 +17,14 @@
  * @brief HDD information read class
  */
 
-#include <errno.h>
 #include <fcntl.h>
 #include <getopt.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <cerrno>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
 #include <algorithm>
 #include <regex>
@@ -47,20 +47,18 @@
 
 #include "hdd_reader/hdd_reader.hpp"
 
-namespace fs = boost::filesystem;
-
 // 7634-7647 Unassigned
 constexpr int PORT = 7635;
 
 /**
  * @brief HDD information
  */
-typedef struct
+struct HDD_Info
 {
   std::string model_;   //!< @brief Model number
   std::string serial_;  //!< @brief Serial number
   int temperature_;     //!< @brief Temperature
-} HDD_Info;
+};
 
 /**
  * @brief ATA PASS-THROUGH (12) command
@@ -68,7 +66,7 @@ typedef struct
  * - ATA Command Pass-Through
  *   https://www.t10.org/ftp/t10/document.04/04-262r8.pdf
  */
-typedef struct
+struct ATAPassThrough12
 {
   uint8_t operation_code_;      //!< @brief OPERATION CODE (A1h)
   uint8_t reserved0_ : 1;       //!< @brief Reserved
@@ -89,7 +87,7 @@ typedef struct
   uint8_t command_;             //!< @brief COMMAND
   uint8_t reserved2_;           //!< @brief Reserved
   uint8_t control_;             //!< @brief CONTROL
-} ATAPassThrough12;
+};
 
 /**
  * @brief Attribute Table Format
@@ -97,7 +95,7 @@ typedef struct
  * - SMART Attribute Overview
  *   http://www.t13.org/Documents/UploadedDocuments/docs2005/e05171r0-ACS-SMARTAttributes_Overview.pdf
  */
-typedef struct __attribute__((packed))  // Minimize total struct memory 16 to 12
+struct AttributeEntry
 {
   uint8_t attribute_id_;  //!< @brief Attribute ID
   //  Flags
@@ -114,7 +112,7 @@ typedef struct __attribute__((packed))  // Minimize total struct memory 16 to 12
   uint32_t data_;                //!< @brief Data
   uint16_t attribute_specific_;  //!< @brief Attribute-specific
   uint8_t threshold_;            //!< @brief Threshold
-} AttributeEntry;
+} __attribute__((packed));       // Minimize total struct memory 16 to 12
 
 /**
  * @brief Device SMART data structure
@@ -124,7 +122,7 @@ typedef struct __attribute__((packed))  // Minimize total struct memory 16 to 12
  * - SMART Attribute Overview
  *   http://www.t13.org/Documents/UploadedDocuments/docs2005/e05171r0-ACS-SMARTAttributes_Overview.pdf
  */
-typedef struct __attribute__((packed))  // Minimize total struct memory 514 to 512
+struct SMARTData
 {
   // Offset 0..361 X Vendor specific
   uint16_t smart_structure_version_;    //!< @brief SMART structure version
@@ -141,18 +139,18 @@ typedef struct __attribute__((packed))  // Minimize total struct memory 514 to 5
   uint8_t short_self_test_polling_time_;     //!< @brief Short self-test polling time (in minutes)
   uint8_t extended_self_test_polling_time_;  //!< @brief Extended self-test polling time in minutes
   uint8_t
-    conveyance_self_test_polling_time_;  //!< @brief Conveyance self-test polling time in minutes
+    conveyance_self_test_polling_time_;     //!< @brief Conveyance self-test polling time in minutes
   uint16_t                                  //!< @brief Extended self-test polling time
     extended_self_test_polling_time_word_;  //!<   in minutes (word)
   uint8_t reserved_[9];                     //!< @brief Reserved
   uint8_t vendor_specific3_[125];           //!< @brief Vendor specific
   uint8_t data_structure_checksum_;         //!< @brief Data structure checksum
-} SMARTData;
+} __attribute__((packed));                  // Minimize total struct memory 514 to 512
 
 /**
  * @brief print usage
  */
-void usage(void)
+void usage()
 {
   printf("Usage: hdd_reader [options]\n");
   printf("  -h --help   : Display help\n");
@@ -193,12 +191,11 @@ void swap_char(char * ptr, size_t size)
  */
 int get_ata_identify(int fd, HDDInfo * info)
 {
-  sg_io_hdr_t hdr;
-  ATAPassThrough12 ata;
-  unsigned char data[512];  // 256 words
+  sg_io_hdr_t hdr{};
+  ATAPassThrough12 ata{};
+  unsigned char data[512]{};  // 256 words
 
   // Create a command descriptor block(CDB)
-  memset(&ata, 0, sizeof(ata));
   ata.operation_code_ = 0xA1;  // ATA PASS-THROUGH (12) command
   ata.protocol_ = 0x4;         // PIO Data-In
   ata.t_dir_ = 0x1;            // from the ATA device to the application client
@@ -208,7 +205,6 @@ int get_ata_identify(int fd, HDDInfo * info)
   ata.command_ = 0xEC;         // IDENTIFY DEVICE
 
   // Create a control structure
-  memset(&hdr, 0, sizeof(sg_io_hdr_t));
   hdr.interface_id = 'S';                   // This must be set to 'S'
   hdr.dxfer_direction = SG_DXFER_FROM_DEV;  // a SCSI READ command
   hdr.cmd_len = sizeof(ata);         // length in bytes of the SCSI command that 'cmdp' points to
@@ -224,14 +220,14 @@ int get_ata_identify(int fd, HDDInfo * info)
 
   // IDENTIFY DEVICE
   // Word 10..19 Serial number
-  char serial_number[20 + 1] = "";
+  char serial_number[20 + 1]{};
   strncpy(serial_number, reinterpret_cast<char *>(data) + 20, 20);
   swap_char(serial_number, 20);
   info->serial_ = serial_number;
   boost::trim(info->serial_);
 
   // Word 27..46 Model number
-  char model_number[40 + 1] = "";
+  char model_number[40 + 1]{};
   strncpy(model_number, reinterpret_cast<char *>(data) + 54, 40);
   swap_char(model_number, 40);
   info->model_ = model_number;
@@ -257,12 +253,11 @@ int get_ata_identify(int fd, HDDInfo * info)
  */
 int get_ata_SMARTData(int fd, HDDInfo * info)
 {
-  sg_io_hdr_t hdr;
-  ATAPassThrough12 ata;
-  SMARTData data;
+  sg_io_hdr_t hdr{};
+  ATAPassThrough12 ata{};
+  SMARTData data{};
 
   // Create a command descriptor block(CDB)
-  memset(&ata, 0, sizeof(ata));
   ata.operation_code_ = 0xA1;  // ATA PASS-THROUGH (12) command
   ata.protocol_ = 0x4;         // PIO Data-In
   ata.t_dir_ = 0x1;            // from the ATA device to the application client
@@ -275,7 +270,6 @@ int get_ata_SMARTData(int fd, HDDInfo * info)
   ata.command_ = 0xB0;         // SMART READ DATA
 
   // Create a control structure
-  memset(&hdr, 0, sizeof(sg_io_hdr_t));
   hdr.interface_id = 'S';                   // This must be set to 'S'
   hdr.dxfer_direction = SG_DXFER_FROM_DEV;  // a SCSI READ command
   hdr.cmd_len = sizeof(ata);         // length in bytes of the SCSI command that 'cmdp' points to
@@ -311,11 +305,10 @@ int get_ata_SMARTData(int fd, HDDInfo * info)
  */
 int get_nvme_identify(int fd, HDDInfo * info)
 {
-  nvme_admin_cmd cmd;
-  char data[4096];  // Fixed size for Identify command
+  nvme_admin_cmd cmd{};
+  char data[4096]{};  // Fixed size for Identify command
 
   // The Identify command returns a data buffer that describes information about the NVM subsystem
-  memset(&cmd, 0, sizeof(cmd));
   cmd.opcode = 0x06;            // Identify
   cmd.addr = (uint64_t)data;    // memory address of data
   cmd.data_len = sizeof(data);  // length of data
@@ -329,13 +322,13 @@ int get_nvme_identify(int fd, HDDInfo * info)
 
   // Identify Controller Data Structure
   // Bytes 23:04 Serial Number (SN)
-  char serial_number[20 + 1];
+  char serial_number[20 + 1]{};
   strncpy(serial_number, data + 4, 20);
   info->serial_ = serial_number;
   boost::trim(info->serial_);
 
   // Bytes 63:24 Model Number (MN)
-  char model_number[40 + 1];
+  char model_number[40 + 1]{};
   strncpy(model_number, data + 24, 40);
   info->model_ = model_number;
   boost::trim(info->model_);
@@ -354,11 +347,10 @@ int get_nvme_identify(int fd, HDDInfo * info)
  */
 int get_nvme_SMARTData(int fd, HDDInfo * info)
 {
-  nvme_admin_cmd cmd;
-  char data[4];  // 1 Dword (get byte 0 to 3)
+  nvme_admin_cmd cmd{};
+  char data[4]{};  // 1 Dword (get byte 0 to 3)
 
   // The Get Log Page command returns a data buffer containing the log page requested
-  memset(&cmd, 0, sizeof(cmd));
   cmd.opcode = 0x02;            // Get Log Page
   cmd.nsid = 0xFFFFFFFF;        // Global log page
   cmd.addr = (uint64_t)data;    // memory address of data
@@ -406,8 +398,7 @@ void run(int port)
   }
 
   // Give the socket FD the local address ADDR
-  sockaddr_in addr;
-  memset(&addr, 0, sizeof(sockaddr_in));
+  sockaddr_in addr{};
   addr.sin_family = AF_INET;
   addr.sin_port = htons(port);
   addr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -426,7 +417,7 @@ void run(int port)
     return;
   }
 
-  sockaddr_in client;
+  sockaddr_in client{};
   socklen_t len = sizeof(client);
 
   while (true) {
@@ -440,16 +431,18 @@ void run(int port)
     }
 
     // Receive list of device from a socket
-    char buf[1024] = "";
+    char buf[1024]{};
     ret = recv(new_sock, buf, sizeof(buf) - 1, 0);
     if (ret < 0) {
       syslog(LOG_ERR, "Failed to receive. %s\n", strerror(errno));
+      close(new_sock);
       close(sock);
       return;
     }
     // No data received
     if (ret == 0) {
       syslog(LOG_ERR, "No data received. %s\n", strerror(errno));
+      close(new_sock);
       close(sock);
       return;
     }
@@ -458,11 +451,13 @@ void run(int port)
     std::vector<std::string> hdd_devices;
 
     try {
+      buf[sizeof(buf) - 1] = '\0';
       std::istringstream iss(buf);
       boost::archive::text_iarchive oa(iss);
       oa & hdd_devices;
     } catch (const std::exception & e) {
       syslog(LOG_ERR, "exception. %s\n", e.what());
+      close(new_sock);
       close(sock);
       return;
     }
@@ -471,11 +466,11 @@ void run(int port)
     std::ostringstream oss;
     boost::archive::text_oarchive oa(oss);
 
-    for (auto itr = hdd_devices.begin(); itr != hdd_devices.end(); ++itr) {
-      HDDInfo info;
+    for (auto & hdd_device : hdd_devices) {
+      HDDInfo info{};
 
       // Open a file
-      int fd = open(itr->c_str(), O_RDONLY);
+      int fd = open(hdd_device.c_str(), O_RDONLY);
       if (fd < 0) {
         info.error_code_ = errno;
         syslog(LOG_ERR, "Failed to open a file. %s\n", strerror(info.error_code_));
@@ -483,7 +478,7 @@ void run(int port)
       }
 
       // AHCI device
-      if (boost::starts_with(itr->c_str(), "/dev/sd")) {
+      if (boost::starts_with(hdd_device.c_str(), "/dev/sd")) {
         // Get IDENTIFY DEVICE for ATA drive
         info.error_code_ = get_ata_identify(fd, &info);
         if (info.error_code_ != 0) {
@@ -501,7 +496,7 @@ void run(int port)
           close(fd);
           continue;
         }
-      } else if (boost::starts_with(itr->c_str(), "/dev/nvme")) {     // NVMe device
+      } else if (boost::starts_with(hdd_device.c_str(), "/dev/nvme")) {  // NVMe device
         // Get Identify for NVMe drive
         info.error_code_ = get_nvme_identify(fd, &info);
         if (info.error_code_ != 0) {
@@ -528,7 +523,7 @@ void run(int port)
         syslog(LOG_ERR, "Failed to close the file descriptor FD. %s\n", strerror(info.error_code_));
       }
 
-      list[*itr] = info;
+      list[hdd_device] = info;
     }
 
     oa << list;
@@ -551,7 +546,9 @@ void run(int port)
 int main(int argc, char ** argv)
 {
   static struct option long_options[] = {
-    {"help", no_argument, 0, 'h'}, {"port", required_argument, 0, 'p'}, {0, 0, 0, 0}};
+    {"help", no_argument, nullptr, 'h'},
+    {"port", required_argument, nullptr, 'p'},
+    {nullptr, 0, nullptr, 0}};
 
   // Parse command-line options
   int c = 0;
