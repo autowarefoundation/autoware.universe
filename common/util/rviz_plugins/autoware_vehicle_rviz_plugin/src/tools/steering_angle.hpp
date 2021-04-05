@@ -15,26 +15,14 @@
 #ifndef TOOLS__STEERING_ANGLE_HPP_
 #define TOOLS__STEERING_ANGLE_HPP_
 
-#include <deque>
-#include <iomanip>
 #include <memory>
+#include <mutex>
 
 #ifndef Q_MOC_RUN
-#include "rclcpp/rclcpp.hpp"
-#include "rviz_common/display_context.hpp"
-#include "rviz_common/frame_manager_iface.hpp"
 #include "rviz_common/ros_topic_display.hpp"
-#include "rviz_common/properties/bool_property.hpp"
 #include "rviz_common/properties/color_property.hpp"
-#include "rviz_common/properties/enum_property.hpp"
 #include "rviz_common/properties/float_property.hpp"
 #include "rviz_common/properties/int_property.hpp"
-#include "rviz_common/validate_floats.hpp"
-
-#include "OgreBillboardSet.h"
-#include "OgreManualObject.h"
-#include "OgreSceneManager.h"
-#include "OgreSceneNode.h"
 
 #include "autoware_vehicle_msgs/msg/steering.hpp"
 
@@ -60,11 +48,9 @@ private Q_SLOTS:
   void updateVisualization();
 
 protected:
+  void update(float wall_dt, float ros_dt) override;
   void processMessage(const autoware_vehicle_msgs::msg::Steering::ConstSharedPtr msg_ptr) override;
-  std::unique_ptr<Ogre::ColourValue> setColorDependsOnVelocity(
-    const double vel_max, const double cmd_vel);
-  std::unique_ptr<Ogre::ColourValue> gradation(
-    const QColor & color_min, const QColor & color_max, const double ratio);
+
   jsk_rviz_plugins::OverlayObject::Ptr overlay_;
   rviz_common::properties::ColorProperty * property_text_color_;
   rviz_common::properties::IntProperty * property_left_;
@@ -77,6 +63,7 @@ protected:
   // QImage hud_;
 
 private:
+  std::mutex mutex_;
   autoware_vehicle_msgs::msg::Steering::ConstSharedPtr last_msg_ptr_;
 };
 

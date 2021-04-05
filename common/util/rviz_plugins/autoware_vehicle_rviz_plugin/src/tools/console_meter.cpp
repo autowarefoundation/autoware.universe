@@ -62,18 +62,6 @@ void ConsoleMeterDisplay::onInitialize()
   overlay_->updateTextureSize(property_length_->getInt(), property_length_->getInt());
   overlay_->setPosition(property_left_->getInt(), property_top_->getInt());
   overlay_->setDimensions(overlay_->getTextureWidth(), overlay_->getTextureHeight());
-
-  // QColor background_color;
-  // background_color.setAlpha(0);
-  // jsk_rviz_plugins::ScopedPixelBuffer buffer = overlay_->getBuffer();
-  // hud_ = buffer.getQImage(*overlay_);
-  // for (int i = 0; i < overlay_->getTextureWidth(); i++)
-  // {
-  //   for (int j = 0; j < overlay_->getTextureHeight(); j++)
-  //   {
-  //     hud_.setPixel(i, j, background_color.rgba());
-  //   }
-  // }
 }
 
 void ConsoleMeterDisplay::onEnable()
@@ -89,14 +77,18 @@ void ConsoleMeterDisplay::onDisable()
   overlay_->hide();
 }
 
-void ConsoleMeterDisplay::processMessage(
-  const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg_ptr)
+void ConsoleMeterDisplay::update(float wall_dt, float ros_dt)
 {
-  if (!isEnabled()) {
-    return;
-  }
-  if (!overlay_->isVisible()) {
-    return;
+  (void) wall_dt;
+  (void) ros_dt;
+
+  double linear_x = 0;
+  {
+    std::lock_guard<std::mutex> message_lock(mutex_);
+    if (!last_msg_ptr_) {
+      return;
+    }
+    linear_x = last_msg_ptr_->twist.linear.x;
   }
 
   QColor background_color;
@@ -115,7 +107,7 @@ void ConsoleMeterDisplay::processMessage(
   QColor white_color(Qt::white);
   white_color.setAlpha(255);
   const float velocity_ratio = std::min(
-    std::max(std::fabs(msg_ptr->twist.linear.x) - meter_min_velocity_, 0.0) /
+    std::max(std::fabs(linear_x) - meter_min_velocity_, 0.0) /
     (meter_max_velocity_ - meter_min_velocity_),
     1.0);
   const float theta =
@@ -149,14 +141,28 @@ void ConsoleMeterDisplay::processMessage(
   font.setBold(true);
   painter.setFont(font);
   std::ostringstream velocity_ss;
-  velocity_ss << std::fixed << std::setprecision(2) << msg_ptr->twist.linear.x * 3.6 << "km/h";
+  velocity_ss << std::fixed << std::setprecision(2) << linear_x * 3.6 << "km/h";
   painter.drawText(
     0, std::min(property_value_height_offset_->getInt(), h - 1), w,
     std::max(h - property_value_height_offset_->getInt(), 1), Qt::AlignCenter | Qt::AlignVCenter,
     velocity_ss.str().c_str());
   painter.end();
-  last_msg_ptr_ = msg_ptr;
   updateVisualization();
+}
+
+void ConsoleMeterDisplay::processMessage(
+  const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg_ptr)
+{
+  if (!isEnabled()) {
+    return;
+  }
+
+  {
+    std::lock_guard<std::mutex> message_lock(mutex_);
+    last_msg_ptr_ = msg_ptr;
+  }
+
+  queueRender();
 }
 
 void ConsoleMeterDisplay::updateVisualization()

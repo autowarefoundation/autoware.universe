@@ -15,25 +15,12 @@
 #ifndef TOOLS__TURN_SIGNAL_HPP_
 #define TOOLS__TURN_SIGNAL_HPP_
 
-#include <deque>
 #include <memory>
+#include <mutex>
 
 #ifndef Q_MOC_RUN
-#include "rclcpp/rclcpp.hpp"
-#include "rviz_common/display_context.hpp"
-#include "rviz_common/frame_manager_iface.hpp"
 #include "rviz_common/ros_topic_display.hpp"
-#include "rviz_common/properties/bool_property.hpp"
-#include "rviz_common/properties/color_property.hpp"
-#include "rviz_common/properties/enum_property.hpp"
-#include "rviz_common/properties/float_property.hpp"
 #include "rviz_common/properties/int_property.hpp"
-#include "rviz_common/validate_floats.hpp"
-
-#include "OgreBillboardSet.h"
-#include "OgreManualObject.h"
-#include "OgreSceneManager.h"
-#include "OgreSceneNode.h"
 
 #include "autoware_vehicle_msgs/msg/turn_signal.hpp"
 
@@ -59,6 +46,7 @@ private Q_SLOTS:
   void updateVisualization();
 
 protected:
+  void update(float wall_dt, float ros_dt) override;
   void processMessage(
     const autoware_vehicle_msgs::msg::TurnSignal::ConstSharedPtr msg_ptr) override;
   jsk_rviz_plugins::OverlayObject::Ptr overlay_;
@@ -71,6 +59,8 @@ protected:
 private:
   QPointF right_arrow_polygon_[7];
   QPointF left_arrow_polygon_[7];
+
+  std::mutex mutex_;
   autoware_vehicle_msgs::msg::TurnSignal::ConstSharedPtr last_msg_ptr_;
 };
 

@@ -77,8 +77,27 @@ void TurnSignalDisplay::processMessage(
   if (!isEnabled()) {
     return;
   }
-  if (!overlay_->isVisible()) {
-    return;
+
+  {
+    std::lock_guard<std::mutex> message_lock(mutex_);
+    last_msg_ptr_ = msg_ptr;
+  }
+
+  queueRender();
+}
+
+void TurnSignalDisplay::update(float wall_dt, float ros_dt)
+{
+  (void) wall_dt;
+  (void) ros_dt;
+
+  unsigned int signal_type;
+  {
+    std::lock_guard<std::mutex> message_lock(mutex_);
+    if (!last_msg_ptr_) {
+      return;
+    }
+    signal_type = last_msg_ptr_->data;
   }
 
   QColor background_color;
@@ -93,19 +112,19 @@ void TurnSignalDisplay::processMessage(
   // turn signal color
   QColor white_color(Qt::white);
   white_color.setAlpha(255);
-  if (msg_ptr->data == autoware_vehicle_msgs::msg::TurnSignal::RIGHT) {
+  if (signal_type == autoware_vehicle_msgs::msg::TurnSignal::RIGHT) {
     painter.setPen(QPen(white_color, static_cast<int>(2), Qt::DotLine));
     painter.drawPolygon(left_arrow_polygon_, 7);
     painter.setBrush(QBrush(Qt::white, Qt::SolidPattern));
     painter.setPen(QPen(white_color, static_cast<int>(2), Qt::SolidLine));
     painter.drawPolygon(right_arrow_polygon_, 7);
-  } else if (msg_ptr->data == autoware_vehicle_msgs::msg::TurnSignal::LEFT) {
+  } else if (signal_type == autoware_vehicle_msgs::msg::TurnSignal::LEFT) {
     painter.setPen(QPen(white_color, static_cast<int>(2), Qt::DotLine));
     painter.drawPolygon(right_arrow_polygon_, 7);
     painter.setBrush(QBrush(Qt::white, Qt::SolidPattern));
     painter.setPen(QPen(white_color, static_cast<int>(2), Qt::SolidLine));
     painter.drawPolygon(left_arrow_polygon_, 7);
-  } else if (msg_ptr->data == autoware_vehicle_msgs::msg::TurnSignal::HAZARD) {
+  } else if (signal_type == autoware_vehicle_msgs::msg::TurnSignal::HAZARD) {
     painter.setBrush(QBrush(Qt::white, Qt::SolidPattern));
     painter.setPen(QPen(white_color, static_cast<int>(2), Qt::SolidLine));
     painter.drawPolygon(right_arrow_polygon_, 7);
@@ -116,7 +135,6 @@ void TurnSignalDisplay::processMessage(
     painter.drawPolygon(left_arrow_polygon_, 7);
   }
   painter.end();
-  last_msg_ptr_ = msg_ptr;
   updateVisualization();
 }
 

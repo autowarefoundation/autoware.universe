@@ -15,6 +15,8 @@
 #include <memory>
 #include <algorithm>
 
+#include "OgreMaterialManager.h"
+
 #include "velocity_history.hpp"
 #define EIGEN_MPL2_ONLY
 #include "Eigen/Core"
@@ -107,9 +109,21 @@ bool VelocityHistoryDisplay::validateFloats(
   return true;
 }
 
+void VelocityHistoryDisplay::update(float wall_dt, float ros_dt)
+{
+  (void) wall_dt;
+  (void) ros_dt;
+
+  updateVisualization();
+}
+
 void VelocityHistoryDisplay::processMessage(
   const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg_ptr)
 {
+  if (!isEnabled()) {
+    return;
+  }
+
   if (!validateFloats(msg_ptr)) {
     setStatus(
       rviz_common::properties::StatusProperty::Error, "Topic",
@@ -129,12 +143,16 @@ void VelocityHistoryDisplay::processMessage(
       qPrintable(fixed_frame_));
   }
 
-  histories_.emplace_back(msg_ptr, position);
-  updateVisualization();
+  {
+    std::lock_guard<std::mutex> message_lock(mutex_);
+    histories_.emplace_back(msg_ptr, position);
+  }
+  queueRender();
 }
 
 void VelocityHistoryDisplay::updateVisualization()
 {
+  std::lock_guard<std::mutex> message_lock(mutex_);
   if (histories_.empty()) {return;}
   velocity_manual_object_->clear();
 

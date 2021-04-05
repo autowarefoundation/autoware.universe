@@ -17,20 +17,15 @@
 
 #include <deque>
 #include <memory>
+#include <mutex>
 #include <tuple>
 
-#include "OgreBillboardSet.h"
+#include "OgreColourValue.h"
 #include "OgreManualObject.h"
-#include "OgreMaterialManager.h"
-#include "OgreSceneManager.h"
-#include "OgreSceneNode.h"
-#include "rclcpp/rclcpp.hpp"
-#include "rviz_common/display_context.hpp"
-#include "rviz_common/frame_manager_iface.hpp"
+#include "OgreVector3.h"
 #include "rviz_common/ros_topic_display.hpp"
 #include "rviz_common/properties/bool_property.hpp"
 #include "rviz_common/properties/color_property.hpp"
-#include "rviz_common/properties/enum_property.hpp"
 #include "rviz_common/properties/float_property.hpp"
 #include "rviz_common/properties/parse_color.hpp"
 #include "rviz_common/validate_floats.hpp"
@@ -55,6 +50,7 @@ private Q_SLOTS:
   void updateVisualization();
 
 protected:
+  void update(float wall_dt, float ros_dt) override;
   void processMessage(const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg_ptr) override;
   std::unique_ptr<Ogre::ColourValue> setColorDependsOnVelocity(
     const double vel_max, const double cmd_vel);
@@ -72,6 +68,7 @@ private:
   std::deque<std::tuple<geometry_msgs::msg::TwistStamped::ConstSharedPtr, Ogre::Vector3>>
   histories_;
   bool validateFloats(const geometry_msgs::msg::TwistStamped::ConstSharedPtr & msg_ptr);
+  std::mutex mutex_;
 };
 
 }  // namespace rviz_plugins
