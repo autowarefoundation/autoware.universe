@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
-  <arg name="run_mode" default="online" doc="options: online, planning_simulation"/>
+  <arg name="run_mode" default="online" description="options: online, planning_simulation"/>
 
   <group>
     <push-ros-namespace namespace="/system"/>
