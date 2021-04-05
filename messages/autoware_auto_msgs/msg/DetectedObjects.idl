@@ -1,13 +1,13 @@
-#include "autoware_auto_msgs/msg/DetectedDynamicObject.idl"
+#include "autoware_auto_msgs/msg/DetectedObject.idl"
 #include "std_msgs/msg/Header.idl"
 
 module autoware_auto_msgs {
   module msg {
     @verbatim (language="comment", text=
       " This is the output of object detection and the input to tracking.")
-    struct DetectedDynamicObjectArray {
+    struct DetectedObjects {
       std_msgs::msg::Header header;
-      sequence<autoware_auto_msgs::msg::DetectedDynamicObject> objects;
+      sequence<autoware_auto_msgs::msg::DetectedObject> objects;
     };
   };
 };

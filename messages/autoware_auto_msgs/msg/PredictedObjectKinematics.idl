@@ -1,0 +1,18 @@
+#include "autoware_auto_msgs/msg/PredictedPath.idl"
+#include "geometry_msgs/msg/AccelWithCovariance.idl"
+#include "geometry_msgs/msg/PoseWithCovariance.idl"
+#include "geometry_msgs/msg/TwistWithCovariance.idl"
+
+module autoware_auto_msgs {
+  module msg {
+    struct PredictedObjectKinematics {
+      geometry_msgs::msg::PoseWithCovariance initial_pose;
+
+      geometry_msgs::msg::TwistWithCovariance initial_twist;
+
+      geometry_msgs::msg::AccelWithCovariance initial_acceleration;
+
+      sequence<autoware_auto_msgs::msg::PredictedPath, 10> predicted_paths;
+    };
+  };
+};
