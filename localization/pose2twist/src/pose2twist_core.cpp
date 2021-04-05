@@ -50,18 +50,18 @@ double calcDiffForRadian(const double lhs_rad, const double rhs_rad)
 }
 
 // x: roll, y: pitch, z: yaw
-geometry_msgs::msg::Vector3 getRPY(geometry_msgs::msg::Pose::SharedPtr pose)
+geometry_msgs::msg::Vector3 getRPY(const geometry_msgs::msg::Pose & pose)
 {
   geometry_msgs::msg::Vector3 rpy;
   tf2::Quaternion q(
-    pose->orientation.x, pose->orientation.y, pose->orientation.z, pose->orientation.w);
+    pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w);
   tf2::Matrix3x3(q).getRPY(rpy.x, rpy.y, rpy.z);
   return rpy;
 }
 
 geometry_msgs::msg::Vector3 getRPY(geometry_msgs::msg::PoseStamped::SharedPtr pose)
 {
-  return getRPY(pose);
+  return getRPY(pose->pose);
 }
 
 geometry_msgs::msg::TwistStamped calcTwist(
