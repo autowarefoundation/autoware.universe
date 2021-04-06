@@ -123,21 +123,6 @@ def launch_setup(context, *args, **kwargs):
         }]
     )
 
-    relay_component = ComposableNode(
-        package='topic_tools',
-        plugin='topic_tools::RelayNode',
-        name='relay',
-        parameters=[{
-            "input_topic": "/sensing/lidar/top/rectified/pointcloud",
-            "output_topic": "/sensing/lidar/pointcloud",
-            "type": "sensor_msgs/msg/PointCloud2",
-            "history": "keep_last",
-            "depth": 5,
-            "reliability": "best_effort",
-            'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False'),
-        }],
-    )
-
     # set container to run all required components in the same process
     container = ComposableNodeContainer(
         name='pointcloud_preprocessor_container',
@@ -148,7 +133,6 @@ def launch_setup(context, *args, **kwargs):
             concat_component,
             cropbox_component,
             ground_component,
-            relay_component,
         ],
         output='screen',
         parameters=[{
