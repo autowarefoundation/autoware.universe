@@ -14,7 +14,8 @@
 # limitations under the License.
 
 import launch
-from launch.actions import DeclareLaunchArgument, OpaqueFunction
+from launch.actions import DeclareLaunchArgument, OpaqueFunction, SetLaunchConfiguration
+from launch.conditions import IfCondition, UnlessCondition
 from launch.substitutions import EnvironmentVariable, LaunchConfiguration
 from launch_ros.actions import ComposableNodeContainer, LoadComposableNodes
 from launch_ros.descriptions import ComposableNode
@@ -62,7 +63,10 @@ def launch_setup(context, *args, **kwargs):
                              '/sensing/lidar/front_center/mirror_cropped/pointcloud'],
             'output_frame': LaunchConfiguration('base_frame'),
             'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False')
-        }]
+        }],
+        extra_arguments=[{
+            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
+        }],
     )
 
     # set PointCloud PassThrough Filter as a component
@@ -79,7 +83,10 @@ def launch_setup(context, *args, **kwargs):
             'min_z': vehicle_info['min_height_offset'],
             'max_z': vehicle_info['max_height_offset'],
             'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False')
-        }]
+        }],
+        extra_arguments=[{
+            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
+        }],
     )
 
     # set crop box filter as a component
@@ -102,7 +109,10 @@ def launch_setup(context, *args, **kwargs):
             'max_z': vehicle_info['max_height_offset'],
             'negative': False,
             'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False')
-        }]
+        }],
+        extra_arguments=[{
+            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
+        }],
     )
 
     ray_ground_filter_component = ComposableNode(
@@ -126,7 +136,10 @@ def launch_setup(context, *args, **kwargs):
             'min_y': vehicle_info['min_lateral_offset'],
             'max_y': vehicle_info['max_lateral_offset'],
             'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False')
-        }]
+        }],
+        extra_arguments=[{
+            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
+        }],
     )
 
     short_height_obstacle_detection_area_filter_component = ComposableNode(
@@ -148,7 +161,10 @@ def launch_setup(context, *args, **kwargs):
             'max_z': 0.5,
             'negative': False,
             'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False')
-        }]
+        }],
+        extra_arguments=[{
+            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
+        }],
     )
 
     vector_map_filter_component = ComposableNode(
@@ -164,7 +180,10 @@ def launch_setup(context, *args, **kwargs):
             'voxel_size_x': 0.25,
             'voxel_size_y': 0.25,
             'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False')
-        }]
+        }],
+        extra_arguments=[{
+            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
+        }],
     )
 
     ransac_ground_filter_component = ComposableNode(
@@ -187,7 +206,10 @@ def launch_setup(context, *args, **kwargs):
             'voxel_size_z': 0.2,
             'debug': False,
             'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False')
-        }]
+        }],
+        extra_arguments=[{
+            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
+        }],
     )
 
     concat_no_ground_component = ComposableNode(
@@ -200,7 +222,10 @@ def launch_setup(context, *args, **kwargs):
                              '/sensing/lidar/short_height/no_ground/pointcloud'],
             'output_frame': LaunchConfiguration('base_frame'),
             'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False')
-        }]
+        }],
+        extra_arguments=[{
+            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
+        }],
     )
 
     voxel_grid_filter_component = ComposableNode(
@@ -218,7 +243,10 @@ def launch_setup(context, *args, **kwargs):
             'voxel_size_y': 0.04,
             'voxel_size_z': 0.08,
             'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False')
-        }]
+        }],
+        extra_arguments=[{
+            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
+        }],
     )
 
     radius_search_2d_outlier_filter_component = ComposableNode(
@@ -233,7 +261,10 @@ def launch_setup(context, *args, **kwargs):
             'search_radius': 0.2,
             'min_neighbors': 5,
             'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False')
-        }]
+        }],
+        extra_arguments=[{
+            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
+        }],
     )
 
     voxel_grid_outlier_filter_component = ComposableNode(
@@ -250,7 +281,10 @@ def launch_setup(context, *args, **kwargs):
             'voxel_size_z': 100.0,
             'voxel_points_threshold': 5,
             'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False')
-        }]
+        }],
+        extra_arguments=[{
+            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
+        }],
     )
 
     relay_component = ComposableNode(
@@ -266,6 +300,9 @@ def launch_setup(context, *args, **kwargs):
             'reliability': 'best_effort',
             'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False')
         }],
+        extra_arguments=[{
+            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
+        }],
     )
 
     # set container to run all required components in the same process
@@ -273,7 +310,7 @@ def launch_setup(context, *args, **kwargs):
         name='pointcloud_preprocessor_container',
         namespace='pointcloud_preprocessor',
         package='rclcpp_components',
-        executable='component_container',
+        executable=LaunchConfiguration('container_executable'),
         composable_node_descriptions=[
             cropbox_component,
             ray_ground_filter_component,
@@ -331,5 +368,22 @@ def generate_launch_description():
     add_launch_arg('use_concat_filter', 'true')
     add_launch_arg('use_radius_search', 'true')
     add_launch_arg('vehicle_param_file')
+    add_launch_arg('use_multithread', 'False')
+    add_launch_arg('use_intra_process', 'False')
 
-    return launch.LaunchDescription(launch_arguments + [OpaqueFunction(function=launch_setup)])
+    set_container_executable = SetLaunchConfiguration(
+        'container_executable',
+        'component_container',
+        condition=UnlessCondition(LaunchConfiguration('use_multithread'))
+    )
+
+    set_container_mt_executable = SetLaunchConfiguration(
+        'container_executable',
+        'component_container_mt',
+        condition=IfCondition(LaunchConfiguration('use_multithread'))
+    )
+
+    return launch.LaunchDescription(launch_arguments +
+                                    [set_container_executable,
+                                     set_container_mt_executable] +
+                                    [OpaqueFunction(function=launch_setup)])

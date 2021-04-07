@@ -60,6 +60,8 @@
       <arg name="use_concat_filter" value="$(var use_concat_filter)" />
       <arg name="use_radius_search" value="$(var use_radius_search)" />
       <arg name="vehicle_param_file" value="$(var vehicle_param_file)" />
+      <arg name="use_intra_process" value="false" />
+      <arg name="use_multithread" value="false" />
     </include>
 
   </group>

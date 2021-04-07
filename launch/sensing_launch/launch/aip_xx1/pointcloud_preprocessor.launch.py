@@ -17,7 +17,7 @@ import os
 import yaml
 
 import launch
-from launch.actions import DeclareLaunchArgument, OpaqueFunction
+from launch.actions import DeclareLaunchArgument, OpaqueFunction, SetLaunchConfiguration
 from launch.conditions import IfCondition, UnlessCondition
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import ComposableNodeContainer, LoadComposableNodes
@@ -59,11 +59,14 @@ def launch_setup(context, *args, **kwargs):
         remappings=[('output', 'concatenated/pointcloud')],
         parameters=[{
             'input_topics': ['/sensing/lidar/top/outlier_filtered/pointcloud',
-                            '/sensing/lidar/left/outlier_filtered/pointcloud',
-                            '/sensing/lidar/right/outlier_filtered/pointcloud'],
+                             '/sensing/lidar/left/outlier_filtered/pointcloud',
+                             '/sensing/lidar/right/outlier_filtered/pointcloud'],
             'output_frame': LaunchConfiguration('base_frame'),
             'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False'),
-        }]
+        }],
+        extra_arguments=[{
+            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
+        }],
     )
 
     passthrough_component = ComposableNode(
@@ -79,7 +82,10 @@ def launch_setup(context, *args, **kwargs):
             'min_z': vehicle_info['min_height_offset'],
             'max_z': vehicle_info['max_height_offset'],
             'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False'),
-        }]
+        }],
+        extra_arguments=[{
+            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
+        }],
     )
 
     # set crop box filter as a component
@@ -102,7 +108,10 @@ def launch_setup(context, *args, **kwargs):
             'max_z': vehicle_info['max_height_offset'],
             'negative': False,
             'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False'),
-        }]
+        }],
+        extra_arguments=[{
+            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
+        }],
     )
 
     ground_component = ComposableNode(
@@ -118,7 +127,10 @@ def launch_setup(context, *args, **kwargs):
             "local_max_slope": 10.0,
             "min_height_threshold": 0.2,
             'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False'),
-        }]
+        }],
+        extra_arguments=[{
+            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
+        }],
     )
 
     # set container to run all required components in the same process
@@ -126,7 +138,7 @@ def launch_setup(context, *args, **kwargs):
         name='pointcloud_preprocessor_container',
         namespace='pointcloud_preprocessor',
         package='rclcpp_components',
-        executable='component_container',
+        executable=LaunchConfiguration('container_executable'),
         composable_node_descriptions=[
             cropbox_component,
             ground_component,
@@ -141,13 +153,13 @@ def launch_setup(context, *args, **kwargs):
     concat_loader = LoadComposableNodes(
         composable_node_descriptions=[concat_component],
         target_container=container,
-        condition=launch.conditions.IfCondition(LaunchConfiguration('use_concat_filter')),
+        condition=IfCondition(LaunchConfiguration('use_concat_filter')),
     )
 
     passthrough_loader = LoadComposableNodes(
         composable_node_descriptions=[passthrough_component],
         target_container=container,
-        condition=launch.conditions.UnlessCondition(LaunchConfiguration('use_concat_filter')),
+        condition=UnlessCondition(LaunchConfiguration('use_concat_filter')),
     )
 
     return [container, concat_loader, passthrough_loader]
@@ -162,5 +174,22 @@ def generate_launch_description():
     add_launch_arg('base_frame', 'base_link')
     add_launch_arg('use_concat_filter', 'use_concat_filter')
     add_launch_arg('vehicle_param_file')
+    add_launch_arg('use_multithread', 'False')
+    add_launch_arg('use_intra_process', 'False')
 
-    return launch.LaunchDescription(launch_arguments + [OpaqueFunction(function=launch_setup)])
+    set_container_executable = SetLaunchConfiguration(
+        'container_executable',
+        'component_container',
+        condition=UnlessCondition(LaunchConfiguration('use_multithread'))
+    )
+
+    set_container_mt_executable = SetLaunchConfiguration(
+        'container_executable',
+        'component_container_mt',
+        condition=IfCondition(LaunchConfiguration('use_multithread'))
+    )
+
+    return launch.LaunchDescription(launch_arguments +
+                                    [set_container_executable,
+                                     set_container_mt_executable] +
+                                    [OpaqueFunction(function=launch_setup)])

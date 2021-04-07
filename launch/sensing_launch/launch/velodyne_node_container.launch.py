@@ -13,7 +13,8 @@
 # limitations under the License.
 
 import launch
-from launch.actions import DeclareLaunchArgument, OpaqueFunction
+from launch.actions import DeclareLaunchArgument, OpaqueFunction, SetLaunchConfiguration
+from launch.conditions import IfCondition, UnlessCondition
 from launch.substitutions import EnvironmentVariable, LaunchConfiguration
 from launch_ros.actions import ComposableNodeContainer, LoadComposableNodes
 from launch_ros.descriptions import ComposableNode
@@ -67,6 +68,9 @@ def launch_setup(context, *args, **kwargs):
         }],
         remappings=[('velodyne_points', 'pointcloud_raw'),
                     ('velodyne_points_ex', 'pointcloud_raw_ex')],
+        extra_arguments=[{
+            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
+        }],
     )
     )
 
@@ -91,6 +95,9 @@ def launch_setup(context, *args, **kwargs):
                     ('output', 'self_cropped/pointcloud_ex'),
                     ],
         parameters=[cropbox_parameters],
+        extra_arguments=[{
+            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
+        }],
     )
     )
 
@@ -110,6 +117,9 @@ def launch_setup(context, *args, **kwargs):
                     ('output', 'mirror_cropped/pointcloud_ex'),
                     ],
         parameters=[cropbox_parameters],
+        extra_arguments=[{
+            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
+        }],
     )
     )
 
@@ -125,6 +135,9 @@ def launch_setup(context, *args, **kwargs):
         parameters=[{
             'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False'),
         }],
+        extra_arguments=[{
+            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
+        }],
     )
     )
 
@@ -139,6 +152,9 @@ def launch_setup(context, *args, **kwargs):
         parameters=[{
             'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False'),
         }],
+        extra_arguments=[{
+            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
+        }],
     )
     )
 
@@ -148,7 +164,7 @@ def launch_setup(context, *args, **kwargs):
         name='velodyne_node_container',
         namespace='pointcloud_preprocessor',
         package='rclcpp_components',
-        executable='component_container',
+        executable=LaunchConfiguration('container_executable'),
         composable_node_descriptions=nodes,
         parameters=[{
             'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False'),
@@ -211,4 +227,22 @@ def generate_launch_description():
     add_launch_arg('output_frame', LaunchConfiguration('base_frame'))
     add_launch_arg('vehicle_param_file')
     add_launch_arg('vehicle_mirror_param_file')
-    return launch.LaunchDescription(launch_arguments + [OpaqueFunction(function=launch_setup)])
+    add_launch_arg('use_multithread', 'False')
+    add_launch_arg('use_intra_process', 'False')
+
+    set_container_executable = SetLaunchConfiguration(
+        'container_executable',
+        'component_container',
+        condition=UnlessCondition(LaunchConfiguration('use_multithread'))
+    )
+
+    set_container_mt_executable = SetLaunchConfiguration(
+        'container_executable',
+        'component_container_mt',
+        condition=IfCondition(LaunchConfiguration('use_multithread'))
+    )
+
+    return launch.LaunchDescription(launch_arguments +
+                                    [set_container_executable,
+                                     set_container_mt_executable] +
+                                    [OpaqueFunction(function=launch_setup)])
