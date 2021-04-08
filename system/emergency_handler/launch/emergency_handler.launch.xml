@@ -17,7 +17,7 @@
   <arg name="service_clear_emergency" default="/system/clear_emergency" />
 
   <arg name="config_file" default="$(find-pkg-share emergency_handler)/config/emergency_handler.param.yaml" />
-  <arg name="emergency_hazard_level" default="2" doc="1: Safe Fault, 2: Latent Fault, 3: Single Point Fault" />
+  <arg name="emergency_hazard_level" default="2" description="1: Safe Fault, 2: Latent Fault, 3: Single Point Fault" />
   <arg name="use_emergency_hold" default="false" />
 
   <!-- emergency_handler -->
