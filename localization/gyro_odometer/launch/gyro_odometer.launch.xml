@@ -1,11 +1,11 @@
 <launch>
-  <arg name="input_vehicle_twist_topic" default="/vehicle/status/twist" doc="" />
-  <arg name="input_imu_topic" default="/sensing/imu/imu_data" doc="" />
+  <arg name="input_vehicle_twist_topic" default="/vehicle/status/twist" description="" />
+  <arg name="input_imu_topic" default="/sensing/imu/imu_data" description="" />
 
-  <arg name="output_twist_topic" default="gyro_twist" doc="" />
-  <arg name="output_twist_with_covariance_topic" default="gyro_twist_with_covariance" doc="" />
+  <arg name="output_twist_topic" default="gyro_twist" description="" />
+  <arg name="output_twist_with_covariance_topic" default="gyro_twist_with_covariance" description="" />
 
-  <arg name="output_frame" default="base_link" doc="" />
+  <arg name="output_frame" default="base_link" description="" />
 
   <node pkg="gyro_odometer" exec="gyro_odometer" name="gyro_odometer" output="screen">
     <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
