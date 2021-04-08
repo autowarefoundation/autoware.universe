@@ -1,8 +1,8 @@
 <launch>
-  <arg name="input" doc="input topic name" />
-  <arg name="output" doc="output topic name" />
+  <arg name="input" description="input topic name" />
+  <arg name="output" description="output topic name" />
 
-  <arg name="ignore_tags" doc="tags to be ignored" />
+  <arg name="ignore_tags" description="tags to be ignored" />
 
   <node pkg="livox_tag_filter" exec="livox_tag_filter_node" name="livox_tag_filter_node" output="screen">
     <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
