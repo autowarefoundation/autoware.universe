@@ -1,5 +1,5 @@
 <launch>
-  <arg name="joy_type" default="DS4" doc="options: DS4, G29"/>
+  <arg name="joy_type" default="DS4" description="options: DS4, G29"/>
 
   <arg name="input_joy" default="/joy" />
   <arg name="input_twist" default="/localization/twist" />
