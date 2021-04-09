@@ -76,3 +76,17 @@
     state: latest
     update_cache: yes
   become: yes
+
+- name: ROS2 (install rmw-cyclonedds-cpp)
+  apt:
+    name: "ros-{{ rosdistro }}-rmw-cyclonedds-cpp"
+    state: latest
+    update_cache: yes
+  become: yes
+
+- name: ROS2 (Add settings to .bashrc)
+  lineinfile:
+    dest: ~/.bashrc
+    line: "export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp"
+    state: present
+  become: no
