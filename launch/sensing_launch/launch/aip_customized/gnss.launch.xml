@@ -1,6 +1,7 @@
 <launch>
 
   <arg name="launch_driver" default="true" />
+  <arg name="coordinate_system" default="1" description="0:UTM, 1:MGRS, 2:PLANE" />
 
   <group>
     <push-ros-namespace namespace="gnss"/>
@@ -21,7 +22,7 @@
       <arg name="output_topic_gnss_pose_cov" value="pose_with_covariance" />
       <arg name="output_topic_gnss_fixed" value="fixed" />
 
-      <arg name="coordinate_system" value="1" description="0:UTM, 1:MGRS, 2:PLANE" />
+      <arg name="coordinate_system" value="$(var coordinate_system)" />
       <arg name="use_ublox_receiver" value="true" />
 
       <arg name="gnss_frame" value="gnss_link" />
