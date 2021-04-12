@@ -29,6 +29,10 @@
       <arg name="vehicle_id" value="$(var vehicle_id)"/>
       <arg name="vehicle_param_file" value="$(find-pkg-share $(var vehicle_model)_description)/config/vehicle_info.param.yaml"/>
     </include>
+
+    <include file="$(find-pkg-share vehicle_info_param_server)/launch/vehicle_info_param_server.launch.xml">
+      <arg name="config_file" value="$(find-pkg-share $(var vehicle_model)_description)/config/vehicle_info.param.yaml"/>
+    </include>
   </group>
 
   <!-- System -->
