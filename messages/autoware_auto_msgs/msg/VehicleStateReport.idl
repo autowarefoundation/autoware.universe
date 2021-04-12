@@ -13,7 +13,7 @@ module autoware_auto_msgs {
       const uint8 WIPER_OFF = 1;
       const uint8 WIPER_LOW = 2;
       const uint8 WIPER_HIGH = 3;
-      const uint8 WIPER_CLEAN = 4;
+      const uint8 WIPER_CLEAN = 14; // Match WipersCommand::ENABLE_CLEAN
       const uint8 GEAR_DRIVE = 1;
       const uint8 GEAR_REVERSE = 2;
       const uint8 GEAR_PARK = 3;
