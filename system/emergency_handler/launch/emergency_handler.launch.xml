@@ -5,7 +5,6 @@
   <arg name="input_prev_control_command" default="/control/vehicle_cmd" />
   <arg name="input_current_gate_mode" default="/control/current_gate_mode" />
   <arg name="input_twist" default="/localization/twist" />
-  <arg name="input_is_state_timeout" default="state_timeout_checker/is_state_timeout" />
 
   <arg name="output_control_command" default="/system/emergency/control_cmd" />
   <arg name="output_shift" default="/system/emergency/shift_cmd" />
@@ -29,7 +28,6 @@
     <remap from="~/input/prev_control_command" to="$(var input_prev_control_command)"/>
     <remap from="~/input/current_gate_mode" to="$(var input_current_gate_mode)"/>
     <remap from="~/input/twist" to="$(var input_twist)"/>
-    <remap from="~/input/is_state_timeout" to="$(var input_is_state_timeout)"/>
 
     <remap from="~/output/control_command" to="$(var output_control_command)"/>
     <remap from="~/output/shift" to="$(var output_shift)"/>
@@ -43,18 +41,5 @@
     <param from="$(var config_file)" />
     <param name="emergency_hazard_level" value="$(var emergency_hazard_level)" />
     <param name="use_emergency_hold" value="$(var use_emergency_hold)" />
-  </node>
-
-  <!-- state_timeout_checker -->
-  <arg name="state_timeout_checker_config_file" default="$(find-pkg-share emergency_handler)/config/state_timeout_checker.param.yaml" />
-
-  <node pkg="emergency_handler" exec="state_timeout_checker" name="state_timeout_checker" output="screen">
-    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
-
-    <remap from="~/input/autoware_state" to="$(var input_autoware_state)"/>
-
-    <remap from="~/output/is_state_timeout" to="$(var input_is_state_timeout)"/>
-
-    <param from="$(var state_timeout_checker_config_file)" />
   </node>
 </launch>

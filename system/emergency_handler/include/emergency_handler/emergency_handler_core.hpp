@@ -54,15 +54,12 @@ private:
     sub_prev_control_command_;
   rclcpp::Subscription<autoware_control_msgs::msg::GateMode>::SharedPtr sub_current_gate_mode_;
   rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr sub_twist_;
-  rclcpp::Subscription<autoware_system_msgs::msg::TimeoutNotification>::SharedPtr
-    sub_is_state_timeout_;
 
   autoware_system_msgs::msg::AutowareState::ConstSharedPtr autoware_state_;
   autoware_system_msgs::msg::DrivingCapability::ConstSharedPtr driving_capability_;
   autoware_control_msgs::msg::ControlCommand::ConstSharedPtr prev_control_command_;
   autoware_control_msgs::msg::GateMode::ConstSharedPtr current_gate_mode_;
   geometry_msgs::msg::TwistStamped::ConstSharedPtr twist_;
-  autoware_system_msgs::msg::TimeoutNotification::ConstSharedPtr is_state_timeout_;
 
   void onAutowareState(const autoware_system_msgs::msg::AutowareState::ConstSharedPtr msg);
   void onDrivingCapability(const autoware_system_msgs::msg::DrivingCapability::ConstSharedPtr msg);
@@ -100,7 +97,6 @@ private:
   int update_rate_;
   double data_ready_timeout_;
   double timeout_driving_capability_;
-  double timeout_is_state_timeout_;
   int emergency_hazard_level_;
   bool use_emergency_hold_;
   bool use_parking_after_stopped_;
@@ -112,8 +108,6 @@ private:
   rclcpp::Time initialized_time_;
   std::shared_ptr<HeaderlessHeartbeatChecker<autoware_system_msgs::msg::DrivingCapability>>
   heartbeat_driving_capability_;
-  std::shared_ptr<HeaderlessHeartbeatChecker<autoware_system_msgs::msg::TimeoutNotification>>
-  heartbeat_is_state_timeout_;
 
   // Algorithm
   bool is_emergency_ = false;

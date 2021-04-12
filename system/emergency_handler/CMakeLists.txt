@@ -22,22 +22,10 @@ set(EMERGENCY_HANDLER_SRC
 set(EMERGENCY_HANDLER_HEADERS
   include/emergency_handler/emergency_handler_core.hpp)
 
-set(STATE_TIMEOUT_CHECKER_SRC
-  src/state_timeout_checker/state_timeout_checker_core.cpp)
-
-set(STATE_TIMEOUT_CHECKER_HEADERS
-  include/emergency_handler/state_timeout_checker_core.hpp)
-
 ament_auto_add_executable(emergency_handler
   src/emergency_handler/emergency_handler_node.cpp
   ${EMERGENCY_HANDLER_SRC}
   ${EMERGENCY_HANDLER_HEADERS}
-)
-
-ament_auto_add_executable(state_timeout_checker
-  src/state_timeout_checker/state_timeout_checker_node.cpp
-  ${STATE_TIMEOUT_CHECKER_SRC}
-  ${STATE_TIMEOUT_CHECKER_HEADERS}
 )
 
 if(BUILD_TESTING)

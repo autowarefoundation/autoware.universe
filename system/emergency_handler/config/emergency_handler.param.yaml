@@ -1,9 +1,8 @@
 # Default configuration for emergency handler
 ---
 /**:
-    ros__parameters:
-      update_rate: 10
-      timeout_driving_capability: 0.5
-      timeout_is_state_timeout: 0.5
-      data_ready_timeout: 30.0
-      use_parking_after_stopped: false
+  ros__parameters:
+    update_rate: 10
+    timeout_driving_capability: 0.5
+    data_ready_timeout: 30.0
+    use_parking_after_stopped: false
