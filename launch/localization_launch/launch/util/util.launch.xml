@@ -10,41 +10,17 @@
   <!-- frame_ids -->
   <arg name="base_frame" default="base_link" description="Vehicle reference frame" />
 
+  <!-- container -->
+  <arg name="container" default="/sensing/lidar/top/pointcloud_preprocessor/velodyne_node_container" />
+
+  <!-- option -->
+  <arg name="use_intra_process" default="false" />
+
   <!-- pose_initializer -->
   <include file="$(find-pkg-share pose_initializer)/launch/pose_initializer.launch.xml">
     <arg name="ndt_align_server_name" value="/localization/pose_estimator/ndt_align_srv" />
   </include>
 
-  <node pkg="pointcloud_preprocessor" exec="crop_box_filter_node" name="crop_box_filter_measurement_range" output="log">
-    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)" />
-    <remap from="input" to="$(var input_sensor_points_topic)" />
-    <remap from="output" to="$(var output_measurement_range_sensor_points_topic)" />
-    <param name="min_x" value="-60.0" />
-    <param name="max_x" value="60.0" />
-    <param name="min_y" value="-60.0" />
-    <param name="max_y" value="60.0" />
-    <param name="min_z" value="-30.0" />
-    <param name="max_z" value="50.0" />
-    <param name="negative" value="False" />
-    <param name="input_frame" value="$(var base_frame)" />
-    <param name="output_frame" value="$(var base_frame)" />
-  </node>
-
-  <!-- Run a VoxelGrid filter to clean NaNs and downsample the data -->
-  <node pkg="pointcloud_preprocessor" exec="voxel_grid_downsample_filter_node" name="voxel_grid_filter" output="log">
-    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
-    <remap from="input" to="$(var output_measurement_range_sensor_points_topic)" />
-    <remap from="output" to="$(var output_voxel_grid_downsample_sensor_points_topic)" />
-    <param name="voxel_size_x" value="3.0" />
-    <param name="voxel_size_y" value="3.0" />
-    <param name="voxel_size_z" value="3.0" />
-  </node>
-
-  <node pkg="pointcloud_preprocessor" exec="random_downsample_filter_node" name="random_filter" output="log">
-    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
-    <remap from="input" to="$(var output_voxel_grid_downsample_sensor_points_topic)" />
-    <remap from="output" to="$(var output_downsample_sensor_points_topic)" />
-    <param name="sample_num" value="1500" />
-  </node>
+  <include file="$(find-pkg-share localization_launch)/launch/util/util.launch.py"  />
 
 </launch>
