@@ -78,11 +78,11 @@ void LivoxTagFilterNode::onPointCloud(const sensor_msgs::msg::PointCloud2::Const
   }
 
   // Publish ROS message
-  sensor_msgs::msg::PointCloud2 tag_filtered_msg;
-  pcl::toROSMsg(tag_filtered_points, tag_filtered_msg);
-  tag_filtered_msg.header = msg->header;
+  auto tag_filtered_msg_ptr = std::make_unique<sensor_msgs::msg::PointCloud2>();
+  pcl::toROSMsg(tag_filtered_points, *tag_filtered_msg_ptr);
+  tag_filtered_msg_ptr->header = msg->header;
 
-  pub_pointcloud_->publish(tag_filtered_msg);
+  pub_pointcloud_->publish(std::move(tag_filtered_msg_ptr));
 }
 
 }  // namespace livox_tag_filter

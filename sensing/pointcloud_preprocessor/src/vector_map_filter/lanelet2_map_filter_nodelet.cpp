@@ -247,7 +247,8 @@ void Lanelet2MapFilterComponent::pointcloudCallback(const PointCloud2ConstPtr cl
         output_cloud_ptr->header.frame_id);
     return;
   }
-  filtered_pointcloud_pub_->publish(*output_transed_cloud_ptr);
+  auto output = std::make_unique<sensor_msgs::msg::PointCloud2>(*output_transed_cloud_ptr);
+  filtered_pointcloud_pub_->publish(std::move(output));
 }
 
 void Lanelet2MapFilterComponent::mapCallback(

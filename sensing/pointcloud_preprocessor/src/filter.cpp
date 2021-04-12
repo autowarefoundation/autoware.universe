@@ -147,7 +147,7 @@ void pointcloud_preprocessor::Filter::computePublish(
   // Call the virtual method in the child
   filter(input, indices, output);
 
-  PointCloud2::SharedPtr cloud_tf(new PointCloud2(output));  // set the output by default
+  auto cloud_tf = std::make_unique<PointCloud2>(output);  // set the output by default
   // Check whether the user has given a different output TF frame
   if (!tf_output_frame_.empty() && output.header.frame_id != tf_output_frame_) {
     RCLCPP_DEBUG(
@@ -185,7 +185,7 @@ void pointcloud_preprocessor::Filter::computePublish(
   cloud_tf->header.stamp = input->header.stamp;
 
   // Publish a boost shared ptr
-  pub_output_->publish(*cloud_tf);
+  pub_output_->publish(std::move(cloud_tf));
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
