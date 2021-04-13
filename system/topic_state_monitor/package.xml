@@ -11,6 +11,7 @@
   <depend>ament_index_cpp</depend>
   <depend>diagnostic_updater</depend>
   <depend>rclcpp</depend>
+  <depend>rclcpp_components</depend>
   <depend>rclcpp_generic</depend>
 
   <test_depend>ament_lint_auto</test_depend>

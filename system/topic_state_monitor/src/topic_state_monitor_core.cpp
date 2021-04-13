@@ -36,8 +36,8 @@ void update_param(
 
 namespace topic_state_monitor
 {
-TopicStateMonitorNode::TopicStateMonitorNode()
-: Node("topic_state_monitor"), updater_(this)
+TopicStateMonitorNode::TopicStateMonitorNode(const rclcpp::NodeOptions & node_options)
+: Node("topic_state_monitor", node_options), updater_(this)
 {
   using std::placeholders::_1;
   // Parameter
@@ -163,3 +163,6 @@ void TopicStateMonitorNode::checkTopicStatus(diagnostic_updater::DiagnosticStatu
 }
 
 }  // namespace topic_state_monitor
+
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(topic_state_monitor::TopicStateMonitorNode)

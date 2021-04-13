@@ -37,7 +37,7 @@ struct NodeParam
 class TopicStateMonitorNode : public rclcpp::Node
 {
 public:
-  TopicStateMonitorNode();
+  TopicStateMonitorNode(const rclcpp::NodeOptions & node_options);
 
 private:
   // Parameter

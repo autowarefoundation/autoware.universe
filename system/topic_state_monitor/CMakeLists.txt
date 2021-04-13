@@ -15,15 +15,12 @@ ament_auto_find_build_dependencies()
 
 ament_auto_add_library(topic_state_monitor SHARED
   src/topic_state_monitor/topic_state_monitor.cpp
-)
-
-ament_auto_add_executable(topic_state_monitor_node
   src/topic_state_monitor_core.cpp
-  src/topic_state_monitor_node.cpp
 )
 
-target_link_libraries(topic_state_monitor_node
-  topic_state_monitor
+rclcpp_components_register_node(topic_state_monitor
+  PLUGIN "topic_state_monitor::TopicStateMonitorNode"
+  EXECUTABLE topic_state_monitor_node
 )
 
 if(BUILD_TESTING)
