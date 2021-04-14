@@ -4,13 +4,13 @@
   <arg name="use_vector_map" default="false"/>
 
   <group if="$(var use_vector_map)">
+    <set_remap from="objects" to="/perception/object_recognition/objects"/>
     <include file="$(find-pkg-share map_based_prediction)/launch/map_based_prediction.launch.xml">
       <arg name="output_topic" value="/perception/object_recognition/objects"/>
     </include>
   </group>
   <group unless="$(var use_vector_map)">
     <include file="$(find-pkg-share naive_path_prediction)/launch/naive_path_prediction.launch.xml">
-      <remap from="objects" to="/perception/object_recognition/objects"/>
     </include>
   </group>
 
