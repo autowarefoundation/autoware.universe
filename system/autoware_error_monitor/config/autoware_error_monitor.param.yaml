@@ -77,4 +77,5 @@
             "/autoware/system/emergency_stop_operation",
             "/autoware/vehicle/alive_monitoring",
             "/autoware/vehicle/vehicle_errors",
+            "/autoware/vehicle/obstacle_crush",
           ]
