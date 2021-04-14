@@ -24,7 +24,7 @@
 
 #include "system_monitor/gpu_monitor/gpu_monitor_base.hpp"
 
-typedef struct gpu_info
+struct gpu_info
 {
   std::string label_;  //!< @brief gpu label
   std::string path_;   //!< @brief sysfs path to gpu temperature
@@ -33,7 +33,7 @@ typedef struct gpu_info
   : label_(), path_() {}
   gpu_info(const std::string & l, const std::string & p)
   : label_(l), path_(p) {}
-} gpu_info;
+};
 
 class GPUMonitor : public GPUMonitorBase
 {
@@ -85,17 +85,17 @@ protected:
   /**
    * @brief get names for gpu temperature files
    */
-  void getTempNames(void);
+  void getTempNames();
 
   /**
    * @brief get names for gpu load files
    */
-  void getLoadNames(void);
+  void getLoadNames();
 
   /**
    * @brief get names for gpu frequency files
    */
-  void getFreqNames(void);
+  void getFreqNames();
 
   std::vector<gpu_info> temps_;  //!< @brief GPU list for temperature
   std::vector<gpu_info> loads_;  //!< @brief GPU list for utilization

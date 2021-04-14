@@ -26,7 +26,7 @@
 GPUMonitorBase::GPUMonitorBase(const std::string & node_name, const rclcpp::NodeOptions & options)
 : Node(node_name, options),
   updater_(this),
-  hostname_(),
+  hostname_{""},
   temp_warn_(declare_parameter<float>("temp_warn", 90.0)),
   temp_error_(declare_parameter<float>("temp_error", 95.0)),
   gpu_usage_warn_(declare_parameter<float>("gpu_usage_warn", 0.90)),
@@ -51,27 +51,27 @@ void GPUMonitorBase::update()
 
 void GPUMonitorBase::shut_down() { /*NOOP by default.*/}
 
-void GPUMonitorBase::checkTemp(diagnostic_updater::DiagnosticStatusWrapper & stat)
+void GPUMonitorBase::checkTemp(diagnostic_updater::DiagnosticStatusWrapper & /* stat */)
 {
   RCLCPP_INFO_ONCE(get_logger(), "GPUMonitorBase::checkTemp not implemented.");
 }
 
-void GPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
+void GPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & /* stat */)
 {
   RCLCPP_INFO_ONCE(get_logger(), "GPUMonitorBase::checkUsage not implemented.");
 }
 
-void GPUMonitorBase::checkMemoryUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
+void GPUMonitorBase::checkMemoryUsage(diagnostic_updater::DiagnosticStatusWrapper & /* stat */)
 {
   RCLCPP_INFO_ONCE(get_logger(), "GPUMonitorBase::checkMemoryUsage not implemented.");
 }
 
-void GPUMonitorBase::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & stat)
+void GPUMonitorBase::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & /* stat */)
 {
   RCLCPP_INFO_ONCE(get_logger(), "GPUMonitorBase::checkThrottling not implemented.");
 }
 
-void GPUMonitorBase::checkFrequency(diagnostic_updater::DiagnosticStatusWrapper & stat)
+void GPUMonitorBase::checkFrequency(diagnostic_updater::DiagnosticStatusWrapper & /* stat */)
 {
   RCLCPP_INFO_ONCE(get_logger(), "GPUMonitorBase::checkFrequency not implemented.");
 }

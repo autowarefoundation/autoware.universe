@@ -33,9 +33,7 @@ GPUMonitor::GPUMonitor(const std::string & node_name, const rclcpp::NodeOptions 
   // Include frequency into GPU Thermal Throttling thus remove.
   updater_.removeByName("GPU Frequency");
 
-  nvmlReturn_t ret;
-
-  ret = nvmlInit();
+  nvmlReturn_t ret = nvmlInit();
   if (ret != NVML_SUCCESS) {
     RCLCPP_ERROR(this->get_logger(), "Failed to initialize NVML: %s\n", nvmlErrorString(ret));
   }
@@ -48,8 +46,8 @@ GPUMonitor::GPUMonitor(const std::string & node_name, const rclcpp::NodeOptions 
       nvmlErrorString(ret));
   }
 
-  for (int index = 0; index < deviceCount; ++index) {
-    gpu_info info;
+  for (unsigned int index = 0; index < deviceCount; ++index) {
+    gpu_info info{};
     ret = nvmlDeviceGetHandleByIndex(index, &info.device);
     if (ret != NVML_SUCCESS) {
       RCLCPP_ERROR(
@@ -88,7 +86,7 @@ void GPUMonitor::checkTemp(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
   int level = DiagStatus::OK;
   int index = 0;
-  nvmlReturn_t ret;
+  nvmlReturn_t ret{};
 
   if (gpus_.empty()) {
     stat.summary(DiagStatus::ERROR, "gpu not found");
@@ -123,7 +121,7 @@ void GPUMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
   int level = DiagStatus::OK;
   int whole_level = DiagStatus::OK;
   int index = 0;
-  nvmlReturn_t ret;
+  nvmlReturn_t ret{};
 
   if (gpus_.empty()) {
     stat.summary(DiagStatus::ERROR, "gpu not found");
@@ -163,7 +161,7 @@ void GPUMonitor::checkMemoryUsage(diagnostic_updater::DiagnosticStatusWrapper & 
   int level = DiagStatus::OK;
   int whole_level = DiagStatus::OK;
   int index = 0;
-  nvmlReturn_t ret;
+  nvmlReturn_t ret{};
 
   if (gpus_.empty()) {
     stat.summary(DiagStatus::ERROR, "gpu not found");
@@ -208,7 +206,7 @@ void GPUMonitor::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & s
   int level = DiagStatus::OK;
   int whole_level = DiagStatus::OK;
   int index = 0;
-  nvmlReturn_t ret;
+  nvmlReturn_t ret{};
   std::vector<std::string> reasons;
 
   if (gpus_.empty()) {
@@ -240,7 +238,7 @@ void GPUMonitor::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & s
     while (clocksThrottleReasons) {
       unsigned long long flag = clocksThrottleReasons & ((~clocksThrottleReasons) + 1);  // NOLINT
       clocksThrottleReasons ^= flag;
-      reasons.push_back(reasonToString(flag));
+      reasons.emplace_back(reasonToString(flag));
 
       switch (flag) {
         case nvmlClocksThrottleReasonGpuIdle:

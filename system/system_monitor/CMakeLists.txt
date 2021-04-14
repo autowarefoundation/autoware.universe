@@ -152,7 +152,7 @@ target_link_libraries(mem_monitor ${LIBRARIES})
 target_link_libraries(net_monitor ${NL_LIBS} ${LIBRARIES})
 target_link_libraries(ntp_monitor ${Boost_LIBRARIES} ${LIBRARIES})
 target_link_libraries(process_monitor ${LIBRARIES})
-target_link_libraries(gpu_monitor ${GPU_LIBRARY} ${LIBRARIES})
+target_link_libraries(gpu_monitor ${GPU_LIBRARY} ${Boost_LIBRARIES} ${LIBRARIES})
 target_link_libraries(msr_reader ${Boost_LIBRARIES} ${LIBRARIES})
 target_link_libraries(hdd_reader ${Boost_LIBRARIES} ${LIBRARIES})
 

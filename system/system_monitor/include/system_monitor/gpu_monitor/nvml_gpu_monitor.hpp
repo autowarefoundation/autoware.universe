@@ -52,13 +52,13 @@
 /**
  * @brief GPU information
  */
-typedef struct gpu_info
+struct gpu_info
 {
   nvmlDevice_t device;                      //!< @brief handle for a particular device
   char name[NVML_DEVICE_NAME_BUFFER_SIZE];  //!< @brief name of device
   nvmlPciInfo_t pci;                        //!< @brief PCI information about a GPU device
   nvmlUtilization_t utilization;            //!< @brief Utilization information for a device
-} gpu_info;
+};
 
 class GPUMonitor : public GPUMonitorBase
 {

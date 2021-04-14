@@ -53,23 +53,23 @@ void GPUMonitor::checkTemp(diagnostic_updater::DiagnosticStatusWrapper & stat)
   }
 
   int level = DiagStatus::OK;
-  std::string error_str = "";
+  std::string error_str;
 
-  for (auto itr = temps_.begin(); itr != temps_.end(); ++itr) {
+  for (const auto & itr : temps_) {
     // Read temperature file
-    const fs::path path(itr->path_);
+    const fs::path path(itr.path_);
     fs::ifstream ifs(path, std::ios::in);
     if (!ifs) {
-      stat.add("file open error", itr->path_);
+      stat.add("file open error", itr.path_);
       error_str = "file open error";
       continue;
     }
 
-    float temp;
+    float temp{};
     ifs >> temp;
     ifs.close();
     temp /= 1000;
-    stat.addf(itr->label_, "%.1f DegC", temp);
+    stat.addf(itr.label_, "%.1f DegC", temp);
 
     level = DiagStatus::OK;
     if (temp >= temp_error_) {
@@ -94,22 +94,22 @@ void GPUMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
   }
 
   int level = DiagStatus::OK;
-  std::string error_str = "";
+  std::string error_str;
 
-  for (auto itr = loads_.begin(); itr != loads_.end(); ++itr) {
+  for (const auto & itr : loads_) {
     // Read load file
-    const fs::path path(itr->path_);
+    const fs::path path(itr.path_);
     fs::ifstream ifs(path, std::ios::in);
     if (!ifs) {
-      stat.add("file open error", itr->path_);
+      stat.add("file open error", itr.path_);
       error_str = "file open error";
       continue;
     }
 
-    float load;
+    float load{};
     ifs >> load;
     ifs.close();
-    stat.addf(itr->label_, "%.1f%%", load / 10);
+    stat.addf(itr.label_, "%.1f%%", load / 10);
 
     level = DiagStatus::OK;
     load /= 1000;
@@ -139,15 +139,15 @@ void GPUMonitor::checkFrequency(diagnostic_updater::DiagnosticStatusWrapper & st
     return;
   }
 
-  for (auto itr = freqs_.begin(); itr != freqs_.end(); ++itr) {
+  for (const auto & freq : freqs_) {
     // Read cur_freq file
-    const fs::path path(itr->path_);
+    const fs::path path(freq.path_);
     fs::ifstream ifs(path, std::ios::in);
     if (ifs) {
       std::string line;
       if (std::getline(ifs, line)) {
         stat.addf(
-          (std::format("GPU %1%: clock") % itr->label_), "%d MHz",
+          fmt::format("GPU {}: clock", freq.label_), "%d MHz",
           std::stoi(line) / 1000000);
       }
     }
@@ -163,8 +163,8 @@ void GPUMonitor::getTempNames()
   std::vector<thermal_zone> therms;
   SystemMonitorUtility::getThermalZone("GPU-therm", &therms);
 
-  for (auto itr = therms.begin(); itr != therms.end(); ++itr) {
-    temps_.emplace_back(itr->label_, itr->path_);
+  for (const auto & therm : therms) {
+    temps_.emplace_back(therm.label_, therm.path_);
   }
 }
 
