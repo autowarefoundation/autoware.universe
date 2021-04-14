@@ -283,12 +283,6 @@ void VehicleCmdGate::onTimer()
   if (use_emergency_handling_ && is_system_emergency_) {
     turn_signal = emergency_commands_.turn_signal;
     shift = emergency_commands_.shift;
-  } else if (current_gate_mode_.data == autoware_control_msgs::msg::GateMode::AUTO) {
-    turn_signal = auto_commands_.turn_signal;
-    shift = auto_commands_.shift;
-  } else if (current_gate_mode_.data == autoware_control_msgs::msg::GateMode::REMOTE) {
-    turn_signal = remote_commands_.turn_signal;
-    shift = remote_commands_.shift;
   } else {
     if (current_gate_mode_.data == autoware_control_msgs::msg::GateMode::AUTO) {
       turn_signal = auto_commands_.turn_signal;
