@@ -4,7 +4,7 @@
   <version>0.1.0</version>
   <description>The tier4_pcl_extensions package</description>
   <maintainer email="ryu.yamamoto@tier4.jp">Ryu Yamamoto</maintainer>
-  <license>Apache 2</license>
+  <license>Apache License 2.0</license>
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
   <buildtool_depend>eigen3_cmake_module</buildtool_depend>
