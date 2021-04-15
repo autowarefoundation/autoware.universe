@@ -4,7 +4,7 @@
   <version>0.1.0</version>
   <description>The vehicle_cmd_gate package</description>
   <maintainer email="h_ohta@ertl.jp">h_ohta</maintainer>
-  <license>Apache 2</license>
+  <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
