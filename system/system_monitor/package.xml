@@ -6,7 +6,7 @@
   <description>The system_monitor package</description>
   <maintainer email="fumihito.ito@tier4.jp">Fumihito Ito</maintainer>
 
-  <license>Apache 2.0</license>
+  <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
