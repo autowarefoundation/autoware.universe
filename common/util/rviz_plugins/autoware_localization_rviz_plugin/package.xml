@@ -4,7 +4,7 @@
   <name>autoware_localization_rviz_plugin</name>
   <version>0.1.0</version>
   <description>The autoware_localization_rviz_plugin package</description>
-  <license>Apache 2.0</license>
+  <license>Apache License 2.0</license>
 
   <maintainer email="isamu.takagi@tier4.jp">Isamu Takagi</maintainer>
 
