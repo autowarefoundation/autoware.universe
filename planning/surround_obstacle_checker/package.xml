@@ -7,7 +7,7 @@
 
   <maintainer email="tier4@todo.todo">tier4</maintainer>
 
-  <license>Apache 2</license>
+  <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>eigen3_cmake_module</buildtool_depend>
