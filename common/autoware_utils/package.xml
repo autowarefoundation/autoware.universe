@@ -5,7 +5,7 @@
   <description>The autoware_utils package</description>
   <maintainer email="horibe.takamasa@gmail.com">Takamasa Horibe</maintainer>
   <maintainer email="kenji.miyake@tier4.jp">Kenji Miyake</maintainer>
-  <license>Apache 2</license>
+  <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
