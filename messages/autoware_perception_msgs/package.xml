@@ -6,7 +6,7 @@
   <description>The autoware_perception_msgs package</description>
   <maintainer email="yukihiro.saito@tier4.jp">Yukihiro Saito</maintainer>
 
-  <license>Apache 2</license>
+  <license>Apache License 2.0</license>
 
   <buildtool_depend condition="$ROS_VERSION == 1">catkin</buildtool_depend>
   <buildtool_depend condition="$ROS_VERSION == 2">ament_cmake</buildtool_depend>
