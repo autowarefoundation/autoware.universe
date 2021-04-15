@@ -5,7 +5,7 @@
   <description>The awapi_awiv_adapter package</description>
   <maintainer email="tomoya.kimura@tier4.jp">Tomoya Kimura</maintainer>
   <author email="tomoya.kimura@tier4.jp">Tomoya Kimura</author>
-  <license>BSD</license>
+  <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
