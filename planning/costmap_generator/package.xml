@@ -5,7 +5,7 @@
   <description>The costmap_generator package</description>
 
   <maintainer email="kenji.miyake@tier4.jp">Kenji Miyake</maintainer>
-  <license>Apache 2</license>
+  <license>Apache License 2.0</license>
 
   <maintainer email="cirpue49@yahoo.co.jp">ando</maintainer>
   <license>BSD</license>
