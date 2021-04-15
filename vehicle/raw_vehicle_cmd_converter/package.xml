@@ -6,7 +6,7 @@
   <maintainer email="horibe.takamasa@gmail.com">Horibe Takamasa</maintainer>
   <author email="mkuri8m@gmail.com">Makoto Kurihara</author>
   <author email="horibe.takamasa@gmail.com">Horibe Takamasa</author>
-  <license>Apache 2</license>
+  <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
