@@ -8,7 +8,7 @@
   <license>Apache License 2.0</license>
 
   <maintainer email="cirpue49@yahoo.co.jp">ando</maintainer>
-  <license>BSD</license>
+  <license>BSD-3-Clause</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
