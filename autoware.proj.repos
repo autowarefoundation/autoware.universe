@@ -87,6 +87,10 @@ repositories:
     type: git
     url: https://github.com/tier4/ublox.git
     version: tier4/ros2
+  vendor/septentrio:
+    type: git
+    url: https://github.com/tier4/septentrio_gnss_driver.git
+    version: tier4/ros2
   vendor/livox-driver:
     type: git
     url: https://github.com/tier4/livox_ros2_driver.git
