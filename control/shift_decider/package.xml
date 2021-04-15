@@ -5,7 +5,7 @@
   <description>The shift_decider package</description>
   <maintainer email="horibe.takamasa@gmail.com">Takamasa Horibe</maintainer>
   <author email="horibe.takamasa@gmail.com">Takamasa Horibe</author>
-  <license>Apache 2</license>
+  <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
@@ -14,7 +14,7 @@
   <test_depend>ament_cmake_cpplint</test_depend>
 
   <export>
-  <build_type>ament_cmake</build_type>
+    <build_type>ament_cmake</build_type>
   </export>
 
   <depend>autoware_control_msgs</depend>
