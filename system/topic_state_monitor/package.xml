@@ -4,7 +4,7 @@
   <version>0.1.0</version>
   <description>The topic_state_monitor package</description>
   <maintainer email="kenji.miyake@tier4.jp">Kenji Miyake</maintainer>
-  <license>Apache 2</license>
+  <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
