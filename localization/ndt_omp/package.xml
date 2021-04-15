@@ -10,7 +10,7 @@
 
   <maintainer email="koide@aisl.cs.tut.ac.jp">koide</maintainer>
 
-  <license>BSD</license>
+  <license>BSD-2-Clause</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
   <depend>libpcl-all-dev</depend>
