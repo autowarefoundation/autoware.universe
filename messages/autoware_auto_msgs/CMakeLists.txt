@@ -10,6 +10,8 @@ ament_auto_find_build_dependencies()
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "action/PlanTrajectory.idl"
+  "action/RecordTrajectory.idl"
+  "action/ReplayTrajectory.idl"
   "msg/BoundingBox.idl"
   "msg/BoundingBoxArray.idl"
   "msg/Complex32.idl"
