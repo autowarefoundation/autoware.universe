@@ -75,7 +75,7 @@ ApproximateDownsampleFilterComponent::ApproximateDownsampleFilterComponent(
 }
 
 void ApproximateDownsampleFilterComponent::filter(
-  const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output)
+  const PointCloud2ConstPtr & input, const IndicesPtr & /*indices*/, PointCloud2 & output)
 {
   boost::mutex::scoped_lock lock(mutex_);
   pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_input(new pcl::PointCloud<pcl::PointXYZ>);
@@ -111,6 +111,7 @@ rcl_interfaces::msg::SetParametersResult ApproximateDownsampleFilterComponent::p
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = true;
   result.reason = "success";
+  return result;
 }
 
 }  // namespace pointcloud_preprocessor

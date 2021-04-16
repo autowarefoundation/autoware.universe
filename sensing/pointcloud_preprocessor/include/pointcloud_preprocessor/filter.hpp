@@ -104,30 +104,30 @@ bool get_param(const std::vector<rclcpp::Parameter> & p, const std::string & nam
 class Filter : public rclcpp::Node
 {
 public:
-  typedef sensor_msgs::msg::PointCloud2 PointCloud2;
-  typedef sensor_msgs::msg::PointCloud2::ConstSharedPtr PointCloud2ConstPtr;
+  using PointCloud2 = sensor_msgs::msg::PointCloud2;
+  using PointCloud2ConstPtr = sensor_msgs::msg::PointCloud2::ConstSharedPtr;
 
-  typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
-  typedef PointCloud::Ptr PointCloudPtr;
-  typedef PointCloud::ConstPtr PointCloudConstPtr;
+  using PointCloud = pcl::PointCloud<pcl::PointXYZ>;
+  using PointCloudPtr = PointCloud::Ptr;
+  using PointCloudConstPtr = PointCloud::ConstPtr;
 
-  typedef pcl_msgs::msg::PointIndices PointIndices;
-  typedef PointIndices::SharedPtr PointIndicesPtr;
-  typedef PointIndices::ConstSharedPtr PointIndicesConstPtr;
+  using PointIndices = pcl_msgs::msg::PointIndices;
+  using PointIndicesPtr = PointIndices::SharedPtr;
+  using PointIndicesConstPtr = PointIndices::ConstSharedPtr;
 
-  typedef pcl_msgs::msg::ModelCoefficients ModelCoefficients;
-  typedef ModelCoefficients::SharedPtr ModelCoefficientsPtr;
-  typedef ModelCoefficients::ConstSharedPtr ModelCoefficientsConstPtr;
+  using ModelCoefficients = pcl_msgs::msg::ModelCoefficients;
+  using ModelCoefficientsPtr = ModelCoefficients::SharedPtr;
+  using ModelCoefficientsConstPtr = ModelCoefficients::ConstSharedPtr;
 
-  typedef pcl::IndicesPtr IndicesPtr;
-  typedef pcl::IndicesConstPtr IndicesConstPtr;
+  using IndicesPtr = pcl::IndicesPtr;
+  using IndicesConstPtr = pcl::IndicesConstPtr;
 
-  typedef message_filters::Synchronizer<sync_policies::ExactTime<PointCloud2, PointIndices>>
-    ExactTimeSyncPolicy;
-  typedef message_filters::Synchronizer<sync_policies::ApproximateTime<PointCloud2, PointIndices>>
-    ApproximateTimeSyncPolicy;
+  using ExactTimeSyncPolicy =
+    message_filters::Synchronizer<sync_policies::ExactTime<PointCloud2, PointIndices>>;
+  using ApproximateTimeSyncPolicy =
+    message_filters::Synchronizer<sync_policies::ApproximateTime<PointCloud2, PointIndices>>;
 
-  Filter(
+  explicit Filter(
     const std::string & filter_name = "pointcloud_preprocessor_filter",
     const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
 
@@ -218,7 +218,9 @@ protected:
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
 
-  inline bool isValid(const PointCloud2ConstPtr & cloud, const std::string & topic_name = "input")
+  inline bool isValid(
+    const PointCloud2ConstPtr & cloud,
+    const std::string & /*topic_name*/ = "input")
   {
     if (cloud->width * cloud->height * cloud->point_step != cloud->data.size()) {
       RCLCPP_WARN(

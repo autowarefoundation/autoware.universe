@@ -61,8 +61,8 @@ namespace pointcloud_preprocessor
 class RandomDownsampleFilterComponent : public pointcloud_preprocessor::Filter
 {
 protected:
-  virtual void filter(
-    const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output);
+  void filter(
+    const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output) override;
 
 private:
   size_t sample_num_;

@@ -174,6 +174,7 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
   list(APPEND AMENT_LINT_AUTO_EXCLUDE
+    # To avoid conflicts between cpplint and uncrustify w.r.t. inclusion guards
     ament_cmake_uncrustify
   )
 endif()

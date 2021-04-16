@@ -61,8 +61,8 @@ namespace pointcloud_preprocessor
 class VoxelGridDownsampleFilterComponent : public pointcloud_preprocessor::Filter
 {
 protected:
-  virtual void filter(
-    const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output);
+  void filter(
+    const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output) override;
 
 private:
   double voxel_size_x_;

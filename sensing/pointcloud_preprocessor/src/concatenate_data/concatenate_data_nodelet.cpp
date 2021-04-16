@@ -100,7 +100,7 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
       this->create_publisher<autoware_debug_msgs::msg::Int32Stamped>("~/concat_num", 10);
     pub_not_subscribed_topic_name_ =
       this->create_publisher<autoware_debug_msgs::msg::StringStamped>(
-        "~/not_subscribed_topic_name", 10);
+      "~/not_subscribed_topic_name", 10);
   }
 
   // Subscribers
@@ -330,7 +330,7 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
   const bool is_already_subscribed_this = (cloud_stdmap_[topic_name] != nullptr);
   const bool is_already_subscribed_tmp = std::any_of(
     std::begin(cloud_stdmap_tmp_), std::end(cloud_stdmap_tmp_),
-    [](const auto & e) { return e.second != nullptr; });
+    [](const auto & e) {return e.second != nullptr;});
 
   if (is_already_subscribed_this) {
     cloud_stdmap_tmp_[topic_name] = xyz_input_ptr;
