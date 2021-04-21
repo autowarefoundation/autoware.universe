@@ -3,20 +3,18 @@ Messages
 
 # Overview
 
-In this section, it is described that 8 categories of messages in the architecture:
+This page describes the eight categories of message in the new architecture, along with definitions for each message.
 
-- autoware control messages
-- autoware lanelet2 messages
-- autoware perception messages
-- autoware planning messages
-- autoware system messages
-- autoware traffic light messages
-- autoware vector map messages
-- autoware vehicle messages
+- [Autoware control messages](#autoware-control-messages)
+- [Autoware lanelet2 messages](#autoware-lanelet2-messages)
+- [Autoware perception messages](#autoware-perception-messages)
+- [Autoware planning messages](#autoware-planning-messages)
+- [Autoware system messages](#autoware-system-messages)
+- [Autoware traffic light messages](#autoware-traffic-light-messages)
+- [Autoware vector map messages](#autoware-vector-map-messages)
+- [Autoware vehicle messages](#autoware-vehicle-messages)
 
-the definition of each message is shown in following subsection.
-
-## autoware control messages
+## Autoware control messages
 
 ### ControlCommand.msg
 
@@ -30,7 +28,7 @@ the definition of each message is shown in following subsection.
 `Header header`  
 `autoware_control_msgs/ControlCommand control`
 
-## autoware lanelet2 messages
+## Autoware lanelet2 messages
 
 ### MapBin.msg
 
@@ -39,7 +37,7 @@ the definition of each message is shown in following subsection.
 `string map_version`  
 `int8[] data`  
 
-## autoware perception messages
+## Autoware perception messages
 
 ### DynamicObject.msg
 
@@ -105,7 +103,7 @@ the definition of each message is shown in following subsection.
 `bool acceleration_reliable`  
 `PredictedPath[] predicted_paths`  
 
-## autoware planning messages
+## Autoware planning messages
 
 ### LaneSequence.msg
 
@@ -167,7 +165,7 @@ the definition of each message is shown in following subsection.
 `geometry_msgs/Twist twist`  
 `geometry_msgs/Accel accel`  
 
-## autoware system messages
+## Autoware system messages
 
 ### AutowareState.msg
 
@@ -182,7 +180,7 @@ the definition of each message is shown in following subsection.
 `string state`  
 `string msg`  
 
-## autoware traffic light messages
+## Autoware traffic light messages
 
 ### LampState.msg
 
@@ -217,7 +215,7 @@ the definition of each message is shown in following subsection.
 `std_msgs/Header header`  
 `autoware_traffic_light_msgs/TrafficLightState[] states`  
 
-## autoware vector map messages
+## Autoware vector map messages
 
 ### BinaryGpkgMap.msg
 
@@ -226,7 +224,7 @@ the definition of each message is shown in following subsection.
 `string map_version`  
 `int8[] data`  
 
-## autoware vehicle messages
+## Autoware vehicle messages
 
 ### ControlMode.msg
 
@@ -236,7 +234,7 @@ the definition of each message is shown in following subsection.
 `uint8 AUTO_STEER_ONLY = 2`  
 `uint8 AUTO_PEDAL_ONLY = 3`  
 `int32 data`
-  
+
 ### Pedal.msg
 
 `std_msgs/Header header`  
