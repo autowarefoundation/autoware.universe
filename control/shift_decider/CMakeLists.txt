@@ -10,7 +10,14 @@ if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_EXTENSIONS OFF)
 endif()
 
-ament_auto_add_executable(shift_decider src/shift_decider.cpp src/main.cpp)
+ament_auto_add_library(shift_decider_node SHARED
+  src/shift_decider.cpp
+)
+
+rclcpp_components_register_node(shift_decider_node
+  PLUGIN "ShiftDecider"
+  EXECUTABLE shift_decider
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -20,4 +27,4 @@ endif()
 ament_auto_package(
   INSTALL_TO_SHARE
   launch
-  )
+)

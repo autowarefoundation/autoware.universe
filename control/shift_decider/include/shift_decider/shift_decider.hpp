@@ -26,7 +26,7 @@
 class ShiftDecider : public rclcpp::Node
 {
 public:
-  ShiftDecider();
+  explicit ShiftDecider(const rclcpp::NodeOptions & node_options);
 
 private:
   void onTimer();
