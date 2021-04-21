@@ -44,7 +44,7 @@ using GateModeType = autoware_control_msgs::msg::GateMode::_data_type;
 class AutowareJoyControllerNode : public rclcpp::Node
 {
 public:
-  AutowareJoyControllerNode();
+  explicit AutowareJoyControllerNode(const rclcpp::NodeOptions & node_options);
 
 private:
   // Parameter

@@ -420,8 +420,8 @@ void AutowareJoyControllerNode::initTimer(double period_s)
   this->get_node_timers_interface()->add_timer(timer_, nullptr);
 }
 
-AutowareJoyControllerNode::AutowareJoyControllerNode()
-: Node("autoware_joy_controller")
+AutowareJoyControllerNode::AutowareJoyControllerNode(const rclcpp::NodeOptions & node_options)
+: Node("autoware_joy_controller", node_options)
 {
   // Parameter
   joy_type_ = declare_parameter("joy_type", std::string("DS4"));
@@ -491,3 +491,6 @@ AutowareJoyControllerNode::AutowareJoyControllerNode()
   initTimer(1.0 / update_rate_);
 }
 }  // namespace autoware_joy_controller
+
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware_joy_controller::AutowareJoyControllerNode)

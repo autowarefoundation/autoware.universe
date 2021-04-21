@@ -11,9 +11,13 @@ endif()
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
-ament_auto_add_executable(autoware_joy_controller
-  src/autoware_joy_controller/main.cpp
+ament_auto_add_library(autoware_joy_controller_node SHARED
   src/autoware_joy_controller/autoware_joy_controller_node.cpp
+)
+
+rclcpp_components_register_node(autoware_joy_controller_node
+  PLUGIN "autoware_joy_controller::AutowareJoyControllerNode"
+  EXECUTABLE autoware_joy_controller
 )
 
 if(BUILD_TESTING)
