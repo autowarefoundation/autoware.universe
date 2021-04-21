@@ -24,10 +24,14 @@ include_directories(
 
 # Target
 ## obstacle_collision_checker_node
-ament_auto_add_executable(obstacle_collision_checker_node
-  src/obstacle_collision_checker_node/main.cpp
+ament_auto_add_library(obstacle_collision_checker SHARED
   src/obstacle_collision_checker_node/obstacle_collision_checker.cpp
   src/obstacle_collision_checker_node/obstacle_collision_checker_node.cpp
+)
+
+rclcpp_components_register_node(obstacle_collision_checker
+  PLUGIN "obstacle_collision_checker::ObstacleCollisionCheckerNode"
+  EXECUTABLE obstacle_collision_checker_node
 )
 
 if(BUILD_TESTING)

@@ -23,10 +23,14 @@ include_directories(
 
 # Target
 ## lane_departure_checker_node
-ament_auto_add_executable(lane_departure_checker_node
-  src/lane_departure_checker_node/main.cpp
+ament_auto_add_library(lane_departure_checker SHARED
   src/lane_departure_checker_node/lane_departure_checker.cpp
   src/lane_departure_checker_node/lane_departure_checker_node.cpp
+)
+
+rclcpp_components_register_node(lane_departure_checker
+  PLUGIN "lane_departure_checker::LaneDepartureCheckerNode"
+  EXECUTABLE lane_departure_checker_node
 )
 
 if(BUILD_TESTING)

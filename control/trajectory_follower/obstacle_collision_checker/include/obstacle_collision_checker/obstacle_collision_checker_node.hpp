@@ -43,7 +43,7 @@ struct NodeParam
 class ObstacleCollisionCheckerNode : public rclcpp::Node
 {
 public:
-  ObstacleCollisionCheckerNode();
+  explicit ObstacleCollisionCheckerNode(const rclcpp::NodeOptions & node_options);
 
 private:
   // NodeHandle

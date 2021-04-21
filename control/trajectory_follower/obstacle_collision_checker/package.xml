@@ -18,6 +18,7 @@
   <depend>geometry_msgs</depend>
   <depend>pcl_ros</depend>
   <depend>rclcpp</depend>
+  <depend>rclcpp_components</depend>
   <depend>std_msgs</depend>
   <depend>tf2</depend>
   <depend>tf2_eigen</depend>

@@ -41,8 +41,8 @@ void update_param(
 
 namespace obstacle_collision_checker
 {
-ObstacleCollisionCheckerNode::ObstacleCollisionCheckerNode()
-: Node("obstacle_collision_checker_node"), updater_(this)
+ObstacleCollisionCheckerNode::ObstacleCollisionCheckerNode(const rclcpp::NodeOptions & node_options)
+: Node("obstacle_collision_checker_node", node_options), updater_(this)
 {
   using std::placeholders::_1;
 
@@ -335,3 +335,6 @@ visualization_msgs::msg::MarkerArray ObstacleCollisionCheckerNode::createMarkerA
   return marker_array;
 }
 }  // namespace obstacle_collision_checker
+
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(obstacle_collision_checker::ObstacleCollisionCheckerNode)

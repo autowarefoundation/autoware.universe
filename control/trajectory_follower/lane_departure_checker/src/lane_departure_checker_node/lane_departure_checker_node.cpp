@@ -521,3 +521,6 @@ visualization_msgs::msg::MarkerArray LaneDepartureCheckerNode::createMarkerArray
   return marker_array;
 }
 }  // namespace lane_departure_checker
+
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(lane_departure_checker::LaneDepartureCheckerNode)
