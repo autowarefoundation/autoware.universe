@@ -45,8 +45,9 @@ const char * getGateModeName(const autoware_control_msgs::msg::GateMode::_data_t
 
 }  // namespace
 
-VehicleCmdGate::VehicleCmdGate()
-: Node("vehicle_cmd_gate"), is_engaged_(false), updater_(this)
+VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
+: Node("vehicle_cmd_gate", node_options),
+  is_engaged_(false), updater_(this)
 {
   rclcpp::QoS durable_qos{1};
   durable_qos.transient_local();
@@ -546,3 +547,6 @@ void VehicleCmdGate::checkExternalEmergencyStop(diagnostic_updater::DiagnosticSt
 
   stat.summary(status.level, status.message);
 }
+
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(VehicleCmdGate)

@@ -43,7 +43,7 @@ struct Commands
 class VehicleCmdGate : public rclcpp::Node
 {
 public:
-  VehicleCmdGate();
+  explicit VehicleCmdGate(const rclcpp::NodeOptions & node_options);
 
 private:
   // Publisher

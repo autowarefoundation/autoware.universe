@@ -16,18 +16,16 @@ endif()
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
-# Add path of include dir
-include_directories(include)
-
 # Generate exe file
-ament_auto_add_executable(vehicle_cmd_gate
-  src/vehicle_cmd_gate_node.cpp
+ament_auto_add_library(vehicle_cmd_gate_node SHARED
   src/vehicle_cmd_gate.cpp
   src/vehicle_cmd_filter.cpp
 )
 
-ament_target_dependencies(vehicle_cmd_gate ${VEHICLE_CMD_GATE_DEPENDENCIES})
-ament_export_dependencies(${VEHICLE_CMD_GATE_DEPENDENCIES})
+rclcpp_components_register_node(vehicle_cmd_gate_node
+  PLUGIN "VehicleCmdGate"
+  EXECUTABLE vehicle_cmd_gate
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

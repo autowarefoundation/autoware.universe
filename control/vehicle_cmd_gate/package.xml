@@ -11,6 +11,7 @@
   <depend>autoware_control_msgs</depend>
   <depend>autoware_vehicle_msgs</depend>
   <depend>rclcpp</depend>
+  <depend>rclcpp_components</depend>
   <depend>geometry_msgs</depend>
   <depend>std_srvs</depend>
   <depend>diagnostic_updater</depend>
