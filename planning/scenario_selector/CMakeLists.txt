@@ -23,9 +23,13 @@ set(SCENARIO_SELECTOR_SRC
 )
 
 ## scenario_selector_node
-ament_auto_add_executable(scenario_selector
-  src/scenario_selector_node/main.cpp
+ament_auto_add_library(scenario_selector_node SHARED
   ${SCENARIO_SELECTOR_SRC}
+)
+
+rclcpp_components_register_node(scenario_selector_node
+  PLUGIN "ScenarioSelectorNode"
+  EXECUTABLE scenario_selector
 )
 
 if(BUILD_TESTING)

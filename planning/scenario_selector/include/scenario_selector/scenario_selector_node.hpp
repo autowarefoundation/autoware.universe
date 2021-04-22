@@ -47,7 +47,7 @@ struct Output
 class ScenarioSelectorNode : public rclcpp::Node
 {
 public:
-  ScenarioSelectorNode();
+  explicit ScenarioSelectorNode(const rclcpp::NodeOptions & node_options);
 
   void onMap(const autoware_lanelet2_msgs::msg::MapBin::ConstSharedPtr msg);
   void onRoute(const autoware_planning_msgs::msg::Route::ConstSharedPtr msg);

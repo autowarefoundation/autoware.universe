@@ -295,8 +295,8 @@ void ScenarioSelectorNode::onTimer()
   }
 }
 
-ScenarioSelectorNode::ScenarioSelectorNode()
-: Node("scenario_selector"),
+ScenarioSelectorNode::ScenarioSelectorNode(const rclcpp::NodeOptions & node_options)
+: Node("scenario_selector", node_options),
   tf_buffer_(this->get_clock()),
   tf_listener_(tf_buffer_),
   current_scenario_(autoware_planning_msgs::msg::Scenario::EMPTY),
@@ -358,3 +358,6 @@ ScenarioSelectorNode::ScenarioSelectorNode()
     }
   }
 }
+
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(ScenarioSelectorNode)
