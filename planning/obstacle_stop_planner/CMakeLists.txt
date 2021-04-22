@@ -18,22 +18,26 @@ find_package(Eigen3 REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(PCL REQUIRED)
 
-ament_auto_add_executable(obstacle_stop_planner_node
+ament_auto_add_library(obstacle_stop_planner SHARED
   src/debug_marker.cpp
   src/node.cpp
-  src/main.cpp
   src/adaptive_cruise_control.cpp
 )
 
-target_include_directories(obstacle_stop_planner_node
+target_include_directories(obstacle_stop_planner
   PUBLIC
     ${OpenCV_INCLUDE_DIRS}
     ${PCL_INCLUDE_DIRS}
 )
 
-target_link_libraries(obstacle_stop_planner_node
+target_link_libraries(obstacle_stop_planner
     ${OpenCV_LIBRARIES}
     ${PCL_LIBRARIES}
+)
+
+rclcpp_components_register_node(obstacle_stop_planner
+  PLUGIN "motion_planning::ObstacleStopPlannerNode"
+  EXECUTABLE obstacle_stop_planner_node
 )
 
 if(BUILD_TESTING)

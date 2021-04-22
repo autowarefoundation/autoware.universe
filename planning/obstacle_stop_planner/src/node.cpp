@@ -79,8 +79,9 @@ using Point = bg::model::d2::point_xy<double>;
 using Polygon = bg::model::polygon<Point, false>;
 using Line = bg::model::linestring<Point>;
 
-ObstacleStopPlannerNode::ObstacleStopPlannerNode()
-: Node("obstacle_stop_planner"), tf_buffer_(this->get_clock()), tf_listener_(tf_buffer_)
+ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & node_options)
+: Node("obstacle_stop_planner", node_options),
+  tf_buffer_(this->get_clock()), tf_listener_(tf_buffer_)
 {
   // Vehicle Parameters
   auto vehicle_info(vehicle_info_util::VehicleInfo::create(*this));
@@ -994,3 +995,6 @@ geometry_msgs::msg::Pose ObstacleStopPlannerNode::getVehicleCenterFromBase(
 }
 
 }  // namespace motion_planning
+
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(motion_planning::ObstacleStopPlannerNode)

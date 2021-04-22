@@ -59,7 +59,7 @@ struct SlowDownPoint
 class ObstacleStopPlannerNode : public rclcpp::Node
 {
 public:
-  ObstacleStopPlannerNode();
+  explicit ObstacleStopPlannerNode(const rclcpp::NodeOptions & ndoe_options);
 
 private:
   /*
