@@ -206,7 +206,7 @@ private:
     const std::vector<rclcpp::Parameter> & parameters);
 
 public:
-  ObstacleAvoidancePlanner();
+  explicit ObstacleAvoidancePlanner(const rclcpp::NodeOptions & node_options);
   ~ObstacleAvoidancePlanner();
 };
 

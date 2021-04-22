@@ -17,7 +17,7 @@ ament_auto_find_build_dependencies()
 find_package(Eigen3 REQUIRED)
 find_package(OpenCV REQUIRED)
 
-ament_auto_add_executable(obstacle_avoidance_planner_node
+ament_auto_add_library(obstacle_avoidance_planner SHARED
   src/vehicle_model/vehicle_model_interface.cpp
   src/vehicle_model/vehicle_model_bicycle_kinematics.cpp
   src/vehicle_model/vehicle_model_bicycle_kinematics_no_delay.cpp
@@ -27,16 +27,20 @@ ament_auto_add_executable(obstacle_avoidance_planner_node
   src/mpt_optimizer.cpp
   src/process_cv.cpp
   src/node.cpp
-  src/main.cpp
 )
 
-target_include_directories(obstacle_avoidance_planner_node
+target_include_directories(obstacle_avoidance_planner
   PUBLIC
     ${OpenCV_INCLUDE_DIRS}
 )
 
-target_link_libraries(obstacle_avoidance_planner_node
+target_link_libraries(obstacle_avoidance_planner
   ${OpenCV_LIBRARIES}
+)
+
+rclcpp_components_register_node(obstacle_avoidance_planner
+  PLUGIN "ObstacleAvoidancePlanner"
+  EXECUTABLE obstacle_avoidance_planner_node
 )
 
 if(BUILD_TESTING)
