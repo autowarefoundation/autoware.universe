@@ -18,57 +18,18 @@ find_package(PCL REQUIRED COMPONENTS common)
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
-add_executable(${PROJECT_NAME}_node
+ament_auto_add_library(${PROJECT_NAME} SHARED
   src/debug_marker.cpp
   src/node.cpp
-  src/main.cpp
 )
 
-set(${PROJECT_NAME}_DEPENDENCIES
-  eigen3_cmake_module
-  Eigen3
-  PCL
-  autoware_perception_msgs
-  autoware_planning_msgs
-  diagnostic_msgs
-  rclcpp
-  sensor_msgs
-  std_msgs
-  tf2
-  tf2_geometry_msgs
-  tf2_eigen
-  tf2_ros
-  visualization_msgs
-  pcl_conversions
-  vehicle_info_util
+target_link_libraries(${PROJECT_NAME}
+  ${PCL_LIBRARIES}
 )
 
-target_include_directories(${PROJECT_NAME}_node
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-)
-
-ament_target_dependencies(${PROJECT_NAME}_node PUBLIC ${${PROJECT_NAME}_DEPENDENCIES})
-
-target_compile_definitions(${PROJECT_NAME}_node PUBLIC ${PCL_DEFINITIONS})
-target_include_directories(${PROJECT_NAME}_node PUBLIC ${PCL_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME}_node PUBLIC ${PCL_LIBRARIES})
-target_link_directories(${PROJECT_NAME}_node PUBLIC ${PCL_LIBRARY_DIRS})
-
-install(
-  DIRECTORY include/
-  DESTINATION include
-)
-
-install(
-  DIRECTORY launch config
-  DESTINATION share/${PROJECT_NAME}
-)
-
-install(
-  TARGETS ${PROJECT_NAME}_node
-  DESTINATION lib/${PROJECT_NAME}
+rclcpp_components_register_node(${PROJECT_NAME}
+  PLUGIN "SurroundObstacleCheckerNode"
+  EXECUTABLE ${PROJECT_NAME}_node
 )
 
 if(BUILD_TESTING)
@@ -76,4 +37,8 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
-ament_package()
+ament_auto_package(
+  INSTALL_TO_SHARE
+  config
+  launch
+)

@@ -30,8 +30,8 @@
 #include "Eigen/Core"
 #include "Eigen/Geometry"
 
-SurroundObstacleCheckerNode::SurroundObstacleCheckerNode()
-: Node("surround_obstacle_checker_node"),
+SurroundObstacleCheckerNode::SurroundObstacleCheckerNode(const rclcpp::NodeOptions & node_options)
+: Node("surround_obstacle_checker_node", node_options),
   tf_buffer_(this->get_clock()),
   tf_listener_(tf_buffer_),
   vehicle_info_(vehicle_info_util::VehicleInfo::create(*this))
@@ -473,3 +473,6 @@ std::string SurroundObstacleCheckerNode::jsonDumpsPose(const geometry_msgs::msg:
     .str();
   return json_dumps_pose;
 }
+
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(SurroundObstacleCheckerNode)

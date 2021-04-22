@@ -50,7 +50,7 @@ enum class State { PASS, STOP };
 class SurroundObstacleCheckerNode : public rclcpp::Node
 {
 public:
-  SurroundObstacleCheckerNode();
+  explicit SurroundObstacleCheckerNode(const rclcpp::NodeOptions & node_options);
 
 private:
   void pathCallback(const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr input_msg);
