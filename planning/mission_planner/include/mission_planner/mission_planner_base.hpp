@@ -35,7 +35,7 @@ namespace mission_planner
 class MissionPlanner : public rclcpp::Node
 {
 protected:
-  MissionPlanner(const std::string & node_name);
+  MissionPlanner(const std::string & node_name, const rclcpp::NodeOptions & node_options);
 
   geometry_msgs::msg::PoseStamped goal_pose_;
   geometry_msgs::msg::PoseStamped start_pose_;

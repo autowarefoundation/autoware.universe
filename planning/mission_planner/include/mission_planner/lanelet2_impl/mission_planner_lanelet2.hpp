@@ -40,7 +40,7 @@ namespace mission_planner
 class MissionPlannerLanelet2 : public MissionPlanner
 {
 public:
-  MissionPlannerLanelet2();
+  explicit MissionPlannerLanelet2(const rclcpp::NodeOptions & node_options);
 
 private:
   bool is_graph_ready_;

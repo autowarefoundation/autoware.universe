@@ -18,7 +18,8 @@
 
 namespace mission_planner
 {
-GoalPoseVisualizer::GoalPoseVisualizer() : Node("goal_pose_visualizer_node")
+GoalPoseVisualizer::GoalPoseVisualizer(const rclcpp::NodeOptions & node_options)
+: Node("goal_pose_visualizer_node", node_options)
 {
   sub_route_ = create_subscription<autoware_planning_msgs::msg::Route>(
     "input/route", rclcpp::QoS{1},
@@ -36,3 +37,6 @@ void GoalPoseVisualizer::echoBackRouteCallback(
   pub_goal_pose_->publish(goal_pose);
 }
 }  // namespace mission_planner
+
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(mission_planner::GoalPoseVisualizer)

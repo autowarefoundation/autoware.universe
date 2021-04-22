@@ -27,7 +27,7 @@ namespace mission_planner
 class GoalPoseVisualizer : public rclcpp::Node
 {
 public:
-  GoalPoseVisualizer();
+  explicit GoalPoseVisualizer(const rclcpp::NodeOptions & node_options);
 
 private:
 

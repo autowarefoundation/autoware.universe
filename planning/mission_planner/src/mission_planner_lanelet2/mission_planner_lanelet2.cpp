@@ -119,8 +119,9 @@ bool isInParkingLot(
 
 namespace mission_planner
 {
-MissionPlannerLanelet2::MissionPlannerLanelet2()
-: MissionPlanner("mission_planner_node"), is_graph_ready_(false)
+MissionPlannerLanelet2::MissionPlannerLanelet2(const rclcpp::NodeOptions & node_options)
+: MissionPlanner("mission_planner_node", node_options),
+  is_graph_ready_(false)
 {
   using std::placeholders::_1;
   map_subscriber_ = create_subscription<autoware_lanelet2_msgs::msg::MapBin>(
@@ -346,3 +347,6 @@ RouteSections MissionPlannerLanelet2::createRouteSections(
 }
 
 }  // namespace mission_planner
+
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(mission_planner::MissionPlannerLanelet2)
