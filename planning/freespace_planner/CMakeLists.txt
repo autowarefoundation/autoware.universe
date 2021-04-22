@@ -13,9 +13,13 @@ endif()
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
-ament_auto_add_executable(freespace_planner
+ament_auto_add_library(freespace_planner_node SHARED
   src/freespace_planner/freespace_planner_node.cpp
-  src/freespace_planner/main.cpp
+)
+
+rclcpp_components_register_node(freespace_planner_node
+  PLUGIN "AstarNavi"
+  EXECUTABLE freespace_planner
 )
 
 if(BUILD_TESTING)

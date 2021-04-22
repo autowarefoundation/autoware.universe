@@ -240,8 +240,8 @@ bool isStopped(
 
 }  // namespace
 
-AstarNavi::AstarNavi()
-: Node("freespace_planner")
+AstarNavi::AstarNavi(const rclcpp::NodeOptions & node_options)
+: Node("freespace_planner", node_options)
 {
   using std::placeholders::_1;
 
@@ -541,3 +541,6 @@ geometry_msgs::msg::TransformStamped AstarNavi::getTransform(
   }
   return tf;
 }
+
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(AstarNavi)

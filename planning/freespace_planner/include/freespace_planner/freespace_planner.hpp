@@ -65,7 +65,7 @@ struct NodeParam
 class AstarNavi : public rclcpp::Node
 {
 public:
-  AstarNavi();
+  explicit AstarNavi(const rclcpp::NodeOptions & node_options);
 
 private:
   // ros
