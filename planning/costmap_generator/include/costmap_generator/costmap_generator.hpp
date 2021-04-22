@@ -69,7 +69,7 @@
 class CostmapGenerator : public rclcpp::Node
 {
 public:
-  CostmapGenerator();
+  explicit CostmapGenerator(const rclcpp::NodeOptions & node_options);
 
 private:
   bool use_objects_;

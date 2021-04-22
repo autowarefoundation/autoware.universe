@@ -91,8 +91,8 @@ std::vector<geometry_msgs::msg::Point> poly2vector(const geometry_msgs::msg::Pol
 
 }  // namespace
 
-CostmapGenerator::CostmapGenerator()
-: Node("costmap_generator"), tf_buffer_(this->get_clock()), tf_listener_(tf_buffer_)
+CostmapGenerator::CostmapGenerator(const rclcpp::NodeOptions & node_options)
+: Node("costmap_generator", node_options), tf_buffer_(this->get_clock()), tf_listener_(tf_buffer_)
 {
   // Parameters
   costmap_frame_ = this->declare_parameter<std::string>("costmap_frame", "map");
@@ -378,3 +378,6 @@ void CostmapGenerator::publishCostmap(const grid_map::GridMap & costmap)
   out_gridmap_msg->header = header;
   pub_costmap_->publish(*out_gridmap_msg);
 }
+
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(CostmapGenerator)

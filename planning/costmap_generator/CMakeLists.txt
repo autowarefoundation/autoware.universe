@@ -29,11 +29,18 @@ ament_auto_add_library(costmap_generator_lib SHARED
 )
 target_link_libraries(costmap_generator_lib ${PCL_LIBRARIES})
 
-ament_auto_add_executable(costmap_generator
+ament_auto_add_library(costmap_generator_node SHARED
   nodes/costmap_generator/costmap_generator_node.cpp
-  nodes/costmap_generator/main.cpp
 )
-target_link_libraries(costmap_generator ${PCL_LIBRARIES})
+target_link_libraries(costmap_generator_node
+  ${PCL_LIBRARIES}
+  costmap_generator_lib
+)
+
+rclcpp_components_register_node(costmap_generator_node
+  PLUGIN "CostmapGenerator"
+  EXECUTABLE costmap_generator
+)
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
