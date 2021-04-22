@@ -62,8 +62,8 @@ autoware_planning_msgs::msg::Path to_path(
 }
 }  // namespace
 
-BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode()
-: Node("behavior_velocity_planner_node"),
+BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptions & node_options)
+: Node("behavior_velocity_planner_node", node_options),
   tf_buffer_(this->get_clock()),
   tf_listener_(tf_buffer_),
   planner_data_(*this)
@@ -326,3 +326,6 @@ void BehaviorVelocityPlannerNode::publishDebugMarker(const autoware_planning_msg
   }
   debug_viz_pub_->publish(output_msg);
 }
+
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(BehaviorVelocityPlannerNode)

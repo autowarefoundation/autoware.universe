@@ -45,7 +45,7 @@ set(BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES
 
 
 # Common
-add_library(scene_module_lib STATIC
+ament_auto_add_library(scene_module_lib SHARED
   src/utilization/path_utilization.cpp
   src/utilization/util.cpp
   src/utilization/interpolate.cpp
@@ -61,7 +61,7 @@ ament_target_dependencies(scene_module_lib ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENC
 
 
 # Scene Module: Stop Line
-add_library(scene_module_stop_line STATIC
+ament_auto_add_library(scene_module_stop_line SHARED
   src/scene_module/stop_line/manager.cpp
   src/scene_module/stop_line/scene.cpp
   src/scene_module/stop_line/debug.cpp
@@ -79,7 +79,7 @@ target_link_libraries(scene_module_stop_line scene_module_lib)
 
 
 # Scene Module: Crosswalk
-add_library(scene_module_crosswalk STATIC
+ament_auto_add_library(scene_module_crosswalk SHARED
   src/scene_module/crosswalk/manager.cpp
   src/scene_module/crosswalk/scene_crosswalk.cpp
   src/scene_module/crosswalk/scene_walkway.cpp
@@ -99,7 +99,7 @@ target_link_libraries(scene_module_crosswalk scene_module_lib)
 
 
 # Scene Module: Intersection
-add_library(scene_module_intersection STATIC
+ament_auto_add_library(scene_module_intersection SHARED
   src/scene_module/intersection/manager.cpp
   src/scene_module/intersection/scene_intersection.cpp
   src/scene_module/intersection/scene_merge_from_private_road.cpp
@@ -119,7 +119,7 @@ target_link_libraries(scene_module_intersection scene_module_lib)
 
 
 # Scene Module: Traffic Light
-add_library(scene_module_traffic_light STATIC
+ament_auto_add_library(scene_module_traffic_light SHARED
   src/scene_module/traffic_light/manager.cpp
   src/scene_module/traffic_light/scene.cpp
   src/scene_module/traffic_light/debug.cpp
@@ -137,7 +137,7 @@ target_link_libraries(scene_module_traffic_light scene_module_lib)
 
 
 # Scene Module: Blind Spot
-add_library(scene_module_blind_spot STATIC
+ament_auto_add_library(scene_module_blind_spot SHARED
   src/scene_module/blind_spot/manager.cpp
   src/scene_module/blind_spot/scene.cpp
   src/scene_module/blind_spot/debug.cpp
@@ -155,7 +155,7 @@ target_link_libraries(scene_module_blind_spot scene_module_lib)
 
 
 # Scene Module: Detection Area
-add_library(scene_module_detection_area STATIC
+ament_auto_add_library(scene_module_detection_area SHARED
   src/scene_module/detection_area/manager.cpp
   src/scene_module/detection_area/scene.cpp
   src/scene_module/detection_area/debug.cpp
@@ -173,7 +173,7 @@ target_link_libraries(scene_module_detection_area scene_module_lib)
 
 
 # Scene Module Manager
-add_library(scene_module_manager STATIC
+ament_auto_add_library(scene_module_manager SHARED
   src/planner_manager.cpp
 )
 
@@ -189,20 +189,19 @@ target_link_libraries(scene_module_manager scene_module_lib)
 
 
 # Node
-ament_auto_add_executable(behavior_velocity_planner_node
+ament_auto_add_library(behavior_velocity_planner SHARED
   src/node.cpp
-  src/main.cpp
 )
 
-target_include_directories(behavior_velocity_planner_node
+target_include_directories(behavior_velocity_planner
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
 
-ament_target_dependencies(behavior_velocity_planner_node ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
+ament_target_dependencies(behavior_velocity_planner ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
 
-target_link_libraries(behavior_velocity_planner_node
+target_link_libraries(behavior_velocity_planner
   scene_module_lib
   scene_module_stop_line
   scene_module_crosswalk
@@ -214,6 +213,11 @@ target_link_libraries(behavior_velocity_planner_node
 )
 
 ament_export_dependencies(${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
+
+rclcpp_components_register_node(behavior_velocity_planner
+  PLUGIN "BehaviorVelocityPlannerNode"
+  EXECUTABLE behavior_velocity_planner_node
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

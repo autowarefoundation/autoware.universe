@@ -36,7 +36,7 @@
 class BehaviorVelocityPlannerNode : public rclcpp::Node
 {
 public:
-  BehaviorVelocityPlannerNode();
+  explicit BehaviorVelocityPlannerNode(const rclcpp::NodeOptions & node_options);
 
 private:
   // tf
