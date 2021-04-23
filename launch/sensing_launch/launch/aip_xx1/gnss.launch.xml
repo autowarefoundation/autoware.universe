@@ -1,22 +1,36 @@
 <launch>
 
   <arg name="launch_driver" default="true" />
+  <arg name="gnss_receiver" default="ublox" description="ublox(default) or septentrio"/>
   <arg name="coordinate_system" default="1" description="0:UTM, 1:MGRS, 2:PLANE" />
 
   <group>
     <push-ros-namespace namespace="gnss"/>
 
+    <!-- Switch topic name -->
+    <let name="navsatfix_topic_name" value="ublox/nav_sat_fix" if="$(eval &quot;'$(var gnss_receiver)'=='ublox'&quot;)" />
+    <let name="navpvt_topic_name" value="ublox/navpvt" if="$(eval &quot;'$(var gnss_receiver)'=='ublox'&quot;)" />
+    <let name="navsatfix_topic_name" value="septentrio/nav_sat_fix" if="$(eval &quot;'$(var gnss_receiver)'=='septentrio'&quot;)"/>
+    <let name="navpvt_topic_name" value="septentrio/navpvt/unused" if="$(eval &quot;'$(var gnss_receiver)'=='septentrio'&quot;)"/>
+
     <!-- Ublox Driver -->
-    <node pkg="ublox_gps" name="ublox" exec="ublox_gps_node" if="$(var launch_driver)">
-      <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
-      <remap from="ublox/fix" to="ublox/nav_sat_fix" />
-      <param from="$(find-pkg-share ublox_gps)/c94_f9p_rover.yaml"/>
-    </node>
+    <group if="$(eval &quot;'$(var gnss_receiver)'=='ublox'&quot;)">
+      <node pkg="ublox_gps" name="ublox" exec="ublox_gps_node" if="$(var launch_driver)">
+        <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
+        <remap from="ublox/fix" to="ublox/nav_sat_fix" />
+        <param from="$(find-pkg-share ublox_gps)/c94_f9p_rover.yaml"/>
+      </node>
+    </group>
+
+    <!-- Septentrio GNSS Driver -->
+    <group if="$(eval &quot;'$(var launch_driver)' and '$(var gnss_receiver)'=='septentrio'&quot;)">
+      <include file="$(find-pkg-share septentrio_gnss_driver)/launch/mosaic_x5_rover.launch.xml" />
+    </group>
 
     <!-- NavSatFix to MGRS Pose -->
     <include file="$(find-pkg-share gnss_poser)/launch/gnss_poser.launch.xml">
-      <arg name="input_topic_fix" value="ublox/nav_sat_fix" />
-      <arg name="input_topic_navpvt" value="ublox/navpvt" />
+      <arg name="input_topic_fix" value="$(var navsatfix_topic_name)" />
+      <arg name="input_topic_navpvt" value="$(var navpvt_topic_name)" />
 
       <arg name="output_topic_gnss_pose" value="pose" />
       <arg name="output_topic_gnss_pose_cov" value="pose_with_covariance" />
