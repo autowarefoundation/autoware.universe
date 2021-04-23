@@ -66,7 +66,8 @@ Lanelet2MapFilterComponent::Lanelet2MapFilterComponent(const rclcpp::NodeOptions
 
   // Set tf
   {
-    tf_buffer_ = std::make_shared<tf2_ros::Buffer>(get_clock());
+    rclcpp::Clock::SharedPtr ros_clock = std::make_shared<rclcpp::Clock>(RCL_ROS_TIME);
+    tf_buffer_ = std::make_shared<tf2_ros::Buffer>(ros_clock);
     auto timer_interface = std::make_shared<tf2_ros::CreateTimerROS>(
       get_node_base_interface(), get_node_timers_interface());
     tf_buffer_->setCreateTimerInterface(timer_interface);
