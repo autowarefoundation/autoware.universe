@@ -4,6 +4,5 @@
 
   <executable cmd="python3 -m http.server 8085" cwd="$(find-pkg-share autoware_web_controller)/www" name="web_server"/>
   <node pkg="rosbridge_server" exec="rosbridge_websocket" name="rosbridge_server_node">
-    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
   </node>
 </launch>
