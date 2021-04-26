@@ -29,7 +29,7 @@
 namespace fs = boost::filesystem;
 
 CPUMonitor::CPUMonitor(const std::string & node_name, const rclcpp::NodeOptions & options)
-: CPUMonitorBase(node_name, options)
+: CPUMonitorBase("cpu_monitor", options)
 {
 }
 
@@ -77,3 +77,6 @@ void CPUMonitor::getTempNames(void)
     temps_.emplace_back(itr->label_, itr->path_);
   }
 }
+
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(CPUMonitor)

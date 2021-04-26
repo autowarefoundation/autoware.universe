@@ -26,8 +26,8 @@
 
 #include "system_monitor/process_monitor/process_monitor.hpp"
 
-ProcessMonitor::ProcessMonitor(const std::string & node_name, const rclcpp::NodeOptions & options)
-: Node(node_name, options),
+ProcessMonitor::ProcessMonitor(const rclcpp::NodeOptions & options)
+: Node("process_monitor", options),
   updater_(this),
   num_of_procs_(declare_parameter<int>("num_of_procs", 5))
 {
@@ -300,3 +300,6 @@ void ProcessMonitor::setErrorContent(
     (*itr)->setErrorContent(error_command, content);
   }
 }
+
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(ProcessMonitor)

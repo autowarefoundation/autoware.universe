@@ -21,7 +21,10 @@
 
 #include "system_monitor/cpu_monitor/unknown_cpu_monitor.hpp"
 
-CPUMonitor::CPUMonitor(const std::string & node_name, const rclcpp::NodeOptions & options)
-: CPUMonitorBase(node_name, options)
+CPUMonitor::CPUMonitor(const rclcpp::NodeOptions & options)
+: CPUMonitorBase("cpu_monitor", options)
 {
 }
+
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(CPUMonitor)

@@ -32,7 +32,7 @@ public:
    * @param [in] node_name Name of the node.
    * @param [in] options Options associated with this node.
    */
-  CPUMonitor(const std::string & node_name, const rclcpp::NodeOptions & options);
+  explicit CPUMonitor(const rclcpp::NodeOptions & options);
 
   /**
    * @brief get names for core temperature files

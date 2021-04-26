@@ -29,10 +29,9 @@ class GPUMonitor : public GPUMonitorBase
 public:
   /**
    * @brief constructor
-   * @param [in] node_name Name of the node.
    * @param [in] options Options associated with this node.
    */
-  GPUMonitor(const std::string & node_name, const rclcpp::NodeOptions & options);
+  explicit GPUMonitor(const rclcpp::NodeOptions & options);
 };
 
 #endif  // SYSTEM_MONITOR__GPU_MONITOR__UNKNOWN_GPU_MONITOR_HPP_

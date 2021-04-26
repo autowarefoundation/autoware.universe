@@ -34,8 +34,8 @@
 
 namespace bp = boost::process;
 
-HDDMonitor::HDDMonitor(const std::string & node_name, const rclcpp::NodeOptions & options)
-: Node(node_name, options),
+HDDMonitor::HDDMonitor(const rclcpp::NodeOptions & options)
+: Node("hdd_montior", options),
   updater_(this),
   hdd_reader_port_(declare_parameter<int>("hdd_reader_port", 7635))
 {
@@ -287,3 +287,6 @@ void HDDMonitor::getHDDParams()
     hdd_devices_.push_back(name);
   }
 }
+
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(HDDMonitor)

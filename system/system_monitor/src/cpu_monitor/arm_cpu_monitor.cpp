@@ -23,8 +23,8 @@
 #include "system_monitor/cpu_monitor/arm_cpu_monitor.hpp"
 #include "system_monitor/system_monitor_utility.hpp"
 
-CPUMonitor::CPUMonitor(const std::string & node_name, const rclcpp::NodeOptions & options)
-: CPUMonitorBase(node_name, options)
+CPUMonitor::CPUMonitor(const rclcpp::NodeOptions & options)
+: CPUMonitorBase("cpu_monitor", options)
 {
 }
 
@@ -43,3 +43,6 @@ void CPUMonitor::getTempNames(void)
     temps_.emplace_back(itr->label_, itr->path_);
   }
 }
+
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(CPUMonitor)

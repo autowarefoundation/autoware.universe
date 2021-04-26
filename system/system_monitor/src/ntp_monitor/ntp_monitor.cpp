@@ -29,8 +29,8 @@
 namespace bp = boost::process;
 namespace fs = boost::filesystem;
 
-NTPMonitor::NTPMonitor(const std::string & node_name, const rclcpp::NodeOptions & options)
-: Node(node_name, options),
+NTPMonitor::NTPMonitor(const rclcpp::NodeOptions & options)
+: Node("ntp_monitor", options),
   updater_(this),
   server_(declare_parameter<std::string>("server", "ntp.ubuntu.com")),
   offset_warn_(declare_parameter<float>("offset_warn", 0.1)),
@@ -127,3 +127,6 @@ void NTPMonitor::executeNtpdate()
     delay_ = delay;
   }
 }
+
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(NTPMonitor)

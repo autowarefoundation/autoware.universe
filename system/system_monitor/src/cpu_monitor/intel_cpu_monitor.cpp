@@ -36,10 +36,13 @@
 
 namespace fs = boost::filesystem;
 
-CPUMonitor::CPUMonitor(const std::string & node_name, const rclcpp::NodeOptions & options)
-: CPUMonitorBase(node_name, options)
+CPUMonitor::CPUMonitor(const rclcpp::NodeOptions & options)
+: CPUMonitorBase("cpu_monitor", options)
 {
   msr_reader_port_ = declare_parameter<int>("msr_reader_port", 7634);
+
+  this->getTempNames();
+  this->getFreqNames();
 }
 
 void CPUMonitor::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & stat)
@@ -187,3 +190,6 @@ void CPUMonitor::getTempNames(void)
       return n1 < n2;
     }); // NOLINT
 }
+
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(CPUMonitor)

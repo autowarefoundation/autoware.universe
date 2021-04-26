@@ -35,10 +35,9 @@ class ProcessMonitor : public rclcpp::Node
 public:
   /**
    * @brief constructor
-   * @param [in] node_name Name of the node.
    * @param [in] options Options associated with this node.
    */
-  ProcessMonitor(const std::string & node_name, const rclcpp::NodeOptions & options);
+  ProcessMonitor(const rclcpp::NodeOptions & options);
 
   /**
    * @brief Update the diagnostic state

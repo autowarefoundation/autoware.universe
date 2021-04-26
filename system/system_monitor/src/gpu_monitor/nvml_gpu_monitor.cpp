@@ -27,8 +27,8 @@
 
 #include "system_monitor/gpu_monitor/nvml_gpu_monitor.hpp"
 
-GPUMonitor::GPUMonitor(const std::string & node_name, const rclcpp::NodeOptions & options)
-: GPUMonitorBase(node_name, options)
+GPUMonitor::GPUMonitor(const rclcpp::NodeOptions & options)
+: GPUMonitorBase("gpu_monitor", options)
 {
   // Include frequency into GPU Thermal Throttling thus remove.
   updater_.removeByName("GPU Frequency");
@@ -279,3 +279,6 @@ std::string GPUMonitor::toHumanReadable(unsigned long long size)  // NOLINT
   const char * format = (dsize > 0 && dsize < 10) ? "{:.1f}{}" : "{:.0f}{}";
   return fmt::format(format, dsize, units[count]);
 }
+
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(GPUMonitor)

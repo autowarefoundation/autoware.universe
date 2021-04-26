@@ -47,10 +47,13 @@ class NetMonitor : public rclcpp::Node
 public:
   /**
    * @brief constructor
-   * @param [in] node_name Name of the node.
    * @param [in] options Options associated with this node.
    */
-  NetMonitor(const std::string & node_name, const rclcpp::NodeOptions & options);
+  NetMonitor(const rclcpp::NodeOptions & options);
+  /**
+   * @brief destructor
+   */
+  ~NetMonitor();
 
   /**
    * @brief Update the diagnostic state.

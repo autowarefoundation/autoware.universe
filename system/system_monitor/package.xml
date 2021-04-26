@@ -13,6 +13,7 @@
   <depend>diagnostic_msgs</depend>
   <depend>diagnostic_updater</depend>
   <depend>rclcpp</depend>
+  <depend>rclcpp_components</depend>
   <depend>fmt</depend>
   <depend>std_msgs</depend>
   <depend>libnl-3-dev</depend>

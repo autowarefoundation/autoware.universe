@@ -31,10 +31,9 @@ class MemMonitor : public rclcpp::Node
 public:
   /**
    * @brief constructor
-   * @param [in] node_name Name of the node.
    * @param [in] options Options associated with this node.
    */
-  MemMonitor(const std::string & node_name, const rclcpp::NodeOptions & options);
+  MemMonitor(const rclcpp::NodeOptions & options);
 
   /**
    * @brief Update the diagnostic state.

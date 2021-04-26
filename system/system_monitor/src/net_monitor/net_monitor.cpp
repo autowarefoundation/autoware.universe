@@ -35,8 +35,8 @@
 
 #include "system_monitor/net_monitor/net_monitor.hpp"
 
-NetMonitor::NetMonitor(const std::string & node_name, const rclcpp::NodeOptions & options)
-: Node(node_name, options),
+NetMonitor::NetMonitor(const rclcpp::NodeOptions & options)
+: Node("net_monitor", options),
   updater_(this),
   last_update_time_{0, 0, this->get_clock()->get_clock_type()},
   device_params_(declare_parameter<std::vector<std::string>>("devices", {})),
@@ -47,6 +47,11 @@ NetMonitor::NetMonitor(const std::string & node_name, const rclcpp::NodeOptions 
   updater_.add("Network Usage", this, &NetMonitor::checkUsage);
 
   nl80211_.init();
+}
+
+NetMonitor::~NetMonitor()
+{
+  shutdown_nl80211();
 }
 
 void NetMonitor::update()
@@ -216,3 +221,6 @@ void NetMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
 
   last_update_time_ = this->now();
 }
+
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(NetMonitor)

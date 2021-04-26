@@ -28,8 +28,8 @@
 
 namespace bp = boost::process;
 
-MemMonitor::MemMonitor(const std::string & node_name, const rclcpp::NodeOptions & options)
-: Node(node_name, options),
+MemMonitor::MemMonitor(const rclcpp::NodeOptions & options)
+: Node("mem_monitor", options),
   updater_(this),
   usage_warn_(declare_parameter<float>("usage_warn", 0.95)),
   usage_error_(declare_parameter<float>("usage_error", 0.99))
@@ -127,3 +127,6 @@ std::string MemMonitor::toHumanReadable(const std::string & str)
   const char * format = (size > 0 && size < 10) ? "{:.1f}{}" : "{:.0f}{}";
   return fmt::format(format, size, units[count]);
 }
+
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(MemMonitor)

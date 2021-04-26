@@ -68,7 +68,7 @@ public:
    * @param [in] node_name Name of the node.
    * @param [in] options Options associated with this node.
    */
-  GPUMonitor(const std::string & node_name, const rclcpp::NodeOptions & options);
+  explicit GPUMonitor(const rclcpp::NodeOptions & options);
 
   /**
   * @brief Terminate the node, log final statements. An independent function is preferred to allow an explicit way

@@ -31,8 +31,8 @@
 
 namespace fs = boost::filesystem;
 
-GPUMonitor::GPUMonitor(const std::string & node_name, const rclcpp::NodeOptions & options)
-: GPUMonitorBase(node_name, options)
+GPUMonitor::GPUMonitor(const rclcpp::NodeOptions & options)
+: GPUMonitorBase("gpu_monitor", options)
 {
   getTempNames();
   getLoadNames();
@@ -203,3 +203,6 @@ void GPUMonitor::getFreqNames()
     freqs_.emplace_back(path.filename().generic_string(), freq_path.generic_string());
   }
 }
+
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(GPUMonitor)

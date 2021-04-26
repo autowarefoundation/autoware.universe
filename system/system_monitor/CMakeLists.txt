@@ -86,34 +86,28 @@ set(CPU_MONITOR_SOURCE
   src/cpu_monitor/${CMAKE_CPU_PLATFORM}_cpu_monitor.cpp
 )
 
-ament_auto_add_executable(cpu_monitor
-  src/cpu_monitor/cpu_monitor_node.cpp
+ament_auto_add_library(cpu_monitor_lib SHARED
   ${CPU_MONITOR_SOURCE}
 )
 
-ament_auto_add_executable(hdd_monitor
-  src/hdd_monitor/hdd_monitor_node.cpp
+ament_auto_add_library(hdd_monitor_lib SHARED
   src/hdd_monitor/hdd_monitor.cpp
 )
 
-ament_auto_add_executable(mem_monitor
-  src/mem_monitor/mem_monitor_node.cpp
+ament_auto_add_library(mem_monitor_lib SHARED
   src/mem_monitor/mem_monitor.cpp
 )
 
-ament_auto_add_executable(net_monitor
-  src/net_monitor/net_monitor_node.cpp
+ament_auto_add_library(net_monitor_lib SHARED
   src/net_monitor/net_monitor.cpp
   src/net_monitor/nl80211.cpp
 )
 
-ament_auto_add_executable(ntp_monitor
-  src/ntp_monitor/ntp_monitor_node.cpp
+ament_auto_add_library(ntp_monitor_lib SHARED
   src/ntp_monitor/ntp_monitor.cpp
 )
 
-ament_auto_add_executable(process_monitor
-  src/process_monitor/process_monitor_node.cpp
+ament_auto_add_library(process_monitor_lib SHARED
   src/process_monitor/process_monitor.cpp
 )
 
@@ -121,8 +115,7 @@ set(GPU_MONITOR_SOURCE
   src/gpu_monitor/gpu_monitor_base.cpp
   src/gpu_monitor/${CMAKE_GPU_PLATFORM}_gpu_monitor.cpp
 )
-ament_auto_add_executable(gpu_monitor
-  src/gpu_monitor/gpu_monitor_node.cpp
+ament_auto_add_library(gpu_monitor_lib SHARED
   ${GPU_MONITOR_SOURCE}
 )
 
@@ -146,15 +139,50 @@ find_package(Boost REQUIRED COMPONENTS
 )
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(cpu_monitor ${Boost_LIBRARIES} ${LIBRARIES})
-target_link_libraries(hdd_monitor ${Boost_LIBRARIES} ${LIBRARIES})
-target_link_libraries(mem_monitor ${LIBRARIES})
-target_link_libraries(net_monitor ${NL_LIBS} ${LIBRARIES})
-target_link_libraries(ntp_monitor ${Boost_LIBRARIES} ${LIBRARIES})
-target_link_libraries(process_monitor ${LIBRARIES})
-target_link_libraries(gpu_monitor ${GPU_LIBRARY} ${Boost_LIBRARIES} ${LIBRARIES})
+target_link_libraries(cpu_monitor_lib ${Boost_LIBRARIES} ${LIBRARIES})
+target_link_libraries(hdd_monitor_lib ${Boost_LIBRARIES} ${LIBRARIES})
+target_link_libraries(mem_monitor_lib ${LIBRARIES})
+target_link_libraries(net_monitor_lib ${NL_LIBS} ${LIBRARIES})
+target_link_libraries(ntp_monitor_lib ${Boost_LIBRARIES} ${LIBRARIES})
+target_link_libraries(process_monitor_lib ${LIBRARIES})
+target_link_libraries(gpu_monitor_lib ${GPU_LIBRARY} ${Boost_LIBRARIES} ${LIBRARIES})
 target_link_libraries(msr_reader ${Boost_LIBRARIES} ${LIBRARIES})
 target_link_libraries(hdd_reader ${Boost_LIBRARIES} ${LIBRARIES})
+
+rclcpp_components_register_node(cpu_monitor_lib
+  PLUGIN "CPUMonitor"
+  EXECUTABLE cpu_monitor
+)
+
+rclcpp_components_register_node(hdd_monitor_lib
+  PLUGIN "HDDMonitor"
+  EXECUTABLE hdd_monitor
+)
+
+rclcpp_components_register_node(mem_monitor_lib
+  PLUGIN "MemMonitor"
+  EXECUTABLE mem_monitor
+)
+
+rclcpp_components_register_node(net_monitor_lib
+  PLUGIN "NetMonitor"
+  EXECUTABLE net_monitor
+)
+
+rclcpp_components_register_node(ntp_monitor_lib
+  PLUGIN "NTPMonitor"
+  EXECUTABLE ntp_monitor
+)
+
+rclcpp_components_register_node(process_monitor_lib
+  PLUGIN "ProcessMonitor"
+  EXECUTABLE process_monitor
+)
+
+rclcpp_components_register_node(gpu_monitor_lib
+  PLUGIN "GPUMonitor"
+  EXECUTABLE gpu_monitor
+)
 
 # TODO(yunus.caliskan): Port the tests to ROS2, robustify the tests.
 if(BUILD_TESTING)
