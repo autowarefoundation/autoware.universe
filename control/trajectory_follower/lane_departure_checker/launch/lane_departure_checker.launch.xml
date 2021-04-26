@@ -7,7 +7,6 @@
   <arg name="config_file" default="$(find-pkg-share lane_departure_checker)/config/lane_departure_checker.param.yaml" />
 
   <node pkg="lane_departure_checker" exec="lane_departure_checker_node" name="lane_departure_checker_node" output="screen">
-    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
     <remap from="~/input/twist" to="$(var input/twist)"/>
     <remap from="~/input/lanelet_map_bin" to="$(var input/lanelet_map_bin)"/>
     <remap from="~/input/route" to="$(var input/route)"/>
