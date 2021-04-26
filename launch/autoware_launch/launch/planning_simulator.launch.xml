@@ -13,6 +13,8 @@
   <arg name="perception/enable_detection_failure" default="true"/>
   <arg name="perception/enable_object_recognition" default="true"/>
   <arg name="sensing/visible_range" default="300.0"/>
+  <arg name="use_sim_time" default="false" />
+  <set_parameter name="use_sim_time" value="$(var use_sim_time)" />
 
   <!-- Vehicle -->
   <include file="$(find-pkg-share vehicle_launch)/launch/vehicle.launch.xml">
@@ -56,7 +58,6 @@
 
   <!-- Rviz -->
   <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen" args="-d $(find-pkg-share autoware_launch)/rviz/autoware.rviz -s $(find-pkg-share autoware_launch)/rviz/image/autoware.png" if="$(var rviz)">
-    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
   </node>
 
   <!-- Web Controller -->
