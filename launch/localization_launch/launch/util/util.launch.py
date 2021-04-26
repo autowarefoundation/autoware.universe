@@ -41,7 +41,6 @@ def generate_launch_description():
             'min_z': -30.0,
             'max_z': 50.0,
             'negative': False,
-            'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False'),
         }],
         extra_arguments=[{
             'use_intra_process_comms': LaunchConfiguration('use_intra_process')
@@ -61,7 +60,6 @@ def generate_launch_description():
             'voxel_size_x': 3.0,
             'voxel_size_y': 3.0,
             'voxel_size_z': 3.0,
-            'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False'),
         }],
         extra_arguments=[{
             'use_intra_process_comms': LaunchConfiguration('use_intra_process')
@@ -79,7 +77,6 @@ def generate_launch_description():
         ],
         parameters=[{
             'sample_num': 1500,
-            'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False'),
         }],
         extra_arguments=[{
             'use_intra_process_comms': LaunchConfiguration('use_intra_process')
