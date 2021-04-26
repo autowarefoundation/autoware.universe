@@ -34,7 +34,6 @@
   <arg name="input/image7" default="/image_raw7"/>
 
   <node pkg="roi_cluster_fusion" exec="roi_cluster_fusion_node" name="roi_cluster_fusion">
-    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
     <param name="use_iou" value="true"/>
     <param name="use_iou_x" value="false"/>
     <param name="use_iou_y" value="false"/>
