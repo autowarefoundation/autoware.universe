@@ -39,7 +39,6 @@
 
       <!-- latlon coupler -->
       <node pkg="latlon_muxer" exec="latlon_muxer" name="latlon_muxer" output="screen">
-        <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
         <remap from="input/lateral/control_cmd" to="lateral/control_cmd"/>
         <remap from="input/longitudinal/control_cmd" to="longitudinal/control_cmd"/>
         <remap from="output/control_cmd" to="control_cmd"/>
