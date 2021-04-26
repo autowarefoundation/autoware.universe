@@ -10,7 +10,6 @@
   <arg name="manager" default="traffic_light_recognition_nodelet_manager"/>
 
   <node pkg="traffic_light_visualization" exec="traffic_light_visualization_node" name="traffic_light_visualization">
-    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
     <remap from="~/input/image" to="$(var input/image)"/>
     <remap from="~/input/rois" to="$(var input/rois)"/>
     <remap from="~/input/rough/rois" to="$(var input/rough/rois)"/>
