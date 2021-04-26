@@ -33,8 +33,6 @@ def generate_launch_description():
             'input_topic': LaunchConfiguration('input_route'),
             'output_topic': LaunchConfiguration('get_route'),
             'type': 'autoware_planning_msgs/msg/Route',
-            'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME',
-                                                default_value='False')
         }],
         extra_arguments=[{
             'use_intra_process_comms': LaunchConfiguration('use_intra_process')
@@ -50,8 +48,6 @@ def generate_launch_description():
             'input_topic': LaunchConfiguration('input_object'),
             'output_topic': LaunchConfiguration('get_predicted_object'),
             'type': 'autoware_perception_msgs/msg/DynamicObjectArray',
-            'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME',
-                                                default_value='False')
         }],
         extra_arguments=[{
             'use_intra_process_comms': LaunchConfiguration('use_intra_process')
@@ -67,8 +63,6 @@ def generate_launch_description():
             'input_topic': LaunchConfiguration('input_nearest_traffic_light_state'),
             'output_topic': LaunchConfiguration('get_nearest_traffic_light_status'),
             'type': 'autoware_perception_msgs/msg/TrafficLightStateStamped',
-            'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME',
-                                                default_value='False')
         }],
         extra_arguments=[{
             'use_intra_process_comms': LaunchConfiguration('use_intra_process')
@@ -84,8 +78,6 @@ def generate_launch_description():
             'input_topic': LaunchConfiguration('set_gate_mode'),
             'output_topic': LaunchConfiguration('output_gate_mode'),
             'type': 'autoware_control_msgs/msg/GateMode',
-            'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME',
-                                                default_value='False')
         }],
         extra_arguments=[{
             'use_intra_process_comms': LaunchConfiguration('use_intra_process')
@@ -101,8 +93,6 @@ def generate_launch_description():
             'input_topic': LaunchConfiguration('set_emergency_stop'),
             'output_topic': LaunchConfiguration('output_emergency_stop'),
             'type': 'autoware_control_msgs/msg/EmergencyMode',
-            'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME',
-                                                default_value='False')
         }],
         extra_arguments=[{
             'use_intra_process_comms': LaunchConfiguration('use_intra_process')
@@ -118,8 +108,6 @@ def generate_launch_description():
             'input_topic': LaunchConfiguration('set_engage'),
             'output_topic': LaunchConfiguration('output_autoware_engage'),
             'type': 'autoware_vehicle_msgs/msg/Engage',
-            'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME',
-                                                default_value='False')
         }],
         extra_arguments=[{
             'use_intra_process_comms': LaunchConfiguration('use_intra_process')
@@ -135,8 +123,6 @@ def generate_launch_description():
             'input_topic': LaunchConfiguration('set_engage'),
             'output_topic': LaunchConfiguration('output_vehicle_engage'),
             'type': 'autoware_vehicle_msgs/msg/Engage',
-            'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME',
-                                                default_value='False')
         }],
         extra_arguments=[{
             'use_intra_process_comms': LaunchConfiguration('use_intra_process')
@@ -153,8 +139,6 @@ def generate_launch_description():
             'output_topic': LaunchConfiguration('output_route'),
             'type': 'autoware_planning_msgs/msg/Route',
             'durability': 'transient_local',
-            'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME',
-                                                default_value='False')
         }],
         extra_arguments=[{
             'use_intra_process_comms': LaunchConfiguration('use_intra_process')
@@ -170,8 +154,6 @@ def generate_launch_description():
             'input_topic': LaunchConfiguration('set_goal'),
             'output_topic': LaunchConfiguration('output_goal'),
             'type': 'geometry_msgs/msg/PoseStamped',
-            'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME',
-                                                default_value='False')
         }],
         extra_arguments=[{
             'use_intra_process_comms': LaunchConfiguration('use_intra_process')
@@ -187,8 +169,6 @@ def generate_launch_description():
             'input_topic': LaunchConfiguration('set_lane_change_approval'),
             'output_topic': LaunchConfiguration('output_lane_change_approval'),
             'type': 'autoware_planning_msgs/msg/LaneChangeCommand',
-            'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME',
-                                                default_value='False')
         }],
         extra_arguments=[{
             'use_intra_process_comms': LaunchConfiguration('use_intra_process')
@@ -204,8 +184,6 @@ def generate_launch_description():
             'input_topic': LaunchConfiguration('set_force_lane_change'),
             'output_topic': LaunchConfiguration('output_force_lane_change'),
             'type': 'autoware_planning_msgs/msg/LaneChangeCommand',
-            'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME',
-                                                default_value='False')
         }],
         extra_arguments=[{
             'use_intra_process_comms': LaunchConfiguration('use_intra_process')
@@ -221,8 +199,6 @@ def generate_launch_description():
             'input_topic': LaunchConfiguration('set_obstacle_avoid_approval'),
             'output_topic': LaunchConfiguration('output_obstacle_avoid_approval'),
             'type': 'autoware_planning_msgs/msg/EnableAvoidance',
-            'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME',
-                                                default_value='False')
         }],
         extra_arguments=[{
             'use_intra_process_comms': LaunchConfiguration('use_intra_process')
@@ -238,8 +214,6 @@ def generate_launch_description():
             'input_topic': LaunchConfiguration('input_traffic_light_state'),
             'output_topic': LaunchConfiguration('get_traffic_light_status'),
             'type': 'autoware_perception_msgs/msg/TrafficLightStateArray',
-            'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME',
-                                                default_value='False')
         }],
         extra_arguments=[{
             'use_intra_process_comms': LaunchConfiguration('use_intra_process')
@@ -255,8 +229,6 @@ def generate_launch_description():
             'input_topic': LaunchConfiguration('set_overwrite_traffic_light_state'),
             'output_topic': LaunchConfiguration('output_overwrite_traffic_light_state'),
             'type': 'autoware_perception_msgs/msg/TrafficLightStateArray',
-            'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME',
-                                                default_value='False')
         }],
         extra_arguments=[{
             'use_intra_process_comms': LaunchConfiguration('use_intra_process')
@@ -272,8 +244,6 @@ def generate_launch_description():
             'input_topic': LaunchConfiguration('input_stop_speed_exceeded'),
             'output_topic': LaunchConfiguration('get_stop_speed_exceeded'),
             'type': 'autoware_planning_msgs/msg/StopSpeedExceeded',
-            'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME',
-                                                default_value='False')
         }],
         extra_arguments=[{
             'use_intra_process_comms': LaunchConfiguration('use_intra_process')
@@ -289,8 +259,6 @@ def generate_launch_description():
             'input_topic': LaunchConfiguration('set_crosswalk_status'),
             'output_topic': LaunchConfiguration('input_external_crosswalk_status'),
             'type': 'autoware_api_msgs/msg/CrosswalkStatus',
-            'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME',
-                                                default_value='False')
         }],
         extra_arguments=[{
             'use_intra_process_comms': LaunchConfiguration('use_intra_process')
@@ -306,8 +274,6 @@ def generate_launch_description():
             'input_topic': LaunchConfiguration('set_intersection_status'),
             'output_topic': LaunchConfiguration('input_external_intersection_status'),
             'type': 'autoware_api_msgs/msg/IntersectionStatus',
-            'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME',
-                                                default_value='False')
         }],
         extra_arguments=[{
             'use_intra_process_comms': LaunchConfiguration('use_intra_process')
@@ -323,8 +289,6 @@ def generate_launch_description():
             'input_topic': LaunchConfiguration('set_expand_stop_range'),
             'output_topic': LaunchConfiguration('input_expand_stop_range'),
             'type': 'autoware_planning_msgs/msg/ExpandStopRange',
-            'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME',
-                                                default_value='False')
         }],
         extra_arguments=[{
             'use_intra_process_comms': LaunchConfiguration('use_intra_process')
@@ -340,8 +304,6 @@ def generate_launch_description():
             'input_topic': LaunchConfiguration('set_pose_initialization_request'),
             'output_topic': LaunchConfiguration('input_pose_initialization_request'),
             'type': 'autoware_localization_msgs/msg/PoseInitializationRequest',
-            'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME',
-                                                default_value='False')
         }],
         extra_arguments=[{
             'use_intra_process_comms': LaunchConfiguration('use_intra_process')
@@ -355,9 +317,6 @@ def generate_launch_description():
         executable=LaunchConfiguration('container_executable'),
         composable_node_descriptions=relay_components,
         output='screen',
-        parameters=[{
-            'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False')
-        }],
     )
 
     set_container_executable = SetLaunchConfiguration(
