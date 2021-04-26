@@ -11,7 +11,6 @@
 
   <!-- run pointcloud_to_laserscan node -->
   <node pkg="pointcloud_to_laserscan" type="pointcloud_to_laserscan_node" name="pointcloud_to_laserscan">
-    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
 
     <remap from="cloud_in" to="$(arg camera)/depth_registered/points_processed"/>
     <remap from="scan" to="$(arg camera)/scan"/>
