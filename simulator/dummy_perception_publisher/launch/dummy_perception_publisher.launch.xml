@@ -9,7 +9,6 @@
     <push-ros-namespace namespace="simulation"/>
     <group if="$(var real)">
       <node pkg="dummy_perception_publisher" exec="dummy_perception_publisher_node" name="dummy_perception_publisher" output="screen">
-        <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
         <remap from="output/dynamic_object" to="/perception/object_recognition/detection/labeled_clusters" />
         <remap from="output/objects_pose" to="debug/object_pose" />
         <remap from="output/points_raw" to="/sensing/lidar/no_ground/pointcloud" />
@@ -27,7 +26,6 @@
     </group>
     <group unless="$(var real)">
       <node pkg="dummy_perception_publisher" exec="dummy_perception_publisher_node" name="dummy_perception_publisher" output="screen">
-        <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
         <remap from="output/dynamic_object" to="/perception/object_recognition/detection/objects" />
         <remap from="output/objects_pose" to="debug/object_pose" />
         <remap from="output/points_raw" to="/sensing/lidar/no_ground/pointcloud" />
@@ -66,7 +64,6 @@
     <group unless="$(var use_object_recognition)">
       <push-ros-namespace namespace="object_recognition"/>
       <node pkg="dummy_perception_publisher" exec="empty_objects_publisher" name="empty_objects_publisher" output="screen">
-        <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
         <remap from="output/objects" to="/perception/object_recognition/objects" />
       </node>
     </group>
