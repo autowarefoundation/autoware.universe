@@ -9,7 +9,6 @@
   <arg name="param_path" default="$(find-pkg-share traffic_light_map_based_detector)/config/traffic_light_map_based_detector.param.yaml" />
 
   <node pkg="traffic_light_map_based_detector" exec="traffic_light_map_based_detector_node" name="traffic_light_map_based_detector" output="screen">
-    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
     <remap from="~/input/vector_map" to="$(var input/vector_map)" />
     <remap from="~/input/camera_info" to="$(var input/camera_info)" />
     <remap from="~/input/route" to="$(var input/route)" />
