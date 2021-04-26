@@ -1,7 +1,6 @@
 <launch>
   <arg name="ndt_align_server_name" default="ndt_align_srv"/>
   <node pkg="pose_initializer" exec="pose_initializer" name="pose_initializer" output="log">
-    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
     <remap from="initialpose" to="/initialpose" />
     <remap from="initialpose3d" to="/initialpose3d" />
     <remap from="gnss_pose_cov" to="/sensing/gnss/pose_with_covariance" />
