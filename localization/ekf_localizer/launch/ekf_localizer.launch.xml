@@ -45,7 +45,6 @@
   <arg name="output_twist_with_covariance_name" default="ekf_twist_with_covariance"/>
 
   <node pkg="ekf_localizer" exec="ekf_localizer" name="ekf_localizer" output="screen">
-    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
 
     <remap from="in_pose" to="$(var input_pose_name)"/>
     <remap from="in_pose_with_covariance" to="$(var input_pose_with_cov_name)"/>
