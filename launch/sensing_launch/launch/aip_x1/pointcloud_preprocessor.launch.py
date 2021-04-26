@@ -62,7 +62,6 @@ def launch_setup(context, *args, **kwargs):
                              '/sensing/lidar/front_right/mirror_cropped/pointcloud',
                              '/sensing/lidar/front_center/mirror_cropped/pointcloud'],
             'output_frame': LaunchConfiguration('base_frame'),
-            'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False')
         }],
         extra_arguments=[{
             'use_intra_process_comms': LaunchConfiguration('use_intra_process')
@@ -82,7 +81,6 @@ def launch_setup(context, *args, **kwargs):
             'output_frame': LaunchConfiguration('base_frame'),
             'min_z': vehicle_info['min_height_offset'],
             'max_z': vehicle_info['max_height_offset'],
-            'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False')
         }],
         extra_arguments=[{
             'use_intra_process_comms': LaunchConfiguration('use_intra_process')
@@ -108,7 +106,6 @@ def launch_setup(context, *args, **kwargs):
             'min_z': -0.5,
             'max_z': vehicle_info['max_height_offset'],
             'negative': False,
-            'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False')
         }],
         extra_arguments=[{
             'use_intra_process_comms': LaunchConfiguration('use_intra_process')
@@ -135,7 +132,6 @@ def launch_setup(context, *args, **kwargs):
             'max_x': vehicle_info['max_longitudinal_offset'],
             'min_y': vehicle_info['min_lateral_offset'],
             'max_y': vehicle_info['max_lateral_offset'],
-            'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False')
         }],
         extra_arguments=[{
             'use_intra_process_comms': LaunchConfiguration('use_intra_process')
@@ -160,7 +156,6 @@ def launch_setup(context, *args, **kwargs):
             'min_z': -0.5,
             'max_z': 0.5,
             'negative': False,
-            'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False')
         }],
         extra_arguments=[{
             'use_intra_process_comms': LaunchConfiguration('use_intra_process')
@@ -179,7 +174,6 @@ def launch_setup(context, *args, **kwargs):
         parameters=[{
             'voxel_size_x': 0.25,
             'voxel_size_y': 0.25,
-            'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False')
         }],
         extra_arguments=[{
             'use_intra_process_comms': LaunchConfiguration('use_intra_process')
@@ -205,7 +199,6 @@ def launch_setup(context, *args, **kwargs):
             'voxel_size_y': 0.2,
             'voxel_size_z': 0.2,
             'debug': False,
-            'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False')
         }],
         extra_arguments=[{
             'use_intra_process_comms': LaunchConfiguration('use_intra_process')
@@ -221,7 +214,6 @@ def launch_setup(context, *args, **kwargs):
             'input_topics': ['/sensing/lidar/rough/no_ground/pointcloud',
                              '/sensing/lidar/short_height/no_ground/pointcloud'],
             'output_frame': LaunchConfiguration('base_frame'),
-            'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False')
         }],
         extra_arguments=[{
             'use_intra_process_comms': LaunchConfiguration('use_intra_process')
@@ -242,7 +234,6 @@ def launch_setup(context, *args, **kwargs):
             'voxel_size_x': 0.04,
             'voxel_size_y': 0.04,
             'voxel_size_z': 0.08,
-            'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False')
         }],
         extra_arguments=[{
             'use_intra_process_comms': LaunchConfiguration('use_intra_process')
@@ -260,7 +251,6 @@ def launch_setup(context, *args, **kwargs):
         parameters=[{
             'search_radius': 0.2,
             'min_neighbors': 5,
-            'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False')
         }],
         extra_arguments=[{
             'use_intra_process_comms': LaunchConfiguration('use_intra_process')
@@ -280,7 +270,6 @@ def launch_setup(context, *args, **kwargs):
             'voxel_size_y': 0.4,
             'voxel_size_z': 100.0,
             'voxel_points_threshold': 5,
-            'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False')
         }],
         extra_arguments=[{
             'use_intra_process_comms': LaunchConfiguration('use_intra_process')
@@ -298,7 +287,6 @@ def launch_setup(context, *args, **kwargs):
             'history': 'keep_last',
             'depth': 5,
             'reliability': 'best_effort',
-            'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False')
         }],
         extra_arguments=[{
             'use_intra_process_comms': LaunchConfiguration('use_intra_process')
@@ -322,9 +310,6 @@ def launch_setup(context, *args, **kwargs):
             relay_component,
         ],
         output='screen',
-        parameters=[{
-            'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False')
-        }],
     )
 
     # load concat or passthrough filter

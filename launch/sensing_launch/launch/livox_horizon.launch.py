@@ -72,8 +72,6 @@ def launch_setup(context, *args, **kwargs):
                 'lvx_file_path': LaunchConfiguration('lvx_file_path'),
                 'user_config_path': LaunchConfiguration('user_config_path'),
                 'frame_id': LaunchConfiguration('sensor_frame'),
-                'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME',
-                                                    default_value='False'),
             },
             bd_code_param,
         ]
@@ -98,7 +96,6 @@ def launch_setup(context, *args, **kwargs):
             'min_z': vehicle_info['min_height_offset'],
             'max_z': vehicle_info['max_height_offset'],
             'negative': True,
-            'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False'),
         }]
     )
 
@@ -121,7 +118,6 @@ def launch_setup(context, *args, **kwargs):
             'min_z': vehicle_mirror_info['min_height_offset'],
             'max_z': vehicle_mirror_info['max_height_offset'],
             'negative': True,
-            'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False'),
         }]
     )
 
@@ -136,9 +132,6 @@ def launch_setup(context, *args, **kwargs):
             cropbox_mirror_component,
         ],
         output='screen',
-        parameters=[{
-            'use_sim_time': EnvironmentVariable(name='AW_ROS2_USE_SIM_TIME', default_value='False'),
-        }],
     )
 
     loader = LoadComposableNodes(

@@ -9,7 +9,6 @@
 
     <!-- Ublox Driver -->
     <node pkg="ublox_gps" name="ublox" exec="ublox_gps_node" if="$(var launch_driver)">
-      <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
       <remap from="ublox/fix" to="ublox/nav_sat_fix" />
       <param from="$(find-pkg-share ublox_gps)/c94_f9p_rover.yaml"/>
     </node>

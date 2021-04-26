@@ -7,7 +7,6 @@
     <group>
       <push-ros-namespace namespace="traffic_light"/>
       <node pkg="usb_cam" name="traffic_light_camera" exec="usb_cam_node" if="$(var launch_driver)">
-        <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
         <remap from="/image_raw" to="image_raw" />
         <remap from="/camera_info" to="camera_info" />
         <param name="camera_frame_id" value="traffic_light/camera_optical_link" />
