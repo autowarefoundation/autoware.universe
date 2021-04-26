@@ -7,7 +7,6 @@
   <arg name="is_completed" default="is_completed"/>
 
   <node pkg="freespace_planner" exec="freespace_planner" name="freespace_planner" output="screen">
-    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
     <remap from="~/input/route" to="$(var input_route)" />
     <remap from="~/input/occupancy_grid" to="$(var input_occupancy_grid)" />
     <remap from="~/input/scenario" to="$(var input_scenario)" />
