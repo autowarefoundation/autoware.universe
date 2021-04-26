@@ -1,6 +1,5 @@
 <launch>
   <node pkg="shift_decider" exec="shift_decider" name="shift_decider" output="screen">
-    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
     <remap from="input/control_cmd" to="/control/trajectory_follower/control_cmd" />
     <remap from="output/shift_cmd" to="/control/shift_decider/shift_cmd" />
   </node>
