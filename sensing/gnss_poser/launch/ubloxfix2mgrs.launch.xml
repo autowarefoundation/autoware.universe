@@ -4,7 +4,6 @@
   <arg name="input_topic_navpvt" default="/ublox/navpvt" />
 
   <include file="$(find-pkg-share gnss_poser)/launch/gnss_poser.launch.xml">
-    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
     <arg name="input_topic_fix" value="$(var input_topic_fix)" />
     <arg name="input_topic_navpvt" value="$(var input_topic_navpvt)" />
     <!-- coordinate_system="0:UTM, 1:MGRS, 2:PLANE" -->
