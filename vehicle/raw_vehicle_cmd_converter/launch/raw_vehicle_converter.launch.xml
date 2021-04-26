@@ -8,7 +8,6 @@
   <arg name="max_brake" default="0.8"/>
 
   <node pkg="raw_vehicle_cmd_converter" exec="raw_vehicle_cmd_converter_node" name="raw_vehicle_cmd_converter" output="screen">
-    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
     <param name="csv_path_accel_map" value="$(var csv_path_accel_map)" />
     <param name="csv_path_brake_map" value="$(var csv_path_brake_map)" />
     <param name="max_throttle" value="$(var max_throttle)" />
