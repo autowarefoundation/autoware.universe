@@ -22,13 +22,14 @@
   <arg name="camera_info7" default="/sensing/camera/camera7/camera_info"/>
   <arg name="image_number" default="6"/>
   <arg name="use_vector_map" default="true"/>
+  <arg name="use_empty_dynamic_object_publisher" default="false" description="if use_empty_dynamic_object_publisher:=true, /perception/object_recognition/objects topic has an empty DynamicObjectArray"/>
 
   <!-- perception module -->
   <group>
     <push-ros-namespace namespace="perception"/>
 
     <!-- object recognition module -->
-    <group>
+    <group unless="$(var use_empty_dynamic_object_publisher)">
       <push-ros-namespace namespace="object_recognition"/>
       <!-- detection module -->
       <group>
@@ -68,6 +69,13 @@
           <arg name="use_vector_map" value="$(var use_vector_map)"/>
         </include>
       </group>
+    </group>
+
+    <group if="$(var use_empty_dynamic_object_publisher)">
+      <push-ros-namespace namespace="object_recognition"/>
+      <node pkg="dummy_perception_publisher" exec="empty_objects_publisher" name="empty_objects_publisher" output="screen">
+        <remap from="~/output/objects" to="/perception/object_recognition/objects" />
+      </node>
     </group>
 
     <!-- traffic light module -->
