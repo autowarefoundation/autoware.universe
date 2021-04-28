@@ -150,7 +150,7 @@ void MultiObjectTracker::measurementCallback(
           measurement_time, input_transformed_objects.feature_objects.at(i).object));
     } else {
       list_tracker_.push_back(
-        std::make_shared<PedestrianAndBicycleTracker>(
+        std::make_shared<PedestrianTracker>(
           measurement_time, input_transformed_objects.feature_objects.at(i).object));
     }
   }
