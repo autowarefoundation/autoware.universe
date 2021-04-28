@@ -5,7 +5,9 @@
   <arg name="visible_range" default="300.0" />
   <arg name="real" default="true" />
   <arg name="use_object_recognition" default="true" />
-  <group>
+  <arg name="disable_dummy_perception_publisher_node" default="false" />
+
+  <group unless="$(var disable_dummy_perception_publisher_node)">
     <push-ros-namespace namespace="simulation"/>
     <group if="$(var real)">
       <node pkg="dummy_perception_publisher" exec="dummy_perception_publisher_node" name="dummy_perception_publisher" output="screen">
