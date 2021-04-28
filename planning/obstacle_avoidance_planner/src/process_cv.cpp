@@ -255,9 +255,11 @@ PolygonPoints getPolygonPointsFromPolygon(
   std::vector<geometry_msgs::msg::Point> points_in_image;
   std::vector<geometry_msgs::msg::Point> points_in_map;
   for (const auto & polygon_p : object.shape.footprint.points) {
-    geometry_msgs::msg::Point point;
-    point.x = polygon_p.x;
-    point.y = polygon_p.y;
+    geometry_msgs::msg::Point rel_point;
+    rel_point.x = polygon_p.x;
+    rel_point.y = polygon_p.y;
+    geometry_msgs::msg::Point point =
+      util::transformToAbsoluteCoordinate2D(rel_point, object.state.pose_covariance.pose);
     const auto image_point = util::transformMapToOptionalImage(point, map_info);
     if (image_point) {
       points_in_image.push_back(image_point.get());
