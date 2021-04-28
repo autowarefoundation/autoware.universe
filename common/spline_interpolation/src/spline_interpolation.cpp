@@ -86,6 +86,8 @@ bool SplineInterpolator::interpolate(
 {
   method_ = method;
 
+  return_value.clear();
+
   if (!isValidInput(base_index, base_value, return_index, return_value)) {
     std::cerr << "[interpolate] invalid input. interpolation failed." << std::endl;
     return false;
