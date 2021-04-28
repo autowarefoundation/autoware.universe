@@ -6,6 +6,7 @@
   <arg name="sensor_model"/>
   <!-- Optional parameters -->
   <arg name="rviz" default="true" description="launch rviz"/>
+  <arg name="rviz_config" default="$(find-pkg-share autoware_launch)/rviz/autoware.rviz" description="rviz config"/>
   <arg name="lanelet2_map_file" default="lanelet2_map.osm" />
   <arg name="pointcloud_map_file" default="pointcloud_map.pcd" />
   <!-- Optional parameters for scenario simulation -->
@@ -13,6 +14,7 @@
   <arg name="perception/enable_detection_failure" default="true"/>
   <arg name="perception/enable_object_recognition" default="true"/>
   <arg name="sensing/visible_range" default="300.0"/>
+  <arg name="scenario_simulation" default="false"/>
   <arg name="use_sim_time" default="false" />
   <set_parameter name="use_sim_time" value="$(var use_sim_time)" />
 
@@ -22,6 +24,7 @@
     <arg name="sensor_model" value="$(var sensor_model)"/>
     <arg name="vehicle_param_file" value="$(find-pkg-share $(var vehicle_model)_description)/config/vehicle_info.param.yaml"/>
     <arg name="simulation" value="true"/>
+    <arg name="scenario_simulation" value="$(var scenario_simulation)"/>
     <arg name="initial_engage_state" value="$(var initial_engage_state)"/>
   </include>
 
@@ -39,6 +42,7 @@
   <!-- Dummy Perception -->
   <include file="$(find-pkg-share dummy_perception_publisher)/launch/dummy_perception_publisher.launch.xml">
     <arg name="real" value="$(var perception/enable_detection_failure)"/>
+    <arg name="disable_dummy_perception_publisher_node" value="$(var scenario_simulation)"/>
     <arg name="use_object_recognition" value="$(var perception/enable_object_recognition)"/>
     <arg name="visible_range" value="$(var sensing/visible_range)"/>
   </include>
@@ -57,11 +61,10 @@
   <include file="$(find-pkg-share awapi_awiv_adapter)/launch/awapi_awiv_adapter.launch.xml" />
 
   <!-- Rviz -->
-  <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen" args="-d $(find-pkg-share autoware_launch)/rviz/autoware.rviz -s $(find-pkg-share autoware_launch)/rviz/image/autoware.png" if="$(var rviz)">
-  </node>
+  <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen" args="-d $(var rviz_config) -s $(find-pkg-share autoware_launch)/rviz/image/autoware.png" if="$(var rviz)"/>
 
   <!-- Web Controller -->
-  <include file="$(find-pkg-share autoware_web_controller)/launch/autoware_web_controller.launch.xml" />
+  <include file="$(find-pkg-share autoware_web_controller)/launch/autoware_web_controller.launch.xml" unless="$(var scenario_simulation)"/>
 
   <!-- Clock Publisher For Rosbag -->
   <!-- TODO(mitsudome-r): remove this after ROSBAG2 can automatically record clock -->
