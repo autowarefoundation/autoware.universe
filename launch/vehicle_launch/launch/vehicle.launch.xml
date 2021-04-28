@@ -6,6 +6,7 @@
 
   <arg name="initial_engage_state" default="true"/>
   <arg name="simulation" default="false" />
+  <arg name="scenario_simulation" default="false" />
   <arg name ="vehicle_id" default="$(env VEHICLE_ID default)" />
 
   <!-- vehicle info -->
@@ -28,6 +29,7 @@
   <include file="$(find-pkg-share vehicle_launch)/launch/vehicle_interface.launch.xml">
     <arg name="initial_engage_state" value="$(var initial_engage_state)"/>
     <arg name="simulation" value="$(var simulation)"/>
+    <arg name="scenario_simulation" value="$(var scenario_simulation)"/>
     <arg name="vehicle_model" value="$(var vehicle_model)"/>
     <arg name="vehicle_id" value="$(var vehicle_id)"/>
   </include>

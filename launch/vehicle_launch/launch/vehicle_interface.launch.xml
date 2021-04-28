@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
   <arg name="simulation"/>
+  <arg name="scenario_simulation"/>
   <arg name="vehicle_model"/>
   <arg name="vehicle_id"/>
   <arg name="initial_engage_state" default="true"/>
@@ -10,11 +11,13 @@
 
   <!-- simulation mode -->
   <group if="$(var simulation)">
-    <arg name="simulator_model" default="$(var vehicle_model_pkg)/config/simulator_model.param.yaml" />
-    <include file="$(find-pkg-share simple_planning_simulator)/launch/simple_planning_simulator.launch.xml">
-      <arg name="simulator_model" value="$(var simulator_model)"/>
-      <arg name="initial_engage_state" value="$(var initial_engage_state)"/>
-    </include>
+    <group unless="$(var scenario_simulation)">
+      <arg name="simulator_model" default="$(var vehicle_model_pkg)/config/simulator_model.param.yaml" />
+      <include file="$(find-pkg-share simple_planning_simulator)/launch/simple_planning_simulator.launch.xml">
+        <arg name="simulator_model" value="$(var simulator_model)"/>
+        <arg name="initial_engage_state" value="$(var initial_engage_state)"/>
+      </include>
+    </group>
   </group>
 
   <!-- real mode -->
