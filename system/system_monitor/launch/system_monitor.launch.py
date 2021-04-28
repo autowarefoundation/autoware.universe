@@ -102,7 +102,7 @@ def launch_setup(context, *args, **kwargs):
         name='system_monitor_container',
         namespace='system_monitor',
         package='rclcpp_components',
-        executable='component_container',
+        executable='component_container_mt',
         composable_node_descriptions=[
             cpu_monitor,
             hdd_monitor,
