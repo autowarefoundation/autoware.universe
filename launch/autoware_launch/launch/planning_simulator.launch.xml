@@ -17,13 +17,15 @@
   <arg name="scenario_simulation" default="false"/>
   <arg name="use_sim_time" default="false" />
   <set_parameter name="use_sim_time" value="$(var use_sim_time)" />
+  <!-- Optional parameters for vcu emulation -->
+  <arg name="vehicle_simulation" default="true"/>
 
   <!-- Vehicle -->
   <include file="$(find-pkg-share vehicle_launch)/launch/vehicle.launch.xml">
     <arg name="vehicle_model" value="$(var vehicle_model)"/>
     <arg name="sensor_model" value="$(var sensor_model)"/>
     <arg name="vehicle_param_file" value="$(find-pkg-share $(var vehicle_model)_description)/config/vehicle_info.param.yaml"/>
-    <arg name="simulation" value="true"/>
+    <arg name="simulation" value="$(var vehicle_simulation)"/>
     <arg name="scenario_simulation" value="$(var scenario_simulation)"/>
     <arg name="initial_engage_state" value="$(var initial_engage_state)"/>
   </include>
