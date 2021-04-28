@@ -91,7 +91,6 @@ class RayGroundFilterComponent : public pointcloud_preprocessor::Filter
     float theta;   // angle deg on XY plane
 
     size_t radial_div;      // index of the radial division to which this point belongs to
-    size_t concentric_div;  // index of the concentric division to which this points belongs to
 
     size_t red;    // Red component  [0-255]
     size_t green;  // Green Component[0-255]

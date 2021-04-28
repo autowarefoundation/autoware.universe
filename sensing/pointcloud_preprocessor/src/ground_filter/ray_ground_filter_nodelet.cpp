@@ -122,7 +122,6 @@ void RayGroundFilterComponent::ConvertXYZIToRTZColor(
       theta -= 360;
     }
     auto radial_div = (size_t)floor(theta / radial_divider_angle_);
-    auto concentric_div = (size_t)floor(fabs(radius / concentric_divider_distance_));
 
     new_point.point.x = in_cloud->points[i].x;
     new_point.point.y = in_cloud->points[i].y;
@@ -131,7 +130,6 @@ void RayGroundFilterComponent::ConvertXYZIToRTZColor(
     new_point.radius = radius;
     new_point.theta = theta;
     new_point.radial_div = radial_div;
-    new_point.concentric_div = concentric_div;
     new_point.red = (size_t)colors_[new_point.radial_div % color_num_].val[0];
     new_point.green = (size_t)colors_[new_point.radial_div % color_num_].val[1];
     new_point.blue = (size_t)colors_[new_point.radial_div % color_num_].val[2];
