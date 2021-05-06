@@ -10,7 +10,7 @@ module autoware_auto_msgs {
       std_msgs::msg::Header header;
       string child_frame_id;
       geometry_msgs::msg::Vector3 position;
-      sequence<double, 9> covariance;
+      double covariance[9];
     };
   };
 };
