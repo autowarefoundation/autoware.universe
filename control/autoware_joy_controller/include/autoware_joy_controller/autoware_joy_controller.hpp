@@ -64,6 +64,10 @@ private:
   double max_backward_velocity_;
   double backward_accel_ratio_;
 
+  // CallbackGroups
+  rclcpp::CallbackGroup::SharedPtr callback_group_subscribers_;
+  rclcpp::CallbackGroup::SharedPtr callback_group_services_;
+
   // Subscriber
   rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr sub_joy_;
   rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr sub_twist_;
@@ -106,13 +110,6 @@ private:
   ShiftType prev_shift_ = autoware_vehicle_msgs::msg::Shift::NONE;
   TurnSignalType prev_turn_signal_ = autoware_vehicle_msgs::msg::TurnSignal::NONE;
   GateModeType prev_gate_mode_ = autoware_control_msgs::msg::GateMode::AUTO;
-
-  // tmp
-  rclcpp::Publisher<autoware_vehicle_msgs::msg::VehicleCommand>::SharedPtr pub_vehicle_command_;
-  rclcpp::Publisher<autoware_vehicle_msgs::msg::RawVehicleCommand>::SharedPtr
-    pub_raw_vehicle_command_;
-  void publishVehicleCommand();
-  void publishRawVehicleCommand();
 
   // Timer
   rclcpp::TimerBase::SharedPtr timer_;

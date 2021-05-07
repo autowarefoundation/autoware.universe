@@ -188,10 +188,6 @@ void AutowareJoyControllerNode::onTimer()
   publishControlCommand();
   publishRawControlCommand();
   publishEmergencyStop();
-
-  // tmp
-  publishVehicleCommand();
-  publishRawVehicleCommand();
 }
 
 void AutowareJoyControllerNode::publishControlCommand()
@@ -388,27 +384,6 @@ void AutowareJoyControllerNode::publishVehicleEngage()
   pub_vehicle_engage_->publish(engage);
 }
 
-// tmp
-void AutowareJoyControllerNode::publishVehicleCommand()
-{
-  autoware_vehicle_msgs::msg::VehicleCommand vehicle_cmd;
-  vehicle_cmd.header.stamp = this->now();
-  vehicle_cmd.control = prev_control_command_;
-  vehicle_cmd.shift.data = prev_shift_;
-
-  pub_vehicle_command_->publish(vehicle_cmd);
-}
-
-void AutowareJoyControllerNode::publishRawVehicleCommand()
-{
-  autoware_vehicle_msgs::msg::RawVehicleCommand vehicle_cmd;
-  vehicle_cmd.header.stamp = this->now();
-  vehicle_cmd.control = prev_raw_control_command_;
-  vehicle_cmd.shift.data = prev_shift_;
-
-  pub_raw_vehicle_command_->publish(vehicle_cmd);
-}
-
 void AutowareJoyControllerNode::initTimer(double period_s)
 {
   auto timer_callback = std::bind(&AutowareJoyControllerNode::onTimer, this);
@@ -439,13 +414,21 @@ AutowareJoyControllerNode::AutowareJoyControllerNode(const rclcpp::NodeOptions &
 
   RCLCPP_INFO(get_logger(), "Joy type: %s", joy_type_.c_str());
 
+  // Callback Groups
+  callback_group_subscribers_ = this->create_callback_group(
+    rclcpp::CallbackGroupType::MutuallyExclusive);
+  callback_group_services_ = this->create_callback_group(
+    rclcpp::CallbackGroupType::MutuallyExclusive);
+  auto subscriber_option = rclcpp::SubscriptionOptions();
+  subscriber_option.callback_group = callback_group_subscribers_;
+
   // Subscriber
   sub_joy_ = this->create_subscription<sensor_msgs::msg::Joy>(
     "input/joy", 1,
-    std::bind(&AutowareJoyControllerNode::onJoy, this, std::placeholders::_1));
+    std::bind(&AutowareJoyControllerNode::onJoy, this, std::placeholders::_1), subscriber_option);
   sub_twist_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
     "input/twist", 1,
-    std::bind(&AutowareJoyControllerNode::onTwist, this, std::placeholders::_1));
+    std::bind(&AutowareJoyControllerNode::onTwist, this, std::placeholders::_1), subscriber_option);
 
   // Publisher
   pub_control_command_ = this->create_publisher<autoware_control_msgs::msg::ControlCommandStamped>(
@@ -467,17 +450,9 @@ AutowareJoyControllerNode::AutowareJoyControllerNode(const rclcpp::NodeOptions &
   pub_vehicle_engage_ = this->create_publisher<autoware_vehicle_msgs::msg::Engage>(
     "output/vehicle_engage", 1);
 
-  // tmp
-  pub_vehicle_command_ =
-    this->create_publisher<autoware_vehicle_msgs::msg::VehicleCommand>("output/vehicle_cmd", 1);
-  pub_raw_vehicle_command_ =
-    this->create_publisher<autoware_vehicle_msgs::msg::RawVehicleCommand>(
-    "output/raw_vehicle_cmd",
-    1);
-
   // Service Client
   client_clear_emergency_stop_ = this->create_client<std_srvs::srv::Trigger>(
-    "service/clear_emergency_stop");
+    "service/clear_emergency_stop", rmw_qos_profile_services_default, callback_group_services_);
   while (!client_clear_emergency_stop_->wait_for_service(std::chrono::seconds(1))) {
     if (!rclcpp::ok()) {
       RCLCPP_ERROR(get_logger(), "Interrupted while waiting for service.");
