@@ -181,7 +181,7 @@ def launch_setup(context, *args, **kwargs):
             ('input/remote/turn_signal_cmd', '/remote/turn_signal_cmd'),
             ('input/remote/shift_cmd', '/remote/shift_cmd'),
 
-            ('input/emergency/control_cmd', 'input/emergency/control_cmd'),
+            ('input/emergency/control_cmd', '/system/emergency/control_cmd'),
             ('input/emergency/turn_signal_cmd', '/system/emergency/turn_signal_cmd'),
             ('input/emergency/shift_cmd', '/system/emergency/shift_cmd'),
 
@@ -247,7 +247,8 @@ def launch_setup(context, *args, **kwargs):
             latlon_muxer_component,
             lane_departure_component,
             shift_decider_component,
-            vehicle_cmd_gate_component
+            vehicle_cmd_gate_component,
+            remote_cmd_converter_component,
         ],
     )
 
