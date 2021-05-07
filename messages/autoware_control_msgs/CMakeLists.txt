@@ -18,6 +18,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/GateMode.msg"
   "msg/ControlCommand.msg"
   "msg/ControlCommandStamped.msg"
+  "msg/RemoteCommandSelectorMode.msg"
+  "srv/RemoteCommandSelect.srv"
   DEPENDENCIES std_msgs
 )
 
