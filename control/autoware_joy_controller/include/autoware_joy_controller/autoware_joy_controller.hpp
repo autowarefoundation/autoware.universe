@@ -23,10 +23,11 @@
 
 #include "autoware_control_msgs/msg/control_command_stamped.hpp"
 #include "autoware_control_msgs/msg/gate_mode.hpp"
-#include "autoware_debug_msgs/msg/bool_stamped.hpp"
+#include "autoware_control_msgs/msg/emergency_mode.hpp"
 #include "autoware_vehicle_msgs/msg/raw_control_command_stamped.hpp"
 #include "autoware_vehicle_msgs/msg/shift_stamped.hpp"
 #include "autoware_vehicle_msgs/msg/turn_signal.hpp"
+#include "autoware_vehicle_msgs/msg/engage.hpp"
 #include "geometry_msgs/msg/twist_stamped.hpp"
 #include "sensor_msgs/msg/joy.hpp"
 #include "autoware_joy_controller/joy_converter/joy_converter_base.hpp"
@@ -82,9 +83,9 @@ private:
   rclcpp::Publisher<autoware_vehicle_msgs::msg::ShiftStamped>::SharedPtr pub_shift_;
   rclcpp::Publisher<autoware_vehicle_msgs::msg::TurnSignal>::SharedPtr pub_turn_signal_;
   rclcpp::Publisher<autoware_control_msgs::msg::GateMode>::SharedPtr pub_gate_mode_;
-  rclcpp::Publisher<autoware_debug_msgs::msg::BoolStamped>::SharedPtr pub_emergency_stop_;
-  rclcpp::Publisher<autoware_debug_msgs::msg::BoolStamped>::SharedPtr pub_autoware_engage_;
-  rclcpp::Publisher<autoware_debug_msgs::msg::BoolStamped>::SharedPtr pub_vehicle_engage_;
+  rclcpp::Publisher<autoware_control_msgs::msg::EmergencyMode>::SharedPtr pub_emergency_stop_;
+  rclcpp::Publisher<autoware_vehicle_msgs::msg::Engage>::SharedPtr pub_autoware_engage_;
+  rclcpp::Publisher<autoware_vehicle_msgs::msg::Engage>::SharedPtr pub_vehicle_engage_;
 
   void publishControlCommand();
   void publishRawControlCommand();

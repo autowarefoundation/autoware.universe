@@ -325,15 +325,15 @@ void AutowareJoyControllerNode::publishGateMode()
 
 void AutowareJoyControllerNode::publishEmergencyStop()
 {
-  autoware_debug_msgs::msg::BoolStamped emergency;
+  autoware_control_msgs::msg::EmergencyMode emergency;
 
   if (joy_->emergency_stop()) {
-    emergency.data = true;
+    emergency.is_emergency = true;
     RCLCPP_INFO(get_logger(), "Emergency");
   }
 
   if (joy_->clear_emergency_stop()) {
-    emergency.data = false;
+    emergency.is_emergency = false;
 
     auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
     auto result = client_clear_emergency_stop_->async_send_request(
@@ -356,15 +356,15 @@ void AutowareJoyControllerNode::clearEmergencyResponse(
 
 void AutowareJoyControllerNode::publishAutowareEngage()
 {
-  autoware_debug_msgs::msg::BoolStamped engage;
+  autoware_vehicle_msgs::msg::Engage engage;
 
   if (joy_->autoware_engage()) {
-    engage.data = true;
+    engage.engage = true;
     RCLCPP_INFO(get_logger(), "Autoware Engage");
   }
 
   if (joy_->autoware_disengage()) {
-    engage.data = false;
+    engage.engage = false;
     RCLCPP_INFO(get_logger(), "Autoware Disengage");
   }
 
@@ -373,15 +373,15 @@ void AutowareJoyControllerNode::publishAutowareEngage()
 
 void AutowareJoyControllerNode::publishVehicleEngage()
 {
-  autoware_debug_msgs::msg::BoolStamped engage;
+  autoware_vehicle_msgs::msg::Engage engage;
 
   if (joy_->vehicle_engage()) {
-    engage.data = true;
+    engage.engage = true;
     RCLCPP_INFO(get_logger(), "Vehicle Engage");
   }
 
   if (joy_->vehicle_disengage()) {
-    engage.data = false;
+    engage.engage = false;
     RCLCPP_INFO(get_logger(), "Vehicle Disengage");
   }
 
@@ -459,12 +459,12 @@ AutowareJoyControllerNode::AutowareJoyControllerNode(const rclcpp::NodeOptions &
   pub_gate_mode_ = this->create_publisher<autoware_control_msgs::msg::GateMode>(
     "output/gate_mode",
     1);
-  pub_emergency_stop_ = this->create_publisher<autoware_debug_msgs::msg::BoolStamped>(
+  pub_emergency_stop_ = this->create_publisher<autoware_control_msgs::msg::EmergencyMode>(
     "output/emergency_stop",
     1);
-  pub_autoware_engage_ = this->create_publisher<autoware_debug_msgs::msg::BoolStamped>(
+  pub_autoware_engage_ = this->create_publisher<autoware_vehicle_msgs::msg::Engage>(
     "output/autoware_engage", 1);
-  pub_vehicle_engage_ = this->create_publisher<autoware_debug_msgs::msg::BoolStamped>(
+  pub_vehicle_engage_ = this->create_publisher<autoware_vehicle_msgs::msg::Engage>(
     "output/vehicle_engage", 1);
 
   // tmp
