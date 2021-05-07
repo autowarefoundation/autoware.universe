@@ -15,9 +15,9 @@
     <remap from="input/auto/turn_signal_cmd" to="/planning/turn_signal_decider/turn_signal_cmd"/>
     <remap from="input/auto/shift_cmd" to="/control/shift_decider/shift_cmd"/>
 
-    <remap from="input/remote/control_cmd" to="/remote/control_cmd"/>
-    <remap from="input/remote/turn_signal_cmd" to="/remote/turn_signal_cmd"/>
-    <remap from="input/remote/shift_cmd" to="/remote/shift_cmd"/>
+    <remap from="input/remote/control_cmd" to="/external/external_cmd_selector/control_cmd"/>
+    <remap from="input/remote/turn_signal_cmd" to="/external/external_cmd_selector/turn_signal_cmd"/>
+    <remap from="input/remote/shift_cmd" to="/external/external_cmd_selector/shift_cmd"/>
 
     <remap from="input/emergency/control_cmd" to="/system/emergency/control_cmd"/>
     <remap from="input/emergency/turn_signal_cmd" to="/system/emergency/turn_signal_cmd"/>
