@@ -59,7 +59,8 @@ lanelet::ConstLanelets getRouteLanelets(
 
     for (const auto & lane_id : route_sections.front().lane_ids) {
       for (const auto & lanelet_sequence : lanelet::utils::query::getPrecedingLaneletSequences(
-             routing_graph, lanelet_map.laneletLayer.get(lane_id), extension_length)) {
+          routing_graph, lanelet_map.laneletLayer.get(lane_id), extension_length))
+      {
         for (const auto & preceding_lanelet : lanelet_sequence) {
           route_lanelets.push_back(preceding_lanelet);
         }
@@ -79,7 +80,8 @@ lanelet::ConstLanelets getRouteLanelets(
 
     for (const auto & lane_id : route_sections.back().lane_ids) {
       for (const auto & lanelet_sequence : lanelet::utils::query::getSucceedingLaneletSequences(
-             routing_graph, lanelet_map.laneletLayer.get(lane_id), extension_length)) {
+          routing_graph, lanelet_map.laneletLayer.get(lane_id), extension_length))
+      {
         for (const auto & succeeding_lanelet : lanelet_sequence) {
           route_lanelets.push_back(succeeding_lanelet);
         }
@@ -90,13 +92,13 @@ lanelet::ConstLanelets getRouteLanelets(
   return route_lanelets;
 }
 
-template <typename T>
+template<typename T>
 void update_param(
   const std::vector<rclcpp::Parameter> & parameters, const std::string & name, T & value)
 {
   auto it = std::find_if(
     parameters.cbegin(), parameters.cend(),
-    [&name](const rclcpp::Parameter & parameter) { return parameter.get_name() == name; });
+    [&name](const rclcpp::Parameter & parameter) {return parameter.get_name() == name;});
   if (it != parameters.cend()) {
     value = it->template get_value<T>();
   }
