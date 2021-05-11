@@ -52,7 +52,7 @@
 #include "simple_planning_simulator/vehicle_model/sim_model_ideal.hpp"
 #include "simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
 #include "simple_planning_simulator/vehicle_model/sim_model_time_delay.hpp"
-#include "vehicle_info_util/vehicle_info.hpp"
+#include "vehicle_info_util/vehicle_info_util.hpp"
 
 class Simulator : public rclcpp::Node
 {

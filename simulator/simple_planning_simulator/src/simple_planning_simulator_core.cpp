@@ -21,7 +21,8 @@ Simulator::Simulator(const std::string & node_name, const rclcpp::NodeOptions & 
 : Node(node_name, options)
 {
   /* simple_planning_simulator parameters */
-  wheelbase_ = vehicle_info_util::VehicleInfo::create(*this).wheel_base_m_;
+  const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
+  wheelbase_ = vehicle_info.wheel_base_m;
   loop_rate_ = declare_parameter("loop_rate", 30.0);
   sim_steering_gear_ratio_ = declare_parameter("sim_steering_gear_ratio", 15.0);
   simulation_frame_id_ = declare_parameter("simulation_frame_id", "base_link");
