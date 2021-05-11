@@ -40,7 +40,7 @@
 #include "tf2/utils.h"
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
-#include "vehicle_info_util/vehicle_info.hpp"
+#include "vehicle_info_util/vehicle_info_util.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
 
 ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & node_options)
@@ -178,15 +178,15 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
     declare_parameter("distance_for_path_shape_change_detection", 2.0);
 
   // vehicle param
-  vehicle_info_util::VehicleInfo vehicle_info = vehicle_info_util::VehicleInfo::create(*this);
-  vehicle_param_->width = vehicle_info.vehicle_width_m_;
-  vehicle_param_->length = vehicle_info.vehicle_length_m_;
-  vehicle_param_->wheelbase = vehicle_info.wheel_base_m_;
-  vehicle_param_->rear_overhang = vehicle_info.rear_overhang_m_;
-  vehicle_param_->front_overhang = vehicle_info.front_overhang_m_;
+  const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
+  vehicle_param_->width = vehicle_info.vehicle_width_m;
+  vehicle_param_->length = vehicle_info.vehicle_length_m;
+  vehicle_param_->wheelbase = vehicle_info.wheel_base_m;
+  vehicle_param_->rear_overhang = vehicle_info.rear_overhang_m;
+  vehicle_param_->front_overhang = vehicle_info.front_overhang_m;
 
   if (is_using_vehicle_config_) {
-    double vehicle_width = vehicle_info.vehicle_width_m_;
+    double vehicle_width = vehicle_info.vehicle_width_m;
     traj_param_->center_line_width = vehicle_width;
     constrain_param_->keep_space_shape_y = vehicle_width;
   }
