@@ -9,6 +9,12 @@
   <arg name="lanelet2_map_file" default="lanelet2_map.osm" />
   <arg name="pointcloud_map_file" default="pointcloud_map.pcd" />
 
+  <!-- Global parameters -->
+  <!-- Vehicle info -->
+  <include file="$(find-pkg-share vehicle_launch)/launch/vehicle_info.launch.py">
+    <arg name="config_file" value="$(find-pkg-share $(var vehicle_model)_description)/config/vehicle_info.param.yaml"/>
+  </include>
+
   <!-- Vehicle -->
   <include file="$(find-pkg-share vehicle_launch)/launch/vehicle.launch.xml">
     <arg name="vehicle_model" value="$(var vehicle_model)"/>
