@@ -34,7 +34,7 @@
 #include "geometry_msgs/msg/twist_stamped.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
 #include "std_msgs/msg/header.hpp"
-#include "vehicle_info_util/vehicle_info.hpp"
+#include "vehicle_info_util/vehicle_info_util.hpp"
 
 #include "lanelet2_core/LaneletMap.h"
 #include "lanelet2_routing/RoutingGraph.h"
@@ -44,7 +44,7 @@
 struct PlannerData
 {
   explicit PlannerData(rclcpp::Node & node)
-  : vehicle_info_(vehicle_info_util::VehicleInfo::create(node))
+  : vehicle_info_(vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo())
   {
     max_stop_acceleration_threshold_ = node.declare_parameter(
       "max_accel", -5.0);  // TODO(someone): read min_acc in velocity_controller.param.yaml?

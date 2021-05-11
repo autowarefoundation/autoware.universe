@@ -39,7 +39,7 @@ bool StopLineModule::modifyPathVelocity(
   autoware_planning_msgs::msg::StopReason * stop_reason)
 {
   debug_data_ = DebugData();
-  debug_data_.base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m_;
+  debug_data_.base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
   first_stop_path_point_index_ = static_cast<int>(path->points.size()) - 1;
   *stop_reason =
     planning_utils::initializeStopReason(autoware_planning_msgs::msg::StopReason::STOP_LINE);
@@ -62,7 +62,7 @@ bool StopLineModule::modifyPathVelocity(
 
       // search stop point index
       size_t insert_stop_point_idx = 0;
-      const double base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m_;
+      const double base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
       double length_sum = 0;
 
       const double stop_length = planner_param_.stop_margin + base_link2front;

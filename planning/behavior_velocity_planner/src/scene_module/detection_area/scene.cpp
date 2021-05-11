@@ -288,7 +288,7 @@ bool DetectionAreaModule::modifyPathVelocity(
 
   // Reset data
   debug_data_ = DebugData();
-  debug_data_.base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m_;
+  debug_data_.base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
   *stop_reason =
     planning_utils::initializeStopReason(autoware_planning_msgs::msg::StopReason::DETECTION_AREA);
 
@@ -481,7 +481,7 @@ boost::optional<PathIndexWithPose> DetectionAreaModule::createTargetPoint(
 
   // Calculate offset length from stop line
   // Use '-' to make the positive direction is forward
-  const double offset_length = -(margin + planner_data_->vehicle_info_.max_longitudinal_offset_m_);
+  const double offset_length = -(margin + planner_data_->vehicle_info_.max_longitudinal_offset_m);
 
   // Find offset segment
   const auto offset_segment = findOffsetSegment(path, *collision_segment, offset_length);

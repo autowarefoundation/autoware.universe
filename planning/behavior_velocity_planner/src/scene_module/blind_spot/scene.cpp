@@ -105,7 +105,7 @@ bool BlindSpotModule::modifyPathVelocity(
   /* get debug info */
   const auto stop_line_pose =
     util::getAheadPose(
-    stop_line_idx, planner_data_->vehicle_info_.max_longitudinal_offset_m_,
+    stop_line_idx, planner_data_->vehicle_info_.max_longitudinal_offset_m,
     *path);
   debug_data_.virtual_wall_pose = stop_line_pose;
   debug_data_.stop_point_pose = path->points.at(stop_line_idx).point.pose;
@@ -162,8 +162,8 @@ boost::optional<int> BlindSpotModule::getFirstPointConflictingLanelets(
     const auto line = (turn_direction_ == TurnDirection::LEFT) ? ll.leftBound() : ll.rightBound();
     for (size_t i = 0; i < path.points.size(); ++i) {
       const auto vehicle_edge = getVehicleEdge(
-        path.points.at(i).point.pose, planner_data_->vehicle_info_.vehicle_width_m_,
-        planner_data_->vehicle_info_.max_longitudinal_offset_m_);
+        path.points.at(i).point.pose, planner_data_->vehicle_info_.vehicle_width_m,
+        planner_data_->vehicle_info_.max_longitudinal_offset_m);
       if (bg::intersects(toHybrid(to2D(line)), toHybrid(vehicle_edge))) {
         first_idx_conflicting_lanelets =
           std::min(first_idx_conflicting_lanelets, static_cast<int>(i));
@@ -195,7 +195,7 @@ bool BlindSpotModule::generateStopLine(
   constexpr double interval = 0.2;
   const int margin_idx_dist = std::ceil(planner_param_.stop_line_margin / interval);
   const int base2front_idx_dist =
-    std::ceil(planner_data_->vehicle_info_.max_longitudinal_offset_m_ / interval);
+    std::ceil(planner_data_->vehicle_info_.max_longitudinal_offset_m / interval);
   const int pass_judge_idx_dist = std::ceil(pass_judge_line_dist / interval);
 
   /* spline interpolation */

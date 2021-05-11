@@ -42,7 +42,7 @@ bool CrosswalkModule::modifyPathVelocity(
   autoware_planning_msgs::msg::StopReason * stop_reason)
 {
   debug_data_ = DebugData();
-  debug_data_.base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m_;
+  debug_data_.base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
   first_stop_path_point_index_ = static_cast<int>(path->points.size()) - 1;
   *stop_reason =
     planning_utils::initializeStopReason(autoware_planning_msgs::msg::StopReason::CROSSWALK);
@@ -321,7 +321,7 @@ bool CrosswalkModule::createVehiclePathPolygonInCrosswalk(
 
   Polygon candidate_path_polygon;
   {
-    const double width = planner_data_->vehicle_info_.vehicle_width_m_;
+    const double width = planner_data_->vehicle_info_.vehicle_width_m;
     const double d = (width / 2.0) + extended_width;
     const auto cp0 = path_collision_points.at(0);
     const auto cp1 = path_collision_points.at(1);

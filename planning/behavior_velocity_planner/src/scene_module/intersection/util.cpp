@@ -266,7 +266,7 @@ bool generateStopLine(
 
   const int margin_idx_dist = std::ceil(planner_param.stop_line_margin / interval);
   const int base2front_idx_dist =
-    std::ceil(planner_data->vehicle_info_.max_longitudinal_offset_m_ / interval);
+    std::ceil(planner_data->vehicle_info_.max_longitudinal_offset_m / interval);
   const int pass_judge_idx_dist = std::ceil(pass_judge_line_dist / interval);
 
   /* spline interpolation */

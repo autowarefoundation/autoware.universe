@@ -39,7 +39,7 @@ bool WalkwayModule::modifyPathVelocity(
   autoware_planning_msgs::msg::StopReason * stop_reason)
 {
   debug_data_ = DebugData();
-  debug_data_.base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m_;
+  debug_data_.base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
   first_stop_path_point_index_ = static_cast<int>(path->points.size()) - 1;
   *stop_reason =
     planning_utils::initializeStopReason(autoware_planning_msgs::msg::StopReason::WALKWAY);
@@ -88,7 +88,7 @@ bool WalkwayModule::modifyPathVelocity(
     const double distance = bg::distance(stop_pose, self_pose);
     const double distance_threshold = 1.0;
     debug_data_.stop_judge_range = distance_threshold;
-    if (distance < distance_threshold && planner_data_->isVehicleStopping()) state_ = State::STOP;
+    if (distance < distance_threshold && planner_data_->isVehicleStopping()) {state_ = State::STOP;}
     return true;
   } else if (state_ == State::STOP) {
     if (planner_data_->isVehicleStopping()) {

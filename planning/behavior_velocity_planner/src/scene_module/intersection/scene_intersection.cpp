@@ -110,7 +110,7 @@ bool IntersectionModule::modifyPathVelocity(
   }
 
   debug_data_.virtual_wall_pose = util::getAheadPose(
-    stop_line_idx, planner_data_->vehicle_info_.max_longitudinal_offset_m_, *path);
+    stop_line_idx, planner_data_->vehicle_info_.max_longitudinal_offset_m, *path);
   debug_data_.stop_point_pose = path->points.at(stop_line_idx).point.pose;
   debug_data_.judge_point_pose = path->points.at(pass_judge_line_idx).point.pose;
 
@@ -369,7 +369,7 @@ bool IntersectionModule::checkStuckVehicleInIntersection(
   const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr objects_ptr) const
 {
   const double detect_length =
-    planner_param_.stuck_vehicle_detect_dist + planner_data_->vehicle_info_.vehicle_length_m_;
+    planner_param_.stuck_vehicle_detect_dist + planner_data_->vehicle_info_.vehicle_length_m;
   const Polygon2d stuck_vehicle_detect_area = generateEgoIntersectionLanePolygon(
     path, closest_idx, stop_idx, detect_length, planner_param_.stuck_vehicle_ignore_dist);
   debug_data_.stuck_vehicle_detect_area = toGeomMsg(stuck_vehicle_detect_area);

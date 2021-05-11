@@ -130,7 +130,7 @@ bool TrafficLightModule::modifyPathVelocity(
   autoware_planning_msgs::msg::StopReason * stop_reason)
 {
   debug_data_ = DebugData();
-  debug_data_.base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m_;
+  debug_data_.base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
   first_stop_path_point_index_ = static_cast<int>(path->points.size()) - 1;
   *stop_reason =
     planning_utils::initializeStopReason(autoware_planning_msgs::msg::StopReason::TRAFFIC_LIGHT);
@@ -204,12 +204,12 @@ bool TrafficLightModule::modifyPathVelocity(
         if (
           planner_param_.enable_pass_judge && input_ == Input::PERCEPTION &&
           (calcSignedArcLength(input_path, self_pose.pose, stop_line_point) <
-          pass_judge_line_distance + planner_data_->vehicle_info_.max_longitudinal_offset_m_) &&
+          pass_judge_line_distance + planner_data_->vehicle_info_.max_longitudinal_offset_m) &&
           (3.0 /* =10.8km/h */ < self_twist_ptr->twist.linear.x && !is_prev_state_stop_))
         {
           RCLCPP_WARN_THROTTLE(
             logger_, *clock_, 1000 /* ms */, "vehicle is over stop border (%f m)",
-            pass_judge_line_distance + planner_data_->vehicle_info_.max_longitudinal_offset_m_);
+            pass_judge_line_distance + planner_data_->vehicle_info_.max_longitudinal_offset_m);
           return true;
         } else {
           // Add Stop WayPoint
@@ -450,7 +450,7 @@ bool TrafficLightModule::createTargetPoint(
 
     // search target point index
     target_point_idx = 0;
-    const double base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m_;
+    const double base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
     double length_sum = 0;
 
     const double target_length = margin + base_link2front;

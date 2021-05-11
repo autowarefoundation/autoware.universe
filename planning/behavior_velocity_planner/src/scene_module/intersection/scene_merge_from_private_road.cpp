@@ -90,7 +90,7 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(
   }
 
   debug_data_.virtual_wall_pose = util::getAheadPose(
-    stop_line_idx, planner_data_->vehicle_info_.max_longitudinal_offset_m_, *path);
+    stop_line_idx, planner_data_->vehicle_info_.max_longitudinal_offset_m, *path);
   debug_data_.stop_point_pose = path->points.at(stop_line_idx).point.pose;
   if (first_idx_inside_lane != -1) {
     debug_data_.first_collision_point = path->points.at(first_idx_inside_lane).point.pose.position;
