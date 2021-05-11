@@ -13,6 +13,8 @@
 // limitations under the License.
 
 #include <chrono>
+#include <memory>
+#include <utility>
 
 #include "external_cmd_selector/external_cmd_selector_node.hpp"
 
@@ -24,12 +26,16 @@ ExternalCmdSelector::ExternalCmdSelector(const rclcpp::NodeOptions & node_option
   initial_selector_mode_ = declare_parameter("initial_selector_mode", 0);
 
   // Publisher
-  pub_current_selector_mode_ = create_publisher<autoware_control_msgs::msg::RemoteCommandSelectorMode>(
+  pub_current_selector_mode_ =
+    create_publisher<autoware_control_msgs::msg::RemoteCommandSelectorMode>(
     "~/output/current_selector_mode", 1);
 
   pub_raw_control_cmd_ =
-    create_publisher<autoware_vehicle_msgs::msg::RawControlCommandStamped>("~/output/raw_control_cmd", 1);
-  pub_shift_cmd_ = create_publisher<autoware_vehicle_msgs::msg::ShiftStamped>("~/output/shift_cmd", 1);
+    create_publisher<autoware_vehicle_msgs::msg::RawControlCommandStamped>(
+    "~/output/raw_control_cmd", 1);
+  pub_shift_cmd_ = create_publisher<autoware_vehicle_msgs::msg::ShiftStamped>(
+    "~/output/shift_cmd",
+    1);
   pub_turn_signal_cmd_ =
     create_publisher<autoware_vehicle_msgs::msg::TurnSignal>("~/output/turn_signal_cmd", 1);
 
@@ -48,22 +54,36 @@ ExternalCmdSelector::ExternalCmdSelector(const rclcpp::NodeOptions & node_option
   // Subscriber
   sub_local_raw_control_cmd_ =
     create_subscription<autoware_vehicle_msgs::msg::RawControlCommandStamped>(
-    "~/input/local/raw_control_cmd", 1, std::bind(&ExternalCmdSelector::onLocalRawControlCmd, this, _1), subscriber_option);
+    "~/input/local/raw_control_cmd", 1,
+    std::bind(&ExternalCmdSelector::onLocalRawControlCmd, this, _1), subscriber_option);
   sub_local_shift_cmd_ =
-    create_subscription<autoware_vehicle_msgs::msg::ShiftStamped>("~/input/local/shift_cmd", 1, std::bind(&ExternalCmdSelector::onLocalShiftCmd, this, _1), subscriber_option);
+    create_subscription<autoware_vehicle_msgs::msg::ShiftStamped>(
+    "~/input/local/shift_cmd", 1, std::bind(
+      &ExternalCmdSelector::onLocalShiftCmd, this,
+      _1), subscriber_option);
   sub_local_turn_signal_cmd_ = create_subscription<autoware_vehicle_msgs::msg::TurnSignal>(
-    "~/input/local/turn_signal_cmd", 1, std::bind(&ExternalCmdSelector::onLocalTurnSignalCmd, this, _1), subscriber_option);
+    "~/input/local/turn_signal_cmd", 1,
+    std::bind(&ExternalCmdSelector::onLocalTurnSignalCmd, this, _1), subscriber_option);
 
-  sub_remote_raw_control_cmd_ = create_subscription<autoware_vehicle_msgs::msg::RawControlCommandStamped>(
-    "~/input/remote/raw_control_cmd", 1, std::bind(&ExternalCmdSelector::onRemoteRawControlCmd, this, _1), subscriber_option);
+  sub_remote_raw_control_cmd_ =
+    create_subscription<autoware_vehicle_msgs::msg::RawControlCommandStamped>(
+    "~/input/remote/raw_control_cmd", 1,
+    std::bind(&ExternalCmdSelector::onRemoteRawControlCmd, this, _1), subscriber_option);
   sub_remote_shift_cmd_ =
-    create_subscription<autoware_vehicle_msgs::msg::ShiftStamped>("~/input/remote/shift_cmd", 1, std::bind(&ExternalCmdSelector::onRemoteShiftCmd, this, _1));
+    create_subscription<autoware_vehicle_msgs::msg::ShiftStamped>(
+    "~/input/remote/shift_cmd", 1, std::bind(
+      &ExternalCmdSelector::onRemoteShiftCmd, this,
+      _1));
   sub_remote_turn_signal_cmd_ = create_subscription<autoware_vehicle_msgs::msg::TurnSignal>(
-    "~/input/remote/turn_signal_cmd", 1, std::bind(&ExternalCmdSelector::onRemoteTurnSignalCmd, this, _1), subscriber_option);
+    "~/input/remote/turn_signal_cmd", 1,
+    std::bind(&ExternalCmdSelector::onRemoteTurnSignalCmd, this, _1), subscriber_option);
 
   // Service
   srv_select_external_command_ = create_service<autoware_control_msgs::srv::RemoteCommandSelect>(
-    "~/service/select_external_command", std::bind(&ExternalCmdSelector::onSelectRemoteCommandService, this, _1, _2, _3), rmw_qos_profile_services_default, callback_group_services_);
+    "~/service/select_external_command",
+    std::bind(
+      &ExternalCmdSelector::onSelectRemoteCommandService, this, _1, _2,
+      _3), rmw_qos_profile_services_default, callback_group_services_);
 
   // Initialize mode
   current_selector_mode_.data = initial_selector_mode_;
@@ -88,7 +108,8 @@ void ExternalCmdSelector::onLocalRawControlCmd(
   pub_raw_control_cmd_->publish(*msg);
 }
 
-void ExternalCmdSelector::onLocalShiftCmd(const autoware_vehicle_msgs::msg::ShiftStamped::ConstSharedPtr msg)
+void ExternalCmdSelector::onLocalShiftCmd(
+  const autoware_vehicle_msgs::msg::ShiftStamped::ConstSharedPtr msg)
 {
   if (current_selector_mode_.data != autoware_control_msgs::msg::RemoteCommandSelectorMode::LOCAL) {
     return;
@@ -110,16 +131,21 @@ void ExternalCmdSelector::onLocalTurnSignalCmd(
 void ExternalCmdSelector::onRemoteRawControlCmd(
   const autoware_vehicle_msgs::msg::RawControlCommandStamped::ConstSharedPtr msg)
 {
-  if (current_selector_mode_.data != autoware_control_msgs::msg::RemoteCommandSelectorMode::REMOTE) {
+  if (current_selector_mode_.data !=
+    autoware_control_msgs::msg::RemoteCommandSelectorMode::REMOTE)
+  {
     return;
   }
 
   pub_raw_control_cmd_->publish(*msg);
 }
 
-void ExternalCmdSelector::onRemoteShiftCmd(const autoware_vehicle_msgs::msg::ShiftStamped::ConstSharedPtr msg)
+void ExternalCmdSelector::onRemoteShiftCmd(
+  const autoware_vehicle_msgs::msg::ShiftStamped::ConstSharedPtr msg)
 {
-  if (current_selector_mode_.data != autoware_control_msgs::msg::RemoteCommandSelectorMode::REMOTE) {
+  if (current_selector_mode_.data !=
+    autoware_control_msgs::msg::RemoteCommandSelectorMode::REMOTE)
+  {
     return;
   }
 
@@ -129,7 +155,9 @@ void ExternalCmdSelector::onRemoteShiftCmd(const autoware_vehicle_msgs::msg::Shi
 void ExternalCmdSelector::onRemoteTurnSignalCmd(
   const autoware_vehicle_msgs::msg::TurnSignal::ConstSharedPtr msg)
 {
-  if (current_selector_mode_.data != autoware_control_msgs::msg::RemoteCommandSelectorMode::REMOTE) {
+  if (current_selector_mode_.data !=
+    autoware_control_msgs::msg::RemoteCommandSelectorMode::REMOTE)
+  {
     return;
   }
 

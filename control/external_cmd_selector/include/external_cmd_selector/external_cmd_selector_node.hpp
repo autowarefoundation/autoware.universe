@@ -15,6 +15,8 @@
 #ifndef EXTERNAL_CMD_SELECTOR__EXTERNAL_CMD_SELECTOR_NODE_HPP_
 #define EXTERNAL_CMD_SELECTOR__EXTERNAL_CMD_SELECTOR_NODE_HPP_
 
+#include <memory>
+
 #include "rclcpp/rclcpp.hpp"
 
 #include "autoware_control_msgs/srv/remote_command_select.hpp"
@@ -30,9 +32,11 @@ public:
 
 private:
   // Publisher
-  rclcpp::Publisher<autoware_control_msgs::msg::RemoteCommandSelectorMode>::SharedPtr pub_current_selector_mode_;
+  rclcpp::Publisher<autoware_control_msgs::msg::RemoteCommandSelectorMode>::SharedPtr
+    pub_current_selector_mode_;
 
-  rclcpp::Publisher<autoware_vehicle_msgs::msg::RawControlCommandStamped>::SharedPtr pub_raw_control_cmd_;
+  rclcpp::Publisher<autoware_vehicle_msgs::msg::RawControlCommandStamped>::SharedPtr
+    pub_raw_control_cmd_;
   rclcpp::Publisher<autoware_vehicle_msgs::msg::ShiftStamped>::SharedPtr pub_shift_cmd_;
   rclcpp::Publisher<autoware_vehicle_msgs::msg::TurnSignal>::SharedPtr pub_turn_signal_cmd_;
 
@@ -41,32 +45,39 @@ private:
   rclcpp::CallbackGroup::SharedPtr callback_group_services_;
 
   // Subscriber
-  rclcpp::Subscription<autoware_vehicle_msgs::msg::RawControlCommandStamped>::SharedPtr sub_local_raw_control_cmd_;
+  rclcpp::Subscription<autoware_vehicle_msgs::msg::RawControlCommandStamped>::SharedPtr
+    sub_local_raw_control_cmd_;
   rclcpp::Subscription<autoware_vehicle_msgs::msg::ShiftStamped>::SharedPtr sub_local_shift_cmd_;
-  rclcpp::Subscription<autoware_vehicle_msgs::msg::TurnSignal>::SharedPtr sub_local_turn_signal_cmd_;
+  rclcpp::Subscription<autoware_vehicle_msgs::msg::TurnSignal>::SharedPtr sub_local_turn_signal_cmd_; //NOLINT
 
-  rclcpp::Subscription<autoware_vehicle_msgs::msg::RawControlCommandStamped>::SharedPtr sub_remote_raw_control_cmd_;
+  rclcpp::Subscription<autoware_vehicle_msgs::msg::RawControlCommandStamped>::SharedPtr
+    sub_remote_raw_control_cmd_;
   rclcpp::Subscription<autoware_vehicle_msgs::msg::ShiftStamped>::SharedPtr sub_remote_shift_cmd_;
-  rclcpp::Subscription<autoware_vehicle_msgs::msg::TurnSignal>::SharedPtr sub_remote_turn_signal_cmd_;
+  rclcpp::Subscription<autoware_vehicle_msgs::msg::TurnSignal>::SharedPtr
+    sub_remote_turn_signal_cmd_;
 
-  void onSelectorModeCmd(const autoware_control_msgs::msg::RemoteCommandSelectorMode::ConstSharedPtr msg);
+  void onSelectorModeCmd(
+    const autoware_control_msgs::msg::RemoteCommandSelectorMode::ConstSharedPtr msg);
 
-  void onLocalRawControlCmd(const autoware_vehicle_msgs::msg::RawControlCommandStamped::ConstSharedPtr msg);
+  void onLocalRawControlCmd(
+    const autoware_vehicle_msgs::msg::RawControlCommandStamped::ConstSharedPtr msg);
   void onLocalShiftCmd(const autoware_vehicle_msgs::msg::ShiftStamped::ConstSharedPtr msg);
   void onLocalTurnSignalCmd(const autoware_vehicle_msgs::msg::TurnSignal::ConstSharedPtr msg);
 
-  void onRemoteRawControlCmd(const autoware_vehicle_msgs::msg::RawControlCommandStamped::ConstSharedPtr msg);
+  void onRemoteRawControlCmd(
+    const autoware_vehicle_msgs::msg::RawControlCommandStamped::ConstSharedPtr msg);
   void onRemoteShiftCmd(const autoware_vehicle_msgs::msg::ShiftStamped::ConstSharedPtr msg);
   void onRemoteTurnSignalCmd(const autoware_vehicle_msgs::msg::TurnSignal::ConstSharedPtr msg);
 
   // Service
-  rclcpp::Service<autoware_control_msgs::srv::RemoteCommandSelect>::SharedPtr srv_select_external_command_;
+  rclcpp::Service<autoware_control_msgs::srv::RemoteCommandSelect>::SharedPtr
+    srv_select_external_command_;
   autoware_control_msgs::msg::RemoteCommandSelectorMode current_selector_mode_;
 
   bool onSelectRemoteCommandService(
-  const std::shared_ptr<rmw_request_id_t> request_header,
-  const autoware_control_msgs::srv::RemoteCommandSelect::Request::SharedPtr req,
-  const autoware_control_msgs::srv::RemoteCommandSelect::Response::SharedPtr res);
+    const std::shared_ptr<rmw_request_id_t> request_header,
+    const autoware_control_msgs::srv::RemoteCommandSelect::Request::SharedPtr req,
+    const autoware_control_msgs::srv::RemoteCommandSelect::Response::SharedPtr res);
 
   // Timer
   rclcpp::TimerBase::SharedPtr timer_;
