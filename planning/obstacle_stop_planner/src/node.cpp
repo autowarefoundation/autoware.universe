@@ -32,7 +32,7 @@
 #include "boost/geometry/geometries/linestring.hpp"
 #include "boost/geometry/geometries/point_xy.hpp"
 #include "obstacle_stop_planner/node.hpp"
-#include "vehicle_info_util/vehicle_info.hpp"
+#include "vehicle_info_util/vehicle_info_util.hpp"
 
 #define EIGEN_MPL2_ONLY
 #include "eigen3/Eigen/Core"
@@ -84,15 +84,15 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
   tf_buffer_(this->get_clock()), tf_listener_(tf_buffer_)
 {
   // Vehicle Parameters
-  auto vehicle_info(vehicle_info_util::VehicleInfo::create(*this));
+  const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
 
-  wheel_base_ = vehicle_info.wheel_base_m_;
-  front_overhang_ = vehicle_info.front_overhang_m_;
-  rear_overhang_ = vehicle_info.rear_overhang_m_;
-  left_overhang_ = vehicle_info.left_overhang_m_;
-  right_overhang_ = vehicle_info.right_overhang_m_;
-  vehicle_width_ = vehicle_info.vehicle_width_m_;
-  vehicle_length_ = vehicle_info.vehicle_length_m_;
+  wheel_base_ = vehicle_info.wheel_base_m;
+  front_overhang_ = vehicle_info.front_overhang_m;
+  rear_overhang_ = vehicle_info.rear_overhang_m;
+  left_overhang_ = vehicle_info.left_overhang_m;
+  right_overhang_ = vehicle_info.right_overhang_m;
+  vehicle_width_ = vehicle_info.vehicle_width_m;
+  vehicle_length_ = vehicle_info.vehicle_length_m;
 
   // Parameters
   stop_margin_ = declare_parameter("stop_planner.stop_margin", 5.0);
