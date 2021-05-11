@@ -24,8 +24,7 @@ module autoware_auto_msgs {
       const uint8 MODE_DISENGAGED = 3;
       const uint8 MODE_NOT_READY = 4;
     };
-    @verbatim (language="comment", text=
-      " VehicleStateReport.msg")
+
     struct VehicleStateReport {
       builtin_interfaces::msg::Time stamp;
 
