@@ -33,7 +33,7 @@
 #include "geometry_msgs/msg/twist_stamped.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
-#include "vehicle_info_util/vehicle_info.hpp"
+#include "vehicle_info_util/vehicle_info_util.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
 
 #include "autoware_perception_msgs/msg/dynamic_object_array.hpp"

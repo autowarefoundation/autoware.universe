@@ -34,7 +34,7 @@ SurroundObstacleCheckerNode::SurroundObstacleCheckerNode(const rclcpp::NodeOptio
 : Node("surround_obstacle_checker_node", node_options),
   tf_buffer_(this->get_clock()),
   tf_listener_(tf_buffer_),
-  vehicle_info_(vehicle_info_util::VehicleInfo::create(*this))
+  vehicle_info_(vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo())
 {
   // Parameters
   use_pointcloud_ = this->declare_parameter("use_pointcloud", true);
@@ -45,7 +45,7 @@ SurroundObstacleCheckerNode::SurroundObstacleCheckerNode(const rclcpp::NodeOptio
   state_clear_time_ = this->declare_parameter("state_clear_time", 2.0);
   stop_state_ego_speed_ = this->declare_parameter("stop_state_ego_speed", 0.1);
   debug_ptr_ = std::make_shared<SurroundObstacleCheckerDebugNode>(
-    vehicle_info_.max_longitudinal_offset_m_, this->get_clock(), *this);
+    vehicle_info_.max_longitudinal_offset_m, this->get_clock(), *this);
   self_poly_ = createSelfPolygon();
 
   // Publishers
@@ -382,10 +382,10 @@ bool SurroundObstacleCheckerNode::checkStop(
 
 Polygon2d SurroundObstacleCheckerNode::createSelfPolygon()
 {
-  const double front = vehicle_info_.max_longitudinal_offset_m_;
-  const double rear = vehicle_info_.min_longitudinal_offset_m_;
-  const double left = vehicle_info_.max_lateral_offset_m_;
-  const double right = vehicle_info_.min_lateral_offset_m_;
+  const double front = vehicle_info_.max_longitudinal_offset_m;
+  const double rear = vehicle_info_.min_longitudinal_offset_m;
+  const double left = vehicle_info_.max_lateral_offset_m;
+  const double right = vehicle_info_.min_lateral_offset_m;
 
   Polygon2d poly;
   boost::geometry::exterior_ring(poly) = boost::assign::list_of<Point2d>(front, left)(front, right)(
