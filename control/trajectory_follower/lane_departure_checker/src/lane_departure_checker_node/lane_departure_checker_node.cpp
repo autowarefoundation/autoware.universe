@@ -123,8 +123,8 @@ LaneDepartureCheckerNode::LaneDepartureCheckerNode(const rclcpp::NodeOptions & o
   // Core Parameter
 
   // Vehicle Info
-  auto vehicle_info = vehicle_info_util::VehicleInfo::create(*this);
-  vehicle_length_m_ = vehicle_info.vehicle_length_m_;
+  const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
+  vehicle_length_m_ = vehicle_info.vehicle_length_m;
 
   param_.footprint_margin = declare_parameter("footprint_margin", 0.0);
   param_.resample_interval = declare_parameter("resample_interval", 0.3);

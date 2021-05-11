@@ -27,7 +27,7 @@
 #include "sensor_msgs/msg/point_cloud2.hpp"
 
 #include "autoware_utils/geometry/boost_geometry.hpp"
-#include "vehicle_info_util/vehicle_info.hpp"
+#include "vehicle_info_util/vehicle_info_util.hpp"
 #include "boost/optional.hpp"
 #include "pcl/point_cloud.h"
 #include "pcl/point_types.h"

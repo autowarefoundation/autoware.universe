@@ -21,7 +21,7 @@
 #include "autoware_utils/geometry/geometry.hpp"
 #include "autoware_utils/math/unit_conversion.hpp"
 #include "autoware_utils/ros/marker_helper.hpp"
-#include "vehicle_info_util/vehicle_info.hpp"
+#include "vehicle_info_util/vehicle_info_util.hpp"
 #include "obstacle_collision_checker/util/create_vehicle_footprint.hpp"
 
 namespace

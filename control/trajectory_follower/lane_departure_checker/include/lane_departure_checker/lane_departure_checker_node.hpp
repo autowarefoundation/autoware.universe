@@ -30,7 +30,7 @@
 #include "autoware_planning_msgs/msg/route.hpp"
 #include "autoware_planning_msgs/msg/trajectory.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
-#include "vehicle_info_util/vehicle_info.hpp"
+#include "vehicle_info_util/vehicle_info_util.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
 
 #include "lane_departure_checker/lane_departure_checker.hpp"

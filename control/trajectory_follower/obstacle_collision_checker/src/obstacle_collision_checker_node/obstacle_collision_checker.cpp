@@ -76,7 +76,7 @@ double calcBrakingDistance(
 namespace obstacle_collision_checker
 {
 ObstacleCollisionChecker::ObstacleCollisionChecker(rclcpp::Node & node)
-: vehicle_info_(vehicle_info_util::VehicleInfo::create(node))
+: vehicle_info_(vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo())
 {
 }
 

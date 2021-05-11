@@ -15,8 +15,8 @@
 #ifndef OBSTACLE_COLLISION_CHECKER__UTIL__CREATE_VEHICLE_FOOTPRINT_HPP_
 #define OBSTACLE_COLLISION_CHECKER__UTIL__CREATE_VEHICLE_FOOTPRINT_HPP_
 
-#include <autoware_utils/geometry/geometry.hpp>
-#include <vehicle_info_util/vehicle_info.hpp>
+#include "autoware_utils/geometry/geometry.hpp"
+#include "vehicle_info_util/vehicle_info_util.hpp"
 
 inline autoware_utils::LinearRing2d createVehicleFootprint(
   const vehicle_info_util::VehicleInfo & vehicle_info, const double margin = 0.0)
@@ -26,11 +26,11 @@ inline autoware_utils::LinearRing2d createVehicleFootprint(
 
   const auto & i = vehicle_info;
 
-  const double x_front = i.front_overhang_m_ + i.wheel_base_m_ + margin;
-  const double x_center = i.wheel_base_m_ / 2.0;
-  const double x_rear = -(i.rear_overhang_m_ + margin);
-  const double y_left = i.wheel_tread_m_ / 2.0 + i.left_overhang_m_ + margin;
-  const double y_right = -(i.wheel_tread_m_ / 2.0 + i.right_overhang_m_ + margin);
+  const double x_front = i.front_overhang_m + i.wheel_base_m + margin;
+  const double x_center = i.wheel_base_m / 2.0;
+  const double x_rear = -(i.rear_overhang_m + margin);
+  const double y_left = i.wheel_tread_m / 2.0 + i.left_overhang_m + margin;
+  const double y_right = -(i.wheel_tread_m / 2.0 + i.right_overhang_m + margin);
 
   LinearRing2d footprint;
   footprint.push_back(Point2d{x_front, y_left});
