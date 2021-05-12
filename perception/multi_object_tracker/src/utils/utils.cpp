@@ -128,10 +128,18 @@ void toPolygon2d(
     Eigen::Matrix2d rotation;
     rotation << std::cos(yaw), -std::sin(yaw), std::sin(yaw), std::cos(yaw);
     Eigen::Vector2d offset0, offset1, offset2, offset3;
-    offset0 = rotation * Eigen::Vector2d(object.shape.dimensions.x * 0.5f, object.shape.dimensions.y * 0.5f);
-    offset1 = rotation * Eigen::Vector2d(object.shape.dimensions.x * 0.5f, -object.shape.dimensions.y * 0.5f);
-    offset2 = rotation * Eigen::Vector2d(-object.shape.dimensions.x * 0.5f, -object.shape.dimensions.y * 0.5f);
-    offset3 = rotation * Eigen::Vector2d(-object.shape.dimensions.x * 0.5f, object.shape.dimensions.y * 0.5f);
+    offset0 = rotation * Eigen::Vector2d(
+      object.shape.dimensions.x * 0.5f,
+      object.shape.dimensions.y * 0.5f);
+    offset1 = rotation * Eigen::Vector2d(
+      object.shape.dimensions.x * 0.5f,
+      -object.shape.dimensions.y * 0.5f);
+    offset2 = rotation * Eigen::Vector2d(
+      -object.shape.dimensions.x * 0.5f,
+      -object.shape.dimensions.y * 0.5f);
+    offset3 = rotation * Eigen::Vector2d(
+      -object.shape.dimensions.x * 0.5f,
+      object.shape.dimensions.y * 0.5f);
     output.outer().push_back(
       boost::geometry::make<autoware_utils::Point2d>(
         pose.position.x + offset0.x(), pose.position.y + offset0.y()));
