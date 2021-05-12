@@ -6,14 +6,14 @@
     <!-- behavior planning module -->
     <group>
       <push-ros-namespace namespace="behavior_planning"/>
-      <include file="$(find-pkg-share planning_launch)/launch/scenario_planning/lane_driving/behavior_planning/behavior_planning.launch.xml">
+      <include file="$(find-pkg-share planning_launch)/launch/scenario_planning/lane_driving/behavior_planning/behavior_planning.launch.py">
       </include>
     </group>
 
     <!-- motion planning module -->
     <group>
       <push-ros-namespace namespace="motion_planning"/>
-      <include file="$(find-pkg-share planning_launch)/launch/scenario_planning/lane_driving/motion_planning/motion_planning.launch.xml">
+      <include file="$(find-pkg-share planning_launch)/launch/scenario_planning/lane_driving/motion_planning/motion_planning.launch.py">
       </include>
     </group>
   </group>

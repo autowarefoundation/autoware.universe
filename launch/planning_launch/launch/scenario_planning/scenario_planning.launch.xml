@@ -28,7 +28,7 @@
     <include file="$(find-pkg-share planning_launch)/launch/scenario_planning/lane_driving.launch.xml">
     </include>
     <!-- parking -->
-    <include file="$(find-pkg-share planning_launch)/launch/scenario_planning/parking.launch.xml">
+    <include file="$(find-pkg-share planning_launch)/launch/scenario_planning/parking.launch.py">
     </include>
   </group>
 </launch>

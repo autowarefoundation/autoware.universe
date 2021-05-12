@@ -14,30 +14,11 @@
     <remap from="~/output/lane_change_available" to="/planning/scenario_planning/lane_driving/lane_change_available" />
     <remap from="~/output/stop_reasons" to="/planning/scenario_planning/status/stop_reasons" />
     <remap from="~/debug/lane_change_candidate_path" to="/planning/scenario_planning/lane_driving/lane_change_candidate_path" />
-    <param name="min_stop_distance" value="5.0" />
-    <param name="stop_time" value="2.0" />
-    <param name="hysteresis_buffer_distance" value="2.0" />
-    <param name="backward_path_length" value="5.0" />
-    <param name="forward_path_length" value="200.0" />
-    <param name="max_accel" value="-5.0" />
-    <param name="lane_change_prepare_duration" value="4.0" />
-    <param name="lane_changing_duration" value="8.0" />
-    <param name="backward_length_buffer_for_end_of_lane" value="5.0" />
-    <param name="lane_change_finish_judge_buffer" value="3.0" />
-    <param name="minimum_lane_change_length" value="12.0" />
-    <param name="minimum_lane_change_velocity" value="5.6" />
-    <param name="prediction_duration" value="8.0" />
-    <param name="prediction_time_resolution" value="0.5" />
-    <param name="drivable_area_resolution" value="0.1" />
-    <param name="drivable_area_width" value="100.0" />
-    <param name="drivable_area_height" value="50.0" />
-    <param name="static_obstacle_velocity_thresh" value="1.5" />
-    <param name="maximum_deceleration" value="1.0" />
+    <param from="$(find-pkg-share planning_launch)/config/scenario_planning/lane_driving/behavior_planning/lane_change_planner/lane_change_planner.param.yaml" />
     <param name="enable_abort_lane_change" value="false" />
     <param name="enable_collision_check_at_prepare_phase" value="false" />
     <param name="use_predicted_path_outside_lanelet" value="false" />
     <param name="use_all_predicted_path" value="false" />
-    <param name="refine_goal_search_radius_range" value="7.5" />
     <param name="enable_blocked_by_obstacle" value="false" />
   </node>
 

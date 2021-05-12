@@ -36,8 +36,8 @@
       <arg name="input_trajectory" value="surround_obstacle_checker/trajectory" />
       <arg name="input_pointcloud" value="/sensing/lidar/no_ground/pointcloud" />
       <arg name="output_trajectory" value="/planning/scenario_planning/lane_driving/trajectory" />
-      <arg name="acc_param_file" value="$(find-pkg-share planning_launch)/config/adaptive_cruise_control.param.yaml" />
-      <arg name="param_file" value="$(find-pkg-share planning_launch)/config/obstacle_stop_planner.param.yaml" />
+      <arg name="acc_param_file" value="$(find-pkg-share planning_launch)/config/obstacle_stop_planner/adaptive_cruise_control.param.yaml" />
+      <arg name="param_file" value="$(find-pkg-share planning_launch)/config/obstacle_stop_planner/obstacle_stop_planner.param.yaml" />
       <arg name="enable_slow_down" value="false" />
     </include>
   </group>

@@ -5,7 +5,7 @@
     <!-- mission planning module -->
     <group>
       <push-ros-namespace namespace="mission_planning"/>
-      <include file="$(find-pkg-share planning_launch)/launch/mission_planning/mission_planning.launch.xml">
+      <include file="$(find-pkg-share planning_launch)/launch/mission_planning/mission_planning.launch.py">
       </include>
     </group>
 
