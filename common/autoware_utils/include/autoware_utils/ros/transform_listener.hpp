@@ -26,6 +26,8 @@
 
 #include "geometry_msgs/msg/transform_stamped.hpp"
 
+namespace autoware_utils
+{
 class TransformListener
 {
 public:
@@ -78,5 +80,6 @@ private:
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
 };
+}  // namespace autoware_utils
 
 #endif  // AUTOWARE_UTILS__ROS__TRANSFORM_LISTENER_HPP_

@@ -21,6 +21,8 @@
 
 #include "rclcpp/rclcpp.hpp"
 
+namespace autoware_utils
+{
 template<class T>
 T waitForParam(
   rclcpp::Node * node, const std::string & remote_node_name, const std::string & param_name)
@@ -46,5 +48,6 @@ T waitForParam(
 
   return {};
 }
+}  // namespace autoware_utils
 
 #endif  // AUTOWARE_UTILS__ROS__WAIT_FOR_PARAM_HPP_

@@ -25,6 +25,9 @@
 
 #include "autoware_utils/ros/debug_traits.hpp"
 
+namespace autoware_utils
+{
+
 namespace debug_publisher
 {
 template<
@@ -42,8 +45,6 @@ T_msg toDebugMsg(const T & data, const rclcpp::Time & stamp)
 }
 }  // namespace debug_publisher
 
-namespace autoware_utils
-{
 class DebugPublisher
 {
 public:
