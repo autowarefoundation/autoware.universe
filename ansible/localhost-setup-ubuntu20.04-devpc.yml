@@ -4,13 +4,13 @@
   become: no
   vars_prompt:
     - name: yn_gpu
-      prompt: "Do you install GPU modules(cuda: 11.1, cudnn: 8.0.5, TensorRT: 7.2.1)? (y/n)"
+      prompt: "Would you like to install the optional GPU modules (cuda: 11.1, cudnn: 8.0.5, TensorRT: 7.2.1)? (y/n)"
       default: "y"
       private: no
   pre_tasks:
     - pause:
         seconds: 10
-        prompt: "[Warning]: Skip install GPU modules. Try manually installing these modules to execute nodes depending on TensorRT."
+        prompt: "[Warning]: Skipping installation of GPU modules. To execute nodes depending on TensorRT, please manually install the modules listed above."
       when: yn_gpu != 'y'
   roles:
     - { role: cuda, when: yn_gpu == 'y', tags: ["cuda"] }

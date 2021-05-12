@@ -13,14 +13,15 @@ SCRIPT_DIR=$(cd $(dirname $0); pwd)
 
 # Prevent root execution
 if [ $(id -u) -eq 0 ]; then
-  echo "Don't run as root" >&2
+  echo "Do not run setup as root!" >&2
   exit 1
 fi
 
 if [ $noninteractive -eq 1 ]; then
   answer="y"
 else
-  read -p ">  Do you run setup? This will take a while. [y/N] " answer
+  echo "Setting up the pre-build environment for AutowareArchitectureProposal.IV can take up to 45 minutes."
+  read -p ">  Are you sure you want to run setup? [y/N] " answer
 fi
 
 if [[ $answer = [cC] ]]; then
@@ -46,6 +47,6 @@ case $answer in
     echo -e "\e[32mComplete \e[0m"
     ;;
   * )
-    echo -e "\e[33mCanceled \e[0m"
+    echo -e "\e[33mCancelled \e[0m"
     ;;
 esac
