@@ -46,13 +46,9 @@ public:
   explicit ObstacleCollisionCheckerNode(const rclcpp::NodeOptions & node_options);
 
 private:
-  // NodeHandle
-  // ros::NodeHandle nh_{""};
-  // ros::NodeHandle private_nh_{"~"};
-
   // Subscriber
   std::shared_ptr<autoware_utils::SelfPoseListener> self_pose_listener_;
-  std::shared_ptr<TransformListener> transform_listener_;
+  std::shared_ptr<autoware_utils::TransformListener> transform_listener_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_obstacle_pointcloud_;
   rclcpp::Subscription<autoware_planning_msgs::msg::Trajectory>::SharedPtr
     sub_reference_trajectory_;

@@ -66,7 +66,7 @@ ObstacleCollisionCheckerNode::ObstacleCollisionCheckerNode(const rclcpp::NodeOpt
 
   // Subscriber
   self_pose_listener_ = std::make_shared<autoware_utils::SelfPoseListener>(this);
-  transform_listener_ = std::make_shared<TransformListener>(this);
+  transform_listener_ = std::make_shared<autoware_utils::TransformListener>(this);
 
   sub_obstacle_pointcloud_ = create_subscription<sensor_msgs::msg::PointCloud2>(
     "input/obstacle_pointcloud", 1,
