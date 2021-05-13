@@ -42,7 +42,7 @@
   </include>
 
   <!-- Map -->
-  <include file="$(find-pkg-share map_launch)/launch/map.launch.xml">
+  <include file="$(find-pkg-share map_launch)/launch/map.launch.py">
     <arg name="lanelet2_map_path" value="$(var map_path)/$(var lanelet2_map_file)" />
     <arg name="pointcloud_map_path" value="$(var map_path)/$(var pointcloud_map_file)"/>
   </include>
