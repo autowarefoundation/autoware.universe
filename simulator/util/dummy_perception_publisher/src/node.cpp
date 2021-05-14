@@ -252,7 +252,7 @@ void DummyPerceptionPublisherNode::createObjectPointcloud(
   const double vertical_theta_step = (1.0 / 180.0) * M_PI;
   const double vertical_min_theta = (-15.0 / 180.0) * M_PI;
   const double vertical_max_theta = (15.0 / 180.0) * M_PI;
-  const double horizontal_theta_step = (0.5 / 180.0) * M_PI;
+  const double horizontal_theta_step = (0.1 / 180.0) * M_PI;
   const double horizontal_min_theta = (-180.0 / 180.0) * M_PI;
   const double horizontal_max_theta = (180.0 / 180.0) * M_PI;
 
