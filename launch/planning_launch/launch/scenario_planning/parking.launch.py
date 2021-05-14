@@ -66,7 +66,7 @@ def generate_launch_description():
             ),
             ComposableNode(
                 package='freespace_planner',
-                plugin='AstarNavi',
+                plugin='FreespacePlannerNode',
                 name='freespace_planner',
                 remappings=[
                     ('~/input/route', '/planning/mission_planning/route'),
