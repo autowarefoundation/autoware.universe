@@ -62,10 +62,10 @@ struct NodeParam
   bool replan_when_course_out;
 };
 
-class AstarNavi : public rclcpp::Node
+class FreespacePlannerNode : public rclcpp::Node
 {
 public:
-  explicit AstarNavi(const rclcpp::NodeOptions & node_options);
+  explicit FreespacePlannerNode(const rclcpp::NodeOptions & node_options);
 
 private:
   // ros

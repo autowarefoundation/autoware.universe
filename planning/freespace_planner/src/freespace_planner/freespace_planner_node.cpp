@@ -240,7 +240,7 @@ bool isStopped(
 
 }  // namespace
 
-AstarNavi::AstarNavi(const rclcpp::NodeOptions & node_options)
+FreespacePlannerNode::FreespacePlannerNode(const rclcpp::NodeOptions & node_options)
 : Node("freespace_planner", node_options)
 {
   using std::placeholders::_1;
@@ -288,13 +288,14 @@ AstarNavi::AstarNavi(const rclcpp::NodeOptions & node_options)
   // Subscribers
   {
     route_sub_ = create_subscription<autoware_planning_msgs::msg::Route>(
-      "~/input/route", rclcpp::QoS{1}, std::bind(&AstarNavi::onRoute, this, _1));
+      "~/input/route", rclcpp::QoS{1}, std::bind(&FreespacePlannerNode::onRoute, this, _1));
     occupancy_grid_sub_ = create_subscription<nav_msgs::msg::OccupancyGrid>(
-      "~/input/occupancy_grid", rclcpp::QoS{1}, std::bind(&AstarNavi::onOccupancyGrid, this, _1));
+      "~/input/occupancy_grid", rclcpp::QoS{1},
+      std::bind(&FreespacePlannerNode::onOccupancyGrid, this, _1));
     scenario_sub_ = create_subscription<autoware_planning_msgs::msg::Scenario>(
-      "~/input/scenario", rclcpp::QoS{1}, std::bind(&AstarNavi::onScenario, this, _1));
+      "~/input/scenario", rclcpp::QoS{1}, std::bind(&FreespacePlannerNode::onScenario, this, _1));
     twist_sub_ = create_subscription<geometry_msgs::msg::TwistStamped>(
-      "~/input/twist", rclcpp::QoS{100}, std::bind(&AstarNavi::onTwist, this, _1));
+      "~/input/twist", rclcpp::QoS{100}, std::bind(&FreespacePlannerNode::onTwist, this, _1));
   }
 
   // Publishers
@@ -318,7 +319,7 @@ AstarNavi::AstarNavi(const rclcpp::NodeOptions & node_options)
 
   // Timer
   {
-    auto timer_callback = std::bind(&AstarNavi::onTimer, this);
+    auto timer_callback = std::bind(&FreespacePlannerNode::onTimer, this);
     auto period = std::chrono::duration_cast<std::chrono::nanoseconds>(
       std::chrono::duration<double>(node_param_.update_rate));
     timer_ = std::make_shared<rclcpp::GenericTimer<decltype(timer_callback)>>(
@@ -327,7 +328,7 @@ AstarNavi::AstarNavi(const rclcpp::NodeOptions & node_options)
   }
 }
 
-void AstarNavi::onRoute(const autoware_planning_msgs::msg::Route::ConstSharedPtr msg)
+void FreespacePlannerNode::onRoute(const autoware_planning_msgs::msg::Route::ConstSharedPtr msg)
 {
   route_ = msg;
 
@@ -337,17 +338,18 @@ void AstarNavi::onRoute(const autoware_planning_msgs::msg::Route::ConstSharedPtr
   reset();
 }
 
-void AstarNavi::onOccupancyGrid(const nav_msgs::msg::OccupancyGrid::ConstSharedPtr msg)
+void FreespacePlannerNode::onOccupancyGrid(const nav_msgs::msg::OccupancyGrid::ConstSharedPtr msg)
 {
   occupancy_grid_ = msg;
 }
 
-void AstarNavi::onScenario(const autoware_planning_msgs::msg::Scenario::ConstSharedPtr msg)
+void FreespacePlannerNode::onScenario(
+  const autoware_planning_msgs::msg::Scenario::ConstSharedPtr msg)
 {
   scenario_ = msg;
 }
 
-void AstarNavi::onTwist(const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg)
+void FreespacePlannerNode::onTwist(const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg)
 {
   twist_ = msg;
 
@@ -366,7 +368,7 @@ void AstarNavi::onTwist(const geometry_msgs::msg::TwistStamped::ConstSharedPtr m
   }
 }
 
-bool AstarNavi::isPlanRequired()
+bool FreespacePlannerNode::isPlanRequired()
 {
   if (trajectory_.points.empty()) {
     return true;
@@ -399,7 +401,7 @@ bool AstarNavi::isPlanRequired()
   return false;
 }
 
-void AstarNavi::updateTargetIndex()
+void FreespacePlannerNode::updateTargetIndex()
 {
   const auto is_near_target =
     calcDistance2d(trajectory_.points.at(target_index_).pose, current_pose_.pose) <
@@ -426,7 +428,7 @@ void AstarNavi::updateTargetIndex()
   }
 }
 
-void AstarNavi::onTimer()
+void FreespacePlannerNode::onTimer()
 {
   // Check all inputs are ready
   if (!occupancy_grid_ || !route_ || !scenario_ || !twist_) {
@@ -477,7 +479,7 @@ void AstarNavi::onTimer()
   debug_partial_pose_array_pub_->publish(trajectory2PoseArray(partial_trajectory_));
 }
 
-void AstarNavi::planTrajectory()
+void FreespacePlannerNode::planTrajectory()
 {
   // Extend robot shape
   RobotShape extended_robot_shape = astar_param_.robot_shape;
@@ -521,7 +523,7 @@ void AstarNavi::planTrajectory()
   }
 }
 
-void AstarNavi::reset()
+void FreespacePlannerNode::reset()
 {
   trajectory_ = autoware_planning_msgs::msg::Trajectory();
   partial_trajectory_ = autoware_planning_msgs::msg::Trajectory();
@@ -529,7 +531,7 @@ void AstarNavi::reset()
   this->set_parameter(rclcpp::Parameter("is_completed", false));
 }
 
-geometry_msgs::msg::TransformStamped AstarNavi::getTransform(
+geometry_msgs::msg::TransformStamped FreespacePlannerNode::getTransform(
   const std::string & from, const std::string & to)
 {
   geometry_msgs::msg::TransformStamped tf;
@@ -543,4 +545,4 @@ geometry_msgs::msg::TransformStamped AstarNavi::getTransform(
 }
 
 #include "rclcpp_components/register_node_macro.hpp"
-RCLCPP_COMPONENTS_REGISTER_NODE(AstarNavi)
+RCLCPP_COMPONENTS_REGISTER_NODE(FreespacePlannerNode)
