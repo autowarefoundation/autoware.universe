@@ -39,3 +39,9 @@ ament_auto_package(INSTALL_TO_SHARE
   launch
   data
 )
+
+install(PROGRAMS scripts/plot_accel_brake_map.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(FILES DESTINATION share/${PROJECT_NAME})
