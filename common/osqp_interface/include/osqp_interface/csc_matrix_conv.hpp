@@ -11,13 +11,14 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef CSC_MATRIX_CONV_H
-#define CSC_MATRIX_CONV_H
+#ifndef OSQP_INTERFACE__CSC_MATRIX_CONV_HPP_
+#define OSQP_INTERFACE__CSC_MATRIX_CONV_HPP_
 
 #include <vector>
 
+#include "osqp/types.h"  // for 'c_int' type ('long' or 'long long')
+
 #include "eigen3/Eigen/Core"
-#include "types.h"  // for 'c_int' type ('long' or 'long long')
 
 namespace osqp
 {
@@ -41,4 +42,4 @@ void printCSCMatrix(CSC_Matrix & csc_mat);
 
 }  // namespace osqp
 
-#endif  // CSC_MATRIX_CONV_H
+#endif  // OSQP_INTERFACE__CSC_MATRIX_CONV_HPP_
