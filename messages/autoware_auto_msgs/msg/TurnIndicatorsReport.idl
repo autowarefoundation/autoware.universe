@@ -3,9 +3,9 @@
 module autoware_auto_msgs {
   module msg {
     module TurnIndicatorsReport_Constants {
-      const uint8 DISABLE = 0;
-      const uint8 ENABLE_LEFT = 1;
-      const uint8 ENABLE_RIGHT = 2;
+      const uint8 DISABLE = 1;
+      const uint8 ENABLE_LEFT = 2;
+      const uint8 ENABLE_RIGHT = 3;
     };
 
     struct TurnIndicatorsReport {

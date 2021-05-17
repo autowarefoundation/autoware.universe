@@ -3,9 +3,9 @@
 module autoware_auto_msgs {
   module msg {
     module HeadlightsReport_Constants {
-      const uint8 DISABLE = 0;
-      const uint8 ENABLE_LOW = 1;
-      const uint8 ENABLE_HIGH = 2;
+      const uint8 DISABLE = 1;
+      const uint8 ENABLE_LOW = 2;
+      const uint8 ENABLE_HIGH = 3;
     };
 
     struct HeadlightsReport {
