@@ -1,0 +1,45 @@
+name: Generate documentation
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.8"
+
+      - name: Install MkDocs
+        run: |
+          pip3 install \
+            fontawesome_markdown \
+            markdown \
+            mdx_unimoji \
+            mkdocs \
+            mkdocs-exclude \
+            mkdocs-material \
+            mkdocs-same-dir \
+            plantuml-markdown \
+            pymdown-extensions \
+            python-markdown-math
+
+      - name: Build MkDocs
+        run: |
+          mkdocs build -f mkdocs.yml --verbose --clean
+          mv site public
+
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: "public"
