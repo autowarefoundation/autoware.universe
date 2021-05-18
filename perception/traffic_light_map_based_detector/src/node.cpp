@@ -26,6 +26,7 @@
 #include "lanelet2_extension/utility/utilities.hpp"
 #include "lanelet2_extension/visualization/visualization.hpp"
 
+#include "lanelet2_core/Exceptions.h"
 #include "lanelet2_core/LaneletMap.h"
 #include "lanelet2_core/geometry/Point.h"
 #include "lanelet2_projection/UTM.h"
@@ -246,7 +247,12 @@ void MapBasedDetector::routeCallback(
   lanelet::ConstLanelets route_lanelets;
   for (const auto & route_section : input_msg->route_sections) {
     for (const auto & lane_id : route_section.lane_ids) {
-      route_lanelets.push_back(lanelet_map_ptr_->laneletLayer.get(lane_id));
+      try {
+        route_lanelets.push_back(lanelet_map_ptr_->laneletLayer.get(lane_id));
+      } catch (const lanelet::NoSuchPrimitiveError & ex) {
+        RCLCPP_ERROR(get_logger(), ex.what());
+        return;
+      }
     }
   }
   std::vector<lanelet::AutowareTrafficLightConstPtr> route_lanelet_traffic_lights =
