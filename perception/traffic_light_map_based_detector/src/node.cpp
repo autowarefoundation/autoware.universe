@@ -176,8 +176,10 @@ bool MapBasedDetector::getTrafficLightRoi(
     const double image_u = (fx * camera_x + cx * camera_z) / camera_z;
     const double image_v = (fy * camera_y + cy * camera_z) / camera_z;
 
-    tl_roi.roi.x_offset = std::max(std::min(image_u, static_cast<double>(camera_info.width)), 0.0);
-    tl_roi.roi.y_offset = std::max(std::min(image_v, static_cast<double>(camera_info.height)), 0.0);
+    tl_roi.roi.x_offset = std::max(
+      std::min(image_u, static_cast<double>(static_cast<int>(camera_info.width) - 1)), 0.0);
+    tl_roi.roi.y_offset = std::max(
+      std::min(image_v, static_cast<double>(static_cast<int>(camera_info.height) - 1)), 0.0);
   }
 
   // for roi.width and roi.height
@@ -200,13 +202,15 @@ bool MapBasedDetector::getTrafficLightRoi(
     if (camera_z <= 0.0) {return false;}
     const double image_u = (fx * camera_x + cx * camera_z) / camera_z;
     const double image_v = (fy * camera_y + cy * camera_z) / camera_z;
-    tl_roi.roi.width = std::max(
-      std::min(
-        image_u, static_cast<double>(camera_info.width)), 0.0) - tl_roi.roi.x_offset;
-    tl_roi.roi.height = std::max(
-      std::min(
-        image_v, static_cast<double>(camera_info.height)), 0.0) - tl_roi.roi.y_offset;
-    if (tl_roi.roi.width <= 0 || tl_roi.roi.height <= 0) {return false;}
+    tl_roi.roi.width =
+      std::max(
+      std::min(image_u, static_cast<double>(camera_info.width)),
+      0.0) - tl_roi.roi.x_offset;
+    tl_roi.roi.height =
+      std::max(
+      std::min(image_v, static_cast<double>(camera_info.height)),
+      0.0) - tl_roi.roi.y_offset;
+    if (tl_roi.roi.width < 0 || tl_roi.roi.height < 0) {return false;}
   }
   return true;
 }
@@ -298,7 +302,7 @@ void MapBasedDetector::isInVisibility(
         tl_right_down_point.y() - tl_left_down_point.y(),
         tl_right_down_point.x() - tl_left_down_point.x()) +
       M_PI_2);
-    const double max_angele_range = 40.0 / 180.0 * M_PI;
+    const double max_angle_range = 40.0 / 180.0 * M_PI;
 
     // get direction of z axis
     tf2::Vector3 camera_z_dir(0, 0, 1);
@@ -308,7 +312,7 @@ void MapBasedDetector::isInVisibility(
     camera_z_dir = camera_rotation_matrix * camera_z_dir;
     double camera_yaw = std::atan2(camera_z_dir.y(), camera_z_dir.x());
     camera_yaw = normalizeAngle(camera_yaw);
-    if (!isInAngleRange(tl_yaw, camera_yaw, max_angele_range)) {continue;}
+    if (!isInAngleRange(tl_yaw, camera_yaw, max_angle_range)) {continue;}
 
     // check within image frame
     tf2::Transform tf_map2camera(
@@ -344,13 +348,13 @@ bool MapBasedDetector::isInDistanceRange(
 bool MapBasedDetector::isInAngleRange(
   const double & tl_yaw,
   const double & camera_yaw,
-  const double max_angele_range)
+  const double max_angle_range)
 {
   Eigen::Vector2d vec1, vec2;
   vec1 << std::cos(tl_yaw), std::sin(tl_yaw);
   vec2 << std::cos(camera_yaw), std::sin(camera_yaw);
   const double diff_angle = std::acos(vec1.dot(vec2));
-  return std::fabs(diff_angle) < max_angele_range;
+  return std::fabs(diff_angle) < max_angle_range;
 }
 
 bool MapBasedDetector::isInImageFrame(

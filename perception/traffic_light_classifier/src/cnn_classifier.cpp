@@ -110,8 +110,9 @@ void CNNClassifier::outputDebugImage(
     if (i < states.size() - 1) {label += ",";}
   }
 
-  int expand_w = 200;
-  int expand_h = static_cast<int>((expand_w * debug_image.rows) / debug_image.cols);
+  const int expand_w = 200;
+  const int expand_h =
+    std::max(static_cast<int>((expand_w * debug_image.rows) / debug_image.cols), 1);
 
   cv::resize(debug_image, debug_image, cv::Size(expand_w, expand_h));
   cv::Mat text_img(cv::Size(expand_w, 50), CV_8UC3, cv::Scalar(0, 0, 0));

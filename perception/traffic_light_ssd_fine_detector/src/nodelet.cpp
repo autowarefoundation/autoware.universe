@@ -145,14 +145,26 @@ void TrafficLightSSDFineDetectorNodelet::callback(
 
     for (int i = 0; i < num_infer; ++i) {
       int roi_index = i + batch_count * batch_size;
-      lts.push_back(
-        cv::Point(
-          in_roi_msg->rois.at(roi_index).roi.x_offset,
-          in_roi_msg->rois.at(roi_index).roi.y_offset));
-      rbs.push_back(
-        cv::Point(
-          in_roi_msg->rois.at(roi_index).roi.x_offset + in_roi_msg->rois.at(roi_index).roi.width,
-          in_roi_msg->rois.at(roi_index).roi.y_offset + in_roi_msg->rois.at(roi_index).roi.height));
+      const int roi_x_offset = static_cast<int>(in_roi_msg->rois.at(roi_index).roi.x_offset);
+      const int roi_y_offset = static_cast<int>(in_roi_msg->rois.at(roi_index).roi.y_offset);
+      const int roi_width = static_cast<int>(in_roi_msg->rois.at(roi_index).roi.width);
+      const int roi_height = static_cast<int>(in_roi_msg->rois.at(roi_index).roi.height);
+      {
+        const int x_min = 0, x_max = static_cast<int>(original_image.size().width) - 1;
+        const int y_min = 0, y_max = static_cast<int>(original_image.size().height) - 1;
+        lts.push_back(
+          cv::Point(
+            std::min(std::max(roi_x_offset, x_min), x_max),
+            std::min(std::max(roi_y_offset, y_min), y_max)));
+      }
+      {
+        const int width_min = 1, x_max = static_cast<int>(original_image.size().width);
+        const int height_min = 1, y_max = static_cast<int>(original_image.size().height);
+        rbs.push_back(
+          cv::Point(
+            std::min(roi_x_offset + std::max(roi_width, width_min), x_max),
+            std::min(roi_y_offset + std::max(roi_height, height_min), y_max)));
+      }
       fitInFrame(lts.at(i), rbs.at(i), cv::Size(original_image.size()));
       cropped_imgs.push_back(cv::Mat(original_image, cv::Rect(lts.at(i), rbs.at(i))));
     }
