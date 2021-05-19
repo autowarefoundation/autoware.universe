@@ -123,6 +123,10 @@ repositories:
     type: git
     url: https://github.com/tier4/rosbag2
     version: tier4/main
+  vendor/launch_ros:
+    type: git
+    url: https://github.com/tier4/launch_ros.git
+    version: tier4/foxy
 # calibration
 #  calibration/tunable_static_tf_broadcaster:
 #    type: git
