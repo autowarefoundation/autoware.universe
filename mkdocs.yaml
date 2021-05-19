@@ -1,0 +1,35 @@
+site_name: Autoware Documentation
+repo_url: https://github.com/tier4/autoware.iv
+docs_dir: .
+edit_uri: edit/main/
+theme:
+  name: material
+  feature:
+    tabs: true
+  favicon: images/tier4.png
+  icon:
+    repo: fontawesome/brands/github
+extra:
+  font:
+    text: "Noto Sans JP"
+    code: "Consolas"
+plugins:
+  - same-dir
+  - search
+copyright: "Copyright &copy; 2021 Tier IV, Inc."
+
+markdown_extensions:
+  - codehilite: { guess_lang: false }
+  - fontawesome_markdown
+  - mdx_math
+  - mdx_unimoji
+  - plantuml_markdown: { server: http://www.plantuml.com/plantuml }
+  - pymdownx.arithmatex
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - toc: { permalink: "#" }
+
+extra_css:
+  - "https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css"
+extra_javascript:
+  - http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML
