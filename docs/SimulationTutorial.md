@@ -7,12 +7,12 @@ Autoware provides two types of simulation:
 
 ## How to use a pre-recorded rosbag file for simulation
 
-\* Currently this feature is not available for ROS 2.
+**\* Currently the sample rosbag is not available for ROS 2.**
 
-> Assumes that [installation and setup of AutowareArchitectureProposal](../README.md#installation-steps) has already been completed.
+> Assumes that [installation and setup of Autoware.IV](../README.md#installation-steps) has already been completed.
 
 1. Download the sample pointcloud and vector maps from [here](https://drive.google.com/open?id=197kgRfSomZzaSbRrjWTx614le2qN-oxx), unpack the zip archive and copy the two map files to the same folder.
-2. Download the sample rosbag from [here](https://drive.google.com/open?id=1BFcNjIBUVKwupPByATYczv2X4qZtdAeD).
+2. ~~Download the sample rosbag from here.~~
 
 | Sensor                | Topic name                               |
 | --------------------- | ---------------------------------------- |
@@ -34,17 +34,17 @@ Autoware provides two types of simulation:
 3. Open a terminal and launch Autoware in "rosbag mode".
 
 ```sh
-cd ~/workspace/AutowareArchitectureProposal
+cd ~/workspace/autoware.proj
 source install/setup.bash
-roslaunch autoware_launch logging_simulator.launch map_path:=/path/to/map_folder
+ros2 launch autoware_launch logging_simulator.launch.xml map_path:=/path/to/map_folder vehicle_model:=lexus sensor_model:=aip_xx1 rosbag:=true perception:=false
 ```
 
 4. Open a second terminal and play the sample rosbag file
 
 ```sh
-cd ~/workspace/AutowareArchitectureProposal
+cd ~/workspace/autoware.proj
 source install/setup.bash
-rosbag play --clock -r 0.2 /path/to/sample.bag
+ros2 bag play /path/to/sample.db3 -r 0.2
 ```
 
 ![rosbag_sim](https://user-images.githubusercontent.com/10920881/79726334-9381b000-8325-11ea-9ac6-ebbb29b11f14.png)
@@ -55,13 +55,13 @@ rosbag play --clock -r 0.2 /path/to/sample.bag
 
 ## How to use the Planning Simulator
 
-> Assumes that [installation and setup of AutowareArchitectureProposal](../README.md#installation-steps) has already been completed.
+> Assumes that [installation and setup of Autoware.IV](../README.md#installation-steps) has already been completed.
 
 1. Download the sample pointcloud and vector maps from [here](https://drive.google.com/open?id=197kgRfSomZzaSbRrjWTx614le2qN-oxx), unpack the zip archive and copy the two map files to the same folder.
 2. Launch Autoware with Planning Simulator
 
 ```sh
-cd ~/workspace/AutowareArchitectureProposal
+cd ~/workspace/autoware.proj
 source install/setup.bash
 ros2 launch autoware_launch planning_simulator.launch.xml map_path:=/path/to/map_folder vehicle_model:=lexus sensor_model:=aip_xx1
 ```
@@ -81,7 +81,7 @@ ros2 launch autoware_launch planning_simulator.launch.xml map_path:=/path/to/map
 ![goal](https://user-images.githubusercontent.com/10920881/79816596-8fee3780-83be-11ea-9ee4-caabbef3a385.png)
 
 5. Engage the ego vehicle.
-   - a. Open the [autoware_web_controller](http://localhost:8085/autoware_web_controller/index.html) in a browser.
+   - a. Open the [autoware_web_controller](http://localhost:8085/autoware_web_controller/) in a browser.
    - b. Click the `Engage` button.
 
 ![engage](https://user-images.githubusercontent.com/10920881/79714298-4db7ee00-830b-11ea-9ac4-11e126d7a7c4.png)

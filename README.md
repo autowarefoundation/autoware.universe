@@ -1,12 +1,10 @@
-# Autoware (Architecture Proposal)
+# Autoware.IV
 
 ![autoware](https://user-images.githubusercontent.com/8327598/69472442-cca50b00-0ded-11ea-9da0-9e2302aa1061.png)
 
 A meta-repository for the new Autoware architecture feasibility study created by Tier IV. For more details about the architecture itself, please read this [overview](/design/Overview.md).
 
-> **WARNING**: All source code relating to this meta-repository is intended solely to demonstrate a potential new architecture for Autoware, and should not be used to autonomously drive a real car!
->
-> **NOTE**: Some, but not all of the features within the [AutowareArchitectureProposal.iv repository](https://github.com/tier4/AutowareArchitectureProposal.iv) are planned to be merged into [Autoware.Auto](https://gitlab.com/autowarefoundation/autoware.auto/AutowareAuto) (the reason being that Autoware.Auto has its own scope and ODD which it needs to achieve, and so not all the features in this architecture proposal will be required).
+> **NOTE**: Some, but not all of the features within the [Autoware.IV repository](https://github.com/tier4/autoware.iv) are planned to be merged into [Autoware.Auto](https://gitlab.com/autowarefoundation/autoware.auto/AutowareAuto) (the reason being that Autoware.Auto has its own scope and ODD which it needs to achieve, and so not all the features in Autoware.IV will be required).
 
 # Installation Guide
 
@@ -26,10 +24,11 @@ A meta-repository for the new Autoware architecture feasibility study created by
 
 ### Software
 
- - Ubuntu 20.04
- - NVIDIA driver
+- Ubuntu 20.04
+- NVIDIA driver
 
 ## Review licenses
+
 The following software will be installed during the installation process, so please confirm their licenses first before proceeding.
 
 - [CUDA 11.1](https://docs.nvidia.com/cuda/eula/index.html)
@@ -47,9 +46,8 @@ The following software will be installed during the installation process, so ple
 ```sh
 mkdir -p ~/workspace
 cd ~/workspace
-git clone git@github.com:tier4/AutowareArchitectureProposal.git
-cd AutowareArchitectureProposal
-git checkout ros2
+git clone git@github.com:tier4/autoware.proj.git
+cd autoware.proj
 ```
 
 2. Run the setup script to install CUDA, cuDNN 8, OSQP, ROS 2 and TensorRT 7, entering 'y' when prompted (this step will take around 45 minutes)
@@ -65,7 +63,7 @@ source ~/.bashrc
 colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release --catkin-skip-building-tests
 ```
 
-> Several modules will report stderror output, but these are just warnings and can be safely ignored.
+> Several modules will report stderr output, but these are just warnings and can be safely ignored.
 
 ## Sensor hardware configuration
 
@@ -81,24 +79,24 @@ The following files are provided as samples:
 
 ### Rosbag simulation
 
-\* Currently this feature is not available for ROS 2.
+**\* Currently the sample rosbag is not available for ROS 2**.
 
 1. [Download the sample pointcloud and vector maps](https://drive.google.com/open?id=1ovrJcFS5CZ2H51D8xVWNtEvj_oiXW-zk), unpack the zip archive and copy the two map files to the same folder.
-2. [Download the sample rosbag](https://drive.google.com/open?id=1BFcNjIBUVKwupPByATYczv2X4qZtdAeD).
+2. ~~Download the sample rosbag.~~
 3. Open a terminal and launch Autoware
 
 ```sh
-cd ~/workspace/AutowareArchitectureProposal
+cd ~/workspace/autoware.proj
 source install/setup.bash
-roslaunch autoware_launch logging_simulator.launch map_path:=/path/to/map_folder vehicle_model:=lexus sensor_model:=aip_xx1 rosbag:=true
+ros2 launch autoware_launch logging_simulator.launch.xml map_path:=/path/to/map_folder vehicle_model:=lexus sensor_model:=aip_xx1 rosbag:=true perception:=false
 ```
 
 4. Open a second terminal and play the sample rosbag file
 
 ```sh
-cd ~/workspace/AutowareArchitectureProposal
+cd ~/workspace/autoware.proj
 source install/setup.bash
-rosbag play --clock -r 0.2 /path/to/sample.bag
+ros2 bag play /path/to/sample.db3 -r 0.2
 ```
 
 5. Focus the view on the ego vehicle by changing the `Target Frame` in the RViz Views panel from `viewer` to `base_link`.
@@ -114,7 +112,7 @@ rosbag play --clock -r 0.2 /path/to/sample.bag
 2. Open a terminal and launch Autoware
 
 ```sh
-cd ~/workspace/AutowareArchitectureProposal
+cd ~/workspace/autoware.proj
 source install/setup.bash
 ros2 launch autoware_launch planning_simulator.launch.xml map_path:=/path/to/map_folder vehicle_model:=lexus sensor_model:=aip_xx1
 ```
@@ -126,7 +124,7 @@ ros2 launch autoware_launch planning_simulator.launch.xml map_path:=/path/to/map
    - a) Click the `2D Nav Goal` button in the toolbar, or hit the `G` key
    - b) In the 3D View pane, click and hold the left-mouse button, and then drag to set the direction for the goal pose.
 5. Engage the ego vehicle.
-   - a) Open the [autoware_web_controller](http://localhost:8085/autoware_web_controller/index.html) in a browser.
+   - a) Open the [autoware_web_controller](http://localhost:8085/autoware_web_controller/) in a browser.
    - b) Click the `Engage` button.
 
 #### Note
@@ -137,13 +135,13 @@ ros2 launch autoware_launch planning_simulator.launch.xml map_path:=/path/to/map
 
 Please refer to the [Simulation tutorial](./docs/SimulationTutorial.md) for more details about supported simulations, along with more verbose instructions including screenshots.
 
-## Running the AutowareArchitectureProposal source code with Autoware.Auto
-For anyone who would like to use the features of this architecture proposal with existing [Autoware.Auto](https://gitlab.com/autowarefoundation/autoware.auto/AutowareAuto) modules right now, [ros_bridge](https://github.com/ros2/ros1_bridge) can be used.
-> Until the two architectures become more aligned, message type conversions are required to enable communication between the Autoware.Auto and AutowareArchitectureProposal modules and these will need to be added manually.
+## Running the Autoware.IV source code with Autoware.Auto
+
+For anyone who would like to use the features of Autoware.IV with existing [Autoware.Auto](https://gitlab.com/autowarefoundation/autoware.auto/AutowareAuto) modules right now, [ros_bridge](https://github.com/ros2/ros1_bridge) can be used.
+> Until the two architectures become more aligned, message type conversions are required to enable communication between the Autoware.Auto and Autoware.IV modules and these will need to be added manually.
 
 - To set up Autoware.Auto, please refer to the [Autoware.Auto installation guide](https://autowarefoundation.gitlab.io/autoware.auto/AutowareAuto/installation.html).
 - To set up ros_bridge, please follow the [installation instructions on the ros_bridge GitHub repository](https://github.com/ros2/ros1_bridge#prerequisites).
-
 
 # References
 
