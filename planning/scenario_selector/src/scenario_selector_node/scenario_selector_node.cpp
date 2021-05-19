@@ -36,13 +36,6 @@ void onData(const T & data, T * buffer)
   *buffer = data;
 }
 
-template<class T>
-std::function<void(T)> createCallback(T * buffer)
-{
-  using Func = std::function<void (T)>;
-  return static_cast<Func>(std::bind(&onData<T>, std::placeholders::_1, buffer));
-}
-
 std::shared_ptr<lanelet::ConstPolygon3d> findNearestParkinglot(
   const std::shared_ptr<lanelet::LaneletMap> & lanelet_map_ptr,
   const lanelet::BasicPoint2d & search_point)
@@ -156,12 +149,15 @@ bool isStopped(
 
 }  // namespace
 
-Input ScenarioSelectorNode::getScenarioInput(const std::string & scenario)
+autoware_planning_msgs::msg::Trajectory::ConstSharedPtr
+ScenarioSelectorNode::getScenarioTrajectory(const std::string & scenario)
 {
-  if (scenario == autoware_planning_msgs::msg::Scenario::LANEDRIVING) {return input_lane_driving_;}
-  if (scenario == autoware_planning_msgs::msg::Scenario::PARKING) {return input_parking_;}
+  if (scenario == autoware_planning_msgs::msg::Scenario::LANEDRIVING) {
+    return lane_driving_trajectory_;
+  }
+  if (scenario == autoware_planning_msgs::msg::Scenario::PARKING) {return parking_trajectory_;}
   RCLCPP_ERROR_STREAM(this->get_logger(), "invalid scenario argument: " << scenario);
-  return input_lane_driving_;
+  return lane_driving_trajectory_;
 }
 
 std::string ScenarioSelectorNode::selectScenarioByPosition()
@@ -196,12 +192,11 @@ std::string ScenarioSelectorNode::selectScenarioByPosition()
   return current_scenario_;
 }
 
-autoware_planning_msgs::msg::Scenario ScenarioSelectorNode::selectScenario()
+void ScenarioSelectorNode::updateCurrentScenario()
 {
   const auto prev_scenario = current_scenario_;
 
-  const auto scenario_trajectory = getScenarioInput(current_scenario_).buf_trajectory;
-
+  const auto scenario_trajectory = getScenarioTrajectory(current_scenario_);
   const auto is_near_trajectory_end =
     isNearTrajectoryEnd(scenario_trajectory, current_pose_->pose, th_arrived_distance_m_);
 
@@ -211,19 +206,10 @@ autoware_planning_msgs::msg::Scenario ScenarioSelectorNode::selectScenario()
     current_scenario_ = selectScenarioByPosition();
   }
 
-  autoware_planning_msgs::msg::Scenario scenario;
-  scenario.current_scenario = current_scenario_;
-
-  if (current_scenario_ == autoware_planning_msgs::msg::Scenario::PARKING) {
-    scenario.activating_scenarios.push_back(current_scenario_);
-  }
-
   if (current_scenario_ != prev_scenario) {
     RCLCPP_INFO_STREAM(
       this->get_logger(), "scenario changed: " << prev_scenario << " -> " << current_scenario_);
   }
-
-  return scenario;
 }
 
 void ScenarioSelectorNode::onMap(const autoware_lanelet2_msgs::msg::MapBin::ConstSharedPtr msg)
@@ -272,21 +258,49 @@ void ScenarioSelectorNode::onTimer()
     current_scenario_ = selectScenarioByPosition();
   }
 
-  // Select scenario
-  const auto scenario = selectScenario();
-  output_.pub_scenario->publish(scenario);
+  updateCurrentScenario();
+  autoware_planning_msgs::msg::Scenario scenario;
+  scenario.current_scenario = current_scenario_;
 
-  const auto & input = getScenarioInput(scenario.current_scenario);
+  if (current_scenario_ == autoware_planning_msgs::msg::Scenario::PARKING) {
+    scenario.activating_scenarios.push_back(current_scenario_);
+  }
 
-  if (!input.buf_trajectory) {
+  pub_scenario_->publish(scenario);
+}
+
+
+void ScenarioSelectorNode::onLaneDrivingTrajectory(
+  const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr msg)
+{
+  lane_driving_trajectory_ = msg;
+
+  if (current_scenario_ != autoware_planning_msgs::msg::Scenario::LANEDRIVING) {
     return;
   }
 
-  // Output
+  publishTrajectory(msg);
+}
+
+void ScenarioSelectorNode::onParkingTrajectory(
+  const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr msg)
+{
+  parking_trajectory_ = msg;
+
+  if (current_scenario_ != autoware_planning_msgs::msg::Scenario::PARKING) {
+    return;
+  }
+
+  publishTrajectory(msg);
+}
+
+void ScenarioSelectorNode::publishTrajectory(
+  const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr msg)
+{
   const auto now = this->now();
-  const auto delay_sec = (now - input.buf_trajectory->header.stamp).seconds();
+  const auto delay_sec = (now - msg->header.stamp).seconds();
   if (delay_sec <= th_max_message_delay_sec_) {
-    output_.pub_trajectory->publish(*input.buf_trajectory);
+    pub_trajectory_->publish(*msg);
   } else {
     RCLCPP_WARN_THROTTLE(
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
@@ -307,19 +321,18 @@ ScenarioSelectorNode::ScenarioSelectorNode(const rclcpp::NodeOptions & node_opti
   th_stopped_velocity_mps_(this->declare_parameter<double>("th_stopped_velocity_mps", 0.01))
 {
   // Parameters
-
   this->declare_parameter<bool>("is_parking_completed", false);
 
   // Input
-  input_lane_driving_.sub_trajectory =
+  sub_lane_driving_trajectory_ =
     this->create_subscription<autoware_planning_msgs::msg::Trajectory>(
     "input/lane_driving/trajectory", rclcpp::QoS{1},
-    createCallback<autoware_planning_msgs::msg::Trajectory::ConstSharedPtr>(
-      &input_lane_driving_.buf_trajectory));
+    std::bind(&ScenarioSelectorNode::onLaneDrivingTrajectory, this, std::placeholders::_1));
 
-  input_parking_.sub_trajectory =
+  sub_parking_trajectory_ =
     this->create_subscription<autoware_planning_msgs::msg::Trajectory>(
-    "input/parking/trajectory", rclcpp::QoS{1}, createCallback(&input_parking_.buf_trajectory));
+    "input/parking/trajectory", rclcpp::QoS{1},
+    std::bind(&ScenarioSelectorNode::onParkingTrajectory, this, std::placeholders::_1));
 
   sub_lanelet_map_ = this->create_subscription<autoware_lanelet2_msgs::msg::MapBin>(
     "input/lanelet_map", rclcpp::QoS{1}.transient_local(),
@@ -332,9 +345,9 @@ ScenarioSelectorNode::ScenarioSelectorNode(const rclcpp::NodeOptions & node_opti
     std::bind(&ScenarioSelectorNode::onTwist, this, std::placeholders::_1));
 
   // Output
-  output_.pub_scenario = this->create_publisher<autoware_planning_msgs::msg::Scenario>(
+  pub_scenario_ = this->create_publisher<autoware_planning_msgs::msg::Scenario>(
     "output/scenario", rclcpp::QoS{1});
-  output_.pub_trajectory = this->create_publisher<autoware_planning_msgs::msg::Trajectory>(
+  pub_trajectory_ = this->create_publisher<autoware_planning_msgs::msg::Trajectory>(
     "output/trajectory", rclcpp::QoS{1});
 
   // Timer Callback

@@ -32,18 +32,6 @@
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
 
-struct Input
-{
-  rclcpp::Subscription<autoware_planning_msgs::msg::Trajectory>::SharedPtr sub_trajectory;
-  autoware_planning_msgs::msg::Trajectory::ConstSharedPtr buf_trajectory;
-};
-
-struct Output
-{
-  rclcpp::Publisher<autoware_planning_msgs::msg::Scenario>::SharedPtr pub_scenario;
-  rclcpp::Publisher<autoware_planning_msgs::msg::Trajectory>::SharedPtr pub_trajectory;
-};
-
 class ScenarioSelectorNode : public rclcpp::Node
 {
 public:
@@ -54,10 +42,14 @@ public:
   void onTwist(const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg);
 
   void onTimer();
+  void onLaneDrivingTrajectory(const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr msg);
+  void onParkingTrajectory(const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr msg);
+  void publishTrajectory(const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr msg);
 
-  autoware_planning_msgs::msg::Scenario selectScenario();
+  void updateCurrentScenario();
   std::string selectScenarioByPosition();
-  Input getScenarioInput(const std::string & scenario);
+  autoware_planning_msgs::msg::Trajectory::ConstSharedPtr
+  getScenarioTrajectory(const std::string & scenario);
 
 private:
   rclcpp::TimerBase::SharedPtr timer_;
@@ -68,12 +60,15 @@ private:
   rclcpp::Subscription<autoware_lanelet2_msgs::msg::MapBin>::SharedPtr sub_lanelet_map_;
   rclcpp::Subscription<autoware_planning_msgs::msg::Route>::SharedPtr sub_route_;
   rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr sub_twist_;
+  rclcpp::Subscription<autoware_planning_msgs::msg::Trajectory>::SharedPtr
+    sub_lane_driving_trajectory_;
+  rclcpp::Subscription<autoware_planning_msgs::msg::Trajectory>::SharedPtr
+    sub_parking_trajectory_;
+  rclcpp::Publisher<autoware_planning_msgs::msg::Trajectory>::SharedPtr pub_trajectory_;
+  rclcpp::Publisher<autoware_planning_msgs::msg::Scenario>::SharedPtr pub_scenario_;
 
-  Input input_lane_driving_;
-  Input input_parking_;
-
-  Output output_;
-
+  autoware_planning_msgs::msg::Trajectory::ConstSharedPtr lane_driving_trajectory_;
+  autoware_planning_msgs::msg::Trajectory::ConstSharedPtr parking_trajectory_;
   autoware_planning_msgs::msg::Route::ConstSharedPtr route_;
   geometry_msgs::msg::PoseStamped::ConstSharedPtr current_pose_;
   geometry_msgs::msg::TwistStamped::ConstSharedPtr twist_;
