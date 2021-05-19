@@ -53,8 +53,8 @@ repositories:
     version: f08cd28b357f9feede55f1fb485cb21964f5d594
   vendor/grid_map:
     type: git
-    url: https://github.com/ANYbotics/grid_map.git
-    version: ros2
+    url: https://github.com/tier4/grid_map.git
+    version: tier4/foxy
   vendor/perception_pcl:
     type: git
     url: https://github.com/ros-perception/perception_pcl.git
@@ -118,6 +118,11 @@ repositories:
   vendor/operational-design-domains:
     type: git
     url: https://gitlab.com/autowarefoundation/operational-design-domains
+    version: master
+  vendor/rosbag2:
+    type: git
+    url: https://github.com/tier4/rosbag2
+    version: tier4/main
 # calibration
 #  calibration/tunable_static_tf_broadcaster:
 #    type: git
