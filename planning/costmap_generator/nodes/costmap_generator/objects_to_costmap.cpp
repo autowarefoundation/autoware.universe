@@ -115,8 +115,8 @@ geometry_msgs::msg::Point ObjectsToCostmap::makeExpandedPoint(
   double theta = std::atan2(in_corner_point.y - in_centroid.y, in_corner_point.x - in_centroid.x);
   double delta_x = expand_polygon_size * std::cos(theta);
   double delta_y = expand_polygon_size * std::sin(theta);
-  expanded_point.x = in_corner_point.x + delta_x;
-  expanded_point.y = in_corner_point.y + delta_y;
+  expanded_point.x = in_centroid.x + in_corner_point.x + delta_x;
+  expanded_point.y = in_centroid.y + in_corner_point.y + delta_y;
 
   return expanded_point;
 }
@@ -146,7 +146,6 @@ void ObjectsToCostmap::setCostInPolygon(
   const grid_map::Polygon & polygon, const std::string & gridmap_layer_name, const float score,
   grid_map::GridMap & objects_costmap)
 {
-  grid_map::PolygonIterator iterators(objects_costmap, polygon);
   for (grid_map::PolygonIterator itr(objects_costmap, polygon); !itr.isPastEnd(); ++itr) {
     const float current_score = objects_costmap.at(gridmap_layer_name, *itr);
     if (score > current_score) {

@@ -53,6 +53,9 @@
 #include "lanelet2_extension/utility/query.hpp"
 #include "lanelet2_extension/utility/utilities.hpp"
 #include "lanelet2_extension/visualization/visualization.hpp"
+#include "pcl_ros/transforms.hpp"
+#include "tf2/utils.h"
+#include "tf2_eigen/tf2_eigen.h"
 
 #include "costmap_generator/object_map_utils.hpp"
 
@@ -89,6 +92,21 @@ std::vector<geometry_msgs::msg::Point> poly2vector(const geometry_msgs::msg::Pol
   return ps;
 }
 
+pcl::PointCloud<pcl::PointXYZ> getTransformedPointCloud(
+  const sensor_msgs::msg::PointCloud2 & pointcloud_msg,
+  const geometry_msgs::msg::Transform & transform)
+{
+  const Eigen::Matrix4f transform_matrix = tf2::transformToEigen(transform).matrix().cast<float>();
+
+  sensor_msgs::msg::PointCloud2 transformed_msg;
+  pcl_ros::transformPointCloud(transform_matrix, pointcloud_msg, transformed_msg);
+
+  pcl::PointCloud<pcl::PointXYZ> transformed_pointcloud;
+  pcl::fromROSMsg(transformed_msg, transformed_pointcloud);
+
+  return transformed_pointcloud;
+}
+
 }  // namespace
 
 CostmapGenerator::CostmapGenerator(const rclcpp::NodeOptions & node_options)
@@ -120,7 +138,7 @@ CostmapGenerator::CostmapGenerator(const rclcpp::NodeOptions & node_options)
     try {
       tf_buffer_.lookupTransform("map", "base_link", tf2::TimePointZero);
       break;
-    } catch (tf2::TransformException & ex) {
+    } catch (const tf2::TransformException & ex) {
       RCLCPP_INFO(this->get_logger(), "waiting for initial pose...");
     }
     rclcpp::sleep_for(std::chrono::milliseconds(5000));
@@ -238,7 +256,7 @@ void CostmapGenerator::onTimer()
     tf = tf_buffer_.lookupTransform(
       costmap_frame_, vehicle_frame_, rclcpp::Time(0), rclcpp::Duration::from_seconds(1.0));
   } catch (tf2::TransformException & ex) {
-    RCLCPP_ERROR(rclcpp::get_logger("Exception: "), "%s", ex.what());
+    RCLCPP_ERROR(this->get_logger(), "%s", ex.what());
     return;
   }
 
@@ -257,9 +275,7 @@ void CostmapGenerator::onTimer()
   }
 
   if (use_points_ && points_) {
-    pcl::PointCloud<pcl::PointXYZ>::Ptr points(new pcl::PointCloud<pcl::PointXYZ>);
-    pcl::fromROSMsg(*points_, *points);
-    costmap_[LayerName::points] = generatePointsCostmap(points);
+    costmap_[LayerName::points] = generatePointsCostmap(points_);
   }
 
   costmap_[LayerName::combined] = generateCombinedCostmap();
@@ -281,11 +297,22 @@ void CostmapGenerator::initGridmap()
 }
 
 grid_map::Matrix CostmapGenerator::generatePointsCostmap(
-  const pcl::PointCloud<pcl::PointXYZ>::Ptr & in_points)
+  const sensor_msgs::msg::PointCloud2::ConstSharedPtr & in_points)
 {
+  geometry_msgs::msg::TransformStamped points2costmap;
+  try {
+    points2costmap = tf_buffer_.lookupTransform(
+      costmap_frame_, in_points->header.frame_id, tf2::TimePointZero);
+  } catch (const tf2::TransformException & ex) {
+    RCLCPP_ERROR(rclcpp::get_logger("costmap_generator"), "%s", ex.what());
+  }
+
+  const auto transformed_points = getTransformedPointCloud(*in_points, points2costmap.transform);
+
   grid_map::Matrix points_costmap = points2costmap_.makeCostmapFromPoints(
     maximum_lidar_height_thres_, minimum_lidar_height_thres_, grid_min_value_, grid_max_value_,
-    costmap_, LayerName::points, in_points);
+    costmap_, LayerName::points, transformed_points);
+
   return points_costmap;
 }
 
@@ -301,9 +328,9 @@ autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr transformObjec
   geometry_msgs::msg::TransformStamped objects2costmap;
   try {
     objects2costmap = tf_buffer.lookupTransform(
-      target_frame_id, src_frame_id, rclcpp::Time(0), rclcpp::Duration::from_seconds(1.0));
-  } catch (tf2::TransformException & ex) {
-    RCLCPP_ERROR(rclcpp::get_logger("Exception: "), "%s", ex.what());
+      target_frame_id, src_frame_id, tf2::TimePointZero);
+  } catch (const tf2::TransformException & ex) {
+    RCLCPP_ERROR(rclcpp::get_logger("costmap_generator"), "%s", ex.what());
   }
 
   for (auto & object : objects->objects) {
