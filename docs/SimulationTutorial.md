@@ -7,12 +7,12 @@ Autoware provides two types of simulation:
 
 ## How to use a pre-recorded rosbag file for simulation
 
-**\* Currently the sample rosbag is not available for ROS 2.**
-
 > Assumes that [installation and setup of Autoware.IV](../README.md#installation-steps) has already been completed.
 
 1. Download the sample pointcloud and vector maps from [here](https://drive.google.com/open?id=197kgRfSomZzaSbRrjWTx614le2qN-oxx), unpack the zip archive and copy the two map files to the same folder.
-2. ~~Download the sample rosbag from here.~~
+2. Download the sample rosbag files and put them into the same folder, e.g., `~/rosbag2/sample/`.
+   - db3 https://drive.google.com/file/d/1wLWyOlfH_-k4VYBgae1KAFlKdwJnH_si/view?usp=sharing
+   - yaml https://drive.google.com/file/d/1Arb-QVnNHM-BFdB_icm7J7fWkyuZt7mZ/view?usp=sharing
 
 | Sensor                | Topic name                               |
 | --------------------- | ---------------------------------------- |
@@ -44,7 +44,7 @@ ros2 launch autoware_launch logging_simulator.launch.xml map_path:=/path/to/map_
 ```sh
 cd ~/workspace/autoware.proj
 source install/setup.bash
-ros2 bag play /path/to/sample.db3 -r 0.2
+ros2 bag play /path/to/sample.625-2.bag2_0.db3 -r 0.2
 ```
 
 ![rosbag_sim](https://user-images.githubusercontent.com/10920881/79726334-9381b000-8325-11ea-9ac6-ebbb29b11f14.png)
