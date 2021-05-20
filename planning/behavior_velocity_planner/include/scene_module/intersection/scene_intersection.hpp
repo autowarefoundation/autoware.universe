@@ -76,9 +76,11 @@ private:
 
   struct DebugData
   {
+    bool stop_required;
     autoware_planning_msgs::msg::PathWithLaneId path_raw;
 
-    geometry_msgs::msg::Pose virtual_wall_pose;
+    geometry_msgs::msg::Pose slow_wall_pose;
+    geometry_msgs::msg::Pose stop_wall_pose;
     geometry_msgs::msg::Pose stop_point_pose;
     geometry_msgs::msg::Pose judge_point_pose;
     geometry_msgs::msg::Polygon ego_lane_polygon;
