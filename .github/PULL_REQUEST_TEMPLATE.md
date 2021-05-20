@@ -12,7 +12,7 @@
 
 ## Description
 
-<!-- Describe what this PR changes? -->
+<!-- Describe what this PR changes. -->
 
 ## Review Procedure
 
@@ -20,7 +20,7 @@
 
 ## Remarks
 
-<!-- Write remarks as you like if you need. -->
+<!-- Write remarks as you like if you need them. -->
 
 ## Pre-Review Checklist for the PR Author
 
@@ -34,7 +34,7 @@
 - [ ] (Optional) Unit tests have been written for new behavior
 - [ ] PR title describes the changes
 
-## Post-review Checklist for the PR Author
+## Post-Review Checklist for the PR Author
 
 - [ ] All open points are addressed and tracked via issues or tickets
 - [ ] Write [release notes][release-notes]
