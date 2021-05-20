@@ -277,7 +277,7 @@ bool generateStopLine(
 
   /* generate stop point */
   // If a stop_line is defined in lanelet_map, use it.
-  // else, generates a local stop_line with considering the lane conflictions.
+  // else, generates a local stop_line with considering the lane conflicts.
   int first_idx_ip_inside_lane;  // first stop point index for interpolated path.
   int stop_idx_ip;               // stop point index for interpolated path.
   geometry_msgs::msg::Point stop_point_from_map;
@@ -371,7 +371,8 @@ bool getStopPoseFromMap(
 bool getObjectivePolygons(
   lanelet::LaneletMapConstPtr lanelet_map_ptr, lanelet::routing::RoutingGraphPtr routing_graph_ptr,
   const int lane_id, const IntersectionModule::PlannerParam & planner_param,
-  std::vector<lanelet::CompoundPolygon3d> * polygons, const rclcpp::Logger logger)
+  std::vector<lanelet::CompoundPolygon3d> * conflicting_polygons,
+  std::vector<lanelet::CompoundPolygon3d> * objective_polygons, const rclcpp::Logger logger)
 {
   const auto & assigned_lanelet = lanelet_map_ptr->laneletLayer.get(lane_id);
 
@@ -409,6 +410,8 @@ bool getObjectivePolygons(
   const auto & conflicting_lanelets =
     lanelet::utils::getConflictingLanelets(routing_graph_ptr, assigned_lanelet);
 
+  lanelet::ConstLanelets
+    conflicting_lanelets_ex_yield_ego;  // conflicting lanes with "lane_id" excluding ego lanes and yield lanes
   lanelet::ConstLanelets objective_lanelets;  // final objective lanelets
 
   // exclude yield lanelets and ego lanelets from objective_lanelets
@@ -419,6 +422,7 @@ bool getObjectivePolygons(
     if (lanelet::utils::contains(ego_lanelets, conflicting_lanelet)) {
       continue;
     }
+    conflicting_lanelets_ex_yield_ego.push_back(conflicting_lanelet);
     objective_lanelets.push_back(conflicting_lanelet);
   }
 
@@ -435,13 +439,20 @@ bool getObjectivePolygons(
     }
   }
 
+  // get exact polygon of conflicting lanes
+  conflicting_polygons->clear();
+  const double path_length = lanelet::utils::getLaneletLength3d(conflicting_lanelets_ex_yield_ego);
+  const auto polygon3d = lanelet::utils::getPolygonFromArcLength(
+    conflicting_lanelets_ex_yield_ego, path_length - length, path_length);
+  conflicting_polygons->push_back(polygon3d);
+
   // get exact polygon of interest with exact length
-  polygons->clear();
+  objective_polygons->clear();
   for (const auto & ll : objective_lanelets_sequences) {
     const double path_length = lanelet::utils::getLaneletLength3d(ll);
     const auto polygon3d =
       lanelet::utils::getPolygonFromArcLength(ll, path_length - length, path_length);
-    polygons->push_back(polygon3d);
+    objective_polygons->push_back(polygon3d);
   }
 
   std::stringstream ss_c, ss_y, ss_e, ss_o, ss_os;

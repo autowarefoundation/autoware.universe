@@ -71,10 +71,13 @@ bool IntersectionModule::modifyPathVelocity(
   const auto lanelet_map_ptr = planner_data_->lanelet_map;
   const auto routing_graph_ptr = planner_data_->routing_graph;
 
-  /* get detection area */
+  /* get detection area and conflicting area */
   std::vector<lanelet::CompoundPolygon3d> detection_areas;
+  std::vector<lanelet::CompoundPolygon3d> conflicting_areas;
+
   util::getObjectivePolygons(
-    lanelet_map_ptr, routing_graph_ptr, lane_id_, planner_param_, &detection_areas, logger_);
+    lanelet_map_ptr, routing_graph_ptr, lane_id_, planner_param_, &conflicting_areas,
+    &detection_areas, logger_);
   if (detection_areas.empty()) {
     RCLCPP_DEBUG(logger_, "no detection area. skip computation.");
     return true;
@@ -87,7 +90,7 @@ bool IntersectionModule::modifyPathVelocity(
   int first_idx_inside_lane = -1;
   const auto target_path = trimPathWithLaneId(*path);
   if (!util::generateStopLine(
-      lane_id_, detection_areas, planner_data_, planner_param_, path, target_path, &stop_line_idx,
+      lane_id_, conflicting_areas, planner_data_, planner_param_, path, target_path, &stop_line_idx,
       &pass_judge_line_idx, &first_idx_inside_lane, logger_.get_child("util")))
   {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(logger_, *clock_, 1000 /* ms */, "setStopLineIdx fail");

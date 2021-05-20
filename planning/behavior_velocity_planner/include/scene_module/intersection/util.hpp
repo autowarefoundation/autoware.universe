@@ -55,7 +55,8 @@ bool hasDuplicatedPoint(
 bool getObjectivePolygons(
   lanelet::LaneletMapConstPtr lanelet_map_ptr, lanelet::routing::RoutingGraphPtr routing_graph_ptr,
   const int lane_id, const IntersectionModule::PlannerParam & planner_param,
-  std::vector<lanelet::CompoundPolygon3d> * polygons, const rclcpp::Logger logger);
+  std::vector<lanelet::CompoundPolygon3d> * conflicting_polygons,
+  std::vector<lanelet::CompoundPolygon3d> * objective_polygons, const rclcpp::Logger logger);
 
 /**
    * @brief Generate a stop line and insert it into the path. If the stop line is defined in the map,
