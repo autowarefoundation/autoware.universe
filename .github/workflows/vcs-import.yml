@@ -1,0 +1,48 @@
+name: vcs import
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "autoware.proj.repos"
+  workflow_dispatch:
+
+jobs:
+  vcs-import:
+    runs-on: ubuntu-latest
+    container: osrf/ros:foxy-desktop
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install pip
+        run: |
+          apt-get -y update
+          apt-get -y install python3-pip
+
+      - name: Install tools
+        run: |
+          apt-get -y update
+          apt-get -y install curl git
+
+      - name: Fix autoware.proj.repos for private repositories
+        run: |
+          sed -i -e "s|git@github.com:|https://github.com/|g" autoware.proj.repos
+
+      - name: Set git config for private repositories
+        run: |
+          git config --local --unset-all http.https://github.com/.extraheader || true
+          git config --global url.https://${{ secrets.REPO_TOKEN }}@github.com.insteadof 'https://github.com'
+
+      - name: Run vcs import
+        run: |
+          mkdir src
+          vcs import src < autoware.proj.repos
+
+      - name: Run rosdep install
+        run: |
+          apt-get -y update
+          rosdep update
+          rosdep install -y --from-paths . --ignore-src --rosdistro foxy

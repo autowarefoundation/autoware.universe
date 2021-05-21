@@ -12,9 +12,11 @@ done
 SCRIPT_DIR=$(cd $(dirname $0); pwd)
 
 # Prevent root execution
-if [ $(id -u) -eq 0 ]; then
-  echo "Do not run setup as root!" >&2
-  exit 1
+if [ $noninteractive -eq 0 ]; then
+  if [ $(id -u) -eq 0 ]; then
+    echo "Do not run setup as root!" >&2
+    exit 1
+  fi
 fi
 
 if [ $noninteractive -eq 1 ]; then
@@ -44,9 +46,17 @@ case $answer in
     else
       ansible-playbook -i localhost, $SCRIPT_DIR/ansible/localhost-setup-ubuntu20.04-devpc.yml -i $SCRIPT_DIR/inventories/local-dev.ini -e AUTOWARE_DIR=$SCRIPT_DIR --ask-become-pass
     fi
-    echo -e "\e[32mComplete \e[0m"
+
+    if [ "$?" = "0" ]; then
+      echo -e "\e[32mComplete \e[0m"
+      exit 0
+    else
+      echo -e "\e[31mFailed \e[0m"
+      exit 1
+    fi
     ;;
   * )
     echo -e "\e[33mCancelled \e[0m"
+    exit 1
     ;;
 esac
