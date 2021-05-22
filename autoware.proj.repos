@@ -127,6 +127,10 @@ repositories:
     type: git
     url: https://github.com/tier4/launch_ros.git
     version: tier4/foxy
+  vendor/ndt_omp:
+    type: git
+    url: https://github.com/tier4/ndt_omp.git
+    version: tier4/main
 # calibration
 #  calibration/tunable_static_tf_broadcaster:
 #    type: git
