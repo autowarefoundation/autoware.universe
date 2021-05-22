@@ -17,7 +17,7 @@
 
 #include "ndt/base.hpp"
 
-#include "ndt_omp/ndt_omp.hpp"
+#include "pclomp/ndt_omp.h"
 #include "pcl/io/io.h"
 #include "pcl/io/pcd_io.h"
 #include "pcl/point_types.h"
@@ -57,13 +57,13 @@ public:
 
   // only OMP Impl
   void setNumThreads(int n);
-  void setNeighborhoodSearchMethod(ndt_omp::NeighborSearchMethod method);
+  void setNeighborhoodSearchMethod(pclomp::NeighborSearchMethod method);
 
   int getNumThreads() const;
-  ndt_omp::NeighborSearchMethod getNeighborhoodSearchMethod() const;
+  pclomp::NeighborSearchMethod getNeighborhoodSearchMethod() const;
 
 private:
-  boost::shared_ptr<ndt_omp::NormalDistributionsTransform<PointSource, PointTarget>> ndt_ptr_;
+  boost::shared_ptr<pclomp::NormalDistributionsTransform<PointSource, PointTarget>> ndt_ptr_;
 };
 
 #include "ndt/impl/omp.hpp"

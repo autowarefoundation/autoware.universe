@@ -19,7 +19,7 @@
 
 template<class PointSource, class PointTarget>
 NormalDistributionsTransformOMP<PointSource, PointTarget>::NormalDistributionsTransformOMP()
-: ndt_ptr_(new ndt_omp::NormalDistributionsTransform<PointSource, PointTarget>)
+: ndt_ptr_(new pclomp::NormalDistributionsTransform<PointSource, PointTarget>)
 {
 }
 
@@ -163,7 +163,7 @@ void NormalDistributionsTransformOMP<PointSource, PointTarget>::setNumThreads(in
 
 template<class PointSource, class PointTarget>
 void NormalDistributionsTransformOMP<PointSource, PointTarget>::setNeighborhoodSearchMethod(
-  ndt_omp::NeighborSearchMethod method)
+  pclomp::NeighborSearchMethod method)
 {
   ndt_ptr_->setNeighborhoodSearchMethod(method);
 }
@@ -175,7 +175,7 @@ int NormalDistributionsTransformOMP<PointSource, PointTarget>::getNumThreads() c
 }
 
 template<class PointSource, class PointTarget>
-ndt_omp::NeighborSearchMethod
+pclomp::NeighborSearchMethod
 NormalDistributionsTransformOMP<PointSource, PointTarget>::getNeighborhoodSearchMethod() const
 {
   return ndt_ptr_->getNeighborhoodSearchMethod();

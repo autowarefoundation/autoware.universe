@@ -58,7 +58,7 @@ NDTScanMatcher::NDTScanMatcher()
 
     int search_method = static_cast<int>(omp_params_.search_method);
     search_method = this->declare_parameter("omp_neighborhood_search_method", search_method);
-    omp_params_.search_method = static_cast<ndt_omp::NeighborSearchMethod>(search_method);
+    omp_params_.search_method = static_cast<pclomp::NeighborSearchMethod>(search_method);
     // TODO check search_method is valid value.
     ndt_omp_ptr->setNeighborhoodSearchMethod(omp_params_.search_method);
 
