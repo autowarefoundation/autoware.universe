@@ -62,3 +62,10 @@
                   contains: [": remote_control_topic_status"]
                   timeout: 1.0
                   num_items: 0
+
+                joy_controller_connection:
+                  type: diagnostic_aggregator/GenericAnalyzer
+                  path: joy_controller_connection
+                  contains: [": joy_controller_connection"]
+                  timeout: 1.0
+                  num_items: 0
