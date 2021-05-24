@@ -12,16 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+
 from ament_index_python.packages import get_package_share_directory
 import launch
-from launch.actions import DeclareLaunchArgument, SetLaunchConfiguration, ExecuteProcess
-from launch.conditions import IfCondition, UnlessCondition
+from launch.actions import DeclareLaunchArgument
+from launch.actions import ExecuteProcess
+from launch.actions import SetLaunchConfiguration
+from launch.conditions import IfCondition
+from launch.conditions import UnlessCondition
 from launch.substitutions import LaunchConfiguration
-
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
-
-import os
 import yaml
 
 
@@ -65,11 +67,11 @@ def generate_launch_description():
         parameters=[
             lane_change_planner_param,
             {
-                "enable_abort_lane_change": False,
-                "enable_collision_check_at_prepare_phase": False,
-                "use_predicted_path_outside_lanelet": False,
-                "use_all_predicted_path": False,
-                "enable_blocked_by_obstacle": False,
+                'enable_abort_lane_change': False,
+                'enable_collision_check_at_prepare_phase': False,
+                'use_predicted_path_outside_lanelet': False,
+                'use_all_predicted_path': False,
+                'enable_blocked_by_obstacle': False,
             }
         ],
         extra_arguments=[

@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 import launch
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
@@ -63,6 +64,6 @@ def generate_launch_description():
         ],
     )
     return launch.LaunchDescription([
-        DeclareLaunchArgument("use_intra_process", default_value='false'),
+        DeclareLaunchArgument('use_intra_process', default_value='false'),
         container
     ])
