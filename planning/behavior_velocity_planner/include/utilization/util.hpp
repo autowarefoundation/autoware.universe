@@ -105,7 +105,13 @@ geometry_msgs::msg::Pose transformAbsCoordinate2D(
 double calcJudgeLineDist(
   const double velocity, const double max_stop_acceleration, const double delay_response_time);
 
+double calcJudgeLineDistWithJerkLimit(
+  const double velocity, const double acceleration,
+  const double max_stop_acceleration, const double max_stop_jerk,
+  const double delay_response_time);
+
 autoware_planning_msgs::msg::StopReason initializeStopReason(const std::string & stop_reason);
+
 void appendStopReason(
   const autoware_planning_msgs::msg::StopFactor stop_factor,
   autoware_planning_msgs::msg::StopReason * stop_reason);

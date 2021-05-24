@@ -434,8 +434,8 @@ bool DetectionAreaModule::hasEnoughBrakingDistance(
 {
   // get vehicle info and compute pass_judge_line_distance
   const auto current_velocity = planner_data_->current_velocity->twist.linear.x;
-  const double max_acc = planner_data_->max_stop_acceleration_threshold_;
-  const double delay_response_time = planner_data_->delay_response_time_;
+  const double max_acc = planner_data_->max_stop_acceleration_threshold;
+  const double delay_response_time = planner_data_->delay_response_time;
   const double pass_judge_line_distance =
     planning_utils::calcJudgeLineDist(current_velocity, max_acc, delay_response_time);
 

@@ -114,6 +114,7 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   // Parameters
   forward_path_length_ = this->declare_parameter("forward_path_length", 1000.0);
   backward_path_length_ = this->declare_parameter("backward_path_length", 5.0);
+  planner_data_.accel_lowpass_gain = this->declare_parameter("lowpass_gain", 0.5);
 
   // Initialize PlannerManager
   if (this->declare_parameter("launch_stop_line", true)) {
@@ -194,6 +195,7 @@ void BehaviorVelocityPlannerNode::onVehicleVelocity(
   const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg)
 {
   planner_data_.current_velocity = msg;
+  planner_data_.updateCurrentAcc();
 }
 
 void BehaviorVelocityPlannerNode::onLaneletMap(
@@ -235,7 +237,7 @@ void BehaviorVelocityPlannerNode::onTrafficLightStates(
     autoware_perception_msgs::msg::TrafficLightStateStamped traffic_light_state;
     traffic_light_state.header = msg->header;
     traffic_light_state.state = state;
-    planner_data_.traffic_light_id_map_[state.id] = traffic_light_state;
+    planner_data_.traffic_light_id_map[state.id] = traffic_light_state;
   }
 }
 
@@ -258,7 +260,7 @@ void BehaviorVelocityPlannerNode::onExternalTrafficLightStates(
     autoware_perception_msgs::msg::TrafficLightStateStamped traffic_light_state;
     traffic_light_state.header = msg->header;
     traffic_light_state.state = state;
-    planner_data_.external_traffic_light_id_map_[state.id] = traffic_light_state;
+    planner_data_.external_traffic_light_id_map[state.id] = traffic_light_state;
   }
 }
 
