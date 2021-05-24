@@ -21,6 +21,6 @@
     <arg name="ndt_align_server_name" value="/localization/pose_estimator/ndt_align_srv" />
   </include>
 
-  <include file="$(find-pkg-share localization_launch)/launch/util/util.launch.py"  />
+  <include file="$(find-pkg-share localization_launch)/launch/util/util.launch.py" />
 
 </launch>
