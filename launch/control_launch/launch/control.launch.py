@@ -13,15 +13,19 @@
 # limitations under the License.
 
 import launch
-from launch.actions import DeclareLaunchArgument, GroupAction,\
-    OpaqueFunction, SetLaunchConfiguration
-from launch.conditions import IfCondition, LaunchConfigurationEquals, UnlessCondition
+from launch.actions import DeclareLaunchArgument
+from launch.actions import GroupAction
+from launch.actions import OpaqueFunction
+from launch.actions import SetLaunchConfiguration
+from launch.conditions import IfCondition
+from launch.conditions import LaunchConfigurationEquals
+from launch.conditions import UnlessCondition
 from launch.substitutions import LaunchConfiguration
-
-from launch_ros.actions import ComposableNodeContainer, LoadComposableNodes, PushRosNamespace
+from launch_ros.actions import ComposableNodeContainer
+from launch_ros.actions import LoadComposableNodes
+from launch_ros.actions import PushRosNamespace
 from launch_ros.descriptions import ComposableNode
 from launch_ros.substitutions import FindPackageShare
-
 import yaml
 
 
@@ -388,10 +392,12 @@ def generate_launch_description():
         condition=IfCondition(LaunchConfiguration('use_multithread'))
     )
     return launch.LaunchDescription(
-            launch_arguments +
-            [set_container_executable,
-            set_container_mt_executable] +
-            [
-                OpaqueFunction(function=launch_setup)
-            ]
+        launch_arguments +
+        [
+            set_container_executable,
+            set_container_mt_executable,
+        ] +
+        [
+            OpaqueFunction(function=launch_setup)
+        ]
     )
