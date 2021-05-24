@@ -41,7 +41,7 @@ private:
     const autoware_planning_msgs::msg::PathWithLaneId & path) override;
 
   // Debug
-  rclcpp::Publisher<autoware_perception_msgs::msg::TrafficLightStateStamped>::SharedPtr
+  rclcpp::Publisher<autoware_perception_msgs::msg::LookingTrafficLightState>::SharedPtr
     pub_tl_state_;
 };
 #endif  // SCENE_MODULE__TRAFFIC_LIGHT__MANAGER_HPP_

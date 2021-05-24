@@ -36,6 +36,7 @@
 #include "lanelet2_routing/RoutingGraph.h"
 
 #include "scene_module/scene_module_interface.hpp"
+#include "autoware_perception_msgs/msg/looking_traffic_light_state.hpp"
 
 class TrafficLightModule : public SceneModuleInterface
 {
@@ -76,9 +77,9 @@ public:
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
 
-  inline autoware_perception_msgs::msg::TrafficLightStateStamped getTrafficLightState() const
+  inline autoware_perception_msgs::msg::LookingTrafficLightState getTrafficLightState() const
   {
-    return tl_state_;
+    return looking_tl_state_;
   }
   inline State getTrafficLightModuleState() const {return state_;}
   inline Input getTrafficLightModuleInput() const {return input_;}
@@ -147,6 +148,6 @@ private:
   bool is_prev_state_stop_;
 
   // Traffic Light State
-  autoware_perception_msgs::msg::TrafficLightStateStamped tl_state_;
+  autoware_perception_msgs::msg::LookingTrafficLightState looking_tl_state_;
 };
 #endif  // SCENE_MODULE__TRAFFIC_LIGHT__SCENE_HPP_

@@ -65,7 +65,7 @@ TrafficLightModuleManager::TrafficLightModuleManager(rclcpp::Node & node)
   planner_param_.external_tl_state_timeout =
     node.declare_parameter(ns + ".external_tl_state_timeout", 1.0);
   planner_param_.enable_pass_judge = node.declare_parameter(ns + ".enable_pass_judge", true);
-  pub_tl_state_ = node.create_publisher<autoware_perception_msgs::msg::TrafficLightStateStamped>(
+  pub_tl_state_ = node.create_publisher<autoware_perception_msgs::msg::LookingTrafficLightState>(
     "~/output/traffic_light_state", 1);
 }
 
@@ -74,7 +74,9 @@ void TrafficLightModuleManager::modifyPathVelocity(
 {
   visualization_msgs::msg::MarkerArray debug_marker_array;
   autoware_planning_msgs::msg::StopReasonArray stop_reason_array;
-  autoware_perception_msgs::msg::TrafficLightStateStamped tl_state;
+  autoware_perception_msgs::msg::LookingTrafficLightState tl_state;
+  tl_state.header.stamp = clock_->now();
+  tl_state.module = false;
   stop_reason_array.header.frame_id = "map";
   stop_reason_array.header.stamp = this->clock_->now();
   first_stop_path_point_index_ = static_cast<int>(path->points.size());
@@ -102,9 +104,7 @@ void TrafficLightModuleManager::modifyPathVelocity(
     pub_stop_reason_->publish(stop_reason_array);
   }
   pub_debug_->publish(debug_marker_array);
-  if (!tl_state.state.lamp_states.empty()) {
-    pub_tl_state_->publish(tl_state);
-  }
+  pub_tl_state_->publish(tl_state);
 }
 
 void TrafficLightModuleManager::launchNewModules(
