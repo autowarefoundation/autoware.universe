@@ -13,15 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import launch
-import yaml
 import os
+
 from ament_index_python.packages import get_package_share_directory
-from launch.actions import DeclareLaunchArgument, OpaqueFunction
+import launch
+from launch.actions import DeclareLaunchArgument
+from launch.actions import OpaqueFunction
 from launch.substitutions import LaunchConfiguration
-from launch_ros.actions import ComposableNodeContainer, LoadComposableNodes
+from launch_ros.actions import ComposableNodeContainer
+from launch_ros.actions import LoadComposableNodes
 from launch_ros.descriptions import ComposableNode
-from launch.substitutions import EnvironmentVariable
+import yaml
 
 
 def get_vehicle_info(context):
@@ -157,7 +159,7 @@ def generate_launch_description():
     add_launch_arg('output_type', '0')
     add_launch_arg('lvx_file_path', 'livox_test.lvx')
     add_launch_arg('user_config_path', os.path.join(get_package_share_directory(
-        "livox_ros2_driver"), "config/livox_lidar_config.json"))
+        'livox_ros2_driver'), 'config/livox_lidar_config.json'))
     add_launch_arg('bd_code_param_path')
     add_launch_arg('launch_driver')
     add_launch_arg('base_frame', 'base_link')
