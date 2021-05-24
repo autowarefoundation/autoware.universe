@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
-<!-- TODO: add the appropriate vehicle and sensor model below. -->
+  <!-- TODO: add the appropriate vehicle and sensor model below. -->
   <arg name="vehicle_model" default="" />
   <arg name="sensor_model" default="" />
   <arg name="map_path" default="/opt/autoware/maps/" />
