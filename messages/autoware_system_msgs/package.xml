@@ -5,19 +5,18 @@
   <version>0.1.0</version>
   <description>The autoware_system_msgs package</description>
   <maintainer email="kenji.miyake@tier4.jp">Kenji Miyake</maintainer>
-
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
+
   <buildtool_depend>rosidl_default_generators</buildtool_depend>
+
+  <depend>diagnostic_msgs</depend>
+  <depend>std_msgs</depend>
+
   <exec_depend>rosidl_default_runtime</exec_depend>
+
   <member_of_group>rosidl_interface_packages</member_of_group>
-
-  <build_depend>diagnostic_msgs</build_depend>
-  <exec_depend>diagnostic_msgs</exec_depend>
-  <build_depend>std_msgs</build_depend>
-  <exec_depend>std_msgs</exec_depend>
-
 
   <export>
     <build_type>ament_cmake</build_type>
