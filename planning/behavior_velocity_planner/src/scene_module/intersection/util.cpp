@@ -441,10 +441,12 @@ bool getObjectivePolygons(
 
   // get exact polygon of conflicting lanes
   conflicting_polygons->clear();
-  const double path_length = lanelet::utils::getLaneletLength3d(conflicting_lanelets_ex_yield_ego);
-  const auto polygon3d = lanelet::utils::getPolygonFromArcLength(
-    conflicting_lanelets_ex_yield_ego, path_length - length, path_length);
-  conflicting_polygons->push_back(polygon3d);
+  if(!conflicting_lanelets_ex_yield_ego.empty()) {
+    const double path_length = lanelet::utils::getLaneletLength3d(conflicting_lanelets_ex_yield_ego);
+    const auto polygon3d = lanelet::utils::getPolygonFromArcLength(
+      conflicting_lanelets_ex_yield_ego, path_length - length, path_length);
+    conflicting_polygons->push_back(polygon3d);
+  }
 
   // get exact polygon of interest with exact length
   objective_polygons->clear();
