@@ -17,6 +17,7 @@
 
 #include <deque>
 #include <memory>
+#include <vector>
 
 #include "OgreBillboardSet.h"
 #include "OgreManualObject.h"
@@ -62,8 +63,8 @@ protected:
     const QColor & color_min, const QColor & color_max, const double ratio);
   Ogre::ManualObject * path_manual_object_;
   Ogre::ManualObject * velocity_manual_object_;
-  std::vector<rviz_rendering::MovableText*> velocity_texts_;
-  std::vector<Ogre::SceneNode*> velocity_text_nodes_;
+  std::vector<rviz_rendering::MovableText *> velocity_texts_;
+  std::vector<Ogre::SceneNode *> velocity_text_nodes_;
   rviz_common::properties::BoolProperty * property_path_view_;
   rviz_common::properties::BoolProperty * property_velocity_view_;
   rviz_common::properties::FloatProperty * property_path_width_;
