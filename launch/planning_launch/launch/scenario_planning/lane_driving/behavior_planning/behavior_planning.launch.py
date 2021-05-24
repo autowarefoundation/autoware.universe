@@ -56,7 +56,7 @@ def generate_launch_description():
             ('~/output/lane_change_path', 'path_with_lane_id'),
             ('~/output/lane_change_ready',
              '/planning/scenario_planning/lane_driving/lane_change_ready'),
-            ('~/output/lane_change_avialable',
+            ('~/output/lane_change_available',
              '/planning/scenario_planning/lane_driving/lane_change_available'),
             ('~/output/stop_reasons', '/planning/scenario_planning/status/stop_reasons'),
             ('~/debug/lane_change_candidate_path',
