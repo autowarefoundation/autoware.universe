@@ -13,12 +13,10 @@
 # limitations under the License.
 
 import launch
-from launch.actions import DeclareLaunchArgument, OpaqueFunction
-from launch.conditions import IfCondition, UnlessCondition, LaunchConfigurationNotEquals
+from launch.conditions import LaunchConfigurationNotEquals
 from launch.substitutions import LaunchConfiguration
-from launch_ros.actions import ComposableNodeContainer, LoadComposableNodes
+from launch_ros.actions import LoadComposableNodes
 from launch_ros.descriptions import ComposableNode
-from launch.substitutions import EnvironmentVariable
 
 
 def generate_launch_description():
@@ -29,7 +27,7 @@ def generate_launch_description():
         remappings=[
             ('input', LaunchConfiguration('input_sensor_points_topic')),
             ('output',
-             'mesurement_range/pointcloud'),
+             'measurement_range/pointcloud'),
         ],
         parameters=[{
             'input_frame': LaunchConfiguration('base_frame'),
@@ -52,7 +50,7 @@ def generate_launch_description():
         name='voxel_grid_downsample_filter',
         remappings=[
             ('input',
-             'mesurement_range/pointcloud'),
+             'measurement_range/pointcloud'),
             ('output',
              LaunchConfiguration('output_voxel_grid_downsample_sensor_points_topic')),
         ],
