@@ -1,0 +1,4 @@
+std_msgs/Header header
+bool module
+autoware_perception_msgs/TrafficLightStateStamped[] perception
+autoware_perception_msgs/TrafficLightStateStamped[] external

@@ -18,6 +18,7 @@ set(OBJECT_RECOGNITION_MSG_FILES
 
 set(TRAFFIC_LIGHT_RECOGNITION_MSG_FILES
   "LampState.msg"
+  "LookingTrafficLightState.msg"
   "TrafficLightRoi.msg"
   "TrafficLightRoiArray.msg"
   "TrafficLightState.msg"
