@@ -147,7 +147,7 @@ void CPUMonitor::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & s
   stat.summary(whole_level, thermal_dict_.at(whole_level));
 }
 
-void CPUMonitor::getTempNames(void)
+void CPUMonitor::getTempNames()
 {
   const fs::path root("/sys/devices/platform/coretemp.0");
 

@@ -47,7 +47,7 @@ public:
   void changeUsageWarn(float usage_warn) {usage_warn_ = usage_warn;}
   void changeUsageError(float usage_error) {usage_error_ = usage_error;}
 
-  void update(void) {updater_.force_update();}
+  void update() {updater_.force_update();}
 
   const std::string removePrefix(const std::string & name)
   {
@@ -89,7 +89,7 @@ protected:
   std::string exe_dir_;
   std::string free_;
 
-  void SetUp(void)
+  void SetUp()
   {
     using std::placeholders::_1;
     rclcpp::init(0, nullptr);
@@ -102,7 +102,7 @@ protected:
     if (fs::exists(free_)) {fs::remove(free_);}
   }
 
-  void TearDown(void)
+  void TearDown()
   {
     // Remove dummy executable if exists
     if (fs::exists(free_)) {fs::remove(free_);}
@@ -120,7 +120,7 @@ protected:
     return false;
   }
 
-  void modifyPath(void)
+  void modifyPath()
   {
     // Modify PATH temporarily
     auto env = boost::this_process::environment();

@@ -48,10 +48,10 @@ public:
   }
 
   void addTempName(const std::string & path) {temps_.emplace_back(path, path);}
-  void clearTempNames(void) {temps_.clear();}
+  void clearTempNames() {temps_.clear();}
 
   void addFreqName(int index, const std::string & path) {freqs_.emplace_back(index, path);}
-  void clearFreqNames(void) {freqs_.clear();}
+  void clearFreqNames() {freqs_.clear();}
 
   void setMpstatExists(bool mpstat_exists) {mpstat_exists_ = mpstat_exists;}
 
@@ -61,7 +61,7 @@ public:
   void changeLoad1Warn(float load1_warn) {load1_warn_ = load1_warn;}
   void changeLoad5Warn(float load5_warn) {load5_warn_ = load5_warn;}
 
-  void update(void) {updater_.force_update();}
+  void update() {updater_.force_update();}
 
   const std::string removePrefix(const std::string & name)
   {
@@ -103,7 +103,7 @@ protected:
   std::string exe_dir_;
   std::string mpstat_;
 
-  void SetUp(void)
+  void SetUp()
   {
     using std::placeholders::_1;
     rclcpp::init(0, nullptr);
@@ -120,7 +120,7 @@ protected:
     if (fs::exists(mpstat_)) {fs::remove(mpstat_);}
   }
 
-  void TearDown(void)
+  void TearDown()
   {
     // Remove test file if exists
     if (fs::exists(TEST_FILE)) {fs::remove(TEST_FILE);}
@@ -140,7 +140,7 @@ protected:
     return false;
   }
 
-  void modifyPath(void)
+  void modifyPath()
   {
     // Modify PATH temporarily
     auto env = boost::this_process::environment();
@@ -662,7 +662,7 @@ public:
   : CPUMonitorBase(node_name, options)
   {
   }
-  void update(void) {updater_.force_update();}
+  void update() {updater_.force_update();}
 };
 
 TEST_F(CPUMonitorTestSuite, dummyCPUMonitorTest)

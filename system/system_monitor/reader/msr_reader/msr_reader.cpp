@@ -76,7 +76,7 @@ typedef struct
 /**
  * @brief print usage
  */
-void usage(void)
+void usage()
 {
   printf("Usage: msr_reader [options]\n");
   printf("  -h --help   : Display help\n");

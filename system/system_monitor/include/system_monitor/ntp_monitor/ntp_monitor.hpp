@@ -34,7 +34,7 @@ public:
    * @brief constructor
    * @param [in] options Options associated with this node.
    */
-  NTPMonitor(const rclcpp::NodeOptions & options);
+  explicit NTPMonitor(const rclcpp::NodeOptions & options);
 
   /**
    * @brief Update the diagnostic state.

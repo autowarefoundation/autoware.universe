@@ -49,7 +49,7 @@ public:
    * @brief constructor
    * @param [in] options Options associated with this node.
    */
-  NetMonitor(const rclcpp::NodeOptions & options);
+  explicit NetMonitor(const rclcpp::NodeOptions & options);
   /**
    * @brief destructor
    */

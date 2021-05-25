@@ -61,17 +61,17 @@ public:
   /**
    * @brief Update the diagnostic state.
    */
-  void update(void);
+  void update();
 
   /**
    * @brief get names for core temperature files
    */
-  virtual void getTempNames(void);
+  virtual void getTempNames();
 
   /**
    * @brief get names for cpu frequency files
    */
-  virtual void getFreqNames(void);
+  virtual void getFreqNames();
 
 protected:
   using DiagStatus = diagnostic_msgs::msg::DiagnosticStatus;

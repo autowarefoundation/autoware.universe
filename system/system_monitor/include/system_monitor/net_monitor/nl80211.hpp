@@ -33,7 +33,7 @@ public:
   /**
    * @brief initialize
    */
-  void init(void);
+  void init();
 
   /**
    * @brief get bitrate
@@ -45,7 +45,7 @@ public:
   /**
    * @brief shutdown
    */
-  void shutdown(void);
+  void shutdown();
 
   float bitrate_;  //!< @brief bitrate
 

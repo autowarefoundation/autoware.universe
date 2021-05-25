@@ -12,16 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import launch
-import yaml
 import os
+
 from ament_index_python.packages import get_package_share_directory
-from launch.actions import DeclareLaunchArgument, OpaqueFunction
+import launch
+from launch.actions import DeclareLaunchArgument
+from launch.actions import OpaqueFunction
 from launch.substitutions import LaunchConfiguration
-from launch_ros.actions import ComposableNodeContainer, LoadComposableNodes, Node
+from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
-from launch.substitutions import EnvironmentVariable
-from launch.conditions import IfCondition
+import yaml
 
 
 def launch_setup(context, *args, **kwargs):
@@ -118,7 +118,8 @@ def launch_setup(context, *args, **kwargs):
 
 
 def generate_launch_description():
-    system_monitor_path = os.path.join(get_package_share_directory('system_launch'), 'config', 'system_monitor')
+    system_monitor_path = os.path.join(get_package_share_directory(
+        'system_launch'), 'config', 'system_monitor')
     return launch.LaunchDescription(
         [
             DeclareLaunchArgument(

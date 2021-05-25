@@ -40,15 +40,15 @@ public:
   }
 
   void addTempName(const std::string & path) {temps_.emplace_back(path, path);}
-  void clearTempNames(void) {temps_.clear();}
+  void clearTempNames() {temps_.clear();}
 
   void addLoadName(const std::string & path) {loads_.emplace_back(path, path);}
-  void clearLoadNames(void) {loads_.clear();}
+  void clearLoadNames() {loads_.clear();}
 
   void addFreqName(const std::string & path) {freqs_.emplace_back(path, path);}
-  void clearFreqNames(void) {freqs_.clear();}
+  void clearFreqNames() {freqs_.clear();}
 
-  void update(void) {updater_.force_update();}
+  void update() {updater_.force_update();}
 
   const std::string removePrefix(const std::string & name)
   {
@@ -81,7 +81,7 @@ protected:
   rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr
     sub_;
 
-  void SetUp(void)
+  void SetUp()
   {
     using std::placeholders::_1;
     rclcpp::init(0, nullptr);
@@ -91,7 +91,7 @@ protected:
       "/diagnostics", 1000, std::bind(&TestGPUMonitor::diagCallback, monitor_.get(), _1));
   }
 
-  void TearDown(void)
+  void TearDown()
   {
     // Remove test file if exists
     if (fs::exists(TEST_FILE)) {fs::remove(TEST_FILE);}
@@ -473,7 +473,7 @@ public:
   : GPUMonitorBase(node_name, options)
   {
   }
-  void update(void) {updater_.force_update();}
+  void update() {updater_.force_update();}
 };
 
 TEST_F(GPUMonitorTestSuite, dummyGPUMonitorTest)

@@ -48,7 +48,7 @@ public:
    * @brief constructor
    * @param [in] options Options associated with this node.
    */
-  HDDMonitor(const rclcpp::NodeOptions & options);
+  explicit HDDMonitor(const rclcpp::NodeOptions & options);
 
   /**
    * @brief Update the diagnostic state.

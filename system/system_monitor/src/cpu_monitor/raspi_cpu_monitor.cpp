@@ -67,7 +67,7 @@ void CPUMonitor::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & s
   stat.summary(level, thermal_dict_.at(level));
 }
 
-void CPUMonitor::getTempNames(void)
+void CPUMonitor::getTempNames()
 {
   // thermal_zone0
   std::vector<thermal_zone> therms;

@@ -260,12 +260,12 @@ void CPUMonitorBase::checkFrequency(diagnostic_updater::DiagnosticStatusWrapper 
   stat.summary(DiagStatus::OK, "OK");
 }
 
-void CPUMonitorBase::getTempNames(void)
+void CPUMonitorBase::getTempNames()
 {
   RCLCPP_INFO(this->get_logger(), "CPUMonitorBase::getTempNames not implemented.");
 }
 
-void CPUMonitorBase::getFreqNames(void)
+void CPUMonitorBase::getFreqNames()
 {
   const fs::path root("/sys/devices/system/cpu");
 

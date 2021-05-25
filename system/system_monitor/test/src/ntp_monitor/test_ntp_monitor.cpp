@@ -48,7 +48,7 @@ public:
 
   void setNtpdateExists(bool ntpdate_exists) {ntpdate_exists_ = ntpdate_exists;}
 
-  void update(void) {updater_.force_update();}
+  void update() {updater_.force_update();}
 
   const std::string removePrefix(const std::string & name)
   {
@@ -90,7 +90,7 @@ protected:
   std::string exe_dir_;
   std::string ntpdate_;
 
-  void SetUp(void)
+  void SetUp()
   {
     using std::placeholders::_1;
     rclcpp::init(0, nullptr);
@@ -103,7 +103,7 @@ protected:
     if (fs::exists(ntpdate_)) {fs::remove(ntpdate_);}
   }
 
-  void TearDown(void)
+  void TearDown()
   {
     // Remove dummy executable if exists
     if (fs::exists(ntpdate_)) {fs::remove(ntpdate_);}
@@ -121,7 +121,7 @@ protected:
     return false;
   }
 
-  void modifyPath(void)
+  void modifyPath()
   {
     // Modify PATH temporarily
     auto env = boost::this_process::environment();

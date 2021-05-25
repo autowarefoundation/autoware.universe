@@ -62,12 +62,12 @@ public:
    * @param [in] node_name Name of the node.
    * @param [in] options Options associated with this node.
    */
-  CPUMonitor(const rclcpp::NodeOptions & options);
+  explicit CPUMonitor(const rclcpp::NodeOptions & options);
 
   /**
    * @brief get names for core temperature files
    */
-  void getTempNames(void) override;
+  void getTempNames() override;
 
 protected:
   /**

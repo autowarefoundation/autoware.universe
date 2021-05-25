@@ -37,7 +37,7 @@ public:
    * @brief constructor
    * @param [in] options Options associated with this node.
    */
-  ProcessMonitor(const rclcpp::NodeOptions & options);
+  explicit ProcessMonitor(const rclcpp::NodeOptions & options);
 
   /**
    * @brief Update the diagnostic state

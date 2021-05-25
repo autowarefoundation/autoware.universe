@@ -42,10 +42,10 @@ public:
 
   void changeUsageWarn(float usage_warn) {usage_warn_ = usage_warn;}
 
-  const std::vector<std::string> getDeviceParams(void) {return device_params_;}
-  void clearDeviceParams(void) {device_params_.clear();}
+  const std::vector<std::string> getDeviceParams() {return device_params_;}
+  void clearDeviceParams() {device_params_.clear();}
 
-  void update(void) {updater_.force_update();}
+  void update() {updater_.force_update();}
 
   const std::string removePrefix(const std::string & name)
   {
@@ -78,7 +78,7 @@ protected:
   rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr
     sub_;
 
-  void SetUp(void)
+  void SetUp()
   {
     using std::placeholders::_1;
     rclcpp::init(0, nullptr);
@@ -88,7 +88,7 @@ protected:
       "/diagnostics", 1000, std::bind(&TestNetMonitor::diagCallback, monitor_.get(), _1));
   }
 
-  void TearDown(void)
+  void TearDown()
   {
     rclcpp::shutdown();
   }

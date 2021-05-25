@@ -33,7 +33,7 @@ public:
    * @brief constructor
    * @param [in] options Options associated with this node.
    */
-  MemMonitor(const rclcpp::NodeOptions & options);
+  explicit MemMonitor(const rclcpp::NodeOptions & options);
 
   /**
    * @brief Update the diagnostic state.

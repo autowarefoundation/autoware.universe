@@ -37,7 +37,7 @@ public:
   }
 
   void addGPU(const gpu_info & info) {gpus_.push_back(info);}
-  void clearGPU(void) {gpus_.clear();}
+  void clearGPU() {gpus_.clear();}
 
   void changeTempWarn(float temp_warn) {temp_warn_ = temp_warn;}
   void changeTempError(float temp_error) {temp_error_ = temp_error;}
@@ -51,7 +51,7 @@ public:
     memory_usage_error_ = memory_usage_error;
   }
 
-  void update(void) {updater_.force_update();}
+  void update() {updater_.force_update();}
 
   const std::string removePrefix(const std::string & name)
   {
@@ -84,7 +84,7 @@ protected:
   rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr
     sub_;
 
-  void SetUp(void)
+  void SetUp()
   {
     using std::placeholders::_1;
     rclcpp::init(0, nullptr);
@@ -94,7 +94,7 @@ protected:
       "/diagnostics", 1000, std::bind(&TestGPUMonitor::diagCallback, monitor_.get(), _1));
   }
 
-  void TearDown(void)
+  void TearDown()
   {
     rclcpp::shutdown();
   }
@@ -488,7 +488,7 @@ TEST_F(GPUMonitorTestSuite, gpuNotFoundTest)
   ASSERT_STREQ(status.message.c_str(), "gpu not found");
 }
 
-TEST_F(GPUMonitorTestSuite, illigalDeviceHandleTest)
+TEST_F(GPUMonitorTestSuite, illegalDeviceHandleTest)
 {
   // Clear list
   monitor_->clearGPU();
@@ -533,7 +533,7 @@ public:
   : GPUMonitorBase(node_name, options)
   {
   }
-  void update(void) {updater_.force_update();}
+  void update() {updater_.force_update();}
 };
 
 TEST_F(GPUMonitorTestSuite, dummyGPUMonitorTest)

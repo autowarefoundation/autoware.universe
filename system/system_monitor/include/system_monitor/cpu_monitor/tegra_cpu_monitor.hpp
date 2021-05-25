@@ -37,7 +37,7 @@ public:
   /**
    * @brief get names for core temperature files
    */
-  void getTempNames(void) override;
+  void getTempNames() override;
 
 protected:
   /**

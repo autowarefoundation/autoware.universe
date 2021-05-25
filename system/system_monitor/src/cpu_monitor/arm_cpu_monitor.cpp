@@ -33,7 +33,7 @@ void CPUMonitor::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & s
   // TODO(Fumihito Ito): implement me
 }
 
-void CPUMonitor::getTempNames(void)
+void CPUMonitor::getTempNames()
 {
   // Jetson TX1 TX2 Nano: thermal_zone1, Xavier: thermal_zone0
   std::vector<thermal_zone> therms;

@@ -46,12 +46,12 @@ protected:
   /**
    * @brief get names for core temperature files
    */
-  void getTempNames(void) override;
+  void getTempNames() override;
 
   /**
    * @brief Add a loadable kernel module msr
    */
-  void modprobeMSR(void);
+  void modprobeMSR();
 
   int msr_reader_port_;  //!< @brief port number to connect to msr_reader
 };

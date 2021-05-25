@@ -34,7 +34,7 @@ public:
     array_ = *diag_msg;
   }
 
-  void update(void) {updater_.force_update();}
+  void update() {updater_.force_update();}
 
 private:
   diagnostic_msgs::msg::DiagnosticArray array_;
@@ -50,7 +50,7 @@ protected:
   rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr
     sub_;
 
-  void SetUp(void)
+  void SetUp()
   {
     using std::placeholders::_1;
     rclcpp::init(0, nullptr);
@@ -62,7 +62,7 @@ protected:
     monitor_->getFreqNames();
   }
 
-  void TearDown(void)
+  void TearDown()
   {
     rclcpp::shutdown();
   }
