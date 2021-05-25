@@ -13,15 +13,17 @@
 # limitations under the License.
 
 import launch
-from launch_ros.actions import ComposableNodeContainer, LoadComposableNodes
-from launch_ros.descriptions import ComposableNode
-from launch.conditions import IfCondition, UnlessCondition
 from launch.actions import DeclareLaunchArgument
-from launch.substitutions import AnonName, LaunchConfiguration
+from launch.conditions import IfCondition
+from launch.conditions import UnlessCondition
+from launch.substitutions import AnonName
+from launch.substitutions import LaunchConfiguration
+from launch_ros.actions import ComposableNodeContainer
+from launch_ros.actions import LoadComposableNodes
+from launch_ros.descriptions import ComposableNode
 
 
 def generate_launch_description():
-
     ns = 'euclidean_cluster'
     pkg = 'euclidean_cluster'
 
