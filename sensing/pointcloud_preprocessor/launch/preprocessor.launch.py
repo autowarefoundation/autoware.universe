@@ -13,15 +13,15 @@
 # limitations under the License.
 
 import launch
-from launch.actions import DeclareLaunchArgument, LogInfo
-from launch.substitutions import LaunchConfiguration, PythonExpression
-
+from launch.actions import DeclareLaunchArgument
+from launch.actions import LogInfo
+from launch.substitutions import LaunchConfiguration
+from launch.substitutions import PythonExpression
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 
 
 def generate_launch_description():
-
     ns = 'pointcloud_preprocessor'
     pkg = 'pointcloud_preprocessor'
 
@@ -63,8 +63,8 @@ def generate_launch_description():
         remappings=[
             ('input',
              PythonExpression(["'points_raw/concatenated' if len(",
-                              LaunchConfiguration('input_points_raw_list'),
-                              ") > 1 else 'input_points_raw0'"])),
+                               LaunchConfiguration('input_points_raw_list'),
+                               ") > 1 else 'input_points_raw0'"])),
             ('output', LaunchConfiguration('output_points_raw'))
         ],
         parameters=[

@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <memory>
+#include <utility>
 #include <vector>
 
 #include "pcl_conversions/pcl_conversions.h"
