@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 # Copyright 2020 Tier IV, Inc.
 #
@@ -15,12 +14,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import numpy as np
 import argparse
+from os import getcwd
+from os.path import basename
+from os.path import dirname
+from os.path import exists
+from os.path import join
+from os.path import splitext
 import subprocess
 import sys
-from os import getcwd
-from os.path import dirname, basename, splitext, join, exists
+
+import numpy as np
+
 try:
     import pandas as pd
 except ImportError:
@@ -68,8 +73,8 @@ def getActValue(df, speed_type):
     else:
         val = np.array(list(df['field']))
     # Calc differential
-    dval = (val[2:] - val[:-2]) / (tm[2:] - tm[:-2])
-    return tm[1:-1], val[1:-1], dval
+    d_val = (val[2:] - val[:-2]) / (tm[2:] - tm[:-2])
+    return tm[1:-1], val[1:-1], d_val
 
 
 def getCmdValueWithDelay(df, delay):
@@ -80,25 +85,25 @@ def getCmdValueWithDelay(df, delay):
 
 def getLinearInterpolate(_tm, _val, _index, ti):
     tmp_t = _tm[_index]
-    tmp_nextt = _tm[_index + 1]
+    tmp_next_t = _tm[_index + 1]
     tmp_val = _val[_index]
-    tmp_nextval = _val[_index + 1]
-    val_i = tmp_val + (tmp_nextval - tmp_val) / \
-        (tmp_nextt - tmp_t) * (ti - tmp_t)
+    tmp_next_val = _val[_index + 1]
+    val_i = tmp_val + (tmp_next_val - tmp_val) / \
+        (tmp_next_t - tmp_t) * (ti - tmp_t)
     return val_i
 
 
 def getFittingTimeConstantParam(cmd_data, act_data,
                                 delay, args, speed_type=False):
     tm_cmd, cmd_delay = getCmdValueWithDelay(cmd_data, delay)
-    tm_act, act, dact = getActValue(act_data, speed_type)
+    tm_act, act, d_act = getActValue(act_data, speed_type)
     _t_min = max(tm_cmd[0], tm_act[0])
     _t_max = min(tm_cmd[-1], tm_act[-1])
     tm_cmd = tm_cmd - _t_min
     tm_act = tm_act - _t_min
     MAX_CNT = int((_t_max - _t_min - args.cutoff_time) / FREQ_SAMPLE)
-    dact_samp = [None] * MAX_CNT
-    diff_actcmd_samp = [None] * MAX_CNT
+    d_act_sample = [None] * MAX_CNT
+    diff_act_cmd_sample = [None] * MAX_CNT
     ind_cmd = 0
     ind_act = 0
     for ind in range(MAX_CNT):
@@ -109,20 +114,20 @@ def getFittingTimeConstantParam(cmd_data, act_data,
         while (tm_act[ind_act + 1] < ti):
             ind_act += 1
         act_i = getLinearInterpolate(tm_act, act, ind_act, ti)
-        dact_i = getLinearInterpolate(tm_act, dact, ind_act, ti)
-        dact_samp[ind] = dact_i
-        diff_actcmd_samp[ind] = act_i - cmd_delay_i
-    dact_samp = np.array(dact_samp)
-    diff_actcmd_samp = np.array(diff_actcmd_samp)
+        d_act_i = getLinearInterpolate(tm_act, d_act, ind_act, ti)
+        d_act_sample[ind] = d_act_i
+        diff_act_cmd_sample[ind] = act_i - cmd_delay_i
+    d_act_sample = np.array(d_act_sample)
+    diff_act_cmd_sample = np.array(diff_act_cmd_sample)
     if args.cutoff_freq > 0:
-        dact_samp = lowpass_filter(dact_samp, cutoff_freq=args.cutoff_freq)
-        diff_actcmd_samp = lowpass_filter(
-            diff_actcmd_samp, cutoff_freq=args.cutoff_freq)
-    dact_samp = dact_samp.reshape(1, -1)
-    diff_actcmd_samp = diff_actcmd_samp.reshape(1, -1)
-    tau = -np.dot(diff_actcmd_samp, np.linalg.pinv(dact_samp))[0, 0]
-    error = np.linalg.norm(diff_actcmd_samp + tau *
-                           dact_samp) / dact_samp.shape[1]
+        d_act_sample = lowpass_filter(d_act_sample, cutoff_freq=args.cutoff_freq)
+        diff_act_cmd_sample = lowpass_filter(
+            diff_act_cmd_sample, cutoff_freq=args.cutoff_freq)
+    d_act_sample = d_act_sample.reshape(1, -1)
+    diff_act_cmd_sample = diff_act_cmd_sample.reshape(1, -1)
+    tau = -np.dot(diff_act_cmd_sample, np.linalg.pinv(d_act_sample))[0, 0]
+    error = np.linalg.norm(diff_act_cmd_sample + tau *
+                           d_act_sample) / d_act_sample.shape[1]
     return tau, error
 
 
