@@ -17,8 +17,8 @@
 import sys
 
 from ament_index_python.packages import get_package_share_directory
-from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 
 
@@ -39,7 +39,7 @@ def main(dimension, accel_or_brake):
                 stroke_list.append(float(w[0]))
                 acc_list.append([float(e) for e in w[1:]])
 
-    plt.rcParams["font.size"] = 30
+    plt.rcParams['font.size'] = 30
     if dimension == 2:
         plt.title('{} map'.format(accel_or_brake))
         plt.xlabel('stroke')
@@ -55,7 +55,7 @@ def main(dimension, accel_or_brake):
         fig = plt.figure()
         Axes3D  # dummy code for flake8
         ax = fig.add_subplot(111, projection='3d')
-        ax.set_title("{} map".format(accel_or_brake))
+        ax.set_title('{} map'.format(accel_or_brake))
         ax.set_xlabel('stroke')
         ax.set_ylabel('vel [km/h]')
         ax.set_zlabel('acceleration [m/s^2]')
