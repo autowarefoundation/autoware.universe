@@ -14,18 +14,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import print_function
 
 import argparse
 import sys
+
+from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import TransformStamped
 import rclpy
 from rclpy.node import Node
 import tf2_ros
-from geometry_msgs.msg import PoseStamped
-from geometry_msgs.msg import TransformStamped
 
 
 class Pose2TfNode(Node):
+
     def __init__(self, options):
         super().__init__('pose2tf')
         self._options = options
@@ -39,7 +40,7 @@ class Pose2TfNode(Node):
             transforms = []
             transforms.append(tfs)
             self._tf_broadcaster.sendTransform(transforms)
-        except Exception as e:
+        except tf2_ros.TransformException as e:
             print(e)
 
     @staticmethod
@@ -59,12 +60,12 @@ class Pose2TfNode(Node):
 
 
 def main(args):
-    print("{}".format(args))
+    print('{}'.format(args))
     rclpy.init()
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("topic_name", type=str)
-    parser.add_argument("tf_name", type=str)
+    parser.add_argument('topic_name', type=str)
+    parser.add_argument('tf_name', type=str)
     ns = parser.parse_args(args)
 
     pose2tf_node = Pose2TfNode(ns)
@@ -73,5 +74,5 @@ def main(args):
     rclpy.shutdown()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main(sys.argv[1:])

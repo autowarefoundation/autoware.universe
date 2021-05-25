@@ -14,15 +14,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from geometry_msgs.msg import PoseStamped
 import rclpy
 from rclpy.node import Node
 from tf2_ros import LookupException
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
-from geometry_msgs.msg import PoseStamped
 
 
 class SelfPoseListener(Node):
+
     def __init__(self):
         super().__init__('self_pose_listener')
         self.tf_buffer = Buffer()
@@ -32,9 +33,9 @@ class SelfPoseListener(Node):
     def get_current_pose(self):
         try:
             tf = self.tf_buffer.lookup_transform(
-                "map", "base_link", rclpy.time.Time())
-            tf_time = self.tf_buffer.get_latest_common_time("map", "base_link")
-            self.self_pose = SelfPoseListener.create_pose(tf_time, "map", tf)
+                'map', 'base_link', rclpy.time.Time())
+            tf_time = self.tf_buffer.get_latest_common_time('map', 'base_link')
+            self.self_pose = SelfPoseListener.create_pose(tf_time, 'map', tf)
         except LookupException as e:
             self.get_logger().warn('Required transformation not found: `{}`'.format(str(e)))
             return None

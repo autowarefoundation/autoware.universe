@@ -14,24 +14,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import print_function
-
 import argparse
 import math
 import sys
 
+from autoware_planning_msgs.msg import StopReasonArray
+from case_converter import pascal2snake
+from geometry_msgs.msg import PoseStamped
 import numpy as np
 import rclpy
 from rclpy.node import Node
-from autoware_planning_msgs.msg import StopReasonArray
-from geometry_msgs.msg import PoseStamped
 from rtree import index
-
 from self_pose_listener import SelfPoseListener
-from case_converter import pascal2snake
 
 
 class StopReason2PoseNode(Node):
+
     def __init__(self, options):
         super().__init__('stop_reason2pose_node')
         self._options = options
@@ -69,9 +67,9 @@ class StopReason2PoseNode(Node):
                     pose_id = self._register_pose(
                         snake_case_stop_reason, pose.pose)
 
-                pose_topic_name = "{snake_case_stop_reason}_{pose_id}".format(
+                pose_topic_name = '{snake_case_stop_reason}_{pose_id}'.format(
                     **locals())
-                topic_ns = "/autoware_debug_tools/stop_reason2pose/"
+                topic_ns = '/autoware_debug_tools/stop_reason2pose/'
                 if pose_topic_name not in self._pub_pose_map:
                     self._pub_pose_map[pose_topic_name] = self.create_publisher(
                         PoseStamped, topic_ns + pose_topic_name, 1)
@@ -85,7 +83,7 @@ class StopReason2PoseNode(Node):
 
             if nearest_pose.pose:
                 if snake_case_stop_reason not in self._pub_pose_map:
-                    topic_ns = "/autoware_debug_tools/stop_reason2pose/"
+                    topic_ns = '/autoware_debug_tools/stop_reason2pose/'
                     self._pub_pose_map[snake_case_stop_reason] = self.create_publisher(
                         PoseStamped, topic_ns + snake_case_stop_reason, 1)
                 self._pub_pose_map[snake_case_stop_reason].publish(
@@ -96,10 +94,10 @@ class StopReason2PoseNode(Node):
         if not poses:
             return None
 
-        dists = map(
+        distances = map(
             lambda p: StopReason2PoseNode.calc_distance2d(
                 p, self_pose), poses)
-        nearest_idx = np.argmin(dists)
+        nearest_idx = np.argmin(distances)
 
         return poses[nearest_idx]
 
@@ -126,26 +124,26 @@ class StopReason2PoseNode(Node):
 
         return nearest_pose_id
 
-    def _get_pose(self, name, id):
+    def _get_pose(self, name, pose_id):
         if name not in self._pose_map:
             return None
 
-        return self._pose_map[name][id]
+        return self._pose_map[name][pose_id]
 
-    def _update_pose(self, name, pose, id):
+    def _update_pose(self, name, pose, pose_id):
         self._pose_map[name][id] = pose
         self._idx_map[name].insert(
-            id, StopReason2PoseNode.pose2boundingbox(pose))
+            pose_id, StopReason2PoseNode.pose2boundingbox(pose))
 
     def _register_pose(self, name, pose):
         if name not in self._pose_map:
             self._pose_map[name] = {}
 
-        id = len(self._pose_map[name]) + 1
-        self._pose_map[name][id] = pose
+        pose_id = len(self._pose_map[name]) + 1
+        self._pose_map[name][pose_id] = pose
         self._idx_map[name].insert(
-            id, StopReason2PoseNode.pose2boundingbox(pose))
-        return id
+            pose_id, StopReason2PoseNode.pose2boundingbox(pose))
+        return pose_id
 
     @staticmethod
     def calc_distance2d(pose1, pose2):
@@ -163,7 +161,7 @@ def main(args):
     rclpy.init()
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("topic_name", type=str)
+    parser.add_argument('topic_name', type=str)
     ns = parser.parse_args(args)
 
     stop_reason2pose_node = StopReason2PoseNode(ns)
@@ -172,5 +170,5 @@ def main(args):
     rclpy.shutdown()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main(sys.argv[1:])
