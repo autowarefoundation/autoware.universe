@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # Copyright 2020 Tier IV, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,9 +13,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-# !/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 # TODO(kosuke murakami): write ros2 visualizer
 # import rospy
@@ -49,7 +48,7 @@
 
 #         self.length = 50
 
-#         self.substatus1 = rospy.Subscriber(
+#         self.sub_status1 = rospy.Subscriber(
 #           "/planning/scenario_planning/lane_driving/motion_planning/obstacle_avoidance_planner/trajectory",
 #           Trajectory, self.CallBackTraj, queue_size=1, tcp_nodelay=True)
 #         rospy.Timer(rospy.Duration(0.3), self.timerCallback)
