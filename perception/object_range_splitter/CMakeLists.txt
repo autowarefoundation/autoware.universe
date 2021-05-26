@@ -19,9 +19,13 @@ include_directories(
   include
 )
 
-ament_auto_add_executable(object_range_splitter_node
+ament_auto_add_library(object_range_splitter SHARED
   src/node.cpp
-  src/main.cpp
+)
+
+rclcpp_components_register_node(object_range_splitter
+  PLUGIN "object_range_splitter::ObjectRangeSplitterNode"
+  EXECUTABLE object_range_splitter_node
 )
 
 if(BUILD_TESTING)

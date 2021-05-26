@@ -25,8 +25,7 @@ namespace object_range_splitter
 class ObjectRangeSplitterNode : public rclcpp::Node
 {
 public:
-  ObjectRangeSplitterNode();
-  ~ObjectRangeSplitterNode() = default;
+  explicit ObjectRangeSplitterNode(const rclcpp::NodeOptions & node_options);
 
 private:
   void objectCallback(

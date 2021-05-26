@@ -16,8 +16,8 @@
 
 namespace object_range_splitter
 {
-ObjectRangeSplitterNode::ObjectRangeSplitterNode()
-: Node("object_range_splitter_node")
+ObjectRangeSplitterNode::ObjectRangeSplitterNode(const rclcpp::NodeOptions & node_options)
+: Node("object_range_splitter_node", node_options)
 {
   using std::placeholders::_1;
   spilt_range_ = declare_parameter("split_range", 30.0);
@@ -63,3 +63,6 @@ void ObjectRangeSplitterNode::objectCallback(
   short_range_object_pub_->publish(output_short_range_object_msg);
 }
 }  // namespace object_range_splitter
+
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(object_range_splitter::ObjectRangeSplitterNode)
