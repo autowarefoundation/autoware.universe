@@ -4,8 +4,10 @@ module autoware_auto_msgs {
   module msg {
     struct Shape {
       @verbatim (language="comment", text=
-        " A 2D polygon describing the outline of an object. All z components should"
-        " be set to the minimum height of the object.")
+        " A 2D polygon describing the outline of an object. All z components should be set to the"
+        " minimum z coordinate on the object. Since the frame used to represent this object must"
+        " be gravity aligned, this will be the value corresponding to the lowest point of the"
+        " object.")
       geometry_msgs::msg::Polygon polygon;
 
       @verbatim (language="comment", text=

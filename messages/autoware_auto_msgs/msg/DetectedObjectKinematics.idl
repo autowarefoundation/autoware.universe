@@ -1,14 +1,40 @@
-#include "geometry_msgs/msg/AccelWithCovariance.idl"
-#include "geometry_msgs/msg/PoseWithCovariance.idl"
+#include "geometry_msgs/msg/Point.idl"
+#include "geometry_msgs/msg/Quaternion.idl"
 #include "geometry_msgs/msg/TwistWithCovariance.idl"
 
 module autoware_auto_msgs {
   module msg {
-    struct DetectedObjectKinematics {
-      geometry_msgs::msg::PoseWithCovariance pose;
+    module DetectedObjectKinematics_Constants {
+      /**
+       * Only position is available, orientation is empty. Note that the shape can be an oriented
+       * bounding box but the direction the object is facing is unknown, in which case
+       * orientation should be empty.
+       */
+      const uint8 UNAVAILABLE = 0;
+      /**
+       * The orientation is determined only up to a sign flip. For instance, assume that cars are
+       * longer than they are wide, and the perception pipeline can accurately estimate the
+       * dimensions of a car. It should set the orientation to coincide with the major axis, with
+       * the sign chosen arbitrarily, and use this tag to signify that the orientation could
+       * point to the front or the back.
+       */
+      const uint8 SIGN_UNKNOWN = 1;
+      /**
+       * The full orientation is available. Use e.g. for machine-learning models that can
+       * differentiate between the front and back of a vehicle.
+       */
+      const uint8 AVAILABLE = 2;
+    };
 
-      boolean has_pose;
-      boolean has_pose_covariance;
+    struct DetectedObjectKinematics {
+      @verbatim (language="comment", text=
+      " Convenience value, calculated from the shape.")
+      geometry_msgs::msg::Point centroid_position;
+      double position_covariance[9];
+      boolean has_position_covariance;
+
+      geometry_msgs::msg::Quaternion orientation;
+      uint8 orientation_availability;
 
       geometry_msgs::msg::TwistWithCovariance twist;
 
