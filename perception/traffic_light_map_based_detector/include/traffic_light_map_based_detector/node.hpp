@@ -46,8 +46,7 @@ namespace traffic_light
 class MapBasedDetector : public rclcpp::Node
 {
 public:
-  MapBasedDetector();
-  ~MapBasedDetector() {}
+  explicit MapBasedDetector(const rclcpp::NodeOptions & node_options);
 
 private:
   struct Config
@@ -104,7 +103,7 @@ private:
     const geometry_msgs::msg::Point & camera_point,
     const double max_distance_range);
   bool isInAngleRange(
-    const double & tl_yaw, const double & camera_yaw, const double max_angele_range);
+    const double & tl_yaw, const double & camera_yaw, const double max_angle_range);
   bool isInImageFrame(
     const sensor_msgs::msg::CameraInfo & camera_info,
     const geometry_msgs::msg::Point & point);

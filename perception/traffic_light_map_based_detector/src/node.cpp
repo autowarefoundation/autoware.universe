@@ -46,8 +46,9 @@
 
 namespace traffic_light
 {
-MapBasedDetector::MapBasedDetector()
-: Node("traffic_light_map_based_detector"), tf_buffer_(this->get_clock()), tf_listener_(tf_buffer_)
+MapBasedDetector::MapBasedDetector(const rclcpp::NodeOptions & node_options)
+: Node("traffic_light_map_based_detector", node_options),
+  tf_buffer_(this->get_clock()), tf_listener_(tf_buffer_)
 {
   using std::placeholders::_1;
 
@@ -448,3 +449,6 @@ double MapBasedDetector::normalizeAngle(const double & angle)
 }
 
 }  // namespace traffic_light
+
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(traffic_light::MapBasedDetector)

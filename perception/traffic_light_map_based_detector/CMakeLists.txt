@@ -23,9 +23,13 @@ include_directories(
   ${EIGEN3_INCLUDE_DIR}
 )
 
-ament_auto_add_executable(traffic_light_map_based_detector_node
+ament_auto_add_library(traffic_light_map_based_detector SHARED
   src/node.cpp
-  src/main.cpp
+)
+
+rclcpp_components_register_node(traffic_light_map_based_detector
+  PLUGIN "traffic_light::MapBasedDetector"
+  EXECUTABLE traffic_light_map_based_detector_node
 )
 
 if(BUILD_TESTING)
