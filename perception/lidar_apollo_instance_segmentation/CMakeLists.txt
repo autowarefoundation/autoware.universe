@@ -93,7 +93,7 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
   find_package(ament_cmake_auto REQUIRED)
   ament_auto_find_build_dependencies()
   find_package(PCL REQUIRED)
-  
+
   if(NOT CMAKE_CXX_STANDARD)
     set(CMAKE_CXX_STANDARD 14)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -113,18 +113,6 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     ${PCL_INCLUDE_DIRS}
   )
 
-  ament_auto_add_executable(lidar_apollo_instance_segmentation_node
-  src/main.cpp
-  src/node.cpp
-  src/detector.cpp
-  src/log_table.cpp
-  src/feature_generator.cpp
-  src/feature_map.cpp
-  src/cluster2d.cpp
-  src/debugger.cpp
-  )
-
-
   ament_auto_add_library(tensorrt_apollo_cnn_lib SHARED
     lib/src/TrtNet.cpp
   )
@@ -140,8 +128,23 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     ${PCL_LIBRARIES}
   )
 
-  target_link_libraries(lidar_apollo_instance_segmentation_node
+  ament_auto_add_library(lidar_apollo_instance_segmentation SHARED
+    src/node.cpp
+    src/detector.cpp
+    src/log_table.cpp
+    src/feature_generator.cpp
+    src/feature_map.cpp
+    src/cluster2d.cpp
+    src/debugger.cpp
+  )
+
+  target_link_libraries(lidar_apollo_instance_segmentation
     tensorrt_apollo_cnn_lib
+  )
+
+  rclcpp_components_register_node(lidar_apollo_instance_segmentation
+    PLUGIN "LidarInstanceSegmentationNode"
+    EXECUTABLE lidar_apollo_instance_segmentation_node
   )
 
 if(BUILD_TESTING)

@@ -41,6 +41,5 @@ private:
   void pointCloudCallback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);
 
 public:
-  LidarInstanceSegmentationNode();
-  ~LidarInstanceSegmentationNode() {}
+  explicit LidarInstanceSegmentationNode(const rclcpp::NodeOptions & node_options);
 };

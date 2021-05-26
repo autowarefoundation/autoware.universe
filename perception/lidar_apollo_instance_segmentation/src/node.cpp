@@ -15,8 +15,9 @@
 #include "lidar_apollo_instance_segmentation/node.hpp"
 #include "lidar_apollo_instance_segmentation/detector.hpp"
 
-LidarInstanceSegmentationNode::LidarInstanceSegmentationNode()
-: Node("lidar_apollo_instance_segmentation_node")
+LidarInstanceSegmentationNode::LidarInstanceSegmentationNode(
+  const rclcpp::NodeOptions & node_options)
+: Node("lidar_apollo_instance_segmentation_node", node_options)
 {
   using std::placeholders::_1;
   detector_ptr_ = std::make_shared<LidarApolloInstanceSegmentation>(this);
@@ -38,3 +39,6 @@ void LidarInstanceSegmentationNode::pointCloudCallback(
   dynamic_objects_pub_->publish(output_msg);
   debugger_ptr_->publishColoredPointCloud(output_msg);
 }
+
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(LidarInstanceSegmentationNode)
