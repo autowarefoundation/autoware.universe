@@ -89,7 +89,7 @@ private:
     std::vector<lanelet::Lanelet> & closest_lanelets, std::string uuid_string);
 
 public:
-  MapBasedPredictionROS();
+  explicit MapBasedPredictionROS(const rclcpp::NodeOptions & node_options);
 };
 
 #endif  // MAP_BASED_PREDICTION_ROS_HPP_

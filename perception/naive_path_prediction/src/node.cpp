@@ -24,7 +24,8 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
 
-NaivePathPredictionNode::NaivePathPredictionNode() : Node("naive_path_prediction_node")
+NaivePathPredictionNode::NaivePathPredictionNode(const rclcpp::NodeOptions & node_options)
+: Node("naive_path_prediction_node", node_options)
 {
   using std::placeholders::_1;
   sub_ = this->create_subscription<autoware_perception_msgs::msg::DynamicObjectArray>("input", 1, std::bind(&NaivePathPredictionNode::callback, this, _1));
@@ -72,12 +73,5 @@ void NaivePathPredictionNode::callback(
   return;
 }
 
-int main(int argc, char ** argv)
-{
-  rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<NaivePathPredictionNode>());
-
-  rclcpp::shutdown();
-
-  return 0;
-}
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(NaivePathPredictionNode)

@@ -185,8 +185,9 @@ double calculateDistance(
   return distance;
 }
 
-MapBasedPredictionROS::MapBasedPredictionROS()
-: Node("map_based_prediction"), interpolating_resolution_(0.5)
+MapBasedPredictionROS::MapBasedPredictionROS(const rclcpp::NodeOptions & node_options)
+: Node("map_based_prediction", node_options),
+  interpolating_resolution_(0.5)
 {
   rclcpp::Clock::SharedPtr clock = std::make_shared<rclcpp::Clock>(RCL_ROS_TIME);
   tf_buffer_ptr_ = std::make_shared<tf2_ros::Buffer>(clock);
@@ -442,3 +443,6 @@ void MapBasedPredictionROS::mapCallback(
     *msg, lanelet_map_ptr_, &traffic_rules_ptr_, &routing_graph_ptr_);
   RCLCPP_INFO(get_logger(), "Map is loaded");
 }
+
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(MapBasedPredictionROS)

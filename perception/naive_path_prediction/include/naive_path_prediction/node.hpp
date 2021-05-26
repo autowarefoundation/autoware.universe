@@ -30,7 +30,5 @@ private:
   void callback(const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr input_msg);
 
 public:
-  NaivePathPredictionNode();
-
-  ~NaivePathPredictionNode(){};
+  explicit NaivePathPredictionNode(const rclcpp::NodeOptions & node_options);
 };
