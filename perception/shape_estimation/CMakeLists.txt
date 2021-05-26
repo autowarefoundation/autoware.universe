@@ -21,8 +21,7 @@ find_package(OpenCV REQUIRED)
 find_package(Eigen3 REQUIRED)
 
 
-set(SHAPE_ESTIMATION_CPPS
-  src/main.cpp
+set(SHAPE_ESTIMATION_SOURCES
   src/node.cpp
   src/shape_estimator.cpp
   src/model/normal/bounding_box.cpp
@@ -43,7 +42,7 @@ set(SHAPE_ESTIMATION_CPPS
   src/corrector/yaw_fixed/no_corrector.cpp
 )
 
-set(SHAPE_ESTIMATION_HPPS
+set(SHAPE_ESTIMATION_HEADERS
   src/model/normal/bounding_box.hpp
   src/model/normal/convex_hull.hpp
   src/model/normal/cylinder.hpp
@@ -62,9 +61,9 @@ set(SHAPE_ESTIMATION_HPPS
   src/corrector/yaw_fixed/no_corrector.hpp
 )
 
-ament_auto_add_executable(shape_estimation
-  ${SHAPE_ESTIMATION_CPPS}
-  ${SHAPE_ESTIMATION_HPPS}
+ament_auto_add_library(shape_estimation_node SHARED
+  ${SHAPE_ESTIMATION_SOURCES}
+  ${SHAPE_ESTIMATION_HEADERS}
 )
 
 set(SHAPE_ESTIMATION_DEPENDENCIES
@@ -78,13 +77,18 @@ set(SHAPE_ESTIMATION_DEPENDENCIES
   OpenCV
   Eigen3
 )
-ament_target_dependencies(shape_estimation ${SHAPE_ESTIMATION_DEPENDENCIES})
-target_include_directories(shape_estimation
+ament_target_dependencies(shape_estimation_node ${SHAPE_ESTIMATION_DEPENDENCIES})
+target_include_directories(shape_estimation_node
     PUBLIC
         $<INSTALL_INTERFACE:include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
+rclcpp_components_register_node(shape_estimation_node
+  PLUGIN "ShapeEstimationNode"
+  EXECUTABLE shape_estimation
 )
 
 if(BUILD_TESTING)

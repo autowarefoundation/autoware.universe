@@ -38,7 +38,5 @@ private:
   std::unique_ptr<ShapeEstimator> estimator_;
 
 public:
-  ShapeEstimationNode();
-
-  ~ShapeEstimationNode() {}
+  explicit ShapeEstimationNode(const rclcpp::NodeOptions & node_options);
 };

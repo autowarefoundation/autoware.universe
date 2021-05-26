@@ -20,8 +20,8 @@
 #include "shape_estimation/node.hpp"
 #include "shape_estimation/shape_estimator.hpp"
 
-ShapeEstimationNode::ShapeEstimationNode()
-: Node("shape_estimation")
+ShapeEstimationNode::ShapeEstimationNode(const rclcpp::NodeOptions & node_options)
+: Node("shape_estimation", node_options)
 {
   using std::placeholders::_1;
   sub_ = create_subscription<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>(
@@ -73,3 +73,6 @@ void ShapeEstimationNode::callback(
   // Publish
   pub_->publish(output_msg);
 }
+
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(ShapeEstimationNode)
