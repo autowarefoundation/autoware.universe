@@ -19,21 +19,19 @@ include_directories(
   include
 )
 
-ament_auto_add_executable(object_association_merger_node
+ament_auto_add_library(object_association_merger SHARED
   src/object_association_merger/utils/utils.cpp
   src/object_association_merger/data_association/data_association.cpp
   src/object_association_merger/data_association/successive_shortest_path/successive_shortest_path.cpp
   src/object_association_merger/node.cpp
-  src/object_association_merger/main.cpp
 )
-target_compile_definitions(object_association_merger_node PRIVATE ${PCL_DEFINITIONS})
-target_include_directories(object_association_merger_node PRIVATE ${PCL_INCLUDE_DIRS})
-# Unfortunately, this one can't be PRIVATE because only the plain or only the
-# keyword (PRIVATE) signature of target_link_libraries can be used for one
-# target, not both. The plain signature is already used inside
-# `ament_target_dependencies` and possibly rosidl_target_interfaces.
-target_link_libraries(object_association_merger_node ${PCL_LIBRARIES})
-target_link_directories(object_association_merger_node PRIVATE ${PCL_LIBRARY_DIRS})
+
+target_link_libraries(object_association_merger ${PCL_LIBRARIES})
+
+rclcpp_components_register_node(object_association_merger
+  PLUGIN "object_association::ObjectAssociationMergerNode"
+  EXECUTABLE object_association_merger_node
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

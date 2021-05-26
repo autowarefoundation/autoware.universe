@@ -28,8 +28,8 @@
 
 namespace object_association
 {
-ObjectAssociationMergerNode::ObjectAssociationMergerNode()
-: rclcpp::Node("cluster_data_association_node"),
+ObjectAssociationMergerNode::ObjectAssociationMergerNode(const rclcpp::NodeOptions & node_options)
+: rclcpp::Node("cluster_data_association_node", node_options),
   tf_buffer_(get_clock()),
   tf_listener_(tf_buffer_),
   object0_sub_(this, "input/object0", rclcpp::QoS{1}.get_rmw_qos_profile()),
@@ -96,3 +96,6 @@ void ObjectAssociationMergerNode::objectsCallback(
   merged_object_pub_->publish(output_msg);
 }
 }  // namespace object_association
+
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(object_association::ObjectAssociationMergerNode)

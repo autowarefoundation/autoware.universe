@@ -13,6 +13,7 @@
   <depend>pcl_conversions</depend>
   <depend>libpcl-all-dev</depend>
   <depend>rclcpp</depend>
+  <depend>rclcpp_components</depend>
   <depend>sensor_msgs</depend>
   <depend>tf2</depend>
   <depend>tf2_ros</depend>

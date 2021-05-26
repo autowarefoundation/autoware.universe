@@ -32,8 +32,7 @@ namespace object_association
 class ObjectAssociationMergerNode : public rclcpp::Node
 {
 public:
-  ObjectAssociationMergerNode();
-  ~ObjectAssociationMergerNode() = default;
+  explicit ObjectAssociationMergerNode(const rclcpp::NodeOptions & node_options);
 
 private:
   void objectsCallback(
