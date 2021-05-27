@@ -24,22 +24,21 @@ using DebugData = StopLineModule::DebugData;
 visualization_msgs::msg::MarkerArray createMarkers(
   const DebugData & debug_data, const int64_t module_id)
 {
-  int32_t uid = planning_utils::bitShift(module_id);
   visualization_msgs::msg::MarkerArray msg;
   tf2::Transform tf_base_link2front(
     tf2::Quaternion(0.0, 0.0, 0.0, 1.0), tf2::Vector3(debug_data.base_link2front, 0.0, 0.0));
 
   // Stop VirtualWall
-  for (size_t j = 0; j < debug_data.stop_poses.size(); ++j) {
+  if (debug_data.stop_pose) {
     visualization_msgs::msg::Marker marker;
     marker.header.frame_id = "map";
     marker.ns = "stop_virtual_wall";
-    marker.id = uid + j;
+    marker.id = module_id;
     marker.lifetime = rclcpp::Duration::from_seconds(0.5);
     marker.type = visualization_msgs::msg::Marker::CUBE;
     marker.action = visualization_msgs::msg::Marker::ADD;
     tf2::Transform tf_map2base_link;
-    tf2::fromMsg(debug_data.stop_poses.at(j), tf_map2base_link);
+    tf2::fromMsg(*debug_data.stop_pose, tf_map2base_link);
     tf2::Transform tf_map2front = tf_map2base_link * tf_base_link2front;
     tf2::toMsg(tf_map2front, marker.pose);
     marker.pose.position.z += 1.0;
@@ -52,17 +51,18 @@ visualization_msgs::msg::MarkerArray createMarkers(
     marker.color.b = 0.0;
     msg.markers.push_back(marker);
   }
+
   // Factor Text
-  for (size_t j = 0; j < debug_data.stop_poses.size(); ++j) {
+  if (debug_data.stop_pose) {
     visualization_msgs::msg::Marker marker;
     marker.header.frame_id = "map";
     marker.ns = "factor_text";
-    marker.id = uid + j;
+    marker.id = module_id;
     marker.lifetime = rclcpp::Duration::from_seconds(0.5);
     marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
     marker.action = visualization_msgs::msg::Marker::ADD;
     tf2::Transform tf_map2base_link;
-    tf2::fromMsg(debug_data.stop_poses.at(j), tf_map2base_link);
+    tf2::fromMsg(*debug_data.stop_pose, tf_map2base_link);
     tf2::Transform tf_map2front = tf_map2base_link * tf_base_link2front;
     tf2::toMsg(tf_map2front, marker.pose);
     marker.pose.position.z += 2.0;

@@ -16,6 +16,7 @@
 #define SCENE_MODULE__STOP_LINE__SCENE_HPP_
 
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #define EIGEN_MPL2_ONLY
@@ -29,17 +30,35 @@
 #include "lanelet2_routing/RoutingGraph.h"
 
 #include "scene_module/scene_module_interface.hpp"
+#include "utilization/boost_geometry_helper.hpp"
 
 class StopLineModule : public SceneModuleInterface
 {
 public:
-  enum class State { APPROACH, STOP, START };
+  enum class State { APPROACH, STOPPED, START };
+
+  struct SegmentIndexWithPose
+  {
+    size_t index;
+    geometry_msgs::msg::Pose pose;
+  };
+
+  struct SegmentIndexWithPoint2d
+  {
+    size_t index;
+    Point2d point;
+  };
+
+  struct SegmentIndexWithOffset
+  {
+    size_t index;
+    double offset;
+  };
 
   struct DebugData
   {
     double base_link2front;
-    std::vector<geometry_msgs::msg::Pose> stop_poses;
-    geometry_msgs::msg::Pose first_stop_pose;
+    boost::optional<geometry_msgs::msg::Pose> stop_pose;
   };
 
   struct PlannerParam
@@ -63,12 +82,23 @@ public:
 private:
   int64_t module_id_;
 
-  bool getBackwardPointFromBasePoint(
-    const Eigen::Vector2d & line_point1, const Eigen::Vector2d & line_point2,
-    const Eigen::Vector2d & base_point, const double backward_length,
-    Eigen::Vector2d & output_point);
-
   geometry_msgs::msg::Point getCenterOfStopLine(const lanelet::ConstLineString3d & stop_line);
+
+  boost::optional<StopLineModule::SegmentIndexWithPoint2d> findCollision(
+    const autoware_planning_msgs::msg::PathWithLaneId & path, const LineString2d & stop_line);
+
+  boost::optional<StopLineModule::SegmentIndexWithOffset> findOffsetSegment(
+    const autoware_planning_msgs::msg::PathWithLaneId & path,
+    const StopLineModule::SegmentIndexWithPoint2d & collision);
+
+  boost::optional<StopLineModule::SegmentIndexWithPose> calcStopPose(
+    const autoware_planning_msgs::msg::PathWithLaneId & path,
+    const boost::optional<StopLineModule::SegmentIndexWithOffset> & offset_segment);
+
+  autoware_planning_msgs::msg::PathWithLaneId insertStopPose(
+    const autoware_planning_msgs::msg::PathWithLaneId & path,
+    const StopLineModule::SegmentIndexWithPose & insert_index_with_pose,
+    autoware_planning_msgs::msg::StopReason * stop_reason);
 
   lanelet::ConstLineString3d stop_line_;
   State state_;

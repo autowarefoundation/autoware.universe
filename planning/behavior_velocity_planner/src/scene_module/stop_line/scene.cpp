@@ -19,8 +19,141 @@
 #include "utilization/util.hpp"
 
 namespace bg = boost::geometry;
-using Point = bg::model::d2::point_xy<double>;
-using Polygon = bg::model::polygon<Point>;
+
+namespace
+{
+double calcYawFromPoints(const geometry_msgs::msg::Point & p_front, const geometry_msgs::msg::Point & p_back)
+{
+  return std::atan2(p_back.y - p_front.y, p_back.x - p_front.x);
+}
+
+geometry_msgs::msg::Pose calcInterpolatedPose(
+  const autoware_planning_msgs::msg::PathWithLaneId & path,
+  const StopLineModule::SegmentIndexWithOffset & offset_segment)
+{
+  // Get segment points
+  const auto & p_front = path.points.at(offset_segment.index).point.pose.position;
+  const auto & p_back = path.points.at(offset_segment.index + 1).point.pose.position;
+
+  // To Eigen point
+  const auto p_eigen_front = Eigen::Vector2d(p_front.x, p_front.y);
+  const auto p_eigen_back = Eigen::Vector2d(p_back.x, p_back.y);
+
+  // Calculate direction vector
+  const auto direction_vector = (p_eigen_back - p_eigen_front).normalized();
+
+  // Add offset to front point
+  const auto interpolated_point_2d = p_eigen_front + offset_segment.offset * direction_vector;
+
+  // Interpolate Z
+  const auto interpolated_z = (p_front.z + p_back.z) / 2;
+
+  // Calculate orientation so that X-axis would be along the trajectory
+  tf2::Quaternion quat;
+  quat.setRPY(0, 0, calcYawFromPoints(p_front, p_back));
+
+  // To Pose
+  geometry_msgs::msg::Pose interpolated_pose;
+  interpolated_pose.position.x = interpolated_point_2d.x();
+  interpolated_pose.position.y = interpolated_point_2d.y();
+  interpolated_pose.position.z = interpolated_z;
+  interpolated_pose.orientation = tf2::toMsg(quat);
+
+  return interpolated_pose;
+}
+
+boost::optional<StopLineModule::SegmentIndexWithOffset> findBackwardOffsetSegment(
+  const autoware_planning_msgs::msg::PathWithLaneId & path, const size_t base_idx,
+  const double offset_length)
+{
+  double sum_length = 0.0;
+  for (size_t i = base_idx - 1; i >= 0; --i) {
+    // Avoid overflow
+    if (i >= base_idx) {
+      break;
+    }
+
+    const auto p_front = to_bg2d(path.points.at(i).point.pose.position);
+    const auto p_back = to_bg2d(path.points.at(i + 1).point.pose.position);
+
+    sum_length += bg::distance(p_front, p_back);
+
+    // If it's over offset point, return front index and remain offset length
+    if (sum_length >= offset_length) {
+      return StopLineModule::SegmentIndexWithOffset{i, sum_length - offset_length};
+    }
+  }
+
+  // No enough path length
+  return {};
+}
+
+StopLineModule::SegmentIndexWithOffset findNearestSegment(
+  const autoware_planning_msgs::msg::PathWithLaneId & path, const geometry_msgs::msg::Point & point)
+{
+  std::vector<double> distances;
+  distances.reserve(path.points.size());
+
+  std::transform(
+    path.points.cbegin(), path.points.cend(), std::back_inserter(distances),
+    [&point](const autoware_planning_msgs::msg::PathPointWithLaneId & p) {
+      return planning_utils::calcDist2d(p.point.pose.position, point);
+    });
+
+  const auto min_itr = std::min_element(distances.cbegin(), distances.cend());
+  const auto min_idx = static_cast<size_t>(std::distance(distances.cbegin(), min_itr));
+
+  // Process boundary conditions
+  if (min_idx == 0 || min_idx == path.points.size() - 1) {
+    const size_t segment_idx = min_idx == 0 ? min_idx : min_idx - 1;
+
+    return StopLineModule::SegmentIndexWithOffset{
+      segment_idx, planning_utils::calcDist2d(path.points.at(segment_idx), point)};
+  }
+
+  // Process normal conditions(having previous and next points)
+  const auto & p_prev = path.points.at(min_idx - 1);
+  const auto d_prev = planning_utils::calcDist2d(p_prev, point);
+
+  const auto & p_next = path.points.at(min_idx + 1);
+  const auto d_next = planning_utils::calcDist2d(p_next, point);
+
+  const size_t segment_idx = (d_prev <= d_next) ? min_idx - 1 : min_idx;
+
+  return StopLineModule::SegmentIndexWithOffset{
+    segment_idx, planning_utils::calcDist2d(path.points.at(segment_idx), point)};
+}
+
+double calcSignedArcLength(
+  const autoware_planning_msgs::msg::PathWithLaneId & path, const size_t & idx_front,
+  const size_t & idx_back)
+{
+  // If flipped, reverse index and take negative
+  if (idx_front > idx_back) {
+    return -calcSignedArcLength(path, idx_back, idx_front);
+  }
+
+  double sum_length = 0.0;
+  for (size_t i = idx_front; i < idx_back; ++i) {
+    const auto & p1 = path.points.at(i).point.pose.position;
+    const auto & p2 = path.points.at(i + 1).point.pose.position;
+    sum_length += planning_utils::calcDist2d(p1, p2);
+  }
+
+  return sum_length;
+}
+
+double calcSignedArcLength(
+  const autoware_planning_msgs::msg::PathWithLaneId & path, const geometry_msgs::msg::Point & p1,
+  const geometry_msgs::msg::Point & p2)
+{
+  const auto seg_1 = findNearestSegment(path, p1);
+  const auto seg_2 = findNearestSegment(path, p2);
+
+  return -seg_1.offset + calcSignedArcLength(path, seg_1.index, seg_2.index) + seg_2.offset;
+}
+
+}  // namespace
 
 StopLineModule::StopLineModule(
   const int64_t module_id, const lanelet::ConstLineString3d & stop_line,
@@ -34,6 +167,95 @@ StopLineModule::StopLineModule(
   planner_param_ = planner_param;
 }
 
+boost::optional<StopLineModule::SegmentIndexWithPoint2d> StopLineModule::findCollision(
+  const autoware_planning_msgs::msg::PathWithLaneId & path, const LineString2d & stop_line)
+{
+  for (size_t i = 0; i < path.points.size() - 1; ++i) {
+    const auto & p_front = path.points.at(i).point.pose.position;
+    const auto & p_back = path.points.at(i + 1).point.pose.position;
+
+    // Find intersection
+    const LineString2d path_segment = {{p_front.x, p_front.y}, {p_back.x, p_back.y}};
+    std::vector<Point2d> collision_points;
+    bg::intersection(stop_line, path_segment, collision_points);
+
+    // Ignore if no collision found
+    if (collision_points.empty()) {
+      continue;
+    }
+
+    // Select first collision
+    const auto & collision_point = collision_points.at(0);
+
+    return StopLineModule::SegmentIndexWithPoint2d{i, collision_point};
+  }
+
+  return {};
+}
+
+boost::optional<StopLineModule::SegmentIndexWithOffset> StopLineModule::findOffsetSegment(
+  const autoware_planning_msgs::msg::PathWithLaneId & path,
+  const StopLineModule::SegmentIndexWithPoint2d & collision)
+{
+  const auto base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
+  const auto base_backward_length = planner_param_.stop_margin + base_link2front;
+
+  const auto & p_front = to_bg2d(path.points.at(collision.index).point.pose.position);
+  const auto & p_back = to_bg2d(path.points.at(collision.index + 1).point.pose.position);
+
+  return findBackwardOffsetSegment(
+    path, collision.index + 1, base_backward_length + bg::distance(p_back, collision.point));
+}
+
+boost::optional<StopLineModule::SegmentIndexWithPose> StopLineModule::calcStopPose(
+  const autoware_planning_msgs::msg::PathWithLaneId & path,
+  const boost::optional<StopLineModule::SegmentIndexWithOffset> & offset_segment)
+{
+  // If no stop point found due to out of range, use front point on path
+  if (!offset_segment) {
+    return StopLineModule::SegmentIndexWithPose{0, path.points.front().point.pose};
+  }
+
+  return StopLineModule::SegmentIndexWithPose{
+    offset_segment->index, calcInterpolatedPose(path, *offset_segment)};
+}
+
+autoware_planning_msgs::msg::PathWithLaneId StopLineModule::insertStopPose(
+  const autoware_planning_msgs::msg::PathWithLaneId & path,
+  const StopLineModule::SegmentIndexWithPose & stop_pose_with_index,
+  autoware_planning_msgs::msg::StopReason * stop_reason)
+{
+  auto modified_path = path;
+
+  // Insert stop pose to between segment start and end
+  const int insert_index = stop_pose_with_index.index + 1;
+  auto stop_point_with_lane_id = modified_path.points.at(insert_index);
+  stop_point_with_lane_id.point.pose = stop_pose_with_index.pose;
+  stop_point_with_lane_id.point.twist.linear.x = 0.0;
+
+  // Update first stop index
+  first_stop_path_point_index_ = insert_index;
+  debug_data_.stop_pose = stop_point_with_lane_id.point.pose;
+
+  // Insert stop point
+  modified_path.points.insert(modified_path.points.begin() + insert_index, stop_point_with_lane_id);
+
+  // Insert 0 velocity after stop point
+  for (size_t j = insert_index; j < modified_path.points.size(); ++j) {
+    modified_path.points.at(j).point.twist.linear.x = 0.0;
+  }
+
+  // Get stop point and stop factor
+  {
+    autoware_planning_msgs::msg::StopFactor stop_factor;
+    stop_factor.stop_pose = stop_point_with_lane_id.point.pose;
+    stop_factor.stop_factor_points.push_back(getCenterOfStopLine(stop_line_));
+    planning_utils::appendStopReason(stop_factor, stop_reason);
+  }
+
+  return modified_path;
+}
+
 bool StopLineModule::modifyPathVelocity(
   autoware_planning_msgs::msg::PathWithLaneId * path,
   autoware_planning_msgs::msg::StopReason * stop_reason)
@@ -44,98 +266,55 @@ bool StopLineModule::modifyPathVelocity(
   *stop_reason =
     planning_utils::initializeStopReason(autoware_planning_msgs::msg::StopReason::STOP_LINE);
 
-  Eigen::Vector2d stop_point;
-  bg::model::linestring<Point> stop_line = {
+  const LineString2d stop_line = {
     {stop_line_[0].x(), stop_line_[0].y()}, {stop_line_[1].x(), stop_line_[1].y()}};
 
-  if (state_ == State::APPROACH) {
-    for (size_t i = 0; i < path->points.size() - 1; ++i) {
-      bg::model::linestring<Point> line = {
-        {path->points.at(i).point.pose.position.x, path->points.at(i).point.pose.position.y},
-        {path->points.at(i + 1).point.pose.position.x,
-          path->points.at(i + 1).point.pose.position.y}};
-      std::vector<Point> collision_points;
-      bg::intersection(stop_line, line, collision_points);
-      if (collision_points.empty()) {
-        continue;
-      }
+  // Find collision
+  const auto collision = findCollision(*path, stop_line);
 
-      // search stop point index
-      size_t insert_stop_point_idx = 0;
-      const double base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
-      double length_sum = 0;
-
-      const double stop_length = planner_param_.stop_margin + base_link2front;
-      Eigen::Vector2d point1, point2;
-      point1 << collision_points.at(0).x(), collision_points.at(0).y();
-      point2 << path->points.at(i).point.pose.position.x, path->points.at(i).point.pose.position.y;
-      length_sum += (point2 - point1).norm();
-      for (size_t j = i; 0 < j; --j) {
-        if (stop_length < length_sum) {
-          insert_stop_point_idx = j + 1;
-          break;
-        }
-        point1 << path->points.at(j).point.pose.position.x,
-          path->points.at(j).point.pose.position.y;
-        point2 << path->points.at(j - 1).point.pose.position.x,
-          path->points.at(j - 1).point.pose.position.y;
-        length_sum += (point2 - point1).norm();
-      }
-
-      // create stop point
-      autoware_planning_msgs::msg::PathPointWithLaneId stop_point_with_lane_id;
-      getBackwardPointFromBasePoint(point2, point1, point2, length_sum - stop_length, stop_point);
-      const int stop_point_idx = std::max(static_cast<int>(insert_stop_point_idx - 1), 0);
-      stop_point_with_lane_id = path->points.at(stop_point_idx);
-      stop_point_with_lane_id.point.pose.position.x = stop_point.x();
-      stop_point_with_lane_id.point.pose.position.y = stop_point.y();
-      stop_point_with_lane_id.point.twist.linear.x = 0.0;
-      if (stop_point_idx < first_stop_path_point_index_) {
-        first_stop_path_point_index_ = stop_point_idx;
-        debug_data_.first_stop_pose = stop_point_with_lane_id.point.pose;
-      }
-      debug_data_.stop_poses.push_back(stop_point_with_lane_id.point.pose);
-
-      // insert stop point
-      path->points.insert(path->points.begin() + insert_stop_point_idx, stop_point_with_lane_id);
-
-      // insert 0 velocity after stop point
-      for (size_t j = insert_stop_point_idx; j < path->points.size(); ++j) {
-        path->points.at(j).point.twist.linear.x = 0.0;
-      }
-
-      // get stop point and stop factor
-      if (state_ != State::START) {
-        autoware_planning_msgs::msg::StopFactor stop_factor;
-        stop_factor.stop_pose = debug_data_.first_stop_pose;
-        stop_factor.stop_factor_points.emplace_back(getCenterOfStopLine(stop_line_));
-        planning_utils::appendStopReason(stop_factor, stop_reason);
-      }
-
-      break;
-    }
-
-    // update state
-    geometry_msgs::msg::PoseStamped self_pose = planner_data_->current_pose;
-    const double x = stop_point.x() - self_pose.pose.position.x;
-    const double y = stop_point.y() - self_pose.pose.position.y;
-    const double dist = std::sqrt(x * x + y * y);
-    if (dist < planner_param_.stop_check_dist && planner_data_->isVehicleStopping()) {
-      state_ = State::STOP;
-    }
-  } else if (state_ == State::STOP) {
-    if (!planner_data_->isVehicleStopping()) {state_ = State::START;}
+  // If no collision found, do nothing
+  if (!collision) {
+    return true;
   }
-  return true;
-}
 
-bool StopLineModule::getBackwardPointFromBasePoint(
-  const Eigen::Vector2d & line_point1, const Eigen::Vector2d & line_point2,
-  const Eigen::Vector2d & base_point, const double backward_length, Eigen::Vector2d & output_point)
-{
-  Eigen::Vector2d line_vec = line_point2 - line_point1;
-  Eigen::Vector2d backward_vec = backward_length * line_vec.normalized();
-  output_point = base_point + backward_vec;
+  // Find offset segment
+  const auto offset_segment = findOffsetSegment(*path, *collision);
+
+  // Calculate stop pose and insert index
+  const auto stop_pose_with_index = calcStopPose(*path, offset_segment);
+
+  // Calc dist to stop pose
+  const double signed_arc_dist_to_stop_point = calcSignedArcLength(
+    *path, planner_data_->current_pose.pose.position, stop_pose_with_index->pose.position);
+
+  if (state_ == State::APPROACH) {
+    // Insert stop pose
+    *path = insertStopPose(*path, *stop_pose_with_index, stop_reason);
+
+    // Move to stopped state if stopped
+    if (
+      std::abs(signed_arc_dist_to_stop_point) < planner_param_.stop_check_dist &&
+      planner_data_->isVehicleStopping()) {
+      RCLCPP_INFO(logger_, "APPROACH -> STOPPED");
+      state_ = State::STOPPED;
+    }
+  } else if (state_ == State::STOPPED) {
+    // Change state after vehicle departure
+    if (!planner_data_->isVehicleStopping()) {
+      RCLCPP_INFO(logger_, "STOPPED -> START");
+      state_ = State::START;
+    }
+  } else if (state_ == State::START) {
+    // Initialize if vehicle is far from stop_line
+    constexpr bool use_initialization_after_start = false;
+    if (use_initialization_after_start) {
+      if (signed_arc_dist_to_stop_point > planner_param_.stop_check_dist) {
+        RCLCPP_INFO(logger_, "START -> APPROACH");
+        state_ = State::APPROACH;
+      }
+    }
+  }
+
   return true;
 }
 
