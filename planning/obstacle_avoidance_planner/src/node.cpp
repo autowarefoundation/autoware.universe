@@ -85,7 +85,7 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
 
   is_publishing_area_with_objects_ = declare_parameter("is_publishing_area_with_objects", false);
   is_publishing_clearance_map_ = declare_parameter("is_publishing_clearance_map", false);
-  is_showing_debug_info_ = declare_parameter("is_showing_debug_info", true);
+  is_showing_debug_info_ = declare_parameter("is_showing_debug_info", false);
   is_using_vehicle_config_ = declare_parameter("is_using_vehicle_config", false);
   is_stopping_if_outside_drivable_area_ =
     declare_parameter("is_stopping_if_outside_drivable_area", true);
@@ -760,14 +760,14 @@ Trajectories ObstacleAvoidancePlanner::getBaseTrajectory(
   const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points,
   const Trajectories & trajs) const
 {
-  auto basee_trajs = trajs;
+  auto base_trajs = trajs;
   if (!trajs.extended_trajectory.empty()) {
     const auto extended_point_opt = util::getLastExtendedTrajPoint(
       path_points.back(), trajs.extended_trajectory.back().pose,
       traj_param_->delta_yaw_threshold_for_closest_point,
       traj_param_->max_dist_for_extending_end_point);
     if (extended_point_opt) {
-      basee_trajs.extended_trajectory.push_back(extended_point_opt.get());
+      base_trajs.extended_trajectory.push_back(extended_point_opt.get());
     }
   } else if (!trajs.model_predictive_trajectory.empty()) {
     const auto extended_point_opt = util::getLastExtendedTrajPoint(
@@ -775,25 +775,25 @@ Trajectories ObstacleAvoidancePlanner::getBaseTrajectory(
       traj_param_->delta_yaw_threshold_for_closest_point,
       traj_param_->max_dist_for_extending_end_point);
     if (extended_point_opt) {
-      basee_trajs.extended_trajectory.push_back(extended_point_opt.get());
+      base_trajs.extended_trajectory.push_back(extended_point_opt.get());
     }
   }
   double prev_velocity = 1e4;
-  for (auto & p : basee_trajs.model_predictive_trajectory) {
+  for (auto & p : base_trajs.model_predictive_trajectory) {
     if (p.twist.linear.x < 1e-6) {
       p.twist.linear.x = prev_velocity;
     } else {
       prev_velocity = p.twist.linear.x;
     }
   }
-  for (auto & p : basee_trajs.extended_trajectory) {
+  for (auto & p : base_trajs.extended_trajectory) {
     if (p.twist.linear.x < 1e-6) {
       p.twist.linear.x = prev_velocity;
     } else {
       prev_velocity = p.twist.linear.x;
     }
   }
-  return basee_trajs;
+  return base_trajs;
 }
 
 boost::optional<int> ObstacleAvoidancePlanner::getStopIdx(
