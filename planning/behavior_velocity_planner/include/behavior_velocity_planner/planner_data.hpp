@@ -15,9 +15,13 @@
 #ifndef BEHAVIOR_VELOCITY_PLANNER__PLANNER_DATA_HPP_
 #define BEHAVIOR_VELOCITY_PLANNER__PLANNER_DATA_HPP_
 
-#include <boost/optional.hpp>
+#include <algorithm>
+#include <deque>
 #include <map>
 #include <memory>
+#include <vector>
+
+#include "boost/optional.hpp"
 
 #include "tf2_ros/transform_listener.h"
 
@@ -58,6 +62,8 @@ struct PlannerData
   // msgs from callbacks that are used for data-ready
   geometry_msgs::msg::TwistStamped::ConstSharedPtr current_velocity;
   geometry_msgs::msg::TwistStamped::ConstSharedPtr prev_velocity;
+  static constexpr double velocity_buffer_time_sec = 10.0;
+  std::deque<geometry_msgs::msg::TwistStamped> velocity_buffer;
   autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr dynamic_objects;
   pcl::PointCloud<pcl::PointXYZ>::ConstPtr no_ground_pointcloud;
   lanelet::LaneletMapPtr lanelet_map;
@@ -106,12 +112,31 @@ struct PlannerData
     prev_accel = current_accel;
   }
 
-  bool isVehicleStopping() const
+  bool isVehicleStopped(const double stop_duration = 0.0) const
   {
-    if (!current_velocity) {
-      return false;
+    if (velocity_buffer.empty()) return false;
+
+    // Get velocities within stop_duration
+    const auto now = rclcpp::Clock{RCL_ROS_TIME}.now();
+    std::vector<double> vs;
+    for (const auto & velocity : velocity_buffer) {
+      vs.push_back(velocity.twist.linear.x);
+
+      const auto time_diff = now - velocity.header.stamp;
+      if (time_diff.seconds() >= stop_duration) {
+        break;
+      }
     }
-    return current_velocity->twist.linear.x < 0.1;
+
+    // Check all velocities
+    constexpr double stop_velocity = 0.1;
+    for (const auto & v : vs) {
+      if (v >= stop_velocity) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   std::shared_ptr<autoware_perception_msgs::msg::TrafficLightStateStamped> getTrafficLightState(

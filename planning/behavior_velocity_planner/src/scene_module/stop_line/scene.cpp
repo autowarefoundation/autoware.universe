@@ -294,13 +294,13 @@ bool StopLineModule::modifyPathVelocity(
     // Move to stopped state if stopped
     if (
       std::abs(signed_arc_dist_to_stop_point) < planner_param_.stop_check_dist &&
-      planner_data_->isVehicleStopping()) {
+      planner_data_->isVehicleStopped(planner_param_.stop_duration_sec)) {
       RCLCPP_INFO(logger_, "APPROACH -> STOPPED");
       state_ = State::STOPPED;
     }
   } else if (state_ == State::STOPPED) {
     // Change state after vehicle departure
-    if (!planner_data_->isVehicleStopping()) {
+    if (!planner_data_->isVehicleStopped()) {
       RCLCPP_INFO(logger_, "STOPPED -> START");
       state_ = State::START;
     }

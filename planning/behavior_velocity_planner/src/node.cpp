@@ -196,6 +196,22 @@ void BehaviorVelocityPlannerNode::onVehicleVelocity(
 {
   planner_data_.current_velocity = msg;
   planner_data_.updateCurrentAcc();
+
+  // Add velocity to buffer
+  planner_data_.velocity_buffer.push_front(*msg);
+  const auto now = this->now();
+  while (true) {
+    // Check oldest data time
+    const auto time_diff = now - planner_data_.velocity_buffer.back().header.stamp;
+
+    // Finish when oldest data is newer than threshold
+    if (time_diff.seconds() <= PlannerData::velocity_buffer_time_sec) {
+      break;
+    }
+
+    // Remove old data
+    planner_data_.velocity_buffer.pop_back();
+  }
 }
 
 void BehaviorVelocityPlannerNode::onLaneletMap(

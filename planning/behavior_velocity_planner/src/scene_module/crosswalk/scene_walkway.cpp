@@ -88,10 +88,10 @@ bool WalkwayModule::modifyPathVelocity(
     const double distance = bg::distance(stop_pose, self_pose);
     const double distance_threshold = 1.0;
     debug_data_.stop_judge_range = distance_threshold;
-    if (distance < distance_threshold && planner_data_->isVehicleStopping()) {state_ = State::STOP;}
+    if (distance < distance_threshold && planner_data_->isVehicleStopped()) {state_ = State::STOP;}
     return true;
   } else if (state_ == State::STOP) {
-    if (planner_data_->isVehicleStopping()) {
+    if (planner_data_->isVehicleStopped()) {
       state_ = State::SURPASSED;
     }
   } else if (state_ == State::SURPASSED) {

@@ -117,7 +117,7 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(
     const double distance =
       planning_utils::calcDist2d(current_pose.pose, path->points.at(stop_line_idx).point.pose);
     constexpr double distance_threshold = 2.0;
-    if (distance < distance_threshold && planner_data_->isVehicleStopping()) {
+    if (distance < distance_threshold && planner_data_->isVehicleStopped()) {
       state_machine_.setState(State::GO);
     }
 
