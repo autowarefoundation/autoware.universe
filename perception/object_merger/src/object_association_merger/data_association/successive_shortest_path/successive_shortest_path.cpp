@@ -72,16 +72,16 @@ void MaximizeLinearAssignment(
   int n_agents = cost.size();
   int n_tasks = cost.at(0).size();
 
-  int n_dummys;
+  int n_dummies;
   if (sparse_cost) {
-    n_dummys = n_agents;
+    n_dummies = n_agents;
   } else {
-    n_dummys = 0;
+    n_dummies = 0;
   }
 
   int source = 0;
   int sink = n_agents + n_tasks + 1;
-  int n_nodes = n_agents + n_tasks + n_dummys + 2;
+  int n_nodes = n_agents + n_tasks + n_dummies + 2;
 
   // // Print cost matrix
   // std::cout << std::endl;
@@ -119,9 +119,9 @@ void MaximizeLinearAssignment(
       adjacency_list.at(v).reserve(n_agents + 1);
     } else if (v == sink) {
       // Sink
-      adjacency_list.at(v).reserve(n_tasks + n_dummys);
+      adjacency_list.at(v).reserve(n_tasks + n_dummies);
     } else {
-      // Dummys
+      // Dummies
       adjacency_list.at(v).reserve(2);
     }
   }
