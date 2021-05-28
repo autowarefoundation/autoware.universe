@@ -30,6 +30,7 @@
 #include "autoware_vehicle_msgs/msg/shift_stamped.hpp"
 #include "autoware_vehicle_msgs/msg/turn_signal.hpp"
 #include "autoware_vehicle_msgs/msg/vehicle_command.hpp"
+#include "autoware_vehicle_msgs/msg/control_mode.hpp"
 
 // ROS2 core
 #include "diagnostic_msgs/msg/diagnostic_array.hpp"
@@ -54,12 +55,14 @@ private:
     sub_prev_control_command_;
   rclcpp::Subscription<autoware_control_msgs::msg::GateMode>::SharedPtr sub_current_gate_mode_;
   rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr sub_twist_;
+  rclcpp::Subscription<autoware_vehicle_msgs::msg::ControlMode>::SharedPtr sub_control_mode_;
 
   autoware_system_msgs::msg::AutowareState::ConstSharedPtr autoware_state_;
   autoware_system_msgs::msg::DrivingCapability::ConstSharedPtr driving_capability_;
   autoware_control_msgs::msg::ControlCommand::ConstSharedPtr prev_control_command_;
   autoware_control_msgs::msg::GateMode::ConstSharedPtr current_gate_mode_;
   geometry_msgs::msg::TwistStamped::ConstSharedPtr twist_;
+  autoware_vehicle_msgs::msg::ControlMode::ConstSharedPtr control_mode_;
 
   void onAutowareState(const autoware_system_msgs::msg::AutowareState::ConstSharedPtr msg);
   void onDrivingCapability(const autoware_system_msgs::msg::DrivingCapability::ConstSharedPtr msg);
@@ -67,6 +70,7 @@ private:
   void onPrevControlCommand(const autoware_vehicle_msgs::msg::VehicleCommand::ConstSharedPtr msg);
   void onCurrentGateMode(const autoware_control_msgs::msg::GateMode::ConstSharedPtr msg);
   void onTwist(const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg);
+  void onControlMode(const autoware_vehicle_msgs::msg::ControlMode::ConstSharedPtr msg);
   void onIsStateTimeout(
     const autoware_system_msgs::msg::TimeoutNotification::ConstSharedPtr msg);
 
@@ -99,6 +103,7 @@ private:
   double timeout_driving_capability_;
   int emergency_hazard_level_;
   bool use_emergency_hold_;
+  bool use_emergency_hold_in_manual_driving_;
   bool use_parking_after_stopped_;
 
   bool isDataReady();
@@ -111,10 +116,12 @@ private:
 
   // Algorithm
   bool is_emergency_ = false;
+  bool is_holding_emergency_ = false;
   autoware_system_msgs::msg::HazardStatus hazard_status_;
 
   bool isStopped();
   bool isEmergency(const autoware_system_msgs::msg::HazardStatus & hazard_status);
+  void updateHazardStatus();
   autoware_system_msgs::msg::HazardStatus judgeHazardStatus();
   autoware_control_msgs::msg::ControlCommand selectAlternativeControlCommand();
 };

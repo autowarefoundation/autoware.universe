@@ -67,14 +67,18 @@ diagnostic_msgs::msg::DiagnosticArray convertHazardStatusToDiagnosticArray(
 }  // namespace
 
 EmergencyHandler::EmergencyHandler()
-: Node("emergency_handler"),
-  update_rate_(declare_parameter<int>("update_rate", 10)),
-  data_ready_timeout_(declare_parameter<double>("data_ready_timeout", 30.0)),
-  timeout_driving_capability_(declare_parameter<double>("timeout_driving_capability", 0.5)),
-  emergency_hazard_level_(declare_parameter<int>("emergency_hazard_level", 2)),
-  use_emergency_hold_(declare_parameter<bool>("use_emergency_hold", false)),
-  use_parking_after_stopped_(declare_parameter<bool>("use_parking_after_stopped", false))
+: Node("emergency_handler")
 {
+  // Parameter
+  update_rate_ = declare_parameter<int>("update_rate", 10);
+  data_ready_timeout_ = declare_parameter<double>("data_ready_timeout", 30.0);
+  timeout_driving_capability_ = declare_parameter<double>("timeout_driving_capability", 0.5);
+  emergency_hazard_level_ = declare_parameter<int>("emergency_hazard_level", 2);
+  use_emergency_hold_ = declare_parameter<bool>("use_emergency_hold", false);
+  use_emergency_hold_in_manual_driving_ =
+    declare_parameter<bool>("use_emergency_hold_in_manual_driving", false);
+  use_parking_after_stopped_ = declare_parameter<bool>("use_parking_after_stopped", false);
+
   using std::placeholders::_1;
   using std::placeholders::_2;
   using std::placeholders::_3;
@@ -94,6 +98,8 @@ EmergencyHandler::EmergencyHandler()
     std::bind(&EmergencyHandler::onCurrentGateMode, this, _1));
   sub_twist_ = create_subscription<geometry_msgs::msg::TwistStamped>(
     "~/input/twist", rclcpp::QoS{1}, std::bind(&EmergencyHandler::onTwist, this, _1));
+  sub_control_mode_ = create_subscription<autoware_vehicle_msgs::msg::ControlMode>(
+    "~/input/control_mode", rclcpp::QoS{1}, std::bind(&EmergencyHandler::onControlMode, this, _1));
 
   // Heartbeat
   heartbeat_driving_capability_ =
@@ -120,7 +126,12 @@ EmergencyHandler::EmergencyHandler()
     "~/output/diagnostics_err", rclcpp::QoS{1});
 
   // Initialize
-  twist_ = geometry_msgs::msg::TwistStamped::ConstSharedPtr(new geometry_msgs::msg::TwistStamped);
+  twist_ = std::make_shared<const geometry_msgs::msg::TwistStamped>();
+
+  autoware_vehicle_msgs::msg::ControlMode control_mode;
+  control_mode.data = autoware_vehicle_msgs::msg::ControlMode::MANUAL;
+  control_mode_ = std::make_shared<const autoware_vehicle_msgs::msg::ControlMode>(control_mode);
+
   prev_control_command_ = autoware_control_msgs::msg::ControlCommand::ConstSharedPtr(
     new autoware_control_msgs::msg::ControlCommand);
 
@@ -169,15 +180,23 @@ void EmergencyHandler::onTwist(const geometry_msgs::msg::TwistStamped::ConstShar
   twist_ = msg;
 }
 
+void EmergencyHandler::onControlMode(
+  const autoware_vehicle_msgs::msg::ControlMode::ConstSharedPtr msg)
+{
+  control_mode_ = msg;
+}
+
 bool EmergencyHandler::onClearEmergencyService(
   const std::shared_ptr<rmw_request_id_t> request_header,
   const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
   std::shared_ptr<std_srvs::srv::Trigger::Response> response)
 {
   (void)request_header;
+
   const auto hazard_status = judgeHazardStatus();
   if (!isEmergency(hazard_status)) {
     is_emergency_ = false;
+    is_holding_emergency_ = false;
     hazard_status_ = hazard_status;
 
     response->success = true;
@@ -289,18 +308,8 @@ void EmergencyHandler::onTimer()
     return;
   }
 
-  // Check if emergency
-  if (use_emergency_hold_) {
-    if (!is_emergency_) {
-      // Update only when it is not emergency
-      hazard_status_ = judgeHazardStatus();
-      is_emergency_ = isEmergency(hazard_status_);
-    }
-  } else {
-    // Update always
-    hazard_status_ = judgeHazardStatus();
-    is_emergency_ = isEmergency(hazard_status_);
-  }
+  // Update hazard status
+  updateHazardStatus();
 
   // Publish data
   publishHazardStatus(hazard_status_);
@@ -321,6 +330,31 @@ bool EmergencyHandler::isEmergency(const autoware_system_msgs::msg::HazardStatus
 {
   return hazard_status.level >= emergency_hazard_level_;
 }
+
+void EmergencyHandler::updateHazardStatus()
+{
+  // Do nothing and hold previous status when holding emergency status
+  if (use_emergency_hold_ && is_holding_emergency_) {
+    return;
+  }
+
+  // Update status
+  hazard_status_ = judgeHazardStatus();
+  is_emergency_ = isEmergency(hazard_status_);
+
+  // Decide whether to hold emergency
+  if (is_emergency_) {
+    // Don't hold status during manual driving
+    const bool is_manual_driving =
+      (control_mode_->data == autoware_vehicle_msgs::msg::ControlMode::MANUAL);
+    const auto no_hold_condition = (!use_emergency_hold_in_manual_driving_ && is_manual_driving);
+
+    if (!no_hold_condition) {
+      is_holding_emergency_ = true;
+    }
+  }
+}
+
 
 autoware_system_msgs::msg::HazardStatus EmergencyHandler::judgeHazardStatus()
 {
