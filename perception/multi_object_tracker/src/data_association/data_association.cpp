@@ -11,10 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
-//
-// Author: v1.0 Yukihiro Saito
-//
 
 #include <algorithm>
 #include <list>
@@ -23,8 +19,8 @@
 #include <vector>
 
 #include "multi_object_tracker/data_association/data_association.hpp"
-#include "successive_shortest_path/successive_shortest_path.hpp"
 #include "multi_object_tracker/utils/utils.hpp"
+#include "multi_object_tracker/data_association/solver/gnn_solver.hpp"
 
 DataAssociation::DataAssociation(
   std::vector<int> can_assign_vector, std::vector<double> max_dist_vector,
@@ -55,6 +51,8 @@ DataAssociation::DataAssociation(
       min_area_vector.data(), min_area_label_num, min_area_label_num);
     min_area_matrix_ = min_area_matrix_tmp.transpose();
   }
+
+  gnn_solver_ptr_ = std::make_shared<gnn_solver::MuSSP>();
 }
 
 void DataAssociation::assign(
@@ -69,7 +67,7 @@ void DataAssociation::assign(
     }
   }
   // Solve
-  assignment_problem::MaximizeLinearAssignment(score, &direct_assignment, &reverse_assignment);
+  gnn_solver_ptr_->maximizeLinearAssignment(score, &direct_assignment, &reverse_assignment);
 
   for (auto itr = direct_assignment.begin(); itr != direct_assignment.end(); ) {
     if (src(itr->first, itr->second) < score_threshold_) {

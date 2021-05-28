@@ -33,15 +33,20 @@ set(MULTI_OBJECT_TRACKER_SRC
   src/tracker/model/pedestrian_tracker.cpp
   src/tracker/model/pedestrian_and_bicycle_tracker.cpp
   src/data_association/data_association.cpp
-  src/data_association/successive_shortest_path/successive_shortest_path.hpp
-  src/data_association/successive_shortest_path/successive_shortest_path.cpp
+)
+
+ament_auto_add_library(mu_successive_shortest_path SHARED
+  src/data_association/mu_successive_shortest_path/mu_successive_shortest_path_wrapper.cpp
 )
 
 ament_auto_add_library(multi_object_tracker_node SHARED
   ${MULTI_OBJECT_TRACKER_SRC}
 )
 
-target_link_libraries(multi_object_tracker_node Eigen3::Eigen)
+target_link_libraries(multi_object_tracker_node
+  mu_successive_shortest_path
+  Eigen3::Eigen
+)
 
 rclcpp_components_register_node(multi_object_tracker_node
   PLUGIN "MultiObjectTracker"

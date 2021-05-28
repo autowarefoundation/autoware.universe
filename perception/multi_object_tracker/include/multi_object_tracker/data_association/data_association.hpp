@@ -28,6 +28,7 @@
 #include "Eigen/Core"
 #include "Eigen/Geometry"
 
+#include "multi_object_tracker/data_association/solver/gnn_solver.hpp"
 #include "multi_object_tracker/tracker/tracker.hpp"
 #include "autoware_perception_msgs/msg/dynamic_object_with_feature_array.hpp"
 
@@ -44,6 +45,7 @@ private:
   Eigen::MatrixXd max_area_matrix_;
   Eigen::MatrixXd min_area_matrix_;
   const double score_threshold_;
+  std::shared_ptr<gnn_solver::GnnSolverInterface> gnn_solver_ptr_;
 
 public:
   DataAssociation(
