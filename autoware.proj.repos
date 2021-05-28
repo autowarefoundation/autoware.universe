@@ -131,6 +131,10 @@ repositories:
     type: git
     url: https://github.com/tier4/ndt_omp.git
     version: tier4/main
+  vendor/mussp:
+    type: git
+    url: https://github.com/tier4/muSSP.git
+    version: tier4/main
 # calibration
 #  calibration/tunable_static_tf_broadcaster:
 #    type: git
