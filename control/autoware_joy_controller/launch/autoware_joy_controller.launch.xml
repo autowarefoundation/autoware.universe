@@ -6,7 +6,7 @@
   <arg name="input_twist" default="/localization/twist" />
 
   <arg name="output_control_command" default="/external/$(var external_cmd_source)/joy/control_cmd" />
-  <arg name="output_raw_control_command" default="/external/$(var external_cmd_source)/raw_control_cmd" />
+  <arg name="output_external_control_command" default="/external/$(var external_cmd_source)/control_cmd" />
   <arg name="output_shift" default="/external/$(var external_cmd_source)/shift_cmd" />
   <arg name="output_turn_signal" default="/external/$(var external_cmd_source)/turn_signal_cmd" />
   <arg name="output_gate_mode" default="/remote/gate_mode_cmd" />
@@ -21,7 +21,7 @@
     <remap from="input/twist" to="$(var input_twist)"/>
 
     <remap from="output/control_command" to="$(var output_control_command)"/>
-    <remap from="output/raw_control_command" to="$(var output_raw_control_command)"/>
+    <remap from="output/external_control_command" to="$(var output_external_control_command)"/>
     <remap from="output/shift" to="$(var output_shift)"/>
     <remap from="output/turn_signal" to="$(var output_turn_signal)"/>
     <remap from="output/gate_mode" to="$(var output_gate_mode)"/>

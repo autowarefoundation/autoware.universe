@@ -23,15 +23,14 @@
 
 #include "autoware_control_msgs/msg/control_command_stamped.hpp"
 #include "autoware_control_msgs/msg/gate_mode.hpp"
+#include "autoware_vehicle_msgs/msg/external_control_command_stamped.hpp"
 #include "autoware_control_msgs/msg/emergency_mode.hpp"
-#include "autoware_vehicle_msgs/msg/raw_control_command_stamped.hpp"
 #include "autoware_vehicle_msgs/msg/shift_stamped.hpp"
 #include "autoware_vehicle_msgs/msg/turn_signal.hpp"
 #include "autoware_vehicle_msgs/msg/engage.hpp"
 #include "geometry_msgs/msg/twist_stamped.hpp"
 #include "sensor_msgs/msg/joy.hpp"
 #include "autoware_joy_controller/joy_converter/joy_converter_base.hpp"
-#include "autoware_vehicle_msgs/msg/raw_vehicle_command.hpp"
 #include "autoware_vehicle_msgs/msg/vehicle_command.hpp"
 
 #include "std_srvs/srv/trigger.hpp"
@@ -82,8 +81,8 @@ private:
   // Publisher
   rclcpp::Publisher<autoware_control_msgs::msg::ControlCommandStamped>::SharedPtr
     pub_control_command_;
-  rclcpp::Publisher<autoware_vehicle_msgs::msg::RawControlCommandStamped>::SharedPtr
-    pub_raw_control_command_;
+  rclcpp::Publisher<autoware_vehicle_msgs::msg::ExternalControlCommandStamped>::SharedPtr
+    pub_external_control_command_;
   rclcpp::Publisher<autoware_vehicle_msgs::msg::ShiftStamped>::SharedPtr pub_shift_;
   rclcpp::Publisher<autoware_vehicle_msgs::msg::TurnSignal>::SharedPtr pub_turn_signal_;
   rclcpp::Publisher<autoware_control_msgs::msg::GateMode>::SharedPtr pub_gate_mode_;
@@ -92,7 +91,7 @@ private:
   rclcpp::Publisher<autoware_vehicle_msgs::msg::Engage>::SharedPtr pub_vehicle_engage_;
 
   void publishControlCommand();
-  void publishRawControlCommand();
+  void publishExternalControlCommand();
   void publishShift();
   void publishTurnSignal();
   void publishGateMode();
@@ -106,7 +105,7 @@ private:
 
   // Previous State
   autoware_control_msgs::msg::ControlCommand prev_control_command_;
-  autoware_vehicle_msgs::msg::RawControlCommand prev_raw_control_command_;
+  autoware_vehicle_msgs::msg::ExternalControlCommand prev_external_control_command_;
   ShiftType prev_shift_ = autoware_vehicle_msgs::msg::Shift::NONE;
   TurnSignalType prev_turn_signal_ = autoware_vehicle_msgs::msg::TurnSignal::NONE;
   GateModeType prev_gate_mode_ = autoware_control_msgs::msg::GateMode::AUTO;

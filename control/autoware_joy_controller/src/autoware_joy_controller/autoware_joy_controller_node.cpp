@@ -186,7 +186,7 @@ void AutowareJoyControllerNode::onTimer()
   }
 
   publishControlCommand();
-  publishRawControlCommand();
+  publishExternalControlCommand();
   publishEmergencyStop();
 }
 
@@ -224,9 +224,9 @@ void AutowareJoyControllerNode::publishControlCommand()
   prev_control_command_ = cmd_stamped.control;
 }
 
-void AutowareJoyControllerNode::publishRawControlCommand()
+void AutowareJoyControllerNode::publishExternalControlCommand()
 {
-  autoware_vehicle_msgs::msg::RawControlCommandStamped cmd_stamped;
+  autoware_vehicle_msgs::msg::ExternalControlCommandStamped cmd_stamped;
   cmd_stamped.header.stamp = this->now();
 
   {
@@ -239,8 +239,8 @@ void AutowareJoyControllerNode::publishRawControlCommand()
     cmd.brake = brake_ratio_ * calcMapping(static_cast<double>(joy_->brake()), brake_sensitivity_);
   }
 
-  pub_raw_control_command_->publish(cmd_stamped);
-  prev_raw_control_command_ = cmd_stamped.control;
+  pub_external_control_command_->publish(cmd_stamped);
+  prev_external_control_command_ = cmd_stamped.control;
 }
 
 void AutowareJoyControllerNode::publishShift()
@@ -433,9 +433,9 @@ AutowareJoyControllerNode::AutowareJoyControllerNode(const rclcpp::NodeOptions &
   // Publisher
   pub_control_command_ = this->create_publisher<autoware_control_msgs::msg::ControlCommandStamped>(
     "output/control_command", 1);
-  pub_raw_control_command_ =
-    this->create_publisher<autoware_vehicle_msgs::msg::RawControlCommandStamped>(
-    "output/raw_control_command", 1);
+  pub_external_control_command_ =
+    this->create_publisher<autoware_vehicle_msgs::msg::ExternalControlCommandStamped>(
+    "output/external_control_command", 1);
   pub_shift_ = this->create_publisher<autoware_vehicle_msgs::msg::ShiftStamped>("output/shift", 1);
   pub_turn_signal_ =
     this->create_publisher<autoware_vehicle_msgs::msg::TurnSignal>("output/turn_signal", 1);
