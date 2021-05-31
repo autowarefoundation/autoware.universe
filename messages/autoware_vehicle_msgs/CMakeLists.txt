@@ -23,7 +23,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/Steering.msg"
   "msg/RawVehicleCommand.msg"
   "msg/RawControlCommand.msg"
-  "msg/RawControlCommandStamped.msg"
+  "msg/ExternalControlCommand.msg"
+  "msg/ExternalControlCommandStamped.msg"
   DEPENDENCIES std_msgs geometry_msgs autoware_control_msgs
 )
 
