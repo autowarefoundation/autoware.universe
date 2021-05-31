@@ -24,10 +24,14 @@
 
 ## Pre-Review Checklist for the PR Author
 
+**PR Author should check the checkboxes below when creating the PR.**
+
 - [ ] Code follows [coding guidelines][coding-guidelines]
 - [ ] Assign PR to reviewer
 
 ## Checklist for the PR Reviewer
+
+**Reviewers should check the checkboxes below before approval.**
 
 - [ ] Commits are properly organized and messages are according to the guideline
 - [ ] Code follows [coding guidelines][coding-guidelines]
@@ -35,6 +39,8 @@
 - [ ] PR title describes the changes
 
 ## Post-Review Checklist for the PR Author
+
+**PR Author should check the checkboxes below before merging.**
 
 - [ ] All open points are addressed and tracked via issues or tickets
 - [ ] Write [release notes][release-notes]
