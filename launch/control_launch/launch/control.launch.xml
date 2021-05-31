@@ -60,9 +60,9 @@
 
     <!-- For backward compatibility of external commands -->
     <group>
-      <node pkg="topic_tools" exec="relay" name="relay_remote_raw_control_cmd">
-        <param name="input_topic" value="/remote/raw_control_cmd" />
-        <param name="output_topic" value="/external/remote/raw_control_cmd" />
+      <node pkg="topic_tools" exec="relay" name="relay_remote_remote_control_cmd">
+        <param name="input_topic" value="/remote/external_control_cmd" />
+        <param name="output_topic" value="/external/remote/external_control_cmd" />
         <param name="type" value="autoware_vehicle_msgs/msg/RawControlCommandStamped" />
       </node>
       <node pkg="topic_tools" exec="relay" name="relay_remote_shift_cmd">
@@ -81,18 +81,18 @@
     <include file="$(find-pkg-share external_cmd_selector)/launch/external_cmd_selector.launch.xml">
       <arg name="initial_selector_mode" value="1" />
 
-      <arg name="input/local/raw_control_cmd" value="/external/local/raw_control_cmd" />
+      <arg name="input/local/control_cmd" value="/external/local/control_cmd" />
       <arg name="input/local/shift_cmd" value="/external/local/shift_cmd" />
       <arg name="input/local/turn_signal_cmd" value="/external/local/turn_signal_cmd" />
 
-      <arg name="input/remote/raw_control_cmd" value="/external/remote/raw_control_cmd" />
+      <arg name="input/remote/control_cmd" value="/external/remote/control_cmd" />
       <arg name="input/remote/shift_cmd" value="/external/remote/shift_cmd" />
       <arg name="input/remote/turn_signal_cmd" value="/external/remote/turn_signal_cmd" />
     </include>
 
     <!-- remote_cmd_converter -->
     <include file="$(find-pkg-share remote_cmd_converter)/launch/remote_cmd_converter.launch.xml">
-      <arg name="in/raw_control_cmd" value="/external/external_cmd_selector/raw_control_cmd" />
+      <arg name="in/external_control_cmd" value="/external/external_cmd_selector/external_control_cmd" />
       <arg name="in/shift_cmd" value="/external/external_cmd_selector/shift_cmd" />
       <arg name="out/control_cmd" value="/external/external_cmd_selector/control_cmd" />
     </include>
