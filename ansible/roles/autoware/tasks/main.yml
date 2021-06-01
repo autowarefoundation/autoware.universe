@@ -1,17 +1,17 @@
 ---
+- name: Autoware (install pip)
+  apt:
+    name: python3-pip
+    state: latest
+    update_cache: yes
+  become: yes
+
 - name: Autoware (update rosdep)
   command: rosdep update
   become: yes
 
 - name: Autoware (rosdep install dependencies)
   command: "rosdep install -y --from-paths {{ AUTOWARE_DIR }}/src --ignore-src --rosdistro {{ rosdistro }}"
-  become: yes
-
-- name: Autoware (install pip)
-  apt:
-    name: python3-pip
-    state: latest
-    update_cache: yes
   become: yes
 
 - name: Autoware (install gdown to download some files for neural network)
