@@ -1,4 +1,4 @@
-#include "geometry_msgs/msg/Vector3.idl"
+#include "geometry_msgs/msg/Point.idl"
 #include "std_msgs/msg/Header.idl"
 
 module autoware_auto_msgs {
@@ -9,7 +9,7 @@ module autoware_auto_msgs {
     struct RelativePositionWithCovarianceStamped {
       std_msgs::msg::Header header;
       string child_frame_id;
-      geometry_msgs::msg::Vector3 position;
+      geometry_msgs::msg::Point position;
       double covariance[9];
     };
   };
