@@ -85,29 +85,24 @@ void DummyDiagPublisherNode::onTimer()
 }
 
 DummyDiagPublisherNode::DummyDiagPublisherNode()
-: Node("dummy_diag_publisher"),
-  update_rate_(declare_parameter("update_rate", 10.0)),
-  updater_(this)
+: Node("dummy_diag_publisher")
 {
-  // Get configuration
-  std::map<std::string, std::string> configuration_parameters;
-  configuration_parameters.insert(std::pair<std::string, std::string>("diag_config.name", ""));
-  configuration_parameters.insert(
-    std::pair<std::string, std::string>(
-      "diag_config.hardware_id",
-      ""));
-  configuration_parameters.insert(std::pair<std::string, std::string>("diag_config.msg_ok", ""));
-  configuration_parameters.insert(std::pair<std::string, std::string>("diag_config.msg_warn", ""));
-  configuration_parameters.insert(std::pair<std::string, std::string>("diag_config.msg_error", ""));
-  configuration_parameters.insert(std::pair<std::string, std::string>("diag_config.msg_stale", ""));
+  // Parameter
+  update_rate_ = declare_parameter("update_rate", 10.0);
+  const std::string diag_name = this->declare_parameter("diag_name").get<std::string>();
+  const std::string hardware_id = "dummy_diag_" + diag_name;
+  diag_config_ = DiagConfig{
+    diag_name,
+    hardware_id,
+    "OK",
+    "Warn",
+    "Error",
+    "Stale",
+  };
 
-  this->declare_parameters<std::string>("", configuration_parameters);
-  this->get_parameters("diag_config", configuration_parameters);
-  diag_config_ = DiagConfig(configuration_parameters);
-
-  // set parameter callback
+  // Set parameter callback
   config_.status = static_cast<Status>(this->declare_parameter("status", 0));
-  config_.is_active = this->declare_parameter("is_active", false);
+  config_.is_active = this->declare_parameter("is_active", true);
   set_param_res_ =
     this->add_on_set_parameters_callback(
     std::bind(
@@ -121,7 +116,7 @@ DummyDiagPublisherNode::DummyDiagPublisherNode()
   // Timer
   auto timer_callback = std::bind(&DummyDiagPublisherNode::onTimer, this);
   auto period = std::chrono::duration_cast<std::chrono::nanoseconds>(
-    std::chrono::duration<double>(update_rate_));
+    std::chrono::duration<double>(1 / update_rate_));
 
   timer_ = std::make_shared<rclcpp::GenericTimer<decltype(timer_callback)>>(
     this->get_clock(), period, std::move(timer_callback),

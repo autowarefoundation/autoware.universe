@@ -23,17 +23,6 @@
 
 struct DiagConfig
 {
-  DiagConfig() = default;
-  explicit DiagConfig(std::map<std::string, std::string> config)
-  : name(static_cast<std::string>(config["name"])),
-    hardware_id(static_cast<std::string>(config["hardware_id"])),
-    msg_ok(static_cast<std::string>(config["msg_ok"])),
-    msg_warn(static_cast<std::string>(config["msg_warn"])),
-    msg_error(static_cast<std::string>(config["msg_error"])),
-    msg_stale(static_cast<std::string>(config["msg_stale"]))
-  {
-  }
-
   std::string name;
   std::string hardware_id;
   std::string msg_ok;
@@ -41,8 +30,6 @@ struct DiagConfig
   std::string msg_error;
   std::string msg_stale;
 };
-
-// Create enum with ok and warn types
 
 class DummyDiagPublisherNode : public rclcpp::Node
 {
@@ -75,7 +62,7 @@ private:
     const std::vector<rclcpp::Parameter> & parameters);
 
   // Diagnostic Updater
-  diagnostic_updater::Updater updater_;
+  diagnostic_updater::Updater updater_{this, 1000.0 /* sec */};  // Set long period to reduce automatic update
 
   void produceDiagnostics(diagnostic_updater::DiagnosticStatusWrapper & stat);
 
