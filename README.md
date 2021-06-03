@@ -1,12 +1,15 @@
-# Autoware.IV
+# Autoware (Architecture Proposal)
 
 ![autoware](https://user-images.githubusercontent.com/8327598/69472442-cca50b00-0ded-11ea-9da0-9e2302aa1061.png)
 
 A meta-repository for the new Autoware architecture feasibility study created by Tier IV. For more details about the architecture itself, please read this [overview](/design/Overview.md).
 
-> **NOTE**: Some, but not all of the features within the [Autoware.IV repository](https://github.com/tier4/autoware.iv) are planned to be merged into [Autoware.Auto](https://gitlab.com/autowarefoundation/autoware.auto/AutowareAuto) (the reason being that Autoware.Auto has its own scope and ODD which it needs to achieve, and so not all the features in Autoware.IV will be required).
-
-# Installation Guide
+> **WARNING**:
+>
+> - All source code relating to this meta-repository is intended solely to demonstrate a potential new architecture for Autoware
+> - This project should not be used to autonomously drive a real car!
+> - This repository is for internal development use only, not accepting contributions from unknown outside collaborators
+> - Although the documentation is published on GitHub Pages to propose our architecture, it's not for users
 
 ## Minimum Requirements
 
@@ -81,8 +84,8 @@ The following files are provided as samples:
 
 1. [Download the sample pointcloud and vector maps](https://drive.google.com/open?id=1ovrJcFS5CZ2H51D8xVWNtEvj_oiXW-zk), unpack the zip archive and copy the two map files to the same folder.
 2. Download the sample rosbag files and put them into the same folder, e.g., `~/rosbag2/sample/`.
-   - db3 https://drive.google.com/file/d/1wLWyOlfH_-k4VYBgae1KAFlKdwJnH_si/view?usp=sharing
-   - yaml https://drive.google.com/file/d/1Arb-QVnNHM-BFdB_icm7J7fWkyuZt7mZ/view?usp=sharing
+   - [db3](https://drive.google.com/file/d/1wLWyOlfH_-k4VYBgae1KAFlKdwJnH_si/view?usp=sharing)
+   - [yaml](https://drive.google.com/file/d/1Arb-QVnNHM-BFdB_icm7J7fWkyuZt7mZ/view?usp=sharing)
 3. Open a terminal and launch Autoware
 
 ```sh
@@ -135,17 +138,18 @@ ros2 launch autoware_launch planning_simulator.launch.xml map_path:=/path/to/map
 
 Please refer to the [Simulation tutorial](./docs/SimulationTutorial.md) for more details about supported simulations, along with more verbose instructions including screenshots.
 
-## Running the Autoware.IV source code with Autoware.Auto
+## Running the AutowareArchitectureProposal source code with Autoware.Auto
 
-For anyone who would like to use the features of Autoware.IV with existing [Autoware.Auto](https://gitlab.com/autowarefoundation/autoware.auto/AutowareAuto) modules right now, [ros_bridge](https://github.com/ros2/ros1_bridge) can be used.
-> Until the two architectures become more aligned, message type conversions are required to enable communication between the Autoware.Auto and Autoware.IV modules and these will need to be added manually.
+For anyone who would like to use the features of this architecture proposal with existing [Autoware.Auto](https://gitlab.com/autowarefoundation/autoware.auto/AutowareAuto) modules right now, [ros_bridge](https://github.com/ros2/ros1_bridge) can be used.
+
+> Until the two architectures become more aligned, message type conversions are required to enable communication between the Autoware.Auto and AutowareArchitectureProposal modules and these will need to be added manually.
 
 - To set up Autoware.Auto, please refer to the [Autoware.Auto installation guide](https://autowarefoundation.gitlab.io/autoware.auto/AutowareAuto/installation.html).
 - To set up ros_bridge, please follow the [installation instructions on the ros_bridge GitHub repository](https://github.com/ros2/ros1_bridge#prerequisites).
 
 # References
 
-## Autoware.IV demonstration videos
+## Videos
 
 - [Scenario demo](https://youtu.be/kn2bIU_g0oY)
 - [Obstacle avoidance in the same lane](https://youtu.be/s_4fBDixFJc)
