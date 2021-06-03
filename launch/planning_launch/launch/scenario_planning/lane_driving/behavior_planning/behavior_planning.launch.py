@@ -162,7 +162,7 @@ def generate_launch_description():
             ('~/input/traffic_light_states',
              '/perception/traffic_light_recognition/traffic_light_states'),
             ('~/input/external_traffic_light_states',
-             '/foa/traffic_light_recognition/traffic_light_states'),
+             '/awapi/traffic_light/put/traffic_light_status'),
             ('~/output/path', 'path'),
             ('~/output/stop_reasons',
              '/planning/scenario_planning/status/stop_reasons'),
