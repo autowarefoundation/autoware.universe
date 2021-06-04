@@ -109,7 +109,6 @@ jobs:
           git branch --show-current | grep rc/v0.0.0 || false
           cat autoware.proj.repos | grep autoware/autoware.iv -A3 | grep rc/v0.0.0 || false
           cat autoware.proj.repos | grep autoware/launcher -A3 | grep rc/v0.0.0 || false
-          cat autoware.proj.repos | grep autoware/individual_params -A3 | grep rc/v0.0.0 || false
 
       - name: Create release tags
         run: |
@@ -128,7 +127,6 @@ jobs:
           git describe --tags | grep v0.0.0 || false
           cat autoware.proj.repos | grep autoware/autoware.iv -A3 | grep v0.0.0 || false
           cat autoware.proj.repos | grep autoware/launcher -A3 | grep v0.0.0 || false
-          cat autoware.proj.repos | grep autoware/individual_params -A3 | grep v0.0.0 || false
 
   test-product-release:
     needs: vcs-import-cache
@@ -191,7 +189,6 @@ jobs:
           git branch --show-current | grep rc/v0.0.1 || false
           cat autoware.proj.repos | grep autoware/autoware.iv -A3 | grep rc/v0.0.0 || false
           cat autoware.proj.repos | grep autoware/launcher -A3 | grep rc/v0.0.1 || false
-          cat autoware.proj.repos | grep autoware/individual_params -A3 | grep rc/v0.0.1 || false
 
       - name: Create release tags
         run: |
@@ -210,7 +207,6 @@ jobs:
           git describe --tags | grep v0.0.1 || false
           cat autoware.proj.repos | grep autoware/autoware.iv -A3 | grep v0.0.0 || false
           cat autoware.proj.repos | grep autoware/launcher -A3 | grep v0.0.1 || false
-          cat autoware.proj.repos | grep autoware/individual_params -A3 | grep v0.0.1 || false
 
   test-product-release-after-reference-release:
     needs: vcs-import-cache
@@ -278,7 +274,6 @@ jobs:
           git branch --show-current | grep rc/v0.0.1 || false
           cat autoware.proj.repos | grep autoware/autoware.iv -A3 | grep v0.0.0 || false
           cat autoware.proj.repos | grep autoware/launcher -A3 | grep rc/v0.0.1 || false
-          cat autoware.proj.repos | grep autoware/individual_params -A3 | grep rc/v0.0.1 || false
 
       - name: Create release tags
         run: |
@@ -297,7 +292,6 @@ jobs:
           git describe --tags | grep v0.0.1 || false
           cat autoware.proj.repos | grep autoware/autoware.iv -A3 | grep v0.0.0 || false
           cat autoware.proj.repos | grep autoware/launcher -A3 | grep v0.0.1 || false
-          cat autoware.proj.repos | grep autoware/individual_params -A3 | grep v0.0.1 || false
 
   test-experiment-branch:
     needs: vcs-import-cache
@@ -360,4 +354,3 @@ jobs:
           git branch --show-current | grep experiment/20210123-test || false
           cat autoware.proj.repos | grep autoware/autoware.iv -A3 | grep experiment/20210123-test || false
           cat autoware.proj.repos | grep autoware/launcher -A3 | grep experiment/20210123-test || false
-          cat autoware.proj.repos | grep autoware/individual_params -A3 | grep experiment/20210123-test || false

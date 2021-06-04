@@ -125,7 +125,7 @@ function get_reference_repositories() {
 }
 
 function get_product_repositories() {
-  echo "src/autoware/launcher" "src/autoware/individual_params"
+  echo "src/autoware/launcher"
 }
 
 function get_vcs_repositories() {
@@ -174,6 +174,8 @@ function update_vcs_versions() {
     if is_rc_branch_name "$branch_name"; then
       new_version="$branch_name"
     elif is_experiment_branch_name "$branch_name"; then
+      new_version="$branch_name"
+    elif is_sem_ver "$branch_name"; then
       new_version="$branch_name"
     elif is_sem_ver "$commit_description"; then
       new_version="$commit_description"
