@@ -9,10 +9,11 @@
     update_cache: yes
   become: yes
 
-# curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo apt-key add -
+# sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key  -o /usr/share/keyrings/ros-archive-keyring.gpg
 - name: ROS2 (set up your keys)
-  apt_key:
+  get_url:
     url: "{{ keyserver }}"
+    dest: "{{ keyring_dest }}"
   become: yes
 
 # get architecture for ros2-repo
@@ -20,10 +21,10 @@
   shell: dpkg --print-architecture
   register: deb_architecture
 
-# sudo sh -c 'echo "deb [arch=$(dpkg --print-architecture)] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" > /etc/apt/sources.list.d/ros2-latest.list'
+# echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
 - name: ROS2 (add source list)
   apt_repository:
-    repo: "deb [arch={{ deb_architecture.stdout }}] {{ repository }} {{ ansible_lsb.codename }} main"
+    repo: "deb [arch={{ deb_architecture.stdout }} signed-by={{ keyring_dest }}] {{ repository }} {{ ansible_lsb.codename }} main"
     state: present
     update_cache: yes
   become: yes
