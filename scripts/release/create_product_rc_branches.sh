@@ -5,7 +5,8 @@ source "$SCRIPT_DIR/common/helper_functions.sh"
 
 # Define functions
 function show_usage() {
-  echo -e "Usage: create_experiment_branches.sh experiment_name
+  echo -e
+    "Usage: create_reference_rc_branches.sh reference_version product_version
       [-h/--help] [-y/--yes] [--change-reference-repositories] [--push|--delete]
 
     -h/--help:
@@ -23,8 +24,12 @@ function show_usage() {
     --delete:
       Whether to delete branches/tags. Please use this option when you mistook something.
 
-    experiment_name:
-      The version to be used for experiment branches.
+    reference_version:
+      The version to be used for refecenfe rc branches.
+      The valid pattern is '^v([0-9]+)\.([0-9]+)\.([0-9]+)$'.
+
+    product_version:
+      The version to be used for product rc branches.
       The valid pattern is '^v([0-9]+)\.([0-9]+)\.([0-9]+)$'.
 
     Note: Using --push and --delete at the same time may cause unexpected behaviors."
@@ -32,11 +37,18 @@ function show_usage() {
 
 # Parse arguments
 source "$SCRIPT_DIR/common/parse_common_args.sh"
-experiment_name="${args[0]}"
+reference_version="${args[0]}"
+product_version="${args[1]}"
 
 # Check args
-if ! is_valid_experiment_name "$experiment_name"; then
-  echo -e "\e[31mPlease input a valid experiment branch name as the 1st argument\e[m"
+if (! is_valid_reference_release_version "$reference_version") && (! is_rc_branch_name "$reference_version"); then
+  echo -e "\e[31mPlease input a valid reference rc version as the 1st argument\e[m"
+  show_usage
+  exit 1
+fi
+
+if ! is_valid_product_rc_version "$product_version"; then
+  echo -e "\e[31mPlease input a valid product rc version as the 2nd argument\e[m"
   show_usage
   exit 1
 fi
@@ -45,18 +57,23 @@ fi
 source "$SCRIPT_DIR/common/pre_common_tasks.sh"
 
 # Set branch prefix
-branch_prefix="experiment/"
+branch_prefix="rc/"
 
 # Create branches in reference repositories
 echo -e "\e[36mCreate branches in autoware repositories\e[m"
 for reference_repository in $(get_reference_repositories); do
-  create_branch "$reference_repository" "$branch_prefix$experiment_name" "$flag_push" "$flag_delete"
+  if [ "$flag_change_reference_repositories" ]; then
+    # Don't use branch prefix for reference version, so you need to specify the exact branch name or tag.
+    create_branch "$reference_repository" "$reference_version" "$flag_push" "$flag_delete"
+  else
+    checkout_branch_or_tag "$reference_repository" "$reference_version"
+  fi
 done
 
 # Create branches in product repositories
 echo -e "\e[36mCreate branches in product repositories\e[m"
 for product_repository in $(get_product_repositories); do
-  create_branch "$product_repository" "$branch_prefix$experiment_name" "$flag_push" "$flag_delete"
+  create_branch "$product_repository" "$branch_prefix$product_version" "$flag_push" "$flag_delete"
 done
 
 # Run post common tasks
@@ -65,4 +82,4 @@ if [ "$flag_delete" = "" ]; then
 fi
 
 # Create branch in meta repository
-create_branch "$(get_meta_repository)" "$branch_prefix$experiment_name" "$flag_push" "$flag_delete"
+create_branch "$(get_meta_repository)" "$branch_prefix$product_version" "$flag_push" "$flag_delete"

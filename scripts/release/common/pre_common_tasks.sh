@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
-SCRIPT_DIR=$(cd $(dirname $0); pwd)
-source $SCRIPT_DIR/helper_functions.sh
+# Notice: This script supposes to be called from release scripts.
 
 # Install prerequisites
 install_yq_if_not_installed
