@@ -85,8 +85,8 @@ jobs:
       - name: Commit autoware.proj.repos to remove workspace diff
         run: |
           git add autoware.proj.repos
-          git config --local user.email "actions@example.com"
-          git config --local user.name "Github Actions"
+          git config --global user.email "actions@example.com"
+          git config --global user.name "Github Actions"
           git commit -m "Update autoware.proj.repos in CI"
 
       - name: Set git config for private repositories
@@ -106,9 +106,9 @@ jobs:
 
       - name: Check result
         run: |
-          git branch --show-current | grep rc/v0.0.0 || false
-          cat autoware.proj.repos | grep autoware/autoware.iv -A3 | grep rc/v0.0.0 || false
-          cat autoware.proj.repos | grep autoware/launcher -A3 | grep rc/v0.0.0 || false
+          git branch --show-current | grep "^rc/v0.0.0" || false
+          cat autoware.proj.repos | grep autoware/autoware.iv -A3 | grep "version: rc/v0.0.0" || false
+          cat autoware.proj.repos | grep autoware/launcher -A3 | grep "version: rc/v0.0.0" || false
 
       - name: Create release tags
         run: |
@@ -124,9 +124,9 @@ jobs:
       - name: Check result
         run: |
           test "$(git branch --show-current)" = "" || false
-          git describe --tags | grep v0.0.0 || false
-          cat autoware.proj.repos | grep autoware/autoware.iv -A3 | grep v0.0.0 || false
-          cat autoware.proj.repos | grep autoware/launcher -A3 | grep v0.0.0 || false
+          git describe --tags | grep "^v0.0.0" || false
+          cat autoware.proj.repos | grep autoware/autoware.iv -A3 | grep "version: v0.0.0" || false
+          cat autoware.proj.repos | grep autoware/launcher -A3 | grep "version: v0.0.0" || false
 
   test-product-release:
     needs: vcs-import-cache
@@ -165,8 +165,8 @@ jobs:
       - name: Commit autoware.proj.repos to remove workspace diff
         run: |
           git add autoware.proj.repos
-          git config --local user.email "actions@example.com"
-          git config --local user.name "Github Actions"
+          git config --global user.email "actions@example.com"
+          git config --global user.name "Github Actions"
           git commit -m "Update autoware.proj.repos in CI"
 
       - name: Set git config for private repositories
@@ -186,9 +186,9 @@ jobs:
 
       - name: Check result
         run: |
-          git branch --show-current | grep rc/v0.0.1 || false
-          cat autoware.proj.repos | grep autoware/autoware.iv -A3 | grep rc/v0.0.0 || false
-          cat autoware.proj.repos | grep autoware/launcher -A3 | grep rc/v0.0.1 || false
+          git branch --show-current | grep "^rc/v0.0.1" || false
+          cat autoware.proj.repos | grep autoware/autoware.iv -A3 | grep "version: rc/v0.0.0" || false
+          cat autoware.proj.repos | grep autoware/launcher -A3 | grep "version: rc/v0.0.1" || false
 
       - name: Create release tags
         run: |
@@ -204,9 +204,9 @@ jobs:
       - name: Check result
         run: |
           test "$(git branch --show-current)" = "" || false
-          git describe --tags | grep v0.0.1 || false
-          cat autoware.proj.repos | grep autoware/autoware.iv -A3 | grep v0.0.0 || false
-          cat autoware.proj.repos | grep autoware/launcher -A3 | grep v0.0.1 || false
+          git describe --tags | grep "^v0.0.1" || false
+          cat autoware.proj.repos | grep autoware/autoware.iv -A3 | grep "version: v0.0.0" || false
+          cat autoware.proj.repos | grep autoware/launcher -A3 | grep "version: v0.0.1" || false
 
   test-product-release-after-reference-release:
     needs: vcs-import-cache
@@ -245,8 +245,8 @@ jobs:
       - name: Commit autoware.proj.repos to remove workspace diff
         run: |
           git add autoware.proj.repos
-          git config --local user.email "actions@example.com"
-          git config --local user.name "Github Actions"
+          git config --global user.email "actions@example.com"
+          git config --global user.name "Github Actions"
           git commit -m "Update autoware.proj.repos in CI"
 
       - name: Set git config for private repositories
@@ -271,9 +271,9 @@ jobs:
 
       - name: Check result
         run: |
-          git branch --show-current | grep rc/v0.0.1 || false
-          cat autoware.proj.repos | grep autoware/autoware.iv -A3 | grep v0.0.0 || false
-          cat autoware.proj.repos | grep autoware/launcher -A3 | grep rc/v0.0.1 || false
+          git branch --show-current | grep "^rc/v0.0.1" || false
+          cat autoware.proj.repos | grep autoware/autoware.iv -A3 | grep "version: v0.0.0" || false
+          cat autoware.proj.repos | grep autoware/launcher -A3 | grep "version: rc/v0.0.1" || false
 
       - name: Create release tags
         run: |
@@ -289,9 +289,9 @@ jobs:
       - name: Check result
         run: |
           test "$(git branch --show-current)" = "" || false
-          git describe --tags | grep v0.0.1 || false
-          cat autoware.proj.repos | grep autoware/autoware.iv -A3 | grep v0.0.0 || false
-          cat autoware.proj.repos | grep autoware/launcher -A3 | grep v0.0.1 || false
+          git describe --tags | grep "^v0.0.1" || false
+          cat autoware.proj.repos | grep autoware/autoware.iv -A3 | grep "version: v0.0.0" || false
+          cat autoware.proj.repos | grep autoware/launcher -A3 | grep "version: v0.0.1" || false
 
   test-experiment-branch:
     needs: vcs-import-cache
@@ -330,8 +330,8 @@ jobs:
       - name: Commit autoware.proj.repos to remove workspace diff
         run: |
           git add autoware.proj.repos
-          git config --local user.email "actions@example.com"
-          git config --local user.name "Github Actions"
+          git config --global user.email "actions@example.com"
+          git config --global user.name "Github Actions"
           git commit -m "Update autoware.proj.repos in CI"
 
       - name: Set git config for private repositories
@@ -351,6 +351,6 @@ jobs:
 
       - name: Check result
         run: |
-          git branch --show-current | grep experiment/20210123-test || false
-          cat autoware.proj.repos | grep autoware/autoware.iv -A3 | grep experiment/20210123-test || false
-          cat autoware.proj.repos | grep autoware/launcher -A3 | grep experiment/20210123-test || false
+          git branch --show-current | grep "^experiment/20210123-test" || false
+          cat autoware.proj.repos | grep autoware/autoware.iv -A3 | grep "version: experiment/20210123-test" || false
+          cat autoware.proj.repos | grep autoware/launcher -A3 | grep "version: experiment/20210123-test" || false

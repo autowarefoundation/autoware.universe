@@ -229,7 +229,8 @@ function create_tag() {
   fi
 
   echo -e "Create tag \"$version\" in \"$repository\""
-  $git_command tag "$version" || exit 1
+  $git_command checkout --detach --quiet HEAD
+  $git_command tag -a "$version" -m "$version" || exit 1
 
   if [ "$flag_push" ]; then
     echo -e "Push tag \"$version\" to \"$repository\""
