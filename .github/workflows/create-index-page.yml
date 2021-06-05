@@ -1,0 +1,32 @@
+name: Create index page
+
+on:
+  schedule:
+    - cron: "0 19 * * *" # run at 4 AM JST
+  workflow_dispatch:
+
+jobs:
+  create-index-page:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          ref: gh-pages
+
+      - name: Create index page
+        run: |
+          rm -f index.html
+          tree -H . -d -L 2 --noreport --charset utf-8 -T "Index" > index.html
+
+      - name: Set git config
+        run: |
+          git config --local user.email "actions@example.com"
+          git config --local user.name "Github Actions"
+
+      - name: Commit file
+        run: |
+          git add index.html
+          git commit -m "Add index.html" --allow-empty
+          git push origin gh-pages
