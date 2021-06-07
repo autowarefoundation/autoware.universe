@@ -11,6 +11,9 @@ on:
       - master
   workflow_dispatch:
 
+env:
+  GITHUB_PAGES_URL: https://tier4.github.io/autoware.proj
+
 jobs:
   generate-docs:
     runs-on: ubuntu-latest
@@ -86,3 +89,12 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./public
           keep_files: true
+
+      - name: Comment PR
+        if: ${{ github.event.action == 'opened' }}
+        uses: peter-evans/create-or-update-comment@v1
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          body: |
+            Documentation URL: ${{ env.GITHUB_PAGES_URL }}/pulls/${{ github.event.pull_request.number }}
