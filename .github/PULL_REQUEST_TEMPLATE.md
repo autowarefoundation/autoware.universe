@@ -46,5 +46,11 @@
 - [ ] Write [release notes][release-notes]
 - [ ] (When added something to `.repos`) Check if proper access rights are set
 
+## CI Checks
+
+- **vcs import**: Required to pass before the merge.
+- **Check spelling**: NOT required to pass before the merge. It is up to the reviewer(s). See [here][spell-check-dict] if you want to add some words to the spell check dictionary.
+
 [coding-guidelines]: https://tier4.atlassian.net/wiki/spaces/AIP/pages/1194394777/T4
 [release-notes]: https://tier4.atlassian.net/wiki/spaces/AIP/pages/563774416
+[spell-check-dict]: https://github.com/tier4/autoware-spell-check-dict#how-to-contribute
