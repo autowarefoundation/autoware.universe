@@ -50,7 +50,7 @@ public:
 
 private:
   // Subscriber
-  autoware_utils::SelfPoseListener self_pose_listener_;
+  autoware_utils::SelfPoseListener self_pose_listener_{this};
   rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr sub_twist_;
   rclcpp::Subscription<autoware_lanelet2_msgs::msg::MapBin>::SharedPtr sub_lanelet_map_bin_;
   rclcpp::Subscription<autoware_planning_msgs::msg::Route>::SharedPtr sub_route_;
@@ -79,8 +79,8 @@ private:
   void onPredictedTrajectory(const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr msg);
 
   // Publisher
-  autoware_utils::DebugPublisher debug_publisher_;
-  autoware_utils::ProcessingTimePublisher processing_time_publisher_;
+  autoware_utils::DebugPublisher debug_publisher_{this, "~/debug"};
+  autoware_utils::ProcessingTimePublisher processing_time_publisher_{this};
 
   // Timer
   rclcpp::TimerBase::SharedPtr timer_;
@@ -100,12 +100,12 @@ private:
     const std::vector<rclcpp::Parameter> & parameters);
 
   // Core
-  Input input_;
-  Output output_;
+  Input input_{};
+  Output output_{};
   std::unique_ptr<LaneDepartureChecker> lane_departure_checker_;
 
   // Diagnostic Updater
-  diagnostic_updater::Updater updater_;
+  diagnostic_updater::Updater updater_{this};
 
   void checkLaneDeparture(diagnostic_updater::DiagnosticStatusWrapper & stat);
   void checkTrajectoryDeviation(diagnostic_updater::DiagnosticStatusWrapper & stat);

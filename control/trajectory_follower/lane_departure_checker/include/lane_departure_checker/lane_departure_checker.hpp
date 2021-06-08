@@ -16,9 +16,9 @@
 #define LANE_DEPARTURE_CHECKER__LANE_DEPARTURE_CHECKER_HPP_
 
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
 
 #include "boost/optional.hpp"
 
@@ -52,27 +52,25 @@ struct Param
 
 struct Input
 {
-  geometry_msgs::msg::PoseStamped::ConstSharedPtr current_pose;
-  geometry_msgs::msg::TwistStamped::ConstSharedPtr current_twist;
-  lanelet::LaneletMapPtr lanelet_map;
-  autoware_planning_msgs::msg::Route::ConstSharedPtr route;
-  lanelet::ConstLanelets route_lanelets;
-  autoware_planning_msgs::msg::Trajectory::ConstSharedPtr reference_trajectory;
-  autoware_planning_msgs::msg::Trajectory::ConstSharedPtr predicted_trajectory;
+  geometry_msgs::msg::PoseStamped::ConstSharedPtr current_pose{};
+  geometry_msgs::msg::TwistStamped::ConstSharedPtr current_twist{};
+  lanelet::LaneletMapPtr lanelet_map{};
+  autoware_planning_msgs::msg::Route::ConstSharedPtr route{};
+  lanelet::ConstLanelets route_lanelets{};
+  autoware_planning_msgs::msg::Trajectory::ConstSharedPtr reference_trajectory{};
+  autoware_planning_msgs::msg::Trajectory::ConstSharedPtr predicted_trajectory{};
 };
 
 struct Output
 {
-  Output()
-  : resampled_trajectory(rosidl_runtime_cpp::MessageInitialization::ZERO) {}
-  std::map<std::string, double> processing_time_map;
-  bool will_leave_lane;
-  bool is_out_of_lane;
-  PoseDeviation trajectory_deviation;
-  lanelet::ConstLanelets candidate_lanelets;
-  autoware_planning_msgs::msg::Trajectory resampled_trajectory;
-  std::vector<LinearRing2d> vehicle_footprints;
-  std::vector<LinearRing2d> vehicle_passing_areas;
+  std::map<std::string, double> processing_time_map{};
+  bool will_leave_lane{};
+  bool is_out_of_lane{};
+  PoseDeviation trajectory_deviation{};
+  lanelet::ConstLanelets candidate_lanelets{};
+  autoware_planning_msgs::msg::Trajectory resampled_trajectory{};
+  std::vector<LinearRing2d> vehicle_footprints{};
+  std::vector<LinearRing2d> vehicle_passing_areas{};
 };
 
 class LaneDepartureChecker
