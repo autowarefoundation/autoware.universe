@@ -1,73 +1,42 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.5)
 project(image_transport_decompressor)
 
-find_package(catkin REQUIRED COMPONENTS
-  image_transport
-  cv_bridge
-  pluginlib
-  rosconsole
-  roscpp
-  roslib
-  sensor_msgs
-  nodelet
-)
+### Compile options
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
+  set(CMAKE_CXX_EXTENSIONS OFF)
+endif()
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wno-unused-parameter -Wall -Wextra -Wpedantic)
+endif()
 
-find_package(Boost REQUIRED)
+
+find_package(ament_cmake_auto)
+ament_auto_find_build_dependencies()
+
 find_package(OpenCV REQUIRED)
 
-catkin_package(
-  INCLUDE_DIRS include
-  LIBRARIES image_transport_decompressor_nodelet
-  CATKIN_DEPENDS image_transport cv_bridge pluginlib rosconsole roscpp roslib sensor_msgs nodelet
-#  DEPENDS system_lib
-)
-
 include_directories(
-  include
-  ${catkin_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
 )
 
-add_library(image_transport_decompressor_nodelet SHARED
-  src/nodelet.cpp
+ament_auto_add_library(image_transport_decompressor SHARED
+  src/image_transport_decompressor.cpp
 )
 
-add_dependencies(image_transport_decompressor_nodelet
-  ${${PROJECT_NAME}_EXPORTED_TARGETS}
-  ${catkin_EXPORTED_TARGETS}
-)
-
-target_link_libraries(image_transport_decompressor_nodelet
-  ${catkin_LIBRARIES}
+target_link_libraries(image_transport_decompressor
   ${OpenCV_LIBRARIES}
 )
 
-add_executable(image_transport_decompressor_node
-src/node.cpp
+rclcpp_components_register_node(image_transport_decompressor
+  PLUGIN "image_preprocessor::ImageTransportDecompressor"
+  EXECUTABLE image_transport_decompressor_node
 )
 
-add_dependencies(image_transport_decompressor_node
-  ${${PROJECT_NAME}_EXPORTED_TARGETS}
-  ${catkin_EXPORTED_TARGETS}
-)
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
+endif()
 
-target_link_libraries(image_transport_decompressor_node
-  image_transport_decompressor_nodelet
-  ${catkin_LIBRARIES}
-  ${OpenCV_LIBRARIES}
-)
-
-install(
-  TARGETS
-  image_transport_decompressor_node
-  image_transport_decompressor_nodelet
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-
-install(
-  FILES
-  image_transport_decompressor.xml
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-)
+ament_auto_package()

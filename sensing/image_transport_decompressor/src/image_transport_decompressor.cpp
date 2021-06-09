@@ -46,23 +46,36 @@
 *  POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************/
 
-#include "image_transport_decompressor/nodelet.hpp"
+#include <limits>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
+
+#include "cv_bridge/cv_bridge.h"
+#include "sensor_msgs/image_encodings.hpp"
+
+#include "image_transport_decompressor/image_transport_decompressor.hpp"
 
 namespace image_preprocessor
 {
-void ImageTransportDecompressorNodelet::onInit()
+ImageTransportDecompressor::ImageTransportDecompressor(const rclcpp::NodeOptions & node_options)
+: rclcpp::Node("image_transport_decompressor", node_options),
+  encoding_(declare_parameter("encoding", "default"))
 {
-  nh_ = getNodeHandle();
-  pnh_ = getPrivateNodeHandle();
-  pnh_.param("encoding", enc_, std::string("default"));
-
-  compressed_image_sub_ = pnh_.subscribe(
-    "input/compressed_image", 1, &ImageTransportDecompressorNodelet::compressedImageCallback, this);
-  raw_image_pub_ = pnh_.advertise<sensor_msgs::Image>("output/raw_image", 1);
+  compressed_image_sub_ = create_subscription<sensor_msgs::msg::CompressedImage>(
+    "input/compressed_image", rclcpp::SensorDataQoS(),
+    std::bind(&ImageTransportDecompressor::onCompressedImage, this, std::placeholders::_1));
+  raw_image_pub_ = create_publisher<sensor_msgs::msg::Image>(
+    "output/raw_image",
+    rclcpp::SensorDataQoS());
 }
 
-void ImageTransportDecompressorNodelet::compressedImageCallback(
-  const sensor_msgs::CompressedImageConstPtr & input_compressed_image_msg)
+void ImageTransportDecompressor::onCompressedImage(
+  const sensor_msgs::msg::CompressedImage::ConstSharedPtr input_compressed_image_msg)
 {
   cv_bridge::CvImagePtr cv_ptr(new cv_bridge::CvImage);
   // Copy message header
@@ -84,16 +97,18 @@ void ImageTransportDecompressorNodelet::compressedImageCallback(
           cv_ptr->encoding = sensor_msgs::image_encodings::BGR8;
           break;
         default:
-          ROS_ERROR("Unsupported number of channels: %i", cv_ptr->image.channels());
+          RCLCPP_ERROR(
+            get_logger(), "Unsupported number of channels: %i",
+            cv_ptr->image.channels());
           break;
       }
     } else {
       std::string image_encoding;
-      if (enc_ == std::string("default")) {
+      if (encoding_ == std::string("default")) {
         image_encoding = input_compressed_image_msg->format.substr(0, split_pos);
-      } else if (enc_ == std::string("rgb8")) {
+      } else if (encoding_ == std::string("rgb8")) {
         image_encoding = "rgb8";
-      } else if (enc_ == std::string("bgr8")) {
+      } else if (encoding_ == std::string("bgr8")) {
         image_encoding = "bgr8";
       } else {
         image_encoding = input_compressed_image_msg->format.substr(0, split_pos);
@@ -155,7 +170,7 @@ void ImageTransportDecompressorNodelet::compressedImageCallback(
       }
     }
   } catch (cv::Exception & e) {
-    ROS_ERROR("%s", e.what());
+    RCLCPP_ERROR(get_logger(), "%s", e.what());
   }
 
   size_t rows = cv_ptr->image.rows;
@@ -163,10 +178,12 @@ void ImageTransportDecompressorNodelet::compressedImageCallback(
 
   if ((rows > 0) && (cols > 0)) {
     // Publish message to user callback
-    raw_image_pub_.publish(cv_ptr->toImageMsg());
+    auto image_ptr =
+      std::make_unique<sensor_msgs::msg::Image>(*cv_ptr->toImageMsg());
+    raw_image_pub_->publish(std::move(image_ptr));
   }
 }
 }  // namespace image_preprocessor
 
-#include "pluginlib/class_list_macros.h"
-PLUGINLIB_EXPORT_CLASS(image_preprocessor::ImageTransportDecompressorNodelet, nodelet::Nodelet)
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(image_preprocessor::ImageTransportDecompressor)
