@@ -135,6 +135,11 @@ repositories:
     type: git
     url: https://github.com/tier4/muSSP.git
     version: tier4/main
+  # ecu_system_setup
+  ecu_system_setup:
+    type: git
+    url: git@github.com:tier4/autoware_ecu_system_setup.git
+    version: main
 # calibration
 #  calibration/tunable_static_tf_broadcaster:
 #    type: git
