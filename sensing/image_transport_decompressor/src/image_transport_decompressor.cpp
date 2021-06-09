@@ -67,10 +67,10 @@ ImageTransportDecompressor::ImageTransportDecompressor(const rclcpp::NodeOptions
   encoding_(declare_parameter("encoding", "default"))
 {
   compressed_image_sub_ = create_subscription<sensor_msgs::msg::CompressedImage>(
-    "input/compressed_image", rclcpp::SensorDataQoS(),
+    "~/input/compressed_image", rclcpp::SensorDataQoS(),
     std::bind(&ImageTransportDecompressor::onCompressedImage, this, std::placeholders::_1));
   raw_image_pub_ = create_publisher<sensor_msgs::msg::Image>(
-    "output/raw_image",
+    "~/output/raw_image",
     rclcpp::SensorDataQoS());
 }
 
