@@ -18,6 +18,9 @@ from ament_index_python.packages import get_package_share_directory
 import launch
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
+from launch.actions import SetLaunchConfiguration
+from launch.conditions import IfCondition
+from launch.conditions import UnlessCondition
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.actions import LoadComposableNodes
@@ -65,6 +68,9 @@ def generate_launch_description():
     add_launch_arg('input_h', '224')
     add_launch_arg('input_w', '224')
 
+    add_launch_arg('use_intra_process', 'False')
+    add_launch_arg('use_multithread', 'False')
+
     def create_parameter_dict(*args):
         result = {}
         for x in args:
@@ -75,8 +81,20 @@ def generate_launch_description():
         name='traffic_light_node_container',
         namespace='/perception/traffic_light_recognition',
         package='rclcpp_components',
-        executable='component_container',
+        executable=LaunchConfiguration('container_executable'),
         composable_node_descriptions=[
+            ComposableNode(
+                package='image_transport_decompressor',
+                plugin='image_preprocessor::ImageTransportDecompressor',
+                name='traffic_light_image_decompressor',
+                parameters=[{'encoding': 'rgb8'}],
+                remappings=[('~/input/compressed_image',
+                            [LaunchConfiguration('input/image'), '/compressed']),
+                            ('~/output/raw_image', LaunchConfiguration('input/image'))],
+                extra_arguments=[{
+                    'use_intra_process_comms': LaunchConfiguration('use_intra_process')
+                }],
+            ),
             ComposableNode(
                 package='traffic_light_classifier',
                 plugin='traffic_light::TrafficLightClassifierNodelet',
@@ -86,7 +104,10 @@ def generate_launch_description():
                                                   'precision', 'input_c', 'input_h', 'input_w')],
                 remappings=[('~/input/image', LaunchConfiguration('input/image')),
                             ('~/input/rois', 'rois'),
-                            ('~/output/traffic_light_states', 'traffic_light_states')]
+                            ('~/output/traffic_light_states', 'traffic_light_states')],
+                extra_arguments=[{
+                    'use_intra_process_comms': LaunchConfiguration('use_intra_process')
+                }],
             ),
             ComposableNode(
                 package='traffic_light_visualization',
@@ -100,7 +121,10 @@ def generate_launch_description():
                             ('~/output/image', 'debug/rois'),
                             ('~/output/image/compressed', 'debug/rois/compressed'),
                             ('~/output/image/compressedDepth', 'debug/rois/compressedDepth'),
-                            ('~/output/image/theora', 'debug/rois/theora')]
+                            ('~/output/image/theora', 'debug/rois/theora')],
+                extra_arguments=[{
+                    'use_intra_process_comms': LaunchConfiguration('use_intra_process')
+                }],
             )
         ],
         output='both',
@@ -120,11 +144,32 @@ def generate_launch_description():
                 parameters=[ssd_fine_detector_param],
                 remappings=[('~/input/image', LaunchConfiguration('input/image')),
                             ('~/input/rois', 'rough/rois'),
-                            ('~/output/rois', 'rois')]
+                            ('~/output/rois', 'rois')],
+                extra_arguments=[{
+                    'use_intra_process_comms': LaunchConfiguration('use_intra_process')
+                }],
             ),
         ],
         target_container=container,
         condition=launch.conditions.IfCondition(LaunchConfiguration('enable_fine_detection')),
     )
 
-    return LaunchDescription(launch_arguments + [container, loader])
+    set_container_executable = SetLaunchConfiguration(
+        'container_executable',
+        'component_container',
+        condition=UnlessCondition(LaunchConfiguration('use_multithread'))
+    )
+
+    set_container_mt_executable = SetLaunchConfiguration(
+        'container_executable',
+        'component_container_mt',
+        condition=IfCondition(LaunchConfiguration('use_multithread'))
+    )
+
+    return LaunchDescription([
+        *launch_arguments,
+        set_container_executable,
+        set_container_mt_executable,
+        container,
+        loader,
+    ])

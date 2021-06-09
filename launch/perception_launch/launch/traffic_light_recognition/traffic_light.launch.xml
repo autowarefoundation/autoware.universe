@@ -1,17 +1,9 @@
 <?xml version="1.0"?>
 
 <launch>
-
   <arg name="enable_fine_detection" default="true"/>
   <arg name="input/image" default="/sensing/camera/traffic_light/image_raw"/>
   <arg name="input/camera_info" default="/sensing/camera/traffic_light/camera_info"/>
-
-  <!-- compressed to raw image-->
-  <node pkg="image_transport" exec="republish" name="traffic_light_image_decompressor" args="compressed raw">
-    <remap from="in/compressed" to="$(var input/image)/compressed"/>
-    <remap from="out" to="$(var input/image)"/>
-  </node>
-
 
   <group if="$(var enable_fine_detection)">
     <include file="$(find-pkg-share traffic_light_map_based_detector)/launch/traffic_light_map_based_detector.launch.xml">
@@ -30,5 +22,7 @@
   <include file="$(find-pkg-share perception_launch)/launch/traffic_light_recognition/traffic_light_node_container.launch.py">
     <arg name="input/image" value="$(var input/image)"/>
     <arg name="enable_fine_detection" value="$(var enable_fine_detection)"/>
+    <arg name="use_intra_process" value="true"/>
+    <arg name="use_multithread" value="false"/>
   </include>
 </launch>
