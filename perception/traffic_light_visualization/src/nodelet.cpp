@@ -69,7 +69,7 @@ void TrafficLightRoiVisualizerNodelet::connectCb()
     roi_sub_.unsubscribe();
     if (enable_fine_detection_) {rough_roi_sub_.unsubscribe();}
   } else if (!image_sub_.getSubscriber()) {
-    image_sub_.subscribe(this, "~/input/image", "raw", rclcpp::QoS{1}.get_rmw_qos_profile());
+    image_sub_.subscribe(this, "~/input/image", "raw", rmw_qos_profile_sensor_data);
     roi_sub_.subscribe(this, "~/input/rois", rclcpp::QoS{1}.get_rmw_qos_profile());
     tl_states_sub_.subscribe(
       this, "~/input/traffic_light_states", rclcpp::QoS{1}.get_rmw_qos_profile());
