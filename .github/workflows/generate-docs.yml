@@ -9,6 +9,11 @@ on:
     branches:
       - main
       - master
+    paths:
+      - "mkdocs.yml"
+      - "**/*.md"
+      - "**/*.svg"
+      - "**/*.png"
   workflow_dispatch:
 
 env:
