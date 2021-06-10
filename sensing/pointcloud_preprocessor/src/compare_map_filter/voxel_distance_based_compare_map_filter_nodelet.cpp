@@ -31,7 +31,7 @@ VoxelDistanceBasedCompareMapFilterComponent::VoxelDistanceBasedCompareMapFilterC
 
   using std::placeholders::_1;
   sub_map_ = this->create_subscription<PointCloud2>(
-    "map", rclcpp::QoS{1},
+    "map", rclcpp::QoS{1}.transient_local(),
     std::bind(&VoxelDistanceBasedCompareMapFilterComponent::input_target_callback, this, _1));
 
   set_param_res_ = this->add_on_set_parameters_callback(
@@ -55,10 +55,10 @@ void VoxelDistanceBasedCompareMapFilterComponent::filter(
       voxel_grid_.getGridCoordinates(
         pcl_input->points.at(i).x, pcl_input->points.at(i).y, pcl_input->points.at(i).z));
     if (index == -1) {  // empty voxel
-      std::vector<int> nn_indices(1);
-      std::vector<float> nn_dists(1);
-      tree_->nearestKSearch(pcl_input->points.at(i), 1, nn_indices, nn_dists);
-      if (distance_threshold_ * distance_threshold_ < nn_dists.at(0)) {
+      std::vector<int> nn_indices(1);  // nn means nearest neighbor
+      std::vector<float> nn_distances(1);
+      tree_->nearestKSearch(pcl_input->points.at(i), 1, nn_indices, nn_distances);
+      if (distance_threshold_ * distance_threshold_ < nn_distances.at(0)) {
         pcl_output->points.push_back(pcl_input->points.at(i));
       }
     }

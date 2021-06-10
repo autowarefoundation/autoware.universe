@@ -30,7 +30,7 @@ DistanceBasedCompareMapFilterComponent::DistanceBasedCompareMapFilterComponent(
 
   using std::placeholders::_1;
   sub_map_ = this->create_subscription<PointCloud2>(
-    "map", rclcpp::QoS{1},
+    "map", rclcpp::QoS{1}.transient_local(),
     std::bind(&DistanceBasedCompareMapFilterComponent::input_target_callback, this, _1));
 
   set_param_res_ = this->add_on_set_parameters_callback(
