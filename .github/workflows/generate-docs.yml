@@ -5,6 +5,11 @@ on:
     branches:
       - main
       - master
+    paths:
+      - "mkdocs.yml"
+      - "**/*.md"
+      - "**/*.svg"
+      - "**/*.png"
   pull_request:
     branches:
       - main
