@@ -16,7 +16,7 @@
     <!-- Ublox Driver -->
     <group if="$(eval &quot;'$(var gnss_receiver)'=='ublox'&quot;)">
       <node pkg="ublox_gps" name="ublox" exec="ublox_gps_node" if="$(var launch_driver)">
-        <remap from="ublox/fix" to="ublox/nav_sat_fix" />
+        <remap from="~/fix" to="~/nav_sat_fix" />
         <param from="$(find-pkg-share ublox_gps)/c94_f9p_rover.yaml"/>
       </node>
     </group>
