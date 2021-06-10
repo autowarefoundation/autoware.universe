@@ -10,6 +10,7 @@ on:
       - "**/*.md"
       - "**/*.svg"
       - "**/*.png"
+      - "**/*.css"
   pull_request:
     branches:
       - main
@@ -19,6 +20,7 @@ on:
       - "**/*.md"
       - "**/*.svg"
       - "**/*.png"
+      - "**/*.css"
   workflow_dispatch:
 
 env:
@@ -65,6 +67,7 @@ jobs:
               -not -name '*.md' \
               -not -name '*.svg' \
               -not -name '*.png' \
+              -not -name '*.css' \
             | xargs -I {} rm "{}"
 
       - name: Build MkDocs

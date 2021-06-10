@@ -7,7 +7,7 @@ theme:
   name: material
   feature:
     tabs: true
-  favicon: images/tier4.png
+  favicon: docs/images/tier4.png
   icon:
     repo: fontawesome/brands/github
 extra:
@@ -38,5 +38,6 @@ markdown_extensions:
 
 extra_css:
   - "https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css"
+  - docs/css/tier4_color.css
 extra_javascript:
   - "https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS-MML_HTMLorMML"
