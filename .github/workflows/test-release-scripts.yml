@@ -14,11 +14,6 @@ jobs:
     container: osrf/ros:foxy-desktop
 
     steps:
-      # https://github.com/osrf/docker_images/issues/535
-      - name: Temporarily fix GPG problem
-        run: |
-          sudo rm /etc/apt/sources.list.d/ros2-latest.list
-
       - name: Checkout repository
         uses: actions/checkout@v2
 
@@ -54,11 +49,6 @@ jobs:
     container: osrf/ros:foxy-desktop
 
     steps:
-      # https://github.com/osrf/docker_images/issues/535
-      - name: Temporarily fix GPG problem
-        run: |
-          sudo rm /etc/apt/sources.list.d/ros2-latest.list
-
       - name: Checkout repository
         uses: actions/checkout@v2
 
@@ -134,11 +124,6 @@ jobs:
     container: osrf/ros:foxy-desktop
 
     steps:
-      # https://github.com/osrf/docker_images/issues/535
-      - name: Temporarily fix GPG problem
-        run: |
-          sudo rm /etc/apt/sources.list.d/ros2-latest.list
-
       - name: Checkout repository
         uses: actions/checkout@v2
 
@@ -214,11 +199,6 @@ jobs:
     container: osrf/ros:foxy-desktop
 
     steps:
-      # https://github.com/osrf/docker_images/issues/535
-      - name: Temporarily fix GPG problem
-        run: |
-          sudo rm /etc/apt/sources.list.d/ros2-latest.list
-
       - name: Checkout repository
         uses: actions/checkout@v2
 
@@ -299,11 +279,6 @@ jobs:
     container: osrf/ros:foxy-desktop
 
     steps:
-      # https://github.com/osrf/docker_images/issues/535
-      - name: Temporarily fix GPG problem
-        run: |
-          sudo rm /etc/apt/sources.list.d/ros2-latest.list
-
       - name: Checkout repository
         uses: actions/checkout@v2
 
