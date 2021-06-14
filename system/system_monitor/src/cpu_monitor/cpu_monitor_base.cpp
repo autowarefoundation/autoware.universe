@@ -138,6 +138,7 @@ void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & st
   float sys;
   float idle;
   float usage;
+  float total;
   int level = DiagStatus::OK;
   int whole_level = DiagStatus::OK;
 
@@ -163,7 +164,8 @@ void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & st
           if (boost::optional<float> v = cpu_load.get_optional<float>("sys")) {sys = v.get();}
           if (boost::optional<float> v = cpu_load.get_optional<float>("idle")) {idle = v.get();}
 
-          usage = (usr + nice) * 1e-2;
+          total = usr + nice + sys;
+          usage = total * 1e-2;
 
           level = DiagStatus::OK;
           if (usage >= usage_error_) {
@@ -173,6 +175,7 @@ void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & st
           }
 
           stat.add(fmt::format("CPU {}: status", cpu_name), load_dict_.at(level));
+          stat.addf(fmt::format("CPU {}: total", cpu_name), "%.2f%%", total);
           stat.addf(fmt::format("CPU {}: usr", cpu_name), "%.2f%%", usr);
           stat.addf(fmt::format("CPU {}: nice", cpu_name), "%.2f%%", nice);
           stat.addf(fmt::format("CPU {}: sys", cpu_name), "%.2f%%", sys);
