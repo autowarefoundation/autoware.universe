@@ -26,5 +26,6 @@
 #include "model/pedestrian_and_bicycle_tracker.hpp"
 #include "model/pedestrian_tracker.hpp"
 #include "model/tracker_base.hpp"
+#include "model/unknown_tracker.hpp"
 
 #endif  // MULTI_OBJECT_TRACKER__TRACKER__TRACKER_HPP_

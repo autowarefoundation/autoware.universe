@@ -150,7 +150,7 @@ void MultiObjectTracker::measurementCallback(
           measurement_time, input_transformed_objects.feature_objects.at(i).object));
     } else {
       list_tracker_.push_back(
-        std::make_shared<PedestrianTracker>(
+        std::make_shared<UnknownTracker>(
           measurement_time, input_transformed_objects.feature_objects.at(i).object));
     }
   }
@@ -182,15 +182,15 @@ bool MultiObjectTracker::transformDynamicObjects(
 
   /* transform to world coordinate */
   if (input_msg.header.frame_id != target_frame_id) {
-    tf2::Transform tf_target2objets_world;
-    tf2::Transform tf_target2objets;
-    tf2::Transform tf_objets_world2objects;
+    tf2::Transform tf_target2objects_world;
+    tf2::Transform tf_target2objects;
+    tf2::Transform tf_objects_world2objects;
     try {
-      geometry_msgs::msg::TransformStamped ros_target2objets_world;
-      ros_target2objets_world = tf_buffer_.lookupTransform(
+      geometry_msgs::msg::TransformStamped ros_target2objects_world;
+      ros_target2objects_world = tf_buffer_.lookupTransform(
         /*target*/ target_frame_id, /*src*/ input_msg.header.frame_id, input_msg.header.stamp,
         rclcpp::Duration::from_seconds(0.5));
-      tf2::fromMsg(ros_target2objets_world.transform, tf_target2objets_world);
+      tf2::fromMsg(ros_target2objects_world.transform, tf_target2objects_world);
     } catch (tf2::TransformException & ex) {
       RCLCPP_WARN(this->get_logger(), "%s", ex.what());
       return false;
@@ -198,10 +198,10 @@ bool MultiObjectTracker::transformDynamicObjects(
     for (size_t i = 0; i < output_msg.feature_objects.size(); ++i) {
       tf2::fromMsg(
         output_msg.feature_objects.at(i).object.state.pose_covariance.pose,
-        tf_objets_world2objects);
-      tf_target2objets = tf_target2objets_world * tf_objets_world2objects;
+        tf_objects_world2objects);
+      tf_target2objects = tf_target2objects_world * tf_objects_world2objects;
       tf2::toMsg(
-        tf_target2objets, output_msg.feature_objects.at(i).object.state.pose_covariance.pose);
+        tf_target2objects, output_msg.feature_objects.at(i).object.state.pose_covariance.pose);
     }
   }
   return true;
