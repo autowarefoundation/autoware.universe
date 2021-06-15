@@ -16,6 +16,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/AckermannLateralCommand.idl"
   "msg/BoundingBox.idl"
   "msg/BoundingBoxArray.idl"
+  "msg/ClassifiedRoi.idl"
+  "msg/ClassifiedRoiArray.idl"
   "msg/Complex32.idl"
   "msg/ControlDiagnostic.idl"
   "msg/DetectedObject.idl"
