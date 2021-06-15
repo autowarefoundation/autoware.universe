@@ -124,6 +124,10 @@ void TrafficLightSSDFineDetectorNodelet::callback(
   const sensor_msgs::msg::Image::ConstSharedPtr in_image_msg,
   const autoware_perception_msgs::msg::TrafficLightRoiArray::ConstSharedPtr in_roi_msg)
 {
+  if (in_image_msg->width < 2 || in_image_msg->height < 2) {
+    return;
+  }
+
   using std::chrono::high_resolution_clock;
   using std::chrono::milliseconds;
   const auto exe_start_time = high_resolution_clock::now();
@@ -145,26 +149,11 @@ void TrafficLightSSDFineDetectorNodelet::callback(
 
     for (int i = 0; i < num_infer; ++i) {
       int roi_index = i + batch_count * batch_size;
-      const int roi_x_offset = static_cast<int>(in_roi_msg->rois.at(roi_index).roi.x_offset);
-      const int roi_y_offset = static_cast<int>(in_roi_msg->rois.at(roi_index).roi.y_offset);
-      const int roi_width = static_cast<int>(in_roi_msg->rois.at(roi_index).roi.width);
-      const int roi_height = static_cast<int>(in_roi_msg->rois.at(roi_index).roi.height);
-      {
-        const int x_min = 0, x_max = static_cast<int>(original_image.size().width) - 1;
-        const int y_min = 0, y_max = static_cast<int>(original_image.size().height) - 1;
-        lts.push_back(
-          cv::Point(
-            std::min(std::max(roi_x_offset, x_min), x_max),
-            std::min(std::max(roi_y_offset, y_min), y_max)));
-      }
-      {
-        const int width_min = 1, x_max = static_cast<int>(original_image.size().width);
-        const int height_min = 1, y_max = static_cast<int>(original_image.size().height);
-        rbs.push_back(
-          cv::Point(
-            std::min(roi_x_offset + std::max(roi_width, width_min), x_max),
-            std::min(roi_y_offset + std::max(roi_height, height_min), y_max)));
-      }
+      lts.push_back(cv::Point(
+        in_roi_msg->rois.at(roi_index).roi.x_offset, in_roi_msg->rois.at(roi_index).roi.y_offset));
+      rbs.push_back(cv::Point(
+        in_roi_msg->rois.at(roi_index).roi.x_offset + in_roi_msg->rois.at(roi_index).roi.width,
+        in_roi_msg->rois.at(roi_index).roi.y_offset + in_roi_msg->rois.at(roi_index).roi.height));
       fitInFrame(lts.at(i), rbs.at(i), cv::Size(original_image.size()));
       cropped_imgs.push_back(cv::Mat(original_image, cv::Rect(lts.at(i), rbs.at(i))));
     }
@@ -275,10 +264,17 @@ bool TrafficLightSSDFineDetectorNodelet::cnnOutput2BoxDetection(
     std::vector<float>::iterator iter = std::max_element(tlr_scores.begin(), tlr_scores.end());
     size_t index = std::distance(tlr_scores.begin(), iter);
     size_t box_index = i * detection_per_class_ * 4 + index * 4;
-    det.x = boxes[box_index] * in_imgs.at(i).cols;
-    det.y = boxes[box_index + 1] * in_imgs.at(i).rows;
-    det.w = (boxes[box_index + 2] - boxes[box_index]) * in_imgs.at(i).cols;
-    det.h = (boxes[box_index + 3] - boxes[box_index + 1]) * in_imgs.at(i).rows;
+    cv::Point lt, rb;
+    lt.x = boxes[box_index] * in_imgs.at(i).cols;
+    lt.y = boxes[box_index + 1] * in_imgs.at(i).rows;
+    rb.x = boxes[box_index + 2] * in_imgs.at(i).cols;
+    rb.y = boxes[box_index + 3] * in_imgs.at(i).rows;
+    fitInFrame(lt, rb, cv::Size(in_imgs.at(i).cols, in_imgs.at(i).rows));
+    det.x = lt.x;
+    det.y = lt.y;
+    det.w = rb.x - lt.x;
+    det.h = rb.y - lt.y;
+
     det.prob = tlr_scores[index];
     detections.push_back(det);
   }
@@ -304,16 +300,19 @@ bool TrafficLightSSDFineDetectorNodelet::rosMsg2CvMat(
 bool TrafficLightSSDFineDetectorNodelet::fitInFrame(
   cv::Point & lt, cv::Point & rb, const cv::Size & size)
 {
-  try {
-    if (rb.x > size.width) {rb.x = size.width;}
-    if (rb.y > size.height) {rb.y = size.height;}
-    if (lt.x < 0) {lt.x = 0;}
-    if (lt.y < 0) {lt.y = 0;}
-  } catch (cv::Exception & e) {
-    RCLCPP_ERROR(
-      this->get_logger(),
-      "Failed to fit bounding rect in size [%d, %d] \n%s", size.width, size.height, e.what());
-    return false;
+  const int width = static_cast<int>(size.width);
+  const int height = static_cast<int>(size.height);
+  {
+    const int x_min = 0, x_max = width - 2;
+    const int y_min = 0, y_max = height - 2;
+    lt.x = std::min(std::max(lt.x, x_min), x_max);
+    lt.y = std::min(std::max(lt.y, y_min), y_max);
+  }
+  {
+    const int x_min = lt.x + 1, x_max = width - 1;
+    const int y_min = lt.y + 1, y_max = height - 1;
+    rb.x = std::min(std::max(rb.x, x_min), x_max);
+    rb.y = std::min(std::max(rb.y, y_min), y_max);
   }
 
   return true;
