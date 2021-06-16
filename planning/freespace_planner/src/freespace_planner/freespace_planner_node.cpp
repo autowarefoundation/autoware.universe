@@ -270,7 +270,13 @@ FreespacePlannerNode::FreespacePlannerNode(const rclcpp::NodeOptions & node_opti
     astar_param_.robot_shape.length = declare_parameter("robot_length", 4.5);
     astar_param_.robot_shape.width = declare_parameter("robot_width", 1.75);
     astar_param_.robot_shape.base2back = declare_parameter("robot_base2back", 1.0);
-    astar_param_.minimum_turning_radius = declare_parameter("minimum_turning_radius", 6.0);
+    astar_param_.minimum_turning_radius = declare_parameter("minimum_turning_radius", 0.5);
+    astar_param_.maximum_turning_radius = declare_parameter("maximum_turning_radius", 6.0);
+    astar_param_.turning_radius_size = declare_parameter("turning_radius_size", 11);
+    astar_param_.maximum_turning_radius = std::max(
+      astar_param_.maximum_turning_radius,
+      astar_param_.minimum_turning_radius);
+    astar_param_.turning_radius_size = std::max(astar_param_.turning_radius_size, 1);
 
     // search configs
     astar_param_.theta_size = declare_parameter("theta_size", 48);
