@@ -324,15 +324,15 @@ TEST(geometry, transformVector)
   }
 }
 
-TEST(geometry, calculateCurvature)
+TEST(geometry, calcCurvature)
 {
-  using autoware_utils::calculateCurvature;
+  using autoware_utils::calcCurvature;
   // Straight Line
   {
     geometry_msgs::msg::Point p1 = autoware_utils::createPoint(0.0, 0.0, 0.0);
     geometry_msgs::msg::Point p2 = autoware_utils::createPoint(1.0, 0.0, 0.0);
     geometry_msgs::msg::Point p3 = autoware_utils::createPoint(2.0, 0.0, 0.0);
-    EXPECT_DOUBLE_EQ(calculateCurvature(p1, p2, p3), 0.0);
+    EXPECT_DOUBLE_EQ(calcCurvature(p1, p2, p3), 0.0);
   }
 
   // Clockwise Curved Road with a 1[m] radius
@@ -340,7 +340,7 @@ TEST(geometry, calculateCurvature)
     geometry_msgs::msg::Point p1 = autoware_utils::createPoint(0.0, 0.0, 0.0);
     geometry_msgs::msg::Point p2 = autoware_utils::createPoint(1.0, 1.0, 0.0);
     geometry_msgs::msg::Point p3 = autoware_utils::createPoint(2.0, 0.0, 0.0);
-    EXPECT_DOUBLE_EQ(calculateCurvature(p1, p2, p3), -1.0);
+    EXPECT_DOUBLE_EQ(calcCurvature(p1, p2, p3), -1.0);
   }
 
   // Clockwise Curved Road with a 5[m] radius
@@ -348,7 +348,7 @@ TEST(geometry, calculateCurvature)
     geometry_msgs::msg::Point p1 = autoware_utils::createPoint(0.0, 0.0, 0.0);
     geometry_msgs::msg::Point p2 = autoware_utils::createPoint(5.0, 5.0, 0.0);
     geometry_msgs::msg::Point p3 = autoware_utils::createPoint(10.0, 0.0, 0.0);
-    EXPECT_DOUBLE_EQ(calculateCurvature(p1, p2, p3), -0.2);
+    EXPECT_DOUBLE_EQ(calcCurvature(p1, p2, p3), -0.2);
   }
 
   // Counter-Clockwise Curved Road with a 1[m] radius
@@ -356,7 +356,7 @@ TEST(geometry, calculateCurvature)
     geometry_msgs::msg::Point p1 = autoware_utils::createPoint(0.0, 0.0, 0.0);
     geometry_msgs::msg::Point p2 = autoware_utils::createPoint(-1.0, 1.0, 0.0);
     geometry_msgs::msg::Point p3 = autoware_utils::createPoint(-2.0, 0.0, 0.0);
-    EXPECT_DOUBLE_EQ(calculateCurvature(p1, p2, p3), 1.0);
+    EXPECT_DOUBLE_EQ(calcCurvature(p1, p2, p3), 1.0);
   }
 
   // Counter-Clockwise Curved Road with a 5[m] radius
@@ -364,16 +364,16 @@ TEST(geometry, calculateCurvature)
     geometry_msgs::msg::Point p1 = autoware_utils::createPoint(0.0, 0.0, 0.0);
     geometry_msgs::msg::Point p2 = autoware_utils::createPoint(-5.0, 5.0, 0.0);
     geometry_msgs::msg::Point p3 = autoware_utils::createPoint(-10.0, 0.0, 0.0);
-    EXPECT_DOUBLE_EQ(calculateCurvature(p1, p2, p3), 0.2);
+    EXPECT_DOUBLE_EQ(calcCurvature(p1, p2, p3), 0.2);
   }
 
   // Give same points
   {
     geometry_msgs::msg::Point p1 = autoware_utils::createPoint(0.0, 0.0, 0.0);
     geometry_msgs::msg::Point p2 = autoware_utils::createPoint(1.0, 0.0, 0.0);
-    ASSERT_ANY_THROW(calculateCurvature(p1, p1, p1));
-    ASSERT_ANY_THROW(calculateCurvature(p1, p1, p2));
-    ASSERT_ANY_THROW(calculateCurvature(p1, p2, p1));
-    ASSERT_ANY_THROW(calculateCurvature(p1, p2, p2));
+    ASSERT_ANY_THROW(calcCurvature(p1, p1, p1));
+    ASSERT_ANY_THROW(calcCurvature(p1, p1, p2));
+    ASSERT_ANY_THROW(calcCurvature(p1, p2, p1));
+    ASSERT_ANY_THROW(calcCurvature(p1, p2, p2));
   }
 }
