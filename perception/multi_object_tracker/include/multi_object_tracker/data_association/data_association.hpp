@@ -35,22 +35,19 @@
 class DataAssociation
 {
 private:
-  double getDistance(
-    const geometry_msgs::msg::Point & measurement, const geometry_msgs::msg::Point & tracker);
-  double getMahalanobisDistance(
-    const geometry_msgs::msg::Point & measurement, const geometry_msgs::msg::Point & tracker,
-    const Eigen::Matrix2d & covariance);
   Eigen::MatrixXi can_assign_matrix_;
   Eigen::MatrixXd max_dist_matrix_;
   Eigen::MatrixXd max_area_matrix_;
   Eigen::MatrixXd min_area_matrix_;
+  Eigen::MatrixXd max_rad_matrix_;
   const double score_threshold_;
-  std::shared_ptr<gnn_solver::GnnSolverInterface> gnn_solver_ptr_;
+  std::unique_ptr<gnn_solver::GnnSolverInterface> gnn_solver_ptr_;
 
 public:
   DataAssociation(
     std::vector<int> can_assign_vector, std::vector<double> max_dist_vector,
-    std::vector<double> max_area_vector, std::vector<double> min_area_vector);
+    std::vector<double> max_area_vector, std::vector<double> min_area_vector,
+    std::vector<double> max_rad_vector);
   void assign(
     const Eigen::MatrixXd & src, std::unordered_map<int, int> & direct_assignment,
     std::unordered_map<int, int> & reverse_assignment);

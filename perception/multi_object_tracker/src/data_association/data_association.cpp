@@ -22,9 +22,63 @@
 #include "multi_object_tracker/utils/utils.hpp"
 #include "multi_object_tracker/data_association/solver/gnn_solver.hpp"
 
+namespace
+{
+double getDistance(
+  const geometry_msgs::msg::Point & measurement,
+  const geometry_msgs::msg::Point & tracker)
+{
+  const double diff_x = tracker.x - measurement.x;
+  const double diff_y = tracker.y - measurement.y;
+  // const double diff_z = tracker.z - measurement.z;
+  return std::sqrt(diff_x * diff_x + diff_y * diff_y);
+}
+
+double getMahalanobisDistance(
+  const geometry_msgs::msg::Point & measurement, const geometry_msgs::msg::Point & tracker,
+  const Eigen::Matrix2d & covariance)
+{
+  Eigen::Vector2d measurement_point;
+  measurement_point << measurement.x, measurement.y;
+  Eigen::Vector2d tracker_point;
+  tracker_point << tracker.x, tracker.y;
+  Eigen::MatrixXd mahalanobis_squared = (measurement_point - tracker_point).transpose() *
+    covariance.inverse() * (measurement_point - tracker_point);
+  return std::sqrt(mahalanobis_squared(0));
+}
+
+Eigen::Matrix2d getXYCovariance(const geometry_msgs::msg::PoseWithCovariance & pose_covariance)
+{
+  Eigen::Matrix2d covariance;
+  covariance << pose_covariance.covariance[0], pose_covariance.covariance[1],
+    pose_covariance.covariance[6], pose_covariance.covariance[7];
+  return covariance;
+}
+
+double getFormedYawAngle(
+  const geometry_msgs::msg::Quaternion & measurement_quat,
+  const geometry_msgs::msg::Quaternion & tracker_quat, const bool distinguish_front_or_back = true)
+{
+  const double measurement_yaw = autoware_utils::normalizeRadian(tf2::getYaw(measurement_quat));
+  const double tracker_yaw = autoware_utils::normalizeRadian(tf2::getYaw(tracker_quat));
+  const double angle_range = distinguish_front_or_back ? M_PI : M_PI_2;
+  const double angle_step = distinguish_front_or_back ? 2.0 * M_PI : M_PI;
+  // Fixed measurement_yaw to be in the range of +-90 or 180 degrees of X_t(IDX::YAW)
+  double measurement_fixed_yaw = measurement_yaw;
+  while (angle_range <= tracker_yaw - measurement_fixed_yaw) {
+    measurement_fixed_yaw = measurement_fixed_yaw + angle_step;
+  }
+  while (angle_range <= measurement_fixed_yaw - tracker_yaw) {
+    measurement_fixed_yaw = measurement_fixed_yaw - angle_step;
+  }
+  return std::fabs(measurement_fixed_yaw - tracker_yaw);
+}
+}  // namespace
+
 DataAssociation::DataAssociation(
   std::vector<int> can_assign_vector, std::vector<double> max_dist_vector,
-  std::vector<double> max_area_vector, std::vector<double> min_area_vector)
+  std::vector<double> max_area_vector, std::vector<double> min_area_vector,
+  std::vector<double> max_rad_vector)
 : score_threshold_(0.01)
 {
   {
@@ -51,8 +105,14 @@ DataAssociation::DataAssociation(
       min_area_vector.data(), min_area_label_num, min_area_label_num);
     min_area_matrix_ = min_area_matrix_tmp.transpose();
   }
+  {
+    const int max_rad_label_num = static_cast<int>(std::sqrt(max_rad_vector.size()));
+    Eigen::Map<Eigen::MatrixXd> max_rad_matrix_tmp(
+      max_rad_vector.data(), max_rad_label_num, max_rad_label_num);
+    max_rad_matrix_ = max_rad_matrix_tmp.transpose();
+  }
 
-  gnn_solver_ptr_ = std::make_shared<gnn_solver::MuSSP>();
+  gnn_solver_ptr_ = std::make_unique<gnn_solver::MuSSP>();
 }
 
 void DataAssociation::assign(
@@ -101,39 +161,46 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
       ++measurement_idx)
     {
       double score = 0.0;
-      if (can_assign_matrix_(
-          (*tracker_itr)->getType(),
-          measurements.feature_objects.at(measurement_idx).object.semantic.type))
-      {
-        double max_dist = max_dist_matrix_(
-          (*tracker_itr)->getType(),
-          measurements.feature_objects.at(measurement_idx).object.semantic.type);
-        double max_area = max_area_matrix_(
-          (*tracker_itr)->getType(),
-          measurements.feature_objects.at(measurement_idx).object.semantic.type);
-        double min_area = min_area_matrix_(
-          (*tracker_itr)->getType(),
-          measurements.feature_objects.at(measurement_idx).object.semantic.type);
-        double dist = getDistance(
-          measurements.feature_objects.at(measurement_idx)
-          .object.state.pose_covariance.pose.position,
-          (*tracker_itr)->getPosition(measurements.header.stamp));
-        double area = utils::getArea(measurements.feature_objects.at(measurement_idx).object.shape);
+      const geometry_msgs::msg::PoseWithCovariance tracker_pose_covariance =
+        (*tracker_itr)->getPoseWithCovariance(measurements.header.stamp);
+      const autoware_perception_msgs::msg::DynamicObject & measurement_object =
+        measurements.feature_objects.at(measurement_idx).object;
+      if (can_assign_matrix_((*tracker_itr)->getType(), measurement_object.semantic.type)) {
+        const double max_dist =
+          max_dist_matrix_((*tracker_itr)->getType(), measurement_object.semantic.type);
+        const double max_area =
+          max_area_matrix_((*tracker_itr)->getType(), measurement_object.semantic.type);
+        const double min_area =
+          min_area_matrix_((*tracker_itr)->getType(), measurement_object.semantic.type);
+        const double max_rad =
+          max_rad_matrix_((*tracker_itr)->getType(), measurement_object.semantic.type);
+        const double dist = getDistance(
+          measurement_object.state.pose_covariance.pose.position,
+          tracker_pose_covariance.pose.position);
+        const double area = utils::getArea(measurement_object.shape);
         score = (max_dist - std::min(dist, max_dist)) / max_dist;
 
         // dist gate
-        if (max_dist < dist) {score = 0.0;}
-        // area gate
-        if (area < min_area || max_area < area) {score = 0.0;}
-        // mahalanobis dist gate
-        if (score < score_threshold_) {
+        if (max_dist < dist) {
+          score = 0.0;
+          // area gate
+        } else if (area < min_area || max_area < area) {
+          score = 0.0;
+          // angle gate
+        } else if (std::fabs(max_rad) < M_PI) {
+          const double angle = getFormedYawAngle(
+            measurement_object.state.pose_covariance.pose.orientation,
+            tracker_pose_covariance.pose.orientation, false);
+          if (std::fabs(max_rad) < std::fabs(angle)) {score = 0.0;}
+          // mahalanobis dist gate
+        } else if (score < score_threshold_) {
           double mahalanobis_dist = getMahalanobisDistance(
             measurements.feature_objects.at(measurement_idx)
             .object.state.pose_covariance.pose.position,
-            (*tracker_itr)->getPosition(measurements.header.stamp),
-            (*tracker_itr)->getXYCovariance(measurements.header.stamp));
+            tracker_pose_covariance.pose.position,
+            getXYCovariance(tracker_pose_covariance));
 
-          if (2.448 <= mahalanobis_dist) {score = 0.0;}
+          if (2.448 /*95%*/ <= mahalanobis_dist) {score = 0.0;}
         }
       }
       score_matrix(tracker_idx, measurement_idx) = score;
@@ -141,26 +208,4 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
   }
 
   return score_matrix;
-}
-
-double DataAssociation::getDistance(
-  const geometry_msgs::msg::Point & measurement, const geometry_msgs::msg::Point & tracker)
-{
-  const double diff_x = tracker.x - measurement.x;
-  const double diff_y = tracker.y - measurement.y;
-  // const double diff_z = tracker.z - measurement.z;
-  return std::sqrt(diff_x * diff_x + diff_y * diff_y);
-}
-
-double DataAssociation::getMahalanobisDistance(
-  const geometry_msgs::msg::Point & measurement, const geometry_msgs::msg::Point & tracker,
-  const Eigen::Matrix2d & covariance)
-{
-  Eigen::Vector2d measurement_point;
-  measurement_point << measurement.x, measurement.y;
-  Eigen::Vector2d tracker_point;
-  tracker_point << tracker.x, tracker.y;
-  Eigen::MatrixXd mahalanobis_squared = (measurement_point - tracker_point).transpose() *
-    covariance.inverse() * (measurement_point - tracker_point);
-  return std::sqrt(mahalanobis_squared(0));
 }

@@ -55,9 +55,7 @@ public:
   {
     return (current_time - last_update_with_measurement_time_).seconds();
   }
-  virtual geometry_msgs::msg::Point getPosition(const rclcpp::Time & time);
-  virtual Eigen::Matrix2d getXYCovariance(const rclcpp::Time & time);
-  virtual double getArea(const rclcpp::Time & time);
+  virtual geometry_msgs::msg::PoseWithCovariance getPoseWithCovariance(const rclcpp::Time & time);
 
   /*
    *　Pure virtual function

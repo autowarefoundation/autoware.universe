@@ -13,8 +13,6 @@
 // limitations under the License.
 //
 //
-// Author: v1.0 Yukihiro Saito
-//
 
 #include <iterator>
 #include <list>
@@ -75,6 +73,7 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   this->declare_parameter("max_dist_matrix");
   this->declare_parameter("max_area_matrix");
   this->declare_parameter("min_area_matrix");
+  this->declare_parameter("max_rad_matrix");
   auto can_assign_matrix_tmp =
     this->get_parameter("can_assign_matrix").as_integer_array();
   std::vector<int> can_assign_matrix(can_assign_matrix_tmp.begin(), can_assign_matrix_tmp.end());
@@ -84,8 +83,10 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
     this->get_parameter("max_area_matrix").as_double_array();
   std::vector<double> min_area_matrix =
     this->get_parameter("min_area_matrix").as_double_array();
+  std::vector<double> max_rad_matrix =
+    this->get_parameter("max_rad_matrix").as_double_array();
   data_association_ = std::make_unique<DataAssociation>(
-    can_assign_matrix, max_dist_matrix, max_area_matrix, min_area_matrix);
+    can_assign_matrix, max_dist_matrix, max_area_matrix, min_area_matrix, max_rad_matrix);
 }
 
 void MultiObjectTracker::measurementCallback(

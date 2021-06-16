@@ -13,8 +13,6 @@
 // limitations under the License.
 //
 //
-// Author: v1.0 Yukihiro Saito
-//
 
 #include <algorithm>
 #include <random>
@@ -51,31 +49,9 @@ bool Tracker::updateWithoutMeasurement()
   return true;
 }
 
-geometry_msgs::msg::Point Tracker::getPosition(const rclcpp::Time & time)
+geometry_msgs::msg::PoseWithCovariance Tracker::getPoseWithCovariance(const rclcpp::Time & time)
 {
   autoware_perception_msgs::msg::DynamicObject object;
   getEstimatedDynamicObject(time, object);
-  geometry_msgs::msg::Point position;
-  position.x = object.state.pose_covariance.pose.position.x;
-  position.y = object.state.pose_covariance.pose.position.y;
-  position.z = object.state.pose_covariance.pose.position.z;
-  return position;
-}
-
-Eigen::Matrix2d Tracker::getXYCovariance(const rclcpp::Time & time)
-{
-  autoware_perception_msgs::msg::DynamicObject object;
-  getEstimatedDynamicObject(time, object);
-  Eigen::Matrix2d covariance;
-  covariance << object.state.pose_covariance.covariance[0],
-    object.state.pose_covariance.covariance[1], object.state.pose_covariance.covariance[6],
-    object.state.pose_covariance.covariance[7];
-  return covariance;
-}
-
-double Tracker::getArea(const rclcpp::Time & time)
-{
-  autoware_perception_msgs::msg::DynamicObject object;
-  getEstimatedDynamicObject(time, object);
-  return utils::getArea(object.shape);
+  return object.state.pose_covariance;
 }

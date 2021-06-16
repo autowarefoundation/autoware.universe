@@ -236,17 +236,13 @@ bool BigVehicleTracker::measureWithPose(const autoware_perception_msgs::msg::Dyn
   {
     Eigen::MatrixXd X_t(dim_x_, 1);
     ekf_.getX(X_t);
-    // Fixed measurement_yaw to be in the range of +-180 degrees of X_t(IDX::YAW)
+    // Fixed measurement_yaw to be in the range of +-90 degrees of X_t(IDX::YAW)
     while (M_PI_2 <= X_t(IDX::YAW) - measurement_yaw) {
       measurement_yaw = measurement_yaw + M_PI;
     }
     while (M_PI_2 <= measurement_yaw - X_t(IDX::YAW)) {
       measurement_yaw = measurement_yaw - M_PI;
     }
-    float theta = std::acos(
-      std::cos(X_t(IDX::YAW)) * std::cos(measurement_yaw) +
-      std::sin(X_t(IDX::YAW)) * std::sin(measurement_yaw));
-    if (autoware_utils::deg2rad(60) < std::fabs(theta)) {return false;}
   }
 
   /* Set measurement matrix */
@@ -351,7 +347,7 @@ bool BigVehicleTracker::getEstimatedDynamicObject(
   // predict state
   KalmanFilter tmp_ekf_for_no_update = ekf_;
   const double dt = (time - last_update_time_).seconds();
-  predict(dt, tmp_ekf_for_no_update);
+  if (0.001 /*1msec*/ < dt) {predict(dt, tmp_ekf_for_no_update);}
   Eigen::MatrixXd X_t(dim_x_, 1);     // predicted state
   Eigen::MatrixXd P(dim_x_, dim_x_);  // predicted state
   tmp_ekf_for_no_update.getX(X_t);
