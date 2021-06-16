@@ -11,7 +11,9 @@
 
   <depend>autoware_perception_msgs</depend>
   <depend>autoware_planning_msgs</depend>
+  <depend>autoware_utils</depend>
   <depend>geometry_msgs</depend>
+  <depend>image_geometry</depend>
   <depend>lanelet2_extension</depend>
   <depend>rclcpp</depend>
   <depend>sensor_msgs</depend>
@@ -20,7 +22,7 @@
 
   <!-- The export tag contains other, unspecified, tags -->
   <test_depend>ament_lint_auto</test_depend>
-  <test_depend>ament_cmake_cppcheck</test_depend>
+  <test_depend>ament_lint_common</test_depend>
 
   <export>
     <!-- Other tools can request additional information be placed here -->

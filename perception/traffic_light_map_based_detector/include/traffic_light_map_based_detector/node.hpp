@@ -1,3 +1,16 @@
+// Copyright 2020 Tier IV, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 /*
  * Copyright 2019 Autoware Foundation. All rights reserved.
  *
@@ -34,6 +47,7 @@
 #include "autoware_perception_msgs/msg/traffic_light_roi_array.hpp"
 #include "autoware_planning_msgs/msg/route.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
+#include "image_geometry/pinhole_camera_model.h"
 #include "sensor_msgs/msg/camera_info.hpp"
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
@@ -81,7 +95,6 @@ private:
 
   using TrafficLightSet = std::set<lanelet::ConstLineString3d, IdLessThan>;
 
-  sensor_msgs::msg::CameraInfo::ConstSharedPtr camera_info_ptr_;
   std::shared_ptr<TrafficLightSet> all_traffic_lights_ptr_;
   std::shared_ptr<TrafficLightSet> route_traffic_lights_ptr_;
 
@@ -93,24 +106,23 @@ private:
   void mapCallback(const autoware_lanelet2_msgs::msg::MapBin::ConstSharedPtr input_msg);
   void cameraInfoCallback(const sensor_msgs::msg::CameraInfo::ConstSharedPtr input_msg);
   void routeCallback(const autoware_planning_msgs::msg::Route::ConstSharedPtr input_msg);
-  void isInVisibility(
+  void getVisibleTrafficLights(
     const TrafficLightSet & all_traffic_lights,
     const geometry_msgs::msg::Pose & camera_pose,
-    const sensor_msgs::msg::CameraInfo & camera_info,
+    const image_geometry::PinholeCameraModel & pinhole_camera_model,
     std::vector<lanelet::ConstLineString3d> & visible_traffic_lights);
   bool isInDistanceRange(
     const geometry_msgs::msg::Point & tl_point,
     const geometry_msgs::msg::Point & camera_point,
-    const double max_distance_range);
+    const double max_distance_range) const;
   bool isInAngleRange(
-    const double & tl_yaw, const double & camera_yaw, const double max_angle_range);
+    const double & tl_yaw, const double & camera_yaw, const double max_angle_range) const;
   bool isInImageFrame(
-    const sensor_msgs::msg::CameraInfo & camera_info,
-    const geometry_msgs::msg::Point & point);
-  double normalizeAngle(const double & angle);
+    const image_geometry::PinholeCameraModel & pinhole_camera_model,
+    const geometry_msgs::msg::Point & point) const;
   bool getTrafficLightRoi(
     const geometry_msgs::msg::Pose & camera_pose,
-    const sensor_msgs::msg::CameraInfo & camera_info,
+    const image_geometry::PinholeCameraModel & pinhole_camera_model,
     const lanelet::ConstLineString3d traffic_light,
     const Config & config,
     autoware_perception_msgs::msg::TrafficLightRoi & tl_roi);
