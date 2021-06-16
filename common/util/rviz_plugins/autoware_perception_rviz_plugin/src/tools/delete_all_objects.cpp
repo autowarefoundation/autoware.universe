@@ -58,7 +58,7 @@ DeleteAllObjectsTool::DeleteAllObjectsTool()
   shortcut_key_ = 'd';
 
   topic_property_ = new rviz_common::properties::StringProperty(
-    "Pose Topic", "/simulation/dummy_perception/publisher/object_info",
+    "Pose Topic", "/simulation/dummy_perception_publisher/object_info",
     "The topic on which to publish dummy object info.",
     getPropertyContainer(), SLOT(updateTopic()), this);
 }
