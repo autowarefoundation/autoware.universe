@@ -37,6 +37,7 @@
 
 #include "scene_module/scene_module_interface.hpp"
 #include "autoware_perception_msgs/msg/looking_traffic_light_state.hpp"
+#include "autoware_perception_msgs/msg/traffic_light_judge_stamped.hpp"
 
 class TrafficLightModule : public SceneModuleInterface
 {
@@ -108,6 +109,8 @@ private:
     const autoware_planning_msgs::msg::PathWithLaneId & input_path,
     const size_t & dead_line_point_idx, const Eigen::Vector2d & dead_line_point,
     const double dead_line_range);
+
+  bool updateTrafficLightState(const lanelet::ConstLineStringsOrPolygons3d traffic_lights);
 
   bool isStopRequired(const autoware_perception_msgs::msg::TrafficLightState & tl_state);
 
