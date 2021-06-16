@@ -44,6 +44,7 @@ private:
   std::unique_ptr<gnn_solver::GnnSolverInterface> gnn_solver_ptr_;
 
 public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   DataAssociation(
     std::vector<int> can_assign_vector, std::vector<double> max_dist_vector,
     std::vector<double> max_area_vector, std::vector<double> min_area_vector,
