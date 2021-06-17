@@ -235,6 +235,8 @@ public:
   void updateMaxIter(const int iter);
   void updateVerbose(const bool verbose);
   void updateRhoInterval(const int rho_interval);
+  void updateRho(const double rho);
+  void updateAlpha(const double alpha);
 
   int getTakenIter() {return static_cast<int>(latest_work_info.iter);}
   std::string getStatusMessage() {return static_cast<std::string>(latest_work_info.status);}
