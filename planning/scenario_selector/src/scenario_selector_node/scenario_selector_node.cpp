@@ -167,7 +167,9 @@ std::string ScenarioSelectorNode::selectScenarioByPosition()
   const auto is_in_parking_lot = isInParkingLot(lanelet_map_ptr_, current_pose_->pose);
 
   if (current_scenario_ == autoware_planning_msgs::msg::Scenario::EMPTY) {
-    if (is_in_parking_lot) {
+    if (is_in_lane && is_goal_in_lane) {
+      return autoware_planning_msgs::msg::Scenario::LANEDRIVING;
+    } else if (is_in_parking_lot) {
       return autoware_planning_msgs::msg::Scenario::PARKING;
     } else {
       return autoware_planning_msgs::msg::Scenario::LANEDRIVING;
