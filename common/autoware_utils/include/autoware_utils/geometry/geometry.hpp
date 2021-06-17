@@ -32,23 +32,11 @@
 
 namespace autoware_utils
 {
-inline geometry_msgs::msg::Point getPoint(const geometry_msgs::msg::Point & p) {return p;}
+template<class T>
+geometry_msgs::msg::Point getPoint(const T & p);
 
-inline geometry_msgs::msg::Point getPoint(const geometry_msgs::msg::Pose & p) {return p.position;}
-
-inline geometry_msgs::msg::Point getPoint(const geometry_msgs::msg::PoseStamped & p)
-{
-  return p.pose.position;
-}
-
-inline geometry_msgs::msg::Point getPoint(const autoware_planning_msgs::msg::PathPoint & p)
-{
-  return p.pose.position;
-}
-inline geometry_msgs::msg::Point getPoint(const autoware_planning_msgs::msg::TrajectoryPoint & p)
-{
-  return p.pose.position;
-}
+template<class T>
+geometry_msgs::msg::Pose getPose(const T & p);
 
 inline geometry_msgs::msg::Point createPoint(const double x, const double y, const double z)
 {

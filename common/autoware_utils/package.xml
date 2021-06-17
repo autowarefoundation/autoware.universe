@@ -14,6 +14,7 @@
   <depend>builtin_interfaces</depend>
   <depend>diagnostic_msgs</depend>
   <depend>geometry_msgs</depend>
+  <depend>libboost-dev</depend>
   <depend>rclcpp</depend>
   <depend>tf2</depend>
   <depend>tf2_geometry_msgs</depend>

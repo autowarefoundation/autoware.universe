@@ -13,8 +13,11 @@ endif()
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
+find_package(Boost REQUIRED)
+
 ament_auto_add_library(autoware_utils
   src/autoware_utils.cpp
+  src/geometry/geometry.cpp
 )
 
 # Test

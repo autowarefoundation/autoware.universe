@@ -1,4 +1,4 @@
-// Copyright 2020 TierIV
+// Copyright 2020 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,5 +29,6 @@
 #include "autoware_utils/ros/transform_listener.hpp"
 #include "autoware_utils/ros/wait_for_param.hpp"
 #include "autoware_utils/system/stop_watch.hpp"
+#include "autoware_utils/trajectory/trajectory.hpp"
 
 #endif  // AUTOWARE_UTILS__AUTOWARE_UTILS_HPP_
