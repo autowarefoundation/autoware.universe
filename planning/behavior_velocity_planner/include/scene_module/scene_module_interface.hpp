@@ -96,7 +96,7 @@ public:
     stop_reason_array.header.frame_id = "map";
     stop_reason_array.header.stamp = clock_->now();
 
-    first_stop_path_point_index_ = static_cast<int>(path->points.size());
+    first_stop_path_point_index_ = static_cast<int>(path->points.size()) - 1;
     for (const auto & scene_module : scene_modules_) {
       autoware_planning_msgs::msg::StopReason stop_reason;
       scene_module->setPlannerData(planner_data_);

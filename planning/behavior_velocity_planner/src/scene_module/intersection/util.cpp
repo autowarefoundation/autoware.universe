@@ -259,7 +259,7 @@ bool generateStopLine(
   const double max_acc = planner_data->max_stop_acceleration_threshold;
   const double delay_response_time = planner_data->delay_response_time;
   const double pass_judge_line_dist =
-    planning_utils::calcJudgeLineDist(current_vel, max_acc, delay_response_time);
+    planning_utils::calcJudgeLineDistWithAccLimit(current_vel, max_acc, delay_response_time);
 
   /* set parameters */
   constexpr double interval = 0.2;
@@ -410,8 +410,8 @@ bool getObjectivePolygons(
   const auto & conflicting_lanelets =
     lanelet::utils::getConflictingLanelets(routing_graph_ptr, assigned_lanelet);
 
-  lanelet::ConstLanelets
-    conflicting_lanelets_ex_yield_ego;  // conflicting lanes with "lane_id" excluding ego lanes and yield lanes
+  lanelet::ConstLanelets                // conflicting lanes with "lane_id"
+    conflicting_lanelets_ex_yield_ego;  // excluding ego lanes and yield lanes
   lanelet::ConstLanelets objective_lanelets;  // final objective lanelets
 
   // exclude yield lanelets and ego lanelets from objective_lanelets
@@ -441,8 +441,9 @@ bool getObjectivePolygons(
 
   // get exact polygon of conflicting lanes
   conflicting_polygons->clear();
-  if(!conflicting_lanelets_ex_yield_ego.empty()) {
-    const double path_length = lanelet::utils::getLaneletLength3d(conflicting_lanelets_ex_yield_ego);
+  if (!conflicting_lanelets_ex_yield_ego.empty()) {
+    const double path_length =
+      lanelet::utils::getLaneletLength3d(conflicting_lanelets_ex_yield_ego);
     const auto polygon3d = lanelet::utils::getPolygonFromArcLength(
       conflicting_lanelets_ex_yield_ego, path_length - length, path_length);
     conflicting_polygons->push_back(polygon3d);

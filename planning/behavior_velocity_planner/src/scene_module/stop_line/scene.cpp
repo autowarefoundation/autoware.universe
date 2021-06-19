@@ -22,7 +22,9 @@ namespace bg = boost::geometry;
 
 namespace
 {
-double calcYawFromPoints(const geometry_msgs::msg::Point & p_front, const geometry_msgs::msg::Point & p_back)
+double calcYawFromPoints(
+  const geometry_msgs::msg::Point & p_front,
+  const geometry_msgs::msg::Point & p_back)
 {
   return std::atan2(p_back.y - p_front.y, p_back.x - p_front.x);
 }
@@ -294,7 +296,8 @@ bool StopLineModule::modifyPathVelocity(
     // Move to stopped state if stopped
     if (
       std::abs(signed_arc_dist_to_stop_point) < planner_param_.stop_check_dist &&
-      planner_data_->isVehicleStopped(planner_param_.stop_duration_sec)) {
+      planner_data_->isVehicleStopped(planner_param_.stop_duration_sec))
+    {
       RCLCPP_INFO(logger_, "APPROACH -> STOPPED");
       state_ = State::STOPPED;
     }

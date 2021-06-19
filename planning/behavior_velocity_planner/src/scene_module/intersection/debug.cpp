@@ -297,7 +297,7 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createDebugMarkerArray(
         debug_data_.judge_point_pose, "judge_point_pose", lane_id_, 1.0, 1.0, 0.5),
       current_time, &debug_marker_array);
 
-    if(debug_data_.stop_required){
+    if (debug_data_.stop_required) {
       appendMarkerArray(
         createVirtualStopWallMarkerArray(debug_data_.stop_wall_pose, lane_id_, "intersection"),
         current_time, &debug_marker_array);

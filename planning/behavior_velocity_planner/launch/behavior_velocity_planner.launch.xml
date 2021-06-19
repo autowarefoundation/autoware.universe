@@ -18,7 +18,6 @@
   <arg name="max_accel" default="-3.0" />
   <arg name="max_jerk" default="-5.0" />
   <arg name="delay_response_time" default="0.50" />
-  <arg name="yellow_lamp_period" default="2.75" />
 
   <node pkg="behavior_velocity_planner" exec="behavior_velocity_planner_node" name="behavior_velocity_planner" output="screen">
     <param from="$(find-pkg-share behavior_velocity_planner)/config/blind_spot.param.yaml" />
@@ -39,9 +38,6 @@
     <remap from="~/output/stop_reasons" to="/planning/scenario_planning/status/stop_reasons" />
     <remap from="~/output/traffic_light_state" to="debug/traffic_light_state" />
 
-    <param name="yellow_lamp_period" value="$(var yellow_lamp_period)" />
-    <param name="max_jerk" value="$(var max_jerk)" />
-
     <param name="launch_stop_line" value="$(var launch_stop_line)" />
     <param name="launch_crosswalk" value="$(var launch_crosswalk)" />
     <param name="launch_traffic_light" value="$(var launch_traffic_light)" />
@@ -51,6 +47,7 @@
 
     <param name="forward_path_length" value="$(var forward_path_length)" />
     <param name="backward_path_length" value="$(var backward_path_length)" />
+    <param name="max_jerk" value="$(var max_jerk)" />
     <param name="max_accel" value="$(var max_accel)" />
     <param name="delay_response_time" value="$(var delay_response_time)" />
   </node>

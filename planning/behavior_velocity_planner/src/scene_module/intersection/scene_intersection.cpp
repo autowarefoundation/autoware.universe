@@ -148,7 +148,7 @@ bool IntersectionModule::modifyPathVelocity(
     const double base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
     util::setVelocityFrom(stop_line_idx, v, path);
 
-    if(is_stop_required){
+    if (is_stop_required) {
       debug_data_.stop_required = true;
       debug_data_.stop_wall_pose = util::getAheadPose(stop_line_idx, base_link2front, *path);
       debug_data_.stop_point_pose = path->points.at(stop_line_idx).point.pose;
@@ -157,7 +157,8 @@ bool IntersectionModule::modifyPathVelocity(
       /* get stop point and stop factor */
       autoware_planning_msgs::msg::StopFactor stop_factor;
       stop_factor.stop_pose = debug_data_.stop_point_pose;
-      const auto stop_factor_conflict = planning_utils::toRosPoints(debug_data_.conflicting_targets);
+      const auto stop_factor_conflict =
+        planning_utils::toRosPoints(debug_data_.conflicting_targets);
       const auto stop_factor_stuck = planning_utils::toRosPoints(debug_data_.stuck_targets);
       stop_factor.stop_factor_points =
         planning_utils::concatVector(stop_factor_conflict, stop_factor_stuck);

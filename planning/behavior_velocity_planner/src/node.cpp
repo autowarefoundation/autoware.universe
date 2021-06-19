@@ -114,7 +114,8 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   // Parameters
   forward_path_length_ = this->declare_parameter("forward_path_length", 1000.0);
   backward_path_length_ = this->declare_parameter("backward_path_length", 5.0);
-  planner_data_.accel_lowpass_gain = this->declare_parameter("lowpass_gain", 0.5);
+  // TODO(yukkysaito): This will become unnecessary when acc output from localization is available.
+  planner_data_.accel_lowpass_gain_ = this->declare_parameter("lowpass_gain", 0.5);
 
   // Initialize PlannerManager
   if (this->declare_parameter("launch_stop_line", true)) {

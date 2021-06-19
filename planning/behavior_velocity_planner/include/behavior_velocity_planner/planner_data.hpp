@@ -45,6 +45,7 @@
 #include "lanelet2_routing/RoutingGraphContainer.h"
 #include "lanelet2_traffic_rules/TrafficRulesFactory.h"
 
+class BehaviorVelocityPlannerNode;
 struct PlannerData
 {
   explicit PlannerData(rclcpp::Node & node)
@@ -54,14 +55,13 @@ struct PlannerData
       "max_accel", -5.0);  // TODO(someone): read min_acc in velocity_controller.param.yaml?
     max_stop_jerk_threshold = node.declare_parameter("max_jerk", -5.0);
     delay_response_time = node.declare_parameter("delay_response_time", 0.50);
-    yellow_lamp_period = node.declare_parameter("yellow_lamp_period", 2.75);
   }
   // tf
   geometry_msgs::msg::PoseStamped current_pose;
 
   // msgs from callbacks that are used for data-ready
   geometry_msgs::msg::TwistStamped::ConstSharedPtr current_velocity;
-  geometry_msgs::msg::TwistStamped::ConstSharedPtr prev_velocity;
+  double current_accel;
   static constexpr double velocity_buffer_time_sec = 10.0;
   std::deque<geometry_msgs::msg::TwistStamped> velocity_buffer;
   autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr dynamic_objects;
@@ -76,7 +76,7 @@ struct PlannerData
 
   // external data
   std::map<int, autoware_perception_msgs::msg::TrafficLightStateStamped>
-    external_traffic_light_id_map;
+  external_traffic_light_id_map;
   boost::optional<autoware_api_msgs::msg::CrosswalkStatus> external_crosswalk_status_input;
   boost::optional<autoware_api_msgs::msg::IntersectionStatus> external_intersection_status_input;
 
@@ -87,34 +87,10 @@ struct PlannerData
   double max_stop_acceleration_threshold;
   double max_stop_jerk_threshold;
   double delay_response_time;
-  double yellow_lamp_period;
-
-  // calc current acceleration
-  double current_accel;
-  double prev_accel;
-  double accel_lowpass_gain;
-
-  void updateCurrentAcc()
-  {
-    if (prev_velocity) {
-      const double dv = current_velocity->twist.linear.x - prev_velocity->twist.linear.x;
-      const auto time_diff =
-        rclcpp::Time(current_velocity->header.stamp) - rclcpp::Time(prev_velocity->header.stamp);
-      const double dt = std::max(time_diff.seconds(), 1e-03);
-      const double accel = dv / dt;
-      // apply lowpass filter
-      current_accel = accel_lowpass_gain * accel + (1.0 - accel_lowpass_gain) * prev_accel;
-    } else {
-      current_accel = 0.0;
-    }
-
-    prev_velocity = current_velocity;
-    prev_accel = current_accel;
-  }
 
   bool isVehicleStopped(const double stop_duration = 0.0) const
   {
-    if (velocity_buffer.empty()) return false;
+    if (velocity_buffer.empty()) {return false;}
 
     // Get velocities within stop_duration
     const auto now = rclcpp::Clock{RCL_ROS_TIME}.now();
@@ -158,5 +134,30 @@ struct PlannerData
     return std::make_shared<autoware_perception_msgs::msg::TrafficLightStateStamped>(
       external_traffic_light_id_map.at(id));
   }
+
+private:
+  double prev_accel_;
+  geometry_msgs::msg::TwistStamped::ConstSharedPtr prev_velocity_;
+  double accel_lowpass_gain_;
+
+  void updateCurrentAcc()
+  {
+    if (prev_velocity_) {
+      const double dv = current_velocity->twist.linear.x - prev_velocity_->twist.linear.x;
+      const double dt =
+        std::max(
+        (rclcpp::Time(current_velocity->header.stamp) -
+        rclcpp::Time(prev_velocity_->header.stamp)).seconds(), 1e-03);
+      const double accel = dv / dt;
+      // apply lowpass filter
+      current_accel = accel_lowpass_gain_ * accel + (1.0 - accel_lowpass_gain_) * prev_accel_;
+    } else {
+      current_accel = 0.0;
+    }
+
+    prev_velocity_ = current_velocity;
+    prev_accel_ = current_accel;
+  }
+  friend BehaviorVelocityPlannerNode;
 };
 #endif  // BEHAVIOR_VELOCITY_PLANNER__PLANNER_DATA_HPP_

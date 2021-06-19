@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "utilization/util.hpp"
-
+#include <algorithm>
 #include <limits>
 #include <string>
 #include <vector>
+
+#include "utilization/util.hpp"
 
 namespace planning_utils
 {
@@ -150,9 +151,9 @@ geometry_msgs::msg::Pose transformAbsCoordinate2D(
   return absolute;
 }
 
-double calcJudgeLineDist(
+double calcJudgeLineDistWithAccLimit(
   const double velocity, const double max_stop_acceleration,
-  const double delay_response_time)  // TODO(someone): also consider jerk
+  const double delay_response_time)
 {
   double judge_line_dist =
     (velocity * velocity) / (2.0 * (-max_stop_acceleration)) + delay_response_time * velocity;
@@ -164,8 +165,9 @@ double calcJudgeLineDistWithJerkLimit(
   const double max_stop_jerk, const double max_stop_acceleration,
   const double delay_response_time)
 {
-  if(velocity <= 0.0)
+  if (velocity <= 0.0) {
     return 0.0;
+  }
 
   /* t0: subscribe traffic light state and decide to stop */
   /* t1: braking start (with jerk limitation) */
@@ -175,20 +177,23 @@ double calcJudgeLineDistWithJerkLimit(
   const double t1 = delay_response_time;
   const double x1 = velocity * t1;
 
-  const double v2 = velocity + (std::pow(max_stop_acceleration, 2) - std::pow(acceleration, 2)) / (2.0 * max_stop_jerk);
+  const double v2 = velocity +
+    (std::pow(max_stop_acceleration, 2) - std::pow(acceleration, 2)) / (2.0 * max_stop_jerk);
 
-  if(v2 <= 0.0){
-    const double t2 = -1.0 * (max_stop_acceleration + std::sqrt(acceleration * acceleration - 2.0 * max_stop_jerk * velocity)) / max_stop_jerk;
-    const double x2 = velocity * t2
-                    + acceleration * std::pow(t2, 2) / 2.0
-                    + max_stop_jerk * std::pow(t2, 3) / 6.0;
+  if (v2 <= 0.0) {
+    const double t2 = -1.0 *
+      (max_stop_acceleration +
+      std::sqrt(acceleration * acceleration - 2.0 * max_stop_jerk * velocity)) / max_stop_jerk;
+    const double x2 = velocity * t2 +
+      acceleration * std::pow(t2, 2) / 2.0 +
+      max_stop_jerk * std::pow(t2, 3) / 6.0;
     return std::max(0.0, x1 + x2);
   }
 
   const double t2 = (max_stop_acceleration - acceleration) / max_stop_jerk;
-  const double x2 = velocity * t2
-                  + acceleration * std::pow(t2, 2) / 2.0
-                  + max_stop_jerk * std::pow(t2, 3) / 6.0;
+  const double x2 = velocity * t2 +
+    acceleration * std::pow(t2, 2) / 2.0 +
+    max_stop_jerk * std::pow(t2, 3) / 6.0;
 
   const double x3 = -1.0 * std::pow(v2, 2) / (2.0 * max_stop_acceleration);
   return std::max(0.0, x1 + x2 + x3);

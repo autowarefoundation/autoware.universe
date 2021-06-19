@@ -102,7 +102,7 @@ geometry_msgs::msg::Pose transformRelCoordinate2D(
 geometry_msgs::msg::Pose transformAbsCoordinate2D(
   const geometry_msgs::msg::Pose & relative, const geometry_msgs::msg::Pose & origin);
 
-double calcJudgeLineDist(
+double calcJudgeLineDistWithAccLimit(
   const double velocity, const double max_stop_acceleration, const double delay_response_time);
 
 double calcJudgeLineDistWithJerkLimit(

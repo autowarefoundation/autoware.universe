@@ -189,7 +189,7 @@ bool BlindSpotModule::generateStopLine(
   const double max_acc = planner_data_->max_stop_acceleration_threshold;
   const double delay_response_time = planner_data_->delay_response_time;
   const double pass_judge_line_dist =
-    planning_utils::calcJudgeLineDist(current_vel, max_acc, delay_response_time);
+    planning_utils::calcJudgeLineDistWithAccLimit(current_vel, max_acc, delay_response_time);
 
   /* set parameters */
   constexpr double interval = 0.2;
