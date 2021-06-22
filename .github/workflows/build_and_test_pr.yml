@@ -1,0 +1,61 @@
+name: Build and test for PR
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-and-test-pr:
+    runs-on: ubuntu-latest
+    container: osrf/ros:foxy-desktop
+
+    steps:
+      - name: Cancel previous runs
+        uses: styfle/cancel-workflow-action@0.9.0
+
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          # Fetch with depth=0 to calculate modified packages
+          fetch-depth: 0
+
+      - name: Install pip
+        run: |
+          apt-get -y update
+          apt-get -y install python3-pip
+
+      - name: Search modified package
+        id: list_packages
+        run: |
+          ${GITHUB_WORKSPACE}/.github/workflows/get_modified_package.sh
+
+      - name: Show target packages
+        run: |
+          echo "Target packages: ${{ steps.list_packages.outputs.package_list }}"
+
+      - name: Clone dependency packages
+        if: ${{ steps.list_packages.outputs.package_list != '' }}
+        run: |
+          mkdir dependency_ws
+          vcs import dependency_ws < build_depends.repos
+          apt-get -y update
+          rosdep update
+          rosdep install -y --from-paths . --ignore-src --rosdistro foxy
+
+      - name: Build
+        if: ${{ steps.list_packages.outputs.package_list != '' }}
+        run: |
+          . /opt/ros/foxy/setup.sh
+          colcon build --event-handlers console_cohesion+ \
+            --packages-above-and-dependencies ${{ steps.list_packages.outputs.package_list }} \
+            --cmake-args -DCMAKE_BUILD_TYPE=Release
+
+      - name: Run tests
+        if: ${{ steps.list_packages.outputs.package_list != '' }}
+        run: |
+          . /opt/ros/foxy/setup.sh
+          colcon test --event-handlers console_cohesion+ \
+            --packages-above ${{ steps.list_packages.outputs.package_list }} \
+            --return-code-on-test-failure

@@ -1,0 +1,51 @@
+name: Build and test
+
+on:
+  schedule:
+    - cron: "0 19 * * *" # run at 4 AM JST
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    container: osrf/ros:foxy-desktop
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install pip
+        run: |
+          apt-get -y update
+          apt-get -y install python3-pip
+
+      - name: Search modified package
+        id: list_packages
+        run: |
+          echo ::set-output name=package_list::$(colcon list --names-only)
+
+      - name: Show target packages
+        run: |
+          echo "Target packages: ${{ steps.list_packages.outputs.package_list }}"
+
+      - name: Clone dependency packages
+        run: |
+          mkdir dependency_ws
+          vcs import dependency_ws < build_depends.repos
+          apt-get -y update
+          rosdep update
+          rosdep install -y --from-paths . --ignore-src --rosdistro foxy
+
+      - name: Build
+        run: |
+          . /opt/ros/foxy/setup.sh
+          colcon build --event-handlers console_cohesion+ \
+            --packages-up-to ${{ steps.list_packages.outputs.package_list }} \
+            --cmake-args -DCMAKE_BUILD_TYPE=Release
+
+      - name: Run tests
+        run: |
+          . /opt/ros/foxy/setup.sh
+          colcon test --event-handlers console_cohesion+ \
+            --packages-select ${{ steps.list_packages.outputs.package_list }} \
+            --return-code-on-test-failure
