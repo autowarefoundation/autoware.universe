@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 
+function get_workspace_root() {
+  git rev-parse --show-toplevel
+}
+
 function get_repos_file_path() {
-  echo "$(git rev-parse --show-toplevel)/autoware.proj.repos"
+  echo "$(get_workspace_root)/autoware.proj.repos"
 }
 
 function install_yq_if_not_installed() {
@@ -147,13 +151,13 @@ function update_workspace() {
 function update_version_in_repos() {
   repository="$1"
   if [ "$repository" = "" ]; then
-    echo -e "Please input a repository name as the 1st argument"
+    echo -e "Please input a repository name as the 1st argument."
     return 1
   fi
 
   version="$2"
   if [ "$version" = "" ]; then
-    echo -e "Please input a version as the 2nd argument"
+    echo -e "Please input a version as the 2nd argument."
     return 1
   fi
 
@@ -197,17 +201,17 @@ function create_branch() {
   git_command="git --work-tree=$repository --git-dir=$repository/.git"
 
   if [ "$flag_delete" ]; then
-    echo -e "Delete branch \"$branch_name\" in \"$repository\""
+    echo -e "Delete branch \"$branch_name\" in \"$repository\"."
     $git_command checkout --detach --quiet HEAD
     $git_command branch -D --quiet "$branch_name"
     return 0
   fi
 
-  echo -e "Create branch \"$branch_name\" in \"$repository\""
+  echo -e "Create branch \"$branch_name\" in \"$repository\"."
   $git_command checkout --quiet -b "$branch_name" || exit 1
 
   if [ "$flag_push" ]; then
-    echo -e "Push branch \"$branch_name\" to \"$repository\""
+    echo -e "Push branch \"$branch_name\" to \"$repository\"."
     $git_command push origin "$branch_name"
   fi
 
@@ -223,17 +227,17 @@ function create_tag() {
   git_command="git --work-tree=$repository --git-dir=$repository/.git"
 
   if [ "$flag_delete" ]; then
-    echo -e "Delete tag \"$version\" in \"$repository\""
+    echo -e "Delete tag \"$version\" in \"$repository\"."
     $git_command tag -d "$version" > /dev/null
     return 0
   fi
 
-  echo -e "Create tag \"$version\" in \"$repository\""
+  echo -e "Create tag \"$version\" in \"$repository\"."
   $git_command checkout --detach --quiet HEAD
   $git_command tag -a "$version" -m "$version" || exit 1
 
   if [ "$flag_push" ]; then
-    echo -e "Push tag \"$version\" to \"$repository\""
+    echo -e "Push tag \"$version\" to \"$repository\"."
     $git_command push origin "$version"
   fi
 
@@ -246,7 +250,7 @@ function checkout_branch_or_tag() {
 
   git_command="git --work-tree=$repository --git-dir=$repository/.git"
 
-  echo -e "Checkout \"$branch_or_tag_name\" in \"$repository\""
+  echo -e "Checkout \"$branch_or_tag_name\" in \"$repository\"."
   $git_command checkout --quiet "$branch_or_tag_name" || exit 1
 
   return 0

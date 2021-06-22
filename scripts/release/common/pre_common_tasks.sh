@@ -5,6 +5,9 @@
 # Install prerequisites
 install_yq_if_not_installed
 
+# Move to workspace root
+cd "$(get_workspace_root)" || exit 1
+
 # Create src directory if not exist
 if ! [ -d src ]; then
   mkdir -p src

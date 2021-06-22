@@ -35,13 +35,6 @@ source "$SCRIPT_DIR/common/parse_common_args.sh"
 reference_version="${args[0]}"
 product_version="$reference_version" # Use reference version to product repositories as well
 
-# Check if using rc branches
-echo -e "\e[36mCheck if using rc branch\e[m"
-if ! is_on_corresponding_rc_branch "$product_version"; then
-  echo -e "\e[31mPlease checkout corresponding rc branch for $product_version\e[m"
-  exit 1
-fi
-
 # Set default values
 if [ "$flag_change_reference_repositories" = "" ]; then
   flag_change_reference_repositories=true
@@ -49,8 +42,14 @@ fi
 
 # Check args
 if ! is_valid_reference_release_version "$reference_version"; then
-  echo -e "\e[31mPlease input a valid reference release version as the 1st argument\e[m"
+  echo -e "\e[31mPlease input a valid reference release version as the 1st argument.\e[m"
   show_usage
+  exit 1
+fi
+
+# Check if using RC branch
+if ! is_on_corresponding_rc_branch "$product_version"; then
+  echo -e "\e[31mPlease checkout corresponding RC branch for $product_version.\e[m"
   exit 1
 fi
 

@@ -24,7 +24,7 @@ function show_usage() {
       Whether to delete branches/tags. Please use this option when you mistook something.
 
     reference_version:
-      The version to be used for refecenfe rc branches.
+      The version to be used for reference RC branches.
       The valid pattern is '^v([0-9]+)\.([0-9]+)\.([0-9]+)$'.
 
     Note: Using --push and --delete at the same time may cause unexpected behaviors."
@@ -42,7 +42,7 @@ fi
 
 # Check args
 if ! is_valid_reference_rc_version "$reference_version"; then
-  echo -e "\e[31mPlease input a valid reference rc version as the 1st argument\e[m"
+  echo -e "\e[31mPlease input a valid reference RC version as the 1st argument.\e[m"
   show_usage
   exit 1
 fi

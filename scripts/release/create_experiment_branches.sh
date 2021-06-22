@@ -36,7 +36,7 @@ experiment_name="${args[0]}"
 
 # Check args
 if ! is_valid_experiment_name "$experiment_name"; then
-  echo -e "\e[31mPlease input a valid experiment branch name as the 1st argument\e[m"
+  echo -e "\e[31mPlease input a valid experiment branch name as the 1st argument.\e[m"
   show_usage
   exit 1
 fi

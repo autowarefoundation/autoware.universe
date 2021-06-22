@@ -25,11 +25,11 @@ function show_usage() {
       Whether to delete branches/tags. Please use this option when you mistook something.
 
     reference_version:
-      The version to be used for refecenfe rc branches.
+      The version to be used for reference RC branches.
       The valid pattern is '^v([0-9]+)\.([0-9]+)\.([0-9]+)$'.
 
     product_version:
-      The version to be used for product rc branches.
+      The version to be used for product RC branches.
       The valid pattern is '^v([0-9]+)\.([0-9]+)\.([0-9]+)$'.
 
     Note: Using --push and --delete at the same time may cause unexpected behaviors."
@@ -42,13 +42,13 @@ product_version="${args[1]}"
 
 # Check args
 if (! is_valid_reference_release_version "$reference_version") && (! is_rc_branch_name "$reference_version"); then
-  echo -e "\e[31mPlease input a valid reference rc version as the 1st argument\e[m"
+  echo -e "\e[31mPlease input a valid reference RC version as the 1st argument.\e[m"
   show_usage
   exit 1
 fi
 
 if ! is_valid_product_rc_version "$product_version"; then
-  echo -e "\e[31mPlease input a valid product rc version as the 2nd argument\e[m"
+  echo -e "\e[31mPlease input a valid product RC version as the 2nd argument.\e[m"
   show_usage
   exit 1
 fi
