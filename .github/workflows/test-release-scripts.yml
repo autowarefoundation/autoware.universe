@@ -35,7 +35,7 @@ jobs:
         if: steps.cache-src.outputs.cache-hit != 'true'
         run: |
           git config --local --unset-all http.https://github.com/.extraheader || true
-          git config --global url.https://${{ secrets.REPO_TOKEN }}@github.com.insteadof 'https://github.com'
+          git config --global url.https://${{ secrets.REPO_TOKEN }}@github.com.insteadOf 'https://github.com'
 
       - name: Run vcs import
         if: steps.cache-src.outputs.cache-hit != 'true'
@@ -82,7 +82,7 @@ jobs:
       - name: Set git config for private repositories
         run: |
           git config --local --unset-all http.https://github.com/.extraheader || true
-          git config --global url.https://${{ secrets.REPO_TOKEN }}@github.com.insteadof 'https://github.com'
+          git config --global url.https://${{ secrets.REPO_TOKEN }}@github.com.insteadOf 'https://github.com'
 
       - name: Create rc branches
         run: |
@@ -157,7 +157,7 @@ jobs:
       - name: Set git config for private repositories
         run: |
           git config --local --unset-all http.https://github.com/.extraheader || true
-          git config --global url.https://${{ secrets.REPO_TOKEN }}@github.com.insteadof 'https://github.com'
+          git config --global url.https://${{ secrets.REPO_TOKEN }}@github.com.insteadOf 'https://github.com'
 
       - name: Create rc branches
         run: |
@@ -232,7 +232,7 @@ jobs:
       - name: Set git config for private repositories
         run: |
           git config --local --unset-all http.https://github.com/.extraheader || true
-          git config --global url.https://${{ secrets.REPO_TOKEN }}@github.com.insteadof 'https://github.com'
+          git config --global url.https://${{ secrets.REPO_TOKEN }}@github.com.insteadOf 'https://github.com'
 
       - name: Prepare reference release
         run: |
@@ -312,7 +312,7 @@ jobs:
       - name: Set git config for private repositories
         run: |
           git config --local --unset-all http.https://github.com/.extraheader || true
-          git config --global url.https://${{ secrets.REPO_TOKEN }}@github.com.insteadof 'https://github.com'
+          git config --global url.https://${{ secrets.REPO_TOKEN }}@github.com.insteadOf 'https://github.com'
 
       - name: Create experiment branches
         run: |

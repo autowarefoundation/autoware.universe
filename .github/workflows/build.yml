@@ -44,7 +44,7 @@ jobs:
       - name: Set git config for private repositories
         run: |
           git config --local --unset-all http.https://github.com/.extraheader || true
-          git config --global url.https://${{ secrets.REPO_TOKEN }}@github.com.insteadof 'https://github.com'
+          git config --global url.https://${{ secrets.REPO_TOKEN }}@github.com.insteadOf 'https://github.com'
 
       - name: Run setup script
         run: |
