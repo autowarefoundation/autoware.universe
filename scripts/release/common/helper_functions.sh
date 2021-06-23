@@ -195,8 +195,7 @@ function update_vcs_versions() {
 function create_branch() {
   repository="$1"
   branch_name="$2"
-  flag_push="$3"
-  flag_delete="$4"
+  flag_delete="$3"
 
   git_command="git --work-tree=$repository --git-dir=$repository/.git"
 
@@ -210,19 +209,13 @@ function create_branch() {
   echo -e "Create branch \"$branch_name\" in \"$repository\"."
   $git_command checkout --quiet -b "$branch_name" || exit 1
 
-  if [ "$flag_push" ]; then
-    echo -e "Push branch \"$branch_name\" to \"$repository\"."
-    $git_command push origin "$branch_name"
-  fi
-
   return 0
 }
 
 function create_tag() {
   repository="$1"
   version="$2"
-  flag_push="$3"
-  flag_delete="$4"
+  flag_delete="$3"
 
   git_command="git --work-tree=$repository --git-dir=$repository/.git"
 
@@ -235,11 +228,6 @@ function create_tag() {
   echo -e "Create tag \"$version\" in \"$repository\"."
   $git_command checkout --detach --quiet HEAD
   $git_command tag -a "$version" -m "$version" || exit 1
-
-  if [ "$flag_push" ]; then
-    echo -e "Push tag \"$version\" to \"$repository\"."
-    $git_command push origin "$version"
-  fi
 
   return 0
 }

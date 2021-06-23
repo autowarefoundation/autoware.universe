@@ -6,7 +6,7 @@ source "$SCRIPT_DIR/common/helper_functions.sh"
 # Define functions
 function show_usage() {
   echo -e "Usage: create_product_release_tags.sh reference_version product_version
-      [-h/--help] [-y/--yes] [--change-reference-repositories] [--push|--delete]
+      [-h/--help] [-y/--yes] [--change-reference-repositories] [--delete]
 
     -h/--help:
       Show usage and exit.
@@ -16,9 +16,6 @@ function show_usage() {
 
     --change-reference-repositories:
       Whether to create branches/tags in reference repositories.
-
-    --push:
-      Whether to push branches/tags. Please use this option when you can be sure.
 
     --delete:
       Whether to delete branches/tags. Please use this option when you mistook something.
@@ -30,8 +27,7 @@ function show_usage() {
     product_version:
       The version to be used for product release tags.
       The valid pattern is '^v([0-9]+)\.([0-9]+)\.([0-9]+)$'.
-
-    Note: Using --push and --delete at the same time may cause unexpected behaviors."
+    "
 }
 
 # Parse arguments
@@ -65,7 +61,7 @@ source "$SCRIPT_DIR/common/pre_common_tasks.sh"
 echo -e "\e[36mCreate tags in reference repositories\e[m"
 for reference_repository in $(get_reference_repositories); do
   if [ "$flag_change_reference_repositories" ]; then
-    create_tag "$reference_repository" "$reference_version" "$flag_push" "$flag_delete"
+    create_tag "$reference_repository" "$reference_version" "$flag_delete"
   else
     checkout_branch_or_tag "$reference_repository" "$reference_version"
   fi
@@ -74,7 +70,7 @@ done
 # Create tags in product repositories
 echo -e "\e[36mCreate tags in product repositories\e[m"
 for product_repository in $(get_product_repositories); do
-  create_tag "$product_repository" "$product_version" "$flag_push" "$flag_delete"
+  create_tag "$product_repository" "$product_version" "$flag_delete"
 done
 
 # Run post common tasks
@@ -83,4 +79,4 @@ if [ "$flag_delete" = "" ]; then
 fi
 
 # Create tag in meta repository
-create_tag "$(get_meta_repository)" "$product_version" "$flag_push" "$flag_delete"
+create_tag "$(get_meta_repository)" "$product_version" "$flag_delete"

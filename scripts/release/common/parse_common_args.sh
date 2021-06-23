@@ -16,9 +16,6 @@ function parse_common_args(){
       "--change-reference-repositories")
         flag_change_reference_repositories=true
         ;;
-      "--push")
-        flag_push=true
-        ;;
       "--delete")
         flag_delete=true
         ;;
@@ -41,19 +38,6 @@ fi
 if [ "$flag_yes" = "" ]; then
   if [ "$flag_change_reference_repositories" ]; then
     read -rp "You are going to change reference repositories. Are you sure to continue? [y/N] " answer
-
-    case "$answer" in
-      [yY]* )
-        ;;
-      * )
-        echo -e "\e[33mCanceled.\e[m"
-        exit 1
-        ;;
-    esac
-  fi
-
-  if [ "$flag_push" ]; then
-    read -rp "You are going to push branches or tags. Are you sure to continue? [y/N] " answer
 
     case "$answer" in
       [yY]* )

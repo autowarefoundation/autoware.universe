@@ -6,7 +6,7 @@ source "$SCRIPT_DIR/common/helper_functions.sh"
 # Define functions
 function show_usage() {
   echo -e "Usage: create_experiment_branches.sh experiment_name
-      [-h/--help] [-y/--yes] [--change-reference-repositories] [--push|--delete]
+      [-h/--help] [-y/--yes] [--change-reference-repositories] [--delete]
 
     -h/--help:
       Show usage and exit.
@@ -17,17 +17,13 @@ function show_usage() {
     --change-reference-repositories:
       Whether to create branches/tags in reference repositories.
 
-    --push:
-      Whether to push branches/tags. Please use this option when you can be sure.
-
     --delete:
       Whether to delete branches/tags. Please use this option when you mistook something.
 
     experiment_name:
       The version to be used for experiment branches.
       The valid pattern is '^v([0-9]+)\.([0-9]+)\.([0-9]+)$'.
-
-    Note: Using --push and --delete at the same time may cause unexpected behaviors."
+    "
 }
 
 # Parse arguments
@@ -50,13 +46,13 @@ branch_prefix="experiment/"
 # Create branches in reference repositories
 echo -e "\e[36mCreate branches in autoware repositories\e[m"
 for reference_repository in $(get_reference_repositories); do
-  create_branch "$reference_repository" "$branch_prefix$experiment_name" "$flag_push" "$flag_delete"
+  create_branch "$reference_repository" "$branch_prefix$experiment_name" "$flag_delete"
 done
 
 # Create branches in product repositories
 echo -e "\e[36mCreate branches in product repositories\e[m"
 for product_repository in $(get_product_repositories); do
-  create_branch "$product_repository" "$branch_prefix$experiment_name" "$flag_push" "$flag_delete"
+  create_branch "$product_repository" "$branch_prefix$experiment_name" "$flag_delete"
 done
 
 # Run post common tasks
@@ -65,4 +61,4 @@ if [ "$flag_delete" = "" ]; then
 fi
 
 # Create branch in meta repository
-create_branch "$(get_meta_repository)" "$branch_prefix$experiment_name" "$flag_push" "$flag_delete"
+create_branch "$(get_meta_repository)" "$branch_prefix$experiment_name" "$flag_delete"
