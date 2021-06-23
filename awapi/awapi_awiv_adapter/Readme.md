@@ -116,11 +116,23 @@
 ### /awapi/traffic_light/get/nearest_traffic_light_status
 
 - get recognition result of nearest traffic light
-- MessageType: autoware_perception_msgs/TrafficLightStateStamped
+- MessageType: autoware_perception_msgs/LookingTrafficLightState
 
-| ✓   | type                                              | name | unit | note |
-| --- | :------------------------------------------------ | :--- | :--- | :--- |
-|     | autoware_perception_msgs/TrafficLightStateStamped |      |      |      |
+|     | type                                                | name       | unit | note                                                          |
+| --- | :-------------------------------------------------- | :--------- | :--- | :------------------------------------------------------------ |
+|     | std_msgs/Header                                     | header     |      |                                                               |
+|     | autoware_perception_msgs/TrafficLightStateWithJudge | perception |      | traffic light information from autoware perception module    |
+|     | autoware_perception_msgs/TrafficLightStateWithJudge | external   |      | traffic light information from external tool/module           |
+|     | autoware_perception_msgs/TrafficLightStateWithJudge | final      |      | traffic light information used by the planning module finally |
+
+
+- The contents of TrafficLightStateWithJudge.msg is following.
+
+|     | type                                       | name  | unit                 | note                                                           |
+| --- | :----------------------------------------- | :---- | :------------------- | :------------------------------------------------------------- |
+|     | autoware_perception_msgs/TrafficLightState | state |                      | traffic light color/arrow                                      |
+|     | uint8                                      | judge | 0:NONE, 1:STOP, 2:GO | go/stop judgment based on the color/arrow of the traffic light |
+
 
 ### /awapi/vehicle/get/door
 
