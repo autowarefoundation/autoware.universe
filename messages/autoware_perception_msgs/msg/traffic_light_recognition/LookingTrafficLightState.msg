@@ -1,9 +1,7 @@
 std_msgs/Header header
-bool module
-autoware_perception_msgs/TrafficLightStateStamped[] perception
-autoware_perception_msgs/TrafficLightStateStamped[] external
-autoware_perception_msgs/TrafficLightStateStamped[] final
 
-autoware_perception_msgs/TrafficLightJudgeStamped perception_judge
-autoware_perception_msgs/TrafficLightJudgeStamped external_judge
-autoware_perception_msgs/TrafficLightJudgeStamped final_judge
+bool is_module_running
+
+autoware_perception_msgs/TrafficLightStateWithJudge perception
+autoware_perception_msgs/TrafficLightStateWithJudge external
+autoware_perception_msgs/TrafficLightStateWithJudge final
