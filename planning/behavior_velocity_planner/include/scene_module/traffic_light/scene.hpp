@@ -33,7 +33,6 @@
 #include "scene_module/scene_module_interface.hpp"
 #include "utilization/boost_geometry_helper.hpp"
 #include "autoware_perception_msgs/msg/looking_traffic_light_state.hpp"
-#include "autoware_perception_msgs/msg/traffic_light_judge_stamped.hpp"
 
 class TrafficLightModule : public SceneModuleInterface
 {
@@ -108,6 +107,9 @@ private:
     autoware_perception_msgs::msg::TrafficLightStateStamped & external_tl_state);
 
   bool updateTrafficLightState(const lanelet::ConstLineStringsOrPolygons3d & traffic_lights);
+
+  autoware_perception_msgs::msg::TrafficLightStateWithJudge generateTlStateWithJudgeFromTlState(
+    const autoware_perception_msgs::msg::TrafficLightState tl_state) const;
 
   // Key Feature
   const lanelet::TrafficLight & traffic_light_reg_elem_;

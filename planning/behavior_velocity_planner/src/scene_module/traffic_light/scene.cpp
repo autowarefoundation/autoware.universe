@@ -153,10 +153,10 @@ bool createTargetPoint(
 {
   if (input.points.size() < 2) {return false;}
   for (size_t i = 0; i < input.points.size() - 1; ++i) {
-    Point2d path_line_begin = {
-      input.points.at(i).point.pose.position.x, input.points.at(i).point.pose.position.y};
-    Point2d path_line_end = {
-      input.points.at(i + 1).point.pose.position.x, input.points.at(i + 1).point.pose.position.y};
+    Point2d path_line_begin = {input.points.at(i).point.pose.position.x,
+      input.points.at(i).point.pose.position.y};
+    Point2d path_line_end = {input.points.at(i + 1).point.pose.position.x,
+      input.points.at(i + 1).point.pose.position.y};
     LineString2d path_line = {path_line_begin, path_line_end};
 
     // check nearest collision point
@@ -216,8 +216,7 @@ bool calcStopPointAndInsertIndex(
   LineString2d stop_line;
 
   for (size_t i = 0; i < lanelet_stop_lines.size() - 1; ++i) {
-    stop_line = {
-      {lanelet_stop_lines[i].x(), lanelet_stop_lines[i].y()},
+    stop_line = {{lanelet_stop_lines[i].x(), lanelet_stop_lines[i].y()},
       {lanelet_stop_lines[i + 1].x(), lanelet_stop_lines[i + 1].y()}};
 
     // Calculate stop pose and insert index,
@@ -244,6 +243,17 @@ geometry_msgs::msg::Point getTrafficLightPosition(
   }
   return tl_center;
 }
+autoware_perception_msgs::msg::LookingTrafficLightState initializeTrafficLightState(
+  const rclcpp::Time stamp)
+{
+  autoware_perception_msgs::msg::LookingTrafficLightState state;
+  state.header.stamp = stamp;
+  state.is_module_running = true;
+  state.perception.has_state = false;
+  state.external.has_state = false;
+  state.final.has_state = false;
+  return state;
+}
 }  // namespace
 
 TrafficLightModule::TrafficLightModule(
@@ -264,23 +274,8 @@ bool TrafficLightModule::modifyPathVelocity(
   autoware_planning_msgs::msg::PathWithLaneId * path,
   autoware_planning_msgs::msg::StopReason * stop_reason)
 {
-  // initialize tl_state
-  looking_tl_state_ = autoware_perception_msgs::msg::LookingTrafficLightState();
-  looking_tl_state_.header.stamp = clock_->now();
-  looking_tl_state_.module = true;
-  looking_tl_state_.perception.clear();
-  looking_tl_state_.external.clear();
-  looking_tl_state_.final.clear();
-
-  autoware_perception_msgs::msg::TrafficLightJudgeStamped judge;
-  judge.header.stamp = path->header.stamp;
-  judge.judge = autoware_perception_msgs::msg::TrafficLightJudgeStamped::NONE;
-  judge.signal_source = autoware_perception_msgs::msg::TrafficLightJudgeStamped::NO_SIGNAL;
-
-  looking_tl_state_.perception_judge = judge;
-  looking_tl_state_.external_judge = judge;
-  looking_tl_state_.final_judge = judge;
-  debug_data_ = DebugData();
+  looking_tl_state_ = initializeTrafficLightState(path->header.stamp);
+  debug_data_ = {};
   debug_data_.base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
   first_stop_path_point_index_ = static_cast<int>(path->points.size()) - 1;
   *stop_reason =
@@ -350,8 +345,8 @@ bool TrafficLightModule::isStopSignal(const lanelet::ConstLineStringsOrPolygons3
     return false;
   }
 
-  return looking_tl_state_.final_judge.judge ==
-         autoware_perception_msgs::msg::TrafficLightJudgeStamped::STOP;
+  return looking_tl_state_.final.judge ==
+         autoware_perception_msgs::msg::TrafficLightStateWithJudge::STOP;
 }
 
 bool TrafficLightModule::updateTrafficLightState(
@@ -370,28 +365,14 @@ bool TrafficLightModule::updateTrafficLightState(
   }
 
   if (found_perception) {
-    looking_tl_state_.perception.push_back(tl_state_perception);
-    looking_tl_state_.perception_judge.judge =
-      isTrafficLightStateStop(tl_state_perception.state) ?
-      autoware_perception_msgs::msg::TrafficLightJudgeStamped::STOP :
-      autoware_perception_msgs::msg::TrafficLightJudgeStamped::GO;
-    looking_tl_state_.perception_judge.signal_source =
-      autoware_perception_msgs::msg::TrafficLightJudgeStamped::PERCEPTION;
+    looking_tl_state_.perception = generateTlStateWithJudgeFromTlState(tl_state_perception.state);
     looking_tl_state_.final = looking_tl_state_.perception;
-    looking_tl_state_.final_judge = looking_tl_state_.perception_judge;
     input_ = Input::PERCEPTION;
   }
 
   if (found_external) {
-    looking_tl_state_.external.push_back(tl_state_external);
-    looking_tl_state_.external_judge.judge =
-      isTrafficLightStateStop(tl_state_external.state) ?
-      autoware_perception_msgs::msg::TrafficLightJudgeStamped::STOP :
-      autoware_perception_msgs::msg::TrafficLightJudgeStamped::GO;
-    looking_tl_state_.external_judge.signal_source =
-      autoware_perception_msgs::msg::TrafficLightJudgeStamped::EXTERNAL;
+    looking_tl_state_.external = generateTlStateWithJudgeFromTlState(tl_state_external.state);
     looking_tl_state_.final = looking_tl_state_.external;
-    looking_tl_state_.final_judge = looking_tl_state_.external_judge;
     input_ = Input::EXTERNAL;
   }
 
@@ -624,4 +605,17 @@ bool TrafficLightModule::getExternalTrafficLightState(
     return false;
   }
   return true;
+}
+
+autoware_perception_msgs::msg::TrafficLightStateWithJudge
+TrafficLightModule::generateTlStateWithJudgeFromTlState(
+  const autoware_perception_msgs::msg::TrafficLightState tl_state) const
+{
+  autoware_perception_msgs::msg::TrafficLightStateWithJudge tl_state_with_judge;
+  tl_state_with_judge.state = tl_state;
+  tl_state_with_judge.has_state = true;
+  tl_state_with_judge.judge = isTrafficLightStateStop(tl_state) ?
+    autoware_perception_msgs::msg::TrafficLightStateWithJudge::STOP :
+    autoware_perception_msgs::msg::TrafficLightStateWithJudge::GO;
+  return tl_state_with_judge;
 }
