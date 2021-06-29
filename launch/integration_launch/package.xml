@@ -6,11 +6,10 @@
 
   <maintainer email="hiroyuki.obinata@tier4.jp">Hiroyuki Obinata</maintainer>
   <license>Apache 2</license>
-<buildtool_depend>ament_cmake_auto</buildtool_depend>
+  <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
   <!-- launch -->
   <exec_depend>control_launch</exec_depend>
-  <exec_depend>clock_publisher</exec_depend>
   <exec_depend>localization_launch</exec_depend>
   <exec_depend>map_launch</exec_depend>
   <exec_depend>perception_launch</exec_depend>
@@ -19,7 +18,7 @@
   <exec_depend>system_launch</exec_depend>
   <exec_depend>vehicle_launch</exec_depend>
 
-  <!-- vizualization -->
+  <!-- visualization -->
   <exec_depend>rviz2</exec_depend>
 
   <!-- web controller -->
