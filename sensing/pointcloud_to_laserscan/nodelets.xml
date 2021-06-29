@@ -1,9 +1,0 @@
-<library path="lib/libpointcloud_to_laserscan">
-
-  <class name="pointcloud_to_laserscan/pointcloud_to_laserscan_nodelet" type="pointcloud_to_laserscan::PointCloudToLaserScanNodelet" base_class_type="nodelet::Nodelet">
-    <description>
-      Nodelet to convert sensor_msgs/PointCloud2 to sensor_msgs/LaserScans.
-    </description>
-  </class>
-
-</library>
