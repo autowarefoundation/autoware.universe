@@ -111,10 +111,6 @@ repositories:
     type: git
     url: https://github.com/GT-RAIL/rosauth.git
     version: ros2
-  vendor/clock_publisher:
-    type: git
-    url: https://github.com/mitsudome-r/clock_publisher.git
-    version: master
   vendor/velodyne_vls:
     type: git
     url: https://github.com/tier4/velodyne_vls.git
