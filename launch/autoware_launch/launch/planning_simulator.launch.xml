@@ -74,8 +74,4 @@
 
   <!-- Web Controller -->
   <include file="$(find-pkg-share autoware_web_controller)/launch/autoware_web_controller.launch.xml" unless="$(var scenario_simulation)"/>
-
-  <!-- Clock Publisher For Rosbag -->
-  <!-- TODO(mitsudome-r): remove this after ROSBAG2 can automatically record clock -->
-  <include file="$(find-pkg-share clock_publisher)/launch/clock_publisher.launch.xml" />
 </launch>

@@ -11,7 +11,6 @@
 
   <!-- launch -->
   <exec_depend>control_launch</exec_depend>
-  <exec_depend>clock_publisher</exec_depend>
   <exec_depend>localization_launch</exec_depend>
   <exec_depend>map_launch</exec_depend>
   <exec_depend>perception_launch</exec_depend>
