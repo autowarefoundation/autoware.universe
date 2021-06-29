@@ -17,6 +17,8 @@
 
 #include "visualization_msgs/msg/marker_array.hpp"
 
+namespace behavior_velocity_planner
+{
 inline geometry_msgs::msg::Point createMarkerPosition(double x, double y, double z)
 {
   geometry_msgs::msg::Point point;
@@ -98,4 +100,6 @@ inline void appendMarkerArray(
     marker_array->markers.back().header.stamp = current_time;
   }
 }
+}  // namespace behavior_velocity_planner
+
 #endif  // UTILIZATION__MARKER_HELPER_HPP_

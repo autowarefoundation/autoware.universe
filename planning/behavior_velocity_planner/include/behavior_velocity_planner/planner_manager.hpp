@@ -34,6 +34,8 @@
 
 #include "scene_module/scene_module_interface.hpp"
 
+namespace behavior_velocity_planner
+{
 class BehaviorVelocityPlannerManager
 {
 public:
@@ -50,5 +52,6 @@ private:
   std::vector<std::shared_ptr<SceneModuleManagerInterface>> scene_manager_ptrs_;
   diagnostic_msgs::msg::DiagnosticStatus stop_reason_diag_;
 };
+}  // namespace behavior_velocity_planner
 
 #endif  // BEHAVIOR_VELOCITY_PLANNER__PLANNER_MANAGER_HPP_

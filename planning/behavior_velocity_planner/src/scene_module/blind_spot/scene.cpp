@@ -32,6 +32,8 @@
 #include "lanelet2_extension/utility/query.hpp"
 #include "lanelet2_extension/utility/utilities.hpp"
 
+namespace behavior_velocity_planner
+{
 namespace bg = boost::geometry;
 
 BlindSpotModule::BlindSpotModule(
@@ -584,3 +586,4 @@ void BlindSpotModule::StateMachine::setState(State state) {state_ = state;}
 void BlindSpotModule::StateMachine::setMarginTime(const double t) {margin_time_ = t;}
 
 BlindSpotModule::State BlindSpotModule::StateMachine::getState() {return state_;}
+}  // namespace behavior_velocity_planner

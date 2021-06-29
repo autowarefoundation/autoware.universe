@@ -33,6 +33,8 @@
 #include "behavior_velocity_planner/planner_data.hpp"
 #include "behavior_velocity_planner/planner_manager.hpp"
 
+namespace behavior_velocity_planner
+{
 class BehaviorVelocityPlannerNode : public rclcpp::Node
 {
 public:
@@ -93,4 +95,6 @@ private:
   geometry_msgs::msg::PoseStamped getCurrentPose();
   bool isDataReady();
 };
+}  // namespace behavior_velocity_planner
+
 #endif  // BEHAVIOR_VELOCITY_PLANNER__NODE_HPP_

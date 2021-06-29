@@ -33,6 +33,8 @@
 #include "scene_module/scene_module_interface.hpp"
 #include "utilization/boost_geometry_helper.hpp"
 
+namespace behavior_velocity_planner
+{
 class IntersectionModule : public SceneModuleInterface
 {
 public:
@@ -233,5 +235,6 @@ private:
   // Debug
   mutable DebugData debug_data_;
 };
+}  // namespace behavior_velocity_planner
 
 #endif  // SCENE_MODULE__INTERSECTION__SCENE_INTERSECTION_HPP_

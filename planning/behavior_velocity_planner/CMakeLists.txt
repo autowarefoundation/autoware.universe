@@ -215,7 +215,7 @@ target_link_libraries(behavior_velocity_planner
 ament_export_dependencies(${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
 
 rclcpp_components_register_node(behavior_velocity_planner
-  PLUGIN "BehaviorVelocityPlannerNode"
+  PLUGIN "behavior_velocity_planner::BehaviorVelocityPlannerNode"
   EXECUTABLE behavior_velocity_planner_node
 )
 

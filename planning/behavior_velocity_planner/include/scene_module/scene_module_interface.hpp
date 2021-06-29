@@ -30,6 +30,8 @@
 #include "rclcpp/rclcpp.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
 
+namespace behavior_velocity_planner
+{
 class SceneModuleInterface
 {
 public:
@@ -174,4 +176,6 @@ protected:
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_debug_;
   rclcpp::Publisher<autoware_planning_msgs::msg::StopReasonArray>::SharedPtr pub_stop_reason_;
 };
+}  // namespace behavior_velocity_planner
+
 #endif  // SCENE_MODULE__SCENE_MODULE_INTERFACE_HPP_

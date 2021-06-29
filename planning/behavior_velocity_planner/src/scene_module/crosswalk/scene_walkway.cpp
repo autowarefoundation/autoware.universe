@@ -17,6 +17,8 @@
 #include "scene_module/crosswalk/scene_walkway.hpp"
 #include "utilization/util.hpp"
 
+namespace behavior_velocity_planner
+{
 namespace bg = boost::geometry;
 using Point = bg::model::d2::point_xy<double>;
 using Polygon = bg::model::polygon<Point>;
@@ -98,3 +100,4 @@ bool WalkwayModule::modifyPathVelocity(
   }
   return true;
 }
+}  // namespace behavior_velocity_planner

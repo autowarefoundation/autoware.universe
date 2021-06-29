@@ -39,6 +39,8 @@
  *        before entering intersection
  */
 
+namespace behavior_velocity_planner
+{
 class MergeFromPrivateRoadModule : public SceneModuleInterface
 {
 public:
@@ -124,4 +126,6 @@ private:
   // Debug
   mutable DebugData debug_data_;
 };
+}  // namespace behavior_velocity_planner
+
 #endif  // SCENE_MODULE__INTERSECTION__SCENE_MERGE_FROM_PRIVATE_ROAD_HPP_

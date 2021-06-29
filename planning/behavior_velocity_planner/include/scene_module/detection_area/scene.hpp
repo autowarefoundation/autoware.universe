@@ -33,6 +33,8 @@
 #include "scene_module/scene_module_interface.hpp"
 #include "utilization/boost_geometry_helper.hpp"
 
+namespace behavior_velocity_planner
+{
 using PathIndexWithPose = std::pair<size_t, geometry_msgs::msg::Pose>;  // front index, pose
 using PathIndexWithPoint2d = std::pair<size_t, Point2d>;                // front index, point2d
 using PathIndexWithOffset = std::pair<size_t, double>;                  // front index, offset
@@ -107,4 +109,6 @@ private:
   // Debug
   DebugData debug_data_;
 };
+}  // namespace behavior_velocity_planner
+
 #endif  // SCENE_MODULE__DETECTION_AREA__SCENE_HPP_

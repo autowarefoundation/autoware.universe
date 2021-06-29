@@ -33,6 +33,8 @@
 #include "geometry_msgs/msg/quaternion.hpp"
 #include "visualization_msgs/msg/marker.hpp"
 
+namespace behavior_velocity_planner
+{
 using Point2d = boost::geometry::model::d2::point_xy<double>;
 namespace planning_utils
 {
@@ -130,5 +132,6 @@ std::vector<T> concatVector(const std::vector<T> & vec1, const std::vector<T> & 
   return concat_vec;
 }
 }  // namespace planning_utils
+}  // namespace behavior_velocity_planner
 
 #endif  // UTILIZATION__UTIL_HPP_

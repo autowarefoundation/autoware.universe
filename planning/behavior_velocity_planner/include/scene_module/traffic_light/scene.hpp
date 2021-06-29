@@ -34,6 +34,8 @@
 #include "utilization/boost_geometry_helper.hpp"
 #include "autoware_perception_msgs/msg/looking_traffic_light_state.hpp"
 
+namespace behavior_velocity_planner
+{
 class TrafficLightModule : public SceneModuleInterface
 {
 public:
@@ -133,4 +135,6 @@ private:
   // Traffic Light State
   autoware_perception_msgs::msg::LookingTrafficLightState looking_tl_state_;
 };
+}  // namespace behavior_velocity_planner
+
 #endif  // SCENE_MODULE__TRAFFIC_LIGHT__SCENE_HPP_

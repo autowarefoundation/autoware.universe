@@ -45,6 +45,8 @@
 #include "lanelet2_routing/RoutingGraphContainer.h"
 #include "lanelet2_traffic_rules/TrafficRulesFactory.h"
 
+namespace behavior_velocity_planner
+{
 class BehaviorVelocityPlannerNode;
 struct PlannerData
 {
@@ -160,4 +162,6 @@ private:
   }
   friend BehaviorVelocityPlannerNode;
 };
+}  // namespace behavior_velocity_planner
+
 #endif  // BEHAVIOR_VELOCITY_PLANNER__PLANNER_DATA_HPP_

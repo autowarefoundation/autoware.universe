@@ -19,6 +19,8 @@
 
 #include "utilization/util.hpp"
 
+namespace behavior_velocity_planner
+{
 namespace planning_utils
 {
 double normalizeEulerAngle(double euler)
@@ -242,3 +244,4 @@ geometry_msgs::msg::Point toRosPoint(const Point2d & boost_point, const double z
 }
 
 }  // namespace planning_utils
+}  // namespace behavior_velocity_planner

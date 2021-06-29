@@ -32,6 +32,8 @@
 #include "scene_module/scene_module_interface.hpp"
 #include "utilization/boost_geometry_helper.hpp"
 
+namespace behavior_velocity_planner
+{
 class StopLineModule : public SceneModuleInterface
 {
 public:
@@ -110,4 +112,6 @@ private:
   // Debug
   DebugData debug_data_;
 };
+}  // namespace behavior_velocity_planner
+
 #endif  // SCENE_MODULE__STOP_LINE__SCENE_HPP_

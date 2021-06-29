@@ -17,6 +17,8 @@
 #include <vector>
 #include "utilization/util.hpp"
 
+namespace behavior_velocity_planner
+{
 namespace interpolation
 {
 /*
@@ -125,3 +127,4 @@ std::vector<double> calcEuclidDist(const std::vector<double> & x, const std::vec
   return dist_v;
 }
 }  // namespace interpolation
+}  // namespace behavior_velocity_planner

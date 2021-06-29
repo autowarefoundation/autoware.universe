@@ -17,6 +17,8 @@
 #include "utilization/util.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 
+namespace behavior_velocity_planner
+{
 namespace
 {
 using DebugData = StopLineModule::DebugData;
@@ -91,3 +93,4 @@ visualization_msgs::msg::MarkerArray StopLineModule::createDebugMarkerArray()
 
   return debug_marker_array;
 }
+}  // namespace behavior_velocity_planner

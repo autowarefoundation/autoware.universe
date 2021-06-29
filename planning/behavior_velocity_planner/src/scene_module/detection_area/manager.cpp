@@ -23,6 +23,8 @@
 #include "lanelet2_extension/utility/query.hpp"
 #include "tf2/utils.h"
 
+namespace behavior_velocity_planner
+{
 namespace
 {
 std::vector<lanelet::DetectionAreaConstPtr> getDetectionAreaRegElemsOnPath(
@@ -93,3 +95,4 @@ DetectionAreaModuleManager::getModuleExpiredFunction(
            return detection_area_id_set.count(scene_module->getModuleId()) == 0;
          };
 }
+}  // namespace behavior_velocity_planner

@@ -19,6 +19,8 @@
 #include "utilization/marker_helper.hpp"
 #include "utilization/util.hpp"
 
+namespace behavior_velocity_planner
+{
 namespace
 {
 using DebugData = DetectionAreaModule::DebugData;
@@ -246,3 +248,4 @@ visualization_msgs::msg::MarkerArray DetectionAreaModule::createDebugMarkerArray
 
   return debug_marker_array;
 }
+}  // namespace behavior_velocity_planner

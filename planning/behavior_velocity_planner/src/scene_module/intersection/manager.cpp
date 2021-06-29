@@ -23,6 +23,8 @@
 #include "utilization/boost_geometry_helper.hpp"
 #include "utilization/util.hpp"
 
+namespace behavior_velocity_planner
+{
 namespace
 {
 std::vector<lanelet::ConstLanelet> getLaneletsOnPath(
@@ -128,3 +130,4 @@ IntersectionModuleManager::getModuleExpiredFunction(
            return lane_id_set.count(scene_module->getModuleId()) == 0;
          };
 }
+}  // namespace behavior_velocity_planner

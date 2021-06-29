@@ -26,6 +26,8 @@
 #include "scene_module/crosswalk/scene_walkway.hpp"
 #include "scene_module/scene_module_interface.hpp"
 
+namespace behavior_velocity_planner
+{
 class CrosswalkModuleManager : public SceneModuleManagerInterface
 {
 public:
@@ -41,4 +43,6 @@ private:
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
     const autoware_planning_msgs::msg::PathWithLaneId & path) override;
 };
+}  // namespace behavior_velocity_planner
+
 #endif  // SCENE_MODULE__CROSSWALK__MANAGER_HPP_

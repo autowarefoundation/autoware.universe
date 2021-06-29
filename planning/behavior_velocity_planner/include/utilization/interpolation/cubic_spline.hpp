@@ -31,6 +31,8 @@
 
 #include "Eigen/Eigen"
 
+namespace behavior_velocity_planner
+{
 static std::vector<double> vec_diff(const std::vector<double> & input)
 {
   std::vector<double> output;
@@ -374,5 +376,6 @@ private:
   }
   double max_s_value_;
 };
+}  // namespace behavior_velocity_planner
 
 #endif  // UTILIZATION__INTERPOLATION__CUBIC_SPLINE_HPP_

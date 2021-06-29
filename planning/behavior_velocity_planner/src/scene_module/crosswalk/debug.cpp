@@ -20,6 +20,8 @@
 #include "utilization/marker_helper.hpp"
 #include "utilization/util.hpp"
 
+namespace behavior_velocity_planner
+{
 namespace
 {
 visualization_msgs::msg::MarkerArray createCrosswalkMarkers(
@@ -534,3 +536,4 @@ visualization_msgs::msg::MarkerArray WalkwayModule::createDebugMarkerArray()
 
   return debug_marker_array;
 }
+}  // namespace behavior_velocity_planner

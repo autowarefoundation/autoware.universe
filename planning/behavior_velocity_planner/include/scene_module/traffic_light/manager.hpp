@@ -24,6 +24,8 @@
 #include "scene_module/scene_module_interface.hpp"
 #include "scene_module/traffic_light/scene.hpp"
 
+namespace behavior_velocity_planner
+{
 class TrafficLightModuleManager : public SceneModuleManagerInterface
 {
 public:
@@ -44,4 +46,6 @@ private:
   rclcpp::Publisher<autoware_perception_msgs::msg::LookingTrafficLightState>::SharedPtr
     pub_tl_state_;
 };
+}  // namespace behavior_velocity_planner
+
 #endif  // SCENE_MODULE__TRAFFIC_LIGHT__MANAGER_HPP_

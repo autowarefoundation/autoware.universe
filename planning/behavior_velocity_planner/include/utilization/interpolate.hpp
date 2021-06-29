@@ -18,6 +18,8 @@
 #include <cmath>
 #include <vector>
 
+namespace behavior_velocity_planner
+{
 namespace interpolation
 {
 // template <class T>
@@ -42,5 +44,6 @@ bool isValidInput(
 std::vector<double> calcEuclidDist(const std::vector<double> & x, const std::vector<double> & y);
 
 }  // namespace interpolation
+}  // namespace behavior_velocity_planner
 
 #endif  // UTILIZATION__INTERPOLATE_HPP_

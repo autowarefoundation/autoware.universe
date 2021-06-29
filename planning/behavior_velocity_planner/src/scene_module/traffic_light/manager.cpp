@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 #include "scene_module/traffic_light/manager.hpp"
 
 #include <memory>
@@ -21,6 +22,8 @@
 
 #include "tf2/utils.h"
 
+namespace behavior_velocity_planner
+{
 namespace
 {
 std::unordered_map<lanelet::TrafficLightConstPtr, lanelet::ConstLanelet>
@@ -146,3 +149,4 @@ TrafficLightModuleManager::getModuleExpiredFunction(
            return lanelet_id_set.count(scene_module->getModuleId()) == 0;
          };
 }
+}  // namespace behavior_velocity_planner

@@ -19,6 +19,8 @@
 
 #include "autoware_planning_msgs/msg/path.hpp"
 
+namespace behavior_velocity_planner
+{
 autoware_planning_msgs::msg::Path interpolatePath(
   const autoware_planning_msgs::msg::Path & path, const double length,
   const rclcpp::Logger & logger);
@@ -26,5 +28,6 @@ autoware_planning_msgs::msg::Path filterLitterPathPoint(
   const autoware_planning_msgs::msg::Path & path);
 autoware_planning_msgs::msg::Path filterStopPathPoint(
   const autoware_planning_msgs::msg::Path & path);
+}  // namespace behavior_velocity_planner
 
 #endif  // UTILIZATION__PATH_UTILIZATION_HPP_

@@ -29,6 +29,8 @@
 #include "utilization/interpolate.hpp"
 #include "utilization/util.hpp"
 
+namespace behavior_velocity_planner
+{
 namespace bg = boost::geometry;
 
 IntersectionModule::IntersectionModule(
@@ -493,3 +495,4 @@ bool IntersectionModule::isTargetExternalInputStatus(const int target_status)
          (clock_->now() - planner_data_->external_intersection_status_input.get().header.stamp)
          .seconds() < planner_param_.external_input_timeout;
 }
+}  // namespace behavior_velocity_planner

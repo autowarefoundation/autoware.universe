@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 #include "scene_module/stop_line/manager.hpp"
 
 #include <vector>
@@ -18,6 +19,8 @@
 #include <string>
 #include <memory>
 
+namespace behavior_velocity_planner
+{
 namespace
 {
 std::vector<lanelet::TrafficSignConstPtr> getTrafficSignRegElemsOnPath(
@@ -108,3 +111,4 @@ StopLineModuleManager::getModuleExpiredFunction(
            return stop_line_id_set.count(scene_module->getModuleId()) == 0;
          };
 }
+}  // namespace behavior_velocity_planner

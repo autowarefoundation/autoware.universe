@@ -20,6 +20,8 @@
 #include "utilization/util.hpp"
 
 
+namespace behavior_velocity_planner
+{
 namespace bg = boost::geometry;
 using Point = bg::model::d2::point_xy<double>;
 using Polygon = bg::model::polygon<Point>;
@@ -369,3 +371,4 @@ bool CrosswalkModule::isTargetExternalInputStatus(const int target_status)
          (clock_->now() - planner_data_->external_crosswalk_status_input.get().header.stamp)
          .seconds() < planner_param_.external_input_timeout;
 }
+}  // namespace behavior_velocity_planner

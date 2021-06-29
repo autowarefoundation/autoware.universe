@@ -38,6 +38,8 @@
 #include "scene_module/crosswalk/util.hpp"
 #include "scene_module/scene_module_interface.hpp"
 
+namespace behavior_velocity_planner
+{
 class CrosswalkModule : public SceneModuleInterface
 {
 public:
@@ -100,4 +102,6 @@ private:
   // Debug
   DebugData debug_data_;
 };
+}  // namespace behavior_velocity_planner
+
 #endif  // SCENE_MODULE__CROSSWALK__SCENE_CROSSWALK_HPP_

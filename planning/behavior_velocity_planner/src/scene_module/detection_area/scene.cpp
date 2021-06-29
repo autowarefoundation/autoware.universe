@@ -21,6 +21,8 @@
 #include "tf2_eigen/tf2_eigen.h"
 #include "utilization/util.hpp"
 
+namespace behavior_velocity_planner
+{
 namespace bg = boost::geometry;
 
 namespace
@@ -495,3 +497,4 @@ boost::optional<PathIndexWithPose> DetectionAreaModule::createTargetPoint(
 
   return std::make_pair(front_idx, target_pose);
 }
+}  // namespace behavior_velocity_planner

@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 #include "scene_module/stop_line/scene.hpp"
 
 #include <algorithm>
@@ -18,6 +19,8 @@
 
 #include "utilization/util.hpp"
 
+namespace behavior_velocity_planner
+{
 namespace bg = boost::geometry;
 
 namespace
@@ -330,3 +333,4 @@ geometry_msgs::msg::Point StopLineModule::getCenterOfStopLine(
   center_point.z = (stop_line[0].z() + stop_line[1].z()) / 2.0;
   return center_point;
 }
+}  // namespace behavior_velocity_planner

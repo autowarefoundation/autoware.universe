@@ -21,6 +21,8 @@
 #include "utilization/marker_helper.hpp"
 #include "utilization/util.hpp"
 
+namespace behavior_velocity_planner
+{
 namespace
 {
 using State = IntersectionModule::State;
@@ -332,3 +334,4 @@ visualization_msgs::msg::MarkerArray MergeFromPrivateRoadModule::createDebugMark
 
   return debug_marker_array;
 }
+}  // namespace behavior_velocity_planner

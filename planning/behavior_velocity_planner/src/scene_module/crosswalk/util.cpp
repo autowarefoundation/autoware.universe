@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include <algorithm>
 #include <cmath>
 #include <string>
@@ -38,6 +37,8 @@
 #include "lanelet2_extension/utility/query.hpp"
 #include "lanelet2_extension/utility/utilities.hpp"
 
+namespace behavior_velocity_planner
+{
 namespace bg = boost::geometry;
 using Point = bg::model::d2::point_xy<double>;
 using Polygon = bg::model::polygon<Point>;
@@ -324,9 +325,10 @@ bool isClockWise(const Polygon & polygon)
 
 Polygon inverseClockWise(const Polygon & polygon)
 {
-  Polygon inversed_polygon;
+  Polygon inverted_polygon;
   for (int i = polygon.outer().size() - 1; 0 <= i; --i) {
-    inversed_polygon.outer().push_back(polygon.outer().at(i));
+    inverted_polygon.outer().push_back(polygon.outer().at(i));
   }
-  return inversed_polygon;
+  return inverted_polygon;
 }
+}  // namespace behavior_velocity_planner

@@ -26,6 +26,8 @@
 
 #include "geometry_msgs/msg/point.hpp"
 
+namespace behavior_velocity_planner
+{
 namespace util
 {
 bool setVelocityFrom(
@@ -96,4 +98,6 @@ bool getStopPoseFromMap(
   const std::shared_ptr<const PlannerData> & planner_data);
 
 }  // namespace util
+}  // namespace behavior_velocity_planner
+
 #endif  // SCENE_MODULE__INTERSECTION__UTIL_HPP_

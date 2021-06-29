@@ -29,6 +29,8 @@
 #include "utilization/interpolate.hpp"
 #include "utilization/util.hpp"
 
+namespace behavior_velocity_planner
+{
 namespace bg = boost::geometry;
 
 namespace util
@@ -486,3 +488,4 @@ bool getObjectivePolygons(
 }
 
 }  // namespace util
+}  // namespace behavior_velocity_planner

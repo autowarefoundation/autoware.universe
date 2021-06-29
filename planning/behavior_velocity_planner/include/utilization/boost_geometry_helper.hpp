@@ -40,12 +40,6 @@
 #include "autoware_planning_msgs/msg/path_point_with_lane_id.hpp"
 #include "autoware_planning_msgs/msg/trajectory_point.hpp"
 
-using Point2d = boost::geometry::model::d2::point_xy<double>;
-using Segment2d = boost::geometry::model::segment<Point2d>;
-using LineString2d = boost::geometry::model::linestring<Point2d>;
-using Polygon2d =
-  boost::geometry::model::polygon<Point2d, false, false>;  // counter-clockwise, open
-
 // cppcheck-suppress unknownMacro
 BOOST_GEOMETRY_REGISTER_POINT_3D(geometry_msgs::msg::Point, double, cs::cartesian, x, y, z)
 BOOST_GEOMETRY_REGISTER_POINT_3D(
@@ -60,6 +54,14 @@ BOOST_GEOMETRY_REGISTER_POINT_3D(
 BOOST_GEOMETRY_REGISTER_POINT_3D(
   autoware_planning_msgs::msg::TrajectoryPoint, double, cs::cartesian, pose.position.x,
   pose.position.y, pose.position.z)
+
+namespace behavior_velocity_planner
+{
+using Point2d = boost::geometry::model::d2::point_xy<double>;
+using Segment2d = boost::geometry::model::segment<Point2d>;
+using LineString2d = boost::geometry::model::linestring<Point2d>;
+using Polygon2d =
+  boost::geometry::model::polygon<Point2d, false, false>;  // counter-clockwise, open
 
 template<class T>
 Point2d to_bg2d(const T & p)
@@ -205,4 +207,6 @@ inline Polygon2d toBoostPoly(const lanelet::BasicPolygon2d & polygon)
 
   return boost_poly;
 }
+}  // namespace behavior_velocity_planner
+
 #endif  // UTILIZATION__BOOST_GEOMETRY_HELPER_HPP_

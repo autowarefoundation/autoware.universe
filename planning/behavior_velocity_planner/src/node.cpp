@@ -37,6 +37,8 @@
 #include "scene_module/stop_line/manager.hpp"
 #include "scene_module/traffic_light/manager.hpp"
 
+namespace behavior_velocity_planner
+{
 namespace
 {
 geometry_msgs::msg::PoseStamped transform2pose(
@@ -345,6 +347,7 @@ void BehaviorVelocityPlannerNode::publishDebugMarker(const autoware_planning_msg
   }
   debug_viz_pub_->publish(output_msg);
 }
+}  // namespace behavior_velocity_planner
 
 #include "rclcpp_components/register_node_macro.hpp"
-RCLCPP_COMPONENTS_REGISTER_NODE(BehaviorVelocityPlannerNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(behavior_velocity_planner::BehaviorVelocityPlannerNode)

@@ -19,6 +19,8 @@
 #include <string>
 #include <vector>
 
+namespace behavior_velocity_planner
+{
 namespace
 {
 std::vector<lanelet::ConstLanelet> getCrosswalksOnPath(
@@ -117,3 +119,4 @@ CrosswalkModuleManager::getModuleExpiredFunction(
            return crosswalk_id_set.count(scene_module->getModuleId()) == 0;
          };
 }
+}  // namespace behavior_velocity_planner

@@ -24,6 +24,8 @@
 #include "scene_module/detection_area/scene.hpp"
 #include "scene_module/scene_module_interface.hpp"
 
+namespace behavior_velocity_planner
+{
 class DetectionAreaModuleManager : public SceneModuleManagerInterface
 {
 public:
@@ -38,4 +40,6 @@ private:
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
     const autoware_planning_msgs::msg::PathWithLaneId & path) override;
 };
+}  // namespace behavior_velocity_planner
+
 #endif  // SCENE_MODULE__DETECTION_AREA__MANAGER_HPP_

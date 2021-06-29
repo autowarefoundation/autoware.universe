@@ -18,6 +18,8 @@
 #include <memory>
 #include "boost/format.hpp"
 
+namespace behavior_velocity_planner
+{
 namespace
 {
 std::string jsonDumpsPose(const geometry_msgs::msg::Pose & pose)
@@ -84,3 +86,4 @@ diagnostic_msgs::msg::DiagnosticStatus BehaviorVelocityPlannerManager::getStopRe
 {
   return stop_reason_diag_;
 }
+}  // namespace behavior_velocity_planner

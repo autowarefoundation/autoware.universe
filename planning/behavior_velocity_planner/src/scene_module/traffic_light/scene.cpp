@@ -26,6 +26,8 @@
 #include "scene_module/traffic_light/scene.hpp"
 #include "utilization/util.hpp"
 
+namespace behavior_velocity_planner
+{
 namespace bg = boost::geometry;
 
 namespace
@@ -619,3 +621,4 @@ TrafficLightModule::generateTlStateWithJudgeFromTlState(
     autoware_perception_msgs::msg::TrafficLightStateWithJudge::GO;
   return tl_state_with_judge;
 }
+}  // namespace behavior_velocity_planner

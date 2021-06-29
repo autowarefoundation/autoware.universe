@@ -32,6 +32,8 @@
 #include "autoware_planning_msgs/msg/path_with_lane_id.hpp"
 #include "behavior_velocity_planner/planner_data.hpp"
 
+namespace behavior_velocity_planner
+{
 struct DebugData
 {
   double base_link2front;
@@ -70,5 +72,6 @@ bool isClockWise(
 
 boost::geometry::model::polygon<boost::geometry::model::d2::point_xy<double>> inverseClockWise(
   const boost::geometry::model::polygon<boost::geometry::model::d2::point_xy<double>> & polygon);
+}  // namespace behavior_velocity_planner
 
 #endif  // SCENE_MODULE__CROSSWALK__UTIL_HPP_

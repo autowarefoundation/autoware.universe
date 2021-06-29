@@ -33,6 +33,8 @@
 #include "scene_module/scene_module_interface.hpp"
 #include "utilization/boost_geometry_helper.hpp"
 
+namespace behavior_velocity_planner
+{
 struct BlindSpotPolygons
 {
   lanelet::CompoundPolygon3d conflict_area;
@@ -256,4 +258,6 @@ private:
   // Debug
   mutable DebugData debug_data_;
 };
+}  // namespace behavior_velocity_planner
+
 #endif  // SCENE_MODULE__BLIND_SPOT__SCENE_HPP_

@@ -19,6 +19,8 @@
 #include "utilization/marker_helper.hpp"
 #include "utilization/util.hpp"
 
+namespace behavior_velocity_planner
+{
 namespace
 {
 using State = BlindSpotModule::State;
@@ -234,3 +236,4 @@ visualization_msgs::msg::MarkerArray BlindSpotModule::createDebugMarkerArray()
 
   return debug_marker_array;
 }
+}  // namespace behavior_velocity_planner

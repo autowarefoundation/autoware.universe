@@ -28,6 +28,8 @@
 #include "utilization/interpolate.hpp"
 #include "utilization/util.hpp"
 
+namespace behavior_velocity_planner
+{
 namespace bg = boost::geometry;
 
 MergeFromPrivateRoadModule::MergeFromPrivateRoadModule(
@@ -135,3 +137,4 @@ MergeFromPrivateRoadModule::State MergeFromPrivateRoadModule::StateMachine::getS
 {
   return state_;
 }
+}  // namespace behavior_velocity_planner
