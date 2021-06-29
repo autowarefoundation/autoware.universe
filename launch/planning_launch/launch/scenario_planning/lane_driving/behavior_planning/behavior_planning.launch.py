@@ -150,7 +150,7 @@ def generate_launch_description():
 
     behavior_velocity_planner_component = ComposableNode(
         package='behavior_velocity_planner',
-        plugin='BehaviorVelocityPlannerNode',
+        plugin='behavior_velocity_planner::BehaviorVelocityPlannerNode',
         name='behavior_velocity_planner',
         namespace='',
         remappings=[
