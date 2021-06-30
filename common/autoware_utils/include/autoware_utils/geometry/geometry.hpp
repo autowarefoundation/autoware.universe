@@ -15,6 +15,7 @@
 #ifndef AUTOWARE_UTILS__GEOMETRY__GEOMETRY_HPP_
 #define AUTOWARE_UTILS__GEOMETRY__GEOMETRY_HPP_
 
+#include <exception>
 #include <vector>
 
 #define EIGEN_MPL2_ONLY
@@ -33,10 +34,71 @@
 namespace autoware_utils
 {
 template<class T>
-geometry_msgs::msg::Point getPoint(const T & p);
+geometry_msgs::msg::Point getPoint(const T & p)
+{
+  return geometry_msgs::build<geometry_msgs::msg::Point>().x(p.x).y(p.y).z(p.z);
+}
+
+template<>
+inline geometry_msgs::msg::Point getPoint(const geometry_msgs::msg::Point & p)
+{
+  return p;
+}
+
+template<>
+inline geometry_msgs::msg::Point getPoint(const geometry_msgs::msg::Pose & p)
+{
+  return p.position;
+}
+
+template<>
+inline geometry_msgs::msg::Point getPoint(const geometry_msgs::msg::PoseStamped & p)
+{
+  return p.pose.position;
+}
+
+template<>
+inline geometry_msgs::msg::Point getPoint(const autoware_planning_msgs::msg::PathPoint & p)
+{
+  return p.pose.position;
+}
+
+template<>
+inline geometry_msgs::msg::Point getPoint(const autoware_planning_msgs::msg::TrajectoryPoint & p)
+{
+  return p.pose.position;
+}
 
 template<class T>
-geometry_msgs::msg::Pose getPose(const T & p);
+geometry_msgs::msg::Pose getPose(const T & p)
+{
+  static_assert(sizeof(T) == 0, "Only specializations of getPose can be used.");
+  throw std::logic_error("Only specializations of getPose can be used.");
+}
+
+template<>
+inline geometry_msgs::msg::Pose getPose(const geometry_msgs::msg::Pose & p)
+{
+  return p;
+}
+
+template<>
+inline geometry_msgs::msg::Pose getPose(const geometry_msgs::msg::PoseStamped & p)
+{
+  return p.pose;
+}
+
+template<>
+inline geometry_msgs::msg::Pose getPose(const autoware_planning_msgs::msg::PathPoint & p)
+{
+  return p.pose;
+}
+
+template<>
+inline geometry_msgs::msg::Pose getPose(const autoware_planning_msgs::msg::TrajectoryPoint & p)
+{
+  return p.pose;
+}
 
 inline geometry_msgs::msg::Point createPoint(const double x, const double y, const double z)
 {

@@ -145,9 +145,22 @@ TEST(trajectory, searchZeroVelocityIndex)
 
     EXPECT_EQ(*searchZeroVelocityIndex(traj.points), idx_ans);
   }
+
+  // Search from src_idx to dst_idx
+  {
+    const size_t idx_ans = 3;
+
+    auto traj = generateTestTrajectory<Trajectory>(10, 1.0, 1.0);
+    updateTrajectoryVelocityAt(traj.points, idx_ans, 0.0);
+
+    EXPECT_FALSE(searchZeroVelocityIndex(traj.points, 0, 3));
+    EXPECT_EQ(*searchZeroVelocityIndex(traj.points, 0, 4), idx_ans);
+    EXPECT_EQ(*searchZeroVelocityIndex(traj.points, 3, 10), idx_ans);
+    EXPECT_FALSE(searchZeroVelocityIndex(traj.points, 4, 10));
+  }
 }
 
-TEST(trajectory, findNearestIndex_StraightTrajectory)
+TEST(trajectory, findNearestIndex_Pos_StraightTrajectory)
 {
   using autoware_utils::findNearestIndex;
 
@@ -178,7 +191,7 @@ TEST(trajectory, findNearestIndex_StraightTrajectory)
   EXPECT_EQ(findNearestIndex(traj.points, createPoint(4.0, 0.0, 0.0)), 4U);
 }
 
-TEST(trajectory, findNearestIndex_CurvedTrajectory)
+TEST(trajectory, findNearestIndex_Pos_CurvedTrajectory)
 {
   using autoware_utils::findNearestIndex;
 
@@ -188,7 +201,7 @@ TEST(trajectory, findNearestIndex_CurvedTrajectory)
   EXPECT_EQ(findNearestIndex(traj.points, createPoint(5.1, 3.4, 0.0)), 6U);
 }
 
-TEST(trajectory, findNearestIndexWithYawThreshold)
+TEST(trajectory, findNearestIndex_Pose_NoThreshold)
 {
   using autoware_utils::findNearestIndex;
 
@@ -199,31 +212,69 @@ TEST(trajectory, findNearestIndexWithYawThreshold)
     findNearestIndex(Trajectory{}.points, geometry_msgs::msg::Pose{}, {}), std::invalid_argument);
 
   // Start point
-  EXPECT_EQ(*findNearestIndex(traj.points, createPose(0.0, 0.0, 0.0, 0.0, 0.0, 0.0), M_PI), 0U);
-
-  // Start point with 180 degrees angle deviations
-  EXPECT_FALSE(findNearestIndex(traj.points, createPose(0.0, 0.0, 0.0, 0.0, 0.0, M_PI), M_PI));
-
-  // Start point with 270(-90) degrees angle deviations
-  EXPECT_EQ(
-    *findNearestIndex(traj.points, createPose(0.0, 0.0, 0.0, 0.0, 0.0, 1.5 * M_PI), M_PI), 0U);
+  EXPECT_EQ(*findNearestIndex(traj.points, createPose(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)), 0U);
 
   // End point
-  EXPECT_EQ(*findNearestIndex(traj.points, createPose(9.0, 0.0, 0.0, 0.0, 0.0, 0.0), M_PI), 9U);
+  EXPECT_EQ(*findNearestIndex(traj.points, createPose(9.0, 0.0, 0.0, 0.0, 0.0, 0.0)), 9U);
 
   // Boundary conditions
-  EXPECT_EQ(*findNearestIndex(traj.points, createPose(0.5, 0.0, 0.0, 0.0, 0.0, 0.0), M_PI), 0U);
-  EXPECT_EQ(*findNearestIndex(traj.points, createPose(0.51, 0.0, 0.0, 0.0, 0.0, 0.0), M_PI), 1U);
+  EXPECT_EQ(*findNearestIndex(traj.points, createPose(0.5, 0.0, 0.0, 0.0, 0.0, 0.0)), 0U);
+  EXPECT_EQ(*findNearestIndex(traj.points, createPose(0.51, 0.0, 0.0, 0.0, 0.0, 0.0)), 1U);
 
   // Point before start point
-  EXPECT_EQ(*findNearestIndex(traj.points, createPose(-4.0, 5.0, 0.0, 0.0, 0.0, 0.0), M_PI), 0U);
+  EXPECT_EQ(*findNearestIndex(traj.points, createPose(-4.0, 5.0, 0.0, 0.0, 0.0, 0.0)), 0U);
 
   // Point after end point
-  EXPECT_EQ(*findNearestIndex(traj.points, createPose(100.0, -3.0, 0.0, 0.0, 0.0, 0.0), M_PI), 9U);
+  EXPECT_EQ(*findNearestIndex(traj.points, createPose(100.0, -3.0, 0.0, 0.0, 0.0, 0.0)), 9U);
+}
+
+TEST(trajectory, findNearestIndex_Pose_DistThreshold)
+{
+  using autoware_utils::findNearestIndex;
+
+  const auto traj = generateTestTrajectory<Trajectory>(10, 1.0);
+
+  // Out of threshold
+  EXPECT_FALSE(findNearestIndex(traj.points, createPose(3.0, 0.6, 0.0, 0.0, 0.0, 0.0), 0.5));
+
+  // On threshold
+  EXPECT_EQ(*findNearestIndex(traj.points, createPose(3.0, 0.5, 0.0, 0.0, 0.0, 0.0), 0.5), 3U);
+
+  // Within threshold
+  EXPECT_EQ(*findNearestIndex(traj.points, createPose(3.0, 0.4, 0.0, 0.0, 0.0, 0.0), 0.5), 3U);
+}
+
+TEST(trajectory, findNearestIndex_Pose_YawThreshold)
+{
+  using autoware_utils::findNearestIndex;
+
+  const auto traj = generateTestTrajectory<Trajectory>(10, 1.0);
+  const auto max_d = std::numeric_limits<double>::max();
+
+  // Out of threshold
+  EXPECT_FALSE(findNearestIndex(traj.points, createPose(3.0, 0.0, 0.0, 0.0, 0.0, 1.1), max_d, 1.0));
+
+  // On threshold
+  EXPECT_EQ(
+    *findNearestIndex(traj.points, createPose(3.0, 0.0, 0.0, 0.0, 0.0, 1.0), max_d, 1.0), 3U);
+
+  // Within threshold
+  EXPECT_EQ(
+    *findNearestIndex(traj.points, createPose(3.0, 0.0, 0.0, 0.0, 0.0, 0.9), max_d, 1.0), 3U);
+}
+
+TEST(trajectory, findNearestIndex_Pose_DistAndYawThreshold)
+{
+  using autoware_utils::findNearestIndex;
+
+  const auto traj = generateTestTrajectory<Trajectory>(10, 1.0);
 
   // Random cases
-  EXPECT_EQ(*findNearestIndex(traj.points, createPose(2.4, 1.3, 0.0, 0.0, 0.0, 0.0)), 2U);
-  EXPECT_EQ(*findNearestIndex(traj.points, createPose(4.0, 0.0, 0.0, 0.0, 0.0, 0.0), M_PI), 4U);
+  EXPECT_EQ(*findNearestIndex(traj.points, createPose(2.4, 1.3, 0.0, 0.0, 0.0, 0.3), 2.0, 0.4), 2U);
+  EXPECT_EQ(
+    *findNearestIndex(traj.points, createPose(4.1, 0.3, 0.0, 0.0, 0.0, -0.8), 0.5, 1.0), 4U);
+  EXPECT_EQ(
+    *findNearestIndex(traj.points, createPose(8.5, -0.5, 0.0, 0.0, 0.0, 0.0), 1.0, 0.1), 8U);
 }
 
 TEST(trajectory, findNearestSegmentIndex)

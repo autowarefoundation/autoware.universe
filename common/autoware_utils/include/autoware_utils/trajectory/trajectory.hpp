@@ -34,12 +34,13 @@ void validateNonEmpty(const T & points)
 }
 
 template<class T>
-boost::optional<size_t> searchZeroVelocityIndex(const T & points_with_twist)
+boost::optional<size_t> searchZeroVelocityIndex(
+  const T & points_with_twist, const size_t src_idx, const size_t dst_idx)
 {
   validateNonEmpty(points_with_twist);
 
   constexpr double epsilon = 1e-3;
-  for (size_t i = 0; i < points_with_twist.size(); ++i) {
+  for (size_t i = src_idx; i < dst_idx; ++i) {
     if (std::fabs(points_with_twist.at(i).twist.linear.x) < epsilon) {
       return i;
     }
@@ -49,47 +50,61 @@ boost::optional<size_t> searchZeroVelocityIndex(const T & points_with_twist)
 }
 
 template<class T>
+boost::optional<size_t> searchZeroVelocityIndex(const T & points_with_twist)
+{
+  return searchZeroVelocityIndex(points_with_twist, 0, points_with_twist.size());
+}
+
+template<class T>
 size_t findNearestIndex(const T & points, const geometry_msgs::msg::Point & point)
 {
   validateNonEmpty(points);
 
-  double dist_min = std::numeric_limits<double>::max();
-  size_t index_min = 0;
+  double min_dist = std::numeric_limits<double>::max();
+  size_t min_idx = 0;
 
   for (size_t i = 0; i < points.size(); ++i) {
     const auto dist = calcDistance2d(points.at(i), point);
-    if (dist < dist_min) {
-      dist_min = dist;
-      index_min = i;
+    if (dist < min_dist) {
+      min_dist = dist;
+      min_idx = i;
     }
   }
-
-  return index_min;
+  return min_idx;
 }
 
 template<class T>
 boost::optional<size_t> findNearestIndex(
   const T & points, const geometry_msgs::msg::Pose & pose,
-  const double yaw_threshold = std::numeric_limits<double>::max())
+  const double max_dist = std::numeric_limits<double>::max(),
+  const double max_yaw = std::numeric_limits<double>::max())
 {
   validateNonEmpty(points);
 
-  double dist_min = std::numeric_limits<double>::max();
+  double min_dist = std::numeric_limits<double>::max();
   bool is_nearest_found = false;
-  size_t index_min = 0;
+  size_t min_idx = 0;
 
   for (size_t i = 0; i < points.size(); ++i) {
-    const auto delta_yaw = calcYawDeviation(getPose(points.at(i)), pose);
-    if (std::fabs(delta_yaw) < yaw_threshold) {
-      const auto dist = calcDistance2d(points.at(i), pose);
-      if (dist < dist_min) {
-        dist_min = dist;
-        index_min = i;
-        is_nearest_found = true;
-      }
+    const auto dist = calcDistance2d(points.at(i), pose);
+    if (dist > max_dist) {
+      continue;
     }
+
+    const auto yaw = calcYawDeviation(getPose(points.at(i)), pose);
+    if (std::fabs(yaw) > max_yaw) {
+      continue;
+    }
+
+    if (dist >= min_dist) {
+      continue;
+    }
+
+    min_dist = dist;
+    min_idx = i;
+    is_nearest_found = true;
   }
-  return is_nearest_found ? boost::optional<size_t>(index_min) : boost::none;
+  return is_nearest_found ? boost::optional<size_t>(min_idx) : boost::none;
 }
 
 /**

@@ -26,6 +26,20 @@ TEST(geometry, getPoint)
   const double z_ans = 3.0;
 
   {
+    struct AnyPoint
+    {
+      double x;
+      double y;
+      double z;
+    };
+    const AnyPoint p{x_ans, y_ans, z_ans};
+    const geometry_msgs::msg::Point p_out = getPoint(p);
+    EXPECT_DOUBLE_EQ(p_out.x, x_ans);
+    EXPECT_DOUBLE_EQ(p_out.y, y_ans);
+    EXPECT_DOUBLE_EQ(p_out.z, z_ans);
+  }
+
+  {
     geometry_msgs::msg::Point p;
     p.x = x_ans;
     p.y = y_ans;

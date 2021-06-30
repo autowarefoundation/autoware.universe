@@ -17,7 +17,6 @@ find_package(Boost REQUIRED)
 
 ament_auto_add_library(autoware_utils
   src/autoware_utils.cpp
-  src/geometry/geometry.cpp
 )
 
 # Test

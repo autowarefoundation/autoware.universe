@@ -20,6 +20,7 @@
 #include "autoware_utils/geometry/pose_deviation.hpp"
 #include "autoware_utils/math/constants.hpp"
 #include "autoware_utils/math/normalization.hpp"
+#include "autoware_utils/math/range.hpp"
 #include "autoware_utils/math/unit_conversion.hpp"
 #include "autoware_utils/ros/debug_publisher.hpp"
 #include "autoware_utils/ros/debug_traits.hpp"
