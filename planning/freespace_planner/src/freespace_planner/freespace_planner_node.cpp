@@ -326,8 +326,7 @@ FreespacePlannerNode::FreespacePlannerNode(const rclcpp::NodeOptions & node_opti
   // Timer
   {
     auto timer_callback = std::bind(&FreespacePlannerNode::onTimer, this);
-    auto period = std::chrono::duration_cast<std::chrono::nanoseconds>(
-      std::chrono::duration<double>(node_param_.update_rate));
+    const auto period = rclcpp::Rate(node_param_.update_rate).period();
     timer_ = std::make_shared<rclcpp::GenericTimer<decltype(timer_callback)>>(
       get_clock(), period, std::move(timer_callback), get_node_base_interface()->get_context());
     get_node_timers_interface()->add_timer(timer_, nullptr);
