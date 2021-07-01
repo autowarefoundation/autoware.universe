@@ -164,8 +164,7 @@ CostmapGenerator::CostmapGenerator(const rclcpp::NodeOptions & node_options)
 
   // Timer
   auto timer_callback = std::bind(&CostmapGenerator::onTimer, this);
-  auto period = std::chrono::duration_cast<std::chrono::nanoseconds>(
-    std::chrono::duration<double>(update_rate_));
+  const auto period = rclcpp::Rate(update_rate_).period();
   timer_ = std::make_shared<rclcpp::GenericTimer<decltype(timer_callback)>>(
     this->get_clock(), period, std::move(timer_callback),
     this->get_node_base_interface()->get_context());
