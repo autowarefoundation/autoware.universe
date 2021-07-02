@@ -14,7 +14,7 @@
   <arg name="container" default="/sensing/lidar/top/pointcloud_preprocessor/velodyne_node_container" />
 
   <!-- option -->
-  <arg name="use_intra_process" default="false" />
+  <arg name="use_intra_process" default="true" />
 
   <!-- pose_initializer -->
   <include file="$(find-pkg-share pose_initializer)/launch/pose_initializer.launch.xml">
