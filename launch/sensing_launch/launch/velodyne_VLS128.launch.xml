@@ -28,8 +28,8 @@
     <arg name="scan_phase" value="$(var scan_phase)"/>
     <arg name="vehicle_param_file" value="$(var vehicle_param_file)" />
     <arg name="vehicle_mirror_param_file" value="$(var vehicle_mirror_param_file)" />
-    <arg name="use_intra_process" value="false" />
-    <arg name="use_multithread" value="false" />
+    <arg name="use_intra_process" value="true" />
+    <arg name="use_multithread" value="true" />
   </include>
 
   <!-- Velodyne Monitor -->
