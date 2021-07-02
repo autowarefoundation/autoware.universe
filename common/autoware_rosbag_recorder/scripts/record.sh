@@ -1,7 +1,7 @@
 #!/bin/sh
 
 usage_exit() {
-        echo "Usage: rosrun autoware_rosbag_recorder record.sh [-o filename]" 1>&2
+        echo "Usage: ros2 run autoware_rosbag_recorder record.sh [-o filename]" 1>&2
         exit 1
 }
 
@@ -16,7 +16,7 @@ do
 done
 
 if [ -n "$OPTARG" ]; then
-  rosbag record -e "(.*)/velodyne_packets|/as/(.*)|/pacmod/(.*)|/vehicle/(.*)|/sensing/imu/(.*)|/sensing/gnss/(.*)|/sensing/camera/(.*)/camera_info|/sensing/camera/(.*)/compressed|/perception/object_recognition/detection/rois(.)|/perception/object_recognition/objects" -o $OPTARG;
-else 
+  ros2 bag record -e "(.*)/velodyne_packets|/as/(.*)|/pacmod/(.*)|/vehicle/(.*)|/sensing/imu/(.*)|/sensing/gnss/(.*)|/sensing/camera/(.*)/camera_info|/sensing/camera/(.*)/compressed|/perception/object_recognition/detection/rois(.)|/perception/object_recognition/objects" -o $OPTARG;
+else
   usage_exit;
 fi
