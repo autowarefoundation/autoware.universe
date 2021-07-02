@@ -28,6 +28,7 @@
 #include "autoware_utils/ros/processing_time_publisher.hpp"
 #include "autoware_utils/ros/self_pose_listener.hpp"
 #include "autoware_utils/ros/transform_listener.hpp"
+#include "autoware_utils/ros/update_param.hpp"
 #include "autoware_utils/ros/wait_for_param.hpp"
 #include "autoware_utils/system/stop_watch.hpp"
 #include "autoware_utils/trajectory/trajectory.hpp"
