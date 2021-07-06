@@ -14,6 +14,7 @@
 
 import launch
 from launch.actions import DeclareLaunchArgument
+from launch.actions import OpaqueFunction
 from launch.conditions import IfCondition
 from launch.conditions import UnlessCondition
 from launch.substitutions import AnonName
@@ -21,47 +22,26 @@ from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.actions import LoadComposableNodes
 from launch_ros.descriptions import ComposableNode
+from launch_ros.substitutions import FindPackageShare
+import yaml
 
 
-def generate_launch_description():
+def launch_setup(context, *args, **kwargs):
+    # https://github.com/ros2/launch_ros/issues/156
+    def load_composable_node_param(param_path):
+        with open(LaunchConfiguration(param_path).perform(context), 'r') as f:
+            return yaml.safe_load(f)['/**']['ros__parameters']
     ns = 'euclidean_cluster'
     pkg = 'euclidean_cluster'
 
-    # declare launch arguments
-    input_pointcloud_param = DeclareLaunchArgument(
-        'input_pointcloud',
-        default_value='/sensing/lidar/no_ground/pointcloud')
-
-    input_map_param = DeclareLaunchArgument(
-        'input_map',
-        default_value='/map/pointcloud_map')
-
-    output_clusters_param = DeclareLaunchArgument(
-        'output_clusters',
-        default_value='clusters')
-
-    use_pointcloud_map_param = DeclareLaunchArgument(
-        'use_pointcloud_map',
-        default_value='false')
-
     # set voxel grid filter as a component
     voxel_grid_filter_component = ComposableNode(
-        package='voxel_grid_filter',
-        plugin='pcl::VoxelGrid',
+        package='pointcloud_preprocessor',
+        plugin='pointcloud_preprocessor::VoxelGridDownsampleFilterComponent',
         name=AnonName('voxel_grid_filter'),
         remappings=[('input', LaunchConfiguration('input_pointcloud')),
                     ('output', 'voxel_grid_filtered/pointcloud')],
-        parameters=[
-            {
-                'filter_field_name': 'z',
-                'filter_limit_min': 0.1,
-                'filter_limit_max': 2.5,
-                'filter_limit_negative': False,
-                'leaf_size': 0.1,
-                'input_frame': 'base_link',
-                'output_frame': 'base_link',
-            }
-        ]
+        parameters=[load_composable_node_param('voxel_grid_param_path')],
     )
 
     # set compare map filter as a component
@@ -80,16 +60,7 @@ def generate_launch_description():
         name=AnonName('euclidean_cluster'),
         remappings=[('input', 'compare_map_filtered/pointcloud'),
                     ('output', LaunchConfiguration('output_clusters'))],
-        parameters=[
-            {
-                'target_frame': 'base_link',
-                'tolerance': 0.7,
-                'voxel_leaf_size': 0.35,
-                'min_points_number_per_voxel': 2,
-                'min_cluster_size': 3,
-                'max_cluster_size': 3000
-            }
-        ]
+        parameters=[load_composable_node_param('voxel_grid_based_euclidean_param_path')],
     )
 
     disuse_map_euclidean_cluster_component = ComposableNode(
@@ -98,16 +69,7 @@ def generate_launch_description():
         name=AnonName('euclidean_cluster'),
         remappings=[('input', 'voxel_grid_filtered/pointcloud'),
                     ('output', LaunchConfiguration('output_clusters'))],
-        parameters=[
-            {
-                'target_frame': 'base_link',
-                'tolerance': 0.7,
-                'voxel_leaf_size': 0.35,
-                'min_points_number_per_voxel': 2,
-                'min_cluster_size': 3,
-                'max_cluster_size': 3000
-            }
-        ]
+        parameters=[load_composable_node_param('voxel_grid_based_euclidean_param_path')],
     )
 
     container = ComposableNodeContainer(
@@ -132,12 +94,31 @@ def generate_launch_description():
         condition=UnlessCondition(LaunchConfiguration('use_pointcloud_map')),
     )
 
-    return launch.LaunchDescription([
-        input_pointcloud_param,
-        input_map_param,
-        output_clusters_param,
-        use_pointcloud_map_param,
+    return [
         container,
         use_map_loader,
         disuse_map_loader
+    ]
+
+
+def generate_launch_description():
+    def add_launch_arg(name: str, default_value=None):
+        return DeclareLaunchArgument(name, default_value=default_value)
+
+    return launch.LaunchDescription([
+        add_launch_arg('input_pointcloud', '/sensing/lidar/no_ground/pointcloud'),
+        add_launch_arg('input_map', '/map/pointcloud_map'),
+        add_launch_arg('output_clusters', 'clusters'),
+        add_launch_arg('use_pointcloud_map', 'false'),
+        add_launch_arg('voxel_grid_param_path',
+                       [
+                           FindPackageShare('euclidean_cluster'),
+                           '/config/voxel_grid.param.yaml'
+                       ]),
+        add_launch_arg('voxel_grid_based_euclidean_param_path',
+                       [
+                           FindPackageShare('euclidean_cluster'),
+                           '/config/voxel_grid_based_euclidean_cluster.param.yaml'
+                       ]),
+        OpaqueFunction(function=launch_setup),
     ])

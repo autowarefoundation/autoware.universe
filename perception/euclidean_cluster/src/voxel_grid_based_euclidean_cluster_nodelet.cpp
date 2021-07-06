@@ -36,7 +36,7 @@ VoxelGridBasedEuclideanClusterNodelet::VoxelGridBasedEuclideanClusterNodelet(con
 
   using std::placeholders::_1;
   pointcloud_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
-    "input", rclcpp::QoS{1}.transient_local(), std::bind(&VoxelGridBasedEuclideanClusterNodelet::pointcloudCallback, this, _1));
+    "input", rclcpp::SensorDataQoS().keep_last(1), std::bind(&VoxelGridBasedEuclideanClusterNodelet::pointcloudCallback, this, _1));
 
   cluster_pub_ = this->create_publisher<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>("output", 10);
   debug_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("debug/clusters", 1);

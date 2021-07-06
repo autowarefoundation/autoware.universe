@@ -9,7 +9,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 find_package(ament_cmake_auto REQUIRED)
-find_package(PCL REQUIRED QUIET COMPONENTS common search filters)
+find_package(PCL REQUIRED QUIET COMPONENTS common search filters segmentation)
 ament_auto_find_build_dependencies()
 
 
@@ -45,4 +45,5 @@ rclcpp_components_register_node(voxel_grid_based_euclidean_cluster_nodelet
 
 ament_auto_package(INSTALL_TO_SHARE
     launch
+    config
 )
