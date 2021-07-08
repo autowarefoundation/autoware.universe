@@ -28,7 +28,7 @@ if(BUILD_TESTING)
 
   file(GLOB_RECURSE test_files test/**/*.cpp)
 
-  ament_add_gtest(test_autoware_utils test/test_autoware_utils.test ${test_files})
+  ament_add_gtest(test_autoware_utils ${test_files})
 
   target_link_libraries(test_autoware_utils
     autoware_utils
