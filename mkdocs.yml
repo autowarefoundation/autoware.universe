@@ -29,8 +29,9 @@ markdown_extensions:
   - codehilite: { guess_lang: false }
   - fontawesome_markdown
   - mdx_math
+  - mdx_truly_sane_lists: { nested_indent: 2 }
   - mdx_unimoji
-  - plantuml_markdown: { server: http://www.plantuml.com/plantuml }
+  - plantuml_markdown: { server: "http://www.plantuml.com/plantuml" }
   - pymdownx.arithmatex
   - pymdownx.highlight
   - pymdownx.superfences

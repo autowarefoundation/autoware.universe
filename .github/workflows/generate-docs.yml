@@ -50,6 +50,7 @@ jobs:
           pip3 install \
             fontawesome_markdown \
             markdown \
+            mdx_truly_sane_lists \
             mdx_unimoji \
             mkdocs \
             mkdocs-exclude \
@@ -110,4 +111,4 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           token: ${{ secrets.GITHUB_TOKEN }}
           body: |
-            Documentation URL: ${{ env.GITHUB_PAGES_URL }}/pulls/${{ github.event.pull_request.number }}
+            Documentation URL: ${{ env.GITHUB_PAGES_URL }}/pulls/${{ github.event.pull_request.number }}/
