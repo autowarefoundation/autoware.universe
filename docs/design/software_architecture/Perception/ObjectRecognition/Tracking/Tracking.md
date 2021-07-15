@@ -1,21 +1,22 @@
-Detection
-=====
+# Detection
 
 ## Use Cases and Requirements
+
 Tracking in Object Recognition is required for use cases involved with obstacles:
 
-* Changing lane
-* Turning at intersection
-* Avoiding parked vehicles
-* Stopping at a crosswalk when pedestrians are walking
-* Passing intersection without traffic lights
-* Merging into another lane
-* Taking over Pedestrian/Cyclists
-* Stopping/yielding to an obstacle
+- Changing lane
+- Turning at intersection
+- Avoiding parked vehicles
+- Stopping at a crosswalk when pedestrians are walking
+- Passing intersection without traffic lights
+- Merging into another lane
+- Taking over Pedestrian/Cyclists
+- Stopping/yielding to an obstacle
 
 For the details about related requirements, please refer to the [document for Perception stack](/design/Perception/Perception.md).
 
 ## Role
+
 Tracking in Object Recognition keeps objects' unique id over time. This time series processing leads to estimating objects' property such as their velocity and/or acceleration. Furthermore, it could estimate more accurate objects' orientation by leveraging the Detection results over time.
 
 ## Input
@@ -32,16 +33,15 @@ Tracking in Object Recognition keeps objects' unique id over time. This time ser
 | Dynamic Objects | `autoware_perception_msgs::DynamicObjectArray` | Object Recognition: Prediction | `map`    | /perception/object_recognition/tracking/objects |
 
 ## Design
+
 This is our sample implementation for the Tracking module.
 ![msg](../image/ObjectTrackingDesign.png)
-
 
 ## Requirement in Output
 
 Designated objects' properties in autoware_perception_msgs::DynamicObject need to be filled in the Tracking module before passing to the Prediction module.
 
 ![msg](../image/ObjectTrackingRequirement.png)
-
 
 | Property              | Definition                              | Data Type                            | Parent Data Type                          |
 | --------------------- | --------------------------------------- | ------------------------------------ | ----------------------------------------- |

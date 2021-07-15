@@ -1,5 +1,4 @@
-Scenario Selector
-=============
+# Scenario Selector
 
 ## Role
 
@@ -15,4 +14,4 @@ The role of scenario selector is to select appropriate scenario planner dependin
 ### Output
 
 - scenario: `autoware_planning_msgs::Scenario` <br> This contains current available scenario and selected scenario. Each Scenario modules read this topic and chooses to plan trajectory
-- Trajectory: `autoware_planning_msgs::Trajectory` <br> This is the final trajectory of Planning stack, which is the trajectory from selected Scenario module.  
+- Trajectory: `autoware_planning_msgs::Trajectory` <br> This is the final trajectory of Planning stack, which is the trajectory from selected Scenario module.

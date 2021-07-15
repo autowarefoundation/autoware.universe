@@ -1,6 +1,6 @@
 # Control
 
-# Overview
+## Overview
 
 Control stack generates control signals to drive a vehicle following trajectories considering vehicle dynamics.
 This layer ensures that the vehicle follows the trajectory planned by planning.
@@ -67,7 +67,7 @@ The main outputs included in Vehicle Command are as follows.
 
 As above requirements, the control stack outputs gear shifting command and acceleration command as Vehicle command
 
-# Design
+## Design
 
 ![ControlOverview](image/ControlOverview.svg)
 
@@ -113,6 +113,6 @@ Systematic post-processing of vehicle control command, independent of trajectory
 
 - Control signal for vehicles
 
-# References
+## References
 
 TBU

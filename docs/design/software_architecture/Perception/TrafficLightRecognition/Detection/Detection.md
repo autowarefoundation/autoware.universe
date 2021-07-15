@@ -1,10 +1,11 @@
-Detection
-=====
+# Detection
 
 ## Use Cases and Requirements
+
 Detection in Traffic Light Recognition is required for use cases involved with traffic light:
-* Passing intersection when traffic signal is green
-* Stopping at intersection when traffic signal is red
+
+- Passing intersection when traffic signal is green
+- Stopping at intersection when traffic signal is red
 
 For the details about related requirements, please refer to the [document for Perception stack](/design/Perception/Perception.md).
 
@@ -14,12 +15,12 @@ Detection module in Traffic Light Recognition finds traffic lights' region of in
 
 ## Input
 
-| Input       | Data Type                        | Topic                         |
-| ----------- | -------------------------------- | ----------------------------- |
-| Camera      | `sensor_msgs::Image`             | /sensing/camera/*/image_raw   |
-| Camera info | `sensor_msgs::CameraInfo`        | /sensing/camera/*/camera_info |
-| Map         | `autoware_lanelet2_msgs::MapBin` | /map/vector_map               |
-| TF          | `tf2_msgs::TFMessage`            | /tf                           |
+| Input       | Data Type                        | Topic                          |
+| ----------- | -------------------------------- | ------------------------------ |
+| Camera      | `sensor_msgs::Image`             | /sensing/camera/\*/image_raw   |
+| Camera info | `sensor_msgs::CameraInfo`        | /sensing/camera/\*/camera_info |
+| Map         | `autoware_lanelet2_msgs::MapBin` | /map/vector_map                |
+| TF          | `tf2_msgs::TFMessage`            | /tf                            |
 
 ## Output
 
@@ -28,6 +29,7 @@ Detection module in Traffic Light Recognition finds traffic lights' region of in
 | Cropped traffic light ROI information | `autoware_perception_msgs::TrafficLightRoiArray.msg` | Traffic Light Recognition: Classification | /perception/traffic_light_recognition/rois |
 
 ## Design
+
 The Detection module is designed to modularize some patterns of detecting traffic lights' ROI.
 
 ![msg](../image/LightDetectionDesign.png)

@@ -1,7 +1,6 @@
-Messages
-==========
+# Messages
 
-# Overview
+## Overview
 
 This page describes the eight categories of message in the new architecture, along with definitions for each message.
 
@@ -35,7 +34,7 @@ This page describes the eight categories of message in the new architecture, alo
 `Header header`  
 `string format_version`  
 `string map_version`  
-`int8[] data`  
+`int8[] data`
 
 ## Autoware perception messages
 
@@ -44,32 +43,32 @@ This page describes the eight categories of message in the new architecture, alo
 `uuid_msgs/UniqueID id`  
 `Semantic semantic`  
 `State state`  
-`Shape shape`  
+`Shape shape`
 
 ### DynamicObjectArray.msg
 
 `std_msgs/Header header`  
-`DynamicObject[] objects`  
+`DynamicObject[] objects`
 
 ### DynamicObjectWithFeature.msg
 
 `DynamicObject object`  
-`Feature feature`  
+`Feature feature`
 
 ### DynamicObjectWithFeatureArray.msg
 
 `std_msgs/Header header`  
-`DynamicObjectWithFeature[] feature_objects`  
+`DynamicObjectWithFeature[] feature_objects`
 
 ### Feature.msg
 
 `sensor_msgs/PointCloud2 cluster`  
-`sensor_msgs/RegionOfInterest roi`  
+`sensor_msgs/RegionOfInterest roi`
 
 ### PredictedPath.msg
 
 `geometry_msgs/PoseWithCovarianceStamped[] path`  
-`float64 confidence`  
+`float64 confidence`
 
 ### Semantic.msg
 
@@ -82,7 +81,7 @@ This page describes the eight categories of message in the new architecture, alo
 `uint8 PEDESTRIAN=6`  
 `uint8 ANIMAL=7`  
 `uint32 type`  
-`float64 confidence`  
+`float64 confidence`
 
 ### Shape.msg
 
@@ -91,7 +90,7 @@ This page describes the eight categories of message in the new architecture, alo
 `uint8 POLYGON=2`  
 `uint8 type`  
 `geometry_msgs/Vector3 dimensions`  
-`geometry_msgs/Polygon footprint`  
+`geometry_msgs/Polygon footprint`
 
 ### State.msg
 
@@ -101,19 +100,19 @@ This page describes the eight categories of message in the new architecture, alo
 `bool twist_reliable`  
 `geometry_msgs/AccelWithCovariance acceleration_covariance`  
 `bool acceleration_reliable`  
-`PredictedPath[] predicted_paths`  
+`PredictedPath[] predicted_paths`
 
 ## Autoware planning messages
 
 ### LaneSequence.msg
 
-`int64[] lane_ids`  
+`int64[] lane_ids`
 
 ### Path.msg
 
 `std_msgs/Header header`  
 `autoware_planning_msgs/PathPoint[] points`  
-`nav_msgs/OccupancyGrid drivable_area`  
+`nav_msgs/OccupancyGrid drivable_area`
 
 ### PathPoint.msg
 
@@ -121,30 +120,30 @@ This page describes the eight categories of message in the new architecture, alo
 `uint8 FIXED=1`  
 `geometry_msgs/Pose pose`  
 `geometry_msgs/Twist twist`  
-`uint8 type`  
+`uint8 type`
 
 ### PathPointWithLaneId.msg
 
 `autoware_planning_msgs/PathPoint point`  
-`int64[] lane_ids`  
+`int64[] lane_ids`
 
 ### PathWithLaneId.msg
 
 `std_msgs/Header header`  
 `autoware_planning_msgs/PathPointWithLaneId[] points`  
-`nav_msgs/OccupancyGrid drivable_area`  
+`nav_msgs/OccupancyGrid drivable_area`
 
 ### Route.msg
 
 `std_msgs/Header header`  
 `geometry_msgs/Pose goal_pose`  
-`autoware_planning_msgs/RouteSection[] route_sections`  
+`autoware_planning_msgs/RouteSection[] route_sections`
 
 ### RouteSection.msg
 
 `int64[] lane_ids`  
 `int64 preferred_lane_id`  
-`int64[] continued_lane_ids`  
+`int64[] continued_lane_ids`
 
 ### Scenario.msg
 
@@ -152,7 +151,7 @@ This page describes the eight categories of message in the new architecture, alo
 `string LaneDriving=LaneDriving`  
 `string Parking=Parking`  
 `string current_scenario`  
-`string[] activating_scenarios`  
+`string[] activating_scenarios`
 
 ### Trajectory.msg
 
@@ -163,7 +162,7 @@ This page describes the eight categories of message in the new architecture, alo
 
 `geometry_msgs/Pose pose`  
 `geometry_msgs/Twist twist`  
-`geometry_msgs/Accel accel`  
+`geometry_msgs/Accel accel`
 
 ## Autoware system messages
 
@@ -178,7 +177,7 @@ This page describes the eight categories of message in the new architecture, alo
 `string ArrivedGoal=ArrivedGoal`  
 `string FailedToArriveGoal=FailedToArriveGoal`  
 `string state`  
-`string msg`  
+`string msg`
 
 ## Autoware traffic light messages
 
@@ -193,27 +192,27 @@ This page describes the eight categories of message in the new architecture, alo
 `uint8 UP=6`  
 `uint8 DOWN=7`  
 `uint32 type`  
-`float32 confidence`  
+`float32 confidence`
 
 ### TrafficLightRoi.msg
 
 `sensor_msgs/RegionOfInterest roi`  
-`int32 id`  
+`int32 id`
 
 ### TrafficLightRoiArray.msg
 
 `std_msgs/Header header`  
-`autoware_traffic_light_msgs/TrafficLightRoi[] rois`  
+`autoware_traffic_light_msgs/TrafficLightRoi[] rois`
 
 ### TrafficLightState.msg
 
 `autoware_traffic_light_msgs/LampState[] lamp_states`  
-`int32 id`  
+`int32 id`
 
 ### TrafficLightStateArray.msg
 
 `std_msgs/Header header`  
-`autoware_traffic_light_msgs/TrafficLightState[] states`  
+`autoware_traffic_light_msgs/TrafficLightState[] states`
 
 ## Autoware vector map messages
 
@@ -222,7 +221,7 @@ This page describes the eight categories of message in the new architecture, alo
 `std_msgs/Header header`  
 `string format_version`  
 `string map_version`  
-`int8[] data`  
+`int8[] data`
 
 ## Autoware vehicle messages
 
@@ -239,7 +238,7 @@ This page describes the eight categories of message in the new architecture, alo
 
 `std_msgs/Header header`  
 `float64 throttle`  
-`float64 brake`  
+`float64 brake`
 
 ### Shift.msg
 
@@ -249,17 +248,17 @@ This page describes the eight categories of message in the new architecture, alo
 `uint8 NEUTRAL=3`  
 `uint8 DRIVE=4`  
 `uint8 LOW=5`  
-`int32 data`  
+`int32 data`
 
 ### ShiftStamped.msg
 
 `std_msgs/Header header`  
-`autoware_vehicle_msgs/Shift shift`  
+`autoware_vehicle_msgs/Shift shift`
 
 ### Steering.msg
 
 `std_msgs/Header header`  
-`float32 data`  
+`float32 data`
 
 ### TurnSignal.msg
 
@@ -268,11 +267,11 @@ This page describes the eight categories of message in the new architecture, alo
 `uint8 LEFT = 1`  
 `uint8 RIGHT = 2`  
 `uint8 HAZARD = 3`  
-`int32 data`  
+`int32 data`
 
 ### VehicleCommand.msg
 
 `std_msgs/Header header`  
 `autoware_control_msgs/ControlCommand control`  
 `autoware_vehicle_msgs/Shift shift`  
-`int32 emergency`  
+`int32 emergency`

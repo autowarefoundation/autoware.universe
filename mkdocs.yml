@@ -46,59 +46,59 @@ extra_javascript:
 nav:
   - Home: docs/Readme.md
   - Tutorials:
-    - Requirements: docs/tutorial/Requirements.md
-    - How to install: docs/tutorial/HowToInstall.md
-    - How to run:
-      - Quick start: docs/tutorial/QuickStart.md
-      - Simulation: docs/tutorial/SimulationTutorial.md
+      - Requirements: docs/tutorial/Requirements.md
+      - How to install: docs/tutorial/HowToInstall.md
+      - How to run:
+          - Quick start: docs/tutorial/QuickStart.md
+          - Simulation: docs/tutorial/SimulationTutorial.md
   - Design:
-    - Architecture:
-      - Overview: docs/design/software_architecture/Overview.md
-      - Sensing: docs/design/software_architecture/Sensing/Sensing.md
-      - Localization:
-        - Overall: docs/design/software_architecture/Localization/Localization.md
-        - Pose estimator: docs/design/software_architecture/Localization/PoseEstimator/PoseEstimator.md
-        - Twist estimator: docs/design/software_architecture/Localization/TwistEstimator/TwistEstimator.md
-        - Pose twist fusion filter: docs/design/software_architecture/Localization/PoseTwistFusionFilter/PoseTwistFusionFilter.md
-      - Perception:
-        - Overall: docs/design/software_architecture/Perception/Perception.md
-        - Object recognition:
-          - Detection: docs/design/software_architecture/Perception/ObjectRecognition/Detection/Detection.md
-          - Tracking: docs/design/software_architecture/Perception/ObjectRecognition/Tracking/Tracking.md
-          - Prediction: docs/design/software_architecture/Perception/ObjectRecognition/Prediction/Prediction.md
-        - Traffic light recognition:
-          - Detection: docs/design/software_architecture/Perception/TrafficLightRecognition/Detection/Detection.md
-          - Classification: docs/design/software_architecture/Perception/TrafficLightRecognition/Classification/Classification.md
-      - Planning:
-        - Overall: docs/design/software_architecture/Planning/Planning.md
-        - Scenario selector: docs/design/software_architecture/Planning/ScenarioSelector/ScenarioSelector.md
-        - Lane driving Scenario:
-          - Overall: docs/design/software_architecture/Planning/LaneDriving/LaneDrivingScenario.md
-          - Behavior path planning: docs/design/software_architecture/Planning/LaneDriving/Behavior/LaneChangePlanner.md
-          - Behavior velocity planning: docs/design/software_architecture/Planning/LaneDriving/Behavior/BehaviorVelocityPlanner.md
-        - Parking: docs/design/software_architecture/Planning/Parking/ParkingScenario.md
-        - Design rationale: docs/design/software_architecture/Planning/DesignRationale.md
-      - Control:
-        - Overall: docs/design/software_architecture/Control/Control.md
-        - Trajectory follower:
-          - Lateral controller: docs/design/software_architecture/Control/TrajectoryFollower/LateralController.md
-          - Longitudinal controller: docs/design/software_architecture/Control/TrajectoryFollower/LongitudinalController.md
-          - Lateral longitudinal coupler: docs/design/software_architecture/Control/TrajectoryFollower/LatLonCoupler.md
-        - Vehicle cmd gate: docs/design/software_architecture/Control/VehicleCmdGate/VehicleCmdGate.md
-      - Vehicle: docs/design/software_architecture/Vehicle/Vehicle.md
-      - Map: docs/design/software_architecture/Map/Map.md
-      - TF: docs/design/software_architecture/TF.md
-      - Naming convention: docs/design/software_architecture/NamingConvention.md
-      - For developers: docs/design/software_architecture/ForDevelopers.md
-      - Node diagram: docs/design/software_architecture/NodeDiagram.md
-    - Repositry: docs/design/repository/Repository.md
-    - Release: docs/design/release/Release.md
-  - DevelopperGuide:
-    - Coding guideline: docs/developper_guide/CodingGuideline.md
-    - Pull request guideline: docs/developper_guide/PullRequestGuideline.md
-    - Unit test Guideline: docs/developper_guide/UnitTestGuideline.md
-    - Knowhow:
-      - docs/developper_guide/knowhow/PortingToROS2.md
+      - Architecture:
+          - Overview: docs/design/software_architecture/Overview.md
+          - Sensing: docs/design/software_architecture/Sensing/Sensing.md
+          - Localization:
+              - Overall: docs/design/software_architecture/Localization/Localization.md
+              - Pose estimator: docs/design/software_architecture/Localization/PoseEstimator/PoseEstimator.md
+              - Twist estimator: docs/design/software_architecture/Localization/TwistEstimator/TwistEstimator.md
+              - Pose twist fusion filter: docs/design/software_architecture/Localization/PoseTwistFusionFilter/PoseTwistFusionFilter.md
+          - Perception:
+              - Overall: docs/design/software_architecture/Perception/Perception.md
+              - Object recognition:
+                  - Detection: docs/design/software_architecture/Perception/ObjectRecognition/Detection/Detection.md
+                  - Tracking: docs/design/software_architecture/Perception/ObjectRecognition/Tracking/Tracking.md
+                  - Prediction: docs/design/software_architecture/Perception/ObjectRecognition/Prediction/Prediction.md
+              - Traffic light recognition:
+                  - Detection: docs/design/software_architecture/Perception/TrafficLightRecognition/Detection/Detection.md
+                  - Classification: docs/design/software_architecture/Perception/TrafficLightRecognition/Classification/Classification.md
+          - Planning:
+              - Overall: docs/design/software_architecture/Planning/Planning.md
+              - Scenario selector: docs/design/software_architecture/Planning/ScenarioSelector/ScenarioSelector.md
+              - Lane driving Scenario:
+                  - Overall: docs/design/software_architecture/Planning/LaneDriving/LaneDrivingScenario.md
+                  - Behavior path planning: docs/design/software_architecture/Planning/LaneDriving/Behavior/LaneChangePlanner.md
+                  - Behavior velocity planning: docs/design/software_architecture/Planning/LaneDriving/Behavior/BehaviorVelocityPlanner.md
+              - Parking: docs/design/software_architecture/Planning/Parking/ParkingScenario.md
+              - Design rationale: docs/design/software_architecture/Planning/DesignRationale.md
+          - Control:
+              - Overall: docs/design/software_architecture/Control/Control.md
+              - Trajectory follower:
+                  - Lateral controller: docs/design/software_architecture/Control/TrajectoryFollower/LateralController.md
+                  - Longitudinal controller: docs/design/software_architecture/Control/TrajectoryFollower/LongitudinalController.md
+                  - Lateral longitudinal coupler: docs/design/software_architecture/Control/TrajectoryFollower/LatLonCoupler.md
+              - Vehicle cmd gate: docs/design/software_architecture/Control/VehicleCmdGate/VehicleCmdGate.md
+          - Vehicle: docs/design/software_architecture/Vehicle/Vehicle.md
+          - Map: docs/design/software_architecture/Map/Map.md
+          - TF: docs/design/software_architecture/TF.md
+          - Naming convention: docs/design/software_architecture/NamingConvention.md
+          - For developers: docs/design/software_architecture/ForDevelopers.md
+          - Node diagram: docs/design/software_architecture/NodeDiagram.md
+      - Repository: docs/design/repository/Repository.md
+      - Release: docs/design/release/Release.md
+  - DeveloperGuide:
+      - Coding guideline: docs/developer_guide/CodingGuideline.md
+      - Pull request guideline: docs/developer_guide/PullRequestGuideline.md
+      - Unit test Guideline: docs/developer_guide/UnitTestGuideline.md
+      - Knowhow:
+          - docs/developer_guide/knowhow/PortingToROS2.md
   - License/Credit:
-    - Credits: docs/Credits.md
-    - License: docs/LICENSE
+      - Credits: docs/Credits.md
+      - License: docs/LICENSE

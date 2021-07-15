@@ -22,4 +22,3 @@ ReflowComments: false
 # because it crushes include-groups unless IncludeCategories are defined properly.
 # It was introduced in https://github.com/llvm-mirror/clang/commit/62e3198c4f5490a1c60ba51d81fe2e1f0dc99135
 IncludeBlocks: Preserve
-...

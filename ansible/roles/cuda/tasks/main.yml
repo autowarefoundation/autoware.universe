@@ -28,7 +28,7 @@
 - name: CUDA (install CUDA 11.1)
   become: yes
   apt:
-    name: cuda-11-1  # nvidia-driver should be greater than 455
+    name: cuda-11-1 # nvidia-driver should be greater than 455
     update_cache: yes
 
 - name: CUDA (add path >> bashrc)

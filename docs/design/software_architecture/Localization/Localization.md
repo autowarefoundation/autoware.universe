@@ -1,7 +1,6 @@
-Localization
-=============
+# Localization
 
-# Overview
+## Overview
 
 The localization stack has a role to recognize where ego vehicle is ["map" frame](/design/Tf.md). Additionally, this stack estimates twist of ego vehicle for precise velocity planning and control.
 
@@ -16,10 +15,10 @@ There are two main roles of Localization stack:
 
 | Input          | Data Type                                  |
 | -------------- | ------------------------------------------ |
-| LiDAR          | `sensor_msgs::PointCoud2`                  |
+| LiDAR          | `sensor_msgs::PointCloud2`                 |
 | GNSS           | `geometry_msgs::PoseWithCovarianceStamped` |
 | IMU            | `sensor_msgs::Imu`                         |
-| Pointcloud Map | `sensor_msgs::PointCoud2`                  |
+| Pointcloud Map | `sensor_msgs::PointCloud2`                 |
 | Vehicle CAN    | `geometry_msgs::TwistStamped`              |
 
 ### Sensors
@@ -49,7 +48,7 @@ Multiple sensor information described below is considered.
 ### Reference Map
 
 - Pointcloud Map
-  
+
 ## Output
 
 | Output        | Topic (Data Type)                                       | Use Cases of the output       |
@@ -69,22 +68,25 @@ Multiple sensor information described below is considered.
 | 6. Driving<br>on the target lane                         | Self pose on the map<br>Self twist | Control                | To calculate target throttle/brake value and steering angle<br>based on pose and twist of ego vehicle and target trajectory                                        |
 
 ## Requirements
+
 The high-level requirements of Localization stack are listed below:
-* Localization stack must provide pose in "map" frame. (Use Case 1-6)
-  * The output should be provided as TF from "map" to "base_link". (See [TF document](/design/TF.md) for the details)
-  * The localization result must be continuous 
-  * Whenever a localization algorithm fails, the failure must be detected should not update vehicle pose.
-* Localization stack must provide the velocity of the vehicle in "map" frame. (Use Case 5,6)
 
-# Design
+- Localization stack must provide pose in "map" frame. (Use Case 1-6)
+  - The output should be provided as TF from "map" to "base_link". (See [TF document](/design/TF.md) for the details)
+  - The localization result must be continuous
+  - Whenever a localization algorithm fails, the failure must be detected should not update vehicle pose.
+- Localization stack must provide the velocity of the vehicle in "map" frame. (Use Case 5,6)
 
-The localization stack provides indispensable information to achieve autonomous driving. Therefore, it is not preferable to depend on only one localization algorithm. We insert pose twist fusion filter after pose and twist estimator to improve robustness of the estimated pose and twist. Also, developers can easily add a new estimator based on another sensor, e.g. camera-based visual SLAM and visual odometry, into the localization stack.  The localization stack should output the transformation from map to base_link as /tf to utilize its interpolation system. 
+## Design
+
+The localization stack provides indispensable information to achieve autonomous driving. Therefore, it is not preferable to depend on only one localization algorithm. We insert pose twist fusion filter after pose and twist estimator to improve robustness of the estimated pose and twist. Also, developers can easily add a new estimator based on another sensor, e.g. camera-based visual SLAM and visual odometry, into the localization stack. The localization stack should output the transformation from map to base_link as /tf to utilize its interpolation system.
 
 ![Localization_component](image/LocalizationOverview.svg)
 
 ## Pose estimator
 
 ### Role
+
 Pose estimator is a component to estimate ego vehicle pose which includes position and orientation. The final output should also include covariance, which represents the estimator's confidence on the estimated pose. A pose estimator could either estimate pose in a local map, or it can estimate absolute pose using global localizer. The output pose can be published in any frame as long as enough /tf is provided to project into the "map" frame.
 
 ### Input
@@ -95,11 +97,12 @@ Pose estimator is a component to estimate ego vehicle pose which includes positi
 - Pointcloud Map
 
 ### Output
+
 - Pose with Covariance
 - Pose Estimator Diagnostics
 
-
 ## Twist Estimator
+
 Twist estimator is a component to estimate ego vehicle twist for precise velocity planning and control. The x-axis velocity and z-axis angular velocity of the vehicle are crucial information. These values are preferable to be noise-free and unbiased.
 
 ### Input
@@ -117,9 +120,10 @@ Twist estimator is a component to estimate ego vehicle twist for precise velocit
 ### Role
 
 Pose Twist Fusion Filter is a component to integrate the poses estimated by pose estimators and the twists estimated by twist estimators. This assumes sequential Bayesian Filter, such as EKF and particle filter, which calculates vehicle's pose and twist probabilistically. This should also ensure the following functions:
-* smoothing of estimated pose (see [TF.md](/design/TF.md))
-* outlier rejection of inputs based on previously calculated pose and it's covariance (see [TF.md](/design/TF.md))
-* time delay compensation in case pose estimators take time to calculate pose
+
+- smoothing of estimated pose (see [TF.md](/design/TF.md))
+- outlier rejection of inputs based on previously calculated pose and it's covariance (see [TF.md](/design/TF.md))
+- time delay compensation in case pose estimators take time to calculate pose
 
 ### Input
 
@@ -131,4 +135,3 @@ Pose Twist Fusion Filter is a component to integrate the poses estimated by pose
 
 - Ego Vehicle Pose (/tf from map frame to base_link frame)
 - Ego Vehicle Twist
-

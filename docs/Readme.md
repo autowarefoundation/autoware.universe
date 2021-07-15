@@ -4,9 +4,9 @@
 
 AutowareArchitectureProposal is a repository to explore and establish the architecture design of Autoware, an autonomous driving software managed by Autoware Foundation.
 
-There already exists [Autoware.Auto](https://gitlab.com/autowarefoundation/autoware.auto) repository in Autoware Foundation GitLab. The architecture investigation, however, was done as a separate repository rather than a fork to explore architecture without prejudice from the existing source code.  
+There already exists [Autoware.Auto](https://gitlab.com/autowarefoundation/autoware.auto) repository in Autoware Foundation GitLab. The architecture investigation, however, was done as a separate repository rather than a fork to explore architecture without prejudice from the existing source code.
 
-The established architecture will be presented to Autoware.Auto which will then be reviewed by the community members and be used to improve Autoware.Auto. AutowareArchitectureProposal also contains new functions that do not yet exist in Autoware.Auto to verify that the architecture is feasible for various use cases. These functions are also planned to be refactored and merged into Autoware.Auto. The details are explained in the [Future plans](#future-plans) section.  
+The established architecture will be presented to Autoware.Auto which will then be reviewed by the community members and be used to improve Autoware.Auto. AutowareArchitectureProposal also contains new functions that do not yet exist in Autoware.Auto to verify that the architecture is feasible for various use cases. These functions are also planned to be refactored and merged into Autoware.Auto. The details are explained in the [Future plans](#future-plans) section.
 
 ## Note for non-Tier IV members
 
@@ -17,7 +17,7 @@ The established architecture will be presented to Autoware.Auto which will then 
 ## Target
 
 AutowareArchitectureProposal aims to realize autonomous driving in various environments.  
-Autonomous driving on public roads is an extremely challenging project, and it cannot be achieved in a short period of time. Therefore we are trying to accumulate technology by applying the current AutowareArchitectureProposal to more restricted use cases such as in-factory transportation. At the same time, demonstration experiments in public roads are also in progress.  
+Autonomous driving on public roads is an extremely challenging project, and it cannot be achieved in a short period of time. Therefore we are trying to accumulate technology by applying the current AutowareArchitectureProposal to more restricted use cases such as in-factory transportation. At the same time, demonstration experiments in public roads are also in progress.
 
 ## Future plans
 
@@ -25,4 +25,3 @@ Again, autonomous driving is an extremely challenging project and this cannot be
 As part of Tier IV's commitment to collaboration with the AWF and its members, we plan to merge the additional functionality of AutowareArchitectureProposal to Autoware.Auto. Note that since Autoware.Auto has its own scope and ODD (Operational Design Domain, prerequisite environmental conditions for an automatic driving system to operate) that needs to be achieved, not all the features in AutowareArchitectureProposal will be required.
 
 We keep using AutowareArchitectureProposal for some time, but remember that the core of our products will shift to Autoware.Auto.
-

@@ -4,4 +4,3 @@
 - import_tasks: pacmod.yml
   when:
     - not kvaser_library_only
-

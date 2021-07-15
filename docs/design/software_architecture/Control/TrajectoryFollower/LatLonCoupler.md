@@ -1,6 +1,6 @@
 # Latlon Coupler
 
-# Overview
+## Overview
 
 ## Role
 
@@ -33,6 +33,7 @@ Latlon Coupler module integrates lateral control command and longitudinal contro
 ### Output
 
 `autoware_control_msgs/ControlCommandStamped`:
+
 | Input                   | Data Type        | Explanation                      |
 | ----------------------- | ---------------- | -------------------------------- |
 | Velocity                | std_msgs/Float64 | from Longitudinal Control module |

@@ -4,5 +4,6 @@
 
 AutowareArchitectureProposal is a repository to explore and establish the architecture design of Autoware, an autonomous driving software managed by Autoware Foundation.
 
-# Documentation
+## Documentation
+
 See [Github Pages](https://tier4.github.io/autoware.proj/tree/main/)
