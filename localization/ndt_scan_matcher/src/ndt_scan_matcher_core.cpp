@@ -80,6 +80,9 @@ NDTScanMatcher::NDTScanMatcher()
   base_frame_ = this->declare_parameter("base_frame", base_frame_);
   RCLCPP_INFO(get_logger(), "base_frame_id: %s", base_frame_.c_str());
 
+  ndt_base_frame_ = this->declare_parameter("ndt_base_frame", ndt_base_frame_);
+  RCLCPP_INFO(get_logger(), "ndt_base_frame_id: %s", ndt_base_frame_.c_str());
+
   double trans_epsilon = ndt_ptr_->getTransformationEpsilon();
   double step_size = ndt_ptr_->getStepSize();
   double resolution = ndt_ptr_->getResolution();
