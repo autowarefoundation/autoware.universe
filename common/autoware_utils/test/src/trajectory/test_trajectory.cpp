@@ -337,9 +337,9 @@ TEST(trajectory, calcLongitudinalOffsetToSegment_StraightTrajectory)
     calcLongitudinalOffsetToSegment(
       traj.points, traj.points.size() - 1, geometry_msgs::msg::Point{}), std::out_of_range);
 
-  // Too close points in trajectory
+  // Same close points in trajectory
   {
-    const auto invalid_traj = generateTestTrajectory<Trajectory>(10, 1e-10);
+    const auto invalid_traj = generateTestTrajectory<Trajectory>(10, 0.0);
     const auto p = createPoint(3.0, 0.0, 0.0);
     EXPECT_THROW(calcLongitudinalOffsetToSegment(invalid_traj.points, 3, p), std::runtime_error);
   }

@@ -17,6 +17,7 @@ find_package(Boost REQUIRED)
 
 ament_auto_add_library(autoware_utils
   src/autoware_utils.cpp
+  src/planning/planning_marker_helper.cpp
 )
 
 # Test

@@ -17,6 +17,8 @@
 #include "autoware_utils/geometry/geometry.hpp"
 #include "autoware_utils/math/unit_conversion.hpp"
 
+constexpr double epsilon = 1e-6;
+
 TEST(geometry, getPoint)
 {
   using autoware_utils::getPoint;
@@ -194,6 +196,29 @@ TEST(geometry, createPoint)
   EXPECT_DOUBLE_EQ(p_out.z, 3.0);
 }
 
+TEST(geometry, createQuaternion)
+{
+  using autoware_utils::createQuaternion;
+
+  // (0.18257419, 0.36514837, 0.54772256, 0.73029674) is normalized quaternion of (1, 2, 3, 4)
+  const geometry_msgs::msg::Quaternion q_out = createQuaternion(
+    0.18257419, 0.36514837, 0.54772256, 0.73029674);
+  EXPECT_DOUBLE_EQ(q_out.x, 0.18257419);
+  EXPECT_DOUBLE_EQ(q_out.y, 0.36514837);
+  EXPECT_DOUBLE_EQ(q_out.z, 0.54772256);
+  EXPECT_DOUBLE_EQ(q_out.w, 0.73029674);
+}
+
+TEST(geometry, createTranslation)
+{
+  using autoware_utils::createTranslation;
+
+  const geometry_msgs::msg::Vector3 v_out = createTranslation(1.0, 2.0, 3.0);
+  EXPECT_DOUBLE_EQ(v_out.x, 1.0);
+  EXPECT_DOUBLE_EQ(v_out.y, 2.0);
+  EXPECT_DOUBLE_EQ(v_out.z, 3.0);
+}
+
 TEST(geometry, createQuaternionFromRPY)
 {
   using autoware_utils::createQuaternionFromRPY;
@@ -221,6 +246,107 @@ TEST(geometry, createQuaternionFromRPY)
     EXPECT_DOUBLE_EQ(q_out.y(), 0.30618621784789724);
     EXPECT_DOUBLE_EQ(q_out.z(), 0.17677669529663692);
     EXPECT_DOUBLE_EQ(q_out.w(), 0.91855865354369193);
+  }
+}
+
+TEST(geometry, calcElevationAngle)
+{
+  using autoware_utils::calcElevationAngle;
+  using autoware_utils::createPoint;
+  using autoware_utils::deg2rad;
+
+  {
+    const auto p1 = createPoint(1.0, 1.0, 1.0);
+    const auto p2 = createPoint(1.0, 1.0, -10.0);
+    EXPECT_NEAR(calcElevationAngle(p1, p2), deg2rad(-90.0), epsilon);
+  }
+  {
+    const auto p1 = createPoint(0.0, 0.0, 0.0);
+    const auto p2 = createPoint(1.0, 0.0, -std::sqrt(3.0));
+    EXPECT_NEAR(calcElevationAngle(p1, p2), deg2rad(-60.0), epsilon);
+  }
+  {
+    const auto p1 = createPoint(0.0, 0.0, -1.0);
+    const auto p2 = createPoint(0.0, 1.0, -2.0);
+    EXPECT_NEAR(calcElevationAngle(p1, p2), deg2rad(-45.0), epsilon);
+  }
+  {
+    const auto p1 = createPoint(0.0, 0.0, 1.0);
+    const auto p2 = createPoint(1.0, 1.0, 1.0);
+    EXPECT_NEAR(calcElevationAngle(p1, p2), deg2rad(0.0), epsilon);
+  }
+  {
+    const auto p1 = createPoint(-100, -100, 0.0);
+    const auto p2 = createPoint(0.0, 0.0, 0.0);
+    EXPECT_NEAR(calcElevationAngle(p1, p2), deg2rad(0.0), epsilon);
+  }
+  {
+    const auto p1 = createPoint(0.0, 0.0, 1.0);
+    const auto p2 = createPoint(0.0, 1.0, 2.0);
+    EXPECT_NEAR(calcElevationAngle(p1, p2), deg2rad(45.0), epsilon);
+  }
+  {
+    const auto p1 = createPoint(0.0, 0.0, 0.0);
+    const auto p2 = createPoint(1.0, 0.0, std::sqrt(3.0));
+    EXPECT_NEAR(calcElevationAngle(p1, p2), deg2rad(60.0), epsilon);
+  }
+  {
+    const auto p1 = createPoint(1.0, 1.0, 1.0);
+    const auto p2 = createPoint(1.0, 1.0, 10.0);
+    EXPECT_NEAR(calcElevationAngle(p1, p2), deg2rad(90.0), epsilon);
+  }
+}
+
+TEST(geometry, calcAzimuthAngle)
+{
+  using autoware_utils::calcAzimuthAngle;
+  using autoware_utils::createPoint;
+  using autoware_utils::deg2rad;
+
+  {
+    const auto p1 = createPoint(0.0, 0.0, 9.0);
+    const auto p2 = createPoint(-100, -epsilon, 0.0);
+    EXPECT_NEAR(calcAzimuthAngle(p1, p2), deg2rad(-180.0), epsilon);
+  }
+  {
+    const auto p1 = createPoint(0.0, 0.0, 2.0);
+    const auto p2 = createPoint(-1.0, -1.0, 0.0);
+    EXPECT_NEAR(calcAzimuthAngle(p1, p2), deg2rad(-135.0), epsilon);
+  }
+  {
+    const auto p1 = createPoint(0.0, 10.0, 0.0);
+    const auto p2 = createPoint(0.0, 0.0, 6.0);
+    EXPECT_NEAR(calcAzimuthAngle(p1, p2), deg2rad(-90.0), epsilon);
+  }
+  {
+    const auto p1 = createPoint(0.0, 0.0, 0.0);
+    const auto p2 = createPoint(1.0, -1.0, 4.0);
+    EXPECT_NEAR(calcAzimuthAngle(p1, p2), deg2rad(-45.0), epsilon);
+  }
+  {
+    const auto p1 = createPoint(0.0, 1.0, 3.3);
+    const auto p2 = createPoint(10.0, 1.0, -10.0);
+    EXPECT_NEAR(calcAzimuthAngle(p1, p2), deg2rad(0.0), epsilon);
+  }
+  {
+    const auto p1 = createPoint(0.0, 0.0, 2.0);
+    const auto p2 = createPoint(1.0, 1.0, 0.0);
+    EXPECT_NEAR(calcAzimuthAngle(p1, p2), deg2rad(45.0), epsilon);
+  }
+  {
+    const auto p1 = createPoint(0.0, 0.0, 10.0);
+    const auto p2 = createPoint(0.0, 10.0, 0.0);
+    EXPECT_NEAR(calcAzimuthAngle(p1, p2), deg2rad(90.0), epsilon);
+  }
+  {
+    const auto p1 = createPoint(0.0, 0.0, 2.0);
+    const auto p2 = createPoint(-1.0, 1.0, 0.0);
+    EXPECT_NEAR(calcAzimuthAngle(p1, p2), deg2rad(135.0), epsilon);
+  }
+  {
+    const auto p1 = createPoint(0.0, 0.0, 9.0);
+    const auto p2 = createPoint(-100, epsilon, 0.0);
+    EXPECT_NEAR(calcAzimuthAngle(p1, p2), deg2rad(180.0), epsilon);
   }
 }
 
@@ -256,6 +382,86 @@ TEST(geometry, calcDistance3d)
   pose.position.z = 4.0;
 
   EXPECT_DOUBLE_EQ(calcDistance3d(point, pose), 3.0);
+}
+
+TEST(geometry, getRPY)
+{
+  using autoware_utils::createQuaternionFromRPY;
+  using autoware_utils::deg2rad;
+  using autoware_utils::getRPY;
+
+  {
+    const double ans_roll = deg2rad(5);
+    const double ans_pitch = deg2rad(10);
+    const double ans_yaw = deg2rad(15);
+    const auto quat = tf2::toMsg(createQuaternionFromRPY(ans_roll, ans_pitch, ans_yaw));
+    const auto rpy = getRPY(quat);
+    EXPECT_NEAR(rpy.x, ans_roll, epsilon);
+    EXPECT_NEAR(rpy.y, ans_pitch, epsilon);
+    EXPECT_NEAR(rpy.z, ans_yaw, epsilon);
+  }
+  {
+    const double ans_roll = deg2rad(0);
+    const double ans_pitch = deg2rad(5);
+    const double ans_yaw = deg2rad(-10);
+    const auto quat = tf2::toMsg(createQuaternionFromRPY(ans_roll, ans_pitch, ans_yaw));
+    const auto rpy = getRPY(quat);
+    EXPECT_NEAR(rpy.x, ans_roll, epsilon);
+    EXPECT_NEAR(rpy.y, ans_pitch, epsilon);
+    EXPECT_NEAR(rpy.z, ans_yaw, epsilon);
+  }
+  {
+    const double ans_roll = deg2rad(30);
+    const double ans_pitch = deg2rad(-20);
+    const double ans_yaw = deg2rad(0);
+    const auto quat = tf2::toMsg(createQuaternionFromRPY(ans_roll, ans_pitch, ans_yaw));
+    const auto rpy = getRPY(quat);
+    EXPECT_NEAR(rpy.x, ans_roll, epsilon);
+    EXPECT_NEAR(rpy.y, ans_pitch, epsilon);
+    EXPECT_NEAR(rpy.z, ans_yaw, epsilon);
+  }
+}
+
+TEST(geometry, getRPY_wrapper)
+{
+  using autoware_utils::createQuaternionFromRPY;
+  using autoware_utils::deg2rad;
+  using autoware_utils::getRPY;
+
+  {
+    const double ans_roll = deg2rad(45);
+    const double ans_pitch = deg2rad(25);
+    const double ans_yaw = deg2rad(-5);
+    const auto quat = tf2::toMsg(createQuaternionFromRPY(ans_roll, ans_pitch, ans_yaw));
+
+    // geometry_msgs::Pose
+    {
+      geometry_msgs::msg::Pose pose{};
+      pose.orientation = quat;
+      const auto rpy = getRPY(pose);
+      EXPECT_NEAR(rpy.x, ans_roll, epsilon);
+      EXPECT_NEAR(rpy.y, ans_pitch, epsilon);
+      EXPECT_NEAR(rpy.z, ans_yaw, epsilon);
+    }
+    // geometry_msgs::PoseStamped
+    {
+      geometry_msgs::msg::PoseStamped pose{};
+      pose.pose.orientation = quat;
+      const auto rpy = getRPY(pose);
+      EXPECT_NEAR(rpy.x, ans_roll, epsilon);
+      EXPECT_NEAR(rpy.y, ans_pitch, epsilon);
+      EXPECT_NEAR(rpy.z, ans_yaw, epsilon);
+    }
+    // geometry_msgs::PoseWithCovarianceStamped
+    {
+      geometry_msgs::msg::PoseWithCovarianceStamped pose{};
+      pose.pose.pose.orientation = quat;
+      const auto rpy = getRPY(pose);
+      EXPECT_NEAR(rpy.x, ans_roll, epsilon);
+      EXPECT_NEAR(rpy.y, ans_pitch, epsilon);
+      EXPECT_NEAR(rpy.z, ans_yaw, epsilon);
+    }
+  }
 }
 
 TEST(geometry, transform2pose)
@@ -478,5 +684,62 @@ TEST(geometry, calcCurvature)
     ASSERT_ANY_THROW(calcCurvature(p1, p1, p2));
     ASSERT_ANY_THROW(calcCurvature(p1, p2, p1));
     ASSERT_ANY_THROW(calcCurvature(p1, p2, p2));
+  }
+}
+
+TEST(geometry, calcOffsetPose)
+{
+  using autoware_utils::calcOffsetPose;
+  using autoware_utils::createPoint;
+  using autoware_utils::createQuaternion;
+  using autoware_utils::createQuaternionFromRPY;
+  using autoware_utils::deg2rad;
+
+  {
+    geometry_msgs::msg::Pose p_in;
+    p_in.position = createPoint(1.0, 2.0, 3.0);
+    p_in.orientation = createQuaternion(0.0, 0.0, 0.0, 1.0);
+
+    const auto p_out = calcOffsetPose(p_in, 1.0, 1.0, 1.0);
+
+    EXPECT_DOUBLE_EQ(p_out.position.x, 2.0);
+    EXPECT_DOUBLE_EQ(p_out.position.y, 3.0);
+    EXPECT_DOUBLE_EQ(p_out.position.z, 4.0);
+    EXPECT_DOUBLE_EQ(p_out.orientation.x, 0.0);
+    EXPECT_DOUBLE_EQ(p_out.orientation.y, 0.0);
+    EXPECT_DOUBLE_EQ(p_out.orientation.z, 0.0);
+    EXPECT_DOUBLE_EQ(p_out.orientation.w, 1.0);
+  }
+
+  {
+    geometry_msgs::msg::Pose p_in;
+    p_in.position = createPoint(2.0, 3.0, 1.0);
+    p_in.orientation = tf2::toMsg(createQuaternionFromRPY(deg2rad(0), deg2rad(0), deg2rad(90)));
+
+    const auto p_out = calcOffsetPose(p_in, 2.0, 1.0, 3.0);
+
+    EXPECT_DOUBLE_EQ(p_out.position.x, 1.0);
+    EXPECT_DOUBLE_EQ(p_out.position.y, 5.0);
+    EXPECT_DOUBLE_EQ(p_out.position.z, 4.0);
+    EXPECT_DOUBLE_EQ(p_out.orientation.x, 0.0);
+    EXPECT_DOUBLE_EQ(p_out.orientation.y, 0.0);
+    EXPECT_DOUBLE_EQ(p_out.orientation.z, 0.70710678118654757);
+    EXPECT_DOUBLE_EQ(p_out.orientation.w, 0.70710678118654757);
+  }
+
+  {
+    geometry_msgs::msg::Pose p_in;
+    p_in.position = createPoint(2.0, 1.0, 1.0);
+    p_in.orientation = tf2::toMsg(createQuaternionFromRPY(deg2rad(0), deg2rad(0), deg2rad(30)));
+
+    const auto p_out = calcOffsetPose(p_in, 2.0, 0.0, -1.0);
+
+    EXPECT_DOUBLE_EQ(p_out.position.x, 3.73205080756887729);
+    EXPECT_DOUBLE_EQ(p_out.position.y, 2.0);
+    EXPECT_DOUBLE_EQ(p_out.position.z, 0.0);
+    EXPECT_DOUBLE_EQ(p_out.orientation.x, 0.0);
+    EXPECT_DOUBLE_EQ(p_out.orientation.y, 0.0);
+    EXPECT_DOUBLE_EQ(p_out.orientation.z, 0.25881904510252068);
+    EXPECT_DOUBLE_EQ(p_out.orientation.w, 0.96592582628906831);
   }
 }

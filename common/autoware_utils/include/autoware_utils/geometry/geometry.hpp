@@ -109,6 +109,50 @@ inline geometry_msgs::msg::Point createPoint(const double x, const double y, con
   return p;
 }
 
+inline geometry_msgs::msg::Vector3 getRPY(const geometry_msgs::msg::Quaternion & quat)
+{
+  geometry_msgs::msg::Vector3 rpy;
+  tf2::Quaternion q(quat.x, quat.y, quat.z, quat.w);
+  tf2::Matrix3x3(q).getRPY(rpy.x, rpy.y, rpy.z);
+  return rpy;
+}
+
+inline geometry_msgs::msg::Vector3 getRPY(const geometry_msgs::msg::Pose & pose)
+{
+  return getRPY(pose.orientation);
+}
+
+inline geometry_msgs::msg::Vector3 getRPY(const geometry_msgs::msg::PoseStamped & pose)
+{
+  return getRPY(pose.pose);
+}
+
+inline geometry_msgs::msg::Vector3 getRPY(
+  const geometry_msgs::msg::PoseWithCovarianceStamped & pose)
+{
+  return getRPY(pose.pose.pose);
+}
+
+inline geometry_msgs::msg::Quaternion createQuaternion(
+  const double x, const double y, const double z, const double w)
+{
+  geometry_msgs::msg::Quaternion q;
+  q.x = x;
+  q.y = y;
+  q.z = z;
+  q.w = w;
+  return q;
+}
+
+inline geometry_msgs::msg::Vector3 createTranslation(const double x, const double y, const double z)
+{
+  geometry_msgs::msg::Vector3 v;
+  v.x = x;
+  v.y = y;
+  v.z = z;
+  return v;
+}
+
 // Revival of tf::createQuaternionFromRPY
 // https://answers.ros.org/question/304397/recommended-way-to-construct-quaternion-from-rollpitchyaw-with-tf2/
 inline tf2::Quaternion createQuaternionFromRPY(
@@ -134,6 +178,40 @@ double calcDistance3d(const Point1 & point1, const Point2 & point2)
   const auto p2 = getPoint(point2);
   // To be replaced by std::hypot(dx, dy, dz) in C++17
   return std::hypot(std::hypot(p1.x - p2.x, p1.y - p2.y), p1.z - p2.z);
+}
+
+/**
+ * @brief calculate elevation angle of two points.
+ * @details This function returns the elevation angle of the position of the two input points
+ *          with respect to the origin of their coordinate system.
+ *          If the two points are in the same position, the calculation result will be unstable.
+ * @param p_from source point
+ * @param p_to target point
+ * @return -pi/2 <= elevation angle <= pi/2
+ */
+inline double calcElevationAngle(
+  const geometry_msgs::msg::Point & p_from, const geometry_msgs::msg::Point & p_to)
+{
+  const double dz = p_to.z - p_from.z;
+  const double dist_2d = calcDistance2d(p_from, p_to);
+  return std::atan2(dz, dist_2d);
+}
+
+/**
+ * @brief calculate azimuth angle of two points.
+ * @details This function returns the azimuth angle of the position of the two input points
+ *          with respect to the origin of their coordinate system.
+ *          If x and y of the two points are the same, the calculation result will be unstable.
+ * @param p_from source point
+ * @param p_to target point
+ * @return -pi < azimuth angle < pi.
+ */
+inline double calcAzimuthAngle(
+  const geometry_msgs::msg::Point & p_from, const geometry_msgs::msg::Point & p_to)
+{
+  const double dx = p_to.x - p_from.x;
+  const double dy = p_to.y - p_from.y;
+  return std::atan2(dy, dx);
 }
 
 inline geometry_msgs::msg::Pose transform2pose(const geometry_msgs::msg::Transform & transform)
@@ -218,6 +296,24 @@ inline double calcCurvature(
     throw std::runtime_error("points are too close for curvature calculation.");
   }
   return 2.0 * ((p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x)) / denominator;
+}
+
+/**
+ * @brief Calculate offset pose. The offset values are defined in the local coordinate of the input pose.
+ */
+inline geometry_msgs::msg::Pose calcOffsetPose(
+  const geometry_msgs::msg::Pose & p, const double x, const double y, const double z)
+{
+  geometry_msgs::msg::Pose pose;
+  geometry_msgs::msg::Transform transform;
+  transform.translation = createTranslation(x, y, z);
+  transform.rotation = createQuaternion(0.0, 0.0, 0.0, 1.0);
+  tf2::Transform tf_pose;
+  tf2::Transform tf_offset;
+  tf2::fromMsg(transform, tf_offset);
+  tf2::fromMsg(p, tf_pose);
+  tf2::toMsg(tf_pose * tf_offset, pose);
+  return pose;
 }
 }  // namespace autoware_utils
 

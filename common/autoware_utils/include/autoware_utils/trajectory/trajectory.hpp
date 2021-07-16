@@ -127,9 +127,8 @@ double calcLongitudinalOffsetToSegment(
   const Eigen::Vector3d segment_vec{p_back.x - p_front.x, p_back.y - p_front.y, 0};
   const Eigen::Vector3d target_vec{p_target.x - p_front.x, p_target.y - p_front.y, 0};
 
-  constexpr double epsilon = 1e-6;
-  if (segment_vec.norm() < epsilon) {
-    throw std::runtime_error("Too close points are given.");
+  if (segment_vec.norm() == 0.0) {
+    throw std::runtime_error("Same points are given.");
   }
 
   return segment_vec.dot(target_vec) / segment_vec.norm();
