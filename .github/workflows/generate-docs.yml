@@ -60,17 +60,6 @@ jobs:
             pymdown-extensions \
             python-markdown-math
 
-      - name: Remove non-document files
-        run: |
-          find . -type f \
-              -not -path './.git' \
-              -not -path './mkdocs.yml' \
-              -not -name '*.md' \
-              -not -name '*.svg' \
-              -not -name '*.png' \
-              -not -name '*.css' \
-            | xargs -I {} rm "{}"
-
       - name: Build MkDocs
         run: |
           mkdocs build -f mkdocs.yml --verbose --clean
