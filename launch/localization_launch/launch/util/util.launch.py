@@ -27,7 +27,7 @@ def generate_launch_description():
         remappings=[
             ('input', LaunchConfiguration('input_sensor_points_topic')),
             ('output',
-             'measurement_range/pointcloud'),
+             LaunchConfiguration('output_measurement_range_sensor_points_topic')),
         ],
         parameters=[{
             'input_frame': LaunchConfiguration('base_frame'),
@@ -50,7 +50,7 @@ def generate_launch_description():
         name='voxel_grid_downsample_filter',
         remappings=[
             ('input',
-             'measurement_range/pointcloud'),
+             LaunchConfiguration('output_measurement_range_sensor_points_topic')),
             ('output',
              LaunchConfiguration('output_voxel_grid_downsample_sensor_points_topic')),
         ],
