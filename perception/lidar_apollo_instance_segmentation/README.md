@@ -6,11 +6,11 @@ This package makes use of three external codes.
 The trained files are provided by apollo. The trained files are automatically downloaded when you build.
 
 Original URL
-- VLP-16 : 
+- VLP-16 :
     https://github.com/ApolloAuto/apollo/raw/88bfa5a1acbd20092963d6057f3a922f3939a183/modules/perception/production/data/perception/lidar/models/cnnseg/velodyne16/deploy.caffemodel
-- HDL-64 : 
+- HDL-64 :
     https://github.com/ApolloAuto/apollo/raw/88bfa5a1acbd20092963d6057f3a922f3939a183/modules/perception/production/data/perception/lidar/models/cnnseg/velodyne64/deploy.caffemodel
-- VLS-128 : 
+- VLS-128 :
     https://github.com/ApolloAuto/apollo/raw/91844c80ee4bd0cc838b4de4c625852363c258b5/modules/perception/production/data/perception/lidar/models/cnnseg/velodyne128/deploy.caffemodel
 
 Supported lidars are velodyne 16, 64 and 128, but you can also use velodyne 32 and other lidars with good accuracy.
@@ -36,7 +36,7 @@ Supported lidars are velodyne 16, 64 and 128, but you can also use velodyne 32 a
 ```
 
 
-2. [tensorRTWrapper](https://github.com/lewes6369/tensorRTWrapper) : 
+2. [tensorRTWrapper](https://github.com/lewes6369/tensorRTWrapper) :
 It is used under the lib directory.
 ```
 MIT License
