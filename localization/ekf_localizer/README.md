@@ -15,7 +15,7 @@ The overall flowchart of the ekf_localizer is described below.
 ## Features
 This package includes the following features:
 
- - **Time delay compensation** for input messages, which enables proper integration of input information with varying time delay. This is important especially for high speed moving robot, such as autonomous driving vehicle. (see following figure). 
+ - **Time delay compensation** for input messages, which enables proper integration of input information with varying time delay. This is important especially for high speed moving robot, such as autonomous driving vehicle. (see following figure).
 - **Automatic estimation of yaw bias** prevents modeling errors caused by sensor mounting angle errors, which can improve estimation accuracy.
 - **Mahalanobis distance gate** enables probabilistic outlier detection to determine which inputs should be used or ignored.
 - **Smooth update**, the Kalman Filter measurement update is typically performed when a measurement is obtained, but it can cause large changes in the estimated value especially for low frequency measurements. Since the algorithm can consider the measurement time, the measurement data can be divided into multiple pieces and integrated smoothly while maintaining consistency (see following figure).
@@ -109,9 +109,9 @@ The current robot state is predicted from previously estimated data using a give
 
 ## Measurement Update
 
-Before update, the Mahalanobis distance is calculated between the measured input and the predicted state, the measurement update is not performed for inputs where the Mahalanobis distance exceeds the given threshold. 
+Before update, the Mahalanobis distance is calculated between the measured input and the predicted state, the measurement update is not performed for inputs where the Mahalanobis distance exceeds the given threshold.
 
-The predicted state is updated with the latest measured inputs, measured_pose and measured_twist. The updates are performed with the same frequency as prediction, usually at a high frequency, in order to enable smooth state estimation. 
+The predicted state is updated with the latest measured inputs, measured_pose and measured_twist. The updates are performed with the same frequency as prediction, usually at a high frequency, in order to enable smooth state estimation.
 
 
 
@@ -172,7 +172,7 @@ note: process noise for position x & y are calculated automatically from nonline
  - Check the relation between measurement pose and twist is appropriate (whether the derivative of pose has similar value to twist). This discrepancy is caused mainly by unit error (such as confusing radian/degree) or bias noise, and it causes large estimation errors.
 
 
-**1. Set sensor parameters** 
+**1. Set sensor parameters**
 
 Set sensor-rate and standard-deviation from the basic information of the sensor. The `pose_measure_uncertainty_time` is for uncertainty of the header timestamp data.
 
@@ -191,17 +191,17 @@ Set sensor-rate and standard-deviation from the basic information of the sensor.
  - `proc_stddev_vx_c` : set to maximum linear acceleration
  - `proc_stddev_wz_c` : set to maximum angular acceleration
  - `proc_stddev_yaw_c` : This parameter describes the correlation between the yaw and yaw-rate. Large value means the change in yaw does not correlate to the estimated yaw-rate. If this is set to 0, it means the change in estimate yaw is equal to yaw-rate. Usually this should be set to 0.
- - `proc_stddev_yaw_bias_c` : This parameter is the standard deviation for the rate of change in yaw bias. In most cases, yaw bias is constant, so it can be very small, but must be non-zero. 
+ - `proc_stddev_yaw_bias_c` : This parameter is the standard deviation for the rate of change in yaw bias. In most cases, yaw bias is constant, so it can be very small, but must be non-zero.
 
  **3. Tune sensor standard deviation parameters with rosbag simulation.**
- 
- If the position measurement seems more reliable, make these parameters smaller. If the estimated position seems to be noisy due to pose measurement noise, make these values bigger. 
+
+ If the position measurement seems more reliable, make these parameters smaller. If the estimated position seems to be noisy due to pose measurement noise, make these values bigger.
 
   - `pose_stddev_x`
   - `pose_stddev_y`
   - `pose_stddev_yaw`
 
- If the twist measurement seems more reliable, make these parameters smaller. If the estimated twist seems to be noisy due to pose measurement noise, make these values bigger. 
+ If the twist measurement seems more reliable, make these parameters smaller. If the estimated twist seems to be noisy due to pose measurement noise, make these values bigger.
   - `twist_stddev_vx`
   - `twist_stddev_wz`
 
