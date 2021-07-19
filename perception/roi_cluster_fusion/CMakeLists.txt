@@ -9,7 +9,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 
-find_package(ament_lint_auto REQUIRED) 
+find_package(ament_lint_auto REQUIRED)
 find_package(ament_cmake_auto REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(Eigen3 REQUIRED)
@@ -38,7 +38,7 @@ ament_auto_package(INSTALL_TO_SHARE
     launch
 )
 
-if(BUILD_TESTING) 
+if(BUILD_TESTING)
    find_package(ament_lint_auto REQUIRED)
-   ament_lint_auto_find_test_dependencies() 
+   ament_lint_auto_find_test_dependencies()
  endif()
