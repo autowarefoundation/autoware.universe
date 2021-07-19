@@ -3,7 +3,7 @@
 This multi object tracker consists of data association and EKF.
 
 ## Data association
-The data association performs maximum score matching, called min cost max flow problem. 
+The data association performs maximum score matching, called min cost max flow problem.
 In this package, mussp[1] is used as solver.
 In addition, when associating observations to tracers, data association have gates such as the area of the object from the BEV, Mahalanobis distance, and maximum distance, depending on the class label.
 
@@ -15,7 +15,7 @@ For big vehicles such as trucks and buses, we have separate models for passenger
 ## Note
 This package makes use of external code.
 
-|  Name  | License | Original Repository  | 
+|  Name  | License | Original Repository  |
 | ---- | ---- | ---- |
 | [muSSP](src/data_association/mu_successive_shortest_path/impl) | [Apache 2.0](src/data_association/mu_successive_shortest_path/impl) | https://github.com/yu-lab-vt/muSSP |
 
