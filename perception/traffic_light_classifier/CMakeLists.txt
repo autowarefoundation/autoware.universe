@@ -155,7 +155,7 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     data
     launch
   )
-  
+
 else()
   message(STATUS "CUDA and/or TensorRT were not found. build only color classifier")
 

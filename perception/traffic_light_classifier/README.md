@@ -11,7 +11,7 @@ For example, the traffic light with red and right arrow lit are represented by l
 
 ## HSV filter version
 
-## CNN version 
+## CNN version
 
 If you use CNN, the trained file are automatically downloaded when you build.
 

@@ -126,7 +126,7 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
   set(CMAKE_CXX_FLAGS "-O2 -Wall -Wunused-variable ${CMAKE_CXX_FLAGS} -fpic -std=c++11 -pthread")
 
   ### ssd ###
-  ament_auto_add_library(ssd 
+  ament_auto_add_library(ssd
     lib/src/trt_ssd.cpp
   )
 
@@ -166,4 +166,3 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
 else()
   message(STATUS "TrafficLightSSDFineDetector won't be built, CUDA and/or TensorRT were not found.")
 endif()
-
