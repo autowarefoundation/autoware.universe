@@ -99,22 +99,22 @@ NMSPlugin::NMSPlugin(void const * data, size_t length)
   read(d, count_);
 }
 
-const char * NMSPlugin::getPluginType() const {return NMS_PLUGIN_NAME;}
+const char * NMSPlugin::getPluginType() const noexcept {return NMS_PLUGIN_NAME;}
 
-const char * NMSPlugin::getPluginVersion() const {return NMS_PLUGIN_VERSION;}
+const char * NMSPlugin::getPluginVersion() const noexcept {return NMS_PLUGIN_VERSION;}
 
-int NMSPlugin::getNbOutputs() const {return 3;}
+int NMSPlugin::getNbOutputs() const noexcept {return 3;}
 
-int NMSPlugin::initialize() {return 0;}
+int NMSPlugin::initialize() noexcept {return 0;}
 
-void NMSPlugin::terminate() {}
+void NMSPlugin::terminate() noexcept {}
 
-size_t NMSPlugin::getSerializationSize() const
+size_t NMSPlugin::getSerializationSize() const noexcept
 {
   return sizeof(nms_thresh_) + sizeof(detections_per_im_) + sizeof(count_);
 }
 
-void NMSPlugin::serialize(void * buffer) const
+void NMSPlugin::serialize(void * buffer) const noexcept
 {
   char * d = static_cast<char *>(buffer);
   write(d, nms_thresh_);
@@ -122,15 +122,15 @@ void NMSPlugin::serialize(void * buffer) const
   write(d, count_);
 }
 
-void NMSPlugin::destroy() {delete this;}
+void NMSPlugin::destroy() noexcept {delete this;}
 
-void NMSPlugin::setPluginNamespace(const char * N) {}
+void NMSPlugin::setPluginNamespace(const char * N) noexcept {}
 
-const char * NMSPlugin::getPluginNamespace() const {return NMS_PLUGIN_NAMESPACE;}
+const char * NMSPlugin::getPluginNamespace() const noexcept {return NMS_PLUGIN_NAMESPACE;}
 
 // IPluginV2Ext Methods
 
-DataType NMSPlugin::getOutputDataType(int index, const DataType * inputTypes, int nbInputs) const
+DataType NMSPlugin::getOutputDataType(int index, const DataType * inputTypes, int nbInputs) const noexcept
 {
   assert(index < 3);
   return DataType::kFLOAT;
@@ -138,13 +138,13 @@ DataType NMSPlugin::getOutputDataType(int index, const DataType * inputTypes, in
 
 // IPluginV2DynamicExt Methods
 
-IPluginV2DynamicExt * NMSPlugin::clone() const
+IPluginV2DynamicExt * NMSPlugin::clone() const noexcept
 {
   return new NMSPlugin(nms_thresh_, detections_per_im_, count_);
 }
 
 DimsExprs NMSPlugin::getOutputDimensions(
-  int outputIndex, const DimsExprs * inputs, int nbInputs, IExprBuilder & exprBuilder)
+  int outputIndex, const DimsExprs * inputs, int nbInputs, IExprBuilder & exprBuilder) noexcept
 {
   DimsExprs output(inputs[0]);
   output.d[1] = exprBuilder.constant(detections_per_im_ * (outputIndex == 1 ? 4 : 1));
@@ -154,7 +154,7 @@ DimsExprs NMSPlugin::getOutputDimensions(
 }
 
 bool NMSPlugin::supportsFormatCombination(
-  int pos, const PluginTensorDesc * inOut, int nbInputs, int nbOutputs)
+  int pos, const PluginTensorDesc * inOut, int nbInputs, int nbOutputs) noexcept
 {
   assert(nbInputs == 3);
   assert(nbOutputs == 3);
@@ -165,7 +165,7 @@ bool NMSPlugin::supportsFormatCombination(
 
 void NMSPlugin::configurePlugin(
   const DynamicPluginTensorDesc * in, int nbInputs, const DynamicPluginTensorDesc * out,
-  int nbOutputs)
+  int nbOutputs) noexcept
 {
   assert(nbInputs == 3);
   assert(in[0].desc.dims.d[1] == in[2].desc.dims.d[1]);
@@ -175,7 +175,7 @@ void NMSPlugin::configurePlugin(
 
 size_t NMSPlugin::getWorkspaceSize(
   const PluginTensorDesc * inputs, int nbInputs, const PluginTensorDesc * outputs,
-  int nbOutputs) const
+  int nbOutputs) const noexcept
 {
   if (size < 0) {
     size = nms(
@@ -187,7 +187,7 @@ size_t NMSPlugin::getWorkspaceSize(
 
 int NMSPlugin::enqueue(
   const PluginTensorDesc * inputDesc, const PluginTensorDesc * outputDesc,
-  const void * const * inputs, void * const * outputs, void * workspace, cudaStream_t stream)
+  const void * const * inputs, void * const * outputs, void * workspace, cudaStream_t stream) noexcept
 {
   return nms(
     inputDesc->dims.d[0], inputs, outputs, count_, detections_per_im_, nms_thresh_, workspace,
@@ -196,22 +196,22 @@ int NMSPlugin::enqueue(
 
 NMSPluginCreator::NMSPluginCreator() {}
 
-const char * NMSPluginCreator::getPluginName() const {return NMS_PLUGIN_NAME;}
+const char * NMSPluginCreator::getPluginName() const noexcept {return NMS_PLUGIN_NAME;}
 
-const char * NMSPluginCreator::getPluginVersion() const {return NMS_PLUGIN_VERSION;}
+const char * NMSPluginCreator::getPluginVersion() const noexcept {return NMS_PLUGIN_VERSION;}
 
-const char * NMSPluginCreator::getPluginNamespace() const {return NMS_PLUGIN_NAMESPACE;}
+const char * NMSPluginCreator::getPluginNamespace() const noexcept {return NMS_PLUGIN_NAMESPACE;}
 
-void NMSPluginCreator::setPluginNamespace(const char * N) {}
-const PluginFieldCollection * NMSPluginCreator::getFieldNames() {return nullptr;}
+void NMSPluginCreator::setPluginNamespace(const char * N) noexcept {}
+const PluginFieldCollection * NMSPluginCreator::getFieldNames() noexcept {return nullptr;}
 IPluginV2DynamicExt * NMSPluginCreator::createPlugin(
-  const char * name, const PluginFieldCollection * fc)
+  const char * name, const PluginFieldCollection * fc) noexcept
 {
   return nullptr;
 }
 
 IPluginV2DynamicExt * NMSPluginCreator::deserializePlugin(
-  const char * name, const void * serialData, size_t serialLength)
+  const char * name, const void * serialData, size_t serialLength) noexcept
 {
   return new NMSPlugin(serialData, serialLength);
 }
