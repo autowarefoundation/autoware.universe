@@ -46,7 +46,7 @@ public:
   explicit Logger(bool verbose)
   : verbose_(verbose) {}
 
-  void log(Severity severity, const char * msg) override
+  void log(Severity severity, const char * msg) noexcept override
   {
     if (verbose_ || ((severity != Severity::kINFO) && (severity != Severity::kVERBOSE))) {
       std::cout << msg << std::endl;
