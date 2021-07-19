@@ -10,7 +10,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wno-unused-parameter -Wall -Wextra -Wpedantic -Werror)
 endif()
 
-find_package(ament_cmake REQUIRED) 
+find_package(ament_cmake REQUIRED)
 find_package(PCL REQUIRED COMPONENTS common)
 
 add_library(ndt_pcl_modified
