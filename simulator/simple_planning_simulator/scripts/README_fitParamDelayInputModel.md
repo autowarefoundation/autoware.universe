@@ -1,7 +1,7 @@
 # fitParamDelayInputModel.py scripts
 ## How to use
 ```
-python fitParamDelayInputModel.py --bag_file [bagfile] (--cutoff_time [cutoff_time] --cutoff_freq [cutoff_freq] --min_delay [min_delay] --max_delay [max_delay] --delay_incr [delay_incr]) 
+python fitParamDelayInputModel.py --bag_file [bagfile] (--cutoff_time [cutoff_time] --cutoff_freq [cutoff_freq] --min_delay [min_delay] --max_delay [max_delay] --delay_incr [delay_incr])
 # in round brakets is optional arguments
 python fitParamDelayInputModel.py --help # for more information
 ```
@@ -18,7 +18,7 @@ python fitParamDelayInputModel.py --help # for more information
   * vehicle_status/angle is the measured steering angle [rad]
   * vehicle_status/speed is the measured vehicle speed [km/h]
 
-## Description 
+## Description
 * Parameter fitting for Input Delay Model (First Order System with Dead Time) with rosbag file input
 * Arguments explaining:
   * CUTOFF_TIME: Cutoff time[sec]. Rosbag file often was start recording before autoware was run. Time before autoware was run should be cut off. This script will only consider data from t=cutoff_time to the end of the bag file (default is 1.0)
