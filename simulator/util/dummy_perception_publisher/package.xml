@@ -11,10 +11,10 @@
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
   <buildtool_depend>rosidl_default_generators</buildtool_depend>
   <exec_depend>rosidl_default_runtime</exec_depend>
-  
+
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
-  
+
   <depend>geometry_msgs</depend>
   <depend>autoware_perception_msgs</depend>
   <depend>libpcl-all-dev</depend>
