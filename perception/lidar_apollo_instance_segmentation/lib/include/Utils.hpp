@@ -47,21 +47,21 @@ namespace Tn
 class Profiler : public nvinfer1::IProfiler
 {
 public:
-  void printLayerTimes(int itrationsTimes)
+  void printLayerTimes(int iterationsTimes)
   {
     float totalTime = 0;
     for (size_t i = 0; i < mProfile.size(); i++) {
-      printf("%-40.40s %4.3fms\n", mProfile[i].first.c_str(), mProfile[i].second / itrationsTimes);
+      printf("%-40.40s %4.3fms\n", mProfile[i].first.c_str(), mProfile[i].second / iterationsTimes);
       totalTime += mProfile[i].second;
     }
-    printf("Time over all layers: %4.3f\n", totalTime / itrationsTimes);
+    printf("Time over all layers: %4.3f\n", totalTime / iterationsTimes);
   }
 
 private:
   typedef std::pair<std::string, float> Record;
   std::vector<Record> mProfile;
 
-  virtual void reportLayerTime(const char * layerName, float ms)
+  virtual void reportLayerTime(const char * layerName, float ms) noexcept override
   {
     auto record = std::find_if(
       mProfile.begin(), mProfile.end(), [&](const Record & r) {return r.first == layerName;});
@@ -83,7 +83,7 @@ public:
   Logger(Severity severity)
   : reportableSeverity(severity) {}
 
-  void log(Severity severity, const char * msg) override
+  void log(Severity severity, const char * msg) noexcept override
   {
     // suppress messages with severity enum value greater than the reportable
     if (severity > reportableSeverity) {return;}
