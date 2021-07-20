@@ -11,19 +11,25 @@ This is package to use GNSS with ROS messages.
 This package use GeographicLib to calculate coordinates.
 
 1. Download files from <https://sourceforge.net/projects/geographiclib/files/distrib/>
+
 2. Build and install Geographiclib
 
-        tar xfpz GeographicLib-1.50.1.
-        cd GeographicLib-1.50.1
-        mkdir BUILD
-        cd BUILD
-        ../configure --prefix=/usr
-        make
-        sudo make install
-        sudo cp /usr/share/cmake/GeographicLib/FindGeographicLib.cmake /usr/share/cmake-3.5/Modules
+   ```sh
+   tar xfpz GeographicLib-1.50.1.
+   cd GeographicLib-1.50.1
+   mkdir BUILD
+   cd BUILD
+   ../configure --prefix=/usr
+   make
+   sudo make install
+   sudo cp /usr/share/cmake/GeographicLib/FindGeographicLib.cmake /usr/share/cmake-3.5/Modules
+   ```
+
 3. install geoid datasets
 
-        geographiclib-get-geoids best
+   ```sh
+   geographiclib-get-geoids best
+   ```
 
 ### Ublox
 
@@ -42,10 +48,15 @@ This package use gnss package in autoware.
 
 ## Usage
 
-    roslaunch gnss_poser gnss_poser.launch
+```sh
+roslaunch gnss_poser gnss_poser.launch
+```
+
 For ublox GNSS receiver
 
-    roslaunch gnss_poser ubloxfix2mgrs.launch
+```sh
+roslaunch gnss_poser ubloxfix2mgrs.launch
+```
 
 ## Configuration
 
