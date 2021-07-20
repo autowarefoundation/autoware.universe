@@ -2,7 +2,7 @@
 
 L-shape fitting implementation of the paper:
 
-```
+```bibtex
 @conference{Zhang-2017-26536,
 author = {Xiao Zhang and Wenda Xu and Chiyu Dong and John M. Dolan},
 title = {Efficient L-Shape Fitting for Vehicle Detection Using Laser Scanners},
@@ -48,7 +48,7 @@ Launch files also include the visualization node.
 
 ## Node info
 
-```
+```txt
 Node [/lidar_shape_estimation]
 Publications:
  * /detection/shape_estimation/objects [autoware_perception_msgs/DetectedObjectArray]
