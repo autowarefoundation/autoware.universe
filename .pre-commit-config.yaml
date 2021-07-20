@@ -33,4 +33,15 @@ repos:
       - id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
 
-exclude: '.svg'
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.27.1
+    hooks:
+      - id: markdownlint
+        args: ["-c", ".markdownlint.yaml", "--fix"]
+
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v2.3.2
+    hooks:
+      - id: prettier
+
+exclude: ".svg"
