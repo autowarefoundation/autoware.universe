@@ -68,8 +68,8 @@
   - False: not exceed the stop speed ( = "no stop line in the trajectory" or "possible to stop before the stop line" )
 - MessageType: autoware_planning_msgs/StopSpeedExceedStatus
 
-| ✓   | type          | name | unit | note |
-| --- | :------------ | :--- | :--- | :--- |
+| ✓   | type                                         | name | unit | note |
+| --- | :------------------------------------------- | :--- | :--- | :--- |
 |     | autoware_planning_msgs/StopSpeedExceedStatus |      | -    |      |
 
 ### /awapi/prediction/get/objects
@@ -121,10 +121,9 @@
 |     | type                                                | name       | unit | note                                                          |
 | --- | :-------------------------------------------------- | :--------- | :--- | :------------------------------------------------------------ |
 |     | std_msgs/Header                                     | header     |      |                                                               |
-|     | autoware_perception_msgs/TrafficLightStateWithJudge | perception |      | traffic light information from autoware perception module    |
+|     | autoware_perception_msgs/TrafficLightStateWithJudge | perception |      | traffic light information from autoware perception module     |
 |     | autoware_perception_msgs/TrafficLightStateWithJudge | external   |      | traffic light information from external tool/module           |
 |     | autoware_perception_msgs/TrafficLightStateWithJudge | final      |      | traffic light information used by the planning module finally |
-
 
 - The contents of TrafficLightStateWithJudge.msg is following.
 
@@ -132,7 +131,6 @@
 | --- | :----------------------------------------- | :---- | :------------------- | :------------------------------------------------------------- |
 |     | autoware_perception_msgs/TrafficLightState | state |                      | traffic light color/arrow                                      |
 |     | uint8                                      | judge | 0:NONE, 1:STOP, 2:GO | go/stop judgment based on the color/arrow of the traffic light |
-
 
 ### /awapi/vehicle/get/door
 
@@ -155,8 +153,8 @@
 - set upper velocity
 - MessageType: autoware_api_msgs/VelocityLimit
 
-| ✓   | type             | name | unit | note         |
-| --- | :--------------- | :--- | :--- | :----------- |
+| ✓   | type                            | name | unit | note         |
+| --- | :------------------------------ | :--- | :--- | :----------- |
 | ✓   | autoware_api_msgs/VelocityLimit |      |      | max velocity |
 
 ### /awapi/vehicle/put/stop
@@ -170,8 +168,8 @@
     - (if upper velocity have never received, send _default_max_velocity_ value.)
     - _default_max_velocity_ refers to the param: _/planning/scenario_planning/motion_velocity_optimizer/max_velocity_
 
-  | ✓   | type          | name | unit | note |
-  | --- | :------------ | :--- | :--- | :--- |
+  | ✓   | type                          | name | unit | note |
+  | --- | :---------------------------- | :--- | :--- | :--- |
   | ✓   | autoware_api_msgs/StopCommand |      |      |      |
 
 ### /awapi/autoware/put/gate_mode
@@ -198,8 +196,8 @@
 - send engage signal (both of autoware/engage and vehicle/engage)
 - MessageType: autoware_vehicle_msgs/Engage
 
-| ✓   | type                             | name | unit | note |
-| --- | :------------------------------- | :--- | :--- | :--- |
+| ✓   | type                         | name | unit | note |
+| --- | :--------------------------- | :--- | :--- | :--- |
 | ✓   | autoware_vehicle_msgs/Engage |      |      |      |
 
 ### /awapi/autoware/put/goal
@@ -226,8 +224,8 @@
 - send True: start lane change when **lane_change_ready** is true
 - MessageType: autoware_planning_msgs/LaneChangeCommand
 
-| ✓   | type          | name | unit | note |
-| --- | :------------ | :--- | :--- | :--- |
+| ✓   | type                                         | name | unit | note |
+| --- | :------------------------------------------- | :--- | :--- | :--- |
 |     | autoware_planning_msgs/msg/LaneChangeCommand |      |      |      |
 
 ### /awapi/lane_change/put/force
@@ -236,8 +234,8 @@
 - send True: start lane change when **force_lane_change_available** is true
 - MessageType: autoware_planning_msgs/LaneChangeCommand
 
-| ✓   | type          | name | unit | note |
-| --- | :------------ | :--- | :--- | :--- |
+| ✓   | type                                     | name | unit | note |
+| --- | :--------------------------------------- | :--- | :--- | :--- |
 |     | autoware_planning_msgs/LaneChangeCommand |      |      |      |
 
 ### /awapi/object_avoidance/put/approval
@@ -245,8 +243,8 @@
 - send object avoidance approval flag
 - MessageType: autoware_planning_msgs/EnableAvoidance
 
-| ✓   | type          | name | unit | note |
-| --- | :------------ | :--- | :--- | :--- |
+| ✓   | type                                   | name | unit | note |
+| --- | :------------------------------------- | :--- | :--- | :--- |
 |     | autoware_planning_msgs/EnableAvoidance |      |      |      |
 
 ### /awapi/object_avoidance/put/force
@@ -273,8 +271,8 @@
   - send True: open door
   - send False: close door
 
-| ✓   | type          | name | unit | note                                        |
-| --- | :------------ | :--- | :--- | :------------------------------------------ |
+| ✓   | type                          | name | unit | note                                        |
+| --- | :---------------------------- | :--- | :--- | :------------------------------------------ |
 |     | autoware_api_msgs/DoorCommand |      |      | available only for the vehicle using pacmod |
 
 ### /awapi/autoware/put/crosswalk_states
@@ -304,6 +302,6 @@
 - send expand range of the polygon used by obstacle stop [m]
 - MessageType: autoware_planning_msgs/ExpandStopRange
 
-| ✓   | type    | name | unit | note |
-| --- | :------ | :--- | :--- | :--- |
+| ✓   | type                                   | name | unit | note |
+| --- | :------------------------------------- | :--- | :--- | :--- |
 |     | autoware_planning_msgs/ExpandStopRange |      |      |      |
