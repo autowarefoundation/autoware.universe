@@ -19,11 +19,10 @@ If you use CNN, the trained file are automatically downloaded when you build.
 
 Please download from below list and replace onnx and label file in the data directory.
 
-  | | pretrained onnx model | corresponding label file |
-  |:--- | :--- | --- |
-  | United States| [LISA](https://drive.google.com/uc?id=1Q-pZNTUBDNWddcURARrvtz2jmTiqV5T7) | [go-stop-warning-label](https://drive.google.com/uc?id=15fxhS2zDAU0aa_cLkrhMKo_1ZY-JnWTE) |
-  | Japan |[nishishinjuku](https://drive.google.com/uc?id=19M64ZAo0XNv-Ep2RDynrRipLg3YAm65e)  | [nishishinjuku-label](https://drive.google.com/uc?id=1C4XkFe-G58LcDJSVMp5xlwQniGVozgwW) |
-
+|               | pretrained onnx model                                                             | corresponding label file                                                                  |
+| :------------ | :-------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| United States | [LISA](https://drive.google.com/uc?id=1Q-pZNTUBDNWddcURARrvtz2jmTiqV5T7)          | [go-stop-warning-label](https://drive.google.com/uc?id=15fxhS2zDAU0aa_cLkrhMKo_1ZY-JnWTE) |
+| Japan         | [nishishinjuku](https://drive.google.com/uc?id=19M64ZAo0XNv-Ep2RDynrRipLg3YAm65e) | [nishishinjuku-label](https://drive.google.com/uc?id=1C4XkFe-G58LcDJSVMp5xlwQniGVozgwW)   |
 
 ## Reference
 

@@ -1,4 +1,4 @@
-# traffic\_light\_ssd\_fine\_detector
+# traffic_light_ssd_fine_detector
 
 This is a traffic light fine detector implementation of MobileNetV2 + SSDLite.
 
