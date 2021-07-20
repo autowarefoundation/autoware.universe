@@ -19,7 +19,7 @@ find_package(OpenCV REQUIRED)
 ###########
 
 ament_auto_add_library(traffic_light_roi_visualizer_nodelet SHARED
-  src/nodelet.cpp
+  src/traffic_light_roi_visualizer/nodelet.cpp
 )
 
 target_link_libraries(traffic_light_roi_visualizer_nodelet
@@ -35,6 +35,11 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
 endif()
+
+ament_auto_add_executable(traffic_light_map_visualizer_node
+  src/traffic_light_map_visualizer/node.cpp
+  src/traffic_light_map_visualizer/main.cpp
+)
 
 #############
 ## Install ##

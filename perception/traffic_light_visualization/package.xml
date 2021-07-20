@@ -10,8 +10,10 @@
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
   <depend>autoware_perception_msgs</depend>
+  <depend>autoware_lanelet2_msgs</depend>
   <depend>cv_bridge</depend>
   <depend>image_transport</depend>
+  <depend>lanelet2_extension</depend>
   <depend>message_filters</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
@@ -20,7 +22,6 @@
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
 
-  <!-- The export tag contains other, unspecified, tags -->
   <export>
     <build_type>ament_cmake</build_type>
   </export>
