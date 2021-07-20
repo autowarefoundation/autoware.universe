@@ -6,14 +6,14 @@
 
 ### Input topics
 
-| Name                               | Type                               | Description                                           |
-| ---------------------------------- | ---------------------------------- | ----------------------------------------------------- |
-| `~input/lane_driving/trajectory` | autoware_planning_msgs::Trajectory | trajectory of LaneDriving scenario                  |
-| `~input/parking/trajectory`        | autoware_planning_msgs::Trajectory | trajectory of Parking scenario                        |
-| `~input/lanelet_map`               | autoware_lanelet2_msgs::MapBin     |                                                       |
-| `~input/route`                     | autoware_planning_msgs::Route      | route and goal pose                                   |
-| `~input/twist`                     | geometry_msgs::TwistStamped        | for checking whether vehicle is stopped               |
-| `is_parking_completed`             | bool (implemented as rosparam)     | whether all split trajectory of Parking are published |
+| Name                             | Type                               | Description                                           |
+| -------------------------------- | ---------------------------------- | ----------------------------------------------------- |
+| `~input/lane_driving/trajectory` | autoware_planning_msgs::Trajectory | trajectory of LaneDriving scenario                    |
+| `~input/parking/trajectory`      | autoware_planning_msgs::Trajectory | trajectory of Parking scenario                        |
+| `~input/lanelet_map`             | autoware_lanelet2_msgs::MapBin     |                                                       |
+| `~input/route`                   | autoware_planning_msgs::Route      | route and goal pose                                   |
+| `~input/twist`                   | geometry_msgs::TwistStamped        | for checking whether vehicle is stopped               |
+| `is_parking_completed`           | bool (implemented as rosparam)     | whether all split trajectory of Parking are published |
 
 ### Output topics
 
