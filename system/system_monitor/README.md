@@ -29,7 +29,7 @@ This package provides the following nodes for monitoring system:
 
 Use colcon build and launch in the same way as other packages.
 
-```
+```sh
 colcon build
 source install/setup.bash
 ros2 launch system_monitor system_monitor.launch.xml
@@ -78,9 +78,9 @@ Every topic is published in 1 minute interval.
 
 See [ROS parameters](docs/ros_parameters.md).
 
-# Notes
+## Notes
 
-## <u>CPU monitor for intel platform</u>
+### <u>CPU monitor for intel platform</u>
 
 Thermal throttling event can be monitored by reading contents of MSR(Model Specific Register), and accessing MSR is only allowed for root by default, so this package provides the following approach to minimize security risks as much as possible:<br>
 
@@ -92,32 +92,32 @@ Thermal throttling event can be monitored by reading contents of MSR(Model Speci
 
 1. Create a user to run 'msr_reader'.
 
-```
+```sh
 sudo adduser <username>
 ```
 
 2. Load kernel module 'msr' into your target system.<br>
    The path '/dev/cpu/CPUNUM/msr' appears.
 
-```
+```sh
 sudo modprobe msr
 ```
 
 3. Allow user to access MSR with read-only privilege using the Access Control List (ACL).
 
-```
+```sh
 sudo setfacl -m u:<username>:r /dev/cpu/*/msr
 ```
 
 4. Assign capability to 'msr_reader' since msr kernel module requires rawio capability.
 
-```
+```sh
 sudo setcap cap_sys_rawio=ep install/system_monitor/lib/system_monitor/msr_reader
 ```
 
 5. Run 'msr_reader' as the user you created, and run system_monitor as a generic user.
 
-```
+```sh
 su <username>
 install/system_monitor/lib/system_monitor/msr_reader
 ```
@@ -139,25 +139,25 @@ As with the CPU monitor, this package provides an approach to minimize security 
 
 1. Create a user to run 'hdd_reader'.
 
-```
+```sh
 sudo adduser <username>
 ```
 
 2. Add user to the disk group.
 
-```
+```sh
 sudo usermod -a -G disk <username>
 ```
 
 3. Assign capabilities to 'hdd_reader' since SCSI kernel module requires rawio capability to send ATA PASS-THROUGH (12) command and NVMe kernel module requires admin capability to send Admin Command.
 
-```
+```sh
 sudo setcap 'cap_sys_rawio=ep cap_sys_admin=ep' install/system_monitor/lib/system_monitor/hdd_reader
 ```
 
 4. Run 'hdd_reader' as the user you created, and run system_monitor as a generic user.
 
-```
+```sh
 su <username>
 install/system_monitor/lib/system_monitor/hdd_reader
 ```
@@ -173,7 +173,7 @@ Currently GPU monitor for intel platform only supports NVIDIA GPU whose informat
 Also you need to install CUDA libraries.
 For installation instructions for CUDA 10.0, see [NVIDIA CUDA Installation Guide for Linux](https://docs.nvidia.com/cuda/archive/10.0/cuda-installation-guide-linux/index.html).
 
-# UML diagrams
+## UML diagrams
 
 See [Class diagrams](docs/class_diagrams.md).
 See [Sequence diagrams](docs/seq_diagrams.md).

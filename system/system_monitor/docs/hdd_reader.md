@@ -26,7 +26,8 @@ Returns 0 if OK; non-zero otherwise.
 
 The 'hdd_reader' accesses minimal data enough to get Model number, Serial number, and HDD temperature.<br>
 This is an approach to limit its functionality, however, the functionality can be expanded for further improvements and considerations in the future.<br><br>
-**[ATA]**
+
+### [ATA]
 
 | Purpose                     | Name                 | Length               |
 | --------------------------- | -------------------- | -------------------- |
@@ -40,7 +41,7 @@ For details please see the documents below.<br>
 - [SMART Attribute Overview](http://www.t13.org/Documents/UploadedDocuments/docs2005/e05171r0-ACS-SMARTAttributes_Overview.pdf)
 - [SMART Attribute Annex](http://www.t13.org/documents/uploadeddocuments/docs2005/e05148r0-acs-smartattributesannex.pdf)
 
-**[NVMe]**
+### [NVMe]
 
 | Purpose                     | Name                               | Length           |
 | --------------------------- | ---------------------------------- | ---------------- |
