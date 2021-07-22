@@ -1,5 +1,5 @@
 ---
-rosdistro: "foxy"
+rosdistro: "galactic"
 package: "desktop"
 repository: "http://packages.ros.org/ros2/ubuntu"
 keyserver: "https://raw.githubusercontent.com/ros/rosdistro/master/ros.key"

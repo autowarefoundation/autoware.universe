@@ -85,6 +85,14 @@
     update_cache: yes
   become: yes
 
+# Required to build rosbag2 from source until the delay option is released.
+- name: ROS2 (purge ros-{{ rosdistro }}-rosbag2*)
+  apt:
+    name: "ros-{{ rosdistro }}-rosbag2*"
+    state: absent
+    purge: yes
+  become: yes
+
 - name: ROS2 (Add settings to .bashrc)
   lineinfile:
     dest: ~/.bashrc

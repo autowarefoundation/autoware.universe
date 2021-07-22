@@ -58,6 +58,11 @@ repositories:
     type: git
     url: git@github.com:tier4/logsim.git
     version: ros2
+  # ecu_system_setup
+  ecu_system_setup:
+    type: git
+    url: git@github.com:tier4/autoware_ecu_system_setup.git
+    version: main
   # vendor
   vendor/quaternion_operation:
     type: git
@@ -65,8 +70,8 @@ repositories:
     version: f08cd28b357f9feede55f1fb485cb21964f5d594
   vendor/grid_map:
     type: git
-    url: https://github.com/tier4/grid_map.git
-    version: tier4/foxy
+    url: https://github.com/ANYbotics/grid_map.git
+    version: ros2
   vendor/perception_pcl:
     type: git
     url: https://github.com/ros-perception/perception_pcl.git
@@ -127,10 +132,11 @@ repositories:
     type: git
     url: https://gitlab.com/autowarefoundation/operational-design-domains
     version: master
+  # TODO: Remove rosbag2 from repos when the delay option is released
   vendor/rosbag2:
     type: git
-    url: https://github.com/tier4/rosbag2
-    version: tier4/main
+    url: https://github.com/ros2/rosbag2
+    version: galactic
   vendor/launch_ros:
     type: git
     url: https://github.com/tier4/launch_ros.git
@@ -147,8 +153,24 @@ repositories:
     type: git
     url: https://github.com/tier4/pointcloud_to_laserscan.git
     version: tier4/main
-  # ecu_system_setup
-  ecu_system_setup:
+  # missing_packages
+  missing_packages/lanelet2:
     type: git
-    url: git@github.com:tier4/autoware_ecu_system_setup.git
-    version: main
+    url: https://github.com/fzi-forschungszentrum-informatik/Lanelet2.git
+    version: 1.1.1
+  missing_packages/mrt_cmake_modules:
+    type: git
+    url: https://github.com/KIT-MRT/mrt_cmake_modules.git
+    version: 1.0.8
+  missing_packages/astuff_sensor_msgs:
+    type: git
+    url: https://github.com/astuff/astuff_sensor_msgs.git
+    version: 3.2.0
+  missing_packages/automotive_autonomy_msgs:
+    type: git
+    url: https://github.com/astuff/automotive_autonomy_msgs.git
+    version: 3.0.4
+  missing_packages/plotjuggler-ros-plugins:
+    type: git
+    url: https://github.com/PlotJuggler/plotjuggler-ros-plugins.git
+    version: rolling
