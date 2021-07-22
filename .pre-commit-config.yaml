@@ -1,3 +1,7 @@
+# To install:
+#
+#     pip install pre-commit
+#
 # To use:
 #
 #     pre-commit run -a
