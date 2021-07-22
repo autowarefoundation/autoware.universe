@@ -23,7 +23,6 @@
 
 #include "diagnostic_updater/diagnostic_updater.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "rclcpp_generic/generic_subscription.hpp"
 
 #include "topic_state_monitor/topic_state_monitor.hpp"
 
@@ -53,7 +52,7 @@ private:
   std::unique_ptr<TopicStateMonitor> topic_state_monitor_;
 
   // Subscriber
-  rclcpp_generic::GenericSubscription::SharedPtr sub_topic_;
+  rclcpp::GenericSubscription::SharedPtr sub_topic_;
 
   // Timer
   void onTimer();

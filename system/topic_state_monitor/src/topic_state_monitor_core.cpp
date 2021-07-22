@@ -64,8 +64,8 @@ TopicStateMonitorNode::TopicStateMonitorNode(const rclcpp::NodeOptions & node_op
   rclcpp::QoS qos = rclcpp::QoS{1};
   if (param_.transient_local) {qos.transient_local();}
   if (param_.best_effort) {qos.best_effort();}
-  sub_topic_ = rclcpp_generic::GenericSubscription::create(
-    get_node_topics_interface(), param_.topic, param_.topic_type, qos,
+  sub_topic_ = this->create_generic_subscription(
+    param_.topic, param_.topic_type, qos,
     [this](std::shared_ptr<rclcpp::SerializedMessage> msg) {topic_state_monitor_->update();});
 
   // Diagnostic Updater
