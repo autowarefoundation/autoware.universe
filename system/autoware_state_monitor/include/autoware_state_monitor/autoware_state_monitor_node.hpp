@@ -39,7 +39,6 @@
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
 #include "diagnostic_updater/diagnostic_updater.hpp"
-#include "rclcpp_generic/generic_subscription.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 class AutowareStateMonitorNode : public rclcpp::Node
@@ -87,7 +86,7 @@ private:
     const std::string & topic_name, const std::string & topic_type,
     const bool transient_local, const bool best_effort);
 
-  std::map<std::string, rclcpp_generic::GenericSubscription::SharedPtr> sub_topic_map_;
+  std::map<std::string, rclcpp::GenericSubscription::SharedPtr> sub_topic_map_;
   std::map<std::string, std::deque<rclcpp::Time>> topic_received_time_buffer_;
 
   // Service

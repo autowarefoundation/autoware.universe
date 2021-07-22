@@ -318,9 +318,12 @@ void AutowareStateMonitorNode::registerTopicCallback(
   if (best_effort) {
     qos.best_effort();
   }
-  sub_topic_map_[topic_name] = rclcpp_generic::GenericSubscription::create(
-    this->get_node_topics_interface(), topic_name, topic_type, qos, callback,
-    callback_group_subscribers_);
+
+  auto subscriber_option = rclcpp::SubscriptionOptions();
+  subscriber_option.callback_group = callback_group_subscribers_;
+
+  sub_topic_map_[topic_name] = this->create_generic_subscription(
+    topic_name, topic_type, qos, callback, subscriber_option);
 }
 
 TopicStats AutowareStateMonitorNode::getTopicStats() const
