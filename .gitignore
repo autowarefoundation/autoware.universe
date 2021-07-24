@@ -58,4 +58,10 @@ install/
 logs/
 .catkin_tools/
 
+# cspell
+.cspell.json
+
+# temporary ignored packages
+src/**/COLCON_IGNORE
+
 # Don't ignore src/ because full-text search won't work.
