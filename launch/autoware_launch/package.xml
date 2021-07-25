@@ -23,6 +23,7 @@
   <exec_depend>rviz2</exec_depend>
 
   <!-- web controller -->
+  <exec_depend>autoware_global_parameter_loader</exec_depend>
   <exec_depend>autoware_web_controller</exec_depend>
   <exec_depend condition="$ROS_PYTHON_VERSION == 2">python-tornado</exec_depend>
   <exec_depend condition="$ROS_PYTHON_VERSION == 3">python3-tornado</exec_depend>
