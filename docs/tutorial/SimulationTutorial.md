@@ -39,7 +39,7 @@ Autoware provides two types of simulation:
    ```sh
    cd ~/workspace/autoware.proj
    source install/setup.bash
-   ros2 launch autoware_launch logging_simulator.launch.xml map_path:=/path/to/map_folder vehicle_model:=lexus sensor_model:=aip_xx1 rosbag:=true perception:=false
+   ros2 launch autoware_launch logging_simulator.launch.xml map_path:=/path/to/map_folder vehicle_model:=lexus sensor_model:=aip_xx1
    ```
 
 4. Open a second terminal and play the sample rosbag file
