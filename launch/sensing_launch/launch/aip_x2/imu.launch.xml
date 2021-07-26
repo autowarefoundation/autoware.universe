@@ -14,13 +14,11 @@
       </node>
     </group>
 
-
-    <!-- Relay -->
-    <node pkg="topic_tools" exec="relay" name="twist_relay" output="log">
-      <param name="input_topic" value="/sensing/imu/tamagawa/imu_raw" />
-      <param name="output_topic" value="/sensing/imu/imu_data" />
-      <param name="type" value="sensor_msgs/msg/Imu" />
-    </node>
+    <include file="$(find-pkg-share imu_corrector)/launch/imu_corrector.launch.xml">
+      <arg name="input_topic" value="tamagawa/imu_raw" />
+      <arg name="output_topic" value="imu_data" />
+      <arg name="param_file" value="$(find-pkg-share individual_params)/config/$(env VEHICLE_ID default)/aip_x2/imu_corrector.param.yaml" />
+    </include>
   </group>
 
 </launch>
