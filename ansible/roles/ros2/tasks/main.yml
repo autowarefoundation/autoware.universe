@@ -86,11 +86,22 @@
   become: yes
 
 # Required to build rosbag2 from source until the delay option is released.
+# Cannot built the source if it is installed with apt due to an include order bug.
+# https://github.com/ros2/rosbag2/issues/820
+# https://github.com/ros2/rosbag2/issues/698
 - name: ROS2 (purge ros-{{ rosdistro }}-rosbag2*)
   apt:
     name: "ros-{{ rosdistro }}-rosbag2*"
     state: absent
     purge: yes
+  become: yes
+
+# It may be removed with rosbag2.
+- name: ROS2 (install ros-galactic-ros2cli-common-extensions)
+  apt:
+    name: "ros-{{ rosdistro }}-ros2cli-common-extensions"
+    state: latest
+    update_cache: yes
   become: yes
 
 - name: ROS2 (Add settings to .bashrc)
