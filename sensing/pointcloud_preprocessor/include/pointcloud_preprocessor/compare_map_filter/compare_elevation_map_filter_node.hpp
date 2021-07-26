@@ -1,0 +1,57 @@
+// Copyright 2021 Tier IV, Inc. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#ifndef POINTCLOUD_PREPROCESSOR__COMPARE_MAP_FILTER__COMPARE_ELEVATION_MAP_FILTER_NODE_HPP_
+#define POINTCLOUD_PREPROCESSOR__COMPARE_MAP_FILTER__COMPARE_ELEVATION_MAP_FILTER_NODE_HPP_
+
+#include <iostream>
+#include <memory>
+#include <mutex>
+#include <string>
+#include <vector>
+
+#include "grid_map_msgs/msg/grid_map.hpp"
+#include "pointcloud_preprocessor/filter.hpp"
+#include "rclcpp/rclcpp.hpp"
+namespace pointcloud_preprocessor
+{
+class CompareElevationMapFilterComponent : public pointcloud_preprocessor::Filter
+{
+protected:
+  virtual void filter(
+    const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output);
+
+private:
+  rclcpp::Subscription<grid_map_msgs::msg::GridMap>::SharedPtr sub_map_;
+
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_filtered_cloud_;
+  grid_map::GridMap elevation_map_;
+  cv::Mat elevation_image_;
+  grid_map::Matrix elevation_map_data_;
+  std::string layer_name_;
+  std::string map_frame_;
+  double height_diff_thresh_;
+  bool is_ready_;
+
+  void setVerbosityLevelToDebugIfFlagSet();
+  void processPointcloud(grid_map::GridMapPclLoader * gridMapPclLoader);
+  void elevationMapCallback(const grid_map_msgs::msg::GridMap::ConstSharedPtr elevation_map);
+
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  explicit CompareElevationMapFilterComponent(const rclcpp::NodeOptions & options);
+};
+}  // namespace pointcloud_preprocessor
+
+#endif  // POINTCLOUD_PREPROCESSOR__COMPARE_MAP_FILTER__COMPARE_ELEVATION_MAP_FILTER_NODE_HPP_

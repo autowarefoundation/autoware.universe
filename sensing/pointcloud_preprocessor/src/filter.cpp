@@ -229,7 +229,7 @@ void pointcloud_preprocessor::Filter::input_indices_callback(
     RCLCPP_DEBUG(
       this->get_logger(),
       "[input_indices_callback]\n"
-      "   - PointCloud with %d data points (%s), stamp %f, and frame %s on inpu topic received.\n"
+      "   - PointCloud with %d data points (%s), stamp %f, and frame %s on input topic received.\n"
       "   - PointIndices with %zu values, stamp %f, and frame %s on indices topic received.",
       cloud->width * cloud->height, pcl::getFieldsList(*cloud).c_str(),
       rclcpp::Time(cloud->header.stamp).seconds(), cloud->header.frame_id.c_str(),

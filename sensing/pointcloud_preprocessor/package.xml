@@ -33,6 +33,8 @@
   <depend>autoware_utils</depend>
   <depend>tier4_pcl_extensions</depend>
   <depend>lanelet2_extension</depend>
+  <depend>grid_map_pcl</depend>
+  <depend>grid_map_ros</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

@@ -226,7 +226,7 @@ protected:
       RCLCPP_WARN(
         this->get_logger(),
         "Invalid PointCloud (data = %zu, width = %d, height = %d, step = %d) with stamp %f, "
-        "and frame %sreceived!",
+        "and frame %s received!",
         cloud->data.size(), cloud->width, cloud->height, cloud->point_step,
         rclcpp::Time(cloud->header.stamp).seconds(), cloud->header.frame_id.c_str());
       return false;
