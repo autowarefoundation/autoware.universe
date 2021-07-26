@@ -1,5 +1,8 @@
 <launch>
+  <arg name="use_twist_with_covariance" default="true" description="" />
   <arg name="input_vehicle_twist_topic" default="/vehicle/status/twist" description="" />
+  <arg name="input_vehicle_twist_with_covariance_topic" default="/vehicle/status/twist_with_covariance" description="" />
+
   <arg name="input_imu_topic" default="/sensing/imu/imu_data" description="" />
 
   <arg name="output_twist_topic" default="gyro_twist" description="" />
@@ -8,7 +11,11 @@
   <arg name="output_frame" default="base_link" description="" />
 
   <node pkg="gyro_odometer" exec="gyro_odometer" name="gyro_odometer" output="screen">
+
+    <param name="use_twist_with_covariance" value="$(var use_twist_with_covariance)" />
     <remap from="vehicle/twist" to="$(var input_vehicle_twist_topic)" />
+    <remap from="vehicle/twist_with_covariance" to="$(var input_vehicle_twist_with_covariance_topic)" />
+
     <remap from="imu" to="$(var input_imu_topic)" />
 
     <remap from="twist" to="$(var output_twist_topic)" />
