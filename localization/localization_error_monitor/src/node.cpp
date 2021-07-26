@@ -18,8 +18,12 @@
 #include <string>
 #include <utility>
 #include <algorithm>
+#include <cmath>
+
 #include "localization_error_monitor/node.hpp"
+#include "tf2/utils.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
+
 
 LocalizationErrorMonitor::LocalizationErrorMonitor()
 : Node("localization_error_monitor"), updater_(this)
@@ -27,6 +31,11 @@ LocalizationErrorMonitor::LocalizationErrorMonitor()
   scale_ = this->declare_parameter("scale", 3.0);
   error_ellipse_size_ = this->declare_parameter("error_ellipse_size", 1.0);
   warn_ellipse_size_ = this->declare_parameter("warn_ellipse_size", 0.8);
+
+  error_ellipse_size_lateral_direction_ = this->declare_parameter(
+    "error_ellipse_size_lateral_direction", 0.3);
+  warn_ellipse_size_lateral_direction_ = this->declare_parameter(
+    "warn_ellipse_size_lateral_direction", 0.2);
 
   pose_with_cov_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
     "input/pose_with_cov", 1,
@@ -40,6 +49,10 @@ LocalizationErrorMonitor::LocalizationErrorMonitor()
 
   updater_.setHardwareID("localization_error_monitor");
   updater_.add("localization_accuracy", this, &LocalizationErrorMonitor::checkLocalizationAccuracy);
+  updater_.add(
+    "localization_accuracy_lateral_direction", this,
+    &LocalizationErrorMonitor::checkLocalizationAccuracyLateralDirection
+  );
 
   // Set timer
   auto timer_callback = std::bind(&LocalizationErrorMonitor::onTimer, this);
@@ -66,6 +79,23 @@ void LocalizationErrorMonitor::checkLocalizationAccuracy(
   if (error_ellipse_size_ <= ellipse_.long_radius) {
     diag_level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
     diag_message = "ellipse size is over the expected range";
+  }
+  stat.summary(diag_level, diag_message);
+}
+
+void LocalizationErrorMonitor::checkLocalizationAccuracyLateralDirection(
+  diagnostic_updater::DiagnosticStatusWrapper & stat)
+{
+  stat.add("localization_accuracy_lateral_direction", ellipse_.size_lateral_direction);
+  int8_t diag_level = diagnostic_msgs::msg::DiagnosticStatus::OK;
+  std::string diag_message = "ellipse size along lateral direction is within the expected range";
+  if (warn_ellipse_size_lateral_direction_ <= ellipse_.size_lateral_direction) {
+    diag_level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
+    diag_message = "ellipse size along lateral direction is too large";
+  }
+  if (error_ellipse_size_lateral_direction_ <= ellipse_.size_lateral_direction) {
+    diag_level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
+    diag_message = "ellipse size along lateral direction is over the expected range";
   }
   stat.summary(diag_level, diag_message);
 }
@@ -102,7 +132,7 @@ void LocalizationErrorMonitor::onPoseWithCovariance(
   geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr input_msg)
 {
   // create xy covariance (2x2 matrix)
-  // input geometry_msgs::PoseWithCovariance containe 6x6 matrix
+  // input geometry_msgs::PoseWithCovariance contain 6x6 matrix
   Eigen::Matrix2d xy_covariance;
   const auto cov = input_msg->pose.covariance;
   xy_covariance(0, 0) = cov[0 * 6 + 0];
@@ -120,6 +150,23 @@ void LocalizationErrorMonitor::onPoseWithCovariance(
   const Eigen::Vector2d pc_vector = eigensolver.eigenvectors().col(1);
   ellipse_.yaw = std::atan2(pc_vector.y(), pc_vector.x());
 
+  // ellipse size along lateral direction (body-frame)
+  ellipse_.P = xy_covariance;
+  const double yaw_vehicle = tf2::getYaw(input_msg->pose.pose.orientation);
+  ellipse_.size_lateral_direction = scale_ * measureSizeEllipseAlongBodyFrame(
+    ellipse_.P.inverse(), yaw_vehicle);
+
   const auto ellipse_marker = createEllipseMarker(ellipse_, input_msg);
   ellipse_marker_pub_->publish(ellipse_marker);
+}
+
+double LocalizationErrorMonitor::measureSizeEllipseAlongBodyFrame(
+  const Eigen::Matrix2d & Pinv, const double theta)
+{
+  Eigen::MatrixXd e(2, 1);
+  e(0, 0) = std::cos(theta);
+  e(1, 0) = std::sin(theta);
+
+  double d = std::sqrt((e.transpose() * Pinv * e)(0, 0) / Pinv.determinant());
+  return d;
 }
