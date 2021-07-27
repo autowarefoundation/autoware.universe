@@ -53,7 +53,7 @@ jobs:
 
       - name: Build
         run: |
-          . /opt/ros/foxy/setup.sh
+          . /opt/ros/galactic/setup.sh
           colcon build \
             --event-handlers console_cohesion+ \
             --cmake-args -DCMAKE_BUILD_TYPE=Release
