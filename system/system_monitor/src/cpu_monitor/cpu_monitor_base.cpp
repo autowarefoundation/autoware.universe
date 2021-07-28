@@ -133,12 +133,12 @@ void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & st
   }
 
   std::string cpu_name;
-  float usr;
-  float nice;
-  float sys;
-  float idle;
-  float usage;
-  float total;
+  float usr{0.0};
+  float nice{0.0};
+  float sys{0.0};
+  float idle{0.0};
+  float usage{0.0};
+  float total{0.0};
   int level = DiagStatus::OK;
   int whole_level = DiagStatus::OK;
 

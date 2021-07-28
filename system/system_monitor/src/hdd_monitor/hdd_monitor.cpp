@@ -276,11 +276,11 @@ void HDDMonitor::getHDDParams()
   for (auto i = 0; i < num_disks; ++i) {
     const auto prefix = "disks.disk" + std::to_string(i);
     HDDParam param;
-    param.temp_warn_ = declare_parameter(prefix + ".temp_warn").get<float>();
-    param.temp_error_ = declare_parameter(prefix + ".temp_error").get<float>();
-    param.usage_warn_ = declare_parameter(prefix + ".usage_warn").get<float>();
-    param.usage_error_ = declare_parameter(prefix + ".usage_error").get<float>();
-    const auto name = declare_parameter(prefix + ".name").get<std::string>();
+    param.temp_warn_ = declare_parameter<float>(prefix + ".temp_warn");
+    param.temp_error_ = declare_parameter<float>(prefix + ".temp_error");
+    param.usage_warn_ = declare_parameter<float>(prefix + ".usage_warn");
+    param.usage_error_ = declare_parameter<float>(prefix + ".usage_error");
+    const auto name = declare_parameter<std::string>(prefix + ".name");
 
     hdd_params_[name] = param;
 

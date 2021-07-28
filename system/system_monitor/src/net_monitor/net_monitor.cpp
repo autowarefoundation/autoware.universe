@@ -39,7 +39,8 @@ NetMonitor::NetMonitor(const rclcpp::NodeOptions & options)
 : Node("net_monitor", options),
   updater_(this),
   last_update_time_{0, 0, this->get_clock()->get_clock_type()},
-  device_params_(declare_parameter<std::vector<std::string>>("devices", {})),
+  device_params_(
+    declare_parameter<std::vector<std::string>>("devices", std::vector<std::string>())),
   usage_warn_(declare_parameter<float>("usage_warn", 0.95))
 {
   gethostname(hostname_, sizeof(hostname_));
@@ -87,10 +88,10 @@ void NetMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
   int whole_level = DiagStatus::OK;
   int index = 0;
   std::string error_str;
-  float rx_traffic;
-  float tx_traffic;
-  float rx_usage;
-  float tx_usage;
+  float rx_traffic{0.0};
+  float tx_traffic{0.0};
+  float rx_usage{0.0};
+  float tx_usage{0.0};
   std::vector<std::string> interface_names;
 
   for (ifa = ifas; ifa; ifa = ifa->ifa_next) {
