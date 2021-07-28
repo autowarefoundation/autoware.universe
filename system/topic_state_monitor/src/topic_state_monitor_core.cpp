@@ -42,11 +42,11 @@ TopicStateMonitorNode::TopicStateMonitorNode(const rclcpp::NodeOptions & node_op
   using std::placeholders::_1;
   // Parameter
   node_param_.update_rate = declare_parameter("update_rate", 10.0);
-  param_.topic = declare_parameter("topic").get<std::string>();
-  param_.topic_type = declare_parameter("topic_type").get<std::string>();
+  param_.topic = declare_parameter<std::string>("topic");
+  param_.topic_type = declare_parameter<std::string>("topic_type");
   param_.transient_local = declare_parameter("transient_local", false);
   param_.best_effort = declare_parameter("best_effort", false);
-  param_.diag_name = declare_parameter("diag_name").get<std::string>();
+  param_.diag_name = declare_parameter<std::string>("diag_name");
   param_.warn_rate = declare_parameter("warn_rate", 0.5);
   param_.error_rate = declare_parameter("error_rate", 0.1);
   param_.timeout = declare_parameter("timeout", 1.0);
