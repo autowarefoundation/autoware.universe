@@ -30,7 +30,7 @@ std::vector<Config> getConfigs(
   const std::string & config_namespace)
 {
   std::string names_key = config_namespace + ".names";
-  interface->declare_parameter(names_key);
+  interface->declare_parameter(names_key, rclcpp::PARAMETER_STRING_ARRAY);
   std::vector<std::string> config_names = interface->get_parameter(names_key).as_string_array();
 
   std::vector<Config> configs;

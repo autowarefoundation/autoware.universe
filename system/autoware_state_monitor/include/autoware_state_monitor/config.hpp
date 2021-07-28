@@ -27,17 +27,25 @@ struct TopicConfig
   explicit TopicConfig(
     rclcpp::node_interfaces::NodeParametersInterface::SharedPtr interface,
     const std::string & namespace_prefix, const std::string & name)
-  : module(interface->declare_parameter(namespace_prefix + ".module").get<std::string>()),
+  : module(
+      interface->declare_parameter(namespace_prefix + ".module",
+      rclcpp::PARAMETER_STRING).get<std::string>()),
     name(name),
-    type(interface->declare_parameter(namespace_prefix + ".type").get<std::string>()),
+    type(
+      interface->declare_parameter(namespace_prefix + ".type",
+      rclcpp::PARAMETER_STRING).get<std::string>()),
     transient_local(
       interface->declare_parameter(namespace_prefix + ".transient_local",
       static_cast<rclcpp::ParameterValue>(false)).get<bool>()),
     best_effort(
       interface->declare_parameter(namespace_prefix + ".best_effort",
       static_cast<rclcpp::ParameterValue>(false)).get<bool>()),
-    timeout(interface->declare_parameter(namespace_prefix + ".timeout").get<double>()),
-    warn_rate(interface->declare_parameter(namespace_prefix + ".warn_rate").get<double>())
+    timeout(
+      interface->declare_parameter(namespace_prefix + ".timeout",
+      rclcpp::PARAMETER_DOUBLE).get<double>()),
+    warn_rate(
+      interface->declare_parameter(namespace_prefix + ".warn_rate",
+      rclcpp::PARAMETER_DOUBLE).get<double>())
   {
   }
 
@@ -55,7 +63,9 @@ struct ParamConfig
   explicit ParamConfig(
     rclcpp::node_interfaces::NodeParametersInterface::SharedPtr interface,
     const std::string & namespace_prefix, const std::string & name)
-  : module(interface->declare_parameter(namespace_prefix + ".module").get<std::string>()),
+  : module(
+      interface->declare_parameter(namespace_prefix + ".module",
+      rclcpp::PARAMETER_STRING).get<std::string>()),
     name(name)
   {
   }
@@ -69,10 +79,18 @@ struct TfConfig
   explicit TfConfig(
     rclcpp::node_interfaces::NodeParametersInterface::SharedPtr interface,
     const std::string & namespace_prefix, const std::string & name)
-  : module(interface->declare_parameter(namespace_prefix + ".module").get<std::string>()),
-    from(interface->declare_parameter(namespace_prefix + ".from").get<std::string>()),
-    to(interface->declare_parameter(namespace_prefix + ".to").get<std::string>()),
-    timeout(interface->declare_parameter(namespace_prefix + ".timeout").get<double>())
+  : module(
+      interface->declare_parameter(namespace_prefix + ".module",
+      rclcpp::PARAMETER_STRING).get<std::string>()),
+    from(
+      interface->declare_parameter(namespace_prefix + ".from",
+      rclcpp::PARAMETER_STRING).get<std::string>()),
+    to(
+      interface->declare_parameter(namespace_prefix + ".to",
+      rclcpp::PARAMETER_STRING).get<std::string>()),
+    timeout(
+      interface->declare_parameter(namespace_prefix + ".timeout",
+      rclcpp::PARAMETER_DOUBLE).get<double>())
   {
   }
 

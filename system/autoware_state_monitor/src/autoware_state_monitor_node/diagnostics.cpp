@@ -26,8 +26,7 @@ void AutowareStateMonitorNode::setupDiagnosticUpdater()
 {
   updater_.setHardwareID("autoware_state_monitor");
 
-  this->declare_parameter("module_names");
-  std::vector<std::string> module_names = this->get_parameter("module_names").as_string_array();
+  const auto module_names = this->declare_parameter<std::vector<std::string>>("module_names");
 
   // Topic
   for (const auto & module_name : module_names) {
