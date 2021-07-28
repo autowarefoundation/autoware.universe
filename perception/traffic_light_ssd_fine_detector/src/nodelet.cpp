@@ -43,8 +43,8 @@ TrafficLightSSDFineDetectorNodelet::TrafficLightSSDFineDetectorNodelet(
   std::ifstream fs(engine_path);
   std::vector<std::string> labels;
   const int max_batch_size = this->declare_parameter("max_batch_size", 8);
-  const std::string onnx_file = this->declare_parameter("onnx_file").get<std::string>();
-  const std::string label_file = this->declare_parameter("label_file").get<std::string>();
+  const std::string onnx_file = this->declare_parameter<std::string>("onnx_file");
+  const std::string label_file = this->declare_parameter<std::string>("label_file");
   const std::string mode = this->declare_parameter("mode", "FP32");
 
   if (readLabelFile(label_file, labels)) {
