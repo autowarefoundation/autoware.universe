@@ -128,11 +128,6 @@ repositories:
     type: git
     url: https://gitlab.com/autowarefoundation/operational-design-domains
     version: master
-  # TODO: Remove rosbag2 from repos when the delay option is released
-  vendor/rosbag2:
-    type: git
-    url: https://github.com/ros2/rosbag2
-    version: galactic
   vendor/launch_ros:
     type: git
     url: https://github.com/tier4/launch_ros.git
