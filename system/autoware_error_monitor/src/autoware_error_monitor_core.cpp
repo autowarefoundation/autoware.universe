@@ -97,9 +97,8 @@ void AutowareErrorMonitor::loadRequiredModules(const std::string & key)
 {
   const auto param_key = std::string("required_modules.") + key + std::string(".names");
 
-  this->declare_parameter(param_key);
+  const auto names = this->declare_parameter<std::vector<std::string>>(param_key);
 
-  const auto names = this->get_parameter(param_key).as_string_array();
   if (names.size() == 0) {
     throw std::runtime_error(fmt::format("no parameter found: {}", param_key));
   }
