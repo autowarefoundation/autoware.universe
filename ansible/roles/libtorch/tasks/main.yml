@@ -1,0 +1,28 @@
+# for Ubuntu 20.04 / CUDA 11.1
+- name: LibTorch (download)
+  when: cuda_version == '11.1'
+  become: yes
+  command: gdown https://drive.google.com/u/0/uc?id=1eNh3F3xCQ4AMJEHtwb1dhshSyzWMjoc8 -O /tmp/libtorch.zip
+- name: LibTorch (unarchive)
+  when: cuda_version == '11.1'
+  become: yes
+  unarchive:
+    src: /tmp/libtorch.zip
+    dest: /usr/local
+- name: LibTorch (install OpenMP)
+  become: yes
+  apt:
+    name:
+      - libgomp1
+    update_cache: yes
+- name: LibTorch (replace a library file)
+  become: yes
+  command: cp /usr/lib/x86_64-linux-gnu/libgomp.so.1 /usr/local/libtorch/lib/libgomp-75eea7e8.so.1
+- name: LibTorch (add library >> bashrc)
+  become: no
+  lineinfile:
+    dest: ~/.bashrc
+    line: export LD_LIBRARY_PATH="/usr/local/libtorch/lib:$LD_LIBRARY_PATH"
+    state: present
+# ref: https://discuss.pytorch.org/t/libtorch-code-integration-failed-with-error-version-gomp-4-5-not-found/119545
+# ref: https://github.com/pytorch/pytorch/issues/643#issuecomment-294269589

@@ -18,3 +18,4 @@
     - { role: ros2, rosdistro: galactic, tags: ["ros2"] }
     - { role: autoware, rosdistro: galactic, tags: ["autoware"] }
     - { role: pacmod, rosdistro: galactic, tags: ["pacmod"] }
+    - { role: libtorch, tags: ["libtorch"] }
