@@ -89,7 +89,7 @@ DummyDiagPublisherNode::DummyDiagPublisherNode()
 {
   // Parameter
   update_rate_ = declare_parameter("update_rate", 10.0);
-  const std::string diag_name = this->declare_parameter("diag_name").get<std::string>();
+  const std::string diag_name = this->declare_parameter<std::string>("diag_name");
   const std::string hardware_id = "dummy_diag_" + diag_name;
   diag_config_ = DiagConfig{
     diag_name,
