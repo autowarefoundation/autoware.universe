@@ -384,7 +384,7 @@ rcl_interfaces::msg::SetParametersResult RayGroundFilterComponent::paramCallback
   setVehicleFootprint(min_x_, max_x_, min_y_, max_y_);
 
   if (get_param(p, "base_frame", base_frame_)) {
-    RCLCPP_DEBUG(get_logger(), "Setting base_frame to: %s.", base_frame_);
+    RCLCPP_DEBUG(get_logger(), "Setting base_frame to: %s.", base_frame_.c_str());
   }
   if (get_param(p, "general_max_slope", general_max_slope_)) {
     RCLCPP_DEBUG(get_logger(), "Setting general_max_slope to: %f.", general_max_slope_);

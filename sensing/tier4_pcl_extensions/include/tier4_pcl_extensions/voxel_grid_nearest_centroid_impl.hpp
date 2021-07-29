@@ -93,11 +93,11 @@ pcl::VoxelGridNearestCentroid<PointT>::applyFilter(PointCloud & output)
   }
 
   // Check that the leaf size is not too small, given the size of the data
-  int64_t dx = static_cast<int64_t>((max_p[0] - min_p[0]) * inverse_leaf_size_[0]) + 1;
-  int64_t dy = static_cast<int64_t>((max_p[1] - min_p[1]) * inverse_leaf_size_[1]) + 1;
-  int64_t dz = static_cast<int64_t>((max_p[2] - min_p[2]) * inverse_leaf_size_[2]) + 1;
+  std::int64_t dx = static_cast<std::int64_t>((max_p[0] - min_p[0]) * inverse_leaf_size_[0]) + 1;
+  std::int64_t dy = static_cast<std::int64_t>((max_p[1] - min_p[1]) * inverse_leaf_size_[1]) + 1;
+  std::int64_t dz = static_cast<std::int64_t>((max_p[2] - min_p[2]) * inverse_leaf_size_[2]) + 1;
 
-  if ((dx * dy * dz) > std::numeric_limits<int32_t>::max()) {
+  if ((dx * dy * dz) > std::numeric_limits<std::int32_t>::max()) {
     PCL_WARN(
       "[pcl::%s::applyFilter] Leaf size is too small for the input dataset. Integer indices would overflow.",  // NOLINT
       getClassName().c_str());
@@ -132,9 +132,9 @@ pcl::VoxelGridNearestCentroid<PointT>::applyFilter(PointCloud & output)
   // ---[ RGB special case
   std::vector<pcl::PCLPointField> fields;
   int rgba_index = -1;
-  rgba_index = pcl::getFieldIndex(*input_, "rgb", fields);
+  rgba_index = pcl::getFieldIndex<PointT>("rgb", fields);
   if (rgba_index == -1) {
-    rgba_index = pcl::getFieldIndex(*input_, "rgba", fields);
+    rgba_index = pcl::getFieldIndex<PointT>("rgba", fields);
   }
   if (rgba_index >= 0) {
     rgba_index = fields[rgba_index].offset;
@@ -146,7 +146,7 @@ pcl::VoxelGridNearestCentroid<PointT>::applyFilter(PointCloud & output)
   if (!filter_field_name_.empty()) {
     // Get the distance field index
     std::vector<pcl::PCLPointField> fields;
-    int distance_idx = pcl::getFieldIndex(*input_, filter_field_name_, fields);
+    int distance_idx = pcl::getFieldIndex<PointT>(filter_field_name_, fields);
     if (distance_idx == -1) {
       PCL_WARN(
         "[pcl::%s::applyFilter] Invalid filter field name. Index is %d.\n",
@@ -157,16 +157,16 @@ pcl::VoxelGridNearestCentroid<PointT>::applyFilter(PointCloud & output)
     for (size_t cp = 0; cp < input_->points.size(); ++cp) {
       if (!input_->is_dense) {
         // Check if the point is invalid
-        if (!pcl_isfinite(input_->points[cp].x) ||
-          !pcl_isfinite(input_->points[cp].y) ||
-          !pcl_isfinite(input_->points[cp].z))
+        if (!std::isfinite(input_->points[cp].x) ||
+          !std::isfinite(input_->points[cp].y) ||
+          !std::isfinite(input_->points[cp].z))
         {
           continue;
         }
       }
 
       // Get the distance value
-      const uint8_t * pt_data = reinterpret_cast<const uint8_t *>(&input_->points[cp]);
+      const std::uint8_t * pt_data = reinterpret_cast<const std::uint8_t *>(&input_->points[cp]);
       float distance_value = 0;
       memcpy(&distance_value, pt_data + fields[distance_idx].offset, sizeof(float));
 
@@ -234,9 +234,9 @@ pcl::VoxelGridNearestCentroid<PointT>::applyFilter(PointCloud & output)
     for (size_t cp = 0; cp < input_->points.size(); ++cp) {
       if (!input_->is_dense) {
         // Check if the point is invalid
-        if (!pcl_isfinite(input_->points[cp].x) ||
-          !pcl_isfinite(input_->points[cp].y) ||
-          !pcl_isfinite(input_->points[cp].z))
+        if (!std::isfinite(input_->points[cp].x) ||
+          !std::isfinite(input_->points[cp].y) ||
+          !std::isfinite(input_->points[cp].z))
         {
           continue;
         }
@@ -351,7 +351,7 @@ pcl::VoxelGridNearestCentroid<PointT>::applyFilter(PointCloud & output)
       }
     }
   }
-  output.width = static_cast<uint32_t>(output.points.size());
+  output.width = static_cast<std::uint32_t>(output.points.size());
 }
 
 
