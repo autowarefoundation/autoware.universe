@@ -19,5 +19,3 @@ jobs:
 
       - name: Run pre-commit
         uses: pre-commit/action@v2.0.3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
