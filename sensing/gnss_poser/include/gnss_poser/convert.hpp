@@ -45,7 +45,7 @@ enum class MGRSPrecision
 double EllipsoidHeight2OrthometricHeight(
   const sensor_msgs::msg::NavSatFix & nav_sat_fix_msg, const rclcpp::Logger & logger)
 {
-  double OrthometricHeight;
+  double OrthometricHeight{0.0};
   try {
     GeographicLib::Geoid egm2008("egm2008-1");
     OrthometricHeight = egm2008.ConvertHeight(
