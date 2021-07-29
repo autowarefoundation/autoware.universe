@@ -169,6 +169,11 @@ repositories:
     type: git
     url: https://github.com/tier4/diagnostics.git
     version: tier4/main
+  # TODO: Remove behavior tree from repos after runtime error is resolved in released package
+  vendor/behaviortree-cpp-v3:
+    type: git
+    url: https://github.com/BehaviorTree/BehaviorTree.CPP.git
+    version: 3.5.6
   # missing_packages
   missing_packages/astuff_sensor_msgs:
     type: git
