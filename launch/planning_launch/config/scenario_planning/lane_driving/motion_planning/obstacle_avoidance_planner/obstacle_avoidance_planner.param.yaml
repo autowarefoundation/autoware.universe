@@ -14,7 +14,7 @@
     # clearance for unique points
     clearance_for_straight_line: 0.05 # minimum optimizing range around straight points
     clearance_for_joint: 0.1 # minimum optimizing range around joint points
-    clearance_for_only_smoothing: 0.1 # minimum optimizing range when applygin only smoothing
+    clearance_for_only_smoothing: 0.1 # minimum optimizing range when applying only smoothing
     range_for_extend_joint: 0.1 # minimum optimizing range around joint points for extending
     clearance_from_object_for_straight: 10.0 # minimum clearance from object when judging straight line
 
