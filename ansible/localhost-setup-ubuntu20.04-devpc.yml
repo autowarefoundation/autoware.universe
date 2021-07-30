@@ -16,6 +16,5 @@
     - { role: cuda, when: yn_gpu == 'y', tags: ["cuda"] }
     - { role: tensorrt, when: yn_gpu == 'y', tags: ["tensorrt"] }
     - { role: ros2, rosdistro: galactic, tags: ["ros2"] }
-    - { role: vcs, tags: ["vcs"] }
     - { role: autoware, rosdistro: galactic, tags: ["autoware"] }
     - { role: pacmod, rosdistro: galactic, tags: ["pacmod"] }

@@ -1,8 +1,0 @@
----
-- name: VCS (make directory)
-  file:
-    path: "{{ AUTOWARE_DIR }}/src"
-    state: directory
-
-- name: VCS (vcs import)
-  shell: vcs import {{ AUTOWARE_DIR }}/src < {{ AUTOWARE_DIR }}/autoware.proj.repos
