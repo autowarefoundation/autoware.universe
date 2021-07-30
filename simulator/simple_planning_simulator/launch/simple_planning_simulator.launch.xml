@@ -17,6 +17,7 @@
     <remap from="output/current_twist" to="/vehicle/status/twist" />
     <remap from="output/status" to="/vehicle/status" />
     <remap from="output/control_mode" to="/vehicle/status/control_mode" />
+    <remap from="output/cov" to="/localization/pose_with_covariance" />
     <remap from="input/vehicle_cmd" to="/control/vehicle_cmd" />
     <remap from="input/turn_signal_cmd" to="/control/turn_signal_cmd" />
     <remap from="input/initial_pose" to="/initialpose" />

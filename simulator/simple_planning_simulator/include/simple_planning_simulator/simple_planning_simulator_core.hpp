@@ -25,6 +25,7 @@
 #include <memory>
 #include <random>
 #include <string>
+#include <vector>
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -78,6 +79,7 @@ private:
   rclcpp::Publisher<autoware_vehicle_msgs::msg::TurnSignal>::SharedPtr pub_turn_signal_;
   rclcpp::Publisher<autoware_vehicle_msgs::msg::ShiftStamped>::SharedPtr pub_shift_;
   rclcpp::Publisher<autoware_vehicle_msgs::msg::ControlMode>::SharedPtr pub_control_mode_;
+  rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pub_cov_;
 
   rclcpp::Subscription<autoware_vehicle_msgs::msg::VehicleCommand>::SharedPtr
     sub_vehicle_cmd_;  //!< @brief topic subscriber for vehicle_cmd
@@ -92,6 +94,10 @@ private:
   rclcpp::Subscription<autoware_vehicle_msgs::msg::Engage>::SharedPtr
     sub_engage_;                                   //!< @brief topic subscriber for engage topic
   rclcpp::TimerBase::SharedPtr timer_simulation_;  //!< @brief timer for simulation
+
+  OnSetParametersCallbackHandle::SharedPtr set_param_res_;
+  rcl_interfaces::msg::SetParametersResult onParameter(
+    const std::vector<rclcpp::Parameter> & parameters);
 
   /* tf */
   std::shared_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
@@ -124,6 +130,8 @@ private:
   double loop_rate_;  //!< @brief frequency to calculate vehicle model & publish result
   double wheelbase_;  //!< @brief wheelbase length to convert angular-velocity & steering
   double sim_steering_gear_ratio_;  //!< @brief for steering wheel angle calculation
+  double x_stddev_;  //!< @brief x standard deviation for dummy covariance in map coordinate
+  double y_stddev_;  //!< @brief y standard deviation for dummy covariance in map coordinate
 
   /* flags */
   bool is_initialized_ = false;                //!< @brief flag to check the initial position is set
@@ -239,12 +247,18 @@ private:
     const geometry_msgs::msg::Twist & twist);
 
   /**
-   * @brief publish pose and twist
-   * @param [in] pose pose to be published
+   * @brief publish pose_with_covariance
+   * @param [in] cov pose with covariance to be published
+   */
+  void publishPoseWithCov(
+    const geometry_msgs::msg::PoseWithCovariance & cov);
+
+  /**
+   * @brief publish twist
    * @param [in] twist twist to be published
    */
-  void publishPoseTwist(
-    const geometry_msgs::msg::Pose & pose, const geometry_msgs::msg::Twist & twist);
+  void publishTwist(
+    const geometry_msgs::msg::Twist & twist);
 
   /**
    * @brief publish tf
