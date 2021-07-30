@@ -1,7 +1,7 @@
 # for Ubuntu 20.04 / CUDA 11.1
 - name: LibTorch (download)
   when: cuda_version == '11.1'
-  become: yes
+  become: no
   command: gdown https://drive.google.com/u/0/uc?id=1eNh3F3xCQ4AMJEHtwb1dhshSyzWMjoc8 -O /tmp/libtorch.zip
 - name: LibTorch (unarchive)
   when: cuda_version == '11.1'
