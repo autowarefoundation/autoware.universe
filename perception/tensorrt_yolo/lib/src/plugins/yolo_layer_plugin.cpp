@@ -118,6 +118,8 @@ YoloLayerPlugin::YoloLayerPlugin(
 // create the plugin at runtime from a byte stream
 YoloLayerPlugin::YoloLayerPlugin(const void * data, size_t length)
 {
+  (void)length;
+
   const char * d = static_cast<const char *>(data);
   read(d, width_);
   read(d, height_);
@@ -167,7 +169,7 @@ void YoloLayerPlugin::serialize(void * buffer) const noexcept
 
 void YoloLayerPlugin::destroy() noexcept {delete this;}
 
-void YoloLayerPlugin::setPluginNamespace(const char * N) noexcept {}
+void YoloLayerPlugin::setPluginNamespace(const char * N) noexcept { (void)N; }
 
 const char * YoloLayerPlugin::getPluginNamespace() const noexcept {return YOLO_LAYER_PLUGIN_NAMESPACE;}
 
@@ -176,6 +178,10 @@ const char * YoloLayerPlugin::getPluginNamespace() const noexcept {return YOLO_L
 DataType YoloLayerPlugin::getOutputDataType(
   int index, const DataType * inputTypes, int nbInputs) const noexcept
 {
+  (void)index;
+  (void)inputTypes;
+  (void)nbInputs;
+
   return DataType::kFLOAT;
 }
 
@@ -186,6 +192,8 @@ IPluginV2DynamicExt * YoloLayerPlugin::clone() const noexcept {return new YoloLa
 DimsExprs YoloLayerPlugin::getOutputDimensions(
   int outputIndex, const DimsExprs * inputs, int nbInputs, IExprBuilder & exprBuilder) noexcept
 {
+  (void)nbInputs;
+
   DimsExprs ret = inputs[0];
   ret.nbDims = 3;
   const auto total_count =
@@ -199,6 +207,9 @@ DimsExprs YoloLayerPlugin::getOutputDimensions(
 bool YoloLayerPlugin::supportsFormatCombination(
   int pos, const PluginTensorDesc * inOut, int nbInputs, int nbOutputs) noexcept
 {
+  (void)nbInputs;
+  (void)nbOutputs;
+
   assert(nbInputs == 1);
   assert(nbOutputs == 3);
   assert(pos < 4);
@@ -209,6 +220,11 @@ void YoloLayerPlugin::configurePlugin(
   const DynamicPluginTensorDesc * in, int nbInput, const DynamicPluginTensorDesc * out,
   int nbOutput) noexcept
 {
+  (void)in;
+  (void)nbInput;
+  (void)out;
+  (void)nbOutput;
+
   assert(nbInput == 1);
   assert(nbOutput == 3);
 }
@@ -217,6 +233,10 @@ size_t YoloLayerPlugin::getWorkspaceSize(
   const PluginTensorDesc * inputs, int nbInputs,
   const PluginTensorDesc * outputs, int nbOutputs) const noexcept
 {
+  (void)nbInputs;
+  (void)outputs;
+  (void)nbOutputs;
+
   if (size < 0) {
     const int batch_size = inputs[0].dims.d[0];
     const int grid_width = inputs[0].dims.d[2];
@@ -257,18 +277,23 @@ const char * YoloLayerPluginCreator::getPluginNamespace() const noexcept
   return YOLO_LAYER_PLUGIN_NAMESPACE;
 }
 
-void YoloLayerPluginCreator::setPluginNamespace(const char * N) noexcept {}
+void YoloLayerPluginCreator::setPluginNamespace(const char * N) noexcept { (void)N; }
 const PluginFieldCollection * YoloLayerPluginCreator::getFieldNames() noexcept {return nullptr;}
 
 IPluginV2DynamicExt * YoloLayerPluginCreator::createPlugin(
   const char * name, const PluginFieldCollection * fc) noexcept
 {
+  (void)name;
+  (void)fc;
+
   return nullptr;
 }
 
 IPluginV2DynamicExt * YoloLayerPluginCreator::deserializePlugin(
   const char * name, const void * serialData, size_t serialLength) noexcept
 {
+  (void)name;
+
   return new YoloLayerPlugin(serialData, serialLength);
 }
 }  // namespace yolo

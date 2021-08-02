@@ -93,6 +93,8 @@ NMSPlugin::NMSPlugin(float nms_thresh, int detections_per_im, size_t count)
 
 NMSPlugin::NMSPlugin(void const * data, size_t length)
 {
+  (void)length;
+
   const char * d = static_cast<const char *>(data);
   read(d, nms_thresh_);
   read(d, detections_per_im_);
@@ -124,7 +126,7 @@ void NMSPlugin::serialize(void * buffer) const noexcept
 
 void NMSPlugin::destroy() noexcept {delete this;}
 
-void NMSPlugin::setPluginNamespace(const char * N) noexcept {}
+void NMSPlugin::setPluginNamespace(const char * N) noexcept { (void)N; }
 
 const char * NMSPlugin::getPluginNamespace() const noexcept {return NMS_PLUGIN_NAMESPACE;}
 
@@ -132,6 +134,10 @@ const char * NMSPlugin::getPluginNamespace() const noexcept {return NMS_PLUGIN_N
 
 DataType NMSPlugin::getOutputDataType(int index, const DataType * inputTypes, int nbInputs) const noexcept
 {
+  (void)index;
+  (void)inputTypes;
+  (void)nbInputs;
+
   assert(index < 3);
   return DataType::kFLOAT;
 }
@@ -146,6 +152,8 @@ IPluginV2DynamicExt * NMSPlugin::clone() const noexcept
 DimsExprs NMSPlugin::getOutputDimensions(
   int outputIndex, const DimsExprs * inputs, int nbInputs, IExprBuilder & exprBuilder) noexcept
 {
+  (void)nbInputs;
+
   DimsExprs output(inputs[0]);
   output.d[1] = exprBuilder.constant(detections_per_im_ * (outputIndex == 1 ? 4 : 1));
   output.d[2] = exprBuilder.constant(1);
@@ -156,6 +164,9 @@ DimsExprs NMSPlugin::getOutputDimensions(
 bool NMSPlugin::supportsFormatCombination(
   int pos, const PluginTensorDesc * inOut, int nbInputs, int nbOutputs) noexcept
 {
+  (void)nbInputs;
+  (void)nbOutputs;
+
   assert(nbInputs == 3);
   assert(nbOutputs == 3);
   assert(pos < 6);
@@ -167,6 +178,11 @@ void NMSPlugin::configurePlugin(
   const DynamicPluginTensorDesc * in, int nbInputs, const DynamicPluginTensorDesc * out,
   int nbOutputs) noexcept
 {
+  (void)nbInputs;
+  (void)nbOutputs;
+  (void)out;
+  (void)nbOutputs;
+
   assert(nbInputs == 3);
   assert(in[0].desc.dims.d[1] == in[2].desc.dims.d[1]);
   assert(in[1].desc.dims.d[1] == in[2].desc.dims.d[1] * 4);
@@ -177,6 +193,10 @@ size_t NMSPlugin::getWorkspaceSize(
   const PluginTensorDesc * inputs, int nbInputs, const PluginTensorDesc * outputs,
   int nbOutputs) const noexcept
 {
+  (void)nbInputs;
+  (void)outputs;
+  (void)nbOutputs;
+
   if (size < 0) {
     size = nms(
       inputs->dims.d[0], nullptr, nullptr, count_, detections_per_im_, nms_thresh_, nullptr, 0,
@@ -202,17 +222,21 @@ const char * NMSPluginCreator::getPluginVersion() const noexcept {return NMS_PLU
 
 const char * NMSPluginCreator::getPluginNamespace() const noexcept {return NMS_PLUGIN_NAMESPACE;}
 
-void NMSPluginCreator::setPluginNamespace(const char * N) noexcept {}
+void NMSPluginCreator::setPluginNamespace(const char * N) noexcept { (void)N; }
 const PluginFieldCollection * NMSPluginCreator::getFieldNames() noexcept {return nullptr;}
 IPluginV2DynamicExt * NMSPluginCreator::createPlugin(
   const char * name, const PluginFieldCollection * fc) noexcept
 {
+  (void)name;
+  (void)fc;
   return nullptr;
 }
 
 IPluginV2DynamicExt * NMSPluginCreator::deserializePlugin(
   const char * name, const void * serialData, size_t serialLength) noexcept
 {
+  (void)name;
+
   return new NMSPlugin(serialData, serialLength);
 }
 

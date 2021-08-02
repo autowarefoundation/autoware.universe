@@ -148,6 +148,9 @@ public:
 
   bool getBatch(void * bindings[], const char * names[], int nb_bindings) noexcept override
   {
+    (void)names;
+    (void)nb_bindings;
+
     if (!stream_.next()) {return false;}
 
     CHECK_CUDA_ERROR(

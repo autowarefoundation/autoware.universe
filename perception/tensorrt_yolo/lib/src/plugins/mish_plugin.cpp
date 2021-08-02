@@ -76,7 +76,7 @@ namespace yolo
 MishPlugin::MishPlugin() {}
 
 // create the plugin at runtime from a byte stream
-MishPlugin::MishPlugin(const void * data, size_t length) {}
+MishPlugin::MishPlugin(const void * data, size_t length) { (void)data; (void)length; }
 
 // IPluginV2 Methods
 
@@ -92,7 +92,7 @@ void MishPlugin::terminate() noexcept {}
 
 size_t MishPlugin::getSerializationSize() const noexcept {return 0;}
 
-void MishPlugin::serialize(void * buffer) const noexcept {}
+void MishPlugin::serialize(void * buffer) const noexcept { (void)buffer; }
 
 void MishPlugin::destroy() noexcept {delete this;}
 
@@ -107,6 +107,10 @@ const char * MishPlugin::getPluginNamespace() const noexcept {return mPluginName
 
 DataType MishPlugin::getOutputDataType(int index, const DataType * inputTypes, int nbInputs) const noexcept
 {
+  (void)index;
+  (void)inputTypes;
+  (void)nbInputs;
+
   assert(inputTypes[0] == DataType::kFLOAT);
   return inputTypes[0];
 }
@@ -123,12 +127,19 @@ IPluginV2DynamicExt * MishPlugin::clone() const noexcept
 DimsExprs MishPlugin::getOutputDimensions(
   int outputIndex, const DimsExprs * inputs, int nbInputs, IExprBuilder & exprBuilder) noexcept
 {
+  (void)outputIndex;
+  (void)nbInputs;
+  (void)exprBuilder;
+
   return inputs[0];
 }
 
 bool MishPlugin::supportsFormatCombination(
   int pos, const PluginTensorDesc * inOut, int nbInputs, int nbOutputs) noexcept
 {
+  (void)nbInputs;
+  (void)nbOutputs;
+
   return inOut[pos].type == DataType::kFLOAT && inOut[pos].format == PluginFormat::kLINEAR;
 }
 
@@ -136,6 +147,11 @@ void MishPlugin::configurePlugin(
   const DynamicPluginTensorDesc * in, int nbInput, const DynamicPluginTensorDesc * out,
   int nbOutput) noexcept
 {
+  (void)in;
+  (void)nbInput;
+  (void)out;
+  (void)nbOutput;
+
   assert(nbInput == 1);
   assert(nbOutput == 1);
 }
@@ -144,6 +160,11 @@ size_t MishPlugin::getWorkspaceSize(
   const PluginTensorDesc * inputs, int nbInputs,
   const PluginTensorDesc * outputs, int nbOutputs) const noexcept
 {
+  (void)inputs;
+  (void)nbInputs;
+  (void)outputs;
+  (void)nbOutputs;
+
   return 0;
 }
 
@@ -151,6 +172,10 @@ int MishPlugin::enqueue(
   const PluginTensorDesc * inputDesc, const PluginTensorDesc * outputDesc,
   const void * const * inputs, void * const * outputs, void * workspace, cudaStream_t stream) noexcept
 {
+  (void)inputDesc;
+  (void)outputDesc;
+  (void)workspace;
+
   const int input_volume = volume(inputDesc[0].dims);
 
   int status = -1;
@@ -181,6 +206,9 @@ const PluginFieldCollection * MishPluginCreator::getFieldNames() noexcept {retur
 IPluginV2DynamicExt * MishPluginCreator::createPlugin(
   const char * name, const PluginFieldCollection * fc) noexcept
 {
+  (void)name;
+  (void)fc;
+
   MishPlugin * obj = new MishPlugin();
   obj->setPluginNamespace(mNamespace.c_str());
   return obj;
@@ -189,6 +217,8 @@ IPluginV2DynamicExt * MishPluginCreator::createPlugin(
 IPluginV2DynamicExt * MishPluginCreator::deserializePlugin(
   const char * name, const void * serialData, size_t serialLength) noexcept
 {
+  (void)name;
+
   // This object will be deleted when the network is destroyed, which will
   // call MishPlugin::destroy()
   MishPlugin * obj = new MishPlugin(serialData, serialLength);
