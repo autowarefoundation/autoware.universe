@@ -186,12 +186,8 @@ boost::optional<PathIndexWithOffset> findBackwardOffsetSegment(
   const double offset_length)
 {
   double sum_length = 0.0;
-  for (size_t i = base_idx - 1; i >= 0; --i) {
-    // Avoid overflow
-    if (i >= base_idx) {
-      break;
-    }
-
+  const auto start = static_cast<std::int32_t>(base_idx) - 1;
+  for (std::int32_t i = start; i >= 0; --i) {
     const auto p_front = to_bg2d(path.points.at(i).point.pose.position);
     const auto p_back = to_bg2d(path.points.at(i + 1).point.pose.position);
 
@@ -199,7 +195,8 @@ boost::optional<PathIndexWithOffset> findBackwardOffsetSegment(
 
     // If it's over offset point, return front index and remain offset length
     if (sum_length >= offset_length) {
-      return std::make_pair(i, sum_length - offset_length);
+      const auto k = static_cast<std::size_t>(i);
+      return std::make_pair(k, sum_length - offset_length);
     }
   }
 
@@ -268,8 +265,8 @@ DetectionAreaModule::DetectionAreaModule(
   const rclcpp::Clock::SharedPtr clock)
 : SceneModuleInterface(module_id, logger, clock),
   detection_area_reg_elem_(detection_area_reg_elem),
-  planner_param_(planner_param),
-  state_(State::GO)
+  state_(State::GO),
+  planner_param_(planner_param)
 {
 }
 

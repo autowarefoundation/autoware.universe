@@ -83,7 +83,7 @@ bool insertTargetVelocityPoint(
     // ----------------
 
     // check nearest collision point
-    Point nearest_collision_point;
+    Point nearest_collision_point{};
     double min_dist = 0.0;
     for (size_t j = 0; j < collision_points.size(); ++j) {
       double dist = bg::distance(Point(p0.x, p0.y), collision_points.at(j));
@@ -221,7 +221,7 @@ bool insertTargetVelocityPoint(
     // ----------------
 
     // check nearest collision point
-    Point nearest_collision_point;
+    Point nearest_collision_point{};
     double min_dist = 0.0;
     for (size_t j = 0; j < collision_points.size(); ++j) {
       double dist = bg::distance(Point(p0.x, p0.y), collision_points.at(j));
@@ -310,12 +310,12 @@ bool insertTargetVelocityPoint(
 
 bool isClockWise(const Polygon & polygon)
 {
-  const int n = polygon.outer().size();
+  const auto n = polygon.outer().size();
 
   const double x_offset = polygon.outer().at(0).x();
   const double y_offset = polygon.outer().at(0).y();
   double sum = 0.0;
-  for (int i = 0; i < polygon.outer().size(); ++i) {
+  for (std::size_t i = 0; i < polygon.outer().size(); ++i) {
     sum +=
       (polygon.outer().at(i).x() - x_offset) * (polygon.outer().at((i + 1) % n).y() - y_offset) -
       (polygon.outer().at(i).y() - y_offset) * (polygon.outer().at((i + 1) % n).x() - x_offset);
@@ -325,10 +325,10 @@ bool isClockWise(const Polygon & polygon)
 
 Polygon inverseClockWise(const Polygon & polygon)
 {
+  const auto & poly = polygon.outer();
   Polygon inverted_polygon;
-  for (int i = polygon.outer().size() - 1; 0 <= i; --i) {
-    inverted_polygon.outer().push_back(polygon.outer().at(i));
-  }
+  inverted_polygon.outer().reserve(poly.size());
+  std::reverse_copy(poly.begin(), poly.end(), std::back_inserter(inverted_polygon.outer()));
   return inverted_polygon;
 }
 }  // namespace behavior_velocity_planner

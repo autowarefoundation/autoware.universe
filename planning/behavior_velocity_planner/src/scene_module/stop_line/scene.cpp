@@ -72,12 +72,8 @@ boost::optional<StopLineModule::SegmentIndexWithOffset> findBackwardOffsetSegmen
   const double offset_length)
 {
   double sum_length = 0.0;
-  for (size_t i = base_idx - 1; i >= 0; --i) {
-    // Avoid overflow
-    if (i >= base_idx) {
-      break;
-    }
-
+  const auto start = static_cast<std::int32_t>(base_idx) - 1;
+  for (std::int32_t i = start; i >= 0; --i) {
     const auto p_front = to_bg2d(path.points.at(i).point.pose.position);
     const auto p_back = to_bg2d(path.points.at(i + 1).point.pose.position);
 
@@ -85,7 +81,8 @@ boost::optional<StopLineModule::SegmentIndexWithOffset> findBackwardOffsetSegmen
 
     // If it's over offset point, return front index and remain offset length
     if (sum_length >= offset_length) {
-      return StopLineModule::SegmentIndexWithOffset{i, sum_length - offset_length};
+      const auto k = static_cast<std::size_t>(i);
+      return StopLineModule::SegmentIndexWithOffset{k, sum_length - offset_length};
     }
   }
 
@@ -205,7 +202,6 @@ boost::optional<StopLineModule::SegmentIndexWithOffset> StopLineModule::findOffs
   const auto base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
   const auto base_backward_length = planner_param_.stop_margin + base_link2front;
 
-  const auto & p_front = to_bg2d(path.points.at(collision.index).point.pose.position);
   const auto & p_back = to_bg2d(path.points.at(collision.index + 1).point.pose.position);
 
   return findBackwardOffsetSegment(

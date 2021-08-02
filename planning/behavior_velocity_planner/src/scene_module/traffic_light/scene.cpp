@@ -109,6 +109,7 @@ double calcSignedArcLength(
   }
 }
 
+[[maybe_unused]]
 double calcSignedDistance(const geometry_msgs::msg::Pose & p1, const Eigen::Vector2d & p2)
 {
   Eigen::Affine3d map2p1;
@@ -266,8 +267,8 @@ TrafficLightModule::TrafficLightModule(
   traffic_light_reg_elem_(traffic_light_reg_elem),
   lane_(lane),
   state_(State::APPROACH),
-  is_prev_state_stop_(false),
-  input_(Input::PERCEPTION)
+  input_(Input::PERCEPTION),
+  is_prev_state_stop_(false)
 {
   planner_param_ = planner_param;
 }
@@ -277,7 +278,7 @@ bool TrafficLightModule::modifyPathVelocity(
   autoware_planning_msgs::msg::StopReason * stop_reason)
 {
   looking_tl_state_ = initializeTrafficLightState(path->header.stamp);
-  debug_data_ = {};
+  debug_data_ = DebugData();
   debug_data_.base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
   first_stop_path_point_index_ = static_cast<int>(path->points.size()) - 1;
   *stop_reason =
@@ -391,8 +392,6 @@ bool TrafficLightModule::isPassthrough(const double & signed_arc_length) const
   const double max_acc = planner_data_->max_stop_acceleration_threshold;
   const double max_jerk = planner_data_->max_stop_jerk_threshold;
   const double delay_response_time = planner_data_->delay_response_time;
-  const double optional_vel =
-    2.0 * max_acc * (delay_response_time - planner_param_.yellow_lamp_period);
 
   const double reachable_distance =
     planner_data_->current_velocity->twist.linear.x * planner_param_.yellow_lamp_period;
