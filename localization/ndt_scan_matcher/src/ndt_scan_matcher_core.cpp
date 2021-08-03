@@ -374,16 +374,9 @@ void NDTScanMatcher::callbackSensorPoints(
   const Eigen::Matrix4f initial_pose_matrix = initial_pose_affine.matrix().cast<float>();
 
   auto output_cloud = std::make_shared<pcl::PointCloud<PointSource>>();
-  const auto align_start_time = std::chrono::system_clock::now();
   key_value_stdmap_["state"] = "Aligning";
   ndt_ptr_->align(*output_cloud, initial_pose_matrix);
   key_value_stdmap_["state"] = "Sleeping";
-  const auto align_end_time = std::chrono::system_clock::now();
-  const double align_time =
-    std::chrono::duration_cast<std::chrono::microseconds>(
-    align_end_time -
-    align_start_time).count() /
-    1000.0;
 
   const Eigen::Matrix4f result_pose_matrix = ndt_ptr_->getFinalTransformation();
   Eigen::Affine3d result_pose_affine;
