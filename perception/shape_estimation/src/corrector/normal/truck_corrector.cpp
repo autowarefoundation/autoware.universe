@@ -59,7 +59,7 @@ bool TruckCorrector::correct(
   v_point.push_back(Eigen::Vector2d(-shape_output.dimensions.x / 2.0, 0.0));
   v_point.push_back(Eigen::Vector2d(0.0, -shape_output.dimensions.y / 2.0));
 
-  size_t first_most_distant_index;
+  size_t first_most_distant_index{0};
   {
     double distance = 0.0;
     for (size_t i = 0; i < v_point.size(); ++i) {
@@ -69,7 +69,7 @@ bool TruckCorrector::correct(
       }
     }
   }
-  size_t second_most_distant_index;
+  size_t second_most_distant_index{0};
   {
     double distance = 0.0;
     for (size_t i = 0; i < v_point.size(); ++i) {
@@ -79,7 +79,7 @@ bool TruckCorrector::correct(
       }
     }
   }
-  size_t third_most_distant_index;
+  size_t third_most_distant_index{0};
   {
     double distance = 0.0;
     for (size_t i = 0; i < v_point.size(); ++i) {
