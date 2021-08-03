@@ -28,6 +28,7 @@ using namespace std::placeholders;
 
 namespace
 {
+[[maybe_unused]]
 void setColor(
   const double r, const double g, const double b, const double a, std_msgs::msg::ColorRGBA & cl)
 {
