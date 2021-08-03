@@ -194,7 +194,7 @@ PolygonPoints getPolygonPointsFromBB(
   const std::vector<double> rel_x = {0.5 * dim_x, 0.5 * dim_x, -0.5 * dim_x, -0.5 * dim_x};
   const std::vector<double> rel_y = {0.5 * dim_y, -0.5 * dim_y, -0.5 * dim_y, 0.5 * dim_y};
   const geometry_msgs::msg::Pose object_pose = object.state.pose_covariance.pose;
-  for (int i = 0; i < rel_x.size(); i++) {
+  for (std::size_t i = 0; i < rel_x.size(); i++) {
     geometry_msgs::msg::Point rel_point;
     rel_point.x = rel_x[i];
     rel_point.y = rel_y[i];
@@ -333,7 +333,7 @@ std::vector<cv::Point> getExtendedCVPolygon(
       }
       // back_idx -> vector_back -> vector_front -> nearest_idx -> front_idx
     } else {
-      for (int i = edges.back_idx + 1; i < points_in_image.size(); i++) {
+      for (std::size_t i = edges.back_idx + 1; i < points_in_image.size(); i++) {
         cv_polygon.push_back(cv::Point(points_in_image[i].x, points_in_image[i].y));
       }
       for (int i = 0; i < edges.front_idx; i++) {
@@ -349,7 +349,7 @@ std::vector<cv::Point> getExtendedCVPolygon(
       // back_idx -> vector_back -> vector_front -> nearest_idx -> front_idx
     } else {
       if (edges.back_idx >= edges.front_idx && nearest_polygon_idx < edges.front_idx) {
-        for (int i = edges.back_idx + 1; i < points_in_image.size(); i++) {
+        for (std::size_t i = edges.back_idx + 1; i < points_in_image.size(); i++) {
           cv_polygon.push_back(cv::Point(points_in_image[i].x, points_in_image[i].y));
         }
         for (int i = 0; i < edges.front_idx; i++) {
@@ -416,7 +416,7 @@ boost::optional<Edges> getEdges(
   const Eigen::Vector2d path_point_vec(dx1, dy1);
   const double path_point_vec_norm = path_point_vec.norm();
   Edges edges;
-  for (int i = 0; i < points_in_image.size(); i++) {
+  for (std::size_t i = 0; i < points_in_image.size(); i++) {
     const double dx2 = points_in_map[i].x - ray_origin.x;
     const double dy2 = points_in_map[i].y - ray_origin.y;
     const Eigen::Vector2d path_point2point(dx2, dy2);
@@ -510,7 +510,7 @@ boost::optional<int> getStopIdx(
   const cv::Mat & road_clearance_map, const nav_msgs::msg::MapMetaData & map_info)
 {
   const int nearest_idx = util::getNearestPointIdx(footprints, ego_pose.position);
-  for (int i = nearest_idx; i < footprints.size(); i++) {
+  for (std::size_t i = nearest_idx; i < footprints.size(); i++) {
     const auto top_left = getDistance(road_clearance_map, footprints[i].top_left, map_info);
     const auto top_right = getDistance(road_clearance_map, footprints[i].top_right, map_info);
     const auto bottom_right = getDistance(road_clearance_map, footprints[i].bottom_right, map_info);
@@ -522,7 +522,7 @@ boost::optional<int> getStopIdx(
       top_left.get() < epsilon || top_right.get() < epsilon || bottom_left.get() < epsilon ||
       bottom_right.get() < epsilon)
     {
-      return std::max(i - 1, 0);
+      return std::max(static_cast<int>(i - 1), 0);
     }
   }
   return boost::none;

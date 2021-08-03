@@ -264,7 +264,7 @@ std::vector<geometry_msgs::msg::Point> getInterpolatedPoints(
     concat_points.push_back(point.position);
   }
 
-  for (int i = 0; i < concat_points.size(); i++) {
+  for (std::size_t i = 0; i < concat_points.size(); i++) {
     if (i > 0) {
       if (
         std::fabs(concat_points[i].x - concat_points[i - 1].x) < 1e-6 &&
@@ -286,7 +286,7 @@ std::vector<geometry_msgs::msg::Point> getInterpolatedPoints(
 {
   std::vector<double> tmp_x;
   std::vector<double> tmp_y;
-  for (int i = 0; i < points.size(); i++) {
+  for (std::size_t i = 0; i < points.size(); i++) {
     if (i > 0) {
       if (
         std::fabs(points[i].x - points[i - 1].x) < 1e-6 &&
@@ -308,7 +308,7 @@ std::vector<geometry_msgs::msg::Point> getInterpolatedPoints(
 {
   std::vector<double> tmp_x;
   std::vector<double> tmp_y;
-  for (int i = 0; i < points.size(); i++) {
+  for (std::size_t i = 0; i < points.size(); i++) {
     if (i > 0) {
       if (
         std::fabs(points[i].position.x - points[i - 1].position.x) < 1e-6 &&
@@ -330,7 +330,7 @@ std::vector<geometry_msgs::msg::Point> getInterpolatedPoints(
 {
   std::vector<double> tmp_x;
   std::vector<double> tmp_y;
-  for (int i = 0; i < points.size(); i++) {
+  for (std::size_t i = 0; i < points.size(); i++) {
     if (i > 0) {
       if (
         std::fabs(points[i].p.x - points[i - 1].p.x) < 1e-6 &&
@@ -353,7 +353,7 @@ std::vector<geometry_msgs::msg::Point> getInterpolatedPoints(
 {
   std::vector<double> tmp_x;
   std::vector<double> tmp_y;
-  for (int i = 0; i < points.size(); i++) {
+  for (std::size_t i = 0; i < points.size(); i++) {
     if (i > 0) {
       if (
         std::fabs(points[i].pose.position.x - points[i - 1].pose.position.x) < 1e-6 &&
@@ -384,7 +384,7 @@ int getNearestIdx(
   double min_dist = std::numeric_limits<double>::max();
   int nearest_idx = default_idx;
   const double point_yaw = tf2::getYaw(pose.orientation);
-  for (int i = 0; i < points.size(); i++) {
+  for (std::size_t i = 0; i < points.size(); i++) {
     const double dist = calculateSquaredDistance(points[i].pose.position, pose.position);
     const double points_yaw = tf2::getYaw(points[i].pose.orientation);
     const double diff_yaw = points_yaw - point_yaw;
@@ -410,7 +410,7 @@ int getNearestIdx(
   int nearest_idx = default_idx;
   double min_dist = std::numeric_limits<double>::max();
   const double point_yaw = tf2::getYaw(pose.orientation);
-  for (int i = 0; i < points.size(); i++) {
+  for (std::size_t i = 0; i < points.size(); i++) {
     const double dist = calculateSquaredDistance(points[i], pose.position);
     double points_yaw = 0;
     if (i > 0) {
@@ -444,7 +444,7 @@ int getNearestIdxOverPoint(
   const double pose_dx = std::cos(point_yaw);
   const double pose_dy = std::sin(point_yaw);
   int nearest_idx = 0;
-  for (int i = 0; i < points.size(); i++) {
+  for (std::size_t i = 0; i < points.size(); i++) {
     if (i > 0) {
       const double dist = util::calculateSquaredDistance(points[i].pose.position, pose.position);
       const double points_yaw =
@@ -470,7 +470,7 @@ int getNearestIdx(
   double min_dist = std::numeric_limits<double>::max();
   int nearest_idx = default_idx;
   const double point_yaw = tf2::getYaw(pose.orientation);
-  for (int i = 0; i < points.size(); i++) {
+  for (std::size_t i = 0; i < points.size(); i++) {
     if (i > 0) {
       const double dist = calculateSquaredDistance(points[i], pose.position);
       const double points_yaw = getYawFromPoints(points[i], points[i - 1]);
@@ -490,7 +490,7 @@ int getNearestIdx(const T & points, const geometry_msgs::msg::Point & point, con
 {
   double min_dist = std::numeric_limits<double>::max();
   int nearest_idx = default_idx;
-  for (int i = 0; i < points.size(); i++) {
+  for (std::size_t i = 0; i < points.size(); i++) {
     if (i > 0) {
       const double dist = calculateSquaredDistance(points[i - 1].pose.position, point);
       const double points_dx = points[i].pose.position.x - points[i - 1].pose.position.x;
@@ -521,7 +521,7 @@ int getNearestIdx(
 {
   int nearest_idx = 0;
   double min_dist = std::numeric_limits<double>::max();
-  for (int i = 0; i < points.size(); i++) {
+  for (std::size_t i = 0; i < points.size(); i++) {
     const double dist = calculateSquaredDistance(points[i], point);
     if (dist < min_dist) {
       min_dist = dist;
@@ -536,7 +536,7 @@ int getNearestIdx(const T & points, const geometry_msgs::msg::Point & point)
 {
   int nearest_idx = 0;
   double min_dist = std::numeric_limits<double>::max();
-  for (int i = 0; i < points.size(); i++) {
+  for (std::size_t i = 0; i < points.size(); i++) {
     const double dist = calculateSquaredDistance(points[i].pose.position, point);
     if (dist < min_dist) {
       min_dist = dist;
@@ -556,7 +556,7 @@ int getNearestIdx(
 {
   double nearest_delta_s = std::numeric_limits<double>::max();
   int nearest_idx = begin_idx;
-  for (int i = begin_idx; i < points.size(); i++) {
+  for (std::size_t i = begin_idx; i < points.size(); i++) {
     double diff = std::fabs(target_s - points[i].s);
     if (diff < nearest_delta_s) {
       nearest_delta_s = diff;
@@ -571,7 +571,7 @@ int getNearestPointIdx(const T & points, const geometry_msgs::msg::Point & point
 {
   int nearest_idx = 0;
   double min_dist = std::numeric_limits<double>::max();
-  for (int i = 0; i < points.size(); i++) {
+  for (std::size_t i = 0; i < points.size(); i++) {
     const double dist = calculateSquaredDistance(points[i].p, point);
     if (dist < min_dist) {
       min_dist = dist;
@@ -645,7 +645,7 @@ std::vector<autoware_planning_msgs::msg::TrajectoryPoint> alignVelocityWithPoint
 {
   auto traj_points = base_traj_points;
   int prev_begin_idx = 0;
-  for (int i = 0; i < traj_points.size(); i++) {
+  for (std::size_t i = 0; i < traj_points.size(); i++) {
     const auto first = points.begin() + prev_begin_idx;
     const auto last = points.end();
     const T truncated_points(first, last);
@@ -653,13 +653,13 @@ std::vector<autoware_planning_msgs::msg::TrajectoryPoint> alignVelocityWithPoint
     const int nearest_idx =
       util::getNearestIdx(truncated_points, traj_points[i].pose.position, default_idx);
     traj_points[i].pose.position.z = truncated_points[nearest_idx].pose.position.z;
-    if (i <= max_skip_comparison_idx) {
+    if (static_cast<int>(i) <= max_skip_comparison_idx) {
       traj_points[i].twist.linear.x = truncated_points[nearest_idx].twist.linear.x;
     } else {
       traj_points[i].twist.linear.x =
         std::fmin(truncated_points[nearest_idx].twist.linear.x, traj_points[i].twist.linear.x);
     }
-    if (i >= zero_velocity_traj_idx) {
+    if (static_cast<int>(i) >= zero_velocity_traj_idx) {
       traj_points[i].twist.linear.x = 0;
     } else if (truncated_points[nearest_idx].twist.linear.x < 1e-6) {
       if (i > 0) {
@@ -684,8 +684,8 @@ alignVelocityWithPoints<std::vector<autoware_planning_msgs::msg::TrajectoryPoint
 std::vector<std::vector<int>> getHistogramTable(const std::vector<std::vector<int>> & input)
 {
   std::vector<std::vector<int>> histogram_table = input;
-  for (int i = 0; i < input.size(); i++) {
-    for (int j = 0; j < input[i].size(); j++) {
+  for (std::size_t i = 0; i < input.size(); i++) {
+    for (std::size_t j = 0; j < input[i].size(); j++) {
       if (input[i][j]) {
         histogram_table[i][j] = 0;
       } else {
@@ -710,7 +710,7 @@ Rectangle getLargestRectangleInRow(
   search_histo.push_back(0);
   std::stack<HistogramBin> stack;
   Rectangle largest_rect;
-  for (int i = 0; i < search_histo.size(); i++) {
+  for (std::size_t i = 0; i < search_histo.size(); i++) {
     HistogramBin bin;
     bin.height = search_histo[i];
     bin.variable_pos = i;
@@ -748,7 +748,7 @@ Rectangle getLargestRectangle(const std::vector<std::vector<int>> & input)
 {
   std::vector<std::vector<int>> histogram_table = getHistogramTable(input);
   Rectangle largest_rectangle;
-  for (int i = 0; i < histogram_table.size(); i++) {
+  for (std::size_t i = 0; i < histogram_table.size(); i++) {
     Rectangle rect = getLargestRectangleInRow(histogram_table[i], i, input.size());
     if (rect.area > largest_rectangle.area) {
       largest_rectangle = rect;
@@ -803,10 +803,10 @@ std::vector<Footprint> getVehicleFootprints(
   std::vector<double> rel_lon_offset{baselink_to_top, baselink_to_top, 0, 0};
   std::vector<double> rel_lat_offset{half_width, -half_width, -half_width, half_width};
   std::vector<Footprint> rects;
-  for (int i = 0; i < optimized_points.size(); i++) {
+  for (std::size_t i = 0; i < optimized_points.size(); i++) {
     // for (int i = nearest_idx; i < optimized_points.size(); i++) {
     std::vector<geometry_msgs::msg::Point> abs_points;
-    for (int j = 0; j < rel_lon_offset.size(); j++) {
+    for (std::size_t j = 0; j < rel_lon_offset.size(); j++) {
       geometry_msgs::msg::Point rel_point;
       rel_point.x = rel_lon_offset[j];
       rel_point.y = rel_lat_offset[j];
@@ -898,7 +898,7 @@ int getZeroVelocityIdx(
 
   if (is_showing_debug_info) {
     int zero_velocity_path_idx = path_points.size() - 1;
-    for (int i = 0; i < path_points.size(); i++) {
+    for (std::size_t i = 0; i < path_points.size(); i++) {
       if (path_points[i].twist.linear.x < 1e-6) {
         zero_velocity_path_idx = i;
         break;
@@ -918,7 +918,7 @@ int getZeroVelocityIdxFromPoints(
   const int default_idx, const TrajectoryParam & traj_param)
 {
   int zero_velocity_points_idx = points.size() - 1;
-  for (int i = 0; i < points.size(); i++) {
+  for (std::size_t i = 0; i < points.size(); i++) {
     if (points[i].twist.linear.x < 1e-6) {
       zero_velocity_points_idx = i;
       break;

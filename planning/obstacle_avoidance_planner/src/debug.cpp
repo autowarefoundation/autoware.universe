@@ -152,7 +152,7 @@ visualization_msgs::msg::MarkerArray getDebugPointsMarkers(
 
   unique_id = 0;
   visualization_msgs::msg::Marker interpolated_points_marker;
-  interpolated_points_marker.lifetime = rclcpp::Duration(0);
+  interpolated_points_marker.lifetime = rclcpp::Duration::from_seconds(0);
   interpolated_points_marker.header.frame_id = "map";
   interpolated_points_marker.header.stamp = rclcpp::Time(0);
   interpolated_points_marker.ns = std::string("interpolated_points_marker");
@@ -172,7 +172,7 @@ visualization_msgs::msg::MarkerArray getDebugPointsMarkers(
 
   unique_id = 0;
   visualization_msgs::msg::Marker optimized_points_marker;
-  optimized_points_marker.lifetime = rclcpp::Duration(0);
+  optimized_points_marker.lifetime = rclcpp::Duration::from_seconds(0);
   optimized_points_marker.header.frame_id = "map";
   optimized_points_marker.header.stamp = rclcpp::Time(0);
   optimized_points_marker.ns = std::string("optimized_points_marker");
@@ -191,9 +191,9 @@ visualization_msgs::msg::MarkerArray getDebugPointsMarkers(
   }
 
   unique_id = 0;
-  for (int i = 0; i < optimized_points.size(); i++) {
+  for (std::size_t i = 0; i < optimized_points.size(); i++) {
     visualization_msgs::msg::Marker optimized_points_text_marker;
-    optimized_points_text_marker.lifetime = rclcpp::Duration(0);
+    optimized_points_text_marker.lifetime = rclcpp::Duration::from_seconds(0);
     optimized_points_text_marker.header.frame_id = "map";
     optimized_points_text_marker.header.stamp = rclcpp::Time(0);
     optimized_points_text_marker.ns = std::string("optimized_points_text_marker");
@@ -210,9 +210,9 @@ visualization_msgs::msg::MarkerArray getDebugPointsMarkers(
   }
 
   unique_id = 0;
-  for (int i = 0; i < interpolated_points.size(); i++) {
+  for (std::size_t i = 0; i < interpolated_points.size(); i++) {
     visualization_msgs::msg::Marker interpolated_points_text_marker;
-    interpolated_points_text_marker.lifetime = rclcpp::Duration(0);
+    interpolated_points_text_marker.lifetime = rclcpp::Duration::from_seconds(0);
     interpolated_points_text_marker.header.frame_id = "map";
     interpolated_points_text_marker.header.stamp = rclcpp::Time(0);
     interpolated_points_text_marker.ns = std::string("interpolated_points_text_marker");
@@ -250,7 +250,7 @@ visualization_msgs::msg::MarkerArray getDebugPointsMarkers(
 
   unique_id = 0;
   visualization_msgs::msg::Marker fixed_marker;
-  fixed_marker.lifetime = rclcpp::Duration(0);
+  fixed_marker.lifetime = rclcpp::Duration::from_seconds(0);
   fixed_marker.header.frame_id = "map";
   fixed_marker.header.stamp = rclcpp::Time(0);
   fixed_marker.ns = std::string("fixed_points_marker");
@@ -294,9 +294,9 @@ visualization_msgs::msg::MarkerArray getDebugConstrainMarkers(
 {
   visualization_msgs::msg::MarkerArray marker_array;
   int unique_id = 0;
-  for (int i = 0; i < constrain_ranges.size(); i++) {
+  for (std::size_t i = 0; i < constrain_ranges.size(); i++) {
     visualization_msgs::msg::Marker constrain_rect_marker;
-    constrain_rect_marker.lifetime = rclcpp::Duration(0);
+    constrain_rect_marker.lifetime = rclcpp::Duration::from_seconds(0);
     constrain_rect_marker.header.frame_id = "map";
     constrain_rect_marker.header.stamp = rclcpp::Time(0);
     constrain_rect_marker.ns = ns;
@@ -319,13 +319,13 @@ visualization_msgs::msg::MarkerArray getDebugConstrainMarkers(
     marker_array.markers.push_back(constrain_rect_marker);
   }
 
-  for (int i = 0; i < constrain_ranges.size(); i++) {
+  for (std::size_t i = 0; i < constrain_ranges.size(); i++) {
     visualization_msgs::msg::Marker marker;
     marker.header.frame_id = "map";
     marker.header.stamp = rclcpp::Time(0);
     marker.ns = ns + "_text";
     marker.id = unique_id++;
-    marker.lifetime = rclcpp::Duration(0);
+    marker.lifetime = rclcpp::Duration::from_seconds(0);
     marker.action = visualization_msgs::msg::Marker::ADD;
     marker.pose.orientation.w = 1.0;
     marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
@@ -337,9 +337,9 @@ visualization_msgs::msg::MarkerArray getDebugConstrainMarkers(
   }
 
   unique_id = 0;
-  for (int i = 0; i < constrain_ranges.size(); i++) {
+  for (std::size_t i = 0; i < constrain_ranges.size(); i++) {
     visualization_msgs::msg::Marker constrain_range_text_marker;
-    constrain_range_text_marker.lifetime = rclcpp::Duration(0);
+    constrain_range_text_marker.lifetime = rclcpp::Duration::from_seconds(0);
     constrain_range_text_marker.header.frame_id = "map";
     constrain_range_text_marker.header.stamp = rclcpp::Time(0);
     constrain_range_text_marker.ns = ns + "location";
@@ -460,7 +460,7 @@ visualization_msgs::msg::MarkerArray getRectanglesNumMarkerArray(
   int number_of_rect = 0;
   for (const auto & rect : rects) {
     marker.id = unique_id++;
-    marker.lifetime = rclcpp::Duration(0);
+    marker.lifetime = rclcpp::Duration::from_seconds(0);
     marker.action = visualization_msgs::msg::Marker::ADD;
     marker.pose.orientation.w = 1.0;
     marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
@@ -495,7 +495,7 @@ visualization_msgs::msg::MarkerArray getPointsMarkerArray(
 
   const int unique_id = 0;
   marker.id = unique_id;
-  marker.lifetime = rclcpp::Duration(0);
+  marker.lifetime = rclcpp::Duration::from_seconds(0);
   marker.action = visualization_msgs::msg::Marker::ADD;
   marker.pose.orientation.w = 1.0;
   marker.type = visualization_msgs::msg::Marker::SPHERE_LIST;
@@ -525,7 +525,7 @@ visualization_msgs::msg::MarkerArray getPointsMarkerArray(
 
   const int unique_id = 0;
   marker.id = unique_id;
-  marker.lifetime = rclcpp::Duration(0);
+  marker.lifetime = rclcpp::Duration::from_seconds(0);
   marker.action = visualization_msgs::msg::Marker::ADD;
   marker.pose.orientation.w = 1.0;
   marker.type = visualization_msgs::msg::Marker::SPHERE_LIST;
@@ -554,9 +554,9 @@ visualization_msgs::msg::MarkerArray getPointsTextMarkerArray(
   marker.ns = ns;
 
   int unique_id = 0;
-  for (int i = 0; i < points.size(); i++) {
+  for (std::size_t i = 0; i < points.size(); i++) {
     marker.id = unique_id++;
-    marker.lifetime = rclcpp::Duration(0);
+    marker.lifetime = rclcpp::Duration::from_seconds(0);
     marker.action = visualization_msgs::msg::Marker::ADD;
     marker.pose.orientation.w = 1.0;
     marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
@@ -584,9 +584,9 @@ visualization_msgs::msg::MarkerArray getPointsTextMarkerArray(
   marker.ns = ns;
 
   int unique_id = 0;
-  for (int i = 0; i < points.size(); i++) {
+  for (std::size_t i = 0; i < points.size(); i++) {
     marker.id = unique_id++;
-    marker.lifetime = rclcpp::Duration(0);
+    marker.lifetime = rclcpp::Duration::from_seconds(0);
     marker.action = visualization_msgs::msg::Marker::ADD;
     marker.pose.orientation.w = 1.0;
     marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
@@ -614,9 +614,9 @@ visualization_msgs::msg::MarkerArray getBaseBoundsLineMarkerArray(
   marker.ns = ns;
 
   int unique_id = 0;
-  for (int i = 0; i < bounds.size(); i++) {
+  for (std::size_t i = 0; i < bounds.size(); i++) {
     marker.id = unique_id++;
-    marker.lifetime = rclcpp::Duration(0);
+    marker.lifetime = rclcpp::Duration::from_seconds(0);
     marker.action = visualization_msgs::msg::Marker::ADD;
     marker.pose.orientation.w = 1.0;
     marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
@@ -653,9 +653,9 @@ visualization_msgs::msg::MarkerArray getTopBoundsLineMarkerArray(
   marker.ns = ns;
 
   int unique_id = 0;
-  for (int i = 0; i < bounds.size(); i++) {
+  for (std::size_t i = 0; i < bounds.size(); i++) {
     marker.id = unique_id++;
-    marker.lifetime = rclcpp::Duration(0);
+    marker.lifetime = rclcpp::Duration::from_seconds(0);
     marker.action = visualization_msgs::msg::Marker::ADD;
     marker.pose.orientation.w = 1.0;
     marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
@@ -692,9 +692,9 @@ visualization_msgs::msg::MarkerArray getMidBoundsLineMarkerArray(
   marker.ns = ns;
 
   int unique_id = 0;
-  for (int i = 0; i < bounds.size(); i++) {
+  for (std::size_t i = 0; i < bounds.size(); i++) {
     marker.id = unique_id++;
-    marker.lifetime = rclcpp::Duration(0);
+    marker.lifetime = rclcpp::Duration::from_seconds(0);
     marker.action = visualization_msgs::msg::Marker::ADD;
     marker.pose.orientation.w = 1.0;
     marker.type = visualization_msgs::msg::Marker::LINE_STRIP;

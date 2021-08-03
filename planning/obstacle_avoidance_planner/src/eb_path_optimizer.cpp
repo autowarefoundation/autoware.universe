@@ -231,7 +231,7 @@ EBPathOptimizer::getExtendedOptimizedTrajectory(
   const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & optimized_points,
   DebugData * debug_data)
 {
-  if (optimized_points.size() <= traj_param_.num_fix_points_for_extending) {
+  if (static_cast<int>(optimized_points.size()) <= traj_param_.num_fix_points_for_extending) {
     RCLCPP_INFO_THROTTLE(
       rclcpp::get_logger("EBPathOptimizer"), logger_ros_clock_,
       std::chrono::milliseconds(10000).count(), "[Avoidance] Not extend trajectory");
@@ -307,7 +307,7 @@ EBPathOptimizer::getExtendedOptimizedTrajectory(
     traj_param_.delta_yaw_threshold_for_closest_point);
 
   std::vector<autoware_planning_msgs::msg::TrajectoryPoint> extended_traj;
-  for (int i = extend_begin_idx; i < extended_traj_points.size(); i++) {
+  for (std::size_t i = extend_begin_idx; i < extended_traj_points.size(); i++) {
     extended_traj.push_back(extended_traj_points[i]);
   }
 
@@ -342,7 +342,6 @@ std::vector<autoware_planning_msgs::msg::TrajectoryPoint> EBPathOptimizer::calcu
 std::vector<double> EBPathOptimizer::solveQP(const OptMode & opt_mode)
 {
   std::vector<double> optimized_points;
-  int solution_status = 1;
   if (opt_mode == OptMode::Normal) {
     osqp_solver_ptr_->updateEpsRel(qp_param_.eps_rel);
     osqp_solver_ptr_->updateEpsAbs(qp_param_.eps_abs);
@@ -448,7 +447,7 @@ std::vector<geometry_msgs::msg::Point> EBPathOptimizer::getPaddedInterpolatedPoi
   const std::vector<geometry_msgs::msg::Point> & interpolated_points, const int farthest_point_idx)
 {
   std::vector<geometry_msgs::msg::Point> padded_interpolated_points;
-  for (size_t i = 0; i < traj_param_.num_sampling_points; i++) {
+  for (int i = 0; i < traj_param_.num_sampling_points; i++) {
     if (i > farthest_point_idx) {
       padded_interpolated_points.push_back(interpolated_points[farthest_point_idx]);
     } else {
@@ -508,8 +507,8 @@ int EBPathOptimizer::getEndPathIdx(
 {
   double accum_dist = 0;
   int end_path_idx = begin_path_idx;
-  for (int i = begin_path_idx; i < path_points.size(); i++) {
-    if (i > begin_path_idx) {
+  for (std::size_t i = begin_path_idx; i < path_points.size(); i++) {
+    if (static_cast<int>(i) > begin_path_idx) {
       const double dist =
         util::calculate2DDistance(path_points[i].pose.position, path_points[i - 1].pose.position);
       accum_dist += dist;
@@ -531,7 +530,7 @@ int EBPathOptimizer::getEndPathIdxInsideArea(
   const int default_idx = 0;
   const int initial_idx = util::getNearestIdx(
     path_points, ego_pose, default_idx, traj_param_.delta_yaw_threshold_for_closest_point);
-  for (int i = initial_idx; i < path_points.size(); i++) {
+  for (std::size_t i = initial_idx; i < path_points.size(); i++) {
     geometry_msgs::msg::Point p = path_points[i].pose.position;
     geometry_msgs::msg::Point top_image_point;
     end_path_idx = i;
@@ -598,7 +597,7 @@ EBPathOptimizer::convertOptimizedPointsToTrajectory(
   const int farthest_idx)
 {
   std::vector<autoware_planning_msgs::msg::TrajectoryPoint> traj_points;
-  for (size_t i = 0; i <= farthest_idx; i++) {
+  for (int i = 0; i <= farthest_idx; i++) {
     autoware_planning_msgs::msg::TrajectoryPoint tmp_point;
     tmp_point.pose.position.x = optimized_points[i];
     tmp_point.pose.position.y = optimized_points[i + traj_param_.num_sampling_points];
@@ -842,8 +841,8 @@ boost::optional<std::vector<ConstrainRectangle>> EBPathOptimizer::getConstrainRe
   }
 
   std::vector<ConstrainRectangle> constrain_ranges(traj_param_.num_sampling_points);
-  size_t origin_dynamic_joint_idx = traj_param_.num_sampling_points;
-  for (size_t i = 0; i < traj_param_.num_sampling_points; i++) {
+  int origin_dynamic_joint_idx = traj_param_.num_sampling_points;
+  for (int i = 0; i < traj_param_.num_sampling_points; i++) {
     if (isPreFixIdx(i, farthest_point_idx, num_fixed_points, straight_idx)) {
       constrain_ranges[i] = only_smooth_constrains[i];
       if (object_constrains[i].is_empty_driveable_area) {
@@ -866,7 +865,7 @@ boost::optional<std::vector<ConstrainRectangle>> EBPathOptimizer::getConstrainRe
         if (constrain_ranges[i].is_empty_driveable_area) {
           RCLCPP_INFO_EXPRESSION(
             rclcpp::get_logger("EBPathOptimizer"), is_showing_debug_info_,
-            "Only road clearance optimization failed at %zu", i);
+            "Only road clearance optimization failed at %d", i);
           is_using_only_smooth_constrain = true;
           origin_dynamic_joint_idx = i;
           return boost::none;
@@ -876,7 +875,7 @@ boost::optional<std::vector<ConstrainRectangle>> EBPathOptimizer::getConstrainRe
         if (constrain_ranges[i].is_empty_driveable_area) {
           RCLCPP_INFO_EXPRESSION(
             rclcpp::get_logger("EBPathOptimizer"), is_showing_debug_info_,
-            "Object clearance optimization failed at %zu", i);
+            "Object clearance optimization failed at %d", i);
           return boost::none;
         }
       }
@@ -987,7 +986,6 @@ geometry_msgs::msg::Pose EBPathOptimizer::getOriginPose(
   const std::vector<geometry_msgs::msg::Point> & interpolated_points, const int interpolated_idx,
   const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points)
 {
-  double min_dist = std::numeric_limits<double>::max();
   geometry_msgs::msg::Pose pose;
   pose.position = interpolated_points[interpolated_idx];
   if (interpolated_idx > 0) {
@@ -1011,7 +1009,6 @@ Anchor EBPathOptimizer::getAnchor(
   const std::vector<geometry_msgs::msg::Point> & interpolated_points, const int interpolated_idx,
   const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points) const
 {
-  double min_dist = std::numeric_limits<double>::max();
   geometry_msgs::msg::Pose pose;
   pose.position = interpolated_points[interpolated_idx];
   if (interpolated_idx > 0) {
@@ -1247,8 +1244,8 @@ OccupancyMaps EBPathOptimizer::getOccupancyMaps(
       const int x_idx = occupancy_points.size() - x_idx_in_occupancy_map - 1;
       const int y_idx = occupancy_points.front().size() - y_idx_in_occupancy_map - 1;
       if (
-        x_idx < 0 || x_idx >= occupancy_points.size() || y_idx < 0 ||
-        y_idx >= occupancy_points.front().size())
+        x_idx < 0 || x_idx >= static_cast<int>(occupancy_points.size()) || y_idx < 0 ||
+        y_idx >= static_cast<int>(occupancy_points.front().size()))
       {
         continue;
       }

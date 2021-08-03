@@ -156,7 +156,7 @@ void MPTOptimizer::calcOrientation(std::vector<ReferencePoint> * ref_points) con
   if (!ref_points) {
     return;
   }
-  for (int i = 0; i < ref_points->size(); i++) {
+  for (std::size_t i = 0; i < ref_points->size(); i++) {
     if (ref_points->at(i).fix_state) {
       continue;
     }
@@ -179,7 +179,7 @@ void MPTOptimizer::calcVelocity(
   if (!ref_points) {
     return;
   }
-  for (int i = 0; i < ref_points->size(); i++) {
+  for (std::size_t i = 0; i < ref_points->size(); i++) {
     ref_points->at(i).v = points[util::getNearestIdx(points, ref_points->at(i).p)].twist.linear.x;
   }
 }
@@ -227,7 +227,7 @@ void MPTOptimizer::calcArcLength(std::vector<ReferencePoint> * ref_points) const
   if (!ref_points) {
     return;
   }
-  for (int i = 0; i < ref_points->size(); i++) {
+  for (std::size_t i = 0; i < ref_points->size(); i++) {
     if (i > 0) {
       geometry_msgs::msg::Point a, b;
       a = ref_points->at(i).p;
@@ -242,7 +242,7 @@ void MPTOptimizer::calcExtraPoints(std::vector<ReferencePoint> * ref_points) con
   if (!ref_points) {
     return;
   }
-  for (int i = 0; i < ref_points->size(); i++) {
+  for (std::size_t i = 0; i < ref_points->size(); i++) {
     const double p1_target_s = ref_points->at(i).s + mpt_param_ptr_->top_point_dist_from_base_link;
     const int nearest_p1_idx = util::getNearestIdx(*ref_points, p1_target_s, i);
     ref_points->at(i).top_pose.position = ref_points->at(nearest_p1_idx).p;
@@ -253,10 +253,10 @@ void MPTOptimizer::calcExtraPoints(std::vector<ReferencePoint> * ref_points) con
 
     ref_points->at(i).top_pose.orientation =
       util::getQuaternionFromPoints(ref_points->at(i).top_pose.position, ref_points->at(i).p);
-    if (i == nearest_p1_idx && i > 0) {
+    if (static_cast<int>(i) == nearest_p1_idx && i > 0) {
       ref_points->at(i).top_pose.orientation =
         util::getQuaternionFromPoints(ref_points->at(i).p, ref_points->at(i - 1).p);
-    } else if (i == nearest_p1_idx) {
+    } else if (static_cast<int>(i) == nearest_p1_idx) {
       ref_points->at(i).top_pose.orientation = ref_points->at(i).q;
     }
     ref_points->at(i).mid_pose.orientation = ref_points->at(i).top_pose.orientation;
@@ -283,7 +283,7 @@ void MPTOptimizer::calcInitialState(
   boost::optional<int> begin_idx = boost::none;
   double accum_s = 0;
 
-  for (int i = 0; i < ref_points->size(); i++) {
+  for (std::size_t i = 0; i < ref_points->size(); i++) {
     double ds = 0.0;
     if (i < ref_points->size() - 1) {
       ds = ref_points->at(i + 1).s - ref_points->at(i).s;
@@ -577,12 +577,9 @@ std::vector<autoware_planning_msgs::msg::TrajectoryPoint> MPTOptimizer::getMPTPo
   const auto x0 = ref_points.front().optimized_state;
   Eigen::VectorXd Xex = mpt_matrix.Aex * x0 + mpt_matrix.Bex * Uex + mpt_matrix.Wex;
 
-  const int N = ref_points.size();
-
   std::vector<autoware_planning_msgs::msg::TrajectoryPoint> traj_points;
   {
     const double lat_error = x0(0);
-    const double yaw_error = x0(1);
     autoware_planning_msgs::msg::TrajectoryPoint traj_point;
     traj_point.pose.position.x = ref_points[0].p.x - std::sin(ref_points[0].yaw) * lat_error;
     traj_point.pose.position.y = ref_points[0].p.y + std::cos(ref_points[0].yaw) * lat_error;
@@ -590,9 +587,8 @@ std::vector<autoware_planning_msgs::msg::TrajectoryPoint> MPTOptimizer::getMPTPo
     traj_points.push_back(traj_point);
   }
 
-  for (int i = 1; i < ref_points.size(); ++i) {
+  for (std::size_t i = 1; i < ref_points.size(); ++i) {
     const double lat_error = Xex((i - 1) * DIM_X);
-    const double yaw_error = Xex((i - 1) * DIM_X + 1);
     Eigen::Vector3d state = Xex.segment((i - 1) * DIM_X, DIM_X);
     setOptimizedState(&ref_points[i], state);
     autoware_planning_msgs::msg::TrajectoryPoint traj_point;
@@ -602,7 +598,7 @@ std::vector<autoware_planning_msgs::msg::TrajectoryPoint> MPTOptimizer::getMPTPo
 
     traj_points.push_back(traj_point);
   }
-  for (int i = 0; i < traj_points.size(); ++i) {
+  for (std::size_t i = 0; i < traj_points.size(); ++i) {
     if (i > 0 && traj_points.size() > 1) {
       traj_points[i].pose.orientation = util::getQuaternionFromPoints(
         traj_points[i].pose.position, traj_points[i - 1].pose.position);
@@ -1083,7 +1079,7 @@ ConstraintMatrix MPTOptimizer::getConstraintMatrix(
 
   constraint_matrix.linear = A;
 
-  for (size_t i = 0; i < lb.size(); ++i) {
+  for (int i = 0; i < lb.size(); ++i) {
     constraint_matrix.lower_bound.push_back(lb(i));
     constraint_matrix.upper_bound.push_back(ub(i));
   }
@@ -1096,9 +1092,9 @@ std::vector<ReferencePoint> MPTOptimizer::getBaseReferencePoints(
   const std::unique_ptr<Trajectories> & prev_trajs, DebugData * debug_data) const
 {
   std::vector<ReferencePoint> reference_points;
-  for (int i = 0; i < interpolated_points.size(); i++) {
+  for (const auto & e : interpolated_points) {
     ReferencePoint ref_point;
-    ref_point.p = interpolated_points[i];
+    ref_point.p = e;
     reference_points.push_back(ref_point);
   }
   if (!prev_trajs) {
@@ -1111,7 +1107,7 @@ std::vector<ReferencePoint> MPTOptimizer::getBaseReferencePoints(
   // re-calculating points' position for fixing
   std::vector<geometry_msgs::msg::Point> cropped_interpolated_points;
   double accum_s_for_interpolated = 0;
-  for (int i = 0; i < interpolated_points.size(); i++) {
+  for (std::size_t i = 0; i < interpolated_points.size(); i++) {
     if (i > 0) {
       accum_s_for_interpolated +=
         util::calculate2DDistance(interpolated_points[i], interpolated_points[i - 1]);
@@ -1157,7 +1153,7 @@ std::vector<ReferencePoint> MPTOptimizer::getBaseReferencePoints(
   }
 
   std::vector<ReferencePoint> trimmed_reference_points;
-  for (int i = 0; i < reference_points.size(); i++) {
+  for (std::size_t i = 0; i < reference_points.size(); i++) {
     if (i > 0) {
       const double dx = reference_points[i].p.x - reference_points[i - 1].p.x;
       const double dy = reference_points[i].p.y - reference_points[i - 1].p.y;
@@ -1168,13 +1164,13 @@ std::vector<ReferencePoint> MPTOptimizer::getBaseReferencePoints(
     trimmed_reference_points.push_back(reference_points[i]);
   }
 
-  for (int i = 0; i < trimmed_reference_points.size(); i++) {
-    if (trimmed_reference_points[i].fix_state) {
+  for (const auto & e : trimmed_reference_points) {
+    if (e.fix_state) {
       geometry_msgs::msg::Point rel_point;
-      rel_point.y = trimmed_reference_points[i].fix_state.get()(0);
+      rel_point.y = e.fix_state.get()(0);
       geometry_msgs::msg::Pose origin;
-      origin.position = trimmed_reference_points[i].p;
-      origin.orientation = trimmed_reference_points[i].q;
+      origin.position = e.p;
+      origin.orientation = e.q;
       geometry_msgs::msg::Pose debug_pose;
       debug_pose.position = util::transformToAbsoluteCoordinate2D(rel_point, origin);
       debug_data->fixed_mpt_points.push_back(debug_pose);

@@ -549,7 +549,7 @@ ObstacleAvoidancePlanner::convertPointsToTrajectory(
     util::getInterpolatedPoints(trajectory_points, traj_param_->delta_arc_length_for_trajectory);
   // add discarded point in the process of interpolation
   interpolated_points.push_back(trajectory_points.back().pose.position);
-  if (interpolated_points.size() < min_num_points_for_getting_yaw_) {
+  if (static_cast<int>(interpolated_points.size()) < min_num_points_for_getting_yaw_) {
     return util::convertPathToTrajectory(path_points);
   }
   std::vector<geometry_msgs::msg::Point> candidate_points = interpolated_points;
@@ -640,7 +640,7 @@ int ObstacleAvoidancePlanner::calculateNonDecelerationRange(
   }
 
   double accum_arc_length = 0;
-  for (int i = nearest_idx + 1; i < traj_points.size(); i++) {
+  for (std::size_t i = nearest_idx + 1; i < traj_points.size(); i++) {
     accum_arc_length +=
       util::calculate2DDistance(traj_points[i].pose.position, traj_points[i - 1].pose.position);
     if (accum_arc_length > non_decelerating_arc_length) {
@@ -703,7 +703,7 @@ boost::optional<Trajectories> ObstacleAvoidancePlanner::calcTrajectoryInsideArea
   }
 
   if (optional_stop_idx && !prev_trajectories_ptr_) {
-    if (optional_stop_idx.get() < trajs.model_predictive_trajectory.size()) {
+    if (optional_stop_idx.get() < static_cast<int>(trajs.model_predictive_trajectory.size())) {
       tmp_trajs.model_predictive_trajectory =
         std::vector<autoware_planning_msgs::msg::TrajectoryPoint>{
         trajs.model_predictive_trajectory.begin(),
