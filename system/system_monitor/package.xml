@@ -19,7 +19,7 @@
   <depend>libnl-3-dev</depend>
 
   <exec_depend>sysstat</exec_depend>
-  <exec_depend>ntpdate</exec_depend>
+  <exec_depend>chrony</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

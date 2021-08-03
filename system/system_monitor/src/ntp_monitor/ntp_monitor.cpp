@@ -19,6 +19,7 @@
 
 #include <regex>
 #include <string>
+#include <map>
 
 #include "boost/filesystem.hpp"
 #include "boost/process.hpp"
@@ -32,24 +33,17 @@ namespace fs = boost::filesystem;
 NTPMonitor::NTPMonitor(const rclcpp::NodeOptions & options)
 : Node("ntp_monitor", options),
   updater_(this),
-  server_(declare_parameter<std::string>("server", "ntp.ubuntu.com")),
   offset_warn_(declare_parameter<float>("offset_warn", 0.1)),
-  offset_error_(declare_parameter<float>("offset_error", 5.0)),
-  error_(""),
-  offset_(0.0f),
-  delay_(0.0f)
+  offset_error_(declare_parameter<float>("offset_error", 5.0))
 {
   gethostname(hostname_, sizeof(hostname_));
 
   // Check if command exists
-  fs::path p = bp::search_path("ntpdate");
-  ntpdate_exists_ = (p.empty()) ? false : true;
+  fs::path p = bp::search_path("chronyc");
+  chronyc_exists_ = (p.empty()) ? false : true;
 
   updater_.setHardwareID(hostname_);
   updater_.add("NTP Offset", this, &NTPMonitor::checkOffset);
-
-  thread_ = std::thread(&NTPMonitor::executeNtpdate, this);
-  thread_.detach();
 }
 
 void NTPMonitor::update()
@@ -59,73 +53,82 @@ void NTPMonitor::update()
 
 void NTPMonitor::checkOffset(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
-  if (!ntpdate_exists_) {
-    stat.summary(DiagStatus::ERROR, "ntpdate error");
+  if (!chronyc_exists_) {
+    stat.summary(DiagStatus::ERROR, "chronyc error");
     stat.add(
-      "ntpdate",
-      "Command 'ntpdate' not found, but can be installed with: sudo apt install ntpdate");
+      "chronyc",
+      "Command 'chronyc' not found, but can be installed with: sudo apt install chrony");
     return;
   }
 
-  if (!error_.empty()) {
-    stat.summary(DiagStatus::ERROR, "ntpdate error");
-    stat.add("ntpdate", error_);
+  std::string error_str;
+  float offset = 0.0f;
+  std::map<std::string, std::string> tracking_map;
+  error_str = executeChronyc(offset, tracking_map);
+  if (!error_str.empty()) {
+    stat.summary(DiagStatus::ERROR, "chronyc error");
+    stat.add("chronyc", error_str);
     return;
   }
 
   int level = DiagStatus::OK;
 
   // Check an earlier offset as well
-  float abs = std::abs(offset_);
+  float abs = std::abs(offset);
   if (abs >= offset_error_) {
     level = DiagStatus::ERROR;
   } else if (abs >= offset_warn_) {
     level = DiagStatus::WARN;
   }
-
-  stat.addf("NTP Offset", "%.6f sec", offset_);
-  stat.addf("NTP Delay", "%.6f sec", delay_);
+  for (auto itr = tracking_map.begin(); itr != tracking_map.end(); ++itr) {
+    stat.add(itr->first, itr->second);
+  }
   stat.summary(level, offset_dict_.at(level));
 }
 
-void NTPMonitor::executeNtpdate()
+std::string NTPMonitor::executeChronyc(
+  float & out_offset,
+  std::map<std::string, std::string> & out_tracking_map)
 {
-  while (rclcpp::ok()) {
-    error_.clear();
+  std::string result;
 
-    // Query NTP server
-    bp::ipstream is_out;
-    bp::ipstream is_err;
-    bp::child c(fmt::format("ntpdate -q {}", server_), bp::std_out > is_out, bp::std_err > is_err);
-    c.wait();
-    if (c.exit_code() != 0) {
-      std::ostringstream os;
-      is_err >> os.rdbuf();
-      error_ = os.str().c_str();
-      return;
-    }
-
-    std::string line;
-    float offset = 0.0f;
-    float delay = 0.0f;
-    std::cmatch match;
-    const std::regex filter("^server.*offset ([-+]?\\d+\\.\\d+), delay ([-+]?\\d+\\.\\d+)");
-
-    while (std::getline(is_out, line) && !line.empty()) {
-      if (std::regex_match(line.c_str(), match, filter)) {
-        float ofs = std::atof(match[1].str().c_str());
-        float dly = std::atof(match[2].str().c_str());
-        // Choose better network performance
-        if (dly > delay) {
-          offset = ofs;
-          delay = dly;
-        }
-      }
-    }
-
-    offset_ = offset;
-    delay_ = delay;
+  // Tracking chrony status
+  bp::ipstream is_out;
+  bp::child c("chronyc tracking", bp::std_out > is_out);
+  c.wait();
+  if (c.exit_code() != 0) {
+    std::ostringstream os;
+    is_out >> os.rdbuf();
+    result = os.str().c_str();
+    return result;
   }
+
+  std::string line;
+  std::cmatch match;
+  const std::regex filter("^(.+[A-Za-z()]) *: (.*)");
+  const std::regex filter_system_time("([0-9.]*) seconds (slow|fast).*");
+
+  while (std::getline(is_out, line) && !line.empty()) {
+    if (std::regex_match(line.c_str(), match, filter)) {
+      out_tracking_map[match[1].str()] = match[2].str();
+    }
+  }
+
+  // System time : conversion string to float
+  std::string str_system_time = out_tracking_map["System time"];
+  if (std::regex_match(str_system_time.c_str(), match, filter_system_time)) {
+    out_offset = std::atof(match[1].str().c_str());
+
+    if (match[2].str() == "fast") {
+      // "fast" is - value(match to ntpdate)
+      out_offset *= -1;
+    } else {
+      // "slow" is + value(match to ntpdate)
+    }
+  } else {
+    RCLCPP_WARN(get_logger(), "regex_match: illegal result. str = %s", str_system_time.c_str());
+  }
+  return result;
 }
 
 #include "rclcpp_components/register_node_macro.hpp"

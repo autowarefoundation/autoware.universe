@@ -54,23 +54,22 @@ protected:
     diagnostic_updater::DiagnosticStatusWrapper & stat);  // NOLINT(runtime/references)
 
   /**
-   * @brief thread function to execute ntpdate
+   * @brief function to execute chronyc
+   * @param [out] outOffset offset value of NTP time
+   * @param [out] out_tracking_map "chronyc tracking" output for diagnostic
+   * @return if error occurred, return error string
    */
-  void executeNtpdate();
+  std::string executeChronyc(
+    float & outOffset,
+    std::map<std::string, std::string> & out_tracking_map);
 
   diagnostic_updater::Updater updater_;  //!< @brief Updater class which advertises to /diagnostics
 
   char hostname_[HOST_NAME_MAX + 1];  //!< @brief host name
-  bool ntpdate_exists_;               //!< @brief flag if ntpdate exists
+  bool chronyc_exists_;               //!< @brief flag if chronyc exists
 
-  std::string server_;  //!< @brief Reference server
-  float offset_warn_;   //!< @brief NTP offset(us) to generate warning
-  float offset_error_;  //!< @brief NTP offset(us) to generate error
-
-  std::thread thread_;  //!< @brief thread to execute ntpdate
-  std::string error_;   //!< @brief error output of ntpdate
-  float offset_;        //!< @brief NTP offset(us)
-  float delay_;         //!< @brief NTP delay(us)
+  float offset_warn_;   //!< @brief NTP offset(sec) to generate warning
+  float offset_error_;  //!< @brief NTP offset(sec) to generate error
 
   /**
    * @brief NTP offset status messages
