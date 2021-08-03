@@ -73,13 +73,7 @@ bool CNNClassifier::getLampState(
   // do inference
   std::vector<void *> bindings = {input_data_device.get(), output_data_device.get()};
 
-  std::chrono::system_clock::time_point start = std::chrono::system_clock::now();
   trt_->context_->executeV2(bindings.data());
-  std::chrono::system_clock::time_point end = std::chrono::system_clock::now();
-  double elapsed_time =
-    static_cast<double>(
-    std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()) / 1000;
-  // ROS_INFO("inference elapsed time: %f [ms]", elapsed_time);
 
   std::vector<float> output_data_host(num_output);
   cudaMemcpy(
@@ -102,7 +96,7 @@ void CNNClassifier::outputDebugImage(
 {
   float probability;
   std::string label;
-  for (int i = 0; i < states.size(); i++) {
+  for (std::size_t i = 0; i < states.size(); i++) {
     auto state = states.at(i);
     // all lamp confidence are the same
     probability = state.confidence;
