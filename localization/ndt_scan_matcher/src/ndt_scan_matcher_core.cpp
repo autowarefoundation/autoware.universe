@@ -109,7 +109,7 @@ NDTScanMatcher::NDTScanMatcher()
     "pointcloud_map", rclcpp::QoS{1}.transient_local(),
     std::bind(&NDTScanMatcher::callbackMapPoints, this, std::placeholders::_1));
   sensor_points_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
-    "points_raw", rclcpp::SensorDataQoS(),
+    "points_raw", rclcpp::SensorDataQoS().keep_last(points_queue_size),
     std::bind(&NDTScanMatcher::callbackSensorPoints, this, std::placeholders::_1));
 
   sensor_aligned_pose_pub_ =
