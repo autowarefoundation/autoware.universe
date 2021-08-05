@@ -1,23 +1,23 @@
 cmake_minimum_required(VERSION 3.5)
 project(autoware_localization_srvs)
 
-# Default to C++14
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
   set(CMAKE_CXX_STANDARD_REQUIRED ON)
   set(CMAKE_CXX_EXTENSIONS OFF)
 endif()
+
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-find_package(ament_cmake REQUIRED)
-find_package(rosidl_default_generators REQUIRED)
-find_package(geometry_msgs REQUIRED)
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/PoseWithCovarianceStamped.srv"
-  DEPENDENCIES geometry_msgs
+  DEPENDENCIES
+    geometry_msgs
 )
 
 if(BUILD_TESTING)
@@ -25,4 +25,4 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
-ament_package()
+ament_auto_package()
