@@ -1,7 +1,7 @@
 site_name: Autoware Documentation
 site_url: https://tier4.github.io/autoware.proj
 repo_url: https://github.com/tier4/autoware.proj
-edit_uri: edit/main/
+edit_uri: edit/main/docs
 docs_dir: docs
 theme:
   name: material
