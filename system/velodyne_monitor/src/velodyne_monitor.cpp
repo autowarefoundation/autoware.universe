@@ -79,7 +79,13 @@ void VelodyneMonitor::checkConnection(diagnostic_updater::DiagnosticStatusWrappe
   }
 
   // Extracts the body of the request message into a json value
-  info_json_ = res.extract_json().get();
+  try {
+    info_json_ = res.extract_json().get();
+  } catch (const web::http::http_exception & ex) {
+    RCLCPP_WARN(get_logger(), ex.what());
+    stat.summary(DiagStatus::ERROR, ex.what());
+    return;
+  }
 
   updater_.setHardwareIDf(
     "%s: %s", info_json_["model"].as_string().c_str(), info_json_["serial"].as_string().c_str());
@@ -106,7 +112,13 @@ void VelodyneMonitor::checkTemperature(diagnostic_updater::DiagnosticStatusWrapp
   diag_json_received_ = true;
 
   // Extracts the body of the request message into a json value
-  diag_json_ = res.extract_json().get();
+  try {
+    diag_json_ = res.extract_json().get();
+  } catch (const web::http::http_exception & ex) {
+    RCLCPP_WARN(get_logger(), ex.what());
+    stat.summary(DiagStatus::ERROR, ex.what());
+    return;
+  }
 
   const float top_temp =
     convertTemperature(diag_json_["volt_temp"]["top"]["lm20_temp"].as_integer());
@@ -164,7 +176,13 @@ void VelodyneMonitor::checkMotorRpm(diagnostic_updater::DiagnosticStatusWrapper 
   }
 
   // Extracts the body of the request message into a json value
-  settings_json_ = res.extract_json().get();
+  try {
+    settings_json_ = res.extract_json().get();
+  } catch (const web::http::http_exception & ex) {
+    RCLCPP_WARN(get_logger(), ex.what());
+    stat.summary(DiagStatus::ERROR, ex.what());
+    return;
+  }
 
   // Sends an HTTP-GET request
   if (!requestGET("/cgi/status.json", res, err_msg)) {
@@ -173,7 +191,13 @@ void VelodyneMonitor::checkMotorRpm(diagnostic_updater::DiagnosticStatusWrapper 
   }
 
   // Extracts the body of the request message into a json value
-  status_json_ = res.extract_json().get();
+  try {
+    status_json_ = res.extract_json().get();
+  } catch (const web::http::http_exception & ex) {
+    RCLCPP_WARN(get_logger(), ex.what());
+    stat.summary(DiagStatus::ERROR, ex.what());
+    return;
+  }
 
   const double setting = settings_json_["rpm"].as_double();
   const double rpm = status_json_["motor"]["rpm"].as_double();
