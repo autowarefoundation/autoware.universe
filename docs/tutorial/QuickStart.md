@@ -36,11 +36,11 @@
 1. [Download the sample pointcloud and vector maps](https://drive.google.com/open?id=197kgRfSomZzaSbRrjWTx614le2qN-oxx), unpack the zip archive and copy the two map files to the same folder.
 2. Open a terminal and launch Autoware
 
-```sh
-cd ~/workspace/autoware.proj
-source install/setup.bash
-ros2 launch autoware_launch planning_simulator.launch.xml map_path:=/path/to/map_folder vehicle_model:=lexus sensor_model:=aip_xx1
-```
+   ```sh
+   cd ~/workspace/autoware.proj
+   source install/setup.bash
+   ros2 launch autoware_launch planning_simulator.launch.xml map_path:=/path/to/map_folder vehicle_model:=lexus sensor_model:=aip_xx1
+   ```
 
 3. Set an initial pose for the ego vehicle
 

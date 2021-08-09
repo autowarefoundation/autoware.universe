@@ -6,43 +6,43 @@ Do the following to setup and start ADE environment
 
 1. Setup ade home
 
-```sh
-cd ~
-mkdir ade-home
-cd ade-home
-touch .adehome
-```
+   ```sh
+   cd ~
+   mkdir ade-home
+   cd ade-home
+   touch .adehome
+   ```
 
 2. Setup AutowareArchitectureProposal
 
-```sh
-git clone https://github.com/tier4/AutowareArchitectureProposal
-cd AutowareArchitectureProposal
-git checkout ros2
-```
+   ```sh
+   git clone https://github.com/tier4/AutowareArchitectureProposal
+   cd AutowareArchitectureProposal
+   git checkout ros2
+   ```
 
 3. enter ADE
 
-```sh
-cd ~/ade-home/AutowareArchitectureProposal
-ade start --update --enter
-cd AutowareArchitectureProposal
-```
+   ```sh
+   cd ~/ade-home/AutowareArchitectureProposal
+   ade start --update --enter
+   cd AutowareArchitectureProposal
+   ```
 
-All commands that follow are to be entered in ADE. Next step is to fetch the sub-repos:
+   All commands that follow are to be entered in ADE. Next step is to fetch the sub-repos:
 
-```sh
-cd ~/AutowareArchitectureProposal
-mkdir src
-vcs import src < autoware.proj.repos
-rosdep update
-rosdep install -y --from-paths src --ignore-src --rosdistro foxy
-colcon build --event-handlers console_cohesion+
-```
+   ```sh
+   cd ~/AutowareArchitectureProposal
+   mkdir src
+   vcs import src < autoware.proj.repos
+   rosdep update
+   rosdep install -y --from-paths src --ignore-src --rosdistro foxy
+   colcon build --event-handlers console_cohesion+
+   ```
 
-For instance, the `shift_decider` package is in the repository `github.com:tier4/pilot.auto.git`, which is now in the `autoware/pilot.auto` subdirectory.
+   For instance, the `shift_decider` package is in the repository `github.com:tier4/pilot.auto.git`, which is now in the `autoware/pilot.auto` subdirectory.
 
-Now branch off `ros2` inside that subdirectory and delete the `COLCON_IGNORE` file in the package you want to port.
+   Now branch off `ros2` inside that subdirectory and delete the `COLCON_IGNORE` file in the package you want to port.
 
 ## Important changes
 
