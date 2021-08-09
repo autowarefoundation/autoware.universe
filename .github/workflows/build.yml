@@ -13,7 +13,7 @@ jobs:
       # https://github.community/t/bug-strange-no-space-left-on-device-ioexceptions-on-github-runners/17616
       - name: Free disk space
         run: |
-          sudo apt-get -y purge \
+          sudo apt-get -y --allow-remove-essential purge \
             aria2 ansible azure-cli shellcheck rpm xorriso zsync clang* dotnet-sdk* esl-erlang firefox g++-8 gfortran* \
             google* ghc* cabal-install* imagemagick libmagick* ant ant-optional kubectl libnginx* \
             mercurial apt-transport-https mono-complete mysql-client libmysqlclient-dev mysql-server mssql-tools unixodbc-dev \
