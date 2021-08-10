@@ -58,6 +58,7 @@
 #include <mutex>
 #include <string>
 #include <vector>
+#include <set>
 
 // ROS includes
 #include "message_filters/pass_through.h"
@@ -68,6 +69,8 @@
 #include "pcl_conversions/pcl_conversions.h"
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
+#include "diagnostic_updater/diagnostic_updater.hpp"
+#include "diagnostic_msgs/msg/diagnostic_status.hpp"
 
 #include "geometry_msgs/msg/twist_stamped.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
@@ -103,14 +106,12 @@ private:
   /** \brief The output PointCloud publisher. */
   rclcpp::Publisher<PointCloud2>::SharedPtr pub_output_;
 
-  rclcpp::Publisher<autoware_debug_msgs::msg::Int32Stamped>::SharedPtr pub_concat_num_;
-  rclcpp::Publisher<autoware_debug_msgs::msg::StringStamped>::SharedPtr
-    pub_not_subscribed_topic_name_;
-
   /** \brief The maximum number of messages that we can store in the queue. */
   int maximum_queue_size_ = 3;
 
   double timeout_sec_ = 0.1;
+
+  std::set<std::string> not_subscribed_topic_names_;
 
   /** \brief A vector of subscriber. */
   std::vector<rclcpp::Subscription<PointCloud2>::SharedPtr> filters_;
@@ -118,6 +119,7 @@ private:
   rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr sub_twist_;
 
   rclcpp::TimerBase::SharedPtr timer_;
+  diagnostic_updater::Updater updater_{this};
 
   /** \brief Output TF frame the concatenated points should be transformed to. */
   std::string output_frame_;
@@ -151,6 +153,9 @@ private:
     const std::string & topic_name);
   void twist_callback(const geometry_msgs::msg::TwistStamped::ConstSharedPtr input);
   void timer_callback();
+
+  void checkConcatStatus(
+    diagnostic_updater::DiagnosticStatusWrapper & stat);
 };
 }  // namespace pointcloud_preprocessor
 

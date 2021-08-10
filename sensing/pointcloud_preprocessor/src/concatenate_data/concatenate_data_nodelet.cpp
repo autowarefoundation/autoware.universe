@@ -92,15 +92,17 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
     timeout_sec_ = static_cast<double>(declare_parameter("timeout_sec", 0.1));
   }
 
+  // Initialize not_subscribed_topic_names_
+  {
+    for (const std::string & e : input_topics_) {
+      not_subscribed_topic_names_.insert(e);
+    }
+  }
+
   // Publishers
   {
     pub_output_ = this->create_publisher<PointCloud2>(
       "output", rclcpp::SensorDataQoS().keep_last(maximum_queue_size_));
-    pub_concat_num_ =
-      this->create_publisher<autoware_debug_msgs::msg::Int32Stamped>("~/concat_num", 10);
-    pub_not_subscribed_topic_name_ =
-      this->create_publisher<autoware_debug_msgs::msg::StringStamped>(
-      "~/not_subscribed_topic_name", 10);
   }
 
   // Subscribers
@@ -142,6 +144,14 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
     timer_ = std::make_shared<rclcpp::GenericTimer<decltype(cb)>>(
       get_clock(), period, std::move(cb), get_node_base_interface()->get_context());
     get_node_timers_interface()->add_timer(timer_, nullptr);
+  }
+
+  // Diagnostic Updater
+  {
+    updater_.setHardwareID("concatenate_data_checker");
+    updater_.add(
+      "concat_status", this,
+      &PointCloudConcatenateDataSynchronizerComponent::checkConcatStatus);
   }
 }
 
@@ -238,34 +248,23 @@ void PointCloudConcatenateDataSynchronizerComponent::combineClouds(
 void PointCloudConcatenateDataSynchronizerComponent::publish()
 {
   sensor_msgs::msg::PointCloud2::SharedPtr concat_cloud_ptr_ = nullptr;
-  std::string not_subscribed_topic_name = "";
-  size_t concat_num = 0;
+  not_subscribed_topic_names_.clear();
 
   for (const auto & e : cloud_stdmap_) {
     if (e.second != nullptr) {
-      sensor_msgs::msg::PointCloud2::SharedPtr transed_cloud_ptr(
+      sensor_msgs::msg::PointCloud2::SharedPtr transformed_cloud_ptr(
         new sensor_msgs::msg::PointCloud2());
-      transformPointCloud(e.second, transed_cloud_ptr);
+      transformPointCloud(e.second, transformed_cloud_ptr);
       if (concat_cloud_ptr_ == nullptr) {
-        concat_cloud_ptr_ = transed_cloud_ptr;
+        concat_cloud_ptr_ = transformed_cloud_ptr;
       } else {
         PointCloudConcatenateDataSynchronizerComponent::combineClouds(
-          concat_cloud_ptr_, transed_cloud_ptr, concat_cloud_ptr_);
+          concat_cloud_ptr_, transformed_cloud_ptr, concat_cloud_ptr_);
       }
-      ++concat_num;
 
     } else {
-      if (not_subscribed_topic_name.empty()) {
-        not_subscribed_topic_name = e.first;
-      } else {
-        not_subscribed_topic_name += "," + e.first;
-      }
+      not_subscribed_topic_names_.insert(e.first);
     }
-  }
-  if (!not_subscribed_topic_name.empty()) {
-    RCLCPP_WARN_STREAM_THROTTLE(
-      this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
-      "Skipped " << not_subscribed_topic_name << ". Please confirm topic.");
   }
 
   if (concat_cloud_ptr_) {
@@ -275,15 +274,7 @@ void PointCloudConcatenateDataSynchronizerComponent::publish()
     RCLCPP_WARN(this->get_logger(), "concat_cloud_ptr_ is nullptr, skipping pointcloud publish.");
   }
 
-  autoware_debug_msgs::msg::Int32Stamped concat_num_msg;
-  concat_num_msg.stamp = this->now();
-  concat_num_msg.data = concat_num;
-  pub_concat_num_->publish(concat_num_msg);
-
-  autoware_debug_msgs::msg::StringStamped not_subscribed_topic_name_msg;
-  not_subscribed_topic_name_msg.stamp = this->now();
-  not_subscribed_topic_name_msg.data = not_subscribed_topic_name;
-  pub_not_subscribed_topic_name_->publish(not_subscribed_topic_name_msg);
+  updater_.force_update();
 
   cloud_stdmap_ = cloud_stdmap_tmp_;
   std::for_each(
@@ -410,6 +401,23 @@ void PointCloudConcatenateDataSynchronizerComponent::twist_callback(
   twist_ptr_queue_.push_back(input);
 }
 
+
+void PointCloudConcatenateDataSynchronizerComponent::checkConcatStatus(
+  diagnostic_updater::DiagnosticStatusWrapper & stat)
+{
+  for (const std::string & e : input_topics_) {
+    const std::string subscribe_status = not_subscribed_topic_names_.count(e) ? "NG" : "OK";
+    stat.add(e, subscribe_status);
+  }
+
+  const int8_t level = not_subscribed_topic_names_.empty() ?
+    diagnostic_msgs::msg::DiagnosticStatus::OK:
+    diagnostic_msgs::msg::DiagnosticStatus::WARN;
+  const std::string message = not_subscribed_topic_names_.empty() ?
+    "Concatenate all topics":
+    "Some topics are not concatenated";
+  stat.summary(level, message);
+}
 }  // namespace pointcloud_preprocessor
 
 #include "rclcpp_components/register_node_macro.hpp"
