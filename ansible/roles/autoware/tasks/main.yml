@@ -19,6 +19,7 @@
     name:
       - gdown
     executable: pip3
+  become: yes
 
 - name: Autoware (install geographiclib-tools)
   apt:
