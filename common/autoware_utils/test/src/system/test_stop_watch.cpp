@@ -19,7 +19,7 @@
 
 #include "autoware_utils/system/stop_watch.hpp"
 
-TEST(system, StopWatch)
+TEST(system, StopWatch_sec)
 {
   using autoware_utils::StopWatch;
 
@@ -40,10 +40,23 @@ TEST(system, StopWatch)
 
   const auto t4 = stop_watch.toc("total");
 
-  constexpr double error = 0.1;
-  EXPECT_NEAR(t1, 1.0, error);
-  EXPECT_NEAR(t2, 2.0, error);
-  EXPECT_NEAR(t3, 1.0, error);
-  EXPECT_NEAR(t4, 4.0, error);
+  constexpr double error_sec = 0.01;
+  EXPECT_NEAR(t1, 1.0, error_sec);
+  EXPECT_NEAR(t2, 2.0, error_sec);
+  EXPECT_NEAR(t3, 1.0, error_sec);
+  EXPECT_NEAR(t4, 4.0, error_sec);
   ASSERT_ANY_THROW(stop_watch.toc("invalid_key"));
+}
+
+TEST(system, StopWatch_msec)
+{
+  using autoware_utils::StopWatch;
+
+  StopWatch<std::chrono::milliseconds> stop_watch;
+
+  stop_watch.tic();
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+
+  constexpr double error_msec = 10.0;
+  EXPECT_NEAR(stop_watch.toc(), 1000.0, error_msec);
 }
