@@ -2,12 +2,12 @@
 <launch>
   <!-- Essential parameters -->
   <arg name="map_path" description="point cloud and lanelet2 map directory path"/>
-  <arg name="vehicle_model"/>
-  <arg name="sensor_model"/>
+  <arg name="vehicle_model" description="vehicle model name"/>
+  <arg name="sensor_model" description="sensor model name"/>
   <!-- Optional parameters -->
   <arg name="rviz" default="true" description="launch rviz"/>
-  <arg name="lanelet2_map_file" default="lanelet2_map.osm" />
-  <arg name="pointcloud_map_file" default="pointcloud_map.pcd" />
+  <arg name="lanelet2_map_file" default="lanelet2_map.osm" description="lanelet2 map file name"/>
+  <arg name="pointcloud_map_file" default="pointcloud_map.pcd" description="pointcloud map file name"/>
 
   <!-- Global parameters -->
   <include file="$(find-pkg-share autoware_global_parameter_loader)/launch/global_params.launch.py">

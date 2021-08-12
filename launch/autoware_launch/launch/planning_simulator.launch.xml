@@ -2,21 +2,21 @@
 <launch>
   <!-- Essential parameters -->
   <arg name="map_path" description="point cloud and lanelet2 map directory path"/>
-  <arg name="vehicle_model"/>
-  <arg name="sensor_model"/>
+  <arg name="vehicle_model" description="vehicle model name"/>
+  <arg name="sensor_model" description="sensor model name"/>
   <!-- Optional parameters -->
   <arg name="rviz" default="true" description="launch rviz"/>
   <arg name="rviz_config" default="$(find-pkg-share autoware_launch)/rviz/autoware.rviz" description="rviz config"/>
-  <arg name="lanelet2_map_file" default="lanelet2_map.osm" />
-  <arg name="pointcloud_map_file" default="pointcloud_map.pcd" />
+  <arg name="lanelet2_map_file" default="lanelet2_map.osm" description="lanelet2 map file name"/>
+  <arg name="pointcloud_map_file" default="pointcloud_map.pcd" description="pointcloud map file name"/>
   <!-- Optional parameters for scenario simulation -->
-  <arg name="initial_engage_state" default="true"/>
-  <arg name="perception/enable_detection_failure" default="true"/>
-  <arg name="perception/enable_object_recognition" default="true"/>
-  <arg name="sensing/visible_range" default="300.0"/>
-  <arg name="scenario_simulation" default="false"/>
+  <arg name="initial_engage_state" default="true" description="/vehicle/engage state after starting Autoware"/>
+  <arg name="perception/enable_detection_failure" default="true" description="enable to simulate detection failure when using dummy perception"/>
+  <arg name="perception/enable_object_recognition" default="true" description="enable object recognition when using dummy perception"/>
+  <arg name="sensing/visible_range" default="300.0" description="visible range when using dummy perception"/>
+  <arg name="scenario_simulation" default="false" description="use scenario simulation"/>
   <!-- Optional parameters for vcu emulation -->
-  <arg name="vehicle_simulation" default="true"/>
+  <arg name="vehicle_simulation" default="true" description="use vehicle simulation"/>
 
   <!-- Global parameters -->
   <include file="$(find-pkg-share autoware_global_parameter_loader)/launch/global_params.launch.py">
