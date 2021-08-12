@@ -64,6 +64,7 @@ def generate_launch_description():
         ],
     )
     return launch.LaunchDescription([
-        DeclareLaunchArgument('use_intra_process', default_value='false'),
+        DeclareLaunchArgument('use_intra_process', default_value='false',
+                              description='use ROS2 component container communication'),
         container
     ])

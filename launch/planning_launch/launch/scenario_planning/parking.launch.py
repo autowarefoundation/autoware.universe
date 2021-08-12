@@ -128,8 +128,10 @@ def generate_launch_description():
     )
 
     return launch.LaunchDescription([
-        DeclareLaunchArgument('use_intra_process', default_value='false'),
-        DeclareLaunchArgument('use_multithread', default_value='false'),
+        DeclareLaunchArgument('use_intra_process', default_value='false',
+                              description='use ROS2 component container communication'),
+        DeclareLaunchArgument('use_multithread', default_value='false',
+                              description='use multithread'),
         set_container_executable,
         set_container_mt_executable,
         GroupAction([
