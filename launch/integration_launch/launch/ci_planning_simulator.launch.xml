@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
   <!-- TODO: add the appropriate vehicle and sensor model below. -->
-  <arg name="vehicle_model" default=""/>
-  <arg name="sensor_model" default=""/>
-  <arg name="map_path" default=""/>
-  <arg name="rviz" default="false"/>
+  <arg name="vehicle_model" default="" description="vehicle model name"/>
+  <arg name="sensor_model" default="" description="sensor model name"/>
+  <arg name="map_path" default="" description="path to the directory of point cloud and lanelet2 map"/>
+  <arg name="rviz" default="false" description="launch rviz"/>
 
-  <arg name="log_output_dir"/>
-  <arg name="scenario_id"/>
-  <arg name="scenario_path"/>
+  <arg name="log_output_dir" description="path to output log directory"/>
+  <arg name="scenario_id" description="scenario ID"/>
+  <arg name="scenario_path" description="path to scenario"/>
 
   <!-- autoware -->
   <include file="$(find-pkg-share autoware_launch)/launch/planning_simulator.launch.xml">
