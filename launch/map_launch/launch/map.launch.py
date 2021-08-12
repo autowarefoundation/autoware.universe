@@ -96,17 +96,19 @@ def generate_launch_description():
         output='screen',
     )
 
-    def add_launch_arg(name: str, default_value=None):
-        return DeclareLaunchArgument(name, default_value=default_value)
+    def add_launch_arg(name: str, default_value=None, description=None):
+        return DeclareLaunchArgument(name, default_value=default_value, description=description)
 
     return launch.LaunchDescription([
-        add_launch_arg('map_path', ''),
+        add_launch_arg('map_path', '', 'path to map directory'),
         add_launch_arg('lanelet2_map_path', [
-                       LaunchConfiguration('map_path'), '/lanelet2_map.osm']),
+                       LaunchConfiguration('map_path'), '/lanelet2_map.osm'],
+                       'path to lanelet2 map file'),
         add_launch_arg('pointcloud_map_path', [
-                       LaunchConfiguration('map_path'), '/pointcloud_map.pcd']),
-        add_launch_arg('use_intra_process', 'false'),
-        add_launch_arg('use_multithread', 'false'),
+                       LaunchConfiguration('map_path'), '/pointcloud_map.pcd'],
+                       'path to pointcloud map file'),
+        add_launch_arg('use_intra_process', 'false', 'use ROS2 component container communication'),
+        add_launch_arg('use_multithread', 'false', 'use multithread'),
         SetLaunchConfiguration(
             'container_executable',
             'component_container',
