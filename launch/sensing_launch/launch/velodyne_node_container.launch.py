@@ -187,37 +187,39 @@ def launch_setup(context, *args, **kwargs):
 def generate_launch_description():
     launch_arguments = []
 
-    def add_launch_arg(name: str, default_value=None):
+    def add_launch_arg(name: str, default_value=None, description=None):
         # a default_value of None is equivalent to not passing that kwarg at all
-        launch_arguments.append(DeclareLaunchArgument(name, default_value=default_value))
+        launch_arguments.append(DeclareLaunchArgument(
+            name, default_value=default_value, description=description))
 
-    add_launch_arg('model')
-    add_launch_arg('launch_driver', 'True')
-    add_launch_arg('calibration')
-    add_launch_arg('device_ip', '192.168.1.201')
+    add_launch_arg('model', description='velodyne model name')
+    add_launch_arg('launch_driver', 'True', 'do launch driver')
+    add_launch_arg('calibration', description='path to calibration file')
+    add_launch_arg('device_ip', '192.168.1.201', 'device ip address')
     add_launch_arg('scan_phase', '0.0')
-    add_launch_arg('base_frame', 'base_link')
-    add_launch_arg('container_name', 'velodyne_composable_node_container')
-    add_launch_arg('min_range')
-    add_launch_arg('max_range')
+    add_launch_arg('base_frame', 'base_link', 'base frame id')
+    add_launch_arg('container_name', 'velodyne_composable_node_container', 'container name')
+    add_launch_arg('min_range', description='minimum view range')
+    add_launch_arg('max_range', description='maximum view range')
     add_launch_arg('pcap', '')
-    add_launch_arg('port', '2368')
+    add_launch_arg('port', '2368', description='device port number')
     add_launch_arg('read_fast', 'False')
     add_launch_arg('read_once', 'False')
     add_launch_arg('repeat_delay', '0.0')
-    add_launch_arg('rpm', '600.0')
+    add_launch_arg('rpm', '600.0', 'rotational frequency')
     add_launch_arg('laserscan_ring', '-1')
     add_launch_arg('laserscan_resolution', '0.007')
     add_launch_arg('num_points_thresholds', '300')
     add_launch_arg('invalid_intensity')
-    add_launch_arg('frame_id', 'velodyne')
+    add_launch_arg('frame_id', 'velodyne', 'velodyne frame id')
     add_launch_arg('gps_time', 'False')
-    add_launch_arg('input_frame', LaunchConfiguration('base_frame'))
-    add_launch_arg('output_frame', LaunchConfiguration('base_frame'))
-    add_launch_arg('vehicle_param_file')
-    add_launch_arg('vehicle_mirror_param_file')
-    add_launch_arg('use_multithread', 'False')
-    add_launch_arg('use_intra_process', 'False')
+    add_launch_arg('input_frame', LaunchConfiguration('base_frame'), 'use for cropbox')
+    add_launch_arg('output_frame', LaunchConfiguration('base_frame'), 'use for cropbox')
+    add_launch_arg('vehicle_param_file', description='path to the file of vehicle info yaml')
+    add_launch_arg('vehicle_mirror_param_file',
+                   description='path to the file of vehicle mirror position yaml')
+    add_launch_arg('use_multithread', 'False', 'use multithread')
+    add_launch_arg('use_intra_process', 'False', 'use ROS2 component container communication')
 
     set_container_executable = SetLaunchConfiguration(
         'container_executable',
