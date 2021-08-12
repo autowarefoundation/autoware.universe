@@ -14,6 +14,9 @@ module autoware_auto_msgs {
       @default (value=0.0)
       float y;
 
+      @default (value=0.0)
+      float z;
+
       autoware_auto_msgs::msg::Complex32 heading;
 
       @default (value=0.0)
