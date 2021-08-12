@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - master
+      - develop
     paths:
       - "mkdocs.yml"
       - "**/*.md"
@@ -14,7 +14,7 @@ on:
   pull_request:
     branches:
       - main
-      - master
+      - develop
     paths:
       - "mkdocs.yml"
       - "**/*.md"
@@ -32,9 +32,8 @@ jobs:
 
     steps:
       - name: Extract branch name
-        shell: bash
-        run: echo "::set-output name=branch::${GITHUB_REF#refs/heads/}"
         id: extract_branch
+        run: echo "::set-output name=branch::${GITHUB_REF#refs/heads/}"
 
       - name: Checkout repository
         uses: actions/checkout@v2

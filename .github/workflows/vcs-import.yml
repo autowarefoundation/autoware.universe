@@ -2,8 +2,6 @@ name: vcs import
 
 on:
   pull_request:
-    branches:
-      - main
     paths:
       - "autoware.proj.repos"
   workflow_dispatch:

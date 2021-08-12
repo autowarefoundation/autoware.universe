@@ -8,6 +8,12 @@ on:
 jobs:
   build:
     runs-on: ubuntu-20.04
+    strategy:
+      fail-fast: false
+      matrix:
+        branch:
+          - main
+          - develop
 
     steps:
       # https://github.community/t/bug-strange-no-space-left-on-device-ioexceptions-on-github-runners/17616
@@ -26,6 +32,8 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v2
+        with:
+          ref: ${{ matrix.branch }}
 
       - name: Install pip
         run: |
