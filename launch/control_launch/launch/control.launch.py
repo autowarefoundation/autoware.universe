@@ -315,50 +315,57 @@ def launch_setup(context, *args, **kwargs):
 def generate_launch_description():
     launch_arguments = []
 
-    def add_launch_arg(name: str, default_value=None):
-        launch_arguments.append(DeclareLaunchArgument(name, default_value=default_value))
-    add_launch_arg('lateral_control_mode', 'mpc_follower')
+    def add_launch_arg(name: str, default_value=None, description=None):
+        launch_arguments.append(DeclareLaunchArgument(
+            name, default_value=default_value, description=description))
+    add_launch_arg('lateral_control_mode', 'mpc_follower',
+                   'lateral control mode: `mpc_follower` or `pure_pursuit`')
     add_launch_arg(
         'mpc_follower_param_path',
         [
             FindPackageShare('control_launch'),
             '/config/mpc_follower/mpc_follower.param.yaml'
-        ]
+        ],
+        'path to the parameter file of mpc_follower'
     )
     add_launch_arg(
         'pure_pursuit_param_path',
         [
             FindPackageShare('control_launch'),
             '/config/pure_pursuit/pure_pursuit.param.yaml'
-        ]
+        ],
+        'path to the parameter file of pure_pursuit'
     )
     add_launch_arg(
         'velocity_controller_param_path',
         [
             FindPackageShare('control_launch'),
             '/config/velocity_controller/velocity_controller.param.yaml'
-        ]
+        ],
+        'path to the parameter file of velocity controller'
     )
     add_launch_arg(
         'vehicle_cmd_gate_param_path',
         [
             FindPackageShare('control_launch'),
             '/config/vehicle_cmd_gate/vehicle_cmd_gate.param.yaml'
-        ]
+        ],
+        'path to the parameter file of vehicle_cmd_gate'
     )
 
     # velocity controller
-    add_launch_arg('control_rate', '30.0')
-    add_launch_arg('show_debug_info', 'false')
-    add_launch_arg('enable_smooth_stop', 'true')
-    add_launch_arg('enable_pub_debug', 'true')
+    add_launch_arg('control_rate', '30.0', 'control rate')
+    add_launch_arg('show_debug_info', 'false', 'show debug information')
+    add_launch_arg('enable_smooth_stop', 'true',
+                   'enable smooth stop (in velocity controller state)')
+    add_launch_arg('enable_pub_debug', 'true', 'enable to publish debug information')
 
     # vehicle cmd gate
-    add_launch_arg('use_emergency_handling', 'false')
-    add_launch_arg('use_external_emergency_stop', 'true')
+    add_launch_arg('use_emergency_handling', 'false', 'use emergency handling')
+    add_launch_arg('use_external_emergency_stop', 'true', 'use external emergency stop')
 
     # external cmd selector
-    add_launch_arg('initial_selector_mode', '1')
+    add_launch_arg('initial_selector_mode', '1', '0: Local, 1: Remote')
 
     # remote cmd converter
     add_launch_arg(
@@ -366,22 +373,25 @@ def generate_launch_description():
         [
             FindPackageShare('raw_vehicle_cmd_converter'),
             '/data/default/accel_map.csv'
-        ]
+        ],
+        'csv file path for accel map'
     )
     add_launch_arg(
         'csv_path_brake_map',
         [
             FindPackageShare('raw_vehicle_cmd_converter'),
             '/data/default/brake_map.csv'
-        ]
+        ],
+        'csv file path for brake map'
     )
-    add_launch_arg('ref_vel_gain', '3.0')
-    add_launch_arg('wait_for_first_topic', 'true')
-    add_launch_arg('control_command_timeout', '1.0')
-    add_launch_arg('emergency_stop_timeout', '3.0')
+    add_launch_arg('ref_vel_gain', '3.0', 'gain for remote command accel')
+    add_launch_arg('wait_for_first_topic', 'true',
+                   'disable topic disruption detection until subscribing first topics')
+    add_launch_arg('control_command_timeout', '1.0', 'remote control command timeout')
+    add_launch_arg('emergency_stop_timeout', '3.0', 'emergency stop timeout for remote heartbeat')
 
-    add_launch_arg('use_intra_process', 'false')
-    add_launch_arg('use_multithread', 'false')
+    add_launch_arg('use_intra_process', 'false', 'use ROS2 component container communication')
+    add_launch_arg('use_multithread', 'false', 'use multithread')
     set_container_executable = SetLaunchConfiguration(
         'container_executable',
         'component_container',
