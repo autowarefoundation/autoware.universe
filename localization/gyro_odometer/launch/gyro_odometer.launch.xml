@@ -1,14 +1,14 @@
 <launch>
-  <arg name="use_twist_with_covariance" default="true" description="" />
-  <arg name="input_vehicle_twist_topic" default="/vehicle/status/twist" description="" />
-  <arg name="input_vehicle_twist_with_covariance_topic" default="/vehicle/status/twist_with_covariance" description="" />
+  <arg name="use_twist_with_covariance" default="true" description="use `input_vehicle_twist_with_covariance_topic` instead of 'input_vehicle_twist_topic' as input topic"/>
+  <arg name="input_vehicle_twist_topic" default="/vehicle/status/twist" description="input twist topic name from vehicle"/>
+  <arg name="input_vehicle_twist_with_covariance_topic" default="/vehicle/status/twist_with_covariance" description="input twist with covariance topic name from vehicle"/>
 
-  <arg name="input_imu_topic" default="/sensing/imu/imu_data" description="" />
+  <arg name="input_imu_topic" default="/sensing/imu/imu_data" description="input imu topic name" />
 
-  <arg name="output_twist_topic" default="gyro_twist" description="" />
-  <arg name="output_twist_with_covariance_topic" default="gyro_twist_with_covariance" description="" />
+  <arg name="output_twist_topic" default="gyro_twist" description="output twist topic name"/>
+  <arg name="output_twist_with_covariance_topic" default="gyro_twist_with_covariance" description="output twist with covariance topic name"/>
 
-  <arg name="output_frame" default="base_link" description="" />
+  <arg name="output_frame" default="base_link" description="output frame id"/>
 
   <node pkg="gyro_odometer" exec="gyro_odometer" name="gyro_odometer" output="screen">
 
