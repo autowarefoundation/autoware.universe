@@ -30,9 +30,10 @@ from launch_ros.descriptions import ComposableNode
 def generate_launch_description():
     launch_arguments = []
 
-    def add_launch_arg(name: str, default_value=None):
+    def add_launch_arg(name: str, default_value=None, description=None):
         # a default_value of None is equivalent to not passing that kwarg at all
-        launch_arguments.append(DeclareLaunchArgument(name, default_value=default_value))
+        launch_arguments.append(DeclareLaunchArgument(
+            name, default_value=default_value, description=description))
 
     ssd_fine_detector_share_dir = get_package_share_directory(
         'traffic_light_ssd_fine_detector'

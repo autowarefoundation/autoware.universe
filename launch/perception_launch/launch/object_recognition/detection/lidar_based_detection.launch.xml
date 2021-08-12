@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-  <arg name="use_vector_map" default="true"/>
+  <arg name="use_vector_map" default="true" description="use vector map in prediction"/>
   <include file="$(find-pkg-share lidar_apollo_instance_segmentation)/launch/lidar_apollo_instance_segmentation.launch.xml" />
   <include file="$(find-pkg-share shape_estimation)/launch/shape_estimation.launch.xml">
     <arg name="use_map_current" value="$(var use_vector_map)"/>

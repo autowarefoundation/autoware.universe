@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 
 <launch>
-  <arg name="image_raw0" default="/image_raw"/>
-  <arg name="camera_info0" default="/camera_info"/>
+  <arg name="image_raw0" default="/image_raw" description="image raw topic name"/>
+  <arg name="camera_info0" default="/camera_info" description="camera info topic name"/>
   <arg name="image_raw1" default="/image_raw1"/>
   <arg name="camera_info1" default="/camera_info1"/>
   <arg name="image_raw2" default="/image_raw2"/>
@@ -17,8 +17,8 @@
   <arg name="camera_info6" default="/camera_info6"/>
   <arg name="image_raw7" default="/image_raw7"/>
   <arg name="camera_info7" default="/camera_info7"/>
-  <arg name="image_number" default="1"/>
-  <arg name="use_vector_map" default="true"/>
+  <arg name="image_number" default="1" description="choose image raw number(0-7)"/>
+  <arg name="use_vector_map" default="true" description="use vector map in prediction"/>
 
   <!-- Jetson AGX -->
   <!-- <include file="$(find-pkg-share tensorrt_yolo)/launch/yolo.launch.xml">

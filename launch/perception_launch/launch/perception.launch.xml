@@ -2,10 +2,9 @@
 
 <launch>
   <!-- common parameters -->
-  <arg name="mode" default="camera_lidar_fusion"/>
-  <!-- "camera_lidar_fusion", "lidar" or "camera" -->
-  <arg name="image_raw0" default="/sensing/camera/camera0/image_rect_color"/>
-  <arg name="camera_info0" default="/sensing/camera/camera0/camera_info"/>
+  <arg name="mode" default="camera_lidar_fusion" description="options: `camera_lidar_fusion`, `lidar` or `camera`"/>
+  <arg name="image_raw0" default="/sensing/camera/camera0/image_rect_color" description="image raw topic name"/>
+  <arg name="camera_info0" default="/sensing/camera/camera0/camera_info" description="camera info topic name"/>
   <arg name="image_raw1" default="/sensing/camera/camera1/image_rect_color"/>
   <arg name="camera_info1" default="/sensing/camera/camera1/camera_info"/>
   <arg name="image_raw2" default="/sensing/camera/camera2/image_rect_color"/>
@@ -20,8 +19,8 @@
   <arg name="camera_info6" default="/sensing/camera/camera6/camera_info"/>
   <arg name="image_raw7" default="/sensing/camera/camera7/image_rect_color"/>
   <arg name="camera_info7" default="/sensing/camera/camera7/camera_info"/>
-  <arg name="image_number" default="6"/>
-  <arg name="use_vector_map" default="true"/>
+  <arg name="image_number" default="6" description="choose image raw number(0-7)"/>
+  <arg name="use_vector_map" default="true" description="use vector map in prediction"/>
   <arg name="use_empty_dynamic_object_publisher" default="false" description="if use_empty_dynamic_object_publisher:=true, /perception/object_recognition/objects topic has an empty DynamicObjectArray"/>
 
   <!-- perception module -->

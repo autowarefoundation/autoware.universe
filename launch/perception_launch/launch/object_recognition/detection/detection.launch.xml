@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 
 <launch>
-  <arg name="mode" default="camera_lidar_fusion"/>
+  <arg name="mode" default="camera_lidar_fusion" description="options: `camera_lidar_fusion`, `lidar` or `camera`"/>
   <!-- "camera_lidar_fusion", "lidar" or "camera" -->
-  <arg name="image_raw0" default="/image_raw"/>
-  <arg name="camera_info0" default="/camera_info"/>
+  <arg name="image_raw0" default="/image_raw" description="image raw topic name"/>
+  <arg name="camera_info0" default="/camera_info" description="camera info topic name"/>
   <arg name="image_raw1" default=""/>
   <arg name="camera_info1" default=""/>
   <arg name="image_raw2" default=""/>
@@ -19,8 +19,8 @@
   <arg name="camera_info6" default=""/>
   <arg name="image_raw7" default=""/>
   <arg name="camera_info7" default=""/>
-  <arg name="image_number" default="1"/>
-  <arg name="use_vector_map" default="true"/>
+  <arg name="image_number" default="1" description="choose image raw number(0-7)"/>
+  <arg name="use_vector_map" default="true" description="use vector map in prediction"/>
 
   <!-- camera lidar fusion based detection-->
   <group if="$(eval '&quot;$(var mode)&quot;==&quot;camera_lidar_fusion&quot;')">
