@@ -11,7 +11,7 @@
         <remap from="/camera_info" to="camera_info" />
         <param name="camera_frame_id" value="driving_recorder/camera_optical_link" />
         <param name="camera_name" value="driving_recorder/camera" />
-        <param name="video_device" type="string" value="/dev/video0" />
+        <param name="video_device" value="/dev/video0" />
         <param name="image_width" value="640" />
         <param name="image_height" value="480" />
         <param name="pixel_format" value="yuyv" />
