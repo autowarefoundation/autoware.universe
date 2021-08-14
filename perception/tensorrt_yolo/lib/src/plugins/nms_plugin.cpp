@@ -126,13 +126,15 @@ void NMSPlugin::serialize(void * buffer) const noexcept
 
 void NMSPlugin::destroy() noexcept {delete this;}
 
-void NMSPlugin::setPluginNamespace(const char * N) noexcept { (void)N; }
+void NMSPlugin::setPluginNamespace(const char * N) noexcept {(void)N;}
 
 const char * NMSPlugin::getPluginNamespace() const noexcept {return NMS_PLUGIN_NAMESPACE;}
 
 // IPluginV2Ext Methods
 
-DataType NMSPlugin::getOutputDataType(int index, const DataType * inputTypes, int nbInputs) const noexcept
+DataType NMSPlugin::getOutputDataType(
+  int index, const DataType * inputTypes,
+  int nbInputs) const noexcept
 {
   (void)index;
   (void)inputTypes;
@@ -207,7 +209,8 @@ size_t NMSPlugin::getWorkspaceSize(
 
 int NMSPlugin::enqueue(
   const PluginTensorDesc * inputDesc, const PluginTensorDesc * outputDesc,
-  const void * const * inputs, void * const * outputs, void * workspace, cudaStream_t stream) noexcept
+  const void * const * inputs, void * const * outputs, void * workspace,
+  cudaStream_t stream) noexcept
 {
   return nms(
     inputDesc->dims.d[0], inputs, outputs, count_, detections_per_im_, nms_thresh_, workspace,
@@ -222,7 +225,7 @@ const char * NMSPluginCreator::getPluginVersion() const noexcept {return NMS_PLU
 
 const char * NMSPluginCreator::getPluginNamespace() const noexcept {return NMS_PLUGIN_NAMESPACE;}
 
-void NMSPluginCreator::setPluginNamespace(const char * N) noexcept { (void)N; }
+void NMSPluginCreator::setPluginNamespace(const char * N) noexcept {(void)N;}
 const PluginFieldCollection * NMSPluginCreator::getFieldNames() noexcept {return nullptr;}
 IPluginV2DynamicExt * NMSPluginCreator::createPlugin(
   const char * name, const PluginFieldCollection * fc) noexcept

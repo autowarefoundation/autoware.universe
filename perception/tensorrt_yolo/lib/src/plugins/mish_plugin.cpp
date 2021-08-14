@@ -76,7 +76,7 @@ namespace yolo
 MishPlugin::MishPlugin() {}
 
 // create the plugin at runtime from a byte stream
-MishPlugin::MishPlugin(const void * data, size_t length) { (void)data; (void)length; }
+MishPlugin::MishPlugin(const void * data, size_t length) {(void)data; (void)length;}
 
 // IPluginV2 Methods
 
@@ -92,7 +92,7 @@ void MishPlugin::terminate() noexcept {}
 
 size_t MishPlugin::getSerializationSize() const noexcept {return 0;}
 
-void MishPlugin::serialize(void * buffer) const noexcept { (void)buffer; }
+void MishPlugin::serialize(void * buffer) const noexcept {(void)buffer;}
 
 void MishPlugin::destroy() noexcept {delete this;}
 
@@ -105,7 +105,9 @@ const char * MishPlugin::getPluginNamespace() const noexcept {return mPluginName
 
 // IPluginV2Ext Methods
 
-DataType MishPlugin::getOutputDataType(int index, const DataType * inputTypes, int nbInputs) const noexcept
+DataType MishPlugin::getOutputDataType(
+  int index, const DataType * inputTypes,
+  int nbInputs) const noexcept
 {
   (void)index;
   (void)inputTypes;
@@ -170,7 +172,8 @@ size_t MishPlugin::getWorkspaceSize(
 
 int MishPlugin::enqueue(
   const PluginTensorDesc * inputDesc, const PluginTensorDesc * outputDesc,
-  const void * const * inputs, void * const * outputs, void * workspace, cudaStream_t stream) noexcept
+  const void * const * inputs, void * const * outputs, void * workspace,
+  cudaStream_t stream) noexcept
 {
   (void)inputDesc;
   (void)outputDesc;

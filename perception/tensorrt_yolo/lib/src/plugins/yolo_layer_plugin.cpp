@@ -169,9 +169,12 @@ void YoloLayerPlugin::serialize(void * buffer) const noexcept
 
 void YoloLayerPlugin::destroy() noexcept {delete this;}
 
-void YoloLayerPlugin::setPluginNamespace(const char * N) noexcept { (void)N; }
+void YoloLayerPlugin::setPluginNamespace(const char * N) noexcept {(void)N;}
 
-const char * YoloLayerPlugin::getPluginNamespace() const noexcept {return YOLO_LAYER_PLUGIN_NAMESPACE;}
+const char * YoloLayerPlugin::getPluginNamespace() const noexcept
+{
+  return YOLO_LAYER_PLUGIN_NAMESPACE;
+}
 
 // IPluginV2Ext Methods
 
@@ -251,7 +254,8 @@ size_t YoloLayerPlugin::getWorkspaceSize(
 
 int YoloLayerPlugin::enqueue(
   const PluginTensorDesc * inputDesc, const PluginTensorDesc * outputDesc,
-  const void * const * inputs, void * const * outputs, void * workspace, cudaStream_t stream) noexcept
+  const void * const * inputs, void * const * outputs, void * workspace,
+  cudaStream_t stream) noexcept
 {
   const int batch_size = inputDesc[0].dims.d[0];
   const int grid_width = inputDesc[0].dims.d[2];
@@ -270,14 +274,17 @@ YoloLayerPluginCreator::YoloLayerPluginCreator() {}
 
 const char * YoloLayerPluginCreator::getPluginName() const noexcept {return YOLO_LAYER_PLUGIN_NAME;}
 
-const char * YoloLayerPluginCreator::getPluginVersion() const noexcept {return YOLO_LAYER_PLUGIN_VERSION;}
+const char * YoloLayerPluginCreator::getPluginVersion() const noexcept
+{
+  return YOLO_LAYER_PLUGIN_VERSION;
+}
 
 const char * YoloLayerPluginCreator::getPluginNamespace() const noexcept
 {
   return YOLO_LAYER_PLUGIN_NAMESPACE;
 }
 
-void YoloLayerPluginCreator::setPluginNamespace(const char * N) noexcept { (void)N; }
+void YoloLayerPluginCreator::setPluginNamespace(const char * N) noexcept {(void)N;}
 const PluginFieldCollection * YoloLayerPluginCreator::getFieldNames() noexcept {return nullptr;}
 
 IPluginV2DynamicExt * YoloLayerPluginCreator::createPlugin(

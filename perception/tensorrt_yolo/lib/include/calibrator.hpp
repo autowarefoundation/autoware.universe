@@ -146,7 +146,7 @@ public:
 
   virtual ~Int8EntropyCalibrator() {CHECK_CUDA_ERROR(cudaFree(device_input_));}
 
-  bool getBatch(void * bindings[], const char * names[], int nb_bindings) noexcept override
+  bool getBatch(void * bindings[], const char * names[], int nb_bindings) override
   {
     (void)names;
     (void)nb_bindings;

@@ -73,7 +73,8 @@ public:
     int outputIndex, const nvinfer1::DimsExprs * inputs, int nbInputs,
     nvinfer1::IExprBuilder & exprBuilder) noexcept override;
   bool supportsFormatCombination(
-    int pos, const nvinfer1::PluginTensorDesc * inOut, int nbInputs, int nbOutputs) noexcept override;
+    int pos, const nvinfer1::PluginTensorDesc * inOut, int nbInputs,
+    int nbOutputs) noexcept override;
   void configurePlugin(
     const nvinfer1::DynamicPluginTensorDesc * in, int nbInputs,
     const nvinfer1::DynamicPluginTensorDesc * out, int nbOutputs) noexcept override;
