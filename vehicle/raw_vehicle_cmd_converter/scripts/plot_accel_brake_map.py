@@ -66,7 +66,7 @@ def main(dimension, map_dir, accel_or_brake):
 
         plt.show()
 
-    except Exception:
+    except Exception:  # noqa: B902
         print('No map file found in {}'.format(map_dir))
 
 
