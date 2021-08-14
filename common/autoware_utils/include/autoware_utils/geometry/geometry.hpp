@@ -70,7 +70,7 @@ inline geometry_msgs::msg::Point getPoint(const autoware_planning_msgs::msg::Tra
 }
 
 template<class T>
-geometry_msgs::msg::Pose getPose(const T & p)
+geometry_msgs::msg::Pose getPose([[maybe_unused]] const T & p)
 {
   static_assert(sizeof(T) == 0, "Only specializations of getPose can be used.");
   throw std::logic_error("Only specializations of getPose can be used.");
