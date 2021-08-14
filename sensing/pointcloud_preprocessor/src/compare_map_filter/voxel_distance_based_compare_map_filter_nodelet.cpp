@@ -39,7 +39,8 @@ VoxelDistanceBasedCompareMapFilterComponent::VoxelDistanceBasedCompareMapFilterC
 }
 
 void VoxelDistanceBasedCompareMapFilterComponent::filter(
-  const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output)
+  const PointCloud2ConstPtr & input, [[maybe_unused]] const IndicesPtr & indices,
+  PointCloud2 & output)
 {
   boost::mutex::scoped_lock lock(mutex_);
   if (voxel_map_ptr_ == NULL || map_ptr_ == NULL || tree_ == NULL) {

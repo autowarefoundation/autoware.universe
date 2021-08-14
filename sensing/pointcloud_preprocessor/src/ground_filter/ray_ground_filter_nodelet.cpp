@@ -308,7 +308,8 @@ void RayGroundFilterComponent::ExtractPointsIndices(
 }
 
 void RayGroundFilterComponent::filter(
-  const PointCloud2::ConstSharedPtr & input, const IndicesPtr & indices, PointCloud2 & output)
+  const PointCloud2::ConstSharedPtr & input, [[maybe_unused]] const IndicesPtr & indices,
+  PointCloud2 & output)
 {
   boost::mutex::scoped_lock lock(mutex_);
 

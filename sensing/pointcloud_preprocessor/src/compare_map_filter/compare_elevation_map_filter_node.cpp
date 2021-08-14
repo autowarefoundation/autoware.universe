@@ -65,7 +65,8 @@ void CompareElevationMapFilterComponent::elevationMapCallback(
 }
 
 void CompareElevationMapFilterComponent::filter(
-  const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output)
+  const PointCloud2ConstPtr & input, [[maybe_unused]] const IndicesPtr & indices,
+  PointCloud2 & output)
 {
   pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_input(new pcl::PointCloud<pcl::PointXYZ>);
   pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_output(new pcl::PointCloud<pcl::PointXYZ>);
