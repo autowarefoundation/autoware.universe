@@ -41,7 +41,7 @@ AutowareIvStopReasonAggregator::updateStopReasonArray(
 
 void AutowareIvStopReasonAggregator::applyUpdate(
   const autoware_planning_msgs::msg::StopReasonArray::ConstSharedPtr & msg_ptr,
-  const AutowareInfo & aw_info)
+  [[maybe_unused]] const AutowareInfo & aw_info)
 {
   /* remove old stop_reason that matches reason with received msg */
   // make reason-matching msg list
