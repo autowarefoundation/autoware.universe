@@ -401,7 +401,8 @@ lanelet::ConstLanelet BlindSpotModule::generateHalfLanelet(
 }
 
 boost::optional<BlindSpotPolygons> BlindSpotModule::generateBlindSpotPolygons(
-  lanelet::LaneletMapConstPtr lanelet_map_ptr, lanelet::routing::RoutingGraphPtr routing_graph_ptr,
+  lanelet::LaneletMapConstPtr lanelet_map_ptr,
+  [[maybe_unused]] lanelet::routing::RoutingGraphPtr routing_graph_ptr,
   const autoware_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
   const geometry_msgs::msg::Pose & stop_line_pose) const
 {
