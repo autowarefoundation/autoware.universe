@@ -183,7 +183,8 @@ boost::optional<Trajectories> EBPathOptimizer::generateOptimizedTrajectory(
 
 boost::optional<std::vector<autoware_planning_msgs::msg::TrajectoryPoint>>
 EBPathOptimizer::getOptimizedTrajectory(
-  const bool enable_avoidance, const autoware_planning_msgs::msg::Path & path,
+  [[maybe_unused]] const bool enable_avoidance,
+  const autoware_planning_msgs::msg::Path & path,
   const CandidatePoints & candidate_points, const cv::Mat & clearance_map,
   const cv::Mat & only_objects_clearance_map, DebugData * debug_data)
 {
@@ -366,9 +367,10 @@ std::vector<double> EBPathOptimizer::solveQP(const OptMode & opt_mode)
 
 std::vector<geometry_msgs::msg::Pose> EBPathOptimizer::getFixedPoints(
   const geometry_msgs::msg::Pose & ego_pose,
-  const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points,
-  const std::unique_ptr<Trajectories> & prev_trajs, const cv::Mat & drivable_area,
-  const nav_msgs::msg::MapMetaData & map_info)
+  [[maybe_unused]] const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points,
+  const std::unique_ptr<Trajectories> & prev_trajs,
+  [[maybe_unused]] const cv::Mat & drivable_area,
+  [[maybe_unused]] const nav_msgs::msg::MapMetaData & map_info)
 {
   /* use of prev_traj_points(fine resolution) instead of prev_opt_traj(coarse resolution)
      stabilize trajectory's yaw*/
@@ -619,7 +621,8 @@ EBPathOptimizer::convertOptimizedPointsToTrajectory(
 boost::optional<std::vector<ConstrainRectangle>> EBPathOptimizer::getConstrainRectangleVec(
   const autoware_planning_msgs::msg::Path & path,
   const std::vector<geometry_msgs::msg::Point> & interpolated_points, const int num_fixed_points,
-  const int farthest_point_idx, const int straight_idx, const cv::Mat & clearance_map,
+  const int farthest_point_idx, const int straight_idx,
+  [[maybe_unused]] const cv::Mat & clearance_map,
   const cv::Mat & only_objects_clearance_map)
 {
   const nav_msgs::msg::MapMetaData map_info = path.drivable_area.info;

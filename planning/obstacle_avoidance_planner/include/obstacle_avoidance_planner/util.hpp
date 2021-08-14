@@ -181,7 +181,7 @@ int getZeroVelocityIdx(
 template<typename T>
 int getZeroVelocityIdxFromPoints(
   const T & points, const std::vector<geometry_msgs::msg::Point> & fine_points,
-  const int default_idx, const TrajectoryParam & traj_param);
+  const int /* default_idx */, const TrajectoryParam & traj_param);
 
 template<typename T>
 double getArcLength(const T & points, const int initial_idx = 0);

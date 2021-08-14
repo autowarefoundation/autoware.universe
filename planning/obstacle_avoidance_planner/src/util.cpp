@@ -437,7 +437,8 @@ int getNearestIdx(
 
 int getNearestIdxOverPoint(
   const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & points,
-  const geometry_msgs::msg::Pose & pose, const int default_idx, const double delta_yaw_threshold)
+  const geometry_msgs::msg::Pose & pose, [[maybe_unused]] const int default_idx,
+  const double delta_yaw_threshold)
 {
   double min_dist = std::numeric_limits<double>::max();
   const double point_yaw = tf2::getYaw(pose.orientation);
@@ -704,7 +705,7 @@ struct HistogramBin
 };
 
 Rectangle getLargestRectangleInRow(
-  const std::vector<int> & histo, const int current_row, const int row_size)
+  const std::vector<int> & histo, const int current_row, [[maybe_unused]] const int row_size)
 {
   std::vector<int> search_histo = histo;
   search_histo.push_back(0);
@@ -915,7 +916,7 @@ int getZeroVelocityIdx(
 template<typename T>
 int getZeroVelocityIdxFromPoints(
   const T & points, const std::vector<geometry_msgs::msg::Point> & fine_points,
-  const int default_idx, const TrajectoryParam & traj_param)
+  const int /* default_idx */, const TrajectoryParam & traj_param)
 {
   int zero_velocity_points_idx = points.size() - 1;
   for (std::size_t i = 0; i < points.size(); i++) {

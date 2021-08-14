@@ -131,9 +131,10 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
 
 std::vector<ReferencePoint> MPTOptimizer::convertToReferencePoints(
   const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & points,
-  const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points,
-  const std::unique_ptr<Trajectories> & prev_trajs, const geometry_msgs::msg::Pose & ego_pose,
-  const CVMaps & maps, DebugData * debug_data) const
+  [[maybe_unused]] const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points,
+  const std::unique_ptr<Trajectories> & prev_trajs,
+  [[maybe_unused]] const geometry_msgs::msg::Pose & ego_pose,
+  [[maybe_unused]] const CVMaps & maps, DebugData * debug_data) const
 {
   const auto interpolated_points =
     util::getInterpolatedPoints(points, traj_param_ptr_->delta_arc_length_for_mpt_points);
@@ -571,7 +572,9 @@ Eigen::VectorXd MPTOptimizer::getState(
 std::vector<autoware_planning_msgs::msg::TrajectoryPoint> MPTOptimizer::getMPTPoints(
   std::vector<ReferencePoint> & ref_points, const Eigen::VectorXd & Uex,
   const MPTMatrix & mpt_matrix,
-  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & optimized_points) const
+  [[maybe_unused]]
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & optimized_points)
+const
 {
   const int DIM_X = vehicle_model_ptr_->getDimX();
   const auto x0 = ref_points.front().optimized_state;
@@ -896,7 +899,7 @@ ObjectiveMatrix MPTOptimizer::getObjectiveMatrix(
 ConstraintMatrix MPTOptimizer::getConstraintMatrix(
   const bool enable_avoidance, const Eigen::VectorXd & x0, const MPTMatrix & m, const CVMaps & maps,
   const std::vector<ReferencePoint> & ref_points,
-  const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points,
+  [[maybe_unused]] const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points,
   DebugData * debug_data) const
 {
   std::vector<double> dist_vec{
