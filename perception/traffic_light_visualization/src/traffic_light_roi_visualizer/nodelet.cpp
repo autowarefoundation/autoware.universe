@@ -130,6 +130,7 @@ bool TrafficLightRoiVisualizerNodelet::createRect(
 void TrafficLightRoiVisualizerNodelet::imageRoiCallback(
   const sensor_msgs::msg::Image::ConstSharedPtr & input_image_msg,
   const autoware_perception_msgs::msg::TrafficLightRoiArray::ConstSharedPtr & input_tl_roi_msg,
+  [[maybe_unused]]
   const autoware_perception_msgs::msg::TrafficLightStateArray::ConstSharedPtr & input_tl_states_msg)
 {
   cv_bridge::CvImagePtr cv_ptr;
