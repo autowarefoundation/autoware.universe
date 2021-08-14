@@ -20,7 +20,8 @@
 #include "car_filter.hpp"
 
 bool CarFilter::filter(
-  const autoware_perception_msgs::msg::Shape & shape, const geometry_msgs::msg::Pose & pose)
+  const autoware_perception_msgs::msg::Shape & shape,
+  [[maybe_unused]] const geometry_msgs::msg::Pose & pose)
 {
   double x = shape.dimensions.x;
   double y = shape.dimensions.y;
