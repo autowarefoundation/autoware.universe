@@ -47,6 +47,11 @@ public:
   VehicleModelInterface(int dim_x, int dim_u, int dim_y);
 
   /**
+   * @brief destructor
+   */
+  virtual ~VehicleModelInterface() = default;
+
+  /**
    * @brief get state x dimension
    * @return state dimension
    */

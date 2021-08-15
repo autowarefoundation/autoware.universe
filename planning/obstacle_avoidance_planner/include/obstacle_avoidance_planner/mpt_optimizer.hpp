@@ -48,6 +48,7 @@
 #include "boost/optional.hpp"
 #include "eigen3/Eigen/Core"
 #include "nav_msgs/msg/map_meta_data.hpp"
+#include "obstacle_avoidance_planner/vehicle_model/vehicle_model_interface.hpp"
 
 namespace cv
 {
@@ -67,8 +68,6 @@ struct VehicleParam;
 struct Rectangle;
 struct CVMaps;
 struct Trajectories;
-
-class VehicleModelInterface;
 
 struct ReferencePoint
 {
@@ -283,7 +282,6 @@ public:
     const bool is_showing_debug_info, const QPParam & qp_param, const TrajectoryParam & traj_param,
     const ConstrainParam & constrain_param, const VehicleParam & vehicle_param,
     const MPTParam & mpt_param);
-  ~MPTOptimizer();
 
   boost::optional<MPTTrajs> getModelPredictiveTrajectory(
     const bool enable_avoidance,

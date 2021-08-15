@@ -238,7 +238,6 @@ private:
 
   const bool is_showing_debug_info_;
   const double epsilon_;
-  const double MIN_NUM_POINTS_FOR_YAW_ = 2;
 
   const QPParam qp_param_;
   const TrajectoryParam traj_param_;

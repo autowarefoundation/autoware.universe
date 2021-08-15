@@ -47,8 +47,6 @@ MPTOptimizer::MPTOptimizer(
     vehicle_param_ptr_->steer_tau);
 }
 
-MPTOptimizer::~MPTOptimizer() {}
-
 boost::optional<MPTTrajs> MPTOptimizer::getModelPredictiveTrajectory(
   const bool enable_avoidance,
   const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & smoothed_points,

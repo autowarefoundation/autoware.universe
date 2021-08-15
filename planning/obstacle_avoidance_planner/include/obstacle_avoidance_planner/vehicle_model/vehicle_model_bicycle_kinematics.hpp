@@ -70,7 +70,7 @@ public:
   /**
    * @brief destructor
    */
-  ~KinematicsBicycleModel() = default;
+  virtual ~KinematicsBicycleModel() = default;
 
   /**
    * @brief calculate discrete model matrix of x_k+1 = Ad * xk + Bd * uk + Wd, yk = Cd * xk
