@@ -56,6 +56,7 @@ class ColorClassifier : public ClassifierInterface
 {
 public:
   explicit ColorClassifier(rclcpp::Node * node_ptr);
+  virtual ~ColorClassifier() = default;
 
   bool getLampState(
     const cv::Mat & input_image,

@@ -297,7 +297,7 @@ void MapBasedDetector::routeCallback(
       try {
         route_lanelets.push_back(lanelet_map_ptr_->laneletLayer.get(lane_id));
       } catch (const lanelet::NoSuchPrimitiveError & ex) {
-        RCLCPP_ERROR(get_logger(), ex.what());
+        RCLCPP_ERROR(get_logger(), "%s", ex.what());
         return;
       }
     }

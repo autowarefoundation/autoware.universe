@@ -37,6 +37,7 @@ class CNNClassifier : public ClassifierInterface
 {
 public:
   explicit CNNClassifier(rclcpp::Node * node_ptr);
+  virtual ~CNNClassifier() = default;
 
   bool getLampState(
     const cv::Mat & input_image,
