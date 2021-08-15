@@ -116,7 +116,6 @@ public:
     cudaStream_t stream) noexcept override;
 
 private:
-  const char * mPluginNamespace;
   int width_;
   int height_;
   int num_anchors_;

@@ -146,21 +146,25 @@ public:
 
   virtual ~Int8EntropyCalibrator() {CHECK_CUDA_ERROR(cudaFree(device_input_));}
 
-  bool getBatch(void * bindings[], const char * names[], int nb_bindings) override
+  bool getBatch(void * bindings[], const char * names[], int nb_bindings) noexcept override
   {
     (void)names;
     (void)nb_bindings;
 
     if (!stream_.next()) {return false;}
 
-    CHECK_CUDA_ERROR(
-      cudaMemcpy(
-        device_input_, stream_.getBatch(), input_count_ * sizeof(float), cudaMemcpyHostToDevice));
+    try {
+      CHECK_CUDA_ERROR(
+        cudaMemcpy(
+          device_input_, stream_.getBatch(), input_count_ * sizeof(float), cudaMemcpyHostToDevice));
+    } catch (const std::exception & e) {
+      // Do nothing
+    }
     bindings[0] = device_input_;
     return true;
   }
 
-  const void * readCalibrationCache(size_t & length) noexcept
+  const void * readCalibrationCache(size_t & length) noexcept override
   {
     calib_cache_.clear();
     std::ifstream input(calibration_cache_file_, std::ios::binary);
@@ -175,7 +179,7 @@ public:
     return length ? &calib_cache_[0] : nullptr;
   }
 
-  void writeCalibrationCache(const void * cache, size_t length) noexcept
+  void writeCalibrationCache(const void * cache, size_t length) noexcept override
   {
     std::ofstream output(calibration_cache_file_, std::ios::binary);
     output.write(reinterpret_cast<const char *>(cache), length);
