@@ -89,7 +89,7 @@ double getDistanceFromTwoPoint(
   return dist;
 }
 
-constexpr double normalizeRadian(
+double normalizeRadian(
   const double rad, const double min_rad = -boost::math::constants::pi<double>(),
   const double max_rad = boost::math::constants::pi<double>())
 {
