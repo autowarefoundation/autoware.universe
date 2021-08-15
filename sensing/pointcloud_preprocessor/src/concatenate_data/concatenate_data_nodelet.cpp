@@ -332,7 +332,7 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
       try {
         setPeriod(period.count());
       } catch (rclcpp::exceptions::RCLError & ex) {
-        RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000, ex.what());
+        RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000, "%s", ex.what());
       }
       timer_->reset();
     }
@@ -372,7 +372,7 @@ void PointCloudConcatenateDataSynchronizerComponent::timer_callback()
       std::chrono::nanoseconds period = 10ms;
       setPeriod(period.count());
     } catch (rclcpp::exceptions::RCLError & ex) {
-      RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000, ex.what());
+      RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000, "%s", ex.what());
     }
     timer_->reset();
   }

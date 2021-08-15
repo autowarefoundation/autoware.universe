@@ -117,7 +117,6 @@ private:
     reclass_distance_threshold_;  // distance between points at which re classification will occur
 
   size_t radial_dividers_num_;
-  size_t concentric_dividers_num_;
 
   size_t grid_width_;
   size_t grid_height_;
