@@ -155,7 +155,7 @@ inline double calcOverlapAreaRate(const Polygon2d & target, const Polygon2d & ba
 
   // calculate area of polygon
   double intersect_area = 0.0;
-  for (const auto intersect : intersects) {
+  for (const auto & intersect : intersects) {
     intersect_area += boost::geometry::area(intersect);
   }
   const double target_area = boost::geometry::area(target);
@@ -190,7 +190,7 @@ inline geometry_msgs::msg::Polygon toGeomMsg(const Polygon2d & polygon)
 inline Polygon2d toBoostPoly(const geometry_msgs::msg::Polygon & polygon)
 {
   Polygon2d boost_poly;
-  for (const auto point : polygon.points) {
+  for (const auto & point : polygon.points) {
     const Point2d point2d(point.x, point.y);
     boost_poly.outer().push_back(point2d);
   }
@@ -200,7 +200,7 @@ inline Polygon2d toBoostPoly(const geometry_msgs::msg::Polygon & polygon)
 inline Polygon2d toBoostPoly(const lanelet::BasicPolygon2d & polygon)
 {
   Polygon2d boost_poly;
-  for (const auto vec : polygon) {
+  for (const auto & vec : polygon) {
     const Point2d point2d(vec.x(), vec.y());
     boost_poly.outer().push_back(point2d);
   }
