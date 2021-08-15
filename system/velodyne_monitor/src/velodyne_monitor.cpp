@@ -82,7 +82,7 @@ void VelodyneMonitor::checkConnection(diagnostic_updater::DiagnosticStatusWrappe
   try {
     info_json_ = res.extract_json().get();
   } catch (const web::http::http_exception & ex) {
-    RCLCPP_WARN(get_logger(), ex.what());
+    RCLCPP_WARN(get_logger(), "%s", ex.what());
     stat.summary(DiagStatus::ERROR, ex.what());
     return;
   }
@@ -115,7 +115,7 @@ void VelodyneMonitor::checkTemperature(diagnostic_updater::DiagnosticStatusWrapp
   try {
     diag_json_ = res.extract_json().get();
   } catch (const web::http::http_exception & ex) {
-    RCLCPP_WARN(get_logger(), ex.what());
+    RCLCPP_WARN(get_logger(), "%s", ex.what());
     stat.summary(DiagStatus::ERROR, ex.what());
     return;
   }
@@ -179,7 +179,7 @@ void VelodyneMonitor::checkMotorRpm(diagnostic_updater::DiagnosticStatusWrapper 
   try {
     settings_json_ = res.extract_json().get();
   } catch (const web::http::http_exception & ex) {
-    RCLCPP_WARN(get_logger(), ex.what());
+    RCLCPP_WARN(get_logger(), "%s", ex.what());
     stat.summary(DiagStatus::ERROR, ex.what());
     return;
   }
@@ -194,7 +194,7 @@ void VelodyneMonitor::checkMotorRpm(diagnostic_updater::DiagnosticStatusWrapper 
   try {
     status_json_ = res.extract_json().get();
   } catch (const web::http::http_exception & ex) {
-    RCLCPP_WARN(get_logger(), ex.what());
+    RCLCPP_WARN(get_logger(), "%s", ex.what());
     stat.summary(DiagStatus::ERROR, ex.what());
     return;
   }
