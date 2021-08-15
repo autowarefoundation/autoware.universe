@@ -64,7 +64,7 @@ size_t findNearestIndex(const T & points, const geometry_msgs::msg::Point & poin
   size_t min_idx = 0;
 
   for (size_t i = 0; i < points.size(); ++i) {
-    const auto dist = calcDistance2d(points.at(i), point);
+    const auto dist = calcSquaredDistance2d(points.at(i), point);
     if (dist < min_dist) {
       min_dist = dist;
       min_idx = i;

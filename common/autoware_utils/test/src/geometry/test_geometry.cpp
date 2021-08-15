@@ -367,6 +367,23 @@ TEST(geometry, calcDistance2d)
   EXPECT_DOUBLE_EQ(calcDistance2d(point, pose), 5.0);
 }
 
+TEST(geometry, calcSquaredDistance2d)
+{
+  using autoware_utils::calcSquaredDistance2d;
+
+  geometry_msgs::msg::Point point;
+  point.x = 1.0;
+  point.y = 2.0;
+  point.z = 3.0;
+
+  geometry_msgs::msg::Pose pose;
+  pose.position.x = 5.0;
+  pose.position.y = 5.0;
+  pose.position.z = 4.0;
+
+  EXPECT_DOUBLE_EQ(calcSquaredDistance2d(point, pose), 25.0);
+}
+
 TEST(geometry, calcDistance3d)
 {
   using autoware_utils::calcDistance3d;
