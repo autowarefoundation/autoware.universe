@@ -21,7 +21,7 @@
 
 namespace autoware_utils
 {
-constexpr double normalizeDegree(const double deg, const double min_deg = -180)
+inline double normalizeDegree(const double deg, const double min_deg = -180)
 {
   const auto max_deg = min_deg + 360.0;
 
@@ -33,7 +33,7 @@ constexpr double normalizeDegree(const double deg, const double min_deg = -180)
   }
 }
 
-constexpr double normalizeRadian(const double rad, const double min_rad = -pi)
+inline double normalizeRadian(const double rad, const double min_rad = -pi)
 {
   const auto max_rad = min_rad + 2 * pi;
 
