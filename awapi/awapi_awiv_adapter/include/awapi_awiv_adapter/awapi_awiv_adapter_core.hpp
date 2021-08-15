@@ -156,7 +156,6 @@ private:
   std::unique_ptr<AutowareIvMaxVelocityPublisher> max_velocity_publisher_;
   double status_pub_hz_;
   double stop_reason_timeout_;
-  double default_max_velocity;
   double stop_reason_thresh_dist_;
 };
 

@@ -68,8 +68,8 @@ bool AutowareIvStopReasonAggregator::checkMatchingReason(
   const autoware_planning_msgs::msg::StopReasonArray::ConstSharedPtr & msg_stop_reason_array,
   const autoware_planning_msgs::msg::StopReasonArray & stop_reason_array)
 {
-  for (const auto msg_stop_reason : msg_stop_reason_array->stop_reasons) {
-    for (const auto stop_reason : stop_reason_array.stop_reasons) {
+  for (const auto & msg_stop_reason : msg_stop_reason_array->stop_reasons) {
+    for (const auto & stop_reason : stop_reason_array.stop_reasons) {
       if (msg_stop_reason.reason == stop_reason.reason) {
         // find matching reason
         return true;
@@ -140,8 +140,8 @@ AutowareIvStopReasonAggregator::makeStopReasonArray(const AutowareInfo & aw_info
   stop_reason_array_msg.header.stamp = clock_->now();
 
   // input stop reason
-  for (const auto stop_reason_array : stop_reason_array_vec_) {
-    for (const auto stop_reason : stop_reason_array.stop_reasons) {
+  for (const auto & stop_reason_array : stop_reason_array_vec_) {
+    for (const auto & stop_reason : stop_reason_array.stop_reasons) {
       appendStopReasonToArray(stop_reason, &stop_reason_array_msg, aw_info);
     }
   }
@@ -176,7 +176,7 @@ autoware_planning_msgs::msg::StopReason AutowareIvStopReasonAggregator::getNearS
 
   autoware_planning_msgs::msg::StopReason near_stop_reason;
   near_stop_reason.reason = stop_reason.reason;
-  for (const auto stop_factor : stop_reason.stop_factors) {
+  for (const auto & stop_factor : stop_reason.stop_factors) {
     if (stop_factor.dist_to_stop_pose < thresh_dist_to_stop_pose_) {
       // append only near stop factor
       near_stop_reason.stop_factors.emplace_back(stop_factor);
