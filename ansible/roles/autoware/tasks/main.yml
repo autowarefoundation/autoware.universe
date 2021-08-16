@@ -11,7 +11,7 @@
   become: yes
 
 - name: Autoware (rosdep install dependencies)
-  command: "rosdep install -y --from-paths {{ AUTOWARE_DIR }}/src --ignore-src --rosdistro {{ rosdistro }}"
+  command: "rosdep install -y --from-paths {{ WORKSPACE_ROOT }}/src --ignore-src --rosdistro {{ rosdistro }}"
   become: yes
 
 - name: Autoware (install gdown to download some files for neural network)
