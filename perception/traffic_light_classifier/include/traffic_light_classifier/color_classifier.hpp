@@ -77,7 +77,6 @@ private:
     Val = 2,
   };
   image_transport::Publisher image_pub_;
-  double ratio_threshold_;
 
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr set_param_res_;
   rclcpp::Node * node_ptr_;

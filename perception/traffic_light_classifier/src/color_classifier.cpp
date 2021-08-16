@@ -20,7 +20,7 @@
 namespace traffic_light
 {
 ColorClassifier::ColorClassifier(rclcpp::Node * node_ptr)
-: ratio_threshold_(0.02), node_ptr_(node_ptr)
+: node_ptr_(node_ptr)
 {
   using std::placeholders::_1;
   image_pub_ = image_transport::create_publisher(
