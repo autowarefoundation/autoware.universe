@@ -28,9 +28,7 @@
 #include "autoware_debug_msgs/msg/int64_stamped.hpp"
 #include "autoware_debug_msgs/msg/string_stamped.hpp"
 
-namespace autoware_utils
-{
-namespace debug_traits
+namespace autoware_utils::debug_traits
 {
 template<typename T>
 struct is_debug_message : std::false_type {};
@@ -74,8 +72,6 @@ struct is_debug_message<autoware_debug_msgs::msg::Int64Stamped>
 template<>
 struct is_debug_message<autoware_debug_msgs::msg::StringStamped>
   : std::true_type {};
-
-}  // namespace debug_traits
-}  // namespace autoware_utils
+}  // namespace autoware_utils::debug_traits
 
 #endif  // AUTOWARE_UTILS__ROS__DEBUG_TRAITS_HPP_

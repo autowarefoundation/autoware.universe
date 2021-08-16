@@ -27,11 +27,11 @@ template<
 class StopWatch
 {
 public:
-  StopWatch() {t_start_[default_name] = Clock::now();}
+  void tic(const std::string & name = default_name) {t_start_[name] = Clock::now();}
 
-  void tic(const char * name = default_name) {t_start_[name] = Clock::now();}
+  void tic(const char * name) {tic(std::string(name));}
 
-  double toc(const char * name, const bool reset = false)
+  double toc(const std::string & name, const bool reset = false)
   {
     const auto t_start = t_start_.at(name);
     const auto t_end = Clock::now();
@@ -46,11 +46,13 @@ public:
     return static_cast<double>(duration) / one_sec;
   }
 
+  double toc(const char * name, const bool reset = false) {return toc(std::string(name), reset);}
+
   double toc(const bool reset = false) {return toc(default_name, reset);}
 
 private:
   using Time = std::chrono::time_point<Clock>;
-  static constexpr const char * default_name = "__auto__";
+  static constexpr const char * default_name{"__auto__"};
 
   std::unordered_map<std::string, Time> t_start_;
 };

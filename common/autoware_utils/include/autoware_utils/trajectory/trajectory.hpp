@@ -149,7 +149,8 @@ size_t findNearestSegmentIndex(const T & points, const geometry_msgs::msg::Point
 
   if (nearest_idx == 0) {
     return 0;
-  } else if (nearest_idx == points.size() - 1) {
+  }
+  if (nearest_idx == points.size() - 1) {
     return points.size() - 2;
   }
 

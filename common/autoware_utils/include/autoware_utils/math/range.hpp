@@ -38,7 +38,7 @@ std::vector<T> arange(const T start, const T stop, const T step = 1)
   }
 
   const double max_i_double = std::ceil(static_cast<double>(stop - start) / step);
-  const size_t max_i = static_cast<size_t>(max_i_double);
+  const auto max_i = static_cast<size_t>(max_i_double);
 
   std::vector<T> out;
   out.reserve(max_i);
@@ -52,8 +52,8 @@ std::vector<T> arange(const T start, const T stop, const T step = 1)
 template<class T>
 std::vector<double> linspace(const T start, const T stop, const size_t num)
 {
-  const double start_double = static_cast<double>(start);
-  const double stop_double = static_cast<double>(stop);
+  const auto start_double = static_cast<double>(start);
+  const auto stop_double = static_cast<double>(stop);
 
   if (num == 0) {
     return {};

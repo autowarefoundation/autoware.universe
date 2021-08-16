@@ -72,7 +72,7 @@ inline double calcYawDeviation(
 inline PoseDeviation calcPoseDeviation(
   const geometry_msgs::msg::Pose & base_pose, const geometry_msgs::msg::Pose & target_pose)
 {
-  PoseDeviation deviation;
+  PoseDeviation deviation{};
 
   deviation.lateral = calcLateralDeviation(base_pose, target_pose.position);
   deviation.longitudinal = calcLongitudinalDeviation(base_pose, target_pose.position);

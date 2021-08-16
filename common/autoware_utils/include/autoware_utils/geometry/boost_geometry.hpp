@@ -55,6 +55,7 @@ struct Point2d : public Eigen::Vector2d
   Point2d(const double x, const double y)
   : Eigen::Vector2d(x, y) {}
 
+  [[nodiscard]]
   Point3d to_3d(const double z = 0.0) const;
 };
 
@@ -64,6 +65,7 @@ struct Point3d : public Eigen::Vector3d
   Point3d(const double x, const double y, const double z)
   : Eigen::Vector3d(x, y, z) {}
 
+  [[nodiscard]]
   Point2d to_2d() const;
 };
 
