@@ -9,7 +9,7 @@ on:
 jobs:
   vcs-import:
     runs-on: ubuntu-latest
-    container: osrf/ros:galactic-desktop
+    container: rostooling/setup-ros-docker:ubuntu-focal-ros-galactic-ros-base-latest
 
     steps:
       - name: Checkout repository
@@ -43,4 +43,4 @@ jobs:
         run: |
           apt-get -y update
           rosdep update
-          rosdep install -y --from-paths . --ignore-src --rosdistro galactic
+          DEBIAN_FRONTEND=noninteractive rosdep install -y --from-paths . --ignore-src --rosdistro galactic
