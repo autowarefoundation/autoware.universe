@@ -11,6 +11,11 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic -Werror)
 endif()
 
+# Ignore -Wnonportable-include-path in Clang for mussp
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wno-nonportable-include-path)
+endif()
+
 ### Find Packages
 find_package(ament_cmake_auto REQUIRED)
 
