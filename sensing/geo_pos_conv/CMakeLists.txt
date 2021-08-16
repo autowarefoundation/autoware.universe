@@ -16,7 +16,7 @@ find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
 ### Create library
-ament_auto_add_library(geo_pos_conv
+ament_auto_add_library(geo_pos_conv SHARED
   src/geo_pos_conv.cpp
 )
 
