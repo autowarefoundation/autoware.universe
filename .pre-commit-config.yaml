@@ -50,8 +50,8 @@ repos:
       - id: shellcheck
 
   - repo: https://github.com/hadolint/hadolint
-    rev: v2.6.1
+    rev: v2.6.0
     hooks:
-      - id: hadolint
+      - id: hadolint-docker
 
 exclude: ".svg"
