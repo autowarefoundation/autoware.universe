@@ -26,6 +26,11 @@ jobs:
           apt-get -y update
           apt-get -y install python3-pip
 
+      # tmp: colcon-package-selection 0.2.6 doesn't support --packages-above-and-dependencies
+      - name: Update colcon
+        run: |
+          pip3 install -U colcon-package-selection
+
       - name: Search modified package
         id: list_packages
         run: |
