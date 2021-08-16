@@ -60,7 +60,6 @@ private:
 
   float voxel_size_x_;
   float voxel_size_y_;
-  float voxel_size_z_;
 
   void pointcloudCallback(const PointCloud2ConstPtr msg);
 
