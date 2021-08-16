@@ -309,7 +309,7 @@ void MPTOptimizer::calcInitialState(
 
 /*
  * predict equation: Xec = Aex * x0 + Bex * Uex + Wex
- * cost function: J = Xex' * Qex * Xex + (Uex - Uref)' * R1ex * (Uex - Urefex) + Uex' * R2ex * Uex
+ * cost function: J = Xex' * Qex * Xex + (Uex - Uref)' * R1ex * (Uex - Uref_ex) + Uex' * R2ex * Uex
  * Qex = diag([Q,Q,...]), R1ex = diag([R,R,...])
  */
 boost::optional<MPTMatrix> MPTOptimizer::generateMPTMatrix(
@@ -329,7 +329,7 @@ boost::optional<MPTMatrix> MPTOptimizer::generateMPTMatrix(
   Eigen::MatrixXd Qex = Eigen::MatrixXd::Zero(DIM_Y * N, DIM_Y * N);
   Eigen::MatrixXd R1ex = Eigen::MatrixXd::Zero(DIM_U * N, DIM_U * N);
   Eigen::MatrixXd R2ex = Eigen::MatrixXd::Zero(DIM_U * N, DIM_U * N);
-  Eigen::MatrixXd Urefex = Eigen::MatrixXd::Zero(DIM_U * N, 1);
+  Eigen::MatrixXd Uref_ex = Eigen::MatrixXd::Zero(DIM_U * N, 1);
 
   /* weight matrix depends on the vehicle model */
   Eigen::MatrixXd Q = Eigen::MatrixXd::Zero(DIM_Y, DIM_Y);
@@ -409,7 +409,7 @@ boost::optional<MPTMatrix> MPTOptimizer::generateMPTMatrix(
     if (std::fabs(Uref(0, 0)) < mpt_param_ptr_->zero_ff_steer_angle * M_PI / 180.0) {
       Uref(0, 0) = 0.0;  // ignore curvature noise
     }
-    Urefex.block(i * DIM_U, 0, DIM_U, 1) = Uref;
+    Uref_ex.block(i * DIM_U, 0, DIM_U, 1) = Uref;
   }
 
   addSteerWeightR(&R1ex, reference_points);
@@ -422,11 +422,11 @@ boost::optional<MPTMatrix> MPTOptimizer::generateMPTMatrix(
   m.Qex = Qex;
   m.R1ex = R1ex;
   m.R2ex = R2ex;
-  m.Urefex = Urefex;
+  m.Uref_ex = Uref_ex;
   if (
     m.Aex.array().isNaN().any() || m.Bex.array().isNaN().any() || m.Cex.array().isNaN().any() ||
     m.Wex.array().isNaN().any() || m.Qex.array().isNaN().any() || m.R1ex.array().isNaN().any() ||
-    m.R2ex.array().isNaN().any() || m.Urefex.array().isNaN().any())
+    m.R2ex.array().isNaN().any() || m.Uref_ex.array().isNaN().any())
   {
     RCLCPP_WARN(rclcpp::get_logger("MPTOptimizer"), "[Avoidance] MPT matrix includes NaN.");
     return boost::none;
@@ -857,7 +857,7 @@ boost::optional<double> MPTOptimizer::getClearance(
 ObjectiveMatrix MPTOptimizer::getObjectiveMatrix(
   const Eigen::VectorXd & x0, const MPTMatrix & m) const
 {
-  const int DIM_U_N = m.Urefex.rows();
+  const int DIM_U_N = m.Uref_ex.rows();
   const Eigen::MatrixXd CB = m.Cex * m.Bex;
   const Eigen::MatrixXd QCB = m.Qex * CB;
   // Eigen::MatrixXd H = CB.transpose() * QCB + m.R1ex + m.R2ex;
@@ -867,7 +867,7 @@ ObjectiveMatrix MPTOptimizer::getObjectiveMatrix(
   H.triangularView<Eigen::Upper>() += m.R1ex + m.R2ex;
   H.triangularView<Eigen::Lower>() = H.transpose();
   Eigen::VectorXd f =
-    (m.Cex * (m.Aex * x0 + m.Wex)).transpose() * QCB - m.Urefex.transpose() * m.R1ex;
+    (m.Cex * (m.Aex * x0 + m.Wex)).transpose() * QCB - m.Uref_ex.transpose() * m.R1ex;
   addSteerWeightF(&f);
 
   constexpr int num_lat_constraint = 3;
@@ -904,7 +904,7 @@ ConstraintMatrix MPTOptimizer::getConstraintMatrix(
     mpt_param_ptr_->base_point_dist_from_base_link, mpt_param_ptr_->top_point_dist_from_base_link,
     mpt_param_ptr_->mid_point_dist_from_base_link};
 
-  const size_t N_ref = m.Urefex.rows();
+  const size_t N_ref = m.Uref_ex.rows();
   const size_t N_state = vehicle_model_ptr_->getDimX();
   const size_t N_point = dist_vec.size();
   const size_t N_dec = N_ref * (N_point + 1);

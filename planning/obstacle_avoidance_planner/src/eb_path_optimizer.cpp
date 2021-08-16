@@ -277,11 +277,11 @@ EBPathOptimizer::getExtendedOptimizedTrajectory(
     fixed_points.push_back(optimized_points[optimized_points.size() - i].pose);
   }
 
-  const double delat_arc_length_for_extending_trajectory = std::fmax(
+  const double delta_arc_length_for_extending_trajectory = std::fmax(
     traj_param_.delta_arc_length_for_optimization,
     static_cast<float>(extending_trajectory_length / traj_param_.num_sampling_points));
   std::vector<geometry_msgs::msg::Point> interpolated_points = util::getInterpolatedPoints(
-    fixed_points, non_fixed_points, delat_arc_length_for_extending_trajectory);
+    fixed_points, non_fixed_points, delta_arc_length_for_extending_trajectory);
   if (interpolated_points.empty()) {
     RCLCPP_INFO_THROTTLE(
       rclcpp::get_logger("EBPathOptimizer"), logger_ros_clock_,
@@ -295,7 +295,7 @@ EBPathOptimizer::getExtendedOptimizedTrajectory(
     getPaddedInterpolatedPoints(interpolated_points, farthest_idx);
   const double arc_length = util::getArcLength(fixed_points);
   const int num_fix_points =
-    static_cast<int>(arc_length) / delat_arc_length_for_extending_trajectory;
+    static_cast<int>(arc_length) / delta_arc_length_for_extending_trajectory;
   std::vector<ConstrainRectangle> constrain_rectangles =
     getConstrainRectangleVec(path_points, padded_interpolated_points, num_fix_points, farthest_idx);
 

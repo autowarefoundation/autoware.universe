@@ -630,13 +630,13 @@ std::vector<autoware_planning_msgs::msg::TrajectoryPoint> fillTrajectoryWithVelo
   const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & traj_points,
   const double velocity)
 {
-  std::vector<autoware_planning_msgs::msg::TrajectoryPoint> traj_with_velo;
+  std::vector<autoware_planning_msgs::msg::TrajectoryPoint> traj_with_velocity;
   for (const auto & traj_point : traj_points) {
     auto tmp_point = traj_point;
     tmp_point.twist.linear.x = velocity;
-    traj_with_velo.push_back(tmp_point);
+    traj_with_velocity.push_back(tmp_point);
   }
-  return traj_with_velo;
+  return traj_with_velocity;
 }
 
 template<typename T>
@@ -891,7 +891,7 @@ int getZeroVelocityIdx(
     rclcpp::get_logger("util"), is_showing_debug_info,
     "0 m/s idx from path: %d from opt: %d total size %zu", zero_velocity_idx_from_path,
     zero_velocity_idx_from_opt_points, fine_points.size());
-  // std::cout << "zero velo from path " << zero_velocity_idx_from_path << " from opt "
+  // std::cout << "zero velocity from path " << zero_velocity_idx_from_path << " from opt "
   //           << zero_velocity_idx_from_opt_points << " total size  " << fine_points.size()
   //           << std::endl;
   const int zero_velocity_idx =

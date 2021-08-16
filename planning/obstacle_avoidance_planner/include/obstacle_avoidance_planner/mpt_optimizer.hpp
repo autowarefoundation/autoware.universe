@@ -115,7 +115,7 @@ struct MPTMatrix
   Eigen::MatrixXd Qex;
   Eigen::MatrixXd R1ex;
   Eigen::MatrixXd R2ex;
-  Eigen::MatrixXd Urefex;
+  Eigen::MatrixXd Uref_ex;
 };
 
 struct ObjectiveMatrix
@@ -210,7 +210,7 @@ private:
 
   /*
  * predict equation: Xec = Aex * x0 + Bex * Uex + Wex
- * cost function: J = Xex' * Qex * Xex + (Uex - Uref)' * R1ex * (Uex - Urefex) + Uex' * R2ex * Uex
+ * cost function: J = Xex' * Qex * Xex + (Uex - Uref)' * R1ex * (Uex - Uref_ex) + Uex' * R2ex * Uex
  * Qex = diag([Q,Q,...]), R1ex = diag([R,R,...])
  */
   boost::optional<MPTMatrix> generateMPTMatrix(
