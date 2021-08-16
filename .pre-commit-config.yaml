@@ -44,4 +44,14 @@ repos:
     hooks:
       - id: prettier
 
+  - repo: https://github.com/gruntwork-io/pre-commit
+    rev: v0.1.12
+    hooks:
+      - id: shellcheck
+
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.6.1
+    hooks:
+      - id: hadolint
+
 exclude: ".svg"
