@@ -14,7 +14,7 @@ ament_auto_find_build_dependencies()
 
 find_package(Boost REQUIRED)
 
-ament_auto_add_library(autoware_utils
+ament_auto_add_library(autoware_utils SHARED
   src/autoware_utils.cpp
   src/planning/planning_marker_helper.cpp
 )
