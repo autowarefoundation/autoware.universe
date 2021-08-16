@@ -19,7 +19,9 @@ include_directories(include ${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
-ament_auto_add_library(matching_score src/matching_score.cpp)
+ament_auto_add_library(matching_score SHARED
+  src/matching_score.cpp
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
