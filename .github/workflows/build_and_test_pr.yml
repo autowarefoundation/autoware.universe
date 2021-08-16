@@ -9,7 +9,7 @@ on:
 jobs:
   build-and-test-pr:
     runs-on: ubuntu-latest
-    container: osrf/ros:foxy-desktop
+    container: rostooling/setup-ros-docker:ubuntu-focal-ros-galactic-ros-base-latest
 
     steps:
       - name: Cancel previous runs
@@ -42,12 +42,12 @@ jobs:
           vcs import dependency_ws < build_depends.repos
           apt-get -y update
           rosdep update
-          rosdep install -y --from-paths . --ignore-src --rosdistro foxy
+          rosdep install -y --from-paths . --ignore-src --rosdistro galactic
 
       - name: Build
         if: ${{ steps.list_packages.outputs.package_list != '' }}
         run: |
-          . /opt/ros/foxy/setup.sh
+          . /opt/ros/galactic/setup.sh
           colcon build --event-handlers console_cohesion+ \
             --packages-above-and-dependencies ${{ steps.list_packages.outputs.package_list }} \
             --cmake-args -DCMAKE_BUILD_TYPE=Release
@@ -55,7 +55,7 @@ jobs:
       - name: Run tests
         if: ${{ steps.list_packages.outputs.package_list != '' }}
         run: |
-          . /opt/ros/foxy/setup.sh
+          . /opt/ros/galactic/setup.sh
           colcon test --event-handlers console_cohesion+ \
             --packages-above ${{ steps.list_packages.outputs.package_list }} \
             --return-code-on-test-failure

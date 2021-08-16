@@ -8,7 +8,7 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-    container: osrf/ros:foxy-desktop
+    container: rostooling/setup-ros-docker:ubuntu-focal-ros-galactic-ros-base-latest
 
     steps:
       - name: Checkout repository
@@ -34,18 +34,18 @@ jobs:
           vcs import dependency_ws < build_depends.repos
           apt-get -y update
           rosdep update
-          rosdep install -y --from-paths . --ignore-src --rosdistro foxy
+          rosdep install -y --from-paths . --ignore-src --rosdistro galactic
 
       - name: Build
         run: |
-          . /opt/ros/foxy/setup.sh
+          . /opt/ros/galactic/setup.sh
           colcon build --event-handlers console_cohesion+ \
             --packages-up-to ${{ steps.list_packages.outputs.package_list }} \
             --cmake-args -DCMAKE_BUILD_TYPE=Release
 
       - name: Run tests
         run: |
-          . /opt/ros/foxy/setup.sh
+          . /opt/ros/galactic/setup.sh
           colcon test --event-handlers console_cohesion+ \
             --packages-select ${{ steps.list_packages.outputs.package_list }} \
             --return-code-on-test-failure
