@@ -55,11 +55,11 @@ void RadiusSearch2DOutlierFilterComponent::filter(
   }
 
   std::vector<int> k_indices(xy_cloud->points.size());
-  std::vector<float> k_dists(xy_cloud->points.size());
+  std::vector<float> k_sqr_distances(xy_cloud->points.size());
   kd_tree_->setInputCloud(xy_cloud);
   pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_output(new pcl::PointCloud<pcl::PointXYZ>);
   for (size_t i = 0; i < xy_cloud->points.size(); ++i) {
-    size_t k = kd_tree_->radiusSearch(i, search_radius_, k_indices, k_dists);
+    size_t k = kd_tree_->radiusSearch(i, search_radius_, k_indices, k_sqr_distances);
     if (k >= min_neighbors_) {
       pcl_output->points.push_back(xyz_cloud->points.at(i));
     }

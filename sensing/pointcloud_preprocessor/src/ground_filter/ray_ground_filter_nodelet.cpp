@@ -313,8 +313,8 @@ void RayGroundFilterComponent::filter(
 {
   boost::mutex::scoped_lock lock(mutex_);
 
-  sensor_msgs::msg::PointCloud2::SharedPtr input_transed_ptr(new sensor_msgs::msg::PointCloud2);
-  bool succeeded = TransformPointCloud(base_frame_, input, input_transed_ptr);
+  sensor_msgs::msg::PointCloud2::SharedPtr input_transformed_ptr(new sensor_msgs::msg::PointCloud2);
+  bool succeeded = TransformPointCloud(base_frame_, input, input_transformed_ptr);
   if (!succeeded) {
     RCLCPP_ERROR_STREAM_THROTTLE(
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
@@ -323,7 +323,7 @@ void RayGroundFilterComponent::filter(
   }
 
   pcl::PointCloud<PointType_>::Ptr current_sensor_cloud_ptr(new pcl::PointCloud<PointType_>);
-  pcl::fromROSMsg(*input_transed_ptr, *current_sensor_cloud_ptr);
+  pcl::fromROSMsg(*input_transformed_ptr, *current_sensor_cloud_ptr);
 
   PointCloudXYZRTColor organized_points;
   std::vector<pcl::PointIndices> radial_division_indices;
@@ -350,10 +350,10 @@ void RayGroundFilterComponent::filter(
   pcl::toROSMsg(*no_ground_cloud_ptr, *no_ground_cloud_msg_ptr);
   no_ground_cloud_msg_ptr->header = input->header;
   no_ground_cloud_msg_ptr->header.frame_id = base_frame_;
-  sensor_msgs::msg::PointCloud2::SharedPtr no_ground_cloud_transed_msg_ptr(
+  sensor_msgs::msg::PointCloud2::SharedPtr no_ground_cloud_transformed_msg_ptr(
     new sensor_msgs::msg::PointCloud2);
   succeeded =
-    TransformPointCloud(base_frame_, no_ground_cloud_msg_ptr, no_ground_cloud_transed_msg_ptr);
+    TransformPointCloud(base_frame_, no_ground_cloud_msg_ptr, no_ground_cloud_transformed_msg_ptr);
   if (!succeeded) {
     RCLCPP_ERROR_STREAM_THROTTLE(
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
@@ -361,7 +361,7 @@ void RayGroundFilterComponent::filter(
         no_ground_cloud_msg_ptr->header.frame_id);
     return;
   }
-  output = *no_ground_cloud_transed_msg_ptr;
+  output = *no_ground_cloud_transformed_msg_ptr;
 }
 
 rcl_interfaces::msg::SetParametersResult RayGroundFilterComponent::paramCallback(

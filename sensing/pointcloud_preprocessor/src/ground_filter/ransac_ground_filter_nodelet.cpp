@@ -229,15 +229,15 @@ void RANSACGroundFilterComponent::filter(
   PointCloud2 & output)
 {
   boost::mutex::scoped_lock lock(mutex_);
-  sensor_msgs::msg::PointCloud2::SharedPtr input_transed_ptr(new sensor_msgs::msg::PointCloud2);
-  if (!transformPointCloud(base_frame_, input, input_transed_ptr)) {
+  sensor_msgs::msg::PointCloud2::SharedPtr input_transformed_ptr(new sensor_msgs::msg::PointCloud2);
+  if (!transformPointCloud(base_frame_, input, input_transformed_ptr)) {
     RCLCPP_ERROR_STREAM_THROTTLE(
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
       "Failed transform from " << base_frame_ << " to " << input->header.frame_id);
     return;
   }
   pcl::PointCloud<PointType>::Ptr current_sensor_cloud_ptr(new pcl::PointCloud<PointType>);
-  pcl::fromROSMsg(*input_transed_ptr, *current_sensor_cloud_ptr);
+  pcl::fromROSMsg(*input_transformed_ptr, *current_sensor_cloud_ptr);
 
   // downsample pointcloud to reduce ransac calculation cost
   pcl::PointCloud<PointType>::Ptr downsampled_cloud(new pcl::PointCloud<PointType>);
@@ -281,7 +281,7 @@ void RANSACGroundFilterComponent::filter(
   const Eigen::Affine3d plane_affine = getPlaneAffine(*segment_ground_cloud_ptr, plane_normal);
   pcl::PointCloud<PointType>::Ptr no_ground_cloud_ptr(new pcl::PointCloud<PointType>);
 
-  // use not downsamped pointcloud for extract pointcloud that higher than height threshold
+  // use not downsampled pointcloud for extract pointcloud that higher than height threshold
   for (const auto & p : current_sensor_cloud_ptr->points) {
     const Eigen::Vector3d transformed_point =
       plane_affine.inverse() * Eigen::Vector3d(p.x, p.y, p.z);
@@ -294,16 +294,18 @@ void RANSACGroundFilterComponent::filter(
     new sensor_msgs::msg::PointCloud2);
   pcl::toROSMsg(*no_ground_cloud_ptr, *no_ground_cloud_msg_ptr);
   no_ground_cloud_msg_ptr->header = input->header;
-  sensor_msgs::msg::PointCloud2::SharedPtr no_ground_cloud_transed_msg_ptr(
+  sensor_msgs::msg::PointCloud2::SharedPtr no_ground_cloud_transformed_msg_ptr(
     new sensor_msgs::msg::PointCloud2);
-  if (!transformPointCloud(base_frame_, no_ground_cloud_msg_ptr, no_ground_cloud_transed_msg_ptr)) {
+  if (
+    !transformPointCloud(base_frame_, no_ground_cloud_msg_ptr, no_ground_cloud_transformed_msg_ptr)
+    ) {
     RCLCPP_ERROR_STREAM_THROTTLE(
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
       "Failed transform from " << base_frame_ << " to " <<
         no_ground_cloud_msg_ptr->header.frame_id);
     return;
   }
-  output = *no_ground_cloud_transed_msg_ptr;
+  output = *no_ground_cloud_transformed_msg_ptr;
 
   // output debug plane coords and ground pointcloud when debug flag is set
   if (debug_) {
