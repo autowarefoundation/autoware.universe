@@ -47,7 +47,7 @@ T * DisjointSetFind(T * x)
 }
 
 template<class T>
-void DisjointSetMerge(T * x, const T * y)
+void DisjointSetMerge([[maybe_unused]] T * x, [[maybe_unused]] const T * y)
 {
 }
 

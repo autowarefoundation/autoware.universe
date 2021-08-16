@@ -42,8 +42,8 @@ FeatureMap::FeatureMap(const int width, const int height, const int range)
   count_data = &(map_data[0]) + width * height * 2;
   nonempty_data = &(map_data[0]) + width * height * 3;
 }
-void FeatureMap::initializeMap(std::vector<float> & map) {}
-void FeatureMap::resetMap(std::vector<float> & map)
+void FeatureMap::initializeMap([[maybe_unused]] std::vector<float> & map) {}
+void FeatureMap::resetMap([[maybe_unused]] std::vector<float> & map)
 {
   const int size = width * height;
   for (int i = 0; i < size; ++i) {
@@ -64,8 +64,8 @@ FeatureMapWithIntensity::FeatureMapWithIntensity(const int width, const int heig
   mean_intensity_data = &(map_data[0]) + width * height * 4;
   nonempty_data = &(map_data[0]) + width * height * 5;
 }
-void FeatureMapWithIntensity::initializeMap(std::vector<float> & map) {}
-void FeatureMapWithIntensity::resetMap(std::vector<float> & map)
+void FeatureMapWithIntensity::initializeMap([[maybe_unused]] std::vector<float> & map) {}
+void FeatureMapWithIntensity::resetMap([[maybe_unused]] std::vector<float> & map)
 {
   const int size = width * height;
   for (int i = 0; i < size; ++i) {
@@ -88,7 +88,7 @@ FeatureMapWithConstant::FeatureMapWithConstant(const int width, const int height
   distance_data = &(map_data[0]) + width * height * 4;
   nonempty_data = &(map_data[0]) + width * height * 5;
 }
-void FeatureMapWithConstant::initializeMap(std::vector<float> & map)
+void FeatureMapWithConstant::initializeMap([[maybe_unused]] std::vector<float> & map)
 {
   for (int row = 0; row < height; ++row) {
     for (int col = 0; col < width; ++col) {
@@ -106,7 +106,7 @@ void FeatureMapWithConstant::initializeMap(std::vector<float> & map)
   }
 }
 
-void FeatureMapWithConstant::resetMap(std::vector<float> & map)
+void FeatureMapWithConstant::resetMap([[maybe_unused]] std::vector<float> & map)
 {
   const int size = width * height;
   for (int i = 0; i < size; ++i) {
@@ -130,7 +130,7 @@ FeatureMapWithConstantAndIntensity::FeatureMapWithConstantAndIntensity(
   distance_data = &(map_data[0]) + width * height * 6;
   nonempty_data = &(map_data[0]) + width * height * 7;
 }
-void FeatureMapWithConstantAndIntensity::initializeMap(std::vector<float> & map)
+void FeatureMapWithConstantAndIntensity::initializeMap([[maybe_unused]] std::vector<float> & map)
 {
   for (int row = 0; row < height; ++row) {
     for (int col = 0; col < width; ++col) {
@@ -148,7 +148,7 @@ void FeatureMapWithConstantAndIntensity::initializeMap(std::vector<float> & map)
   }
 }
 
-void FeatureMapWithConstantAndIntensity::resetMap(std::vector<float> & map)
+void FeatureMapWithConstantAndIntensity::resetMap([[maybe_unused]] std::vector<float> & map)
 {
   const int size = width * height;
   for (int i = 0; i < size; ++i) {
