@@ -20,7 +20,6 @@ sudo apt-get update && sudo apt-get install python3-vcstool
    cd autoware.proj
    mkdir src
    vcs import src < autoware.proj.repos
-   rosdep install -y --from-paths src --ignore-src --rosdistro $ROS_DISTRO
    ```
 
 2. Run the setup script to install CUDA, cuDNN 8, OSQP, ROS 2 and TensorRT 7, entering 'y' when prompted (this step will take around 45 minutes)
