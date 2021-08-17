@@ -11,4 +11,4 @@ AutowareArchitectureProposal is a repository to explore and establish the archit
 
 ## Documentation
 
-See [Github Pages](https://tier4.github.io/autoware.proj/tree/main/)
+See [Github Pages](https://tier4.github.io/autoware.proj/tree/develop/)
