@@ -27,6 +27,8 @@ template<
 class StopWatch
 {
 public:
+  StopWatch() {tic(default_name);}
+
   void tic(const std::string & name = default_name) {t_start_[name] = Clock::now();}
 
   void tic(const char * name) {tic(std::string(name));}
