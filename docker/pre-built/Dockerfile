@@ -14,6 +14,6 @@ RUN --mount=type=ssh \
   && colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
 
 ## Create entrypoint
-COPY docker/entrypoint.sh /
+COPY docker/pre-built/entrypoint.sh /
 ENTRYPOINT [ "/entrypoint.sh" ]
 CMD ["/bin/bash"]

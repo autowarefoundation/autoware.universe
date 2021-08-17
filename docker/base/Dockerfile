@@ -33,3 +33,7 @@ RUN --mount=type=ssh \
   && rm -rf /tmp/autoware.proj \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
+
+COPY docker/base/entrypoint.sh /
+ENTRYPOINT [ "/entrypoint.sh" ]
+CMD ["/bin/bash"]
