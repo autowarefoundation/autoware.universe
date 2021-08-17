@@ -96,6 +96,17 @@ protected:
     diagnostic_updater::DiagnosticStatusWrapper & stat) override;  // NOLINT(runtime/references)
 
   /**
+   * @brief add stat of GPU usage per process
+   * @param [in] index GPU index
+   * @param [in] device GPU device
+   * @param [out] stat diagnostic message passed directly to diagnostic publish calls
+   */
+  void addProcessUsage(
+    int index,
+    nvmlDevice_t device,
+    diagnostic_updater::DiagnosticStatusWrapper & stat);
+
+  /**
    * @brief check GPU memory usage
    * @param [out] stat diagnostic message passed directly to diagnostic publish calls
    * @note NOLINT syntax is needed since diagnostic_updater asks for a non-const reference
@@ -121,7 +132,11 @@ protected:
    */
   std::string toHumanReadable(unsigned long long size);  // NOLINT(runtime/int)
 
+  static const size_t MAX_ARRAY_SIZE = 64;
+  static const size_t MAX_NAME_LENGTH = 128;
+
   std::vector<gpu_info> gpus_;  //!< @brief list of gpus
+  uint64_t current_timestamp_ = 0;  //!< @brief latest timestamp[usec] of addProcessUsage()
 };
 
 #endif  // SYSTEM_MONITOR__GPU_MONITOR__NVML_GPU_MONITOR_HPP_
