@@ -27,6 +27,7 @@
 #include "autoware_planning_msgs/msg/route.hpp"
 #include "autoware_planning_msgs/msg/trajectory.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
+#include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
 #include "geometry_msgs/msg/twist_stamped.hpp"
 #include "rosidl_runtime_cpp/message_initialization.hpp"
 
@@ -41,7 +42,7 @@ using autoware_utils::PoseDeviation;
 
 struct Param
 {
-  double footprint_margin;
+  double footprint_margin_scale;
   double resample_interval;
   double max_deceleration;
   double delay_time;
@@ -59,6 +60,7 @@ struct Input
   lanelet::ConstLanelets route_lanelets{};
   autoware_planning_msgs::msg::Trajectory::ConstSharedPtr reference_trajectory{};
   autoware_planning_msgs::msg::Trajectory::ConstSharedPtr predicted_trajectory{};
+  geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr covariance{};
 };
 
 struct Output
@@ -102,6 +104,7 @@ private:
     const autoware_planning_msgs::msg::Trajectory & trajectory, const double length);
 
   std::vector<LinearRing2d> createVehicleFootprints(
+    const geometry_msgs::msg::PoseWithCovariance & covariance,
     const autoware_planning_msgs::msg::Trajectory & trajectory, const Param & param);
 
   static std::vector<LinearRing2d> createVehiclePassingAreas(

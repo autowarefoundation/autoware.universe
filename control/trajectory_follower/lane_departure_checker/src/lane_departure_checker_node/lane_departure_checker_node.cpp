@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "lane_departure_checker/lane_departure_checker_node.hpp"
+
 #include <map>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
-
-#include "lane_departure_checker/lane_departure_checker_node.hpp"
 
 #include "autoware_utils/math/unit_conversion.hpp"
 #include "autoware_utils/ros/marker_helper.hpp"
@@ -122,7 +122,7 @@ LaneDepartureCheckerNode::LaneDepartureCheckerNode(const rclcpp::NodeOptions & o
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
   vehicle_length_m_ = vehicle_info.vehicle_length_m;
 
-  param_.footprint_margin = declare_parameter("footprint_margin", 0.0);
+  param_.footprint_margin_scale = declare_parameter("footprint_margin_scale", 1.0);
   param_.resample_interval = declare_parameter("resample_interval", 0.3);
   param_.max_deceleration = declare_parameter("max_deceleration", 3.0);
   param_.delay_time = declare_parameter("delay_time", 0.3);
@@ -152,6 +152,9 @@ LaneDepartureCheckerNode::LaneDepartureCheckerNode(const rclcpp::NodeOptions & o
   sub_predicted_trajectory_ = this->create_subscription<autoware_planning_msgs::msg::Trajectory>(
     "~/input/predicted_trajectory", 1,
     std::bind(&LaneDepartureCheckerNode::onPredictedTrajectory, this, _1));
+  sub_pose_with_cov_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
+    "~/input/covariance", 1,
+    std::bind(&LaneDepartureCheckerNode::onPoseWithCov, this, _1));
 
   // Publisher
   // Nothing
@@ -206,6 +209,12 @@ void LaneDepartureCheckerNode::onPredictedTrajectory(
   predicted_trajectory_ = msg;
 }
 
+void LaneDepartureCheckerNode::onPoseWithCov(
+  const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr msg)
+{
+  cov_ = msg;
+}
+
 bool LaneDepartureCheckerNode::isDataReady()
 {
   if (!current_pose_) {
@@ -237,6 +246,11 @@ bool LaneDepartureCheckerNode::isDataReady()
   if (!predicted_trajectory_) {
     RCLCPP_INFO_THROTTLE(
       get_logger(), *get_clock(), 5000, "waiting for predicted_trajectory msg...");
+    return false;
+  }
+
+  if (!cov_) {
+    RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for covariance msg...");
     return false;
   }
 
@@ -290,6 +304,7 @@ void LaneDepartureCheckerNode::onTimer()
   input_.route_lanelets = route_lanelets_;
   input_.reference_trajectory = reference_trajectory_;
   input_.predicted_trajectory = predicted_trajectory_;
+  input_.covariance = cov_;
   processing_time_map["Node: setInputData"] = stop_watch.toc(true);
 
   output_ = lane_departure_checker_->update(input_);
@@ -328,7 +343,7 @@ rcl_interfaces::msg::SetParametersResult LaneDepartureCheckerNode::onParameter(
     update_param(parameters, "visualize_lanelet", node_param_.visualize_lanelet);
 
     // Core
-    update_param(parameters, "footprint_margin", param_.footprint_margin);
+    update_param(parameters, "footprint_margin_scale", param_.footprint_margin_scale);
     update_param(parameters, "resample_interval", param_.resample_interval);
     update_param(parameters, "max_deceleration", param_.max_deceleration);
     update_param(parameters, "delay_time", param_.delay_time);

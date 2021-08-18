@@ -5,7 +5,7 @@
     visualize_lanelet: false
 
     # Core
-    footprint_margin: 0.0
+    footprint_margin_scale: 1.0
     resample_interval: 0.3
     max_deceleration: 2.8
     delay_time: 1.3

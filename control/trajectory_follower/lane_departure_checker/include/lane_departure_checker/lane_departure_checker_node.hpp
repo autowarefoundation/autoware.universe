@@ -30,6 +30,7 @@
 #include "autoware_planning_msgs/msg/route.hpp"
 #include "autoware_planning_msgs/msg/trajectory.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
+#include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
 
@@ -58,6 +59,7 @@ private:
     sub_reference_trajectory_;
   rclcpp::Subscription<autoware_planning_msgs::msg::Trajectory>::SharedPtr
     sub_predicted_trajectory_;
+  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr sub_pose_with_cov_;
 
   // Data Buffer
   geometry_msgs::msg::PoseStamped::ConstSharedPtr current_pose_;
@@ -66,6 +68,7 @@ private:
   lanelet::traffic_rules::TrafficRulesPtr traffic_rules_;
   lanelet::routing::RoutingGraphPtr routing_graph_;
   autoware_planning_msgs::msg::Route::ConstSharedPtr route_;
+  geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr cov_;
   autoware_planning_msgs::msg::Route::ConstSharedPtr last_route_;
   lanelet::ConstLanelets route_lanelets_;
   autoware_planning_msgs::msg::Trajectory::ConstSharedPtr reference_trajectory_;
@@ -77,6 +80,7 @@ private:
   void onRoute(const autoware_planning_msgs::msg::Route::ConstSharedPtr msg);
   void onReferenceTrajectory(const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr msg);
   void onPredictedTrajectory(const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr msg);
+  void onPoseWithCov(const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr msg);
 
   // Publisher
   autoware_utils::DebugPublisher debug_publisher_{this, "~/debug"};

@@ -136,8 +136,8 @@ Output LaneDepartureChecker::update(const Input & input)
       resampleTrajectory(*input.predicted_trajectory, param_.resample_interval), braking_distance);
     output.processing_time_map["resampleTrajectory"] = stop_watch.toc(true);
   }
-
-  output.vehicle_footprints = createVehicleFootprints(output.resampled_trajectory, param_);
+  output.vehicle_footprints =
+    createVehicleFootprints(input.covariance->pose, output.resampled_trajectory, param_);
   output.processing_time_map["createVehicleFootprints"] = stop_watch.toc(true);
 
   output.vehicle_passing_areas = createVehiclePassingAreas(output.vehicle_footprints);
@@ -228,11 +228,16 @@ autoware_planning_msgs::msg::Trajectory LaneDepartureChecker::cutTrajectory(
 }
 
 std::vector<LinearRing2d> LaneDepartureChecker::createVehicleFootprints(
+  const geometry_msgs::msg::PoseWithCovariance & covariance,
   const autoware_planning_msgs::msg::Trajectory & trajectory, const Param & param)
 {
+  // Calculate longitudinal and lateral margin based on covariance
+  const auto margin = calcFootprintMargin(
+    covariance,
+    param.footprint_margin_scale);
+
   // Create vehicle footprint in base_link coordinate
-  const auto local_vehicle_footprint =
-    createVehicleFootprint(*vehicle_info_ptr_, param.footprint_margin);
+  const auto local_vehicle_footprint = createVehicleFootprint(*vehicle_info_ptr_, margin);
 
   // Create vehicle footprint on each TrajectoryPoint
   std::vector<LinearRing2d> vehicle_footprints;
