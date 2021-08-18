@@ -1,5 +1,5 @@
 <launch>
-  <arg name="input/pose_with_cov" default="/localization/pose_twist_fusion_filter/pose_with_covariance" />
+  <arg name="input/pose_with_cov" default="/localization/pose_with_covariance" />
   <arg name="scale" default="3.0" />
   <arg name="error_ellipse_size" default="1.0" />
   <arg name="warn_ellipse_size" default="0.8" />
