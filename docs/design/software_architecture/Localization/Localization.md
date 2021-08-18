@@ -51,21 +51,23 @@ Multiple sensor information described below is considered.
 
 ## Output
 
-| Output        | Topic (Data Type)                                       | Use Cases of the output       |
-| ------------- | ------------------------------------------------------- | ----------------------------- |
-| Vehicle Pose  | `/tf` <br> (`tf2_msgs/TFMessage`)                       | Perception, Planning, Control |
-| Vehicle Twist | `/localization/twist`<br>(`geometry_msgs/TwistStamped`) | Planning, Control             |
+| Output                       | Topic (Data Type)                                                                     | Use Cases of the output       |
+| ---------------------------- | ------------------------------------------------------------------------------------- | ----------------------------- |
+| Vehicle Pose                 | `/tf` <br> (`tf2_msgs/TFMessage`)                                                     | Perception, Planning, Control |
+| Vehicle Pose with Covariance | `/localization/pose_with_covariance` <br> (`geometry_msgs/PoseWithCovarianceStamped`) | Control                       |
+| Vehicle Twist                | `/localization/twist`<br>(`geometry_msgs/TwistStamped`)                               | Planning, Control             |
 
 ## Use Cases
 
-| Use Cases                                                | Requirement in `Localization`      | Output                 | How it is used                                                                                                                                                     |
-| -------------------------------------------------------- | ---------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1. Passing intersection<br>with traffic lights           | Self pose on the map               | Perception             | To detect traffic lights associated with the lane<br>where ego vehicle is in the camera image                                                                      |
-| 2. Changing lane                                         | Self pose on the map               | Perception<br>Planning | To predict object motion on the lane<br>with lane information<br><br>To recognize drivable area based on lane information<br>and the position where ego vehicle is |
-| 3. Stopping at crosswalk<br>when a pedestrian is walking | Self pose on the map               | Perception             | To recognize where the crosswalk is<br>based on ego vehicle position and map information                                                                           |
-| 4. Reaching a goal<br>by driving on lanes                | Self pose on the map               | Planning               | To plan the global path from the position where ego vehicle is to<br>a goal with lane information                                                                  |
-| 5. Driving<br>with following speed limits                | Self pose on the map<br>Self twist | Planning               | To recognize speed limit on the lane<br>where ego vehicle is<br><br>To plan target velocity<br>based on the velocity of ego vehicle and speed limit                |
-| 6. Driving<br>on the target lane                         | Self pose on the map<br>Self twist | Control                | To calculate target throttle/brake value and steering angle<br>based on pose and twist of ego vehicle and target trajectory                                        |
+| Use Cases                                                | Requirement in `Localization`        | Output                 | How it is used                                                                                                                                                     |
+| -------------------------------------------------------- | ------------------------------------ | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1. Passing intersection<br>with traffic lights           | Self pose on the map                 | Perception             | To detect traffic lights associated with the lane<br>where ego vehicle is in the camera image                                                                      |
+| 2. Changing lane                                         | Self pose on the map                 | Perception<br>Planning | To predict object motion on the lane<br>with lane information<br><br>To recognize drivable area based on lane information<br>and the position where ego vehicle is |
+| 3. Stopping at crosswalk<br>when a pedestrian is walking | Self pose on the map                 | Perception             | To recognize where the crosswalk is<br>based on ego vehicle position and map information                                                                           |
+| 4. Reaching a goal<br>by driving on lanes                | Self pose on the map                 | Planning               | To plan the global path from the position where ego vehicle is to<br>a goal with lane information                                                                  |
+| 5. Driving<br>with following speed limits                | Self pose on the map<br>Self twist   | Planning               | To recognize speed limit on the lane<br>where ego vehicle is<br><br>To plan target velocity<br>based on the velocity of ego vehicle and speed limit                |
+| 6. Driving<br>on the target lane                         | Self pose on the map<br>Self twist   | Control                | To calculate target throttle/brake value and steering angle<br>based on pose and twist of ego vehicle and target trajectory                                        |
+| 7. Driving<br>within the target lane                     | Self pose with covariance on the map | Control                | To check if ego vehicle with covariance is inside the target lane                                                                                                  |
 
 ## Requirements
 
@@ -81,7 +83,7 @@ The high-level requirements of Localization stack are listed below:
 
 The localization stack provides indispensable information to achieve autonomous driving. Therefore, it is not preferable to depend on only one localization algorithm. We insert pose twist fusion filter after pose and twist estimator to improve robustness of the estimated pose and twist. Also, developers can easily add a new estimator based on another sensor, e.g. camera-based visual SLAM and visual odometry, into the localization stack. The localization stack should output the transformation from map to base_link as /tf to utilize its interpolation system.
 
-![Localization_component](image/LocalizationOverview.svg)
+![Localization_component](image/LocalizationOverview.drawio.svg)
 
 ## Pose estimator
 
@@ -134,4 +136,5 @@ Pose Twist Fusion Filter is a component to integrate the poses estimated by pose
 ### Output
 
 - Ego Vehicle Pose (/tf from map frame to base_link frame)
+- Ego Vehicle Pose with Covariance
 - Ego Vehicle Twist
