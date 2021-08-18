@@ -103,7 +103,7 @@ rocker --nvidia --x11 --user --home -- autoware:base
 Or you can manually specify the mount destination
 
 ```sh
-rocker --nvidia --x11 --user --volume ~/autoware.proj:$HOME/autoware.proj -- autoware:base
+rocker --nvidia --x11 --user --volume ~/rosbag_simulation --volume ~/autoware.proj:$HOME/autoware.proj -- autoware:base
 ```
 
 #### 3. Build
