@@ -496,8 +496,8 @@ double VehicleCmdGate::getDt()
 }
 
 bool VehicleCmdGate::onExternalEmergencyStopService(
-  const std::shared_ptr<rmw_request_id_t> req_header,
-  const std::shared_ptr<std_srvs::srv::Trigger::Request> req,
+  [[maybe_unused]] const std::shared_ptr<rmw_request_id_t> req_header,
+  [[maybe_unused]] const std::shared_ptr<std_srvs::srv::Trigger::Request> req,
   const std::shared_ptr<std_srvs::srv::Trigger::Response> res)
 {
   is_external_emergency_stop_ = true;
@@ -508,8 +508,8 @@ bool VehicleCmdGate::onExternalEmergencyStopService(
 }
 
 bool VehicleCmdGate::onClearExternalEmergencyStopService(
-  const std::shared_ptr<rmw_request_id_t> req_header,
-  const std::shared_ptr<std_srvs::srv::Trigger::Request> req,
+  [[maybe_unused]] const std::shared_ptr<rmw_request_id_t> req_header,
+  [[maybe_unused]] const std::shared_ptr<std_srvs::srv::Trigger::Request> req,
   const std::shared_ptr<std_srvs::srv::Trigger::Response> res)
 {
   if (is_external_emergency_stop_) {
