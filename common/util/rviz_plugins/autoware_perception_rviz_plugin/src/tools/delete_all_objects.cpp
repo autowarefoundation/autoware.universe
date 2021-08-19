@@ -79,7 +79,10 @@ void DeleteAllObjectsTool::updateTopic()
   clock_ = raw_node->get_clock();
 }
 
-void DeleteAllObjectsTool::onPoseSet(double x, double y, double theta)
+void DeleteAllObjectsTool::onPoseSet(
+  [[maybe_unused]] double x,
+  [[maybe_unused]] double y,
+  [[maybe_unused]] double theta)
 {
   dummy_perception_publisher::msg::Object output_msg;
   std::string fixed_frame = context_->getFixedFrame().toStdString();
