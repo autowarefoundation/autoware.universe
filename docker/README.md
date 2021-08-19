@@ -50,8 +50,10 @@ gdown --id 1wLWyOlfH_-k4VYBgae1KAFlKdwJnH_si
 xhost +local:
 
 # Run Autoware in the simulation mode
-rocker --nvidia --x11 --user --volume ~/rosbag_simulation -- autoware:pre-built
-ros2 launch autoware_launch logging_simulator.launch.xml map_path:=$HOME/rosbag_simulation/map vehicle_model:=lexus sensor_model:=aip_xx1
+# NOTE: Autoware runs with root privileges since NVIDIA driver has to be enabled
+# TODO(Kenji Miyake): Fix to support non-root execution
+rocker --env NVIDIA_DRIVER_CAPABILITIES=all --nvidia --x11 --volume ~/rosbag_simulation:/root/rosbag_simulation -- autoware:pre-built
+ros2 launch autoware_launch logging_simulator.launch.xml map_path:=/root/rosbag_simulation/map vehicle_model:=lexus sensor_model:=aip_xx1
 
 # Play the sample rosbag file in another terminal
 rocker --nvidia --x11 --user --volume ~/rosbag_simulation -- autoware:pre-built
