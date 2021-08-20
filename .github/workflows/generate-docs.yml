@@ -31,12 +31,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Extract branch name
-        id: extract_branch
-        run: echo "::set-output name=branch::${GITHUB_REF#refs/heads/}"
-
       - name: Checkout repository
         uses: actions/checkout@v2
+        with:
+          # Fetch with depth=0 to calculate modified files
+          fetch-depth: 0
 
       - name: Setup Python
         uses: actions/setup-python@v2
@@ -63,21 +62,11 @@ jobs:
         run: |
           mkdocs build -f mkdocs.yml --verbose --clean
 
-      - name: Print branch name (push)
-        if: ${{ !github.event.pull_request }}
-        run: |
-          echo "branch name: ${{ steps.extract_branch.outputs.branch }}"
-
       - name: Move docs (push)
         if: ${{ !github.event.pull_request }}
         run: |
           mkdir -p public/tree
-          mv site public/tree/${{ steps.extract_branch.outputs.branch }}
-
-      - name: Print PR number (pull_request)
-        if: ${{ github.event.pull_request }}
-        run: |
-          echo "PR number: ${{ github.event.pull_request.number }}"
+          mv site public/tree/${GITHUB_REF#refs/heads/}
 
       - name: Move docs (pull_request)
         if: ${{ github.event.pull_request }}
@@ -92,11 +81,26 @@ jobs:
           publish_dir: ./public
           keep_files: true
 
+      - name: Create comment body
+        id: create_comment_body
+        run: |
+          base_url="${{ env.GITHUB_PAGES_URL }}/pulls/${{ github.event.pull_request.number }}/"
+          ${GITHUB_WORKSPACE}/.github/create_doc_comment.sh "${base_url}" "origin/${{ github.event.pull_request.base.ref }}"
+
+      - name: Find Comment
+        uses: peter-evans/find-comment@v1
+        id: find_comment
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: "github-actions[bot]"
+          body-includes: Documentation
+
       - name: Comment PR
-        if: ${{ github.event.action == 'opened' }}
         uses: peter-evans/create-or-update-comment@v1
         with:
+          comment-id: ${{ steps.find_comment.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
           token: ${{ secrets.GITHUB_TOKEN }}
           body: |
-            Documentation URL: ${{ env.GITHUB_PAGES_URL }}/pulls/${{ github.event.pull_request.number }}/
+            ${{ steps.create_comment_body.outputs.comment_body }}
+          edit-mode: replace
