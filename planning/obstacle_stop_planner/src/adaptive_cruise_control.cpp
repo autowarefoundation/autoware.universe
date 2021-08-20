@@ -89,6 +89,7 @@ double getDistanceFromTwoPoint(
   return dist;
 }
 
+[[maybe_unused]]
 double normalizeRadian(
   const double rad, const double min_rad = -boost::math::constants::pi<double>(),
   const double max_rad = boost::math::constants::pi<double>())
@@ -201,7 +202,7 @@ void AdaptiveCruiseController::insertAdaptiveCruiseVelocity(
   const double current_velocity = current_velocity_ptr->twist.linear.x;
   double col_point_distance;
   double point_velocity;
-  bool success_estm_vel = false;
+  bool success_estimate_vel = false;
   /*
   * calc distance to collision point
   */
@@ -221,7 +222,7 @@ void AdaptiveCruiseController::insertAdaptiveCruiseVelocity(
     if (estimatePointVelocityFromPcl(
         traj_yaw, nearest_collision_point, nearest_collision_point_time, &point_velocity))
     {
-      success_estm_vel = true;
+      success_estimate_vel = true;
     }
   }
 
@@ -229,16 +230,16 @@ void AdaptiveCruiseController::insertAdaptiveCruiseVelocity(
     if (estimatePointVelocityFromObject(
         object_ptr, traj_yaw, nearest_collision_point, &point_velocity))
     {
-      success_estm_vel = true;
+      success_estimate_vel = true;
     }
   }
 
-  if (param_.use_rough_est_vel && !success_estm_vel) {
+  if (param_.use_rough_est_vel && !success_estimate_vel) {
     point_velocity = estimateRoughPointVelocity(current_velocity);
-    success_estm_vel = true;
+    success_estimate_vel = true;
   }
 
-  if (!success_estm_vel) {
+  if (!success_estimate_vel) {
     // if failed to estimate velocity, need to stop
     RCLCPP_DEBUG_THROTTLE(
       node_->get_logger(), *node_->get_clock(), std::chrono::milliseconds(1000).count(),
@@ -516,7 +517,8 @@ double AdaptiveCruiseController::calcTargetVelocity_P(
 }
 
 double AdaptiveCruiseController::calcTargetVelocity_I(
-  const double target_dist, const double current_dist)
+  [[maybe_unused]] const double target_dist,
+  [[maybe_unused]] const double current_dist)
 {
   // not implemented
   return 0.0;

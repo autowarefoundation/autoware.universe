@@ -780,7 +780,7 @@ bool ObstacleStopPlannerNode::trimTrajectoryWithIndexFromSelfPose(
 }
 
 bool ObstacleStopPlannerNode::trimTrajectoryFromSelfPose(
-  const autoware_planning_msgs::msg::Trajectory & input_trajectory,
+  [[maybe_unused]] const autoware_planning_msgs::msg::Trajectory & input_trajectory,
   const geometry_msgs::msg::Pose self_pose,
   autoware_planning_msgs::msg::Trajectory & output_trajectory)
 {
