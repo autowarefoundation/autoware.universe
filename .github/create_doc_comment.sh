@@ -39,7 +39,7 @@ for modified_file in $modified_files; do
     continue
   fi
 
-  markdown_paths+=("$modified_file")
+  markdown_paths+=("${modified_file//docs\//}")
 done
 
 # Create comment body
