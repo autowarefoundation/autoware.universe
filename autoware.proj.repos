@@ -29,6 +29,10 @@ repositories:
     type: git
     url: git@github.com:tier4/sensor_description.iv.git
     version: main
+  description/sensor/aip_description:
+    type: git
+    url: git@github.com:tier4/aip_description.iv.git
+    version: main
   description/sensor/velodyne_simulator:
     type: git
     url: https://github.com/tier4/velodyne_simulator.git
