@@ -82,20 +82,23 @@ jobs:
           keep_files: true
 
       - name: Create comment body
+        if: ${{ github.event.pull_request }}
         id: create_comment_body
         run: |
           base_url="${{ env.GITHUB_PAGES_URL }}/pulls/${{ github.event.pull_request.number }}/"
           ${GITHUB_WORKSPACE}/.github/create_doc_comment.sh "${base_url}" "origin/${{ github.event.pull_request.base.ref }}"
 
       - name: Find Comment
-        uses: peter-evans/find-comment@v1
+        if: ${{ github.event.pull_request }}
         id: find_comment
+        uses: peter-evans/find-comment@v1
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: "github-actions[bot]"
           body-includes: Documentation
 
       - name: Comment PR
+        if: ${{ github.event.pull_request }}
         uses: peter-evans/create-or-update-comment@v1
         with:
           comment-id: ${{ steps.find_comment.outputs.comment-id }}
