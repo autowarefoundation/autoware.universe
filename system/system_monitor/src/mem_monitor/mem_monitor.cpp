@@ -86,7 +86,7 @@ void MemMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
     // Physical memory
     if (index == 1) {
       // available divided by total is available memory including calculation for buff/cache,
-      // so the substraction of this from 1 gives real usage.
+      // so the subtraction of this from 1 gives real usage.
       usage = 1.0f - std::atof(list[6].c_str()) / std::atof(list[1].c_str());
 
       if (usage >= usage_error_) {
