@@ -211,7 +211,7 @@ bool MapBasedPrediction::getPredictedPath(
   const std_msgs::msg::Header & origin_header, Spline2D & spline2d,
   autoware_perception_msgs::msg::PredictedPath & path)
 {
-  // Quintic polynominal for d
+  // Quintic polynomial for d
   // A = np.array([[T**3, T**4, T**5],
   //               [3 * T ** 2, 4 * T ** 3, 5 * T ** 4],
   //               [6 * T, 12 * T ** 2, 20 * T ** 3]])
@@ -238,7 +238,7 @@ bool MapBasedPrediction::getPredictedPath(
   Eigen::Vector3d x_3;
   x_3 = a_3_inv * b_3;
 
-  // Quadric polynominal
+  // Quadric polynomial
   // A_inv = np.matrix([[1/(T**2), -1/(3*T)],
   //                         [-1/(2*T**3), 1/(4*T**2)]])
   // b = np.matrix([[vxe - self.a1 - 2 * self.a2 * T],
