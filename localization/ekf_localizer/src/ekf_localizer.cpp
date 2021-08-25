@@ -687,7 +687,7 @@ void EKFLocalizer::measurementUpdateTwist(const geometry_msgs::msg::TwistStamped
   }
 
   /* In order to avoid a large change by update, measurement update is performed
-  * by dividing at every step. measuremeent update is performed by dividing at every step. */
+  * by dividing at every step. measurement update is performed by dividing at every step. */
   R *= (ekf_rate_ / twist_rate_);
 
   ekf_.updateWithDelay(y, C, R, delay_step);
