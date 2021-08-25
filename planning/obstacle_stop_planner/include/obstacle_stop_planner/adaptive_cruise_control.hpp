@@ -87,7 +87,7 @@ private:
     //!< @brief The distance to extend the polygon width the object in pointcloud-object matching
     double object_polygon_width_margin;
 
-    //!< @breif Maximum time difference treated as continuous points in speed estimation using a
+    //!< @brief Maximum time difference treated as continuous points in speed estimation using a
     // point cloud
     double valid_est_vel_diff_time;
 
