@@ -4,7 +4,7 @@
 
 ```sh
 python fitParamDelayInputModel.py --bag_file [bagfile] (--cutoff_time [cutoff_time] --cutoff_freq [cutoff_freq] --min_delay [min_delay] --max_delay [max_delay] --delay_incr [delay_incr])
-# in round brakets is optional arguments
+# in round brackets is optional arguments
 python fitParamDelayInputModel.py --help # for more information
 ```
 
