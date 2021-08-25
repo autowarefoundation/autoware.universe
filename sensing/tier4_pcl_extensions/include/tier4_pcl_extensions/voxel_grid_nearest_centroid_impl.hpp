@@ -300,7 +300,7 @@ pcl::VoxelGridNearestCentroid<PointT>::applyFilter(PointCloud & output)
     leaf_layout_.resize(div_b_[0] * div_b_[1] * div_b_[2], -1);
   }
 
-  // Eigen values and vectors calculated to prevent near singluar matrices
+  // Eigen values and vectors calculated to prevent near singular matrices
   // Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> eigensolver;
   // Eigen::Matrix3d eigen_val;
   // Eigen::Vector3d pt_sum;
@@ -322,7 +322,7 @@ pcl::VoxelGridNearestCentroid<PointT>::applyFilter(PointCloud & output)
 
     // If the voxel contains sufficient points, its covariance is calculated and is added to the
     // voxel centroids and output clouds.
-    // Points with less than the minimum points will have a can not be accuratly approximated
+    // Points with less than the minimum points will have a can not be accurately approximated
     // using a normal distribution.
     if (leaf.nr_points >= min_points_per_voxel_) {
       if (save_leaf_layout_) {
@@ -345,7 +345,7 @@ pcl::VoxelGridNearestCentroid<PointT>::applyFilter(PointCloud & output)
       }
       output.points.back() = leaf.points.at(i_min);
 
-      // Stores the voxel indice for fast access searching
+      // Stores the voxel indices for fast access searching
       if (searchable_) {
         voxel_centroids_leaf_indices_.push_back(static_cast<int>(it->first));
       }

@@ -64,7 +64,7 @@ namespace pcl
 /** \brief A searchable voxel strucure containing the mean and covariance of the data.
   * \note For more information please see
   * <b>Magnusson, M. (2009). The Three-Dimensional Normal-Distributions Transform —
-  * an Efﬁcient Representation for Registration, Surface Analysis, and Loop Detection.
+  * an Efficient Representation for Registration, Surface Analysis, and Loop Detection.
   * PhD thesis, Orebro University. Orebro Studies in Technology 36</b>
   * \author Brian Okorn (Space and Naval Warfare Systems Center Pacific)
   */
@@ -102,8 +102,8 @@ public:
   typedef boost::shared_ptr<const VoxelGrid<PointT>> ConstPtr;
 
 
-  /** \brief Simple structure to hold a centroid, covarince and the number of points in a leaf.
-    * Inverse covariance, eigen vectors and engen values are precomputed. */
+  /** \brief Simple structure to hold a centroid, covariance and the number of points in a leaf.
+    * Inverse covariance, eigen vectors and eigen values are precomputed. */
   struct Leaf
   {
     /** \brief Constructor.
@@ -381,7 +381,7 @@ public:
     }
   }
 
-  /** \brief Get the voxels surrounding point p, not including the voxel contating point p.
+  /** \brief Get the voxels surrounding point p, not including the voxel containing point p.
    * \note Only voxels containing a sufficient number of points are used (slower than radius search in practice).
    * \param[in] reference_point the point to get the leaf structure at
    * \param[out] neighbors
@@ -391,7 +391,7 @@ public:
   // getNeighborhoodAtPoint (const PointT& reference_point, std::vector<LeafConstPtr> &neighbors);
 
   /** \brief Get the leaf structure map
-   * \return a map contataining all leaves
+   * \return a map containing all leaves
    */
   inline const std::map<size_t, Leaf> &
   getLeaves()
@@ -401,7 +401,7 @@ public:
 
   /** \brief Get a pointcloud containing the voxel centroids
    * \note Only voxels containing a sufficient number of points are used.
-   * \return a map contataining all leaves
+   * \return a map containing all leaves
    */
   inline PointCloudPtr
   getCentroids()
@@ -555,7 +555,7 @@ protected:
    *         minimum number of points. */
   PointCloudPtr voxel_centroids_;
 
-  /** \brief Indices of leaf structurs associated with each point in \ref voxel_centroids_
+  /** \brief Indices of leaf structures associated with each point in \ref voxel_centroids_
    *         (used for searching). */
   std::vector<int> voxel_centroids_leaf_indices_;
 
