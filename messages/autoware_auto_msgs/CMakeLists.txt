@@ -24,6 +24,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/DetectedObjectKinematics.idl"
   "msg/DetectedObjects.idl"
   "msg/DiagnosticHeader.idl"
+  "msg/Float32MultiArrayDiagnostic.idl"
   "msg/GearReport.idl"
   "msg/HADMapBin.idl"
   "msg/HADMapRoute.idl"
