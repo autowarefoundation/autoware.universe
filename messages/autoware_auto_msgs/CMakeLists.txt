@@ -47,6 +47,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/LongitudinalCommand.idl"
   "msg/MapPrimitive.idl"
   "msg/ObjectClassification.idl"
+  "msg/OrderMovement.idl"
   "msg/Path.idl"
   "msg/PathPoint.idl"
   "msg/PathPointWithLaneId.idl"
