@@ -149,14 +149,6 @@ repositories:
     url: https://github.com/tier4/ars408_driver.git
     version: tier4/ros2
   # missing_packages
-  missing_packages/lanelet2:
-    type: git
-    url: https://github.com/fzi-forschungszentrum-informatik/Lanelet2.git
-    version: 1.1.1
-  missing_packages/mrt_cmake_modules:
-    type: git
-    url: https://github.com/KIT-MRT/mrt_cmake_modules.git
-    version: 1.0.8
   missing_packages/astuff_sensor_msgs:
     type: git
     url: https://github.com/astuff/astuff_sensor_msgs.git
