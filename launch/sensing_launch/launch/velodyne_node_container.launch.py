@@ -66,7 +66,8 @@ def launch_setup(context, *args, **kwargs):
         parameters=[{**create_parameter_dict('calibration', 'min_range', 'max_range',
                                              'num_points_thresholds',
                                              'invalid_intensity',
-                                             'frame_id', 'scan_phase'),
+                                             'frame_id', 'scan_phase',
+                                             'view_direction', 'view_width'),
                      }],
         remappings=[('velodyne_points', 'pointcloud_raw'),
                     ('velodyne_points_ex', 'pointcloud_raw_ex')],
@@ -213,6 +214,8 @@ def generate_launch_description():
     add_launch_arg('invalid_intensity')
     add_launch_arg('frame_id', 'velodyne', 'velodyne frame id')
     add_launch_arg('gps_time', 'False')
+    add_launch_arg('view_direction', description='the center of lidar angle')
+    add_launch_arg('view_width', description='lidar angle: 0~6.28 [rad]')
     add_launch_arg('input_frame', LaunchConfiguration('base_frame'), 'use for cropbox')
     add_launch_arg('output_frame', LaunchConfiguration('base_frame'), 'use for cropbox')
     add_launch_arg('vehicle_param_file', description='path to the file of vehicle info yaml')
