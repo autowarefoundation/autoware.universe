@@ -321,7 +321,7 @@ def generate_launch_description():
         launch_arguments.append(DeclareLaunchArgument(
             name, default_value=default_value, description=description))
     add_launch_arg('lateral_controller_mode', 'mpc_follower',
-                   'lateral control mode: `mpc_follower` or `pure_pursuit`')
+                   'lateral controller mode: `mpc_follower` or `pure_pursuit`')
     add_launch_arg(
         'mpc_follower_param_path',
         [
