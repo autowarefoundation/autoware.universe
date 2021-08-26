@@ -34,7 +34,7 @@ class AdaptiveCruiseController
 public:
   AdaptiveCruiseController(
     rclcpp::Node * node, const double vehicle_width, const double vehicle_length,
-    const double wheel_base, const double front_overhang);
+    const double baselink2front);
 
   void insertAdaptiveCruiseVelocity(
     const autoware_planning_msgs::msg::Trajectory & trajectory,
@@ -55,8 +55,7 @@ private:
    */
   double vehicle_width_;
   double vehicle_length_;
-  double wheel_base_;
-  double front_overhang_;
+  double baselink2front_;
 
   rclcpp::Time prev_collision_point_time_;
   pcl::PointXYZ prev_collision_point_;
@@ -69,9 +68,6 @@ private:
 
   struct Param
   {
-    double stop_margin;
-    double min_behavior_stop_margin;
-
     //!< @brief use tracking objects for estimating object velocity or not
     bool use_object_to_est_vel;
 

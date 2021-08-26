@@ -86,13 +86,12 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
   // Vehicle Parameters
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
 
-  wheel_base_ = vehicle_info.wheel_base_m;
-  front_overhang_ = vehicle_info.front_overhang_m;
   rear_overhang_ = vehicle_info.rear_overhang_m;
   left_overhang_ = vehicle_info.left_overhang_m;
   right_overhang_ = vehicle_info.right_overhang_m;
   vehicle_width_ = vehicle_info.vehicle_width_m;
   vehicle_length_ = vehicle_info.vehicle_length_m;
+  baselink2front_ = vehicle_info.max_longitudinal_offset_m;
 
   // Parameters
   stop_margin_ = declare_parameter("stop_planner.stop_margin", 5.0);
@@ -108,19 +107,19 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
   max_deceleration_ = declare_parameter("slow_down_planner.max_deceleration", 2.0);
   enable_slow_down_ = declare_parameter("enable_slow_down", false);
 
-  stop_margin_ += wheel_base_ + front_overhang_;
-  min_behavior_stop_margin_ += wheel_base_ + front_overhang_;
-  slow_down_margin_ += wheel_base_ + front_overhang_;
+  stop_margin_ += baselink2front_;
+  min_behavior_stop_margin_ += baselink2front_;
+  slow_down_margin_ += baselink2front_;
   stop_search_radius_ =
     step_length_ + std::hypot(vehicle_width_ / 2.0 + expand_stop_range_, vehicle_length_ / 2.0);
   slow_down_search_radius_ =
     step_length_ +
     std::hypot(vehicle_width_ / 2.0 + expand_slow_down_range_, vehicle_length_ / 2.0);
-  debug_ptr_ = std::make_shared<ObstacleStopPlannerDebugNode>(this, wheel_base_ + front_overhang_);
+  debug_ptr_ = std::make_shared<ObstacleStopPlannerDebugNode>(this, baselink2front_);
 
   // Initializer
   acc_controller_ = std::make_unique<motion_planning::AdaptiveCruiseController>(
-    this, vehicle_width_, vehicle_length_, wheel_base_, front_overhang_);
+    this, vehicle_width_, vehicle_length_, baselink2front_);
 
   // Publishers
   path_pub_ =
@@ -817,15 +816,15 @@ void ObstacleStopPlannerNode::createOneStepPolygon(
     double yaw = getYawFromGeometryMsgsQuaternion(base_step_pose.orientation);
     one_step_move_vehicle_corner_points.push_back(
       cv::Point2d(
-        base_step_pose.position.x + std::cos(yaw) * (wheel_base_ + front_overhang_) -
+        base_step_pose.position.x + std::cos(yaw) * baselink2front_ -
         std::sin(yaw) * (vehicle_width_ / 2.0 + expand_width),
-        base_step_pose.position.y + std::sin(yaw) * (wheel_base_ + front_overhang_) +
+        base_step_pose.position.y + std::sin(yaw) * baselink2front_ +
         std::cos(yaw) * (vehicle_width_ / 2.0 + expand_width)));
     one_step_move_vehicle_corner_points.push_back(
       cv::Point2d(
-        base_step_pose.position.x + std::cos(yaw) * (wheel_base_ + front_overhang_) -
+        base_step_pose.position.x + std::cos(yaw) * baselink2front_ -
         std::sin(yaw) * (-vehicle_width_ / 2.0 - expand_width),
-        base_step_pose.position.y + std::sin(yaw) * (wheel_base_ + front_overhang_) +
+        base_step_pose.position.y + std::sin(yaw) * baselink2front_ +
         std::cos(yaw) * (-vehicle_width_ / 2.0 - expand_width)));
     one_step_move_vehicle_corner_points.push_back(
       cv::Point2d(
@@ -845,15 +844,15 @@ void ObstacleStopPlannerNode::createOneStepPolygon(
     double yaw = getYawFromGeometryMsgsQuaternion(next_step_pose.orientation);
     one_step_move_vehicle_corner_points.push_back(
       cv::Point2d(
-        next_step_pose.position.x + std::cos(yaw) * (wheel_base_ + front_overhang_) -
+        next_step_pose.position.x + std::cos(yaw) * baselink2front_ -
         std::sin(yaw) * (vehicle_width_ / 2.0 + expand_width),
-        next_step_pose.position.y + std::sin(yaw) * (wheel_base_ + front_overhang_) +
+        next_step_pose.position.y + std::sin(yaw) * baselink2front_ +
         std::cos(yaw) * (vehicle_width_ / 2.0 + expand_width)));
     one_step_move_vehicle_corner_points.push_back(
       cv::Point2d(
-        next_step_pose.position.x + std::cos(yaw) * (wheel_base_ + front_overhang_) -
+        next_step_pose.position.x + std::cos(yaw) * baselink2front_ -
         std::sin(yaw) * (-vehicle_width_ / 2.0 - expand_width),
-        next_step_pose.position.y + std::sin(yaw) * (wheel_base_ + front_overhang_) +
+        next_step_pose.position.y + std::sin(yaw) * baselink2front_ +
         std::cos(yaw) * (-vehicle_width_ / 2.0 - expand_width)));
     one_step_move_vehicle_corner_points.push_back(
       cv::Point2d(

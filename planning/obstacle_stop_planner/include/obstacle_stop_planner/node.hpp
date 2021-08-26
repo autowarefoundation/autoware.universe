@@ -87,8 +87,8 @@ private:
   sensor_msgs::msg::PointCloud2::SharedPtr obstacle_ros_pointcloud_ptr_;
   geometry_msgs::msg::TwistStamped::ConstSharedPtr current_velocity_ptr_;
   autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr object_ptr_;
-  double wheel_base_, front_overhang_, rear_overhang_, left_overhang_, right_overhang_,
-    vehicle_width_, vehicle_length_;
+  double rear_overhang_, left_overhang_, right_overhang_, vehicle_width_, vehicle_length_,
+    baselink2front_;
   double stop_margin_;
   double slow_down_margin_;
   double min_behavior_stop_margin_;

@@ -118,20 +118,16 @@ namespace motion_planning
 {
 AdaptiveCruiseController::AdaptiveCruiseController(
   rclcpp::Node * node, const double vehicle_width, const double vehicle_length,
-  const double wheel_base, const double front_overhang)
+  const double baselink2front)
 : node_(node),
   vehicle_width_(vehicle_width),
   vehicle_length_(vehicle_length),
-  wheel_base_(wheel_base),
-  front_overhang_(front_overhang)
+  baselink2front_(baselink2front)
 {
   // get parameter
   std::string acc_ns = "adaptive_cruise_control.";
 
   /* config */
-  param_.min_behavior_stop_margin =
-    node_->get_parameter("stop_planner.min_behavior_stop_margin").as_double() + wheel_base_ +
-    front_overhang_;
   param_.use_object_to_est_vel =
     node_->declare_parameter(acc_ns + "use_object_to_estimate_vel", true);
   param_.use_pcl_to_est_vel = node_->declare_parameter(acc_ns + "use_pcl_to_estimate_vel", true);
@@ -290,7 +286,7 @@ void AdaptiveCruiseController::calcDistanceToNearestPointOnPath(
   geometry_msgs::msg::Vector3 self_size;
   self_size.x = vehicle_length_;
   self_size.y = vehicle_width_;
-  double self_offset = (wheel_base_ + front_overhang_) - vehicle_length_ / 2.0;
+  double self_offset = baselink2front_ - vehicle_length_ / 2.0;
   Polygon self_poly = getPolygon(self_pose, self_size, self_offset);
 
   // get nearest point
@@ -322,7 +318,7 @@ void AdaptiveCruiseController::calcDistanceToNearestPointOnPath(
     convertPointRosToBoost(trajectory.points.at(nearest_point_idx - 1).pose.position));
 
   // subtract base_link to front
-  dist_to_point -= param_.min_behavior_stop_margin;
+  dist_to_point -= baselink2front_;
 
   // time compensation
   if (param_.use_time_compensation_to_dist) {
