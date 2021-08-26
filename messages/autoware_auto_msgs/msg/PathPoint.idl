@@ -1,0 +1,18 @@
+#include "geometry_msgs/msg/Pose.idl"
+#include "geometry_msgs/msg/Twist.idl"
+
+module autoware_auto_msgs {
+  module msg {
+    @verbatim (language = "comment", text=
+      "Represents a pose from a lanelet map, contains twist information.")
+    struct PathPoint {
+      geometry_msgs::msg::Pose pose;
+      geometry_msgs::msg::Twist twist;
+
+      @verbatim(language = "comment", text =
+        "Denotes that the point is final, doesn't need further updates.")
+      @default (value = FALSE)
+      boolean is_final;
+    };
+  };
+};
