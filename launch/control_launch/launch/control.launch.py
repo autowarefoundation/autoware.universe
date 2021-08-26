@@ -292,7 +292,7 @@ def launch_setup(context, *args, **kwargs):
         composable_node_descriptions=[mpc_follower_component],
         target_container=container,
         condition=LaunchConfigurationEquals(
-            'lateral_control_mode', 'mpc_follower'
+            'lateral_controller_mode', 'mpc_follower'
         ),
     )
 
@@ -300,7 +300,7 @@ def launch_setup(context, *args, **kwargs):
         composable_node_descriptions=[pure_pursuit_component],
         target_container=container,
         condition=LaunchConfigurationEquals(
-            'lateral_control_mode', 'pure_pursuit'
+            'lateral_controller_mode', 'pure_pursuit'
         ),
     )
 
@@ -320,7 +320,7 @@ def generate_launch_description():
     def add_launch_arg(name: str, default_value=None, description=None):
         launch_arguments.append(DeclareLaunchArgument(
             name, default_value=default_value, description=description))
-    add_launch_arg('lateral_control_mode', 'mpc_follower',
+    add_launch_arg('lateral_controller_mode', 'mpc_follower',
                    'lateral control mode: `mpc_follower` or `pure_pursuit`')
     add_launch_arg(
         'mpc_follower_param_path',
