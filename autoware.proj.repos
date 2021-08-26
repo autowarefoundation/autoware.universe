@@ -157,7 +157,3 @@ repositories:
     type: git
     url: https://github.com/astuff/automotive_autonomy_msgs.git
     version: 3.0.4
-  missing_packages/plotjuggler-ros-plugins:
-    type: git
-    url: https://github.com/PlotJuggler/plotjuggler-ros-plugins.git
-    version: rolling
