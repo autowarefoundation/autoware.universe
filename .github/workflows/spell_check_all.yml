@@ -2,6 +2,10 @@ name: Check spelling (all files)
 
 on:
   workflow_dispatch:
+    inputs:
+      ignore_patterns:
+        description: "ignore patterns (ex. *.svg|*.osm)"
+        required: false
 
 jobs:
   spellcheck:
@@ -31,5 +35,5 @@ jobs:
           #   Ex. "**/!(*.osm|*.svg|CHANGELOG.rst)"
           ./node_modules/.bin/cspell \
             --config .github/workflows/.cspell.json \
-            "**/!(dummy)" \
+            "**/!(${{ github.event.inputs.ignore_patterns }})" \
             2> /dev/null
