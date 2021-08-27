@@ -1,0 +1,35 @@
+name: Check spelling (all files)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  spellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Prepare node
+        uses: actions/setup-node@v2
+
+      - name: Install cspell
+        run: |
+          npm install cspell
+
+      - name: Retrieve spell check dictionary
+        run: |
+          curl --silent --show-error \
+            --output .github/workflows/.cspell.json \
+            https://raw.githubusercontent.com/tier4/autoware-spell-check-dict/main/cspell/.cspell.json
+
+      - name: Check spelling
+        run: |
+          # The cspell-action might not be able to exclude specific files.
+          # So use cspell package directly instead.
+          # How to exclude specific files:
+          #   Ex. "**/!(*.osm|*.svg|CHANGELOG.rst)"
+          ./node_modules/.bin/cspell \
+            --config .github/workflows/.cspell.json \
+            "**/!(dummy)" \
+            2> /dev/null
