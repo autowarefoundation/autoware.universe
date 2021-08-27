@@ -29,7 +29,7 @@ Planning stack must satisfy following use cases:
 
 ## Requirements
 
-1. **Planing route from start to goal** (Use Case 1)
+1. **Planning route from start to goal** (Use Case 1)
 
    - Planning stack should be able to get starting lane and goal lane from given start pose and goal pose either in earth frame or map frame
    - Planning stack should be able to calculate sequences of lanes that navigates vehicle from start lane to goal lane that minimizes cost function(either time based cost or distance based cost)
