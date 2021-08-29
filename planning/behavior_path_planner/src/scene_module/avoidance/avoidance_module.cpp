@@ -460,7 +460,7 @@ std::vector<Frenet> AvoidanceModule::endPointsToFrenet(
   return frenet_points;
 }
 
-void AvoidanceModule::extendDrivableArea(ShiftedPath * shifted_path, double margin) const
+void AvoidanceModule::generateExtendedDrivableArea(ShiftedPath * shifted_path, double margin) const
 {
   const auto right_extend_elem =
     std::min_element(shifted_path->shift_length.begin(), shifted_path->shift_length.end());
@@ -474,17 +474,15 @@ void AvoidanceModule::extendDrivableArea(ShiftedPath * shifted_path, double marg
   right_extend -= (right_extend < -THRESHOLD) ? margin : 0.0;
   left_extend += (left_extend > THRESHOLD) ? margin : 0.0;
 
-  const double resolution = shifted_path->path.drivable_area.info.resolution;
-  const double width = shifted_path->path.drivable_area.info.width * resolution;
-  const double height = shifted_path->path.drivable_area.info.height * resolution;
-  const double vehicle_length = planner_data_->parameters.vehicle_length;
-
   const auto extended_lanelets = lanelet::utils::getExpandedLanelets(
     avoidance_data_.current_lanelets, left_extend, right_extend);
 
-  shifted_path->path.drivable_area = util::generateDrivableArea(
-    extended_lanelets, getEgoPose(), width, height, resolution, vehicle_length,
-    *(planner_data_->route_handler));
+  {
+    const auto & p = planner_data_->parameters;
+    shifted_path->path.drivable_area = util::generateDrivableArea(
+      extended_lanelets, getEgoPose(), p.drivable_area_width, p.drivable_area_height,
+      p.drivable_area_resolution, p.vehicle_length, *(planner_data_->route_handler));
+  }
 }
 
 PoseStamped AvoidanceModule::getUnshiftedEgoPose(const ShiftedPath & prev_path) const
@@ -544,10 +542,6 @@ PathWithLaneId AvoidanceModule::calcCenterLinePath(
   // }
 
   centerline_path.header = route_handler->getRouteHeader();
-
-  centerline_path.drivable_area = util::generateDrivableArea(
-    current_lanes, pose, p.drivable_area_width, p.drivable_area_height, p.drivable_area_resolution,
-    p.vehicle_length, *route_handler);
 
   return centerline_path;
 }
@@ -638,7 +632,11 @@ BehaviorModuleOutput AvoidanceModule::plan()
   if (new_shift_point) {addShiftPointIfApproved(*new_shift_point);}
 
   // generate path with shift points that have been inserted.
-  const auto avoidance_path = generateAvoidancePath(path_shifter_);
+  auto avoidance_path = generateAvoidancePath(path_shifter_);
+
+  // Drivable area generation.
+  constexpr double extend_margin = 0.5;
+  generateExtendedDrivableArea(&avoidance_path, extend_margin);
 
   // post processing
   {
@@ -771,10 +769,6 @@ ShiftedPath AvoidanceModule::generateAvoidancePath(PathShifter & path_shifter) c
     RCLCPP_ERROR(getLogger(), "failed to generate shifted path.");
     return toShiftedPath(reference);
   }
-
-  // Drivable area.
-  constexpr double extend_margin = 0.5;
-  extendDrivableArea(&shifted_path, extend_margin);
 
   return shifted_path;
 }

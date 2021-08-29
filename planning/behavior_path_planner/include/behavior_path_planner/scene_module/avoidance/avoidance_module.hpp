@@ -170,7 +170,7 @@ private:
   void addShiftPointIfApproved(const ShiftPoint & point);
 
   ShiftedPath generateAvoidancePath(PathShifter & shifter) const;
-  void extendDrivableArea(ShiftedPath * shifted_path, double margin) const;
+  void generateExtendedDrivableArea(ShiftedPath * shifted_path, double margin) const;
 
   void postProcess(PathShifter & shifter) const;
 
