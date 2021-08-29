@@ -30,11 +30,16 @@ std::vector<lanelet::ConstLanelet> getCrosswalksOnPath(
 {
   std::vector<lanelet::ConstLanelet> crosswalks;
 
+  std::set<int64_t> unique_lane_ids;
   for (const auto & p : path.points) {
-    const auto lane_id = p.lane_ids.at(0);
+    unique_lane_ids.insert(p.lane_ids.at(0));  // should we iterate ids? keep as it was.
+  }
+
+  for (const auto & lane_id : unique_lane_ids) {
     const auto ll = lanelet_map->laneletLayer.get(lane_id);
 
-    const auto conflicting_crosswalks = overall_graphs->conflictingInGraph(ll, 1);
+    constexpr int PEDESTRIAN_GRAPH_ID = 1;
+    const auto conflicting_crosswalks = overall_graphs->conflictingInGraph(ll, PEDESTRIAN_GRAPH_ID);
     for (const auto & crosswalk : conflicting_crosswalks) {
       crosswalks.push_back(crosswalk);
     }
