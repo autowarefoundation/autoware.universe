@@ -305,6 +305,7 @@ autoware_perception_msgs::msg::DynamicObjectWithFeature Cluster2D::obstacleToObj
     0.0, 0.0,
     in_obstacle.heading);
   resulting_object.object.state.orientation_reliable = false;
+
   return resulting_object;
 }
 
