@@ -71,6 +71,7 @@ struct StopPoint
 struct SlowDownSection
 {
   TrajectoryPoint start_point{};
+  TrajectoryPoint end_point{};
   size_t slow_down_start_idx;
   size_t slow_down_end_idx;
   double velocity;

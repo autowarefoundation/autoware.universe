@@ -58,6 +58,78 @@ TrajectoryPoint getBackwardPointFromBasePoint(
 
   return output;
 }
+boost::optional<std::pair<size_t, TrajectoryPoint>> getForwardInsertPointFromBasePoint(
+  const size_t base_idx, const Trajectory & trajectory, const double margin)
+{
+  if (base_idx + 1 > trajectory.points.size()) {
+    return {};
+  }
+
+  if (margin < std::numeric_limits<double>::epsilon()) {
+    return std::make_pair(base_idx, trajectory.points.at(base_idx));
+  }
+
+  double length_sum = 0.0;
+  double length_residual = 0.0;
+
+  for (size_t i = base_idx; i < trajectory.points.size() - 1; ++i) {
+    const auto & p_front = trajectory.points.at(i);
+    const auto & p_back = trajectory.points.at(i + 1);
+
+    length_sum += calcDistance2d(p_front, p_back);
+    length_residual = length_sum - margin;
+
+    if (length_residual >= std::numeric_limits<double>::epsilon()) {
+      const auto p_insert =
+        getBackwardPointFromBasePoint(p_back, p_front, p_back, length_residual);
+
+      // p_front(trajectory.points.at(i)) is insert base point
+      return std::make_pair(i, p_insert);
+    }
+  }
+
+  if (length_residual < std::numeric_limits<double>::epsilon()) {
+    return std::make_pair(trajectory.points.size() - 1, trajectory.points.back());
+  }
+
+  return {};
+}
+boost::optional<std::pair<size_t, TrajectoryPoint>> getBackwardInsertPointFromBasePoint(
+  const size_t base_idx, const Trajectory & trajectory, const double margin)
+{
+  if (base_idx + 1 > trajectory.points.size()) {
+    return {};
+  }
+
+  if (margin < std::numeric_limits<double>::epsilon()) {
+    return std::make_pair(base_idx, trajectory.points.at(base_idx));
+  }
+
+  double length_sum = 0.0;
+  double length_residual = 0.0;
+
+  for (size_t i = base_idx; 0 < i; --i) {
+    const auto & p_front = trajectory.points.at(i - 1);
+    const auto & p_back = trajectory.points.at(i);
+
+    length_sum += calcDistance2d(p_front, p_back);
+    length_residual = length_sum - margin;
+
+    if (length_residual >= std::numeric_limits<double>::epsilon()) {
+      const auto p_insert =
+        getBackwardPointFromBasePoint(p_front, p_back, p_front, length_residual);
+
+      // p_front(trajectory.points.at(i-1)) is insert base point
+      return std::make_pair(i - 1, p_insert);
+    }
+  }
+
+  if (length_residual < std::numeric_limits<double>::epsilon()) {
+    return std::make_pair(size_t(0), trajectory.points.front());
+  }
+
+  return {};
+}
 std::string jsonDumpsPose(const geometry_msgs::msg::Pose & pose)
 {
   const std::string json_dumps_pose =
@@ -430,18 +502,37 @@ void ObstacleStopPlannerNode::insertStopPoint(
   const StopPoint & stop_point, Trajectory & output,
   diagnostic_msgs::msg::DiagnosticStatus & stop_reason_diag)
 {
+  const auto traj_end_idx = output.points.size() - 1;
   const auto & stop_idx = stop_point.index;
+
   const auto & p_base = output.points.at(stop_idx);
+  const auto & p_next = output.points.at(std::min(stop_idx + 1, traj_end_idx));
   const auto & p_insert = stop_point.point;
+
   constexpr double min_dist = 1e-3;
 
-  if (calcDistance2d(p_base, p_insert) > min_dist) {
+  const auto is_p_base_and_p_insert_overlap =
+    calcDistance2d(p_base, p_insert) < min_dist;
+  const auto is_p_next_and_p_insert_overlap =
+    calcDistance2d(p_next, p_insert) < min_dist;
+
+  auto update_stop_idx = stop_idx;
+
+  if (!is_p_base_and_p_insert_overlap &&
+    !is_p_next_and_p_insert_overlap)
+  {
+    // insert: start_idx and end_idx are shifted by one
     output.points.insert(output.points.begin() + stop_idx, p_insert);
+    update_stop_idx = std::min(update_stop_idx + 1, traj_end_idx);
+  } else if (is_p_next_and_p_insert_overlap) {
+    // not insert: p_insert is merged into p_next
+    update_stop_idx = std::min(update_stop_idx + 1, traj_end_idx);
   }
 
-  for (size_t i = stop_idx; i < output.points.size(); ++i) {
+  for (size_t i = update_stop_idx; i < output.points.size(); ++i) {
     output.points.at(i).twist.linear.x = 0.0;
   }
+
   stop_reason_diag = makeStopReasonDiag("obstacle", p_insert.pose);
   debug_ptr_->pushPose(p_insert.pose, PoseType::Stop);
 }
@@ -479,25 +570,21 @@ StopPoint ObstacleStopPlannerNode::createTargetPoint(
   const int idx, const double margin, const Eigen::Vector2d & trajectory_vec,
   const Eigen::Vector2d & collision_point_vec, const Trajectory & base_trajectory)
 {
-  StopPoint stop_point{};
-  double length_sum = 0.0;
-  TrajectoryPoint p_front{};
-  TrajectoryPoint p_back{};
+  const auto dist_remain =
+    trajectory_vec.normalized().dot(collision_point_vec);
 
-  length_sum += trajectory_vec.normalized().dot(collision_point_vec);
+  const auto update_margin_from_vehicle = margin - dist_remain;
+  const auto insert_point_with_idx = getBackwardInsertPointFromBasePoint(
+    idx, base_trajectory, update_margin_from_vehicle);
 
-  for (size_t i = idx; 0 < i; --i) {
-    p_front = base_trajectory.points.at(i - 1);
-    p_back = base_trajectory.points.at(i);
-
-    if (margin < length_sum) {
-      stop_point.index = i;
-      break;
-    }
-    length_sum += calcDistance2d(p_front, p_back);
+  if (!insert_point_with_idx) {
+    // TODO(Satoshi Ota)
+    return StopPoint{};
   }
-  stop_point.point = getBackwardPointFromBasePoint(
-    p_front, p_back, p_front, length_sum - margin);
+
+  StopPoint stop_point{};
+  stop_point.index = insert_point_with_idx.get().first;
+  stop_point.point = insert_point_with_idx.get().second;
 
   return stop_point;
 }
@@ -508,52 +595,31 @@ SlowDownSection ObstacleStopPlannerNode::createSlowDownSection(
   const Eigen::Vector2d & trajectory_vec,
   const Eigen::Vector2d & slow_down_point_vec)
 {
-  SlowDownSection slow_down_section{};
+  const auto dist_remain =
+    trajectory_vec.normalized().dot(slow_down_point_vec);
 
   // calc slow down start point
-  double length_sum_forward = 0.0;
-  double delta_length_forward = 0.0;
-  length_sum_forward += trajectory_vec.normalized().dot(slow_down_point_vec);
-
-  for (size_t i = idx; 0 < i; --i) {
-    const auto & p_front = base_trajectory.points.at(i - 1);
-    const auto & p_back = base_trajectory.points.at(i);
-
-    if (slow_down_param_.slow_down_forward_margin < length_sum_forward) {
-      slow_down_section.slow_down_start_idx = i;
-      slow_down_section.start_point =
-        getBackwardPointFromBasePoint(p_front, p_back, p_front, delta_length_forward);
-      break;
-    }
-    length_sum_forward += calcDistance2d(p_front, p_back);
-    delta_length_forward = length_sum_forward - slow_down_param_.slow_down_forward_margin;
-  }
-
-  if (delta_length_forward < std::numeric_limits<double>::epsilon()) {
-    slow_down_section.slow_down_start_idx = 0;
-    slow_down_section.start_point = base_trajectory.points.front();
-  }
+  const auto update_forward_margin_from_vehicle =
+    slow_down_param_.slow_down_forward_margin - dist_remain;
+  const auto start_insert_point_with_idx = getBackwardInsertPointFromBasePoint(
+    idx, base_trajectory, update_forward_margin_from_vehicle);
 
   // calc slow down end point
-  double length_sum_backward = 0.0;
-  double delta_length_backward = 0.0;
-  length_sum_backward -= trajectory_vec.normalized().dot(slow_down_point_vec);
+  const auto update_backward_margin_from_vehicle =
+    slow_down_param_.slow_down_backward_margin + dist_remain;
+  const auto end_insert_point_with_idx = getForwardInsertPointFromBasePoint(
+    idx, base_trajectory, update_backward_margin_from_vehicle);
 
-  for (size_t i = idx; i < base_trajectory.points.size() - 1; ++i) {
-    const auto & p_front = base_trajectory.points.at(i);
-    const auto & p_back = base_trajectory.points.at(i + 1);
-
-    if (slow_down_param_.slow_down_backward_margin < length_sum_backward) {
-      slow_down_section.slow_down_end_idx = i;
-      break;
-    }
-    length_sum_backward += calcDistance2d(p_front, p_back);
-    delta_length_backward = length_sum_backward - slow_down_param_.slow_down_backward_margin;
+  if (!start_insert_point_with_idx || !end_insert_point_with_idx) {
+    // TODO(Satoshi Ota)
+    return SlowDownSection{};
   }
 
-  if (delta_length_backward < std::numeric_limits<double>::epsilon()) {
-    slow_down_section.slow_down_end_idx = base_trajectory.points.size() - 1;
-  }
+  SlowDownSection slow_down_section{};
+  slow_down_section.slow_down_start_idx = start_insert_point_with_idx.get().first;
+  slow_down_section.start_point = start_insert_point_with_idx.get().second;
+  slow_down_section.slow_down_end_idx = end_insert_point_with_idx.get().first;
+  slow_down_section.end_point = end_insert_point_with_idx.get().second;
 
   slow_down_section.velocity =
     slow_down_param_.min_slow_down_vel +
@@ -569,18 +635,57 @@ void ObstacleStopPlannerNode::insertSlowDownSection(
   [[maybe_unused]] const Trajectory & base_trajectory,
   Trajectory & output)
 {
+  const auto traj_end_idx = output.points.size() - 1;
   const auto & start_idx = slow_down_section.slow_down_start_idx;
   const auto & end_idx = slow_down_section.slow_down_end_idx;
+
   const auto & p_base_start = output.points.at(start_idx);
+  const auto & p_next_start = output.points.at(std::min(start_idx + 1, traj_end_idx));
   const auto & p_insert_start = slow_down_section.start_point;
+
   const auto & p_base_end = output.points.at(end_idx);
+  const auto & p_next_end = output.points.at(std::min(end_idx + 1, traj_end_idx));
+  const auto & p_insert_end = slow_down_section.end_point;
+
   constexpr double min_dist = 1e-3;
 
-  if (calcDistance2d(p_base_start, p_insert_start) > min_dist) {
+  const auto is_start_p_base_and_p_insert_overlap =
+    calcDistance2d(p_base_start, p_insert_start) < min_dist;
+  const auto is_start_p_next_and_p_insert_overlap =
+    calcDistance2d(p_next_start, p_insert_start) < min_dist;
+
+  auto update_start_idx = start_idx;
+  auto update_end_idx = end_idx;
+
+  if (!is_start_p_base_and_p_insert_overlap &&
+    !is_start_p_next_and_p_insert_overlap)
+  {
+    // insert: start_idx and end_idx are shifted by one
     output.points.insert(output.points.begin() + start_idx, p_insert_start);
+    update_start_idx = std::min(update_start_idx + 1, traj_end_idx);
+    update_end_idx = std::min(update_end_idx + 1, traj_end_idx);
+  } else if (is_start_p_next_and_p_insert_overlap) {
+    // not insert: p_insert is merged into p_next
+    update_start_idx = std::min(update_start_idx + 1, traj_end_idx);
   }
 
-  for (size_t i = start_idx; i <= end_idx; ++i) {
+  const auto is_end_p_base_and_p_insert_overlap =
+    calcDistance2d(p_base_end, p_insert_end) < min_dist;
+  const auto is_end_p_next_and_p_insert_overlap =
+    calcDistance2d(p_next_end, p_insert_end) < min_dist;
+
+  if (!is_end_p_base_and_p_insert_overlap &&
+    !is_end_p_next_and_p_insert_overlap)
+  {
+    // insert: end_idx is shifted by one
+    output.points.insert(output.points.begin() + end_idx, p_insert_end);
+    update_end_idx = std::min(update_end_idx + 1, traj_end_idx);
+  } else if (is_end_p_next_and_p_insert_overlap) {
+    // not insert: p_insert is merged into p_next
+    update_end_idx = std::min(update_end_idx + 1, traj_end_idx);
+  }
+
+  for (size_t i = update_start_idx; i <= update_end_idx; ++i) {
     output.points.at(i).twist.linear.x =
       std::min(slow_down_section.velocity, output.points.at(i).twist.linear.x);
   }
