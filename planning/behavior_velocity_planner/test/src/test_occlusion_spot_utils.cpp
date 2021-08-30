@@ -20,12 +20,37 @@
 #include "scene_module/occlusion_spot/occlusion_spot_utils.hpp"
 
 #include "utils.hpp"
+#include "utilization/path_utilization.hpp"
+
+autoware_planning_msgs::msg::Path toPath(
+  const autoware_planning_msgs::msg::PathWithLaneId & path_with_id)
+{
+  autoware_planning_msgs::msg::Path path;
+  for (const auto & p : path_with_id.points) {
+    path.points.push_back(p.point);
+  }
+  return path;
+}
+
+TEST(spline, splineInterpolate)
+{
+  using std::chrono::duration;
+  using std::chrono::duration_cast;
+  using std::chrono::high_resolution_clock;
+  using std::chrono::microseconds;
+  autoware_planning_msgs::msg::PathWithLaneId path = test::generatePath(0, 0.0, 6.0, 0.0, 7);
+  const auto path_interp = behavior_velocity_planner::interpolatePath(toPath(path), 100, 0.5);
+  for (const auto & p : path_interp.points) {
+    std::cout << "interp" << p.pose.position.x << std::endl;
+  }
+  ASSERT_EQ(path_interp.points.size(), path.points.size() * 2 - +1);
+}
+
 
 TEST(buildPathLanelet, nominal)
 {
   using behavior_velocity_planner::occlusion_spot_utils::buildPathLanelet;
   lanelet::ConstLanelet path_lanelet;
-  int first_index;
   /* straight diagonal path
       0 1 2 3 4
     0 x
@@ -35,22 +60,12 @@ TEST(buildPathLanelet, nominal)
     4         x
   */
   autoware_planning_msgs::msg::PathWithLaneId path = test::generatePath(0, 0, 4, 4, 5);
-  first_index = 0;
-  path_lanelet = buildPathLanelet(path, first_index, 1000);
+  path_lanelet = buildPathLanelet(path);
   ASSERT_EQ(path_lanelet.centerline2d().front().x(), 0.0);
   ASSERT_EQ(path_lanelet.centerline2d().front().y(), 0.0);
   ASSERT_NE(path_lanelet.centerline2d().back().x(), 4.0);
   ASSERT_NE(path_lanelet.centerline2d().back().y(), 4.0);
-  // changing the first path index
-  first_index = 1;
-  path_lanelet = buildPathLanelet(path, first_index, 1000);
-  ASSERT_EQ(path_lanelet.centerline2d().front().x(), 1.0);
-  ASSERT_EQ(path_lanelet.centerline2d().front().y(), 1.0);
-  ASSERT_NE(path_lanelet.centerline2d().back().x(), 4.0);
-  ASSERT_NE(path_lanelet.centerline2d().back().y(), 4.0);
-  first_index = 4;
-  path_lanelet = buildPathLanelet(path, first_index, 1000);
-  // ASSERT_EQ(path_lanelet.centerline2d().front(), path_lanelet.centerline2d().back());
+  std::cout << "path lanelet size: " << path_lanelet.centerline2d().size() << std::endl;
 }
 
 TEST(calcVelocityAndHeightToPossibleCollision, TooManyPossibleCollisions)
@@ -95,11 +110,11 @@ TEST(calcVelocityAndHeightToPossibleCollision, ConsiderSignedOffset)
   using std::chrono::high_resolution_clock;
   using std::chrono::microseconds;
   std::vector<PossibleCollisionInfo> possible_collisions;
-  const double offset = -2;
-  autoware_planning_msgs::msg::PathWithLaneId path = test::generatePath(-offset, 3.0, 6.0, 3.0, 5);
+  const double offset = 2;
+  autoware_planning_msgs::msg::PathWithLaneId path = test::generatePath(offset, 3.0, 6.0, 3.0, 5);
   test::generatePossibleCollisions(possible_collisions, 3.0, 3.0, 6.0, 3.0, 3);
   for (size_t i = 0; i < path.points.size(); i++) {
-    path.points[i].point.twist.linear.x = static_cast<double>(i - offset);
+    path.points[i].point.twist.linear.x = static_cast<double>(i + offset);
   }
 
   /**

@@ -59,19 +59,19 @@ bool OcclusionSpotInPublicModule::modifyPathVelocity(
   }
   const auto target_road_type = occlusion_spot_utils::ROAD_TYPE::PUBLIC;
   autoware_planning_msgs::msg::PathWithLaneId limited_path;
-  double longitudinal_offset_from_path_point_to_ego = 0;
+  double offset_from_ego_to_closest = 0;
+  double offset_from_closest_to_target = 0;
   {
     // extract lanelet that includes target_road_type only
     if (!behavior_velocity_planner::occlusion_spot_utils::extractTargetRoad(
-        closest_idx, lanelet_map_ptr, *path, longitudinal_offset_from_path_point_to_ego,
-        limited_path, target_road_type))
+        closest_idx, lanelet_map_ptr, param_.detection_area_length, *path,
+        offset_from_closest_to_target, limited_path, target_road_type))
     {
       return true;
     }
     // use path point as origin for stability
-    longitudinal_offset_from_path_point_to_ego +=
-      planning_utils::transformRelCoordinate2D(ego_pose, path->points[closest_idx].point.pose)
-      .position.x;
+    offset_from_ego_to_closest = -planning_utils::transformRelCoordinate2D(
+      ego_pose, path->points[closest_idx].point.pose).position.x;
   }
   if (limited_path.points.size() < 4) {return true;}
   std::vector<behavior_velocity_planner::occlusion_spot_utils::PossibleCollisionInfo>
@@ -79,14 +79,16 @@ bool OcclusionSpotInPublicModule::modifyPathVelocity(
   RCLCPP_DEBUG_STREAM_THROTTLE(logger_, *clock_, 3000, "closest_idx : " << closest_idx);
   RCLCPP_DEBUG_STREAM_THROTTLE(
     logger_, *clock_, 3000,
-    "longitudinal_offset_from_path_point_to_ego : " <<
-      longitudinal_offset_from_path_point_to_ego);
+    "offset_from_ego_to_closest : " <<
+      offset_from_ego_to_closest);
+  const double offset_from_ego_to_target =
+    offset_from_ego_to_closest + offset_from_closest_to_target;
   behavior_velocity_planner::occlusion_spot_utils::createPossibleCollisionBehindParkedVehicle(
-    possible_collisions, limited_path, param_, longitudinal_offset_from_path_point_to_ego,
+    possible_collisions, limited_path, param_, offset_from_ego_to_target,
     dynamic_obj_arr_ptr);
   // set orientation to each possible collision
   behavior_velocity_planner::occlusion_spot_utils::calcVelocityAndHeightToPossibleCollision(
-    closest_idx, *path, longitudinal_offset_from_path_point_to_ego, possible_collisions);
+    closest_idx, *path, offset_from_ego_to_target, possible_collisions);
   // apply safe velocity using ebs and pbs deceleration
   applySafeVelocityConsideringPossibleCollison(
     path, possible_collisions, ego_velocity, param_.public_road, param_);

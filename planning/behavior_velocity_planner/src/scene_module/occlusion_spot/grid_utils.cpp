@@ -77,7 +77,9 @@ void findOcclusionSpots(
     if (isOcclusionSpotSquare(
         occlusion_spot_square, grid_data, *iterator, min_occlusion_spot_size, grid.getSize()))
     {
-      grid.getPosition(occlusion_spot_square.index, occlusion_spot_square.position);
+      if (!grid.getPosition(occlusion_spot_square.index, occlusion_spot_square.position)) {
+        continue;
+      }
       std::vector<grid_map::Position> corner_positions;
       getCornerPositions(corner_positions, grid, occlusion_spot_square);
       for (const grid_map::Position & corner : corner_positions) {

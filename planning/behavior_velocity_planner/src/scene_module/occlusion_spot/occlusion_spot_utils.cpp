@@ -65,7 +65,7 @@ ROAD_TYPE getCurrentRoadType(
 
 void calcVelocityAndHeightToPossibleCollision(
   const int closest_idx, const autoware_planning_msgs::msg::PathWithLaneId & path,
-  const double longitudinal_offset_to_ego, std::vector<PossibleCollisionInfo> & possible_collisions)
+  const double offset_from_ego_to_target, std::vector<PossibleCollisionInfo> & possible_collisions)
 {
   if (possible_collisions.empty()) {return;}
   std::sort(
@@ -81,7 +81,7 @@ void calcVelocityAndHeightToPossibleCollision(
     };
   // insert path point orientation to possible collision
   size_t collision_index = 0;
-  double dist_along_path_point = -longitudinal_offset_to_ego;
+  double dist_along_path_point = offset_from_ego_to_target;
   double dist_along_next_path_point = dist_along_path_point;
   for (size_t idx = closest_idx; idx < path.points.size() - 1; idx++) {
     auto p_prev = path.points[idx].point;
@@ -118,36 +118,30 @@ void calcVelocityAndHeightToPossibleCollision(
 }
 
 autoware_planning_msgs::msg::Path toPath(
-  const autoware_planning_msgs::msg::PathWithLaneId & path_with_id, const int first_index)
+  const autoware_planning_msgs::msg::PathWithLaneId & path_with_id)
 {
   autoware_planning_msgs::msg::Path path;
-  for (size_t i = first_index; i < path_with_id.points.size(); i++) {
-    path.points.push_back(path_with_id.points[i].point);
+  for (const auto & p : path_with_id.points) {
+    path.points.push_back(p.point);
   }
   return path;
 }
 
-lanelet::ConstLanelet buildPathLanelet(
-  const autoware_planning_msgs::msg::PathWithLaneId & path, int first_index, double max_range)
+lanelet::ConstLanelet buildPathLanelet(const autoware_planning_msgs::msg::PathWithLaneId & path)
 {
-  autoware_planning_msgs::msg::Path converted_path =
-    filterLitterPathPoint(toPath(path, first_index));
-  if (converted_path.points.empty()) {return lanelet::ConstLanelet();}
-  autoware_planning_msgs::msg::Path interpolated_path = interpolatePath(
-    converted_path, max_range,
-    2.0);
+  autoware_planning_msgs::msg::Path converted_path = filterLitterPathPoint(toPath(path));
+  if (converted_path.points.empty()) {
+    return lanelet::ConstLanelet();
+  }
+  const double max_length = 100000.0;  // interpolate as much as possible for extracted lane
+  autoware_planning_msgs::msg::Path interpolated_path =
+    interpolatePath(converted_path, max_length, 2.0);
   lanelet::BasicLineString2d path_line;
   path_line.reserve(interpolated_path.points.size());
   // skip last point that will creates extra ordinary path
   for (size_t i = 0; i < interpolated_path.points.size() - 1; ++i) {
     const auto & pose_i = interpolated_path.points[i].pose;
     path_line.emplace_back(pose_i.position.x, pose_i.position.y);
-    if (
-      autoware_utils::calcDistance2d(
-        path.points[first_index].point.pose.position, pose_i.position) > max_range)
-    {
-      break;
-    }
   }
   // set simplified line to lanelet
   lanelet::BasicLineString2d simplified_line;
@@ -165,7 +159,7 @@ lanelet::ConstLanelet buildPathLanelet(
 
 void calculateCollisionPathPointFromOcclusionSpot(
   PossibleCollisionInfo & pc, const lanelet::BasicPoint2d & obstacle_point,
-  const double longitudinal_offset_to_ego, const lanelet::ConstLanelet & path_lanelet,
+  const double offset_from_ego_to_target, const lanelet::ConstLanelet & path_lanelet,
   const PlannerParam & param)
 {
   auto calcSignedArcDistance = [](const double lateral_distance, const double offset) {
@@ -202,8 +196,8 @@ void calculateCollisionPathPointFromOcclusionSpot(
     calcSignedArcDistance(
     arc_lane_occlusion_point.distance,
     param.vehicle_info.vehicle_width * 0.5);
-  lanelet::ArcCoordinates arc_lane_dist_at_collision;
-  pc.arc_lane_dist_at_collision = {arc_lane_occlusion_point.length - longitudinal_offset_to_ego -
+  pc.arc_lane_dist_at_collision =
+  {arc_lane_occlusion_point.length + offset_from_ego_to_target -
     param.vehicle_info.baselink_to_front,
     std::abs(signed_lateral_distance)};
 }
@@ -211,10 +205,10 @@ void calculateCollisionPathPointFromOcclusionSpot(
 void createPossibleCollisionBehindParkedVehicle(
   std::vector<PossibleCollisionInfo> & possible_collisions,
   const autoware_planning_msgs::msg::PathWithLaneId & path, const PlannerParam & param,
-  const double longitudinal_offset_to_ego,
+  const double offset_from_ego_to_target,
   const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr & dyn_obj_arr)
 {
-  lanelet::ConstLanelet path_lanelet = buildPathLanelet(path, 0, param.detection_area_length);
+  lanelet::ConstLanelet path_lanelet = buildPathLanelet(path);
   if (path_lanelet.centerline2d().empty()) {return;}
   std::vector<lanelet::ArcCoordinates> arcs;
   auto calcSignedArcDistance = [](const double lateral_distance, const double offset) {
@@ -248,9 +242,9 @@ void createPossibleCollisionBehindParkedVehicle(
       calcSignedArcDistance(arc_lane_point_at_occlusion.distance, half_vehicle_width);
     arc_lane_point_at_occlusion.distance =
       std::abs(arc_lane_point_at_occlusion.distance) - 0.5 * dyn.shape.dimensions.y;
-    // ignore if obstacle is not within ego base link to front or path and not farther than 2.0[m]
+    // ignore if obstacle is not within attention area
     if (
-      arc_lane_point_at_occlusion.length - longitudinal_offset_to_ego <
+      offset_from_ego_to_target + arc_lane_point_at_occlusion.length <
       param.vehicle_info.baselink_to_front ||
       arc_lane_point_at_occlusion.distance < half_vehicle_width ||
       param.lateral_distance_thr + half_vehicle_width < arc_lane_point_at_occlusion.distance)
@@ -275,15 +269,16 @@ void createPossibleCollisionBehindParkedVehicle(
       path_lanelet.centerline2d(), {arc_lane_point_at_occlusion.length, signed_lateral_distance});
     PossibleCollisionInfo pc;
     calculateCollisionPathPointFromOcclusionSpot(
-      pc, obstacle_point, longitudinal_offset_to_ego, path_lanelet, param);
+      pc, obstacle_point, offset_from_ego_to_target, path_lanelet, param);
     possible_collisions.emplace_back(pc);
   }
 }
 
 
 bool extractTargetRoad(
-  const int closest_idx, const lanelet::LaneletMapPtr lanelet_map_ptr,
-  const autoware_planning_msgs::msg::PathWithLaneId & src_path, double & offset_to_target,
+  const int closest_idx, const lanelet::LaneletMapPtr lanelet_map_ptr, const double max_range,
+  const autoware_planning_msgs::msg::PathWithLaneId & src_path,
+  double & offset_from_closest_to_target,
   autoware_planning_msgs::msg::PathWithLaneId & tar_path, const ROAD_TYPE & target_road_type)
 {
   bool found_target = false;
@@ -292,6 +287,8 @@ bool extractTargetRoad(
     occlusion_spot_utils::ROAD_TYPE search_road_type = occlusion_spot_utils::getCurrentRoadType(
       lanelet_map_ptr->laneletLayer.get(src_path.points[i].lane_ids[0]), lanelet_map_ptr);
     if (found_target && search_road_type != target_road_type) {break;}
+    // ignore path farther than max range
+    if (offset_from_closest_to_target > max_range) {break;}
     if (search_road_type == target_road_type) {
       tar_path.points.emplace_back(src_path.points[i]);
       found_target = true;
@@ -299,7 +296,7 @@ bool extractTargetRoad(
     if (!found_target && i < src_path.points.size() - 1) {
       const auto & curr_p = src_path.points[i].point.pose.position;
       const auto & next_p = src_path.points[i + 1].point.pose.position;
-      offset_to_target -= autoware_utils::calcDistance2d(curr_p, next_p);
+      offset_from_closest_to_target += autoware_utils::calcDistance2d(curr_p, next_p);
     }
   }
   return found_target;
@@ -308,30 +305,48 @@ bool extractTargetRoad(
 void generatePossibleCollisions(
   std::vector<PossibleCollisionInfo> & possible_collisions,
   const autoware_planning_msgs::msg::PathWithLaneId & path, const grid_map::GridMap & grid,
-  const double longitudinal_offset_to_ego, const PlannerParam & param,
+  const double offset_from_ego_to_closest,
+  const double offset_from_closest_to_target, const PlannerParam & param,
   std::vector<lanelet::BasicPolygon2d> & debug)
 {
-  const double max_range = grid.getLength().maxCoeff() * 0.5;
   // NOTE : buildPathLanelet first index should always be zero because path is already limited
-  lanelet::ConstLanelet path_lanelet = buildPathLanelet(path, 0, max_range);
+  lanelet::ConstLanelet path_lanelet = buildPathLanelet(path);
   if (path_lanelet.centerline2d().empty()) {return;}
   // generate sidewalk possible collision
   generateSidewalkPossibleCollisions(
-    possible_collisions, grid, longitudinal_offset_to_ego, path_lanelet, param, debug);
+    possible_collisions, grid, offset_from_ego_to_closest,
+    offset_from_closest_to_target, path_lanelet, param, debug);
   possible_collisions.insert(
     possible_collisions.end(), possible_collisions.begin(), possible_collisions.end());
 }
 
 void generateSidewalkPossibleCollisions(
   std::vector<PossibleCollisionInfo> & possible_collisions, const grid_map::GridMap & grid,
-  const double longitudinal_offset_to_ego, const lanelet::ConstLanelet & path_lanelet,
+  const double offset_from_ego_to_closest,
+  const double offset_from_closest_to_target,
+  const lanelet::ConstLanelet & path_lanelet,
   const PlannerParam & param, std::vector<lanelet::BasicPolygon2d> & debug)
 {
+  const double offset_form_ego_to_target =
+    offset_from_ego_to_closest + offset_from_closest_to_target;
+  double min_range = 0;
+  // if ego is inside the target path_lanelet, set ignore_length
+  if (offset_form_ego_to_target > param.vehicle_info.baselink_to_front) {
+    min_range = 0;
+  } else {
+    min_range = param.vehicle_info.baselink_to_front - offset_form_ego_to_target;
+  }
   std::vector<geometry::Slice> sidewalk_slices = geometry::buildSidewalkSlices(
-    path_lanelet, param.vehicle_info.baselink_to_front + longitudinal_offset_to_ego,
-    param.vehicle_info.vehicle_width * 0.5, param.sidewalk.slice_size, param.sidewalk.focus_range);
+    path_lanelet, min_range, param.vehicle_info.vehicle_width * 0.5, param.sidewalk.slice_size,
+    param.sidewalk.focus_range);
   double length_lower_bound = std::numeric_limits<double>::max();
   double distance_lower_bound = std::numeric_limits<double>::max();
+  std::sort(
+    sidewalk_slices.begin(), sidewalk_slices.end(),
+    [](const geometry::Slice & s1, const geometry::Slice & s2) {
+      return s1.range.min_length < s2.range.min_length;
+    });
+
   for (const geometry::Slice & sidewalk_slice : sidewalk_slices) {
     debug.push_back(sidewalk_slice.polygon);
     if ((sidewalk_slice.range.min_length < length_lower_bound ||
@@ -342,7 +357,8 @@ void generateSidewalkPossibleCollisions(
         occlusion_spot_positions, grid, sidewalk_slice.polygon,
         param.sidewalk.min_occlusion_spot_size);
       generateSidewalkPossibleCollisionFromOcclusionSpot(
-        possible_collisions, grid, occlusion_spot_positions, path_lanelet, param);
+        possible_collisions, grid, occlusion_spot_positions, offset_form_ego_to_target,
+        path_lanelet, param);
       if (!possible_collisions.empty()) {
         length_lower_bound = sidewalk_slice.range.min_length;
         distance_lower_bound = std::abs(sidewalk_slice.range.min_distance);
@@ -357,6 +373,7 @@ void generateSidewalkPossibleCollisions(
 void generateSidewalkPossibleCollisionFromOcclusionSpot(
   std::vector<PossibleCollisionInfo> & possible_collisions, const grid_map::GridMap & grid,
   const std::vector<grid_map::Position> & occlusion_spot_positions,
+  const double offset_form_ego_to_target,
   const lanelet::ConstLanelet & path_lanelet, const PlannerParam & param)
 {
   for (grid_map::Position occlusion_spot_position : occlusion_spot_positions) {
@@ -370,7 +387,10 @@ void generateSidewalkPossibleCollisionFromOcclusionSpot(
       grid_utils::isCollisionFree(grid, occlusion_spot_position, intersection_point);
     if (collision_free) {
       PossibleCollisionInfo pc;
-      calculateCollisionPathPointFromOcclusionSpot(pc, obstacle_point, 0, path_lanelet, param);
+      calculateCollisionPathPointFromOcclusionSpot(
+        pc, obstacle_point, offset_form_ego_to_target,
+        path_lanelet, param);
+      if (pc.arc_lane_dist_at_collision.length < param.vehicle_info.baselink_to_front) {continue;}
       possible_collisions.emplace_back(pc);
       break;
     }

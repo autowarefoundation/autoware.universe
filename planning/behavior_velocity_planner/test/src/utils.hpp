@@ -107,6 +107,7 @@ inline autoware_planning_msgs::msg::PathWithLaneId generatePath(
     autoware_planning_msgs::msg::PathPointWithLaneId point{};
     point.point.pose.position.x = x0 + x_step * i;
     point.point.pose.position.y = y0 + y_step * i;
+    point.point.pose.position.z = 0.0;
     path.points.push_back(point);
   }
   return path;

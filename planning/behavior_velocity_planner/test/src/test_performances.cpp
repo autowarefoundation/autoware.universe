@@ -69,9 +69,13 @@ TEST(performances, many_sidewalk_occlusion_spots)
   parameters.sidewalk.min_occlusion_spot_size = 1.0;
   parameters.sidewalk.focus_range = 1.0;
   parameters.grid = grid_param;
+  const double offset_from_ego_to_closest = 0;
+  const double offset_from_closest_to_target = 0;
   std::vector<lanelet::BasicPolygon2d> to_remove;
   auto start_closest = high_resolution_clock::now();
-  generatePossibleCollisions(possible_collisions, trajectory, grid, 0, parameters, to_remove);
+  generatePossibleCollisions(
+    possible_collisions, trajectory, grid, offset_from_ego_to_closest,
+    offset_from_closest_to_target, parameters, to_remove);
   auto end_closest = high_resolution_clock::now();
   std::string ms = " (micro seconds) ";
   std::cout << "| only_closest : runtime (microseconds) \n" <<
