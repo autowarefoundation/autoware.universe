@@ -13,53 +13,44 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * v1.0 Yukihiro Saito
  */
 
 #pragma once
 
+#include <string>
+#include <boost/optional.hpp>
+
+#include "autoware_perception_msgs/msg/shape.hpp"
+#include "autoware_perception_msgs/msg/semantic.hpp"
+#include "geometry_msgs/msg/pose.hpp"
 #include "pcl/point_cloud.h"
 #include "pcl/point_types.h"
 #include "pcl_conversions/pcl_conversions.h"
-#include <string>
-#include "autoware_perception_msgs/msg/shape.hpp"
-#include "autoware_perception_msgs/msg/state.hpp"
-#include "geometry_msgs/msg/pose.hpp"
 
 class ShapeEstimator
 {
 private:
   bool estimateShape(
     const int type, const pcl::PointCloud<pcl::PointXYZ> & cluster,
-    autoware_perception_msgs::msg::Shape & shape_output, geometry_msgs::msg::Pose & pose_output);
+    const boost::optional<float> & yaw, autoware_perception_msgs::msg::Shape & shape_output,
+    geometry_msgs::msg::Pose & pose_output);
   bool applyFilter(
     const int type, const autoware_perception_msgs::msg::Shape & shape_output,
     const geometry_msgs::msg::Pose & pose_output);
   bool applyCorrector(
-    const int type, autoware_perception_msgs::msg::Shape & shape_output,
-    geometry_msgs::msg::Pose & pose_output);
-  bool process(
-    const int type, const pcl::PointCloud<pcl::PointXYZ> & cluster,
+    const int type, const bool use_reference_yaw,
     autoware_perception_msgs::msg::Shape & shape_output, geometry_msgs::msg::Pose & pose_output);
 
-  double l_shape_fitting_search_angle_range_;
   bool use_corrector_;
-  bool orientation_reliable_;
+  bool use_filter_;
 
 public:
-  ShapeEstimator();
+  ShapeEstimator(bool use_corrector, bool use_filter);
 
-  ShapeEstimator(
-    double l_shape_fitting_search_angle_range, bool use_corrector, bool orientation_reliable);
+  virtual ~ShapeEstimator() = default;
 
-  ~ShapeEstimator() {}
-
-  bool getShapeAndPose(
+  virtual bool estimateShapeAndPose(
     const int type, const pcl::PointCloud<pcl::PointXYZ> & cluster,
-    autoware_perception_msgs::msg::Shape & shape_output, geometry_msgs::msg::Pose & pose_output);
-  bool getShapeAndPose(
-    const int type, const pcl::PointCloud<pcl::PointXYZ> & cluster,
-    const autoware_perception_msgs::msg::State & state,
-    autoware_perception_msgs::msg::Shape & shape_output,
+    const boost::optional<float> & yaw, autoware_perception_msgs::msg::Shape & shape_output,
     geometry_msgs::msg::Pose & pose_output);
 };

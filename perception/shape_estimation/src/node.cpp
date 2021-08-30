@@ -13,12 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- *
- * v1.0 Yukihiro Saito
  */
 
-#include "shape_estimation/node.hpp"
+#include "node.hpp"
 #include "shape_estimation/shape_estimator.hpp"
+
+#include "tf2/LinearMath/Matrix3x3.h"
+#include "tf2/LinearMath/Quaternion.h"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
+#include "tf2/utils.h"
+
+using SemanticType = autoware_perception_msgs::msg::Semantic;
 
 ShapeEstimationNode::ShapeEstimationNode(const rclcpp::NodeOptions & node_options)
 : Node("shape_estimation", node_options)
@@ -33,11 +38,9 @@ ShapeEstimationNode::ShapeEstimationNode(const rclcpp::NodeOptions & node_option
     "objects", durable_qos);
 
   bool use_corrector = declare_parameter("use_corrector", true);
-  double l_shape_fitting_search_angle_range =
-    declare_parameter("l_shape_fitting_search_angle_range", 3.0);
-  bool orientation_reliable = declare_parameter("orientation_reliable", true);
-  estimator_ = std::make_unique<ShapeEstimator>(
-    l_shape_fitting_search_angle_range, use_corrector, orientation_reliable);
+  bool use_filter = declare_parameter("use_filter", true);
+  use_vehicle_reference_yaw_ = declare_parameter("use_vehicle_reference_yaw", true);
+  estimator_ = std::make_unique<ShapeEstimator>(use_corrector, use_filter);
 }
 
 void ShapeEstimationNode::callback(
@@ -52,18 +55,30 @@ void ShapeEstimationNode::callback(
 
   // Estimate shape for each object and pack msg
   for (const auto & feature_object : input_msg->feature_objects) {
+    const auto & object = feature_object.object;
+    const auto & type = object.semantic.type;
+    const auto & feature = feature_object.feature;
+    const bool is_vehicle =
+      SemanticType::CAR == type || SemanticType::TRUCK == type || SemanticType::BUS == type;
+
     // convert ros to pcl
     pcl::PointCloud<pcl::PointXYZ>::Ptr cluster(new pcl::PointCloud<pcl::PointXYZ>);
-    pcl::fromROSMsg(feature_object.feature.cluster, *cluster);
+    pcl::fromROSMsg(feature.cluster, *cluster);
+
+    // check cluster data
+    if (cluster->empty()) continue;
+
     // estimate shape and pose
     autoware_perception_msgs::msg::Shape shape;
     geometry_msgs::msg::Pose pose;
+    boost::optional<float> yaw = boost::none;
+    if (use_vehicle_reference_yaw_ && is_vehicle)
+      yaw = tf2::getYaw(object.state.pose_covariance.pose.orientation);
+    const bool estimated_success =
+      estimator_->estimateShapeAndPose(object.semantic.type, *cluster, yaw, shape, pose);
 
-    if (!estimator_->getShapeAndPose(
-        feature_object.object.semantic.type, *cluster, feature_object.object.state, shape, pose))
-    {
-      continue;
-    }
+    // If the shape estimation fails, ignore it.
+    if (!estimated_success) continue;
 
     output_msg.feature_objects.push_back(feature_object);
     output_msg.feature_objects.back().object.shape = shape;
