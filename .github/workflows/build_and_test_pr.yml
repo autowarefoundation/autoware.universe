@@ -40,6 +40,12 @@ jobs:
         run: |
           echo "Target packages: ${{ steps.list_packages.outputs.package_list }}"
 
+      - name: Set git config for private repositories
+        if: ${{ steps.list_packages.outputs.package_list != '' }}
+        run: |
+          git config --local --unset-all http.https://github.com/.extraheader || true
+          git config --global url.https://${{ secrets.REPO_TOKEN }}@github.com.insteadOf 'https://github.com'
+
       - name: Clone dependency packages
         if: ${{ steps.list_packages.outputs.package_list != '' }}
         run: |

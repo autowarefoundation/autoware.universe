@@ -1,1 +1,5 @@
 repositories:
+  msgs/autoware_api_msgs:
+    type: git
+    url: https://github.com/tier4/autoware_api_msgs.git
+    version: main

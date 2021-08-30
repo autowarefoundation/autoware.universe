@@ -1,8 +1,10 @@
 cmake_minimum_required(VERSION 3.5)
-project(autoware_vehicle_msgs)
+project(autoware_hmi_msgs)
 
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
+  set(CMAKE_CXX_EXTENSIONS OFF)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -13,17 +15,10 @@ find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/BatteryStatus.msg"
-  "msg/Engage.msg"
-  "msg/VehicleCommand.msg"
-  "msg/Shift.msg"
-  "msg/ShiftStamped.msg"
-  "msg/ControlMode.msg"
-  "msg/TurnSignal.msg"
-  "msg/Steering.msg"
-  "msg/RawVehicleCommand.msg"
-  "msg/RawControlCommand.msg"
-  DEPENDENCIES std_msgs geometry_msgs autoware_control_msgs
+  srv/Announce.srv
+  DEPENDENCIES
+    builtin_interfaces
+    autoware_external_api_msgs
 )
 
 if(BUILD_TESTING)
