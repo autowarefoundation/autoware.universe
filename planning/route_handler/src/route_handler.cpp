@@ -843,6 +843,46 @@ bool RouteHandler::getLeftLaneletWithinRoute(
   }
 }
 
+lanelet::ConstLanelets RouteHandler::getLaneletsFromPoint(const lanelet::ConstPoint3d & point) const
+{
+  return lanelet::utils::findUsagesInLanelets(*lanelet_map_ptr_, point);
+}
+
+boost::optional<lanelet::ConstLanelet> RouteHandler::getRightLanelet(
+  const lanelet::ConstLanelet & lanelet) const
+{
+  // routable lane
+  const auto right_lane = routing_graph_ptr_->right(lanelet);
+  if (right_lane) {return right_lane;}
+
+  // non-routable lane (e.g. lane change infeasible)
+  const auto adjacent_right_lane = routing_graph_ptr_->adjacentRight(lanelet);
+  return adjacent_right_lane;
+}
+
+
+boost::optional<lanelet::ConstLanelet> RouteHandler::getLeftLanelet(
+  const lanelet::ConstLanelet & lanelet) const
+{
+  // routable lane
+  const auto left_lane = routing_graph_ptr_->left(lanelet);
+  if (left_lane) {return left_lane;}
+
+  // non-routable lane (e.g. lane change infeasible)
+  const auto adjacent_left_lane = routing_graph_ptr_->adjacentLeft(lanelet);
+  return adjacent_left_lane;
+}
+
+lanelet::ConstLanelets RouteHandler::getNextLanelets(const lanelet::ConstLanelet & lanelet) const
+{
+  return routing_graph_ptr_->following(lanelet);
+}
+
+lanelet::Lanelets RouteHandler::getOppositeLanelets(const lanelet::ConstLanelet & lanelet) const
+{
+  return lanelet_map_ptr_->laneletLayer.findUsages(lanelet.rightBound().invert());
+}
+
 bool RouteHandler::getLaneChangeTarget(
   const lanelet::ConstLanelets & lanelets, lanelet::ConstLanelet * target_lanelet) const
 {
