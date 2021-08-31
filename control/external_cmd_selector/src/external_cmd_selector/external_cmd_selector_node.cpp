@@ -15,172 +15,202 @@
 #include <chrono>
 #include <utility>
 #include <memory>
+#include <string>
 
 #include "external_cmd_selector/external_cmd_selector_node.hpp"
 
 ExternalCmdSelector::ExternalCmdSelector(const rclcpp::NodeOptions & node_options)
 : Node("external_cmd_selector", node_options)
 {
+  using std::placeholders::_1;
+  using std::placeholders::_2;
+
   // Parameter
-  update_rate_ = declare_parameter("update_rate", 10.0);
-  initial_selector_mode_ = declare_parameter("initial_selector_mode", 0);
+  double update_rate = declare_parameter("update_rate", 10.0);
+  std::string initial_selector_mode = declare_parameter("initial_selector_mode", "local");
 
   // Publisher
   pub_current_selector_mode_ =
-    create_publisher<autoware_control_msgs::msg::RemoteCommandSelectorMode>(
-    "~/output/current_selector_mode", 1);
-
-  pub_external_control_cmd_ =
-    create_publisher<autoware_vehicle_msgs::msg::ExternalControlCommandStamped>(
-    "~/output/external_control_cmd", 1);
-  pub_shift_cmd_ = create_publisher<autoware_vehicle_msgs::msg::ShiftStamped>(
-    "~/output/shift_cmd",
-    1);
+    create_publisher<CommandSourceMode>("~/output/current_selector_mode", 1);
+  pub_control_cmd_ =
+    create_publisher<ExternalControlCommand>("~/output/control_cmd", 1);
+  pub_shift_cmd_ =
+    create_publisher<InternalGearShift>("~/output/shift_cmd", 1);
   pub_turn_signal_cmd_ =
-    create_publisher<autoware_vehicle_msgs::msg::TurnSignal>("~/output/turn_signal_cmd", 1);
+    create_publisher<InternalTurnSignal>("~/output/turn_signal_cmd", 1);
+  pub_heartbeat_ =
+    create_publisher<InternalHeartbeat>("~/output/heartbeat", 1);
 
   // Callback Groups
   callback_group_subscribers_ = this->create_callback_group(
     rclcpp::CallbackGroupType::MutuallyExclusive);
   callback_group_services_ = this->create_callback_group(
     rclcpp::CallbackGroupType::MutuallyExclusive);
+
   auto subscriber_option = rclcpp::SubscriptionOptions();
   subscriber_option.callback_group = callback_group_subscribers_;
 
-  using std::placeholders::_1;
-  using std::placeholders::_2;
-  using std::placeholders::_3;
-
   // Subscriber
-  sub_local_control_cmd_ =
-    create_subscription<autoware_vehicle_msgs::msg::ExternalControlCommandStamped>(
-    "~/input/local/control_cmd", 1, std::bind(
-      &ExternalCmdSelector::onLocalControlCmd, this,
-      _1), subscriber_option);
-  sub_local_shift_cmd_ =
-    create_subscription<autoware_vehicle_msgs::msg::ShiftStamped>(
-    "~/input/local/shift_cmd", 1, std::bind(
-      &ExternalCmdSelector::onLocalShiftCmd, this,
-      _1), subscriber_option);
-  sub_local_turn_signal_cmd_ = create_subscription<autoware_vehicle_msgs::msg::TurnSignal>(
+  sub_local_control_cmd_ = create_subscription<ExternalControlCommand>(
+    "~/input/local/control_cmd", 1,
+    std::bind(&ExternalCmdSelector::onLocalControlCmd, this, _1), subscriber_option);
+  sub_local_shift_cmd_ = create_subscription<ExternalGearShift>(
+    "~/input/local/shift_cmd", 1,
+    std::bind(&ExternalCmdSelector::onLocalShiftCmd, this, _1), subscriber_option);
+  sub_local_turn_signal_cmd_ = create_subscription<ExternalTurnSignal>(
     "~/input/local/turn_signal_cmd", 1,
     std::bind(&ExternalCmdSelector::onLocalTurnSignalCmd, this, _1), subscriber_option);
+  sub_local_heartbeat_ = create_subscription<ExternalHeartbeat>(
+    "~/input/local/heartbeat", 1,
+    std::bind(&ExternalCmdSelector::onLocalHeartbeat, this, _1), subscriber_option);
 
-  sub_remote_control_cmd_ =
-    create_subscription<autoware_vehicle_msgs::msg::ExternalControlCommandStamped>(
-    "~/input/remote/control_cmd", 1, std::bind(
-      &ExternalCmdSelector::onRemoteControlCmd, this,
-      _1), subscriber_option);
-  sub_remote_shift_cmd_ =
-    create_subscription<autoware_vehicle_msgs::msg::ShiftStamped>(
-    "~/input/remote/shift_cmd", 1, std::bind(
-      &ExternalCmdSelector::onRemoteShiftCmd, this,
-      _1));
-  sub_remote_turn_signal_cmd_ = create_subscription<autoware_vehicle_msgs::msg::TurnSignal>(
+  sub_remote_control_cmd_ = create_subscription<ExternalControlCommand>(
+    "~/input/remote/control_cmd", 1,
+    std::bind(&ExternalCmdSelector::onRemoteControlCmd, this, _1), subscriber_option);
+  sub_remote_shift_cmd_ = create_subscription<ExternalGearShift>(
+    "~/input/remote/shift_cmd", 1,
+    std::bind(&ExternalCmdSelector::onRemoteShiftCmd, this, _1), subscriber_option);
+  sub_remote_turn_signal_cmd_ = create_subscription<ExternalTurnSignal>(
     "~/input/remote/turn_signal_cmd", 1,
     std::bind(&ExternalCmdSelector::onRemoteTurnSignalCmd, this, _1), subscriber_option);
+  sub_remote_heartbeat_ = create_subscription<ExternalHeartbeat>(
+    "~/input/remote/heartbeat", 1,
+    std::bind(&ExternalCmdSelector::onRemoteHeartbeat, this, _1), subscriber_option);
 
   // Service
-  srv_select_external_command_ = create_service<autoware_control_msgs::srv::RemoteCommandSelect>(
+  srv_select_external_command_ = create_service<CommandSourceSelect>(
     "~/service/select_external_command",
-    std::bind(
-      &ExternalCmdSelector::onSelectRemoteCommandService, this, _1, _2,
-      _3), rmw_qos_profile_services_default, callback_group_services_);
+    std::bind(&ExternalCmdSelector::onSelectExternalCommandService, this, _1, _2),
+    rmw_qos_profile_services_default, callback_group_services_);
 
   // Initialize mode
-  current_selector_mode_.data = initial_selector_mode_;
+  auto convert_selector_mode = [](const std::string & mode_text)
+    {
+      if (mode_text == "local") {
+        return CommandSourceMode::LOCAL;
+      }
+      if (mode_text == "remote") {
+        return CommandSourceMode::REMOTE;
+      }
+      throw std::invalid_argument("unknown selector mode");
+    };
+  current_selector_mode_.data = convert_selector_mode(initial_selector_mode);
 
   // Timer
   auto timer_callback = std::bind(&ExternalCmdSelector::onTimer, this);
   auto period = std::chrono::duration_cast<std::chrono::nanoseconds>(
-    std::chrono::duration<double>(1.0 / update_rate_));
+    std::chrono::duration<double>(1.0 / update_rate));
   timer_ = std::make_shared<rclcpp::GenericTimer<decltype(timer_callback)>>(
     get_clock(), period, std::move(timer_callback),
     get_node_base_interface()->get_context());
   get_node_timers_interface()->add_timer(timer_, callback_group_subscribers_);
 }
 
-void ExternalCmdSelector::onLocalControlCmd(
-  const autoware_vehicle_msgs::msg::ExternalControlCommandStamped::ConstSharedPtr msg)
+void ExternalCmdSelector::onLocalControlCmd(const ExternalControlCommand::ConstSharedPtr msg)
 {
-  if (current_selector_mode_.data != autoware_control_msgs::msg::RemoteCommandSelectorMode::LOCAL) {
+  if (current_selector_mode_.data != CommandSourceMode::LOCAL) {
     return;
   }
-
-  pub_external_control_cmd_->publish(*msg);
+  pub_control_cmd_->publish(*msg);
 }
 
-void ExternalCmdSelector::onLocalShiftCmd(
-  const autoware_vehicle_msgs::msg::ShiftStamped::ConstSharedPtr msg)
+void ExternalCmdSelector::onLocalShiftCmd(const ExternalGearShift::ConstSharedPtr msg)
 {
-  if (current_selector_mode_.data != autoware_control_msgs::msg::RemoteCommandSelectorMode::LOCAL) {
+  if (current_selector_mode_.data != CommandSourceMode::LOCAL) {
     return;
   }
-
-  pub_shift_cmd_->publish(*msg);
+  pub_shift_cmd_->publish(convert(*msg));
 }
 
-void ExternalCmdSelector::onLocalTurnSignalCmd(
-  const autoware_vehicle_msgs::msg::TurnSignal::ConstSharedPtr msg)
+void ExternalCmdSelector::onLocalTurnSignalCmd(const ExternalTurnSignal::ConstSharedPtr msg)
 {
-  if (current_selector_mode_.data != autoware_control_msgs::msg::RemoteCommandSelectorMode::LOCAL) {
+  if (current_selector_mode_.data != CommandSourceMode::LOCAL) {
     return;
   }
-
-  pub_turn_signal_cmd_->publish(*msg);
+  pub_turn_signal_cmd_->publish(convert(*msg));
 }
 
-void ExternalCmdSelector::onRemoteControlCmd(
-  const autoware_vehicle_msgs::msg::ExternalControlCommandStamped::ConstSharedPtr msg)
+void ExternalCmdSelector::onLocalHeartbeat(const ExternalHeartbeat::ConstSharedPtr msg)
 {
-  if (current_selector_mode_.data !=
-    autoware_control_msgs::msg::RemoteCommandSelectorMode::REMOTE)
-  {
+  if (current_selector_mode_.data != CommandSourceMode::LOCAL) {
     return;
   }
-
-  pub_external_control_cmd_->publish(*msg);
+  pub_heartbeat_->publish(convert(*msg));
 }
 
-void ExternalCmdSelector::onRemoteShiftCmd(
-  const autoware_vehicle_msgs::msg::ShiftStamped::ConstSharedPtr msg)
+void ExternalCmdSelector::onRemoteControlCmd(const ExternalControlCommand::ConstSharedPtr msg)
 {
-  if (current_selector_mode_.data !=
-    autoware_control_msgs::msg::RemoteCommandSelectorMode::REMOTE)
-  {
+  if (current_selector_mode_.data != CommandSourceMode::REMOTE) {
     return;
   }
-
-  pub_shift_cmd_->publish(*msg);
+  pub_control_cmd_->publish(*msg);
 }
 
-void ExternalCmdSelector::onRemoteTurnSignalCmd(
-  const autoware_vehicle_msgs::msg::TurnSignal::ConstSharedPtr msg)
+void ExternalCmdSelector::onRemoteShiftCmd(const ExternalGearShift::ConstSharedPtr msg)
 {
-  if (current_selector_mode_.data !=
-    autoware_control_msgs::msg::RemoteCommandSelectorMode::REMOTE)
-  {
+  if (current_selector_mode_.data != CommandSourceMode::REMOTE) {
     return;
   }
-
-  pub_turn_signal_cmd_->publish(*msg);
+  pub_shift_cmd_->publish(convert(*msg));
 }
 
-bool ExternalCmdSelector::onSelectRemoteCommandService(
-  [[maybe_unused]] const std::shared_ptr<rmw_request_id_t> request_header,
-  const autoware_control_msgs::srv::RemoteCommandSelect::Request::SharedPtr req,
-  const autoware_control_msgs::srv::RemoteCommandSelect::Response::SharedPtr res)
+void ExternalCmdSelector::onRemoteTurnSignalCmd(const ExternalTurnSignal::ConstSharedPtr msg)
+{
+  if (current_selector_mode_.data != CommandSourceMode::REMOTE) {
+    return;
+  }
+  pub_turn_signal_cmd_->publish(convert(*msg));
+}
+
+void ExternalCmdSelector::onRemoteHeartbeat(const ExternalHeartbeat::ConstSharedPtr msg)
+{
+  if (current_selector_mode_.data != CommandSourceMode::REMOTE) {
+    return;
+  }
+  pub_heartbeat_->publish(convert(*msg));
+}
+
+bool ExternalCmdSelector::onSelectExternalCommandService(
+  const CommandSourceSelect::Request::SharedPtr req,
+  const CommandSourceSelect::Response::SharedPtr res)
 {
   current_selector_mode_.data = req->mode.data;
   res->success = true;
   res->message = "Success.";
-
   return true;
 }
 
 void ExternalCmdSelector::onTimer()
 {
   pub_current_selector_mode_->publish(current_selector_mode_);
+}
+
+ExternalCmdSelector::InternalGearShift ExternalCmdSelector::convert(
+  const ExternalGearShift & command)
+{
+  InternalGearShift message;
+  message.header.stamp = command.stamp;
+  message.header.frame_id = "base_link";  // dummy
+  message.shift.data = command.gear_shift.data;
+  return message;
+}
+
+ExternalCmdSelector::InternalTurnSignal ExternalCmdSelector::convert(
+  const ExternalTurnSignal & command)
+{
+  InternalTurnSignal message;
+  message.header.stamp = command.stamp;
+  message.header.frame_id = "base_link";  // dummy
+  message.data = command.turn_signal.data;
+  return message;
+}
+
+ExternalCmdSelector::InternalHeartbeat ExternalCmdSelector::convert(
+  [[maybe_unused]] const ExternalHeartbeat & command)
+{
+  InternalHeartbeat message;
+  message.is_emergency = false;
+  return message;
 }
 
 #include "rclcpp_components/register_node_macro.hpp"

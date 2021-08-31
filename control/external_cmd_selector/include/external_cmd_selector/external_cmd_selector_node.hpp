@@ -19,11 +19,15 @@
 
 #include "rclcpp/rclcpp.hpp"
 
-#include "autoware_control_msgs/srv/remote_command_select.hpp"
-#include "autoware_control_msgs/msg/remote_command_selector_mode.hpp"
-#include "autoware_vehicle_msgs/msg/external_control_command_stamped.hpp"
+#include "autoware_control_msgs/srv/external_command_select.hpp"
+#include "autoware_control_msgs/msg/external_command_selector_mode.hpp"
+#include "autoware_control_msgs/msg/emergency_mode.hpp"
 #include "autoware_vehicle_msgs/msg/shift_stamped.hpp"
 #include "autoware_vehicle_msgs/msg/turn_signal.hpp"
+#include "autoware_external_api_msgs/msg/control_command_stamped.hpp"
+#include "autoware_external_api_msgs/msg/gear_shift_stamped.hpp"
+#include "autoware_external_api_msgs/msg/turn_signal_stamped.hpp"
+#include "autoware_external_api_msgs/msg/heartbeat.hpp"
 
 class ExternalCmdSelector : public rclcpp::Node
 {
@@ -31,61 +35,65 @@ public:
   explicit ExternalCmdSelector(const rclcpp::NodeOptions & node_options);
 
 private:
-  // Publisher
-  rclcpp::Publisher<autoware_control_msgs::msg::RemoteCommandSelectorMode>::SharedPtr
-    pub_current_selector_mode_;
-  rclcpp::Publisher<autoware_vehicle_msgs::msg::ExternalControlCommandStamped>::SharedPtr
-    pub_external_control_cmd_;
-  rclcpp::Publisher<autoware_vehicle_msgs::msg::ShiftStamped>::SharedPtr pub_shift_cmd_;
-  rclcpp::Publisher<autoware_vehicle_msgs::msg::TurnSignal>::SharedPtr pub_turn_signal_cmd_;
+  using CommandSourceSelect = autoware_control_msgs::srv::ExternalCommandSelect;
+  using CommandSourceMode = autoware_control_msgs::msg::ExternalCommandSelectorMode;
+  using InternalGearShift = autoware_vehicle_msgs::msg::ShiftStamped;
+  using InternalTurnSignal = autoware_vehicle_msgs::msg::TurnSignal;
+  using InternalHeartbeat = autoware_control_msgs::msg::EmergencyMode;
+  using ExternalControlCommand = autoware_external_api_msgs::msg::ControlCommandStamped;
+  using ExternalGearShift = autoware_external_api_msgs::msg::GearShiftStamped;
+  using ExternalTurnSignal = autoware_external_api_msgs::msg::TurnSignalStamped;
+  using ExternalHeartbeat = autoware_external_api_msgs::msg::Heartbeat;
 
   // CallbackGroups
   rclcpp::CallbackGroup::SharedPtr callback_group_subscribers_;
   rclcpp::CallbackGroup::SharedPtr callback_group_services_;
 
+  // Publisher
+  rclcpp::Publisher<CommandSourceMode>::SharedPtr pub_current_selector_mode_;
+  rclcpp::Publisher<ExternalControlCommand>::SharedPtr pub_control_cmd_;
+  rclcpp::Publisher<InternalGearShift>::SharedPtr pub_shift_cmd_;
+  rclcpp::Publisher<InternalTurnSignal>::SharedPtr pub_turn_signal_cmd_;
+  rclcpp::Publisher<InternalHeartbeat>::SharedPtr pub_heartbeat_;
+
   // Subscriber
-  rclcpp::Subscription<autoware_vehicle_msgs::msg::ExternalControlCommandStamped>::SharedPtr
-    sub_local_control_cmd_;
-  rclcpp::Subscription<autoware_vehicle_msgs::msg::ShiftStamped>::SharedPtr sub_local_shift_cmd_;
-  rclcpp::Subscription<autoware_vehicle_msgs::msg::TurnSignal>::SharedPtr sub_local_turn_signal_cmd_; //NOLINT
+  rclcpp::Subscription<ExternalControlCommand>::SharedPtr sub_local_control_cmd_;
+  rclcpp::Subscription<ExternalGearShift>::SharedPtr sub_local_shift_cmd_;
+  rclcpp::Subscription<ExternalTurnSignal>::SharedPtr sub_local_turn_signal_cmd_;
+  rclcpp::Subscription<ExternalHeartbeat>::SharedPtr sub_local_heartbeat_;
 
-  rclcpp::Subscription<autoware_vehicle_msgs::msg::ExternalControlCommandStamped>::SharedPtr
-    sub_remote_control_cmd_;
-  rclcpp::Subscription<autoware_vehicle_msgs::msg::ShiftStamped>::SharedPtr sub_remote_shift_cmd_;
-  rclcpp::Subscription<autoware_vehicle_msgs::msg::TurnSignal>::SharedPtr
-    sub_remote_turn_signal_cmd_;
+  rclcpp::Subscription<ExternalControlCommand>::SharedPtr sub_remote_control_cmd_;
+  rclcpp::Subscription<ExternalGearShift>::SharedPtr sub_remote_shift_cmd_;
+  rclcpp::Subscription<ExternalTurnSignal>::SharedPtr sub_remote_turn_signal_cmd_;
+  rclcpp::Subscription<ExternalHeartbeat>::SharedPtr sub_remote_heartbeat_;
 
-  void onSelectorModeCmd(
-    const autoware_control_msgs::msg::RemoteCommandSelectorMode::ConstSharedPtr msg);
+  void onLocalControlCmd(const ExternalControlCommand::ConstSharedPtr msg);
+  void onLocalShiftCmd(const ExternalGearShift::ConstSharedPtr msg);
+  void onLocalTurnSignalCmd(const ExternalTurnSignal::ConstSharedPtr msg);
+  void onLocalHeartbeat(const ExternalHeartbeat::ConstSharedPtr msg);
 
-  void onLocalControlCmd(
-    const autoware_vehicle_msgs::msg::ExternalControlCommandStamped::ConstSharedPtr msg);
-  void onLocalShiftCmd(const autoware_vehicle_msgs::msg::ShiftStamped::ConstSharedPtr msg);
-  void onLocalTurnSignalCmd(const autoware_vehicle_msgs::msg::TurnSignal::ConstSharedPtr msg);
-
-  void onRemoteControlCmd(
-    const autoware_vehicle_msgs::msg::ExternalControlCommandStamped::ConstSharedPtr msg);
-  void onRemoteShiftCmd(const autoware_vehicle_msgs::msg::ShiftStamped::ConstSharedPtr msg);
-  void onRemoteTurnSignalCmd(const autoware_vehicle_msgs::msg::TurnSignal::ConstSharedPtr msg);
+  void onRemoteControlCmd(const ExternalControlCommand::ConstSharedPtr msg);
+  void onRemoteShiftCmd(const ExternalGearShift::ConstSharedPtr msg);
+  void onRemoteTurnSignalCmd(const ExternalTurnSignal::ConstSharedPtr msg);
+  void onRemoteHeartbeat(const ExternalHeartbeat::ConstSharedPtr msg);
 
   // Service
-  rclcpp::Service<autoware_control_msgs::srv::RemoteCommandSelect>::SharedPtr
-    srv_select_external_command_;
-  autoware_control_msgs::msg::RemoteCommandSelectorMode current_selector_mode_;
+  rclcpp::Service<CommandSourceSelect>::SharedPtr srv_select_external_command_;
+  CommandSourceMode current_selector_mode_;
 
-  bool onSelectRemoteCommandService(
-    const std::shared_ptr<rmw_request_id_t> request_header,
-    const autoware_control_msgs::srv::RemoteCommandSelect::Request::SharedPtr req,
-    const autoware_control_msgs::srv::RemoteCommandSelect::Response::SharedPtr res);
+  bool onSelectExternalCommandService(
+    const CommandSourceSelect::Request::SharedPtr req,
+    const CommandSourceSelect::Response::SharedPtr res);
 
   // Timer
   rclcpp::TimerBase::SharedPtr timer_;
 
   void onTimer();
 
-  // Parameter
-  double update_rate_;
-  int initial_selector_mode_;
+  // Converter
+  static InternalGearShift convert(const ExternalGearShift & command);
+  static InternalTurnSignal convert(const ExternalTurnSignal & command);
+  static InternalHeartbeat convert(const ExternalHeartbeat & command);
 };
 
 #endif  // EXTERNAL_CMD_SELECTOR__EXTERNAL_CMD_SELECTOR_NODE_HPP_
