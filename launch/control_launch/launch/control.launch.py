@@ -172,20 +172,19 @@ def launch_setup(context, *args, **kwargs):
         plugin='VehicleCmdGate',
         name='vehicle_cmd_gate',
         remappings=[
-            ('input/engage', '/autoware/engage'),
             ('input/system_emergency', '/system/emergency/is_emergency'),
-            ('input/external_emergency_stop', '/remote/emergency_stop'),
             ('input/emergency', '/system/emergency/is_emergency'),
-            ('input/gate_mode', '/remote/gate_mode_cmd'),
             ('input/steering', '/vehicle/status/steering'),
 
             ('input/auto/control_cmd', 'trajectory_follower/control_cmd'),
             ('input/auto/turn_signal_cmd', '/planning/turn_signal_decider/turn_signal_cmd'),
             ('input/auto/shift_cmd', '/control/shift_decider/shift_cmd'),
 
-            ('input/remote/control_cmd', '/external/external_cmd_selector/control_cmd'),
-            ('input/remote/turn_signal_cmd', '/external/external_cmd_selector/turn_signal_cmd'),
-            ('input/remote/shift_cmd', '/external/external_cmd_selector/shift_cmd'),
+            ('input/external/control_cmd', '/external/selected/control_cmd'),
+            ('input/external/turn_signal_cmd', '/external/selected/turn_signal_cmd'),
+            ('input/external/shift_cmd', '/external/selected/shift_cmd'),
+            ('input/external_emergency_stop', '/external/selected/heartbeat'),
+            ('input/gate_mode', '/control/gate_mode_cmd'),
 
             ('input/emergency/control_cmd', '/system/emergency/control_cmd'),
             ('input/emergency/turn_signal_cmd', '/system/emergency/turn_signal_cmd'),
@@ -196,7 +195,13 @@ def launch_setup(context, *args, **kwargs):
             ('output/shift_cmd', '/control/shift_cmd'),
             ('output/turn_signal_cmd', '/control/turn_signal_cmd'),
             ('output/gate_mode', '/control/current_gate_mode'),
+            ('output/engage', '/api/autoware/get/engage'),
 
+            ('~/service/engage', '/api/autoware/set/engage'),
+            ('~/service/external_emergency', '/api/autoware/set/emergency'),
+
+            # TODO(Takagi, Isamu): deprecated
+            ('input/engage', '/autoware/engage'),
             ('~/service/external_emergency_stop', '~/external_emergency_stop'),
             ('~/service/clear_external_emergency_stop', '~/clear_external_emergency_stop'),
         ],
@@ -205,6 +210,7 @@ def launch_setup(context, *args, **kwargs):
             {
                 'use_emergency_handling': LaunchConfiguration('use_emergency_handling'),
                 'use_external_emergency_stop': LaunchConfiguration('use_external_emergency_stop'),
+                'use_start_request': LaunchConfiguration('use_start_request'),
             }
         ],
         extra_arguments=[{
@@ -218,18 +224,20 @@ def launch_setup(context, *args, **kwargs):
         plugin='ExternalCmdSelector',
         name='external_cmd_selector',
         remappings=[
+            ('~/service/select_external_command', '~/select_external_command'),
             ('~/input/local/control_cmd', '/external/local/control_cmd'),
             ('~/input/local/shift_cmd', '/external/local/shift_cmd'),
             ('~/input/local/turn_signal_cmd', '/external/local/turn_signal_cmd'),
+            ('~/input/local/heartbeat', '/external/local/heartbeat'),
             ('~/input/remote/control_cmd', '/external/remote/control_cmd'),
             ('~/input/remote/shift_cmd', '/external/remote/shift_cmd'),
             ('~/input/remote/turn_signal_cmd', '/external/remote/turn_signal_cmd'),
+            ('~/input/remote/heartbeat', '/external/remote/heartbeat'),
+            ('~/output/control_cmd', '/external/selected/external_control_cmd'),
+            ('~/output/shift_cmd', '/external/selected/shift_cmd'),
+            ('~/output/turn_signal_cmd', '/external/selected/turn_signal_cmd'),
+            ('~/output/heartbeat', '/external/selected/heartbeat'),
             ('~/output/current_selector_mode', '~/current_selector_mode'),
-            ('~/output/external_control_cmd',
-             '/external/external_cmd_selector/external_control_cmd'),
-            ('~/output/shift_cmd', '/external/external_cmd_selector/shift_cmd'),
-            ('~/output/turn_signal_cmd', '/external/external_cmd_selector/turn_signal_cmd'),
-            ('~/service/select_external_command', '~/select_external_command'),
         ],
         parameters=[
             {
@@ -241,19 +249,19 @@ def launch_setup(context, *args, **kwargs):
         }],
     )
 
-    # remote cmd converter
-    remote_cmd_converter_component = ComposableNode(
-        package='remote_cmd_converter',
-        plugin='RemoteCmdConverter',
-        name='remote_cmd_converter',
+    # external cmd converter
+    external_cmd_converter_component = ComposableNode(
+        package='external_cmd_converter',
+        plugin='external_cmd_converter::ExternalCmdConverterNode',
+        name='external_cmd_converter',
         remappings=[
-            ('in/external_control_cmd', '/external/external_cmd_selector/external_control_cmd'),
-            ('in/shift_cmd', '/external/external_cmd_selector/shift_cmd'),
+            ('in/external_control_cmd', '/external/selected/external_control_cmd'),
+            ('in/shift_cmd', '/external/selected/shift_cmd'),
             ('in/emergency_stop', '/remote/emergency_stop'),
             ('in/current_gate_mode', '/control/current_gate_mode'),
             ('in/twist', '/localization/twist'),
-            ('out/control_cmd', '/external/external_cmd_selector/control_cmd'),
-            ('out/latest_remote_control_cmd', '/remote/latest_remote_control_cmd'),
+            ('out/control_cmd', '/external/selected/control_cmd'),
+            ('out/latest_external_control_cmd', '/external/selected/latest_external_control_cmd'),
         ],
         parameters=[
             {
@@ -283,7 +291,7 @@ def launch_setup(context, *args, **kwargs):
             lane_departure_component,
             shift_decider_component,
             vehicle_cmd_gate_component,
-            remote_cmd_converter_component,
+            external_cmd_converter_component,
             external_cmd_selector_component,
         ],
     )
@@ -372,9 +380,10 @@ def generate_launch_description():
     # vehicle cmd gate
     add_launch_arg('use_emergency_handling', 'false', 'use emergency handling')
     add_launch_arg('use_external_emergency_stop', 'true', 'use external emergency stop')
+    add_launch_arg('use_start_request', 'false', 'use start request service')
 
     # external cmd selector
-    add_launch_arg('initial_selector_mode', '1', '0: Local, 1: Remote')
+    add_launch_arg('initial_selector_mode', 'remote', 'local or remote')
 
     # remote cmd converter
     add_launch_arg(
