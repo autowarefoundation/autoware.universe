@@ -176,3 +176,33 @@ The role of Scenario module is to calculate trajectory message from route messag
 
 - Trajectory: `autoware_planning_msgs::Trajectory` <br> This contains trajectory that Control must follow. The shape and velocity of the trajectory must satisfy all the use cases for the scenario module.
 - Turn Signal: `autoware_vehicle_msgs::TurnSignal` <br> Turn signal command should also be published because Scenario module is only aware of the traffic rules and operating maneuvers in the whole Autoware stack.
+
+## Reference Implementation
+
+The reference implementation of the planning module in the latest version is shown as below.
+![reference-implementation](image/autoware-iv-planning-v1.0.0.main.drawio.svg)
+
+<!-- ![reference-implementation](image/autoware-iv-planning-v0.13.0.develop.drawio.svg) -->
+
+For more details, please refer to the design documents in each package.
+
+- [_mission_planner_](https://tier4.github.io/autoware.iv/tree/main/planning/mission_planning/mission_planner/mission_planner-design/): calculate route from start to goal based on the map information.
+- _lane_change_planner_: execute lane change.
+- [_behavior_velocity_planner_](https://tier4.github.io/autoware.iv/tree/develop/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/): calculates max speed based on the traffic rules.
+  - [_detection_area_](https://tier4.github.io/autoware.iv/tree/develop/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/#detection-area)
+  - [_blind_spot_](https://tier4.github.io/autoware.iv/tree/develop/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/#blind-spot)
+  - [_cross_walk_](https://tier4.github.io/autoware.iv/tree/develop/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/#crosswalk)
+  - [_stop_line_](https://tier4.github.io/autoware.iv/tree/develop/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/#stop-line)
+  - [_traffic_light_](https://tier4.github.io/autoware.iv/tree/develop/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/#traffic-light)
+  - [_intersection_](https://tier4.github.io/autoware.iv/tree/develop/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/#intersection)
+  <!-- - [_occlusion_spot_](https://tier4.github.io/autoware.iv/tree/develop/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/#occlusion-spot) -->
+- [_obstacle_avoidance_planner_](https://tier4.github.io/autoware.iv/tree/develop/planning/scenario_planning/lane_driving/motion_planning/obstacle_avoidance_planner/obstacle_avoidance_planner-design.ja/): calculate path shape under obstacle and drivable area constraints
+- [_surround_obstacle_checker_](https://tier4.github.io/autoware.iv/tree/main/planning/scenario_planning/lane_driving/motion_planning/surround_obstacle_checker/surround_obstacle_checker-design/): keeps the vehicle being stopped when there are obstacles around the ego-vehicle. It works only when the vehicle is stopped.
+- [_obstacle_stop_planner_](https://github.com/tier4/obstacle_stop_planner_refine/tree/main/obstacle_stop_planner_refine): (NOTE: link is temporal) When there are obstacles on or near the trajectory, it calculates the maximum velocity of the trajectory points depending on the situation: stopping, slowing down, or adaptive cruise (following the car).
+  - [_stop_](https://tier4.github.io/autoware.iv/tree/develop/planning/scenario_planning/lane_driving/motion_planning/obstacle_stop_planner/#obstacle-stop-planner_1)
+  - [_slow_down_](https://tier4.github.io/autoware.iv/tree/develop/planning/scenario_planning/lane_driving/motion_planning/obstacle_stop_planner/#slow-down-planner)
+  - [_adaptive_cruise_](https://tier4.github.io/autoware.iv/tree/develop/planning/scenario_planning/lane_driving/motion_planning/obstacle_stop_planner/#adaptive-cruise-controller)
+- [_costmap_generator_](https://tier4.github.io/autoware.iv/tree/develop/planning/scenario_planning/parking/costmap_generator/): generates a costmap for path generation from dynamic objects and lane information.
+- [_freespace_planner_](https://tier4.github.io/autoware.iv/tree/develop/planning/scenario_planning/parking/freespace_planner/): calculates trajectory considering the feasibility (e.g. curvature) for the freespace scene.
+- [_scenario_selector_](https://tier4.github.io/autoware.iv/tree/develop/planning/scenario_planning/scenario_selector/) : chooses a trajectory according to the current scenario.
+- [_motion_velocity_smoother_](https://tier4.github.io/autoware.iv/tree/develop/planning/scenario_planning/common/motion_velocity_smoother/motion_velocity_smoother-design/): calculates final velocity considering velocity, acceleration, and jerk constraints.
