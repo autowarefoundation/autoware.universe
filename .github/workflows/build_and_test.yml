@@ -8,18 +8,26 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        branch:
+          - main
+          - develop
     container: rostooling/setup-ros-docker:ubuntu-focal-ros-galactic-ros-base-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+        with:
+          ref: ${{ matrix.branch }}
 
       - name: Install pip
         run: |
           apt-get -y update
           apt-get -y install python3-pip
 
-      - name: Search modified package
+      - name: Search packages in this repository
         id: list_packages
         run: |
           echo ::set-output name=package_list::$(colcon list --names-only)
@@ -27,6 +35,11 @@ jobs:
       - name: Show target packages
         run: |
           echo "Target packages: ${{ steps.list_packages.outputs.package_list }}"
+
+      - name: Set git config for private repositories
+        run: |
+          git config --local --unset-all http.https://github.com/.extraheader || true
+          git config --global url.https://${{ secrets.REPO_TOKEN }}@github.com.insteadOf 'https://github.com'
 
       - name: Clone dependency packages
         run: |
