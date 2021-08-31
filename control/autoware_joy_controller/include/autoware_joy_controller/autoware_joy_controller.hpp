@@ -21,24 +21,23 @@
 
 #include "rclcpp/rclcpp.hpp"
 
+#include "autoware_external_api_msgs/msg/control_command_stamped.hpp"
+#include "autoware_external_api_msgs/msg/gear_shift_stamped.hpp"
+#include "autoware_external_api_msgs/msg/turn_signal_stamped.hpp"
+#include "autoware_external_api_msgs/msg/heartbeat.hpp"
+#include "autoware_external_api_msgs/srv/set_emergency.hpp"
 #include "autoware_control_msgs/msg/control_command_stamped.hpp"
 #include "autoware_control_msgs/msg/gate_mode.hpp"
-#include "autoware_vehicle_msgs/msg/external_control_command_stamped.hpp"
-#include "autoware_control_msgs/msg/emergency_mode.hpp"
-#include "autoware_vehicle_msgs/msg/shift_stamped.hpp"
-#include "autoware_vehicle_msgs/msg/turn_signal.hpp"
 #include "autoware_vehicle_msgs/msg/engage.hpp"
 #include "geometry_msgs/msg/twist_stamped.hpp"
 #include "sensor_msgs/msg/joy.hpp"
 #include "autoware_joy_controller/joy_converter/joy_converter_base.hpp"
 #include "autoware_vehicle_msgs/msg/vehicle_command.hpp"
 
-#include "std_srvs/srv/trigger.hpp"
-
 namespace autoware_joy_controller
 {
-using ShiftType = autoware_vehicle_msgs::msg::Shift::_data_type;
-using TurnSignalType = autoware_vehicle_msgs::msg::TurnSignal::_data_type;
+using GearShiftType = autoware_external_api_msgs::msg::GearShift::_data_type;
+using TurnSignalType = autoware_external_api_msgs::msg::TurnSignal::_data_type;
 using GateModeType = autoware_control_msgs::msg::GateMode::_data_type;
 
 class AutowareJoyControllerNode : public rclcpp::Node
@@ -81,12 +80,12 @@ private:
   // Publisher
   rclcpp::Publisher<autoware_control_msgs::msg::ControlCommandStamped>::SharedPtr
     pub_control_command_;
-  rclcpp::Publisher<autoware_vehicle_msgs::msg::ExternalControlCommandStamped>::SharedPtr
+  rclcpp::Publisher<autoware_external_api_msgs::msg::ControlCommandStamped>::SharedPtr
     pub_external_control_command_;
-  rclcpp::Publisher<autoware_vehicle_msgs::msg::ShiftStamped>::SharedPtr pub_shift_;
-  rclcpp::Publisher<autoware_vehicle_msgs::msg::TurnSignal>::SharedPtr pub_turn_signal_;
+  rclcpp::Publisher<autoware_external_api_msgs::msg::GearShiftStamped>::SharedPtr pub_shift_;
+  rclcpp::Publisher<autoware_external_api_msgs::msg::TurnSignalStamped>::SharedPtr pub_turn_signal_;
+  rclcpp::Publisher<autoware_external_api_msgs::msg::Heartbeat>::SharedPtr pub_heartbeat_;
   rclcpp::Publisher<autoware_control_msgs::msg::GateMode>::SharedPtr pub_gate_mode_;
-  rclcpp::Publisher<autoware_control_msgs::msg::EmergencyMode>::SharedPtr pub_emergency_stop_;
   rclcpp::Publisher<autoware_vehicle_msgs::msg::Engage>::SharedPtr pub_autoware_engage_;
   rclcpp::Publisher<autoware_vehicle_msgs::msg::Engage>::SharedPtr pub_vehicle_engage_;
 
@@ -95,19 +94,19 @@ private:
   void publishShift();
   void publishTurnSignal();
   void publishGateMode();
-  void publishEmergencyStop();
+  void publishHeartbeat();
   void publishAutowareEngage();
   void publishVehicleEngage();
-  void clearEmergencyResponse(rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture result);
+  void sendEmergencyRequest(bool emergency);
 
   // Service Client
-  rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr client_clear_emergency_stop_;
+  rclcpp::Client<autoware_external_api_msgs::srv::SetEmergency>::SharedPtr client_emergency_stop_;
 
   // Previous State
   autoware_control_msgs::msg::ControlCommand prev_control_command_;
-  autoware_vehicle_msgs::msg::ExternalControlCommand prev_external_control_command_;
-  ShiftType prev_shift_ = autoware_vehicle_msgs::msg::Shift::NONE;
-  TurnSignalType prev_turn_signal_ = autoware_vehicle_msgs::msg::TurnSignal::NONE;
+  autoware_external_api_msgs::msg::ControlCommand prev_external_control_command_;
+  GearShiftType prev_shift_ = autoware_external_api_msgs::msg::GearShift::NONE;
+  TurnSignalType prev_turn_signal_ = autoware_external_api_msgs::msg::TurnSignal::NONE;
   GateModeType prev_gate_mode_ = autoware_control_msgs::msg::GateMode::AUTO;
 
   // Timer

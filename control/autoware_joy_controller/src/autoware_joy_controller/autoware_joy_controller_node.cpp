@@ -20,59 +20,55 @@
 #include "autoware_joy_controller/autoware_joy_controller.hpp"
 #include "autoware_joy_controller/joy_converter/g29_joy_converter.hpp"
 #include "autoware_joy_controller/joy_converter/ds4_joy_converter.hpp"
+#include "autoware_api_utils/autoware_api_utils.hpp"
 
 namespace
 {
 using autoware_joy_controller::GateModeType;
-using autoware_joy_controller::ShiftType;
+using autoware_joy_controller::GearShiftType;
 using autoware_joy_controller::TurnSignalType;
+using GearShift = autoware_external_api_msgs::msg::GearShift;
+using TurnSignal = autoware_external_api_msgs::msg::TurnSignal;
+using GateMode = autoware_control_msgs::msg::GateMode;
 
-ShiftType getUpperShift(const ShiftType & shift)
+GearShiftType getUpperShift(const GearShiftType & shift)
 {
-  using autoware_vehicle_msgs::msg::Shift;
+  if (shift == GearShift::NONE) {return GearShift::PARKING;}
+  if (shift == GearShift::PARKING) {return GearShift::REVERSE;}
+  if (shift == GearShift::REVERSE) {return GearShift::NEUTRAL;}
+  if (shift == GearShift::NEUTRAL) {return GearShift::DRIVE;}
+  if (shift == GearShift::DRIVE) {return GearShift::LOW;}
+  if (shift == GearShift::LOW) {return GearShift::LOW;}
 
-  if (shift == Shift::NONE) {return Shift::PARKING;}
-  if (shift == Shift::PARKING) {return Shift::REVERSE;}
-  if (shift == Shift::REVERSE) {return Shift::NEUTRAL;}
-  if (shift == Shift::NEUTRAL) {return Shift::DRIVE;}
-  if (shift == Shift::DRIVE) {return Shift::LOW;}
-  if (shift == Shift::LOW) {return Shift::LOW;}
-
-  return Shift::NONE;
+  return GearShift::NONE;
 }
 
-ShiftType getLowerShift(const ShiftType & shift)
+GearShiftType getLowerShift(const GearShiftType & shift)
 {
-  using autoware_vehicle_msgs::msg::Shift;
+  if (shift == GearShift::NONE) {return GearShift::PARKING;}
+  if (shift == GearShift::PARKING) {return GearShift::PARKING;}
+  if (shift == GearShift::REVERSE) {return GearShift::PARKING;}
+  if (shift == GearShift::NEUTRAL) {return GearShift::REVERSE;}
+  if (shift == GearShift::DRIVE) {return GearShift::NEUTRAL;}
+  if (shift == GearShift::LOW) {return GearShift::DRIVE;}
 
-  if (shift == Shift::NONE) {return Shift::PARKING;}
-  if (shift == Shift::PARKING) {return Shift::PARKING;}
-  if (shift == Shift::REVERSE) {return Shift::PARKING;}
-  if (shift == Shift::NEUTRAL) {return Shift::REVERSE;}
-  if (shift == Shift::DRIVE) {return Shift::NEUTRAL;}
-  if (shift == Shift::LOW) {return Shift::DRIVE;}
-
-  return Shift::NONE;
+  return GearShift::NONE;
 }
 
-const char * getShiftName(const ShiftType & shift)
+const char * getShiftName(const GearShiftType & shift)
 {
-  using autoware_vehicle_msgs::msg::Shift;
-
-  if (shift == Shift::NONE) {return "NONE";}
-  if (shift == Shift::PARKING) {return "PARKING";}
-  if (shift == Shift::REVERSE) {return "REVERSE";}
-  if (shift == Shift::NEUTRAL) {return "NEUTRAL";}
-  if (shift == Shift::DRIVE) {return "DRIVE";}
-  if (shift == Shift::LOW) {return "LOW";}
+  if (shift == GearShift::NONE) {return "NONE";}
+  if (shift == GearShift::PARKING) {return "PARKING";}
+  if (shift == GearShift::REVERSE) {return "REVERSE";}
+  if (shift == GearShift::NEUTRAL) {return "NEUTRAL";}
+  if (shift == GearShift::DRIVE) {return "DRIVE";}
+  if (shift == GearShift::LOW) {return "LOW";}
 
   return "NOT_SUPPORTED";
 }
 
 const char * getTurnSignalName(const TurnSignalType & turn_signal)
 {
-  using autoware_vehicle_msgs::msg::TurnSignal;
-
   if (turn_signal == TurnSignal::NONE) {return "NONE";}
   if (turn_signal == TurnSignal::LEFT) {return "LEFT";}
   if (turn_signal == TurnSignal::RIGHT) {return "RIGHT";}
@@ -86,7 +82,7 @@ const char * getGateModeName(const GateModeType & gate_mode)
   using autoware_control_msgs::msg::GateMode;
 
   if (gate_mode == GateMode::AUTO) {return "AUTO";}
-  if (gate_mode == GateMode::REMOTE) {return "REMOTE";}
+  if (gate_mode == GateMode::EXTERNAL) {return "EXTERNAL";}
 
   return "NOT_SUPPORTED";
 }
@@ -128,6 +124,14 @@ void AutowareJoyControllerNode::onJoy(const sensor_msgs::msg::Joy::ConstSharedPt
 
   if (joy_->vehicle_engage() || joy_->vehicle_disengage()) {
     publishVehicleEngage();
+  }
+
+  if (joy_->emergency_stop()) {
+    sendEmergencyRequest(true);
+  }
+
+  if (joy_->clear_emergency_stop()) {
+    sendEmergencyRequest(false);
   }
 }
 
@@ -187,14 +191,13 @@ void AutowareJoyControllerNode::onTimer()
 
   publishControlCommand();
   publishExternalControlCommand();
-  publishEmergencyStop();
+  publishHeartbeat();
 }
 
 void AutowareJoyControllerNode::publishControlCommand()
 {
   autoware_control_msgs::msg::ControlCommandStamped cmd_stamped;
   cmd_stamped.header.stamp = this->now();
-
   {
     auto & cmd = cmd_stamped.control;
 
@@ -226,9 +229,8 @@ void AutowareJoyControllerNode::publishControlCommand()
 
 void AutowareJoyControllerNode::publishExternalControlCommand()
 {
-  autoware_vehicle_msgs::msg::ExternalControlCommandStamped cmd_stamped;
-  cmd_stamped.header.stamp = this->now();
-
+  autoware_external_api_msgs::msg::ControlCommandStamped cmd_stamped;
+  cmd_stamped.stamp = this->now();
   {
     auto & cmd = cmd_stamped.control;
 
@@ -245,71 +247,62 @@ void AutowareJoyControllerNode::publishExternalControlCommand()
 
 void AutowareJoyControllerNode::publishShift()
 {
-  using autoware_vehicle_msgs::msg::Shift;
+  autoware_external_api_msgs::msg::GearShiftStamped gear_shift;
+  gear_shift.stamp = this->now();
 
-  autoware_vehicle_msgs::msg::ShiftStamped shift_stamped;
-  shift_stamped.header.stamp = this->now();
-
-  {
-    auto & shift = shift_stamped.shift;
-    if (joy_->shift_up()) {
-      shift.data = getUpperShift(prev_shift_);
-    }
-
-    if (joy_->shift_down()) {
-      shift.data = getLowerShift(prev_shift_);
-    }
-
-    if (joy_->shift_drive()) {
-      shift.data = Shift::DRIVE;
-    }
-
-    if (joy_->shift_reverse()) {
-      shift.data = Shift::REVERSE;
-    }
-
-    RCLCPP_INFO(get_logger(), "Shift::%s", getShiftName(shift.data));
+  if (joy_->shift_up()) {
+    gear_shift.gear_shift.data = getUpperShift(prev_shift_);
   }
 
-  pub_shift_->publish(shift_stamped);
-  prev_shift_ = shift_stamped.shift.data;
+  if (joy_->shift_down()) {
+    gear_shift.gear_shift.data = getLowerShift(prev_shift_);
+  }
+
+  if (joy_->shift_drive()) {
+    gear_shift.gear_shift.data = GearShift::DRIVE;
+  }
+
+  if (joy_->shift_reverse()) {
+    gear_shift.gear_shift.data = GearShift::REVERSE;
+  }
+
+  RCLCPP_INFO(get_logger(), "GearShift::%s", getShiftName(gear_shift.gear_shift.data));
+
+  pub_shift_->publish(gear_shift);
+  prev_shift_ = gear_shift.gear_shift.data;
 }
 
 void AutowareJoyControllerNode::publishTurnSignal()
 {
-  using autoware_vehicle_msgs::msg::TurnSignal;
-
-  TurnSignal turn_signal;
-  turn_signal.header.stamp = this->now();
+  autoware_external_api_msgs::msg::TurnSignalStamped turn_signal;
+  turn_signal.stamp = this->now();
 
   if (joy_->turn_signal_left() && joy_->turn_signal_right()) {
-    turn_signal.data = TurnSignal::HAZARD;
+    turn_signal.turn_signal.data = TurnSignal::HAZARD;
   } else if (joy_->turn_signal_left()) {
-    turn_signal.data = TurnSignal::LEFT;
+    turn_signal.turn_signal.data = TurnSignal::LEFT;
   } else if (joy_->turn_signal_right()) {
-    turn_signal.data = TurnSignal::RIGHT;
+    turn_signal.turn_signal.data = TurnSignal::RIGHT;
   }
 
   if (joy_->clear_turn_signal()) {
-    turn_signal.data = TurnSignal::NONE;
+    turn_signal.turn_signal.data = TurnSignal::NONE;
   }
 
-  RCLCPP_INFO(get_logger(), "TurnSignal::%s", getTurnSignalName(turn_signal.data));
+  RCLCPP_INFO(get_logger(), "TurnSignal::%s", getTurnSignalName(turn_signal.turn_signal.data));
 
   pub_turn_signal_->publish(turn_signal);
 }
 
 void AutowareJoyControllerNode::publishGateMode()
 {
-  using autoware_control_msgs::msg::GateMode;
-
   autoware_control_msgs::msg::GateMode gate_mode;
 
   if (prev_gate_mode_ == GateMode::AUTO) {
-    gate_mode.data = GateMode::REMOTE;
+    gate_mode.data = GateMode::EXTERNAL;
   }
 
-  if (prev_gate_mode_ == GateMode::REMOTE) {
+  if (prev_gate_mode_ == GateMode::EXTERNAL) {
     gate_mode.data = GateMode::AUTO;
   }
 
@@ -319,35 +312,33 @@ void AutowareJoyControllerNode::publishGateMode()
   prev_gate_mode_ = gate_mode.data;
 }
 
-void AutowareJoyControllerNode::publishEmergencyStop()
+void AutowareJoyControllerNode::publishHeartbeat()
 {
-  autoware_control_msgs::msg::EmergencyMode emergency;
-
-  if (joy_->emergency_stop()) {
-    emergency.is_emergency = true;
-    RCLCPP_INFO(get_logger(), "Emergency");
-  }
-
-  if (joy_->clear_emergency_stop()) {
-    emergency.is_emergency = false;
-
-    auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
-    auto result = client_clear_emergency_stop_->async_send_request(
-      request,
-      std::bind(&AutowareJoyControllerNode::clearEmergencyResponse, this, std::placeholders::_1));
-  }
-
-  pub_emergency_stop_->publish(emergency);
+  autoware_external_api_msgs::msg::Heartbeat heartbeat;
+  heartbeat.stamp = this->now();
+  pub_heartbeat_->publish(heartbeat);
 }
 
-void AutowareJoyControllerNode::clearEmergencyResponse(
-  rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture result)
+void AutowareJoyControllerNode::sendEmergencyRequest(bool emergency)
 {
-  if (result.get()->success) {
-    RCLCPP_INFO(get_logger(), "Clear Emergency Stop");
-  } else {
-    RCLCPP_WARN(get_logger(), "failed to clear emergency stop: %s", result.get()->message.c_str());
-  }
+  RCLCPP_INFO(get_logger(), "%s emergency stop", emergency ? "Set" : "Clear");
+
+  auto request = std::make_shared<autoware_external_api_msgs::srv::SetEmergency::Request>();
+  request->emergency = emergency;
+
+  client_emergency_stop_->async_send_request(
+    request,
+    [this, emergency]
+      (rclcpp::Client<autoware_external_api_msgs::srv::SetEmergency>::SharedFuture result)
+    {
+      auto response = result.get();
+      if (autoware_api_utils::is_success(response->status)) {
+        RCLCPP_INFO(get_logger(), "service succeeded");
+      } else {
+        RCLCPP_WARN(get_logger(), "service failed: %s", response->status.message.c_str());
+      }
+    }
+  );
 }
 
 void AutowareJoyControllerNode::publishAutowareEngage()
@@ -434,32 +425,31 @@ AutowareJoyControllerNode::AutowareJoyControllerNode(const rclcpp::NodeOptions &
   pub_control_command_ = this->create_publisher<autoware_control_msgs::msg::ControlCommandStamped>(
     "output/control_command", 1);
   pub_external_control_command_ =
-    this->create_publisher<autoware_vehicle_msgs::msg::ExternalControlCommandStamped>(
+    this->create_publisher<autoware_external_api_msgs::msg::ControlCommandStamped>(
     "output/external_control_command", 1);
-  pub_shift_ = this->create_publisher<autoware_vehicle_msgs::msg::ShiftStamped>("output/shift", 1);
-  pub_turn_signal_ =
-    this->create_publisher<autoware_vehicle_msgs::msg::TurnSignal>("output/turn_signal", 1);
+  pub_shift_ = this->create_publisher<autoware_external_api_msgs::msg::GearShiftStamped>(
+    "output/shift", 1);
+  pub_turn_signal_ = this->create_publisher<autoware_external_api_msgs::msg::TurnSignalStamped>(
+    "output/turn_signal", 1);
   pub_gate_mode_ = this->create_publisher<autoware_control_msgs::msg::GateMode>(
-    "output/gate_mode",
-    1);
-  pub_emergency_stop_ = this->create_publisher<autoware_control_msgs::msg::EmergencyMode>(
-    "output/emergency_stop",
-    1);
+    "output/gate_mode", 1);
+  pub_heartbeat_ = this->create_publisher<autoware_external_api_msgs::msg::Heartbeat>(
+    "output/heartbeat", 1);
   pub_autoware_engage_ = this->create_publisher<autoware_vehicle_msgs::msg::Engage>(
     "output/autoware_engage", 1);
   pub_vehicle_engage_ = this->create_publisher<autoware_vehicle_msgs::msg::Engage>(
     "output/vehicle_engage", 1);
 
   // Service Client
-  client_clear_emergency_stop_ = this->create_client<std_srvs::srv::Trigger>(
-    "service/clear_emergency_stop", rmw_qos_profile_services_default, callback_group_services_);
-  while (!client_clear_emergency_stop_->wait_for_service(std::chrono::seconds(1))) {
+  client_emergency_stop_ = this->create_client<autoware_external_api_msgs::srv::SetEmergency>(
+    "service/emergency_stop", rmw_qos_profile_services_default, callback_group_services_);
+  while (!client_emergency_stop_->wait_for_service(std::chrono::seconds(1))) {
     if (!rclcpp::ok()) {
       RCLCPP_ERROR(get_logger(), "Interrupted while waiting for service.");
       rclcpp::shutdown();
       return;
     }
-    RCLCPP_INFO(get_logger(), "Waiting for clear_emergency_stop service connection...");
+    RCLCPP_INFO(get_logger(), "Waiting for emergency_stop service connection...");
   }
 
   // Timer
