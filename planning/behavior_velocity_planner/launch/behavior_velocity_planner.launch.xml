@@ -2,7 +2,7 @@
 <launch>
   <arg name="input_route_topic_name" default="/planning/mission_planning/route" />
   <arg name="input_traffic_light_topic_name" default="/perception/traffic_light_recognition/traffic_light_states" />
-  <arg name="external_traffic_light_topic_name" default="/awapi/traffic_light/put/traffic_light_status" />
+  <arg name="external_traffic_light_topic_name" default="/external/traffic_light_recognition/traffic_light_states" />
   <arg name="map_topic_name" default="/map/vector_map" />
 
   <arg name="launch_stop_line" default="true" />
