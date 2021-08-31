@@ -383,7 +383,7 @@ autoware_system_msgs::msg::HazardStatus EmergencyHandler::judgeHazardStatus()
       (autoware_state_->state == AutowareState::INITIALIZING_VEHICLE) ||
       (autoware_state_->state == AutowareState::FINALIZING);
 
-    if (current_gate_mode_->data == GateMode::REMOTE && is_in_remote_ignore_state) {
+    if (current_gate_mode_->data == GateMode::EXTERNAL && is_in_remote_ignore_state) {
       hazard_status.level = HazardStatus::NO_FAULT;
     }
   }
