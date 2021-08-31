@@ -2,22 +2,22 @@
   <arg name="config_file" default="$(find-pkg-share vehicle_cmd_gate)/config/vehicle_cmd_gate.param.yaml" />
   <arg name="use_emergency_handling" default="false" />
   <arg name="use_external_emergency_stop" default="true" />
+  <arg name="use_start_request" default="false" />
 
   <node pkg="vehicle_cmd_gate" exec="vehicle_cmd_gate" name="vehicle_cmd_gate" output="screen">
-    <remap from="input/engage" to="/autoware/engage"/>
     <remap from="input/system_emergency" to="/system/emergency/is_emergency"/>
-    <remap from="input/external_emergency_stop" to="/remote/emergency_stop"/>
     <remap from="input/emergency" to="/system/emergency/is_emergency"/>
-    <remap from="input/gate_mode" to="/remote/gate_mode_cmd"/>
     <remap from="input/steering" to="/vehicle/status/steering"/>
 
     <remap from="input/auto/control_cmd" to="trajectory_follower/control_cmd"/>
     <remap from="input/auto/turn_signal_cmd" to="/planning/turn_signal_decider/turn_signal_cmd"/>
     <remap from="input/auto/shift_cmd" to="/control/shift_decider/shift_cmd"/>
 
-    <remap from="input/remote/control_cmd" to="/external/external_cmd_selector/control_cmd"/>
-    <remap from="input/remote/turn_signal_cmd" to="/external/external_cmd_selector/turn_signal_cmd"/>
-    <remap from="input/remote/shift_cmd" to="/external/external_cmd_selector/shift_cmd"/>
+    <remap from="input/external/control_cmd" to="/external/selected/control_cmd"/>
+    <remap from="input/external/turn_signal_cmd" to="/external/selected/turn_signal_cmd"/>
+    <remap from="input/external/shift_cmd" to="/external/selected/shift_cmd"/>
+    <remap from="input/external_emergency_stop" to="/external/selected/heartbeat"/>
+    <remap from="input/gate_mode" to="/control/gate_mode_cmd"/>
 
     <remap from="input/emergency/control_cmd" to="/system/emergency/control_cmd"/>
     <remap from="input/emergency/turn_signal_cmd" to="/system/emergency/turn_signal_cmd"/>
@@ -28,13 +28,20 @@
     <remap from="output/shift_cmd" to="/control/shift_cmd"/>
     <remap from="output/turn_signal_cmd" to="/control/turn_signal_cmd"/>
     <remap from="output/gate_mode" to="/control/current_gate_mode"/>
+    <remap from="output/engage" to="/api/autoware/get/engage"/>
 
+    <remap from="~/service/engage" to="/api/autoware/set/engage"/>
+    <remap from="~/service/external_emergency" to="/api/autoware/set/emergency"/>
+
+    <!-- TODO(Takagi, Isamu): deprecated -->
+    <remap from="input/engage" to="/autoware/engage"/>
     <remap from="~/service/external_emergency_stop" to="~/external_emergency_stop"/>
     <remap from="~/service/clear_external_emergency_stop" to="~/clear_external_emergency_stop"/>
 
     <param from="$(var config_file)" />
     <param name="use_emergency_handling" value="$(var use_emergency_handling)" />
     <param name="use_external_emergency_stop" value="$(var use_external_emergency_stop)" />
+    <param name="use_start_request" value="$(var use_start_request)" />
   </node>
 
 </launch>

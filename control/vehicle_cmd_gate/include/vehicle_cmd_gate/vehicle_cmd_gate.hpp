@@ -18,11 +18,15 @@
 #include <memory>
 
 #include "diagnostic_updater/diagnostic_updater.hpp"
+#include "geometry_msgs/msg/twist_stamped.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 #include "autoware_control_msgs/msg/control_command_stamped.hpp"
 #include "autoware_control_msgs/msg/emergency_mode.hpp"
 #include "autoware_control_msgs/msg/gate_mode.hpp"
+#include "autoware_debug_msgs/msg/bool_stamped.hpp"
+#include "autoware_external_api_msgs/srv/engage.hpp"
+#include "autoware_external_api_msgs/srv/set_emergency.hpp"
 #include "autoware_vehicle_msgs/msg/engage.hpp"
 #include "autoware_vehicle_msgs/msg/shift_stamped.hpp"
 #include "autoware_vehicle_msgs/msg/steering.hpp"
@@ -52,19 +56,18 @@ private:
   rclcpp::Publisher<autoware_vehicle_msgs::msg::ShiftStamped>::SharedPtr shift_cmd_pub_;
   rclcpp::Publisher<autoware_vehicle_msgs::msg::TurnSignal>::SharedPtr turn_signal_cmd_pub_;
   rclcpp::Publisher<autoware_control_msgs::msg::GateMode>::SharedPtr gate_mode_pub_;
+  rclcpp::Publisher<autoware_vehicle_msgs::msg::Engage>::SharedPtr engage_pub_;
 
   // Subscription
   rclcpp::Subscription<autoware_control_msgs::msg::EmergencyMode>::SharedPtr system_emergency_sub_;
   rclcpp::Subscription<autoware_control_msgs::msg::EmergencyMode>::SharedPtr
     external_emergency_stop_sub_;
   rclcpp::Subscription<autoware_control_msgs::msg::GateMode>::SharedPtr gate_mode_sub_;
-  rclcpp::Subscription<autoware_vehicle_msgs::msg::Engage>::SharedPtr engage_sub_;
   rclcpp::Subscription<autoware_vehicle_msgs::msg::Steering>::SharedPtr steer_sub_;
 
   void onGateMode(autoware_control_msgs::msg::GateMode::ConstSharedPtr msg);
   void onSystemEmergency(autoware_control_msgs::msg::EmergencyMode::ConstSharedPtr msg);
   void onExternalEmergencyStop(autoware_control_msgs::msg::EmergencyMode::ConstSharedPtr msg);
-  void onEngage(autoware_vehicle_msgs::msg::Engage::ConstSharedPtr msg);
   void onSteering(autoware_vehicle_msgs::msg::Steering::ConstSharedPtr msg);
 
   bool is_engaged_;
@@ -91,7 +94,7 @@ private:
   void onAutoTurnSignalCmd(autoware_vehicle_msgs::msg::TurnSignal::ConstSharedPtr msg);
   void onAutoShiftCmd(autoware_vehicle_msgs::msg::ShiftStamped::ConstSharedPtr msg);
 
-  // Subscription for remote
+  // Subscription for external
   Commands remote_commands_;
   rclcpp::Subscription<autoware_control_msgs::msg::ControlCommandStamped>::SharedPtr
     remote_control_cmd_sub_;
@@ -122,9 +125,22 @@ private:
   double external_emergency_stop_heartbeat_timeout_;
 
   // Service
+  rclcpp::Service<autoware_external_api_msgs::srv::Engage>::SharedPtr srv_engage_;
+  rclcpp::Service<autoware_external_api_msgs::srv::SetEmergency>::SharedPtr srv_external_emergency_;
+  void onEngageService(
+    const autoware_external_api_msgs::srv::Engage::Request::SharedPtr request,
+    const autoware_external_api_msgs::srv::Engage::Response::SharedPtr response);
+  void onExternalEmergencyStopService(
+    const std::shared_ptr<rmw_request_id_t> request_header,
+    const std::shared_ptr<autoware_external_api_msgs::srv::SetEmergency::Request> request,
+    const std::shared_ptr<autoware_external_api_msgs::srv::SetEmergency::Response> response);
+
+  // TODO(Takagi, Isamu): deprecated
+  rclcpp::Subscription<autoware_vehicle_msgs::msg::Engage>::SharedPtr engage_sub_;
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr srv_external_emergency_stop_;
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr srv_clear_external_emergency_stop_;
-  bool onExternalEmergencyStopService(
+  void onEngage(autoware_vehicle_msgs::msg::Engage::ConstSharedPtr msg);
+  bool onSetExternalEmergencyStopService(
     const std::shared_ptr<rmw_request_id_t> req_header,
     const std::shared_ptr<std_srvs::srv::Trigger::Request> req,
     const std::shared_ptr<std_srvs::srv::Trigger::Response> res);
@@ -156,6 +172,36 @@ private:
   VehicleCmdFilter filter_;
   autoware_control_msgs::msg::ControlCommand filterControlCommand(
     const autoware_control_msgs::msg::ControlCommand & msg);
+
+  // Start request service
+  struct StartRequest
+  {
+private:
+    static constexpr double eps = 1e-3;
+    using ControlCommandStamped = autoware_control_msgs::msg::ControlCommandStamped;
+
+public:
+    StartRequest(rclcpp::Node * node, bool use_start_request);
+    bool isAccepted();
+    void publishStartAccepted();
+    void checkStopped(const ControlCommandStamped & control);
+    void checkStartRequest(const ControlCommandStamped & control);
+
+private:
+    bool use_start_request_;
+    bool is_start_requesting_;
+    bool is_start_accepted_;
+    bool is_start_cancelled_;
+    geometry_msgs::msg::TwistStamped current_twist_;
+
+    rclcpp::Node * node_;
+    rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr request_start_cli_;
+    rclcpp::Publisher<autoware_debug_msgs::msg::BoolStamped>::SharedPtr request_start_pub_;
+    rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr current_twist_sub_;
+    void onCurrentTwist(geometry_msgs::msg::TwistStamped::ConstSharedPtr msg);
+  };
+
+  std::unique_ptr<StartRequest> start_request_;
 };
 
 #endif  // VEHICLE_CMD_GATE__VEHICLE_CMD_GATE_HPP_
