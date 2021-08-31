@@ -1,6 +1,6 @@
 <launch>
   <!-- Input -->
-  <arg name="input_autoware_engage" default="/autoware/engage" />
+  <arg name="input_autoware_engage" default="/api/autoware/get/engage" />
   <arg name="input_vehicle_control_mode" default="/vehicle/status/control_mode" />
   <arg name="input_is_emergency" default="/system/emergency/is_emergency" />
   <arg name="input_route" default="/planning/mission_planning/route" />
