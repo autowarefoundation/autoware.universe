@@ -40,7 +40,9 @@
 #include "tf2_ros/transform_broadcaster.h"
 #include "tf2_ros/transform_listener.h"
 
+#include "autoware_api_utils/autoware_api_utils.hpp"
 #include "autoware_debug_msgs/msg/float32_stamped.hpp"
+#include "autoware_external_api_msgs/srv/initialize_pose.hpp"
 #include "autoware_planning_msgs/msg/trajectory.hpp"
 #include "autoware_vehicle_msgs/msg/control_mode.hpp"
 #include "autoware_vehicle_msgs/msg/engage.hpp"
@@ -70,6 +72,10 @@ public:
 
 private:
   /* ros system */
+  rclcpp::CallbackGroup::SharedPtr group_api_service_;
+  autoware_api_utils::Service<autoware_external_api_msgs::srv::InitializePose>::SharedPtr
+    srv_set_pose_;  //!< @brief service to set pose for simulation
+
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr
     pub_pose_;  //!< @brief topic ros publisher for current pose
   rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr
@@ -185,12 +191,15 @@ private:
    */
   void callbackTrajectory(const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr msg);
 
+
+  // TODO(Takagi, Isamu): deprecated
   /**
    * @brief set initial pose for simulation with received message
    */
   void callbackInitialPoseWithCov(
     const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr msg);
 
+  // TODO(Takagi, Isamu): deprecated
   /**
    * @brief set initial pose with received message
    */
@@ -205,6 +214,13 @@ private:
    * @brief set simulator engage with received message
    */
   void callbackEngage(const autoware_vehicle_msgs::msg::Engage::ConstSharedPtr msg);
+
+  /**
+   * @brief set pose for simulation with request
+   */
+  void serviceSetPose(
+    const autoware_external_api_msgs::srv::InitializePose::Request::SharedPtr request,
+    const autoware_external_api_msgs::srv::InitializePose::Response::SharedPtr response);
 
   /**
    * @brief get transform from two frame_ids
