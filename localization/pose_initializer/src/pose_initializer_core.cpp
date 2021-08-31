@@ -72,10 +72,19 @@ PoseInitializer::PoseInitializer()
     RCLCPP_INFO(get_logger(), "Waiting for service...");
   }
 
-  gnss_service_ = this->create_service<autoware_localization_srvs::srv::PoseWithCovarianceStamped>(
-    "pose_initializer_srv",
+  initialize_pose_service_ =
+    this->create_service<autoware_localization_srvs::srv::PoseWithCovarianceStamped>(
+    "service/initialize_pose",
     std::bind(
-      &PoseInitializer::serviceInitial, this, std::placeholders::_1, std::placeholders::_2));
+      &PoseInitializer::serviceInitializePose,
+      this, std::placeholders::_1, std::placeholders::_2));
+
+  initialize_pose_auto_service_ =
+    this->create_service<autoware_external_api_msgs::srv::InitializePoseAuto>(
+    "service/initialize_pose_auto",
+    std::bind(
+      &PoseInitializer::serviceInitializePoseAuto,
+      this, std::placeholders::_1, std::placeholders::_2));
 }
 
 PoseInitializer::~PoseInitializer() {}
@@ -88,7 +97,7 @@ void PoseInitializer::callbackMapPoints(
   pcl::fromROSMsg(*map_points_msg_ptr, *map_ptr_);
 }
 
-void PoseInitializer::serviceInitial(
+void PoseInitializer::serviceInitializePose(
   const std::shared_ptr<autoware_localization_srvs::srv::PoseWithCovarianceStamped::Request> req,
   std::shared_ptr<autoware_localization_srvs::srv::PoseWithCovarianceStamped::Response> res)
 {
@@ -105,7 +114,7 @@ void PoseInitializer::serviceInitial(
   add_height_pose_msg_ptr->pose.covariance[4 * 6 + 4] = 0.01;
   add_height_pose_msg_ptr->pose.covariance[5 * 6 + 5] = 1.0;
 
-  callAlignServiceAndPublishResult(add_height_pose_msg_ptr);
+  res->success = callAlignServiceAndPublishResult(add_height_pose_msg_ptr);
 }
 
 void PoseInitializer::callbackInitialPose(
@@ -151,6 +160,15 @@ void PoseInitializer::callbackGNSSPoseCov(
   callAlignServiceAndPublishResult(add_height_pose_msg_ptr);
 }
 
+void PoseInitializer::serviceInitializePoseAuto(
+  const std::shared_ptr<autoware_external_api_msgs::srv::InitializePoseAuto::Request> req,
+  std::shared_ptr<autoware_external_api_msgs::srv::InitializePoseAuto::Response> res)
+{
+  RCLCPP_INFO(this->get_logger(), "Called Pose Initialize Service");
+  enable_gnss_callback_ = true;
+  res->status = autoware_api_utils::response_success();
+}
+
 void PoseInitializer::callbackPoseInitializationRequest(
   const autoware_localization_msgs::msg::PoseInitializationRequest::ConstSharedPtr request_msg_ptr)
 {
@@ -189,12 +207,12 @@ bool PoseInitializer::getHeight(
   return true;
 }
 
-void PoseInitializer::callAlignServiceAndPublishResult(
+bool PoseInitializer::callAlignServiceAndPublishResult(
   const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr input_pose_msg)
 {
   if (request_id_ != response_id_) {
     RCLCPP_ERROR(get_logger(), "Did not receive response for previous NDT Align Server call");
-    return;
+    return false;
   }
   auto req =
     std::make_shared<autoware_localization_srvs::srv::PoseWithCovarianceStamped::Request>();
@@ -225,4 +243,5 @@ void PoseInitializer::callAlignServiceAndPublishResult(
         response_id_ = result.get()->seq;
       }
     });
+  return true;
 }

@@ -23,6 +23,8 @@
 #include "tf2/transform_datatypes.h"
 #include "tf2_ros/transform_listener.h"
 #include "autoware_localization_msgs/msg/pose_initialization_request.hpp"
+#include "autoware_external_api_msgs/srv/initialize_pose_auto.hpp"
+#include "autoware_api_utils/autoware_api_utils.hpp"
 
 #include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
@@ -40,9 +42,12 @@ public:
 
 private:
   void callbackMapPoints(sensor_msgs::msg::PointCloud2::ConstSharedPtr pointcloud2_msg_ptr);
-  void serviceInitial(
+  void serviceInitializePose(
     const std::shared_ptr<autoware_localization_srvs::srv::PoseWithCovarianceStamped::Request> req,
     std::shared_ptr<autoware_localization_srvs::srv::PoseWithCovarianceStamped::Response> res);
+  void serviceInitializePoseAuto(
+    const std::shared_ptr<autoware_external_api_msgs::srv::InitializePoseAuto::Request> req,
+    std::shared_ptr<autoware_external_api_msgs::srv::InitializePoseAuto::Response> res);
   void callbackInitialPose(
     geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose_cov_msg_ptr);
   void callbackGNSSPoseCov(
@@ -53,12 +58,14 @@ private:
   bool getHeight(
     const geometry_msgs::msg::PoseWithCovarianceStamped & input_pose_msg,
     const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr output_pose_msg_ptr);
-  void callAlignServiceAndPublishResult(
+  bool callAlignServiceAndPublishResult(
     const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg);
 
-  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr initial_pose_sub_;
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr gnss_pose_sub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr map_points_sub_;
+
+  // TODO(Takagi, Isamu): deprecated
+  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr initial_pose_sub_;
   rclcpp::Subscription<autoware_localization_msgs::msg::PoseInitializationRequest>::SharedPtr
     pose_initialization_request_sub_;
 
@@ -67,7 +74,9 @@ private:
   rclcpp::Client<autoware_localization_srvs::srv::PoseWithCovarianceStamped>::SharedPtr ndt_client_;
 
   rclcpp::Service<autoware_localization_srvs::srv::PoseWithCovarianceStamped>::SharedPtr
-    gnss_service_;
+    initialize_pose_service_;
+  rclcpp::Service<autoware_external_api_msgs::srv::InitializePoseAuto>::SharedPtr
+    initialize_pose_auto_service_;
 
   tf2::BufferCore tf2_buffer_;
   tf2_ros::TransformListener tf2_listener_;
