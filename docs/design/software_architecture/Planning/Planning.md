@@ -116,49 +116,6 @@ It may be controversial whether new scenario is needed or existing scenario shou
 
 ![Planning_component](image/PlanningOverview.svg)
 
-## Mission planner
-
-### Role
-
-The role of mission planner is to calculate route that navigates from current vehicle pose to goal pose. The route is made of sequence of lanes that vehicle must follow to reach goal pose.
-
-This module is responsible for calculating full route to goal, and therefore only use static map information. Any dynamic obstacle information (e.g. pedestrians and vehicles) is not considered during route planning. Therefore, output route topic is only published when goal pose is given and will be latched until next goal is provided.
-
-**remark**: Dynamic map information, such as road construction blocking some lanes, may be considered in the future. However, this feature becomes more reasonable unless we have multiple vehicle, where each vehicle updates map online and share it with other vehicles. Therefore, we only consider static map information for now.
-
-### Input
-
-- current pose: `/tf` (map->base_link): <br> This is current pose in map frame calculated by Localization stack.
-- goal pose: geometry_msgs::PoseStamped <br> This is goal pose given from the Operator/Fleet Management Software
-- map: autoware_lanelet_msgs::MapBin <br> This is binary data of map from Map stack. This should include geometry information of each lane to match input start/goal pose to corresponding lane, and lane connection information to calculate sequence of lanes to reach goal lane.
-
-### Output
-
-route: `autoware_planning_msgs::Route` <br> Message type is described below. Route is made of sequence of route section that vehicle must follow in order to reach goal, where a route section is a “slice” of a road that bundles lane changeable lanes. Note that the most atomic unit of route is lane_id, which is the unique id of a lane in vector map. Therefore, route message does not contain geometric information about the lane since we did not want to have planning module’s message to have dependency on map data structure.
-
-![Planning_component](image/PlanningRouteMsg.svg)
-
-![Planning_component](image/PlanningRouteImg.svg)
-
-## Scenario selector
-
-### Role
-
-The role of scenario selector is to select appropriate scenario planner depending on situation. For example, if current pose is within road, then scenario selector should choose on-road planner, and if vehicle is within parking lot, then scenario selector should choose parking scenario.
-Note that all trajectory calculated by each scenario module passes is collected by scenario selector, and scenario selector chooses which trajectory to be passed down to Control module. This ensures that trajectory from unselected scenario is not passed down to Control when scenario is changed even if there is a delay when scenario planner receives notification that it is unselected by the scenario selector.
-
-### Input
-
-- map: `autoware_lanelet_msgs::MapBin`
-- vehicle pose: `/tf` (map->base_link)
-- route: `autoware_planning_msgs::Route` <br> Scenario planner uses above three topics to decide which scenario to use. In general it should decide scenarios based on where in the map vehicle is located(map+vehicle pose) and where it is trying to go(route).
-- trajectory: `autoware_planning_msgs::Trajectory` <br> Scenario planner gets the output from all the scenarios and passes the trajectory from selected scenario down to following stacks. This must be done within scenario_selector module to sync with the timing of scenario changing.
-
-### Output
-
-- scenario: `autoware_planning_msgs::Scenario` <br> This contains current available scenario and selected scenario. Each Scenario modules read this topic and chooses to plan trajectory
-- Trajectory: `autoware_planning_msgs::Trajectory` <br> This is the final trajectory of Planning stack, which is the trajectory from selected Scenario module.
-
 ## Scenarios
 
 ### Role
