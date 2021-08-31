@@ -72,21 +72,6 @@ def generate_launch_description():
     relay_components.append(ComposableNode(
         package='topic_tools',
         plugin='topic_tools::RelayNode',
-        name='gate_mode_relay',
-        namespace='awapi',
-        parameters=[{
-            'input_topic': LaunchConfiguration('set_gate_mode'),
-            'output_topic': LaunchConfiguration('output_gate_mode'),
-            'type': 'autoware_control_msgs/msg/GateMode',
-        }],
-        extra_arguments=[{
-            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
-        }],
-    ))
-
-    relay_components.append(ComposableNode(
-        package='topic_tools',
-        plugin='topic_tools::RelayNode',
         name='emergency_stop_relay',
         namespace='awapi',
         parameters=[{
