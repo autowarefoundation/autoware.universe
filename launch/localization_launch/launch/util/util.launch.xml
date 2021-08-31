@@ -17,10 +17,9 @@
   <arg name="use_intra_process" default="true" description="use ROS2 component container communication"/>
 
   <!-- pose_initializer -->
-  <include file="$(find-pkg-share pose_initializer)/launch/pose_initializer.launch.xml">
-    <arg name="ndt_align_server_name" value="/localization/pose_estimator/ndt_align_srv" />
-  </include>
+  <include file="$(find-pkg-share pose_initializer)/launch/pose_initializer.launch.xml" />
 
+  <!-- util -->
   <include file="$(find-pkg-share localization_launch)/launch/util/util.launch.py" />
 
 </launch>
