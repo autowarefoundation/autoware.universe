@@ -30,6 +30,10 @@
   <exec_depend condition="$ROS_PYTHON_VERSION == 2">python-bson</exec_depend>
   <exec_depend condition="$ROS_PYTHON_VERSION == 3">python3-bson</exec_depend>
 
+  <!-- api adaptor -->
+  <exec_depend>awapi_awiv_adapter</exec_depend>
+  <exec_depend>autoware_iv_external_api_adaptor</exec_depend>
+
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
 

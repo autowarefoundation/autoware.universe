@@ -43,7 +43,6 @@
     </include>
   </group>
 
-
   <!-- Map -->
   <group>
     <include file="$(find-pkg-share map_launch)/launch/map.launch.py" if="$(var map)">
@@ -51,7 +50,6 @@
       <arg name="pointcloud_map_path" value="$(var map_path)/$(var pointcloud_map_file)"/>
     </include>
   </group>
-
 
   <!-- Sensing -->
   <group>
@@ -63,13 +61,11 @@
     </include>
   </group>
 
-
   <!-- Localization -->
   <group>
     <include file="$(find-pkg-share localization_launch)/launch/localization.launch.xml" if="$(var localization)">
     </include>
   </group>
-
 
   <!-- Perception -->
   <group>
@@ -92,6 +88,12 @@
       <arg name="lateral_controller_mode" value="mpc_follower" />
     </include>
   </group>
+
+  <!-- Autoware API -->
+  <include file="$(find-pkg-share autoware_api_launch)/launch/autoware_api.launch.xml">
+    <arg name="init_simulator_pose" value="false"/>
+    <arg name="init_localization_pose" value="true"/>
+  </include>
 
   <!-- Rviz -->
   <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen" args="-d $(find-pkg-share autoware_launch)/rviz/autoware.rviz -s $(find-pkg-share autoware_launch)/rviz/image/autoware.png" if="$(var rviz)">
