@@ -9,9 +9,14 @@ Depending on the implementation of occupancy grid map, it can be called an outli
 
 1. Use the occupancy grid map to separate point clouds into those with low occupancy probability and those with high occupancy probability.
 
-2. If `use_radius_search_2d_filter` is true, then apply an radius search 2d outlier filter to the point cloud that is determined to have a low occupancy probability.
-   1. For each point, determine the outlier from the radius (`radius_search_2d_filter/search_radius`) and the number of point clouds.
+2. The point clouds that belong to the low occupancy probability are not necessarily outliers. In particular, the top of the moving object tends to belong to the low occupancy probability. Therefore, if `use_radius_search_2d_filter` is true, then apply an radius search 2d outlier filter to the point cloud that is determined to have a low occupancy probability.
+   1. For each low occupancy probability point, determine the outlier from the radius (`radius_search_2d_filter/search_radius`) and the number of point clouds. In this case, the point cloud to be referenced is not only low occupancy probability points, but all point cloud including high occupancy probability points.
    2. The number of point clouds can be multiplied by `radius_search_2d_filter/min_points_and_distance_ratio` and distance from base link. However, the minimum and maximum number of point clouds is limited.
+
+The following video is a sample. Yellow points are high occupancy probability, green points are low occupancy probability which is not an outlier, and red points are outliers. At around 0:15 and 1:16 in the first video, a bird crosses the road, but it is considered as an outlier.
+
+- [movie1](https://www.youtube.com/watch?v=hEVv0LaTpP8)
+- [movie2](https://www.youtube.com/watch?v=VaHs1CdLcD0)
 
 ## Inputs / Outputs
 
