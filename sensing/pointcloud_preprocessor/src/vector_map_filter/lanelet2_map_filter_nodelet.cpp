@@ -200,12 +200,13 @@ pcl::PointCloud<pcl::PointXYZ> Lanelet2MapFilterComponent::getLaneFilteredPointC
 
   for (auto & point : downsampled_cloud->points) {
     if (pointWithinLanelets(
-          Point2d(point.x + centroid[0], point.y + centroid[1]), intersected_lanelets)) {
+        Point2d(point.x + centroid[0], point.y + centroid[1]), intersected_lanelets))
+    {
       const size_t index = voxel_grid.getCentroidIndex(point);
       for (auto & original_point : downsampled2original_map[index].points) {
-        original_point.x +=  centroid[0];
-        original_point.y +=  centroid[1];
-        original_point.z +=  centroid[2];
+        original_point.x += centroid[0];
+        original_point.y += centroid[1];
+        original_point.z += centroid[2];
         filtered_cloud.points.push_back(original_point);
       }
     }

@@ -297,8 +297,8 @@ void RANSACGroundFilterComponent::filter(
   sensor_msgs::msg::PointCloud2::SharedPtr no_ground_cloud_transformed_msg_ptr(
     new sensor_msgs::msg::PointCloud2);
   if (
-    !transformPointCloud(base_frame_, no_ground_cloud_msg_ptr, no_ground_cloud_transformed_msg_ptr)
-    ) {
+    !transformPointCloud(base_frame_, no_ground_cloud_msg_ptr, no_ground_cloud_transformed_msg_ptr))
+  {
     RCLCPP_ERROR_STREAM_THROTTLE(
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
       "Failed transform from " << base_frame_ << " to " <<

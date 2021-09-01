@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// *INDENT-OFF*
 #ifndef POINTCLOUD_PREPROCESSOR__COMPARE_MAP_FILTER__VOXEL_BASED_APPROXIMATE_COMPARE_MAP_FILTER_NODELET_HPP_
 #define POINTCLOUD_PREPROCESSOR__COMPARE_MAP_FILTER__VOXEL_BASED_APPROXIMATE_COMPARE_MAP_FILTER_NODELET_HPP_
+// *INDENT-ON*
 
 #include <vector>
 

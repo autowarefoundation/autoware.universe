@@ -411,10 +411,10 @@ void PointCloudConcatenateDataSynchronizerComponent::checkConcatStatus(
   }
 
   const int8_t level = not_subscribed_topic_names_.empty() ?
-    diagnostic_msgs::msg::DiagnosticStatus::OK:
+    diagnostic_msgs::msg::DiagnosticStatus::OK :
     diagnostic_msgs::msg::DiagnosticStatus::WARN;
   const std::string message = not_subscribed_topic_names_.empty() ?
-    "Concatenate all topics":
+    "Concatenate all topics" :
     "Some topics are not concatenated";
   stat.summary(level, message);
 }
