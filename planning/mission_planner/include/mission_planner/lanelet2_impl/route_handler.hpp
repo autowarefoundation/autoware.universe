@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MISSION_PLANNER_LANELET_IMPL_ROUTE_HANDLER_H
-#define MISSION_PLANNER_LANELET_IMPL_ROUTE_HANDLER_H
+#ifndef MISSION_PLANNER__LANELET2_IMPL__ROUTE_HANDLER_HPP_
+#define MISSION_PLANNER__LANELET2_IMPL__ROUTE_HANDLER_HPP_
+
+// lanelet
+#include <vector>
 
 // Autoware
 #include "lanelet2_extension/utility/query.hpp"
 #include "mission_planner/lanelet2_impl/utility_functions.hpp"
-
-// lanelet
-#include <vector>
 
 #include "lanelet2_routing/Route.h"
 #include "lanelet2_routing/RoutingCost.h"
@@ -69,4 +69,4 @@ public:
   lanelet::ConstLanelets getNextLaneSequence(const lanelet::ConstLanelets & lane_sequence) const;
 };
 }  // namespace mission_planner
-#endif  // MISSION_PLANNER_LANELET_IMPL_ROUTE_HANDLER_H
+#endif  // MISSION_PLANNER__LANELET2_IMPL__ROUTE_HANDLER_HPP_

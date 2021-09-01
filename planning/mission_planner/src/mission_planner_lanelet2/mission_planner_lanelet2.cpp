@@ -14,6 +14,8 @@
 
 #include "mission_planner/lanelet2_impl/mission_planner_lanelet2.hpp"
 
+#include <limits>
+#include <memory>
 #include <unordered_set>
 
 #include "lanelet2_core/geometry/Lanelet.h"
@@ -141,7 +143,7 @@ void MissionPlannerLanelet2::mapCallback(
   is_graph_ready_ = true;
 }
 
-bool MissionPlannerLanelet2::isRoutingGraphReady() const { return is_graph_ready_; }
+bool MissionPlannerLanelet2::isRoutingGraphReady() const {return is_graph_ready_;}
 
 void MissionPlannerLanelet2::visualizeRoute(const autoware_planning_msgs::msg::Route & route) const
 {
@@ -177,13 +179,13 @@ void MissionPlannerLanelet2::visualizeRoute(const autoware_planning_msgs::msg::R
     lanelet::visualization::laneletsBoundaryAsMarkerArray(route_lanelets, cl_ll_borders, false));
   insertMarkerArray(
     &route_marker_array, lanelet::visualization::laneletsAsTriangleMarkerArray(
-                           "route_lanelets", route_lanelets, cl_route));
+      "route_lanelets", route_lanelets, cl_route));
   insertMarkerArray(
     &route_marker_array,
     lanelet::visualization::laneletsAsTriangleMarkerArray("end_lanelets", end_lanelets, cl_end));
   insertMarkerArray(
     &route_marker_array, lanelet::visualization::laneletsAsTriangleMarkerArray(
-                           "normal_lanelets", normal_lanelets, cl_normal));
+      "normal_lanelets", normal_lanelets, cl_normal));
   insertMarkerArray(
     &route_marker_array,
     lanelet::visualization::laneletsAsTriangleMarkerArray("goal_lanelets", goal_lanelets, cl_goal));
@@ -193,7 +195,10 @@ void MissionPlannerLanelet2::visualizeRoute(const autoware_planning_msgs::msg::R
 bool MissionPlannerLanelet2::isGoalValid() const
 {
   lanelet::Lanelet closest_lanelet;
-  if (!lanelet::utils::query::getClosestLanelet(road_lanelets_, goal_pose_.pose, &closest_lanelet)) {
+  if (!lanelet::utils::query::getClosestLanelet(
+      road_lanelets_, goal_pose_.pose,
+      &closest_lanelet))
+  {
     return false;
   }
   const auto goal_lanelet_pt = lanelet::utils::conversion::toLaneletPoint(goal_pose_.pose.position);
@@ -230,12 +235,12 @@ autoware_planning_msgs::msg::Route MissionPlannerLanelet2::planRoute()
 {
   std::stringstream ss;
   for (const auto & checkpoint : checkpoints_) {
-    ss << "x: " << checkpoint.pose.position.x << " "
-       << "y: " << checkpoint.pose.position.y << std::endl;
+    ss << "x: " << checkpoint.pose.position.x << " " <<
+      "y: " << checkpoint.pose.position.y << std::endl;
   }
   RCLCPP_INFO_STREAM(
-    get_logger(), "start planning route with checkpoints: " << std::endl
-                                                            << ss.str());
+    get_logger(), "start planning route with checkpoints: " << std::endl <<
+      ss.str());
 
   autoware_planning_msgs::msg::Route route_msg;
   RouteSections route_sections;
@@ -280,11 +285,17 @@ bool MissionPlannerLanelet2::planPathBetweenCheckpoints(
   lanelet::ConstLanelets * path_lanelets_ptr) const
 {
   lanelet::Lanelet start_lanelet;
-  if (!lanelet::utils::query::getClosestLanelet(road_lanelets_, start_checkpoint.pose, &start_lanelet)) {
+  if (!lanelet::utils::query::getClosestLanelet(
+      road_lanelets_, start_checkpoint.pose,
+      &start_lanelet))
+  {
     return false;
   }
   lanelet::Lanelet goal_lanelet;
-  if (!lanelet::utils::query::getClosestLanelet(road_lanelets_, goal_checkpoint.pose, &goal_lanelet)) {
+  if (!lanelet::utils::query::getClosestLanelet(
+      road_lanelets_, goal_checkpoint.pose,
+      &goal_lanelet))
+  {
     return false;
   }
 
@@ -293,12 +304,12 @@ bool MissionPlannerLanelet2::planPathBetweenCheckpoints(
     routing_graph_ptr_->getRoute(start_lanelet, goal_lanelet, 0);
   if (!optional_route) {
     RCLCPP_ERROR_STREAM(
-      get_logger(), "Failed to find a proper path!"
-                      << std::endl
-                      << "start checkpoint: " << toString(start_pose_.pose) << std::endl
-                      << "goal checkpoint: " << toString(goal_pose_.pose) << std::endl
-                      << "start lane id: " << start_lanelet.id() << std::endl
-                      << "goal lane id: " << goal_lanelet.id() << std::endl);
+      get_logger(), "Failed to find a proper path!" <<
+        std::endl <<
+        "start checkpoint: " << toString(start_pose_.pose) << std::endl <<
+        "goal checkpoint: " << toString(goal_pose_.pose) << std::endl <<
+        "start lane id: " << start_lanelet.id() << std::endl <<
+        "goal lane id: " << goal_lanelet.id() << std::endl);
     return false;
   }
 

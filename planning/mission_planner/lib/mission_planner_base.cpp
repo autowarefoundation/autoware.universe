@@ -11,6 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+#include <string>
 #include "mission_planner/mission_planner_base.hpp"
 
 #include "lanelet2_extension/utility/message_conversion.hpp"

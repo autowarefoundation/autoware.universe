@@ -12,8 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MISSION_PLANNER_LANELET2_IMPL_MISSION_PLANNER_LANELET2_H
-#define MISSION_PLANNER_LANELET2_IMPL_MISSION_PLANNER_LANELET2_H
+#ifndef MISSION_PLANNER__LANELET2_IMPL__MISSION_PLANNER_LANELET2_HPP_
+#define MISSION_PLANNER__LANELET2_IMPL__MISSION_PLANNER_LANELET2_HPP_
+
+#include <string>
+#include <vector>
 
 // ROS
 #include "rclcpp/rclcpp.hpp"
@@ -29,9 +32,6 @@
 #include "lanelet2_core/LaneletMap.h"
 #include "lanelet2_routing/RoutingGraph.h"
 #include "lanelet2_traffic_rules/TrafficRulesFactory.h"
-
-// others
-#include <string>
 
 using RouteSections = std::vector<autoware_planning_msgs::msg::RouteSection>;
 
@@ -72,4 +72,4 @@ private:
 };
 }  // namespace mission_planner
 
-#endif  // MISSION_PLANNER_LANELET2_IMPL_MISSION_PLANNER_LANELET2_H
+#endif  // MISSION_PLANNER__LANELET2_IMPL__MISSION_PLANNER_LANELET2_HPP_

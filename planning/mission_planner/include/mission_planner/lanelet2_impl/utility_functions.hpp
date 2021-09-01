@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MISSION_PLANNER_LANELET2_IMPL_UTILITY_FUNCTIONS_H
-#define MISSION_PLANNER_LANELET2_IMPL_UTILITY_FUNCTIONS_H
+#ifndef MISSION_PLANNER__LANELET2_IMPL__UTILITY_FUNCTIONS_HPP_
+#define MISSION_PLANNER__LANELET2_IMPL__UTILITY_FUNCTIONS_HPP_
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -26,7 +26,7 @@
 #include "visualization_msgs/msg/marker_array.hpp"
 bool exists(const std::unordered_set<lanelet::Id> & set, const lanelet::Id & id);
 
-template <typename T>
+template<typename T>
 bool exists(const std::vector<T> & vectors, const T & item)
 {
   for (const auto & i : vectors) {
@@ -41,4 +41,4 @@ void setColor(std_msgs::msg::ColorRGBA * cl, double r, double g, double b, doubl
 void insertMarkerArray(
   visualization_msgs::msg::MarkerArray * a1, const visualization_msgs::msg::MarkerArray & a2);
 std::string toString(const geometry_msgs::msg::Pose & pose);
-#endif  // MISSION_PLANNER_LANELET2_IMPL_UTILITY_FUNCTIONS_H
+#endif  // MISSION_PLANNER__LANELET2_IMPL__UTILITY_FUNCTIONS_HPP_
