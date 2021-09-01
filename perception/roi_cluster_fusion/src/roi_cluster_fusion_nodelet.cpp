@@ -425,7 +425,8 @@ void RoiClusterFusionNodelet::fusionCallback(
     }
     if (debugger_) {
       debugger_->showImage(
-        id, input_roi_msg->header.stamp, debug_image_rois, debug_pointcloud_rois, debug_image_points);
+        id, input_roi_msg->header.stamp, debug_image_rois, debug_pointcloud_rois,
+        debug_image_points);
     }
   }
   // publish output msg
