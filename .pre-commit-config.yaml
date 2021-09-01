@@ -44,4 +44,13 @@ repos:
     hooks:
       - id: prettier
 
+  - repo: local
+    hooks:
+      - id: uncrustify
+        name: ament_uncrustify
+        description: Formats C/CPP code
+        language: docker_image
+        files: \.(c|cc|cxx|cpp|h|hpp|hxx|m)$
+        entry: ros:galactic ament_uncrustify --reformat
+
 exclude: ".svg"
