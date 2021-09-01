@@ -12,9 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "rclcpp/rclcpp.hpp"
-
 #include "pose2twist/pose2twist_core.hpp"
+
+#include <memory>
+
+#include "rclcpp/rclcpp.hpp"
 
 int main(int argc, char ** argv)
 {

@@ -20,7 +20,8 @@
 
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 
-Pose2Twist::Pose2Twist() : Node("pose2twist_core")
+Pose2Twist::Pose2Twist()
+: Node("pose2twist_core")
 {
   using std::placeholders::_1;
 
@@ -106,9 +107,9 @@ geometry_msgs::msg::TwistStamped calcTwist(
 
 void Pose2Twist::callbackPose(geometry_msgs::msg::PoseStamped::SharedPtr pose_msg_ptr)
 {
-  // TODO check time stamp diff
-  // TODO check suddenly move
-  // TODO apply low pass filter
+  // TODO(YamatoAndo) check time stamp diff
+  // TODO(YamatoAndo) check suddenly move
+  // TODO(YamatoAndo) apply low pass filter
 
   geometry_msgs::msg::PoseStamped::SharedPtr current_pose_msg = pose_msg_ptr;
   static geometry_msgs::msg::PoseStamped::SharedPtr prev_pose_msg = current_pose_msg;

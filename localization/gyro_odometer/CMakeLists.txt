@@ -23,7 +23,7 @@ ament_auto_add_executable(${PROJECT_NAME}
   src/gyro_odometer_node.cpp
   ${GYRO_ODOMETER_SRC}
   ${GYRO_ODOMETER_HEADERS}
- )
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

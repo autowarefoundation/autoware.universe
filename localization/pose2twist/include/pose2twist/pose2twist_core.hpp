@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef POSE2TWIST_CORE_H
-#define POSE2TWIST_CORE_H
+#ifndef POSE2TWIST__POSE2TWIST_CORE_HPP_
+#define POSE2TWIST__POSE2TWIST_CORE_HPP_
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -38,4 +38,4 @@ private:
   rclcpp::Publisher<autoware_debug_msgs::msg::Float32Stamped>::SharedPtr angular_z_pub_;
 };
 
-#endif
+#endif  // POSE2TWIST__POSE2TWIST_CORE_HPP_
