@@ -149,11 +149,14 @@ void TrafficLightSSDFineDetectorNodelet::callback(
 
     for (int i = 0; i < num_infer; ++i) {
       int roi_index = i + batch_count * batch_size;
-      lts.push_back(cv::Point(
-        in_roi_msg->rois.at(roi_index).roi.x_offset, in_roi_msg->rois.at(roi_index).roi.y_offset));
-      rbs.push_back(cv::Point(
-        in_roi_msg->rois.at(roi_index).roi.x_offset + in_roi_msg->rois.at(roi_index).roi.width,
-        in_roi_msg->rois.at(roi_index).roi.y_offset + in_roi_msg->rois.at(roi_index).roi.height));
+      lts.push_back(
+        cv::Point(
+          in_roi_msg->rois.at(roi_index).roi.x_offset,
+          in_roi_msg->rois.at(roi_index).roi.y_offset));
+      rbs.push_back(
+        cv::Point(
+          in_roi_msg->rois.at(roi_index).roi.x_offset + in_roi_msg->rois.at(roi_index).roi.width,
+          in_roi_msg->rois.at(roi_index).roi.y_offset + in_roi_msg->rois.at(roi_index).roi.height));
       fitInFrame(lts.at(i), rbs.at(i), cv::Size(original_image.size()));
       cropped_imgs.push_back(cv::Mat(original_image, cv::Rect(lts.at(i), rbs.at(i))));
     }
