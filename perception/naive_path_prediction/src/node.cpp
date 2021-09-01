@@ -28,7 +28,10 @@ NaivePathPredictionNode::NaivePathPredictionNode(const rclcpp::NodeOptions & nod
 : Node("naive_path_prediction_node", node_options)
 {
   using std::placeholders::_1;
-  sub_ = this->create_subscription<autoware_perception_msgs::msg::DynamicObjectArray>("input", 1, std::bind(&NaivePathPredictionNode::callback, this, _1));
+  sub_ = this->create_subscription<autoware_perception_msgs::msg::DynamicObjectArray>(
+    "input", 1, std::bind(
+      &NaivePathPredictionNode::callback, this,
+      _1));
   pub_ = this->create_publisher<autoware_perception_msgs::msg::DynamicObjectArray>("objects", 1);
 }
 
@@ -46,7 +49,8 @@ void NaivePathPredictionNode::callback(
       pose_cov_stamped.header = output_msg.header;
       rclcpp::Duration delta_t_ = rclcpp::Duration::from_seconds(dt);
       pose_cov_stamped.header.stamp.sec = output_msg.header.stamp.sec + delta_t_.seconds();
-      pose_cov_stamped.header.stamp.nanosec = output_msg.header.stamp.nanosec + delta_t_.nanoseconds();
+      pose_cov_stamped.header.stamp.nanosec = output_msg.header.stamp.nanosec +
+        delta_t_.nanoseconds();
       geometry_msgs::msg::Pose object_frame_pose;
       geometry_msgs::msg::Pose world_frame_pose;
       object_frame_pose.position.x =
@@ -70,7 +74,6 @@ void NaivePathPredictionNode::callback(
 
   // Publish
   pub_->publish(output_msg);
-  return;
 }
 
 #include "rclcpp_components/register_node_macro.hpp"
