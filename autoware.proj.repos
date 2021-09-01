@@ -152,6 +152,10 @@ repositories:
     type: git
     url: https://github.com/tier4/ars408_driver.git
     version: tier4/ros2
+  vendor/hash_library_vendor:
+    type: git
+    url: https://github.com/tier4/hash_library_vendor.git
+    version: main
   # missing_packages
   missing_packages/astuff_sensor_msgs:
     type: git
