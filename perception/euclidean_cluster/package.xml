@@ -17,6 +17,8 @@
   <depend>sensor_msgs</depend>
   <depend>geometry_msgs</depend>
 
+  <test_depend>ament_lint_common</test_depend>
+
   <export>
     <build_type>ament_cmake</build_type>
   </export>

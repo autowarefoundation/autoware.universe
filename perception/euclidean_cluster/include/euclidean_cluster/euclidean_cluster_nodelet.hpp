@@ -31,12 +31,12 @@ public:
   EuclideanClusterNodelet(const rclcpp::NodeOptions & options);
 
 private:
-
   void pointcloudCallback(sensor_msgs::msg::PointCloud2::ConstSharedPtr input_msg);
   geometry_msgs::msg::Point getCentroid(const sensor_msgs::msg::PointCloud2 & pointcloud);
 
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_sub_;
-  rclcpp::Publisher<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>::SharedPtr cluster_pub_;
+  rclcpp::Publisher<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>::SharedPtr
+    cluster_pub_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr debug_pub_;
 
   // ROS Parameters

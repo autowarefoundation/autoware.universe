@@ -22,7 +22,8 @@
 
 namespace euclidean_cluster
 {
-VoxelGridBasedEuclideanClusterNodelet::VoxelGridBasedEuclideanClusterNodelet(const rclcpp::NodeOptions & options)
+VoxelGridBasedEuclideanClusterNodelet::VoxelGridBasedEuclideanClusterNodelet(
+  const rclcpp::NodeOptions & options)
 : Node("voxel_grid_based_euclidean_cluster_node", options)
 {
 
@@ -36,9 +37,13 @@ VoxelGridBasedEuclideanClusterNodelet::VoxelGridBasedEuclideanClusterNodelet(con
 
   using std::placeholders::_1;
   pointcloud_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
-    "input", rclcpp::SensorDataQoS().keep_last(1), std::bind(&VoxelGridBasedEuclideanClusterNodelet::pointcloudCallback, this, _1));
+    "input", rclcpp::SensorDataQoS().keep_last(1),
+    std::bind(&VoxelGridBasedEuclideanClusterNodelet::pointcloudCallback, this, _1));
 
-  cluster_pub_ = this->create_publisher<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>("output", 10);
+  cluster_pub_ =
+    this->create_publisher<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>(
+    "output",
+    10);
   debug_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("debug/clusters", 1);
 }
 
@@ -85,9 +90,11 @@ void VoxelGridBasedEuclideanClusterNodelet::pointcloudCallback(
   std::unordered_map</* voxel grid index */ int, /* cluster index */ int> map;
   int cluster_idx = 0;
   for (std::vector<pcl::PointIndices>::const_iterator cluster_itr = cluster_indices.begin();
-       cluster_itr != cluster_indices.end(); ++cluster_itr) {
+    cluster_itr != cluster_indices.end(); ++cluster_itr)
+  {
     for (std::vector<int>::const_iterator point_itr = cluster_itr->indices.begin();
-         point_itr != cluster_itr->indices.end(); ++point_itr) {
+      point_itr != cluster_itr->indices.end(); ++point_itr)
+    {
       map[*point_itr] = cluster_idx;
     }
     ++cluster_idx;
@@ -97,11 +104,13 @@ void VoxelGridBasedEuclideanClusterNodelet::pointcloudCallback(
   std::vector<pcl::PointCloud<pcl::PointXYZ>> v_cluster;
   v_cluster.resize(cluster_idx);
   for (size_t i = 0; i < raw_pointcloud_ptr->points.size(); ++i) {
-    const int index = voxel_grid_.getCentroidIndexAt(voxel_grid_.getGridCoordinates(
-      raw_pointcloud_ptr->points.at(i).x, raw_pointcloud_ptr->points.at(i).y,
-      raw_pointcloud_ptr->points.at(i).z));
-    if (map.find(index) != map.end())
+    const int index = voxel_grid_.getCentroidIndexAt(
+      voxel_grid_.getGridCoordinates(
+        raw_pointcloud_ptr->points.at(i).x, raw_pointcloud_ptr->points.at(i).y,
+        raw_pointcloud_ptr->points.at(i).z));
+    if (map.find(index) != map.end()) {
       v_cluster.at(map[index]).points.push_back(raw_pointcloud_ptr->points.at(i));
+    }
   }
 
   // build output msg
@@ -109,14 +118,18 @@ void VoxelGridBasedEuclideanClusterNodelet::pointcloudCallback(
     autoware_perception_msgs::msg::DynamicObjectWithFeatureArray output;
     output.header = input_msg->header;
     for (std::vector<pcl::PointCloud<pcl::PointXYZ>>::const_iterator cluster_itr =
-           v_cluster.begin();
-         cluster_itr != v_cluster.end(); ++cluster_itr) {
+      v_cluster.begin();
+      cluster_itr != v_cluster.end(); ++cluster_itr)
+    {
       if (!(min_cluster_size_ <= static_cast<int>(cluster_itr->points.size()) &&
-            static_cast<int>(cluster_itr->points.size()) <= max_cluster_size_))
+        static_cast<int>(cluster_itr->points.size()) <= max_cluster_size_))
+      {
         continue;
+      }
       pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_cluster(new pcl::PointCloud<pcl::PointXYZ>);
       for (pcl::PointCloud<pcl::PointXYZ>::const_iterator point_itr = cluster_itr->points.begin();
-           point_itr != cluster_itr->points.end(); ++point_itr) {
+        point_itr != cluster_itr->points.end(); ++point_itr)
+      {
         cloud_cluster->points.push_back(*point_itr);
       }
       cloud_cluster->width = cloud_cluster->points.size();
@@ -134,20 +147,24 @@ void VoxelGridBasedEuclideanClusterNodelet::pointcloudCallback(
   }
 
   // build debug msg
-  if (debug_pub_->get_subscription_count() < 1) return;
+  if (debug_pub_->get_subscription_count() < 1) {return;}
   {
     sensor_msgs::msg::PointCloud2 pointcloud_output;
 
     int i = 0;
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_cluster(new pcl::PointCloud<pcl::PointXYZI>);
     for (std::vector<pcl::PointCloud<pcl::PointXYZ>>::const_iterator cluster_itr =
-           v_cluster.begin();
-         cluster_itr != v_cluster.end(); ++cluster_itr) {
+      v_cluster.begin();
+      cluster_itr != v_cluster.end(); ++cluster_itr)
+    {
       if (!(min_cluster_size_ <= static_cast<int>(cluster_itr->points.size()) &&
-            static_cast<int>(cluster_itr->points.size()) <= max_cluster_size_))
+        static_cast<int>(cluster_itr->points.size()) <= max_cluster_size_))
+      {
         continue;
+      }
       for (pcl::PointCloud<pcl::PointXYZ>::const_iterator point_itr = cluster_itr->points.begin();
-           point_itr != cluster_itr->points.end(); ++point_itr) {
+        point_itr != cluster_itr->points.end(); ++point_itr)
+      {
         pcl::PointXYZI point;
         point.x = point_itr->x;
         point.y = point_itr->y;
@@ -174,8 +191,9 @@ geometry_msgs::msg::Point VoxelGridBasedEuclideanClusterNodelet::getCentroid(
   centroid.y = 0.f;
   centroid.z = 0.f;
   for (sensor_msgs::PointCloud2ConstIterator<float> iter_x(pointcloud, "x"),
-       iter_y(pointcloud, "y"), iter_z(pointcloud, "z");
-       iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z) {
+    iter_y(pointcloud, "y"), iter_z(pointcloud, "z");
+    iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z)
+  {
     centroid.x += *iter_x;
     centroid.y += *iter_y;
     centroid.z += *iter_z;
