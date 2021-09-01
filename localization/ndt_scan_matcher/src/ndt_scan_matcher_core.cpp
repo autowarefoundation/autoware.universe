@@ -27,6 +27,14 @@
 
 #include "ndt_scan_matcher/util_func.hpp"
 
+double norm(const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2)
+{
+  return std::sqrt(
+    std::pow(p1.x - p2.x, 2.0) +
+    std::pow(p1.y - p2.y, 2.0) +
+    std::pow(p1.z - p2.z, 2.0));
+}
+
 NDTScanMatcher::NDTScanMatcher()
 : Node("ndt_scan_matcher"),
   tf2_buffer_(this->get_clock()),
@@ -512,50 +520,23 @@ void NDTScanMatcher::callbackSensorPoints(
 
   autoware_debug_msgs::msg::Float32Stamped initial_to_result_distance_msg;
   initial_to_result_distance_msg.stamp = sensor_ros_time;
-  initial_to_result_distance_msg.data = std::sqrt(
-    std::pow(
-      initial_pose_cov_msg.pose.pose.position.x - result_pose_with_cov_msg.pose.pose.position.x,
-      2.0) +
-    std::pow(
-      initial_pose_cov_msg.pose.pose.position.y - result_pose_with_cov_msg.pose.pose.position.y,
-      2.0) +
-    std::pow(
-      initial_pose_cov_msg.pose.pose.position.z - result_pose_with_cov_msg.pose.pose.position.z,
-      2.0));
+  initial_to_result_distance_msg.data = norm(
+    initial_pose_cov_msg.pose.pose.position,
+    result_pose_with_cov_msg.pose.pose.position);
   initial_to_result_distance_pub_->publish(initial_to_result_distance_msg);
 
   autoware_debug_msgs::msg::Float32Stamped initial_to_result_distance_old_msg;
   initial_to_result_distance_old_msg.stamp = sensor_ros_time;
-  initial_to_result_distance_old_msg.data = std::sqrt(
-    std::pow(
-      initial_pose_old_msg_ptr->pose.pose.position.x -
-      result_pose_with_cov_msg.pose.pose.position.x,
-      2.0) +
-    std::pow(
-      initial_pose_old_msg_ptr->pose.pose.position.y -
-      result_pose_with_cov_msg.pose.pose.position.y,
-      2.0) +
-    std::pow(
-      initial_pose_old_msg_ptr->pose.pose.position.z -
-      result_pose_with_cov_msg.pose.pose.position.z,
-      2.0));
+  initial_to_result_distance_old_msg.data = norm(
+    initial_pose_old_msg_ptr->pose.pose.position,
+    result_pose_with_cov_msg.pose.pose.position);
   initial_to_result_distance_old_pub_->publish(initial_to_result_distance_old_msg);
 
   autoware_debug_msgs::msg::Float32Stamped initial_to_result_distance_new_msg;
   initial_to_result_distance_new_msg.stamp = sensor_ros_time;
-  initial_to_result_distance_new_msg.data = std::sqrt(
-    std::pow(
-      initial_pose_new_msg_ptr->pose.pose.position.x -
-      result_pose_with_cov_msg.pose.pose.position.x,
-      2.0) +
-    std::pow(
-      initial_pose_new_msg_ptr->pose.pose.position.y -
-      result_pose_with_cov_msg.pose.pose.position.y,
-      2.0) +
-    std::pow(
-      initial_pose_new_msg_ptr->pose.pose.position.z -
-      result_pose_with_cov_msg.pose.pose.position.z,
-      2.0));
+  initial_to_result_distance_new_msg.data = norm(
+    initial_pose_new_msg_ptr->pose.pose.position,
+    result_pose_with_cov_msg.pose.pose.position);
   initial_to_result_distance_new_pub_->publish(initial_to_result_distance_new_msg);
 
   key_value_stdmap_["transform_probability"] = std::to_string(transform_probability);
