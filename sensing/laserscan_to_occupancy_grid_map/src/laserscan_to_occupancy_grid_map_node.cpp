@@ -64,8 +64,9 @@ bool cropPointcloudByHeight(
         tf2::transformToEigen(tf_stamped.transform).matrix().cast<float>();
       pcl_ros::transformPointCloud(tf_matrix, input, trans_input_tmp);
     } catch (const tf2::TransformException & ex) {
-      RCLCPP_WARN_THROTTLE(rclcpp::get_logger("laserscan_to_occupancy_grid_map"),
-       clock, 5000, "%s", ex.what());
+      RCLCPP_WARN_THROTTLE(
+        rclcpp::get_logger("laserscan_to_occupancy_grid_map"),
+        clock, 5000, "%s", ex.what());
       return false;
     }
   }
@@ -195,12 +196,16 @@ void OccupancyGridMapNode::onLaserscanPointCloud2WithObstacleAndRaw(
   PointCloud2 cropped_raw_pc{};
   if (use_height_filter_) {
     constexpr float min_height = -1.0, max_height = 2.0;
-    if(!cropPointcloudByHeight(
-      *input_obstacle_msg, *tf2_, base_link_frame_, min_height, max_height, cropped_obstacle_pc))
-        return;
-    if(!cropPointcloudByHeight(
-      *input_raw_msg, *tf2_, base_link_frame_, min_height, max_height, cropped_raw_pc))
-        return;
+    if (!cropPointcloudByHeight(
+        *input_obstacle_msg, *tf2_, base_link_frame_, min_height, max_height, cropped_obstacle_pc))
+    {
+      return;
+    }
+    if (!cropPointcloudByHeight(
+        *input_raw_msg, *tf2_, base_link_frame_, min_height, max_height, cropped_raw_pc))
+    {
+      return;
+    }
   }
   const PointCloud2 & filtered_obstacle_pc =
     use_height_filter_ ? cropped_obstacle_pc : *input_obstacle_msg;
