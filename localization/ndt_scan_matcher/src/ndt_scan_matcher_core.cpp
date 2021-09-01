@@ -25,6 +25,8 @@
 
 #include "pcl_conversions/pcl_conversions.h"
 
+#include "autoware_utils/geometry/geometry.hpp"
+
 #include "ndt_scan_matcher/util_func.hpp"
 
 double norm(const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2)
@@ -691,10 +693,8 @@ bool NDTScanMatcher::getTransform(
     transform_stamped_ptr->transform.translation.x = 0.0;
     transform_stamped_ptr->transform.translation.y = 0.0;
     transform_stamped_ptr->transform.translation.z = 0.0;
-    transform_stamped_ptr->transform.rotation.x = 0.0;
-    transform_stamped_ptr->transform.rotation.y = 0.0;
-    transform_stamped_ptr->transform.rotation.z = 0.0;
-    transform_stamped_ptr->transform.rotation.w = 1.0;
+    transform_stamped_ptr->transform.rotation =
+      autoware_utils::createQuaternion(0.0, 0.0, 0.0, 1.0);
     return true;
   }
 
@@ -714,10 +714,8 @@ bool NDTScanMatcher::getTransform(
     transform_stamped_ptr->transform.translation.x = 0.0;
     transform_stamped_ptr->transform.translation.y = 0.0;
     transform_stamped_ptr->transform.translation.z = 0.0;
-    transform_stamped_ptr->transform.rotation.x = 0.0;
-    transform_stamped_ptr->transform.rotation.y = 0.0;
-    transform_stamped_ptr->transform.rotation.z = 0.0;
-    transform_stamped_ptr->transform.rotation.w = 1.0;
+    transform_stamped_ptr->transform.rotation =
+      autoware_utils::createQuaternion(0.0, 0.0, 0.0, 1.0);
     return false;
   }
   return true;
@@ -734,10 +732,8 @@ bool NDTScanMatcher::getTransform(
     transform_stamped_ptr->transform.translation.x = 0.0;
     transform_stamped_ptr->transform.translation.y = 0.0;
     transform_stamped_ptr->transform.translation.z = 0.0;
-    transform_stamped_ptr->transform.rotation.x = 0.0;
-    transform_stamped_ptr->transform.rotation.y = 0.0;
-    transform_stamped_ptr->transform.rotation.z = 0.0;
-    transform_stamped_ptr->transform.rotation.w = 1.0;
+    transform_stamped_ptr->transform.rotation =
+      autoware_utils::createQuaternion(0.0, 0.0, 0.0, 1.0);
     return true;
   }
 
@@ -755,10 +751,8 @@ bool NDTScanMatcher::getTransform(
     transform_stamped_ptr->transform.translation.x = 0.0;
     transform_stamped_ptr->transform.translation.y = 0.0;
     transform_stamped_ptr->transform.translation.z = 0.0;
-    transform_stamped_ptr->transform.rotation.x = 0.0;
-    transform_stamped_ptr->transform.rotation.y = 0.0;
-    transform_stamped_ptr->transform.rotation.z = 0.0;
-    transform_stamped_ptr->transform.rotation.w = 1.0;
+    transform_stamped_ptr->transform.rotation =
+      autoware_utils::createQuaternion(0.0, 0.0, 0.0, 1.0);
     return false;
   }
   return true;
