@@ -1,21 +1,21 @@
-/*
- * Copyright 2018 Autoware Foundation. All rights reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
+// Copyright 2018 Autoware Foundation. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #include "shape_estimation/model/cylinder.hpp"
+
+#include <algorithm>
+
 #include "pcl/point_cloud.h"
 #include "pcl/point_types.h"
 #include "pcl_conversions/pcl_conversions.h"
@@ -37,7 +37,7 @@ bool CylinderShapeModel::estimate(
   }
 
   // calc circumscribed circle on x-y plane
-  cv::Mat_<float> cv_points((int)cluster.size(), 2);
+  cv::Mat_<float> cv_points(static_cast<int>(cluster.size()), 2);
   for (size_t i = 0; i < cluster.size(); ++i) {
     cv_points(i, 0) = cluster.at(i).x;  // x
     cv_points(i, 1) = cluster.at(i).y;  // y
@@ -46,11 +46,11 @@ bool CylinderShapeModel::estimate(
   float radius;
   cv::minEnclosingCircle(cv::Mat(cv_points).reshape(2), center, radius);
   constexpr float ep = 0.001;
-  radius = std::max(radius, (float)ep);
+  radius = std::max(radius, static_cast<float>(ep));
 
   shape_output.type = autoware_perception_msgs::msg::Shape::CYLINDER;
-  shape_output.dimensions.x = (float)radius * 2.0;
-  shape_output.dimensions.y = (float)radius * 2.0;
+  shape_output.dimensions.x = static_cast<float>(radius) * 2.0;
+  shape_output.dimensions.y = static_cast<float>(radius) * 2.0;
   shape_output.dimensions.z = std::max((max_z - min_z), ep);
   pose_output.position.x = center.x;
   pose_output.position.y = center.y;

@@ -1,21 +1,21 @@
-/*
- * Copyright 2018 Autoware Foundation. All rights reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
+// Copyright 2018 Autoware Foundation. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #include "node.hpp"
+
+#include <memory>
+
 #include "shape_estimation/shape_estimator.hpp"
 
 #include "tf2/LinearMath/Matrix3x3.h"
@@ -66,19 +66,20 @@ void ShapeEstimationNode::callback(
     pcl::fromROSMsg(feature.cluster, *cluster);
 
     // check cluster data
-    if (cluster->empty()) continue;
+    if (cluster->empty()) {continue;}
 
     // estimate shape and pose
     autoware_perception_msgs::msg::Shape shape;
     geometry_msgs::msg::Pose pose;
     boost::optional<float> yaw = boost::none;
-    if (use_vehicle_reference_yaw_ && is_vehicle)
+    if (use_vehicle_reference_yaw_ && is_vehicle) {
       yaw = tf2::getYaw(object.state.pose_covariance.pose.orientation);
+    }
     const bool estimated_success =
       estimator_->estimateShapeAndPose(object.semantic.type, *cluster, yaw, shape, pose);
 
     // If the shape estimation fails, ignore it.
-    if (!estimated_success) continue;
+    if (!estimated_success) {continue;}
 
     output_msg.feature_objects.push_back(feature_object);
     output_msg.feature_objects.back().object.shape = shape;
