@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef NDT_SCAN_MATCHER__NDT_SCAN_MATCHER_CORE_HPP_
+#define NDT_SCAN_MATCHER__NDT_SCAN_MATCHER_CORE_HPP_
 
 #include <array>
 #include <deque>
@@ -165,3 +166,5 @@ private:
   std::thread diagnostic_thread_;
   std::map<std::string, std::string> key_value_stdmap_;
 };
+
+#endif  // NDT_SCAN_MATCHER__NDT_SCAN_MATCHER_CORE_HPP_
