@@ -19,6 +19,7 @@ find_package(OpenCV REQUIRED)
 ament_auto_add_library(obstacle_avoidance_planner SHARED
   src/vehicle_model/vehicle_model_interface.cpp
   src/vehicle_model/vehicle_model_bicycle_kinematics.cpp
+  src/vehicle_model/vehicle_model_bicycle_kinematics_no_delay.cpp
   src/util.cpp
   src/debug.cpp
   src/eb_path_optimizer.cpp

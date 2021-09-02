@@ -12,10 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <iostream>
-#include <vector>
-
 #include "obstacle_avoidance_planner/vehicle_model/vehicle_model_bicycle_kinematics.hpp"
+
+#include <iostream>
 
 KinematicsBicycleModel::KinematicsBicycleModel(
   const double wheelbase, const double steer_lim, const double steer_tau)
@@ -26,8 +25,8 @@ KinematicsBicycleModel::KinematicsBicycleModel(
   steer_tau_ = steer_tau;
 }
 
-void KinematicsBicycleModel::calculateStateEquationMatrix(
-  Eigen::MatrixXd & Ad, Eigen::MatrixXd & Bd, Eigen::MatrixXd & Wd,
+void KinematicsBicycleModel::calculateDiscreteMatrix(
+  Eigen::MatrixXd * Ad, Eigen::MatrixXd * Bd, Eigen::MatrixXd * Cd, Eigen::MatrixXd * Wd,
   const double ds)
 {
   auto sign = [](double x) {return (x > 0.0) - (x < 0.0);};
@@ -46,26 +45,15 @@ void KinematicsBicycleModel::calculateStateEquationMatrix(
 
   // assuming delta time for steer tau
   constexpr double dt = 0.03;
-  Ad << 1.0, ds, 0, 0.0, 1, ds / wheelbase_ * cos_delta_r_squared_inv, 0.0, 0,
+  *Ad << 1.0, ds, 0, 0.0, 1, ds / (wheelbase_ * cos_delta_r_squared_inv), 0.0, 0,
     1 - dt / steer_tau_;
 
-  Bd << 0.0, 0.0, dt / steer_tau_;
+  *Bd << 0.0, 0.0, dt / steer_tau_;
 
-  Wd << 0.0,
+  *Cd << 1.0, 0.0, 0.0, 0.0, 1.0, 0.0;
+
+  *Wd << 0.0,
     -ds * curvature_ + ds / wheelbase_ * (tan(delta_r) - delta_r * cos_delta_r_squared_inv), 0.0;
-}
-
-void KinematicsBicycleModel::calculateObservationMatrix(Eigen::MatrixXd & Cd)
-{
-  Cd << 1.0, 0.0, 0.0, 0.0, 1.0, 0.0;
-}
-
-void KinematicsBicycleModel::calculateObservationSparseMatrix(
-  std::vector<Eigen::Triplet<double>> & Cd_vec)
-{
-  Cd_vec.clear();
-  Cd_vec.push_back({0, 0, 1.0});
-  Cd_vec.push_back({1, 1, 1.0});
 }
 
 void KinematicsBicycleModel::calculateReferenceInput(Eigen::MatrixXd * Uref)
