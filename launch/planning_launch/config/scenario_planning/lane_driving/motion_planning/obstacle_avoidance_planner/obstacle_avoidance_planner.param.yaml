@@ -65,8 +65,7 @@
     # trajectory param for mpt
     num_curvature_sampling_points: 5 # number of sampling points when calculating curvature
     delta_arc_length_for_mpt_points: 0.5 # delta arc length when generating mpt[m]
-    forward_fixing_mpt_min_distance: 10 # number of fixing points around ego vehicle
-    forward_fixing_mpt_time: 1.0 # forward fixing time with current velocity [s]
+    forward_fixing_mpt_distance: 10 # number of fixing points around ego vehicle
 
     # optimization param for mpt
     is_hard_fixing_terminal_point: false # hard fixing terminal point
@@ -83,7 +82,6 @@
     terminal_path_lat_error_weight: 1000.0 # weight for lateral error at path end point
     terminal_path_yaw_error_weight: 1000.0 # weight for yaw error at path end point
     zero_ff_steer_angle: 0.5 # threshold that feed-forward angle becomes zero
-    optimization_center_offset: 1.5
 
     # replanning & trimming trajectory param outside algorithm
     min_delta_dist_for_replan: 10.0 # minimum delta dist thres for replan[m]
