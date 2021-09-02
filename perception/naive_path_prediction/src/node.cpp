@@ -57,6 +57,9 @@ void NaivePathPredictionNode::callback(
         output_msg.objects.at(i).state.twist_covariance.twist.linear.x * dt;
       object_frame_pose.position.y =
         output_msg.objects.at(i).state.twist_covariance.twist.linear.y * dt;
+      tf2::Quaternion quat;
+      quat.setRPY(0.0, 0.0, 0.0);
+      object_frame_pose.orientation = tf2::toMsg(quat);
       tf2::Transform tf_object2future;
       tf2::Transform tf_world2object;
       tf2::Transform tf_world2future;

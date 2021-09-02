@@ -270,10 +270,9 @@ bool MapBasedPrediction::getPredictedPath(
     tmp_point.pose.pose.position.x = p[0] + std::cos(yaw - M_PI / 2.0) * calculated_d;
     tmp_point.pose.pose.position.y = p[1] + std::sin(yaw - M_PI / 2.0) * calculated_d;
     tmp_point.pose.pose.position.z = height;
-    tmp_point.pose.pose.orientation.x = 0;
-    tmp_point.pose.pose.orientation.y = 0;
-    tmp_point.pose.pose.orientation.z = 0;
-    tmp_point.pose.pose.orientation.w = 1;
+    tf2::Quaternion quat;
+    quat.setRPY(0.0, 0.0, yaw);
+    tmp_point.pose.pose.orientation = tf2::toMsg(quat);
     tmp_point.header = origin_header;
     tmp_point.header.stamp = rclcpp::Time(origin_header.stamp) + rclcpp::Duration::from_seconds(i);
     path.path.push_back(tmp_point);
@@ -301,6 +300,9 @@ void MapBasedPrediction::getLinearPredictedPath(
     geometry_msgs::msg::Pose world_frame_pose;
     object_frame_pose.position.x = object_twist.linear.x * dt;
     object_frame_pose.position.y = object_twist.linear.y * dt;
+    tf2::Quaternion quat;
+    quat.setRPY(0.0, 0.0, 0.0);
+    object_frame_pose.orientation = tf2::toMsg(quat);
     tf2::Transform tf_object2future;
     tf2::Transform tf_world2object;
     tf2::Transform tf_world2future;
@@ -310,11 +312,6 @@ void MapBasedPrediction::getLinearPredictedPath(
     tf_world2future = tf_world2object * tf_object2future;
     tf2::toMsg(tf_world2future, world_frame_pose);
     pose_cov_stamped.pose.pose = world_frame_pose;
-    pose_cov_stamped.pose.pose.orientation.x = 0;
-    pose_cov_stamped.pose.pose.orientation.y = 0;
-    pose_cov_stamped.pose.pose.orientation.z = 0;
-    pose_cov_stamped.pose.pose.orientation.w = 1;
-
     predicted_path.path.push_back(pose_cov_stamped);
   }
 
