@@ -24,6 +24,7 @@
 #include "autoware_perception_msgs/msg/dynamic_object.hpp"
 #include "autoware_perception_msgs/msg/dynamic_object_array.hpp"
 #include "autoware_planning_msgs/msg/path_with_lane_id.hpp"
+#include "autoware_utils/autoware_utils.hpp"
 #include "geometry_msgs/msg/point.hpp"
 
 #include "lanelet2_core/LaneletMap.h"
@@ -123,6 +124,9 @@ private:
   int64_t lane_id_;
   std::string turn_direction_;
   bool has_traffic_light_;
+
+  autoware_planning_msgs::msg::PathWithLaneId extractPathNearExitOfPrivateRoad(
+    const autoware_planning_msgs::msg::PathWithLaneId & path, const double extend_length);
 
   // Parameter
   PlannerParam planner_param_;

@@ -15,6 +15,7 @@
 #include "scene_module/intersection/scene_merge_from_private_road.hpp"
 
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "lanelet2_core/geometry/Polygon.h"
@@ -81,9 +82,12 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(
   int stop_line_idx = -1;
   int judge_line_idx = -1;
   int first_idx_inside_lane = -1;
+  const auto private_path =
+    extractPathNearExitOfPrivateRoad(*path, planner_data_->vehicle_info_.vehicle_length_m);
   if (!util::generateStopLine(
-      lane_id_, conflicting_areas, planner_data_, planner_param_.intersection_param, path, *path,
-      &stop_line_idx, &judge_line_idx, &first_idx_inside_lane, logger_.get_child("util")))
+      lane_id_, conflicting_areas, planner_data_, planner_param_.intersection_param, path,
+      private_path, &stop_line_idx, &judge_line_idx, &first_idx_inside_lane,
+      logger_.get_child("util")))
   {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(logger_, *clock_, 1000 /* ms */, "setStopLineIdx fail");
     return false;
@@ -130,6 +134,48 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(
   }
 
   return true;
+}
+
+autoware_planning_msgs::msg::PathWithLaneId
+MergeFromPrivateRoadModule::extractPathNearExitOfPrivateRoad(
+  const autoware_planning_msgs::msg::PathWithLaneId & path, const double extend_length)
+{
+  if (path.points.size() < 2) {
+    return path;
+  }
+
+  autoware_planning_msgs::msg::PathWithLaneId private_path = path;
+  private_path.points.clear();
+
+  double sum_dist = 0.0;
+  bool prev_has_target_lane_id = false;
+  for (int i = static_cast<int>(path.points.size()) - 2; i >= 0; i--) {
+    bool has_target_lane_id = false;
+    for (const auto path_id : path.points.at(i).lane_ids) {
+      if (path_id == lane_id_) {
+        has_target_lane_id = true;
+      }
+    }
+    if (has_target_lane_id) {
+      // add path point with target lane id
+      // (lanelet with target lane id is exit of private road)
+      private_path.points.emplace_back(path.points.at(i));
+      prev_has_target_lane_id = true;
+      continue;
+    }
+    if (prev_has_target_lane_id) {
+      // extend path to the front
+      private_path.points.emplace_back(path.points.at(i));
+      sum_dist += autoware_utils::calcDistance2d(
+        path.points.at(i).point.pose, path.points.at(i + 1).point.pose);
+      if (sum_dist > extend_length) {
+        break;
+      }
+    }
+  }
+
+  std::reverse(private_path.points.begin(), private_path.points.end());
+  return private_path;
 }
 
 void MergeFromPrivateRoadModule::StateMachine::setState(State state) {state_ = state;}
