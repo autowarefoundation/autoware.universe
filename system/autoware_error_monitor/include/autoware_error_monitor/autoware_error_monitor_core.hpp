@@ -23,8 +23,13 @@
 
 #include "boost/optional.hpp"
 
-#include "autoware_system_msgs/msg/driving_capability.hpp"
+#include "autoware_control_msgs/msg/gate_mode.hpp"
+#include "autoware_system_msgs/msg/autoware_state.hpp"
+#include "autoware_system_msgs/msg/hazard_status_stamped.hpp"
+#include "autoware_vehicle_msgs/msg/control_mode.hpp"
+
 #include "diagnostic_msgs/msg/diagnostic_array.hpp"
+#include "std_srvs/srv/trigger.hpp"
 #include "rclcpp/create_timer.hpp"
 #include "rclcpp/rclcpp.hpp"
 
@@ -41,11 +46,14 @@ using DiagLevel = std::map<std::string, std::string>;
 
 struct DiagConfig
 {
-  explicit DiagConfig(const std::string & module_name, DiagLevel & diag_level)
+  explicit DiagConfig(
+    const std::string & module_name, DiagLevel & diag_level,
+    const bool auto_recovery)
   : name(module_name),
     sf_at(diag_level["sf_at"]),
     lf_at(diag_level["lf_at"]),
-    spf_at(diag_level["spf_at"])
+    spf_at(diag_level["spf_at"]),
+    auto_recovery(auto_recovery)
   {
     // Set default values
     if (sf_at == "") {sf_at = "none";}
@@ -57,6 +65,7 @@ struct DiagConfig
   std::string sf_at;
   std::string lf_at;
   std::string spf_at;
+  bool auto_recovery;
 };
 
 using RequiredModules = std::vector<DiagConfig>;
@@ -74,10 +83,26 @@ public:
 
 private:
   // Parameter
-  int update_rate_;
-  bool ignore_missing_diagnostics_;
-  bool add_leaf_diagnostics_;
+  struct Parameters
+  {
+    int update_rate;
+    bool ignore_missing_diagnostics;
+    bool add_leaf_diagnostics;
+    double data_ready_timeout;
+    double diag_timeout_sec;
+    double hazard_recovery_timeout;
+    int emergency_hazard_level;
+    bool use_emergency_hold;
+    bool use_emergency_hold_in_manual_driving;
+  };
+
+  Parameters params_{};
+
+  rclcpp::Time emergency_state_switch_time_;
+  rclcpp::Time initialized_time_;
+  autoware_system_msgs::msg::HazardStatus hazard_status_{};
   std::unordered_map<std::string, RequiredModules> required_modules_map_;
+  std::string current_mode_;
 
   void loadRequiredModules(const std::string & key);
 
@@ -89,26 +114,42 @@ private:
 
   // Subscriber
   rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr sub_diag_array_;
-
+  rclcpp::Subscription<autoware_system_msgs::msg::AutowareState>::SharedPtr sub_autoware_state_;
+  rclcpp::Subscription<autoware_control_msgs::msg::GateMode>::SharedPtr sub_current_gate_mode_;
+  rclcpp::Subscription<autoware_vehicle_msgs::msg::ControlMode>::SharedPtr sub_control_mode_;
+  void onAutowareState(const autoware_system_msgs::msg::AutowareState::ConstSharedPtr msg);
+  void onCurrentGateMode(const autoware_control_msgs::msg::GateMode::ConstSharedPtr msg);
+  void onControlMode(const autoware_vehicle_msgs::msg::ControlMode::ConstSharedPtr msg);
   void onDiagArray(const diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr msg);
 
   const size_t diag_buffer_size_ = 100;
   std::unordered_map<std::string, DiagBuffer> diag_buffer_map_;
   diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr diag_array_;
+  autoware_system_msgs::msg::AutowareState::ConstSharedPtr autoware_state_;
+  autoware_control_msgs::msg::GateMode::ConstSharedPtr current_gate_mode_;
+  autoware_vehicle_msgs::msg::ControlMode::ConstSharedPtr control_mode_;
 
   // Publisher
-  rclcpp::Publisher<autoware_system_msgs::msg::DrivingCapability>::SharedPtr
-    pub_driving_capability_;
+  rclcpp::Publisher<autoware_system_msgs::msg::HazardStatusStamped>::SharedPtr pub_hazard_status_;
+  rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr pub_diagnostics_err_;
+  void publishHazardStatus(const autoware_system_msgs::msg::HazardStatus & hazard_status);
+
+  // Service
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr srv_clear_emergency_;
+  bool onClearEmergencyService(
+    [[maybe_unused]] std_srvs::srv::Trigger::Request::SharedPtr request,
+    std_srvs::srv::Trigger::Response::SharedPtr response);
 
   // Algorithm
-  boost::optional<DiagStamped> getLatestDiag(const std::string & diag_name);
-  int getHazardLevel(const DiagConfig & required_module, const int diag_level);
+  boost::optional<DiagStamped> getLatestDiag(const std::string & diag_name) const;
+  int getHazardLevel(const DiagConfig & required_module, const int diag_level) const;
   void appendHazardDiag(
     const DiagConfig & required_module, const diagnostic_msgs::msg::DiagnosticStatus & diag,
-    autoware_system_msgs::msg::HazardStatus * hazard_status);
-  autoware_system_msgs::msg::HazardStatus judgeHazardStatus(const std::string & key);
-
-  const double diag_timeout_sec_ = 1.0;
+    autoware_system_msgs::msg::HazardStatus * hazard_status) const;
+  autoware_system_msgs::msg::HazardStatus judgeHazardStatus() const;
+  void updateHazardStatus();
+  bool canAutoRecovery() const;
+  bool isEmergencyHoldingRequired() const;
 };
 
 #endif  // AUTOWARE_ERROR_MONITOR__AUTOWARE_ERROR_MONITOR_CORE_HPP_

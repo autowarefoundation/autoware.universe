@@ -10,8 +10,13 @@
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
   <depend>rclcpp</depend>
+  <depend>autoware_control_msgs</depend>
+  <depend>autoware_debug_msgs</depend>
   <depend>autoware_system_msgs</depend>
+  <depend>autoware_vehicle_msgs</depend>
+  <depend>autoware_utils</depend>
   <depend>diagnostic_msgs</depend>
+  <depend>std_srvs</depend>
   <depend>fmt</depend>
 
   <exec_depend>diagnostic_aggregator</exec_depend>
