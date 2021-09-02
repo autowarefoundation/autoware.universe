@@ -12,6 +12,7 @@
   <depend>autoware_control_msgs</depend>
   <depend>autoware_system_msgs</depend>
   <depend>autoware_vehicle_msgs</depend>
+  <depend>autoware_utils</depend>
   <depend>geometry_msgs</depend>
   <depend>std_msgs</depend>
   <depend>std_srvs</depend>

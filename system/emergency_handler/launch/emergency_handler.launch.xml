@@ -1,48 +1,26 @@
 <launch>
-  <arg name="input_autoware_state" default="/autoware/state" />
-  <arg name="input_driving_capability" default="/autoware/driving_capability" />
+  <arg name="input_hazard_status" default="/system/emergency/hazard_status" />
   <!-- To be replaced by ControlCommand -->
   <arg name="input_prev_control_command" default="/control/vehicle_cmd" />
-  <arg name="input_current_gate_mode" default="/control/current_gate_mode" />
   <arg name="input_twist" default="/localization/twist" />
-  <arg name="input_control_mode" default="/vehicle/status/control_mode" />
 
   <arg name="output_control_command" default="/system/emergency/control_cmd" />
   <arg name="output_shift" default="/system/emergency/shift_cmd" />
   <arg name="output_turn_signal" default="/system/emergency/turn_signal_cmd" />
   <arg name="output_is_emergency" default="/system/emergency/is_emergency" />
-  <arg name="output_hazard_status" default="/system/emergency/hazard_status" />
-  <arg name="output_diagnostics_err" default="/diagnostics_err" />
-
-  <arg name="service_clear_emergency" default="/system/clear_emergency" />
 
   <arg name="config_file" default="$(find-pkg-share emergency_handler)/config/emergency_handler.param.yaml" />
-  <arg name="emergency_hazard_level" default="2" description="1: Safe Fault, 2: Latent Fault, 3: Single Point Fault" />
-  <arg name="use_emergency_hold" default="false" />
-  <arg name="use_emergency_hold_in_manual_driving" default="false" />
 
   <!-- emergency_handler -->
   <node pkg="emergency_handler" exec="emergency_handler" name="emergency_handler" output="screen">
-
-    <remap from="~/input/autoware_state" to="$(var input_autoware_state)"/>
-    <remap from="~/input/driving_capability" to="$(var input_driving_capability)"/>
+    <remap from="~/input/hazard_status" to="$(var input_hazard_status)"/>
     <remap from="~/input/prev_control_command" to="$(var input_prev_control_command)"/>
-    <remap from="~/input/current_gate_mode" to="$(var input_current_gate_mode)"/>
     <remap from="~/input/twist" to="$(var input_twist)"/>
-    <remap from="~/input/control_mode" to="$(var input_control_mode)"/>
-
     <remap from="~/output/control_command" to="$(var output_control_command)"/>
     <remap from="~/output/shift" to="$(var output_shift)"/>
     <remap from="~/output/turn_signal" to="$(var output_turn_signal)"/>
     <remap from="~/output/is_emergency" to="$(var output_is_emergency)"/>
-    <remap from="~/output/hazard_status" to="$(var output_hazard_status)"/>
-    <remap from="~/output/diagnostics_err" to="$(var output_diagnostics_err)"/>
-
-    <remap from="service/clear_emergency" to="$(var service_clear_emergency)"/>
 
     <param from="$(var config_file)" />
-    <param name="emergency_hazard_level" value="$(var emergency_hazard_level)" />
-    <param name="use_emergency_hold" value="$(var use_emergency_hold)" />
-    <param name="use_emergency_hold_in_manual_driving" value="$(var use_emergency_hold_in_manual_driving)" />
   </node>
 </launch>

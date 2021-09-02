@@ -3,6 +3,9 @@
 /**:
   ros__parameters:
     update_rate: 10
-    timeout_driving_capability: 0.5
-    data_ready_timeout: 30.0
+    timeout_hazard_status: 0.5
     use_parking_after_stopped: false
+
+    # setting whether to turn hazard lamp on for each situation
+    turning_hazard_on:
+      emergency: true

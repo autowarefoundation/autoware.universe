@@ -1,69 +1,48 @@
 # emergency_handler
 
-## Feature Details
+## Purpose
 
-### emergency hold
+Emergency Handler is a node to select proper MRM from from system failure state contained in HazardStatus.
 
-`emergency_handler` has an optional feature to hold emergency status once after it becomes emergency status.
-This is controlled by `use_emergency_hold` parameter.
+## Inner-workings / Algorithms
 
-It's useful for keeping the error reasons.
-For example, when some errors occurred and recovered soon, it's difficult to know why they happened, because the error diagnostics will disappear after recovery.
+TBD.
 
-Since manual driving gives unexpected effects to the autonomous driving system, we usually don't need to know the error reasons during manual driving, but sometimes you'll want to know them for debugging.
-So you can choose whether to hold emergency status during manual driving.
-This is controlled by `use_emergency_hold_in_manual_driving` parameter.
+## Inputs / Outputs
 
-It's implemented as whether to update status in `updateHazardStatus()` function.
-If there is no update, the status will be kept.
+### Input
 
-#### State Transition
+| Name                              | Type                                             | Description                                                                   |
+| --------------------------------- | ------------------------------------------------ | ----------------------------------------------------------------------------- |
+| `/system/emergency/hazard_status` | `autoware_system_msgs::msg::HazardStatusStamped` | Used to select proper MRM from system failure state contained in HazardStatus |
+| `/control/vehicle_cmd`            | `autoware_vehicle_msgs::msg::VehicleCommand`     | Used as reference when generate Emergency Control Command                     |
+| `/localization/twist`             | `geometry_msgs::msg::TwistStamped`               | Used to decide whether vehicle is stopped or not                              |
 
-```plantuml
-@startuml
-hide empty description
+### Output
 
-state "Not Emergency" as N
-state "Emergency" as E
+| Name                                  | Type                                                | Description                                           |
+| ------------------------------------- | --------------------------------------------------- | ----------------------------------------------------- |
+| `/system/emergency/control_cmd`       | `autoware_control_msgs::msg::ControlCommandStamped` | Required to execute proper MRM                        |
+| `"/system/emergency/shift_cmd"`       | `autoware_vehicle_msgs::msg::ShiftStamped`          | Required to execute proper MRM                        |
+| `"/system/emergency/turn_signal_cmd"` | `autoware_vehicle_msgs::msg::TurnSignal`            | Required to execute proper MRM                        |
+| `"/system/emergency/is_emergency"`    | `autoware_control_msgs::msg::EmergencyMode`         | Used to inform the emergency situation of the vehicle |
 
-[*] --> N
+## Parameters
 
-N -down-> E : found critical errors
-E -up-> N : emergency status is cleared
+### Node Parameters
 
-note right of E
-  If emergency hold is enabled, a service call is required to clear the emergency status.
-  If not, the emergency status will be automatically cleared when the errors recovered.
-end note
+| Name        | Type | Default Value | Explanation            |
+| ----------- | ---- | ------------- | ---------------------- |
+| update_rate | int  | `10`          | Timer callback period. |
 
-@enduml
-```
+### Core Parameters
 
-#### Flowchart
+| Name                        | Type   | Default Value | Explanation                                                                                                                       |
+| --------------------------- | ------ | ------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| timeout_hazard_status       | double | `0.5`         | If the input `hazard_status` topic cannot be received for more than `timeout_hazard_status`, vehicle will make an emergency stop. |
+| use_parking_after_stopped   | bool   | `false`       | If this parameter is true, it will publish PARKING shift command.                                                                 |
+| turning_hazard_on.emergency | bool   | `true`        | If this parameter is true, hazard lamps will be turned on during emergency state.                                                 |
 
-```plantuml
-@startuml
-title updateHazardStatus
-start
+## Assumptions / Known limits
 
-if (use emergency hold feature?) then (yes)
-  if (holding emergency status?) then (yes)
-    stop
-  else (no)
-  endif
-else (no)
-endif
-
-:update hazard status;
-
-if (is emergency?) then (yes)
-  if (don't use emergency hold feature in manual mode? & during manual mode?) then (yes)
-  else (no)
-    :hold emergency status;
-  endif
-else (no)
-endif
-
-stop
-@enduml
-```
+TBD.
