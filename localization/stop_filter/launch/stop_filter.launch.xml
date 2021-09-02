@@ -1,0 +1,20 @@
+<launch>
+  <arg name="vx_threshold" default="0.01" description="[m/s]"/>
+  <arg name="wz_threshold" default="0.01" description="[rad/s]"/>
+  <arg name="input_twist_name" default="in_twist"/>
+  <arg name="input_twist_with_covariance_name" default="in_twist_with_covariance"/>
+  <arg name="output_twist_name" default="stop_filter_twist"/>
+  <arg name="output_twist_with_covariance_name" default="stop_filter_twist_with_covariance"/>
+  <arg name="debug_stop_flag" default="debug/stop_flag"/>
+  <node pkg="stop_filter" exec="stop_filter" name="stop_filter" output="screen">
+    <remap from="input/twist" to="$(var input_twist_name)"/>
+    <remap from="input/twist_with_covariance" to="$(var input_twist_with_covariance_name)"/>
+
+    <remap from="output/twist" to="$(var output_twist_name)"/>
+    <remap from="output/twist_with_covariance" to="$(var output_twist_with_covariance_name)"/>
+    <remap from="debug/stop_flag" to="$(var debug_stop_flag)"/>
+
+    <param name="vx_threshold" value="$(var vx_threshold)"/>
+    <param name="wz_threshold" value="$(var wz_threshold)"/>
+  </node>
+</launch>
