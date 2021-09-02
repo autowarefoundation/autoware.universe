@@ -137,14 +137,19 @@ The role of Scenario module is to calculate trajectory message from route messag
 ## Reference Implementation
 
 The reference implementation of the planning module in the latest version is shown as below.
-![reference-implementation](image/autoware-iv-planning-v1.0.0.main.drawio.svg)
 
-<!-- ![reference-implementation](image/autoware-iv-planning-v0.13.0.develop.drawio.svg) -->
+<!-- ![reference-implementation](image/autoware-iv-planning-v1.0.0.main.drawio.svg) -->
+
+![reference-implementation](image/autoware-iv-planning-v0.13.0.develop.drawio.svg)
 
 For more details, please refer to the design documents in each package.
 
 - [_mission_planner_](https://tier4.github.io/autoware.iv/tree/main/planning/mission_planning/mission_planner/mission_planner-design/): calculate route from start to goal based on the map information.
-- _lane_change_planner_: execute lane change.
+- [_behavior_path_planner_](https://tier4.github.io/autoware.iv/tree/develop/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/Readme/): calculates path and drivable area based on the traffic rules.
+  - [_lane_following_](https://tier4.github.io/autoware.iv/tree/develop/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/Readme/#lane-following)
+  - [_lane_change_](https://tier4.github.io/autoware.iv/tree/develop/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/Readme/#lane-following)
+  - [_avoidance_](https://tier4.github.io/autoware.iv/tree/develop/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/Readme/#lane-following)
+  - _side_shift_
 - [_behavior_velocity_planner_](https://tier4.github.io/autoware.iv/tree/develop/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/): calculates max speed based on the traffic rules.
   - [_detection_area_](https://tier4.github.io/autoware.iv/tree/develop/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/#detection-area)
   - [_blind_spot_](https://tier4.github.io/autoware.iv/tree/develop/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/#blind-spot)
@@ -152,7 +157,7 @@ For more details, please refer to the design documents in each package.
   - [_stop_line_](https://tier4.github.io/autoware.iv/tree/develop/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/#stop-line)
   - [_traffic_light_](https://tier4.github.io/autoware.iv/tree/develop/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/#traffic-light)
   - [_intersection_](https://tier4.github.io/autoware.iv/tree/develop/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/#intersection)
-  <!-- - [_occlusion_spot_](https://tier4.github.io/autoware.iv/tree/develop/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/#occlusion-spot) -->
+  - [_occlusion_spot_](https://tier4.github.io/autoware.iv/tree/develop/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/#occlusion-spot)
 - [_obstacle_avoidance_planner_](https://tier4.github.io/autoware.iv/tree/develop/planning/scenario_planning/lane_driving/motion_planning/obstacle_avoidance_planner/obstacle_avoidance_planner-design.ja/): calculate path shape under obstacle and drivable area constraints
 - [_surround_obstacle_checker_](https://tier4.github.io/autoware.iv/tree/main/planning/scenario_planning/lane_driving/motion_planning/surround_obstacle_checker/surround_obstacle_checker-design/): keeps the vehicle being stopped when there are obstacles around the ego-vehicle. It works only when the vehicle is stopped.
 - [_obstacle_stop_planner_](https://github.com/tier4/obstacle_stop_planner_refine/tree/main/obstacle_stop_planner_refine): (NOTE: link is temporal) When there are obstacles on or near the trajectory, it calculates the maximum velocity of the trajectory points depending on the situation: stopping, slowing down, or adaptive cruise (following the car).
