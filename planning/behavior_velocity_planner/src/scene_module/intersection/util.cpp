@@ -398,11 +398,12 @@ bool getStopPoseIndexFromMap(
   return true;
 }
 
-bool getObjectivePolygons(
+bool getObjectiveLanelets(
   lanelet::LaneletMapConstPtr lanelet_map_ptr, lanelet::routing::RoutingGraphPtr routing_graph_ptr,
   const int lane_id, const IntersectionModule::PlannerParam & planner_param,
-  std::vector<lanelet::CompoundPolygon3d> * conflicting_polygons,
-  std::vector<lanelet::CompoundPolygon3d> * objective_polygons, const rclcpp::Logger logger)
+  std::vector<lanelet::ConstLanelets> * conflicting_lanelets_result,
+  std::vector<lanelet::ConstLanelets> * objective_lanelets_result,
+  const rclcpp::Logger logger)
 {
   const auto & assigned_lanelet = lanelet_map_ptr->laneletLayer.get(lane_id);
 
@@ -471,11 +472,8 @@ bool getObjectivePolygons(
     }
   }
 
-  // get exact polygon of conflicting lanes
-  *conflicting_polygons = getPolygon3dFromLaneletsVec(conflicting_lanelets_ex_yield_ego, length);
-
-  // get exact polygon of interest with exact length
-  *objective_polygons = getPolygon3dFromLaneletsVec(objective_lanelets_sequences, length);
+  *conflicting_lanelets_result = conflicting_lanelets_ex_yield_ego;
+  *objective_lanelets_result = objective_lanelets_sequences;
 
   std::stringstream ss_c, ss_y, ss_e, ss_o, ss_os;
   for (const auto & l : conflicting_lanelets) {
@@ -496,10 +494,10 @@ bool getObjectivePolygons(
     }
   }
   RCLCPP_DEBUG(
-    logger, "getObjectivePolygons() conflict = %s yield = %s ego = %s", ss_c.str().c_str(),
+    logger, "getObjectiveLanelets() conflict = %s yield = %s ego = %s", ss_c.str().c_str(),
     ss_y.str().c_str(), ss_e.str().c_str());
   RCLCPP_DEBUG(
-    logger, "getObjectivePolygons() object = %s object_sequences = %s", ss_o.str().c_str(),
+    logger, "getObjectiveLanelets() object = %s object_sequences = %s", ss_o.str().c_str(),
     ss_os.str().c_str());
   return true;
 }
@@ -515,6 +513,18 @@ std::vector<lanelet::CompoundPolygon3d> getPolygon3dFromLaneletsVec(
     p_vec.push_back(polygon3d);
   }
   return p_vec;
+}
+
+std::vector<int> getLaneletIdsFromLaneletsVec(
+  const std::vector<lanelet::ConstLanelets> & ll_vec)
+{
+  std::vector<int> id_list;
+  for (const auto & lls : ll_vec) {
+    for (const auto & ll : lls) {
+      id_list.emplace_back(ll.id());
+    }
+  }
+  return id_list;
 }
 
 }  // namespace util

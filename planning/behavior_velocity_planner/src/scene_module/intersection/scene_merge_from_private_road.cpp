@@ -66,13 +66,15 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(
   const auto routing_graph_ptr = planner_data_->routing_graph;
 
   /* get detection area */
-  std::vector<lanelet::CompoundPolygon3d> detection_areas;
-  std::vector<lanelet::CompoundPolygon3d> conflicting_areas;
+  std::vector<lanelet::ConstLanelets> detection_area_lanelets;
+  std::vector<lanelet::ConstLanelets> conflicting_area_lanelets;
 
-  util::getObjectivePolygons(
+  util::getObjectiveLanelets(
     lanelet_map_ptr, routing_graph_ptr, lane_id_, planner_param_.intersection_param,
-    &conflicting_areas, &detection_areas, logger_);
-  if (detection_areas.empty()) {
+    &conflicting_area_lanelets, &detection_area_lanelets, logger_);
+  std::vector<lanelet::CompoundPolygon3d> conflicting_areas = util::getPolygon3dFromLaneletsVec(
+    conflicting_area_lanelets, planner_param_.intersection_param.detection_area_length);
+  if (conflicting_areas.empty()) {
     RCLCPP_DEBUG(logger_, "no detection area. skip computation.");
     return true;
   }

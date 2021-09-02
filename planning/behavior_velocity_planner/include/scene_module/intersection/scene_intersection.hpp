@@ -25,6 +25,7 @@
 #include "autoware_perception_msgs/msg/dynamic_object.hpp"
 #include "autoware_perception_msgs/msg/dynamic_object_array.hpp"
 #include "autoware_planning_msgs/msg/path_with_lane_id.hpp"
+#include "autoware_utils/autoware_utils.hpp"
 #include "geometry_msgs/msg/point.hpp"
 
 #include "lanelet2_core/LaneletMap.h"
@@ -107,7 +108,11 @@ public:
     double stuck_vehicle_vel_thr;  //! Threshold of the speed to be recognized as stopped
     double intersection_velocity;  //! used for intersection passing time
     double intersection_max_acc;   //! used for calculating intersection velocity
+    double detection_area_margin;  //! used for detecting objects in detection area
     double detection_area_length;  //! used to create detection area polygon
+    double detection_area_angle_thr;  //! threshold in checking the angle of detecting objects
+    double min_predicted_path_confidence;
+    //! minimum confidence value of predicted path to use for collision detection
     double external_input_timeout;  //! used to disable external input
   };
 
@@ -139,6 +144,7 @@ private:
    * actual collision check algorithm inside this function)
    * @param path             ego-car lane
    * @param detection_areas  collision check is performed for vehicles that exist in this area
+   * @param detection_area_lanelet_ids  angle check is performed for obstacles using this lanelet ids
    * @param objects_ptr      target objects
    * @param closest_idx      ego-car position index on the lane
    * @return true if collision is detected
@@ -146,6 +152,7 @@ private:
   bool checkCollision(
     const autoware_planning_msgs::msg::PathWithLaneId & path,
     const std::vector<lanelet::CompoundPolygon3d> & detection_areas,
+    const std::vector<int> & detection_area_lanelet_ids,
     const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr objects_ptr,
     const int closest_idx);
 
@@ -221,6 +228,16 @@ private:
    * @return rue if the object has a target type
    */
   bool isTargetExternalInputStatus(const int target_status);
+
+  /**
+   * @brief Whether the given pose belongs to any target lanelet or not
+   * @param pose pose to be checked
+   * @param target_lanelet_ids id list of target lanelets
+   * @param thresh_angle angle threshold considered to belong to a lanelet
+   * @return true if the given pose belongs to any target lanelet
+   */
+  bool checkAngleForTargetLanelets(
+    const geometry_msgs::msg::Pose & pose, const std::vector<int> & target_lanelet_ids);
 
   StateMachine state_machine_;  //! for state
 

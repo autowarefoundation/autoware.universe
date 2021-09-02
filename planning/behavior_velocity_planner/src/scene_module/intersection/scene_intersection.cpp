@@ -74,12 +74,21 @@ bool IntersectionModule::modifyPathVelocity(
   const auto routing_graph_ptr = planner_data_->routing_graph;
 
   /* get detection area and conflicting area */
-  std::vector<lanelet::CompoundPolygon3d> detection_areas;
-  std::vector<lanelet::CompoundPolygon3d> conflicting_areas;
+  std::vector<lanelet::ConstLanelets> detection_area_lanelets;
+  std::vector<lanelet::ConstLanelets> conflicting_area_lanelets;
 
-  util::getObjectivePolygons(
-    lanelet_map_ptr, routing_graph_ptr, lane_id_, planner_param_, &conflicting_areas,
-    &detection_areas, logger_);
+  util::getObjectiveLanelets(
+    lanelet_map_ptr, routing_graph_ptr, lane_id_, planner_param_, &conflicting_area_lanelets,
+    &detection_area_lanelets, logger_);
+  std::vector<lanelet::CompoundPolygon3d> conflicting_areas = util::getPolygon3dFromLaneletsVec(
+    conflicting_area_lanelets, planner_param_.detection_area_length);
+  std::vector<lanelet::CompoundPolygon3d> detection_areas = util::getPolygon3dFromLaneletsVec(
+    detection_area_lanelets, planner_param_.detection_area_length);
+  std::vector<int> conflicting_area_lanelet_ids =
+    util::getLaneletIdsFromLaneletsVec(conflicting_area_lanelets);
+  std::vector<int> detection_area_lanelet_ids =
+    util::getLaneletIdsFromLaneletsVec(detection_area_lanelets);
+
   if (detection_areas.empty()) {
     RCLCPP_DEBUG(logger_, "no detection area. skip computation.");
     return true;
@@ -129,7 +138,8 @@ bool IntersectionModule::modifyPathVelocity(
   const auto objects_ptr = planner_data_->dynamic_objects;
 
   /* calculate dynamic collision around detection area */
-  bool has_collision = checkCollision(*path, detection_areas, objects_ptr, closest_idx);
+  bool has_collision =
+    checkCollision(*path, detection_areas, detection_area_lanelet_ids, objects_ptr, closest_idx);
   bool is_stuck = checkStuckVehicleInIntersection(*path, closest_idx, stop_line_idx, objects_ptr);
   bool is_entry_prohibited = (has_collision || is_stuck);
   if (external_go) {
@@ -195,6 +205,7 @@ void IntersectionModule::cutPredictPathWithDuration(
 bool IntersectionModule::checkCollision(
   const autoware_planning_msgs::msg::PathWithLaneId & path,
   const std::vector<lanelet::CompoundPolygon3d> & detection_areas,
+  const std::vector<int> & detection_area_lanelet_ids,
   const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr objects_ptr,
   const int closest_idx)
 {
@@ -217,13 +228,18 @@ bool IntersectionModule::checkCollision(
     }
 
     // keep vehicle in detection_area
-    const Polygon2d obj_poly = toFootprintPolygon(object);
-
+    const Point2d obj_point(
+      object.state.pose_covariance.pose.position.x, object.state.pose_covariance.pose.position.y);
     for (const auto & detection_area : detection_areas) {
       const auto detection_poly = lanelet::utils::to2D(detection_area).basicPolygon();
-      const bool is_in_objective_lanelet =
-        !boost::geometry::disjoint(obj_poly, toBoostPoly(detection_poly));
-      if (is_in_objective_lanelet) {
+      const double dist_to_detection_area =
+        boost::geometry::distance(obj_point, toBoostPoly(detection_poly));
+      if (dist_to_detection_area > planner_param_.detection_area_margin) {
+        // ignore the object far from detection area
+        continue;
+      }
+      // check direction of objects
+      if (checkAngleForTargetLanelets(object_pose, detection_area_lanelet_ids)) {
         target_objects.objects.push_back(object);
         break;
       }
@@ -241,6 +257,10 @@ bool IntersectionModule::checkCollision(
   for (const auto & object : target_objects.objects) {
     bool has_collision = false;
     for (const auto & predicted_path : object.state.predicted_paths) {
+      if (predicted_path.confidence < planner_param_.min_predicted_path_confidence) {
+        // ignore the predicted path with too low confidence
+        continue;
+      }
       has_collision = bg::intersects(ego_poly, to_bg2d(predicted_path.path));
       if (has_collision) {
         collision_detected = true;
@@ -479,4 +499,23 @@ bool IntersectionModule::isTargetExternalInputStatus(const int target_status)
          (clock_->now() - planner_data_->external_intersection_status_input.get().header.stamp)
          .seconds() < planner_param_.external_input_timeout;
 }
+
+bool IntersectionModule::checkAngleForTargetLanelets(
+  const geometry_msgs::msg::Pose & pose, const std::vector<int> & target_lanelet_ids)
+{
+  for (const int lanelet_id : target_lanelet_ids) {
+    const auto ll = planner_data_->lanelet_map->laneletLayer.get(lanelet_id);
+    if (!lanelet::utils::isInLanelet(pose, ll, planner_param_.detection_area_margin)) {
+      continue;
+    }
+    const double ll_angle = lanelet::utils::getLaneletAngle(ll, pose.position);
+    const double pose_angle = tf2::getYaw(pose.orientation);
+    const double angle_diff = autoware_utils::normalizeRadian(ll_angle - pose_angle);
+    if (std::fabs(angle_diff) < planner_param_.detection_area_angle_thr) {
+      return true;
+    }
+  }
+  return false;
+}
+
 }  // namespace behavior_velocity_planner

@@ -75,7 +75,12 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
   ip.stuck_vehicle_vel_thr = node.declare_parameter(ns + ".stuck_vehicle_vel_thr", 3.0 / 3.6);
   ip.intersection_velocity = node.declare_parameter(ns + ".intersection_velocity", 10.0 / 3.6);
   ip.intersection_max_acc = node.declare_parameter(ns + ".intersection_max_accel", 0.5);
+  ip.detection_area_margin = node.declare_parameter(ns + ".detection_area_margin", 0.5);
   ip.detection_area_length = node.declare_parameter(ns + ".detection_area_length", 200.0);
+  ip.detection_area_angle_thr =
+    node.declare_parameter(ns + ".detection_area_angle_threshold", M_PI / 4.0);
+  ip.min_predicted_path_confidence =
+    node.declare_parameter(ns + ".min_predicted_path_confidence", 0.05);
   ip.external_input_timeout = node.declare_parameter(ns + ".walkway.external_input_timeout", 1.0);
   auto & mp = merge_from_private_area_param_;
   mp.stop_duration_sec = node.declare_parameter(
