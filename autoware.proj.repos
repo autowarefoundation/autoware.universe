@@ -60,7 +60,7 @@ repositories:
     version: main
   simulator/scenario_simulator:
     type: git
-    url: git@github.com:tier4/scenario_simulator.auto.git
+    url: git@github.com:tier4/scenario_simulator_v2.git
     version: master
   simulator/logsim:
     type: git
