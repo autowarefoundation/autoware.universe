@@ -40,6 +40,10 @@ public:
   void onTrajectoryPointValueChecker(DiagnosticStatusWrapper & stat);
   void onTrajectoryIntervalChecker(DiagnosticStatusWrapper & stat);
   void onTrajectoryCurvatureChecker(DiagnosticStatusWrapper & stat);
+  void onTrajectoryRelativeAngleChecker(DiagnosticStatusWrapper & stat);
+  static bool checkTrajectoryRelativeAngle(
+    const Trajectory & traj, const double relative_angle_threshold, const double min_dist_threshold,
+    std::string & error_msg);
 
   static bool checkTrajectoryPointValue(
     const Trajectory & traj, std::string & error_msg);
@@ -65,6 +69,8 @@ private:
   // Parameter
   double error_interval_;
   double error_curvature_;
+  double error_sharp_angle_;
+  double ignore_too_close_points_;
 };
 }  // namespace planning_diagnostics
 
