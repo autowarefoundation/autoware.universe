@@ -18,6 +18,8 @@
   <arg name="input_is_emergency" default="/system/emergency/is_emergency" />
   <arg name="input_hazard_status" default="/system/emergency/hazard_status" />
   <arg name="input_stop_reason" default="/planning/scenario_planning/status/stop_reasons" />
+  <arg name="input_v2x_command" default="/planning/scenario_planning/status/infrastructure_commands" />
+  <arg name="input_v2x_state" default="/system/v2x/virtual_traffic_light_states" />
   <arg name="input_diagnostics" default="/diagnostics_agg" />
   <arg name="input_global_rpt" default="/pacmod/parsed_tx/global_rpt" />
   <arg name="input_lane_change_available" default="/planning/scenario_planning/lane_driving/lane_change_available" />
@@ -84,6 +86,8 @@
   <arg name="get_stop_speed_exceeded" default="autoware/get/stop_speed_exceeded" />
   <arg name="get_traffic_light_status" default="traffic_light/get/status" />
   <arg name="get_nearest_traffic_light_status" default="traffic_light/get/nearest_traffic_light_status" />
+  <arg name="get_v2x_command" default="/awapi/tmp/infrastructure_commands" />
+  <arg name="get_v2x_state" default="/awapi/tmp/virtual_traffic_light_states" />
 
   <arg name="use_intra_process" default="false" />
   <arg name="use_multithread" default="false" />
@@ -104,6 +108,8 @@
       <remap from="input/is_emergency" to="$(var input_is_emergency)" />
       <remap from="input/hazard_status" to="$(var input_hazard_status)" />
       <remap from="input/stop_reason" to="$(var input_stop_reason)" />
+      <remap from="input/v2x_command" to="$(var input_v2x_command)" />
+      <remap from="input/v2x_state" to="$(var input_v2x_state)" />
       <remap from="input/diagnostics" to="$(var input_diagnostics)" />
       <remap from="input/global_rpt" to="$(var input_global_rpt)" />
       <remap from="input/lane_change_available" to="$(var input_lane_change_available)" />
@@ -124,6 +130,8 @@
       <remap from="output/max_velocity" to="$(var output_max_velocity)" />
       <remap from="output/door_control" to="$(var output_door_control)" />
       <remap from="output/door_status" to="$(var get_door_status)" />
+      <remap from="output/v2x_command" to="$(var get_v2x_command)" />
+      <remap from="output/v2x_state" to="$(var get_v2x_state)" />
       <param name="node/emergency_stop" value="$(var node_emergency_stop)" />
       <param name="param/emergency_stop" value="$(var param_emergency_stop)" />
       <param name="node/max_velocity" value="$(var node_max_velocity)" />

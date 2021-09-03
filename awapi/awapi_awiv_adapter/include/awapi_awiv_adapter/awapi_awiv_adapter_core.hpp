@@ -27,6 +27,8 @@
 #include "autoware_planning_msgs/msg/stop_reason_array.hpp"
 #include "autoware_planning_msgs/msg/trajectory.hpp"
 #include "autoware_system_msgs/msg/autoware_state.hpp"
+#include "autoware_v2x_msgs/msg/infrastructure_command_array.hpp"
+#include "autoware_v2x_msgs/msg/virtual_traffic_light_state_array.hpp"
 #include "autoware_vehicle_msgs/msg/control_mode.hpp"
 #include "autoware_vehicle_msgs/msg/shift_stamped.hpp"
 #include "autoware_vehicle_msgs/msg/steering.hpp"
@@ -44,6 +46,7 @@
 #include "awapi_awiv_adapter/awapi_obstacle_avoidance_state_publisher.hpp"
 #include "awapi_awiv_adapter/awapi_pacmod_util.hpp"
 #include "awapi_awiv_adapter/awapi_stop_reason_aggregator.hpp"
+#include "awapi_awiv_adapter/awapi_v2x_aggregator.hpp"
 #include "awapi_awiv_adapter/awapi_vehicle_state_publisher.hpp"
 
 namespace autoware_api
@@ -69,6 +72,10 @@ private:
   rclcpp::Subscription<autoware_system_msgs::msg::HazardStatusStamped>::SharedPtr
     sub_hazard_status_;
   rclcpp::Subscription<autoware_planning_msgs::msg::StopReasonArray>::SharedPtr sub_stop_reason_;
+  rclcpp::Subscription<autoware_v2x_msgs::msg::InfrastructureCommandArray>::SharedPtr
+    sub_v2x_command_;
+  rclcpp::Subscription<autoware_v2x_msgs::msg::VirtualTrafficLightStateArray>::SharedPtr
+    sub_v2x_state_;
   rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr sub_diagnostics_;
   rclcpp::Subscription<pacmod_msgs::msg::GlobalRpt>::SharedPtr sub_global_rpt_;
   rclcpp::Subscription<autoware_planning_msgs::msg::LaneChangeStatus>::SharedPtr
@@ -92,6 +99,9 @@ private:
   // publisher
   rclcpp::Publisher<pacmod_msgs::msg::SystemCmdInt>::SharedPtr pub_door_control_;
   rclcpp::Publisher<autoware_api_msgs::msg::DoorStatus>::SharedPtr pub_door_status_;
+  rclcpp::Publisher<autoware_v2x_msgs::msg::InfrastructureCommandArray>::SharedPtr pub_v2x_command_;
+  rclcpp::Publisher<autoware_v2x_msgs::msg::VirtualTrafficLightStateArray>::SharedPtr
+    pub_v2x_state_;
 
   // timer
   rclcpp::TimerBase::SharedPtr timer_;
@@ -117,6 +127,10 @@ private:
     const autoware_system_msgs::msg::HazardStatusStamped::ConstSharedPtr msg_ptr);
   void callbackStopReason(
     const autoware_planning_msgs::msg::StopReasonArray::ConstSharedPtr msg_ptr);
+  void callbackV2XCommand(
+    const autoware_v2x_msgs::msg::InfrastructureCommandArray::ConstSharedPtr msg_ptr);
+  void callbackV2XState(
+    const autoware_v2x_msgs::msg::VirtualTrafficLightStateArray::ConstSharedPtr msg_ptr);
   void callbackDiagnostics(const diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr msg_ptr);
   void callbackGlobalRpt(const pacmod_msgs::msg::GlobalRpt::ConstSharedPtr msg_ptr);
   void callbackLaneChangeAvailable(
@@ -150,6 +164,7 @@ private:
   std::unique_ptr<AutowareIvVehicleStatePublisher> vehicle_state_publisher_;
   std::unique_ptr<AutowareIvAutowareStatePublisher> autoware_state_publisher_;
   std::unique_ptr<AutowareIvStopReasonAggregator> stop_reason_aggregator_;
+  std::unique_ptr<AutowareIvV2XAggregator> v2x_aggregator_;
   std::unique_ptr<AutowareIvLaneChangeStatePublisher> lane_change_state_publisher_;
   std::unique_ptr<AutowareIvObstacleAvoidanceStatePublisher>
   obstacle_avoidance_state_publisher_;

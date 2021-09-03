@@ -44,6 +44,8 @@ AutowareIvAdapter::AutowareIvAdapter()
     std::make_unique<AutowareIvStopReasonAggregator>(
     *this, stop_reason_timeout_,
     stop_reason_thresh_dist_);
+  v2x_aggregator_ =
+    std::make_unique<AutowareIvV2XAggregator>(*this);
   lane_change_state_publisher_ = std::make_unique<AutowareIvLaneChangeStatePublisher>(*this);
   obstacle_avoidance_state_publisher_ =
     std::make_unique<AutowareIvObstacleAvoidanceStatePublisher>(*this);
@@ -55,6 +57,10 @@ AutowareIvAdapter::AutowareIvAdapter()
     this->create_publisher<pacmod_msgs::msg::SystemCmdInt>("output/door_control", 1);
   pub_door_status_ =
     this->create_publisher<autoware_api_msgs::msg::DoorStatus>("output/door_status", 1);
+  pub_v2x_command_ = this->create_publisher<autoware_v2x_msgs::msg::InfrastructureCommandArray>(
+    "output/v2x_command", 1);
+  pub_v2x_state_ = this->create_publisher<autoware_v2x_msgs::msg::VirtualTrafficLightStateArray>(
+    "output/v2x_state", 1);
 
   // subscriber
 
@@ -87,6 +93,10 @@ AutowareIvAdapter::AutowareIvAdapter()
     "input/hazard_status", 1, std::bind(&AutowareIvAdapter::callbackHazardStatus, this, _1));
   sub_stop_reason_ = this->create_subscription<autoware_planning_msgs::msg::StopReasonArray>(
     "input/stop_reason", 100, std::bind(&AutowareIvAdapter::callbackStopReason, this, _1));
+  sub_v2x_command_ = this->create_subscription<autoware_v2x_msgs::msg::InfrastructureCommandArray>(
+    "input/v2x_command", 100, std::bind(&AutowareIvAdapter::callbackV2XCommand, this, _1));
+  sub_v2x_state_ = this->create_subscription<autoware_v2x_msgs::msg::VirtualTrafficLightStateArray>(
+    "input/v2x_state", 100, std::bind(&AutowareIvAdapter::callbackV2XState, this, _1));
   sub_diagnostics_ = this->create_subscription<diagnostic_msgs::msg::DiagnosticArray>(
     "input/diagnostics", 1, std::bind(&AutowareIvAdapter::callbackDiagnostics, this, _1));
   sub_global_rpt_ = this->create_subscription<pacmod_msgs::msg::GlobalRpt>(
@@ -161,6 +171,14 @@ void AutowareIvAdapter::timerCallback()
 
   // publish pacmod door status
   pub_door_status_->publish(pacmod_util::getDoorStatusMsg(aw_info_.door_state_ptr));
+
+  // publish v2x command and state
+  if (aw_info_.v2x_command_ptr) {
+    pub_v2x_command_->publish(*aw_info_.v2x_command_ptr);
+  }
+  if (aw_info_.v2x_state_ptr) {
+    pub_v2x_state_->publish(*aw_info_.v2x_state_ptr);
+  }
 }
 
 void AutowareIvAdapter::callbackSteer(
@@ -254,6 +272,18 @@ void AutowareIvAdapter::callbackStopReason(
   const autoware_planning_msgs::msg::StopReasonArray::ConstSharedPtr msg_ptr)
 {
   aw_info_.stop_reason_ptr = stop_reason_aggregator_->updateStopReasonArray(msg_ptr, aw_info_);
+}
+
+void AutowareIvAdapter::callbackV2XCommand(
+  const autoware_v2x_msgs::msg::InfrastructureCommandArray::ConstSharedPtr msg_ptr)
+{
+  aw_info_.v2x_command_ptr = v2x_aggregator_->updateV2XCommand(msg_ptr);
+}
+
+void AutowareIvAdapter::callbackV2XState(
+  const autoware_v2x_msgs::msg::VirtualTrafficLightStateArray::ConstSharedPtr msg_ptr)
+{
+  aw_info_.v2x_state_ptr = v2x_aggregator_->updateV2XState(msg_ptr);
 }
 
 void AutowareIvAdapter::callbackDiagnostics(
