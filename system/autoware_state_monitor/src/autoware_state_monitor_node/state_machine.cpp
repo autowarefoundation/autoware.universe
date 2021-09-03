@@ -173,7 +173,7 @@ bool StateMachine::isOverridden() const {return !isEngaged();}
 
 bool StateMachine::isEmergency() const
 {
-  if (!state_input_.hazard_status->status.emergency_holding) {
+  if (!state_input_.hazard_status) {
     return false;
   }
 
