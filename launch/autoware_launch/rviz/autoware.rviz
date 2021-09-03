@@ -976,6 +976,24 @@ Visualization Manager:
                       Value: true
                     - Class: rviz_default_plugins/MarkerArray
                       Enabled: true
+                      Name: VirtualTrafficLight
+                      Namespaces:
+                        end_lines: false
+                        instrument_center: false
+                        instrument_id: false
+                        start_line: false
+                        stop_factor_text: true
+                        stop_line: false
+                        stop_virtual_wall: true
+                      Topic:
+                        Depth: 5
+                        Durability Policy: Volatile
+                        History Policy: Keep Last
+                        Reliability Policy: Reliable
+                        Value: /planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/virtual_traffic_light
+                      Value: true
+                    - Class: rviz_default_plugins/MarkerArray
+                      Enabled: true
                       Name: StopLine
                       Namespaces:
                         factor_text: true
