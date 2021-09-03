@@ -46,6 +46,9 @@ PlanningErrorMonitorNode::PlanningErrorMonitorNode(const rclcpp::NodeOptions & n
   updater_.add(
     "trajectory_curvature_validation", this,
     &PlanningErrorMonitorNode::onTrajectoryCurvatureChecker);
+  updater_.add(
+    "trajectory_relative_angle_validation", this,
+    &PlanningErrorMonitorNode::onTrajectoryRelativeAngleChecker);
 
   auto on_timer_ = std::bind(&PlanningErrorMonitorNode::onTimer, this);
   timer_ = std::make_shared<rclcpp::GenericTimer<decltype(on_timer_)>>(
@@ -56,6 +59,8 @@ PlanningErrorMonitorNode::PlanningErrorMonitorNode(const rclcpp::NodeOptions & n
   // Parameter
   error_interval_ = declare_parameter("error_interval", 100.0);
   error_curvature_ = declare_parameter("error_curvature", 1.0);
+  error_sharp_angle_ = declare_parameter("error_sharp_angle", M_PI_4);
+  ignore_too_close_points_ = declare_parameter("ignore_too_close_points", 0.05);
 }
 
 void PlanningErrorMonitorNode::onTimer() {updater_.force_update();}
@@ -95,6 +100,20 @@ void PlanningErrorMonitorNode::onTrajectoryCurvatureChecker(DiagnosticStatusWrap
   std::string error_msg;
   const auto diag_level =
     checkTrajectoryCurvature(*current_trajectory_, error_curvature_, error_msg) ?
+    DiagnosticStatus::OK :
+    DiagnosticStatus::ERROR;
+  stat.summary(diag_level, error_msg);
+}
+
+void PlanningErrorMonitorNode::onTrajectoryRelativeAngleChecker(DiagnosticStatusWrapper & stat)
+{
+  if (!current_trajectory_) {return;}
+
+  std::string error_msg;
+  const auto diag_level =
+    checkTrajectoryRelativeAngle(
+    *current_trajectory_, error_sharp_angle_, ignore_too_close_points_,
+    error_msg) ?
     DiagnosticStatus::OK :
     DiagnosticStatus::ERROR;
   stat.summary(diag_level, error_msg);
@@ -149,6 +168,58 @@ bool PlanningErrorMonitorNode::checkTrajectoryInterval(
   return true;
 }
 
+
+bool PlanningErrorMonitorNode::checkTrajectoryRelativeAngle(
+  const Trajectory & traj, const double angle_threshold, const double min_dist_threshold,
+  std::string & error_msg)
+{
+  error_msg = "This trajectory's relative angle is within the expected range";
+
+  // We need at least three points to compute relative angle
+  const size_t relative_angle_points_num = 3;
+  if (traj.points.size() < relative_angle_points_num) {return true;}
+
+  for (size_t p1_id = 0; p1_id <= traj.points.size() - relative_angle_points_num; ++p1_id) {
+    // Get Point1
+    const auto & p1 = traj.points.at(p1_id).pose.position;
+
+    // Get Point2
+    const auto & p2 = traj.points.at(p1_id + 1).pose.position;
+
+    // Get Point3
+    const auto & p3 = traj.points.at(p1_id + 2).pose.position;
+
+    // ignore invert driving direction
+    if (traj.points.at(p1_id).twist.linear.x < 0 ||
+      traj.points.at(p1_id + 1).twist.linear.x < 0 ||
+      traj.points.at(p1_id + 2).twist.linear.x < 0) {continue;}
+
+    // convert to p1 coordinate
+    const double x3 = p3.x - p1.x;
+    const double x2 = p2.x - p1.x;
+    const double y3 = p3.y - p1.y;
+    const double y2 = p2.y - p1.y;
+
+    // skip too close points case
+    if (std::hypot(x3, y3) < min_dist_threshold ||
+      std::hypot(x2, y2) < min_dist_threshold)
+    {
+      continue;
+    }
+
+    // calculate relative angle of vector p3 based on p1p2 vector
+    const double th = std::atan2(y2, x2);
+    const double th2 = std::atan2(
+      -x3 * std::sin(th) + y3 * std::cos(th), x3 * std::cos(
+        th) + y3 * std::sin(th));
+    if (std::abs(th2) > angle_threshold) {
+      error_msg = "This Trajectory's relative angle has larger value than the expected value";
+      // std::cout << error_msg << std::endl;
+      return false;
+    }
+  }
+  return true;
+}
 bool PlanningErrorMonitorNode::checkTrajectoryCurvature(
   const Trajectory & traj, const double & curvature_threshold, std::string & error_msg)
 {

@@ -97,14 +97,69 @@ TEST(PlanningErrorMonitor, TrajectoryCurvatureChecker)
         valid_error_msg));
     ASSERT_EQ(valid_error_msg, "This trajectory's curvature is within the expected range");
   }
+}
 
-  // TODO(Horibe) write test for large curvature trajectory
+TEST(PlanningErrorMonitor, TrajectoryRelativeAngleChecker)
+{
+  using autoware_planning_msgs::msg::Trajectory;
+  using planning_diagnostics::PlanningErrorMonitorNode;
+  const double too_close_dist = 0.05;
+  const double too_sharp_turn = M_PI_4;
   {
-    // Trajectory valid_traj = generateTrajectory(NOMINAL_INTERVAL);
-    // std::string valid_error_msg;
-    // ASSERT_TRUE(
-    //   PlanningErrorMonitorNode::checkTrajectoryCurvature(
-    //     valid_traj, ERROR_CURVATURE, valid_error_msg));
-    // ASSERT_EQ(valid_error_msg, "This trajectory's curvature is within the expected range");
+    /**
+     * y: 0 0 0 0&INF 0 0 0 0 0 0
+     **/
+    Trajectory valid_traj = generateTrajectory(NOMINAL_INTERVAL);
+    valid_traj.points[4].pose.position.x = 3;
+    valid_traj.points[4].pose.position.y = 10;
+    // for (auto t : valid_traj.points) {
+    //   std::cout << "p: (x , y) = " << "( "<<t.pose.position.x <<
+    // " , " << t.pose.position.y <<" )"<< std::endl;
+    // }
+    std::string valid_error_msg;
+    ASSERT_FALSE(
+      PlanningErrorMonitorNode::checkTrajectoryRelativeAngle(
+        valid_traj, too_sharp_turn, too_close_dist, valid_error_msg));
+    ASSERT_EQ(
+      valid_error_msg,
+      "This Trajectory's relative angle has larger value than the expected value");
+  }
+
+  {
+    /** <---inverted pattern-----
+     * y: 0 0 0 0 INF 0 0 0 0 0 0
+     **/
+    Trajectory valid_traj = generateTrajectory(NOMINAL_INTERVAL);
+    valid_traj.points[4].pose.position.y = -10000000;
+    for (auto t : valid_traj.points) {
+      t.pose.position.x *= -1;
+    }
+    std::string valid_error_msg;
+    ASSERT_FALSE(
+      PlanningErrorMonitorNode::checkTrajectoryRelativeAngle(
+        valid_traj, too_sharp_turn, too_close_dist, valid_error_msg));
+    ASSERT_EQ(
+      valid_error_msg,
+      "This Trajectory's relative angle has larger value than the expected value");
+  }
+
+  {
+    /** vertical pattern
+     * x: 0 0 0 0 INF 0 0 0 0 0 0
+     **/
+    Trajectory valid_traj = generateTrajectory(NOMINAL_INTERVAL);
+    for (size_t i = 0; i < valid_traj.points.size(); i++) {
+      auto & p = valid_traj.points[i].pose.position;
+      p.x = 0;
+      p.y = i;
+    }
+    valid_traj.points[4].pose.position.x = -10000000;
+    std::string valid_error_msg;
+    ASSERT_FALSE(
+      PlanningErrorMonitorNode::checkTrajectoryRelativeAngle(
+        valid_traj, too_sharp_turn, too_close_dist, valid_error_msg));
+    ASSERT_EQ(
+      valid_error_msg,
+      "This Trajectory's relative angle has larger value than the expected value");
   }
 }

@@ -5,5 +5,7 @@
     <remap from="~/input/trajectory" to="$(var input/trajectory)" />
     <param name="error_interval" value="100.0" />
     <param name="error_curvature" value="2.0" />
+    <param name="error_sharp_angle" value="0.785398"/>
+    <param name="ignore_too_close_points" value="0.005" />
   </node>
 </launch>

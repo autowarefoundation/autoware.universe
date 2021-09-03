@@ -20,6 +20,10 @@ This function computes interval distance between two consecutive points, and wil
 
 This function checks if the curvature at each point on a trajectory has an appropriate value. Calculation details are described in the following picture. First, we choose one point(green point in the picture) that are 1.0[m] behind the current point. Then we get a point(blue point in the picture) 1.0[m] ahead of the current point. Using these three points, we calculate the curvature by [this method](https://en.wikipedia.org/wiki/Menger_curvature).
 
+### Relative Angle Checker (onTrajectoryRelativeAngleChecker)
+
+This function checks if the relative angle at point1 generated from point2 and 3 on a trajectory has an appropriate value.
+
 ![curvature_calculation_diagram](./media/curvature_calculation_diagram.svg)
 
 ## Inputs / Outputs
@@ -32,16 +36,18 @@ This function checks if the curvature at each point on a trajectory has an appro
 
 ### Output
 
-| Name          | Type                              | Description         |
-| ------------- | --------------------------------- | ------------------- |
-| `diagnostics` | `diagnostic_msgs/DiagnosticArray` | diagnostics outputs |
+| Name           | Type                              | Description         |
+| -------------- | --------------------------------- | ------------------- |
+| `/diagnostics` | `diagnostic_msgs/DiagnosticArray` | diagnostics outputs |
 
 ## Parameters
 
-| Name              | Type     | Description                           | Default value |
-| :---------------- | :------- | :------------------------------------ | :------------ |
-| `error_interval`  | `double` | Error Interval Distance Threshold [m] | 100.0         |
-| `error_curvature` | `double` | Error Curvature Threshold             | 1.0           |
+| Name                      | Type     | Description                           | Default value |
+| :------------------------ | :------- | :------------------------------------ | :------------ |
+| `error_interval`          | `double` | Error Interval Distance Threshold [m] | 100.0         |
+| `error_curvature`         | `double` | Error Curvature Threshold             | 1.0           |
+| `error_sharp_angle`       | `double` | Error Sharp Angle Threshold           | $\pi$/4       |
+| `ignore_too_close_points` | `double` | Ignore Too Close Distance Threshold   | 0.005         |
 
 ## Assumptions / Known limits
 
