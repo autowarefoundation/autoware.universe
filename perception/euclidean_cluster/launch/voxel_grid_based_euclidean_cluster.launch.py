@@ -56,7 +56,7 @@ def launch_setup(context, *args, **kwargs):
 
     use_map_euclidean_cluster_component = ComposableNode(
         package=pkg,
-        plugin='euclidean_cluster::VoxelGridBasedEuclideanClusterNodelet',
+        plugin='euclidean_cluster::VoxelGridBasedEuclideanClusterNode',
         name=AnonName('euclidean_cluster'),
         remappings=[('input', 'compare_map_filtered/pointcloud'),
                     ('output', LaunchConfiguration('output_clusters'))],
@@ -65,7 +65,7 @@ def launch_setup(context, *args, **kwargs):
 
     disuse_map_euclidean_cluster_component = ComposableNode(
         package=pkg,
-        plugin='euclidean_cluster::VoxelGridBasedEuclideanClusterNodelet',
+        plugin='euclidean_cluster::VoxelGridBasedEuclideanClusterNode',
         name=AnonName('euclidean_cluster'),
         remappings=[('input', 'voxel_grid_filtered/pointcloud'),
                     ('output', LaunchConfiguration('output_clusters'))],
