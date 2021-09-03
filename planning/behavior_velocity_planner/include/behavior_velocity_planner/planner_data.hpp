@@ -34,6 +34,7 @@
 #include "autoware_perception_msgs/msg/dynamic_object_array.hpp"
 #include "autoware_perception_msgs/msg/traffic_light_state_array.hpp"
 #include "autoware_perception_msgs/msg/traffic_light_state_stamped.hpp"
+#include "autoware_v2x_msgs/msg/virtual_traffic_light_state_array.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/twist_stamped.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
@@ -81,6 +82,8 @@ struct PlannerData
   external_traffic_light_id_map;
   boost::optional<autoware_api_msgs::msg::CrosswalkStatus> external_crosswalk_status_input;
   boost::optional<autoware_api_msgs::msg::IntersectionStatus> external_intersection_status_input;
+  autoware_v2x_msgs::msg::VirtualTrafficLightStateArray::ConstSharedPtr
+    virtual_traffic_light_states;
 
   // parameters
   vehicle_info_util::VehicleInfo vehicle_info_;

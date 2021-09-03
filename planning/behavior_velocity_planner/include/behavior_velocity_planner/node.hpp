@@ -61,6 +61,8 @@ private:
     sub_external_intersection_states_;
   rclcpp::Subscription<autoware_perception_msgs::msg::TrafficLightStateArray>::SharedPtr
     sub_external_traffic_light_states_;
+  rclcpp::Subscription<autoware_v2x_msgs::msg::VirtualTrafficLightStateArray>::SharedPtr
+    sub_virtual_traffic_light_states_;
 
   void onTrigger(const autoware_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg);
   void onDynamicObjects(
@@ -75,6 +77,8 @@ private:
   void onExternalCrosswalkStates(const autoware_api_msgs::msg::CrosswalkStatus::ConstSharedPtr msg);
   void onExternalIntersectionStates(
     const autoware_api_msgs::msg::IntersectionStatus::ConstSharedPtr msg);
+  void onVirtualTrafficLightStates(
+    const autoware_v2x_msgs::msg::VirtualTrafficLightStateArray::ConstSharedPtr msg);
 
   // publisher
   rclcpp::Publisher<autoware_planning_msgs::msg::Path>::SharedPtr path_pub_;

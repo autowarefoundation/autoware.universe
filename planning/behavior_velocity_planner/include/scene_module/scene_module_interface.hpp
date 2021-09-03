@@ -23,6 +23,7 @@
 #include "autoware_planning_msgs/msg/path_with_lane_id.hpp"
 #include "autoware_planning_msgs/msg/stop_reason.hpp"
 #include "autoware_planning_msgs/msg/stop_reason_array.hpp"
+#include "autoware_v2x_msgs/msg/infrastructure_command_array.hpp"
 
 #include "behavior_velocity_planner/planner_data.hpp"
 
@@ -53,6 +54,17 @@ public:
     planner_data_ = planner_data;
   }
 
+  boost::optional<autoware_v2x_msgs::msg::InfrastructureCommand> getInfrastructureCommand()
+  {
+    return infrastructure_command_;
+  }
+
+  void setInfrastructureCommand(
+    const boost::optional<autoware_v2x_msgs::msg::InfrastructureCommand> & command)
+  {
+    infrastructure_command_ = command;
+  }
+
   boost::optional<int> getFirstStopPathPointIndex() {return first_stop_path_point_index_;}
 
 protected:
@@ -60,6 +72,7 @@ protected:
   rclcpp::Logger logger_;
   rclcpp::Clock::SharedPtr clock_;
   std::shared_ptr<const PlannerData> planner_data_;
+  boost::optional<autoware_v2x_msgs::msg::InfrastructureCommand> infrastructure_command_;
   boost::optional<int> first_stop_path_point_index_;
 };
 
@@ -73,6 +86,9 @@ public:
     pub_debug_ = node.create_publisher<visualization_msgs::msg::MarkerArray>(ns, 20);
     pub_stop_reason_ = node.create_publisher<autoware_planning_msgs::msg::StopReasonArray>(
       "~/output/stop_reasons", 20);
+    pub_infrastructure_commands_ =
+      node.create_publisher<autoware_v2x_msgs::msg::InfrastructureCommandArray>(
+      "~/output/infrastructure_commands", 20);
   }
 
   virtual ~SceneModuleManagerInterface() = default;
@@ -98,12 +114,19 @@ public:
     stop_reason_array.header.frame_id = "map";
     stop_reason_array.header.stamp = clock_->now();
 
+    autoware_v2x_msgs::msg::InfrastructureCommandArray infrastructure_command_array;
+    infrastructure_command_array.stamp = clock_->now();
+
     first_stop_path_point_index_ = static_cast<int>(path->points.size()) - 1;
     for (const auto & scene_module : scene_modules_) {
       autoware_planning_msgs::msg::StopReason stop_reason;
       scene_module->setPlannerData(planner_data_);
       scene_module->modifyPathVelocity(path, &stop_reason);
       stop_reason_array.stop_reasons.emplace_back(stop_reason);
+
+      if (const auto command = scene_module->getInfrastructureCommand()) {
+        infrastructure_command_array.commands.push_back(*command);
+      }
 
       if (scene_module->getFirstStopPathPointIndex() < first_stop_path_point_index_) {
         first_stop_path_point_index_ = scene_module->getFirstStopPathPointIndex();
@@ -117,6 +140,7 @@ public:
     if (!stop_reason_array.stop_reasons.empty()) {
       pub_stop_reason_->publish(stop_reason_array);
     }
+    pub_infrastructure_commands_->publish(infrastructure_command_array);
     pub_debug_->publish(debug_marker_array);
   }
 
@@ -175,6 +199,8 @@ protected:
   rclcpp::Logger logger_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_debug_;
   rclcpp::Publisher<autoware_planning_msgs::msg::StopReasonArray>::SharedPtr pub_stop_reason_;
+  rclcpp::Publisher<autoware_v2x_msgs::msg::InfrastructureCommandArray>::SharedPtr
+    pub_infrastructure_commands_;
 };
 }  // namespace behavior_velocity_planner
 

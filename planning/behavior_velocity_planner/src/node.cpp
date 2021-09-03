@@ -36,6 +36,7 @@
 #include "scene_module/intersection/manager.hpp"
 #include "scene_module/stop_line/manager.hpp"
 #include "scene_module/traffic_light/manager.hpp"
+#include "scene_module/virtual_traffic_light/manager.hpp"
 
 namespace behavior_velocity_planner
 {
@@ -106,6 +107,10 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
     this->create_subscription<autoware_perception_msgs::msg::TrafficLightStateArray>(
     "~/input/external_traffic_light_states", 10,
     std::bind(&BehaviorVelocityPlannerNode::onExternalTrafficLightStates, this, _1));
+  sub_virtual_traffic_light_states_ =
+    this->create_subscription<autoware_v2x_msgs::msg::VirtualTrafficLightStateArray>(
+    "~/input/virtual_traffic_light_states", 10,
+    std::bind(&BehaviorVelocityPlannerNode::onVirtualTrafficLightStates, this, _1));
 
   // Publishers
   path_pub_ = this->create_publisher<autoware_planning_msgs::msg::Path>("~/output/path", 1);
@@ -137,6 +142,9 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   }
   if (this->declare_parameter("launch_detection_area", true)) {
     planner_manager_.launchSceneModule(std::make_shared<DetectionAreaModuleManager>(*this));
+  }
+  if (this->declare_parameter("launch_virtual_traffic_light", true)) {
+    planner_manager_.launchSceneModule(std::make_shared<VirtualTrafficLightModuleManager>(*this));
   }
 }
 
@@ -281,6 +289,13 @@ void BehaviorVelocityPlannerNode::onExternalTrafficLightStates(
     traffic_light_state.state = state;
     planner_data_.external_traffic_light_id_map[state.id] = traffic_light_state;
   }
+}
+
+
+void BehaviorVelocityPlannerNode::onVirtualTrafficLightStates(
+  const autoware_v2x_msgs::msg::VirtualTrafficLightStateArray::ConstSharedPtr msg)
+{
+  planner_data_.virtual_traffic_light_states = msg;
 }
 
 void BehaviorVelocityPlannerNode::onTrigger(
