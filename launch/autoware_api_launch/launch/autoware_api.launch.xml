@@ -8,9 +8,9 @@
   <!-- autoware api adaptor -->
   <group>
     <push-ros-namespace namespace="autoware_api"/>
-    <include file="$(find-pkg-share autoware_iv_external_api_adaptor)/launch/external_api_adaptor.launch.py"/>
-    <include file="$(find-pkg-share autoware_iv_internal_api_adaptor)/launch/internal_api_adaptor.launch.py"/>
-    <include file="$(find-pkg-share autoware_iv_internal_api_adaptor)/launch/internal_api_relay.launch.xml"/>
+    <include file="$(find-pkg-share autoware_api_launch)/launch/include/external_api_adaptor.launch.py"/>
+    <include file="$(find-pkg-share autoware_api_launch)/launch/include/internal_api_adaptor.launch.py"/>
+    <include file="$(find-pkg-share autoware_api_launch)/launch/include/internal_api_relay.launch.xml"/>
   </group>
 
   <!-- autoware api utils -->

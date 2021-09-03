@@ -1,0 +1,26 @@
+<launch>
+  <group>
+    <push-ros-namespace namespace="internal"/>
+    <node pkg="topic_tools" exec="relay" name="traffic_light_states">
+      <param name="input_topic" value="/api/autoware/set/traffic_light_states"/>
+      <param name="output_topic" value="/external/traffic_light_recognition/traffic_light_states"/>
+      <param name="type" value="autoware_perception_msgs/msg/TrafficLightStateArray"/>
+    </node>
+    <node pkg="topic_tools" exec="relay" name="intersection_states">
+      <param name="input_topic" value="/api/autoware/set/intersection_states"/>
+      <param name="output_topic" value="/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/input/external_intersection_states"/>
+      <param name="type" value="autoware_api_msgs/msg/IntersectionStatus"/>
+    </node>
+    <node pkg="topic_tools" exec="relay" name="crosswalk_states">
+      <param name="input_topic" value="/api/autoware/set/crosswalk_states"/>
+      <param name="output_topic" value="/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/input/external_crosswalk_states"/>
+      <param name="type" value="autoware_api_msgs/msg/CrosswalkStatus"/>
+    </node>
+    <!-- TODO(Takagi, Isamu): workaround for topic check -->
+    <node pkg="topic_tools" exec="relay" name="initialpose">
+      <param name="input_topic" value="/initialpose"/>
+      <param name="output_topic" value="/initialpose2d"/>
+      <param name="type" value="geometry_msgs/msg/PoseWithCovarianceStamped"/>
+    </node>
+  </group>
+</launch>
