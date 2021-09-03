@@ -2,7 +2,7 @@
   <!-- Input -->
   <arg name="input_autoware_engage" default="/api/autoware/get/engage" />
   <arg name="input_vehicle_control_mode" default="/vehicle/status/control_mode" />
-  <arg name="input_is_emergency" default="/system/emergency/is_emergency" />
+  <arg name="input_hazard_status" default="/system/emergency/hazard_status" />
   <arg name="input_route" default="/planning/mission_planning/route" />
   <arg name="input_twist" default="/localization/twist" />
 
@@ -28,7 +28,7 @@
   <node pkg="autoware_state_monitor" exec="autoware_state_monitor" name="autoware_state_monitor" output="screen">
     <remap from="input/autoware_engage" to="$(var input_autoware_engage)"/>
     <remap from="input/vehicle_control_mode" to="$(var input_vehicle_control_mode)"/>
-    <remap from="input/is_emergency" to="$(var input_is_emergency)"/>
+    <remap from="input/hazard_status" to="$(var input_hazard_status)"/>
     <remap from="input/route" to="$(var input_route)"/>
     <remap from="input/twist" to="$(var input_twist)"/>
 

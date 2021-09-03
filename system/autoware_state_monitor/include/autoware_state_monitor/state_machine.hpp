@@ -21,7 +21,7 @@
 
 #include "autoware_planning_msgs/msg/route.hpp"
 #include "autoware_planning_msgs/msg/trajectory.hpp"
-#include "autoware_control_msgs/msg/emergency_mode.hpp"
+#include "autoware_system_msgs/msg/hazard_status_stamped.hpp"
 #include "autoware_system_msgs/msg/autoware_state.hpp"
 #include "autoware_vehicle_msgs/msg/control_mode.hpp"
 #include "autoware_vehicle_msgs/msg/engage.hpp"
@@ -46,7 +46,7 @@ struct StateInput
 
   autoware_vehicle_msgs::msg::Engage::ConstSharedPtr autoware_engage;
   autoware_vehicle_msgs::msg::ControlMode::ConstSharedPtr vehicle_control_mode;
-  autoware_control_msgs::msg::EmergencyMode::ConstSharedPtr emergency_mode;
+  autoware_system_msgs::msg::HazardStatusStamped::ConstSharedPtr hazard_status;
   bool is_finalizing = false;
   bool is_route_reset_required = false;
   autoware_planning_msgs::msg::Route::ConstSharedPtr route;
