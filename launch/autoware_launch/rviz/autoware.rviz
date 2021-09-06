@@ -1043,7 +1043,7 @@ Visualization Manager:
                     - Class: rviz_plugins/Path
                       Color Border Vel Max: 3
                       Enabled: true
-                      Name: LaneChangeCanditate
+                      Name: LaneChangeCandidate
                       Topic:
                         Depth: 5
                         Durability Policy: Volatile
