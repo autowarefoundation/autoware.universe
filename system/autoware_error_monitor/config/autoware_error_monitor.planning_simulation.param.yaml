@@ -27,6 +27,7 @@
             "/autoware/map/map_version",
             "/autoware/perception/alive_monitoring",
             "/autoware/planning/alive_monitoring",
+            "/autoware/planning/trajectory_monitoring",
             "/autoware/sensing/alive_monitoring",
             "/autoware/sensing/camera",
             "/autoware/sensing/gnss",
