@@ -169,7 +169,21 @@ The path generation is computed in Frenet coordinates. The shift length profile 
 
 ### Side Shift
 
-[WIP]
+The role of the Side Shift module is to shift the reference path laterally in response to external instructions (such as remote operation).
+
+#### Parameters for path generation
+
+![path_shifter](./image/side_shift_fig1.png)
+
+In the figure, `straight margin distance` is to avoid sudden shifting, that is calculated by `max(min_distance_to_start_shifting, ego_speed * time_to_start_shifting)` . The `shifting distance` is calculated by jerk, with minimum speed and minimum distance parameter, described below. The minimum speed is used to prevent sharp shift when ego vehicle is stopped.
+
+| Name                           | Unit   | Type   | Description                                                                 | Default value |
+| :----------------------------- | :----- | :----- | :-------------------------------------------------------------------------- | :------------ |
+| min_distance_to_start_shifting | [m]    | double | minimum straight distance before shift start.                               | 5.0           |
+| time_to_start_shifting         | [s]    | double | time of minimum straight distance before shift start.                       | 1.0           |
+| shifting_lateral_jerk          | [m/s3] | double | lateral jerk to calculate shifting distance.                                | 0.2           |
+| min_shifting_distance          | [m]    | double | the shifting distance is longer than this length.                           | 5.0           |
+| min_shifting_speed             | [m/s]  | double | lateral jerk is calculated with the greater of current_speed or this speed. | 5.56          |
 
 ## References / External links
 

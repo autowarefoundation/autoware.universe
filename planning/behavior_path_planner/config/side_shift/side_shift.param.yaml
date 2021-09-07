@@ -1,9 +1,8 @@
 /**:
   ros__parameters:
     side_shift:
-      min_fix_distance: 20.0
-      start_avoid_sec: 4.0
-      drivable_area_resolution: 0.1
-      drivable_area_width: 100.0
-      drivable_area_height: 50.0
-      inside_outside_judge_margin: 0.3
+      min_distance_to_start_shifting: 5.0
+      time_to_start_shifting: 1.0
+      shifting_lateral_jerk: 0.2
+      min_shifting_distance: 5.0
+      min_shifting_speed: 5.56

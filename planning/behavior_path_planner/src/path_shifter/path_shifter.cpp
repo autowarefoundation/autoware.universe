@@ -53,6 +53,13 @@ void PathShifter::addShiftPoint(const ShiftPoint & point)
   is_index_aligned_ = false;  // shift_point index has to be updated for new shift points.
 }
 
+
+void PathShifter::setShiftPoints(const std::vector<ShiftPoint> & points)
+{
+  shift_points_ = points;
+  is_index_aligned_ = false;  // shift_point index has to be updated for new shift points.
+}
+
 bool PathShifter::generate(ShiftedPath * shifted_path)
 {
   RCLCPP_DEBUG_STREAM(logger_, "PathShifter::generate start!");

@@ -109,6 +109,7 @@ private:
 
   // (TODO) move to util
   PathWithLaneId clipPathByGoal(const PathWithLaneId & path) const;
+  void clipPathLength(PathWithLaneId & path) const;
 
   /**
    * @brief Execute behavior tree and publish planned data.

@@ -25,6 +25,7 @@
 
 #include "behavior_path_planner/route_handler.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
+#include "behavior_path_planner/path_shifter/path_shifter.hpp"
 
 namespace behavior_path_planner
 {
@@ -35,12 +36,14 @@ using nav_msgs::msg::OccupancyGrid;
 
 struct SideShiftParameters
 {
-  double min_fix_distance;
-  double start_avoid_sec;
+  double time_to_start_shifting;
+  double min_distance_to_start_shifting;
+  double shifting_lateral_jerk;
+  double min_shifting_distance;
+  double min_shifting_speed;
   double drivable_area_resolution;
   double drivable_area_width;
   double drivable_area_height;
-  double inside_outside_judge_margin;
 };
 
 class SideShiftModule : public SceneModuleInterface
@@ -70,18 +73,15 @@ private:
   void onLateralOffset(const LateralOffset::ConstSharedPtr lateral_offset_msg);
 
   // non-const methods
-  // TODO(Horibe) cleanup args
-  PathWithLaneId refinePath(
-    const PathWithLaneId & input_path, double lateral_offset,
-    bool & start_pose_reset_request, bool & drivable_area_shrink_request,
-    double & drivable_area_extention_width, Pose & start_avoid_pose) const;
+  void adjustDrivableArea(ShiftedPath * path) const;
+
+  ShiftPoint calcShiftPoint() const;
 
   // const methods
-  void extendDrivableArea(
-    PathWithLaneId & path, double lateral_offset,
-    const RouteHandler & route_handler) const;
-  bool isVehicleInDrivableArea(const OccupancyGrid & drivable_area) const;
   void publishPath(const PathWithLaneId & path) const;
+
+  double getClosestShiftLength() const;
+
 
   // member
   PathWithLaneId refined_path_{};
@@ -92,23 +92,22 @@ private:
   // Current lateral offset to shift the reference path.
   double lateral_offset_{0.0};
 
-  // lateral offset used for previous planned path
-  double prev_planned_lateral_offset_{0.0};
+  // Flag to check lateral offset change is requested
+  bool lateral_offset_change_request_{false};
 
   // Triggered when offset is changed, released when start pose is refound.
   bool start_pose_reset_request_{false};
 
-  // To keep the consistency in each planning.
-  Pose start_avoid_pose_{};
+  PathShifter path_shifter_;
 
-  // Triggered when received smaller lateral offset, released when the drivable area is shrunk
-  bool drivable_area_shrink_request_{false};
+  ShiftedPath prev_output_;
 
-  // For the drivable area extension.
-  double drivable_area_extention_width_{0.0};
 
-  //
-  bool is_approval_needed_{true};  // needs approval at first
+  // NOTE: this function is ported from avoidance.
+  PoseStamped getUnshiftedEgoPose(const ShiftedPath & prev_path) const;
+  inline PoseStamped getEgoPose() const {return *(planner_data_->self_pose);}
+  PathWithLaneId calcCenterLinePath(
+    const std::shared_ptr<const PlannerData> & planner_data, const PoseStamped & pose) const;
 };
 
 }  // namespace behavior_path_planner

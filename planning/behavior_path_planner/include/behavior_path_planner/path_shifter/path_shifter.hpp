@@ -47,8 +47,8 @@ struct ShiftPoint
 
 struct ShiftedPath
 {
-  PathWithLaneId path;
-  std::vector<double> shift_length;
+  PathWithLaneId path{};
+  std::vector<double> shift_length{};
 };
 
 class PathShifter
@@ -65,6 +65,11 @@ public:
    * @brief  Add shift point. You don't have to care about the start/end_idx.
    */
   void addShiftPoint(const ShiftPoint & point);
+
+  /**
+   * @brief  Set new shift point. You don't have to care about the start/end_idx.
+   */
+  void setShiftPoints(const std::vector<ShiftPoint> & points);
 
   std::vector<ShiftPoint> getShiftPoints() const {return shift_points_;}
   PathWithLaneId getReferencePath() const {return reference_path_;}

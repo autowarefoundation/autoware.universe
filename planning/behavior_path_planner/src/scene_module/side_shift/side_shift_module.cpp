@@ -14,6 +14,7 @@
 
 #include <memory>
 #include <string>
+#include <algorithm>
 
 #include "opencv2/opencv.hpp"
 
@@ -23,6 +24,30 @@
 #include "behavior_path_planner/scene_module/side_shift/side_shift_module.hpp"
 #include "behavior_path_planner/scene_module/side_shift/util.hpp"
 #include "behavior_path_planner/utilities.hpp"
+#include "behavior_path_planner/path_utilities.hpp"
+
+
+namespace
+{
+lanelet::ConstLanelets calcLaneAroundPose(
+  const std::shared_ptr<const behavior_path_planner::PlannerData> & planner_data,
+  const geometry_msgs::msg::Pose & pose, const double backward_length)
+{
+  const auto & p = planner_data->parameters;
+  const auto & route_handler = planner_data->route_handler;
+
+  lanelet::ConstLanelet current_lane;
+  if (!route_handler->getClosestLaneletWithinRoute(pose, &current_lane)) {
+    return {};  // TODO(Horibe)
+  }
+
+  // For current_lanes with desired length
+  lanelet::ConstLanelets current_lanes =
+    route_handler->getLaneletSequence(current_lane, pose, backward_length, p.forward_path_length);
+
+  return current_lanes;
+}
+}  // namespace
 
 namespace behavior_path_planner
 {
@@ -30,35 +55,28 @@ using geometry_msgs::msg::Point;
 using geometry_msgs::msg::PoseStamped;
 
 SideShiftModule::SideShiftModule(
-  const std::string & name, rclcpp::Node & node,
-  const SideShiftParameters & parameters)
+  const std::string & name, rclcpp::Node & node, const SideShiftParameters & parameters)
 : SceneModuleInterface{name, node}, parameters_{parameters}
 {
   using std::placeholders::_1;
 
-  lateral_offset_subscriber_ =
-    node.create_subscription<LateralOffset>(
-    "~/input/side_shift_length", 1, std::bind(&SideShiftModule::onLateralOffset, this, _1));
+  lateral_offset_subscriber_ = node.create_subscription<LateralOffset>(
+    "~/input/lateral_offset", 1, std::bind(&SideShiftModule::onLateralOffset, this, _1));
 }
 
 void SideShiftModule::initVariables()
 {
-  refined_path_ = PathWithLaneId{};
   reference_path_ = std::make_shared<PathWithLaneId>();
   start_pose_reset_request_ = false;
-  drivable_area_shrink_request_ = false;
-  start_avoid_pose_ = Pose{};
   lateral_offset_ = 0.0;
-  prev_planned_lateral_offset_ = 0.0;
-  drivable_area_extention_width_ = 0.0;
-  is_approval_needed_ = true;  // needs approval at first
+  prev_output_ = ShiftedPath{};
+  path_shifter_ = PathShifter{};
 }
 
 void SideShiftModule::onEntry()
 {
   // write me... (Don't initialize variables, otherwise lateral offset gets zero on entry.)
-  start_avoid_pose_ = Pose{};
-  refined_path_ = PathWithLaneId{};
+  start_pose_reset_request_ = false;
 }
 
 void SideShiftModule::onExit()
@@ -76,12 +94,15 @@ void SideShiftModule::setParameters(const SideShiftParameters & parameters)
 
 bool SideShiftModule::isExecutionRequested() const
 {
+  if (current_state_ == BT::NodeStatus::RUNNING) {
+    return true;
+  }
+
   // If the desired offset has a non-zero value, return true as we want to execute the plan.
 
   const bool has_request = !isAlmostZero(lateral_offset_);
   RCLCPP_DEBUG_STREAM(
-    getLogger(),
-    "ESS::isExecutionRequested() : " << std::boolalpha << has_request);
+    getLogger(), "ESS::isExecutionRequested() : " << std::boolalpha << has_request);
 
   return has_request;
 }
@@ -97,13 +118,24 @@ BT::NodeStatus SideShiftModule::updateState()
   // drivable area,this module can stop the computation and return SUCCESS.
 
   const bool no_request = isAlmostZero(lateral_offset_);
-  const bool on_reference = isVehicleInDrivableArea(reference_path_->drivable_area);
+
+  const auto no_shifted_plan = [&]() {
+      if (prev_output_.shift_length.empty()) {
+        return true;
+      } else {
+        const auto max_planned_shift_length = std::max_element(
+          prev_output_.shift_length.begin(), prev_output_.shift_length.end(),
+          [](double a, double b) {return std::abs(a) < std::abs(b);});
+        return std::abs(*max_planned_shift_length) < 0.01;
+      }
+    } ();
+
 
   RCLCPP_DEBUG(
-    getLogger(), "ESS::updateState() : no_request = %d, on_reference = %d", no_request,
-    on_reference);
+    getLogger(), "ESS::updateState() : no_request = %d, no_shifted_plan = %d", no_request,
+    no_shifted_plan);
 
-  if (no_request && on_reference) {
+  if (no_request && no_shifted_plan) {
     current_state_ = BT::NodeStatus::SUCCESS;
   } else {
     current_state_ = BT::NodeStatus::RUNNING;
@@ -114,244 +146,234 @@ BT::NodeStatus SideShiftModule::updateState()
 
 void SideShiftModule::updateData()
 {
-  reference_path_ = util::generateCenterLinePath(planner_data_);
+  const auto reference_pose = prev_output_.shift_length.empty() ? *planner_data_->self_pose :
+    getUnshiftedEgoPose(prev_output_);
+  const auto centerline_path = calcCenterLinePath(planner_data_, reference_pose);
+
+  constexpr double resample_interval = 1.0;
+  *reference_path_ = util::resamplePathWithSpline(centerline_path, resample_interval);
+
+  path_shifter_.setPath(*reference_path_);
 
   const auto & route_handler = planner_data_->route_handler;
   const auto & p = planner_data_->parameters;
 
   lanelet::ConstLanelet current_lane;
-  if (!route_handler->getClosestLaneletWithinRoute(planner_data_->self_pose->pose, &current_lane)) {
+  if (!route_handler->getClosestLaneletWithinRoute(reference_pose.pose, &current_lane)) {
     RCLCPP_ERROR(getLogger(), "failed to find closest lanelet within route!!!");
   }
 
   // For current_lanes with desired length
   current_lanelets_ = route_handler->getLaneletSequence(
-    current_lane, planner_data_->self_pose->pose, p.backward_path_length, p.forward_path_length);
+    current_lane, reference_pose.pose, p.backward_path_length, p.forward_path_length);
+
+  path_shifter_.removeBehindShiftPointAndSetBaseOffset(planner_data_->self_pose->pose.position);
 }
 
 BehaviorModuleOutput SideShiftModule::plan()
 {
-  // TODO(Horibe) Apply resampling since it is too sparse.
+  // update shift point if approved
+  if (lateral_offset_change_request_) {
+    if (approval_handler_.isApproved()) {
+      RCLCPP_DEBUG(getLogger(), "change requested: APPROVED. new shift point is calculated.");
+      path_shifter_.addShiftPoint(calcShiftPoint());
+      approval_handler_.clearWaitApproval();
+      approval_handler_.clearApproval();  // use this approval.
+      lateral_offset_change_request_ = false;
+    } else {
+      approval_handler_.waitApproval();  // requires external approval when offset is changed
+      RCLCPP_DEBUG(getLogger(), "change requested: NOT approved. waiting approval...");
+    }
+  } else {
+    RCLCPP_DEBUG(getLogger(), "%s, %d change is not requested:", __func__, __LINE__);
+  }
 
-  refined_path_ = refinePath(
-    *reference_path_, lateral_offset_, start_pose_reset_request_, drivable_area_shrink_request_,
-    drivable_area_extention_width_, start_avoid_pose_);
+  // Refine path
+  ShiftedPath shifted_path;
+  path_shifter_.generate(&shifted_path);
 
-  prev_planned_lateral_offset_ = lateral_offset_;
+  // Reset orientation
+  setOrientation(&shifted_path.path);
+
+  adjustDrivableArea(&shifted_path);
 
   BehaviorModuleOutput output;
-  output.path = std::make_shared<PathWithLaneId>(refined_path_);
+  output.path = std::make_shared<PathWithLaneId>(shifted_path.path);
+
+  prev_output_ = shifted_path;
 
   return output;
 }
 
 PathWithLaneId SideShiftModule::planCandidate() const
 {
-  auto start_pose_reset_request = start_pose_reset_request_;
-  auto drivable_area_shrink_request = drivable_area_shrink_request_;
-  auto drivable_area_extention_width = drivable_area_extention_width_;
-  auto start_avoid_pose = start_avoid_pose_;
+  auto path_shifter_local = path_shifter_;
 
-  const auto path = refinePath(
-    *reference_path_, lateral_offset_, start_pose_reset_request, drivable_area_shrink_request,
-    drivable_area_extention_width, start_avoid_pose);
+  path_shifter_local.addShiftPoint(calcShiftPoint());
 
-  return path;
+  // Refine path
+  ShiftedPath shifted_path;
+  path_shifter_local.generate(&shifted_path);
+
+
+  // Reset orientation
+  setOrientation(&shifted_path.path);
+
+  return shifted_path.path;
 }
 
 BehaviorModuleOutput SideShiftModule::planWaitingApproval()
 {
-  BehaviorModuleOutput out;
-  const auto lateral_offset = prev_planned_lateral_offset_;  // use previous plan!
-  auto start_pose_reset_request = false;
-  auto drivable_area_shrink_request = false;
-  auto drivable_area_extention_width = drivable_area_extention_width_;
-  auto start_avoid_pose = start_avoid_pose_;
+  // Refine path
+  ShiftedPath shifted_path;
+  path_shifter_.generate(&shifted_path);
 
-  refined_path_ = refinePath(
-    *reference_path_, lateral_offset, start_pose_reset_request, drivable_area_shrink_request,
-    drivable_area_extention_width, start_avoid_pose);
+  // Reset orientation
+  setOrientation(&shifted_path.path);
 
-  out.path = std::make_shared<PathWithLaneId>(refined_path_);
-  out.path_candidate = std::make_shared<PathWithLaneId>(planCandidate());
+  adjustDrivableArea(&shifted_path);
 
-  return out;
+  BehaviorModuleOutput output;
+  output.path = std::make_shared<PathWithLaneId>(shifted_path.path);
+  output.path_candidate = std::make_shared<PathWithLaneId>(planCandidate());
+
+  prev_output_ = shifted_path;
+
+  return output;
 }
 
 void SideShiftModule::onLateralOffset(const LateralOffset::ConstSharedPtr lateral_offset_msg)
 {
   const double new_lateral_offset = lateral_offset_msg->lateral_offset;
 
+  RCLCPP_DEBUG(
+    getLogger(), "onLateralOffset start : lateral offset current = %f, new = &%f", lateral_offset_,
+    new_lateral_offset);
+
   // offset is not changed.
   if (std::abs(lateral_offset_ - new_lateral_offset) < 1e-4) {
-    lateral_offset_ = new_lateral_offset;  // update lateral offset
     return;
   }
 
-  // offset is changed.
-  approval_handler_.waitApproval();  // requires external approval when offset is changed
-
-  start_pose_reset_request_ = true;
-  if (!drivable_area_shrink_request_) {
-    if ((std::abs(lateral_offset_) > std::abs(new_lateral_offset))) {
-      drivable_area_shrink_request_ = true;
-      drivable_area_extention_width_ = lateral_offset_;
-    } else {
-      drivable_area_extention_width_ = new_lateral_offset;
-    }
-  }
+  // new offset is requested.
+  lateral_offset_change_request_ = true;
 
   lateral_offset_ = new_lateral_offset;
 }
 
-PathWithLaneId SideShiftModule::refinePath(
-  const PathWithLaneId & input_path, double lateral_offset, bool & start_pose_reset_request,
-  bool & drivable_area_shrink_request, double & drivable_area_extention_width,
-  Pose & start_avoid_pose) const
+ShiftPoint SideShiftModule::calcShiftPoint() const
 {
-  using autoware_utils::findNearestIndex;
+  const auto & p = parameters_;
+  const auto ego_speed = std::abs(planner_data_->self_velocity->twist.linear.x);
+  const auto ego_point = planner_data_->self_pose->pose.position;
 
-  if (refined_path_.points.empty()) {return input_path;}
+  const double dist_to_start = std::max(
+    p.min_distance_to_start_shifting, ego_speed * p.time_to_start_shifting);
 
-  auto output_path = input_path;
-  const auto & param = planner_data_->parameters;
+  const double dist_to_end = [&]() {
+      const double shift_length = lateral_offset_ - getClosestShiftLength();
+      const double jerk_shifting_distance = path_shifter_.calcLongitudinalDistFromJerk(
+        shift_length, p.shifting_lateral_jerk, std::min(ego_speed, p.min_shifting_speed));
+      const double shifting_distance = std::max(jerk_shifting_distance, p.min_shifting_distance);
+      const double dist_to_end = dist_to_start + shifting_distance;
+      RCLCPP_DEBUG(
+        getLogger(), "min_distance_to_start_shifting = %f, dist_to_start = %f, dist_to_end = %f",
+        parameters_.min_distance_to_start_shifting, dist_to_start, dist_to_end);
+      return dist_to_end;
+    } ();
 
-  // Find the nearest path index to current pose
-  const size_t nearest_idx =
-    findNearestIndex(output_path.points, planner_data_->self_pose->pose.position);
+  ShiftPoint shift_point;
+  shift_point.length = lateral_offset_;
+  shift_point.start_idx = util::getIdxByArclength(*reference_path_, ego_point, dist_to_start);
+  shift_point.start = reference_path_->points.at(shift_point.start_idx).point.pose;
+  shift_point.end_idx = util::getIdxByArclength(*reference_path_, ego_point, dist_to_end);
+  shift_point.end = reference_path_->points.at(shift_point.end_idx).point.pose;
 
-  // Get pose in path starting avoidance
-  if (start_pose_reset_request) {
-    const double current_velocity = planner_data_->self_velocity->twist.linear.x;
-    const double start_distance = std::max(
-      parameters_.min_fix_distance,
-      current_velocity * parameters_.start_avoid_sec + param.base_link2front);
-    if (getStartAvoidPose(output_path, start_distance, nearest_idx, &start_avoid_pose)) {
-      start_pose_reset_request = false;
-    }
-  }
-
-  // Find the nearest path index to starting avoidance pose
-  const size_t start_avoid_idx = findNearestIndex(output_path.points, start_avoid_pose.position);
-
-  // Refine path
-  for (size_t idx = 0; idx < output_path.points.size(); ++idx) {
-    auto & pt = output_path.points.at(idx).point;
-    if (idx < start_avoid_idx) {
-      // Set position from previous published refined path for continuity
-      const size_t refined_nearest_idx = findNearestIndex(refined_path_.points, pt.pose.position);
-      pt.pose.position = refined_path_.points.at(refined_nearest_idx).point.pose.position;
-    } else if (!start_pose_reset_request) {
-      // Add lateral offset
-      const auto input_pt = input_path.points.at(idx).point;
-      double yaw = tf2::getYaw(input_pt.pose.orientation);
-      pt.pose.position.x -= lateral_offset * std::sin(yaw);
-      pt.pose.position.y += lateral_offset * std::cos(yaw);
-    }
-  }
-
-  // Reset orientation
-  setOrientation(&output_path);
-
-  // Inside outside check if offset is decreased
-  if (drivable_area_shrink_request) {
-    auto path_with_extended_drivable_area = output_path;
-    extendDrivableArea(
-      path_with_extended_drivable_area, lateral_offset, *(planner_data_->route_handler));
-    if (isVehicleInDrivableArea(path_with_extended_drivable_area.drivable_area)) {
-      output_path.drivable_area = path_with_extended_drivable_area.drivable_area;
-      drivable_area_extention_width = lateral_offset;
-      drivable_area_shrink_request = false;
-      return output_path;
-    }
-  }
-
-  // Refine drivable area
-  extendDrivableArea(output_path, drivable_area_extention_width, *(planner_data_->route_handler));
-
-  return output_path;
+  return shift_point;
 }
 
-void SideShiftModule::extendDrivableArea(
-  PathWithLaneId & path, double lateral_offset,
-  [[maybe_unused]] const RouteHandler & route_handler) const
+double SideShiftModule::getClosestShiftLength() const
 {
-  const double resolution = path.drivable_area.info.resolution;
-  const double width = path.drivable_area.info.width * resolution;
-  const double height = path.drivable_area.info.height * resolution;
-  const double vehicle_length = planner_data_->parameters.vehicle_length;
+  if (prev_output_.shift_length.empty()) {return 0.0;}
 
-  const double left_extend = lateral_offset > 0.0 ? lateral_offset : 0.0;
-  const double right_extend = lateral_offset < 0.0 ? lateral_offset : 0.0;
+  const auto ego_point = planner_data_->self_pose->pose.position;
+  const auto closest = autoware_utils::findNearestIndex(prev_output_.path.points, ego_point);
+  return prev_output_.shift_length.at(closest);
+}
+
+void SideShiftModule::adjustDrivableArea(ShiftedPath * path) const
+{
+  const auto itr = std::minmax_element(path->shift_length.begin(), path->shift_length.end());
+
+  const double threshold = 0.1;
+  const double margin = 0.5;
+  const double right_offset = std::min(*itr.first - (*itr.first < -threshold ? margin : 0.0), 0.0);
+  const double left_offset = std::max(*itr.second + (*itr.first > threshold ? margin : 0.0), 0.0);
+
   const auto extended_lanelets =
-    lanelet::utils::getExpandedLanelets(current_lanelets_, left_extend, right_extend);
+    lanelet::utils::getExpandedLanelets(current_lanelets_, left_offset, right_offset);
 
-  path.drivable_area = util::generateDrivableArea(
-    extended_lanelets, *(planner_data_->self_pose), width, height, resolution, vehicle_length,
-    *(planner_data_->route_handler));
+  {
+    const auto & p = planner_data_->parameters;
+    path->path.drivable_area = util::generateDrivableArea(
+      extended_lanelets, *(planner_data_->self_pose), p.drivable_area_width, p.drivable_area_height,
+      p.drivable_area_resolution, p.vehicle_length, *(planner_data_->route_handler));
+  }
 }
 
-bool SideShiftModule::isVehicleInDrivableArea(const OccupancyGrid & drivable_area) const
+
+// NOTE: this function is ported from avoidance.
+PoseStamped SideShiftModule::getUnshiftedEgoPose(const ShiftedPath & prev_path) const
 {
-  // Get grid origin
-  PoseStamped grid_origin{};
-  grid_origin.pose = drivable_area.info.origin;
-  grid_origin.header = drivable_area.header;
+  const auto ego_pose = getEgoPose();
 
-  // Get transform
-  tf2::Stamped<tf2::Transform> tf_grid2map, tf_map2grid;
-  tf2::convert(grid_origin, tf_grid2map);
-  tf_map2grid.setData(tf_grid2map.inverse());
-  const auto geom_tf_map2grid = tf2::toMsg(tf_map2grid);
+  // un-shifted fot current ideal pose
+  const auto closest =
+    autoware_utils::findNearestIndex(prev_path.path.points, ego_pose.pose.position);
 
-  constexpr uint8_t FREE_SPACE = 0;
-  constexpr uint8_t OCCUPIED_SPACE = 100;
+  PoseStamped unshifted_pose{};
+  unshifted_pose.header = ego_pose.header;
+  unshifted_pose.pose = prev_path.path.points.at(closest).point.pose;
 
-  // Convert occupancy grid to image
-  cv::Mat cv_image(
-    drivable_area.info.width, drivable_area.info.height, CV_8UC1, cv::Scalar(OCCUPIED_SPACE));
-  behavior_path_planner::util::occupancyGridToImage(drivable_area, &cv_image);
+  util::shiftPose(&unshifted_pose.pose, -prev_path.shift_length.at(closest));
 
-  // Convert vehicle vertices to cv point
-  cv::Point cv_front_left, cv_front_right, cv_rear_left, cv_rear_right;
-  {
-    // Get current base_link informations
-    const auto current_pose = *(planner_data_->self_pose);
-    const auto base_link = current_pose.pose.position;
-    const double yaw = tf2::getYaw(current_pose.pose.orientation);
+  return unshifted_pose;
+}
 
-    // Get vehicle informations
-    const auto planner_param = planner_data_->parameters;
-    const double margin = parameters_.inside_outside_judge_margin;
-    const double l_front = planner_param.base_link2front + margin;
-    const double l_rear = -(planner_param.base_link2rear + margin);
-    const double l_side = 0.5 * planner_param.vehicle_width + margin;
+// NOTE: this function is ported from avoidance.
+PathWithLaneId SideShiftModule::calcCenterLinePath(
+  const std::shared_ptr<const PlannerData> & planner_data, const PoseStamped & pose) const
+{
+  const auto & p = planner_data->parameters;
+  const auto & route_handler = planner_data->route_handler;
 
-    // Calculate vertices on grid coordinate
-    auto transformToGridLocal = [&](const double l1, const double l2) {
-        return transformToGrid(base_link, l1, l2, yaw, geom_tf_map2grid);
-      };
-    auto grid_front_left = transformToGridLocal(l_front, l_side);
-    auto grid_front_right = transformToGridLocal(l_front, -l_side);
-    auto grid_rear_left = transformToGridLocal(l_rear, l_side);
-    auto grid_rear_right = transformToGridLocal(l_rear, -l_side);
+  PathWithLaneId centerline_path;
 
-    // Convert to cv coordinate
-    auto toCVPointLocal = [&](const Point & p) {
-        return behavior_path_planner::util::toCVPoint(
-          p, parameters_.drivable_area_width, parameters_.drivable_area_height,
-          parameters_.drivable_area_resolution);
-      };
-    cv_front_left = toCVPointLocal(grid_front_left);
-    cv_front_right = toCVPointLocal(grid_front_right);
-    cv_rear_left = toCVPointLocal(grid_rear_left);
-    cv_rear_right = toCVPointLocal(grid_rear_right);
-  }
+  // special for avoidance: take behind distance upt ot shift-start-point if it exist.
+  const auto longest_dist_to_shift_point = [&]() {
+      double max_dist = 0.0;
+      for (const auto & pnt : path_shifter_.getShiftPoints()) {
+        max_dist = std::max(max_dist, autoware_utils::calcDistance2d(getEgoPose(), pnt.start));
+      }
+      return max_dist;
+    } ();
+  const auto extra_margin = 10.0;  // Since distance does not consider arclength, but just line.
+  const auto backward_length =
+    std::max(p.backward_path_length, longest_dist_to_shift_point + extra_margin);
 
-  auto isFreeSpace = [&](const cv::Point & p) {return cv_image.at<uint8_t>(p) == FREE_SPACE;};
-  bool is_vehicle_on_freespace = isFreeSpace(cv_front_left) && isFreeSpace(cv_front_right) &&
-    isFreeSpace(cv_rear_left) && isFreeSpace(cv_rear_right);
-  return is_vehicle_on_freespace;
+  RCLCPP_DEBUG(
+    getLogger(),
+    "p.backward_path_length = %f, longest_dist_to_shift_point = %f, backward_length = %f",
+    p.backward_path_length, longest_dist_to_shift_point, backward_length);
+
+  const lanelet::ConstLanelets current_lanes =
+    calcLaneAroundPose(planner_data, pose.pose, backward_length);
+  centerline_path = route_handler->getCenterLinePath(
+    current_lanes, pose.pose, backward_length, p.forward_path_length, p);
+
+  centerline_path.header = route_handler->getRouteHeader();
+
+  return centerline_path;
 }
 
 }  // namespace behavior_path_planner
