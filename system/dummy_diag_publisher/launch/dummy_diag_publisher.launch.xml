@@ -45,9 +45,9 @@
     <arg name="diag_name" value="lane_departure"/>
   </include>
 
-  <!-- obstacle crush -->
+  <!-- obstacle crash -->
   <include file="$(find-pkg-share dummy_diag_publisher)/launch/dummy_diag_publisher_node.launch.xml">
-    <arg name="diag_name" value="obstacle_crush"/>
+    <arg name="diag_name" value="obstacle_crash"/>
   </include>
 
   <!-- vehicle -->
