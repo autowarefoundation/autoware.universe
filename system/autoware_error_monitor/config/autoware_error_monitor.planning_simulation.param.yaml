@@ -50,7 +50,7 @@
             # '/autoware/system/resource_monitoring/gpu_thermal_throttling', # Require GPU
             "/autoware/vehicle/alive_monitoring",
             "/autoware/vehicle/vehicle_errors",
-            "/autoware/vehicle/obstacle_crush", # todo: crush should be replaced to crash
+            "/autoware/vehicle/obstacle_crash",
           ]
         diag_level:
           /autoware/localization/matching_score: { sf_at: "warn", lf_at: "error", spf_at: "none" }
@@ -69,7 +69,7 @@
           # /autoware/system/resource_monitoring/gpu_memory_usage: { sf_at: "warn", lf_at: "error", spf_at: "none" }  # No need to watch in simulation
           # /autoware/system/resource_monitoring/gpu_thermal_throttling: { sf_at: "warn", lf_at: "error", spf_at: "none" }  # No need to watch in simulation
         auto_recovery:
-          /autoware/vehicle/obstacle_crush: false # todo: crush should be replaced to crash
+          /autoware/vehicle/obstacle_crash: false
 
       remote_control:
         names:
@@ -80,5 +80,5 @@
             "/autoware/system/emergency_stop_operation",
             "/autoware/vehicle/alive_monitoring",
             "/autoware/vehicle/vehicle_errors",
-            "/autoware/vehicle/obstacle_crush", # todo: crush should be replaced to crash
+            "/autoware/vehicle/obstacle_crash",
           ]

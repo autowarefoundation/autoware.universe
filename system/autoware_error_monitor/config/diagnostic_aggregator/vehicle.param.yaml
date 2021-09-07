@@ -48,9 +48,9 @@
           timeout: 1.0
           num_items: 0
 
-        obstacle_crush: # todo: crush should be replaced to crash
+        obstacle_crash:
           type: diagnostic_aggregator/GenericAnalyzer
-          path: obstacle_crush
-          contains: [": obstacle_crush"]
+          path: obstacle_crash
+          contains: [": obstacle_crash"]
           timeout: 1.0
           num_items: 0
