@@ -107,6 +107,14 @@ void GyroOdometer::callbackImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_m
 
   tf2::doTransform(angular_velocity, transformed_angular_velocity, *tf_base2imu_ptr);
 
+  // clear imu yaw bias if vehicle is stopped
+  if (
+    std::fabs(transformed_angular_velocity.vector.z) < 0.01 &&
+    std::fabs(twist_with_cov_msg_ptr_->twist.twist.linear.x) < 0.01)
+  {
+    transformed_angular_velocity.vector.z = 0.0;
+  }
+
   // TODO(YamatoAndo) move code
   geometry_msgs::msg::TwistStamped twist;
   twist.header.stamp = imu_msg_ptr->header.stamp;
