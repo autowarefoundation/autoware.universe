@@ -61,14 +61,6 @@
     <!-- external_cmd_selector -->
     <include file="$(find-pkg-share external_cmd_selector)/launch/external_cmd_selector.launch.xml">
       <arg name="initial_selector_mode" value="remote" />
-      <arg name="input/local/control_cmd" value="/external/local/control_cmd" />
-      <arg name="input/local/shift_cmd" value="/external/local/shift_cmd" />
-      <arg name="input/local/turn_signal_cmd" value="/external/local/turn_signal_cmd" />
-      <arg name="input/local/heartbeat" value="/external/local/heartbeat" />
-      <arg name="input/remote/control_cmd" value="/external/remote/control_cmd" />
-      <arg name="input/remote/shift_cmd" value="/external/remote/shift_cmd" />
-      <arg name="input/remote/turn_signal_cmd" value="/external/remote/turn_signal_cmd" />
-      <arg name="input/remote/heartbeat" value="/external/remote/heartbeat" />
     </include>
 
     <!-- external_cmd_converter -->

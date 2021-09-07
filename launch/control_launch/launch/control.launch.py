@@ -15,11 +15,13 @@
 import launch
 from launch.actions import DeclareLaunchArgument
 from launch.actions import GroupAction
+from launch.actions import IncludeLaunchDescription
 from launch.actions import OpaqueFunction
 from launch.actions import SetLaunchConfiguration
 from launch.conditions import IfCondition
 from launch.conditions import LaunchConfigurationEquals
 from launch.conditions import UnlessCondition
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.actions import LoadComposableNodes
@@ -219,34 +221,15 @@ def launch_setup(context, *args, **kwargs):
     )
 
     # external cmd selector
-    external_cmd_selector_component = ComposableNode(
-        package='external_cmd_selector',
-        plugin='ExternalCmdSelector',
-        name='external_cmd_selector',
-        remappings=[
-            ('~/service/select_external_command', '~/select_external_command'),
-            ('~/input/local/control_cmd', '/external/local/control_cmd'),
-            ('~/input/local/shift_cmd', '/external/local/shift_cmd'),
-            ('~/input/local/turn_signal_cmd', '/external/local/turn_signal_cmd'),
-            ('~/input/local/heartbeat', '/external/local/heartbeat'),
-            ('~/input/remote/control_cmd', '/external/remote/control_cmd'),
-            ('~/input/remote/shift_cmd', '/external/remote/shift_cmd'),
-            ('~/input/remote/turn_signal_cmd', '/external/remote/turn_signal_cmd'),
-            ('~/input/remote/heartbeat', '/external/remote/heartbeat'),
-            ('~/output/control_cmd', '/external/selected/external_control_cmd'),
-            ('~/output/shift_cmd', '/external/selected/shift_cmd'),
-            ('~/output/turn_signal_cmd', '/external/selected/turn_signal_cmd'),
-            ('~/output/heartbeat', '/external/selected/heartbeat'),
-            ('~/output/current_selector_mode', '~/current_selector_mode'),
+    external_cmd_selector_loader = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([
+            FindPackageShare('external_cmd_selector'), '/launch/external_cmd_selector.launch.py'
+        ]),
+        launch_arguments=[
+            ('use_intra_process', LaunchConfiguration('use_intra_process')),
+            ('target_container', '/control/control_container'),
+            ('initial_selector_mode', 'remote'),
         ],
-        parameters=[
-            {
-                'initial_selector_mode': LaunchConfiguration('initial_selector_mode'),
-            }
-        ],
-        extra_arguments=[{
-            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
-        }],
     )
 
     # external cmd converter
@@ -292,7 +275,6 @@ def launch_setup(context, *args, **kwargs):
             shift_decider_component,
             vehicle_cmd_gate_component,
             external_cmd_converter_component,
-            external_cmd_selector_component,
         ],
     )
 
@@ -315,6 +297,7 @@ def launch_setup(context, *args, **kwargs):
     group = GroupAction([
         PushRosNamespace('control'),
         container,
+        external_cmd_selector_loader,
         mpc_follower_loader,
         pure_pursuit_loader
     ])
