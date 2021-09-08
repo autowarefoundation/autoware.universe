@@ -50,7 +50,7 @@ endif
 if "" then
   -->[true] "emergency is held"
   else
-  -->[false] "Check is_emergency condition"
+  -->[false] "Check emergency condition"
 endif
 
 if "" then
