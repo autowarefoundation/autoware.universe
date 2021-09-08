@@ -21,7 +21,6 @@
 
 #include "autoware_control_msgs/srv/external_command_select.hpp"
 #include "autoware_control_msgs/msg/external_command_selector_mode.hpp"
-#include "autoware_control_msgs/msg/emergency_mode.hpp"
 #include "autoware_vehicle_msgs/msg/shift_stamped.hpp"
 #include "autoware_vehicle_msgs/msg/turn_signal.hpp"
 #include "autoware_external_api_msgs/msg/control_command_stamped.hpp"
@@ -39,7 +38,7 @@ private:
   using CommandSourceMode = autoware_control_msgs::msg::ExternalCommandSelectorMode;
   using InternalGearShift = autoware_vehicle_msgs::msg::ShiftStamped;
   using InternalTurnSignal = autoware_vehicle_msgs::msg::TurnSignal;
-  using InternalHeartbeat = autoware_control_msgs::msg::EmergencyMode;
+  using InternalHeartbeat = autoware_external_api_msgs::msg::Heartbeat;
   using ExternalControlCommand = autoware_external_api_msgs::msg::ControlCommandStamped;
   using ExternalGearShift = autoware_external_api_msgs::msg::GearShiftStamped;
   using ExternalTurnSignal = autoware_external_api_msgs::msg::TurnSignalStamped;

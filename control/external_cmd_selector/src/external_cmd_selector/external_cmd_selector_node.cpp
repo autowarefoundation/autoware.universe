@@ -206,11 +206,9 @@ ExternalCmdSelector::InternalTurnSignal ExternalCmdSelector::convert(
 }
 
 ExternalCmdSelector::InternalHeartbeat ExternalCmdSelector::convert(
-  [[maybe_unused]] const ExternalHeartbeat & command)
+  const ExternalHeartbeat & command)
 {
-  InternalHeartbeat message;
-  message.is_emergency = false;
-  return message;
+  return command;
 }
 
 #include "rclcpp_components/register_node_macro.hpp"
