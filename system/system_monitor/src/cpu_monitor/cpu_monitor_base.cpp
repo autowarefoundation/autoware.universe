@@ -234,7 +234,8 @@ void CPUMonitorBase::checkLoad(diagnostic_updater::DiagnosticStatusWrapper & sta
   stat.addf("15min", "%.2f%%", loadavg[2] * 1e2);
 }
 
-void CPUMonitorBase::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & stat)
+void CPUMonitorBase::checkThrottling(
+  [[maybe_unused]] diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
   RCLCPP_INFO(this->get_logger(), "CPUMonitorBase::checkThrottling not implemented.");
 }
