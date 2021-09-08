@@ -53,8 +53,8 @@ private:
   void getGateModeInfo(
     const autoware_control_msgs::msg::GateMode::ConstSharedPtr & gate_mode_ptr,
     autoware_api_msgs::msg::AwapiAutowareStatus * status);
-  void getIsEmergencyInfo(
-    const autoware_control_msgs::msg::EmergencyMode::ConstSharedPtr & is_emergency_ptr,
+  void getEmergencyStateInfo(
+    const autoware_system_msgs::msg::EmergencyStateStamped::ConstSharedPtr & emergency_state_ptr,
     autoware_api_msgs::msg::AwapiAutowareStatus * status);
   void getCurrentMaxVelInfo(
     const autoware_planning_msgs::msg::VelocityLimit::ConstSharedPtr & current_max_velocity_ptr,

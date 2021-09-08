@@ -29,7 +29,7 @@
 
 #include "autoware_api_msgs/msg/velocity_limit.hpp"
 #include "autoware_api_msgs/msg/stop_command.hpp"
-#include "autoware_control_msgs/msg/emergency_mode.hpp"
+#include "autoware_system_msgs/msg/emergency_state_stamped.hpp"
 #include "autoware_control_msgs/msg/gate_mode.hpp"
 #include "autoware_planning_msgs/msg/is_avoidance_possible.hpp"
 #include "autoware_planning_msgs/msg/lane_change_status.hpp"
@@ -65,7 +65,7 @@ struct AutowareInfo
   autoware_system_msgs::msg::AutowareState::ConstSharedPtr autoware_state_ptr;
   autoware_vehicle_msgs::msg::ControlMode::ConstSharedPtr control_mode_ptr;
   autoware_control_msgs::msg::GateMode::ConstSharedPtr gate_mode_ptr;
-  autoware_control_msgs::msg::EmergencyMode::ConstSharedPtr is_emergency_ptr;
+  autoware_system_msgs::msg::EmergencyStateStamped::ConstSharedPtr emergency_state_ptr;
   autoware_system_msgs::msg::HazardStatusStamped::ConstSharedPtr hazard_status_ptr;
   autoware_planning_msgs::msg::StopReasonArray::ConstSharedPtr stop_reason_ptr;
   autoware_v2x_msgs::msg::InfrastructureCommandArray::ConstSharedPtr v2x_command_ptr;

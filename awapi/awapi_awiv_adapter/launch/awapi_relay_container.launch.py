@@ -72,21 +72,6 @@ def generate_launch_description():
     relay_components.append(ComposableNode(
         package='topic_tools',
         plugin='topic_tools::RelayNode',
-        name='emergency_stop_relay',
-        namespace='awapi',
-        parameters=[{
-            'input_topic': LaunchConfiguration('set_emergency_stop'),
-            'output_topic': LaunchConfiguration('output_emergency_stop'),
-            'type': 'autoware_control_msgs/msg/EmergencyMode',
-        }],
-        extra_arguments=[{
-            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
-        }],
-    ))
-
-    relay_components.append(ComposableNode(
-        package='topic_tools',
-        plugin='topic_tools::RelayNode',
         name='autoware_engage_relay',
         namespace='awapi',
         parameters=[{

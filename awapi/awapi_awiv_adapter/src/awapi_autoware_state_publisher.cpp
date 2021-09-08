@@ -43,7 +43,7 @@ void AutowareIvAutowareStatePublisher::statePublisher(const AutowareInfo & aw_in
   getAutowareStateInfo(aw_info.autoware_state_ptr, &status);
   getControlModeInfo(aw_info.control_mode_ptr, &status);
   getGateModeInfo(aw_info.gate_mode_ptr, &status);
-  getIsEmergencyInfo(aw_info.is_emergency_ptr, &status);
+  getEmergencyStateInfo(aw_info.emergency_state_ptr, &status);
   getCurrentMaxVelInfo(aw_info.current_max_velocity_ptr, &status);
   getHazardStatusInfo(aw_info, &status);
   getStopReasonInfo(aw_info.stop_reason_ptr, &status);
@@ -96,17 +96,21 @@ void AutowareIvAutowareStatePublisher::getGateModeInfo(
   status->gate_mode = gate_mode_ptr->data;
 }
 
-void AutowareIvAutowareStatePublisher::getIsEmergencyInfo(
-  const autoware_control_msgs::msg::EmergencyMode::ConstSharedPtr & is_emergency_ptr,
+void AutowareIvAutowareStatePublisher::getEmergencyStateInfo(
+  const autoware_system_msgs::msg::EmergencyStateStamped::ConstSharedPtr & emergency_state_ptr,
   autoware_api_msgs::msg::AwapiAutowareStatus * status)
 {
-  if (!is_emergency_ptr) {
-    RCLCPP_DEBUG_STREAM_THROTTLE(logger_, *clock_, 5000 /* ms */, "is_emergency is nullptr");
+  if (!emergency_state_ptr) {
+    RCLCPP_DEBUG_STREAM_THROTTLE(logger_, *clock_, 5000 /* ms */, "emergency_state is nullptr");
     return;
   }
 
   // get emergency
-  status->emergency_stopped = is_emergency_ptr->is_emergency;
+  using autoware_system_msgs::msg::EmergencyState;
+  status->emergency_stopped =
+    (emergency_state_ptr->state.state == EmergencyState::MRM_OPERATING) ||
+    (emergency_state_ptr->state.state == EmergencyState::MRM_SUCCEEDED) ||
+    (emergency_state_ptr->state.state == EmergencyState::MRM_FAILED);
 }
 
 void AutowareIvAutowareStatePublisher::getCurrentMaxVelInfo(

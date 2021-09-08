@@ -181,16 +181,6 @@
 | --- | :----------------------------- | :--- | :--- | :--- |
 |     | autoware_control_msgs/GateMode |      |      |      |
 
-### /awapi/autoware/put/emergency_stop
-
-- send emergency_stop signal
-- MessageType: autoware_control_msgs/EmergencyMode
-- <font color="Cyan">**To enable this functionality, autoware have to be in the Remote Mode or set _/control/vehicle_cmd_gate/use_external_emergency_stop_ to true.**</font>
-
-| ✓   | type                                | name | unit | note |
-| --- | :---------------------------------- | :--- | :--- | :--- |
-| ✓   | autoware_control_msgs/EmergencyMode |      |      |      |
-
 ### /awapi/autoware/put/engage
 
 - send engage signal (both of autoware/engage and vehicle/engage)
