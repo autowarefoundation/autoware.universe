@@ -52,8 +52,8 @@ EmergencyHandler::EmergencyHandler()
     "~/output/shift", rclcpp::QoS{1});
   pub_turn_signal_ = create_publisher<autoware_vehicle_msgs::msg::TurnSignal>(
     "~/output/turn_signal", rclcpp::QoS{1});
-  pub_is_emergency_ = create_publisher<autoware_control_msgs::msg::EmergencyMode>(
-    "~/output/is_emergency", rclcpp::QoS{1});
+  pub_emergency_state_ = create_publisher<autoware_system_msgs::msg::EmergencyStateStamped>(
+    "~/output/emergency_state", rclcpp::QoS{1});
 
   // Initialize
   twist_ = std::make_shared<const geometry_msgs::msg::TwistStamped>();
@@ -138,9 +138,12 @@ void EmergencyHandler::publishControlCommands()
 
   // Publish Emergency State
   {
-    autoware_control_msgs::msg::EmergencyMode emergency_mode;
-    emergency_mode.is_emergency = is_emergency_;
-    pub_is_emergency_->publish(emergency_mode);
+    autoware_system_msgs::msg::EmergencyStateStamped emergency_state;
+    emergency_state.state.state = autoware_system_msgs::msg::EmergencyState::NORMAL;
+    if (is_emergency_) {
+      emergency_state.state.state = autoware_system_msgs::msg::EmergencyState::MRM_OPERATING;
+    }
+    pub_emergency_state_->publish(emergency_state);
   }
 }
 

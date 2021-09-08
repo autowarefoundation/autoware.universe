@@ -21,7 +21,7 @@
 
 // Autoware
 #include "autoware_control_msgs/msg/control_command_stamped.hpp"
-#include "autoware_control_msgs/msg/emergency_mode.hpp"
+#include "autoware_system_msgs/msg/emergency_state_stamped.hpp"
 #include "autoware_system_msgs/msg/hazard_status_stamped.hpp"
 #include "autoware_system_msgs/msg/timeout_notification.hpp"
 #include "autoware_vehicle_msgs/msg/shift_stamped.hpp"
@@ -67,7 +67,8 @@ private:
     pub_control_command_;
   rclcpp::Publisher<autoware_vehicle_msgs::msg::ShiftStamped>::SharedPtr pub_shift_;
   rclcpp::Publisher<autoware_vehicle_msgs::msg::TurnSignal>::SharedPtr pub_turn_signal_;
-  rclcpp::Publisher<autoware_control_msgs::msg::EmergencyMode>::SharedPtr pub_is_emergency_;
+  rclcpp::Publisher<autoware_system_msgs::msg::EmergencyStateStamped>::SharedPtr
+    pub_emergency_state_;
 
   autoware_vehicle_msgs::msg::TurnSignal createTurnSignalMsg();
   void publishControlCommands();

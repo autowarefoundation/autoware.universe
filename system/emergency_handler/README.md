@@ -25,7 +25,7 @@ TBD.
 | `/system/emergency/control_cmd`       | `autoware_control_msgs::msg::ControlCommandStamped` | Required to execute proper MRM                        |
 | `"/system/emergency/shift_cmd"`       | `autoware_vehicle_msgs::msg::ShiftStamped`          | Required to execute proper MRM                        |
 | `"/system/emergency/turn_signal_cmd"` | `autoware_vehicle_msgs::msg::TurnSignal`            | Required to execute proper MRM                        |
-| `"/system/emergency/is_emergency"`    | `autoware_control_msgs::msg::EmergencyMode`         | Used to inform the emergency situation of the vehicle |
+| `"/system/emergency/emergency_state"` | `autoware_system_msgs::msg::EmergencyStateStamped`  | Used to inform the emergency situation of the vehicle |
 
 ## Parameters
 

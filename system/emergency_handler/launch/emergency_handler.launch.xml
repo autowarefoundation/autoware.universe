@@ -7,7 +7,7 @@
   <arg name="output_control_command" default="/system/emergency/control_cmd" />
   <arg name="output_shift" default="/system/emergency/shift_cmd" />
   <arg name="output_turn_signal" default="/system/emergency/turn_signal_cmd" />
-  <arg name="output_is_emergency" default="/system/emergency/is_emergency" />
+  <arg name="output_emergency_state" default="/system/emergency/emergency_state" />
 
   <arg name="config_file" default="$(find-pkg-share emergency_handler)/config/emergency_handler.param.yaml" />
 
@@ -19,7 +19,7 @@
     <remap from="~/output/control_command" to="$(var output_control_command)"/>
     <remap from="~/output/shift" to="$(var output_shift)"/>
     <remap from="~/output/turn_signal" to="$(var output_turn_signal)"/>
-    <remap from="~/output/is_emergency" to="$(var output_is_emergency)"/>
+    <remap from="~/output/emergency_state" to="$(var output_emergency_state)"/>
 
     <param from="$(var config_file)" />
   </node>
