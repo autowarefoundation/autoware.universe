@@ -46,6 +46,11 @@ nav:
           - Quick start: tutorial/QuickStart.md
           - Simulation: tutorial/SimulationTutorial.md
   - Design:
+      - API:
+          - Concept: design/apis/ja/concept.md
+          - List: design/apis/ja/list.md
+          - Proposal:
+              - State: design/apis/ja/state.md
       - Architecture:
           - Overview: design/software_architecture/Overview.md
           - Sensing: design/software_architecture/Sensing/Sensing.md
