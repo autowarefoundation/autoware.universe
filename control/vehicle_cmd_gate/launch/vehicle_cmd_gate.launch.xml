@@ -5,8 +5,7 @@
   <arg name="use_start_request" default="false" />
 
   <node pkg="vehicle_cmd_gate" exec="vehicle_cmd_gate" name="vehicle_cmd_gate" output="screen">
-    <remap from="input/system_emergency" to="/system/emergency/is_emergency"/>
-    <remap from="input/emergency" to="/system/emergency/is_emergency"/>
+    <remap from="input/emergency_state" to="/system/emergency/emergency_state"/>
     <remap from="input/steering" to="/vehicle/status/steering"/>
 
     <remap from="input/auto/control_cmd" to="trajectory_follower/control_cmd"/>
@@ -16,7 +15,7 @@
     <remap from="input/external/control_cmd" to="/external/selected/control_cmd"/>
     <remap from="input/external/turn_signal_cmd" to="/external/selected/turn_signal_cmd"/>
     <remap from="input/external/shift_cmd" to="/external/selected/shift_cmd"/>
-    <remap from="input/external_emergency_stop" to="/external/selected/heartbeat"/>
+    <remap from="input/external_emergency_stop_heartbeat" to="/external/selected/heartbeat"/>
     <remap from="input/gate_mode" to="/control/gate_mode_cmd"/>
 
     <remap from="input/emergency/control_cmd" to="/system/emergency/control_cmd"/>

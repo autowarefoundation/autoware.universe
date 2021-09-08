@@ -22,9 +22,10 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include "autoware_control_msgs/msg/control_command_stamped.hpp"
-#include "autoware_control_msgs/msg/emergency_mode.hpp"
+#include "autoware_system_msgs/msg/emergency_state_stamped.hpp"
 #include "autoware_control_msgs/msg/gate_mode.hpp"
 #include "autoware_debug_msgs/msg/bool_stamped.hpp"
+#include "autoware_external_api_msgs/msg/heartbeat.hpp"
 #include "autoware_external_api_msgs/srv/engage.hpp"
 #include "autoware_external_api_msgs/srv/set_emergency.hpp"
 #include "autoware_vehicle_msgs/msg/engage.hpp"
@@ -59,15 +60,17 @@ private:
   rclcpp::Publisher<autoware_vehicle_msgs::msg::Engage>::SharedPtr engage_pub_;
 
   // Subscription
-  rclcpp::Subscription<autoware_control_msgs::msg::EmergencyMode>::SharedPtr system_emergency_sub_;
-  rclcpp::Subscription<autoware_control_msgs::msg::EmergencyMode>::SharedPtr
-    external_emergency_stop_sub_;
+  rclcpp::Subscription<autoware_system_msgs::msg::EmergencyStateStamped>::SharedPtr
+    emergency_state_sub_;
+  rclcpp::Subscription<autoware_external_api_msgs::msg::Heartbeat>::SharedPtr
+    external_emergency_stop_heartbeat_sub_;
   rclcpp::Subscription<autoware_control_msgs::msg::GateMode>::SharedPtr gate_mode_sub_;
   rclcpp::Subscription<autoware_vehicle_msgs::msg::Steering>::SharedPtr steer_sub_;
 
   void onGateMode(autoware_control_msgs::msg::GateMode::ConstSharedPtr msg);
-  void onSystemEmergency(autoware_control_msgs::msg::EmergencyMode::ConstSharedPtr msg);
-  void onExternalEmergencyStop(autoware_control_msgs::msg::EmergencyMode::ConstSharedPtr msg);
+  void onEmergencyState(autoware_system_msgs::msg::EmergencyStateStamped::ConstSharedPtr msg);
+  void onExternalEmergencyStopHeartbeat(
+    autoware_external_api_msgs::msg::Heartbeat::ConstSharedPtr msg);
   void onSteering(autoware_vehicle_msgs::msg::Steering::ConstSharedPtr msg);
 
   bool is_engaged_;
@@ -77,8 +80,8 @@ private:
   autoware_control_msgs::msg::GateMode current_gate_mode_;
 
   // Heartbeat
-  std::shared_ptr<rclcpp::Time> system_emergency_heartbeat_received_time_;
-  bool is_system_emergency_heartbeat_timeout_ = false;
+  std::shared_ptr<rclcpp::Time> emergency_state_heartbeat_received_time_;
+  bool is_emergency_state_heartbeat_timeout_ = false;
   std::shared_ptr<rclcpp::Time> external_emergency_stop_heartbeat_received_time_;
   bool is_external_emergency_stop_heartbeat_timeout_ = false;
   bool isHeartbeatTimeout(
