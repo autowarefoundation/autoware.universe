@@ -78,7 +78,7 @@ struct TfConfig
 {
   explicit TfConfig(
     rclcpp::node_interfaces::NodeParametersInterface::SharedPtr interface,
-    const std::string & namespace_prefix, const std::string & name)
+    const std::string & namespace_prefix, [[maybe_unused]] const std::string & name)
   : module(
       interface->declare_parameter(namespace_prefix + ".module",
       rclcpp::PARAMETER_STRING).get<std::string>()),

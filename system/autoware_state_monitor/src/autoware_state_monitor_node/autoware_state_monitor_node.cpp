@@ -169,7 +169,7 @@ void AutowareStateMonitorNode::onTwist(const geometry_msgs::msg::TwistStamped::C
 
 bool AutowareStateMonitorNode::onShutdownService(
   const std::shared_ptr<rmw_request_id_t> request_header,
-  const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
+  [[maybe_unused]] const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
   const std::shared_ptr<std_srvs::srv::Trigger::Response> response)
 {
   (void)request_header;
@@ -201,8 +201,8 @@ bool AutowareStateMonitorNode::onShutdownService(
 }
 
 bool AutowareStateMonitorNode::onResetRouteService(
-  const std::shared_ptr<rmw_request_id_t> request_header,
-  const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
+  [[maybe_unused]] const std::shared_ptr<rmw_request_id_t> request_header,
+  [[maybe_unused]] const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
   const std::shared_ptr<std_srvs::srv::Trigger::Response> response)
 {
   if (state_machine_->getCurrentState() != AutowareState::WaitingForEngage) {
@@ -287,7 +287,8 @@ void AutowareStateMonitorNode::onTimer()
 
 // TODO(jilaada): Use generic subscription base
 void AutowareStateMonitorNode::onTopic(
-  const std::shared_ptr<rclcpp::SerializedMessage> msg, const std::string & topic_name)
+  [[maybe_unused]] const std::shared_ptr<rclcpp::SerializedMessage> msg,
+  const std::string & topic_name)
 {
   const auto now = this->now();
 
