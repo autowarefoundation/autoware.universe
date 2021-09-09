@@ -111,6 +111,10 @@ endif
 
 :plan path between each check points;
 
+:initialize route lanelets;
+
+:get preferred lanelets;
+
 :create route sections;
 
 if (planed route is looped?) then (no)
@@ -127,7 +131,18 @@ stop
 `plan path between each check points` firstly calculates closest lanes to start and goal pose.
 Then routing graph of Lanelet2 plans the shortest path from start and goal pose.
 
-`create route sections` extracts `preferred_lane_id`, `continued_lane_ids`, and `lane_ids` for each route section.
+`initialize route lanelets` initializes route handler, and calculates `route_lanelets`.
+`route_lanelets`, all of which will be registered in route sections, are lanelets next to the lanelets in the planned path, and used when planning lane change.
+To calculate `route_lanelets`,
+
+1. All the neighbor (right and left) lanes for the planned path which is lane-changeable is memorized as `route_lanelets`.
+2. All the neighbor (right and left) lanes for the planned path which is not lane-changeable is memorized as `candidate_lanelets`.
+3. If the following and previous lanelets of each `candidate_lanelets` are `route_lanelets`, the `candidate_lanelet` is registered as `route_lanelets`
+   - This is because even though `candidate_lanelet` (an adjacent lane) is not lane-changeable, we can pass the `candidate_lanelet` without lane change if the following and previous lanelets of the `candidate_lanelet` are `route_lanelets`
+
+`get preferred lanelets` extracts `preferred_lane_id` from `route_lanelets` with the route handler.
+
+`create route sections` extracts `continued_lane_ids`, and `lane_ids` from `route_lanelets` for each route section with the route handler, and creates route sections.
 
 ## Limitations
 
