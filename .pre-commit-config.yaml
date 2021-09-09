@@ -44,6 +44,12 @@ repos:
     hooks:
       - id: prettier
 
+  - repo: https://github.com/tier4/pre-commit-hooks-ros
+    rev: v0.1.2
+    hooks:
+      - id: prettier-xml
+      - id: sort-package-xml
+
   - repo: local
     hooks:
       - id: uncrustify
