@@ -25,7 +25,7 @@ public:
   : Node("empty_objects_publisher")
   {
     empty_objects_pub_ = this->create_publisher<autoware_perception_msgs::msg::DynamicObjectArray>(
-      "output/objects", 1);
+      "~/output/objects", 1);
 
     auto timer_callback = std::bind(&EmptyObjectsPublisher::timerCallback, this);
     const auto period = std::chrono::milliseconds(100);
