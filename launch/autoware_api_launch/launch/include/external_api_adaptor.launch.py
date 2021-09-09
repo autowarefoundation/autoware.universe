@@ -40,6 +40,7 @@ def generate_launch_description():
         _create_api_node('route', 'Route'),
         _create_api_node('service', 'Service'),
         _create_api_node('start', 'Start'),
+        _create_api_node('vehicle_status', 'VehicleStatus'),
         _create_api_node('velocity', 'Velocity'),
         _create_api_node('version', 'Version'),
     ]
