@@ -95,7 +95,8 @@ nav:
   - DeveloperGuide:
       - Coding guideline: developer_guide/CodingGuideline.md
       - Pull request guideline: developer_guide/PullRequestGuideline.md
-      - Unit test Guideline: developer_guide/UnitTestGuideline.md
+      - Unit test guideline: developer_guide/UnitTestGuideline.md
+      - Clang-Tidy guideline: developer_guide/ClangTidyGuideline.md
       - Knowhow:
           - developer_guide/knowhow/PortingToROS2.md
   - License/Credit:
