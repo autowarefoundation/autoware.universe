@@ -15,11 +15,11 @@
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>tf2</depend>
-  <depend>tf2_ros</depend>
   <depend>tf2_geometry_msgs</depend>
+  <depend>tf2_ros</depend>
 
-  <exec_depend>topic_tools</exec_depend>
   <exec_depend>ros2cli</exec_depend>
+  <exec_depend>topic_tools</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
