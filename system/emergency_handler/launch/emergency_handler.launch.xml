@@ -3,6 +3,7 @@
   <!-- To be replaced by ControlCommand -->
   <arg name="input_prev_control_command" default="/control/vehicle_cmd" />
   <arg name="input_twist" default="/localization/twist" />
+  <arg name="input_control_mode" default="/vehicle/status/control_mode" />
 
   <arg name="output_control_command" default="/system/emergency/control_cmd" />
   <arg name="output_shift" default="/system/emergency/shift_cmd" />
@@ -16,6 +17,8 @@
     <remap from="~/input/hazard_status" to="$(var input_hazard_status)"/>
     <remap from="~/input/prev_control_command" to="$(var input_prev_control_command)"/>
     <remap from="~/input/twist" to="$(var input_twist)"/>
+    <remap from="~/input/control_mode" to="$(var input_control_mode)"/>
+
     <remap from="~/output/control_command" to="$(var output_control_command)"/>
     <remap from="~/output/shift" to="$(var output_shift)"/>
     <remap from="~/output/turn_signal" to="$(var output_turn_signal)"/>
