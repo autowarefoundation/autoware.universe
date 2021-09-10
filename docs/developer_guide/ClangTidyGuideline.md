@@ -1,8 +1,10 @@
 # Clang-Tidy Guidelines
 
-This document follows the convention of [RFC2119](https://datatracker.ietf.org/doc/html/rfc2119).
+Weekly Clang-Tidy analysis report for `main` branch is [here](https://tier4.github.io/autoware-iv-metrics-dashboard/tidy/) (updated every Sunday).
 
 **Information:** Due to the lack of the header files of CUDA or NVML, Perception modules and NVML GPU Monitor can not be analyzed correctly by clang-tidy-pr in autoware.iv repository. You may find some clang-errors and false positives.
+
+This document follows the convention of [RFC2119](https://datatracker.ietf.org/doc/html/rfc2119).
 
 ---
 
