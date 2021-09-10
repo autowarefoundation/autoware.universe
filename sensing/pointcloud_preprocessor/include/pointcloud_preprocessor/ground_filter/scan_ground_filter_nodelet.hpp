@@ -61,6 +61,57 @@ private:
   };
   using PointCloudRefVector = std::vector<PointRef>;
 
+
+  struct PointsCentroid
+  {
+    float radius_sum;
+    float height_sum;
+    float radius_avg;
+    float height_avg;
+    uint32_t point_num;
+
+    PointsCentroid()
+    : radius_sum(0.0f),
+      height_sum(0.0f),
+      radius_avg(0.0f),
+      height_avg(0.0f),
+      point_num(0)
+    {}
+
+    void initialize()
+    {
+      radius_sum = 0.0f;
+      height_sum = 0.0f;
+      radius_avg = 0.0f;
+      height_avg = 0.0f;
+      point_num = 0;
+    }
+
+    void addPoint(const float radius, const float height)
+    {
+      radius_sum += radius;
+      height_sum += height;
+      ++point_num;
+      radius_avg = radius_sum / point_num;
+      height_avg = height_sum / point_num;
+    }
+
+    float getAverageSlope()
+    {
+      return std::atan2(height_avg, radius_avg);
+    }
+
+    float getAverageHeight()
+    {
+      return height_avg;
+    }
+
+    float getAverageRadius()
+    {
+      return radius_avg;
+    }
+  };
+
   void filter(
     const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output) override;
 

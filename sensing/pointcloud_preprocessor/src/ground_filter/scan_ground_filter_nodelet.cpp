@@ -129,12 +129,8 @@ void ScanGroundFilterComponent::classifyPointCloud(
   for (size_t i = 0; i < in_radial_ordered_clouds.size(); i++) {
     float prev_gnd_radius = 0.0f;
     float prev_gnd_slope = 0.0f;
-    float prev_gnd_radius_sum = 0.0f;
-    float prev_gnd_height_sum = 0.0f;
-    float prev_gnd_radius_avg = 0.0f;
-    float prev_gnd_height_avg = 0.0f;
     float points_distance = 0.0f;
-    uint32_t prev_gnd_point_num = 0;
+    PointsCentroid ground_cluster, non_ground_cluster;
     float local_slope = 0.0f;
     PointLabel prev_point_label = PointLabel::INIT;
     pcl::PointXYZ prev_gnd_point(0, 0, 0);
@@ -154,32 +150,38 @@ void ScanGroundFilterComponent::classifyPointCloud(
         }
         prev_gnd_radius = std::hypot(prev_gnd_point.x, prev_gnd_point.y);
         prev_gnd_slope = 0.0f;
-        prev_gnd_radius_sum = 0.0f;
-        prev_gnd_height_sum = 0.0f;
-        prev_gnd_radius_avg = 0.0f;
-        prev_gnd_height_avg = 0.0f;
-        prev_gnd_point_num = 0;
+        ground_cluster.initialize();
+        non_ground_cluster.initialize();
         points_distance = calcDistance3d(*p->orig_point, prev_gnd_point);
       } else {
         points_distance = calcDistance3d(*p->orig_point, *p_prev->orig_point);
       }
 
-      float points_2d_distance = p->radius - prev_gnd_radius;
-      float height_distance = p->orig_point->z - prev_gnd_point.z;
+      float radius_distance_from_gnd = p->radius - prev_gnd_radius;
+      float height_from_gnd = p->orig_point->z - prev_gnd_point.z;
+      float height_from_obj = p->orig_point->z - non_ground_cluster.getAverageHeight();
+      bool calculate_slope = false;
+      bool is_point_close_to_prev =
+        (points_distance <
+        (p->radius * radial_divider_angle_rad_ + split_points_distance_tolerance_));
 
       // check points which is far enough from previous point
-      if (
-        // close to the previous point, set point follow label
-        points_distance < (p->radius * radial_divider_angle_rad_ +
-        split_points_distance_tolerance_) &&
-        std::abs(height_distance) < split_height_distance_)
+      if ((prev_point_label == PointLabel::NON_GROUND) &&
+        (std::abs(height_from_obj) >= split_height_distance_))
       {
+        calculate_slope = true;
+      } else if (is_point_close_to_prev && std::abs(height_from_gnd) < split_height_distance_) {
+        // close to the previous point, set point follow label
         p->point_state = PointLabel::POINT_FOLLOW;
+        calculate_slope = false;
       } else {
+        calculate_slope = true;
+      }
+      if (calculate_slope) {
         // far from the previous point
 
         float global_slope = std::atan2(p->orig_point->z, p->radius);
-        local_slope = std::atan2(height_distance, points_2d_distance);
+        local_slope = std::atan2(height_from_gnd, radius_distance_from_gnd);
 
         if (global_slope > global_slope_max_angle) {
           // the point is outside of the global slope threshold
@@ -193,11 +195,8 @@ void ScanGroundFilterComponent::classifyPointCloud(
       }
 
       if (p->point_state == PointLabel::GROUND) {
-        prev_gnd_radius_sum = 0.0f;
-        prev_gnd_height_sum = 0.0f;
-        prev_gnd_radius_avg = 0.0f;
-        prev_gnd_height_avg = 0.0f;
-        prev_gnd_point_num = 0;
+        ground_cluster.initialize();
+        non_ground_cluster.initialize();
       }
       if (p->point_state == PointLabel::NON_GROUND) {
         out_no_ground_indices.indices.push_back(p->orig_index);
@@ -219,12 +218,12 @@ void ScanGroundFilterComponent::classifyPointCloud(
       if (p->point_state == PointLabel::GROUND) {
         prev_gnd_radius = p->radius;
         prev_gnd_point = pcl::PointXYZ(p->orig_point->x, p->orig_point->y, p->orig_point->z);
-        prev_gnd_radius_sum += p->radius;
-        prev_gnd_height_sum += p->orig_point->z;
-        ++prev_gnd_point_num;
-        prev_gnd_radius_avg = prev_gnd_radius_sum / prev_gnd_point_num;
-        prev_gnd_height_avg = prev_gnd_height_sum / prev_gnd_point_num;
-        prev_gnd_slope = std::atan2(prev_gnd_height_avg, prev_gnd_radius_avg);
+        ground_cluster.addPoint(p->radius, p->orig_point->z);
+        prev_gnd_slope = ground_cluster.getAverageSlope();
+      }
+      // update the non ground state
+      if (p->point_state == PointLabel::NON_GROUND) {
+        non_ground_cluster.addPoint(p->radius, p->orig_point->z);
       }
     }
   }
