@@ -4,7 +4,7 @@
       type: diagnostic_aggregator/AnalyzerGroup
       path: vehicle
       analyzers:
-        alive_monitoring:
+        alive_monitoring: # TODO:rename to node_alive_monitoring or something
           type: diagnostic_aggregator/AnalyzerGroup
           path: alive_monitoring
           analyzers:
@@ -22,23 +22,23 @@
               timeout: 1.0
               num_items: 0
 
+        vehicle_interface_connection:
+          type: diagnostic_aggregator/AnalyzerGroup
+          path: vehicle_interface_connection
+          analyzers:
             can_bus_connection:
-              type: diagnostic_aggregator/AnalyzerGroup
+              type: diagnostic_aggregator/GenericAnalyzer
               path: can_bus_connection
-              analyzers:
-                can_bus_connection:
-                  type: diagnostic_aggregator/GenericAnalyzer
-                  path: can_bus_connection
-                  contains: [": can_bus_connection"]
-                  timeout: 1.0
-                  num_items: 0
+              contains: [": can_bus_connection"]
+              timeout: 1.0
+              num_items: 0
 
-                ros2_socketcan_connection:
-                  type: diagnostic_aggregator/GenericAnalyzer
-                  path: ros2_socketcan_connection
-                  contains: [": socket_can_"]
-                  timeout: 1.0
-                  num_items: 0
+            ros2_socketcan_connection:
+              type: diagnostic_aggregator/GenericAnalyzer
+              path: ros2_socketcan_connection
+              contains: [": socket_can_"]
+              timeout: 1.0
+              num_items: 0
 
 
         vehicle_errors:

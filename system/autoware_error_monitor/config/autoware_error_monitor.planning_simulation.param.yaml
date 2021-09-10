@@ -49,6 +49,7 @@
             # '/autoware/system/resource_monitoring/gpu_memory_usage', # Require GPU
             # '/autoware/system/resource_monitoring/gpu_thermal_throttling', # Require GPU
             "/autoware/vehicle/alive_monitoring",
+            "/autoware/vehicle/vehicle_interface_connection",
             "/autoware/vehicle/vehicle_errors",
             "/autoware/vehicle/obstacle_crash",
           ]
@@ -69,6 +70,8 @@
           # /autoware/system/resource_monitoring/gpu_memory_usage: { sf_at: "warn", lf_at: "error", spf_at: "none" }  # No need to watch in simulation
           # /autoware/system/resource_monitoring/gpu_thermal_throttling: { sf_at: "warn", lf_at: "error", spf_at: "none" }  # No need to watch in simulation
         auto_recovery:
+          /autoware/vehicle/vehicle_interface_connection: false
+          /autoware/vehicle/vehicle_errors: false
           /autoware/vehicle/obstacle_crash: false
 
       remote_control:
