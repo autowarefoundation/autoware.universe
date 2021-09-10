@@ -65,9 +65,6 @@
 
     <!-- external_cmd_converter -->
     <include file="$(find-pkg-share external_cmd_converter)/launch/external_cmd_converter.launch.xml">
-      <arg name="in/external_control_cmd" value="/external/selected/external_control_cmd" />
-      <arg name="in/shift_cmd" value="/external/selected/shift_cmd" />
-      <arg name="out/control_cmd" value="/external/selected/control_cmd" />
     </include>
   </group>
 </launch>
