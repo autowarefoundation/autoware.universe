@@ -12,8 +12,8 @@
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
-  <depend>autoware_utils</depend>
   <depend>autoware_planning_msgs</depend>
+  <depend>autoware_utils</depend>
   <depend>freespace_planning_algorithms</depend>
   <depend>geometry_msgs</depend>
   <depend>nav_msgs</depend>
