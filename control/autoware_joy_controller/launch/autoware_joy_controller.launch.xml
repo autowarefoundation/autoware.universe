@@ -6,10 +6,10 @@
   <arg name="input_twist" default="/localization/twist" />
 
   <arg name="output_control_command" default="/external/$(var external_cmd_source)/joy/control_cmd" />
-  <arg name="output_external_control_command" default="/external/$(var external_cmd_source)/control_cmd" />
-  <arg name="output_shift" default="/external/$(var external_cmd_source)/shift_cmd" />
-  <arg name="output_turn_signal" default="/external/$(var external_cmd_source)/turn_signal_cmd" />
-  <arg name="output_heartbeat" default="/external/$(var external_cmd_source)/heartbeat" />
+  <arg name="output_external_control_command" default="/api/external/set/command/$(var external_cmd_source)/control" />
+  <arg name="output_shift" default="/api/external/set/command/$(var external_cmd_source)/shift" />
+  <arg name="output_turn_signal" default="/api/external/set/command/$(var external_cmd_source)/turn_signal" />
+  <arg name="output_heartbeat" default="/api/external/set/command/$(var external_cmd_source)/heartbeat" />
   <arg name="output_gate_mode" default="/control/gate_mode_cmd" />
   <arg name="output_autoware_engage" default="/autoware/engage" />
   <arg name="output_vehicle_engage" default="/vehicle/engage" />
