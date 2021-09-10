@@ -10,15 +10,15 @@
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
-  <depend>autoware_utils</depend>
   <depend>autoware_perception_msgs</depend>
+  <depend>autoware_utils</depend>
+  <depend>pcl_ros</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
-  <depend>pcl_ros</depend>
   <depend>tf2_geometry_msgs</depend>
 
-  <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_cmake_cppcheck</test_depend>
+  <test_depend>ament_lint_auto</test_depend>
 
   <export>
     <build_type>ament_cmake</build_type>
