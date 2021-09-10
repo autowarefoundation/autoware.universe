@@ -174,8 +174,7 @@ def launch_setup(context, *args, **kwargs):
         plugin='VehicleCmdGate',
         name='vehicle_cmd_gate',
         remappings=[
-            ('input/system_emergency', '/system/emergency/is_emergency'),
-            ('input/emergency', '/system/emergency/is_emergency'),
+            ('input/emergency_state', '/system/emergency/emergency_state'),
             ('input/steering', '/vehicle/status/steering'),
 
             ('input/auto/control_cmd', 'trajectory_follower/control_cmd'),
@@ -185,7 +184,7 @@ def launch_setup(context, *args, **kwargs):
             ('input/external/control_cmd', '/external/selected/control_cmd'),
             ('input/external/turn_signal_cmd', '/external/selected/turn_signal_cmd'),
             ('input/external/shift_cmd', '/external/selected/shift_cmd'),
-            ('input/external_emergency_stop', '/external/selected/heartbeat'),
+            ('input/external_emergency_stop_heartbeat', '/external/selected/heartbeat'),
             ('input/gate_mode', '/control/gate_mode_cmd'),
 
             ('input/emergency/control_cmd', '/system/emergency/control_cmd'),
