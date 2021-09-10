@@ -17,7 +17,7 @@
       <param name="type" value="autoware_api_msgs/msg/CrosswalkStatus"/>
     </node>
     <!-- TODO(Takagi, Isamu): workaround for topic check -->
-    <node pkg="topic_tools" exec="relay" name="initialpose">
+    <node pkg="topic_tools" exec="relay" name="initial_pose_2d">
       <param name="input_topic" value="/initialpose"/>
       <param name="output_topic" value="/initialpose2d"/>
       <param name="type" value="geometry_msgs/msg/PoseWithCovarianceStamped"/>
