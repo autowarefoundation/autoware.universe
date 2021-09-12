@@ -331,7 +331,7 @@ Visualization Manager:
           Channel Name: intensity
           Class: rviz_default_plugins/PointCloud2
           Color: 255; 255; 255
-          Color Transformer: Intensity
+          Color Transformer: FlatColor
           Decay Time: 0
           Enabled: true
           Invert Rainbow: false
@@ -344,7 +344,7 @@ Visualization Manager:
           Selectable: true
           Size (Pixels): 1
           Size (m): 0.02
-          Style: Squares
+          Style: Points
           Topic:
             Depth: 5
             Durability Policy: Transient Local
@@ -365,11 +365,13 @@ Visualization Manager:
             left_lane_bound: true
             parking_lots: true
             parking_space: true
+            pedestrian_marking: true
             right_lane_bound: true
             road_lanelets: false
             stop_lines: true
             traffic_light: true
             traffic_light_triangle: true
+            walkway_lanelets: true
           Topic:
             Depth: 5
             Durability Policy: Transient Local
@@ -383,7 +385,7 @@ Visualization Manager:
       Displays:
         - Class: rviz_common/Group
           Displays:
-            - Alpha: 0.999
+            - Alpha: 0.4
               Autocompute Intensity Bounds: true
               Autocompute Value Bounds:
                 Max Value: 5
@@ -404,9 +406,9 @@ Visualization Manager:
               Name: ConcatenatePointCloud
               Position Transformer: XYZ
               Selectable: true
-              Size (Pixels): 2
+              Size (Pixels): 1
               Size (m): 0.02
-              Style: Squares
+              Style: Points
               Topic:
                 Depth: 5
                 Durability Policy: Volatile
@@ -425,7 +427,7 @@ Visualization Manager:
               Axis: Z
               Channel Name: z
               Class: rviz_default_plugins/PointCloud2
-              Color: 255; 255; 255
+              Color: 200; 200; 200
               Color Transformer: FlatColor
               Decay Time: 0
               Enabled: true
@@ -437,9 +439,9 @@ Visualization Manager:
               Name: NoGroundPointCloud
               Position Transformer: XYZ
               Selectable: true
-              Size (Pixels): 5
+              Size (Pixels): 3
               Size (m): 0.02
-              Style: Squares
+              Style: Points
               Topic:
                 Depth: 5
                 Durability Policy: Volatile
