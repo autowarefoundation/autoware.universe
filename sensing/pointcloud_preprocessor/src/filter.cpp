@@ -90,37 +90,7 @@ pointcloud_preprocessor::Filter::Filter(
       "output", rclcpp::SensorDataQoS().keep_last(max_queue_size_));
   }
 
-  // Set subscriber
-  {
-    if (use_indices_) {
-      // Subscribe to the input using a filter
-      sub_input_filter_.subscribe(
-        this, "input", rclcpp::SensorDataQoS().keep_last(max_queue_size_).get_rmw_qos_profile());
-      sub_indices_filter_.subscribe(
-        this, "indices", rclcpp::SensorDataQoS().keep_last(max_queue_size_).get_rmw_qos_profile());
-
-      if (approximate_sync_) {
-        sync_input_indices_a_ = std::make_shared<ApproximateTimeSyncPolicy>(max_queue_size_);
-        sync_input_indices_a_->connectInput(sub_input_filter_, sub_indices_filter_);
-        sync_input_indices_a_->registerCallback(
-          std::bind(
-            &Filter::input_indices_callback, this, std::placeholders::_1, std::placeholders::_2));
-      } else {
-        sync_input_indices_e_ = std::make_shared<ExactTimeSyncPolicy>(max_queue_size_);
-        sync_input_indices_e_->connectInput(sub_input_filter_, sub_indices_filter_);
-        sync_input_indices_e_->registerCallback(
-          std::bind(
-            &Filter::input_indices_callback, this, std::placeholders::_1, std::placeholders::_2));
-      }
-    } else {
-      // Subscribe in an old fashion to input only (no filters)
-      // CAN'T use auto-type here.
-      std::function<void(const PointCloud2ConstPtr msg)> cb = std::bind(
-        &Filter::input_indices_callback, this, std::placeholders::_1, PointIndicesConstPtr());
-      sub_input_ = create_subscription<PointCloud2>(
-        "input", rclcpp::SensorDataQoS().keep_last(max_queue_size_), cb);
-    }
-  }
+  subscribe();
 
   // Set tf_listener, tf_buffer.
   setupTF();
@@ -138,6 +108,55 @@ void pointcloud_preprocessor::Filter::setupTF()
   tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(
     *tf_buffer_);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void pointcloud_preprocessor::Filter::subscribe()
+{
+  if (use_indices_) {
+    // Subscribe to the input using a filter
+    sub_input_filter_.subscribe(
+      this, "input", rclcpp::SensorDataQoS().keep_last(max_queue_size_).get_rmw_qos_profile());
+    sub_indices_filter_.subscribe(
+      this, "indices", rclcpp::SensorDataQoS().keep_last(max_queue_size_).get_rmw_qos_profile());
+
+    if (approximate_sync_) {
+      sync_input_indices_a_ = std::make_shared<ApproximateTimeSyncPolicy>(max_queue_size_);
+      sync_input_indices_a_->connectInput(sub_input_filter_, sub_indices_filter_);
+      sync_input_indices_a_->registerCallback(
+        std::bind(
+          &Filter::input_indices_callback, this, std::placeholders::_1, std::placeholders::_2));
+    } else {
+      sync_input_indices_e_ = std::make_shared<ExactTimeSyncPolicy>(max_queue_size_);
+      sync_input_indices_e_->connectInput(sub_input_filter_, sub_indices_filter_);
+      sync_input_indices_e_->registerCallback(
+        std::bind(
+          &Filter::input_indices_callback, this, std::placeholders::_1, std::placeholders::_2));
+    }
+  } else {
+    // Subscribe in an old fashion to input only (no filters)
+    // CAN'T use auto-type here.
+    std::function<void(const PointCloud2ConstPtr msg)> cb = std::bind(
+      &Filter::input_indices_callback, this, std::placeholders::_1, PointIndicesConstPtr());
+    sub_input_ = create_subscription<PointCloud2>(
+      "input", rclcpp::SensorDataQoS().keep_last(max_queue_size_), cb);
+  }
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void pointcloud_preprocessor::Filter::unsubscribe()
+{
+  if (use_indices_) {
+    sub_input_filter_.unsubscribe();
+    sub_indices_filter_.unsubscribe();
+    if (approximate_sync_) {
+      sync_input_indices_a_.reset();
+    } else {
+      sync_input_indices_e_.reset();
+    }
+  } else {
+    sub_input_.reset();
+  }
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////

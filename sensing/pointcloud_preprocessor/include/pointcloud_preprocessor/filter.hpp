@@ -179,6 +179,12 @@ protected:
   virtual void filter(
     const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output) = 0;
 
+  /** \brief Lazy transport subscribe routine. */
+  virtual void subscribe();
+
+  /** \brief Lazy transport unsubscribe routine. */
+  virtual void unsubscribe();
+
   /** \brief Call the child filter () method, optionally transform the result, and publish it.
    * \param input the input point cloud dataset.
    * \param indices a pointer to the vector of point indices to use.
