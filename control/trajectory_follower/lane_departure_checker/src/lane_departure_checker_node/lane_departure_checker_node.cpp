@@ -326,6 +326,12 @@ void LaneDepartureCheckerNode::onTimer()
 
   debug_publisher_.publish<visualization_msgs::msg::MarkerArray>(
     std::string("marker_array"), createMarkerArray());
+  processing_time_map["Node: publishDebugMarker"] = stop_watch.toc(true);
+
+  // Merge processing_time_map
+  for (const auto & m : output_.processing_time_map) {
+    processing_time_map["Core: " + m.first] = m.second;
+  }
 
   processing_time_map["Total"] = stop_watch.toc("Total");
   processing_time_publisher_.publish(processing_time_map);
