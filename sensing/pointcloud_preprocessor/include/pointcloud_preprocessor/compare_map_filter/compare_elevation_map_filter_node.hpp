@@ -21,7 +21,10 @@
 #include <string>
 #include <vector>
 
+#include "grid_map_core/GridMap.hpp"
+#include "grid_map_cv/grid_map_cv.hpp"
 #include "grid_map_msgs/msg/grid_map.hpp"
+#include "grid_map_pcl/GridMapPclLoader.hpp"
 #include "pointcloud_preprocessor/filter.hpp"
 #include "rclcpp/rclcpp.hpp"
 namespace pointcloud_preprocessor
@@ -29,8 +32,8 @@ namespace pointcloud_preprocessor
 class CompareElevationMapFilterComponent : public pointcloud_preprocessor::Filter
 {
 protected:
-  virtual void filter(
-    const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output);
+  void filter(
+    const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output) override;
 
 private:
   rclcpp::Subscription<grid_map_msgs::msg::GridMap>::SharedPtr sub_map_;
@@ -42,7 +45,6 @@ private:
   std::string layer_name_;
   std::string map_frame_;
   double height_diff_thresh_;
-  bool is_ready_;
 
   void setVerbosityLevelToDebugIfFlagSet();
   void processPointcloud(grid_map::GridMapPclLoader * gridMapPclLoader);

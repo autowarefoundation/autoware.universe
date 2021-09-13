@@ -37,7 +37,7 @@ CompareElevationMapFilterComponent::CompareElevationMapFilterComponent(
   const rclcpp::NodeOptions & options)
 : Filter("CompareElevationMapFilter", options)
 {
-  is_ready_ = false;
+  unsubscribe();
   layer_name_ = this->declare_parameter("map_layer_name", std::string("elevation"));
   height_diff_thresh_ = this->declare_parameter("height_diff_thresh", 0.15);
   map_frame_ = this->declare_parameter("map_frame", "map");
@@ -61,7 +61,7 @@ void CompareElevationMapFilterComponent::elevationMapCallback(
   const float max_value = elevation_map_.get(layer_name_).maxCoeffOfFinites();
   grid_map::GridMapCvConverter::toImage<uint16_t, 1>(
     elevation_map_, layer_name_, CV_16UC1, min_value, max_value, elevation_image_);
-  is_ready_ = true;
+  subscribe();
 }
 
 void CompareElevationMapFilterComponent::filter(
@@ -71,24 +71,21 @@ void CompareElevationMapFilterComponent::filter(
   pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_input(new pcl::PointCloud<pcl::PointXYZ>);
   pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_output(new pcl::PointCloud<pcl::PointXYZ>);
   std::string output_frame = map_frame_;
-  if (is_ready_) {
-    output_frame = elevation_map_.getFrameId();
-    elevation_map_.setTimestamp(input->header.stamp.nanosec);
-    pcl::fromROSMsg(*input, *pcl_input);
-    pcl_output->points.reserve(pcl_input->points.size());
-    for (const auto & point : pcl_input->points) {
-      if (elevation_map_.isInside(grid_map::Position(point.x, point.y))) {
-        float elevation_value = elevation_map_.atPosition(
-          layer_name_, grid_map::Position(point.x, point.y),
-          grid_map::InterpolationMethods::INTER_LINEAR);
-        const float height_diff = point.z - elevation_value;
-        if (height_diff > height_diff_thresh_) {
-          pcl_output->points.push_back(point);
-        }
+
+  output_frame = elevation_map_.getFrameId();
+  elevation_map_.setTimestamp(input->header.stamp.nanosec);
+  pcl::fromROSMsg(*input, *pcl_input);
+  pcl_output->points.reserve(pcl_input->points.size());
+  for (const auto & point : pcl_input->points) {
+    if (elevation_map_.isInside(grid_map::Position(point.x, point.y))) {
+      float elevation_value = elevation_map_.atPosition(
+        layer_name_, grid_map::Position(point.x, point.y),
+        grid_map::InterpolationMethods::INTER_LINEAR);
+      const float height_diff = point.z - elevation_value;
+      if (height_diff > height_diff_thresh_) {
+        pcl_output->points.push_back(point);
       }
     }
-  } else {
-    pcl::fromROSMsg(*input, *pcl_output);
   }
 
   pcl::toROSMsg(*pcl_output, output);
