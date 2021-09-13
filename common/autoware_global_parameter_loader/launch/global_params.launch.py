@@ -35,7 +35,7 @@ def launch_setup(context, *args, **kwargs):
             [FindPackageShare('vehicle_info_util'), '/launch/vehicle_info.launch.py']
         ),
         launch_arguments={
-            'config_file': [vehicle_description_pkg, '/config/vehicle_info.param.yaml']
+            'vehicle_info_param_file': [vehicle_description_pkg, '/config/vehicle_info.param.yaml']
         }.items()
     )
 
