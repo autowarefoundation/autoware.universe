@@ -73,7 +73,7 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
   // Subscriber
   emergency_state_sub_ =
     this->create_subscription<autoware_system_msgs::msg::EmergencyStateStamped>(
-    "input/system_emergency", 1, std::bind(&VehicleCmdGate::onEmergencyState, this, _1));
+    "input/emergency_state", 1, std::bind(&VehicleCmdGate::onEmergencyState, this, _1));
   external_emergency_stop_heartbeat_sub_ =
     this->create_subscription<autoware_external_api_msgs::msg::Heartbeat>(
     "input/external_emergency_stop_heartbeat", 1,
