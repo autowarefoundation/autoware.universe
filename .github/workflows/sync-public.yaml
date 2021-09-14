@@ -1,0 +1,40 @@
+name: sync public
+
+on:
+  schedule:
+    - cron: "0 19 * * *" # run at 4 AM JST
+  workflow_dispatch:
+
+env:
+  BASE_BRANCH: main
+  SYNC_TARGET_BRANCH: main-internal
+  SYNC_TARGET_REPOSITORY: https://github.com/tier4/AutowareArchitectureProposal.proj.git
+
+jobs:
+  sync-public:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ env.BASE_BRANCH }}
+          fetch-depth: 0
+
+      - name: Generate token
+        uses: tibdex/github-app-token@v1
+        id: generate-token
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Set git config for private repositories
+        run: |
+          git config --local --unset-all http.https://github.com/.extraheader || true
+          git config --global url.https://x-access-token:${{ steps.generate-token.outputs.token }}@github.com.insteadOf 'https://github.com'
+
+      - name: Push to public repository
+        run: |
+          git remote add public ${{ env.SYNC_TARGET_REPOSITORY }}
+          git fetch public
+          git push public ${{ env.BASE_BRANCH }}:${{ env.SYNC_TARGET_BRANCH }}
