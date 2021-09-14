@@ -31,11 +31,11 @@ repositories:
   # description
   description/sensor/sensor_description:
     type: git
-    url: git@github.com:tier4/sensor_description.iv.git
+    url: https://github.com/tier4/sensor_description.iv.git
     version: main
   description/sensor/aip_description:
     type: git
-    url: git@github.com:tier4/aip_description.iv.git
+    url: https://github.com/tier4/aip_description.iv.git
     version: main
   description/sensor/velodyne_simulator:
     type: git
@@ -43,7 +43,7 @@ repositories:
     version: ros2
   description/vehicle/lexus_description:
     type: git
-    url: git@github.com:tier4/lexus_description.iv.git
+    url: https://github.com/tier4/lexus_description.iv.git
     version: main
   # simulator
   simulator/planning_simulator:
@@ -60,7 +60,7 @@ repositories:
     version: main
   simulator/scenario_simulator:
     type: git
-    url: git@github.com:tier4/scenario_simulator_v2.git
+    url: https://github.com/tier4/scenario_simulator_v2.git
     version: master
   simulator/logsim:
     type: git
