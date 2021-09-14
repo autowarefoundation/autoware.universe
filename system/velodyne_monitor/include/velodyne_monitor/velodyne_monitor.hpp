@@ -91,13 +91,6 @@ protected:
    */
   float convertTemperature(int raw);
 
-  /**
-   * @brief timer callback
-   * @param [in] event timing information
-   */
-  void onTimer();
-
-  rclcpp::TimerBase::SharedPtr timer_;                     //!< @brief timer
   diagnostic_updater::Updater updater_;  //!< @brief updater class which advertises to /diagnostics
   std::unique_ptr<client::http_client> client_;  //!< @brief HTTP client class
   json::value info_json_;                        //!< @brief values of info.json

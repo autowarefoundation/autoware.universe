@@ -55,16 +55,6 @@ VelodyneMonitor::VelodyneMonitor()
   client_.reset(new client::http_client("http://" + ip_address_, config));
 
   updater_.setHardwareID("velodyne");
-
-  // Timer
-  auto timer_callback = std::bind(&VelodyneMonitor::onTimer, this);
-  auto period = std::chrono::duration_cast<std::chrono::nanoseconds>(
-    std::chrono::duration<double>(1.0));
-
-  timer_ = std::make_shared<rclcpp::GenericTimer<decltype(timer_callback)>>(
-    this->get_clock(), period, std::move(timer_callback),
-    this->get_node_base_interface()->get_context());
-  this->get_node_timers_interface()->add_timer(timer_, nullptr);
 }
 
 void VelodyneMonitor::checkConnection(diagnostic_updater::DiagnosticStatusWrapper & stat)
@@ -239,5 +229,3 @@ float VelodyneMonitor::convertTemperature(int raw)
 {
   return std::sqrt(2.1962e6 + (1.8639 - static_cast<float>(raw) * 5.0 / 4096) / 3.88e-6) - 1481.96;
 }
-
-void VelodyneMonitor::onTimer() {updater_.force_update();}
