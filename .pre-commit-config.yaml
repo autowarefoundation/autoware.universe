@@ -50,6 +50,11 @@ repos:
       - id: prettier-xml
       - id: sort-package-xml
 
+  - repo: https://github.com/gruntwork-io/pre-commit
+    rev: v0.1.12
+    hooks:
+      - id: shellcheck
+
   - repo: local
     hooks:
       - id: uncrustify
