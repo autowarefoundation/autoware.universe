@@ -25,6 +25,7 @@
 #include "fmt/format.h"
 
 #include "system_monitor/mem_monitor/mem_monitor.hpp"
+#include "system_monitor/system_monitor_utility.hpp"
 
 namespace bp = boost::process;
 
@@ -46,6 +47,9 @@ void MemMonitor::update()
 
 void MemMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
+  // Remember start time to measure elapsed time
+  const auto t_start = SystemMonitorUtility::startMeasurement();
+
   // Get total amount of free and used memory
   bp::ipstream is_out;
   bp::ipstream is_err;
@@ -112,6 +116,9 @@ void MemMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
   }
 
   stat.summary(level, usage_dict_.at(level));
+
+  // Measure elapsed time since start time and report
+  SystemMonitorUtility::stopMeasurement(t_start, stat);
 }
 
 std::string MemMonitor::toHumanReadable(const std::string & str)

@@ -31,6 +31,7 @@
 
 #include "hdd_reader/hdd_reader.hpp"
 #include "system_monitor/hdd_monitor/hdd_monitor.hpp"
+#include "system_monitor/system_monitor_utility.hpp"
 
 namespace bp = boost::process;
 
@@ -55,6 +56,9 @@ void HDDMonitor::update()
 
 void HDDMonitor::checkTemp(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
+  // Remember start time to measure elapsed time
+  const auto t_start = SystemMonitorUtility::startMeasurement();
+
   if (hdd_params_.empty()) {
     stat.summary(DiagStatus::ERROR, "invalid disk parameter");
     return;
@@ -193,10 +197,16 @@ void HDDMonitor::checkTemp(diagnostic_updater::DiagnosticStatusWrapper & stat)
   } else {
     stat.summary(whole_level, temp_dict_.at(whole_level));
   }
+
+  // Measure elapsed time since start time and report
+  SystemMonitorUtility::stopMeasurement(t_start, stat);
 }
 
 void HDDMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
+  // Remember start time to measure elapsed time
+  const auto t_start = SystemMonitorUtility::startMeasurement();
+
   if (hdd_params_.empty()) {
     stat.summary(DiagStatus::ERROR, "invalid disk parameter");
     return;
@@ -268,6 +278,9 @@ void HDDMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
   } else {
     stat.summary(whole_level, usage_dict_.at(whole_level));
   }
+
+  // Measure elapsed time since start time and report
+  SystemMonitorUtility::stopMeasurement(t_start, stat);
 }
 
 void HDDMonitor::getHDDParams()

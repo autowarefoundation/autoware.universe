@@ -34,6 +34,7 @@
 #include "fmt/format.h"
 
 #include "system_monitor/net_monitor/net_monitor.hpp"
+#include "system_monitor/system_monitor_utility.hpp"
 
 NetMonitor::NetMonitor(const rclcpp::NodeOptions & options)
 : Node("net_monitor", options),
@@ -67,6 +68,9 @@ void NetMonitor::shutdown_nl80211()
 
 void NetMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
+  // Remember start time to measure elapsed time
+  const auto t_start = SystemMonitorUtility::startMeasurement();
+
   if (device_params_.empty()) {
     stat.summary(DiagStatus::ERROR, "invalid device parameter");
     return;
@@ -221,6 +225,9 @@ void NetMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
   }
 
   last_update_time_ = this->now();
+
+  // Measure elapsed time since start time and report
+  SystemMonitorUtility::stopMeasurement(t_start, stat);
 }
 
 #include "rclcpp_components/register_node_macro.hpp"

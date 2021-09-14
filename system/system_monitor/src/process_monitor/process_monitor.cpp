@@ -25,6 +25,7 @@
 #include "fmt/format.h"
 
 #include "system_monitor/process_monitor/process_monitor.hpp"
+#include "system_monitor/system_monitor_utility.hpp"
 
 ProcessMonitor::ProcessMonitor(const rclcpp::NodeOptions & options)
 : Node("process_monitor", options),
@@ -57,6 +58,9 @@ void ProcessMonitor::update()
 
 void ProcessMonitor::monitorProcesses(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
+  // Remember start time to measure elapsed time
+  const auto t_start = SystemMonitorUtility::startMeasurement();
+
   bp::ipstream is_err;
   bp::ipstream is_out;
   std::ostringstream os;
@@ -86,6 +90,9 @@ void ProcessMonitor::monitorProcesses(diagnostic_updater::DiagnosticStatusWrappe
 
   // Get high memory processes
   getHighMemoryProcesses(str);
+
+  // Measure elapsed time since start time and report
+  SystemMonitorUtility::stopMeasurement(t_start, stat);
 }
 
 void ProcessMonitor::getTasksSummary(

@@ -27,6 +27,8 @@
 #include "fmt/format.h"
 
 #include "system_monitor/ntp_monitor/ntp_monitor.hpp"
+#include "system_monitor/system_monitor_utility.hpp"
+
 namespace bp = boost::process;
 namespace fs = boost::filesystem;
 
@@ -53,6 +55,9 @@ void NTPMonitor::update()
 
 void NTPMonitor::checkOffset(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
+  // Remember start time to measure elapsed time
+  const auto t_start = SystemMonitorUtility::startMeasurement();
+
   if (!chronyc_exists_) {
     stat.summary(DiagStatus::ERROR, "chronyc error");
     stat.add(
@@ -84,6 +89,9 @@ void NTPMonitor::checkOffset(diagnostic_updater::DiagnosticStatusWrapper & stat)
     stat.add(itr->first, itr->second);
   }
   stat.summary(level, offset_dict_.at(level));
+
+  // Measure elapsed time since start time and report
+  SystemMonitorUtility::stopMeasurement(t_start, stat);
 }
 
 std::string NTPMonitor::executeChronyc(

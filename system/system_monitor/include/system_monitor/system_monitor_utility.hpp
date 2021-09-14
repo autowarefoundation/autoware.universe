@@ -20,6 +20,7 @@
 #ifndef SYSTEM_MONITOR__SYSTEM_MONITOR_UTILITY_HPP_
 #define SYSTEM_MONITOR__SYSTEM_MONITOR_UTILITY_HPP_
 
+#include <chrono>
 #include <regex>
 #include <string>
 #include <vector>
@@ -85,6 +86,30 @@ public:
       const fs::path temp_path = path / "temp";
       therm->emplace_back(t, path.filename().generic_string(), temp_path.generic_string());
     }
+  }
+
+  /**
+   * @brief Remember start time to measure elapsed time
+   * @return start time
+   */
+  static std::chrono::high_resolution_clock::time_point startMeasurement()
+  {
+    return std::chrono::high_resolution_clock::now();
+  }
+
+  /**
+   * @brief Measure elapsed time since start time and report
+   * @param [in] t_start start time
+   * @param [out] stat diagnostic message passed directly to diagnostic publish calls
+   */
+  static void stopMeasurement(
+    const std::chrono::high_resolution_clock::time_point & start,
+    diagnostic_updater::DiagnosticStatusWrapper & stat)
+  {
+    // Measure elapsed time since start time and report
+    const auto t_end = std::chrono::high_resolution_clock::now();
+    const float elapsed_ms = std::chrono::duration<float, std::milli>(t_end - start).count();
+    stat.addf("execution time", "%f ms", elapsed_ms);
   }
 };
 

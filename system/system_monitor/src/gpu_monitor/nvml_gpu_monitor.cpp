@@ -30,6 +30,7 @@
 #include "fmt/format.h"
 
 #include "system_monitor/gpu_monitor/nvml_gpu_monitor.hpp"
+#include "system_monitor/system_monitor_utility.hpp"
 
 GPUMonitor::GPUMonitor(const rclcpp::NodeOptions & options)
 : GPUMonitorBase("gpu_monitor", options)
@@ -88,6 +89,9 @@ void GPUMonitor::shut_down()
 
 void GPUMonitor::checkTemp(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
+  // Remember start time to measure elapsed time
+  const auto t_start = SystemMonitorUtility::startMeasurement();
+
   int level = DiagStatus::OK;
   int index = 0;
   nvmlReturn_t ret{};
@@ -118,10 +122,16 @@ void GPUMonitor::checkTemp(diagnostic_updater::DiagnosticStatusWrapper & stat)
   }
 
   stat.summary(level, temp_dict_.at(level));
+
+  // Measure elapsed time since start time and report
+  SystemMonitorUtility::stopMeasurement(t_start, stat);
 }
 
 void GPUMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
+  // Remember start time to measure elapsed time
+  const auto t_start = SystemMonitorUtility::startMeasurement();
+
   int level = DiagStatus::OK;
   int whole_level = DiagStatus::OK;
   int index = 0;
@@ -160,6 +170,9 @@ void GPUMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
   }
 
   stat.summary(whole_level, load_dict_.at(whole_level));
+
+  // Measure elapsed time since start time and report
+  SystemMonitorUtility::stopMeasurement(t_start, stat);
 }
 
 void GPUMonitor::addProcessUsage(
@@ -257,6 +270,9 @@ void GPUMonitor::addProcessUsage(
 
 void GPUMonitor::checkMemoryUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
+  // Remember start time to measure elapsed time
+  const auto t_start = SystemMonitorUtility::startMeasurement();
+
   int level = DiagStatus::OK;
   int whole_level = DiagStatus::OK;
   int index = 0;
@@ -298,10 +314,16 @@ void GPUMonitor::checkMemoryUsage(diagnostic_updater::DiagnosticStatusWrapper & 
   }
 
   stat.summary(whole_level, load_dict_.at(whole_level));
+
+  // Measure elapsed time since start time and report
+  SystemMonitorUtility::stopMeasurement(t_start, stat);
 }
 
 void GPUMonitor::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
+  // Remember start time to measure elapsed time
+  const auto t_start = SystemMonitorUtility::startMeasurement();
+
   int level = DiagStatus::OK;
   int whole_level = DiagStatus::OK;
   int index = 0;
@@ -363,6 +385,9 @@ void GPUMonitor::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & s
   }
 
   stat.summary(whole_level, throttling_dict_.at(whole_level));
+
+  // Measure elapsed time since start time and report
+  SystemMonitorUtility::stopMeasurement(t_start, stat);
 }
 
 std::string GPUMonitor::toHumanReadable(unsigned long long size)  // NOLINT

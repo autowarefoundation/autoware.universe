@@ -30,6 +30,7 @@
 #include "fmt/format.h"
 
 #include "system_monitor/cpu_monitor/cpu_monitor_base.hpp"
+#include "system_monitor/system_monitor_utility.hpp"
 
 namespace bp = boost::process;
 namespace fs = boost::filesystem;
@@ -71,6 +72,9 @@ void CPUMonitorBase::update()
 
 void CPUMonitorBase::checkTemp(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
+  // Remember start time to measure elapsed time
+  const auto t_start = SystemMonitorUtility::startMeasurement();
+
   if (temps_.empty()) {
     stat.summary(DiagStatus::ERROR, "temperature files not found");
     return;
@@ -107,10 +111,16 @@ void CPUMonitorBase::checkTemp(diagnostic_updater::DiagnosticStatusWrapper & sta
   } else {
     stat.summary(level, temp_dict_.at(level));
   }
+
+  // Measure elapsed time since start time and report
+  SystemMonitorUtility::stopMeasurement(t_start, stat);
 }
 
 void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
+  // Remember start time to measure elapsed time
+  const auto t_start = SystemMonitorUtility::startMeasurement();
+
   if (!mpstat_exists_) {
     stat.summary(DiagStatus::ERROR, "mpstat error");
     stat.add(
@@ -196,10 +206,16 @@ void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & st
   }
 
   stat.summary(whole_level, load_dict_.at(whole_level));
+
+  // Measure elapsed time since start time and report
+  SystemMonitorUtility::stopMeasurement(t_start, stat);
 }
 
 void CPUMonitorBase::checkLoad(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
+  // Remember start time to measure elapsed time
+  const auto t_start = SystemMonitorUtility::startMeasurement();
+
   double loadavg[3];
 
   std::ifstream ifs("/proc/loadavg", std::ios::in);
@@ -232,6 +248,9 @@ void CPUMonitorBase::checkLoad(diagnostic_updater::DiagnosticStatusWrapper & sta
   stat.addf("1min", "%.2f%%", loadavg[0] * 1e2);
   stat.addf("5min", "%.2f%%", loadavg[1] * 1e2);
   stat.addf("15min", "%.2f%%", loadavg[2] * 1e2);
+
+  // Measure elapsed time since start time and report
+  SystemMonitorUtility::stopMeasurement(t_start, stat);
 }
 
 void CPUMonitorBase::checkThrottling(
@@ -242,6 +261,9 @@ void CPUMonitorBase::checkThrottling(
 
 void CPUMonitorBase::checkFrequency(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
+  // Remember start time to measure elapsed time
+  const auto t_start = SystemMonitorUtility::startMeasurement();
+
   if (freqs_.empty()) {
     stat.summary(DiagStatus::ERROR, "frequency files not found");
     return;
@@ -262,6 +284,9 @@ void CPUMonitorBase::checkFrequency(diagnostic_updater::DiagnosticStatusWrapper 
   }
 
   stat.summary(DiagStatus::OK, "OK");
+
+  // Measure elapsed time since start time and report
+  SystemMonitorUtility::stopMeasurement(t_start, stat);
 }
 
 void CPUMonitorBase::getTempNames()

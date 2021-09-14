@@ -33,6 +33,7 @@
 
 #include "msr_reader/msr_reader.hpp"
 #include "system_monitor/cpu_monitor/intel_cpu_monitor.hpp"
+#include "system_monitor/system_monitor_utility.hpp"
 
 namespace fs = boost::filesystem;
 
@@ -47,6 +48,9 @@ CPUMonitor::CPUMonitor(const rclcpp::NodeOptions & options)
 
 void CPUMonitor::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
+  // Remember start time to measure elapsed time
+  const auto t_start = SystemMonitorUtility::startMeasurement();
+
   // Create a new socket
   int sock = socket(AF_INET, SOCK_STREAM, 0);
   if (sock < 0) {
@@ -145,6 +149,9 @@ void CPUMonitor::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & s
   }
 
   stat.summary(whole_level, thermal_dict_.at(whole_level));
+
+  // Measure elapsed time since start time and report
+  SystemMonitorUtility::stopMeasurement(t_start, stat);
 }
 
 void CPUMonitor::getTempNames()
