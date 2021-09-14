@@ -470,6 +470,7 @@ bool ObstacleStopPlannerNode::withinPolygon(
   pcl::PointCloud<pcl::PointXYZ>::Ptr within_points_ptr)
 {
   Polygon2d boost_polygon;
+  bool find_within_points = false;
   for (const auto & point : cv_polygon) {
     boost_polygon.outer().push_back(bg::make<Point2d>(point.x, point.y));
   }
@@ -480,11 +481,11 @@ bool ObstacleStopPlannerNode::withinPolygon(
     if (bg::distance(prev_point, point) < radius || bg::distance(next_point, point) < radius) {
       if (bg::within(point, boost_polygon)) {
         within_points_ptr->push_back(candidate_points_ptr->at(j));
-        return true;
+        find_within_points = true;
       }
     }
   }
-  return false;
+  return find_within_points;
 }
 
 void ObstacleStopPlannerNode::externalExpandStopRangeCallback(
