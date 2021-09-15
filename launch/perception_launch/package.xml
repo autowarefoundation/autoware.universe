@@ -10,24 +10,21 @@
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
-  <!-- object recognition -->
   <exec_depend>dynamic_object_visualization</exec_depend>
   <exec_depend>euclidean_cluster</exec_depend>
+  <exec_depend>image_transport_decompressor</exec_depend>
   <exec_depend>lidar_apollo_instance_segmentation</exec_depend>
   <exec_depend>map_based_prediction</exec_depend>
   <exec_depend>multi_object_tracker</exec_depend>
   <exec_depend>naive_path_prediction</exec_depend>
+  <exec_depend>object_merger</exec_depend>
+  <exec_depend>object_range_splitter</exec_depend>
   <exec_depend>roi_cluster_fusion</exec_depend>
   <exec_depend>shape_estimation</exec_depend>
   <exec_depend>tensorrt_yolo</exec_depend>
-  <exec_depend>object_range_splitter</exec_depend>
-  <exec_depend>object_merger</exec_depend>
-
-  <!-- traffic light recognition -->
-  <exec_depend>image_transport_decompressor</exec_depend>
+  <exec_depend>traffic_light_classifier</exec_depend>
   <exec_depend>traffic_light_map_based_detector</exec_depend>
   <exec_depend>traffic_light_ssd_fine_detector</exec_depend>
-  <exec_depend>traffic_light_classifier</exec_depend>
   <exec_depend>traffic_light_visualization</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
