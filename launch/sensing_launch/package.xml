@@ -17,11 +17,11 @@
   <exec_depend>topic_tools</exec_depend>
   <exec_depend>ublox_gps</exec_depend>
   <exec_depend>usb_cam</exec_depend>
-
+  <exec_depend>usb_cam</exec_depend>
   <exec_depend>velodyne_driver</exec_depend>
   <exec_depend>velodyne_monitor</exec_depend>
   <exec_depend>velodyne_pointcloud</exec_depend>
-  <exec_depend>usb_cam</exec_depend>
+
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
