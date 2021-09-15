@@ -76,10 +76,11 @@ repositories:
     type: git
     url: https://github.com/OUXT-Polaris/quaternion_operation.git
     version: f08cd28b357f9feede55f1fb485cb21964f5d594
+  # After https://github.com/ANYbotics/grid_map/pull/323 is merged, use upstream.
   vendor/grid_map:
     type: git
-    url: https://github.com/ANYbotics/grid_map.git
-    version: ba2f9cb6e62f7ee9c5bac7401391a211e442e459
+    url: https://github.com/tier4/grid_map.git
+    version: tier4/ros2
   vendor/perception_pcl:
     type: git
     url: https://github.com/ros-perception/perception_pcl.git
