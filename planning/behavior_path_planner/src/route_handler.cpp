@@ -16,6 +16,7 @@
 #include <limits>
 #include <memory>
 #include <unordered_set>
+#include <string>
 #include <vector>
 
 #include "lanelet2_core/LaneletMap.h"
@@ -164,6 +165,11 @@ void RouteHandler::setRouteLanelets()
     }
   }
   is_handler_ready_ = true;
+}
+
+lanelet::ConstPolygon3d RouteHandler::getIntersectionAreaById(const lanelet::Id id) const
+{
+  return lanelet_map_ptr_->polygonLayer.get(id);
 }
 
 Header RouteHandler::getRouteHeader() const {return route_msg_.header;}

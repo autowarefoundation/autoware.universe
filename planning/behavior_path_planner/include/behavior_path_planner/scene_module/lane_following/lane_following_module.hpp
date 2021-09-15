@@ -19,6 +19,7 @@
 #include <string>
 
 #include "autoware_planning_msgs/msg/path_with_lane_id.hpp"
+#include "lanelet2_extension/utility/utilities.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
@@ -29,6 +30,9 @@ using autoware_planning_msgs::msg::PathWithLaneId;
 
 struct LaneFollowingParameters
 {
+  bool expand_drivable_area;
+  double right_bound_offset;
+  double left_bound_offset;
   double lane_change_prepare_duration;
 };
 

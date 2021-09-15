@@ -74,6 +74,8 @@ public:
 
   bool isHandlerReady() const;
 
+  lanelet::ConstPolygon3d getExtraDrivableAreaById(const lanelet::Id id) const;
+
   Header getRouteHeader() const;
 
   lanelet::routing::RoutingGraphContainer getOverallGraph() const;
@@ -139,6 +141,8 @@ public:
 
   double getLaneChangeableDistance(
     const Pose & current_pose, const LaneChangeDirection & direction) const;
+
+  lanelet::ConstPolygon3d getIntersectionAreaById(const lanelet::Id id) const;
 
 private:
   // MUST

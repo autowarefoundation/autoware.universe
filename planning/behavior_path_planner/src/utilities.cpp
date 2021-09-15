@@ -895,14 +895,25 @@ OccupancyGrid generateDrivableArea(
     // convert lane polygons into cv type
     cv::Mat cv_image(
       occupancy_grid.info.width, occupancy_grid.info.height, CV_8UC1, cv::Scalar(occupied_space));
-    for (std::size_t i = 0; i < drivable_lanes.size(); i++) {
-      const auto lane = drivable_lanes.at(i);
+    for (const auto & lane : drivable_lanes) {
+      lanelet::BasicPolygon2d lane_poly = lane.polygon2d().basicPolygon();
+
+      if (lane.hasAttribute("intersection_area")) {
+        const std::string area_id = lane.attributeOr("intersection_area", "none");
+        const auto intersection_area =
+          route_handler.getIntersectionAreaById(atoi(area_id.c_str()));
+        const auto poly = lanelet::utils::to2D(intersection_area).basicPolygon();
+        std::vector<lanelet::BasicPolygon2d> lane_polys{};
+        if (boost::geometry::intersection(poly, lane_poly, lane_polys)) {
+          lane_poly = lane_polys.front();
+        }
+      }
 
       // create drivable area using opencv
       std::vector<std::vector<cv::Point>> cv_polygons;
       std::vector<cv::Point> cv_polygon;
-      for (const auto & llt_pt : lane.polygon3d()) {
-        Point geom_pt = lanelet::utils::conversion::toGeomMsgPt(llt_pt);
+      for (const auto & p : lane_poly) {
+        Point geom_pt = autoware_utils::createPoint(p.x(), p.y(), 0.0);
         Point transformed_geom_pt;
         tf2::doTransform(geom_pt, transformed_geom_pt, geom_tf_map2grid);
         cv_polygon.push_back(toCVPoint(transformed_geom_pt, width, height, resolution));

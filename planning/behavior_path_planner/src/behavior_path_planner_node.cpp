@@ -204,7 +204,11 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
 LaneFollowingParameters BehaviorPathPlannerNode::getLaneFollowingParam()
 {
   LaneFollowingParameters p{};
-  p.lane_change_prepare_duration = declare_parameter("lane_change_prepare_duration", 2.0);
+  p.expand_drivable_area = declare_parameter("lane_following.expand_drivable_area", false);
+  p.right_bound_offset = declare_parameter("lane_following.right_bound_offset", 0.5);
+  p.left_bound_offset = declare_parameter("lane_following.left_bound_offset", 0.5);
+  p.lane_change_prepare_duration = declare_parameter(
+    "lane_following.lane_change_prepare_duration", 2.0);
   return p;
 }
 
