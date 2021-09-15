@@ -49,10 +49,10 @@ ex.)
 
 ### Arguments
 
-| Name          | Type   | Description        | Default            |
-| ------------- | ------ | ------------------ | ------------------ |
-| sensor_model  | String | sensor model name  | ""                 |
-| vehicle_model | String | vehicle model name | ""                 |
+| Name          | Type   | Description        | Default |
+| ------------- | ------ | ------------------ | ------- |
+| sensor_model  | String | sensor model name  | ""      |
+| vehicle_model | String | vehicle model name | ""      |
 
 ### Usage
 
