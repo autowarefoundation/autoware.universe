@@ -22,6 +22,7 @@
   <depend>diagnostic_updater</depend>
   <depend>grid_map_pcl</depend>
   <depend>grid_map_ros</depend>
+  <depend>image_transport</depend>
   <depend>lanelet2_extension</depend>
   <depend>libopencv-dev</depend>
   <depend>libpcl-all-dev</depend>
@@ -33,6 +34,7 @@
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>sensor_msgs</depend>
+  <depend>std_msgs</depend>
   <depend>tf2</depend>
   <depend>tf2_eigen</depend>
   <depend>tf2_ros</depend>
