@@ -179,28 +179,35 @@ Path toPath(const PathWithLaneId & input)
   return output;
 }
 
-size_t getIdxByArclength(
-  const PathWithLaneId & path, const Point & origin,
-  const double signed_arc)
+size_t getIdxByArclength(const PathWithLaneId & path, const Point & origin, const double signed_arc)
 {
+  if (path.points.empty()) {
+    throw std::runtime_error("[getIdxByArclength] path points must be > 0");
+  }
+
   const auto closest_idx = autoware_utils::findNearestIndex(path.points, origin);
 
-  size_t index = closest_idx;
+  using autoware_utils::calcDistance2d;
   double sum_length = 0.0;
   if (signed_arc >= 0.0) {
-    for (; index < path.points.size() - 1; ++index) {
-      sum_length +=
-        autoware_utils::calcDistance2d(path.points.at(index), path.points.at(index + 1));
-      if (sum_length > signed_arc) {break;}
+    for (size_t i = closest_idx; i < path.points.size() - 1; ++i) {
+      const auto next_i = i + 1;
+      sum_length += calcDistance2d(path.points.at(i), path.points.at(next_i));
+      if (sum_length > signed_arc) {
+        return next_i;
+      }
     }
+    return path.points.size() - 1;
   } else {
-    for (; index > 0; --index) {
-      sum_length -=
-        autoware_utils::calcDistance2d(path.points.at(index), path.points.at(index - 1));
-      if (sum_length < signed_arc) {break;}
+    for (size_t i = closest_idx; i > 0; --i) {
+      const auto next_i = i - 1;
+      sum_length -= calcDistance2d(path.points.at(i), path.points.at(next_i));
+      if (sum_length < signed_arc) {
+        return next_i;
+      }
     }
+    return 0;
   }
-  return index;
 }
 
 }  // namespace util

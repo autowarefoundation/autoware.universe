@@ -502,6 +502,8 @@ void BehaviorPathPlannerNode::onRoute(const Route::ConstSharedPtr msg)
 
 void BehaviorPathPlannerNode::clipPathLength(PathWithLaneId & path) const
 {
+  if (path.points.size() < 3) {return;}
+
   const auto ego_pos = planner_data_->self_pose->pose.position;
   const double forward = planner_data_->parameters.forward_path_length;
   const double backward = planner_data_->parameters.backward_path_length;
@@ -510,7 +512,7 @@ void BehaviorPathPlannerNode::clipPathLength(PathWithLaneId & path) const
   const auto end_idx = util::getIdxByArclength(path, ego_pos, forward);
 
   const std::vector<PathPointWithLaneId> clipped_points{path.points.begin() + start_idx,
-    path.points.begin() + end_idx};
+    path.points.begin() + end_idx + 1};
 
   path.points = clipped_points;
 }
