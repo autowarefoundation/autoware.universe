@@ -16,10 +16,17 @@ ament_auto_find_build_dependencies()
 ament_auto_add_library(planning_error_monitor_node SHARED
   src/planning_error_monitor_node.cpp
 )
-
 rclcpp_components_register_node(planning_error_monitor_node
   PLUGIN "planning_diagnostics::PlanningErrorMonitorNode"
   EXECUTABLE planning_error_monitor
+)
+
+ament_auto_add_library(invalid_trajectory_publisher_node SHARED
+  src/invalid_trajectory_publisher.cpp
+)
+rclcpp_components_register_node(invalid_trajectory_publisher_node
+  PLUGIN "planning_diagnostics::InvalidTrajectoryPublisherNode"
+  EXECUTABLE invalid_trajectory_publisher
 )
 
 if(BUILD_TESTING)

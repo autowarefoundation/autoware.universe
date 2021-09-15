@@ -57,3 +57,15 @@ This function checks if the relative angle at point1 generated from point2 and 3
 ## Future extensions / Unimplemented parts
 
 - Collision checker with obstacles may be implemented in the future.
+
+## Error detection and handling
+
+For the onsite validation, you can use the `invalid_trajectory_publisher` node. Please launch the node with the following command when the target trajectory is being published.
+
+```bash
+ros2 launch planning_error_monitor invalid_trajectory_publisher.launch.xml
+```
+
+This node subscribes the target trajectory, inserts the invalid point, and publishes it with the same name. The invalid trajectory is supposed to be detected by the `planning_error_monitor`.
+
+Limitation: Once the `invalid_trajectory_publisher` receives the trajectory, it will turn off the subscriber. This is to prevent the trajectory from looping in the same node, therefore, only the one pattern of invalid trajectory is generated.
