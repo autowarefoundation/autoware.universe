@@ -69,6 +69,19 @@ def generate_launch_description():
     with open(lane_change_param_path, 'r') as f:
         lane_change_param = yaml.safe_load(f)['/**']['ros__parameters']
 
+    lane_following_param_path = os.path.join(
+        get_package_share_directory('planning_launch'),
+        'config',
+        'scenario_planning',
+        'lane_driving',
+        'behavior_planning',
+        'behavior_path_planner',
+        'lane_following',
+        'lane_following.param.yaml',
+    )
+    with open(lane_following_param_path, 'r') as f:
+        lane_following_param = yaml.safe_load(f)['/**']['ros__parameters']
+
     behavior_path_planner_param_path = os.path.join(
         get_package_share_directory('planning_launch'),
         'config',
@@ -113,6 +126,7 @@ def generate_launch_description():
             side_shift_param,
             avoidance_param,
             lane_change_param,
+            lane_following_param,
             behavior_path_planner_param,
             {
                 'bt_tree_config_path':
