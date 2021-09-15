@@ -164,22 +164,6 @@ void AutowareIvAutowareStatePublisher::getHazardStatusInfo(
     diagnostics_filter::extractLeafDiagnostics(status->hazard_status.status.diagnostics_sf);
   status->hazard_status.status.diagnostics_nf =
     diagnostics_filter::extractLeafDiagnostics(status->hazard_status.status.diagnostics_nf);
-
-  // filter by state
-  if (aw_info.autoware_state_ptr->state != autoware_system_msgs::msg::AutowareState::EMERGENCY) {
-    status->hazard_status.status.level = autoware_system_msgs::msg::HazardStatus::NO_FAULT;
-    status->hazard_status.status.diagnostics_spf = {};
-    status->hazard_status.status.diagnostics_lf = {};
-    status->hazard_status.status.diagnostics_sf = {};
-  }
-
-  // filter by control_mode
-  if (aw_info.control_mode_ptr->data == autoware_vehicle_msgs::msg::ControlMode::MANUAL) {
-    status->hazard_status.status.level = autoware_system_msgs::msg::HazardStatus::NO_FAULT;
-    status->hazard_status.status.diagnostics_spf = {};
-    status->hazard_status.status.diagnostics_lf = {};
-    status->hazard_status.status.diagnostics_sf = {};
-  }
 }
 
 void AutowareIvAutowareStatePublisher::getStopReasonInfo(
@@ -241,18 +225,6 @@ void AutowareIvAutowareStatePublisher::getErrorDiagInfo(
     RCLCPP_DEBUG_STREAM_THROTTLE(
       logger_, *clock_, 5000 /* ms */,
       "[AutowareIvAutowareStatePublisher] hazard_status is nullptr");
-    return;
-  }
-
-  // filter by state
-  if (aw_info.autoware_state_ptr->state != AutowareState::EMERGENCY) {
-    status->error_diagnostics = {};
-    return;
-  }
-
-  // filter by control_mode
-  if (aw_info.control_mode_ptr->data == ControlMode::MANUAL) {
-    status->error_diagnostics = {};
     return;
   }
 
