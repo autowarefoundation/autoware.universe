@@ -9,27 +9,20 @@
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
-  <!-- launch -->
   <exec_depend>autoware_api_launch</exec_depend>
+  <exec_depend>autoware_global_parameter_loader</exec_depend>
+  <exec_depend>autoware_web_controller</exec_depend>
   <exec_depend>control_launch</exec_depend>
   <exec_depend>localization_launch</exec_depend>
   <exec_depend>map_launch</exec_depend>
   <exec_depend>perception_launch</exec_depend>
   <exec_depend>planning_launch</exec_depend>
+  <exec_depend>python3-bson</exec_depend>
+  <exec_depend>python3-tornado</exec_depend>
+  <exec_depend>rviz2</exec_depend>
   <exec_depend>sensing_launch</exec_depend>
   <exec_depend>system_launch</exec_depend>
   <exec_depend>vehicle_launch</exec_depend>
-
-  <!-- visualization -->
-  <exec_depend>rviz2</exec_depend>
-
-  <!-- web controller -->
-  <exec_depend>autoware_global_parameter_loader</exec_depend>
-  <exec_depend>autoware_web_controller</exec_depend>
-  <exec_depend condition="$ROS_PYTHON_VERSION == 2">python-tornado</exec_depend>
-  <exec_depend condition="$ROS_PYTHON_VERSION == 3">python3-tornado</exec_depend>
-  <exec_depend condition="$ROS_PYTHON_VERSION == 2">python-bson</exec_depend>
-  <exec_depend condition="$ROS_PYTHON_VERSION == 3">python3-bson</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
