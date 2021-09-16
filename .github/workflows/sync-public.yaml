@@ -25,8 +25,8 @@ jobs:
         uses: tibdex/github-app-token@v1
         id: generate-token
         with:
-          app_id: ${{ secrets.APP_ID }}
-          private_key: ${{ secrets.APP_PRIVATE_KEY }}
+          app_id: ${{ secrets.PROPOSAL_SYNC_APP_ID }}
+          private_key: ${{ secrets.PROPOSAL_SYNC_APP_PRIVATE_KEY }}
 
       - name: Set git config for private repositories
         run: |
