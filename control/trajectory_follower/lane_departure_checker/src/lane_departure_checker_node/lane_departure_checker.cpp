@@ -70,25 +70,20 @@ size_t findNearestIndex(
   return min_idx;
 }
 
-boost::optional<lanelet::ConstLanelet> findNearestLanelet(
-  const lanelet::ConstLanelets & lanelets, const Point2d & point, const double th_dist)
+LinearRing2d createHullFromFootprints(
+  const std::vector<LinearRing2d> & footprints)
 {
-  std::vector<double> distances;
-  distances.reserve(lanelets.size());
-  std::transform(
-    lanelets.cbegin(), lanelets.cend(), std::back_inserter(distances),
-    [&](const lanelet::ConstLanelet & ll) {
-      return boost::geometry::distance(ll.polygon2d().basicPolygon(), point);
-    });
-
-  const auto min_itr = std::min_element(distances.cbegin(), distances.cend());
-  const auto min_idx = static_cast<size_t>(std::distance(distances.cbegin(), min_itr));
-
-  if (*min_itr > th_dist) {
-    return {};
+  MultiPoint2d combined;
+  for (const auto & footprint : footprints) {
+    for (const auto & p : footprint) {
+      combined.push_back(p);
+    }
   }
 
-  return lanelets.at(min_idx);
+  LinearRing2d hull;
+  boost::geometry::convex_hull(combined, hull);
+
+  return hull;
 }
 
 lanelet::ConstLanelets getCandidateLanelets(
@@ -97,14 +92,12 @@ lanelet::ConstLanelets getCandidateLanelets(
 {
   lanelet::ConstLanelets candidate_lanelets;
 
-  for (const auto & vehicle_footprint : vehicle_footprints) {
-    for (size_t i = 0; i < vehicle_footprint.size() - 1; ++i) {
-      const auto & p = vehicle_footprint.at(i);
-
-      const auto nearest_lanelet = findNearestLanelet(route_lanelets, p, 10.0);
-      if (nearest_lanelet) {
-        candidate_lanelets.push_back(*nearest_lanelet);
-      }
+  // Find lanes within the convex hull of footprints
+  const auto footprint_hull = createHullFromFootprints(vehicle_footprints);
+  for (const auto & route_lanelet : route_lanelets) {
+    const auto poly = route_lanelet.polygon2d().basicPolygon();
+    if (!boost::geometry::disjoint(poly, footprint_hull)) {
+      candidate_lanelets.push_back(route_lanelet);
     }
   }
 
@@ -257,27 +250,10 @@ std::vector<LinearRing2d> LaneDepartureChecker::createVehiclePassingAreas(
   for (size_t i = 0; i < vehicle_footprints.size() - 1; ++i) {
     const auto & footprint1 = vehicle_footprints.at(i);
     const auto & footprint2 = vehicle_footprints.at(i + 1);
-    areas.push_back(createHullFromFootprints(footprint1, footprint2));
+    areas.push_back(createHullFromFootprints({footprint1, footprint2}));
   }
 
   return areas;
-}
-
-LinearRing2d LaneDepartureChecker::createHullFromFootprints(
-  const LinearRing2d & area1, const LinearRing2d & area2)
-{
-  MultiPoint2d combined;
-  for (const auto & p : area1) {
-    combined.push_back(p);
-  }
-  for (const auto & p : area2) {
-    combined.push_back(p);
-  }
-
-  LinearRing2d hull;
-  boost::geometry::convex_hull(combined, hull);
-
-  return hull;
 }
 
 bool LaneDepartureChecker::willLeaveLane(

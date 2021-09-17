@@ -110,9 +110,6 @@ private:
   static std::vector<LinearRing2d> createVehiclePassingAreas(
     const std::vector<LinearRing2d> & vehicle_footprints);
 
-  static LinearRing2d createHullFromFootprints(
-    const LinearRing2d & area1, const LinearRing2d & area2);
-
   static bool willLeaveLane(
     const lanelet::ConstLanelets & candidate_lanelets,
     const std::vector<LinearRing2d> & vehicle_footprints);
