@@ -128,6 +128,7 @@ private:
    * Parameter
    */
   std::unique_ptr<motion_planning::AdaptiveCruiseController> acc_controller_;
+  boost::optional<SlowDownSection> latest_slow_down_section_;
   sensor_msgs::msg::PointCloud2::SharedPtr obstacle_ros_pointcloud_ptr_;
   geometry_msgs::msg::TwistStamped::ConstSharedPtr current_velocity_ptr_;
   DynamicObjectArray::ConstSharedPtr object_ptr_;
@@ -158,10 +159,6 @@ private:
   bool decimateTrajectory(
     const Trajectory & input, const double step_length, Trajectory & output,
     std::map<size_t /* decimate */, size_t /* origin */> & index_map);
-
-  bool trimTrajectoryFromSelfPose(
-    const Trajectory & input, const geometry_msgs::msg::Pose & self_pose,
-    Trajectory & output);
 
   bool trimTrajectoryWithIndexFromSelfPose(
     const Trajectory & input, const geometry_msgs::msg::Pose & self_pose,
@@ -196,22 +193,18 @@ private:
     diagnostic_msgs::msg::DiagnosticStatus & stop_reason_diag);
 
   StopPoint searchInsertPoint(
-    const int idx, const Trajectory & base_trajectory,
-    const Eigen::Vector2d & trajectory_vec, const Eigen::Vector2d & collision_point_vec);
+    const int idx, const Trajectory & base_trajectory, const double dist_remain);
 
   StopPoint createTargetPoint(
-    const int idx, const double margin, const Eigen::Vector2d & trajectory_vec,
-    const Eigen::Vector2d & collision_point_vec, const Trajectory & base_trajectory);
+    const int idx, const double margin,
+    const Trajectory & base_trajectory, const double dist_remain);
 
   SlowDownSection createSlowDownSection(
     const int idx, const Trajectory & base_trajectory,
-    const double lateral_deviation,
-    const Eigen::Vector2d & trajectory_vec,
-    const Eigen::Vector2d & slow_down_point_vec);
+    const double lateral_deviation, const double dist_remain);
 
   void insertSlowDownSection(
-    const SlowDownSection & slow_down_section,
-    const Trajectory & base_trajectory, Trajectory & output);
+    const SlowDownSection & slow_down_section, Trajectory & output);
 
   void extendTrajectory(
     const Trajectory & input, const double extend_distance, Trajectory & output);

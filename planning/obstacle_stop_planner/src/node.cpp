@@ -37,6 +37,8 @@ namespace motion_planning
 
 using autoware_utils::calcAzimuthAngle;
 using autoware_utils::calcDistance2d;
+using autoware_utils::calcSignedArcLength;
+using autoware_utils::createPoint;
 using autoware_utils::createQuaternionFromRPY;
 using autoware_utils::findNearestIndex;
 using autoware_utils::getRPY;
@@ -129,6 +131,35 @@ boost::optional<std::pair<size_t, TrajectoryPoint>> getBackwardInsertPointFromBa
   }
 
   return {};
+}
+boost::optional<std::pair<size_t, double>> findNearestFrontIndex(
+  const Trajectory & trajectory, const geometry_msgs::msg::Point & point)
+{
+  for (size_t i = 0; i < trajectory.points.size(); ++i) {
+    const auto & p_traj = trajectory.points.at(i).pose;
+    const auto yaw = getRPY(p_traj).z;
+    const Point2d p_traj_direction(std::cos(yaw), std::sin(yaw));
+    const Point2d p_traj_to_target(point.x - p_traj.position.x, point.y - p_traj.position.y);
+
+    const auto is_in_front_of_target_point = p_traj_direction.dot(p_traj_to_target) < 0.0;
+    const auto is_trajectory_end = i + 1 == trajectory.points.size();
+
+    if (is_in_front_of_target_point || is_trajectory_end) {
+      const auto dist_p_traj_to_target = p_traj_direction.normalized().dot(p_traj_to_target);
+      return std::make_pair(i, dist_p_traj_to_target);
+    }
+  }
+
+  return {};
+}
+bool isInFrontOfTargetPoint(
+  const geometry_msgs::msg::Pose & pose, const geometry_msgs::msg::Point & point)
+{
+  const auto yaw = getRPY(pose).z;
+  const Point2d pose_direction(std::cos(yaw), std::sin(yaw));
+  const Point2d to_target(point.x - pose.position.x, point.y - pose.position.y);
+
+  return pose_direction.dot(to_target) < 0.0;
 }
 std::string jsonDumpsPose(const geometry_msgs::msg::Pose & pose)
 {
@@ -312,7 +343,6 @@ void ObstacleStopPlannerNode::pathCallback(const Trajectory::ConstSharedPtr inpu
   // for slow down
   bool found_slow_down_points = false;
   bool slow_down_require = false;
-  size_t decimate_trajectory_slow_down_index = 0;
   pcl::PointXYZ nearest_slow_down_point;
   pcl::PointXYZ lateral_nearest_slow_down_point;
   pcl::PointCloud<pcl::PointXYZ>::Ptr slow_down_pointcloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
@@ -341,10 +371,11 @@ void ObstacleStopPlannerNode::pathCallback(const Trajectory::ConstSharedPtr inpu
         prev_center_point, next_center_point,
         obstacle_candidate_pointcloud_ptr, slow_down_pointcloud_ptr);
 
-      if (!slow_down_require && found_slow_down_points) {
+      const auto found_first_slow_down_points = found_slow_down_points && !slow_down_require;
+
+      if (found_first_slow_down_points) {
         // found nearest slow down obstacle
         slow_down_require = true;
-        decimate_trajectory_slow_down_index = i;
         getNearestPoint(
           *slow_down_pointcloud_ptr, p_front, &nearest_slow_down_point,
           &nearest_collision_point_time);
@@ -401,63 +432,68 @@ void ObstacleStopPlannerNode::pathCallback(const Trajectory::ConstSharedPtr inpu
 
   if (stop_require) {
     // insert stop point
-    for (size_t i = decimate_trajectory_index_map.at(decimate_trajectory_collision_index) +
-      trajectory_trim_index;
-      i < base_trajectory.points.size(); ++i)
-    {
-      const auto & base_trajectory_pose = base_trajectory.points.at(i).pose;
-      const auto yaw = getRPY(base_trajectory_pose).z;
-      const Point2d base_trajectory_pose_direction(std::cos(yaw), std::sin(yaw));
-      const Point2d base_trajectory_point_to_obstacle(
-        nearest_collision_point.x - base_trajectory_pose.position.x,
-        nearest_collision_point.y - base_trajectory_pose.position.y);
+    const auto index_with_dist_remain = findNearestFrontIndex(
+      base_trajectory, createPoint(nearest_collision_point.x, nearest_collision_point.y, 0));
 
-      const auto is_obstacle_in_front_of_trajectory_point =
-        base_trajectory_pose_direction.dot(base_trajectory_point_to_obstacle) > 0.0;
-      const auto is_trajectory_end = i + 1 == base_trajectory.points.size();
-
-      if (!is_obstacle_in_front_of_trajectory_point || is_trajectory_end) {
-        const auto stop_point = searchInsertPoint(
-          i, base_trajectory, base_trajectory_pose_direction,
-          base_trajectory_point_to_obstacle);
-
-        if (stop_point.index <= output_trajectory.points.size()) {
-          insertStopPoint(stop_point, output_trajectory, stop_reason_diag);
-        }
-        break;
-      }
+    if (index_with_dist_remain) {
+      const auto stop_point = searchInsertPoint(
+        index_with_dist_remain.get().first, base_trajectory, index_with_dist_remain.get().second);
+      insertStopPoint(stop_point, output_trajectory, stop_reason_diag);
     }
   }
 
   if (slow_down_require) {
     // insert slow down point
-    for (size_t i = decimate_trajectory_index_map.at(decimate_trajectory_slow_down_index);
-      i < base_trajectory.points.size(); ++i)
-    {
-      const auto & base_trajectory_pose = base_trajectory.points.at(i).pose;
-      const auto yaw = getRPY(base_trajectory_pose).z;
-      const Point2d base_trajectory_pose_direction(std::cos(yaw), std::sin(yaw));
-      const Point2d base_trajectory_point_to_obstacle(
-        nearest_slow_down_point.x - base_trajectory_pose.position.x,
-        nearest_slow_down_point.y - base_trajectory_pose.position.y);
+    const auto index_with_dist_remain = findNearestFrontIndex(
+      base_trajectory, createPoint(nearest_slow_down_point.x, nearest_slow_down_point.y, 0));
 
-      const auto is_obstacle_in_front_of_trajectory_point =
-        base_trajectory_pose_direction.dot(base_trajectory_point_to_obstacle) > 0.0;
-      const auto is_trajectory_end = i + 1 == base_trajectory.points.size();
+    if (index_with_dist_remain) {
+      const auto slow_down_section = createSlowDownSection(
+        index_with_dist_remain.get().first, base_trajectory,
+        lateral_deviation, index_with_dist_remain.get().second);
 
-      if (!is_obstacle_in_front_of_trajectory_point || is_trajectory_end) {
-        const auto slow_down_section = createSlowDownSection(
-          i, base_trajectory, lateral_deviation, base_trajectory_pose_direction,
-          base_trajectory_point_to_obstacle);
+      const auto dist_baselink_to_obstacle =
+        calcSignedArcLength(
+        base_trajectory.points, trajectory_trim_index,
+        index_with_dist_remain.get().first) -
+        index_with_dist_remain.get().second;
 
-        if (slow_down_section.slow_down_start_idx <= output_trajectory.points.size()) {
-          insertSlowDownSection(
-            slow_down_section, base_trajectory, output_trajectory);
-        }
-        break;
+      if (!latest_slow_down_section_ &&
+        dist_baselink_to_obstacle < vehicle_info_.max_longitudinal_offset_m)
+      {
+        latest_slow_down_section_ = slow_down_section;
       }
+
+      insertSlowDownSection(slow_down_section, output_trajectory);
     }
   }
+
+  if (node_param_.enable_slow_down && latest_slow_down_section_) {
+    // check whether ego is in slow down section or not
+    const auto & p_start = latest_slow_down_section_.get().start_point.pose.position;
+    const auto & p_end = latest_slow_down_section_.get().end_point.pose.position;
+    const auto reach_slow_down_start_point = isInFrontOfTargetPoint(self_pose, p_start);
+    const auto reach_slow_down_end_point = isInFrontOfTargetPoint(self_pose, p_end);
+    const auto is_in_slow_down_section = reach_slow_down_start_point && !reach_slow_down_end_point;
+    const auto index_with_dist_remain = findNearestFrontIndex(base_trajectory, p_end);
+
+    if (is_in_slow_down_section && index_with_dist_remain) {
+      const auto end_insert_point_with_idx = getBackwardInsertPointFromBasePoint(
+        index_with_dist_remain.get().first, base_trajectory, -index_with_dist_remain.get().second);
+
+      SlowDownSection slow_down_section{};
+      slow_down_section.slow_down_start_idx = 0;
+      slow_down_section.start_point = output_trajectory.points.front();
+      slow_down_section.slow_down_end_idx = end_insert_point_with_idx.get().first;
+      slow_down_section.end_point = end_insert_point_with_idx.get().second;
+      slow_down_section.velocity = latest_slow_down_section_.get().velocity;
+
+      insertSlowDownSection(slow_down_section, output_trajectory);
+    } else {
+      latest_slow_down_section_ = {};
+    }
+  }
+
   path_pub_->publish(output_trajectory);
   stop_reason_diag_pub_->publish(stop_reason_diag);
   debug_ptr_->publish();
@@ -539,16 +575,12 @@ void ObstacleStopPlannerNode::insertStopPoint(
 }
 
 StopPoint ObstacleStopPlannerNode::searchInsertPoint(
-  const int idx, const Trajectory & base_trajectory,
-  const Eigen::Vector2d & trajectory_vec, const Eigen::Vector2d & collision_point_vec)
+  const int idx, const Trajectory & base_trajectory, const double dist_remain)
 {
-  const auto max_dist_stop_point =
-    createTargetPoint(
-    idx, stop_param_.stop_margin, trajectory_vec, collision_point_vec,
-    base_trajectory);
+  const auto max_dist_stop_point = createTargetPoint(
+    idx, stop_param_.stop_margin, base_trajectory, dist_remain);
   const auto min_dist_stop_point = createTargetPoint(
-    idx, stop_param_.min_behavior_stop_margin, trajectory_vec, collision_point_vec,
-    base_trajectory);
+    idx, stop_param_.min_behavior_stop_margin, base_trajectory, dist_remain);
 
   // check if stop point is already inserted by behavior planner
   bool is_inserted_already_stop_point = false;
@@ -568,12 +600,9 @@ StopPoint ObstacleStopPlannerNode::searchInsertPoint(
 }
 
 StopPoint ObstacleStopPlannerNode::createTargetPoint(
-  const int idx, const double margin, const Eigen::Vector2d & trajectory_vec,
-  const Eigen::Vector2d & collision_point_vec, const Trajectory & base_trajectory)
+  const int idx, const double margin,
+  const Trajectory & base_trajectory, const double dist_remain)
 {
-  const auto dist_remain =
-    trajectory_vec.normalized().dot(collision_point_vec);
-
   const auto update_margin_from_vehicle = margin - dist_remain;
   const auto insert_point_with_idx = getBackwardInsertPointFromBasePoint(
     idx, base_trajectory, update_margin_from_vehicle);
@@ -592,13 +621,8 @@ StopPoint ObstacleStopPlannerNode::createTargetPoint(
 
 SlowDownSection ObstacleStopPlannerNode::createSlowDownSection(
   const int idx, const Trajectory & base_trajectory,
-  const double lateral_deviation,
-  const Eigen::Vector2d & trajectory_vec,
-  const Eigen::Vector2d & slow_down_point_vec)
+  const double lateral_deviation, const double dist_remain)
 {
-  const auto dist_remain =
-    trajectory_vec.normalized().dot(slow_down_point_vec);
-
   // calc slow down start point
   const auto update_forward_margin_from_vehicle =
     slow_down_param_.slow_down_forward_margin - dist_remain;
@@ -632,9 +656,7 @@ SlowDownSection ObstacleStopPlannerNode::createSlowDownSection(
 }
 
 void ObstacleStopPlannerNode::insertSlowDownSection(
-  const SlowDownSection & slow_down_section,
-  [[maybe_unused]] const Trajectory & base_trajectory,
-  Trajectory & output)
+  const SlowDownSection & slow_down_section, Trajectory & output)
 {
   const auto traj_end_idx = output.points.size() - 1;
   const auto & start_idx = slow_down_section.slow_down_start_idx;
@@ -805,15 +827,6 @@ bool ObstacleStopPlannerNode::trimTrajectoryWithIndexFromSelfPose(
   output.header = input.header;
   index = min_distance_index;
   return true;
-}
-
-bool ObstacleStopPlannerNode::trimTrajectoryFromSelfPose(
-  [[maybe_unused]] const Trajectory & input,
-  const geometry_msgs::msg::Pose & self_pose,
-  Trajectory & output)
-{
-  size_t index;
-  return trimTrajectoryWithIndexFromSelfPose(output, self_pose, output, index);
 }
 
 bool ObstacleStopPlannerNode::searchPointcloudNearTrajectory(
