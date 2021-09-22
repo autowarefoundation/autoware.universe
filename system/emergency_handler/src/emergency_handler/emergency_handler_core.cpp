@@ -61,6 +61,7 @@ EmergencyHandler::EmergencyHandler()
 
   // Initialize
   twist_ = std::make_shared<const geometry_msgs::msg::TwistStamped>();
+  control_mode_ = std::make_shared<const autoware_vehicle_msgs::msg::ControlMode>();
   prev_control_command_ = autoware_control_msgs::msg::ControlCommand::ConstSharedPtr(
     new autoware_control_msgs::msg::ControlCommand);
 
