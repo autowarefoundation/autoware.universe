@@ -15,6 +15,8 @@ find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
 rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/MultiArrayDimension.msg"
+  "msg/MultiArrayLayout.msg"
   "msg/BoolStamped.msg"
   "msg/Float32Stamped.msg"
   "msg/Float32MultiArrayStamped.msg"
