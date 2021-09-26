@@ -192,6 +192,10 @@ Point lerpByLength(const std::vector<Point> & array, const double length);
 bool lerpByTimeStamp(
   const PredictedPath & path, const rclcpp::Time & t, Pose * lerped_pt);
 
+bool lerpByDistance(
+  const behavior_path_planner::PullOutPath & path, const double & s,
+  Pose * lerped_pt, const lanelet::ConstLanelets & road_lanes);
+
 bool calcObjectPolygon(const DynamicObject & object, Polygon2d * object_polygon);
 
 PredictedPath resamplePredictedPath(
@@ -205,6 +209,11 @@ double getDistanceBetweenPredictedPaths(
 double getDistanceBetweenPredictedPathAndObject(
   const DynamicObject & object, const PredictedPath & path, const double start_time,
   const double end_time, const double resolution);
+
+double getDistanceBetweenPredictedPathAndObjectPolygon(
+  const DynamicObject & object, const PullOutPath & ego_path,
+  const autoware_utils::LinearRing2d & vehicle_footprint, double distance_resolution,
+  const lanelet::ConstLanelets & road_lanes);
 
 /**
  * @brief Get index of the obstacles inside the lanelets with start and end length
@@ -271,6 +280,9 @@ std::shared_ptr<PathWithLaneId> generateCenterLinePath(
   const std::shared_ptr<const PlannerData> & planner_data);
 
 PathPointWithLaneId insertStopPoint(double length, PathWithLaneId * path);
+
+double getDistanceToShoulderBoundary(
+  const lanelet::ConstLanelets & shoulder_lanelets, const Pose & pose);
 
 // misc
 

@@ -28,16 +28,19 @@
 #include "autoware_lanelet2_msgs/msg/map_bin.hpp"
 #include "autoware_planning_msgs/msg/path_with_lane_id.hpp"
 #include "autoware_planning_msgs/msg/route.hpp"
+#include "autoware_planning_msgs/msg/path.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "lanelet2_extension/utility/query.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 #include "behavior_path_planner/parameters.hpp"
+#include "behavior_path_planner/path_shifter/path_shifter.hpp"
 
 namespace behavior_path_planner
 {
 using autoware_lanelet2_msgs::msg::MapBin;
 using autoware_planning_msgs::msg::PathWithLaneId;
+using autoware_planning_msgs::msg::Path;
 using autoware_planning_msgs::msg::Route;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseStamped;
@@ -45,6 +48,8 @@ using geometry_msgs::msg::Twist;
 using std_msgs::msg::Header;
 
 enum class LaneChangeDirection { NONE, LEFT, RIGHT };
+enum class PullOverDirection { NONE, LEFT, RIGHT };
+enum class PullOutDirection { NONE, LEFT, RIGHT };
 
 struct LaneChangePath
 {
@@ -52,6 +57,32 @@ struct LaneChangePath
   double acceleration{0.0};
   double preparation_length{0.0};
   double lane_change_length{0.0};
+};
+
+struct PullOverPath
+{
+  PathWithLaneId path;
+  ShiftedPath shifted_path;
+  ShiftPoint shift_point;
+  double acceleration{0.0};
+  double preparation_length{0.0};
+  double pull_over_length = {0.0};
+};
+
+struct PullOutPath
+{
+  PathWithLaneId path;
+  ShiftedPath shifted_path;
+  ShiftPoint shift_point;
+  double acceleration = 0.0;
+  double preparation_length = 0.0;
+  double pull_out_length = 0.0;
+};
+
+struct RetreatPath
+{
+  behavior_path_planner::PullOutPath pull_out_path;
+  Pose backed_pose;
 };
 
 class RouteHandler
@@ -67,6 +98,9 @@ public:
   void setMap(const MapBin & map_msg);
 
   void setRoute(const Route & route_msg);
+
+  void setPullOverGoalPose(
+    const lanelet::ConstLanelet target_lane, const double vehicle_width, const double margin);
 
   // const methods
 
@@ -84,6 +118,8 @@ public:
   bool isInGoalRouteSection(const lanelet::ConstLanelet & lanelet) const;
 
   Pose getGoalPose() const;
+
+  Pose getPullOverGoalPose() const;
 
   lanelet::Id getGoalLaneId() const;
 
@@ -108,12 +144,18 @@ public:
     const lanelet::ConstLanelet & lanelet, const Pose & current_pose,
     const double backward_distance, const double forward_distance) const;
 
+  lanelet::ConstLanelets getShoulderLaneletSequence(
+    const lanelet::ConstLanelet & lanelet, const Pose & current_pose,
+    const double backward_distance, const double forward_distance) const;
+
   lanelet::ConstLanelets getCheckTargetLanesFromPath(
     const PathWithLaneId & path,
     const lanelet::ConstLanelets & target_lanes, const double check_length) const;
 
   lanelet::routing::RelationType getRelation(
     const lanelet::ConstLanelet & prev_lane, const lanelet::ConstLanelet & next_lane) const;
+
+  lanelet::ConstLanelets getShoulderLanelets() const;
 
   // for path
 
@@ -136,8 +178,21 @@ public:
     const lanelet::ConstLanelets & lanelet_sequence, const double lane_change_prepare_duration,
     const double lane_change_buffer) const;
 
+  PathWithLaneId setDecelerationVelocity(
+    const PathWithLaneId & input, const lanelet::ConstLanelets & lanelet_sequence,
+    const double distance_after_pullover, const double pullover_distance_min,
+    const double distance_before_pull_over, const double deceleration_interval,
+    Pose goal_pose) const;
+
   bool getLaneChangeTarget(
     const lanelet::ConstLanelets & lanelets, lanelet::ConstLanelet * target_lanelet) const;
+
+  bool getPullOverTarget(
+    const lanelet::ConstLanelets & lanelets, lanelet::ConstLanelet * target_lanelet) const;
+
+  bool getPullOutStart(
+    const lanelet::ConstLanelets & lanelets, lanelet::ConstLanelet * target_lanelet,
+    const Pose & pose) const;
 
   double getLaneChangeableDistance(
     const Pose & current_pose, const LaneChangeDirection & direction) const;
@@ -155,6 +210,9 @@ private:
   lanelet::ConstLanelets preferred_lanelets_;
   lanelet::ConstLanelets start_lanelets_;
   lanelet::ConstLanelets goal_lanelets_;
+
+  lanelet::ConstLanelets shoulder_lanelets_;
+  Pose pull_over_goal_pose_;
 
   Route route_msg_;
 
@@ -201,6 +259,20 @@ private:
     const lanelet::ConstLanelet & lanelet,
     const double min_length = std::numeric_limits<double>::max()) const;
 
+  bool getFollowingShoulderLanelet(
+    const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * following_lanelet) const;
+
+  lanelet::ConstLanelets getShoulderLaneletSequenceAfter(
+    const lanelet::ConstLanelet & lanelet,
+    const double min_length = std::numeric_limits<double>::max()) const;
+
+  bool getPreviousShoulderLanelet(
+    const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * prev_lanelet) const;
+
+  lanelet::ConstLanelets getShoulderLaneletSequenceUpTo(
+    const lanelet::ConstLanelet & lanelet,
+    const double min_length = std::numeric_limits<double>::max()) const;
+
   lanelet::ConstLanelets getPreviousLaneletSequence(
     const lanelet::ConstLanelets & lanelet_sequence) const;
 
@@ -212,8 +284,7 @@ private:
 
   // for path
 
-  PathWithLaneId updatePathTwist(
-    const PathWithLaneId & path) const;
+  PathWithLaneId updatePathTwist(const PathWithLaneId & path) const;
 };
 }  // namespace behavior_path_planner
 #endif  // BEHAVIOR_PATH_PLANNER__ROUTE_HANDLER_HPP_

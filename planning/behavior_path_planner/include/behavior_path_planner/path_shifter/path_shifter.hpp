@@ -81,7 +81,7 @@ public:
    * @brief  Generate a shifted path according to the given reference path and shift points.
    * @return False if the path is empty or shift points have conflicts.
    */
-  bool generate(ShiftedPath * shift_path);
+  bool generate(ShiftedPath * shift_path, const bool offset_back = true);
 
   /**
    * @brief Remove behind shift points and add the removed offset to the base_offset_.
@@ -179,7 +179,7 @@ private:
    *          dividing the shift interval into four parts and apply a cubic spline to them.
    *          The resultant shifting shape is closed to the Clothoid curve.
    */
-  void applySplineShifter(ShiftedPath * shifted_path);
+  void applySplineShifter(ShiftedPath * shifted_path, const bool offset_back);
 
   ////////////////////////////////////////
   // Helper Functions

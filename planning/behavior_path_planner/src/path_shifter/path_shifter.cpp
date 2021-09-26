@@ -60,7 +60,7 @@ void PathShifter::setShiftPoints(const std::vector<ShiftPoint> & points)
   is_index_aligned_ = false;  // shift_point index has to be updated for new shift points.
 }
 
-bool PathShifter::generate(ShiftedPath * shifted_path)
+bool PathShifter::generate(ShiftedPath * shifted_path, const bool offset_back)
 {
   RCLCPP_DEBUG_STREAM(logger_, "PathShifter::generate start!");
 
@@ -79,7 +79,19 @@ bool PathShifter::generate(ShiftedPath * shifted_path)
     return true;
   }
 
-  if (!is_index_aligned_) {updateShiftPointIndices();}
+  if (!is_index_aligned_) {
+    updateShiftPointIndices();
+    for (const auto shift_point : shift_points_) {
+      int idx_gap = shift_point.end_idx - shift_point.start_idx;
+      if (idx_gap <= 1) {
+        RCLCPP_WARN_STREAM(
+          logger_,
+          "shift start point and end point can't be adjoining "
+          "Maybe shift length is too short?");
+        return false;
+      }
+    }
+  }
 
   // Sort shift points since applyShift function only supports sorted points
   if (!sortShiftPointsAlongPath(reference_path_)) {
@@ -88,15 +100,19 @@ bool PathShifter::generate(ShiftedPath * shifted_path)
   }
 
   if (shift_points_.front().start_idx == 0) {
-    RCLCPP_WARN_STREAM(
-      logger_,
-      "shift start point is at the edge of path. It could cause undesired result."
-      " Maybe path is too short for backward?");
+    // if offset is applied on front side, shifting from first point is no problem
+    if (offset_back) {
+      RCLCPP_WARN_STREAM(
+        logger_,
+        "shift start point is at the edge of path. It could cause undesired result."
+        " Maybe path is too short for backward?");
+    }
   }
 
   // Calculate shifted path (linear shifter is only for debug, will be deprecated.)
   constexpr bool USE_SPLINE_SHIFTER = true;
-  USE_SPLINE_SHIFTER ? applySplineShifter(shifted_path) : applyLinearShifter(shifted_path);
+  USE_SPLINE_SHIFTER ? applySplineShifter(shifted_path, offset_back) :
+  applyLinearShifter(shifted_path);
 
   // DEBUG
   RCLCPP_DEBUG_STREAM(
@@ -141,7 +157,7 @@ void PathShifter::applyLinearShifter(ShiftedPath * shifted_path)
   }
 }
 
-void PathShifter::applySplineShifter(ShiftedPath * shifted_path)
+void PathShifter::applySplineShifter(ShiftedPath * shifted_path, const bool offset_back)
 {
   const auto arclength_arr = util::calcPathArcLengthArray(reference_path_);
 
@@ -162,8 +178,10 @@ void PathShifter::applySplineShifter(ShiftedPath * shifted_path)
     // These points are defined to achieve the constant-jerk shifting (see the header description).
     const std::vector<double> base_distance = {0.0, shifting_arclength / 4.0,
       shifting_arclength * 3.0 / 4.0, shifting_arclength};
-    const std::vector<double> base_length = {0.0, delta_shift / 12.0, delta_shift * 11.0 / 12.0,
-      delta_shift};
+    const auto base_length =
+      offset_back ?
+      std::vector<double>{0.0, delta_shift / 12.0, delta_shift * 11.0 / 12.0, delta_shift} :
+    std::vector<double>{delta_shift, delta_shift * 11.0 / 12.0, delta_shift / 12.0, 0.0};
 
     std::vector<double> query_distance, query_length;
 
@@ -187,8 +205,17 @@ void PathShifter::applySplineShifter(ShiftedPath * shifted_path)
         ++i;
       }
     }
-    for (size_t i = shift_point.end_idx; i < shifted_path->path.points.size(); ++i) {
-      addLateralOffsetOnIndexPoint(shifted_path, delta_shift, i);
+
+    if (offset_back == true) {
+      // Apply shifting after shift
+      for (size_t i = shift_point.end_idx; i < shifted_path->path.points.size(); ++i) {
+        addLateralOffsetOnIndexPoint(shifted_path, delta_shift, i);
+      }
+    } else {
+      // Apply shifting before shift
+      for (size_t i = 0; i < shift_point.start_idx + 1; ++i) {
+        addLateralOffsetOnIndexPoint(shifted_path, query_length.front(), i);
+      }
     }
     current_shift = shift_point.length;
   }

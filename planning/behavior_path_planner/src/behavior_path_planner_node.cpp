@@ -22,10 +22,12 @@
 
 #include "behavior_path_planner/behavior_path_planner_node.hpp"
 #include "behavior_path_planner/path_utilities.hpp"
-#include "behavior_path_planner/utilities.hpp"
 #include "behavior_path_planner/scene_module/avoidance/avoidance_module.hpp"
 #include "behavior_path_planner/scene_module/lane_change/lane_change_module.hpp"
+#include "behavior_path_planner/scene_module/pull_over/pull_over_module.hpp"
+#include "behavior_path_planner/scene_module/pull_out/pull_out_module.hpp"
 #include "behavior_path_planner/scene_module/side_shift/side_shift_module.hpp"
+#include "behavior_path_planner/utilities.hpp"
 
 namespace behavior_path_planner
 {
@@ -49,9 +51,8 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   perception_subscriber_ = create_subscription<DynamicObjectArray>(
     "~/input/perception", 1, std::bind(&BehaviorPathPlannerNode::onPerception, this, _1));
   external_approval_subscriber_ = create_subscription<ApprovalMsg>(
-    "~/input/external_approval", 1, std::bind(
-      &BehaviorPathPlannerNode::onExternalApproval, this,
-      _1));
+    "~/input/external_approval", 1,
+    std::bind(&BehaviorPathPlannerNode::onExternalApproval, this, _1));
   force_approval_subscriber_ = create_subscription<PathChangeModule>(
     "~/input/force_approval", 1, std::bind(&BehaviorPathPlannerNode::onForceApproval, this, _1));
 
@@ -82,14 +83,12 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   {
     bt_manager_ = std::make_shared<BehaviorTreeManager>(getBehaviorTreeManagerParam());
 
-    auto side_shift_module = std::make_shared<SideShiftModule>(
-      "SideShift", *this,
-      getSideShiftParam());
+    auto side_shift_module =
+      std::make_shared<SideShiftModule>("SideShift", *this, getSideShiftParam());
     bt_manager_->registerSceneModule(side_shift_module);
 
-    auto avoidance_module = std::make_shared<AvoidanceModule>(
-      "Avoidance", *this,
-      getAvoidanceParam());
+    auto avoidance_module =
+      std::make_shared<AvoidanceModule>("Avoidance", *this, getAvoidanceParam());
     bt_manager_->registerSceneModule(avoidance_module);
 
     auto lane_following_module =
@@ -107,6 +106,12 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     bt_manager_->registerSceneModule(force_lane_change_module);
 
     bt_manager_->registerForceApproval("ForceLaneChange");
+
+    auto pull_over_module = std::make_shared<PullOverModule>("PullOver", *this, getPullOverParam());
+    bt_manager_->registerSceneModule(pull_over_module);
+
+    auto pull_out_module = std::make_shared<PullOutModule>("PullOut", *this, getPullOutParam());
+    bt_manager_->registerSceneModule(pull_out_module);
 
     bt_manager_->createBehaviorTree();
   }
@@ -136,9 +141,14 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   BehaviorPathPlannerParameters p{};
   p.backward_path_length = declare_parameter("backward_path_length", 5.0);
   p.forward_path_length = declare_parameter("forward_path_length", 100.0);
-  p.backward_length_buffer_for_end_of_lane = declare_parameter(
-    "backward_length_buffer_for_end_of_lane", 5.0);
+  p.backward_length_buffer_for_end_of_lane =
+    declare_parameter("backward_length_buffer_for_end_of_lane", 5.0);
+  p.backward_length_buffer_for_end_of_pull_over =
+    declare_parameter("backward_length_buffer_for_end_of_pull_over", 5.0);
+  p.backward_length_buffer_for_end_of_pull_out =
+    declare_parameter("backward_length_buffer_for_end_of_pull_out", 5.0);
   p.minimum_lane_change_length = declare_parameter("minimum_lane_change_length", 8.0);
+  p.minimum_pull_over_length = declare_parameter("minimum_pull_over_length", 15.0);
   p.drivable_area_resolution = declare_parameter("drivable_area_resolution", 0.1);
   p.drivable_area_width = declare_parameter("drivable_area_width", 100.0);
   p.drivable_area_height = declare_parameter("drivable_area_height", 50.0);
@@ -148,9 +158,12 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   const auto vehicle_info = VehicleInfoUtil(*this).getVehicleInfo();
   p.vehicle_width = vehicle_info.vehicle_width_m;
   p.vehicle_length = vehicle_info.vehicle_length_m;
+  p.wheel_tread = vehicle_info.wheel_tread_m;
   p.wheel_base = vehicle_info.wheel_base_m;
   p.front_overhang = vehicle_info.front_overhang_m;
   p.rear_overhang = vehicle_info.rear_overhang_m;
+  p.left_over_hang = vehicle_info.left_overhang_m;
+  p.right_over_hang = vehicle_info.right_overhang_m;
   p.base_link2front = vehicle_info.max_longitudinal_offset_m;
   p.base_link2rear = p.rear_overhang;
 
@@ -246,16 +259,122 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
   // validation of parameters
   if (p.lane_change_sampling_num < 1) {
     RCLCPP_FATAL_STREAM(
-      get_logger(),
-      "lane_change_sampling_num must be positive integer. Given parameter: " <<
+      get_logger(), "lane_change_sampling_num must be positive integer. Given parameter: " <<
         p.lane_change_sampling_num << std::endl <<
         "Terminating the program...");
     exit(EXIT_FAILURE);
   }
   if (p.maximum_deceleration < 0.0) {
     RCLCPP_FATAL_STREAM(
-      get_logger(),
-      "maximum_deceleration cannot be negative value. Given parameter: " <<
+      get_logger(), "maximum_deceleration cannot be negative value. Given parameter: " <<
+        p.maximum_deceleration << std::endl <<
+        "Terminating the program...");
+    exit(EXIT_FAILURE);
+  }
+
+  return p;
+}
+
+PullOverParameters BehaviorPathPlannerNode::getPullOverParam()
+{
+  const auto dp = [this](const std::string & str, auto def_val) {
+      std::string name = "pull_over." + str;
+      return this->declare_parameter(name, def_val);
+    };
+
+  PullOverParameters p;
+
+  p.min_stop_distance = dp("min_stop_distance", 5.0);
+  p.stop_time = dp("stop_time", 2.0);
+  p.hysteresis_buffer_distance = dp("hysteresis_buffer_distance", 2.0);
+  p.pull_over_prepare_duration = dp("pull_over_prepare_duration", 2.0);
+  p.pull_over_duration = dp("pull_over_duration", 4.0);
+  p.pull_over_finish_judge_buffer = dp("pull_over_finish_judge_buffer", 3.0);
+  p.minimum_pull_over_velocity = dp("minimum_pull_over_velocity", 8.3);
+  p.prediction_duration = dp("prediction_duration", 8.0);
+  p.prediction_time_resolution = dp("prediction_time_resolution", 0.5);
+  p.static_obstacle_velocity_thresh = dp("static_obstacle_velocity_thresh", 0.1);
+  p.maximum_deceleration = dp("maximum_deceleration", 1.0);
+  p.pull_over_sampling_num = dp("pull_over_sampling_num", 4);
+  p.enable_collision_check_at_prepare_phase = dp("enable_collision_check_at_prepare_phase", true);
+  p.use_predicted_path_outside_lanelet = dp("use_predicted_path_outside_lanelet", true);
+  p.use_all_predicted_path = dp("use_all_predicted_path", false);
+  p.enable_blocked_by_obstacle = dp("enable_blocked_by_obstacle", false);
+  p.pull_over_search_distance = dp("pull_over_search_distance", 30.0);
+  p.after_pull_over_straight_distance = dp("after_pull_over_straight_distance", 3.0);
+  p.before_pull_over_straight_distance =
+    dp("before_pull_over_straight_distance", 3.0);
+  p.margin_from_boundary = dp("margin_from_boundary", 0.3);
+  p.maximum_lateral_jerk = dp("maximum_lateral_jerk", 3.0);
+  p.minimum_lateral_jerk = dp("minimum_lateral_jerk", 1.0);
+  p.deceleration_interval = dp("deceleration_interval", 10.0);
+
+
+  // validation of parameters
+  if (p.pull_over_sampling_num < 1) {
+    RCLCPP_FATAL_STREAM(
+      get_logger(), "pull_over_sampling_num must be positive integer. Given parameter: " <<
+        p.pull_over_sampling_num << std::endl <<
+        "Terminating the program...");
+    exit(EXIT_FAILURE);
+  }
+  if (p.maximum_deceleration < 0.0) {
+    RCLCPP_FATAL_STREAM(
+      get_logger(), "maximum_deceleration cannot be negative value. Given parameter: " <<
+        p.maximum_deceleration << std::endl <<
+        "Terminating the program...");
+    exit(EXIT_FAILURE);
+  }
+
+  return p;
+}
+
+PullOutParameters BehaviorPathPlannerNode::getPullOutParam()
+{
+  const auto dp = [this](const std::string & str, auto def_val) {
+      std::string name = "pull_out." + str;
+      return this->declare_parameter(name, def_val);
+    };
+
+  PullOutParameters p;
+
+  p.min_stop_distance = dp("min_stop_distance", 5.0);
+  p.stop_time = dp("stop_time", 2.0);
+  p.hysteresis_buffer_distance = dp("hysteresis_buffer_distance", 2.0);
+  p.pull_out_prepare_duration = dp("pull_out_prepare_duration", 2.0);
+  p.pull_out_duration = dp("pull_out_duration", 4.0);
+  p.pull_out_finish_judge_buffer = dp("pull_out_finish_judge_buffer", 1.0);
+  p.minimum_pull_out_velocity = dp("minimum_pull_out_velocity", 8.3);
+  p.prediction_duration = dp("prediction_duration", 8.0);
+  p.prediction_time_resolution = dp("prediction_time_resolution", 0.5);
+  p.static_obstacle_velocity_thresh = dp("static_obstacle_velocity_thresh", 0.1);
+  p.maximum_deceleration = dp("maximum_deceleration", 1.0);
+  p.pull_out_sampling_num = dp("pull_out_sampling_num", 4);
+  p.enable_collision_check_at_prepare_phase = dp("enable_collision_check_at_prepare_phase", true);
+  p.use_predicted_path_outside_lanelet = dp("use_predicted_path_outside_lanelet", true);
+  p.use_all_predicted_path = dp("use_all_predicted_path", false);
+  p.use_dynamic_object = dp("use_dynamic_object", false);
+  p.enable_blocked_by_obstacle = dp("enable_blocked_by_obstacle", false);
+  p.pull_out_search_distance = dp("pull_out_search_distance", 30.0);
+  p.after_pull_out_straight_distance = dp("after_pull_out_straight_distance", 3.0);
+  p.before_pull_out_straight_distance =
+    dp("before_pull_out_straight_distance", 3.0);
+  p.maximum_lateral_jerk = dp("maximum_lateral_jerk", 3.0);
+  p.minimum_lateral_jerk = dp("minimum_lateral_jerk", 1.0);
+  p.deceleration_interval = dp("deceleration_interval", 10.0);
+
+
+  // validation of parameters
+  if (p.pull_out_sampling_num < 1) {
+    RCLCPP_FATAL_STREAM(
+      get_logger(), "pull_out_sampling_num must be positive integer. Given parameter: " <<
+        p.pull_out_sampling_num << std::endl <<
+        "Terminating the program...");
+    exit(EXIT_FAILURE);
+  }
+  if (p.maximum_deceleration < 0.0) {
+    RCLCPP_FATAL_STREAM(
+      get_logger(), "maximum_deceleration cannot be negative value. Given parameter: " <<
         p.maximum_deceleration << std::endl <<
         "Terminating the program...");
     exit(EXIT_FAILURE);
@@ -277,9 +396,7 @@ void BehaviorPathPlannerNode::waitForData()
 {
   // wait until mandatory data is ready
   while (!planner_data_->route_handler->isHandlerReady() && rclcpp::ok()) {
-    RCLCPP_WARN_THROTTLE(
-      get_logger(), *get_clock(), 5000,
-      "waiting for route to be ready");
+    RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for route to be ready");
     rclcpp::spin_some(this->get_node_base_interface());
     rclcpp::Rate(100).sleep();
   }
@@ -322,9 +439,8 @@ void BehaviorPathPlannerNode::run()
     path_publisher_->publish(clipped_path);
   } else {
     RCLCPP_ERROR(
-      get_logger(),
-      "behavior path output is empty! Stop publish. path = %lu, clipped = %lu", path->points.size(),
-      clipped_path.points.size());
+      get_logger(), "behavior path output is empty! Stop publish. path = %lu, clipped = %lu",
+      path->points.size(), clipped_path.points.size());
   }
   path_candidate_publisher_->publish(util::toPath(*path_candidate));
   // debug_path_publisher_->publish(util::toPath(path));
@@ -344,8 +460,7 @@ void BehaviorPathPlannerNode::run()
   RCLCPP_DEBUG(get_logger(), "----- behavior path planner end -----\n\n");
 }
 
-PathWithLaneId::SharedPtr BehaviorPathPlannerNode::getPath(
-  const BehaviorModuleOutput & bt_output)
+PathWithLaneId::SharedPtr BehaviorPathPlannerNode::getPath(const BehaviorModuleOutput & bt_output)
 {
   // TODO(Horibe) do some error handling when path is not available.
 
@@ -360,14 +475,13 @@ PathWithLaneId::SharedPtr BehaviorPathPlannerNode::getPath(
 PathWithLaneId::SharedPtr BehaviorPathPlannerNode::getPathCandidate(
   const BehaviorModuleOutput & bt_output)
 {
-  auto path_candidate = bt_output.path_candidate ?
-    bt_output.path_candidate :
-    std::make_shared<PathWithLaneId>();
+  auto path_candidate =
+    bt_output.path_candidate ? bt_output.path_candidate : std::make_shared<PathWithLaneId>();
   path_candidate->header = planner_data_->route_handler->getRouteHeader();
   path_candidate->header.stamp = this->now();
   RCLCPP_DEBUG(
-    get_logger(),
-    "BehaviorTreeManager: path candidate is %s.", bt_output.path_candidate ? "FOUND" : "NOT FOUND");
+    get_logger(), "BehaviorTreeManager: path candidate is %s.",
+    bt_output.path_candidate ? "FOUND" : "NOT FOUND");
   return path_candidate;
 }
 
@@ -381,6 +495,10 @@ void BehaviorPathPlannerNode::publishModuleStatus(
         return PathChangeModuleId::AVOIDANCE;
       } else if (name == "ForceLaneChange") {
         return PathChangeModuleId::FORCE_LANE_CHANGE;
+      } else if (name == "PullOver") {
+        return PathChangeModuleId::PULL_OVER;
+      } else if (name == "PullOut") {
+        return PathChangeModuleId::PULL_OUT;
       } else {
         return PathChangeModuleId::NONE;
       }
@@ -416,11 +534,12 @@ void BehaviorPathPlannerNode::publishModuleStatus(
       }
     }
     if (status->is_ready && status->is_waiting_approval) {
-      if (status->module_name == "LaneFollowing" || status->module_name == "SideShift") {continue;}
+      if (status->module_name == "LaneFollowing" || status->module_name == "SideShift") {
+        continue;
+      }
       is_ready = true;
       RCLCPP_DEBUG(
-        get_logger(),
-        "%s is Ready : ready = %s, is_approved = %s", status->module_name.c_str(),
+        get_logger(), "%s is Ready : ready = %s, is_approved = %s", status->module_name.c_str(),
         status->is_ready ? "true" : "false", status->is_waiting_approval ? "true" : "false");
       ready_module.module.type = getModuleType(status->module_name);
     }
@@ -521,11 +640,19 @@ PathWithLaneId BehaviorPathPlannerNode::clipPathByGoal(const PathWithLaneId & pa
 {
   const auto goal = planner_data_->route_handler->getGoalPose();
   const auto goal_lane_id = planner_data_->route_handler->getGoalLaneId();
+  const auto is_approved = planner_data_->approval.is_approved.data;
 
   Pose refined_goal{};
   {
     lanelet::ConstLanelet goal_lanelet;
-    if (planner_data_->route_handler->getGoalLanelet(&goal_lanelet)) {
+    lanelet::ConstLanelet pull_over_lane;
+    geometry_msgs::msg::Pose pull_over_goal;
+    if (
+      is_approved && planner_data_->route_handler->getPullOverTarget(
+        planner_data_->route_handler->getShoulderLanelets(), &pull_over_lane))
+    {
+      refined_goal = planner_data_->route_handler->getPullOverGoalPose();
+    } else if (planner_data_->route_handler->getGoalLanelet(&goal_lanelet)) {
       refined_goal = util::refineGoal(goal, goal_lanelet);
     } else {
       refined_goal = goal;

@@ -361,6 +361,35 @@ bool lerpByTimeStamp(
   return false;
 }
 
+bool lerpByDistance(
+  const behavior_path_planner::PullOutPath & path, const double & s,
+  Pose * lerped_pt, const lanelet::ConstLanelets & road_lanes)
+{
+  if (lerped_pt == nullptr) {
+    // ROS_WARN_STREAM_THROTTLE(1, "failed to lerp by distance due to nullptr pt");
+    return false;
+  }
+
+  for (size_t i = 1; i < path.path.points.size(); i++) {
+    const auto & pt = path.path.points.at(i).point.pose;
+    const auto & prev_pt = path.path.points.at(i - 1).point.pose;
+    if (
+      (s >= lanelet::utils::getArcCoordinates(road_lanes, prev_pt).length) &&
+      (s < lanelet::utils::getArcCoordinates(road_lanes, pt).length))
+    {
+      const double distance = lanelet::utils::getArcCoordinates(road_lanes, pt).length -
+        lanelet::utils::getArcCoordinates(road_lanes, prev_pt).length;
+      const auto offset = s - lanelet::utils::getArcCoordinates(road_lanes, prev_pt).length;
+      const auto ratio = offset / distance;
+      *lerped_pt = lerpByPose(prev_pt, pt, ratio);
+      return true;
+    }
+  }
+
+  // ROS_ERROR_STREAM("Something failed in function: " << __func__);
+  return false;
+}
+
 double getDistanceBetweenPredictedPaths(
   const PredictedPath & object_path, const PredictedPath & ego_path, const double start_time,
   const double end_time, const double resolution)
@@ -416,6 +445,41 @@ double getDistanceBetweenPredictedPathAndObject(
   return min_distance;
 }
 
+double getDistanceBetweenPredictedPathAndObjectPolygon(
+  const DynamicObject & object, const PullOutPath & ego_path,
+  const autoware_utils::LinearRing2d & vehicle_footprint, double distance_resolution,
+  const lanelet::ConstLanelets & road_lanes)
+{
+  double min_distance = std::numeric_limits<double>::max();
+
+  const auto ego_path_point_array = convertToGeometryPointArray(ego_path.path);
+  Polygon2d obj_polygon;
+  if (!calcObjectPolygon(object, &obj_polygon)) {
+    // ROS_ERROR("calcObjectPolygon failed");
+    return min_distance;
+  }
+  const auto s_start =
+    lanelet::utils::getArcCoordinates(road_lanes, ego_path.path.points.front().point.pose).length;
+  const auto s_end = lanelet::utils::getArcCoordinates(road_lanes, ego_path.shift_point.end).length;
+
+  for (auto s = s_start + distance_resolution; s < s_end; s += distance_resolution) {
+    Pose ego_pose;
+    if (!lerpByDistance(ego_path, s, &ego_pose, road_lanes)) {
+      // ROS_ERROR("lerp failed");
+      continue;
+    }
+    const auto vehicle_footprint_on_path =
+      transformVector(vehicle_footprint, autoware_utils::pose2transform(ego_pose));
+    Point2d ego_point{ego_pose.position.x, ego_pose.position.y};
+    for (const auto & vehicle_footprint : vehicle_footprint_on_path) {
+      double distance = boost::geometry::distance(obj_polygon, vehicle_footprint);
+      if (distance < min_distance) {
+        min_distance = distance;
+      }
+    }
+  }
+  return min_distance;
+}
 // only works with consecutive lanes
 std::vector<size_t> filterObjectsByLanelets(
   const DynamicObjectArray & objects,
@@ -1160,6 +1224,28 @@ PathPointWithLaneId insertStopPoint(
     path->points.at(insert_idx).point.twist = zero_velocity;
   }
   return stop_point;
+}
+
+double getDistanceToShoulderBoundary(
+  const lanelet::ConstLanelets & shoulder_lanelets, const Pose & pose)
+{
+  lanelet::ConstLanelet closest_shoulder_lanelet;
+  lanelet::ArcCoordinates arc_coordinates;
+  if (lanelet::utils::query::getClosestLanelet(
+      shoulder_lanelets, pose, &closest_shoulder_lanelet))
+  {
+    const auto lanelet_point = lanelet::utils::conversion::toLaneletPoint(pose.position);
+    const auto & left_line_2d = lanelet::utils::to2D(closest_shoulder_lanelet.leftBound3d());
+    arc_coordinates = lanelet::geometry::toArcCoordinates(
+      left_line_2d, lanelet::utils::to2D(lanelet_point).basicPoint());
+
+  } else {
+    RCLCPP_ERROR_STREAM(
+      rclcpp::get_logger("behavior_path_planner").get_child("utilities"),
+      "closest shoulder lanelet not found.");
+  }
+
+  return arc_coordinates.distance;
 }
 
 double getArcLengthToTargetLanelet(

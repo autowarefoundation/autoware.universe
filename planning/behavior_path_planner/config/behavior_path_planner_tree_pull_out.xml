@@ -14,22 +14,12 @@
                 <Action ID="PullOut_Plan" output="{output}"/>
             </ReactiveSequence>
             <ReactiveSequence>
-                <Condition ID="SideShift_Request"/>
-                <Condition ID="SideShift_Ready"/>
-                <Action ID="SideShift_Plan" output="{output}"/>
-            </ReactiveSequence>
-            <ReactiveSequence>
                 <Condition ID="LaneChange_Request"/>
                 <Fallback>
                     <Condition ID="LaneChange_Ready"/>
                     <Condition ID="ForceLaneChange_ForceApproval"/>
                 </Fallback>
                 <Action ID="LaneChange_Plan" output="{output}"/>
-            </ReactiveSequence>
-            <ReactiveSequence>
-                <Condition ID="Avoidance_Request"/>
-                <Condition ID="Avoidance_Ready"/>
-                <Action ID="Avoidance_Plan" output="{output}"/>
             </ReactiveSequence>
             <Action ID="LaneFollowing_Plan" output="{output}"/>
         </Fallback>
@@ -76,7 +66,7 @@
         <Condition ID="LaneChange_Ready"/>
         <Condition ID="LaneChange_Request"/>
         <Action ID="LaneFollowing_Plan">
-            <output_port name="output" type="boost::optional&lt;autoware_planning_msgs::PathWithLaneId_&lt;std::allocator&lt;void&gt; &gt; &gt;">desc</output_port>
+            <output_port name="output" type="behavior_path_planner::BehaviorModuleOutput">desc</output_port>
         </Action>
         <Action ID="LaneFollowing_PlanCandidate">
             <output_port name="output_candidate" type="boost::optional&lt;autoware_planning_msgs::PathWithLaneId_&lt;std::allocator&lt;void&gt; &gt; &gt;">desc</output_port>

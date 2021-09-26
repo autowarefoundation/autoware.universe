@@ -42,6 +42,8 @@
 #include "behavior_path_planner/scene_module/avoidance/avoidance_module.hpp"
 #include "behavior_path_planner/scene_module/lane_change/lane_change_module.hpp"
 #include "behavior_path_planner/scene_module/lane_following/lane_following_module.hpp"
+#include "behavior_path_planner/scene_module/pull_over/pull_over_module.hpp"
+#include "behavior_path_planner/scene_module/pull_out/pull_out_module.hpp"
 #include "behavior_path_planner/scene_module/side_shift/side_shift_module.hpp"
 #include "behavior_path_planner/turn_signal_decider.hpp"
 
@@ -98,6 +100,8 @@ private:
   AvoidanceParameters getAvoidanceParam();
   LaneFollowingParameters getLaneFollowingParam();
   LaneChangeParameters getLaneChangeParam();
+  PullOverParameters getPullOverParam();
+  PullOutParameters getPullOutParam();
 
   // callback
   void onVelocity(const TwistStamped::ConstSharedPtr msg);

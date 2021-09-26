@@ -15,11 +15,12 @@ The following modules are currently supported:
 - **Lane Following**: Generate lane centerline from map.
 - **Lane Change**: Performs a lane change. This module is performed when it is necessary and a collision check with other vehicles is cleared.
 - **Obstacle Avoidance**: Perform an obstacle avoidance. This module is for avoidance of a vehicle parked on the edge of the lane or overtaking a low-speed obstacle.
+- **Pull Over**: Performs a pull over. This module is performed when goal is in the shoulder lane. Ego-vehicle will stop at the goal.
+- **Pull Out**: Performs a pull out. This module is performed when ego-vehicle is stationary and footprint of ego-vehicle is included in shoulder lane. This module ends when ego-vehicle merges into the road.
 - **Side Shift**: (For remote control) Shift the path to left or right according to an external instruction.
 
 [WIP]
 
-- **Pull Over/Out**: xxx.
 - **Free Space**: xxx.
 
 ![behavior_modules](./image/behavior_modules.png)
@@ -163,9 +164,105 @@ The path generation is computed in Frenet coordinates. The shift length profile 
 - collaboration with "avoidance-by-lane-change".
 - specific rules for traffic condition (need to back to the center line before entering an intersection).
 
-### Pull Over/Out
+### Pull Over
 
-[WIP]
+The Pull Over module is activated when goal is in the shoulder lane. Ego-vehicle will stop at the goal.
+
+#### \***\*start pull over condition\*\*** (need to meet all of the conditions below)
+
+- Pull over request condition
+
+  - The goal is in shoulder lane
+  - The distance from ego-vehicle to the destination is long enough for pull over
+    - The distance required for a pull over is determined by the sum of the straight distance before pull over, the straight distance after pull over, and the minimum distance required for pull over
+
+- Pull over ready condition
+
+  - The end of generated path is located before the end of the road
+  - Distance required for pull over of generated path is shorter than distance from ego-pose to goal-pose
+  - Generated Path of the pull over doesn’t collide with other objects
+  - Pull over is allowed by an operator
+    - If pull over path is not allowed by an operator, leave distance required for pull over and stop.  
+      This case is defined as UC ID: UC-F-11-00004 at [ODD Use Case Slide Pullover draft](https://docs.google.com/presentation/d/19-G1vj0rG-1P1RKWLg-Iq3_7YgcIYgXZ1wq2_J9NXGo/edit#slide=id.gf4f59f078d_0_1)
+
+#### \***\*finish pull over condition\*\*** (need to meet any of the conditions below)
+
+- The distance to the goal from your vehicle is lower than threshold (default: < `1m`)
+- The speed of the vehicle is 0.
+
+#### **Collision prediction with obstacles**
+
+1. Predict each position of the ego-vehicle and other vehicle on the target lane of the pull over at t1, t2,...tn
+2. If a distance between the ego-vehicle and other one is lower than the threshold (`ego_velocity * stop_time (2s)`) at each time, that is judged as a collision
+
+#### **Path Generation**
+
+The path is generated with a certain margin (default: `0.5 m`) from left boundary of shoulder lane.
+Pull over distance is calculated by the speed, lateral deviation, and the lateral jerk.
+The lateral jerk is searched for among the predetermined minimum and maximum values, and the one satisfies ready conditions described above is output.
+
+1. Apply uniform offset to centerline of shoulder lane for ensuring margin
+2. In the section between merge start and end, path is shifted by a method that is used to generate avoidance path (four segmental constant jerk polynomials)
+3. Combine this path with center line of road lane
+
+![pull_over](./image/pull_over_fig1.drawio.svg)
+
+#### Parameters for path generation
+
+| Name                 | Unit   | Type   | Description                                                                                                 | Default value |
+| :------------------- | :----- | :----- | :---------------------------------------------------------------------------------------------------------- | :------------ |
+| straight_distance    | [m]    | double | straight distance after pull over.                                                                          | 5.0           |
+| minimum_lateral_jerk | [m/s3] | double | minimum lateral jerk to calculate shifting distance.                                                        | 0.5           |
+| maximum_lateral_jerk | [m/s3] | double | maximum lateral jerk to calculate shifting distance.                                                        | 2.0           |
+| pull_over_velocity   | [m/s]  | double | Accelerate/decelerate to this speed before the start of the pullover.                                       | 3.0           |
+| margin               | [m]    | double | distance from ego-vehicle's footprint to the edge of the shoulder lane. This value determines shift length. | 0.5           |
+
+#### Unimplemented parts / limitations for pull over
+
+- When parking on the shoulder of the road, 3.5m space on the right side should be secured
+
+### Pull Out
+
+The Pull Out module is activated when ego-vehicle is stationary and footprint of ego-vehicle is included in shoulder lane. This module ends when ego-vehicle merges into the road.
+
+#### \***\*start pull out condition\*\*** (need to meet all of the conditions below)
+
+- Pull out request condition
+
+  - The speed of the vehicle is 0.
+  - The footprint of ego-vehicle is included in shoulder lane
+  - The distance from ego-vehicle to the destination is long enough for pull out (same with pull over)
+    - The distance required for a pull out is determined by the sum of the straight distance before pull out, the straight distance after pull out, and the minimum distance required for pull out
+
+- Pull out ready condition
+
+  - The end of generated path is located before the end of the road
+  - Distance required for pull out of generated path is shorter than distance from ego-pose to goal-pose
+  - Generated Path is safe (This condition is temporarily invalid)
+    - It is possible to enable or disable this condition. (default: `disabled`)
+    - If safe path cannot be generated from the current position, safe path from a receding position is searched.
+  - Pull out is allowed by an operator
+
+#### \***\*finish pull out condition\*\*** (need to meet any of the conditions below)
+
+- The distance to the goal of your vehicle is lower than threshold (default: < `1m`)
+- The speed of the vehicle is 0.
+
+#### **Safe check with obstacles in shoulder lane**
+
+1. Calculate ego-vehicle's footprint on pull out path between from current position to merge end point. (Illustrated by blue frame)
+2. Calculate object's polygon which is located in shoulder lane
+3. If a distance between the footprint and the polygon is lower than the threshold (default: `1.5 m`), that is judged as a unsafe path
+
+![pull_out](./image/pull_out_fig1.drawio.svg)
+
+#### **Path Generation**
+
+The path is generated with a certain margin from the left edge of the shoulder lane.
+
+#### Unimplemented parts / limitations for pull put
+
+- Note that the current module's start judgment condition may incorrectly judge that the vehicle is parked on the shoulder, such as when stopping in front of an intersection.
 
 ### Side Shift
 
