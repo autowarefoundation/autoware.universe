@@ -63,8 +63,7 @@ bool isRouteLooped(const RouteSections & route_sections)
   return false;
 }
 
-double normalizeRadian(
-  const double rad, const double min_rad = -M_PI, const double max_rad = M_PI)
+double normalizeRadian(const double rad, const double min_rad = -M_PI, const double max_rad = M_PI)
 {
   const auto value = std::fmod(rad, 2 * M_PI);
   if (min_rad < value && value <= max_rad) {
@@ -122,14 +121,12 @@ bool isInParkingLot(
 namespace mission_planner
 {
 MissionPlannerLanelet2::MissionPlannerLanelet2(const rclcpp::NodeOptions & node_options)
-: MissionPlanner("mission_planner_node", node_options),
-  is_graph_ready_(false)
+: MissionPlanner("mission_planner_node", node_options), is_graph_ready_(false)
 {
   using std::placeholders::_1;
   map_subscriber_ = create_subscription<autoware_lanelet2_msgs::msg::MapBin>(
-    "input/vector_map", rclcpp::QoS{10}.transient_local(), std::bind(
-      &MissionPlannerLanelet2::mapCallback, this,
-      _1));
+    "input/vector_map", rclcpp::QoS{10}.transient_local(),
+    std::bind(&MissionPlannerLanelet2::mapCallback, this, _1));
 }
 
 void MissionPlannerLanelet2::mapCallback(
@@ -140,6 +137,7 @@ void MissionPlannerLanelet2::mapCallback(
     *msg, lanelet_map_ptr_, &traffic_rules_ptr_, &routing_graph_ptr_);
   lanelet::ConstLanelets all_lanelets = lanelet::utils::query::laneletLayer(lanelet_map_ptr_);
   road_lanelets_ = lanelet::utils::query::roadLanelets(all_lanelets);
+  shoulder_lanelets_ = lanelet::utils::query::shoulderLanelets(all_lanelets);
   is_graph_ready_ = true;
 }
 
@@ -226,6 +224,26 @@ bool MissionPlannerLanelet2::isGoalValid() const
   const auto parking_lots = lanelet::utils::query::getAllParkingLots(lanelet_map_ptr_);
   if (isInParkingLot(parking_lots, goal_lanelet_pt)) {
     return true;
+  }
+
+  // check if goal is in shoulder lanelet
+  lanelet::Lanelet closest_shoulder_lanelet;
+  if (!lanelet::utils::query::getClosestLanelet(
+      shoulder_lanelets_, goal_pose_.pose, &closest_shoulder_lanelet))
+  {
+    return false;
+  }
+  // check if goal pose is in shoulder lane
+  if (isInLane(closest_shoulder_lanelet, goal_lanelet_pt)) {
+    const auto lane_yaw =
+      lanelet::utils::getLaneletAngle(closest_shoulder_lanelet, goal_pose_.pose.position);
+    const auto goal_yaw = tf2::getYaw(goal_pose_.pose.orientation);
+    const auto angle_diff = normalizeRadian(lane_yaw - goal_yaw);
+
+    constexpr double th_angle = M_PI / 4;
+    if (std::abs(angle_diff) < th_angle) {
+      return true;
+    }
   }
 
   return false;

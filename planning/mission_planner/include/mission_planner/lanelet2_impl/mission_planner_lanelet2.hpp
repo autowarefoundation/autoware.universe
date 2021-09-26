@@ -49,6 +49,7 @@ private:
   lanelet::routing::RoutingGraphPtr routing_graph_ptr_;
   lanelet::traffic_rules::TrafficRulesPtr traffic_rules_ptr_;
   lanelet::ConstLanelets road_lanelets_;
+  lanelet::ConstLanelets shoulder_lanelets_;
 
   rclcpp::Subscription<autoware_lanelet2_msgs::msg::MapBin>::SharedPtr map_subscriber_;
 
