@@ -913,7 +913,8 @@ OccupancyGrid generateDrivableArea(
       std::vector<std::vector<cv::Point>> cv_polygons;
       std::vector<cv::Point> cv_polygon;
       for (const auto & p : lane_poly) {
-        Point geom_pt = autoware_utils::createPoint(p.x(), p.y(), 0.0);
+        const double z = lane.polygon3d().basicPolygon().at(0).z();
+        Point geom_pt = autoware_utils::createPoint(p.x(), p.y(), z);
         Point transformed_geom_pt;
         tf2::doTransform(geom_pt, transformed_geom_pt, geom_tf_map2grid);
         cv_polygon.push_back(toCVPoint(transformed_geom_pt, width, height, resolution));
