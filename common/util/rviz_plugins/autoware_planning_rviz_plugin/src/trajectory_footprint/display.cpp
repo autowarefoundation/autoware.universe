@@ -24,6 +24,7 @@ namespace rviz_plugins
 {
 AutowareTrajectoryFootprintDisplay::AutowareTrajectoryFootprintDisplay()
 {
+  // trajectory footprint
   property_trajectory_footprint_view_ = new rviz_common::properties::BoolProperty(
     "View Trajectory Footprint", true, "", this, SLOT(updateVisualization()), this);
   property_trajectory_footprint_alpha_ = new rviz_common::properties::FloatProperty(
@@ -46,6 +47,19 @@ AutowareTrajectoryFootprintDisplay::AutowareTrajectoryFootprintDisplay()
   property_vehicle_width_->setMin(0.0);
   property_rear_overhang_->setMin(0.0);
 
+  // trajectory point
+  property_trajectory_point_view_ = new rviz_common::properties::BoolProperty(
+    "View Trajectory Point", false, "", this, SLOT(updateVisualization()), this);
+  property_trajectory_point_alpha_ = new rviz_common::properties::FloatProperty(
+    "Alpha", 1.0, "", property_trajectory_point_view_, SLOT(updateVisualization()), this);
+  property_trajectory_point_alpha_->setMin(0.0);
+  property_trajectory_point_alpha_->setMax(1.0);
+  property_trajectory_point_color_ = new rviz_common::properties::ColorProperty(
+    "Color", QColor(0, 60, 255), "", property_trajectory_point_view_,
+    SLOT(updateVisualization()), this);
+  property_trajectory_point_radius_ = new rviz_common::properties::FloatProperty(
+    "Radius", 0.1, "", property_trajectory_point_view_, SLOT(updateVisualization()), this);
+
   updateVehicleInfo();
 }
 
@@ -53,6 +67,7 @@ AutowareTrajectoryFootprintDisplay::~AutowareTrajectoryFootprintDisplay()
 {
   if (initialized()) {
     scene_manager_->destroyManualObject(trajectory_footprint_manual_object_);
+    scene_manager_->destroyManualObject(trajectory_point_manual_object_);
   }
 }
 
@@ -63,12 +78,17 @@ void AutowareTrajectoryFootprintDisplay::onInitialize()
   trajectory_footprint_manual_object_ = scene_manager_->createManualObject();
   trajectory_footprint_manual_object_->setDynamic(true);
   scene_node_->attachObject(trajectory_footprint_manual_object_);
+
+  trajectory_point_manual_object_ = scene_manager_->createManualObject();
+  trajectory_point_manual_object_->setDynamic(true);
+  scene_node_->attachObject(trajectory_point_manual_object_);
 }
 
 void AutowareTrajectoryFootprintDisplay::reset()
 {
   MFDClass::reset();
   trajectory_footprint_manual_object_->clear();
+  trajectory_point_manual_object_->clear();
 }
 
 bool AutowareTrajectoryFootprintDisplay::validateFloats(
@@ -107,6 +127,7 @@ void AutowareTrajectoryFootprintDisplay::processMessage(
   scene_node_->setOrientation(orientation);
 
   trajectory_footprint_manual_object_->clear();
+  trajectory_point_manual_object_->clear();
 
   Ogre::MaterialPtr material = Ogre::MaterialManager::getSingleton().getByName(
     "BaseWhiteNoLighting", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
@@ -117,6 +138,11 @@ void AutowareTrajectoryFootprintDisplay::processMessage(
     trajectory_footprint_manual_object_->estimateVertexCount(msg_ptr->points.size() * 4 * 2);
     trajectory_footprint_manual_object_->begin(
       "BaseWhiteNoLighting", Ogre::RenderOperation::OT_LINE_LIST);
+
+    trajectory_point_manual_object_->estimateVertexCount(msg_ptr->points.size() * 3 * 8);
+    trajectory_point_manual_object_->begin(
+      "BaseWhiteNoLighting",
+      Ogre::RenderOperation::OT_TRIANGLE_LIST);
 
     for (size_t point_idx = 0; point_idx < msg_ptr->points.size(); point_idx++) {
       const auto & path_point = msg_ptr->points.at(point_idx);
@@ -162,9 +188,42 @@ void AutowareTrajectoryFootprintDisplay::processMessage(
           }
         }
       }
+
+      /*
+       * Point
+       */
+      if (property_trajectory_point_view_->getBool()) {
+        Ogre::ColourValue color;
+        color = rviz_common::properties::qtToOgre(property_trajectory_point_color_->getColor());
+        color.a = property_trajectory_point_alpha_->getFloat();
+
+        const double radius = property_trajectory_point_radius_->getFloat();
+        for (size_t s_idx = 0; s_idx < 8; ++s_idx) {
+          const double current_angle = static_cast<double>(s_idx) / 8.0 * 2.0 * M_PI;
+          const double next_angle = static_cast<double>(s_idx + 1) / 8.0 * 2.0 * M_PI;
+          trajectory_point_manual_object_->position(
+            path_point.pose.position.x + radius * std::cos(current_angle),
+            path_point.pose.position.y + radius * std::sin(current_angle),
+            path_point.pose.position.z);
+          trajectory_point_manual_object_->colour(color);
+
+          trajectory_point_manual_object_->position(
+            path_point.pose.position.x + radius * std::cos(next_angle),
+            path_point.pose.position.y + radius * std::sin(next_angle),
+            path_point.pose.position.z);
+          trajectory_point_manual_object_->colour(color);
+
+          trajectory_point_manual_object_->position(
+            path_point.pose.position.x,
+            path_point.pose.position.y,
+            path_point.pose.position.z);
+          trajectory_point_manual_object_->colour(color);
+        }
+      }
     }
 
     trajectory_footprint_manual_object_->end();
+    trajectory_point_manual_object_->end();
   }
   last_msg_ptr_ = msg_ptr;
 }

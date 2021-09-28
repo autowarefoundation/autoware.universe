@@ -64,6 +64,12 @@ protected:
   rviz_common::properties::FloatProperty * property_vehicle_width_;
   rviz_common::properties::FloatProperty * property_rear_overhang_;
 
+  Ogre::ManualObject * trajectory_point_manual_object_;
+  rviz_common::properties::BoolProperty * property_trajectory_point_view_;
+  rviz_common::properties::ColorProperty * property_trajectory_point_color_;
+  rviz_common::properties::FloatProperty * property_trajectory_point_alpha_;
+  rviz_common::properties::FloatProperty * property_trajectory_point_radius_;
+
   struct VehicleFootprintInfo
   {
     VehicleFootprintInfo(const float l, const float w, const float r)
