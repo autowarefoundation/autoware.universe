@@ -16,6 +16,6 @@ jobs:
             --output .github/workflows/.cspell.json \
             https://raw.githubusercontent.com/tier4/autoware-spell-check-dict/main/cspell/.cspell.json
 
-      - uses: streetsidesoftware/cspell-action@v1.3.1
+      - uses: streetsidesoftware/cspell-action@v1.3.2
         with:
           config: ".github/workflows/.cspell.json"
