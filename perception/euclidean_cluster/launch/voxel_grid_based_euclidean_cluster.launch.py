@@ -31,65 +31,82 @@ def launch_setup(context, *args, **kwargs):
     def load_composable_node_param(param_path):
         with open(LaunchConfiguration(param_path).perform(context), 'r') as f:
             return yaml.safe_load(f)['/**']['ros__parameters']
-    ns = 'euclidean_cluster'
+    ns = 'clustering'
     pkg = 'euclidean_cluster'
-
-    # set voxel grid filter as a component
-    voxel_grid_filter_component = ComposableNode(
-        package='pointcloud_preprocessor',
-        plugin='pointcloud_preprocessor::VoxelGridDownsampleFilterComponent',
-        name=AnonName('voxel_grid_filter'),
-        remappings=[('input', LaunchConfiguration('input_pointcloud')),
-                    ('output', 'voxel_grid_filtered/pointcloud')],
-        parameters=[load_composable_node_param('voxel_grid_param_path')],
-    )
 
     # set compare map filter as a component
     compare_map_filter_component = ComposableNode(
         package='pointcloud_preprocessor',
+        namespace=ns,
         plugin='pointcloud_preprocessor::VoxelBasedCompareMapFilterComponent',
         name=AnonName('compare_map_filter'),
-        remappings=[('input', 'voxel_grid_filtered/pointcloud'),
+        remappings=[('input', LaunchConfiguration('input_pointcloud')),
                     ('map', LaunchConfiguration('input_map')),
-                    ('output', 'compare_map_filtered/pointcloud')]
+                    ('output', 'map_filter/pointcloud')],
+        parameters=[load_composable_node_param('compare_map_param_path')],
     )
 
-    use_map_euclidean_cluster_component = ComposableNode(
-        package=pkg,
-        plugin='euclidean_cluster::VoxelGridBasedEuclideanClusterNode',
-        name=AnonName('euclidean_cluster'),
-        remappings=[('input', 'compare_map_filtered/pointcloud'),
-                    ('output', LaunchConfiguration('output_clusters'))],
-        parameters=[load_composable_node_param('voxel_grid_based_euclidean_param_path')],
+    # set voxel grid filter as a component
+    use_map_voxel_grid_filter_component = ComposableNode(
+        package='pointcloud_preprocessor',
+        namespace=ns,
+        plugin='pointcloud_preprocessor::ApproximateDownsampleFilterComponent',
+        name=AnonName('voxel_grid_filter'),
+        remappings=[('input', 'map_filter/pointcloud'),
+                    ('output', 'downsampled/pointcloud')],
+        parameters=[load_composable_node_param('voxel_grid_param_path')],
+    )
+    disuse_map_voxel_grid_filter_component = ComposableNode(
+        package='pointcloud_preprocessor',
+        namespace=ns,
+        plugin='pointcloud_preprocessor::ApproximateDownsampleFilterComponent',
+        name=AnonName('voxel_grid_filter'),
+        remappings=[('input', LaunchConfiguration('input_pointcloud')),
+                    ('output', 'downsampled/pointcloud')],
+        parameters=[load_composable_node_param('voxel_grid_param_path')],
     )
 
-    disuse_map_euclidean_cluster_component = ComposableNode(
+    # set outlier filter as a component
+    outlier_filter_component = ComposableNode(
+        package='pointcloud_preprocessor',
+        namespace=ns,
+        plugin='pointcloud_preprocessor::VoxelGridOutlierFilterComponent',
+        name='outlier_filter',
+        remappings=[('input', 'downsampled/pointcloud'),
+                    ('output', 'outlier_filter/pointcloud')],
+        parameters=[load_composable_node_param('outlier_param_path')],
+    )
+
+    # set euclidean cluster as a component
+    euclidean_cluster_component = ComposableNode(
         package=pkg,
+        namespace=ns,
         plugin='euclidean_cluster::VoxelGridBasedEuclideanClusterNode',
-        name=AnonName('euclidean_cluster'),
-        remappings=[('input', 'voxel_grid_filtered/pointcloud'),
+        name='euclidean_cluster',
+        remappings=[('input', 'outlier_filter/pointcloud'),
                     ('output', LaunchConfiguration('output_clusters'))],
         parameters=[load_composable_node_param('voxel_grid_based_euclidean_param_path')],
     )
 
     container = ComposableNodeContainer(
         name='euclidean_cluster_container',
-        namespace=ns,
         package='rclcpp_components',
+        namespace=ns,
         executable='component_container',
-        composable_node_descriptions=[voxel_grid_filter_component],
+        composable_node_descriptions=[
+            outlier_filter_component, euclidean_cluster_component],
         output='screen',
     )
 
     use_map_loader = LoadComposableNodes(
         composable_node_descriptions=[compare_map_filter_component,
-                                      use_map_euclidean_cluster_component],
+                                      use_map_voxel_grid_filter_component],
         target_container=container,
         condition=IfCondition(LaunchConfiguration('use_pointcloud_map')),
     )
 
     disuse_map_loader = LoadComposableNodes(
-        composable_node_descriptions=[disuse_map_euclidean_cluster_component],
+        composable_node_descriptions=[disuse_map_voxel_grid_filter_component],
         target_container=container,
         condition=UnlessCondition(LaunchConfiguration('use_pointcloud_map')),
     )
@@ -114,6 +131,16 @@ def generate_launch_description():
                        [
                            FindPackageShare('euclidean_cluster'),
                            '/config/voxel_grid.param.yaml'
+                       ]),
+        add_launch_arg('outlier_param_path',
+                       [
+                           FindPackageShare('euclidean_cluster'),
+                           '/config/outlier.param.yaml'
+                       ]),
+        add_launch_arg('compare_map_param_path',
+                       [
+                           FindPackageShare('euclidean_cluster'),
+                           '/config/compare_map.param.yaml'
                        ]),
         add_launch_arg('voxel_grid_based_euclidean_param_path',
                        [

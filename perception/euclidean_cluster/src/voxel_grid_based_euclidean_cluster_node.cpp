@@ -38,7 +38,7 @@ VoxelGridBasedEuclideanClusterNode::VoxelGridBasedEuclideanClusterNode(
   cluster_pub_ =
     this->create_publisher<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>(
     "output",
-    10);
+    rclcpp::QoS{1});
   debug_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("debug/clusters", 1);
 }
 

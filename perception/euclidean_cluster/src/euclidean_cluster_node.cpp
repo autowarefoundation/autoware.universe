@@ -33,8 +33,7 @@ EuclideanClusterNode::EuclideanClusterNode(const rclcpp::NodeOptions & options)
 
   cluster_pub_ =
     this->create_publisher<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>(
-    "output",
-    10);
+    "output", rclcpp::QoS{1});
   debug_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("debug/clusters", 1);
 }
 
