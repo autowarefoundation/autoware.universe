@@ -9,9 +9,9 @@
         lateral_distance: 1.5               # [m] maximum lateral distance to consider hidden collision
       # road type parameters
       public_road:
-        min_velocity: 5.0                   # [m/s] minimum velocity to ignore occlusion spot
+        min_velocity: 2.78                  # [m/s] minimum velocity to ignore occlusion spot
         ebs_decel: -6.0                     # [m/s^2] maximum deceleration to assume for emergency stops.
-        pbs_decel: -0.5                     # [m/s^2] deceleration to assume for predictive braking stops
+        pbs_decel: -1.0                     # [m/s^2] deceleration to assume for predictive braking stops
       private_road:
         min_velocity: 1.5                   # [m/s] minimum velocity to ignore occlusion spot
         ebs_decel: -4.0                     # [m/s^2] maximum deceleration to assume for emergency stops.
