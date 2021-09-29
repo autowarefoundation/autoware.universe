@@ -56,9 +56,9 @@
   </group>
 
   <!-- visualization -->
-  <!-- <include file="$(find-pkg-share dynamic_object_visualization)/launch/dynamic_object_visualizer.launch.xml">
+  <include file="$(find-pkg-share dynamic_object_visualization)/launch/dynamic_object_visualizer.launch.xml">
     <arg name="input" value="objects"/>
     <arg name="with_feature" value="true"/>
     <arg name="only_known_objects" value="false"/>
-  </include> -->
+  </include>
 </launch>
