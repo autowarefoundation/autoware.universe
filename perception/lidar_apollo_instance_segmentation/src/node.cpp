@@ -28,7 +28,7 @@ LidarInstanceSegmentationNode::LidarInstanceSegmentationNode(
     std::bind(&LidarInstanceSegmentationNode::pointCloudCallback, this, _1));
   dynamic_objects_pub_ =
     this->create_publisher<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>(
-    "output/labeled_clusters", 1);
+    "output/labeled_clusters", rclcpp::QoS{1});
 }
 
 void LidarInstanceSegmentationNode::pointCloudCallback(
