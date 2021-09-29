@@ -64,6 +64,7 @@ bool transformDynamicObjects(
 
   /* transform to world coordinate */
   if (input_msg.header.frame_id != target_frame_id) {
+    output_msg.header.frame_id = target_frame_id;
     tf2::Transform tf_target2objects_world;
     tf2::Transform tf_target2objects;
     tf2::Transform tf_objects_world2objects;
@@ -161,11 +162,9 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   tf_listener_(tf_buffer_)
 {
   // Create publishers and subscribers
-  rclcpp::QoS durable_qos{1};
-  durable_qos.transient_local();
   dynamic_object_sub_ =
     create_subscription<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>(
-    "input", durable_qos,
+    "input", rclcpp::QoS{1},
     std::bind(&MultiObjectTracker::onMeasurement, this, std::placeholders::_1));
   dynamic_object_pub_ =
     create_publisher<autoware_perception_msgs::msg::DynamicObjectArray>("output", rclcpp::QoS{1});
