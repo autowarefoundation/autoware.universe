@@ -29,10 +29,12 @@ NaivePathPredictionNode::NaivePathPredictionNode(const rclcpp::NodeOptions & nod
 {
   using std::placeholders::_1;
   sub_ = this->create_subscription<autoware_perception_msgs::msg::DynamicObjectArray>(
-    "input", 1, std::bind(
+    "input", rclcpp::QoS{1}, std::bind(
       &NaivePathPredictionNode::callback, this,
       _1));
-  pub_ = this->create_publisher<autoware_perception_msgs::msg::DynamicObjectArray>("objects", 1);
+  pub_ = this->create_publisher<autoware_perception_msgs::msg::DynamicObjectArray>(
+    "objects",
+    rclcpp::QoS{1});
 }
 
 void NaivePathPredictionNode::callback(
