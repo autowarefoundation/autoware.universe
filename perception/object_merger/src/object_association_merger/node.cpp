@@ -42,7 +42,7 @@ ObjectAssociationMergerNode::ObjectAssociationMergerNode(const rclcpp::NodeOptio
 
   merged_object_pub_ =
     create_publisher<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>(
-    "output/object", rclcpp::QoS{10});
+    "output/object", rclcpp::QoS{1});
 }
 
 void ObjectAssociationMergerNode::objectsCallback(
