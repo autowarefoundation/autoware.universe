@@ -22,13 +22,13 @@ ObjectRangeSplitterNode::ObjectRangeSplitterNode(const rclcpp::NodeOptions & nod
   using std::placeholders::_1;
   spilt_range_ = declare_parameter("split_range", 30.0);
   sub_ = this->create_subscription<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>(
-    "input/object", 1, std::bind(&ObjectRangeSplitterNode::objectCallback, this, _1));
+    "input/object", rclcpp::QoS{1}, std::bind(&ObjectRangeSplitterNode::objectCallback, this, _1));
   long_range_object_pub_ =
     this->create_publisher<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>(
-    "output/long_range_object", 10);
+    "output/long_range_object", rclcpp::QoS{1});
   short_range_object_pub_ =
     this->create_publisher<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>(
-    "output/short_range_object", 10);
+    "output/short_range_object", rclcpp::QoS{1});
 }
 
 void ObjectRangeSplitterNode::objectCallback(
