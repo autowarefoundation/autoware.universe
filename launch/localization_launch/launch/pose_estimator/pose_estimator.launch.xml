@@ -1,6 +1,5 @@
 <?xml version="1.0"?>
 <launch>
-  <arg name="environment_name" default="$(env ENVIRONMENT_NAME default)" />
 
   <include file="$(find-pkg-share ndt_scan_matcher)/launch/ndt_scan_matcher.launch.xml">
     <arg name="input_map_points_topic" value="/map/pointcloud_map"/>
@@ -12,7 +11,7 @@
     <arg name="output_pose_with_covariance_topic" value="/localization/pose_estimator/pose_with_covariance"/>
     <arg name="output_diagnostics_topic" value="/localization/diagnostics"/>
 
-    <arg name="param_file" value="$(find-pkg-share localization_launch)/config/$(var environment_name)/ndt_scan_matcher.param.yaml" />
+    <arg name="param_file" value="$(find-pkg-share localization_launch)/config/ndt_scan_matcher.param.yaml" />
   </include>
 
 </launch>
