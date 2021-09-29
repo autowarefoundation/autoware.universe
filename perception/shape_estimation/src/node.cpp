@@ -32,10 +32,8 @@ ShapeEstimationNode::ShapeEstimationNode(const rclcpp::NodeOptions & node_option
   sub_ = create_subscription<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>(
     "input", rclcpp::QoS{1}, std::bind(&ShapeEstimationNode::callback, this, _1));
 
-  rclcpp::QoS durable_qos{1};
-  durable_qos.transient_local();  // to latch the topic
   pub_ = create_publisher<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>(
-    "objects", durable_qos);
+    "objects", rclcpp::QoS{1});
 
   bool use_corrector = declare_parameter("use_corrector", true);
   bool use_filter = declare_parameter("use_filter", true);
