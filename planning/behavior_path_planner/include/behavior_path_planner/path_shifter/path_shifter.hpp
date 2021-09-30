@@ -15,6 +15,7 @@
 #ifndef BEHAVIOR_PATH_PLANNER__PATH_SHIFTER__PATH_SHIFTER_HPP_
 #define BEHAVIOR_PATH_PLANNER__PATH_SHIFTER__PATH_SHIFTER_HPP_
 
+#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -38,17 +39,25 @@ using geometry_msgs::msg::Pose;
 
 struct ShiftPoint
 {
-  Pose start{};      // shift start point in absolute coordinate
-  Pose end{};        // shift start point in absolute coordinate
-  double length;     // absolute shift length related to the reference path
-  size_t start_idx;  // associated start-point index for the reference path
-  size_t end_idx;    // associated end-point index for the reference path
+  Pose start{};     // shift start point in absolute coordinate
+  Pose end{};       // shift start point in absolute coordinate
+  double length{};  // absolute shift length at the end point related to the reference path
+
+  size_t start_idx{};  // associated start-point index for the reference path
+  size_t end_idx{};    // associated end-point index for the reference path
 };
+using ShiftPointArray = std::vector<ShiftPoint>;
 
 struct ShiftedPath
 {
   PathWithLaneId path{};
   std::vector<double> shift_length{};
+};
+
+enum class SHIFT_TYPE
+{
+  LINEAR = 0,
+  SPLINE = 1,
 };
 
 class PathShifter
@@ -81,7 +90,9 @@ public:
    * @brief  Generate a shifted path according to the given reference path and shift points.
    * @return False if the path is empty or shift points have conflicts.
    */
-  bool generate(ShiftedPath * shift_path, const bool offset_back = true);
+  bool generate(
+    ShiftedPath * shift_path, const bool offset_back = true,
+    const SHIFT_TYPE type = SHIFT_TYPE::SPLINE);
 
   /**
    * @brief Remove behind shift points and add the removed offset to the base_offset_.
@@ -101,9 +112,19 @@ public:
     const double l = std::abs(lateral);
     const double v = std::abs(velocity);
     if (j < 1.0e-8) {
-      return 1.0e10;                // TODO(Horibe) maybe invalid arg?
+      return 1.0e10;  // TODO(Horibe) maybe invalid arg?
     }
     return 4.0 * std::pow(0.5 * l / j, 1.0 / 3.0) * v;
+  }
+
+  static double calcJerkFromLatLonDistance(
+    const double lateral, const double longitudinal, const double velocity)
+  {
+    constexpr double ep = 1.0e-3;
+    const double lat = std::abs(lateral);
+    const double lon = std::max(std::abs(longitudinal), ep);
+    const double v = std::abs(velocity);
+    return 0.5 * lat * std::pow(4.0 * v / lon, 3);
   }
 
   double getTotalShiftLength() const
@@ -117,7 +138,9 @@ public:
 
   double getLastShiftLength() const
   {
-    if (shift_points_.empty()) {return base_offset_;}
+    if (shift_points_.empty()) {
+      return base_offset_;
+    }
 
     // TODO(Horibe) enable this with const
     // if (!is_index_aligned_) {
@@ -125,9 +148,22 @@ public:
     // }
     const auto furthest = std::max_element(
       shift_points_.begin(), shift_points_.end(),
-      [](auto & a, auto & b) {return a.end_idx > b.end_idx;});
+      [](auto & a, auto & b) {return a.end_idx < b.end_idx;});
 
     return furthest->length;
+  }
+
+  boost::optional<ShiftPoint> getLastShiftPoint() const
+  {
+    if (shift_points_.empty()) {
+      return {};
+    }
+
+    const auto furthest = std::max_element(
+      shift_points_.begin(), shift_points_.end(),
+      [](auto & a, auto & b) {return a.end_idx > b.end_idx;});
+
+    return *furthest;
   }
 
   /**
@@ -140,15 +176,15 @@ public:
    * @brief  Calculate shift point from path arclength for start and end point.
    */
   static bool calcShiftPointFromArcLength(
-    const PathWithLaneId & path, const Point & origin, double dist_to_start,
-    double dist_to_end, double shift_length, ShiftPoint * shift_point);
+    const PathWithLaneId & path, const Point & origin, double dist_to_start, double dist_to_end,
+    double shift_length, ShiftPoint * shift_point);
 
 private:
   // The reference path along which the shift will be performed.
   PathWithLaneId reference_path_;
 
   // Shift points used for shifted-path generation.
-  std::vector<ShiftPoint> shift_points_;
+  ShiftPointArray shift_points_;
 
   // The amount of shift length to the entire path.
   double base_offset_{0.0};
@@ -188,7 +224,7 @@ private:
   /**
    * @brief Check if the shift points are aligned in order and have no conflict range.
    */
-  bool checkShiftPointsAlignment(const std::vector<ShiftPoint> & shift_points) const;
+  bool checkShiftPointsAlignment(const ShiftPointArray & shift_points) const;
 
   void addLateralOffsetOnIndexPoint(ShiftedPath * point, double offset, size_t index) const;
 
@@ -198,14 +234,6 @@ private:
   {
     RCLCPP_DEBUG(logger_, "base_offset is changed: %f -> %f", base_offset_, val);
     base_offset_ = val;
-  }
-
-  void addShiftPoints(const std::vector<ShiftPoint> & val)
-  {
-    RCLCPP_DEBUG(
-      logger_, "shift points are changed: size %lu -> %lu",
-      shift_points_.size(), val.size());
-    shift_points_ = val;
   }
 };
 

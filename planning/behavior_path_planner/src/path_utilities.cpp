@@ -37,11 +37,12 @@ using autoware_planning_msgs::msg::PathWithLaneId;
 /**
  * @brief calc path arclength on each points from start point to end point.
  */
-std::vector<double> calcPathArcLengthArray(const PathWithLaneId & path, size_t start, size_t end)
+std::vector<double> calcPathArcLengthArray(
+  const PathWithLaneId & path, size_t start, size_t end, double offset)
 {
   std::vector<double> out;
 
-  double sum = 0.0;
+  double sum = offset;
   out.push_back(sum);
 
   start = std::max(start + 1, size_t{1});
@@ -89,24 +90,23 @@ PathWithLaneId resamplePathWithSpline(const PathWithLaneId & path, double interv
 
   if (base_points.empty() || sampling_points.empty()) {return path;}
 
-  std::vector<double> base_x;
-  std::vector<double> base_y;
-  std::vector<double> base_z;
+  std::vector<double> base_x, base_y, base_z;
   for (const auto & p : path.points) {
-    base_x.push_back(p.point.pose.position.x);
-    base_y.push_back(p.point.pose.position.y);
-    base_z.push_back(p.point.pose.position.z);
+    const auto & pos = p.point.pose.position;
+    base_x.push_back(pos.x);
+    base_y.push_back(pos.y);
+    base_z.push_back(pos.z);
   }
 
-  std::vector<double> resampled_x;
-  std::vector<double> resampled_y;
-  std::vector<double> resampled_z;
+  std::vector<double> resampled_x, resampled_y, resampled_z;
   {
     spline_interpolation::SplineInterpolator spline{};
+    const auto interp = [&](const auto & base, auto & resampled) {
+        return spline.interpolate(base_points, base, sampling_points, resampled);
+      };
     if (
-      !spline.interpolate(base_points, base_x, sampling_points, resampled_x) ||
-      !spline.interpolate(base_points, base_y, sampling_points, resampled_y) ||
-      !spline.interpolate(base_points, base_z, sampling_points, resampled_z))
+      !interp(base_x, resampled_x) || !interp(base_y, resampled_y) ||
+      !interp(base_z, resampled_z))
     {
       throw std::runtime_error("spline failed in behavior_path_planner avoidance module");
     }
@@ -208,6 +208,23 @@ size_t getIdxByArclength(const PathWithLaneId & path, const Point & origin, cons
     }
     return 0;
   }
+}
+
+void clipPathLength(
+  PathWithLaneId & path, const Point base_pos, const double forward,
+  const double backward)
+{
+  if (path.points.size() < 3) {
+    return;
+  }
+
+  const auto start_idx = util::getIdxByArclength(path, base_pos, -backward);
+  const auto end_idx = util::getIdxByArclength(path, base_pos, forward);
+
+  const std::vector<PathPointWithLaneId> clipped_points{
+    path.points.begin() + start_idx, path.points.begin() + end_idx + 1};
+
+  path.points = clipped_points;
 }
 
 }  // namespace util

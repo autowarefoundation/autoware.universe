@@ -43,7 +43,7 @@ struct BehaviorTreeManagerParam
 class BehaviorTreeManager
 {
 public:
-  explicit BehaviorTreeManager(const BehaviorTreeManagerParam & param);
+  BehaviorTreeManager(rclcpp::Node & node, const BehaviorTreeManagerParam & param);
   void createBehaviorTree();
   void registerSceneModule(const std::shared_ptr<SceneModuleInterface> & p);
   void registerForceApproval(const std::string & name);
@@ -59,9 +59,8 @@ private:
   std::shared_ptr<PlannerData> current_planner_data_;
   std::vector<std::shared_ptr<SceneModuleInterface>> scene_modules_;
   std::vector<std::shared_ptr<SceneModuleStatus>> modules_status_;
-  rclcpp::Logger logger_{rclcpp::get_logger("behavior_path_planner").get_child(
-      "behavior_tree_manager")};
-  rclcpp::Clock clock_{RCL_ROS_TIME};
+  rclcpp::Logger logger_;
+  rclcpp::Clock clock_;
 
   BT::BehaviorTreeFactory bt_factory_;
   BT::Tree bt_tree_;

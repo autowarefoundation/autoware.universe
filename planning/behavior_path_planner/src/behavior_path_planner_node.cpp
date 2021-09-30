@@ -81,7 +81,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
 
   // behavior tree manager
   {
-    bt_manager_ = std::make_shared<BehaviorTreeManager>(getBehaviorTreeManagerParam());
+    bt_manager_ = std::make_shared<BehaviorTreeManager>(*this, getBehaviorTreeManagerParam());
 
     auto side_shift_module =
       std::make_shared<SideShiftModule>("SideShift", *this, getSideShiftParam());
@@ -127,9 +127,11 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
 
   // Start timer. This must be done after all data (e.g. vehicle pose, velocity) are ready.
   {
+    const auto planning_hz = declare_parameter("planning_hz", 10.0);
+    const auto period = rclcpp::Rate(planning_hz).period();
     auto on_timer = std::bind(&BehaviorPathPlannerNode::run, this);
     timer_ = std::make_shared<rclcpp::GenericTimer<decltype(on_timer)>>(
-      this->get_clock(), 100ms, std::move(on_timer),
+      this->get_clock(), period, std::move(on_timer),
       this->get_node_base_interface()->get_context());
     this->get_node_timers_interface()->add_timer(timer_, nullptr);
   }
@@ -195,21 +197,38 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
     };
 
   AvoidanceParameters p{};
+  p.resample_interval_for_planning = dp("resample_interval_for_planning", 0.3);
+  p.resample_interval_for_output = dp("resample_interval_for_output", 3.0);
+  p.detection_area_right_expand_dist = dp("detection_area_right_expand_dist", 0.0);
+  p.detection_area_left_expand_dist = dp("detection_area_left_expand_dist", 1.0);
+
   p.threshold_distance_object_is_on_center = dp("threshold_distance_object_is_on_center", 1.0);
   p.threshold_speed_object_is_stopped = dp("threshold_speed_object_is_stopped", 1.0);
-  p.object_check_forward_distance = dp("object_check_forward_distance", 100.0);
+  p.object_check_forward_distance = dp("object_check_forward_distance", 150.0);
   p.object_check_backward_distance = dp("object_check_backward_distance", 2.0);
   p.lateral_collision_margin = dp("lateral_collision_margin", 2.0);
-  p.time_to_start_avoidance = dp("time_to_start_avoidance", 3.0);
-  p.min_distance_to_start_avoidance = dp("min_distance_to_start_avoidance", 10.0);
-  p.time_avoiding = dp("time_avoiding", 3.0);
-  p.min_distance_avoiding = dp("min_distance_avoiding", 10.0);
-  p.max_shift_length = dp("max_shift_length", 1.5);
-  p.min_distance_avoidance_end_to_object = dp("min_distance_avoidance_end_to_object", 5.0);
-  p.time_avoidance_end_to_object = dp("time_avoidance_end_to_object", 1.0);
+
+  p.prepare_time = dp("prepare_time", 3.0);
+  p.min_prepare_distance = dp("min_prepare_distance", 10.0);
+  p.min_avoidance_distance = dp("min_avoidance_distance", 10.0);
+
+  p.min_nominal_avoidance_speed = dp("min_nominal_avoidance_speed", 5.0);
+  p.min_sharp_avoidance_speed = dp("min_sharp_avoidance_speed", 1.0);
+
+  p.max_right_shift_length = dp("max_right_shift_length", 1.5);
+  p.max_left_shift_length = dp("max_left_shift_length", 1.5);
 
   p.nominal_lateral_jerk = dp("nominal_lateral_jerk", 0.3);
   p.max_lateral_jerk = dp("max_lateral_jerk", 2.0);
+
+  p.longitudinal_collision_margin_min_distance =
+    dp("longitudinal_collision_margin_min_distance", 0.0);
+  p.longitudinal_collision_margin_time = dp("longitudinal_collision_margin_time", 0.0);
+
+  p.object_hold_max_count = dp("object_hold_max_count", 0);
+
+  p.publish_debug_marker = dp("publish_debug_marker", false);
+  p.print_debug_info = dp("print_debug_info", false);
 
   return p;
 }
@@ -434,15 +453,13 @@ void BehaviorPathPlannerNode::run()
   auto clipped_path = clipPathByGoal(*path);
   clipPathLength(clipped_path);
 
-  // TODO(Horibe) the path must have points. Needs to be fix.
   if (!clipped_path.points.empty()) {
     path_publisher_->publish(clipped_path);
   } else {
-    RCLCPP_ERROR(
-      get_logger(), "behavior path output is empty! Stop publish. path = %lu, clipped = %lu",
-      path->points.size(), clipped_path.points.size());
+    RCLCPP_ERROR(get_logger(), "behavior path output is empty! Stop publish.");
   }
   path_candidate_publisher_->publish(util::toPath(*path_candidate));
+
   // debug_path_publisher_->publish(util::toPath(path));
   debug_drivable_area_publisher_->publish(path->drivable_area);
 
@@ -621,19 +638,11 @@ void BehaviorPathPlannerNode::onRoute(const Route::ConstSharedPtr msg)
 
 void BehaviorPathPlannerNode::clipPathLength(PathWithLaneId & path) const
 {
-  if (path.points.size() < 3) {return;}
-
   const auto ego_pos = planner_data_->self_pose->pose.position;
   const double forward = planner_data_->parameters.forward_path_length;
   const double backward = planner_data_->parameters.backward_path_length;
 
-  const auto start_idx = util::getIdxByArclength(path, ego_pos, -backward);
-  const auto end_idx = util::getIdxByArclength(path, ego_pos, forward);
-
-  const std::vector<PathPointWithLaneId> clipped_points{path.points.begin() + start_idx,
-    path.points.begin() + end_idx + 1};
-
-  path.points = clipped_points;
+  util::clipPathLength(path, ego_pos, forward, backward);
 }
 
 PathWithLaneId BehaviorPathPlannerNode::clipPathByGoal(const PathWithLaneId & path) const

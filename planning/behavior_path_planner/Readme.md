@@ -182,7 +182,7 @@ The Pull Over module is activated when goal is in the shoulder lane. Ego-vehicle
   - Distance required for pull over of generated path is shorter than distance from ego-pose to goal-pose
   - Generated Path of the pull over doesn’t collide with other objects
   - Pull over is allowed by an operator
-    - If pull over path is not allowed by an operator, leave distance required for pull over and stop.  
+    - If pull over path is not allowed by an operator, leave distance required for pull over and stop.
       This case is defined as UC ID: UC-F-11-00004 at [ODD Use Case Slide Pullover draft](https://docs.google.com/presentation/d/19-G1vj0rG-1P1RKWLg-Iq3_7YgcIYgXZ1wq2_J9NXGo/edit#slide=id.gf4f59f078d_0_1)
 
 #### \***\*finish pull over condition\*\*** (need to meet any of the conditions below)

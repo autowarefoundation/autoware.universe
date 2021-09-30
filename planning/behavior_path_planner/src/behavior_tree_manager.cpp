@@ -25,8 +25,11 @@
 
 namespace behavior_path_planner
 {
-BehaviorTreeManager::BehaviorTreeManager(const BehaviorTreeManagerParam & param)
-: bt_manager_param_(param)
+BehaviorTreeManager::BehaviorTreeManager(
+  rclcpp::Node & node, const BehaviorTreeManagerParam & param)
+: bt_manager_param_(param),
+  logger_(node.get_logger().get_child("behavior_tree_manager")),
+  clock_(*node.get_clock())
 {
 }
 

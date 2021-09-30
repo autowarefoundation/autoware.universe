@@ -67,7 +67,8 @@ class SceneModuleInterface
 {
 public:
   SceneModuleInterface(const std::string & name, rclcpp::Node & node)
-  : name_{name}, logger_{node.get_logger().get_child(name)}, clock_{*node.get_clock()} {}
+  : name_{name}, logger_{node.get_logger().get_child(name)}, clock_{*node.get_clock()},
+    approval_handler_(node) {}
 
   virtual ~SceneModuleInterface() = default;
 

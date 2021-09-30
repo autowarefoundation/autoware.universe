@@ -25,6 +25,9 @@ namespace behavior_path_planner
 class ApprovalHandler
 {
 public:
+  explicit ApprovalHandler(rclcpp::Node & node)
+  : clock_{*node.get_clock()} {}
+
   void setCurrentApproval(const behavior_path_planner::BoolStamped & approval)
   {
     approval_ = approval;
@@ -32,8 +35,7 @@ public:
 
   bool isApproved() const
   {
-    auto clock{rclcpp::Clock{RCL_ROS_TIME}};
-    const auto now = clock.now();
+    const auto now = clock_.now();
     const auto thresh_sec = 0.5;
     if (approval_.data && (now - approval_.stamp).seconds() < thresh_sec) {
       if ((now - last_clear_time_).seconds() > thresh_sec) {
@@ -48,8 +50,7 @@ public:
   void clearWaitApproval() {is_waiting_approval_ = false;}
   void clearApproval()
   {
-    auto clock{rclcpp::Clock{RCL_ROS_TIME}};
-    last_clear_time_ = clock.now();
+    last_clear_time_ = clock_.now();
     approval_.data = false;
   }
 
@@ -57,6 +58,9 @@ private:
   BoolStamped approval_{false};
   bool is_waiting_approval_{true};
   rclcpp::Time last_clear_time_{0, 0, RCL_ROS_TIME};
+
+  std::string name_;
+  mutable rclcpp::Clock clock_;
 };
 
 }  // namespace behavior_path_planner

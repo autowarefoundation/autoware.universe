@@ -28,114 +28,16 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include "behavior_path_planner/path_shifter/path_shifter.hpp"
+#include "behavior_path_planner/scene_module/avoidance/avoidance_module_data.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 
 namespace behavior_path_planner
 {
-using autoware_perception_msgs::msg::DynamicObject;
-using autoware_perception_msgs::msg::DynamicObjectArray;
-using autoware_planning_msgs::msg::PathPointWithLaneId;
-using autoware_planning_msgs::msg::PathWithLaneId;
-using geometry_msgs::msg::Point;
-using geometry_msgs::msg::Pose;
-using geometry_msgs::msg::PoseStamped;
-
-struct AvoidanceParameters
-{
-  // Vehicles whose distance to the center of the path is
-  // less than this will not be considered for avoidance.
-  double threshold_distance_object_is_on_center;
-
-  // vehicles with speed greater than this will not be avoided
-  double threshold_speed_object_is_stopped;
-
-  // distance to avoid object detection
-  double object_check_forward_distance;
-
-  // continue to detect backward vehicles as avoidance targets until they are this distance away
-  double object_check_backward_distance;
-
-  // we want to keep this lateral margin when avoiding
-  double lateral_collision_margin;
-
-  // we want to complete collision avoidance this distance in advance
-  double longitudinal_collision_margin;
-
-  // start avoidance after this time to avoid sudden path change
-  double time_to_start_avoidance;
-
-  // Even if the vehicle speed is zero, avoidance will start after a distance of this much.
-  double min_distance_to_start_avoidance;
-
-  // time to start avoidance TODO(Horibe): will be changed to jerk constraint later
-  double time_avoiding;
-
-  // minimum distance while avoiding TODO(Horibe): will be changed to jerk constraint later
-  double min_distance_avoiding;
-
-  // Even if the obstacle is very large, it will not avoid more than this length.
-  double max_shift_length;
-
-  // even if the vehicle speed is zero, avoidance will end after this much distance.
-  double min_distance_avoidance_end_to_object;
-
-  // we want to end the avoidance a few seconds before we pass by the avoided target.
-  double time_avoidance_end_to_object;
-
-  // Avoidance path is generated with this jerk.
-  // If there is no margin, the jerk increases up to max lateral jerk.
-  double nominal_lateral_jerk;
-
-  // if the avoidance path exceeds this lateral jerk, it will be not used anymore.
-  double max_lateral_jerk;
-};
-
-struct Frenet
-{
-  Frenet() = default;
-  Frenet(double lat, double lon)
-  : lateral(lat), longitudinal(lon) {}
-  double lateral{0.0};
-  double longitudinal{0.0};
-};
-
-struct DebugData
-{
-  DynamicObjectArray target_objects;
-  std::shared_ptr<lanelet::ConstLanelets> expanded_lanelets;
-  std::shared_ptr<lanelet::ConstLanelets> current_lanelets;
-  std::vector<Frenet> raw_shift_points;
-  std::vector<Frenet> modified_shift_points;
-  std::vector<ShiftPoint> current_shift_points;
-  std::vector<ShiftPoint> new_shift_points;
-};
-
-struct ObjectData  // avoidance target
-{
-  ObjectData() = default;
-  ObjectData(
-    const DynamicObject & obj, double lat, double lon, double overhang)
-  : object(obj), lateral(lat), longitudinal(lon), overhang_dist(overhang) {}
-  DynamicObject object;
-  double lateral;
-  double longitudinal;
-  double overhang_dist;
-};
-
-struct AvoidancePlanningData
-{
-  Pose reference_pose;  // unshifted pose
-  PathWithLaneId reference_path;
-  lanelet::ConstLanelets current_lanelets;
-  std::vector<ObjectData> objects;
-};
-
 class AvoidanceModule : public SceneModuleInterface
 {
 public:
   AvoidanceModule(
-    const std::string & name, rclcpp::Node & node,
-    const AvoidanceParameters & parameters);
+    const std::string & name, rclcpp::Node & node, const AvoidanceParameters & parameters);
 
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
@@ -151,72 +53,137 @@ public:
 
 private:
   AvoidanceParameters parameters_;
+
   AvoidancePlanningData avoidance_data_;
-  std::shared_ptr<ShiftedPath> prev_output_{nullptr};
-  mutable DebugData debug_data_;
 
   PathShifter path_shifter_;
 
+  // data used in previous planning
+  ShiftedPath prev_output_;
+  ShiftedPath prev_linear_shift_path_;  // used for shift point check
+  PathWithLaneId prev_reference_;
+
+  // for raw_shift_point registration
+  AvoidPointArray registered_raw_shift_points_;
+  AvoidPointArray current_raw_shift_points_;
+  void registerRawShiftPoints(const AvoidPointArray & future_registered);
+  void updateRegisteredRawShiftPoints();
+
+  // -- for state management --
+  bool isAvoidancePlanRunning() const;
+
+  // -- for pre-processing --
   void initVariables();
+  AvoidancePlanningData calcAvoidancePlanningData(DebugData & debug) const;
+  ObjectDataArray calcAvoidanceTargetObjects(
+    const lanelet::ConstLanelets & lanelets, const PathWithLaneId & reference_path,
+    DebugData & debug) const;
 
-  AvoidancePlanningData calcAvoidancePlanningData() const;
+  ObjectDataArray registered_objects_;
+  void updateRegisteredObject(const ObjectDataArray & objects);
+  void CompensateDetectionLost(ObjectDataArray & objects) const;
 
-  std::vector<ShiftPoint> calcShiftPointsInFrenet(DebugData & debug) const;
 
-  boost::optional<ShiftPoint> calcIntersectionShiftPoint(const AvoidancePlanningData & data) const;
+  // -- for shift point generation --
+  AvoidPointArray calcShiftPoints(
+    AvoidPointArray & current_raw_shift_points,
+    DebugData & debug) const;
 
-  boost::optional<ShiftPoint> findNewShiftPoint(
-    const std::vector<ShiftPoint> & shift_points, const PathShifter & shifter) const;
-  void addShiftPointIfApproved(const ShiftPoint & point);
+  // shift point generation: generator
+  AvoidPointArray calcRawShiftPointsFromObjects(const ObjectDataArray & objects) const;
+  double getRightShiftBound() const;
+  double getLeftShiftBound() const;
 
+  // shift point generation: combiner
+  AvoidPointArray combineRawShiftPointsWithUniqueCheck(
+    const AvoidPointArray & base_points, const AvoidPointArray & added_points) const;
+
+  // shift point generation: merger
+  AvoidPointArray mergeShiftPoints(
+    const AvoidPointArray & raw_shift_points, DebugData & debug) const;
+  void generateTotalShiftLine(
+    const AvoidPointArray & avoid_points, ShiftLineData & shift_line_data) const;
+  AvoidPointArray extractShiftPointsFromLine(ShiftLineData & shift_line_data) const;
+  std::vector<size_t> calcParentIds(
+    const AvoidPointArray & parent_candidates, const AvoidPoint & child) const;
+
+  // shift point generation: trimmers
+  AvoidPointArray trimShiftPoint(const AvoidPointArray & shift_points, DebugData & debug) const;
+  void quantizeShiftPoint(AvoidPointArray & shift_points, const double interval) const;
+  void trimSmallShiftPoint(AvoidPointArray & shift_points, const double shift_diff_thres) const;
+  void trimSimilarGradShiftPoint(AvoidPointArray & shift_points, const double threshold) const;
+  void trimMomentaryReturn(AvoidPointArray & shift_points) const;
+  void trimTooSharpShift(AvoidPointArray & shift_points) const;
+  void trimSharpReturn(AvoidPointArray & shift_points) const;
+
+  // shift point generation: return-shift generator
+  void addReturnShiftPointFromEgo(
+    AvoidPointArray & sp_candidates, AvoidPointArray & current_raw_shift_points) const;
+
+  // -- for shift point operations --
+  void alignShiftPointsOrder(
+    AvoidPointArray & shift_points, const bool recalc_start_length = true) const;
+  AvoidPointArray fillAdditionalInfo(const AvoidPointArray & shift_points) const;
+  AvoidPoint fillAdditionalInfo(const AvoidPoint & shift_point) const;
+  void fillAdditionalInfoFromPoint(AvoidPointArray & shift_points) const;
+  void fillAdditionalInfoFromLongitudinal(AvoidPointArray & shift_points) const;
+
+  // -- for new shift point approval --
+  boost::optional<AvoidPointArray> findNewShiftPoint(
+    const AvoidPointArray & shift_points, const PathShifter & shifter) const;
+  void addShiftPointIfApproved(const AvoidPointArray & point);
+  void addNewShiftPoints(PathShifter & path_shifter, const AvoidPointArray & shift_points) const;
+
+  // -- path generation --
   ShiftedPath generateAvoidancePath(PathShifter & shifter) const;
   void generateExtendedDrivableArea(ShiftedPath * shifted_path, double margin) const;
 
+  // clean up shifter
   void postProcess(PathShifter & shifter) const;
 
   // turn signal
   TurnSignalInfo calcTurnSignalInfo(const ShiftedPath & path) const;
 
-  // helper
-  std::vector<Frenet> endPointsToFrenet(
-    const PathWithLaneId & path,
-    const PathShifter & shifter) const;
-
-  double getNominalAvoidanceDistance() const;
-  double getNominalDistanceToStartAvoid() const;
+  // intersection (old)
+  boost::optional<AvoidPoint> calcIntersectionShiftPoint(const AvoidancePlanningData & data) const;
 
   bool isTargetObjectType(const DynamicObject & object) const;
 
+  // debug
+  mutable DebugData debug_data_;
+  void setDebugData(const PathShifter & shifter, const DebugData & debug);
+
+  // =====================================
+  // ========= helper functions ==========
+  // =====================================
+
   PathWithLaneId calcCenterLinePath(
-    const std::shared_ptr<const PlannerData> & planner_data,
-    const PoseStamped & pose) const;
-
-  bool isAvoidancePlanRunning() const
-  {
-    const bool has_base_offset = std::abs(path_shifter_.getBaseOffset()) > 0.01;
-    const bool has_shift_point = (path_shifter_.getShiftPointsSize() > 0);
-    return has_base_offset || has_shift_point;
-  }
-
-  inline double getEgoSpeed() const
-  {
-    return std::abs(planner_data_->self_velocity->twist.linear.x);
-  }
-
-  PoseStamped getUnshiftedEgoPose(const ShiftedPath & prev_path) const;
-
-  inline PoseStamped getEgoPose() const {return *(planner_data_->self_pose);}
-
-  inline Point getEgoPosition() const
-  {
-    return planner_data_->self_pose->pose.position;
-  }
-
-  ShiftedPath toShiftedPath(const PathWithLaneId & path) const;
+    const std::shared_ptr<const PlannerData> & planner_data, const PoseStamped & pose) const;
 
   void clipPathLength(PathWithLaneId & path) const;
 
-  void setDebugData(const PathShifter & shifter, const DebugData & debug);
+  // TODO(Horibe): think later.
+  // for unique ID
+  mutable uint64_t original_unique_id = 0;  // TODO(Horibe) remove mutable
+  uint64_t getOriginalShiftPointUniqueId() const {return original_unique_id++;}
+
+  double getNominalAvoidanceDistance(const double shift_length) const;
+  double getNominalPrepareDistance() const;
+  double getNominalAvoidanceEgoSpeed() const;
+
+  double getSharpAvoidanceDistance(const double shift_length) const;
+  double getSharpAvoidanceEgoSpeed() const;
+
+  double getEgoSpeed() const;
+  Point getEgoPosition() const;
+  PoseStamped getEgoPose() const;
+  PoseStamped getUnshiftedEgoPose(const ShiftedPath & prev_path) const;
+  double getCurrentBaseShift() const {return path_shifter_.getBaseOffset();}
+  double getCurrentLinearShift() const
+  {
+    return prev_linear_shift_path_.shift_length.at(
+      autoware_utils::findNearestIndex(prev_linear_shift_path_.path.points, getEgoPosition()));
+  }
 };
 
 }  // namespace behavior_path_planner
