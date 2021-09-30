@@ -29,7 +29,7 @@ repositories:
     url: git@github.com:tier4/calibration_tools.git
     version: main
   # description
-  description/sensor/sensor_description:
+  description/sensor/sensor_component_description:
     type: git
     url: https://github.com/tier4/sensor_description.iv.git
     version: main
