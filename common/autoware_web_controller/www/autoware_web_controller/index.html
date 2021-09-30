@@ -14,7 +14,7 @@
     <script type="text/javascript" src="js/autoware_engage.js"></script>
     <script type="text/javascript" src="js/vehicle_engage.js"></script>
     <script type="text/javascript" src="js/velocity_limit.js"></script>
-    <script type="text/javascript" src="js/lane_change_approval.js"></script>
+    <script type="text/javascript" src="js/path_change_approval.js"></script>
     <style>
       .ui-menu {
         min-width: 90px;
@@ -82,13 +82,13 @@
           <span id="velocity_limit_status"> - </span>
           <span>km/h</span>
         </div>
-        <h3>Lane Change Approval : <span id="lane_change_approval_info"> - </span></h3>
-        <form action="javascript:LaneChangeApprovalPublisher.send();" id="ui">
+        <h3>Path Change Approval : <span id="path_change_approval_info"> - </span></h3>
+        <form action="javascript:PathChangeApprovalPublisher.send();" id="ui">
           <input type="submit" value="Approve" id="btn" /><br />
         </form>
         <div>
           <span>Status:</span>
-          <span id="lane_change_approval_status"> - </span>
+          <span id="path_change_approval_status"> - </span>
         </div>
       </div>
       <div id="vehicle">
