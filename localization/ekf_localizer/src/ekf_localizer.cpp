@@ -241,11 +241,11 @@ void EKFLocalizer::setCurrentResult()
     tf2::Matrix3x3(q_tf).getRPY(roll, pitch, yaw_tmp);
   }
   double yaw = ekf_.getXelement(IDX::YAW) + ekf_.getXelement(IDX::YAWB);
-  current_ekf_pose_.pose.orientation = createQuaternionFromRPY(roll, pitch, yaw);
+  current_ekf_pose_.pose.orientation = autoware_utils::createQuaternionFromRPY(roll, pitch, yaw);
 
   current_ekf_pose_no_yawbias_ = current_ekf_pose_;
   current_ekf_pose_no_yawbias_.pose.orientation =
-    createQuaternionFromRPY(roll, pitch, ekf_.getXelement(IDX::YAW));
+    autoware_utils::createQuaternionFromRPY(roll, pitch, ekf_.getXelement(IDX::YAW));
 
   current_ekf_twist_.header.frame_id = "base_link";
   current_ekf_twist_.header.stamp = this->now();
@@ -716,18 +716,6 @@ bool EKFLocalizer::mahalanobisGate(
   }
 
   return true;
-}
-
-/*
- * createQuaternionFromRPY
- */
-geometry_msgs::msg::Quaternion EKFLocalizer::createQuaternionFromRPY(
-  double r, double p,
-  double y) const
-{
-  tf2::Quaternion q;
-  q.setRPY(r, p, y);
-  return tf2::toMsg(q);
 }
 
 /*

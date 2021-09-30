@@ -30,6 +30,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "autoware_debug_msgs/msg/float64_stamped.hpp"
 #include "autoware_debug_msgs/msg/float64_multi_array_stamped.hpp"
+#include "autoware_utils/geometry/geometry.hpp"
 #include "tf2/LinearMath/Quaternion.h"
 #include "tf2/utils.h"
 #include "tf2_ros/transform_broadcaster.h"
@@ -232,11 +233,6 @@ private:
    * @return normalized yaw
    */
   double normalizeYaw(const double & yaw) const;
-
-  /**
-   * @brief create quaternion from roll, pitch and yaw.
-   */
-  geometry_msgs::msg::Quaternion createQuaternionFromRPY(double r, double p, double y) const;
 
   /**
    * @brief set current EKF estimation result to current_ekf_pose_ & current_ekf_twist_
