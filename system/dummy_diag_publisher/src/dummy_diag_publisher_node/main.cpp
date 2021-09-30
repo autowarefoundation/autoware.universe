@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <memory>
+
 #include "rclcpp/rclcpp.hpp"
 
 #include "dummy_diag_publisher/dummy_diag_publisher_node.hpp"

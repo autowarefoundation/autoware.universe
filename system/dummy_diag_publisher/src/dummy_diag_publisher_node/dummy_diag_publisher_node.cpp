@@ -12,29 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <vector>
+#include <memory>
+#include <string>
+#include <utility>
+
 #include "dummy_diag_publisher/dummy_diag_publisher_node.hpp"
 
 #include "rclcpp/create_timer.hpp"
-
-namespace
-{
-template<typename T>
-void update_param(
-  const std::vector<rclcpp::Parameter> & parameters, const std::string & name, T & value)
-{
-  auto it = std::find_if(
-    parameters.cbegin(), parameters.cend(),
-    [&name](const rclcpp::Parameter & parameter) {return parameter.get_name() == name;});
-  if (it != parameters.cend()) {
-    value = it->template get_value<T>();
-  }
-}
-}  // namespace
+#include "autoware_utils/ros/update_param.hpp"
 
 rcl_interfaces::msg::SetParametersResult DummyDiagPublisherNode::paramCallback(
   const std::vector<rclcpp::Parameter> & parameters)
 {
-
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = true;
   result.reason = "success";
@@ -42,9 +32,9 @@ rcl_interfaces::msg::SetParametersResult DummyDiagPublisherNode::paramCallback(
   DummyDiagPublisherConfig config = config_;
   try {
     int status = static_cast<int>(config.status);
-    update_param(parameters, "status", status);
+    autoware_utils::updateParam(parameters, "status", status);
     config.status = Status(status);
-    update_param(parameters, "is_active", config.is_active);
+    autoware_utils::updateParam(parameters, "is_active", config.is_active);
     config_ = config;
   } catch (const rclcpp::exceptions::InvalidParameterTypeException & e) {
     result.successful = false;

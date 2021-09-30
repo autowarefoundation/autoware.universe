@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DUMMY_DIAG_PUBLISHER_DUMMY_DIAG_PUBLISHER_H_
-#define DUMMY_DIAG_PUBLISHER_DUMMY_DIAG_PUBLISHER_H_
+#ifndef DUMMY_DIAG_PUBLISHER__DUMMY_DIAG_PUBLISHER_NODE_HPP_
+#define DUMMY_DIAG_PUBLISHER__DUMMY_DIAG_PUBLISHER_NODE_HPP_
 
 #include <string>
+#include <vector>
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -62,7 +63,8 @@ private:
     const std::vector<rclcpp::Parameter> & parameters);
 
   // Diagnostic Updater
-  diagnostic_updater::Updater updater_{this, 1000.0 /* sec */};  // Set long period to reduce automatic update
+  // Set long period to reduce automatic update
+  diagnostic_updater::Updater updater_{this, 1000.0 /* sec */};
 
   void produceDiagnostics(diagnostic_updater::DiagnosticStatusWrapper & stat);
 
@@ -71,4 +73,4 @@ private:
   rclcpp::TimerBase::SharedPtr timer_;
 };
 
-#endif
+#endif  // DUMMY_DIAG_PUBLISHER__DUMMY_DIAG_PUBLISHER_NODE_HPP_
