@@ -15,6 +15,7 @@
 #ifndef AUTOWARE_UTILS__TRAJECTORY__TRAJECTORY_HPP_
 #define AUTOWARE_UTILS__TRAJECTORY__TRAJECTORY_HPP_
 
+#include <algorithm>
 #include <limits>
 #include <stdexcept>
 
@@ -81,13 +82,15 @@ boost::optional<size_t> findNearestIndex(
 {
   validateNonEmpty(points);
 
-  double min_dist = std::numeric_limits<double>::max();
+  const double max_squared_dist = max_dist * max_dist;
+
+  double min_squared_dist = std::numeric_limits<double>::max();
   bool is_nearest_found = false;
   size_t min_idx = 0;
 
   for (size_t i = 0; i < points.size(); ++i) {
-    const auto dist = calcDistance2d(points.at(i), pose);
-    if (dist > max_dist) {
+    const auto squared_dist = calcSquaredDistance2d(points.at(i), pose);
+    if (squared_dist > max_squared_dist) {
       continue;
     }
 
@@ -96,11 +99,11 @@ boost::optional<size_t> findNearestIndex(
       continue;
     }
 
-    if (dist >= min_dist) {
+    if (squared_dist >= min_squared_dist) {
       continue;
     }
 
-    min_dist = dist;
+    min_squared_dist = squared_dist;
     min_idx = i;
     is_nearest_found = true;
   }
