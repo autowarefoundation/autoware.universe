@@ -1,20 +1,37 @@
-# see AvoidanceParameters description in avoidance_module.hpp for description.
+# see AvoidanceParameters description in avoidance_module_data.hpp for description.
 /**:
   ros__parameters:
     avoidance:
+      resample_interval_for_planning: 0.3
+      resample_interval_for_output: 4.0
+      detection_area_right_expand_dist: 0.0
+      detection_area_left_expand_dist: 1.0
+
       threshold_distance_object_is_on_center: 0.0 # [m]
       threshold_speed_object_is_stopped: 1.0      # [m/s]
       object_check_forward_distance: 150.0        # [m]
       object_check_backward_distance: 2.0         # [m]
       lateral_collision_margin: 2.0               # [m]
-      longitudinal_collision_margin: 3.0          # [m]
-      time_to_start_avoidance: 1.0                # [s]
-      min_distance_to_start_avoidance: 1.0        # [m]
-      time_avoiding: 7.0                          # [s]
-      min_distance_avoiding: 50.0                 # [m]
 
-      min_distance_avoidance_end_to_object: 5.0   # [m]
-      time_avoidance_end_to_object: 1.0           # [s]
+      prepare_time: 2.0                           # [s]
+      min_prepare_distance: 1.0                   # [m]
+      min_avoidance_distance: 10.0                # [m]
 
-      nominal_lateral_jerk: 0.3   # [m/s3]
-      max_lateral_jerk: 2.0       # [m/s3]
+      min_nominal_avoidance_speed: 7.0  # [m/s]
+      min_sharp_avoidance_speed: 1.0    # [m/s]
+
+      max_right_shift_length: 5.0
+      max_left_shift_length: 5.0
+
+      nominal_lateral_jerk: 0.2   # [m/s3]
+      max_lateral_jerk: 1.0       # [m/s3]
+
+      object_hold_max_count: 20
+
+      # for debug
+      publish_debug_marker: false
+      print_debug_info: false
+
+      # not enabled yet
+      longitudinal_collision_margin_min_distance: 0.0          # [m]
+      longitudinal_collision_margin_time: 0.0

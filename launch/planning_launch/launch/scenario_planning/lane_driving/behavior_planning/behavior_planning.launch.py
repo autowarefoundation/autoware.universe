@@ -159,7 +159,8 @@ def generate_launch_description():
             {
                 'bt_tree_config_path':
                 [FindPackageShare('behavior_path_planner'),
-                 '/config/behavior_path_planner_tree.xml']
+                 '/config/behavior_path_planner_tree.xml'],
+                'planning_hz': 10.0,
             }
         ],
         extra_arguments=[
