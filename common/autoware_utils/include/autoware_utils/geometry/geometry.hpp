@@ -155,12 +155,19 @@ inline geometry_msgs::msg::Vector3 createTranslation(const double x, const doubl
 
 // Revival of tf::createQuaternionFromRPY
 // https://answers.ros.org/question/304397/recommended-way-to-construct-quaternion-from-rollpitchyaw-with-tf2/
-inline tf2::Quaternion createQuaternionFromRPY(
+inline geometry_msgs::msg::Quaternion createQuaternionFromRPY(
   const double roll, const double pitch, const double yaw)
 {
   tf2::Quaternion q;
   q.setRPY(roll, pitch, yaw);
-  return q;
+  return tf2::toMsg(q);
+}
+
+inline geometry_msgs::msg::Quaternion createQuaternionFromYaw(const double yaw)
+{
+  tf2::Quaternion q;
+  q.setRPY(0, 0, yaw);
+  return tf2::toMsg(q);
 }
 
 template<class Point1, class Point2>

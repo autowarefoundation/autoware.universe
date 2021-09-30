@@ -36,7 +36,7 @@ geometry_msgs::msg::Pose createPose(
 {
   geometry_msgs::msg::Pose p;
   p.position = createPoint(x, y, z);
-  tf2::convert(createQuaternionFromRPY(roll, pitch, yaw), p.orientation);
+  p.orientation = createQuaternionFromRPY(roll, pitch, yaw);
   return p;
 }
 

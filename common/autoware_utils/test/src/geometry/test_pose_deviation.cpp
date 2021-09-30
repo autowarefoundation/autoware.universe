@@ -27,13 +27,13 @@ TEST(geometry, pose_deviation)
   pose1.position.x = 1.0;
   pose1.position.y = 2.0;
   pose1.position.z = 3.0;
-  pose1.orientation = tf2::toMsg(createQuaternionFromRPY(0, 0, deg2rad(45)));
+  pose1.orientation = createQuaternionFromRPY(0, 0, deg2rad(45));
 
   geometry_msgs::msg::Pose pose2;
   pose2.position.x = 2.0;
   pose2.position.y = 4.0;
   pose2.position.z = 6.0;
-  pose2.orientation = tf2::toMsg(createQuaternionFromRPY(0, 0, deg2rad(60)));
+  pose2.orientation = createQuaternionFromRPY(0, 0, deg2rad(60));
 
   const auto deviation = calcPoseDeviation(pose1, pose2);
   EXPECT_DOUBLE_EQ(deviation.lateral, 0.70710678118654735);

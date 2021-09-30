@@ -225,27 +225,58 @@ TEST(geometry, createQuaternionFromRPY)
   using autoware_utils::deg2rad;
 
   {
-    const tf2::Quaternion q_out = createQuaternionFromRPY(0, 0, 0);
-    EXPECT_DOUBLE_EQ(q_out.x(), 0.0);
-    EXPECT_DOUBLE_EQ(q_out.y(), 0.0);
-    EXPECT_DOUBLE_EQ(q_out.z(), 0.0);
-    EXPECT_DOUBLE_EQ(q_out.w(), 1.0);
+    const auto q_out = createQuaternionFromRPY(0, 0, 0);
+    EXPECT_DOUBLE_EQ(q_out.x, 0.0);
+    EXPECT_DOUBLE_EQ(q_out.y, 0.0);
+    EXPECT_DOUBLE_EQ(q_out.z, 0.0);
+    EXPECT_DOUBLE_EQ(q_out.w, 1.0);
   }
 
   {
-    const tf2::Quaternion q_out = createQuaternionFromRPY(0, 0, deg2rad(90));
-    EXPECT_DOUBLE_EQ(q_out.x(), 0.0);
-    EXPECT_DOUBLE_EQ(q_out.y(), 0.0);
-    EXPECT_DOUBLE_EQ(q_out.z(), 0.70710678118654757);
-    EXPECT_DOUBLE_EQ(q_out.w(), 0.70710678118654757);
+    const auto q_out = createQuaternionFromRPY(0, 0, deg2rad(90));
+    EXPECT_DOUBLE_EQ(q_out.x, 0.0);
+    EXPECT_DOUBLE_EQ(q_out.y, 0.0);
+    EXPECT_DOUBLE_EQ(q_out.z, 0.70710678118654757);
+    EXPECT_DOUBLE_EQ(q_out.w, 0.70710678118654757);
   }
 
   {
-    const tf2::Quaternion q_out = createQuaternionFromRPY(deg2rad(30), deg2rad(30), deg2rad(30));
-    EXPECT_DOUBLE_EQ(q_out.x(), 0.17677669529663687);
-    EXPECT_DOUBLE_EQ(q_out.y(), 0.30618621784789724);
-    EXPECT_DOUBLE_EQ(q_out.z(), 0.17677669529663692);
-    EXPECT_DOUBLE_EQ(q_out.w(), 0.91855865354369193);
+    const auto q_out = createQuaternionFromRPY(
+      deg2rad(30), deg2rad(30), deg2rad(30));
+    EXPECT_DOUBLE_EQ(q_out.x, 0.17677669529663687);
+    EXPECT_DOUBLE_EQ(q_out.y, 0.30618621784789724);
+    EXPECT_DOUBLE_EQ(q_out.z, 0.17677669529663692);
+    EXPECT_DOUBLE_EQ(q_out.w, 0.91855865354369193);
+  }
+}
+
+TEST(geometry, createQuaternionFromYaw)
+{
+  using autoware_utils::createQuaternionFromYaw;
+  using autoware_utils::deg2rad;
+
+  {
+    const auto q_out = createQuaternionFromYaw(0);
+    EXPECT_DOUBLE_EQ(q_out.x, 0.0);
+    EXPECT_DOUBLE_EQ(q_out.y, 0.0);
+    EXPECT_DOUBLE_EQ(q_out.z, 0.0);
+    EXPECT_DOUBLE_EQ(q_out.w, 1.0);
+  }
+
+  {
+    const auto q_out = createQuaternionFromYaw(deg2rad(90));
+    EXPECT_DOUBLE_EQ(q_out.x, 0.0);
+    EXPECT_DOUBLE_EQ(q_out.y, 0.0);
+    EXPECT_DOUBLE_EQ(q_out.z, 0.70710678118654757);
+    EXPECT_DOUBLE_EQ(q_out.w, 0.70710678118654757);
+  }
+
+  {
+    const auto q_out = createQuaternionFromYaw(deg2rad(30));
+    EXPECT_DOUBLE_EQ(q_out.x, 0.0);
+    EXPECT_DOUBLE_EQ(q_out.y, 0.0);
+    EXPECT_DOUBLE_EQ(q_out.z, 0.25881904510252074);
+    EXPECT_DOUBLE_EQ(q_out.w, 0.96592582628906831);
   }
 }
 
@@ -411,7 +442,7 @@ TEST(geometry, getRPY)
     const double ans_roll = deg2rad(5);
     const double ans_pitch = deg2rad(10);
     const double ans_yaw = deg2rad(15);
-    const auto quat = tf2::toMsg(createQuaternionFromRPY(ans_roll, ans_pitch, ans_yaw));
+    const auto quat = createQuaternionFromRPY(ans_roll, ans_pitch, ans_yaw);
     const auto rpy = getRPY(quat);
     EXPECT_NEAR(rpy.x, ans_roll, epsilon);
     EXPECT_NEAR(rpy.y, ans_pitch, epsilon);
@@ -421,7 +452,7 @@ TEST(geometry, getRPY)
     const double ans_roll = deg2rad(0);
     const double ans_pitch = deg2rad(5);
     const double ans_yaw = deg2rad(-10);
-    const auto quat = tf2::toMsg(createQuaternionFromRPY(ans_roll, ans_pitch, ans_yaw));
+    const auto quat = createQuaternionFromRPY(ans_roll, ans_pitch, ans_yaw);
     const auto rpy = getRPY(quat);
     EXPECT_NEAR(rpy.x, ans_roll, epsilon);
     EXPECT_NEAR(rpy.y, ans_pitch, epsilon);
@@ -431,7 +462,7 @@ TEST(geometry, getRPY)
     const double ans_roll = deg2rad(30);
     const double ans_pitch = deg2rad(-20);
     const double ans_yaw = deg2rad(0);
-    const auto quat = tf2::toMsg(createQuaternionFromRPY(ans_roll, ans_pitch, ans_yaw));
+    const auto quat = createQuaternionFromRPY(ans_roll, ans_pitch, ans_yaw);
     const auto rpy = getRPY(quat);
     EXPECT_NEAR(rpy.x, ans_roll, epsilon);
     EXPECT_NEAR(rpy.y, ans_pitch, epsilon);
@@ -449,7 +480,7 @@ TEST(geometry, getRPY_wrapper)
     const double ans_roll = deg2rad(45);
     const double ans_pitch = deg2rad(25);
     const double ans_yaw = deg2rad(-5);
-    const auto quat = tf2::toMsg(createQuaternionFromRPY(ans_roll, ans_pitch, ans_yaw));
+    const auto quat = createQuaternionFromRPY(ans_roll, ans_pitch, ans_yaw);
 
     // geometry_msgs::Pose
     {
@@ -492,7 +523,7 @@ TEST(geometry, transform2pose)
     transform.translation.x = 1.0;
     transform.translation.y = 2.0;
     transform.translation.z = 3.0;
-    transform.rotation = tf2::toMsg(createQuaternionFromRPY(deg2rad(30), deg2rad(30), deg2rad(30)));
+    transform.rotation = createQuaternionFromRPY(deg2rad(30), deg2rad(30), deg2rad(30));
 
     const geometry_msgs::msg::Pose pose = transform2pose(transform);
 
@@ -513,7 +544,7 @@ TEST(geometry, transform2pose)
     transform_stamped.transform.translation.y = 2.0;
     transform_stamped.transform.translation.z = 3.0;
     transform_stamped.transform.rotation =
-      tf2::toMsg(createQuaternionFromRPY(deg2rad(30), deg2rad(30), deg2rad(30)));
+      createQuaternionFromRPY(deg2rad(30), deg2rad(30), deg2rad(30));
 
     const geometry_msgs::msg::PoseStamped pose_stamped = transform2pose(transform_stamped);
 
@@ -543,7 +574,7 @@ TEST(geometry, pose2transform)
     pose.position.x = 1.0;
     pose.position.y = 2.0;
     pose.position.z = 3.0;
-    pose.orientation = tf2::toMsg(createQuaternionFromRPY(deg2rad(30), deg2rad(30), deg2rad(30)));
+    pose.orientation = createQuaternionFromRPY(deg2rad(30), deg2rad(30), deg2rad(30));
 
     const geometry_msgs::msg::Transform transform = pose2transform(pose);
 
@@ -564,7 +595,7 @@ TEST(geometry, pose2transform)
     pose_stamped.pose.position.y = 2.0;
     pose_stamped.pose.position.z = 3.0;
     pose_stamped.pose.orientation =
-      tf2::toMsg(createQuaternionFromRPY(deg2rad(30), deg2rad(30), deg2rad(30)));
+      createQuaternionFromRPY(deg2rad(30), deg2rad(30), deg2rad(30));
 
     const geometry_msgs::msg::TransformStamped transform_stamped = pose2transform(pose_stamped);
 
@@ -597,7 +628,7 @@ TEST(geometry, transformPoint)
     geometry_msgs::msg::Transform transform;
     transform.translation.x = 1.0;
     transform.translation.y = 2.0;
-    transform.rotation = tf2::toMsg(createQuaternionFromRPY(0, 0, deg2rad(30)));
+    transform.rotation = createQuaternionFromRPY(0, 0, deg2rad(30));
 
     const Point2d p_transformed = transformPoint(p, transform);
 
@@ -612,7 +643,7 @@ TEST(geometry, transformPoint)
     transform.translation.x = 1.0;
     transform.translation.y = 2.0;
     transform.translation.z = 3.0;
-    transform.rotation = tf2::toMsg(createQuaternionFromRPY(deg2rad(30), deg2rad(30), deg2rad(30)));
+    transform.rotation = createQuaternionFromRPY(deg2rad(30), deg2rad(30), deg2rad(30));
 
     const Point3d p_transformed = transformPoint(p, transform);
 
@@ -636,7 +667,7 @@ TEST(geometry, transformVector)
     transform.translation.x = 1.0;
     transform.translation.y = 2.0;
     transform.translation.z = 3.0;
-    transform.rotation = tf2::toMsg(createQuaternionFromRPY(deg2rad(30), deg2rad(30), deg2rad(30)));
+    transform.rotation = createQuaternionFromRPY(deg2rad(30), deg2rad(30), deg2rad(30));
 
     const MultiPoint3d ps_transformed = transformVector(ps, transform);
 
@@ -731,7 +762,7 @@ TEST(geometry, calcOffsetPose)
   {
     geometry_msgs::msg::Pose p_in;
     p_in.position = createPoint(2.0, 3.0, 1.0);
-    p_in.orientation = tf2::toMsg(createQuaternionFromRPY(deg2rad(0), deg2rad(0), deg2rad(90)));
+    p_in.orientation = createQuaternionFromRPY(deg2rad(0), deg2rad(0), deg2rad(90));
 
     const auto p_out = calcOffsetPose(p_in, 2.0, 1.0, 3.0);
 
@@ -747,7 +778,7 @@ TEST(geometry, calcOffsetPose)
   {
     geometry_msgs::msg::Pose p_in;
     p_in.position = createPoint(2.0, 1.0, 1.0);
-    p_in.orientation = tf2::toMsg(createQuaternionFromRPY(deg2rad(0), deg2rad(0), deg2rad(30)));
+    p_in.orientation = createQuaternionFromRPY(deg2rad(0), deg2rad(0), deg2rad(30));
 
     const auto p_out = calcOffsetPose(p_in, 2.0, 0.0, -1.0);
 
