@@ -62,6 +62,9 @@ SideShiftModule::SideShiftModule(
 
   lateral_offset_subscriber_ = node.create_subscription<LateralOffset>(
     "~/input/lateral_offset", 1, std::bind(&SideShiftModule::onLateralOffset, this, _1));
+
+  // If lateral offset is subscribed, it approves side shift module automatically
+  approval_handler_.clearWaitApproval();
 }
 
 void SideShiftModule::initVariables()
@@ -172,18 +175,11 @@ void SideShiftModule::updateData()
 
 BehaviorModuleOutput SideShiftModule::plan()
 {
-  // update shift point if approved
+  // Update shift point
   if (lateral_offset_change_request_) {
-    if (approval_handler_.isApproved()) {
-      RCLCPP_DEBUG(getLogger(), "change requested: APPROVED. new shift point is calculated.");
-      path_shifter_.addShiftPoint(calcShiftPoint());
-      approval_handler_.clearWaitApproval();
-      approval_handler_.clearApproval();  // use this approval.
-      lateral_offset_change_request_ = false;
-    } else {
-      approval_handler_.waitApproval();  // requires external approval when offset is changed
-      RCLCPP_DEBUG(getLogger(), "change requested: NOT approved. waiting approval...");
-    }
+    RCLCPP_DEBUG(getLogger(), "change requested: APPROVED. new shift point is calculated.");
+    path_shifter_.addShiftPoint(calcShiftPoint());
+    lateral_offset_change_request_ = false;
   } else {
     RCLCPP_DEBUG(getLogger(), "%s, %d change is not requested:", __func__, __LINE__);
   }
