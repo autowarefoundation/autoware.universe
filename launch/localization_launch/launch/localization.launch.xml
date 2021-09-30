@@ -28,8 +28,7 @@
       </include>
     </group>
     <!-- localization_error_monitor_module -->
-    <include file="$(find-pkg-share localization_error_monitor)/launch/localization_error_monitor.launch.xml">
-      <arg name="input/pose_with_cov" value="pose_twist_fusion_filter/pose_with_covariance" />
+    <include file="$(find-pkg-share localization_launch)/launch/localization_error_monitor/localization_error_monitor.launch.xml">
     </include>
   </group>
 </launch>
