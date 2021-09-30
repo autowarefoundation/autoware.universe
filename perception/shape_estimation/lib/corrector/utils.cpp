@@ -240,7 +240,7 @@ bool correctVehicleBoundingBox(
     geometry_msgs::msg::Vector3 rpy = autoware_utils::getRPY(pose_output.orientation);
     rpy.z = rpy.z + M_PI_2;
     pose_output.orientation =
-      tf2::toMsg(autoware_utils::createQuaternionFromRPY(rpy.x, rpy.y, rpy.z));
+      autoware_utils::createQuaternionFromRPY(rpy.x, rpy.y, rpy.z);
     double temp = shape_output.dimensions.x;
     shape_output.dimensions.x = shape_output.dimensions.y;
     shape_output.dimensions.y = temp;
