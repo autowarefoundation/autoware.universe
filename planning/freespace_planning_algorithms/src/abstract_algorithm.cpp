@@ -20,7 +20,7 @@
 namespace freespace_planning_algorithms
 {
 using autoware_utils::normalizeRadian;
-using autoware_utils::createQuaternionFromRPY;
+using autoware_utils::createQuaternionFromYaw;
 
 geometry_msgs::msg::Pose transformPose(
   const geometry_msgs::msg::Pose & pose, const geometry_msgs::msg::TransformStamped & transform)
@@ -57,7 +57,7 @@ geometry_msgs::msg::Pose index2pose(
 
   const double one_angle_range = 2.0 * M_PI / theta_size;
   const double yaw = index.theta * one_angle_range;
-  tf2::convert(createQuaternionFromRPY(0, 0, yaw), pose_local.orientation);
+  pose_local.orientation = createQuaternionFromYaw(yaw);
 
   return pose_local;
 }

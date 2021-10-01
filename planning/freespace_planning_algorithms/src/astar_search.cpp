@@ -34,7 +34,7 @@ double calcReedsSheppDistance(
 
 void setYaw(geometry_msgs::msg::Quaternion * orientation, const double yaw)
 {
-  tf2::convert(autoware_utils::createQuaternionFromRPY(0, 0, yaw), *orientation);
+  *orientation = autoware_utils::createQuaternionFromYaw(yaw);
 }
 
 geometry_msgs::msg::Pose calcRelativePose(
@@ -61,9 +61,7 @@ geometry_msgs::msg::Pose node2pose(const AstarNode & node)
   pose_local.position.x = node.x;
   pose_local.position.y = node.y;
   pose_local.position.z = 0;
-
-  const auto quat = autoware_utils::createQuaternionFromRPY(0, 0, node.theta);
-  tf2::convert(quat, pose_local.orientation);
+  pose_local.orientation = autoware_utils::createQuaternionFromYaw(node.theta);
 
   return pose_local;
 }
