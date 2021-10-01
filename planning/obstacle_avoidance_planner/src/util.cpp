@@ -30,7 +30,7 @@
 #include "obstacle_avoidance_planner/eb_path_optimizer.hpp"
 #include "obstacle_avoidance_planner/mpt_optimizer.hpp"
 #include "obstacle_avoidance_planner/util.hpp"
-#include "spline_interpolation/spline_interpolation.hpp"
+#include "interpolation/spline_interpolation.hpp"
 #include "tf2/utils.h"
 
 namespace util
@@ -221,20 +221,10 @@ bool interpolate2DPoints(
   for (double i = 0.0; i < base_s.back() - 1e-6; i += resolution) {
     new_s.push_back(i);
   }
-  spline_interpolation::SplineInterpolator spline;
-  // spline::SplineInterpolate spline;
-  std::vector<double> interpolated_x;
-  std::vector<double> interpolated_y;
 
-  const int num_sample = base_s.size();
-  constexpr int num_sample_threshold = 10;
-  if (num_sample > num_sample_threshold) {
-    spline.interpolate(base_s, base_x, new_s, interpolated_x, spline_interpolation::Method::PCG);
-    spline.interpolate(base_s, base_y, new_s, interpolated_y, spline_interpolation::Method::PCG);
-  } else {
-    spline.interpolate(base_s, base_x, new_s, interpolated_x, spline_interpolation::Method::SOR);
-    spline.interpolate(base_s, base_y, new_s, interpolated_y, spline_interpolation::Method::SOR);
-  }
+  // spline interpolation
+  const std::vector<double> interpolated_x = interpolation::slerp(base_s, base_x, new_s);
+  const std::vector<double> interpolated_y = interpolation::slerp(base_s, base_y, new_s);
 
   for (size_t i = 0; i < interpolated_x.size(); i++) {
     if (std::isnan(interpolated_x[i]) || std::isnan(interpolated_y[i])) {
