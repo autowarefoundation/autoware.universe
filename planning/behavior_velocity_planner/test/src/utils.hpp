@@ -167,6 +167,33 @@ inline void addConstantVelocity(
     p.point.twist.linear.x = velocity;
   }
 }
+inline autoware_perception_msgs::msg::DynamicObject generateDynamicObject(double x)
+{
+  autoware_perception_msgs::msg::DynamicObject obj;
+  obj.shape.dimensions.x = 5.0;
+  obj.shape.dimensions.y = 2.0;
+  tf2::Quaternion q;
+  obj.state.pose_covariance.pose.orientation = tf2::toMsg(q);
+  obj.state.orientation_reliable = true;
+  obj.state.twist_reliable = true;
+  obj.state.twist_covariance.twist.linear.x = 0;
+  obj.state.pose_covariance.pose.position.x = x;
+  obj.state.pose_covariance.pose.position.y = 0;
+  obj.semantic.type = autoware_perception_msgs::msg::Semantic::CAR;
+  return obj;
+}
+inline geometry_msgs::msg::Pose generatePose(double x)
+{
+  geometry_msgs::msg::Pose p;
+  p.position.x = x;
+  p.position.y = 0.0;
+  p.position.z = 1.0;
+  tf2::Quaternion q;
+  q.setRPY(0, 0, 0);
+  p.orientation = tf2::toMsg(q);
+  return p;
+}
+
 }  // namespace test
 
 #endif  // UTILS_HPP_

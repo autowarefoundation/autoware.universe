@@ -23,6 +23,46 @@ namespace behavior_velocity_planner
 {
 namespace planning_utils
 {
+Polygon2d toFootprintPolygon(
+  const autoware_perception_msgs::msg::DynamicObject & object)
+{
+  Polygon2d obj_footprint;
+  if (object.shape.type == autoware_perception_msgs::msg::Shape::POLYGON) {
+    obj_footprint = toBoostPoly(object.shape.footprint);
+  } else {
+    // cylinder type is treated as square-polygon
+    obj_footprint = obj2polygon(object.state.pose_covariance.pose, object.shape.dimensions);
+  }
+  return obj_footprint;
+}
+
+bool isAheadOf(const geometry_msgs::msg::Pose & target, const geometry_msgs::msg::Pose & origin)
+{
+  geometry_msgs::msg::Pose p = planning_utils::transformRelCoordinate2D(target, origin);
+  const bool is_target_ahead = (p.position.x > 0.0);
+  return is_target_ahead;
+}
+
+Polygon2d generatePathPolygon(
+  const autoware_planning_msgs::msg::PathWithLaneId & path, const size_t start_idx,
+  const size_t end_idx, const double width)
+{
+  Polygon2d ego_area;  // open polygon
+  for (size_t i = start_idx; i <= end_idx; ++i) {
+    const double yaw = tf2::getYaw(path.points.at(i).point.pose.orientation);
+    const double x = path.points.at(i).point.pose.position.x + width * std::sin(yaw);
+    const double y = path.points.at(i).point.pose.position.y - width * std::cos(yaw);
+    ego_area.outer().push_back(Point2d(x, y));
+  }
+  for (size_t i = end_idx; i >= start_idx; --i) {
+    const double yaw = tf2::getYaw(path.points.at(i).point.pose.orientation);
+    const double x = path.points.at(i).point.pose.position.x - width * std::sin(yaw);
+    const double y = path.points.at(i).point.pose.position.y + width * std::cos(yaw);
+    ego_area.outer().push_back(Point2d(x, y));
+  }
+  return ego_area;
+}
+
 double normalizeEulerAngle(double euler)
 {
   double res = euler;

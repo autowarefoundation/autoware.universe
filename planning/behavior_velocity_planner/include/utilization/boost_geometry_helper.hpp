@@ -39,6 +39,8 @@
 #include "autoware_planning_msgs/msg/path_point.hpp"
 #include "autoware_planning_msgs/msg/path_point_with_lane_id.hpp"
 #include "autoware_planning_msgs/msg/trajectory_point.hpp"
+#include "lanelet2_core/primitives/Polygon.h"
+
 
 // cppcheck-suppress unknownMacro
 BOOST_GEOMETRY_REGISTER_POINT_3D(geometry_msgs::msg::Point, double, cs::cartesian, x, y, z)

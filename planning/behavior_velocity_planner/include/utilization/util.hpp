@@ -26,6 +26,7 @@
 #include "pcl/point_types.h"
 
 #include "autoware_perception_msgs/msg/dynamic_object_array.hpp"
+#include "autoware_perception_msgs/msg/dynamic_object.hpp"
 #include "autoware_planning_msgs/msg/path.hpp"
 #include "autoware_planning_msgs/msg/path_with_lane_id.hpp"
 #include "autoware_planning_msgs/msg/stop_reason.hpp"
@@ -109,6 +110,11 @@ geometry_msgs::msg::Pose transformRelCoordinate2D(
   const geometry_msgs::msg::Pose & target, const geometry_msgs::msg::Pose & origin);
 geometry_msgs::msg::Pose transformAbsCoordinate2D(
   const geometry_msgs::msg::Pose & relative, const geometry_msgs::msg::Pose & origin);
+Polygon2d toFootprintPolygon(const autoware_perception_msgs::msg::DynamicObject & object);
+bool isAheadOf(const geometry_msgs::msg::Pose & target, const geometry_msgs::msg::Pose & origin);
+Polygon2d generatePathPolygon(
+  const autoware_planning_msgs::msg::PathWithLaneId & path, const size_t start_idx,
+  const size_t end_idx, const double width);
 
 double calcJudgeLineDistWithAccLimit(
   const double velocity, const double max_stop_acceleration, const double delay_response_time);

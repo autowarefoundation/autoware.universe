@@ -269,17 +269,28 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
 
+  # utils for test
+  ament_auto_add_library(utilization SHARED
+    src/utilization/util.cpp
+  )
+  # Gtest for utilization
+  ament_add_gtest(utilization-test
+    test/src/test_state_machine.cpp
+    test/src/test_arc_lane_util.cpp
+    test/src/test_utilization.cpp
+  )
+  target_link_libraries(utilization-test
+    gtest_main
+    utilization
+  )
+
+  # Gtest for occlusion spot
   ament_add_gtest(occlusion_spot-test
-    test/src/utils.hpp
     test/src/test_occlusion_spot_utils.cpp
     test/src/test_risk_predictive_braking.cpp
     test/src/test_geometry.cpp
     test/src/test_grid_utils.cpp
     test/src/test_performances.cpp
-    src/scene_module/occlusion_spot/geometry.cpp
-    src/scene_module/occlusion_spot/grid_utils.cpp
-    src/scene_module/occlusion_spot/occlusion_spot_utils.cpp
-    src/scene_module/occlusion_spot/risk_predictive_braking.cpp
   )
   target_link_libraries(occlusion_spot-test
     gtest_main

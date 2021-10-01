@@ -23,15 +23,6 @@
 
 #include "utilization/util.hpp"
 
-namespace autoware_utils
-{
-template<>
-geometry_msgs::msg::Point getPoint(const autoware_planning_msgs::msg::PathPointWithLaneId & p)
-{
-  return p.point.pose.position;
-}
-}
-
 namespace behavior_velocity_planner
 {
 namespace

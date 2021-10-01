@@ -96,7 +96,7 @@ TEST(calcVelocityAndHeightToPossibleCollision, TooManyPossibleCollisions)
   // 2000 path * 2000 possible collisions
   EXPECT_EQ(possible_collisions.size(), size_t{2000});
   EXPECT_EQ(path.points.size(), size_t{2000});
-  EXPECT_TRUE(duration_cast<microseconds>(end_naive - start_naive).count() < 500);
+  EXPECT_TRUE(duration_cast<microseconds>(end_naive - start_naive).count() < 2000);
   std::cout << " runtime (microsec) " <<
     duration_cast<microseconds>(end_naive - start_naive).count() << std::endl;
 }
