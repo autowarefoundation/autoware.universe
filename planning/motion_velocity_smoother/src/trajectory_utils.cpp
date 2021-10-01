@@ -333,8 +333,8 @@ boost::optional<Trajectory> applyLinearInterpolation(
     point.pose.position.x = px_p->at(i);
     point.pose.position.y = py_p->at(i);
     point.pose.position.z = pz_p->at(i);
-    tf2::convert(
-      autoware_utils::createQuaternionFromRPY(0.0, 0.0, pyaw_p->at(i)), point.pose.orientation);
+    point.pose.orientation = autoware_utils::createQuaternionFromYaw(pyaw_p->at(i));
+
     point.twist.linear.x = tlx_p->at(i);
     point.twist.angular.z = taz_p->at(i);
     point.accel.linear.x = alx_p->at(i);
