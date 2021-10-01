@@ -376,7 +376,7 @@ bool calcStopDistWithJerkConstraints(
   } else {
     const double v_error = target_vel - v0;
     const double v_diff_decel = 0.5 * a0 * calculateTime(a0, 0.0, jerk_acc);
-    if (v_diff_decel < v_error || a0 > 0.0) {
+    if (v_diff_decel > v_error || a0 > 0.0) {
       // Necessary to increase deceleration case
       type = AccelerationType::TRIANGLE;
     } else {
