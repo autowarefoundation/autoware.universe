@@ -109,21 +109,9 @@ bool splineInterpolate(
   }
 
   // do spline for xy
-  spline_interpolation::SplineInterpolator spline;
-  std::vector<double> resampled_x;
-  std::vector<double> resampled_y;
-  std::vector<double> resampled_z;
-  if (
-    !spline.interpolate(
-      base_s, base_x, resampled_s, resampled_x, spline_interpolation::Method::PCG) ||
-    !spline.interpolate(
-      base_s, base_y, resampled_s, resampled_y, spline_interpolation::Method::PCG) ||
-    !spline.interpolate(
-      base_s, base_z, resampled_s, resampled_z, spline_interpolation::Method::PCG))
-  {
-    RCLCPP_ERROR(logger, "spline interpolation failed.");
-    return false;
-  }
+  const std::vector<double> resampled_x = ::interpolation::slerp(base_s, base_x, resampled_s);
+  const std::vector<double> resampled_y = ::interpolation::slerp(base_s, base_y, resampled_s);
+  const std::vector<double> resampled_z = ::interpolation::slerp(base_s, base_z, resampled_s);
 
   // set xy
   output->points.clear();
