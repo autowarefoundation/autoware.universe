@@ -75,6 +75,17 @@ TEST(geometry, getPoint)
   }
 
   {
+    geometry_msgs::msg::PoseWithCovarianceStamped p;
+    p.pose.pose.position.x = x_ans;
+    p.pose.pose.position.y = y_ans;
+    p.pose.pose.position.z = z_ans;
+    const geometry_msgs::msg::Point p_out = getPoint(p);
+    EXPECT_DOUBLE_EQ(p_out.x, x_ans);
+    EXPECT_DOUBLE_EQ(p_out.y, y_ans);
+    EXPECT_DOUBLE_EQ(p_out.z, z_ans);
+  }
+
+  {
     autoware_planning_msgs::msg::PathPoint p;
     p.pose.position.x = x_ans;
     p.pose.position.y = y_ans;

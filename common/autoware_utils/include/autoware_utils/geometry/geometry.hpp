@@ -25,6 +25,7 @@
 #include "autoware_planning_msgs/msg/path.hpp"
 #include "autoware_planning_msgs/msg/trajectory.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
+#include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
 #include "geometry_msgs/msg/quaternion.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
@@ -55,6 +56,12 @@ template<>
 inline geometry_msgs::msg::Point getPoint(const geometry_msgs::msg::PoseStamped & p)
 {
   return p.pose.position;
+}
+
+template<>
+inline geometry_msgs::msg::Point getPoint(const geometry_msgs::msg::PoseWithCovarianceStamped & p)
+{
+  return p.pose.pose.position;
 }
 
 template<>
