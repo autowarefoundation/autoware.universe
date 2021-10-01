@@ -155,7 +155,7 @@ bool TrackerHandler::estimateDynamicObjects(
     estimated_object.state.pose_covariance.pose.position.z = z;
     const float yaw_hat = autoware_utils::normalizeRadian(yaw + wz * dt.seconds());
     estimated_object.state.pose_covariance.pose.orientation =
-      tf2::toMsg(autoware_utils::createQuaternionFromRPY(0, 0, yaw_hat));
+      autoware_utils::createQuaternionFromYaw(yaw_hat);
     output.objects.push_back(estimated_object);
   }
   return true;
