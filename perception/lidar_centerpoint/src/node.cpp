@@ -108,8 +108,7 @@ void LidarCenterPointNode::pointCloudCallback(
 
     geometry_msgs::msg::Pose pose;
     pose.position = autoware_utils::createPoint(x, y, z);
-    pose.orientation = tf2::toMsg(
-      autoware_utils::createQuaternionFromRPY(0.0, 0.0, yaw));
+    pose.orientation = autoware_utils::createQuaternionFromYaw(yaw);
     feature_obj.object.state.pose_covariance.pose = pose;
 
     autoware_perception_msgs::msg::Shape shape;
