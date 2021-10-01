@@ -157,7 +157,7 @@ PathWithLaneId resamplePathWithSpline(const PathWithLaneId & path, double interv
     const auto & p1 = resampled_path.points.at(i + 1).point.pose.position;
     const double yaw = std::atan2(p1.y - p0.y, p1.x - p0.x);
     resampled_path.points.at(i).point.pose.orientation =
-      tf2::toMsg(autoware_utils::createQuaternionFromRPY(0.0, 0.0, yaw));
+      autoware_utils::createQuaternionFromYaw(yaw);
   }
   if (resampled_path.points.size() > 2) {
     resampled_path.points.back().point.pose.orientation =
