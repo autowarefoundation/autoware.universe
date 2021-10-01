@@ -23,6 +23,7 @@
 #include "Eigen/Geometry"
 
 #include "autoware_planning_msgs/msg/path.hpp"
+#include "autoware_planning_msgs/msg/path_point_with_lane_id.hpp"
 #include "autoware_planning_msgs/msg/trajectory.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
@@ -74,6 +75,13 @@ template<>
 inline geometry_msgs::msg::Point getPoint(const autoware_planning_msgs::msg::TrajectoryPoint & p)
 {
   return p.pose.position;
+}
+
+template<>
+inline geometry_msgs::msg::Point getPoint(
+  const autoware_planning_msgs::msg::PathPointWithLaneId & p)
+{
+  return p.point.pose.position;
 }
 
 template<class T>
