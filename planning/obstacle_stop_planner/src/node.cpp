@@ -39,7 +39,6 @@ using autoware_utils::calcAzimuthAngle;
 using autoware_utils::calcDistance2d;
 using autoware_utils::calcSignedArcLength;
 using autoware_utils::createPoint;
-using autoware_utils::createQuaternionFromRPY;
 using autoware_utils::findNearestIndex;
 using autoware_utils::getRPY;
 
