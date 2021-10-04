@@ -23,7 +23,7 @@
 #include "lanelet2_extension/utility/query.hpp"
 #include "lanelet2_extension/utility/utilities.hpp"
 #include "opencv2/opencv.hpp"
-#include "spline_interpolation/spline_interpolation.hpp"
+#include "interpolation/spline_interpolation.hpp"
 #include "tf2/utils.h"
 
 namespace behavior_path_planner
@@ -98,19 +98,9 @@ PathWithLaneId resamplePathWithSpline(const PathWithLaneId & path, double interv
     base_z.push_back(pos.z);
   }
 
-  std::vector<double> resampled_x, resampled_y, resampled_z;
-  {
-    spline_interpolation::SplineInterpolator spline{};
-    const auto interp = [&](const auto & base, auto & resampled) {
-        return spline.interpolate(base_points, base, sampling_points, resampled);
-      };
-    if (
-      !interp(base_x, resampled_x) || !interp(base_y, resampled_y) ||
-      !interp(base_z, resampled_z))
-    {
-      throw std::runtime_error("spline failed in behavior_path_planner avoidance module");
-    }
-  }
+  const auto resampled_x = interpolation::slerp(base_points, base_x, sampling_points);
+  const auto resampled_y = interpolation::slerp(base_points, base_y, sampling_points);
+  const auto resampled_z = interpolation::slerp(base_points, base_z, sampling_points);
 
   PathWithLaneId resampled_path{};
   resampled_path.header = path.header;

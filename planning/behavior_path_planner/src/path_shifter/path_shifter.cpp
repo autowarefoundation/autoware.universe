@@ -18,7 +18,7 @@
 #include "autoware_utils/autoware_utils.hpp"
 #include "behavior_path_planner/utilities.hpp"
 #include "behavior_path_planner/path_utilities.hpp"
-#include "spline_interpolation/spline_interpolation.hpp"
+#include "interpolation/spline_interpolation.hpp"
 
 #include "behavior_path_planner/path_shifter/path_shifter.hpp"
 
@@ -164,8 +164,6 @@ void PathShifter::applySplineShifter(ShiftedPath * shifted_path, const bool offs
 
   constexpr double epsilon = 1.0e-8;  // to avoid 0 division
 
-  spline_interpolation::SplineInterpolator spline;
-
   // For all shift_points,
   for (const auto & shift_point : shift_points_) {
     // calc delta shift at the sp.end_idx so that the sp.end_idx on the path will have
@@ -201,12 +199,7 @@ void PathShifter::applySplineShifter(ShiftedPath * shifted_path, const bool offs
       query_distance.push_back(dist_from_start);
     }
     if (!query_distance.empty()) {
-      if (!spline.interpolate(
-          base_distance, base_length, query_distance, query_length,
-          spline_interpolation::Method::PCG))
-      {
-        RCLCPP_ERROR(logger_, "spline failed!!");
-      }
+      query_length = interpolation::slerp(base_distance, base_length, query_distance);
     }
 
     // Apply shifting.

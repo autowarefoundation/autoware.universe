@@ -27,7 +27,6 @@
 #include "lanelet2_extension/utility/query.hpp"
 #include "lanelet2_extension/utility/utilities.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "spline_interpolation/spline_interpolation.hpp"
 #include "tf2/utils.h"
 
 #include "behavior_path_planner/route_handler.hpp"
