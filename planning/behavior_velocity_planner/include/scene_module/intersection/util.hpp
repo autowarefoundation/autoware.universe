@@ -22,7 +22,6 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include "scene_module/intersection/scene_intersection.hpp"
-#include "interpolation/spline_interpolation.hpp"
 
 #include "geometry_msgs/msg/point.hpp"
 

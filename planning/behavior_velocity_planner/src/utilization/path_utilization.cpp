@@ -21,6 +21,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "tf2/LinearMath/Quaternion.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
+#include "interpolation/spline_interpolation.hpp"
 
 namespace behavior_velocity_planner
 {
@@ -85,15 +86,9 @@ autoware_planning_msgs::msg::Path interpolatePath(
   }
 
   // Interpolate
-  spline_interpolation::SplineInterpolator spline;
-  if (
-    !spline.interpolate(s_in, x, s_out, x_interp) ||
-    !spline.interpolate(s_in, y, s_out, y_interp) ||
-    !spline.interpolate(s_in, z, s_out, z_interp))
-  {
-    RCLCPP_WARN(logger, "Interpolation error!");
-    return path;
-  }
+  x_interp = interpolation::slerp(s_in, x, s_out);
+  y_interp = interpolation::slerp(s_in, y, s_out);
+  z_interp = interpolation::slerp(s_in, z, s_out);
 
   // Insert boundary points
   x_interp.insert(x_interp.begin(), x.front());

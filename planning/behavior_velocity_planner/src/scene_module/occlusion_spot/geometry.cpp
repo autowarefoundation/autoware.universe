@@ -18,7 +18,6 @@
 #include "lanelet2_extension/utility/query.hpp"
 #include "lanelet2_extension/utility/utilities.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "spline_interpolation/spline_interpolation.hpp"
 
 #include "scene_module/occlusion_spot/geometry.hpp"
 

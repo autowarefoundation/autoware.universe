@@ -25,6 +25,7 @@
 #include "lanelet2_extension/utility/query.hpp"
 #include "lanelet2_extension/utility/utilities.hpp"
 
+#include "interpolation/spline_interpolation.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "utilization/interpolate.hpp"
 #include "utilization/util.hpp"
