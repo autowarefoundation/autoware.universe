@@ -21,7 +21,7 @@
 
 #include "motion_velocity_smoother/trajectory_utils.hpp"
 #include "motion_velocity_smoother/linear_interpolation.hpp"
-#include "spline_interpolation/spline_interpolation.hpp"
+#include "interpolation/spline_interpolation.hpp"
 
 namespace motion_velocity_smoother
 {
@@ -302,12 +302,10 @@ boost::optional<Trajectory> applyLinearInterpolation(
 
   boost::optional<std::vector<double>> px_p, py_p, pz_p, pyaw_p;
   if (use_spline_for_pose) {
-    spline_interpolation::SplineInterpolator spline;
-    std::vector<double> _px_p, _py_p, _pz_p, _pyaw_p;
-    if (spline.interpolate(base_index, px, out_index, _px_p)) {px_p = _px_p;}
-    if (spline.interpolate(base_index, py, out_index, _py_p)) {py_p = _py_p;}
-    if (spline.interpolate(base_index, pz, out_index, _pz_p)) {pz_p = _pz_p;}
-    if (spline.interpolate(base_index, pyaw, out_index, _pyaw_p)) {pyaw_p = _pyaw_p;}
+    px_p = interpolation::slerp(base_index, px, out_index);
+    py_p = interpolation::slerp(base_index, py, out_index);
+    pz_p = interpolation::slerp(base_index, pz, out_index);
+    pyaw_p = interpolation::slerp(base_index, pyaw, out_index);
   } else {
     px_p = linear_interpolation::interpolate(base_index, px, out_index);
     py_p = linear_interpolation::interpolate(base_index, py, out_index);
