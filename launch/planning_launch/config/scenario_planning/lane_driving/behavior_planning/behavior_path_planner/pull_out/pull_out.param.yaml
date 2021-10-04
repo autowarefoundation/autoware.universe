@@ -23,4 +23,3 @@
       maximum_lateral_jerk: 2.0
       minimum_lateral_jerk: 0.5
       deceleration_interval: 15.0
-
