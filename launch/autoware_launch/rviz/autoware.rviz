@@ -1128,7 +1128,7 @@ Visualization Manager:
                         slow_down_end_virtual_wall: false
                         slow_down_end_factor_text: false
                         slow_down_end: false
-                        stop_virtual_wall: true 
+                        stop_virtual_wall: true
                         stop_factor_text: true
                         slow_down_virtual_wall: true
                         slow_down_factor_text: true
