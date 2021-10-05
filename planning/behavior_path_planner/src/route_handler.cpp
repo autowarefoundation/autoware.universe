@@ -625,10 +625,10 @@ bool RouteHandler::getPullOverTarget(
 
 bool RouteHandler::getPullOutStart(
   const lanelet::ConstLanelets & lanelets, lanelet::ConstLanelet * target_lanelet,
-  const Pose & pose) const
+  const Pose & pose, const double vehicle_width) const
 {
   for (const auto & shoulder_lanelet : lanelets) {
-    if (lanelet::utils::isInLanelet(pose, shoulder_lanelet, 0.1)) {
+    if (lanelet::utils::isInLanelet(pose, shoulder_lanelet, vehicle_width / 2.0)) {
       *target_lanelet = shoulder_lanelet;
       return true;
     }

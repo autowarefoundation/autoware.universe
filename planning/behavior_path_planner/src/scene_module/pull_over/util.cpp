@@ -274,14 +274,6 @@ std::vector<PullOverPath> getPullOverPaths(
       continue;
     }
 
-    // check candidate path is in lanelet
-    if (!isPathInLanelets(candidate_path.path, original_lanelets, target_lanelets)) {
-      RCLCPP_ERROR_STREAM(
-        rclcpp::get_logger("behavior_path_planner").get_child("pull_over").get_child("util"),
-        "path is not in lanelets");
-      continue;
-    }
-
     // set fixed flag
     for (auto & pt : candidate_path.path.points) {
       pt.point.type = PathPoint::FIXED;

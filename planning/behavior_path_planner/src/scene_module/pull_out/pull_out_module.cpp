@@ -383,7 +383,8 @@ lanelet::ConstLanelets PullOutModule::getPullOutLanes(
     current_lanes, planner_data_->self_pose->pose, &current_lane);
 
   if (route_handler->getPullOutStart(
-      route_handler->getShoulderLanelets(), &shoulder_lane, current_pose))
+      route_handler->getShoulderLanelets(), &shoulder_lane, current_pose,
+      planner_data_->parameters.vehicle_width))
   {
     shoulder_lanes = route_handler->getShoulderLaneletSequence(
       shoulder_lane, current_pose, pull_out_lane_length_, pull_out_lane_length_);
