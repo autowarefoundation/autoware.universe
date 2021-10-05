@@ -69,6 +69,8 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
     "output/gate_mode", durable_qos);
   engage_pub_ = this->create_publisher<autoware_vehicle_msgs::msg::Engage>(
     "output/engage", durable_qos);
+  pub_external_emergency_ = this->create_publisher<autoware_external_api_msgs::msg::Emergency>(
+    "output/external_emergency", durable_qos);
 
   // Subscriber
   emergency_state_sub_ =
@@ -329,11 +331,17 @@ void VehicleCmdGate::onTimer()
   autoware_engage.stamp = this->now();
   autoware_engage.engage = is_engaged_;
 
+  // External emergency
+  autoware_external_api_msgs::msg::Emergency external_emergency;
+  external_emergency.stamp = this->now();
+  external_emergency.emergency = is_external_emergency_stop_;
+
   // Publish topics
   gate_mode_pub_->publish(current_gate_mode_);
   turn_signal_cmd_pub_->publish(turn_signal);
   shift_cmd_pub_->publish(shift);
   engage_pub_->publish(autoware_engage);
+  pub_external_emergency_->publish(external_emergency);
 
   // Publish start request
   start_request_->publishStartAccepted();
@@ -440,6 +448,11 @@ void VehicleCmdGate::publishEmergencyStopControlCommands()
   autoware_engage.stamp = stamp;
   autoware_engage.engage = is_engaged_;
 
+  // External emergency
+  autoware_external_api_msgs::msg::Emergency external_emergency;
+  external_emergency.stamp = stamp;
+  external_emergency.emergency = is_external_emergency_stop_;
+
   // Publish topics
   vehicle_cmd_pub_->publish(vehicle_cmd);
   control_cmd_pub_->publish(control_cmd);
@@ -447,6 +460,7 @@ void VehicleCmdGate::publishEmergencyStopControlCommands()
   turn_signal_cmd_pub_->publish(turn_signal);
   shift_cmd_pub_->publish(shift);
   engage_pub_->publish(autoware_engage);
+  pub_external_emergency_->publish(external_emergency);
 
   // Publish start request
   start_request_->publishStartAccepted();

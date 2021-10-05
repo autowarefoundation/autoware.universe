@@ -28,6 +28,7 @@
     <remap from="output/turn_signal_cmd" to="/control/turn_signal_cmd"/>
     <remap from="output/gate_mode" to="/control/current_gate_mode"/>
     <remap from="output/engage" to="/api/autoware/get/engage"/>
+    <remap from="output/external_emergency" to="/api/autoware/get/emergency"/>
 
     <remap from="~/service/engage" to="/api/autoware/set/engage"/>
     <remap from="~/service/external_emergency" to="/api/autoware/set/emergency"/>

@@ -26,6 +26,7 @@
 #include "autoware_control_msgs/msg/gate_mode.hpp"
 #include "autoware_debug_msgs/msg/bool_stamped.hpp"
 #include "autoware_external_api_msgs/msg/heartbeat.hpp"
+#include "autoware_external_api_msgs/msg/emergency.hpp"
 #include "autoware_external_api_msgs/srv/engage.hpp"
 #include "autoware_external_api_msgs/srv/set_emergency.hpp"
 #include "autoware_vehicle_msgs/msg/engage.hpp"
@@ -130,6 +131,7 @@ private:
   // Service
   rclcpp::Service<autoware_external_api_msgs::srv::Engage>::SharedPtr srv_engage_;
   rclcpp::Service<autoware_external_api_msgs::srv::SetEmergency>::SharedPtr srv_external_emergency_;
+  rclcpp::Publisher<autoware_external_api_msgs::msg::Emergency>::SharedPtr pub_external_emergency_;
   void onEngageService(
     const autoware_external_api_msgs::srv::Engage::Request::SharedPtr request,
     const autoware_external_api_msgs::srv::Engage::Response::SharedPtr response);
