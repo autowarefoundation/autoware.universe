@@ -197,6 +197,7 @@ def launch_setup(context, *args, **kwargs):
             ('output/turn_signal_cmd', '/control/turn_signal_cmd'),
             ('output/gate_mode', '/control/current_gate_mode'),
             ('output/engage', '/api/autoware/get/engage'),
+            ('output/external_emergency', '/api/autoware/get/emergency'),
 
             ('~/service/engage', '/api/autoware/set/engage'),
             ('~/service/external_emergency', '/api/autoware/set/emergency'),
