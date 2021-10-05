@@ -173,15 +173,55 @@ void SideShiftModule::updateData()
   path_shifter_.removeBehindShiftPointAndSetBaseOffset(planner_data_->self_pose->pose.position);
 }
 
+bool SideShiftModule::addShiftPoint()
+{
+  auto shift_points = path_shifter_.getShiftPoints();
+
+  const auto calcLongitudinal = [this](const auto & sp) {
+      return autoware_utils::calcSignedArcLength(
+        reference_path_->points, getEgoPose().pose.position, sp.start.position);
+    };
+
+  // remove shift points on a far position.
+  for (int i = static_cast<int>(shift_points.size()) - 1; i >= 0; --i) {
+    const auto dist_to_start = calcLongitudinal(shift_points.at(i));
+    const double remove_threshold = std::max(
+      planner_data_->self_velocity->twist.linear.x * 1.0 /* sec */, 2.0 /* m */);
+    if (dist_to_start > remove_threshold) {  // TODO(Horibe)
+      shift_points.erase(shift_points.begin() + i);
+    }
+  }
+
+  // check if the new_shift_point has conflicts with existing shift points.
+  const auto new_sp = calcShiftPoint();
+  const auto new_sp_longitudinal = calcLongitudinal(new_sp);
+  for (const auto & sp : shift_points) {
+    if (calcLongitudinal(sp) >= new_sp_longitudinal) {
+      RCLCPP_WARN(
+        getLogger(),
+        "try to add shift point, but shift point already exists behind the proposed point. "
+        "Ignore the current proposal.");
+      return false;
+    }
+  }
+
+  // if no conflict, then add the new point.
+  shift_points.push_back(new_sp);
+
+  // set to path_shifter
+  path_shifter_.setShiftPoints(shift_points);
+  lateral_offset_change_request_ = false;
+
+  return true;
+}
+
 BehaviorModuleOutput SideShiftModule::plan()
 {
   // Update shift point
   if (lateral_offset_change_request_) {
-    RCLCPP_DEBUG(getLogger(), "change requested: APPROVED. new shift point is calculated.");
-    path_shifter_.addShiftPoint(calcShiftPoint());
-    lateral_offset_change_request_ = false;
+    addShiftPoint();
   } else {
-    RCLCPP_DEBUG(getLogger(), "%s, %d change is not requested:", __func__, __LINE__);
+    RCLCPP_DEBUG(getLogger(), "change is not requested");
   }
 
   // Refine path

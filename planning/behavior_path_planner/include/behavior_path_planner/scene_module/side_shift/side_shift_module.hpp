@@ -77,6 +77,8 @@ private:
 
   ShiftPoint calcShiftPoint() const;
 
+  bool addShiftPoint();
+
   // const methods
   void publishPath(const PathWithLaneId & path) const;
 
