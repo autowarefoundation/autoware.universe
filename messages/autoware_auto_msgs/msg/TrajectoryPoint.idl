@@ -1,4 +1,3 @@
-#include "autoware_auto_msgs/msg/Complex32.idl"
 #include "builtin_interfaces/msg/Duration.idl"
 
 module autoware_auto_msgs {
@@ -17,7 +16,7 @@ module autoware_auto_msgs {
       @default (value=0.0)
       float z;
 
-      autoware_auto_msgs::msg::Complex32 heading;
+      geometry_msgs::msg::Quaternion orientation;
 
       @default (value=0.0)
       float longitudinal_velocity_mps;
