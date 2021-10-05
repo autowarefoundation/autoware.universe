@@ -7,7 +7,7 @@
       detection_area_right_expand_dist: 0.0
       detection_area_left_expand_dist: 1.0
 
-      threshold_distance_object_is_on_center: 0.0 # [m]
+      threshold_distance_object_is_on_center: 1.0 # [m]
       threshold_speed_object_is_stopped: 1.0      # [m/s]
       object_check_forward_distance: 150.0        # [m]
       object_check_backward_distance: 2.0         # [m]
