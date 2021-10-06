@@ -25,16 +25,38 @@ namespace rviz_plugins
 AutowareStatePanel::AutowareStatePanel(QWidget * parent)
 : rviz_common::Panel(parent)
 {
+  // Gate Mode
+  auto * gate_prefix_label_ptr = new QLabel("GATE: ");
+  gate_prefix_label_ptr->setAlignment(Qt::AlignCenter);
   gate_mode_label_ptr_ = new QLabel("INIT");
   gate_mode_label_ptr_->setAlignment(Qt::AlignCenter);
+  auto * gate_layout = new QHBoxLayout;
+  gate_layout->addWidget(gate_prefix_label_ptr);
+  gate_layout->addWidget(gate_mode_label_ptr_);
 
+  // State
+  auto * state_prefix_label_ptr = new QLabel("STATE: ");
+  state_prefix_label_ptr->setAlignment(Qt::AlignCenter);
   autoware_state_label_ptr_ = new QLabel("INIT");
   autoware_state_label_ptr_->setAlignment(Qt::AlignCenter);
+  auto * state_layout = new QHBoxLayout;
+  state_layout->addWidget(state_prefix_label_ptr);
+  state_layout->addWidget(autoware_state_label_ptr_);
 
-  auto * layout = new QVBoxLayout;
-  layout->addWidget(gate_mode_label_ptr_);
-  layout->addWidget(autoware_state_label_ptr_);
-  setLayout(layout);
+  // Gear
+  auto * gear_prefix_label_ptr = new QLabel("GEAR: ");
+  gear_prefix_label_ptr->setAlignment(Qt::AlignCenter);
+  gear_label_ptr_ = new QLabel("INIT");
+  gear_label_ptr_->setAlignment(Qt::AlignCenter);
+  auto * gear_layout = new QHBoxLayout;
+  gear_layout->addWidget(gear_prefix_label_ptr);
+  gear_layout->addWidget(gear_label_ptr_);
+
+  auto * v_layout = new QVBoxLayout;
+  v_layout->addLayout(gate_layout);
+  v_layout->addLayout(state_layout);
+  v_layout->addLayout(gear_layout);
+  setLayout(v_layout);
 }
 
 void AutowareStatePanel::onInitialize()
@@ -49,6 +71,10 @@ void AutowareStatePanel::onInitialize()
   sub_autoware_state_ = raw_node->create_subscription<autoware_system_msgs::msg::AutowareState>(
     "/autoware/state", 10,
     std::bind(&AutowareStatePanel::onAutowareState, this, _1));
+
+  sub_gear_ = raw_node->create_subscription<autoware_vehicle_msgs::msg::ShiftStamped>(
+    "/vehicle/status/shift", 10,
+    std::bind(&AutowareStatePanel::onShift, this, _1));
 }
 
 void AutowareStatePanel::onGateMode(
@@ -90,6 +116,31 @@ void AutowareStatePanel::onAutowareState(
   } else {
     autoware_state_label_ptr_->setText(msg->state.c_str());
     autoware_state_label_ptr_->setStyleSheet("background-color: #FFFF00;");
+  }
+}
+
+void AutowareStatePanel::onShift(
+  const autoware_vehicle_msgs::msg::ShiftStamped::ConstSharedPtr msg)
+{
+  switch (msg->shift.data) {
+    case autoware_vehicle_msgs::msg::Shift::NONE:
+      gear_label_ptr_->setText("NONE");
+      break;
+    case autoware_vehicle_msgs::msg::Shift::PARKING:
+      gear_label_ptr_->setText("PARKING");
+      break;
+    case autoware_vehicle_msgs::msg::Shift::REVERSE:
+      gear_label_ptr_->setText("REVERSE");
+      break;
+    case autoware_vehicle_msgs::msg::Shift::NEUTRAL:
+      gear_label_ptr_->setText("NEUTRAL");
+      break;
+    case autoware_vehicle_msgs::msg::Shift::DRIVE:
+      gear_label_ptr_->setText("DRIVE");
+      break;
+    case autoware_vehicle_msgs::msg::Shift::LOW:
+      gear_label_ptr_->setText("LOW");
+      break;
   }
 }
 }  // namespace rviz_plugins

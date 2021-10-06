@@ -25,7 +25,7 @@
 
 #include "autoware_control_msgs/msg/gate_mode.hpp"
 #include "autoware_system_msgs/msg/autoware_state.hpp"
-#include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
+#include "autoware_vehicle_msgs/msg/shift_stamped.hpp"
 
 namespace rviz_plugins
 {
@@ -41,11 +41,14 @@ public:
 protected:
   void onGateMode(const autoware_control_msgs::msg::GateMode::ConstSharedPtr msg);
   void onAutowareState(const autoware_system_msgs::msg::AutowareState::ConstSharedPtr msg);
+  void onShift(const autoware_vehicle_msgs::msg::ShiftStamped::ConstSharedPtr msg);
 
   rclcpp::Subscription<autoware_control_msgs::msg::GateMode>::SharedPtr sub_gate_mode_;
   rclcpp::Subscription<autoware_system_msgs::msg::AutowareState>::SharedPtr sub_autoware_state_;
+  rclcpp::Subscription<autoware_vehicle_msgs::msg::ShiftStamped>::SharedPtr sub_gear_;
   QLabel * gate_mode_label_ptr_;
   QLabel * autoware_state_label_ptr_;
+  QLabel * gear_label_ptr_;
 };
 
 }  // namespace rviz_plugins
