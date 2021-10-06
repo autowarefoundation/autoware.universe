@@ -132,9 +132,10 @@ boost::optional<std::pair<size_t, TrajectoryPoint>> getBackwardInsertPointFromBa
   return {};
 }
 boost::optional<std::pair<size_t, double>> findNearestFrontIndex(
-  const Trajectory & trajectory, const geometry_msgs::msg::Point & point)
+  const size_t start_idx, const Trajectory & trajectory,
+  const geometry_msgs::msg::Point & point)
 {
-  for (size_t i = 0; i < trajectory.points.size(); ++i) {
+  for (size_t i = start_idx; i < trajectory.points.size(); ++i) {
     const auto & p_traj = trajectory.points.at(i).pose;
     const auto yaw = getRPY(p_traj).z;
     const Point2d p_traj_direction(std::cos(yaw), std::sin(yaw));
@@ -342,6 +343,7 @@ void ObstacleStopPlannerNode::pathCallback(const Trajectory::ConstSharedPtr inpu
   // for slow down
   bool found_slow_down_points = false;
   bool slow_down_require = false;
+  size_t decimate_trajectory_slow_down_index = 0;
   pcl::PointXYZ nearest_slow_down_point;
   pcl::PointXYZ lateral_nearest_slow_down_point;
   pcl::PointCloud<pcl::PointXYZ>::Ptr slow_down_pointcloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
@@ -374,6 +376,7 @@ void ObstacleStopPlannerNode::pathCallback(const Trajectory::ConstSharedPtr inpu
 
       if (found_first_slow_down_points) {
         // found nearest slow down obstacle
+        decimate_trajectory_slow_down_index = i;
         slow_down_require = true;
         getNearestPoint(
           *slow_down_pointcloud_ptr, p_front, &nearest_slow_down_point,
@@ -431,8 +434,10 @@ void ObstacleStopPlannerNode::pathCallback(const Trajectory::ConstSharedPtr inpu
 
   if (stop_require) {
     // insert stop point
+    const auto idx =
+      decimate_trajectory_index_map.at(decimate_trajectory_collision_index) + trajectory_trim_index;
     const auto index_with_dist_remain = findNearestFrontIndex(
-      base_trajectory, createPoint(nearest_collision_point.x, nearest_collision_point.y, 0));
+      idx, base_trajectory, createPoint(nearest_collision_point.x, nearest_collision_point.y, 0));
 
     if (index_with_dist_remain) {
       const auto stop_point = searchInsertPoint(
@@ -443,8 +448,9 @@ void ObstacleStopPlannerNode::pathCallback(const Trajectory::ConstSharedPtr inpu
 
   if (slow_down_require) {
     // insert slow down point
+    const auto idx = decimate_trajectory_index_map.at(decimate_trajectory_slow_down_index);
     const auto index_with_dist_remain = findNearestFrontIndex(
-      base_trajectory, createPoint(nearest_slow_down_point.x, nearest_slow_down_point.y, 0));
+      idx, base_trajectory, createPoint(nearest_slow_down_point.x, nearest_slow_down_point.y, 0));
 
     if (index_with_dist_remain) {
       const auto slow_down_section = createSlowDownSection(
@@ -474,7 +480,7 @@ void ObstacleStopPlannerNode::pathCallback(const Trajectory::ConstSharedPtr inpu
     const auto reach_slow_down_start_point = isInFrontOfTargetPoint(self_pose, p_start);
     const auto reach_slow_down_end_point = isInFrontOfTargetPoint(self_pose, p_end);
     const auto is_in_slow_down_section = reach_slow_down_start_point && !reach_slow_down_end_point;
-    const auto index_with_dist_remain = findNearestFrontIndex(base_trajectory, p_end);
+    const auto index_with_dist_remain = findNearestFrontIndex(0, base_trajectory, p_end);
 
     if (is_in_slow_down_section && index_with_dist_remain) {
       const auto end_insert_point_with_idx = getBackwardInsertPointFromBasePoint(
