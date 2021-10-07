@@ -61,39 +61,6 @@ geometry_msgs::msg::Vector3 getRPY(const geometry_msgs::msg::PoseWithCovarianceS
   return getRPY(pose.pose.pose);
 }
 
-// geometry_msgs::msg::Twist calcTwist(const geometry_msgs::msg::PoseStamped &pose_a,
-//                                const geometry_msgs::msg::PoseStamped &pose_b)
-// {
-//   const double dt = (pose_a.header.stamp - pose_b.header.stamp).toSec();
-//
-//   if (dt == 0) {
-//     return geometry_msgs::msg::Twist();
-//   }
-//
-//   const auto pose_a_rpy = getRPY(pose_a);
-//   const auto pose_b_rpy = getRPY(pose_b);
-//
-//   geometry_msgs::msg::Vector3 diff_xyz;
-//   geometry_msgs::msg::Vector3 diff_rpy;
-//
-//   diff_xyz.x = pose_a.pose.position.x - pose_b.pose.position.x;
-//   diff_xyz.y = pose_a.pose.position.y - pose_b.pose.position.y;
-//   diff_xyz.z = pose_a.pose.position.z - pose_b.pose.position.z;
-//   diff_rpy.x = calcDiffForRadian(pose_a_rpy.x, pose_b_rpy.x);
-//   diff_rpy.y = calcDiffForRadian(pose_a_rpy.y, pose_b_rpy.y);
-//   diff_rpy.z = calcDiffForRadian(pose_a_rpy.z, pose_b_rpy.z);
-//
-//   geometry_msgs::msg::Twist twist;
-//   twist.linear.x = diff_xyz.x / dt;
-//   twist.linear.y = diff_xyz.y / dt;
-//   twist.linear.z = diff_xyz.z / dt;
-//   twist.angular.x = diff_rpy.x / dt;
-//   twist.angular.y = diff_rpy.y / dt;
-//   twist.angular.z = diff_rpy.z / dt;
-//
-//   return twist;
-// }
-
 geometry_msgs::msg::Twist calcTwist(
   const geometry_msgs::msg::PoseStamped & pose_a, const geometry_msgs::msg::PoseStamped & pose_b)
 {
