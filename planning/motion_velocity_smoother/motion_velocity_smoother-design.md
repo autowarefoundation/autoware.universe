@@ -77,8 +77,10 @@ It performs the post-process of the planned velocity.
 - Set zero velocity ahead of the stopping point
 - Set maximum velocity given in the config named `max_velocity`
 - Set velocity behind the current pose
-- Resample trajectory
+- Resample trajectory (`post resampling`)
 - Output debug data
+
+After the optimization, a resampling called `post resampling` is performed before passing the optimized trajectory to the next node. Since the required path interval from optimization may be different from the one for the next module, `post resampling` helps to fill this gap. Therefore, in `post resampling`, it is necessary to check the path specification of the following module to determine the parameters. Note that if the computational load of the optimization algorithm is high and the path interval is sparser than the path specification of the following module in the first resampling, `post resampling` would resample the trajectory densely. On the other hand, if the computational load of the optimization algorithm is small and the path interval is denser than the path specification of the following module in the first resampling, the path is sparsely resampled according to the specification of the following module.
 
 ## Inputs / Outputs
 
