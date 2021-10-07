@@ -63,6 +63,8 @@ void popOldPose(
   pose_cov_msg_ptr_array,
   const rclcpp::Time & time_stamp);
 
+Eigen::Affine3d fromRosPoseToEigen(const geometry_msgs::msg::Pose & ros_pose);
+
 geometry_msgs::msg::PoseArray createRandomPoseArray(
   const geometry_msgs::msg::PoseWithCovarianceStamped & base_pose_with_cov,
   const size_t particle_num);

@@ -162,8 +162,6 @@ NDTScanMatcher::NDTScanMatcher()
   diagnostic_thread_.detach();
 }
 
-NDTScanMatcher::~NDTScanMatcher() {}
-
 void NDTScanMatcher::timerDiagnostic()
 {
   rclcpp::Rate rate(100);
@@ -379,8 +377,7 @@ void NDTScanMatcher::callbackSensorPoints(
     return;
   }
   // align
-  Eigen::Affine3d initial_pose_affine;
-  tf2::fromMsg(initial_pose_cov_msg.pose.pose, initial_pose_affine);
+  const Eigen::Affine3d initial_pose_affine = fromRosPoseToEigen(initial_pose_cov_msg.pose.pose);
   const Eigen::Matrix4f initial_pose_matrix = initial_pose_affine.matrix().cast<float>();
 
   auto output_cloud = std::make_shared<pcl::PointCloud<PointSource>>();
@@ -568,8 +565,7 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::alignUsingMonteCar
 
   int i = 0;
   for (const auto & initial_pose : initial_pose_array.poses) {
-    Eigen::Affine3d initial_pose_affine;
-    tf2::fromMsg(initial_pose, initial_pose_affine);
+    const Eigen::Affine3d initial_pose_affine = fromRosPoseToEigen(initial_pose);
     const Eigen::Matrix4f initial_pose_matrix = initial_pose_affine.matrix().cast<float>();
 
     ndt_ptr->align(*output_cloud, initial_pose_matrix);
@@ -667,16 +663,7 @@ void NDTScanMatcher::publishTF(
   transform_stamped.child_frame_id = child_frame_id;
   transform_stamped.header.stamp = pose_msg.header.stamp;
 
-  transform_stamped.transform.translation.x = pose_msg.pose.position.x;
-  transform_stamped.transform.translation.y = pose_msg.pose.position.y;
-  transform_stamped.transform.translation.z = pose_msg.pose.position.z;
-
-  tf2::Quaternion tf_quaternion;
-  tf2::fromMsg(pose_msg.pose.orientation, tf_quaternion);
-  transform_stamped.transform.rotation.x = tf_quaternion.x();
-  transform_stamped.transform.rotation.y = tf_quaternion.y();
-  transform_stamped.transform.rotation.z = tf_quaternion.z();
-  transform_stamped.transform.rotation.w = tf_quaternion.w();
+  transform_stamped.transform = autoware_utils::pose2transform(pose_msg.pose);
 
   tf2_broadcaster_.sendTransform(transform_stamped);
 }
@@ -759,7 +746,7 @@ bool NDTScanMatcher::getTransform(
 }
 
 bool NDTScanMatcher::isLocalOptimalSolutionOscillation(
-  const std::vector<Eigen::Matrix4f> & result_pose_matrix_array)
+  const std::vector<Eigen::Matrix4f> & result_pose_matrix_array) const
 {
   bool prev_oscillation = false;
   int oscillation_cnt = 0;

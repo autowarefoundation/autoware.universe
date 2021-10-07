@@ -80,7 +80,6 @@ class NDTScanMatcher : public rclcpp::Node
 
 public:
   NDTScanMatcher();
-  ~NDTScanMatcher();
 
 private:
   void serviceNDTAlign(
@@ -110,7 +109,7 @@ private:
     const geometry_msgs::msg::TransformStamped::SharedPtr & transform_stamped_ptr);
 
   bool isLocalOptimalSolutionOscillation(
-    const std::vector<Eigen::Matrix4f> & result_pose_matrix_array);
+    const std::vector<Eigen::Matrix4f> & result_pose_matrix_array) const;
 
   void publishMarkerForDebug(const Particle & particle_array, const size_t i);
 
