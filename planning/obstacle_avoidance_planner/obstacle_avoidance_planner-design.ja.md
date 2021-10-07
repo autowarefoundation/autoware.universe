@@ -132,8 +132,7 @@ Elastic band で平滑化された trajectory に対して、以下の条件を�
 
 ![vehicle_error_kinematics](./media/vehicle_error_kinematics.png)
 
-指令ステア角度を$\delta_{des, k}$とすると、ステア角の遅延を考慮した車両キネマティクスモデルは以下で表される。
-この時、ステア角$\delta_k$は一次遅れ系として指令ステア角に追従すると仮定する。
+指令ステア角度を$\delta_{des, k}$とすると、ステア角の遅延を考慮した車両キネマティクスモデルは以下で表される。この時、ステア角$\delta_k$は一次遅れ系として指令ステア角に追従すると仮定する。
 
 $$
 \begin{align}
@@ -143,26 +142,28 @@ y_{k+1} & = y_{k} + v \sin \theta_k dt \\
 \end{align}
 $$
 
-次にこれらの式を線形化する。
-$y_k$, $\theta_k$は追従誤差であるため微小近似でき、$\sin \theta_k \approx \theta_k$となる。
+次にこれらの式を線形化する。$y_k$, $\theta_k$は追従誤差であるため微小近似でき、$\sin \theta_k \approx \theta_k$となる。
 
-$\delta_k$に関してはステア角であるため微小とみなせない。
-そこで、以下のように参照経路の曲率$\kappa_k$から計算されるステア角$\delta_{\mathrm{ref}, k}$を用いることにより、$\delta_k$を微小な値$\Delta \delta_k$で表す。
+$\delta_k$に関してはステア角であるため微小とみなせない。そこで、以下のように参照経路の曲率$\kappa_k$から計算されるステア角$\delta_{\mathrm{ref}, k}$を用いることにより、$\delta_k$を微小な値$\Delta \delta_k$で表す。
+
+ここで注意すべきこととしては、$\delta_k$は最大ステア角度$\delta_{\max}$以内の値を取る。曲率$\kappa_k$から計算された$\delta_{\mathrm{ref}, k}$が最大ステア角度$\delta_{\max}$より大きいときに$\delta_{\mathrm{ref}, k}$をそのまま使用して線形化すると、$\Delta \delta_k = \delta - \delta_{\mathrm{ref}, k} = \delta_{\max} - \delta_{\mathrm{ref}, k}$となり、$\Delta \delta_k$の絶対値が大きくなる。すなわち、$\delta_{\mathrm{ref}, k}$にも最大ステア角度制限を適用する必要がある。
 
 $$
 \begin{align}
-\delta_{\mathrm{ref}, k} & = \arctan(L \kappa_k) \\
-\delta_k & = \delta_{\mathrm{ref}, k} + \Delta \delta_k, \ \Delta \delta_k << 1 \\
+\delta_{\mathrm{ref}, k} & = \mathrm{clamp}(\arctan(L \kappa_k), -\delta_{\max}, \delta_{\max}) \\
+\delta_k & = \delta_{\mathrm{ref}, k} + \Delta \delta_k, \ \Delta \delta_k \ll 1 \\
 \end{align}
 $$
 
-この$\delta_k$を介して$\tan \delta_k$を線形な式で近似する。
+$\mathrm{clamp}(v, v_{\min}, v_{\max})$は$v$を$v_{\min}$から$v_{\max}$の範囲内に丸める関数である。
+
+この$\delta_{\mathrm{ref}, k}$を介して$\tan \delta_k$を線形な式で近似する。
 
 $$
 \begin{align}
-\tan \delta_k & \approx \tan \delta_{\mathrm{ref}, k} + \frac{d \tan \delta}{d \delta}|_{\delta = \delta_{\mathrm{ref}, k}} \Delta \delta_k \\
-& = \tan \delta_{\mathrm{ref}, k} + \frac{d \tan \delta}{d \delta}|_{\delta = \delta_{\mathrm{ref}, k}} (\delta_{\mathrm{ref}, k} - \delta_k) \\
-& = \tan \delta_{\mathrm{ref}, k} - \frac{\delta_{\mathrm{ref}}}{\cos^2 \delta_{\mathrm{ref}, k}} + \frac{1}{\cos^2 \delta_{\mathrm{ref}, k}} \delta_k
+\tan \delta_k & \approx \tan \delta_{\mathrm{ref}, k} + \left.\frac{d \tan \delta}{d \delta}\right|_{\delta = \delta_{\mathrm{ref}, k}} \Delta \delta_k \\
+& = \tan \delta_{\mathrm{ref}, k} + \left.\frac{d \tan \delta}{d \delta}\right|_{\delta = \delta_{\mathrm{ref}, k}} (\delta_{\mathrm{ref}, k} - \delta_k) \\
+& = \tan \delta_{\mathrm{ref}, k} - \frac{\delta_{\mathrm{ref}, k}}{\cos^2 \delta_{\mathrm{ref}, k}} + \frac{1}{\cos^2 \delta_{\mathrm{ref}, k}} \delta_k
 \end{align}
 $$
 
@@ -196,7 +197,7 @@ $$
     +
     \begin{pmatrix}
         0 \\
-        - \frac{v \delta_{\mathrm{ref}, k} dt}{L \cos^{2} \delta_{\mathrm{ref}, k}} \\
+        \frac{v \tan(\delta_{\mathrm{ref}, k}) dt}{L} - \frac{v \delta_{\mathrm{ref}, k} dt}{L \cos^{2} \delta_{\mathrm{ref}, k}} - \kappa_k v dt\\
         0
     \end{pmatrix}
 \end{align}
@@ -215,9 +216,9 @@ $$
 ここでそれぞれに対するスラック変数 $\lambda_{\mathrm{base}}, \lambda_{\mathrm{top}}, \lambda_{\mathrm{mid}}$を定義し、
 
 $$
-y_{\mathrm{base}, k, min} - \lambda_{\mathrm{base}, k} \leq y_{\mathrm{base}, k} (y_k)  \leq y_{\mathrm{base}, k, max} + \lambda_{\mathrm{base}, k}\\
-y_{\mathrm{top}, k, min} - \lambda_{\mathrm{top}, k} \leq y_{\mathrm{top}, k} (y_k) \leq y_{\mathrm{top}, k, max} + \lambda_{\mathrm{top}, k}\\
-y_{\mathrm{mid}, k, min} - \lambda_{\mathrm{mid}, k} \leq y_{\mathrm{mid}, k} (y_k) \leq y_{\mathrm{mid}, k, max} + \lambda_{\mathrm{mid}, k}
+y_{\mathrm{base}, k, \min} - \lambda_{\mathrm{base}, k} \leq y_{\mathrm{base}, k} (y_k)  \leq y_{\mathrm{base}, k, \max} + \lambda_{\mathrm{base}, k}\\
+y_{\mathrm{top}, k, \min} - \lambda_{\mathrm{top}, k} \leq y_{\mathrm{top}, k} (y_k) \leq y_{\mathrm{top}, k, \max} + \lambda_{\mathrm{top}, k}\\
+y_{\mathrm{mid}, k, \min} - \lambda_{\mathrm{mid}, k} \leq y_{\mathrm{mid}, k} (y_k) \leq y_{\mathrm{mid}, k, \max} + \lambda_{\mathrm{mid}, k}
 $$
 
 $y_{\mathrm{base}, k}, y_{\mathrm{top}, k}, y_{\mathrm{mid}, k}$は$y_k$の 1 次式として表現できるので、このソフト制約の目的関数は、以下のように記述できる。
