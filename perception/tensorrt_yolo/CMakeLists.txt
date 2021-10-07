@@ -107,6 +107,17 @@ if(NOT EXISTS "${FILE}")
   )
 endif()
 
+# yolov4-tiny
+set(FILE "${PATH}/yolov4-tiny.onnx")
+message(STATUS "Checking and downloading yolov4.onnx")
+if(NOT EXISTS "${FILE}")
+  message(STATUS "... file does not exist. Downloading now ...")
+  execute_process(
+    COMMAND gdown "https://drive.google.com/uc?id=1rUHjV_JfkmlVFgb20XXrOMWo_HZAjrFh" -O ${PATH}/yolov4-tiny.onnx
+    ERROR_QUIET
+  )
+endif()
+
 # yolov5s
 set(FILE "${PATH}/yolov5s.onnx")
 message(STATUS "Checking and downloading yolov5s.onnx")
@@ -239,6 +250,16 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     config
     data
     launch
+  )
+
+  install(
+    TARGETS
+      mish_plugin
+      yolo_layer_plugin
+      nms_plugin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+    RUNTIME DESTINATION bin
   )
 
 else()
