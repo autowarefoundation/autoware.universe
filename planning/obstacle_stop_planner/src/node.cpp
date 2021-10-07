@@ -437,11 +437,11 @@ void ObstacleStopPlannerNode::pathCallback(const Trajectory::ConstSharedPtr inpu
     const auto idx =
       decimate_trajectory_index_map.at(decimate_trajectory_collision_index) + trajectory_trim_index;
     const auto index_with_dist_remain = findNearestFrontIndex(
-      idx, base_trajectory, createPoint(nearest_collision_point.x, nearest_collision_point.y, 0));
+      idx, output_trajectory, createPoint(nearest_collision_point.x, nearest_collision_point.y, 0));
 
     if (index_with_dist_remain) {
       const auto stop_point = searchInsertPoint(
-        index_with_dist_remain.get().first, base_trajectory, index_with_dist_remain.get().second);
+        index_with_dist_remain.get().first, output_trajectory, index_with_dist_remain.get().second);
       insertStopPoint(stop_point, output_trajectory, stop_reason_diag);
     }
   }
@@ -450,16 +450,16 @@ void ObstacleStopPlannerNode::pathCallback(const Trajectory::ConstSharedPtr inpu
     // insert slow down point
     const auto idx = decimate_trajectory_index_map.at(decimate_trajectory_slow_down_index);
     const auto index_with_dist_remain = findNearestFrontIndex(
-      idx, base_trajectory, createPoint(nearest_slow_down_point.x, nearest_slow_down_point.y, 0));
+      idx, output_trajectory, createPoint(nearest_slow_down_point.x, nearest_slow_down_point.y, 0));
 
     if (index_with_dist_remain) {
       const auto slow_down_section = createSlowDownSection(
-        index_with_dist_remain.get().first, base_trajectory,
+        index_with_dist_remain.get().first, output_trajectory,
         lateral_deviation, index_with_dist_remain.get().second);
 
       const auto dist_baselink_to_obstacle =
         calcSignedArcLength(
-        base_trajectory.points, trajectory_trim_index,
+        output_trajectory.points, trajectory_trim_index,
         index_with_dist_remain.get().first) -
         index_with_dist_remain.get().second;
 
@@ -480,11 +480,12 @@ void ObstacleStopPlannerNode::pathCallback(const Trajectory::ConstSharedPtr inpu
     const auto reach_slow_down_start_point = isInFrontOfTargetPoint(self_pose, p_start);
     const auto reach_slow_down_end_point = isInFrontOfTargetPoint(self_pose, p_end);
     const auto is_in_slow_down_section = reach_slow_down_start_point && !reach_slow_down_end_point;
-    const auto index_with_dist_remain = findNearestFrontIndex(0, base_trajectory, p_end);
+    const auto index_with_dist_remain = findNearestFrontIndex(0, output_trajectory, p_end);
 
     if (is_in_slow_down_section && index_with_dist_remain) {
       const auto end_insert_point_with_idx = getBackwardInsertPointFromBasePoint(
-        index_with_dist_remain.get().first, base_trajectory, -index_with_dist_remain.get().second);
+        index_with_dist_remain.get().first, output_trajectory,
+        -index_with_dist_remain.get().second);
 
       SlowDownSection slow_down_section{};
       slow_down_section.slow_down_start_idx = 0;
