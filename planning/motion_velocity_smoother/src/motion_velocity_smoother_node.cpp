@@ -383,9 +383,12 @@ void MotionVelocitySmootherNode::onExternalVelocityLimit(const VelocityLimit::Co
           max_velocity_with_deceleration_ = external_velocity_limit_;
           external_velocity_limit_dist_ = 0.0;
         } else {
-          const double a_min = smoother_->getMinDecel();
-          const double j_max = smoother_->getMaxJerk();
-          const double j_min = smoother_->getMinJerk();
+          const double a_min =
+            msg->use_constraints ? msg->constraints.min_acceleration : smoother_->getMinDecel();
+          const double j_max =
+            msg->use_constraints ? msg->constraints.max_jerk : smoother_->getMaxJerk();
+          const double j_min =
+            msg->use_constraints ? msg->constraints.min_jerk : smoother_->getMinJerk();
           double stop_dist;
           std::map<double, double> jerk_profile;
           if (trajectory_utils::calcStopDistWithJerkConstraints(
