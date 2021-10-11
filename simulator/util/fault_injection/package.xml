@@ -11,6 +11,7 @@
 
   <depend>autoware_simulation_msgs</depend>
   <depend>autoware_utils</depend>
+  <depend>diagnostic_aggregator</depend>
   <depend>diagnostic_msgs</depend>
   <depend>diagnostic_updater</depend>
   <depend>rclcpp</depend>
