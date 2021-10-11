@@ -3,7 +3,7 @@
 This package is used to convert pseudo system faults from PSim to Diagnostics and notify Autoware.
 The component diagram is as follows:
 
-![img/component.png](img/component.svg)
+![Component diagram of fault_injection package](img/component.drawio.svg)
 
 ## Test
 
