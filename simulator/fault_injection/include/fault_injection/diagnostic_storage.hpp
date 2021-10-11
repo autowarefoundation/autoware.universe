@@ -19,6 +19,7 @@
 #include <unordered_map>
 
 #include "diagnostic_msgs/msg/diagnostic_status.hpp"
+#include "diagnostic_aggregator/status_item.hpp"
 
 
 namespace fault_injection
@@ -40,7 +41,7 @@ public:
     status.name = diag_config.diag_name;
     status.hardware_id = "";
     status.level = DiagnosticStatus::OK;
-    status.message = "";
+    status.message = "OK";
     event_diag_map_[diag_config.sim_name] = status;
   }
 
@@ -51,7 +52,8 @@ public:
 
   void updateLevel(const std::string & event_name, const int8_t level)
   {
-    event_diag_map_.at(event_name).level = static_cast<DiagnosticStatus::_level_type>(level);
+    event_diag_map_.at(event_name).level = diagnostic_aggregator::valToLevel(level);
+    event_diag_map_.at(event_name).message = diagnostic_aggregator::valToMsg(level);
   }
 
   DiagnosticStatus getDiag(const std::string & event_name)
