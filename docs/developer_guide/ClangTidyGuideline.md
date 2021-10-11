@@ -6,6 +6,40 @@ Weekly Clang-Tidy analysis report for `main` branch is [here](https://tier4.gith
 
 This document follows the convention of [RFC2119](https://datatracker.ietf.org/doc/html/rfc2119).
 
+## How to use Clang-Tidy on your local machine
+
+First, install Clang-Tidy.
+
+```shell
+# Ubuntu/Debian
+sudo apt install clang-tidy
+```
+
+Next, build your package with `-DCMAKE_EXPORT_COMPILE_COMMANDS=ON` option.
+
+```shell
+cd ~/autoware.proj
+colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+```
+
+Finally, run `./scripts/clang-tidy-package.sh`.
+
+```shell
+./scripts/clang-tidy-package.sh <path-to-your-package>
+```
+
+For example:
+
+```shell
+./scripts/clang-tidy-package.sh src/autoware/autoware.iv/common/util/autoware_utils/
+```
+
+Or, execute Clang-Tidy directly.
+
+```shell
+clang-tidy -p build/compile_commands.json <your-source-code>
+```
+
 ---
 
 ## Severity Level
