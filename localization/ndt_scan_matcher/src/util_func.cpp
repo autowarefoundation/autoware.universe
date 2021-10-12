@@ -1,4 +1,5 @@
 #include "ndt_scan_matcher/util_func.hpp"
+#include "ndt_scan_matcher/matrix_type.hpp"
 
 static std::random_device seed_gen;
 
@@ -40,6 +41,11 @@ double calcDiffForRadian(const double lhs_rad, const double rhs_rad)
     diff_rad = diff_rad + 2 * M_PI;
   }
   return diff_rad;
+}
+
+Eigen::Map<const RowMatrixXd> makeEigenCovariance(const std::array<double, 36> & covariance)
+{
+  return Eigen::Map<const RowMatrixXd>(covariance.data(), 6, 6);
 }
 
 // x: roll, y: pitch, z: yaw
@@ -197,12 +203,16 @@ geometry_msgs::msg::PoseArray createRandomPoseArray(
   const size_t particle_num)
 {
   std::default_random_engine engine(seed_gen());
-  std::normal_distribution<> x_distribution(0.0, base_pose_with_cov.pose.covariance[0]);
-  std::normal_distribution<> y_distribution(0.0, base_pose_with_cov.pose.covariance[1 * 6 + 1]);
-  std::normal_distribution<> z_distribution(0.0, base_pose_with_cov.pose.covariance[2 * 6 + 2]);
-  std::normal_distribution<> roll_distribution(0.0, base_pose_with_cov.pose.covariance[3 * 6 + 3]);
-  std::normal_distribution<> pitch_distribution(0.0, base_pose_with_cov.pose.covariance[4 * 6 + 4]);
-  std::normal_distribution<> yaw_distribution(0.0, base_pose_with_cov.pose.covariance[5 * 6 + 5]);
+  const Eigen::Map<const RowMatrixXd> covariance = makeEigenCovariance(
+    base_pose_with_cov.pose.covariance
+  );
+
+  std::normal_distribution<> x_distribution(0.0, covariance(0, 0));
+  std::normal_distribution<> y_distribution(0.0, covariance(1, 1));
+  std::normal_distribution<> z_distribution(0.0, covariance(2, 2));
+  std::normal_distribution<> roll_distribution(0.0, covariance(3, 3));
+  std::normal_distribution<> pitch_distribution(0.0, covariance(4, 4));
+  std::normal_distribution<> yaw_distribution(0.0, covariance(5, 5));
 
   const auto base_rpy = getRPY(base_pose_with_cov);
 

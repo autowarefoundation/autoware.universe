@@ -28,6 +28,8 @@
 #include "autoware_utils/geometry/geometry.hpp"
 
 #include "ndt_scan_matcher/util_func.hpp"
+#include "ndt_scan_matcher/matrix_type.hpp"
+
 
 double norm(const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2)
 {
@@ -449,13 +451,15 @@ void NDTScanMatcher::callbackSensorPoints(
   result_pose_with_cov_msg.header.stamp = sensor_ros_time;
   result_pose_with_cov_msg.header.frame_id = map_frame_;
   result_pose_with_cov_msg.pose.pose = result_pose_msg;
+
   //TODO temporary value
-  result_pose_with_cov_msg.pose.covariance[0] = 0.025;
-  result_pose_with_cov_msg.pose.covariance[1 * 6 + 1] = 0.025;
-  result_pose_with_cov_msg.pose.covariance[2 * 6 + 2] = 0.025;
-  result_pose_with_cov_msg.pose.covariance[3 * 6 + 3] = 0.000625;
-  result_pose_with_cov_msg.pose.covariance[4 * 6 + 4] = 0.000625;
-  result_pose_with_cov_msg.pose.covariance[5 * 6 + 5] = 0.000625;
+  Eigen::Map<RowMatrixXd> covariance(&result_pose_with_cov_msg.pose.covariance[0], 6, 6);
+  covariance(0, 0) = 0.025;
+  covariance(1, 1) = 0.025;
+  covariance(2, 2) = 0.025;
+  covariance(3, 3) = 0.000625;
+  covariance(4, 4) = 0.000625;
+  covariance(5, 5) = 0.000625;
 
   if (is_converged) {
     ndt_pose_pub_->publish(result_pose_stamped_msg);
