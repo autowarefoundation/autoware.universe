@@ -2,6 +2,7 @@
 
 <launch>
   <arg name="mode" default="camera_lidar_fusion" description="options: `camera_lidar_fusion`, `lidar` or `camera`"/>
+  <arg name="lidar_detection_model" default="centerpoint" description="options: `centerpoint`, `apollo`"/>
   <!-- "camera_lidar_fusion", "lidar" or "camera" -->
   <arg name="image_raw0" default="/image_raw" description="image raw topic name"/>
   <arg name="camera_info0" default="/camera_info" description="camera info topic name"/>
@@ -43,12 +44,14 @@
       <arg name="camera_info7" value="$(var camera_info7)"/>
       <arg name="image_number" value="$(var image_number)"/>
       <arg name="use_vector_map" value="$(var use_vector_map)"/>
+      <arg name="lidar_detection_model" value="$(var lidar_detection_model)"/>
     </include>
   </group>
   <!-- lidar based detection-->
   <group if="$(eval '&quot;$(var mode)&quot;==&quot;lidar&quot;')">
     <include file="$(find-pkg-share perception_launch)/launch/object_recognition/detection/lidar_based_detection.launch.xml">
       <arg name="use_vector_map" value="$(var use_vector_map)"/>
+      <arg name="lidar_detection_model" value="$(var lidar_detection_model)"/>
     </include>
   </group>
   <!-- camera based detection-->

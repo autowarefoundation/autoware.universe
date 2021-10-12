@@ -18,6 +18,7 @@
   <arg name="camera_info7" default="/camera_info7"/>
   <arg name="image_number" default="1" description="choose image raw number(0-7)"/>
   <arg name="use_vector_map" default="true" description="use vector map in prediction"/>
+  <arg name="lidar_detection_model" default="centerpoint" description="options: `centerpoint`, `apollo`"/>
 
   <!-- Jetson AGX -->
   <!-- <include file="$(find-pkg-share tensorrt_yolo)/launch/yolo.launch.xml">
@@ -80,15 +81,24 @@
     </include>
   </group>
 
-  <group>
+  <group if="$(eval &quot;'$(var lidar_detection_model)'=='centerpoint'&quot;)">
     <push-ros-namespace namespace="centerpoint"/>
     <include file="$(find-pkg-share lidar_centerpoint)/launch/lidar_centerpoint.launch.xml">
       <arg name="output/objects" value="objects" />
     </include>
   </group>
 
+  <group if="$(eval &quot;'$(var lidar_detection_model)'=='apollo'&quot;)">
+    <push-ros-namespace namespace="apollo"/>
+    <include file="$(find-pkg-share lidar_apollo_instance_segmentation)/launch/lidar_apollo_instance_segmentation.launch.xml" />
+    <include file="$(find-pkg-share shape_estimation)/launch/shape_estimation.launch.xml">
+      <arg name="output/objects" value="objects"/>
+      <arg name="use_map_current" value="$(var use_vector_map)"/>
+    </include>
+  </group>
+
   <include file="$(find-pkg-share object_merger)/launch/object_association_merger.launch.xml">
-    <arg name="input/object0" value="centerpoint/objects"/>
+    <arg name="input/object0" value="$(var lidar_detection_model)/objects"/>
     <arg name="input/object1" value="euclidean/camera_lidar_fusion/short_range_objects"/>
     <arg name="output/object" value="objects"/>
   </include>
