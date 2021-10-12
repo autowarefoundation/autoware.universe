@@ -117,13 +117,20 @@ AvoidancePlanningData AvoidanceModule::calcAvoidancePlanningData(DebugData & deb
   const auto reference_pose = getUnshiftedEgoPose(prev_output_);
   data.reference_pose = reference_pose.pose;
 
-  // center line path
+  // center line path (output of this function must have size > 1)
   const auto center_path = calcCenterLinePath(planner_data_, reference_pose);
   debug.center_line = center_path;
+  if (center_path.points.size() < 2) {
+    throw std::runtime_error("calcCenterLinePath() must return path which size > 1");
+  }
 
   // reference path
   data.reference_path =
     util::resamplePathWithSpline(center_path, parameters_.resample_interval_for_planning);
+  if (data.reference_path.points.size() < 2) {
+    // if the resampled path has only 1 point, use original path.
+    data.reference_path = center_path;
+  }
   data.ego_closest_path_index =
     findNearestIndex(data.reference_path.points, data.reference_pose.position);
 
