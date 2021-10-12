@@ -10,19 +10,6 @@
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
-  <exec_depend>gnss_poser</exec_depend>
-  <exec_depend>livox_ros2_driver</exec_depend>
-  <exec_depend>pointcloud_preprocessor</exec_depend>
-  <exec_depend>tamagawa_imu_driver</exec_depend>
-  <exec_depend>topic_tools</exec_depend>
-  <exec_depend>ublox_gps</exec_depend>
-  <exec_depend>usb_cam</exec_depend>
-  <exec_depend>usb_cam</exec_depend>
-  <exec_depend>velodyne_driver</exec_depend>
-  <exec_depend>velodyne_monitor</exec_depend>
-  <exec_depend>velodyne_pointcloud</exec_depend>
-
-
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
 

@@ -5,29 +5,16 @@
   <arg name="vehicle_param_file" description="path to the file of vehicle info yaml"/>
   <arg name="vehicle_mirror_param_file" description="path to the file of vehicle mirror position yaml"/>
 
+  <let name="sensor_launch_pkg" value="$(find-pkg-share $(var sensor_model)_launch)"/>
+
   <group>
     <push-ros-namespace namespace="sensing"/>
 
-    <!-- LiDAR Driver -->
-    <include file="$(find-pkg-share sensing_launch)/launch/$(var sensor_model)/lidar.launch.xml">
+    <!-- Driver -->
+    <include file="$(var sensor_launch_pkg)/launch/sensing.launch.xml">
       <arg name="launch_driver" value="$(var launch_driver)" />
       <arg name="vehicle_param_file" value="$(var vehicle_param_file)" />
       <arg name="vehicle_mirror_param_file" value="$(var vehicle_mirror_param_file)" />
-    </include>
-
-    <!-- Camera Driver -->
-    <include file="$(find-pkg-share sensing_launch)/launch/$(var sensor_model)/camera.launch.xml">
-      <arg name="launch_driver" value="$(var launch_driver)" />
-    </include>
-
-    <!-- IMU Driver -->
-    <include file="$(find-pkg-share sensing_launch)/launch/$(var sensor_model)/imu.launch.xml">
-      <arg name="launch_driver" value="$(var launch_driver)" />
-    </include>
-
-    <!-- GNSS Driver -->
-    <include file="$(find-pkg-share sensing_launch)/launch/$(var sensor_model)/gnss.launch.xml">
-      <arg name="launch_driver" value="$(var launch_driver)" />
     </include>
 
   </group>
