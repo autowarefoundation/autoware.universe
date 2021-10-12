@@ -214,7 +214,10 @@ std::vector<LaneChangePath> getLaneChangePaths(
         point.point.twist.linear.x = std::min(
           point.point.twist.linear.x,
           std::max(lane_change_distance / lane_changing_duration, minimum_lane_change_velocity));
-        point.lane_ids = reference_path2.points.front().lane_ids;
+        const auto nearest_idx = autoware_utils::findNearestIndex(
+          reference_path2.points,
+          point.point.pose);
+        point.lane_ids = reference_path2.points.at(*nearest_idx).lane_ids;
       }
 
       candidate_path.path = combineReferencePath(reference_path1, shifted_path.path);
