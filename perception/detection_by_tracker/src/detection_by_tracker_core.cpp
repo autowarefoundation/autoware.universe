@@ -342,7 +342,7 @@ float DetectionByTracker::optimizeUnderSegmentedObject(
 
   // build output
   highest_iou_object.object.semantic = target_object.semantic;
-  highest_iou_object.object.semantic.confidence = 0.99f;
+  highest_iou_object.object.semantic.confidence = 0.1f;
   output = highest_iou_object;
   return highest_iou;
 }
