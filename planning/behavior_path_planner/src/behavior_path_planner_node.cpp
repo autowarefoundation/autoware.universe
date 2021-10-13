@@ -227,6 +227,9 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
 
   p.object_hold_max_count = dp("object_hold_max_count", 0);
 
+  p.min_avoidance_speed_for_acc_prevention = dp("min_avoidance_speed_for_acc_prevention", 3.0);
+  p.max_avoidance_acceleration = dp("max_avoidance_acceleration", 0.5);
+
   p.publish_debug_marker = dp("publish_debug_marker", false);
   p.print_debug_info = dp("print_debug_info", false);
 

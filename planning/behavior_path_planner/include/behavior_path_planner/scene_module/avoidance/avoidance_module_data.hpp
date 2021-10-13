@@ -112,6 +112,14 @@ struct AvoidanceParameters
   // lost_count and the registered object will be removed when the count exceeds this max count.
   int object_hold_max_count;
 
+  // For velocity planning to avoid acceleration during avoidance.
+  // Speeds smaller than this are not inserted.
+  double min_avoidance_speed_for_acc_prevention;
+
+  // To prevent large acceleration while avoidance. The max velocity is limited with this
+  // acceleration.
+  double max_avoidance_acceleration;
+
   // debug
   bool publish_debug_marker = false;
   bool print_debug_info = false;

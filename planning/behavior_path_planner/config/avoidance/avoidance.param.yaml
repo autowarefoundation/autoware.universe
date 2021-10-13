@@ -28,6 +28,10 @@
 
       object_hold_max_count: 20
 
+      # For prevention of large acceleration while avoidance
+      min_avoidance_speed_for_acc_prevention: 3.0  # [m/s]
+      max_avoidance_acceleration: 0.5  # [m/ss]
+
       # for debug
       publish_debug_marker: false
       print_debug_info: false

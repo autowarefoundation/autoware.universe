@@ -138,6 +138,9 @@ private:
   ShiftedPath generateAvoidancePath(PathShifter & shifter) const;
   void generateExtendedDrivableArea(ShiftedPath * shifted_path, double margin) const;
 
+  // -- velocity planning --
+  void modifyPathVelocityToPreventAccelerationOnAvoidance(ShiftedPath & shifted_path) const;
+
   // clean up shifter
   void postProcess(PathShifter & shifter) const;
 

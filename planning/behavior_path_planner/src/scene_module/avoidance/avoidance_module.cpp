@@ -1576,6 +1576,61 @@ void AvoidanceModule::generateExtendedDrivableArea(ShiftedPath * shifted_path, d
   }
 }
 
+void AvoidanceModule::modifyPathVelocityToPreventAccelerationOnAvoidance(ShiftedPath & path) const
+{
+  const auto ego_idx = avoidance_data_.ego_closest_path_index;
+  const auto N = path.shift_length.size();
+
+  // find first shift-change point from ego
+  constexpr auto SHIFT_DIFF_THR = 0.1;
+  size_t target_idx = N;
+  const auto current_shift = path.shift_length.at(ego_idx);
+  for (size_t i = ego_idx + 1; i < N; ++i) {
+    if (std::abs(path.shift_length.at(i) - current_shift) > SHIFT_DIFF_THR) {
+      // this index do not have to be accurate, so it can be i or i + 1.
+      // but if the ego point is already on the shift-change point, ego index should be a target_idx
+      // so that the distance for acceleration will be 0 and the ego speed is directly applied
+      // to the path velocity (no acceleration while avoidance)
+      target_idx = i - 1;
+      break;
+    }
+  }
+  if (target_idx == N) {
+    DEBUG_PRINT("shift length has no changes. No velocity limit is applied.");
+    return;
+  }
+
+  // calc time to the shift-change point
+  constexpr auto NO_ACCEL_TIME_THR = 3.0;
+  const auto s = avoidance_data_.arclength_from_ego.at(target_idx) -
+    avoidance_data_.arclength_from_ego.at(ego_idx);
+  const auto t = s / std::max(getEgoSpeed(), 1.0);
+  if (t > NO_ACCEL_TIME_THR) {
+    DEBUG_PRINT(
+      "shift point is far (s: %f, t: %f, ego_i: %lu, target_i: %lu). No velocity limit is applied.",
+      s, t, ego_idx, target_idx);
+    return;
+  }
+
+  // calc max velocity with given acceleration
+  const auto v0 = getEgoSpeed();
+  const auto vmax = std::max(
+    parameters_.min_avoidance_speed_for_acc_prevention,
+    std::sqrt(v0 * v0 + 2.0 * s * parameters_.max_avoidance_acceleration));
+
+  // apply velocity limit
+  constexpr size_t VLIM_APPLY_IDX_MARGIN = 0;
+  for (size_t i = ego_idx + VLIM_APPLY_IDX_MARGIN; i < N; ++i) {
+    path.path.points.at(i).point.twist.linear.x =
+      std::min(path.path.points.at(i).point.twist.linear.x, vmax);
+  }
+
+  DEBUG_PRINT(
+    "s: %f, t: %f, v0: %f, a: %f, vmax: %f, ego_i: %lu, target_i: %lu", s, t, v0,
+    parameters_.max_avoidance_acceleration, vmax, ego_idx, target_idx);
+}
+
+
 // TODO(Horibe) clean up functions: there is a similar code in util as well.
 PathWithLaneId AvoidanceModule::calcCenterLinePath(
   const std::shared_ptr<const PlannerData> & planner_data, const PoseStamped & pose) const
@@ -1737,6 +1792,9 @@ BehaviorModuleOutput AvoidanceModule::plan()
   // Drivable area generation.
   constexpr double extend_margin = 0.5;
   generateExtendedDrivableArea(&avoidance_path, extend_margin);
+
+  // modify max speed to prevent acceleration in avoidance maneuver.
+  modifyPathVelocityToPreventAccelerationOnAvoidance(avoidance_path);
 
   // post processing
   {
