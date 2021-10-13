@@ -159,7 +159,7 @@ RoiClusterFusionNodelet::RoiClusterFusionNodelet(const rclcpp::NodeOptions & opt
       std::bind(&RoiClusterFusionNodelet::cameraInfoCallback, this, std::placeholders::_1, id);
     v_camera_info_sub_.push_back(
       this->create_subscription<sensor_msgs::msg::CameraInfo>(
-        "input/camera_info" + std::to_string(id), 1, fcn));
+        "input/camera_info" + std::to_string(id), rclcpp::QoS{1}.best_effort(), fcn));
   }
   v_roi_sub_.resize(rois_number);
   for (int id = 0; id < static_cast<int>(v_roi_sub_.size()); ++id) {
