@@ -21,6 +21,7 @@
   <exec_depend>python3-tornado</exec_depend>
   <exec_depend>rviz2</exec_depend>
   <exec_depend>sensing_launch</exec_depend>
+  <exec_depend>simulator_launch</exec_depend>
   <exec_depend>system_launch</exec_depend>
   <exec_depend>vehicle_launch</exec_depend>
 
