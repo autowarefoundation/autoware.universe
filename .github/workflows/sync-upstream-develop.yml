@@ -1,0 +1,77 @@
+name: sync upstream develop
+
+on:
+  schedule:
+    - cron: "0 19 * * *" # run at 4 AM JST
+  workflow_dispatch:
+
+env:
+  UPSTREAM_REPO: https://github.com/tier4/autoware.proj.git
+  BASE_BRANCH: develop
+  SYNC_TARGET_BRANCH: develop
+  SYNC_BRANCH: sync-upstream-develop
+
+jobs:
+  sync-upstream:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ env.BASE_BRANCH }}
+          fetch-depth: 0
+
+      - name: Generate token
+        uses: tibdex/github-app-token@v1
+        id: generate-token
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Set git config for private repositories
+        run: |
+          git config --local --unset-all http.https://github.com/.extraheader || true
+          git config --global url.https://x-access-token:${{ steps.generate-token.outputs.token }}@github.com.insteadOf 'https://github.com'
+
+      - name: Fetch upstream
+        run: |
+          git remote add upstream "${{ env.UPSTREAM_REPO }}"
+          git fetch -pPtf --all
+
+      # To keep the base branch in "create-pull-request", checkout with "BASE_BRANCH" and reset to "SYNC_TARGET_BRANCH"
+      - name: Reset to sync target branch
+        run: |
+          git reset --hard upstream/${{ env.SYNC_TARGET_BRANCH }}
+
+      - name: Create PR
+        id: create_pr
+        uses: peter-evans/create-pull-request@v3
+        with:
+          token: ${{ steps.generate-token.outputs.token }}
+          commit-message: sync upstream develop
+          committer: GitHub <noreply@github.com>
+          author: GitHub <noreply@github.com>
+          signoff: false
+          base: ${{ env.BASE_BRANCH }}
+          branch: ${{ env.SYNC_BRANCH }}
+          delete-branch: true
+          title: sync upstream develop
+          body: |
+            sync upstream develop
+          labels: |
+            sync-upstream-develop
+          draft: false
+
+      - name: Check outputs
+        run: |
+          echo "Pull Request Number - ${{ steps.create_pr.outputs.pull-request-number }}"
+          echo "Pull Request URL - ${{ steps.create_pr.outputs.pull-request-url }}"
+
+      - name: Enable Auto-merge
+        if: steps.create_pr.outputs.pull-request-operation == 'created'
+        uses: peter-evans/enable-pull-request-automerge@v1
+        with:
+          token: ${{ steps.generate-token.outputs.token }}
+          pull-request-number: ${{ steps.create_pr.outputs.pull-request-number }}
+          merge-method: merge
