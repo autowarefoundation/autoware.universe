@@ -168,11 +168,11 @@ rcl_interfaces::msg::SetParametersResult MotionVelocitySmootherNode::onParameter
 
   {
     auto & p = base_param_;
-    update_param("max_accel", p.max_accel);
-    update_param("min_decel", p.min_decel);
+    update_param("normal.min_acc", p.max_accel);
+    update_param("normal.max_acc", p.min_decel);
     update_param("stop_decel", p.stop_decel);
-    update_param("max_jerk", p.max_jerk);
-    update_param("min_jerk", p.min_jerk);
+    update_param("normal.max_jerk", p.max_jerk);
+    update_param("normal.min_jerk", p.min_jerk);
     update_param("max_lateral_accel", p.max_lateral_accel);
     update_param("min_curve_velocity", p.min_curve_velocity);
     update_param("decel_distance_before_curve", p.decel_distance_before_curve);
@@ -280,11 +280,11 @@ void MotionVelocitySmootherNode::initCommonParam()
 void MotionVelocitySmootherNode::initSmootherBaseParam()
 {
   auto & p = base_param_;
-  p.max_accel = declare_parameter("max_accel", 2.0);   // 0.11G
-  p.min_decel = declare_parameter("min_decel", -3.0);  // -0.2G
+  p.max_accel = declare_parameter("normal.max_acc", 2.0);   // 0.11G
+  p.min_decel = declare_parameter("normal.min_acc", -3.0);  // -0.2G
   p.stop_decel = declare_parameter("stop_decel", 0.0);
-  p.max_jerk = declare_parameter("max_jerk", 0.3);
-  p.min_jerk = declare_parameter("min_jerk", -0.1);
+  p.max_jerk = declare_parameter("normal.max_jerk", 0.3);
+  p.min_jerk = declare_parameter("normal.min_jerk", -0.1);
   p.max_lateral_accel = declare_parameter("max_lateral_accel", 0.2);
   p.decel_distance_before_curve = declare_parameter("decel_distance_before_curve", 3.5);
   p.decel_distance_after_curve = declare_parameter("decel_distance_after_curve", 0.0);
