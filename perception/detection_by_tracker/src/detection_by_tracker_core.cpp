@@ -388,7 +388,7 @@ void DetectionByTracker::mergeOverSegmentedObjects(
     // build output
     autoware_perception_msgs::msg::DynamicObjectWithFeature feature_object;
     feature_object.object.semantic = tracked_object.semantic;
-    feature_object.object.semantic.confidence = 0.99f;
+    feature_object.object.semantic.confidence = 0.1f;
     if (!shape_estimator_->estimateShapeAndPose(
         feature_object.object.semantic.type, pcl_merged_cluster,
         tf2::getYaw(tracked_object.state.pose_covariance.pose.orientation),
