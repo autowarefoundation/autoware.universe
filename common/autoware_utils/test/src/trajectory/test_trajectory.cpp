@@ -375,6 +375,66 @@ TEST(trajectory, calcLongitudinalOffsetToSegment_CurveTrajectory)
     epsilon);
 }
 
+TEST(trajectory, calcLateralOffset)
+{
+  using autoware_utils::calcLateralOffset;
+
+  const auto traj = generateTestTrajectory<Trajectory>(10, 1.0);
+
+  // Empty
+  EXPECT_THROW(
+    calcLateralOffset(
+      Trajectory{}.points, geometry_msgs::msg::Point{}), std::invalid_argument);
+
+  // Trajectory size is 1
+  {
+    const auto one_point_traj = generateTestTrajectory<Trajectory>(1, 1.0);
+    EXPECT_THROW(
+      calcLateralOffset(
+        one_point_traj.points, geometry_msgs::msg::Point{}), std::out_of_range);
+  }
+
+  // Same close points in trajectory
+  {
+    const auto invalid_traj = generateTestTrajectory<Trajectory>(10, 0.0);
+    const auto p = createPoint(3.0, 0.0, 0.0);
+    EXPECT_THROW(calcLateralOffset(invalid_traj.points, p), std::runtime_error);
+  }
+
+  // Point on trajectory
+  EXPECT_NEAR(
+    calcLateralOffset(traj.points, createPoint(3.1, 0.0, 0.0)), 0.0, epsilon);
+
+  // Point before start point
+  EXPECT_NEAR(
+    calcLateralOffset(traj.points, createPoint(-3.9, 3.0, 0.0)), 3.0, epsilon);
+
+  // Point after start point
+  EXPECT_NEAR(
+    calcLateralOffset(traj.points, createPoint(13.3, -10.0, 0.0)), -10.0, epsilon);
+
+  // Random cases
+  EXPECT_NEAR(
+    calcLateralOffset(traj.points, createPoint(4.3, 7.0, 0.0)), 7.0, epsilon);
+  EXPECT_NEAR(
+    calcLateralOffset(traj.points, createPoint(1.0, -3.0, 0.0)), -3.0, epsilon);
+}
+
+TEST(trajectory, calcLateralOffset_CurveTrajectory)
+{
+  using autoware_utils::calcLateralOffset;
+
+  const auto traj = generateTestTrajectory<Trajectory>(10, 1.0, 0.0, 0.0, 0.1);
+
+  // Random cases
+  EXPECT_NEAR(
+    calcLateralOffset(traj.points, createPoint(2.0, 0.5, 0.0)), 0.071386083,
+    epsilon);
+  EXPECT_NEAR(
+    calcLateralOffset(traj.points, createPoint(5.0, 1.0, 0.0)), -1.366602819,
+    epsilon);
+}
+
 TEST(trajectory, calcSignedArcLengthFromIndexToIndex)
 {
   using autoware_utils::calcSignedArcLength;

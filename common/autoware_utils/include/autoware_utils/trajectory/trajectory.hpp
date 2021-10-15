@@ -111,7 +111,7 @@ boost::optional<size_t> findNearestIndex(
 }
 
 /**
-  * @brief calculate length along trajectory from seg_idx point to nearest point to p_target on trajectory
+  * @brief calculate longitudinal offset (length along trajectory from seg_idx point to nearest point to p_target on trajectory)
   *        If seg_idx point is after that nearest point, length is negative
   * @param points points of trajectory, path, ...
   * @param seg_idx segment index of point at beginning of length
@@ -164,6 +164,35 @@ size_t findNearestSegmentIndex(const T & points, const geometry_msgs::msg::Point
   }
 
   return nearest_idx;
+}
+
+/**
+  * @brief calculate lateral offset from p_target (length from p_target to trajectory)
+  *        If seg_idx point is after that nearest point, length is negative
+  * @param points points of trajectory, path, ...
+  * @param p_target target point
+  * @return length (unsigned)
+  */
+template<class T>
+double calcLateralOffset(
+  const T & points, const geometry_msgs::msg::Point & p_target)
+{
+  validateNonEmpty(points);
+
+  const size_t seg_idx = findNearestSegmentIndex(points, p_target);
+
+  const auto p_front = getPoint(points.at(seg_idx));
+  const auto p_back = getPoint(points.at(seg_idx + 1));
+
+  const Eigen::Vector3d segment_vec{p_back.x - p_front.x, p_back.y - p_front.y, 0.0};
+  const Eigen::Vector3d target_vec{p_target.x - p_front.x, p_target.y - p_front.y, 0.0};
+
+  if (segment_vec.norm() == 0.0) {
+    throw std::runtime_error("Same points are given.");
+  }
+
+  const Eigen::Vector3d cross_vec = segment_vec.cross(target_vec);
+  return cross_vec(2) / segment_vec.norm();
 }
 
 /**
