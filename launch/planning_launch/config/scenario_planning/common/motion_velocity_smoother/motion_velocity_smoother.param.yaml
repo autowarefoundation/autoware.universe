@@ -2,10 +2,6 @@
   ros__parameters:
     # motion state constraints
     max_velocity: 20.0      # max velocity limit [m/s]
-    max_accel: 1.0          # max acceleration limit [m/ss]
-    min_decel: -0.5         # min deceleration limit [m/ss]
-    max_jerk: 1.0             # default maximum jerk limit
-    min_jerk: -0.5            # default minimum jerk limit
 
     # external velocity limit parameter
     margin_to_insert_external_velocity_limit: 0.3   #  margin distance to insert external velocity limit [m]
