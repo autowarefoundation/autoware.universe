@@ -67,7 +67,7 @@ class SceneModuleInterface
 {
 public:
   SceneModuleInterface(const std::string & name, rclcpp::Node & node)
-  : name_{name}, logger_{node.get_logger().get_child(name)}, clock_{*node.get_clock()},
+  : name_{name}, logger_{node.get_logger().get_child(name)}, clock_{node.get_clock()},
     approval_handler_(node) {}
 
   virtual ~SceneModuleInterface() = default;
@@ -175,10 +175,10 @@ public:
 private:
   std::string name_;
   rclcpp::Logger logger_;
-  rclcpp::Clock clock_;
 
 protected:
   MarkerArray debug_marker_;
+  rclcpp::Clock::SharedPtr clock_;
 
 public:
   ApprovalHandler approval_handler_;

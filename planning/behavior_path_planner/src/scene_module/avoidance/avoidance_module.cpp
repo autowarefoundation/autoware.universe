@@ -121,7 +121,9 @@ AvoidancePlanningData AvoidanceModule::calcAvoidancePlanningData(DebugData & deb
   const auto center_path = calcCenterLinePath(planner_data_, reference_pose);
   debug.center_line = center_path;
   if (center_path.points.size() < 2) {
-    throw std::runtime_error("calcCenterLinePath() must return path which size > 1");
+    RCLCPP_WARN_THROTTLE(
+      getLogger(), *clock_, 5000, "calcCenterLinePath() must return path which size > 1");
+    return data;
   }
 
   // reference path
