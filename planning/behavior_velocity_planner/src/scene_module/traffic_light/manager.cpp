@@ -85,7 +85,8 @@ void TrafficLightModuleManager::modifyPathVelocity(
 
   stop_reason_array.header.frame_id = "map";
   stop_reason_array.header.stamp = path->header.stamp;
-  first_stop_path_point_index_ = static_cast<int>(path->points.size());
+  first_stop_path_point_index_ = static_cast<int>(path->points.size() - 1);
+  first_ref_stop_path_point_index_ = static_cast<int>(path->points.size() - 1);
   for (const auto & scene_module : scene_modules_) {
     autoware_planning_msgs::msg::StopReason stop_reason;
     std::shared_ptr<TrafficLightModule> traffic_light_scene_module(
@@ -95,6 +96,12 @@ void TrafficLightModuleManager::modifyPathVelocity(
     stop_reason_array.stop_reasons.emplace_back(stop_reason);
     if (traffic_light_scene_module->getFirstStopPathPointIndex() < first_stop_path_point_index_) {
       first_stop_path_point_index_ = traffic_light_scene_module->getFirstStopPathPointIndex();
+    }
+    if (traffic_light_scene_module->getFirstRefStopPathPointIndex() <
+      first_ref_stop_path_point_index_)
+    {
+      first_ref_stop_path_point_index_ =
+        traffic_light_scene_module->getFirstRefStopPathPointIndex();
       if (
         traffic_light_scene_module->getTrafficLightModuleState() !=
         TrafficLightModule::State::GO_OUT)

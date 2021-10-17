@@ -45,6 +45,8 @@ private:
   // Debug
   rclcpp::Publisher<autoware_perception_msgs::msg::LookingTrafficLightState>::SharedPtr
     pub_tl_state_;
+
+  boost::optional<int> first_ref_stop_path_point_index_;
 };
 }  // namespace behavior_velocity_planner
 

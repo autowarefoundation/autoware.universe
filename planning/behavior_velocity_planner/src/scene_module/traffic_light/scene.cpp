@@ -282,6 +282,7 @@ bool TrafficLightModule::modifyPathVelocity(
   debug_data_ = DebugData();
   debug_data_.base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
   first_stop_path_point_index_ = static_cast<int>(path->points.size()) - 1;
+  first_ref_stop_path_point_index_ = static_cast<int>(path->points.size()) - 1;
   *stop_reason =
     planning_utils::initializeStopReason(autoware_planning_msgs::msg::StopReason::TRAFFIC_LIGHT);
 
@@ -320,6 +321,8 @@ bool TrafficLightModule::modifyPathVelocity(
       state_ = State::GO_OUT;
       return true;
     }
+
+    first_ref_stop_path_point_index_ = stop_line_point_idx;
 
     // Check if stop is coming.
     if (!isStopSignal(traffic_lights)) {

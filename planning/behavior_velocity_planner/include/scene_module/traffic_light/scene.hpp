@@ -81,7 +81,13 @@ public:
   {
     return looking_tl_state_;
   }
+
   inline State getTrafficLightModuleState() const {return state_;}
+
+  inline boost::optional<int> getFirstRefStopPathPointIndex() const
+  {
+    return first_ref_stop_path_point_index_;
+  }
 
 private:
   bool isStopSignal(const lanelet::ConstLineStringsOrPolygons3d & traffic_lights);
@@ -131,6 +137,8 @@ private:
 
   // prevent paththrough chattering
   bool is_prev_state_stop_;
+
+  boost::optional<int> first_ref_stop_path_point_index_;
 
   // Traffic Light State
   autoware_perception_msgs::msg::LookingTrafficLightState looking_tl_state_;
