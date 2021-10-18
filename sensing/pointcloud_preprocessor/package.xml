@@ -19,6 +19,7 @@
 
   <depend>autoware_debug_msgs</depend>
   <depend>autoware_utils</depend>
+  <depend>diagnostic_updater</depend>
   <depend>grid_map_pcl</depend>
   <depend>grid_map_ros</depend>
   <depend>lanelet2_extension</depend>
