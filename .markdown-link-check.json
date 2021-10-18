@@ -1,0 +1,10 @@
+{
+  "aliveStatusCodes": [200, 206, 403],
+  "ignorePatterns": [
+    {
+      "pattern": "^https://github.com/tier4"
+    }
+  ],
+  "retryOn429": true,
+  "retryCount": 10
+}
