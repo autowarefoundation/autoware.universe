@@ -56,18 +56,20 @@ NDTScanMatcher::NDTScanMatcher()
 
   int ndt_implement_type_tmp = this->declare_parameter("ndt_implement_type", 0);
   ndt_implement_type_ = static_cast<NDTImplementType>(ndt_implement_type_tmp);
-  if (ndt_implement_type_ == NDTImplementType::PCL_GENERIC) {
-    RCLCPP_INFO(get_logger(), "NDT Implement Type is PCL GENERIC");
-    ndt_ptr_.reset(new NormalDistributionsTransformPCLGeneric<PointSource, PointTarget>);
-  } else if (ndt_implement_type_ == NDTImplementType::PCL_MODIFIED) {
-    RCLCPP_INFO(get_logger(), "NDT Implement Type is PCL MODIFIED");
-    ndt_ptr_.reset(new NormalDistributionsTransformPCLModified<PointSource, PointTarget>);
-  } else if (ndt_implement_type_ == NDTImplementType::OMP) {
-    RCLCPP_INFO(get_logger(), "NDT Implement Type is OMP");
 
-    std::shared_ptr<NormalDistributionsTransformOMP<PointSource, PointTarget>> ndt_omp_ptr(
-      new NormalDistributionsTransformOMP<PointSource, PointTarget>);
+  RCLCPP_INFO(get_logger(), "NDT Implement Type is %d", ndt_implement_type_tmp);
+  try {
+    ndt_ptr_ = getNDT<PointSource, PointTarget>(ndt_implement_type_);
+  } catch (std::exception & e) {
+    RCLCPP_ERROR(get_logger(), "%s", e.what());
+    return;
+  }
 
+  if (ndt_implement_type_ == NDTImplementType::OMP) {
+    using T = NormalDistributionsTransformOMP<PointSource, PointTarget>;
+
+    // FIXME(IshitaTakeshi) Not sure if this is safe
+    std::shared_ptr<T> ndt_omp_ptr = std::dynamic_pointer_cast<T>(ndt_ptr_);
     int search_method = static_cast<int>(omp_params_.search_method);
     search_method = this->declare_parameter("omp_neighborhood_search_method", search_method);
     omp_params_.search_method = static_cast<pclomp::NeighborSearchMethod>(search_method);
@@ -77,12 +79,6 @@ NDTScanMatcher::NDTScanMatcher()
     omp_params_.num_threads = this->declare_parameter("omp_num_threads", omp_params_.num_threads);
     omp_params_.num_threads = std::max(omp_params_.num_threads, 1);
     ndt_omp_ptr->setNumThreads(omp_params_.num_threads);
-
-    ndt_ptr_ = ndt_omp_ptr;
-  } else {
-    ndt_implement_type_ = NDTImplementType::PCL_GENERIC;
-    RCLCPP_INFO(get_logger(), "NDT Implement Type is PCL GENERIC");
-    ndt_ptr_.reset(new NormalDistributionsTransformPCLGeneric<PointSource, PointTarget>);
   }
 
   int points_queue_size = this->declare_parameter("input_sensor_points_queue_size", 0);
@@ -293,22 +289,16 @@ void NDTScanMatcher::callbackMapPoints(
   const auto resolution = ndt_ptr_->getResolution();
   const auto max_iterations = ndt_ptr_->getMaximumIterations();
 
-  std::shared_ptr<NormalDistributionsTransformBase<PointSource, PointTarget>> new_ndt_ptr_;
+  using NDTBase = NormalDistributionsTransformBase<PointSource, PointTarget>;
+  std::shared_ptr<NDTBase> new_ndt_ptr_ = getNDT<PointSource, PointTarget>(ndt_implement_type_);
 
-  if (ndt_implement_type_ == NDTImplementType::PCL_GENERIC) {
-    new_ndt_ptr_.reset(new NormalDistributionsTransformPCLGeneric<PointSource, PointTarget>);
-  } else if (ndt_implement_type_ == NDTImplementType::PCL_MODIFIED) {
-    new_ndt_ptr_.reset(new NormalDistributionsTransformPCLModified<PointSource, PointTarget>);
-  } else if (ndt_implement_type_ == NDTImplementType::OMP) {
-    std::shared_ptr<NormalDistributionsTransformOMP<PointSource, PointTarget>> ndt_omp_ptr(
-      new NormalDistributionsTransformOMP<PointSource, PointTarget>);
+  if (ndt_implement_type_ == NDTImplementType::OMP) {
+    using T = NormalDistributionsTransformOMP<PointSource, PointTarget>;
 
+    // FIXME(IshitaTakeshi) Not sure if this is safe
+    std::shared_ptr<T> ndt_omp_ptr = std::dynamic_pointer_cast<T>(ndt_ptr_);
     ndt_omp_ptr->setNeighborhoodSearchMethod(omp_params_.search_method);
     ndt_omp_ptr->setNumThreads(omp_params_.num_threads);
-
-    new_ndt_ptr_ = ndt_omp_ptr;
-  } else {
-    new_ndt_ptr_.reset(new NormalDistributionsTransformPCLGeneric<PointSource, PointTarget>);
   }
 
   new_ndt_ptr_->setTransformationEpsilon(trans_epsilon);

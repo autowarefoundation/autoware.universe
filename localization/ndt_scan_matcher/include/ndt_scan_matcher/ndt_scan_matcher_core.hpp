@@ -22,6 +22,8 @@
 #include <string>
 #include <thread>
 
+#define FMT_HEADER_ONLY
+#include "fmt/format.h"
 #include "rclcpp/rclcpp.hpp"
 
 #include "tf2/transform_datatypes.h"
@@ -46,6 +48,30 @@
 #include "ndt/omp.hpp"
 #include "ndt/pcl_generic.hpp"
 #include "ndt/pcl_modified.hpp"
+
+enum class NDTImplementType { PCL_GENERIC = 0, PCL_MODIFIED = 1, OMP = 2 };
+
+template<typename PointSource, typename PointTarget>
+std::shared_ptr<NormalDistributionsTransformBase<PointSource, PointTarget>> getNDT(
+  const NDTImplementType & ndt_mode)
+{
+  std::shared_ptr<NormalDistributionsTransformBase<PointSource, PointTarget>> ndt_ptr;
+  if (ndt_mode == NDTImplementType::PCL_GENERIC) {
+    ndt_ptr.reset(new NormalDistributionsTransformPCLGeneric<PointSource, PointTarget>);
+    return ndt_ptr;
+  }
+  if (ndt_mode == NDTImplementType::PCL_MODIFIED) {
+    ndt_ptr.reset(new NormalDistributionsTransformPCLModified<PointSource, PointTarget>);
+    return ndt_ptr;
+  }
+  if (ndt_mode == NDTImplementType::OMP) {
+    ndt_ptr.reset(new NormalDistributionsTransformOMP<PointSource, PointTarget>);
+    return ndt_ptr;
+  }
+
+  const std::string s = fmt::format("Unknown NDT type {}", static_cast<int>(ndt_mode));
+  throw std::runtime_error(s);
+}
 
 class NDTScanMatcher : public rclcpp::Node
 {
@@ -75,8 +101,6 @@ class NDTScanMatcher : public rclcpp::Node
     double score;
     int iteration;
   };
-
-  enum class NDTImplementType { PCL_GENERIC = 0, PCL_MODIFIED = 1, OMP = 2 };
 
 public:
   NDTScanMatcher();
