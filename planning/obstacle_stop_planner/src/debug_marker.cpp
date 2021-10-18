@@ -40,6 +40,7 @@ ObstacleStopPlannerDebugNode::ObstacleStopPlannerDebugNode(
     "~/debug/marker", 1);
   stop_reason_pub_ = node_->create_publisher<autoware_planning_msgs::msg::StopReasonArray>(
     "~/output/stop_reasons", 1);
+  pub_debug_values_ = node_->create_publisher<Float32MultiArrayStamped>("~/debug/debug_values", 1);
 }
 
 bool ObstacleStopPlannerDebugNode::pushPolygon(
@@ -128,6 +129,14 @@ void ObstacleStopPlannerDebugNode::publish()
   /* publish stop reason for autoware api */
   const auto stop_reason_msg = makeStopReasonArray();
   stop_reason_pub_->publish(stop_reason_msg);
+
+  // publish debug values
+  autoware_debug_msgs::msg::Float32MultiArrayStamped debug_msg{};
+  debug_msg.stamp = node_->now();
+  for (const auto & v : debug_values_.getValues()) {
+    debug_msg.data.push_back(v);
+  }
+  pub_debug_values_->publish(debug_msg);
 
   /* reset variables */
   vehicle_polygons_.clear();

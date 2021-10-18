@@ -4,6 +4,8 @@
   <arg name="input_trajectory" default="input/trajectory" />
   <arg name="input_twist" default="/localization/twist" />
   <arg name="output_trajectory" default="output/trajectory" />
+  <arg name="output_velocity_limit" default="/planning/scenario_planning/max_velocity_candidates" />
+  <arg name="output_velocity_limit_clear_command" default="/planning/scenario_planning/clear_velocity_limit" />
   <arg name="enable_slow_down" default="false" />
   <arg name="param_file" default="$(find-pkg-share obstacle_stop_planner)/config/obstacle_stop_planner.param.yaml" />
   <arg name="acc_param_file" default="$(find-pkg-share obstacle_stop_planner)/config/adaptive_cruise_control.param.yaml" />
@@ -14,6 +16,8 @@
     <remap from="~/output/stop_reason" to="/planning/scenario_planning/status/stop_reason" />
     <remap from="~/output/stop_reasons" to="/planning/scenario_planning/status/stop_reasons" />
     <remap from="~/output/trajectory" to="$(var output_trajectory)" />
+    <remap from="~/output/max_velocity" to="$(var output_velocity_limit)" />
+    <remap from="~/output/velocity_limit_clear_command" to="$(var output_velocity_limit_clear_command)" />
     <remap from="~/input/objects" to="$(var input_objects)" />
     <remap from="~/input/pointcloud" to="$(var input_pointcloud)" />
     <remap from="~/input/trajectory" to="$(var input_trajectory)" />
