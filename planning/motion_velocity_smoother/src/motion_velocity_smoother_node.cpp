@@ -168,8 +168,8 @@ rcl_interfaces::msg::SetParametersResult MotionVelocitySmootherNode::onParameter
 
   {
     auto & p = base_param_;
-    update_param("normal.min_acc", p.max_accel);
-    update_param("normal.max_acc", p.min_decel);
+    update_param("normal.max_acc", p.max_accel);
+    update_param("normal.min_acc", p.min_decel);
     update_param("stop_decel", p.stop_decel);
     update_param("normal.max_jerk", p.max_jerk);
     update_param("normal.min_jerk", p.min_jerk);
