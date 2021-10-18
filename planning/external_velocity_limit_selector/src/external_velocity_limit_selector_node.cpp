@@ -28,24 +28,32 @@ VelocityLimit getHardestLimit(
   const ExternalVelocityLimitSelectorNode::NodeParam & node_param)
 {
   VelocityLimit hardest_limit{};
-  double hardest_max_velocity = node_param.max_velocity;
-  double hardest_max_jerk = 0.0;
+  hardest_limit.max_velocity = node_param.max_velocity;
 
   VelocityLimitConstraints normal_constraints{};
   normal_constraints.min_acceleration = node_param.normal_min_acc;
   normal_constraints.min_jerk = node_param.normal_min_jerk;
   normal_constraints.max_jerk = node_param.normal_max_jerk;
 
+  double hardest_max_velocity = node_param.max_velocity;
+  double hardest_max_jerk = 0.0;
+
   for (const auto & limit : velocity_limits) {
+    // guard nan, inf
+    const auto max_velocity =
+      std::isfinite(limit.second.max_velocity) ?
+      limit.second.max_velocity : node_param.max_velocity;
+
     // find hardest max velocity
-    if (limit.second.max_velocity < hardest_max_velocity) {
+    if (max_velocity < hardest_max_velocity) {
       hardest_limit.stamp = limit.second.stamp;
-      hardest_limit.max_velocity = limit.second.max_velocity;
-      hardest_max_velocity = limit.second.max_velocity;
+      hardest_limit.max_velocity = max_velocity;
+      hardest_max_velocity = max_velocity;
     }
 
     const auto constraints =
-      limit.second.use_constraints ? limit.second.constraints : normal_constraints;
+      limit.second.use_constraints && std::isfinite(limit.second.constraints.max_jerk) ?
+      limit.second.constraints : normal_constraints;
 
     // find hardest jerk
     if (hardest_max_jerk < constraints.max_jerk) {
