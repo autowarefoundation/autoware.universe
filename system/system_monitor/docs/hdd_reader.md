@@ -36,10 +36,10 @@ This is an approach to limit its functionality, however, the functionality can b
 
 For details please see the documents below.<br>
 
-- [ATA Command Set - 4 (ACS-4)](http://www.t13.org/Documents/UploadedDocuments/docs2016/di529r14-ATAATAPI_Command_Set_-_4.pdf)
-- [ATA/ATAPI Command Set - 3 (ACS-3)](http://www.t13.org/Documents/UploadedDocuments/docs2013/d2161r5-ATAATAPI_Command_Set_-_3.pdf)
-- [SMART Attribute Overview](http://www.t13.org/Documents/UploadedDocuments/docs2005/e05171r0-ACS-SMARTAttributes_Overview.pdf)
-- [SMART Attribute Annex](http://www.t13.org/documents/uploadeddocuments/docs2005/e05148r0-acs-smartattributesannex.pdf)
+- [ATA Command Set - 4 (ACS-4)](https://www.t13.org/system/files/Project%20Drafts/2017/di529r20-ATA/ATAPI%20Command%20Set%20-%204_2.pdf)
+- [ATA/ATAPI Command Set - 3 (ACS-3)](https://www.t13.org/system/files/Standards/2013/d2161r5-ATA/ATAPI%20Command%20Set%20-%203.pdf)
+- [SMART Attribute Overview](https://www.t13.org/system/files/Documents/2005/e05171r0-SMART%20Attributes%20Overview_1.pdf)
+- [SMART Attribute Annex](https://www.t13.org/system/files/Documents/2005/e05148r0-ACS-SMART%20Attributes%20Annex_1.pdf)
 
 ### [NVMe]
 
