@@ -54,20 +54,21 @@ TEST(PlanningErrorMonitor, TrajectoryIntervalChecker)
 {
   using autoware_planning_msgs::msg::Trajectory;
   using planning_diagnostics::PlanningErrorMonitorNode;
+  PlanningErrorMonitorDebugNode debug_marker;
   // Normal Trajectory
   {
     Trajectory valid_traj = generateTrajectory(NOMINAL_INTERVAL);
 
     std::string valid_msg;
     ASSERT_TRUE(
-      PlanningErrorMonitorNode::checkTrajectoryInterval(valid_traj, ERROR_INTERVAL, valid_msg));
+      PlanningErrorMonitorNode::checkTrajectoryInterval(
+        valid_traj, ERROR_INTERVAL, valid_msg, debug_marker));
     ASSERT_EQ(valid_msg, "Trajectory Interval Length is within the expected range");
 
     std::string boundary_msg;
     ASSERT_TRUE(
       PlanningErrorMonitorNode::checkTrajectoryInterval(
-        valid_traj, NOMINAL_INTERVAL,
-        boundary_msg));
+        valid_traj, NOMINAL_INTERVAL, boundary_msg, debug_marker));
     ASSERT_EQ(boundary_msg, "Trajectory Interval Length is within the expected range");
   }
 
@@ -77,7 +78,7 @@ TEST(PlanningErrorMonitor, TrajectoryIntervalChecker)
     std::string long_interval_error_msg;
     ASSERT_FALSE(
       PlanningErrorMonitorNode::checkTrajectoryInterval(
-        long_interval_traj, NOMINAL_INTERVAL, long_interval_error_msg));
+        long_interval_traj, NOMINAL_INTERVAL, long_interval_error_msg, debug_marker));
     ASSERT_EQ(
       long_interval_error_msg, "Trajectory Interval Length is longer than the expected range");
   }
@@ -87,14 +88,14 @@ TEST(PlanningErrorMonitor, TrajectoryCurvatureChecker)
 {
   using autoware_planning_msgs::msg::Trajectory;
   using planning_diagnostics::PlanningErrorMonitorNode;
+  PlanningErrorMonitorDebugNode debug_marker;
   // Normal Trajectory
   {
     Trajectory valid_traj = generateTrajectory(NOMINAL_INTERVAL);
     std::string valid_error_msg;
     ASSERT_TRUE(
       PlanningErrorMonitorNode::checkTrajectoryCurvature(
-        valid_traj, ERROR_CURVATURE,
-        valid_error_msg));
+        valid_traj, ERROR_CURVATURE, valid_error_msg, debug_marker));
     ASSERT_EQ(valid_error_msg, "This trajectory's curvature is within the expected range");
   }
 }
@@ -103,6 +104,7 @@ TEST(PlanningErrorMonitor, TrajectoryRelativeAngleChecker)
 {
   using autoware_planning_msgs::msg::Trajectory;
   using planning_diagnostics::PlanningErrorMonitorNode;
+  PlanningErrorMonitorDebugNode debug_marker;
   const double too_close_dist = 0.05;
   const double too_sharp_turn = M_PI_4;
   {
@@ -119,7 +121,7 @@ TEST(PlanningErrorMonitor, TrajectoryRelativeAngleChecker)
     std::string valid_error_msg;
     ASSERT_FALSE(
       PlanningErrorMonitorNode::checkTrajectoryRelativeAngle(
-        valid_traj, too_sharp_turn, too_close_dist, valid_error_msg));
+        valid_traj, too_sharp_turn, too_close_dist, valid_error_msg, debug_marker));
     ASSERT_EQ(
       valid_error_msg,
       "This Trajectory's relative angle has larger value than the expected value");
@@ -137,7 +139,7 @@ TEST(PlanningErrorMonitor, TrajectoryRelativeAngleChecker)
     std::string valid_error_msg;
     ASSERT_FALSE(
       PlanningErrorMonitorNode::checkTrajectoryRelativeAngle(
-        valid_traj, too_sharp_turn, too_close_dist, valid_error_msg));
+        valid_traj, too_sharp_turn, too_close_dist, valid_error_msg, debug_marker));
     ASSERT_EQ(
       valid_error_msg,
       "This Trajectory's relative angle has larger value than the expected value");
@@ -157,7 +159,7 @@ TEST(PlanningErrorMonitor, TrajectoryRelativeAngleChecker)
     std::string valid_error_msg;
     ASSERT_FALSE(
       PlanningErrorMonitorNode::checkTrajectoryRelativeAngle(
-        valid_traj, too_sharp_turn, too_close_dist, valid_error_msg));
+        valid_traj, too_sharp_turn, too_close_dist, valid_error_msg, debug_marker));
     ASSERT_EQ(
       valid_error_msg,
       "This Trajectory's relative angle has larger value than the expected value");

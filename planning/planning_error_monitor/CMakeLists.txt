@@ -15,6 +15,7 @@ ament_auto_find_build_dependencies()
 
 ament_auto_add_library(planning_error_monitor_node SHARED
   src/planning_error_monitor_node.cpp
+  src/debug_marker.cpp
 )
 rclcpp_components_register_node(planning_error_monitor_node
   PLUGIN "planning_diagnostics::PlanningErrorMonitorNode"

@@ -36,9 +36,10 @@ This function checks if the relative angle at point1 generated from point2 and 3
 
 ### Output
 
-| Name           | Type                              | Description         |
-| -------------- | --------------------------------- | ------------------- |
-| `/diagnostics` | `diagnostic_msgs/DiagnosticArray` | diagnostics outputs |
+| Name             | Type                              | Description           |
+| ---------------- | --------------------------------- | --------------------- |
+| `/diagnostics`   | `diagnostic_msgs/DiagnosticArray` | diagnostics outputs   |
+| `~/debug/marker` | `visualization_msgs/MarkerArray`  | visualization markers |
 
 ## Parameters
 
@@ -48,6 +49,14 @@ This function checks if the relative angle at point1 generated from point2 and 3
 | `error_curvature`         | `double` | Error Curvature Threshold             | 1.0           |
 | `error_sharp_angle`       | `double` | Error Sharp Angle Threshold           | $\pi$/4       |
 | `ignore_too_close_points` | `double` | Ignore Too Close Distance Threshold   | 0.005         |
+
+## Visualization
+
+When the trajectory error occurs, markers for visualization are published at the topic `~/debug/marker`.
+
+- trajectory_interval: An error occurs when the distance between two points exceeds a certain large value. The two points where the error occurred will be visualized.
+- trajectory_curvature: An error occurs when the curvature exceeds a certain large value. The three points used to calculate the curvature will be visualized.
+- trajectory_relative_angle: An error occurs when the angle in the direction of the path point changes significantly. The three points used to calculate the relative angle will be visualized.
 
 ## Assumptions / Known limits
 
