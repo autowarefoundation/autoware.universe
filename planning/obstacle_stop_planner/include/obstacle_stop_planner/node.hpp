@@ -112,6 +112,10 @@ public:
 
   struct SlowDownParam
   {
+    double normal_min_jerk;         // min jerk limit for mild stop [m/sss]
+    double normal_min_acc;          // min deceleration limit for mild stop [m/ss]
+    double limit_min_jerk;          // min jerk limit [m/sss]
+    double limit_min_acc;           // min deceleration limit [m/ss]
     double forward_margin;    // slow down margin(vehicle front -> obstacle) [m]
     double backward_margin;   // slow down margin(obstacle vehicle rear) [m]
     double expand_slow_down_range;  // lateral range of detection area [m]
@@ -121,11 +125,7 @@ public:
     double slow_down_vel;           // target slow down velocity [m/s]
     double forward_margin_min;      // min margin for relaxing slow down margin [m/s]
     double forward_margin_span;     // fineness param for relaxing slow down margin [m/s]
-    double dec_min;                 // min deceleration limit [m/ss]
-    double dec_min_mild_stop;       // min deceleration limit for mild stop [m/ss]
-    double jerk_min;                // min jerk limit [m/sss]
-    double jerk_min_mild_stop;      // min jerk limit for mild stop [m/sss]
-    double jerk_min_slow_down;      // min slow down jerk constraint [m/sss]
+    double slow_down_min_jerk;      // min slow down jerk constraint [m/sss]
     double jerk_start;              // init jerk used for deceleration planning [m/sss]
     double jerk_span;               // fineness param for planning deceleration jerk [m/sss]
     double vel_threshold_reset_velocity_limit_;  // velocity threshold,

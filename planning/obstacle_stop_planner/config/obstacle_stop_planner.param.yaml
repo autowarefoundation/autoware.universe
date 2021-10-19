@@ -21,11 +21,5 @@
       forward_margin_span: -0.1 # fineness param for relaxing slow down margin [m/s]
       jerk_min_slow_down: -0.3 # min slow down jerk constraint [m/sss]
       jerk_span: -0.01 # fineness param for planning deceleration jerk [m/sss]
-      slow_down_vel: 1.38 # target slow down velocity [m/s]
-
-      # smoother parameters
       jerk_start: -0.1 # init jerk used for deceleration planning [m/sss]
-      jerk_min: -1.5 # min jerk limit [m/sss]
-      jerk_min_mild_stop: -0.3 # min jerk limit for mild stop [m/sss]
-      dec_min: -2.5 # min deceleration limit [m/ss]
-      dec_min_mild_stop: -1.0 # min deceleration limit for mild stop [m/ss]
+      slow_down_vel: 1.38 # target slow down velocity [m/s]

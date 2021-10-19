@@ -226,14 +226,14 @@ boost::optional<std::pair<double, double>> calcFeasibleMarginAndVelocity(
     return std::make_pair(p.forward_margin, p.slow_down_vel);
   }
 
-  for (double planning_jerk = p.jerk_start; planning_jerk > p.jerk_min_slow_down - epsilon;
+  for (double planning_jerk = p.jerk_start; planning_jerk > p.slow_down_min_jerk - epsilon;
     planning_jerk += p.jerk_span)
   {
     const double jerk_dec = planning_jerk;
     const double jerk_acc = std::abs(planning_jerk);
 
     const auto planning_dec = planning_jerk >
-      p.jerk_min_mild_stop ? p.dec_min : p.dec_min_mild_stop;
+      p.normal_min_jerk ? p.limit_min_acc : p.normal_min_acc;
     const auto stop_dist = calcDecelDistWithJerkAndAccConstraints(
       current_vel, p.slow_down_vel, current_acc, planning_dec, jerk_acc, jerk_dec);
 
@@ -250,11 +250,11 @@ boost::optional<std::pair<double, double>> calcFeasibleMarginAndVelocity(
   }
 
   {
-    const double jerk_dec = p.jerk_min_slow_down;
-    const double jerk_acc = std::abs(p.jerk_min_slow_down);
+    const double jerk_dec = p.slow_down_min_jerk;
+    const double jerk_acc = std::abs(p.slow_down_min_jerk);
 
-    const auto planning_dec = p.jerk_min_slow_down >
-      p.jerk_min_mild_stop ? p.dec_min : p.dec_min_mild_stop;
+    const auto planning_dec = p.slow_down_min_jerk >
+      p.normal_min_jerk ? p.limit_min_acc : p.normal_min_acc;
     const auto stop_dist = calcDecelDistWithJerkAndAccConstraints(
       current_vel, p.slow_down_vel, current_acc, planning_dec, jerk_acc, jerk_dec);
 
@@ -266,7 +266,7 @@ boost::optional<std::pair<double, double>> calcFeasibleMarginAndVelocity(
       const auto planning_margin = dist_baselink_to_obstacle - stop_dist.get();
       RCLCPP_DEBUG(
         logger, "[relax margin] dist:%-6.2f jerk:%-6.2f margin:%-6.2f v0:%-6.2f vt%-6.2f",
-        stop_dist.get(), p.jerk_min, planning_margin, p.slow_down_vel, current_vel);
+        stop_dist.get(), p.slow_down_min_jerk, planning_margin, p.slow_down_vel, current_vel);
       return std::make_pair(planning_margin, p.slow_down_vel);
     }
   }
@@ -462,28 +462,29 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
   {
     auto & p = slow_down_param_;
     const std::string ns = "slow_down_planner.";
+    // common param
+    p.normal_min_jerk = declare_parameter("normal.min_jerk", -0.3);
+    p.normal_min_acc = declare_parameter("normal.min_acc", -1.0);
+    p.limit_min_jerk = declare_parameter("limit.min_jerk", -1.5);
+    p.limit_min_acc = declare_parameter("limit.min_acc", -2.5);
+    // slow down planner specific parameters
     p.forward_margin = declare_parameter(ns + "forward_margin", 5.0);
     p.backward_margin = declare_parameter(ns + "backward_margin", 5.0);
     p.expand_slow_down_range = declare_parameter(ns + "expand_slow_down_range", 1.0);
     p.max_slow_down_vel = declare_parameter(ns + "max_slow_down_vel", 4.0);
     p.min_slow_down_vel = declare_parameter(ns + "min_slow_down_vel", 2.0);
-    /* consider jerk/dec constraints in slow down */
+    // consider jerk/dec constraints in slow down
     p.consider_constraints = declare_parameter(ns + "consider_constraints", false);
     p.forward_margin_min = declare_parameter(ns + "forward_margin_min", 1.0);
     p.forward_margin_span = declare_parameter(ns + "forward_margin_span", -0.1);
-    p.jerk_min = declare_parameter(ns + "jerk_min", -1.5);
-    p.jerk_min_mild_stop = declare_parameter(ns + "jerk_min_mild_stop", -0.3);
-    p.jerk_min_slow_down = declare_parameter(ns + "jerk_min_slow_down", -0.3);
+    p.slow_down_min_jerk = declare_parameter(ns + "jerk_min_slow_down", -0.3);
     p.jerk_start = declare_parameter(ns + "jerk_start", -0.1);
     p.jerk_span = declare_parameter(ns + "jerk_span", -0.01);
-    p.dec_min = declare_parameter(ns + "dec_min", -2.5);
-    p.dec_min_mild_stop = declare_parameter(ns + "dec_min_mild_stop", -1.0);
     p.slow_down_vel = declare_parameter(ns + "slow_down_vel", 1.39);
     p.vel_threshold_reset_velocity_limit_ = declare_parameter(
       ns + "vel_threshold_reset_velocity_limit_", 0.2);
     p.dec_threshold_reset_velocity_limit_ = declare_parameter(
       ns + "dec_threshold_reset_velocity_limit_", 0.1);
-    /* ------------------------------------------ */
     p.forward_margin += i.max_longitudinal_offset_m;
     p.forward_margin_min += i.wheel_base_m + i.front_overhang_m;
     p.backward_margin += i.rear_overhang_m;
@@ -1432,9 +1433,9 @@ void ObstacleStopPlannerNode::setExternalVelocityLimit()
   slow_down_limit_vel->stamp = this->now();
   slow_down_limit_vel->max_velocity = p.slow_down_vel;
   slow_down_limit_vel->constraints.min_acceleration =
-    p.jerk_min_slow_down < p.jerk_min_mild_stop ? p.dec_min : p.dec_min_mild_stop;
-  slow_down_limit_vel->constraints.max_jerk = std::abs(p.jerk_min_slow_down);
-  slow_down_limit_vel->constraints.min_jerk = p.jerk_min_slow_down;
+    p.slow_down_min_jerk < p.normal_min_jerk ? p.limit_min_acc : p.normal_min_acc;
+  slow_down_limit_vel->constraints.max_jerk = std::abs(p.slow_down_min_jerk);
+  slow_down_limit_vel->constraints.min_jerk = p.slow_down_min_jerk;
   slow_down_limit_vel->use_constraints = true;
   slow_down_limit_vel->sender = "obstacle_stop_planner";
 
