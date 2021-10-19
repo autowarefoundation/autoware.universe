@@ -69,4 +69,12 @@ geometry_msgs::msg::PoseArray createRandomPoseArray(
   const geometry_msgs::msg::PoseWithCovarianceStamped & base_pose_with_cov,
   const size_t particle_num);
 
+template<class T>
+T transform(const T & input, const geometry_msgs::msg::TransformStamped & transform)
+{
+  T output;
+  tf2::doTransform<T>(input, output, transform);
+  return output;
+}
+
 #endif  // NDT_SCAN_MATCHER__UTIL_FUNC_HPP_

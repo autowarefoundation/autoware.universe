@@ -225,7 +225,7 @@ void NDTScanMatcher::serviceNDTAlign(
   // transform pose_frame to map_frame
   auto mapTF_initial_pose_msg_ptr =
     std::make_shared<geometry_msgs::msg::PoseWithCovarianceStamped>();
-  tf2::doTransform(req->pose_with_cov, *mapTF_initial_pose_msg_ptr, *TF_pose_to_map_ptr);
+  *mapTF_initial_pose_msg_ptr = transform(req->pose_with_cov, *TF_pose_to_map_ptr);
 
   if (ndt_ptr_->getInputTarget() == nullptr) {
     res->success = false;
@@ -275,8 +275,8 @@ void NDTScanMatcher::callbackInitialPose(
     // transform pose_frame to map_frame
     auto mapTF_initial_pose_msg_ptr =
       std::make_shared<geometry_msgs::msg::PoseWithCovarianceStamped>();
-    tf2::doTransform(*initial_pose_msg_ptr, *mapTF_initial_pose_msg_ptr, *TF_pose_to_map_ptr);
     // mapTF_initial_pose_msg_ptr->header.stamp = initial_pose_msg_ptr->header.stamp;
+    *mapTF_initial_pose_msg_ptr = transform(*initial_pose_msg_ptr, *TF_pose_to_map_ptr);
     initial_pose_msg_ptr_array_.push_back(mapTF_initial_pose_msg_ptr);
   }
 }
