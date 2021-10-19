@@ -736,6 +736,15 @@ PathWithLaneId RouteHandler::getCenterLinePath(
   for (const auto & llt : lanelet_sequence) {
     lanelet::traffic_rules::SpeedLimitInformation limit = traffic_rules_ptr_->speedLimit(llt);
     const lanelet::ConstLineString3d centerline = llt.centerline();
+
+    const auto addPathPoint = [&reference_path, &limit, &llt](const auto & pt) {
+        PathPointWithLaneId p{};
+        p.point.pose.position = lanelet::utils::conversion::toGeomMsgPt(pt);
+        p.lane_ids.push_back(llt.id());
+        p.point.twist.linear.x = limit.speedLimit.value();
+        reference_path.points.push_back(p);
+      };
+
     for (size_t i = 0; i < centerline.size(); i++) {
       const lanelet::ConstPoint3d pt = centerline[i];
       lanelet::ConstPoint3d next_pt =
@@ -743,44 +752,15 @@ PathWithLaneId RouteHandler::getCenterLinePath(
       double distance = lanelet::geometry::distance2d(to2D(pt), to2D(next_pt));
 
       if (s < s_start && s + distance > s_start) {
-        if (use_exact) {
-          const auto tmp_p = get3DPointFrom2DArcLength(lanelet_sequence, s_start);
-          PathPointWithLaneId point{};
-          point.point.pose.position = lanelet::utils::conversion::toGeomMsgPt(tmp_p);
-          point.lane_ids.push_back(llt.id());
-          point.point.twist.linear.x = limit.speedLimit.value();
-          reference_path.points.push_back(point);
-        } else {
-          PathPointWithLaneId point;
-          point.point.pose.position = lanelet::utils::conversion::toGeomMsgPt(pt);
-          point.lane_ids.push_back(llt.id());
-          point.point.twist.linear.x = limit.speedLimit.value();
-          reference_path.points.push_back(point);
-        }
+        const auto p = use_exact ? get3DPointFrom2DArcLength(lanelet_sequence, s_start) : pt;
+        addPathPoint(p);
       }
-
       if (s >= s_start && s <= s_end) {
-        PathPointWithLaneId point{};
-        point.point.pose.position = lanelet::utils::conversion::toGeomMsgPt(pt);
-        point.lane_ids.push_back(llt.id());
-        point.point.twist.linear.x = limit.speedLimit.value();
-        reference_path.points.push_back(point);
+        addPathPoint(pt);
       }
       if (s < s_end && s + distance > s_end) {
-        if (use_exact) {
-          const auto tmp_p = get3DPointFrom2DArcLength(lanelet_sequence, s_end);
-          PathPointWithLaneId point{};
-          point.point.pose.position = lanelet::utils::conversion::toGeomMsgPt(tmp_p);
-          point.lane_ids.push_back(llt.id());
-          point.point.twist.linear.x = limit.speedLimit.value();
-          reference_path.points.push_back(point);
-        } else {
-          PathPointWithLaneId point{};
-          point.point.pose.position = lanelet::utils::conversion::toGeomMsgPt(next_pt);
-          point.lane_ids.push_back(llt.id());
-          point.point.twist.linear.x = limit.speedLimit.value();
-          reference_path.points.push_back(point);
-        }
+        const auto p = use_exact ? get3DPointFrom2DArcLength(lanelet_sequence, s_end) : next_pt;
+        addPathPoint(p);
       }
       s += distance;
     }
@@ -806,22 +786,16 @@ PathWithLaneId RouteHandler::getCenterLinePath(
   // set angle
   for (size_t i = 0; i < reference_path.points.size(); i++) {
     double angle{0.0};
-    auto & pt = reference_path.points.at(i);
+    const auto & pts = reference_path.points;
     if (i + 1 < reference_path.points.size()) {
-      auto next_pt = reference_path.points.at(i + 1);
-      angle = std::atan2(
-        next_pt.point.pose.position.y - pt.point.pose.position.y,
-        next_pt.point.pose.position.x - pt.point.pose.position.x);
+      angle = autoware_utils::calcAzimuthAngle(
+        pts.at(i).point.pose.position, pts.at(i + 1).point.pose.position);
     } else if (i != 0) {
-      auto prev_pt = reference_path.points.at(i - 1);
-      auto pt = reference_path.points.at(i);
-      angle = std::atan2(
-        pt.point.pose.position.y - prev_pt.point.pose.position.y,
-        pt.point.pose.position.x - prev_pt.point.pose.position.x);
+      angle = autoware_utils::calcAzimuthAngle(
+        pts.at(i - 1).point.pose.position, pts.at(i).point.pose.position);
     }
-    tf2::Quaternion yaw_quat{};
-    yaw_quat.setRPY(0, 0, angle);
-    pt.point.pose.orientation = tf2::toMsg(yaw_quat);
+    reference_path.points.at(i).point.pose.orientation =
+      autoware_utils::createQuaternionFromYaw(angle);
   }
 
   return reference_path;
