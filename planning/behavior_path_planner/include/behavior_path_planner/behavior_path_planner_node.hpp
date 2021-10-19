@@ -111,9 +111,13 @@ private:
   void onMap(const MapBin::ConstSharedPtr map_msg);
   void onRoute(const Route::ConstSharedPtr route_msg);
 
-  // (TODO) move to util
-  PathWithLaneId clipPathByGoal(const PathWithLaneId & path) const;
-  void clipPathLength(PathWithLaneId & path) const;
+  /**
+   * @brief Modify the path points near the goal to smoothly connect the lanelet and the goal point.
+   */
+  PathWithLaneId modifyPathForSmoothGoalConnection(
+    const PathWithLaneId & path) const;  // (TODO) move to util
+
+  void clipPathLength(PathWithLaneId & path) const;  // (TODO) move to util
 
   /**
    * @brief Execute behavior tree and publish planned data.

@@ -168,7 +168,7 @@ The path generation is computed in Frenet coordinates. The shift length profile 
 
 The Pull Over module is activated when goal is in the shoulder lane. Ego-vehicle will stop at the goal.
 
-#### \***\*start pull over condition\*\*** (need to meet all of the conditions below)
+#### **start pull over condition** (need to meet all of the conditions below)
 
 - Pull over request condition
 
@@ -185,7 +185,7 @@ The Pull Over module is activated when goal is in the shoulder lane. Ego-vehicle
     - If pull over path is not allowed by an operator, leave distance required for pull over and stop.
       This case is defined as UC ID: UC-F-11-00004 at [ODD Use Case Slide Pullover draft](https://docs.google.com/presentation/d/19-G1vj0rG-1P1RKWLg-Iq3_7YgcIYgXZ1wq2_J9NXGo/edit#slide=id.gf4f59f078d_0_1)
 
-#### \***\*finish pull over condition\*\*** (need to meet any of the conditions below)
+#### **finish pull over condition** (need to meet any of the conditions below)
 
 - The distance to the goal from your vehicle is lower than threshold (default: < `1m`)
 - The speed of the vehicle is 0.
@@ -225,7 +225,7 @@ The lateral jerk is searched for among the predetermined minimum and maximum val
 
 The Pull Out module is activated when ego-vehicle is stationary and footprint of ego-vehicle is included in shoulder lane. This module ends when ego-vehicle merges into the road.
 
-#### \***\*start pull out condition\*\*** (need to meet all of the conditions below)
+#### **start pull out condition** (need to meet all of the conditions below)
 
 - Pull out request condition
 
@@ -243,7 +243,7 @@ The Pull Out module is activated when ego-vehicle is stationary and footprint of
     - If safe path cannot be generated from the current position, safe path from a receding position is searched.
   - Pull out is allowed by an operator
 
-#### \***\*finish pull out condition\*\*** (need to meet any of the conditions below)
+#### **finish pull out condition** (need to meet any of the conditions below)
 
 - The distance to the goal of your vehicle is lower than threshold (default: < `1m`)
 - The speed of the vehicle is 0.
@@ -281,6 +281,12 @@ In the figure, `straight margin distance` is to avoid sudden shifting, that is c
 | shifting_lateral_jerk          | [m/s3] | double | lateral jerk to calculate shifting distance.                                | 0.2           |
 | min_shifting_distance          | [m]    | double | the shifting distance is longer than this length.                           | 5.0           |
 | min_shifting_speed             | [m/s]  | double | lateral jerk is calculated with the greater of current_speed or this speed. | 5.56          |
+
+### Smooth goal connection
+
+If the target path contains a goal, modify the points of the path so that the path and the goal are connected smoothly. This process will change the shape of the path by the distance of `refine_goal_search_radius_range` from the goal. Note that this logic depends on the interpolation algorithm that will be executed in a later module (at the moment it uses spline interpolation), so it needs to be updated in the future.
+
+![path_goal_refinement](./image/path_goal_refinement.drawio.svg)
 
 ## References / External links
 

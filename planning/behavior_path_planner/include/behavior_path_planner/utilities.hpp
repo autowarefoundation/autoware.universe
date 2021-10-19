@@ -250,11 +250,31 @@ OccupancyGrid generateDrivableArea(
 
 // goal management
 
+/**
+ * @brief Modify the path points near the goal to smoothly connect the input path and the goal point
+ * @details Remove the path points that are forward from the goal by the distance of
+ * search_radius_range. Then insert the goal into the path. The previous goal point generated
+ * from the goal posture information is also inserted for the smooth connection of the goal pose.
+ * @param [in] search_radius_range distance on path to be modified for goal insertion
+ * @param [in] search_rad_range [unused]
+ * @param [in] input original path
+ * @param [in] goal original goal pose
+ * @param [in] goal_lane_id [unused]
+ * @param [in] output_ptr output path with modified points for the goal
+ */
 bool setGoal(
   const double search_radius_range, const double search_rad_range,
   const PathWithLaneId & input, const Pose & goal,
   const int64_t goal_lane_id, PathWithLaneId * output_ptr);
 
+/**
+ * @brief Recreate the goal pose to prevent the goal point being too far from the lanelet, which
+ *  causes the path to twist near the goal.
+ * @details Return the goal point projected on the straight line of the segment of lanelet
+ *  closest to the original goal.
+ * @param [in] goal original goal pose
+ * @param [in] goal_lanelet lanelet containing the goal pose
+ */
 const Pose refineGoal(const Pose & goal, const lanelet::ConstLanelet & goal_lanelet);
 
 PathWithLaneId refinePathForGoal(

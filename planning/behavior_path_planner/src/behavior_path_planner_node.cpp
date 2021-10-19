@@ -453,7 +453,7 @@ void BehaviorPathPlannerNode::run()
   const auto path_candidate = getPathCandidate(output);
   planner_data_->prev_output_path = path;
 
-  auto clipped_path = clipPathByGoal(*path);
+  auto clipped_path = modifyPathForSmoothGoalConnection(*path);
   clipPathLength(clipped_path);
 
   if (!clipped_path.points.empty()) {
@@ -648,7 +648,8 @@ void BehaviorPathPlannerNode::clipPathLength(PathWithLaneId & path) const
   util::clipPathLength(path, ego_pos, forward, backward);
 }
 
-PathWithLaneId BehaviorPathPlannerNode::clipPathByGoal(const PathWithLaneId & path) const
+PathWithLaneId BehaviorPathPlannerNode::modifyPathForSmoothGoalConnection(
+  const PathWithLaneId & path) const
 {
   const auto goal = planner_data_->route_handler->getGoalPose();
   const auto goal_lane_id = planner_data_->route_handler->getGoalLaneId();
