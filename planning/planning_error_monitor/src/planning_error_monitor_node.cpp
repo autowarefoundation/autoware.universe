@@ -32,6 +32,8 @@ PlanningErrorMonitorNode::PlanningErrorMonitorNode(const rclcpp::NodeOptions & n
   using std::placeholders::_1;
   using std::chrono_literals::operator""ms;
 
+  debug_marker_.initialize(this);
+
   traj_sub_ =
     create_subscription<Trajectory>(
     "~/input/trajectory", 1,
@@ -63,7 +65,11 @@ PlanningErrorMonitorNode::PlanningErrorMonitorNode(const rclcpp::NodeOptions & n
   ignore_too_close_points_ = declare_parameter("ignore_too_close_points", 0.05);
 }
 
-void PlanningErrorMonitorNode::onTimer() {updater_.force_update();}
+void PlanningErrorMonitorNode::onTimer()
+{
+  updater_.force_update();
+  debug_marker_.publish();
+}
 
 void PlanningErrorMonitorNode::onCurrentTrajectory(const Trajectory::ConstSharedPtr msg)
 {
@@ -87,7 +93,7 @@ void PlanningErrorMonitorNode::onTrajectoryIntervalChecker(DiagnosticStatusWrapp
 
   std::string error_msg;
   const auto diag_level =
-    checkTrajectoryInterval(*current_trajectory_, error_interval_, error_msg) ?
+    checkTrajectoryInterval(*current_trajectory_, error_interval_, error_msg, debug_marker_) ?
     DiagnosticStatus::OK :
     DiagnosticStatus::ERROR;
   stat.summary(diag_level, error_msg);
@@ -99,7 +105,7 @@ void PlanningErrorMonitorNode::onTrajectoryCurvatureChecker(DiagnosticStatusWrap
 
   std::string error_msg;
   const auto diag_level =
-    checkTrajectoryCurvature(*current_trajectory_, error_curvature_, error_msg) ?
+    checkTrajectoryCurvature(*current_trajectory_, error_curvature_, error_msg, debug_marker_) ?
     DiagnosticStatus::OK :
     DiagnosticStatus::ERROR;
   stat.summary(diag_level, error_msg);
@@ -112,8 +118,7 @@ void PlanningErrorMonitorNode::onTrajectoryRelativeAngleChecker(DiagnosticStatus
   std::string error_msg;
   const auto diag_level =
     checkTrajectoryRelativeAngle(
-    *current_trajectory_, error_sharp_angle_, ignore_too_close_points_,
-    error_msg) ?
+    *current_trajectory_, error_sharp_angle_, ignore_too_close_points_, error_msg, debug_marker_) ?
     DiagnosticStatus::OK :
     DiagnosticStatus::ERROR;
   stat.summary(diag_level, error_msg);
@@ -154,26 +159,30 @@ bool PlanningErrorMonitorNode::checkFinite(const TrajectoryPoint & point)
 }
 
 bool PlanningErrorMonitorNode::checkTrajectoryInterval(
-  const Trajectory & traj, const double & interval_threshold, std::string & error_msg)
+  const Trajectory & traj, const double & interval_threshold, std::string & error_msg,
+  PlanningErrorMonitorDebugNode & debug_marker)
 {
   error_msg = "Trajectory Interval Length is within the expected range";
+  debug_marker.clearPoseMarker("trajectory_interval");
   for (size_t i = 1; i < traj.points.size(); ++i) {
     double ds = calcDistance2d(traj.points.at(i), traj.points.at(i - 1));
 
     if (ds > interval_threshold) {
       error_msg = "Trajectory Interval Length is longer than the expected range";
+      debug_marker.pushPoseMarker(traj.points.at(i - 1).pose, "trajectory_interval");
+      debug_marker.pushPoseMarker(traj.points.at(i).pose, "trajectory_interval");
       return false;
     }
   }
   return true;
 }
 
-
 bool PlanningErrorMonitorNode::checkTrajectoryRelativeAngle(
   const Trajectory & traj, const double angle_threshold, const double min_dist_threshold,
-  std::string & error_msg)
+  std::string & error_msg, PlanningErrorMonitorDebugNode & debug_marker)
 {
   error_msg = "This trajectory's relative angle is within the expected range";
+  debug_marker.clearPoseMarker("trajectory_relative_angle");
 
   // We need at least three points to compute relative angle
   const size_t relative_angle_points_num = 3;
@@ -215,15 +224,20 @@ bool PlanningErrorMonitorNode::checkTrajectoryRelativeAngle(
     if (std::abs(th2) > angle_threshold) {
       error_msg = "This Trajectory's relative angle has larger value than the expected value";
       // std::cout << error_msg << std::endl;
+      debug_marker.pushPoseMarker(traj.points.at(p1_id).pose, "trajectory_relative_angle", 0);
+      debug_marker.pushPoseMarker(traj.points.at(p1_id + 1).pose, "trajectory_relative_angle", 1);
+      debug_marker.pushPoseMarker(traj.points.at(p1_id + 2).pose, "trajectory_relative_angle", 2);
       return false;
     }
   }
   return true;
 }
 bool PlanningErrorMonitorNode::checkTrajectoryCurvature(
-  const Trajectory & traj, const double & curvature_threshold, std::string & error_msg)
+  const Trajectory & traj, const double & curvature_threshold, std::string & error_msg,
+  PlanningErrorMonitorDebugNode & debug_marker)
 {
   error_msg = "This trajectory's curvature is within the expected range";
+  debug_marker.clearPoseMarker("trajectory_curvature");
 
   // We need at least three points to compute curvature
   if (traj.points.size() < 3) {return true;}
@@ -249,6 +263,9 @@ bool PlanningErrorMonitorNode::checkTrajectoryCurvature(
 
     if (std::fabs(curvature) > curvature_threshold) {
       error_msg = "This Trajectory's curvature has larger value than the expected value";
+      debug_marker.pushPoseMarker(traj.points.at(p1_id).pose, "trajectory_curvature");
+      debug_marker.pushPoseMarker(traj.points.at(p2_id).pose, "trajectory_curvature");
+      debug_marker.pushPoseMarker(traj.points.at(p3_id).pose, "trajectory_curvature");
       return false;
     }
   }

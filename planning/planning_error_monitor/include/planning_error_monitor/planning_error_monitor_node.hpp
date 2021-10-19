@@ -20,6 +20,7 @@
 #include "autoware_planning_msgs/msg/trajectory.hpp"
 #include "diagnostic_msgs/msg/diagnostic_array.hpp"
 #include "diagnostic_updater/diagnostic_updater.hpp"
+#include "planning_error_monitor/debug_marker.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 namespace planning_diagnostics
@@ -43,16 +44,16 @@ public:
   void onTrajectoryRelativeAngleChecker(DiagnosticStatusWrapper & stat);
   static bool checkTrajectoryRelativeAngle(
     const Trajectory & traj, const double relative_angle_threshold, const double min_dist_threshold,
-    std::string & error_msg);
+    std::string & error_msg, PlanningErrorMonitorDebugNode & debug_marker);
 
   static bool checkTrajectoryPointValue(
     const Trajectory & traj, std::string & error_msg);
   static bool checkTrajectoryInterval(
-    const Trajectory & traj, const double & interval_threshold,
-    std::string & error_msg);
+    const Trajectory & traj, const double & interval_threshold, std::string & error_msg,
+    PlanningErrorMonitorDebugNode & debug_marker);
   static bool checkTrajectoryCurvature(
-    const Trajectory & traj, const double & curvature_threshold,
-    std::string & error_msg);
+    const Trajectory & traj, const double & curvature_threshold, std::string & error_msg,
+    PlanningErrorMonitorDebugNode & debug_marker);
 
 private:
   static bool checkFinite(const TrajectoryPoint & p);
@@ -71,6 +72,8 @@ private:
   double error_curvature_;
   double error_sharp_angle_;
   double ignore_too_close_points_;
+
+  PlanningErrorMonitorDebugNode debug_marker_;
 };
 }  // namespace planning_diagnostics
 
