@@ -1,4 +1,6 @@
 <launch>
+  <!-- common param -->
+  <arg name="common_param_path"/>
 
   <!-- lane_driving scenario -->
   <group>
