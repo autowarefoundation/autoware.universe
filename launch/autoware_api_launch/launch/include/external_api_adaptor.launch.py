@@ -36,6 +36,7 @@ def generate_launch_description():
         _create_api_node('initial_pose', 'InitialPose'),
         _create_api_node('map', 'Map'),
         _create_api_node('operator', 'Operator'),
+        _create_api_node('metadata_packages', 'MetadataPackages'),
         _create_api_node('route', 'Route'),
         _create_api_node('service', 'Service'),
         _create_api_node('start', 'Start'),
