@@ -35,7 +35,7 @@ def generate_launch_description():
                     ('input/goal_pose', '/planning/mission_planning/goal'),
                     ('input/checkpoint', '/planning/mission_planning/checkpoint'),
                     ('output/route', '/planning/mission_planning/route'),
-                    ('visualization_topic_name',
+                    ('debug/route_marker',
                      '/planning/mission_planning/route_marker'),
                 ],
                 parameters=[
