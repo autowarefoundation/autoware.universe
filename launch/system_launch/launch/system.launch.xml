@@ -50,8 +50,5 @@
       <arg name="config_file" value="$(find-pkg-share emergency_handler)/config/emergency_handler.param.yaml" />
     </include>
 
-    <!-- Autoware Version Publisher-->
-    <node pkg="autoware_version" exec="autoware_version" name="autoware_version" output="screen">
-    </node>
   </group>
 </launch>
