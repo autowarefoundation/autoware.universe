@@ -79,6 +79,7 @@ NDTScanMatcher::NDTScanMatcher()
     omp_params_.num_threads = this->declare_parameter("omp_num_threads", omp_params_.num_threads);
     omp_params_.num_threads = std::max(omp_params_.num_threads, 1);
     ndt_omp_ptr->setNumThreads(omp_params_.num_threads);
+    ndt_ptr_ = ndt_omp_ptr;
   }
 
   int points_queue_size = this->declare_parameter("input_sensor_points_queue_size", 0);
@@ -299,6 +300,7 @@ void NDTScanMatcher::callbackMapPoints(
     std::shared_ptr<T> ndt_omp_ptr = std::dynamic_pointer_cast<T>(ndt_ptr_);
     ndt_omp_ptr->setNeighborhoodSearchMethod(omp_params_.search_method);
     ndt_omp_ptr->setNumThreads(omp_params_.num_threads);
+    new_ndt_ptr_ = ndt_omp_ptr;
   }
 
   new_ndt_ptr_->setTransformationEpsilon(trans_epsilon);
