@@ -895,8 +895,9 @@ StopPoint ObstacleStopPlannerNode::searchInsertPoint(
 
   // check if stop point is already inserted by behavior planner
   bool is_inserted_already_stop_point = false;
+  const double epsilon = 1e-3;
   for (int j = max_dist_stop_point.index - 1; j < static_cast<int>(idx); ++j) {
-    if (base_trajectory.points.at(std::max(j, 0)).twist.linear.x == 0.0) {
+    if (std::abs(base_trajectory.points.at(std::max(j, 0)).twist.linear.x) < epsilon) {
       is_inserted_already_stop_point = true;
       break;
     }
