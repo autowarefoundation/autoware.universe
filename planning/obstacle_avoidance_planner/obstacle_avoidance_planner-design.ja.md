@@ -272,3 +272,59 @@ $$
   - behavior_path_planner 側で回避する場合と、obstacle_avoidance_planner で回避する場合がある
 - behavior_path_planner から来る path が道路壁に衝突していると、大きく外側に膨れた trajectory を計画する (柏の葉のカーブで顕著)
 - 計算負荷が高い
+
+## How to debug
+
+obstacle_avoidance_planner` から出力される debug 用の topic について説明する。
+
+- **interpolated_points_marker**
+  - obstacle avoidance planner への入力経路をリサンプルしたもの。この経路が道路内に収まっているか（道路内にあることが必須ではない）、十分になめらかか（ある程度滑らかでないとロジックが破綻する）、などを確認する。
+
+![interpolated_points_marker](./media/interpolated_points_marker.png)
+
+- **smoothed_points_text**
+  - Elastic Band の計算結果。点群ではなく小さい数字が描画される。平滑化されたこの経路が道路内からはみ出ていないか、歪んでいないかなどを確認。
+
+![smoothed_points_text](./media/smoothed_points_text.png)
+
+- **(base/top/mid)\_bounds_line**
+  - 壁との衝突判定における横方向の道路境界までの距離（正確には - vehicle_width / 2.0）。
+  - 車両の 3 箇所（base, top, mid）で衝突判定を行っており、3 つのマーカーが存在する。
+  - 黄色い線の各端点から道路境界までの距離が車幅の半分くらいであれば異常なし（ここがおかしい場合はロジック異常）。
+
+![bounds_line](./media/bounds_line.png)
+
+- **optimized_points_marker**
+  - MPT の計算結果。道路からはみ出ていないか、振動していないかなどを確認
+
+![optimized_points_marker](./media/optimized_points_marker.png)
+
+- **Trajectory with footprint**
+  - TrajectoryFootprint の rviz_plugin を用いて経路上の footprint を描画することが可能。これを用いて obstacle_avoidance_planner への入出力の footprint、経路に収まっているかどうか等を確認する。
+
+![trajectory_with_footprint](./media/trajectory_with_footprint.png)
+
+- **Drivable Area**
+  - obstacle avoidance への入力の走行可能領域を表示する。Drivable Area の生成に不具合があると生成経路が歪む可能性がある。
+  - topic 名：`/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/debug/drivable_area`
+  - `nav_msgs/msg/OccupancyGrid` 型として出力される
+
+![drivable_area](./media/drivable_area.png)
+
+- **area_with_objects**
+  - 入力された走行可能領域から障害物を取り除いた後の、走行可能領域
+  - `nav_msgs/msg/OccupancyGrid` 型として出力される
+
+![area_with_objects](./media/area_with_objects.png)
+
+- **object_clearance_map**
+  - 回避対象の障害物からの距離を可視化したもの。
+  - `nav_msgs/msg/OccupancyGrid` 型として出力される
+
+![object_clearance_map](./media/object_clearance_map.png)
+
+- **clearance_map**
+  - 入力された走行可能領域からの距離を可視化したもの。
+  - `nav_msgs/msg/OccupancyGrid` 型として出力される
+
+![clearance_map](./media/clearance_map.png)
