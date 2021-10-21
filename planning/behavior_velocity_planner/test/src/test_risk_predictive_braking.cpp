@@ -75,9 +75,9 @@ TEST(insertSafeVelocityToPath, dont_insert_last_point)
   pose.position.x = 0;
   pose.position.y = 0;
   pose.position.z = 0;
-  int res = insertSafeVelocityToPath(pose, safe_vel, param, &path);
+  insertSafeVelocityToPath(pose, safe_vel, param, &path);
   ASSERT_EQ(path.points.size(), static_cast<size_t>(num_path + 1));
   pose.position.x = static_cast<double>(num_path + 1);
-  res = insertSafeVelocityToPath(pose, safe_vel, param, &path);
+  insertSafeVelocityToPath(pose, safe_vel, param, &path);
   ASSERT_EQ(path.points.size(), static_cast<size_t>(num_path + 1));
 }

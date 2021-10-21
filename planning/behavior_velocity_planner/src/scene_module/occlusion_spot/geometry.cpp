@@ -77,7 +77,6 @@ void buildSlices(
   if (inner_bounds.size() < 2 || outer_bounds.size() < 2) {return;}
   const double ratio_dist_start = std::abs(range.min_distance / range.max_distance);
   const double ratio_dist_increment = std::min(1.0, slice_width / std::abs(range.max_distance));
-  double length = 0;
   for (int s = 0; s < num_longitudinal_slice; s++) {
     const double length = range.min_length + s * slice_length;
     const double next_length = range.min_length + (s + 1.0) * slice_length;

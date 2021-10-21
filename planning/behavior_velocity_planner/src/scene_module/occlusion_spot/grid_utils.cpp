@@ -98,7 +98,7 @@ bool isCollisionFree(
         return false;
       }
     }
-  } catch (std::invalid_argument e) {
+  } catch (const std::invalid_argument & e) {
     std::cerr << e.what() << std::endl;
   }
   return true;
@@ -164,7 +164,7 @@ void toQuantizedImage(
   for (int x = width - 1; x >= 0; x--) {
     for (int y = height - 1; y >= 0; y--) {
       const int idx = (height - 1 - y) + (width - 1 - x) * height;
-      unsigned char intensity = occupancy_grid.data.at(idx);
+      int8_t intensity = occupancy_grid.data.at(idx);
       if (0 <= intensity && intensity < param.free_space_max) {
         intensity = grid_utils::occlusion_cost_value::FREE_SPACE;
       } else if (  // NOLINT

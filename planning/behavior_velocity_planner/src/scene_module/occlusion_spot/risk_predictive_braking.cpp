@@ -102,7 +102,7 @@ int insertSafeVelocityToPath(
   }
 
   // return if index is after the last path point
-  if (insert_idx == inout_path->points.size()) {return -1;}
+  if (insert_idx == static_cast<int>(inout_path->points.size())) {return -1;}
   autoware_planning_msgs::msg::PathPointWithLaneId inserted_point;
   inserted_point = inout_path->points.at(closest_idx);
   inserted_point.point.pose = in_pose;

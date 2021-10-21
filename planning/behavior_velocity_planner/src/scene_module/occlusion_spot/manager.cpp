@@ -150,6 +150,7 @@ OcclusionSpotModuleManager::getModuleExpiredFunction(
            if (scene_module->getModuleId() == static_cast<int64_t>(ModuleID::PUBLIC)) {
              return !has_public_road;
            }
+           return true;
          };
 }
 }  // namespace behavior_velocity_planner
