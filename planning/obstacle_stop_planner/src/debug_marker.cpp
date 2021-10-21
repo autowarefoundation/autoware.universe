@@ -346,150 +346,207 @@ visualization_msgs::msg::MarkerArray ObstacleStopPlannerDebugNode::makeVisualiza
   }
 
   if (stop_pose_ptr_ != nullptr) {
-    visualization_msgs::msg::Marker marker;
-    marker.header.frame_id = "map";
-    marker.header.stamp = current_time;
-    marker.ns = "virtual_wall/stop";
-    marker.id = 0;
-    marker.lifetime = rclcpp::Duration::from_seconds(0.5);
-    marker.type = visualization_msgs::msg::Marker::CUBE;
-    marker.action = visualization_msgs::msg::Marker::ADD;
-    tf2::Transform tf_map2base_link;
-    tf2::fromMsg(*stop_pose_ptr_, tf_map2base_link);
-    tf2::Transform tf_map2front = tf_map2base_link * tf_base_link2front;
-    tf2::toMsg(tf_map2front, marker.pose);
-    marker.pose.position.z += 1.0;
-    marker.scale.x = 0.1;
-    marker.scale.y = 5.0;
-    marker.scale.z = 2.0;
-    marker.color.a = 0.5;  // Don't forget to set the alpha!
-    marker.color.r = 1.0;
-    marker.color.g = 0.0;
-    marker.color.b = 0.0;
-    msg.markers.push_back(marker);
+    {
+      visualization_msgs::msg::Marker marker;
+      marker.header.frame_id = "map";
+      marker.header.stamp = current_time;
+      marker.ns = "virtual_wall/stop";
+      marker.id = 0;
+      marker.lifetime = rclcpp::Duration::from_seconds(0.5);
+      marker.type = visualization_msgs::msg::Marker::CUBE;
+      marker.action = visualization_msgs::msg::Marker::ADD;
+      tf2::Transform tf_map2base_link;
+      tf2::fromMsg(*stop_pose_ptr_, tf_map2base_link);
+      tf2::Transform tf_map2front = tf_map2base_link * tf_base_link2front;
+      tf2::toMsg(tf_map2front, marker.pose);
+      marker.pose.position.z += 1.0;
+      marker.scale.x = 0.1;
+      marker.scale.y = 5.0;
+      marker.scale.z = 2.0;
+      marker.color.a = 0.5;  // Don't forget to set the alpha!
+      marker.color.r = 1.0;
+      marker.color.g = 0.0;
+      marker.color.b = 0.0;
+      msg.markers.push_back(marker);
+    }
+
+    {
+      visualization_msgs::msg::Marker marker;
+      marker.header.frame_id = "map";
+      marker.header.stamp = current_time;
+      marker.ns = "factor_text/stop";
+      marker.id = 0;
+      marker.lifetime = rclcpp::Duration::from_seconds(0.5);
+      marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
+      marker.action = visualization_msgs::msg::Marker::ADD;
+      tf2::Transform tf_map2base_link;
+      tf2::fromMsg(*stop_pose_ptr_, tf_map2base_link);
+      tf2::Transform tf_map2front = tf_map2base_link * tf_base_link2front;
+      tf2::toMsg(tf_map2front, marker.pose);
+      marker.pose.position.z += 2.5;
+      marker.scale.x = 0.0;
+      marker.scale.y = 0.0;
+      marker.scale.z = 1.0;
+      marker.color.a = 0.999;  // Don't forget to set the alpha!
+      marker.color.r = 1.0;
+      marker.color.g = 1.0;
+      marker.color.b = 1.0;
+      marker.text = "obstacle on the path";
+      msg.markers.push_back(marker);
+    }
   }
 
-  if (stop_pose_ptr_ != nullptr) {
-    visualization_msgs::msg::Marker marker;
-    marker.header.frame_id = "map";
-    marker.header.stamp = current_time;
-    marker.ns = "factor_text/stop";
-    marker.id = 0;
-    marker.lifetime = rclcpp::Duration::from_seconds(0.5);
-    marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
-    marker.action = visualization_msgs::msg::Marker::ADD;
-    tf2::Transform tf_map2base_link;
-    tf2::fromMsg(*stop_pose_ptr_, tf_map2base_link);
-    tf2::Transform tf_map2front = tf_map2base_link * tf_base_link2front;
-    tf2::toMsg(tf_map2front, marker.pose);
-    marker.pose.position.z += 2.0;
-    marker.scale.x = 0.0;
-    marker.scale.y = 0.0;
-    marker.scale.z = 1.0;
-    marker.color.a = 0.999;  // Don't forget to set the alpha!
-    marker.color.r = 1.0;
-    marker.color.g = 1.0;
-    marker.color.b = 1.0;
-    marker.text = "obstacle";
-    msg.markers.push_back(marker);
+  if (slow_down_start_pose_ptr_ != nullptr && stop_pose_ptr_ == nullptr) {
+    {
+      visualization_msgs::msg::Marker marker;
+      marker.header.frame_id = "map";
+      marker.header.stamp = current_time;
+      marker.ns = "virtual_wall/slow_down";
+      marker.id = 0;
+      marker.lifetime = rclcpp::Duration::from_seconds(0.5);
+      marker.type = visualization_msgs::msg::Marker::CUBE;
+      marker.action = visualization_msgs::msg::Marker::ADD;
+      tf2::Transform tf_map2base_link;
+      tf2::fromMsg(*slow_down_start_pose_ptr_, tf_map2base_link);
+      tf2::Transform tf_map2front = tf_map2base_link * tf_base_link2front;
+      tf2::toMsg(tf_map2front, marker.pose);
+      marker.pose.position.z += 1.0;
+      marker.scale.x = 0.1;
+      marker.scale.y = 5.0;
+      marker.scale.z = 2.0;
+      marker.color.a = 0.5;  // Don't forget to set the alpha!
+      marker.color.r = 1.0;
+      marker.color.g = 1.0;
+      marker.color.b = 0.0;
+      msg.markers.push_back(marker);
+    }
+
+    {
+      visualization_msgs::msg::Marker marker;
+      marker.header.frame_id = "map";
+      marker.header.stamp = current_time;
+      marker.ns = "virtual_wall/slow_down_start";
+      marker.id = 0;
+      marker.lifetime = rclcpp::Duration::from_seconds(0.5);
+      marker.type = visualization_msgs::msg::Marker::CUBE;
+      marker.action = visualization_msgs::msg::Marker::ADD;
+      tf2::Transform tf_map2base_link;
+      tf2::fromMsg(*slow_down_start_pose_ptr_, tf_map2base_link);
+      tf2::Transform tf_map2front = tf_map2base_link * tf_base_link2front;
+      tf2::toMsg(tf_map2front, marker.pose);
+      marker.pose.position.z += 1.0;
+      marker.scale.x = 0.1;
+      marker.scale.y = 5.0;
+      marker.scale.z = 2.0;
+      marker.color.a = 0.5;  // Don't forget to set the alpha!
+      marker.color.r = 1.0;
+      marker.color.g = 1.0;
+      marker.color.b = 0.0;
+      msg.markers.push_back(marker);
+    }
   }
 
-  if (slow_down_start_pose_ptr_ != nullptr) {
-    visualization_msgs::msg::Marker marker;
-    marker.header.frame_id = "map";
-    marker.header.stamp = current_time;
-    marker.ns = "virtual_wall/slow_down_start";
-    marker.id = 0;
-    marker.lifetime = rclcpp::Duration::from_seconds(0.5);
-    marker.type = visualization_msgs::msg::Marker::CUBE;
-    marker.action = visualization_msgs::msg::Marker::ADD;
-    tf2::Transform tf_map2base_link;
-    tf2::fromMsg(*slow_down_start_pose_ptr_, tf_map2base_link);
-    tf2::Transform tf_map2front = tf_map2base_link * tf_base_link2front;
-    tf2::toMsg(tf_map2front, marker.pose);
-    marker.pose.position.z += 1.0;
-    marker.scale.x = 0.1;
-    marker.scale.y = 5.0;
-    marker.scale.z = 2.0;
-    marker.color.a = 0.5;  // Don't forget to set the alpha!
-    marker.color.r = 1.0;
-    marker.color.g = 1.0;
-    marker.color.b = 0.0;
-    msg.markers.push_back(marker);
+  if (slow_down_start_pose_ptr_ != nullptr && stop_pose_ptr_ == nullptr) {
+    {
+      visualization_msgs::msg::Marker marker;
+      marker.header.frame_id = "map";
+      marker.header.stamp = current_time;
+      marker.ns = "factor_text/slow_down";
+      marker.id = 0;
+      marker.lifetime = rclcpp::Duration::from_seconds(0.5);
+      marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
+      marker.action = visualization_msgs::msg::Marker::ADD;
+      tf2::Transform tf_map2base_link;
+      tf2::fromMsg(*slow_down_start_pose_ptr_, tf_map2base_link);
+      tf2::Transform tf_map2front = tf_map2base_link * tf_base_link2front;
+      tf2::toMsg(tf_map2front, marker.pose);
+      marker.pose.position.z += 2.5;
+      marker.scale.x = 0.0;
+      marker.scale.y = 0.0;
+      marker.scale.z = 1.0;
+      marker.color.a = 0.999;  // Don't forget to set the alpha!
+      marker.color.r = 1.0;
+      marker.color.g = 1.0;
+      marker.color.b = 1.0;
+      marker.text = "obstacle beside the path";
+      msg.markers.push_back(marker);
+    }
+
+    {
+      visualization_msgs::msg::Marker marker;
+      marker.header.frame_id = "map";
+      marker.header.stamp = current_time;
+      marker.ns = "factor_text/slow_down_start";
+      marker.id = 0;
+      marker.lifetime = rclcpp::Duration::from_seconds(0.5);
+      marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
+      marker.action = visualization_msgs::msg::Marker::ADD;
+      tf2::Transform tf_map2base_link;
+      tf2::fromMsg(*slow_down_start_pose_ptr_, tf_map2base_link);
+      tf2::Transform tf_map2front = tf_map2base_link * tf_base_link2front;
+      tf2::toMsg(tf_map2front, marker.pose);
+      marker.pose.position.z += 2.0;
+      marker.scale.x = 0.0;
+      marker.scale.y = 0.0;
+      marker.scale.z = 1.0;
+      marker.color.a = 0.999;  // Don't forget to set the alpha!
+      marker.color.r = 1.0;
+      marker.color.g = 1.0;
+      marker.color.b = 1.0;
+      marker.text = "slow down\nstart";
+      msg.markers.push_back(marker);
+    }
   }
 
-  if (slow_down_start_pose_ptr_ != nullptr) {
-    visualization_msgs::msg::Marker marker;
-    marker.header.frame_id = "map";
-    marker.header.stamp = current_time;
-    marker.ns = "factor_text/slow_down_start";
-    marker.id = 0;
-    marker.lifetime = rclcpp::Duration::from_seconds(0.5);
-    marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
-    marker.action = visualization_msgs::msg::Marker::ADD;
-    tf2::Transform tf_map2base_link;
-    tf2::fromMsg(*slow_down_start_pose_ptr_, tf_map2base_link);
-    tf2::Transform tf_map2front = tf_map2base_link * tf_base_link2front;
-    tf2::toMsg(tf_map2front, marker.pose);
-    marker.pose.position.z += 2.0;
-    marker.scale.x = 0.0;
-    marker.scale.y = 0.0;
-    marker.scale.z = 1.0;
-    marker.color.a = 0.999;  // Don't forget to set the alpha!
-    marker.color.r = 1.0;
-    marker.color.g = 1.0;
-    marker.color.b = 1.0;
-    marker.text = "slow down\nstart";
-    msg.markers.push_back(marker);
-  }
+  if (slow_down_end_pose_ptr_ != nullptr && stop_pose_ptr_ == nullptr) {
+    {
+      visualization_msgs::msg::Marker marker;
+      marker.header.frame_id = "map";
+      marker.header.stamp = current_time;
+      marker.ns = "virtual_wall/slow_down_end";
+      marker.id = 0;
+      marker.lifetime = rclcpp::Duration::from_seconds(0.5);
+      marker.type = visualization_msgs::msg::Marker::CUBE;
+      marker.action = visualization_msgs::msg::Marker::ADD;
+      tf2::Transform tf_map2base_link;
+      tf2::fromMsg(*slow_down_end_pose_ptr_, tf_map2base_link);
+      tf2::Transform tf_map2front = tf_map2base_link * tf_base_link2front;
+      tf2::toMsg(tf_map2front, marker.pose);
+      marker.pose.position.z += 1.0;
+      marker.scale.x = 0.1;
+      marker.scale.y = 5.0;
+      marker.scale.z = 2.0;
+      marker.color.a = 0.5;  // Don't forget to set the alpha!
+      marker.color.r = 1.0;
+      marker.color.g = 1.0;
+      marker.color.b = 0.0;
+      msg.markers.push_back(marker);
+    }
 
-  if (slow_down_end_pose_ptr_ != nullptr) {
-    visualization_msgs::msg::Marker marker;
-    marker.header.frame_id = "map";
-    marker.header.stamp = current_time;
-    marker.ns = "virtual_wall/slow_down_end";
-    marker.id = 0;
-    marker.lifetime = rclcpp::Duration::from_seconds(0.5);
-    marker.type = visualization_msgs::msg::Marker::CUBE;
-    marker.action = visualization_msgs::msg::Marker::ADD;
-    tf2::Transform tf_map2base_link;
-    tf2::fromMsg(*slow_down_end_pose_ptr_, tf_map2base_link);
-    tf2::Transform tf_map2front = tf_map2base_link * tf_base_link2front;
-    tf2::toMsg(tf_map2front, marker.pose);
-    marker.pose.position.z += 1.0;
-    marker.scale.x = 0.1;
-    marker.scale.y = 5.0;
-    marker.scale.z = 2.0;
-    marker.color.a = 0.5;  // Don't forget to set the alpha!
-    marker.color.r = 1.0;
-    marker.color.g = 1.0;
-    marker.color.b = 0.0;
-    msg.markers.push_back(marker);
-  }
-
-  if (slow_down_end_pose_ptr_ != nullptr) {
-    visualization_msgs::msg::Marker marker;
-    marker.header.frame_id = "map";
-    marker.header.stamp = current_time;
-    marker.ns = "factor_text/slow_down_end";
-    marker.id = 0;
-    marker.lifetime = rclcpp::Duration::from_seconds(0.5);
-    marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
-    marker.action = visualization_msgs::msg::Marker::ADD;
-    tf2::Transform tf_map2base_link;
-    tf2::fromMsg(*slow_down_end_pose_ptr_, tf_map2base_link);
-    tf2::Transform tf_map2front = tf_map2base_link * tf_base_link2front;
-    tf2::toMsg(tf_map2front, marker.pose);
-    marker.pose.position.z += 2.0;
-    marker.scale.x = 0.0;
-    marker.scale.y = 0.0;
-    marker.scale.z = 1.0;
-    marker.color.a = 0.999;  // Don't forget to set the alpha!
-    marker.color.r = 1.0;
-    marker.color.g = 1.0;
-    marker.color.b = 1.0;
-    marker.text = "slow down\nend";
-    msg.markers.push_back(marker);
+    {
+      visualization_msgs::msg::Marker marker;
+      marker.header.frame_id = "map";
+      marker.header.stamp = current_time;
+      marker.ns = "factor_text/slow_down_end";
+      marker.id = 0;
+      marker.lifetime = rclcpp::Duration::from_seconds(0.5);
+      marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
+      marker.action = visualization_msgs::msg::Marker::ADD;
+      tf2::Transform tf_map2base_link;
+      tf2::fromMsg(*slow_down_end_pose_ptr_, tf_map2base_link);
+      tf2::Transform tf_map2front = tf_map2base_link * tf_base_link2front;
+      tf2::toMsg(tf_map2front, marker.pose);
+      marker.pose.position.z += 2.0;
+      marker.scale.x = 0.0;
+      marker.scale.y = 0.0;
+      marker.scale.z = 1.0;
+      marker.color.a = 0.999;  // Don't forget to set the alpha!
+      marker.color.r = 1.0;
+      marker.color.g = 1.0;
+      marker.color.b = 1.0;
+      marker.text = "slow down\nend";
+      msg.markers.push_back(marker);
+    }
   }
 
   if (stop_obstacle_point_ptr_ != nullptr) {

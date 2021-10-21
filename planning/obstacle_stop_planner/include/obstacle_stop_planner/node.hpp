@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 #ifndef OBSTACLE_STOP_PLANNER__NODE_HPP_
 #define OBSTACLE_STOP_PLANNER__NODE_HPP_
 
@@ -18,40 +19,56 @@
 #include <memory>
 #include <vector>
 
-#include "rclcpp/rclcpp.hpp"
+#include "boost/assert.hpp"
+#include "boost/assign/list_of.hpp"
+#include "boost/format.hpp"
+#include "boost/geometry.hpp"
+#include "boost/geometry/geometries/linestring.hpp"
+#include "boost/geometry/geometries/point_xy.hpp"
 
+#include "opencv2/core/core.hpp"
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
+
+#include "pcl/point_types.h"
+#include "pcl_conversions/pcl_conversions.h"
+#include "pcl/point_cloud.h"
+#include "pcl/common/transforms.h"
+
+#include "autoware_debug_msgs/msg/float32_stamped.hpp"
 #include "autoware_perception_msgs/msg/dynamic_object_array.hpp"
 #include "autoware_planning_msgs/msg/trajectory.hpp"
 #include "autoware_planning_msgs/msg/expand_stop_range.hpp"
 #include "diagnostic_msgs/msg/diagnostic_status.hpp"
 #include "geometry_msgs/msg/twist_stamped.hpp"
-#include "autoware_debug_msgs/msg/float32_stamped.hpp"
-#include "pcl/point_types.h"
-#include "pcl_conversions/pcl_conversions.h"
-#include "pcl/point_cloud.h"
-#include "pcl/common/transforms.h"
+#include "pcl_ros/transforms.hpp"
+#include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
 #include "tf2/utils.h"
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
 #include "visualization_msgs/msg/marker_array.hpp"
-#include "opencv2/core/core.hpp"
-#include "opencv2/highgui/highgui.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
+
 #include "obstacle_stop_planner/adaptive_cruise_control.hpp"
 #include "obstacle_stop_planner/debug_marker.hpp"
 
 namespace motion_planning
 {
+namespace bg = boost::geometry;
+using Point = bg::model::d2::point_xy<double>;
+using Polygon = bg::model::polygon<Point, false>;
+using Line = bg::model::linestring<Point>;
+
 struct StopPoint
 {
   size_t index;
   Eigen::Vector2d point;
 };
 
-struct SlowDownPoint
+struct SlowDownSection
 {
-  size_t index;
+  size_t slow_down_start_idx;
+  size_t slow_down_end_idx;
   Eigen::Vector2d point;
   double velocity;
 };
@@ -77,8 +94,8 @@ private:
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticStatus>::SharedPtr stop_reason_diag_pub_;
 
   std::shared_ptr<ObstacleStopPlannerDebugNode> debug_ptr_;
-  tf2_ros::Buffer tf_buffer_;
-  tf2_ros::TransformListener tf_listener_;
+  tf2_ros::Buffer tf_buffer_{get_clock()};
+  tf2_ros::TransformListener tf_listener_{tf_buffer_};
 
   /*
    * Parameter
@@ -90,7 +107,8 @@ private:
   double rear_overhang_, left_overhang_, right_overhang_, vehicle_width_, vehicle_length_,
     baselink2front_;
   double stop_margin_;
-  double slow_down_margin_;
+  double slow_down_forward_margin_;
+  double slow_down_backward_margin_;
   double min_behavior_stop_margin_;
   rclcpp::Time prev_col_point_time_;
   pcl::PointXYZ prev_col_point_;
@@ -98,7 +116,6 @@ private:
   double expand_stop_range_;
   double max_slow_down_vel_;
   double min_slow_down_vel_;
-  double max_deceleration_;
   bool enable_slow_down_;
   double extend_distance_;
   double step_length_;
@@ -113,11 +130,12 @@ private:
     const autoware_planning_msgs::msg::ExpandStopRange::ConstSharedPtr input_msg);
 
 private:
+  bool withinPolygon(
+    const std::vector<cv::Point2d> cv_polygon, const Point & prev_point, const Point & next_point,
+    pcl::PointCloud<pcl::PointXYZ>::Ptr candidate_points_ptr,
+    pcl::PointCloud<pcl::PointXYZ>::Ptr within_points_ptr);
   bool convexHull(
     const std::vector<cv::Point2d> pointcloud, std::vector<cv::Point2d> & polygon_points);
-  bool decimateTrajectory(
-    const autoware_planning_msgs::msg::Trajectory & input_trajectory, const double step_length,
-    autoware_planning_msgs::msg::Trajectory & output_trajectory);
   bool decimateTrajectory(
     const autoware_planning_msgs::msg::Trajectory & input_trajectory, const double step_length,
     autoware_planning_msgs::msg::Trajectory & output_trajectory,
@@ -132,9 +150,9 @@ private:
     autoware_planning_msgs::msg::Trajectory & output_trajectory,
     size_t & index);
   bool searchPointcloudNearTrajectory(
-    const autoware_planning_msgs::msg::Trajectory & trajectory, const double radius,
-    const pcl::PointCloud<pcl::PointXYZ>::Ptr input_pointcloud_ptr,
-    pcl::PointCloud<pcl::PointXYZ>::Ptr output_pointcloud_ptr);
+    const autoware_planning_msgs::msg::Trajectory & trajectory,
+    const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_points_ptr,
+    pcl::PointCloud<pcl::PointXYZ>::Ptr output_points_ptr);
   void createOneStepPolygon(
     const geometry_msgs::msg::Pose base_step_pose, const geometry_msgs::msg::Pose next_step_pose,
     std::vector<cv::Point2d> & polygon, const double expand_width = 0.0);
@@ -154,37 +172,31 @@ private:
   geometry_msgs::msg::Pose getVehicleCenterFromBase(const geometry_msgs::msg::Pose & base_pose);
 
   void insertStopPoint(
-    const StopPoint & stop_point, const autoware_planning_msgs::msg::Trajectory & base_path,
+    const StopPoint & stop_point, const autoware_planning_msgs::msg::Trajectory & base_trajectory,
     autoware_planning_msgs::msg::Trajectory & output_path,
     diagnostic_msgs::msg::DiagnosticStatus & stop_reason_diag);
 
   StopPoint searchInsertPoint(
-    const int idx, const autoware_planning_msgs::msg::Trajectory & base_path,
+    const int idx, const autoware_planning_msgs::msg::Trajectory & base_trajectory,
     const Eigen::Vector2d & trajectory_vec, const Eigen::Vector2d & collision_point_vec);
 
   StopPoint createTargetPoint(
     const int idx, const double margin, const Eigen::Vector2d & trajectory_vec,
     const Eigen::Vector2d & collision_point_vec,
-    const autoware_planning_msgs::msg::Trajectory & base_path);
+    const autoware_planning_msgs::msg::Trajectory & base_trajectory);
 
-  SlowDownPoint createSlowDownStartPoint(
-    const int idx, const double margin, const double slow_down_target_vel,
-    const Eigen::Vector2d & trajectory_vec, const Eigen::Vector2d & slow_down_point_vec,
-    const autoware_planning_msgs::msg::Trajectory & base_path);
+  SlowDownSection createSlowDownSection(
+    const int idx, const double lateral_deviation, const Eigen::Vector2d & trajectory_vec,
+    const Eigen::Vector2d & slow_down_point_vec,
+    const autoware_planning_msgs::msg::Trajectory & base_trajectory);
 
-  void insertSlowDownStartPoint(
-    const SlowDownPoint & slow_down_start_point,
-    const autoware_planning_msgs::msg::Trajectory & base_path,
+  void insertSlowDownSection(
+    const SlowDownSection & slow_down_section,
+    const autoware_planning_msgs::msg::Trajectory & base_trajectory,
     autoware_planning_msgs::msg::Trajectory & output_path);
 
-  void insertSlowDownVelocity(
-    const size_t slow_down_start_point_idx, const double slow_down_target_vel, double slow_down_vel,
-    autoware_planning_msgs::msg::Trajectory & output_path);
-
-  double calcSlowDownTargetVel(const double lateral_deviation);
   bool extendTrajectory(
-    const autoware_planning_msgs::msg::Trajectory & input_trajectory,
-    const double extend_distance,
+    const autoware_planning_msgs::msg::Trajectory & input_trajectory, const double extend_distance,
     autoware_planning_msgs::msg::Trajectory & output_trajectory);
 
   autoware_planning_msgs::msg::TrajectoryPoint getExtendTrajectoryPoint(
