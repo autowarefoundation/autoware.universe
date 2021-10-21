@@ -41,8 +41,9 @@ bool transformPointcloud(
     tf_stamped = tf2.lookupTransform(
       target_frame, input.header.frame_id, input.header.stamp, rclcpp::Duration::from_seconds(0.5));
   } catch (const tf2::TransformException & ex) {
-    RCLCPP_WARN_THROTTLE(rclcpp::get_logger("pointcloud_processor").get_child(
-      "occupancy_grid_map_outlier_filter"), clock, 5000, "%s", ex.what());
+    RCLCPP_WARN_THROTTLE(
+      rclcpp::get_logger("pointcloud_processor").get_child(
+        "occupancy_grid_map_outlier_filter"), clock, 5000, "%s", ex.what());
     return false;
   }
   // transform pointcloud
@@ -59,12 +60,13 @@ geometry_msgs::msg::PoseStamped getPoseStamped(
 {
   rclcpp::Clock clock{RCL_ROS_TIME};
   geometry_msgs::msg::TransformStamped tf_stamped{};
-  try{
+  try {
     tf_stamped =
       tf2.lookupTransform(target_frame_id, src_frame_id, time, rclcpp::Duration::from_seconds(0.5));
   } catch (const tf2::TransformException & ex) {
-    RCLCPP_WARN_THROTTLE(rclcpp::get_logger("pointcloud_processor").get_child(
-      "occupancy_grid_map_outlier_filter"), clock, 5000, "%s", ex.what());
+    RCLCPP_WARN_THROTTLE(
+      rclcpp::get_logger("pointcloud_processor").get_child(
+        "occupancy_grid_map_outlier_filter"), clock, 5000, "%s", ex.what());
   }
   return autoware_utils::transform2pose(tf_stamped);
 }
@@ -103,7 +105,7 @@ RadiusSearch2dfilter::RadiusSearch2dfilter(rclcpp::Node & node)
     "radius_search_2d_filter.min_points_and_distance_ratio", 400.0f);
   min_points_ = node.declare_parameter("radius_search_2d_filter.min_points", 4);
   max_points_ = node.declare_parameter("radius_search_2d_filter.max_points", 70);
-  kd_tree_ = boost::make_shared<pcl::search::KdTree<pcl::PointXY> >(false);
+  kd_tree_ = boost::make_shared<pcl::search::KdTree<pcl::PointXY>>(false);
 }
 
 void RadiusSearch2dfilter::filter(
@@ -193,13 +195,14 @@ OccupancyGridMapOutlierFilterComponent::OccupancyGridMapOutlierFilterComponent(
   occupancy_grid_map_sub_.subscribe(
     this, "~/input/occupancy_grid_map", rclcpp::QoS{1}.get_rmw_qos_profile());
   sync_ptr_ = std::make_shared<Sync>(SyncPolicy(5), occupancy_grid_map_sub_, pointcloud_sub_);
-  sync_ptr_->registerCallback(std::bind(
+  sync_ptr_->registerCallback(
+    std::bind(
       &OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2, this,
       std::placeholders::_1, std::placeholders::_2));
   pointcloud_pub_ = create_publisher<PointCloud2>("~/output/pointcloud", rclcpp::SensorDataQoS());
 
   /* Radius search 2d filter */
-  if(use_radius_search_2d_filter) {
+  if (use_radius_search_2d_filter) {
     radius_search_2d_filter_ptr_ = std::make_shared<RadiusSearch2dfilter>(*this);
   }
   /* debugger */
@@ -211,8 +214,9 @@ void OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2(
 {
   // Transform to occupancy grid map frame
   PointCloud2 ogm_frame_pc{};
-  if(!transformPointcloud(*input_pc, *tf2_, input_ogm->header.frame_id, ogm_frame_pc))
+  if (!transformPointcloud(*input_pc, *tf2_, input_ogm->header.frame_id, ogm_frame_pc)) {
     return;
+  }
   // Occupancy grid map based filter
   PclPointCloud high_confidence_pc{};
   PclPointCloud low_confidence_pc{};
@@ -238,9 +242,11 @@ void OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2(
     auto base_link_frame_filtered_pc_ptr = std::make_unique<PointCloud2>();
     pcl::toROSMsg(concat_pc, ogm_frame_filtered_pc);
     ogm_frame_filtered_pc.header = ogm_frame_pc.header;
-    if(!transformPointcloud(
-      ogm_frame_filtered_pc, *tf2_, base_link_frame_, *base_link_frame_filtered_pc_ptr))
+    if (!transformPointcloud(
+        ogm_frame_filtered_pc, *tf2_, base_link_frame_, *base_link_frame_filtered_pc_ptr))
+    {
       return;
+    }
     auto pc_ptr = std::make_unique<PointCloud2>();
     pointcloud_pub_->publish(std::move(base_link_frame_filtered_pc_ptr));
   }
@@ -257,14 +263,16 @@ void OccupancyGridMapOutlierFilterComponent::filterByOccupancyGridMap(
   PclPointCloud & high_confidence, PclPointCloud & low_confidence)
 {
   for (sensor_msgs::PointCloud2ConstIterator<float> x(pointcloud, "x"), y(pointcloud, "y"),
-       z(pointcloud, "z");
-       x != x.end(); ++x, ++y, ++z) {
+    z(pointcloud, "z");
+    x != x.end(); ++x, ++y, ++z)
+  {
     const auto cost = getCost(occupancy_grid_map, *x, *y);
     if (cost) {
-      if (cost_threshold_ < *cost)
+      if (cost_threshold_ < *cost) {
         high_confidence.push_back(pcl::PointXYZ(*x, *y, *z));
-      else
+      } else {
         low_confidence.push_back(pcl::PointXYZ(*x, *y, *z));
+      }
     } else {
       high_confidence.push_back(pcl::PointXYZ(*x, *y, *z));
     }

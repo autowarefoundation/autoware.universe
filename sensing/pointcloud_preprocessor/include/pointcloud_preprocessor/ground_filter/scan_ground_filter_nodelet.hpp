@@ -40,7 +40,8 @@ private:
   // classified point label
   // (0: not classified, 1: ground, 2: not ground, 3: follow previous point,
   //  4: unkown(currently not used), 5: virtual ground)
-  enum class PointLabel {
+  enum class PointLabel
+  {
     INIT = 0,
     GROUND,
     NON_GROUND,
