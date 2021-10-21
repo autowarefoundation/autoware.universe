@@ -97,6 +97,9 @@ bool getStopPoseFromMap(
   const int lane_id, geometry_msgs::msg::Point * stop_pose,
   const std::shared_ptr<const PlannerData> & planner_data);
 
+std::vector<lanelet::CompoundPolygon3d> getPolygon3dFromLaneletsVec(
+  const std::vector<lanelet::ConstLanelets> & ll_vec, double clip_length);
+
 }  // namespace util
 }  // namespace behavior_velocity_planner
 

@@ -400,9 +400,9 @@ bool getObjectivePolygons(
   const auto & conflicting_lanelets =
     lanelet::utils::getConflictingLanelets(routing_graph_ptr, assigned_lanelet);
 
-  lanelet::ConstLanelets                // conflicting lanes with "lane_id"
-    conflicting_lanelets_ex_yield_ego;  // excluding ego lanes and yield lanes
-  lanelet::ConstLanelets objective_lanelets;  // final objective lanelets
+  std::vector<lanelet::ConstLanelets>   // conflicting lanes with "lane_id"
+  conflicting_lanelets_ex_yield_ego;    // excluding ego lanes and yield lanes
+  std::vector<lanelet::ConstLanelets> objective_lanelets;  // final objective lanelets
 
   // exclude yield lanelets and ego lanelets from objective_lanelets
   for (const auto & conflicting_lanelet : conflicting_lanelets) {
@@ -412,8 +412,8 @@ bool getObjectivePolygons(
     if (lanelet::utils::contains(ego_lanelets, conflicting_lanelet)) {
       continue;
     }
-    conflicting_lanelets_ex_yield_ego.push_back(conflicting_lanelet);
-    objective_lanelets.push_back(conflicting_lanelet);
+    conflicting_lanelets_ex_yield_ego.push_back({conflicting_lanelet});
+    objective_lanelets.push_back({conflicting_lanelet});
   }
 
   // get possible lanelet path that reaches conflicting_lane longer than given length
@@ -421,32 +421,19 @@ bool getObjectivePolygons(
   std::vector<lanelet::ConstLanelets> objective_lanelets_sequences;
   for (const auto & ll : objective_lanelets) {
     auto lanelet_sequences =
-      lanelet::utils::query::getPrecedingLaneletSequences(routing_graph_ptr, ll, length);
+      lanelet::utils::query::getPrecedingLaneletSequences(routing_graph_ptr, ll.front(), length);
     // Preceding lanes does not include objective_lane so add them at the end
-    objective_lanelets_sequences.push_back({ll});
+    objective_lanelets_sequences.push_back(ll);
     for (auto & l : lanelet_sequences) {
       objective_lanelets_sequences.push_back(l);
     }
   }
 
   // get exact polygon of conflicting lanes
-  conflicting_polygons->clear();
-  if (!conflicting_lanelets_ex_yield_ego.empty()) {
-    const double path_length =
-      lanelet::utils::getLaneletLength3d(conflicting_lanelets_ex_yield_ego);
-    const auto polygon3d = lanelet::utils::getPolygonFromArcLength(
-      conflicting_lanelets_ex_yield_ego, path_length - length, path_length);
-    conflicting_polygons->push_back(polygon3d);
-  }
+  *conflicting_polygons = getPolygon3dFromLaneletsVec(conflicting_lanelets_ex_yield_ego, length);
 
   // get exact polygon of interest with exact length
-  objective_polygons->clear();
-  for (const auto & ll : objective_lanelets_sequences) {
-    const double path_length = lanelet::utils::getLaneletLength3d(ll);
-    const auto polygon3d =
-      lanelet::utils::getPolygonFromArcLength(ll, path_length - length, path_length);
-    objective_polygons->push_back(polygon3d);
-  }
+  *objective_polygons = getPolygon3dFromLaneletsVec(objective_lanelets_sequences, length);
 
   std::stringstream ss_c, ss_y, ss_e, ss_o, ss_os;
   for (const auto & l : conflicting_lanelets) {
@@ -459,7 +446,7 @@ bool getObjectivePolygons(
     ss_e << l.id() << ", ";
   }
   for (const auto & l : objective_lanelets) {
-    ss_o << l.id() << ", ";
+    ss_o << l.front().id() << ", ";
   }
   for (const auto & l : objective_lanelets_sequences) {
     for (const auto & ll : l) {
@@ -473,6 +460,19 @@ bool getObjectivePolygons(
     logger, "getObjectivePolygons() object = %s object_sequences = %s", ss_o.str().c_str(),
     ss_os.str().c_str());
   return true;
+}
+
+std::vector<lanelet::CompoundPolygon3d> getPolygon3dFromLaneletsVec(
+  const std::vector<lanelet::ConstLanelets> & ll_vec, double clip_length)
+{
+  std::vector<lanelet::CompoundPolygon3d> p_vec;
+  for (const auto & ll : ll_vec) {
+    const double path_length = lanelet::utils::getLaneletLength3d(ll);
+    const auto polygon3d =
+      lanelet::utils::getPolygonFromArcLength(ll, path_length - clip_length, path_length);
+    p_vec.push_back(polygon3d);
+  }
+  return p_vec;
 }
 
 }  // namespace util
