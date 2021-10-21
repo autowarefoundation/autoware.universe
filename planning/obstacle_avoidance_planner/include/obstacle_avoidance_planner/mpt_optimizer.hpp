@@ -47,6 +47,7 @@
 #include "autoware_planning_msgs/msg/trajectory_point.hpp"
 #include "boost/optional.hpp"
 #include "eigen3/Eigen/Core"
+#include "eigen3/Eigen/Sparse"
 #include "nav_msgs/msg/map_meta_data.hpp"
 #include "obstacle_avoidance_planner/vehicle_model/vehicle_model_interface.hpp"
 
@@ -111,8 +112,8 @@ struct MPTMatrix
   Eigen::MatrixXd Aex;
   Eigen::MatrixXd Bex;
   Eigen::MatrixXd Wex;
-  Eigen::MatrixXd Cex;
-  Eigen::MatrixXd Qex;
+  Eigen::SparseMatrix<double> Cex;
+  Eigen::SparseMatrix<double> Qex;
   Eigen::MatrixXd R1ex;
   Eigen::MatrixXd R2ex;
   Eigen::MatrixXd Uref_ex;
@@ -153,6 +154,8 @@ struct MPTParam
   double terminal_path_lat_error_weight;
   double terminal_path_yaw_error_weight;
   double zero_ff_steer_angle;
+  double current_vel = 0.0;
+  double optimization_center_offset;
 };
 
 class MPTOptimizer
@@ -269,7 +272,9 @@ private:
     const cv::Mat & clearance_map, const geometry_msgs::msg::Point & map_point,
     const nav_msgs::msg::MapMetaData & map_info) const;
 
-  ObjectiveMatrix getObjectiveMatrix(const Eigen::VectorXd & x0, const MPTMatrix & m) const;
+  ObjectiveMatrix getObjectiveMatrix(
+    const std::vector<ReferencePoint> & ref_points,
+    const Eigen::VectorXd & x0, const MPTMatrix & m) const;
 
   ConstraintMatrix getConstraintMatrix(
     const bool enable_avoidance, const Eigen::VectorXd & x0, const MPTMatrix & m,

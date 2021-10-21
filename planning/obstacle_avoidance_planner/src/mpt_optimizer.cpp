@@ -25,7 +25,6 @@
 #include "obstacle_avoidance_planner/process_cv.hpp"
 #include "obstacle_avoidance_planner/util.hpp"
 #include "obstacle_avoidance_planner/vehicle_model/vehicle_model_bicycle_kinematics.hpp"
-#include "obstacle_avoidance_planner/vehicle_model/vehicle_model_bicycle_kinematics_no_delay.hpp"
 #include "opencv2/core.hpp"
 #include "osqp_interface/osqp_interface.hpp"
 #include "tf2/utils.h"
@@ -325,29 +324,29 @@ boost::optional<MPTMatrix> MPTOptimizer::generateMPTMatrix(
   Eigen::MatrixXd Aex = Eigen::MatrixXd::Zero(DIM_X * N, DIM_X);      // state transition
   Eigen::MatrixXd Bex = Eigen::MatrixXd::Zero(DIM_X * N, DIM_U * N);  // control input
   Eigen::MatrixXd Wex = Eigen::MatrixXd::Zero(DIM_X * N, 1);
-  Eigen::MatrixXd Cex = Eigen::MatrixXd::Zero(DIM_Y * N, DIM_X * N);
-  Eigen::MatrixXd Qex = Eigen::MatrixXd::Zero(DIM_Y * N, DIM_Y * N);
   Eigen::MatrixXd R1ex = Eigen::MatrixXd::Zero(DIM_U * N, DIM_U * N);
   Eigen::MatrixXd R2ex = Eigen::MatrixXd::Zero(DIM_U * N, DIM_U * N);
   Eigen::MatrixXd Uref_ex = Eigen::MatrixXd::Zero(DIM_U * N, 1);
 
+  Eigen::SparseMatrix<double> Cex_sparse_mat(DIM_Y * N, DIM_X * N);
+  std::vector<Eigen::Triplet<double>> Cex_triplet_vec;
+
+  Eigen::SparseMatrix<double> Qex_sparse_mat(DIM_Y * N, DIM_Y * N);
+  std::vector<Eigen::Triplet<double>> Qex_triplet_vec;
+
+
   /* weight matrix depends on the vehicle model */
-  Eigen::MatrixXd Q = Eigen::MatrixXd::Zero(DIM_Y, DIM_Y);
+  const double Qex_00 =
+    (!prev_trajs) ? mpt_param_ptr_->lat_error_weight * 1000 : mpt_param_ptr_->lat_error_weight;
+  const double Qex_11 = mpt_param_ptr_->yaw_error_weight;
+
   Eigen::MatrixXd R = Eigen::MatrixXd::Zero(DIM_U, DIM_U);
-  Eigen::MatrixXd Q_adaptive = Eigen::MatrixXd::Zero(DIM_Y, DIM_Y);
-  Eigen::MatrixXd R_adaptive = Eigen::MatrixXd::Zero(DIM_U, DIM_U);
-  Q(0, 0) = mpt_param_ptr_->lat_error_weight;
-  if (!prev_trajs) {
-    const double initial_lat_error_weight = mpt_param_ptr_->lat_error_weight * 1000;
-    Q(0, 0) = initial_lat_error_weight;
-  }
-  Q(1, 1) = mpt_param_ptr_->yaw_error_weight;
   R(0, 0) = mpt_param_ptr_->steer_input_weight;
 
   Eigen::MatrixXd Ad(DIM_X, DIM_X);
   Eigen::MatrixXd Bd(DIM_X, DIM_U);
   Eigen::MatrixXd Wd(DIM_X, 1);
-  Eigen::MatrixXd Cd(DIM_Y, DIM_X);
+  std::vector<Eigen::Triplet<double>> Cd_vec;
   Eigen::MatrixXd Uref(DIM_U, 1);
 
   geometry_msgs::msg::Pose last_ref_pose;
@@ -359,6 +358,11 @@ boost::optional<MPTMatrix> MPTOptimizer::generateMPTMatrix(
 
   /* predict dynamics for N times */
   for (int i = 0; i < N; ++i) {
+    const int idx_x_i = i * DIM_X;
+    const int idx_x_i_prev = (i - 1) * DIM_X;
+    const int idx_u_i = i * DIM_U;
+    const int idx_y_i = i * DIM_Y;
+
     const double ref_k = reference_points[i].k;
     double ds = 0.0;
     if (i < N - 1) {
@@ -368,24 +372,33 @@ boost::optional<MPTMatrix> MPTOptimizer::generateMPTMatrix(
     }
 
     /* get discrete state matrix A, B, C, W */
+    Cd_vec.clear();
     vehicle_model_ptr_->setCurvature(ref_k);
-    vehicle_model_ptr_->calculateDiscreteMatrix(&Ad, &Bd, &Cd, &Wd, ds);
+    vehicle_model_ptr_->calculateStateEquationMatrix(Ad, Bd, Wd, ds);
+    vehicle_model_ptr_->calculateObservationSparseMatrix(Cd_vec);
 
-    Q_adaptive = Q;
-    R_adaptive = R;
-    if (i == N - 1 && last_extended_point) {
-      Q_adaptive(0, 0) = mpt_param_ptr_->terminal_path_lat_error_weight;
-      Q_adaptive(1, 1) = mpt_param_ptr_->terminal_path_yaw_error_weight;
-    } else if (i == N - 1) {
-      Q_adaptive(0, 0) = mpt_param_ptr_->terminal_lat_error_weight;
-      Q_adaptive(1, 1) = mpt_param_ptr_->terminal_yaw_error_weight;
+    // update C
+    for (const auto & Cd : Cd_vec) {
+      Cex_triplet_vec.push_back(
+        Eigen::Triplet<double>(
+          idx_y_i + Cd.row(), idx_x_i + Cd.col(),
+          Cd.value()));
     }
 
+    // update Q
+    double adaptive_Qex_00 = Qex_00;
+    double adaptive_Qex_11 = Qex_11;
+    if (i == N - 1 && last_extended_point) {
+      adaptive_Qex_00 = mpt_param_ptr_->terminal_path_lat_error_weight;
+      adaptive_Qex_11 = mpt_param_ptr_->terminal_path_yaw_error_weight;
+    } else if (i == N - 1) {
+      adaptive_Qex_00 = mpt_param_ptr_->terminal_lat_error_weight;
+      adaptive_Qex_11 = mpt_param_ptr_->terminal_yaw_error_weight;
+    }
+    Qex_triplet_vec.push_back(Eigen::Triplet<double>(idx_y_i, idx_y_i, adaptive_Qex_00));
+    Qex_triplet_vec.push_back(Eigen::Triplet<double>(idx_y_i + 1, idx_y_i + 1, adaptive_Qex_11));
+
     /* update mpt matrix */
-    int idx_x_i = i * DIM_X;
-    int idx_x_i_prev = (i - 1) * DIM_X;
-    int idx_u_i = i * DIM_U;
-    int idx_y_i = i * DIM_Y;
     if (i == 0) {
       Aex.block(0, 0, DIM_X, DIM_X) = Ad;
       Bex.block(0, 0, DIM_X, DIM_U) = Bd;
@@ -400,9 +413,7 @@ boost::optional<MPTMatrix> MPTOptimizer::generateMPTMatrix(
       Wex.block(idx_x_i, 0, DIM_X, 1) = Ad * Wex.block(idx_x_i_prev, 0, DIM_X, 1) + Wd;
     }
     Bex.block(idx_x_i, idx_u_i, DIM_X, DIM_U) = Bd;
-    Cex.block(idx_y_i, idx_x_i, DIM_Y, DIM_X) = Cd;
-    Qex.block(idx_y_i, idx_y_i, DIM_Y, DIM_Y) = Q_adaptive;
-    R1ex.block(idx_u_i, idx_u_i, DIM_U, DIM_U) = R_adaptive;
+    R1ex.block(idx_u_i, idx_u_i, DIM_U, DIM_U) = R;
 
     /* get reference input (feed-forward) */
     vehicle_model_ptr_->calculateReferenceInput(&Uref);
@@ -411,6 +422,8 @@ boost::optional<MPTMatrix> MPTOptimizer::generateMPTMatrix(
     }
     Uref_ex.block(i * DIM_U, 0, DIM_U, 1) = Uref;
   }
+  Cex_sparse_mat.setFromTriplets(Cex_triplet_vec.begin(), Cex_triplet_vec.end());
+  Qex_sparse_mat.setFromTriplets(Qex_triplet_vec.begin(), Qex_triplet_vec.end());
 
   addSteerWeightR(&R1ex, reference_points);
 
@@ -418,14 +431,19 @@ boost::optional<MPTMatrix> MPTOptimizer::generateMPTMatrix(
   m.Aex = Aex;
   m.Bex = Bex;
   m.Wex = Wex;
-  m.Cex = Cex;
-  m.Qex = Qex;
+  m.Cex = Cex_sparse_mat;
+  m.Qex = Qex_sparse_mat;
   m.R1ex = R1ex;
   m.R2ex = R2ex;
   m.Uref_ex = Uref_ex;
+
+  // TODO(murooka) how to check isNan for sparse matrix if needed
   if (
-    m.Aex.array().isNaN().any() || m.Bex.array().isNaN().any() || m.Cex.array().isNaN().any() ||
-    m.Wex.array().isNaN().any() || m.Qex.array().isNaN().any() || m.R1ex.array().isNaN().any() ||
+    m.Aex.array().isNaN().any() || m.Bex.array().isNaN().any()
+    //|| m.Cex.array().isNaN().any()
+    || m.Wex.array().isNaN().any()
+    //|| m.Qex.array().isNaN().any()
+    || m.R1ex.array().isNaN().any() ||
     m.R2ex.array().isNaN().any() || m.Uref_ex.array().isNaN().any())
   {
     RCLCPP_WARN(rclcpp::get_logger("MPTOptimizer"), "[Avoidance] MPT matrix includes NaN.");
@@ -518,7 +536,7 @@ boost::optional<Eigen::VectorXd> MPTOptimizer::executeOptimization(
   auto t_start1 = std::chrono::high_resolution_clock::now();
 
   const auto x0 = ref_points.front().optimized_state;
-  ObjectiveMatrix obj_m = getObjectiveMatrix(x0, m);
+  ObjectiveMatrix obj_m = getObjectiveMatrix(ref_points, x0, m);
   ConstraintMatrix const_m =
     getConstraintMatrix(enable_avoidance, x0, m, maps, ref_points, path_points, debug_data);
 
@@ -629,6 +647,10 @@ std::vector<Bounds> MPTOptimizer::getReferenceBounds(
   std::vector<geometry_msgs::msg::Pose> debug_bounds_candidate_for_mid_points;
   int cnt = 0;
   for (const auto & point : ref_points) {
+    // NOTE: delta_yaw_from_p1 and delta_yaw_from_p2 are the same.
+    const double alpha = point.delta_yaw_from_p1;
+    const auto bounds_quat = util::getQuaternionFromYaw(alpha + point.yaw);
+
     ReferencePoint ref_base_point;
     ref_base_point.p = point.p;
     ref_base_point.yaw = point.yaw;
@@ -643,17 +665,17 @@ std::vector<Bounds> MPTOptimizer::getReferenceBounds(
 
     geometry_msgs::msg::Pose debug_for_base_point;
     debug_for_base_point.position = ref_base_point.p;
-    debug_for_base_point.orientation = point.q;
+    debug_for_base_point.orientation = bounds_quat;
     debug_bounds_candidate_for_base_points.push_back(debug_for_base_point);
 
     geometry_msgs::msg::Pose debug_for_top_point;
     debug_for_top_point.position = ref_top_point.p;
-    debug_for_top_point.orientation = point.top_pose.orientation;
+    debug_for_top_point.orientation = bounds_quat;
     debug_bounds_candidate_for_top_points.push_back(debug_for_top_point);
 
     geometry_msgs::msg::Pose debug_for_mid_point;
     debug_for_mid_point.position = ref_mid_point.p;
-    debug_for_mid_point.orientation = point.top_pose.orientation;
+    debug_for_mid_point.orientation = bounds_quat;
     debug_bounds_candidate_for_mid_points.push_back(debug_for_mid_point);
 
     if (
@@ -781,8 +803,13 @@ boost::optional<std::vector<double>> MPTOptimizer::getRoughBound(
 {
   double left_bound = 0;
   double right_bound = 0;
-  const double left_angle = util::normalizeRadian(ref_point.yaw + M_PI_2);
-  const double right_angle = util::normalizeRadian(ref_point.yaw - M_PI_2);
+
+  // NOTE: delta_yaw_from_p1 and delta_yaw_from_p2 are the same.
+  const double alpha = ref_point.delta_yaw_from_p1;
+  const double global_alpha = alpha + ref_point.yaw;
+
+  const double left_angle = util::normalizeRadian(global_alpha + M_PI_2);
+  const double right_angle = util::normalizeRadian(global_alpha - M_PI_2);
 
   geometry_msgs::msg::Point new_position;
   new_position.x = ref_point.p.x;
@@ -855,10 +882,35 @@ boost::optional<double> MPTOptimizer::getClearance(
 }
 
 ObjectiveMatrix MPTOptimizer::getObjectiveMatrix(
+  const std::vector<ReferencePoint> & ref_points,
   const Eigen::VectorXd & x0, const MPTMatrix & m) const
 {
-  const int DIM_U_N = m.Uref_ex.rows();
-  const Eigen::MatrixXd CB = m.Cex * m.Bex;
+  const size_t DIM_U_N = m.Uref_ex.rows();
+  const size_t DIM_X = vehicle_model_ptr_->getDimX();
+
+  // generate T matrix and vector to shift optimization center
+  //   define Z as time-series vector of shifted deviation error
+  //   Z = sparse_T_mat * (m.Aex * x0 + m.Bex * U + m.Wex) + T_vec
+  Eigen::SparseMatrix<double> sparse_T_mat(DIM_U_N * DIM_X, DIM_U_N * DIM_X);
+  Eigen::VectorXd T_vec = Eigen::VectorXd::Zero(DIM_U_N * DIM_X);
+  std::vector<Eigen::Triplet<double>> triplet_T_vec;
+  const double offset = mpt_param_ptr_->optimization_center_offset;
+
+  for (size_t i = 0; i < DIM_U_N; ++i) {
+    const double alpha = (i == DIM_U_N - 1) ? ref_points[i].delta_yaw_from_p1 :
+      ref_points[i + 1].delta_yaw_from_p1;
+
+    triplet_T_vec.push_back(Eigen::Triplet<double>(i * DIM_X, i * DIM_X, std::cos(alpha)));
+    triplet_T_vec.push_back(
+      Eigen::Triplet<double>(i * DIM_X, i * DIM_X + 1, offset * std::cos(alpha)));
+    triplet_T_vec.push_back(Eigen::Triplet<double>(i * DIM_X + 1, i * DIM_X + 1, 1));
+    triplet_T_vec.push_back(Eigen::Triplet<double>(i * DIM_X + 2, i * DIM_X + 2, 1));
+
+    T_vec(i * DIM_X) = -offset * std::sin(alpha);
+  }
+  sparse_T_mat.setFromTriplets(triplet_T_vec.begin(), triplet_T_vec.end());
+
+  const Eigen::MatrixXd CB = m.Cex * sparse_T_mat * m.Bex;
   const Eigen::MatrixXd QCB = m.Qex * CB;
   // Eigen::MatrixXd H = CB.transpose() * QCB + m.R1ex + m.R2ex;
   // This calculation is heavy. looking for a good way.
@@ -867,7 +919,8 @@ ObjectiveMatrix MPTOptimizer::getObjectiveMatrix(
   H.triangularView<Eigen::Upper>() += m.R1ex + m.R2ex;
   H.triangularView<Eigen::Lower>() = H.transpose();
   Eigen::VectorXd f =
-    (m.Cex * (m.Aex * x0 + m.Wex)).transpose() * QCB - m.Uref_ex.transpose() * m.R1ex;
+    (m.Cex * (sparse_T_mat * (m.Aex * x0 + m.Wex) + T_vec)).transpose() * QCB -
+    m.Uref_ex.transpose() * m.R1ex;
   addSteerWeightF(&f);
 
   constexpr int num_lat_constraint = 3;
@@ -916,155 +969,94 @@ ConstraintMatrix MPTOptimizer::getConstraintMatrix(
   Eigen::VectorXd ub = Eigen::VectorXd::Constant(3 * N_ref * N_point + N_ref, osqp::INF);
 
   // Define constraint matrices and vectors
-  // Gap from reference point around vehicle base_link
-  {
-    // C := [I | O | O]
-    Eigen::MatrixXd C = Eigen::MatrixXd::Zero(N_ref, N_ref * N_state);
-    for (size_t i = 0; i < N_ref; ++i) {
-      C(i, N_state * i) = 1;
-    }
-    // bias := Cast * (Aex * x0 + Wex)
-    Eigen::VectorXd bias = C * (m.Aex * x0 + m.Wex);
-    // A_blk := [C * Bex | I | O | O
-    //          -C * Bex | I | O | O
-    //               O   | I | O | O]
-    Eigen::MatrixXd A_blk = Eigen::MatrixXd::Zero(3 * N_ref, N_dec);
-    A_blk.block(0, 0, N_ref, N_ref) = C * m.Bex;
-    A_blk.block(0, N_ref, N_ref, N_ref) = Eigen::MatrixXd::Identity(N_ref, N_ref);
-    A_blk.block(N_ref, 0, N_ref, N_ref) = -C * m.Bex;
-    A_blk.block(N_ref, N_ref, N_ref, N_ref) = Eigen::MatrixXd::Identity(N_ref, N_ref);
-    A_blk.block(2 * N_ref, N_ref, N_ref, N_ref) = Eigen::MatrixXd::Identity(N_ref, N_ref);
-    // lb_blk := [-bias + bounds.lb
-    //             bias - bounds.ub
-    //             0]
-    Eigen::VectorXd lb_blk = Eigen::VectorXd::Zero(3 * N_ref);
-    for (size_t i = 0; i < N_ref; ++i) {
-      if (i == N_ref - 1) {
-        lb_blk(i) = -bias(i) + bounds[i].c0.lb;
-        lb_blk(N_ref + i) = bias(i) - bounds[i].c0.ub;
-      } else {
-        lb_blk(i) = -bias(i) + bounds[i + 1].c0.lb;
-        lb_blk(N_ref + i) = bias(i) - bounds[i + 1].c0.ub;
-      }
-    }
-    // Assign
-    A.block(0, 0, 3 * N_ref, N_dec) = A_blk;
-    lb.segment(0, 3 * N_ref) = lb_blk;
-  }
+  // Gap from reference point around vehicle base, top, middle in order
+  for (size_t l_idx = 0; l_idx < dist_vec.size(); ++l_idx) {
+    // generate C matrix in form of sparse for fast calculation
+    // C := [cos(alpha1) | l * cos(alpha)| O]
+    Eigen::SparseMatrix<double> C_sparse_mat(N_ref, N_ref * N_state);
+    std::vector<Eigen::Triplet<double>> C_triplet_vec;
 
-  // Gap from reference point around vehicle top
-  {
-    // C := diag([cos(alpha1) | l1*cos(alpha1) | 0])
-    Eigen::MatrixXd C = Eigen::MatrixXd::Zero(N_ref, N_ref * N_state);
+    // update upper matrices
     for (size_t i = 0; i < N_ref; ++i) {
-      Eigen::MatrixXd Cast = Eigen::MatrixXd::Zero(1, N_state);
-      if (i == N_ref - 1) {
-        Cast(0, 0) = std::cos(ref_points[i].delta_yaw_from_p1);
-        Cast(0, 1) = dist_vec[1] * std::cos(ref_points[i].delta_yaw_from_p1);
-      } else {
-        Cast(0, 0) = std::cos(ref_points[i + 1].delta_yaw_from_p1);
-        Cast(0, 1) = dist_vec[1] * std::cos(ref_points[i + 1].delta_yaw_from_p1);
-      }
-      C.block(i, N_state * i, 1, N_state) = Cast;
+      // NOTE: ref_points[i].delta_yaw_from_p1 and ref_points[i].delta_yaw_from_p2 are the same.
+      const double alpha = (i == N_ref - 1) ? ref_points[i].delta_yaw_from_p1 :
+        ref_points[i + 1].delta_yaw_from_p1;
+
+      C_triplet_vec.push_back(Eigen::Triplet<double>(i, i * N_state, std::cos(alpha)));
+      C_triplet_vec.push_back(
+        Eigen::Triplet<double>(i, i * N_state + 1, dist_vec[l_idx] * std::cos(alpha)));
     }
-    // bias := Cast * (Aex * x0 + Wex) - l1 * sin(alpha1)
-    Eigen::VectorXd bias = C * (m.Aex * x0 + m.Wex);
-    for (size_t i = 0; i < N_ref; ++i) {
-      if (i == N_ref - 1) {
-        bias(i) -= dist_vec[1] * std::sin(ref_points[i].delta_yaw_from_p1);
-      } else {
-        bias(i) -= dist_vec[1] * std::sin(ref_points[i + 1].delta_yaw_from_p1);
-      }
-    }
-    // A_blk := [C * Bex | O | I | O
-    //          -C * Bex | O | I | O
-    //               O   | O | I | O]
+    C_sparse_mat.setFromTriplets(C_triplet_vec.begin(), C_triplet_vec.end());
+
+    // A_blk := [C * Bex | (I) | (I) |  (I)
+    //          -C * Bex | (I) | (I) |  (I)
+    //               O   | (I)  | (I) |  (I)]
+    //                   (base) (top) (middle)
+    // NOTE: position of three Is depends on base, top or middle
     Eigen::MatrixXd A_blk = Eigen::MatrixXd::Zero(3 * N_ref, N_dec);
-    A_blk.block(0, 0, N_ref, N_ref) = C * m.Bex;
-    A_blk.block(0, 2 * N_ref, N_ref, N_ref) = Eigen::MatrixXd::Identity(N_ref, N_ref);
-    A_blk.block(N_ref, 0, N_ref, N_ref) = -C * m.Bex;
-    A_blk.block(N_ref, 2 * N_ref, N_ref, N_ref) = Eigen::MatrixXd::Identity(N_ref, N_ref);
-    A_blk.block(2 * N_ref, 2 * N_ref, N_ref, N_ref) = Eigen::MatrixXd::Identity(N_ref, N_ref);
+    const Eigen::MatrixXd CB = C_sparse_mat * m.Bex;
+    A_blk.block(0, 0, N_ref, N_ref) = CB;
+    A_blk.block(N_ref, 0, N_ref, N_ref) = -CB;
+
+    A_blk.block(0, (l_idx + 1) * N_ref, N_ref, N_ref) =
+      Eigen::MatrixXd::Identity(N_ref, N_ref);
+    A_blk.block(N_ref, (l_idx + 1) * N_ref, N_ref, N_ref) =
+      Eigen::MatrixXd::Identity(N_ref, N_ref);
+    A_blk.block(2 * N_ref, (l_idx + 1) * N_ref, N_ref, N_ref) =
+      Eigen::MatrixXd::Identity(N_ref, N_ref);
+
+    // TODO(murooka) use this when l_inf_norm optimization is implemented
+    // const int offset_cols = mpt_param_ptr_->l_inf_norm_mpt ? 0 : l_idx;
+    // A_blk.block(0, (offset_cols + 1) * N_ref, N_ref, N_ref) =
+    //   Eigen::MatrixXd::Identity(N_ref, N_ref);
+    // A_blk.block(N_ref, (offset_cols + 1) * N_ref, N_ref, N_ref) =
+    //   Eigen::MatrixXd::Identity(N_ref, N_ref);
+    // A_blk.block(2 * N_ref, (offset_cols + 1) * N_ref, N_ref, N_ref) =
+    //   Eigen::MatrixXd::Identity(N_ref, N_ref);
+
+    // bias := Cast * (Aex * x0 + Wex) - l * sin(alpha)
+    Eigen::VectorXd bias = C_sparse_mat * (m.Aex * x0 + m.Wex);
+    for (size_t i = 0; i < N_ref; ++i) {
+      // NOTE: ref_points[i].delta_yaw_from_p1 and ref_points[i].delta_yaw_from_p2 are the same.
+      const double alpha = (i == N_ref - 1) ? ref_points[i].delta_yaw_from_p1 :
+        ref_points[i + 1].delta_yaw_from_p1;
+
+      bias(i) -= dist_vec[l_idx] * std::sin(alpha);
+    }
+
     // lb_blk := [-bias + bounds.lb
     //             bias - bounds.ub
     //             0]
     Eigen::VectorXd lb_blk = Eigen::VectorXd::Zero(3 * N_ref);
     for (size_t i = 0; i < N_ref; ++i) {
-      if (i == N_ref - 1) {
-        lb_blk(i) = -bias(i) + bounds[i].c1.lb;
-        lb_blk(N_ref + i) = bias(i) - bounds[i].c1.ub;
-      } else {
-        lb_blk(i) = -bias(i) + bounds[i + 1].c1.lb;
-        lb_blk(N_ref + i) = bias(i) - bounds[i + 1].c1.ub;
-      }
+      const double part_lb = (i == N_ref - 1) ? bounds[i].c0.lb : bounds[i + 1].c0.lb;
+      const double part_ub = (i == N_ref - 1) ? bounds[i].c0.ub : bounds[i + 1].c0.ub;
+
+      const double current_bias = bias(i);
+      lb_blk(i) = -current_bias + part_lb;
+      lb_blk(N_ref + i) = current_bias - part_ub;
     }
+
     // Assign
-    A.block(3 * N_ref, 0, 3 * N_ref, N_dec) = A_blk;
-    lb.segment(3 * N_ref, 3 * N_ref) = lb_blk;
-  }
-  // Gap from reference point around vehicle middle
-  {
-    // C := [diag(cos(alpha2)) | diag(l2*cos(alpha2)) | O]
-    Eigen::MatrixXd C = Eigen::MatrixXd::Zero(N_ref, N_ref * N_state);
-    for (size_t i = 0; i < N_ref; ++i) {
-      Eigen::MatrixXd Cast = Eigen::MatrixXd::Zero(1, N_state);
-      if (i == N_ref - 1) {
-        Cast(0, 0) = std::cos(ref_points[i].delta_yaw_from_p2);
-        Cast(0, 1) = dist_vec[2] * std::cos(ref_points[i].delta_yaw_from_p2);
-      } else {
-        Cast(0, 0) = std::cos(ref_points[i + 1].delta_yaw_from_p2);
-        Cast(0, 1) = dist_vec[2] * std::cos(ref_points[i + 1].delta_yaw_from_p2);
-      }
-      C.block(i, N_state * i, 1, N_state) = Cast;
-    }
-    // bias := Cast * (Aex * x0 + Wex) - l2 * sin(alpha2)
-    Eigen::VectorXd bias = C * (m.Aex * x0 + m.Wex);
-    for (size_t i = 0; i < N_ref; ++i) {
-      if (i == N_ref - 1) {
-        bias(i) -= dist_vec[2] * std::sin(ref_points[i].delta_yaw_from_p2);
-      } else {
-        bias(i) -= dist_vec[2] * std::sin(ref_points[i + 1].delta_yaw_from_p2);
-      }
-    }
-    // A_blk := [C * Bex | O | O | I
-    //          -C * Bex | O | O | I
-    //               O   | O | O | I]
-    Eigen::MatrixXd A_blk = Eigen::MatrixXd::Zero(3 * N_ref, N_dec);
-    A_blk.block(0, 0, N_ref, N_ref) = C * m.Bex;
-    A_blk.block(0, 3 * N_ref, N_ref, N_ref) = Eigen::MatrixXd::Identity(N_ref, N_ref);
-    A_blk.block(N_ref, 0, N_ref, N_ref) = -C * m.Bex;
-    A_blk.block(N_ref, 3 * N_ref, N_ref, N_ref) = Eigen::MatrixXd::Identity(N_ref, N_ref);
-    A_blk.block(2 * N_ref, 3 * N_ref, N_ref, N_ref) = Eigen::MatrixXd::Identity(N_ref, N_ref);
-    // lb_blk := [-bias + bounds.lb
-    //             bias - bounds.ub
-    //             0]
-    Eigen::VectorXd lb_blk = Eigen::VectorXd::Zero(3 * N_ref);
-    for (size_t i = 0; i < N_ref; ++i) {
-      if (i == N_ref - 1) {
-        lb_blk(i) = -bias(i) + bounds[i].c2.lb;
-        lb_blk(N_ref + i) = bias(i) - bounds[i].c2.ub;
-      } else {
-        lb_blk(i) = -bias(i) + bounds[i + 1].c2.lb;
-        lb_blk(N_ref + i) = bias(i) - bounds[i + 1].c2.ub;
-      }
-    }
-    // Assign
-    A.block(2 * 3 * N_ref, 0, 3 * N_ref, N_dec) = A_blk;
-    lb.segment(2 * 3 * N_ref, 3 * N_ref) = lb_blk;
+    A.block(l_idx * 3 * N_ref, 0, 3 * N_ref, N_dec) = A_blk;
+    lb.segment(l_idx * 3 * N_ref, 3 * N_ref) = lb_blk;
   }
 
   // Fixed points constraint
   {
     // C := [I | O | O]
-    Eigen::MatrixXd C = Eigen::MatrixXd::Zero(N_ref, N_ref * N_state);
+    Eigen::SparseMatrix<double> C_sparse_mat(N_ref, N_ref * N_state);
+    std::vector<Eigen::Triplet<double>> C_triplet_vec;
     for (size_t i = 0; i < N_ref; ++i) {
-      C(i, N_state * i) = 1;
+      C_triplet_vec.push_back(Eigen::Triplet<double>(i, N_state * i, 1));
     }
+    C_sparse_mat.setFromTriplets(C_triplet_vec.begin(), C_triplet_vec.end());
+
     // bias := Cast * (Aex * x0 + Wex)
-    Eigen::VectorXd bias = C * (m.Aex * x0 + m.Wex);
+    Eigen::VectorXd bias = C_sparse_mat * (m.Aex * x0 + m.Wex);
 
     // Assign
-    A.block(3 * N_point * N_ref, 0, N_ref, N_ref) = C * m.Bex;
+    A.block(3 * N_point * N_ref, 0, N_ref, N_ref) = C_sparse_mat * m.Bex;
     for (size_t i = 0; i < N_ref; ++i) {
       if (ref_points[i + 1].fix_state && i + 1 < N_ref) {
         lb(3 * N_point * N_ref + i) = ref_points[i + 1].fix_state.get()(0) - bias(i);
@@ -1125,8 +1117,11 @@ std::vector<ReferencePoint> MPTOptimizer::getBaseReferencePoints(
   std::vector<geometry_msgs::msg::Point> fine_interpolated_points;
   fine_interpolated_points =
     util::getInterpolatedPoints(cropped_interpolated_points, fine_resolution);
-  const double max_s =
-    traj_param_ptr_->backward_fixing_distance + traj_param_ptr_->forward_fixing_mpt_distance;
+
+  const double forward_max_s = std::min(
+    mpt_param_ptr_->current_vel * traj_param_ptr_->forward_fixing_mpt_time,
+    traj_param_ptr_->forward_fixing_mpt_min_distance);
+  const double max_s = traj_param_ptr_->backward_fixing_distance + forward_max_s;
   const int num_points = std::min(
     static_cast<int>(reference_points.size()),
     static_cast<int>(max_s / traj_param_ptr_->delta_arc_length_for_mpt_points));

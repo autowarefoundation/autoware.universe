@@ -22,7 +22,9 @@
 #ifndef OBSTACLE_AVOIDANCE_PLANNER__VEHICLE_MODEL__VEHICLE_MODEL_INTERFACE_HPP_
 #define OBSTACLE_AVOIDANCE_PLANNER__VEHICLE_MODEL__VEHICLE_MODEL_INTERFACE_HPP_
 
+#include <vector>
 #include "eigen3/Eigen/Core"
+#include "eigen3/Eigen/Sparse"
 
 /**
  * @class vehicle model class
@@ -76,16 +78,28 @@ public:
   void setCurvature(const double curvature);
 
   /**
-   * @brief calculate discrete model matrix of x_k+1 = Ad * xk + Bd * uk + Wd, yk = Cd * xk
+   * @brief calculate discrete state equation matrix of x_k+1 = Ad * x_k + Bd * uk + Wd
    * @param [out] Ad coefficient matrix
    * @param [out] Bd coefficient matrix
-   * @param [out] Cd coefficient matrix
    * @param [out] Wd coefficient matrix
-   * @param [in] ds Discretization arc length
+   * @param [in] ds discretization arc length
    */
-  virtual void calculateDiscreteMatrix(
-    Eigen::MatrixXd * Ad, Eigen::MatrixXd * Bd, Eigen::MatrixXd * Cd, Eigen::MatrixXd * Wd,
+  virtual void calculateStateEquationMatrix(
+    Eigen::MatrixXd & Ad, Eigen::MatrixXd & Bd, Eigen::MatrixXd & Wd,
     const double ds) = 0;
+
+  /**
+   * @brief calculate discrete observation matrix of y_k = Cd * x_k
+   * @param [out] Cd coefficient matrix
+   */
+  virtual void calculateObservationMatrix(Eigen::MatrixXd & Cd) = 0;
+
+  /**
+   * @brief calculate discrete observation matrix of y_k = Cd * x_k
+   * @param [out] Cd_vec sparse matrix information of coefficient matrix
+   */
+  virtual void calculateObservationSparseMatrix(
+    std::vector<Eigen::Triplet<double>> & Cd_vec) = 0;
 
   /**
    * @brief calculate reference input

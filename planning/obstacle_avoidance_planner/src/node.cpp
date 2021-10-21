@@ -110,7 +110,8 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
     declare_parameter("num_joint_buffer_points_for_extending", 4);
   traj_param_->num_offset_for_begin_idx = declare_parameter("num_offset_for_begin_idx", 2);
   traj_param_->num_fix_points_for_extending = declare_parameter("num_fix_points_for_extending", 2);
-  traj_param_->forward_fixing_mpt_distance = declare_parameter("forward_fixing_mpt_distance", 10);
+  traj_param_->forward_fixing_mpt_min_distance =
+    declare_parameter("forward_fixing_mpt_min_distance", 10);
   traj_param_->delta_arc_length_for_optimization =
     declare_parameter("delta_arc_length_for_optimization", 1.0);
   traj_param_->delta_arc_length_for_mpt_points =
@@ -143,6 +144,7 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
   traj_param_->is_avoiding_motorbike = declare_parameter("avoiding_object_type.motorbike", true);
   traj_param_->is_avoiding_pedestrian = declare_parameter("avoiding_object_type.pedestrian", true);
   traj_param_->is_avoiding_animal = declare_parameter("avoiding_object_type.animal", true);
+  traj_param_->forward_fixing_mpt_time = declare_parameter("forward_fixing_mpt_time", 1.0);
 
   constrain_param_->is_getting_constraints_close2path_points =
     declare_parameter("is_getting_constraints_close2path_points", false);
@@ -217,6 +219,9 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
   mpt_param_->terminal_path_yaw_error_weight =
     declare_parameter("terminal_path_yaw_error_weight", 1000.0);
   mpt_param_->zero_ff_steer_angle = declare_parameter("zero_ff_steer_angle", 0.5);
+  mpt_param_->optimization_center_offset = declare_parameter(
+    "optimization_center_offset",
+    vehicle_param_->wheelbase / 2.0);
 
   mpt_param_->clearance_from_road = vehicle_param_->width * 0.5 +
     constrain_param_->clearance_from_road +
@@ -258,6 +263,7 @@ rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::paramCallback
   update_param("trajectory_length", traj_param_->trajectory_length);
   update_param("forward_fixing_distance", traj_param_->forward_fixing_distance);
   update_param("backward_fixing_distance", traj_param_->backward_fixing_distance);
+  update_param("forward_fixing_mpt_time", traj_param_->forward_fixing_mpt_time);
 
   // clearance for unique points
   update_param("clearance_for_straight_line", constrain_param_->clearance_for_straight_line);
@@ -290,6 +296,9 @@ rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::paramCallback
   update_param("steer_input_weight", mpt_param_->steer_input_weight);
   update_param("steer_rate_weight", mpt_param_->steer_rate_weight);
   update_param("steer_acc_weight", mpt_param_->steer_acc_weight);
+  update_param("optimization_center_offset", mpt_param_->optimization_center_offset);
+
+  initialize();
 
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = true;
@@ -367,6 +376,7 @@ ObstacleAvoidancePlanner::generateOptimizedTrajectory(
   }
   prev_ego_pose_ptr_ = std::make_unique<geometry_msgs::msg::Pose>(ego_pose);
   prev_replanned_time_ptr_ = std::make_unique<rclcpp::Time>(this->now());
+  mpt_param_->current_vel = current_twist_ptr_->twist.linear.x;
 
   DebugData debug_data;
   const auto optional_trajs = eb_path_optimizer_ptr_->generateOptimizedTrajectory(

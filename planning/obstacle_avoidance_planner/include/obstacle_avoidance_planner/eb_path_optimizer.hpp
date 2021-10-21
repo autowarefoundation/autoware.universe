@@ -139,7 +139,8 @@ struct TrajectoryParam
   double delta_yaw_threshold_for_straight;
   double trajectory_length;
   double forward_fixing_distance;
-  double forward_fixing_mpt_distance;
+  double forward_fixing_mpt_min_distance;
+  double forward_fixing_mpt_time;
   double backward_fixing_distance;
   double max_avoiding_ego_velocity_ms;
   double max_avoiding_objects_velocity_ms;

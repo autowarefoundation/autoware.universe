@@ -48,6 +48,8 @@
 #ifndef OBSTACLE_AVOIDANCE_PLANNER__VEHICLE_MODEL__VEHICLE_MODEL_BICYCLE_KINEMATICS_HPP_
 #define OBSTACLE_AVOIDANCE_PLANNER__VEHICLE_MODEL__VEHICLE_MODEL_BICYCLE_KINEMATICS_HPP_
 
+#include <vector>
+
 #include "eigen3/Eigen/Core"
 #include "eigen3/Eigen/LU"
 #include "obstacle_avoidance_planner/vehicle_model/vehicle_model_interface.hpp"
@@ -73,16 +75,28 @@ public:
   virtual ~KinematicsBicycleModel() = default;
 
   /**
-   * @brief calculate discrete model matrix of x_k+1 = Ad * xk + Bd * uk + Wd, yk = Cd * xk
+   * @brief calculate discrete state equation matrix of x_k+1 = Ad * x_k + Bd * uk + Wd
    * @param [out] Ad coefficient matrix
    * @param [out] Bd coefficient matrix
-   * @param [out] Cd coefficient matrix
    * @param [out] Wd coefficient matrix
-   * @param [in] dt Discretization arc length
+   * @param [in] ds discretization arc length
    */
-  void calculateDiscreteMatrix(
-    Eigen::MatrixXd * Ad, Eigen::MatrixXd * Bd, Eigen::MatrixXd * Cd, Eigen::MatrixXd * Wd,
+  void calculateStateEquationMatrix(
+    Eigen::MatrixXd & Ad, Eigen::MatrixXd & Bd, Eigen::MatrixXd & Wd,
     const double ds) override;
+
+  /**
+   * @brief calculate discrete observation matrix of y_k = Cd * x_k
+   * @param [out] Cd coefficient matrix
+   */
+  void calculateObservationMatrix(Eigen::MatrixXd & Cd) override;
+
+  /**
+   * @brief calculate discrete observation matrix of y_k = Cd * x_k
+   * @param [out] Cd_vec sparse matrix information of coefficient matrix
+   */
+  void calculateObservationSparseMatrix(
+    std::vector<Eigen::Triplet<double>> & Cd_vec) override;
 
   /**
    * @brief calculate reference input
