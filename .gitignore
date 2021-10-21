@@ -1,3 +1,7 @@
+# Vim
+*.swp
+*.swo
+
 # VSCode
 .vscode/
 *.code-workspace
