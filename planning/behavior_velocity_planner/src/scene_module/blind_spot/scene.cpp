@@ -248,8 +248,7 @@ bool BlindSpotModule::generateStopLine(
   if (has_prior_stopline || stop_idx_ip == pass_judge_idx_ip) {
     *pass_judge_line_idx = *stop_line_idx;
   } else {
-    const auto inserted_pass_judge_point = path_ip.points.at(pass_judge_idx_ip).point.pose;
-    *pass_judge_line_idx = util::insertPoint(inserted_pass_judge_point, path);
+    *pass_judge_line_idx = insertPoint(pass_judge_idx_ip, path_ip, path);
     ++(*stop_line_idx);  // stop index is incremented by judge line insertion
   }
 

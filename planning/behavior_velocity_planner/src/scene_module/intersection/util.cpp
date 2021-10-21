@@ -54,10 +54,8 @@ int insertPoint(
   inserted_point = inout_path->points.at(closest_idx);
   inserted_point.point.pose = in_pose;
 
-  if (!hasDuplicatedPoint(*inout_path, inserted_point.point.pose.position)) {
-    auto it = inout_path->points.begin() + insert_idx;
-    inout_path->points.insert(it, inserted_point);
-  }
+  auto it = inout_path->points.begin() + insert_idx;
+  inout_path->points.insert(it, inserted_point);
 
   return insert_idx;
 }
@@ -199,13 +197,15 @@ bool hasLaneId(const autoware_planning_msgs::msg::PathPointWithLaneId & p, const
 }
 
 bool hasDuplicatedPoint(
-  const autoware_planning_msgs::msg::PathWithLaneId & path, const geometry_msgs::msg::Point & point)
+  const autoware_planning_msgs::msg::PathWithLaneId & path, const geometry_msgs::msg::Point & point,
+  int * duplicated_point_idx)
 {
-  for (const auto & path_point : path.points) {
-    const auto & p = path_point.point.pose.position;
+  for (size_t i = 0; i < path.points.size(); i++) {
+    const auto & p = path.points.at(i).point.pose.position;
 
     constexpr double min_dist = 0.001;
     if (planning_utils::calcDist2d(p, point) < min_dist) {
+      *duplicated_point_idx = static_cast<int>(i);
       return true;
     }
   }
@@ -297,7 +297,11 @@ bool generateStopLine(
 
   /* insert stop_point */
   const auto inserted_stop_point = path_ip.points.at(stop_idx_ip).point.pose;
-  *stop_line_idx = util::insertPoint(inserted_stop_point, original_path);
+  // if path has too close (= duplicated) point to the stop point, do not insert it
+  // and consider the index of the duplicated point as stop_line_idx
+  if (!util::hasDuplicatedPoint(*original_path, inserted_stop_point.position, stop_line_idx)) {
+    *stop_line_idx = util::insertPoint(inserted_stop_point, original_path);
+  }
 
   /* if another stop point exist before intersection stop_line, disable judge_line. */
   bool has_prior_stopline = false;
@@ -315,8 +319,15 @@ bool generateStopLine(
     *pass_judge_line_idx = *stop_line_idx;
   } else {
     const auto inserted_pass_judge_point = path_ip.points.at(pass_judge_idx_ip).point.pose;
-    *pass_judge_line_idx = util::insertPoint(inserted_pass_judge_point, original_path);
-    ++(*stop_line_idx);  // stop index is incremented by judge line insertion
+    // if path has too close (= duplicated) point to the pass judge point, do not insert it
+    // and consider the index of the duplicated point as pass_judge_line_idx
+    if (!util::hasDuplicatedPoint(
+        *original_path, inserted_pass_judge_point.position,
+        pass_judge_line_idx))
+    {
+      *pass_judge_line_idx = util::insertPoint(inserted_pass_judge_point, original_path);
+      ++(*stop_line_idx);  // stop index is incremented by judge line insertion
+    }
   }
 
   RCLCPP_DEBUG(

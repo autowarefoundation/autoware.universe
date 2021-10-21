@@ -48,8 +48,8 @@ geometry_msgs::msg::Pose getAheadPose(
 bool isAheadOf(const geometry_msgs::msg::Pose & target, const geometry_msgs::msg::Pose & origin);
 bool hasLaneId(const autoware_planning_msgs::msg::PathPointWithLaneId & p, const int id);
 bool hasDuplicatedPoint(
-  const autoware_planning_msgs::msg::PathWithLaneId & path,
-  const geometry_msgs::msg::Point & point);
+  const autoware_planning_msgs::msg::PathWithLaneId & path, const geometry_msgs::msg::Point & point,
+  int * duplicated_point_idx);
 
 /**
    * @brief get objective polygons for detection area
