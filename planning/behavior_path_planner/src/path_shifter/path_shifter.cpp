@@ -294,7 +294,7 @@ bool PathShifter::checkShiftPointsAlignment(const std::vector<ShiftPoint> & shif
   return true;
 }
 
-bool PathShifter::sortShiftPointsAlongPath(const PathWithLaneId & path)
+bool PathShifter::sortShiftPointsAlongPath([[maybe_unused]] const PathWithLaneId & path)
 {
   if (shift_points_.empty()) {
     RCLCPP_DEBUG_STREAM(logger_, "shift_points_ is empty. do nothing.");

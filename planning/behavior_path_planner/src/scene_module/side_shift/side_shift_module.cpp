@@ -273,7 +273,8 @@ PathWithLaneId SideShiftModule::refinePath(
 }
 
 void SideShiftModule::extendDrivableArea(
-  PathWithLaneId & path, double lateral_offset, const RouteHandler & route_handler) const
+  PathWithLaneId & path, double lateral_offset,
+  [[maybe_unused]] const RouteHandler & route_handler) const
 {
   const double resolution = path.drivable_area.info.resolution;
   const double width = path.drivable_area.info.width * resolution;

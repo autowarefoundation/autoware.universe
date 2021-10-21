@@ -52,11 +52,11 @@ void BehaviorTreeManager::registerSceneModule(const std::shared_ptr<SceneModuleI
 
   // simple condition node for "isRequested" and "isReady"
   bt_factory_.registerSimpleCondition(
-    name + "_Request", [this, module, status](BT::TreeNode &) {
+    name + "_Request", [module, status](BT::TreeNode &) {
       return isExecutionRequested(module, status);
     });
   bt_factory_.registerSimpleCondition(
-    name + "_Ready", [this, module, status](BT::TreeNode &) {
+    name + "_Ready", [module, status](BT::TreeNode &) {
       return isExecutionReady(module, status);
     });
 

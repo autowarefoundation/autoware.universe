@@ -653,8 +653,9 @@ bool exists(std::vector<T> vec, T element)
 
 // goal does not have z
 bool setGoal(
-  const double search_radius_range, const double search_rad_range, const PathWithLaneId & input,
-  const Pose & goal, const int64_t goal_lane_id, PathWithLaneId * output_ptr)
+  const double search_radius_range, [[maybe_unused]] const double search_rad_range,
+  const PathWithLaneId & input,
+  const Pose & goal, [[maybe_unused]] const int64_t goal_lane_id, PathWithLaneId * output_ptr)
 {
   try {
     if (input.points.empty()) {

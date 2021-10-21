@@ -69,6 +69,8 @@ public:
   SceneModuleInterface(const std::string & name, rclcpp::Node & node)
   : name_{name}, logger_{node.get_logger().get_child(name)}, clock_{*node.get_clock()} {}
 
+  virtual ~SceneModuleInterface() = default;
+
   /**
    * @brief Return SUCCESS if plan is not needed or plan is successfully finished,
    *        FAILURE if plan has failed, RUNNING if plan is on going.
