@@ -63,6 +63,7 @@ ament_auto_add_library(pointcloud_preprocessor_filter SHARED
   src/passthrough_filter/passthrough_uint16.cpp
   src/pointcloud_accumulator/pointcloud_accumulator_nodelet.cpp
   src/vector_map_filter/lanelet2_map_filter_nodelet.cpp
+  src/distortion_corrector/distortion_corrector.cpp
 )
 
 target_link_libraries(pointcloud_preprocessor_filter
@@ -191,6 +192,13 @@ rclcpp_components_register_node(pointcloud_preprocessor_filter
 rclcpp_components_register_node(pointcloud_preprocessor_filter
   PLUGIN "pointcloud_preprocessor::Lanelet2MapFilterComponent"
   EXECUTABLE vector_map_filter_node)
+
+
+# ========== Distortion Corrector ==========
+rclcpp_components_register_node(pointcloud_preprocessor_filter
+  PLUGIN "pointcloud_preprocessor::DistortionCorrectorComponent"
+  EXECUTABLE distortion_corrector_node)
+
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
