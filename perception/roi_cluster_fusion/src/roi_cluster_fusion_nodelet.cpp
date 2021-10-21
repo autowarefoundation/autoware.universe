@@ -423,9 +423,10 @@ void RoiClusterFusionNodelet::fusionCallback(
       }
       debug_image_rois.push_back(input_roi_msg->feature_objects.at(i).feature.roi);
     }
-
-    debugger_->showImage(
-      id, input_roi_msg->header.stamp, debug_image_rois, debug_pointcloud_rois, debug_image_points);
+    if (debugger_) {
+      debugger_->showImage(
+        id, input_roi_msg->header.stamp, debug_image_rois, debug_pointcloud_rois, debug_image_points);
+    }
   }
   // publish output msg
   labeled_cluster_pub_->publish(output_msg);
