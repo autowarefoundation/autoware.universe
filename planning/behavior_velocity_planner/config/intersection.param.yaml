@@ -11,3 +11,6 @@
       intersection_velocity: 2.778 # 2.778m/s = 10.0km/h
       intersection_max_accel: 0.5 # m/ss
       detection_area_length: 200.0 # [m]
+
+    merge_from_private_road:
+      stop_duration_sec: 1.0

@@ -11,3 +11,4 @@
       walkway:
         stop_line_distance: 1.5 # make stop line away from walkway when no explicit stop line exists
         stop_margin: 1.0
+        stop_duration_sec: 1.0
