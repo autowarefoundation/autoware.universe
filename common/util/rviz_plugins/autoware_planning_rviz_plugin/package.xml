@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<package format="2">
+<package format="3">
 
   <name>autoware_planning_rviz_plugin</name>
   <version>0.1.0</version>
