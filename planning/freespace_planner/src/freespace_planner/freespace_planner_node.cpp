@@ -28,8 +28,6 @@
  * limitations under the License.
  */
 
-#include "freespace_planner/freespace_planner.hpp"
-
 #include <algorithm>
 #include <deque>
 #include <memory>
@@ -37,29 +35,42 @@
 #include <utility>
 #include <vector>
 
+#include "autoware_utils/autoware_utils.hpp"
+#include "freespace_planner/freespace_planner_node.hpp"
+
 namespace
 {
-bool isActive(const autoware_planning_msgs::msg::Scenario::ConstSharedPtr & scenario)
+using autoware_planning_msgs::msg::Scenario;
+using autoware_planning_msgs::msg::Trajectory;
+using autoware_planning_msgs::msg::TrajectoryPoint;
+using freespace_planning_algorithms::AstarSearch;
+using freespace_planning_algorithms::PlannerWaypoint;
+using freespace_planning_algorithms::PlannerWaypoints;
+using geometry_msgs::msg::Accel;
+using geometry_msgs::msg::Pose;
+using geometry_msgs::msg::PoseArray;
+using geometry_msgs::msg::PoseStamped;
+using geometry_msgs::msg::TransformStamped;
+using geometry_msgs::msg::Twist;
+using geometry_msgs::msg::TwistStamped;
+
+bool isActive(const Scenario::ConstSharedPtr & scenario)
 {
   if (!scenario) {
     return false;
   }
 
   const auto & s = scenario->activating_scenarios;
-  if (
-    std::find(std::begin(s), std::end(s), autoware_planning_msgs::msg::Scenario::PARKING) !=
-    std::end(s))
-  {
+  if (std::find(std::begin(s), std::end(s), Scenario::PARKING) != std::end(s)) {
     return true;
   }
 
   return false;
 }
 
-geometry_msgs::msg::PoseArray trajectory2PoseArray(
-  const autoware_planning_msgs::msg::Trajectory & trajectory)
+PoseArray trajectory2PoseArray(const Trajectory & trajectory)
 {
-  geometry_msgs::msg::PoseArray pose_array;
+  PoseArray pose_array;
   pose_array.header = trajectory.header;
 
   for (const auto & point : trajectory.points) {
@@ -69,7 +80,7 @@ geometry_msgs::msg::PoseArray trajectory2PoseArray(
   return pose_array;
 }
 
-std::vector<size_t> getReversingIndices(const autoware_planning_msgs::msg::Trajectory & trajectory)
+std::vector<size_t> getReversingIndices(const Trajectory & trajectory)
 {
   std::vector<size_t> indices;
 
@@ -97,11 +108,10 @@ size_t getNextTargetIndex(
   return trajectory_size - 1;
 }
 
-autoware_planning_msgs::msg::Trajectory getPartialTrajectory(
-  const autoware_planning_msgs::msg::Trajectory & trajectory, const size_t start_index,
-  const size_t end_index)
+Trajectory getPartialTrajectory(
+  const Trajectory & trajectory, const size_t start_index, const size_t end_index)
 {
-  autoware_planning_msgs::msg::Trajectory partial_trajectory;
+  Trajectory partial_trajectory;
   partial_trajectory.header = trajectory.header;
   partial_trajectory.header.stamp = rclcpp::Clock().now();
 
@@ -115,80 +125,45 @@ autoware_planning_msgs::msg::Trajectory getPartialTrajectory(
     partial_trajectory.points.front().twist.linear.x =
       partial_trajectory.points.at(1).twist.linear.x;
   }
-  partial_trajectory.points.back().twist.linear.x = 0;
+  if (!partial_trajectory.points.empty()) {
+    partial_trajectory.points.back().twist.linear.x = 0;
+  }
 
   return partial_trajectory;
 }
 
-double calcDistance2d(const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2)
-{
-  return std::hypot(p1.x - p2.x, p1.y - p2.y);
-}
-
-double calcDistance2d(const geometry_msgs::msg::Pose & p1, const geometry_msgs::msg::Pose & p2)
-{
-  return calcDistance2d(p1.position, p2.position);
-}
-
-std::vector<double> calcDistances2d(
-  const autoware_planning_msgs::msg::Trajectory & trajectory, const geometry_msgs::msg::Pose & pose)
-{
-  std::vector<double> distances;
-  distances.reserve(trajectory.points.size());
-
-  std::transform(
-    std::begin(trajectory.points), std::end(trajectory.points), std::back_inserter(distances),
-    [&](const auto & point) {return calcDistance2d(point.pose.position, pose.position);});
-
-  return distances;
-}
-
 double calcDistance2d(
-  const autoware_planning_msgs::msg::Trajectory & trajectory, const geometry_msgs::msg::Pose & pose)
+  const Trajectory & trajectory, const Pose & pose)
 {
-  const auto distances = calcDistances2d(trajectory, pose);
-  const auto min_itr = std::min_element(std::begin(distances), std::end(distances));
-  return *min_itr;
+  const auto idx = autoware_utils::findNearestIndex(trajectory.points, pose.position);
+  return autoware_utils::calcDistance2d(trajectory.points.at(idx), pose);
 }
 
-geometry_msgs::msg::Pose transformPose(
-  const geometry_msgs::msg::Pose & pose, const geometry_msgs::msg::TransformStamped & transform)
+Pose transformPose(
+  const Pose & pose, const TransformStamped & transform)
 {
-  geometry_msgs::msg::PoseStamped transformed_pose;
-  geometry_msgs::msg::PoseStamped orig_pose;
+  PoseStamped transformed_pose;
+  PoseStamped orig_pose;
   orig_pose.pose = pose;
   tf2::doTransform(orig_pose, transformed_pose, transform);
 
   return transformed_pose.pose;
 }
 
-geometry_msgs::msg::PoseStamped tf2pose(const geometry_msgs::msg::TransformStamped & tf)
-{
-  geometry_msgs::msg::PoseStamped pose;
-
-  pose.header = tf.header;
-  pose.pose.orientation = tf.transform.rotation;
-  pose.pose.position.x = tf.transform.translation.x;
-  pose.pose.position.y = tf.transform.translation.y;
-  pose.pose.position.z = tf.transform.translation.z;
-
-  return pose;
-}
-
-autoware_planning_msgs::msg::Trajectory createTrajectory(
-  const geometry_msgs::msg::PoseStamped & current_pose, const AstarWaypoints & astar_waypoints,
+Trajectory createTrajectory(
+  const PoseStamped & current_pose, const PlannerWaypoints & planner_waypoints,
   const double & velocity)
 {
-  autoware_planning_msgs::msg::Trajectory trajectory;
-  trajectory.header = astar_waypoints.header;
+  Trajectory trajectory;
+  trajectory.header = planner_waypoints.header;
 
-  for (const auto & awp : astar_waypoints.waypoints) {
-    autoware_planning_msgs::msg::TrajectoryPoint point;
+  for (const auto & awp : planner_waypoints.waypoints) {
+    TrajectoryPoint point;
 
     point.pose = awp.pose.pose;
 
-    point.accel = geometry_msgs::msg::Accel();
-    point.twist = geometry_msgs::msg::Twist();
+    point.accel = Accel();
+    point.twist = Twist();
 
     point.pose.position.z = current_pose.pose.position.z;  // height = const
     point.twist.linear.x = velocity / 3.6;                 // velocity = const
@@ -202,11 +177,10 @@ autoware_planning_msgs::msg::Trajectory createTrajectory(
   return trajectory;
 }
 
-autoware_planning_msgs::msg::Trajectory createStopTrajectory(
-  const geometry_msgs::msg::PoseStamped & current_pose)
+Trajectory createStopTrajectory(const PoseStamped & current_pose)
 {
-  AstarWaypoints waypoints;
-  AstarWaypoint waypoint;
+  PlannerWaypoints waypoints;
+  PlannerWaypoint waypoint;
 
   waypoints.header.stamp = rclcpp::Clock().now();
   waypoints.header.frame_id = current_pose.header.frame_id;
@@ -218,16 +192,8 @@ autoware_planning_msgs::msg::Trajectory createStopTrajectory(
   return createTrajectory(current_pose, waypoints, 0.0);
 }
 
-size_t findNearestIndex(
-  const autoware_planning_msgs::msg::Trajectory & trajectory, const geometry_msgs::msg::Pose & pose)
-{
-  const auto distances = calcDistances2d(trajectory, pose);
-  const auto min_itr = std::min_element(std::begin(distances), std::end(distances));
-  return std::distance(std::begin(distances), min_itr);
-}
-
 bool isStopped(
-  const std::deque<geometry_msgs::msg::TwistStamped::ConstSharedPtr> & twist_buffer,
+  const std::deque<TwistStamped::ConstSharedPtr> & twist_buffer,
   const double th_stopped_velocity_mps)
 {
   for (const auto & twist : twist_buffer) {
@@ -240,6 +206,8 @@ bool isStopped(
 
 }  // namespace
 
+namespace freespace_planner
+{
 FreespacePlannerNode::FreespacePlannerNode(const rclcpp::NodeOptions & node_options)
 : Node("freespace_planner", node_options)
 {
@@ -247,80 +215,48 @@ FreespacePlannerNode::FreespacePlannerNode(const rclcpp::NodeOptions & node_opti
 
   // NodeParam
   {
-    node_param_.waypoints_velocity = declare_parameter("waypoints_velocity", 5.0);
-    node_param_.update_rate = declare_parameter("update_rate", 1.0);
-    node_param_.th_arrived_distance_m = declare_parameter("th_arrived_distance_m", 1.0);
-    node_param_.th_stopped_time_sec = declare_parameter("th_stopped_time_sec", 1.0);
-    node_param_.th_stopped_velocity_mps = declare_parameter("th_stopped_velocity_mps", 0.01);
-    node_param_.th_course_out_distance_m = declare_parameter("th_course_out_distance_m", 3.0);
-    node_param_.replan_when_obstacle_found = declare_parameter("replan_when_obstacle_found", true);
-    node_param_.replan_when_course_out = declare_parameter("replan_when_course_out", true);
-    declare_parameter<bool>("is_completed", false);
+    auto & p = node_param_;
+    p.planning_algorithm = declare_parameter("planning_algorithm", "astar");
+    p.waypoints_velocity = declare_parameter("waypoints_velocity", 5.0);
+    p.update_rate = declare_parameter("update_rate", 1.0);
+    p.th_arrived_distance_m = declare_parameter("th_arrived_distance_m", 1.0);
+    p.th_stopped_time_sec = declare_parameter("th_stopped_time_sec", 1.0);
+    p.th_stopped_velocity_mps = declare_parameter("th_stopped_velocity_mps", 0.01);
+    p.th_course_out_distance_m = declare_parameter("th_course_out_distance_m", 3.0);
+    p.replan_when_obstacle_found = declare_parameter("replan_when_obstacle_found", true);
+    p.replan_when_course_out = declare_parameter("replan_when_course_out", true);
+    declare_parameter("is_completed");
   }
 
-  // AstarParam
-  {
-    // base configs
-    astar_param_.use_back = declare_parameter("use_back", true);
-    astar_param_.only_behind_solutions = declare_parameter("only_behind_solutions", false);
-    astar_param_.time_limit = declare_parameter("time_limit", 5000.0);
-
-    // robot configs
-    // TODO(Kenji Miyake): obtain from vehicle_info
-    astar_param_.robot_shape.length = declare_parameter("robot_length", 4.5);
-    astar_param_.robot_shape.width = declare_parameter("robot_width", 1.75);
-    astar_param_.robot_shape.base2back = declare_parameter("robot_base2back", 1.0);
-    astar_param_.minimum_turning_radius = declare_parameter("minimum_turning_radius", 0.5);
-    astar_param_.maximum_turning_radius = declare_parameter("maximum_turning_radius", 6.0);
-    astar_param_.turning_radius_size = declare_parameter("turning_radius_size", 11);
-    astar_param_.maximum_turning_radius = std::max(
-      astar_param_.maximum_turning_radius,
-      astar_param_.minimum_turning_radius);
-    astar_param_.turning_radius_size = std::max(astar_param_.turning_radius_size, 1);
-
-    // search configs
-    astar_param_.theta_size = declare_parameter("theta_size", 48);
-    astar_param_.angle_goal_range = declare_parameter("angle_goal_range", 6.0);
-    astar_param_.curve_weight = declare_parameter("curve_weight", 1.2);
-    astar_param_.reverse_weight = declare_parameter("reverse_weight", 2.00);
-    astar_param_.lateral_goal_range = declare_parameter("lateral_goal_range", 0.5);
-    astar_param_.longitudinal_goal_range = declare_parameter("longitudinal_goal_range", 2.0);
-
-    // costmap configs
-    astar_param_.obstacle_threshold = declare_parameter("obstacle_threshold", 100);
-    astar_param_.distance_heuristic_weight = declare_parameter("distance_heuristic_weight", 1.0);
-  }
+  // Planning
+  getPlanningCommonParam();
+  getAstarParam();
 
   // Subscribers
   {
-    route_sub_ = create_subscription<autoware_planning_msgs::msg::Route>(
-      "~/input/route", rclcpp::QoS{1}, std::bind(&FreespacePlannerNode::onRoute, this, _1));
-    occupancy_grid_sub_ = create_subscription<nav_msgs::msg::OccupancyGrid>(
-      "~/input/occupancy_grid", rclcpp::QoS{1},
-      std::bind(&FreespacePlannerNode::onOccupancyGrid, this, _1));
-    scenario_sub_ = create_subscription<autoware_planning_msgs::msg::Scenario>(
-      "~/input/scenario", rclcpp::QoS{1}, std::bind(&FreespacePlannerNode::onScenario, this, _1));
-    twist_sub_ = create_subscription<geometry_msgs::msg::TwistStamped>(
-      "~/input/twist", rclcpp::QoS{100}, std::bind(&FreespacePlannerNode::onTwist, this, _1));
+    route_sub_ = create_subscription<Route>(
+      "~/input/route", 1, std::bind(&FreespacePlannerNode::onRoute, this, _1));
+    occupancy_grid_sub_ = create_subscription<OccupancyGrid>(
+      "~/input/occupancy_grid", 1, std::bind(&FreespacePlannerNode::onOccupancyGrid, this, _1));
+    scenario_sub_ = create_subscription<Scenario>(
+      "~/input/scenario", 1, std::bind(&FreespacePlannerNode::onScenario, this, _1));
+    twist_sub_ = create_subscription<TwistStamped>(
+      "~/input/twist", 100, std::bind(&FreespacePlannerNode::onTwist, this, _1));
   }
 
   // Publishers
   {
     rclcpp::QoS qos{1};
     qos.transient_local();  // latch
-    trajectory_pub_ =
-      create_publisher<autoware_planning_msgs::msg::Trajectory>("~/output/trajectory", qos);
-    debug_pose_array_pub_ =
-      create_publisher<geometry_msgs::msg::PoseArray>("~/debug/pose_array", qos);
-    debug_partial_pose_array_pub_ =
-      create_publisher<geometry_msgs::msg::PoseArray>("~/debug/partial_pose_array", qos);
+    trajectory_pub_ = create_publisher<Trajectory>("~/output/trajectory", qos);
+    debug_pose_array_pub_ = create_publisher<PoseArray>("~/debug/pose_array", qos);
+    debug_partial_pose_array_pub_ = create_publisher<PoseArray>("~/debug/partial_pose_array", qos);
   }
 
   // TF
   {
     tf_buffer_ = std::make_shared<tf2_ros::Buffer>(get_clock());
-    tf_listener_ = std::make_shared<tf2_ros::TransformListener>(
-      *tf_buffer_, std::shared_ptr<rclcpp::Node>(this, [](auto) {}), false);
+    tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
   }
 
   // Timer
@@ -333,7 +269,48 @@ FreespacePlannerNode::FreespacePlannerNode(const rclcpp::NodeOptions & node_opti
   }
 }
 
-void FreespacePlannerNode::onRoute(const autoware_planning_msgs::msg::Route::ConstSharedPtr msg)
+void FreespacePlannerNode::getPlanningCommonParam()
+{
+  auto & p = planner_common_param_;
+
+  // base configs
+  p.time_limit = declare_parameter("time_limit", 5000.0);
+
+  // robot configs
+  // TODO(Kenji Miyake): obtain from vehicle_info
+  p.vehicle_shape.length = declare_parameter("robot_length", 4.5);
+  p.vehicle_shape.width = declare_parameter("robot_width", 1.75);
+  p.vehicle_shape.base2back = declare_parameter("robot_base2back", 1.0);
+  p.minimum_turning_radius = declare_parameter("minimum_turning_radius", 0.5);
+  p.maximum_turning_radius = declare_parameter("maximum_turning_radius", 6.0);
+  p.turning_radius_size = declare_parameter("turning_radius_size", 11);
+  p.maximum_turning_radius = std::max(
+    p.maximum_turning_radius,
+    p.minimum_turning_radius);
+  p.turning_radius_size = std::max(p.turning_radius_size, 1);
+
+  // search configs
+  p.theta_size = declare_parameter("theta_size", 48);
+  p.angle_goal_range = declare_parameter("angle_goal_range", 6.0);
+  p.curve_weight = declare_parameter("curve_weight", 1.2);
+  p.reverse_weight = declare_parameter("reverse_weight", 2.00);
+  p.lateral_goal_range = declare_parameter("lateral_goal_range", 0.5);
+  p.longitudinal_goal_range =
+    declare_parameter("longitudinal_goal_range", 2.0);
+
+  // costmap configs
+  p.obstacle_threshold = declare_parameter("obstacle_threshold", 100);
+}
+
+void FreespacePlannerNode::getAstarParam()
+{
+  auto & p = astar_param_;
+  p.only_behind_solutions = declare_parameter("astar.only_behind_solutions", false);
+  p.use_back = declare_parameter("astar.use_back", true);
+  p.distance_heuristic_weight = declare_parameter("astar.distance_heuristic_weight", 1.0);
+}
+
+void FreespacePlannerNode::onRoute(const Route::ConstSharedPtr msg)
 {
   route_ = msg;
 
@@ -343,18 +320,18 @@ void FreespacePlannerNode::onRoute(const autoware_planning_msgs::msg::Route::Con
   reset();
 }
 
-void FreespacePlannerNode::onOccupancyGrid(const nav_msgs::msg::OccupancyGrid::ConstSharedPtr msg)
+void FreespacePlannerNode::onOccupancyGrid(const OccupancyGrid::ConstSharedPtr msg)
 {
   occupancy_grid_ = msg;
 }
 
 void FreespacePlannerNode::onScenario(
-  const autoware_planning_msgs::msg::Scenario::ConstSharedPtr msg)
+  const Scenario::ConstSharedPtr msg)
 {
   scenario_ = msg;
 }
 
-void FreespacePlannerNode::onTwist(const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg)
+void FreespacePlannerNode::onTwist(const TwistStamped::ConstSharedPtr msg)
 {
   twist_ = msg;
 
@@ -380,14 +357,17 @@ bool FreespacePlannerNode::isPlanRequired()
   }
 
   if (node_param_.replan_when_obstacle_found) {
-    astar_.reset(new AstarSearch(astar_param_));
-    astar_->initializeNodes(*occupancy_grid_);
+    algo_->setMap(*occupancy_grid_);
 
-    const auto nearest_index = findNearestIndex(trajectory_, current_pose_.pose);
-    const auto forward_trajectory = getPartialTrajectory(trajectory_, nearest_index, target_index_);
+    const size_t nearest_index_partial =
+      autoware_utils::findNearestIndex(partial_trajectory_.points, current_pose_.pose.position);
+    const size_t end_index_partial = partial_trajectory_.points.size() - 1;
+
+    const auto forward_trajectory =
+      getPartialTrajectory(partial_trajectory_, nearest_index_partial, end_index_partial);
 
     const bool is_obstacle_found =
-      astar_->hasObstacleOnTrajectory(trajectory2PoseArray(forward_trajectory));
+      algo_->hasObstacleOnTrajectory(trajectory2PoseArray(forward_trajectory));
     if (is_obstacle_found) {
       RCLCPP_INFO(get_logger(), "Found obstacle");
       return true;
@@ -409,7 +389,7 @@ bool FreespacePlannerNode::isPlanRequired()
 void FreespacePlannerNode::updateTargetIndex()
 {
   const auto is_near_target =
-    calcDistance2d(trajectory_.points.at(target_index_).pose, current_pose_.pose) <
+    autoware_utils::calcDistance2d(trajectory_.points.at(target_index_), current_pose_) <
     node_param_.th_arrived_distance_m;
 
   const auto is_stopped = isStopped(twist_buffer_, node_param_.th_stopped_velocity_mps);
@@ -423,7 +403,7 @@ void FreespacePlannerNode::updateTargetIndex()
       is_completed_ = true;
       this->set_parameter(rclcpp::Parameter("is_completed", true));
       RCLCPP_INFO_THROTTLE(
-        get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(), "Astar completed");
+        get_logger(), *get_clock(), 1000, "Freespace planning completed");
     } else {
       // Switch to next partial trajectory
       prev_target_index_ = target_index_;
@@ -451,11 +431,13 @@ void FreespacePlannerNode::onTimer()
 
   // Get current pose
   constexpr const char * vehicle_frame = "base_link";
-  current_pose_ = tf2pose(getTransform(occupancy_grid_->header.frame_id, vehicle_frame));
+  current_pose_ =
+    autoware_utils::transform2pose(getTransform(occupancy_grid_->header.frame_id, vehicle_frame));
   if (current_pose_.header.frame_id == "") {
     return;
   }
 
+  initializePlanningAlgorithm();
   if (isPlanRequired()) {
     reset();
 
@@ -487,16 +469,16 @@ void FreespacePlannerNode::onTimer()
 void FreespacePlannerNode::planTrajectory()
 {
   // Extend robot shape
-  RobotShape extended_robot_shape = astar_param_.robot_shape;
+  freespace_planning_algorithms::VehicleShape extended_vehicle_shape =
+    planner_common_param_.vehicle_shape;
   constexpr double margin = 1.0;
-  extended_robot_shape.length += margin;
-  extended_robot_shape.width += margin;
-  extended_robot_shape.base2back += margin / 2;
+  extended_vehicle_shape.length += margin;
+  extended_vehicle_shape.width += margin;
+  extended_vehicle_shape.base2back += margin / 2;
 
-  // initialize vector for A* search, this runs only once
-  astar_.reset(new AstarSearch(astar_param_));
-  astar_->setRobotShape(extended_robot_shape);
-  astar_->initializeNodes(*occupancy_grid_);
+  // Provide robot shape and map for the planner
+  algo_->setVehicleShape(extended_vehicle_shape);
+  algo_->setMap(*occupancy_grid_);
 
   // Calculate poses in costmap frame
   const auto current_pose_in_costmap_frame = transformPose(
@@ -506,17 +488,17 @@ void FreespacePlannerNode::planTrajectory()
   const auto goal_pose_in_costmap_frame = transformPose(
     goal_pose_.pose, getTransform(occupancy_grid_->header.frame_id, goal_pose_.header.frame_id));
 
-  // execute astar search
+  // execute planning
   const rclcpp::Time start = get_clock()->now();
-  const bool result = astar_->makePlan(current_pose_in_costmap_frame, goal_pose_in_costmap_frame);
+  const bool result = algo_->makePlan(current_pose_in_costmap_frame, goal_pose_in_costmap_frame);
   const rclcpp::Time end = get_clock()->now();
 
-  RCLCPP_INFO(get_logger(), "Astar planning: %f [s]", (end - start).seconds());
+  RCLCPP_INFO(get_logger(), "Freespace planning: %f [s]", (end - start).seconds());
 
   if (result) {
     RCLCPP_INFO(get_logger(), "Found goal!");
     trajectory_ =
-      createTrajectory(current_pose_, astar_->getWaypoints(), node_param_.waypoints_velocity);
+      createTrajectory(current_pose_, algo_->getWaypoints(), node_param_.waypoints_velocity);
     reversing_indices_ = getReversingIndices(trajectory_);
     prev_target_index_ = 0;
     target_index_ =
@@ -530,16 +512,16 @@ void FreespacePlannerNode::planTrajectory()
 
 void FreespacePlannerNode::reset()
 {
-  trajectory_ = autoware_planning_msgs::msg::Trajectory();
-  partial_trajectory_ = autoware_planning_msgs::msg::Trajectory();
+  trajectory_ = Trajectory();
+  partial_trajectory_ = Trajectory();
   is_completed_ = false;
   this->set_parameter(rclcpp::Parameter("is_completed", false));
 }
 
-geometry_msgs::msg::TransformStamped FreespacePlannerNode::getTransform(
+TransformStamped FreespacePlannerNode::getTransform(
   const std::string & from, const std::string & to)
 {
-  geometry_msgs::msg::TransformStamped tf;
+  TransformStamped tf;
   try {
     tf =
       tf_buffer_->lookupTransform(from, to, rclcpp::Time(0), rclcpp::Duration::from_seconds(1.0));
@@ -549,5 +531,16 @@ geometry_msgs::msg::TransformStamped FreespacePlannerNode::getTransform(
   return tf;
 }
 
+void FreespacePlannerNode::initializePlanningAlgorithm()
+{
+  if (node_param_.planning_algorithm == "astar") {
+    algo_.reset(new AstarSearch(planner_common_param_, astar_param_));
+  } else {
+    throw std::runtime_error(
+            "No such algorithm named " + node_param_.planning_algorithm + " exists.");
+  }
+}
+}  // namespace freespace_planner
+
 #include "rclcpp_components/register_node_macro.hpp"
-RCLCPP_COMPONENTS_REGISTER_NODE(FreespacePlannerNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(freespace_planner::FreespacePlannerNode)

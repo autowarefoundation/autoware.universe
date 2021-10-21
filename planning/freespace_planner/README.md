@@ -2,8 +2,10 @@
 
 ## freespace_planner_node
 
-`freespace_planner_node` is a global path planner node that plans trajectory in the space having static/dynamic obstacles.  
-This node is based on Hybrid A\* search algorithm in `astar_search` package.
+`freespace_planner_node` is a global path planner node that plans trajectory
+in the space having static/dynamic obstacles. This node is currently based on
+Hybrid A\* search algorithm in `freespace_planning_algorithms` package.
+Other algorithms such as rrt\* will be also added and selectable in the future.
 
 **Note**
 Due to the constraint of trajectory following, the output trajectory will be split to include only the single direction path.
@@ -49,24 +51,30 @@ None
 | `replan_when_obstacle_found` | bool   | whether replanning when obstacle has found on the trajectory                    |
 | `replan_when_course_out`     | bool   | whether replanning when vehicle is out of course                                |
 
+#### Planner common parameters
+
+| Parameter                 | Type   | Description                                        |
+| ------------------------- | ------ | -------------------------------------------------- |
+| `planning_algorithms`     | string | algorithms used in the node                        |
+| `time_limit`              | double | time limit of planning                             |
+| `robot_length`            | double | robot length                                       |
+| `robot_width`             | double | robot width                                        |
+| `robot_base2back`         | double | distance from robot's back to robot's base_link    |
+| `minimum_turning_radius`  | double | minimum turning radius of robot                    |
+| `theta_size`              | double | the number of angle's discretization               |
+| `lateral_goal_range`      | double | goal range of lateral position                     |
+| `longitudinal_goal_range` | double | goal range of longitudinal position                |
+| `angle_goal_range`        | double | goal range of angle                                |
+| `curve_weight`            | double | additional cost factor for curve actions           |
+| `reverse_weight`          | double | additional cost factor for reverse actions         |
+| `obstacle_threshold`      | double | threshold for regarding a certain grid as obstacle |
+
 #### A\* search parameters
 
 | Parameter                   | Type   | Description                                             |
 | --------------------------- | ------ | ------------------------------------------------------- |
-| `use_back`                  | bool   | whether using backward trajectory                       |
 | `only_behind_solutions`     | bool   | whether restricting the solutions to be behind the goal |
-| `time_limit`                | double | time limit of planning                                  |
-| `robot_length`              | double | robot length                                            |
-| `robot_width`               | double | robot width                                             |
-| `robot_base2back`           | double | distance from robot's back to robot's base_link         |
-| `minimum_turning_radius`    | double | minimum turning radius of robot                         |
-| `theta_size`                | double | the number of angle's discretization                    |
-| `lateral_goal_range`        | double | goal range of lateral position                          |
-| `longitudinal_goal_range`   | double | goal range of longitudinal position                     |
-| `angle_goal_range`          | double | goal range of angle                                     |
-| `curve_weight`              | double | additional cost factor for curve actions                |
-| `reverse_weight`            | double | additional cost factor for reverse actions              |
-| `obstacle_threshold`        | double | threshold for regarding a certain grid as obstacle      |
+| `use_back`                  | bool   | whether using backward trajectory                       |
 | `distance_heuristic_weight` | double | heuristic weight for estimating node's cost             |
 
 ### Flowchart

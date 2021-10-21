@@ -18,7 +18,7 @@ ament_auto_add_library(freespace_planner_node SHARED
 )
 
 rclcpp_components_register_node(freespace_planner_node
-  PLUGIN "FreespacePlannerNode"
+  PLUGIN "freespace_planner::FreespacePlannerNode"
   EXECUTABLE freespace_planner
 )
 

@@ -1,6 +1,7 @@
 /**:
   ros__parameters:
     # -- Node Configurations --
+    planning_algorithm: "astar"
     waypoints_velocity: 5.0
     update_rate: 10.0
     th_arrived_distance_m: 1.0
@@ -10,10 +11,8 @@
     replan_when_obstacle_found: true
     replan_when_course_out: true
 
-    # -- A* search Configurations --
+    # -- Configurations common to the all planners --
     # base configs
-    use_back: true
-    only_behind_solutions: false
     time_limit: 30000.0
     # robot configs # TODO replace by vehicle_info
     robot_length: 4.5
@@ -31,4 +30,9 @@
     longitudinal_goal_range: 2.0
     # costmap configs
     obstacle_threshold: 100
-    distance_heuristic_weight: 1.0
+
+    # -- A* search Configurations --
+    astar:
+      only_behind_solutions: false
+      use_back: true
+      distance_heuristic_weight: 1.0
