@@ -65,7 +65,7 @@ struct PlannerData
 
   // msgs from callbacks that are used for data-ready
   geometry_msgs::msg::TwistStamped::ConstSharedPtr current_velocity;
-  double current_accel;
+  boost::optional<double> current_accel;
   static constexpr double velocity_buffer_time_sec = 10.0;
   std::deque<geometry_msgs::msg::TwistStamped> velocity_buffer;
   autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr dynamic_objects;
@@ -145,26 +145,39 @@ struct PlannerData
   }
 
 private:
-  double prev_accel_;
+  boost::optional<double> prev_accel_;
   geometry_msgs::msg::TwistStamped::ConstSharedPtr prev_velocity_;
   double accel_lowpass_gain_;
 
   void updateCurrentAcc()
   {
-    if (prev_velocity_) {
-      const double dv = current_velocity->twist.linear.x - prev_velocity_->twist.linear.x;
-      const double dt =
-        std::max(
-        (rclcpp::Time(current_velocity->header.stamp) -
-        rclcpp::Time(prev_velocity_->header.stamp)).seconds(), 1e-03);
-      const double accel = dv / dt;
-      // apply lowpass filter
-      current_accel = accel_lowpass_gain_ * accel + (1.0 - accel_lowpass_gain_) * prev_accel_;
-    } else {
-      current_accel = 0.0;
+    current_accel = {};
+
+    if (!current_velocity) {
+      return;
     }
 
+    if (!prev_velocity_) {
+      prev_velocity_ = current_velocity;
+      return;
+    }
+
+    const double dv = current_velocity->twist.linear.x - prev_velocity_->twist.linear.x;
+    const double dt =
+      std::max(
+      (rclcpp::Time(current_velocity->header.stamp) -
+      rclcpp::Time(prev_velocity_->header.stamp)).seconds(), 1e-03);
+
+    const double accel = dv / dt;
     prev_velocity_ = current_velocity;
+
+    if (!prev_accel_) {
+      prev_accel_ = accel;
+      return;
+    }
+    // apply lowpass filter
+    current_accel = accel_lowpass_gain_ * accel + (1.0 - accel_lowpass_gain_) * prev_accel_.get();
+
     prev_accel_ = current_accel;
   }
   friend BehaviorVelocityPlannerNode;
