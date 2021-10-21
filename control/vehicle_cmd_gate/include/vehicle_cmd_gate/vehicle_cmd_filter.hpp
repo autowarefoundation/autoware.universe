@@ -31,13 +31,15 @@ public:
   void setLatJerkLim(double v) {lat_jerk_lim_ = v;}
   void setPrevCmd(const autoware_control_msgs::msg::ControlCommand & v) {prev_cmd_ = v;}
 
-  void limitLongitudinalWithVel(autoware_control_msgs::msg::ControlCommand & input);
+  void limitLongitudinalWithVel(autoware_control_msgs::msg::ControlCommand & input) const;
   void limitLongitudinalWithAcc(
-    const double dt, autoware_control_msgs::msg::ControlCommand & input);
+    const double dt, autoware_control_msgs::msg::ControlCommand & input) const;
   void limitLongitudinalWithJerk(
-    const double dt, autoware_control_msgs::msg::ControlCommand & input);
-  void limitLateralWithLatAcc(const double dt, autoware_control_msgs::msg::ControlCommand & input);
-  void limitLateralWithLatJerk(const double dt, autoware_control_msgs::msg::ControlCommand & input);
+    const double dt, autoware_control_msgs::msg::ControlCommand & input) const;
+  void limitLateralWithLatAcc(
+    const double dt, autoware_control_msgs::msg::ControlCommand & input) const;
+  void limitLateralWithLatJerk(
+    const double dt, autoware_control_msgs::msg::ControlCommand & input) const;
 
 private:
   double wheel_base_;
@@ -48,8 +50,9 @@ private:
   double lat_jerk_lim_;
   autoware_control_msgs::msg::ControlCommand prev_cmd_;
 
-  double calcLatAcc(const autoware_control_msgs::msg::ControlCommand & cmd);
-  double limitDiff(const double curr, const double prev, const double diff_lim);
+  double calcLatAcc(const autoware_control_msgs::msg::ControlCommand & cmd) const;
+  double calcSteerFromLatacc(const double v, const double latacc) const;
+  double limitDiff(const double curr, const double prev, const double diff_lim) const;
 };
 
 #endif  // VEHICLE_CMD_GATE__VEHICLE_CMD_FILTER_HPP_

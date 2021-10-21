@@ -18,27 +18,28 @@
 
 VehicleCmdFilter::VehicleCmdFilter() {}
 
-void VehicleCmdFilter::limitLongitudinalWithVel(autoware_control_msgs::msg::ControlCommand & input)
+void VehicleCmdFilter::limitLongitudinalWithVel(
+  autoware_control_msgs::msg::ControlCommand & input) const
 {
   input.velocity = std::max(std::min(input.velocity, vel_lim_), -vel_lim_);
 }
 
 void VehicleCmdFilter::limitLongitudinalWithAcc(
-  const double dt, autoware_control_msgs::msg::ControlCommand & input)
+  const double dt, autoware_control_msgs::msg::ControlCommand & input) const
 {
   input.acceleration = std::max(std::min(input.acceleration, lon_acc_lim_), -lon_acc_lim_);
   input.velocity = limitDiff(input.velocity, prev_cmd_.velocity, lon_acc_lim_ * dt);
 }
 
 void VehicleCmdFilter::VehicleCmdFilter::limitLongitudinalWithJerk(
-  const double dt, autoware_control_msgs::msg::ControlCommand & input)
+  const double dt, autoware_control_msgs::msg::ControlCommand & input) const
 {
   input.acceleration = limitDiff(input.acceleration, prev_cmd_.acceleration, lon_jerk_lim_ * dt);
 }
 
 void VehicleCmdFilter::limitLateralWithLatAcc(
   [[maybe_unused]] const double dt,
-  autoware_control_msgs::msg::ControlCommand & input)
+  autoware_control_msgs::msg::ControlCommand & input) const
 {
   double latacc = calcLatAcc(input);
   if (std::fabs(latacc) > lat_acc_lim_) {
@@ -49,25 +50,35 @@ void VehicleCmdFilter::limitLateralWithLatAcc(
 }
 
 void VehicleCmdFilter::limitLateralWithLatJerk(
-  const double dt, autoware_control_msgs::msg::ControlCommand & input)
+  const double dt, autoware_control_msgs::msg::ControlCommand & input) const
 {
   double curr_latacc = calcLatAcc(input);
   double prev_latacc = calcLatAcc(prev_cmd_);
-  double latacc_lim = limitDiff(curr_latacc, prev_latacc, lat_jerk_lim_ * dt);
-  if (std::fabs(curr_latacc) > std::fabs(latacc_lim)) {
-    double v_sq = std::max(input.velocity * input.velocity, 0.001);
-    double steer_lim = std::atan(std::fabs(latacc_lim) * wheel_base_ / v_sq);
-    input.steering_angle = curr_latacc > 0.0 ? steer_lim : -steer_lim;
+
+  const double latacc_max = prev_latacc + lat_jerk_lim_ * dt;
+  const double latacc_min = prev_latacc - lat_jerk_lim_ * dt;
+
+  if (curr_latacc > latacc_max) {
+    input.steering_angle = calcSteerFromLatacc(input.velocity, latacc_max);
+  } else if (curr_latacc < latacc_min) {
+    input.steering_angle = calcSteerFromLatacc(input.velocity, latacc_min);
   }
 }
 
-double VehicleCmdFilter::calcLatAcc(const autoware_control_msgs::msg::ControlCommand & cmd)
+double VehicleCmdFilter::calcSteerFromLatacc(const double v, const double latacc) const
+{
+  const double v_sq = std::max(v * v, 0.001);
+  return std::atan(latacc * wheel_base_ / v_sq);
+}
+
+double VehicleCmdFilter::calcLatAcc(const autoware_control_msgs::msg::ControlCommand & cmd) const
 {
   double v = cmd.velocity;
   return v * v * std::tan(cmd.steering_angle) / wheel_base_;
 }
 
-double VehicleCmdFilter::limitDiff(const double curr, const double prev, const double diff_lim)
+double VehicleCmdFilter::limitDiff(
+  const double curr, const double prev, const double diff_lim) const
 {
   double diff = std::max(std::min(curr - prev, diff_lim), -diff_lim);
   return prev + diff;

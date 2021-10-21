@@ -48,8 +48,7 @@ const char * getGateModeName(const autoware_control_msgs::msg::GateMode::_data_t
 }  // namespace
 
 VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
-: Node("vehicle_cmd_gate", node_options),
-  is_engaged_(false), updater_(this)
+: Node("vehicle_cmd_gate", node_options), is_engaged_(false), updater_(this)
 {
   using namespace std::placeholders;
 

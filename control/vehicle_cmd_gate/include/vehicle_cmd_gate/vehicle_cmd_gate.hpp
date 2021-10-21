@@ -36,8 +36,8 @@
 #include "autoware_vehicle_msgs/msg/vehicle_command.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
 
-#include "vehicle_cmd_gate/vehicle_cmd_filter.hpp"
 #include "std_srvs/srv/trigger.hpp"
+#include "vehicle_cmd_gate/vehicle_cmd_filter.hpp"
 
 struct Commands
 {

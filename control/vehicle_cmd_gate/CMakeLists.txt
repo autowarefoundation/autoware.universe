@@ -29,6 +29,18 @@ rclcpp_components_register_node(vehicle_cmd_gate_node
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
+
+  ament_add_gtest(test_vehicle_cmd_gate
+    test/src/test_main.cpp
+    test/src/test_vehicle_cmd_filter.cpp
+  )
+  ament_target_dependencies(test_vehicle_cmd_gate
+    rclcpp
+    autoware_control_msgs
+  )
+  target_link_libraries(test_vehicle_cmd_gate
+    vehicle_cmd_gate_node
+  )
 endif()
 
 ament_auto_package(
