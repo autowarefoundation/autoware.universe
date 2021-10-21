@@ -487,6 +487,35 @@ TEST(trajectory, calcSignedArcLengthFromPointToIndex)
   EXPECT_NEAR(calcSignedArcLength(traj.points, createPoint(4.3, 7.0, 0.0), 2), -2.3, epsilon);
 }
 
+TEST(trajectory, calcSignedArcLengthFromIndexToPoint)
+{
+  using autoware_utils::calcSignedArcLength;
+
+  const auto traj = generateTestTrajectory<Trajectory>(10, 1.0);
+
+  // Empty
+  EXPECT_THROW(calcSignedArcLength(Trajectory{}.points, {}, {}), std::invalid_argument);
+
+  // Same point
+  EXPECT_NEAR(calcSignedArcLength(traj.points, 3, createPoint(3.0, 0.0, 0.0)), 0, epsilon);
+
+  // Forward
+  EXPECT_NEAR(calcSignedArcLength(traj.points, 0, createPoint(3.0, 0.0, 0.0)), 3, epsilon);
+
+  // Backward
+  EXPECT_NEAR(calcSignedArcLength(traj.points, 9, createPoint(5.0, 0.0, 0.0)), -4, epsilon);
+
+  // Point before start point
+  EXPECT_NEAR(calcSignedArcLength(traj.points, 6, createPoint(-3.9, 3.0, 0.0)), -9.9, epsilon);
+
+  // Point after end point
+  EXPECT_NEAR(calcSignedArcLength(traj.points, 7, createPoint(13.3, -10.0, 0.0)), 6.3, epsilon);
+
+  // Random cases
+  EXPECT_NEAR(calcSignedArcLength(traj.points, 1, createPoint(9.0, 3.0, 0.0)), 8, epsilon);
+  EXPECT_NEAR(calcSignedArcLength(traj.points, 4, createPoint(1.7, 7.0, 0.0)), -2.3, epsilon);
+}
+
 TEST(trajectory, calcSignedArcLengthFromPointToPoint)
 {
   using autoware_utils::calcSignedArcLength;
@@ -548,4 +577,17 @@ TEST(trajectory, calcSignedArcLengthFromPointToPoint)
     const auto p2 = createPoint(2.0, 3.0, 0.0);
     EXPECT_NEAR(calcSignedArcLength(traj.points, p1, p2), -2.3, epsilon);
   }
+}
+
+TEST(trajectory, calcArcLength)
+{
+  using autoware_utils::calcArcLength;
+
+  const auto traj = generateTestTrajectory<Trajectory>(10, 1.0);
+
+  // Empty
+  EXPECT_THROW(calcArcLength(Trajectory{}.points), std::invalid_argument);
+
+  // Whole Length
+  EXPECT_NEAR(calcArcLength(traj.points), 9.0, epsilon);
 }

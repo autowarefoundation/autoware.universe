@@ -233,6 +233,18 @@ double calcSignedArcLength(
 }
 
 /**
+  * @brief calcSignedArcLength from index to point
+  */
+template<class T>
+double calcSignedArcLength(
+  const T & points, const size_t src_idx, const geometry_msgs::msg::Point & dst_point)
+{
+  validateNonEmpty(points);
+
+  return -calcSignedArcLength(points, dst_point, src_idx);
+}
+
+/**
   * @brief calcSignedArcLength from point to point
   */
 template<class T>
@@ -252,6 +264,17 @@ double calcSignedArcLength(
     calcLongitudinalOffsetToSegment(points, dst_seg_idx, dst_point);
 
   return signed_length_on_traj - signed_length_src_offset + signed_length_dst_offset;
+}
+
+/**
+  * @brief calcArcLength for the whole length
+  */
+template<class T>
+double calcArcLength(const T & points)
+{
+  validateNonEmpty(points);
+
+  return calcSignedArcLength(points, 0, points.size() - 1);
 }
 }  // namespace autoware_utils
 
