@@ -460,10 +460,12 @@ bool getObjectivePolygons(
   const double length = planner_param.detection_area_length;
   std::vector<lanelet::ConstLanelets> objective_lanelets_sequences;
   for (const auto & ll : objective_lanelets) {
-    auto lanelet_sequences =
-      lanelet::utils::query::getPrecedingLaneletSequences(routing_graph_ptr, ll.front(), length);
     // Preceding lanes does not include objective_lane so add them at the end
     objective_lanelets_sequences.push_back(ll);
+    // get preceding lanelets without ego_lanelets
+    // to prevent the detection area from including the ego lanes and its' preceding lanes.
+    const auto lanelet_sequences = lanelet::utils::query::getPrecedingLaneletSequences(
+      routing_graph_ptr, ll.front(), length, ego_lanelets);
     for (auto & l : lanelet_sequences) {
       objective_lanelets_sequences.push_back(l);
     }
