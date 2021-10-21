@@ -94,28 +94,31 @@ void GNSSPoser::callbackNavSatFix(
     prev_position = median_position;
   }
 
-  // generate gnss_antenna_pose_msg
-  geometry_msgs::msg::PoseStamped gnss_antenna_pose_msg;
-  gnss_antenna_pose_msg.header.stamp = nav_sat_fix_msg_ptr->header.stamp;
-  gnss_antenna_pose_msg.header.frame_id = map_frame_;
-  gnss_antenna_pose_msg.pose.position = median_position;
-  gnss_antenna_pose_msg.pose.orientation = orientation;
+  // generate gnss_antenna_pose
+  geometry_msgs::msg::Pose gnss_antenna_pose{};
+  gnss_antenna_pose.position = median_position;
+  gnss_antenna_pose.orientation = orientation;
+
+  // get TF from gnss_antenna to map
+  tf2::Transform tf_map2gnss_antenna{};
+  tf2::fromMsg(gnss_antenna_pose, tf_map2gnss_antenna);
 
   // get TF from base_link to gnss_antenna
-  geometry_msgs::msg::TransformStamped::SharedPtr tf_base_to_gnss_ptr =
-    std::make_shared<geometry_msgs::msg::TransformStamped>();
+  auto tf_gnss_antenna2base_link_msg_ptr = std::make_shared<geometry_msgs::msg::TransformStamped>();
   getStaticTransform(
-    gnss_frame_, base_frame_, tf_base_to_gnss_ptr, nav_sat_fix_msg_ptr->header.stamp);
+    gnss_frame_, base_frame_, tf_gnss_antenna2base_link_msg_ptr,
+    nav_sat_fix_msg_ptr->header.stamp);
+  tf2::Transform tf_gnss_antenna2base_link{};
+  tf2::fromMsg(tf_gnss_antenna2base_link_msg_ptr->transform, tf_gnss_antenna2base_link);
 
-  // transform pose from gnss_antenna to base_link
-  geometry_msgs::msg::PoseStamped gnss_base_pose_msg;
-  // remove rotation
-  tf_base_to_gnss_ptr->transform.rotation.x = 0.0;
-  tf_base_to_gnss_ptr->transform.rotation.y = 0.0;
-  tf_base_to_gnss_ptr->transform.rotation.z = 0.0;
-  tf_base_to_gnss_ptr->transform.rotation.w = 1.0;
-  tf2::doTransform(gnss_antenna_pose_msg, gnss_base_pose_msg, *tf_base_to_gnss_ptr);
+  // transform pose from gnss_antenna(in map frame) to base_link(in map frame)
+  tf2::Transform tf_map2base_link{};
+  tf_map2base_link = tf_map2gnss_antenna * tf_gnss_antenna2base_link;
+
+  geometry_msgs::msg::PoseStamped gnss_base_pose_msg{};
+  gnss_base_pose_msg.header.stamp = nav_sat_fix_msg_ptr->header.stamp;
   gnss_base_pose_msg.header.frame_id = map_frame_;
+  tf2::toMsg(tf_map2base_link, gnss_base_pose_msg.pose);
 
   // publish gnss_base_link pose in map frame
   pose_pub_->publish(gnss_base_pose_msg);
@@ -221,19 +224,19 @@ geometry_msgs::msg::Quaternion GNSSPoser::getQuaternionByHeading(const int headi
   }
   const double yaw = (heading_conv * 1e-5) * M_PI / 180.0;
 
-  tf2::Quaternion quta;
-  quta.setRPY(0, 0, yaw);
+  tf2::Quaternion quaternion;
+  quaternion.setRPY(0, 0, yaw);
 
-  return tf2::toMsg(quta);
+  return tf2::toMsg(quaternion);
 }
 
 geometry_msgs::msg::Quaternion GNSSPoser::getQuaternionByPositionDifference(
   const geometry_msgs::msg::Point & point, const geometry_msgs::msg::Point & prev_point)
 {
   const double yaw = std::atan2(point.y - prev_point.y, point.x - prev_point.x);
-  tf2::Quaternion quta;
-  quta.setRPY(0, 0, yaw);
-  return tf2::toMsg(quta);
+  tf2::Quaternion quaternion;
+  quaternion.setRPY(0, 0, yaw);
+  return tf2::toMsg(quaternion);
 }
 
 bool GNSSPoser::getTransform(
