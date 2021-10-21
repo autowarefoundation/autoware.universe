@@ -70,7 +70,6 @@ private:
   std::string sensor_frame_;
   double global_slope_max_angle_rad_;       // radians
   double local_slope_max_angle_rad_;        // radians
-  double local_slope_max_dist_;             // distance threshold in meters
   double radial_divider_angle_rad_;         // distance in rads between dividers
   double split_points_distance_tolerance_;  // distance in meters between concentric divisions
   double                                    // minimum height threshold regardless the slope,

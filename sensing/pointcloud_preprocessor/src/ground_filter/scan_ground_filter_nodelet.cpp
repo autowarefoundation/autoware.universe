@@ -103,7 +103,7 @@ void ScanGroundFilterComponent::convertPointcloud(
   for (size_t i = 0; i < radial_dividers_num_; ++i) {
     std::sort(
       out_radial_ordered_points[i].begin(), out_radial_ordered_points[i].end(),
-      [](const PointRef & a, const PointRef & b) { return a.radius < b.radius; });
+      [](const PointRef & a, const PointRef & b) {return a.radius < b.radius;});
   }
 }
 
@@ -112,7 +112,6 @@ void ScanGroundFilterComponent::calcVirtualGroundOrigin(pcl::PointXYZ & point)
   point.x = vehicle_info_.wheel_base_m;
   point.y = 0;
   point.z = 0;
-  return;
 }
 
 void ScanGroundFilterComponent::classifyPointCloud(
@@ -172,8 +171,9 @@ void ScanGroundFilterComponent::classifyPointCloud(
       if (
         // close to the previous point, set point follow label
         points_distance < (p->radius * radial_divider_angle_rad_ +
-                           split_points_distance_tolerance_) &&
-        std::abs(height_distance) < split_height_distance_) {
+        split_points_distance_tolerance_) &&
+        std::abs(height_distance) < split_height_distance_)
+      {
         p->point_state = PointLabel::POINT_FOLLOW;
       } else {
         // far from the previous point
@@ -201,13 +201,15 @@ void ScanGroundFilterComponent::classifyPointCloud(
       }
       if (p->point_state == PointLabel::NON_GROUND) {
         out_no_ground_indices.indices.push_back(p->orig_index);
-      } else if (
+      } else if ( // NOLINT
         (prev_point_label == PointLabel::NON_GROUND) &&
-        (p->point_state == PointLabel::POINT_FOLLOW)) {
+        (p->point_state == PointLabel::POINT_FOLLOW))
+      {
         p->point_state = PointLabel::NON_GROUND;
         out_no_ground_indices.indices.push_back(p->orig_index);
-      } else if (
-        (prev_point_label == PointLabel::GROUND) && (p->point_state == PointLabel::POINT_FOLLOW)) {
+      } else if ( // NOLINT
+        (prev_point_label == PointLabel::GROUND) && (p->point_state == PointLabel::POINT_FOLLOW))
+      {
         p->point_state = PointLabel::GROUND;
       } else {
       }
@@ -238,13 +240,15 @@ void ScanGroundFilterComponent::extractObjectPoints(
 }
 
 void ScanGroundFilterComponent::filter(
-  const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output)
+  const PointCloud2ConstPtr & input, [[maybe_unused]] const IndicesPtr & indices,
+  PointCloud2 & output)
 {
   auto input_transformed_ptr = std::make_shared<PointCloud2>();
   bool succeeded = transformPointCloud(base_frame_, input, input_transformed_ptr);
   sensor_frame_ = input->header.frame_id;
   if (!succeeded) {
-    RCLCPP_ERROR_STREAM_THROTTLE(get_logger(), *get_clock(), 10000,
+    RCLCPP_ERROR_STREAM_THROTTLE(
+      get_logger(), *get_clock(), 10000,
       "Failed transform from " << base_frame_ << " to " << input->header.frame_id);
     return;
   }
@@ -276,38 +280,44 @@ rcl_interfaces::msg::SetParametersResult ScanGroundFilterComponent::onParameter(
   const std::vector<rclcpp::Parameter> & p)
 {
   if (get_param(p, "base_frame", base_frame_)) {
-    RCLCPP_DEBUG_STREAM(get_logger(), "Setting base_frame to: " <<  base_frame_);
+    RCLCPP_DEBUG_STREAM(get_logger(), "Setting base_frame to: " << base_frame_);
   }
   double global_slope_max_angle_deg{get_parameter("global_slope_max_angle_deg").as_double()};
   if (get_param(p, "global_slope_max_angle_deg", global_slope_max_angle_deg)) {
     global_slope_max_angle_rad_ = deg2rad(global_slope_max_angle_deg);
-    RCLCPP_DEBUG(get_logger(),
+    RCLCPP_DEBUG(
+      get_logger(),
       "Setting global_slope_max_angle_rad to: %f.", global_slope_max_angle_rad_);
   }
   double local_slope_max_angle_deg{get_parameter("local_slope_max_angle_deg").as_double()};
   if (get_param(p, "local_slope_max_angle_deg", local_slope_max_angle_deg)) {
     local_slope_max_angle_rad_ = deg2rad(local_slope_max_angle_deg);
-    RCLCPP_DEBUG(get_logger(),
+    RCLCPP_DEBUG(
+      get_logger(),
       "Setting local_slope_max_angle_rad to: %f.", local_slope_max_angle_rad_);
   }
   double radial_divider_angle_deg{get_parameter("radial_divider_angle_deg").as_double()};
   if (get_param(p, "radial_divider_angle_deg", radial_divider_angle_deg)) {
     radial_divider_angle_rad_ = deg2rad(radial_divider_angle_deg);
     radial_dividers_num_ = std::ceil(2.0 * M_PI / radial_divider_angle_rad_);
-    RCLCPP_DEBUG(get_logger(),
+    RCLCPP_DEBUG(
+      get_logger(),
       "Setting radial_divider_angle_rad to: %f.", radial_divider_angle_rad_);
-    RCLCPP_DEBUG(get_logger(),
+    RCLCPP_DEBUG(
+      get_logger(),
       "Setting radial_dividers_num to: %zu.", radial_dividers_num_);
   }
   if (get_param(p, "split_points_distance_tolerance", split_points_distance_tolerance_)) {
-    RCLCPP_DEBUG(get_logger(),
+    RCLCPP_DEBUG(
+      get_logger(),
       "Setting split_points_distance_tolerance to: %f.", split_points_distance_tolerance_);
   }
   if (get_param(p, "split_height_distance", split_height_distance_)) {
     RCLCPP_DEBUG(get_logger(), "Setting split_height_distance to: %f.", split_height_distance_);
   }
   if (get_param(p, "use_virtual_ground_point", use_virtual_ground_point_)) {
-    RCLCPP_DEBUG_STREAM(get_logger(),
+    RCLCPP_DEBUG_STREAM(
+      get_logger(),
       "Setting use_virtual_ground_point to: " << std::boolalpha << use_virtual_ground_point_);
   }
 
