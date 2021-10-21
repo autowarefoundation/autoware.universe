@@ -1,0 +1,9 @@
+/**:
+  ros__parameters:
+    side_shift:
+      min_fix_distance: 20.0
+      start_avoid_sec: 4.0
+      drivable_area_resolution: 0.1
+      drivable_area_width: 100.0
+      drivable_area_height: 50.0
+      inside_outside_judge_margin: 0.3
