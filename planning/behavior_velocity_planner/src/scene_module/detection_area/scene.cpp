@@ -341,7 +341,7 @@ bool DetectionAreaModule::modifyPathVelocity(
 
   // Ignore objects if braking distance is not enough
   if (planner_param_.use_pass_judge_line) {
-    if (state_ != State::STOP && hasEnoughBrakingDistance(self_pose, stop_pose)) {
+    if (state_ != State::STOP && !hasEnoughBrakingDistance(self_pose, stop_pose)) {
       RCLCPP_WARN_THROTTLE(
         logger_, *clock_, std::chrono::milliseconds(1000).count(),
         "[detection_area] vehicle is over stop border");
@@ -436,7 +436,7 @@ bool DetectionAreaModule::hasEnoughBrakingDistance(
   const double pass_judge_line_distance =
     planning_utils::calcJudgeLineDistWithAccLimit(current_velocity, max_acc, delay_response_time);
 
-  return calcSignedDistance(self_pose, line_pose.position) < pass_judge_line_distance;
+  return calcSignedDistance(self_pose, line_pose.position) > pass_judge_line_distance;
 }
 
 autoware_planning_msgs::msg::PathWithLaneId DetectionAreaModule::insertStopPoint(
