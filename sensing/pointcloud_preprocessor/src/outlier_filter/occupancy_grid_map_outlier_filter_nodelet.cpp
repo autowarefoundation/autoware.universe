@@ -35,9 +35,16 @@ bool transformPointcloud(
   const sensor_msgs::msg::PointCloud2 & input, const tf2_ros::Buffer & tf2,
   const std::string & target_frame, sensor_msgs::msg::PointCloud2 & output)
 {
+  rclcpp::Clock clock{RCL_ROS_TIME};
   geometry_msgs::msg::TransformStamped tf_stamped{};
-  tf_stamped = tf2.lookupTransform(
-    target_frame, input.header.frame_id, input.header.stamp, rclcpp::Duration::from_seconds(0.5));
+  try {
+    tf_stamped = tf2.lookupTransform(
+      target_frame, input.header.frame_id, input.header.stamp, rclcpp::Duration::from_seconds(0.5));
+  } catch (const tf2::TransformException & ex) {
+    RCLCPP_WARN_THROTTLE(rclcpp::get_logger("pointcloud_processor").get_child(
+      "occupancy_grid_map_outlier_filter"), clock, 5000, "%s", ex.what());
+    return false;
+  }
   // transform pointcloud
   Eigen::Matrix4f tf_matrix = tf2::transformToEigen(tf_stamped.transform).matrix().cast<float>();
   pcl_ros::transformPointCloud(tf_matrix, input, output);
@@ -50,9 +57,15 @@ geometry_msgs::msg::PoseStamped getPoseStamped(
   const tf2_ros::Buffer & tf2, const std::string & target_frame_id,
   const std::string & src_frame_id, const rclcpp::Time & time)
 {
+  rclcpp::Clock clock{RCL_ROS_TIME};
   geometry_msgs::msg::TransformStamped tf_stamped{};
-  tf_stamped =
-    tf2.lookupTransform(target_frame_id, src_frame_id, time, rclcpp::Duration::from_seconds(0.5));
+  try{
+    tf_stamped =
+      tf2.lookupTransform(target_frame_id, src_frame_id, time, rclcpp::Duration::from_seconds(0.5));
+  } catch (const tf2::TransformException & ex) {
+    RCLCPP_WARN_THROTTLE(rclcpp::get_logger("pointcloud_processor").get_child(
+      "occupancy_grid_map_outlier_filter"), clock, 5000, "%s", ex.what());
+  }
   return autoware_utils::transform2pose(tf_stamped);
 }
 
@@ -128,17 +141,17 @@ void RadiusSearch2dfilter::filter(
   const PclPointCloud & low_conf_input, const Pose & pose,
   PclPointCloud & output, PclPointCloud & outlier)
 {
-  const auto & hight_conf_xyz_cloud = high_conf_input;
+  const auto & high_conf_xyz_cloud = high_conf_input;
   const auto & low_conf_xyz_cloud = low_conf_input;
   pcl::PointCloud<pcl::PointXY>::Ptr xy_cloud(new pcl::PointCloud<pcl::PointXY>);
-  xy_cloud->points.resize(low_conf_xyz_cloud.points.size() + hight_conf_xyz_cloud.points.size());
+  xy_cloud->points.resize(low_conf_xyz_cloud.points.size() + high_conf_xyz_cloud.points.size());
   for (size_t i = 0; i < low_conf_xyz_cloud.points.size(); ++i) {
     xy_cloud->points[i].x = low_conf_xyz_cloud.points[i].x;
     xy_cloud->points[i].y = low_conf_xyz_cloud.points[i].y;
   }
   for (size_t i = low_conf_xyz_cloud.points.size(); i < xy_cloud->points.size(); ++i) {
-    xy_cloud->points[i].x = hight_conf_xyz_cloud.points[i].x;
-    xy_cloud->points[i].y = hight_conf_xyz_cloud.points[i].y;
+    xy_cloud->points[i].x = high_conf_xyz_cloud.points[i - low_conf_xyz_cloud.points.size()].x;
+    xy_cloud->points[i].y = high_conf_xyz_cloud.points[i - low_conf_xyz_cloud.points.size()].y;
   }
 
   std::vector<int> k_indices(xy_cloud->points.size());
@@ -181,8 +194,8 @@ OccupancyGridMapOutlierFilterComponent::OccupancyGridMapOutlierFilterComponent(
     this, "~/input/occupancy_grid_map", rclcpp::QoS{1}.get_rmw_qos_profile());
   sync_ptr_ = std::make_shared<Sync>(SyncPolicy(5), occupancy_grid_map_sub_, pointcloud_sub_);
   sync_ptr_->registerCallback(std::bind(
-    &OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2, this,
-    std::placeholders::_1, std::placeholders::_2));
+      &OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2, this,
+      std::placeholders::_1, std::placeholders::_2));
   pointcloud_pub_ = create_publisher<PointCloud2>("~/output/pointcloud", rclcpp::SensorDataQoS());
 
   /* Radius search 2d filter */
@@ -198,13 +211,12 @@ void OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2(
 {
   // Transform to occupancy grid map frame
   PointCloud2 ogm_frame_pc{};
-  transformPointcloud(*input_pc, *tf2_, input_ogm->header.frame_id, ogm_frame_pc);
-
+  if(!transformPointcloud(*input_pc, *tf2_, input_ogm->header.frame_id, ogm_frame_pc))
+    return;
   // Occupancy grid map based filter
   PclPointCloud high_confidence_pc{};
   PclPointCloud low_confidence_pc{};
   filterByOccupancyGridMap(*input_ogm, ogm_frame_pc, high_confidence_pc, low_confidence_pc);
-
   // Apply Radius search 2d filter for low confidence pointcloud
   PclPointCloud filtered_low_confidence_pc{};
   PclPointCloud outlier_pc{};
@@ -212,23 +224,23 @@ void OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2(
     auto pc_frame_pose_stamped = getPoseStamped(
       *tf2_, input_ogm->header.frame_id, input_pc->header.frame_id, input_ogm->header.stamp);
     radius_search_2d_filter_ptr_->filter(
-      high_confidence_pc, low_confidence_pc, pc_frame_pose_stamped.pose, filtered_low_confidence_pc,
+      high_confidence_pc, low_confidence_pc, pc_frame_pose_stamped.pose,
+      filtered_low_confidence_pc,
       outlier_pc);
   } else {
     outlier_pc = low_confidence_pc;
   }
-
   // Concatenate high confidence pointcloud from occupancy grid map and non-outlier pointcloud
   PclPointCloud concat_pc = high_confidence_pc + filtered_low_confidence_pc;
-
   // Convert to ros msg
   {
     PointCloud2 ogm_frame_filtered_pc{};
     auto base_link_frame_filtered_pc_ptr = std::make_unique<PointCloud2>();
     pcl::toROSMsg(concat_pc, ogm_frame_filtered_pc);
     ogm_frame_filtered_pc.header = ogm_frame_pc.header;
-    transformPointcloud(
-      ogm_frame_filtered_pc, *tf2_, base_link_frame_, *base_link_frame_filtered_pc_ptr);
+    if(!transformPointcloud(
+      ogm_frame_filtered_pc, *tf2_, base_link_frame_, *base_link_frame_filtered_pc_ptr))
+      return;
     auto pc_ptr = std::make_unique<PointCloud2>();
     pointcloud_pub_->publish(std::move(base_link_frame_filtered_pc_ptr));
   }

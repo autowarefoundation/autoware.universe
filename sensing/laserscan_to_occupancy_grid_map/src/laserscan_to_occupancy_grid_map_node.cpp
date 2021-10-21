@@ -44,21 +44,30 @@ bool transformPointcloud(
   return true;
 }
 
-void cropPointcloudByHeight(
+bool cropPointcloudByHeight(
   const sensor_msgs::msg::PointCloud2 & input, const tf2_ros::Buffer & tf2,
   const std::string & target_frame, const float min_height, const float max_height,
   sensor_msgs::msg::PointCloud2 & output)
 {
+  rclcpp::Clock clock{RCL_ROS_TIME};
   // Transformed pointcloud on target frame
   sensor_msgs::msg::PointCloud2 trans_input_tmp;
   const bool is_target_frame = (input.header.frame_id == target_frame);
   if (!is_target_frame) {
-    geometry_msgs::msg::TransformStamped tf_stamped;
-    tf_stamped = tf2.lookupTransform(
-      target_frame, input.header.frame_id, input.header.stamp, rclcpp::Duration::from_seconds(0.5));
-    // transform pointcloud
-    Eigen::Matrix4f tf_matrix = tf2::transformToEigen(tf_stamped.transform).matrix().cast<float>();
-    pcl_ros::transformPointCloud(tf_matrix, input, trans_input_tmp);
+    try {
+      geometry_msgs::msg::TransformStamped tf_stamped;
+      tf_stamped = tf2.lookupTransform(
+        target_frame, input.header.frame_id, input.header.stamp,
+        rclcpp::Duration::from_seconds(0.5));
+      // transform pointcloud
+      Eigen::Matrix4f tf_matrix =
+        tf2::transformToEigen(tf_stamped.transform).matrix().cast<float>();
+      pcl_ros::transformPointCloud(tf_matrix, input, trans_input_tmp);
+    } catch (const tf2::TransformException & ex) {
+      RCLCPP_WARN_THROTTLE(rclcpp::get_logger("laserscan_to_occupancy_grid_map"),
+       clock, 5000, "%s", ex.what());
+      return false;
+    }
   }
   const sensor_msgs::msg::PointCloud2 & trans_input = is_target_frame ? input : trans_input_tmp;
 
@@ -76,6 +85,7 @@ void cropPointcloudByHeight(
   // Convert to ros msg
   pcl::toROSMsg(*pcl_output, output);
   output.header = input.header;
+  return true;
 }
 
 geometry_msgs::msg::Pose getPose(
@@ -185,10 +195,12 @@ void OccupancyGridMapNode::onLaserscanPointCloud2WithObstacleAndRaw(
   PointCloud2 cropped_raw_pc{};
   if (use_height_filter_) {
     constexpr float min_height = -1.0, max_height = 2.0;
-    cropPointcloudByHeight(
-      *input_obstacle_msg, *tf2_, base_link_frame_, min_height, max_height, cropped_obstacle_pc);
-    cropPointcloudByHeight(
-      *input_raw_msg, *tf2_, base_link_frame_, min_height, max_height, cropped_raw_pc);
+    if(!cropPointcloudByHeight(
+      *input_obstacle_msg, *tf2_, base_link_frame_, min_height, max_height, cropped_obstacle_pc))
+        return;
+    if(!cropPointcloudByHeight(
+      *input_raw_msg, *tf2_, base_link_frame_, min_height, max_height, cropped_raw_pc))
+        return;
   }
   const PointCloud2 & filtered_obstacle_pc =
     use_height_filter_ ? cropped_obstacle_pc : *input_obstacle_msg;
