@@ -18,6 +18,8 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include "autoware_planning_msgs/msg/path.hpp"
+#include "autoware_utils/geometry/geometry.hpp"
+#include "spline_interpolation/spline_interpolation.hpp"
 
 namespace behavior_velocity_planner
 {
