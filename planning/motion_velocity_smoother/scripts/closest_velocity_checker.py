@@ -56,6 +56,7 @@ class VelocityChecker(Node):
         super().__init__('velocity_checker')
 
         self.autoware_engage = None
+        self.vehicle_engage = None
         self.external_v_lim = np.nan
         self.localization_twist = Twist()
         self.localization_twist.linear.x = np.nan
@@ -70,8 +71,7 @@ class VelocityChecker(Node):
 
         # planning path and trajectories
         profile = rclpy.qos.QoSProfile(
-            depth=1,
-            durability=rclpy.qos.QoSDurabilityPolicy.RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL)
+            depth=1)
         lane_drv = '/planning/scenario_planning/lane_driving'
         scenario = '/planning/scenario_planning'
         self.sub0 = self.create_subscription(
@@ -123,6 +123,8 @@ class VelocityChecker(Node):
         # others related to velocity
         self.sub8 = self.create_subscription(
             Engage, '/autoware/engage', self.CallBackAwEngage, profile)
+        self.sub12 = self.create_subscription(
+            Engage, '/vehicle/engage', self.CallBackVehicleEngage, profile)
         self.sub9 = self.create_subscription(
             VelocityLimit,
             '/planning/scenario_planning/current_max_velocity',
@@ -149,7 +151,9 @@ class VelocityChecker(Node):
         if self.count == 0:
             self.get_logger().info('')
             self.get_logger().info(
-                '| Map Limit | Behavior | Obs Avoid | Obs Stop | External Lim | LatAcc Filtered | Optimized | Control VelCmd | Control AccCmd | Vehicle VelCmd | Vehicle AccCmd | Engage | Localization Vel | Vehicle Vel | [km/h]')  # noqa: E501
+                '| Map Limit | Behavior | Obs Avoid | Obs Stop | External Lim | LatAcc Filtered '
+                '| Optimized | Control VelCmd | Control AccCmd | Vehicle VelCmd | Vehicle AccCmd '
+                '| AW Engage | VC Engage | Localization Vel | Vehicle Vel | [km/h]')  # noqa: E501
         mps2kmph = 3.6
         vel_map_lim = self.data_arr[LANE_CHANGE] * mps2kmph
         vel_behavior = self.data_arr[BEHAVIOR_VELOCITY] * mps2kmph
@@ -166,10 +170,15 @@ class VelocityChecker(Node):
         vel_vehicle = self.vehicle_twist.linear.x * mps2kmph
         engage = 'None' if self.autoware_engage is None else (
             'True' if self.autoware_engage is True else 'False')
-        self.get_logger().info('| {0: 9.2f} | {1: 8.2f} | {2: 9.2f} | {3: 8.2f} | {4: 12.2f} | {5: 15.2f} | {6: 9.2f} | {7: 14.2f} | {8: 14.2f} | {9: 14.2f} | {10: 14.2f} | {11:>6s} | {12: 16.2f} | {13: 11.2f} |'.format(  # noqa: E501
+        vehicle_engage = 'None' if self.vehicle_engage is None else (
+            'True' if self.vehicle_engage is True else 'False')
+        self.get_logger().info('| {0: 9.2f} | {1: 8.2f} | {2: 9.2f} | {3: 8.2f} | {4: 12.2f} '
+        '| {5: 15.2f} | {6: 9.2f} | {7: 14.2f} | {8: 14.2f} | {9: 14.2f} | {10: 14.2f} '
+        '| {11:>9s} | {12:>9s} | {13: 16.2f} | {14: 11.2f} |'.format(  # noqa: E501
             vel_map_lim, vel_behavior, vel_obs_avoid, vel_obs_stop, vel_external_lim,
             vel_latacc_filtered, vel_optimized, vel_ctrl_cmd, acc_ctrl_cmd,
-            vel_vehicle_cmd, acc_vehicle_cmd, engage, vel_localization, vel_vehicle))
+            vel_vehicle_cmd, acc_vehicle_cmd, engage, vehicle_engage, vel_localization,
+            vel_vehicle))
         self.count += 1
 
     def timerCallback(self):
@@ -180,6 +189,9 @@ class VelocityChecker(Node):
 
     def CallBackAwEngage(self, msg):
         self.autoware_engage = msg.engage
+
+    def CallBackVehicleEngage(self, msg):
+        self.vehicle_engage = msg.engage
 
     def CallBackExternalVelLim(self, msg):
         self.external_v_lim = msg.max_velocity
