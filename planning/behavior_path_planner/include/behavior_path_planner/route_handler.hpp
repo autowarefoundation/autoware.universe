@@ -56,78 +56,49 @@ struct LaneChangePath
 
 class RouteHandler
 {
-private:
-  // MUST
-  lanelet::routing::RoutingGraphPtr routing_graph_ptr_;
-  lanelet::traffic_rules::TrafficRulesPtr traffic_rules_ptr_;
-  std::shared_ptr<const lanelet::routing::RoutingGraphContainer> overall_graphs_ptr_;
-  lanelet::LaneletMapPtr lanelet_map_ptr_;
-  // maybe necessary
-  lanelet::ConstLanelets route_lanelets_;
-  lanelet::ConstLanelets preferred_lanelets_;
-  lanelet::ConstLanelets start_lanelets_;
-  lanelet::ConstLanelets goal_lanelets_;
-
-  Route route_msg_;
-
-  rclcpp::Logger logger_{rclcpp::get_logger("behavior_path_planner").get_child("route_handler")};
-
-  bool is_route_msg_ready_{false};
-  bool is_map_msg_ready_{false};
-  bool is_handler_ready_{false};
-
-  void setRouteLanelets();
-
 public:
   RouteHandler() = default;
   RouteHandler(
     const lanelet::LaneletMapConstPtr & lanelet_map_ptr,
     const lanelet::routing::RoutingGraphPtr & routing_graph, const lanelet::routing::Route & route);
 
-  bool isHandlerReady();
+  // non-const methods
 
   void setMap(const MapBin & map_msg);
 
   void setRoute(const Route & route_msg);
 
+  // const methods
+
+  // for route handler status
+
+  bool isHandlerReady() const;
+
   Header getRouteHeader() const;
 
-  bool getPreviousLaneletWithinRoute(
-    const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * prev_lanelet) const;
+  lanelet::routing::RoutingGraphContainer getOverallGraph() const;
 
-  bool getNextLaneletWithinRoute(
-    const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * next_lanelet) const;
-
-  bool getRightLaneletWithinRoute(
-    const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * right_lanelet);
-
-  bool getLeftLaneletWithinRoute(
-    const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * left_lanelet);
-
-  bool getClosestLaneletWithinRoute(
-    const Pose & search_pose, lanelet::ConstLanelet * closest_lanelet) const;
-  bool getGoalLanelet(lanelet::ConstLanelet * goal_lanelet) const;
+  // for goal
+  bool isInGoalRouteSection(const lanelet::ConstLanelet & lanelet) const;
 
   Pose getGoalPose() const;
 
   lanelet::Id getGoalLaneId() const;
 
+  bool getGoalLanelet(lanelet::ConstLanelet * goal_lanelet) const;
+
+  std::vector<lanelet::ConstLanelet> getLanesAfterGoal(const double vehicle_length) const;
+
+  // for lanelet
+
+  int getNumLaneToPreferredLane(const lanelet::ConstLanelet & lanelet) const;
+
+  bool getClosestLaneletWithinRoute(
+    const Pose & search_pose, lanelet::ConstLanelet * closest_lanelet) const;
+
   lanelet::ConstLanelet getLaneletsFromId(const lanelet::Id id) const;
 
   lanelet::ConstLanelets getLaneletsFromIds(const lanelet::Ids ids) const;
-
-  lanelet::Ids getNeighborLaneIds(
-    const lanelet::ConstLanelet & lanelet, const Pose & pose,
-    const double vehicle_width, const double baselink2front) const;
-
-  bool isDeadEndLanelet(const lanelet::ConstLanelet & lanelet) const;
-
-  bool isInTargetLane(
-    const PoseStamped & pose, const lanelet::ConstLanelets & target) const;
-
-  bool isInGoalRouteSection(const lanelet::ConstLanelet & lanelet) const;
-
-  lanelet::ConstLanelets getRouteLanelets() const;
 
   lanelet::ConstLanelets getLaneletSequence(const lanelet::ConstLanelet & lanelet) const;
 
@@ -135,24 +106,14 @@ public:
     const lanelet::ConstLanelet & lanelet, const Pose & current_pose,
     const double backward_distance, const double forward_distance) const;
 
-  lanelet::ConstLanelets getLaneletSequenceUpTo(
-    const lanelet::ConstLanelet & lanelet,
-    const double min_length = std::numeric_limits<double>::max()) const;
+  lanelet::ConstLanelets getCheckTargetLanesFromPath(
+    const PathWithLaneId & path,
+    const lanelet::ConstLanelets & target_lanes, const double check_length) const;
 
-  lanelet::ConstLanelets getLaneletSequenceAfter(
-    const lanelet::ConstLanelet & lanelet,
-    const double min_length = std::numeric_limits<double>::max()) const;
+  lanelet::routing::RelationType getRelation(
+    const lanelet::ConstLanelet & prev_lane, const lanelet::ConstLanelet & next_lane) const;
 
-  lanelet::ConstLanelets getPreviousLaneletSequence(
-    const lanelet::ConstLanelets & lanelet_sequence) const;
-
-  lanelet::ConstLanelets getClosestLaneletSequence(const Pose & pose) const;
-
-  lanelet::ConstLanelets getNeighborsWithinRoute(const lanelet::ConstLanelet & lanelet) const;
-
-  int getNumLaneToPreferredLane(const lanelet::ConstLanelet & lanelet) const;
-
-  bool isInPreferredLane(const PoseStamped & pose) const;
+  // for path
 
   std::vector<LaneChangePath> getLaneChangePaths(
     const lanelet::ConstLanelets & original_lanes, const lanelet::ConstLanelets & target_lanes,
@@ -173,26 +134,82 @@ public:
     const lanelet::ConstLanelets & lanelet_sequence, const double lane_change_prepare_duration,
     const double lane_change_buffer) const;
 
-  PathWithLaneId updatePathTwist(
-    const PathWithLaneId & path) const;
-
   bool getLaneChangeTarget(
     const lanelet::ConstLanelets & lanelets, lanelet::ConstLanelet * target_lanelet) const;
-  lanelet::ConstLanelets getLaneChangeTarget(const Pose & pose) const;
 
   double getLaneChangeableDistance(
-    const Pose & current_pose, const LaneChangeDirection & direction);
+    const Pose & current_pose, const LaneChangeDirection & direction) const;
 
-  lanelet::ConstLanelets getCheckTargetLanesFromPath(
-    const PathWithLaneId & path,
-    const lanelet::ConstLanelets & target_lanes, const double check_length);
+private:
+  // MUST
+  lanelet::routing::RoutingGraphPtr routing_graph_ptr_;
+  lanelet::traffic_rules::TrafficRulesPtr traffic_rules_ptr_;
+  std::shared_ptr<const lanelet::routing::RoutingGraphContainer> overall_graphs_ptr_;
+  lanelet::LaneletMapPtr lanelet_map_ptr_;
+  // maybe necessary
+  lanelet::ConstLanelets route_lanelets_;
+  lanelet::ConstLanelets preferred_lanelets_;
+  lanelet::ConstLanelets start_lanelets_;
+  lanelet::ConstLanelets goal_lanelets_;
 
-  lanelet::routing::RoutingGraphContainer getOverallGraph() const;
+  Route route_msg_;
 
-  std::vector<lanelet::ConstLanelet> getLanesAfterGoal(const double vehicle_length) const;
+  rclcpp::Logger logger_{rclcpp::get_logger("behavior_path_planner").get_child("route_handler")};
 
-  lanelet::routing::RelationType getRelation(
-    const lanelet::ConstLanelet & prev_lane, const lanelet::ConstLanelet & next_lane) const;
+  bool is_route_msg_ready_{false};
+  bool is_map_msg_ready_{false};
+  bool is_handler_ready_{false};
+
+  // non-const methods
+
+  void setRouteLanelets();
+
+  // const methods
+
+  // for lanelet
+
+  bool isDeadEndLanelet(const lanelet::ConstLanelet & lanelet) const;
+
+  bool isInTargetLane(
+    const PoseStamped & pose, const lanelet::ConstLanelets & target) const;
+
+  bool isInPreferredLane(const PoseStamped & pose) const;
+
+  bool getPreviousLaneletWithinRoute(
+    const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * prev_lanelet) const;
+
+  bool getNextLaneletWithinRoute(
+    const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * next_lanelet) const;
+
+  bool getRightLaneletWithinRoute(
+    const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * right_lanelet) const;
+
+  bool getLeftLaneletWithinRoute(
+    const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * left_lanelet) const;
+
+  lanelet::ConstLanelets getRouteLanelets() const;
+
+  lanelet::ConstLanelets getLaneletSequenceUpTo(
+    const lanelet::ConstLanelet & lanelet,
+    const double min_length = std::numeric_limits<double>::max()) const;
+
+  lanelet::ConstLanelets getLaneletSequenceAfter(
+    const lanelet::ConstLanelet & lanelet,
+    const double min_length = std::numeric_limits<double>::max()) const;
+
+  lanelet::ConstLanelets getPreviousLaneletSequence(
+    const lanelet::ConstLanelets & lanelet_sequence) const;
+
+  lanelet::ConstLanelets getClosestLaneletSequence(const Pose & pose) const;
+
+  lanelet::ConstLanelets getNeighborsWithinRoute(const lanelet::ConstLanelet & lanelet) const;
+
+  lanelet::ConstLanelets getLaneChangeTargetLanes(const Pose & pose) const;
+
+  // for path
+
+  PathWithLaneId updatePathTwist(
+    const PathWithLaneId & path) const;
 };
 }  // namespace behavior_path_planner
 #endif  // BEHAVIOR_PATH_PLANNER__ROUTE_HANDLER_HPP_

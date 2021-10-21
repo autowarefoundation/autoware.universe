@@ -804,7 +804,7 @@ const Pose refineGoal(
   return refined_goal;
 }
 
-PathWithLaneId refinePath(
+PathWithLaneId refinePathForGoal(
   const double search_radius_range, const double search_rad_range, const PathWithLaneId & input,
   const Pose & goal, const int64_t goal_lane_id)
 {
@@ -1223,55 +1223,6 @@ std::vector<Polygon2d> getTargetLaneletPolygons(
     }
   }
   return polygons;
-}
-
-std::vector<Polygon2d> filterObstaclePolygons(
-  const std::vector<Polygon2d> & obstacle_polygons,
-  const DynamicObjectArray & objects,
-  const double static_obstacle_velocity_thresh)
-{
-  std::vector<Polygon2d> filtered_obstacle_polygons;
-  for (const auto & obstacle_polygon : obstacle_polygons) {
-    for (const auto & obj : objects.objects) {
-      const auto velocity = l2Norm(obj.state.twist_covariance.twist.linear);
-      if (
-        velocity > static_obstacle_velocity_thresh ||
-        (obj.semantic.type != Semantic::CAR &&
-        obj.semantic.type != Semantic::TRUCK &&
-        obj.semantic.type != Semantic::BUS))
-      {
-        continue;
-      }
-
-      // create object polygon
-      Polygon2d obj_polygon;
-      if (!calcObjectPolygon(obj, &obj_polygon)) {continue;}
-
-      // check the object is within the polygon
-      if (boost::geometry::within(obj_polygon, obstacle_polygon)) {
-        filtered_obstacle_polygons.push_back(obstacle_polygon);
-        break;
-      }
-    }
-  }
-  return filtered_obstacle_polygons;
-}
-
-double getDistanceToNearestObstaclePolygon(
-  const std::vector<Polygon2d> & obstacle_polygons, const Pose & pose)
-{
-  double min_distance = std::numeric_limits<double>::max();
-  Point2d pt(pose.position.x, pose.position.y);
-  for (const auto & polygon : obstacle_polygons) {
-    const double distance = boost::geometry::distance(polygon, pt);
-    if (distance < min_distance) {min_distance = distance;}
-  }
-  return min_distance;
-}
-
-bool isUniqueId(const lanelet::Ids & ids, const lanelet::Id & id)
-{
-  return std::find(ids.begin(), ids.end(), id) == ids.end();
 }
 
 void occupancyGridToImage(const OccupancyGrid & occupancy_grid, cv::Mat * cv_image)

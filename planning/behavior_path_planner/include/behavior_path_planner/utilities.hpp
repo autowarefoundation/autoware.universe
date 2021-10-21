@@ -136,9 +136,11 @@ struct FrenetCoordinate3d
   double distance{0.0};  // lateral
 };
 
-std::vector<Point> convertToPointArray(const PathWithLaneId & path);
+// data conversions
 
-double l2Norm(const Vector3 vector);
+Path convertToPathFromPathWithLaneId(const PathWithLaneId & path_with_lane_id);
+
+std::vector<Point> convertToPointArray(const PathWithLaneId & path);
 
 std::vector<Point> convertToGeometryPointArray(const PathWithLaneId & path);
 
@@ -149,10 +151,6 @@ PredictedPath convertToPredictedPath(
   const Pose & vehicle_pose, const double duration, const double resolution,
   const double acceleration);
 
-PredictedPath resamplePredictedPath(
-  const PredictedPath & input_path, const double resolution,
-  const double duration);
-
 bool convertToFrenetCoordinate3d(
   const PathWithLaneId & path,
   const Point & search_point_geom, FrenetCoordinate3d * frenet_coordinate);
@@ -161,12 +159,44 @@ bool convertToFrenetCoordinate3d(
   const std::vector<Point> & linestring,
   const Point search_point_geom, FrenetCoordinate3d * frenet_coordinate);
 
+std::vector<uint64_t> getIds(const lanelet::ConstLanelets & lanelets);
+
+// distance (arclength) calculation
+
+double l2Norm(const Vector3 vector);
+
+double getDistanceToEndOfLane(
+  const Pose & current_pose, const lanelet::ConstLanelets & lanelets);
+
+double getDistanceToNextIntersection(
+  const Pose & current_pose, const lanelet::ConstLanelets & lanelets);
+
+double getDistanceToCrosswalk(
+  const Pose & current_pose, const lanelet::ConstLanelets & lanelets,
+  const lanelet::routing::RoutingGraphContainer & overall_graphs);
+
+double getSignedDistance(
+  const Pose & current_pose, const Pose & goal_pose,
+  const lanelet::ConstLanelets & lanelets);
+
+double getArcLengthToTargetLanelet(
+  const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelet & target_lane,
+  const Pose & pose);
+
+// object collision check
+
 Pose lerpByPose(const Pose & p1, const Pose & p2, const double t);
 
 Point lerpByLength(const std::vector<Point> & array, const double length);
 
 bool lerpByTimeStamp(
   const PredictedPath & path, const rclcpp::Time & t, Pose * lerped_pt);
+
+bool calcObjectPolygon(const DynamicObject & object, Polygon2d * object_polygon);
+
+PredictedPath resamplePredictedPath(
+  const PredictedPath & input_path, const double resolution,
+  const double duration);
 
 double getDistanceBetweenPredictedPaths(
   const PredictedPath & path1, const PredictedPath & path2, const double start_time,
@@ -192,72 +222,16 @@ std::vector<size_t> filterObjectsByLanelets(
 std::vector<size_t> filterObjectsByLanelets(
   const DynamicObjectArray & objects, const lanelet::ConstLanelets & target_lanelets);
 
-bool calcObjectPolygon(const DynamicObject & object, Polygon2d * object_polygon);
-
 std::vector<size_t> filterObjectsByPath(
   const DynamicObjectArray & objects, const std::vector<size_t> & object_indices,
   const PathWithLaneId & ego_path, const double vehicle_width);
 
-bool setGoal(
-  const double search_radius_range, const double search_rad_range,
-  const PathWithLaneId & input, const Pose & goal,
-  const int64_t goal_lane_id, PathWithLaneId * output_ptr);
+DynamicObjectArray filterObjectsByVelocity(const DynamicObjectArray & objects, double lim_v);
 
-const Pose refineGoal(const Pose & goal, const lanelet::ConstLanelet & goal_lanelet);
+DynamicObjectArray filterObjectsByVelocity(
+  const DynamicObjectArray & objects, double min_v, double max_v);
 
-PathWithLaneId refinePath(
-  const double search_radius_range, const double search_rad_range,
-  const PathWithLaneId & input, const Pose & goal, const int64_t goal_lane_id);
-PathWithLaneId removeOverlappingPoints(
-  const PathWithLaneId & input_path);
-
-bool containsGoal(const lanelet::ConstLanelets & lanes, const lanelet::Id & goal_id);
-
-OccupancyGrid generateDrivableArea(
-  const lanelet::ConstLanelets & lanes, const PoseStamped & current_pose,
-  const double width, const double height, const double resolution, const double vehicle_length,
-  const RouteHandler & route_handler);
-
-double getDistanceToEndOfLane(
-  const Pose & current_pose, const lanelet::ConstLanelets & lanelets);
-
-double getDistanceToNextIntersection(
-  const Pose & current_pose, const lanelet::ConstLanelets & lanelets);
-
-double getDistanceToCrosswalk(
-  const Pose & current_pose, const lanelet::ConstLanelets & lanelets,
-  const lanelet::routing::RoutingGraphContainer & overall_graphs);
-
-double getSignedDistance(
-  const Pose & current_pose, const Pose & goal_pose,
-  const lanelet::ConstLanelets & lanelets);
-
-std::vector<uint64_t> getIds(const lanelet::ConstLanelets & lanelets);
-
-Path convertToPathFromPathWithLaneId(const PathWithLaneId & path_with_lane_id);
-
-lanelet::Polygon3d getVehiclePolygon(
-  const Pose & vehicle_pose, const double vehicle_width, const double base_link2front);
-
-PathPointWithLaneId insertStopPoint(double length, PathWithLaneId * path);
-
-double getArcLengthToTargetLanelet(
-  const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelet & target_lane,
-  const Pose & pose);
-
-std::vector<Polygon2d> getTargetLaneletPolygons(
-  const lanelet::ConstLanelets & lanelets, const Pose & pose,
-  const double check_length, const std::string & target_type);
-
-std::vector<Polygon2d> filterObstaclePolygons(
-  const std::vector<Polygon2d> & obstacle_polygons,
-  const DynamicObjectArray & objects, const double static_obstacle_velocity_thresh);
-
-double getDistanceToNearestObstaclePolygon(
-  const std::vector<Polygon2d> & obstacle_polygons, const Pose & pose);
-
-// MEMO: From side shift
-bool isUniqueId(const lanelet::Ids & ids, const lanelet::Id & id);
+// drivable area generation
 
 void occupancyGridToImage(const OccupancyGrid & occupancy_grid, cv::Mat * cv_image);
 
@@ -267,14 +241,45 @@ cv::Point toCVPoint(
   const Point & geom_point, const double width_m, const double height_m,
   const double resolution);
 
+OccupancyGrid generateDrivableArea(
+  const lanelet::ConstLanelets & lanes, const PoseStamped & current_pose,
+  const double width, const double height, const double resolution, const double vehicle_length,
+  const RouteHandler & route_handler);
+
+// goal management
+
+bool setGoal(
+  const double search_radius_range, const double search_rad_range,
+  const PathWithLaneId & input, const Pose & goal,
+  const int64_t goal_lane_id, PathWithLaneId * output_ptr);
+
+const Pose refineGoal(const Pose & goal, const lanelet::ConstLanelet & goal_lanelet);
+
+PathWithLaneId refinePathForGoal(
+  const double search_radius_range, const double search_rad_range,
+  const PathWithLaneId & input, const Pose & goal, const int64_t goal_lane_id);
+
+PathWithLaneId removeOverlappingPoints(
+  const PathWithLaneId & input_path);
+
+bool containsGoal(const lanelet::ConstLanelets & lanes, const lanelet::Id & goal_id);
+
+// path management
+
 // TODO(Horibe) There is a similar function in route_handler. Check.
 std::shared_ptr<PathWithLaneId> generateCenterLinePath(
   const std::shared_ptr<const PlannerData> & planner_data);
 
-DynamicObjectArray filterObjectsByVelocity(const DynamicObjectArray & objects, double lim_v);
+PathPointWithLaneId insertStopPoint(double length, PathWithLaneId * path);
 
-DynamicObjectArray filterObjectsByVelocity(
-  const DynamicObjectArray & objects, double min_v, double max_v);
+// misc
+
+lanelet::Polygon3d getVehiclePolygon(
+  const Pose & vehicle_pose, const double vehicle_width, const double base_link2front);
+
+std::vector<Polygon2d> getTargetLaneletPolygons(
+  const lanelet::ConstLanelets & lanelets, const Pose & pose,
+  const double check_length, const std::string & target_type);
 
 void shiftPose(Pose * pose, double shift_length);
 

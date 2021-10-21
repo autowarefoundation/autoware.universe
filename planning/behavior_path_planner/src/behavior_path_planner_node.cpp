@@ -513,7 +513,7 @@ PathWithLaneId BehaviorPathPlannerNode::clipPathByGoal(const PathWithLaneId & pa
     }
   }
 
-  auto refined_path = util::refinePath(
+  auto refined_path = util::refinePathForGoal(
     planner_data_->parameters.refine_goal_search_radius_range, M_PI * 0.5, path, refined_goal,
     goal_lane_id);
   refined_path.header.frame_id = "map";
