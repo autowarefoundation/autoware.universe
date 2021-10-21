@@ -130,7 +130,6 @@ void ScanGroundFilterComponent::classifyPointCloud(
   // sweep through each radial division
   for (size_t i = 0; i < in_radial_ordered_clouds.size(); i++) {
     float prev_gnd_radius = 0.0f;
-    float prev_point_radius = 0.0f;
     float prev_gnd_slope = 0.0f;
     float prev_gnd_radius_sum = 0.0f;
     float prev_gnd_height_sum = 0.0f;
@@ -141,13 +140,10 @@ void ScanGroundFilterComponent::classifyPointCloud(
     float local_slope = 0.0f;
     PointLabel prev_point_label = PointLabel::INIT;
     pcl::PointXYZ prev_gnd_point(0, 0, 0);
-    bool is_prev_point_ground = false;
-    bool is_current_point_ground = false;
     // loop through each point in the radial div
     for (size_t j = 0; j < in_radial_ordered_clouds[i].size(); j++) {
       const double global_slope_max_angle = global_slope_max_angle_rad_;
       const double local_slope_max_angle = local_slope_max_angle_rad_;
-      const double local_slope_max_dist = local_slope_max_dist_;
       auto * p = &in_radial_ordered_clouds[i][j];
       auto * p_prev = &in_radial_ordered_clouds[i][j - 1];
 
@@ -167,7 +163,6 @@ void ScanGroundFilterComponent::classifyPointCloud(
         prev_gnd_point_num = 0;
         points_distance = calcDistance3d(*p->orig_point, prev_gnd_point);
       } else {
-        prev_point_radius = p_prev->radius;
         points_distance = calcDistance3d(*p->orig_point, *p_prev->orig_point);
       }
 
@@ -183,7 +178,6 @@ void ScanGroundFilterComponent::classifyPointCloud(
         p->point_state = PointLabel::POINT_FOLLOW;
       } else {
         // far from the previous point
-        float current_height = p->orig_point->z;
 
         float global_slope = std::atan2(p->orig_point->z, p->radius);
         local_slope = std::atan2(height_distance, points_2d_distance);
