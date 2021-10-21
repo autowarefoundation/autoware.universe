@@ -32,15 +32,31 @@
 
 #include "obstacle_stop_planner/node.hpp"
 
+namespace motion_planning
+{
+
+using autoware_utils::calcAzimuthAngle;
+using autoware_utils::calcDistance2d;
+using autoware_utils::createQuaternionFromRPY;
+using autoware_utils::findNearestIndex;
+using autoware_utils::getRPY;
+
 namespace
 {
-double getYawFromGeometryMsgsQuaternion(const geometry_msgs::msg::Quaternion & quat)
+TrajectoryPoint getBackwardPointFromBasePoint(
+  const TrajectoryPoint & p_from, const TrajectoryPoint & p_to,
+  const TrajectoryPoint & p_base, const double backward_length)
 {
-  tf2::Quaternion tf2_quat(quat.x, quat.y, quat.z, quat.w);
-  double roll, pitch, yaw;
-  tf2::Matrix3x3(tf2_quat).getRPY(roll, pitch, yaw);
+  TrajectoryPoint output;
+  const double dx = p_to.pose.position.x - p_from.pose.position.x;
+  const double dy = p_to.pose.position.y - p_from.pose.position.y;
+  const double norm = std::hypot(dx, dy);
 
-  return yaw;
+  output = p_base;
+  output.pose.position.x += backward_length * dx / norm;
+  output.pose.position.y += backward_length * dy / norm;
+
+  return output;
 }
 std::string jsonDumpsPose(const geometry_msgs::msg::Pose & pose)
 {
@@ -67,8 +83,6 @@ diagnostic_msgs::msg::DiagnosticStatus makeStopReasonDiag(
 }
 }  // namespace
 
-namespace motion_planning
-{
 ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & node_options)
 : Node("obstacle_stop_planner", node_options)
 {
@@ -166,8 +180,7 @@ void ObstacleStopPlannerNode::obstaclePointcloudCallback(
   obstacle_ros_pointcloud_ptr_->header = input_msg->header;
 }
 
-void ObstacleStopPlannerNode::pathCallback(
-  const Trajectory::ConstSharedPtr input_msg)
+void ObstacleStopPlannerNode::pathCallback(const Trajectory::ConstSharedPtr input_msg)
 {
   if (!obstacle_ros_pointcloud_ptr_) {
     RCLCPP_WARN_THROTTLE(
@@ -235,39 +248,39 @@ void ObstacleStopPlannerNode::pathCallback(
 
   for (int i = 0; i < static_cast<int>(decimate_trajectory.points.size()) - 1; ++i) {
     // create one step circle center for vehicle
-    const auto prev_center_pose = getVehicleCenterFromBase(decimate_trajectory.points.at(i).pose);
-    Point2d prev_center_point(prev_center_pose.position.x, prev_center_pose.position.y);
-    const auto next_center_pose =
-      getVehicleCenterFromBase(decimate_trajectory.points.at(i + 1).pose);
-    Point2d next_center_point(next_center_pose.position.x, next_center_pose.position.y);
+    const auto & p_front = decimate_trajectory.points.at(i).pose;
+    const auto & p_back = decimate_trajectory.points.at(i + 1).pose;
+    const auto prev_center_pose = getVehicleCenterFromBase(p_front);
+    const Point2d prev_center_point(prev_center_pose.position.x, prev_center_pose.position.y);
+    const auto next_center_pose = getVehicleCenterFromBase(p_back);
+    const Point2d next_center_point(next_center_pose.position.x, next_center_pose.position.y);
 
     if (node_param_.enable_slow_down) {
       std::vector<cv::Point2d> one_step_move_slow_down_range_polygon;
       // create one step polygon for slow_down range
       createOneStepPolygon(
-        decimate_trajectory.points.at(i).pose, decimate_trajectory.points.at(i + 1).pose,
-        one_step_move_slow_down_range_polygon, slow_down_param_.expand_slow_down_range);
+        p_front, p_back, one_step_move_slow_down_range_polygon,
+        slow_down_param_.expand_slow_down_range);
       debug_ptr_->pushPolygon(
-        one_step_move_slow_down_range_polygon, decimate_trajectory.points.at(i).pose.position.z,
-        PolygonType::SlowDownRange);
+        one_step_move_slow_down_range_polygon, p_front.position.z, PolygonType::SlowDownRange);
 
       found_slow_down_points = withinPolygon(
         one_step_move_slow_down_range_polygon, prev_center_point, next_center_point,
         obstacle_candidate_pointcloud_ptr, slow_down_pointcloud_ptr);
+
       if (!slow_down_require && found_slow_down_points) {
         // found nearest slow down obstacle
         slow_down_require = true;
         decimate_trajectory_slow_down_index = i;
-        debug_ptr_->pushPolygon(
-          one_step_move_slow_down_range_polygon, decimate_trajectory.points.at(i).pose.position.z,
-          PolygonType::SlowDown);
         getNearestPoint(
-          *slow_down_pointcloud_ptr, decimate_trajectory.points.at(i).pose,
-          &nearest_slow_down_point, &nearest_collision_point_time);
+          *slow_down_pointcloud_ptr, p_front, &nearest_slow_down_point,
+          &nearest_collision_point_time);
         getLateralNearestPoint(
-          *slow_down_pointcloud_ptr, decimate_trajectory.points.at(i).pose,
-          &lateral_nearest_slow_down_point, &lateral_deviation);
+          *slow_down_pointcloud_ptr, p_front, &lateral_nearest_slow_down_point, &lateral_deviation);
+
         debug_ptr_->pushObstaclePoint(nearest_slow_down_point, PointType::SlowDown);
+        debug_ptr_->pushPolygon(
+          one_step_move_slow_down_range_polygon, p_front.position.z, PolygonType::SlowDown);
       }
 
     } else {
@@ -278,8 +291,7 @@ void ObstacleStopPlannerNode::pathCallback(
       std::vector<cv::Point2d> one_step_move_vehicle_polygon;
       // create one step polygon for vehicle
       createOneStepPolygon(
-        decimate_trajectory.points.at(i).pose, decimate_trajectory.points.at(i + 1).pose,
-        one_step_move_vehicle_polygon, stop_param_.expand_stop_range);
+        p_front, p_back, one_step_move_vehicle_polygon, stop_param_.expand_stop_range);
       debug_ptr_->pushPolygon(
         one_step_move_vehicle_polygon, decimate_trajectory.points.at(i).pose.position.z,
         PolygonType::Vehicle);
@@ -291,15 +303,16 @@ void ObstacleStopPlannerNode::pathCallback(
       found_collision_points = withinPolygon(
         one_step_move_vehicle_polygon, prev_center_point, next_center_point,
         slow_down_pointcloud_ptr, collision_pointcloud_ptr);
+
       if (found_collision_points) {
-        debug_ptr_->pushPolygon(
-          one_step_move_vehicle_polygon, decimate_trajectory.points.at(i).pose.position.z,
-          PolygonType::Collision);
-        getNearestPoint(
-          *collision_pointcloud_ptr, decimate_trajectory.points.at(i).pose,
-          &nearest_collision_point, &nearest_collision_point_time);
-        debug_ptr_->pushObstaclePoint(nearest_collision_point, PointType::Stop);
         decimate_trajectory_collision_index = i;
+        getNearestPoint(
+          *collision_pointcloud_ptr, p_front,
+          &nearest_collision_point, &nearest_collision_point_time);
+
+        debug_ptr_->pushObstaclePoint(nearest_collision_point, PointType::Stop);
+        debug_ptr_->pushPolygon(
+          one_step_move_vehicle_polygon, p_front.position.z, PolygonType::Collision);
 
         stop_require = found_collision_points;
         acc_controller_->insertAdaptiveCruiseVelocity(
@@ -318,21 +331,24 @@ void ObstacleStopPlannerNode::pathCallback(
       trajectory_trim_index;
       i < base_trajectory.points.size(); ++i)
     {
-      const double yaw =
-        getYawFromGeometryMsgsQuaternion(base_trajectory.points.at(i).pose.orientation);
-      const Eigen::Vector2d trajectory_vec(std::cos(yaw), std::sin(yaw));
-      const Eigen::Vector2d collision_point_vec(
-        nearest_collision_point.x - base_trajectory.points.at(i).pose.position.x,
-        nearest_collision_point.y - base_trajectory.points.at(i).pose.position.y);
+      const auto & base_trajectory_pose = base_trajectory.points.at(i).pose;
+      const auto yaw = getRPY(base_trajectory_pose).z;
+      const Point2d base_trajectory_pose_direction(std::cos(yaw), std::sin(yaw));
+      const Point2d base_trajectory_point_to_obstacle(
+        nearest_collision_point.x - base_trajectory_pose.position.x,
+        nearest_collision_point.y - base_trajectory_pose.position.y);
 
-      if (
-        trajectory_vec.dot(collision_point_vec) < 0.0 ||
-        (i + 1 == base_trajectory.points.size() && 0.0 < trajectory_vec.dot(collision_point_vec)))
-      {
-        const auto stop_point =
-          searchInsertPoint(i, base_trajectory, trajectory_vec, collision_point_vec);
+      const auto is_obstacle_in_front_of_trajectory_point =
+        base_trajectory_pose_direction.dot(base_trajectory_point_to_obstacle) > 0.0;
+      const auto is_trajectory_end = i + 1 == base_trajectory.points.size();
+
+      if (!is_obstacle_in_front_of_trajectory_point || is_trajectory_end) {
+        const auto stop_point = searchInsertPoint(
+          i, base_trajectory, base_trajectory_pose_direction,
+          base_trajectory_point_to_obstacle);
+
         if (stop_point.index <= output_trajectory.points.size()) {
-          insertStopPoint(stop_point, base_trajectory, output_trajectory, stop_reason_diag);
+          insertStopPoint(stop_point, output_trajectory, stop_reason_diag);
         }
         break;
       }
@@ -344,22 +360,25 @@ void ObstacleStopPlannerNode::pathCallback(
     for (size_t i = decimate_trajectory_index_map.at(decimate_trajectory_slow_down_index);
       i < base_trajectory.points.size(); ++i)
     {
-      const double yaw =
-        getYawFromGeometryMsgsQuaternion(base_trajectory.points.at(i).pose.orientation);
-      const Eigen::Vector2d trajectory_vec(std::cos(yaw), std::sin(yaw));
-      const Eigen::Vector2d slow_down_point_vec(
-        nearest_slow_down_point.x - base_trajectory.points.at(i).pose.position.x,
-        nearest_slow_down_point.y - base_trajectory.points.at(i).pose.position.y);
+      const auto & base_trajectory_pose = base_trajectory.points.at(i).pose;
+      const auto yaw = getRPY(base_trajectory_pose).z;
+      const Point2d base_trajectory_pose_direction(std::cos(yaw), std::sin(yaw));
+      const Point2d base_trajectory_point_to_obstacle(
+        nearest_slow_down_point.x - base_trajectory_pose.position.x,
+        nearest_slow_down_point.y - base_trajectory_pose.position.y);
 
-      if (
-        trajectory_vec.dot(slow_down_point_vec) < 0.0 ||
-        (i + 1 == base_trajectory.points.size() && 0.0 < trajectory_vec.dot(slow_down_point_vec)))
-      {
+      const auto is_obstacle_in_front_of_trajectory_point =
+        base_trajectory_pose_direction.dot(base_trajectory_point_to_obstacle) > 0.0;
+      const auto is_trajectory_end = i + 1 == base_trajectory.points.size();
+
+      if (!is_obstacle_in_front_of_trajectory_point || is_trajectory_end) {
         const auto slow_down_section = createSlowDownSection(
-          i, lateral_deviation, trajectory_vec, slow_down_point_vec, base_trajectory);
+          i, base_trajectory, lateral_deviation, base_trajectory_pose_direction,
+          base_trajectory_point_to_obstacle);
 
         if (slow_down_section.slow_down_start_idx <= output_trajectory.points.size()) {
-          insertSlowDownSection(slow_down_section, base_trajectory, output_trajectory);
+          insertSlowDownSection(
+            slow_down_section, base_trajectory, output_trajectory);
         }
         break;
       }
@@ -409,21 +428,23 @@ void ObstacleStopPlannerNode::externalExpandStopRangeCallback(
 }
 
 void ObstacleStopPlannerNode::insertStopPoint(
-  const StopPoint & stop_point, const Trajectory & base_trajectory,
-  Trajectory & output,
+  const StopPoint & stop_point, Trajectory & output,
   diagnostic_msgs::msg::DiagnosticStatus & stop_reason_diag)
 {
-  TrajectoryPoint stop_trajectory_point =
-    base_trajectory.points.at(std::max(static_cast<int>(stop_point.index) - 1, 0));
-  stop_trajectory_point.pose.position.x = stop_point.point.x();
-  stop_trajectory_point.pose.position.y = stop_point.point.y();
-  stop_trajectory_point.twist.linear.x = 0.0;
-  output.points.insert(output.points.begin() + stop_point.index, stop_trajectory_point);
-  for (size_t j = stop_point.index; j < output.points.size(); ++j) {
-    output.points.at(j).twist.linear.x = 0.0;
+  const auto & stop_idx = stop_point.index;
+  const auto & p_base = output.points.at(stop_idx);
+  const auto & p_insert = stop_point.point;
+  constexpr double min_dist = 1e-3;
+
+  if (calcDistance2d(p_base, p_insert) > min_dist) {
+    output.points.insert(output.points.begin() + stop_idx, p_insert);
   }
-  stop_reason_diag = makeStopReasonDiag("obstacle", stop_trajectory_point.pose);
-  debug_ptr_->pushPose(stop_trajectory_point.pose, PoseType::Stop);
+
+  for (size_t i = stop_idx; i < output.points.size(); ++i) {
+    output.points.at(i).twist.linear.x = 0.0;
+  }
+  stop_reason_diag = makeStopReasonDiag("obstacle", p_insert.pose);
+  debug_ptr_->pushPose(p_insert.pose, PoseType::Stop);
 }
 
 StopPoint ObstacleStopPlannerNode::searchInsertPoint(
@@ -447,7 +468,7 @@ StopPoint ObstacleStopPlannerNode::searchInsertPoint(
     }
   }
   // insert stop point
-  StopPoint stop_point;
+  StopPoint stop_point{};
   stop_point.index =
     !is_inserted_already_stop_point ? max_dist_stop_point.index : min_dist_stop_point.index;
   stop_point.point =
@@ -459,73 +480,75 @@ StopPoint ObstacleStopPlannerNode::createTargetPoint(
   const int idx, const double margin, const Eigen::Vector2d & trajectory_vec,
   const Eigen::Vector2d & collision_point_vec, const Trajectory & base_trajectory)
 {
+  StopPoint stop_point{};
   double length_sum = 0.0;
-  length_sum += trajectory_vec.normalized().dot(collision_point_vec);
-  Eigen::Vector2d line_start_point, line_end_point;
+  TrajectoryPoint p_front{};
+  TrajectoryPoint p_back{};
 
-  StopPoint stop_point{0, Eigen::Vector2d()};
-  for (size_t j = idx; 0 < j; --j) {
-    line_start_point << base_trajectory.points.at(j - 1).pose.position.x,
-      base_trajectory.points.at(j - 1).pose.position.y;
-    line_end_point << base_trajectory.points.at(j).pose.position.x,
-      base_trajectory.points.at(j).pose.position.y;
+  length_sum += trajectory_vec.normalized().dot(collision_point_vec);
+
+  for (size_t i = idx; 0 < i; --i) {
+    p_front = base_trajectory.points.at(i - 1);
+    p_back = base_trajectory.points.at(i);
+
     if (margin < length_sum) {
-      stop_point.index = j;
+      stop_point.index = i;
       break;
     }
-    length_sum += (line_end_point - line_start_point).norm();
+    length_sum += calcDistance2d(p_front, p_back);
   }
-  getBackwardPointFromBasePoint(
-    line_start_point, line_end_point, line_start_point, length_sum - margin, stop_point.point);
+  stop_point.point = getBackwardPointFromBasePoint(
+    p_front, p_back, p_front, length_sum - margin);
 
   return stop_point;
 }
 
 SlowDownSection ObstacleStopPlannerNode::createSlowDownSection(
-  const int idx, const double lateral_deviation, const Eigen::Vector2d & trajectory_vec,
-  const Eigen::Vector2d & slow_down_point_vec, const Trajectory & base_trajectory)
+  const int idx, const Trajectory & base_trajectory,
+  const double lateral_deviation,
+  const Eigen::Vector2d & trajectory_vec,
+  const Eigen::Vector2d & slow_down_point_vec)
 {
-  SlowDownSection slow_down_section;
+  SlowDownSection slow_down_section{};
+
+  // calc slow down start point
   double length_sum_forward = 0.0;
-  double length_sum_backward = 0.0;
   double delta_length_forward = 0.0;
-  double delta_length_backward = 0.0;
   length_sum_forward += trajectory_vec.normalized().dot(slow_down_point_vec);
 
   for (size_t i = idx; 0 < i; --i) {
-    const Eigen::Vector2d p1(
-      base_trajectory.points.at(i).pose.position.x, base_trajectory.points.at(i).pose.position.y);
-    const Eigen::Vector2d p2(
-      base_trajectory.points.at(i - 1).pose.position.x,
-      base_trajectory.points.at(i - 1).pose.position.y);
+    const auto & p_front = base_trajectory.points.at(i - 1);
+    const auto & p_back = base_trajectory.points.at(i);
 
     if (slow_down_param_.slow_down_forward_margin < length_sum_forward) {
       slow_down_section.slow_down_start_idx = i;
-      getBackwardPointFromBasePoint(p1, p2, p1, delta_length_forward, slow_down_section.point);
+      slow_down_section.start_point =
+        getBackwardPointFromBasePoint(p_front, p_back, p_front, delta_length_forward);
       break;
     }
-    length_sum_forward += (p1 - p2).norm();
+    length_sum_forward += calcDistance2d(p_front, p_back);
     delta_length_forward = length_sum_forward - slow_down_param_.slow_down_forward_margin;
   }
 
   if (delta_length_forward < std::numeric_limits<double>::epsilon()) {
     slow_down_section.slow_down_start_idx = 0;
-    slow_down_section.point.x() = base_trajectory.points.at(0).pose.position.x;
-    slow_down_section.point.y() = base_trajectory.points.at(0).pose.position.y;
+    slow_down_section.start_point = base_trajectory.points.front();
   }
 
+  // calc slow down end point
+  double length_sum_backward = 0.0;
+  double delta_length_backward = 0.0;
+  length_sum_backward -= trajectory_vec.normalized().dot(slow_down_point_vec);
+
   for (size_t i = idx; i < base_trajectory.points.size() - 1; ++i) {
-    const Eigen::Vector2d p1(
-      base_trajectory.points.at(i).pose.position.x, base_trajectory.points.at(i).pose.position.y);
-    const Eigen::Vector2d p2(
-      base_trajectory.points.at(i + 1).pose.position.x,
-      base_trajectory.points.at(i + 1).pose.position.y);
+    const auto & p_front = base_trajectory.points.at(i);
+    const auto & p_back = base_trajectory.points.at(i + 1);
 
     if (slow_down_param_.slow_down_backward_margin < length_sum_backward) {
       slow_down_section.slow_down_end_idx = i;
       break;
     }
-    length_sum_backward += (p1 - p2).norm();
+    length_sum_backward += calcDistance2d(p_front, p_back);
     delta_length_backward = length_sum_backward - slow_down_param_.slow_down_backward_margin;
   }
 
@@ -538,6 +561,7 @@ SlowDownSection ObstacleStopPlannerNode::createSlowDownSection(
     (slow_down_param_.max_slow_down_vel - slow_down_param_.min_slow_down_vel) *
     std::max(lateral_deviation - vehicle_info_.vehicle_width_m / 2, 0.0) /
     slow_down_param_.expand_slow_down_range;
+
   return slow_down_section;
 }
 
@@ -545,32 +569,24 @@ void ObstacleStopPlannerNode::insertSlowDownSection(
   const SlowDownSection & slow_down_section,
   const Trajectory & base_trajectory, Trajectory & output)
 {
-  TrajectoryPoint slow_down_start_trajectory_point =
-    base_trajectory.points.at(slow_down_section.slow_down_start_idx);
-  slow_down_start_trajectory_point.pose.position.x = slow_down_section.point.x();
-  slow_down_start_trajectory_point.pose.position.y = slow_down_section.point.y();
-  slow_down_start_trajectory_point.twist.linear.x = slow_down_section.velocity;
-  constexpr double epsilon = 0.001;
-  const auto & insert_target_point = output.points.at(slow_down_section.slow_down_start_idx);
-  if (
-    autoware_utils::calcDistance2d(slow_down_start_trajectory_point, insert_target_point) >
-    epsilon)
-  {
-    output.points.insert(
-      output.points.begin() + slow_down_section.slow_down_start_idx,
-      slow_down_start_trajectory_point);
-  }
-  debug_ptr_->pushPose(slow_down_start_trajectory_point.pose, PoseType::SlowDownStart);
+  const auto & start_idx = slow_down_section.slow_down_start_idx;
+  const auto & end_idx = slow_down_section.slow_down_end_idx;
+  const auto & p_base_start = output.points.at(start_idx);
+  const auto & p_insert_start = slow_down_section.start_point;
+  const auto & p_base_end = output.points.at(end_idx);
+  constexpr double min_dist = 1e-3;
 
-  TrajectoryPoint slow_down_end_trajectory_point =
-    output.points.at(slow_down_section.slow_down_end_idx);
-  for (size_t i = slow_down_section.slow_down_start_idx; i <= slow_down_section.slow_down_end_idx;
-    ++i)
-  {
+  if (calcDistance2d(p_base_start, p_insert_start) > min_dist) {
+    output.points.insert(output.points.begin() + start_idx, p_insert_start);
+  }
+
+  for (size_t i = start_idx; i <= end_idx; ++i) {
     output.points.at(i).twist.linear.x =
       std::min(slow_down_section.velocity, output.points.at(i).twist.linear.x);
   }
-  debug_ptr_->pushPose(slow_down_end_trajectory_point.pose, PoseType::SlowDownEnd);
+
+  debug_ptr_->pushPose(p_base_start.pose, PoseType::SlowDownStart);
+  debug_ptr_->pushPose(p_base_end.pose, PoseType::SlowDownEnd);
 }
 
 void ObstacleStopPlannerNode::dynamicObjectCallback(
@@ -609,6 +625,11 @@ void ObstacleStopPlannerNode::extendTrajectory(
   const Trajectory & input, const double extend_distance, Trajectory & output)
 {
   output = input;
+
+  if (extend_distance < std::numeric_limits<double>::epsilon()) {
+    return;
+  }
+
   const auto goal_point = input.points.back();
   double interpolation_distance = 0.1;
 
@@ -629,36 +650,23 @@ bool ObstacleStopPlannerNode::decimateTrajectory(
   output.header = input.header;
   double trajectory_length_sum = 0.0;
   double next_length = 0.0;
-  const double epsilon = 0.001;
 
   for (int i = 0; i < static_cast<int>(input.points.size()) - 1; ++i) {
+    const auto & p_front = input.points.at(i);
+    const auto & p_back = input.points.at(i + 1);
+    constexpr double epsilon = 1e-3;
+
     if (next_length <= trajectory_length_sum + epsilon) {
-      Eigen::Vector2d interpolated_point;
-      const Eigen::Vector2d line_start_point(
-        input.points.at(i).pose.position.x,
-        input.points.at(i).pose.position.y);
-      const Eigen::Vector2d line_end_point(
-        input.points.at(i + 1).pose.position.x,
-        input.points.at(i + 1).pose.position.y);
-      getBackwardPointFromBasePoint(
-        line_start_point, line_end_point, line_end_point,
-        -1.0 * (trajectory_length_sum - next_length), interpolated_point);
-      TrajectoryPoint trajectory_point;
-      trajectory_point = input.points.at(i);
-      trajectory_point.pose.position.x = interpolated_point.x();
-      trajectory_point.pose.position.y = interpolated_point.y();
-      output.points.push_back(trajectory_point);
+      const auto p_interpolate = getBackwardPointFromBasePoint(
+        p_front, p_back, p_back, next_length - trajectory_length_sum);
+      output.points.push_back(p_interpolate);
+
       index_map.insert(std::make_pair(output.points.size() - 1, size_t(i)));
       next_length += step_length;
       continue;
     }
-    const double x = input.points.at(i).pose.position.x -
-      input.points.at(i + 1).pose.position.x;
-    const double y = input.points.at(i).pose.position.y -
-      input.points.at(i + 1).pose.position.y;
-    const double distance = std::sqrt(x * x + y * y);
 
-    trajectory_length_sum += distance;
+    trajectory_length_sum += calcDistance2d(p_front, p_back);
   }
   if (!input.points.empty()) {
     output.points.push_back(input.points.back());
@@ -759,7 +767,7 @@ void ObstacleStopPlannerNode::createOneStepPolygon(
   const auto & back_m = i.rear_overhang_m;
   // start step
   {
-    double yaw = getYawFromGeometryMsgsQuaternion(base_step_pose.orientation);
+    const auto yaw = getRPY(base_step_pose).z;
     one_step_move_vehicle_corner_points.push_back(
       cv::Point2d(
         base_step_pose.position.x + std::cos(yaw) * front_m - std::sin(yaw) * width_m,
@@ -779,7 +787,7 @@ void ObstacleStopPlannerNode::createOneStepPolygon(
   }
   // next step
   {
-    double yaw = getYawFromGeometryMsgsQuaternion(next_step_pose.orientation);
+    const auto yaw = getRPY(next_step_pose).z;
     one_step_move_vehicle_corner_points.push_back(
       cv::Point2d(
         next_step_pose.position.x + std::cos(yaw) * front_m - std::sin(yaw) * width_m,
@@ -801,7 +809,7 @@ void ObstacleStopPlannerNode::createOneStepPolygon(
 }
 
 bool ObstacleStopPlannerNode::convexHull(
-  const std::vector<cv::Point2d> pointcloud, std::vector<cv::Point2d> & polygon_points)
+  const std::vector<cv::Point2d> & pointcloud, std::vector<cv::Point2d> & polygon_points)
 {
   cv::Point2d centroid;
   centroid.x = 0;
@@ -853,15 +861,6 @@ bool ObstacleStopPlannerNode::getSelfPose(
     return false;
   }
 }
-bool ObstacleStopPlannerNode::getBackwardPointFromBasePoint(
-  const Eigen::Vector2d & line_point1, const Eigen::Vector2d & line_point2,
-  const Eigen::Vector2d & base_point, const double backward_length, Eigen::Vector2d & output_point)
-{
-  Eigen::Vector2d line_vec = line_point2 - line_point1;
-  Eigen::Vector2d backward_vec = backward_length * line_vec.normalized();
-  output_point = base_point + backward_vec;
-  return true;
-}
 
 void ObstacleStopPlannerNode::getNearestPoint(
   const pcl::PointCloud<pcl::PointXYZ> & pointcloud, const geometry_msgs::msg::Pose & base_pose,
@@ -869,7 +868,7 @@ void ObstacleStopPlannerNode::getNearestPoint(
 {
   double min_norm = 0.0;
   bool is_init = false;
-  const double yaw = getYawFromGeometryMsgsQuaternion(base_pose.orientation);
+  const auto yaw = getRPY(base_pose).z;
   const Eigen::Vector2d base_pose_vec(std::cos(yaw), std::sin(yaw));
 
   for (size_t i = 0; i < pointcloud.size(); ++i) {
@@ -890,7 +889,7 @@ void ObstacleStopPlannerNode::getLateralNearestPoint(
   pcl::PointXYZ * lateral_nearest_point, double * deviation)
 {
   double min_norm = std::numeric_limits<double>::max();
-  const double yaw = getYawFromGeometryMsgsQuaternion(base_pose.orientation);
+  const auto yaw = getRPY(base_pose).z;
   const Eigen::Vector2d base_pose_vec(std::cos(yaw), std::sin(yaw));
   for (size_t i = 0; i < pointcloud.size(); ++i) {
     const Eigen::Vector2d pointcloud_vec(
@@ -909,8 +908,9 @@ geometry_msgs::msg::Pose ObstacleStopPlannerNode::getVehicleCenterFromBase(
   const geometry_msgs::msg::Pose & base_pose)
 {
   const auto & i = vehicle_info_;
+  const auto yaw = getRPY(base_pose).z;
+
   geometry_msgs::msg::Pose center_pose;
-  const double yaw = getYawFromGeometryMsgsQuaternion(base_pose.orientation);
   center_pose.position.x =
     base_pose.position.x + (i.vehicle_length_m / 2.0 - i.rear_overhang_m) * std::cos(yaw);
   center_pose.position.y =

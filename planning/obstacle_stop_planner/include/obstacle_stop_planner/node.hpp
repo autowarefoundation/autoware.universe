@@ -43,7 +43,6 @@
 #include "pcl_ros/transforms.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
-#include "tf2/utils.h"
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
 #include "vehicle_info_util/vehicle_info_util.hpp"
@@ -65,15 +64,15 @@ using vehicle_info_util::VehicleInfo;
 
 struct StopPoint
 {
+  TrajectoryPoint point{};
   size_t index;
-  Eigen::Vector2d point;
 };
 
 struct SlowDownSection
 {
+  TrajectoryPoint start_point{};
   size_t slow_down_start_idx;
   size_t slow_down_end_idx;
-  Eigen::Vector2d point;
   double velocity;
 };
 
@@ -153,7 +152,7 @@ private:
     pcl::PointCloud<pcl::PointXYZ>::Ptr within_points_ptr);
 
   bool convexHull(
-    const std::vector<cv::Point2d> pointcloud, std::vector<cv::Point2d> & polygon_points);
+    const std::vector<cv::Point2d> & pointcloud, std::vector<cv::Point2d> & polygon_points);
 
   bool decimateTrajectory(
     const Trajectory & input, const double step_length, Trajectory & output,
@@ -181,11 +180,6 @@ private:
     const std_msgs::msg::Header & header, const tf2_ros::Buffer & tf_buffer,
     geometry_msgs::msg::Pose & self_pose);
 
-  bool getBackwardPointFromBasePoint(
-    const Eigen::Vector2d & line_point1, const Eigen::Vector2d & line_point2,
-    const Eigen::Vector2d & base_point, const double backward_length,
-    Eigen::Vector2d & output_point);
-
   void getNearestPoint(
     const pcl::PointCloud<pcl::PointXYZ> & pointcloud, const geometry_msgs::msg::Pose & base_pose,
     pcl::PointXYZ * nearest_collision_point, rclcpp::Time * nearest_collision_point_time);
@@ -197,8 +191,8 @@ private:
   geometry_msgs::msg::Pose getVehicleCenterFromBase(const geometry_msgs::msg::Pose & base_pose);
 
   void insertStopPoint(
-    const StopPoint & stop_point, const Trajectory & base_trajectory,
-    Trajectory & output, diagnostic_msgs::msg::DiagnosticStatus & stop_reason_diag);
+    const StopPoint & stop_point, Trajectory & output,
+    diagnostic_msgs::msg::DiagnosticStatus & stop_reason_diag);
 
   StopPoint searchInsertPoint(
     const int idx, const Trajectory & base_trajectory,
@@ -209,9 +203,10 @@ private:
     const Eigen::Vector2d & collision_point_vec, const Trajectory & base_trajectory);
 
   SlowDownSection createSlowDownSection(
-    const int idx, const double lateral_deviation, const Eigen::Vector2d & trajectory_vec,
-    const Eigen::Vector2d & slow_down_point_vec,
-    const Trajectory & base_trajectory);
+    const int idx, const Trajectory & base_trajectory,
+    const double lateral_deviation,
+    const Eigen::Vector2d & trajectory_vec,
+    const Eigen::Vector2d & slow_down_point_vec);
 
   void insertSlowDownSection(
     const SlowDownSection & slow_down_section,
