@@ -130,6 +130,11 @@ private:
   sensor_msgs::msg::PointCloud2::SharedPtr obstacle_ros_pointcloud_ptr_;
   geometry_msgs::msg::TwistStamped::ConstSharedPtr current_velocity_ptr_;
   DynamicObjectArray::ConstSharedPtr object_ptr_;
+  double rear_overhang_, left_overhang_, right_overhang_, vehicle_width_, vehicle_length_,
+    baselink2front_;
+  double stop_margin_;
+  double slow_down_margin_;
+  double min_behavior_stop_margin_;
   rclcpp::Time prev_col_point_time_;
   pcl::PointXYZ prev_col_point_;
 

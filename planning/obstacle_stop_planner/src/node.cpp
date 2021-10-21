@@ -105,8 +105,8 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
     p.expand_stop_range = declare_parameter(ns + "expand_stop_range", 0.0);
     p.extend_distance = declare_parameter(ns + "extend_distance", 0.0);
     p.step_length = declare_parameter(ns + "step_length", 1.0);
-    p.stop_margin += i.wheel_base_m + i.front_overhang_m;
-    p.min_behavior_stop_margin += i.wheel_base_m + i.front_overhang_m;
+    p.stop_margin += i.max_longitudinal_offset_m;
+    p.min_behavior_stop_margin += i.max_longitudinal_offset_m;
     p.stop_search_radius =
       p.step_length + std::hypot(
       i.vehicle_width_m / 2.0 + p.expand_stop_range, i.vehicle_length_m / 2.0);
@@ -120,18 +120,18 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
     p.expand_slow_down_range = declare_parameter(ns + "expand_slow_down_range", 1.0);
     p.max_slow_down_vel = declare_parameter(ns + "max_slow_down_vel", 4.0);
     p.min_slow_down_vel = declare_parameter(ns + "min_slow_down_vel", 2.0);
-    p.slow_down_forward_margin += i.wheel_base_m + i.front_overhang_m;
+    p.slow_down_forward_margin += i.max_longitudinal_offset_m;
     p.slow_down_backward_margin += i.rear_overhang_m;
     p.slow_down_search_radius = stop_param_.step_length +
       std::hypot(i.vehicle_width_m / 2.0 + p.expand_slow_down_range, i.vehicle_length_m / 2.0);
   }
 
   debug_ptr_ = std::make_shared<ObstacleStopPlannerDebugNode>(
-    this, i.wheel_base_m + i.front_overhang_m);
+    this, i.max_longitudinal_offset_m);
 
   // Initializer
   acc_controller_ = std::make_unique<motion_planning::AdaptiveCruiseController>(
-    this, i.vehicle_width_m, i.vehicle_length_m, i.wheel_base_m, i.front_overhang_m);
+    this, i.vehicle_width_m, i.vehicle_length_m, i.max_longitudinal_offset_m);
 
   // Publishers
   path_pub_ = this->create_publisher<Trajectory>("~/output/trajectory", 1);
@@ -762,7 +762,7 @@ void ObstacleStopPlannerNode::createOneStepPolygon(
   std::vector<cv::Point2d> one_step_move_vehicle_corner_points;
 
   const auto & i = vehicle_info_;
-  const auto & front_m = i.wheel_base_m + i.front_overhang_m;
+  const auto & front_m = i.max_longitudinal_offset_m;
   const auto & width_m = i.vehicle_width_m / 2.0 + expand_width;
   const auto & back_m = i.rear_overhang_m;
   // start step
