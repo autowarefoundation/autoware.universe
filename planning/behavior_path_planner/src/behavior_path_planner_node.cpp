@@ -159,43 +159,44 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
 
 SideShiftParameters BehaviorPathPlannerNode::getSideShiftParam()
 {
+  const auto dp = [this](const std::string & str, auto def_val) {
+      std::string name = "side_shift." + str;
+      return this->declare_parameter(name, def_val);
+    };
+
   SideShiftParameters p{};
-  p.min_fix_distance = declare_parameter("side_shift.min_fix_distance", 20.0);
-  p.start_avoid_sec = declare_parameter("side_shift.start_avoid_sec", 4.0);
-  p.drivable_area_resolution = declare_parameter("side_shift.drivable_area_resolution", 0.1);
-  p.drivable_area_width = declare_parameter("side_shift.drivable_area_width", 100.0);
-  p.drivable_area_height = declare_parameter("side_shift.drivable_area_height", 50.0);
-  p.inside_outside_judge_margin = declare_parameter("side_shift.inside_outside_judge_margin", 0.3);
+  p.min_fix_distance = dp("min_fix_distance", 20.0);
+  p.start_avoid_sec = dp("start_avoid_sec", 4.0);
+  p.drivable_area_resolution = dp("drivable_area_resolution", 0.1);
+  p.drivable_area_width = dp("drivable_area_width", 100.0);
+  p.drivable_area_height = dp("drivable_area_height", 50.0);
+  p.inside_outside_judge_margin = dp("inside_outside_judge_margin", 0.3);
   return p;
 }
 
 AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
 {
-  AvoidanceParameters p{};
-  p.threshold_distance_object_is_on_center = declare_parameter(
-    "avoidance.threshold_distance_object_is_on_center", 1.0);
-  p.threshold_speed_object_is_stopped = declare_parameter(
-    "avoidance.threshold_speed_object_is_stopped", 1.0);
-  p.object_check_forward_distance = declare_parameter(
-    "avoidance.object_check_forward_distance",
-    100.0);
-  p.object_check_backward_distance = declare_parameter(
-    "avoidance.object_check_backward_distance",
-    2.0);
-  p.lateral_collision_margin = declare_parameter("avoidance.lateral_collision_margin", 2.0);
-  p.time_to_start_avoidance = declare_parameter("avoidance.time_to_start_avoidance", 3.0);
-  p.min_distance_to_start_avoidance = declare_parameter(
-    "avoidance.min_distance_to_start_avoidance",
-    10.0);
-  p.time_avoiding = declare_parameter("avoidance.time_avoiding", 3.0);
-  p.min_distance_avoiding = declare_parameter("avoidance.min_distance_avoiding", 10.0);
-  p.max_shift_length = declare_parameter("avoidance.max_shift_length", 1.5);
-  p.min_distance_avoidance_end_to_object = declare_parameter(
-    "avoidance.min_distance_avoidance_end_to_object", 5.0);
-  p.time_avoidance_end_to_object = declare_parameter("avoidance.time_avoidance_end_to_object", 1.0);
+  const auto dp = [this](const std::string & str, auto def_val) {
+      std::string name = "avoidance." + str;
+      return this->declare_parameter(name, def_val);
+    };
 
-  p.nominal_lateral_jerk = declare_parameter("avoidance.nominal_lateral_jerk", 0.3);
-  p.max_lateral_jerk = declare_parameter("avoidance.max_lateral_jerk", 2.0);
+  AvoidanceParameters p{};
+  p.threshold_distance_object_is_on_center = dp("threshold_distance_object_is_on_center", 1.0);
+  p.threshold_speed_object_is_stopped = dp("threshold_speed_object_is_stopped", 1.0);
+  p.object_check_forward_distance = dp("object_check_forward_distance", 100.0);
+  p.object_check_backward_distance = dp("object_check_backward_distance", 2.0);
+  p.lateral_collision_margin = dp("lateral_collision_margin", 2.0);
+  p.time_to_start_avoidance = dp("time_to_start_avoidance", 3.0);
+  p.min_distance_to_start_avoidance = dp("min_distance_to_start_avoidance", 10.0);
+  p.time_avoiding = dp("time_avoiding", 3.0);
+  p.min_distance_avoiding = dp("min_distance_avoiding", 10.0);
+  p.max_shift_length = dp("max_shift_length", 1.5);
+  p.min_distance_avoidance_end_to_object = dp("min_distance_avoidance_end_to_object", 5.0);
+  p.time_avoidance_end_to_object = dp("time_avoidance_end_to_object", 1.0);
+
+  p.nominal_lateral_jerk = dp("nominal_lateral_jerk", 0.3);
+  p.max_lateral_jerk = dp("max_lateral_jerk", 2.0);
 
   return p;
 }
@@ -209,38 +210,34 @@ LaneFollowingParameters BehaviorPathPlannerNode::getLaneFollowingParam()
 
 LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
 {
+  const auto dp = [this](const std::string & str, auto def_val) {
+      std::string name = "lane_change." + str;
+      return this->declare_parameter(name, def_val);
+    };
+
   LaneChangeParameters p{};
-  p.min_stop_distance = declare_parameter("lane_change.min_stop_distance", 5.0);
-  p.stop_time = declare_parameter("lane_change.stop_time", 2.0);
-  p.hysteresis_buffer_distance = declare_parameter("lane_change.hysteresis_buffer_distance", 2.0);
-  p.lane_change_prepare_duration =
-    declare_parameter("lane_change.lane_change_prepare_duration", 2.0);
-  p.lane_changing_duration = declare_parameter("lane_change.lane_changing_duration", 4.0);
-  p.lane_change_finish_judge_buffer = declare_parameter(
-    "lane_change.lane_change_finish_judge_buffer", 3.0);
-  p.minimum_lane_change_velocity =
-    declare_parameter("lane_change.minimum_lane_change_velocity", 8.3);
-  p.prediction_duration = declare_parameter("lane_change.prediction_duration", 8.0);
-  p.prediction_time_resolution = declare_parameter("lane_change.prediction_time_resolution", 0.5);
-  p.static_obstacle_velocity_thresh = declare_parameter(
-    "lane_change.static_obstacle_velocity_thresh", 0.1);
-  p.maximum_deceleration = declare_parameter("lane_change.maximum_deceleration", 1.0);
-  p.lane_change_sampling_num = declare_parameter("lane_change.lane_change_sampling_num", 10);
-  p.enable_abort_lane_change = declare_parameter("lane_change.enable_abort_lane_change", true);
-  p.enable_collision_check_at_prepare_phase = declare_parameter(
-    "lane_change.enable_collision_check_at_prepare_phase", true);
-  p.use_predicted_path_outside_lanelet = declare_parameter(
-    "lane_change.use_predicted_path_outside_lanelet", true);
-  p.use_all_predicted_path = declare_parameter("lane_change.use_all_predicted_path", false);
-  p.abort_lane_change_velocity_thresh = declare_parameter(
-    "lane_change.abort_lane_change_velocity_thresh", 0.5);
-  p.abort_lane_change_angle_thresh = declare_parameter(
-    "lane_change.abort_lane_change_angle_thresh", autoware_utils::deg2rad(10.0));
-  p.abort_lane_change_distance_thresh = declare_parameter(
-    "lane_change.abort_lane_change_distance_thresh", 0.3);
-  p.enable_blocked_by_obstacle = declare_parameter("lane_change.enable_blocked_by_obstacle", false);
-  p.lane_change_search_distance =
-    declare_parameter("lane_change.lane_change_search_distance", 30.0);
+  p.min_stop_distance = dp("min_stop_distance", 5.0);
+  p.stop_time = dp("stop_time", 2.0);
+  p.hysteresis_buffer_distance = dp("hysteresis_buffer_distance", 2.0);
+  p.lane_change_prepare_duration = dp("lane_change_prepare_duration", 2.0);
+  p.lane_changing_duration = dp("lane_changing_duration", 4.0);
+  p.lane_change_finish_judge_buffer = dp("lane_change_finish_judge_buffer", 3.0);
+  p.minimum_lane_change_velocity = dp("minimum_lane_change_velocity", 8.3);
+  p.prediction_duration = dp("prediction_duration", 8.0);
+  p.prediction_time_resolution = dp("prediction_time_resolution", 0.5);
+  p.static_obstacle_velocity_thresh = dp("static_obstacle_velocity_thresh", 0.1);
+  p.maximum_deceleration = dp("maximum_deceleration", 1.0);
+  p.lane_change_sampling_num = dp("lane_change_sampling_num", 10);
+  p.enable_abort_lane_change = dp("enable_abort_lane_change", true);
+  p.enable_collision_check_at_prepare_phase = dp("enable_collision_check_at_prepare_phase", true);
+  p.use_predicted_path_outside_lanelet = dp("use_predicted_path_outside_lanelet", true);
+  p.use_all_predicted_path = dp("use_all_predicted_path", false);
+  p.abort_lane_change_velocity_thresh = dp("abort_lane_change_velocity_thresh", 0.5);
+  p.abort_lane_change_angle_thresh =
+    dp("abort_lane_change_angle_thresh", autoware_utils::deg2rad(10.0));
+  p.abort_lane_change_distance_thresh = dp("abort_lane_change_distance_thresh", 0.3);
+  p.enable_blocked_by_obstacle = dp("enable_blocked_by_obstacle", false);
+  p.lane_change_search_distance = dp("lane_change_search_distance", 30.0);
 
   // validation of parameters
   if (p.lane_change_sampling_num < 1) {
