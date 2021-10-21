@@ -27,7 +27,7 @@
 namespace behavior_velocity_planner
 {
 OcclusionSpotInPublicModule::OcclusionSpotInPublicModule(
-  const int64_t module_id, std::shared_ptr<const PlannerData> planner_data,
+  const int64_t module_id, [[maybe_unused]] std::shared_ptr<const PlannerData> planner_data,
   const PlannerParam & planner_param, const rclcpp::Logger logger,
   const rclcpp::Clock::SharedPtr clock)
 : SceneModuleInterface(module_id, logger, clock)
@@ -37,7 +37,7 @@ OcclusionSpotInPublicModule::OcclusionSpotInPublicModule(
 
 bool OcclusionSpotInPublicModule::modifyPathVelocity(
   autoware_planning_msgs::msg::PathWithLaneId * path,
-  autoware_planning_msgs::msg::StopReason * stop_reason)
+  [[maybe_unused]] autoware_planning_msgs::msg::StopReason * stop_reason)
 {
   if (path->points.size() < 2) {return true;}
   param_.vehicle_info.baselink_to_front = planner_data_->vehicle_info_.max_longitudinal_offset_m;

@@ -30,7 +30,8 @@ namespace behavior_velocity_planner
 namespace occlusion_spot_utils
 {
 ROAD_TYPE getCurrentRoadType(
-  const lanelet::ConstLanelet & current_lanelet, const lanelet::LaneletMapPtr & lanelet_map_ptr)
+  const lanelet::ConstLanelet & current_lanelet,
+  [[maybe_unused]] const lanelet::LaneletMapPtr & lanelet_map_ptr)
 {
   const auto logger{rclcpp::get_logger("behavior_velocity_planner").get_child("occlusion_spot")};
   rclcpp::Clock clock{RCL_ROS_TIME};
