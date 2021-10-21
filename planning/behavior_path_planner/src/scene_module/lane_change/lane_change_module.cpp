@@ -125,6 +125,22 @@ BehaviorModuleOutput LaneChangeModule::plan()
 {
   auto path = status_.lane_change_path.path;
 
+  // Generate drivable area
+  {
+    const auto & route_handler = planner_data_->route_handler;
+    const auto common_parameters = planner_data_->parameters;
+    lanelet::ConstLanelets lanes;
+    lanes.insert(lanes.end(), status_.current_lanes.begin(), status_.current_lanes.end());
+    lanes.insert(lanes.end(), status_.lane_change_lanes.begin(), status_.lane_change_lanes.end());
+
+    const double width = common_parameters.drivable_area_width;
+    const double height = common_parameters.drivable_area_height;
+    const double resolution = common_parameters.drivable_area_resolution;
+    path.drivable_area = util::generateDrivableArea(
+      lanes, *(planner_data_->self_pose), width, height, resolution,
+      common_parameters.vehicle_length, *route_handler);
+  }
+
   if (isAbortConditionSatisfied()) {
     if (isNearEndOfLane() && isCurrentSpeedLow()) {
       const auto stop_point = util::insertStopPoint(0.1, &path);
@@ -168,9 +184,6 @@ void LaneChangeModule::setParameters(const LaneChangeParameters & parameters)
 
 void LaneChangeModule::updateLaneChangeStatus()
 {
-  const auto & route_handler = planner_data_->route_handler;
-  const auto common_parameters = planner_data_->parameters;
-
   const auto current_lanes = getCurrentLanes();
   status_.current_lanes = current_lanes;
 
@@ -189,20 +202,6 @@ void LaneChangeModule::updateLaneChangeStatus()
   status_.lane_change_path = selected_path;
   status_.lane_follow_lane_ids = util::getIds(current_lanes);
   status_.lane_change_lane_ids = util::getIds(lane_change_lanes);
-
-  // Generate drivable area
-  {
-    lanelet::ConstLanelets lanes;
-    lanes.insert(lanes.end(), current_lanes.begin(), current_lanes.end());
-    lanes.insert(lanes.end(), lane_change_lanes.begin(), lane_change_lanes.end());
-
-    const double width = common_parameters.drivable_area_width;
-    const double height = common_parameters.drivable_area_height;
-    const double resolution = common_parameters.drivable_area_resolution;
-    status_.lane_change_path.path.drivable_area = util::generateDrivableArea(
-      lanes, *(planner_data_->self_pose), width, height, resolution,
-      common_parameters.vehicle_length, *route_handler);
-  }
 
   const auto current_pose = planner_data_->self_pose->pose;
   const auto arclength_start =
