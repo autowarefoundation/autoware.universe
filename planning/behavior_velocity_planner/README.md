@@ -11,6 +11,7 @@ It consists of several modules.
 - Intersection
 - Stop Line
 - Traffic Light
+- Occlusion Spot
 
 When each module plans velocity, it considers based on `base_link`(center of rear-wheel axis) pose.
 So for example, in order to stop at a stop line with the vehicles' front on the stop line, it calculates `base_link` position from the distance between `base_link` to front and modifies path velocity from the `base_link` position.
@@ -45,6 +46,7 @@ So for example, in order to stop at a stop line with the vehicles' front on the 
 | `launch_intersection`   | bool   | whether to launch intersection module                                               |
 | `launch_traffic_light`  | bool   | whether to launch traffic light module                                              |
 | `launch_stop_line`      | bool   | whether to launch stop_line module                                                  |
+| `launch_occlusion_spot` | bool   | whether to launch occlusion_spot module                                             |
 | `forward_path_length`   | double | forward path length                                                                 |
 | `backward_path_length`  | double | backward path length                                                                |
 | `max_accel`             | double | (to be a global parameter) max acceleration of the vehicle                          |
@@ -126,3 +128,84 @@ Then, we can get `offset segment` and `offset from segment start`.
 After that, we can calculate a offset point from `offset segment` and `offset`. This will be `stop_pose`.
 
 ![calculate_stop_pose](./docs/stop_line/calculate_stop_pose.drawio.svg)
+
+### Occlusion Spot
+
+#### Role
+
+This module plans safe velocity to slow down before reaching collision point that hidden object is darting out from `occlusion spot` where driver can't see clearly because of obstacles.
+
+![brief](./docs/occlusion_spot/occlusion_spot.svg)
+
+### Occlusion Spot Private
+
+This module only works in private road and use occupancy grid map to detect occlusion spots.
+
+### Occlusion Spot Public
+
+This module only works in public road and use dynamic objects to detect occlusion spots.
+
+#### Module Parameters
+
+| Parameter            | Type   | Description                                                               |
+| -------------------- | ------ | ------------------------------------------------------------------------- |
+| `pedestrian_vel`     | double | [m/s] maximum velocity assumed pedestrian coming out from occlusion point |
+| `safety_time_buffer` | double | [m/s] time buffer for the system delay                                    |
+
+| Parameter /threshold      | Type   | Description                                               |
+| ------------------------- | ------ | --------------------------------------------------------- |
+| `detection_area_length`　 | double | [m] the length of path to consider occlusion spot         |
+| `stuck_vehicle_vel`       | double | [m/s] velocity below this value is assumed to stop        |
+| `lateral_distance`        | double | [m] maximum lateral distance to consider hidden collision |
+
+| Parameter /(public or private)\_road | Type   | Description                                                          |
+| ------------------------------------ | ------ | -------------------------------------------------------------------- |
+| `min_velocity`                       | double | [m/s] minimum velocity to ignore occlusion spot                      |
+| `ebs_decel`                          | double | [m/s^2] maximum deceleration to assume for emergency braking system. |
+| `pbs_decel`                          | double | [m/s^2] deceleration to assume for predictive braking system         |
+
+| Parameter /sidewalk       | Type   | Description                                                     |
+| ------------------------- | ------ | --------------------------------------------------------------- |
+| `min_occlusion_spot_size` | double | [m] the length of path to consider occlusion spot               |
+| `focus_range`             | double | [m] buffer around the ego path used to build the sidewalk area. |
+
+| Parameter /grid  | Type   | Description                                                     |
+| ---------------- | ------ | --------------------------------------------------------------- |
+| `free_space_max` | double | [-] maximum value of a free space cell in the occupancy grid    |
+| `occupied_min`   | double | [-] buffer around the ego path used to build the sidewalk area. |
+
+#### Flowchart
+
+```plantuml
+@startuml
+title modifyPathVelocity (Private/Public) Road
+start
+
+:get current road type;
+
+if (road type is PUBLIC) then (yes)
+  :use dynamic object array info;
+else if (road type is PRIVATE) then (yes)
+  :use occupancy grid map info;
+else (no)
+  stop
+endif
+
+:generate possible collision;
+
+:find possible collision between path and occlusion spot;
+
+if (possible collision is found?) then (yes)
+else (no)
+  stop
+endif
+
+:calculate collision path point;
+
+:calculate safe velocity consider lateral distance and safe velocity;
+
+:insertSafeVelocityToPath;
+
+stop
+@enduml
+```

@@ -25,7 +25,7 @@ namespace behavior_velocity_planner
 {
 autoware_planning_msgs::msg::Path interpolatePath(
   const autoware_planning_msgs::msg::Path & path, const double length,
-  const rclcpp::Logger & logger);
+  const double interval = 1.0);
 autoware_planning_msgs::msg::Path filterLitterPathPoint(
   const autoware_planning_msgs::msg::Path & path);
 autoware_planning_msgs::msg::Path filterStopPathPoint(

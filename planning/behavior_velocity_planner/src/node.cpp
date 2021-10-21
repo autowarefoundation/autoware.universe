@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include <functional>
-
 #include <memory>
 
 #include "behavior_velocity_planner/node.hpp"
@@ -34,6 +33,7 @@
 #include "scene_module/crosswalk/manager.hpp"
 #include "scene_module/detection_area/manager.hpp"
 #include "scene_module/intersection/manager.hpp"
+#include "scene_module/occlusion_spot/manager.hpp"
 #include "scene_module/stop_line/manager.hpp"
 #include "scene_module/traffic_light/manager.hpp"
 #include "scene_module/virtual_traffic_light/manager.hpp"
@@ -111,6 +111,9 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
     this->create_subscription<autoware_v2x_msgs::msg::VirtualTrafficLightStateArray>(
     "~/input/virtual_traffic_light_states", 10,
     std::bind(&BehaviorVelocityPlannerNode::onVirtualTrafficLightStates, this, _1));
+  sub_occupancy_grid_ = this->create_subscription<nav_msgs::msg::OccupancyGrid>(
+    "~/input/occupancy_grid", 1,
+    std::bind(&BehaviorVelocityPlannerNode::onOccupancyGrid, this, _1));
 
   // Publishers
   path_pub_ = this->create_publisher<autoware_planning_msgs::msg::Path>("~/output/path", 1);
@@ -147,6 +150,9 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   if (this->declare_parameter("launch_virtual_traffic_light", true)) {
     planner_manager_.launchSceneModule(std::make_shared<VirtualTrafficLightModuleManager>(*this));
   }
+  if (this->declare_parameter("launch_occlusion_spot", true)) {
+    planner_manager_.launchSceneModule(std::make_shared<OcclusionSpotModuleManager>(*this));
+  }
 }
 
 bool BehaviorVelocityPlannerNode::isDataReady()
@@ -173,6 +179,12 @@ bool BehaviorVelocityPlannerNode::isDataReady()
   }
 
   return true;
+}
+
+void BehaviorVelocityPlannerNode::onOccupancyGrid(
+  const nav_msgs::msg::OccupancyGrid::ConstSharedPtr msg)
+{
+  planner_data_.occupancy_grid = msg;
 }
 
 void BehaviorVelocityPlannerNode::onDynamicObjects(
@@ -324,7 +336,7 @@ void BehaviorVelocityPlannerNode::onTrigger(
 
   // interpolation
   const auto interpolated_path_msg =
-    interpolatePath(filtered_path, forward_path_length_, this->get_logger());
+    interpolatePath(filtered_path, forward_path_length_);
 
   // check stop point
   auto output_path_msg = filterStopPathPoint(interpolated_path_msg);

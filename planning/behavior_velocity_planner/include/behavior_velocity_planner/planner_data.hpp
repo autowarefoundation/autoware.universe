@@ -37,6 +37,7 @@
 #include "autoware_v2x_msgs/msg/virtual_traffic_light_state_array.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/twist_stamped.hpp"
+#include "nav_msgs/msg/occupancy_grid.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
 #include "std_msgs/msg/header.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
@@ -70,6 +71,8 @@ struct PlannerData
   autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr dynamic_objects;
   pcl::PointCloud<pcl::PointXYZ>::ConstPtr no_ground_pointcloud;
   lanelet::LaneletMapPtr lanelet_map;
+  // occupancy grid
+  nav_msgs::msg::OccupancyGrid::ConstSharedPtr occupancy_grid;
 
   // other internal data
   std::map<int, autoware_perception_msgs::msg::TrafficLightStateStamped> traffic_light_id_map;

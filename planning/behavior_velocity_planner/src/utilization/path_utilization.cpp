@@ -25,9 +25,9 @@
 namespace behavior_velocity_planner
 {
 autoware_planning_msgs::msg::Path interpolatePath(
-  const autoware_planning_msgs::msg::Path & path, const double length,
-  const rclcpp::Logger & logger)
+  const autoware_planning_msgs::msg::Path & path, const double length, const double interval)
 {
+  const auto logger{rclcpp::get_logger("behavior_velocity_planner").get_child("path_utilization")};
   autoware_planning_msgs::msg::Path interpolated_path;
 
   std::vector<double> x, x_interp;
@@ -65,7 +65,7 @@ autoware_planning_msgs::msg::Path interpolatePath(
   // Calculate query points
   // Remove query point if query point is near input path point
   const double epsilon = 0.01;
-  const double interpolation_interval = 1.0;
+  const double interpolation_interval = interval;
   size_t checkpoint_idx = 1;
   for (double s = interpolation_interval; s < std::min(length, s_in.back());
     s += interpolation_interval)

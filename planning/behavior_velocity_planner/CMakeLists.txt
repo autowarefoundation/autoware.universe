@@ -17,6 +17,7 @@ find_package(Boost REQUIRED)
 find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(PCL REQUIRED COMPONENTS common)
+find_package(OpenCV REQUIRED)
 
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
@@ -42,6 +43,8 @@ set(BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES
   tf2_ros
   vehicle_info_util
   visualization_msgs
+  nav_msgs
+  grid_map_ros
 )
 
 
@@ -191,6 +194,28 @@ ament_target_dependencies(scene_module_virtual_traffic_light ${BEHAVIOR_VELOCITY
 target_link_libraries(scene_module_virtual_traffic_light scene_module_lib)
 
 
+# SceneModule OcclusionSpot
+ament_auto_add_library(scene_module_occlusion_spot SHARED
+  src/scene_module/occlusion_spot/grid_utils.cpp
+  src/scene_module/occlusion_spot/geometry.cpp
+  src/scene_module/occlusion_spot/manager.cpp
+  src/scene_module/occlusion_spot/debug.cpp
+  src/scene_module/occlusion_spot/scene_occlusion_spot_in_public_road.cpp
+  src/scene_module/occlusion_spot/scene_occlusion_spot_in_private_road.cpp
+  src/scene_module/occlusion_spot/occlusion_spot_utils.cpp
+  src/scene_module/occlusion_spot/risk_predictive_braking.cpp
+)
+
+target_include_directories(scene_module_occlusion_spot
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
+
+ament_target_dependencies(scene_module_occlusion_spot ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
+
+target_link_libraries(scene_module_occlusion_spot scene_module_lib)
+
 # Scene Module Manager
 ament_auto_add_library(scene_module_manager SHARED
   src/planner_manager.cpp
@@ -227,6 +252,7 @@ target_link_libraries(behavior_velocity_planner
   scene_module_intersection
   scene_module_traffic_light
   scene_module_blind_spot
+  scene_module_occlusion_spot
   scene_module_detection_area
   scene_module_virtual_traffic_light
   scene_module_manager
@@ -242,6 +268,23 @@ rclcpp_components_register_node(behavior_velocity_planner
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
+
+  ament_add_gtest(occlusion_spot-test
+    test/src/utils.hpp
+    test/src/test_occlusion_spot_utils.cpp
+    test/src/test_risk_predictive_braking.cpp
+    test/src/test_geometry.cpp
+    test/src/test_grid_utils.cpp
+    test/src/test_performances.cpp
+    src/scene_module/occlusion_spot/geometry.cpp
+    src/scene_module/occlusion_spot/grid_utils.cpp
+    src/scene_module/occlusion_spot/occlusion_spot_utils.cpp
+    src/scene_module/occlusion_spot/risk_predictive_braking.cpp
+  )
+  target_link_libraries(occlusion_spot-test
+    gtest_main
+    scene_module_occlusion_spot
+  )
 endif()
 
 ament_auto_package(INSTALL_TO_SHARE

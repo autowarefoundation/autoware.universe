@@ -15,6 +15,7 @@
   <arg name="launch_blind_spot" default="true" />
   <arg name="launch_detection_area" default="true" />
   <arg name="launch_virtual_traffic_light" default="true" />
+  <arg name="launch_occlusion_spot" default="true" />
 
   <arg name="forward_path_length" default="1000.0" />
   <arg name="backward_path_length" default="5.0" />
@@ -31,6 +32,7 @@
     <param from="$(find-pkg-share behavior_velocity_planner)/config/stop_line.param.yaml" />
     <param from="$(find-pkg-share behavior_velocity_planner)/config/traffic_light.param.yaml" />
     <param from="$(find-pkg-share behavior_velocity_planner)/config/virtual_traffic_light.param.yaml" />
+    <param from="$(find-pkg-share behavior_velocity_planner)/config/occlusion_spot.param.yaml" />
 
     <remap from="~/input/path_with_lane_id" to="path_with_lane_id" />
     <remap from="~/input/vector_map" to="$(var map_topic_name)" />
@@ -40,6 +42,7 @@
     <remap from="~/input/traffic_light_states" to="$(var input_traffic_light_topic_name)" />
     <remap from="~/input/external_traffic_light_states" to="$(var external_traffic_light_topic_name)" />
     <remap from="~/input/virtual_traffic_light_states" to="$(var virtual_traffic_light_topic_name)" />
+    <remap from="~/input/occupancy_grid" to="/sensing/lidar/occupancy_grid" />
     <remap from="~/output/path" to="path" />
     <remap from="~/output/stop_reasons" to="/planning/scenario_planning/status/stop_reasons" />
     <remap from="~/output/infrastructure_commands" to="/planning/scenario_planning/status/infrastructure_commands" />
@@ -52,6 +55,7 @@
     <param name="launch_blind_spot" value="$(var launch_blind_spot)" />
     <param name="launch_detection_area" value="$(var launch_detection_area)" />
     <param name="launch_virtual_traffic_light" value="$(var launch_virtual_traffic_light)" />
+    <param name="launch_occlusion_spot" value="$(var launch_occlusion_spot)" />
 
     <param name="forward_path_length" value="$(var forward_path_length)" />
     <param name="backward_path_length" value="$(var backward_path_length)" />
