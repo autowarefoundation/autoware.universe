@@ -225,7 +225,9 @@ RoiClusterFusionNodelet::RoiClusterFusionNodelet(const rclcpp::NodeOptions & opt
   labeled_cluster_pub_ =
     this->create_publisher<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>(
     "output/labeled_clusters", 10);
-  if (use_iou_) {
+
+  const bool debug_mode = declare_parameter("debug_mode", false);
+  if (debug_mode) {
     debugger_ = std::make_shared<Debugger>(this, rois_number);
   }
 }
