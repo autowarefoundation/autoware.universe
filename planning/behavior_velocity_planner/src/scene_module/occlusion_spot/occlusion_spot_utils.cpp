@@ -108,7 +108,7 @@ void calcVelocityAndHeightToPossibleCollision(
         // break searching if dist to collision is farther than next path point
         if (dist_along_next_path_point < current_dist2col) {break;}
       }
-      if (collision_index == possible_collisions.size()) {collision_index--;}
+      if (collision_index == possible_collisions.size()) {break;}
     }
     dist_along_path_point = dist_along_next_path_point;
   }

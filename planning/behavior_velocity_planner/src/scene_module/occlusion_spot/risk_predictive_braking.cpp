@@ -50,7 +50,6 @@ void applySafeVelocityConsideringPossibleCollison(
         "distance for virtual darting object is not set correctly");
       continue;
     }
-
     // RPB : risk predictive braking system velocity consider ego emergency braking deceleration
     const double risk_predictive_braking_velocity =
       calculateSafeRPBVelocity(param.safety_time_buffer, d_obs, v_obs, param.ego.ebs_decel);
@@ -96,19 +95,23 @@ int insertSafeVelocityToPath(
   {
     return -1;
   }
-  int insert_idx = closest_idx;
-  if (isAheadOf(in_pose, inout_path->points.at(closest_idx).point.pose)) {
-    ++insert_idx;
-  }
-
-  // return if index is after the last path point
-  if (insert_idx == static_cast<int>(inout_path->points.size())) {return -1;}
   autoware_planning_msgs::msg::PathPointWithLaneId inserted_point;
   inserted_point = inout_path->points.at(closest_idx);
-  inserted_point.point.pose = in_pose;
-  auto it = inout_path->points.begin() + insert_idx;
-  inout_path->points.insert(it, inserted_point);
-  inserted_point = inout_path->points.at(closest_idx);
+  int insert_idx = closest_idx;
+  // insert velocity to path if distance is not too close else insert new collision point
+  if (planning_utils::calcDist2d(in_pose, inserted_point.point) > 0.1) {
+    if (isAheadOf(in_pose, inout_path->points.at(closest_idx).point.pose)) {
+      ++insert_idx;
+    }
+    // return if index is after the last path point
+    if (insert_idx == static_cast<int>(inout_path->points.size())) {
+      return -1;
+    }
+    auto it = inout_path->points.begin() + insert_idx;
+    inserted_point = inout_path->points.at(closest_idx);
+    inserted_point.point.pose = in_pose;
+    inout_path->points.insert(it, inserted_point);
+  }
   setVelocityFrom(insert_idx, safe_vel, inout_path);
   return 0;
 }
