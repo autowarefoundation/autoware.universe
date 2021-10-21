@@ -73,6 +73,14 @@ MotionVelocitySmootherNode::MotionVelocitySmootherNode(const rclcpp::NodeOptions
         smoother_->setParam(base_param_);
         break;
       }
+    case AlgorithmType::ANALYTICAL: {
+        initAnalyticalJerkConstrainedSmootherParam();
+        smoother_ =
+          std::make_shared<AnalyticalJerkConstrainedSmoother>(
+          analytical_jerk_constrained_smoother_param_);
+        smoother_->setParam(base_param_);
+        break;
+      }
     default:
       throw std::domain_error("[MotionVelocitySmootherNode] invalid algorithm");
   }
@@ -206,6 +214,28 @@ rcl_interfaces::msg::SetParametersResult MotionVelocitySmootherNode::onParameter
         std::dynamic_pointer_cast<LinfPseudoJerkSmoother>(smoother_)->setParam(p);
         break;
       }
+    case AlgorithmType::ANALYTICAL: {
+        auto & p = analytical_jerk_constrained_smoother_param_;
+        update_param("resample.ds_resample", p.resample.ds_resample);
+        update_param("resample.num_resample", p.resample.num_resample);
+        update_param("resample.delta_yaw_threshold", p.resample.delta_yaw_threshold);
+        update_param(
+          "latacc.constant_velocity_dist_threshold",
+          p.latacc.constant_velocity_dist_threshold);
+        update_param("forward.max_acc", p.forward.max_acc);
+        update_param("forward.min_acc", p.forward.min_acc);
+        update_param("forward.max_jerk", p.forward.max_jerk);
+        update_param("forward.min_jerk", p.forward.min_jerk);
+        update_param("forward.kp", p.forward.kp);
+        update_param("backward.start_jerk", p.backward.start_jerk);
+        update_param("backward.min_jerk_mild_stop", p.backward.min_jerk_mild_stop);
+        update_param("backward.min_jerk", p.backward.min_jerk);
+        update_param("backward.min_acc_mild_stop", p.backward.min_acc_mild_stop);
+        update_param("backward.min_acc", p.backward.min_acc);
+        update_param("backward.span_jerk", p.backward.span_jerk);
+        std::dynamic_pointer_cast<AnalyticalJerkConstrainedSmoother>(smoother_)->setParam(p);
+        break;
+      }
     default:
       throw std::domain_error("[MotionVelocitySmootherNode] invalid algorithm");
   }
@@ -296,6 +326,32 @@ void MotionVelocitySmootherNode::initLinfPseudoJerkSmootherParam()
   p.pseudo_jerk_weight = declare_parameter("pseudo_jerk_weight", 200.0);
   p.over_v_weight = declare_parameter("over_v_weight", 100000.0);
   p.over_a_weight = declare_parameter("over_a_weight", 5000.0);
+}
+
+void MotionVelocitySmootherNode::initAnalyticalJerkConstrainedSmootherParam()
+{
+  auto & p = analytical_jerk_constrained_smoother_param_;
+  p.resample.ds_resample = declare_parameter("resample.ds_resample", 0.1);
+  p.resample.num_resample = declare_parameter("resample.num_resample", 1);
+  p.resample.delta_yaw_threshold = declare_parameter("resample.delta_yaw_threshold", 0.785);
+
+  p.latacc.enable_constant_velocity_while_turning =
+    declare_parameter("latacc.enable_constant_velocity_while_turning", false);
+  p.latacc.constant_velocity_dist_threshold =
+    declare_parameter("latacc.constant_velocity_dist_threshold", 2.0);
+
+  p.forward.max_acc = declare_parameter("forward.max_acc", 1.0);
+  p.forward.min_acc = declare_parameter("forward.min_acc", -1.0);
+  p.forward.max_jerk = declare_parameter("forward.max_jerk", 0.3);
+  p.forward.min_jerk = declare_parameter("forward.min_jerk", -0.3);
+  p.forward.kp = declare_parameter("forward.kp", 0.3);
+
+  p.backward.start_jerk = declare_parameter("backward.start_jerk", -0.1);
+  p.backward.min_jerk_mild_stop = declare_parameter("backward.min_jerk_mild_stop", -0.3);
+  p.backward.min_jerk = declare_parameter("backward.min_jerk", -1.5);
+  p.backward.min_acc_mild_stop = declare_parameter("backward.min_acc_mild_stop", -1.0);
+  p.backward.min_acc = declare_parameter("backward.min_acc", -2.5);
+  p.backward.span_jerk = declare_parameter("backward.span_jerk", -0.01);
 }
 
 void MotionVelocitySmootherNode::publishTrajectory(const Trajectory & trajectory) const
@@ -921,6 +977,7 @@ MotionVelocitySmootherNode::AlgorithmType MotionVelocitySmootherNode::getAlgorit
   if (algorithm_name == "JerkFiltered") {return AlgorithmType::JERK_FILTERED;}
   if (algorithm_name == "L2") {return AlgorithmType::L2;}
   if (algorithm_name == "Linf") {return AlgorithmType::LINF;}
+  if (algorithm_name == "Analytical") {return AlgorithmType::ANALYTICAL;}
 
   throw std::domain_error("[MotionVelocitySmootherNode] undesired algorithm is selected.");
   return AlgorithmType::INVALID;

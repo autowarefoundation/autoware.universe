@@ -39,6 +39,9 @@
 #include "motion_velocity_smoother/smoother/jerk_filtered_smoother.hpp"
 #include "motion_velocity_smoother/smoother/l2_pseudo_jerk_smoother.hpp"
 #include "motion_velocity_smoother/smoother/linf_pseudo_jerk_smoother.hpp"
+// *INDENT-OFF*
+#include "motion_velocity_smoother/smoother/analytical_jerk_constrained_smoother/analytical_jerk_constrained_smoother.hpp"
+// *INDENT-ON*
 #include "motion_velocity_smoother/smoother/smoother_base.hpp"
 #include "motion_velocity_smoother/trajectory_utils.hpp"
 
@@ -90,6 +93,7 @@ private:
     JERK_FILTERED = 1,
     L2 = 2,
     LINF = 3,
+    ANALYTICAL = 4,
   };
 
   enum class InitializeType
@@ -124,6 +128,7 @@ private:
   JerkFilteredSmoother::Param jerk_filtered_smoother_param_{};
   L2PseudoJerkSmoother::Param l2_pseudo_jerk_smoother_param_{};
   LinfPseudoJerkSmoother::Param linf_pseudo_jerk_smoother_param_{};
+  AnalyticalJerkConstrainedSmoother::Param analytical_jerk_constrained_smoother_param_{};
 
   std::shared_ptr<SmootherBase> smoother_;
 
@@ -199,6 +204,8 @@ private:
   void initL2PseudoJerkSmootherParam();
 
   void initLinfPseudoJerkSmootherParam();
+
+  void initAnalyticalJerkConstrainedSmootherParam();
 
   // debug
   std::shared_ptr<rclcpp::Time> prev_time_;
