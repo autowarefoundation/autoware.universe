@@ -17,9 +17,9 @@
         ebs_decel: -4.0                     # [m/s^2] maximum deceleration to assume for emergency stops.
         pbs_decel: -0.5                     # [m/s^2] deceleration to assume for predictive braking stops.
       sidewalk:
-        min_occlusion_spot_size: 1.5     # [m] occupancy grid must contain an UNKNOWN area of at least size NxN to be considered a hidden obstacle.
+        min_occlusion_spot_size: 1.0     # [m] occupancy grid must contain an UNKNOWN area of at least size NxN to be considered a hidden obstacle.
         slice_size: 0.5     # [m] size of sidewalk slices in both length and distance relative to the ego trajectory.
-        focus_range: 1.5            # [m] buffer around the ego path used to build the sidewalk area.
+        focus_range: 2.5            # [m] buffer around the ego path used to build the sidewalk area.
       grid:
         free_space_max: 40  # maximum value of a free space cell in the occupancy grid
         occupied_min: 60   # minimum value of an occupied cell in the occupancy grid

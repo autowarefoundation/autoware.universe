@@ -40,7 +40,6 @@ TEST(performances, many_sidewalk_occlusion_spots)
 
   autoware_planning_msgs::msg::PathWithLaneId trajectory =
     test::generatePath(0.5, 0.5, 300.0, 0.5, 3000);
-  int first_trajectory_index(0);
   grid_map::GridMap grid = test::generateGrid(3000, 3000, 0.1);
   for (int x = 0; x < grid.getSize().x(); ++x) {
     for (int y = 0; y < grid.getSize().x(); ++y) {
@@ -72,8 +71,7 @@ TEST(performances, many_sidewalk_occlusion_spots)
   parameters.grid = grid_param;
   std::vector<lanelet::BasicPolygon2d> to_remove;
   auto start_closest = high_resolution_clock::now();
-  generatePossibleCollisions(
-    possible_collisions, trajectory, grid, first_trajectory_index, parameters, to_remove);
+  generatePossibleCollisions(possible_collisions, trajectory, grid, 0, parameters, to_remove);
   auto end_closest = high_resolution_clock::now();
   std::string ms = " (micro seconds) ";
   std::cout << "| only_closest : runtime (microseconds) \n" <<

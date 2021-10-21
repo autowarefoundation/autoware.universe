@@ -30,8 +30,7 @@ OcclusionSpotInPrivateModule::OcclusionSpotInPrivateModule(
   const PlannerParam & planner_param, const rclcpp::Logger logger,
   const rclcpp::Clock::SharedPtr clock,
   const rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr publisher)
-: SceneModuleInterface(module_id, logger, clock),
-  publisher_(publisher)
+: SceneModuleInterface(module_id, logger, clock), publisher_(publisher)
 {
   param_ = planner_param;
 }
@@ -40,7 +39,9 @@ bool OcclusionSpotInPrivateModule::modifyPathVelocity(
   autoware_planning_msgs::msg::PathWithLaneId * path,
   [[maybe_unused]] autoware_planning_msgs::msg::StopReason * stop_reason)
 {
-  if (path->points.size() < 2) {return true;}
+  if (path->points.size() < 2) {
+    return true;
+  }
   param_.vehicle_info.baselink_to_front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
   param_.vehicle_info.vehicle_width = planner_data_->vehicle_info_.vehicle_width_m;
 
@@ -53,46 +54,54 @@ bool OcclusionSpotInPrivateModule::modifyPathVelocity(
     return true;
   }
 
-  int first_idx = -1;
-  int last_idx = -1;
+  int closest_idx = -1;
   if (!planning_utils::calcClosestIndex<autoware_planning_msgs::msg::PathWithLaneId>(
-      *path, ego_pose, first_idx, param_.dist_thr, param_.angle_thr))
+      *path, ego_pose, closest_idx, param_.dist_thr, param_.angle_thr))
   {
     return true;
   }
+
   const auto target_road_type = occlusion_spot_utils::ROAD_TYPE::PRIVATE;
-  bool found_target = false;
-  autoware_planning_msgs::msg::PathWithLaneId limited_path{};
-  // search lanelet that includes target_road_type only : grantee last_idx >= 0 above
-  for (size_t i = first_idx; i < path->points.size(); ++i) {
-    occlusion_spot_utils::ROAD_TYPE search_road_type = occlusion_spot_utils::getCurrentRoadType(
-      lanelet_map_ptr->laneletLayer.get(path->points[i].lane_ids[0]), lanelet_map_ptr);
-    if (found_target && search_road_type != target_road_type) {break;}
-    if (search_road_type == target_road_type) {
-      last_idx = i;
-      limited_path.points.emplace_back(path->points[i]);
-      found_target = true;
+  autoware_planning_msgs::msg::PathWithLaneId limited_path;
+  double longitudinal_offset_from_path_point_to_ego = 0;
+  {
+    // extract lanelet that includes target_road_type only
+    if (!behavior_velocity_planner::occlusion_spot_utils::extractTargetRoad(
+        closest_idx, lanelet_map_ptr, *path, longitudinal_offset_from_path_point_to_ego,
+        limited_path, target_road_type))
+    {
+      return true;
     }
+    // use path point as origin for stability
+    longitudinal_offset_from_path_point_to_ego +=
+      planning_utils::transformRelCoordinate2D(ego_pose, path->points[closest_idx].point.pose)
+      .position.x;
   }
   // this module use spline interpolation that needs more than 4 points
-  if (limited_path.points.size() < 4) {return true;}
+  if (limited_path.points.size() < 4) {
+    return true;
+  }
   nav_msgs::msg::OccupancyGrid occ_grid = *occ_grid_ptr;
   grid_map::GridMap grid_map;
   grid_utils::denoiseOccupancyGridCV(occ_grid, grid_map, param_.grid);
-  if (param_.show_debug_grid) {publisher_->publish(occ_grid);}
+  if (param_.show_debug_grid) {
+    publisher_->publish(occ_grid);
+  }
   std::vector<occlusion_spot_utils::PossibleCollisionInfo> possible_collisions;
+  RCLCPP_DEBUG_STREAM_THROTTLE(logger_, *clock_, 3000, "closest_idx : " << closest_idx);
   RCLCPP_DEBUG_STREAM_THROTTLE(
     logger_, *clock_, 3000,
-    "first idx : " << first_idx << " last idx:" << last_idx);
+    "longitudinal_offset_from_path_point_to_ego : " << longitudinal_offset_from_path_point_to_ego);
   occlusion_spot_utils::generatePossibleCollisions(
-    possible_collisions, limited_path, grid_map, first_idx, param_, debug_data_.sidewalks);
+    possible_collisions, limited_path, grid_map, longitudinal_offset_from_path_point_to_ego, param_,
+    debug_data_.sidewalks);
   RCLCPP_DEBUG_STREAM_THROTTLE(
-    logger_, *clock_, 3000,
-    "num possible collision:" << possible_collisions.size());
-  occlusion_spot_utils::calcVelocityAndHeightToPossibleCollision(
-    *path, possible_collisions);
+    logger_, *clock_, 3000, "num possible collision:" << possible_collisions.size());
+  behavior_velocity_planner::occlusion_spot_utils::calcVelocityAndHeightToPossibleCollision(
+    closest_idx, *path, longitudinal_offset_from_path_point_to_ego, possible_collisions);
   // apply safe velocity using ebs and pbs deceleration
-  applySafeVelocityConsideringPossibleCollison(path, possible_collisions, ego_velocity, param_);
+  applySafeVelocityConsideringPossibleCollison(
+    path, possible_collisions, ego_velocity, param_.private_road, param_);
   debug_data_.z = path->points.front().point.pose.position.z;
   debug_data_.possible_collisions = possible_collisions;
   return true;

@@ -91,14 +91,14 @@ OcclusionSpotModuleManager::OcclusionSpotModuleManager(rclcpp::Node & node)
   pp.show_debug_grid = node.declare_parameter(ns + ".show_debug_grid", false);
 
   // public road ego param
-  pp.ego.min_velocity = node.declare_parameter(ns + ".public_road.min_velocity", 2.7);
-  pp.ego.ebs_decel = node.declare_parameter(ns + ".public_road.ebs_decel", -5.0);
-  pp.ego.pbs_decel = node.declare_parameter(ns + ".public_road.pbs_decel", -1.5);
+  pp.public_road.min_velocity = node.declare_parameter(ns + ".public_road.min_velocity", 2.7);
+  pp.public_road.ebs_decel = node.declare_parameter(ns + ".public_road.ebs_decel", -5.0);
+  pp.public_road.pbs_decel = node.declare_parameter(ns + ".public_road.pbs_decel", -1.5);
 
   // private road
-  pp.ego.min_velocity = node.declare_parameter(ns + ".private_road.min_velocity", 1.5);
-  pp.ego.ebs_decel = node.declare_parameter(ns + ".private_road.ebs_decel", -4.0);
-  pp.ego.pbs_decel = node.declare_parameter(ns + ".private_road.pbs_decel", -2.5);
+  pp.private_road.min_velocity = node.declare_parameter(ns + ".private_road.min_velocity", 1.5);
+  pp.private_road.ebs_decel = node.declare_parameter(ns + ".private_road.ebs_decel", -4.0);
+  pp.private_road.pbs_decel = node.declare_parameter(ns + ".private_road.pbs_decel", -2.5);
 
   // sidewalk param
   pp.sidewalk.min_occlusion_spot_size = node.declare_parameter(

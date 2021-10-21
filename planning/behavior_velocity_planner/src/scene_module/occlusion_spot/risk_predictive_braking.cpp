@@ -25,8 +25,8 @@ namespace occlusion_spot_utils
 {
 void applySafeVelocityConsideringPossibleCollison(
   autoware_planning_msgs::msg::PathWithLaneId * inout_path,
-  std::vector<PossibleCollisionInfo> & possible_collisions, const double ego_vel,
-  const PlannerParam & param)
+  std::vector<PossibleCollisionInfo> & possible_collisions, const double current_vel,
+  const EgoVelocity & ego, const PlannerParam & param)
 {
   const auto logger{rclcpp::get_logger("behavior_velocity_planner").get_child("occlusion_spot")};
   rclcpp::Clock clock{RCL_ROS_TIME};
@@ -52,15 +52,15 @@ void applySafeVelocityConsideringPossibleCollison(
     }
     // RPB : risk predictive braking system velocity consider ego emergency braking deceleration
     const double risk_predictive_braking_velocity =
-      calculateSafeRPBVelocity(param.safety_time_buffer, d_obs, v_obs, param.ego.ebs_decel);
+      calculateSafeRPBVelocity(param.safety_time_buffer, d_obs, v_obs, ego.ebs_decel);
 
     // PBS : predictive braking system velocity consider ego predictive braking deceleration
     const double predictive_braking_system_velocity =
-      calculatePredictiveBrakingVelocity(ego_vel, dist_to_collision, param.ego.pbs_decel);
+      calculatePredictiveBrakingVelocity(current_vel, dist_to_collision, ego.pbs_decel);
 
     // get RPB velocity consider PBS limiter and minimum allowed velocity according to the road type
     const double pbs_limited_rpb_vel = getPBSLimitedRPBVelocity(
-      predictive_braking_system_velocity, risk_predictive_braking_velocity, param.ego.min_velocity,
+      predictive_braking_system_velocity, risk_predictive_braking_velocity, ego.min_velocity,
       original_vel);
     possible_collision.collision_path_point.twist.linear.x = pbs_limited_rpb_vel;
     insertSafeVelocityToPath(
@@ -99,7 +99,8 @@ int insertSafeVelocityToPath(
   inserted_point = inout_path->points.at(closest_idx);
   int insert_idx = closest_idx;
   // insert velocity to path if distance is not too close else insert new collision point
-  if (planning_utils::calcDist2d(in_pose, inserted_point.point) > 0.1) {
+  // if original path has narrow points it's better to set higher distance threshold
+  if (planning_utils::calcDist2d(in_pose, inserted_point.point) > 0.3) {
     if (isAheadOf(in_pose, inout_path->points.at(closest_idx).point.pose)) {
       ++insert_idx;
     }

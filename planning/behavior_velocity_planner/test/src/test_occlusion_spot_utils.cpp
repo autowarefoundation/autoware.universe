@@ -75,7 +75,7 @@ TEST(calcVelocityAndHeightToPossibleCollision, TooManyPossibleCollisions)
  */
 
   auto start_naive = high_resolution_clock::now();
-  calcVelocityAndHeightToPossibleCollision(path, possible_collisions);
+  calcVelocityAndHeightToPossibleCollision(0, path, 0, possible_collisions);
 
   auto end_naive = high_resolution_clock::now();
   // 2000 path * 2000 possible collisions
@@ -84,6 +84,40 @@ TEST(calcVelocityAndHeightToPossibleCollision, TooManyPossibleCollisions)
   EXPECT_TRUE(duration_cast<microseconds>(end_naive - start_naive).count() < 500);
   std::cout << " runtime (microsec) " <<
     duration_cast<microseconds>(end_naive - start_naive).count() << std::endl;
+}
+
+TEST(calcVelocityAndHeightToPossibleCollision, ConsiderSignedOffset)
+{
+  using behavior_velocity_planner::occlusion_spot_utils::calcVelocityAndHeightToPossibleCollision;
+  using behavior_velocity_planner::occlusion_spot_utils::PossibleCollisionInfo;
+  using std::chrono::duration;
+  using std::chrono::duration_cast;
+  using std::chrono::high_resolution_clock;
+  using std::chrono::microseconds;
+  std::vector<PossibleCollisionInfo> possible_collisions;
+  const double offset = -2;
+  autoware_planning_msgs::msg::PathWithLaneId path = test::generatePath(-offset, 3.0, 6.0, 3.0, 5);
+  test::generatePossibleCollisions(possible_collisions, 3.0, 3.0, 6.0, 3.0, 3);
+  for (size_t i = 0; i < path.points.size(); i++) {
+    path.points[i].point.twist.linear.x = static_cast<double>(i - offset);
+  }
+
+  /**
+    * @brief generated path and possible collisions : path start from 2 to 6
+    *    0 1 2 3 4 5 6
+    * x: e-n-n-p-p-p-p-> path
+    * v: N-N-2-3-4-5-6-> velocity
+    * c: N-N-N-c-NcN-c-> collision
+    *    --->| longitudinal offset
+    *    e : ego
+    *    p : path
+    *    c : collision
+  */
+
+  calcVelocityAndHeightToPossibleCollision(0, path, offset, possible_collisions);
+  EXPECT_EQ(possible_collisions[0].collision_path_point.twist.linear.x, 3);
+  EXPECT_EQ(possible_collisions[1].collision_path_point.twist.linear.x, 4.5);
+  EXPECT_EQ(possible_collisions[2].collision_path_point.twist.linear.x, 6);
 }
 
 TEST(createPossibleCollisionBehindParkedVehicle, TooManyPathPointsAndObstacles)
@@ -96,7 +130,6 @@ TEST(createPossibleCollisionBehindParkedVehicle, TooManyPathPointsAndObstacles)
 
   // make a path with 200 points from x=0 to x=200
   autoware_planning_msgs::msg::PathWithLaneId path = test::generatePath(0.0, 3.0, 200.0, 3.0, 100);
-  int first_path_index(0);
   // There is a parked bus,car,truck along with ego path.
   // Ignore vehicle dimensions to simplify test
   std::cout << " 6 -   |TRU|   |   |     -> truck is ignored because of lateral distance   \n" <<
@@ -148,14 +181,14 @@ TEST(createPossibleCollisionBehindParkedVehicle, TooManyPathPointsAndObstacles)
   parameters.detection_area_length = 100;
   parameters.pedestrian_vel = 1.6;
   parameters.lateral_distance_thr = 2.5;
+  parameters.angle_thr = 2.5;
 
   auto obj_arr_ptr =
     std::make_shared<autoware_perception_msgs::msg::DynamicObjectArray>(obj_arr);
   auto start_naive = high_resolution_clock::now();
   std::vector<behavior_velocity_planner::occlusion_spot_utils::PossibleCollisionInfo>
   possible_collisions;
-  createPossibleCollisionBehindParkedVehicle(
-    possible_collisions, path, parameters, first_path_index, obj_arr_ptr);
+  createPossibleCollisionBehindParkedVehicle(possible_collisions, path, parameters, 0, obj_arr_ptr);
   auto end_naive = high_resolution_clock::now();
   // the possible collision is inserted and
   // it's ego distance and obstacle distance is the same as (x,|y|)
