@@ -137,6 +137,9 @@ Simulator::Simulator(const std::string & node_name, const rclcpp::NodeOptions & 
     if (vehicle_model_type_str == "IDEAL_STEER") {
       vehicle_model_type_ = VehicleModelType::IDEAL_STEER;
       vehicle_model_ptr_ = std::make_shared<SimModelIdealSteer>(wheelbase_);
+    } else if (vehicle_model_type_str == "IDEAL_ACCEL") {
+      vehicle_model_type_ = VehicleModelType::IDEAL_ACCEL;
+      vehicle_model_ptr_ = std::make_shared<SimModelIdealAccel>(wheelbase_);
     } else if (vehicle_model_type_str == "DELAY_STEER") {
       vehicle_model_type_ = VehicleModelType::DELAY_STEER;
       vehicle_model_ptr_ = std::make_shared<SimModelTimeDelaySteer>(
@@ -388,6 +391,10 @@ void Simulator::callbackVehicleCmd(
     Eigen::VectorXd input(2);
     input << msg->control.velocity, msg->control.steering_angle;
     vehicle_model_ptr_->setInput(input);
+  } else if (vehicle_model_type_ == VehicleModelType::IDEAL_ACCEL) {
+    Eigen::VectorXd input(2);
+    input << msg->control.acceleration, msg->control.steering_angle;
+    vehicle_model_ptr_->setInput(input);
   } else if (vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC) {
     Eigen::VectorXd input(3);
     double drive_shift =
@@ -440,6 +447,10 @@ void Simulator::setInitialState(
   if (vehicle_model_type_ == VehicleModelType::IDEAL_STEER) {
     Eigen::VectorXd state(3);
     state << x, y, yaw;
+    vehicle_model_ptr_->setState(state);
+  } else if (vehicle_model_type_ == VehicleModelType::IDEAL_ACCEL) {
+    Eigen::VectorXd state(4);
+    state << x, y, yaw, vx;
     vehicle_model_ptr_->setState(state);
   } else if (vehicle_model_type_ == VehicleModelType::DELAY_STEER) {
     Eigen::VectorXd state(5);

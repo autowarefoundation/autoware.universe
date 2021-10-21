@@ -18,10 +18,7 @@ steer_time_constant: 0.27
 steer_time_delay: 0.24
 tread_length: 1.0
 
-# Option for vehicle_model_type:
-# - IDEAL_STEER : reads velocity command. The steering and velocity changes exactly the same as commanded.
-# - DELAY_STEER : reads velocity command. The steering and velocity changes with delay model.
-# - DELAY_STEER_ACC : reads acceleration command. The steering and acceleration changes with delay model.
+# See readme for vehicle model type options
 vehicle_model_type: DELAY_STEER_ACC
 vel_lim: 50.0
 vel_noise_stddev: 0.0
