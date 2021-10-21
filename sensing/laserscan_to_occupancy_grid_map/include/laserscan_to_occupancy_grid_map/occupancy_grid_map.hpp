@@ -75,7 +75,7 @@ public:
 
   void updateOccupiedCells(const PointCloud2 & pointcloud);
 
-  void updateOrigin(double new_origin_x, double new_origin_y);
+  void updateOrigin(double new_origin_x, double new_origin_y) override;
 
 private:
   void raytraceFreespace(const PointCloud2 & pointcloud, const Pose & robot_pose);
