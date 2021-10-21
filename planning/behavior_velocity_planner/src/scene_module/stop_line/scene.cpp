@@ -266,9 +266,8 @@ bool StopLineModule::modifyPathVelocity(
   *stop_reason =
     planning_utils::initializeStopReason(autoware_planning_msgs::msg::StopReason::STOP_LINE);
 
-  const LineString2d stop_line = {
-    {stop_line_[0].x(), stop_line_[0].y()}, {stop_line_[1].x(), stop_line_[1].y()}};
-
+  const LineString2d stop_line = planning_utils::extendLine(
+    stop_line_[0], stop_line_[1], planner_data_->stop_line_extend_length);
   // Find collision
   const auto collision = findCollision(*path, stop_line);
 

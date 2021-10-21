@@ -92,6 +92,7 @@ struct PlannerData
   double max_stop_acceleration_threshold;
   double max_stop_jerk_threshold;
   double delay_response_time;
+  double stop_line_extend_length;
 
   bool isVehicleStopped(const double stop_duration = 0.0) const
   {

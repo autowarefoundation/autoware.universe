@@ -270,9 +270,7 @@ bool generateStopLine(
   // else, generates a local stop_line with considering the lane conflicts.
   int first_idx_ip_inside_lane;  // first stop point index for interpolated path.
   int stop_idx_ip;               // stop point index for interpolated path.
-  geometry_msgs::msg::Point stop_point_from_map;
-  if (getStopPoseFromMap(lane_id, &stop_point_from_map, planner_data)) {
-    planning_utils::calcClosestIndex(path_ip, stop_point_from_map, stop_idx_ip, 10.0);
+  if (getStopPoseIndexFromMap(path_ip, lane_id, planner_data, stop_idx_ip, 10.0, logger)) {
     stop_idx_ip = std::max(stop_idx_ip - base2front_idx_dist, 0);
   } else {
     // get idx of first_inside_lane point
@@ -330,9 +328,10 @@ bool generateStopLine(
   return true;
 }
 
-bool getStopPoseFromMap(
-  const int lane_id, geometry_msgs::msg::Point * stop_point,
-  const std::shared_ptr<const PlannerData> & planner_data)
+bool getStopPoseIndexFromMap(
+  const autoware_planning_msgs::msg::PathWithLaneId & path, const int lane_id,
+  const std::shared_ptr<const PlannerData> & planner_data, int & stop_idx_ip, int dist_thr,
+  const rclcpp::Logger logger)
 {
   lanelet::ConstLanelet lanelet = planner_data->lanelet_map->laneletLayer.get(lane_id);
   const auto road_markings = lanelet.regulatoryElementsAs<lanelet::autoware::RoadMarking>();
@@ -351,9 +350,39 @@ bool getStopPoseFromMap(
 
   const auto p_start = stop_line.front().front();
   const auto p_end = stop_line.front().back();
-  stop_point->x = 0.5 * (p_start.x() + p_end.x());
-  stop_point->y = 0.5 * (p_start.y() + p_end.y());
-  stop_point->z = 0.5 * (p_start.z() + p_end.z());
+  const LineString2d extended_stop_line =
+    planning_utils::extendLine(p_start, p_end, planner_data->stop_line_extend_length);
+
+  for (size_t i = 0; i < path.points.size() - 1; i++) {
+    const auto & p_front = path.points.at(i).point.pose.position;
+    const auto & p_back = path.points.at(i + 1).point.pose.position;
+
+    const LineString2d path_segment = {{p_front.x, p_front.y}, {p_back.x, p_back.y}};
+    std::vector<Point2d> collision_points;
+    bg::intersection(extended_stop_line, path_segment, collision_points);
+
+    if (collision_points.empty()) {
+      continue;
+    }
+
+    stop_idx_ip = i;
+
+    RCLCPP_DEBUG(logger, "found collision point");
+
+    return true;
+  }
+
+  geometry_msgs::msg::Point stop_point_from_map;
+  stop_point_from_map.x = 0.5 * (p_start.x() + p_end.x());
+  stop_point_from_map.y = 0.5 * (p_start.y() + p_end.y());
+  stop_point_from_map.z = 0.5 * (p_start.z() + p_end.z());
+
+  if (!planning_utils::calcClosestIndex(path, stop_point_from_map, stop_idx_ip, dist_thr)) {
+    RCLCPP_DEBUG(logger, "found stop line, but not found stop index");
+    return false;
+  }
+
+  RCLCPP_DEBUG(logger, "found stop line and stop index");
 
   return true;
 }

@@ -93,9 +93,10 @@ int getFirstPointInsidePolygons(
    * @param stop_pose stop point defined on map
    * @return true when the stop point is defined on map.
    */
-bool getStopPoseFromMap(
-  const int lane_id, geometry_msgs::msg::Point * stop_pose,
-  const std::shared_ptr<const PlannerData> & planner_data);
+bool getStopPoseIndexFromMap(
+  const autoware_planning_msgs::msg::PathWithLaneId & path, const int lane_id,
+  const std::shared_ptr<const PlannerData> & planner_data, int & stop_idx_ip, int dist_thr,
+  const rclcpp::Logger logger);
 
 std::vector<lanelet::CompoundPolygon3d> getPolygon3dFromLaneletsVec(
   const std::vector<lanelet::ConstLanelets> & ll_vec, double clip_length);

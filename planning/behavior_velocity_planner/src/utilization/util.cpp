@@ -154,8 +154,7 @@ geometry_msgs::msg::Pose transformAbsCoordinate2D(
 }
 
 double calcJudgeLineDistWithAccLimit(
-  const double velocity, const double max_stop_acceleration,
-  const double delay_response_time)
+  const double velocity, const double max_stop_acceleration, const double delay_response_time)
 {
   double judge_line_dist =
     (velocity * velocity) / (2.0 * (-max_stop_acceleration)) + delay_response_time * velocity;
@@ -243,5 +242,15 @@ geometry_msgs::msg::Point toRosPoint(const Point2d & boost_point, const double z
   return point;
 }
 
+LineString2d extendLine(
+  const lanelet::ConstPoint3d & lanelet_point1, const lanelet::ConstPoint3d & lanelet_point2,
+  const double & length)
+{
+  const Eigen::Vector2d p1(lanelet_point1.x(), lanelet_point1.y());
+  const Eigen::Vector2d p2(lanelet_point2.x(), lanelet_point2.y());
+  const Eigen::Vector2d t = (p2 - p1).normalized();
+  return {
+    {(p1 - length * t).x(), (p1 - length * t).y()}, {(p2 + length * t).x(), (p2 + length * t).y()}};
+}
 }  // namespace planning_utils
 }  // namespace behavior_velocity_planner

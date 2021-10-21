@@ -272,9 +272,8 @@ DetectionAreaModule::DetectionAreaModule(
 LineString2d DetectionAreaModule::getStopLineGeometry2d() const
 {
   const lanelet::ConstLineString3d stop_line = detection_area_reg_elem_.stopLine();
-  const auto & p_front = stop_line.front();
-  const auto & p_back = stop_line.back();
-  return {{p_front.x(), p_front.y()}, {p_back.x(), p_back.y()}};
+  return planning_utils::extendLine(
+    stop_line[0], stop_line[1], planner_data_->stop_line_extend_length);
 }
 
 bool DetectionAreaModule::modifyPathVelocity(

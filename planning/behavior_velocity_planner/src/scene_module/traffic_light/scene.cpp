@@ -214,13 +214,14 @@ bool createTargetPoint(
 bool calcStopPointAndInsertIndex(
   const autoware_planning_msgs::msg::PathWithLaneId & input_path,
   const lanelet::ConstLineString3d & lanelet_stop_lines, const double & offset,
-  Eigen::Vector2d & stop_line_point, size_t & stop_line_point_idx)
+  const double & stop_line_extend_length, Eigen::Vector2d & stop_line_point,
+  size_t & stop_line_point_idx)
 {
   LineString2d stop_line;
 
   for (size_t i = 0; i < lanelet_stop_lines.size() - 1; ++i) {
-    stop_line = {{lanelet_stop_lines[i].x(), lanelet_stop_lines[i].y()},
-      {lanelet_stop_lines[i + 1].x(), lanelet_stop_lines[i + 1].y()}};
+    stop_line = planning_utils::extendLine(
+      lanelet_stop_lines[i], lanelet_stop_lines[i + 1], stop_line_extend_length);
 
     // Calculate stop pose and insert index,
     // if there is a collision point between path and stop line
@@ -293,17 +294,13 @@ bool TrafficLightModule::modifyPathVelocity(
   lanelet::ConstLineStringsOrPolygons3d traffic_lights = traffic_light_reg_elem_.trafficLights();
 
   // Calculate stop pose and insert index
-  Eigen::Vector2d stop_line_point{};
-  size_t stop_line_point_idx{};
-  const auto & base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
-  if (!calcStopPointAndInsertIndex(
-      input_path, lanelet_stop_lines, planner_param_.stop_margin + base_link2front,
-      stop_line_point, stop_line_point_idx))
-  {
-    RCLCPP_WARN_THROTTLE(
-      logger_, *clock_, 1000, "Can't calculate stop point");
-    return false;
-  }
+  Eigen::Vector2d stop_line_point;
+  size_t stop_line_point_idx;
+  calcStopPointAndInsertIndex(
+    input_path, lanelet_stop_lines,
+    planner_param_.stop_margin + planner_data_->vehicle_info_.max_longitudinal_offset_m,
+    planner_data_->stop_line_extend_length, stop_line_point,
+    stop_line_point_idx);
 
   // Calculate dist to stop pose
   const double signed_arc_length_to_stop_point =
