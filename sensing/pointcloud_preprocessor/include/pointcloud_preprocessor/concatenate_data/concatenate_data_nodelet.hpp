@@ -144,7 +144,7 @@ private:
     PointCloud2::SharedPtr & out);
   void publish();
 
-  void convertToXYZCloud(
+  void removeRADTFields(
     const sensor_msgs::msg::PointCloud2 & input_cloud,
     sensor_msgs::msg::PointCloud2 & output_cloud);
   void setPeriod(const int64_t new_period);
@@ -157,6 +157,18 @@ private:
   void checkConcatStatus(
     diagnostic_updater::DiagnosticStatusWrapper & stat);
 };
+
+struct PointXYZI
+{
+  PCL_ADD_POINT4D;
+  float intensity;
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+} EIGEN_ALIGN16;
+
 }  // namespace pointcloud_preprocessor
+
+POINT_CLOUD_REGISTER_POINT_STRUCT(
+  pointcloud_preprocessor::PointXYZI,
+  (float, x, x)(float, y, y)(float, z, z)(float, intensity, intensity))
 
 #endif  // POINTCLOUD_PREPROCESSOR__CONCATENATE_DATA__CONCATENATE_DATA_NODELET_HPP_

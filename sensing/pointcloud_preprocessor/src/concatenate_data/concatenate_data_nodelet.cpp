@@ -109,8 +109,8 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
   {
     RCLCPP_INFO_STREAM(
       get_logger(), "Subscribing to " << input_topics_.size() << " user given topics as inputs:");
-    for (size_t d = 0; d < input_topics_.size(); ++d) {
-      RCLCPP_INFO_STREAM(get_logger(), " - " << input_topics_[d]);
+    for (auto & input_topic : input_topics_) {
+      RCLCPP_INFO_STREAM(get_logger(), " - " << input_topic);
     }
 
     // Subscribe to the filters
@@ -187,7 +187,7 @@ void PointCloudConcatenateDataSynchronizerComponent::combineClouds(
   const auto old_stamp = std::min(rclcpp::Time(in1->header.stamp), rclcpp::Time(in2->header.stamp));
   auto old_twist_ptr_it = std::lower_bound(
     std::begin(twist_ptr_queue_), std::end(twist_ptr_queue_), old_stamp,
-    [](const geometry_msgs::msg::TwistStamped::ConstSharedPtr & x_ptr, rclcpp::Time t) {
+    [](const geometry_msgs::msg::TwistStamped::ConstSharedPtr & x_ptr, const rclcpp::Time & t) {
       return rclcpp::Time(x_ptr->header.stamp) < t;
     });
   old_twist_ptr_it =
@@ -196,14 +196,16 @@ void PointCloudConcatenateDataSynchronizerComponent::combineClouds(
   const auto new_stamp = std::max(rclcpp::Time(in1->header.stamp), rclcpp::Time(in2->header.stamp));
   auto new_twist_ptr_it = std::lower_bound(
     std::begin(twist_ptr_queue_), std::end(twist_ptr_queue_), new_stamp,
-    [](const geometry_msgs::msg::TwistStamped::ConstSharedPtr & x_ptr, rclcpp::Time t) {
+    [](const geometry_msgs::msg::TwistStamped::ConstSharedPtr & x_ptr, const rclcpp::Time & t) {
       return rclcpp::Time(x_ptr->header.stamp) < t;
     });
   new_twist_ptr_it =
     new_twist_ptr_it == twist_ptr_queue_.end() ? (twist_ptr_queue_.end() - 1) : new_twist_ptr_it;
 
   auto prev_time = old_stamp;
-  double x = 0.0, y = 0.0, yaw = 0.0;
+  double x = 0.0;
+  double y = 0.0;
+  double yaw = 0.0;
   for (auto twist_ptr_it = old_twist_ptr_it; twist_ptr_it != new_twist_ptr_it + 1; ++twist_ptr_it) {
     const double dt =
       (twist_ptr_it != new_twist_ptr_it) ?
@@ -285,13 +287,26 @@ void PointCloudConcatenateDataSynchronizerComponent::publish()
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void PointCloudConcatenateDataSynchronizerComponent::convertToXYZCloud(
+void PointCloudConcatenateDataSynchronizerComponent::removeRADTFields(
   const sensor_msgs::msg::PointCloud2 & input_cloud, sensor_msgs::msg::PointCloud2 & output_cloud)
 {
-  pcl::PointCloud<pcl::PointXYZ> tmp_xyz_cloud;
-  pcl::fromROSMsg(input_cloud, tmp_xyz_cloud);
-  pcl::toROSMsg(tmp_xyz_cloud, output_cloud);
-  output_cloud.header = input_cloud.header;
+  bool has_intensity = std::any_of(
+    input_cloud.fields.begin(), input_cloud.fields.end(),
+    [](auto & field) {return field.name == "intensity";});
+
+  if (input_cloud.fields.size() == 3 || (input_cloud.fields.size() == 4 && has_intensity)) {
+    output_cloud = input_cloud;
+  } else if (has_intensity) {
+    pcl::PointCloud<PointXYZI> tmp_cloud;
+    pcl::fromROSMsg(input_cloud, tmp_cloud);
+    pcl::toROSMsg(tmp_cloud, output_cloud);
+    output_cloud.header = input_cloud.header;
+  } else {
+    pcl::PointCloud<pcl::PointXYZ> tmp_cloud;
+    pcl::fromROSMsg(input_cloud, tmp_cloud);
+    pcl::toROSMsg(tmp_cloud, output_cloud);
+    output_cloud.header = input_cloud.header;
+  }
 }
 
 void PointCloudConcatenateDataSynchronizerComponent::setPeriod(const int64_t new_period)
@@ -314,7 +329,7 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
   std::lock_guard<std::mutex> lock(mutex_);
 
   sensor_msgs::msg::PointCloud2 xyz_cloud;
-  convertToXYZCloud(*input_ptr, xyz_cloud);
+  removeRADTFields(*input_ptr, xyz_cloud);
   sensor_msgs::msg::PointCloud2::ConstSharedPtr xyz_input_ptr(
     new sensor_msgs::msg::PointCloud2(xyz_cloud));
 

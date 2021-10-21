@@ -44,23 +44,25 @@ void RingOutlierFilterComponent::filter(
   PointCloud2 & output)
 {
   boost::mutex::scoped_lock lock(mutex_);
-  pcl::PointCloud<pcl::PointXYZIRADT>::Ptr pcl_input(new pcl::PointCloud<pcl::PointXYZIRADT>);
+  pcl::PointCloud<custom_pcl::PointXYZIRADT>::Ptr pcl_input(
+    new pcl::PointCloud<custom_pcl::PointXYZIRADT>);
   pcl::fromROSMsg(*input, *pcl_input);
 
   if (pcl_input->points.empty()) {
     return;
   }
-  std::vector<pcl::PointCloud<pcl::PointXYZIRADT>> pcl_input_ring_array;
+  std::vector<pcl::PointCloud<custom_pcl::PointXYZIRADT>> pcl_input_ring_array;
   pcl_input_ring_array.resize(128);  // TODO(Yamato Ando)
   for (const auto & p : pcl_input->points) {
     pcl_input_ring_array.at(p.ring).push_back(p);
   }
 
-  pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_output(new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::PointCloud<custom_pcl::PointXYZI>::Ptr pcl_output(
+    new pcl::PointCloud<custom_pcl::PointXYZI>);
   pcl_output->points.reserve(pcl_input->points.size());
 
-  pcl::PointCloud<pcl::PointXYZ> pcl_tmp;
-  pcl::PointXYZ p;
+  pcl::PointCloud<custom_pcl::PointXYZI> pcl_tmp;
+  custom_pcl::PointXYZI p{};
   for (const auto & ring_pointcloud : pcl_input_ring_array) {
     if (ring_pointcloud.points.size() < 2) {
       continue;
@@ -72,6 +74,7 @@ void RingOutlierFilterComponent::filter(
       p.x = iter->x;
       p.y = iter->y;
       p.z = iter->z;
+      p.intensity = iter->intensity;
       pcl_tmp.points.push_back(p);
       // if(std::abs(iter->distance - (iter+1)->distance) <= std::sqrt(iter->distance) * 0.08) {
       const float min_dist = std::min(iter->distance, (iter + 1)->distance);
@@ -81,24 +84,23 @@ void RingOutlierFilterComponent::filter(
 
       if (max_dist < min_dist * distance_ratio_ && azimuth_diff < 100.f) {
         continue;
-      } else {
-        // same code
-        if (
-          static_cast<int>(pcl_tmp.points.size()) > num_points_threshold_ ||
-          (pcl_tmp.points.front().x - pcl_tmp.points.back().x) *
-          (pcl_tmp.points.front().x - pcl_tmp.points.back().x) +
-          (pcl_tmp.points.front().y - pcl_tmp.points.back().y) *
-          (pcl_tmp.points.front().y - pcl_tmp.points.back().y) +
-          (pcl_tmp.points.front().z - pcl_tmp.points.back().z) *
-          (pcl_tmp.points.front().z - pcl_tmp.points.back().z) >=
-          object_length_threshold_ * object_length_threshold_)
-        {
-          for (const auto & tmp_p : pcl_tmp.points) {
-            pcl_output->points.push_back(tmp_p);
-          }
-        }
-        pcl_tmp.points.clear();
       }
+      // same code
+      if (
+        static_cast<int>(pcl_tmp.points.size()) > num_points_threshold_ ||
+        (pcl_tmp.points.front().x - pcl_tmp.points.back().x) *
+        (pcl_tmp.points.front().x - pcl_tmp.points.back().x) +
+        (pcl_tmp.points.front().y - pcl_tmp.points.back().y) *
+        (pcl_tmp.points.front().y - pcl_tmp.points.back().y) +
+        (pcl_tmp.points.front().z - pcl_tmp.points.back().z) *
+        (pcl_tmp.points.front().z - pcl_tmp.points.back().z) >=
+        object_length_threshold_ * object_length_threshold_)
+      {
+        for (const auto & tmp_p : pcl_tmp.points) {
+          pcl_output->points.push_back(tmp_p);
+        }
+      }
+      pcl_tmp.points.clear();
     }
 
     // same code

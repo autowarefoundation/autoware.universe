@@ -47,7 +47,7 @@ public:
 
 }  // namespace pointcloud_preprocessor
 
-namespace pcl
+namespace custom_pcl
 {
 struct PointXYZIRADT
 {
@@ -59,11 +59,23 @@ struct PointXYZIRADT
   double time_stamp;
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 } EIGEN_ALIGN16;
-}  // namespace pcl
+
+struct PointXYZI
+{
+  PCL_ADD_POINT4D;
+  float intensity;
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+} EIGEN_ALIGN16;
+
+}  // namespace custom_pcl
 
 POINT_CLOUD_REGISTER_POINT_STRUCT(
-  pcl::PointXYZIRADT,
+  custom_pcl::PointXYZIRADT,
   (float, x, x)(float, y, y)(float, z, z)(float, intensity, intensity)(std::uint16_t, ring, ring)(
     float, azimuth, azimuth)(float, distance, distance)(double, time_stamp, time_stamp))
+
+POINT_CLOUD_REGISTER_POINT_STRUCT(
+  custom_pcl::PointXYZI,
+  (float, x, x)(float, y, y)(float, z, z)(float, intensity, intensity))
 
 #endif  // POINTCLOUD_PREPROCESSOR__OUTLIER_FILTER__RING_OUTLIER_FILTER_NODELET_HPP_
