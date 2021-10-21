@@ -294,13 +294,18 @@ bool TrafficLightModule::modifyPathVelocity(
   lanelet::ConstLineStringsOrPolygons3d traffic_lights = traffic_light_reg_elem_.trafficLights();
 
   // Calculate stop pose and insert index
-  Eigen::Vector2d stop_line_point;
-  size_t stop_line_point_idx;
-  calcStopPointAndInsertIndex(
-    input_path, lanelet_stop_lines,
-    planner_param_.stop_margin + planner_data_->vehicle_info_.max_longitudinal_offset_m,
-    planner_data_->stop_line_extend_length, stop_line_point,
-    stop_line_point_idx);
+  Eigen::Vector2d stop_line_point{};
+  size_t stop_line_point_idx{};
+  if (!calcStopPointAndInsertIndex(
+      input_path, lanelet_stop_lines,
+      planner_param_.stop_margin + planner_data_->vehicle_info_.max_longitudinal_offset_m,
+      planner_data_->stop_line_extend_length, stop_line_point, stop_line_point_idx))
+  {
+    RCLCPP_WARN_THROTTLE(
+      logger_, *clock_, 5000,
+      "Failed to calculate stop point and insert index");
+    return false;
+  }
 
   // Calculate dist to stop pose
   const double signed_arc_length_to_stop_point =
