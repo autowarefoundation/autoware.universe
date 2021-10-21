@@ -1,16 +1,16 @@
-// Copyright 2017-2019 Autoware Foundation
+//  Copyright 2021 Tier IV, Inc. All rights reserved.
 //
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//      http://www.apache.org/licenses/LICENSE-2.0
 //
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
 
 #include <algorithm>
 #include <chrono>
@@ -21,25 +21,22 @@
 
 using namespace std::chrono_literals;
 
-AccelMap::AccelMap(const rclcpp::Logger & logger)
-: logger_(logger), logger_ros_clock_(RCL_ROS_TIME) {}
-
-AccelMap::~AccelMap() {}
-
+namespace raw_vehicle_cmd_converter
+{
 bool AccelMap::readAccelMapFromCSV(std::string csv_path)
 {
   CSVLoader csv(csv_path);
   std::vector<std::vector<std::string>> table;
 
   if (!csv.readCSV(table)) {
-    RCLCPP_ERROR(logger_, "[Accel Map] Cannot open %s", csv_path.c_str());
+    RCLCPP_ERROR(logger_, "Cannot open %s", csv_path.c_str());
     return false;
   }
 
   if (table[0].size() < 2) {
     RCLCPP_ERROR(
       logger_,
-      "[Accel Map] Cannot read %s. CSV file should have at least 2 column", csv_path.c_str());
+      "Cannot read %s. CSV file should have at least 2 column", csv_path.c_str());
     return false;
   }
   vehicle_name_ = table[0][0];
@@ -51,7 +48,7 @@ bool AccelMap::readAccelMapFromCSV(std::string csv_path)
     if (table[0].size() != table[i].size()) {
       RCLCPP_ERROR(
         logger_,
-        "[Accel Map] Cannot read %s. Each row should have a same number of columns",
+        "Cannot read %s. Each row should have a same number of columns",
         csv_path.c_str());
       return false;
     }
@@ -73,19 +70,15 @@ bool AccelMap::getThrottle(double acc, double vel, double & throttle)
 
   if (vel < vel_index_.front()) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
-      logger_,
-      logger_ros_clock_,
-      std::chrono::milliseconds(1000).count(),
-      "[Accel Map] Exceeding the vel range. Current vel: %f < min vel on map: %f. Use min "
+      logger_, clock_, 1000,
+      "Exceeding the vel range. Current vel: %f < min vel on map: %f. Use min "
       "velocity.",
       vel, vel_index_.front());
     vel = vel_index_.front();
   } else if (vel_index_.back() < vel) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
-      logger_,
-      logger_ros_clock_,
-      std::chrono::milliseconds(1000).count(),
-      "[Accel Map] Exceeding the vel range. Current vel: %f > max vel on map: %f. Use max "
+      logger_, clock_, 1000,
+      "Exceeding the vel range. Current vel: %f > max vel on map: %f. Use max "
       "velocity.",
       vel, vel_index_.back());
     vel = vel_index_.back();
@@ -119,19 +112,15 @@ bool AccelMap::getAcceleration(double throttle, double vel, double & acc)
 
   if (vel < vel_index_.front()) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
-      logger_,
-      logger_ros_clock_,
-      std::chrono::milliseconds(1000).count(),
-      "[Accel Map] Exceeding the vel range. Current vel: %f < min vel on map: %f. Use min "
+      logger_, clock_, 1000,
+      "Exceeding the vel range. Current vel: %f < min vel on map: %f. Use min "
       "velocity.",
       vel, vel_index_.front());
     vel = vel_index_.front();
   } else if (vel_index_.back() < vel) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
-      logger_,
-      logger_ros_clock_,
-      std::chrono::milliseconds(1000).count(),
-      "[Accel Map] Exceeding the vel range. Current vel: %f > max vel on map: %f. Use max "
+      logger_, clock_, 1000,
+      "Exceeding the vel range. Current vel: %f > max vel on map: %f. Use max "
       "velocity.",
       vel, vel_index_.back());
     vel = vel_index_.back();
@@ -151,10 +140,8 @@ bool AccelMap::getAcceleration(double throttle, double vel, double & acc)
   const double min_throttle = throttle_index_.front();
   if (throttle < min_throttle || max_throttle < throttle) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
-      logger_,
-      logger_ros_clock_,
-      std::chrono::milliseconds(1000).count(),
-      "[Accel Map] Input throttle: %f is out off range. use closest value.", throttle);
+      logger_, clock_, 1000,
+      "Input throttle: %f is out off range. use closest value.", throttle);
     throttle = std::min(std::max(throttle, min_throttle), max_throttle);
   }
 
@@ -162,3 +149,4 @@ bool AccelMap::getAcceleration(double throttle, double vel, double & acc)
 
   return true;
 }
+}  // namespace raw_vehicle_cmd_converter

@@ -19,14 +19,15 @@
 #include <iostream>
 #include <vector>
 
+namespace raw_vehicle_cmd_converter
+{
 class LinearInterpolate
 {
 public:
-  LinearInterpolate() {}
-  ~LinearInterpolate() {}
   static bool interpolate(
     const std::vector<double> & base_index, const std::vector<double> & base_value,
     const double & return_index, double & return_value);
 };
+}  // namespace raw_vehicle_cmd_converter
 
 #endif  // RAW_VEHICLE_CMD_CONVERTER__INTERPOLATE_HPP_

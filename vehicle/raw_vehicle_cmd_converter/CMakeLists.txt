@@ -15,20 +15,25 @@ endif()
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
-ament_auto_add_library(accel_map_converter SHARED
+ament_auto_add_library(actuation_map_converter SHARED
   src/accel_map.cpp
   src/brake_map.cpp
   src/csv_loader.cpp
   src/interpolate.cpp
+  src/pid.cpp
+  src/steer_converter.cpp
 )
 
-ament_auto_add_executable(raw_vehicle_cmd_converter_node
+ament_auto_add_library(raw_vehicle_cmd_converter_node_component SHARED
   src/node.cpp
-  src/main.cpp
 )
 
-add_dependencies(raw_vehicle_cmd_converter_node accel_map_converter)
-target_link_libraries(raw_vehicle_cmd_converter_node accel_map_converter)
+target_link_libraries(raw_vehicle_cmd_converter_node_component actuation_map_converter)
+
+rclcpp_components_register_node(raw_vehicle_cmd_converter_node_component
+  PLUGIN "raw_vehicle_cmd_converter::RawVehicleCommandConverterNode"
+  EXECUTABLE raw_vehicle_cmd_converter_node
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -36,12 +41,11 @@ if(BUILD_TESTING)
 endif()
 
 ament_auto_package(INSTALL_TO_SHARE
-  launch
+  config
   data
+  launch
 )
 
 install(PROGRAMS scripts/plot_accel_brake_map.py
   DESTINATION lib/${PROJECT_NAME}
 )
-
-install(FILES DESTINATION share/${PROJECT_NAME})

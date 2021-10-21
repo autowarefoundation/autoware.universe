@@ -25,12 +25,11 @@
 #include "raw_vehicle_cmd_converter/csv_loader.hpp"
 #include "raw_vehicle_cmd_converter/interpolate.hpp"
 
+namespace raw_vehicle_cmd_converter
+{
 class AccelMap
 {
 public:
-  explicit AccelMap(const rclcpp::Logger & logger);
-  ~AccelMap();
-
   bool readAccelMapFromCSV(std::string csv_path);
   bool getThrottle(double acc, double vel, double & throttle);
   bool getAcceleration(double throttle, double vel, double & acc);
@@ -39,12 +38,13 @@ public:
   std::vector<std::vector<double>> getAccelMap() {return accel_map_;}
 
 private:
-  rclcpp::Logger logger_;
-  rclcpp::Clock logger_ros_clock_;
+  rclcpp::Logger logger_{rclcpp::get_logger("raw_vehicle_cmd_converter").get_child("accel_map")};
+  rclcpp::Clock clock_{RCL_ROS_TIME};
   std::string vehicle_name_;
   std::vector<double> vel_index_;
   std::vector<double> throttle_index_;
   std::vector<std::vector<double>> accel_map_;
 };
+}  // namespace raw_vehicle_cmd_converter
 
 #endif  // RAW_VEHICLE_CMD_CONVERTER__ACCEL_MAP_HPP_

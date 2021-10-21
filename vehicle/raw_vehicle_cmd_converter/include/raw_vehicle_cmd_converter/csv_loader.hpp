@@ -21,16 +21,18 @@
 #include <string>
 #include <vector>
 
+namespace raw_vehicle_cmd_converter
+{
 class CSVLoader
 {
 public:
   explicit CSVLoader(std::string csv_path);
-  ~CSVLoader();
 
   bool readCSV(std::vector<std::vector<std::string>> & result, const char delim = ',');
 
 private:
   std::string csv_path_;
 };
+}  // namespace raw_vehicle_cmd_converter
 
 #endif  // RAW_VEHICLE_CMD_CONVERTER__CSV_LOADER_HPP_
