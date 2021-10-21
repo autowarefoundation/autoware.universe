@@ -34,6 +34,8 @@
 
 namespace external_cmd_converter
 {
+using raw_vehicle_cmd_converter::AccelMap;
+using raw_vehicle_cmd_converter::BrakeMap;
 
 class ExternalCmdConverterNode : public rclcpp::Node
 {
@@ -80,7 +82,7 @@ private:
   double emergency_stop_timeout_;
 
   // Diagnostics
-  diagnostic_updater::Updater updater_;
+  diagnostic_updater::Updater updater_{this};
 
   void checkTopicStatus(diagnostic_updater::DiagnosticStatusWrapper & stat);
   void checkEmergencyStop(diagnostic_updater::DiagnosticStatusWrapper & stat);
