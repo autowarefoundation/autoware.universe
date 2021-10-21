@@ -899,9 +899,6 @@ OccupancyGrid generateDrivableArea(
 
       // create drivable area using opencv
       std::vector<std::vector<cv::Point>> cv_polygons;
-      std::vector<int> cv_polygon_sizes;
-      cv::Mat cv_image_single_lane(
-        occupancy_grid.info.width, occupancy_grid.info.height, CV_8UC1, cv::Scalar(occupied_space));
       std::vector<cv::Point> cv_polygon;
       for (const auto & llt_pt : lane.polygon3d()) {
         Point geom_pt = lanelet::utils::conversion::toGeomMsgPt(llt_pt);
@@ -910,10 +907,8 @@ OccupancyGrid generateDrivableArea(
         cv_polygon.push_back(toCVPoint(transformed_geom_pt, width, height, resolution));
       }
       cv_polygons.push_back(cv_polygon);
-      cv_polygon_sizes.push_back(cv_polygon.size());
       // fill in drivable area and copy to occupancy grid
-      cv::fillPoly(cv_image_single_lane, cv_polygons, cv::Scalar(free_space));
-      cv::bitwise_and(cv_image, cv_image_single_lane, cv_image);
+      cv::fillPoly(cv_image, cv_polygons, cv::Scalar(free_space));
     }
 
     // Closing
