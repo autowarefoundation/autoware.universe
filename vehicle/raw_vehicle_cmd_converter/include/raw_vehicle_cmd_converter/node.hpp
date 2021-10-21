@@ -86,7 +86,7 @@ public:
   ControlCommandStamped::ConstSharedPtr control_cmd_ptr_;
   AccelMap accel_map_;
   BrakeMap brake_map_;
-  bool ffmap_initialized_;
+  bool ff_map_initialized_;
   double max_accel_cmd_;
   double max_brake_cmd_;
   double max_steer_cmd_;
