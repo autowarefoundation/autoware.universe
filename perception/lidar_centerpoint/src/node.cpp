@@ -54,7 +54,7 @@ LidarCenterPointNode::LidarCenterPointNode(const rclcpp::NodeOptions & node_opti
     std::bind(&LidarCenterPointNode::pointCloudCallback, this, std::placeholders::_1));
   objects_pub_ =
     this->create_publisher<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>(
-    "~/output/objects", 1);
+    "~/output/objects", rclcpp::QoS{1}.transient_local());
   pointcloud_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
     "~/debug/pointcloud_densification", rclcpp::SensorDataQoS{}.keep_last(1));
 }
