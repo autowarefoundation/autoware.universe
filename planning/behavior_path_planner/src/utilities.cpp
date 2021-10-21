@@ -697,6 +697,7 @@ bool setGoal(
     PathPointWithLaneId pre_refined_goal{};
     pre_refined_goal.point.pose.position.x = goal.position.x - std::cos(yaw);
     pre_refined_goal.point.pose.position.y = goal.position.y - std::sin(yaw);
+    pre_refined_goal.point.pose.orientation = goal.orientation;
 
     {  // NOTE: interpolate z and velocity of pre_refined_goal
       const size_t closest_seg_idx =
