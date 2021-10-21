@@ -63,6 +63,7 @@ private:
   double prev_target_vehicle_dist_ = 0.0;
   double prev_target_velocity_ = 0.0;
   bool prev_collision_point_valid_ = false;
+  bool prev_obstacle_velocity_judge_to_start_acc_ = false;
   std::vector<geometry_msgs::msg::TwistStamped> est_vel_que_;
   double prev_upper_velocity_ = 0.0;
 
@@ -103,8 +104,11 @@ private:
     double thresh_vel_to_stop;
 
     /* parameter for acc */
-    //!< @brief threshold of forward obstacle velocity to insert stop line (to stop acc)
-    double obstacle_stop_velocity_thresh;
+    //!< @brief start acc when the velocity of the forward obstacle exceeds this value
+    double obstacle_velocity_thresh_to_start_acc;
+
+    //!< @brief stop acc when the velocity of the forward obstacle falls below this value
+    double obstacle_velocity_thresh_to_stop_acc;
 
     //!< @brief supposed minimum acceleration in emergency stop
     double emergency_stop_acceleration;
@@ -184,6 +188,7 @@ private:
     const double traj_yaw, const pcl::PointXYZ & nearest_collision_point,
     const rclcpp::Time & nearest_collision_point_time, double * velocity);
   double estimateRoughPointVelocity(double current_vel);
+  bool isObstacleVelocityHigh(const double obj_vel);
   double calcUpperVelocity(const double dist_to_col, const double obj_vel, const double self_vel);
   double calcThreshDistToForwardObstacle(const double current_vel, const double obj_vel);
   double calcBaseDistToForwardObstacle(const double current_vel, const double obj_vel);

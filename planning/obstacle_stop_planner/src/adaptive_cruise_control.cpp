@@ -134,8 +134,10 @@ AdaptiveCruiseController::AdaptiveCruiseController(
   param_.consider_obj_velocity = node_->declare_parameter(acc_ns + "consider_obj_velocity", true);
 
   /* parameter for acc */
-  param_.obstacle_stop_velocity_thresh =
-    node_->declare_parameter(acc_ns + "obstacle_stop_velocity_thresh", 1.0);
+  param_.obstacle_velocity_thresh_to_start_acc =
+    node_->declare_parameter(acc_ns + "obstacle_velocity_thresh_to_start_acc", 1.5);
+  param_.obstacle_velocity_thresh_to_stop_acc =
+    node_->declare_parameter(acc_ns + "obstacle_velocity_thresh_to_stop_acc", 1.0);
   param_.emergency_stop_acceleration =
     node_->declare_parameter(acc_ns + "emergency_stop_acceleration", -3.5);
   param_.obstacle_emergency_stop_acceleration =
@@ -437,12 +439,24 @@ double AdaptiveCruiseController::estimateRoughPointVelocity(double current_vel)
   return current_vel * param_.rough_velocity_rate;
 }
 
+bool AdaptiveCruiseController::isObstacleVelocityHigh(const double obj_vel)
+{
+  bool is_high = false;
+  if (prev_obstacle_velocity_judge_to_start_acc_) {
+    is_high = obj_vel > param_.obstacle_velocity_thresh_to_stop_acc;
+  } else {
+    is_high = obj_vel > param_.obstacle_velocity_thresh_to_start_acc;
+  }
+  prev_obstacle_velocity_judge_to_start_acc_ = is_high;
+  return is_high;
+}
+
 double AdaptiveCruiseController::calcUpperVelocity(
   const double dist_to_col, const double obj_vel, const double self_vel)
 {
   debug_values_.data.at(DBGVAL::ESTIMATED_VEL_FINAL) = obj_vel;
-  if (obj_vel < param_.obstacle_stop_velocity_thresh) {
-    // stop by static obstacle
+  if (!isObstacleVelocityHigh(obj_vel)) {
+    // stop acc by low-velocity obstacle
     RCLCPP_DEBUG_THROTTLE(
       node_->get_logger(), *node_->get_clock(), std::chrono::milliseconds(1000).count(),
       "The velocity of forward vehicle is too low. Insert stop line.");

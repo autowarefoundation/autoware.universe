@@ -175,7 +175,8 @@ The above method means that the smaller the lateral deviation of the pointcloud,
 | `adaptive_cruise_control.use_object_to_estimate_vel`             | bool   | use dynamic objects for estimating object velocity or not                                                       |
 | `adaptive_cruise_control.use_pcl_to_estimate_vel`                | bool   | use raw pointclouds for estimating object velocity or not                                                       |
 | `adaptive_cruise_control.consider_obj_velocity`                  | bool   | consider forward vehicle velocity to calculate target velocity in adaptive cruise or not                        |
-| `adaptive_cruise_control.obstacle_stop_velocity_thresh`          | double | threshold of forward obstacle velocity to insert stop line (to stop acc) [m/s]                                  |
+| `adaptive_cruise_control.obstacle_velocity_thresh_to_start_acc`  | double | start adaptive cruise control when the velocity of the forward obstacle exceeds this value [m/s]                |
+| `adaptive_cruise_control.obstacle_velocity_thresh_to_stop_acc`   | double | stop acc when the velocity of the forward obstacle falls below this value [m/s]                                 |
 | `adaptive_cruise_control.emergency_stop_acceleration`            | double | supposed minimum acceleration (deceleration) in emergency stop [m/ss]                                           |
 | `adaptive_cruise_control.emergency_stop_idling_time`             | double | supposed idling time to start emergency stop [s]                                                                |
 | `adaptive_cruise_control.min_dist_stop`                          | double | minimum distance of emergency stop [m]                                                                          |
@@ -243,7 +244,7 @@ stop
 This module works only when the obstacle pointcloud is found in the detection area of the `Obstacle stop planner` module.
 At first, the velocity of the pointcloud is estimated. The velocity estimation uses the velocity information of dynamic objects, or the distance to the point cloud found in the previous step.
 
-Only when the estimation is succeeded and the estimated velocity exceeds the value of `obstacle_stop_velocity_thresh`, the distance to the pointcloud from calculated. When the calculated distance value exceeds the emergency distance $d\_{emergency}$ calculated by emergency_stop parameters, target velocity to insert is calculated.
+Only when the estimation is succeeded and the estimated velocity exceeds the value of `obstacle_stop_velocity_thresh_*`, the distance to the pointcloud from self-position is calculated. For prevent chattering in the mode transition, `obstacle_velocity_thresh_to_start_acc` is used for the threshold to start adaptive cruise, and `obstacle_velocity_thresh_to_stop_acc` is used for the threshold to stop adaptive cruise. When the calculated distance value exceeds the emergency distance $d\_{emergency}$ calculated by emergency_stop parameters, target velocity to insert is calculated.
 
 The emergency distance $d\_{emergency}$ is calculated as follows.
 
