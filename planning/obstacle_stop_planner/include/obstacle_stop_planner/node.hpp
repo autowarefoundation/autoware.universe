@@ -23,8 +23,6 @@
 #include "boost/assign/list_of.hpp"
 #include "boost/format.hpp"
 #include "boost/geometry.hpp"
-#include "boost/geometry/geometries/linestring.hpp"
-#include "boost/geometry/geometries/point_xy.hpp"
 
 #include "opencv2/core/core.hpp"
 #include "opencv2/highgui/highgui.hpp"
@@ -35,6 +33,7 @@
 #include "pcl/point_cloud.h"
 #include "pcl/common/transforms.h"
 
+#include "autoware_utils/autoware_utils.hpp"
 #include "autoware_debug_msgs/msg/float32_stamped.hpp"
 #include "autoware_perception_msgs/msg/dynamic_object_array.hpp"
 #include "autoware_planning_msgs/msg/trajectory.hpp"
@@ -47,17 +46,22 @@
 #include "tf2/utils.h"
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
-#include "visualization_msgs/msg/marker_array.hpp"
+#include "vehicle_info_util/vehicle_info_util.hpp"
 
 #include "obstacle_stop_planner/adaptive_cruise_control.hpp"
 #include "obstacle_stop_planner/debug_marker.hpp"
 
 namespace motion_planning
 {
+
 namespace bg = boost::geometry;
-using Point = bg::model::d2::point_xy<double>;
-using Polygon = bg::model::polygon<Point, false>;
-using Line = bg::model::linestring<Point>;
+using autoware_utils::Point2d;
+using autoware_utils::Polygon2d;
+using autoware_perception_msgs::msg::DynamicObjectArray;
+using autoware_planning_msgs::msg::ExpandStopRange;
+using autoware_planning_msgs::msg::Trajectory;
+using autoware_planning_msgs::msg::TrajectoryPoint;
+using vehicle_info_util::VehicleInfo;
 
 struct StopPoint
 {
@@ -78,19 +82,42 @@ class ObstacleStopPlannerNode : public rclcpp::Node
 public:
   explicit ObstacleStopPlannerNode(const rclcpp::NodeOptions & node_options);
 
+  struct NodeParam
+  {
+    bool enable_slow_down;
+  };
+
+  struct StopParam
+  {
+    double stop_margin;
+    double min_behavior_stop_margin;
+    double expand_stop_range;
+    double extend_distance;
+    double step_length;
+    double stop_search_radius;
+  };
+
+  struct SlowDownParam
+  {
+    double slow_down_forward_margin;
+    double slow_down_backward_margin;
+    double expand_slow_down_range;
+    double max_slow_down_vel;
+    double min_slow_down_vel;
+    double slow_down_search_radius;
+  };
+
 private:
   /*
    * ROS
    */
   // publisher and subscriber
-  rclcpp::Subscription<autoware_planning_msgs::msg::Trajectory>::SharedPtr path_sub_;
+  rclcpp::Subscription<Trajectory>::SharedPtr path_sub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr obstacle_pointcloud_sub_;
   rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr current_velocity_sub_;
-  rclcpp::Subscription<autoware_perception_msgs::msg::DynamicObjectArray>::SharedPtr
-    dynamic_object_sub_;
-  rclcpp::Subscription<autoware_planning_msgs::msg::ExpandStopRange>::SharedPtr
-    expand_stop_range_sub_;
-  rclcpp::Publisher<autoware_planning_msgs::msg::Trajectory>::SharedPtr path_pub_;
+  rclcpp::Subscription<DynamicObjectArray>::SharedPtr dynamic_object_sub_;
+  rclcpp::Subscription<ExpandStopRange>::SharedPtr expand_stop_range_sub_;
+  rclcpp::Publisher<Trajectory>::SharedPtr path_pub_;
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticStatus>::SharedPtr stop_reason_diag_pub_;
 
   std::shared_ptr<ObstacleStopPlannerDebugNode> debug_ptr_;
@@ -103,104 +130,98 @@ private:
   std::unique_ptr<motion_planning::AdaptiveCruiseController> acc_controller_;
   sensor_msgs::msg::PointCloud2::SharedPtr obstacle_ros_pointcloud_ptr_;
   geometry_msgs::msg::TwistStamped::ConstSharedPtr current_velocity_ptr_;
-  autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr object_ptr_;
-  double rear_overhang_, left_overhang_, right_overhang_, vehicle_width_, vehicle_length_,
-    baselink2front_;
-  double stop_margin_;
-  double slow_down_forward_margin_;
-  double slow_down_backward_margin_;
-  double min_behavior_stop_margin_;
+  DynamicObjectArray::ConstSharedPtr object_ptr_;
   rclcpp::Time prev_col_point_time_;
   pcl::PointXYZ prev_col_point_;
-  double expand_slow_down_range_;
-  double expand_stop_range_;
-  double max_slow_down_vel_;
-  double min_slow_down_vel_;
-  bool enable_slow_down_;
-  double extend_distance_;
-  double step_length_;
-  double stop_search_radius_;
-  double slow_down_search_radius_;
+
+  VehicleInfo vehicle_info_;
+  NodeParam node_param_;
+  StopParam stop_param_;
+  SlowDownParam slow_down_param_;
+
   void obstaclePointcloudCallback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr input_msg);
-  void pathCallback(const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr input_msg);
-  void dynamicObjectCallback(
-    const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr input_msg);
+  void pathCallback(const Trajectory::ConstSharedPtr input_msg);
+  void dynamicObjectCallback(const DynamicObjectArray::ConstSharedPtr input_msg);
   void currentVelocityCallback(const geometry_msgs::msg::TwistStamped::ConstSharedPtr input_msg);
-  void externalExpandStopRangeCallback(
-    const autoware_planning_msgs::msg::ExpandStopRange::ConstSharedPtr input_msg);
+  void externalExpandStopRangeCallback(const ExpandStopRange::ConstSharedPtr input_msg);
 
 private:
   bool withinPolygon(
-    const std::vector<cv::Point2d> cv_polygon, const Point & prev_point, const Point & next_point,
+    const std::vector<cv::Point2d> & cv_polygon, const Point2d & prev_point,
+    const Point2d & next_point,
     pcl::PointCloud<pcl::PointXYZ>::Ptr candidate_points_ptr,
     pcl::PointCloud<pcl::PointXYZ>::Ptr within_points_ptr);
+
   bool convexHull(
     const std::vector<cv::Point2d> pointcloud, std::vector<cv::Point2d> & polygon_points);
+
   bool decimateTrajectory(
-    const autoware_planning_msgs::msg::Trajectory & input_trajectory, const double step_length,
-    autoware_planning_msgs::msg::Trajectory & output_trajectory,
+    const Trajectory & input, const double step_length, Trajectory & output,
     std::map<size_t /* decimate */, size_t /* origin */> & index_map);
+
   bool trimTrajectoryFromSelfPose(
-    const autoware_planning_msgs::msg::Trajectory & input_trajectory,
-    const geometry_msgs::msg::Pose self_pose,
-    autoware_planning_msgs::msg::Trajectory & output_trajectory);
+    const Trajectory & input, const geometry_msgs::msg::Pose & self_pose,
+    Trajectory & output);
+
   bool trimTrajectoryWithIndexFromSelfPose(
-    const autoware_planning_msgs::msg::Trajectory & input_trajectory,
-    const geometry_msgs::msg::Pose self_pose,
-    autoware_planning_msgs::msg::Trajectory & output_trajectory,
-    size_t & index);
+    const Trajectory & input, const geometry_msgs::msg::Pose & self_pose,
+    Trajectory & output, size_t & index);
+
   bool searchPointcloudNearTrajectory(
-    const autoware_planning_msgs::msg::Trajectory & trajectory,
+    const Trajectory & trajectory,
     const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_points_ptr,
     pcl::PointCloud<pcl::PointXYZ>::Ptr output_points_ptr);
+
   void createOneStepPolygon(
-    const geometry_msgs::msg::Pose base_step_pose, const geometry_msgs::msg::Pose next_step_pose,
+    const geometry_msgs::msg::Pose & base_step_pose,
+    const geometry_msgs::msg::Pose & next_step_pose,
     std::vector<cv::Point2d> & polygon, const double expand_width = 0.0);
+
   bool getSelfPose(
     const std_msgs::msg::Header & header, const tf2_ros::Buffer & tf_buffer,
     geometry_msgs::msg::Pose & self_pose);
+
   bool getBackwardPointFromBasePoint(
     const Eigen::Vector2d & line_point1, const Eigen::Vector2d & line_point2,
     const Eigen::Vector2d & base_point, const double backward_length,
     Eigen::Vector2d & output_point);
+
   void getNearestPoint(
     const pcl::PointCloud<pcl::PointXYZ> & pointcloud, const geometry_msgs::msg::Pose & base_pose,
     pcl::PointXYZ * nearest_collision_point, rclcpp::Time * nearest_collision_point_time);
+
   void getLateralNearestPoint(
     const pcl::PointCloud<pcl::PointXYZ> & pointcloud, const geometry_msgs::msg::Pose & base_pose,
     pcl::PointXYZ * lateral_nearest_point, double * deviation);
+
   geometry_msgs::msg::Pose getVehicleCenterFromBase(const geometry_msgs::msg::Pose & base_pose);
 
   void insertStopPoint(
-    const StopPoint & stop_point, const autoware_planning_msgs::msg::Trajectory & base_trajectory,
-    autoware_planning_msgs::msg::Trajectory & output_path,
-    diagnostic_msgs::msg::DiagnosticStatus & stop_reason_diag);
+    const StopPoint & stop_point, const Trajectory & base_trajectory,
+    Trajectory & output, diagnostic_msgs::msg::DiagnosticStatus & stop_reason_diag);
 
   StopPoint searchInsertPoint(
-    const int idx, const autoware_planning_msgs::msg::Trajectory & base_trajectory,
+    const int idx, const Trajectory & base_trajectory,
     const Eigen::Vector2d & trajectory_vec, const Eigen::Vector2d & collision_point_vec);
 
   StopPoint createTargetPoint(
     const int idx, const double margin, const Eigen::Vector2d & trajectory_vec,
-    const Eigen::Vector2d & collision_point_vec,
-    const autoware_planning_msgs::msg::Trajectory & base_trajectory);
+    const Eigen::Vector2d & collision_point_vec, const Trajectory & base_trajectory);
 
   SlowDownSection createSlowDownSection(
     const int idx, const double lateral_deviation, const Eigen::Vector2d & trajectory_vec,
     const Eigen::Vector2d & slow_down_point_vec,
-    const autoware_planning_msgs::msg::Trajectory & base_trajectory);
+    const Trajectory & base_trajectory);
 
   void insertSlowDownSection(
     const SlowDownSection & slow_down_section,
-    const autoware_planning_msgs::msg::Trajectory & base_trajectory,
-    autoware_planning_msgs::msg::Trajectory & output_path);
+    const Trajectory & base_trajectory, Trajectory & output);
 
-  bool extendTrajectory(
-    const autoware_planning_msgs::msg::Trajectory & input_trajectory, const double extend_distance,
-    autoware_planning_msgs::msg::Trajectory & output_trajectory);
+  void extendTrajectory(
+    const Trajectory & input, const double extend_distance, Trajectory & output);
 
-  autoware_planning_msgs::msg::TrajectoryPoint getExtendTrajectoryPoint(
-    double extend_distance, const autoware_planning_msgs::msg::TrajectoryPoint & goal_point);
+  TrajectoryPoint getExtendTrajectoryPoint(
+    double extend_distance, const TrajectoryPoint & goal_point);
 };
 }  // namespace motion_planning
 
