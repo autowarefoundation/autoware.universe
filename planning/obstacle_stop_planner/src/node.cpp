@@ -234,13 +234,13 @@ void ObstacleStopPlannerNode::pathCallback(const Trajectory::ConstSharedPtr inpu
   // for collision
   bool found_collision_points = false;
   bool stop_require = false;
-  size_t decimate_trajectory_collision_index;
+  size_t decimate_trajectory_collision_index = 0;
   pcl::PointXYZ nearest_collision_point;
   rclcpp::Time nearest_collision_point_time;
   // for slow down
   bool found_slow_down_points = false;
   bool slow_down_require = false;
-  size_t decimate_trajectory_slow_down_index;
+  size_t decimate_trajectory_slow_down_index = 0;
   pcl::PointXYZ nearest_slow_down_point;
   pcl::PointXYZ lateral_nearest_slow_down_point;
   pcl::PointCloud<pcl::PointXYZ>::Ptr slow_down_pointcloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
@@ -265,7 +265,8 @@ void ObstacleStopPlannerNode::pathCallback(const Trajectory::ConstSharedPtr inpu
         one_step_move_slow_down_range_polygon, p_front.position.z, PolygonType::SlowDownRange);
 
       found_slow_down_points = withinPolygon(
-        one_step_move_slow_down_range_polygon, prev_center_point, next_center_point,
+        one_step_move_slow_down_range_polygon, slow_down_param_.slow_down_search_radius,
+        prev_center_point, next_center_point,
         obstacle_candidate_pointcloud_ptr, slow_down_pointcloud_ptr);
 
       if (!slow_down_require && found_slow_down_points) {
@@ -301,7 +302,8 @@ void ObstacleStopPlannerNode::pathCallback(const Trajectory::ConstSharedPtr inpu
       collision_pointcloud_ptr->header = obstacle_candidate_pointcloud_ptr->header;
 
       found_collision_points = withinPolygon(
-        one_step_move_vehicle_polygon, prev_center_point, next_center_point,
+        one_step_move_vehicle_polygon, stop_param_.stop_search_radius,
+        prev_center_point, next_center_point,
         slow_down_pointcloud_ptr, collision_pointcloud_ptr);
 
       if (found_collision_points) {
@@ -390,8 +392,8 @@ void ObstacleStopPlannerNode::pathCallback(const Trajectory::ConstSharedPtr inpu
 }
 
 bool ObstacleStopPlannerNode::withinPolygon(
-  const std::vector<cv::Point2d> & cv_polygon, const Point2d & prev_point,
-  const Point2d & next_point,
+  const std::vector<cv::Point2d> & cv_polygon, const double radius,
+  const Point2d & prev_point, const Point2d & next_point,
   pcl::PointCloud<pcl::PointXYZ>::Ptr candidate_points_ptr,
   pcl::PointCloud<pcl::PointXYZ>::Ptr within_points_ptr)
 {
@@ -403,10 +405,7 @@ bool ObstacleStopPlannerNode::withinPolygon(
 
   for (size_t j = 0; j < candidate_points_ptr->size(); ++j) {
     Point2d point(candidate_points_ptr->at(j).x, candidate_points_ptr->at(j).y);
-    if (
-      bg::distance(prev_point, point) < slow_down_param_.slow_down_search_radius ||
-      bg::distance(next_point, point) < slow_down_param_.slow_down_search_radius)
-    {
+    if (bg::distance(prev_point, point) < radius || bg::distance(next_point, point) < radius) {
       if (bg::within(point, boost_polygon)) {
         within_points_ptr->push_back(candidate_points_ptr->at(j));
         return true;

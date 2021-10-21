@@ -146,8 +146,8 @@ private:
 
 private:
   bool withinPolygon(
-    const std::vector<cv::Point2d> & cv_polygon, const Point2d & prev_point,
-    const Point2d & next_point,
+    const std::vector<cv::Point2d> & cv_polygon, const double radius,
+    const Point2d & prev_point, const Point2d & next_point,
     pcl::PointCloud<pcl::PointXYZ>::Ptr candidate_points_ptr,
     pcl::PointCloud<pcl::PointXYZ>::Ptr within_points_ptr);
 
