@@ -91,8 +91,9 @@ def generate_launch_description():
             parameters=[{
                 'map_resolution': 0.5,
                 'use_height_filter': True,
-                'input_obstacle_pointcloud': False,
-                'input_obstacle_and_raw_pointcloud': True,
+                'input_obstacle_pointcloud': LaunchConfiguration('input_obstacle_pointcloud'),
+                'input_obstacle_and_raw_pointcloud':
+                LaunchConfiguration('input_obstacle_and_raw_pointcloud'),
             }],
             extra_arguments=[{
                 'use_intra_process_comms': LaunchConfiguration('use_intra_process')
@@ -127,6 +128,8 @@ def generate_launch_description():
         add_launch_arg('output/pointcloud', 'virtual_scan/pointcloud'),
         add_launch_arg('output/ray', 'virtual_scan/ray'),
         add_launch_arg('output/stixel', 'virtual_scan/stixel'),
+        add_launch_arg('input_obstacle_pointcloud', 'false'),
+        add_launch_arg('input_obstacle_and_raw_pointcloud', 'true'),
         set_container_executable,
         set_container_mt_executable,
         occupancy_grid_map_container,
