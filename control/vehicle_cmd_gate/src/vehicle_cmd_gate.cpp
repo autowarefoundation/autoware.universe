@@ -126,6 +126,8 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
     declare_parameter("system_emergency_heartbeat_timeout", 0.5);
   external_emergency_stop_heartbeat_timeout_ =
     declare_parameter("external_emergency_stop_heartbeat_timeout", 0.5);
+  stop_hold_acceleration_ = declare_parameter("stop_hold_acceleration", -1.5);
+  emergency_acceleration_ = declare_parameter("emergency_acceleration", -2.4);
 
   // Vehicle Parameter
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
@@ -488,7 +490,7 @@ autoware_control_msgs::msg::ControlCommand VehicleCmdGate::createStopControlCmd(
   cmd.steering_angle = current_steer_;
   cmd.steering_angle_velocity = 0.0;
   cmd.velocity = 0.0;
-  cmd.acceleration = -1.5;
+  cmd.acceleration = stop_hold_acceleration_;
 
   return cmd;
 }
@@ -500,7 +502,7 @@ autoware_control_msgs::msg::ControlCommand VehicleCmdGate::createEmergencyStopCo
   cmd.steering_angle = prev_control_cmd_.steering_angle;
   cmd.steering_angle_velocity = prev_control_cmd_.steering_angle_velocity;
   cmd.velocity = 0.0;
-  cmd.acceleration = -2.5;
+  cmd.acceleration = emergency_acceleration_;
 
   return cmd;
 }

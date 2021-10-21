@@ -127,6 +127,8 @@ private:
   bool use_external_emergency_stop_;
   double system_emergency_heartbeat_timeout_;
   double external_emergency_stop_heartbeat_timeout_;
+  double stop_hold_acceleration_;
+  double emergency_acceleration_;
 
   // Service
   rclcpp::Service<autoware_external_api_msgs::srv::Engage>::SharedPtr srv_engage_;
