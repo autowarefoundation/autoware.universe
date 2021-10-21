@@ -31,13 +31,14 @@
 class Tracker
 {
 protected:
-  unique_identifier_msgs::msg::UUID getUUID() {return uuid_;}
+  unique_identifier_msgs::msg::UUID getUUID() const {return uuid_;}
   void setType(int type) {type_ = type;}
 
 private:
   unique_identifier_msgs::msg::UUID uuid_;
   int type_;
   int no_measurement_count_;
+  int total_no_measurement_count_;
   int total_measurement_count_;
   rclcpp::Time last_update_with_measurement_time_;
 
@@ -48,14 +49,16 @@ public:
     const autoware_perception_msgs::msg::DynamicObject & object,
     const rclcpp::Time & measurement_time);
   bool updateWithoutMeasurement();
-  int getType() {return type_;}
-  int getNoMeasurementCount() {return no_measurement_count_;}
-  int getTotalMeasurementCount() {return total_measurement_count_;}
-  double getElapsedTimeFromLastUpdate(const rclcpp::Time & current_time)
+  int getType() const {return type_;}
+  int getNoMeasurementCount() const {return no_measurement_count_;}
+  int getTotalNoMeasurementCount() const {return total_no_measurement_count_;}
+  int getTotalMeasurementCount() const {return total_measurement_count_;}
+  double getElapsedTimeFromLastUpdate(const rclcpp::Time & current_time) const
   {
     return (current_time - last_update_with_measurement_time_).seconds();
   }
-  virtual geometry_msgs::msg::PoseWithCovariance getPoseWithCovariance(const rclcpp::Time & time);
+  virtual geometry_msgs::msg::PoseWithCovariance getPoseWithCovariance(const rclcpp::Time & time)
+  const;
 
   /*
    *　Pure virtual function
@@ -67,7 +70,7 @@ protected:
 
 public:
   virtual bool getEstimatedDynamicObject(
-    const rclcpp::Time & time, autoware_perception_msgs::msg::DynamicObject & object) = 0;
+    const rclcpp::Time & time, autoware_perception_msgs::msg::DynamicObject & object) const = 0;
   virtual bool predict(const rclcpp::Time & time) = 0;
 };
 

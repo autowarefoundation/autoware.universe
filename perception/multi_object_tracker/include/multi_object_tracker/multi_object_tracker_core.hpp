@@ -53,22 +53,25 @@ private:
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
 
-  void measurementCallback(
+  void onMeasurement(
     const autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr
     input_objects_msg);
-  void publishTimerCallback();
+  void onTimer();
 
   std::string world_frame_id_;  // tracking frame
   std::list<std::shared_ptr<Tracker>> list_tracker_;
   std::unique_ptr<DataAssociation> data_association_;
-  bool enable_delay_compensation_;
-  bool transformDynamicObjects(
-    const autoware_perception_msgs::msg::DynamicObjectWithFeatureArray & input_msg,
-    const std::string & target_frame_id,
-    autoware_perception_msgs::msg::DynamicObjectWithFeatureArray & output_msg);
+
   void checkTrackerLifeCycle(
+    std::list<std::shared_ptr<Tracker>> & list_tracker, const rclcpp::Time & time,
+    const geometry_msgs::msg::Transform & self_transform);
+  void sanitizeTracker(
     std::list<std::shared_ptr<Tracker>> & list_tracker, const rclcpp::Time & time);
-  void publish(const rclcpp::Time & time);
+  std::shared_ptr<Tracker> createNewTracker(
+    const autoware_perception_msgs::msg::DynamicObject & object, const rclcpp::Time & time) const;
+
+  void publish(const rclcpp::Time & time) const;
+  inline bool shouldTrackerPublish(const std::shared_ptr<const Tracker> tracker) const;
 };
 
 #endif  // MULTI_OBJECT_TRACKER__MULTI_OBJECT_TRACKER_CORE_HPP_

@@ -42,7 +42,8 @@ public:
     const autoware_perception_msgs::msg::DynamicObject & object,
     const rclcpp::Time & time) override;
   bool getEstimatedDynamicObject(
-    const rclcpp::Time & time, autoware_perception_msgs::msg::DynamicObject & object) override;
+    const rclcpp::Time & time,
+    autoware_perception_msgs::msg::DynamicObject & object) const override;
   virtual ~MultipleVehicleTracker() {}
 };
 

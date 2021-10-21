@@ -39,21 +39,24 @@ private:
     VX = 2,
     VY = 3,
   };
-  char dim_x_ = 4;
-  float process_noise_covariance_pos_x_;
-  float process_noise_covariance_pos_y_;
-  float process_noise_covariance_vx_;
-  float process_noise_covariance_vy_;
-  float initial_measurement_noise_covariance_vx_;
-  float initial_measurement_noise_covariance_vy_;
-  // if use_measurement_covariance_ is false, use following params
-  bool use_measurement_covariance_;
-  float measurement_noise_covariance_pos_x_;
-  float measurement_noise_covariance_pos_y_;
-  float initial_measurement_noise_covariance_pos_x_;
-  float initial_measurement_noise_covariance_pos_y_;
-
+  struct EkfParams
+  {
+    char dim_x = 4;
+    float q_cov_x;
+    float q_cov_y;
+    float q_cov_vx;
+    float q_cov_vy;
+    float p0_cov_vx;
+    float p0_cov_vy;
+    // if use_measurement_covariance_ is false, use following params
+    bool use_measurement_covariance;
+    float r_cov_x;
+    float r_cov_y;
+    float p0_cov_x;
+    float p0_cov_y;
+  } ekf_params_;
   float max_vx_, max_vy_;
+  float z_;
 
 public:
   UnknownTracker(
@@ -61,13 +64,14 @@ public:
     const autoware_perception_msgs::msg::DynamicObject & object);
 
   bool predict(const rclcpp::Time & time) override;
-  bool predict(const double dt, KalmanFilter & ekf);
+  bool predict(const double dt, KalmanFilter & ekf) const;
   bool measure(
     const autoware_perception_msgs::msg::DynamicObject & object,
     const rclcpp::Time & time) override;
   bool measureWithPose(const autoware_perception_msgs::msg::DynamicObject & object);
   bool getEstimatedDynamicObject(
-    const rclcpp::Time & time, autoware_perception_msgs::msg::DynamicObject & object) override;
+    const rclcpp::Time & time,
+    autoware_perception_msgs::msg::DynamicObject & object) const override;
   virtual ~UnknownTracker() {}
 };
 

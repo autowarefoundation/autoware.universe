@@ -23,6 +23,7 @@
 Tracker::Tracker(const rclcpp::Time & time, const int type)
 : type_(type),
   no_measurement_count_(0),
+  total_no_measurement_count_(0),
   total_measurement_count_(1),
   last_update_with_measurement_time_(time)
 {
@@ -46,10 +47,12 @@ bool Tracker::updateWithMeasurement(
 bool Tracker::updateWithoutMeasurement()
 {
   ++no_measurement_count_;
+  ++total_no_measurement_count_;
   return true;
 }
 
 geometry_msgs::msg::PoseWithCovariance Tracker::getPoseWithCovariance(const rclcpp::Time & time)
+const
 {
   autoware_perception_msgs::msg::DynamicObject object;
   getEstimatedDynamicObject(time, object);

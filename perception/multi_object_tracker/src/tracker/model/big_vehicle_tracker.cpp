@@ -34,45 +34,44 @@ BigVehicleTracker::BigVehicleTracker(
   const rclcpp::Time & time, const autoware_perception_msgs::msg::DynamicObject & object)
 : Tracker(time, object.semantic.type),
   logger_(rclcpp::get_logger("BigVehicleTracker")),
-  last_update_time_(time)
+  last_update_time_(time),
+  z_(object.state.pose_covariance.pose.position.z)
 {
   object_ = object;
 
   // initialize params
-  use_measurement_covariance_ = false;
-  float process_noise_stddev_pos_x = 0.0;                                      // [m/s]
-  float process_noise_stddev_pos_y = 0.0;                                      // [m/s]
-  float process_noise_stddev_yaw = autoware_utils::deg2rad(20);                // [rad/s]
-  float process_noise_stddev_vx = autoware_utils::kmph2mps(10);                // [m/(s*s)]
-  float process_noise_stddev_wz = autoware_utils::deg2rad(20);                 // [rad/(s*s)]
-  float measurement_noise_stddev_pos_x = 1.5;                                  // [m]
-  float measurement_noise_stddev_pos_y = 0.5;                                  // [m]
-  float measurement_noise_stddev_yaw = autoware_utils::deg2rad(30);            // [rad]
-  float initial_measurement_noise_stddev_pos_x = 1.5;                          // [m]
-  float initial_measurement_noise_stddev_pos_y = 0.5;                          // [m]
-  float initial_measurement_noise_stddev_yaw = autoware_utils::deg2rad(30);    // [rad]
-  float initial_measurement_noise_stddev_vx = autoware_utils::kmph2mps(1000);  // [m/s]
-  float initial_measurement_noise_stddev_wz = autoware_utils::deg2rad(10);     // [rad/s]
-  process_noise_covariance_pos_x_ = std::pow(process_noise_stddev_pos_x, 2.0);
-  process_noise_covariance_pos_y_ = std::pow(process_noise_stddev_pos_y, 2.0);
-  process_noise_covariance_yaw_ = std::pow(process_noise_stddev_yaw, 2.0);
-  process_noise_covariance_vx_ = std::pow(process_noise_stddev_vx, 2.0);
-  process_noise_covariance_wz_ = std::pow(process_noise_stddev_wz, 2.0);
-  measurement_noise_covariance_pos_x_ = std::pow(measurement_noise_stddev_pos_x, 2.0);
-  measurement_noise_covariance_pos_y_ = std::pow(measurement_noise_stddev_pos_y, 2.0);
-  measurement_noise_covariance_yaw_ = std::pow(measurement_noise_stddev_yaw, 2.0);
-  initial_measurement_noise_covariance_pos_x_ =
-    std::pow(initial_measurement_noise_stddev_pos_x, 2.0);
-  initial_measurement_noise_covariance_pos_y_ =
-    std::pow(initial_measurement_noise_stddev_pos_y, 2.0);
-  initial_measurement_noise_covariance_yaw_ = std::pow(initial_measurement_noise_stddev_yaw, 2.0);
-  initial_measurement_noise_covariance_vx_ = std::pow(initial_measurement_noise_stddev_vx, 2.0);
-  initial_measurement_noise_covariance_wz_ = std::pow(initial_measurement_noise_stddev_wz, 2.0);
+  ekf_params_.use_measurement_covariance = false;
+  float q_stddev_x = 0.0;                               // [m/s]
+  float q_stddev_y = 0.0;                               // [m/s]
+  float q_stddev_yaw = autoware_utils::deg2rad(20);     // [rad/s]
+  float q_stddev_vx = autoware_utils::kmph2mps(10);     // [m/(s*s)]
+  float q_stddev_wz = autoware_utils::deg2rad(20);      // [rad/(s*s)]
+  float r_stddev_x = 1.5;                               // [m]
+  float r_stddev_y = 0.5;                               // [m]
+  float r_stddev_yaw = autoware_utils::deg2rad(30);     // [rad]
+  float p0_stddev_x = 1.5;                              // [m]
+  float p0_stddev_y = 0.5;                              // [m]
+  float p0_stddev_yaw = autoware_utils::deg2rad(30);    // [rad]
+  float p0_stddev_vx = autoware_utils::kmph2mps(1000);  // [m/s]
+  float p0_stddev_wz = autoware_utils::deg2rad(10);     // [rad/s]
+  ekf_params_.q_cov_x = std::pow(q_stddev_x, 2.0);
+  ekf_params_.q_cov_y = std::pow(q_stddev_y, 2.0);
+  ekf_params_.q_cov_yaw = std::pow(q_stddev_yaw, 2.0);
+  ekf_params_.q_cov_vx = std::pow(q_stddev_vx, 2.0);
+  ekf_params_.q_cov_wz = std::pow(q_stddev_wz, 2.0);
+  ekf_params_.r_cov_x = std::pow(r_stddev_x, 2.0);
+  ekf_params_.r_cov_y = std::pow(r_stddev_y, 2.0);
+  ekf_params_.r_cov_yaw = std::pow(r_stddev_yaw, 2.0);
+  ekf_params_.p0_cov_x = std::pow(p0_stddev_x, 2.0);
+  ekf_params_.p0_cov_y = std::pow(p0_stddev_y, 2.0);
+  ekf_params_.p0_cov_yaw = std::pow(p0_stddev_yaw, 2.0);
+  ekf_params_.p0_cov_vx = std::pow(p0_stddev_vx, 2.0);
+  ekf_params_.p0_cov_wz = std::pow(p0_stddev_wz, 2.0);
   max_vx_ = autoware_utils::kmph2mps(100);  // [m/s]
   max_wz_ = autoware_utils::deg2rad(30);    // [rad/s]
 
   // initialize X matrix
-  Eigen::MatrixXd X(dim_x_, 1);
+  Eigen::MatrixXd X(ekf_params_.dim_x, 1);
   X(IDX::X) = object.state.pose_covariance.pose.position.x;
   X(IDX::Y) = object.state.pose_covariance.pose.position.y;
   X(IDX::YAW) = tf2::getYaw(object.state.pose_covariance.pose.orientation);
@@ -85,9 +84,9 @@ BigVehicleTracker::BigVehicleTracker(
   }
 
   // initialize P matrix
-  Eigen::MatrixXd P = Eigen::MatrixXd::Zero(dim_x_, dim_x_);
+  Eigen::MatrixXd P = Eigen::MatrixXd::Zero(ekf_params_.dim_x, ekf_params_.dim_x);
   if (
-    !use_measurement_covariance_ ||
+    !ekf_params_.use_measurement_covariance ||
     object.state.pose_covariance.covariance[utils::MSG_COV_IDX::X_X] == 0.0 ||
     object.state.pose_covariance.covariance[utils::MSG_COV_IDX::Y_Y] == 0.0 ||
     object.state.pose_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW] == 0.0)
@@ -96,20 +95,16 @@ BigVehicleTracker::BigVehicleTracker(
     const double sin_yaw = std::sin(X(IDX::YAW));
     const double sin_2yaw = std::sin(2.0f * X(IDX::YAW));
     // Rotate the covariance matrix according to the vehicle yaw
-    // because initial_measurement_noise_covariance_pos_x and y are in the
-    // vehicle coordinate system.
-    P(IDX::X, IDX::X) = initial_measurement_noise_covariance_pos_x_ * cos_yaw * cos_yaw +
-      initial_measurement_noise_covariance_pos_y_ * sin_yaw * sin_yaw;
-    P(IDX::X, IDX::Y) =
-      0.5f *
-      (initial_measurement_noise_covariance_pos_x_ - initial_measurement_noise_covariance_pos_y_) *
-      sin_2yaw;
-    P(IDX::Y, IDX::Y) = initial_measurement_noise_covariance_pos_x_ * sin_yaw * sin_yaw +
-      initial_measurement_noise_covariance_pos_y_ * cos_yaw * cos_yaw;
+    // because p0_cov_x and y are in the vehicle coordinate system.
+    P(IDX::X, IDX::X) =
+      ekf_params_.p0_cov_x * cos_yaw * cos_yaw + ekf_params_.p0_cov_y * sin_yaw * sin_yaw;
+    P(IDX::X, IDX::Y) = 0.5f * (ekf_params_.p0_cov_x - ekf_params_.p0_cov_y) * sin_2yaw;
+    P(IDX::Y, IDX::Y) =
+      ekf_params_.p0_cov_x * sin_yaw * sin_yaw + ekf_params_.p0_cov_y * cos_yaw * cos_yaw;
     P(IDX::Y, IDX::X) = P(IDX::X, IDX::Y);
-    P(IDX::YAW, IDX::YAW) = initial_measurement_noise_covariance_yaw_;
-    P(IDX::VX, IDX::VX) = initial_measurement_noise_covariance_vx_;
-    P(IDX::WZ, IDX::WZ) = initial_measurement_noise_covariance_wz_;
+    P(IDX::YAW, IDX::YAW) = ekf_params_.p0_cov_yaw;
+    P(IDX::VX, IDX::VX) = ekf_params_.p0_cov_vx;
+    P(IDX::WZ, IDX::WZ) = ekf_params_.p0_cov_wz;
   } else {
     P(IDX::X, IDX::X) = object.state.pose_covariance.covariance[utils::MSG_COV_IDX::X_X];
     P(IDX::X, IDX::Y) = object.state.pose_covariance.covariance[utils::MSG_COV_IDX::X_Y];
@@ -120,8 +115,8 @@ BigVehicleTracker::BigVehicleTracker(
       P(IDX::VX, IDX::VX) = object.state.twist_covariance.covariance[utils::MSG_COV_IDX::X_X];
       P(IDX::WZ, IDX::WZ) = object.state.twist_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW];
     } else {
-      P(IDX::VX, IDX::VX) = initial_measurement_noise_covariance_vx_;
-      P(IDX::WZ, IDX::WZ) = initial_measurement_noise_covariance_wz_;
+      P(IDX::VX, IDX::VX) = ekf_params_.p0_cov_vx;
+      P(IDX::WZ, IDX::WZ) = ekf_params_.p0_cov_wz;
     }
   }
 
@@ -142,7 +137,7 @@ bool BigVehicleTracker::predict(const rclcpp::Time & time)
   return ret;
 }
 
-bool BigVehicleTracker::predict(const double dt, KalmanFilter & ekf)
+bool BigVehicleTracker::predict(const double dt, KalmanFilter & ekf) const
 {
   /*  == Nonlinear model ==
    *
@@ -164,14 +159,14 @@ bool BigVehicleTracker::predict(const double dt, KalmanFilter & ekf)
    */
 
   // X t
-  Eigen::MatrixXd X_t(dim_x_, 1);  // predicted state
+  Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);  // predicted state
   ekf.getX(X_t);
   const double cos_yaw = std::cos(X_t(IDX::YAW));
   const double sin_yaw = std::sin(X_t(IDX::YAW));
   const double sin_2yaw = std::sin(2.0f * X_t(IDX::YAW));
 
   // X t+1
-  Eigen::MatrixXd X_next_t(dim_x_, 1);                           // predicted state
+  Eigen::MatrixXd X_next_t(ekf_params_.dim_x, 1);                // predicted state
   X_next_t(IDX::X) = X_t(IDX::X) + X_t(IDX::VX) * cos_yaw * dt;  // dx = v * cos(yaw)
   X_next_t(IDX::Y) = X_t(IDX::Y) + X_t(IDX::VX) * sin_yaw * dt;  // dy = v * sin(yaw)
   X_next_t(IDX::YAW) = X_t(IDX::YAW) + (X_t(IDX::WZ)) * dt;      // dyaw = omega
@@ -179,7 +174,7 @@ bool BigVehicleTracker::predict(const double dt, KalmanFilter & ekf)
   X_next_t(IDX::WZ) = X_t(IDX::WZ);
 
   // A
-  Eigen::MatrixXd A = Eigen::MatrixXd::Identity(dim_x_, dim_x_);
+  Eigen::MatrixXd A = Eigen::MatrixXd::Identity(ekf_params_.dim_x, ekf_params_.dim_x);
   A(IDX::X, IDX::YAW) = -X_t(IDX::VX) * sin_yaw * dt;
   A(IDX::X, IDX::VX) = cos_yaw * dt;
   A(IDX::Y, IDX::YAW) = X_t(IDX::VX) * cos_yaw * dt;
@@ -187,54 +182,50 @@ bool BigVehicleTracker::predict(const double dt, KalmanFilter & ekf)
   A(IDX::YAW, IDX::WZ) = dt;
 
   // Q
-  Eigen::MatrixXd Q = Eigen::MatrixXd::Zero(dim_x_, dim_x_);
+  Eigen::MatrixXd Q = Eigen::MatrixXd::Zero(ekf_params_.dim_x, ekf_params_.dim_x);
   // Rotate the covariance matrix according to the vehicle yaw
-  // because process_noise_covariance_pos_x and y are in the vehicle coordinate system.
-  Q(IDX::X, IDX::X) = (process_noise_covariance_pos_x_ * cos_yaw * cos_yaw +
-    process_noise_covariance_pos_y_ * sin_yaw * sin_yaw) *
-    dt * dt;
-  Q(IDX::X, IDX::Y) =
-    (0.5f * (process_noise_covariance_pos_x_ - process_noise_covariance_pos_y_) * sin_2yaw) * dt *
-    dt;
-  Q(IDX::Y, IDX::Y) = (process_noise_covariance_pos_x_ * sin_yaw * sin_yaw +
-    process_noise_covariance_pos_y_ * cos_yaw * cos_yaw) *
-    dt * dt;
+  // because q_cov_x and y are in the vehicle coordinate system.
+  Q(IDX::X, IDX::X) =
+    (ekf_params_.q_cov_x * cos_yaw * cos_yaw + ekf_params_.q_cov_y * sin_yaw * sin_yaw) * dt * dt;
+  Q(IDX::X, IDX::Y) = (0.5f * (ekf_params_.q_cov_x - ekf_params_.q_cov_y) * sin_2yaw) * dt * dt;
+  Q(IDX::Y, IDX::Y) =
+    (ekf_params_.q_cov_x * sin_yaw * sin_yaw + ekf_params_.q_cov_y * cos_yaw * cos_yaw) * dt * dt;
   Q(IDX::Y, IDX::X) = Q(IDX::X, IDX::Y);
-  Q(IDX::YAW, IDX::YAW) = process_noise_covariance_yaw_ * dt * dt;
-  Q(IDX::VX, IDX::VX) = process_noise_covariance_vx_ * dt * dt;
-  Q(IDX::WZ, IDX::WZ) = process_noise_covariance_wz_ * dt * dt;
-  Eigen::MatrixXd B = Eigen::MatrixXd::Zero(dim_x_, dim_x_);
-  Eigen::MatrixXd u = Eigen::MatrixXd::Zero(dim_x_, 1);
+  Q(IDX::YAW, IDX::YAW) = ekf_params_.q_cov_yaw * dt * dt;
+  Q(IDX::VX, IDX::VX) = ekf_params_.q_cov_vx * dt * dt;
+  Q(IDX::WZ, IDX::WZ) = ekf_params_.q_cov_wz * dt * dt;
+  Eigen::MatrixXd B = Eigen::MatrixXd::Zero(ekf_params_.dim_x, ekf_params_.dim_x);
+  Eigen::MatrixXd u = Eigen::MatrixXd::Zero(ekf_params_.dim_x, 1);
 
-  if (!ekf_.predict(X_next_t, A, Q)) {RCLCPP_WARN(logger_, "Cannot predict");}
+  if (!ekf.predict(X_next_t, A, Q)) {RCLCPP_WARN(logger_, "Cannot predict");}
 
   return true;
 }
 
 bool BigVehicleTracker::measureWithPose(const autoware_perception_msgs::msg::DynamicObject & object)
 {
-  float measurement_noise_covariance_pos_x = 0.0f;
-  float measurement_noise_covariance_pos_y = 0.0f;
+  float r_cov_x;
+  float r_cov_y;
   const auto & semantic_type = object.semantic.type;
   using autoware_perception_msgs::msg::Semantic;
   if (semantic_type == Semantic::CAR) {
-    constexpr float measurement_noise_stddev_pos_x = 8.0;  // [m]
-    constexpr float measurement_noise_stddev_pos_y = 0.8;  // [m]
-    measurement_noise_covariance_pos_x = std::pow(measurement_noise_stddev_pos_x, 2.0);
-    measurement_noise_covariance_pos_y = std::pow(measurement_noise_stddev_pos_y, 2.0);
+    constexpr float r_stddev_x = 8.0;  // [m]
+    constexpr float r_stddev_y = 0.8;  // [m]
+    r_cov_x = std::pow(r_stddev_x, 2.0);
+    r_cov_y = std::pow(r_stddev_y, 2.0);
   } else if (semantic_type == Semantic::TRUCK || semantic_type == Semantic::BUS) {
-    measurement_noise_covariance_pos_x = measurement_noise_covariance_pos_x_;
-    measurement_noise_covariance_pos_y = measurement_noise_covariance_pos_y_;
+    r_cov_x = ekf_params_.r_cov_x;
+    r_cov_y = ekf_params_.r_cov_y;
   } else {
-    measurement_noise_covariance_pos_x = measurement_noise_covariance_pos_x_;
-    measurement_noise_covariance_pos_y = measurement_noise_covariance_pos_y_;
+    r_cov_x = ekf_params_.r_cov_x;
+    r_cov_y = ekf_params_.r_cov_y;
   }
 
   constexpr int dim_y = 3;  // pos x, pos y, yaw, depending on Pose output
   double measurement_yaw =
     autoware_utils::normalizeRadian(tf2::getYaw(object.state.pose_covariance.pose.orientation));
   {
-    Eigen::MatrixXd X_t(dim_x_, 1);
+    Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);
     ekf_.getX(X_t);
     // Fixed measurement_yaw to be in the range of +-90 degrees of X_t(IDX::YAW)
     while (M_PI_2 <= X_t(IDX::YAW) - measurement_yaw) {
@@ -251,7 +242,7 @@ bool BigVehicleTracker::measureWithPose(const autoware_perception_msgs::msg::Dyn
     measurement_yaw;
 
   /* Set measurement matrix */
-  Eigen::MatrixXd C = Eigen::MatrixXd::Zero(dim_y, dim_x_);
+  Eigen::MatrixXd C = Eigen::MatrixXd::Zero(dim_y, ekf_params_.dim_x);
   C(0, IDX::X) = 1.0;    // for pos x
   C(1, IDX::Y) = 1.0;    // for pos y
   C(2, IDX::YAW) = 1.0;  // for yaw
@@ -259,7 +250,7 @@ bool BigVehicleTracker::measureWithPose(const autoware_perception_msgs::msg::Dyn
   /* Set measurement noise covariance */
   Eigen::MatrixXd R = Eigen::MatrixXd::Zero(dim_y, dim_y);
   if (
-    !use_measurement_covariance_ ||
+    !ekf_params_.use_measurement_covariance ||
     object.state.pose_covariance.covariance[utils::MSG_COV_IDX::X_X] == 0.0 ||
     object.state.pose_covariance.covariance[utils::MSG_COV_IDX::Y_Y] == 0.0 ||
     object.state.pose_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW] == 0.0)
@@ -267,14 +258,11 @@ bool BigVehicleTracker::measureWithPose(const autoware_perception_msgs::msg::Dyn
     const double cos_yaw = std::cos(measurement_yaw);
     const double sin_yaw = std::sin(measurement_yaw);
     const double sin_2yaw = std::sin(2.0f * measurement_yaw);
-    R(0, 0) = measurement_noise_covariance_pos_x * cos_yaw * cos_yaw +
-      measurement_noise_covariance_pos_y * sin_yaw * sin_yaw;          // x - x
-    R(0, 1) = 0.5f * (measurement_noise_covariance_pos_x - measurement_noise_covariance_pos_y) *
-      sin_2yaw;          // x - y
-    R(1, 1) = measurement_noise_covariance_pos_x * sin_yaw * sin_yaw +
-      measurement_noise_covariance_pos_y * cos_yaw * cos_yaw;          // y - y
-    R(1, 0) = R(0, 1);                                                 // y - x
-    R(2, 2) = measurement_noise_covariance_yaw_;                       // yaw - yaw
+    R(0, 0) = r_cov_x * cos_yaw * cos_yaw + r_cov_y * sin_yaw * sin_yaw;  // x - x
+    R(0, 1) = 0.5f * (r_cov_x - r_cov_y) * sin_2yaw;                      // x - y
+    R(1, 1) = r_cov_x * sin_yaw * sin_yaw + r_cov_y * cos_yaw * cos_yaw;  // y - y
+    R(1, 0) = R(0, 1);                                                    // y - x
+    R(2, 2) = ekf_params_.r_cov_yaw;                                      // yaw - yaw
   } else {
     R(0, 0) = object.state.pose_covariance.covariance[utils::MSG_COV_IDX::X_X];
     R(0, 1) = object.state.pose_covariance.covariance[utils::MSG_COV_IDX::X_Y];
@@ -290,8 +278,8 @@ bool BigVehicleTracker::measureWithPose(const autoware_perception_msgs::msg::Dyn
 
   // normalize yaw and limit vx, wz
   {
-    Eigen::MatrixXd X_t(dim_x_, 1);
-    Eigen::MatrixXd P_t(dim_x_, dim_x_);
+    Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);
+    Eigen::MatrixXd P_t(ekf_params_.dim_x, ekf_params_.dim_x);
     ekf_.getX(X_t);
     ekf_.getP(P_t);
     X_t(IDX::YAW) = autoware_utils::normalizeRadian(X_t(IDX::YAW));
@@ -303,6 +291,11 @@ bool BigVehicleTracker::measureWithPose(const autoware_perception_msgs::msg::Dyn
     }
     ekf_.init(X_t, P_t);
   }
+
+  // position z
+  constexpr float gain = 0.9;
+  z_ = gain * z_ + (1.0 - gain) * object.state.pose_covariance.pose.position.z;
+
   return true;
 }
 
@@ -338,7 +331,7 @@ bool BigVehicleTracker::measure(
 }
 
 bool BigVehicleTracker::getEstimatedDynamicObject(
-  const rclcpp::Time & time, autoware_perception_msgs::msg::DynamicObject & object)
+  const rclcpp::Time & time, autoware_perception_msgs::msg::DynamicObject & object) const
 {
   object = object_;
   object.id = getUUID();
@@ -348,14 +341,15 @@ bool BigVehicleTracker::getEstimatedDynamicObject(
   KalmanFilter tmp_ekf_for_no_update = ekf_;
   const double dt = (time - last_update_time_).seconds();
   if (0.001 /*1msec*/ < dt) {predict(dt, tmp_ekf_for_no_update);}
-  Eigen::MatrixXd X_t(dim_x_, 1);     // predicted state
-  Eigen::MatrixXd P(dim_x_, dim_x_);  // predicted state
+  Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);                // predicted state
+  Eigen::MatrixXd P(ekf_params_.dim_x, ekf_params_.dim_x);  // predicted state
   tmp_ekf_for_no_update.getX(X_t);
   tmp_ekf_for_no_update.getP(P);
 
   // set position
   object.state.pose_covariance.pose.position.x = X_t(IDX::X);
   object.state.pose_covariance.pose.position.y = X_t(IDX::Y);
+  object.state.pose_covariance.pose.position.z = z_;
 
   // set yaw
   {
