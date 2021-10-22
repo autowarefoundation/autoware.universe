@@ -14,9 +14,19 @@
 //  limitations under the License.
 //
 
-#include <QVBoxLayout>
-#include <rviz_common/display_context.hpp>
 #include "autoware_state_panel.hpp"
+
+#include <QVBoxLayout>
+#include <QString>
+#include <rviz_common/display_context.hpp>
+
+#include <string>
+#include <memory>
+
+inline std::string Bool2String(const bool var)
+{
+  return var ? "True" : "False";
+}
 
 using std::placeholders::_1;
 
@@ -27,7 +37,7 @@ AutowareStatePanel::AutowareStatePanel(QWidget * parent)
 {
   // Gate Mode
   auto * gate_prefix_label_ptr = new QLabel("GATE: ");
-  gate_prefix_label_ptr->setAlignment(Qt::AlignCenter);
+  gate_prefix_label_ptr->setAlignment(Qt::AlignRight);
   gate_mode_label_ptr_ = new QLabel("INIT");
   gate_mode_label_ptr_->setAlignment(Qt::AlignCenter);
   auto * gate_layout = new QHBoxLayout;
@@ -36,7 +46,7 @@ AutowareStatePanel::AutowareStatePanel(QWidget * parent)
 
   // State
   auto * state_prefix_label_ptr = new QLabel("STATE: ");
-  state_prefix_label_ptr->setAlignment(Qt::AlignCenter);
+  state_prefix_label_ptr->setAlignment(Qt::AlignRight);
   autoware_state_label_ptr_ = new QLabel("INIT");
   autoware_state_label_ptr_->setAlignment(Qt::AlignCenter);
   auto * state_layout = new QHBoxLayout;
@@ -45,36 +55,58 @@ AutowareStatePanel::AutowareStatePanel(QWidget * parent)
 
   // Gear
   auto * gear_prefix_label_ptr = new QLabel("GEAR: ");
-  gear_prefix_label_ptr->setAlignment(Qt::AlignCenter);
+  gear_prefix_label_ptr->setAlignment(Qt::AlignRight);
   gear_label_ptr_ = new QLabel("INIT");
   gear_label_ptr_->setAlignment(Qt::AlignCenter);
   auto * gear_layout = new QHBoxLayout;
   gear_layout->addWidget(gear_prefix_label_ptr);
   gear_layout->addWidget(gear_label_ptr_);
 
+  // Engage Status
+  auto * engage_prefix_label_ptr = new QLabel("Engage: ");
+  engage_prefix_label_ptr->setAlignment(Qt::AlignRight);
+  engage_status_label_ptr_ = new QLabel("INIT");
+  engage_status_label_ptr_->setAlignment(Qt::AlignCenter);
+  auto * engage_status_layout = new QHBoxLayout;
+  engage_status_layout->addWidget(engage_prefix_label_ptr);
+  engage_status_layout->addWidget(engage_status_label_ptr_);
+
+  // Autoware Engage Button
+  engage_button_ptr_ = new QPushButton("Engage");
+  connect(engage_button_ptr_, SIGNAL(clicked()), SLOT(onClickAutowareEngage()));
+
   auto * v_layout = new QVBoxLayout;
   v_layout->addLayout(gate_layout);
   v_layout->addLayout(state_layout);
   v_layout->addLayout(gear_layout);
+  v_layout->addLayout(engage_status_layout);
+  v_layout->addWidget(engage_button_ptr_);
   setLayout(v_layout);
 }
 
 void AutowareStatePanel::onInitialize()
 {
-  rclcpp::Node::SharedPtr raw_node =
-    this->getDisplayContext()->getRosNodeAbstraction().lock()->get_raw_node();
+  raw_node_ = this->getDisplayContext()->getRosNodeAbstraction().lock()->get_raw_node();
 
-  sub_gate_mode_ = raw_node->create_subscription<autoware_control_msgs::msg::GateMode>(
+  sub_gate_mode_ = raw_node_->create_subscription<autoware_control_msgs::msg::GateMode>(
     "/control/current_gate_mode", 10,
     std::bind(&AutowareStatePanel::onGateMode, this, _1));
 
-  sub_autoware_state_ = raw_node->create_subscription<autoware_system_msgs::msg::AutowareState>(
+  sub_autoware_state_ = raw_node_->create_subscription<autoware_system_msgs::msg::AutowareState>(
     "/autoware/state", 10,
     std::bind(&AutowareStatePanel::onAutowareState, this, _1));
 
-  sub_gear_ = raw_node->create_subscription<autoware_vehicle_msgs::msg::ShiftStamped>(
+  sub_gear_ = raw_node_->create_subscription<autoware_vehicle_msgs::msg::ShiftStamped>(
     "/vehicle/status/shift", 10,
     std::bind(&AutowareStatePanel::onShift, this, _1));
+
+  sub_engage_ =
+    raw_node_->create_subscription<autoware_external_api_msgs::msg::EngageStatus>(
+    "/api/external/get/engage", 10,
+    std::bind(&AutowareStatePanel::onEngageStatus, this, _1));
+
+  client_engage_ = raw_node_->create_client<autoware_external_api_msgs::srv::Engage>(
+    "/api/external/set/engage", rmw_qos_profile_services_default);
 }
 
 void AutowareStatePanel::onGateMode(
@@ -143,6 +175,34 @@ void AutowareStatePanel::onShift(
       break;
   }
 }
+
+void AutowareStatePanel::onEngageStatus(
+  const autoware_external_api_msgs::msg::EngageStatus::ConstSharedPtr msg)
+{
+  engage_status_label_ptr_->setText(QString::fromStdString(Bool2String(msg->engage)));
+}
+
+void AutowareStatePanel::onClickAutowareEngage()
+{
+  auto req = std::make_shared<autoware_external_api_msgs::srv::Engage::Request>();
+  req->engage = true;
+
+  RCLCPP_INFO(raw_node_->get_logger(), "client request");
+
+  if (!client_engage_->service_is_ready()) {
+    RCLCPP_INFO(raw_node_->get_logger(), "client is unavailable");
+    return;
+  }
+
+  client_engage_->async_send_request(
+    req,
+    [this](rclcpp::Client<autoware_external_api_msgs::srv::Engage>::SharedFuture result) {
+      RCLCPP_INFO(
+        raw_node_->get_logger(), "Status: %d, %s",
+        result.get()->status.code, result.get()->status.message.c_str());
+    });
+}
+
 }  // namespace rviz_plugins
 
 #include "pluginlib/class_list_macros.hpp"

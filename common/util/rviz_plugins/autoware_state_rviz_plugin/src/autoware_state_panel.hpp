@@ -21,11 +21,14 @@
 #include <rviz_common/panel.hpp>
 
 #include <QLabel>
-#include <memory>
+#include <QPushButton>
+
 
 #include "autoware_control_msgs/msg/gate_mode.hpp"
 #include "autoware_system_msgs/msg/autoware_state.hpp"
 #include "autoware_vehicle_msgs/msg/shift_stamped.hpp"
+#include "autoware_external_api_msgs/msg/engage_status.hpp"
+#include "autoware_external_api_msgs/srv/engage.hpp"
 
 namespace rviz_plugins
 {
@@ -38,17 +41,29 @@ public:
   explicit AutowareStatePanel(QWidget * parent = nullptr);
   void onInitialize() override;
 
+public Q_SLOTS:
+  void onClickAutowareEngage();
+
 protected:
   void onGateMode(const autoware_control_msgs::msg::GateMode::ConstSharedPtr msg);
   void onAutowareState(const autoware_system_msgs::msg::AutowareState::ConstSharedPtr msg);
   void onShift(const autoware_vehicle_msgs::msg::ShiftStamped::ConstSharedPtr msg);
+  void onEngageStatus(const autoware_external_api_msgs::msg::EngageStatus::ConstSharedPtr msg);
 
+
+  rclcpp::Node::SharedPtr raw_node_;
   rclcpp::Subscription<autoware_control_msgs::msg::GateMode>::SharedPtr sub_gate_mode_;
   rclcpp::Subscription<autoware_system_msgs::msg::AutowareState>::SharedPtr sub_autoware_state_;
   rclcpp::Subscription<autoware_vehicle_msgs::msg::ShiftStamped>::SharedPtr sub_gear_;
+  rclcpp::Subscription<autoware_external_api_msgs::msg::EngageStatus>::SharedPtr sub_engage_;
+
+  rclcpp::Client<autoware_external_api_msgs::srv::Engage>::SharedPtr client_engage_;
+
   QLabel * gate_mode_label_ptr_;
   QLabel * autoware_state_label_ptr_;
   QLabel * gear_label_ptr_;
+  QLabel * engage_status_label_ptr_;
+  QPushButton * engage_button_ptr_;
 };
 
 }  // namespace rviz_plugins
