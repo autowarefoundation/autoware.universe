@@ -26,6 +26,7 @@ Currently the following traffic rules are considered in the reference implementa
 2. intersection
 3. stop line
 4. traffic light
+5. occlusion spot
 
 ## Requirements
 
@@ -59,6 +60,11 @@ Again, traffic rules might be different depending on country, and the requiremen
    - Speed profile of a trajectory at the associated stopline must be zero when relevant traffic light is red and it has enough distance to stop before the stopline with given deceleration configuration
 
    ![TrafficLight](image/TrafficLight.png)
+
+5. **Occlusion spot**
+   - Vehicle must slow down before possible collision for occlusion spots.
+
+![OcclusionSpot](image/OcclusionSpot.svg)
 
 ## Design
 
