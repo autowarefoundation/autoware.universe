@@ -20,30 +20,19 @@
     </group>
 
     <!-- State Monitor -->
-    <group if="$(eval &quot;'$(var run_mode)'=='online'&quot;)">
-      <include file="$(find-pkg-share autoware_state_monitor)/launch/autoware_state_monitor.launch.xml">
-        <arg name="config_file" value="$(find-pkg-share autoware_state_monitor)/config/autoware_state_monitor.param.yaml" />
-      </include>
-    </group>
-    <group if="$(eval &quot;'$(var run_mode)'=='planning_simulation'&quot;)">
-      <include file="$(find-pkg-share autoware_state_monitor)/launch/autoware_state_monitor.launch.xml">
-        <arg name="config_file" value="$(find-pkg-share autoware_state_monitor)/config/autoware_state_monitor.planning_simulation.param.yaml" />
-      </include>
-    </group>
+    <let name="config_file" value="$(find-pkg-share autoware_state_monitor)/config/autoware_state_monitor.param.yaml" if="$(eval &quot;'$(var run_mode)'=='online'&quot;)"/>
+    <let name="config_file" value="$(find-pkg-share autoware_state_monitor)/config/autoware_state_monitor.planning_simulation.param.yaml" if="$(eval &quot;'$(var run_mode)'=='planning_simulation'&quot;)"/>
+    <include file="$(find-pkg-share autoware_state_monitor)/launch/autoware_state_monitor.launch.xml">
+      <arg name="config_file" value="$(var config_file)" />
+    </include>
 
     <!-- Error Monitor -->
-    <group if="$(eval &quot;'$(var run_mode)'=='online'&quot;)">
-      <include file="$(find-pkg-share autoware_error_monitor)/launch/autoware_error_monitor.launch.xml">
-        <arg name="config_file" value="$(find-pkg-share autoware_error_monitor)/config/autoware_error_monitor.param.yaml" />
-        <arg name="use_emergency_hold" value="false" />
-      </include>
-    </group>
-    <group if="$(eval &quot;'$(var run_mode)'=='planning_simulation'&quot;)">
-      <include file="$(find-pkg-share autoware_error_monitor)/launch/autoware_error_monitor.launch.xml">
-        <arg name="config_file" value="$(find-pkg-share autoware_error_monitor)/config/autoware_error_monitor.planning_simulation.param.yaml" />
-        <arg name="use_emergency_hold" value="false" />
-      </include>
-    </group>
+    <let name="config_file" value="$(find-pkg-share autoware_error_monitor)/config/autoware_error_monitor.param.yaml" if="$(eval &quot;'$(var run_mode)'=='online'&quot;)"/>
+    <let name="config_file" value="$(find-pkg-share autoware_error_monitor)/config/autoware_error_monitor.planning_simulation.param.yaml" if="$(eval &quot;'$(var run_mode)'=='planning_simulation'&quot;)"/>
+    <include file="$(find-pkg-share autoware_error_monitor)/launch/autoware_error_monitor.launch.xml">
+      <arg name="config_file" value="$(var config_file)" />
+      <arg name="use_emergency_hold" value="false" />
+    </include>
 
     <!-- Emergency Handler -->
     <include file="$(find-pkg-share emergency_handler)/launch/emergency_handler.launch.xml">
