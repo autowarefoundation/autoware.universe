@@ -384,6 +384,7 @@ Visualization Manager:
             road_lanelets: false
             stop_lines: true
             traffic_light: true
+            traffic_light_id: false
             traffic_light_triangle: true
             walkway_lanelets: true
           Topic:
