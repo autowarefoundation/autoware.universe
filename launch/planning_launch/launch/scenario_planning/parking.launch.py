@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from ament_index_python.packages import get_package_share_directory
+
 import launch
 from launch.actions import DeclareLaunchArgument
 from launch.actions import GroupAction
@@ -23,8 +25,22 @@ from launch_ros.actions import ComposableNodeContainer
 from launch_ros.actions import PushRosNamespace
 from launch_ros.descriptions import ComposableNode
 
+import os
+import yaml
+
 
 def generate_launch_description():
+    freespace_planner_param_path = os.path.join(
+        get_package_share_directory('planning_launch'),
+        'config',
+        'scenario_planning',
+        'parking',
+        'freespace_planner',
+        'freespace_planner.param.yaml',
+    )
+    with open(freespace_planner_param_path, 'r') as f:
+        freespace_planner_param = yaml.safe_load(f)['/**']['ros__parameters']
+
     container = ComposableNodeContainer(
         name='parking_container',
         namespace='',
@@ -71,7 +87,7 @@ def generate_launch_description():
             ),
             ComposableNode(
                 package='freespace_planner',
-                plugin='FreespacePlannerNode',
+                plugin='freespace_planner::FreespacePlannerNode',
                 name='freespace_planner',
                 remappings=[
                     ('~/input/route', '/planning/mission_planning/route'),
@@ -83,31 +99,7 @@ def generate_launch_description():
                     ('is_completed', '/planning/scenario_planning/parking/is_completed'),
                 ],
                 parameters=[
-                    {
-                        'waypoints_velocity': 5.0,
-                        'update_rate': 10.0,
-                        'th_arrived_distance_m': 1.0,
-                        'th_stopped_time_sec': 1.0,
-                        'th_stopped_velocity_mps': 0.01,
-                        'th_course_out_distance_m': 1.0,
-                        'replan_when_obstacle_found': True,
-                        'replan_when_course_out': True,
-                        'use_back': True,
-                        'only_behind_solutions': False,
-                        'time_limit': 30000.0,
-                        'robot_length': 4.5,
-                        'robot_width': 1.75,
-                        'robot_base2back': 1.0,
-                        'minimum_turning_radius': 9.0,
-                        'theta_size': 144,
-                        'angle_goal_range': 6.0,
-                        'curve_weight': 1.2,
-                        'reverse_weight': 2.0,
-                        'lateral_goal_range': 0.5,
-                        'longitudinal_goal_range': 2.0,
-                        'obstacle_threshold': 100,
-                        'distance_heuristic_weight': 1.0,
-                    },
+                    freespace_planner_param,
                 ],
                 extra_arguments=[{
                     'use_intra_process_comms': LaunchConfiguration('use_intra_process')

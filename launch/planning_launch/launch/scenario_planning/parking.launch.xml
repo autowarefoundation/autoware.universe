@@ -18,6 +18,7 @@
       <arg name="input_twist" value="/localization/twist" />
       <arg name="output_trajectory" value="/planning/scenario_planning/parking/trajectory" />
       <arg name="is_completed" value="/planning/scenario_planning/parking/is_completed" />
+      <arg name="param_file" value="$(find-pkg-share planning_launch)/config/scenario_planning/parking/freespace_planner/freespace_planner.param.yaml" />
     </include>
   </group>
 </launch>
