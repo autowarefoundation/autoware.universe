@@ -1157,11 +1157,11 @@ Visualization Manager:
                         bounds_candidate_top_text: false
                         constrain_rect: false
                         constrain_rect_text: false
-                        constrain_rectlocation: false
+                        constrain_rect_location: false
                         current_vehicle_footprint: false
                         extending_constrain_rect: false
                         extending_constrain_rect_text: false
-                        extending_constrain_rectlocation: false
+                        extending_constrain_rect_location: false
                         fixed_mpt_points: false
                         fixed_points_for_extending: false
                         fixed_points_marker: false
