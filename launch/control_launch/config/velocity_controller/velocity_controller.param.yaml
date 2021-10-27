@@ -18,15 +18,15 @@
     # drive state
     kp: 1.0
     ki: 0.1
-    kd: 0
+    kd: 0.0
     max_out: 1.0
     min_out: -1.0
     max_p_effort: 1.0
     min_p_effort: -1.0
     max_i_effort: 0.3
     min_i_effort: -0.3
-    max_d_effort: 0
-    min_d_effort: 0
+    max_d_effort: 0.0
+    min_d_effort: 0.0
     lpf_vel_error_gain: 0.9
     current_velocity_threshold_pid_integration: 0.5
 
