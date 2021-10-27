@@ -1039,34 +1039,16 @@ Visualization Manager:
                         Reliability Policy: Reliable
                         Value: /planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/detection_area
                       Value: true
-                    - Class: rviz_default_plugins/MarkerArray
-                      Enabled: true
-                      Name: LaneChange
-                      Namespaces:
-                        candidate_lane_change_path: false
-                        ego_lane_change_path: false
-                        ego_lane_follow_path: false
-                        factor_text: true
-                        object_predicted_path: false
-                        selected_path: false
-                        stop_virtual_wall: true
-                      Topic:
-                        Depth: 5
-                        Durability Policy: Volatile
-                        History Policy: Keep Last
-                        Reliability Policy: Reliable
-                        Value: /planning/scenario_planning/lane_driving/behavior_planning/lane_change_planner/debug/predicted_path_markers
-                      Value: true
                     - Class: rviz_plugins/Path
                       Color Border Vel Max: 3
                       Enabled: true
-                      Name: LaneChangeCandidate
+                      Name: PathChangeCandidate
                       Topic:
                         Depth: 5
                         Durability Policy: Volatile
                         History Policy: Keep Last
                         Reliability Policy: Reliable
-                        Value: /planning/scenario_planning/lane_driving/lane_change_candidate_path
+                        Value: /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/output/path_candidate
                       Value: true
                       View Path:
                         Alpha: 0.30000001192092896
