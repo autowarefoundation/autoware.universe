@@ -1095,10 +1095,16 @@ Visualization Manager:
                       Namespaces:
                         collision_polygons: false
                         detection_polygons: false
+                        slow_down_polygons: false
+                        slow_down_detection_polygons: false
                         factor_text: true
                         stop_virtual_wall: true
                         stop_obstacle_point: false
                         stop_obstacle_text: false
+                        virtual_wall/slow_down_start: false
+                        factor_text/slow_down_start: false
+                        virtual_wall/slow_down_end: false
+                        factor_text/slow_down_end: false
                       Topic:
                         Depth: 5
                         Durability Policy: Volatile
