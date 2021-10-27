@@ -82,6 +82,7 @@
     terminal_path_lat_error_weight: 1000.0 # weight for lateral error at path end point
     terminal_path_yaw_error_weight: 1000.0 # weight for yaw error at path end point
     zero_ff_steer_angle: 0.5 # threshold that feed-forward angle becomes zero
+    optimization_center_offset: 1.5
 
     # replanning & trimming trajectory param outside algorithm
     min_delta_dist_for_replan: 10.0 # minimum delta dist thres for replan[m]
