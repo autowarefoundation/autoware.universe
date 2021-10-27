@@ -73,7 +73,7 @@
   <group>
     <include file="$(find-pkg-share perception_launch)/launch/perception.launch.xml" if="$(var perception)">
       <!-- options for mode: camera_lidar_fusion, lidar, camera -->
-      <arg name="mode" value="lidar" />
+      <arg name="mode" value="camera_lidar_fusion" />
     </include>
   </group>
 
