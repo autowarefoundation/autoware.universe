@@ -3,7 +3,6 @@
     # -- system --
     ctrl_period: 0.03               # control period [s]
     traj_resample_dist: 0.1         # path resampling interval [m]
-    enable_yaw_recalculation: false # flag for recalculation of yaw angle after resampling
     use_steer_prediction: false     # flag for using steer prediction (do not use steer measurement)
     admissible_position_error: 5.0  # stop mpc calculation when error is larger than the following value
     admissible_yaw_error_rad: 1.57  # stop mpc calculation when error is larger than the following value
