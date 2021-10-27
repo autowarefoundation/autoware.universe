@@ -1109,20 +1109,25 @@ Visualization Manager:
                         Value: true
                     - Class: rviz_default_plugins/MarkerArray
                       Enabled: true
-                      Name: ObstaclePointCLoudStop
+                      Name: ObstacleStop
                       Namespaces:
                         collision_polygons: false
                         detection_polygons: false
                         slow_down_polygons: false
                         slow_down_detection_polygons: false
-                        factor_text: true
-                        stop_virtual_wall: true
                         stop_obstacle_point: false
                         stop_obstacle_text: false
-                        virtual_wall/slow_down_start: false
-                        factor_text/slow_down_start: false
-                        virtual_wall/slow_down_end: false
-                        factor_text/slow_down_end: false
+                        slow_down_obstacle_point: false
+                        slow_down_obstacle_text: false
+                        slow_down_start_virtual_wall: false
+                        slow_down_start_factor_text: false
+                        slow_down_end_virtual_wall: false
+                        slow_down_end_factor_text: false
+                        slow_down_end: false
+                        stop_virtual_wall: true 
+                        stop_factor_text: true
+                        slow_down_virtual_wall: true
+                        slow_down_factor_text: true
                       Topic:
                         Depth: 5
                         Durability Policy: Volatile
