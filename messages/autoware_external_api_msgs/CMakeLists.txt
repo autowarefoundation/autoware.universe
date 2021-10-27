@@ -32,11 +32,13 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   msg/Route.msg
   msg/RouteSection.msg
   msg/Service.msg
+  msg/TextFile.msg
   msg/TurnSignal.msg
   msg/TurnSignalStamped.msg
   srv/ClearRoute.srv
   srv/Engage.srv
   srv/GetMetadataPackages.srv
+  srv/GetTextFile.srv
   srv/GetVersion.srv
   srv/InitializePose.srv
   srv/InitializePoseAuto.srv
