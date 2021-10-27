@@ -36,7 +36,7 @@
     smooth_stop_weak_acc: -0.3
     smooth_stop_weak_stop_acc: -0.8
     smooth_stop_strong_stop_acc: -3.4
-    smooth_stop_max_fast_vel: 0.5
+    smooth_stop_min_fast_vel: 0.5
     smooth_stop_min_running_vel: 0.01
     smooth_stop_min_running_acc: 0.01
     smooth_stop_weak_stop_time: 0.8
