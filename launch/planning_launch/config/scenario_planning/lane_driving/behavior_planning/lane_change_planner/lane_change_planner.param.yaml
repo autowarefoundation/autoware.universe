@@ -4,7 +4,7 @@
     stop_time: 2.0
     hysteresis_buffer_distance: 2.0
     backward_path_length: 5.0
-    forward_path_length: 200.0
+    forward_path_length: 300.0
     max_accel: -5.0
     lane_change_prepare_duration: 4.0
     lane_changing_duration: 8.0
