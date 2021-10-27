@@ -24,75 +24,101 @@ from launch.conditions import UnlessCondition
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
+from launch_ros.substitutions import FindPackageShare
 import yaml
 
 
 def generate_launch_description():
-    # lane change planner
-    lane_change_planner_param_path = os.path.join(
+    # behavior path planner
+    side_shift_param_path = os.path.join(
         get_package_share_directory('planning_launch'),
         'config',
         'scenario_planning',
         'lane_driving',
         'behavior_planning',
-        'lane_change_planner',
-        'lane_change_planner.param.yaml',
+        'behavior_path_planner',
+        'side_shift',
+        'side_shift.param.yaml',
     )
-    with open(lane_change_planner_param_path, 'r') as f:
-        lane_change_planner_param = yaml.safe_load(f)['/**']['ros__parameters']
+    with open(side_shift_param_path, 'r') as f:
+        side_shift_param = yaml.safe_load(f)['/**']['ros__parameters']
 
-    lane_change_planner_component = ComposableNode(
-        package='lane_change_planner',
-        plugin='lane_change_planner::LaneChanger',
-        name='lane_change_planner',
+    avoidance_param_path = os.path.join(
+        get_package_share_directory('planning_launch'),
+        'config',
+        'scenario_planning',
+        'lane_driving',
+        'behavior_planning',
+        'behavior_path_planner',
+        'avoidance',
+        'avoidance.param.yaml',
+    )
+    with open(avoidance_param_path, 'r') as f:
+        avoidance_param = yaml.safe_load(f)['/**']['ros__parameters']
+
+    lane_change_param_path = os.path.join(
+        get_package_share_directory('planning_launch'),
+        'config',
+        'scenario_planning',
+        'lane_driving',
+        'behavior_planning',
+        'behavior_path_planner',
+        'lane_change',
+        'lane_change.param.yaml',
+    )
+    with open(lane_change_param_path, 'r') as f:
+        lane_change_param = yaml.safe_load(f)['/**']['ros__parameters']
+
+    behavior_path_planner_param_path = os.path.join(
+        get_package_share_directory('planning_launch'),
+        'config',
+        'scenario_planning',
+        'lane_driving',
+        'behavior_planning',
+        'behavior_path_planner',
+        'behavior_path_planner.param.yaml',
+    )
+    with open(behavior_path_planner_param_path, 'r') as f:
+        behavior_path_planner_param = yaml.safe_load(f)['/**']['ros__parameters']
+
+    behavior_path_planner_component = ComposableNode(
+        package='behavior_path_planner',
+        plugin='behavior_path_planner::BehaviorPathPlannerNode',
+        name='behavior_path_planner',
         namespace='',
         remappings=[
             ('~/input/route', LaunchConfiguration('input_route_topic_name')),
             ('~/input/vector_map', LaunchConfiguration('map_topic_name')),
             ('~/input/perception', '/perception/object_recognition/objects'),
             ('~/input/velocity', '/localization/twist'),
-            ('~/input/lane_change_approval',
-             '/planning/scenario_planning/lane_driving/lane_change_approval'),
-            ('~/input/force_lane_change',
-             '/planning/scenario_planning/lane_driving/force_lane_change'),
-            ('~/output/lane_change_path', 'path_with_lane_id'),
-            ('~/output/lane_change_ready',
-             '/planning/scenario_planning/lane_driving/lane_change_ready'),
-            ('~/output/lane_change_available',
-             '/planning/scenario_planning/lane_driving/lane_change_available'),
-            ('~/output/stop_reasons', '/planning/scenario_planning/status/stop_reasons'),
-            ('~/debug/lane_change_candidate_path',
-             '/planning/scenario_planning/lane_driving/lane_change_candidate_path'),
+            ('~/input/external_approval',
+             '/planning/scenario_planning/lane_driving/behavior_planning/'
+             'behavior_path_planner/path_change_approval'),
+            ('~/input/force_approval',
+             '/planning/scenario_planning/lane_driving/behavior_planning/'
+             'behavior_path_planner/path_change_force'),
+            ('~/output/path', 'path_with_lane_id'),
+            ('~/output/ready',
+             '/planning/scenario_planning/lane_driving/behavior_planning/'
+             'behavior_path_planner/ready_module'),
+            ('~/output/running',
+             '/planning/scenario_planning/lane_driving/behavior_planning/'
+             'behavior_path_planner/running_modules'),
+            ('~/output/force_available',
+             '/planning/scenario_planning/lane_driving/behavior_planning/'
+             'behavior_path_planner/force_available'),
+            ('~/output/turn_signal_cmd', '/planning/turn_signal_decider/turn_signal_cmd'),
         ],
         parameters=[
-            lane_change_planner_param,
+            side_shift_param,
+            avoidance_param,
+            lane_change_param,
+            behavior_path_planner_param,
             {
-                'enable_abort_lane_change': False,
-                'enable_collision_check_at_prepare_phase': False,
-                'use_predicted_path_outside_lanelet': False,
-                'use_all_predicted_path': False,
-                'enable_blocked_by_obstacle': False,
+                'bt_tree_config_path':
+                [FindPackageShare('behavior_path_planner'),
+                 '/config/behavior_path_planner_tree.xml']
             }
-        ],
-        extra_arguments=[
-            {'use_intra_process_comms': LaunchConfiguration('use_intra_process')}
-        ],
-    )
-
-    # turn signal decider
-    turn_signal_decider_component = ComposableNode(
-        package='turn_signal_decider',
-        plugin='turn_signal_decider::TurnSignalDecider',
-        name='turn_signal_decider',
-        namespace='',
-        remappings=[
-            ('input/path_with_lane_id', 'path_with_lane_id'),
-            ('input/vector_map', LaunchConfiguration('map_topic_name')),
-            ('output/turn_signal_cmd', '/planning/turn_signal_decider/turn_signal_cmd'),
-        ],
-        parameters=[
-            {'lane_change_search_distance': 30.0},
-            {'intersection_search_distance': 30.0},
         ],
         extra_arguments=[
             {'use_intra_process_comms': LaunchConfiguration('use_intra_process')}
@@ -213,8 +239,7 @@ def generate_launch_description():
         package='rclcpp_components',
         executable=LaunchConfiguration('container_executable'),
         composable_node_descriptions=[
-            lane_change_planner_component,
-            turn_signal_decider_component,
+            behavior_path_planner_component,
             behavior_velocity_planner_component,
         ],
         output='screen',
@@ -252,7 +277,8 @@ def generate_launch_description():
         container,
         ExecuteProcess(
             cmd=['ros2', 'topic', 'pub',
-                 '/planning/scenario_planning/lane_driving/lane_change_approval',
-                 'autoware_planning_msgs/msg/LaneChangeCommand', '{command: true}',
+                 '/planning/scenario_planning/lane_driving/behavior_planning/'
+                 'behavior_path_planner/path_change_approval',
+                 'autoware_planning_msgs/msg/Approval', '{approval: true}',
                  '-r', '10']),
     ])
