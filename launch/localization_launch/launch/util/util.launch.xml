@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <launch>
+  <arg name="environment_name" default="$(env ENVIRONMENT_NAME default)" />
 
   <!-- Topics -->
   <arg name="input_sensor_points_topic" default="/sensing/lidar/top/rectified/pointcloud" description="input topic name for raw pointcloud"/>
