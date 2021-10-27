@@ -7,7 +7,8 @@
       consider_obj_velocity: true # consider forward vehicle velocity to ACC or not
 
       # general parameter for ACC
-      obstacle_stop_velocity_thresh: 1.0 # threshold of forward obstacle velocity to insert stop line (to stop acc) [m/s]
+      obstacle_velocity_thresh_to_start_acc: 1.5 # start adaptive cruise control when the velocity of the forward obstacle exceeds this value [m/s]
+      obstacle_velocity_thresh_to_stop_acc: 1.0 # stop adaptive cruise control when the velocity of the forward obstacle falls below this value [m/s]
       emergency_stop_acceleration: -5.0 # supposed minimum acceleration (deceleration) in emergency stop [m/ss]
       emergency_stop_idling_time: 0.5 # supposed idling time to start emergency stop [s]
       min_dist_stop: 4.0 # minimum distance of emergency stop [m]
