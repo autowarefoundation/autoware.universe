@@ -423,6 +423,22 @@ void MotionVelocitySmootherNode::onExternalVelocityLimit(const VelocityLimit::Co
   pub_velocity_limit_->publish(*msg);
 }
 
+bool MotionVelocitySmootherNode::checkData() const
+{
+  if (!current_pose_ptr_ || !current_velocity_ptr_ || !base_traj_raw_ptr_) {
+    RCLCPP_DEBUG(
+      get_logger(), "wait topics : current_pose = %d, current_vel = %d, base_traj = %d",
+      (bool)current_pose_ptr_, (bool)current_velocity_ptr_, (bool)base_traj_raw_ptr_);
+    return false;
+  }
+  if (base_traj_raw_ptr_->points.size() < 2) {
+    RCLCPP_ERROR(get_logger(), "input trajectory size must > 1. Skip computation.");
+    return false;
+  }
+
+  return true;
+}
+
 void MotionVelocitySmootherNode::onCurrentTrajectory(const Trajectory::ConstSharedPtr msg)
 {
   base_traj_raw_ptr_ = msg;
@@ -436,15 +452,7 @@ void MotionVelocitySmootherNode::onCurrentTrajectory(const Trajectory::ConstShar
   current_pose_ptr_ = self_pose_listener_.getCurrentPose();
 
   // guard
-  if (!current_pose_ptr_ || !current_velocity_ptr_ || !base_traj_raw_ptr_) {
-    RCLCPP_DEBUG(
-      get_logger(),
-      "wait topics : current_pose = %d, current_vel = %d, base_traj = %d",
-      (bool)current_pose_ptr_, (bool)current_velocity_ptr_, (bool)base_traj_raw_ptr_);
-    return;
-  }
-  if (base_traj_raw_ptr_->points.empty()) {
-    RCLCPP_DEBUG(get_logger(), "received trajectory is empty");
+  if (!checkData()) {
     return;
   }
 

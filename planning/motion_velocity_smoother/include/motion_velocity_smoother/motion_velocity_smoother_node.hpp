@@ -158,6 +158,8 @@ private:
   void publishClosestState(const TrajectoryPoint & closest_point);
 
   // const methods
+  bool checkData() const;
+
   AlgorithmType getAlgorithmType(const std::string & algorithm_name) const;
 
   Trajectory calcTrajectoryVelocity(
