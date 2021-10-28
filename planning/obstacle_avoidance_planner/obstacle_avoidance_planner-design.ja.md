@@ -62,24 +62,45 @@ obstacle_avoidance_planner は入力された path と drivable area、および
 
 ### Optimize trajectory
 
-参照経路に基づいたフレネ座標系で車両キネマティクス、及び追従誤差を定義し、二次計画法を用いて車両キネマティクスや障害物回避を考慮しながら追従誤差が小さくなるように経路生成する。
+This module makes the trajectory kinematically-feasible and collision-free.
+We define vehicle pose in the frenet coordinate, and minimize tracking errors by optimization.
+This optimization also considers vehicle kinematics and collision checking with road boundary and obstacles.
+
 自車近傍の経路の急な変化を防ぐため、直近の経路は前回の経路をそのまま使用する。
 計算コストを抑えるため、最終的に出力する経路長よりも短い距離に対してのみ計算を行う。
 
-### Extend trajectory
+Optimization center on the vehicle, that tries to locate just on the trajectory, can be tuned along side the vehicle vertical axis.
+This parameter `optimization center offset` is defined as the signed length from the back-wheel center to the optimization center.
+Some examples are shown in the following figure, and it is shown that the trajectory of vehicle shape differs according to the optimization center even if the reference trajectory (green one) is the same.
 
-経路を規定の長さ（default: 200m）に拡張するため、最適化した経路の先を Reference 経路と接続する。
+![mpt_optimization_offset](./media/mpt_optimization_offset.svg)
 
-### Check drivable area
+### Check drivability, and extend trajectory
 
-生成された経路が走行可能領域を逸脱していた場合、前回生成された走行可能領域内にある経路を出力する。
+Optimized trajectory is too short for velocity planning, therefore extend the trajectory by concatenating the optimized trajectory and the behavior path considering drivability.
+Generated trajectory is checked if it is inside the drivable area or not, and if outside drivable area, output a trajectory inside drivable area with the behavior path or the previously generated trajectory.
+
+As described above, the behavior path is separated into two paths: one is for optimization and the other is the remain. The first path becomes optimized trajectory, and the second path just is transformed to a trajectory. Then a trajectory inside the drivable area is calculated as follows.
+
+- If optimized trajectory is **inside the drivable area**, and the remained trajectory is inside/outside the drivable area,
+  - the output trajectory will be just concatenation of those two trajectories.
+  - In this case, we do not care if the remained trajectory is inside or outside the drivable area since generally it is outside the drivable area (especially in a narrow road), but we want to pass a trajectory as long as possible to the latter module.
+- If optimized trajectory is **outside the drivable area**, and the remained trajectory is inside/outside the drivable area,
+  - and if the previously generated trajectory **is memorized**,
+    - the output trajectory will be a part of previously generated trajectory, whose end firstly goes outside the drivable area.
+  - and if the previously generated trajectory **is not memorized**,
+    - the output trajectory will be a part of trajectory just transformed from the behavior path, whose end firstly goes outside the drivable area.
+
+Optimization failure is dealt with the same as if the optimized trajectory is outside the drivable area.
+The output trajectory is memorized as a previously generated trajectory for the next cycle.
 
 _Rationale_
 現在の設計において、数値誤差による破綻を防ぐために障害物回避は全てソフト制約として考慮されており、生成された経路に置いて車両が走行可能領域内に入っているかの判定が必要。
 
-### Apply path velocity
+### Assign trajectory velocity
 
-入力の path に埋め込まれている速度を出力される trajectory に埋め込む。経路間隔が異なるため線形補間を用いる。
+Velocity is assigned in the result trajectory by the behavior path.
+The shapes of the trajectory and the path are different, therefore the each nearest trajectory point to the path is searched and interpolated linearly.
 
 ## Algorithms
 
