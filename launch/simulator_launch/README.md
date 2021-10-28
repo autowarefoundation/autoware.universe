@@ -1,5 +1,9 @@
 # simulator_launch
 
+## Structure
+
+![simulator_launch](./simulator_launch.drawio.svg)
+
 ## Package Dependencies
 
 Please see `<exec_depend>` in `package.xml`.

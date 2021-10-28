@@ -12,6 +12,7 @@
 
   <exec_depend>dummy_perception_publisher</exec_depend>
   <exec_depend>fault_injection</exec_depend>
+  <exec_depend>simple_planning_simulator</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
