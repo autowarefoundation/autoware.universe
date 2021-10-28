@@ -574,15 +574,15 @@ void ObstacleStopPlannerNode::pathCallback(const Trajectory::ConstSharedPtr inpu
 
   Trajectory output_trajectory = *input_msg;
 
-  // extend trajectory to consider obstacles after the goal
-  const auto base_trajectory =
-    extendTrajectory(*input_msg, stop_param_.extend_distance);
   // trim trajectory from self pose
-  const auto trim_trajectory = trimTrajectoryWithIndexFromSelfPose(
-    base_trajectory, planner_data.current_pose, planner_data.trajectory_trim_index);
+  const auto base_trajectory = trimTrajectoryWithIndexFromSelfPose(
+    *input_msg, planner_data.current_pose, planner_data.trajectory_trim_index);
+  // extend trajectory to consider obstacles after the goal
+  const auto extend_trajectory =
+    extendTrajectory(base_trajectory, stop_param_.extend_distance);
   // decimate trajectory for calculation cost
   const auto decimate_trajectory = decimateTrajectory(
-    trim_trajectory, stop_param_.step_length, planner_data.decimate_trajectory_index_map);
+    extend_trajectory, stop_param_.step_length, planner_data.decimate_trajectory_index_map);
 
   // search obstacles within slow-down/collision area
   searchObstacle(decimate_trajectory, output_trajectory, planner_data);
@@ -742,9 +742,9 @@ void ObstacleStopPlannerNode::insertVelocity(Trajectory & output, PlannerData & 
         planner_data.nearest_slow_down_point.x, planner_data.nearest_slow_down_point.y, 0));
 
     if (index_with_dist_remain) {
+      const auto vehicle_idx = std::min(planner_data.trajectory_trim_index, traj_end_idx);
       const auto dist_baselink_to_obstacle =
-        calcSignedArcLength(
-        output.points, planner_data.trajectory_trim_index, index_with_dist_remain.get().first);
+        calcSignedArcLength(output.points, vehicle_idx, index_with_dist_remain.get().first);
 
       debug_ptr_->setDebugValues(
         DebugValues::TYPE::OBSTACLE_DISTANCE,
