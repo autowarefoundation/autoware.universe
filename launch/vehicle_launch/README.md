@@ -19,11 +19,6 @@ You can include as follows in `*.launch.xml` to use `vehicle.launch.xml`.
   <include file="$(find-pkg-share vehicle_launch)/launch/vehicle.launch.xml">
     <arg name="vehicle_model" value="$(var vehicle_model)"/>
     <arg name="sensor_model" value="$(var sensor_model)"/>
-    <arg name="vehicle_param_file" value="$(find-pkg-share $(var vehicle_model)_description)/config/vehicle_info.param.yaml"/>
-  </include>
-
-  <include file="$(find-pkg-share vehicle_launch)/launch/vehicle_info.launch.py">
-    <arg name="config_file" value="$(find-pkg-share $(var vehicle_model)_description)/config/vehicle_info.param.yaml"/>
   </include>
 ```
 

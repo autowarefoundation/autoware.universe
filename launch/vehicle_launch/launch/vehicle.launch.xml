@@ -4,9 +4,9 @@
   <arg name="sensor_model" description="sensor model name"/>
   <arg name="vehicle_id" default="$(env VEHICLE_ID default)" description="vehicle specific ID"/>
 
-  <arg name="initial_engage_state" default="true" description="/vehicle/engage state after starting Autoware"/>
+  <arg name="vehicle_model_pkg" default="$(find-pkg-share $(var vehicle_model)_description)" description="path to the directory of vehicle model package"/>
+
   <arg name="simulation" default="false" description="use simulation"/>
-  <arg name="scenario_simulation" default="false" description="use scenario simulation"/>
 
   <!-- vehicle description -->
   <group>
@@ -18,11 +18,9 @@
   </group>
 
   <!-- vehicle interface -->
-  <include file="$(find-pkg-share vehicle_launch)/launch/vehicle_interface.launch.xml">
-    <arg name="initial_engage_state" value="$(var initial_engage_state)"/>
-    <arg name="simulation" value="$(var simulation)"/>
-    <arg name="scenario_simulation" value="$(var scenario_simulation)"/>
-    <arg name="vehicle_model" value="$(var vehicle_model)"/>
-    <arg name="vehicle_id" value="$(var vehicle_id)"/>
-  </include>
+  <group unless="$(var simulation)">
+    <include file="$(var vehicle_model_pkg)/launch/vehicle_interface.launch.xml">
+      <arg name="vehicle_id" value="$(var vehicle_id)"/>
+    </include>
+  </group>
 </launch>
