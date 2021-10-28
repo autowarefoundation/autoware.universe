@@ -27,10 +27,7 @@
   <include file="$(find-pkg-share vehicle_launch)/launch/vehicle.launch.xml">
     <arg name="vehicle_model" value="$(var vehicle_model)"/>
     <arg name="sensor_model" value="$(var sensor_model)"/>
-    <arg name="vehicle_param_file" value="$(find-pkg-share $(var vehicle_model)_description)/config/vehicle_info.param.yaml"/>
     <arg name="simulation" value="$(var vehicle_simulation)"/>
-    <arg name="scenario_simulation" value="$(var scenario_simulation)"/>
-    <arg name="initial_engage_state" value="$(var initial_engage_state)"/>
   </include>
 
   <!-- System -->
@@ -72,5 +69,8 @@
     <arg name="perception/enable_detection_failure" value="$(var perception/enable_detection_failure)"/>
     <arg name="perception/enable_object_recognition" value="$(var perception/enable_object_recognition)"/>
     <arg name="sensing/visible_range" value="$(var sensing/visible_range)"/>
+    <arg name="vehicle_simulation" value="$(var vehicle_simulation)"/>
+    <arg name="vehicle_model" value="$(var vehicle_model)"/>
+    <arg name="initial_engage_state" value="$(var initial_engage_state)"/>
   </include>
 </launch>
