@@ -73,7 +73,7 @@ using RequiredModules = std::vector<DiagConfig>;
 struct KeyName
 {
   static constexpr const char * autonomous_driving = "autonomous_driving";
-  static constexpr const char * remote_control = "remote_control";
+  static constexpr const char * external_control = "external_control";
 };
 
 class AutowareErrorMonitor : public rclcpp::Node

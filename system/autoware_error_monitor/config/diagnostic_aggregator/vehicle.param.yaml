@@ -4,53 +4,13 @@
       type: diagnostic_aggregator/AnalyzerGroup
       path: vehicle
       analyzers:
-        alive_monitoring: # TODO:rename to node_alive_monitoring or something
+        node_alive_monitoring:
           type: diagnostic_aggregator/AnalyzerGroup
-          path: alive_monitoring
+          path: node_alive_monitoring
           analyzers:
+            # TODO(Tier IV): Consider splitting sensor input and control command output
             topic_status:
               type: diagnostic_aggregator/GenericAnalyzer
               path: topic_status
               contains: [": vehicle_topic_status"]
               timeout: 1.0
-              num_items: 0
-
-            control_command_topic_status:
-              type: diagnostic_aggregator/GenericAnalyzer
-              path: control_command_topic_status
-              contains: [": control_command_topic_status"]
-              timeout: 1.0
-              num_items: 0
-
-        vehicle_interface_connection:
-          type: diagnostic_aggregator/AnalyzerGroup
-          path: vehicle_interface_connection
-          analyzers:
-            can_bus_connection:
-              type: diagnostic_aggregator/GenericAnalyzer
-              path: can_bus_connection
-              contains: [": can_bus_connection"]
-              timeout: 1.0
-              num_items: 0
-
-            ros2_socketcan_connection:
-              type: diagnostic_aggregator/GenericAnalyzer
-              path: ros2_socketcan_connection
-              contains: [": socket_can_"]
-              timeout: 1.0
-              num_items: 0
-
-
-        vehicle_errors:
-          type: diagnostic_aggregator/GenericAnalyzer
-          path: vehicle_errors
-          contains: [": vehicle_errors"]
-          timeout: 1.0
-          num_items: 0
-
-        obstacle_crash:
-          type: diagnostic_aggregator/GenericAnalyzer
-          path: obstacle_crash
-          contains: [": obstacle_crash"]
-          timeout: 1.0
-          num_items: 0

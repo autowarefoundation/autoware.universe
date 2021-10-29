@@ -8,7 +8,6 @@
   <arg name="use_emergency_hold" default="false" />
   <arg name="use_emergency_hold_in_manual_driving" default="false" />
 
-  <arg name="agg_config_file_discard" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/_discard.param.yaml" />
   <arg name="agg_config_file_control" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/control.param.yaml" />
   <arg name="agg_config_file_localization" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/localization.param.yaml" />
   <arg name="agg_config_file_map" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/map.param.yaml" />
@@ -17,6 +16,8 @@
   <arg name="agg_config_file_sensing" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/sensing.param.yaml" />
   <arg name="agg_config_file_system" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/system.param.yaml" />
   <arg name="agg_config_file_vehicle" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/vehicle.param.yaml" />
+  <arg name="extra_agg_config_file_sensing" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/_empty.param.yaml" />
+  <arg name="extra_agg_config_file_vehicle" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/_empty.param.yaml" />
 
   <group>
     <push-ros-namespace namespace="/"/>
@@ -24,7 +25,6 @@
     <node pkg="diagnostic_aggregator" exec="aggregator_node" name="aggregator_node" output="screen" args="--ros-args --log-level WARN">
       <param name="pub_rate" value="10.0"/>
       <param name="path" value="autoware"/>
-      <param from="$(var agg_config_file_discard)" />
       <param from="$(var agg_config_file_control)" />
       <param from="$(var agg_config_file_localization)" />
       <param from="$(var agg_config_file_map)" />
@@ -33,6 +33,8 @@
       <param from="$(var agg_config_file_sensing)" />
       <param from="$(var agg_config_file_system)" />
       <param from="$(var agg_config_file_vehicle)" />
+      <param from="$(var extra_agg_config_file_sensing)" />
+      <param from="$(var extra_agg_config_file_vehicle)" />
     </node>
   </group>
 

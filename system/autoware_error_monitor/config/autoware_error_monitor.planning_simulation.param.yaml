@@ -16,72 +16,42 @@
     required_modules:
       autonomous_driving:
         names: [
-            "/autoware/control/autonomous_driving/alive_monitoring",
-            "/autoware/control/autonomous_driving/lane_departure",
-            # '/autoware/control/autonomous_driving/trajectory_deviation', # Unstable
-            "/autoware/control/command_gate/alive_monitoring",
-            "/autoware/localization/alive_monitoring",
-            "/autoware/localization/matching_score",
-            "/autoware/localization/localization_accuracy",
-            "/autoware/map/alive_monitoring",
-            "/autoware/map/map_version",
-            "/autoware/perception/alive_monitoring",
-            "/autoware/planning/alive_monitoring",
-            "/autoware/planning/trajectory_monitoring",
-            "/autoware/sensing/alive_monitoring",
-            "/autoware/sensing/camera",
-            "/autoware/sensing/gnss",
-            "/autoware/sensing/imu",
-            "/autoware/sensing/lidar",
-            "/autoware/system/alive_monitoring",
+            "/autoware/control/autonomous_driving/node_alive_monitoring",
+            "/autoware/control/autonomous_driving/performance_monitoring/lane_departure",
+            "/autoware/control/control_command_gate/node_alive_monitoring",
+
+            "/autoware/localization/node_alive_monitoring",
+            # "/autoware/localization/performance_monitoring/matching_score",
+            # "/autoware/localization/performance_monitoring/localization_accuracy",
+
+            "/autoware/map/node_alive_monitoring",
+
+            "/autoware/perception/node_alive_monitoring",
+
+            "/autoware/planning/node_alive_monitoring",
+            "/autoware/planning/performance_monitoring/trajectory_validation",
+
+            "/autoware/sensing/node_alive_monitoring",
+
+            "/autoware/system/node_alive_monitoring",
             "/autoware/system/emergency_stop_operation",
-            "/autoware/system/logging",
-            # '/autoware/system/resource_monitoring/cpu_temperature', # Not working in containers
-            # '/autoware/system/resource_monitoring/cpu_usage', # No need to watch in simulation
-            # '/autoware/system/resource_monitoring/cpu_thermal_throttling', # Require setup
-            # '/autoware/system/resource_monitoring/hdd_temperature', # Require setup
-            # '/autoware/system/resource_monitoring/hdd_usage', # Not working in containers
-            # '/autoware/system/resource_monitoring/memory_usage', # No need to watch in simulation
-            # '/autoware/system/resource_monitoring/network_usage', # No need to watch in simulation
-            # '/autoware/system/resource_monitoring/ntp_offset', # No need to watch in simulation
-            # '/autoware/system/resource_monitoring/gpu_temperature', # Require GPU
-            # '/autoware/system/resource_monitoring/gpu_usage', # Require GPU
-            # '/autoware/system/resource_monitoring/gpu_memory_usage', # Require GPU
-            # '/autoware/system/resource_monitoring/gpu_thermal_throttling', # Require GPU
-            "/autoware/vehicle/alive_monitoring",
-            "/autoware/vehicle/vehicle_interface_connection",
-            "/autoware/vehicle/vehicle_errors",
-            "/autoware/vehicle/obstacle_crash",
+            # "/autoware/system/resource_monitoring",
+
+            "/autoware/vehicle/node_alive_monitoring",
           ]
         diag_level:
-          /autoware/localization/matching_score: { sf_at: "warn", lf_at: "error", spf_at: "none" }
-          /autoware/sensing/gnss: { sf_at: "warn", lf_at: "error", spf_at: "none" }
-          /autoware/system/logging: { sf_at: "warn", lf_at: "none", spf_at: "none" }
-          # /autoware/system/resource_monitoring/cpu_temperature: { sf_at: "warn", lf_at: "error", spf_at: "none" } # Not working in VMs
-          # /autoware/system/resource_monitoring/cpu_usage: { sf_at: "warn", lf_at: "error", spf_at: "none" }  # No need to watch in simulation
-          # /autoware/system/resource_monitoring/cpu_thermal_throttling: { sf_at: "warn", lf_at: "error", spf_at: "none" }  # No need to watch in simulation
-          # /autoware/system/resource_monitoring/hdd_temperature: { sf_at: "warn", lf_at: "error", spf_at: "none" }  # No need to watch in simulation
-          # /autoware/system/resource_monitoring/hdd_usage: { sf_at: "warn", lf_at: "error", spf_at: "none" }  # No need to watch in simulation
-          # /autoware/system/resource_monitoring/memory_usage: { sf_at: "warn", lf_at: "error", spf_at: "none" }  # No need to watch in simulation
-          # /autoware/system/resource_monitoring/network_usage: { sf_at: "warn", lf_at: "error", spf_at: "none" }  # No need to watch in simulation
-          # /autoware/system/resource_monitoring/ntp_offset: { sf_at: "warn", lf_at: "none", spf_at: "none" }  # No need to watch in simulation
-          # /autoware/system/resource_monitoring/gpu_temperature: { sf_at: "warn", lf_at: "error", spf_at: "none" }  # No need to watch in simulation
-          # /autoware/system/resource_monitoring/gpu_usage: { sf_at: "warn", lf_at: "error", spf_at: "none" }  # No need to watch in simulation
-          # /autoware/system/resource_monitoring/gpu_memory_usage: { sf_at: "warn", lf_at: "error", spf_at: "none" }  # No need to watch in simulation
-          # /autoware/system/resource_monitoring/gpu_thermal_throttling: { sf_at: "warn", lf_at: "error", spf_at: "none" }  # No need to watch in simulation
-        auto_recovery:
-          /autoware/vehicle/vehicle_interface_connection: false
-          /autoware/vehicle/vehicle_errors: false
-          /autoware/vehicle/obstacle_crash: false
+          /autoware/localization/performance_monitoring/matching_score: { sf_at: "warn", lf_at: "none", spf_at: "none" }
+          /autoware/system/debug_data_logger: { sf_at: "warn", lf_at: "none", spf_at: "none" }
+          /autoware/system/resource_monitoring: { sf_at: "warn", lf_at: "none", spf_at: "none" }
 
-      remote_control:
+      external_control:
         names:
           [
-            "/autoware/control/command_gate/alive_monitoring",
-            "/autoware/control/remote_control/alive_monitoring",
-            "/autoware/system/alive_monitoring",
+            "/autoware/control/control_command_gate/node_alive_monitoring",
+            "/autoware/control/external_control/external_command_selector/node_alive_monitoring",
+
+            "/autoware/system/node_alive_monitoring",
             "/autoware/system/emergency_stop_operation",
-            "/autoware/vehicle/alive_monitoring",
-            "/autoware/vehicle/vehicle_errors",
-            "/autoware/vehicle/obstacle_crash",
+
+            "/autoware/vehicle/node_alive_monitoring",
           ]

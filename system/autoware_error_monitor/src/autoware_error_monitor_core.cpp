@@ -139,21 +139,21 @@ int isInNoFaultCondition(
   using autoware_control_msgs::msg::GateMode;
   using autoware_system_msgs::msg::AutowareState;
 
-  const auto is_in_auto_ignore_state =
+  const auto is_in_autonomous_ignore_state =
     (autoware_state.state == AutowareState::INITIALIZING_VEHICLE) ||
     (autoware_state.state == AutowareState::WAITING_FOR_ROUTE) ||
     (autoware_state.state == AutowareState::PLANNING) ||
     (autoware_state.state == AutowareState::FINALIZING);
 
-  if (current_gate_mode.data == GateMode::AUTO && is_in_auto_ignore_state) {
+  if (current_gate_mode.data == GateMode::AUTO && is_in_autonomous_ignore_state) {
     return true;
   }
 
-  const auto is_in_remote_ignore_state =
+  const auto is_in_external_ignore_state =
     (autoware_state.state == AutowareState::INITIALIZING_VEHICLE) ||
     (autoware_state.state == AutowareState::FINALIZING);
 
-  if (current_gate_mode.data == GateMode::EXTERNAL && is_in_remote_ignore_state) {
+  if (current_gate_mode.data == GateMode::EXTERNAL && is_in_external_ignore_state) {
     return true;
   }
 
@@ -179,7 +179,7 @@ AutowareErrorMonitor::AutowareErrorMonitor()
     declare_parameter<bool>("use_emergency_hold_in_manual_driving", false);
 
   loadRequiredModules(KeyName::autonomous_driving);
-  loadRequiredModules(KeyName::remote_control);
+  loadRequiredModules(KeyName::external_control);
 
   using std::placeholders::_1;
   using std::placeholders::_2;
@@ -337,7 +337,7 @@ void AutowareErrorMonitor::onTimer()
   }
 
   current_mode_ = current_gate_mode_->data == autoware_control_msgs::msg::GateMode::AUTO ?
-    KeyName::autonomous_driving : KeyName::remote_control;
+    KeyName::autonomous_driving : KeyName::external_control;
 
   updateHazardStatus();
   publishHazardStatus(hazard_status_);
