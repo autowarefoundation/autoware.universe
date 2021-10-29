@@ -21,6 +21,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   msg/DoorStatus.msg
   msg/Emergency.msg
   msg/EngageStatus.msg
+  msg/FailSafeState.msg
+  msg/FailSafeStateStamped.msg
   msg/GearShift.msg
   msg/GearShiftStamped.msg
   msg/Heartbeat.msg
@@ -33,8 +35,13 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   msg/RouteSection.msg
   msg/Service.msg
   msg/TextFile.msg
+  msg/Steering.msg
   msg/TurnSignal.msg
   msg/TurnSignalStamped.msg
+  msg/VehicleCommand.msg
+  msg/VehicleCommandStamped.msg
+  msg/VehicleStatus.msg
+  msg/VehicleStatusStamped.msg
   srv/ClearRoute.srv
   srv/Engage.srv
   srv/GetMetadataPackages.srv
