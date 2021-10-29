@@ -31,6 +31,7 @@
 #include "autoware_debug_msgs/msg/float64_stamped.hpp"
 #include "autoware_debug_msgs/msg/float64_multi_array_stamped.hpp"
 #include "autoware_utils/geometry/geometry.hpp"
+#include "autoware_utils/system/stop_watch.hpp"
 #include "tf2/LinearMath/Quaternion.h"
 #include "tf2/utils.h"
 #include "tf2_ros/transform_broadcaster.h"
@@ -248,6 +249,8 @@ private:
    * @brief for debug
    */
   void showCurrentX();
+
+  autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch_;
 
   friend class EKFLocalizerTestSuite;  // for test code
 };
