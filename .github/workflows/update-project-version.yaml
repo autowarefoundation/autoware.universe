@@ -1,0 +1,32 @@
+name: update-project-version
+
+on:
+  push:
+    branches:
+      - rc/**
+
+jobs:
+  update-project-version:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Update project version
+        working-directory: autoware_proj_version/resource
+        run: |
+          version=$(echo ${{ github.ref }} | sed -e "s/.*\/v//")
+          cat version.json | jq .version=\"$version\" > version.json.temp
+          mv version.json.temp version.json
+
+      - name: Commit and push
+        run: |
+          if ! git diff --exit-code --quiet
+          then
+            git config user.name github-actions
+            git config user.email github-actions@github.com
+            git add .
+            git commit -m "Update project version"
+            git push
+          fi
