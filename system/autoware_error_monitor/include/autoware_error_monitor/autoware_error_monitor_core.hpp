@@ -42,25 +42,8 @@ struct DiagStamped
 
 using DiagBuffer = std::deque<DiagStamped>;
 
-using DiagLevel = std::map<std::string, std::string>;
-
 struct DiagConfig
 {
-  explicit DiagConfig(
-    const std::string & module_name, DiagLevel & diag_level,
-    const bool auto_recovery)
-  : name(module_name),
-    sf_at(diag_level["sf_at"]),
-    lf_at(diag_level["lf_at"]),
-    spf_at(diag_level["spf_at"]),
-    auto_recovery(auto_recovery)
-  {
-    // Set default values
-    if (sf_at == "") {sf_at = "none";}
-    if (lf_at == "") {lf_at = "warn";}
-    if (spf_at == "") {spf_at = "error";}
-  }
-
   std::string name;
   std::string sf_at;
   std::string lf_at;

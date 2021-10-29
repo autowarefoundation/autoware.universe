@@ -28,6 +28,17 @@
 
 namespace
 {
+std::vector<std::string> split(const std::string & str, const char delim)
+{
+  std::vector<std::string> elems;
+  std::stringstream ss(str);
+  std::string item;
+  while (std::getline(ss, item, delim)) {
+    elems.push_back(item);
+  }
+  return elems;
+}
+
 int str2level(const std::string & level_str)
 {
   using diagnostic_msgs::msg::DiagnosticStatus;
@@ -162,21 +173,23 @@ int isInNoFaultCondition(
 }  // namespace
 
 AutowareErrorMonitor::AutowareErrorMonitor()
-: Node("autoware_error_monitor")
+: Node("autoware_error_monitor",
+    rclcpp::NodeOptions().automatically_declare_parameters_from_overrides(true))
 {
   // Parameter
-  params_.update_rate = declare_parameter("update_rate", 10);
-  params_.ignore_missing_diagnostics = declare_parameter("ignore_missing_diagnostics", false);
-  params_.add_leaf_diagnostics = declare_parameter("add_leaf_diagnostics", true);
-  params_.data_ready_timeout = declare_parameter<double>("data_ready_timeout", 30.0);
-  params_.diag_timeout_sec = declare_parameter<double>("diag_timeout_sec", 1.0);
-  params_.hazard_recovery_timeout = declare_parameter<double>("hazard_recovery_timeout", 5.0);
-  params_.emergency_hazard_level = declare_parameter<int>(
-    "emergency_hazard_level",
+  get_parameter_or<int>("update_rate", params_.update_rate, 10);
+  get_parameter_or<bool>("ignore_missing_diagnostics", params_.ignore_missing_diagnostics, false);
+  get_parameter_or<bool>("add_leaf_diagnostics", params_.add_leaf_diagnostics, true);
+  get_parameter_or<double>("data_ready_timeout", params_.data_ready_timeout, 30.0);
+  get_parameter_or<double>("diag_timeout_sec", params_.diag_timeout_sec, 1.0);
+  get_parameter_or<double>("hazard_recovery_timeout", params_.hazard_recovery_timeout, 5.0);
+  get_parameter_or<int>(
+    "emergency_hazard_level", params_.emergency_hazard_level,
     autoware_system_msgs::msg::HazardStatus::LATENT_FAULT);
-  params_.use_emergency_hold = declare_parameter<bool>("use_emergency_hold", false);
-  params_.use_emergency_hold_in_manual_driving =
-    declare_parameter<bool>("use_emergency_hold_in_manual_driving", false);
+  get_parameter_or<bool>("use_emergency_hold", params_.use_emergency_hold, false);
+  get_parameter_or<bool>(
+    "use_emergency_hold_in_manual_driving",
+    params_.use_emergency_hold_in_manual_driving, false);
 
   loadRequiredModules(KeyName::autonomous_driving);
   loadRequiredModules(KeyName::external_control);
@@ -227,31 +240,58 @@ AutowareErrorMonitor::AutowareErrorMonitor()
 
 void AutowareErrorMonitor::loadRequiredModules(const std::string & key)
 {
-  const auto param_key = std::string("required_modules.") + key + std::string(".names");
+  const auto param_key = std::string("required_modules.") + key;
 
-  const auto names = this->declare_parameter<std::vector<std::string>>(param_key);
+  const uint64_t depth = 3;
+  const auto param_names = this->list_parameters({param_key}, depth).names;
 
-  if (names.size() == 0) {
+  if (param_names.empty()) {
     throw std::runtime_error(fmt::format("no parameter found: {}", param_key));
   }
 
+  // Load module names from parameter key
+  std::set<std::string> module_names;
   RequiredModules required_modules;
-  required_modules.reserve(names.size());
 
-  DiagLevel default_level{{"sf_at", ""}, {"lf_at", ""}, {"spf_at", ""}};
+  for (const auto & param_name : param_names) {
+    // Example of param_name: required_modules.key.module
+    //                     or required_modules.key.module.parameter
+    const auto split_names = split(param_name, '.');
+    const auto & param_required_modules = split_names.at(0);
+    const auto & param_key = split_names.at(1);
+    const auto & param_module = split_names.at(2);
+    const auto module_name_with_prefix =
+      fmt::format("{0}.{1}.{2}", param_required_modules, param_key, param_module);
 
-  for (const auto & module_name : names) {
-    // diag_level
-    const auto diag_level_key =
-      std::string("required_modules.") + key + std::string(".diag_level.") + module_name;
-    this->declare_parameters(diag_level_key, default_level);
-    DiagLevel diag_level{};
-    this->get_parameters(diag_level_key, diag_level);
+    // Skip duplicate parameter
+    if (module_names.count(module_name_with_prefix) != 0) {
+      continue;
+    }
+    module_names.insert(module_name_with_prefix);
+
+    // Load diag level
+    const auto sf_key = module_name_with_prefix + std::string(".sf_at");
+    std::string sf_at;
+    this->get_parameter_or(sf_key, sf_at, std::string("none"));
+
+    const auto lf_key = module_name_with_prefix + std::string(".lf_at");
+    std::string lf_at;
+    this->get_parameter_or(lf_key, lf_at, std::string("warn"));
+
+    const auto spf_key = module_name_with_prefix + std::string(".spf_at");
+    std::string spf_at;
+    this->get_parameter_or(spf_key, spf_at, std::string("error"));
+
     // auto_recovery
-    const auto auto_recovery_key =
-      std::string("required_modules.") + key + std::string(".auto_recovery.") + module_name;
-    const bool auto_recovery_approval = this->declare_parameter(auto_recovery_key, true);
-    required_modules.emplace_back(module_name, diag_level, auto_recovery_approval);
+    const auto auto_recovery_key = module_name_with_prefix + std::string(".auto_recovery");
+    std::string auto_recovery_approval_str;
+    this->get_parameter_or(auto_recovery_key, auto_recovery_approval_str, std::string("true"));
+
+    // Convert auto_recovery_approval_str to bool
+    bool auto_recovery_approval{};
+    std::istringstream(auto_recovery_approval_str) >> std::boolalpha >> auto_recovery_approval;
+
+    required_modules.push_back({param_module, sf_at, lf_at, spf_at, auto_recovery_approval});
   }
 
   required_modules_map_.insert(std::make_pair(key, required_modules));
