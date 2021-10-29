@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
   <arg name="run_mode" default="online" description="options: online, planning_simulation"/>
+  <arg name="sensor_model" description="sensor model name"/>
+
+  <let name="sensor_launch_pkg" value="$(find-pkg-share $(var sensor_model)_launch)"/>
 
   <group>
     <push-ros-namespace namespace="/system"/>
@@ -31,6 +34,8 @@
     <let name="config_file" value="$(find-pkg-share autoware_error_monitor)/config/autoware_error_monitor.planning_simulation.param.yaml" if="$(eval &quot;'$(var run_mode)'=='planning_simulation'&quot;)"/>
     <include file="$(find-pkg-share autoware_error_monitor)/launch/autoware_error_monitor.launch.xml">
       <arg name="config_file" value="$(var config_file)" />
+      <arg name="extra_agg_config_file_sensing" value="$(var sensor_launch_pkg)/data/diagnostic_aggregator/sensor_kit.param.yaml" />
+      <arg name="extra_agg_config_file_vehicle" value="$(find-pkg-share system_launch)/config/diagnostic_aggregator/vehicle.param.yaml" />
       <arg name="use_emergency_hold" value="false" />
     </include>
 
