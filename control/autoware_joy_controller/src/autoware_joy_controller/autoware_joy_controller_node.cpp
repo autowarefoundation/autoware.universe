@@ -343,19 +343,29 @@ void AutowareJoyControllerNode::sendEmergencyRequest(bool emergency)
 
 void AutowareJoyControllerNode::publishAutowareEngage()
 {
-  autoware_vehicle_msgs::msg::Engage engage;
-
+  auto req = std::make_shared<autoware_external_api_msgs::srv::Engage::Request>();
   if (joy_->autoware_engage()) {
-    engage.engage = true;
+    req->engage = true;
     RCLCPP_INFO(get_logger(), "Autoware Engage");
   }
 
   if (joy_->autoware_disengage()) {
-    engage.engage = false;
+    req->engage = false;
     RCLCPP_INFO(get_logger(), "Autoware Disengage");
   }
 
-  pub_autoware_engage_->publish(engage);
+  if (!client_autoware_engage_->service_is_ready()) {
+    RCLCPP_WARN(get_logger(), "%s is unavailable", client_autoware_engage_->get_service_name());
+    return;
+  }
+
+  client_autoware_engage_->async_send_request(
+    req,
+    [this](rclcpp::Client<autoware_external_api_msgs::srv::Engage>::SharedFuture result) {
+      RCLCPP_INFO(
+        get_logger(), "%s: %d, %s", client_autoware_engage_->get_service_name(),
+        result.get()->status.code, result.get()->status.message.c_str());
+    });
 }
 
 void AutowareJoyControllerNode::publishVehicleEngage()
@@ -435,8 +445,6 @@ AutowareJoyControllerNode::AutowareJoyControllerNode(const rclcpp::NodeOptions &
     "output/gate_mode", 1);
   pub_heartbeat_ = this->create_publisher<autoware_external_api_msgs::msg::Heartbeat>(
     "output/heartbeat", 1);
-  pub_autoware_engage_ = this->create_publisher<autoware_vehicle_msgs::msg::Engage>(
-    "output/autoware_engage", 1);
   pub_vehicle_engage_ = this->create_publisher<autoware_vehicle_msgs::msg::Engage>(
     "output/vehicle_engage", 1);
 
@@ -451,6 +459,9 @@ AutowareJoyControllerNode::AutowareJoyControllerNode(const rclcpp::NodeOptions &
     }
     RCLCPP_INFO(get_logger(), "Waiting for emergency_stop service connection...");
   }
+
+  client_autoware_engage_ = this->create_client<autoware_external_api_msgs::srv::Engage>(
+    "service/autoware_engage", rmw_qos_profile_services_default);
 
   // Timer
   initTimer(1.0 / update_rate_);
