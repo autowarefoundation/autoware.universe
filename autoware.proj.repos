@@ -121,6 +121,10 @@ repositories:
     type: git
     url: https://github.com/tier4/livox_ros2_driver.git
     version: tier4/master
+  vendor/lidar-driver:
+    type: git
+    url: git@github.com:tier4/lidar_driver.git
+    version: main
   vendor/rosbridge_suite:
     type: git
     url: https://github.com/tier4/rosbridge_suite.git
