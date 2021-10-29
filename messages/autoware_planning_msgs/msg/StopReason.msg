@@ -4,6 +4,7 @@ string CROSSWALK=Crosswalk
 string WALKWAY=Walkway
 string STOP_LINE=StopLine
 string DETECTION_AREA=DetectionArea
+string NO_STOPPING_AREA=NoStoppingArea
 string TRAFFIC_LIGHT=TrafficLight
 string OBSTACLE_STOP=ObstacleStop
 string SURROUND_OBSTACLE_CHECK=SurroundObstacleCheck

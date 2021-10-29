@@ -15,13 +15,18 @@ find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
 rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/Approval.msg"
   "msg/EnableAvoidance.msg"
   "msg/ExpandStopRange.msg"
   "msg/IsAvoidancePossible.msg"
   "msg/LaneChangeCommand.msg"
   "msg/LaneChangeStatus.msg"
   "msg/LaneSequence.msg"
+  "msg/LateralOffset.msg"
   "msg/Path.msg"
+  "msg/PathChangeModule.msg"
+  "msg/PathChangeModuleArray.msg"
+  "msg/PathChangeModuleId.msg"
   "msg/PathPoint.msg"
   "msg/PathWithLaneId.msg"
   "msg/PathPointWithLaneId.msg"
@@ -35,6 +40,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/Trajectory.msg"
   "msg/TrajectoryPoint.msg"
   "msg/VelocityLimit.msg"
+  "msg/VelocityLimitClearCommand.msg"
+  "msg/VelocityLimitConstraints.msg"
   DEPENDENCIES
     geometry_msgs
     nav_msgs
