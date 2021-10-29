@@ -17,7 +17,6 @@ ament_auto_find_build_dependencies()
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/AutowareState.msg"
   "msg/AutowareVersion.msg"
-  "msg/DrivingCapability.msg"
   "msg/HazardStatus.msg"
   "msg/HazardStatusStamped.msg"
   "msg/TimeoutNotification.msg"

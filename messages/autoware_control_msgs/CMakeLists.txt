@@ -15,7 +15,6 @@ find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/EmergencyMode.msg"
   "msg/GateMode.msg"
   "msg/ControlCommand.msg"
   "msg/ControlCommandStamped.msg"
