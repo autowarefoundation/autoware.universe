@@ -96,6 +96,13 @@ ExternalCmdSelector::ExternalCmdSelector(const rclcpp::NodeOptions & node_option
     };
   current_selector_mode_.data = convert_selector_mode(initial_selector_mode);
 
+  // Diagnostics Updater
+  updater_.setHardwareID("external_cmd_selector");
+  updater_.add(
+    "heartbeat", [](auto & stat) {
+      stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "Alive");
+    });
+
   // Timer
   auto timer_callback = std::bind(&ExternalCmdSelector::onTimer, this);
   auto period = std::chrono::duration_cast<std::chrono::nanoseconds>(

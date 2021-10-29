@@ -27,6 +27,8 @@
 #include "autoware_external_api_msgs/msg/gear_shift_stamped.hpp"
 #include "autoware_external_api_msgs/msg/turn_signal_stamped.hpp"
 #include "autoware_external_api_msgs/msg/heartbeat.hpp"
+#include "diagnostic_updater/diagnostic_updater.hpp"
+#include "diagnostic_updater/update_functions.hpp"
 
 class ExternalCmdSelector : public rclcpp::Node
 {
@@ -93,6 +95,9 @@ private:
   static InternalGearShift convert(const ExternalGearShift & command);
   static InternalTurnSignal convert(const ExternalTurnSignal & command);
   static InternalHeartbeat convert(const ExternalHeartbeat & command);
+
+  // Diagnostics Updater
+  diagnostic_updater::Updater updater_{this};
 };
 
 #endif  // EXTERNAL_CMD_SELECTOR__EXTERNAL_CMD_SELECTOR_NODE_HPP_
