@@ -33,6 +33,7 @@
   <!-- System -->
   <include file="$(find-pkg-share system_launch)/launch/system.launch.xml">
     <arg name="run_mode" value="planning_simulation"/>
+    <arg name="sensor_model" value="$(var sensor_model)"/>
   </include>
 
   <!-- Map -->
