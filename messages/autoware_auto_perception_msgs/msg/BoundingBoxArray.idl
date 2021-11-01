@@ -1,0 +1,17 @@
+#include "autoware_auto_perception_msgs/msg/BoundingBox.idl"
+#include "std_msgs/msg/Header.idl"
+
+module autoware_auto_perception_msgs {
+  module msg {
+    module BoundingBoxArray_Constants {
+      const uint32 CAPACITY = 256;
+    };
+    @verbatim (language="comment", text=
+      " Message for a full set of bounding boxes")
+    struct BoundingBoxArray {
+      std_msgs::msg::Header header;
+
+      sequence<autoware_auto_perception_msgs::msg::BoundingBox, 256> boxes;
+    };
+  };
+};

@@ -1,0 +1,16 @@
+#include "geometry_msgs/msg/Point.idl"
+#include "std_msgs/msg/Header.idl"
+
+module autoware_auto_geometry_msgs {
+  module msg {
+    @verbatim (language="comment", text=
+      " This message is a generalized representation of a 3D pose without"
+      " orientation of the origin of one frame within a child frame.")
+    struct RelativePositionWithCovarianceStamped {
+      std_msgs::msg::Header header;
+      string child_frame_id;
+      geometry_msgs::msg::Point position;
+      double covariance[9];
+    };
+  };
+};

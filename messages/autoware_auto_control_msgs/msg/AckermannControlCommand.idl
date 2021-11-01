@@ -1,0 +1,16 @@
+#include "autoware_auto_control_msgs/msg/AckermannLateralCommand.idl"
+#include "autoware_auto_control_msgs/msg/LongitudinalCommand.idl"
+#include "builtin_interfaces/msg/Time.idl"
+
+module autoware_auto_control_msgs {
+  module msg {
+    @verbatim (language="comment", text=
+      " Lateral and longitudinal control message for Ackermann-style platforms")
+    struct AckermannControlCommand {
+      builtin_interfaces::msg::Time stamp;
+
+      autoware_auto_control_msgs::msg::AckermannLateralCommand lateral;
+      autoware_auto_control_msgs::msg::LongitudinalCommand longitudinal;
+    };
+  };
+};

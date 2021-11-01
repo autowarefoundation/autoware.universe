@@ -1,0 +1,20 @@
+module autoware_auto_geometry_msgs {
+  module msg {
+    @verbatim (language="comment", text=
+      " Complex32.msg" "\n"
+      " Can be used to represent yaw angle for trajectories" "\n"
+      " To convert back to a yaw angle, see" "\n"
+      " https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles")
+    struct Complex32 {
+      @verbatim (language="comment", text=
+        " cos(yaw / 2)")
+      @default (value=1.0)
+      float real;
+
+      @verbatim (language="comment", text=
+        " sin(yaw / 2)")
+      @default (value=0.0)
+      float imag;
+    };
+  };
+};

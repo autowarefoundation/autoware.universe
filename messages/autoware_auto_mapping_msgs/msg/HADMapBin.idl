@@ -1,0 +1,32 @@
+#include "std_msgs/msg/Header.idl"
+
+module autoware_auto_mapping_msgs {
+  module msg {
+    module HADMapBin_Constants {
+      const uint8 MAP_FORMAT_LANELET2 = 0;
+    };
+    @verbatim(language = "comment", text =
+      "HADMap contents in binary blob format")
+    struct HADMapBin
+    {
+      std_msgs::msg::Header header;
+      @verbatim(language = "comment", text =
+        "HADMap format identifier, allows supporting multiple map formats")
+      uint8 map_format;
+
+      @verbatim(language = "comment", text =
+        "Version of map format. Keep as empty string if unnecssary")
+      @default(value = "")
+      string format_version;
+
+      @verbatim(language = "comment", text =
+        "Version of map. Keep as empty empty if unnecessary")
+      @default(value = "")
+      string map_version;
+
+      @verbatim(language = "comment", text =
+        "Binary map data")
+      sequence < uint8 > data;
+    };
+  };
+};

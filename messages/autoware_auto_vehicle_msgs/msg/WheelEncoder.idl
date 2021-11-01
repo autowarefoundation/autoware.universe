@@ -1,0 +1,17 @@
+#include "std_msgs/msg/Header.idl"
+
+module autoware_auto_vehicle_msgs {
+  module msg {
+    @verbatim (language="comment", text=
+    "Representation of a wheel-encoder measurement")
+    struct WheelEncoder {
+      std_msgs::msg::Header header;
+
+      @verbatim (language="comment", text=
+        " Negative speed values indicate rotation in the opposite " "\n"
+        " direction of the normal direction of travel of the vehicle.")
+      @default (value=0.0)
+      float speed_mps;
+    };
+  };
+};

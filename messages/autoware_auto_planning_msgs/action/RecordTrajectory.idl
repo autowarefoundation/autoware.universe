@@ -1,0 +1,19 @@
+module autoware_auto_planning_msgs {
+  module action {
+    struct RecordTrajectory_Goal {
+      @verbatim(language = "comment", text =
+        "A path to the CSV file which will be created to save the recorded trajectory.")
+      string record_path;
+    };
+
+    struct RecordTrajectory_Result {
+      @verbatim(language = "comment", text =
+        "This action has no result but we must provide something here.")
+      boolean unused_flag;
+    };
+
+    struct RecordTrajectory_Feedback {
+      int32 current_length;
+    };
+  };
+};

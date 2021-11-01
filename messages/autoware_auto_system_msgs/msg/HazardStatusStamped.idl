@@ -1,0 +1,18 @@
+#include "builtin_interfaces/msg/Time.idl"
+#include "autoware_auto_system_msgs/msg/HazardStatus.idl"
+
+module autoware_auto_system_msgs {
+  module msg {
+
+    @verbatim (language="comment", text=
+      " A message for reporting the hazard status with timestamp.")
+    struct HazardStatusStamped {
+      builtin_interfaces::msg::Time stamp;
+
+      @verbatim (language="comment", text=
+        " Contains the hazard status with diagnostics information.")
+      autoware_auto_system_msgs::msg::HazardStatus status;
+    };
+  };
+};
+

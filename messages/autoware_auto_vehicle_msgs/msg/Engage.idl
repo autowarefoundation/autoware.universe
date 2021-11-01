@@ -1,0 +1,18 @@
+#include "builtin_interfaces/msg/Time.idl"
+
+module autoware_auto_vehicle_msgs {
+  module msg {
+
+    @verbatim (language="comment", text=
+      " Command for controlling the engagement state of the vehicle.")
+    struct Engage {
+      builtin_interfaces::msg::Time stamp;
+
+      @verbatim (language="comment", text=
+        " Determines if a vehicle should be engaged.")
+      @default (value=FALSE)
+      boolean engage;
+    };
+  };
+};
+

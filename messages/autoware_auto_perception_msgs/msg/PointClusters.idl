@@ -1,0 +1,18 @@
+#include "autoware_auto_perception_msgs/msg/PointXYZIF.idl"
+#include "std_msgs/msg/Header.idl"
+
+module autoware_auto_perception_msgs {
+  module msg {
+    @verbatim (language="comment", text=
+      " Represent the clusters" "\n"
+      " The cluster 0 is from point 0 to point cluster_boundary[0] - 1." "\n"
+      " Cluster i would be from point cluster_boundary[i - 1] to cluster_boundary[i] - 1, and so on")
+    struct PointClusters {
+      std_msgs::msg::Header header;
+
+      sequence<autoware_auto_perception_msgs::msg::PointXYZIF> points;
+
+      sequence<uint32> cluster_boundary;
+    };
+  };
+};

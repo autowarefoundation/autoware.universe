@@ -1,0 +1,21 @@
+#include "std_msgs/msg/Header.idl"
+
+module autoware_auto_planning_msgs {
+  module msg {
+    module OrderMovement_Constants {
+      const uint8 NOTSET = 0;
+      const uint8 STOP = 1;
+      const uint8 GO = 2;
+      const uint8 SLOWDOWN = 3;
+    };
+
+    @verbatim (language="comment", text=
+      "Movement order for planner to follow")
+    struct OrderMovement {
+      std_msgs::msg::Header header;
+
+      @default (value=0)
+      uint8 order_movement;
+    };
+  };
+};

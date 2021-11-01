@@ -1,0 +1,16 @@
+#include "autoware_auto_perception_msgs/msg/DetectedObjectKinematics.idl"
+#include "autoware_auto_perception_msgs/msg/ObjectClassification.idl"
+#include "autoware_auto_perception_msgs/msg/Shape.idl"
+
+module autoware_auto_perception_msgs {
+  module msg {
+    struct DetectedObject {
+      @range (min=0.0, max=1.0)
+      float existence_probability;
+
+      sequence<autoware_auto_perception_msgs::msg::ObjectClassification> classification;
+      autoware_auto_perception_msgs::msg::DetectedObjectKinematics kinematics;
+      autoware_auto_perception_msgs::msg::Shape shape;
+    };
+  };
+};

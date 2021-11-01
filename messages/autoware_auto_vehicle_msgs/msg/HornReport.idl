@@ -1,0 +1,13 @@
+#include "builtin_interfaces/msg/Time.idl"
+
+module autoware_auto_vehicle_msgs {
+  module msg {
+    struct HornReport {
+      builtin_interfaces::msg::Time stamp;
+
+      @default (value=FALSE)
+      boolean report;
+    };
+  };
+};
+

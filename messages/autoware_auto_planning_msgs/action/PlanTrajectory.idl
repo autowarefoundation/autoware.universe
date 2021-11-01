@@ -1,0 +1,27 @@
+#include "autoware_auto_planning_msgs/msg/HADMapRoute.idl"
+#include "autoware_auto_planning_msgs/msg/Trajectory.idl"
+
+module autoware_auto_planning_msgs {
+  module action {
+    module PlanTrajectory_Result_Constants {
+      const uint8 SUCCESS = 0;
+      const uint8 FAIL = 1;
+    };
+    struct PlanTrajectory_Goal {
+      autoware_auto_planning_msgs::msg::HADMapRoute sub_route;
+    };
+
+    struct PlanTrajectory_Result {
+      @verbatim(language = "comment", text =
+        "Report of end condition. Value should be one of PlanTrajectory_Constants")
+      uint8 result;
+      autoware_auto_planning_msgs::msg::Trajectory trajectory;
+    };
+
+    struct PlanTrajectory_Feedback {
+      @verbatim(language = "comment", text =
+        "Currently we don't need feedback, but we need some variable to compile")
+      uint8 unused_variable;
+    };
+  };
+};

@@ -1,0 +1,22 @@
+#include "autoware_auto_mapping_msgs/msg/MapPrimitive.idl"
+#include "autoware_auto_planning_msgs/msg/TrajectoryPoint.idl"
+#include "std_msgs/msg/Header.idl"
+
+module autoware_auto_planning_msgs {
+  module msg {
+    module Route_Constants {
+      const uint32 CAPACITY = 100;
+    };
+    @verbatim (language="comment", text=
+      "Global route information for the planner")
+    struct Route {
+      std_msgs::msg::Header header;
+
+      autoware_auto_planning_msgs::msg::TrajectoryPoint start_point;
+
+      autoware_auto_planning_msgs::msg::TrajectoryPoint goal_point;
+
+      sequence<autoware_auto_mapping_msgs::msg::MapPrimitive, 100> primitives;
+    };
+  };
+};

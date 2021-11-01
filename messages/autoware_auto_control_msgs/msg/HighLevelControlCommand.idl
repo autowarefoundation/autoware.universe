@@ -1,0 +1,18 @@
+#include "builtin_interfaces/msg/Time.idl"
+
+module autoware_auto_control_msgs {
+  module msg {
+    struct HighLevelControlCommand {
+      builtin_interfaces::msg::Time stamp;
+
+      @verbatim (language="comment", text=
+        " should be negative when reversed")
+      @default (value=0.0)
+      float velocity_mps;
+
+      @verbatim (language="comment", text=
+        " units of inverse meters")
+      float curvature;
+    };
+  };
+};

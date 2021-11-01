@@ -1,0 +1,16 @@
+#include "builtin_interfaces/msg/Time.idl"
+
+module autoware_auto_vehicle_msgs {
+  module msg {
+    @verbatim (language="comment", text=
+    " Command for controlling a horn.")
+
+    struct HornCommand {
+      builtin_interfaces::msg::Time stamp;
+
+      @default (value=FALSE)
+      boolean active;
+    };
+  };
+};
+

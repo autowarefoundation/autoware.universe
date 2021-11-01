@@ -1,0 +1,16 @@
+#include "autoware_auto_system_msgs/msg/DiagnosticHeader.idl"
+#include "std_msgs/msg/Float32MultiArray.idl"
+
+module autoware_auto_system_msgs {
+  module msg {
+    @verbatim (language="comment", text=
+      " Generic diagnostic information to be used for debugging purposes")
+    struct Float32MultiArrayDiagnostic {
+      autoware_auto_system_msgs::msg::DiagnosticHeader diag_header;
+
+      @verbatim (language="comment", text=
+        " Debug information as a Float32MultiArray")
+      std_msgs::msg::Float32MultiArray diag_array;
+    };
+  };
+};

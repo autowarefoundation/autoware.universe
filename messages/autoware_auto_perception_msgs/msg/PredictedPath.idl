@@ -1,0 +1,15 @@
+#include "builtin_interfaces/msg/Duration.idl"
+#include "geometry_msgs/msg/Pose.idl"
+
+module autoware_auto_perception_msgs {
+  module msg {
+    struct PredictedPath {
+      sequence<geometry_msgs::msg::Pose, 100> path;
+
+      @verbatim (language="comment", text=
+        " The time_step field defines the interval between consecutive pose predictions in the path array.")
+      builtin_interfaces::msg::Duration time_step;
+      float confidence;
+    };
+  };
+};

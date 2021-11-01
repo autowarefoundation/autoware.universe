@@ -1,0 +1,18 @@
+#include "autoware_auto_planning_msgs/msg/Trajectory.idl"
+
+module autoware_auto_planning_msgs {
+  module srv {
+    struct ModifyTrajectory_Request
+    {
+      @verbatim(language = "comment", text =
+        "Trajectory to be modified")
+      autoware_auto_planning_msgs::msg::Trajectory original_trajectory;
+    };
+    struct ModifyTrajectory_Response
+    {
+      @verbatim(language = "comment", text =
+        "Trajectory after modification")
+      autoware_auto_planning_msgs::msg::Trajectory modified_trajectory;
+    };
+  };
+};

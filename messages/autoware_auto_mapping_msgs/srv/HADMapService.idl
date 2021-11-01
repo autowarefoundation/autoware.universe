@@ -1,0 +1,39 @@
+#include "autoware_auto_mapping_msgs/msg/HADMapBin.idl"
+
+module autoware_auto_mapping_msgs {
+  module srv {
+    // enum type not working yet on ROS2 implementation of idl
+    // enum HADPrimitive
+    // {
+    //   FullMap,
+    //   AllPrimitives,
+    //   DriveableGeometry,
+    //   RegulatoryElements,
+    //   StaticObjects
+    // };
+
+    module HADMapService_Request_Constants {
+      const uint8 FULL_MAP = 0;
+      const uint8 ALL_PRIMITIVES = 1;
+      const uint8 DRIVEABLE_GEOMETRY = 2;
+      const uint8 REGULATORY_ELEMENTS = 3;
+      const uint8 STATIC_OBJECTS = 4;
+    };
+
+    struct HADMapService_Request
+    {
+      sequence < uint8 > requested_primitives;
+      @verbatim(language = "comment", text =
+        "Geometric upper bound of map data requested")
+      sequence < double, 3 > geom_upper_bound;
+      @verbatim(language = "comment", text =
+        "Geometric upper bound of map data requested")
+      sequence < double, 3 > geom_lower_bound;
+    };
+    struct HADMapService_Response
+    {
+      autoware_auto_mapping_msgs::msg::HADMapBin map;
+      int32 answer;
+    };
+  };
+};

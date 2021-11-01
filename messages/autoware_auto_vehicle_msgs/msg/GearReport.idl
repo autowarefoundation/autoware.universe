@@ -1,0 +1,39 @@
+#include "builtin_interfaces/msg/Time.idl"
+
+module autoware_auto_vehicle_msgs {
+  module msg {
+    module GearReport_Constants {
+      const uint8 DRIVE = 1;
+      const uint8 DRIVE_2 = 2;
+      const uint8 DRIVE_3 = 3;
+      const uint8 DRIVE_4 = 4;
+      const uint8 DRIVE_5 = 5;
+      const uint8 DRIVE_6 = 6;
+      const uint8 DRIVE_7 = 7;
+      const uint8 DRIVE_8 = 8;
+      const uint8 DRIVE_9 = 9;
+      const uint8 DRIVE_10 = 10;
+      const uint8 DRIVE_11 = 11;
+      const uint8 DRIVE_12 = 12;
+      const uint8 DRIVE_13 = 13;
+      const uint8 DRIVE_14 = 14;
+      const uint8 DRIVE_15 = 15;
+      const uint8 DRIVE_16 = 16;
+      const uint8 DRIVE_17 = 17;
+      const uint8 DRIVE_18 = 18;
+      const uint8 REVERSE = 19;
+      const uint8 REVERSE_2 = 20;
+      const uint8 PARK = 21;
+      const uint8 LOW = 22;
+      const uint8 LOW_2 = 23;
+    };
+
+    struct GearReport {
+      builtin_interfaces::msg::Time stamp;
+
+      @default (value=0)
+      uint8 report;
+    };
+  };
+};
+

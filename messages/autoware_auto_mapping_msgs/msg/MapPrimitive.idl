@@ -1,0 +1,17 @@
+#include "std_msgs/msg/Header.idl"
+
+module autoware_auto_mapping_msgs {
+  module msg {
+    @verbatim(language = "comment", text =
+      "Map primitive information")
+    struct MapPrimitive
+    {
+      int64 id;
+
+      @verbatim(language = "comment", text =
+        "Type of primitive, such as lane, polygon, line.")
+      @default(value = "")
+      string primitive_type;
+    };
+  };
+};

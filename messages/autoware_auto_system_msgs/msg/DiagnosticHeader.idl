@@ -1,0 +1,20 @@
+#include "builtin_interfaces/msg/Duration.idl"
+#include "builtin_interfaces/msg/Time.idl"
+
+module autoware_auto_system_msgs {
+  module msg {
+    @verbatim (language="comment", text=
+      " Base information that all diagnostic messages should have")
+    struct DiagnosticHeader {
+      string<256> name;
+
+      builtin_interfaces::msg::Time data_stamp;
+
+      builtin_interfaces::msg::Time computation_start;
+
+      builtin_interfaces::msg::Duration runtime;
+
+      uint32 iterations;
+    };
+  };
+};

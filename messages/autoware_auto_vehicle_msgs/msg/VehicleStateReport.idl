@@ -1,0 +1,50 @@
+#include "builtin_interfaces/msg/Time.idl"
+
+module autoware_auto_vehicle_msgs {
+  module msg {
+    module VehicleStateReport_Constants {
+      const uint8 BLINKER_OFF = 1;
+      const uint8 BLINKER_LEFT = 2;
+      const uint8 BLINKER_RIGHT = 3;
+      const uint8 BLINKER_HAZARD = 4;
+      const uint8 HEADLIGHT_OFF = 1;
+      const uint8 HEADLIGHT_ON = 2;
+      const uint8 HEADLIGHT_HIGH = 3;
+      const uint8 WIPER_OFF = 1;
+      const uint8 WIPER_LOW = 2;
+      const uint8 WIPER_HIGH = 3;
+      const uint8 WIPER_CLEAN = 14; // Match WipersCommand::ENABLE_CLEAN
+      const uint8 GEAR_DRIVE = 1;
+      const uint8 GEAR_REVERSE = 2;
+      const uint8 GEAR_PARK = 3;
+      const uint8 GEAR_LOW = 4;
+      const uint8 GEAR_NEUTRAL = 5;
+      const uint8 MODE_AUTONOMOUS = 1;
+      const uint8 MODE_MANUAL = 2;
+      const uint8 MODE_DISENGAGED = 3;
+      const uint8 MODE_NOT_READY = 4;
+    };
+
+    struct VehicleStateReport {
+      builtin_interfaces::msg::Time stamp;
+
+      @verbatim (language="comment", text=
+        " 0 to 100")
+      uint8 fuel;
+
+      uint8 blinker;
+
+      uint8 headlight;
+
+      uint8 wiper;
+
+      uint8 gear;
+
+      uint8 mode;
+
+      boolean hand_brake;
+
+      boolean horn;
+    };
+  };
+};

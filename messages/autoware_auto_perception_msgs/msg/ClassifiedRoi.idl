@@ -1,0 +1,15 @@
+#include "geometry_msgs/msg/Polygon.idl"
+#include "autoware_auto_perception_msgs/msg/ObjectClassification.idl"
+
+module autoware_auto_perception_msgs {
+  module msg {
+    @verbatim (language="comment", text="A region of interest in an image with class information.")
+    struct ClassifiedRoi {
+      @verbatim (language="comment", text="A vector of possible classifications of this object.")
+      sequence<autoware_auto_perception_msgs::msg::ObjectClassification> classifications;
+
+      @verbatim (language="comment", text="A 2D polygon describing the outline of an object in image coordinates.")
+      geometry_msgs::msg::Polygon polygon;
+    };
+  };
+};

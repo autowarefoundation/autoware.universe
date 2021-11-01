@@ -1,0 +1,30 @@
+#include "builtin_interfaces/msg/Time.idl"
+
+module autoware_auto_control_msgs {
+  module msg {
+    @verbatim (language="comment", text=
+      " Longitudinal control message for all vehicle types")
+
+    struct LongitudinalCommand {
+      builtin_interfaces::msg::Time stamp;
+
+      @verbatim (language="comment", text=
+        " Desired platform speed in meters per second."
+        " A positive value indicates movement in the positive X direction of the vehicle "
+        " while a negative value indicates movement in the negative X direction of the vehicle.")
+      @default (value=0.0)
+      float speed;
+
+      @verbatim (language="comment", text=
+        " Desired platform acceleration in meters per second squared."
+        " A positive value indicates acceleration while a negative value indicates deceleration.")
+      @default (value=0.0)
+      float acceleration;
+
+      @verbatim (language="comment", text=
+        " Desired platform jerk in meters per second cubed")
+      @default (value=0.0)
+      float jerk;
+    };
+  };
+};

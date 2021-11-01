@@ -1,0 +1,49 @@
+#include "diagnostic_msgs/msg/DiagnosticStatus.idl"
+
+module autoware_auto_system_msgs {
+  module msg {
+    module HazardStatus_Constants {
+      const uint8 NO_FAULT = 0;
+      const uint8 SAFE_FAULT = 1;
+      const uint8 LATENT_FAULT = 2;
+      const uint8 SINGLE_POINT_FAULT = 3;
+    };
+
+    @verbatim (language="comment", text=
+      " A message for reporting the hazard status.")
+    struct HazardStatus {
+
+      @verbatim (language="comment", text=
+        " Determines the hazard level.")
+      @default (value=0)
+      uint8 level;
+
+      @verbatim (language="comment", text=
+        " Determines whether the vehicle is in the emergency state.")
+      @default (value=FALSE)
+      boolean emergency;
+
+      @verbatim (language="comment", text=
+        " Determines whether the vehicle emergency state should be held.")
+      @default (value=FALSE)
+      boolean emergency_holding;
+
+      @verbatim (language="comment", text=
+        " Diagnostics categorized as no fault.")
+      sequence<diagnostic_msgs::msg::DiagnosticStatus> diag_no_fault;
+
+      @verbatim (language="comment", text=
+        " Diagnostics categorized as safe fault.")
+      sequence<diagnostic_msgs::msg::DiagnosticStatus> diag_safe_fault;
+
+      @verbatim (language="comment", text=
+        " Diagnostics categorized as latent fault.")
+      sequence<diagnostic_msgs::msg::DiagnosticStatus> diag_latent_fault;
+
+      @verbatim (language="comment", text=
+        " Diagnostics categorized as single point fault.")
+      sequence<diagnostic_msgs::msg::DiagnosticStatus> diag_single_point_fault;
+    };
+  };
+};
+

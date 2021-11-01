@@ -1,0 +1,13 @@
+#include "autoware_auto_perception_msgs/msg/PredictedObject.idl"
+#include "std_msgs/msg/Header.idl"
+
+module autoware_auto_perception_msgs {
+  module msg {
+    @verbatim (language="comment", text=
+      " This is the output of object prediction.")
+    struct PredictedObjects {
+      std_msgs::msg::Header header;
+      sequence<autoware_auto_perception_msgs::msg::PredictedObject> objects;
+    };
+  };
+};

@@ -1,0 +1,12 @@
+#include "autoware_auto_mapping_msgs/msg/MapPrimitive.idl"
+
+module autoware_auto_mapping_msgs {
+  module msg {
+    @verbatim (language="comment", text=
+      " A segment of an HADMap which contains one or more MapPrimitives.")
+    struct HADMapSegment {
+      sequence<autoware_auto_mapping_msgs::msg::MapPrimitive> primitives;
+      int64 preferred_primitive_id;
+    };
+  };
+};

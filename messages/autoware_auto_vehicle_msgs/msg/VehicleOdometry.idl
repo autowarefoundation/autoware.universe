@@ -1,0 +1,20 @@
+#include "builtin_interfaces/msg/Time.idl"
+
+module autoware_auto_vehicle_msgs {
+  module msg {
+    @verbatim (language="comment", text=
+      " VehicleOdometry.msg")
+    struct VehicleOdometry {
+      builtin_interfaces::msg::Time stamp;
+
+      @default (value=0.0)
+      float velocity_mps;
+
+      @default (value=0.0)
+      float front_wheel_angle_rad;
+
+      @default (value=0.0)
+      float rear_wheel_angle_rad;
+    };
+  };
+};

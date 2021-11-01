@@ -1,0 +1,38 @@
+#include "builtin_interfaces/msg/Time.idl"
+
+module autoware_auto_vehicle_msgs {
+  module msg {
+    module WipersCommand_Constants {
+      const uint8 NO_COMMAND = 0;
+      const uint8 DISABLE = 1;
+      const uint8 ENABLE_LOW = 2;
+      const uint8 ENABLE_HIGH = 3;
+      const uint8 ENABLE_INT_1 = 4;
+      const uint8 ENABLE_INT_2 = 5;
+      const uint8 ENABLE_INT_3 = 6;
+      const uint8 ENABLE_INT_4 = 7;
+      const uint8 ENABLE_INT_5 = 8;
+      const uint8 ENABLE_INT_6 = 9;
+      const uint8 ENABLE_INT_7 = 10;
+      const uint8 ENABLE_INT_8 = 11;
+      const uint8 ENABLE_INT_9 = 12;
+      const uint8 ENABLE_INT_10 = 13;
+      const uint8 ENABLE_CLEAN = 14;
+    };
+
+    @verbatim (language="comment", text=
+    " Command for controlling a wiper or group of wipers.")
+
+    @verbatim (language="comment", text=
+    " Each wiper or group of simultaneously-controlled wipers"
+    " should have their own topic which receives this message.")
+
+    struct WipersCommand {
+      builtin_interfaces::msg::Time stamp;
+
+      @default (value=0)
+      uint8 command;
+    };
+  };
+};
+

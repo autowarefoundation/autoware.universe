@@ -1,0 +1,15 @@
+#include "autoware_auto_planning_msgs/msg/PathPoint.idl"
+
+module autoware_auto_planning_msgs {
+  module msg {
+    @verbatim (language = "comment", text=
+      "Contains a PathPoint and lanelet lane_id information.")
+    struct PathPointWithLaneId {
+      autoware_auto_planning_msgs::msg::PathPoint point;
+
+      @verbatim(language = "comment", text =
+        "Lanelet lane_id information.")
+      sequence<uint64> lane_ids;
+    };
+  };
+};

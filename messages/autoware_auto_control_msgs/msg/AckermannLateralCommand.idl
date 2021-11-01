@@ -1,0 +1,25 @@
+#include "builtin_interfaces/msg/Time.idl"
+
+module autoware_auto_control_msgs {
+  module msg {
+    @verbatim (language="comment", text=
+      " Lateral control message for Ackermann-style platforms" "\n"
+      " Note regarding tires: If the platform has multiple steering tires, the commands"
+      " given here are for a virtual tire at the average lateral position of the steering tires.")
+
+    struct AckermannLateralCommand {
+      builtin_interfaces::msg::Time stamp;
+
+      @verbatim (language="comment", text=
+        " Desired angle of the steering tire in radians left (positive)"
+        " or right (negative) of center (0.0)")
+      @default (value=0.0)
+      float steering_tire_angle;
+
+      @verbatim (language="comment", text=
+        " Desired rate of change of the steering tire angle in radians per second")
+      @default (value=0.0)
+      float steering_tire_rotation_rate;
+    };
+  };
+};

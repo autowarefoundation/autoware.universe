@@ -1,0 +1,30 @@
+#include "builtin_interfaces/msg/Time.idl"
+
+module autoware_auto_system_msgs {
+  module msg {
+
+    module EmergencyState_Constants {
+      const uint8 NORMAL = 1;
+      const uint8 OVERRIDE_REQUESTING = 2;
+      const uint8 MRM_OPERATING = 3;
+      const uint8 MRM_SUCCEEDED = 4;
+      const uint8 MRM_FAILED = 5;
+    };
+
+    @verbatim (language="comment", text=
+      " Message for reporting the emergency state.")
+    struct EmergencyState {
+      builtin_interfaces::msg::Time stamp;
+
+      @verbatim (language="comment", text=
+        " Current emergency state fo the system. Possible states are as follows."
+        " - NORMAL - the system is not in emergency mode."
+        " - OVERRIDE_REQUESTING - the override is requesting."
+        " - MRM_OPERATING - during the minimal risk maneuver (MRM)"
+        " - MRM_SUCCEEDED - MRM operation succeeded."
+        " - MRM_FAILED - MRM operation failed.")
+      uint8 state;
+    };
+  };
+};
+

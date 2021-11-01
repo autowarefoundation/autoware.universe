@@ -1,0 +1,15 @@
+#include "autoware_auto_planning_msgs/msg/PathPoint.idl"
+#include "nav_msgs/msg/OccupancyGrid.idl"
+#include "std_msgs/msg/Header.idl"
+
+module autoware_auto_planning_msgs {
+  module msg {
+    @verbatim (language = "comment", text=
+      "Contains a PathPoint path and an OccupancyGrid of drivable_area.")
+    struct Path {
+      std_msgs::msg::Header header;
+      sequence<autoware_auto_planning_msgs::msg::PathPoint> points;
+      nav_msgs::msg::OccupancyGrid drivable_area;
+    };
+  };
+};

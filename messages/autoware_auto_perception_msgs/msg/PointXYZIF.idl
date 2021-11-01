@@ -1,0 +1,20 @@
+module autoware_auto_perception_msgs {
+  module msg {
+    module PointXYZIF_Constants {
+      const uint16 END_OF_SCAN_ID = 65535;
+    };
+    @verbatim (language="comment", text=
+      " This message is meant to mirror autoware::common::types::PointXYZIF")
+    struct PointXYZIF {
+      float x;
+
+      float y;
+
+      float z;
+
+      float intensity;
+
+      uint16 id;
+    };
+  };
+};

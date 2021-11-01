@@ -1,0 +1,26 @@
+#include "builtin_interfaces/msg/Time.idl"
+
+module autoware_auto_system_msgs {
+  module msg {
+    module AutowareState_Constants {
+      const uint8 INITIALIZING = 1;
+      const uint8 WAITING_FOR_ROUTE = 2;
+      const uint8 PLANNING = 3;
+      const uint8 WAITING_FOR_ENGAGE = 4;
+      const uint8 DRIVING = 5;
+      const uint8 ARRIVED_GOAL = 6;
+      const uint8 FINALIZING = 7;
+    };
+
+    @verbatim (language="comment", text=
+      " A message for reporting the Autoware system status.")
+    struct AutowareState {
+      builtin_interfaces::msg::Time stamp;
+
+      @verbatim (language="comment", text=
+        " Current state of the Autoware system.")
+      uint8 state;
+    };
+  };
+};
+

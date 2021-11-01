@@ -1,0 +1,19 @@
+module autoware_auto_geometry_msgs {
+  module msg {
+    @verbatim (language="comment", text=
+      " Represents rotation, but with less precision than the message in common_interfaces")
+    struct Quaternion32 {
+      @default (value=0.0)
+      float x;
+
+      @default (value=0.0)
+      float y;
+
+      @default (value=0.0)
+      float z;
+
+      @default (value=1.0)
+      float w;
+    };
+  };
+};

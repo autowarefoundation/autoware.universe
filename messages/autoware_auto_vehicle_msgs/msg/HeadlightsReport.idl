@@ -1,0 +1,18 @@
+#include "builtin_interfaces/msg/Time.idl"
+
+module autoware_auto_vehicle_msgs {
+  module msg {
+    module HeadlightsReport_Constants {
+      const uint8 DISABLE = 1;
+      const uint8 ENABLE_LOW = 2;
+      const uint8 ENABLE_HIGH = 3;
+    };
+
+    struct HeadlightsReport {
+      builtin_interfaces::msg::Time stamp;
+
+      @default (value=0)
+      uint8 report;
+    };
+  };
+};

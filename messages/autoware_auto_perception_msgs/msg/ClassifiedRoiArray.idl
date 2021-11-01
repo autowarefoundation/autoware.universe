@@ -1,0 +1,14 @@
+#include "autoware_auto_perception_msgs/msg/ClassifiedRoi.idl"
+#include "std_msgs/msg/Header.idl"
+
+module autoware_auto_perception_msgs {
+  module msg {
+    @verbatim (language="comment", text=
+      " Message for a full set of classified ROIs")
+    struct ClassifiedRoiArray {
+      std_msgs::msg::Header header;
+
+      sequence<autoware_auto_perception_msgs::msg::ClassifiedRoi> rois;
+    };
+  };
+};

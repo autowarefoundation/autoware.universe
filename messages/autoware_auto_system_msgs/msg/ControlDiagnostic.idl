@@ -1,0 +1,33 @@
+#include "autoware_auto_system_msgs/msg/DiagnosticHeader.idl"
+
+module autoware_auto_system_msgs {
+  module msg {
+    @verbatim (language="comment", text=
+      " Diagnostic information for the controller")
+    struct ControlDiagnostic {
+      autoware_auto_system_msgs::msg::DiagnosticHeader diag_header;
+
+      @verbatim (language="comment", text=
+        " Controller specific information")
+      boolean new_trajectory;
+
+      string<256> trajectory_source;
+
+      string<256> pose_source;
+
+      @verbatim (language="comment", text=
+        " the error between the current vehicle and the nearest neighbor point")
+      float lateral_error_m;
+
+      float longitudinal_error_m;
+
+      float velocity_error_mps;
+
+      float acceleration_error_mps2;
+
+      float yaw_error_rad;
+
+      float yaw_rate_error_rps;
+    };
+  };
+};

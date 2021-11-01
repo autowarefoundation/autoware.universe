@@ -1,0 +1,27 @@
+#include "builtin_interfaces/msg/Time.idl"
+
+module autoware_auto_vehicle_msgs {
+  module msg {
+    @verbatim (language="comment", text=
+      " Information that is sent to Vehicle interface")
+    struct VehicleControlCommand {
+      builtin_interfaces::msg::Time stamp;
+
+      @verbatim (language="comment", text=
+        " should be negative when reversed")
+      @default (value=0.0)
+      float long_accel_mps2;
+
+      @verbatim (language="comment", text=
+        " should be negative when reversed")
+      @default (value=0.0)
+      float velocity_mps;
+
+      @default (value=0.0)
+      float front_wheel_angle_rad;
+
+      @default (value=0.0)
+      float rear_wheel_angle_rad;
+    };
+  };
+};

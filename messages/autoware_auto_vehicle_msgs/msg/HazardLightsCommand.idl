@@ -1,0 +1,22 @@
+#include "builtin_interfaces/msg/Time.idl"
+
+module autoware_auto_vehicle_msgs {
+  module msg {
+    module HazardLightsCommand_Constants {
+      const uint8 NO_COMMAND = 0;
+      const uint8 DISABLE = 1;
+      const uint8 ENABLE = 2;
+    };
+
+    @verbatim (language="comment", text=
+    " Command for controlling a vehicle's hazard lights.")
+
+    struct HazardLightsCommand {
+      builtin_interfaces::msg::Time stamp;
+
+      @default (value=0)
+      uint8 command;
+    };
+  };
+};
+

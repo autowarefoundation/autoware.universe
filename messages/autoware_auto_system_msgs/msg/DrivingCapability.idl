@@ -1,0 +1,22 @@
+#include "builtin_interfaces/msg/Time.idl"
+#include "autoware_auto_system_msgs/msg/HazardStatus.idl"
+
+module autoware_auto_system_msgs {
+  module msg {
+
+    @verbatim (language="comment", text=
+      " A status message for reporting the vehicle driving capabilities.")
+    struct DrivingCapability {
+      builtin_interfaces::msg::Time stamp;
+
+      @verbatim (language="comment", text=
+        " Status for the autonomous driving mode.")
+      autoware_auto_system_msgs::msg::HazardStatus autonomous_driving;
+
+      @verbatim (language="comment", text=
+        " Status for the remote control mode.")
+      autoware_auto_system_msgs::msg::HazardStatus remote_control;
+    };
+  };
+};
+

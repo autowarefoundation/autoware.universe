@@ -1,0 +1,31 @@
+#include "builtin_interfaces/msg/Duration.idl"
+
+module autoware_auto_planning_msgs {
+  module msg {
+    @verbatim (language="comment", text=
+      " Representation of a trajectory point for the controller")
+    struct TrajectoryPoint {
+      builtin_interfaces::msg::Duration time_from_start;
+
+      geometry_msgs::msg::Pose pose;
+
+      @default (value=0.0)
+      float longitudinal_velocity_mps;
+
+      @default (value=0.0)
+      float lateral_velocity_mps;
+
+      @default (value=0.0)
+      float acceleration_mps2;
+
+      @default (value=0.0)
+      float heading_rate_rps;
+
+      @default (value=0.0)
+      float front_wheel_angle_rad;
+
+      @default (value=0.0)
+      float rear_wheel_angle_rad;
+    };
+  };
+};

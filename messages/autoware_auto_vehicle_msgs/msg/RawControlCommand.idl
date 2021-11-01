@@ -1,0 +1,21 @@
+#include "builtin_interfaces/msg/Time.idl"
+
+module autoware_auto_vehicle_msgs {
+  module msg {
+    struct RawControlCommand {
+      builtin_interfaces::msg::Time stamp;
+
+      @verbatim (language="comment", text=
+        " Units for all below fields are not defined. The exact semantics for each field is defined by each" "\n"
+        " vehicle interface implementation. It is the system integrator's responsibility to ensure these are" "\n"
+        " consistent when using this interface")
+      uint32 throttle;
+
+      uint32 brake;
+
+      int32 front_steer;
+
+      int32 rear_steer;
+    };
+  };
+};
