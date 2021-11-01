@@ -4,7 +4,7 @@
 
 - Category: Mandatory
 - Behavior: Service
-- DataType: [autoware_external_api_msgs/srv/Engage](https://github.com/tier4/autoware_api_msgs/blob/develop/autoware_external_api_msgs/srv/Engage.srv)
+- DataType: [autoware_external_api_msgs/srv/Engage](https://github.com/tier4/autoware_api_msgs/blob/main/autoware_external_api_msgs/srv/Engage.srv)
 
 ## Description
 

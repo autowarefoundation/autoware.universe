@@ -4,7 +4,7 @@
 
 - Category: Optional
 - Behavior: Topic
-- DataType: [autoware_external_api_msgs/msg/ControlCommandStamped](https://github.com/tier4/autoware_api_msgs/blob/develop/autoware_external_api_msgs/msg/ControlCommandStamped.msg)
+- DataType: [autoware_external_api_msgs/msg/ControlCommandStamped](https://github.com/tier4/autoware_api_msgs/blob/main/autoware_external_api_msgs/msg/ControlCommandStamped.msg)
 
 ## Description
 
