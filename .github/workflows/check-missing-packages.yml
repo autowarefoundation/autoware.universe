@@ -1,0 +1,27 @@
+name: Check missing packages
+
+on:
+  schedule:
+    - cron: "0 19 * * 0" # run at 4 AM JST on Sundays
+  workflow_dispatch:
+
+jobs:
+  check-missing-packages:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { ros_distribution: galactic, package: rqt-runtime-monitor }
+
+    container: ros:${{ matrix.ros_distribution }}
+
+    steps:
+      - name: Check ros-${{ matrix.ros_distribution }}-${{ matrix.package }}
+        run: |
+          sudo apt-get -y update
+          result=$(apt-cache search ros-${{ matrix.ros_distribution }}-${{ matrix.package }})
+          if [ "$result" != "" ]; then
+            sudo apt-get -y install ros-${{ matrix.ros_distribution }}-${{ matrix.package }}
+            exit 1
+          fi
