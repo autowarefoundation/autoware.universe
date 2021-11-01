@@ -55,7 +55,7 @@ void ControlPerformanceAnalysisCore::setCurrentPose(const Pose & msg)
   current_vec_pose_ptr_ = std::make_shared<Pose>(msg);
 }
 
-void ControlPerformanceAnalysisCore::setCurrentControValue(
+void ControlPerformanceAnalysisCore::setCurrentControlValue(
   const ControlCommandStamped & msg)
 {
   current_control_ptr_ = std::make_shared<ControlCommandStamped>(msg);
@@ -73,7 +73,7 @@ std::pair<bool, int32_t> ControlPerformanceAnalysisCore::findClosestPrevWayPoint
      *   interval_vector_xy = {waypoint_1 - waypoint_0}_xy
      * */
 
-  // Prepare vector of projection distance values; projection of vehcile vectors onto the intervals
+  // Prepare vector of projection distance values; projection of vehicle vectors onto the intervals
   std::vector<double> projection_distances_ds;  //
 
   auto f_projection_dist = [this](auto pose_1, auto pose_0) {
@@ -383,7 +383,7 @@ std::pair<bool, Pose> ControlPerformanceAnalysisCore::calculateClosestPose()
   double interp_yaw_angle = prev_yaw + ratio_t * dpsi_prev2next;
 
   Quaternion orient_msg =
-    utils::createOrientationMsgfromYaw(interp_yaw_angle);
+    utils::createOrientationMsgFromYaw(interp_yaw_angle);
   interpolated_pose.orientation = orient_msg;
 
   setInterpolatedPose(interpolated_pose);
@@ -522,12 +522,12 @@ double ControlPerformanceAnalysisCore::estimatePurePursuitCurvature()
     utils::getNormalVector(current_vec_yaw);  // ClockWise
 
   // Project this vector on the vehicle normal vector.
-  double x_purepursuit = vec_to_target[0] * normal_vec[0] + vec_to_target[1] * normal_vec[1];
+  double x_pure_pursuit = vec_to_target[0] * normal_vec[0] + vec_to_target[1] * normal_vec[1];
 
   // Pure pursuit curvature.
-  double curvature_purepursuit =
-    2 * x_purepursuit / (look_ahead_distance_pp * look_ahead_distance_pp);
+  double curvature_pure_pursuit =
+    2 * x_pure_pursuit / (look_ahead_distance_pp * look_ahead_distance_pp);
 
-  return curvature_purepursuit;
+  return curvature_pure_pursuit;
 }
 }  // namespace control_performance_analysis

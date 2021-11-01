@@ -224,7 +224,7 @@ const
   control_performance_core_ptr_->setCurrentWaypoints(*current_trajectory_ptr_);
   control_performance_core_ptr_->setCurrentPose(current_pose_->pose);
   control_performance_core_ptr_->setCurrentVelocities(current_velocity_ptr_->twist);
-  control_performance_core_ptr_->setCurrentControValue(*current_control_msg_ptr_);
+  control_performance_core_ptr_->setCurrentControlValue(*current_control_msg_ptr_);
 
   // Find the index of the next waypoint.
   std::pair<bool, int32_t> prev_closest_wp_pose_idx =

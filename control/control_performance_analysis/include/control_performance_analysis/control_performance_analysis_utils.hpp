@@ -71,7 +71,7 @@ inline double angleDistance(double & target_angle, double const & reference_angl
   return -1.0 * diff_signed_correction;
 }
 
-inline geometry_msgs::msg::Quaternion createOrientationMsgfromYaw(double yaw_angle)
+inline geometry_msgs::msg::Quaternion createOrientationMsgFromYaw(double yaw_angle)
 {
   geometry_msgs::msg::Quaternion orientation_msg;
   double roll_angle = 0.0;

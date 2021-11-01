@@ -62,7 +62,7 @@ public:
   void setCurrentPose(const Pose & msg);
   void setCurrentWaypoints(const Trajectory & trajectory);
   void setCurrentVelocities(const Twist & twist_msg);
-  void setCurrentControValue(const ControlCommandStamped & msg);
+  void setCurrentControlValue(const ControlCommandStamped & msg);
   void setInterpolatedPose(Pose & interpolated_pose);
 
   void findCurveRefIdx();
