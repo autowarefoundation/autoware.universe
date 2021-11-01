@@ -11,18 +11,19 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// #ifndef UTIL_H
-// #define UTIL_H
+
 #ifndef OBSTACLE_AVOIDANCE_PLANNER__UTIL_HPP_
 #define OBSTACLE_AVOIDANCE_PLANNER__UTIL_HPP_
 
 #include <memory>
 #include <vector>
 
-#include "autoware_planning_msgs/msg/path_point.hpp"
-#include "autoware_planning_msgs/msg/trajectory.hpp"
 #include "boost/optional/optional_fwd.hpp"
 #include "eigen3/Eigen/Core"
+
+#include "autoware_planning_msgs/msg/path_point.hpp"
+#include "autoware_planning_msgs/msg/trajectory.hpp"
+#include "autoware_utils/trajectory/trajectory.hpp"
 
 struct VehicleParam;
 struct ReferencePoint;

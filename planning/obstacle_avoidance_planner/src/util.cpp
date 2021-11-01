@@ -18,20 +18,19 @@
 #include <stack>
 #include <vector>
 
+#include "boost/optional.hpp"
+
 #include "autoware_planning_msgs/msg/path_point.hpp"
 #include "autoware_planning_msgs/msg/trajectory_point.hpp"
-#include "boost/optional.hpp"
 #include "geometry_msgs/msg/point32.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 #include "nav_msgs/msg/map_meta_data.hpp"
-
-// #include "ros/console.h";
+#include "tf2/utils.h"
 
 #include "obstacle_avoidance_planner/eb_path_optimizer.hpp"
 #include "obstacle_avoidance_planner/mpt_optimizer.hpp"
 #include "obstacle_avoidance_planner/util.hpp"
 #include "interpolation/spline_interpolation.hpp"
-#include "tf2/utils.h"
 
 namespace util
 {
@@ -39,25 +38,22 @@ template<typename T>
 geometry_msgs::msg::Point transformToRelativeCoordinate2D(
   const T & point, const geometry_msgs::msg::Pose & origin)
 {
-  geometry_msgs::msg::Transform origin_coord2point;
-  origin_coord2point.translation.x = point.x;
-  origin_coord2point.translation.y = point.y;
-  tf2::Transform tf_origin_coord2point;
-  tf2::fromMsg(origin_coord2point, tf_origin_coord2point);
+  // NOTE: implement transformation without defining yaw variable
+  //       but directly sin/cos of yaw for fast calculation
+  const auto & q = origin.orientation;
+  const double cos_yaw = 1 - 2 * q.z * q.z;
+  const double sin_yaw = 2 * q.w * q.z;
 
-  geometry_msgs::msg::Transform origin_coord2origin;
-  origin_coord2origin.translation.x = origin.position.x;
-  origin_coord2origin.translation.y = origin.position.y;
-  origin_coord2origin.rotation = origin.orientation;
-  tf2::Transform tf_origin_coord2origin;
-  tf2::fromMsg(origin_coord2origin, tf_origin_coord2origin);
+  geometry_msgs::msg::Point relative_p;
+  const double tmp_x = point.x - origin.position.x;
+  const double tmp_y = point.y - origin.position.y;
+  relative_p.x = tmp_x * cos_yaw + tmp_y * sin_yaw;
+  relative_p.y = -tmp_x * sin_yaw + tmp_y * cos_yaw;
+  relative_p.z = point.z;
 
-  tf2::Transform tf_origin2origin_coord = tf_origin_coord2origin.inverse() * tf_origin_coord2point;
-  geometry_msgs::msg::Pose rel_pose;
-  tf2::toMsg(tf_origin2origin_coord, rel_pose);
-  geometry_msgs::msg::Point relative_p = rel_pose.position;
   return relative_p;
 }
+
 template geometry_msgs::msg::Point transformToRelativeCoordinate2D<geometry_msgs::msg::Point>(
   const geometry_msgs::msg::Point &, const geometry_msgs::msg::Pose & origin);
 template geometry_msgs::msg::Point transformToRelativeCoordinate2D<geometry_msgs::msg::Point32>(
@@ -66,24 +62,18 @@ template geometry_msgs::msg::Point transformToRelativeCoordinate2D<geometry_msgs
 geometry_msgs::msg::Point transformToAbsoluteCoordinate2D(
   const geometry_msgs::msg::Point & point, const geometry_msgs::msg::Pose & origin)
 {
-  geometry_msgs::msg::Transform origin2point;
-  origin2point.translation.x = point.x;
-  origin2point.translation.y = point.y;
-  tf2::Transform tf_origin2point;
-  tf2::fromMsg(origin2point, tf_origin2point);
+  // NOTE: implement transformation without defining yaw variable
+  //       but directly sin/cos of yaw for fast calculation
+  const auto & q = origin.orientation;
+  const double cos_yaw = 1 - 2 * q.z * q.z;
+  const double sin_yaw = 2 * q.w * q.z;
 
-  geometry_msgs::msg::Transform origin_coord2origin;
-  origin_coord2origin.translation.x = origin.position.x;
-  origin_coord2origin.translation.y = origin.position.y;
-  origin_coord2origin.rotation = origin.orientation;
-  tf2::Transform tf_origin_coord2origin;
-  tf2::fromMsg(origin_coord2origin, tf_origin_coord2origin);
-  tf2::Transform tf_origin_coord2point = tf_origin_coord2origin * tf_origin2point;
+  geometry_msgs::msg::Point absolute_p;
+  absolute_p.x = point.x * cos_yaw - point.y * sin_yaw + origin.position.x;
+  absolute_p.y = point.x * sin_yaw + point.y * cos_yaw + origin.position.y;
+  absolute_p.z = point.z;
 
-  geometry_msgs::msg::Pose abs_pose;
-  tf2::toMsg(tf_origin_coord2point, abs_pose);
-  geometry_msgs::msg::Point abs_p = abs_pose.position;
-  return abs_p;
+  return absolute_p;
 }
 
 double calculate2DDistance(const geometry_msgs::msg::Point & a, const geometry_msgs::msg::Point & b)
@@ -638,28 +628,51 @@ std::vector<autoware_planning_msgs::msg::TrajectoryPoint> alignVelocityWithPoint
   int prev_begin_idx = 0;
   for (std::size_t i = 0; i < traj_points.size(); i++) {
     const auto first = points.begin() + prev_begin_idx;
+
+    // TODO(Horibe) could be replaced end() with some reasonable number to reduce computational time
     const auto last = points.end();
     const T truncated_points(first, last);
-    const int default_idx = 0;
-    const int nearest_idx =
-      util::getNearestIdx(truncated_points, traj_points[i].pose.position, default_idx);
-    traj_points[i].pose.position.z = truncated_points[nearest_idx].pose.position.z;
-    if (static_cast<int>(i) <= max_skip_comparison_idx) {
-      traj_points[i].twist.linear.x = truncated_points[nearest_idx].twist.linear.x;
-    } else {
-      traj_points[i].twist.linear.x =
-        std::fmin(truncated_points[nearest_idx].twist.linear.x, traj_points[i].twist.linear.x);
+
+    const size_t closest_seg_idx =
+      autoware_utils::findNearestSegmentIndex(truncated_points, traj_points[i].pose.position);
+    // TODO(murooka) implement calcSignedArcLength(points, idx, point)
+    const double closest_to_target_dist = autoware_utils::calcSignedArcLength(
+      truncated_points, truncated_points.at(closest_seg_idx).pose.position,
+      traj_points[i].pose.position);
+    const double seg_dist =
+      autoware_utils::calcSignedArcLength(truncated_points, closest_seg_idx, closest_seg_idx + 1);
+
+    // interpolate 1st-nearest (v1) value and 2nd-nearest value (v2)
+    const auto lerp = [&](const double v1, const double v2, const double ratio) {
+        return std::abs(seg_dist) < 1e-6 ? v2 : v1 + (v2 - v1) * ratio;
+      };
+
+    // z
+    {
+      const double closest_z = truncated_points.at(closest_seg_idx).pose.position.z;
+      const double next_z = truncated_points.at(closest_seg_idx + 1).pose.position.z;
+      traj_points[i].pose.position.z = lerp(closest_z, next_z, closest_to_target_dist / seg_dist);
     }
-    if (static_cast<int>(i) >= zero_velocity_traj_idx) {
-      traj_points[i].twist.linear.x = 0;
-    } else if (truncated_points[nearest_idx].twist.linear.x < 1e-6) {
-      if (i > 0) {
-        traj_points[i].twist.linear.x = traj_points[i - 1].twist.linear.x;
+
+    // vx
+    {
+      const double closest_vel = truncated_points[closest_seg_idx].twist.linear.x;
+      const double next_vel = truncated_points[closest_seg_idx + 1].twist.linear.x;
+      const double target_vel = lerp(closest_vel, next_vel, closest_to_target_dist / seg_dist);
+
+      if (static_cast<int>(i) >= zero_velocity_traj_idx) {
+        traj_points[i].twist.linear.x = 0;
+      } else if (target_vel < 1e-6) {
+        const auto idx = std::max(static_cast<int>(i) - 1, 0);
+        traj_points[i].twist.linear.x = traj_points[idx].twist.linear.x;
+      } else if (static_cast<int>(i) <= max_skip_comparison_idx) {
+        traj_points[i].twist.linear.x = target_vel;
       } else {
-        traj_points[i].twist.linear.x = points.front().twist.linear.x;
+        traj_points[i].twist.linear.x = std::fmin(target_vel, traj_points[i].twist.linear.x);
       }
     }
-    prev_begin_idx += nearest_idx;
+    // NOTE: closest_seg_idx is for the clipped trajectory. This operation must be "+=".
+    prev_begin_idx += closest_seg_idx;
   }
   return traj_points;
 }
@@ -881,9 +894,6 @@ int getZeroVelocityIdx(
     rclcpp::get_logger("util"), is_showing_debug_info,
     "0 m/s idx from path: %d from opt: %d total size %zu", zero_velocity_idx_from_path,
     zero_velocity_idx_from_opt_points, fine_points.size());
-  // std::cout << "zero velocity from path " << zero_velocity_idx_from_path << " from opt "
-  //           << zero_velocity_idx_from_opt_points << " total size  " << fine_points.size()
-  //           << std::endl;
   const int zero_velocity_idx =
     std::min(zero_velocity_idx_from_path, zero_velocity_idx_from_opt_points);
 

@@ -342,7 +342,7 @@ visualization_msgs::msg::MarkerArray getDebugConstrainMarkers(
     constrain_range_text_marker.lifetime = rclcpp::Duration::from_seconds(0);
     constrain_range_text_marker.header.frame_id = "map";
     constrain_range_text_marker.header.stamp = rclcpp::Time(0);
-    constrain_range_text_marker.ns = ns + "location";
+    constrain_range_text_marker.ns = ns + "_location";
     constrain_range_text_marker.action = visualization_msgs::msg::Marker::ADD;
     constrain_range_text_marker.pose.orientation.w = 1.0;
     constrain_range_text_marker.id = unique_id;

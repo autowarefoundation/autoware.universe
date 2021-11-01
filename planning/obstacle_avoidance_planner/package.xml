@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<package format="2">
+<package format="3">
   <name>obstacle_avoidance_planner</name>
   <version>0.1.0</version>
   <description>The path_planner package</description>
@@ -8,10 +8,11 @@
 
   <license>Apache License 2.0</license>
 
-  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
   <depend>autoware_perception_msgs</depend>
   <depend>autoware_planning_msgs</depend>
+  <depend>autoware_utils</depend>
   <depend>geometry_msgs</depend>
   <depend>interpolation</depend>
   <depend>nav_msgs</depend>
