@@ -7,8 +7,9 @@
 
   <arg name="vehicle_simulation" default="true" description="use vehicle simulation"/>
   <arg name="vehicle_model" description="vehicle model name"/>
-  <arg name="vehicle_model_pkg" default="$(find-pkg-share $(var vehicle_model)_description)" description="path to the directory of vehicle model package"/>
   <arg name="initial_engage_state" default="true" description="/vehicle/engage state after starting Autoware"/>
+
+  <let name="vehicle_model_pkg" value="$(find-pkg-share $(var vehicle_model)_description)"/>
 
   <group if="$(var scenario_simulation)">
     <include file="$(find-pkg-share fault_injection)/launch/fault_injection.launch.xml"/>
