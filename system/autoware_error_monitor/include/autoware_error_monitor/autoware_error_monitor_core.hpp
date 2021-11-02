@@ -15,24 +15,23 @@
 #ifndef AUTOWARE_ERROR_MONITOR__AUTOWARE_ERROR_MONITOR_CORE_HPP_
 #define AUTOWARE_ERROR_MONITOR__AUTOWARE_ERROR_MONITOR_CORE_HPP_
 
+#include <rclcpp/create_timer.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <std_srvs/srv/trigger.hpp>
+
+#include <autoware_control_msgs/msg/gate_mode.hpp>
+#include <autoware_system_msgs/msg/autoware_state.hpp>
+#include <autoware_system_msgs/msg/hazard_status_stamped.hpp>
+#include <autoware_vehicle_msgs/msg/control_mode.hpp>
+#include <diagnostic_msgs/msg/diagnostic_array.hpp>
+
+#include <boost/optional.hpp>
+
 #include <deque>
 #include <map>
 #include <string>
 #include <unordered_map>
 #include <vector>
-
-#include "boost/optional.hpp"
-
-#include "autoware_control_msgs/msg/gate_mode.hpp"
-#include "autoware_system_msgs/msg/autoware_state.hpp"
-#include "autoware_system_msgs/msg/hazard_status_stamped.hpp"
-#include "autoware_vehicle_msgs/msg/control_mode.hpp"
-
-#include "diagnostic_msgs/msg/diagnostic_array.hpp"
-#include "std_srvs/srv/trigger.hpp"
-#include "rclcpp/create_timer.hpp"
-#include "rclcpp/rclcpp.hpp"
-
 
 struct DiagStamped
 {

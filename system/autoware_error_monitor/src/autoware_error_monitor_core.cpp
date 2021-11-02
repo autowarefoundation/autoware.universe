@@ -15,16 +15,16 @@
 #include <algorithm>
 #include <memory>
 #include <regex>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
-#include <set>
 
 #define FMT_HEADER_ONLY
-#include "fmt/format.h"
-
 #include "autoware_error_monitor/autoware_error_monitor_core.hpp"
 #include "autoware_error_monitor/diagnostics_filter.hpp"
+
+#include <fmt/format.h>
 
 namespace
 {
@@ -44,9 +44,15 @@ int str2level(const std::string & level_str)
   using diagnostic_msgs::msg::DiagnosticStatus;
   using std::regex_constants::icase;
 
-  if (std::regex_match(level_str, std::regex("warn", icase))) {return DiagnosticStatus::WARN;}
-  if (std::regex_match(level_str, std::regex("error", icase))) {return DiagnosticStatus::ERROR;}
-  if (std::regex_match(level_str, std::regex("stale", icase))) {return DiagnosticStatus::STALE;}
+  if (std::regex_match(level_str, std::regex("warn", icase))) {
+    return DiagnosticStatus::WARN;
+  }
+  if (std::regex_match(level_str, std::regex("error", icase))) {
+    return DiagnosticStatus::ERROR;
+  }
+  if (std::regex_match(level_str, std::regex("stale", icase))) {
+    return DiagnosticStatus::STALE;
+  }
 
   throw std::runtime_error(fmt::format("invalid level: {}", level_str));
 }
@@ -65,10 +71,18 @@ std::vector<diagnostic_msgs::msg::DiagnosticStatus> & getTargetDiagnosticsRef(
 {
   using autoware_system_msgs::msg::HazardStatus;
 
-  if (hazard_level == HazardStatus::NO_FAULT) {return hazard_status->diagnostics_nf;}
-  if (hazard_level == HazardStatus::SAFE_FAULT) {return hazard_status->diagnostics_sf;}
-  if (hazard_level == HazardStatus::LATENT_FAULT) {return hazard_status->diagnostics_lf;}
-  if (hazard_level == HazardStatus::SINGLE_POINT_FAULT) {return hazard_status->diagnostics_spf;}
+  if (hazard_level == HazardStatus::NO_FAULT) {
+    return hazard_status->diagnostics_nf;
+  }
+  if (hazard_level == HazardStatus::SAFE_FAULT) {
+    return hazard_status->diagnostics_sf;
+  }
+  if (hazard_level == HazardStatus::LATENT_FAULT) {
+    return hazard_status->diagnostics_lf;
+  }
+  if (hazard_level == HazardStatus::SINGLE_POINT_FAULT) {
+    return hazard_status->diagnostics_spf;
+  }
 
   throw std::runtime_error(fmt::format("invalid hazard level: {}", hazard_level));
 }
@@ -82,12 +96,12 @@ diagnostic_msgs::msg::DiagnosticArray convertHazardStatusToDiagnosticArray(
   diag_array.header.stamp = clock->now();
 
   const auto decorateDiag = [](const auto & hazard_diag, const std::string & label) {
-      auto diag = hazard_diag;
+    auto diag = hazard_diag;
 
-      diag.message = label + diag.message;
+    diag.message = label + diag.message;
 
-      return diag;
-    };
+    return diag;
+  };
 
   for (const auto & hazard_diag : hazard_status.diagnostics_nf) {
     diag_array.status.push_back(decorateDiag(hazard_diag, "[No Fault]"));
@@ -173,7 +187,8 @@ int isInNoFaultCondition(
 }  // namespace
 
 AutowareErrorMonitor::AutowareErrorMonitor()
-: Node("autoware_error_monitor",
+: Node(
+    "autoware_error_monitor",
     rclcpp::NodeOptions().automatically_declare_parameters_from_overrides(true))
 {
   // Parameter
@@ -188,8 +203,7 @@ AutowareErrorMonitor::AutowareErrorMonitor()
     autoware_system_msgs::msg::HazardStatus::LATENT_FAULT);
   get_parameter_or<bool>("use_emergency_hold", params_.use_emergency_hold, false);
   get_parameter_or<bool>(
-    "use_emergency_hold_in_manual_driving",
-    params_.use_emergency_hold_in_manual_driving, false);
+    "use_emergency_hold_in_manual_driving", params_.use_emergency_hold_in_manual_driving, false);
 
   loadRequiredModules(KeyName::autonomous_driving);
   loadRequiredModules(KeyName::external_control);
@@ -198,8 +212,7 @@ AutowareErrorMonitor::AutowareErrorMonitor()
   using std::placeholders::_2;
   // Subscriber
   sub_diag_array_ = create_subscription<diagnostic_msgs::msg::DiagnosticArray>(
-    "input/diag_array", rclcpp::QoS{1},
-    std::bind(&AutowareErrorMonitor::onDiagArray, this, _1));
+    "input/diag_array", rclcpp::QoS{1}, std::bind(&AutowareErrorMonitor::onDiagArray, this, _1));
   sub_current_gate_mode_ = create_subscription<autoware_control_msgs::msg::GateMode>(
     "~/input/current_gate_mode", rclcpp::QoS{1},
     std::bind(&AutowareErrorMonitor::onCurrentGateMode, this, _1));
@@ -207,8 +220,8 @@ AutowareErrorMonitor::AutowareErrorMonitor()
     "~/input/autoware_state", rclcpp::QoS{1},
     std::bind(&AutowareErrorMonitor::onAutowareState, this, _1));
   sub_control_mode_ = create_subscription<autoware_vehicle_msgs::msg::ControlMode>(
-    "~/input/control_mode", rclcpp::QoS{1}, std::bind(
-      &AutowareErrorMonitor::onControlMode, this, _1));
+    "~/input/control_mode", rclcpp::QoS{1},
+    std::bind(&AutowareErrorMonitor::onControlMode, this, _1));
 
   // Publisher
   pub_hazard_status_ = create_publisher<autoware_system_msgs::msg::HazardStatusStamped>(
@@ -339,26 +352,22 @@ void AutowareErrorMonitor::onControlMode(
 bool AutowareErrorMonitor::isDataReady()
 {
   if (!diag_array_) {
-    RCLCPP_WARN_THROTTLE(
-      get_logger(), *get_clock(), 5000, "waiting for diag_array msg...");
+    RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for diag_array msg...");
     return false;
   }
 
   if (!current_gate_mode_) {
-    RCLCPP_INFO_THROTTLE(
-      get_logger(), *get_clock(), 5000, "waiting for current_gate_mode msg...");
+    RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for current_gate_mode msg...");
     return false;
   }
 
   if (!autoware_state_) {
-    RCLCPP_INFO_THROTTLE(
-      get_logger(), *get_clock(), 5000, "waiting for autoware_state msg...");
+    RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for autoware_state msg...");
     return false;
   }
 
   if (!control_mode_) {
-    RCLCPP_INFO_THROTTLE(
-      get_logger(), *get_clock(), 5000, "waiting for control_mode msg...");
+    RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for control_mode msg...");
     return false;
   }
   return true;
@@ -376,15 +385,16 @@ void AutowareErrorMonitor::onTimer()
     return;
   }
 
-  current_mode_ = current_gate_mode_->data == autoware_control_msgs::msg::GateMode::AUTO ?
-    KeyName::autonomous_driving : KeyName::external_control;
+  current_mode_ = current_gate_mode_->data == autoware_control_msgs::msg::GateMode::AUTO
+                    ? KeyName::autonomous_driving
+                    : KeyName::external_control;
 
   updateHazardStatus();
   publishHazardStatus(hazard_status_);
 }
 
-boost::optional<DiagStamped> AutowareErrorMonitor::getLatestDiag(const std::string & diag_name)
-const
+boost::optional<DiagStamped> AutowareErrorMonitor::getLatestDiag(
+  const std::string & diag_name) const
 {
   if (diag_buffer_map_.count(diag_name) == 0) {
     return {};
@@ -404,9 +414,15 @@ int AutowareErrorMonitor::getHazardLevel(
 {
   using autoware_system_msgs::msg::HazardStatus;
 
-  if (isOverLevel(diag_level, required_module.spf_at)) {return HazardStatus::SINGLE_POINT_FAULT;}
-  if (isOverLevel(diag_level, required_module.lf_at)) {return HazardStatus::LATENT_FAULT;}
-  if (isOverLevel(diag_level, required_module.sf_at)) {return HazardStatus::SAFE_FAULT;}
+  if (isOverLevel(diag_level, required_module.spf_at)) {
+    return HazardStatus::SINGLE_POINT_FAULT;
+  }
+  if (isOverLevel(diag_level, required_module.lf_at)) {
+    return HazardStatus::LATENT_FAULT;
+  }
+  if (isOverLevel(diag_level, required_module.sf_at)) {
+    return HazardStatus::SAFE_FAULT;
+  }
 
   return HazardStatus::NO_FAULT;
 }
@@ -422,8 +438,7 @@ void AutowareErrorMonitor::appendHazardDiag(
 
   if (params_.add_leaf_diagnostics) {
     for (const auto & diag :
-      diagnostics_filter::extractLeafChildrenDiagnostics(hazard_diag, diag_array_->status))
-    {
+         diagnostics_filter::extractLeafChildrenDiagnostics(hazard_diag, diag_array_->status)) {
       target_diagnostics_ref.push_back(diag);
     }
   }
