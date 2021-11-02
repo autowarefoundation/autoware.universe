@@ -14,15 +14,14 @@
 
 #include "matching_score/matching_score.hpp"
 
-#include "pcl/point_types.h"
+#include <pcl/point_types.h>
 
-template<class PointType>
-MatchingScore<PointType>::MatchingScore()
-: fermi_kT_(0.05), fermi_mu_(0.25)
+template <class PointType>
+MatchingScore<PointType>::MatchingScore() : fermi_kT_(0.05), fermi_mu_(0.25)
 {
 }
 
-template<class PointType>
+template <class PointType>
 void MatchingScore<PointType>::setInputTarget(
   const boost::shared_ptr<pcl::PointCloud<PointType> const> & pointcloud_ptr)
 {
@@ -33,14 +32,14 @@ void MatchingScore<PointType>::setInputTarget(
   }
 }
 
-template<class PointType>
+template <class PointType>
 void MatchingScore<PointType>::setSearchMethodTarget(
   const boost::shared_ptr<pcl::search::KdTree<PointType>> & tree_ptr)
 {
   tree_ptr_ = tree_ptr;
 }
 
-template<class PointType>
+template <class PointType>
 double MatchingScore<PointType>::calcMatchingScore(
   const boost::shared_ptr<pcl::PointCloud<PointType> const> & pointcloud_ptr)
 {
@@ -57,14 +56,14 @@ double MatchingScore<PointType>::calcMatchingScore(
   return score;
 }
 
-template<class PointType>
+template <class PointType>
 double MatchingScore<PointType>::calcFermiDistributionFunction(
   const double x, const double kT, const double mu)
 {
   return 1.0 / (std::exp((x - mu) / kT) + 1.0);
 }
 
-template<class PointType>
+template <class PointType>
 std::vector<PointWithDistance<PointType>> MatchingScore<PointType>::convertPointWithDistance(
   const boost::shared_ptr<pcl::PointCloud<PointType> const> & pointcloud_ptr)
 {

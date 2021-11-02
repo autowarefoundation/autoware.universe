@@ -15,19 +15,20 @@
 #ifndef NDT_SCAN_MATCHER__UTIL_FUNC_HPP_
 #define NDT_SCAN_MATCHER__UTIL_FUNC_HPP_
 
+#include <geometry_msgs/msg/pose_array.hpp>
+#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
+#include <std_msgs/msg/color_rgba.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
+
+#include <tf2_eigen/tf2_eigen.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+
 #include <algorithm>
 #include <cmath>
 #include <deque>
 #include <random>
-
-#include "tf2_eigen/tf2_eigen.h"
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-
-#include "geometry_msgs/msg/pose_array.hpp"
-#include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
-#include "geometry_msgs/msg/twist_stamped.hpp"
-#include "std_msgs/msg/color_rgba.hpp"
-#include "visualization_msgs/msg/marker_array.hpp"
+#include <vector>
 
 // ref by http://takacity.blog.fc2.com/blog-entry-69.html
 std_msgs::msg::ColorRGBA ExchangeColorCrc(double x);
@@ -44,7 +45,7 @@ geometry_msgs::msg::Twist calcTwist(
 
 void getNearestTimeStampPose(
   const std::deque<geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr> &
-  pose_cov_msg_ptr_array,
+    pose_cov_msg_ptr_array,
   const rclcpp::Time & time_stamp,
   geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr & output_old_pose_cov_msg_ptr,
   geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr & output_new_pose_cov_msg_ptr);
@@ -55,12 +56,11 @@ geometry_msgs::msg::PoseStamped interpolatePose(
 
 geometry_msgs::msg::PoseStamped interpolatePose(
   const geometry_msgs::msg::PoseWithCovarianceStamped & pose_a,
-  const geometry_msgs::msg::PoseWithCovarianceStamped & pose_b,
-  const rclcpp::Time & time_stamp);
+  const geometry_msgs::msg::PoseWithCovarianceStamped & pose_b, const rclcpp::Time & time_stamp);
 
 void popOldPose(
   std::deque<geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr> &
-  pose_cov_msg_ptr_array,
+    pose_cov_msg_ptr_array,
   const rclcpp::Time & time_stamp);
 
 Eigen::Affine3d fromRosPoseToEigen(const geometry_msgs::msg::Pose & ros_pose);
@@ -69,7 +69,7 @@ geometry_msgs::msg::PoseArray createRandomPoseArray(
   const geometry_msgs::msg::PoseWithCovarianceStamped & base_pose_with_cov,
   const size_t particle_num);
 
-template<class T>
+template <class T>
 T transform(const T & input, const geometry_msgs::msg::TransformStamped & transform)
 {
   T output;

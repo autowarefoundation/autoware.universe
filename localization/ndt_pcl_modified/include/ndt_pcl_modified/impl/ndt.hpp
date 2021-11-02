@@ -54,7 +54,10 @@
 #ifndef PCL_REGISTRATION_NDT_MODIFIED_IMPL_H_
 #define PCL_REGISTRATION_NDT_MODIFIED_IMPL_H_
 
-template<typename PointSource, typename PointTarget>
+#include <algorithm>
+#include <vector>
+
+template <typename PointSource, typename PointTarget>
 void pcl::NormalDistributionsTransformModified<PointSource, PointTarget>::computeTransformation(
   PointCloudSource & output, const Eigen::Matrix4f & guess)
 {
@@ -96,8 +99,8 @@ void pcl::NormalDistributionsTransformModified<PointSource, PointTarget>::comput
 
   double score = 0;
   double delta_p_norm;
-  // Calculate derivatives of initial transform vector, subsequent derivative calculations are done in the step length
-  // determination.
+  // Calculate derivatives of initial transform vector, subsequent derivative calculations are done
+  // in the step length determination.
   score = NormalDistributionsTransformModified<PointSource, PointTarget>::computeDerivatives(
     score_gradient, hessian, output, p);
 
@@ -155,12 +158,12 @@ void pcl::NormalDistributionsTransformModified<PointSource, PointTarget>::comput
 
     transformation_ =
       (Eigen::Translation<float, 3>(
-        static_cast<float>(delta_p(0)), static_cast<float>(delta_p(1)),
-        static_cast<float>(delta_p(2))) *
-      Eigen::AngleAxis<float>(static_cast<float>(delta_p(3)), Eigen::Vector3f::UnitX()) *
-      Eigen::AngleAxis<float>(static_cast<float>(delta_p(4)), Eigen::Vector3f::UnitY()) *
-      Eigen::AngleAxis<float>(static_cast<float>(delta_p(5)), Eigen::Vector3f::UnitZ()))
-      .matrix();
+         static_cast<float>(delta_p(0)), static_cast<float>(delta_p(1)),
+         static_cast<float>(delta_p(2))) *
+       Eigen::AngleAxis<float>(static_cast<float>(delta_p(3)), Eigen::Vector3f::UnitX()) *
+       Eigen::AngleAxis<float>(static_cast<float>(delta_p(4)), Eigen::Vector3f::UnitY()) *
+       Eigen::AngleAxis<float>(static_cast<float>(delta_p(5)), Eigen::Vector3f::UnitZ()))
+        .matrix();
 
     transformation_array_.push_back(final_transformation_);
     p = p + delta_p;
@@ -172,23 +175,22 @@ void pcl::NormalDistributionsTransformModified<PointSource, PointTarget>::comput
 
     if (
       nr_iterations_ > max_iterations_ || (converged_rotation && nr_iterations_ &&
-      (std::fabs(delta_p_norm) < transformation_epsilon_)))
-    {
+                                           (std::fabs(delta_p_norm) < transformation_epsilon_))) {
       converged_ = true;
     }
 
     nr_iterations_++;
   }
 
-  // Store transformation probability.  The realtive differences within each scan registration are accurate
-  // but the normalization constants need to be modified for it to be globally accurate
+  // Store transformation probability.  The realtive differences within each scan registration are
+  // accurate but the normalization constants need to be modified for it to be globally accurate
   trans_probability_ = score / static_cast<double>(input_->points.size());
 
   hessian_ = hessian;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-template<typename PointSource, typename PointTarget>
+template <typename PointSource, typename PointTarget>
 double pcl::NormalDistributionsTransformModified<PointSource, PointTarget>::computeStepLengthMT(
   const Eigen::Matrix<double, 6, 1> & x, Eigen::Matrix<double, 6, 1> & step_dir, double step_init,
   double step_max, double step_min, double & score, Eigen::Matrix<double, 6, 1> & score_gradient,
@@ -225,22 +227,24 @@ double pcl::NormalDistributionsTransformModified<PointSource, PointTarget>::comp
   // Initial endpoints of Interval I,
   double a_l = 0, a_u = 0;
 
-  // Auxiliary function psi is used until I is determined ot be a closed interval, Equation 2.1 [More, Thuente 1994]
+  // Auxiliary function psi is used until I is determined ot be a closed interval, Equation 2.1
+  // [More, Thuente 1994]
   double f_l =
     NormalDistributionsTransformModified<PointSource, PointTarget>::auxilaryFunction_PsiMT(
-    a_l, phi_0, phi_0, d_phi_0, mu);
+      a_l, phi_0, phi_0, d_phi_0, mu);
   double g_l =
     NormalDistributionsTransformModified<PointSource, PointTarget>::auxilaryFunction_dPsiMT(
-    d_phi_0, d_phi_0, mu);
+      d_phi_0, d_phi_0, mu);
 
   double f_u =
     NormalDistributionsTransformModified<PointSource, PointTarget>::auxilaryFunction_PsiMT(
-    a_u, phi_0, phi_0, d_phi_0, mu);
+      a_u, phi_0, phi_0, d_phi_0, mu);
   double g_u =
     NormalDistributionsTransformModified<PointSource, PointTarget>::auxilaryFunction_dPsiMT(
-    d_phi_0, d_phi_0, mu);
+      d_phi_0, d_phi_0, mu);
 
-  // Check used to allow More-Thuente step length calculation to be skipped by making step_min == step_max
+  // Check used to allow More-Thuente step length calculation to be skipped by making step_min ==
+  // step_max
   bool interval_converged = (step_max - step_min) > 0, open_interval = true;
 
   double a_t = step_init;
@@ -251,18 +255,18 @@ double pcl::NormalDistributionsTransformModified<PointSource, PointTarget>::comp
 
   final_transformation_ =
     (Eigen::Translation<float, 3>(
-      static_cast<float>(x_t(0)), static_cast<float>(x_t(1)), static_cast<float>(x_t(2))) *
-    Eigen::AngleAxis<float>(static_cast<float>(x_t(3)), Eigen::Vector3f::UnitX()) *
-    Eigen::AngleAxis<float>(static_cast<float>(x_t(4)), Eigen::Vector3f::UnitY()) *
-    Eigen::AngleAxis<float>(static_cast<float>(x_t(5)), Eigen::Vector3f::UnitZ()))
-    .matrix();
+       static_cast<float>(x_t(0)), static_cast<float>(x_t(1)), static_cast<float>(x_t(2))) *
+     Eigen::AngleAxis<float>(static_cast<float>(x_t(3)), Eigen::Vector3f::UnitX()) *
+     Eigen::AngleAxis<float>(static_cast<float>(x_t(4)), Eigen::Vector3f::UnitY()) *
+     Eigen::AngleAxis<float>(static_cast<float>(x_t(5)), Eigen::Vector3f::UnitZ()))
+      .matrix();
 
   // New transformed point cloud
   transformPointCloud(*input_, trans_cloud, final_transformation_);
 
-  // Updates score, gradient and hessian.  Hessian calculation is unnecessary but testing showed that most step
-  // calculations use the initial step suggestion and recalculation the reusable portions of the hessian would intail
-  // more computation time.
+  // Updates score, gradient and hessian.  Hessian calculation is unnecessary but testing showed
+  // that most step calculations use the initial step suggestion and recalculation the reusable
+  // portions of the hessian would intail more computation time.
   score = NormalDistributionsTransformModified<PointSource, PointTarget>::computeDerivatives(
     score_gradient, hessian, trans_cloud, x_t, true);
 
@@ -274,17 +278,17 @@ double pcl::NormalDistributionsTransformModified<PointSource, PointTarget>::comp
   // Calculate psi(alpha_t)
   double psi_t =
     NormalDistributionsTransformModified<PointSource, PointTarget>::auxilaryFunction_PsiMT(
-    a_t, phi_t, phi_0, d_phi_0, mu);
+      a_t, phi_t, phi_0, d_phi_0, mu);
   // Calculate psi'(alpha_t)
   double d_psi_t =
     NormalDistributionsTransformModified<PointSource, PointTarget>::auxilaryFunction_dPsiMT(
-    d_phi_t, d_phi_0, mu);
+      d_phi_t, d_phi_0, mu);
 
-  // Iterate until max number of iterations, interval convergence or a value satisfies the sufficient decrease,
-  // Equation 1.1, and curvature condition, Equation 1.2 [More, Thuente 1994]
+  // Iterate until max number of iterations, interval convergence or a value satisfies the
+  // sufficient decrease, Equation 1.1, and curvature condition, Equation 1.2 [More, Thuente 1994]
 
   while (!interval_converged && step_iterations < max_step_iterations &&
-    !(psi_t <= 0 /*Sufficient Decrease*/ && d_phi_t <= -nu * d_phi_0 /*Curvature Condition*/))
+         !(psi_t <= 0 /*Sufficient Decrease*/ && d_phi_t <= -nu * d_phi_0 /*Curvature Condition*/))
   // while (!interval_converged && step_iterations < max_step_iterations && !(psi_t <= 0))
   {
     // Use auxiliary function if interval I is not closed
@@ -303,11 +307,11 @@ double pcl::NormalDistributionsTransformModified<PointSource, PointTarget>::comp
 
     final_transformation_ =
       (Eigen::Translation<float, 3>(
-        static_cast<float>(x_t(0)), static_cast<float>(x_t(1)), static_cast<float>(x_t(2))) *
-      Eigen::AngleAxis<float>(static_cast<float>(x_t(3)), Eigen::Vector3f::UnitX()) *
-      Eigen::AngleAxis<float>(static_cast<float>(x_t(4)), Eigen::Vector3f::UnitY()) *
-      Eigen::AngleAxis<float>(static_cast<float>(x_t(5)), Eigen::Vector3f::UnitZ()))
-      .matrix();
+         static_cast<float>(x_t(0)), static_cast<float>(x_t(1)), static_cast<float>(x_t(2))) *
+       Eigen::AngleAxis<float>(static_cast<float>(x_t(3)), Eigen::Vector3f::UnitX()) *
+       Eigen::AngleAxis<float>(static_cast<float>(x_t(4)), Eigen::Vector3f::UnitY()) *
+       Eigen::AngleAxis<float>(static_cast<float>(x_t(5)), Eigen::Vector3f::UnitZ()))
+        .matrix();
 
     // New transformed point cloud
     // Done on final cloud to prevent wasted computation
@@ -328,7 +332,7 @@ double pcl::NormalDistributionsTransformModified<PointSource, PointTarget>::comp
     // Calculate psi'(alpha_t+)
     d_psi_t =
       NormalDistributionsTransformModified<PointSource, PointTarget>::auxilaryFunction_dPsiMT(
-      d_phi_t, d_phi_0, mu);
+        d_phi_t, d_phi_0, mu);
 
     // Check if I is now a closed interval
     if (open_interval && (psi_t <= 0 && d_psi_t >= 0)) {
@@ -347,12 +351,12 @@ double pcl::NormalDistributionsTransformModified<PointSource, PointTarget>::comp
       // Update interval end points using Updating Algorithm [More, Thuente 1994]
       interval_converged =
         NormalDistributionsTransformModified<PointSource, PointTarget>::updateIntervalMT(
-        a_l, f_l, g_l, a_u, f_u, g_u, a_t, psi_t, d_psi_t);
+          a_l, f_l, g_l, a_u, f_u, g_u, a_t, psi_t, d_psi_t);
     } else {
       // Update interval end points using Modified Updating Algorithm [More, Thuente 1994]
       interval_converged =
         NormalDistributionsTransformModified<PointSource, PointTarget>::updateIntervalMT(
-        a_l, f_l, g_l, a_u, f_u, g_u, a_t, phi_t, d_phi_t);
+          a_l, f_l, g_l, a_u, f_u, g_u, a_t, phi_t, d_phi_t);
     }
 
     step_iterations++;

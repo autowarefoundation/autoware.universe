@@ -17,7 +17,7 @@
 
 #include "ndt/base.hpp"
 
-template<class PointSource, class PointTarget>
+template <class PointSource, class PointTarget>
 NormalDistributionsTransformBase<PointSource, PointTarget>::NormalDistributionsTransformBase()
 {
 }

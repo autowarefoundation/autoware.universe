@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "ndt/omp.hpp"
+
 #include "ndt/impl/omp.hpp"
 
 template class NormalDistributionsTransformOMP<pcl::PointXYZ, pcl::PointXYZ>;

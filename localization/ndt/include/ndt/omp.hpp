@@ -17,14 +17,16 @@
 
 #include "ndt/base.hpp"
 
-#include "pclomp/ndt_omp.h"
-#include "pcl/io/io.h"
-#include "pcl/io/pcd_io.h"
-#include "pcl/point_types.h"
+#include <pcl/io/io.h>
+#include <pcl/io/pcd_io.h>
+#include <pcl/point_types.h>
+#include <pclomp/ndt_omp.h>
 
-template<class PointSource, class PointTarget>
+#include <vector>
+
+template <class PointSource, class PointTarget>
 class NormalDistributionsTransformOMP
-  : public NormalDistributionsTransformBase<PointSource, PointTarget>
+: public NormalDistributionsTransformBase<PointSource, PointTarget>
 {
 public:
   NormalDistributionsTransformOMP();

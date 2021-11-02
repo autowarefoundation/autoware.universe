@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "ndt/base.hpp"
+
 #include "ndt/impl/base.hpp"
 
 template class NormalDistributionsTransformBase<pcl::PointXYZ, pcl::PointXYZ>;

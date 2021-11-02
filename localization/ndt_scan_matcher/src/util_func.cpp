@@ -1,4 +1,19 @@
+// Copyright 2015-2019 Autoware Foundation
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 #include "ndt_scan_matcher/util_func.hpp"
+
 #include "ndt_scan_matcher/matrix_type.hpp"
 
 static std::random_device seed_gen;
@@ -103,7 +118,7 @@ geometry_msgs::msg::Twist calcTwist(
 
 void getNearestTimeStampPose(
   const std::deque<geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr> &
-  pose_cov_msg_ptr_array,
+    pose_cov_msg_ptr_array,
   const rclcpp::Time & time_stamp,
   geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr & output_old_pose_cov_msg_ptr,
   geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr & output_new_pose_cov_msg_ptr)
@@ -113,7 +128,7 @@ void getNearestTimeStampPose(
       std::const_pointer_cast<geometry_msgs::msg::PoseWithCovarianceStamped>(pose_cov_msg_ptr);
     const rclcpp::Time pose_time_stamp = output_new_pose_cov_msg_ptr->header.stamp;
     if (pose_time_stamp > time_stamp) {
-      // TODO refactor
+      // TODO(Tier IV): refactor
       if (pose_time_stamp.seconds() == 0.0) {
         output_old_pose_cov_msg_ptr = output_new_pose_cov_msg_ptr;
       }
@@ -129,9 +144,9 @@ geometry_msgs::msg::PoseStamped interpolatePose(
 {
   const rclcpp::Time pose_a_time_stamp = pose_a.header.stamp;
   const rclcpp::Time pose_b_time_stamp = pose_b.header.stamp;
-  if ((pose_a_time_stamp.seconds() == 0.0) || (pose_b_time_stamp.seconds() == 0.0) ||
-    (time_stamp.seconds() == 0.0))
-  {
+  if (
+    (pose_a_time_stamp.seconds() == 0.0) || (pose_b_time_stamp.seconds() == 0.0) ||
+    (time_stamp.seconds() == 0.0)) {
     return geometry_msgs::msg::PoseStamped();
   }
 
@@ -164,8 +179,7 @@ geometry_msgs::msg::PoseStamped interpolatePose(
 
 geometry_msgs::msg::PoseStamped interpolatePose(
   const geometry_msgs::msg::PoseWithCovarianceStamped & pose_a,
-  const geometry_msgs::msg::PoseWithCovarianceStamped & pose_b,
-  const rclcpp::Time & time_stamp)
+  const geometry_msgs::msg::PoseWithCovarianceStamped & pose_b, const rclcpp::Time & time_stamp)
 {
   geometry_msgs::msg::PoseStamped tmp_pose_a;
   tmp_pose_a.header = pose_a.header;
@@ -180,7 +194,7 @@ geometry_msgs::msg::PoseStamped interpolatePose(
 
 void popOldPose(
   std::deque<geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr> &
-  pose_cov_msg_ptr_array,
+    pose_cov_msg_ptr_array,
   const rclcpp::Time & time_stamp)
 {
   while (!pose_cov_msg_ptr_array.empty()) {
@@ -203,9 +217,8 @@ geometry_msgs::msg::PoseArray createRandomPoseArray(
   const size_t particle_num)
 {
   std::default_random_engine engine(seed_gen());
-  const Eigen::Map<const RowMatrixXd> covariance = makeEigenCovariance(
-    base_pose_with_cov.pose.covariance
-  );
+  const Eigen::Map<const RowMatrixXd> covariance =
+    makeEigenCovariance(base_pose_with_cov.pose.covariance);
 
   std::normal_distribution<> x_distribution(0.0, covariance(0, 0));
   std::normal_distribution<> y_distribution(0.0, covariance(1, 1));

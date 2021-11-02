@@ -15,19 +15,20 @@
 #ifndef MATCHING_SCORE_H
 #define MATCHING_SCORE_H
 
-#include "pcl/search/kdtree.h"
+#include <pcl/search/kdtree.h>
 
-template<class PointType>
+#include <vector>
+
+template <class PointType>
 struct PointWithDistance
 {
-  PointWithDistance()
-  : distance(0.0) {}
+  PointWithDistance() : distance(0.0) {}
 
   PointType point;
   double distance;
 };
 
-template<class PointType>
+template <class PointType>
 class MatchingScore
 {
 public:
@@ -38,13 +39,13 @@ public:
   double calcMatchingScore(
     const boost::shared_ptr<pcl::PointCloud<PointType> const> & pointcloud_ptr);
 
-  void setFermikT(const double fermi_kT) {fermi_kT_ = fermi_kT;}
+  void setFermikT(const double fermi_kT) { fermi_kT_ = fermi_kT; }
 
-  double getFermikT() const {return fermi_kT_;}
+  double getFermikT() const { return fermi_kT_; }
 
-  void setFermiMu(const double fermi_mu) {fermi_mu_ = fermi_mu;}
+  void setFermiMu(const double fermi_mu) { fermi_mu_ = fermi_mu; }
 
-  double getFermiMu() const {return fermi_mu_;}
+  double getFermiMu() const { return fermi_mu_; }
 
   std::vector<PointWithDistance<PointType>> getPointWithDistanceArray() const
   {

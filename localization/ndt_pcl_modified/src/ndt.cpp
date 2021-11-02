@@ -37,10 +37,11 @@
  *
  */
 
-#include "pcl/point_types.h"
-#include "pcl/impl/instantiate.hpp"
-
 #include "ndt_pcl_modified/ndt.hpp"
+
+#include <pcl/impl/instantiate.hpp>
+
+#include <pcl/point_types.h>
 
 template class PCL_EXPORTS pcl::NormalDistributionsTransformModified<pcl::PointXYZ, pcl::PointXYZ>;
 template class PCL_EXPORTS
