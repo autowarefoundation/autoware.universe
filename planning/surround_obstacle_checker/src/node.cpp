@@ -12,23 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "surround_obstacle_checker/node.hpp"
+
+#include <pcl/common/transforms.h>
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl_conversions/pcl_conversions.h>
+#include <tf2_eigen/tf2_eigen.h>
+
 #include <algorithm>
 #include <functional>
 #include <limits>
 #include <memory>
 #include <string>
 
-#include "pcl/common/transforms.h"
-#include "pcl/point_cloud.h"
-#include "pcl/point_types.h"
-#include "pcl_conversions/pcl_conversions.h"
-#include "tf2_eigen/tf2_eigen.h"
-
-#include "surround_obstacle_checker/node.hpp"
-
 #define EIGEN_MPL2_ONLY
-#include "Eigen/Core"
-#include "Eigen/Geometry"
+#include <Eigen/Core>
+#include <Eigen/Geometry>
 
 SurroundObstacleCheckerNode::SurroundObstacleCheckerNode(const rclcpp::NodeOptions & node_options)
 : Node("surround_obstacle_checker_node", node_options),
@@ -63,8 +63,8 @@ SurroundObstacleCheckerNode::SurroundObstacleCheckerNode(const rclcpp::NodeOptio
     std::bind(&SurroundObstacleCheckerNode::pointCloudCallback, this, std::placeholders::_1));
   dynamic_object_sub_ =
     this->create_subscription<autoware_perception_msgs::msg::DynamicObjectArray>(
-    "~/input/objects", 1,
-    std::bind(&SurroundObstacleCheckerNode::dynamicObjectCallback, this, std::placeholders::_1));
+      "~/input/objects", 1,
+      std::bind(&SurroundObstacleCheckerNode::dynamicObjectCallback, this, std::placeholders::_1));
   current_velocity_sub_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
     "~/input/twist", 1,
     std::bind(&SurroundObstacleCheckerNode::currentVelocityCallback, this, std::placeholders::_1));
@@ -75,22 +75,19 @@ void SurroundObstacleCheckerNode::pathCallback(
 {
   if (use_pointcloud_ && !pointcloud_ptr_) {
     RCLCPP_WARN_THROTTLE(
-      this->get_logger(), *this->get_clock(), 1000 /* ms */,
-      "waiting for pointcloud info...");
+      this->get_logger(), *this->get_clock(), 1000 /* ms */, "waiting for pointcloud info...");
     return;
   }
 
   if (use_dynamic_object_ && !object_ptr_) {
     RCLCPP_WARN_THROTTLE(
-      this->get_logger(), *this->get_clock(), 1000 /* ms */,
-      "waiting for dynamic object info...");
+      this->get_logger(), *this->get_clock(), 1000 /* ms */, "waiting for dynamic object info...");
     return;
   }
 
   if (!current_velocity_ptr_) {
     RCLCPP_WARN_THROTTLE(
-      this->get_logger(), *this->get_clock(), 1000 /* ms */,
-      "waiting for current velocity...");
+      this->get_logger(), *this->get_clock(), 1000 /* ms */, "waiting for current velocity...");
     return;
   }
 
@@ -174,13 +171,12 @@ void SurroundObstacleCheckerNode::insertStopVelocity(
 }
 
 bool SurroundObstacleCheckerNode::getPose(
-  const std::string & source, const std::string & target,
-  geometry_msgs::msg::Pose & pose)
+  const std::string & source, const std::string & target, geometry_msgs::msg::Pose & pose)
 {
   try {
     // get transform from source to target
-    geometry_msgs::msg::TransformStamped ros_src2tgt = tf_buffer_.lookupTransform(
-      source, target, tf2::TimePointZero);
+    geometry_msgs::msg::TransformStamped ros_src2tgt =
+      tf_buffer_.lookupTransform(source, target, tf2::TimePointZero);
     // convert geometry_msgs::msg::Transform to geometry_msgs::msg::Pose
     tf2::Transform transform;
     tf2::fromMsg(ros_src2tgt.transform, transform);
@@ -201,8 +197,8 @@ bool SurroundObstacleCheckerNode::convertPose(
   tf2::Transform src2tgt;
   try {
     // get transform from source to target
-    geometry_msgs::msg::TransformStamped ros_src2tgt = tf_buffer_.lookupTransform(
-      source, target, time, tf2::durationFromSec(0.1));
+    geometry_msgs::msg::TransformStamped ros_src2tgt =
+      tf_buffer_.lookupTransform(source, target, time, tf2::durationFromSec(0.1));
     tf2::fromMsg(ros_src2tgt.transform, src2tgt);
   } catch (tf2::TransformException & ex) {
     RCLCPP_WARN_STREAM_THROTTLE(
@@ -293,8 +289,7 @@ void SurroundObstacleCheckerNode::getNearestObstacleByDynamicObject(
     // change frame of obj_pose to base_link
     geometry_msgs::msg::Pose pose_baselink;
     if (!convertPose(
-        obj.state.pose_covariance.pose, obj_frame, "base_link", obj_time, pose_baselink))
-    {
+          obj.state.pose_covariance.pose, obj_frame, "base_link", obj_time, pose_baselink)) {
       return;
     }
 
@@ -410,7 +405,7 @@ Polygon2d SurroundObstacleCheckerNode::createObjPolygon(
 
   // rotate polygon(yaw)
   boost::geometry::strategy::transform::rotate_transformer<boost::geometry::radian, double, 2, 2>
-  rotate(-yaw);    // anti-clockwise -> :clockwise rotation
+    rotate(-yaw);  // anti-clockwise -> :clockwise rotation
   Polygon2d rotate_obj_poly;
   boost::geometry::transform(obj_poly, rotate_obj_poly, rotate);
 
@@ -438,7 +433,7 @@ Polygon2d SurroundObstacleCheckerNode::createObjPolygon(
 
   // rotate polygon(yaw)
   boost::geometry::strategy::transform::rotate_transformer<boost::geometry::radian, double, 2, 2>
-  rotate(-yaw);    // anti-clockwise -> :clockwise rotation
+    rotate(-yaw);  // anti-clockwise -> :clockwise rotation
   Polygon2d rotate_obj_poly;
   boost::geometry::transform(obj_poly, rotate_obj_poly, rotate);
 
@@ -467,12 +462,12 @@ std::string SurroundObstacleCheckerNode::jsonDumpsPose(const geometry_msgs::msg:
 {
   const std::string json_dumps_pose =
     (boost::format(
-      R"({"position":{"x":%lf,"y":%lf,"z":%lf},"orientation":{"w":%lf,"x":%lf,"y":%lf,"z":%lf}})") %
-    pose.position.x % pose.position.y % pose.position.z % pose.orientation.w % pose.orientation.x %
-    pose.orientation.y % pose.orientation.z)
-    .str();
+       R"({"position":{"x":%lf,"y":%lf,"z":%lf},"orientation":{"w":%lf,"x":%lf,"y":%lf,"z":%lf}})") %
+     pose.position.x % pose.position.y % pose.position.z % pose.orientation.w % pose.orientation.x %
+     pose.orientation.y % pose.orientation.z)
+      .str();
   return json_dumps_pose;
 }
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(SurroundObstacleCheckerNode)

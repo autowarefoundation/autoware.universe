@@ -15,31 +15,33 @@
 #ifndef SURROUND_OBSTACLE_CHECKER__NODE_HPP_
 #define SURROUND_OBSTACLE_CHECKER__NODE_HPP_
 
+#include "surround_obstacle_checker/debug_marker.hpp"
+
+#include <rclcpp/rclcpp.hpp>
+#include <vehicle_info_util/vehicle_info_util.hpp>
+
+#include <autoware_perception_msgs/msg/dynamic_object_array.hpp>
+#include <autoware_planning_msgs/msg/trajectory.hpp>
+#include <diagnostic_msgs/msg/diagnostic_status.hpp>
+#include <diagnostic_msgs/msg/key_value.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
+
+#include <boost/assert.hpp>
+#include <boost/assign/list_of.hpp>
+#include <boost/format.hpp>
+#include <boost/geometry.hpp>
+#include <boost/geometry/geometries/linestring.hpp>
+#include <boost/geometry/geometries/point_xy.hpp>
+
+#include <pcl_conversions/pcl_conversions.h>
+#include <tf2/utils.h>
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
+
 #include <memory>
 #include <string>
-
-#include "pcl_conversions/pcl_conversions.h"
-#include "tf2/utils.h"
-#include "tf2_ros/buffer.h"
-#include "tf2_ros/transform_listener.h"
-#include "boost/assert.hpp"
-#include "boost/assign/list_of.hpp"
-#include "boost/format.hpp"
-#include "boost/geometry.hpp"
-#include "boost/geometry/geometries/linestring.hpp"
-#include "boost/geometry/geometries/point_xy.hpp"
-#include "diagnostic_msgs/msg/diagnostic_status.hpp"
-#include "diagnostic_msgs/msg/key_value.hpp"
-#include "geometry_msgs/msg/twist_stamped.hpp"
-#include "rclcpp/rclcpp.hpp"
-#include "sensor_msgs/msg/point_cloud2.hpp"
-#include "vehicle_info_util/vehicle_info_util.hpp"
-#include "visualization_msgs/msg/marker_array.hpp"
-
-#include "autoware_perception_msgs/msg/dynamic_object_array.hpp"
-#include "autoware_planning_msgs/msg/trajectory.hpp"
-
-#include "surround_obstacle_checker/debug_marker.hpp"
 
 using Point2d = boost::geometry::model::d2::point_xy<double>;
 using Polygon2d =
@@ -63,8 +65,7 @@ private:
     const geometry_msgs::msg::Pose & pose, const std::string & source, const std::string & target,
     const rclcpp::Time & time, geometry_msgs::msg::Pose & conv_pose);
   bool getPose(
-    const std::string & source, const std::string & target,
-    geometry_msgs::msg::Pose & pose);
+    const std::string & source, const std::string & target, geometry_msgs::msg::Pose & pose);
   void getNearestObstacle(double * min_dist_to_obj, geometry_msgs::msg::Point * nearest_obj_point);
   void getNearestObstacleByPointCloud(
     double * min_dist_to_obj, geometry_msgs::msg::Point * nearest_obj_point);

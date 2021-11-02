@@ -15,14 +15,15 @@
 #ifndef SURROUND_OBSTACLE_CHECKER__DEBUG_MARKER_HPP_
 #define SURROUND_OBSTACLE_CHECKER__DEBUG_MARKER_HPP_
 
+#include <rclcpp/rclcpp.hpp>
+
+#include <autoware_planning_msgs/msg/stop_reason_array.hpp>
+#include <geometry_msgs/msg/pose.hpp>
+#include <visualization_msgs/msg/marker.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
+
 #include <memory>
 #include <string>
-
-#include "autoware_planning_msgs/msg/stop_reason_array.hpp"
-#include "geometry_msgs/msg/pose.hpp"
-#include "rclcpp/rclcpp.hpp"
-#include "visualization_msgs/msg/marker.hpp"
-#include "visualization_msgs/msg/marker_array.hpp"
 
 enum class PoseType : int8_t { NoStart = 0 };
 enum class PointType : int8_t { NoStart = 0 };

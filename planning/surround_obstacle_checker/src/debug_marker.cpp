@@ -14,9 +14,9 @@
 
 #include "surround_obstacle_checker/debug_marker.hpp"
 
-#include <memory>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
-#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
+#include <memory>
 
 SurroundObstacleCheckerDebugNode::SurroundObstacleCheckerDebugNode(
   const double base_link2front, const rclcpp::Clock::SharedPtr clock, rclcpp::Node & node)
