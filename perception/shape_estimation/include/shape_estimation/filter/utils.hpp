@@ -15,7 +15,7 @@
 #ifndef SHAPE_ESTIMATION__FILTER__UTILS_HPP_
 #define SHAPE_ESTIMATION__FILTER__UTILS_HPP_
 
-#include "autoware_perception_msgs/msg/shape.hpp"
+#include <autoware_perception_msgs/msg/shape.hpp>
 
 namespace utils
 {

@@ -25,8 +25,7 @@ private:
   bool use_reference_yaw_;
 
 public:
-  explicit CarCorrector(bool use_reference_yaw = false)
-  : use_reference_yaw_(use_reference_yaw)
+  explicit CarCorrector(bool use_reference_yaw = false) : use_reference_yaw_(use_reference_yaw)
   {
     params_.min_width = 1.2;
     params_.max_width = 2.2;

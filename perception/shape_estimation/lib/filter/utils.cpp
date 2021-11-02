@@ -24,7 +24,9 @@ bool filterVehicleBoundingBox(
   const float y = shape.dimensions.y;
   const float s = x * y;
 
-  if (shape.type != autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {return true;}
+  if (shape.type != autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
+    return true;
+  }
   if (x < min_width && y < min_width) {
     return false;
   }

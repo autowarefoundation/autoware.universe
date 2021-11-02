@@ -15,9 +15,9 @@
 #ifndef SHAPE_ESTIMATION__MODEL__BOUNDING_BOX_HPP_
 #define SHAPE_ESTIMATION__MODEL__BOUNDING_BOX_HPP_
 
-#include <vector>
-
 #include "shape_estimation/model/model_interface.hpp"
+
+#include <vector>
 
 class BoundingBoxShapeModel : public ShapeEstimationModelInterface
 {

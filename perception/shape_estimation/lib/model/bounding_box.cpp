@@ -14,30 +14,30 @@
 
 #include "shape_estimation/model/bounding_box.hpp"
 
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+
+#include <autoware_perception_msgs/msg/shape.hpp>
+
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl_conversions/pcl_conversions.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 #include <algorithm>
 #include <cmath>
 #include <utility>
 #include <vector>
 
-#include "autoware_perception_msgs/msg/shape.hpp"
-#include "opencv2/core/core.hpp"
-#include "opencv2/highgui/highgui.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
-#include "pcl/point_cloud.h"
-#include "pcl/point_types.h"
-#include "pcl_conversions/pcl_conversions.h"
-#include "tf2/LinearMath/Quaternion.h"
-#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
-
 #define EIGEN_MPL2_ONLY
 
-#include "Eigen/Core"
+#include <Eigen/Core>
 
 constexpr float epsilon = 0.001;
 
-BoundingBoxShapeModel::BoundingBoxShapeModel()
-: reference_yaw_(boost::none) {}
+BoundingBoxShapeModel::BoundingBoxShapeModel() : reference_yaw_(boost::none) {}
 
 BoundingBoxShapeModel::BoundingBoxShapeModel(const boost::optional<float> & reference_yaw)
 : reference_yaw_(reference_yaw)
@@ -193,7 +193,9 @@ float BoundingBoxShapeModel::calcClosenessCriterion(
   constexpr float d_max = 0.4 * 0.4;
   float beta = 0;  // col.6, Algo.4
   for (size_t i = 0; i < D_1.size(); ++i) {
-    if (d_max < std::min(D_1.at(i), D_2.at(i))) {continue;}
+    if (d_max < std::min(D_1.at(i), D_2.at(i))) {
+      continue;
+    }
     const float d = std::max(std::min(D_1.at(i), D_2.at(i)), d_min);
     beta += 1.0 / d;
   }

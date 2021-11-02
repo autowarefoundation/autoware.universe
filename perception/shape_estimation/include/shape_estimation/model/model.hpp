@@ -15,9 +15,9 @@
 #ifndef SHAPE_ESTIMATION__MODEL__MODEL_HPP_
 #define SHAPE_ESTIMATION__MODEL__MODEL_HPP_
 
-#include "shape_estimation/model/model_interface.hpp"
-#include "shape_estimation/model/convex_hull.hpp"
 #include "shape_estimation/model/bounding_box.hpp"
+#include "shape_estimation/model/convex_hull.hpp"
 #include "shape_estimation/model/cylinder.hpp"
+#include "shape_estimation/model/model_interface.hpp"
 
 #endif  // SHAPE_ESTIMATION__MODEL__MODEL_HPP_

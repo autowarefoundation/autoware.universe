@@ -13,11 +13,13 @@
 // limitations under the License.
 
 #include "shape_estimation/shape_estimator.hpp"
-#include <iostream>
-#include <memory>
+
 #include "shape_estimation/corrector/corrector.hpp"
 #include "shape_estimation/filter/filter.hpp"
 #include "shape_estimation/model/model.hpp"
+
+#include <iostream>
+#include <memory>
 
 ShapeEstimator::ShapeEstimator(bool use_corrector, bool use_filter)
 : use_corrector_(use_corrector), use_filter_(use_filter)
@@ -26,8 +28,8 @@ ShapeEstimator::ShapeEstimator(bool use_corrector, bool use_filter)
 
 bool ShapeEstimator::estimateShapeAndPose(
   const int type, const pcl::PointCloud<pcl::PointXYZ> & cluster,
-  const boost::optional<float> & yaw,
-  autoware_perception_msgs::msg::Shape & shape_output, geometry_msgs::msg::Pose & pose_output)
+  const boost::optional<float> & yaw, autoware_perception_msgs::msg::Shape & shape_output,
+  geometry_msgs::msg::Pose & pose_output)
 {
   autoware_perception_msgs::msg::Shape shape;
   geometry_msgs::msg::Pose pose;
@@ -66,8 +68,7 @@ bool ShapeEstimator::estimateShape(
   if (
     type == autoware_perception_msgs::msg::Semantic::CAR ||
     type == autoware_perception_msgs::msg::Semantic::TRUCK ||
-    type == autoware_perception_msgs::msg::Semantic::BUS)
-  {
+    type == autoware_perception_msgs::msg::Semantic::BUS) {
     model_ptr.reset(new BoundingBoxShapeModel(yaw));
   } else if (type == autoware_perception_msgs::msg::Semantic::PEDESTRIAN) {
     model_ptr.reset(new CylinderShapeModel());

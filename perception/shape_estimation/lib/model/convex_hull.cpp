@@ -14,22 +14,23 @@
 
 #include "shape_estimation/model/convex_hull.hpp"
 
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+
+#include <autoware_perception_msgs/msg/shape.hpp>
+#include <geometry_msgs/msg/point32.hpp>
+
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl_conversions/pcl_conversions.h>
+
 #include <algorithm>
 #include <vector>
 
-#include "pcl/point_cloud.h"
-#include "pcl/point_types.h"
-#include "pcl_conversions/pcl_conversions.h"
-#include "geometry_msgs/msg/point32.hpp"
-#include "opencv2/core/core.hpp"
-#include "opencv2/highgui/highgui.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
-#include "autoware_perception_msgs/msg/shape.hpp"
-
 bool ConvexhullShapeModel::estimate(
   const pcl::PointCloud<pcl::PointXYZ> & cluster,
-  autoware_perception_msgs::msg::Shape & shape_output,
-  geometry_msgs::msg::Pose & pose_output)
+  autoware_perception_msgs::msg::Shape & shape_output, geometry_msgs::msg::Pose & pose_output)
 {
   // calc centroid point for convex hull height(z)
   pcl::PointXYZ centroid;

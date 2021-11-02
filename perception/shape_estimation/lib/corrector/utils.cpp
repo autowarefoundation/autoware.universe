@@ -14,18 +14,18 @@
 
 #include "shape_estimation/corrector/utils.hpp"
 
+#include <tf2/LinearMath/Matrix3x3.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/utils.h>
+#include <tf2_eigen/tf2_eigen.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+
 #include <algorithm>
 #include <vector>
 
-#include "tf2/LinearMath/Matrix3x3.h"
-#include "tf2/LinearMath/Quaternion.h"
-#include "tf2/utils.h"
-#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
-#include "tf2_eigen/tf2_eigen.h"
-
 #define EIGEN_MPL2_ONLY
-#include "Eigen/Core"
-#include "Eigen/Geometry"
+#include <Eigen/Core>
+#include <Eigen/Geometry>
 
 namespace utils
 {
@@ -86,8 +86,7 @@ bool correctVehicleBoundingBox(
     for (size_t i = 0; i < v_point.size(); ++i) {
       if (
         (distance < (affine_mat * v_point.at(i)).norm()) && i != first_most_distant_index &&
-        i != second_most_distant_index)
-      {
+        i != second_most_distant_index) {
         distance = (affine_mat * v_point.at(i)).norm();
         third_most_distant_index = i;
       }
@@ -100,43 +99,41 @@ bool correctVehicleBoundingBox(
   // 1,3 pair or 0,2 pair is most far index
   if (
     static_cast<int>(std::abs(
-      static_cast<int>(first_most_distant_index) -
-      static_cast<int>(second_most_distant_index))) % 2 == 0)
-  {
+      static_cast<int>(first_most_distant_index) - static_cast<int>(second_most_distant_index))) %
+      2 ==
+    0) {
     if (
       param.min_width < (v_point.at(first_most_distant_index) * 2.0).norm() &&
-      (v_point.at(first_most_distant_index) * 2.0).norm() < param.max_width)
-    {
+      (v_point.at(first_most_distant_index) * 2.0).norm() < param.max_width) {
       if ((v_point.at(third_most_distant_index) * 2.0).norm() < param.max_length) {
         correction_vector = v_point.at(third_most_distant_index);
         if (correction_vector.x() == 0.0) {
           correction_vector.y() =
             std::max(std::abs(correction_vector.y()), param.avg_length / 2.0) *
-            (correction_vector.y() < 0.0 ? -1.0 : 1.0) -
+              (correction_vector.y() < 0.0 ? -1.0 : 1.0) -
             correction_vector.y();
         } else if (correction_vector.y() == 0.0) {
           correction_vector.x() =
             std::max(std::abs(correction_vector.x()), param.avg_length / 2.0) *
-            (correction_vector.x() < 0.0 ? -1.0 : 1.0) -
+              (correction_vector.x() < 0.0 ? -1.0 : 1.0) -
             correction_vector.x();
         }
       } else {
         return false;
       }
-    } else if ( // NOLINT
+    } else if (  // NOLINT
       param.min_length < (v_point.at(first_most_distant_index) * 2.0).norm() &&
-      (v_point.at(first_most_distant_index) * 2.0).norm() < param.max_length)
-    {
+      (v_point.at(first_most_distant_index) * 2.0).norm() < param.max_length) {
       if ((v_point.at(third_most_distant_index) * 2.0).norm() < param.max_width) {
         correction_vector = v_point.at(third_most_distant_index);
         if (correction_vector.x() == 0.0) {
           correction_vector.y() = std::max(std::abs(correction_vector.y()), param.avg_width / 2.0) *
-            (correction_vector.y() < 0.0 ? -1.0 : 1.0) -
-            correction_vector.y();
+                                    (correction_vector.y() < 0.0 ? -1.0 : 1.0) -
+                                  correction_vector.y();
         } else if (correction_vector.y() == 0.0) {
           correction_vector.x() = std::max(std::abs(correction_vector.x()), param.avg_width / 2.0) *
-            (correction_vector.x() < 0.0 ? -1.0 : 1.0) -
-            correction_vector.x();
+                                    (correction_vector.x() < 0.0 ? -1.0 : 1.0) -
+                                  correction_vector.x();
         }
       } else {
         return false;
@@ -146,85 +143,81 @@ bool correctVehicleBoundingBox(
     }
   }
   // fit width
-  else if ( // NOLINT
+  else if (  // NOLINT
     (param.min_width < (v_point.at(first_most_distant_index) * 2.0).norm() &&
-    (v_point.at(first_most_distant_index) * 2.0).norm() < param.max_width) &&
+     (v_point.at(first_most_distant_index) * 2.0).norm() < param.max_width) &&
     (param.min_width < (v_point.at(second_most_distant_index) * 2.0).norm() &&
-    (v_point.at(second_most_distant_index) * 2.0).norm() <
-    param.max_width))     // both of edge is within width threshold
+     (v_point.at(second_most_distant_index) * 2.0).norm() <
+       param.max_width))  // both of edge is within width threshold
   {
     correction_vector = v_point.at(first_most_distant_index);
     if (correction_vector.x() == 0.0) {
       correction_vector.y() = std::max(std::abs(correction_vector.y()), param.avg_length / 2.0) *
-        (correction_vector.y() < 0.0 ? -1.0 : 1.0) -
-        correction_vector.y();
+                                (correction_vector.y() < 0.0 ? -1.0 : 1.0) -
+                              correction_vector.y();
     } else if (correction_vector.y() == 0.0) {
       correction_vector.x() = std::max(std::abs(correction_vector.x()), param.avg_length / 2.0) *
-        (correction_vector.x() < 0.0 ? -1.0 : 1.0) -
-        correction_vector.x();
+                                (correction_vector.x() < 0.0 ? -1.0 : 1.0) -
+                              correction_vector.x();
     }
-  } else if ( // NOLINT
+  } else if (  // NOLINT
     param.min_width < (v_point.at(first_most_distant_index) * 2.0).norm() &&
-    (v_point.at(first_most_distant_index) * 2.0).norm() < param.max_width)
-  {
+    (v_point.at(first_most_distant_index) * 2.0).norm() < param.max_width) {
     correction_vector = v_point.at(second_most_distant_index);
     if (correction_vector.x() == 0.0) {
       correction_vector.y() = std::max(std::abs(correction_vector.y()), param.avg_length / 2.0) *
-        (correction_vector.y() < 0.0 ? -1.0 : 1.0) -
-        correction_vector.y();
+                                (correction_vector.y() < 0.0 ? -1.0 : 1.0) -
+                              correction_vector.y();
     } else if (correction_vector.y() == 0.0) {
       correction_vector.x() = std::max(std::abs(correction_vector.x()), param.avg_length / 2.0) *
-        (correction_vector.x() < 0.0 ? -1.0 : 1.0) -
-        correction_vector.x();
+                                (correction_vector.x() < 0.0 ? -1.0 : 1.0) -
+                              correction_vector.x();
     }
-  } else if ( // NOLINT
+  } else if (  // NOLINT
     param.min_width < (v_point.at(second_most_distant_index) * 2.0).norm() &&
-    (v_point.at(second_most_distant_index) * 2.0).norm() < param.max_width)
-  {
+    (v_point.at(second_most_distant_index) * 2.0).norm() < param.max_width) {
     correction_vector = v_point.at(first_most_distant_index);
 
     if (correction_vector.x() == 0.0) {
       correction_vector.y() = std::max(std::abs(correction_vector.y()), param.avg_length / 2.0) *
-        (correction_vector.y() < 0.0 ? -1.0 : 1.0) -
-        correction_vector.y();
+                                (correction_vector.y() < 0.0 ? -1.0 : 1.0) -
+                              correction_vector.y();
     } else if (correction_vector.y() == 0.0) {
       correction_vector.x() = std::max(std::abs(correction_vector.x()), param.avg_length / 2.0) *
-        (correction_vector.x() < 0.0 ? -1.0 : 1.0) -
-        correction_vector.x();
+                                (correction_vector.x() < 0.0 ? -1.0 : 1.0) -
+                              correction_vector.x();
     }
   }
   // fit length
-  else if ( // NOLINT
+  else if (  // NOLINT
     (param.min_length < (v_point.at(first_most_distant_index) * 2.0).norm() &&
-    (v_point.at(first_most_distant_index) * 2.0).norm() < param.max_length) &&
-    (v_point.at(second_most_distant_index) * 2.0).norm() < param.max_width)
-  {
+     (v_point.at(first_most_distant_index) * 2.0).norm() < param.max_length) &&
+    (v_point.at(second_most_distant_index) * 2.0).norm() < param.max_width) {
     correction_vector = v_point.at(second_most_distant_index);
 
     if (correction_vector.x() == 0.0) {
       correction_vector.y() = std::max(std::abs(correction_vector.y()), param.avg_width / 2.0) *
-        (correction_vector.y() < 0.0 ? -1.0 : 1.0) -
-        correction_vector.y();
+                                (correction_vector.y() < 0.0 ? -1.0 : 1.0) -
+                              correction_vector.y();
     } else if (correction_vector.y() == 0.0) {
       correction_vector.x() = std::max(std::abs(correction_vector.x()), param.avg_width / 2.0) *
-        (correction_vector.x() < 0.0 ? -1.0 : 1.0) -
-        correction_vector.x();
+                                (correction_vector.x() < 0.0 ? -1.0 : 1.0) -
+                              correction_vector.x();
     }
-  } else if ( // NOLINT
+  } else if (  // NOLINT
     (param.min_length < (v_point.at(second_most_distant_index) * 2.0).norm() &&
-    (v_point.at(second_most_distant_index) * 2.0).norm() < param.max_length) &&
-    (v_point.at(first_most_distant_index) * 2.0).norm() < param.max_width)
-  {
+     (v_point.at(second_most_distant_index) * 2.0).norm() < param.max_length) &&
+    (v_point.at(first_most_distant_index) * 2.0).norm() < param.max_width) {
     correction_vector = v_point.at(first_most_distant_index);
 
     if (correction_vector.x() == 0.0) {
       correction_vector.y() = std::max(std::abs(correction_vector.y()), param.avg_width / 2.0) *
-        (correction_vector.y() < 0.0 ? -1.0 : 1.0) -
-        correction_vector.y();
+                                (correction_vector.y() < 0.0 ? -1.0 : 1.0) -
+                              correction_vector.y();
     } else if (correction_vector.y() == 0.0) {
       correction_vector.x() = std::max(std::abs(correction_vector.x()), param.avg_width / 2.0) *
-        (correction_vector.x() < 0.0 ? -1.0 : 1.0) -
-        correction_vector.x();
+                                (correction_vector.x() < 0.0 ? -1.0 : 1.0) -
+                              correction_vector.x();
     }
   } else {
     return false;
@@ -239,8 +232,7 @@ bool correctVehicleBoundingBox(
   if (shape_output.dimensions.x < shape_output.dimensions.y) {
     geometry_msgs::msg::Vector3 rpy = autoware_utils::getRPY(pose_output.orientation);
     rpy.z = rpy.z + M_PI_2;
-    pose_output.orientation =
-      autoware_utils::createQuaternionFromRPY(rpy.x, rpy.y, rpy.z);
+    pose_output.orientation = autoware_utils::createQuaternionFromRPY(rpy.x, rpy.y, rpy.z);
     double temp = shape_output.dimensions.x;
     shape_output.dimensions.x = shape_output.dimensions.y;
     shape_output.dimensions.y = temp;
@@ -304,8 +296,7 @@ bool correctVehicleBoundingBoxWithReferenceYaw(
   Eigen::Vector3d e2 = (Eigen::Vector3d(-ex, 0, 0) - local_c1).normalized();
   double length = 0;
   if (
-    param.min_length < shape_output.dimensions.x && shape_output.dimensions.x < param.max_length)
-  {
+    param.min_length < shape_output.dimensions.x && shape_output.dimensions.x < param.max_length) {
     length = shape_output.dimensions.x;
   } else {
     length = param.avg_length;
