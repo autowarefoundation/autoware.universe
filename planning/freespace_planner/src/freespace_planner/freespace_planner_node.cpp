@@ -28,15 +28,16 @@
  * limitations under the License.
  */
 
+#include "freespace_planner/freespace_planner_node.hpp"
+
+#include <autoware_utils/autoware_utils.hpp>
+
 #include <algorithm>
 #include <deque>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
-
-#include "autoware_utils/autoware_utils.hpp"
-#include "freespace_planner/freespace_planner_node.hpp"
 
 namespace
 {
@@ -132,15 +133,13 @@ Trajectory getPartialTrajectory(
   return partial_trajectory;
 }
 
-double calcDistance2d(
-  const Trajectory & trajectory, const Pose & pose)
+double calcDistance2d(const Trajectory & trajectory, const Pose & pose)
 {
   const auto idx = autoware_utils::findNearestIndex(trajectory.points, pose.position);
   return autoware_utils::calcDistance2d(trajectory.points.at(idx), pose);
 }
 
-Pose transformPose(
-  const Pose & pose, const TransformStamped & transform)
+Pose transformPose(const Pose & pose, const TransformStamped & transform)
 {
   PoseStamped transformed_pose;
   PoseStamped orig_pose;
@@ -284,9 +283,7 @@ void FreespacePlannerNode::getPlanningCommonParam()
   p.minimum_turning_radius = declare_parameter("minimum_turning_radius", 0.5);
   p.maximum_turning_radius = declare_parameter("maximum_turning_radius", 6.0);
   p.turning_radius_size = declare_parameter("turning_radius_size", 11);
-  p.maximum_turning_radius = std::max(
-    p.maximum_turning_radius,
-    p.minimum_turning_radius);
+  p.maximum_turning_radius = std::max(p.maximum_turning_radius, p.minimum_turning_radius);
   p.turning_radius_size = std::max(p.turning_radius_size, 1);
 
   // search configs
@@ -295,8 +292,7 @@ void FreespacePlannerNode::getPlanningCommonParam()
   p.curve_weight = declare_parameter("curve_weight", 1.2);
   p.reverse_weight = declare_parameter("reverse_weight", 2.00);
   p.lateral_goal_range = declare_parameter("lateral_goal_range", 0.5);
-  p.longitudinal_goal_range =
-    declare_parameter("longitudinal_goal_range", 2.0);
+  p.longitudinal_goal_range = declare_parameter("longitudinal_goal_range", 2.0);
 
   // costmap configs
   p.obstacle_threshold = declare_parameter("obstacle_threshold", 100);
@@ -325,11 +321,7 @@ void FreespacePlannerNode::onOccupancyGrid(const OccupancyGrid::ConstSharedPtr m
   occupancy_grid_ = msg;
 }
 
-void FreespacePlannerNode::onScenario(
-  const Scenario::ConstSharedPtr msg)
-{
-  scenario_ = msg;
-}
+void FreespacePlannerNode::onScenario(const Scenario::ConstSharedPtr msg) { scenario_ = msg; }
 
 void FreespacePlannerNode::onTwist(const TwistStamped::ConstSharedPtr msg)
 {
@@ -402,8 +394,7 @@ void FreespacePlannerNode::updateTargetIndex()
       // Finished publishing all partial trajectories
       is_completed_ = true;
       this->set_parameter(rclcpp::Parameter("is_completed", true));
-      RCLCPP_INFO_THROTTLE(
-        get_logger(), *get_clock(), 1000, "Freespace planning completed");
+      RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 1000, "Freespace planning completed");
     } else {
       // Switch to next partial trajectory
       prev_target_index_ = target_index_;
@@ -537,10 +528,10 @@ void FreespacePlannerNode::initializePlanningAlgorithm()
     algo_.reset(new AstarSearch(planner_common_param_, astar_param_));
   } else {
     throw std::runtime_error(
-            "No such algorithm named " + node_param_.planning_algorithm + " exists.");
+      "No such algorithm named " + node_param_.planning_algorithm + " exists.");
   }
 }
 }  // namespace freespace_planner
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(freespace_planner::FreespacePlannerNode)
