@@ -12,18 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "system_monitor/process_monitor/process_monitor.hpp"
+
+#include <rclcpp/rclcpp.hpp>
+
+#include <boost/algorithm/string.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/process.hpp>
+
+#include <fmt/format.h>
+#include <gtest/gtest.h>
+
 #include <memory>
 #include <string>
-
-#include "boost/algorithm/string.hpp"
-#include "boost/filesystem.hpp"
-#include "boost/process.hpp"
-
-#include "fmt/format.h"
-#include "gtest/gtest.h"
-#include "rclcpp/rclcpp.hpp"
-
-#include "system_monitor/process_monitor/process_monitor.hpp"
 
 namespace bp = boost::process;
 namespace fs = boost::filesystem;
@@ -46,9 +47,9 @@ public:
     array_ = *diag_msg;
   }
 
-  int getNumOfProcs() const {return num_of_procs_;}
+  int getNumOfProcs() const { return num_of_procs_; }
 
-  void update() {updater_.force_update();}
+  void update() { updater_.force_update(); }
 
   const std::string removePrefix(const std::string & name)
   {
@@ -88,8 +89,7 @@ public:
 
 protected:
   std::unique_ptr<TestProcessMonitor> monitor_;
-  rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr
-    sub_;
+  rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr sub_;
   std::string exe_dir_;
   std::string top_;
   std::string echo_;
@@ -106,19 +106,35 @@ protected:
       "/diagnostics", 1000, std::bind(&TestProcessMonitor::diagCallback, monitor_.get(), _1));
 
     // Remove dummy executable if exists
-    if (fs::exists(top_)) {fs::remove(top_);}
-    if (fs::exists(echo_)) {fs::remove(echo_);}
-    if (fs::exists(sed_)) {fs::remove(sed_);}
-    if (fs::exists(sort_)) {fs::remove(sort_);}
+    if (fs::exists(top_)) {
+      fs::remove(top_);
+    }
+    if (fs::exists(echo_)) {
+      fs::remove(echo_);
+    }
+    if (fs::exists(sed_)) {
+      fs::remove(sed_);
+    }
+    if (fs::exists(sort_)) {
+      fs::remove(sort_);
+    }
   }
 
   void TearDown()
   {
     // Remove dummy executable if exists
-    if (fs::exists(top_)) {fs::remove(top_);}
-    if (fs::exists(echo_)) {fs::remove(echo_);}
-    if (fs::exists(sed_)) {fs::remove(sed_);}
-    if (fs::exists(sort_)) {fs::remove(sort_);}
+    if (fs::exists(top_)) {
+      fs::remove(top_);
+    }
+    if (fs::exists(echo_)) {
+      fs::remove(echo_);
+    }
+    if (fs::exists(sed_)) {
+      fs::remove(sed_);
+    }
+    if (fs::exists(sort_)) {
+      fs::remove(sort_);
+    }
     rclcpp::shutdown();
   }
 

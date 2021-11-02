@@ -17,14 +17,13 @@
  * @brief Unknown CPU monitor class
  */
 
-#include <string>
-
 #include "system_monitor/cpu_monitor/unknown_cpu_monitor.hpp"
 
-CPUMonitor::CPUMonitor(const rclcpp::NodeOptions & options)
-: CPUMonitorBase("cpu_monitor", options)
+#include <string>
+
+CPUMonitor::CPUMonitor(const rclcpp::NodeOptions & options) : CPUMonitorBase("cpu_monitor", options)
 {
 }
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(CPUMonitor)

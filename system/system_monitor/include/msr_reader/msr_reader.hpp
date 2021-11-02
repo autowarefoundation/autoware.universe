@@ -20,10 +20,10 @@
 #ifndef MSR_READER__MSR_READER_HPP_
 #define MSR_READER__MSR_READER_HPP_
 
-#include <vector>
+#include <boost/serialization/serialization.hpp>
+#include <boost/serialization/vector.hpp>
 
-#include "boost/serialization/serialization.hpp"
-#include "boost/serialization/vector.hpp"
+#include <vector>
 
 /**
  * @brief MSR information
@@ -40,7 +40,7 @@ struct MSRInfo
    * @note NOLINT syntax is needed since this is an interface to serialization and
    * used inside boost serialization.
    */
-  template<typename archive>
+  template <typename archive>
   void serialize(archive & ar, const unsigned /*version*/)  // NOLINT(runtime/references)
   {
     ar & error_code_;

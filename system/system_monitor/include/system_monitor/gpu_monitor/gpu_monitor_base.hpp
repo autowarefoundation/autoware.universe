@@ -20,11 +20,11 @@
 #ifndef SYSTEM_MONITOR__GPU_MONITOR__GPU_MONITOR_BASE_HPP_
 #define SYSTEM_MONITOR__GPU_MONITOR__GPU_MONITOR_BASE_HPP_
 
+#include <diagnostic_updater/diagnostic_updater.hpp>
+
 #include <climits>
 #include <map>
 #include <string>
-
-#include "diagnostic_updater/diagnostic_updater.hpp"
 
 class GPUMonitorBase : public rclcpp::Node
 {
@@ -35,9 +35,10 @@ public:
   virtual void update();
 
   /**
-  * @brief Terminate the node, log final statements. An independent function is preferred to allow an explicit way
-  * to operate actions that require a valid rclcpp context. By default this method does nothing.
-  */
+   * @brief Terminate the node, log final statements. An independent function is preferred to allow
+   * an explicit way to operate actions that require a valid rclcpp context. By default this method
+   * does nothing.
+   */
   virtual void shut_down();
 
 protected:

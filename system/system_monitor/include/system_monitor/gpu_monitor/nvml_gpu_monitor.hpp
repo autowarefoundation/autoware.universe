@@ -20,34 +20,25 @@
 #ifndef SYSTEM_MONITOR__GPU_MONITOR__NVML_GPU_MONITOR_HPP_
 #define SYSTEM_MONITOR__GPU_MONITOR__NVML_GPU_MONITOR_HPP_
 
+#include "system_monitor/gpu_monitor/gpu_monitor_base.hpp"
+
 #include <nvml.h>
 
 #include <map>
 #include <string>
 #include <vector>
 
-#include "system_monitor/gpu_monitor/gpu_monitor_base.hpp"
-
-#define reasonToString(X) \
-  (((X)&nvmlClocksThrottleReasonGpuIdle) \
-  ? "GpuIdle" \
-  : ((X)&nvmlClocksThrottleReasonApplicationsClocksSetting) \
-  ? "ApplicationsClocksSetting" \
-  : ((X)&nvmlClocksThrottleReasonSwPowerCap) \
-  ? "SwPowerCap" \
-  : ((X)&nvmlClocksThrottleReasonHwSlowdown) \
-  ? "HwSlowdown" \
-  : ((X)&nvmlClocksThrottleReasonSyncBoost) \
-  ? "SyncBoost" \
-  : ((X)&nvmlClocksThrottleReasonSwThermalSlowdown) \
-  ? "SwThermalSlowdown" \
-  : ((X)&nvmlClocksThrottleReasonHwThermalSlowdown) \
-  ? "HwThermalSlowdown" \
-  : ((X)&nvmlClocksThrottleReasonHwPowerBrakeSlowdown) \
-  ? "HwPowerBrakeSlowdown" \
-  : ((X)&nvmlClocksThrottleReasonDisplayClockSetting) \
-  ? "DisplayClockSetting" \
-  : "UNKNOWN")
+#define reasonToString(X)                                                                  \
+  (((X)&nvmlClocksThrottleReasonGpuIdle)                     ? "GpuIdle"                   \
+   : ((X)&nvmlClocksThrottleReasonApplicationsClocksSetting) ? "ApplicationsClocksSetting" \
+   : ((X)&nvmlClocksThrottleReasonSwPowerCap)                ? "SwPowerCap"                \
+   : ((X)&nvmlClocksThrottleReasonHwSlowdown)                ? "HwSlowdown"                \
+   : ((X)&nvmlClocksThrottleReasonSyncBoost)                 ? "SyncBoost"                 \
+   : ((X)&nvmlClocksThrottleReasonSwThermalSlowdown)         ? "SwThermalSlowdown"         \
+   : ((X)&nvmlClocksThrottleReasonHwThermalSlowdown)         ? "HwThermalSlowdown"         \
+   : ((X)&nvmlClocksThrottleReasonHwPowerBrakeSlowdown)      ? "HwPowerBrakeSlowdown"      \
+   : ((X)&nvmlClocksThrottleReasonDisplayClockSetting)       ? "DisplayClockSetting"       \
+                                                             : "UNKNOWN")
 
 /**
  * @brief GPU information
@@ -71,9 +62,10 @@ public:
   explicit GPUMonitor(const rclcpp::NodeOptions & options);
 
   /**
-  * @brief Terminate the node, log final statements. An independent function is preferred to allow an explicit way
-  * to operate actions that require a valid rclcpp context. By default this method does nothing.
-  */
+   * @brief Terminate the node, log final statements. An independent function is preferred to allow
+   * an explicit way to operate actions that require a valid rclcpp context. By default this method
+   * does nothing.
+   */
   void shut_down() override;
 
 protected:
@@ -102,9 +94,7 @@ protected:
    * @param [out] stat diagnostic message passed directly to diagnostic publish calls
    */
   void addProcessUsage(
-    int index,
-    nvmlDevice_t device,
-    diagnostic_updater::DiagnosticStatusWrapper & stat);
+    int index, nvmlDevice_t device, diagnostic_updater::DiagnosticStatusWrapper & stat);
 
   /**
    * @brief check GPU memory usage
@@ -128,14 +118,15 @@ protected:
    * @brief get human-readable output for memory size
    * @param [in] size size with bytes
    * @return human-readable output
-   * @note NOLINT syntax is needed since struct nvmlMemory_t has unsigned long long values to return memory size.
+   * @note NOLINT syntax is needed since struct nvmlMemory_t has unsigned long long values to return
+   * memory size.
    */
   std::string toHumanReadable(unsigned long long size);  // NOLINT(runtime/int)
 
   static const size_t MAX_ARRAY_SIZE = 64;
   static const size_t MAX_NAME_LENGTH = 128;
 
-  std::vector<gpu_info> gpus_;  //!< @brief list of gpus
+  std::vector<gpu_info> gpus_;      //!< @brief list of gpus
   uint64_t current_timestamp_ = 0;  //!< @brief latest timestamp[usec] of addProcessUsage()
 };
 

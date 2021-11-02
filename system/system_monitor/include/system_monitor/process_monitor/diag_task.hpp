@@ -20,9 +20,9 @@
 #ifndef SYSTEM_MONITOR__PROCESS_MONITOR__DIAG_TASK_HPP_
 #define SYSTEM_MONITOR__PROCESS_MONITOR__DIAG_TASK_HPP_
 
-#include <string>
+#include <diagnostic_updater/diagnostic_updater.hpp>
 
-#include "diagnostic_updater/diagnostic_updater.hpp"
+#include <string>
 
 class DiagTask : public diagnostic_updater::DiagnosticTask
 {
@@ -33,8 +33,7 @@ public:
    * @brief constructor
    * @param [in] name diagnostics status name
    */
-  explicit DiagTask(const std::string & name)
-  : DiagnosticTask(name) {}
+  explicit DiagTask(const std::string & name) : DiagnosticTask(name) {}
 
   /**
    * @brief main loop
@@ -89,73 +88,73 @@ public:
    * @brief set process id
    * @param [in] pid process id
    */
-  void setProcessId(const std::string & pid) {pid_ = pid;}
+  void setProcessId(const std::string & pid) { pid_ = pid; }
 
   /**
    * @brief set user name
    * @param [in] user user name
    */
-  void setUserName(const std::string & user) {user_ = user;}
+  void setUserName(const std::string & user) { user_ = user; }
 
   /**
    * @brief set priority
    * @param [in] pr priority
    */
-  void setPriority(const std::string & pr) {pr_ = pr;}
+  void setPriority(const std::string & pr) { pr_ = pr; }
 
   /**
    * @brief set nice value
    * @param [in] ni nice value
    */
-  void setNiceValue(const std::string & ni) {ni_ = ni;}
+  void setNiceValue(const std::string & ni) { ni_ = ni; }
 
   /**
    * @brief set virtual image
    * @param [in] virt virtual image
    */
-  void setVirtualImage(const std::string & virt) {virt_ = virt;}
+  void setVirtualImage(const std::string & virt) { virt_ = virt; }
 
   /**
    * @brief set resident size
    * @param [in] res resident size
    */
-  void setResidentSize(const std::string & res) {res_ = res;}
+  void setResidentSize(const std::string & res) { res_ = res; }
 
   /**
    * @brief set shared mem size
    * @param [in] shr shared mem size
    */
-  void setSharedMemSize(const std::string & shr) {shr_ = shr;}
+  void setSharedMemSize(const std::string & shr) { shr_ = shr; }
 
   /**
    * @brief set process status
    * @param [in] s process status
    */
-  void setProcessStatus(const std::string & s) {s_ = s;}
+  void setProcessStatus(const std::string & s) { s_ = s; }
 
   /**
    * @brief set CPU usage
    * @param [in] cpu CPU usage
    */
-  void setCPUUsage(const std::string & cpu) {cpu_ = cpu;}
+  void setCPUUsage(const std::string & cpu) { cpu_ = cpu; }
 
   /**
    * @brief set memory usage
    * @param [in] mem memory usage
    */
-  void setMemoryUsage(const std::string & mem) {mem_ = mem;}
+  void setMemoryUsage(const std::string & mem) { mem_ = mem; }
 
   /**
    * @brief set CPU time
    * @param [in] time CPU time
    */
-  void setCPUTime(const std::string & time) {time_ = time;}
+  void setCPUTime(const std::string & time) { time_ = time; }
 
   /**
    * @brief set Command name/line
    * @param [in] command Command name/line
    */
-  void setCommandName(const std::string & command) {command_ = command;}
+  void setCommandName(const std::string & command) { command_ = command; }
 
 private:
   int level_;                  //!< @brief Diagnostics error level

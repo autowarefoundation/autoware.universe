@@ -12,12 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "system_monitor/gpu_monitor/unknown_gpu_monitor.hpp"
+
+#include <rclcpp/rclcpp.hpp>
+
+#include <gtest/gtest.h>
+
 #include <memory>
 #include <string>
-
-#include "gtest/gtest.h"
-#include "rclcpp/rclcpp.hpp"
-#include "system_monitor/gpu_monitor/unknown_gpu_monitor.hpp"
 
 using DiagStatus = diagnostic_msgs::msg::DiagnosticStatus;
 
@@ -27,14 +29,16 @@ class TestGPUMonitor : public GPUMonitor
 
 public:
   TestGPUMonitor(const std::string & node_name, const rclcpp::NodeOptions & options)
-  : GPUMonitor(node_name, options) {}
+  : GPUMonitor(node_name, options)
+  {
+  }
 
   void diagCallback(const diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr diag_msg)
   {
     array_ = *diag_msg;
   }
 
-  void update() {updater_.force_update();}
+  void update() { updater_.force_update(); }
 
 private:
   diagnostic_msgs::msg::DiagnosticArray array_;
@@ -47,8 +51,7 @@ public:
 
 protected:
   std::unique_ptr<TestGPUMonitor> monitor_;
-  rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr
-    sub_;
+  rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr sub_;
 
   void SetUp()
   {
@@ -60,15 +63,10 @@ protected:
       "/diagnostics", 1000, std::bind(&TestGPUMonitor::diagCallback, monitor_.get(), _1));
   }
 
-  void TearDown()
-  {
-    rclcpp::shutdown();
-  }
+  void TearDown() { rclcpp::shutdown(); }
 };
 
-TEST_F(GPUMonitorTestSuite, test) {
-  ASSERT_TRUE(true);
-}
+TEST_F(GPUMonitorTestSuite, test) { ASSERT_TRUE(true); }
 
 int main(int argc, char ** argv)
 {

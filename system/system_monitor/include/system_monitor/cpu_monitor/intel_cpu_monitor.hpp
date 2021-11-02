@@ -20,9 +20,9 @@
 #ifndef SYSTEM_MONITOR__CPU_MONITOR__INTEL_CPU_MONITOR_HPP_
 #define SYSTEM_MONITOR__CPU_MONITOR__INTEL_CPU_MONITOR_HPP_
 
-#include <string>
-
 #include "system_monitor/cpu_monitor/cpu_monitor_base.hpp"
+
+#include <string>
 
 class CPUMonitor : public CPUMonitorBase
 {

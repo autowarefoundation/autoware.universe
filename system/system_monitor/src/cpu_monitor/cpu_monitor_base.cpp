@@ -17,20 +17,21 @@
  * @brief CPU monitor base class
  */
 
+#include "system_monitor/cpu_monitor/cpu_monitor_base.hpp"
+
+#include "system_monitor/system_monitor_utility.hpp"
+
+#include <boost/filesystem.hpp>
+#include <boost/process.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/thread.hpp>
+
+#include <fmt/format.h>
+
 #include <algorithm>
 #include <regex>
 #include <string>
-
-#include "boost/filesystem.hpp"
-#include "boost/process.hpp"
-#include "boost/property_tree/json_parser.hpp"
-#include "boost/property_tree/ptree.hpp"
-#include "boost/thread.hpp"
-
-#include "fmt/format.h"
-
-#include "system_monitor/cpu_monitor/cpu_monitor_base.hpp"
-#include "system_monitor/system_monitor_utility.hpp"
 
 namespace bp = boost::process;
 namespace fs = boost::filesystem;
@@ -65,10 +66,7 @@ CPUMonitorBase::CPUMonitorBase(const std::string & node_name, const rclcpp::Node
   updater_.add("CPU Frequency", this, &CPUMonitorBase::checkFrequency);
 }
 
-void CPUMonitorBase::update()
-{
-  updater_.force_update();
-}
+void CPUMonitorBase::update() { updater_.force_update(); }
 
 void CPUMonitorBase::checkTemp(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
@@ -169,10 +167,18 @@ void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & st
           if (boost::optional<std::string> v = cpu_load.get_optional<std::string>("cpu")) {
             cpu_name = v.get();
           }
-          if (boost::optional<float> v = cpu_load.get_optional<float>("usr")) {usr = v.get();}
-          if (boost::optional<float> v = cpu_load.get_optional<float>("nice")) {nice = v.get();}
-          if (boost::optional<float> v = cpu_load.get_optional<float>("sys")) {sys = v.get();}
-          if (boost::optional<float> v = cpu_load.get_optional<float>("idle")) {idle = v.get();}
+          if (boost::optional<float> v = cpu_load.get_optional<float>("usr")) {
+            usr = v.get();
+          }
+          if (boost::optional<float> v = cpu_load.get_optional<float>("nice")) {
+            nice = v.get();
+          }
+          if (boost::optional<float> v = cpu_load.get_optional<float>("sys")) {
+            sys = v.get();
+          }
+          if (boost::optional<float> v = cpu_load.get_optional<float>("idle")) {
+            idle = v.get();
+          }
 
           total = usr + nice + sys;
           usage = total * 1e-2;
@@ -192,7 +198,9 @@ void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & st
           stat.addf(fmt::format("CPU {}: idle", cpu_name), "%.2f%%", idle);
 
           if (usage_avg_ == true) {
-            if (cpu_name == "all") {whole_level = level;}
+            if (cpu_name == "all") {
+              whole_level = level;
+            }
           } else {
             whole_level = std::max(whole_level, level);
           }
@@ -276,8 +284,7 @@ void CPUMonitorBase::checkFrequency(diagnostic_updater::DiagnosticStatusWrapper 
     if (ifs) {
       std::string line;
       if (std::getline(ifs, line)) {
-        stat.addf(
-          fmt::format("CPU {}: clock", itr->index_), "%d MHz", std::stoi(line) / 1000);
+        stat.addf(fmt::format("CPU {}: clock", itr->index_), "%d MHz", std::stoi(line) / 1000);
       }
     }
     ifs.close();
@@ -299,15 +306,18 @@ void CPUMonitorBase::getFreqNames()
   const fs::path root("/sys/devices/system/cpu");
 
   for (const fs::path & path :
-    boost::make_iterator_range(fs::directory_iterator(root), fs::directory_iterator()))
-  {
-    if (!fs::is_directory(path)) {continue;}
+       boost::make_iterator_range(fs::directory_iterator(root), fs::directory_iterator())) {
+    if (!fs::is_directory(path)) {
+      continue;
+    }
 
     std::cmatch match;
     const char * cpu_dir = path.generic_string().c_str();
 
     // /sys/devices/system/cpu[0-9] ?
-    if (!std::regex_match(cpu_dir, match, std::regex(".*cpu(\\d+)"))) {continue;}
+    if (!std::regex_match(cpu_dir, match, std::regex(".*cpu(\\d+)"))) {
+      continue;
+    }
 
     // /sys/devices/system/cpu[0-9]/cpufreq/scaling_cur_freq
     cpu_freq_info freq;
@@ -317,8 +327,7 @@ void CPUMonitorBase::getFreqNames()
     freqs_.push_back(freq);
   }
 
-  std::sort(
-    freqs_.begin(), freqs_.end(), [](const cpu_freq_info & c1, const cpu_freq_info & c2) {
-      return c1.index_ < c2.index_;
-    }); // NOLINT
+  std::sort(freqs_.begin(), freqs_.end(), [](const cpu_freq_info & c1, const cpu_freq_info & c2) {
+    return c1.index_ < c2.index_;
+  });  // NOLINT
 }

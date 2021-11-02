@@ -20,12 +20,12 @@
 #ifndef SYSTEM_MONITOR__NTP_MONITOR__NTP_MONITOR_HPP_
 #define SYSTEM_MONITOR__NTP_MONITOR__NTP_MONITOR_HPP_
 
+#include <diagnostic_updater/diagnostic_updater.hpp>
+
 #include <climits>
 #include <map>
 #include <string>
 #include <thread>
-
-#include "diagnostic_updater/diagnostic_updater.hpp"
 
 class NTPMonitor : public rclcpp::Node
 {
@@ -60,8 +60,7 @@ protected:
    * @return if error occurred, return error string
    */
   std::string executeChronyc(
-    float & outOffset,
-    std::map<std::string, std::string> & out_tracking_map);
+    float & outOffset, std::map<std::string, std::string> & out_tracking_map);
 
   diagnostic_updater::Updater updater_;  //!< @brief Updater class which advertises to /diagnostics
 

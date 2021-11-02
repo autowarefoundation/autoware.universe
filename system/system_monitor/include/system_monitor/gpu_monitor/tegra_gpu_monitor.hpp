@@ -19,20 +19,18 @@
 #ifndef SYSTEM_MONITOR__GPU_MONITOR__TEGRA_GPU_MONITOR_HPP_
 #define SYSTEM_MONITOR__GPU_MONITOR__TEGRA_GPU_MONITOR_HPP_
 
+#include "system_monitor/gpu_monitor/gpu_monitor_base.hpp"
+
 #include <string>
 #include <vector>
-
-#include "system_monitor/gpu_monitor/gpu_monitor_base.hpp"
 
 struct gpu_info
 {
   std::string label_;  //!< @brief gpu label
   std::string path_;   //!< @brief sysfs path to gpu temperature
 
-  gpu_info()
-  : label_(), path_() {}
-  gpu_info(const std::string & l, const std::string & p)
-  : label_(l), path_(p) {}
+  gpu_info() : label_(), path_() {}
+  gpu_info(const std::string & l, const std::string & p) : label_(l), path_(p) {}
 };
 
 class GPUMonitor : public GPUMonitorBase

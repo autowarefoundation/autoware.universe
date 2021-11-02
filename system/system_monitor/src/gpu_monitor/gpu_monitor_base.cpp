@@ -17,11 +17,11 @@
  * @brief GPU monitor class
  */
 
+#include "system_monitor/gpu_monitor/gpu_monitor_base.hpp"
+
 #include <unistd.h>
 
 #include <string>
-
-#include "system_monitor/gpu_monitor/gpu_monitor_base.hpp"
 
 GPUMonitorBase::GPUMonitorBase(const std::string & node_name, const rclcpp::NodeOptions & options)
 : Node(node_name, options),
@@ -44,12 +44,11 @@ GPUMonitorBase::GPUMonitorBase(const std::string & node_name, const rclcpp::Node
   updater_.add("GPU Frequency", this, &GPUMonitorBase::checkFrequency);
 }
 
-void GPUMonitorBase::update()
-{
-  updater_.force_update();
-}
+void GPUMonitorBase::update() { updater_.force_update(); }
 
-void GPUMonitorBase::shut_down() { /*NOOP by default.*/}
+void GPUMonitorBase::shut_down()
+{ /*NOOP by default.*/
+}
 
 void GPUMonitorBase::checkTemp(diagnostic_updater::DiagnosticStatusWrapper & /* stat */)
 {

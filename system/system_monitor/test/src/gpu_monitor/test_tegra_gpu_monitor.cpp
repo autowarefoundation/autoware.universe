@@ -12,14 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "system_monitor/gpu_monitor/tegra_gpu_monitor.hpp"
+
+#include <rclcpp/rclcpp.hpp>
+
+#include <boost/algorithm/string.hpp>
+#include <boost/filesystem.hpp>
+
+#include <gtest/gtest.h>
+
 #include <memory>
 #include <string>
-
-#include "gtest/gtest.h"
-#include "rclcpp/rclcpp.hpp"
-#include "system_monitor/gpu_monitor/tegra_gpu_monitor.hpp"
-#include "boost/algorithm/string.hpp"
-#include "boost/filesystem.hpp"
 
 static constexpr const char * TEST_FILE = "test";
 
@@ -32,23 +35,25 @@ class TestGPUMonitor : public GPUMonitor
 
 public:
   TestGPUMonitor(const std::string & node_name, const rclcpp::NodeOptions & options)
-  : GPUMonitor(node_name, options) {}
+  : GPUMonitor(node_name, options)
+  {
+  }
 
   void diagCallback(const diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr diag_msg)
   {
     array_ = *diag_msg;
   }
 
-  void addTempName(const std::string & path) {temps_.emplace_back(path, path);}
-  void clearTempNames() {temps_.clear();}
+  void addTempName(const std::string & path) { temps_.emplace_back(path, path); }
+  void clearTempNames() { temps_.clear(); }
 
-  void addLoadName(const std::string & path) {loads_.emplace_back(path, path);}
-  void clearLoadNames() {loads_.clear();}
+  void addLoadName(const std::string & path) { loads_.emplace_back(path, path); }
+  void clearLoadNames() { loads_.clear(); }
 
-  void addFreqName(const std::string & path) {freqs_.emplace_back(path, path);}
-  void clearFreqNames() {freqs_.clear();}
+  void addFreqName(const std::string & path) { freqs_.emplace_back(path, path); }
+  void clearFreqNames() { freqs_.clear(); }
 
-  void update() {updater_.force_update();}
+  void update() { updater_.force_update(); }
 
   const std::string removePrefix(const std::string & name)
   {
@@ -78,8 +83,7 @@ public:
 
 protected:
   std::unique_ptr<TestGPUMonitor> monitor_;
-  rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr
-    sub_;
+  rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr sub_;
 
   void SetUp()
   {
@@ -94,7 +98,9 @@ protected:
   void TearDown()
   {
     // Remove test file if exists
-    if (fs::exists(TEST_FILE)) {fs::remove(TEST_FILE);}
+    if (fs::exists(TEST_FILE)) {
+      fs::remove(TEST_FILE);
+    }
     rclcpp::shutdown();
   }
 
@@ -473,15 +479,14 @@ public:
   : GPUMonitorBase(node_name, options)
   {
   }
-  void update() {updater_.force_update();}
+  void update() { updater_.force_update(); }
 };
 
 TEST_F(GPUMonitorTestSuite, dummyGPUMonitorTest)
 {
   rclcpp::NodeOptions options;
-  std::unique_ptr<DummyGPUMonitor> monitor = std::make_unique<DummyGPUMonitor>(
-    "dummy_gpu_monitor",
-    options);
+  std::unique_ptr<DummyGPUMonitor> monitor =
+    std::make_unique<DummyGPUMonitor>("dummy_gpu_monitor", options);
   // Publish topic
   monitor->update();
 }

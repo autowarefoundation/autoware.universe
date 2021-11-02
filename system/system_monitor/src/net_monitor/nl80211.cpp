@@ -17,14 +17,14 @@
  * @brief 802.11 netlink-based interface class
  */
 
-#include "linux/nl80211.h"
-#include "net/if.h"
-#include "netlink/genl/ctrl.h"
-#include "netlink/genl/genl.h"
 #include "system_monitor/net_monitor/nl80211.hpp"
 
-NL80211::NL80211()
-: bitrate_(0.0), initialized_(false), socket_(nullptr), id_(-1), cb_(nullptr) {}
+#include <linux/nl80211.h>
+#include <net/if.h>
+#include <netlink/genl/ctrl.h>
+#include <netlink/genl/genl.h>
+
+NL80211::NL80211() : bitrate_(0.0), initialized_(false), socket_(nullptr), id_(-1), cb_(nullptr) {}
 
 // Attribute validation policy
 static struct nla_policy stats_policy[NL80211_STA_INFO_MAX + 1];
@@ -48,24 +48,34 @@ static int callback(struct nl_msg * msg, void * arg)
   ret =
     nla_parse(tb, NL80211_ATTR_MAX, genlmsg_attrdata(ghdr, 0), genlmsg_attrlen(ghdr, 0), nullptr);
   // Returns 0 on success or a negative error code.
-  if (ret < 0) {return NL_SKIP;}
+  if (ret < 0) {
+    return NL_SKIP;
+  }
 
   // Information about a station missing
-  if (!tb[NL80211_ATTR_STA_INFO]) {return NL_SKIP;}
+  if (!tb[NL80211_ATTR_STA_INFO]) {
+    return NL_SKIP;
+  }
 
   // Create attribute index based on nested attribute.
   ret = nla_parse_nested(sinfo, NL80211_STA_INFO_MAX, tb[NL80211_ATTR_STA_INFO], stats_policy);
   // Returns 0 on success or a negative error code.
-  if (ret < 0) {return NL_SKIP;}
+  if (ret < 0) {
+    return NL_SKIP;
+  }
 
   // current unicast tx rate missing
-  if (!sinfo[NL80211_STA_INFO_TX_BITRATE]) {return NL_SKIP;}
+  if (!sinfo[NL80211_STA_INFO_TX_BITRATE]) {
+    return NL_SKIP;
+  }
 
   // Create attribute index based on nested attribute.
   ret =
     nla_parse_nested(rinfo, NL80211_RATE_INFO_MAX, sinfo[NL80211_STA_INFO_TX_BITRATE], rate_policy);
   // Returns 0 on success or a negative error code.
-  if (ret < 0) {return NL_SKIP;}
+  if (ret < 0) {
+    return NL_SKIP;
+  }
 
   // total bitrate exists
   if (rinfo[NL80211_RATE_INFO_BITRATE]) {
@@ -81,7 +91,9 @@ void NL80211::init()
   // Allocate new netlink socket.
   socket_ = nl_socket_alloc();
   // Returns newly allocated netlink socket or NULL.
-  if (!socket_) {return;}
+  if (!socket_) {
+    return;
+  }
 
   // Connect a generic netlink socket.
   // Returns 0 on success or a negative error code.
@@ -127,18 +139,24 @@ float NL80211::getBitrate(const char * ifa_name)
 
   bitrate_ = 0.0;
 
-  if (!initialized_) {return bitrate_;}
+  if (!initialized_) {
+    return bitrate_;
+  }
 
   // Get index of the network interface
   index = if_nametoindex(ifa_name);
   // Returns index number of the network interface on success
   // or 0 on error and errno is set appropriately
-  if (!index) {return bitrate_;}
+  if (!index) {
+    return bitrate_;
+  }
 
   // Allocate a new netlink message with the default maximum payload size.
   msg = nlmsg_alloc();
   // Returns newly allocated netlink message or NULL.
-  if (!msg) {return bitrate_;}
+  if (!msg) {
+    return bitrate_;
+  }
 
   // Add Generic Netlink headers to Netlink message.
   hdr = genlmsg_put(msg, NL_AUTO_PORT, NL_AUTO_SEQ, id_, 0, NLM_F_DUMP, NL80211_CMD_GET_STATION, 0);
@@ -178,7 +196,9 @@ float NL80211::getBitrate(const char * ifa_name)
 
 void NL80211::shutdown()
 {
-  if (cb_) {nl_cb_put(cb_);}
+  if (cb_) {
+    nl_cb_put(cb_);
+  }
   nl_close(socket_);
   nl_socket_free(socket_);
   initialized_ = false;

@@ -12,18 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "system_monitor/ntp_monitor/ntp_monitor.hpp"
+
+#include <rclcpp/rclcpp.hpp>
+
+#include <boost/algorithm/string.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/process.hpp>
+
+#include <fmt/format.h>
+#include <gtest/gtest.h>
+
 #include <memory>
 #include <string>
-
-#include "boost/algorithm/string.hpp"
-#include "boost/filesystem.hpp"
-#include "boost/process.hpp"
-
-#include "fmt/format.h"
-#include "gtest/gtest.h"
-#include "rclcpp/rclcpp.hpp"
-
-#include "system_monitor/ntp_monitor/ntp_monitor.hpp"
 
 namespace fs = boost::filesystem;
 using DiagStatus = diagnostic_msgs::msg::DiagnosticStatus;
@@ -36,19 +37,21 @@ class TestNTPMonitor : public NTPMonitor
 
 public:
   TestNTPMonitor(const std::string & node_name, const rclcpp::NodeOptions & options)
-  : NTPMonitor(node_name, options) {}
+  : NTPMonitor(node_name, options)
+  {
+  }
 
   void diagCallback(const diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr diag_msg)
   {
     array_ = *diag_msg;
   }
 
-  void changeOffsetWarn(float offset_warn) {offset_warn_ = offset_warn;}
-  void changeOffsetError(float offset_error) {offset_error_ = offset_error;}
+  void changeOffsetWarn(float offset_warn) { offset_warn_ = offset_warn; }
+  void changeOffsetError(float offset_error) { offset_error_ = offset_error; }
 
-  void setNtpdateExists(bool ntpdate_exists) {ntpdate_exists_ = ntpdate_exists;}
+  void setNtpdateExists(bool ntpdate_exists) { ntpdate_exists_ = ntpdate_exists; }
 
-  void update() {updater_.force_update();}
+  void update() { updater_.force_update(); }
 
   const std::string removePrefix(const std::string & name)
   {
@@ -85,8 +88,7 @@ public:
 
 protected:
   std::unique_ptr<TestNTPMonitor> monitor_;
-  rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr
-    sub_;
+  rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr sub_;
   std::string exe_dir_;
   std::string ntpdate_;
 
@@ -100,13 +102,17 @@ protected:
       "/diagnostics", 1000, std::bind(&TestNTPMonitor::diagCallback, monitor_.get(), _1));
 
     // Remove dummy executable if exists
-    if (fs::exists(ntpdate_)) {fs::remove(ntpdate_);}
+    if (fs::exists(ntpdate_)) {
+      fs::remove(ntpdate_);
+    }
   }
 
   void TearDown()
   {
     // Remove dummy executable if exists
-    if (fs::exists(ntpdate_)) {fs::remove(ntpdate_);}
+    if (fs::exists(ntpdate_)) {
+      fs::remove(ntpdate_);
+    }
     rclcpp::shutdown();
   }
 

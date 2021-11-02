@@ -12,21 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "system_monitor/cpu_monitor/tegra_cpu_monitor.hpp"
+
+#include <rclcpp/rclcpp.hpp>
+
+#include <boost/algorithm/string.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/format.hpp>
+#include <boost/process.hpp>
+
+#include <fmt/format.h>
+#include <gtest/gtest.h>
+
 #include <fstream>
 #include <memory>
 #include <string>
 #include <vector>
-
-#include "boost/algorithm/string.hpp"
-#include "boost/filesystem.hpp"
-#include "boost/format.hpp"
-#include "boost/process.hpp"
-
-#include "fmt/format.h"
-#include "gtest/gtest.h"
-#include "rclcpp/rclcpp.hpp"
-
-#include "system_monitor/cpu_monitor/tegra_cpu_monitor.hpp"
 
 static constexpr const char * TEST_FILE = "test";
 
@@ -41,28 +42,30 @@ class TestCPUMonitor : public CPUMonitor
 
 public:
   TestCPUMonitor(const std::string & node_name, const rclcpp::NodeOptions & options)
-  : CPUMonitor(node_name, options) {}
+  : CPUMonitor(node_name, options)
+  {
+  }
 
   void diagCallback(const diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr diag_msg)
   {
     array_ = *diag_msg;
   }
 
-  void addTempName(const std::string & path) {temps_.emplace_back(path, path);}
-  void clearTempNames() {temps_.clear();}
+  void addTempName(const std::string & path) { temps_.emplace_back(path, path); }
+  void clearTempNames() { temps_.clear(); }
 
-  void addFreqName(int index, const std::string & path) {freqs_.emplace_back(index, path);}
-  void clearFreqNames() {freqs_.clear();}
+  void addFreqName(int index, const std::string & path) { freqs_.emplace_back(index, path); }
+  void clearFreqNames() { freqs_.clear(); }
 
-  void setMpstatExists(bool mpstat_exists) {mpstat_exists_ = mpstat_exists;}
+  void setMpstatExists(bool mpstat_exists) { mpstat_exists_ = mpstat_exists; }
 
-  void changeUsageWarn(float usage_warn) {usage_warn_ = usage_warn;}
-  void changeUsageError(float usage_error) {usage_error_ = usage_error;}
+  void changeUsageWarn(float usage_warn) { usage_warn_ = usage_warn; }
+  void changeUsageError(float usage_error) { usage_error_ = usage_error; }
 
-  void changeLoad1Warn(float load1_warn) {load1_warn_ = load1_warn;}
-  void changeLoad5Warn(float load5_warn) {load5_warn_ = load5_warn;}
+  void changeLoad1Warn(float load1_warn) { load1_warn_ = load1_warn; }
+  void changeLoad5Warn(float load5_warn) { load5_warn_ = load5_warn; }
 
-  void update() {updater_.force_update();}
+  void update() { updater_.force_update(); }
 
   const std::string removePrefix(const std::string & name)
   {
@@ -99,8 +102,7 @@ public:
 
 protected:
   std::unique_ptr<TestCPUMonitor> monitor_;
-  rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr
-    sub_;
+  rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr sub_;
   std::string exe_dir_;
   std::string mpstat_;
 
@@ -116,17 +118,25 @@ protected:
     monitor_->getFreqNames();
 
     // Remove test file if exists
-    if (fs::exists(TEST_FILE)) {fs::remove(TEST_FILE);}
+    if (fs::exists(TEST_FILE)) {
+      fs::remove(TEST_FILE);
+    }
     // Remove dummy executable if exists
-    if (fs::exists(mpstat_)) {fs::remove(mpstat_);}
+    if (fs::exists(mpstat_)) {
+      fs::remove(mpstat_);
+    }
   }
 
   void TearDown()
   {
     // Remove test file if exists
-    if (fs::exists(TEST_FILE)) {fs::remove(TEST_FILE);}
+    if (fs::exists(TEST_FILE)) {
+      fs::remove(TEST_FILE);
+    }
     // Remove dummy executable if exists
-    if (fs::exists(mpstat_)) {fs::remove(mpstat_);}
+    if (fs::exists(mpstat_)) {
+      fs::remove(mpstat_);
+    }
     rclcpp::shutdown();
   }
 
@@ -648,7 +658,7 @@ public:
   : CPUMonitorBase(node_name, options)
   {
   }
-  void update() {updater_.force_update();}
+  void update() { updater_.force_update(); }
 };
 
 TEST_F(CPUMonitorTestSuite, dummyCPUMonitorTest)

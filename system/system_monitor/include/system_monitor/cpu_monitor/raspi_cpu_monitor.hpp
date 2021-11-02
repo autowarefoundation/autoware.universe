@@ -20,9 +20,9 @@
 #ifndef SYSTEM_MONITOR__CPU_MONITOR__RASPI_CPU_MONITOR_HPP_
 #define SYSTEM_MONITOR__CPU_MONITOR__RASPI_CPU_MONITOR_HPP_
 
-#include <string>
-
 #include "system_monitor/cpu_monitor/cpu_monitor_base.hpp"
+
+#include <string>
 
 #define raspiUnderVoltageDetected (1 << 0)              // 0x00001
 #define raspiArmFrequencyCapped (1 << 1)                // 0x00002
@@ -35,24 +35,16 @@
 
 #define raspiThermalThrottlingMask (raspiCurrentlyThrottled | raspiSoftTemperatureLimitActive)
 
-#define throttledToString(X) \
-  (((X)&raspiUnderVoltageDetected) \
-  ? "Under-voltage detected" \
-  : ((X)&raspiArmFrequencyCapped) \
-  ? "Arm frequency capped" \
-  : ((X)&raspiCurrentlyThrottled) \
-  ? "Currently throttled" \
-  : ((X)&raspiSoftTemperatureLimitActive) \
-  ? "Soft temperature limit active" \
-  : ((X)&raspiUnderVoltageHasOccurred) \
-  ? "Under-voltage has occurred" \
-  : ((X)&raspiArmFrequencyCappedHasOccurred) \
-  ? "Arm frequency capped has occurred" \
-  : ((X)&raspiThrottlingHasOccurred) \
-  ? "Throttling has occurred" \
-  : ((X)&raspiSoftTemperatureLimitHasOccurred) \
-  ? "Soft temperature limit has occurred" \
-  : "UNKNOWN")
+#define throttledToString(X)                                                            \
+  (((X)&raspiUnderVoltageDetected)              ? "Under-voltage detected"              \
+   : ((X)&raspiArmFrequencyCapped)              ? "Arm frequency capped"                \
+   : ((X)&raspiCurrentlyThrottled)              ? "Currently throttled"                 \
+   : ((X)&raspiSoftTemperatureLimitActive)      ? "Soft temperature limit active"       \
+   : ((X)&raspiUnderVoltageHasOccurred)         ? "Under-voltage has occurred"          \
+   : ((X)&raspiArmFrequencyCappedHasOccurred)   ? "Arm frequency capped has occurred"   \
+   : ((X)&raspiThrottlingHasOccurred)           ? "Throttling has occurred"             \
+   : ((X)&raspiSoftTemperatureLimitHasOccurred) ? "Soft temperature limit has occurred" \
+                                                : "UNKNOWN")
 
 class CPUMonitor : public CPUMonitorBase
 {

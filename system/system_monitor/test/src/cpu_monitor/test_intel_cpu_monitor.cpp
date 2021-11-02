@@ -12,24 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "system_monitor/cpu_monitor/intel_cpu_monitor.hpp"
+
+#include <msr_reader/msr_reader.hpp>
+#include <rclcpp/rclcpp.hpp>
+
+#include <boost/algorithm/string.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/process.hpp>
+
+#include <fmt/format.h>
+#include <gtest/gtest.h>
 #include <pthread.h>
 
 #include <fstream>
 #include <memory>
 #include <string>
 #include <vector>
-
-#include "boost/algorithm/string.hpp"
-#include "boost/archive/text_oarchive.hpp"
-#include "boost/filesystem.hpp"
-#include "boost/process.hpp"
-
-#include "fmt/format.h"
-#include "gtest/gtest.h"
-#include "rclcpp/rclcpp.hpp"
-
-#include "msr_reader/msr_reader.hpp"
-#include "system_monitor/cpu_monitor/intel_cpu_monitor.hpp"
 
 static constexpr const char * TEST_FILE = "test";
 static constexpr const char * DOCKER_ENV = "/.dockerenv";
@@ -45,26 +45,28 @@ class TestCPUMonitor : public CPUMonitor
 
 public:
   TestCPUMonitor(const std::string & node_name, const rclcpp::NodeOptions & options)
-  : CPUMonitor(node_name, options) {}
+  : CPUMonitor(node_name, options)
+  {
+  }
 
   void diagCallback(const diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr diag_msg)
   {
     array_ = *diag_msg;
   }
 
-  void addTempName(const std::string & path) {temps_.emplace_back(path, path);}
-  void clearTempNames() {temps_.clear();}
-  bool isTempNamesEmpty() {return temps_.empty();}
+  void addTempName(const std::string & path) { temps_.emplace_back(path, path); }
+  void clearTempNames() { temps_.clear(); }
+  bool isTempNamesEmpty() { return temps_.empty(); }
 
-  void addFreqName(int index, const std::string & path) {freqs_.emplace_back(index, path);}
-  void clearFreqNames() {freqs_.clear();}
+  void addFreqName(int index, const std::string & path) { freqs_.emplace_back(index, path); }
+  void clearFreqNames() { freqs_.clear(); }
 
-  void setMpstatExists(bool mpstat_exists) {mpstat_exists_ = mpstat_exists;}
+  void setMpstatExists(bool mpstat_exists) { mpstat_exists_ = mpstat_exists; }
 
-  void changeUsageWarn(float usage_warn) {usage_warn_ = usage_warn;}
-  void changeUsageError(float usage_error) {usage_error_ = usage_error;}
+  void changeUsageWarn(float usage_warn) { usage_warn_ = usage_warn; }
+  void changeUsageError(float usage_error) { usage_error_ = usage_error; }
 
-  void update() {updater_.force_update();}
+  void update() { updater_.force_update(); }
 
   const std::string removePrefix(const std::string & name)
   {
@@ -101,8 +103,7 @@ public:
 
 protected:
   std::unique_ptr<TestCPUMonitor> monitor_;
-  rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr
-    sub_;
+  rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr sub_;
   std::string exe_dir_;
   std::string mpstat_;
 
@@ -118,17 +119,25 @@ protected:
     monitor_->getFreqNames();
 
     // Remove test file if exists
-    if (fs::exists(TEST_FILE)) {fs::remove(TEST_FILE);}
+    if (fs::exists(TEST_FILE)) {
+      fs::remove(TEST_FILE);
+    }
     // Remove dummy executable if exists
-    if (fs::exists(mpstat_)) {fs::remove(mpstat_);}
+    if (fs::exists(mpstat_)) {
+      fs::remove(mpstat_);
+    }
   }
 
   void TearDown()
   {
     // Remove test file if exists
-    if (fs::exists(TEST_FILE)) {fs::remove(TEST_FILE);}
+    if (fs::exists(TEST_FILE)) {
+      fs::remove(TEST_FILE);
+    }
     // Remove dummy executable if exists
-    if (fs::exists(mpstat_)) {fs::remove(mpstat_);}
+    if (fs::exists(mpstat_)) {
+      fs::remove(mpstat_);
+    }
     rclcpp::shutdown();
   }
 
@@ -153,8 +162,7 @@ protected:
   }
 };
 
-enum ThreadTestMode
-{
+enum ThreadTestMode {
   Normal = 0,
   Throttling,
   ReturnsError,
@@ -172,7 +180,9 @@ void * msr_reader(void * args)
 
   // Create a new socket
   int sock = socket(AF_INET, SOCK_STREAM, 0);
-  if (sock < 0) {return nullptr;}
+  if (sock < 0) {
+    return nullptr;
+  }
 
   // Allow address reuse
   int ret = 0;
@@ -243,7 +253,9 @@ void * msr_reader(void * args)
       // Wait for recv timeout
       while (true) {
         pthread_mutex_lock(&mutex);
-        if (stop_thread) {break;}
+        if (stop_thread) {
+          break;
+        }
         pthread_mutex_unlock(&mutex);
         sleep(1);
       }
@@ -273,7 +285,9 @@ void * msr_reader(void * args)
 TEST_F(CPUMonitorTestSuite, tempWarnTest)
 {
   // Skip test if process runs inside CI environment
-  if (monitor_->isTempNamesEmpty() && fs::exists(DOCKER_ENV)) {return;}
+  if (monitor_->isTempNamesEmpty() && fs::exists(DOCKER_ENV)) {
+    return;
+  }
 
   // Verify normal behavior
   {
@@ -335,7 +349,9 @@ TEST_F(CPUMonitorTestSuite, tempWarnTest)
 TEST_F(CPUMonitorTestSuite, tempErrorTest)
 {
   // Skip test if process runs inside CI environment
-  if (monitor_->isTempNamesEmpty() && fs::exists(DOCKER_ENV)) {return;}
+  if (monitor_->isTempNamesEmpty() && fs::exists(DOCKER_ENV)) {
+    return;
+  }
 
   // Verify normal behavior
   {
@@ -878,7 +894,7 @@ public:
   : CPUMonitorBase(node_name, options)
   {
   }
-  void update() {updater_.force_update();}
+  void update() { updater_.force_update(); }
 };
 
 TEST_F(CPUMonitorTestSuite, dummyCPUMonitorTest)

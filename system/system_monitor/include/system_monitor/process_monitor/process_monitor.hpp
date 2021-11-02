@@ -20,13 +20,15 @@
 #ifndef SYSTEM_MONITOR__PROCESS_MONITOR__PROCESS_MONITOR_HPP_
 #define SYSTEM_MONITOR__PROCESS_MONITOR__PROCESS_MONITOR_HPP_
 
+#include "system_monitor/process_monitor/diag_task.hpp"
+
+#include <diagnostic_updater/diagnostic_updater.hpp>
+
+#include <boost/process.hpp>
+
 #include <memory>
 #include <string>
 #include <vector>
-
-#include "boost/process.hpp"
-#include "diagnostic_updater/diagnostic_updater.hpp"
-#include "system_monitor/process_monitor/diag_task.hpp"
 
 namespace bp = boost::process;
 
@@ -114,9 +116,9 @@ protected:
 
   int num_of_procs_;  //!< @brief number of processes to show
   std::vector<std::shared_ptr<DiagTask>>
-  load_tasks_;    //!< @brief list of diagnostics tasks for high load procs
+    load_tasks_;  //!< @brief list of diagnostics tasks for high load procs
   std::vector<std::shared_ptr<DiagTask>>
-  memory_tasks_;    //!< @brief list of diagnostics tasks for high memory procs
+    memory_tasks_;  //!< @brief list of diagnostics tasks for high memory procs
 };
 
 #endif  // SYSTEM_MONITOR__PROCESS_MONITOR__PROCESS_MONITOR_HPP_

@@ -20,13 +20,14 @@
 #ifndef SYSTEM_MONITOR__NET_MONITOR__NET_MONITOR_HPP_
 #define SYSTEM_MONITOR__NET_MONITOR__NET_MONITOR_HPP_
 
+#include "system_monitor/net_monitor/nl80211.hpp"
+
+#include <diagnostic_updater/diagnostic_updater.hpp>
+
 #include <climits>
 #include <map>
 #include <string>
 #include <vector>
-
-#include "diagnostic_updater/diagnostic_updater.hpp"
-#include "system_monitor/net_monitor/nl80211.hpp"
 
 #define toMbit(X) (static_cast<float>(X) / 1000000 * 8)
 
@@ -38,8 +39,7 @@ typedef struct bytes
   unsigned int rx_bytes;  //!< @brief total bytes received
   unsigned int tx_bytes;  //!< @brief total bytes transmitted
 
-  bytes()
-  : rx_bytes(0), tx_bytes(0) {}
+  bytes() : rx_bytes(0), tx_bytes(0) {}
 } bytes;
 
 class NetMonitor : public rclcpp::Node
@@ -61,8 +61,8 @@ public:
   void update();
 
   /**
- * @brief Shutdown nl80211 object
- */
+   * @brief Shutdown nl80211 object
+   */
   void shutdown_nl80211();
 
 protected:
@@ -88,7 +88,7 @@ protected:
 
   char hostname_[HOST_NAME_MAX + 1];        //!< @brief host name
   std::map<std::string, bytes> bytes_;      //!< @brief list of bytes
-  rclcpp::Time last_update_time_;              //!< @brief last update time
+  rclcpp::Time last_update_time_;           //!< @brief last update time
   std::vector<std::string> device_params_;  //!< @brief list of devices
   NL80211 nl80211_;                         // !< @brief 802.11 netlink-based interface
 

@@ -12,19 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "system_monitor/mem_monitor/mem_monitor.hpp"
+
+#include <rclcpp/rclcpp.hpp>
+
+#include <boost/algorithm/string.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/format.hpp>
+#include <boost/process.hpp>
+
+#include <fmt/format.h>
+#include <gtest/gtest.h>
+
 #include <memory>
 #include <string>
-
-#include "boost/algorithm/string.hpp"
-#include "boost/filesystem.hpp"
-#include "boost/format.hpp"
-#include "boost/process.hpp"
-
-#include "fmt/format.h"
-#include "gtest/gtest.h"
-#include "rclcpp/rclcpp.hpp"
-
-#include "system_monitor/mem_monitor/mem_monitor.hpp"
 
 namespace fs = boost::filesystem;
 using DiagStatus = diagnostic_msgs::msg::DiagnosticStatus;
@@ -37,17 +38,19 @@ class TestMemMonitor : public MemMonitor
 
 public:
   TestMemMonitor(const std::string & node_name, const rclcpp::NodeOptions & options)
-  : MemMonitor(node_name, options) {}
+  : MemMonitor(node_name, options)
+  {
+  }
 
   void diagCallback(const diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr diag_msg)
   {
     array_ = *diag_msg;
   }
 
-  void changeUsageWarn(float usage_warn) {usage_warn_ = usage_warn;}
-  void changeUsageError(float usage_error) {usage_error_ = usage_error;}
+  void changeUsageWarn(float usage_warn) { usage_warn_ = usage_warn; }
+  void changeUsageError(float usage_error) { usage_error_ = usage_error; }
 
-  void update() {updater_.force_update();}
+  void update() { updater_.force_update(); }
 
   const std::string removePrefix(const std::string & name)
   {
@@ -84,8 +87,7 @@ public:
 
 protected:
   std::unique_ptr<TestMemMonitor> monitor_;
-  rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr
-    sub_;
+  rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr sub_;
   std::string exe_dir_;
   std::string free_;
 
@@ -99,13 +101,17 @@ protected:
       "/diagnostics", 1000, std::bind(&TestMemMonitor::diagCallback, monitor_.get(), _1));
 
     // Remove dummy executable if exists
-    if (fs::exists(free_)) {fs::remove(free_);}
+    if (fs::exists(free_)) {
+      fs::remove(free_);
+    }
   }
 
   void TearDown()
   {
     // Remove dummy executable if exists
-    if (fs::exists(free_)) {fs::remove(free_);}
+    if (fs::exists(free_)) {
+      fs::remove(free_);
+    }
     rclcpp::shutdown();
   }
 

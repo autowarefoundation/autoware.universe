@@ -17,6 +17,13 @@
  * @brief GPU monitor class
  */
 
+#include "system_monitor/gpu_monitor/nvml_gpu_monitor.hpp"
+
+#include "system_monitor/system_monitor_utility.hpp"
+
+#include <boost/algorithm/string.hpp>
+
+#include <fmt/format.h>
 #include <sys/time.h>
 
 #include <algorithm>
@@ -25,15 +32,7 @@
 #include <string>
 #include <vector>
 
-#include "boost/algorithm/string.hpp"
-
-#include "fmt/format.h"
-
-#include "system_monitor/gpu_monitor/nvml_gpu_monitor.hpp"
-#include "system_monitor/system_monitor_utility.hpp"
-
-GPUMonitor::GPUMonitor(const rclcpp::NodeOptions & options)
-: GPUMonitorBase("gpu_monitor", options)
+GPUMonitor::GPUMonitor(const rclcpp::NodeOptions & options) : GPUMonitorBase("gpu_monitor", options)
 {
   // Include frequency into GPU Thermal Throttling thus remove.
   updater_.removeByName("GPU Frequency");
@@ -56,23 +55,22 @@ GPUMonitor::GPUMonitor(const rclcpp::NodeOptions & options)
     ret = nvmlDeviceGetHandleByIndex(index, &info.device);
     if (ret != NVML_SUCCESS) {
       RCLCPP_ERROR(
-        this->get_logger(),
-        "Failed to acquire the handle for a particular device [%d]: %s", index,
+        this->get_logger(), "Failed to acquire the handle for a particular device [%d]: %s", index,
         nvmlErrorString(ret));
       continue;
     }
     ret = nvmlDeviceGetName(info.device, info.name, NVML_DEVICE_NAME_BUFFER_SIZE);
     if (ret != NVML_SUCCESS) {
       RCLCPP_ERROR(
-        this->get_logger(),
-        "Failed to retrieve the name of this device [%d]: %s", index, nvmlErrorString(ret));
+        this->get_logger(), "Failed to retrieve the name of this device [%d]: %s", index,
+        nvmlErrorString(ret));
       continue;
     }
     ret = nvmlDeviceGetPciInfo(info.device, &info.pci);
     if (ret != NVML_SUCCESS) {
       RCLCPP_ERROR(
-        this->get_logger(),
-        "Failed to retrieve the PCI attributes [%d]: %s", index, nvmlErrorString(ret));
+        this->get_logger(), "Failed to retrieve the PCI attributes [%d]: %s", index,
+        nvmlErrorString(ret));
       continue;
     }
     gpus_.push_back(info);
@@ -176,9 +174,7 @@ void GPUMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
 }
 
 void GPUMonitor::addProcessUsage(
-  int index,
-  nvmlDevice_t device,
-  diagnostic_updater::DiagnosticStatusWrapper & stat)
+  int index, nvmlDevice_t device, diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
   nvmlReturn_t ret{};
   std::list<uint32_t> running_pid_list;
@@ -190,8 +186,7 @@ void GPUMonitor::addProcessUsage(
   ret = nvmlDeviceGetComputeRunningProcesses_v2(device, &info_count, infos.get());
   if (ret != NVML_SUCCESS) {
     RCLCPP_WARN(
-      this->get_logger(),
-      "Failed to nvmlDeviceGetComputeRunningProcesses_v2 NVML: %s",
+      this->get_logger(), "Failed to nvmlDeviceGetComputeRunningProcesses_v2 NVML: %s",
       nvmlErrorString(ret));
     return;
   }
@@ -205,8 +200,7 @@ void GPUMonitor::addProcessUsage(
   ret = nvmlDeviceGetGraphicsRunningProcesses_v2(device, &info_count, infos.get());
   if (ret != NVML_SUCCESS) {
     RCLCPP_WARN(
-      this->get_logger(),
-      "Failed to nvmlDeviceGetGraphicsRunningProcesses_v2 NVML: %s",
+      this->get_logger(), "Failed to nvmlDeviceGetGraphicsRunningProcesses_v2 NVML: %s",
       nvmlErrorString(ret));
     return;
   }
@@ -220,8 +214,7 @@ void GPUMonitor::addProcessUsage(
   // This function result will not succeed, because arg[util_count(in)] is 0.
   if (ret != NVML_ERROR_INSUFFICIENT_SIZE) {
     RCLCPP_WARN(
-      this->get_logger(),
-      "Failed to nvmlDeviceGetProcessUtilization(1st) NVML: %s",
+      this->get_logger(), "Failed to nvmlDeviceGetProcessUtilization(1st) NVML: %s",
       nvmlErrorString(ret));
     return;
   }
@@ -237,8 +230,7 @@ void GPUMonitor::addProcessUsage(
   ret = nvmlDeviceGetProcessUtilization(device, utils.get(), &util_count, current_timestamp_);
   if (ret != NVML_SUCCESS) {
     RCLCPP_WARN(
-      this->get_logger(),
-      "Failed to nvmlDeviceGetProcessUtilization(2nd) NVML: %s",
+      this->get_logger(), "Failed to nvmlDeviceGetProcessUtilization(2nd) NVML: %s",
       nvmlErrorString(ret));
     return;
   }
@@ -254,8 +246,8 @@ void GPUMonitor::addProcessUsage(
         stat.add(fmt::format("GPU {0}: process {1}: pid", index, add_cnt), utils[cnt].pid);
         stat.add(fmt::format("GPU {0}: process {1}: name", index, add_cnt), name);
         stat.addf(
-          fmt::format("GPU {0}: process {1}: usage", index, add_cnt),
-          "%ld.0%%", ((utils[cnt].smUtil != UINT32_MAX) ? utils[cnt].smUtil : 0));
+          fmt::format("GPU {0}: process {1}: usage", index, add_cnt), "%ld.0%%",
+          ((utils[cnt].smUtil != UINT32_MAX) ? utils[cnt].smUtil : 0));
         ++add_cnt;
         break;
       }
@@ -266,7 +258,6 @@ void GPUMonitor::addProcessUsage(
   rclcpp::Clock system_clock(RCL_SYSTEM_TIME);
   current_timestamp_ = system_clock.now().nanoseconds() / 1000;
 }
-
 
 void GPUMonitor::checkMemoryUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
@@ -377,7 +368,9 @@ void GPUMonitor::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & s
     stat.add(fmt::format("GPU {}: name", index), itr->name);
     stat.addf(fmt::format("GPU {}: graphics clock", index), "%d MHz", clock);
 
-    if (reasons.empty()) {reasons.emplace_back("ReasonNone");}
+    if (reasons.empty()) {
+      reasons.emplace_back("ReasonNone");
+    }
 
     stat.add(fmt::format("GPU {}: reasons", index), boost::algorithm::join(reasons, ", "));
 
@@ -404,5 +397,5 @@ std::string GPUMonitor::toHumanReadable(unsigned long long size)  // NOLINT
   return fmt::format(format, dsize, units[count]);
 }
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(GPUMonitor)

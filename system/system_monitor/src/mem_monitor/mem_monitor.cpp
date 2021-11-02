@@ -17,15 +17,16 @@
  * @brief Memory monitor class
  */
 
+#include "system_monitor/mem_monitor/mem_monitor.hpp"
+
+#include "system_monitor/system_monitor_utility.hpp"
+
+#include <boost/process.hpp>
+
+#include <fmt/format.h>
+
 #include <string>
 #include <vector>
-
-#include "boost/process.hpp"
-
-#include "fmt/format.h"
-
-#include "system_monitor/mem_monitor/mem_monitor.hpp"
-#include "system_monitor/system_monitor_utility.hpp"
 
 namespace bp = boost::process;
 
@@ -40,10 +41,7 @@ MemMonitor::MemMonitor(const rclcpp::NodeOptions & options)
   updater_.add("Memory Usage", this, &MemMonitor::checkUsage);
 }
 
-void MemMonitor::update()
-{
-  updater_.force_update();
-}
+void MemMonitor::update() { updater_.force_update(); }
 
 void MemMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
@@ -135,5 +133,5 @@ std::string MemMonitor::toHumanReadable(const std::string & str)
   return fmt::format(format, size, units[count]);
 }
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(MemMonitor)

@@ -17,14 +17,14 @@
  * @brief TEGRA PU monitor class
  */
 
+#include "system_monitor/cpu_monitor/tegra_cpu_monitor.hpp"
+
+#include "system_monitor/system_monitor_utility.hpp"
+
 #include <string>
 #include <vector>
 
-#include "system_monitor/cpu_monitor/tegra_cpu_monitor.hpp"
-#include "system_monitor/system_monitor_utility.hpp"
-
-CPUMonitor::CPUMonitor(const rclcpp::NodeOptions & options)
-: CPUMonitorBase("cpu_monitor", options)
+CPUMonitor::CPUMonitor(const rclcpp::NodeOptions & options) : CPUMonitorBase("cpu_monitor", options)
 {
   // There is no event record for thermal throttling.
   // Need to manually monitor temperature to figure out if thermal limits crossed or not.
@@ -44,5 +44,5 @@ void CPUMonitor::getTempNames()
   }
 }
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(CPUMonitor)

@@ -12,14 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "system_monitor/gpu_monitor/nvml_gpu_monitor.hpp"
+
+#include <rclcpp/rclcpp.hpp>
+
+#include <boost/algorithm/string.hpp>
+
+#include <gtest/gtest.h>
+
 #include <memory>
 #include <string>
-
-#include "gtest/gtest.h"
-#include "rclcpp/rclcpp.hpp"
-#include "system_monitor/gpu_monitor/nvml_gpu_monitor.hpp"
-#include "boost/algorithm/string.hpp"
-
 
 using DiagStatus = diagnostic_msgs::msg::DiagnosticStatus;
 
@@ -29,29 +31,31 @@ class TestGPUMonitor : public GPUMonitor
 
 public:
   TestGPUMonitor(const std::string & node_name, const rclcpp::NodeOptions & options)
-  : GPUMonitor(node_name, options) {}
+  : GPUMonitor(node_name, options)
+  {
+  }
 
   void diagCallback(const diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr diag_msg)
   {
     array_ = *diag_msg;
   }
 
-  void addGPU(const gpu_info & info) {gpus_.push_back(info);}
-  void clearGPU() {gpus_.clear();}
+  void addGPU(const gpu_info & info) { gpus_.push_back(info); }
+  void clearGPU() { gpus_.clear(); }
 
-  void changeTempWarn(float temp_warn) {temp_warn_ = temp_warn;}
-  void changeTempError(float temp_error) {temp_error_ = temp_error;}
+  void changeTempWarn(float temp_warn) { temp_warn_ = temp_warn; }
+  void changeTempError(float temp_error) { temp_error_ = temp_error; }
 
-  void changeGPUUsageWarn(float gpu_usage_warn) {gpu_usage_warn_ = gpu_usage_warn;}
-  void changeGPUUsageError(float gpu_usage_error) {gpu_usage_error_ = gpu_usage_error;}
+  void changeGPUUsageWarn(float gpu_usage_warn) { gpu_usage_warn_ = gpu_usage_warn; }
+  void changeGPUUsageError(float gpu_usage_error) { gpu_usage_error_ = gpu_usage_error; }
 
-  void changeMemoryUsageWarn(float memory_usage_warn) {memory_usage_warn_ = memory_usage_warn;}
+  void changeMemoryUsageWarn(float memory_usage_warn) { memory_usage_warn_ = memory_usage_warn; }
   void changeMemoryUsageError(float memory_usage_error)
   {
     memory_usage_error_ = memory_usage_error;
   }
 
-  void update() {updater_.force_update();}
+  void update() { updater_.force_update(); }
 
   const std::string removePrefix(const std::string & name)
   {
@@ -81,8 +85,7 @@ public:
 
 protected:
   std::unique_ptr<TestGPUMonitor> monitor_;
-  rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr
-    sub_;
+  rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr sub_;
 
   void SetUp()
   {
@@ -94,10 +97,7 @@ protected:
       "/diagnostics", 1000, std::bind(&TestGPUMonitor::diagCallback, monitor_.get(), _1));
   }
 
-  void TearDown()
-  {
-    rclcpp::shutdown();
-  }
+  void TearDown() { rclcpp::shutdown(); }
 
   bool findValue(const DiagStatus status, const std::string & key, std::string & value)  // NOLINT
   {
@@ -305,7 +305,6 @@ TEST_F(GPUMonitorTestSuite, gpuUsageErrorTest)
     // Give time to publish
     rclcpp::WallRate(2).sleep();
     rclcpp::spin_some(monitor_->get_node_base_interface());
-
 
     // Verify
     DiagStatus status;
@@ -533,15 +532,14 @@ public:
   : GPUMonitorBase(node_name, options)
   {
   }
-  void update() {updater_.force_update();}
+  void update() { updater_.force_update(); }
 };
 
 TEST_F(GPUMonitorTestSuite, dummyGPUMonitorTest)
 {
   rclcpp::NodeOptions options;
-  std::unique_ptr<DummyGPUMonitor> monitor = std::make_unique<DummyGPUMonitor>(
-    "dummy_gpu_monitor",
-    options);
+  std::unique_ptr<DummyGPUMonitor> monitor =
+    std::make_unique<DummyGPUMonitor>("dummy_gpu_monitor", options);
   // Publish topic
   monitor->update();
 }

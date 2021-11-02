@@ -12,12 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "system_monitor/cpu_monitor/unknown_cpu_monitor.hpp"
+
+#include <rclcpp/rclcpp.hpp>
+
+#include <gtest/gtest.h>
+
 #include <memory>
 #include <string>
-
-#include "gtest/gtest.h"
-#include "rclcpp/rclcpp.hpp"
-#include "system_monitor/cpu_monitor/unknown_cpu_monitor.hpp"
 
 using DiagStatus = diagnostic_msgs::msg::DiagnosticStatus;
 
@@ -27,14 +29,16 @@ class TestCPUMonitor : public CPUMonitor
 
 public:
   TestCPUMonitor(const std::string & node_name, const rclcpp::NodeOptions & options)
-  : CPUMonitor(node_name, options) {}
+  : CPUMonitor(node_name, options)
+  {
+  }
 
   void diagCallback(const diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr diag_msg)
   {
     array_ = *diag_msg;
   }
 
-  void update() {updater_.force_update();}
+  void update() { updater_.force_update(); }
 
 private:
   diagnostic_msgs::msg::DiagnosticArray array_;
@@ -47,8 +51,7 @@ public:
 
 protected:
   std::unique_ptr<TestCPUMonitor> monitor_;
-  rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr
-    sub_;
+  rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr sub_;
 
   void SetUp()
   {
@@ -62,15 +65,10 @@ protected:
     monitor_->getFreqNames();
   }
 
-  void TearDown()
-  {
-    rclcpp::shutdown();
-  }
+  void TearDown() { rclcpp::shutdown(); }
 };
 
-TEST_F(CPUMonitorTestSuite, test) {
-  ASSERT_TRUE(true);
-}
+TEST_F(CPUMonitorTestSuite, test) { ASSERT_TRUE(true); }
 
 int main(int argc, char ** argv)
 {

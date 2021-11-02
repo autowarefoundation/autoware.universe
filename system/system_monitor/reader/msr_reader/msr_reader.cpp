@@ -17,12 +17,20 @@
  * @brief MSR read class
  */
 
+#include <msr_reader/msr_reader.hpp>
+
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/lexical_cast.hpp>
+
 #include <errno.h>
 #include <fcntl.h>
 #include <getopt.h>
+#include <netinet/in.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/socket.h>
 #include <syslog.h>
 #include <unistd.h>
 
@@ -32,15 +40,6 @@
 #include <sstream>
 #include <string>
 #include <vector>
-
-#include "netinet/in.h"
-#include "sys/socket.h"
-
-#include "boost/archive/text_oarchive.hpp"
-#include "boost/filesystem.hpp"
-#include "boost/lexical_cast.hpp"
-
-#include "msr_reader/msr_reader.hpp"
 
 namespace fs = boost::filesystem;
 
@@ -60,17 +59,17 @@ typedef struct
   uint64_t pkg_prochot_event_ : 1;                //!< @brief 2 Pkg PROCHOT # event (RO)
   uint64_t pkg_prochot_log_ : 1;                  //!< @brief 3 Pkg PROCHOT # log (R/WC0)
   uint64_t pkg_critical_temperature_status_ : 1;  //!< @brief 4 Pkg Critical Temperature Status (RO)
-  uint64_t                                       //!< @brief 5 Pkg Critical Temperature
-    pkg_critical_temperature_status_log_ : 1;    //!<   Status Log (R/WC0)
-  uint64_t pkg_thermal_threshold_1_status_ : 1;  //!< @brief 6 Pkg Thermal Threshold #1 Status (RO)
-  uint64_t pkg_thermal_threshold_1_log_ : 1;     //!< @brief 7 Pkg Thermal Threshold #1 log (R/WC0)
-  uint64_t pkg_thermal_threshold_2_status_ : 1;  //!< @brief 8 Pkg Thermal Threshold #2 Status (RO)
-  uint64_t pkg_thermal_threshold_2_log_ : 1;     //!< @brief 9 Pkg Thermal Threshold #2 log (R/WC0)
-  uint64_t pkg_power_limitation_status_ : 1;     //!< @brief 10 Pkg Power Limitation Status (RO)
-  uint64_t pkg_power_limitation_log_ : 1;        //!< @brief 11 Pkg Power Limitation log (R/WC0)
-  uint64_t reserved1_ : 4;                       //!< @brief 15:12 Reserved
-  uint64_t pkg_digital_readout_ : 7;             //!< @brief 22:16 Pkg Digital Readout (RO)
-  uint64_t reserved2_ : 41;                      //!< @brief 63:23 Reserved
+  uint64_t                                        //!< @brief 5 Pkg Critical Temperature
+    pkg_critical_temperature_status_log_ : 1;     //!<   Status Log (R/WC0)
+  uint64_t pkg_thermal_threshold_1_status_ : 1;   //!< @brief 6 Pkg Thermal Threshold #1 Status (RO)
+  uint64_t pkg_thermal_threshold_1_log_ : 1;      //!< @brief 7 Pkg Thermal Threshold #1 log (R/WC0)
+  uint64_t pkg_thermal_threshold_2_status_ : 1;   //!< @brief 8 Pkg Thermal Threshold #2 Status (RO)
+  uint64_t pkg_thermal_threshold_2_log_ : 1;      //!< @brief 9 Pkg Thermal Threshold #2 log (R/WC0)
+  uint64_t pkg_power_limitation_status_ : 1;      //!< @brief 10 Pkg Power Limitation Status (RO)
+  uint64_t pkg_power_limitation_log_ : 1;         //!< @brief 11 Pkg Power Limitation log (R/WC0)
+  uint64_t reserved1_ : 4;                        //!< @brief 15:12 Reserved
+  uint64_t pkg_digital_readout_ : 7;              //!< @brief 22:16 Pkg Digital Readout (RO)
+  uint64_t reserved2_ : 41;                       //!< @brief 63:23 Reserved
 } PackageThermalStatus;
 
 /**
@@ -233,29 +232,35 @@ int main(int argc, char ** argv)
   const fs::path root("/dev/cpu");
 
   for (const fs::path & path : boost::make_iterator_range(
-      fs::recursive_directory_iterator(root), fs::recursive_directory_iterator()))
-  {
-    if (fs::is_directory(path)) {continue;}
+         fs::recursive_directory_iterator(root), fs::recursive_directory_iterator())) {
+    if (fs::is_directory(path)) {
+      continue;
+    }
 
     std::cmatch match;
     const char * msr = path.generic_string().c_str();
 
     // /dev/cpu/[0-9]/msr ?
-    if (!std::regex_match(msr, match, std::regex(".*msr"))) {continue;}
+    if (!std::regex_match(msr, match, std::regex(".*msr"))) {
+      continue;
+    }
 
     list.push_back(path.generic_string());
   }
 
-  std::sort(
-    list.begin(), list.end(), [](const std::string & c1, const std::string & c2) {
-      std::cmatch match;
-      const std::regex filter(".*/(\\d+)/msr");
-      int n1 = 0;
-      int n2 = 0;
-      if (std::regex_match(c1.c_str(), match, filter)) {n1 = std::stoi(match[1].str());}
-      if (std::regex_match(c2.c_str(), match, filter)) {n2 = std::stoi(match[1].str());}
-      return n1 < n2;
-    }); // NOLINT
+  std::sort(list.begin(), list.end(), [](const std::string & c1, const std::string & c2) {
+    std::cmatch match;
+    const std::regex filter(".*/(\\d+)/msr");
+    int n1 = 0;
+    int n2 = 0;
+    if (std::regex_match(c1.c_str(), match, filter)) {
+      n1 = std::stoi(match[1].str());
+    }
+    if (std::regex_match(c2.c_str(), match, filter)) {
+      n2 = std::stoi(match[1].str());
+    }
+    return n1 < n2;
+  });  // NOLINT
 
   if (list.empty()) {
     printf("No msr found in /dev/cpu.\n");
