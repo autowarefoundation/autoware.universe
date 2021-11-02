@@ -37,20 +37,18 @@
 #ifndef CALIBRATOR_HPP_
 #define CALIBRATOR_HPP_
 
+#include <cuda_utils.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/opencv.hpp>
+
+#include <NvInfer.h>
 #include <assert.h>
 
 #include <algorithm>
 #include <iterator>
 #include <string>
 #include <vector>
-
-#include "opencv2/core/core.hpp"
-#include "opencv2/highgui/highgui.hpp"
-#include "opencv2/opencv.hpp"
-
-#include "NvInfer.h"
-
-#include "cuda_utils.hpp"
 
 namespace yolo
 {
@@ -68,13 +66,13 @@ public:
     batch_.resize(batch_size_ * input_dims_.d[1] * input_dims_.d[2] * input_dims_.d[3]);
   }
 
-  int getBatchSize() const {return batch_size_;}
+  int getBatchSize() const { return batch_size_; }
 
-  int getMaxBatches() const {return max_batches_;}
+  int getMaxBatches() const { return max_batches_; }
 
-  float * getBatch() {return &batch_[0];}
+  float * getBatch() { return &batch_[0]; }
 
-  nvinfer1::Dims getInputDims() {return input_dims_;}
+  nvinfer1::Dims getInputDims() { return input_dims_; }
 
   std::vector<float> preprocess(const cv::Mat & in_img, const int c, const int w, const int h) const
   {
@@ -103,7 +101,9 @@ public:
 
   bool next()
   {
-    if (current_batch_ == max_batches_) {return false;}
+    if (current_batch_ == max_batches_) {
+      return false;
+    }
 
     for (int i = 0; i < batch_size_; ++i) {
       auto image =
@@ -118,7 +118,7 @@ public:
     return true;
   }
 
-  void reset() {current_batch_ = 0;}
+  void reset() { current_batch_ = 0; }
 
 private:
   int batch_size_;
@@ -142,21 +142,22 @@ public:
     CHECK_CUDA_ERROR(cudaMalloc(&device_input_, input_count_ * sizeof(float)));
   }
 
-  int getBatchSize() const noexcept override {return stream_.getBatchSize();}
+  int getBatchSize() const noexcept override { return stream_.getBatchSize(); }
 
-  virtual ~Int8EntropyCalibrator() {CHECK_CUDA_ERROR(cudaFree(device_input_));}
+  virtual ~Int8EntropyCalibrator() { CHECK_CUDA_ERROR(cudaFree(device_input_)); }
 
   bool getBatch(void * bindings[], const char * names[], int nb_bindings) noexcept override
   {
     (void)names;
     (void)nb_bindings;
 
-    if (!stream_.next()) {return false;}
+    if (!stream_.next()) {
+      return false;
+    }
 
     try {
-      CHECK_CUDA_ERROR(
-        cudaMemcpy(
-          device_input_, stream_.getBatch(), input_count_ * sizeof(float), cudaMemcpyHostToDevice));
+      CHECK_CUDA_ERROR(cudaMemcpy(
+        device_input_, stream_.getBatch(), input_count_ * sizeof(float), cudaMemcpyHostToDevice));
     } catch (const std::exception & e) {
       // Do nothing
     }

@@ -44,6 +44,7 @@
 #define CUDA_UTILS_HPP_
 
 #include <cuda_runtime_api.h>
+
 #include <memory>
 #include <sstream>
 #include <stdexcept>
@@ -57,20 +58,20 @@ void check_error(const ::cudaError_t e, const char * f, int n)
 {
   if (e != ::cudaSuccess) {
     std::stringstream s;
-    s << ::cudaGetErrorName(e) << " (" << e << ")@" << f << "#L" << n << ": " <<
-      ::cudaGetErrorString(e);
+    s << ::cudaGetErrorName(e) << " (" << e << ")@" << f << "#L" << n << ": "
+      << ::cudaGetErrorString(e);
     throw std::runtime_error{s.str()};
   }
 }
 
 struct deleter
 {
-  void operator()(void * p) const {CHECK_CUDA_ERROR(::cudaFree(p));}
+  void operator()(void * p) const { CHECK_CUDA_ERROR(::cudaFree(p)); }
 };
-template<typename T>
+template <typename T>
 using unique_ptr = std::unique_ptr<T, deleter>;
 
-template<typename T>
+template <typename T>
 typename std::enable_if<std::is_array<T>::value, cuda::unique_ptr<T>>::type make_unique(
   const std::size_t n)
 {
@@ -80,7 +81,7 @@ typename std::enable_if<std::is_array<T>::value, cuda::unique_ptr<T>>::type make
   return cuda::unique_ptr<T>{p};
 }
 
-template<typename T>
+template <typename T>
 cuda::unique_ptr<T> make_unique()
 {
   T * p;
@@ -90,7 +91,7 @@ cuda::unique_ptr<T> make_unique()
 
 constexpr size_t CUDA_ALIGN = 256;
 
-template<typename T>
+template <typename T>
 inline size_t get_size_aligned(size_t num_elem)
 {
   size_t size = num_elem * sizeof(T);
@@ -101,8 +102,8 @@ inline size_t get_size_aligned(size_t num_elem)
   return size + extra_align;
 }
 
-template<typename T>
-inline T * get_next_ptr(size_t num_elem, void * & workspace, size_t & workspace_size)
+template <typename T>
+inline T * get_next_ptr(size_t num_elem, void *& workspace, size_t & workspace_size)
 {
   size_t size = get_size_aligned<T>(num_elem);
   if (size > workspace_size) {

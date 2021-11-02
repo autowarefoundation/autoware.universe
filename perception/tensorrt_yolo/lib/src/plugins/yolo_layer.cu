@@ -61,10 +61,10 @@
 #include <stdio.h>
 #include <stdexcept>
 
-#include "math_constants.h"
+#include <math_constants.h>
 
-#include "cuda_utils.hpp"
-#include "yolo_layer.hpp"
+#include <cuda_utils.hpp>
+#include <yolo_layer.hpp>
 
 namespace yolo
 {

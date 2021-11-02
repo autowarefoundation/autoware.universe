@@ -62,6 +62,7 @@
 #define YOLO_LAYER_HPP_
 
 #include <cuda_runtime_api.h>
+
 #include <vector>
 
 namespace yolo

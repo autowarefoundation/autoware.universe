@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "tensorrt_yolo/nodelet.hpp"
+
 #include <glob.h>
 
 #include <algorithm>
@@ -19,8 +21,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-
-#include "tensorrt_yolo/nodelet.hpp"
 
 namespace
 {
@@ -52,7 +52,7 @@ TensorrtYoloNodelet::TensorrtYoloNodelet(const rclcpp::NodeOptions & options)
   yolo_config_.num_anchors = declare_parameter("num_anchors", 3);
   auto anchors = declare_parameter(
     "anchors", std::vector<double>{
-      10, 13, 16, 30, 33, 23, 30, 61, 62, 45, 59, 119, 116, 90, 156, 198, 373, 326});
+                 10, 13, 16, 30, 33, 23, 30, 61, 62, 45, 59, 119, 116, 90, 156, 198, 373, 326});
   std::vector<float> anchors_float(anchors.begin(), anchors.end());
   yolo_config_.anchors = anchors_float;
   auto scale_x_y = declare_parameter("scale_x_y", std::vector<double>{1.0, 1.0, 1.0});
@@ -101,7 +101,7 @@ TensorrtYoloNodelet::TensorrtYoloNodelet(const rclcpp::NodeOptions & options)
 
   objects_pub_ =
     this->create_publisher<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>(
-    "out/objects", 1);
+      "out/objects", 1);
   image_pub_ = image_transport::create_publisher(this, "out/image");
 
   out_scores_ =
@@ -136,15 +136,16 @@ void TensorrtYoloNodelet::callback(const sensor_msgs::msg::Image::ConstSharedPtr
     return;
   }
   if (!net_ptr_->detect(
-      in_image_ptr->image, out_scores_.get(), out_boxes_.get(), out_classes_.get()))
-  {
+        in_image_ptr->image, out_scores_.get(), out_boxes_.get(), out_classes_.get())) {
     RCLCPP_WARN(this->get_logger(), "Fail to inference");
     return;
   }
   const auto width = in_image_ptr->image.cols;
   const auto height = in_image_ptr->image.rows;
   for (int i = 0; i < yolo_config_.detections_per_im; ++i) {
-    if (out_scores_[i] < yolo_config_.ignore_thresh) {break;}
+    if (out_scores_[i] < yolo_config_.ignore_thresh) {
+      break;
+    }
     autoware_perception_msgs::msg::DynamicObjectWithFeature object;
     object.feature.roi.x_offset = out_boxes_[4 * i] * width;
     object.feature.roi.y_offset = out_boxes_[4 * i + 1] * height;
@@ -201,5 +202,5 @@ bool TensorrtYoloNodelet::readLabelFile(
 
 }  // namespace object_recognition
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(object_recognition::TensorrtYoloNodelet)

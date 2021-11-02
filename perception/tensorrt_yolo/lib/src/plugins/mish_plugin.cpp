@@ -36,14 +36,15 @@
  * SOFTWARE.
  */
 
+#include <mish.hpp>
+#include <mish_plugin.hpp>
+
 #include <stdio.h>
+
 #include <cassert>
 #include <cmath>
 #include <iostream>
 #include <vector>
-
-#include "mish.hpp"
-#include "mish_plugin.hpp"
 
 using nvinfer1::DataType;
 using nvinfer1::Dims;
@@ -51,10 +52,10 @@ using nvinfer1::DimsExprs;
 using nvinfer1::DynamicPluginTensorDesc;
 using nvinfer1::IExprBuilder;
 using nvinfer1::IPluginV2DynamicExt;
-using nvinfer1::PluginTensorDesc;
 using nvinfer1::PluginField;
 using nvinfer1::PluginFieldCollection;
 using nvinfer1::PluginFormat;
+using nvinfer1::PluginTensorDesc;
 
 namespace
 {
@@ -76,38 +77,41 @@ namespace yolo
 MishPlugin::MishPlugin() {}
 
 // create the plugin at runtime from a byte stream
-MishPlugin::MishPlugin(const void * data, size_t length) {(void)data; (void)length;}
+MishPlugin::MishPlugin(const void * data, size_t length)
+{
+  (void)data;
+  (void)length;
+}
 
 // IPluginV2 Methods
 
-const char * MishPlugin::getPluginType() const noexcept {return MISH_PLUGIN_NAME;}
+const char * MishPlugin::getPluginType() const noexcept { return MISH_PLUGIN_NAME; }
 
-const char * MishPlugin::getPluginVersion() const noexcept {return MISH_PLUGIN_VERSION;}
+const char * MishPlugin::getPluginVersion() const noexcept { return MISH_PLUGIN_VERSION; }
 
-int MishPlugin::getNbOutputs() const noexcept {return 1;}
+int MishPlugin::getNbOutputs() const noexcept { return 1; }
 
-int MishPlugin::initialize() noexcept {return 0;}
+int MishPlugin::initialize() noexcept { return 0; }
 
 void MishPlugin::terminate() noexcept {}
 
-size_t MishPlugin::getSerializationSize() const noexcept {return 0;}
+size_t MishPlugin::getSerializationSize() const noexcept { return 0; }
 
-void MishPlugin::serialize(void * buffer) const noexcept {(void)buffer;}
+void MishPlugin::serialize(void * buffer) const noexcept { (void)buffer; }
 
-void MishPlugin::destroy() noexcept {delete this;}
+void MishPlugin::destroy() noexcept { delete this; }
 
 void MishPlugin::setPluginNamespace(const char * pluginNamespace) noexcept
 {
   mPluginNamespace = pluginNamespace;
 }
 
-const char * MishPlugin::getPluginNamespace() const noexcept {return mPluginNamespace;}
+const char * MishPlugin::getPluginNamespace() const noexcept { return mPluginNamespace; }
 
 // IPluginV2Ext Methods
 
 DataType MishPlugin::getOutputDataType(
-  int index, const DataType * inputTypes,
-  int nbInputs) const noexcept
+  int index, const DataType * inputTypes, int nbInputs) const noexcept
 {
   (void)index;
   (void)inputTypes;
@@ -159,8 +163,8 @@ void MishPlugin::configurePlugin(
 }
 
 size_t MishPlugin::getWorkspaceSize(
-  const PluginTensorDesc * inputs, int nbInputs,
-  const PluginTensorDesc * outputs, int nbOutputs) const noexcept
+  const PluginTensorDesc * inputs, int nbInputs, const PluginTensorDesc * outputs,
+  int nbOutputs) const noexcept
 {
   (void)inputs;
   (void)nbInputs;
@@ -200,11 +204,11 @@ MishPluginCreator::MishPluginCreator()
   mFC.fields = mPluginAttributes.data();
 }
 
-const char * MishPluginCreator::getPluginName() const noexcept {return MISH_PLUGIN_NAME;}
+const char * MishPluginCreator::getPluginName() const noexcept { return MISH_PLUGIN_NAME; }
 
-const char * MishPluginCreator::getPluginVersion() const noexcept {return MISH_PLUGIN_VERSION;}
+const char * MishPluginCreator::getPluginVersion() const noexcept { return MISH_PLUGIN_VERSION; }
 
-const PluginFieldCollection * MishPluginCreator::getFieldNames() noexcept {return &mFC;}
+const PluginFieldCollection * MishPluginCreator::getFieldNames() noexcept { return &mFC; }
 
 IPluginV2DynamicExt * MishPluginCreator::createPlugin(
   const char * name, const PluginFieldCollection * fc) noexcept

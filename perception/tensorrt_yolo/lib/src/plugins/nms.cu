@@ -41,23 +41,23 @@
 #include <stdexcept>
 #include <vector>
 
-#include "cuda.h"
-#include "thrust/device_ptr.h"
-#include "thrust/execution_policy.h"
-#include "thrust/gather.h"
-#include "thrust/sequence.h"
+#include <cuda.h>
+#include <thrust/device_ptr.h>
+#include <thrust/execution_policy.h>
+#include <thrust/gather.h>
+#include <thrust/sequence.h>
 
 #if CUDART_VERSION >= 11000
-#include "cub/device/device_radix_sort.cuh"
-#include "cub/iterator/counting_input_iterator.cuh"
+#include <cub/device/device_radix_sort.cuh>
+#include <cub/iterator/counting_input_iterator.cuh>
 #else
-#include "thrust/system/cuda/detail/cub/device/device_radix_sort.cuh"
-#include "thrust/system/cuda/detail/cub/iterator/counting_input_iterator.cuh"
+#include <thrust/system/cuda/detail/cub/device/device_radix_sort.cuh>
+#include <thrust/system/cuda/detail/cub/iterator/counting_input_iterator.cuh>
 using namespace thrust::cuda_cub;
 #endif
 
-#include "cuda_utils.hpp"
-#include "nms.hpp"
+#include <cuda_utils.hpp>
+#include <nms.hpp>
 
 namespace yolo
 {

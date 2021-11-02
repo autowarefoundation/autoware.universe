@@ -34,6 +34,15 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include <calibrator.hpp>
+#include <cuda_utils.hpp>
+#include <mish_plugin.hpp>
+#include <nms_plugin.hpp>
+#include <trt_yolo.hpp>
+#include <yolo_layer_plugin.hpp>
+
+#include <NvOnnxParser.h>
+
 #include <algorithm>
 #include <fstream>
 #include <functional>
@@ -42,15 +51,6 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
-
-#include "NvOnnxParser.h"
-
-#include "calibrator.hpp"
-#include "cuda_utils.hpp"
-#include "mish_plugin.hpp"
-#include "nms_plugin.hpp"
-#include "trt_yolo.hpp"
-#include "yolo_layer_plugin.hpp"
 
 namespace yolo
 {
@@ -159,7 +159,9 @@ Net::Net(
     return;
   }
   // Allow use of FP16 layers when running in INT8
-  if (fp16 || int8) {config->setFlag(nvinfer1::BuilderFlag::kFP16);}
+  if (fp16 || int8) {
+    config->setFlag(nvinfer1::BuilderFlag::kFP16);
+  }
   config->setMaxWorkspaceSize(workspace_size);
 
   // Parse ONNX FCN
@@ -291,18 +293,15 @@ bool Net::detect(const cv::Mat & in_img, float * out_scores, float * out_boxes, 
   } catch (const std::runtime_error & e) {
     return false;
   }
-  CHECK_CUDA_ERROR(
-    cudaMemcpyAsync(
-      out_scores, out_scores_d_.get(), sizeof(float) * getMaxDetections(), cudaMemcpyDeviceToHost,
-      stream_));
-  CHECK_CUDA_ERROR(
-    cudaMemcpyAsync(
-      out_boxes, out_boxes_d_.get(), sizeof(float) * 4 * getMaxDetections(), cudaMemcpyDeviceToHost,
-      stream_));
-  CHECK_CUDA_ERROR(
-    cudaMemcpyAsync(
-      out_classes, out_classes_d_.get(), sizeof(float) * getMaxDetections(), cudaMemcpyDeviceToHost,
-      stream_));
+  CHECK_CUDA_ERROR(cudaMemcpyAsync(
+    out_scores, out_scores_d_.get(), sizeof(float) * getMaxDetections(), cudaMemcpyDeviceToHost,
+    stream_));
+  CHECK_CUDA_ERROR(cudaMemcpyAsync(
+    out_boxes, out_boxes_d_.get(), sizeof(float) * 4 * getMaxDetections(), cudaMemcpyDeviceToHost,
+    stream_));
+  CHECK_CUDA_ERROR(cudaMemcpyAsync(
+    out_classes, out_classes_d_.get(), sizeof(float) * getMaxDetections(), cudaMemcpyDeviceToHost,
+    stream_));
   cudaStreamSynchronize(stream_);
   return true;
 }
@@ -326,6 +325,6 @@ int Net::getInputSize() const
   return input_size;
 }
 
-int Net::getMaxDetections() const {return engine_->getBindingDimensions(1).d[1];}
+int Net::getMaxDetections() const { return engine_->getBindingDimensions(1).d[1]; }
 
 }  // namespace yolo

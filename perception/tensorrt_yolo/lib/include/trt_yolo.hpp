@@ -37,26 +37,25 @@
 #ifndef TRT_YOLO_HPP_
 #define TRT_YOLO_HPP_
 
+#include <cuda_utils.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/opencv.hpp>
+#include <yolo_layer.hpp>
+
+#include <NvInfer.h>
 #include <cuda_runtime.h>
+
 #include <iostream>
 #include <memory>
 #include <string>
 #include <vector>
 
-#include "opencv2/core/core.hpp"
-#include "opencv2/highgui/highgui.hpp"
-#include "opencv2/opencv.hpp"
-
-#include "NvInfer.h"
-
-#include "cuda_utils.hpp"
-#include "yolo_layer.hpp"
-
 namespace yolo
 {
 struct Deleter
 {
-  template<typename T>
+  template <typename T>
   void operator()(T * obj) const
   {
     if (obj) {
@@ -65,14 +64,13 @@ struct Deleter
   }
 };
 
-template<typename T>
+template <typename T>
 using unique_ptr = std::unique_ptr<T, Deleter>;
 
 class Logger : public nvinfer1::ILogger
 {
 public:
-  explicit Logger(bool verbose)
-  : verbose_(verbose) {}
+  explicit Logger(bool verbose) : verbose_(verbose) {}
 
   void log(Severity severity, const char * msg) noexcept override
   {

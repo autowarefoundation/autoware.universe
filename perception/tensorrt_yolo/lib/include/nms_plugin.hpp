@@ -37,10 +37,10 @@
 #ifndef NMS_PLUGIN_HPP_
 #define NMS_PLUGIN_HPP_
 
+#include <NvInfer.h>
+
 #include <cassert>
 #include <vector>
-
-#include "NvInfer.h"
 
 namespace yolo
 {
