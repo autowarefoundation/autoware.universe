@@ -25,10 +25,10 @@ ObjectRangeSplitterNode::ObjectRangeSplitterNode(const rclcpp::NodeOptions & nod
     "input/object", rclcpp::QoS{1}, std::bind(&ObjectRangeSplitterNode::objectCallback, this, _1));
   long_range_object_pub_ =
     this->create_publisher<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>(
-    "output/long_range_object", rclcpp::QoS{1});
+      "output/long_range_object", rclcpp::QoS{1});
   short_range_object_pub_ =
     this->create_publisher<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>(
-    "output/short_range_object", rclcpp::QoS{1});
+      "output/short_range_object", rclcpp::QoS{1});
 }
 
 void ObjectRangeSplitterNode::objectCallback(
@@ -37,8 +37,7 @@ void ObjectRangeSplitterNode::objectCallback(
   // Guard
   if (
     long_range_object_pub_->get_subscription_count() < 1 &&
-    short_range_object_pub_->get_subscription_count() < 1)
-  {
+    short_range_object_pub_->get_subscription_count() < 1) {
     return;
   }
   // build output msg
@@ -64,5 +63,5 @@ void ObjectRangeSplitterNode::objectCallback(
 }
 }  // namespace object_range_splitter
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(object_range_splitter::ObjectRangeSplitterNode)

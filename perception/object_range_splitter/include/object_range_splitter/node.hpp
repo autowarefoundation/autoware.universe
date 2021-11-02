@@ -15,10 +15,11 @@
 #ifndef OBJECT_RANGE_SPLITTER__NODE_HPP_
 #define OBJECT_RANGE_SPLITTER__NODE_HPP_
 
-#include <memory>
+#include <rclcpp/rclcpp.hpp>
 
-#include "autoware_perception_msgs/msg/dynamic_object_with_feature_array.hpp"
-#include "rclcpp/rclcpp.hpp"
+#include <autoware_perception_msgs/msg/dynamic_object_with_feature_array.hpp>
+
+#include <memory>
 
 namespace object_range_splitter
 {
