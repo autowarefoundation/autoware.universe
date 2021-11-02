@@ -54,43 +54,43 @@ repos:
     hooks:
       - id: shellcheck
 
-  # - repo: https://github.com/pycqa/isort
-  #   rev: 5.9.3
-  #   hooks:
-  #     - id: isort
+  - repo: https://github.com/pycqa/isort
+    rev: 5.9.3
+    hooks:
+      - id: isort
 
-  # - repo: https://github.com/psf/black
-  #   rev: 21.9b0
-  #   hooks:
-  #     - id: black
-  #       args: ["--line-length=100"]
+  - repo: https://github.com/psf/black
+    rev: 21.9b0
+    hooks:
+      - id: black
+        args: ["--line-length=100"]
 
-  # - repo: https://github.com/PyCQA/flake8
-  #   rev: 4.0.1
-  #   hooks:
-  #     - id: flake8
-  #       additional_dependencies:
-  #         [
-  #           "flake8-blind-except",
-  #           "flake8-builtins",
-  #           "flake8-class-newline",
-  #           "flake8-comprehensions",
-  #           "flake8-deprecated",
-  #           "flake8-docstrings",
-  #           "flake8-import-order",
-  #           "flake8-quotes",
-  #         ]
+  - repo: https://github.com/PyCQA/flake8
+    rev: 4.0.1
+    hooks:
+      - id: flake8
+        additional_dependencies:
+          [
+            "flake8-blind-except",
+            "flake8-builtins",
+            "flake8-class-newline",
+            "flake8-comprehensions",
+            "flake8-deprecated",
+            "flake8-docstrings",
+            "flake8-import-order",
+            "flake8-quotes",
+          ]
 
-  # - repo: https://github.com/pre-commit/mirrors-clang-format
-  #   rev: v12.0.1
-  #   hooks:
-  #     - id: clang-format
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v12.0.1
+    hooks:
+      - id: clang-format
 
-  # - repo: https://github.com/cpplint/cpplint
-  #   rev: 1.5.5
-  #   hooks:
-  #     - id: cpplint
-  #       args: ["--quiet"]
-  #       exclude: "(.cu)"
+  - repo: https://github.com/cpplint/cpplint
+    rev: 1.5.5
+    hooks:
+      - id: cpplint
+        args: ["--quiet"]
+        exclude: "(.cu)"
 
 exclude: ".svg"
