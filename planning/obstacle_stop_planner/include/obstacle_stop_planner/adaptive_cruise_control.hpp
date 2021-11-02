@@ -15,17 +15,18 @@
 #ifndef OBSTACLE_STOP_PLANNER__ADAPTIVE_CRUISE_CONTROL_HPP_
 #define OBSTACLE_STOP_PLANNER__ADAPTIVE_CRUISE_CONTROL_HPP_
 
+#include <rclcpp/rclcpp.hpp>
+
+#include <autoware_debug_msgs/msg/float32_multi_array_stamped.hpp>
+#include <autoware_perception_msgs/msg/dynamic_object_array.hpp>
+#include <autoware_planning_msgs/msg/trajectory.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
+
+#include <pcl/point_types.h>
+#include <pcl_conversions/pcl_conversions.h>
+#include <tf2/utils.h>
+
 #include <vector>
-
-#include "geometry_msgs/msg/twist_stamped.hpp"
-#include "pcl/point_types.h"
-#include "pcl_conversions/pcl_conversions.h"
-#include "rclcpp/rclcpp.hpp"
-#include "autoware_debug_msgs/msg/float32_multi_array_stamped.hpp"
-#include "tf2/utils.h"
-
-#include "autoware_perception_msgs/msg/dynamic_object_array.hpp"
-#include "autoware_planning_msgs/msg/trajectory.hpp"
 
 namespace motion_planning
 {
@@ -38,13 +39,11 @@ public:
 
   void insertAdaptiveCruiseVelocity(
     const autoware_planning_msgs::msg::Trajectory & trajectory,
-    const int nearest_collision_point_idx,
-    const geometry_msgs::msg::Pose self_pose, const pcl::PointXYZ & nearest_collision_point,
-    const rclcpp::Time nearest_collision_point_time,
+    const int nearest_collision_point_idx, const geometry_msgs::msg::Pose self_pose,
+    const pcl::PointXYZ & nearest_collision_point, const rclcpp::Time nearest_collision_point_time,
     const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr object_ptr,
     const geometry_msgs::msg::TwistStamped::ConstSharedPtr current_velocity_ptr,
-    bool * need_to_stop,
-    autoware_planning_msgs::msg::Trajectory * output_trajectory);
+    bool * need_to_stop, autoware_planning_msgs::msg::Trajectory * output_trajectory);
 
 private:
   rclcpp::Publisher<autoware_debug_msgs::msg::Float32MultiArrayStamped>::SharedPtr pub_debug_;
@@ -182,8 +181,7 @@ private:
     const autoware_planning_msgs::msg::Trajectory & trajectory, const int collision_point_idx);
   bool estimatePointVelocityFromObject(
     const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr object_ptr,
-    const double traj_yaw,
-    const pcl::PointXYZ & nearest_collision_point, double * velocity);
+    const double traj_yaw, const pcl::PointXYZ & nearest_collision_point, double * velocity);
   bool estimatePointVelocityFromPcl(
     const double traj_yaw, const pcl::PointXYZ & nearest_collision_point,
     const rclcpp::Time & nearest_collision_point_time, double * velocity);
@@ -206,8 +204,7 @@ private:
 
   /* Debug */
   mutable autoware_debug_msgs::msg::Float32MultiArrayStamped debug_values_;
-  enum DBGVAL
-  {
+  enum DBGVAL {
     ESTIMATED_VEL_PCL = 0,
     ESTIMATED_VEL_OBJ = 1,
     ESTIMATED_VEL_FINAL = 2,

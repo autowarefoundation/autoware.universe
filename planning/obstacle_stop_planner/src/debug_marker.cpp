@@ -12,13 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "obstacle_stop_planner/debug_marker.hpp"
+
+#include <autoware_utils/autoware_utils.hpp>
+
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+
 #include <memory>
 #include <vector>
-
-#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
-
-#include "autoware_utils/autoware_utils.hpp"
-#include "obstacle_stop_planner/debug_marker.hpp"
 
 using autoware_utils::appendMarkerArray;
 using autoware_utils::calcOffsetPose;
@@ -27,8 +28,8 @@ using autoware_utils::createMarkerColor;
 using autoware_utils::createMarkerOrientation;
 using autoware_utils::createMarkerScale;
 using autoware_utils::createPoint;
-using autoware_utils::createStopVirtualWallMarker;
 using autoware_utils::createSlowDownVirtualWallMarker;
+using autoware_utils::createStopVirtualWallMarker;
 
 namespace motion_planning
 {
@@ -36,8 +37,8 @@ ObstacleStopPlannerDebugNode::ObstacleStopPlannerDebugNode(
   rclcpp::Node * node, const double base_link2front)
 : node_(node), base_link2front_(base_link2front)
 {
-  debug_viz_pub_ = node_->create_publisher<visualization_msgs::msg::MarkerArray>(
-    "~/debug/marker", 1);
+  debug_viz_pub_ =
+    node_->create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/marker", 1);
   stop_reason_pub_ = node_->create_publisher<autoware_planning_msgs::msg::StopReasonArray>(
     "~/output/stop_reasons", 1);
   pub_debug_values_ = node_->create_publisher<Float32MultiArrayStamped>("~/debug/debug_values", 1);
@@ -60,16 +61,24 @@ bool ObstacleStopPlannerDebugNode::pushPolygon(
 {
   switch (type) {
     case PolygonType::Vehicle:
-      if (!polygon.empty()) {vehicle_polygons_.push_back(polygon);}
+      if (!polygon.empty()) {
+        vehicle_polygons_.push_back(polygon);
+      }
       return true;
     case PolygonType::Collision:
-      if (!polygon.empty()) {collision_polygons_.push_back(polygon);}
+      if (!polygon.empty()) {
+        collision_polygons_.push_back(polygon);
+      }
       return true;
     case PolygonType::SlowDownRange:
-      if (!polygon.empty()) {slow_down_range_polygons_.push_back(polygon);}
+      if (!polygon.empty()) {
+        slow_down_range_polygons_.push_back(polygon);
+      }
       return true;
     case PolygonType::SlowDown:
-      if (!polygon.empty()) {slow_down_polygons_.push_back(polygon);}
+      if (!polygon.empty()) {
+        slow_down_polygons_.push_back(polygon);
+      }
       return true;
     default:
       return false;
@@ -77,8 +86,7 @@ bool ObstacleStopPlannerDebugNode::pushPolygon(
 }
 
 bool ObstacleStopPlannerDebugNode::pushPose(
-  const geometry_msgs::msg::Pose & pose,
-  const PoseType & type)
+  const geometry_msgs::msg::Pose & pose, const PoseType & type)
 {
   switch (type) {
     case PoseType::Stop:
@@ -205,8 +213,8 @@ visualization_msgs::msg::MarkerArray ObstacleStopPlannerDebugNode::makeVisualiza
   if (!slow_down_range_polygons_.empty()) {
     auto marker = createDefaultMarker(
       "map", current_time, "slow_down_detection_polygons", 0,
-      visualization_msgs::msg::Marker::LINE_LIST,
-      createMarkerScale(0.01, 0.0, 0.0), createMarkerColor(0.0, 1.0, 0.0, 0.999));
+      visualization_msgs::msg::Marker::LINE_LIST, createMarkerScale(0.01, 0.0, 0.0),
+      createMarkerColor(0.0, 1.0, 0.0, 0.999));
 
     for (size_t i = 0; i < slow_down_range_polygons_.size(); ++i) {
       for (size_t j = 0; j < slow_down_range_polygons_.at(i).size(); ++j) {
@@ -259,8 +267,8 @@ visualization_msgs::msg::MarkerArray ObstacleStopPlannerDebugNode::makeVisualiza
     const auto p = calcOffsetPose(*slow_down_start_pose_ptr_, base_link2front_, 0.0, 0.0);
 
     {
-      const auto markers = createSlowDownVirtualWallMarker(
-        p, "obstacle beside the path", current_time, 0);
+      const auto markers =
+        createSlowDownVirtualWallMarker(p, "obstacle beside the path", current_time, 0);
       appendMarkerArray(markers, &msg);
     }
 
@@ -291,8 +299,8 @@ visualization_msgs::msg::MarkerArray ObstacleStopPlannerDebugNode::makeVisualiza
   if (stop_obstacle_point_ptr_ != nullptr) {
     auto marker = createDefaultMarker(
       "map", current_time, "stop_obstacle_text", 0,
-      visualization_msgs::msg::Marker::TEXT_VIEW_FACING,
-      createMarkerScale(0.0, 0.0, 1.0), createMarkerColor(1.0, 1.0, 1.0, 0.999));
+      visualization_msgs::msg::Marker::TEXT_VIEW_FACING, createMarkerScale(0.0, 0.0, 1.0),
+      createMarkerColor(1.0, 1.0, 1.0, 0.999));
     marker.pose.position = *stop_obstacle_point_ptr_;
     marker.pose.position.z += 2.0;
     marker.text = "!";
@@ -310,8 +318,8 @@ visualization_msgs::msg::MarkerArray ObstacleStopPlannerDebugNode::makeVisualiza
   if (slow_down_obstacle_point_ptr_ != nullptr) {
     auto marker = createDefaultMarker(
       "map", current_time, "slow_down_obstacle_text", 0,
-      visualization_msgs::msg::Marker::TEXT_VIEW_FACING,
-      createMarkerScale(0.0, 0.0, 1.0), createMarkerColor(1.0, 1.0, 1.0, 0.999));
+      visualization_msgs::msg::Marker::TEXT_VIEW_FACING, createMarkerScale(0.0, 0.0, 1.0),
+      createMarkerColor(1.0, 1.0, 1.0, 0.999));
     marker.pose.position = *slow_down_obstacle_point_ptr_;
     marker.pose.position.z += 2.0;
     marker.text = "!";

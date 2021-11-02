@@ -12,20 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "obstacle_stop_planner/adaptive_cruise_control.hpp"
+
+#include <boost/algorithm/clamp.hpp>
+#include <boost/assert.hpp>
+#include <boost/assign/list_of.hpp>
+#include <boost/format.hpp>
+#include <boost/geometry.hpp>
+#include <boost/geometry/geometries/linestring.hpp>
+#include <boost/geometry/geometries/point_xy.hpp>
+
 #include <algorithm>
 #include <limits>
-#include <vector>
 #include <string>
-
-#include "boost/algorithm/clamp.hpp"
-#include "boost/assert.hpp"
-#include "boost/assign/list_of.hpp"
-#include "boost/format.hpp"
-#include "boost/geometry.hpp"
-#include "boost/geometry/geometries/linestring.hpp"
-#include "boost/geometry/geometries/point_xy.hpp"
-
-#include "obstacle_stop_planner/adaptive_cruise_control.hpp"
+#include <vector>
 
 namespace bg = boost::geometry;
 using Point = bg::model::d2::point_xy<double>;
@@ -55,8 +55,7 @@ geometry_msgs::msg::Vector3 rpyFromQuat(const geometry_msgs::msg::Quaternion & q
 
 Polygon getPolygon(
   const geometry_msgs::msg::Pose & pose, const geometry_msgs::msg::Vector3 & size,
-  const double center_offset,
-  const double l_margin = 0.0, const double w_margin = 0.0)
+  const double center_offset, const double l_margin = 0.0, const double w_margin = 0.0)
 {
   Polygon obj_poly;
   geometry_msgs::msg::Vector3 obj_rpy = rpyFromQuat(pose.orientation);
@@ -89,8 +88,7 @@ double getDistanceFromTwoPoint(
   return dist;
 }
 
-[[maybe_unused]]
-double normalizeRadian(
+[[maybe_unused]] double normalizeRadian(
   const double rad, const double min_rad = -boost::math::constants::pi<double>(),
   const double max_rad = boost::math::constants::pi<double>())
 {
@@ -182,8 +180,7 @@ AdaptiveCruiseController::AdaptiveCruiseController(
 
   /* publisher */
   pub_debug_ = node_->create_publisher<autoware_debug_msgs::msg::Float32MultiArrayStamped>(
-    "~/debug_values",
-    1);
+    "~/debug_values", 1);
 }
 
 void AdaptiveCruiseController::insertAdaptiveCruiseVelocity(
@@ -202,32 +199,30 @@ void AdaptiveCruiseController::insertAdaptiveCruiseVelocity(
   double point_velocity;
   bool success_estimate_vel = false;
   /*
-  * calc distance to collision point
-  */
+   * calc distance to collision point
+   */
   calcDistanceToNearestPointOnPath(
     trajectory, nearest_collision_point_idx, self_pose, nearest_collision_point,
     nearest_collision_point_time, &col_point_distance);
 
   /*
-  * calc yaw of trajectory at collision point
-  */
+   * calc yaw of trajectory at collision point
+   */
   const double traj_yaw = calcTrajYaw(trajectory, nearest_collision_point_idx);
 
   /*
-  * estimate velocity of collision point
-  */
+   * estimate velocity of collision point
+   */
   if (param_.use_pcl_to_est_vel) {
     if (estimatePointVelocityFromPcl(
-        traj_yaw, nearest_collision_point, nearest_collision_point_time, &point_velocity))
-    {
+          traj_yaw, nearest_collision_point, nearest_collision_point_time, &point_velocity)) {
       success_estimate_vel = true;
     }
   }
 
   if (param_.use_object_to_est_vel) {
     if (estimatePointVelocityFromObject(
-        object_ptr, traj_yaw, nearest_collision_point, &point_velocity))
-    {
+          object_ptr, traj_yaw, nearest_collision_point, &point_velocity)) {
       success_estimate_vel = true;
     }
   }
@@ -264,8 +259,8 @@ void AdaptiveCruiseController::insertAdaptiveCruiseVelocity(
   }
 
   /*
-  * insert max velocity
-  */
+   * insert max velocity
+   */
   insertMaxVelocityToPath(
     self_pose, current_velocity, upper_velocity, col_point_distance, output_trajectory);
   *need_to_stop = false;
@@ -341,8 +336,7 @@ double AdaptiveCruiseController::calcTrajYaw(
 
 bool AdaptiveCruiseController::estimatePointVelocityFromObject(
   const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr object_ptr,
-  const double traj_yaw,
-  const pcl::PointXYZ & nearest_collision_point, double * velocity)
+  const double traj_yaw, const pcl::PointXYZ & nearest_collision_point, double * velocity)
 {
   geometry_msgs::msg::Point nearest_collision_p_ros;
   nearest_collision_p_ros.x = nearest_collision_point.x;
@@ -496,8 +490,8 @@ double AdaptiveCruiseController::calcThreshDistToForwardObstacle(
     (-1.0 * obj_vel_min * obj_vel_min) / (2.0 * param_.obstacle_emergency_stop_acceleration);
 
   return minimum_distance + std::max(
-    0.0, idling_distance + braking_distance -
-    obj_braking_distance * param_.consider_obj_velocity);
+                              0.0, idling_distance + braking_distance -
+                                     obj_braking_distance * param_.consider_obj_velocity);
 }
 
 double AdaptiveCruiseController::calcBaseDistToForwardObstacle(
@@ -511,8 +505,8 @@ double AdaptiveCruiseController::calcBaseDistToForwardObstacle(
   const double obj_braking_distance =
     (-1.0 * obj_vel_min * obj_vel_min) / (2.0 * param_.obstacle_min_standard_acceleration);
   return minimum_distance + std::max(
-    0.0, idling_distance + braking_distance -
-    obj_braking_distance * param_.consider_obj_velocity);
+                              0.0, idling_distance + braking_distance -
+                                     obj_braking_distance * param_.consider_obj_velocity);
 }
 
 double AdaptiveCruiseController::calcTargetVelocity_P(
@@ -529,8 +523,7 @@ double AdaptiveCruiseController::calcTargetVelocity_P(
 }
 
 double AdaptiveCruiseController::calcTargetVelocity_I(
-  [[maybe_unused]] const double target_dist,
-  [[maybe_unused]] const double current_dist)
+  [[maybe_unused]] const double target_dist, [[maybe_unused]] const double current_dist)
 {
   // not implemented
   return 0.0;
@@ -545,7 +538,7 @@ double AdaptiveCruiseController::calcTargetVelocity_D(
   }
 
   double diff_vel = (target_dist - prev_target_vehicle_dist_) /
-    (node_->now().seconds() - prev_target_vehicle_time_);
+                    (node_->now().seconds() - prev_target_vehicle_time_);
 
   if (std::fabs(diff_vel) >= param_.d_coeff_valid_diff_vel) {
     // invalid(discontinuous) diff_vel
@@ -555,8 +548,12 @@ double AdaptiveCruiseController::calcTargetVelocity_D(
   double add_vel_d = 0;
 
   add_vel_d = diff_vel;
-  if (add_vel_d >= 0) {diff_vel *= param_.d_coeff_pos;}
-  if (add_vel_d < 0) {diff_vel *= param_.d_coeff_neg;}
+  if (add_vel_d >= 0) {
+    diff_vel *= param_.d_coeff_pos;
+  }
+  if (add_vel_d < 0) {
+    diff_vel *= param_.d_coeff_neg;
+  }
   add_vel_d = boost::algorithm::clamp(add_vel_d, -param_.d_max_vel_norm, param_.d_max_vel_norm);
 
   // add buffer
@@ -640,16 +637,12 @@ void AdaptiveCruiseController::insertMaxVelocityToPath(
 }
 
 void AdaptiveCruiseController::registerQueToVelocity(
-  const double vel,
-  const rclcpp::Time & vel_time)
+  const double vel, const rclcpp::Time & vel_time)
 {
   // remove old msg from que
   std::vector<int> delete_idxs;
   for (size_t i = 0; i < est_vel_que_.size(); i++) {
-    if (
-      node_->now().seconds() - est_vel_que_.at(i).header.stamp.sec >
-      param_.valid_vel_que_time)
-    {
+    if (node_->now().seconds() - est_vel_que_.at(i).header.stamp.sec > param_.valid_vel_que_time) {
       delete_idxs.push_back(i);
     }
   }

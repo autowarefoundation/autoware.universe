@@ -14,24 +14,26 @@
 #ifndef OBSTACLE_STOP_PLANNER__DEBUG_MARKER_HPP_
 #define OBSTACLE_STOP_PLANNER__DEBUG_MARKER_HPP_
 
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <rclcpp/rclcpp.hpp>
+
+#include <autoware_debug_msgs/msg/float32_multi_array_stamped.hpp>
+#include <autoware_planning_msgs/msg/stop_reason_array.hpp>
+#include <geometry_msgs/msg/point.hpp>
+#include <geometry_msgs/msg/pose.hpp>
+#include <visualization_msgs/msg/marker.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
+
+#include <pcl/point_types.h>
+
 #include <memory>
 #include <string>
 #include <vector>
-
-#include "autoware_debug_msgs/msg/float32_multi_array_stamped.hpp"
-#include "autoware_planning_msgs/msg/stop_reason_array.hpp"
-#include "geometry_msgs/msg/point.hpp"
-#include "geometry_msgs/msg/pose.hpp"
-#include "pcl/point_types.h"
-#include "rclcpp/rclcpp.hpp"
-#include "visualization_msgs/msg/marker.hpp"
-#include "visualization_msgs/msg/marker_array.hpp"
-#include "opencv2/core/core.hpp"
-#include "opencv2/highgui/highgui.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
 #define EIGEN_MPL2_ONLY
-#include "eigen3/Eigen/Core"
-#include "eigen3/Eigen/Geometry"
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Geometry>
 namespace motion_planning
 {
 using autoware_debug_msgs::msg::Float32MultiArrayStamped;
@@ -45,8 +47,7 @@ enum class PoseType : int8_t { Stop = 0, SlowDownStart, SlowDownEnd };
 class DebugValues
 {
 public:
-  enum class TYPE
-  {
+  enum class TYPE {
     CURRENT_VEL = 0,
     CURRENT_ACC = 1,
     CURRENT_FORWARD_MARGIN = 2,
@@ -63,24 +64,24 @@ public:
    * @param [in] type the TYPE enum for which to get the index
    * @return index of the type
    */
-  int getValuesIdx(const TYPE type) const {return static_cast<int>(type);}
+  int getValuesIdx(const TYPE type) const { return static_cast<int>(type); }
   /**
    * @brief get all the debug values as an std::array
    * @return array of all debug values
    */
-  std::array<double, static_cast<int>(TYPE::SIZE)> getValues() const {return values_;}
+  std::array<double, static_cast<int>(TYPE::SIZE)> getValues() const { return values_; }
   /**
    * @brief set the given type to the given value
    * @param [in] type TYPE of the value
    * @param [in] value value to set
    */
-  void setValues(const TYPE type, const double val) {values_.at(static_cast<int>(type)) = val;}
+  void setValues(const TYPE type, const double val) { values_.at(static_cast<int>(type)) = val; }
   /**
    * @brief set the given type to the given value
    * @param [in] type index of the type
    * @param [in] value value to set
    */
-  void setValues(const int type, const double val) {values_.at(type) = val;}
+  void setValues(const int type, const double val) { values_.at(type) = val; }
 
 private:
   static constexpr int num_debug_values_ = static_cast<int>(TYPE::SIZE);
