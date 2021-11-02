@@ -17,8 +17,10 @@ import time
 import unittest
 
 from ament_index_python.packages import get_package_share_directory
-from autoware_simulation_msgs.msg import FaultInjectionEvent, SimulationEvents
-from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus
+from autoware_simulation_msgs.msg import FaultInjectionEvent
+from autoware_simulation_msgs.msg import SimulationEvents
+from diagnostic_msgs.msg import DiagnosticArray
+from diagnostic_msgs.msg import DiagnosticStatus
 import launch
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import AnyLaunchDescriptionSource
@@ -33,9 +35,9 @@ logger = get_logger(__name__)
 @pytest.mark.launch_test
 def generate_test_description():
     test_fault_injection_launch_file = os.path.join(
-        get_package_share_directory('fault_injection'),
-        'launch',
-        'test_fault_injection.launch.xml',
+        get_package_share_directory("fault_injection"),
+        "launch",
+        "test_fault_injection.launch.xml",
     )
     fault_injection = IncludeLaunchDescription(
         AnyLaunchDescriptionSource(test_fault_injection_launch_file),
@@ -51,7 +53,6 @@ def generate_test_description():
 
 
 class TestFaultInjectionLink(unittest.TestCase):
-
     @classmethod
     def setUpClass(cls):
         # Initialize the ROS context for the test node
@@ -64,8 +65,8 @@ class TestFaultInjectionLink(unittest.TestCase):
 
     def setUp(self):
         # Create a ROS node for tests
-        self.test_node = rclpy.create_node('test_node')
-        self.event_name = 'cpu_temperature'
+        self.test_node = rclpy.create_node("test_node")
+        self.event_name = "cpu_temperature"
         self.evaluation_time = 10.0
 
     def tearDown(self):
@@ -73,15 +74,17 @@ class TestFaultInjectionLink(unittest.TestCase):
 
     @staticmethod
     def print_message(stat):
-        logger.debug('===========================')
+        logger.debug("===========================")
         logger.debug(stat)
 
     @staticmethod
     def get_num_valid_data(msg_buffer, level: bytes) -> int:
         received_diagnostics = [stat for diag_array in msg_buffer for stat in diag_array.status]
-        filtered_diagnostics = [stat for stat in received_diagnostics
-                                if ('Node starting up' not in stat.message)
-                                and (stat.level == level)]
+        filtered_diagnostics = [
+            stat
+            for stat in received_diagnostics
+            if ("Node starting up" not in stat.message) and (stat.level == level)
+        ]
 
         for stat in filtered_diagnostics:
             TestFaultInjectionLink.print_message(stat)
@@ -95,18 +98,11 @@ class TestFaultInjectionLink(unittest.TestCase):
         Expect fault_injection_node publish /diagnostics.status
         when the talker to publish strings
         """
-        pub_events = self.test_node.create_publisher(
-            SimulationEvents,
-            '/simulation/events',
-            10
-        )
+        pub_events = self.test_node.create_publisher(SimulationEvents, "/simulation/events", 10)
 
         msg_buffer = []
         self.test_node.create_subscription(
-            DiagnosticArray,
-            '/diagnostics',
-            lambda msg: msg_buffer.append(msg),
-            10
+            DiagnosticArray, "/diagnostics", lambda msg: msg_buffer.append(msg), 10
         )
 
         # Wait until the talker transmits messages over the ROS topic
@@ -129,10 +125,7 @@ class TestFaultInjectionLink(unittest.TestCase):
         msg_buffer = []
 
         self.test_node.create_subscription(
-            DiagnosticArray,
-            '/diagnostics',
-            lambda msg: msg_buffer.append(msg),
-            10
+            DiagnosticArray, "/diagnostics", lambda msg: msg_buffer.append(msg), 10
         )
 
         # Wait until the talker transmits two messages over the ROS topic
@@ -146,7 +139,6 @@ class TestFaultInjectionLink(unittest.TestCase):
 
 @launch_testing.post_shutdown_test()
 class TestProcessOutput(unittest.TestCase):
-
     def test_exit_code(self, proc_info):
         """
         Test process exit code.
