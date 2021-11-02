@@ -13,9 +13,11 @@
 // limitations under the License.
 
 #include "euclidean_cluster/voxel_grid_based_euclidean_cluster.hpp"
+
+#include <pcl/kdtree/kdtree.h>
+#include <pcl/segmentation/extract_clusters.h>
+
 #include <unordered_map>
-#include "pcl/kdtree/kdtree.h"
-#include "pcl/segmentation/extract_clusters.h"
 
 namespace euclidean_cluster
 {
@@ -90,15 +92,16 @@ bool VoxelGridBasedEuclideanCluster::cluster(
   for (const auto & point : pointcloud->points) {
     const int index =
       voxel_grid_.getCentroidIndexAt(voxel_grid_.getGridCoordinates(point.x, point.y, point.z));
-    if (map.find(index) != map.end()) {temporary_clusters.at(map[index]).points.push_back(point);}
+    if (map.find(index) != map.end()) {
+      temporary_clusters.at(map[index]).points.push_back(point);
+    }
   }
 
   // build output and check cluster size
   {
     for (const auto & cluster : temporary_clusters) {
       if (!(min_cluster_size_ <= static_cast<int>(cluster.points.size()) &&
-        static_cast<int>(cluster.points.size()) <= max_cluster_size_))
-      {
+            static_cast<int>(cluster.points.size()) <= max_cluster_size_)) {
         continue;
       }
       clusters.push_back(cluster);

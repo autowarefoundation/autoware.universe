@@ -11,8 +11,12 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 #include "voxel_grid_based_euclidean_cluster_node.hpp"
+
 #include "euclidean_cluster/utils.hpp"
+
+#include <vector>
 
 namespace euclidean_cluster
 {
@@ -37,8 +41,7 @@ VoxelGridBasedEuclideanClusterNode::VoxelGridBasedEuclideanClusterNode(
 
   cluster_pub_ =
     this->create_publisher<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>(
-    "output",
-    rclcpp::QoS{1});
+      "output", rclcpp::QoS{1});
   debug_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("debug/clusters", 1);
 }
 
@@ -59,7 +62,9 @@ void VoxelGridBasedEuclideanClusterNode::onPointCloud(
   cluster_pub_->publish(output);
 
   // build debug msg
-  if (debug_pub_->get_subscription_count() < 1) {return;}
+  if (debug_pub_->get_subscription_count() < 1) {
+    return;
+  }
   {
     sensor_msgs::msg::PointCloud2 debug;
     convertObjectMsg2SensorMsg(output, debug);

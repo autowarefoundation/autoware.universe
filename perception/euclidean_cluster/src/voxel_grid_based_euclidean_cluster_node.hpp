@@ -13,21 +13,23 @@
 // limitations under the License.
 
 #pragma once
-#include <memory>
-
-#include "rclcpp/rclcpp.hpp"
 
 #include "euclidean_cluster/voxel_grid_based_euclidean_cluster.hpp"
-#include "sensor_msgs/msg/point_cloud2.hpp"
-#include "geometry_msgs/msg/pose_stamped.hpp"
-#include "autoware_perception_msgs/msg/dynamic_object_with_feature_array.hpp"
+
+#include <rclcpp/rclcpp.hpp>
+
+#include <autoware_perception_msgs/msg/dynamic_object_with_feature_array.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+
+#include <memory>
 
 namespace euclidean_cluster
 {
 class VoxelGridBasedEuclideanClusterNode : public rclcpp::Node
 {
 public:
-  VoxelGridBasedEuclideanClusterNode(const rclcpp::NodeOptions & options);
+  explicit VoxelGridBasedEuclideanClusterNode(const rclcpp::NodeOptions & options);
 
 private:
   void onPointCloud(const sensor_msgs::msg::PointCloud2::ConstSharedPtr input_msg);

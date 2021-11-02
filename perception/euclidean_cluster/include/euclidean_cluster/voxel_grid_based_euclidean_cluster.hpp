@@ -13,10 +13,14 @@
 // limitations under the License.
 
 #pragma once
-#include "pcl/point_types.h"
-#include "pcl/filters/voxel_grid.h"
+
 #include "euclidean_cluster/euclidean_cluster_interface.hpp"
 #include "euclidean_cluster/utils.hpp"
+
+#include <pcl/filters/voxel_grid.h>
+#include <pcl/point_types.h>
+
+#include <vector>
 
 namespace euclidean_cluster
 {
@@ -30,9 +34,9 @@ public:
     float voxel_leaf_size, int min_points_number_per_voxel);
   bool cluster(
     const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & pointcloud,
-    std::vector<pcl::PointCloud<pcl::PointXYZ>> & clusters)  override;
-  void setVoxelLeafSize(float voxel_leaf_size) {voxel_leaf_size_ = voxel_leaf_size;}
-  void setTolerance(float tolerance) {tolerance_ = tolerance;}
+    std::vector<pcl::PointCloud<pcl::PointXYZ>> & clusters) override;
+  void setVoxelLeafSize(float voxel_leaf_size) { voxel_leaf_size_ = voxel_leaf_size; }
+  void setTolerance(float tolerance) { tolerance_ = tolerance; }
   void setMinPointsNumberPerVoxel(int min_points_number_per_voxel)
   {
     min_points_number_per_voxel_ = min_points_number_per_voxel;

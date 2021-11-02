@@ -13,9 +13,13 @@
 // limitations under the License.
 
 #pragma once
-#include "pcl/point_types.h"
+
 #include "euclidean_cluster/euclidean_cluster_interface.hpp"
 #include "euclidean_cluster/utils.hpp"
+
+#include <pcl/point_types.h>
+
+#include <vector>
 
 namespace euclidean_cluster
 {
@@ -28,7 +32,7 @@ public:
   bool cluster(
     const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & pointcloud,
     std::vector<pcl::PointCloud<pcl::PointXYZ>> & clusters) override;
-  void setTolerance(float tolerance) {tolerance_ = tolerance;}
+  void setTolerance(float tolerance) { tolerance_ = tolerance; }
 
 private:
   float tolerance_;

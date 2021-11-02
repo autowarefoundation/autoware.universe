@@ -13,25 +13,22 @@
 // limitations under the License.
 
 #include "euclidean_cluster/euclidean_cluster.hpp"
-#include "pcl/kdtree/kdtree.h"
-#include "pcl/segmentation/extract_clusters.h"
+
+#include <pcl/kdtree/kdtree.h>
+#include <pcl/segmentation/extract_clusters.h>
 
 namespace euclidean_cluster
 {
-EuclideanCluster::EuclideanCluster()
-{
-}
+EuclideanCluster::EuclideanCluster() {}
 
-EuclideanCluster::EuclideanCluster(
-  bool use_height, int min_cluster_size, int max_cluster_size)
+EuclideanCluster::EuclideanCluster(bool use_height, int min_cluster_size, int max_cluster_size)
 : EuclideanClusterInterface(use_height, min_cluster_size, max_cluster_size)
 {
 }
 
 EuclideanCluster::EuclideanCluster(
   bool use_height, int min_cluster_size, int max_cluster_size, float tolerance)
-: EuclideanClusterInterface(use_height, min_cluster_size, max_cluster_size),
-  tolerance_(tolerance)
+: EuclideanClusterInterface(use_height, min_cluster_size, max_cluster_size), tolerance_(tolerance)
 {
 }
 

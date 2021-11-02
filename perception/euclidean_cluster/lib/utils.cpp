@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 #include "euclidean_cluster/utils.hpp"
-#include "autoware_perception_msgs/msg/dynamic_object_with_feature.hpp"
-#include "autoware_perception_msgs/msg/dynamic_object_with_feature_array.hpp"
-#include "sensor_msgs/point_cloud2_iterator.hpp"
-#include "sensor_msgs/msg/point_field.hpp"
+
+#include <autoware_perception_msgs/msg/dynamic_object_with_feature.hpp>
+#include <autoware_perception_msgs/msg/dynamic_object_with_feature_array.hpp>
+#include <sensor_msgs/msg/point_field.hpp>
+#include <sensor_msgs/point_cloud2_iterator.hpp>
 
 namespace euclidean_cluster
 {
@@ -26,9 +27,8 @@ geometry_msgs::msg::Point getCentroid(const sensor_msgs::msg::PointCloud2 & poin
   centroid.y = 0.0f;
   centroid.z = 0.0f;
   for (sensor_msgs::PointCloud2ConstIterator<float> iter_x(pointcloud, "x"),
-    iter_y(pointcloud, "y"), iter_z(pointcloud, "z");
-    iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z)
-  {
+       iter_y(pointcloud, "y"), iter_z(pointcloud, "z");
+       iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z) {
     centroid.x += *iter_x;
     centroid.y += *iter_y;
     centroid.z += *iter_z;
@@ -70,8 +70,7 @@ void convertObjectMsg2SensorMsg(
   sensor_msgs::PointCloud2Modifier modifier(output);
   modifier.setPointCloud2Fields(
     4, "x", 1, sensor_msgs::msg::PointField::FLOAT32, "y", 1, sensor_msgs::msg::PointField::FLOAT32,
-    "z", 1,
-    sensor_msgs::msg::PointField::FLOAT32, "rgb", 1, sensor_msgs::msg::PointField::FLOAT32);
+    "z", 1, sensor_msgs::msg::PointField::FLOAT32, "rgb", 1, sensor_msgs::msg::PointField::FLOAT32);
   modifier.resize(pointcloud_size);
 
   sensor_msgs::PointCloud2Iterator<float> iter_out_x(output, "x");
@@ -81,17 +80,16 @@ void convertObjectMsg2SensorMsg(
   sensor_msgs::PointCloud2Iterator<uint8_t> iter_out_g(output, "g");
   sensor_msgs::PointCloud2Iterator<uint8_t> iter_out_b(output, "b");
 
-  constexpr uint8_t color_data[] = {200, 0, 0, 0, 200, 0, 0, 0, 200,
-    200, 200, 0, 200, 0, 200, 0, 200, 200};                                    // 6 pattern
+  constexpr uint8_t color_data[] = {200, 0,   0, 0,   200, 0,   0, 0,   200,
+                                    200, 200, 0, 200, 0,   200, 0, 200, 200};  // 6 pattern
   for (size_t i = 0; i < input.feature_objects.size(); ++i) {
     const auto & feature_object = input.feature_objects.at(i);
     sensor_msgs::PointCloud2ConstIterator<float> iter_in_x(feature_object.feature.cluster, "x");
     sensor_msgs::PointCloud2ConstIterator<float> iter_in_y(feature_object.feature.cluster, "y");
     sensor_msgs::PointCloud2ConstIterator<float> iter_in_z(feature_object.feature.cluster, "z");
     for (; iter_in_x != iter_in_x.end(); ++iter_in_x, ++iter_in_y, ++iter_in_z, ++iter_out_x,
-      ++iter_out_y, ++iter_out_z, ++iter_out_r, ++iter_out_g,
-      ++iter_out_b)
-    {
+                                         ++iter_out_y, ++iter_out_z, ++iter_out_r, ++iter_out_g,
+                                         ++iter_out_b) {
       *iter_out_x = *iter_in_x;
       *iter_out_y = *iter_in_y;
       *iter_out_z = *iter_in_z;
