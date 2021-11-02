@@ -14,11 +14,11 @@
 
 #include "gyro_odometer/gyro_odometer_core.hpp"
 
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+
 #include <cmath>
 #include <memory>
 #include <string>
-
-#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 
 GyroOdometer::GyroOdometer()
 : Node("gyro_odometer"),
@@ -110,8 +110,7 @@ void GyroOdometer::callbackImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_m
   // clear imu yaw bias if vehicle is stopped
   if (
     std::fabs(transformed_angular_velocity.vector.z) < 0.01 &&
-    std::fabs(twist_with_cov_msg_ptr_->twist.twist.linear.x) < 0.01)
-  {
+    std::fabs(twist_with_cov_msg_ptr_->twist.twist.linear.x) < 0.01) {
     transformed_angular_velocity.vector.z = 0.0;
   }
 

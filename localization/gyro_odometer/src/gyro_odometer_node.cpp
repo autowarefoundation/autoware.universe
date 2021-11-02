@@ -14,9 +14,9 @@
 
 #include "gyro_odometer/gyro_odometer_core.hpp"
 
-#include <memory>
+#include <rclcpp/rclcpp.hpp>
 
-#include "rclcpp/rclcpp.hpp"
+#include <memory>
 
 int main(int argc, char ** argv)
 {

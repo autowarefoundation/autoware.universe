@@ -14,14 +14,13 @@
 
 #include "pose2twist/pose2twist_core.hpp"
 
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+
 #include <cmath>
 #include <cstddef>
 #include <functional>
 
-#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
-
-Pose2Twist::Pose2Twist()
-: Node("pose2twist_core")
+Pose2Twist::Pose2Twist() : Node("pose2twist_core")
 {
   using std::placeholders::_1;
 
@@ -54,8 +53,7 @@ double calcDiffForRadian(const double lhs_rad, const double rhs_rad)
 geometry_msgs::msg::Vector3 getRPY(const geometry_msgs::msg::Pose & pose)
 {
   geometry_msgs::msg::Vector3 rpy;
-  tf2::Quaternion q(
-    pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w);
+  tf2::Quaternion q(pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w);
   tf2::Matrix3x3(q).getRPY(rpy.x, rpy.y, rpy.z);
   return rpy;
 }
