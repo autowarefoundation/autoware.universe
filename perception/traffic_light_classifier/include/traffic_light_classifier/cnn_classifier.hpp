@@ -15,21 +15,22 @@
 #ifndef TRAFFIC_LIGHT_CLASSIFIER__CNN_CLASSIFIER_HPP_
 #define TRAFFIC_LIGHT_CLASSIFIER__CNN_CLASSIFIER_HPP_
 
+#include "traffic_light_classifier/classifier_interface.hpp"
+
+#include <image_transport/image_transport.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <trt_common.hpp>
+
+#include <autoware_perception_msgs/msg/lamp_state.hpp>
+
+#include <cv_bridge/cv_bridge.h>
+
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
-#include <map>
-
-#include "autoware_perception_msgs/msg/lamp_state.hpp"
-#include "cv_bridge/cv_bridge.h"
-#include "image_transport/image_transport.hpp"
-#include "rclcpp/rclcpp.hpp"
-#include "traffic_light_classifier/classifier_interface.hpp"
-
-#include "opencv2/core/core.hpp"
-#include "opencv2/highgui/highgui.hpp"
-
-#include "trt_common.hpp"
 
 namespace traffic_light
 {

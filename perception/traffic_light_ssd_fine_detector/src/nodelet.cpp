@@ -13,17 +13,17 @@
 // limitations under the License.
 
 #include "traffic_light_ssd_fine_detector/nodelet.hpp"
+
+#include <ament_index_cpp/get_package_share_directory.hpp>
+#include <cuda_utils.hpp>
+
 #include <memory>
 #include <string>
-#include <vector>
 #include <utility>
-
-#include "ament_index_cpp/get_package_share_directory.hpp"
-#include "cuda_utils.hpp"
+#include <vector>
 
 namespace traffic_light
 {
-
 inline std::vector<float> toFloatVector(const std::vector<double> double_vector)
 {
   return std::vector<float>(double_vector.begin(), double_vector.end());
@@ -68,8 +68,8 @@ TrafficLightSSDFineDetectorNodelet::TrafficLightSSDFineDetectorNodelet(
     }
   } else {
     RCLCPP_INFO(
-      this->get_logger(),
-      "Could not find %s, try making TensorRT engine from onnx", engine_path.c_str());
+      this->get_logger(), "Could not find %s, try making TensorRT engine from onnx",
+      engine_path.c_str());
     net_ptr_.reset(new ssd::Net(onnx_file, mode, max_batch_size));
     net_ptr_->save(engine_path);
   }
@@ -88,10 +88,10 @@ TrafficLightSSDFineDetectorNodelet::TrafficLightSSDFineDetectorNodelet(
   this->get_node_timers_interface()->add_timer(timer_, nullptr);
 
   std::lock_guard<std::mutex> lock(connect_mutex_);
-  output_roi_pub_ = this->create_publisher<autoware_perception_msgs::msg::TrafficLightRoiArray>(
-    "~/output/rois", 1);
-  exe_time_pub_ = this->create_publisher<autoware_debug_msgs::msg::Float32Stamped>(
-    "~/debug/exe_time_ms", 1);
+  output_roi_pub_ =
+    this->create_publisher<autoware_perception_msgs::msg::TrafficLightRoiArray>("~/output/rois", 1);
+  exe_time_pub_ =
+    this->create_publisher<autoware_debug_msgs::msg::Float32Stamped>("~/debug/exe_time_ms", 1);
   if (is_approximate_sync_) {
     approximate_sync_.reset(new ApproximateSync(ApproximateSyncPolicy(10), image_sub_, roi_sub_));
     approximate_sync_->registerCallback(
@@ -149,14 +149,11 @@ void TrafficLightSSDFineDetectorNodelet::callback(
 
     for (int i = 0; i < num_infer; ++i) {
       int roi_index = i + batch_count * batch_size;
-      lts.push_back(
-        cv::Point(
-          in_roi_msg->rois.at(roi_index).roi.x_offset,
-          in_roi_msg->rois.at(roi_index).roi.y_offset));
-      rbs.push_back(
-        cv::Point(
-          in_roi_msg->rois.at(roi_index).roi.x_offset + in_roi_msg->rois.at(roi_index).roi.width,
-          in_roi_msg->rois.at(roi_index).roi.y_offset + in_roi_msg->rois.at(roi_index).roi.height));
+      lts.push_back(cv::Point(
+        in_roi_msg->rois.at(roi_index).roi.x_offset, in_roi_msg->rois.at(roi_index).roi.y_offset));
+      rbs.push_back(cv::Point(
+        in_roi_msg->rois.at(roi_index).roi.x_offset + in_roi_msg->rois.at(roi_index).roi.width,
+        in_roi_msg->rois.at(roi_index).roi.y_offset + in_roi_msg->rois.at(roi_index).roi.height));
       fitInFrame(lts.at(i), rbs.at(i), cv::Size(original_image.size()));
       cropped_imgs.push_back(cv::Mat(original_image, cv::Rect(lts.at(i), rbs.at(i))));
     }
@@ -187,8 +184,7 @@ void TrafficLightSSDFineDetectorNodelet::callback(
     // Get Output
     std::vector<Detection> detections;
     if (!cnnOutput2BoxDetection(
-        scores.get(), boxes.get(), tlr_id_, cropped_imgs, num_infer, detections))
-    {
+          scores.get(), boxes.get(), tlr_id_, cropped_imgs, num_infer, detections)) {
       RCLCPP_ERROR(this->get_logger(), "Fail to postprocess image");
       return;
     }
@@ -292,8 +288,7 @@ bool TrafficLightSSDFineDetectorNodelet::rosMsg2CvMat(
     image = cv_image->image;
   } catch (cv_bridge::Exception & e) {
     RCLCPP_ERROR(
-      this->get_logger(),
-      "Failed to convert sensor_msgs::msg::Image to cv::Mat \n%s", e.what());
+      this->get_logger(), "Failed to convert sensor_msgs::msg::Image to cv::Mat \n%s", e.what());
     return false;
   }
 
@@ -360,5 +355,5 @@ bool TrafficLightSSDFineDetectorNodelet::getTlrIdFromLabel(
 
 }  // namespace traffic_light
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(traffic_light::TrafficLightSSDFineDetectorNodelet)

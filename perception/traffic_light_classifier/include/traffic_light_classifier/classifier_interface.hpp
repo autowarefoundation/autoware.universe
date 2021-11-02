@@ -15,10 +15,12 @@
 #ifndef TRAFFIC_LIGHT_CLASSIFIER__CLASSIFIER_INTERFACE_HPP_
 #define TRAFFIC_LIGHT_CLASSIFIER__CLASSIFIER_INTERFACE_HPP_
 
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+
+#include <autoware_perception_msgs/msg/lamp_state.hpp>
+
 #include <vector>
-#include "autoware_perception_msgs/msg/lamp_state.hpp"
-#include "opencv2/core/core.hpp"
-#include "opencv2/highgui/highgui.hpp"
 
 namespace traffic_light
 {

@@ -12,16 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "trt_ssd.hpp"
+#include <trt_ssd.hpp>
+
+#include <NvOnnxConfig.h>
+#include <NvOnnxParser.h>
 
 #include <fstream>
-#include <stdexcept>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <vector>
-
-#include "NvOnnxConfig.h"
-#include "NvOnnxParser.h"
 
 namespace ssd
 {
@@ -60,7 +60,9 @@ Net::Net(const std::string & path, bool verbose)
 
 Net::~Net()
 {
-  if (stream_) {cudaStreamDestroy(stream_);}
+  if (stream_) {
+    cudaStreamDestroy(stream_);
+  }
 }
 
 Net::Net(
@@ -88,7 +90,9 @@ Net::Net(
     return;
   }
   // Allow use of FP16 layers when running in INT8
-  if (fp16 || int8) {config->setFlag(nvinfer1::BuilderFlag::kFP16);}
+  if (fp16 || int8) {
+    config->setFlag(nvinfer1::BuilderFlag::kFP16);
+  }
   config->setMaxWorkspaceSize(workspace_size);
 
   // Parse ONNX FCN
@@ -113,8 +117,8 @@ Net::Net(
     if (int8) {
         config->setFlag(BuilderFlag::kINT8);
         ImageStream stream(batch, inputDims, calibration_images);
-        calib = std::unique_ptr<Int8EntropyCalibrator>(new Int8EntropyCalibrator(stream, model_name, calibration_table));
-        config->setInt8Calibrator(calib.get());
+        calib = std::unique_ptr<Int8EntropyCalibrator>(new Int8EntropyCalibrator(stream, model_name,
+    calibration_table)); config->setInt8Calibrator(calib.get());
     }*/
 
   // create profile
@@ -181,9 +185,6 @@ int Net::getMaxBatchSize()
   return engine_->getProfileDimensions(0, 0, nvinfer1::OptProfileSelector::kMAX).d[0];
 }
 
-int Net::getMaxDetections()
-{
-  return engine_->getBindingDimensions(1).d[1];
-}
+int Net::getMaxDetections() { return engine_->getBindingDimensions(1).d[1]; }
 
 }  // namespace ssd

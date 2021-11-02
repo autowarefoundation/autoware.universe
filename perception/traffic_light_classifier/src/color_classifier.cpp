@@ -12,15 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 #include "traffic_light_classifier/color_classifier.hpp"
+
+#include <opencv2/imgproc/imgproc_c.h>
+
 #include <algorithm>
 #include <string>
 #include <vector>
-#include "opencv2/imgproc/imgproc_c.h"
 
 namespace traffic_light
 {
-ColorClassifier::ColorClassifier(rclcpp::Node * node_ptr)
-: node_ptr_(node_ptr)
+ColorClassifier::ColorClassifier(rclcpp::Node * node_ptr) : node_ptr_(node_ptr)
 {
   using std::placeholders::_1;
   image_pub_ = image_transport::create_publisher(
@@ -198,15 +199,15 @@ rcl_interfaces::msg::SetParametersResult ColorClassifier::parametersCallback(
   const std::vector<rclcpp::Parameter> & parameters)
 {
   auto update_param = [&](const std::string & name, int & v) {
-      auto it = std::find_if(
-        parameters.cbegin(), parameters.cend(),
-        [&name](const rclcpp::Parameter & parameter) {return parameter.get_name() == name;});
-      if (it != parameters.cend()) {
-        v = it->as_int();
-        return true;
-      }
-      return false;
-    };
+    auto it = std::find_if(
+      parameters.cbegin(), parameters.cend(),
+      [&name](const rclcpp::Parameter & parameter) { return parameter.get_name() == name; });
+    if (it != parameters.cend()) {
+      v = it->as_int();
+      return true;
+    }
+    return false;
+  };
 
   update_param("green_min_h", hsv_config_.green_min_h);
   update_param("green_min_s", hsv_config_.green_min_s);
@@ -227,30 +228,16 @@ rcl_interfaces::msg::SetParametersResult ColorClassifier::parametersCallback(
   update_param("red_max_s", hsv_config_.red_max_s);
   update_param("red_max_v", hsv_config_.red_max_v);
 
-  min_hsv_green_ = cv::Scalar(
-    hsv_config_.green_min_h,
-    hsv_config_.green_min_s,
-    hsv_config_.green_min_v);
-  max_hsv_green_ = cv::Scalar(
-    hsv_config_.green_max_h,
-    hsv_config_.green_max_s,
-    hsv_config_.green_max_v);
-  min_hsv_yellow_ = cv::Scalar(
-    hsv_config_.yellow_min_h,
-    hsv_config_.yellow_min_s,
-    hsv_config_.yellow_min_v);
-  max_hsv_yellow_ = cv::Scalar(
-    hsv_config_.yellow_max_h,
-    hsv_config_.yellow_max_s,
-    hsv_config_.yellow_max_v);
-  min_hsv_red_ = cv::Scalar(
-    hsv_config_.red_min_h,
-    hsv_config_.red_min_s,
-    hsv_config_.red_min_v);
-  max_hsv_red_ = cv::Scalar(
-    hsv_config_.red_max_h,
-    hsv_config_.red_max_s,
-    hsv_config_.red_max_v);
+  min_hsv_green_ =
+    cv::Scalar(hsv_config_.green_min_h, hsv_config_.green_min_s, hsv_config_.green_min_v);
+  max_hsv_green_ =
+    cv::Scalar(hsv_config_.green_max_h, hsv_config_.green_max_s, hsv_config_.green_max_v);
+  min_hsv_yellow_ =
+    cv::Scalar(hsv_config_.yellow_min_h, hsv_config_.yellow_min_s, hsv_config_.yellow_min_v);
+  max_hsv_yellow_ =
+    cv::Scalar(hsv_config_.yellow_max_h, hsv_config_.yellow_max_s, hsv_config_.yellow_max_v);
+  min_hsv_red_ = cv::Scalar(hsv_config_.red_min_h, hsv_config_.red_min_s, hsv_config_.red_min_v);
+  max_hsv_red_ = cv::Scalar(hsv_config_.red_max_h, hsv_config_.red_max_s, hsv_config_.red_max_v);
 
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = true;

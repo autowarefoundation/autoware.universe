@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 #include "traffic_light_classifier/nodelet.hpp"
+
 #include <iostream>
 #include <memory>
-#include <vector>
 #include <utility>
+#include <vector>
 
 namespace traffic_light
 {
@@ -34,7 +35,6 @@ TrafficLightClassifierNodelet::TrafficLightClassifierNodelet(const rclcpp::NodeO
     sync_->registerCallback(
       std::bind(&TrafficLightClassifierNodelet::imageRoiCallback, this, _1, _2));
   }
-
 
   tl_states_pub_ = this->create_publisher<autoware_perception_msgs::msg::TrafficLightStateArray>(
     "~/output/traffic_light_states", rclcpp::QoS{1});
@@ -66,9 +66,9 @@ TrafficLightClassifierNodelet::TrafficLightClassifierNodelet(const rclcpp::NodeO
 void TrafficLightClassifierNodelet::connectCb()
 {
   // set callbacks only when there are subscribers to this node
-  if (tl_states_pub_->get_subscription_count() == 0 &&
-    tl_states_pub_->get_intra_process_subscription_count() == 0)
-  {
+  if (
+    tl_states_pub_->get_subscription_count() == 0 &&
+    tl_states_pub_->get_intra_process_subscription_count() == 0) {
     image_sub_.unsubscribe();
     roi_sub_.unsubscribe();
   } else if (!image_sub_.getSubscriber()) {
@@ -119,6 +119,6 @@ void TrafficLightClassifierNodelet::imageRoiCallback(
 
 }  // namespace traffic_light
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 
 RCLCPP_COMPONENTS_REGISTER_NODE(traffic_light::TrafficLightClassifierNodelet)
