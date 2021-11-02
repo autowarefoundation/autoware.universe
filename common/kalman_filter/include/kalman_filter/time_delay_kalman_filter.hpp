@@ -15,10 +15,12 @@
 #ifndef KALMAN_FILTER__TIME_DELAY_KALMAN_FILTER_HPP_
 #define KALMAN_FILTER__TIME_DELAY_KALMAN_FILTER_HPP_
 
-#include <iostream>
 #include "kalman_filter/kalman_filter.hpp"
-#include "eigen3/Eigen/Core"
-#include "eigen3/Eigen/LU"
+
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/LU>
+
+#include <iostream>
 
 /**
  * @file time_delay_kalman_filter.h
@@ -39,7 +41,8 @@ public:
    * @brief initialization of kalman filter
    * @param x initial state
    * @param P0 initial covariance of estimated state
-   * @param max_delay_step Maximum number of delay steps, which determines the dimension of the extended kalman filter
+   * @param max_delay_step Maximum number of delay steps, which determines the dimension of the
+   * extended kalman filter
    */
   void init(const Eigen::MatrixXd & x, const Eigen::MatrixXd & P, const int max_delay_step);
 
@@ -56,8 +59,8 @@ public:
   void getLatestP(Eigen::MatrixXd & P);
 
   /**
-   * @brief calculate kalman filter covariance by precision model with time delay. This is mainly for EKF of nonlinear
-   * process model.
+   * @brief calculate kalman filter covariance by precision model with time delay. This is mainly
+   * for EKF of nonlinear process model.
    * @param x_next predicted state by prediction model
    * @param A coefficient matrix of x for process model
    * @param Q covariance matrix for process model
@@ -66,8 +69,8 @@ public:
     const Eigen::MatrixXd & x_next, const Eigen::MatrixXd & A, const Eigen::MatrixXd & Q);
 
   /**
-   * @brief calculate kalman filter covariance by measurement model with time delay. This is mainly for EKF of nonlinear
-   * process model.
+   * @brief calculate kalman filter covariance by measurement model with time delay. This is mainly
+   * for EKF of nonlinear process model.
    * @param y measured values
    * @param C coefficient matrix of x for measurement model
    * @param R covariance matrix for measurement model

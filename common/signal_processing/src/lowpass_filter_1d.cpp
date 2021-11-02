@@ -14,12 +14,11 @@
 
 #include "signal_processing/lowpass_filter_1d.hpp"
 
-LowpassFilter1d::LowpassFilter1d(const double x, const double gain)
-: x_(x), gain_(gain) {}
+LowpassFilter1d::LowpassFilter1d(const double x, const double gain) : x_(x), gain_(gain) {}
 
-void LowpassFilter1d::reset(const double x) {x_ = x;}
+void LowpassFilter1d::reset(const double x) { x_ = x; }
 
-double LowpassFilter1d::getValue() const {return x_;}
+double LowpassFilter1d::getValue() const { return x_; }
 
 double LowpassFilter1d::filter(const double u)
 {

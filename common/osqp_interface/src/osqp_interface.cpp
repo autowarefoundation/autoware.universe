@@ -15,17 +15,18 @@
 // Author: Robin Karlsson
 //
 
-#include <chrono>
-#include <iostream>
-#include <string>
-#include <vector>
-#include <tuple>
-#include <memory>
-
-#include "osqp/osqp.h"
+#include "osqp_interface/osqp_interface.hpp"
 
 #include "osqp_interface/csc_matrix_conv.hpp"
-#include "osqp_interface/osqp_interface.hpp"
+
+#include <osqp/osqp.h>
+
+#include <chrono>
+#include <iostream>
+#include <memory>
+#include <string>
+#include <tuple>
+#include <vector>
 
 namespace osqp
 {
@@ -79,28 +80,28 @@ c_int OSQPInterface::initializeProblem(
   // check if arguments are valid
   std::stringstream ss;
   if (P.rows() != P.cols()) {
-    ss << "P.rows() and P.cols() are not the same. P.rows() = " << P.rows() <<
-      ", P.cols() = " << P.cols();
+    ss << "P.rows() and P.cols() are not the same. P.rows() = " << P.rows()
+       << ", P.cols() = " << P.cols();
     throw std::invalid_argument(ss.str());
   }
   if (P.rows() != q.size()) {
-    ss << "P.rows() and q.size() are not the same. P.rows() = " << P.rows() <<
-      ", q.size() = " << q.size();
+    ss << "P.rows() and q.size() are not the same. P.rows() = " << P.rows()
+       << ", q.size() = " << q.size();
     throw std::invalid_argument(ss.str());
   }
   if (P.rows() != A.cols()) {
-    ss << "P.rows() and A.cols() are not the same. P.rows() = " << P.rows() <<
-      ", A.cols() = " << A.cols();
+    ss << "P.rows() and A.cols() are not the same. P.rows() = " << P.rows()
+       << ", A.cols() = " << A.cols();
     throw std::invalid_argument(ss.str());
   }
   if (A.rows() != l.size()) {
-    ss << "A.rows() and l.size() are not the same. A.rows() = " << A.rows() <<
-      ", l.size() = " << l.size();
+    ss << "A.rows() and l.size() are not the same. A.rows() = " << A.rows()
+       << ", l.size() = " << l.size();
     throw std::invalid_argument(ss.str());
   }
   if (A.rows() != u.size()) {
-    ss << "A.rows() and u.size() are not the same. A.rows() = " << A.rows() <<
-      ", u.size() = " << u.size();
+    ss << "A.rows() and u.size() are not the same. A.rows() = " << A.rows()
+       << ", u.size() = " << u.size();
     throw std::invalid_argument(ss.str());
   }
 
@@ -320,6 +321,6 @@ inline bool OSQPInterface::isEqual(double x, double y)
   return std::abs(x - y) <= epsilon * std::abs(x);
 }
 
-c_int OSQPInterface::getExitFlag(void) {return exitflag;}
+c_int OSQPInterface::getExitFlag(void) { return exitflag; }
 
 }  // namespace osqp

@@ -15,9 +15,9 @@
 #ifndef INTERPOLATION__LINEAR_INTERPOLATION_HPP_
 #define INTERPOLATION__LINEAR_INTERPOLATION_HPP_
 
-#include <vector>
-
 #include "interpolation/interpolation_utils.hpp"
+
+#include <vector>
 
 namespace interpolation
 {

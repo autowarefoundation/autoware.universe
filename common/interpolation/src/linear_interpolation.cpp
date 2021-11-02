@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <vector>
 #include "interpolation/linear_interpolation.hpp"
+
+#include <vector>
 
 namespace interpolation
 {
@@ -40,7 +41,7 @@ std::vector<double> lerp(
     const double src_val = base_values.at(key_index);
     const double dst_val = base_values.at(key_index + 1);
     const double ratio = (query_key - base_keys.at(key_index)) /
-      (base_keys.at(key_index + 1) - base_keys.at(key_index));
+                         (base_keys.at(key_index + 1) - base_keys.at(key_index));
 
     const double interpolated_val = lerp(src_val, dst_val, ratio);
     query_values.push_back(interpolated_val);

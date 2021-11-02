@@ -63,16 +63,12 @@ inline void validateInput(
   // when size of vectors are less than 2
   if (base_keys.size() < 2 || base_values.size() < 2) {
     throw std::invalid_argument(
-            "The size of points is less than 2. base_keys.size() = " +
-            std::to_string(base_keys.size()) +
-            ", base_values.size() = " + std::to_string(base_values.size()));
+      "The size of points is less than 2. base_keys.size() = " + std::to_string(base_keys.size()) +
+      ", base_values.size() = " + std::to_string(base_values.size()));
   }
 
   // when indices are not sorted
-  if (
-    !isIncreasing(base_keys) ||
-    !isNotDecreasing(query_keys))
-  {
+  if (!isIncreasing(base_keys) || !isNotDecreasing(query_keys)) {
     throw std::invalid_argument("Either base_keys or query_keys is not sorted.");
   }
 

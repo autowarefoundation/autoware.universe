@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "interpolation/interpolation_utils.hpp"
+
+#include <gtest/gtest.h>
 
 #include <vector>
-#include "gtest/gtest.h"
-#include "interpolation/interpolation_utils.hpp"
 
 constexpr double epsilon = 1e-6;
 
@@ -84,9 +85,7 @@ TEST(interpolation_utils, validateInput)
   const std::vector<double> partly_not_increasing_vec{0.0, 0.0, 2.0, 3.0};
   // NOTE: base_keys must be strictly monotonous increasing vector
   EXPECT_THROW(
-    validateInput(
-      partly_not_increasing_vec, base_values,
-      query_keys), std::invalid_argument);
+    validateInput(partly_not_increasing_vec, base_values, query_keys), std::invalid_argument);
   // NOTE: query_keys is allowed to be monotonous non-decreasing vector
   EXPECT_NO_THROW(validateInput(base_keys, base_values, partly_not_increasing_vec));
 
@@ -105,7 +104,5 @@ TEST(interpolation_utils, validateInput)
   // size is different
   const std::vector<double> different_size_base_values{0.0, 1.0, 2.0};
   EXPECT_THROW(
-    validateInput(
-      base_keys, different_size_base_values,
-      query_keys), std::invalid_argument);
+    validateInput(base_keys, different_size_base_values, query_keys), std::invalid_argument);
 }

@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "gtest/gtest.h"
-
 #include "signal_processing/lowpass_filter_1d.hpp"
+
+#include <gtest/gtest.h>
 
 constexpr double epsilon = 1e-6;
 

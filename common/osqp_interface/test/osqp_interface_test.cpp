@@ -12,23 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <vector>
-
-#include "gtest/gtest.h"
-
 #include "osqp_interface/osqp_interface.hpp"
+
+#include <gtest/gtest.h>
+
+#include <vector>
 
 constexpr double tolerance = 0.01;
 
-void generateOSQPSolver()
-{
-  osqp::OSQPInterface solver;
-}
+void generateOSQPSolver() { osqp::OSQPInterface solver; }
 
-TEST(OSQPInterface, Instance)
-{
-  EXPECT_NO_THROW(generateOSQPSolver());
-}
+TEST(OSQPInterface, Instance) { EXPECT_NO_THROW(generateOSQPSolver()); }
 
 TEST(OSQPInterface, Solve)
 {
