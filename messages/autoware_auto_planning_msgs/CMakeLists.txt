@@ -18,6 +18,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/RoutePoint.idl"
   "msg/Trajectory.idl"
   "msg/TrajectoryPoint.idl"
+  "msg/Path.idl"
+  "msg/PathPoint.idl"
   "srv/ModifyTrajectory.idl"
   DEPENDENCIES
     "autoware_auto_geometry_msgs"
