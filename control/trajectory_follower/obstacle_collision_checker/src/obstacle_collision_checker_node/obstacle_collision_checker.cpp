@@ -12,22 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "obstacle_collision_checker/obstacle_collision_checker.hpp"
+
+#include "obstacle_collision_checker/util/create_vehicle_footprint.hpp"
+
+#include <autoware_utils/geometry/geometry.hpp>
+#include <autoware_utils/math/normalization.hpp>
+#include <autoware_utils/math/unit_conversion.hpp>
+#include <autoware_utils/system/stop_watch.hpp>
+#include <pcl_ros/transforms.hpp>
+#include <rclcpp/rclcpp.hpp>
+
+#include <boost/geometry.hpp>
+
+#include <pcl_conversions/pcl_conversions.h>
+#include <tf2/utils.h>
+#include <tf2_eigen/tf2_eigen.h>
+
 #include <iostream>
 #include <vector>
-
-#include "boost/geometry.hpp"
-#include "obstacle_collision_checker/obstacle_collision_checker.hpp"
-#include "obstacle_collision_checker/util/create_vehicle_footprint.hpp"
-#include "autoware_utils/geometry/geometry.hpp"
-#include "autoware_utils/math/normalization.hpp"
-#include "autoware_utils/math/unit_conversion.hpp"
-#include "autoware_utils/system/stop_watch.hpp"
-#include "pcl_conversions/pcl_conversions.h"
-#include "tf2/utils.h"
-#include "tf2_eigen/tf2_eigen.h"
-#include "pcl_ros/transforms.hpp"
-#include "rclcpp/rclcpp.hpp"
-
 
 namespace
 {
@@ -189,9 +192,8 @@ std::vector<LinearRing2d> ObstacleCollisionChecker::createVehicleFootprints(
   // Create vehicle footprint on each TrajectoryPoint
   std::vector<LinearRing2d> vehicle_footprints;
   for (const auto & p : trajectory.points) {
-    vehicle_footprints.push_back(
-      autoware_utils::transformVector<autoware_utils::LinearRing2d>(
-        local_vehicle_footprint, autoware_utils::pose2transform(p.pose)));
+    vehicle_footprints.push_back(autoware_utils::transformVector<autoware_utils::LinearRing2d>(
+      local_vehicle_footprint, autoware_utils::pose2transform(p.pose)));
   }
 
   return vehicle_footprints;

@@ -15,26 +15,27 @@
 #ifndef LANE_DEPARTURE_CHECKER__LANE_DEPARTURE_CHECKER_NODE_HPP_
 #define LANE_DEPARTURE_CHECKER__LANE_DEPARTURE_CHECKER_NODE_HPP_
 
+#include "lane_departure_checker/lane_departure_checker.hpp"
+
+#include <autoware_utils/ros/debug_publisher.hpp>
+#include <autoware_utils/ros/processing_time_publisher.hpp>
+#include <autoware_utils/ros/self_pose_listener.hpp>
+#include <diagnostic_updater/diagnostic_updater.hpp>
+#include <lanelet2_extension/utility/message_conversion.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <vehicle_info_util/vehicle_info_util.hpp>
+
+#include <autoware_debug_msgs/msg/float64_stamped.hpp>
+#include <autoware_planning_msgs/msg/route.hpp>
+#include <autoware_planning_msgs/msg/trajectory.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
+
+#include <lanelet2_core/LaneletMap.h>
+
 #include <memory>
 #include <vector>
-
-#include "autoware_utils/ros/debug_publisher.hpp"
-#include "autoware_utils/ros/processing_time_publisher.hpp"
-#include "autoware_utils/ros/self_pose_listener.hpp"
-#include "diagnostic_updater/diagnostic_updater.hpp"
-#include "lanelet2_core/LaneletMap.h"
-#include "lanelet2_extension/utility/message_conversion.hpp"
-#include "rclcpp/rclcpp.hpp"
-
-#include "autoware_debug_msgs/msg/float64_stamped.hpp"
-#include "autoware_planning_msgs/msg/route.hpp"
-#include "autoware_planning_msgs/msg/trajectory.hpp"
-#include "geometry_msgs/msg/pose_stamped.hpp"
-#include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
-#include "vehicle_info_util/vehicle_info_util.hpp"
-#include "visualization_msgs/msg/marker_array.hpp"
-
-#include "lane_departure_checker/lane_departure_checker.hpp"
 
 namespace lane_departure_checker
 {

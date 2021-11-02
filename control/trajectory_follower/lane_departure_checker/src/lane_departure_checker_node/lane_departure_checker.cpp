@@ -12,21 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <algorithm>
-#include <vector>
-
 #include "lane_departure_checker/lane_departure_checker.hpp"
 
-#include "boost/geometry.hpp"
-
-#include "autoware_utils/geometry/geometry.hpp"
-#include "autoware_utils/math/normalization.hpp"
-#include "autoware_utils/math/unit_conversion.hpp"
-#include "autoware_utils/system/stop_watch.hpp"
-#include "lanelet2_core/geometry/Polygon.h"
-#include "tf2/utils.h"
-
 #include "lane_departure_checker/util/create_vehicle_footprint.hpp"
+
+#include <autoware_utils/geometry/geometry.hpp>
+#include <autoware_utils/math/normalization.hpp>
+#include <autoware_utils/math/unit_conversion.hpp>
+#include <autoware_utils/system/stop_watch.hpp>
+
+#include <boost/geometry.hpp>
+
+#include <lanelet2_core/geometry/Polygon.h>
+#include <tf2/utils.h>
+
+#include <algorithm>
+#include <vector>
 
 using autoware_utils::LinearRing2d;
 using autoware_utils::MultiPoint2d;
@@ -70,8 +71,7 @@ size_t findNearestIndex(
   return min_idx;
 }
 
-LinearRing2d createHullFromFootprints(
-  const std::vector<LinearRing2d> & footprints)
+LinearRing2d createHullFromFootprints(const std::vector<LinearRing2d> & footprints)
 {
   MultiPoint2d combined;
   for (const auto & footprint : footprints) {
@@ -225,9 +225,7 @@ std::vector<LinearRing2d> LaneDepartureChecker::createVehicleFootprints(
   const autoware_planning_msgs::msg::Trajectory & trajectory, const Param & param)
 {
   // Calculate longitudinal and lateral margin based on covariance
-  const auto margin = calcFootprintMargin(
-    covariance,
-    param.footprint_margin_scale);
+  const auto margin = calcFootprintMargin(covariance, param.footprint_margin_scale);
 
   // Create vehicle footprint in base_link coordinate
   const auto local_vehicle_footprint = createVehicleFootprint(*vehicle_info_ptr_, margin);

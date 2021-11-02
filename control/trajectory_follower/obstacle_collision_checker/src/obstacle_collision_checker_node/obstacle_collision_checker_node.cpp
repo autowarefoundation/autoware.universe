@@ -12,27 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "obstacle_collision_checker/obstacle_collision_checker_node.hpp"
+
+#include "obstacle_collision_checker/util/create_vehicle_footprint.hpp"
+
+#include <autoware_utils/geometry/geometry.hpp>
+#include <autoware_utils/math/unit_conversion.hpp>
+#include <autoware_utils/ros/marker_helper.hpp>
+#include <vehicle_info_util/vehicle_info_util.hpp>
+
 #include <memory>
-#include <vector>
 #include <string>
 #include <utility>
-
-#include "obstacle_collision_checker/obstacle_collision_checker_node.hpp"
-#include "autoware_utils/geometry/geometry.hpp"
-#include "autoware_utils/math/unit_conversion.hpp"
-#include "autoware_utils/ros/marker_helper.hpp"
-#include "vehicle_info_util/vehicle_info_util.hpp"
-#include "obstacle_collision_checker/util/create_vehicle_footprint.hpp"
+#include <vector>
 
 namespace
 {
-template<typename T>
+template <typename T>
 void update_param(
   const std::vector<rclcpp::Parameter> & parameters, const std::string & name, T & value)
 {
   auto it = std::find_if(
     parameters.cbegin(), parameters.cend(),
-    [&name](const rclcpp::Parameter & parameter) {return parameter.get_name() == name;});
+    [&name](const rclcpp::Parameter & parameter) { return parameter.get_name() == name; });
   if (it != parameters.cend()) {
     value = it->template get_value<T>();
   }
@@ -81,8 +83,7 @@ ObstacleCollisionCheckerNode::ObstacleCollisionCheckerNode(const rclcpp::NodeOpt
     "input/twist", 1, std::bind(&ObstacleCollisionCheckerNode::onTwist, this, _1));
 
   // Publisher
-  debug_publisher_ =
-    std::make_shared<autoware_utils::DebugPublisher>(this, "debug/marker");
+  debug_publisher_ = std::make_shared<autoware_utils::DebugPublisher>(this, "debug/marker");
   time_publisher_ = std::make_shared<autoware_utils::ProcessingTimePublisher>(this);
 
   // Diagnostic Updater
@@ -336,5 +337,5 @@ visualization_msgs::msg::MarkerArray ObstacleCollisionCheckerNode::createMarkerA
 }
 }  // namespace obstacle_collision_checker
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(obstacle_collision_checker::ObstacleCollisionCheckerNode)

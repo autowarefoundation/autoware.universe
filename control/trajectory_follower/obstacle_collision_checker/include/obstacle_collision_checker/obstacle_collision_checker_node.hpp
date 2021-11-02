@@ -15,23 +15,24 @@
 #ifndef OBSTACLE_COLLISION_CHECKER__OBSTACLE_COLLISION_CHECKER_NODE_HPP_
 #define OBSTACLE_COLLISION_CHECKER__OBSTACLE_COLLISION_CHECKER_NODE_HPP_
 
+#include "obstacle_collision_checker/obstacle_collision_checker.hpp"
+
+#include <autoware_utils/geometry/geometry.hpp>
+#include <autoware_utils/ros/debug_publisher.hpp>
+#include <autoware_utils/ros/processing_time_publisher.hpp>
+#include <autoware_utils/ros/self_pose_listener.hpp>
+#include <autoware_utils/ros/transform_listener.hpp>
+#include <diagnostic_updater/diagnostic_updater.hpp>
+#include <rclcpp/rclcpp.hpp>
+
+#include <autoware_planning_msgs/msg/route.hpp>
+#include <autoware_planning_msgs/msg/trajectory.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
+
 #include <memory>
 #include <vector>
-
-#include "rclcpp/rclcpp.hpp"
-#include "diagnostic_updater/diagnostic_updater.hpp"
-#include "autoware_utils/geometry/geometry.hpp"
-#include "autoware_utils/ros/debug_publisher.hpp"
-#include "autoware_utils/ros/processing_time_publisher.hpp"
-#include "autoware_utils/ros/self_pose_listener.hpp"
-#include "autoware_utils/ros/transform_listener.hpp"
-#include "autoware_planning_msgs/msg/route.hpp"
-#include "autoware_planning_msgs/msg/trajectory.hpp"
-#include "geometry_msgs/msg/pose_stamped.hpp"
-#include "sensor_msgs/msg/point_cloud2.hpp"
-#include "visualization_msgs/msg/marker_array.hpp"
-
-#include "obstacle_collision_checker/obstacle_collision_checker.hpp"
 
 namespace obstacle_collision_checker
 {

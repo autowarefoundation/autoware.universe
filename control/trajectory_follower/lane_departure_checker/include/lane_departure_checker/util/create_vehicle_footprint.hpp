@@ -29,10 +29,10 @@
 #define LANE_DEPARTURE_CHECKER__UTIL__CREATE_VEHICLE_FOOTPRINT_HPP_
 
 #include <Eigen/Dense>
+#include <autoware_utils/geometry/geometry.hpp>
+#include <vehicle_info_util/vehicle_info_util.hpp>
 
-#include "autoware_utils/geometry/geometry.hpp"
-#include "tf2/utils.h"
-#include "vehicle_info_util/vehicle_info_util.hpp"
+#include <tf2/utils.h>
 
 struct FootprintMargin
 {
@@ -41,8 +41,7 @@ struct FootprintMargin
 };
 
 inline autoware_utils::LinearRing2d createVehicleFootprint(
-  const vehicle_info_util::VehicleInfo & vehicle_info,
-  const FootprintMargin & margin = {0.0, 0.0})
+  const vehicle_info_util::VehicleInfo & vehicle_info, const FootprintMargin & margin = {0.0, 0.0})
 {
   using autoware_utils::LinearRing2d;
   using autoware_utils::Point2d;
@@ -72,21 +71,18 @@ inline FootprintMargin calcFootprintMargin(
 {
   const auto Cov_in_map = covariance.covariance;
   Eigen::Matrix2d Cov_xy_map;
-  Cov_xy_map <<
-    Cov_in_map[0 * 6 + 0], Cov_in_map[0 * 6 + 1],
-    Cov_in_map[1 * 6 + 0], Cov_in_map[1 * 6 + 1];
+  Cov_xy_map << Cov_in_map[0 * 6 + 0], Cov_in_map[0 * 6 + 1], Cov_in_map[1 * 6 + 0],
+    Cov_in_map[1 * 6 + 1];
 
   const double yaw_vehicle = tf2::getYaw(covariance.pose.orientation);
 
   // To get a position in a transformed coordinate, rotate the inverse direction
   Eigen::Matrix2d R_map2vehicle;
-  R_map2vehicle <<
-    std::cos(-yaw_vehicle), -std::sin(-yaw_vehicle),
-    std::sin(-yaw_vehicle), std::cos(-yaw_vehicle);
+  R_map2vehicle << std::cos(-yaw_vehicle), -std::sin(-yaw_vehicle), std::sin(-yaw_vehicle),
+    std::cos(-yaw_vehicle);
   // Rotate covariance E((X, Y)^t*(X, Y)) = E(R*(x,y)*(x,y)^t*R^t)
   // when Rotate point (X, Y)^t= R*(x, y)^t.
-  const Eigen::Matrix2d Cov_xy_vehicle =
-    R_map2vehicle * Cov_xy_map * R_map2vehicle.transpose();
+  const Eigen::Matrix2d Cov_xy_vehicle = R_map2vehicle * Cov_xy_map * R_map2vehicle.transpose();
 
   // The longitudinal/lateral length is represented
   // in Cov_xy_vehicle(0,0), Cov_xy_vehicle(1,1) respectively.
