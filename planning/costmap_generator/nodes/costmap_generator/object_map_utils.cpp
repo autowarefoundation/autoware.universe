@@ -81,7 +81,6 @@ void FillPolygonAreas(
   transform = in_tf_buffer.lookupTransform(
     in_tf_target_frame, in_tf_source_frame, rclcpp::Time(0), rclcpp::Duration::from_seconds(1.0));
 
-
   // calculate out_grid_map position
   grid_map::Position map_pos = out_grid_map.getPosition();
   const double origin_x_offset = out_grid_map.getLength().x() / 2.0 - map_pos.x();
@@ -100,9 +99,9 @@ void FillPolygonAreas(
 
       // coordinate conversion for cv image
       const double cv_x = (out_grid_map.getLength().y() - origin_y_offset - transformed_point.y) /
-        out_grid_map.getResolution();
+                          out_grid_map.getResolution();
       const double cv_y = (out_grid_map.getLength().x() - origin_x_offset - transformed_point.x) /
-        out_grid_map.getResolution();
+                          out_grid_map.getResolution();
       cv_polygon.emplace_back(cv_x, cv_y);
     }
 

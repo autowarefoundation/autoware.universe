@@ -63,8 +63,7 @@ bool PointsToCostmap::isValidInd(const grid_map::Index & grid_ind)
   int y_grid_ind = grid_ind.y();
   if (
     x_grid_ind >= 0 && x_grid_ind < std::ceil(grid_length_x_ * (1 / grid_resolution_)) &&
-    y_grid_ind >= 0 && y_grid_ind < std::ceil(grid_length_y_ * (1 / grid_resolution_)))
-  {
+    y_grid_ind >= 0 && y_grid_ind < std::ceil(grid_length_y_ * (1 / grid_resolution_))) {
     is_valid = true;
   }
   return is_valid;
@@ -135,8 +134,7 @@ grid_map::Matrix PointsToCostmap::makeCostmapFromPoints(
   const std::string & gridmap_layer_name, const pcl::PointCloud<pcl::PointXYZ> & in_sensor_points)
 {
   initGridmapParam(gridmap);
-  std::vector<std::vector<std::vector<double>>> grid_vec =
-    assignPoints2GridCell(in_sensor_points);
+  std::vector<std::vector<std::vector<double>>> grid_vec = assignPoints2GridCell(in_sensor_points);
   grid_map::Matrix costmap = calculateCostmap(
     maximum_height_thres, minimum_lidar_height_thres, grid_min_value, grid_max_value, gridmap,
     gridmap_layer_name, grid_vec);

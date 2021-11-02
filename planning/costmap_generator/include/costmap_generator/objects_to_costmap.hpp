@@ -45,12 +45,12 @@
 #ifndef COSTMAP_GENERATOR__OBJECTS_TO_COSTMAP_HPP_
 #define COSTMAP_GENERATOR__OBJECTS_TO_COSTMAP_HPP_
 
+#include <grid_map_ros/grid_map_ros.hpp>
+#include <rclcpp/rclcpp.hpp>
+
+#include <autoware_perception_msgs/msg/dynamic_object_array.hpp>
+
 #include <string>
-
-#include "autoware_perception_msgs/msg/dynamic_object_array.hpp"
-
-#include "rclcpp/rclcpp.hpp"
-#include "grid_map_ros/grid_map_ros.hpp"
 
 class ObjectsToCostmap
 {
@@ -98,8 +98,7 @@ private:
   /// \param[out] expanded point
   geometry_msgs::msg::Point makeExpandedPoint(
     const geometry_msgs::msg::Point & in_centroid,
-    const geometry_msgs::msg::Point32 & in_corner_point,
-    const double expand_polygon_size);
+    const geometry_msgs::msg::Point32 & in_corner_point, const double expand_polygon_size);
 
   /// \brief make polygon(grid_map::Polygon) from convex hull points
   /// \param[in] in_centroid: object's centroid
