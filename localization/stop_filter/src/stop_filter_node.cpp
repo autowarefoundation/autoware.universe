@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <memory>
 #include "stop_filter/stop_filter.hpp"
+
+#include <memory>
 
 int main(int argc, char ** argv)
 {

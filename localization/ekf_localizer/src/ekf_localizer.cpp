@@ -12,14 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "ekf_localizer/ekf_localizer.hpp"
+
+#include <autoware_utils/math/unit_conversion.hpp>
+#include <rclcpp/logging.hpp>
+
 #include <algorithm>
 #include <functional>
 #include <memory>
 #include <string>
 #include <utility>
-#include "ekf_localizer/ekf_localizer.hpp"
-#include "autoware_utils/math/unit_conversion.hpp"
-#include "rclcpp/logging.hpp"
 
 // clang-format off
 #define PRINT_MAT(X) std::cout << #X << ":\n" << X << std::endl << std::endl
@@ -77,8 +79,8 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
 
   /* initialize ros system */
   auto timer_control_callback = std::bind(&EKFLocalizer::timerCallback, this);
-  auto period_control = std::chrono::duration_cast<std::chrono::nanoseconds>(
-    std::chrono::duration<double>(ekf_dt_));
+  auto period_control =
+    std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(ekf_dt_));
   timer_control_ = std::make_shared<rclcpp::GenericTimer<decltype(timer_control_callback)>>(
     get_clock(), period_control, std::move(timer_control_callback),
     this->get_node_base_interface()->get_context());
@@ -211,7 +213,9 @@ void EKFLocalizer::setCurrentResult()
  */
 void EKFLocalizer::timerTFCallback()
 {
-  if (current_ekf_pose_.header.frame_id == "") {return;}
+  if (current_ekf_pose_.header.frame_id == "") {
+    return;
+  }
 
   geometry_msgs::msg::TransformStamped transformStamped;
   transformStamped.header.stamp = this->now();
@@ -239,8 +243,12 @@ bool EKFLocalizer::getTransformFromTF(
   tf2::BufferCore tf_buffer;
   tf2_ros::TransformListener tf_listener(tf_buffer);
   rclcpp::sleep_for(std::chrono::milliseconds(100));
-  if (parent_frame.front() == '/') {parent_frame.erase(0, 1);}
-  if (child_frame.front() == '/') {child_frame.erase(0, 1);}
+  if (parent_frame.front() == '/') {
+    parent_frame.erase(0, 1);
+  }
+  if (child_frame.front() == '/') {
+    child_frame.erase(0, 1);
+  }
 
   for (int i = 0; i < 50; ++i) {
     try {
@@ -263,8 +271,7 @@ void EKFLocalizer::callbackInitialPose(
   geometry_msgs::msg::TransformStamped transform;
   if (!getTransformFromTF(pose_frame_id_, initialpose->header.frame_id, transform)) {
     RCLCPP_ERROR(
-      get_logger(), "[EKF] TF transform failed. parent = %s, child = %s",
-      pose_frame_id_.c_str(),
+      get_logger(), "[EKF] TF transform failed. parent = %s, child = %s", pose_frame_id_.c_str(),
       initialpose->header.frame_id.c_str());
   }
 
@@ -404,7 +411,7 @@ void EKFLocalizer::predictKinematicsModel()
   /* Update for latest state */
   X_next(IDX::X) = X_curr(IDX::X) + vx * cos(yaw + yaw_bias) * dt;  // dx = v * cos(yaw)
   X_next(IDX::Y) = X_curr(IDX::Y) + vx * sin(yaw + yaw_bias) * dt;  // dy = v * sin(yaw)
-  X_next(IDX::YAW) = X_curr(IDX::YAW) + (wz) * dt;                    // dyaw = omega + omega_bias
+  X_next(IDX::YAW) = X_curr(IDX::YAW) + (wz)*dt;                    // dyaw = omega + omega_bias
   X_next(IDX::YAWB) = yaw_bias;
   X_next(IDX::VX) = vx;
   X_next(IDX::WZ) = wz;
@@ -640,7 +647,7 @@ void EKFLocalizer::measurementUpdateTwist(const geometry_msgs::msg::TwistStamped
   }
 
   /* In order to avoid a large change by update, measurement update is performed
-  * by dividing at every step. measurement update is performed by dividing at every step. */
+   * by dividing at every step. measurement update is performed by dividing at every step. */
   R *= (ekf_rate_ / twist_rate_);
 
   ekf_.updateWithDelay(y, C, R, delay_step);

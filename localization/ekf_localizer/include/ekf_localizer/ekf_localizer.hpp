@@ -15,30 +15,31 @@
 #ifndef EKF_LOCALIZER__EKF_LOCALIZER_HPP_
 #define EKF_LOCALIZER__EKF_LOCALIZER_HPP_
 
+#include <autoware_utils/geometry/geometry.hpp>
+#include <autoware_utils/system/stop_watch.hpp>
+#include <kalman_filter/kalman_filter.hpp>
+#include <kalman_filter/time_delay_kalman_filter.hpp>
+#include <rclcpp/rclcpp.hpp>
+
+#include <autoware_debug_msgs/msg/float64_multi_array_stamped.hpp>
+#include <autoware_debug_msgs/msg/float64_stamped.hpp>
+#include <geometry_msgs/msg/pose_array.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+#include <geometry_msgs/msg/transform_stamped.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
+#include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
+
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/utils.h>
+#include <tf2_ros/transform_broadcaster.h>
+#include <tf2_ros/transform_listener.h>
+
 #include <chrono>
 #include <iostream>
 #include <memory>
-#include <vector>
 #include <string>
-
-#include "geometry_msgs/msg/pose_array.hpp"
-#include "geometry_msgs/msg/pose_stamped.hpp"
-#include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
-#include "geometry_msgs/msg/transform_stamped.hpp"
-#include "geometry_msgs/msg/twist_stamped.hpp"
-#include "geometry_msgs/msg/twist_with_covariance_stamped.hpp"
-#include "rclcpp/rclcpp.hpp"
-#include "autoware_debug_msgs/msg/float64_stamped.hpp"
-#include "autoware_debug_msgs/msg/float64_multi_array_stamped.hpp"
-#include "autoware_utils/geometry/geometry.hpp"
-#include "autoware_utils/system/stop_watch.hpp"
-#include "tf2/LinearMath/Quaternion.h"
-#include "tf2/utils.h"
-#include "tf2_ros/transform_broadcaster.h"
-#include "tf2_ros/transform_listener.h"
-
-#include "kalman_filter/kalman_filter.hpp"
-#include "kalman_filter/time_delay_kalman_filter.hpp"
+#include <vector>
 
 class EKFLocalizer : public rclcpp::Node
 {
@@ -66,15 +67,13 @@ private:
   rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
     pub_pose_cov_no_yawbias_;
   //!< @brief initial pose subscriber
-  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
-    sub_initialpose_;
+  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr sub_initialpose_;
   //!< @brief measurement pose subscriber
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr sub_pose_;
   //!< @brief measurement twist subscriber
   rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr sub_twist_;
   //!< @brief measurement pose with covariance subscriber
-  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
-    sub_pose_with_cov_;
+  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr sub_pose_with_cov_;
   //!< @brief measurement twist with covariance subscriber
   rclcpp::Subscription<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr
     sub_twist_with_cov_;
@@ -89,12 +88,11 @@ private:
 
   /* parameters */
   bool show_debug_info_;
-  double ekf_rate_;  //!< @brief  EKF predict rate
-  double ekf_dt_;    //!< @brief  = 1 / ekf_rate_
-  double tf_rate_;   //!< @brief  tf publish rate
-  bool
-    enable_yaw_bias_estimation_;  //!< @brief for LiDAR mount error.
-                                  //!< if true,publish /estimate_yaw_bias
+  double ekf_rate_;                  //!< @brief  EKF predict rate
+  double ekf_dt_;                    //!< @brief  = 1 / ekf_rate_
+  double tf_rate_;                   //!< @brief  tf publish rate
+  bool enable_yaw_bias_estimation_;  //!< @brief for LiDAR mount error.
+                                     //!< if true,publish /estimate_yaw_bias
   std::string pose_frame_id_;
 
   int dim_x_;              //!< @brief  dimension of EKF state
@@ -102,24 +100,22 @@ private:
   int dim_x_ex_;  //!< @brief  dimension of extended EKF state (dim_x_ * extended_state_step)
 
   /* Pose */
-  double
-    pose_additional_delay_;  //!< @brief  compensated pose delay time =
-                             //!< (pose.header.stamp - now) + additional_delay [s]
+  double pose_additional_delay_;          //!< @brief  compensated pose delay time =
+                                          //!< (pose.header.stamp - now) + additional_delay [s]
   double pose_measure_uncertainty_time_;  //!< @brief  added for measurement covariance
   double pose_rate_;  //!< @brief  pose rate [s], used for covariance calculation
   //!< @brief  the mahalanobis distance threshold to ignore pose measurement
   double pose_gate_dist_;
-  double pose_stddev_x_;  //!< @brief  standard deviation for pose position x [m]
-  double pose_stddev_y_;  //!< @brief  standard deviation for pose position y [m]
+  double pose_stddev_x_;            //!< @brief  standard deviation for pose position x [m]
+  double pose_stddev_y_;            //!< @brief  standard deviation for pose position y [m]
   double pose_stddev_yaw_;          //!< @brief  standard deviation for pose position yaw [rad]
   bool use_pose_with_covariance_;   //!< @brief  use covariance in pose_with_covariance message
   bool use_twist_with_covariance_;  //!< @brief  use covariance in twist_with_covariance message
 
   /* twist */
-  double
-    twist_additional_delay_;  //!< @brief  compensated delay = (twist.header.stamp - now)
-                              //!< + additional_delay [s]
-  double twist_rate_;  //!< @brief  rate [s], used for covariance calculation
+  double twist_additional_delay_;  //!< @brief  compensated delay = (twist.header.stamp - now)
+                                   //!< + additional_delay [s]
+  double twist_rate_;              //!< @brief  rate [s], used for covariance calculation
   //!< @brief  measurement is ignored if the mahalanobis distance is larger than this value.
   double twist_gate_dist_;
   double twist_stddev_vx_;  //!< @brief  standard deviation for linear vx
@@ -131,8 +127,7 @@ private:
   double proc_cov_vx_d_;        //!< @brief  discrete process noise in d_vx=0
   double proc_cov_wz_d_;        //!< @brief  discrete process noise in d_wz=0
 
-  enum IDX
-  {
+  enum IDX {
     X = 0,
     Y = 1,
     YAW = 2,
@@ -143,11 +138,11 @@ private:
 
   /* for model prediction */
   geometry_msgs::msg::TwistStamped::SharedPtr
-    current_twist_ptr_;                                           //!< @brief current measured twist
+    current_twist_ptr_;                                          //!< @brief current measured twist
   geometry_msgs::msg::PoseStamped::SharedPtr current_pose_ptr_;  //!< @brief current measured pose
   geometry_msgs::msg::PoseStamped current_ekf_pose_;             //!< @brief current estimated pose
   geometry_msgs::msg::PoseStamped
-    current_ekf_pose_no_yawbias_;                  //!< @brief current estimated pose w/o yaw bias
+    current_ekf_pose_no_yawbias_;  //!< @brief current estimated pose w/o yaw bias
   geometry_msgs::msg::TwistStamped current_ekf_twist_;  //!< @brief current estimated twist
   std::array<double, 36ul> current_pose_covariance_;
   std::array<double, 36ul> current_twist_covariance_;
