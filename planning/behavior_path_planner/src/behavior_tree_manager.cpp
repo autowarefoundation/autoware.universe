@@ -12,16 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "behavior_path_planner/behavior_tree_manager.hpp"
+
+#include "behavior_path_planner/scene_module/scene_module_bt_node_interface.hpp"
+#include "behavior_path_planner/scene_module/scene_module_interface.hpp"
+#include "behavior_path_planner/utilities.hpp"
+
 #include <algorithm>
 #include <memory>
 #include <set>
 #include <string>
 #include <vector>
-
-#include "behavior_path_planner/behavior_tree_manager.hpp"
-#include "behavior_path_planner/utilities.hpp"
-#include "behavior_path_planner/scene_module/scene_module_bt_node_interface.hpp"
-#include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 
 namespace behavior_path_planner
 {
@@ -40,8 +41,7 @@ void BehaviorTreeManager::createBehaviorTree()
     bt_tree_ = bt_factory_.createTreeFromFile(bt_manager_param_.bt_tree_config_path, blackboard_);
   } catch (...) {
     RCLCPP_ERROR(
-      logger_, "Failed to create BT from: %s",
-      bt_manager_param_.bt_tree_config_path.c_str());
+      logger_, "Failed to create BT from: %s", bt_manager_param_.bt_tree_config_path.c_str());
     exit(EXIT_FAILURE);
   }
   addGrootMonitoring(
@@ -54,28 +54,25 @@ void BehaviorTreeManager::registerSceneModule(const std::shared_ptr<SceneModuleI
   const auto status = std::make_shared<SceneModuleStatus>(name);
 
   // simple condition node for "isRequested" and "isReady"
+  bt_factory_.registerSimpleCondition(name + "_Request", [module, status](BT::TreeNode &) {
+    return isExecutionRequested(module, status);
+  });
   bt_factory_.registerSimpleCondition(
-    name + "_Request", [module, status](BT::TreeNode &) {
-      return isExecutionRequested(module, status);
-    });
-  bt_factory_.registerSimpleCondition(
-    name + "_Ready", [module, status](BT::TreeNode &) {
-      return isExecutionReady(module, status);
-    });
+    name + "_Ready", [module, status](BT::TreeNode &) { return isExecutionReady(module, status); });
 
   // simple action node for "planCandidate"
   auto bt_node =
     std::make_shared<SceneModuleBTNodeInterface>("", BT::NodeConfiguration{}, module, status);
   bt_factory_.registerSimpleAction(
     name + "_PlanCandidate",
-    [bt_node](BT::TreeNode & tree_node) {return bt_node->planCandidate(tree_node);},
+    [bt_node](BT::TreeNode & tree_node) { return bt_node->planCandidate(tree_node); },
     SceneModuleBTNodeInterface::providedPorts());
 
   // register builder with default tick functor for "plan"
   auto builder = [module, status](
-    const std::string & _name, const BT::NodeConfiguration & _config) {
-      return std::make_unique<SceneModuleBTNodeInterface>(_name, _config, module, status);
-    };
+                   const std::string & _name, const BT::NodeConfiguration & _config) {
+    return std::make_unique<SceneModuleBTNodeInterface>(_name, _config, module, status);
+  };
   bt_factory_.registerBuilder<SceneModuleBTNodeInterface>(name + "_Plan", builder);
 
   scene_modules_.push_back(module);
@@ -84,10 +81,9 @@ void BehaviorTreeManager::registerSceneModule(const std::shared_ptr<SceneModuleI
 
 void BehaviorTreeManager::registerForceApproval(const std::string & name)
 {
-  bt_factory_.registerSimpleCondition(
-    name + "_ForceApproval", [this, name](BT::TreeNode &) {
-      return BehaviorTreeManager::checkForceApproval(name);
-    });
+  bt_factory_.registerSimpleCondition(name + "_ForceApproval", [this, name](BT::TreeNode &) {
+    return BehaviorTreeManager::checkForceApproval(name);
+  });
 }
 
 BehaviorModuleOutput BehaviorTreeManager::run(const std::shared_ptr<PlannerData> & data)
@@ -96,11 +92,10 @@ BehaviorModuleOutput BehaviorTreeManager::run(const std::shared_ptr<PlannerData>
 
   // set planner_data & reset status
   std::for_each(
-    scene_modules_.begin(), scene_modules_.end(), [&data](const auto & m) {m->setData(data);});
-  std::for_each(
-    modules_status_.begin(), modules_status_.end(), [](const auto & s) {
-      *s = SceneModuleStatus{s->module_name};
-    });
+    scene_modules_.begin(), scene_modules_.end(), [&data](const auto & m) { m->setData(data); });
+  std::for_each(modules_status_.begin(), modules_status_.end(), [](const auto & s) {
+    *s = SceneModuleStatus{s->module_name};
+  });
 
   // reset blackboard
   blackboard_->set<BehaviorModuleOutput>("output", BehaviorModuleOutput{});
@@ -134,15 +129,14 @@ BT::NodeStatus BehaviorTreeManager::checkForceApproval(const std::string & name)
   const auto & approval = current_planner_data_->approval.is_force_approved;
   if ((clock_.now() - approval.stamp).seconds() > 1.0) {
     RCLCPP_WARN_THROTTLE(
-      logger_, clock_, 3000,
-      "BehaviorTreeManager : Force approval data is time out!");
+      logger_, clock_, 3000, "BehaviorTreeManager : Force approval data is time out!");
     return BT::NodeStatus::FAILURE;
   }
 
   return approval.module_name == name ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE;
 }
 
-void BehaviorTreeManager::resetBehaviorTree() {bt_tree_.haltTree();}
+void BehaviorTreeManager::resetBehaviorTree() { bt_tree_.haltTree(); }
 
 void BehaviorTreeManager::addGrootMonitoring(
   BT::Tree * tree, uint16_t publisher_port, uint16_t server_port, uint16_t max_msg_per_second)
@@ -153,7 +147,9 @@ void BehaviorTreeManager::addGrootMonitoring(
 
 void BehaviorTreeManager::resetGrootMonitor()
 {
-  if (groot_monitor_) {groot_monitor_.reset();}
+  if (groot_monitor_) {
+    groot_monitor_.reset();
+  }
 }
 
 }  // namespace behavior_path_planner

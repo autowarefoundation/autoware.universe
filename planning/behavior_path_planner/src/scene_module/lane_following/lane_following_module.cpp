@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "behavior_path_planner/scene_module/lane_following/lane_following_module.hpp"
+
+#include "behavior_path_planner/utilities.hpp"
+
 #include <memory>
 #include <string>
-
-#include "behavior_path_planner/scene_module/lane_following/lane_following_module.hpp"
-#include "behavior_path_planner/utilities.hpp"
 
 namespace behavior_path_planner
 {
@@ -32,9 +33,9 @@ void LaneFollowingModule::initParam()
   approval_handler_.clearWaitApproval();  // no need approval
 }
 
-bool LaneFollowingModule::isExecutionRequested() const {return true;}
+bool LaneFollowingModule::isExecutionRequested() const { return true; }
 
-bool LaneFollowingModule::isExecutionReady() const {return true;}
+bool LaneFollowingModule::isExecutionReady() const { return true; }
 
 BT::NodeStatus LaneFollowingModule::updateState()
 {
@@ -48,7 +49,7 @@ BehaviorModuleOutput LaneFollowingModule::plan()
   output.path = std::make_shared<PathWithLaneId>(getReferencePath());
   return output;
 }
-PathWithLaneId LaneFollowingModule::planCandidate() const {return getReferencePath();}
+PathWithLaneId LaneFollowingModule::planCandidate() const { return getReferencePath(); }
 void LaneFollowingModule::onEntry()
 {
   initParam();
@@ -118,8 +119,7 @@ PathWithLaneId LaneFollowingModule::getReferencePath() const
       const double l_offset =
         l_type.compare("road_border") != 0 ? parameters_.left_bound_offset : 0.0;
 
-      expand_lanes.push_back(
-        lanelet::utils::getExpandedLanelet(current_lane, l_offset, r_offset));
+      expand_lanes.push_back(lanelet::utils::getExpandedLanelet(current_lane, l_offset, r_offset));
     }
 
     current_lanes = expand_lanes;

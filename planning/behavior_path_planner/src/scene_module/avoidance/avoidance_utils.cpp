@@ -12,6 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "behavior_path_planner/path_utilities.hpp"
+#include "behavior_path_planner/scene_module/avoidance/avoidance_module.hpp"
+#include "behavior_path_planner/utilities.hpp"
+
+#include <autoware_utils/autoware_utils.hpp>
+#include <lanelet2_extension/utility/message_conversion.hpp>
+#include <lanelet2_extension/utility/utilities.hpp>
+
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+
 #include <algorithm>
 #include <iomanip>
 #include <limits>
@@ -20,24 +30,13 @@
 #include <string>
 #include <vector>
 
-
-#include "autoware_planning_msgs/msg/path_with_lane_id.hpp"
-#include "autoware_utils/autoware_utils.hpp"
-#include "lanelet2_extension/utility/message_conversion.hpp"
-#include "lanelet2_extension/utility/utilities.hpp"
-
-#include "behavior_path_planner/path_utilities.hpp"
-#include "behavior_path_planner/scene_module/avoidance/avoidance_module.hpp"
-#include "behavior_path_planner/utilities.hpp"
-
-
 namespace behavior_path_planner
 {
-bool isOnRight(const ObjectData & obj) {return obj.lateral < 0.0;}
+bool isOnRight(const ObjectData & obj) { return obj.lateral < 0.0; }
 
 lanelet::ConstLanelets calcLaneAroundPose(
-  const std::shared_ptr<const PlannerData> & planner_data,
-  const geometry_msgs::msg::Pose & pose, const double backward_length)
+  const std::shared_ptr<const PlannerData> & planner_data, const geometry_msgs::msg::Pose & pose,
+  const double backward_length)
 {
   const auto & p = planner_data->parameters;
   const auto & route_handler = planner_data->route_handler;
@@ -78,10 +77,14 @@ ShiftPointArray toShiftPointArray(const AvoidPointArray & avoid_points)
 size_t findPathIndexFromArclength(
   const std::vector<double> & path_arclength_arr, const double target_arc)
 {
-  if (path_arclength_arr.empty()) {return 0;}
+  if (path_arclength_arr.empty()) {
+    return 0;
+  }
 
   for (size_t i = 0; i < path_arclength_arr.size(); ++i) {
-    if (path_arclength_arr.at(i) > target_arc) {return i;}
+    if (path_arclength_arr.at(i) > target_arc) {
+      return i;
+    }
   }
   return path_arclength_arr.size() - 1;
 }
@@ -111,7 +114,9 @@ double lerpShiftLengthOnArc(double arc, const AvoidPoint & ap)
 
 void clipByMinStartIdx(const AvoidPointArray & shift_points, PathWithLaneId & path)
 {
-  if (path.points.empty()) {return;}
+  if (path.points.empty()) {
+    return;
+  }
 
   size_t min_start_idx = std::numeric_limits<size_t>::max();
   for (const auto & sp : shift_points) {
@@ -137,8 +142,7 @@ double calcDistanceToClosestFootprintPoint(
   return distance;
 }
 
-double calcOverhangDistance(
-  const ObjectData & object_data, const Pose & base_pose)
+double calcOverhangDistance(const ObjectData & object_data, const Pose & base_pose)
 {
   double largest_overhang = isOnRight(object_data) ? -100.0 : 100.0;  // large number
 
@@ -148,8 +152,8 @@ double calcOverhangDistance(
   for (const auto & p : object_poly.outer()) {
     const auto point = autoware_utils::createPoint(p.x(), p.y(), 0.0);
     const auto lateral = autoware_utils::calcLateralDeviation(base_pose, point);
-    largest_overhang = isOnRight(object_data) ? std::max(largest_overhang, lateral) :
-      std::min(largest_overhang, lateral);
+    largest_overhang = isOnRight(object_data) ? std::max(largest_overhang, lateral)
+                                              : std::min(largest_overhang, lateral);
   }
   return largest_overhang;
 }

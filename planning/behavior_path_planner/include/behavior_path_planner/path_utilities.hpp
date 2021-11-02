@@ -15,31 +15,31 @@
 #ifndef BEHAVIOR_PATH_PLANNER__PATH_UTILITIES_HPP_
 #define BEHAVIOR_PATH_PLANNER__PATH_UTILITIES_HPP_
 
+#include <opencv2/opencv.hpp>
+
+#include <autoware_planning_msgs/msg/path.hpp>
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <geometry_msgs/msg/point.hpp>
+
+#include <boost/geometry/geometries/box.hpp>
+#include <boost/geometry/geometries/point_xy.hpp>
+#include <boost/geometry/geometries/polygon.hpp>
+#include <boost/geometry/geometry.hpp>
+
+#include <lanelet2_core/geometry/Lanelet.h>
+#include <lanelet2_routing/Route.h>
+#include <lanelet2_routing/RoutingGraph.h>
+#include <lanelet2_routing/RoutingGraphContainer.h>
+
 #include <limits>
 #include <vector>
-
-#include "boost/geometry/geometries/box.hpp"
-#include "boost/geometry/geometries/point_xy.hpp"
-#include "boost/geometry/geometries/polygon.hpp"
-#include "boost/geometry/geometry.hpp"
-
-#include "lanelet2_core/geometry/Lanelet.h"
-#include "lanelet2_routing/Route.h"
-#include "lanelet2_routing/RoutingGraph.h"
-#include "lanelet2_routing/RoutingGraphContainer.h"
-
-#include "opencv2/opencv.hpp"
-
-#include "autoware_planning_msgs/msg/path.hpp"
-#include "autoware_planning_msgs/msg/path_with_lane_id.hpp"
-#include "geometry_msgs/msg/point.hpp"
 
 namespace behavior_path_planner
 {
 namespace util
 {
-using autoware_planning_msgs::msg::PathWithLaneId;
 using autoware_planning_msgs::msg::Path;
+using autoware_planning_msgs::msg::PathWithLaneId;
 using geometry_msgs::msg::Point;
 
 std::vector<double> calcPathArcLengthArray(
@@ -47,17 +47,14 @@ std::vector<double> calcPathArcLengthArray(
   double offset = 0.0);
 
 double calcPathArcLength(
-  const PathWithLaneId & path, size_t start = 0,
-  size_t end = std::numeric_limits<size_t>::max());
+  const PathWithLaneId & path, size_t start = 0, size_t end = std::numeric_limits<size_t>::max());
 
-PathWithLaneId resamplePathWithSpline(
-  const PathWithLaneId & path, double interval);
+PathWithLaneId resamplePathWithSpline(const PathWithLaneId & path, double interval);
 
 Path toPath(const PathWithLaneId & input);
 
 size_t getIdxByArclength(
-  const PathWithLaneId & path, const Point & origin,
-  const double signed_arc);
+  const PathWithLaneId & path, const Point & origin, const double signed_arc);
 
 void clipPathLength(
   PathWithLaneId & path, const Point base_pos, const double forward, const double backward);

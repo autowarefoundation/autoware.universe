@@ -15,19 +15,18 @@
 #ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SCENE_MODULE_BT_NODE_INTERFACE_HPP_
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SCENE_MODULE_BT_NODE_INTERFACE_HPP_
 
+#include "behavior_path_planner/scene_module/scene_module_interface.hpp"
+
+#include <behaviortree_cpp_v3/bt_factory.h>
+
 #include <memory>
 #include <string>
-
-#include "behaviortree_cpp_v3/bt_factory.h"
-
-#include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 
 namespace behavior_path_planner
 {
 struct SceneModuleStatus
 {
-  explicit SceneModuleStatus(const std::string & n)
-  : module_name(n) {}
+  explicit SceneModuleStatus(const std::string & n) : module_name(n) {}
   std::string module_name;  // TODO(Horibe) should be const
   bool is_ready{false};
   bool is_requested{false};

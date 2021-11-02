@@ -15,32 +15,33 @@
 #ifndef BEHAVIOR_PATH_PLANNER__ROUTE_HANDLER_HPP_
 #define BEHAVIOR_PATH_PLANNER__ROUTE_HANDLER_HPP_
 
+#include "behavior_path_planner/parameters.hpp"
+#include "behavior_path_planner/path_shifter/path_shifter.hpp"
+
+#include <lanelet2_extension/utility/query.hpp>
+#include <rclcpp/rclcpp.hpp>
+
+#include <autoware_lanelet2_msgs/msg/map_bin.hpp>
+#include <autoware_planning_msgs/msg/path.hpp>
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_planning_msgs/msg/route.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+
+#include <lanelet2_routing/Route.h>
+#include <lanelet2_routing/RoutingCost.h>
+#include <lanelet2_routing/RoutingGraph.h>
+#include <lanelet2_routing/RoutingGraphContainer.h>
+#include <lanelet2_traffic_rules/TrafficRulesFactory.h>
+
 #include <limits>
 #include <memory>
 #include <vector>
 
-#include "lanelet2_routing/Route.h"
-#include "lanelet2_routing/RoutingCost.h"
-#include "lanelet2_routing/RoutingGraph.h"
-#include "lanelet2_routing/RoutingGraphContainer.h"
-#include "lanelet2_traffic_rules/TrafficRulesFactory.h"
-
-#include "autoware_lanelet2_msgs/msg/map_bin.hpp"
-#include "autoware_planning_msgs/msg/path_with_lane_id.hpp"
-#include "autoware_planning_msgs/msg/route.hpp"
-#include "autoware_planning_msgs/msg/path.hpp"
-#include "geometry_msgs/msg/pose_stamped.hpp"
-#include "lanelet2_extension/utility/query.hpp"
-#include "rclcpp/rclcpp.hpp"
-
-#include "behavior_path_planner/parameters.hpp"
-#include "behavior_path_planner/path_shifter/path_shifter.hpp"
-
 namespace behavior_path_planner
 {
 using autoware_lanelet2_msgs::msg::MapBin;
-using autoware_planning_msgs::msg::PathWithLaneId;
 using autoware_planning_msgs::msg::Path;
+using autoware_planning_msgs::msg::PathWithLaneId;
 using autoware_planning_msgs::msg::Route;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseStamped;
@@ -149,8 +150,8 @@ public:
     const double backward_distance, const double forward_distance) const;
 
   lanelet::ConstLanelets getCheckTargetLanesFromPath(
-    const PathWithLaneId & path,
-    const lanelet::ConstLanelets & target_lanes, const double check_length) const;
+    const PathWithLaneId & path, const lanelet::ConstLanelets & target_lanes,
+    const double check_length) const;
 
   lanelet::routing::RelationType getRelation(
     const lanelet::ConstLanelet & prev_lane, const lanelet::ConstLanelet & next_lane) const;
@@ -161,8 +162,7 @@ public:
 
   std::vector<LaneChangePath> getLaneChangePaths(
     const lanelet::ConstLanelets & original_lanes, const lanelet::ConstLanelets & target_lanes,
-    const Pose & pose, const Twist & twist,
-    const BehaviorPathPlannerParameters & parameter) const;
+    const Pose & pose, const Twist & twist, const BehaviorPathPlannerParameters & parameter) const;
 
   PathWithLaneId getCenterLinePath(
     const lanelet::ConstLanelets & lanelet_sequence, const Pose & pose,
@@ -174,9 +174,8 @@ public:
     bool use_exact = true) const;
 
   PathWithLaneId setDecelerationVelocity(
-    const PathWithLaneId & input,
-    const lanelet::ConstLanelets & lanelet_sequence, const double lane_change_prepare_duration,
-    const double lane_change_buffer) const;
+    const PathWithLaneId & input, const lanelet::ConstLanelets & lanelet_sequence,
+    const double lane_change_prepare_duration, const double lane_change_buffer) const;
 
   PathWithLaneId setDecelerationVelocity(
     const PathWithLaneId & input, const lanelet::ConstLanelets & lanelet_sequence,
@@ -232,8 +231,7 @@ private:
 
   bool isDeadEndLanelet(const lanelet::ConstLanelet & lanelet) const;
 
-  bool isInTargetLane(
-    const PoseStamped & pose, const lanelet::ConstLanelets & target) const;
+  bool isInTargetLane(const PoseStamped & pose, const lanelet::ConstLanelets & target) const;
 
   bool isInPreferredLane(const PoseStamped & pose) const;
 

@@ -15,23 +15,22 @@
 #ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__PULL_OVER__PULL_OVER_MODULE_HPP_
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__PULL_OVER__PULL_OVER_MODULE_HPP_
 
+#include "behavior_path_planner/path_shifter/path_shifter.hpp"
+#include "behavior_path_planner/scene_module/scene_module_interface.hpp"
+#include "behavior_path_planner/utilities.hpp"
+
+#include <lanelet2_extension/utility/message_conversion.hpp>
+#include <lanelet2_extension/utility/utilities.hpp>
+#include <vehicle_info_util/vehicle_info_util.hpp>
+
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+
+#include <tf2/utils.h>
+
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
-
-#include "tf2/utils.h"
-
-#include "autoware_planning_msgs/msg/path_with_lane_id.hpp"
-
-#include "lanelet2_extension/utility/message_conversion.hpp"
-#include "lanelet2_extension/utility/utilities.hpp"
-
-#include "vehicle_info_util/vehicle_info_util.hpp"
-
-#include "behavior_path_planner/path_shifter/path_shifter.hpp"
-#include "behavior_path_planner/scene_module/scene_module_interface.hpp"
-#include "behavior_path_planner/utilities.hpp"
 
 namespace behavior_path_planner
 {
@@ -106,8 +105,7 @@ private:
   std::pair<bool, bool> getSafePath(
     const lanelet::ConstLanelets & pull_over_lanes, const double check_distance,
     PullOverPath & safe_path) const;
-  TurnSignalInfo getTurnSignalAndDistance(
-    const PathWithLaneId & path) const;
+  TurnSignalInfo getTurnSignalAndDistance(const PathWithLaneId & path) const;
 
   // turn signal
   TurnSignalInfo calcTurnSignalInfo(const ShiftPoint & shift_point) const;

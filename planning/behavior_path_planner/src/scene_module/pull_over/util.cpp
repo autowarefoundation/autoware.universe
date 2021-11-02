@@ -12,27 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "behavior_path_planner/scene_module/pull_over/util.hpp"
+
+#include "behavior_path_planner/path_shifter/path_shifter.hpp"
+#include "behavior_path_planner/path_utilities.hpp"
+
+#include <autoware_utils/geometry/boost_geometry.hpp>
+#include <lanelet2_extension/utility/query.hpp>
+#include <lanelet2_extension/utility/utilities.hpp>
+#include <rclcpp/rclcpp.hpp>
+
+#include <autoware_planning_msgs/msg/path_point.hpp>
+
+#include <boost/geometry/algorithms/dispatch/distance.hpp>
+
+#include <lanelet2_core/LaneletMap.h>
+#include <tf2/utils.h>
+#include <tf2_ros/transform_listener.h>
+
 #include <algorithm>
 #include <limits>
 #include <memory>
 #include <string>
 #include <vector>
-
-#include "autoware_planning_msgs/msg/path_point.hpp"
-#include "lanelet2_core/LaneletMap.h"
-#include "lanelet2_extension/utility/query.hpp"
-#include "lanelet2_extension/utility/utilities.hpp"
-#include "rclcpp/rclcpp.hpp"
-
-#include "tf2/utils.h"
-#include "tf2_ros/transform_listener.h"
-
-#include "behavior_path_planner/path_shifter/path_shifter.hpp"
-#include "behavior_path_planner/path_utilities.hpp"
-#include "behavior_path_planner/scene_module/pull_over/util.hpp"
-
-#include "autoware_utils/geometry/boost_geometry.hpp"
-#include "boost/geometry/algorithms/dispatch/distance.hpp"
 
 namespace behavior_path_planner
 {
@@ -41,8 +43,7 @@ namespace pull_over_utils
 using autoware_perception_msgs::msg::PredictedPath;
 using autoware_planning_msgs::msg::PathPoint;
 
-PathWithLaneId combineReferencePath(
-  const PathWithLaneId path1, const PathWithLaneId path2)
+PathWithLaneId combineReferencePath(const PathWithLaneId path1, const PathWithLaneId path2)
 {
   PathWithLaneId path;
   path.points.insert(path.points.end(), path1.points.begin(), path1.points.end());
@@ -54,8 +55,8 @@ PathWithLaneId combineReferencePath(
 }
 
 bool isPathInLanelets(
-  const PathWithLaneId & path,
-  const lanelet::ConstLanelets & original_lanelets, const lanelet::ConstLanelets & target_lanelets)
+  const PathWithLaneId & path, const lanelet::ConstLanelets & original_lanelets,
+  const lanelet::ConstLanelets & target_lanelets)
 {
   for (const auto & pt : path.points) {
     bool is_in_lanelet = false;
@@ -69,7 +70,9 @@ bool isPathInLanelets(
         is_in_lanelet = true;
       }
     }
-    if (!is_in_lanelet) {return false;}
+    if (!is_in_lanelet) {
+      return false;
+    }
   }
   return true;
 }
@@ -77,8 +80,8 @@ bool isPathInLanelets(
 std::vector<PullOverPath> getPullOverPaths(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & original_lanelets,
   const lanelet::ConstLanelets & target_lanelets, const Pose & pose,
-  [[maybe_unused]] const Twist & twist,
-  const BehaviorPathPlannerParameters & common_parameter, const PullOverParameters & parameter)
+  [[maybe_unused]] const Twist & twist, const BehaviorPathPlannerParameters & common_parameter,
+  const PullOverParameters & parameter)
 {
   std::vector<PullOverPath> candidate_paths;
 
@@ -106,8 +109,7 @@ std::vector<PullOverPath> getPullOverPaths(
     distance_to_shoulder_lane_boundary + common_parameter.vehicle_width / 2 + margin;
 
   for (double lateral_jerk = 0.5; lateral_jerk <= maximum_lateral_jerk;
-    lateral_jerk += jerk_resolution)
-  {
+       lateral_jerk += jerk_resolution) {
     PathShifter path_shifter;
     ShiftedPath shifted_path;
     PullOverPath candidate_path;
@@ -122,7 +124,7 @@ std::vector<PullOverPath> getPullOverPaths(
         lanelet::utils::getArcCoordinates(original_lanelets, route_handler.getGoalPose());
       const auto arc_position_pose = lanelet::utils::getArcCoordinates(original_lanelets, pose);
       straight_distance = arc_position_goal.length - after_pull_over_straight_distance -
-        pull_over_distance - arc_position_pose.length;
+                          pull_over_distance - arc_position_pose.length;
       if (straight_distance < before_pull_over_straight_distance) {
         RCLCPP_ERROR_STREAM(
           rclcpp::get_logger("behavior_path_planner").get_child("pull_over").get_child("util"),
@@ -158,8 +160,8 @@ std::vector<PullOverPath> getPullOverPaths(
         point.point.twist.linear.x = std::min(
           point.point.twist.linear.x,
           (distance_to_pull_over_start / deceleration_interval) *
-          (point.point.twist.linear.x - minimum_pull_over_velocity) +
-          minimum_pull_over_velocity);
+              (point.point.twist.linear.x - minimum_pull_over_velocity) +
+            minimum_pull_over_velocity);
       }
     }
 
@@ -174,7 +176,7 @@ std::vector<PullOverPath> getPullOverPaths(
     {
       const lanelet::ArcCoordinates pull_over_start_arc_position =
         lanelet::utils::getArcCoordinates(
-        target_lanelets, reference_path1.points.back().point.pose);
+          target_lanelets, reference_path1.points.back().point.pose);
       double s_start = pull_over_start_arc_position.length;
       double s_end = s_start + pull_over_distance + forward_path_length;
       target_lane_reference_path = route_handler.getCenterLinePath(target_lanelets, s_start, s_end);
@@ -210,8 +212,7 @@ std::vector<PullOverPath> getPullOverPaths(
       shift_point.end = reference_path2.points.front().point.pose;
 
       // distance between shoulder lane's left boundary and current lane center
-      double distance_road_to_left_boundary =
-        util::getDistanceToShoulderBoundary(
+      double distance_road_to_left_boundary = util::getDistanceToShoulderBoundary(
         route_handler.getShoulderLanelets(), reference_path1.points.back().point.pose);
       // distance between shoulder lane's left boundary and current lane center
       double distance_road_to_target =
@@ -288,17 +289,15 @@ std::vector<PullOverPath> getPullOverPaths(
 std::vector<PullOverPath> selectValidPaths(
   const std::vector<PullOverPath> & paths, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes,
-  const lanelet::routing::RoutingGraphContainer & overall_graphs,
-  const Pose & current_pose, const bool isInGoalRouteSection,
-  const Pose & goal_pose)
+  const lanelet::routing::RoutingGraphContainer & overall_graphs, const Pose & current_pose,
+  const bool isInGoalRouteSection, const Pose & goal_pose)
 {
   std::vector<PullOverPath> available_paths;
 
   for (const auto & path : paths) {
     if (hasEnoughDistance(
-        path, current_lanes, target_lanes, current_pose, isInGoalRouteSection, goal_pose,
-        overall_graphs))
-    {
+          path, current_lanes, target_lanes, current_pose, isInGoalRouteSection, goal_pose,
+          overall_graphs)) {
       available_paths.push_back(path);
     }
   }
@@ -309,16 +308,14 @@ std::vector<PullOverPath> selectValidPaths(
 bool selectSafePath(
   const std::vector<PullOverPath> & paths, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes,
-  const DynamicObjectArray::ConstSharedPtr & dynamic_objects,
-  const Pose & current_pose, const Twist & current_twist,
-  const double vehicle_width, const PullOverParameters & ros_parameters,
-  PullOverPath * selected_path)
+  const DynamicObjectArray::ConstSharedPtr & dynamic_objects, const Pose & current_pose,
+  const Twist & current_twist, const double vehicle_width,
+  const PullOverParameters & ros_parameters, PullOverPath * selected_path)
 {
   for (const auto & path : paths) {
     if (isPullOverPathSafe(
-        path.path, current_lanes, target_lanes, dynamic_objects, current_pose, current_twist,
-        vehicle_width, ros_parameters, true, path.acceleration))
-    {
+          path.path, current_lanes, target_lanes, dynamic_objects, current_pose, current_twist,
+          vehicle_width, ros_parameters, true, path.acceleration)) {
       *selected_path = path;
       return true;
     }
@@ -354,8 +351,7 @@ bool hasEnoughDistance(
 
   if (
     isInGoalRouteSection &&
-    pull_over_total_distance > util::getSignedDistance(current_pose, goal_pose, current_lanes))
-  {
+    pull_over_total_distance > util::getSignedDistance(current_pose, goal_pose, current_lanes)) {
     return false;
   }
 
@@ -370,10 +366,9 @@ bool hasEnoughDistance(
 bool isPullOverPathSafe(
   const PathWithLaneId & path, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes,
-  const DynamicObjectArray::ConstSharedPtr & dynamic_objects,
-  const Pose & current_pose, const Twist & current_twist,
-  const double vehicle_width, const PullOverParameters & ros_parameters, const bool use_buffer,
-  const double acceleration)
+  const DynamicObjectArray::ConstSharedPtr & dynamic_objects, const Pose & current_pose,
+  const Twist & current_twist, const double vehicle_width,
+  const PullOverParameters & ros_parameters, const bool use_buffer, const double acceleration)
 {
   if (path.points.empty()) {
     return false;
@@ -435,10 +430,10 @@ bool isPullOverPathSafe(
       predicted_paths = obj.state.predicted_paths;
     } else {
       auto & max_confidence_path = *(std::max_element(
-          obj.state.predicted_paths.begin(), obj.state.predicted_paths.end(),
-          [](const auto & path1, const auto & path2) {
-            return path1.confidence > path2.confidence;
-          }));
+        obj.state.predicted_paths.begin(), obj.state.predicted_paths.end(),
+        [](const auto & path1, const auto & path2) {
+          return path1.confidence > path2.confidence;
+        }));
       predicted_paths.push_back(max_confidence_path);
     }
     for (const auto & obj_path : predicted_paths) {
@@ -467,10 +462,10 @@ bool isPullOverPathSafe(
       predicted_paths = obj.state.predicted_paths;
     } else {
       auto & max_confidence_path = *(std::max_element(
-          obj.state.predicted_paths.begin(), obj.state.predicted_paths.end(),
-          [](const auto & path1, const auto & path2) {
-            return path1.confidence > path2.confidence;
-          }));
+        obj.state.predicted_paths.begin(), obj.state.predicted_paths.end(),
+        [](const auto & path1, const auto & path2) {
+          return path1.confidence > path2.confidence;
+        }));
       predicted_paths.push_back(max_confidence_path);
     }
 

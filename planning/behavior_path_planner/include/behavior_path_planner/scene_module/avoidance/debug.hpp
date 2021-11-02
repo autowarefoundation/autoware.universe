@@ -15,20 +15,21 @@
 #ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__AVOIDANCE__DEBUG_HPP_
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__AVOIDANCE__DEBUG_HPP_
 
-#include <string>
-#include <vector>
-
-#include "lanelet2_core/LaneletMap.h"
-#include "lanelet2_routing/RoutingGraph.h"
-
-#include "autoware_perception_msgs/msg/dynamic_object_array.hpp"
-#include "autoware_planning_msgs/msg/path_with_lane_id.hpp"
-#include "autoware_utils/ros/marker_helper.hpp"
-#include "geometry_msgs/msg/polygon.hpp"
-#include "visualization_msgs/msg/marker_array.hpp"
-
 #include "behavior_path_planner/path_shifter/path_shifter.hpp"
 #include "behavior_path_planner/scene_module/avoidance/avoidance_module_data.hpp"
+
+#include <autoware_utils/ros/marker_helper.hpp>
+
+#include <autoware_perception_msgs/msg/dynamic_object_array.hpp>
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <geometry_msgs/msg/polygon.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
+
+#include <lanelet2_core/LaneletMap.h>
+#include <lanelet2_routing/RoutingGraph.h>
+
+#include <string>
+#include <vector>
 
 namespace marker_utils
 {
@@ -48,12 +49,12 @@ MarkerArray createShiftLengthMarkerArray(
   const std::string & ns, const double r, const double g, const double b);
 
 MarkerArray createAvoidPointMarkerArray(
-  const AvoidPointArray & shift_points, const std::string & ns,
-  const double r, const double g, const double b, const double w);
+  const AvoidPointArray & shift_points, const std::string & ns, const double r, const double g,
+  const double b, const double w);
 
 MarkerArray createShiftPointMarkerArray(
-  const ShiftPointArray & shift_points, const double base_shift,
-  const std::string & ns, const double r, const double g, const double b, const double w);
+  const ShiftPointArray & shift_points, const double base_shift, const std::string & ns,
+  const double r, const double g, const double b, const double w);
 
 MarkerArray createLaneletsAreaMarkerArray(
   const std::vector<lanelet::ConstLanelet> & lanelets, const std::string & ns, const double r,
@@ -90,7 +91,6 @@ MarkerArray createPoseMarkerArray(
   const double b);
 
 }  // namespace marker_utils
-
 
 std::string toStrInfo(const behavior_path_planner::ShiftPointArray & sp_arr);
 

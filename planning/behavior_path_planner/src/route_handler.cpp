@@ -12,31 +12,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "behavior_path_planner/route_handler.hpp"
+
+#include "behavior_path_planner/utilities.hpp"
+
+#include <lanelet2_extension/utility/message_conversion.hpp>
+#include <lanelet2_extension/utility/query.hpp>
+#include <lanelet2_extension/utility/utilities.hpp>
+#include <rclcpp/rclcpp.hpp>
+
+#include <lanelet2_core/LaneletMap.h>
+#include <lanelet2_core/geometry/Lanelet.h>
+#include <lanelet2_core/primitives/LaneletSequence.h>
+#include <tf2/utils.h>
+
 #include <algorithm>
 #include <limits>
 #include <memory>
-#include <unordered_set>
 #include <string>
+#include <unordered_set>
 #include <vector>
-
-#include "lanelet2_core/LaneletMap.h"
-#include "lanelet2_core/geometry/Lanelet.h"
-#include "lanelet2_core/primitives/LaneletSequence.h"
-
-#include "lanelet2_extension/utility/message_conversion.hpp"
-#include "lanelet2_extension/utility/query.hpp"
-#include "lanelet2_extension/utility/utilities.hpp"
-#include "rclcpp/rclcpp.hpp"
-#include "tf2/utils.h"
-
-#include "behavior_path_planner/route_handler.hpp"
-#include "behavior_path_planner/utilities.hpp"
 
 namespace
 {
 using lanelet::utils::to2D;
 
-template<typename T>
+template <typename T>
 bool exists(const std::vector<T> & vectors, const T & item)
 {
   for (const auto & i : vectors) {
@@ -135,7 +136,7 @@ void RouteHandler::setRoute(const Route & route_msg)
   }
 }
 
-bool RouteHandler::isHandlerReady() const {return is_handler_ready_;}
+bool RouteHandler::isHandlerReady() const { return is_handler_ready_; }
 
 void RouteHandler::setRouteLanelets()
 {
@@ -173,7 +174,7 @@ lanelet::ConstPolygon3d RouteHandler::getIntersectionAreaById(const lanelet::Id 
   return lanelet_map_ptr_->polygonLayer.get(id);
 }
 
-Header RouteHandler::getRouteHeader() const {return route_msg_.header;}
+Header RouteHandler::getRouteHeader() const { return route_msg_.header; }
 
 std::vector<lanelet::ConstLanelet> RouteHandler::getLanesAfterGoal(
   const double vehicle_length) const
@@ -193,9 +194,9 @@ std::vector<lanelet::ConstLanelet> RouteHandler::getLanesAfterGoal(
   }
 }
 
-lanelet::ConstLanelets RouteHandler::getRouteLanelets() const {return route_lanelets_;}
+lanelet::ConstLanelets RouteHandler::getRouteLanelets() const { return route_lanelets_; }
 
-Pose RouteHandler::getGoalPose() const {return route_msg_.goal_pose;}
+Pose RouteHandler::getGoalPose() const { return route_msg_.goal_pose; }
 
 void RouteHandler::setPullOverGoalPose(
   const lanelet::ConstLanelet target_lane, const double vehicle_width, const double margin)
@@ -218,8 +219,8 @@ void RouteHandler::setPullOverGoalPose(
     util::getDistanceToShoulderBoundary({target_lane}, shoulder_point);
 
   // distance between shoulder lane center and target line
-  double distance_shoulder_to_target = distance_shoulder_to_left_boundary + vehicle_width / 2 +
-    margin;
+  double distance_shoulder_to_target =
+    distance_shoulder_to_left_boundary + vehicle_width / 2 + margin;
 
   // Apply shifting shoulder lane to adjust to target line
   double offset = -distance_shoulder_to_target;
@@ -229,7 +230,7 @@ void RouteHandler::setPullOverGoalPose(
   pull_over_goal_pose_.position.y = shoulder_point.position.y + std::cos(yaw) * offset;
 }
 
-Pose RouteHandler::getPullOverGoalPose() const {return pull_over_goal_pose_;}
+Pose RouteHandler::getPullOverGoalPose() const { return pull_over_goal_pose_; }
 
 lanelet::Id RouteHandler::getGoalLaneId() const
 {
@@ -345,8 +346,8 @@ lanelet::ConstLanelets RouteHandler::getLaneletSequence(const lanelet::ConstLane
 }
 
 lanelet::ConstLanelets RouteHandler::getLaneletSequence(
-  const lanelet::ConstLanelet & lanelet, const Pose & current_pose,
-  const double backward_distance, const double forward_distance) const
+  const lanelet::ConstLanelet & lanelet, const Pose & current_pose, const double backward_distance,
+  const double forward_distance) const
 {
   lanelet::ConstLanelets lanelet_sequence;
   lanelet::ConstLanelets lanelet_sequence_backward;
@@ -396,8 +397,7 @@ bool RouteHandler::getFollowingShoulderLanelet(
     if (
       std::hypot(
         front_pose.position.x - back_pose.position.x,
-        front_pose.position.y - back_pose.position.y) < 5)
-    {
+        front_pose.position.y - back_pose.position.y) < 5) {
       *following_lanelet = shoulder_lanelet;
       return true;
     }
@@ -447,8 +447,7 @@ bool RouteHandler::getPreviousShoulderLanelet(
     if (
       std::hypot(
         front_pose.position.x - back_pose.position.x,
-        front_pose.position.y - back_pose.position.y) < 5)
-    {
+        front_pose.position.y - back_pose.position.y) < 5) {
       *prev_lanelet = shoulder_lanelet;
       return true;
     }
@@ -481,8 +480,8 @@ lanelet::ConstLanelets RouteHandler::getShoulderLaneletSequenceUpTo(
 }
 
 lanelet::ConstLanelets RouteHandler::getShoulderLaneletSequence(
-  const lanelet::ConstLanelet & lanelet, const Pose & current_pose,
-  const double backward_distance, const double forward_distance) const
+  const lanelet::ConstLanelet & lanelet, const Pose & current_pose, const double backward_distance,
+  const double forward_distance) const
 {
   lanelet::ConstLanelets lanelet_sequence;
   lanelet::ConstLanelets lanelet_sequence_backward;
@@ -738,12 +737,12 @@ PathWithLaneId RouteHandler::getCenterLinePath(
     const lanelet::ConstLineString3d centerline = llt.centerline();
 
     const auto addPathPoint = [&reference_path, &limit, &llt](const auto & pt) {
-        PathPointWithLaneId p{};
-        p.point.pose.position = lanelet::utils::conversion::toGeomMsgPt(pt);
-        p.lane_ids.push_back(llt.id());
-        p.point.twist.linear.x = limit.speedLimit.value();
-        reference_path.points.push_back(p);
-      };
+      PathPointWithLaneId p{};
+      p.point.pose.position = lanelet::utils::conversion::toGeomMsgPt(pt);
+      p.lane_ids.push_back(llt.id());
+      p.point.twist.linear.x = limit.speedLimit.value();
+      reference_path.points.push_back(p);
+    };
 
     for (size_t i = 0; i < centerline.size(); i++) {
       const lanelet::ConstPoint3d pt = centerline[i];
@@ -802,15 +801,13 @@ PathWithLaneId RouteHandler::getCenterLinePath(
 }
 
 PathWithLaneId RouteHandler::setDecelerationVelocity(
-  const PathWithLaneId & input,
-  const lanelet::ConstLanelets & lanelet_sequence, const double lane_change_prepare_duration,
-  const double lane_change_buffer) const
+  const PathWithLaneId & input, const lanelet::ConstLanelets & lanelet_sequence,
+  const double lane_change_prepare_duration, const double lane_change_buffer) const
 {
   auto reference_path = input;
   if (
     isDeadEndLanelet(lanelet_sequence.back()) &&
-    lane_change_prepare_duration > std::numeric_limits<double>::epsilon())
-  {
+    lane_change_prepare_duration > std::numeric_limits<double>::epsilon()) {
     for (auto & point : reference_path.points) {
       const double lane_length = lanelet::utils::getLaneletLength2d(lanelet_sequence);
       const auto arclength = lanelet::utils::getArcCoordinates(lanelet_sequence, point.point.pose);
@@ -836,12 +833,11 @@ PathWithLaneId RouteHandler::setDecelerationVelocity(
   const auto arclength_pull_over_start = arclength_goal_pose - pullover_buffer;
   const auto arclength_path_front =
     lanelet::utils::getArcCoordinates(lanelet_sequence, reference_path.points.front().point.pose)
-    .length;
+      .length;
 
   if (
     isDeadEndLanelet(lanelet_sequence.back()) &&
-    pullover_distance_min > std::numeric_limits<double>::epsilon())
-  {
+    pullover_distance_min > std::numeric_limits<double>::epsilon()) {
     for (auto & point : reference_path.points) {
       const auto arclength =
         lanelet::utils::getArcCoordinates(lanelet_sequence, point.point.pose).length;
@@ -882,15 +878,15 @@ lanelet::ConstLanelets RouteHandler::getLaneChangeTargetLanes(const Pose & pose)
 
   int num = getNumLaneToPreferredLane(lanelet);
   if (num < 0) {
-    auto right_lanelet = (!!routing_graph_ptr_->right(lanelet)) ?
-      routing_graph_ptr_->right(lanelet) :
-      routing_graph_ptr_->adjacentRight(lanelet);
+    auto right_lanelet = (!!routing_graph_ptr_->right(lanelet))
+                           ? routing_graph_ptr_->right(lanelet)
+                           : routing_graph_ptr_->adjacentRight(lanelet);
     target_lanelets = getLaneletSequence(right_lanelet.get());
   }
   if (num > 0) {
-    auto left_lanelet = (!!routing_graph_ptr_->left(lanelet)) ?
-      routing_graph_ptr_->left(lanelet) :
-      routing_graph_ptr_->adjacentLeft(lanelet);
+    auto left_lanelet = (!!routing_graph_ptr_->left(lanelet))
+                          ? routing_graph_ptr_->left(lanelet)
+                          : routing_graph_ptr_->adjacentLeft(lanelet);
     target_lanelets = getLaneletSequence(left_lanelet.get());
   }
   return target_lanelets;
@@ -1023,8 +1019,7 @@ lanelet::routing::RelationType RouteHandler::getRelation(
       }
       if (
         relation.get() == lanelet::routing::RelationType::Left ||
-        relation.get() == lanelet::routing::RelationType::Right)
-      {
+        relation.get() == lanelet::routing::RelationType::Right) {
         return relation.get();
       }
       prev_llt = llt;
@@ -1033,6 +1028,6 @@ lanelet::routing::RelationType RouteHandler::getRelation(
 
   return lanelet::routing::RelationType::None;
 }
-lanelet::ConstLanelets RouteHandler::getShoulderLanelets() const {return shoulder_lanelets_;}
+lanelet::ConstLanelets RouteHandler::getShoulderLanelets() const { return shoulder_lanelets_; }
 
 }  // namespace behavior_path_planner

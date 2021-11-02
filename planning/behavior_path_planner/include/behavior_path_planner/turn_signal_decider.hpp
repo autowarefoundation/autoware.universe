@@ -15,15 +15,15 @@
 #ifndef BEHAVIOR_PATH_PLANNER__TURN_SIGNAL_DECIDER_HPP_
 #define BEHAVIOR_PATH_PLANNER__TURN_SIGNAL_DECIDER_HPP_
 
+#include "behavior_path_planner/route_handler.hpp"
+
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_vehicle_msgs/msg/turn_signal.hpp>
+
+#include <lanelet2_core/LaneletMap.h>
+
 #include <memory>
 #include <utility>
-
-#include "lanelet2_core/LaneletMap.h"
-
-#include "autoware_planning_msgs/msg/path_with_lane_id.hpp"
-#include "autoware_vehicle_msgs/msg/turn_signal.hpp"
-
-#include "behavior_path_planner/route_handler.hpp"
 
 namespace behavior_path_planner
 {
@@ -34,8 +34,7 @@ class TurnSignalDecider
 {
 public:
   TurnSignal getTurnSignal(
-    const PathWithLaneId & path, const Pose & current_pose,
-    const RouteHandler & route_handler,
+    const PathWithLaneId & path, const Pose & current_pose, const RouteHandler & route_handler,
     const TurnSignal & turn_signal_plan, const double plan_distance) const;
 
   void setParameters(const double base_link2front, const double intersection_search_distance)
@@ -49,8 +48,8 @@ private:
     const PathWithLaneId & path, const Pose & current_pose,
     const RouteHandler & route_handler) const;
 
-  rclcpp::Logger
-    logger_{rclcpp::get_logger("behavior_path_planner").get_child("turn_signal_decider")};
+  rclcpp::Logger logger_{
+    rclcpp::get_logger("behavior_path_planner").get_child("turn_signal_decider")};
 
   // data
   double intersection_search_distance_{0.0};

@@ -15,17 +15,17 @@
 #ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SIDE_SHIFT__SIDE_SHIFT_MODULE_HPP_
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SIDE_SHIFT__SIDE_SHIFT_MODULE_HPP_
 
-#include <memory>
-#include <string>
-
-#include "autoware_planning_msgs/msg/path_with_lane_id.hpp"
-#include "autoware_planning_msgs/msg/lateral_offset.hpp"
-
-#include "rclcpp/rclcpp.hpp"
-
+#include "behavior_path_planner/path_shifter/path_shifter.hpp"
 #include "behavior_path_planner/route_handler.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
-#include "behavior_path_planner/path_shifter/path_shifter.hpp"
+
+#include <rclcpp/rclcpp.hpp>
+
+#include <autoware_planning_msgs/msg/lateral_offset.hpp>
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+
+#include <memory>
+#include <string>
 
 namespace behavior_path_planner
 {
@@ -50,8 +50,7 @@ class SideShiftModule : public SceneModuleInterface
 {
 public:
   SideShiftModule(
-    const std::string & name, rclcpp::Node & node,
-    const SideShiftParameters & parameters);
+    const std::string & name, rclcpp::Node & node, const SideShiftParameters & parameters);
 
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
@@ -84,7 +83,6 @@ private:
 
   double getClosestShiftLength() const;
 
-
   // member
   PathWithLaneId refined_path_{};
   std::shared_ptr<PathWithLaneId> reference_path_{std::make_shared<PathWithLaneId>()};
@@ -104,10 +102,9 @@ private:
 
   ShiftedPath prev_output_;
 
-
   // NOTE: this function is ported from avoidance.
   PoseStamped getUnshiftedEgoPose(const ShiftedPath & prev_path) const;
-  inline PoseStamped getEgoPose() const {return *(planner_data_->self_pose);}
+  inline PoseStamped getEgoPose() const { return *(planner_data_->self_pose); }
   PathWithLaneId calcCenterLinePath(
     const std::shared_ptr<const PlannerData> & planner_data, const PoseStamped & pose) const;
 };

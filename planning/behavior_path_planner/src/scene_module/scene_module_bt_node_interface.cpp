@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "behavior_path_planner/scene_module/scene_module_bt_node_interface.hpp"
+
 #include <memory>
 #include <string>
-
-#include "behavior_path_planner/scene_module/scene_module_bt_node_interface.hpp"
 
 namespace behavior_path_planner
 {
@@ -57,7 +57,7 @@ BT::NodeStatus SceneModuleBTNodeInterface::tick()
   scene_module_->updateApproval();
 
   const bool is_waiting_approval = scene_module_->approval_handler_.isWaitingApproval() &&
-    !scene_module_->approval_handler_.isApproved();
+                                   !scene_module_->approval_handler_.isApproved();
   if (is_waiting_approval) {
     try {
       // NOTE: Since BehaviorTreeCpp has an issue to shadow the exception reason thrown
@@ -97,8 +97,7 @@ BT::NodeStatus SceneModuleBTNodeInterface::tick()
     }
 
     RCLCPP_DEBUG_STREAM(
-      scene_module_->getLogger(),
-      "on tick: current status = " << BT::toStr(current_status));
+      scene_module_->getLogger(), "on tick: current status = " << BT::toStr(current_status));
     if (current_status != BT::NodeStatus::RUNNING) {
       RCLCPP_DEBUG(scene_module_->getLogger(), "on tick: module ended.");
       break;
@@ -109,8 +108,7 @@ BT::NodeStatus SceneModuleBTNodeInterface::tick()
 
   scene_module_->onExit();
   RCLCPP_DEBUG_STREAM(
-    scene_module_->getLogger(),
-    "on tick: return current status = " << BT::toStr(current_status));
+    scene_module_->getLogger(), "on tick: return current status = " << BT::toStr(current_status));
 
   return current_status;
 }

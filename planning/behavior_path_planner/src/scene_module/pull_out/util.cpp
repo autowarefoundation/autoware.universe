@@ -12,27 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "behavior_path_planner/scene_module/pull_out/util.hpp"
+
+#include "behavior_path_planner/path_shifter/path_shifter.hpp"
+#include "behavior_path_planner/path_utilities.hpp"
+#include "behavior_path_planner/util/create_vehicle_footprint.hpp"
+
+#include <autoware_utils/geometry/boost_geometry.hpp>
+#include <lanelet2_extension/utility/query.hpp>
+#include <lanelet2_extension/utility/utilities.hpp>
+#include <rclcpp/rclcpp.hpp>
+
+#include <boost/geometry/algorithms/dispatch/distance.hpp>
+
+#include <lanelet2_core/LaneletMap.h>
+#include <tf2/utils.h>
+#include <tf2_ros/transform_listener.h>
+
 #include <algorithm>
 #include <limits>
 #include <memory>
 #include <string>
 #include <vector>
-
-#include "lanelet2_core/LaneletMap.h"
-#include "lanelet2_extension/utility/query.hpp"
-#include "lanelet2_extension/utility/utilities.hpp"
-#include "rclcpp/rclcpp.hpp"
-
-#include "tf2/utils.h"
-#include "tf2_ros/transform_listener.h"
-
-#include "behavior_path_planner/path_shifter/path_shifter.hpp"
-#include "behavior_path_planner/path_utilities.hpp"
-#include "behavior_path_planner/scene_module/pull_out/util.hpp"
-#include "behavior_path_planner/util/create_vehicle_footprint.hpp"
-
-#include "autoware_utils/geometry/boost_geometry.hpp"
-#include "boost/geometry/algorithms/dispatch/distance.hpp"
 
 namespace behavior_path_planner
 {
@@ -53,8 +54,8 @@ PathWithLaneId combineReferencePath(const PathWithLaneId path1, const PathWithLa
 }
 
 bool isPathInLanelets4pullover(
-  const PathWithLaneId & path,
-  const lanelet::ConstLanelets & original_lanelets, const lanelet::ConstLanelets & target_lanelets)
+  const PathWithLaneId & path, const lanelet::ConstLanelets & original_lanelets,
+  const lanelet::ConstLanelets & target_lanelets)
 {
   for (const auto & pt : path.points) {
     bool is_in_lanelet = false;
@@ -69,7 +70,9 @@ bool isPathInLanelets4pullover(
         is_in_lanelet = true;
       }
     }
-    if (!is_in_lanelet) {return false;}
+    if (!is_in_lanelet) {
+      return false;
+    }
   }
   return true;
 }
@@ -99,8 +102,7 @@ std::vector<PullOutPath> getPullOutPaths(
   double initial_lateral_jerk = is_retreat_path ? maximum_lateral_jerk : minimum_lateral_jerk;
 
   for (double lateral_jerk = initial_lateral_jerk; lateral_jerk <= maximum_lateral_jerk;
-    lateral_jerk += jerk_resolution)
-  {
+       lateral_jerk += jerk_resolution) {
     PathWithLaneId reference_path;
     PathShifter path_shifter;
     ShiftedPath shifted_path;
@@ -177,10 +179,8 @@ std::vector<PullOutPath> getPullOutPaths(
 
     ShiftPoint shift_point;
     {
-      const Pose pull_out_start_on_shoulder_lane =
-        reference_path1.points.back().point.pose;
-      const Pose pull_out_end_on_road_lane =
-        reference_path2.points.front().point.pose;
+      const Pose pull_out_start_on_shoulder_lane = reference_path1.points.back().point.pose;
+      const Pose pull_out_end_on_road_lane = reference_path2.points.front().point.pose;
       shift_point.start = pull_out_start_on_shoulder_lane;
       shift_point.end = pull_out_end_on_road_lane;
 
@@ -265,7 +265,6 @@ PullOutPath getBackPaths(
   const double distance_to_shoulder_center =
     lanelet::utils::getArcCoordinates(shoulder_lanelets, pose).distance;
 
-
   PathWithLaneId reference_path1;
   {
     const auto arc_position = lanelet::utils::getArcCoordinates(shoulder_lanelets, pose);
@@ -315,8 +314,7 @@ PullOutPath getBackPaths(
 }
 
 Pose getBackedPose(
-  const Pose & current_pose, const double & yaw_shoulder_lane,
-  const double & back_distance)
+  const Pose & current_pose, const double & yaw_shoulder_lane, const double & back_distance)
 {
   Pose backed_pose;
   backed_pose = current_pose;
@@ -329,17 +327,15 @@ Pose getBackedPose(
 std::vector<PullOutPath> selectValidPaths(
   const std::vector<PullOutPath> & paths, const lanelet::ConstLanelets & road_lanes,
   const lanelet::ConstLanelets & shoulder_lanes,
-  const lanelet::routing::RoutingGraphContainer & overall_graphs,
-  const Pose & current_pose, const bool isInGoalRouteSection,
-  const Pose & goal_pose)
+  const lanelet::routing::RoutingGraphContainer & overall_graphs, const Pose & current_pose,
+  const bool isInGoalRouteSection, const Pose & goal_pose)
 {
   std::vector<PullOutPath> available_paths;
 
   for (const auto & path : paths) {
     if (hasEnoughDistance(
-        path, road_lanes, shoulder_lanes, current_pose, isInGoalRouteSection, goal_pose,
-        overall_graphs))
-    {
+          path, road_lanes, shoulder_lanes, current_pose, isInGoalRouteSection, goal_pose,
+          overall_graphs)) {
       available_paths.push_back(path);
     }
   }
@@ -358,9 +354,8 @@ bool selectSafePath(
   const bool use_dynamic_object = ros_parameters.use_dynamic_object;
   for (const auto & path : paths) {
     if (isPullOutPathSafe(
-        path, road_lanes, shoulder_lanes, dynamic_objects, ros_parameters,
-        local_vehicle_footprint, true, use_dynamic_object))
-    {
+          path, road_lanes, shoulder_lanes, dynamic_objects, ros_parameters,
+          local_vehicle_footprint, true, use_dynamic_object)) {
       *selected_path = path;
       return true;
     }
@@ -396,8 +391,7 @@ bool hasEnoughDistance(
 
   if (
     isInGoalRouteSection &&
-    pull_out_total_distance > util::getSignedDistance(current_pose, goal_pose, road_lanes))
-  {
+    pull_out_total_distance > util::getSignedDistance(current_pose, goal_pose, road_lanes)) {
     return false;
   }
 

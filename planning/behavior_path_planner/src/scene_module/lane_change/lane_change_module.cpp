@@ -12,22 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "behavior_path_planner/scene_module/lane_change/lane_change_module.hpp"
+
+#include "behavior_path_planner/path_utilities.hpp"
+#include "behavior_path_planner/scene_module/lane_change/util.hpp"
+#include "behavior_path_planner/utilities.hpp"
+
+#include <autoware_utils/autoware_utils.hpp>
+#include <lanelet2_extension/utility/message_conversion.hpp>
+#include <lanelet2_extension/utility/utilities.hpp>
+
+#include <autoware_perception_msgs/msg/semantic.hpp>
+
 #include <algorithm>
 #include <limits>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
-
-#include "autoware_perception_msgs/msg/semantic.hpp"
-#include "autoware_utils/autoware_utils.hpp"
-#include "lanelet2_extension/utility/message_conversion.hpp"
-#include "lanelet2_extension/utility/utilities.hpp"
-
-#include "behavior_path_planner/path_utilities.hpp"
-#include "behavior_path_planner/scene_module/lane_change/lane_change_module.hpp"
-#include "behavior_path_planner/scene_module/lane_change/util.hpp"
-#include "behavior_path_planner/utilities.hpp"
 
 namespace behavior_path_planner
 {
@@ -70,7 +72,9 @@ void LaneChangeModule::onExit()
 
 bool LaneChangeModule::isExecutionRequested() const
 {
-  if (current_state_ == BT::NodeStatus::RUNNING) {return true;}
+  if (current_state_ == BT::NodeStatus::RUNNING) {
+    return true;
+  }
 
   // Get lane change lanes
   const auto current_lanes = getCurrentLanes();
@@ -87,7 +91,9 @@ bool LaneChangeModule::isExecutionRequested() const
 
 bool LaneChangeModule::isExecutionReady() const
 {
-  if (current_state_ == BT::NodeStatus::RUNNING) {return true;}
+  if (current_state_ == BT::NodeStatus::RUNNING) {
+    return true;
+  }
 
   // Get lane change lanes
   const auto current_lanes = getCurrentLanes();
@@ -334,7 +340,9 @@ std::pair<bool, bool> LaneChangeModule::getSafePath(
       lane_change_paths, current_lanes, check_lanes, route_handler->getOverallGraph(), current_pose,
       route_handler->isInGoalRouteSection(current_lanes.back()), route_handler->getGoalPose());
 
-    if (valid_paths.empty()) {return std::make_pair(false, false);}
+    if (valid_paths.empty()) {
+      return std::make_pair(false, false);
+    }
 
     // select safe path
     bool found_safe_path = lane_change_utils::selectSafePath(
@@ -362,8 +370,7 @@ TurnSignalInfo LaneChangeModule::getTurnSignalAndDistance(const PathWithLaneId &
   auto clock{rclcpp::Clock{RCL_ROS_TIME}};
   if (!convertToFrenetCoordinate3d(path, current_pose.position, &vehicle_pose_frenet)) {
     RCLCPP_ERROR_THROTTLE(
-      getLogger(), clock, 5000,
-      "failed to convert vehicle pose into frenet coordinate");
+      getLogger(), clock, 5000, "failed to convert vehicle pose into frenet coordinate");
     return {};
   }
 
@@ -395,16 +402,14 @@ TurnSignalInfo LaneChangeModule::getTurnSignalAndDistance(const PathWithLaneId &
         const auto relation = route_handler->getRelation(prev_lane, lane);
         if (
           relation == lanelet::routing::RelationType::Left ||
-          relation == lanelet::routing::RelationType::AdjacentLeft)
-        {
+          relation == lanelet::routing::RelationType::AdjacentLeft) {
           turn_signal.turn_signal.data = TurnSignal::LEFT;
           turn_signal.signal_distance = distance_from_vehicle_front;
           return turn_signal;
         }
         if (
           relation == lanelet::routing::RelationType::Right ||
-          relation == lanelet::routing::RelationType::AdjacentRight)
-        {
+          relation == lanelet::routing::RelationType::AdjacentRight) {
           turn_signal.turn_signal.data = TurnSignal::RIGHT;
           turn_signal.signal_distance = distance_from_vehicle_front;
           return turn_signal;
@@ -418,7 +423,7 @@ TurnSignalInfo LaneChangeModule::getTurnSignalAndDistance(const PathWithLaneId &
   return {};
 }
 
-bool LaneChangeModule::isSafe() const {return status_.is_safe;}
+bool LaneChangeModule::isSafe() const { return status_.is_safe; }
 
 bool LaneChangeModule::isNearEndOfLane() const
 {
@@ -459,19 +464,15 @@ bool LaneChangeModule::isLaneBlocked(const lanelet::ConstLanelets & lanes) const
 
   if (polygon.size() < 3) {
     RCLCPP_WARN_STREAM(
-      getLogger(),
-      "could not get polygon from lanelet with arc lengths: " << arc.length << " to " <<
-        arc.length + check_distance);
+      getLogger(), "could not get polygon from lanelet with arc lengths: "
+                     << arc.length << " to " << arc.length + check_distance);
     return false;
   }
 
   for (const auto & obj : planner_data_->dynamic_object->objects) {
     if (
-      obj.semantic.type == Semantic::CAR ||
-      obj.semantic.type == Semantic::TRUCK ||
-      obj.semantic.type == Semantic::BUS ||
-      obj.semantic.type == Semantic::MOTORBIKE)
-    {
+      obj.semantic.type == Semantic::CAR || obj.semantic.type == Semantic::TRUCK ||
+      obj.semantic.type == Semantic::BUS || obj.semantic.type == Semantic::MOTORBIKE) {
       const auto velocity = util::l2Norm(obj.state.twist_covariance.twist.linear);
       if (velocity < static_obj_velocity_thresh) {
         const auto position =
@@ -588,8 +589,8 @@ bool LaneChangeModule::hasFinishedLaneChange() const
     lanelet::utils::getArcCoordinates(status_.lane_change_lanes, current_pose);
   const double travel_distance = arclength_current.length - status_.start_distance;
   const double finish_distance = status_.lane_change_path.preparation_length +
-    status_.lane_change_path.lane_change_length +
-    parameters_.lane_change_finish_judge_buffer;
+                                 status_.lane_change_path.lane_change_length +
+                                 parameters_.lane_change_finish_judge_buffer;
   return travel_distance > finish_distance;
 }
 

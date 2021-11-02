@@ -15,21 +15,23 @@
 #ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SCENE_MODULE_INTERFACE_HPP_
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SCENE_MODULE_INTERFACE_HPP_
 
+#include "behavior_path_planner/data_manager.hpp"
+#include "behavior_path_planner/scene_module/approval_handler.hpp"
+#include "behavior_path_planner/utilities.hpp"
+
+#include <rclcpp/rclcpp.hpp>
+
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_vehicle_msgs/msg/turn_signal.hpp>
+
+#include <boost/optional.hpp>
+
+#include <behaviortree_cpp_v3/basic_types.h>
+
 #include <limits>
 #include <memory>
 #include <string>
 #include <utility>
-
-#include "boost/optional.hpp"
-
-#include "autoware_planning_msgs/msg/path_with_lane_id.hpp"
-#include "autoware_vehicle_msgs/msg/turn_signal.hpp"
-#include "behaviortree_cpp_v3/basic_types.h"
-#include "rclcpp/rclcpp.hpp"
-
-#include "behavior_path_planner/data_manager.hpp"
-#include "behavior_path_planner/scene_module/approval_handler.hpp"
-#include "behavior_path_planner/utilities.hpp"
 
 namespace behavior_path_planner
 {
@@ -40,7 +42,7 @@ using PlanResult = PathWithLaneId::SharedPtr;
 
 struct TurnSignalInfo
 {
-  TurnSignalInfo() {turn_signal.data = TurnSignal::NONE;}
+  TurnSignalInfo() { turn_signal.data = TurnSignal::NONE; }
 
   // desired turn signal
   TurnSignal turn_signal;
@@ -67,8 +69,12 @@ class SceneModuleInterface
 {
 public:
   SceneModuleInterface(const std::string & name, rclcpp::Node & node)
-  : name_{name}, logger_{node.get_logger().get_child(name)}, clock_{node.get_clock()},
-    approval_handler_(node) {}
+  : name_{name},
+    logger_{node.get_logger().get_child(name)},
+    clock_{node.get_clock()},
+    approval_handler_(node)
+  {
+  }
 
   virtual ~SceneModuleInterface() = default;
 
@@ -157,20 +163,20 @@ public:
   /**
    * @brief set planner data
    */
-  void setData(const std::shared_ptr<const PlannerData> & data) {planner_data_ = data;}
+  void setData(const std::shared_ptr<const PlannerData> & data) { planner_data_ = data; }
 
   void updateApproval()
   {
     approval_handler_.setCurrentApproval(planner_data_->approval.is_approved);
   }
 
-  std::string name() const {return name_;}
+  std::string name() const { return name_; }
 
-  rclcpp::Logger getLogger() const {return logger_;}
+  rclcpp::Logger getLogger() const { return logger_; }
 
   std::shared_ptr<const PlannerData> planner_data_;
 
-  MarkerArray getDebugMarker() {return debug_marker_;}
+  MarkerArray getDebugMarker() { return debug_marker_; }
 
 private:
   std::string name_;

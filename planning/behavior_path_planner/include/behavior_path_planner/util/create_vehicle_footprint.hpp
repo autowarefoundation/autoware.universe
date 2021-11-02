@@ -15,8 +15,8 @@
 #ifndef BEHAVIOR_PATH_PLANNER__UTIL__CREATE_VEHICLE_FOOTPRINT_HPP_
 #define BEHAVIOR_PATH_PLANNER__UTIL__CREATE_VEHICLE_FOOTPRINT_HPP_
 
-#include "autoware_utils/geometry/geometry.hpp"
-#include "vehicle_info_util/vehicle_info_util.hpp"
+#include <autoware_utils/geometry/geometry.hpp>
+#include <vehicle_info_util/vehicle_info_util.hpp>
 
 inline autoware_utils::LinearRing2d createVehicleFootprint(
   const vehicle_info_util::VehicleInfo & vehicle_info, const double margin = 0.0)

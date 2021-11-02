@@ -12,13 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <cmath>
-
-#include "rclcpp/rclcpp.hpp"
-#include "tf2/utils.h"
+#include "behavior_path_planner/scene_module/side_shift/util.hpp"
 
 #include "behavior_path_planner/utilities.hpp"
-#include "behavior_path_planner/scene_module/side_shift/util.hpp"
+
+#include <rclcpp/rclcpp.hpp>
+
+#include <tf2/utils.h>
+
+#include <cmath>
 
 namespace behavior_path_planner
 {
@@ -55,8 +57,12 @@ bool getStartAvoidPose(
   const PathWithLaneId & path, const double start_distance, const size_t nearest_idx,
   Pose * start_avoid_pose)
 {
-  if (!start_avoid_pose) {return false;}
-  if (nearest_idx >= path.points.size()) {return false;}
+  if (!start_avoid_pose) {
+    return false;
+  }
+  if (nearest_idx >= path.points.size()) {
+    return false;
+  }
 
   double arclength = 0.0;
   for (size_t idx = nearest_idx + 1; idx < path.points.size(); ++idx) {
@@ -75,11 +81,11 @@ bool getStartAvoidPose(
   return false;
 }
 
-bool isAlmostZero(double v) {return std::fabs(v) < 1.0e-4;}
+bool isAlmostZero(double v) { return std::fabs(v) < 1.0e-4; }
 
 Point transformToGrid(
-  const Point & pt, const double longitudinal_offset, const double lateral_offset,
-  const double yaw, const TransformStamped & geom_tf)
+  const Point & pt, const double longitudinal_offset, const double lateral_offset, const double yaw,
+  const TransformStamped & geom_tf)
 {
   Point offset_pt, grid_pt;
   offset_pt = pt;
@@ -88,6 +94,5 @@ Point transformToGrid(
   tf2::doTransform(offset_pt, grid_pt, geom_tf);
   return grid_pt;
 }
-
 
 }  // namespace behavior_path_planner

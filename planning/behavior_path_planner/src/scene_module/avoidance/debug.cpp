@@ -12,14 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <string>
-#include <vector>
-
-#include "tf2/utils.h"
+#include "behavior_path_planner/scene_module/avoidance/debug.hpp"
 
 #include "behavior_path_planner/path_utilities.hpp"
-#include "behavior_path_planner/scene_module/avoidance/debug.hpp"
 #include "behavior_path_planner/utilities.hpp"
+
+#include <tf2/utils.h>
+
+#include <string>
+#include <vector>
 
 namespace marker_utils
 {
@@ -27,7 +28,7 @@ using behavior_path_planner::util::calcPathArcLengthArray;
 using behavior_path_planner::util::shiftPose;
 using visualization_msgs::msg::Marker;
 
-inline int64_t bitShift(int64_t original_id) {return original_id << (sizeof(int32_t) * 8 / 2);}
+inline int64_t bitShift(int64_t original_id) { return original_id << (sizeof(int32_t) * 8 / 2); }
 
 MarkerArray createShiftLengthMarkerArray(
   const std::vector<double> shift_distance,
@@ -36,7 +37,9 @@ MarkerArray createShiftLengthMarkerArray(
 {
   MarkerArray ma;
 
-  if (shift_distance.size() != reference.points.size()) {return ma;}
+  if (shift_distance.size() != reference.points.size()) {
+    return ma;
+  }
 
   const auto current_time = rclcpp::Clock{RCL_ROS_TIME}.now();
 
@@ -498,9 +501,9 @@ std::string toStrInfo(const behavior_path_planner::ShiftPoint & sp)
   const auto & ps = sp.start.position;
   const auto & pe = sp.end.position;
   std::stringstream ss;
-  ss << "shift length: " << sp.length << ", start_idx: " << sp.start_idx <<
-    ", end_idx: " << sp.end_idx << ", start: (" << ps.x << ", " << ps.y << "), end: (" << pe.x <<
-    ", " << pe.y << ")";
+  ss << "shift length: " << sp.length << ", start_idx: " << sp.start_idx
+     << ", end_idx: " << sp.end_idx << ", start: (" << ps.x << ", " << ps.y << "), end: (" << pe.x
+     << ", " << pe.y << ")";
   return ss.str();
 }
 
@@ -525,11 +528,11 @@ std::string toStrInfo(const behavior_path_planner::AvoidPoint & ap)
   const auto & ps = ap.start.position;
   const auto & pe = ap.end.position;
   std::stringstream ss;
-  ss << "id = " << ap.id << ", shift length: " << ap.length << ", start_idx: " << ap.start_idx <<
-    ", end_idx: " << ap.end_idx << ", start_dist = " << ap.start_longitudinal <<
-    ", end_dist = " << ap.end_longitudinal << ", start_length: " << ap.start_length <<
-    ", start: (" << ps.x << ", " << ps.y << "), end: (" << pe.x << ", " << pe.y <<
-    "), relative_length: " << ap.getRelativeLength() << ", grad = " << ap.getGradient() <<
-    ", parent_ids = [" << pids.str() << "]";
+  ss << "id = " << ap.id << ", shift length: " << ap.length << ", start_idx: " << ap.start_idx
+     << ", end_idx: " << ap.end_idx << ", start_dist = " << ap.start_longitudinal
+     << ", end_dist = " << ap.end_longitudinal << ", start_length: " << ap.start_length
+     << ", start: (" << ps.x << ", " << ps.y << "), end: (" << pe.x << ", " << pe.y
+     << "), relative_length: " << ap.getRelativeLength() << ", grad = " << ap.getGradient()
+     << ", parent_ids = [" << pids.str() << "]";
   return ss.str();
 }

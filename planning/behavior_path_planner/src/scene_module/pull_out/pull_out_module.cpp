@@ -12,29 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <algorithm>
-#include <memory>
-#include <string>
-#include <utility>
-#include <vector>
-
-#include "autoware_planning_msgs/msg/path_with_lane_id.hpp"
-#include "autoware_utils/autoware_utils.hpp"
-
-#include "lanelet2_extension/utility/message_conversion.hpp"
-#include "lanelet2_extension/utility/utilities.hpp"
-#include "rclcpp/rclcpp.hpp"
+#include "behavior_path_planner/scene_module/pull_out/pull_out_module.hpp"
 
 #include "behavior_path_planner/behavior_path_planner_node.hpp"
 #include "behavior_path_planner/path_shifter/path_shifter.hpp"
 #include "behavior_path_planner/path_utilities.hpp"
 #include "behavior_path_planner/scene_module/avoidance/debug.hpp"
-#include "behavior_path_planner/scene_module/pull_out/pull_out_module.hpp"
 #include "behavior_path_planner/scene_module/pull_out/util.hpp"
 #include "behavior_path_planner/util/create_vehicle_footprint.hpp"
-#include "vehicle_info_util/vehicle_info.hpp"
-
 #include "behavior_path_planner/utilities.hpp"
+
+#include <autoware_utils/autoware_utils.hpp>
+#include <lanelet2_extension/utility/message_conversion.hpp>
+#include <lanelet2_extension/utility/utilities.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <vehicle_info_util/vehicle_info.hpp>
+
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+
+#include <algorithm>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace behavior_path_planner
 {
@@ -76,7 +76,9 @@ void PullOutModule::onExit()
 
 bool PullOutModule::isExecutionRequested() const
 {
-  if (current_state_ == BT::NodeStatus::RUNNING) {return true;}
+  if (current_state_ == BT::NodeStatus::RUNNING) {
+    return true;
+  }
 
   const bool car_is_stopping =
     (util::l2Norm(planner_data_->self_velocity->twist.linear) <= 1.5) ? true : false;
@@ -87,8 +89,7 @@ bool PullOutModule::isExecutionRequested() const
     lanelet::utils::query::getClosestLanelet(
       planner_data_->route_handler->getShoulderLanelets(), planner_data_->self_pose->pose,
       &closest_shoulder_lanelet) &&
-    car_is_stopping)
-  {
+    car_is_stopping) {
     // Create vehicle footprint
     const auto vehicle_info = getVehicleInfo(planner_data_->parameters);
     const auto local_vehicle_footprint = createVehicleFootprint(vehicle_info);
@@ -107,7 +108,9 @@ bool PullOutModule::isExecutionRequested() const
 
 bool PullOutModule::isExecutionReady() const
 {
-  if (current_state_ == BT::NodeStatus::RUNNING) {return true;}
+  if (current_state_ == BT::NodeStatus::RUNNING) {
+    return true;
+  }
 
   // TODO(sugahara) move to utility function
   const auto road_lanes = getCurrentLanes();
@@ -383,9 +386,8 @@ lanelet::ConstLanelets PullOutModule::getPullOutLanes(
     current_lanes, planner_data_->self_pose->pose, &current_lane);
 
   if (route_handler->getPullOutStart(
-      route_handler->getShoulderLanelets(), &shoulder_lane, current_pose,
-      planner_data_->parameters.vehicle_width))
-  {
+        route_handler->getShoulderLanelets(), &shoulder_lane, current_pose,
+        planner_data_->parameters.vehicle_width)) {
     shoulder_lanes = route_handler->getShoulderLaneletSequence(
       shoulder_lane, current_pose, pull_out_lane_length_, pull_out_lane_length_);
 
@@ -467,8 +469,7 @@ std::pair<bool, bool> PullOutModule::getSafeRetreatPath(
 
   lanelet::ConstLanelet closest_shoulder_lanelet;
   if (!lanelet::utils::query::getClosestLanelet(
-      pull_out_lanes, current_pose, &closest_shoulder_lanelet))
-  {
+        pull_out_lanes, current_pose, &closest_shoulder_lanelet)) {
     // RCLCPP_ERROR_THROTTLE(getLogger(), clock, 1000, "Failed to find closest lane!");
   }
   const auto arc_position_pose = lanelet::utils::getArcCoordinates(pull_out_lanes, current_pose);
@@ -544,8 +545,7 @@ bool PullOutModule::getBackDistance(
   {
     lanelet::ConstLanelet closest_shoulder_lanelet;
     if (!lanelet::utils::query::getClosestLanelet(
-        pull_out_lanes, current_pose, &closest_shoulder_lanelet))
-    {
+          pull_out_lanes, current_pose, &closest_shoulder_lanelet)) {
       return false;
     }
 
@@ -559,9 +559,8 @@ bool PullOutModule::getBackDistance(
   }
 
   for (double current_back_distance = back_distance_search_resolution;
-    current_back_distance <= maximum_back_distance;
-    current_back_distance += back_distance_search_resolution)
-  {
+       current_back_distance <= maximum_back_distance;
+       current_back_distance += back_distance_search_resolution) {
     if (!pull_out_lanes.empty()) {
       const auto backed_pose =
         pull_out_utils::getBackedPose(current_pose, yaw_shoulder_lane, current_back_distance);
@@ -641,7 +640,7 @@ bool PullOutModule::isLongEnough(const lanelet::ConstLanelets & lanelets) const
   return distance_to_goal_on_road_lane > pull_out_total_distance_min;
 }
 
-bool PullOutModule::isSafe() const {return status_.is_safe;}
+bool PullOutModule::isSafe() const { return status_.is_safe; }
 
 bool PullOutModule::isNearEndOfLane() const
 {
@@ -669,9 +668,9 @@ bool PullOutModule::hasFinishedPullOut() const
   const auto arclength_shift_end =
     lanelet::utils::getArcCoordinates(status_.current_lanes, status_.pull_out_path.shift_point.end);
   const bool car_is_on_goal = (arclength_shift_end.length - arclength_current.length <
-    parameters_.pull_out_finish_judge_buffer) ?
-    true :
-    false;
+                               parameters_.pull_out_finish_judge_buffer)
+                                ? true
+                                : false;
 
   return car_is_on_goal;
 }

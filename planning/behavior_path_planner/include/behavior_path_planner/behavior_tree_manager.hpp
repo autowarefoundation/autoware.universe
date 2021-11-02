@@ -15,21 +15,22 @@
 #ifndef BEHAVIOR_PATH_PLANNER__BEHAVIOR_TREE_MANAGER_HPP_
 #define BEHAVIOR_PATH_PLANNER__BEHAVIOR_TREE_MANAGER_HPP_
 
+#include "behavior_path_planner/data_manager.hpp"
+#include "behavior_path_planner/route_handler.hpp"
+#include "behavior_path_planner/scene_module/scene_module_bt_node_interface.hpp"
+
+#include <visualization_msgs/msg/marker_array.hpp>
+
+#include <behaviortree_cpp_v3/behavior_tree.h>
+#include <behaviortree_cpp_v3/bt_factory.h>
+#include <behaviortree_cpp_v3/loggers/bt_cout_logger.h>
+#include <behaviortree_cpp_v3/loggers/bt_zmq_publisher.h>
+
 #include <memory>
 #include <string>
 #include <tuple>
 #include <unordered_map>
 #include <vector>
-
-#include "behaviortree_cpp_v3/behavior_tree.h"
-#include "behaviortree_cpp_v3/bt_factory.h"
-#include "behaviortree_cpp_v3/loggers/bt_cout_logger.h"
-#include "behaviortree_cpp_v3/loggers/bt_zmq_publisher.h"
-#include "visualization_msgs/msg/marker_array.hpp"
-
-#include "behavior_path_planner/data_manager.hpp"
-#include "behavior_path_planner/route_handler.hpp"
-#include "behavior_path_planner/scene_module/scene_module_bt_node_interface.hpp"
 
 namespace behavior_path_planner
 {

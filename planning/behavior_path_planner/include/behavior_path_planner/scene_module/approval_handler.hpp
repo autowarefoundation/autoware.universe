@@ -15,18 +15,17 @@
 #ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__APPROVAL_HANDLER_HPP_
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__APPROVAL_HANDLER_HPP_
 
+#include <rclcpp/rclcpp.hpp>
+
 #include <memory>
 #include <string>
-
-#include "rclcpp/rclcpp.hpp"
 
 namespace behavior_path_planner
 {
 class ApprovalHandler
 {
 public:
-  explicit ApprovalHandler(rclcpp::Node & node)
-  : clock_{*node.get_clock()} {}
+  explicit ApprovalHandler(rclcpp::Node & node) : clock_{*node.get_clock()} {}
 
   void setCurrentApproval(const behavior_path_planner::BoolStamped & approval)
   {
@@ -45,9 +44,9 @@ public:
     return false;
   }
 
-  bool isWaitingApproval() const {return is_waiting_approval_;}
-  void waitApproval() {is_waiting_approval_ = true;}
-  void clearWaitApproval() {is_waiting_approval_ = false;}
+  bool isWaitingApproval() const { return is_waiting_approval_; }
+  void waitApproval() { is_waiting_approval_ = true; }
+  void clearWaitApproval() { is_waiting_approval_ = false; }
   void clearApproval()
   {
     last_clear_time_ = clock_.now();

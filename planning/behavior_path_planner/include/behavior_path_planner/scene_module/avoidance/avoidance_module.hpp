@@ -15,21 +15,22 @@
 #ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__AVOIDANCE__AVOIDANCE_MODULE_HPP_
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__AVOIDANCE__AVOIDANCE_MODULE_HPP_
 
+#include "behavior_path_planner/path_shifter/path_shifter.hpp"
+#include "behavior_path_planner/scene_module/avoidance/avoidance_module_data.hpp"
+#include "behavior_path_planner/scene_module/scene_module_interface.hpp"
+
+#include <rclcpp/rclcpp.hpp>
+
+#include <autoware_perception_msgs/msg/dynamic_object_array.hpp>
+#include <autoware_planning_msgs/msg/path.hpp>
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_vehicle_msgs/msg/turn_signal.hpp>
+
 #include <memory>
 #include <string>
 #include <tuple>
 #include <utility>
 #include <vector>
-
-#include "autoware_perception_msgs/msg/dynamic_object_array.hpp"
-#include "autoware_planning_msgs/msg/path.hpp"
-#include "autoware_planning_msgs/msg/path_with_lane_id.hpp"
-#include "autoware_vehicle_msgs/msg/turn_signal.hpp"
-#include "rclcpp/rclcpp.hpp"
-
-#include "behavior_path_planner/path_shifter/path_shifter.hpp"
-#include "behavior_path_planner/scene_module/avoidance/avoidance_module_data.hpp"
-#include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 
 namespace behavior_path_planner
 {
@@ -83,11 +84,9 @@ private:
   void updateRegisteredObject(const ObjectDataArray & objects);
   void CompensateDetectionLost(ObjectDataArray & objects) const;
 
-
   // -- for shift point generation --
   AvoidPointArray calcShiftPoints(
-    AvoidPointArray & current_raw_shift_points,
-    DebugData & debug) const;
+    AvoidPointArray & current_raw_shift_points, DebugData & debug) const;
 
   // shift point generation: generator
   AvoidPointArray calcRawShiftPointsFromObjects(const ObjectDataArray & objects) const;
@@ -168,7 +167,7 @@ private:
   // TODO(Horibe): think later.
   // for unique ID
   mutable uint64_t original_unique_id = 0;  // TODO(Horibe) remove mutable
-  uint64_t getOriginalShiftPointUniqueId() const {return original_unique_id++;}
+  uint64_t getOriginalShiftPointUniqueId() const { return original_unique_id++; }
 
   double getNominalAvoidanceDistance(const double shift_length) const;
   double getNominalPrepareDistance() const;
@@ -181,7 +180,7 @@ private:
   Point getEgoPosition() const;
   PoseStamped getEgoPose() const;
   PoseStamped getUnshiftedEgoPose(const ShiftedPath & prev_path) const;
-  double getCurrentBaseShift() const {return path_shifter_.getBaseOffset();}
+  double getCurrentBaseShift() const { return path_shifter_.getBaseOffset(); }
   double getCurrentLinearShift() const
   {
     return prev_linear_shift_path_.shift_length.at(
