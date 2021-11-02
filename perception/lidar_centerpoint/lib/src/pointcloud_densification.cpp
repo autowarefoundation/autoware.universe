@@ -12,21 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <pcl_ros/transforms.hpp>
+#include <pointcloud_densification.hpp>
+
+#include <pcl_conversions/pcl_conversions.h>
+#include <tf2_eigen/tf2_eigen.h>
+
 #include <string>
 #include <utility>
-
-#include "pcl_conversions/pcl_conversions.h"
-#include "pcl_ros/transforms.hpp"
-#include "tf2_eigen/tf2_eigen.h"
-
-#include "pointcloud_densification.hpp"
 
 namespace centerpoint
 {
 PointCloudDensification::PointCloudDensification(
   std::string base_frame_id, const unsigned int pointcloud_cache_size,
   rclcpp::Clock::SharedPtr clock)
-: base_frame_id_(std::move(base_frame_id)), pointcloud_cache_size_(pointcloud_cache_size),
+: base_frame_id_(std::move(base_frame_id)),
+  pointcloud_cache_size_(pointcloud_cache_size),
   tf_buffer_(clock)
 {
 }
@@ -60,8 +61,8 @@ sensor_msgs::msg::PointCloud2 PointCloudDensification::stackPointCloud(
     pcl_ros::transformPointCloud(
       (affine_base2current * affine_past2base).matrix(), cached_pointcloud_msg,
       transformed_pointcloud_msg);
-    double diff_timestamp = input_timestamp -
-      rclcpp::Time(cached_pointcloud_msg.header.stamp).seconds();
+    double diff_timestamp =
+      input_timestamp - rclcpp::Time(cached_pointcloud_msg.header.stamp).seconds();
     setTimeLag(transformed_pointcloud_msg, static_cast<float>(diff_timestamp));
 
     sensor_msgs::msg::PointCloud2 tmp_pointcloud_msg = output_pointcloud_msg;

@@ -15,16 +15,16 @@
 #ifndef LIDAR_CENTERPOINT__NODE_HPP_
 #define LIDAR_CENTERPOINT__NODE_HPP_
 
+#include <centerpoint_trt.hpp>
+#include <config.hpp>
+#include <pointcloud_densification.hpp>
+#include <rclcpp/rclcpp.hpp>
+
+#include <autoware_perception_msgs/msg/dynamic_object_with_feature_array.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+
 #include <memory>
 #include <string>
-
-#include "autoware_perception_msgs/msg/dynamic_object_with_feature_array.hpp"
-#include "rclcpp/rclcpp.hpp"
-#include "sensor_msgs/msg/point_cloud2.hpp"
-
-#include "centerpoint_trt.hpp"
-#include "config.hpp"
-#include "pointcloud_densification.hpp"
 
 namespace centerpoint
 {
@@ -41,9 +41,9 @@ private:
     objects_pub_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_pub_;
 
-  float score_threshold_ {0.0};
+  float score_threshold_{0.0};
   std::string densification_base_frame_;
-  int densification_past_frames_ {0};
+  int densification_past_frames_{0};
   bool use_vfe_trt_{false};
   bool use_head_trt_{false};
   std::string trt_precision_;

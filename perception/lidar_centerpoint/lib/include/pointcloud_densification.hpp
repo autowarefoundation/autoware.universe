@@ -15,12 +15,12 @@
 #ifndef POINTCLOUD_DENSIFICATION_HPP_
 #define POINTCLOUD_DENSIFICATION_HPP_
 
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2_sensor_msgs/tf2_sensor_msgs.h>
+
 #include <list>
 #include <string>
-
-#include "tf2_ros/buffer.h"
-#include "tf2_ros/transform_listener.h"
-#include "tf2_sensor_msgs/tf2_sensor_msgs.h"
 
 namespace centerpoint
 {
@@ -28,8 +28,7 @@ class PointCloudDensification
 {
 public:
   PointCloudDensification(
-    std::string base_frame_id, unsigned int pointcloud_cache_size,
-    rclcpp::Clock::SharedPtr clock);
+    std::string base_frame_id, unsigned int pointcloud_cache_size, rclcpp::Clock::SharedPtr clock);
 
   sensor_msgs::msg::PointCloud2 stackPointCloud(
     const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg);

@@ -15,21 +15,21 @@
 #ifndef CENTERPOINT_TRT_HPP_
 #define CENTERPOINT_TRT_HPP_
 
+#include <config.hpp>
+#include <cuda_utils.hpp>
+#include <network_trt.hpp>
+#include <voxel_generator.hpp>
+
+#include <sensor_msgs/msg/point_cloud2.hpp>
+
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include <torch/script.h>
+
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
-
-#include "pcl/point_types.h"
-#include "pcl/point_cloud.h"
-#include "torch/script.h"
-
-#include "sensor_msgs/msg/point_cloud2.hpp"
-
-#include "config.hpp"
-#include "cuda_utils.hpp"
-#include "network_trt.hpp"
-#include "voxel_generator.hpp"
 
 namespace centerpoint
 {
@@ -43,13 +43,15 @@ public:
     engine_path_(std::move(engine_path)),
     pt_path_(std::move(pt_path)),
     trt_precision_(std::move(trt_precision)),
-    use_trt_(use_trt) {}
+    use_trt_(use_trt)
+  {
+  }
 
-  std::string onnx_path() const {return onnx_path_;}
-  std::string engine_path() const {return engine_path_;}
-  std::string pt_path() const {return pt_path_;}
-  std::string trt_precision() const {return trt_precision_;}
-  bool use_trt() const {return use_trt_;}
+  std::string onnx_path() const { return onnx_path_; }
+  std::string engine_path() const { return engine_path_; }
+  std::string pt_path() const { return pt_path_; }
+  std::string trt_precision() const { return trt_precision_; }
+  bool use_trt() const { return use_trt_; }
 
 private:
   std::string onnx_path_;

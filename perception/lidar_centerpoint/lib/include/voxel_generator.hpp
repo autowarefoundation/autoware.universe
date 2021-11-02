@@ -15,11 +15,11 @@
 #ifndef VOXEL_GENERATOR_HPP_
 #define VOXEL_GENERATOR_HPP_
 
-#include "torch/torch.h"
+#include <config.hpp>
 
-#include "sensor_msgs/msg/point_cloud2.hpp"
+#include <sensor_msgs/msg/point_cloud2.hpp>
 
-#include "config.hpp"
+#include <torch/torch.h>
 
 namespace centerpoint
 {
@@ -32,8 +32,8 @@ public:
 
 protected:
   float pointcloud_range_[6] = {Config::pointcloud_range_xmin, Config::pointcloud_range_ymin,
-    Config::pointcloud_range_zmin, Config::pointcloud_range_xmax,
-    Config::pointcloud_range_ymax, Config::pointcloud_range_zmax};
+                                Config::pointcloud_range_zmin, Config::pointcloud_range_xmax,
+                                Config::pointcloud_range_ymax, Config::pointcloud_range_zmax};
   float voxel_size_[3] = {Config::voxel_size_x, Config::voxel_size_y, Config::voxel_size_z};
   int grid_size_[3] = {Config::grid_size_x, Config::grid_size_y, Config::grid_size_z};
 };

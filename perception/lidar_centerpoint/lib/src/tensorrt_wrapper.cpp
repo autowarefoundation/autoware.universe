@@ -12,18 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <tensorrt_wrapper.hpp>
+
+#include <NvOnnxParser.h>
+
 #include <fstream>
 #include <memory>
 #include <string>
 
-#include <NvOnnxParser.h>
-
-#include "tensorrt_wrapper.hpp"
-
 namespace centerpoint
 {
-TensorRTWrapper::TensorRTWrapper(bool verbose)
-: logger_(Logger(verbose)) {}
+TensorRTWrapper::TensorRTWrapper(bool verbose) : logger_(Logger(verbose)) {}
 
 bool TensorRTWrapper::init(
   const std::string & onnx_path, const std::string & engine_path, const std::string & precision)
@@ -103,8 +102,8 @@ bool TensorRTWrapper::parseONNX(
     return false;
   }
 
-  std::cout << "Applying optimizations and building TRT CUDA engine (" << onnx_path << ") ..." <<
-    std::endl;
+  std::cout << "Applying optimizations and building TRT CUDA engine (" << onnx_path << ") ..."
+            << std::endl;
   engine_ = unique_ptr<nvinfer1::ICudaEngine>(builder->buildEngineWithConfig(*network, *config));
   if (!engine_) {
     std::cout << "Fail to create engine" << std::endl;

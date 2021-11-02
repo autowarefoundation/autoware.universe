@@ -12,15 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "lidar_centerpoint/node.hpp"
+
+#include <autoware_utils/geometry/geometry.hpp>
+#include <config.hpp>
+#include <pcl_ros/transforms.hpp>
+
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+
 #include <memory>
 #include <vector>
-
-#include "autoware_utils/geometry/geometry.hpp"
-#include "pcl_ros/transforms.hpp"
-#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
-
-#include "config.hpp"
-#include "lidar_centerpoint/node.hpp"
 
 namespace centerpoint
 {
@@ -46,15 +47,14 @@ LidarCenterPointNode::LidarCenterPointNode(const rclcpp::NodeOptions & node_opti
     head_onnx_path_, head_engine_path_, head_pt_path_, trt_precision_, use_head_trt_);
   densification_ptr_ = std::make_unique<PointCloudDensification>(
     densification_base_frame_, densification_past_frames_, this->get_clock());
-  detector_ptr_ = std::make_unique<CenterPointTRT>(vfe_param, head_param, /*verbose=*/ false);
+  detector_ptr_ = std::make_unique<CenterPointTRT>(vfe_param, head_param, /*verbose=*/false);
 
-  pointcloud_sub_ =
-    this->create_subscription<sensor_msgs::msg::PointCloud2>(
+  pointcloud_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "~/input/pointcloud", rclcpp::SensorDataQoS{}.keep_last(1),
     std::bind(&LidarCenterPointNode::pointCloudCallback, this, std::placeholders::_1));
   objects_pub_ =
     this->create_publisher<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>(
-    "~/output/objects", rclcpp::QoS{1});
+      "~/output/objects", rclcpp::QoS{1});
   pointcloud_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
     "~/debug/pointcloud_densification", rclcpp::SensorDataQoS{}.keep_last(1));
 }
@@ -62,11 +62,13 @@ LidarCenterPointNode::LidarCenterPointNode(const rclcpp::NodeOptions & node_opti
 void LidarCenterPointNode::pointCloudCallback(
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr input_pointcloud_msg)
 {
-  const auto objects_sub_count = objects_pub_->get_subscription_count() +
-    objects_pub_->get_intra_process_subscription_count();
+  const auto objects_sub_count =
+    objects_pub_->get_subscription_count() + objects_pub_->get_intra_process_subscription_count();
   const auto pointcloud_sub_count = pointcloud_pub_->get_subscription_count() +
-    pointcloud_pub_->get_intra_process_subscription_count();
-  if (objects_sub_count < 1 && pointcloud_sub_count < 1) {return;}
+                                    pointcloud_pub_->get_intra_process_subscription_count();
+  if (objects_sub_count < 1 && pointcloud_sub_count < 1) {
+    return;
+  }
 
   auto stacked_pointcloud_msg = densification_ptr_->stackPointCloud(*input_pointcloud_msg);
   std::vector<float> boxes3d_vec = detector_ptr_->detect(stacked_pointcloud_msg);
@@ -140,5 +142,5 @@ void LidarCenterPointNode::pointCloudCallback(
 
 }  // namespace centerpoint
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(centerpoint::LidarCenterPointNode)

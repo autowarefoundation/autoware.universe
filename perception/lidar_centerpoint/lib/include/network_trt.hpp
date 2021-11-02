@@ -15,7 +15,7 @@
 #ifndef NETWORK_TRT_HPP_
 #define NETWORK_TRT_HPP_
 
-#include "tensorrt_wrapper.hpp"
+#include <tensorrt_wrapper.hpp>
 
 namespace centerpoint
 {
