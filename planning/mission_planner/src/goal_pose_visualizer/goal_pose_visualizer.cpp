@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <mission_planner/goal_pose_visualizer.hpp>
+#include "mission_planner/goal_pose_visualizer.hpp"
 
 namespace mission_planner
 {
@@ -36,5 +36,5 @@ void GoalPoseVisualizer::echoBackRouteCallback(
 }
 }  // namespace mission_planner
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(mission_planner::GoalPoseVisualizer)

@@ -31,7 +31,6 @@ private:
   rclcpp::Subscription<autoware_planning_msgs::msg::Route>::SharedPtr sub_route_;
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_goal_pose_;
 
-
   void echoBackRouteCallback(const autoware_planning_msgs::msg::Route::ConstSharedPtr msg);
 };
 
