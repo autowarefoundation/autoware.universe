@@ -12,20 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <memory>
-#include <string>
-
-#include "pcl/point_types.h"
-
-#include "autoware_utils/autoware_utils.hpp"
-#include "nav_msgs/msg/occupancy_grid.hpp"
-#include "pcl_conversions/pcl_conversions.h"
-#include "pcl_ros/transforms.hpp"
-#include "tf2_eigen/tf2_eigen.h"
-#include "tf2_sensor_msgs/tf2_sensor_msgs.h"
+#include "laserscan_to_occupancy_grid_map/laserscan_to_occupancy_grid_map_node.hpp"
 
 #include "laserscan_to_occupancy_grid_map/cost_value.hpp"
-#include "laserscan_to_occupancy_grid_map/laserscan_to_occupancy_grid_map_node.hpp"
+
+#include <autoware_utils/autoware_utils.hpp>
+#include <pcl_ros/transforms.hpp>
+
+#include <nav_msgs/msg/occupancy_grid.hpp>
+
+#include <pcl/point_types.h>
+#include <pcl_conversions/pcl_conversions.h>
+#include <tf2_eigen/tf2_eigen.h>
+#include <tf2_sensor_msgs/tf2_sensor_msgs.h>
+
+#include <memory>
+#include <string>
 
 namespace
 {
@@ -65,8 +67,7 @@ bool cropPointcloudByHeight(
       pcl_ros::transformPointCloud(tf_matrix, input, trans_input_tmp);
     } catch (const tf2::TransformException & ex) {
       RCLCPP_WARN_THROTTLE(
-        rclcpp::get_logger("laserscan_to_occupancy_grid_map"),
-        clock, 5000, "%s", ex.what());
+        rclcpp::get_logger("laserscan_to_occupancy_grid_map"), clock, 5000, "%s", ex.what());
       return false;
     }
   }
@@ -75,9 +76,8 @@ bool cropPointcloudByHeight(
   // Apply height filter
   pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_output(new pcl::PointCloud<pcl::PointXYZ>);
   for (sensor_msgs::PointCloud2ConstIterator<float> iter_x(trans_input, "x"),
-    iter_y(trans_input, "y"), iter_z(trans_input, "z");
-    iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z)
-  {
+       iter_y(trans_input, "y"), iter_z(trans_input, "z");
+       iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z) {
     if (min_height < *iter_z && *iter_z < max_height) {
       pcl_output->push_back(pcl::PointXYZ(*iter_x, *iter_y, *iter_z));
     }
@@ -104,8 +104,8 @@ geometry_msgs::msg::Pose getPose(
 
 namespace occupancy_grid_map
 {
-using costmap_2d::OccupancyGridMapBBFUpdater;
 using costmap_2d::OccupancyGridMap;
+using costmap_2d::OccupancyGridMapBBFUpdater;
 using geometry_msgs::msg::Pose;
 
 OccupancyGridMapNode::OccupancyGridMapNode(const rclcpp::NodeOptions & node_options)
@@ -122,19 +122,17 @@ OccupancyGridMapNode::OccupancyGridMapNode(const rclcpp::NodeOptions & node_opti
   const double map_length{declare_parameter("map_length", 100.0)};
   const double map_resolution{declare_parameter("map_resolution", 0.5)};
   const bool input_obstacle_pointcloud{declare_parameter("input_obstacle_pointcloud", true)};
-  const bool input_obstacle_and_raw_pointcloud{declare_parameter(
-      "input_obstacle_and_raw_pointcloud", true)};
+  const bool input_obstacle_and_raw_pointcloud{
+    declare_parameter("input_obstacle_and_raw_pointcloud", true)};
 
   /* Subscriber and publisher */
   laserscan_sub_.subscribe(
-    this, "~/input/laserscan",
-    rclcpp::SensorDataQoS{}.keep_last(1).get_rmw_qos_profile());
+    this, "~/input/laserscan", rclcpp::SensorDataQoS{}.keep_last(1).get_rmw_qos_profile());
   obstacle_pointcloud_sub_.subscribe(
     this, "~/input/obstacle_pointcloud",
     rclcpp::SensorDataQoS{}.keep_last(1).get_rmw_qos_profile());
   raw_pointcloud_sub_.subscribe(
-    this, "~/input/raw_pointcloud",
-    rclcpp::SensorDataQoS{}.keep_last(1).get_rmw_qos_profile());
+    this, "~/input/raw_pointcloud", rclcpp::SensorDataQoS{}.keep_last(1).get_rmw_qos_profile());
   // add dummy callback to enable passthrough filter
   laserscan_sub_.registerCallback(std::bind(&OccupancyGridMapNode::onDummyPointCloud2, this, _1));
   if (input_obstacle_and_raw_pointcloud) {
@@ -148,8 +146,7 @@ OccupancyGridMapNode::OccupancyGridMapNode(const rclcpp::NodeOptions & node_opti
   }
 
   sync_ptr_->registerCallback(
-    std::bind(
-      &OccupancyGridMapNode::onLaserscanPointCloud2WithObstacleAndRaw, this, _1, _2, _3));
+    std::bind(&OccupancyGridMapNode::onLaserscanPointCloud2WithObstacleAndRaw, this, _1, _2, _3));
   occupancy_grid_map_pub_ = create_publisher<OccupancyGrid>("~/output/occupancy_grid_map", 1);
 
   /* Occupancy grid */
@@ -188,8 +185,7 @@ void OccupancyGridMapNode::onLaserscanPointCloud2WithObstacleAndRaw(
   const PointCloud2::ConstSharedPtr & input_raw_msg)
 {
   // Laserscan to pointcloud2
-  PointCloud2::ConstSharedPtr laserscan_pc_ptr =
-    convertLaserscanToPointCLoud2(input_laserscan_msg);
+  PointCloud2::ConstSharedPtr laserscan_pc_ptr = convertLaserscanToPointCLoud2(input_laserscan_msg);
 
   // Apply height filter
   PointCloud2 cropped_obstacle_pc{};
@@ -197,20 +193,18 @@ void OccupancyGridMapNode::onLaserscanPointCloud2WithObstacleAndRaw(
   if (use_height_filter_) {
     constexpr float min_height = -1.0, max_height = 2.0;
     if (!cropPointcloudByHeight(
-        *input_obstacle_msg, *tf2_, base_link_frame_, min_height, max_height, cropped_obstacle_pc))
-    {
+          *input_obstacle_msg, *tf2_, base_link_frame_, min_height, max_height,
+          cropped_obstacle_pc)) {
       return;
     }
     if (!cropPointcloudByHeight(
-        *input_raw_msg, *tf2_, base_link_frame_, min_height, max_height, cropped_raw_pc))
-    {
+          *input_raw_msg, *tf2_, base_link_frame_, min_height, max_height, cropped_raw_pc)) {
       return;
     }
   }
   const PointCloud2 & filtered_obstacle_pc =
     use_height_filter_ ? cropped_obstacle_pc : *input_obstacle_msg;
-  const PointCloud2 & filtered_raw_pc =
-    use_height_filter_ ? cropped_raw_pc : *input_raw_msg;
+  const PointCloud2 & filtered_raw_pc = use_height_filter_ ? cropped_raw_pc : *input_raw_msg;
 
   // Transform pointcloud and get frame pose
   PointCloud2 trans_laserscan_pc{};
@@ -243,10 +237,8 @@ void OccupancyGridMapNode::onLaserscanPointCloud2WithObstacleAndRaw(
   occupancy_grid_map_updater_ptr_->update(oneshot_occupancy_grid_map);
 
   // publish
-  occupancy_grid_map_pub_->publish(
-    OccupancyGridMapToMsgPtr(
-      map_frame_, laserscan_pc_ptr->header.stamp, pose.position.z,
-      *occupancy_grid_map_updater_ptr_));
+  occupancy_grid_map_pub_->publish(OccupancyGridMapToMsgPtr(
+    map_frame_, laserscan_pc_ptr->header.stamp, pose.position.z, *occupancy_grid_map_updater_ptr_));
 }
 
 OccupancyGrid::UniquePtr OccupancyGridMapNode::OccupancyGridMapToMsgPtr(
@@ -281,5 +273,5 @@ OccupancyGrid::UniquePtr OccupancyGridMapNode::OccupancyGridMapToMsgPtr(
 
 }  // namespace occupancy_grid_map
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(occupancy_grid_map::OccupancyGridMapNode)

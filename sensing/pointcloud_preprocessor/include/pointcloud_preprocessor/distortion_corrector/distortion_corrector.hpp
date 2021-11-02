@@ -15,17 +15,19 @@
 #ifndef POINTCLOUD_PREPROCESSOR__DISTORTION_CORRECTOR__DISTORTION_CORRECTOR_HPP_
 #define POINTCLOUD_PREPROCESSOR__DISTORTION_CORRECTOR__DISTORTION_CORRECTOR_HPP_
 
+#include <rclcpp/rclcpp.hpp>
+
+#include <geometry_msgs/msg/twist_stamped.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <sensor_msgs/point_cloud2_iterator.hpp>
+
+#include <tf2/convert.h>
+#include <tf2/transform_datatypes.h>
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
+
 #include <deque>
 #include <string>
-
-#include "geometry_msgs/msg/twist_stamped.hpp"
-#include "rclcpp/rclcpp.hpp"
-#include "sensor_msgs/point_cloud2_iterator.hpp"
-#include "sensor_msgs/msg/point_cloud2.hpp"
-#include "tf2/convert.h"
-#include "tf2/transform_datatypes.h"
-#include "tf2_ros/buffer.h"
-#include "tf2_ros/transform_listener.h"
 
 namespace pointcloud_preprocessor
 {
@@ -46,8 +48,7 @@ private:
     tf2::Transform * tf2_transform_ptr);
 
   bool undistortPointCloud(
-    const std::deque<TwistStamped> & twist_queue,
-    const tf2::Transform & tf2_base_link_to_sensor,
+    const std::deque<TwistStamped> & twist_queue, const tf2::Transform & tf2_base_link_to_sensor,
     PointCloud2 & points);
 
   rclcpp::Subscription<PointCloud2>::SharedPtr input_points_sub_;

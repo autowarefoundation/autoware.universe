@@ -50,13 +50,15 @@
  */
 
 #include "tier4_pcl_extensions/voxel_grid_nearest_centroid_impl.hpp"
-#include "pcl/filters/impl/voxel_grid.hpp"
+
+#include <pcl/filters/impl/voxel_grid.hpp>
 
 #ifndef PCL_NO_PRECOMPILE
-#include "pcl/point_types.h"
-#include "pcl/impl/instantiate.hpp"
+#include <pcl/impl/instantiate.hpp>
+
+#include <pcl/point_types.h>
 
 // Instantiations of specific point types
 PCL_INSTANTIATE(VoxelGridNearestCentroid, PCL_XYZ_POINT_TYPES)
 
-#endif    // PCL_NO_PRECOMPILE
+#endif  // PCL_NO_PRECOMPILE

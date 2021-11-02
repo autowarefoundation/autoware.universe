@@ -15,10 +15,11 @@
 #ifndef POINTCLOUD_PREPROCESSOR__POINTCLOUD_ACCUMULATOR__POINTCLOUD_ACCUMULATOR_NODELET_HPP_
 #define POINTCLOUD_PREPROCESSOR__POINTCLOUD_ACCUMULATOR__POINTCLOUD_ACCUMULATOR_NODELET_HPP_
 
-#include <vector>
-
-#include "boost/circular_buffer.hpp"
 #include "pointcloud_preprocessor/filter.hpp"
+
+#include <boost/circular_buffer.hpp>
+
+#include <vector>
 
 namespace pointcloud_preprocessor
 {

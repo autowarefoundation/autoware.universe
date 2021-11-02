@@ -68,7 +68,7 @@ struct CostTranslationTable
       data[i] = std::max(std::min(value, static_cast<char>(99)), static_cast<char>(1));
     }
   }
-  char operator[](unsigned char n) const {return data[n];}
+  char operator[](unsigned char n) const { return data[n]; }
   char data[256];
 };
 static const CostTranslationTable cost_translation_table;

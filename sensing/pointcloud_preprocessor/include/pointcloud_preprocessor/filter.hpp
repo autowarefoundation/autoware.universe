@@ -57,39 +57,37 @@
 #include <vector>
 
 // PCL includes
-#include "pcl/filters/filter.h"
+#include <boost/thread/mutex.hpp>
 
-#include "sensor_msgs/msg/point_cloud2.h"
-#include "boost/thread/mutex.hpp"
+#include <pcl/filters/filter.h>
+#include <sensor_msgs/msg/point_cloud2.h>
 // PCL includes
-#include "pcl/pcl_base.h"
-#include "pcl/point_types.h"
-#include "pcl_conversions/pcl_conversions.h"
-#include "pcl_msgs/msg/model_coefficients.h"
-#include "pcl_msgs/msg/point_indices.h"
-
-#include "message_filters/subscriber.h"
-#include "message_filters/sync_policies/approximate_time.h"
-#include "message_filters/sync_policies/exact_time.h"
-#include "message_filters/synchronizer.h"
+#include <message_filters/subscriber.h>
+#include <message_filters/sync_policies/approximate_time.h>
+#include <message_filters/sync_policies/exact_time.h>
+#include <message_filters/synchronizer.h>
+#include <pcl/pcl_base.h>
+#include <pcl/point_types.h>
+#include <pcl_conversions/pcl_conversions.h>
+#include <pcl_msgs/msg/model_coefficients.h>
+#include <pcl_msgs/msg/point_indices.h>
 
 // Include TF
-#include "tf2_ros/buffer.h"
-#include "tf2_ros/create_timer_ros.h"
-#include "tf2_ros/transform_listener.h"
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/create_timer_ros.h>
+#include <tf2_ros/transform_listener.h>
 
 namespace pointcloud_preprocessor
 {
 namespace sync_policies = message_filters::sync_policies;
 
 /** \brief For parameter service callback */
-template<typename T>
+template <typename T>
 bool get_param(const std::vector<rclcpp::Parameter> & p, const std::string & name, T & value)
 {
-  auto it = std::find_if(
-    p.cbegin(), p.cend(), [&name](const rclcpp::Parameter & parameter) {
-      return parameter.get_name() == name;
-    });
+  auto it = std::find_if(p.cbegin(), p.cend(), [&name](const rclcpp::Parameter & parameter) {
+    return parameter.get_name() == name;
+  });
   if (it != p.cend()) {
     value = it->template get_value<T>();
     return true;
@@ -97,9 +95,8 @@ bool get_param(const std::vector<rclcpp::Parameter> & p, const std::string & nam
   return false;
 }
 
-/** \brief @b Filter represents the base filter class. Some generic 3D operations that are applicable to all filters
- * are defined here as static methods.
- * \author Radu Bogdan Rusu
+/** \brief @b Filter represents the base filter class. Some generic 3D operations that are
+ * applicable to all filters are defined here as static methods. \author Radu Bogdan Rusu
  */
 class Filter : public rclcpp::Node
 {
@@ -153,8 +150,8 @@ protected:
   /** \brief The maximum allowed filter value a point will be considered from. */
   double filter_limit_max_;
 
-  /** \brief Set to true if we want to return the data outside (\a filter_limit_min_;\a filter_limit_max_).
-   * Default: false. */
+  /** \brief Set to true if we want to return the data outside (\a filter_limit_min_;\a
+   * filter_limit_max_). Default: false. */
   bool filter_limit_negative_;
 
   /** \brief The input TF frame the data should be transformed into,
@@ -225,8 +222,7 @@ protected:
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
 
   inline bool isValid(
-    const PointCloud2ConstPtr & cloud,
-    const std::string & /*topic_name*/ = "input")
+    const PointCloud2ConstPtr & cloud, const std::string & /*topic_name*/ = "input")
   {
     if (cloud->width * cloud->height * cloud->point_step != cloud->data.size()) {
       RCLCPP_WARN(

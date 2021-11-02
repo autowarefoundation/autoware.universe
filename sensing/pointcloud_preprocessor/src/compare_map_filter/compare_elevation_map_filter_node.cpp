@@ -12,24 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "pointcloud_preprocessor/compare_map_filter/compare_elevation_map_filter_node.hpp"
+
+#include <grid_map_core/GridMap.hpp>
+#include <grid_map_cv/GridMapCvConverter.hpp>
+#include <grid_map_pcl/GridMapPclLoader.hpp>
+#include <grid_map_pcl/helpers.hpp>
+#include <grid_map_ros/GridMapRosConverter.hpp>
+#include <rclcpp/rclcpp.hpp>
+
+#include <grid_map_msgs/msg/grid_map.hpp>
+
 #include <glob.h>
+#include <pcl/io/pcd_io.h>
+#include <pcl/point_types.h>
+#include <pcl_conversions/pcl_conversions.h>
+#include <rcutils/filesystem.h>  // To be replaced by std::filesystem in C++17
+
 #include <memory>
 #include <string>
 #include <utility>
-
-#include "grid_map_core/GridMap.hpp"
-#include "grid_map_cv/GridMapCvConverter.hpp"
-#include "grid_map_msgs/msg/grid_map.hpp"
-#include "grid_map_pcl/GridMapPclLoader.hpp"
-#include "grid_map_pcl/helpers.hpp"
-#include "grid_map_ros/GridMapRosConverter.hpp"
-#include "pcl/io/pcd_io.h"
-#include "pcl/point_types.h"
-#include "pcl_conversions/pcl_conversions.h"
-#include "rclcpp/rclcpp.hpp"
-#include "rcutils/filesystem.h"  // To be replaced by std::filesystem in C++17
-
-#include "pointcloud_preprocessor/compare_map_filter/compare_elevation_map_filter_node.hpp"
 
 namespace pointcloud_preprocessor
 {
@@ -94,5 +96,5 @@ void CompareElevationMapFilterComponent::filter(
 }
 }  // namespace pointcloud_preprocessor
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(pointcloud_preprocessor::CompareElevationMapFilterComponent)

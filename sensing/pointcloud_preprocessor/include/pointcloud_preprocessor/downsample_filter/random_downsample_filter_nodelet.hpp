@@ -51,10 +51,11 @@
 #ifndef POINTCLOUD_PREPROCESSOR__DOWNSAMPLE_FILTER__RANDOM_DOWNSAMPLE_FILTER_NODELET_HPP_
 #define POINTCLOUD_PREPROCESSOR__DOWNSAMPLE_FILTER__RANDOM_DOWNSAMPLE_FILTER_NODELET_HPP_
 
-#include <vector>
-
-#include "pcl/filters/random_sample.h"
 #include "pointcloud_preprocessor/filter.hpp"
+
+#include <pcl/filters/random_sample.h>
+
+#include <vector>
 
 namespace pointcloud_preprocessor
 {

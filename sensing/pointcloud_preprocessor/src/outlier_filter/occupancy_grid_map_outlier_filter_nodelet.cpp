@@ -12,22 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "pointcloud_preprocessor/outlier_filter/occupancy_grid_map_outlier_filter_nodelet.hpp"
+
+#include <autoware_utils/autoware_utils.hpp>
+#include <pcl_ros/transforms.hpp>
+
+#include <boost/optional.hpp>
+
+#include <pcl/point_types.h>
+#include <pcl_conversions/pcl_conversions.h>
+#include <tf2_eigen/tf2_eigen.h>
+
 #include <algorithm>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
-
-#include "boost/optional.hpp"
-
-#include "pcl/point_types.h"
-
-#include "autoware_utils/autoware_utils.hpp"
-#include "pcl_conversions/pcl_conversions.h"
-#include "pcl_ros/transforms.hpp"
-#include "tf2_eigen/tf2_eigen.h"
-
-#include "pointcloud_preprocessor/outlier_filter/occupancy_grid_map_outlier_filter_nodelet.hpp"
 
 namespace
 {
@@ -42,8 +42,8 @@ bool transformPointcloud(
       target_frame, input.header.frame_id, input.header.stamp, rclcpp::Duration::from_seconds(0.5));
   } catch (const tf2::TransformException & ex) {
     RCLCPP_WARN_THROTTLE(
-      rclcpp::get_logger("pointcloud_processor").get_child(
-        "occupancy_grid_map_outlier_filter"), clock, 5000, "%s", ex.what());
+      rclcpp::get_logger("pointcloud_processor").get_child("occupancy_grid_map_outlier_filter"),
+      clock, 5000, "%s", ex.what());
     return false;
   }
   // transform pointcloud
@@ -65,8 +65,8 @@ geometry_msgs::msg::PoseStamped getPoseStamped(
       tf2.lookupTransform(target_frame_id, src_frame_id, time, rclcpp::Duration::from_seconds(0.5));
   } catch (const tf2::TransformException & ex) {
     RCLCPP_WARN_THROTTLE(
-      rclcpp::get_logger("pointcloud_processor").get_child(
-        "occupancy_grid_map_outlier_filter"), clock, 5000, "%s", ex.what());
+      rclcpp::get_logger("pointcloud_processor").get_child("occupancy_grid_map_outlier_filter"),
+      clock, 5000, "%s", ex.what());
   }
   return autoware_utils::transform2pose(tf_stamped);
 }
@@ -101,8 +101,8 @@ namespace pointcloud_preprocessor
 RadiusSearch2dfilter::RadiusSearch2dfilter(rclcpp::Node & node)
 {
   search_radius_ = node.declare_parameter("radius_search_2d_filter.search_radius", 1.0f);
-  min_points_and_distance_ratio_ = node.declare_parameter(
-    "radius_search_2d_filter.min_points_and_distance_ratio", 400.0f);
+  min_points_and_distance_ratio_ =
+    node.declare_parameter("radius_search_2d_filter.min_points_and_distance_ratio", 400.0f);
   min_points_ = node.declare_parameter("radius_search_2d_filter.min_points", 4);
   max_points_ = node.declare_parameter("radius_search_2d_filter.max_points", 70);
   kd_tree_ = boost::make_shared<pcl::search::KdTree<pcl::PointXY>>(false);
@@ -139,8 +139,7 @@ void RadiusSearch2dfilter::filter(
 }
 
 void RadiusSearch2dfilter::filter(
-  const PclPointCloud & high_conf_input,
-  const PclPointCloud & low_conf_input, const Pose & pose,
+  const PclPointCloud & high_conf_input, const PclPointCloud & low_conf_input, const Pose & pose,
   PclPointCloud & output, PclPointCloud & outlier)
 {
   const auto & high_conf_xyz_cloud = high_conf_input;
@@ -195,10 +194,9 @@ OccupancyGridMapOutlierFilterComponent::OccupancyGridMapOutlierFilterComponent(
   occupancy_grid_map_sub_.subscribe(
     this, "~/input/occupancy_grid_map", rclcpp::QoS{1}.get_rmw_qos_profile());
   sync_ptr_ = std::make_shared<Sync>(SyncPolicy(5), occupancy_grid_map_sub_, pointcloud_sub_);
-  sync_ptr_->registerCallback(
-    std::bind(
-      &OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2, this,
-      std::placeholders::_1, std::placeholders::_2));
+  sync_ptr_->registerCallback(std::bind(
+    &OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2, this,
+    std::placeholders::_1, std::placeholders::_2));
   pointcloud_pub_ = create_publisher<PointCloud2>("~/output/pointcloud", rclcpp::SensorDataQoS());
 
   /* Radius search 2d filter */
@@ -206,7 +204,9 @@ OccupancyGridMapOutlierFilterComponent::OccupancyGridMapOutlierFilterComponent(
     radius_search_2d_filter_ptr_ = std::make_shared<RadiusSearch2dfilter>(*this);
   }
   /* debugger */
-  if (enable_debugger) {debugger_ptr_ = std::make_shared<Debugger>(*this);}
+  if (enable_debugger) {
+    debugger_ptr_ = std::make_shared<Debugger>(*this);
+  }
 }
 
 void OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2(
@@ -228,8 +228,7 @@ void OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2(
     auto pc_frame_pose_stamped = getPoseStamped(
       *tf2_, input_ogm->header.frame_id, input_pc->header.frame_id, input_ogm->header.stamp);
     radius_search_2d_filter_ptr_->filter(
-      high_confidence_pc, low_confidence_pc, pc_frame_pose_stamped.pose,
-      filtered_low_confidence_pc,
+      high_confidence_pc, low_confidence_pc, pc_frame_pose_stamped.pose, filtered_low_confidence_pc,
       outlier_pc);
   } else {
     outlier_pc = low_confidence_pc;
@@ -243,8 +242,7 @@ void OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2(
     pcl::toROSMsg(concat_pc, ogm_frame_filtered_pc);
     ogm_frame_filtered_pc.header = ogm_frame_pc.header;
     if (!transformPointcloud(
-        ogm_frame_filtered_pc, *tf2_, base_link_frame_, *base_link_frame_filtered_pc_ptr))
-    {
+          ogm_frame_filtered_pc, *tf2_, base_link_frame_, *base_link_frame_filtered_pc_ptr)) {
       return;
     }
     auto pc_ptr = std::make_unique<PointCloud2>();
@@ -258,14 +256,12 @@ void OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2(
 }
 
 void OccupancyGridMapOutlierFilterComponent::filterByOccupancyGridMap(
-  const OccupancyGrid & occupancy_grid_map,
-  const PointCloud2 & pointcloud,
+  const OccupancyGrid & occupancy_grid_map, const PointCloud2 & pointcloud,
   PclPointCloud & high_confidence, PclPointCloud & low_confidence)
 {
   for (sensor_msgs::PointCloud2ConstIterator<float> x(pointcloud, "x"), y(pointcloud, "y"),
-    z(pointcloud, "z");
-    x != x.end(); ++x, ++y, ++z)
-  {
+       z(pointcloud, "z");
+       x != x.end(); ++x, ++y, ++z) {
     const auto cost = getCost(occupancy_grid_map, *x, *y);
     if (cost) {
       if (cost_threshold_ < *cost) {
@@ -325,5 +321,5 @@ void OccupancyGridMapOutlierFilterComponent::Debugger::transformToBaseLink(
 
 }  // namespace pointcloud_preprocessor
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(pointcloud_preprocessor::OccupancyGridMapOutlierFilterComponent)

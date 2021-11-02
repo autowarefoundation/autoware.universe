@@ -15,20 +15,21 @@
 #ifndef POINTCLOUD_PREPROCESSOR__GROUND_FILTER__SCAN_GROUND_FILTER_NODELET_HPP_
 #define POINTCLOUD_PREPROCESSOR__GROUND_FILTER__SCAN_GROUND_FILTER_NODELET_HPP_
 
+#include "pointcloud_preprocessor/filter.hpp"
+
+#include <vehicle_info_util/vehicle_info.hpp>
+
+#include <sensor_msgs/msg/point_cloud2.hpp>
+
+#include <pcl/filters/extract_indices.h>
+#include <pcl/filters/voxel_grid.h>
+#include <pcl_conversions/pcl_conversions.h>
+#include <tf2/transform_datatypes.h>
+#include <tf2_eigen/tf2_eigen.h>
+#include <tf2_ros/transform_listener.h>
+
 #include <string>
 #include <vector>
-
-#include "pcl/filters/extract_indices.h"
-#include "pcl/filters/voxel_grid.h"
-
-#include "pcl_conversions/pcl_conversions.h"
-#include "sensor_msgs/msg/point_cloud2.hpp"
-#include "tf2/transform_datatypes.h"
-#include "tf2_eigen/tf2_eigen.h"
-#include "tf2_ros/transform_listener.h"
-#include "vehicle_info_util/vehicle_info.hpp"
-
-#include "pointcloud_preprocessor/filter.hpp"
 
 namespace pointcloud_preprocessor
 {
@@ -40,8 +41,7 @@ private:
   // classified point label
   // (0: not classified, 1: ground, 2: not ground, 3: follow previous point,
   //  4: unkown(currently not used), 5: virtual ground)
-  enum class PointLabel
-  {
+  enum class PointLabel {
     INIT = 0,
     GROUND,
     NON_GROUND,
@@ -61,7 +61,6 @@ private:
   };
   using PointCloudRefVector = std::vector<PointRef>;
 
-
   struct PointsCentroid
   {
     float radius_sum;
@@ -71,12 +70,9 @@ private:
     uint32_t point_num;
 
     PointsCentroid()
-    : radius_sum(0.0f),
-      height_sum(0.0f),
-      radius_avg(0.0f),
-      height_avg(0.0f),
-      point_num(0)
-    {}
+    : radius_sum(0.0f), height_sum(0.0f), radius_avg(0.0f), height_avg(0.0f), point_num(0)
+    {
+    }
 
     void initialize()
     {
@@ -96,20 +92,11 @@ private:
       height_avg = height_sum / point_num;
     }
 
-    float getAverageSlope()
-    {
-      return std::atan2(height_avg, radius_avg);
-    }
+    float getAverageSlope() { return std::atan2(height_avg, radius_avg); }
 
-    float getAverageHeight()
-    {
-      return height_avg;
-    }
+    float getAverageHeight() { return height_avg; }
 
-    float getAverageRadius()
-    {
-      return radius_avg;
-    }
+    float getAverageRadius() { return radius_avg; }
   };
 
   void filter(
@@ -129,7 +116,6 @@ private:
   bool use_virtual_ground_point_;
   size_t radial_dividers_num_;
   VehicleInfo vehicle_info_;
-
 
   /*!
    * Output transformed PointCloud from in_cloud_ptr->header.frame_id to in_target_frame

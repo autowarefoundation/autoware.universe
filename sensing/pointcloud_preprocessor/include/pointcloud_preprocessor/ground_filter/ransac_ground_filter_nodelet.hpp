@@ -15,23 +15,22 @@
 #ifndef POINTCLOUD_PREPROCESSOR__GROUND_FILTER__RANSAC_GROUND_FILTER_NODELET_HPP_
 #define POINTCLOUD_PREPROCESSOR__GROUND_FILTER__RANSAC_GROUND_FILTER_NODELET_HPP_
 
+#include "pointcloud_preprocessor/filter.hpp"
+
+#include <geometry_msgs/msg/pose_array.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+
+#include <pcl/filters/extract_indices.h>
+#include <pcl/filters/voxel_grid.h>
+#include <pcl/segmentation/sac_segmentation.h>
+#include <pcl_conversions/pcl_conversions.h>
+#include <tf2/transform_datatypes.h>
+#include <tf2_eigen/tf2_eigen.h>
+#include <tf2_ros/transform_listener.h>
+
 #include <chrono>
 #include <string>
 #include <vector>
-
-#include "geometry_msgs/msg/pose_array.hpp"
-#include "sensor_msgs/msg/point_cloud2.hpp"
-
-#include "tf2/transform_datatypes.h"
-#include "tf2_eigen/tf2_eigen.h"
-#include "tf2_ros/transform_listener.h"
-
-#include "pcl/filters/extract_indices.h"
-#include "pcl/filters/voxel_grid.h"
-#include "pcl/segmentation/sac_segmentation.h"
-#include "pcl_conversions/pcl_conversions.h"
-
-#include "pointcloud_preprocessor/filter.hpp"
 
 namespace pointcloud_preprocessor
 {
@@ -89,8 +88,8 @@ private:
     const PointCloud2::SharedPtr & out_cloud_ptr);
 
   /*!
-   * Returns the resulting complementary PointCloud, one with the points kept and the other removed as indicated
-   * in the indices
+   * Returns the resulting complementary PointCloud, one with the points kept and the other removed
+   * as indicated in the indices
    * @param in_cloud_ptr Input PointCloud to which the extraction will be performed
    * @param in_indices Indices of the points to be both removed and kept
    * @param out_only_indices_cloud_ptr Resulting PointCloud with the indices kept
@@ -105,14 +104,12 @@ private:
     const pcl::PointCloud<PointType> segment_ground_cloud, const Eigen::Vector3d & plane_normal);
 
   void applyRANSAC(
-    const pcl::PointCloud<PointType>::Ptr & input,
-    pcl::PointIndices::Ptr & output_inliers,
+    const pcl::PointCloud<PointType>::Ptr & input, pcl::PointIndices::Ptr & output_inliers,
     pcl::ModelCoefficients::Ptr & output_coefficients);
 
   void publishDebugMessage(
     const geometry_msgs::msg::PoseArray & debug_pose_array,
-    const pcl::PointCloud<PointType> & ground_cloud,
-    const std_msgs::msg::Header & header);
+    const pcl::PointCloud<PointType> & ground_cloud, const std_msgs::msg::Header & header);
 
   void setDebugPublisher();
 

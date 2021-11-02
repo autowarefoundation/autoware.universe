@@ -56,14 +56,14 @@
 #ifndef POINTCLOUD_PREPROCESSOR__GROUND_FILTER__GENCOLORS_HPP_
 #define POINTCLOUD_PREPROCESSOR__GROUND_FILTER__GENCOLORS_HPP_
 
+#include <opencv2/core/core.hpp>
+
+#include <opencv2/core/core_c.h>
+
 #include <iostream>
 #include <vector>
-
-#include "opencv2/core/core.hpp"
-#include "opencv2/core/core_c.h"
-//  #include "precomp.hpp"
-#include "opencv2/opencv.hpp"
-
+//  #include <precomp.hpp>
+#include <opencv2/opencv.hpp>
 
 namespace ray_ground_filter
 {
@@ -79,7 +79,9 @@ inline static void downsamplePoints(const Mat & src, Mat & dst, size_t count)
   dst.create(1, static_cast<int>(count), CV_8UC3);
   // TODO(YamatoAndo): optimize by exploiting symmetry in the distance matrix
   Mat dists(static_cast<int>(src.total()), static_cast<int>(src.total()), CV_32FC1, Scalar(0));
-  if (dists.empty()) {std::cerr << "Such big matrix can't be created." << std::endl;}
+  if (dists.empty()) {
+    std::cerr << "Such big matrix can't be created." << std::endl;
+  }
 
   for (int i = 0; i < dists.rows; i++) {
     for (int j = i; j < dists.cols; j++) {
@@ -113,7 +115,9 @@ inline static void downsamplePoints(const Mat & src, Mat & dst, size_t count)
 
 inline void generateColors(std::vector<Scalar> & colors, size_t count, size_t factor = 100)
 {
-  if (count < 1) {return;}
+  if (count < 1) {
+    return;
+  }
 
   colors.resize(count);
 

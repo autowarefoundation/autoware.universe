@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <vector>
-
 #include "pointcloud_preprocessor/pointcloud_accumulator/pointcloud_accumulator_nodelet.hpp"
+
+#include <vector>
 
 namespace pointcloud_preprocessor
 {
@@ -75,5 +75,5 @@ rcl_interfaces::msg::SetParametersResult PointcloudAccumulatorComponent::paramCa
 }
 }  // namespace pointcloud_preprocessor
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(pointcloud_preprocessor::PointcloudAccumulatorComponent)

@@ -15,8 +15,9 @@
 #ifndef LASERSCAN_TO_OCCUPANCY_GRID_MAP__UPDATER__OCCUPANCY_GRID_MAP_UPDATER_INTERFACE_HPP_
 #define LASERSCAN_TO_OCCUPANCY_GRID_MAP__UPDATER__OCCUPANCY_GRID_MAP_UPDATER_INTERFACE_HPP_
 
-#include "nav2_costmap_2d/costmap_2d.hpp"
 #include "laserscan_to_occupancy_grid_map/cost_value.hpp"
+
+#include <nav2_costmap_2d/costmap_2d.hpp>
 
 namespace costmap_2d
 {
@@ -26,7 +27,9 @@ public:
   OccupancyGridMapUpdaterInterface(
     const unsigned int cells_size_x, const unsigned int cells_size_y, const float resolution)
   : Costmap2D(
-      cells_size_x, cells_size_y, resolution, 0.f, 0.f, occupancy_cost_value::NO_INFORMATION) {}
+      cells_size_x, cells_size_y, resolution, 0.f, 0.f, occupancy_cost_value::NO_INFORMATION)
+  {
+  }
   virtual ~OccupancyGridMapUpdaterInterface() = default;
   virtual bool update(const Costmap2D & oneshot_occupancy_grid_map) = 0;
 };

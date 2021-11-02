@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <algorithm>
-#include <vector>
-
 #include "pointcloud_preprocessor/outlier_filter/ring_outlier_filter_nodelet.hpp"
 
-#include "pcl/kdtree/kdtree_flann.h"
-#include "pcl/search/kdtree.h"
-#include "pcl/segmentation/segment_differences.h"
+#include <pcl/kdtree/kdtree_flann.h>
+#include <pcl/search/kdtree.h>
+#include <pcl/segmentation/segment_differences.h>
+
+#include <algorithm>
+#include <vector>
 
 namespace pointcloud_preprocessor
 {
@@ -69,8 +69,7 @@ void RingOutlierFilterComponent::filter(
     }
 
     for (auto iter = std::begin(ring_pointcloud.points);
-      iter != std::end(ring_pointcloud.points) - 1; ++iter)
-    {
+         iter != std::end(ring_pointcloud.points) - 1; ++iter) {
       p.x = iter->x;
       p.y = iter->y;
       p.z = iter->z;
@@ -89,13 +88,12 @@ void RingOutlierFilterComponent::filter(
       if (
         static_cast<int>(pcl_tmp.points.size()) > num_points_threshold_ ||
         (pcl_tmp.points.front().x - pcl_tmp.points.back().x) *
-        (pcl_tmp.points.front().x - pcl_tmp.points.back().x) +
-        (pcl_tmp.points.front().y - pcl_tmp.points.back().y) *
-        (pcl_tmp.points.front().y - pcl_tmp.points.back().y) +
-        (pcl_tmp.points.front().z - pcl_tmp.points.back().z) *
-        (pcl_tmp.points.front().z - pcl_tmp.points.back().z) >=
-        object_length_threshold_ * object_length_threshold_)
-      {
+              (pcl_tmp.points.front().x - pcl_tmp.points.back().x) +
+            (pcl_tmp.points.front().y - pcl_tmp.points.back().y) *
+              (pcl_tmp.points.front().y - pcl_tmp.points.back().y) +
+            (pcl_tmp.points.front().z - pcl_tmp.points.back().z) *
+              (pcl_tmp.points.front().z - pcl_tmp.points.back().z) >=
+          object_length_threshold_ * object_length_threshold_) {
         for (const auto & tmp_p : pcl_tmp.points) {
           pcl_output->points.push_back(tmp_p);
         }
@@ -107,13 +105,12 @@ void RingOutlierFilterComponent::filter(
     if (
       static_cast<int>(pcl_tmp.points.size()) > num_points_threshold_ ||
       (pcl_tmp.points.front().x - pcl_tmp.points.back().x) *
-      (pcl_tmp.points.front().x - pcl_tmp.points.back().x) +
-      (pcl_tmp.points.front().y - pcl_tmp.points.back().y) *
-      (pcl_tmp.points.front().y - pcl_tmp.points.back().y) +
-      (pcl_tmp.points.front().z - pcl_tmp.points.back().z) *
-      (pcl_tmp.points.front().z - pcl_tmp.points.back().z) >=
-      object_length_threshold_ * object_length_threshold_)
-    {
+            (pcl_tmp.points.front().x - pcl_tmp.points.back().x) +
+          (pcl_tmp.points.front().y - pcl_tmp.points.back().y) *
+            (pcl_tmp.points.front().y - pcl_tmp.points.back().y) +
+          (pcl_tmp.points.front().z - pcl_tmp.points.back().z) *
+            (pcl_tmp.points.front().z - pcl_tmp.points.back().z) >=
+        object_length_threshold_ * object_length_threshold_) {
       for (const auto & tmp_p : pcl_tmp.points) {
         pcl_output->points.push_back(tmp_p);
       }
@@ -149,5 +146,5 @@ rcl_interfaces::msg::SetParametersResult RingOutlierFilterComponent::paramCallba
 }
 }  // namespace pointcloud_preprocessor
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(pointcloud_preprocessor::RingOutlierFilterComponent)

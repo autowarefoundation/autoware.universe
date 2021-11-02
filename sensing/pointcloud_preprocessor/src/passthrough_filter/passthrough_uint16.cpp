@@ -163,7 +163,9 @@ void pcl::PassThroughUInt16<pcl::PCLPointCloud2>::applyFilter(PCLPointCloud2 & o
             memcpy(&output.data[xyz_offset[2]], &badpt, sizeof(std::uint16_t));
             continue;
           } else {
-            if (extract_removed_indices_) {(*removed_indices_)[nr_removed_p++] = cp;}
+            if (extract_removed_indices_) {
+              (*removed_indices_)[nr_removed_p++] = cp;
+            }
           }
         } else {
           // Use a threshold for cutting out points which are too close/far away
@@ -174,7 +176,9 @@ void pcl::PassThroughUInt16<pcl::PCLPointCloud2>::applyFilter(PCLPointCloud2 & o
             memcpy(&output.data[xyz_offset[2]], &badpt, sizeof(std::uint16_t));
             continue;
           } else {
-            if (extract_removed_indices_) {(*removed_indices_)[nr_removed_p++] = cp;}
+            if (extract_removed_indices_) {
+              (*removed_indices_)[nr_removed_p++] = cp;
+            }
           }
         }
       }
@@ -190,7 +194,9 @@ void pcl::PassThroughUInt16<pcl::PCLPointCloud2>::applyFilter(PCLPointCloud2 & o
 
         // Remove NAN/INF/-INF values. We expect passthrough to output clean valid data.
         if (!std::isfinite(distance_value)) {
-          if (extract_removed_indices_) {(*removed_indices_)[nr_removed_p++] = cp;}
+          if (extract_removed_indices_) {
+            (*removed_indices_)[nr_removed_p++] = cp;
+          }
           continue;
         }
 
@@ -235,9 +241,9 @@ void pcl::PassThroughUInt16<pcl::PCLPointCloud2>::applyFilter(PCLPointCloud2 & o
         nr_p++;
       }
       output.width = nr_p;
-    }  // !keep_organized_
-  } else { // No distance filtering, process all data.
-           // No need to check for is_organized here as we did it above
+    }       // !keep_organized_
+  } else {  // No distance filtering, process all data.
+            // No need to check for is_organized here as we did it above
     for (int cp = 0; cp < nr_points; ++cp, xyz_offset += input_->point_step) {
       // Unoptimized memcpys: assume fields x, y, z are in random order
       memcpy(&pt[0], &input_->data[xyz_offset[0]], sizeof(std::uint16_t));
@@ -269,8 +275,9 @@ void pcl::PassThroughUInt16<pcl::PCLPointCloud2>::applyFilter(PCLPointCloud2 & o
 }
 
 #ifndef PCL_NO_PRECOMPILE
-#include "pcl/point_types.h"
-#include "pcl/impl/instantiate.hpp"
+#include <pcl/impl/instantiate.hpp>
+
+#include <pcl/point_types.h>
 
 // Instantiations of specific point types
 PCL_INSTANTIATE(PassThroughUInt16, PCL_XYZ_POINT_TYPES)

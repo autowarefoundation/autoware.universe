@@ -15,11 +15,12 @@
 #ifndef POINTCLOUD_PREPROCESSOR__OUTLIER_FILTER__RING_OUTLIER_FILTER_NODELET_HPP_
 #define POINTCLOUD_PREPROCESSOR__OUTLIER_FILTER__RING_OUTLIER_FILTER_NODELET_HPP_
 
-#include <vector>
-
-#include "pcl/filters/voxel_grid.h"
-#include "pcl/search/pcl_search.h"
 #include "pointcloud_preprocessor/filter.hpp"
+
+#include <pcl/filters/voxel_grid.h>
+#include <pcl/search/pcl_search.h>
+
+#include <vector>
 
 namespace pointcloud_preprocessor
 {
@@ -75,7 +76,6 @@ POINT_CLOUD_REGISTER_POINT_STRUCT(
     float, azimuth, azimuth)(float, distance, distance)(double, time_stamp, time_stamp))
 
 POINT_CLOUD_REGISTER_POINT_STRUCT(
-  custom_pcl::PointXYZI,
-  (float, x, x)(float, y, y)(float, z, z)(float, intensity, intensity))
+  custom_pcl::PointXYZI, (float, x, x)(float, y, y)(float, z, z)(float, intensity, intensity))
 
 #endif  // POINTCLOUD_PREPROCESSOR__OUTLIER_FILTER__RING_OUTLIER_FILTER_NODELET_HPP_

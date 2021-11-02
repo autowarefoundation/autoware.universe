@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <vector>
-
 #include "pointcloud_preprocessor/outlier_filter/voxel_grid_outlier_filter_nodelet.hpp"
 
-#include "pcl/kdtree/kdtree_flann.h"
-#include "pcl/search/kdtree.h"
-#include "pcl/segmentation/segment_differences.h"
+#include <pcl/kdtree/kdtree_flann.h>
+#include <pcl/search/kdtree.h>
+#include <pcl/segmentation/segment_differences.h>
+
+#include <vector>
 
 namespace pointcloud_preprocessor
 {
@@ -56,9 +56,8 @@ void VoxelGridOutlierFilterComponent::filter(
 
   pcl_output->points.reserve(pcl_input->points.size());
   for (size_t i = 0; i < pcl_input->points.size(); ++i) {
-    const int index = voxel_filter.getCentroidIndexAt(
-      voxel_filter.getGridCoordinates(
-        pcl_input->points.at(i).x, pcl_input->points.at(i).y, pcl_input->points.at(i).z));
+    const int index = voxel_filter.getCentroidIndexAt(voxel_filter.getGridCoordinates(
+      pcl_input->points.at(i).x, pcl_input->points.at(i).y, pcl_input->points.at(i).z));
     if (index != -1) {  // not empty voxel
       pcl_output->points.push_back(pcl_input->points.at(i));
     }
@@ -94,5 +93,5 @@ rcl_interfaces::msg::SetParametersResult VoxelGridOutlierFilterComponent::paramC
 }
 }  // namespace pointcloud_preprocessor
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(pointcloud_preprocessor::VoxelGridOutlierFilterComponent)

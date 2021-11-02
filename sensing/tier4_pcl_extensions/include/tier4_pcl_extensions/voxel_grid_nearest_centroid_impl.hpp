@@ -51,22 +51,21 @@
 #ifndef TIER4_PCL_EXTENSIONS__VOXEL_GRID_NEAREST_CENTROID_IMPL_HPP_
 #define TIER4_PCL_EXTENSIONS__VOXEL_GRID_NEAREST_CENTROID_IMPL_HPP_
 
+#include "tier4_pcl_extensions/voxel_grid_nearest_centroid.hpp"
+
+#include <Eigen/Cholesky>
+#include <Eigen/Dense>
+
+#include <pcl/common/common.h>
+#include <pcl/filters/boost.h>
+
 #include <limits>
 #include <map>
 #include <vector>
 
-#include "pcl/common/common.h"
-#include "pcl/filters/boost.h"
-
-#include "Eigen/Dense"
-#include "Eigen/Cholesky"
-
-#include "tier4_pcl_extensions/voxel_grid_nearest_centroid.hpp"
-
 //////////////////////////////////////////////////////////////////////////////////////////
-template<typename PointT>
-void
-pcl::VoxelGridNearestCentroid<PointT>::applyFilter(PointCloud & output)
+template <typename PointT>
+void pcl::VoxelGridNearestCentroid<PointT>::applyFilter(PointCloud & output)
 {
   // Has the input dataset been set already?
   if (!input_) {
@@ -77,8 +76,8 @@ pcl::VoxelGridNearestCentroid<PointT>::applyFilter(PointCloud & output)
   }
 
   // Copy the header (and thus the frame_id) + allocate enough space for points
-  output.height = 1;                          // downsampling breaks the organized structure
-  output.is_dense = true;                     // we filter out invalid points
+  output.height = 1;       // downsampling breaks the organized structure
+  output.is_dense = true;  // we filter out invalid points
   output.points.clear();
 
   Eigen::Vector4f min_p, max_p;
@@ -86,8 +85,7 @@ pcl::VoxelGridNearestCentroid<PointT>::applyFilter(PointCloud & output)
   if (!filter_field_name_.empty()) {  // If we don't want to process the entire cloud...
     getMinMax3D<PointT>(
       input_, filter_field_name_, static_cast<float>(filter_limit_min_),
-      static_cast<float>(filter_limit_max_), min_p, max_p,
-      filter_limit_negative_);
+      static_cast<float>(filter_limit_max_), min_p, max_p, filter_limit_negative_);
   } else {
     getMinMax3D<PointT>(*input_, min_p, max_p);
   }
@@ -99,7 +97,8 @@ pcl::VoxelGridNearestCentroid<PointT>::applyFilter(PointCloud & output)
 
   if ((dx * dy * dz) > std::numeric_limits<std::int32_t>::max()) {
     PCL_WARN(
-      "[pcl::%s::applyFilter] Leaf size is too small for the input dataset. Integer indices would overflow.",  // NOLINT
+      "[pcl::%s::applyFilter] Leaf size is too small for the input dataset. Integer indices would "
+      "overflow.",  // NOLINT
       getClassName().c_str());
     output.clear();
     return;
@@ -149,18 +148,17 @@ pcl::VoxelGridNearestCentroid<PointT>::applyFilter(PointCloud & output)
     int distance_idx = pcl::getFieldIndex<PointT>(filter_field_name_, fields);
     if (distance_idx == -1) {
       PCL_WARN(
-        "[pcl::%s::applyFilter] Invalid filter field name. Index is %d.\n",
-        getClassName().c_str(), distance_idx);
+        "[pcl::%s::applyFilter] Invalid filter field name. Index is %d.\n", getClassName().c_str(),
+        distance_idx);
     }
 
     // First pass: go over all points and insert them into the right leaf
     for (size_t cp = 0; cp < input_->points.size(); ++cp) {
       if (!input_->is_dense) {
         // Check if the point is invalid
-        if (!std::isfinite(input_->points[cp].x) ||
-          !std::isfinite(input_->points[cp].y) ||
-          !std::isfinite(input_->points[cp].z))
-        {
+        if (
+          !std::isfinite(input_->points[cp].x) || !std::isfinite(input_->points[cp].y) ||
+          !std::isfinite(input_->points[cp].z)) {
           continue;
         }
       }
@@ -182,15 +180,12 @@ pcl::VoxelGridNearestCentroid<PointT>::applyFilter(PointCloud & output)
         }
       }
 
-      int ijk0 =
-        static_cast<int>(floor(input_->points[cp].x * inverse_leaf_size_[0]) -
-        static_cast<float>(min_b_[0]));
-      int ijk1 =
-        static_cast<int>(floor(input_->points[cp].y * inverse_leaf_size_[1]) -
-        static_cast<float>(min_b_[1]));
-      int ijk2 =
-        static_cast<int>(floor(input_->points[cp].z * inverse_leaf_size_[2]) -
-        static_cast<float>(min_b_[2]));
+      int ijk0 = static_cast<int>(
+        floor(input_->points[cp].x * inverse_leaf_size_[0]) - static_cast<float>(min_b_[0]));
+      int ijk1 = static_cast<int>(
+        floor(input_->points[cp].y * inverse_leaf_size_[1]) - static_cast<float>(min_b_[1]));
+      int ijk2 = static_cast<int>(
+        floor(input_->points[cp].z * inverse_leaf_size_[2]) - static_cast<float>(min_b_[2]));
 
       // Compute the centroid leaf index
       int idx = ijk0 * divb_mul_[0] + ijk1 * divb_mul_[1] + ijk2 * divb_mul_[2];
@@ -215,16 +210,13 @@ pcl::VoxelGridNearestCentroid<PointT>::applyFilter(PointCloud & output)
           // fill r/g/b data
           int rgb;
           memcpy(
-            &rgb, reinterpret_cast<const char *>(&input_->points[cp]) + rgba_index,
-            sizeof(int));
+            &rgb, reinterpret_cast<const char *>(&input_->points[cp]) + rgba_index, sizeof(int));
           centroid[centroid_size - 3] = static_cast<float>((rgb >> 16) & 0x0000ff);
           centroid[centroid_size - 2] = static_cast<float>((rgb >> 8) & 0x0000ff);
-          centroid[centroid_size - 1] = static_cast<float>((rgb) & 0x0000ff);
+          centroid[centroid_size - 1] = static_cast<float>((rgb)&0x0000ff);
         }
         pcl::for_each_type<FieldList>(
-          NdCopyPointEigenFunctor<PointT>(
-            input_->points[cp],
-            centroid));
+          NdCopyPointEigenFunctor<PointT>(input_->points[cp], centroid));
         leaf.centroid += centroid;
       }
       ++leaf.nr_points;
@@ -234,23 +226,19 @@ pcl::VoxelGridNearestCentroid<PointT>::applyFilter(PointCloud & output)
     for (size_t cp = 0; cp < input_->points.size(); ++cp) {
       if (!input_->is_dense) {
         // Check if the point is invalid
-        if (!std::isfinite(input_->points[cp].x) ||
-          !std::isfinite(input_->points[cp].y) ||
-          !std::isfinite(input_->points[cp].z))
-        {
+        if (
+          !std::isfinite(input_->points[cp].x) || !std::isfinite(input_->points[cp].y) ||
+          !std::isfinite(input_->points[cp].z)) {
           continue;
         }
       }
 
-      int ijk0 =
-        static_cast<int>(floor(input_->points[cp].x * inverse_leaf_size_[0]) -
-        static_cast<float>(min_b_[0]));
-      int ijk1 =
-        static_cast<int>(floor(input_->points[cp].y * inverse_leaf_size_[1]) -
-        static_cast<float>(min_b_[1]));
-      int ijk2 =
-        static_cast<int>(floor(input_->points[cp].z * inverse_leaf_size_[2]) -
-        static_cast<float>(min_b_[2]));
+      int ijk0 = static_cast<int>(
+        floor(input_->points[cp].x * inverse_leaf_size_[0]) - static_cast<float>(min_b_[0]));
+      int ijk1 = static_cast<int>(
+        floor(input_->points[cp].y * inverse_leaf_size_[1]) - static_cast<float>(min_b_[1]));
+      int ijk2 = static_cast<int>(
+        floor(input_->points[cp].z * inverse_leaf_size_[2]) - static_cast<float>(min_b_[2]));
 
       // Compute the centroid leaf index
       int idx = ijk0 * divb_mul_[0] + ijk1 * divb_mul_[1] + ijk2 * divb_mul_[2];
@@ -273,16 +261,13 @@ pcl::VoxelGridNearestCentroid<PointT>::applyFilter(PointCloud & output)
           // Fill r/g/b data, assuming that the order is BGRA
           int rgb;
           memcpy(
-            &rgb, reinterpret_cast<const char *>(&input_->points[cp]) + rgba_index,
-            sizeof(int));
+            &rgb, reinterpret_cast<const char *>(&input_->points[cp]) + rgba_index, sizeof(int));
           centroid[centroid_size - 3] = static_cast<float>((rgb >> 16) & 0x0000ff);
           centroid[centroid_size - 2] = static_cast<float>((rgb >> 8) & 0x0000ff);
-          centroid[centroid_size - 1] = static_cast<float>((rgb) & 0x0000ff);
+          centroid[centroid_size - 1] = static_cast<float>((rgb)&0x0000ff);
         }
         pcl::for_each_type<FieldList>(
-          NdCopyPointEigenFunctor<PointT>(
-            input_->points[cp],
-            centroid));
+          NdCopyPointEigenFunctor<PointT>(input_->points[cp], centroid));
         leaf.centroid += centroid;
       }
       leaf.points.push_back(input_->points[cp]);
@@ -335,9 +320,9 @@ pcl::VoxelGridNearestCentroid<PointT>::applyFilter(PointCloud & output)
       double dis_min = 1000000.0;
       size_t i_min = 0;
       for (size_t i = 0; i < leaf.points.size(); ++i) {
-        double dis = std::pow(leaf.points.at(i).x - leaf.centroid[0], 2.0) + std::pow(
-          leaf.points.at(
-            i).y - leaf.centroid[1], 2.0) + std::pow(leaf.points.at(i).z - leaf.centroid[2], 2.0);
+        double dis = std::pow(leaf.points.at(i).x - leaf.centroid[0], 2.0) +
+                     std::pow(leaf.points.at(i).y - leaf.centroid[1], 2.0) +
+                     std::pow(leaf.points.at(i).z - leaf.centroid[2], 2.0);
         if (dis < dis_min) {
           dis_min = dis;
           i_min = i;
@@ -354,8 +339,7 @@ pcl::VoxelGridNearestCentroid<PointT>::applyFilter(PointCloud & output)
   output.width = static_cast<std::uint32_t>(output.points.size());
 }
 
+#define PCL_INSTANTIATE_VoxelGridNearestCentroid(T) \
+  template class PCL_EXPORTS pcl::VoxelGridNearestCentroid<T>;
 
-#define PCL_INSTANTIATE_VoxelGridNearestCentroid(T) template class PCL_EXPORTS pcl:: \
-    VoxelGridNearestCentroid<T>;
-
-#endif    // TIER4_PCL_EXTENSIONS__VOXEL_GRID_NEAREST_CENTROID_IMPL_HPP_
+#endif  // TIER4_PCL_EXTENSIONS__VOXEL_GRID_NEAREST_CENTROID_IMPL_HPP_

@@ -28,44 +28,46 @@ def generate_launch_description():
 
     nodes = [
         ComposableNode(
-            package='pointcloud_preprocessor',
-            plugin='pointcloud_preprocessor::ScanGroundFilterComponent',
-            name='scan_ground_filter',
+            package="pointcloud_preprocessor",
+            plugin="pointcloud_preprocessor::ScanGroundFilterComponent",
+            name="scan_ground_filter",
             remappings=[
-                ('input', LaunchConfiguration('input/pointcloud')),
-                ('output', LaunchConfiguration('output/pointcloud'))
+                ("input", LaunchConfiguration("input/pointcloud")),
+                ("output", LaunchConfiguration("output/pointcloud")),
             ],
             parameters=[
                 {
-                    'global_slope_max_angle_deg': 10.0,
-                    'local_slope_max_angle_deg': 30.0,
-                    'split_points_distance_tolerance': 0.2,
-                    'split_height_distance': 0.2,
+                    "global_slope_max_angle_deg": 10.0,
+                    "local_slope_max_angle_deg": 30.0,
+                    "split_points_distance_tolerance": 0.2,
+                    "split_height_distance": 0.2,
                 }
             ],
         ),
     ]
 
     loader = LoadComposableNodes(
-        condition=LaunchConfigurationNotEquals('container', ''),
+        condition=LaunchConfigurationNotEquals("container", ""),
         composable_node_descriptions=nodes,
-        target_container=LaunchConfiguration('container'),
+        target_container=LaunchConfiguration("container"),
     )
 
     container = ComposableNodeContainer(
-        name='scan_ground_filter_container',
-        namespace='',
-        package='rclcpp_components',
-        executable='component_container',
+        name="scan_ground_filter_container",
+        namespace="",
+        package="rclcpp_components",
+        executable="component_container",
         composable_node_descriptions=nodes,
-        output='screen',
-        condition=LaunchConfigurationEquals('container', ''),
+        output="screen",
+        condition=LaunchConfigurationEquals("container", ""),
     )
 
-    return launch.LaunchDescription([
-        add_launch_arg('container', ''),
-        add_launch_arg('input/pointcloud', 'pointcloud'),
-        add_launch_arg('output/pointcloud', 'no_ground/pointcloud'),
-        container,
-        loader
-    ])
+    return launch.LaunchDescription(
+        [
+            add_launch_arg("container", ""),
+            add_launch_arg("input/pointcloud", "pointcloud"),
+            add_launch_arg("output/pointcloud", "no_ground/pointcloud"),
+            container,
+            loader,
+        ]
+    )

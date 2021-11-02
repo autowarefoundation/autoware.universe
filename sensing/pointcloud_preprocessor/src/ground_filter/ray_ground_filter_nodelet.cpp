@@ -29,12 +29,12 @@
  *  v1.0: amc-nu (abrahammonrroy@yahoo.com)
  */
 
-#include <string>
-#include <vector>
-
 #include "pointcloud_preprocessor/ground_filter/ray_ground_filter_nodelet.hpp"
 
-#include "pcl_ros/transforms.hpp"
+#include <pcl_ros/transforms.hpp>
+
+#include <string>
+#include <vector>
 
 namespace pointcloud_preprocessor
 {
@@ -111,8 +111,8 @@ void RayGroundFilterComponent::ConvertXYZIToRTZColor(
   for (size_t i = 0; i < in_cloud->points.size(); i++) {
     PointXYZRTColor new_point;
     auto radius = static_cast<float>(sqrt(
-        in_cloud->points[i].x * in_cloud->points[i].x +
-        in_cloud->points[i].y * in_cloud->points[i].y));
+      in_cloud->points[i].x * in_cloud->points[i].x +
+      in_cloud->points[i].y * in_cloud->points[i].y));
     auto theta =
       static_cast<float>(atan2(in_cloud->points[i].y, in_cloud->points[i].x)) * 180 / M_PI;
     if (theta < 0) {
@@ -121,7 +121,7 @@ void RayGroundFilterComponent::ConvertXYZIToRTZColor(
     if (theta >= 360) {
       theta -= 360;
     }
-    auto radial_div = (size_t)floor(theta / radial_divider_angle_);
+    auto radial_div = static_cast<size_t>(floor(theta / radial_divider_angle_));
 
     new_point.point.x = in_cloud->points[i].x;
     new_point.point.y = in_cloud->points[i].y;
@@ -130,9 +130,9 @@ void RayGroundFilterComponent::ConvertXYZIToRTZColor(
     new_point.radius = radius;
     new_point.theta = theta;
     new_point.radial_div = radial_div;
-    new_point.red = (size_t)colors_[new_point.radial_div % color_num_].val[0];
-    new_point.green = (size_t)colors_[new_point.radial_div % color_num_].val[1];
-    new_point.blue = (size_t)colors_[new_point.radial_div % color_num_].val[2];
+    new_point.red = static_cast<size_t>(colors_[new_point.radial_div % color_num_].val[0]);
+    new_point.green = static_cast<size_t>(colors_[new_point.radial_div % color_num_].val[1]);
+    new_point.blue = static_cast<size_t>(colors_[new_point.radial_div % color_num_].val[2]);
     new_point.original_index = i;
 
     out_organized_points[i] = new_point;
@@ -148,7 +148,7 @@ void RayGroundFilterComponent::ConvertXYZIToRTZColor(
   for (size_t i = 0; i < radial_dividers_num_; i++) {
     std::sort(
       out_radial_ordered_clouds[i].begin(), out_radial_ordered_clouds[i].end(),
-      [](const PointXYZRTColor & a, const PointXYZRTColor & b) {return a.radius < b.radius;});
+      [](const PointXYZRTColor & a, const PointXYZRTColor & b) { return a.radius < b.radius; });
   }
 }
 
@@ -188,14 +188,14 @@ void RayGroundFilterComponent::ClassifyPointCloud(
   out_no_ground_indices.indices.clear();
 #pragma omp for
   for (size_t i = 0; i < in_radial_ordered_clouds.size();
-    i++)     // sweep through each radial division
+       i++)  // sweep through each radial division
   {
     float prev_radius = 0.f;
     float prev_height = 0.f;
     bool prev_ground = false;
     bool current_ground = false;
     for (size_t j = 0; j < in_radial_ordered_clouds[i].size();
-      j++)     // loop through each point in the radial div
+         j++)  // loop through each point in the radial div
     {
       double local_max_slope = local_max_slope_;
       if (j == 0) {
@@ -234,15 +234,13 @@ void RayGroundFilterComponent::ClassifyPointCloud(
         // check current point height against the LOCAL threshold (previous point)
         if (
           current_height <= (prev_height + height_threshold) &&
-          current_height >= (prev_height - height_threshold))
-        {
+          current_height >= (prev_height - height_threshold)) {
           // Check again using general geometry (radius from origin)
           // if previous points wasn't ground
           if (!prev_ground) {
             if (
               current_height <= general_height_threshold &&
-              current_height >= -general_height_threshold)
-            {
+              current_height >= -general_height_threshold) {
               current_ground = true;
             } else {
               current_ground = false;
@@ -255,8 +253,7 @@ void RayGroundFilterComponent::ClassifyPointCloud(
           if (
             points_distance > reclass_distance_threshold_ &&
             (current_height <= general_height_threshold &&
-            current_height >= -general_height_threshold))
-          {
+             current_height >= -general_height_threshold)) {
             current_ground = true;
           } else {
             current_ground = false;
@@ -357,8 +354,8 @@ void RayGroundFilterComponent::filter(
   if (!succeeded) {
     RCLCPP_ERROR_STREAM_THROTTLE(
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
-      "Failed transform from " << base_frame_ << " to " <<
-        no_ground_cloud_msg_ptr->header.frame_id);
+      "Failed transform from " << base_frame_ << " to "
+                               << no_ground_cloud_msg_ptr->header.frame_id);
     return;
   }
   output = *no_ground_cloud_transformed_msg_ptr;
@@ -411,8 +408,7 @@ rcl_interfaces::msg::SetParametersResult RayGroundFilterComponent::paramCallback
       get_logger(), "Setting reclass_distance_threshold to: %f.", reclass_distance_threshold_);
   }
   if (get_param(p, "use_vehicle_footprint", use_vehicle_footprint_)) {
-    RCLCPP_DEBUG(
-      get_logger(), "Setting use_vehicle_footprint to: %d.", use_vehicle_footprint_);
+    RCLCPP_DEBUG(get_logger(), "Setting use_vehicle_footprint to: %d.", use_vehicle_footprint_);
   }
 
   rcl_interfaces::msg::SetParametersResult result;
@@ -424,5 +420,5 @@ rcl_interfaces::msg::SetParametersResult RayGroundFilterComponent::paramCallback
 
 }  // namespace pointcloud_preprocessor
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(pointcloud_preprocessor::RayGroundFilterComponent)

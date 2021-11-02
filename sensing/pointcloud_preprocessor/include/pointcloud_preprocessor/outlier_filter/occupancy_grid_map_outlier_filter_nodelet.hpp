@@ -15,25 +15,26 @@
 #ifndef POINTCLOUD_PREPROCESSOR__OUTLIER_FILTER__OCCUPANCY_GRID_MAP_OUTLIER_FILTER_NODELET_HPP_
 #define POINTCLOUD_PREPROCESSOR__OUTLIER_FILTER__OCCUPANCY_GRID_MAP_OUTLIER_FILTER_NODELET_HPP_
 
+#include <pcl/common/impl/common.hpp>
+#include <rclcpp/rclcpp.hpp>
+
+#include <geometry_msgs/msg/pose.hpp>
+#include <nav_msgs/msg/occupancy_grid.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <sensor_msgs/point_cloud2_iterator.hpp>
+#include <std_msgs/msg/header.hpp>
+
+#include <message_filters/subscriber.h>
+#include <message_filters/sync_policies/exact_time.h>
+#include <message_filters/synchronizer.h>
+#include <pcl/filters/extract_indices.h>
+#include <pcl/filters/radius_outlier_removal.h>
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/message_filter.h>
+#include <tf2_ros/transform_listener.h>
+
 #include <memory>
 #include <string>
-
-#include "pcl/common/impl/common.hpp"
-#include "pcl/filters/radius_outlier_removal.h"
-#include "pcl/filters/extract_indices.h"
-
-#include "geometry_msgs/msg/pose.hpp"
-#include "message_filters/subscriber.h"
-#include "message_filters/sync_policies/exact_time.h"
-#include "message_filters/synchronizer.h"
-#include "rclcpp/rclcpp.hpp"
-#include "tf2_ros/buffer.h"
-#include "tf2_ros/message_filter.h"
-#include "tf2_ros/transform_listener.h"
-#include "nav_msgs/msg/occupancy_grid.hpp"
-#include "sensor_msgs/msg/point_cloud2.hpp"
-#include "std_msgs/msg/header.hpp"
-#include "sensor_msgs/point_cloud2_iterator.hpp"
 
 namespace pointcloud_preprocessor
 {
@@ -51,9 +52,8 @@ public:
     const PclPointCloud & input, const Pose & pose, PclPointCloud & output,
     PclPointCloud & outlier);
   void filter(
-    const PclPointCloud & high_conf_input,
-    const PclPointCloud & low_conf_input, const Pose & pose, PclPointCloud & output,
-    PclPointCloud & outlier);
+    const PclPointCloud & high_conf_input, const PclPointCloud & low_conf_input, const Pose & pose,
+    PclPointCloud & output, PclPointCloud & outlier);
 
 private:
   float search_radius_;
@@ -102,8 +102,7 @@ private:
   rclcpp::Publisher<PointCloud2>::SharedPtr pointcloud_pub_;
   message_filters::Subscriber<OccupancyGrid> occupancy_grid_map_sub_;
   message_filters::Subscriber<PointCloud2> pointcloud_sub_;
-  using SyncPolicy =
-    message_filters::sync_policies::ExactTime<OccupancyGrid, PointCloud2>;
+  using SyncPolicy = message_filters::sync_policies::ExactTime<OccupancyGrid, PointCloud2>;
   using Sync = message_filters::Synchronizer<SyncPolicy>;
   std::shared_ptr<Sync> sync_ptr_;
 

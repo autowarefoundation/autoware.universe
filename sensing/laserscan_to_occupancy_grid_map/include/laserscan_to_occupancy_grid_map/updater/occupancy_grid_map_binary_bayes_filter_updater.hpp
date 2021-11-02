@@ -17,11 +17,10 @@
 #define LASERSCAN_TO_OCCUPANCY_GRID_MAP__UPDATER__OCCUPANCY_GRID_MAP_BINARY_BAYES_FILTER_UPDATER_HPP_
 // *INDENT-ON*
 
-#include "eigen3/Eigen/Core"
-#include "eigen3/Eigen/Geometry"
-
 #include "laserscan_to_occupancy_grid_map/updater/occupancy_grid_map_updater_interface.hpp"
 
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Geometry>
 
 namespace costmap_2d
 {

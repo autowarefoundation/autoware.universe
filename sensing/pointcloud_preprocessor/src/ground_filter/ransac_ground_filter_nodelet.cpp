@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "pointcloud_preprocessor/ground_filter/ransac_ground_filter_nodelet.hpp"
+
+#include <pcl_ros/transforms.hpp>
+
+#include <pcl/common/centroid.h>
+#include <tf2_eigen/tf2_eigen.h>
+
 #include <limits>
 #include <random>
 #include <string>
 #include <vector>
-
-#include "pointcloud_preprocessor/ground_filter/ransac_ground_filter_nodelet.hpp"
-
-#include "pcl/common/centroid.h"
-#include "pcl_ros/transforms.hpp"
-
-#include "tf2_eigen/tf2_eigen.h"
 
 namespace
 {
@@ -120,7 +120,9 @@ RANSACGroundFilterComponent::RANSACGroundFilterComponent(const rclcpp::NodeOptio
 
 void RANSACGroundFilterComponent::setDebugPublisher()
 {
-  if (is_initialized_debug_message_) {return;}
+  if (is_initialized_debug_message_) {
+    return;
+  }
   debug_pose_array_pub_ =
     create_publisher<geometry_msgs::msg::PoseArray>("debug/plane_pose_array", max_queue_size_);
   debug_ground_cloud_pub_ =
@@ -296,13 +298,12 @@ void RANSACGroundFilterComponent::filter(
   no_ground_cloud_msg_ptr->header = input->header;
   sensor_msgs::msg::PointCloud2::SharedPtr no_ground_cloud_transformed_msg_ptr(
     new sensor_msgs::msg::PointCloud2);
-  if (
-    !transformPointCloud(base_frame_, no_ground_cloud_msg_ptr, no_ground_cloud_transformed_msg_ptr))
-  {
+  if (!transformPointCloud(
+        base_frame_, no_ground_cloud_msg_ptr, no_ground_cloud_transformed_msg_ptr)) {
     RCLCPP_ERROR_STREAM_THROTTLE(
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
-      "Failed transform from " << base_frame_ << " to " <<
-        no_ground_cloud_msg_ptr->header.frame_id);
+      "Failed transform from " << base_frame_ << " to "
+                               << no_ground_cloud_msg_ptr->header.frame_id);
     return;
   }
   output = *no_ground_cloud_transformed_msg_ptr;
@@ -335,31 +336,25 @@ rcl_interfaces::msg::SetParametersResult RANSACGroundFilterComponent::paramCallb
     RCLCPP_DEBUG(get_logger(), "Setting min_points to: %d.", min_points_);
   }
   if (get_param(p, "outlier_threshold", outlier_threshold_)) {
-    RCLCPP_DEBUG(
-      get_logger(), "Setting outlier_threshold to: %lf.", outlier_threshold_);
+    RCLCPP_DEBUG(get_logger(), "Setting outlier_threshold to: %lf.", outlier_threshold_);
   }
   if (get_param(p, "height_threshold", height_threshold_)) {
     RCLCPP_DEBUG(get_logger(), "Setting height_threshold_ to: %lf.", height_threshold_);
   }
   if (get_param(p, "plane_slope_threshold", plane_slope_threshold_)) {
-    RCLCPP_DEBUG(
-      get_logger(), "Setting plane_slope_threshold to: %lf.", plane_slope_threshold_);
+    RCLCPP_DEBUG(get_logger(), "Setting plane_slope_threshold to: %lf.", plane_slope_threshold_);
   }
   if (get_param(p, "voxel_size_x", voxel_size_x_)) {
-    RCLCPP_DEBUG(
-      get_logger(), "Setting voxel_size_x to: %lf.", voxel_size_x_);
+    RCLCPP_DEBUG(get_logger(), "Setting voxel_size_x to: %lf.", voxel_size_x_);
   }
   if (get_param(p, "voxel_size_y", voxel_size_y_)) {
-    RCLCPP_DEBUG(
-      get_logger(), "Setting voxel_size_y to: %lf.", voxel_size_y_);
+    RCLCPP_DEBUG(get_logger(), "Setting voxel_size_y to: %lf.", voxel_size_y_);
   }
   if (get_param(p, "voxel_size_z", voxel_size_z_)) {
-    RCLCPP_DEBUG(
-      get_logger(), "Setting voxel_size_z to: %lf.", voxel_size_z_);
+    RCLCPP_DEBUG(get_logger(), "Setting voxel_size_z to: %lf.", voxel_size_z_);
   }
   if (get_param(p, "debug", debug_)) {
-    RCLCPP_DEBUG(
-      get_logger(), "Setting debug to: %d.", debug_);
+    RCLCPP_DEBUG(get_logger(), "Setting debug to: %d.", debug_);
   }
 
   if (debug_) {
@@ -376,8 +371,7 @@ rcl_interfaces::msg::SetParametersResult RANSACGroundFilterComponent::paramCallb
     } else {
       unit_vec_ = Eigen::Vector3d::UnitZ();
     }
-    RCLCPP_DEBUG(
-      get_logger(), "Setting unit_axis to: %s.", unit_axis_.c_str());
+    RCLCPP_DEBUG(get_logger(), "Setting unit_axis to: %s.", unit_axis_.c_str());
   }
 
   rcl_interfaces::msg::SetParametersResult result;
@@ -389,5 +383,5 @@ rcl_interfaces::msg::SetParametersResult RANSACGroundFilterComponent::paramCallb
 
 }  // namespace pointcloud_preprocessor
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(pointcloud_preprocessor::RANSACGroundFilterComponent)

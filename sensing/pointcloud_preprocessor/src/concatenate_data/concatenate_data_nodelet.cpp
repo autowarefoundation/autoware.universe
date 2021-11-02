@@ -49,17 +49,17 @@
  *
  */
 
+#include "pointcloud_preprocessor/concatenate_data/concatenate_data_nodelet.hpp"
+
+#include <pcl_ros/transforms.hpp>
+
+#include <pcl_conversions/pcl_conversions.h>
+
 #include <algorithm>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
-
-#include "pointcloud_preprocessor/concatenate_data/concatenate_data_nodelet.hpp"
-
-#include "pcl_ros/transforms.hpp"
-
-#include "pcl_conversions/pcl_conversions.h"
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -150,8 +150,7 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
   {
     updater_.setHardwareID("concatenate_data_checker");
     updater_.add(
-      "concat_status", this,
-      &PointCloudConcatenateDataSynchronizerComponent::checkConcatStatus);
+      "concat_status", this, &PointCloudConcatenateDataSynchronizerComponent::checkConcatStatus);
   }
 }
 
@@ -208,9 +207,9 @@ void PointCloudConcatenateDataSynchronizerComponent::combineClouds(
   double yaw = 0.0;
   for (auto twist_ptr_it = old_twist_ptr_it; twist_ptr_it != new_twist_ptr_it + 1; ++twist_ptr_it) {
     const double dt =
-      (twist_ptr_it != new_twist_ptr_it) ?
-      (rclcpp::Time((*twist_ptr_it)->header.stamp) - rclcpp::Time(prev_time)).seconds() :
-      (rclcpp::Time(new_stamp) - rclcpp::Time(prev_time)).seconds();
+      (twist_ptr_it != new_twist_ptr_it)
+        ? (rclcpp::Time((*twist_ptr_it)->header.stamp) - rclcpp::Time(prev_time)).seconds()
+        : (rclcpp::Time(new_stamp) - rclcpp::Time(prev_time)).seconds();
 
     if (std::fabs(dt) > 0.1) {
       RCLCPP_WARN_STREAM_THROTTLE(
@@ -279,10 +278,9 @@ void PointCloudConcatenateDataSynchronizerComponent::publish()
   updater_.force_update();
 
   cloud_stdmap_ = cloud_stdmap_tmp_;
-  std::for_each(
-    std::begin(cloud_stdmap_tmp_), std::end(cloud_stdmap_tmp_), [](auto & e) {
-      e.second = nullptr;
-    });
+  std::for_each(std::begin(cloud_stdmap_tmp_), std::end(cloud_stdmap_tmp_), [](auto & e) {
+    e.second = nullptr;
+  });
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -292,7 +290,7 @@ void PointCloudConcatenateDataSynchronizerComponent::removeRADTFields(
 {
   bool has_intensity = std::any_of(
     input_cloud.fields.begin(), input_cloud.fields.end(),
-    [](auto & field) {return field.name == "intensity";});
+    [](auto & field) { return field.name == "intensity"; });
 
   if (input_cloud.fields.size() == 3 || (input_cloud.fields.size() == 4 && has_intensity)) {
     output_cloud = input_cloud;
@@ -311,7 +309,9 @@ void PointCloudConcatenateDataSynchronizerComponent::removeRADTFields(
 
 void PointCloudConcatenateDataSynchronizerComponent::setPeriod(const int64_t new_period)
 {
-  if (!timer_) {return;}
+  if (!timer_) {
+    return;
+  }
   int64_t old_period = 0;
   rcl_ret_t ret = rcl_timer_get_period(timer_->get_timer_handle().get(), &old_period);
   if (ret != RCL_RET_OK) {
@@ -336,7 +336,7 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
   const bool is_already_subscribed_this = (cloud_stdmap_[topic_name] != nullptr);
   const bool is_already_subscribed_tmp = std::any_of(
     std::begin(cloud_stdmap_tmp_), std::end(cloud_stdmap_tmp_),
-    [](const auto & e) {return e.second != nullptr;});
+    [](const auto & e) { return e.second != nullptr; });
 
   if (is_already_subscribed_this) {
     cloud_stdmap_tmp_[topic_name] = xyz_input_ptr;
@@ -356,7 +356,7 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
 
     const bool is_subscribed_all = std::all_of(
       std::begin(cloud_stdmap_), std::end(cloud_stdmap_),
-      [](const auto & e) {return e.second != nullptr;});
+      [](const auto & e) { return e.second != nullptr; });
 
     if (is_subscribed_all) {
       for (const auto & e : cloud_stdmap_tmp_) {
@@ -364,10 +364,9 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
           cloud_stdmap_[e.first] = e.second;
         }
       }
-      std::for_each(
-        std::begin(cloud_stdmap_tmp_), std::end(cloud_stdmap_tmp_), [](auto & e) {
-          e.second = nullptr;
-        });
+      std::for_each(std::begin(cloud_stdmap_tmp_), std::end(cloud_stdmap_tmp_), [](auto & e) {
+        e.second = nullptr;
+      });
 
       timer_->cancel();
       publish();
@@ -407,15 +406,13 @@ void PointCloudConcatenateDataSynchronizerComponent::twist_callback(
   while (!twist_ptr_queue_.empty()) {
     if (
       rclcpp::Time(twist_ptr_queue_.front()->header.stamp) + rclcpp::Duration::from_seconds(1.0) >
-      rclcpp::Time(input->header.stamp))
-    {
+      rclcpp::Time(input->header.stamp)) {
       break;
     }
     twist_ptr_queue_.pop_front();
   }
   twist_ptr_queue_.push_back(input);
 }
-
 
 void PointCloudConcatenateDataSynchronizerComponent::checkConcatStatus(
   diagnostic_updater::DiagnosticStatusWrapper & stat)
@@ -425,16 +422,16 @@ void PointCloudConcatenateDataSynchronizerComponent::checkConcatStatus(
     stat.add(e, subscribe_status);
   }
 
-  const int8_t level = not_subscribed_topic_names_.empty() ?
-    diagnostic_msgs::msg::DiagnosticStatus::OK :
-    diagnostic_msgs::msg::DiagnosticStatus::WARN;
-  const std::string message = not_subscribed_topic_names_.empty() ?
-    "Concatenate all topics" :
-    "Some topics are not concatenated";
+  const int8_t level = not_subscribed_topic_names_.empty()
+                         ? diagnostic_msgs::msg::DiagnosticStatus::OK
+                         : diagnostic_msgs::msg::DiagnosticStatus::WARN;
+  const std::string message = not_subscribed_topic_names_.empty()
+                                ? "Concatenate all topics"
+                                : "Some topics are not concatenated";
   stat.summary(level, message);
 }
 }  // namespace pointcloud_preprocessor
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(
   pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent)

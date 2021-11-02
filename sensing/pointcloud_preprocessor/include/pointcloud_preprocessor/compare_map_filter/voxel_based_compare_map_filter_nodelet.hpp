@@ -15,11 +15,12 @@
 #ifndef POINTCLOUD_PREPROCESSOR__COMPARE_MAP_FILTER__VOXEL_BASED_COMPARE_MAP_FILTER_NODELET_HPP_
 #define POINTCLOUD_PREPROCESSOR__COMPARE_MAP_FILTER__VOXEL_BASED_COMPARE_MAP_FILTER_NODELET_HPP_
 
-#include <vector>
-
-#include "pcl/filters/voxel_grid.h"
-#include "pcl/search/pcl_search.h"
 #include "pointcloud_preprocessor/filter.hpp"
+
+#include <pcl/filters/voxel_grid.h>
+#include <pcl/search/pcl_search.h>
+
+#include <vector>
 
 namespace pointcloud_preprocessor
 {

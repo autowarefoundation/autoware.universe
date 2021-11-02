@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "livox_tag_filter/livox_tag_filter_node.hpp"
+
+#include <pcl_conversions/pcl_conversions.h>
+
 #include <memory>
 #include <utility>
 #include <vector>
-
-#include "pcl_conversions/pcl_conversions.h"
-
-#include "livox_tag_filter/livox_tag_filter_node.hpp"
 
 struct LivoxPoint
 {
@@ -32,7 +32,7 @@ struct LivoxPoint
 
 POINT_CLOUD_REGISTER_POINT_STRUCT(
   LivoxPoint, (float, x, x)(float, y, y)(float, z, z)(float, intensity, intensity)(
-    std::uint8_t, tag, tag)(std::uint8_t, line, line))
+                std::uint8_t, tag, tag)(std::uint8_t, line, line))
 
 namespace livox_tag_filter
 {
@@ -44,14 +44,12 @@ LivoxTagFilterNode::LivoxTagFilterNode(const rclcpp::NodeOptions & node_options)
 
   // Subscriber
   using std::placeholders::_1;
-  sub_pointcloud_ =
-    this->create_subscription<sensor_msgs::msg::PointCloud2>(
-    "input", rclcpp::SensorDataQoS(),
-    std::bind(&LivoxTagFilterNode::onPointCloud, this, _1));
+  sub_pointcloud_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
+    "input", rclcpp::SensorDataQoS(), std::bind(&LivoxTagFilterNode::onPointCloud, this, _1));
 
   // Publisher
-  pub_pointcloud_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
-    "output", rclcpp::SensorDataQoS());
+  pub_pointcloud_ =
+    this->create_publisher<sensor_msgs::msg::PointCloud2>("output", rclcpp::SensorDataQoS());
 }
 
 void LivoxTagFilterNode::onPointCloud(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)
@@ -60,14 +58,14 @@ void LivoxTagFilterNode::onPointCloud(const sensor_msgs::msg::PointCloud2::Const
   pcl::fromROSMsg(*msg, points);
 
   const auto isIgnored = [&](const LivoxPoint & p) {
-      for (const auto & ignore_tag : ignore_tags_) {
-        if (p.tag == ignore_tag) {
-          return true;
-        }
+    for (const auto & ignore_tag : ignore_tags_) {
+      if (p.tag == ignore_tag) {
+        return true;
       }
+    }
 
-      return false;
-    };
+    return false;
+  };
 
   pcl::PointCloud<LivoxPoint> tag_filtered_points;
   for (const auto & p : points) {
@@ -88,5 +86,5 @@ void LivoxTagFilterNode::onPointCloud(const sensor_msgs::msg::PointCloud2::Const
 
 }  // namespace livox_tag_filter
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(livox_tag_filter::LivoxTagFilterNode)

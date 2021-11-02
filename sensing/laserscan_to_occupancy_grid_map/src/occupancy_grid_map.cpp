@@ -49,12 +49,13 @@
  *         David V. Lu!!
  *********************************************************************/
 
-#include <algorithm>
-
-#include "sensor_msgs/point_cloud2_iterator.hpp"
+#include "laserscan_to_occupancy_grid_map/occupancy_grid_map.hpp"
 
 #include "laserscan_to_occupancy_grid_map/cost_value.hpp"
-#include "laserscan_to_occupancy_grid_map/occupancy_grid_map.hpp"
+
+#include <sensor_msgs/point_cloud2_iterator.hpp>
+
+#include <algorithm>
 
 namespace costmap_2d
 {
@@ -141,8 +142,7 @@ void OccupancyGridMap::raytrace2D(const PointCloud2 & pointcloud, const Pose & r
   // occupied
   MarkCell marker(costmap_, occupancy_cost_value::LETHAL_OBSTACLE);
   for (PointCloud2ConstIterator<float> iter_x(pointcloud, "x"), iter_y(pointcloud, "y");
-    iter_x != iter_x.end(); ++iter_x, ++iter_y)
-  {
+       iter_x != iter_x.end(); ++iter_x, ++iter_y) {
     unsigned int mx, my;
     if (!worldToMap(*iter_x, *iter_y, mx, my)) {
       RCLCPP_DEBUG(logger_, "Computing map coords failed");
@@ -164,13 +164,11 @@ void OccupancyGridMap::updateOccupiedCells(const PointCloud2 & pointcloud)
 }
 
 void OccupancyGridMap::updateCellsByPointCloud(
-  const PointCloud2 & pointcloud,
-  const unsigned char cost)
+  const PointCloud2 & pointcloud, const unsigned char cost)
 {
   MarkCell marker(costmap_, cost);
   for (PointCloud2ConstIterator<float> iter_x(pointcloud, "x"), iter_y(pointcloud, "y");
-    iter_x != iter_x.end(); ++iter_x, ++iter_y)
-  {
+       iter_x != iter_x.end(); ++iter_x, ++iter_y) {
     unsigned int mx{};
     unsigned int my{};
     if (!worldToMap(*iter_x, *iter_y, mx, my)) {
@@ -182,8 +180,7 @@ void OccupancyGridMap::updateCellsByPointCloud(
   }
 }
 
-void OccupancyGridMap::raytraceFreespace(
-  const PointCloud2 & pointcloud, const Pose & robot_pose)
+void OccupancyGridMap::raytraceFreespace(const PointCloud2 & pointcloud, const Pose & robot_pose)
 {
   unsigned int x0{};
   unsigned int y0{};
@@ -193,7 +190,8 @@ void OccupancyGridMap::raytraceFreespace(
     RCLCPP_WARN_THROTTLE(
       logger_, clock_, 1000,
       "The origin for the sensor at (%.2f, %.2f) is out of map bounds. So, the costmap cannot "
-      "raytrace for it.", ox, oy);
+      "raytrace for it.",
+      ox, oy);
     return;
   }
 
@@ -203,8 +201,7 @@ void OccupancyGridMap::raytraceFreespace(
   const double map_end_y = origin_y + size_y_ * resolution_;
 
   for (PointCloud2ConstIterator<float> iter_x(pointcloud, "x"), iter_y(pointcloud, "y");
-    iter_x != iter_x.end(); ++iter_x, ++iter_y)
-  {
+       iter_x != iter_x.end(); ++iter_x, ++iter_y) {
     double wx = *iter_x;
     double wy = *iter_y;
 
@@ -242,7 +239,9 @@ void OccupancyGridMap::raytraceFreespace(
     unsigned int y1{};
 
     // check for legality just in case
-    if (!worldToMap(wx, wy, x1, y1)) {continue;}
+    if (!worldToMap(wx, wy, x1, y1)) {
+      continue;
+    }
 
     constexpr unsigned int cell_raytrace_range = 10000;  // large number to ignore range threshold
     MarkCell marker(costmap_, occupancy_cost_value::FREE_SPACE);

@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "pointcloud_preprocessor/ground_filter/scan_ground_filter_nodelet.hpp"
+
+#include <autoware_utils/geometry/geometry.hpp>
+#include <autoware_utils/math/normalization.hpp>
+#include <autoware_utils/math/unit_conversion.hpp>
+#include <pcl_ros/transforms.hpp>
+#include <vehicle_info_util/vehicle_info_util.hpp>
+
 #include <memory>
 #include <string>
 #include <vector>
-
-#include "autoware_utils/geometry/geometry.hpp"
-#include "autoware_utils/math/normalization.hpp"
-#include "autoware_utils/math/unit_conversion.hpp"
-#include "pcl_ros/transforms.hpp"
-#include "vehicle_info_util/vehicle_info_util.hpp"
-
-#include "pointcloud_preprocessor/ground_filter/scan_ground_filter_nodelet.hpp"
 
 namespace pointcloud_preprocessor
 {
@@ -103,7 +103,7 @@ void ScanGroundFilterComponent::convertPointcloud(
   for (size_t i = 0; i < radial_dividers_num_; ++i) {
     std::sort(
       out_radial_ordered_points[i].begin(), out_radial_ordered_points[i].end(),
-      [](const PointRef & a, const PointRef & b) {return a.radius < b.radius;});
+      [](const PointRef & a, const PointRef & b) { return a.radius < b.radius; });
   }
 }
 
@@ -163,12 +163,12 @@ void ScanGroundFilterComponent::classifyPointCloud(
       bool calculate_slope = false;
       bool is_point_close_to_prev =
         (points_distance <
-        (p->radius * radial_divider_angle_rad_ + split_points_distance_tolerance_));
+         (p->radius * radial_divider_angle_rad_ + split_points_distance_tolerance_));
 
       // check points which is far enough from previous point
-      if ((prev_point_label == PointLabel::NON_GROUND) &&
-        (std::abs(height_from_obj) >= split_height_distance_))
-      {
+      if (
+        (prev_point_label == PointLabel::NON_GROUND) &&
+        (std::abs(height_from_obj) >= split_height_distance_)) {
         calculate_slope = true;
       } else if (is_point_close_to_prev && std::abs(height_from_gnd) < split_height_distance_) {
         // close to the previous point, set point follow label
@@ -200,15 +200,13 @@ void ScanGroundFilterComponent::classifyPointCloud(
       }
       if (p->point_state == PointLabel::NON_GROUND) {
         out_no_ground_indices.indices.push_back(p->orig_index);
-      } else if ( // NOLINT
+      } else if (  // NOLINT
         (prev_point_label == PointLabel::NON_GROUND) &&
-        (p->point_state == PointLabel::POINT_FOLLOW))
-      {
+        (p->point_state == PointLabel::POINT_FOLLOW)) {
         p->point_state = PointLabel::NON_GROUND;
         out_no_ground_indices.indices.push_back(p->orig_index);
-      } else if ( // NOLINT
-        (prev_point_label == PointLabel::GROUND) && (p->point_state == PointLabel::POINT_FOLLOW))
-      {
+      } else if (  // NOLINT
+        (prev_point_label == PointLabel::GROUND) && (p->point_state == PointLabel::POINT_FOLLOW)) {
         p->point_state = PointLabel::GROUND;
       } else {
       }
@@ -285,31 +283,26 @@ rcl_interfaces::msg::SetParametersResult ScanGroundFilterComponent::onParameter(
   if (get_param(p, "global_slope_max_angle_deg", global_slope_max_angle_deg)) {
     global_slope_max_angle_rad_ = deg2rad(global_slope_max_angle_deg);
     RCLCPP_DEBUG(
-      get_logger(),
-      "Setting global_slope_max_angle_rad to: %f.", global_slope_max_angle_rad_);
+      get_logger(), "Setting global_slope_max_angle_rad to: %f.", global_slope_max_angle_rad_);
   }
   double local_slope_max_angle_deg{get_parameter("local_slope_max_angle_deg").as_double()};
   if (get_param(p, "local_slope_max_angle_deg", local_slope_max_angle_deg)) {
     local_slope_max_angle_rad_ = deg2rad(local_slope_max_angle_deg);
     RCLCPP_DEBUG(
-      get_logger(),
-      "Setting local_slope_max_angle_rad to: %f.", local_slope_max_angle_rad_);
+      get_logger(), "Setting local_slope_max_angle_rad to: %f.", local_slope_max_angle_rad_);
   }
   double radial_divider_angle_deg{get_parameter("radial_divider_angle_deg").as_double()};
   if (get_param(p, "radial_divider_angle_deg", radial_divider_angle_deg)) {
     radial_divider_angle_rad_ = deg2rad(radial_divider_angle_deg);
     radial_dividers_num_ = std::ceil(2.0 * M_PI / radial_divider_angle_rad_);
     RCLCPP_DEBUG(
-      get_logger(),
-      "Setting radial_divider_angle_rad to: %f.", radial_divider_angle_rad_);
-    RCLCPP_DEBUG(
-      get_logger(),
-      "Setting radial_dividers_num to: %zu.", radial_dividers_num_);
+      get_logger(), "Setting radial_divider_angle_rad to: %f.", radial_divider_angle_rad_);
+    RCLCPP_DEBUG(get_logger(), "Setting radial_dividers_num to: %zu.", radial_dividers_num_);
   }
   if (get_param(p, "split_points_distance_tolerance", split_points_distance_tolerance_)) {
     RCLCPP_DEBUG(
-      get_logger(),
-      "Setting split_points_distance_tolerance to: %f.", split_points_distance_tolerance_);
+      get_logger(), "Setting split_points_distance_tolerance to: %f.",
+      split_points_distance_tolerance_);
   }
   if (get_param(p, "split_height_distance", split_height_distance_)) {
     RCLCPP_DEBUG(get_logger(), "Setting split_height_distance to: %f.", split_height_distance_);
@@ -329,5 +322,5 @@ rcl_interfaces::msg::SetParametersResult ScanGroundFilterComponent::onParameter(
 
 }  // namespace pointcloud_preprocessor
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(pointcloud_preprocessor::ScanGroundFilterComponent)

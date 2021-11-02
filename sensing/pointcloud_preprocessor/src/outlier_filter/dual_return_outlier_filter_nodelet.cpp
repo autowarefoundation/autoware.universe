@@ -12,16 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <vector>
-#include <algorithm>
-#include <string>
 #include "pointcloud_preprocessor/outlier_filter/dual_return_outlier_filter_nodelet.hpp"
 
-#include "std_msgs/msg/header.hpp"
-#include "pcl/kdtree/kdtree_flann.h"
-#include "pcl/search/kdtree.h"
-#include "pcl/segmentation/segment_differences.h"
+#include <std_msgs/msg/header.hpp>
 
+#include <pcl/kdtree/kdtree_flann.h>
+#include <pcl/search/kdtree.h>
+#include <pcl/segmentation/segment_differences.h>
+
+#include <algorithm>
+#include <string>
+#include <vector>
 
 namespace pointcloud_preprocessor
 {
@@ -33,10 +34,8 @@ DualReturnOutlierFilterComponent::DualReturnOutlierFilterComponent(
 {
   // set initial parameters
   {
-    vertical_bins_ =
-      static_cast<int>(declare_parameter("vertical_bins", 128));
-    max_azimuth_diff_ =
-      static_cast<float>(declare_parameter("max_azimuth_diff", 50.0));
+    vertical_bins_ = static_cast<int>(declare_parameter("vertical_bins", 128));
+    max_azimuth_diff_ = static_cast<float>(declare_parameter("max_azimuth_diff", 50.0));
     weak_first_distance_ratio_ =
       static_cast<double>(declare_parameter("weak_first_distance_ratio", 1.004));
     general_distance_ratio_ =
@@ -44,16 +43,14 @@ DualReturnOutlierFilterComponent::DualReturnOutlierFilterComponent(
 
     weak_first_local_noise_threshold_ =
       static_cast<int>(declare_parameter("weak_first_local_noise_threshold", 10));
-    visibility_threshold_ =
-      static_cast<float>(declare_parameter("visibility_threshold", 0.5));
+    visibility_threshold_ = static_cast<float>(declare_parameter("visibility_threshold", 0.5));
   }
   updater_.setHardwareID("dual_return_outlier_filter");
   updater_.add(
     "visibility_validation", this, &DualReturnOutlierFilterComponent::onVisibilityChecker);
 
-  image_pub_ = image_transport::create_publisher(
-    this,
-    "/dual_return_outlier_filter/frequency_image");
+  image_pub_ =
+    image_transport::create_publisher(this, "/dual_return_outlier_filter/frequency_image");
   visibility_pub_ = create_publisher<autoware_debug_msgs::msg::Float32Stamped>(
     "/dual_return_outlier_filter/visibility", rclcpp::SensorDataQoS());
   noise_cloud_pub_ = create_publisher<sensor_msgs::msg::PointCloud2>(
@@ -70,9 +67,8 @@ void DualReturnOutlierFilterComponent::onVisibilityChecker(DiagnosticStatusWrapp
   stat.add("value", std::to_string(visibility_));
 
   // Judge level
-  const auto level = visibility_ > visibility_threshold_ ?
-    DiagnosticStatus::OK :
-    DiagnosticStatus::WARN;
+  const auto level =
+    visibility_ > visibility_threshold_ ? DiagnosticStatus::OK : DiagnosticStatus::WARN;
 
   // Set message
   std::string msg;
@@ -136,8 +132,7 @@ void DualReturnOutlierFilterComponent::filter(
     bool keep_next = false;
     uint ring_id = weak_first_single_ring.points.front().ring;
     for (auto iter = std::begin(weak_first_single_ring) + 1;
-      iter != std::end(weak_first_single_ring) - 1; ++iter)
-    {
+         iter != std::end(weak_first_single_ring) - 1; ++iter) {
       const float min_dist = std::min(iter->distance, (iter + 1)->distance);
       const float max_dist = std::max(iter->distance, (iter + 1)->distance);
       float azimuth_diff = (iter + 1)->azimuth - iter->azimuth;
@@ -166,21 +161,19 @@ void DualReturnOutlierFilterComponent::filter(
         continue;
       }
       while ((uint)deleted_azimuths[current_deleted_index] <
-        ((i + 1) * (36000 / horizontal_bins)) &&
-        current_deleted_index < (deleted_azimuths.size() - 1))
-      {
+               ((i + 1) * (36000 / horizontal_bins)) &&
+             current_deleted_index < (deleted_azimuths.size() - 1)) {
         noise_frequency[i] = noise_frequency[i] + 1;
         current_deleted_index++;
       }
       if (temp_segment.points.size() == 0) {
         continue;
       }
-      while ((temp_segment.points[current_temp_segment_index].azimuth < 0.f ?
-        0.f :
-        temp_segment.points[current_temp_segment_index].azimuth) <
-        ((i + 1) * (36000 / horizontal_bins)) &&
-        current_temp_segment_index < (temp_segment.points.size() - 1))
-      {
+      while ((temp_segment.points[current_temp_segment_index].azimuth < 0.f
+                ? 0.f
+                : temp_segment.points[current_temp_segment_index].azimuth) <
+               ((i + 1) * (36000 / horizontal_bins)) &&
+             current_temp_segment_index < (temp_segment.points.size() - 1)) {
         if (noise_frequency[i] < weak_first_local_noise_threshold_) {
           pcl_output->points.push_back(temp_segment.points[current_temp_segment_index]);
         } else {
@@ -229,8 +222,8 @@ void DualReturnOutlierFilterComponent::filter(
   cv::Mat binary_image;
   cv::inRange(frequency_image, weak_first_local_noise_threshold_, 255, binary_image);
   int num_pixels = cv::countNonZero(binary_image);
-  float filled = static_cast<float>(num_pixels) / static_cast<float>(
-    vertical_bins * horizontal_bins);
+  float filled =
+    static_cast<float>(num_pixels) / static_cast<float>(vertical_bins * horizontal_bins);
   visibility_ = 1.0f - filled;
   // Visualization of histogram
   cv::Mat frequency_image_colorized;
@@ -276,14 +269,10 @@ rcl_interfaces::msg::SetParametersResult DualReturnOutlierFilterComponent::param
       weak_first_local_noise_threshold_);
   }
   if (get_param(p, "vertical_bins", vertical_bins_)) {
-    RCLCPP_DEBUG(
-      get_logger(), "Setting new vertical_bins to: %d.",
-      vertical_bins_);
+    RCLCPP_DEBUG(get_logger(), "Setting new vertical_bins to: %d.", vertical_bins_);
   }
   if (get_param(p, "max_azimuth_diff", max_azimuth_diff_)) {
-    RCLCPP_DEBUG(
-      get_logger(), "Setting new max_azimuth_diff to: %f.",
-      max_azimuth_diff_);
+    RCLCPP_DEBUG(get_logger(), "Setting new max_azimuth_diff to: %f.", max_azimuth_diff_);
   }
 
   rcl_interfaces::msg::SetParametersResult result;
@@ -294,5 +283,5 @@ rcl_interfaces::msg::SetParametersResult DualReturnOutlierFilterComponent::param
 }
 }  // namespace pointcloud_preprocessor
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(pointcloud_preprocessor::DualReturnOutlierFilterComponent)

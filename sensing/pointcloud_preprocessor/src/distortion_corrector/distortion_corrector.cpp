@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "pointcloud_preprocessor/distortion_corrector/distortion_corrector.hpp"
+
 #include <deque>
 #include <string>
 #include <utility>
-
-#include "pointcloud_preprocessor/distortion_corrector/distortion_corrector.hpp"
 
 namespace pointcloud_preprocessor
 {
@@ -50,8 +50,7 @@ void DistortionCorrectorComponent::onTwist(const TwistStamped::ConstSharedPtr tw
       twist_queue_.pop_front();
     } else if (  // NOLINT
       rclcpp::Time(twist_queue_.front().header.stamp) <
-      rclcpp::Time(twist_msg->header.stamp) - rclcpp::Duration::from_seconds(1.0))
-    {
+      rclcpp::Time(twist_msg->header.stamp) - rclcpp::Duration::from_seconds(1.0)) {
       twist_queue_.pop_front();
     }
     break;
@@ -61,9 +60,11 @@ void DistortionCorrectorComponent::onTwist(const TwistStamped::ConstSharedPtr tw
 void DistortionCorrectorComponent::onPointCloud(PointCloud2::UniquePtr points_msg)
 {
   const auto points_sub_count = undistorted_points_pub_->get_subscription_count() +
-    undistorted_points_pub_->get_intra_process_subscription_count();
+                                undistorted_points_pub_->get_intra_process_subscription_count();
 
-  if (points_sub_count < 1) {return;}
+  if (points_sub_count < 1) {
+    return;
+  }
 
   tf2::Transform tf2_base_link_to_sensor{};
   getTransform(points_msg->header.frame_id, base_link_frame_, &tf2_base_link_to_sensor);
@@ -92,8 +93,7 @@ bool DistortionCorrectorComponent::getTransform(
   } catch (const tf2::TransformException & ex) {
     RCLCPP_WARN(get_logger(), "%s", ex.what());
     RCLCPP_ERROR(
-      get_logger(),
-      "Please publish TF %s to %s", target_frame.c_str(), source_frame.c_str());
+      get_logger(), "Please publish TF %s to %s", target_frame.c_str(), source_frame.c_str());
 
     tf2_transform_ptr->setOrigin(tf2::Vector3(0.0, 0.0, 0.0));
     tf2_transform_ptr->setRotation(tf2::Quaternion(0.0, 0.0, 0.0, 1.0));
@@ -103,8 +103,7 @@ bool DistortionCorrectorComponent::getTransform(
 }
 
 bool DistortionCorrectorComponent::undistortPointCloud(
-  const std::deque<TwistStamped> & twist_queue,
-  const tf2::Transform & tf2_base_link_to_sensor,
+  const std::deque<TwistStamped> & twist_queue, const tf2::Transform & tf2_base_link_to_sensor,
   PointCloud2 & points)
 {
   if (points.data.empty() || twist_queue.empty()) {
@@ -114,13 +113,12 @@ bool DistortionCorrectorComponent::undistortPointCloud(
     return false;
   }
 
-  auto time_stamp_field_it =
-    std::find_if(
+  auto time_stamp_field_it = std::find_if(
     std::cbegin(points.fields), std::cend(points.fields),
     [this](const sensor_msgs::msg::PointField & field) {
       return field.name == time_stamp_field_name_;
     });
-  if (time_stamp_field_it == points.fields.cend() ) {
+  if (time_stamp_field_it == points.fields.cend()) {
     RCLCPP_WARN_STREAM_THROTTLE(
       get_logger(), *get_clock(), 10000 /* ms */,
       "Required field time stamp doesn't exist in the point cloud.");
@@ -130,8 +128,7 @@ bool DistortionCorrectorComponent::undistortPointCloud(
   sensor_msgs::PointCloud2Iterator<float> it_x(points, "x");
   sensor_msgs::PointCloud2Iterator<float> it_y(points, "y");
   sensor_msgs::PointCloud2Iterator<float> it_z(points, "z");
-  sensor_msgs::PointCloud2ConstIterator<double>
-  it_time_stamp(points, time_stamp_field_name_);
+  sensor_msgs::PointCloud2ConstIterator<double> it_time_stamp(points, time_stamp_field_name_);
 
   float theta{0.0f};
   float x{0.0f};
@@ -140,8 +137,7 @@ bool DistortionCorrectorComponent::undistortPointCloud(
   const double first_point_time_stamp_sec{*it_time_stamp};
 
   auto twist_it = std::lower_bound(
-    std::begin(twist_queue), std::end(twist_queue),
-    first_point_time_stamp_sec,
+    std::begin(twist_queue), std::end(twist_queue), first_point_time_stamp_sec,
     [](const TwistStamped & x, const double t) {
       return rclcpp::Time(x.header.stamp).seconds() < t;
     });
@@ -150,10 +146,9 @@ bool DistortionCorrectorComponent::undistortPointCloud(
   const tf2::Transform tf2_base_link_to_sensor_inv{tf2_base_link_to_sensor.inverse()};
   for (; it_x != it_x.end(); ++it_x, ++it_y, ++it_z, ++it_time_stamp) {
     for (;
-      (twist_it != std::end(twist_queue) - 1 &&
-      *it_time_stamp > rclcpp::Time(twist_it->header.stamp).seconds());
-      ++twist_it)
-    {
+         (twist_it != std::end(twist_queue) - 1 &&
+          *it_time_stamp > rclcpp::Time(twist_it->header.stamp).seconds());
+         ++twist_it) {
     }
 
     float v{static_cast<float>(twist_it->twist.linear.x)};
@@ -199,5 +194,5 @@ bool DistortionCorrectorComponent::undistortPointCloud(
 
 }  // namespace pointcloud_preprocessor
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(pointcloud_preprocessor::DistortionCorrectorComponent)

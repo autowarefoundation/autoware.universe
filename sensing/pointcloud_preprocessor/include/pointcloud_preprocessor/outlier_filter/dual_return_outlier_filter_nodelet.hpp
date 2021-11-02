@@ -15,27 +15,29 @@
 #ifndef POINTCLOUD_PREPROCESSOR__OUTLIER_FILTER__DUAL_RETURN_OUTLIER_FILTER_NODELET_HPP_
 #define POINTCLOUD_PREPROCESSOR__OUTLIER_FILTER__DUAL_RETURN_OUTLIER_FILTER_NODELET_HPP_
 
-#include <vector>
-
-#include "rclcpp/rclcpp.hpp"
-#include "autoware_debug_msgs/msg/float32_stamped.hpp"
-#include "sensor_msgs/msg/point_cloud2.hpp"
-#include "cv_bridge/cv_bridge.h"
-#include "opencv2/highgui/highgui.hpp"
-#include "image_transport/image_transport.hpp"
-#include "pcl/filters/voxel_grid.h"
-#include "pcl/search/pcl_search.h"
 #include "pointcloud_preprocessor/filter.hpp"
-#include "diagnostic_msgs/msg/diagnostic_array.hpp"
-#include "diagnostic_updater/diagnostic_updater.hpp"
+
+#include <diagnostic_updater/diagnostic_updater.hpp>
+#include <image_transport/image_transport.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <rclcpp/rclcpp.hpp>
+
+#include <autoware_debug_msgs/msg/float32_stamped.hpp>
+#include <diagnostic_msgs/msg/diagnostic_array.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+
+#include <cv_bridge/cv_bridge.h>
+#include <pcl/filters/voxel_grid.h>
+#include <pcl/search/pcl_search.h>
+
+#include <vector>
 
 namespace pointcloud_preprocessor
 {
 using diagnostic_updater::DiagnosticStatusWrapper;
 using diagnostic_updater::Updater;
 
-enum ReturnType : uint8_t
-{
+enum ReturnType : uint8_t {
   INVALID = 0,
   SINGLE_STRONGEST,
   SINGLE_LAST,
@@ -58,10 +60,8 @@ protected:
   /** \brief Parameter service callback */
   rcl_interfaces::msg::SetParametersResult paramCallback(const std::vector<rclcpp::Parameter> & p);
   image_transport::Publisher image_pub_;
-  rclcpp::Publisher<autoware_debug_msgs::msg::Float32Stamped>::SharedPtr
-    visibility_pub_;
-  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr
-    noise_cloud_pub_;
+  rclcpp::Publisher<autoware_debug_msgs::msg::Float32Stamped>::SharedPtr visibility_pub_;
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr noise_cloud_pub_;
 
 private:
   void onVisibilityChecker(DiagnosticStatusWrapper & stat);
@@ -99,10 +99,8 @@ struct PointXYZIRADT
 
 POINT_CLOUD_REGISTER_POINT_STRUCT(
   return_type_cloud::PointXYZIRADT,
-  (float, x, x)(float, y, y)(float, z, z)(float, intensity, intensity)(
-    std::uint16_t, ring,
-    ring)(float, azimuth, azimuth)(float, distance, distance)(
-    std::uint8_t, return_type,
-    return_type)(double, time_stamp, time_stamp))
+  (float, x, x)(float, y, y)(float, z, z)(float, intensity, intensity)(std::uint16_t, ring, ring)(
+    float, azimuth, azimuth)(float, distance, distance)(std::uint8_t, return_type, return_type)(
+    double, time_stamp, time_stamp))
 
 #endif  // POINTCLOUD_PREPROCESSOR__OUTLIER_FILTER__DUAL_RETURN_OUTLIER_FILTER_NODELET_HPP_
