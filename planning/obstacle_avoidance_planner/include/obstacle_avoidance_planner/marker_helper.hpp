@@ -14,7 +14,7 @@
 #ifndef OBSTACLE_AVOIDANCE_PLANNER__MARKER_HELPER_HPP_
 #define OBSTACLE_AVOIDANCE_PLANNER__MARKER_HELPER_HPP_
 
-#include "visualization_msgs/msg/marker_array.hpp"
+#include <visualization_msgs/msg/marker_array.hpp>
 
 inline geometry_msgs::msg::Vector3 createMarkerScale(double x, double y, double z)
 {

@@ -14,14 +14,15 @@
 #ifndef OBSTACLE_AVOIDANCE_PLANNER__DEBUG_HPP_
 #define OBSTACLE_AVOIDANCE_PLANNER__DEBUG_HPP_
 
+#include <opencv2/core.hpp>
+
+#include <autoware_perception_msgs/msg/dynamic_object.hpp>
+#include <autoware_planning_msgs/msg/trajectory_point.hpp>
+#include <nav_msgs/msg/occupancy_grid.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
+
 #include <string>
 #include <vector>
-
-#include "autoware_perception_msgs/msg/dynamic_object.hpp"
-#include "autoware_planning_msgs/msg/trajectory_point.hpp"
-#include "nav_msgs/msg/occupancy_grid.hpp"
-#include "opencv2/core.hpp"
-#include "visualization_msgs/msg/marker_array.hpp"
 
 struct ConstrainRectangle;
 struct Bounds;

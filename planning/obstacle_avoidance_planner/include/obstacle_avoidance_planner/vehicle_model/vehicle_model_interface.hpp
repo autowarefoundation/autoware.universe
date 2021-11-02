@@ -22,7 +22,7 @@
 #ifndef OBSTACLE_AVOIDANCE_PLANNER__VEHICLE_MODEL__VEHICLE_MODEL_INTERFACE_HPP_
 #define OBSTACLE_AVOIDANCE_PLANNER__VEHICLE_MODEL__VEHICLE_MODEL_INTERFACE_HPP_
 
-#include "eigen3/Eigen/Core"
+#include <eigen3/Eigen/Core>
 
 /**
  * @class vehicle model class

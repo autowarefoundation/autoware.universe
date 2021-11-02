@@ -14,20 +14,22 @@
 #ifndef OBSTACLE_AVOIDANCE_PLANNER__EB_PATH_OPTIMIZER_HPP_
 #define OBSTACLE_AVOIDANCE_PLANNER__EB_PATH_OPTIMIZER_HPP_
 
+#include <eigen3/Eigen/Core>
+#include <opencv2/core.hpp>
+#include <rclcpp/clock.hpp>
+
+#include <autoware_perception_msgs/msg/dynamic_object.hpp>
+#include <autoware_planning_msgs/msg/path.hpp>
+#include <autoware_planning_msgs/msg/path_point.hpp>
+#include <autoware_planning_msgs/msg/trajectory.hpp>
+#include <geometry_msgs/msg/point.hpp>
+#include <geometry_msgs/msg/pose.hpp>
+#include <nav_msgs/msg/map_meta_data.hpp>
+
+#include <boost/optional/optional_fwd.hpp>
+
 #include <memory>
 #include <vector>
-
-#include "autoware_perception_msgs/msg/dynamic_object.hpp"
-#include "autoware_planning_msgs/msg/path.hpp"
-#include "autoware_planning_msgs/msg/path_point.hpp"
-#include "autoware_planning_msgs/msg/trajectory.hpp"
-#include "boost/optional/optional_fwd.hpp"
-#include "eigen3/Eigen/Core"
-#include "geometry_msgs/msg/point.hpp"
-#include "geometry_msgs/msg/pose.hpp"
-#include "nav_msgs/msg/map_meta_data.hpp"
-#include "opencv2/core.hpp"
-#include "rclcpp/clock.hpp"
 
 struct Bounds;
 struct MPTParam;
@@ -224,8 +226,7 @@ struct DebugData
   FOAData foa_data;
 };
 
-enum class OptMode : int
-{
+enum class OptMode : int {
   Normal = 0,
   Extending = 1,
   Visualizing = 2,
@@ -315,8 +316,8 @@ private:
 
   int getStraightLineIdx(
     const std::vector<geometry_msgs::msg::Point> & interpolated_points,
-    const int farthest_point_idx,
-    const cv::Mat & only_objects_clearance, const nav_msgs::msg::MapMetaData & map_info,
+    const int farthest_point_idx, const cv::Mat & only_objects_clearance,
+    const nav_msgs::msg::MapMetaData & map_info,
     std::vector<geometry_msgs::msg::Point> & debug_detected_straight_points);
 
   int getEndPathIdx(

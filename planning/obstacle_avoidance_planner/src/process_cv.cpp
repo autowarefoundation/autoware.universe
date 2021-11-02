@@ -11,21 +11,25 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+#include "obstacle_avoidance_planner/process_cv.hpp"
+
+#include "obstacle_avoidance_planner/eb_path_optimizer.hpp"
+#include "obstacle_avoidance_planner/util.hpp"
+
+#include <opencv2/core.hpp>
+#include <opencv2/opencv.hpp>
+
+#include <autoware_perception_msgs/msg/dynamic_object.hpp>
+#include <nav_msgs/msg/occupancy_grid.hpp>
+
+#include <boost/optional.hpp>
+
+#include <opencv2/imgproc/imgproc_c.h>
+#include <tf2/utils.h>
+
 #include <algorithm>
 #include <limits>
 #include <vector>
-
-#include "obstacle_avoidance_planner/process_cv.hpp"
-
-#include "autoware_perception_msgs/msg/dynamic_object.hpp"
-#include "boost/optional.hpp"
-#include "nav_msgs/msg/occupancy_grid.hpp"
-#include "obstacle_avoidance_planner/eb_path_optimizer.hpp"
-#include "obstacle_avoidance_planner/util.hpp"
-#include "opencv2/core.hpp"
-#include "opencv2/imgproc/imgproc_c.h"
-#include "opencv2/opencv.hpp"
-#include "tf2/utils.h"
 
 namespace process_cv
 {
@@ -80,8 +84,7 @@ cv::Mat drawObstaclesOnImage(
   for (const auto & object : objects) {
     const PolygonPoints polygon_points = getPolygonPoints(object, map_info);
     if (isAvoidingObject(
-        polygon_points, object, clearance_map, map_info, path_points_inside_area, traj_param))
-    {
+          polygon_points, object, clearance_map, map_info, path_points_inside_area, traj_param)) {
       cv_polygons.push_back(
         getCVPolygon(object, polygon_points, path_points_inside_area, clearance_map, map_info));
       debug_avoiding_objects->push_back(object);
@@ -123,7 +126,7 @@ bool isAvoidingObject(
 
   const float object_clearance_from_road =
     clearance_map.ptr<float>(
-    static_cast<int>(image_point.get().y))[static_cast<int>(image_point.get().x)] *
+      static_cast<int>(image_point.get().y))[static_cast<int>(image_point.get().x)] *
     map_info.resolution;
   const geometry_msgs::msg::Vector3 twist = object.state.twist_covariance.twist.linear;
   const double vel = std::sqrt(twist.x * twist.x + twist.y * twist.y + twist.z * twist.z);
@@ -133,16 +136,14 @@ bool isAvoidingObject(
     return false;
   }
   const float nearest_path_point_clearance =
-    clearance_map.ptr<float>(
-    static_cast<int>(
+    clearance_map.ptr<float>(static_cast<int>(
       nearest_path_point_image.get().y))[static_cast<int>(nearest_path_point_image.get().x)] *
     map_info.resolution;
   if (
     nearest_path_point_clearance - traj_param.center_line_width * 0.5 <
-    object_clearance_from_road ||
+      object_clearance_from_road ||
     vel > traj_param.max_avoiding_objects_velocity_ms ||
-    !arePointsInsideDriveableArea(polygon_points.points_in_image, clearance_map))
-  {
+    !arePointsInsideDriveableArea(polygon_points.points_in_image, clearance_map)) {
     return false;
   }
   return true;
@@ -159,8 +160,7 @@ bool isAvoidingObjectType(
     (object.semantic.type == object.semantic.BICYCLE && traj_param.is_avoiding_bicycle) ||
     (object.semantic.type == object.semantic.MOTORBIKE && traj_param.is_avoiding_motorbike) ||
     (object.semantic.type == object.semantic.PEDESTRIAN && traj_param.is_avoiding_pedestrian) ||
-    (object.semantic.type == object.semantic.ANIMAL && traj_param.is_avoiding_animal))
-  {
+    (object.semantic.type == object.semantic.ANIMAL && traj_param.is_avoiding_animal)) {
     return true;
   }
   return false;
@@ -225,15 +225,15 @@ PolygonPoints getPolygonPointsFromCircle(
     for (const auto & delta : deltas) {
       geometry_msgs::msg::Point point;
       point.x = std::cos(
-        ((i + delta) / static_cast<double>(num_sampling_points)) * 2.0 * M_PI +
-        M_PI / static_cast<double>(num_sampling_points)) *
-        (radius / 2.0) +
-        center.x;
+                  ((i + delta) / static_cast<double>(num_sampling_points)) * 2.0 * M_PI +
+                  M_PI / static_cast<double>(num_sampling_points)) *
+                  (radius / 2.0) +
+                center.x;
       point.y = std::sin(
-        ((i + delta) / static_cast<double>(num_sampling_points)) * 2.0 * M_PI +
-        M_PI / static_cast<double>(num_sampling_points)) *
-        (radius / 2.0) +
-        center.y;
+                  ((i + delta) / static_cast<double>(num_sampling_points)) * 2.0 * M_PI +
+                  M_PI / static_cast<double>(num_sampling_points)) *
+                  (radius / 2.0) +
+                center.y;
       point.z = center.z;
       geometry_msgs::msg::Point image_point;
       if (util::transformMapToImage(point, map_info, image_point)) {
@@ -387,7 +387,7 @@ boost::optional<Edges> getEdges(
   const Eigen::Vector2d obj_vec(
     object.state.pose_covariance.pose.position.x, object.state.pose_covariance.pose.position.y);
   const double inner_product = rel_path_vec[0] * (obj_vec[0] - nearest_path_point_pose.position.x) +
-    rel_path_vec[1] * (obj_vec[1] - nearest_path_point_pose.position.y);
+                               rel_path_vec[1] * (obj_vec[1] - nearest_path_point_pose.position.y);
   geometry_msgs::msg::Point origin;
   origin.x = nearest_path_point_pose.position.x + rel_path_vec[0] * inner_product;
   origin.y = nearest_path_point_pose.position.y + rel_path_vec[1] * inner_product;
@@ -397,10 +397,9 @@ boost::optional<Edges> getEdges(
   const auto path_point_image =
     util::transformMapToImage(nearest_path_point_pose.position, map_info);
   constexpr double ray_origin_dist_scale = 1.0;
-  const float clearance = clearance_map.ptr<float>(
-    static_cast<int>(
-      path_point_image.y))[static_cast<int>(path_point_image.x)] *
-    map_info.resolution * ray_origin_dist_scale;
+  const float clearance = clearance_map.ptr<float>(static_cast<int>(
+                            path_point_image.y))[static_cast<int>(path_point_image.x)] *
+                          map_info.resolution * ray_origin_dist_scale;
   const Eigen::Vector2d obj2ray_origin = obj2origin.normalized() * (obj2origin.norm() + clearance);
   geometry_msgs::msg::Point ray_origin;
   ray_origin.x = obj_vec[0] + obj2ray_origin[0];
@@ -451,8 +450,7 @@ boost::optional<Edges> getEdges(
   const double dist2back_edge = point2back_edge.norm() * map_info.resolution;
   if (
     dist2extended_front_edge < clearance * 2 || dist2extended_back_edge < clearance * 2 ||
-    dist2front_edge > dist2extended_front_edge || dist2back_edge > dist2extended_back_edge)
-  {
+    dist2front_edge > dist2extended_front_edge || dist2back_edge > dist2extended_back_edge) {
     return boost::none;
   }
   geometry_msgs::msg::Point extended_front;
@@ -485,10 +483,9 @@ cv::Mat getDrivableAreaInCV(const nav_msgs::msg::OccupancyGrid & occupancy_grid)
 {
   cv::Mat drivable_area = cv::Mat(occupancy_grid.info.width, occupancy_grid.info.height, CV_8UC1);
 
-  drivable_area.forEach<unsigned char>(
-    [&](unsigned char & value, const int * position) -> void {
-      getOccupancyGridValue(occupancy_grid, position[0], position[1], value);
-    });
+  drivable_area.forEach<unsigned char>([&](unsigned char & value, const int * position) -> void {
+    getOccupancyGridValue(occupancy_grid, position[0], position[1], value);
+  });
   return drivable_area;
 }
 
@@ -518,10 +515,9 @@ boost::optional<int> getStopIdx(
     const double epsilon = 1e-8;
     if (!top_left || !top_right || !bottom_left || !bottom_right) {
       continue;
-    } else if ( // NOLINT
+    } else if (  // NOLINT
       top_left.get() < epsilon || top_right.get() < epsilon || bottom_left.get() < epsilon ||
-      bottom_right.get() < epsilon)
-    {
+      bottom_right.get() < epsilon) {
       return std::max(static_cast<int>(i - 1), 0);
     }
   }
@@ -536,10 +532,9 @@ boost::optional<double> getDistance(
   if (!image_point) {
     return boost::none;
   }
-  const float clearance = clearance_map.ptr<float>(
-    static_cast<int>(
-      image_point.get().y))[static_cast<int>(image_point.get().x)] *
-    map_info.resolution;
+  const float clearance = clearance_map.ptr<float>(static_cast<int>(
+                            image_point.get().y))[static_cast<int>(image_point.get().x)] *
+                          map_info.resolution;
   return clearance;
 }
 

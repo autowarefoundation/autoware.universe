@@ -29,7 +29,7 @@ void KinematicsBicycleModel::calculateDiscreteMatrix(
   Eigen::MatrixXd * Ad, Eigen::MatrixXd * Bd, Eigen::MatrixXd * Cd, Eigen::MatrixXd * Wd,
   const double ds)
 {
-  auto sign = [](double x) {return (x > 0.0) - (x < 0.0);};
+  auto sign = [](double x) { return (x > 0.0) - (x < 0.0); };
 
   /* Linearize delta around delta_r (reference delta) */
   double delta_r = atan(wheelbase_ * curvature_);

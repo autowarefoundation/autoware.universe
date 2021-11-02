@@ -12,24 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <string>
-#include <vector>
-
-#include "autoware_perception_msgs/msg/dynamic_object.hpp"
-#include "autoware_planning_msgs/msg/trajectory_point.hpp"
-#include "geometry_msgs/msg/pose.hpp"
-#include "nav_msgs/msg/occupancy_grid.hpp"
 #include "obstacle_avoidance_planner/debug.hpp"
+
 #include "obstacle_avoidance_planner/eb_path_optimizer.hpp"
 #include "obstacle_avoidance_planner/marker_helper.hpp"
 #include "obstacle_avoidance_planner/mpt_optimizer.hpp"
 #include "obstacle_avoidance_planner/process_cv.hpp"
 #include "obstacle_avoidance_planner/util.hpp"
-#include "opencv2/core.hpp"
-#include "rclcpp/clock.hpp"
-#include "tf2/utils.h"
-#include "visualization_msgs/msg/marker.hpp"
-#include "visualization_msgs/msg/marker_array.hpp"
+
+#include <opencv2/core.hpp>
+#include <rclcpp/clock.hpp>
+
+#include <autoware_perception_msgs/msg/dynamic_object.hpp>
+#include <autoware_planning_msgs/msg/trajectory_point.hpp>
+#include <geometry_msgs/msg/pose.hpp>
+#include <nav_msgs/msg/occupancy_grid.hpp>
+#include <visualization_msgs/msg/marker.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
+
+#include <tf2/utils.h>
+
+#include <string>
+#include <vector>
 
 visualization_msgs::msg::MarkerArray getDebugVisualizationMarker(
   const DebugData & debug_data,
@@ -351,36 +355,36 @@ visualization_msgs::msg::MarkerArray getDebugConstrainMarkers(
     constrain_range_text_marker.scale = createMarkerScale(0, 0, 0.1);
     constrain_range_text_marker.color = createMarkerColor(1.0, 0, 0, 0.99);
     constrain_range_text_marker.text = std::to_string(i) + std::string(" x ") +
-      std::to_string(constrain_range_text_marker.pose.position.x) +
-      std::string("y ") +
-      std::to_string(constrain_range_text_marker.pose.position.y);
+                                       std::to_string(constrain_range_text_marker.pose.position.x) +
+                                       std::string("y ") +
+                                       std::to_string(constrain_range_text_marker.pose.position.y);
     unique_id++;
     marker_array.markers.push_back(constrain_range_text_marker);
 
     constrain_range_text_marker.id = unique_id;
     constrain_range_text_marker.pose.position = constrain_ranges[i].top_right;
     constrain_range_text_marker.text = std::to_string(i) + std::string(" x ") +
-      std::to_string(constrain_range_text_marker.pose.position.x) +
-      std::string("y ") +
-      std::to_string(constrain_range_text_marker.pose.position.y);
+                                       std::to_string(constrain_range_text_marker.pose.position.x) +
+                                       std::string("y ") +
+                                       std::to_string(constrain_range_text_marker.pose.position.y);
     unique_id++;
     marker_array.markers.push_back(constrain_range_text_marker);
 
     constrain_range_text_marker.id = unique_id;
     constrain_range_text_marker.pose.position = constrain_ranges[i].bottom_left;
     constrain_range_text_marker.text = std::to_string(i) + std::string(" x ") +
-      std::to_string(constrain_range_text_marker.pose.position.x) +
-      std::string("y ") +
-      std::to_string(constrain_range_text_marker.pose.position.y);
+                                       std::to_string(constrain_range_text_marker.pose.position.x) +
+                                       std::string("y ") +
+                                       std::to_string(constrain_range_text_marker.pose.position.y);
     unique_id++;
     marker_array.markers.push_back(constrain_range_text_marker);
 
     constrain_range_text_marker.id = unique_id;
     constrain_range_text_marker.pose.position = constrain_ranges[i].bottom_right;
     constrain_range_text_marker.text = std::to_string(i) + std::string(" x ") +
-      std::to_string(constrain_range_text_marker.pose.position.x) +
-      std::string("y ") +
-      std::to_string(constrain_range_text_marker.pose.position.y);
+                                       std::to_string(constrain_range_text_marker.pose.position.x) +
+                                       std::string("y ") +
+                                       std::to_string(constrain_range_text_marker.pose.position.y);
     unique_id++;
     marker_array.markers.push_back(constrain_range_text_marker);
   }
@@ -770,9 +774,8 @@ nav_msgs::msg::OccupancyGrid getDebugCostmap(
   clearance_map.copyTo(tmp);
   cv::normalize(tmp, tmp, 0, 255, cv::NORM_MINMAX, CV_8UC1);
   nav_msgs::msg::OccupancyGrid clearance_map_in_og = occupancy_grid;
-  tmp.forEach<unsigned char>(
-    [&](const unsigned char & value, const int * position) -> void {
-      process_cv::putOccupancyGridValue(clearance_map_in_og, position[0], position[1], value);
-    });
+  tmp.forEach<unsigned char>([&](const unsigned char & value, const int * position) -> void {
+    process_cv::putOccupancyGridValue(clearance_map_in_og, position[0], position[1], value);
+  });
   return clearance_map_in_og;
 }

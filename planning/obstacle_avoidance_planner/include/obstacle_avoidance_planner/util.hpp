@@ -15,22 +15,25 @@
 #ifndef OBSTACLE_AVOIDANCE_PLANNER__UTIL_HPP_
 #define OBSTACLE_AVOIDANCE_PLANNER__UTIL_HPP_
 
+#include <autoware_utils/trajectory/trajectory.hpp>
+#include <eigen3/Eigen/Core>
+
+#include <autoware_planning_msgs/msg/path_point.hpp>
+#include <autoware_planning_msgs/msg/trajectory.hpp>
+
+#include <boost/optional/optional_fwd.hpp>
+
 #include <memory>
 #include <vector>
 
-#include "boost/optional/optional_fwd.hpp"
-#include "eigen3/Eigen/Core"
-
-#include "autoware_planning_msgs/msg/path_point.hpp"
-#include "autoware_planning_msgs/msg/trajectory.hpp"
-#include "autoware_utils/trajectory/trajectory.hpp"
-
 struct VehicleParam;
 struct ReferencePoint;
+struct Trajectories;
+struct TrajectoryParam;
 
 namespace util
 {
-template<typename T>
+template <typename T>
 geometry_msgs::msg::Point transformToRelativeCoordinate2D(
   const T & point, const geometry_msgs::msg::Pose & origin);
 
@@ -53,7 +56,7 @@ geometry_msgs::msg::Quaternion getQuaternionFromPoints(
 
 geometry_msgs::msg::Quaternion getQuaternionFromYaw(const double yaw);
 
-template<typename T>
+template <typename T>
 geometry_msgs::msg::Point transformMapToImage(
   const T & map_point, const nav_msgs::msg::MapMetaData & occupancy_grid_info);
 
@@ -82,11 +85,11 @@ std::vector<geometry_msgs::msg::Point> getInterpolatedPoints(
 std::vector<geometry_msgs::msg::Point> getInterpolatedPoints(
   const std::vector<ReferencePoint> & points, const double delta_arc_length);
 
-template<typename T>
+template <typename T>
 std::vector<geometry_msgs::msg::Point> getInterpolatedPoints(
   const T & points, const double delta_arc_length);
 
-template<typename T>
+template <typename T>
 int getNearestIdx(
   const T & points, const geometry_msgs::msg::Pose & pose, const int default_idx,
   const double delta_yaw_threshold);
@@ -99,19 +102,19 @@ int getNearestIdxOverPoint(
   const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & points,
   const geometry_msgs::msg::Pose & pose, const int default_idx, const double delta_yaw_threshold);
 
-template<typename T>
+template <typename T>
 int getNearestIdx(const T & points, const geometry_msgs::msg::Point & point, const int default_idx);
 
 int getNearestIdx(
   const std::vector<geometry_msgs::msg::Point> & points, const geometry_msgs::msg::Point & point);
 
-template<typename T>
+template <typename T>
 int getNearestIdx(const T & points, const geometry_msgs::msg::Point & point);
 
 int getNearestIdx(
   const std::vector<ReferencePoint> & points, const double target_s, const int begin_idx);
 
-template<typename T>
+template <typename T>
 int getNearestPointIdx(const T & points, const geometry_msgs::msg::Point & point);
 
 std::vector<autoware_planning_msgs::msg::TrajectoryPoint> convertPathToTrajectory(
@@ -124,7 +127,7 @@ std::vector<autoware_planning_msgs::msg::TrajectoryPoint> fillTrajectoryWithVelo
   const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & traj_points,
   const double velocity);
 
-template<typename T>
+template <typename T>
 std::vector<autoware_planning_msgs::msg::TrajectoryPoint> alignVelocityWithPoints(
   const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & traj_points, const T & points,
   const int zero_velocity_traj_idx, const int max_skip_comparison_idx);
@@ -179,12 +182,12 @@ int getZeroVelocityIdx(
   const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points,
   const std::unique_ptr<Trajectories> & opt_trajs, const TrajectoryParam & traj_param);
 
-template<typename T>
+template <typename T>
 int getZeroVelocityIdxFromPoints(
   const T & points, const std::vector<geometry_msgs::msg::Point> & fine_points,
   const int /* default_idx */, const TrajectoryParam & traj_param);
 
-template<typename T>
+template <typename T>
 double getArcLength(const T & points, const int initial_idx = 0);
 
 double getArcLength(

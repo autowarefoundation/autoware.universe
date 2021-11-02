@@ -40,15 +40,18 @@
 #ifndef OBSTACLE_AVOIDANCE_PLANNER__MPT_OPTIMIZER_HPP_
 #define OBSTACLE_AVOIDANCE_PLANNER__MPT_OPTIMIZER_HPP_
 
+#include "obstacle_avoidance_planner/vehicle_model/vehicle_model_interface.hpp"
+
+#include <eigen3/Eigen/Core>
+
+#include <autoware_planning_msgs/msg/path_point.hpp>
+#include <autoware_planning_msgs/msg/trajectory_point.hpp>
+#include <nav_msgs/msg/map_meta_data.hpp>
+
+#include <boost/optional.hpp>
+
 #include <memory>
 #include <vector>
-
-#include "autoware_planning_msgs/msg/path_point.hpp"
-#include "autoware_planning_msgs/msg/trajectory_point.hpp"
-#include "boost/optional.hpp"
-#include "eigen3/Eigen/Core"
-#include "nav_msgs/msg/map_meta_data.hpp"
-#include "obstacle_avoidance_planner/vehicle_model/vehicle_model_interface.hpp"
 
 namespace cv
 {
@@ -209,10 +212,10 @@ private:
   void setOptimizedState(ReferencePoint * ref_point, const Eigen::Vector3d & optimized_state) const;
 
   /*
- * predict equation: Xec = Aex * x0 + Bex * Uex + Wex
- * cost function: J = Xex' * Qex * Xex + (Uex - Uref)' * R1ex * (Uex - Uref_ex) + Uex' * R2ex * Uex
- * Qex = diag([Q,Q,...]), R1ex = diag([R,R,...])
- */
+   * predict equation: Xec = Aex * x0 + Bex * Uex + Wex
+   * cost function: J = Xex' * Qex * Xex + (Uex - Uref)' * R1ex * (Uex - Uref_ex) + Uex' * R2ex *
+   * Uex Qex = diag([Q,Q,...]), R1ex = diag([R,R,...])
+   */
   boost::optional<MPTMatrix> generateMPTMatrix(
     const std::vector<ReferencePoint> & reference_points,
     const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points,
