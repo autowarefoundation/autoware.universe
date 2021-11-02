@@ -7,16 +7,7 @@ module autoware_auto_msgs {
     struct TrajectoryPoint {
       builtin_interfaces::msg::Duration time_from_start;
 
-      @default (value=0.0)
-      float x;
-
-      @default (value=0.0)
-      float y;
-
-      @default (value=0.0)
-      float z;
-
-      geometry_msgs::msg::Quaternion orientation;
+      geometry_msgs::msg::Pose pose;
 
       @default (value=0.0)
       float longitudinal_velocity_mps;
