@@ -28,8 +28,6 @@ rclcpp_components_register_node(dummy_infrastructure_node_component
 
 ## Tests
 if(BUILD_TESTING)
-  list(APPEND AMENT_LINT_AUTO_EXCLUDE ament_cmake_uncrustify)
-
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
 endif()
