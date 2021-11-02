@@ -16,8 +16,7 @@
 
 namespace gnss_poser
 {
-enum class CoordinateSystem
-{
+enum class CoordinateSystem {
   UTM = 0,
   MGRS = 1,
   PLANE = 2,

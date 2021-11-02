@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "gnss_poser/gnss_poser_core.hpp"
+
 #include <algorithm>
 #include <memory>
 #include <string>
 #include <vector>
-
-#include "gnss_poser/gnss_poser_core.hpp"
 
 namespace gnss_poser
 {
@@ -106,8 +106,7 @@ void GNSSPoser::callbackNavSatFix(
   // get TF from base_link to gnss_antenna
   auto tf_gnss_antenna2base_link_msg_ptr = std::make_shared<geometry_msgs::msg::TransformStamped>();
   getStaticTransform(
-    gnss_frame_, base_frame_, tf_gnss_antenna2base_link_msg_ptr,
-    nav_sat_fix_msg_ptr->header.stamp);
+    gnss_frame_, base_frame_, tf_gnss_antenna2base_link_msg_ptr, nav_sat_fix_msg_ptr->header.stamp);
   tf2::Transform tf_gnss_antenna2base_link{};
   tf2::fromMsg(tf_gnss_antenna2base_link_msg_ptr->transform, tf_gnss_antenna2base_link);
 
@@ -189,13 +188,13 @@ geometry_msgs::msg::Point GNSSPoser::getMedianPosition(
   const boost::circular_buffer<geometry_msgs::msg::Point> & position_buffer)
 {
   auto getMedian = [](std::vector<double> array) {
-      std::sort(std::begin(array), std::end(array));
-      const size_t median_index = array.size() / 2;
-      double median = (array.size() % 2) ?
-        (array.at(median_index)) :
-        ((array.at(median_index) + array.at(median_index - 1)) / 2);
-      return median;
-    };
+    std::sort(std::begin(array), std::end(array));
+    const size_t median_index = array.size() / 2;
+    double median = (array.size() % 2)
+                      ? (array.at(median_index))
+                      : ((array.at(median_index) + array.at(median_index - 1)) / 2);
+    return median;
+  };
 
   std::vector<double> array_x;
   std::vector<double> array_y;
@@ -351,5 +350,5 @@ void GNSSPoser::publishTF(
 }
 }  // namespace gnss_poser
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(gnss_poser::GNSSPoser)
