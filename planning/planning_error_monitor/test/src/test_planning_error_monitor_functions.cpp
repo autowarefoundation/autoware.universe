@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <string>
-
-#include "gtest/gtest.h"
-
 #include "planning_error_monitor/planning_error_monitor_node.hpp"
 #include "test_planning_error_monitor_helper.hpp"
+
+#include <gtest/gtest.h>
+
+#include <string>
 
 constexpr double NOMINAL_INTERVAL = 1.0;
 constexpr double ERROR_INTERVAL = 1000.0;
@@ -60,15 +60,13 @@ TEST(PlanningErrorMonitor, TrajectoryIntervalChecker)
     Trajectory valid_traj = generateTrajectory(NOMINAL_INTERVAL);
 
     std::string valid_msg;
-    ASSERT_TRUE(
-      PlanningErrorMonitorNode::checkTrajectoryInterval(
-        valid_traj, ERROR_INTERVAL, valid_msg, debug_marker));
+    ASSERT_TRUE(PlanningErrorMonitorNode::checkTrajectoryInterval(
+      valid_traj, ERROR_INTERVAL, valid_msg, debug_marker));
     ASSERT_EQ(valid_msg, "Trajectory Interval Length is within the expected range");
 
     std::string boundary_msg;
-    ASSERT_TRUE(
-      PlanningErrorMonitorNode::checkTrajectoryInterval(
-        valid_traj, NOMINAL_INTERVAL, boundary_msg, debug_marker));
+    ASSERT_TRUE(PlanningErrorMonitorNode::checkTrajectoryInterval(
+      valid_traj, NOMINAL_INTERVAL, boundary_msg, debug_marker));
     ASSERT_EQ(boundary_msg, "Trajectory Interval Length is within the expected range");
   }
 
@@ -76,9 +74,8 @@ TEST(PlanningErrorMonitor, TrajectoryIntervalChecker)
   {
     Trajectory long_interval_traj = generateTrajectory(ERROR_INTERVAL);
     std::string long_interval_error_msg;
-    ASSERT_FALSE(
-      PlanningErrorMonitorNode::checkTrajectoryInterval(
-        long_interval_traj, NOMINAL_INTERVAL, long_interval_error_msg, debug_marker));
+    ASSERT_FALSE(PlanningErrorMonitorNode::checkTrajectoryInterval(
+      long_interval_traj, NOMINAL_INTERVAL, long_interval_error_msg, debug_marker));
     ASSERT_EQ(
       long_interval_error_msg, "Trajectory Interval Length is longer than the expected range");
   }
@@ -93,9 +90,8 @@ TEST(PlanningErrorMonitor, TrajectoryCurvatureChecker)
   {
     Trajectory valid_traj = generateTrajectory(NOMINAL_INTERVAL);
     std::string valid_error_msg;
-    ASSERT_TRUE(
-      PlanningErrorMonitorNode::checkTrajectoryCurvature(
-        valid_traj, ERROR_CURVATURE, valid_error_msg, debug_marker));
+    ASSERT_TRUE(PlanningErrorMonitorNode::checkTrajectoryCurvature(
+      valid_traj, ERROR_CURVATURE, valid_error_msg, debug_marker));
     ASSERT_EQ(valid_error_msg, "This trajectory's curvature is within the expected range");
   }
 }
@@ -119,12 +115,10 @@ TEST(PlanningErrorMonitor, TrajectoryRelativeAngleChecker)
     // " , " << t.pose.position.y <<" )"<< std::endl;
     // }
     std::string valid_error_msg;
-    ASSERT_FALSE(
-      PlanningErrorMonitorNode::checkTrajectoryRelativeAngle(
-        valid_traj, too_sharp_turn, too_close_dist, valid_error_msg, debug_marker));
+    ASSERT_FALSE(PlanningErrorMonitorNode::checkTrajectoryRelativeAngle(
+      valid_traj, too_sharp_turn, too_close_dist, valid_error_msg, debug_marker));
     ASSERT_EQ(
-      valid_error_msg,
-      "This Trajectory's relative angle has larger value than the expected value");
+      valid_error_msg, "This Trajectory's relative angle has larger value than the expected value");
   }
 
   {
@@ -137,12 +131,10 @@ TEST(PlanningErrorMonitor, TrajectoryRelativeAngleChecker)
       t.pose.position.x *= -1;
     }
     std::string valid_error_msg;
-    ASSERT_FALSE(
-      PlanningErrorMonitorNode::checkTrajectoryRelativeAngle(
-        valid_traj, too_sharp_turn, too_close_dist, valid_error_msg, debug_marker));
+    ASSERT_FALSE(PlanningErrorMonitorNode::checkTrajectoryRelativeAngle(
+      valid_traj, too_sharp_turn, too_close_dist, valid_error_msg, debug_marker));
     ASSERT_EQ(
-      valid_error_msg,
-      "This Trajectory's relative angle has larger value than the expected value");
+      valid_error_msg, "This Trajectory's relative angle has larger value than the expected value");
   }
 
   {
@@ -157,11 +149,9 @@ TEST(PlanningErrorMonitor, TrajectoryRelativeAngleChecker)
     }
     valid_traj.points[4].pose.position.x = -10000000;
     std::string valid_error_msg;
-    ASSERT_FALSE(
-      PlanningErrorMonitorNode::checkTrajectoryRelativeAngle(
-        valid_traj, too_sharp_turn, too_close_dist, valid_error_msg, debug_marker));
+    ASSERT_FALSE(PlanningErrorMonitorNode::checkTrajectoryRelativeAngle(
+      valid_traj, too_sharp_turn, too_close_dist, valid_error_msg, debug_marker));
     ASSERT_EQ(
-      valid_error_msg,
-      "This Trajectory's relative angle has larger value than the expected value");
+      valid_error_msg, "This Trajectory's relative angle has larger value than the expected value");
   }
 }

@@ -15,13 +15,15 @@
 #ifndef PLANNING_ERROR_MONITOR__PLANNING_ERROR_MONITOR_NODE_HPP_
 #define PLANNING_ERROR_MONITOR__PLANNING_ERROR_MONITOR_NODE_HPP_
 
-#include <string>
-
-#include "autoware_planning_msgs/msg/trajectory.hpp"
-#include "diagnostic_msgs/msg/diagnostic_array.hpp"
-#include "diagnostic_updater/diagnostic_updater.hpp"
 #include "planning_error_monitor/debug_marker.hpp"
-#include "rclcpp/rclcpp.hpp"
+
+#include <diagnostic_updater/diagnostic_updater.hpp>
+#include <rclcpp/rclcpp.hpp>
+
+#include <autoware_planning_msgs/msg/trajectory.hpp>
+#include <diagnostic_msgs/msg/diagnostic_array.hpp>
+
+#include <string>
 
 namespace planning_diagnostics
 {
@@ -46,8 +48,7 @@ public:
     const Trajectory & traj, const double relative_angle_threshold, const double min_dist_threshold,
     std::string & error_msg, PlanningErrorMonitorDebugNode & debug_marker);
 
-  static bool checkTrajectoryPointValue(
-    const Trajectory & traj, std::string & error_msg);
+  static bool checkTrajectoryPointValue(const Trajectory & traj, std::string & error_msg);
   static bool checkTrajectoryInterval(
     const Trajectory & traj, const double & interval_threshold, std::string & error_msg,
     PlanningErrorMonitorDebugNode & debug_marker);

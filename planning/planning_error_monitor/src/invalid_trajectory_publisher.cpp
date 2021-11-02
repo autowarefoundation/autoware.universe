@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "planning_error_monitor/invalid_trajectory_publisher.hpp"
+
 #include <memory>
 #include <string>
 #include <utility>
-
-#include "planning_error_monitor/invalid_trajectory_publisher.hpp"
 
 namespace planning_diagnostics
 {
@@ -35,8 +35,7 @@ InvalidTrajectoryPublisherNode::InvalidTrajectoryPublisherNode(
 
   auto on_timer_ = std::bind(&InvalidTrajectoryPublisherNode::onTimer, this);
   timer_ = std::make_shared<rclcpp::GenericTimer<decltype(on_timer_)>>(
-    this->get_clock(), 100ms, std::move(on_timer_),
-    this->get_node_base_interface()->get_context());
+    this->get_clock(), 100ms, std::move(on_timer_), this->get_node_base_interface()->get_context());
   this->get_node_timers_interface()->add_timer(timer_, nullptr);
 }
 
@@ -77,5 +76,5 @@ void InvalidTrajectoryPublisherNode::onCurrentTrajectory(const Trajectory::Const
 
 }  // namespace planning_diagnostics
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(planning_diagnostics::InvalidTrajectoryPublisherNode)
