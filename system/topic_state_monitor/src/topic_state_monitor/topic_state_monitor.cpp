@@ -16,8 +16,7 @@
 
 namespace topic_state_monitor
 {
-TopicStateMonitor::TopicStateMonitor(rclcpp::Node & node)
-: clock_(node.get_clock()) {}
+TopicStateMonitor::TopicStateMonitor(rclcpp::Node & node) : clock_(node.get_clock()) {}
 
 void TopicStateMonitor::update()
 {
@@ -36,10 +35,18 @@ void TopicStateMonitor::update()
 
 TopicStatus TopicStateMonitor::getTopicStatus() const
 {
-  if (isNotReceived()) {return TopicStatus::NotReceived;}
-  if (isTimeout()) {return TopicStatus::Timeout;}
-  if (isErrorRate()) {return TopicStatus::ErrorRate;}
-  if (isWarnRate()) {return TopicStatus::WarnRate;}
+  if (isNotReceived()) {
+    return TopicStatus::NotReceived;
+  }
+  if (isTimeout()) {
+    return TopicStatus::Timeout;
+  }
+  if (isErrorRate()) {
+    return TopicStatus::ErrorRate;
+  }
+  if (isWarnRate()) {
+    return TopicStatus::WarnRate;
+  }
   return TopicStatus::Ok;
 }
 
@@ -57,7 +64,7 @@ double TopicStateMonitor::calcTopicRate() const
   return static_cast<double>(num_intervals) / time_diff;
 }
 
-bool TopicStateMonitor::isNotReceived() const {return time_buffer_.empty();}
+bool TopicStateMonitor::isNotReceived() const { return time_buffer_.empty(); }
 
 bool TopicStateMonitor::isWarnRate() const
 {

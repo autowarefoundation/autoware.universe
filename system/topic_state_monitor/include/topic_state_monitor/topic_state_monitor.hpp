@@ -15,10 +15,10 @@
 #ifndef TOPIC_STATE_MONITOR__TOPIC_STATE_MONITOR_HPP_
 #define TOPIC_STATE_MONITOR__TOPIC_STATE_MONITOR_HPP_
 
+#include <rclcpp/rclcpp.hpp>
+
 #include <deque>
 #include <string>
-
-#include "rclcpp/rclcpp.hpp"
 
 namespace topic_state_monitor
 {
@@ -35,8 +35,7 @@ struct Param
   int window_size;
 };
 
-enum class TopicStatus : int8_t
-{
+enum class TopicStatus : int8_t {
   Ok,
   NotReceived,
   WarnRate,
@@ -49,10 +48,10 @@ class TopicStateMonitor
 public:
   explicit TopicStateMonitor(rclcpp::Node & node);
 
-  void setParam(const Param & param) {param_ = param;}
+  void setParam(const Param & param) { param_ = param; }
 
-  rclcpp::Time getLastMessageTime() const {return last_message_time_;}
-  double getTopicRate() const {return topic_rate_;}
+  rclcpp::Time getLastMessageTime() const { return last_message_time_; }
+  double getTopicRate() const { return topic_rate_; }
 
   void update();
   TopicStatus getTopicStatus() const;

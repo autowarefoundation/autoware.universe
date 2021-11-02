@@ -12,22 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "topic_state_monitor/topic_state_monitor_core.hpp"
+
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 
-#include "topic_state_monitor/topic_state_monitor_core.hpp"
-
 namespace
 {
-template<typename T>
+template <typename T>
 void update_param(
   const std::vector<rclcpp::Parameter> & parameters, const std::string & name, T & value)
 {
   auto it = std::find_if(
     parameters.cbegin(), parameters.cend(),
-    [&name](const rclcpp::Parameter & parameter) {return parameter.get_name() == name;});
+    [&name](const rclcpp::Parameter & parameter) { return parameter.get_name() == name; });
   if (it != parameters.cend()) {
     value = it->template get_value<T>();
   }
@@ -62,8 +62,12 @@ TopicStateMonitorNode::TopicStateMonitorNode(const rclcpp::NodeOptions & node_op
 
   // Subscriber
   rclcpp::QoS qos = rclcpp::QoS{1};
-  if (param_.transient_local) {qos.transient_local();}
-  if (param_.best_effort) {qos.best_effort();}
+  if (param_.transient_local) {
+    qos.transient_local();
+  }
+  if (param_.best_effort) {
+    qos.best_effort();
+  }
   sub_topic_ = this->create_generic_subscription(
     param_.topic, param_.topic_type, qos,
     [this]([[maybe_unused]] std::shared_ptr<rclcpp::SerializedMessage> msg) {
@@ -166,5 +170,5 @@ void TopicStateMonitorNode::checkTopicStatus(diagnostic_updater::DiagnosticStatu
 
 }  // namespace topic_state_monitor
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(topic_state_monitor::TopicStateMonitorNode)
