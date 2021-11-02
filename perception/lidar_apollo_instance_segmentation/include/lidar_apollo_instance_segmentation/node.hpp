@@ -12,13 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 #pragma once
-#include "rclcpp/rclcpp.hpp"
-
-#include "autoware_perception_msgs/msg/dynamic_object_with_feature_array.hpp"
-#include "sensor_msgs/msg/point_cloud2.hpp"
-#include <memory>
-
 #include "lidar_apollo_instance_segmentation/debugger.hpp"
+
+#include <rclcpp/rclcpp.hpp>
+
+#include <autoware_perception_msgs/msg/dynamic_object_with_feature_array.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+
+#include <memory>
 
 class LidarInstanceSegmentationInterface
 {

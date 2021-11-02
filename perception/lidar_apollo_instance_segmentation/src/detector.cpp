@@ -13,15 +13,15 @@
 // limitations under the License.
 
 #include "lidar_apollo_instance_segmentation/detector.hpp"
-#include "NvCaffeParser.h"
-#include "NvInfer.h"
+
 #include "lidar_apollo_instance_segmentation/feature_map.hpp"
-#include "pcl_conversions/pcl_conversions.h"
+
+#include <NvCaffeParser.h>
+#include <NvInfer.h>
+#include <pcl_conversions/pcl_conversions.h>
 
 LidarApolloInstanceSegmentation::LidarApolloInstanceSegmentation(rclcpp::Node * node)
-: node_(node),
-  tf_buffer_(node_->get_clock()),
-  tf_listener_(tf_buffer_)
+: node_(node), tf_buffer_(node_->get_clock()), tf_listener_(tf_buffer_)
 {
   int range, width, height;
   bool use_intensity_feature, use_constant_feature;
@@ -86,8 +86,7 @@ LidarApolloInstanceSegmentation::LidarApolloInstanceSegmentation(rclcpp::Node * 
 }
 
 bool LidarApolloInstanceSegmentation::transformCloud(
-  const sensor_msgs::msg::PointCloud2 & input,
-  sensor_msgs::msg::PointCloud2 & transformed_cloud,
+  const sensor_msgs::msg::PointCloud2 & input, sensor_msgs::msg::PointCloud2 & transformed_cloud,
   float z_offset)
 {
   // TODO(mitsudome-r): remove conversion once pcl_ros transform are available.
@@ -99,8 +98,7 @@ bool LidarApolloInstanceSegmentation::transformCloud(
     try {
       geometry_msgs::msg::TransformStamped transform_stamped;
       transform_stamped = tf_buffer_.lookupTransform(
-        target_frame_, input.header.frame_id,
-        input.header.stamp, std::chrono::milliseconds(500));
+        target_frame_, input.header.frame_id, input.header.stamp, std::chrono::milliseconds(500));
       Eigen::Matrix4f affine_matrix =
         tf2::transformToEigen(transform_stamped.transform).matrix().cast<float>();
       pcl::transformPointCloud(pcl_input, pcl_transformed_cloud, affine_matrix);
@@ -155,8 +153,7 @@ bool LidarApolloInstanceSegmentation::detectDynamicObjects(
   const float height_thresh = 0.5;
   const int min_pts_num = 3;
   cluster2d_->getObjects(
-    score_threshold_, height_thresh, min_pts_num, output,
-    transformed_cloud.header);
+    score_threshold_, height_thresh, min_pts_num, output, transformed_cloud.header);
 
   // move down pointcloud z_offset in z axis
   for (std::size_t i = 0; i < output.feature_objects.size(); i++) {

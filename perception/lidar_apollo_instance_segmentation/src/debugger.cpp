@@ -13,10 +13,12 @@
 // limitations under the License.
 
 #include "lidar_apollo_instance_segmentation/debugger.hpp"
-#include "pcl/point_types.h"
-#include "pcl/point_cloud.h"
-#include "pcl_conversions/pcl_conversions.h"
-#include "sensor_msgs/msg/point_cloud2.hpp"
+
+#include <sensor_msgs/msg/point_cloud2.hpp>
+
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl_conversions/pcl_conversions.h>
 
 Debugger::Debugger(rclcpp::Node * node)
 {
@@ -35,47 +37,47 @@ void Debugger::publishColoredPointCloud(
     int red = 0, green = 0, blue = 0;
     switch (input.feature_objects.at(i).object.semantic.type) {
       case autoware_perception_msgs::msg::Semantic::CAR: {
-          red = 255;
-          green = 0;
-          blue = 0;
-          break;
-        }
+        red = 255;
+        green = 0;
+        blue = 0;
+        break;
+      }
       case autoware_perception_msgs::msg::Semantic::TRUCK: {
-          red = 255;
-          green = 127;
-          blue = 0;
-          break;
-        }
+        red = 255;
+        green = 127;
+        blue = 0;
+        break;
+      }
       case autoware_perception_msgs::msg::Semantic::BUS: {
-          red = 255;
-          green = 0;
-          blue = 127;
-          break;
-        }
+        red = 255;
+        green = 0;
+        blue = 127;
+        break;
+      }
       case autoware_perception_msgs::msg::Semantic::PEDESTRIAN: {
-          red = 0;
-          green = 255;
-          blue = 0;
-          break;
-        }
+        red = 0;
+        green = 255;
+        blue = 0;
+        break;
+      }
       case autoware_perception_msgs::msg::Semantic::BICYCLE: {
-          red = 0;
-          green = 0;
-          blue = 255;
-          break;
-        }
+        red = 0;
+        green = 0;
+        blue = 255;
+        break;
+      }
       case autoware_perception_msgs::msg::Semantic::MOTORBIKE: {
-          red = 0;
-          green = 127;
-          blue = 255;
-          break;
-        }
+        red = 0;
+        green = 127;
+        blue = 255;
+        break;
+      }
       case autoware_perception_msgs::msg::Semantic::UNKNOWN: {
-          red = 255;
-          green = 255;
-          blue = 255;
-          break;
-        }
+        red = 255;
+        green = 255;
+        blue = 255;
+        break;
+      }
     }
 
     for (size_t i = 0; i < object_pointcloud.size(); i++) {

@@ -20,21 +20,24 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
-*/
-#include "TrtNet.hpp"
-#include "cublas_v2.h"
-#include "cudnn.h"
+ */
+
+#include <TrtNet.hpp>
+
+#include <cublas_v2.h>
+#include <cudnn.h>
 #include <string.h>
 #include <time.h>
+
 #include <cassert>
 #include <chrono>
 #include <iostream>
 #include <sstream>
 #include <unordered_map>
 
-using namespace nvinfer1;
-using namespace nvcaffeparser1;
-using namespace plugin;
+using namespace nvinfer1;        // NOLINT
+using namespace nvcaffeparser1;  // NOLINT
+using namespace plugin;          // NOLINT
 
 static Tn::Logger gLogger;
 
@@ -80,7 +83,7 @@ trtNet::trtNet(const std::string & engineFile)
   mTrtRunMode(RUN_MODE::FLOAT32),
   mTrtInputCount(0)
 {
-  using namespace std;
+  using namespace std;  // NOLINT
   fstream file;
 
   file.open(engineFile, ios::binary | ios::in);
@@ -120,7 +123,9 @@ void trtNet::InitEngine()
     int64_t totalSize = volume(dims) * maxBatchSize * getElementSize(dtype);
     mTrtBindBufferSize[i] = totalSize;
     mTrtCudaBuffer[i] = safeCudaMalloc(totalSize);
-    if (mTrtEngine->bindingIsInput(i)) {mTrtInputCount++;}
+    if (mTrtEngine->bindingIsInput(i)) {
+      mTrtInputCount++;
+    }
   }
 
   CUDA_CHECK(cudaStreamCreate(&mTrtCudaStream));
@@ -132,18 +137,16 @@ void trtNet::doInference(const void * inputData, void * outputData)
   assert(mTrtInputCount == 1);
 
   int inputIndex = 0;
-  CUDA_CHECK(
-    cudaMemcpyAsync(
-      mTrtCudaBuffer[inputIndex], inputData, mTrtBindBufferSize[inputIndex], cudaMemcpyHostToDevice,
-      mTrtCudaStream));
+  CUDA_CHECK(cudaMemcpyAsync(
+    mTrtCudaBuffer[inputIndex], inputData, mTrtBindBufferSize[inputIndex], cudaMemcpyHostToDevice,
+    mTrtCudaStream));
 
   mTrtContext->execute(batchSize, &mTrtCudaBuffer[inputIndex]);
 
   for (size_t bindingIdx = mTrtInputCount; bindingIdx < mTrtBindBufferSize.size(); ++bindingIdx) {
     auto size = mTrtBindBufferSize[bindingIdx];
-    CUDA_CHECK(
-      cudaMemcpyAsync(
-        outputData, mTrtCudaBuffer[bindingIdx], size, cudaMemcpyDeviceToHost, mTrtCudaStream));
+    CUDA_CHECK(cudaMemcpyAsync(
+      outputData, mTrtCudaBuffer[bindingIdx], size, cudaMemcpyDeviceToHost, mTrtCudaStream));
   }
 }
 }  // namespace Tn

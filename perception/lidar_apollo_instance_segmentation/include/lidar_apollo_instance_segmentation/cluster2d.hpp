@@ -46,22 +46,21 @@
 #ifndef LIDAR_APOLLO_INSTANCE_SEGMENTATION__CLUSTER2D_HPP_
 #define LIDAR_APOLLO_INSTANCE_SEGMENTATION__CLUSTER2D_HPP_
 
-#include "pcl/point_types.h"
-#include "pcl/point_cloud.h"
-#include "pcl/PointIndices.h"
-#include <memory>
-#include <vector>
-
 #include "disjoint_set.hpp"
 #include "util.hpp"
 
-#include "autoware_perception_msgs/msg/dynamic_object_with_feature.hpp"
-#include "autoware_perception_msgs/msg/dynamic_object_with_feature_array.hpp"
+#include <autoware_perception_msgs/msg/dynamic_object_with_feature.hpp>
+#include <autoware_perception_msgs/msg/dynamic_object_with_feature_array.hpp>
+#include <std_msgs/msg/header.hpp>
 
-#include "std_msgs/msg/header.hpp"
+#include <pcl/PointIndices.h>
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
 
-enum MetaType
-{
+#include <memory>
+#include <vector>
+
+enum MetaType {
   META_UNKNOWN,
   META_SMALLMOT,
   META_BIGMOT,
@@ -80,8 +79,7 @@ struct Obstacle
   MetaType meta_type;
   std::vector<float> meta_type_probs;
 
-  Obstacle()
-  : score(0.0), height(-5.0), heading(0.0), meta_type(META_UNKNOWN)
+  Obstacle() : score(0.0), height(-5.0), heading(0.0), meta_type(META_UNKNOWN)
   {
     cloud_ptr.reset(new pcl::PointCloud<pcl::PointXYZI>);
     meta_type_probs.assign(MAX_META_TYPE, 0.0);
@@ -150,13 +148,13 @@ private:
     }
   };
 
-  inline bool IsValidRowCol(int row, int col) const {return IsValidRow(row) && IsValidCol(col);}
+  inline bool IsValidRowCol(int row, int col) const { return IsValidRow(row) && IsValidCol(col); }
 
-  inline bool IsValidRow(int row) const {return row >= 0 && row < rows_;}
+  inline bool IsValidRow(int row) const { return row >= 0 && row < rows_; }
 
-  inline bool IsValidCol(int col) const {return col >= 0 && col < cols_;}
+  inline bool IsValidCol(int col) const { return col >= 0 && col < cols_; }
 
-  inline int RowCol2Grid(int row, int col) const {return row * cols_ + col;}
+  inline int RowCol2Grid(int row, int col) const { return row * cols_ + col; }
 
   void traverse(Node * x);
 };

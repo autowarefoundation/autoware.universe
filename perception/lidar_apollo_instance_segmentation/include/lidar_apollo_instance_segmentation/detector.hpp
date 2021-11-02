@@ -13,21 +13,25 @@
 // limitations under the License.
 
 #pragma once
-#include "TrtNet.hpp"
+
 #include "cluster2d.hpp"
 #include "feature_generator.hpp"
 #include "lidar_apollo_instance_segmentation/node.hpp"
 
-#include "tf2_ros/buffer_interface.h"
-#include "tf2_ros/transform_listener.h"
-#include "tf2_eigen/tf2_eigen.h"
-#include "pcl/common/transforms.h"
+#include <TrtNet.hpp>
+
+#include <pcl/common/transforms.h>
+#include <tf2_eigen/tf2_eigen.h>
+#include <tf2_ros/buffer_interface.h>
+#include <tf2_ros/transform_listener.h>
+
 #include <memory>
+#include <string>
 
 class LidarApolloInstanceSegmentation : public LidarInstanceSegmentationInterface
 {
 public:
-  LidarApolloInstanceSegmentation(rclcpp::Node * node);
+  explicit LidarApolloInstanceSegmentation(rclcpp::Node * node);
   ~LidarApolloInstanceSegmentation() {}
   bool detectDynamicObjects(
     const sensor_msgs::msg::PointCloud2 & input,
@@ -35,8 +39,7 @@ public:
 
 private:
   bool transformCloud(
-    const sensor_msgs::msg::PointCloud2 & input,
-    sensor_msgs::msg::PointCloud2 & transformed_cloud,
+    const sensor_msgs::msg::PointCloud2 & input, sensor_msgs::msg::PointCloud2 & transformed_cloud,
     float z_offset);
 
   rclcpp::Node * node_;

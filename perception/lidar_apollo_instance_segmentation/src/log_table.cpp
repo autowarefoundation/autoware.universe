@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "lidar_apollo_instance_segmentation/log_table.hpp"
+
 #include <cmath>
 #include <string>
 #include <vector>
@@ -36,7 +37,7 @@ static ::LogTable log_table;
 
 float calcApproximateLog(float num)
 {
-  int integer_num = (int)(num * 10.0);
+  int integer_num = static_cast<int>(num * 10.0);
   if (integer_num < static_cast<int>(log_table.data.size())) {
     return log_table.data[integer_num];
   }

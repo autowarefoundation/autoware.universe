@@ -20,24 +20,29 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
-*/
+ */
+
 #ifndef __TRT_UTILS_H_
 #define __TRT_UTILS_H_
 
-#include "cudnn.h"
+#include <NvInferPlugin.h>
+#include <cudnn.h>
+
 #include <algorithm>
 #include <iostream>
+#include <string>
+#include <utility>
 #include <vector>
 
 #ifndef CUDA_CHECK
 
-#define CUDA_CHECK(callstr) \
-  { \
-    cudaError_t error_code = callstr; \
-    if (error_code != cudaSuccess) { \
+#define CUDA_CHECK(callstr)                                                              \
+  {                                                                                      \
+    cudaError_t error_code = callstr;                                                    \
+    if (error_code != cudaSuccess) {                                                     \
       std::cerr << "CUDA error " << error_code << " at " << __FILE__ << ":" << __LINE__; \
-      assert(0); \
-    } \
+      assert(0);                                                                         \
+    }                                                                                    \
   }
 
 #endif
@@ -61,10 +66,10 @@ private:
   typedef std::pair<std::string, float> Record;
   std::vector<Record> mProfile;
 
-  virtual void reportLayerTime(const char * layerName, float ms) noexcept override
+  void reportLayerTime(const char * layerName, float ms) noexcept override
   {
     auto record = std::find_if(
-      mProfile.begin(), mProfile.end(), [&](const Record & r) {return r.first == layerName;});
+      mProfile.begin(), mProfile.end(), [&](const Record & r) { return r.first == layerName; });
     if (record == mProfile.end()) {
       mProfile.push_back(std::make_pair(layerName, ms));
     } else {
@@ -77,16 +82,16 @@ private:
 class Logger : public nvinfer1::ILogger
 {
 public:
-  Logger()
-  : Logger(Severity::kWARNING) {}
+  Logger() : Logger(Severity::kWARNING) {}
 
-  Logger(Severity severity)
-  : reportableSeverity(severity) {}
+  explicit Logger(Severity severity) : reportableSeverity(severity) {}
 
   void log(Severity severity, const char * msg) noexcept override
   {
     // suppress messages with severity enum value greater than the reportable
-    if (severity > reportableSeverity) {return;}
+    if (severity > reportableSeverity) {
+      return;
+    }
 
     switch (severity) {
       case Severity::kINTERNAL_ERROR:
@@ -111,15 +116,15 @@ public:
   Severity reportableSeverity{Severity::kWARNING};
 };
 
-template<typename T>
-void write(char * & buffer, const T & val)
+template <typename T>
+void write(char *& buffer, const T & val)
 {
   *reinterpret_cast<T *>(buffer) = val;
   buffer += sizeof(T);
 }
 
-template<typename T>
-void read(const char * & buffer, T & val)
+template <typename T>
+void read(const char *& buffer, T & val)
 {
   val = *reinterpret_cast<const T *>(buffer);
   buffer += sizeof(T);

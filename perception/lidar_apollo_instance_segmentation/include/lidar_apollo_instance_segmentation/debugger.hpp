@@ -13,13 +13,15 @@
 // limitations under the License.
 
 #pragma once
-#include "rclcpp/rclcpp.hpp"
-#include "autoware_perception_msgs/msg/dynamic_object_with_feature_array.hpp"
+
+#include <rclcpp/rclcpp.hpp>
+
+#include <autoware_perception_msgs/msg/dynamic_object_with_feature_array.hpp>
 
 class Debugger
 {
 public:
-  Debugger(rclcpp::Node * node);
+  explicit Debugger(rclcpp::Node * node);
   ~Debugger() {}
   void publishColoredPointCloud(
     const autoware_perception_msgs::msg::DynamicObjectWithFeatureArray & input);

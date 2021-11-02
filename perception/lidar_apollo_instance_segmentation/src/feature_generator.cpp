@@ -13,11 +13,12 @@
 // limitations under the License.
 
 #include "lidar_apollo_instance_segmentation/feature_generator.hpp"
+
 #include "lidar_apollo_instance_segmentation/log_table.hpp"
 
 namespace
 {
-inline float normalizeIntensity(float intensity) {return intensity / 255.0f;}
+inline float normalizeIntensity(float intensity) { return intensity / 255.0f; }
 }  // namespace
 
 FeatureGenerator::FeatureGenerator(
@@ -53,11 +54,15 @@ std::shared_ptr<FeatureMapInterface> FeatureGenerator::generate(
   const float inv_res_y = 0.5 * map_ptr_->height / map_ptr_->range;
 
   for (size_t i = 0; i < pc_ptr->points.size(); ++i) {
-    if (pc_ptr->points[i].z <= min_height_ || max_height_ <= pc_ptr->points[i].z) {continue;}
+    if (pc_ptr->points[i].z <= min_height_ || max_height_ <= pc_ptr->points[i].z) {
+      continue;
+    }
 
     const int pos_x = std::floor((map_ptr_->range - pc_ptr->points[i].y) * inv_res_x);  // x on grid
     const int pos_y = std::floor((map_ptr_->range - pc_ptr->points[i].x) * inv_res_y);  // y on grid
-    if (pos_x < 0 || map_ptr_->width <= pos_x || pos_y < 0 || map_ptr_->height <= pos_y) {continue;}
+    if (pos_x < 0 || map_ptr_->width <= pos_x || pos_y < 0 || map_ptr_->height <= pos_y) {
+      continue;
+    }
 
     const int idx = pos_y * map_ptr_->width + pos_x;
 

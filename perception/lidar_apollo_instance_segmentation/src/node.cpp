@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "lidar_apollo_instance_segmentation/node.hpp"
+
 #include "lidar_apollo_instance_segmentation/detector.hpp"
 
 LidarInstanceSegmentationNode::LidarInstanceSegmentationNode(
@@ -22,13 +23,12 @@ LidarInstanceSegmentationNode::LidarInstanceSegmentationNode(
   using std::placeholders::_1;
   detector_ptr_ = std::make_shared<LidarApolloInstanceSegmentation>(this);
   debugger_ptr_ = std::make_shared<Debugger>(this);
-  pointcloud_sub_ =
-    this->create_subscription<sensor_msgs::msg::PointCloud2>(
+  pointcloud_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "input/pointcloud", rclcpp::SensorDataQoS().keep_last(1),
     std::bind(&LidarInstanceSegmentationNode::pointCloudCallback, this, _1));
   dynamic_objects_pub_ =
     this->create_publisher<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>(
-    "output/labeled_clusters", rclcpp::QoS{1});
+      "output/labeled_clusters", rclcpp::QoS{1});
 }
 
 void LidarInstanceSegmentationNode::pointCloudCallback(
@@ -40,5 +40,5 @@ void LidarInstanceSegmentationNode::pointCloudCallback(
   debugger_ptr_->publishColoredPointCloud(output_msg);
 }
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(LidarInstanceSegmentationNode)

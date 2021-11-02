@@ -13,11 +13,14 @@
 // limitations under the License.
 
 #pragma once
-#include "pcl/point_types.h"
-#include "pcl/point_cloud.h"
-#include <memory>
+
 #include "lidar_apollo_instance_segmentation/feature_map.hpp"
 #include "util.hpp"
+
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+
+#include <memory>
 
 class FeatureGenerator
 {
