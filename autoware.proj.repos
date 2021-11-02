@@ -2,8 +2,8 @@ repositories:
   # autoware
   autoware/autoware.iv:
     type: git
-    url: git@github.com:tier4/autoware.iv.git
-    version: main
+    url: git@github.com:tier4/AutowareArchitectureProposal.iv
+    version: use-autoware-auto-msgs
   autoware/launcher:
     type: git
     url: git@github.com:tier4/autoware_launcher.git
@@ -24,6 +24,10 @@ repositories:
     type: git
     url: git@github.com:tier4/autoware_iv_msgs.git
     version: main
+  autoware/msgs/autoware_auto_msgs:
+    type: git
+    url: git@github.com:tier4/autoware_auto_msgs.git
+    version: tier4/main
   autoware/individual_params:
     type: git
     url: https://github.com/tier4/autoware_individual_params.git
