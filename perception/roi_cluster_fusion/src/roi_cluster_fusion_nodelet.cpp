@@ -12,6 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "roi_cluster_fusion/roi_cluster_fusion_nodelet.hpp"
+
+#include <opencv2/core/eigen.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/opencv.hpp>
+#include <rclcpp_components/register_node_macro.hpp>
+
+#include <pcl/point_types.h>
+#include <pcl_conversions/pcl_conversions.h>
+#include <sensor_msgs/msg/point_cloud2.h>
+#include <tf2/LinearMath/Transform.h>
+#include <tf2/convert.h>
+#include <tf2/transform_datatypes.h>
+#include <tf2_sensor_msgs/tf2_sensor_msgs.h>
+
 #include <algorithm>
 #include <chrono>
 #include <map>
@@ -19,29 +35,13 @@
 #include <utility>
 #include <vector>
 
-#include "pcl/point_types.h"
-#include "pcl_conversions/pcl_conversions.h"
-#include "rclcpp_components/register_node_macro.hpp"
-#include "roi_cluster_fusion/roi_cluster_fusion_nodelet.hpp"
-#include "sensor_msgs/msg/point_cloud2.h"
-#include "tf2/LinearMath/Transform.h"
-#include "tf2/convert.h"
-#include "tf2/transform_datatypes.h"
-#include "tf2_sensor_msgs/tf2_sensor_msgs.h"
-
-#include "opencv2/core/eigen.hpp"
-#include "opencv2/highgui/highgui.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
-#include "opencv2/opencv.hpp"
-
 #define EIGEN_MPL2_ONLY
-#include "Eigen/Core"
-#include "Eigen/Geometry"
+#include <Eigen/Core>
+#include <Eigen/Geometry>
 
 namespace roi_cluster_fusion
 {
-Debugger::Debugger(rclcpp::Node * node, const int camera_num)
-: node_(node)
+Debugger::Debugger(rclcpp::Node * node, const int camera_num) : node_(node)
 {
   image_buffers_.resize(camera_num);
   for (int id = 0; id < camera_num; ++id) {
@@ -49,9 +49,15 @@ Debugger::Debugger(rclcpp::Node * node, const int camera_num)
       node, "input/image_raw" + std::to_string(id),
       boost::bind(&Debugger::imageCallback, this, _1, id), "raw");
     image_subs_.push_back(sub);
-    if (node->has_parameter("format")) {node->undeclare_parameter("format");}
-    if (node->has_parameter("jpeg_quality")) {node->undeclare_parameter("jpeg_quality");}
-    if (node->has_parameter("png_level")) {node->undeclare_parameter("png_level");}
+    if (node->has_parameter("format")) {
+      node->undeclare_parameter("format");
+    }
+    if (node->has_parameter("jpeg_quality")) {
+      node->undeclare_parameter("jpeg_quality");
+    }
+    if (node->has_parameter("png_level")) {
+      node->undeclare_parameter("png_level");
+    }
     auto pub = image_transport::create_publisher(node, "output/image_raw" + std::to_string(id));
     image_pubs_.push_back(pub);
     image_buffers_.at(id).set_capacity(5);
@@ -157,9 +163,8 @@ RoiClusterFusionNodelet::RoiClusterFusionNodelet(const rclcpp::NodeOptions & opt
   for (int id = 0; id < rois_number; ++id) {
     std::function<void(const sensor_msgs::msg::CameraInfo::ConstSharedPtr msg)> fcn =
       std::bind(&RoiClusterFusionNodelet::cameraInfoCallback, this, std::placeholders::_1, id);
-    v_camera_info_sub_.push_back(
-      this->create_subscription<sensor_msgs::msg::CameraInfo>(
-        "input/camera_info" + std::to_string(id), rclcpp::QoS{1}.best_effort(), fcn));
+    v_camera_info_sub_.push_back(this->create_subscription<sensor_msgs::msg::CameraInfo>(
+      "input/camera_info" + std::to_string(id), rclcpp::QoS{1}.best_effort(), fcn));
   }
   v_roi_sub_.resize(rois_number);
   for (int id = 0; id < static_cast<int>(v_roi_sub_.size()); ++id) {
@@ -217,14 +222,13 @@ RoiClusterFusionNodelet::RoiClusterFusionNodelet(const rclcpp::NodeOptions & opt
   // sync_ptr_->registerCallback(
   // boost::bind(&RoiClusterFusionNodelet::fusionCallback, this, _1, _2, _3, _4, _5, _6, _7,
   // _8, _9));
-  sync_ptr_->registerCallback(
-    std::bind(
-      &RoiClusterFusionNodelet::fusionCallback, this, std::placeholders::_1, std::placeholders::_2,
-      std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6,
-      std::placeholders::_7, std::placeholders::_8, std::placeholders::_9));
+  sync_ptr_->registerCallback(std::bind(
+    &RoiClusterFusionNodelet::fusionCallback, this, std::placeholders::_1, std::placeholders::_2,
+    std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6,
+    std::placeholders::_7, std::placeholders::_8, std::placeholders::_9));
   labeled_cluster_pub_ =
     this->create_publisher<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>(
-    "output/labeled_clusters", rclcpp::QoS{1});
+      "output/labeled_clusters", rclcpp::QoS{1});
 
   const bool debug_mode = declare_parameter("debug_mode", false);
   if (debug_mode) {
@@ -328,11 +332,10 @@ void RoiClusterFusionNodelet::fusionCallback(
       std::vector<Eigen::Vector2d> projected_points;
       projected_points.reserve(transformed_cluster.data.size());
       int min_x(m_camera_info_.at(id).width), min_y(m_camera_info_.at(id).height), max_x(0),
-      max_y(0);
+        max_y(0);
       for (sensor_msgs::PointCloud2ConstIterator<float> iter_x(transformed_cluster, "x"),
-        iter_y(transformed_cluster, "y"), iter_z(transformed_cluster, "z");
-        iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z)
-      {
+           iter_y(transformed_cluster, "y"), iter_z(transformed_cluster, "z");
+           iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z) {
         if (*iter_z <= 0.0) {
           continue;
         }
@@ -343,11 +346,10 @@ void RoiClusterFusionNodelet::fusionCallback(
         if (
           0 <= static_cast<int>(normalized_projected_point.x()) &&
           static_cast<int>(normalized_projected_point.x()) <=
-          static_cast<int>(m_camera_info_.at(id).width) - 1 &&
+            static_cast<int>(m_camera_info_.at(id).width) - 1 &&
           0 <= static_cast<int>(normalized_projected_point.y()) &&
           static_cast<int>(normalized_projected_point.y()) <=
-          static_cast<int>(m_camera_info_.at(id).height) - 1)
-        {
+            static_cast<int>(m_camera_info_.at(id).height) - 1) {
           min_x = std::min(static_cast<int>(normalized_projected_point.x()), min_x);
           min_y = std::min(static_cast<int>(normalized_projected_point.y()), min_y);
           max_x = std::max(static_cast<int>(normalized_projected_point.x()), max_x);
@@ -393,8 +395,7 @@ void RoiClusterFusionNodelet::fusionCallback(
       int index = 0;
       double max_iou = 0.0;
       for (auto m_cluster_roi_itr = m_cluster_roi.begin(); m_cluster_roi_itr != m_cluster_roi.end();
-        ++m_cluster_roi_itr)
-      {
+           ++m_cluster_roi_itr) {
         double iou(0.0), iou_x(0.0), iou_y(0.0);
         if (use_iou_) {
           iou =
@@ -416,8 +417,7 @@ void RoiClusterFusionNodelet::fusionCallback(
       if (
         iou_threshold_ < max_iou &&
         output_msg.feature_objects.at(index).object.semantic.confidence <=
-        input_roi_msg->feature_objects.at(i).object.semantic.confidence)
-      {
+          input_roi_msg->feature_objects.at(i).object.semantic.confidence) {
         output_msg.feature_objects.at(index).object.semantic =
           input_roi_msg->feature_objects.at(i).object.semantic;
       }
@@ -445,12 +445,12 @@ double RoiClusterFusionNodelet::calcIoU(
   double overlap_max_x, overlap_max_y, overlap_min_x, overlap_min_y;
   overlap_min_x = roi_1.x_offset < roi_2.x_offset ? roi_2.x_offset : roi_1.x_offset;
   overlap_min_y = roi_1.y_offset < roi_2.y_offset ? roi_2.y_offset : roi_1.y_offset;
-  overlap_max_x = roi_1.x_offset + roi_1.width < roi_2.x_offset + roi_2.width ?
-    roi_1.x_offset + roi_1.width :
-    roi_2.x_offset + roi_2.width;
-  overlap_max_y = roi_1.y_offset + roi_1.height < roi_2.y_offset + roi_2.height ?
-    roi_1.y_offset + roi_1.height :
-    roi_2.y_offset + roi_2.height;
+  overlap_max_x = roi_1.x_offset + roi_1.width < roi_2.x_offset + roi_2.width
+                    ? roi_1.x_offset + roi_1.width
+                    : roi_2.x_offset + roi_2.width;
+  overlap_max_y = roi_1.y_offset + roi_1.height < roi_2.y_offset + roi_2.height
+                    ? roi_1.y_offset + roi_1.height
+                    : roi_2.y_offset + roi_2.height;
   overlap_s = (overlap_max_x - overlap_min_x) * (overlap_max_y - overlap_min_y);
   if (overlap_max_x < overlap_min_x || overlap_max_y < overlap_min_y) {
     return 0.0;
@@ -468,12 +468,12 @@ double RoiClusterFusionNodelet::calcIoUX(
   double overlap_max_x, overlap_max_y, overlap_min_x, overlap_min_y;
   overlap_min_x = roi_1.x_offset < roi_2.x_offset ? roi_2.x_offset : roi_1.x_offset;
   overlap_min_y = roi_1.y_offset < roi_2.y_offset ? roi_2.y_offset : roi_1.y_offset;
-  overlap_max_x = roi_1.x_offset + roi_1.width < roi_2.x_offset + roi_2.width ?
-    roi_1.x_offset + roi_1.width :
-    roi_2.x_offset + roi_2.width;
-  overlap_max_y = roi_1.y_offset + roi_1.height < roi_2.y_offset + roi_2.height ?
-    roi_1.y_offset + roi_1.height :
-    roi_2.y_offset + roi_2.height;
+  overlap_max_x = roi_1.x_offset + roi_1.width < roi_2.x_offset + roi_2.width
+                    ? roi_1.x_offset + roi_1.width
+                    : roi_2.x_offset + roi_2.width;
+  overlap_max_y = roi_1.y_offset + roi_1.height < roi_2.y_offset + roi_2.height
+                    ? roi_1.y_offset + roi_1.height
+                    : roi_2.y_offset + roi_2.height;
   overlap_s = (overlap_max_x - overlap_min_x);
   if (overlap_max_x < overlap_min_x || overlap_max_y < overlap_min_y) {
     return 0.0;
@@ -491,12 +491,12 @@ double RoiClusterFusionNodelet::calcIoUY(
   double overlap_max_x, overlap_max_y, overlap_min_x, overlap_min_y;
   overlap_min_x = roi_1.x_offset < roi_2.x_offset ? roi_2.x_offset : roi_1.x_offset;
   overlap_min_y = roi_1.y_offset < roi_2.y_offset ? roi_2.y_offset : roi_1.y_offset;
-  overlap_max_x = roi_1.x_offset + roi_1.width < roi_2.x_offset + roi_2.width ?
-    roi_1.x_offset + roi_1.width :
-    roi_2.x_offset + roi_2.width;
-  overlap_max_y = roi_1.y_offset + roi_1.height < roi_2.y_offset + roi_2.height ?
-    roi_1.y_offset + roi_1.height :
-    roi_2.y_offset + roi_2.height;
+  overlap_max_x = roi_1.x_offset + roi_1.width < roi_2.x_offset + roi_2.width
+                    ? roi_1.x_offset + roi_1.width
+                    : roi_2.x_offset + roi_2.width;
+  overlap_max_y = roi_1.y_offset + roi_1.height < roi_2.y_offset + roi_2.height
+                    ? roi_1.y_offset + roi_1.height
+                    : roi_2.y_offset + roi_2.height;
   overlap_s = (overlap_max_y - overlap_min_y);
   if (overlap_max_x < overlap_min_x || overlap_max_y < overlap_min_y) {
     return 0.0;
