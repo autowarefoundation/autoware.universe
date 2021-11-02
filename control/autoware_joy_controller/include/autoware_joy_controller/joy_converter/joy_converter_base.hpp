@@ -15,9 +15,9 @@
 #ifndef AUTOWARE_JOY_CONTROLLER__JOY_CONVERTER__JOY_CONVERTER_BASE_HPP_
 #define AUTOWARE_JOY_CONTROLLER__JOY_CONVERTER__JOY_CONVERTER_BASE_HPP_
 
-#include <algorithm>
+#include <sensor_msgs/msg/joy.hpp>
 
-#include "sensor_msgs/msg/joy.hpp"
+#include <algorithm>
 
 namespace autoware_joy_controller
 {

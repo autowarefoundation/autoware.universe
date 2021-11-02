@@ -15,25 +15,26 @@
 #ifndef AUTOWARE_JOY_CONTROLLER__AUTOWARE_JOY_CONTROLLER_HPP_
 #define AUTOWARE_JOY_CONTROLLER__AUTOWARE_JOY_CONTROLLER_HPP_
 
+#include "autoware_joy_controller/joy_converter/joy_converter_base.hpp"
+
+#include <rclcpp/rclcpp.hpp>
+
+#include <autoware_control_msgs/msg/control_command_stamped.hpp>
+#include <autoware_control_msgs/msg/gate_mode.hpp>
+#include <autoware_external_api_msgs/msg/control_command_stamped.hpp>
+#include <autoware_external_api_msgs/msg/gear_shift_stamped.hpp>
+#include <autoware_external_api_msgs/msg/heartbeat.hpp>
+#include <autoware_external_api_msgs/msg/turn_signal_stamped.hpp>
+#include <autoware_external_api_msgs/srv/engage.hpp>
+#include <autoware_external_api_msgs/srv/set_emergency.hpp>
+#include <autoware_vehicle_msgs/msg/engage.hpp>
+#include <autoware_vehicle_msgs/msg/vehicle_command.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
+#include <sensor_msgs/msg/joy.hpp>
+
 #include <algorithm>
 #include <memory>
 #include <string>
-
-#include "rclcpp/rclcpp.hpp"
-
-#include "autoware_external_api_msgs/msg/control_command_stamped.hpp"
-#include "autoware_external_api_msgs/msg/gear_shift_stamped.hpp"
-#include "autoware_external_api_msgs/msg/turn_signal_stamped.hpp"
-#include "autoware_external_api_msgs/msg/heartbeat.hpp"
-#include "autoware_external_api_msgs/srv/engage.hpp"
-#include "autoware_external_api_msgs/srv/set_emergency.hpp"
-#include "autoware_control_msgs/msg/control_command_stamped.hpp"
-#include "autoware_control_msgs/msg/gate_mode.hpp"
-#include "autoware_vehicle_msgs/msg/engage.hpp"
-#include "geometry_msgs/msg/twist_stamped.hpp"
-#include "sensor_msgs/msg/joy.hpp"
-#include "autoware_joy_controller/joy_converter/joy_converter_base.hpp"
-#include "autoware_vehicle_msgs/msg/vehicle_command.hpp"
 
 namespace autoware_joy_controller
 {

@@ -12,15 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "autoware_joy_controller/autoware_joy_controller.hpp"
+#include "autoware_joy_controller/joy_converter/ds4_joy_converter.hpp"
+#include "autoware_joy_controller/joy_converter/g29_joy_converter.hpp"
+
+#include <autoware_api_utils/autoware_api_utils.hpp>
+
 #include <algorithm>
 #include <memory>
 #include <string>
 #include <utility>
-
-#include "autoware_joy_controller/autoware_joy_controller.hpp"
-#include "autoware_joy_controller/joy_converter/g29_joy_converter.hpp"
-#include "autoware_joy_controller/joy_converter/ds4_joy_converter.hpp"
-#include "autoware_api_utils/autoware_api_utils.hpp"
 
 namespace
 {
@@ -33,46 +34,90 @@ using GateMode = autoware_control_msgs::msg::GateMode;
 
 GearShiftType getUpperShift(const GearShiftType & shift)
 {
-  if (shift == GearShift::NONE) {return GearShift::PARKING;}
-  if (shift == GearShift::PARKING) {return GearShift::REVERSE;}
-  if (shift == GearShift::REVERSE) {return GearShift::NEUTRAL;}
-  if (shift == GearShift::NEUTRAL) {return GearShift::DRIVE;}
-  if (shift == GearShift::DRIVE) {return GearShift::LOW;}
-  if (shift == GearShift::LOW) {return GearShift::LOW;}
+  if (shift == GearShift::NONE) {
+    return GearShift::PARKING;
+  }
+  if (shift == GearShift::PARKING) {
+    return GearShift::REVERSE;
+  }
+  if (shift == GearShift::REVERSE) {
+    return GearShift::NEUTRAL;
+  }
+  if (shift == GearShift::NEUTRAL) {
+    return GearShift::DRIVE;
+  }
+  if (shift == GearShift::DRIVE) {
+    return GearShift::LOW;
+  }
+  if (shift == GearShift::LOW) {
+    return GearShift::LOW;
+  }
 
   return GearShift::NONE;
 }
 
 GearShiftType getLowerShift(const GearShiftType & shift)
 {
-  if (shift == GearShift::NONE) {return GearShift::PARKING;}
-  if (shift == GearShift::PARKING) {return GearShift::PARKING;}
-  if (shift == GearShift::REVERSE) {return GearShift::PARKING;}
-  if (shift == GearShift::NEUTRAL) {return GearShift::REVERSE;}
-  if (shift == GearShift::DRIVE) {return GearShift::NEUTRAL;}
-  if (shift == GearShift::LOW) {return GearShift::DRIVE;}
+  if (shift == GearShift::NONE) {
+    return GearShift::PARKING;
+  }
+  if (shift == GearShift::PARKING) {
+    return GearShift::PARKING;
+  }
+  if (shift == GearShift::REVERSE) {
+    return GearShift::PARKING;
+  }
+  if (shift == GearShift::NEUTRAL) {
+    return GearShift::REVERSE;
+  }
+  if (shift == GearShift::DRIVE) {
+    return GearShift::NEUTRAL;
+  }
+  if (shift == GearShift::LOW) {
+    return GearShift::DRIVE;
+  }
 
   return GearShift::NONE;
 }
 
 const char * getShiftName(const GearShiftType & shift)
 {
-  if (shift == GearShift::NONE) {return "NONE";}
-  if (shift == GearShift::PARKING) {return "PARKING";}
-  if (shift == GearShift::REVERSE) {return "REVERSE";}
-  if (shift == GearShift::NEUTRAL) {return "NEUTRAL";}
-  if (shift == GearShift::DRIVE) {return "DRIVE";}
-  if (shift == GearShift::LOW) {return "LOW";}
+  if (shift == GearShift::NONE) {
+    return "NONE";
+  }
+  if (shift == GearShift::PARKING) {
+    return "PARKING";
+  }
+  if (shift == GearShift::REVERSE) {
+    return "REVERSE";
+  }
+  if (shift == GearShift::NEUTRAL) {
+    return "NEUTRAL";
+  }
+  if (shift == GearShift::DRIVE) {
+    return "DRIVE";
+  }
+  if (shift == GearShift::LOW) {
+    return "LOW";
+  }
 
   return "NOT_SUPPORTED";
 }
 
 const char * getTurnSignalName(const TurnSignalType & turn_signal)
 {
-  if (turn_signal == TurnSignal::NONE) {return "NONE";}
-  if (turn_signal == TurnSignal::LEFT) {return "LEFT";}
-  if (turn_signal == TurnSignal::RIGHT) {return "RIGHT";}
-  if (turn_signal == TurnSignal::HAZARD) {return "HAZARD";}
+  if (turn_signal == TurnSignal::NONE) {
+    return "NONE";
+  }
+  if (turn_signal == TurnSignal::LEFT) {
+    return "LEFT";
+  }
+  if (turn_signal == TurnSignal::RIGHT) {
+    return "RIGHT";
+  }
+  if (turn_signal == TurnSignal::HAZARD) {
+    return "HAZARD";
+  }
 
   return "NOT_SUPPORTED";
 }
@@ -81,8 +126,12 @@ const char * getGateModeName(const GateModeType & gate_mode)
 {
   using autoware_control_msgs::msg::GateMode;
 
-  if (gate_mode == GateMode::AUTO) {return "AUTO";}
-  if (gate_mode == GateMode::EXTERNAL) {return "EXTERNAL";}
+  if (gate_mode == GateMode::AUTO) {
+    return "AUTO";
+  }
+  if (gate_mode == GateMode::EXTERNAL) {
+    return "EXTERNAL";
+  }
 
   return "NOT_SUPPORTED";
 }
@@ -155,8 +204,7 @@ bool AutowareJoyControllerNode::isDataReady()
     const auto time_diff = this->now() - last_joy_received_time_;
     if (time_diff.seconds() > timeout) {
       RCLCPP_WARN_THROTTLE(
-        get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
-        "joy msg is timeout");
+        get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(), "joy msg is timeout");
       return false;
     }
   }
@@ -327,18 +375,15 @@ void AutowareJoyControllerNode::sendEmergencyRequest(bool emergency)
   request->emergency = emergency;
 
   client_emergency_stop_->async_send_request(
-    request,
-    [this, emergency]
-      (rclcpp::Client<autoware_external_api_msgs::srv::SetEmergency>::SharedFuture result)
-    {
+    request, [this, emergency](
+               rclcpp::Client<autoware_external_api_msgs::srv::SetEmergency>::SharedFuture result) {
       auto response = result.get();
       if (autoware_api_utils::is_success(response->status)) {
         RCLCPP_INFO(get_logger(), "service succeeded");
       } else {
         RCLCPP_WARN(get_logger(), "service failed: %s", response->status.message.c_str());
       }
-    }
-  );
+    });
 }
 
 void AutowareJoyControllerNode::publishAutowareEngage()
@@ -360,8 +405,7 @@ void AutowareJoyControllerNode::publishAutowareEngage()
   }
 
   client_autoware_engage_->async_send_request(
-    req,
-    [this](rclcpp::Client<autoware_external_api_msgs::srv::Engage>::SharedFuture result) {
+    req, [this](rclcpp::Client<autoware_external_api_msgs::srv::Engage>::SharedFuture result) {
       RCLCPP_INFO(
         get_logger(), "%s: %d, %s", client_autoware_engage_->get_service_name(),
         result.get()->status.code, result.get()->status.message.c_str());
@@ -416,37 +460,37 @@ AutowareJoyControllerNode::AutowareJoyControllerNode(const rclcpp::NodeOptions &
   RCLCPP_INFO(get_logger(), "Joy type: %s", joy_type_.c_str());
 
   // Callback Groups
-  callback_group_subscribers_ = this->create_callback_group(
-    rclcpp::CallbackGroupType::MutuallyExclusive);
-  callback_group_services_ = this->create_callback_group(
-    rclcpp::CallbackGroupType::MutuallyExclusive);
+  callback_group_subscribers_ =
+    this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+  callback_group_services_ =
+    this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   auto subscriber_option = rclcpp::SubscriptionOptions();
   subscriber_option.callback_group = callback_group_subscribers_;
 
   // Subscriber
   sub_joy_ = this->create_subscription<sensor_msgs::msg::Joy>(
-    "input/joy", 1,
-    std::bind(&AutowareJoyControllerNode::onJoy, this, std::placeholders::_1), subscriber_option);
+    "input/joy", 1, std::bind(&AutowareJoyControllerNode::onJoy, this, std::placeholders::_1),
+    subscriber_option);
   sub_twist_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
-    "input/twist", 1,
-    std::bind(&AutowareJoyControllerNode::onTwist, this, std::placeholders::_1), subscriber_option);
+    "input/twist", 1, std::bind(&AutowareJoyControllerNode::onTwist, this, std::placeholders::_1),
+    subscriber_option);
 
   // Publisher
   pub_control_command_ = this->create_publisher<autoware_control_msgs::msg::ControlCommandStamped>(
     "output/control_command", 1);
   pub_external_control_command_ =
     this->create_publisher<autoware_external_api_msgs::msg::ControlCommandStamped>(
-    "output/external_control_command", 1);
-  pub_shift_ = this->create_publisher<autoware_external_api_msgs::msg::GearShiftStamped>(
-    "output/shift", 1);
+      "output/external_control_command", 1);
+  pub_shift_ =
+    this->create_publisher<autoware_external_api_msgs::msg::GearShiftStamped>("output/shift", 1);
   pub_turn_signal_ = this->create_publisher<autoware_external_api_msgs::msg::TurnSignalStamped>(
     "output/turn_signal", 1);
-  pub_gate_mode_ = this->create_publisher<autoware_control_msgs::msg::GateMode>(
-    "output/gate_mode", 1);
-  pub_heartbeat_ = this->create_publisher<autoware_external_api_msgs::msg::Heartbeat>(
-    "output/heartbeat", 1);
-  pub_vehicle_engage_ = this->create_publisher<autoware_vehicle_msgs::msg::Engage>(
-    "output/vehicle_engage", 1);
+  pub_gate_mode_ =
+    this->create_publisher<autoware_control_msgs::msg::GateMode>("output/gate_mode", 1);
+  pub_heartbeat_ =
+    this->create_publisher<autoware_external_api_msgs::msg::Heartbeat>("output/heartbeat", 1);
+  pub_vehicle_engage_ =
+    this->create_publisher<autoware_vehicle_msgs::msg::Engage>("output/vehicle_engage", 1);
 
   // Service Client
   client_emergency_stop_ = this->create_client<autoware_external_api_msgs::srv::SetEmergency>(
@@ -468,5 +512,5 @@ AutowareJoyControllerNode::AutowareJoyControllerNode(const rclcpp::NodeOptions &
 }
 }  // namespace autoware_joy_controller
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(autoware_joy_controller::AutowareJoyControllerNode)
