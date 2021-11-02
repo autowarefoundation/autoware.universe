@@ -29,25 +29,24 @@ from self_pose_listener import SelfPoseListener
 
 
 class StopReason2PoseNode(Node):
-
     def __init__(self, options):
-        super().__init__('stop_reason2pose_node')
+        super().__init__("stop_reason2pose_node")
         self._options = options
         self._sub_pose = self.create_subscription(
-            StopReasonArray, self._options.topic_name, self._on_stop_reasons, 1)
+            StopReasonArray, self._options.topic_name, self._on_stop_reasons, 1
+        )
         self._pub_pose_map = {}
         self._idx_map = {}
         self._pose_map = {}
         self._self_pose_listener = SelfPoseListener()
-        self.timer = self.create_timer(
-            (1.0 / 100), self._self_pose_listener.get_current_pose)
+        self.timer = self.create_timer((1.0 / 100), self._self_pose_listener.get_current_pose)
 
     def _on_stop_reasons(self, msg):
         for stop_reason in msg.stop_reasons:
             snake_case_stop_reason = pascal2snake(stop_reason.reason)
 
             if len(stop_reason.stop_factors) == 0:
-                self.get_logger().warn('stop_factor is null')
+                self.get_logger().warn("stop_factor is null")
                 return
 
             for stop_factor in stop_reason.stop_factors:
@@ -58,45 +57,43 @@ class StopReason2PoseNode(Node):
                 # Get nearest pose
                 th_dist = 1.0
                 nearest_pose_id = self._get_nearest_pose_id(
-                    snake_case_stop_reason, pose.pose, th_dist)
+                    snake_case_stop_reason, pose.pose, th_dist
+                )
                 if nearest_pose_id:
-                    self._update_pose(
-                        snake_case_stop_reason, pose.pose, nearest_pose_id)
+                    self._update_pose(snake_case_stop_reason, pose.pose, nearest_pose_id)
                     pose_id = nearest_pose_id
                 else:
-                    pose_id = self._register_pose(
-                        snake_case_stop_reason, pose.pose)
+                    pose_id = self._register_pose(snake_case_stop_reason, pose.pose)
 
-                pose_topic_name = '{snake_case_stop_reason}_{pose_id}'.format(
-                    **locals())
-                topic_ns = '/autoware_debug_tools/stop_reason2pose/'
+                pose_topic_name = "{snake_case_stop_reason}_{pose_id}".format(**locals())
+                topic_ns = "/autoware_debug_tools/stop_reason2pose/"
                 if pose_topic_name not in self._pub_pose_map:
                     self._pub_pose_map[pose_topic_name] = self.create_publisher(
-                        PoseStamped, topic_ns + pose_topic_name, 1)
+                        PoseStamped, topic_ns + pose_topic_name, 1
+                    )
                 self._pub_pose_map[pose_topic_name].publish(pose)
 
             # Publish nearest stop_reason without number
             nearest_pose = PoseStamped()
             nearest_pose.header = msg.header
             nearest_pose.pose = self._get_nearest_pose_in_array(
-                stop_reason, self._self_pose_listener.self_pose)
+                stop_reason, self._self_pose_listener.self_pose
+            )
 
             if nearest_pose.pose:
                 if snake_case_stop_reason not in self._pub_pose_map:
-                    topic_ns = '/autoware_debug_tools/stop_reason2pose/'
+                    topic_ns = "/autoware_debug_tools/stop_reason2pose/"
                     self._pub_pose_map[snake_case_stop_reason] = self.create_publisher(
-                        PoseStamped, topic_ns + snake_case_stop_reason, 1)
-                self._pub_pose_map[snake_case_stop_reason].publish(
-                    nearest_pose)
+                        PoseStamped, topic_ns + snake_case_stop_reason, 1
+                    )
+                self._pub_pose_map[snake_case_stop_reason].publish(nearest_pose)
 
     def _get_nearest_pose_in_array(self, stop_reason, self_pose):
         poses = [stop_factor.stop_pose for stop_factor in stop_reason.stop_factors]
         if not poses:
             return None
 
-        distances = map(
-            lambda p: StopReason2PoseNode.calc_distance2d(
-                p, self_pose), poses)
+        distances = map(lambda p: StopReason2PoseNode.calc_distance2d(p, self_pose), poses)
         nearest_idx = np.argmin(distances)
 
         return poses[nearest_idx]
@@ -105,8 +102,7 @@ class StopReason2PoseNode(Node):
         if name not in self._idx_map:
             self._idx_map[name] = index.Index()
 
-        return self._idx_map[name].nearest(
-            StopReason2PoseNode.pose2boundingbox(pose), 1)
+        return self._idx_map[name].nearest(StopReason2PoseNode.pose2boundingbox(pose), 1)
 
     def _get_nearest_pose_id(self, name, pose, th_dist):
         nearest_pose_ids = list(self._find_nearest_pose_id(name, pose))
@@ -132,8 +128,7 @@ class StopReason2PoseNode(Node):
 
     def _update_pose(self, name, pose, pose_id):
         self._pose_map[name][id] = pose
-        self._idx_map[name].insert(
-            pose_id, StopReason2PoseNode.pose2boundingbox(pose))
+        self._idx_map[name].insert(pose_id, StopReason2PoseNode.pose2boundingbox(pose))
 
     def _register_pose(self, name, pose):
         if name not in self._pose_map:
@@ -141,8 +136,7 @@ class StopReason2PoseNode(Node):
 
         pose_id = len(self._pose_map[name]) + 1
         self._pose_map[name][pose_id] = pose
-        self._idx_map[name].insert(
-            pose_id, StopReason2PoseNode.pose2boundingbox(pose))
+        self._idx_map[name].insert(pose_id, StopReason2PoseNode.pose2boundingbox(pose))
         return pose_id
 
     @staticmethod
@@ -153,15 +147,14 @@ class StopReason2PoseNode(Node):
 
     @staticmethod
     def pose2boundingbox(pose):
-        return [pose.position.x, pose.position.y,
-                pose.position.x, pose.position.y]
+        return [pose.position.x, pose.position.y, pose.position.x, pose.position.y]
 
 
 def main(args):
     rclpy.init()
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('topic_name', type=str)
+    parser.add_argument("topic_name", type=str)
     ns = parser.parse_args(args)
 
     stop_reason2pose_node = StopReason2PoseNode(ns)
@@ -170,5 +163,5 @@ def main(args):
     rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main(sys.argv[1:])

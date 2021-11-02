@@ -26,13 +26,13 @@ import tf2_ros
 
 
 class Pose2TfNode(Node):
-
     def __init__(self, options):
-        super().__init__('pose2tf')
+        super().__init__("pose2tf")
         self._options = options
         self._tf_broadcaster = tf2_ros.TransformBroadcaster(self)
         self._sub_pose = self.create_subscription(
-            PoseStamped, self._options.topic_name, self._on_pose, 1)
+            PoseStamped, self._options.topic_name, self._on_pose, 1
+        )
 
     def _on_pose(self, msg):
         try:
@@ -60,12 +60,12 @@ class Pose2TfNode(Node):
 
 
 def main(args):
-    print('{}'.format(args))
+    print("{}".format(args))
     rclpy.init()
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('topic_name', type=str)
-    parser.add_argument('tf_name', type=str)
+    parser.add_argument("topic_name", type=str)
+    parser.add_argument("tf_name", type=str)
     ns = parser.parse_args(args)
 
     pose2tf_node = Pose2TfNode(ns)
@@ -74,5 +74,5 @@ def main(args):
     rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main(sys.argv[1:])

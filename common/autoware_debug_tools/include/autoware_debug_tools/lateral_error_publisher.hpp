@@ -17,14 +17,14 @@
 
 #define EIGEN_MPL2_ONLY
 
-#include "eigen3/Eigen/Core"
-#include "eigen3/Eigen/Geometry"
+#include <autoware_utils/trajectory/trajectory.hpp>
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Geometry>
+#include <rclcpp/rclcpp.hpp>
 
-#include "rclcpp/rclcpp.hpp"
-#include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
-#include "autoware_planning_msgs/msg/trajectory.hpp"
-#include "autoware_debug_msgs/msg/float32_stamped.hpp"
-#include "autoware_utils/trajectory/trajectory.hpp"
+#include <autoware_debug_msgs/msg/float32_stamped.hpp>
+#include <autoware_planning_msgs/msg/trajectory.hpp>
+#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 
 class LateralErrorPublisher : public rclcpp::Node
 {

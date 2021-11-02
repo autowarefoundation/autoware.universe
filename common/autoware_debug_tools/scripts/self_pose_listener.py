@@ -23,21 +23,19 @@ from tf2_ros.transform_listener import TransformListener
 
 
 class SelfPoseListener(Node):
-
     def __init__(self):
-        super().__init__('self_pose_listener')
+        super().__init__("self_pose_listener")
         self.tf_buffer = Buffer()
         self._tf_listener = TransformListener(self.tf_buffer, self)
         self.self_pose = PoseStamped()
 
     def get_current_pose(self):
         try:
-            tf = self.tf_buffer.lookup_transform(
-                'map', 'base_link', rclpy.time.Time())
-            tf_time = self.tf_buffer.get_latest_common_time('map', 'base_link')
-            self.self_pose = SelfPoseListener.create_pose(tf_time, 'map', tf)
+            tf = self.tf_buffer.lookup_transform("map", "base_link", rclpy.time.Time())
+            tf_time = self.tf_buffer.get_latest_common_time("map", "base_link")
+            self.self_pose = SelfPoseListener.create_pose(tf_time, "map", tf)
         except LookupException as e:
-            self.get_logger().warn('Required transformation not found: `{}`'.format(str(e)))
+            self.get_logger().warn("Required transformation not found: `{}`".format(str(e)))
             return None
 
     @staticmethod

@@ -26,24 +26,21 @@ from tf2_ros.transform_listener import TransformListener
 
 
 class Tf2PoseNode(Node):
-
     def __init__(self, options):
-        super().__init__('tf2pose')
+        super().__init__("tf2pose")
 
         self._options = options
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
-        self._pub_pose = self.create_publisher(
-            PoseStamped, '/autoware_debug_tools/tf2pose/pose', 1)
-        self.timer = self.create_timer(
-            (1.0 / self._options.hz), self._on_timer)
+        self._pub_pose = self.create_publisher(PoseStamped, "/autoware_debug_tools/tf2pose/pose", 1)
+        self.timer = self.create_timer((1.0 / self._options.hz), self._on_timer)
 
     def _on_timer(self):
         try:
             tf = self.tf_buffer.lookup_transform(
-                self._options.tf_from, self._options.tf_to, rclpy.time.Time())
-            time = self.tf_buffer.get_latest_common_time(
-                self._options.tf_from, self._options.tf_to)
+                self._options.tf_from, self._options.tf_to, rclpy.time.Time()
+            )
+            time = self.tf_buffer.get_latest_common_time(self._options.tf_from, self._options.tf_to)
             pose = Tf2PoseNode.create_pose(time, self._options.tf_from, tf)
             self._pub_pose.publish(pose)
         except LookupException as e:
@@ -71,9 +68,9 @@ def main(args):
     rclpy.init()
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('tf_from', type=str)
-    parser.add_argument('tf_to', type=str)
-    parser.add_argument('hz', type=int, default=10)
+    parser.add_argument("tf_from", type=str)
+    parser.add_argument("tf_to", type=str)
+    parser.add_argument("hz", type=int, default=10)
     ns = parser.parse_args(args)
 
     tf2pose_node = Tf2PoseNode(ns)
@@ -82,5 +79,5 @@ def main(args):
     rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main(sys.argv[1:])

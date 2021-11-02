@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <limits>
-
 #include "autoware_debug_tools/lateral_error_publisher.hpp"
+
+#include <limits>
 
 LateralErrorPublisher::LateralErrorPublisher(const rclcpp::NodeOptions & node_options)
 : Node("lateral_error_publisher", node_options)
@@ -35,12 +35,12 @@ LateralErrorPublisher::LateralErrorPublisher(const rclcpp::NodeOptions & node_op
   sub_ground_truth_pose_ = create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
     "~/input/ground_truth_pose_with_covariance", rclcpp::QoS{1},
     std::bind(&LateralErrorPublisher::onGroundTruthPose, this, _1));
-  pub_control_lateral_error_ = create_publisher<autoware_debug_msgs::msg::Float32Stamped>(
-    "~/control_lateral_error", 1);
-  pub_localization_lateral_error_ = create_publisher<autoware_debug_msgs::msg::Float32Stamped>(
-    "~/localization_lateral_error", 1);
-  pub_lateral_error_ = create_publisher<autoware_debug_msgs::msg::Float32Stamped>(
-    "~/lateral_error", 1);
+  pub_control_lateral_error_ =
+    create_publisher<autoware_debug_msgs::msg::Float32Stamped>("~/control_lateral_error", 1);
+  pub_localization_lateral_error_ =
+    create_publisher<autoware_debug_msgs::msg::Float32Stamped>("~/localization_lateral_error", 1);
+  pub_lateral_error_ =
+    create_publisher<autoware_debug_msgs::msg::Float32Stamped>("~/lateral_error", 1);
 }
 
 void LateralErrorPublisher::onTrajectory(
@@ -63,14 +63,13 @@ void LateralErrorPublisher::onGroundTruthPose(
   // Guard
   if (current_trajectory_ptr_ == nullptr || current_vehicle_pose_ptr_ == nullptr) {
     RCLCPP_WARN_THROTTLE(
-      this->get_logger(), *this->get_clock(),
-      1000 /* ms */, "Reference trajectory or EKF pose is not received");
+      this->get_logger(), *this->get_clock(), 1000 /* ms */,
+      "Reference trajectory or EKF pose is not received");
     return;
   }
   if (current_trajectory_ptr_->points.size() < 2) {
     RCLCPP_WARN_THROTTLE(
-      this->get_logger(), *this->get_clock(),
-      1000 /* ms */, "Reference trajectory is too short");
+      this->get_logger(), *this->get_clock(), 1000 /* ms */, "Reference trajectory is too short");
     return;
   }
 
@@ -80,8 +79,7 @@ void LateralErrorPublisher::onGroundTruthPose(
     std::numeric_limits<double>::max(), yaw_threshold_to_search_closest_);
   if (!closest_index) {
     RCLCPP_WARN_THROTTLE(
-      this->get_logger(), *this->get_clock(),
-      1000 /* ms */, "Failed to search closest index");
+      this->get_logger(), *this->get_clock(), 1000 /* ms */, "Failed to search closest index");
     return;
   }
 
@@ -106,12 +104,11 @@ void LateralErrorPublisher::onGroundTruthPose(
   const auto rotation = Eigen::Rotation2Dd(M_PI_2);
   const Eigen::Vector2d normal_direction = rotation * trajectory_direction;
   RCLCPP_DEBUG(
-    this->get_logger(), "normal direction: (%f, %f)",
-    normal_direction(0), normal_direction(1));
+    this->get_logger(), "normal direction: (%f, %f)", normal_direction(0), normal_direction(1));
   const Eigen::Vector2d unit_normal_direction = normal_direction.normalized();
   RCLCPP_DEBUG(
-    this->get_logger(), "unit normal direction: (%f, %f)",
-    unit_normal_direction(0), unit_normal_direction(1));
+    this->get_logger(), "unit normal direction: (%f, %f)", unit_normal_direction(0),
+    unit_normal_direction(1));
 
   // Calculate control lateral error
   const auto & closest_pose = current_trajectory_ptr_->points.at(*closest_index).pose;
@@ -120,9 +117,7 @@ void LateralErrorPublisher::onGroundTruthPose(
     vehicle_pose.position.x - closest_pose.position.x,
     vehicle_pose.position.y - closest_pose.position.y);
   const auto control_lateral_error = closest_to_vehicle.dot(unit_normal_direction);
-  RCLCPP_DEBUG(
-    this->get_logger(), "control_lateral_error: %f",
-    control_lateral_error);
+  RCLCPP_DEBUG(this->get_logger(), "control_lateral_error: %f", control_lateral_error);
 
   // Calculate localization lateral error
   const auto ground_truth_pose = current_ground_truth_pose_ptr_->pose.pose;
@@ -130,14 +125,10 @@ void LateralErrorPublisher::onGroundTruthPose(
     ground_truth_pose.position.x - vehicle_pose.position.x,
     ground_truth_pose.position.y - vehicle_pose.position.y);
   const auto localization_lateral_error = vehicle_to_ground_truth.dot(unit_normal_direction);
-  RCLCPP_DEBUG(
-    this->get_logger(), "localization_lateral_error: %f",
-    localization_lateral_error);
+  RCLCPP_DEBUG(this->get_logger(), "localization_lateral_error: %f", localization_lateral_error);
 
   const auto lateral_error = control_lateral_error + localization_lateral_error;
-  RCLCPP_DEBUG(
-    this->get_logger(), "localization_error: %f",
-    lateral_error);
+  RCLCPP_DEBUG(this->get_logger(), "localization_error: %f", lateral_error);
 
   // Publish lateral errors
   autoware_debug_msgs::msg::Float32Stamped control_msg;
@@ -156,5 +147,5 @@ void LateralErrorPublisher::onGroundTruthPose(
   pub_lateral_error_->publish(sum_msg);
 }
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(LateralErrorPublisher)
