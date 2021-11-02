@@ -32,16 +32,11 @@ autoware_api_msgs::msg::DoorStatus getDoorStatusMsg(
 
   door_status.status = DoorStatus::UNKNOWN;
 
-  if (
-    msg_ptr->command == SystemRptInt::DOOR_CLOSE &&
-    msg_ptr->output == SystemRptInt::DOOR_OPEN)
-  {
+  if (msg_ptr->command == SystemRptInt::DOOR_CLOSE && msg_ptr->output == SystemRptInt::DOOR_OPEN) {
     // do not used (command & output are always the same value)
     door_status.status = DoorStatus::DOOR_CLOSING;
   } else if (  // NOLINT
-    msg_ptr->command == SystemRptInt::DOOR_OPEN &&
-    msg_ptr->output == SystemRptInt::DOOR_CLOSE)
-  {
+    msg_ptr->command == SystemRptInt::DOOR_OPEN && msg_ptr->output == SystemRptInt::DOOR_CLOSE) {
     // do not used (command & output are always the same value)
     door_status.status = DoorStatus::DOOR_OPENING;
   } else if (msg_ptr->output == SystemRptInt::DOOR_CLOSE) {
@@ -75,7 +70,9 @@ pacmod_msgs::msg::SystemCmdInt createDoorCommand(
   door_cmd.enable = true;
   door_cmd.command = SystemCmdInt::DOOR_NEUTRAL;
 
-  if (!msg_ptr) {return door_cmd;}
+  if (!msg_ptr) {
+    return door_cmd;
+  }
 
   if (msg_ptr->open) {
     door_cmd.command = SystemCmdInt::DOOR_OPEN;

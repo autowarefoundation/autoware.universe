@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "awapi_awiv_adapter/awapi_vehicle_state_publisher.hpp"
+
 #include <limits>
 #include <memory>
-
-#include "awapi_awiv_adapter/awapi_vehicle_state_publisher.hpp"
 
 namespace autoware_api
 {
@@ -99,7 +99,7 @@ void AutowareIvVehicleStatePublisher::getSteerInfo(
     const double ds = steer_ptr->data - previous_steer_ptr_->data;
     const double dt = std::max(
       (rclcpp::Time(steer_ptr->header.stamp) - rclcpp::Time(previous_steer_ptr_->header.stamp))
-      .seconds(),
+        .seconds(),
       1e-03);
     const double steer_vel = ds / dt;
 
@@ -159,7 +159,7 @@ void AutowareIvVehicleStatePublisher::getTwistInfo(
     const double dv = twist_ptr->twist.linear.x - previous_twist_ptr_->twist.linear.x;
     const double dt = std::max(
       (rclcpp::Time(twist_ptr->header.stamp) - rclcpp::Time(previous_twist_ptr_->header.stamp))
-      .seconds(),
+        .seconds(),
       1e-03);
     const double accel = dv / dt;
 

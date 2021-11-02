@@ -15,11 +15,11 @@
 #ifndef AWAPI_AWIV_ADAPTER__DIAGNOSTICS_FILTER_HPP_
 #define AWAPI_AWIV_ADAPTER__DIAGNOSTICS_FILTER_HPP_
 
+#include <diagnostic_msgs/msg/diagnostic_status.hpp>
+
 #include <string>
 #include <unordered_set>
 #include <vector>
-
-#include "diagnostic_msgs/msg/diagnostic_status.hpp"
 
 namespace diagnostics_filter
 {

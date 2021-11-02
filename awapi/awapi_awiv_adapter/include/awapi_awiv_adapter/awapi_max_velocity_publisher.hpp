@@ -15,10 +15,11 @@
 #ifndef AWAPI_AWIV_ADAPTER__AWAPI_MAX_VELOCITY_PUBLISHER_HPP_
 #define AWAPI_AWIV_ADAPTER__AWAPI_MAX_VELOCITY_PUBLISHER_HPP_
 
-#include "rclcpp/rclcpp.hpp"
-
 #include "awapi_awiv_adapter/awapi_autoware_util.hpp"
-#include "autoware_planning_msgs/msg/velocity_limit.hpp"
+
+#include <rclcpp/rclcpp.hpp>
+
+#include <autoware_planning_msgs/msg/velocity_limit.hpp>
 
 namespace autoware_api
 {

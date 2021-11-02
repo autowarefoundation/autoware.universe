@@ -24,358 +24,402 @@ from launch_ros.descriptions import ComposableNode
 def generate_launch_description():
     relay_components = []
 
-    relay_components.append(ComposableNode(
-        package='topic_tools',
-        plugin='topic_tools::RelayNode',
-        name='route_relay',
-        namespace='awapi',
-        parameters=[{
-            'input_topic': LaunchConfiguration('input_route'),
-            'output_topic': LaunchConfiguration('get_route'),
-            'type': 'autoware_planning_msgs/msg/Route',
-        }],
-        extra_arguments=[{
-            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
-        }],
-    ))
+    relay_components.append(
+        ComposableNode(
+            package="topic_tools",
+            plugin="topic_tools::RelayNode",
+            name="route_relay",
+            namespace="awapi",
+            parameters=[
+                {
+                    "input_topic": LaunchConfiguration("input_route"),
+                    "output_topic": LaunchConfiguration("get_route"),
+                    "type": "autoware_planning_msgs/msg/Route",
+                }
+            ],
+            extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
+        )
+    )
 
-    relay_components.append(ComposableNode(
-        package='topic_tools',
-        plugin='topic_tools::RelayNode',
-        name='predict_object_relay',
-        namespace='awapi',
-        parameters=[{
-            'input_topic': LaunchConfiguration('input_object'),
-            'output_topic': LaunchConfiguration('get_predicted_object'),
-            'type': 'autoware_perception_msgs/msg/DynamicObjectArray',
-        }],
-        extra_arguments=[{
-            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
-        }],
-    ))
+    relay_components.append(
+        ComposableNode(
+            package="topic_tools",
+            plugin="topic_tools::RelayNode",
+            name="predict_object_relay",
+            namespace="awapi",
+            parameters=[
+                {
+                    "input_topic": LaunchConfiguration("input_object"),
+                    "output_topic": LaunchConfiguration("get_predicted_object"),
+                    "type": "autoware_perception_msgs/msg/DynamicObjectArray",
+                }
+            ],
+            extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
+        )
+    )
 
-    relay_components.append(ComposableNode(
-        package='topic_tools',
-        plugin='topic_tools::RelayNode',
-        name='nearest_traffic_light_relay',
-        namespace='awapi',
-        parameters=[{
-            'input_topic': LaunchConfiguration('input_nearest_traffic_light_state'),
-            'output_topic': LaunchConfiguration('get_nearest_traffic_light_status'),
-            'type': 'autoware_perception_msgs/msg/LookingTrafficLightState',
-        }],
-        extra_arguments=[{
-            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
-        }],
-    ))
+    relay_components.append(
+        ComposableNode(
+            package="topic_tools",
+            plugin="topic_tools::RelayNode",
+            name="nearest_traffic_light_relay",
+            namespace="awapi",
+            parameters=[
+                {
+                    "input_topic": LaunchConfiguration("input_nearest_traffic_light_state"),
+                    "output_topic": LaunchConfiguration("get_nearest_traffic_light_status"),
+                    "type": "autoware_perception_msgs/msg/LookingTrafficLightState",
+                }
+            ],
+            extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
+        )
+    )
 
-    relay_components.append(ComposableNode(
-        package='topic_tools',
-        plugin='topic_tools::RelayNode',
-        name='ready_module_relay',
-        namespace='awapi',
-        parameters=[{
-            'input_topic': LaunchConfiguration('input_path_change_ready'),
-            'output_topic': LaunchConfiguration('get_path_change_ready'),
-            'type': 'autoware_planning_msgs/msg/PathChangeModule',
-        }],
-        extra_arguments=[{
-            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
-        }],
-    ))
+    relay_components.append(
+        ComposableNode(
+            package="topic_tools",
+            plugin="topic_tools::RelayNode",
+            name="ready_module_relay",
+            namespace="awapi",
+            parameters=[
+                {
+                    "input_topic": LaunchConfiguration("input_path_change_ready"),
+                    "output_topic": LaunchConfiguration("get_path_change_ready"),
+                    "type": "autoware_planning_msgs/msg/PathChangeModule",
+                }
+            ],
+            extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
+        )
+    )
 
-    relay_components.append(ComposableNode(
-        package='topic_tools',
-        plugin='topic_tools::RelayNode',
-        name='force_available_relay',
-        namespace='awapi',
-        parameters=[{
-            'input_topic': LaunchConfiguration('input_path_change_force_available'),
-            'output_topic': LaunchConfiguration('get_path_change_force_available'),
-            'type': 'autoware_planning_msgs/msg/PathChangeModuleArray',
-        }],
-        extra_arguments=[{
-            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
-        }],
-    ))
+    relay_components.append(
+        ComposableNode(
+            package="topic_tools",
+            plugin="topic_tools::RelayNode",
+            name="force_available_relay",
+            namespace="awapi",
+            parameters=[
+                {
+                    "input_topic": LaunchConfiguration("input_path_change_force_available"),
+                    "output_topic": LaunchConfiguration("get_path_change_force_available"),
+                    "type": "autoware_planning_msgs/msg/PathChangeModuleArray",
+                }
+            ],
+            extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
+        )
+    )
 
-    relay_components.append(ComposableNode(
-        package='topic_tools',
-        plugin='topic_tools::RelayNode',
-        name='running_modules_relay',
-        namespace='awapi',
-        parameters=[{
-            'input_topic': LaunchConfiguration('input_path_change_running'),
-            'output_topic': LaunchConfiguration('get_path_change_running'),
-            'type': 'autoware_planning_msgs/msg/PathChangeModuleArray',
-        }],
-        extra_arguments=[{
-            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
-        }],
-    ))
+    relay_components.append(
+        ComposableNode(
+            package="topic_tools",
+            plugin="topic_tools::RelayNode",
+            name="running_modules_relay",
+            namespace="awapi",
+            parameters=[
+                {
+                    "input_topic": LaunchConfiguration("input_path_change_running"),
+                    "output_topic": LaunchConfiguration("get_path_change_running"),
+                    "type": "autoware_planning_msgs/msg/PathChangeModuleArray",
+                }
+            ],
+            extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
+        )
+    )
 
-    relay_components.append(ComposableNode(
-        package='topic_tools',
-        plugin='topic_tools::RelayNode',
-        name='autoware_engage_relay',
-        namespace='awapi',
-        parameters=[{
-            'input_topic': LaunchConfiguration('set_engage'),
-            'output_topic': LaunchConfiguration('output_autoware_engage'),
-            'type': 'autoware_vehicle_msgs/msg/Engage',
-        }],
-        extra_arguments=[{
-            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
-        }],
-    ))
+    relay_components.append(
+        ComposableNode(
+            package="topic_tools",
+            plugin="topic_tools::RelayNode",
+            name="autoware_engage_relay",
+            namespace="awapi",
+            parameters=[
+                {
+                    "input_topic": LaunchConfiguration("set_engage"),
+                    "output_topic": LaunchConfiguration("output_autoware_engage"),
+                    "type": "autoware_vehicle_msgs/msg/Engage",
+                }
+            ],
+            extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
+        )
+    )
 
-    relay_components.append(ComposableNode(
-        package='topic_tools',
-        plugin='topic_tools::RelayNode',
-        name='vehicle_engage_relay',
-        namespace='awapi',
-        parameters=[{
-            'input_topic': LaunchConfiguration('set_engage'),
-            'output_topic': LaunchConfiguration('output_vehicle_engage'),
-            'type': 'autoware_vehicle_msgs/msg/Engage',
-        }],
-        extra_arguments=[{
-            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
-        }],
-    ))
+    relay_components.append(
+        ComposableNode(
+            package="topic_tools",
+            plugin="topic_tools::RelayNode",
+            name="vehicle_engage_relay",
+            namespace="awapi",
+            parameters=[
+                {
+                    "input_topic": LaunchConfiguration("set_engage"),
+                    "output_topic": LaunchConfiguration("output_vehicle_engage"),
+                    "type": "autoware_vehicle_msgs/msg/Engage",
+                }
+            ],
+            extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
+        )
+    )
 
-    relay_components.append(ComposableNode(
-        package='topic_tools',
-        plugin='topic_tools::RelayNode',
-        name='put_route_relay',
-        namespace='awapi',
-        parameters=[{
-            'input_topic': LaunchConfiguration('set_route'),
-            'output_topic': LaunchConfiguration('output_route'),
-            'type': 'autoware_planning_msgs/msg/Route',
-            'durability': 'transient_local',
-        }],
-        extra_arguments=[{
-            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
-        }],
-    ))
+    relay_components.append(
+        ComposableNode(
+            package="topic_tools",
+            plugin="topic_tools::RelayNode",
+            name="put_route_relay",
+            namespace="awapi",
+            parameters=[
+                {
+                    "input_topic": LaunchConfiguration("set_route"),
+                    "output_topic": LaunchConfiguration("output_route"),
+                    "type": "autoware_planning_msgs/msg/Route",
+                    "durability": "transient_local",
+                }
+            ],
+            extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
+        )
+    )
 
-    relay_components.append(ComposableNode(
-        package='topic_tools',
-        plugin='topic_tools::RelayNode',
-        name='put_goal_relay',
-        namespace='awapi',
-        parameters=[{
-            'input_topic': LaunchConfiguration('set_goal'),
-            'output_topic': LaunchConfiguration('output_goal'),
-            'type': 'geometry_msgs/msg/PoseStamped',
-        }],
-        extra_arguments=[{
-            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
-        }],
-    ))
+    relay_components.append(
+        ComposableNode(
+            package="topic_tools",
+            plugin="topic_tools::RelayNode",
+            name="put_goal_relay",
+            namespace="awapi",
+            parameters=[
+                {
+                    "input_topic": LaunchConfiguration("set_goal"),
+                    "output_topic": LaunchConfiguration("output_goal"),
+                    "type": "geometry_msgs/msg/PoseStamped",
+                }
+            ],
+            extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
+        )
+    )
 
-    relay_components.append(ComposableNode(
-        package='topic_tools',
-        plugin='topic_tools::RelayNode',
-        name='lane_change_approval_relay',
-        namespace='awapi',
-        parameters=[{
-            'input_topic': LaunchConfiguration('set_lane_change_approval'),
-            'output_topic': LaunchConfiguration('output_lane_change_approval'),
-            'type': 'autoware_planning_msgs/msg/LaneChangeCommand',
-        }],
-        extra_arguments=[{
-            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
-        }],
-    ))
+    relay_components.append(
+        ComposableNode(
+            package="topic_tools",
+            plugin="topic_tools::RelayNode",
+            name="lane_change_approval_relay",
+            namespace="awapi",
+            parameters=[
+                {
+                    "input_topic": LaunchConfiguration("set_lane_change_approval"),
+                    "output_topic": LaunchConfiguration("output_lane_change_approval"),
+                    "type": "autoware_planning_msgs/msg/LaneChangeCommand",
+                }
+            ],
+            extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
+        )
+    )
 
-    relay_components.append(ComposableNode(
-        package='topic_tools',
-        plugin='topic_tools::RelayNode',
-        name='force_lane_change_relay',
-        namespace='awapi',
-        parameters=[{
-            'input_topic': LaunchConfiguration('set_force_lane_change'),
-            'output_topic': LaunchConfiguration('output_force_lane_change'),
-            'type': 'autoware_planning_msgs/msg/LaneChangeCommand',
-        }],
-        extra_arguments=[{
-            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
-        }],
-    ))
+    relay_components.append(
+        ComposableNode(
+            package="topic_tools",
+            plugin="topic_tools::RelayNode",
+            name="force_lane_change_relay",
+            namespace="awapi",
+            parameters=[
+                {
+                    "input_topic": LaunchConfiguration("set_force_lane_change"),
+                    "output_topic": LaunchConfiguration("output_force_lane_change"),
+                    "type": "autoware_planning_msgs/msg/LaneChangeCommand",
+                }
+            ],
+            extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
+        )
+    )
 
-    relay_components.append(ComposableNode(
-        package='topic_tools',
-        plugin='topic_tools::RelayNode',
-        name='external_approval_relay',
-        namespace='awapi',
-        parameters=[{
-            'input_topic': LaunchConfiguration('set_path_change_approval'),
-            'output_topic': LaunchConfiguration('output_path_change_approval'),
-            'type': 'autoware_planning_msgs/msg/Approval',
-        }],
-        extra_arguments=[{
-            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
-        }],
-    ))
+    relay_components.append(
+        ComposableNode(
+            package="topic_tools",
+            plugin="topic_tools::RelayNode",
+            name="external_approval_relay",
+            namespace="awapi",
+            parameters=[
+                {
+                    "input_topic": LaunchConfiguration("set_path_change_approval"),
+                    "output_topic": LaunchConfiguration("output_path_change_approval"),
+                    "type": "autoware_planning_msgs/msg/Approval",
+                }
+            ],
+            extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
+        )
+    )
 
-    relay_components.append(ComposableNode(
-        package='topic_tools',
-        plugin='topic_tools::RelayNode',
-        name='force_approval_relay',
-        namespace='awapi',
-        parameters=[{
-            'input_topic': LaunchConfiguration('set_path_change_force'),
-            'output_topic': LaunchConfiguration('output_path_change_force'),
-            'type': 'autoware_planning_msgs/msg/PathChangeModule',
-        }],
-        extra_arguments=[{
-            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
-        }],
-    ))
+    relay_components.append(
+        ComposableNode(
+            package="topic_tools",
+            plugin="topic_tools::RelayNode",
+            name="force_approval_relay",
+            namespace="awapi",
+            parameters=[
+                {
+                    "input_topic": LaunchConfiguration("set_path_change_force"),
+                    "output_topic": LaunchConfiguration("output_path_change_force"),
+                    "type": "autoware_planning_msgs/msg/PathChangeModule",
+                }
+            ],
+            extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
+        )
+    )
 
-    relay_components.append(ComposableNode(
-        package='topic_tools',
-        plugin='topic_tools::RelayNode',
-        name='obstacle_avoid_approval_relay',
-        namespace='awapi',
-        parameters=[{
-            'input_topic': LaunchConfiguration('set_obstacle_avoid_approval'),
-            'output_topic': LaunchConfiguration('output_obstacle_avoid_approval'),
-            'type': 'autoware_planning_msgs/msg/EnableAvoidance',
-        }],
-        extra_arguments=[{
-            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
-        }],
-    ))
+    relay_components.append(
+        ComposableNode(
+            package="topic_tools",
+            plugin="topic_tools::RelayNode",
+            name="obstacle_avoid_approval_relay",
+            namespace="awapi",
+            parameters=[
+                {
+                    "input_topic": LaunchConfiguration("set_obstacle_avoid_approval"),
+                    "output_topic": LaunchConfiguration("output_obstacle_avoid_approval"),
+                    "type": "autoware_planning_msgs/msg/EnableAvoidance",
+                }
+            ],
+            extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
+        )
+    )
 
-    relay_components.append(ComposableNode(
-        package='topic_tools',
-        plugin='topic_tools::RelayNode',
-        name='traffic_light_relay',
-        namespace='awapi',
-        parameters=[{
-            'input_topic': LaunchConfiguration('input_traffic_light_state'),
-            'output_topic': LaunchConfiguration('get_traffic_light_status'),
-            'type': 'autoware_perception_msgs/msg/TrafficLightStateArray',
-        }],
-        extra_arguments=[{
-            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
-        }],
-    ))
+    relay_components.append(
+        ComposableNode(
+            package="topic_tools",
+            plugin="topic_tools::RelayNode",
+            name="traffic_light_relay",
+            namespace="awapi",
+            parameters=[
+                {
+                    "input_topic": LaunchConfiguration("input_traffic_light_state"),
+                    "output_topic": LaunchConfiguration("get_traffic_light_status"),
+                    "type": "autoware_perception_msgs/msg/TrafficLightStateArray",
+                }
+            ],
+            extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
+        )
+    )
 
-    relay_components.append(ComposableNode(
-        package='topic_tools',
-        plugin='topic_tools::RelayNode',
-        name='overwrite_traffic_light_state_relay',
-        namespace='awapi',
-        parameters=[{
-            'input_topic': LaunchConfiguration('set_overwrite_traffic_light_state'),
-            'output_topic': LaunchConfiguration('output_overwrite_traffic_light_state'),
-            'type': 'autoware_perception_msgs/msg/TrafficLightStateArray',
-        }],
-        extra_arguments=[{
-            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
-        }],
-    ))
+    relay_components.append(
+        ComposableNode(
+            package="topic_tools",
+            plugin="topic_tools::RelayNode",
+            name="overwrite_traffic_light_state_relay",
+            namespace="awapi",
+            parameters=[
+                {
+                    "input_topic": LaunchConfiguration("set_overwrite_traffic_light_state"),
+                    "output_topic": LaunchConfiguration("output_overwrite_traffic_light_state"),
+                    "type": "autoware_perception_msgs/msg/TrafficLightStateArray",
+                }
+            ],
+            extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
+        )
+    )
 
-    relay_components.append(ComposableNode(
-        package='topic_tools',
-        plugin='topic_tools::RelayNode',
-        name='speed_exceeded_relay',
-        namespace='awapi',
-        parameters=[{
-            'input_topic': LaunchConfiguration('input_stop_speed_exceeded'),
-            'output_topic': LaunchConfiguration('get_stop_speed_exceeded'),
-            'type': 'autoware_planning_msgs/msg/StopSpeedExceeded',
-        }],
-        extra_arguments=[{
-            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
-        }],
-    ))
+    relay_components.append(
+        ComposableNode(
+            package="topic_tools",
+            plugin="topic_tools::RelayNode",
+            name="speed_exceeded_relay",
+            namespace="awapi",
+            parameters=[
+                {
+                    "input_topic": LaunchConfiguration("input_stop_speed_exceeded"),
+                    "output_topic": LaunchConfiguration("get_stop_speed_exceeded"),
+                    "type": "autoware_planning_msgs/msg/StopSpeedExceeded",
+                }
+            ],
+            extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
+        )
+    )
 
-    relay_components.append(ComposableNode(
-        package='topic_tools',
-        plugin='topic_tools::RelayNode',
-        name='crosswalk_status_relay',
-        namespace='awapi',
-        parameters=[{
-            'input_topic': LaunchConfiguration('set_crosswalk_status'),
-            'output_topic': LaunchConfiguration('input_external_crosswalk_status'),
-            'type': 'autoware_api_msgs/msg/CrosswalkStatus',
-        }],
-        extra_arguments=[{
-            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
-        }],
-    ))
+    relay_components.append(
+        ComposableNode(
+            package="topic_tools",
+            plugin="topic_tools::RelayNode",
+            name="crosswalk_status_relay",
+            namespace="awapi",
+            parameters=[
+                {
+                    "input_topic": LaunchConfiguration("set_crosswalk_status"),
+                    "output_topic": LaunchConfiguration("input_external_crosswalk_status"),
+                    "type": "autoware_api_msgs/msg/CrosswalkStatus",
+                }
+            ],
+            extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
+        )
+    )
 
-    relay_components.append(ComposableNode(
-        package='topic_tools',
-        plugin='topic_tools::RelayNode',
-        name='intersection_status_relay',
-        namespace='awapi',
-        parameters=[{
-            'input_topic': LaunchConfiguration('set_intersection_status'),
-            'output_topic': LaunchConfiguration('input_external_intersection_status'),
-            'type': 'autoware_api_msgs/msg/IntersectionStatus',
-        }],
-        extra_arguments=[{
-            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
-        }],
-    ))
+    relay_components.append(
+        ComposableNode(
+            package="topic_tools",
+            plugin="topic_tools::RelayNode",
+            name="intersection_status_relay",
+            namespace="awapi",
+            parameters=[
+                {
+                    "input_topic": LaunchConfiguration("set_intersection_status"),
+                    "output_topic": LaunchConfiguration("input_external_intersection_status"),
+                    "type": "autoware_api_msgs/msg/IntersectionStatus",
+                }
+            ],
+            extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
+        )
+    )
 
-    relay_components.append(ComposableNode(
-        package='topic_tools',
-        plugin='topic_tools::RelayNode',
-        name='expand_stop_range_relay',
-        namespace='awapi',
-        parameters=[{
-            'input_topic': LaunchConfiguration('set_expand_stop_range'),
-            'output_topic': LaunchConfiguration('input_expand_stop_range'),
-            'type': 'autoware_planning_msgs/msg/ExpandStopRange',
-        }],
-        extra_arguments=[{
-            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
-        }],
-    ))
+    relay_components.append(
+        ComposableNode(
+            package="topic_tools",
+            plugin="topic_tools::RelayNode",
+            name="expand_stop_range_relay",
+            namespace="awapi",
+            parameters=[
+                {
+                    "input_topic": LaunchConfiguration("set_expand_stop_range"),
+                    "output_topic": LaunchConfiguration("input_expand_stop_range"),
+                    "type": "autoware_planning_msgs/msg/ExpandStopRange",
+                }
+            ],
+            extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
+        )
+    )
 
-    relay_components.append(ComposableNode(
-        package='topic_tools',
-        plugin='topic_tools::RelayNode',
-        name='pose_initialization_request_relay',
-        namespace='awapi',
-        parameters=[{
-            'input_topic': LaunchConfiguration('set_pose_initialization_request'),
-            'output_topic': LaunchConfiguration('input_pose_initialization_request'),
-            'type': 'autoware_localization_msgs/msg/PoseInitializationRequest',
-        }],
-        extra_arguments=[{
-            'use_intra_process_comms': LaunchConfiguration('use_intra_process')
-        }],
-    ))
+    relay_components.append(
+        ComposableNode(
+            package="topic_tools",
+            plugin="topic_tools::RelayNode",
+            name="pose_initialization_request_relay",
+            namespace="awapi",
+            parameters=[
+                {
+                    "input_topic": LaunchConfiguration("set_pose_initialization_request"),
+                    "output_topic": LaunchConfiguration("input_pose_initialization_request"),
+                    "type": "autoware_localization_msgs/msg/PoseInitializationRequest",
+                }
+            ],
+            extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
+        )
+    )
 
     container = ComposableNodeContainer(
-        name='awapi_relay_container',
-        namespace='awapi',
-        package='rclcpp_components',
-        executable=LaunchConfiguration('container_executable'),
+        name="awapi_relay_container",
+        namespace="awapi",
+        package="rclcpp_components",
+        executable=LaunchConfiguration("container_executable"),
         composable_node_descriptions=relay_components,
-        output='screen',
+        output="screen",
     )
 
     set_container_executable = SetLaunchConfiguration(
-        'container_executable',
-        'component_container',
-        condition=UnlessCondition(LaunchConfiguration('use_multithread'))
+        "container_executable",
+        "component_container",
+        condition=UnlessCondition(LaunchConfiguration("use_multithread")),
     )
 
     set_container_mt_executable = SetLaunchConfiguration(
-        'container_executable',
-        'component_container_mt',
-        condition=IfCondition(LaunchConfiguration('use_multithread'))
+        "container_executable",
+        "component_container_mt",
+        condition=IfCondition(LaunchConfiguration("use_multithread")),
     )
 
-    return launch.LaunchDescription([set_container_executable,
-                                     set_container_mt_executable] +
-                                    [container])
+    return launch.LaunchDescription(
+        [set_container_executable, set_container_mt_executable] + [container]
+    )

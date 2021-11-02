@@ -15,13 +15,14 @@
 #ifndef AWAPI_AWIV_ADAPTER__AWAPI_V2X_AGGREGATOR_HPP_
 #define AWAPI_AWIV_ADAPTER__AWAPI_V2X_AGGREGATOR_HPP_
 
+#include <rclcpp/rclcpp.hpp>
+
+#include <autoware_v2x_msgs/msg/infrastructure_command_array.hpp>
+#include <autoware_v2x_msgs/msg/virtual_traffic_light_state_array.hpp>
+
 #include <map>
 #include <string>
 #include <vector>
-
-#include "rclcpp/rclcpp.hpp"
-#include "autoware_v2x_msgs/msg/infrastructure_command_array.hpp"
-#include "autoware_v2x_msgs/msg/virtual_traffic_light_state_array.hpp"
 
 namespace autoware_api
 {

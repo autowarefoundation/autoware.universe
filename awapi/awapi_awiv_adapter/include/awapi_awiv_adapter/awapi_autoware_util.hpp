@@ -15,40 +15,41 @@
 #ifndef AWAPI_AWIV_ADAPTER__AWAPI_AUTOWARE_UTIL_HPP_
 #define AWAPI_AWIV_ADAPTER__AWAPI_AUTOWARE_UTIL_HPP_
 
+#include <rclcpp/rclcpp.hpp>
+
+#include <autoware_api_msgs/msg/stop_command.hpp>
+#include <autoware_api_msgs/msg/velocity_limit.hpp>
+#include <autoware_control_msgs/msg/gate_mode.hpp>
+#include <autoware_planning_msgs/msg/is_avoidance_possible.hpp>
+#include <autoware_planning_msgs/msg/lane_change_status.hpp>
+#include <autoware_planning_msgs/msg/path.hpp>
+#include <autoware_planning_msgs/msg/stop_reason_array.hpp>
+#include <autoware_planning_msgs/msg/trajectory.hpp>
+#include <autoware_planning_msgs/msg/velocity_limit.hpp>
+#include <autoware_system_msgs/msg/autoware_state.hpp>
+#include <autoware_system_msgs/msg/emergency_state_stamped.hpp>
+#include <autoware_system_msgs/msg/hazard_status_stamped.hpp>
+#include <autoware_v2x_msgs/msg/infrastructure_command_array.hpp>
+#include <autoware_v2x_msgs/msg/virtual_traffic_light_state_array.hpp>
+#include <autoware_vehicle_msgs/msg/battery_status.hpp>
+#include <autoware_vehicle_msgs/msg/control_mode.hpp>
+#include <autoware_vehicle_msgs/msg/shift_stamped.hpp>
+#include <autoware_vehicle_msgs/msg/steering.hpp>
+#include <autoware_vehicle_msgs/msg/turn_signal.hpp>
+#include <autoware_vehicle_msgs/msg/vehicle_command.hpp>
+#include <diagnostic_msgs/msg/diagnostic_array.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
+#include <pacmod_msgs/msg/global_rpt.hpp>
+#include <pacmod_msgs/msg/system_rpt_int.hpp>
+#include <sensor_msgs/msg/nav_sat_fix.hpp>
+
+#include <tf2/utils.h>
+#include <tf2_ros/transform_broadcaster.h>
+#include <tf2_ros/transform_listener.h>
+
 #include <memory>
 #include <string>
-
-#include "geometry_msgs/msg/pose_stamped.hpp"
-#include "geometry_msgs/msg/twist_stamped.hpp"
-#include "pacmod_msgs/msg/global_rpt.hpp"
-#include "rclcpp/rclcpp.hpp"
-#include "sensor_msgs/msg/nav_sat_fix.hpp"
-#include "tf2/utils.h"
-#include "tf2_ros/transform_broadcaster.h"
-#include "tf2_ros/transform_listener.h"
-
-#include "autoware_api_msgs/msg/velocity_limit.hpp"
-#include "autoware_api_msgs/msg/stop_command.hpp"
-#include "autoware_system_msgs/msg/emergency_state_stamped.hpp"
-#include "autoware_control_msgs/msg/gate_mode.hpp"
-#include "autoware_planning_msgs/msg/is_avoidance_possible.hpp"
-#include "autoware_planning_msgs/msg/lane_change_status.hpp"
-#include "autoware_planning_msgs/msg/path.hpp"
-#include "autoware_planning_msgs/msg/stop_reason_array.hpp"
-#include "autoware_planning_msgs/msg/trajectory.hpp"
-#include "autoware_planning_msgs/msg/velocity_limit.hpp"
-#include "autoware_system_msgs/msg/autoware_state.hpp"
-#include "autoware_system_msgs/msg/hazard_status_stamped.hpp"
-#include "autoware_v2x_msgs/msg/infrastructure_command_array.hpp"
-#include "autoware_v2x_msgs/msg/virtual_traffic_light_state_array.hpp"
-#include "autoware_vehicle_msgs/msg/battery_status.hpp"
-#include "autoware_vehicle_msgs/msg/control_mode.hpp"
-#include "autoware_vehicle_msgs/msg/shift_stamped.hpp"
-#include "autoware_vehicle_msgs/msg/steering.hpp"
-#include "autoware_vehicle_msgs/msg/turn_signal.hpp"
-#include "autoware_vehicle_msgs/msg/vehicle_command.hpp"
-#include "diagnostic_msgs/msg/diagnostic_array.hpp"
-#include "pacmod_msgs/msg/system_rpt_int.hpp"
 
 namespace autoware_api
 {
@@ -84,7 +85,7 @@ struct AutowareInfo
   pacmod_msgs::msg::SystemRptInt::ConstSharedPtr door_state_ptr;
 };
 
-template<class T>
+template <class T>
 T waitForParam(
   rclcpp::Node * node, const std::string & remote_node_name, const std::string & param_name)
 {
@@ -98,8 +99,7 @@ T waitForParam(
       return {};
     }
     RCLCPP_INFO_THROTTLE(
-      node->get_logger(), *node->get_clock(), 1000 /* ms */,
-      "waiting for node: %s, param: %s\n",
+      node->get_logger(), *node->get_clock(), 1000 /* ms */, "waiting for node: %s, param: %s\n",
       remote_node_name.c_str(), param_name.c_str());
   }
 

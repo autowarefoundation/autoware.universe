@@ -61,8 +61,7 @@ void AutowareIvObstacleAvoidanceStatePublisher::getCandidatePathInfo(
 {
   if (!path_ptr) {
     RCLCPP_DEBUG_STREAM_THROTTLE(
-      logger_, *clock_, 5000 /* ms */,
-      "obstacle_avoidance_candidate_path is nullptr");
+      logger_, *clock_, 5000 /* ms */, "obstacle_avoidance_candidate_path is nullptr");
     return;
   }
 

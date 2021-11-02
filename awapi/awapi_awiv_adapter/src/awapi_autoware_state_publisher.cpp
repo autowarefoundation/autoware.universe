@@ -12,12 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "awapi_awiv_adapter/awapi_autoware_state_publisher.hpp"
+
+#include "awapi_awiv_adapter/diagnostics_filter.hpp"
+
 #include <regex>
 #include <string>
 #include <vector>
-
-#include "awapi_awiv_adapter/awapi_autoware_state_publisher.hpp"
-#include "awapi_awiv_adapter/diagnostics_filter.hpp"
 
 namespace autoware_api
 {
@@ -27,8 +28,8 @@ AutowareIvAutowareStatePublisher::AutowareIvAutowareStatePublisher(rclcpp::Node 
   arrived_goal_(false)
 {
   // publisher
-  pub_state_ = node.create_publisher<autoware_api_msgs::msg::AwapiAutowareStatus>(
-    "output/autoware_status", 1);
+  pub_state_ =
+    node.create_publisher<autoware_api_msgs::msg::AwapiAutowareStatus>("output/autoware_status", 1);
 }
 
 void AutowareIvAutowareStatePublisher::statePublisher(const AutowareInfo & aw_info)
@@ -60,8 +61,7 @@ void AutowareIvAutowareStatePublisher::getAutowareStateInfo(
   autoware_api_msgs::msg::AwapiAutowareStatus * status)
 {
   if (!autoware_state_ptr) {
-    RCLCPP_DEBUG_STREAM_THROTTLE(
-      logger_, *clock_, 5000 /* ms */, "autoware_state is nullptr");
+    RCLCPP_DEBUG_STREAM_THROTTLE(logger_, *clock_, 5000 /* ms */, "autoware_state is nullptr");
     return;
   }
 
@@ -107,10 +107,9 @@ void AutowareIvAutowareStatePublisher::getEmergencyStateInfo(
 
   // get emergency
   using autoware_system_msgs::msg::EmergencyState;
-  status->emergency_stopped =
-    (emergency_state_ptr->state.state == EmergencyState::MRM_OPERATING) ||
-    (emergency_state_ptr->state.state == EmergencyState::MRM_SUCCEEDED) ||
-    (emergency_state_ptr->state.state == EmergencyState::MRM_FAILED);
+  status->emergency_stopped = (emergency_state_ptr->state.state == EmergencyState::MRM_OPERATING) ||
+                              (emergency_state_ptr->state.state == EmergencyState::MRM_SUCCEEDED) ||
+                              (emergency_state_ptr->state.state == EmergencyState::MRM_FAILED);
 }
 
 void AutowareIvAutowareStatePublisher::getCurrentMaxVelInfo(
@@ -183,8 +182,7 @@ void AutowareIvAutowareStatePublisher::getDiagInfo(
 {
   if (!aw_info.diagnostic_ptr) {
     RCLCPP_DEBUG_STREAM_THROTTLE(
-      logger_, *clock_, 5000 /* ms */,
-      "[AutowareIvAutowareStatePublisher] diagnostics is nullptr");
+      logger_, *clock_, 5000 /* ms */, "[AutowareIvAutowareStatePublisher] diagnostics is nullptr");
     return;
   }
 
@@ -216,8 +214,7 @@ void AutowareIvAutowareStatePublisher::getErrorDiagInfo(
 
   if (!aw_info.diagnostic_ptr) {
     RCLCPP_DEBUG_STREAM_THROTTLE(
-      logger_, *clock_, 5000 /* ms */,
-      "[AutowareIvAutowareStatePublisher] diagnostics is nullptr");
+      logger_, *clock_, 5000 /* ms */, "[AutowareIvAutowareStatePublisher] diagnostics is nullptr");
     return;
   }
 
@@ -282,15 +279,13 @@ bool AutowareIvAutowareStatePublisher::isGoal(
     arrived_goal_ = true;
   } else if (  // NOLINT
     prev_state_ == autoware_system_msgs::msg::AutowareState::DRIVING &&
-    aw_state == autoware_system_msgs::msg::AutowareState::WAITING_FOR_ROUTE)
-  {
+    aw_state == autoware_system_msgs::msg::AutowareState::WAITING_FOR_ROUTE) {
     arrived_goal_ = true;
   }
 
   if (
     aw_state == autoware_system_msgs::msg::AutowareState::WAITING_FOR_ENGAGE ||
-    aw_state == autoware_system_msgs::msg::AutowareState::DRIVING)
-  {
+    aw_state == autoware_system_msgs::msg::AutowareState::DRIVING) {
     // cancel goal state
     arrived_goal_ = false;
   }

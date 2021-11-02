@@ -19,23 +19,15 @@
 
 namespace autoware_api
 {
-
 namespace
 {
-std::string createKey(const Command & command)
-{
-  return command.type + "-" + command.id;
-}
+std::string createKey(const Command & command) { return command.type + "-" + command.id; }
 
-std::string createKey(const State & state)
-{
-  return state.type + "-" + state.id;
-}
+std::string createKey(const State & state) { return state.type + "-" + state.id; }
 }  // namespace
 
 AutowareIvV2XAggregator::AutowareIvV2XAggregator(rclcpp::Node & node)
-: logger_(node.get_logger().get_child("awapi_awiv_v2x_aggregator")),
-  clock_(node.get_clock())
+: logger_(node.get_logger().get_child("awapi_awiv_v2x_aggregator")), clock_(node.get_clock())
 {
 }
 

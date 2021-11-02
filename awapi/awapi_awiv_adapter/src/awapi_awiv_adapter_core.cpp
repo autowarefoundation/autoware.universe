@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "awapi_awiv_adapter/awapi_awiv_adapter_core.hpp"
+
 #include <functional>
 #include <memory>
 #include <utility>
-
-#include "awapi_awiv_adapter/awapi_awiv_adapter_core.hpp"
 
 namespace autoware_api
 {
@@ -30,8 +30,7 @@ AutowareIvAdapter::AutowareIvAdapter()
   stop_reason_timeout_ = this->declare_parameter("stop_reason_timeout", 0.5);
   stop_reason_thresh_dist_ = this->declare_parameter("stop_reason_thresh_dist", 100.0);
   const double default_max_velocity = waitForParam<double>(
-    this, declare_parameter("node/max_velocity", ""),
-    declare_parameter("param/max_velocity", ""));
+    this, declare_parameter("node/max_velocity", ""), declare_parameter("param/max_velocity", ""));
   const bool em_stop_param = waitForParam<bool>(
     this, declare_parameter("node/emergency_stop", ""),
     declare_parameter("param/emergency_stop", ""));
@@ -40,12 +39,9 @@ AutowareIvAdapter::AutowareIvAdapter()
   // setup instance
   vehicle_state_publisher_ = std::make_unique<AutowareIvVehicleStatePublisher>(*this);
   autoware_state_publisher_ = std::make_unique<AutowareIvAutowareStatePublisher>(*this);
-  stop_reason_aggregator_ =
-    std::make_unique<AutowareIvStopReasonAggregator>(
-    *this, stop_reason_timeout_,
-    stop_reason_thresh_dist_);
-  v2x_aggregator_ =
-    std::make_unique<AutowareIvV2XAggregator>(*this);
+  stop_reason_aggregator_ = std::make_unique<AutowareIvStopReasonAggregator>(
+    *this, stop_reason_timeout_, stop_reason_thresh_dist_);
+  v2x_aggregator_ = std::make_unique<AutowareIvV2XAggregator>(*this);
   lane_change_state_publisher_ = std::make_unique<AutowareIvLaneChangeStatePublisher>(*this);
   obstacle_avoidance_state_publisher_ =
     std::make_unique<AutowareIvObstacleAvoidanceStatePublisher>(*this);
@@ -88,8 +84,7 @@ AutowareIvAdapter::AutowareIvAdapter()
     "input/gate_mode", durable_qos, std::bind(&AutowareIvAdapter::callbackGateMode, this, _1));
   sub_emergency_ = this->create_subscription<autoware_system_msgs::msg::EmergencyStateStamped>(
     "input/emergency_state", 1, std::bind(&AutowareIvAdapter::callbackEmergencyState, this, _1));
-  sub_hazard_status_ =
-    this->create_subscription<autoware_system_msgs::msg::HazardStatusStamped>(
+  sub_hazard_status_ = this->create_subscription<autoware_system_msgs::msg::HazardStatusStamped>(
     "input/hazard_status", 1, std::bind(&AutowareIvAdapter::callbackHazardStatus, this, _1));
   sub_stop_reason_ = this->create_subscription<autoware_planning_msgs::msg::StopReasonArray>(
     "input/stop_reason", 100, std::bind(&AutowareIvAdapter::callbackStopReason, this, _1));
@@ -103,8 +98,8 @@ AutowareIvAdapter::AutowareIvAdapter()
     "input/global_rpt", 1, std::bind(&AutowareIvAdapter::callbackGlobalRpt, this, _1));
   sub_lane_change_available_ =
     this->create_subscription<autoware_planning_msgs::msg::LaneChangeStatus>(
-    "input/lane_change_available", 1,
-    std::bind(&AutowareIvAdapter::callbackLaneChangeAvailable, this, _1));
+      "input/lane_change_available", 1,
+      std::bind(&AutowareIvAdapter::callbackLaneChangeAvailable, this, _1));
   sub_lane_change_ready_ = this->create_subscription<autoware_planning_msgs::msg::LaneChangeStatus>(
     "input/lane_change_ready", 1, std::bind(&AutowareIvAdapter::callbackLaneChangeReady, this, _1));
   sub_lane_change_candidate_ = this->create_subscription<autoware_planning_msgs::msg::Path>(
@@ -112,12 +107,12 @@ AutowareIvAdapter::AutowareIvAdapter()
     std::bind(&AutowareIvAdapter::callbackLaneChangeCandidatePath, this, _1));
   sub_obstacle_avoid_ready_ =
     this->create_subscription<autoware_planning_msgs::msg::IsAvoidancePossible>(
-    "input/obstacle_avoid_ready", durable_qos,
-    std::bind(&AutowareIvAdapter::callbackLaneObstacleAvoidReady, this, _1));
+      "input/obstacle_avoid_ready", durable_qos,
+      std::bind(&AutowareIvAdapter::callbackLaneObstacleAvoidReady, this, _1));
   sub_obstacle_avoid_candidate_ =
     this->create_subscription<autoware_planning_msgs::msg::Trajectory>(
-    "input/obstacle_avoid_candidate_path", durable_qos,
-    std::bind(&AutowareIvAdapter::callbackLaneObstacleAvoidCandidatePath, this, _1));
+      "input/obstacle_avoid_candidate_path", durable_qos,
+      std::bind(&AutowareIvAdapter::callbackLaneObstacleAvoidCandidatePath, this, _1));
   sub_max_velocity_ = this->create_subscription<autoware_api_msgs::msg::VelocityLimit>(
     "input/max_velocity", 1, std::bind(&AutowareIvAdapter::callbackMaxVelocity, this, _1));
   sub_current_max_velocity_ = this->create_subscription<autoware_planning_msgs::msg::VelocityLimit>(
@@ -125,8 +120,7 @@ AutowareIvAdapter::AutowareIvAdapter()
     std::bind(&AutowareIvAdapter::callbackCurrentMaxVelocity, this, _1));
   sub_temporary_stop_ = this->create_subscription<autoware_api_msgs::msg::StopCommand>(
     "input/temporary_stop", 1, std::bind(&AutowareIvAdapter::callbackTemporaryStop, this, _1));
-  sub_autoware_traj_ =
-    this->create_subscription<autoware_planning_msgs::msg::Trajectory>(
+  sub_autoware_traj_ = this->create_subscription<autoware_planning_msgs::msg::Trajectory>(
     "input/autoware_trajectory", 1,
     std::bind(&AutowareIvAdapter::callbackAutowareTrajectory, this, _1));
   sub_door_control_ = this->create_subscription<autoware_api_msgs::msg::DoorControlCommand>(
