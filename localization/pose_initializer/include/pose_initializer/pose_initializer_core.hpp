@@ -15,24 +15,22 @@
 #ifndef POSE_INITIALIZER__POSE_INITIALIZER_CORE_HPP_
 #define POSE_INITIALIZER__POSE_INITIALIZER_CORE_HPP_
 
+#include <autoware_api_utils/autoware_api_utils.hpp>
+#include <autoware_localization_srvs/srv/pose_with_covariance_stamped.hpp>
+#include <rclcpp/rclcpp.hpp>
+
+#include <autoware_external_api_msgs/srv/initialize_pose_auto.hpp>
+#include <autoware_localization_msgs/msg/pose_initialization_request.hpp>
+#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include <tf2/transform_datatypes.h>
+#include <tf2_ros/transform_listener.h>
+
 #include <memory>
 #include <string>
-
-#include "rclcpp/rclcpp.hpp"
-
-#include "tf2/transform_datatypes.h"
-#include "tf2_ros/transform_listener.h"
-#include "autoware_localization_msgs/msg/pose_initialization_request.hpp"
-#include "autoware_external_api_msgs/srv/initialize_pose_auto.hpp"
-#include "autoware_api_utils/autoware_api_utils.hpp"
-
-#include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
-#include "sensor_msgs/msg/point_cloud2.hpp"
-
-#include "pcl/point_cloud.h"
-#include "pcl/point_types.h"
-
-#include "autoware_localization_srvs/srv/pose_with_covariance_stamped.hpp"
 
 class PoseInitializer : public rclcpp::Node
 {
@@ -53,7 +51,8 @@ private:
   void callbackGNSSPoseCov(
     geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose_cov_msg_ptr);
   void callbackPoseInitializationRequest(
-    const autoware_localization_msgs::msg::PoseInitializationRequest::ConstSharedPtr request_msg_ptr);  // NOLINT
+    const autoware_localization_msgs::msg::PoseInitializationRequest::ConstSharedPtr
+      request_msg_ptr);  // NOLINT
 
   bool getHeight(
     const geometry_msgs::msg::PoseWithCovarianceStamped & input_pose_msg,

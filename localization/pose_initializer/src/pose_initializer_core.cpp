@@ -12,17 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "pose_initializer/pose_initializer_core.hpp"
+
+#include <pcl_conversions/pcl_conversions.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+
 #include <algorithm>
 #include <chrono>
 #include <functional>
 #include <memory>
 #include <string>
-
-#include "pose_initializer/pose_initializer_core.hpp"
-
-#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
-
-#include "pcl_conversions/pcl_conversions.h"
 
 double getGroundHeight(const pcl::PointCloud<pcl::PointXYZ>::Ptr pcdmap, const tf2::Vector3 & point)
 {
@@ -55,13 +54,12 @@ PoseInitializer::PoseInitializer()
     "pointcloud_map", rclcpp::QoS{1}.transient_local(),
     std::bind(&PoseInitializer::callbackMapPoints, this, std::placeholders::_1));
   gnss_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
-    "gnss_pose_cov", 1, std::bind(
-      &PoseInitializer::callbackGNSSPoseCov, this,
-      std::placeholders::_1));
+    "gnss_pose_cov", 1,
+    std::bind(&PoseInitializer::callbackGNSSPoseCov, this, std::placeholders::_1));
   pose_initialization_request_sub_ =
     this->create_subscription<autoware_localization_msgs::msg::PoseInitializationRequest>(
-    "pose_initialization_request", rclcpp::QoS{1}.transient_local(),
-    std::bind(&PoseInitializer::callbackPoseInitializationRequest, this, std::placeholders::_1));
+      "pose_initialization_request", rclcpp::QoS{1}.transient_local(),
+      std::bind(&PoseInitializer::callbackPoseInitializationRequest, this, std::placeholders::_1));
 
   initial_pose_pub_ =
     this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("initialpose3d", 10);
@@ -74,17 +72,15 @@ PoseInitializer::PoseInitializer()
 
   initialize_pose_service_ =
     this->create_service<autoware_localization_srvs::srv::PoseWithCovarianceStamped>(
-    "service/initialize_pose",
-    std::bind(
-      &PoseInitializer::serviceInitializePose,
-      this, std::placeholders::_1, std::placeholders::_2));
+      "service/initialize_pose", std::bind(
+                                   &PoseInitializer::serviceInitializePose, this,
+                                   std::placeholders::_1, std::placeholders::_2));
 
   initialize_pose_auto_service_ =
     this->create_service<autoware_external_api_msgs::srv::InitializePoseAuto>(
-    "service/initialize_pose_auto",
-    std::bind(
-      &PoseInitializer::serviceInitializePoseAuto,
-      this, std::placeholders::_1, std::placeholders::_2));
+      "service/initialize_pose_auto", std::bind(
+                                        &PoseInitializer::serviceInitializePoseAuto, this,
+                                        std::placeholders::_1, std::placeholders::_2));
 }
 
 PoseInitializer::~PoseInitializer() {}
@@ -224,7 +220,7 @@ bool PoseInitializer::callAlignServiceAndPublishResult(
   ndt_client_->async_send_request(
     req,
     [this](rclcpp::Client<autoware_localization_srvs::srv::PoseWithCovarianceStamped>::SharedFuture
-    result) {
+             result) {
       if (result.get()->success) {
         RCLCPP_INFO(get_logger(), "called NDT Align Server");
         response_id_ = result.get()->seq;

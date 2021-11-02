@@ -13,22 +13,23 @@
 // limitations under the License.
 
 #include "initial_pose_button_panel.hpp"
+
+#include <QFileDialog>
+#include <QHBoxLayout>
+#include <QLineEdit>
+#include <QPainter>
+#include <QPushButton>
 #include <pluginlib/class_list_macros.hpp>
+#include <rviz_common/display_context.hpp>
+
+#include <memory>
 #include <string>
 #include <thread>
 #include <vector>
-#include <memory>
-#include "QFileDialog"
-#include "QHBoxLayout"
-#include "QLineEdit"
-#include "QPainter"
-#include "QPushButton"
-#include "rviz_common/display_context.hpp"
 
 namespace autoware_localization_rviz_plugin
 {
-InitialPoseButtonPanel::InitialPoseButtonPanel(QWidget * parent)
-: rviz_common::Panel(parent)
+InitialPoseButtonPanel::InitialPoseButtonPanel(QWidget * parent) : rviz_common::Panel(parent)
 {
   topic_label_ = new QLabel("PoseWithCovarianceStamped ");
   topic_label_->setAlignment(Qt::AlignCenter);
@@ -100,22 +101,22 @@ void InitialPoseButtonPanel::pushInitializeButton()
   status_label_->setText("Initializing...");
 
   std::thread thread([this] {
-      auto req =
+    auto req =
       std::make_shared<autoware_localization_srvs::srv::PoseWithCovarianceStamped::Request>();
-      req->pose_with_cov = pose_cov_msg_;
+    req->pose_with_cov = pose_cov_msg_;
 
-      client_->async_send_request(
-        req,
-        [this](
-          rclcpp::Client<autoware_localization_srvs::srv::PoseWithCovarianceStamped>::SharedFuture
+    client_->async_send_request(
+      req,
+      [this](
+        rclcpp::Client<autoware_localization_srvs::srv::PoseWithCovarianceStamped>::SharedFuture
           result) {
-          status_label_->setStyleSheet("QLabel { background-color : lightgreen;}");
-          status_label_->setText("OK!!!");
+        status_label_->setStyleSheet("QLabel { background-color : lightgreen;}");
+        status_label_->setText("OK!!!");
 
-          // unlock button
-          initialize_button_->setEnabled(true);
-        });
-    });
+        // unlock button
+        initialize_button_->setEnabled(true);
+      });
+  });
 
   thread.detach();
 }
