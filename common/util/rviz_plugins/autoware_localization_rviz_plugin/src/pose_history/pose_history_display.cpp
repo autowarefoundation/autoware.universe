@@ -14,19 +14,17 @@
 
 #include "pose_history_display.hpp"
 
-#include "rviz_rendering/objects/billboard_line.hpp"
-
-#include "rviz_common/properties/bool_property.hpp"
-#include "rviz_common/properties/color_property.hpp"
-#include "rviz_common/properties/float_property.hpp"
-#include "rviz_common/properties/int_property.hpp"
-#include "rviz_common/properties/parse_color.hpp"
-#include "rviz_common/validate_floats.hpp"
+#include <rviz_common/properties/bool_property.hpp>
+#include <rviz_common/properties/color_property.hpp>
+#include <rviz_common/properties/float_property.hpp>
+#include <rviz_common/properties/int_property.hpp>
+#include <rviz_common/properties/parse_color.hpp>
+#include <rviz_common/validate_floats.hpp>
+#include <rviz_rendering/objects/billboard_line.hpp>
 
 namespace rviz_plugins
 {
-PoseHistory::PoseHistory()
-: last_stamp_(0, 0, RCL_ROS_TIME)
+PoseHistory::PoseHistory() : last_stamp_(0, 0, RCL_ROS_TIME)
 {
   property_buffer_size_ = new rviz_common::properties::IntProperty("Buffer Size", 100, "", this);
   property_line_view_ = new rviz_common::properties::BoolProperty("Line", true, "", this);
@@ -55,14 +53,14 @@ void PoseHistory::onInitialize()
   lines_.reset(new rviz_rendering::BillboardLine(scene_manager_, scene_node_));
 }
 
-void PoseHistory::onEnable() {subscribe();}
+void PoseHistory::onEnable() { subscribe(); }
 
-void PoseHistory::onDisable() {unsubscribe();}
+void PoseHistory::onDisable() { unsubscribe(); }
 
 void PoseHistory::update(float wall_dt, float ros_dt)
 {
-  (void) wall_dt;
-  (void) ros_dt;
+  (void)wall_dt;
+  (void)ros_dt;
 
   if (!history_.empty()) {
     lines_->clear();
@@ -72,10 +70,7 @@ void PoseHistory::update(float wall_dt, float ros_dt)
   }
 }
 
-void PoseHistory::subscribe()
-{
-  MFDClass::subscribe();
-}
+void PoseHistory::subscribe() { MFDClass::subscribe(); }
 
 void PoseHistory::unsubscribe()
 {
@@ -142,5 +137,5 @@ void PoseHistory::updateLines()
 
 }  // namespace rviz_plugins
 
-#include "pluginlib/class_list_macros.hpp"
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(rviz_plugins::PoseHistory, rviz_common::Display)

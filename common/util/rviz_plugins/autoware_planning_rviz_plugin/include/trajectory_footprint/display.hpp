@@ -15,30 +15,30 @@
 #ifndef TRAJECTORY_FOOTPRINT__DISPLAY_HPP_
 #define TRAJECTORY_FOOTPRINT__DISPLAY_HPP_
 
+#include <rclcpp/rclcpp.hpp>
+#include <rviz_common/display_context.hpp>
+#include <rviz_common/frame_manager_iface.hpp>
+#include <rviz_common/message_filter_display.hpp>
+#include <rviz_common/properties/bool_property.hpp>
+#include <rviz_common/properties/color_property.hpp>
+#include <rviz_common/properties/float_property.hpp>
+#include <rviz_common/properties/parse_color.hpp>
+#include <rviz_common/validate_floats.hpp>
+
+#include <autoware_planning_msgs/msg/trajectory.hpp>
+
+#include <OgreBillboardSet.h>
+#include <OgreManualObject.h>
+#include <OgreMaterialManager.h>
+#include <OgreSceneManager.h>
+#include <OgreSceneNode.h>
+
 #include <memory>
-
-#include "OgreBillboardSet.h"
-#include "OgreManualObject.h"
-#include "OgreMaterialManager.h"
-#include "OgreSceneManager.h"
-#include "OgreSceneNode.h"
-#include "rclcpp/rclcpp.hpp"
-#include "rviz_common/display_context.hpp"
-#include "rviz_common/frame_manager_iface.hpp"
-#include "rviz_common/message_filter_display.hpp"
-#include "rviz_common/properties/bool_property.hpp"
-#include "rviz_common/properties/color_property.hpp"
-#include "rviz_common/properties/float_property.hpp"
-#include "rviz_common/properties/parse_color.hpp"
-#include "rviz_common/validate_floats.hpp"
-
-
-#include "autoware_planning_msgs/msg/trajectory.hpp"
 
 namespace rviz_plugins
 {
 class AutowareTrajectoryFootprintDisplay
-  : public rviz_common::MessageFilterDisplay<autoware_planning_msgs::msg::Trajectory>
+: public rviz_common::MessageFilterDisplay<autoware_planning_msgs::msg::Trajectory>
 {
   Q_OBJECT
 

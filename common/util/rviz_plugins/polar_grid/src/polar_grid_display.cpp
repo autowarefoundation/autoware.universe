@@ -40,25 +40,24 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "polar_grid_display.hpp"
+
+#include <rviz_common/display_context.hpp>
+#include <rviz_common/frame_manager_iface.hpp>
+#include <rviz_common/interaction/selection_manager.hpp>
+#include <rviz_common/properties/parse_color.hpp>
+#include <rviz_common/properties/property.hpp>
+#include <rviz_rendering/objects/grid.hpp>
+
+#include <OgreSceneManager.h>
+#include <OgreSceneNode.h>
+
 #include <algorithm>
 #include <string>
 
-#include "OgreSceneManager.h"
-#include "OgreSceneNode.h"
-
-#include "rviz_common/display_context.hpp"
-#include "rviz_common/frame_manager_iface.hpp"
-#include "rviz_common/properties/parse_color.hpp"
-#include "rviz_common/properties/property.hpp"
-#include "rviz_common/interaction/selection_manager.hpp"
-#include "rviz_rendering/objects/grid.hpp"
-
-#include "polar_grid_display.hpp"
-
 namespace rviz_plugins
 {
-PolarGridDisplay::PolarGridDisplay()
-: Display(), wave_range_(0.0)
+PolarGridDisplay::PolarGridDisplay() : Display(), wave_range_(0.0)
 {
   frame_property_ = new rviz_common::properties::TfFrameProperty(
     "Reference Frame", rviz_common::properties::TfFrameProperty::FIXED_FRAME_STRING,
@@ -67,17 +66,13 @@ PolarGridDisplay::PolarGridDisplay()
   color_property_ = new rviz_common::properties::ColorProperty(
     "Color", Qt::white, "The color of the grid lines.", this, SLOT(updatePlane()));
 
-  d_range_property_ =
-    new rviz_common::properties::FloatProperty(
-    "Delta Range", 10.0f, "Delta Range[m].", this,
-    SLOT(updatePlane()));
+  d_range_property_ = new rviz_common::properties::FloatProperty(
+    "Delta Range", 10.0f, "Delta Range[m].", this, SLOT(updatePlane()));
   d_range_property_->setMin(0.1f);
   d_range_property_->setMax(100.0f);
 
-  max_range_property_ =
-    new rviz_common::properties::FloatProperty(
-    "Max Range", 200.0f, "Max Range[m].", this,
-    SLOT(updatePlane()));
+  max_range_property_ = new rviz_common::properties::FloatProperty(
+    "Max Range", 200.0f, "Max Range[m].", this, SLOT(updatePlane()));
   max_range_property_->setMin(0.0f);
   max_range_property_->setMax(500.0f);
   max_alpha_property_ = new rviz_common::properties::FloatProperty(
@@ -90,10 +85,8 @@ PolarGridDisplay::PolarGridDisplay()
     SLOT(updatePlane()));
   min_alpha_property_->setMin(0.0f);
   min_alpha_property_->setMax(1.0f);
-  wave_velocity_property_ =
-    new rviz_common::properties::FloatProperty(
-    "Wave Velocity", 100.0f, "Wave Velocity [m/s]", this, SLOT(
-      updatePlane()));
+  wave_velocity_property_ = new rviz_common::properties::FloatProperty(
+    "Wave Velocity", 100.0f, "Wave Velocity [m/s]", this, SLOT(updatePlane()));
   wave_velocity_property_->setMin(0.0f);
   wave_color_property_ = new rviz_common::properties::ColorProperty(
     "Wave Color", Qt::white, "The color of the grid lines.", this, SLOT(updatePlane()));
@@ -145,21 +138,16 @@ void PolarGridDisplay::update(float /*dt*/, float ros_dt)
   Ogre::Vector3 position;
   Ogre::Quaternion orientation;
   if (context_->getFrameManager()->getTransform(
-      frame,
-      rclcpp::Time(0, 0, context_->getClock()->get_clock_type()), position, orientation))
-  {
+        frame, rclcpp::Time(0, 0, context_->getClock()->get_clock_type()), position, orientation)) {
     scene_node_->setPosition(position);
     scene_node_->setOrientation(orientation);
     setStatus(rviz_common::properties::StatusProperty::Ok, "Transform", "Transform OK");
   } else {
     std::string error;
     if (context_->getFrameManager()->transformHasProblems(
-        frame,
-        rclcpp::Time(0, 0, context_->getClock()->get_clock_type()), error))
-    {
+          frame, rclcpp::Time(0, 0, context_->getClock()->get_clock_type()), error)) {
       setStatus(
-        rviz_common::properties::StatusProperty::Error, "Transform",
-        QString::fromStdString(error));
+        rviz_common::properties::StatusProperty::Error, "Transform", QString::fromStdString(error));
     } else {
       setStatus(
         rviz_common::properties::StatusProperty::Error, "Transform",
@@ -177,7 +165,7 @@ void PolarGridDisplay::update(float /*dt*/, float ros_dt)
   const float d_alpha = std::min(
     std::max(
       static_cast<float>(max_wave_alpha_property_->getFloat()) -
-      static_cast<float>(min_wave_alpha_property_->getFloat()),
+        static_cast<float>(min_wave_alpha_property_->getFloat()),
       0.0f),
     1.0f);
   Ogre::ColourValue color;
@@ -187,7 +175,7 @@ void PolarGridDisplay::update(float /*dt*/, float ros_dt)
   wave_manual_object_->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_LINE_STRIP);
 
   color.a = d_alpha * (1.0 - (wave_range_ / max_range_property_->getFloat())) +
-    min_wave_alpha_property_->getFloat();
+            min_wave_alpha_property_->getFloat();
   color.a = std::max(color.a, min_wave_alpha_property_->getFloat());
   for (float theta = 0.0; theta < 2.0 * M_PI + d_theta; theta += d_theta) {
     wave_manual_object_->position(
@@ -214,7 +202,8 @@ void PolarGridDisplay::updatePlane()
   const float d_alpha = std::min(
     std::max(
       static_cast<float>(max_alpha_property_->getFloat()) -
-      static_cast<float>(min_alpha_property_->getFloat()), 0.0f),
+        static_cast<float>(min_alpha_property_->getFloat()),
+      0.0f),
     1.0f);
   const float epsilon = 0.001;
   const float max_range = max_range_property_->getFloat() + epsilon;
@@ -228,8 +217,7 @@ void PolarGridDisplay::updatePlane()
     for (float theta = 0.0; theta < 2 * M_PI; theta += d_theta) {
       {
         rings_manual_object_->position(
-          static_cast<float>(r) * std::cos(
-            theta), static_cast<float>(r) * std::sin(theta), 0.0);
+          static_cast<float>(r) * std::cos(theta), static_cast<float>(r) * std::sin(theta), 0.0);
         rings_manual_object_->colour(color);
         rings_manual_object_->position(
           static_cast<float>(r) * std::cos(theta + d_theta),
@@ -248,5 +236,5 @@ void PolarGridDisplay::updatePlane()
 
 }  // namespace rviz_plugins
 
-#include "pluginlib/class_list_macros.hpp"
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(rviz_plugins::PolarGridDisplay, rviz_common::Display)

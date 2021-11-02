@@ -49,17 +49,15 @@
 #define MISSION_CHECKPOINT__MISSION_CHECKPOINT_HPP_
 
 #ifndef Q_MOC_RUN  // See: https://bugreports.qt-project.org/browse/QTBUG-22829
-#include "QObject"
-
-#include "rclcpp/node.hpp"
-
-#include "rviz_default_plugins/tools/pose/pose_tool.hpp"
-#include "rviz_common/display_context.hpp"
-#include "rviz_common/properties/float_property.hpp"
-#include "rviz_common/properties/string_property.hpp"
+#include <QObject>
+#include <rclcpp/node.hpp>
+#include <rviz_common/display_context.hpp>
+#include <rviz_common/properties/float_property.hpp>
+#include <rviz_common/properties/string_property.hpp>
+#include <rviz_default_plugins/tools/pose/pose_tool.hpp>
 #endif
 
-#include "geometry_msgs/msg/pose_stamped.hpp"
+#include <geometry_msgs/msg/pose_stamped.hpp>
 
 namespace rviz_plugins
 {

@@ -43,18 +43,19 @@
 #ifndef POLAR_GRID_DISPLAY_HPP_
 #define POLAR_GRID_DISPLAY_HPP_
 
-#include "OgreBillboardSet.h"
-#include "OgreManualObject.h"
-#include "OgreSceneManager.h"
-#include "OgreSceneNode.h"
-#include "rviz_common/display_context.hpp"
-#include "rviz_common/display.hpp"
-#include "rviz_common/properties/color_property.hpp"
-#include "rviz_common/properties/enum_property.hpp"
-#include "rviz_common/properties/float_property.hpp"
-#include "rviz_common/properties/int_property.hpp"
-#include "rviz_common/properties/tf_frame_property.hpp"
-#include "rviz_common/properties/vector_property.hpp"
+#include <rviz_common/display.hpp>
+#include <rviz_common/display_context.hpp>
+#include <rviz_common/properties/color_property.hpp>
+#include <rviz_common/properties/enum_property.hpp>
+#include <rviz_common/properties/float_property.hpp>
+#include <rviz_common/properties/int_property.hpp>
+#include <rviz_common/properties/tf_frame_property.hpp>
+#include <rviz_common/properties/vector_property.hpp>
+
+#include <OgreBillboardSet.h>
+#include <OgreManualObject.h>
+#include <OgreSceneManager.h>
+#include <OgreSceneNode.h>
 
 namespace rviz_plugins
 {

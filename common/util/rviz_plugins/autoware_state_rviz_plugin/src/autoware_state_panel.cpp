@@ -16,24 +16,20 @@
 
 #include "autoware_state_panel.hpp"
 
-#include <QVBoxLayout>
 #include <QString>
+#include <QVBoxLayout>
 #include <rviz_common/display_context.hpp>
 
-#include <string>
 #include <memory>
+#include <string>
 
-inline std::string Bool2String(const bool var)
-{
-  return var ? "True" : "False";
-}
+inline std::string Bool2String(const bool var) { return var ? "True" : "False"; }
 
 using std::placeholders::_1;
 
 namespace rviz_plugins
 {
-AutowareStatePanel::AutowareStatePanel(QWidget * parent)
-: rviz_common::Panel(parent)
+AutowareStatePanel::AutowareStatePanel(QWidget * parent) : rviz_common::Panel(parent)
 {
   // Gate Mode
   auto * gate_prefix_label_ptr = new QLabel("GATE: ");
@@ -89,28 +85,22 @@ void AutowareStatePanel::onInitialize()
   raw_node_ = this->getDisplayContext()->getRosNodeAbstraction().lock()->get_raw_node();
 
   sub_gate_mode_ = raw_node_->create_subscription<autoware_control_msgs::msg::GateMode>(
-    "/control/current_gate_mode", 10,
-    std::bind(&AutowareStatePanel::onGateMode, this, _1));
+    "/control/current_gate_mode", 10, std::bind(&AutowareStatePanel::onGateMode, this, _1));
 
   sub_autoware_state_ = raw_node_->create_subscription<autoware_system_msgs::msg::AutowareState>(
-    "/autoware/state", 10,
-    std::bind(&AutowareStatePanel::onAutowareState, this, _1));
+    "/autoware/state", 10, std::bind(&AutowareStatePanel::onAutowareState, this, _1));
 
   sub_gear_ = raw_node_->create_subscription<autoware_vehicle_msgs::msg::ShiftStamped>(
-    "/vehicle/status/shift", 10,
-    std::bind(&AutowareStatePanel::onShift, this, _1));
+    "/vehicle/status/shift", 10, std::bind(&AutowareStatePanel::onShift, this, _1));
 
-  sub_engage_ =
-    raw_node_->create_subscription<autoware_external_api_msgs::msg::EngageStatus>(
-    "/api/external/get/engage", 10,
-    std::bind(&AutowareStatePanel::onEngageStatus, this, _1));
+  sub_engage_ = raw_node_->create_subscription<autoware_external_api_msgs::msg::EngageStatus>(
+    "/api/external/get/engage", 10, std::bind(&AutowareStatePanel::onEngageStatus, this, _1));
 
   client_engage_ = raw_node_->create_client<autoware_external_api_msgs::srv::Engage>(
     "/api/external/set/engage", rmw_qos_profile_services_default);
 }
 
-void AutowareStatePanel::onGateMode(
-  const autoware_control_msgs::msg::GateMode::ConstSharedPtr msg)
+void AutowareStatePanel::onGateMode(const autoware_control_msgs::msg::GateMode::ConstSharedPtr msg)
 {
   switch (msg->data) {
     case autoware_control_msgs::msg::GateMode::AUTO:
@@ -151,8 +141,7 @@ void AutowareStatePanel::onAutowareState(
   }
 }
 
-void AutowareStatePanel::onShift(
-  const autoware_vehicle_msgs::msg::ShiftStamped::ConstSharedPtr msg)
+void AutowareStatePanel::onShift(const autoware_vehicle_msgs::msg::ShiftStamped::ConstSharedPtr msg)
 {
   switch (msg->shift.data) {
     case autoware_vehicle_msgs::msg::Shift::NONE:
@@ -195,15 +184,14 @@ void AutowareStatePanel::onClickAutowareEngage()
   }
 
   client_engage_->async_send_request(
-    req,
-    [this](rclcpp::Client<autoware_external_api_msgs::srv::Engage>::SharedFuture result) {
+    req, [this](rclcpp::Client<autoware_external_api_msgs::srv::Engage>::SharedFuture result) {
       RCLCPP_INFO(
-        raw_node_->get_logger(), "Status: %d, %s",
-        result.get()->status.code, result.get()->status.message.c_str());
+        raw_node_->get_logger(), "Status: %d, %s", result.get()->status.code,
+        result.get()->status.message.c_str());
     });
 }
 
 }  // namespace rviz_plugins
 
-#include "pluginlib/class_list_macros.hpp"
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(rviz_plugins::AutowareStatePanel, rviz_common::Panel)

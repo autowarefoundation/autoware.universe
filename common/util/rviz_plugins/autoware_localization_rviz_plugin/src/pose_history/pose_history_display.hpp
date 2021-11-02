@@ -15,12 +15,13 @@
 #ifndef POSE_HISTORY__POSE_HISTORY_DISPLAY_HPP_
 #define POSE_HISTORY__POSE_HISTORY_DISPLAY_HPP_
 
+#include <rviz_common/message_filter_display.hpp>
+
+#include <geometry_msgs/msg/pose_stamped.hpp>
+
 #include <deque>
 #include <memory>
 #include <string>
-
-#include "geometry_msgs/msg/pose_stamped.hpp"
-#include "rviz_common/message_filter_display.hpp"
 
 namespace rviz_rendering
 {
@@ -34,13 +35,12 @@ class ColorProperty;
 class FloatProperty;
 class IntProperty;
 class BoolProperty;
-}
+}  // namespace properties
 }  // namespace rviz_common
 
 namespace rviz_plugins
 {
-class PoseHistory
-  : public rviz_common::MessageFilterDisplay<geometry_msgs::msg::PoseStamped>
+class PoseHistory : public rviz_common::MessageFilterDisplay<geometry_msgs::msg::PoseStamped>
 {
   Q_OBJECT
 

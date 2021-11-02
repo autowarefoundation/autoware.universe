@@ -13,9 +13,10 @@
 // limitations under the License.
 
 #include "turn_signal.hpp"
-#include "QPainter"
-#include "ament_index_cpp/get_package_share_directory.hpp"
-#include "rviz_common/uniform_string_stream.hpp"
+
+#include <QPainter>
+#include <ament_index_cpp/get_package_share_directory.hpp>
+#include <rviz_common/uniform_string_stream.hpp>
 
 namespace rviz_plugins
 {
@@ -88,8 +89,8 @@ void TurnSignalDisplay::processMessage(
 
 void TurnSignalDisplay::update(float wall_dt, float ros_dt)
 {
-  (void) wall_dt;
-  (void) ros_dt;
+  (void)wall_dt;
+  (void)ros_dt;
 
   unsigned int signal_type;
   {
@@ -180,5 +181,5 @@ void TurnSignalDisplay::updateVisualization()
 
 }  // namespace rviz_plugins
 
-#include "pluginlib/class_list_macros.hpp"
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(rviz_plugins::TurnSignalDisplay, rviz_common::Display)

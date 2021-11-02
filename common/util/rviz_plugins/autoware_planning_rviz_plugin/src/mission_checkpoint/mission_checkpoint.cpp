@@ -45,12 +45,12 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
- #include <string>
+#include <mission_checkpoint/mission_checkpoint.hpp>
 
-#include "tf2_ros/transform_listener.h"
-#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_ros/transform_listener.h>
 
-#include "mission_checkpoint/mission_checkpoint.hpp"
+#include <string>
 
 namespace rviz_plugins
 {
@@ -85,10 +85,9 @@ void MissionCheckpointTool::onInitialize()
 
 void MissionCheckpointTool::updateTopic()
 {
-  rclcpp::Node::SharedPtr raw_node =
-    context_->getRosNodeAbstraction().lock()->get_raw_node();
-  pose_pub_ = raw_node->
-    create_publisher<geometry_msgs::msg::PoseStamped>(pose_topic_property_->getStdString(), 1);
+  rclcpp::Node::SharedPtr raw_node = context_->getRosNodeAbstraction().lock()->get_raw_node();
+  pose_pub_ = raw_node->create_publisher<geometry_msgs::msg::PoseStamped>(
+    pose_topic_property_->getStdString(), 1);
   clock_ = raw_node->get_clock();
 }
 
@@ -107,13 +106,12 @@ void MissionCheckpointTool::onPoseSet(double x, double y, double theta)
   quat.setRPY(0.0, 0.0, theta);
   pose.pose.orientation = tf2::toMsg(quat);
   RCLCPP_INFO(
-    rclcpp::get_logger("MissionCheckpointTool"),
-    "Setting pose: %.3f %.3f %.3f %.3f [frame=%s]", x, y, position_z_->getFloat(), theta,
-    fixed_frame.c_str());
+    rclcpp::get_logger("MissionCheckpointTool"), "Setting pose: %.3f %.3f %.3f %.3f [frame=%s]", x,
+    y, position_z_->getFloat(), theta, fixed_frame.c_str());
   pose_pub_->publish(pose);
 }
 
 }  // end namespace rviz_plugins
 
-#include "pluginlib/class_list_macros.hpp"
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(rviz_plugins::MissionCheckpointTool, rviz_common::Tool)

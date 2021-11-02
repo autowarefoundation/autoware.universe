@@ -45,11 +45,11 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <string>
-
-#include "tf2_ros/transform_listener.h"
-
 #include "delete_all_objects.hpp"
+
+#include <tf2_ros/transform_listener.h>
+
+#include <string>
 
 namespace rviz_plugins
 {
@@ -59,8 +59,8 @@ DeleteAllObjectsTool::DeleteAllObjectsTool()
 
   topic_property_ = new rviz_common::properties::StringProperty(
     "Pose Topic", "/simulation/dummy_perception_publisher/object_info",
-    "The topic on which to publish dummy object info.",
-    getPropertyContainer(), SLOT(updateTopic()), this);
+    "The topic on which to publish dummy object info.", getPropertyContainer(), SLOT(updateTopic()),
+    this);
 }
 
 void DeleteAllObjectsTool::onInitialize()
@@ -72,17 +72,14 @@ void DeleteAllObjectsTool::onInitialize()
 
 void DeleteAllObjectsTool::updateTopic()
 {
-  rclcpp::Node::SharedPtr raw_node =
-    context_->getRosNodeAbstraction().lock()->get_raw_node();
-  dummy_object_info_pub_ = raw_node->
-    create_publisher<dummy_perception_publisher::msg::Object>(topic_property_->getStdString(), 1);
+  rclcpp::Node::SharedPtr raw_node = context_->getRosNodeAbstraction().lock()->get_raw_node();
+  dummy_object_info_pub_ = raw_node->create_publisher<dummy_perception_publisher::msg::Object>(
+    topic_property_->getStdString(), 1);
   clock_ = raw_node->get_clock();
 }
 
 void DeleteAllObjectsTool::onPoseSet(
-  [[maybe_unused]] double x,
-  [[maybe_unused]] double y,
-  [[maybe_unused]] double theta)
+  [[maybe_unused]] double x, [[maybe_unused]] double y, [[maybe_unused]] double theta)
 {
   dummy_perception_publisher::msg::Object output_msg;
   std::string fixed_frame = context_->getFixedFrame().toStdString();
@@ -99,5 +96,5 @@ void DeleteAllObjectsTool::onPoseSet(
 
 }  // end namespace rviz_plugins
 
-#include "pluginlib/class_list_macros.hpp"
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(rviz_plugins::DeleteAllObjectsTool, rviz_common::Tool)

@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <algorithm>
-
 #include "console_meter.hpp"
-#include "QPainter"
-#include "rviz_common/uniform_string_stream.hpp"
+
+#include <QPainter>
+#include <rviz_common/uniform_string_stream.hpp>
+
+#include <algorithm>
 
 namespace rviz_plugins
 {
@@ -79,8 +80,8 @@ void ConsoleMeterDisplay::onDisable()
 
 void ConsoleMeterDisplay::update(float wall_dt, float ros_dt)
 {
-  (void) wall_dt;
-  (void) ros_dt;
+  (void)wall_dt;
+  (void)ros_dt;
 
   double linear_x = 0;
   {
@@ -108,7 +109,7 @@ void ConsoleMeterDisplay::update(float wall_dt, float ros_dt)
   white_color.setAlpha(255);
   const float velocity_ratio = std::min(
     std::max(std::fabs(linear_x) - meter_min_velocity_, 0.0) /
-    (meter_max_velocity_ - meter_min_velocity_),
+      (meter_max_velocity_ - meter_min_velocity_),
     1.0);
   const float theta =
     (velocity_ratio * (meter_max_angle_ - meter_min_angle_)) + meter_min_angle_ + M_PI_2;
@@ -117,9 +118,9 @@ void ConsoleMeterDisplay::update(float wall_dt, float ros_dt)
   painter.drawLine(
     w * 0.5, h * 0.5,
     (w * 0.5) +
-    (static_cast<float>(w) * 0.5 - (static_cast<float>(hand_width_) * 0.5)) * std::cos(theta),
+      (static_cast<float>(w) * 0.5 - (static_cast<float>(hand_width_) * 0.5)) * std::cos(theta),
     (h * 0.5) +
-    (static_cast<float>(h) * 0.5 - (static_cast<float>(hand_width_) * 0.5)) * std::sin(theta));
+      (static_cast<float>(h) * 0.5 - (static_cast<float>(hand_width_) * 0.5)) * std::sin(theta));
 
   painter.setPen(QPen(white_color, line_width_, Qt::SolidLine));
   painter.drawLine(min_range_line_.x0, min_range_line_.y0, min_range_line_.x1, min_range_line_.y1);
@@ -211,5 +212,5 @@ void ConsoleMeterDisplay::updateVisualization()
 
 }  // namespace rviz_plugins
 
-#include "pluginlib/class_list_macros.hpp"
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(rviz_plugins::ConsoleMeterDisplay, rviz_common::Display)

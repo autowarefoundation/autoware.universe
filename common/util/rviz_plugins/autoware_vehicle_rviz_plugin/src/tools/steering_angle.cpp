@@ -12,23 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "steering_angle.hpp"
+
+#include <QPainter>
+#include <ament_index_cpp/get_package_share_directory.hpp>
+#include <rviz_common/uniform_string_stream.hpp>
+
+#include <algorithm>
 #include <iomanip>
 #include <memory>
 #include <string>
-#include <algorithm>
-
-#include "steering_angle.hpp"
-#include "QPainter"
-#include "ament_index_cpp/get_package_share_directory.hpp"
-#include "rviz_common/uniform_string_stream.hpp"
 
 namespace rviz_plugins
 {
-
 SteeringAngleDisplay::SteeringAngleDisplay()
-: handle_image_(
-    std::string(ament_index_cpp::get_package_share_directory("autoware_vehicle_rviz_plugin") +
-    "/images/handle.png").c_str())
+: handle_image_(std::string(
+                  ament_index_cpp::get_package_share_directory("autoware_vehicle_rviz_plugin") +
+                  "/images/handle.png")
+                  .c_str())
 {
   property_text_color_ = new rviz_common::properties::ColorProperty(
     "Text Color", QColor(25, 255, 240), "text color", this, SLOT(updateVisualization()), this);
@@ -89,8 +90,8 @@ void SteeringAngleDisplay::onDisable()
 
 void SteeringAngleDisplay::update(float wall_dt, float ros_dt)
 {
-  (void) wall_dt;
-  (void) ros_dt;
+  (void)wall_dt;
+  (void)ros_dt;
 
   double steering = 0;
   {
@@ -143,8 +144,7 @@ void SteeringAngleDisplay::update(float wall_dt, float ros_dt)
   font.setBold(true);
   painter.setFont(font);
   std::ostringstream steering_angle_ss;
-  steering_angle_ss << std::fixed << std::setprecision(1) << steering * 180.0 / M_PI <<
-    "deg";
+  steering_angle_ss << std::fixed << std::setprecision(1) << steering * 180.0 / M_PI << "deg";
   painter.drawText(
     0, std::min(property_value_height_offset_->getInt(), h - 1), w,
     std::max(h - property_value_height_offset_->getInt(), 1), Qt::AlignCenter | Qt::AlignVCenter,
@@ -177,5 +177,5 @@ void SteeringAngleDisplay::updateVisualization()
 
 }  // namespace rviz_plugins
 
-#include "pluginlib/class_list_macros.hpp"
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(rviz_plugins::SteeringAngleDisplay, rviz_common::Display)

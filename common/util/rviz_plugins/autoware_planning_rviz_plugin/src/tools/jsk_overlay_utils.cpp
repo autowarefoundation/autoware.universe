@@ -31,9 +31,9 @@
 // POSSIBILITY OF SUCH DAMAGE.S SOFTWARE, EVEN IF ADVISED OF THE
 //  POSSIBILITY OF SUCH DAMAGE.
 
-#include <string>
-
 #include "jsk_overlay_utils.hpp"
+
+#include <string>
 
 namespace jsk_rviz_plugins
 {
@@ -43,9 +43,9 @@ ScopedPixelBuffer::ScopedPixelBuffer(Ogre::HardwarePixelBufferSharedPtr pixel_bu
   pixel_buffer_->lock(Ogre::HardwareBuffer::HBL_NORMAL);
 }
 
-ScopedPixelBuffer::~ScopedPixelBuffer() {pixel_buffer_->unlock();}
+ScopedPixelBuffer::~ScopedPixelBuffer() { pixel_buffer_->unlock(); }
 
-Ogre::HardwarePixelBufferSharedPtr ScopedPixelBuffer::getPixelBuffer() {return pixel_buffer_;}
+Ogre::HardwarePixelBufferSharedPtr ScopedPixelBuffer::getPixelBuffer() { return pixel_buffer_; }
 
 QImage ScopedPixelBuffer::getQImage(unsigned int width, unsigned int height)
 {
@@ -77,10 +77,8 @@ QImage ScopedPixelBuffer::getQImage(OverlayObject & overlay, QColor & bg_color)
 }
 
 OverlayObject::OverlayObject(
-  Ogre::SceneManager * manager, rclcpp::Logger logger,
-  const std::string & name)
-: name_(name),
-  logger_(logger)
+  Ogre::SceneManager * manager, rclcpp::Logger logger, const std::string & name)
+: name_(name), logger_(logger)
 {
   rviz_rendering::RenderSystem::get()->prepareOverlays(manager);
   std::string material_name = name_ + "Material";
@@ -107,7 +105,7 @@ OverlayObject::~OverlayObject()
   // delete overlay_;
 }
 
-std::string OverlayObject::getName() {return name_;}
+std::string OverlayObject::getName() { return name_; }
 
 void OverlayObject::hide()
 {
@@ -123,21 +121,17 @@ void OverlayObject::show()
   }
 }
 
-bool OverlayObject::isTextureReady() {return static_cast<bool>(texture_);}
+bool OverlayObject::isTextureReady() { return static_cast<bool>(texture_); }
 
 void OverlayObject::updateTextureSize(unsigned int width, unsigned int height)
 {
   const std::string texture_name = name_ + "Texture";
   if (width == 0) {
-    RCLCPP_WARN(
-      logger_,
-      "width=0 is specified as texture size");
+    RCLCPP_WARN(logger_, "width=0 is specified as texture size");
     width = 1;
   }
   if (height == 0) {
-    RCLCPP_WARN(
-      logger_,
-      "height=0 is specified as texture size");
+    RCLCPP_WARN(logger_, "height=0 is specified as texture size");
     height = 1;
   }
   if (!isTextureReady() || ((width != texture_->getWidth()) || (height != texture_->getHeight()))) {
@@ -169,14 +163,14 @@ ScopedPixelBuffer OverlayObject::getBuffer()
   }
 }
 
-void OverlayObject::setPosition(double left, double top) {panel_->setPosition(left, top);}
+void OverlayObject::setPosition(double left, double top) { panel_->setPosition(left, top); }
 
 void OverlayObject::setDimensions(double width, double height)
 {
   panel_->setDimensions(width, height);
 }
 
-bool OverlayObject::isVisible() {return overlay_->isVisible();}
+bool OverlayObject::isVisible() { return overlay_->isVisible(); }
 
 unsigned int OverlayObject::getTextureWidth()
 {

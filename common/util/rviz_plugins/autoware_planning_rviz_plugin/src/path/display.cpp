@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <memory>
+#include <path/display.hpp>
 
-#include "path/display.hpp"
+#include <memory>
 #define EIGEN_MPL2_ONLY
-#include "eigen3/Eigen/Core"
-#include "eigen3/Eigen/Geometry"
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Geometry>
 
 namespace rviz_plugins
 {
@@ -121,9 +121,9 @@ bool AutowarePathDisplay::validateFloats(
   const autoware_planning_msgs::msg::Path::ConstSharedPtr & msg_ptr)
 {
   for (auto && path_point : msg_ptr->points) {
-    if (!rviz_common::validateFloats(path_point.pose) &&
-      !rviz_common::validateFloats(path_point.twist))
-    {
+    if (
+      !rviz_common::validateFloats(path_point.pose) &&
+      !rviz_common::validateFloats(path_point.twist)) {
       return false;
     }
   }
@@ -144,9 +144,8 @@ void AutowarePathDisplay::processMessage(
   Ogre::Quaternion orientation;
   if (!context_->getFrameManager()->getTransform(msg_ptr->header, position, orientation)) {
     RCLCPP_DEBUG(
-      rclcpp::get_logger("AutowarePathDisplay"),
-      "Error transforming from frame '%s' to frame '%s'", msg_ptr->header.frame_id.c_str(),
-      qPrintable(fixed_frame_));
+      rclcpp::get_logger("AutowarePathDisplay"), "Error transforming from frame '%s' to frame '%s'",
+      msg_ptr->header.frame_id.c_str(), qPrintable(fixed_frame_));
   }
 
   scene_node_->setPosition(position);
@@ -233,7 +232,7 @@ void AutowarePathDisplay::processMessage(
         velocity_manual_object_->position(
           path_point.pose.position.x, path_point.pose.position.y,
           path_point.pose.position.z +
-          path_point.twist.linear.x * property_velocity_scale_->getFloat());
+            path_point.twist.linear.x * property_velocity_scale_->getFloat());
         velocity_manual_object_->colour(color);
       }
     }
@@ -246,10 +245,12 @@ void AutowarePathDisplay::processMessage(
 
 void AutowarePathDisplay::updateVisualization()
 {
-  if (last_msg_ptr_ != nullptr) {processMessage(last_msg_ptr_);}
+  if (last_msg_ptr_ != nullptr) {
+    processMessage(last_msg_ptr_);
+  }
 }
 
 }  // namespace rviz_plugins
 
-#include "pluginlib/class_list_macros.hpp"
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(rviz_plugins::AutowarePathDisplay, rviz_common::Display)
