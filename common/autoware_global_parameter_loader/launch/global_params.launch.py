@@ -24,19 +24,20 @@ from launch_ros.substitutions import FindPackageShare
 
 def launch_setup(context, *args, **kwargs):
     # use_sim_time
-    set_use_sim_time = SetParameter(name='use_sim_time', value=LaunchConfiguration('use_sim_time'))
+    set_use_sim_time = SetParameter(name="use_sim_time", value=LaunchConfiguration("use_sim_time"))
 
     # vehicle_info
-    vehicle_description_pkg = FindPackageShare([
-        LaunchConfiguration('vehicle_model'), '_description']).perform(context)
+    vehicle_description_pkg = FindPackageShare(
+        [LaunchConfiguration("vehicle_model"), "_description"]
+    ).perform(context)
 
     load_vehicle_info = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            [FindPackageShare('vehicle_info_util'), '/launch/vehicle_info.launch.py']
+            [FindPackageShare("vehicle_info_util"), "/launch/vehicle_info.launch.py"]
         ),
         launch_arguments={
-            'vehicle_info_param_file': [vehicle_description_pkg, '/config/vehicle_info.param.yaml']
-        }.items()
+            "vehicle_info_param_file": [vehicle_description_pkg, "/config/vehicle_info.param.yaml"]
+        }.items(),
     )
 
     return [
@@ -46,7 +47,9 @@ def launch_setup(context, *args, **kwargs):
 
 
 def generate_launch_description():
-    return LaunchDescription([
-        DeclareLaunchArgument('use_sim_time', default_value='false'),
-        OpaqueFunction(function=launch_setup),
-    ])
+    return LaunchDescription(
+        [
+            DeclareLaunchArgument("use_sim_time", default_value="false"),
+            OpaqueFunction(function=launch_setup),
+        ]
+    )
