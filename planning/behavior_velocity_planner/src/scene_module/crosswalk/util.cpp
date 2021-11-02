@@ -12,30 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <scene_module/crosswalk/util.hpp>
+#include <utilization/util.hpp>
+
+#include <autoware_perception_msgs/msg/dynamic_object_array.hpp>
+
+#include <boost/assert.hpp>
+#include <boost/assign/list_of.hpp>
+#include <boost/geometry.hpp>
+#include <boost/geometry/geometries/linestring.hpp>
+#include <boost/geometry/geometries/point_xy.hpp>
+
 #include <algorithm>
 #include <cmath>
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
-
-#include "autoware_perception_msgs/msg/dynamic_object_array.hpp"
-#include "scene_module/crosswalk/util.hpp"
-#include "utilization/util.hpp"
-
-#include "boost/assert.hpp"
-#include "boost/assign/list_of.hpp"
-#include "boost/geometry.hpp"
-#include "boost/geometry/geometries/linestring.hpp"
-#include "boost/geometry/geometries/point_xy.hpp"
 
 #define EIGEN_MPL2_ONLY
-#include "Eigen/Core"
-#include "Eigen/Geometry"
+#include <Eigen/Core>
+#include <Eigen/Geometry>
+#include <lanelet2_extension/regulatory_elements/road_marking.hpp>
+#include <lanelet2_extension/utility/query.hpp>
+#include <lanelet2_extension/utility/utilities.hpp>
 
-#include "lanelet2_core/primitives/BasicRegulatoryElements.h"
-#include "lanelet2_extension/regulatory_elements/road_marking.hpp"
-#include "lanelet2_extension/utility/query.hpp"
-#include "lanelet2_extension/utility/utilities.hpp"
+#include <lanelet2_core/primitives/BasicRegulatoryElements.h>
 
 namespace behavior_velocity_planner
 {
@@ -187,7 +188,9 @@ lanelet::Optional<lanelet::ConstLineString3d> getStopLineFromMap(
       break;  // only one stop_line exists.
     }
   }
-  if (stop_line.empty()) {return {};}
+  if (stop_line.empty()) {
+    return {};
+  }
 
   return stop_line.front();
 }
@@ -208,7 +211,9 @@ bool insertTargetVelocityPoint(
     std::vector<Point> collision_points;
     bg::intersection(toHybrid(to2D(stop_line)), line, collision_points);
 
-    if (collision_points.empty()) {continue;}
+    if (collision_points.empty()) {
+      continue;
+    }
     // -- debug code --
     for (const auto & cp : collision_points) {
       Eigen::Vector3d point3d(cp.x(), cp.y(), planner_data.current_pose.pose.position.z);

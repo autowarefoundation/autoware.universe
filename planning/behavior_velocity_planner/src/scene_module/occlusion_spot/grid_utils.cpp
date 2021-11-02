@@ -12,12 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <grid_map_ros/GridMapRosConverter.hpp>
+#include <scene_module/occlusion_spot/grid_utils.hpp>
+
 #include <algorithm>
 #include <vector>
-
-#include "grid_map_ros/GridMapRosConverter.hpp"
-
-#include "scene_module/occlusion_spot/grid_utils.hpp"
 
 namespace behavior_velocity_planner
 {
@@ -33,7 +32,9 @@ bool isOcclusionSpotSquare(
   int min_y;
   int max_y;
   // No occlusion_spot with size 0
-  if (side_size == 0) {return false;}
+  if (side_size == 0) {
+    return false;
+  }
   /**
    * @brief
    *   (min_x,min_y)...(max_x,min_y)
@@ -53,7 +54,10 @@ bool isOcclusionSpotSquare(
   for (int x = min_x; x <= max_x; ++x) {
     for (int y = min_y; y <= max_y; ++y) {
       // if the value is not unknown value return false
-      if (grid_data(x, y) != grid_utils::occlusion_cost_value::UNKNOWN) {return false;}}
+      if (grid_data(x, y) != grid_utils::occlusion_cost_value::UNKNOWN) {
+        return false;
+      }
+    }
   }
   occlusion_spot.side_size = side_size;
   occlusion_spot.index = cell;
@@ -70,13 +74,10 @@ void findOcclusionSpots(
   for (const auto & point : polygon) {
     grid_polygon.addVertex({point.x(), point.y()});
   }
-  for (grid_map::PolygonIterator iterator(grid, grid_polygon); !iterator.isPastEnd();
-    ++iterator)
-  {
+  for (grid_map::PolygonIterator iterator(grid, grid_polygon); !iterator.isPastEnd(); ++iterator) {
     OcclusionSpotSquare occlusion_spot_square;
     if (isOcclusionSpotSquare(
-        occlusion_spot_square, grid_data, *iterator, min_occlusion_spot_size, grid.getSize()))
-    {
+          occlusion_spot_square, grid_data, *iterator, min_occlusion_spot_size, grid.getSize())) {
       if (!grid.getPosition(occlusion_spot_square.index, occlusion_spot_square.position)) {
         continue;
       }
@@ -118,26 +119,26 @@ void getCornerPositions(
   std::vector<grid_map::Index> corner_indexes;
   const int offset = (occlusion_spot_square.side_size - 1) / 2;
   /**
-     * @brief relation of each grid position
-     *    bl br
-     *    tl tr
-     */
-  corner_indexes = {  // bl
-    grid_map::Index(
-      std::max(0, occlusion_spot_square.index.x() - offset),
-      std::max(0, occlusion_spot_square.index.y() - offset)),
-    // br
-    grid_map::Index(
-      std::min(grid.getSize().x() - 1, occlusion_spot_square.index.x() + offset),
-      std::max(0, occlusion_spot_square.index.y() - offset)),
-    // tl
-    grid_map::Index(
-      std::max(0, occlusion_spot_square.index.x() - offset),
-      std::min(grid.getSize().y() - 1, occlusion_spot_square.index.y() + offset)),
-    // tr
-    grid_map::Index(
-      std::min(grid.getSize().x() - 1, occlusion_spot_square.index.x() + offset),
-      std::min(grid.getSize().y() - 1, occlusion_spot_square.index.y() + offset))};
+   * @brief relation of each grid position
+   *    bl br
+   *    tl tr
+   */
+  corner_indexes = {// bl
+                    grid_map::Index(
+                      std::max(0, occlusion_spot_square.index.x() - offset),
+                      std::max(0, occlusion_spot_square.index.y() - offset)),
+                    // br
+                    grid_map::Index(
+                      std::min(grid.getSize().x() - 1, occlusion_spot_square.index.x() + offset),
+                      std::max(0, occlusion_spot_square.index.y() - offset)),
+                    // tl
+                    grid_map::Index(
+                      std::max(0, occlusion_spot_square.index.x() - offset),
+                      std::min(grid.getSize().y() - 1, occlusion_spot_square.index.y() + offset)),
+                    // tr
+                    grid_map::Index(
+                      std::min(grid.getSize().x() - 1, occlusion_spot_square.index.x() + offset),
+                      std::min(grid.getSize().y() - 1, occlusion_spot_square.index.y() + offset))};
   for (const grid_map::Index & corner_index : corner_indexes) {
     grid_map::Position corner_position;
     grid.getPosition(corner_index, corner_position);
@@ -170,8 +171,7 @@ void toQuantizedImage(
       if (0 <= intensity && intensity < param.free_space_max) {
         intensity = grid_utils::occlusion_cost_value::FREE_SPACE;
       } else if (  // NOLINT
-        intensity == occlusion_cost_value::NO_INFORMATION || intensity < param.occupied_min)
-      {
+        intensity == occlusion_cost_value::NO_INFORMATION || intensity < param.occupied_min) {
         intensity = grid_utils::occlusion_cost_value::UNKNOWN;
       } else {
         intensity = grid_utils::occlusion_cost_value::OCCUPIED;

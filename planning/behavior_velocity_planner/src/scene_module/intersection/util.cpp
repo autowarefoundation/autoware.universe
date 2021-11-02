@@ -12,23 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "scene_module/intersection/util.hpp"
+#include <interpolation/spline_interpolation.hpp>
+#include <lanelet2_extension/regulatory_elements/road_marking.hpp>
+#include <lanelet2_extension/utility/query.hpp>
+#include <lanelet2_extension/utility/utilities.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <scene_module/intersection/util.hpp>
+#include <utilization/interpolate.hpp>
+#include <utilization/util.hpp>
+
+#include <lanelet2_core/geometry/Polygon.h>
+#include <lanelet2_core/primitives/BasicRegulatoryElements.h>
 
 #include <algorithm>
 #include <memory>
 #include <string>
 #include <vector>
-
-#include "lanelet2_core/geometry/Polygon.h"
-#include "lanelet2_core/primitives/BasicRegulatoryElements.h"
-#include "lanelet2_extension/regulatory_elements/road_marking.hpp"
-#include "lanelet2_extension/utility/query.hpp"
-#include "lanelet2_extension/utility/utilities.hpp"
-
-#include "interpolation/spline_interpolation.hpp"
-#include "rclcpp/rclcpp.hpp"
-#include "utilization/interpolate.hpp"
-#include "utilization/util.hpp"
 
 namespace behavior_velocity_planner
 {
@@ -323,9 +322,7 @@ bool generateStopLine(
     // if path has too close (= duplicated) point to the pass judge point, do not insert it
     // and consider the index of the duplicated point as pass_judge_line_idx
     if (!util::hasDuplicatedPoint(
-        *original_path, inserted_pass_judge_point.position,
-        pass_judge_line_idx))
-    {
+          *original_path, inserted_pass_judge_point.position, pass_judge_line_idx)) {
       *pass_judge_line_idx = util::insertPoint(inserted_pass_judge_point, original_path);
       ++(*stop_line_idx);  // stop index is incremented by judge line insertion
     }
@@ -403,8 +400,7 @@ bool getObjectiveLanelets(
   lanelet::LaneletMapConstPtr lanelet_map_ptr, lanelet::routing::RoutingGraphPtr routing_graph_ptr,
   const int lane_id, const IntersectionModule::PlannerParam & planner_param,
   std::vector<lanelet::ConstLanelets> * conflicting_lanelets_result,
-  std::vector<lanelet::ConstLanelets> * objective_lanelets_result,
-  const rclcpp::Logger logger)
+  std::vector<lanelet::ConstLanelets> * objective_lanelets_result, const rclcpp::Logger logger)
 {
   const auto & assigned_lanelet = lanelet_map_ptr->laneletLayer.get(lane_id);
 
@@ -442,8 +438,8 @@ bool getObjectiveLanelets(
   const auto & conflicting_lanelets =
     lanelet::utils::getConflictingLanelets(routing_graph_ptr, assigned_lanelet);
 
-  std::vector<lanelet::ConstLanelets>   // conflicting lanes with "lane_id"
-  conflicting_lanelets_ex_yield_ego;    // excluding ego lanes and yield lanes
+  std::vector<lanelet::ConstLanelets>                      // conflicting lanes with "lane_id"
+    conflicting_lanelets_ex_yield_ego;                     // excluding ego lanes and yield lanes
   std::vector<lanelet::ConstLanelets> objective_lanelets;  // final objective lanelets
 
   // exclude yield lanelets and ego lanelets from objective_lanelets
@@ -516,8 +512,7 @@ std::vector<lanelet::CompoundPolygon3d> getPolygon3dFromLaneletsVec(
   return p_vec;
 }
 
-std::vector<int> getLaneletIdsFromLaneletsVec(
-  const std::vector<lanelet::ConstLanelets> & ll_vec)
+std::vector<int> getLaneletIdsFromLaneletsVec(const std::vector<lanelet::ConstLanelets> & ll_vec)
 {
   std::vector<int> id_list;
   for (const auto & lls : ll_vec) {

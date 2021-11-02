@@ -12,14 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <lanelet2_extension/utility/query.hpp>
+#include <lanelet2_extension/utility/utilities.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <scene_module/occlusion_spot/geometry.hpp>
+
 #include <algorithm>
 #include <vector>
-
-#include "lanelet2_extension/utility/query.hpp"
-#include "lanelet2_extension/utility/utilities.hpp"
-#include "rclcpp/rclcpp.hpp"
-
-#include "scene_module/occlusion_spot/geometry.hpp"
 
 namespace behavior_velocity_planner
 {
@@ -30,7 +29,9 @@ void buildSlices(
   const double slice_length, const double slice_width)
 {
   lanelet::BasicLineString2d path_boundary = path_lanelet.centerline2d().basicLineString();
-  if (path_boundary.size() < 2) {return;}
+  if (path_boundary.size() < 2) {
+    return;
+  }
   const int num_lateral_slice =
     static_cast<int>(std::abs(range.max_distance - range.min_distance) / slice_width);
   // ignore the last point
@@ -64,8 +65,8 @@ void buildSlices(
       path_boundary, outer_bounds, std::abs(range.max_distance));
   } catch (...) {
     RCLCPP_DEBUG_STREAM_THROTTLE(
-      rclcpp::get_logger("behavior_velocity_planner").get_child("occlusion_spot"),
-      clock, 5000, "self crossing with offset " << range.max_distance);
+      rclcpp::get_logger("behavior_velocity_planner").get_child("occlusion_spot"), clock, 5000,
+      "self crossing with offset " << range.max_distance);
   }
   // offset last point is especially messy
   inner_bounds.pop_back();
@@ -73,7 +74,9 @@ void buildSlices(
   // resize to the same size as slice
   inner_bounds.resize(std::min(inner_bounds.size(), outer_bounds.size()));
   outer_bounds.resize(std::min(inner_bounds.size(), outer_bounds.size()));
-  if (inner_bounds.size() < 2 || outer_bounds.size() < 2) {return;}
+  if (inner_bounds.size() < 2 || outer_bounds.size() < 2) {
+    return;
+  }
   const double ratio_dist_start = std::abs(range.min_distance / range.max_distance);
   const double ratio_dist_increment = std::min(1.0, slice_width / std::abs(range.max_distance));
   for (int s = 0; s < num_longitudinal_slice; s++) {
@@ -81,7 +84,9 @@ void buildSlices(
     const double next_length = range.min_length + (s + 1.0) * slice_length;
     const double min_length =
       std::min(lanelet::geometry::length(outer_bounds), lanelet::geometry::length(inner_bounds));
-    if (next_length > min_length) {break;}
+    if (next_length > min_length) {
+      break;
+    }
     for (int d = 0; d < num_lateral_slice; d++) {
       const double ratio_dist = ratio_dist_start + d * ratio_dist_increment;
       const double next_ratio_dist = ratio_dist_start + (d + 1.0) * ratio_dist_increment;
@@ -182,11 +187,12 @@ std::vector<geometry::Slice> buildSidewalkSlices(
   std::vector<geometry::Slice> left_slices;
   std::vector<geometry::Slice> right_slices;
   const double longitudinal_max_dist = lanelet::geometry::length2d(path_lanelet);
-  geometry::SliceRange left_slice_range = {longitudinal_offset, longitudinal_max_dist,
-    lateral_offset, lateral_offset + lateral_max_dist};
+  geometry::SliceRange left_slice_range = {
+    longitudinal_offset, longitudinal_max_dist, lateral_offset, lateral_offset + lateral_max_dist};
   geometry::buildSlices(left_slices, path_lanelet, left_slice_range, slice_size, slice_size);
-  geometry::SliceRange right_slice_range = {longitudinal_offset, longitudinal_max_dist,
-    -lateral_offset, -lateral_offset - lateral_max_dist};
+  geometry::SliceRange right_slice_range = {
+    longitudinal_offset, longitudinal_max_dist, -lateral_offset,
+    -lateral_offset - lateral_max_dist};
   geometry::buildSlices(right_slices, path_lanelet, right_slice_range, slice_size, slice_size);
   // Properly order lanelets from closest to furthest
   for (size_t i = 0; i < right_slices.size(); ++i) {

@@ -12,25 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "scene_module/blind_spot/scene.hpp"
+#include <lanelet2_extension/regulatory_elements/road_marking.hpp>
+#include <lanelet2_extension/utility/query.hpp>
+#include <lanelet2_extension/utility/utilities.hpp>
+#include <scene_module/blind_spot/scene.hpp>
+#include <scene_module/intersection/util.hpp>
+#include <utilization/boost_geometry_helper.hpp>
+#include <utilization/interpolate.hpp>
+#include <utilization/util.hpp>
+
+#include <boost/geometry/algorithms/distance.hpp>
+
+#include <lanelet2_core/geometry/Polygon.h>
+#include <lanelet2_core/primitives/BasicRegulatoryElements.h>
 
 #include <algorithm>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
-
-#include "scene_module/intersection/util.hpp"
-#include "utilization/boost_geometry_helper.hpp"
-#include "utilization/interpolate.hpp"
-#include "utilization/util.hpp"
-
-#include "boost/geometry/algorithms/distance.hpp"
-#include "lanelet2_core/geometry/Polygon.h"
-#include "lanelet2_core/primitives/BasicRegulatoryElements.h"
-#include "lanelet2_extension/regulatory_elements/road_marking.hpp"
-#include "lanelet2_extension/utility/query.hpp"
-#include "lanelet2_extension/utility/utilities.hpp"
 
 namespace behavior_velocity_planner
 {
@@ -105,10 +105,8 @@ bool BlindSpotModule::modifyPathVelocity(
   }
 
   /* get debug info */
-  const auto stop_line_pose =
-    util::getAheadPose(
-    stop_line_idx, planner_data_->vehicle_info_.max_longitudinal_offset_m,
-    *path);
+  const auto stop_line_pose = util::getAheadPose(
+    stop_line_idx, planner_data_->vehicle_info_.max_longitudinal_offset_m, *path);
   debug_data_.virtual_wall_pose = stop_line_pose;
   debug_data_.stop_point_pose = path->points.at(stop_line_idx).point.pose;
   debug_data_.judge_point_pose = path->points.at(pass_judge_line_idx).point.pose;
@@ -122,7 +120,7 @@ bool BlindSpotModule::modifyPathVelocity(
   if (current_state == State::GO && is_over_pass_judge_line) {
     RCLCPP_DEBUG(logger_, "over the pass judge line. no plan needed.");
     *path = input_path;  // reset path
-    return true;  // no plan needed.
+    return true;         // no plan needed.
   }
 
   /* get dynamic object */
@@ -313,8 +311,7 @@ bool BlindSpotModule::checkObstacleInBlindSpot(
   lanelet::LaneletMapConstPtr lanelet_map_ptr, lanelet::routing::RoutingGraphPtr routing_graph_ptr,
   const autoware_planning_msgs::msg::PathWithLaneId & path,
   const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr objects_ptr,
-  const int closest_idx,
-  const geometry_msgs::msg::Pose & stop_line_pose) const
+  const int closest_idx, const geometry_msgs::msg::Pose & stop_line_pose) const
 {
   /* get detection area */
   if (turn_direction_ == TurnDirection::INVALID) {
@@ -375,9 +372,9 @@ lanelet::ConstLanelet BlindSpotModule::generateHalfLanelet(
 {
   lanelet::Points3d lefts, rights;
 
-  const double offset = (turn_direction_ == TurnDirection::LEFT) ?
-    planner_param_.ignore_width_from_center_line :
-    -planner_param_.ignore_width_from_center_line;
+  const double offset = (turn_direction_ == TurnDirection::LEFT)
+                          ? planner_param_.ignore_width_from_center_line
+                          : -planner_param_.ignore_width_from_center_line;
   const auto offset_centerline = lanelet::utils::getCenterlineWithOffset(lanelet, offset);
 
   const auto original_left_bound =
@@ -449,8 +446,7 @@ boost::optional<BlindSpotPolygons> BlindSpotModule::generateBlindSpotPolygons(
   const auto detection_area_start_length =
     total_length - intersection_length - planner_param_.backward_length;
   if (
-    detection_area_start_length < current_arc.length && current_arc.length < stop_line_arc.length)
-  {
+    detection_area_start_length < current_arc.length && current_arc.length < stop_line_arc.length) {
     const auto conflict_area = lanelet::utils::getPolygonFromArcLength(
       blind_spot_lanelets, current_arc.length, stop_line_arc.length);
     const auto detection_area = lanelet::utils::getPolygonFromArcLength(
@@ -504,8 +500,7 @@ bool BlindSpotModule::isTargetObjectType(
   if (
     object.semantic.type == autoware_perception_msgs::msg::Semantic::BICYCLE ||
     object.semantic.type == autoware_perception_msgs::msg::Semantic::PEDESTRIAN ||
-    object.semantic.type == autoware_perception_msgs::msg::Semantic::MOTORBIKE)
-  {
+    object.semantic.type == autoware_perception_msgs::msg::Semantic::MOTORBIKE) {
     return true;
   }
   return false;
@@ -581,9 +576,9 @@ void BlindSpotModule::StateMachine::setStateWithMarginTime(
   RCLCPP_ERROR(logger, "Unsuitable state. ignore request.");
 }
 
-void BlindSpotModule::StateMachine::setState(State state) {state_ = state;}
+void BlindSpotModule::StateMachine::setState(State state) { state_ = state; }
 
-void BlindSpotModule::StateMachine::setMarginTime(const double t) {margin_time_ = t;}
+void BlindSpotModule::StateMachine::setMarginTime(const double t) { margin_time_ = t; }
 
-BlindSpotModule::State BlindSpotModule::StateMachine::getState() {return state_;}
+BlindSpotModule::State BlindSpotModule::StateMachine::getState() { return state_; }
 }  // namespace behavior_velocity_planner

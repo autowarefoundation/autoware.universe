@@ -12,12 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <vector>
+#include <scene_module/detection_area/scene.hpp>
+#include <utilization/marker_helper.hpp>
+#include <utilization/util.hpp>
 
-#include "scene_module/detection_area/scene.hpp"
-#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
-#include "utilization/marker_helper.hpp"
-#include "utilization/util.hpp"
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+
+#include <vector>
 
 namespace behavior_velocity_planner
 {
@@ -236,14 +237,12 @@ visualization_msgs::msg::MarkerArray DetectionAreaModule::createDebugMarkerArray
 
   if (!debug_data_.stop_poses.empty()) {
     appendMarkerArray(
-      createCorrespondenceMarkerArray(
-        detection_area_reg_elem_,
-        current_time), current_time, &debug_marker_array);
+      createCorrespondenceMarkerArray(detection_area_reg_elem_, current_time), current_time,
+      &debug_marker_array);
 
     appendMarkerArray(
-      createObstacleMarkerArray(
-        debug_data_.obstacle_points,
-        current_time), current_time, &debug_marker_array);
+      createObstacleMarkerArray(debug_data_.obstacle_points, current_time), current_time,
+      &debug_marker_array);
   }
 
   return debug_marker_array;

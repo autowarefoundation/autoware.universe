@@ -12,19 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <chrono>
-#include <limits>
-
-#include "gtest/gtest.h"
-#include "rclcpp/rclcpp.hpp"
-#include "utilization/state_machine.hpp"
 #include "utils.hpp"
 
+#include <rclcpp/rclcpp.hpp>
+#include <utilization/state_machine.hpp>
+
+#include <gtest/gtest.h>
+
+#include <chrono>
+#include <limits>
 
 using StateMachine = behavior_velocity_planner::StateMachine;
 using State = behavior_velocity_planner::StateMachine::State;
 
-int enumToInt(State s) {return static_cast<int>(s);}
+int enumToInt(State s) { return static_cast<int>(s); }
 
 TEST(state_machine, on_initialized)
 {

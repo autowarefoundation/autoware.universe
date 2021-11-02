@@ -15,22 +15,21 @@
 #ifndef UTILIZATION__STATE_MACHINE_HPP_
 #define UTILIZATION__STATE_MACHINE_HPP_
 
+#include <rclcpp/rclcpp.hpp>
+
 #include <memory>
 #include <string>
 #include <utility>
 
-#include "rclcpp/rclcpp.hpp"
-
 namespace behavior_velocity_planner
 {
 /**
-   * @brief Manage stop-go states with safety margin time.
-   */
+ * @brief Manage stop-go states with safety margin time.
+ */
 class StateMachine
 {
 public:
-  enum State
-  {
+  enum State {
     STOP = 0,
     GO,
   };
@@ -50,8 +49,7 @@ public:
     margin_time_ = 0.0;
     duration_ = 0.0;
   }
-  void setStateWithMarginTime(
-    State state, rclcpp::Logger logger, rclcpp::Clock & clock)
+  void setStateWithMarginTime(State state, rclcpp::Logger logger, rclcpp::Clock & clock)
   {
     /* same state request */
     if (state_ == state) {
@@ -82,10 +80,10 @@ public:
     RCLCPP_ERROR(logger, "Unsuitable state. ignore request.");
   }
 
-  void setMarginTime(const double t) {margin_time_ = t;}
-  void setState(State state) {state_ = state;}
-  State getState() const {return state_;}
-  double getDuration() const {return duration_;}
+  void setMarginTime(const double t) { margin_time_ = t; }
+  void setState(State state) { state_ = state; }
+  State getState() const { return state_; }
+  double getDuration() const { return duration_; }
 
 private:
   State state_;                               //! current state

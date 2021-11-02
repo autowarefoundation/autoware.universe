@@ -15,32 +15,31 @@
 #ifndef UTILIZATION__BOOST_GEOMETRY_HELPER_HPP_
 #define UTILIZATION__BOOST_GEOMETRY_HELPER_HPP_
 
+#include <autoware_planning_msgs/msg/path_point.hpp>
+#include <autoware_planning_msgs/msg/path_point_with_lane_id.hpp>
+#include <autoware_planning_msgs/msg/trajectory_point.hpp>
+#include <geometry_msgs/msg/point.hpp>
+#include <geometry_msgs/msg/polygon.hpp>
+#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+
+#include <boost/assign/list_of.hpp>
+#include <boost/geometry.hpp>
+#include <boost/geometry/algorithms/area.hpp>
+#include <boost/geometry/algorithms/disjoint.hpp>
+#include <boost/geometry/algorithms/distance.hpp>
+#include <boost/geometry/algorithms/equals.hpp>
+#include <boost/geometry/algorithms/intersection.hpp>
+#include <boost/geometry/geometries/linestring.hpp>
+#include <boost/geometry/geometries/point_xy.hpp>
+#include <boost/geometry/geometries/polygon.hpp>
+#include <boost/geometry/geometries/register/point.hpp>
+#include <boost/geometry/geometries/segment.hpp>
+
+#include <lanelet2_core/primitives/Polygon.h>
+#include <tf2/utils.h>
+
 #include <algorithm>
 #include <vector>
-
-#include "boost/assign/list_of.hpp"
-#include "boost/geometry.hpp"
-#include "boost/geometry/algorithms/area.hpp"
-#include "boost/geometry/algorithms/disjoint.hpp"
-#include "boost/geometry/algorithms/distance.hpp"
-#include "boost/geometry/algorithms/equals.hpp"
-#include "boost/geometry/algorithms/intersection.hpp"
-#include "boost/geometry/geometries/linestring.hpp"
-#include "boost/geometry/geometries/point_xy.hpp"
-#include "boost/geometry/geometries/polygon.hpp"
-#include "boost/geometry/geometries/register/point.hpp"
-#include "boost/geometry/geometries/segment.hpp"
-
-#include "tf2/utils.h"
-#include "geometry_msgs/msg/point.hpp"
-#include "geometry_msgs/msg/polygon.hpp"
-#include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
-
-#include "autoware_planning_msgs/msg/path_point.hpp"
-#include "autoware_planning_msgs/msg/path_point_with_lane_id.hpp"
-#include "autoware_planning_msgs/msg/trajectory_point.hpp"
-#include "lanelet2_core/primitives/Polygon.h"
-
 
 // cppcheck-suppress unknownMacro
 BOOST_GEOMETRY_REGISTER_POINT_3D(geometry_msgs::msg::Point, double, cs::cartesian, x, y, z)
@@ -65,13 +64,13 @@ using LineString2d = boost::geometry::model::linestring<Point2d>;
 using Polygon2d =
   boost::geometry::model::polygon<Point2d, false, false>;  // counter-clockwise, open
 
-template<class T>
+template <class T>
 Point2d to_bg2d(const T & p)
 {
   return Point2d(boost::geometry::get<0>(p), boost::geometry::get<1>(p));
 }
 
-template<class T>
+template <class T>
 LineString2d to_bg2d(const std::vector<T> & vec)
 {
   LineString2d ps;
@@ -126,7 +125,7 @@ inline Polygon2d obj2polygon(
 
   // rotate polygon(yaw)
   boost::geometry::strategy::transform::rotate_transformer<boost::geometry::radian, double, 2, 2>
-  rotate(-yaw);    // anti-clockwise -> :clockwise rotation
+    rotate(-yaw);  // anti-clockwise -> :clockwise rotation
   Polygon2d rotate_obj_poly;
   boost::geometry::transform(obj_poly, rotate_obj_poly, rotate);
 

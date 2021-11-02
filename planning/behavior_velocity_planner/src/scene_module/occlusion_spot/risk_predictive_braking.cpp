@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <scene_module/occlusion_spot/occlusion_spot_utils.hpp>
+#include <scene_module/occlusion_spot/risk_predictive_braking.hpp>
+#include <utilization/util.hpp>
+
 #include <algorithm>
 #include <vector>
-
-#include "scene_module/occlusion_spot/occlusion_spot_utils.hpp"
-#include "scene_module/occlusion_spot/risk_predictive_braking.hpp"
-#include "utilization/util.hpp"
 
 namespace behavior_velocity_planner
 {
@@ -31,7 +31,9 @@ void applySafeVelocityConsideringPossibleCollison(
   const auto logger{rclcpp::get_logger("behavior_velocity_planner").get_child("occlusion_spot")};
   rclcpp::Clock clock{RCL_ROS_TIME};
   // return nullptr or too few points
-  if (!inout_path || inout_path->points.size() < 2) {return;}
+  if (!inout_path || inout_path->points.size() < 2) {
+    return;
+  }
   for (auto & possible_collision : possible_collisions) {
     const double dist_to_collision = possible_collision.arc_lane_dist_at_collision.length;
     const double original_vel = possible_collision.collision_path_point.twist.linear.x;
@@ -40,14 +42,12 @@ void applySafeVelocityConsideringPossibleCollison(
     // skip if obstacle velocity is below zero
     if (v_obs < 0) {
       RCLCPP_WARN_THROTTLE(
-        logger, clock, 3000,
-        "velocity for virtual darting object is not set correctly");
+        logger, clock, 3000, "velocity for virtual darting object is not set correctly");
       continue;
       // skip if distance to object is below zero
     } else if (d_obs < 0) {
       RCLCPP_WARN_THROTTLE(
-        logger, clock, 3000,
-        "distance for virtual darting object is not set correctly");
+        logger, clock, 3000, "distance for virtual darting object is not set correctly");
       continue;
     }
     // RPB : risk predictive braking system velocity consider ego emergency braking deceleration
@@ -91,8 +91,7 @@ int insertSafeVelocityToPath(
 {
   int closest_idx = -1;
   if (!planning_utils::calcClosestIndex(
-      *inout_path, in_pose, closest_idx, param.dist_thr, param.angle_thr))
-  {
+        *inout_path, in_pose, closest_idx, param.dist_thr, param.angle_thr)) {
     return -1;
   }
   autoware_planning_msgs::msg::PathPointWithLaneId inserted_point;

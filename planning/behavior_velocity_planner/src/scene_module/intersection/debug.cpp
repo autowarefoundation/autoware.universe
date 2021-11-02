@@ -12,14 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <scene_module/intersection/scene_intersection.hpp>
+#include <scene_module/intersection/scene_merge_from_private_road.hpp>
+#include <utilization/marker_helper.hpp>
+#include <utilization/util.hpp>
+
 #include <string>
 #include <vector>
-
-#include "scene_module/intersection/scene_intersection.hpp"
-#include "scene_module/intersection/scene_merge_from_private_road.hpp"
-
-#include "utilization/marker_helper.hpp"
-#include "utilization/util.hpp"
 
 namespace behavior_velocity_planner
 {
@@ -54,7 +53,9 @@ visualization_msgs::msg::MarkerArray createLaneletPolygonsMarkerArray(
       point.z = p.z();
       marker.points.push_back(point);
     }
-    if (!marker.points.empty()) {marker.points.push_back(marker.points.front());}
+    if (!marker.points.empty()) {
+      marker.points.push_back(marker.points.front());
+    }
     msg.markers.push_back(marker);
   }
 
@@ -85,7 +86,9 @@ visualization_msgs::msg::MarkerArray createPolygonMarkerArray(
     point.z = p.z;
     marker.points.push_back(point);
   }
-  if (!marker.points.empty()) {marker.points.push_back(marker.points.front());}
+  if (!marker.points.empty()) {
+    marker.points.push_back(marker.points.front());
+  }
   msg.markers.push_back(marker);
 
   return msg;

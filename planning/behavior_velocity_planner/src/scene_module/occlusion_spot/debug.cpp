@@ -12,16 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <autoware_utils/ros/marker_helper.hpp>
+#include <scene_module/occlusion_spot/occlusion_spot_utils.hpp>
+#include <scene_module/occlusion_spot/scene_occlusion_spot_in_private_road.hpp>
+#include <scene_module/occlusion_spot/scene_occlusion_spot_in_public_road.hpp>
+#include <utilization/marker_helper.hpp>
+#include <utilization/util.hpp>
+
 #include <string>
 #include <vector>
-
-#include "autoware_utils/ros/marker_helper.hpp"
-
-#include "scene_module/occlusion_spot/occlusion_spot_utils.hpp"
-#include "scene_module/occlusion_spot/scene_occlusion_spot_in_private_road.hpp"
-#include "scene_module/occlusion_spot/scene_occlusion_spot_in_public_road.hpp"
-#include "utilization/marker_helper.hpp"
-#include "utilization/util.hpp"
 
 namespace behavior_velocity_planner
 {
@@ -91,8 +90,7 @@ std::vector<visualization_msgs::msg::Marker> makeSlowDownMarkers(
 }
 
 std::vector<visualization_msgs::msg::Marker> makeCollisionMarkers(
-  const occlusion_spot_utils::PossibleCollisionInfo & possible_collision, int id,
-  bool show_text)
+  const occlusion_spot_utils::PossibleCollisionInfo & possible_collision, int id, bool show_text)
 {
   std::vector<visualization_msgs::msg::Marker> debug_markers;
   visualization_msgs::msg::Marker debug_marker;
@@ -122,9 +120,9 @@ std::vector<visualization_msgs::msg::Marker> makeCollisionMarkers(
     debug_marker.scale.z = 1.0;
     debug_marker.color = autoware_utils::createMarkerColor(1.0, 1.0, 0.0, 1.0);
     std::ostringstream string_stream;
-    string_stream << "(s,d,v)=(" << possible_collision.arc_lane_dist_at_collision.length << " , " <<
-      possible_collision.arc_lane_dist_at_collision.distance << " , " <<
-      possible_collision.collision_path_point.twist.linear.x << ")";
+    string_stream << "(s,d,v)=(" << possible_collision.arc_lane_dist_at_collision.length << " , "
+                  << possible_collision.arc_lane_dist_at_collision.distance << " , "
+                  << possible_collision.collision_path_point.twist.linear.x << ")";
     debug_marker.text = string_stream.str();
     debug_markers.push_back(debug_marker);
   }
@@ -154,10 +152,9 @@ std::vector<visualization_msgs::msg::Marker> makePolygonMarker(
   return debug_markers;
 }
 
-template<class T>
+template <class T>
 visualization_msgs::msg::MarkerArray createMarkers(
-  T & debug_data,
-  [[maybe_unused]] const int64_t module_id_)
+  T & debug_data, [[maybe_unused]] const int64_t module_id_)
 {
   // add slow down markers for occlusion spot
   visualization_msgs::msg::MarkerArray occlusion_spot_slowdown_markers;
@@ -178,8 +175,7 @@ visualization_msgs::msg::MarkerArray createMarkers(
   for (const auto & possible_collision : possible_collisions) {
     if (
       possible_collision.arc_lane_dist_at_collision.length - prev_length >
-      min_dist_between_markers)
-    {
+      min_dist_between_markers) {
       prev_length = possible_collision.arc_lane_dist_at_collision.length;
       std::vector<visualization_msgs::msg::Marker> collision_markers =
         makeSlowDownMarkers(possible_collision, debug_data.road_type, id++);
@@ -205,8 +201,7 @@ visualization_msgs::msg::MarkerArray createMarkers(
     id = 0;
     for (const auto & sidewalk : debug_data.sidewalks) {
       for (const visualization_msgs::msg::Marker & m :
-        makePolygonMarker(sidewalk, debug_data.z, id++))
-      {
+           makePolygonMarker(sidewalk, debug_data.z, id++)) {
         occlusion_spot_slowdown_markers.markers.push_back(m);
       }
     }

@@ -15,14 +15,14 @@
 #ifndef SCENE_MODULE__TRAFFIC_LIGHT__MANAGER_HPP_
 #define SCENE_MODULE__TRAFFIC_LIGHT__MANAGER_HPP_
 
+#include <rclcpp/rclcpp.hpp>
+#include <scene_module/scene_module_interface.hpp>
+#include <scene_module/traffic_light/scene.hpp>
+
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+
 #include <functional>
 #include <memory>
-
-#include "autoware_planning_msgs/msg/path_with_lane_id.hpp"
-#include "rclcpp/rclcpp.hpp"
-
-#include "scene_module/scene_module_interface.hpp"
-#include "scene_module/traffic_light/scene.hpp"
 
 namespace behavior_velocity_planner
 {
@@ -31,7 +31,7 @@ class TrafficLightModuleManager : public SceneModuleManagerInterface
 public:
   explicit TrafficLightModuleManager(rclcpp::Node & node);
 
-  const char * getModuleName() override {return "traffic_light";}
+  const char * getModuleName() override { return "traffic_light"; }
 
   void modifyPathVelocity(autoware_planning_msgs::msg::PathWithLaneId * path) override;
 

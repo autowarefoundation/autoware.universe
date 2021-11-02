@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "scene_module/virtual_traffic_light/manager.hpp"
+#include <scene_module/virtual_traffic_light/manager.hpp>
 
 #include <memory>
 #include <set>
@@ -26,7 +26,7 @@ namespace
 {
 using lanelet::autoware::VirtualTrafficLight;
 
-template<class T>
+template <class T>
 std::unordered_map<typename T::ConstPtr, lanelet::ConstLanelet> getRegElemMapOnPath(
   const autoware_planning_msgs::msg::PathWithLaneId & path,
   const lanelet::LaneletMapPtr lanelet_map)
@@ -75,15 +75,13 @@ void VirtualTrafficLightModuleManager::launchNewModules(
   const autoware_planning_msgs::msg::PathWithLaneId & path)
 {
   for (const auto & m :
-    getRegElemMapOnPath<VirtualTrafficLight>(path, planner_data_->lanelet_map))
-  {
+       getRegElemMapOnPath<VirtualTrafficLight>(path, planner_data_->lanelet_map)) {
     // Use lanelet_id to unregister module when the route is changed
     const auto module_id = m.second.id();
     if (!isModuleRegistered(module_id)) {
-      registerModule(
-        std::make_shared<VirtualTrafficLightModule>(
-          module_id, *m.first, m.second, planner_param_,
-          logger_.get_child("virtual_traffic_light_module"), clock_));
+      registerModule(std::make_shared<VirtualTrafficLightModule>(
+        module_id, *m.first, m.second, planner_param_,
+        logger_.get_child("virtual_traffic_light_module"), clock_));
     }
   }
 }
@@ -92,12 +90,10 @@ std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
 VirtualTrafficLightModuleManager::getModuleExpiredFunction(
   const autoware_planning_msgs::msg::PathWithLaneId & path)
 {
-  const auto id_set =
-    getLaneletIdSetOnPath(path, planner_data_->lanelet_map);
+  const auto id_set = getLaneletIdSetOnPath(path, planner_data_->lanelet_map);
 
-  return
-    [id_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
-      return id_set.count(scene_module->getModuleId()) == 0;
-    };
+  return [id_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
+    return id_set.count(scene_module->getModuleId()) == 0;
+  };
 }
 }  // namespace behavior_velocity_planner

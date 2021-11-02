@@ -15,20 +15,21 @@
 #ifndef UTILIZATION__ARC_LANE_UTIL_HPP_
 #define UTILIZATION__ARC_LANE_UTIL_HPP_
 
+#include <autoware_utils/geometry/geometry.hpp>
+
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+
+#include <boost/optional.hpp>
+
+#include <algorithm>
 #include <memory>
 #include <utility>
 #include <vector>
-#include <algorithm>
-
-#include "autoware_planning_msgs/msg/path_with_lane_id.hpp"
-#include "autoware_utils/geometry/geometry.hpp"
-#include "boost/optional.hpp"
 
 #define EIGEN_MPL2_ONLY
-#include "Eigen/Core"
-
-#include "rclcpp/rclcpp.hpp"
-#include "utilization/boost_geometry_helper.hpp"
+#include <Eigen/Core>
+#include <rclcpp/rclcpp.hpp>
+#include <utilization/boost_geometry_helper.hpp>
 
 namespace behavior_velocity_planner
 {
@@ -74,7 +75,7 @@ inline boost::optional<Point2d> getNearestCollisionPoint(
   return collision_points.at(min_idx);
 }
 
-template<class T>
+template <class T>
 boost::optional<PathIndexWithPoint2d> findCollisionSegment(
   const T & path, const LineString2d & stop_line)
 {
@@ -93,10 +94,9 @@ boost::optional<PathIndexWithPoint2d> findCollisionSegment(
   return {};
 }
 
-template<class T>
+template <class T>
 boost::optional<PathIndexWithOffset> findForwardOffsetSegment(
-  const T & path, const size_t base_idx,
-  const double offset_length)
+  const T & path, const size_t base_idx, const double offset_length)
 {
   double sum_length = 0.0;
   for (size_t i = base_idx; i < path.points.size() - 1; ++i) {
@@ -112,10 +112,9 @@ boost::optional<PathIndexWithOffset> findForwardOffsetSegment(
   return {};
 }
 
-template<class T>
+template <class T>
 boost::optional<PathIndexWithOffset> findBackwardOffsetSegment(
-  const T & path, const size_t base_idx,
-  const double offset_length)
+  const T & path, const size_t base_idx, const double offset_length)
 {
   double sum_length = 0.0;
   const auto start = static_cast<std::int32_t>(base_idx) - 1;
@@ -133,7 +132,7 @@ boost::optional<PathIndexWithOffset> findBackwardOffsetSegment(
   return {};
 }
 
-template<class T>
+template <class T>
 boost::optional<PathIndexWithOffset> findOffsetSegment(
   const T & path, const PathIndexWithPoint2d & collision_segment, const double offset_length)
 {
@@ -151,10 +150,8 @@ boost::optional<PathIndexWithOffset> findOffsetSegment(
   }
 }
 
-template<class T>
-geometry_msgs::msg::Pose calcTargetPose(
-  const T & path,
-  const PathIndexWithOffset & offset_segment)
+template <class T>
+geometry_msgs::msg::Pose calcTargetPose(const T & path, const PathIndexWithOffset & offset_segment)
 {
   const size_t offset_idx = offset_segment.first;
   const double remain_offset_length = offset_segment.second;

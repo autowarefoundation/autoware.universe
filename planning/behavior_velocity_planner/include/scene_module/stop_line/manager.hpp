@@ -15,14 +15,14 @@
 #ifndef SCENE_MODULE__STOP_LINE__MANAGER_HPP_
 #define SCENE_MODULE__STOP_LINE__MANAGER_HPP_
 
+#include <rclcpp/rclcpp.hpp>
+#include <scene_module/scene_module_interface.hpp>
+#include <scene_module/stop_line/scene.hpp>
+
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+
 #include <functional>
 #include <memory>
-
-#include "autoware_planning_msgs/msg/path_with_lane_id.hpp"
-#include "rclcpp/rclcpp.hpp"
-
-#include "scene_module/scene_module_interface.hpp"
-#include "scene_module/stop_line/scene.hpp"
 
 namespace behavior_velocity_planner
 {
@@ -31,7 +31,7 @@ class StopLineModuleManager : public SceneModuleManagerInterface
 public:
   explicit StopLineModuleManager(rclcpp::Node & node);
 
-  const char * getModuleName() override {return "stop_line";}
+  const char * getModuleName() override { return "stop_line"; }
 
 private:
   StopLineModule::PlannerParam planner_param_;

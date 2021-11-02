@@ -12,17 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <lanelet2_extension/utility/utilities.hpp>
+#include <scene_module/occlusion_spot/occlusion_spot_utils.hpp>
+#include <scene_module/occlusion_spot/risk_predictive_braking.hpp>
+#include <scene_module/occlusion_spot/scene_occlusion_spot_in_public_road.hpp>
+#include <utilization/util.hpp>
+
+#include <lanelet2_core/primitives/BasicRegulatoryElements.h>
+
 #include <memory>
 #include <vector>
-
-#include "lanelet2_core/primitives/BasicRegulatoryElements.h"
-
-#include "lanelet2_extension/utility/utilities.hpp"
-
-#include "scene_module/occlusion_spot/occlusion_spot_utils.hpp"
-#include "scene_module/occlusion_spot/risk_predictive_braking.hpp"
-#include "scene_module/occlusion_spot/scene_occlusion_spot_in_public_road.hpp"
-#include "utilization/util.hpp"
 
 namespace behavior_velocity_planner
 {
@@ -39,7 +38,9 @@ bool OcclusionSpotInPublicModule::modifyPathVelocity(
   autoware_planning_msgs::msg::PathWithLaneId * path,
   [[maybe_unused]] autoware_planning_msgs::msg::StopReason * stop_reason)
 {
-  if (path->points.size() < 2) {return true;}
+  if (path->points.size() < 2) {
+    return true;
+  }
   param_.vehicle_info.baselink_to_front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
   param_.vehicle_info.vehicle_width = planner_data_->vehicle_info_.vehicle_width_m;
 
@@ -53,8 +54,7 @@ bool OcclusionSpotInPublicModule::modifyPathVelocity(
   }
   int closest_idx = -1;
   if (!planning_utils::calcClosestIndex<autoware_planning_msgs::msg::PathWithLaneId>(
-      *path, ego_pose, closest_idx, param_.dist_thr, param_.angle_thr))
-  {
+        *path, ego_pose, closest_idx, param_.dist_thr, param_.angle_thr)) {
     return true;
   }
   const auto target_road_type = occlusion_spot_utils::ROAD_TYPE::PUBLIC;
@@ -64,28 +64,27 @@ bool OcclusionSpotInPublicModule::modifyPathVelocity(
   {
     // extract lanelet that includes target_road_type only
     if (!behavior_velocity_planner::occlusion_spot_utils::extractTargetRoad(
-        closest_idx, lanelet_map_ptr, param_.detection_area_length, *path,
-        offset_from_closest_to_target, limited_path, target_road_type))
-    {
+          closest_idx, lanelet_map_ptr, param_.detection_area_length, *path,
+          offset_from_closest_to_target, limited_path, target_road_type)) {
       return true;
     }
     // use path point as origin for stability
-    offset_from_ego_to_closest = -planning_utils::transformRelCoordinate2D(
-      ego_pose, path->points[closest_idx].point.pose).position.x;
+    offset_from_ego_to_closest =
+      -planning_utils::transformRelCoordinate2D(ego_pose, path->points[closest_idx].point.pose)
+         .position.x;
   }
-  if (limited_path.points.size() < 4) {return true;}
+  if (limited_path.points.size() < 4) {
+    return true;
+  }
   std::vector<behavior_velocity_planner::occlusion_spot_utils::PossibleCollisionInfo>
-  possible_collisions;
+    possible_collisions;
   RCLCPP_DEBUG_STREAM_THROTTLE(logger_, *clock_, 3000, "closest_idx : " << closest_idx);
   RCLCPP_DEBUG_STREAM_THROTTLE(
-    logger_, *clock_, 3000,
-    "offset_from_ego_to_closest : " <<
-      offset_from_ego_to_closest);
+    logger_, *clock_, 3000, "offset_from_ego_to_closest : " << offset_from_ego_to_closest);
   const double offset_from_ego_to_target =
     offset_from_ego_to_closest + offset_from_closest_to_target;
   behavior_velocity_planner::occlusion_spot_utils::createPossibleCollisionBehindParkedVehicle(
-    possible_collisions, limited_path, param_, offset_from_ego_to_target,
-    dynamic_obj_arr_ptr);
+    possible_collisions, limited_path, param_, offset_from_ego_to_target, dynamic_obj_arr_ptr);
   // set orientation to each possible collision
   behavior_velocity_planner::occlusion_spot_utils::calcVelocityAndHeightToPossibleCollision(
     closest_idx, *path, offset_from_ego_to_target, possible_collisions);

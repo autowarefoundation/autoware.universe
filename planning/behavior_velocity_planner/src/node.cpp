@@ -12,31 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "behavior_velocity_planner/node.hpp"
+
+#include <lanelet2_extension/utility/message_conversion.hpp>
+#include <utilization/path_utilization.hpp>
+
+#include <diagnostic_msgs/msg/diagnostic_status.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
+
+#include <lanelet2_routing/Route.h>
+#include <pcl/common/transforms.h>
+#include <tf2_eigen/tf2_eigen.h>
+
 #include <functional>
 #include <memory>
 
-#include "behavior_velocity_planner/node.hpp"
-
-#include "pcl/common/transforms.h"
-#include "tf2_eigen/tf2_eigen.h"
-
-#include "lanelet2_extension/utility/message_conversion.hpp"
-#include "lanelet2_routing/Route.h"
-
-#include "diagnostic_msgs/msg/diagnostic_status.hpp"
-#include "visualization_msgs/msg/marker_array.hpp"
-
-#include "utilization/path_utilization.hpp"
-
 // Scene modules
-#include "scene_module/blind_spot/manager.hpp"
-#include "scene_module/crosswalk/manager.hpp"
-#include "scene_module/detection_area/manager.hpp"
-#include "scene_module/intersection/manager.hpp"
-#include "scene_module/occlusion_spot/manager.hpp"
-#include "scene_module/stop_line/manager.hpp"
-#include "scene_module/traffic_light/manager.hpp"
-#include "scene_module/virtual_traffic_light/manager.hpp"
+#include <scene_module/blind_spot/manager.hpp>
+#include <scene_module/crosswalk/manager.hpp>
+#include <scene_module/detection_area/manager.hpp>
+#include <scene_module/intersection/manager.hpp>
+#include <scene_module/occlusion_spot/manager.hpp>
+#include <scene_module/stop_line/manager.hpp>
+#include <scene_module/traffic_light/manager.hpp>
+#include <scene_module/virtual_traffic_light/manager.hpp>
 
 namespace behavior_velocity_planner
 {
@@ -75,13 +74,13 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   // Trigger Subscriber
   trigger_sub_path_with_lane_id_ =
     this->create_subscription<autoware_planning_msgs::msg::PathWithLaneId>(
-    "~/input/path_with_lane_id", 1, std::bind(&BehaviorVelocityPlannerNode::onTrigger, this, _1));
+      "~/input/path_with_lane_id", 1, std::bind(&BehaviorVelocityPlannerNode::onTrigger, this, _1));
 
   // Subscribers
   sub_dynamic_objects_ =
     this->create_subscription<autoware_perception_msgs::msg::DynamicObjectArray>(
-    "~/input/dynamic_objects", 1,
-    std::bind(&BehaviorVelocityPlannerNode::onDynamicObjects, this, _1));
+      "~/input/dynamic_objects", 1,
+      std::bind(&BehaviorVelocityPlannerNode::onDynamicObjects, this, _1));
   sub_no_ground_pointcloud_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "~/input/no_ground_pointcloud", rclcpp::SensorDataQoS(),
     std::bind(&BehaviorVelocityPlannerNode::onNoGroundPointCloud, this, _1));
@@ -93,24 +92,24 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
     std::bind(&BehaviorVelocityPlannerNode::onLaneletMap, this, _1));
   sub_traffic_light_states_ =
     this->create_subscription<autoware_perception_msgs::msg::TrafficLightStateArray>(
-    "~/input/traffic_light_states", 10,
-    std::bind(&BehaviorVelocityPlannerNode::onTrafficLightStates, this, _1));
+      "~/input/traffic_light_states", 10,
+      std::bind(&BehaviorVelocityPlannerNode::onTrafficLightStates, this, _1));
   sub_external_crosswalk_states_ =
     this->create_subscription<autoware_api_msgs::msg::CrosswalkStatus>(
-    "~/input/external_crosswalk_states", 10,
-    std::bind(&BehaviorVelocityPlannerNode::onExternalCrosswalkStates, this, _1));
+      "~/input/external_crosswalk_states", 10,
+      std::bind(&BehaviorVelocityPlannerNode::onExternalCrosswalkStates, this, _1));
   sub_external_intersection_states_ =
     this->create_subscription<autoware_api_msgs::msg::IntersectionStatus>(
-    "~/input/external_intersection_states", 10,
-    std::bind(&BehaviorVelocityPlannerNode::onExternalIntersectionStates, this, _1));
+      "~/input/external_intersection_states", 10,
+      std::bind(&BehaviorVelocityPlannerNode::onExternalIntersectionStates, this, _1));
   sub_external_traffic_light_states_ =
     this->create_subscription<autoware_perception_msgs::msg::TrafficLightStateArray>(
-    "~/input/external_traffic_light_states", 10,
-    std::bind(&BehaviorVelocityPlannerNode::onExternalTrafficLightStates, this, _1));
+      "~/input/external_traffic_light_states", 10,
+      std::bind(&BehaviorVelocityPlannerNode::onExternalTrafficLightStates, this, _1));
   sub_virtual_traffic_light_states_ =
     this->create_subscription<autoware_v2x_msgs::msg::VirtualTrafficLightStateArray>(
-    "~/input/virtual_traffic_light_states", 10,
-    std::bind(&BehaviorVelocityPlannerNode::onVirtualTrafficLightStates, this, _1));
+      "~/input/virtual_traffic_light_states", 10,
+      std::bind(&BehaviorVelocityPlannerNode::onVirtualTrafficLightStates, this, _1));
   sub_occupancy_grid_ = this->create_subscription<nav_msgs::msg::OccupancyGrid>(
     "~/input/occupancy_grid", 1,
     std::bind(&BehaviorVelocityPlannerNode::onOccupancyGrid, this, _1));
@@ -304,7 +303,6 @@ void BehaviorVelocityPlannerNode::onExternalTrafficLightStates(
   }
 }
 
-
 void BehaviorVelocityPlannerNode::onVirtualTrafficLightStates(
   const autoware_v2x_msgs::msg::VirtualTrafficLightStateArray::ConstSharedPtr msg)
 {
@@ -335,8 +333,7 @@ void BehaviorVelocityPlannerNode::onTrigger(
   const auto filtered_path = filterLitterPathPoint(to_path(velocity_planned_path));
 
   // interpolation
-  const auto interpolated_path_msg =
-    interpolatePath(filtered_path, forward_path_length_);
+  const auto interpolated_path_msg = interpolatePath(filtered_path, forward_path_length_);
 
   // check stop point
   auto output_path_msg = filterStopPathPoint(interpolated_path_msg);
@@ -377,5 +374,5 @@ void BehaviorVelocityPlannerNode::publishDebugMarker(const autoware_planning_msg
 }
 }  // namespace behavior_velocity_planner
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(behavior_velocity_planner::BehaviorVelocityPlannerNode)

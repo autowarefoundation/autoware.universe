@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <unordered_set>
-
-#include "gtest/gtest.h"
-
-#include "scene_module/occlusion_spot/grid_utils.hpp"
-
 #include "utils.hpp"
+
+#include <scene_module/occlusion_spot/grid_utils.hpp>
+
+#include <gtest/gtest.h>
+
+#include <unordered_set>
 
 struct indexHash
 {
@@ -180,13 +180,13 @@ TEST(isOcclusionSpotSquare, many_cells_occlusion_spot)
     }
   }
 
-  std::cout << "TooNoisyCase->No OcclusionSpot 2by2" << std::endl <<
-    "    0|1|2|3|4|                      " << std::endl <<
-    "  0  |?| | | |                      " << std::endl <<
-    "  1  |?|?|?| |                      " << std::endl <<
-    "  2 ?|?| |?| |                      " << std::endl <<
-    "  3  |?| | | |                      " << std::endl <<
-    "  4  |?| | | |                      " << std::endl;
+  std::cout << "TooNoisyCase->No OcclusionSpot 2by2" << std::endl
+            << "    0|1|2|3|4|                      " << std::endl
+            << "  0  |?| | | |                      " << std::endl
+            << "  1  |?|?|?| |                      " << std::endl
+            << "  2 ?|?| |?| |                      " << std::endl
+            << "  3  |?| | | |                      " << std::endl
+            << "  4  |?| | | |                      " << std::endl;
   grid = test::generateGrid(5, 5, 1.0);
   unknown_cells = {{0, 2}, {1, 0}, {1, 1}, {1, 2}, {1, 3}, {2, 1}, {3, 1}, {3, 2}};
   for (grid_map::Index index : unknown_cells) {
@@ -218,7 +218,7 @@ TEST(buildSlices, test_buffer_offset)
   // lanelet::Points3d line;
   boost::geometry::model::linestring<lanelet::BasicPoint2d> line;
   boost::geometry::model::multi_polygon<boost::geometry::model::polygon<lanelet::BasicPoint2d>>
-  poly;
+    poly;
   line.emplace_back(0.0, 1.0);
   line.emplace_back(1.0, 4.0);
   line.emplace_back(2.0, 6.0);

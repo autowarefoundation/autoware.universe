@@ -15,23 +15,21 @@
 #ifndef SCENE_MODULE__DETECTION_AREA__SCENE_HPP_
 #define SCENE_MODULE__DETECTION_AREA__SCENE_HPP_
 
+#include <boost/optional.hpp>
+
 #include <memory>
 #include <utility>
 #include <vector>
 
-#include "boost/optional.hpp"
-
 #define EIGEN_MPL2_ONLY
-#include "Eigen/Core"
+#include <Eigen/Core>
+#include <lanelet2_extension/regulatory_elements/detection_area.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <scene_module/scene_module_interface.hpp>
+#include <utilization/boost_geometry_helper.hpp>
 
-#include "rclcpp/rclcpp.hpp"
-#include "tf2/LinearMath/Transform.h"
-
-#include "lanelet2_core/LaneletMap.h"
-#include "lanelet2_extension/regulatory_elements/detection_area.hpp"
-
-#include "scene_module/scene_module_interface.hpp"
-#include "utilization/boost_geometry_helper.hpp"
+#include <lanelet2_core/LaneletMap.h>
+#include <tf2/LinearMath/Transform.h>
 
 namespace behavior_velocity_planner
 {

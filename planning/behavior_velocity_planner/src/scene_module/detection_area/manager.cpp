@@ -12,16 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <lanelet2_extension/utility/query.hpp>
+#include <scene_module/detection_area/manager.hpp>
+
+#include <tf2/utils.h>
+
 #include <memory>
 #include <set>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
-
-#include "scene_module/detection_area/manager.hpp"
-#include "lanelet2_extension/utility/query.hpp"
-#include "tf2/utils.h"
 
 namespace behavior_velocity_planner
 {
@@ -72,15 +73,13 @@ void DetectionAreaModuleManager::launchNewModules(
   const autoware_planning_msgs::msg::PathWithLaneId & path)
 {
   for (const auto & detection_area :
-    getDetectionAreaRegElemsOnPath(path, planner_data_->lanelet_map))
-  {
+       getDetectionAreaRegElemsOnPath(path, planner_data_->lanelet_map)) {
     // Use lanelet_id to unregister module when the route is changed
     const auto module_id = detection_area->id();
     if (!isModuleRegistered(module_id)) {
-      registerModule(
-        std::make_shared<DetectionAreaModule>(
-          module_id, *detection_area, planner_param_, logger_.get_child("detection_area_module"),
-          clock_));
+      registerModule(std::make_shared<DetectionAreaModule>(
+        module_id, *detection_area, planner_param_, logger_.get_child("detection_area_module"),
+        clock_));
     }
   }
 }
@@ -92,7 +91,7 @@ DetectionAreaModuleManager::getModuleExpiredFunction(
   const auto detection_area_id_set = getDetectionAreaIdSetOnPath(path, planner_data_->lanelet_map);
 
   return [detection_area_id_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
-           return detection_area_id_set.count(scene_module->getModuleId()) == 0;
-         };
+    return detection_area_id_set.count(scene_module->getModuleId()) == 0;
+  };
 }
 }  // namespace behavior_velocity_planner

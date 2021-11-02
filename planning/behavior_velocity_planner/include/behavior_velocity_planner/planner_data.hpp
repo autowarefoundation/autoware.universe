@@ -15,37 +15,36 @@
 #ifndef BEHAVIOR_VELOCITY_PLANNER__PLANNER_DATA_HPP_
 #define BEHAVIOR_VELOCITY_PLANNER__PLANNER_DATA_HPP_
 
+#include <vehicle_info_util/vehicle_info_util.hpp>
+
+#include <autoware_api_msgs/msg/crosswalk_status.hpp>
+#include <autoware_api_msgs/msg/intersection_status.hpp>
+#include <autoware_lanelet2_msgs/msg/map_bin.hpp>
+#include <autoware_perception_msgs/msg/dynamic_object_array.hpp>
+#include <autoware_perception_msgs/msg/traffic_light_state_array.hpp>
+#include <autoware_perception_msgs/msg/traffic_light_state_stamped.hpp>
+#include <autoware_v2x_msgs/msg/virtual_traffic_light_state_array.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
+#include <nav_msgs/msg/occupancy_grid.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <std_msgs/msg/header.hpp>
+
+#include <boost/optional.hpp>
+
+#include <lanelet2_core/LaneletMap.h>
+#include <lanelet2_routing/RoutingGraph.h>
+#include <lanelet2_routing/RoutingGraphContainer.h>
+#include <lanelet2_traffic_rules/TrafficRulesFactory.h>
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include <tf2_ros/transform_listener.h>
+
 #include <algorithm>
 #include <deque>
 #include <map>
 #include <memory>
 #include <vector>
-
-#include "boost/optional.hpp"
-
-#include "tf2_ros/transform_listener.h"
-
-#include "pcl/point_cloud.h"
-#include "pcl/point_types.h"
-
-#include "autoware_api_msgs/msg/crosswalk_status.hpp"
-#include "autoware_api_msgs/msg/intersection_status.hpp"
-#include "autoware_lanelet2_msgs/msg/map_bin.hpp"
-#include "autoware_perception_msgs/msg/dynamic_object_array.hpp"
-#include "autoware_perception_msgs/msg/traffic_light_state_array.hpp"
-#include "autoware_perception_msgs/msg/traffic_light_state_stamped.hpp"
-#include "autoware_v2x_msgs/msg/virtual_traffic_light_state_array.hpp"
-#include "geometry_msgs/msg/pose_stamped.hpp"
-#include "geometry_msgs/msg/twist_stamped.hpp"
-#include "nav_msgs/msg/occupancy_grid.hpp"
-#include "sensor_msgs/msg/point_cloud2.hpp"
-#include "std_msgs/msg/header.hpp"
-#include "vehicle_info_util/vehicle_info_util.hpp"
-
-#include "lanelet2_core/LaneletMap.h"
-#include "lanelet2_routing/RoutingGraph.h"
-#include "lanelet2_routing/RoutingGraphContainer.h"
-#include "lanelet2_traffic_rules/TrafficRulesFactory.h"
 
 namespace behavior_velocity_planner
 {
@@ -82,7 +81,7 @@ struct PlannerData
 
   // external data
   std::map<int, autoware_perception_msgs::msg::TrafficLightStateStamped>
-  external_traffic_light_id_map;
+    external_traffic_light_id_map;
   boost::optional<autoware_api_msgs::msg::CrosswalkStatus> external_crosswalk_status_input;
   boost::optional<autoware_api_msgs::msg::IntersectionStatus> external_intersection_status_input;
   autoware_v2x_msgs::msg::VirtualTrafficLightStateArray::ConstSharedPtr
@@ -99,7 +98,9 @@ struct PlannerData
 
   bool isVehicleStopped(const double stop_duration = 0.0) const
   {
-    if (velocity_buffer.empty()) {return false;}
+    if (velocity_buffer.empty()) {
+      return false;
+    }
 
     // Get velocities within stop_duration
     const auto now = rclcpp::Clock{RCL_ROS_TIME}.now();
@@ -163,10 +164,10 @@ private:
     }
 
     const double dv = current_velocity->twist.linear.x - prev_velocity_->twist.linear.x;
-    const double dt =
-      std::max(
-      (rclcpp::Time(current_velocity->header.stamp) -
-      rclcpp::Time(prev_velocity_->header.stamp)).seconds(), 1e-03);
+    const double dt = std::max(
+      (rclcpp::Time(current_velocity->header.stamp) - rclcpp::Time(prev_velocity_->header.stamp))
+        .seconds(),
+      1e-03);
 
     const double accel = dv / dt;
     prev_velocity_ = current_velocity;

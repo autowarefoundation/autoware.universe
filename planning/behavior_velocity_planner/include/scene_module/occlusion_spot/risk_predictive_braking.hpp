@@ -15,13 +15,12 @@
 #ifndef SCENE_MODULE__OCCLUSION_SPOT__RISK_PREDICTIVE_BRAKING_HPP_
 #define SCENE_MODULE__OCCLUSION_SPOT__RISK_PREDICTIVE_BRAKING_HPP_
 
+#include <scene_module/occlusion_spot/occlusion_spot_utils.hpp>
+
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+
 #include <algorithm>
 #include <vector>
-
-#include "autoware_planning_msgs/msg/path_with_lane_id.hpp"
-
-#include "scene_module/occlusion_spot/occlusion_spot_utils.hpp"
-
 
 namespace behavior_velocity_planner
 {
@@ -44,12 +43,12 @@ inline double calculatePredictiveBrakingVelocity(
 }
 
 /**
-  * @param: safety_time: safety time buffer for reaction
-  * @param: dist_to_obj: distance to virtual darting object
-  * @param: v_obs: relative  velocity for virtual darting object
-  * @param: ebs_decel: emergency brake
-  * @return safe velocity considering rpb
-  **/
+ * @param: safety_time: safety time buffer for reaction
+ * @param: dist_to_obj: distance to virtual darting object
+ * @param: v_obs: relative  velocity for virtual darting object
+ * @param: ebs_decel: emergency brake
+ * @return safe velocity considering rpb
+ **/
 inline double calculateSafeRPBVelocity(
   const double safety_time, const double dist_to_obj, const double v_obs, const double ebs_decel)
 {

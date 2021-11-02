@@ -15,32 +15,30 @@
 #ifndef SCENE_MODULE__INTERSECTION__SCENE_INTERSECTION_HPP_
 #define SCENE_MODULE__INTERSECTION__SCENE_INTERSECTION_HPP_
 
+#include <autoware_utils/autoware_utils.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <scene_module/scene_module_interface.hpp>
+#include <utilization/boost_geometry_helper.hpp>
+
+#include <autoware_perception_msgs/msg/dynamic_object.hpp>
+#include <autoware_perception_msgs/msg/dynamic_object_array.hpp>
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <geometry_msgs/msg/point.hpp>
+
+#include <lanelet2_core/LaneletMap.h>
+#include <lanelet2_routing/RoutingGraph.h>
+
 #include <algorithm>
 #include <memory>
 #include <string>
 #include <vector>
-
-#include "rclcpp/rclcpp.hpp"
-
-#include "autoware_perception_msgs/msg/dynamic_object.hpp"
-#include "autoware_perception_msgs/msg/dynamic_object_array.hpp"
-#include "autoware_planning_msgs/msg/path_with_lane_id.hpp"
-#include "autoware_utils/autoware_utils.hpp"
-#include "geometry_msgs/msg/point.hpp"
-
-#include "lanelet2_core/LaneletMap.h"
-#include "lanelet2_routing/RoutingGraph.h"
-
-#include "scene_module/scene_module_interface.hpp"
-#include "utilization/boost_geometry_helper.hpp"
 
 namespace behavior_velocity_planner
 {
 class IntersectionModule : public SceneModuleInterface
 {
 public:
-  enum class State
-  {
+  enum class State {
     STOP = 0,
     GO,
   };
@@ -60,7 +58,7 @@ public:
    */
   class StateMachine
   {
-public:
+  public:
     StateMachine()
     {
       state_ = State::GO;
@@ -71,7 +69,7 @@ public:
     void setMarginTime(const double t);
     State getState();
 
-private:
+  private:
     State state_;                               //! current state
     double margin_time_;                        //! margin time when transit to Go from Stop
     std::shared_ptr<rclcpp::Time> start_time_;  //! first time received GO when STOP state
@@ -101,10 +99,9 @@ public:
     double decel_velocity;     //! used when in straight and traffic_light lane
     double path_expand_width;  //! path width to calculate the edge line for both side
     double stop_line_margin;   //! distance from auto-generated stopline to detection_area boundary
+    double stuck_vehicle_detect_dist;  //! distance from end point to finish stuck vehicle check
     double
-      stuck_vehicle_detect_dist;  //! distance from end point to finish stuck vehicle check
-    double
-      stuck_vehicle_ignore_dist;  //! distance from intersection start to start stuck vehicle check
+      stuck_vehicle_ignore_dist;   //! distance from intersection start to start stuck vehicle check
     double stuck_vehicle_vel_thr;  //! Threshold of the speed to be recognized as stopped
     double intersection_velocity;  //! used for intersection passing time
     double intersection_max_acc;   //! used for calculating intersection velocity
@@ -144,7 +141,8 @@ private:
    * actual collision check algorithm inside this function)
    * @param path             ego-car lane
    * @param detection_areas  collision check is performed for vehicles that exist in this area
-   * @param detection_area_lanelet_ids  angle check is performed for obstacles using this lanelet ids
+   * @param detection_area_lanelet_ids  angle check is performed for obstacles using this lanelet
+   * ids
    * @param objects_ptr      target objects
    * @param closest_idx      ego-car position index on the lane
    * @return true if collision is detected

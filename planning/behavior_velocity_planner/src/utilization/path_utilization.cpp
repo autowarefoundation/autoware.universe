@@ -12,16 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "utilization/path_utilization.hpp"
+#include <interpolation/spline_interpolation.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <utilization/path_utilization.hpp>
+
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 #include <algorithm>
-#include <vector>
 #include <memory>
-
-#include "rclcpp/rclcpp.hpp"
-#include "tf2/LinearMath/Quaternion.h"
-#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
-#include "interpolation/spline_interpolation.hpp"
+#include <vector>
 
 namespace behavior_velocity_planner
 {
@@ -69,8 +69,7 @@ autoware_planning_msgs::msg::Path interpolatePath(
   const double interpolation_interval = interval;
   size_t checkpoint_idx = 1;
   for (double s = interpolation_interval; s < std::min(length, s_in.back());
-    s += interpolation_interval)
-  {
+       s += interpolation_interval) {
     while (checkpoint_idx < s_in.size() && s_in.at(checkpoint_idx) < s) {
       s_out.push_back(s_in.at(checkpoint_idx));
       v_interp.push_back(v.at(checkpoint_idx));
@@ -78,8 +77,7 @@ autoware_planning_msgs::msg::Path interpolatePath(
     }
     if (
       std::fabs(s - s_in.at(checkpoint_idx - 1)) > epsilon &&
-      std::fabs(s - s_in.at(checkpoint_idx)) > epsilon)
-    {
+      std::fabs(s - s_in.at(checkpoint_idx)) > epsilon) {
       s_out.push_back(s);
       v_interp.push_back(v.at(checkpoint_idx - 1));
     }

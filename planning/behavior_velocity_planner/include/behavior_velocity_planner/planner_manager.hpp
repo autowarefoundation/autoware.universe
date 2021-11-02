@@ -15,24 +15,24 @@
 #ifndef BEHAVIOR_VELOCITY_PLANNER__PLANNER_MANAGER_HPP_
 #define BEHAVIOR_VELOCITY_PLANNER__PLANNER_MANAGER_HPP_
 
+#include <rclcpp/rclcpp.hpp>
+#include <scene_module/scene_module_interface.hpp>
+
+#include <autoware_lanelet2_msgs/msg/map_bin.hpp>
+#include <autoware_perception_msgs/msg/dynamic_object_array.hpp>
+#include <autoware_planning_msgs/msg/path.hpp>
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <diagnostic_msgs/msg/diagnostic_status.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+
+#include <lanelet2_core/LaneletMap.h>
+#include <lanelet2_routing/RoutingGraph.h>
+#include <lanelet2_traffic_rules/TrafficRulesFactory.h>
+#include <tf2_ros/transform_listener.h>
+
 #include <memory>
 #include <string>
 #include <vector>
-
-#include "tf2_ros/transform_listener.h"
-#include "autoware_lanelet2_msgs/msg/map_bin.hpp"
-#include "autoware_perception_msgs/msg/dynamic_object_array.hpp"
-#include "autoware_planning_msgs/msg/path.hpp"
-#include "autoware_planning_msgs/msg/path_with_lane_id.hpp"
-#include "diagnostic_msgs/msg/diagnostic_status.hpp"
-#include "rclcpp/rclcpp.hpp"
-#include "sensor_msgs/msg/point_cloud2.hpp"
-
-#include "lanelet2_core/LaneletMap.h"
-#include "lanelet2_routing/RoutingGraph.h"
-#include "lanelet2_traffic_rules/TrafficRulesFactory.h"
-
-#include "scene_module/scene_module_interface.hpp"
 
 namespace behavior_velocity_planner
 {

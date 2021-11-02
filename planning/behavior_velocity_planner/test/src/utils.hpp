@@ -15,19 +15,19 @@
 #ifndef UTILS_HPP_
 #define UTILS_HPP_
 
+#include <grid_map_core/GridMap.hpp>
+#include <scene_module/occlusion_spot/occlusion_spot_utils.hpp>
+
+#include <autoware_planning_msgs/msg/path_point_with_lane_id.hpp>
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+
+#include <lanelet2_core/geometry/Lanelet.h>
+#include <lanelet2_core/primitives/Lanelet.h>
+#include <lanelet2_routing/RoutingGraph.h>
+#include <lanelet2_traffic_rules/TrafficRulesFactory.h>
+
 #include <utility>
 #include <vector>
-
-#include "lanelet2_core/geometry/Lanelet.h"
-#include "lanelet2_core/primitives/Lanelet.h"
-#include "lanelet2_routing/RoutingGraph.h"
-#include "lanelet2_traffic_rules/TrafficRulesFactory.h"
-
-#include "autoware_planning_msgs/msg/path_point_with_lane_id.hpp"
-#include "autoware_planning_msgs/msg/path_with_lane_id.hpp"
-#include "grid_map_core/GridMap.hpp"
-
-#include "scene_module/occlusion_spot/occlusion_spot_utils.hpp"
 
 namespace test
 {
@@ -124,15 +124,15 @@ inline void generatePossibleCollisions(
   const double lat = -1.0;
   const double velocity = 1.0;
   /**
- * @brief representation of a possible collision between ego and some obstacle
- *                                      ^
- *                                      |
- * Ego ---------collision----------intersection-------> path
- *                                      |
- *             ------------------       |
- *            |     Vehicle      |   obstacle
- *             ------------------
- */
+   * @brief representation of a possible collision between ego and some obstacle
+   *                                      ^
+   *                                      |
+   * Ego ---------collision----------intersection-------> path
+   *                                      |
+   *             ------------------       |
+   *            |     Vehicle      |   obstacle
+   *             ------------------
+   */
   double x_step = (x - x0) / (nb_cols - 1);
   double y_step = (y - y0) / (nb_cols - 1);
   for (int i = 0; i < nb_cols; ++i) {

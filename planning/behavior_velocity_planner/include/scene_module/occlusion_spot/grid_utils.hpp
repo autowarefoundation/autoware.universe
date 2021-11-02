@@ -15,20 +15,20 @@
 #ifndef SCENE_MODULE__OCCLUSION_SPOT__GRID_UTILS_HPP_
 #define SCENE_MODULE__OCCLUSION_SPOT__GRID_UTILS_HPP_
 
+#include <grid_map_core/GridMap.hpp>
+#include <grid_map_core/iterators/LineIterator.hpp>
+#include <grid_map_core/iterators/PolygonIterator.hpp>
+#include <opencv2/opencv.hpp>
+#include <scene_module/occlusion_spot/geometry.hpp>
+
+#include <nav_msgs/msg/occupancy_grid.hpp>
+
+#include <boost/geometry.hpp>
+
+#include <lanelet2_core/geometry/Lanelet.h>
+#include <lanelet2_core/primitives/Lanelet.h>
+
 #include <vector>
-
-#include "boost/geometry.hpp"
-#include "opencv2/opencv.hpp"
-
-#include "lanelet2_core/geometry/Lanelet.h"
-#include "lanelet2_core/primitives/Lanelet.h"
-
-#include "grid_map_core/GridMap.hpp"
-#include "grid_map_core/iterators/LineIterator.hpp"
-#include "grid_map_core/iterators/PolygonIterator.hpp"
-#include "nav_msgs/msg/occupancy_grid.hpp"
-
-#include "scene_module/occlusion_spot/geometry.hpp"
 
 namespace behavior_velocity_planner
 {

@@ -15,16 +15,15 @@
 #ifndef UTILIZATION__PATH_UTILIZATION_HPP_
 #define UTILIZATION__PATH_UTILIZATION_HPP_
 
-#include "rclcpp/rclcpp.hpp"
+#include <autoware_utils/geometry/geometry.hpp>
+#include <rclcpp/rclcpp.hpp>
 
-#include "autoware_planning_msgs/msg/path.hpp"
-#include "autoware_utils/geometry/geometry.hpp"
+#include <autoware_planning_msgs/msg/path.hpp>
 
 namespace behavior_velocity_planner
 {
 autoware_planning_msgs::msg::Path interpolatePath(
-  const autoware_planning_msgs::msg::Path & path, const double length,
-  const double interval = 1.0);
+  const autoware_planning_msgs::msg::Path & path, const double length, const double interval = 1.0);
 autoware_planning_msgs::msg::Path filterLitterPathPoint(
   const autoware_planning_msgs::msg::Path & path);
 autoware_planning_msgs::msg::Path filterStopPathPoint(

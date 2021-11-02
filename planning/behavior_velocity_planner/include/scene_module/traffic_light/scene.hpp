@@ -21,18 +21,17 @@
 #include <vector>
 
 #define EIGEN_MPL2_ONLY
-#include "Eigen/Core"
-#include "Eigen/Geometry"
+#include <Eigen/Core>
+#include <Eigen/Geometry>
+#include <lanelet2_extension/utility/query.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <scene_module/scene_module_interface.hpp>
+#include <utilization/boost_geometry_helper.hpp>
 
-#include "rclcpp/rclcpp.hpp"
+#include <autoware_perception_msgs/msg/looking_traffic_light_state.hpp>
 
-#include "lanelet2_core/LaneletMap.h"
-#include "lanelet2_extension/utility/query.hpp"
-#include "lanelet2_routing/RoutingGraph.h"
-
-#include "scene_module/scene_module_interface.hpp"
-#include "utilization/boost_geometry_helper.hpp"
-#include "autoware_perception_msgs/msg/looking_traffic_light_state.hpp"
+#include <lanelet2_core/LaneletMap.h>
+#include <lanelet2_routing/RoutingGraph.h>
 
 namespace behavior_velocity_planner
 {
@@ -46,9 +45,9 @@ public:
   {
     double base_link2front;
     std::vector<std::tuple<
-        std::shared_ptr<const lanelet::TrafficLight>,
-        autoware_perception_msgs::msg::TrafficLightState>>
-    tl_state;
+      std::shared_ptr<const lanelet::TrafficLight>,
+      autoware_perception_msgs::msg::TrafficLightState>>
+      tl_state;
     std::vector<geometry_msgs::msg::Pose> stop_poses;
     geometry_msgs::msg::Pose first_stop_pose;
     std::vector<geometry_msgs::msg::Pose> dead_line_poses;
@@ -82,7 +81,7 @@ public:
     return looking_tl_state_;
   }
 
-  inline State getTrafficLightModuleState() const {return state_;}
+  inline State getTrafficLightModuleState() const { return state_; }
 
   inline boost::optional<int> getFirstRefStopPathPointIndex() const
   {
@@ -92,13 +91,13 @@ public:
 private:
   bool isStopSignal(const lanelet::ConstLineStringsOrPolygons3d & traffic_lights);
 
-  bool isTrafficLightStateStop(const autoware_perception_msgs::msg::TrafficLightState & tl_state)
-  const;
+  bool isTrafficLightStateStop(
+    const autoware_perception_msgs::msg::TrafficLightState & tl_state) const;
 
   autoware_planning_msgs::msg::PathWithLaneId insertStopPose(
     const autoware_planning_msgs::msg::PathWithLaneId & input,
-    const size_t & insert_target_point_idx,
-    const Eigen::Vector2d & target_point, autoware_planning_msgs::msg::StopReason * stop_reason);
+    const size_t & insert_target_point_idx, const Eigen::Vector2d & target_point,
+    autoware_planning_msgs::msg::StopReason * stop_reason);
 
   bool isPassthrough(const double & signed_arc_length) const;
 

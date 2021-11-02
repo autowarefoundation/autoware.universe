@@ -12,22 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "scene_module/intersection/scene_intersection.hpp"
+#include <lanelet2_extension/regulatory_elements/road_marking.hpp>
+#include <lanelet2_extension/utility/query.hpp>
+#include <lanelet2_extension/utility/utilities.hpp>
+#include <scene_module/intersection/scene_intersection.hpp>
+#include <scene_module/intersection/util.hpp>
+#include <utilization/boost_geometry_helper.hpp>
+#include <utilization/interpolate.hpp>
+#include <utilization/util.hpp>
+
+#include <lanelet2_core/geometry/Polygon.h>
+#include <lanelet2_core/primitives/BasicRegulatoryElements.h>
 
 #include <algorithm>
 #include <memory>
 #include <vector>
-
-#include "lanelet2_core/geometry/Polygon.h"
-#include "lanelet2_core/primitives/BasicRegulatoryElements.h"
-#include "lanelet2_extension/regulatory_elements/road_marking.hpp"
-#include "lanelet2_extension/utility/query.hpp"
-#include "lanelet2_extension/utility/utilities.hpp"
-
-#include "scene_module/intersection/util.hpp"
-#include "utilization/boost_geometry_helper.hpp"
-#include "utilization/interpolate.hpp"
-#include "utilization/util.hpp"
 
 namespace behavior_velocity_planner
 {
@@ -100,9 +99,8 @@ bool IntersectionModule::modifyPathVelocity(
   int pass_judge_line_idx = -1;
   int first_idx_inside_lane = -1;
   if (!util::generateStopLine(
-      lane_id_, conflicting_areas, planner_data_, planner_param_, path, *path, &stop_line_idx,
-      &pass_judge_line_idx, &first_idx_inside_lane, logger_.get_child("util")))
-  {
+        lane_id_, conflicting_areas, planner_data_, planner_param_, path, *path, &stop_line_idx,
+        &pass_judge_line_idx, &first_idx_inside_lane, logger_.get_child("util"))) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(logger_, *clock_, 1000 /* ms */, "setStopLineIdx fail");
     RCLCPP_DEBUG(logger_, "===== plan end =====");
     return false;
@@ -218,7 +216,9 @@ bool IntersectionModule::checkCollision(
   autoware_perception_msgs::msg::DynamicObjectArray target_objects;
   for (const auto & object : objects_ptr->objects) {
     // ignore non-vehicle type objects, such as pedestrian.
-    if (!isTargetCollisionVehicleType(object)) {continue;}
+    if (!isTargetCollisionVehicleType(object)) {
+      continue;
+    }
 
     // ignore vehicle in ego-lane. (TODO update check algorithm)
     const auto object_pose = object.state.pose_covariance.pose;
@@ -433,8 +433,7 @@ bool IntersectionModule::isTargetCollisionVehicleType(
     object.semantic.type == autoware_perception_msgs::msg::Semantic::BUS ||
     object.semantic.type == autoware_perception_msgs::msg::Semantic::TRUCK ||
     object.semantic.type == autoware_perception_msgs::msg::Semantic::MOTORBIKE ||
-    object.semantic.type == autoware_perception_msgs::msg::Semantic::BICYCLE)
-  {
+    object.semantic.type == autoware_perception_msgs::msg::Semantic::BICYCLE) {
     return true;
   }
   return false;
@@ -447,8 +446,7 @@ bool IntersectionModule::isTargetStuckVehicleType(
     object.semantic.type == autoware_perception_msgs::msg::Semantic::CAR ||
     object.semantic.type == autoware_perception_msgs::msg::Semantic::BUS ||
     object.semantic.type == autoware_perception_msgs::msg::Semantic::TRUCK ||
-    object.semantic.type == autoware_perception_msgs::msg::Semantic::MOTORBIKE)
-  {
+    object.semantic.type == autoware_perception_msgs::msg::Semantic::MOTORBIKE) {
     return true;
   }
   return false;
@@ -486,18 +484,18 @@ void IntersectionModule::StateMachine::setStateWithMarginTime(
   RCLCPP_ERROR(logger, "Unsuitable state. ignore request.");
 }
 
-void IntersectionModule::StateMachine::setState(State state) {state_ = state;}
+void IntersectionModule::StateMachine::setState(State state) { state_ = state; }
 
-void IntersectionModule::StateMachine::setMarginTime(const double t) {margin_time_ = t;}
+void IntersectionModule::StateMachine::setMarginTime(const double t) { margin_time_ = t; }
 
-IntersectionModule::State IntersectionModule::StateMachine::getState() {return state_;}
+IntersectionModule::State IntersectionModule::StateMachine::getState() { return state_; }
 
 bool IntersectionModule::isTargetExternalInputStatus(const int target_status)
 {
   return planner_data_->external_intersection_status_input &&
          planner_data_->external_intersection_status_input.get().status == target_status &&
          (clock_->now() - planner_data_->external_intersection_status_input.get().header.stamp)
-         .seconds() < planner_param_.external_input_timeout;
+             .seconds() < planner_param_.external_input_timeout;
 }
 
 bool IntersectionModule::checkAngleForTargetLanelets(

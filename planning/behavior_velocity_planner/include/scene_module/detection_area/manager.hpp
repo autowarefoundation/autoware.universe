@@ -15,14 +15,14 @@
 #ifndef SCENE_MODULE__DETECTION_AREA__MANAGER_HPP_
 #define SCENE_MODULE__DETECTION_AREA__MANAGER_HPP_
 
+#include <rclcpp/rclcpp.hpp>
+#include <scene_module/detection_area/scene.hpp>
+#include <scene_module/scene_module_interface.hpp>
+
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+
 #include <functional>
 #include <memory>
-
-#include "autoware_planning_msgs/msg/path_with_lane_id.hpp"
-#include "rclcpp/rclcpp.hpp"
-
-#include "scene_module/detection_area/scene.hpp"
-#include "scene_module/scene_module_interface.hpp"
 
 namespace behavior_velocity_planner
 {
@@ -31,7 +31,7 @@ class DetectionAreaModuleManager : public SceneModuleManagerInterface
 public:
   explicit DetectionAreaModuleManager(rclcpp::Node & node);
 
-  const char * getModuleName() override {return "detection_area";}
+  const char * getModuleName() override { return "detection_area"; }
 
 private:
   DetectionAreaModule::PlannerParam planner_param_;

@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "scene_module/stop_line/manager.hpp"
+#include <scene_module/stop_line/manager.hpp>
 
-#include <vector>
+#include <memory>
 #include <set>
 #include <string>
-#include <memory>
+#include <vector>
 
 namespace behavior_velocity_planner
 {
@@ -97,10 +97,8 @@ void StopLineModuleManager::launchNewModules(
   for (const auto & stop_line : getStopLinesOnPath(path, planner_data_->lanelet_map)) {
     const auto module_id = stop_line.id();
     if (!isModuleRegistered(module_id)) {
-      registerModule(
-        std::make_shared<StopLineModule>(
-          module_id, stop_line, planner_param_,
-          logger_.get_child("stop_line_module"), clock_));
+      registerModule(std::make_shared<StopLineModule>(
+        module_id, stop_line, planner_param_, logger_.get_child("stop_line_module"), clock_));
     }
   }
 }
@@ -112,7 +110,7 @@ StopLineModuleManager::getModuleExpiredFunction(
   const auto stop_line_id_set = getStopLineIdSetOnPath(path, planner_data_->lanelet_map);
 
   return [stop_line_id_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
-           return stop_line_id_set.count(scene_module->getModuleId()) == 0;
-         };
+    return stop_line_id_set.count(scene_module->getModuleId()) == 0;
+  };
 }
 }  // namespace behavior_velocity_planner

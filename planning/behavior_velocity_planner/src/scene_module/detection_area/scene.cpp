@@ -12,14 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <scene_module/detection_area/scene.hpp>
+#include <utilization/util.hpp>
+
+#include <tf2_eigen/tf2_eigen.h>
+
 #include <algorithm>
 #include <memory>
 #include <utility>
 #include <vector>
-
-#include "scene_module/detection_area/scene.hpp"
-#include "tf2_eigen/tf2_eigen.h"
-#include "utilization/util.hpp"
 
 namespace behavior_velocity_planner
 {
@@ -239,8 +240,7 @@ geometry_msgs::msg::Pose calcTargetPose(
   const auto interpolate_ratio = remain_offset_length / (p_eigen_back - p_eigen_front).norm();
 
   // Add offset to front point
-  const auto target_point_2d =
-    p_eigen_front + interpolate_ratio * (p_eigen_back - p_eigen_front);
+  const auto target_point_2d = p_eigen_front + interpolate_ratio * (p_eigen_back - p_eigen_front);
   const double interpolated_z = p_front.z + interpolate_ratio * (p_back.z - p_front.z);
 
   // Calculate orientation so that X-axis would be along the trajectory
@@ -370,8 +370,7 @@ bool DetectionAreaModule::modifyPathVelocity(
 
     if (
       !first_stop_path_point_index_ ||
-      static_cast<int>(insert_idx) < first_stop_path_point_index_)
-    {
+      static_cast<int>(insert_idx) < first_stop_path_point_index_) {
       debug_data_.first_stop_pose = stop_pose;
       first_stop_path_point_index_ = static_cast<int>(insert_idx);
     }

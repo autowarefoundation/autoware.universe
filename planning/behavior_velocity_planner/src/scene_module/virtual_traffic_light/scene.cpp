@@ -12,16 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "scene_module/virtual_traffic_light/scene.hpp"
+#include <autoware_utils/trajectory/trajectory.hpp>
+#include <scene_module/virtual_traffic_light/scene.hpp>
+#include <utilization/util.hpp>
+
+#include <autoware_v2x_msgs/msg/key_value.hpp>
 
 #include <algorithm>
 #include <string>
 #include <vector>
-
-#include "autoware_utils/trajectory/trajectory.hpp"
-#include "autoware_v2x_msgs/msg/key_value.hpp"
-
-#include "utilization/util.hpp"
 
 namespace behavior_velocity_planner
 {
@@ -75,8 +74,7 @@ std::vector<autoware_utils::LineString3d> toAutowarePoints(
   return output;
 }
 
-autoware_utils::LineString2d to_2d(
-  const autoware_utils::LineString3d & line_string)
+autoware_utils::LineString2d to_2d(const autoware_utils::LineString3d & line_string)
 {
   autoware_utils::LineString2d output;
   for (const auto & p : line_string) {
@@ -99,7 +97,7 @@ geometry_msgs::msg::Pose calcHeadPose(
   return autoware_utils::calcOffsetPose(base_link_pose, base_link_to_front, 0.0, 0.0);
 }
 
-template<class T>
+template <class T>
 boost::optional<SegmentIndexWithPoint> findCollision(
   const T & points, const autoware_utils::LineString3d & line)
 {
@@ -129,8 +127,8 @@ boost::optional<SegmentIndexWithPoint> findCollision(
     const double interpolated_z = p_front.z + interpolate_ratio * (p_back.z - p_front.z);
 
     // To point
-    const auto collision_point = autoware_utils::createPoint(
-      collision_point_2d.x(), collision_point_2d.y(), interpolated_z);
+    const auto collision_point =
+      autoware_utils::createPoint(collision_point_2d.x(), collision_point_2d.y(), interpolated_z);
 
     return SegmentIndexWithPoint{i, collision_point};
   }
@@ -138,7 +136,7 @@ boost::optional<SegmentIndexWithPoint> findCollision(
   return {};
 }
 
-template<class T>
+template <class T>
 boost::optional<SegmentIndexWithPoint> findCollision(
   const T & points, const std::vector<autoware_utils::LineString3d> & lines)
 {
@@ -173,9 +171,7 @@ SegmentIndexWithOffset findForwardOffsetSegment(
 
   // No enough length
   const auto last_segment_length =
-    calcDistance2d(
-    path.points.at(path.points.size() - 2),
-    path.points.at(path.points.size() - 1));
+    calcDistance2d(path.points.at(path.points.size() - 2), path.points.at(path.points.size() - 1));
 
   return {path.points.size() - 2, offset_length - sum_length + last_segment_length};
 }
@@ -204,8 +200,7 @@ SegmentIndexWithOffset findBackwardOffsetSegment(
 }
 
 SegmentIndexWithOffset findOffsetSegment(
-  const autoware_planning_msgs::msg::PathWithLaneId & path,
-  const size_t index, const double offset)
+  const autoware_planning_msgs::msg::PathWithLaneId & path, const size_t index, const double offset)
 {
   if (offset >= 0) {
     return findForwardOffsetSegment(path, index, offset);
@@ -215,8 +210,7 @@ SegmentIndexWithOffset findOffsetSegment(
 }
 
 geometry_msgs::msg::Pose calcInterpolatedPose(
-  const autoware_planning_msgs::msg::PathWithLaneId & path,
-  const size_t index, const double offset)
+  const autoware_planning_msgs::msg::PathWithLaneId & path, const size_t index, const double offset)
 {
   // Get segment points
   const auto & p_front = path.points.at(index).point.pose.position;
@@ -248,8 +242,7 @@ geometry_msgs::msg::Pose calcInterpolatedPose(
   return interpolated_pose;
 }
 
-void insertStopVelocityFromStart(
-  autoware_planning_msgs::msg::PathWithLaneId * path)
+void insertStopVelocityFromStart(autoware_planning_msgs::msg::PathWithLaneId * path)
 {
   for (auto & p : path->points) {
     p.point.twist.linear.x = 0.0;
@@ -331,8 +324,7 @@ VirtualTrafficLightModule::VirtualTrafficLightModule(
     }
 
     // Lane ID
-    map_data_.custom_tags.emplace_back(
-      createKeyValue("lane_id", std::to_string(lane_.id())));
+    map_data_.custom_tags.emplace_back(createKeyValue("lane_id", std::to_string(lane_.id())));
 
     // Turn direction
     map_data_.custom_tags.emplace_back(
@@ -440,8 +432,7 @@ void VirtualTrafficLightModule::updateInfrastructureCommand()
 }
 
 void VirtualTrafficLightModule::setStopReason(
-  const geometry_msgs::msg::Pose & stop_pose,
-  autoware_planning_msgs::msg::StopReason * stop_reason)
+  const geometry_msgs::msg::Pose & stop_pose, autoware_planning_msgs::msg::StopReason * stop_reason)
 {
   autoware_planning_msgs::msg::StopFactor stop_factor;
   stop_factor.stop_pose = stop_pose;
@@ -573,8 +564,8 @@ void VirtualTrafficLightModule::insertStopVelocityAtStopLine(
   setStopReason(stop_pose, stop_reason);
 
   // Set data for visualization
-  module_data_.stop_head_pose_at_stop_line = calcHeadPose(
-    stop_pose, planner_data_->vehicle_info_.max_longitudinal_offset_m);
+  module_data_.stop_head_pose_at_stop_line =
+    calcHeadPose(stop_pose, planner_data_->vehicle_info_.max_longitudinal_offset_m);
 }
 
 void VirtualTrafficLightModule::insertStopVelocityAtEndLine(
@@ -602,7 +593,7 @@ void VirtualTrafficLightModule::insertStopVelocityAtEndLine(
   setStopReason(stop_pose, stop_reason);
 
   // Set data for visualization
-  module_data_.stop_head_pose_at_end_line = calcHeadPose(
-    stop_pose, planner_data_->vehicle_info_.max_longitudinal_offset_m);
+  module_data_.stop_head_pose_at_end_line =
+    calcHeadPose(stop_pose, planner_data_->vehicle_info_.max_longitudinal_offset_m);
 }
 }  // namespace behavior_velocity_planner

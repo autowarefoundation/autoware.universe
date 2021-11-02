@@ -15,15 +15,14 @@
 #ifndef SCENE_MODULE__BLIND_SPOT__MANAGER_HPP_
 #define SCENE_MODULE__BLIND_SPOT__MANAGER_HPP_
 
+#include <rclcpp/rclcpp.hpp>
+#include <scene_module/blind_spot/scene.hpp>
+#include <scene_module/scene_module_interface.hpp>
+
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+
 #include <functional>
 #include <memory>
-
-#include "rclcpp/rclcpp.hpp"
-
-#include "autoware_planning_msgs/msg/path_with_lane_id.hpp"
-
-#include "scene_module/blind_spot/scene.hpp"
-#include "scene_module/scene_module_interface.hpp"
 
 namespace behavior_velocity_planner
 {
@@ -32,7 +31,7 @@ class BlindSpotModuleManager : public SceneModuleManagerInterface
 public:
   explicit BlindSpotModuleManager(rclcpp::Node & node);
 
-  const char * getModuleName() override {return "blind_spot";}
+  const char * getModuleName() override { return "blind_spot"; }
 
 private:
   BlindSpotModule::PlannerParam planner_param_;

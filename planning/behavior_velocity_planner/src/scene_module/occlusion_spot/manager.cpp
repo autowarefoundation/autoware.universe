@@ -12,16 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <scene_module/occlusion_spot/manager.hpp>
+#include <scene_module/occlusion_spot/scene_occlusion_spot_in_private_road.hpp>
+#include <scene_module/occlusion_spot/scene_occlusion_spot_in_public_road.hpp>
+#include <utilization/util.hpp>
+
+#include <lanelet2_core/primitives/BasicRegulatoryElements.h>
+
 #include <memory>
 #include <string>
 #include <vector>
-
-#include "lanelet2_core/primitives/BasicRegulatoryElements.h"
-
-#include "scene_module/occlusion_spot/manager.hpp"
-#include "scene_module/occlusion_spot/scene_occlusion_spot_in_private_road.hpp"
-#include "scene_module/occlusion_spot/scene_occlusion_spot_in_public_road.hpp"
-#include "utilization/util.hpp"
 
 namespace behavior_velocity_planner
 {
@@ -74,8 +74,8 @@ OcclusionSpotModuleManager::OcclusionSpotModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterface(node, getModuleName())
 {
   const std::string ns(getModuleName());
-  pub_debug_occupancy_grid_ = node.create_publisher<nav_msgs::msg::OccupancyGrid>(
-    "~/debug/" + ns + "/occupancy_grid", 1);
+  pub_debug_occupancy_grid_ =
+    node.create_publisher<nav_msgs::msg::OccupancyGrid>("~/debug/" + ns + "/occupancy_grid", 1);
 
   // for crosswalk parameters
   auto & pp = planner_param_;
@@ -101,8 +101,8 @@ OcclusionSpotModuleManager::OcclusionSpotModuleManager(rclcpp::Node & node)
   pp.private_road.pbs_decel = node.declare_parameter(ns + ".private_road.pbs_decel", -2.5);
 
   // sidewalk param
-  pp.sidewalk.min_occlusion_spot_size = node.declare_parameter(
-    ns + ".sidewalk.min_occlusion_spot_size", 2.0);
+  pp.sidewalk.min_occlusion_spot_size =
+    node.declare_parameter(ns + ".sidewalk.min_occlusion_spot_size", 2.0);
   pp.sidewalk.focus_range = node.declare_parameter(ns + ".sidewalk.focus_range", 4.0);
   pp.sidewalk.slice_size = node.declare_parameter(ns + ".sidewalk.slice_size", 1.5);
   // occupancy grid param
@@ -118,20 +118,17 @@ void OcclusionSpotModuleManager::launchNewModules(
   // private
   if (!isModuleRegistered(private_road_module_id)) {
     if (hasPrivateRoadOnPath(path, planner_data_->lanelet_map)) {
-      registerModule(
-        std::make_shared<OcclusionSpotInPrivateModule>(
-          private_road_module_id, planner_data_, planner_param_,
-          logger_.get_child("occlusion_spot_in_private_module"), clock_,
-          pub_debug_occupancy_grid_));
+      registerModule(std::make_shared<OcclusionSpotInPrivateModule>(
+        private_road_module_id, planner_data_, planner_param_,
+        logger_.get_child("occlusion_spot_in_private_module"), clock_, pub_debug_occupancy_grid_));
     }
   }
   // public
   if (!isModuleRegistered(public_road_module_id)) {
     if (hasPublicRoadOnPath(path, planner_data_->lanelet_map)) {
-      registerModule(
-        std::make_shared<OcclusionSpotInPublicModule>(
-          public_road_module_id, planner_data_, planner_param_,
-          logger_.get_child("occlusion_spot_in_public_module"), clock_));
+      registerModule(std::make_shared<OcclusionSpotInPublicModule>(
+        public_road_module_id, planner_data_, planner_param_,
+        logger_.get_child("occlusion_spot_in_public_module"), clock_));
     }
   }
 }
@@ -143,14 +140,14 @@ OcclusionSpotModuleManager::getModuleExpiredFunction(
   const bool has_public_road = hasPublicRoadOnPath(path, planner_data_->lanelet_map);
   const bool has_private_road = hasPrivateRoadOnPath(path, planner_data_->lanelet_map);
   return [has_private_road,
-           has_public_road](const std::shared_ptr<SceneModuleInterface> & scene_module) {
-           if (scene_module->getModuleId() == static_cast<int64_t>(ModuleID::PRIVATE)) {
-             return !has_private_road;
-           }
-           if (scene_module->getModuleId() == static_cast<int64_t>(ModuleID::PUBLIC)) {
-             return !has_public_road;
-           }
-           return true;
-         };
+          has_public_road](const std::shared_ptr<SceneModuleInterface> & scene_module) {
+    if (scene_module->getModuleId() == static_cast<int64_t>(ModuleID::PRIVATE)) {
+      return !has_private_road;
+    }
+    if (scene_module->getModuleId() == static_cast<int64_t>(ModuleID::PUBLIC)) {
+      return !has_public_road;
+    }
+    return true;
+  };
 }
 }  // namespace behavior_velocity_planner

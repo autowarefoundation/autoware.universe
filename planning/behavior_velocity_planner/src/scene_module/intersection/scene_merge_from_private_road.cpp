@@ -12,22 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "scene_module/intersection/scene_merge_from_private_road.hpp"
+#include <lanelet2_extension/regulatory_elements/road_marking.hpp>
+#include <lanelet2_extension/utility/query.hpp>
+#include <lanelet2_extension/utility/utilities.hpp>
+#include <scene_module/intersection/scene_merge_from_private_road.hpp>
+#include <scene_module/intersection/util.hpp>
+#include <utilization/boost_geometry_helper.hpp>
+#include <utilization/interpolate.hpp>
+#include <utilization/util.hpp>
+
+#include <lanelet2_core/geometry/Polygon.h>
+#include <lanelet2_core/primitives/BasicRegulatoryElements.h>
 
 #include <memory>
 #include <string>
 #include <vector>
-
-#include "lanelet2_core/geometry/Polygon.h"
-#include "lanelet2_core/primitives/BasicRegulatoryElements.h"
-#include "lanelet2_extension/regulatory_elements/road_marking.hpp"
-#include "lanelet2_extension/utility/query.hpp"
-#include "lanelet2_extension/utility/utilities.hpp"
-
-#include "scene_module/intersection/util.hpp"
-#include "utilization/boost_geometry_helper.hpp"
-#include "utilization/interpolate.hpp"
-#include "utilization/util.hpp"
 
 namespace behavior_velocity_planner
 {
@@ -87,10 +86,9 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(
   const auto private_path =
     extractPathNearExitOfPrivateRoad(*path, planner_data_->vehicle_info_.vehicle_length_m);
   if (!util::generateStopLine(
-      lane_id_, conflicting_areas, planner_data_, planner_param_.intersection_param, path,
-      private_path, &stop_line_idx, &judge_line_idx, &first_idx_inside_lane,
-      logger_.get_child("util")))
-  {
+        lane_id_, conflicting_areas, planner_data_, planner_param_.intersection_param, path,
+        private_path, &stop_line_idx, &judge_line_idx, &first_idx_inside_lane,
+        logger_.get_child("util"))) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(logger_, *clock_, 1000 /* ms */, "setStopLineIdx fail");
     return false;
   }
@@ -127,8 +125,7 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(
     constexpr double distance_threshold = 2.0;
     if (
       distance < distance_threshold &&
-      planner_data_->isVehicleStopped(planner_param_.stop_duration_sec))
-    {
+      planner_data_->isVehicleStopped(planner_param_.stop_duration_sec)) {
       state_machine_.setState(State::GO);
     }
 
@@ -180,9 +177,9 @@ MergeFromPrivateRoadModule::extractPathNearExitOfPrivateRoad(
   return private_path;
 }
 
-void MergeFromPrivateRoadModule::StateMachine::setState(State state) {state_ = state;}
+void MergeFromPrivateRoadModule::StateMachine::setState(State state) { state_ = state; }
 
-void MergeFromPrivateRoadModule::StateMachine::setMarginTime(const double t) {margin_time_ = t;}
+void MergeFromPrivateRoadModule::StateMachine::setMarginTime(const double t) { margin_time_ = t; }
 
 MergeFromPrivateRoadModule::State MergeFromPrivateRoadModule::StateMachine::getState()
 {

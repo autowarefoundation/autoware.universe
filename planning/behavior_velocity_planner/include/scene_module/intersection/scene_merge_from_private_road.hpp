@@ -15,29 +15,28 @@
 #ifndef SCENE_MODULE__INTERSECTION__SCENE_MERGE_FROM_PRIVATE_ROAD_HPP_
 #define SCENE_MODULE__INTERSECTION__SCENE_MERGE_FROM_PRIVATE_ROAD_HPP_
 
+#include <autoware_utils/autoware_utils.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <scene_module/intersection/scene_intersection.hpp>
+#include <scene_module/scene_module_interface.hpp>
+#include <utilization/boost_geometry_helper.hpp>
+
+#include <autoware_perception_msgs/msg/dynamic_object.hpp>
+#include <autoware_perception_msgs/msg/dynamic_object_array.hpp>
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <geometry_msgs/msg/point.hpp>
+
+#include <lanelet2_core/LaneletMap.h>
+#include <lanelet2_routing/RoutingGraph.h>
+
 #include <memory>
 #include <string>
 #include <vector>
 
-#include "rclcpp/rclcpp.hpp"
-
-#include "autoware_perception_msgs/msg/dynamic_object.hpp"
-#include "autoware_perception_msgs/msg/dynamic_object_array.hpp"
-#include "autoware_planning_msgs/msg/path_with_lane_id.hpp"
-#include "autoware_utils/autoware_utils.hpp"
-#include "geometry_msgs/msg/point.hpp"
-
-#include "lanelet2_core/LaneletMap.h"
-#include "lanelet2_routing/RoutingGraph.h"
-
-#include "scene_module/intersection/scene_intersection.hpp"
-#include "scene_module/scene_module_interface.hpp"
-#include "utilization/boost_geometry_helper.hpp"
-
 /**
- * @brief This module makes sure that vehicle will stop before entering public road from private road.
- *        This module is meant to be registered with intersection module, which looks at intersecting lanes
- *        before entering intersection
+ * @brief This module makes sure that vehicle will stop before entering public road from private
+ * road. This module is meant to be registered with intersection module, which looks at intersecting
+ * lanes before entering intersection
  */
 
 namespace behavior_velocity_planner
@@ -45,8 +44,7 @@ namespace behavior_velocity_planner
 class MergeFromPrivateRoadModule : public SceneModuleInterface
 {
 public:
-  enum class State
-  {
+  enum class State {
     STOP = 0,
     GO,
   };
@@ -66,7 +64,7 @@ public:
    */
   class StateMachine
   {
-public:
+  public:
     StateMachine()
     {
       state_ = State::GO;
@@ -76,7 +74,7 @@ public:
     void setMarginTime(const double t);
     State getState();
 
-private:
+  private:
     State state_;                               //! current state
     double margin_time_;                        //! margin time when transit to Go from Stop
     std::shared_ptr<rclcpp::Time> start_time_;  //! first time received GO when STOP state

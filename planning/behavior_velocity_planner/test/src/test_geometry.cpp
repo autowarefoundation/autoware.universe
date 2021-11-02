@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <vector>
-
-#include "gtest/gtest.h"
-
-#include "scene_module/occlusion_spot/geometry.hpp"
-
 #include "utils.hpp"
+
+#include <scene_module/occlusion_spot/geometry.hpp>
+
+#include <gtest/gtest.h>
+
+#include <vector>
 
 TEST(lerp, interpolation)
 {
@@ -35,9 +35,9 @@ TEST(lerp, interpolation)
   EXPECT_EQ(lerp(-10.0, -5.0, 0.5), -7.5);
   // 2D
   auto expect_eq = [](V v1, V v2) {
-      EXPECT_EQ(v1.x(), v2.x());
-      EXPECT_EQ(v1.y(), v2.y());
-    };
+    EXPECT_EQ(v1.x(), v2.x());
+    EXPECT_EQ(v1.y(), v2.y());
+  };
   expect_eq(lerp(V(0.0, 0.0), V(0.0, 1.0), 0.5), V(0.0, 0.5));
   expect_eq(lerp(V(0.0, 1.0), V(0.0, 2.0), 0.5), V(0.0, 1.5));
   expect_eq(lerp(V(0.0, 0.0), V(2.0, 2.0), 0.5), V(1.0, 1.0));
@@ -49,9 +49,9 @@ TEST(buildInterpolatedPolygon, straight_polygon)
   using behavior_velocity_planner::geometry::buildInterpolatedPolygon;
   using V = Eigen::Vector2d;
   auto expect_eq = [](V v1, V v2) {
-      EXPECT_EQ(v1.x(), v2.x());
-      EXPECT_EQ(v1.y(), v2.y());
-    };
+    EXPECT_EQ(v1.x(), v2.x());
+    EXPECT_EQ(v1.y(), v2.y());
+  };
 
   lanelet::BasicLineString2d from;
   lanelet::BasicLineString2d to;
@@ -170,10 +170,9 @@ TEST(buildSlices, 3x3square_slice)
     buildSlices(slices, traj_lanelet, range, slice_length, slice_width);
     SliceRange ref;
     auto equal_range = [&ref](const Slice & s) {
-        return s.range.min_distance == ref.min_distance &&
-               s.range.max_distance == ref.max_distance &&
-               s.range.min_length == ref.min_length && s.range.max_length == ref.max_length;
-      };
+      return s.range.min_distance == ref.min_distance && s.range.max_distance == ref.max_distance &&
+             s.range.min_length == ref.min_length && s.range.max_length == ref.max_length;
+    };
     ASSERT_EQ(slices.size(), static_cast<size_t>(9));
     for (double l = range.min_length; l < range.max_length; l += slice_length) {
       for (double d = range.min_distance; d > range.max_distance; d -= slice_width) {
@@ -193,10 +192,9 @@ TEST(buildSlices, 3x3square_slice)
     buildSlices(slices, traj_lanelet, range, slice_length, slice_width);
     SliceRange ref;
     auto equal_range = [&ref](const Slice & s) {
-        return s.range.min_distance == ref.min_distance &&
-               s.range.max_distance == ref.max_distance &&
-               s.range.min_length == ref.min_length && s.range.max_length == ref.max_length;
-      };
+      return s.range.min_distance == ref.min_distance && s.range.max_distance == ref.max_distance &&
+             s.range.min_length == ref.min_length && s.range.max_length == ref.max_length;
+    };
     ASSERT_EQ(slices.size(), static_cast<size_t>(9));
     for (double l = range.min_length; l < range.max_length; l += slice_length) {
       for (double d = range.min_distance; d < range.max_distance; d += slice_width) {

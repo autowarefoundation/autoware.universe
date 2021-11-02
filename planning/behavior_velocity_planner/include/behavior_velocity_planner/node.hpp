@@ -15,24 +15,25 @@
 #ifndef BEHAVIOR_VELOCITY_PLANNER__NODE_HPP_
 #define BEHAVIOR_VELOCITY_PLANNER__NODE_HPP_
 
-#include <memory>
-#include <string>
-
-#include "tf2_ros/buffer.h"
-#include "tf2_ros/transform_listener.h"
-
-#include "autoware_api_msgs/msg/crosswalk_status.hpp"
-#include "autoware_api_msgs/msg/intersection_status.hpp"
-#include "autoware_lanelet2_msgs/msg/map_bin.hpp"
-#include "autoware_perception_msgs/msg/dynamic_object_array.hpp"
-#include "autoware_planning_msgs/msg/path.hpp"
-#include "autoware_planning_msgs/msg/path_with_lane_id.hpp"
-#include "nav_msgs/msg/occupancy_grid.hpp"
-#include "rclcpp/rclcpp.hpp"
-#include "sensor_msgs/msg/point_cloud2.hpp"
-
 #include "behavior_velocity_planner/planner_data.hpp"
 #include "behavior_velocity_planner/planner_manager.hpp"
+
+#include <rclcpp/rclcpp.hpp>
+
+#include <autoware_api_msgs/msg/crosswalk_status.hpp>
+#include <autoware_api_msgs/msg/intersection_status.hpp>
+#include <autoware_lanelet2_msgs/msg/map_bin.hpp>
+#include <autoware_perception_msgs/msg/dynamic_object_array.hpp>
+#include <autoware_planning_msgs/msg/path.hpp>
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <nav_msgs/msg/occupancy_grid.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
+
+#include <memory>
+#include <string>
 
 namespace behavior_velocity_planner
 {
@@ -64,8 +65,7 @@ private:
     sub_external_traffic_light_states_;
   rclcpp::Subscription<autoware_v2x_msgs::msg::VirtualTrafficLightStateArray>::SharedPtr
     sub_virtual_traffic_light_states_;
-  rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr
-    sub_occupancy_grid_;
+  rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr sub_occupancy_grid_;
 
   void onTrigger(const autoware_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg);
   void onDynamicObjects(

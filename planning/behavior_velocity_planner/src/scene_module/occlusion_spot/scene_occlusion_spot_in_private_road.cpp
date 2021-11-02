@@ -12,16 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <lanelet2_extension/utility/utilities.hpp>
+#include <scene_module/occlusion_spot/occlusion_spot_utils.hpp>
+#include <scene_module/occlusion_spot/risk_predictive_braking.hpp>
+#include <scene_module/occlusion_spot/scene_occlusion_spot_in_private_road.hpp>
+#include <utilization/util.hpp>
+
+#include <lanelet2_core/primitives/BasicRegulatoryElements.h>
+
 #include <memory>
 #include <vector>
-#include "lanelet2_core/primitives/BasicRegulatoryElements.h"
-
-#include "lanelet2_extension/utility/utilities.hpp"
-
-#include "scene_module/occlusion_spot/occlusion_spot_utils.hpp"
-#include "scene_module/occlusion_spot/risk_predictive_braking.hpp"
-#include "scene_module/occlusion_spot/scene_occlusion_spot_in_private_road.hpp"
-#include "utilization/util.hpp"
 
 namespace behavior_velocity_planner
 {
@@ -56,8 +56,7 @@ bool OcclusionSpotInPrivateModule::modifyPathVelocity(
 
   int closest_idx = -1;
   if (!planning_utils::calcClosestIndex<autoware_planning_msgs::msg::PathWithLaneId>(
-      *path, ego_pose, closest_idx, param_.dist_thr, param_.angle_thr))
-  {
+        *path, ego_pose, closest_idx, param_.dist_thr, param_.angle_thr)) {
     return true;
   }
 
@@ -69,14 +68,14 @@ bool OcclusionSpotInPrivateModule::modifyPathVelocity(
   {
     // extract lanelet that includes target_road_type only
     if (!behavior_velocity_planner::occlusion_spot_utils::extractTargetRoad(
-        closest_idx, lanelet_map_ptr, max_range, *path,
-        offset_from_closest_to_target, limited_path, target_road_type))
-    {
+          closest_idx, lanelet_map_ptr, max_range, *path, offset_from_closest_to_target,
+          limited_path, target_road_type)) {
       return true;
     }
     // use path point as origin for stability
-    offset_from_ego_to_closest = -planning_utils::transformRelCoordinate2D(
-      ego_pose, path->points[closest_idx].point.pose).position.x;
+    offset_from_ego_to_closest =
+      -planning_utils::transformRelCoordinate2D(ego_pose, path->points[closest_idx].point.pose)
+         .position.x;
   }
   // this module use spline interpolation that needs more than 4 points
   if (limited_path.points.size() < 4) {
@@ -89,12 +88,11 @@ bool OcclusionSpotInPrivateModule::modifyPathVelocity(
     publisher_->publish(occ_grid);
   }
   std::vector<occlusion_spot_utils::PossibleCollisionInfo> possible_collisions;
-  const double offset_from_ego_to_target = offset_from_ego_to_closest +
-    offset_from_closest_to_target;
+  const double offset_from_ego_to_target =
+    offset_from_ego_to_closest + offset_from_closest_to_target;
   RCLCPP_DEBUG_STREAM_THROTTLE(logger_, *clock_, 3000, "closest_idx : " << closest_idx);
   RCLCPP_DEBUG_STREAM_THROTTLE(
-    logger_, *clock_, 3000,
-    "offset_from_ego_to_target : " << offset_from_ego_to_target);
+    logger_, *clock_, 3000, "offset_from_ego_to_target : " << offset_from_ego_to_target);
   occlusion_spot_utils::generatePossibleCollisions(
     possible_collisions, limited_path, grid_map, offset_from_ego_to_closest,
     offset_from_closest_to_target, param_, debug_data_.sidewalks);

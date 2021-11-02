@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "gtest/gtest.h"
-#include "utilization/util.hpp"
-#include "utilization/boost_geometry_helper.hpp"
 #include "utils.hpp"
 
+#include <utilization/boost_geometry_helper.hpp>
+#include <utilization/util.hpp>
+
+#include <gtest/gtest.h>
 
 TEST(to_footprint_polygon, nominal)
 {

@@ -15,29 +15,28 @@
 #ifndef SCENE_MODULE__VIRTUAL_TRAFFIC_LIGHT__SCENE_HPP_
 #define SCENE_MODULE__VIRTUAL_TRAFFIC_LIGHT__SCENE_HPP_
 
+#include <autoware_utils/geometry/boost_geometry.hpp>
+#include <lanelet2_extension/regulatory_elements/virtual_traffic_light.hpp>
+#include <lanelet2_extension/utility/query.hpp>
+#include <nlohmann/json.hpp>
+#include <rclcpp/clock.hpp>
+#include <rclcpp/logger.hpp>
+#include <scene_module/scene_module_interface.hpp>
+#include <vehicle_info_util/vehicle_info.hpp>
+
+#include <lanelet2_core/LaneletMap.h>
+#include <lanelet2_routing/RoutingGraph.h>
+
 #include <memory>
 #include <string>
 #include <vector>
-
-#include "autoware_utils/geometry/boost_geometry.hpp"
-#include "lanelet2_core/LaneletMap.h"
-#include "lanelet2_extension/regulatory_elements/virtual_traffic_light.hpp"
-#include "lanelet2_extension/utility/query.hpp"
-#include "lanelet2_routing/RoutingGraph.h"
-#include "nlohmann/json.hpp"
-#include "rclcpp/clock.hpp"
-#include "rclcpp/logger.hpp"
-#include "vehicle_info_util/vehicle_info.hpp"
-
-#include "scene_module/scene_module_interface.hpp"
 
 namespace behavior_velocity_planner
 {
 class VirtualTrafficLightModule : public SceneModuleInterface
 {
 public:
-  enum class State : uint8_t
-  {
+  enum class State : uint8_t {
     NONE = 0,
     REQUESTING = 1,
     PASSING = 2,

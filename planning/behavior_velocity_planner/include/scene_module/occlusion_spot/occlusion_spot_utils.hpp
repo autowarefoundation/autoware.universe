@@ -15,25 +15,24 @@
 #ifndef SCENE_MODULE__OCCLUSION_SPOT__OCCLUSION_SPOT_UTILS_HPP_
 #define SCENE_MODULE__OCCLUSION_SPOT__OCCLUSION_SPOT_UTILS_HPP_
 
+#include <lanelet2_extension/utility/query.hpp>
+#include <lanelet2_extension/utility/utilities.hpp>
+#include <lanelet2_extension/visualization/visualization.hpp>
+#include <scene_module/occlusion_spot/geometry.hpp>
+#include <scene_module/occlusion_spot/grid_utils.hpp>
+
+#include <autoware_perception_msgs/msg/dynamic_object_array.hpp>
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <visualization_msgs/msg/marker.hpp>
+
+#include <lanelet2_core/LaneletMap.h>
+#include <lanelet2_core/geometry/LaneletMap.h>
+#include <tf2/utils.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+
 #include <algorithm>
 #include <chrono>
 #include <vector>
-
-#include "lanelet2_core/LaneletMap.h"
-#include "lanelet2_core/geometry/LaneletMap.h"
-
-#include "autoware_perception_msgs/msg/dynamic_object_array.hpp"
-#include "autoware_planning_msgs/msg/path_with_lane_id.hpp"
-
-#include "lanelet2_extension/utility/query.hpp"
-#include "lanelet2_extension/utility/utilities.hpp"
-#include "lanelet2_extension/visualization/visualization.hpp"
-#include "tf2/utils.h"
-#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
-#include "visualization_msgs/msg/marker.hpp"
-
-#include "scene_module/occlusion_spot/geometry.hpp"
-#include "scene_module/occlusion_spot/grid_utils.hpp"
 
 namespace behavior_velocity_planner
 {
@@ -120,8 +119,7 @@ struct PossibleCollisionInfo
 ROAD_TYPE getCurrentRoadType(
   const lanelet::ConstLanelet & current_lanelet, const lanelet::LaneletMapPtr & lanelet_map_ptr);
 //!< @brief build a Lanelet from a interpolated path
-lanelet::ConstLanelet buildPathLanelet(
-  const autoware_planning_msgs::msg::PathWithLaneId & path);
+lanelet::ConstLanelet buildPathLanelet(const autoware_planning_msgs::msg::PathWithLaneId & path);
 //!< @brief calculate intersection and collision point from occlusion spot
 void calculateCollisionPathPointFromOcclusionSpot(
   PossibleCollisionInfo & pc, const lanelet::BasicPoint2d & obstacle_point,
@@ -136,21 +134,19 @@ void createPossibleCollisionBehindParkedVehicle(
 //!< @brief set velocity and orientation to collision point based on previous Path with laneId
 void calcVelocityAndHeightToPossibleCollision(
   const int closest_idx, const autoware_planning_msgs::msg::PathWithLaneId & path,
-  const double offset_from_ego_to_target,
-  std::vector<PossibleCollisionInfo> & possible_collisions);
+  const double offset_from_ego_to_target, std::vector<PossibleCollisionInfo> & possible_collisions);
 //!< @brief extract lanelet that includes target_road_type only
 bool extractTargetRoad(
   const int closest_idx, const lanelet::LaneletMapPtr lanelet_map_ptr, const double max_range,
   const autoware_planning_msgs::msg::PathWithLaneId & src_path,
-  double & offset_from_closest_to_target,
-  autoware_planning_msgs::msg::PathWithLaneId & tar_path, const ROAD_TYPE & target_road_type);
+  double & offset_from_closest_to_target, autoware_planning_msgs::msg::PathWithLaneId & tar_path,
+  const ROAD_TYPE & target_road_type);
 //!< @brief generate collision coming from occlusion spots of the given grid map and lanelet map
 void generatePossibleCollisions(
   std::vector<PossibleCollisionInfo> & possible_collisions,
   const autoware_planning_msgs::msg::PathWithLaneId & path, const grid_map::GridMap & grid,
-  const double offset_from_ego_to_closest,
-  const double offset_from_closest_to_target, const PlannerParam & param,
-  std::vector<lanelet::BasicPolygon2d> & debug);
+  const double offset_from_ego_to_closest, const double offset_from_closest_to_target,
+  const PlannerParam & param, std::vector<lanelet::BasicPolygon2d> & debug);
 //!< @brief convert a set of occlusion spots found on sidewalk slice
 void generateSidewalkPossibleCollisionFromOcclusionSpot(
   std::vector<PossibleCollisionInfo> & possible_collisions, const grid_map::GridMap & grid,
@@ -160,10 +156,9 @@ void generateSidewalkPossibleCollisionFromOcclusionSpot(
 //!< @brief generate possible collisions coming from occlusion spots on the side of the path
 void generateSidewalkPossibleCollisions(
   std::vector<PossibleCollisionInfo> & possible_collisions, const grid_map::GridMap & grid,
-  const double offset_from_ego_to_closest,
-  const double offset_from_closest_to_target,
-  const lanelet::ConstLanelet & path_lanelet,
-  const PlannerParam & param, std::vector<lanelet::BasicPolygon2d> & debug);
+  const double offset_from_ego_to_closest, const double offset_from_closest_to_target,
+  const lanelet::ConstLanelet & path_lanelet, const PlannerParam & param,
+  std::vector<lanelet::BasicPolygon2d> & debug);
 
 }  // namespace occlusion_spot_utils
 }  // namespace behavior_velocity_planner

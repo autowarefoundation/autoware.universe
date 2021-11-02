@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "utils.hpp"
+
+#include <scene_module/occlusion_spot/grid_utils.hpp>
+#include <scene_module/occlusion_spot/occlusion_spot_utils.hpp>
+
+#include <gtest/gtest.h>
+
 #include <chrono>
 #include <memory>
 #include <string>
 #include <vector>
-
-#include "gtest/gtest.h"
-
-#include "scene_module/occlusion_spot/grid_utils.hpp"
-#include "scene_module/occlusion_spot/occlusion_spot_utils.hpp"
-
-#include "utils.hpp"
 
 using test::grid_param;
 
@@ -78,7 +78,7 @@ TEST(performances, many_sidewalk_occlusion_spots)
     offset_from_closest_to_target, parameters, to_remove);
   auto end_closest = high_resolution_clock::now();
   std::string ms = " (micro seconds) ";
-  std::cout << "| only_closest : runtime (microseconds) \n" <<
-    "| true : " << duration_cast<microseconds>(end_closest - start_closest).count() << ms <<
-    "\n";
+  std::cout << "| only_closest : runtime (microseconds) \n"
+            << "| true : " << duration_cast<microseconds>(end_closest - start_closest).count() << ms
+            << "\n";
 }

@@ -12,19 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <scene_module/traffic_light/scene.hpp>
+#include <utilization/util.hpp>
+
+#include <boost/optional.hpp>  // To be replaced by std::optional in C++17
+
+#include <tf2/utils.h>
+#include <tf2_eigen/tf2_eigen.h>
+
 #include <algorithm>
 #include <map>
 #include <string>
 #include <utility>
 #include <vector>
-
-#include "boost/optional.hpp"  // To be replaced by std::optional in C++17
-
-#include "tf2/utils.h"
-#include "tf2_eigen/tf2_eigen.h"
-
-#include "scene_module/traffic_light/scene.hpp"
-#include "utilization/util.hpp"
 
 namespace behavior_velocity_planner
 {
@@ -40,9 +40,9 @@ std::pair<int, double> findWayPointAndDistance(
     const double dx = p.x() - input_path.points.at(i).point.pose.position.x;
     const double dy = p.y() - input_path.points.at(i).point.pose.position.y;
     const double dx_wp = input_path.points.at(i + 1).point.pose.position.x -
-      input_path.points.at(i).point.pose.position.x;
+                         input_path.points.at(i).point.pose.position.x;
     const double dy_wp = input_path.points.at(i + 1).point.pose.position.y -
-      input_path.points.at(i).point.pose.position.y;
+                         input_path.points.at(i).point.pose.position.y;
 
     const double theta = std::atan2(dy, dx) - std::atan2(dy_wp, dx_wp);
 
@@ -78,9 +78,9 @@ double calcArcLengthFromWayPoint(
   const size_t dst_idx = dst >= 0 ? static_cast<size_t>(dst) : 0;
   for (size_t i = src_idx; i < dst_idx; ++i) {
     const double dx_wp = input_path.points.at(i + 1).point.pose.position.x -
-      input_path.points.at(i).point.pose.position.x;
+                         input_path.points.at(i).point.pose.position.x;
     const double dy_wp = input_path.points.at(i + 1).point.pose.position.y -
-      input_path.points.at(i).point.pose.position.y;
+                         input_path.points.at(i).point.pose.position.y;
     length += std::hypot(dx_wp, dy_wp);
   }
   return length;
@@ -109,8 +109,8 @@ double calcSignedArcLength(
   }
 }
 
-[[maybe_unused]]
-double calcSignedDistance(const geometry_msgs::msg::Pose & p1, const Eigen::Vector2d & p2)
+[[maybe_unused]] double calcSignedDistance(
+  const geometry_msgs::msg::Pose & p1, const Eigen::Vector2d & p2)
 {
   Eigen::Affine3d map2p1;
   tf2::fromMsg(p1, map2p1);
@@ -134,7 +134,9 @@ boost::optional<Point2d> findNearestCollisionPoint(
   std::vector<Point2d> collision_points;
   bg::intersection(line1, line2, collision_points);
 
-  if (collision_points.empty()) {return boost::none;}
+  if (collision_points.empty()) {
+    return boost::none;
+  }
 
   // check nearest collision point
   Point2d nearest_collision_point;
@@ -154,18 +156,22 @@ bool createTargetPoint(
   const autoware_planning_msgs::msg::PathWithLaneId & input, const LineString2d & stop_line,
   const double offset, size_t & target_point_idx, Eigen::Vector2d & target_point)
 {
-  if (input.points.size() < 2) {return false;}
+  if (input.points.size() < 2) {
+    return false;
+  }
   for (size_t i = 0; i < input.points.size() - 1; ++i) {
-    Point2d path_line_begin = {input.points.at(i).point.pose.position.x,
-      input.points.at(i).point.pose.position.y};
-    Point2d path_line_end = {input.points.at(i + 1).point.pose.position.x,
-      input.points.at(i + 1).point.pose.position.y};
+    Point2d path_line_begin = {
+      input.points.at(i).point.pose.position.x, input.points.at(i).point.pose.position.y};
+    Point2d path_line_end = {
+      input.points.at(i + 1).point.pose.position.x, input.points.at(i + 1).point.pose.position.y};
     LineString2d path_line = {path_line_begin, path_line_end};
 
     // check nearest collision point
     const auto nearest_collision_point =
       findNearestCollisionPoint(path_line, stop_line, path_line_begin);
-    if (!nearest_collision_point) {continue;}
+    if (!nearest_collision_point) {
+      continue;
+    }
 
     // search target point index
     target_point_idx = 0;
@@ -298,13 +304,10 @@ bool TrafficLightModule::modifyPathVelocity(
   Eigen::Vector2d stop_line_point{};
   size_t stop_line_point_idx{};
   if (!calcStopPointAndInsertIndex(
-      input_path, lanelet_stop_lines,
-      planner_param_.stop_margin + planner_data_->vehicle_info_.max_longitudinal_offset_m,
-      planner_data_->stop_line_extend_length, stop_line_point, stop_line_point_idx))
-  {
-    RCLCPP_WARN_THROTTLE(
-      logger_, *clock_, 5000,
-      "Failed to calculate stop point and insert index");
+        input_path, lanelet_stop_lines,
+        planner_param_.stop_margin + planner_data_->vehicle_info_.max_longitudinal_offset_m,
+        planner_data_->stop_line_extend_length, stop_line_point, stop_line_point_idx)) {
+    RCLCPP_WARN_THROTTLE(logger_, *clock_, 5000, "Failed to calculate stop point and insert index");
     return false;
   }
 
@@ -433,8 +436,7 @@ bool TrafficLightModule::isPassthrough(const double & signed_arc_length) const
     } else {
       // pass through
       RCLCPP_WARN_THROTTLE(
-        logger_, *clock_, 1000,
-        "[traffic_light] can pass through intersection during yellow lamp");
+        logger_, *clock_, 1000, "[traffic_light] can pass through intersection during yellow lamp");
       return true;
     }
   } else {
@@ -456,20 +458,17 @@ bool TrafficLightModule::isTrafficLightStateStop(
   }
   if (
     turn_direction == "right" &&
-    hasLampState(tl_state, autoware_perception_msgs::msg::LampState::RIGHT))
-  {
+    hasLampState(tl_state, autoware_perception_msgs::msg::LampState::RIGHT)) {
     return false;
   }
   if (
     turn_direction == "left" &&
-    hasLampState(tl_state, autoware_perception_msgs::msg::LampState::LEFT))
-  {
+    hasLampState(tl_state, autoware_perception_msgs::msg::LampState::LEFT)) {
     return false;
   }
   if (
     turn_direction == "straight" &&
-    hasLampState(tl_state, autoware_perception_msgs::msg::LampState::UP))
-  {
+    hasLampState(tl_state, autoware_perception_msgs::msg::LampState::UP)) {
     return false;
   }
 
@@ -508,8 +507,7 @@ bool TrafficLightModule::getHighestConfidenceTrafficLightState(
 
     if (
       tl_state.lamp_states.empty() ||
-      tl_state.lamp_states.front().type == autoware_perception_msgs::msg::LampState::UNKNOWN)
-    {
+      tl_state.lamp_states.front().type == autoware_perception_msgs::msg::LampState::UNKNOWN) {
       reason = "LampStateUnknown";
       continue;
     }
@@ -580,7 +578,7 @@ bool TrafficLightModule::hasLampState(
 {
   const auto it_lamp = std::find_if(
     tl_state.lamp_states.begin(), tl_state.lamp_states.end(),
-    [&lamp_color](const auto & x) {return x.type == lamp_color;});
+    [&lamp_color](const auto & x) { return x.type == lamp_color; });
 
   return it_lamp != tl_state.lamp_states.end();
 }
@@ -632,9 +630,9 @@ TrafficLightModule::generateTlStateWithJudgeFromTlState(
   autoware_perception_msgs::msg::TrafficLightStateWithJudge tl_state_with_judge;
   tl_state_with_judge.state = tl_state;
   tl_state_with_judge.has_state = true;
-  tl_state_with_judge.judge = isTrafficLightStateStop(tl_state) ?
-    autoware_perception_msgs::msg::TrafficLightStateWithJudge::STOP :
-    autoware_perception_msgs::msg::TrafficLightStateWithJudge::GO;
+  tl_state_with_judge.judge = isTrafficLightStateStop(tl_state)
+                                ? autoware_perception_msgs::msg::TrafficLightStateWithJudge::STOP
+                                : autoware_perception_msgs::msg::TrafficLightStateWithJudge::GO;
   return tl_state_with_judge;
 }
 }  // namespace behavior_velocity_planner
