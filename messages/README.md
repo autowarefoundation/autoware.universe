@@ -1,3 +1,5 @@
+This is a Tier4 forked version of [autoware_auto_msgs](https://gitlab.com/autowarefoundation/autoware.auto/autoware_auto_msgs)
+
 # autoware_auto_msgs
 
 Interfaces between core Autoware.Auto components.
