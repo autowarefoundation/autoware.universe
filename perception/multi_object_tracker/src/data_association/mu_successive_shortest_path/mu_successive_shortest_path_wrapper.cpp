@@ -12,6 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "multi_object_tracker/data_association/solver/mu_successive_shortest_path.hpp"
+
+#include <mussp/mussp.h>
+
 #include <array>
 #include <cassert>
 #include <fstream>
@@ -20,14 +24,10 @@
 #include <unordered_map>
 #include <vector>
 
-#include "mussp/mussp.h"
-#include "multi_object_tracker/data_association/solver/mu_successive_shortest_path.hpp"
-
 namespace gnn_solver
 {
 void MuSSP::maximizeLinearAssignment(
-  const std::vector<std::vector<double>> & cost,
-  std::unordered_map<int, int> * direct_assignment,
+  const std::vector<std::vector<double>> & cost, std::unordered_map<int, int> * direct_assignment,
   std::unordered_map<int, int> * reverse_assignment)
 {
   // Terminate if the graph is empty

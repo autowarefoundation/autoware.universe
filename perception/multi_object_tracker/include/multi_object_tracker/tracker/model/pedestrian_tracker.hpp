@@ -19,9 +19,11 @@
 #ifndef MULTI_OBJECT_TRACKER__TRACKER__MODEL__PEDESTRIAN_TRACKER_HPP_
 #define MULTI_OBJECT_TRACKER__TRACKER__MODEL__PEDESTRIAN_TRACKER_HPP_
 
-#include "autoware_perception_msgs/msg/dynamic_object.hpp"
-#include "kalman_filter/kalman_filter.hpp"
 #include "multi_object_tracker/tracker/model/tracker_base.hpp"
+
+#include <kalman_filter/kalman_filter.hpp>
+
+#include <autoware_perception_msgs/msg/dynamic_object.hpp>
 
 class PedestrianTracker : public Tracker
 {
@@ -32,8 +34,7 @@ private:
 private:
   KalmanFilter ekf_;
   rclcpp::Time last_update_time_;
-  enum IDX
-  {
+  enum IDX {
     X = 0,
     Y = 1,
     YAW = 2,

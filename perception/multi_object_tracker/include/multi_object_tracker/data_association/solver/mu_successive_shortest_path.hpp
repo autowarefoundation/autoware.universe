@@ -15,10 +15,10 @@
 #ifndef MULTI_OBJECT_TRACKER__DATA_ASSOCIATION__SOLVER__MU_SUCCESSIVE_SHORTEST_PATH_HPP_
 #define MULTI_OBJECT_TRACKER__DATA_ASSOCIATION__SOLVER__MU_SUCCESSIVE_SHORTEST_PATH_HPP_
 
+#include "multi_object_tracker/data_association/solver/gnn_solver_interface.hpp"
+
 #include <unordered_map>
 #include <vector>
-
-#include "multi_object_tracker/data_association/solver/gnn_solver_interface.hpp"
 
 namespace gnn_solver
 {

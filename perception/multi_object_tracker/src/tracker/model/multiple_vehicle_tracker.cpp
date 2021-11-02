@@ -17,7 +17,8 @@
 //
 
 #include "multi_object_tracker/tracker/model/multiple_vehicle_tracker.hpp"
-#include "autoware_utils/autoware_utils.hpp"
+
+#include <autoware_utils/autoware_utils.hpp>
 
 MultipleVehicleTracker::MultipleVehicleTracker(
   const rclcpp::Time & time, const autoware_perception_msgs::msg::DynamicObject & object)

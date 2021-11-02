@@ -20,19 +20,18 @@
 #define MULTI_OBJECT_TRACKER__TRACKER__MODEL__TRACKER_BASE_HPP_
 
 #define EIGEN_MPL2_ONLY
-#include "Eigen/Core"
+#include <Eigen/Core>
+#include <rclcpp/rclcpp.hpp>
 
-#include "autoware_perception_msgs/msg/dynamic_object.hpp"
-
-#include "geometry_msgs/msg/point.hpp"
-#include "unique_identifier_msgs/msg/uuid.hpp"
-#include "rclcpp/rclcpp.hpp"
+#include <autoware_perception_msgs/msg/dynamic_object.hpp>
+#include <geometry_msgs/msg/point.hpp>
+#include <unique_identifier_msgs/msg/uuid.hpp>
 
 class Tracker
 {
 protected:
-  unique_identifier_msgs::msg::UUID getUUID() const {return uuid_;}
-  void setType(int type) {type_ = type;}
+  unique_identifier_msgs::msg::UUID getUUID() const { return uuid_; }
+  void setType(int type) { type_ = type; }
 
 private:
   unique_identifier_msgs::msg::UUID uuid_;
@@ -49,16 +48,16 @@ public:
     const autoware_perception_msgs::msg::DynamicObject & object,
     const rclcpp::Time & measurement_time);
   bool updateWithoutMeasurement();
-  int getType() const {return type_;}
-  int getNoMeasurementCount() const {return no_measurement_count_;}
-  int getTotalNoMeasurementCount() const {return total_no_measurement_count_;}
-  int getTotalMeasurementCount() const {return total_measurement_count_;}
+  int getType() const { return type_; }
+  int getNoMeasurementCount() const { return no_measurement_count_; }
+  int getTotalNoMeasurementCount() const { return total_no_measurement_count_; }
+  int getTotalMeasurementCount() const { return total_measurement_count_; }
   double getElapsedTimeFromLastUpdate(const rclcpp::Time & current_time) const
   {
     return (current_time - last_update_with_measurement_time_).seconds();
   }
-  virtual geometry_msgs::msg::PoseWithCovariance getPoseWithCovariance(const rclcpp::Time & time)
-  const;
+  virtual geometry_msgs::msg::PoseWithCovariance getPoseWithCovariance(
+    const rclcpp::Time & time) const;
 
   /*
    *　Pure virtual function

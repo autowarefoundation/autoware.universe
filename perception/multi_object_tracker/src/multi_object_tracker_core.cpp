@@ -14,6 +14,11 @@
 //
 //
 
+#include <boost/optional.hpp>
+
+#include <tf2_ros/create_timer_interface.h>
+#include <tf2_ros/create_timer_ros.h>
+
 #include <iterator>
 #include <list>
 #include <memory>
@@ -22,18 +27,13 @@
 #include <utility>
 #include <vector>
 
-#include "boost/optional.hpp"
-
-#include "tf2_ros/create_timer_ros.h"
-#include "tf2_ros/create_timer_interface.h"
-
 #define EIGEN_MPL2_ONLY
-#include "Eigen/Core"
-#include "Eigen/Geometry"
-
 #include "multi_object_tracker/multi_object_tracker_core.hpp"
 #include "multi_object_tracker/utils/utils.hpp"
-#include "rclcpp_components/register_node_macro.hpp"
+
+#include <Eigen/Core>
+#include <Eigen/Geometry>
+#include <rclcpp_components/register_node_macro.hpp>
 
 using SemanticType = autoware_perception_msgs::msg::Semantic;
 
@@ -71,7 +71,9 @@ bool transformDynamicObjects(
     {
       const auto ros_target2objects_world =
         getTransform(tf_buffer, input_msg.header.frame_id, target_frame_id, input_msg.header.stamp);
-      if (!ros_target2objects_world) {return false;}
+      if (!ros_target2objects_world) {
+        return false;
+      }
       tf2::fromMsg(*ros_target2objects_world, tf_target2objects_world);
     }
     for (size_t i = 0; i < output_msg.feature_objects.size(); ++i) {
@@ -92,8 +94,7 @@ inline float getVelocity(const autoware_perception_msgs::msg::DynamicObject & ob
     object.state.twist_covariance.twist.linear.x, object.state.twist_covariance.twist.linear.y);
 }
 
-inline geometry_msgs::msg::Pose getPose(
-  const autoware_perception_msgs::msg::DynamicObject & object)
+inline geometry_msgs::msg::Pose getPose(const autoware_perception_msgs::msg::DynamicObject & object)
 {
   return object.state.pose_covariance.pose;
 }
@@ -133,20 +134,20 @@ bool isSpecificAlivePattern(
     tracker->getTotalMeasurementCount() /
     (tracker->getTotalNoMeasurementCount() + tracker->getTotalMeasurementCount());
 
-  const bool big_vehicle = tracker->getType() == SemanticType::TRUCK ||
-    tracker->getType() == SemanticType::BUS;
+  const bool big_vehicle =
+    tracker->getType() == SemanticType::TRUCK || tracker->getType() == SemanticType::BUS;
 
   const bool slow_velocity = getVelocity(object) < max_velocity;
 
   const bool high_confidence =
     (min_detection_rate < detection_rate ||
-    min_measurement_count < tracker->getTotalMeasurementCount());
+     min_measurement_count < tracker->getTotalMeasurementCount());
 
   const bool not_too_far =
     getXYSquareDistance(self_transform, object) < max_distance * max_distance;
 
-  const bool within_max_survival_period = tracker->getElapsedTimeFromLastUpdate(time) <
-    max_elapsed_time;
+  const bool within_max_survival_period =
+    tracker->getElapsedTimeFromLastUpdate(time) < max_elapsed_time;
 
   const bool is_specific_alive_pattern =
     high_confidence && big_vehicle && within_max_survival_period && not_too_far && slow_velocity;
@@ -164,8 +165,8 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   // Create publishers and subscribers
   dynamic_object_sub_ =
     create_subscription<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>(
-    "input", rclcpp::QoS{1},
-    std::bind(&MultiObjectTracker::onMeasurement, this, std::placeholders::_1));
+      "input", rclcpp::QoS{1},
+      std::bind(&MultiObjectTracker::onMeasurement, this, std::placeholders::_1));
   dynamic_object_pub_ =
     create_publisher<autoware_perception_msgs::msg::DynamicObjectArray>("output", rclcpp::QoS{1});
 
@@ -204,17 +205,18 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
 
 void MultiObjectTracker::onMeasurement(
   const autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr
-  input_objects_msg)
+    input_objects_msg)
 {
   const auto self_transform =
     getTransform(tf_buffer_, "base_link", world_frame_id_, input_objects_msg->header.stamp);
-  if (!self_transform) {return;}
+  if (!self_transform) {
+    return;
+  }
 
   /* transform to world coordinate */
   autoware_perception_msgs::msg::DynamicObjectWithFeatureArray transformed_objects;
   if (!transformDynamicObjects(
-      *input_objects_msg, world_frame_id_, tf_buffer_, transformed_objects))
-  {
+        *input_objects_msg, world_frame_id_, tf_buffer_, transformed_objects)) {
     return;
   }
   /* tracker prediction */
@@ -232,14 +234,13 @@ void MultiObjectTracker::onMeasurement(
   /* tracker measurement update */
   int tracker_idx = 0;
   for (auto tracker_itr = list_tracker_.begin(); tracker_itr != list_tracker_.end();
-    ++tracker_itr, ++tracker_idx)
-  {
+       ++tracker_itr, ++tracker_idx) {
     if (direct_assignment.find(tracker_idx) != direct_assignment.end()) {  // found
       (*(tracker_itr))
-      ->updateWithMeasurement(
-        transformed_objects.feature_objects.at(direct_assignment.find(tracker_idx)->second)
-        .object,
-        measurement_time);
+        ->updateWithMeasurement(
+          transformed_objects.feature_objects.at(direct_assignment.find(tracker_idx)->second)
+            .object,
+          measurement_time);
     } else {  // not found
       (*(tracker_itr))->updateWithoutMeasurement();
     }
@@ -283,7 +284,9 @@ void MultiObjectTracker::onTimer()
 {
   rclcpp::Time current_time = this->now();
   const auto self_transform = getTransform(tf_buffer_, world_frame_id_, "base_link", current_time);
-  if (!self_transform) {return;}
+  if (!self_transform) {
+    return;
+  }
 
   /* life cycle check */
   checkTrackerLifeCycle(list_tracker_, current_time, *self_transform);
@@ -327,10 +330,12 @@ void MultiObjectTracker::sanitizeTracker(
       (*itr2)->getEstimatedDynamicObject(time, object2);
       const double distance = std::hypot(
         object1.state.pose_covariance.pose.position.x -
-        object2.state.pose_covariance.pose.position.x,
+          object2.state.pose_covariance.pose.position.x,
         object1.state.pose_covariance.pose.position.y -
-        object2.state.pose_covariance.pose.position.y);
-      if (distance_threshold < distance) {continue;}
+          object2.state.pose_covariance.pose.position.y);
+      if (distance_threshold < distance) {
+        continue;
+      }
       if (min_iou < utils::get2dIoU(object1, object2)) {
         if ((*itr1)->getTotalMeasurementCount() < (*itr2)->getTotalMeasurementCount()) {
           itr1 = list_tracker.erase(itr1);
@@ -349,21 +354,27 @@ inline bool MultiObjectTracker::shouldTrackerPublish(
   const std::shared_ptr<const Tracker> tracker) const
 {
   constexpr int measurement_count_threshold = 3;
-  if (tracker->getTotalMeasurementCount() < measurement_count_threshold) {return false;}
+  if (tracker->getTotalMeasurementCount() < measurement_count_threshold) {
+    return false;
+  }
   return true;
 }
 
 void MultiObjectTracker::publish(const rclcpp::Time & time) const
 {
   const auto subscriber_count = dynamic_object_pub_->get_subscription_count() +
-    dynamic_object_pub_->get_intra_process_subscription_count();
-  if (subscriber_count < 1) {return;}
+                                dynamic_object_pub_->get_intra_process_subscription_count();
+  if (subscriber_count < 1) {
+    return;
+  }
   // Create output msg
   autoware_perception_msgs::msg::DynamicObjectArray output_msg;
   output_msg.header.frame_id = world_frame_id_;
   output_msg.header.stamp = time;
   for (auto itr = list_tracker_.begin(); itr != list_tracker_.end(); ++itr) {
-    if (!shouldTrackerPublish(*itr)) {continue;}
+    if (!shouldTrackerPublish(*itr)) {
+      continue;
+    }
     autoware_perception_msgs::msg::DynamicObject object;
     (*itr)->getEstimatedDynamicObject(time, object);
     output_msg.objects.push_back(object);

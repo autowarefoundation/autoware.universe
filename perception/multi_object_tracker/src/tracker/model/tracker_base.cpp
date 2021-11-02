@@ -14,11 +14,12 @@
 //
 //
 
+#include "multi_object_tracker/tracker/model/tracker_base.hpp"
+
+#include "multi_object_tracker/utils/utils.hpp"
+
 #include <algorithm>
 #include <random>
-
-#include "multi_object_tracker/tracker/model/tracker_base.hpp"
-#include "multi_object_tracker/utils/utils.hpp"
 
 Tracker::Tracker(const rclcpp::Time & time, const int type)
 : type_(type),
@@ -28,7 +29,7 @@ Tracker::Tracker(const rclcpp::Time & time, const int type)
   last_update_with_measurement_time_(time)
 {
   // Generate random number
-  std::mt19937 gen(std::random_device{} ());
+  std::mt19937 gen(std::random_device{}());
   std::independent_bits_engine<std::mt19937, 8, uint8_t> bit_eng(gen);
   std::generate(uuid_.uuid.begin(), uuid_.uuid.end(), bit_eng);
 }
@@ -51,8 +52,8 @@ bool Tracker::updateWithoutMeasurement()
   return true;
 }
 
-geometry_msgs::msg::PoseWithCovariance Tracker::getPoseWithCovariance(const rclcpp::Time & time)
-const
+geometry_msgs::msg::PoseWithCovariance Tracker::getPoseWithCovariance(
+  const rclcpp::Time & time) const
 {
   autoware_perception_msgs::msg::DynamicObject object;
   getEstimatedDynamicObject(time, object);

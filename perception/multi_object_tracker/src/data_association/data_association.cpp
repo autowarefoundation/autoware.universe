@@ -12,21 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "multi_object_tracker/data_association/data_association.hpp"
+
+#include "multi_object_tracker/data_association/solver/gnn_solver.hpp"
+#include "multi_object_tracker/utils/utils.hpp"
+
 #include <algorithm>
 #include <list>
 #include <memory>
 #include <unordered_map>
 #include <vector>
 
-#include "multi_object_tracker/data_association/data_association.hpp"
-#include "multi_object_tracker/utils/utils.hpp"
-#include "multi_object_tracker/data_association/solver/gnn_solver.hpp"
-
 namespace
 {
 double getDistance(
-  const geometry_msgs::msg::Point & measurement,
-  const geometry_msgs::msg::Point & tracker)
+  const geometry_msgs::msg::Point & measurement, const geometry_msgs::msg::Point & tracker)
 {
   const double diff_x = tracker.x - measurement.x;
   const double diff_y = tracker.y - measurement.y;
@@ -43,7 +43,7 @@ double getMahalanobisDistance(
   Eigen::Vector2d tracker_point;
   tracker_point << tracker.x, tracker.y;
   Eigen::MatrixXd mahalanobis_squared = (measurement_point - tracker_point).transpose() *
-    covariance.inverse() * (measurement_point - tracker_point);
+                                        covariance.inverse() * (measurement_point - tracker_point);
   return std::sqrt(mahalanobis_squared(0));
 }
 
@@ -129,7 +129,7 @@ void DataAssociation::assign(
   // Solve
   gnn_solver_ptr_->maximizeLinearAssignment(score, &direct_assignment, &reverse_assignment);
 
-  for (auto itr = direct_assignment.begin(); itr != direct_assignment.end(); ) {
+  for (auto itr = direct_assignment.begin(); itr != direct_assignment.end();) {
     if (src(itr->first, itr->second) < score_threshold_) {
       itr = direct_assignment.erase(itr);
       continue;
@@ -137,7 +137,7 @@ void DataAssociation::assign(
       ++itr;
     }
   }
-  for (auto itr = reverse_assignment.begin(); itr != reverse_assignment.end(); ) {
+  for (auto itr = reverse_assignment.begin(); itr != reverse_assignment.end();) {
     if (src(itr->second, itr->first) < score_threshold_) {
       itr = reverse_assignment.erase(itr);
       continue;
@@ -155,11 +155,9 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
     Eigen::MatrixXd::Zero(trackers.size(), measurements.feature_objects.size());
   size_t tracker_idx = 0;
   for (auto tracker_itr = trackers.begin(); tracker_itr != trackers.end();
-    ++tracker_itr, ++tracker_idx)
-  {
+       ++tracker_itr, ++tracker_idx) {
     for (size_t measurement_idx = 0; measurement_idx < measurements.feature_objects.size();
-      ++measurement_idx)
-    {
+         ++measurement_idx) {
       double score = 0.0;
       const geometry_msgs::msg::PoseWithCovariance tracker_pose_covariance =
         (*tracker_itr)->getPoseWithCovariance(measurements.header.stamp);
@@ -191,16 +189,19 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
           const double angle = getFormedYawAngle(
             measurement_object.state.pose_covariance.pose.orientation,
             tracker_pose_covariance.pose.orientation, false);
-          if (std::fabs(max_rad) < std::fabs(angle)) {score = 0.0;}
+          if (std::fabs(max_rad) < std::fabs(angle)) {
+            score = 0.0;
+          }
           // mahalanobis dist gate
         } else if (score < score_threshold_) {
           double mahalanobis_dist = getMahalanobisDistance(
             measurements.feature_objects.at(measurement_idx)
-            .object.state.pose_covariance.pose.position,
-            tracker_pose_covariance.pose.position,
-            getXYCovariance(tracker_pose_covariance));
+              .object.state.pose_covariance.pose.position,
+            tracker_pose_covariance.pose.position, getXYCovariance(tracker_pose_covariance));
 
-          if (2.448 /*95%*/ <= mahalanobis_dist) {score = 0.0;}
+          if (2.448 /*95%*/ <= mahalanobis_dist) {
+            score = 0.0;
+          }
         }
       }
       score_matrix(tracker_idx, measurement_idx) = score;

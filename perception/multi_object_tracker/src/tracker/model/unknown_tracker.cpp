@@ -18,11 +18,12 @@
 #include <tf2/utils.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #define EIGEN_MPL2_ONLY
+#include "multi_object_tracker/tracker/model/unknown_tracker.hpp"
+#include "multi_object_tracker/utils/utils.hpp"
+
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <autoware_utils/autoware_utils.hpp>
-#include "multi_object_tracker/utils/utils.hpp"
-#include "multi_object_tracker/tracker/model/unknown_tracker.hpp"
 
 UnknownTracker::UnknownTracker(
   const rclcpp::Time & time, const autoware_perception_msgs::msg::DynamicObject & object)
@@ -75,8 +76,7 @@ UnknownTracker::UnknownTracker(
   if (
     !ekf_params_.use_measurement_covariance ||
     object.state.pose_covariance.covariance[utils::MSG_COV_IDX::X_X] == 0.0 ||
-    object.state.pose_covariance.covariance[utils::MSG_COV_IDX::Y_Y] == 0.0)
-  {
+    object.state.pose_covariance.covariance[utils::MSG_COV_IDX::Y_Y] == 0.0) {
     // Rotate the covariance matrix according to the vehicle yaw
     // because p0_cov_x and y are in the vehicle coordinate system.
     P(IDX::X, IDX::X) = ekf_params_.p0_cov_x;
@@ -106,7 +106,9 @@ bool UnknownTracker::predict(const rclcpp::Time & time)
 {
   const double dt = (time - last_update_time_).seconds();
   bool ret = predict(dt, ekf_);
-  if (ret) {last_update_time_ = time;}
+  if (ret) {
+    last_update_time_ = time;
+  }
   return ret;
 }
 
@@ -158,7 +160,9 @@ bool UnknownTracker::predict(const double dt, KalmanFilter & ekf) const
   Eigen::MatrixXd B = Eigen::MatrixXd::Zero(ekf_params_.dim_x, ekf_params_.dim_x);
   Eigen::MatrixXd u = Eigen::MatrixXd::Zero(ekf_params_.dim_x, 1);
 
-  if (!ekf.predict(X_next_t, A, Q)) {RCLCPP_WARN(logger_, "Pedestrian : Cannot predict");}
+  if (!ekf.predict(X_next_t, A, Q)) {
+    RCLCPP_WARN(logger_, "Pedestrian : Cannot predict");
+  }
 
   return true;
 }
@@ -181,8 +185,7 @@ bool UnknownTracker::measureWithPose(const autoware_perception_msgs::msg::Dynami
   if (
     !ekf_params_.use_measurement_covariance ||
     object.state.pose_covariance.covariance[utils::MSG_COV_IDX::X_X] == 0.0 ||
-    object.state.pose_covariance.covariance[utils::MSG_COV_IDX::Y_Y] == 0.0)
-  {
+    object.state.pose_covariance.covariance[utils::MSG_COV_IDX::Y_Y] == 0.0) {
     R(0, 0) = ekf_params_.r_cov_x;  // x - x
     R(0, 1) = 0.0;                  // x - y
     R(1, 1) = ekf_params_.r_cov_y;  // y - y
@@ -193,7 +196,9 @@ bool UnknownTracker::measureWithPose(const autoware_perception_msgs::msg::Dynami
     R(1, 0) = object.state.pose_covariance.covariance[utils::MSG_COV_IDX::Y_X];
     R(1, 1) = object.state.pose_covariance.covariance[utils::MSG_COV_IDX::Y_Y];
   }
-  if (!ekf_.update(Y, C, R)) {RCLCPP_WARN(logger_, "Pedestrian : Cannot update");}
+  if (!ekf_.update(Y, C, R)) {
+    RCLCPP_WARN(logger_, "Pedestrian : Cannot update");
+  }
 
   // limit vx, vy
   {
@@ -244,7 +249,9 @@ bool UnknownTracker::getEstimatedDynamicObject(
   // predict state
   KalmanFilter tmp_ekf_for_no_update = ekf_;
   const double dt = (time - last_update_time_).seconds();
-  if (0.001 /*1msec*/ < dt) {predict(dt, tmp_ekf_for_no_update);}
+  if (0.001 /*1msec*/ < dt) {
+    predict(dt, tmp_ekf_for_no_update);
+  }
   Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);                // predicted state
   Eigen::MatrixXd P(ekf_params_.dim_x, ekf_params_.dim_x);  // predicted state
   tmp_ekf_for_no_update.getX(X_t);

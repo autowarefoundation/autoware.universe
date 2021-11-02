@@ -17,18 +17,20 @@
 //
 
 #include "multi_object_tracker/tracker/model/bicycle_tracker.hpp"
-#include <autoware_utils/autoware_utils.hpp>
-#include <bits/stdc++.h>
+
 #include "multi_object_tracker/utils/utils.hpp"
 
-#include "tf2/LinearMath/Matrix3x3.h"
-#include "tf2/LinearMath/Quaternion.h"
-#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
-#include "tf2/utils.h"
+#include <autoware_utils/autoware_utils.hpp>
+
+#include <bits/stdc++.h>
+#include <tf2/LinearMath/Matrix3x3.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/utils.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 #define EIGEN_MPL2_ONLY
-#include "Eigen/Core"
-#include "Eigen/Geometry"
+#include <Eigen/Core>
+#include <Eigen/Geometry>
 
 BicycleTracker::BicycleTracker(
   const rclcpp::Time & time, const autoware_perception_msgs::msg::DynamicObject & object)
@@ -89,8 +91,7 @@ BicycleTracker::BicycleTracker(
     !ekf_params_.use_measurement_covariance ||
     object.state.pose_covariance.covariance[utils::MSG_COV_IDX::X_X] == 0.0 ||
     object.state.pose_covariance.covariance[utils::MSG_COV_IDX::Y_Y] == 0.0 ||
-    object.state.pose_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW] == 0.0)
-  {
+    object.state.pose_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW] == 0.0) {
     const double cos_yaw = std::cos(X(IDX::YAW));
     const double sin_yaw = std::sin(X(IDX::YAW));
     const double sin_2yaw = std::sin(2.0f * X(IDX::YAW));
@@ -133,7 +134,9 @@ bool BicycleTracker::predict(const rclcpp::Time & time)
 {
   const double dt = (time - last_update_time_).seconds();
   bool ret = predict(dt, ekf_);
-  if (ret) {last_update_time_ = time;}
+  if (ret) {
+    last_update_time_ = time;
+  }
   return ret;
 }
 
@@ -197,7 +200,9 @@ bool BicycleTracker::predict(const double dt, KalmanFilter & ekf) const
   Eigen::MatrixXd B = Eigen::MatrixXd::Zero(ekf_params_.dim_x, ekf_params_.dim_x);
   Eigen::MatrixXd u = Eigen::MatrixXd::Zero(ekf_params_.dim_x, 1);
 
-  if (!ekf.predict(X_next_t, A, Q)) {RCLCPP_WARN(logger_, "Cannot predict");}
+  if (!ekf.predict(X_next_t, A, Q)) {
+    RCLCPP_WARN(logger_, "Cannot predict");
+  }
 
   return true;
 }
@@ -237,8 +242,7 @@ bool BicycleTracker::measureWithPose(const autoware_perception_msgs::msg::Dynami
   if (
     !ekf_params_.use_measurement_covariance ||
     object.state.pose_covariance.covariance[utils::MSG_COV_IDX::X_X] == 0.0 ||
-    object.state.pose_covariance.covariance[utils::MSG_COV_IDX::Y_Y] == 0.0)
-  {
+    object.state.pose_covariance.covariance[utils::MSG_COV_IDX::Y_Y] == 0.0) {
     R(0, 0) = ekf_params_.r_cov_x;  // x - x
     R(0, 1) = 0.0;                  // x - y
     R(1, 1) = ekf_params_.r_cov_y;  // y - y
@@ -255,7 +259,9 @@ bool BicycleTracker::measureWithPose(const autoware_perception_msgs::msg::Dynami
     // R(2, 1) = object.state.pose_covariance.covariance[utils::MSG_COV_IDX::YAW_Y];
     // R(2, 2) = object.state.pose_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW];
   }
-  if (!ekf_.update(Y, C, R)) {RCLCPP_WARN(logger_, "Cannot update");}
+  if (!ekf_.update(Y, C, R)) {
+    RCLCPP_WARN(logger_, "Cannot update");
+  }
 
   // normalize yaw and limit vx, wz
   {
@@ -282,7 +288,9 @@ bool BicycleTracker::measureWithPose(const autoware_perception_msgs::msg::Dynami
 
 bool BicycleTracker::measureWithShape(const autoware_perception_msgs::msg::DynamicObject & object)
 {
-  if (object.shape.type != autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {return false;}
+  if (object.shape.type != autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
+    return false;
+  }
   constexpr float gain = 0.9;
 
   bounding_box_.width = gain * bounding_box_.width + (1.0 - gain) * object.shape.dimensions.x;
@@ -299,8 +307,7 @@ bool BicycleTracker::measure(
 
   if (0.01 /*10msec*/ < std::fabs((time - last_update_time_).seconds())) {
     RCLCPP_WARN(
-      logger_,
-      "There is a large gap between predicted time and measurement time. (%f)",
+      logger_, "There is a large gap between predicted time and measurement time. (%f)",
       (time - last_update_time_).seconds());
   }
 
@@ -320,7 +327,9 @@ bool BicycleTracker::getEstimatedDynamicObject(
   // predict state
   KalmanFilter tmp_ekf_for_no_update = ekf_;
   const double dt = (time - last_update_time_).seconds();
-  if (0.001 /*1msec*/ < dt) {predict(dt, tmp_ekf_for_no_update);}
+  if (0.001 /*1msec*/ < dt) {
+    predict(dt, tmp_ekf_for_no_update);
+  }
   Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);                // predicted state
   Eigen::MatrixXd P(ekf_params_.dim_x, ekf_params_.dim_x);  // predicted state
   tmp_ekf_for_no_update.getX(X_t);
