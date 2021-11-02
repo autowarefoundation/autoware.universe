@@ -12,18 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "localization_error_monitor/node.hpp"
+
 #include <Eigen/Dense>
+
+#include <tf2/utils.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+
+#include <algorithm>
+#include <cmath>
 #include <functional>
 #include <memory>
 #include <string>
 #include <utility>
-#include <algorithm>
-#include <cmath>
-
-#include "localization_error_monitor/node.hpp"
-#include "tf2/utils.h"
-#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
-
 
 LocalizationErrorMonitor::LocalizationErrorMonitor()
 : Node("localization_error_monitor"), updater_(this)
@@ -32,10 +33,10 @@ LocalizationErrorMonitor::LocalizationErrorMonitor()
   error_ellipse_size_ = this->declare_parameter("error_ellipse_size", 1.0);
   warn_ellipse_size_ = this->declare_parameter("warn_ellipse_size", 0.8);
 
-  error_ellipse_size_lateral_direction_ = this->declare_parameter(
-    "error_ellipse_size_lateral_direction", 0.3);
-  warn_ellipse_size_lateral_direction_ = this->declare_parameter(
-    "warn_ellipse_size_lateral_direction", 0.2);
+  error_ellipse_size_lateral_direction_ =
+    this->declare_parameter("error_ellipse_size_lateral_direction", 0.3);
+  warn_ellipse_size_lateral_direction_ =
+    this->declare_parameter("warn_ellipse_size_lateral_direction", 0.2);
 
   pose_with_cov_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
     "input/pose_with_cov", 1,
@@ -51,8 +52,7 @@ LocalizationErrorMonitor::LocalizationErrorMonitor()
   updater_.add("localization_accuracy", this, &LocalizationErrorMonitor::checkLocalizationAccuracy);
   updater_.add(
     "localization_accuracy_lateral_direction", this,
-    &LocalizationErrorMonitor::checkLocalizationAccuracyLateralDirection
-  );
+    &LocalizationErrorMonitor::checkLocalizationAccuracyLateralDirection);
 
   // Set timer
   auto timer_callback = std::bind(&LocalizationErrorMonitor::onTimer, this);
@@ -64,7 +64,7 @@ LocalizationErrorMonitor::LocalizationErrorMonitor()
   this->get_node_timers_interface()->add_timer(timer_, nullptr);
 }
 
-void LocalizationErrorMonitor::onTimer() {updater_.force_update();}
+void LocalizationErrorMonitor::onTimer() { updater_.force_update(); }
 
 void LocalizationErrorMonitor::checkLocalizationAccuracy(
   diagnostic_updater::DiagnosticStatusWrapper & stat)
@@ -153,8 +153,8 @@ void LocalizationErrorMonitor::onPoseWithCovariance(
   // ellipse size along lateral direction (body-frame)
   ellipse_.P = xy_covariance;
   const double yaw_vehicle = tf2::getYaw(input_msg->pose.pose.orientation);
-  ellipse_.size_lateral_direction = scale_ * measureSizeEllipseAlongBodyFrame(
-    ellipse_.P.inverse(), yaw_vehicle);
+  ellipse_.size_lateral_direction =
+    scale_ * measureSizeEllipseAlongBodyFrame(ellipse_.P.inverse(), yaw_vehicle);
 
   const auto ellipse_marker = createEllipseMarker(ellipse_, input_msg);
   ellipse_marker_pub_->publish(ellipse_marker);

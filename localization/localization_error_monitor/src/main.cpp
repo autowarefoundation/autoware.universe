@@ -12,9 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <memory>
-#include "rclcpp/rclcpp.hpp"
 #include "localization_error_monitor/node.hpp"
+
+#include <rclcpp/rclcpp.hpp>
+
+#include <memory>
 
 int main(int argc, char ** argv)
 {
