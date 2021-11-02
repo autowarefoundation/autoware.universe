@@ -11,10 +11,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+#include "vehicle_cmd_gate/vehicle_cmd_filter.hpp"
+
 #include <algorithm>
 #include <cmath>
-
-#include "vehicle_cmd_gate/vehicle_cmd_filter.hpp"
 
 VehicleCmdFilter::VehicleCmdFilter() {}
 
@@ -38,8 +38,7 @@ void VehicleCmdFilter::VehicleCmdFilter::limitLongitudinalWithJerk(
 }
 
 void VehicleCmdFilter::limitLateralWithLatAcc(
-  [[maybe_unused]] const double dt,
-  autoware_control_msgs::msg::ControlCommand & input) const
+  [[maybe_unused]] const double dt, autoware_control_msgs::msg::ControlCommand & input) const
 {
   double latacc = calcLatAcc(input);
   if (std::fabs(latacc) > lat_acc_lim_) {

@@ -15,29 +15,29 @@
 #ifndef VEHICLE_CMD_GATE__VEHICLE_CMD_GATE_HPP_
 #define VEHICLE_CMD_GATE__VEHICLE_CMD_GATE_HPP_
 
-#include <memory>
-
-#include "diagnostic_updater/diagnostic_updater.hpp"
-#include "geometry_msgs/msg/twist_stamped.hpp"
-#include "rclcpp/rclcpp.hpp"
-
-#include "autoware_control_msgs/msg/control_command_stamped.hpp"
-#include "autoware_system_msgs/msg/emergency_state_stamped.hpp"
-#include "autoware_control_msgs/msg/gate_mode.hpp"
-#include "autoware_debug_msgs/msg/bool_stamped.hpp"
-#include "autoware_external_api_msgs/msg/heartbeat.hpp"
-#include "autoware_external_api_msgs/msg/emergency.hpp"
-#include "autoware_external_api_msgs/srv/engage.hpp"
-#include "autoware_external_api_msgs/srv/set_emergency.hpp"
-#include "autoware_vehicle_msgs/msg/engage.hpp"
-#include "autoware_vehicle_msgs/msg/shift_stamped.hpp"
-#include "autoware_vehicle_msgs/msg/steering.hpp"
-#include "autoware_vehicle_msgs/msg/turn_signal.hpp"
-#include "autoware_vehicle_msgs/msg/vehicle_command.hpp"
-#include "vehicle_info_util/vehicle_info_util.hpp"
-
-#include "std_srvs/srv/trigger.hpp"
 #include "vehicle_cmd_gate/vehicle_cmd_filter.hpp"
+
+#include <diagnostic_updater/diagnostic_updater.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <std_srvs/srv/trigger.hpp>
+#include <vehicle_info_util/vehicle_info_util.hpp>
+
+#include <autoware_control_msgs/msg/control_command_stamped.hpp>
+#include <autoware_control_msgs/msg/gate_mode.hpp>
+#include <autoware_debug_msgs/msg/bool_stamped.hpp>
+#include <autoware_external_api_msgs/msg/emergency.hpp>
+#include <autoware_external_api_msgs/msg/heartbeat.hpp>
+#include <autoware_external_api_msgs/srv/engage.hpp>
+#include <autoware_external_api_msgs/srv/set_emergency.hpp>
+#include <autoware_system_msgs/msg/emergency_state_stamped.hpp>
+#include <autoware_vehicle_msgs/msg/engage.hpp>
+#include <autoware_vehicle_msgs/msg/shift_stamped.hpp>
+#include <autoware_vehicle_msgs/msg/steering.hpp>
+#include <autoware_vehicle_msgs/msg/turn_signal.hpp>
+#include <autoware_vehicle_msgs/msg/vehicle_command.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
+
+#include <memory>
 
 struct Commands
 {
@@ -183,18 +183,18 @@ private:
   // Start request service
   struct StartRequest
   {
-private:
+  private:
     static constexpr double eps = 1e-3;
     using ControlCommandStamped = autoware_control_msgs::msg::ControlCommandStamped;
 
-public:
+  public:
     StartRequest(rclcpp::Node * node, bool use_start_request);
     bool isAccepted();
     void publishStartAccepted();
     void checkStopped(const ControlCommandStamped & control);
     void checkStartRequest(const ControlCommandStamped & control);
 
-private:
+  private:
     bool use_start_request_;
     bool is_start_requesting_;
     bool is_start_accepted_;
