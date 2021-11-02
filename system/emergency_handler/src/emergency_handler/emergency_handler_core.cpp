@@ -12,14 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "emergency_handler/emergency_handler_core.hpp"
+
 #include <memory>
 #include <string>
 #include <utility>
 
-#include "emergency_handler/emergency_handler_core.hpp"
-
-EmergencyHandler::EmergencyHandler()
-: Node("emergency_handler")
+EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
 {
   // Parameter
   param_.update_rate = declare_parameter<int>("update_rate", 10);
@@ -39,21 +38,20 @@ EmergencyHandler::EmergencyHandler()
     "~/input/prev_control_command", rclcpp::QoS{1},
     std::bind(&EmergencyHandler::onPrevControlCommand, this, _1));
   sub_twist_ = create_subscription<geometry_msgs::msg::TwistStamped>(
-    "~/input/twist", rclcpp::QoS{1},
-    std::bind(&EmergencyHandler::onTwist, this, _1));
+    "~/input/twist", rclcpp::QoS{1}, std::bind(&EmergencyHandler::onTwist, this, _1));
   sub_control_mode_ = create_subscription<autoware_vehicle_msgs::msg::ControlMode>(
     "~/input/control_mode", rclcpp::QoS{1}, std::bind(&EmergencyHandler::onControlMode, this, _1));
 
   // Heartbeat
   heartbeat_hazard_status_ =
     std::make_shared<HeaderlessHeartbeatChecker<autoware_system_msgs::msg::HazardStatusStamped>>(
-    *this, "~/input/hazard_status", param_.timeout_hazard_status);
+      *this, "~/input/hazard_status", param_.timeout_hazard_status);
 
   // Publisher
   pub_control_command_ = create_publisher<autoware_control_msgs::msg::ControlCommandStamped>(
     "~/output/control_command", rclcpp::QoS{1});
-  pub_shift_ = create_publisher<autoware_vehicle_msgs::msg::ShiftStamped>(
-    "~/output/shift", rclcpp::QoS{1});
+  pub_shift_ =
+    create_publisher<autoware_vehicle_msgs::msg::ShiftStamped>("~/output/shift", rclcpp::QoS{1});
   pub_turn_signal_ = create_publisher<autoware_vehicle_msgs::msg::TurnSignal>(
     "~/output/turn_signal", rclcpp::QoS{1});
   pub_emergency_state_ = create_publisher<autoware_system_msgs::msg::EmergencyStateStamped>(
@@ -106,7 +104,6 @@ autoware_vehicle_msgs::msg::TurnSignal EmergencyHandler::createTurnSignalMsg()
 {
   autoware_vehicle_msgs::msg::TurnSignal msg;
   msg.header.stamp = this->now();
-
 
   // Check emergency
   const bool is_emergency = isEmergency(hazard_status_stamped_->status);
@@ -196,27 +193,37 @@ void EmergencyHandler::transitionTo(const int new_state)
   using autoware_system_msgs::msg::EmergencyState;
 
   const auto state2string = [](const int state) {
-      if (state == EmergencyState::NORMAL) {return "NORMAL";}
-      if (state == EmergencyState::OVERRIDE_REQUESTING) {return "OVERRIDE_REQUESTING";}
-      if (state == EmergencyState::MRM_OPERATING) {return "MRM_OPERATING";}
-      if (state == EmergencyState::MRM_SUCCEEDED) {return "MRM_SUCCEEDED";}
-      if (state == EmergencyState::MRM_FAILED) {return "MRM_FAILED";}
+    if (state == EmergencyState::NORMAL) {
+      return "NORMAL";
+    }
+    if (state == EmergencyState::OVERRIDE_REQUESTING) {
+      return "OVERRIDE_REQUESTING";
+    }
+    if (state == EmergencyState::MRM_OPERATING) {
+      return "MRM_OPERATING";
+    }
+    if (state == EmergencyState::MRM_SUCCEEDED) {
+      return "MRM_SUCCEEDED";
+    }
+    if (state == EmergencyState::MRM_FAILED) {
+      return "MRM_FAILED";
+    }
 
-      const auto msg = "invalid state: " + std::to_string(state);
-      throw std::runtime_error(msg);
-    };
+    const auto msg = "invalid state: " + std::to_string(state);
+    throw std::runtime_error(msg);
+  };
 
   RCLCPP_INFO(
-    this->get_logger(), "EmergencyState changed: %s -> %s",
-    state2string(emergency_state_), state2string(new_state));
+    this->get_logger(), "EmergencyState changed: %s -> %s", state2string(emergency_state_),
+    state2string(new_state));
 
   emergency_state_ = new_state;
 }
 
 void EmergencyHandler::updateEmergencyState()
 {
-  using autoware_vehicle_msgs::msg::ControlMode;
   using autoware_system_msgs::msg::EmergencyState;
+  using autoware_vehicle_msgs::msg::ControlMode;
 
   // Check emergency
   const bool is_emergency = isEmergency(hazard_status_stamped_->status);
@@ -274,8 +281,7 @@ void EmergencyHandler::updateEmergencyState()
   }
 }
 
-bool EmergencyHandler::isEmergency(
-  const autoware_system_msgs::msg::HazardStatus & hazard_status)
+bool EmergencyHandler::isEmergency(const autoware_system_msgs::msg::HazardStatus & hazard_status)
 {
   return hazard_status.emergency || hazard_status.emergency_holding;
 }
