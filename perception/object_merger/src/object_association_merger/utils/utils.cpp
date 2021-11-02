@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "object_association_merger/utils/utils.hpp"
+#include <object_association_merger/utils/utils.hpp>
 
 namespace utils
 {
@@ -36,7 +36,7 @@ double getPolygonArea(const geometry_msgs::msg::Polygon & footprint)
   for (int i = 0; i < static_cast<int>(footprint.points.size()); ++i) {
     int j = (i + 1) % static_cast<int>(footprint.points.size());
     area += 0.5 * (footprint.points.at(i).x * footprint.points.at(j).y -
-      footprint.points.at(j).x * footprint.points.at(i).y);
+                   footprint.points.at(j).x * footprint.points.at(i).y);
   }
 
   return area;

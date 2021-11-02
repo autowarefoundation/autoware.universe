@@ -12,19 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <sensor_msgs/point_cloud2_iterator.hpp>
+
+#include <tf2/LinearMath/Transform.h>
+#include <tf2/convert.h>
+#include <tf2/transform_datatypes.h>
+
 #include <chrono>
 #include <unordered_map>
-
-#include "sensor_msgs/msg/point_cloud2.hpp"
-#include "sensor_msgs/point_cloud2_iterator.hpp"
-#include "tf2/LinearMath/Transform.h"
-#include "tf2/convert.h"
-#include "tf2/transform_datatypes.h"
-// #include "tf2_sensor_msgs/msg/tf2_sensor_msgs.hpp"
-#include "object_association_merger/node.hpp"
+// #include <tf2_sensor_msgs/msg/tf2_sensor_msgs.hpp>
+#include <object_association_merger/node.hpp>
 #define EIGEN_MPL2_ONLY
-#include "Eigen/Core"
-#include "Eigen/Geometry"
+#include <Eigen/Core>
+#include <Eigen/Geometry>
 
 namespace object_association
 {
@@ -42,17 +43,19 @@ ObjectAssociationMergerNode::ObjectAssociationMergerNode(const rclcpp::NodeOptio
 
   merged_object_pub_ =
     create_publisher<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>(
-    "output/object", rclcpp::QoS{1});
+      "output/object", rclcpp::QoS{1});
 }
 
 void ObjectAssociationMergerNode::objectsCallback(
   const autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr &
-  input_object0_msg,
+    input_object0_msg,
   const autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr &
-  input_object1_msg)
+    input_object1_msg)
 {
   // Guard
-  if (merged_object_pub_->get_subscription_count() < 1) {return;}
+  if (merged_object_pub_->get_subscription_count() < 1) {
+    return;
+  }
 
   // build output msg
   autoware_perception_msgs::msg::DynamicObjectWithFeatureArray output_msg;
@@ -65,15 +68,13 @@ void ObjectAssociationMergerNode::objectsCallback(
     data_association_.calcScoreMatrix(*input_object1_msg, *input_object0_msg);
   data_association_.assign(score_matrix, direct_assignment, reverse_assignment);
   for (size_t object0_idx = 0; object0_idx < input_object0_msg->feature_objects.size();
-    ++object0_idx)
-  {
+       ++object0_idx) {
     if (direct_assignment.find(object0_idx) != direct_assignment.end()) {  // found
       // The one with the higher score will be hired.
       if (
         input_object1_msg->feature_objects.at(direct_assignment.at(object0_idx))
-        .object.semantic.confidence <
-        input_object0_msg->feature_objects.at(object0_idx).object.semantic.confidence)
-      {
+          .object.semantic.confidence <
+        input_object0_msg->feature_objects.at(object0_idx).object.semantic.confidence) {
         output_msg.feature_objects.push_back(input_object0_msg->feature_objects.at(object0_idx));
       } else {
         output_msg.feature_objects.push_back(
@@ -84,10 +85,9 @@ void ObjectAssociationMergerNode::objectsCallback(
     }
   }
   for (size_t object1_idx = 0; object1_idx < input_object1_msg->feature_objects.size();
-    ++object1_idx)
-  {
+       ++object1_idx) {
     if (reverse_assignment.find(object1_idx) != reverse_assignment.end()) {  // found
-    } else {  // not found
+    } else {                                                                 // not found
       output_msg.feature_objects.push_back(input_object1_msg->feature_objects.at(object1_idx));
     }
   }
@@ -97,5 +97,5 @@ void ObjectAssociationMergerNode::objectsCallback(
 }
 }  // namespace object_association
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(object_association::ObjectAssociationMergerNode)
