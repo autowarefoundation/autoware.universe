@@ -15,12 +15,12 @@
 #ifndef AUTOWARE_STATE_MONITOR__CONFIG_HPP_
 #define AUTOWARE_STATE_MONITOR__CONFIG_HPP_
 
+#include <rclcpp/rclcpp.hpp>
+#include <rclcpp/time.hpp>
+
 #include <string>
 #include <utility>
 #include <vector>
-
-#include "rclcpp/rclcpp.hpp"
-#include "rclcpp/time.hpp"
 
 struct TopicConfig
 {
@@ -63,9 +63,8 @@ struct ParamConfig
   explicit ParamConfig(
     rclcpp::node_interfaces::NodeParametersInterface::SharedPtr interface,
     const std::string & namespace_prefix, const std::string & name)
-  : module(
-      interface->declare_parameter(namespace_prefix + ".module",
-      rclcpp::PARAMETER_STRING).get<std::string>()),
+  : module(interface->declare_parameter(namespace_prefix + ".module", rclcpp::PARAMETER_STRING)
+             .get<std::string>()),
     name(name)
   {
   }
@@ -79,18 +78,14 @@ struct TfConfig
   explicit TfConfig(
     rclcpp::node_interfaces::NodeParametersInterface::SharedPtr interface,
     const std::string & namespace_prefix, [[maybe_unused]] const std::string & name)
-  : module(
-      interface->declare_parameter(namespace_prefix + ".module",
-      rclcpp::PARAMETER_STRING).get<std::string>()),
-    from(
-      interface->declare_parameter(namespace_prefix + ".from",
-      rclcpp::PARAMETER_STRING).get<std::string>()),
-    to(
-      interface->declare_parameter(namespace_prefix + ".to",
-      rclcpp::PARAMETER_STRING).get<std::string>()),
-    timeout(
-      interface->declare_parameter(namespace_prefix + ".timeout",
-      rclcpp::PARAMETER_DOUBLE).get<double>())
+  : module(interface->declare_parameter(namespace_prefix + ".module", rclcpp::PARAMETER_STRING)
+             .get<std::string>()),
+    from(interface->declare_parameter(namespace_prefix + ".from", rclcpp::PARAMETER_STRING)
+           .get<std::string>()),
+    to(interface->declare_parameter(namespace_prefix + ".to", rclcpp::PARAMETER_STRING)
+         .get<std::string>()),
+    timeout(interface->declare_parameter(namespace_prefix + ".timeout", rclcpp::PARAMETER_DOUBLE)
+              .get<double>())
   {
   }
 

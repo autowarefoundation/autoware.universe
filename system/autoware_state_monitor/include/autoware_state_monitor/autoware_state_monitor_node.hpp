@@ -15,31 +15,31 @@
 #ifndef AUTOWARE_STATE_MONITOR__AUTOWARE_STATE_MONITOR_NODE_HPP_
 #define AUTOWARE_STATE_MONITOR__AUTOWARE_STATE_MONITOR_NODE_HPP_
 
+#include "autoware_state_monitor/autoware_state.hpp"
+#include "autoware_state_monitor/config.hpp"
+#include "autoware_state_monitor/state_machine.hpp"
+
+#include <diagnostic_updater/diagnostic_updater.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <std_srvs/srv/trigger.hpp>
+
+#include <autoware_planning_msgs/msg/route.hpp>
+#include <autoware_planning_msgs/msg/trajectory.hpp>
+#include <autoware_system_msgs/msg/autoware_state.hpp>
+#include <autoware_system_msgs/msg/hazard_status_stamped.hpp>
+#include <autoware_vehicle_msgs/msg/control_mode.hpp>
+#include <autoware_vehicle_msgs/msg/engage.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
+
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
+
 #include <deque>
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
-
-#include "autoware_state_monitor/autoware_state.hpp"
-#include "autoware_state_monitor/config.hpp"
-#include "autoware_state_monitor/state_machine.hpp"
-
-#include "autoware_planning_msgs/msg/route.hpp"
-#include "autoware_planning_msgs/msg/trajectory.hpp"
-#include "autoware_system_msgs/msg/hazard_status_stamped.hpp"
-#include "autoware_system_msgs/msg/autoware_state.hpp"
-#include "autoware_vehicle_msgs/msg/control_mode.hpp"
-#include "autoware_vehicle_msgs/msg/engage.hpp"
-
-#include "geometry_msgs/msg/pose_stamped.hpp"
-#include "geometry_msgs/msg/twist_stamped.hpp"
-#include "std_srvs/srv/trigger.hpp"
-
-#include "tf2_ros/buffer.h"
-#include "tf2_ros/transform_listener.h"
-#include "diagnostic_updater/diagnostic_updater.hpp"
-#include "rclcpp/rclcpp.hpp"
 
 class AutowareStateMonitorNode : public rclcpp::Node
 {
@@ -83,8 +83,8 @@ private:
   void onTopic(
     const std::shared_ptr<rclcpp::SerializedMessage> msg, const std::string & topic_name);
   void registerTopicCallback(
-    const std::string & topic_name, const std::string & topic_type,
-    const bool transient_local, const bool best_effort);
+    const std::string & topic_name, const std::string & topic_type, const bool transient_local,
+    const bool best_effort);
 
   std::map<std::string, rclcpp::GenericSubscription::SharedPtr> sub_topic_map_;
   std::map<std::string, std::deque<rclcpp::Time>> topic_received_time_buffer_;
@@ -101,7 +101,6 @@ private:
     const std::shared_ptr<rmw_request_id_t> request_header,
     const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
     std::shared_ptr<std_srvs::srv::Trigger::Response> response);
-
 
   // Publisher
   rclcpp::Publisher<autoware_system_msgs::msg::AutowareState>::SharedPtr pub_autoware_state_;

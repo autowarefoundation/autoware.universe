@@ -12,19 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "autoware_state_monitor/autoware_state_monitor_node.hpp"
+
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+
 #include <deque>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 
-#include "autoware_state_monitor/autoware_state_monitor_node.hpp"
-
-#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
-
 namespace
 {
-template<class Config>
+template <class Config>
 std::vector<Config> getConfigs(
   rclcpp::node_interfaces::NodeParametersInterface::SharedPtr interface,
   const std::string & config_namespace)
@@ -157,7 +157,7 @@ void AutowareStateMonitorNode::onTwist(const geometry_msgs::msg::TwistStamped::C
   // Delete old data in buffer
   while (true) {
     const auto time_diff = rclcpp::Time(msg->header.stamp) -
-      rclcpp::Time(state_input_.twist_buffer.front()->header.stamp);
+                           rclcpp::Time(state_input_.twist_buffer.front()->header.stamp);
 
     if (time_diff.seconds() < state_param_.th_stopped_time_sec) {
       break;
@@ -307,14 +307,14 @@ void AutowareStateMonitorNode::onTopic(
 }
 
 void AutowareStateMonitorNode::registerTopicCallback(
-  const std::string & topic_name, const std::string & topic_type,
-  const bool transient_local, const bool best_effort)
+  const std::string & topic_name, const std::string & topic_type, const bool transient_local,
+  const bool best_effort)
 {
   // Initialize buffer
   topic_received_time_buffer_[topic_name] = {};
 
   // Register callback
-  using Callback = std::function<void (const std::shared_ptr<rclcpp::SerializedMessage>)>;
+  using Callback = std::function<void(const std::shared_ptr<rclcpp::SerializedMessage>)>;
   const auto callback = static_cast<Callback>(
     std::bind(&AutowareStateMonitorNode::onTopic, this, std::placeholders::_1, topic_name));
   auto qos = rclcpp::QoS{1};
@@ -328,8 +328,8 @@ void AutowareStateMonitorNode::registerTopicCallback(
   auto subscriber_option = rclcpp::SubscriptionOptions();
   subscriber_option.callback_group = callback_group_subscribers_;
 
-  sub_topic_map_[topic_name] = this->create_generic_subscription(
-    topic_name, topic_type, qos, callback, subscriber_option);
+  sub_topic_map_[topic_name] =
+    this->create_generic_subscription(topic_name, topic_type, qos, callback, subscriber_option);
 }
 
 TopicStats AutowareStateMonitorNode::getTopicStats() const
@@ -463,32 +463,29 @@ AutowareStateMonitorNode::AutowareStateMonitorNode()
   tf_configs_ = getConfigs<TfConfig>(this->get_node_parameters_interface(), "tf_configs");
 
   // Callback Groups
-  callback_group_subscribers_ = this->create_callback_group(
-    rclcpp::CallbackGroupType::MutuallyExclusive);
-  callback_group_services_ = this->create_callback_group(
-    rclcpp::CallbackGroupType::MutuallyExclusive);
+  callback_group_subscribers_ =
+    this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+  callback_group_services_ =
+    this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   auto subscriber_option = rclcpp::SubscriptionOptions();
   subscriber_option.callback_group = callback_group_subscribers_;
 
   // Topic Callback
   for (const auto & topic_config : topic_configs_) {
     registerTopicCallback(
-      topic_config.name, topic_config.type,
-      topic_config.transient_local, topic_config.best_effort);
+      topic_config.name, topic_config.type, topic_config.transient_local, topic_config.best_effort);
   }
 
   // Subscriber
   sub_autoware_engage_ = this->create_subscription<autoware_vehicle_msgs::msg::Engage>(
-    "input/autoware_engage", 1, std::bind(
-      &AutowareStateMonitorNode::onAutowareEngage, this,
-      _1), subscriber_option);
+    "input/autoware_engage", 1, std::bind(&AutowareStateMonitorNode::onAutowareEngage, this, _1),
+    subscriber_option);
   sub_vehicle_control_mode_ = this->create_subscription<autoware_vehicle_msgs::msg::ControlMode>(
     "input/vehicle_control_mode", 1,
     std::bind(&AutowareStateMonitorNode::onVehicleControlMode, this, _1), subscriber_option);
   sub_hazard_status = this->create_subscription<autoware_system_msgs::msg::HazardStatusStamped>(
-    "input/hazard_status", 1, std::bind(
-      &AutowareStateMonitorNode::onHazardStatus, this,
-      _1), subscriber_option);
+    "input/hazard_status", 1, std::bind(&AutowareStateMonitorNode::onHazardStatus, this, _1),
+    subscriber_option);
   sub_route_ = this->create_subscription<autoware_planning_msgs::msg::Route>(
     "input/route", rclcpp::QoS{1}.transient_local(),
     std::bind(&AutowareStateMonitorNode::onRoute, this, _1), subscriber_option);
@@ -497,14 +494,12 @@ AutowareStateMonitorNode::AutowareStateMonitorNode()
 
   // Service
   srv_shutdown_ = this->create_service<std_srvs::srv::Trigger>(
-    "service/shutdown", std::bind(
-      &AutowareStateMonitorNode::onShutdownService, this, _1, _2,
-      _3), rmw_qos_profile_services_default, callback_group_services_);
+    "service/shutdown", std::bind(&AutowareStateMonitorNode::onShutdownService, this, _1, _2, _3),
+    rmw_qos_profile_services_default, callback_group_services_);
   srv_reset_route_ = this->create_service<std_srvs::srv::Trigger>(
     "service/reset_route",
-    std::bind(
-      &AutowareStateMonitorNode::onResetRouteService, this, _1, _2,
-      _3), rmw_qos_profile_services_default, callback_group_services_);
+    std::bind(&AutowareStateMonitorNode::onResetRouteService, this, _1, _2, _3),
+    rmw_qos_profile_services_default, callback_group_services_);
 
   // Publisher
   pub_autoware_state_ =
