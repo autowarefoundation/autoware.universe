@@ -15,14 +15,15 @@
 #ifndef EXTERNAL_VELOCITY_LIMIT_SELECTOR__EXTERNAL_VELOCITY_LIMIT_SELECTOR_NODE_HPP_
 #define EXTERNAL_VELOCITY_LIMIT_SELECTOR__EXTERNAL_VELOCITY_LIMIT_SELECTOR_NODE_HPP_
 
+#include <rclcpp/rclcpp.hpp>
+
+#include <autoware_planning_msgs/msg/velocity_limit.hpp>
+#include <autoware_planning_msgs/msg/velocity_limit_clear_command.hpp>
+
 #include <deque>
 #include <memory>
 #include <string>
 #include <unordered_map>
-
-#include "autoware_planning_msgs/msg/velocity_limit.hpp"
-#include "autoware_planning_msgs/msg/velocity_limit_clear_command.hpp"
-#include "rclcpp/rclcpp.hpp"
 
 using autoware_planning_msgs::msg::VelocityLimit;
 using autoware_planning_msgs::msg::VelocityLimitClearCommand;
@@ -63,7 +64,7 @@ private:
   void setVelocityLimitFromInternal(const VelocityLimit & velocity_limit);
   void clearVelocityLimit(const std::string & sender);
   void updateVelocityLimit();
-  VelocityLimit getCurrentVelocityLimit() {return hardest_limit_;}
+  VelocityLimit getCurrentVelocityLimit() { return hardest_limit_; }
 
   // Parameters
   NodeParam node_param_{};

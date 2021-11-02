@@ -17,9 +17,9 @@
 #include <deque>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
-#include <unordered_map>
 
 namespace
 {
@@ -40,9 +40,8 @@ VelocityLimit getHardestLimit(
 
   for (const auto & limit : velocity_limits) {
     // guard nan, inf
-    const auto max_velocity =
-      std::isfinite(limit.second.max_velocity) ?
-      limit.second.max_velocity : node_param.max_velocity;
+    const auto max_velocity = std::isfinite(limit.second.max_velocity) ? limit.second.max_velocity
+                                                                       : node_param.max_velocity;
 
     // find hardest max velocity
     if (max_velocity < hardest_max_velocity) {
@@ -52,8 +51,9 @@ VelocityLimit getHardestLimit(
     }
 
     const auto constraints =
-      limit.second.use_constraints && std::isfinite(limit.second.constraints.max_jerk) ?
-      limit.second.constraints : normal_constraints;
+      limit.second.use_constraints && std::isfinite(limit.second.constraints.max_jerk)
+        ? limit.second.constraints
+        : normal_constraints;
 
     // find hardest jerk
     if (hardest_max_jerk < constraints.max_jerk) {
@@ -65,7 +65,7 @@ VelocityLimit getHardestLimit(
 
   return hardest_limit;
 }
-}   // namespace
+}  // namespace
 
 ExternalVelocityLimitSelectorNode::ExternalVelocityLimitSelectorNode(
   const rclcpp::NodeOptions & node_options)
@@ -73,18 +73,15 @@ ExternalVelocityLimitSelectorNode::ExternalVelocityLimitSelectorNode(
 {
   using std::placeholders::_1;
   // Input
-  sub_external_velocity_limit_from_api_ =
-    this->create_subscription<VelocityLimit>(
+  sub_external_velocity_limit_from_api_ = this->create_subscription<VelocityLimit>(
     "input/velocity_limit_from_api", 1,
     std::bind(&ExternalVelocityLimitSelectorNode::onVelocityLimitFromAPI, this, _1));
 
-  sub_external_velocity_limit_from_internal_ =
-    this->create_subscription<VelocityLimit>(
+  sub_external_velocity_limit_from_internal_ = this->create_subscription<VelocityLimit>(
     "input/velocity_limit_from_internal", 1,
     std::bind(&ExternalVelocityLimitSelectorNode::onVelocityLimitFromInternal, this, _1));
 
-  sub_velocity_limit_clear_command_ =
-    this->create_subscription<VelocityLimitClearCommand>(
+  sub_velocity_limit_clear_command_ = this->create_subscription<VelocityLimitClearCommand>(
     "input/velocity_limit_clear_command_from_internal", 1,
     std::bind(&ExternalVelocityLimitSelectorNode::onVelocityLimitClearCommand, this, _1));
 
@@ -140,8 +137,7 @@ void ExternalVelocityLimitSelectorNode::onVelocityLimitClearCommand(
   publishVelocityLimit(velocity_limit);
 }
 
-void ExternalVelocityLimitSelectorNode::publishVelocityLimit(
-  const VelocityLimit & velocity_limit)
+void ExternalVelocityLimitSelectorNode::publishVelocityLimit(const VelocityLimit & velocity_limit)
 {
   pub_external_velocity_limit_->publish(velocity_limit);
 }
@@ -176,8 +172,7 @@ void ExternalVelocityLimitSelectorNode::setVelocityLimitFromInternal(
   updateVelocityLimit();
 }
 
-void ExternalVelocityLimitSelectorNode::clearVelocityLimit(
-  const std::string & sender)
+void ExternalVelocityLimitSelectorNode::clearVelocityLimit(const std::string & sender)
 {
   if (velocity_limit_table_.empty()) {
     RCLCPP_WARN(get_logger(), "no velocity limit has been set from internal.");
@@ -208,5 +203,5 @@ void ExternalVelocityLimitSelectorNode::updateVelocityLimit()
   hardest_limit_ = getHardestLimit(velocity_limit_table_, node_param_);
 }
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(ExternalVelocityLimitSelectorNode)
