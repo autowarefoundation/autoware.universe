@@ -15,6 +15,12 @@
 #ifndef FREESPACE_PLANNING_ALGORITHMS__ASTAR_SEARCH_HPP_
 #define FREESPACE_PLANNING_ALGORITHMS__ASTAR_SEARCH_HPP_
 
+#include "freespace_planning_algorithms/abstract_algorithm.hpp"
+#include "freespace_planning_algorithms/reeds_shepp.hpp"
+
+#include <nav_msgs/msg/path.hpp>
+#include <std_msgs/msg/header.hpp>
+
 #include <cmath>
 #include <functional>
 #include <iostream>
@@ -22,12 +28,6 @@
 #include <string>
 #include <tuple>
 #include <vector>
-
-#include "nav_msgs/msg/path.hpp"
-#include "std_msgs/msg/header.hpp"
-
-#include "freespace_planning_algorithms/abstract_algorithm.hpp"
-#include "freespace_planning_algorithms/reeds_shepp.hpp"
 
 namespace freespace_planning_algorithms
 {
@@ -54,7 +54,7 @@ struct AstarNode
   bool is_back;                          // true if the current direction of the vehicle is back
   AstarNode * parent = nullptr;          // parent node
 
-  double cost() const {return gc + hc;}
+  double cost() const { return gc + hc; }
 };
 
 struct NodeComparison
@@ -113,7 +113,7 @@ public:
     const geometry_msgs::msg::Pose & goal_pose) override;
   bool hasFeasibleSolution() override;  // currently used only in testing
 
-  const PlannerWaypoints & getWaypoints() const {return waypoints_;}
+  const PlannerWaypoints & getWaypoints() const { return waypoints_; }
 
 private:
   bool search();
@@ -123,7 +123,7 @@ private:
   double estimateCost(const geometry_msgs::msg::Pose & pose);
   bool isGoal(const AstarNode & node);
 
-  AstarNode * getNodeRef(const IndexXYT & index) {return &nodes_[index.y][index.x][index.theta];}
+  AstarNode * getNodeRef(const IndexXYT & index) { return &nodes_[index.y][index.x][index.theta]; }
 
   // Algorithm specific param
   AstarParam astar_param_;

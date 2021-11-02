@@ -15,26 +15,25 @@
 #ifndef FREESPACE_PLANNING_ALGORITHMS__ABSTRACT_ALGORITHM_HPP_
 #define FREESPACE_PLANNING_ALGORITHMS__ABSTRACT_ALGORITHM_HPP_
 
-#include <vector>
+#include <geometry_msgs/msg/pose_array.hpp>
+#include <nav_msgs/msg/occupancy_grid.hpp>
 
-#include "geometry_msgs/msg/pose_array.hpp"
-#include "nav_msgs/msg/occupancy_grid.hpp"
-#include "tf2/utils.h"
-#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
+#include <tf2/utils.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+
+#include <vector>
 
 // TODO(wep21): Remove these apis
 //              after they are implemented in ros2 geometry2.
 namespace tf2
 {
-inline
-void fromMsg(const geometry_msgs::msg::Point & in, tf2::Vector3 & out)
+inline void fromMsg(const geometry_msgs::msg::Point & in, tf2::Vector3 & out)
 {
   out = tf2::Vector3(in.x, in.y, in.z);
 }
 
-template<>
-inline
-void doTransform(
+template <>
+inline void doTransform(
   const geometry_msgs::msg::Pose & t_in, geometry_msgs::msg::Pose & t_out,
   const geometry_msgs::msg::TransformStamped & transform)
 {
@@ -138,7 +137,7 @@ public:
     planner_common_param_.vehicle_shape = vehicle_shape;
   }
   bool hasObstacleOnTrajectory(const geometry_msgs::msg::PoseArray & trajectory);
-  const PlannerWaypoints & getWaypoints() const {return waypoints_;}
+  const PlannerWaypoints & getWaypoints() const { return waypoints_; }
   virtual ~AbstractPlanningAlgorithm() {}
 
 protected:
@@ -146,8 +145,12 @@ protected:
   bool detectCollision(const IndexXYT & base_index);
   inline bool isOutOfRange(const IndexXYT & index)
   {
-    if (index.x < 0 || static_cast<int>(costmap_.info.width) <= index.x) {return true;}
-    if (index.y < 0 || static_cast<int>(costmap_.info.height) <= index.y) {return true;}
+    if (index.x < 0 || static_cast<int>(costmap_.info.width) <= index.x) {
+      return true;
+    }
+    if (index.y < 0 || static_cast<int>(costmap_.info.height) <= index.y) {
+      return true;
+    }
     return false;
   }
   inline bool isObs(const IndexXYT & index)

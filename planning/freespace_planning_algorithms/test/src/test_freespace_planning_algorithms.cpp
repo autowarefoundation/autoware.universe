@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "freespace_planning_algorithms/astar_search.hpp"
+
+#include <rclcpp/rclcpp.hpp>
+
+#include <gtest/gtest.h>
+#include <tf2/utils.h>
+
 #include <array>
 #include <fstream>
 #include <string>
 #include <vector>
-
-#include "gtest/gtest.h"
-
-#include "rclcpp/rclcpp.hpp"
-#include "tf2/utils.h"
-
-#include "freespace_planning_algorithms/astar_search.hpp"
 
 namespace fpa = freespace_planning_algorithms;
 

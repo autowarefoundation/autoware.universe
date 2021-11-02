@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <vector>
-
-#include "autoware_utils/autoware_utils.hpp"
 #include "freespace_planning_algorithms/astar_search.hpp"
 
-#include "tf2/utils.h"
-#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
+#include <autoware_utils/autoware_utils.hpp>
 
+#include <tf2/utils.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+
+#include <vector>
 
 namespace freespace_planning_algorithms
 {
@@ -203,8 +203,8 @@ double AstarSearch::estimateCost(const geometry_msgs::msg::Pose & pose)
   // Temporarily, until reeds_shepp gets stable.
   if (use_reeds_shepp_) {
     double radius = (planner_common_param_.minimum_turning_radius +
-      planner_common_param_.maximum_turning_radius) *
-      0.5;
+                     planner_common_param_.maximum_turning_radius) *
+                    0.5;
     total_cost +=
       calcReedsSheppDistance(pose, goal_pose_, radius) * astar_param_.distance_heuristic_weight;
   } else {
@@ -243,9 +243,9 @@ bool AstarSearch::search()
     for (const auto & transition : transition_table_[index_theta]) {
       const bool is_turning_point = transition.is_back != current_node->is_back;
 
-      const double move_cost = is_turning_point ?
-        planner_common_param_.reverse_weight * transition.distance :
-        transition.distance;
+      const double move_cost = is_turning_point
+                                 ? planner_common_param_.reverse_weight * transition.distance
+                                 : transition.distance;
 
       // Calculate index of the next state
       geometry_msgs::msg::Pose next_pose;
@@ -347,8 +347,7 @@ bool AstarSearch::isGoal(const AstarNode & node)
 
   if (
     std::fabs(relative_pose.position.x) > longitudinal_goal_range ||
-    std::fabs(relative_pose.position.y) > lateral_goal_range)
-  {
+    std::fabs(relative_pose.position.y) > lateral_goal_range) {
     return false;
   }
 

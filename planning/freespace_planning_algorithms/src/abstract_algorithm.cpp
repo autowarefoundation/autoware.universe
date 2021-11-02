@@ -12,15 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <vector>
-
-#include "autoware_utils/autoware_utils.hpp"
 #include "freespace_planning_algorithms/abstract_algorithm.hpp"
+
+#include <autoware_utils/autoware_utils.hpp>
+
+#include <vector>
 
 namespace freespace_planning_algorithms
 {
-using autoware_utils::normalizeRadian;
 using autoware_utils::createQuaternionFromYaw;
+using autoware_utils::normalizeRadian;
 
 geometry_msgs::msg::Pose transformPose(
   const geometry_msgs::msg::Pose & pose, const geometry_msgs::msg::TransformStamped & transform)

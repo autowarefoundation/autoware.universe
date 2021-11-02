@@ -81,11 +81,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "freespace_planning_algorithms/reeds_shepp.hpp"
+
 #include <algorithm>
 #include <cmath>
 #include <limits>
-
-#include "freespace_planning_algorithms/reeds_shepp.hpp"
 
 namespace
 {
@@ -161,29 +161,30 @@ inline bool LpSpRp(double x, double y, double phi, double & t, double & u, doubl
 void CSC(double x, double y, double phi, ReedsSheppStateSpace::ReedsSheppPath & path)
 {
   double t, u, v, L_min = path.length(), L;
-  if (LpSpLp(x, y, phi, t, u, v) &&
-    L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))
-  {
+  if (LpSpLp(x, y, phi, t, u, v) && L_min > (L = std::abs(t) + std::abs(u) + std::abs(v))) {
     path =
       ReedsSheppStateSpace::ReedsSheppPath(ReedsSheppStateSpace::reedsSheppPathType[14], t, u, v);
     L_min = L;
   }
-  if (LpSpLp(-x, y, -phi, t, u, v) &&
-    L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))    // time flip
+  if (
+    LpSpLp(-x, y, -phi, t, u, v) &&
+    L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))  // time flip
   {
     path = ReedsSheppStateSpace::ReedsSheppPath(
       ReedsSheppStateSpace::reedsSheppPathType[14], -t, -u, -v);
     L_min = L;
   }
-  if (LpSpLp(x, -y, -phi, t, u, v) &&
-    L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))    // reflect
+  if (
+    LpSpLp(x, -y, -phi, t, u, v) &&
+    L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))  // reflect
   {
     path =
       ReedsSheppStateSpace::ReedsSheppPath(ReedsSheppStateSpace::reedsSheppPathType[15], t, u, v);
     L_min = L;
   }
-  if (LpSpLp(-x, -y, phi, t, u, v) &&
-    L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))    // time flip + reflect
+  if (
+    LpSpLp(-x, -y, phi, t, u, v) &&
+    L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))  // time flip + reflect
   {
     path = ReedsSheppStateSpace::ReedsSheppPath(
       ReedsSheppStateSpace::reedsSheppPathType[15], -t, -u, -v);
@@ -194,22 +195,25 @@ void CSC(double x, double y, double phi, ReedsSheppStateSpace::ReedsSheppPath & 
       ReedsSheppStateSpace::ReedsSheppPath(ReedsSheppStateSpace::reedsSheppPathType[12], t, u, v);
     L_min = L;
   }
-  if (LpSpRp(-x, y, -phi, t, u, v) &&
-    L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))    // time flip
+  if (
+    LpSpRp(-x, y, -phi, t, u, v) &&
+    L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))  // time flip
   {
     path = ReedsSheppStateSpace::ReedsSheppPath(
       ReedsSheppStateSpace::reedsSheppPathType[12], -t, -u, -v);
     L_min = L;
   }
-  if (LpSpRp(x, -y, -phi, t, u, v) &&
-    L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))    // reflect
+  if (
+    LpSpRp(x, -y, -phi, t, u, v) &&
+    L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))  // reflect
   {
     path =
       ReedsSheppStateSpace::ReedsSheppPath(ReedsSheppStateSpace::reedsSheppPathType[13], t, u, v);
     L_min = L;
   }
-  if (LpSpRp(-x, -y, phi, t, u, v) &&
-    L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))    // time flip + reflect
+  if (
+    LpSpRp(-x, -y, phi, t, u, v) &&
+    L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))  // time flip + reflect
   {
     path = ReedsSheppStateSpace::ReedsSheppPath(
       ReedsSheppStateSpace::reedsSheppPathType[13], -t, -u, -v);
@@ -234,29 +238,28 @@ inline bool LpRmL(double x, double y, double phi, double & t, double & u, double
 void CCC(double x, double y, double phi, ReedsSheppStateSpace::ReedsSheppPath & path)
 {
   double t, u, v, L_min = path.length(), L;
-  if (LpRmL(x, y, phi, t, u, v) &&
-    L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))
-  {
+  if (LpRmL(x, y, phi, t, u, v) && L_min > (L = std::abs(t) + std::abs(u) + std::abs(v))) {
     path =
       ReedsSheppStateSpace::ReedsSheppPath(ReedsSheppStateSpace::reedsSheppPathType[0], t, u, v);
     L_min = L;
   }
-  if (LpRmL(-x, y, -phi, t, u, v) &&
-    L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))    // time flip
-  {
+  if (LpRmL(-x, y, -phi, t, u, v) && L_min > (L = std::abs(t) + std::abs(u) + std::abs(v))) {
+    // time flip
     path =
       ReedsSheppStateSpace::ReedsSheppPath(ReedsSheppStateSpace::reedsSheppPathType[0], -t, -u, -v);
     L_min = L;
   }
-  if (LpRmL(x, -y, -phi, t, u, v) &&
-    L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))    // reflect
+  if (
+    LpRmL(x, -y, -phi, t, u, v) &&
+    L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))  // reflect
   {
     path =
       ReedsSheppStateSpace::ReedsSheppPath(ReedsSheppStateSpace::reedsSheppPathType[1], t, u, v);
     L_min = L;
   }
-  if (LpRmL(-x, -y, phi, t, u, v) &&
-    L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))    // time flip + reflect
+  if (
+    LpRmL(-x, -y, phi, t, u, v) &&
+    L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))  // time flip + reflect
   {
     path =
       ReedsSheppStateSpace::ReedsSheppPath(ReedsSheppStateSpace::reedsSheppPathType[1], -t, -u, -v);
@@ -270,15 +273,17 @@ void CCC(double x, double y, double phi, ReedsSheppStateSpace::ReedsSheppPath & 
       ReedsSheppStateSpace::ReedsSheppPath(ReedsSheppStateSpace::reedsSheppPathType[0], v, u, t);
     L_min = L;
   }
-  if (LpRmL(-xb, yb, -phi, t, u, v) &&
-    L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))    // time flip
+  if (
+    LpRmL(-xb, yb, -phi, t, u, v) &&
+    L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))  // time flip
   {
     path =
       ReedsSheppStateSpace::ReedsSheppPath(ReedsSheppStateSpace::reedsSheppPathType[0], -v, -u, -t);
     L_min = L;
   }
-  if (LpRmL(xb, -yb, -phi, t, u, v) &&
-    L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))    // reflect
+  if (
+    LpRmL(xb, -yb, -phi, t, u, v) &&
+    L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))  // reflect
   {
     path =
       ReedsSheppStateSpace::ReedsSheppPath(ReedsSheppStateSpace::reedsSheppPathType[1], v, u, t);
@@ -296,18 +301,15 @@ void CCC(double x, double y, double phi, ReedsSheppStateSpace::ReedsSheppPath & 
 inline bool LpRupLumRm(double x, double y, double phi, double & t, double & u, double & v)
 {
   double xi = x + std::sin(phi), eta = y - 1. - std::cos(phi),
-    rho = .25 * (2. + sqrt(xi * xi + eta * eta));
+         rho = .25 * (2. + sqrt(xi * xi + eta * eta));
   if (rho <= 1.) {
     u = acos(rho);
     tauOmega(u, -u, xi, eta, phi, t, v);
     assert(
-      std::abs(
-        2 * (sin(t) - std::sin(t - u) + std::sin(t - 2 * u)) - std::sin(
-          phi) - x) < RS_EPS);
+      std::abs(2 * (sin(t) - std::sin(t - u) + std::sin(t - 2 * u)) - std::sin(phi) - x) < RS_EPS);
     assert(
-      std::abs(
-        2 * (-cos(t) + std::cos(t - u) - std::cos(t - 2 * u)) + std::cos(
-          phi) + 1 - y) < RS_EPS);
+      std::abs(2 * (-cos(t) + std::cos(t - u) - std::cos(t - 2 * u)) + std::cos(phi) + 1 - y) <
+      RS_EPS);
     assert(std::abs(mod2pi(t - 2 * u - v - phi)) < RS_EPS);
     return t >= -ZERO && v <= ZERO;
   }
@@ -317,7 +319,7 @@ inline bool LpRupLumRm(double x, double y, double phi, double & t, double & u, d
 inline bool LpRumLumRp(double x, double y, double phi, double & t, double & u, double & v)
 {
   double xi = x + std::sin(phi), eta = y - 1. - std::cos(phi),
-    rho = (20. - xi * xi - eta * eta) / 16.;
+         rho = (20. - xi * xi - eta * eta) / 16.;
   if (rho >= 0 && rho <= 1) {
     u = -acos(rho);
     if (u >= -.5 * pi) {
@@ -333,58 +335,62 @@ inline bool LpRumLumRp(double x, double y, double phi, double & t, double & u, d
 void CCCC(double x, double y, double phi, ReedsSheppStateSpace::ReedsSheppPath & path)
 {
   double t, u, v, L_min = path.length(), L;
-  if (LpRupLumRm(x, y, phi, t, u, v) &&
-    L_min > (L = std::abs(t) + 2. * std::abs(u) + std::abs(v)))
-  {
+  if (
+    LpRupLumRm(x, y, phi, t, u, v) && L_min > (L = std::abs(t) + 2. * std::abs(u) + std::abs(v))) {
     path = ReedsSheppStateSpace::ReedsSheppPath(
       ReedsSheppStateSpace::reedsSheppPathType[2], t, u, -u, v);
     L_min = L;
   }
-  if (LpRupLumRm(-x, y, -phi, t, u, v) &&
-    L_min > (L = std::abs(t) + 2. * std::abs(u) + std::abs(v)))    // time flip
+  if (
+    LpRupLumRm(-x, y, -phi, t, u, v) &&
+    L_min > (L = std::abs(t) + 2. * std::abs(u) + std::abs(v)))  // time flip
   {
     path = ReedsSheppStateSpace::ReedsSheppPath(
       ReedsSheppStateSpace::reedsSheppPathType[2], -t, -u, u, -v);
     L_min = L;
   }
-  if (LpRupLumRm(x, -y, -phi, t, u, v) &&
-    L_min > (L = std::abs(t) + 2. * std::abs(u) + std::abs(v)))    // reflect
+  if (
+    LpRupLumRm(x, -y, -phi, t, u, v) &&
+    L_min > (L = std::abs(t) + 2. * std::abs(u) + std::abs(v)))  // reflect
   {
     path = ReedsSheppStateSpace::ReedsSheppPath(
       ReedsSheppStateSpace::reedsSheppPathType[3], t, u, -u, v);
     L_min = L;
   }
-  if (LpRupLumRm(-x, -y, phi, t, u, v) &&
-    L_min > (L = std::abs(t) + 2. * std::abs(u) + std::abs(v)))    // time flip + reflect
+  if (
+    LpRupLumRm(-x, -y, phi, t, u, v) &&
+    L_min > (L = std::abs(t) + 2. * std::abs(u) + std::abs(v)))  // time flip + reflect
   {
     path = ReedsSheppStateSpace::ReedsSheppPath(
       ReedsSheppStateSpace::reedsSheppPathType[3], -t, -u, u, -v);
     L_min = L;
   }
 
-  if (LpRumLumRp(x, y, phi, t, u, v) &&
-    L_min > (L = std::abs(t) + 2. * std::abs(u) + std::abs(v)))
-  {
+  if (
+    LpRumLumRp(x, y, phi, t, u, v) && L_min > (L = std::abs(t) + 2. * std::abs(u) + std::abs(v))) {
     path =
       ReedsSheppStateSpace::ReedsSheppPath(ReedsSheppStateSpace::reedsSheppPathType[2], t, u, u, v);
     L_min = L;
   }
-  if (LpRumLumRp(-x, y, -phi, t, u, v) &&
-    L_min > (L = std::abs(t) + 2. * std::abs(u) + std::abs(v)))    // time flip
+  if (
+    LpRumLumRp(-x, y, -phi, t, u, v) &&
+    L_min > (L = std::abs(t) + 2. * std::abs(u) + std::abs(v)))  // time flip
   {
     path = ReedsSheppStateSpace::ReedsSheppPath(
       ReedsSheppStateSpace::reedsSheppPathType[2], -t, -u, -u, -v);
     L_min = L;
   }
-  if (LpRumLumRp(x, -y, -phi, t, u, v) &&
-    L_min > (L = std::abs(t) + 2. * std::abs(u) + std::abs(v)))    // reflect
+  if (
+    LpRumLumRp(x, -y, -phi, t, u, v) &&
+    L_min > (L = std::abs(t) + 2. * std::abs(u) + std::abs(v)))  // reflect
   {
     path =
       ReedsSheppStateSpace::ReedsSheppPath(ReedsSheppStateSpace::reedsSheppPathType[3], t, u, u, v);
     L_min = L;
   }
-  if (LpRumLumRp(-x, -y, phi, t, u, v) &&
-    L_min > (L = std::abs(t) + 2. * std::abs(u) + std::abs(v)))    // time flip + reflect
+  if (
+    LpRumLumRp(-x, -y, phi, t, u, v) &&
+    L_min > (L = std::abs(t) + 2. * std::abs(u) + std::abs(v)))  // time flip + reflect
   {
     path = ReedsSheppStateSpace::ReedsSheppPath(
       ReedsSheppStateSpace::reedsSheppPathType[3], -t, -u, -u, -v);
@@ -402,8 +408,7 @@ inline bool LpRmSmLm(double x, double y, double phi, double & t, double & u, dou
     v = mod2pi(phi - .5 * pi - t);
     assert(std::abs(2 * (sin(t) - std::cos(t)) - u * std::sin(t) + std::sin(phi) - x) < RS_EPS);
     assert(
-      std::abs(-2 * (sin(t) + std::cos(t)) + u * std::cos(t) - std::cos(phi) + 1 - y) <
-      RS_EPS);
+      std::abs(-2 * (sin(t) + std::cos(t)) + u * std::cos(t) - std::cos(phi) + 1 - y) < RS_EPS);
     assert(std::abs(mod2pi(t + pi / 2 + v - phi)) < RS_EPS);
     return t >= -ZERO && u <= ZERO && v <= ZERO;
   }
@@ -433,21 +438,24 @@ void CCSC(double x, double y, double phi, ReedsSheppStateSpace::ReedsSheppPath &
       ReedsSheppStateSpace::reedsSheppPathType[4], t, -.5 * pi, u, v);
     L_min = L;
   }
-  if (LpRmSmLm(-x, y, -phi, t, u, v) &&
-    L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))   // time flip
+  if (
+    LpRmSmLm(-x, y, -phi, t, u, v) &&
+    L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))  // time flip
   {
     path = ReedsSheppStateSpace::ReedsSheppPath(
       ReedsSheppStateSpace::reedsSheppPathType[4], -t, .5 * pi, -u, -v);
     L_min = L;
   }
-  if (LpRmSmLm(x, -y, -phi, t, u, v) &&
-    L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))   // reflect
+  if (
+    LpRmSmLm(x, -y, -phi, t, u, v) &&
+    L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))  // reflect
   {
     path = ReedsSheppStateSpace::ReedsSheppPath(
       ReedsSheppStateSpace::reedsSheppPathType[5], t, -.5 * pi, u, v);
     L_min = L;
   }
-  if (LpRmSmLm(-x, -y, phi, t, u, v) &&
+  if (
+    LpRmSmLm(-x, -y, phi, t, u, v) &&
     L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))  // time flip + reflect
   {
     path = ReedsSheppStateSpace::ReedsSheppPath(
@@ -460,21 +468,24 @@ void CCSC(double x, double y, double phi, ReedsSheppStateSpace::ReedsSheppPath &
       ReedsSheppStateSpace::reedsSheppPathType[8], t, -.5 * pi, u, v);
     L_min = L;
   }
-  if (LpRmSmRm(-x, y, -phi, t, u, v) &&
-    L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))   // time flip
+  if (
+    LpRmSmRm(-x, y, -phi, t, u, v) &&
+    L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))  // time flip
   {
     path = ReedsSheppStateSpace::ReedsSheppPath(
       ReedsSheppStateSpace::reedsSheppPathType[8], -t, .5 * pi, -u, -v);
     L_min = L;
   }
-  if (LpRmSmRm(x, -y, -phi, t, u, v) &&
-    L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))   // reflect
+  if (
+    LpRmSmRm(x, -y, -phi, t, u, v) &&
+    L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))  // reflect
   {
     path = ReedsSheppStateSpace::ReedsSheppPath(
       ReedsSheppStateSpace::reedsSheppPathType[9], t, -.5 * pi, u, v);
     L_min = L;
   }
-  if (LpRmSmRm(-x, -y, phi, t, u, v) &&
+  if (
+    LpRmSmRm(-x, -y, phi, t, u, v) &&
     L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))  // time flip + reflect
   {
     path = ReedsSheppStateSpace::ReedsSheppPath(
@@ -489,21 +500,24 @@ void CCSC(double x, double y, double phi, ReedsSheppStateSpace::ReedsSheppPath &
       ReedsSheppStateSpace::reedsSheppPathType[6], v, u, -.5 * pi, t);
     L_min = L;
   }
-  if (LpRmSmLm(-xb, yb, -phi, t, u, v) &&
-    L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))   // time flip
+  if (
+    LpRmSmLm(-xb, yb, -phi, t, u, v) &&
+    L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))  // time flip
   {
     path = ReedsSheppStateSpace::ReedsSheppPath(
       ReedsSheppStateSpace::reedsSheppPathType[6], -v, -u, .5 * pi, -t);
     L_min = L;
   }
-  if (LpRmSmLm(xb, -yb, -phi, t, u, v) &&
-    L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))   // reflect
+  if (
+    LpRmSmLm(xb, -yb, -phi, t, u, v) &&
+    L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))  // reflect
   {
     path = ReedsSheppStateSpace::ReedsSheppPath(
       ReedsSheppStateSpace::reedsSheppPathType[7], v, u, -.5 * pi, t);
     L_min = L;
   }
-  if (LpRmSmLm(-xb, -yb, phi, t, u, v) &&
+  if (
+    LpRmSmLm(-xb, -yb, phi, t, u, v) &&
     L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))  // time flip + reflect
   {
     path = ReedsSheppStateSpace::ReedsSheppPath(
@@ -516,21 +530,24 @@ void CCSC(double x, double y, double phi, ReedsSheppStateSpace::ReedsSheppPath &
       ReedsSheppStateSpace::reedsSheppPathType[10], v, u, -.5 * pi, t);
     L_min = L;
   }
-  if (LpRmSmRm(-xb, yb, -phi, t, u, v) &&
-    L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))    // time flip
+  if (
+    LpRmSmRm(-xb, yb, -phi, t, u, v) &&
+    L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))  // time flip
   {
     path = ReedsSheppStateSpace::ReedsSheppPath(
       ReedsSheppStateSpace::reedsSheppPathType[10], -v, -u, .5 * pi, -t);
     L_min = L;
   }
-  if (LpRmSmRm(xb, -yb, -phi, t, u, v) &&
-    L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))    // reflect
+  if (
+    LpRmSmRm(xb, -yb, -phi, t, u, v) &&
+    L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))  // reflect
   {
     path = ReedsSheppStateSpace::ReedsSheppPath(
       ReedsSheppStateSpace::reedsSheppPathType[11], v, u, -.5 * pi, t);
     L_min = L;
   }
-  if (LpRmSmRm(-xb, -yb, phi, t, u, v) &&
+  if (
+    LpRmSmRm(-xb, -yb, phi, t, u, v) &&
     L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))  // time flip + reflect
   {
     path = ReedsSheppStateSpace::ReedsSheppPath(
@@ -548,13 +565,10 @@ inline bool LpRmSLmRp(double x, double y, double phi, double & t, double & u, do
       t = mod2pi(atan2((4 - u) * xi - 2 * eta, -2 * xi + (u - 4) * eta));
       v = mod2pi(t - phi);
       assert(
-        std::abs(
-          4 * std::sin(t) - 2 * std::cos(t) - u * std::sin(t) - std::sin(
-            phi) - x) < RS_EPS);
+        std::abs(4 * std::sin(t) - 2 * std::cos(t) - u * std::sin(t) - std::sin(phi) - x) < RS_EPS);
       assert(
-        std::abs(
-          -4 * std::cos(t) - 2 * std::sin(t) + u * std::cos(t) + std::cos(
-            phi) + 1 - y) < RS_EPS);
+        std::abs(-4 * std::cos(t) - 2 * std::sin(t) + u * std::cos(t) + std::cos(phi) + 1 - y) <
+        RS_EPS);
       assert(std::abs(mod2pi(t - v - phi)) < RS_EPS);
       return t >= -ZERO && v >= -ZERO;
     }
@@ -569,15 +583,17 @@ void CCSCC(double x, double y, double phi, ReedsSheppStateSpace::ReedsSheppPath 
       ReedsSheppStateSpace::reedsSheppPathType[16], t, -.5 * pi, u, -.5 * pi, v);
     L_min = L;
   }
-  if (LpRmSLmRp(-x, y, -phi, t, u, v) &&
-    L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))    // time flip
+  if (
+    LpRmSLmRp(-x, y, -phi, t, u, v) &&
+    L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))  // time flip
   {
     path = ReedsSheppStateSpace::ReedsSheppPath(
       ReedsSheppStateSpace::reedsSheppPathType[16], -t, .5 * pi, -u, .5 * pi, -v);
     L_min = L;
   }
-  if (LpRmSLmRp(x, -y, -phi, t, u, v) &&
-    L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))    // reflect
+  if (
+    LpRmSLmRp(x, -y, -phi, t, u, v) &&
+    L_min > (L = std::abs(t) + std::abs(u) + std::abs(v)))  // reflect
   {
     path = ReedsSheppStateSpace::ReedsSheppPath(
       ReedsSheppStateSpace::reedsSheppPathType[17], t, -.5 * pi, u, -.5 * pi, v);
@@ -607,25 +623,25 @@ ReedsSheppStateSpace::ReedsSheppPath reedsShepp(double x, double y, double phi)
 namespace freespace_planning_algorithms
 {
 const ReedsSheppStateSpace::ReedsSheppPathSegmentType
-ReedsSheppStateSpace::reedsSheppPathType[18][5] = {
-  {RS_LEFT, RS_RIGHT, RS_LEFT, RS_NOP, RS_NOP},           // 0
-  {RS_RIGHT, RS_LEFT, RS_RIGHT, RS_NOP, RS_NOP},          // 1
-  {RS_LEFT, RS_RIGHT, RS_LEFT, RS_RIGHT, RS_NOP},         // 2
-  {RS_RIGHT, RS_LEFT, RS_RIGHT, RS_LEFT, RS_NOP},         // 3
-  {RS_LEFT, RS_RIGHT, RS_STRAIGHT, RS_LEFT, RS_NOP},      // 4
-  {RS_RIGHT, RS_LEFT, RS_STRAIGHT, RS_RIGHT, RS_NOP},     // 5
-  {RS_LEFT, RS_STRAIGHT, RS_RIGHT, RS_LEFT, RS_NOP},      // 6
-  {RS_RIGHT, RS_STRAIGHT, RS_LEFT, RS_RIGHT, RS_NOP},     // 7
-  {RS_LEFT, RS_RIGHT, RS_STRAIGHT, RS_RIGHT, RS_NOP},     // 8
-  {RS_RIGHT, RS_LEFT, RS_STRAIGHT, RS_LEFT, RS_NOP},      // 9
-  {RS_RIGHT, RS_STRAIGHT, RS_RIGHT, RS_LEFT, RS_NOP},     // 10
-  {RS_LEFT, RS_STRAIGHT, RS_LEFT, RS_RIGHT, RS_NOP},      // 11
-  {RS_LEFT, RS_STRAIGHT, RS_RIGHT, RS_NOP, RS_NOP},       // 12
-  {RS_RIGHT, RS_STRAIGHT, RS_LEFT, RS_NOP, RS_NOP},       // 13
-  {RS_LEFT, RS_STRAIGHT, RS_LEFT, RS_NOP, RS_NOP},        // 14
-  {RS_RIGHT, RS_STRAIGHT, RS_RIGHT, RS_NOP, RS_NOP},      // 15
-  {RS_LEFT, RS_RIGHT, RS_STRAIGHT, RS_LEFT, RS_RIGHT},    // 16
-  {RS_RIGHT, RS_LEFT, RS_STRAIGHT, RS_RIGHT, RS_LEFT}     // 17
+  ReedsSheppStateSpace::reedsSheppPathType[18][5] = {
+    {RS_LEFT, RS_RIGHT, RS_LEFT, RS_NOP, RS_NOP},         // 0
+    {RS_RIGHT, RS_LEFT, RS_RIGHT, RS_NOP, RS_NOP},        // 1
+    {RS_LEFT, RS_RIGHT, RS_LEFT, RS_RIGHT, RS_NOP},       // 2
+    {RS_RIGHT, RS_LEFT, RS_RIGHT, RS_LEFT, RS_NOP},       // 3
+    {RS_LEFT, RS_RIGHT, RS_STRAIGHT, RS_LEFT, RS_NOP},    // 4
+    {RS_RIGHT, RS_LEFT, RS_STRAIGHT, RS_RIGHT, RS_NOP},   // 5
+    {RS_LEFT, RS_STRAIGHT, RS_RIGHT, RS_LEFT, RS_NOP},    // 6
+    {RS_RIGHT, RS_STRAIGHT, RS_LEFT, RS_RIGHT, RS_NOP},   // 7
+    {RS_LEFT, RS_RIGHT, RS_STRAIGHT, RS_RIGHT, RS_NOP},   // 8
+    {RS_RIGHT, RS_LEFT, RS_STRAIGHT, RS_LEFT, RS_NOP},    // 9
+    {RS_RIGHT, RS_STRAIGHT, RS_RIGHT, RS_LEFT, RS_NOP},   // 10
+    {RS_LEFT, RS_STRAIGHT, RS_LEFT, RS_RIGHT, RS_NOP},    // 11
+    {RS_LEFT, RS_STRAIGHT, RS_RIGHT, RS_NOP, RS_NOP},     // 12
+    {RS_RIGHT, RS_STRAIGHT, RS_LEFT, RS_NOP, RS_NOP},     // 13
+    {RS_LEFT, RS_STRAIGHT, RS_LEFT, RS_NOP, RS_NOP},      // 14
+    {RS_RIGHT, RS_STRAIGHT, RS_RIGHT, RS_NOP, RS_NOP},    // 15
+    {RS_LEFT, RS_RIGHT, RS_STRAIGHT, RS_LEFT, RS_RIGHT},  // 16
+    {RS_RIGHT, RS_LEFT, RS_STRAIGHT, RS_RIGHT, RS_LEFT}   // 17
 };
 
 ReedsSheppStateSpace::ReedsSheppPath::ReedsSheppPath(
@@ -657,8 +673,12 @@ ReedsSheppStateSpace::ReedsSheppPath ReedsSheppStateSpace::reedsShepp(
 void ReedsSheppStateSpace::interpolate(
   const StateXYT & s0, ReedsSheppPath & path, double seg, StateXYT & s_out)
 {
-  if (seg < 0.0) {seg = 0.0;}
-  if (seg > path.length()) {seg = path.length();}
+  if (seg < 0.0) {
+    seg = 0.0;
+  }
+  if (seg > path.length()) {
+    seg = path.length();
+  }
 
   double phi, v;
 
