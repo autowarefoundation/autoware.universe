@@ -15,13 +15,14 @@
 #ifndef IMAGE_TRANSPORT_DECOMPRESSOR__IMAGE_TRANSPORT_DECOMPRESSOR_HPP_
 #define IMAGE_TRANSPORT_DECOMPRESSOR__IMAGE_TRANSPORT_DECOMPRESSOR_HPP_
 
+#include <rclcpp/rclcpp.hpp>
+
+#include <sensor_msgs/msg/compressed_image.hpp>
+#include <sensor_msgs/msg/image.hpp>
+
 #include <memory>
 #include <string>
 #include <utility>
-
-#include "rclcpp/rclcpp.hpp"
-#include "sensor_msgs/msg/image.hpp"
-#include "sensor_msgs/msg/compressed_image.hpp"
 
 namespace image_preprocessor
 {
