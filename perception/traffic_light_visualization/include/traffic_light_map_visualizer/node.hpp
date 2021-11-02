@@ -15,31 +15,29 @@
 #ifndef TRAFFIC_LIGHT_MAP_VISUALIZER__NODE_HPP_
 #define TRAFFIC_LIGHT_MAP_VISUALIZER__NODE_HPP_
 
+#include <lanelet2_extension/regulatory_elements/autoware_traffic_light.hpp>
+#include <lanelet2_extension/utility/query.hpp>
+#include <rclcpp/rclcpp.hpp>
+
+#include <autoware_lanelet2_msgs/msg/map_bin.hpp>
+#include <autoware_perception_msgs/msg/traffic_light_state_array.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
+
 #include <memory>
 #include <string>
 #include <vector>
-
-#include "rclcpp/rclcpp.hpp"
-#include "visualization_msgs/msg/marker_array.hpp"
-#include "autoware_lanelet2_msgs/msg/map_bin.hpp"
-#include "autoware_perception_msgs/msg/traffic_light_state_array.hpp"
-#include "lanelet2_extension/regulatory_elements/autoware_traffic_light.hpp"
-#include "lanelet2_extension/utility/query.hpp"
 
 namespace traffic_light
 {
 class TrafficLightMapVisualizerNode : public rclcpp::Node
 {
 public:
-  TrafficLightMapVisualizerNode(
-    const std::string & node_name,
-    const rclcpp::NodeOptions & options);
+  TrafficLightMapVisualizerNode(const std::string & node_name, const rclcpp::NodeOptions & options);
   ~TrafficLightMapVisualizerNode() = default;
   void trafficLightStatesCallback(
     const autoware_perception_msgs::msg::TrafficLightStateArray::ConstSharedPtr
-    input_tl_states_msg);
-  void binMapCallback(
-    const autoware_lanelet2_msgs::msg::MapBin::ConstSharedPtr input_map_msg);
+      input_tl_states_msg);
+  void binMapCallback(const autoware_lanelet2_msgs::msg::MapBin::ConstSharedPtr input_map_msg);
 
 private:
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr light_marker_pub_;

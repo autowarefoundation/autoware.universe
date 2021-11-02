@@ -12,11 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <rclcpp/rclcpp.hpp>
+#include <rclcpp_components/register_node_macro.hpp>
+#include <traffic_light_roi_visualizer/nodelet.hpp>
+
 #include <memory>
-#include <utility>
 #include <string>
-#include "traffic_light_roi_visualizer/nodelet.hpp"
-#include "rclcpp_components/register_node_macro.hpp"
+#include <utility>
 
 namespace traffic_light
 {
@@ -31,20 +33,14 @@ TrafficLightRoiVisualizerNodelet::TrafficLightRoiVisualizerNodelet(
   enable_fine_detection_ = this->declare_parameter("enable_fine_detection", false);
 
   if (enable_fine_detection_) {
-    sync_with_rough_roi_.reset(
-      new SyncWithRoughRoi(
-        SyncPolicyWithRoughRoi(10), image_sub_,
-        roi_sub_, rough_roi_sub_, tl_states_sub_));
+    sync_with_rough_roi_.reset(new SyncWithRoughRoi(
+      SyncPolicyWithRoughRoi(10), image_sub_, roi_sub_, rough_roi_sub_, tl_states_sub_));
     sync_with_rough_roi_->registerCallback(
-      std::bind(
-        &TrafficLightRoiVisualizerNodelet::
-        imageRoughRoiCallback, this, _1, _2, _3, _4));
+      std::bind(&TrafficLightRoiVisualizerNodelet::imageRoughRoiCallback, this, _1, _2, _3, _4));
   } else {
     sync_.reset(new Sync(SyncPolicy(10), image_sub_, roi_sub_, tl_states_sub_));
     sync_->registerCallback(
-      std::bind(
-        &TrafficLightRoiVisualizerNodelet::imageRoiCallback, this, _1,
-        _2, _3));
+      std::bind(&TrafficLightRoiVisualizerNodelet::imageRoiCallback, this, _1, _2, _3));
   }
 
   auto timer_callback = std::bind(&TrafficLightRoiVisualizerNodelet::connectCb, this);
@@ -56,9 +52,8 @@ TrafficLightRoiVisualizerNodelet::TrafficLightRoiVisualizerNodelet(
     this->get_node_base_interface()->get_context());
   this->get_node_timers_interface()->add_timer(timer_, nullptr);
 
-  image_pub_ = image_transport::create_publisher(
-    this, "~/output/image",
-    rclcpp::QoS{1}.get_rmw_qos_profile());
+  image_pub_ =
+    image_transport::create_publisher(this, "~/output/image", rclcpp::QoS{1}.get_rmw_qos_profile());
 }
 
 void TrafficLightRoiVisualizerNodelet::connectCb()
@@ -67,7 +62,9 @@ void TrafficLightRoiVisualizerNodelet::connectCb()
     image_sub_.unsubscribe();
     tl_states_sub_.unsubscribe();
     roi_sub_.unsubscribe();
-    if (enable_fine_detection_) {rough_roi_sub_.unsubscribe();}
+    if (enable_fine_detection_) {
+      rough_roi_sub_.unsubscribe();
+    }
   } else if (!image_sub_.getSubscriber()) {
     image_sub_.subscribe(this, "~/input/image", "raw", rmw_qos_profile_sensor_data);
     roi_sub_.subscribe(this, "~/input/rois", rclcpp::QoS{1}.get_rmw_qos_profile());
@@ -80,8 +77,7 @@ void TrafficLightRoiVisualizerNodelet::connectCb()
 }
 
 bool TrafficLightRoiVisualizerNodelet::createRect(
-  cv::Mat & image,
-  const autoware_perception_msgs::msg::TrafficLightRoi & tl_roi,
+  cv::Mat & image, const autoware_perception_msgs::msg::TrafficLightRoi & tl_roi,
   const cv::Scalar & color)
 {
   cv::rectangle(
@@ -130,8 +126,8 @@ bool TrafficLightRoiVisualizerNodelet::createRect(
 void TrafficLightRoiVisualizerNodelet::imageRoiCallback(
   const sensor_msgs::msg::Image::ConstSharedPtr & input_image_msg,
   const autoware_perception_msgs::msg::TrafficLightRoiArray::ConstSharedPtr & input_tl_roi_msg,
-  [[maybe_unused]]
-  const autoware_perception_msgs::msg::TrafficLightStateArray::ConstSharedPtr & input_tl_states_msg)
+  [[maybe_unused]] const autoware_perception_msgs::msg::TrafficLightStateArray::ConstSharedPtr &
+    input_tl_states_msg)
 {
   cv_bridge::CvImagePtr cv_ptr;
   try {
@@ -152,14 +148,18 @@ bool TrafficLightRoiVisualizerNodelet::getClassificationResult(
 {
   bool has_correspond_tl_state = false;
   for (const auto & tl_state : tl_states.states) {
-    if (id != tl_state.id) {continue;}
+    if (id != tl_state.id) {
+      continue;
+    }
     has_correspond_tl_state = true;
     for (size_t i = 0; i < tl_state.lamp_states.size(); i++) {
       auto state = tl_state.lamp_states.at(i);
       // all lamp confidence are the same
       result.prob = state.confidence;
       result.label += state2label_[state.type];
-      if (i < tl_state.lamp_states.size() - 1) {result.label += ",";}
+      if (i < tl_state.lamp_states.size() - 1) {
+        result.label += ",";
+      }
     }
   }
   return has_correspond_tl_state;
@@ -182,7 +182,7 @@ void TrafficLightRoiVisualizerNodelet::imageRoughRoiCallback(
   const sensor_msgs::msg::Image::ConstSharedPtr & input_image_msg,
   const autoware_perception_msgs::msg::TrafficLightRoiArray::ConstSharedPtr & input_tl_roi_msg,
   const autoware_perception_msgs::msg::TrafficLightRoiArray::ConstSharedPtr &
-  input_tl_rough_roi_msg,
+    input_tl_rough_roi_msg,
   const autoware_perception_msgs::msg::TrafficLightStateArray::ConstSharedPtr & input_tl_states_msg)
 {
   cv_bridge::CvImagePtr cv_ptr;

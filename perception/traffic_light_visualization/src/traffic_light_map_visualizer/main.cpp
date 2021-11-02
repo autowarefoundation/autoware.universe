@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <memory>
+#include <rclcpp/rclcpp.hpp>
+#include <traffic_light_map_visualizer/node.hpp>
 
-#include "rclcpp/rclcpp.hpp"
-#include "traffic_light_map_visualizer/node.hpp"
+#include <memory>
 
 int main(int argc, char ** argv)
 {

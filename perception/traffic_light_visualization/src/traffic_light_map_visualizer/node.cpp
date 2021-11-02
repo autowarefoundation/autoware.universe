@@ -12,24 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <lanelet2_extension/utility/message_conversion.hpp>
+#include <lanelet2_extension/visualization/visualization.hpp>
+#include <traffic_light_map_visualizer/node.hpp>
+
+#include <visualization_msgs/msg/marker_array.hpp>
+
+#include <lanelet2_core/LaneletMap.h>
+#include <lanelet2_projection/UTM.h>
+
 #include <string>
 #include <vector>
 
-#include "traffic_light_map_visualizer/node.hpp"
-#include "visualization_msgs/msg/marker_array.hpp"
-
-#include "lanelet2_core/LaneletMap.h"
-#include "lanelet2_projection/UTM.h"
-
-#include "lanelet2_extension/utility/message_conversion.hpp"
-#include "lanelet2_extension/visualization/visualization.hpp"
-
-using namespace std::placeholders;
+using std::placeholders::_1;
 
 namespace
 {
-[[maybe_unused]]
-void setColor(
+[[maybe_unused]] void setColor(
   const double r, const double g, const double b, const double a, std_msgs::msg::ColorRGBA & cl)
 {
   cl.r = r;
@@ -42,7 +41,9 @@ bool isAttributeValue(
   const lanelet::ConstPoint3d p, const std::string attr_str, const std::string value_str)
 {
   lanelet::Attribute attr = p.attribute(attr_str);
-  if (attr.value().compare(value_str) == 0) {return true;}
+  if (attr.value().compare(value_str) == 0) {
+    return true;
+  }
   return false;
 }
 
@@ -50,7 +51,9 @@ bool isAttributeValue(
   const lanelet::ConstLineString3d l, const std::string attr_str, const int value)
 {
   lanelet::Attribute attr = l.attribute(attr_str);
-  if (std::stoi(attr.value()) == value) {return true;}
+  if (std::stoi(attr.value()) == value) {
+    return true;
+  }
   return false;
 }
 
@@ -113,17 +116,15 @@ void lightAsMarker(
 namespace traffic_light
 {
 TrafficLightMapVisualizerNode::TrafficLightMapVisualizerNode(
-  const std::string & node_name,
-  const rclcpp::NodeOptions & node_options)
+  const std::string & node_name, const rclcpp::NodeOptions & node_options)
 : rclcpp::Node(node_name, node_options)
 {
-  light_marker_pub_ = create_publisher<visualization_msgs::msg::MarkerArray>(
-    "~/output/traffic_light", 1);
+  light_marker_pub_ =
+    create_publisher<visualization_msgs::msg::MarkerArray>("~/output/traffic_light", 1);
   tl_state_sub_ = create_subscription<autoware_perception_msgs::msg::TrafficLightStateArray>(
     "~/input/tl_state", 1,
     std::bind(&TrafficLightMapVisualizerNode::trafficLightStatesCallback, this, _1));
-  vector_map_sub_ =
-    create_subscription<autoware_lanelet2_msgs::msg::MapBin>(
+  vector_map_sub_ = create_subscription<autoware_lanelet2_msgs::msg::MapBin>(
     "~/input/vector_map", rclcpp::QoS{1}.transient_local(),
     std::bind(&TrafficLightMapVisualizerNode::binMapCallback, this, _1));
 }
@@ -161,31 +162,32 @@ void TrafficLightMapVisualizerNode::trafficLightStatesCallback(
 
   for (auto tli = aw_tl_reg_elems_.begin(); tli != aw_tl_reg_elems_.end(); tli++) {
     for (auto ls : (*tli)->lightBulbs()) {
-      if (!ls.hasAttribute("traffic_light_id")) {continue;}
+      if (!ls.hasAttribute("traffic_light_id")) {
+        continue;
+      }
       for (const auto & input_tl_state : input_tl_states_msg->states) {
         if (isAttributeValue(ls, "traffic_light_id", input_tl_state.id)) {
           for (auto pt : ls) {
-            if (!pt.hasAttribute("color")) {continue;}
+            if (!pt.hasAttribute("color")) {
+              continue;
+            }
 
             for (const auto & lamp_state : input_tl_state.lamp_states) {
               visualization_msgs::msg::Marker marker;
               if (
                 isAttributeValue(pt, "color", "red") &&
-                lamp_state.type == autoware_perception_msgs::msg::LampState::RED)
-              {
+                lamp_state.type == autoware_perception_msgs::msg::LampState::RED) {
                 lightAsMarker(
                   get_node_logging_interface(), pt, &marker, "traffic_light", current_time);
               } else if (  // NOLINT
                 isAttributeValue(pt, "color", "green") &&
-                lamp_state.type == autoware_perception_msgs::msg::LampState::GREEN)
-              {
+                lamp_state.type == autoware_perception_msgs::msg::LampState::GREEN) {
                 lightAsMarker(
                   get_node_logging_interface(), pt, &marker, "traffic_light", current_time);
 
               } else if (  // NOLINT
                 isAttributeValue(pt, "color", "yellow") &&
-                lamp_state.type == autoware_perception_msgs::msg::LampState::YELLOW)
-              {
+                lamp_state.type == autoware_perception_msgs::msg::LampState::YELLOW) {
                 lightAsMarker(
                   get_node_logging_interface(), pt, &marker, "traffic_light", current_time);
               } else {

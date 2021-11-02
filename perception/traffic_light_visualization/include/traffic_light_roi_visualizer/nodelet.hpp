@@ -14,25 +14,25 @@
 #ifndef TRAFFIC_LIGHT_ROI_VISUALIZER__NODELET_HPP_
 #define TRAFFIC_LIGHT_ROI_VISUALIZER__NODELET_HPP_
 
+#include <image_transport/image_transport.hpp>
+#include <image_transport/subscriber_filter.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <rclcpp/rclcpp.hpp>
 
-#include <string>
+#include <autoware_perception_msgs/msg/traffic_light_roi_array.hpp>
+#include <autoware_perception_msgs/msg/traffic_light_state_array.hpp>
+#include <sensor_msgs/msg/image.hpp>
+
+#include <cv_bridge/cv_bridge.h>
+#include <message_filters/subscriber.h>
+#include <message_filters/sync_policies/approximate_time.h>
+#include <message_filters/synchronizer.h>
+#include <opencv2/imgproc/imgproc_c.h>
+
+#include <map>
 #include <memory>
 #include <mutex>
-#include <map>
-
-#include "rclcpp/rclcpp.hpp"
-#include "image_transport/image_transport.hpp"
-#include "image_transport/subscriber_filter.hpp"
-#include "autoware_perception_msgs/msg/traffic_light_roi_array.hpp"
-#include "autoware_perception_msgs/msg/traffic_light_state_array.hpp"
-#include "message_filters/subscriber.h"
-#include "message_filters/sync_policies/approximate_time.h"
-#include "message_filters/synchronizer.h"
-#include "sensor_msgs/msg/image.hpp"
-
-#include "cv_bridge/cv_bridge.h"
-#include "opencv2/imgproc/imgproc_c.h"
-#include "opencv2/highgui/highgui.hpp"
+#include <string>
 
 namespace traffic_light
 {
@@ -52,15 +52,15 @@ public:
     const sensor_msgs::msg::Image::ConstSharedPtr & input_image_msg,
     const autoware_perception_msgs::msg::TrafficLightRoiArray::ConstSharedPtr & input_tl_roi_msg,
     const autoware_perception_msgs::msg::TrafficLightStateArray::ConstSharedPtr &
-    input_tl_states_msg);
+      input_tl_states_msg);
 
   void imageRoughRoiCallback(
     const sensor_msgs::msg::Image::ConstSharedPtr & input_image_msg,
     const autoware_perception_msgs::msg::TrafficLightRoiArray::ConstSharedPtr & input_tl_roi_msg,
     const autoware_perception_msgs::msg::TrafficLightRoiArray::ConstSharedPtr &
-    input_tl_rough_roi_msg,
+      input_tl_rough_roi_msg,
     const autoware_perception_msgs::msg::TrafficLightStateArray::ConstSharedPtr &
-    input_tl_states_msg);
+      input_tl_states_msg);
 
 private:
   std::map<int, std::string> state2label_{
@@ -96,17 +96,16 @@ private:
   message_filters::Subscriber<autoware_perception_msgs::msg::TrafficLightStateArray> tl_states_sub_;
   image_transport::Publisher image_pub_;
   typedef message_filters::sync_policies::ApproximateTime<
-      sensor_msgs::msg::Image, autoware_perception_msgs::msg::TrafficLightRoiArray,
-      autoware_perception_msgs::msg::TrafficLightStateArray>
+    sensor_msgs::msg::Image, autoware_perception_msgs::msg::TrafficLightRoiArray,
+    autoware_perception_msgs::msg::TrafficLightStateArray>
     SyncPolicy;
   typedef message_filters::Synchronizer<SyncPolicy> Sync;
   std::shared_ptr<Sync> sync_;
 
   typedef message_filters::sync_policies::ApproximateTime<
-      sensor_msgs::msg::Image,
-      autoware_perception_msgs::msg::TrafficLightRoiArray,
-      autoware_perception_msgs::msg::TrafficLightRoiArray,
-      autoware_perception_msgs::msg::TrafficLightStateArray>
+    sensor_msgs::msg::Image, autoware_perception_msgs::msg::TrafficLightRoiArray,
+    autoware_perception_msgs::msg::TrafficLightRoiArray,
+    autoware_perception_msgs::msg::TrafficLightStateArray>
     SyncPolicyWithRoughRoi;
   typedef message_filters::Synchronizer<SyncPolicyWithRoughRoi> SyncWithRoughRoi;
   std::shared_ptr<SyncWithRoughRoi> sync_with_rough_roi_;
