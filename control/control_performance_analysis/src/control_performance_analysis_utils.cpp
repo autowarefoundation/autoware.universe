@@ -12,16 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <algorithm>
-
 #include "control_performance_analysis/control_performance_analysis_utils.hpp"
+
+#include <algorithm>
 
 namespace control_performance_analysis
 {
 namespace utils
 {
-double determinant(
-  std::array<double, 2> const & a, std::array<double, 2> const & b)
+double determinant(std::array<double, 2> const & a, std::array<double, 2> const & b)
 {
   return a[0] * b[1] - b[0] * a[1];
 }

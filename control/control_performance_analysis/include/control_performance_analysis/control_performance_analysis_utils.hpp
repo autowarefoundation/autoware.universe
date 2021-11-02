@@ -15,15 +15,16 @@
 #ifndef CONTROL_PERFORMANCE_ANALYSIS__CONTROL_PERFORMANCE_ANALYSIS_UTILS_HPP_
 #define CONTROL_PERFORMANCE_ANALYSIS__CONTROL_PERFORMANCE_ANALYSIS_UTILS_HPP_
 
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Geometry>
+#include <rclcpp/rclcpp.hpp>
+
+#include <geometry_msgs/msg/quaternion.hpp>
+
+#include <tf2/utils.h>
+
 #include <cmath>
 #include <vector>
-
-#include "eigen3/Eigen/Core"
-#include "eigen3/Eigen/Geometry"
-
-#include "geometry_msgs/msg/quaternion.hpp"
-#include "rclcpp/rclcpp.hpp"
-#include "tf2/utils.h"
 
 namespace control_performance_analysis
 {
@@ -59,10 +60,10 @@ inline double computeLateralError(
 }
 
 /*
-     *  Shortest distance between two angles. As the angles are cyclic, interpolation between to
-     *  angles must be  carried out using the distance value instead of using the end values of
-     *  two points.
-     * */
+ *  Shortest distance between two angles. As the angles are cyclic, interpolation between to
+ *  angles must be  carried out using the distance value instead of using the end values of
+ *  two points.
+ * */
 inline double angleDistance(double & target_angle, double const & reference_angle)
 {
   double diff = std::fmod(target_angle - reference_angle + M_PI_2, 2 * M_PI) - M_PI_2;

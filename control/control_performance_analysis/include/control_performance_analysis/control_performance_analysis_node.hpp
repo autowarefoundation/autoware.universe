@@ -15,20 +15,21 @@
 #ifndef CONTROL_PERFORMANCE_ANALYSIS__CONTROL_PERFORMANCE_ANALYSIS_NODE_HPP_
 #define CONTROL_PERFORMANCE_ANALYSIS__CONTROL_PERFORMANCE_ANALYSIS_NODE_HPP_
 
-#include <memory>
-
-#include "boost/optional.hpp"
-
-#include "autoware_control_msgs/msg/control_command_stamped.hpp"
-#include "autoware_planning_msgs/msg/trajectory.hpp"
-#include "autoware_utils/ros/self_pose_listener.hpp"
-#include "autoware_vehicle_msgs/msg/steering.hpp"
-#include "control_performance_analysis/msg/error_stamped.hpp"
-#include "geometry_msgs/msg/pose_stamped.hpp"
-#include "geometry_msgs/msg/twist_stamped.hpp"
-#include "rclcpp/rclcpp.hpp"
-
 #include "control_performance_analysis/control_performance_analysis_core.hpp"
+#include "control_performance_analysis/msg/error_stamped.hpp"
+
+#include <autoware_utils/ros/self_pose_listener.hpp>
+#include <rclcpp/rclcpp.hpp>
+
+#include <autoware_control_msgs/msg/control_command_stamped.hpp>
+#include <autoware_planning_msgs/msg/trajectory.hpp>
+#include <autoware_vehicle_msgs/msg/steering.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
+
+#include <boost/optional.hpp>
+
+#include <memory>
 
 namespace control_performance_analysis
 {
@@ -57,10 +58,10 @@ public:
 
 private:
   // Subscribers and Local Variable Assignment
-  rclcpp::Subscription<Trajectory>::SharedPtr sub_trajectory_;        // subscribe to trajectory
+  rclcpp::Subscription<Trajectory>::SharedPtr sub_trajectory_;  // subscribe to trajectory
   rclcpp::Subscription<ControlCommandStamped>::SharedPtr
     sub_control_steering_;  // subscribe to steering control value
-  rclcpp::Subscription<TwistStamped>::SharedPtr sub_velocity_;          // subscribe to velocity
+  rclcpp::Subscription<TwistStamped>::SharedPtr sub_velocity_;  // subscribe to velocity
   rclcpp::Subscription<Steering>::SharedPtr sub_vehicle_steering_;
 
   // Self Pose listener.

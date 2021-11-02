@@ -12,28 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "control_performance_analysis/control_performance_analysis_core.hpp"
+
 #include <algorithm>
 #include <limits>
 #include <memory>
 #include <utility>
 #include <vector>
 
-#include "control_performance_analysis/control_performance_analysis_core.hpp"
-
 namespace control_performance_analysis
 {
 using geometry_msgs::msg::Quaternion;
 
-ControlPerformanceAnalysisCore::ControlPerformanceAnalysisCore()
-: wheelbase_{2.74}
+ControlPerformanceAnalysisCore::ControlPerformanceAnalysisCore() : wheelbase_{2.74}
 {
   prev_target_vars_ = std::make_unique<TargetPerformanceMsgVars>(TargetPerformanceMsgVars{});
   current_velocities_ptr_ = std::make_shared<std::vector<double>>(2, 0.0);
 }
 
 ControlPerformanceAnalysisCore::ControlPerformanceAnalysisCore(
-  double wheelbase,
-  double curvature_interval_length)
+  double wheelbase, double curvature_interval_length)
 : wheelbase_{wheelbase}, curvature_interval_length_{curvature_interval_length}
 {
   // prepare control performance struct
@@ -55,46 +53,47 @@ void ControlPerformanceAnalysisCore::setCurrentPose(const Pose & msg)
   current_vec_pose_ptr_ = std::make_shared<Pose>(msg);
 }
 
-void ControlPerformanceAnalysisCore::setCurrentControlValue(
-  const ControlCommandStamped & msg)
+void ControlPerformanceAnalysisCore::setCurrentControlValue(const ControlCommandStamped & msg)
 {
   current_control_ptr_ = std::make_shared<ControlCommandStamped>(msg);
 }
 
 std::pair<bool, int32_t> ControlPerformanceAnalysisCore::findClosestPrevWayPointIdx_path_direction()
 {
-  if (!isDataReady()) {return std::make_pair(false, std::numeric_limits<int32_t>::quiet_NaN());}
+  if (!isDataReady()) {
+    return std::make_pair(false, std::numeric_limits<int32_t>::quiet_NaN());
+  }
 
   // How far the next waypoint can be ahead of the vehicle direction.
   double acceptable_min_distance = 2.0;
 
   /*
-     *   Create Vectors of Path Directions for each interval
-     *   interval_vector_xy = {waypoint_1 - waypoint_0}_xy
-     * */
+   *   Create Vectors of Path Directions for each interval
+   *   interval_vector_xy = {waypoint_1 - waypoint_0}_xy
+   * */
 
   // Prepare vector of projection distance values; projection of vehicle vectors onto the intervals
   std::vector<double> projection_distances_ds;  //
 
   auto f_projection_dist = [this](auto pose_1, auto pose_0) {
-      // Vector of intervals.
-      std::vector<double> int_vec{
-        pose_1.position.x - pose_0.position.x, pose_1.position.y - pose_0.position.y};
+    // Vector of intervals.
+    std::vector<double> int_vec{
+      pose_1.position.x - pose_0.position.x, pose_1.position.y - pose_0.position.y};
 
-      // Compute the magnitude of path interval vector
-      double ds_mag = std::hypot(int_vec[0], int_vec[1]);
+    // Compute the magnitude of path interval vector
+    double ds_mag = std::hypot(int_vec[0], int_vec[1]);
 
-      // Vector to vehicle from the origin waypoints.
-      std::vector<double> vehicle_vec{
-        this->current_vec_pose_ptr_->position.x - pose_0.position.x,
-        this->current_vec_pose_ptr_->position.y - pose_0.position.y};
+    // Vector to vehicle from the origin waypoints.
+    std::vector<double> vehicle_vec{
+      this->current_vec_pose_ptr_->position.x - pose_0.position.x,
+      this->current_vec_pose_ptr_->position.y - pose_0.position.y};
 
-      double projection_distance_onto_interval;
-      projection_distance_onto_interval =
-        (int_vec[0] * vehicle_vec[0] + int_vec[1] * vehicle_vec[1]) / ds_mag;
+    double projection_distance_onto_interval;
+    projection_distance_onto_interval =
+      (int_vec[0] * vehicle_vec[0] + int_vec[1] * vehicle_vec[1]) / ds_mag;
 
-      return projection_distance_onto_interval;
-    };
+    return projection_distance_onto_interval;
+  };
 
   // Fill the projection_distances vector.
   std::transform(
@@ -104,8 +103,8 @@ std::pair<bool, int32_t> ControlPerformanceAnalysisCore::findClosestPrevWayPoint
 
   // Lambda function to replace negative numbers with a large number.
   auto fnc_check_if_negative = [](auto x) {
-      return x < 0 ? std::numeric_limits<double>::max() : x;
-    };
+    return x < 0 ? std::numeric_limits<double>::max() : x;
+  };
 
   std::vector<double> projections_distances_all_positive;
   std::transform(
@@ -129,9 +128,9 @@ std::pair<bool, int32_t> ControlPerformanceAnalysisCore::findClosestPrevWayPoint
   findCurveRefIdx();
 
   return ((min_distance_ds <= acceptable_min_distance) & (*idx_prev_wp_ >= 0) &
-         (*idx_prev_wp_ <= length_of_trajectory)) ?
-         std::make_pair(true, *idx_prev_wp_) :
-         std::make_pair(false, std::numeric_limits<int32_t>::quiet_NaN());
+          (*idx_prev_wp_ <= length_of_trajectory))
+           ? std::make_pair(true, *idx_prev_wp_)
+           : std::make_pair(false, std::numeric_limits<int32_t>::quiet_NaN());
 }
 
 bool ControlPerformanceAnalysisCore::isDataReady() const
@@ -139,29 +138,22 @@ bool ControlPerformanceAnalysisCore::isDataReady() const
   rclcpp::Clock clock{RCL_ROS_TIME};
   if (!current_vec_pose_ptr_) {
     RCLCPP_WARN_THROTTLE(
-      logger_, clock, 1000,
-      "cannot get current pose into control_performance algorithm");
+      logger_, clock, 1000, "cannot get current pose into control_performance algorithm");
     return false;
   }
 
   if (!current_waypoints_ptr_) {
-    RCLCPP_WARN_THROTTLE(
-      logger_, clock, 1000,
-      "cannot get current trajectory waypoints ...");
+    RCLCPP_WARN_THROTTLE(logger_, clock, 1000, "cannot get current trajectory waypoints ...");
     return false;
   }
 
   if (!current_velocities_ptr_) {
-    RCLCPP_WARN_THROTTLE(
-      logger_, clock, 1000,
-      "waiting for current_velocity ...");
+    RCLCPP_WARN_THROTTLE(logger_, clock, 1000, "waiting for current_velocity ...");
     return false;
   }
 
   if (!current_control_ptr_) {
-    RCLCPP_WARN_THROTTLE(
-      logger_, clock, 1000,
-      "waiting for current_steering ...");
+    RCLCPP_WARN_THROTTLE(logger_, clock, 1000, "waiting for current_steering ...");
     return false;
   }
 
@@ -184,8 +176,7 @@ std::pair<bool, TargetPerformanceMsgVars> ControlPerformanceAnalysisCore::getPer
 
   if (!pair_pose_interp_wp_.first || !interpolated_pose_ptr_) {
     RCLCPP_WARN_THROTTLE(
-      logger_, clock_, 1000,
-      "Cannot get interpolated pose into control_performance algorithm");
+      logger_, clock_, 1000, "Cannot get interpolated pose into control_performance algorithm");
 
     return std::make_pair(false, TargetPerformanceMsgVars{});
   }
@@ -215,12 +206,11 @@ std::pair<bool, TargetPerformanceMsgVars> ControlPerformanceAnalysisCore::getPer
   double curvature_est_pp = estimatePurePursuitCurvature();  // pure pursuit curvature
 
   // Compute lateral error - projection of vector to waypoint from vehicle onto the vehicle normal.
-  double && lateral_error = utils::computeLateralError(
-    interp_waypoint_xy, vehicle_position_xy, vehicle_yaw_angle);
+  double && lateral_error =
+    utils::computeLateralError(interp_waypoint_xy, vehicle_position_xy, vehicle_yaw_angle);
 
   // Compute the yaw angle error.
-  double && heading_yaw_error =
-    utils::angleDistance(vehicle_yaw_angle, target_yaw);
+  double && heading_yaw_error = utils::angleDistance(vehicle_yaw_angle, target_yaw);
 
   // Set the values of TargetPerformanceMsgVars.
   target_vars.lateral_error = lateral_error;
@@ -265,19 +255,18 @@ void ControlPerformanceAnalysisCore::findCurveRefIdx()
   // Get the previous waypoint as the reference
   if (!interpolated_pose_ptr_) {
     RCLCPP_WARN_THROTTLE(
-      logger_, clock_, 1000,
-      "Cannot set the curvature_idx, no valid interpolated pose ...");
+      logger_, clock_, 1000, "Cannot set the curvature_idx, no valid interpolated pose ...");
 
     return;
   }
 
   auto fun_distance_cond = [this](auto pose_t) {
-      double dist = std::hypot(
-        pose_t.position.x - this->interpolated_pose_ptr_->position.x,
-        pose_t.position.y - this->interpolated_pose_ptr_->position.y);
+    double dist = std::hypot(
+      pose_t.position.x - this->interpolated_pose_ptr_->position.x,
+      pose_t.position.y - this->interpolated_pose_ptr_->position.y);
 
-      return dist > wheelbase_;
-    };
+    return dist > wheelbase_;
+  };
 
   auto it = std::find_if(
     current_waypoints_ptr_->poses.cbegin() + *idx_prev_wp_, current_waypoints_ptr_->poses.cend(),
@@ -316,10 +305,10 @@ std::pair<bool, Pose> ControlPerformanceAnalysisCore::calculateClosestPose()
   idx_next_wp_ = std::make_unique<int32_t>(idx_next_wp_temp);
 
   /*
-     *  Create two vectors originating from the previous waypoints to the next waypoint and the
-     *  vehicle position and find projection of vehicle vector on the the trajectory section,
-     *
-     * */
+   *  Create two vectors originating from the previous waypoints to the next waypoint and the
+   *  vehicle position and find projection of vehicle vector on the the trajectory section,
+   *
+   * */
 
   // First get te yaw angles of all three poses.
   double prev_yaw = tf2::getYaw(current_waypoints_ptr_->poses.at(*idx_prev_wp_).orientation);
@@ -327,10 +316,10 @@ std::pair<bool, Pose> ControlPerformanceAnalysisCore::calculateClosestPose()
 
   // Previous waypoint to next waypoint.
   double dx_prev2next = current_waypoints_ptr_->poses.at(*idx_next_wp_).position.x -
-    current_waypoints_ptr_->poses.at(*idx_prev_wp_).position.x;
+                        current_waypoints_ptr_->poses.at(*idx_prev_wp_).position.x;
 
   double dy_prev2next = current_waypoints_ptr_->poses.at(*idx_next_wp_).position.y -
-    current_waypoints_ptr_->poses.at(*idx_prev_wp_).position.y;
+                        current_waypoints_ptr_->poses.at(*idx_prev_wp_).position.y;
 
   double dpsi_prev2next = utils::angleDistance(next_yaw, prev_yaw);
 
@@ -382,8 +371,7 @@ std::pair<bool, Pose> ControlPerformanceAnalysisCore::calculateClosestPose()
   // Interpolate the yaw angle of pi : interpolated waypoint
   double interp_yaw_angle = prev_yaw + ratio_t * dpsi_prev2next;
 
-  Quaternion orient_msg =
-    utils::createOrientationMsgFromYaw(interp_yaw_angle);
+  Quaternion orient_msg = utils::createOrientationMsgFromYaw(interp_yaw_angle);
   interpolated_pose.orientation = orient_msg;
 
   setInterpolatedPose(interpolated_pose);
@@ -427,9 +415,9 @@ double ControlPerformanceAnalysisCore::estimateCurvature()
     std::distance(current_waypoints_ptr_->poses.cbegin(), current_waypoints_ptr_->poses.cend());
 
   auto num_of_forward_indices = num_of_back_indices;
-  int32_t loc_of_forward_idx = (*idx_curve_ref_wp_ + num_of_forward_indices > max_idx) ?
-    max_idx - 1 :
-    *idx_curve_ref_wp_ + num_of_forward_indices - 1;
+  int32_t loc_of_forward_idx = (*idx_curve_ref_wp_ + num_of_forward_indices > max_idx)
+                                 ? max_idx - 1
+                                 : *idx_curve_ref_wp_ + num_of_forward_indices - 1;
 
   // We have three indices of the three trajectory poses.
   // We compute a curvature estimate from these points.
@@ -446,8 +434,7 @@ double ControlPerformanceAnalysisCore::estimateCurvature()
     current_waypoints_ptr_->poses.at(loc_of_forward_idx).position.x,
     current_waypoints_ptr_->poses.at(loc_of_forward_idx).position.y};
 
-  double estimated_curvature =
-    utils::curvatureFromThreePoints(a_coord, b_coord, c_coord);
+  double estimated_curvature = utils::curvatureFromThreePoints(a_coord, b_coord, c_coord);
 
   return estimated_curvature;
 }
@@ -466,12 +453,12 @@ double ControlPerformanceAnalysisCore::estimatePurePursuitCurvature()
   double look_ahead_distance_pp = std::max(wheelbase_, 2 * Vx);
 
   auto fun_distance_cond = [this, &look_ahead_distance_pp](auto pose_t) {
-      double dist = std::hypot(
-        pose_t.position.x - this->interpolated_pose_ptr_->position.x,
-        pose_t.position.y - this->interpolated_pose_ptr_->position.y);
+    double dist = std::hypot(
+      pose_t.position.x - this->interpolated_pose_ptr_->position.x,
+      pose_t.position.y - this->interpolated_pose_ptr_->position.y);
 
-      return dist > look_ahead_distance_pp;
-    };
+    return dist > look_ahead_distance_pp;
+  };
 
   auto it = std::find_if(
     current_waypoints_ptr_->poses.cbegin() + *idx_prev_wp_, current_waypoints_ptr_->poses.cend(),
@@ -518,8 +505,7 @@ double ControlPerformanceAnalysisCore::estimatePurePursuitCurvature()
     target_pose_pp.position.y - current_vec_pose_ptr_->position.y};
 
   double const && current_vec_yaw = tf2::getYaw(current_vec_pose_ptr_->orientation);
-  std::vector<double> normal_vec =
-    utils::getNormalVector(current_vec_yaw);  // ClockWise
+  std::vector<double> normal_vec = utils::getNormalVector(current_vec_yaw);  // ClockWise
 
   // Project this vector on the vehicle normal vector.
   double x_pure_pursuit = vec_to_target[0] * normal_vec[0] + vec_to_target[1] * normal_vec[1];
