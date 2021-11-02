@@ -20,31 +20,31 @@ from launch_ros.descriptions import ComposableNode
 
 def _create_api_node(node_name, class_name, **kwargs):
     return ComposableNode(
-        namespace='internal',
+        namespace="internal",
         name=node_name,
-        package='autoware_iv_internal_api_adaptor',
-        plugin='internal_api::' + class_name,
+        package="autoware_iv_internal_api_adaptor",
+        plugin="internal_api::" + class_name,
         **kwargs
     )
 
 
 def generate_launch_description():
     param_initial_pose = {
-        'init_simulator_pose': LaunchConfiguration('init_simulator_pose'),
-        'init_localization_pose': LaunchConfiguration('init_localization_pose'),
+        "init_simulator_pose": LaunchConfiguration("init_simulator_pose"),
+        "init_localization_pose": LaunchConfiguration("init_localization_pose"),
     }
     components = [
-        _create_api_node('initial_pose', 'InitialPose', parameters=[param_initial_pose]),
-        _create_api_node('operator', 'Operator'),
-        _create_api_node('route', 'Route'),
-        _create_api_node('velocity', 'Velocity'),
+        _create_api_node("initial_pose", "InitialPose", parameters=[param_initial_pose]),
+        _create_api_node("operator", "Operator"),
+        _create_api_node("route", "Route"),
+        _create_api_node("velocity", "Velocity"),
     ]
     container = ComposableNodeContainer(
-        namespace='internal',
-        name='autoware_iv_adaptor',
-        package='rclcpp_components',
-        executable='component_container_mt',
+        namespace="internal",
+        name="autoware_iv_adaptor",
+        package="rclcpp_components",
+        executable="component_container_mt",
         composable_node_descriptions=components,
-        output='screen',
+        output="screen",
     )
     return launch.LaunchDescription([container])
