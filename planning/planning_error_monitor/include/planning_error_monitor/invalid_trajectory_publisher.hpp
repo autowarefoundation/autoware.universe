@@ -15,10 +15,11 @@
 #ifndef PLANNING_ERROR_MONITOR__INVALID_TRAJECTORY_PUBLISHER_HPP_
 #define PLANNING_ERROR_MONITOR__INVALID_TRAJECTORY_PUBLISHER_HPP_
 
-#include <string>
+#include <rclcpp/rclcpp.hpp>
 
-#include "autoware_planning_msgs/msg/trajectory.hpp"
-#include "rclcpp/rclcpp.hpp"
+#include <autoware_planning_msgs/msg/trajectory.hpp>
+
+#include <string>
 
 namespace planning_diagnostics
 {

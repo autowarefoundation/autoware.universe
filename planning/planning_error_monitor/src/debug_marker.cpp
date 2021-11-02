@@ -12,12 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "planning_error_monitor/debug_marker.hpp"
+
+#include <autoware_utils/autoware_utils.hpp>
+
 #include <memory>
 #include <string>
 #include <vector>
-
-#include "autoware_utils/autoware_utils.hpp"
-#include "planning_error_monitor/debug_marker.hpp"
 
 using visualization_msgs::msg::Marker;
 
@@ -49,11 +50,17 @@ void PlanningErrorMonitorDebugNode::pushPoseMarker(
   marker.pose = pose;
   marker.scale = autoware_utils::createMarkerScale(0.2, 0.1, 0.3);
   if (id == 0)  // Red
-  {marker.color = autoware_utils::createMarkerColor(1.0, 0.0, 0.0, 0.999);}
+  {
+    marker.color = autoware_utils::createMarkerColor(1.0, 0.0, 0.0, 0.999);
+  }
   if (id == 1)  // Green
-  {marker.color = autoware_utils::createMarkerColor(0.0, 1.0, 0.0, 0.999);}
+  {
+    marker.color = autoware_utils::createMarkerColor(0.0, 1.0, 0.0, 0.999);
+  }
   if (id == 2)  // Blue
-  {marker.color = autoware_utils::createMarkerColor(0.0, 0.0, 1.0, 0.999);}
+  {
+    marker.color = autoware_utils::createMarkerColor(0.0, 0.0, 1.0, 0.999);
+  }
   marker_array_.markers.push_back(marker);
 }
 
