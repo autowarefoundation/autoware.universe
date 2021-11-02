@@ -15,26 +15,28 @@
 #ifndef DETECTION_BY_TRACKER__DETECTION_BY_TRACKER_CORE_HPP_
 #define DETECTION_BY_TRACKER__DETECTION_BY_TRACKER_CORE_HPP_
 
+#include <autoware_utils/autoware_utils.hpp>
+#include <euclidean_cluster/euclidean_cluster.hpp>
+#include <euclidean_cluster/utils.hpp>
+#include <euclidean_cluster/voxel_grid_based_euclidean_cluster.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <shape_estimation/shape_estimator.hpp>
+
+#include <autoware_perception_msgs/msg/dynamic_object_array.hpp>
+#include <autoware_perception_msgs/msg/dynamic_object_with_feature_array.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+
+#include <tf2/LinearMath/Transform.h>
+#include <tf2/convert.h>
+#include <tf2/transform_datatypes.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
+
 #include <deque>
 #include <memory>
 #include <vector>
-
-#include "autoware_perception_msgs/msg/dynamic_object_array.hpp"
-#include "autoware_perception_msgs/msg/dynamic_object_with_feature_array.hpp"
-#include "autoware_utils/autoware_utils.hpp"
-#include "euclidean_cluster/euclidean_cluster.hpp"
-#include "euclidean_cluster/utils.hpp"
-#include "euclidean_cluster/voxel_grid_based_euclidean_cluster.hpp"
-#include "geometry_msgs/msg/pose_stamped.hpp"
-#include "rclcpp/rclcpp.hpp"
-#include "sensor_msgs/msg/point_cloud2.hpp"
-#include "shape_estimation/shape_estimator.hpp"
-#include "tf2/LinearMath/Transform.h"
-#include "tf2/convert.h"
-#include "tf2/transform_datatypes.h"
-#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
-#include "tf2_ros/buffer.h"
-#include "tf2_ros/transform_listener.h"
 
 class TrackerHandler
 {
