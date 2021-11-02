@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <vector>
+#include "dummy_diag_publisher/dummy_diag_publisher_node.hpp"
+
+#include <autoware_utils/ros/update_param.hpp>
+#include <rclcpp/create_timer.hpp>
+
 #include <memory>
 #include <string>
 #include <utility>
-
-#include "dummy_diag_publisher/dummy_diag_publisher_node.hpp"
-
-#include "rclcpp/create_timer.hpp"
-#include "autoware_utils/ros/update_param.hpp"
+#include <vector>
 
 rcl_interfaces::msg::SetParametersResult DummyDiagPublisherNode::paramCallback(
   const std::vector<rclcpp::Parameter> & parameters)
@@ -74,30 +74,21 @@ void DummyDiagPublisherNode::onTimer()
   }
 }
 
-DummyDiagPublisherNode::DummyDiagPublisherNode()
-: Node("dummy_diag_publisher")
+DummyDiagPublisherNode::DummyDiagPublisherNode() : Node("dummy_diag_publisher")
 {
   // Parameter
   update_rate_ = declare_parameter("update_rate", 10.0);
   const std::string diag_name = this->declare_parameter<std::string>("diag_name");
   const std::string hardware_id = "dummy_diag_" + diag_name;
   diag_config_ = DiagConfig{
-    diag_name,
-    hardware_id,
-    "OK",
-    "Warn",
-    "Error",
-    "Stale",
+    diag_name, hardware_id, "OK", "Warn", "Error", "Stale",
   };
 
   // Set parameter callback
   config_.status = static_cast<Status>(this->declare_parameter("status", 0));
   config_.is_active = this->declare_parameter("is_active", true);
-  set_param_res_ =
-    this->add_on_set_parameters_callback(
-    std::bind(
-      &DummyDiagPublisherNode::paramCallback, this,
-      std::placeholders::_1));
+  set_param_res_ = this->add_on_set_parameters_callback(
+    std::bind(&DummyDiagPublisherNode::paramCallback, this, std::placeholders::_1));
 
   // Diagnostic Updater
   updater_.setHardwareID(diag_config_.hardware_id);

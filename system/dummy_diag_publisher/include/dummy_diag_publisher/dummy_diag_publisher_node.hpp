@@ -15,12 +15,11 @@
 #ifndef DUMMY_DIAG_PUBLISHER__DUMMY_DIAG_PUBLISHER_NODE_HPP_
 #define DUMMY_DIAG_PUBLISHER__DUMMY_DIAG_PUBLISHER_NODE_HPP_
 
+#include <diagnostic_updater/diagnostic_updater.hpp>
+#include <rclcpp/rclcpp.hpp>
+
 #include <string>
 #include <vector>
-
-#include "rclcpp/rclcpp.hpp"
-
-#include "diagnostic_updater/diagnostic_updater.hpp"
 
 struct DiagConfig
 {
@@ -38,8 +37,7 @@ public:
   DummyDiagPublisherNode();
 
 private:
-  enum Status
-  {
+  enum Status {
     OK,
     WARN,
     ERROR,
