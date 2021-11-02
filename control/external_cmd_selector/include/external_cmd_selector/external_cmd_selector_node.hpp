@@ -15,20 +15,20 @@
 #ifndef EXTERNAL_CMD_SELECTOR__EXTERNAL_CMD_SELECTOR_NODE_HPP_
 #define EXTERNAL_CMD_SELECTOR__EXTERNAL_CMD_SELECTOR_NODE_HPP_
 
+#include <diagnostic_updater/diagnostic_updater.hpp>
+#include <diagnostic_updater/update_functions.hpp>
+#include <rclcpp/rclcpp.hpp>
+
+#include <autoware_control_msgs/msg/external_command_selector_mode.hpp>
+#include <autoware_control_msgs/srv/external_command_select.hpp>
+#include <autoware_external_api_msgs/msg/control_command_stamped.hpp>
+#include <autoware_external_api_msgs/msg/gear_shift_stamped.hpp>
+#include <autoware_external_api_msgs/msg/heartbeat.hpp>
+#include <autoware_external_api_msgs/msg/turn_signal_stamped.hpp>
+#include <autoware_vehicle_msgs/msg/shift_stamped.hpp>
+#include <autoware_vehicle_msgs/msg/turn_signal.hpp>
+
 #include <memory>
-
-#include "rclcpp/rclcpp.hpp"
-
-#include "autoware_control_msgs/srv/external_command_select.hpp"
-#include "autoware_control_msgs/msg/external_command_selector_mode.hpp"
-#include "autoware_vehicle_msgs/msg/shift_stamped.hpp"
-#include "autoware_vehicle_msgs/msg/turn_signal.hpp"
-#include "autoware_external_api_msgs/msg/control_command_stamped.hpp"
-#include "autoware_external_api_msgs/msg/gear_shift_stamped.hpp"
-#include "autoware_external_api_msgs/msg/turn_signal_stamped.hpp"
-#include "autoware_external_api_msgs/msg/heartbeat.hpp"
-#include "diagnostic_updater/diagnostic_updater.hpp"
-#include "diagnostic_updater/update_functions.hpp"
 
 class ExternalCmdSelector : public rclcpp::Node
 {
