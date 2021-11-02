@@ -15,15 +15,15 @@
 #ifndef AUTOWARE_UTILS__GEOMETRY__BOOST_GEOMETRY_HPP_
 #define AUTOWARE_UTILS__GEOMETRY__BOOST_GEOMETRY_HPP_
 
-#include "boost/geometry/core/cs.hpp"
-#include "boost/geometry/geometries/geometries.hpp"
-#include "boost/geometry/geometries/register/point.hpp"
+#include <boost/geometry/core/cs.hpp>
+#include <boost/geometry/geometries/geometries.hpp>
+#include <boost/geometry/geometries/register/point.hpp>
 
 #define EIGEN_MPL2_ONLY
-#include "Eigen/Core"
-#include "Eigen/Geometry"
+#include <Eigen/Core>
+#include <Eigen/Geometry>
 
-#include "geometry_msgs/msg/point.hpp"
+#include <geometry_msgs/msg/point.hpp>
 
 namespace autoware_utils
 {
@@ -52,26 +52,22 @@ using MultiPolygon3d = boost::geometry::model::multi_polygon<Point3d>;
 struct Point2d : public Eigen::Vector2d
 {
   Point2d() = default;
-  Point2d(const double x, const double y)
-  : Eigen::Vector2d(x, y) {}
+  Point2d(const double x, const double y) : Eigen::Vector2d(x, y) {}
 
-  [[nodiscard]]
-  Point3d to_3d(const double z = 0.0) const;
+  [[nodiscard]] Point3d to_3d(const double z = 0.0) const;
 };
 
 struct Point3d : public Eigen::Vector3d
 {
   Point3d() = default;
-  Point3d(const double x, const double y, const double z)
-  : Eigen::Vector3d(x, y, z) {}
+  Point3d(const double x, const double y, const double z) : Eigen::Vector3d(x, y, z) {}
 
-  [[nodiscard]]
-  Point2d to_2d() const;
+  [[nodiscard]] Point2d to_2d() const;
 };
 
-inline Point3d Point2d::to_3d(const double z) const {return Point3d{x(), y(), z};}
+inline Point3d Point2d::to_3d(const double z) const { return Point3d{x(), y(), z}; }
 
-inline Point2d Point3d::to_2d() const {return Point2d{x(), y()};}
+inline Point2d Point3d::to_2d() const { return Point2d{x(), y()}; }
 
 inline geometry_msgs::msg::Point toMsg(const Point3d & point)
 {
@@ -92,7 +88,9 @@ inline Point3d fromMsg(const geometry_msgs::msg::Point & msg)
 }
 }  // namespace autoware_utils
 
-BOOST_GEOMETRY_REGISTER_POINT_2D(autoware_utils::Point2d, double, cs::cartesian, x(), y())  // NOLINT
-BOOST_GEOMETRY_REGISTER_POINT_3D(autoware_utils::Point3d, double, cs::cartesian, x(), y(), z())  // NOLINT
+BOOST_GEOMETRY_REGISTER_POINT_2D(                                 // NOLINT
+  autoware_utils::Point2d, double, cs::cartesian, x(), y())       // NOLINT
+BOOST_GEOMETRY_REGISTER_POINT_3D(                                 // NOLINT
+  autoware_utils::Point3d, double, cs::cartesian, x(), y(), z())  // NOLINT
 
 #endif  // AUTOWARE_UTILS__GEOMETRY__BOOST_GEOMETRY_HPP_

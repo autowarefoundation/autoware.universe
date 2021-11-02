@@ -15,9 +15,9 @@
 #ifndef AUTOWARE_UTILS__MATH__NORMALIZATION_HPP_
 #define AUTOWARE_UTILS__MATH__NORMALIZATION_HPP_
 
-#include <cmath>
-
 #include "autoware_utils/math/constants.hpp"
+
+#include <cmath>
 
 namespace autoware_utils
 {

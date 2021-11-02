@@ -15,27 +15,24 @@
 #ifndef AUTOWARE_UTILS__ROS__DEBUG_PUBLISHER_HPP_
 #define AUTOWARE_UTILS__ROS__DEBUG_PUBLISHER_HPP_
 
+#include "autoware_utils/ros/debug_traits.hpp"
+
+#include <rclcpp/publisher_base.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <rosidl_runtime_cpp/traits.hpp>
+
 #include <memory>
 #include <string>
 #include <unordered_map>
 
-#include "rclcpp/publisher_base.hpp"
-#include "rclcpp/rclcpp.hpp"
-#include "rosidl_runtime_cpp/traits.hpp"
-
-#include "autoware_utils/ros/debug_traits.hpp"
-
 namespace autoware_utils
 {
-
 namespace debug_publisher
 {
-template<
+template <
   class T_msg, class T,
-  std::enable_if_t<
-    autoware_utils::debug_traits::is_debug_message<T_msg>::value,
-    std::nullptr_t> =
-  nullptr>
+  std::enable_if_t<autoware_utils::debug_traits::is_debug_message<T_msg>::value, std::nullptr_t> =
+    nullptr>
 T_msg toDebugMsg(const T & data, const rclcpp::Time & stamp)
 {
   T_msg msg;
@@ -48,13 +45,11 @@ T_msg toDebugMsg(const T & data, const rclcpp::Time & stamp)
 class DebugPublisher
 {
 public:
-  explicit DebugPublisher(rclcpp::Node * node, const char * ns)
-  : node_(node), ns_(ns) {}
+  explicit DebugPublisher(rclcpp::Node * node, const char * ns) : node_(node), ns_(ns) {}
 
-  template<
-    class T, std::enable_if_t<
-      rosidl_generator_traits::is_message<T>::value,
-      std::nullptr_t> = nullptr>
+  template <
+    class T,
+    std::enable_if_t<rosidl_generator_traits::is_message<T>::value, std::nullptr_t> = nullptr>
   void publish(const std::string & name, const T & data, const rclcpp::QoS & qos = rclcpp::QoS(1))
   {
     if (pub_map_.count(name) == 0) {
@@ -64,11 +59,9 @@ public:
     std::dynamic_pointer_cast<rclcpp::Publisher<T>>(pub_map_.at(name))->publish(data);
   }
 
-  template<
+  template <
     class T_msg, class T,
-    std::enable_if_t<
-      !rosidl_generator_traits::is_message<T>::value, std::nullptr_t> =
-    nullptr>
+    std::enable_if_t<!rosidl_generator_traits::is_message<T>::value, std::nullptr_t> = nullptr>
   void publish(const std::string & name, const T & data, const rclcpp::QoS & qos = rclcpp::QoS(1))
   {
     publish(name, debug_publisher::toDebugMsg<T_msg>(data, node_->now()), qos);

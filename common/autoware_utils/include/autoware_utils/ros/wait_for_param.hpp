@@ -15,15 +15,15 @@
 #ifndef AUTOWARE_UTILS__ROS__WAIT_FOR_PARAM_HPP_
 #define AUTOWARE_UTILS__ROS__WAIT_FOR_PARAM_HPP_
 
+#include <rclcpp/rclcpp.hpp>
+
 #include <chrono>
 #include <memory>
 #include <string>
 
-#include "rclcpp/rclcpp.hpp"
-
 namespace autoware_utils
 {
-template<class T>
+template <class T>
 T waitForParam(
   rclcpp::Node * node, const std::string & remote_node_name, const std::string & param_name)
 {
@@ -37,8 +37,7 @@ T waitForParam(
       return {};
     }
     RCLCPP_INFO_THROTTLE(
-      node->get_logger(), *node->get_clock(), 1000 /* ms */,
-      "waiting for node: %s, param: %s\n",
+      node->get_logger(), *node->get_clock(), 1000 /* ms */, "waiting for node: %s, param: %s\n",
       remote_node_name.c_str(), param_name.c_str());
   }
 

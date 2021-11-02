@@ -15,20 +15,19 @@
 #ifndef AUTOWARE_UTILS__ROS__SELF_POSE_LISTENER_HPP_
 #define AUTOWARE_UTILS__ROS__SELF_POSE_LISTENER_HPP_
 
-#include <memory>
-
-#include "rclcpp/rclcpp.hpp"
-
 #include "autoware_utils/geometry/geometry.hpp"
 #include "autoware_utils/ros/transform_listener.hpp"
+
+#include <rclcpp/rclcpp.hpp>
+
+#include <memory>
 
 namespace autoware_utils
 {
 class SelfPoseListener
 {
 public:
-  explicit SelfPoseListener(rclcpp::Node * node)
-  : transform_listener_(node) {}
+  explicit SelfPoseListener(rclcpp::Node * node) : transform_listener_(node) {}
 
   void waitForFirstPose()
   {

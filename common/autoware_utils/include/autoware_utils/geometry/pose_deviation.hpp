@@ -15,10 +15,10 @@
 #ifndef AUTOWARE_UTILS__GEOMETRY__POSE_DEVIATION_HPP_
 #define AUTOWARE_UTILS__GEOMETRY__POSE_DEVIATION_HPP_
 
-#include "tf2/utils.h"
-
 #include "autoware_utils/geometry/geometry.hpp"
 #include "autoware_utils/math/normalization.hpp"
+
+#include <tf2/utils.h>
 
 namespace autoware_utils
 {

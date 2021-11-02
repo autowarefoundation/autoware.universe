@@ -22,7 +22,7 @@
 
 namespace autoware_utils
 {
-template<class T>
+template <class T>
 std::vector<T> arange(const T start, const T stop, const T step = 1)
 {
   if (step == 0) {
@@ -49,7 +49,7 @@ std::vector<T> arange(const T start, const T stop, const T step = 1)
   return out;
 }
 
-template<class T>
+template <class T>
 std::vector<double> linspace(const T start, const T stop, const size_t num)
 {
   const auto start_double = static_cast<double>(start);

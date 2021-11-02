@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "gtest/gtest.h"
-
 #include "autoware_utils/geometry/geometry.hpp"
 #include "autoware_utils/math/unit_conversion.hpp"
+
+#include <gtest/gtest.h>
 
 constexpr double epsilon = 1e-6;
 
@@ -212,8 +212,8 @@ TEST(geometry, createQuaternion)
   using autoware_utils::createQuaternion;
 
   // (0.18257419, 0.36514837, 0.54772256, 0.73029674) is normalized quaternion of (1, 2, 3, 4)
-  const geometry_msgs::msg::Quaternion q_out = createQuaternion(
-    0.18257419, 0.36514837, 0.54772256, 0.73029674);
+  const geometry_msgs::msg::Quaternion q_out =
+    createQuaternion(0.18257419, 0.36514837, 0.54772256, 0.73029674);
   EXPECT_DOUBLE_EQ(q_out.x, 0.18257419);
   EXPECT_DOUBLE_EQ(q_out.y, 0.36514837);
   EXPECT_DOUBLE_EQ(q_out.z, 0.54772256);
@@ -252,8 +252,7 @@ TEST(geometry, createQuaternionFromRPY)
   }
 
   {
-    const auto q_out = createQuaternionFromRPY(
-      deg2rad(30), deg2rad(30), deg2rad(30));
+    const auto q_out = createQuaternionFromRPY(deg2rad(30), deg2rad(30), deg2rad(30));
     EXPECT_DOUBLE_EQ(q_out.x, 0.17677669529663687);
     EXPECT_DOUBLE_EQ(q_out.y, 0.30618621784789724);
     EXPECT_DOUBLE_EQ(q_out.z, 0.17677669529663692);
@@ -605,8 +604,7 @@ TEST(geometry, pose2transform)
     pose_stamped.pose.position.x = 1.0;
     pose_stamped.pose.position.y = 2.0;
     pose_stamped.pose.position.z = 3.0;
-    pose_stamped.pose.orientation =
-      createQuaternionFromRPY(deg2rad(30), deg2rad(30), deg2rad(30));
+    pose_stamped.pose.orientation = createQuaternionFromRPY(deg2rad(30), deg2rad(30), deg2rad(30));
 
     const geometry_msgs::msg::TransformStamped transform_stamped = pose2transform(pose_stamped);
 

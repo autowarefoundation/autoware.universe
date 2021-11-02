@@ -15,23 +15,21 @@
 #ifndef AUTOWARE_UTILS__SYSTEM__HEARTBEAT_CHECKER_HPP_
 #define AUTOWARE_UTILS__SYSTEM__HEARTBEAT_CHECKER_HPP_
 
+#include <rclcpp/rclcpp.hpp>
+
 #include <string>
 
-#include "rclcpp/rclcpp.hpp"
-
-template<class HeartbeatMsg>
+template <class HeartbeatMsg>
 class HeaderlessHeartbeatChecker
 {
 public:
   HeaderlessHeartbeatChecker(
     rclcpp::Node & node, const std::string & topic_name, const double timeout)
-  : clock_(node.get_clock()),
-    timeout_(timeout)
+  : clock_(node.get_clock()), timeout_(timeout)
   {
     using std::placeholders::_1;
     sub_heartbeat_ = node.create_subscription<HeartbeatMsg>(
-      topic_name, rclcpp::QoS{1},
-      std::bind(&HeaderlessHeartbeatChecker::onHeartbeat, this, _1));
+      topic_name, rclcpp::QoS{1}, std::bind(&HeaderlessHeartbeatChecker::onHeartbeat, this, _1));
   }
 
   bool isTimeout()

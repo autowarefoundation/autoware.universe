@@ -19,97 +19,98 @@
 #include <vector>
 
 #define EIGEN_MPL2_ONLY
-#include "Eigen/Core"
-#include "Eigen/Geometry"
-
-#include "autoware_planning_msgs/msg/path.hpp"
-#include "autoware_planning_msgs/msg/path_point_with_lane_id.hpp"
-#include "autoware_planning_msgs/msg/trajectory.hpp"
-#include "geometry_msgs/msg/pose_stamped.hpp"
-#include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
-#include "geometry_msgs/msg/quaternion.hpp"
-#include "geometry_msgs/msg/transform_stamped.hpp"
-#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
-
 #include "autoware_utils/geometry/boost_geometry.hpp"
+
+#include <Eigen/Core>
+#include <Eigen/Geometry>
+
+#include <autoware_planning_msgs/msg/path.hpp>
+#include <autoware_planning_msgs/msg/path_point_with_lane_id.hpp>
+#include <autoware_planning_msgs/msg/trajectory.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+#include <geometry_msgs/msg/quaternion.hpp>
+#include <geometry_msgs/msg/transform_stamped.hpp>
+
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 namespace autoware_utils
 {
-template<class T>
+template <class T>
 geometry_msgs::msg::Point getPoint(const T & p)
 {
   return geometry_msgs::build<geometry_msgs::msg::Point>().x(p.x).y(p.y).z(p.z);
 }
 
-template<>
+template <>
 inline geometry_msgs::msg::Point getPoint(const geometry_msgs::msg::Point & p)
 {
   return p;
 }
 
-template<>
+template <>
 inline geometry_msgs::msg::Point getPoint(const geometry_msgs::msg::Pose & p)
 {
   return p.position;
 }
 
-template<>
+template <>
 inline geometry_msgs::msg::Point getPoint(const geometry_msgs::msg::PoseStamped & p)
 {
   return p.pose.position;
 }
 
-template<>
+template <>
 inline geometry_msgs::msg::Point getPoint(const geometry_msgs::msg::PoseWithCovarianceStamped & p)
 {
   return p.pose.pose.position;
 }
 
-template<>
+template <>
 inline geometry_msgs::msg::Point getPoint(const autoware_planning_msgs::msg::PathPoint & p)
 {
   return p.pose.position;
 }
 
-template<>
+template <>
 inline geometry_msgs::msg::Point getPoint(const autoware_planning_msgs::msg::TrajectoryPoint & p)
 {
   return p.pose.position;
 }
 
-template<>
+template <>
 inline geometry_msgs::msg::Point getPoint(
   const autoware_planning_msgs::msg::PathPointWithLaneId & p)
 {
   return p.point.pose.position;
 }
 
-template<class T>
+template <class T>
 geometry_msgs::msg::Pose getPose([[maybe_unused]] const T & p)
 {
   static_assert(sizeof(T) == 0, "Only specializations of getPose can be used.");
   throw std::logic_error("Only specializations of getPose can be used.");
 }
 
-template<>
+template <>
 inline geometry_msgs::msg::Pose getPose(const geometry_msgs::msg::Pose & p)
 {
   return p;
 }
 
-template<>
+template <>
 inline geometry_msgs::msg::Pose getPose(const geometry_msgs::msg::PoseStamped & p)
 {
   return p.pose;
 }
 
-template<>
+template <>
 inline geometry_msgs::msg::Pose getPose(const autoware_planning_msgs::msg::PathPoint & p)
 {
   return p.pose;
 }
 
-template<>
+template <>
 inline geometry_msgs::msg::Pose getPose(const autoware_planning_msgs::msg::TrajectoryPoint & p)
 {
   return p.pose;
@@ -185,7 +186,7 @@ inline geometry_msgs::msg::Quaternion createQuaternionFromYaw(const double yaw)
   return tf2::toMsg(q);
 }
 
-template<class Point1, class Point2>
+template <class Point1, class Point2>
 double calcDistance2d(const Point1 & point1, const Point2 & point2)
 {
   const auto p1 = getPoint(point1);
@@ -193,7 +194,7 @@ double calcDistance2d(const Point1 & point1, const Point2 & point2)
   return std::hypot(p1.x - p2.x, p1.y - p2.y);
 }
 
-template<class Point1, class Point2>
+template <class Point1, class Point2>
 double calcSquaredDistance2d(const Point1 & point1, const Point2 & point2)
 {
   const auto p1 = getPoint(point1);
@@ -203,7 +204,7 @@ double calcSquaredDistance2d(const Point1 & point1, const Point2 & point2)
   return dx * dx + dy * dy;
 }
 
-template<class Point1, class Point2>
+template <class Point1, class Point2>
 double calcDistance3d(const Point1 & point1, const Point2 & point2)
 {
   const auto p1 = getPoint(point1);
@@ -306,7 +307,7 @@ inline Point2d transformPoint(
   return Point2d{transformed.x(), transformed.y()};
 }
 
-template<class T>
+template <class T>
 T transformVector(const T & points, const geometry_msgs::msg::Transform & transform)
 {
   T transformed;
@@ -331,7 +332,8 @@ inline double calcCurvature(
 }
 
 /**
- * @brief Calculate offset pose. The offset values are defined in the local coordinate of the input pose.
+ * @brief Calculate offset pose. The offset values are defined in the local coordinate of the input
+ * pose.
  */
 inline geometry_msgs::msg::Pose calcOffsetPose(
   const geometry_msgs::msg::Pose & p, const double x, const double y, const double z)

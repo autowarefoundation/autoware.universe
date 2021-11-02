@@ -15,19 +15,19 @@
 #ifndef AUTOWARE_UTILS__ROS__UPDATE_PARAM_HPP_
 #define AUTOWARE_UTILS__ROS__UPDATE_PARAM_HPP_
 
+#include <rclcpp/rclcpp.hpp>
+
 #include <string>
 #include <vector>
 
-#include "rclcpp/rclcpp.hpp"
-
 namespace autoware_utils
 {
-template<class T>
+template <class T>
 bool updateParam(const std::vector<rclcpp::Parameter> & params, const std::string & name, T & value)
 {
   const auto itr = std::find_if(
     params.cbegin(), params.cend(),
-    [&name](const rclcpp::Parameter & p) {return p.get_name() == name;});
+    [&name](const rclcpp::Parameter & p) { return p.get_name() == name; });
 
   // Not found
   if (itr == params.cend()) {

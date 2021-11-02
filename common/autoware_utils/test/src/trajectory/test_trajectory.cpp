@@ -12,15 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <limits>
-#include <vector>
-
-#include "gtest/gtest.h"
-
 #include "autoware_utils/geometry/boost_geometry.hpp"
 #include "autoware_utils/trajectory/trajectory.hpp"
 
-#include "tf2/LinearMath/Quaternion.h"
+#include <gtest/gtest.h>
+#include <tf2/LinearMath/Quaternion.h>
+
+#include <limits>
+#include <vector>
 
 namespace
 {
@@ -40,7 +39,7 @@ geometry_msgs::msg::Pose createPose(
   return p;
 }
 
-template<class T>
+template <class T>
 T generateTestTrajectory(
   const size_t num_points, const double point_interval, const double vel = 0.0,
   const double init_theta = 0.0, const double delta_theta = 0.0)
@@ -62,7 +61,7 @@ T generateTestTrajectory(
   return traj;
 }
 
-template<class T>
+template <class T>
 void updateTrajectoryVelocityAt(T & points, const size_t idx, const double vel)
 {
   points.at(idx).twist.linear.x = vel;
@@ -285,8 +284,8 @@ TEST(trajectory, findNearestSegmentIndex)
 
   // Empty
   EXPECT_THROW(
-    findNearestSegmentIndex(
-      Trajectory{}.points, geometry_msgs::msg::Point{}), std::invalid_argument);
+    findNearestSegmentIndex(Trajectory{}.points, geometry_msgs::msg::Point{}),
+    std::invalid_argument);
 
   // Start point
   EXPECT_EQ(findNearestSegmentIndex(traj.points, createPoint(0.0, 0.0, 0.0)), 0U);
@@ -325,17 +324,17 @@ TEST(trajectory, calcLongitudinalOffsetToSegment_StraightTrajectory)
 
   // Empty
   EXPECT_THROW(
-    calcLongitudinalOffsetToSegment(
-      Trajectory{}.points, {},
-      geometry_msgs::msg::Point{}), std::invalid_argument);
+    calcLongitudinalOffsetToSegment(Trajectory{}.points, {}, geometry_msgs::msg::Point{}),
+    std::invalid_argument);
 
   // Out of range
   EXPECT_THROW(
-    calcLongitudinalOffsetToSegment(
-      traj.points, -1, geometry_msgs::msg::Point{}), std::out_of_range);
+    calcLongitudinalOffsetToSegment(traj.points, -1, geometry_msgs::msg::Point{}),
+    std::out_of_range);
   EXPECT_THROW(
     calcLongitudinalOffsetToSegment(
-      traj.points, traj.points.size() - 1, geometry_msgs::msg::Point{}), std::out_of_range);
+      traj.points, traj.points.size() - 1, geometry_msgs::msg::Point{}),
+    std::out_of_range);
 
   // Same close points in trajectory
   {
@@ -383,15 +382,13 @@ TEST(trajectory, calcLateralOffset)
 
   // Empty
   EXPECT_THROW(
-    calcLateralOffset(
-      Trajectory{}.points, geometry_msgs::msg::Point{}), std::invalid_argument);
+    calcLateralOffset(Trajectory{}.points, geometry_msgs::msg::Point{}), std::invalid_argument);
 
   // Trajectory size is 1
   {
     const auto one_point_traj = generateTestTrajectory<Trajectory>(1, 1.0);
     EXPECT_THROW(
-      calcLateralOffset(
-        one_point_traj.points, geometry_msgs::msg::Point{}), std::out_of_range);
+      calcLateralOffset(one_point_traj.points, geometry_msgs::msg::Point{}), std::out_of_range);
   }
 
   // Same close points in trajectory
@@ -402,22 +399,17 @@ TEST(trajectory, calcLateralOffset)
   }
 
   // Point on trajectory
-  EXPECT_NEAR(
-    calcLateralOffset(traj.points, createPoint(3.1, 0.0, 0.0)), 0.0, epsilon);
+  EXPECT_NEAR(calcLateralOffset(traj.points, createPoint(3.1, 0.0, 0.0)), 0.0, epsilon);
 
   // Point before start point
-  EXPECT_NEAR(
-    calcLateralOffset(traj.points, createPoint(-3.9, 3.0, 0.0)), 3.0, epsilon);
+  EXPECT_NEAR(calcLateralOffset(traj.points, createPoint(-3.9, 3.0, 0.0)), 3.0, epsilon);
 
   // Point after start point
-  EXPECT_NEAR(
-    calcLateralOffset(traj.points, createPoint(13.3, -10.0, 0.0)), -10.0, epsilon);
+  EXPECT_NEAR(calcLateralOffset(traj.points, createPoint(13.3, -10.0, 0.0)), -10.0, epsilon);
 
   // Random cases
-  EXPECT_NEAR(
-    calcLateralOffset(traj.points, createPoint(4.3, 7.0, 0.0)), 7.0, epsilon);
-  EXPECT_NEAR(
-    calcLateralOffset(traj.points, createPoint(1.0, -3.0, 0.0)), -3.0, epsilon);
+  EXPECT_NEAR(calcLateralOffset(traj.points, createPoint(4.3, 7.0, 0.0)), 7.0, epsilon);
+  EXPECT_NEAR(calcLateralOffset(traj.points, createPoint(1.0, -3.0, 0.0)), -3.0, epsilon);
 }
 
 TEST(trajectory, calcLateralOffset_CurveTrajectory)
@@ -427,12 +419,8 @@ TEST(trajectory, calcLateralOffset_CurveTrajectory)
   const auto traj = generateTestTrajectory<Trajectory>(10, 1.0, 0.0, 0.0, 0.1);
 
   // Random cases
-  EXPECT_NEAR(
-    calcLateralOffset(traj.points, createPoint(2.0, 0.5, 0.0)), 0.071386083,
-    epsilon);
-  EXPECT_NEAR(
-    calcLateralOffset(traj.points, createPoint(5.0, 1.0, 0.0)), -1.366602819,
-    epsilon);
+  EXPECT_NEAR(calcLateralOffset(traj.points, createPoint(2.0, 0.5, 0.0)), 0.071386083, epsilon);
+  EXPECT_NEAR(calcLateralOffset(traj.points, createPoint(5.0, 1.0, 0.0)), -1.366602819, epsilon);
 }
 
 TEST(trajectory, calcSignedArcLengthFromIndexToIndex)

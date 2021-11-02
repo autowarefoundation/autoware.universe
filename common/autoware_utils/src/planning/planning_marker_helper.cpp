@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <string>
-
 #include "autoware_utils/planning/planning_marker_helper.hpp"
+
+#include <string>
 
 using autoware_utils::createDefaultMarker;
 using autoware_utils::createMarkerColor;
