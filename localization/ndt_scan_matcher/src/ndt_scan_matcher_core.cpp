@@ -347,7 +347,7 @@ void NDTScanMatcher::callbackSensorPoints(
   ndt_ptr_->setInputSource(sensor_points_baselinkTF_ptr);
 
   // check
-  if (initial_pose_msg_ptr_array_.empty()) {
+  if (initial_pose_msg_ptr_array_.size() <= 1) {
     RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1, "No Pose!");
     return;
   }
