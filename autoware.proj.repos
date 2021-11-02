@@ -7,23 +7,23 @@ repositories:
   autoware/launcher:
     type: git
     url: git@github.com:tier4/autoware_launcher.git
-    version: main
+    version: 5527a3b1541466aad4586128cb4d1fa715143a12
   autoware/aip_launcher:
     type: git
     url: git@github.com:tier4/aip_launcher.iv.git
-    version: main
+    version: 539ab421cd988ce9126ac3fb625914d9fd429445
   autoware/autoware_api_adaptor:
     type: git
     url: git@github.com:tier4/autoware_api_adaptor.git
-    version: main
+    version: f0bb67f673d111b40d5d706a8aae006b7f2719c9
   autoware/msgs/autoware_api_msgs:
     type: git
     url: git@github.com:tier4/autoware_api_msgs.git
-    version: main
+    version: 9d683fd2d47c2664fd1dcb8dd93cffe696535a43
   autoware/msgs/autoware_iv_msgs:
     type: git
     url: git@github.com:tier4/autoware_iv_msgs.git
-    version: main
+    version: 0477e88d1da64df4497b002c7793f8c619ffba52
   autoware/msgs/autoware_auto_msgs:
     type: git
     url: git@github.com:tier4/autoware_auto_msgs.git
@@ -31,54 +31,54 @@ repositories:
   autoware/individual_params:
     type: git
     url: https://github.com/tier4/autoware_individual_params.git
-    version: main
+    version: c67ba5a2b5181f5ce0262d695c0596c7baf00456
   autoware/calibration_tools:
     type: git
     url: git@github.com:tier4/calibration_tools.git
-    version: main
+    version: e8651a36963f117fabf9cf2bdf68f9ad1d3df98e
   # description
   description/sensor/sensor_component_description:
     type: git
     url: https://github.com/tier4/sensor_description.iv.git
-    version: main
+    version: ca3db56426c80f579a79c2c310c2ef59e93e76c2
   description/sensor/aip_description:
     type: git
     url: https://github.com/tier4/aip_description.iv.git
-    version: main
+    version: 094dce484cea799fbf6f95f00da708cfbc1d1f21
   description/sensor/velodyne_simulator:
     type: git
     url: https://github.com/tier4/velodyne_simulator.git
-    version: ros2
+    version: 7bca7039a1d9b0a37a268e7ced3e97b96fe9f5ee
   description/vehicle/lexus_description:
     type: git
     url: https://github.com/tier4/lexus_description.iv.git
-    version: main
+    version: 4a3a06e297f85a737d2b5879b508843b2998038a
   # simulator
   simulator/planning_simulator:
     type: git
     url: git@github.com:tier4/planning_simulator.git
-    version: main
+    version: 512aaa59a16231b6a3d5cfe17ec2e54094c99be9
   simulator/planning_simulator_launcher:
     type: git
     url: git@github.com:tier4/planning_sim_launcher.git
-    version: main
+    version: 8db18efcafa3a7647d0958454177f242d3dcb70e
   simulator/scenario_runner:
     type: git
     url: git@github.com:tier4/scenario_simulator_v1.git
-    version: main
+    version: 1eef79449f7670d0c2a11ba821f48ce8ed0960e7
   simulator/scenario_simulator:
     type: git
     url: https://github.com/tier4/scenario_simulator_v2.git
-    version: master
+    version: 94ed2861739d01490e2fe7c8ec27be76ee72e0eb
   simulator/logsim:
     type: git
     url: git@github.com:tier4/logsim.git
-    version: ros2
+    version: 83901be3b7f70f3580aff610103ab90d2f002782
   # ecu_system_setup
   ecu_system_setup:
     type: git
     url: git@github.com:tier4/autoware_ecu_system_setup.git
-    version: main
+    version: 6baceddfce1e4c2420b44c3c6a31f1054ca3d6c9
   # vendor
   vendor/quaternion_operation:
     type: git
@@ -88,104 +88,104 @@ repositories:
   vendor/grid_map:
     type: git
     url: https://github.com/tier4/grid_map.git
-    version: tier4/ros2
+    version: 657cc055eb90a042057738a85a5651c03e42b1bb
   vendor/perception_pcl:
     type: git
     url: https://github.com/ros-perception/perception_pcl.git
-    version: foxy-devel
+    version: adff50fe9b6adf4770c75275252707de798c4ea6
   vendor/topic_tools:
     type: git
     url: https://github.com/tier4/topic_tools.git
-    version: tier4/main
+    version: ac3af3357f009925d29c8979f7613bcf111e58c4
   vendor/pacmod3: # TODO remove after foxy-version is released
     type: git
     url: https://github.com/astuff/pacmod3.git
-    version: dashing-devel
+    version: deec9f5bcf8585d1443f26f4731bbb7b4e6fb8eb
   vendor/kvaser_interface: # TODO remove after foxy-version is released
     type: git
     url: https://github.com/tier4/kvaser_interface.git
-    version: tier4/ros2
+    version: 3602a186b4dfebfeea17bcaaedede8cd04d4baea
   vendor/usb_cam: # TODO remove after https://github.com/ros-drivers/usb_cam/pull/132 is available in foxy
     type: git
     url: https://github.com/tier4/usb_cam.git
-    version: tier4/ros2
+    version: 8fe48128c04198ca7090a8a8502c1ec058381ce7
   vendor/tamagawa_imu_driver:
     type: git
     url: https://github.com/tier4/tamagawa_imu_driver.git
-    version: ros2
+    version: 07462f25dd047178f7807eae8267e168369a95d6
   vendor/ublox:
     type: git
     url: https://github.com/tier4/ublox.git
-    version: tier4/ros2
+    version: ba21bbbad702e99074f706a7b868db79968e1dfd
   vendor/septentrio:
     type: git
     url: https://github.com/tier4/septentrio_gnss_driver.git
-    version: tier4/ros2
+    version: d6da33824df8cf5d00cd7762fbe27e8dd5566500
   vendor/livox-driver:
     type: git
     url: https://github.com/tier4/livox_ros2_driver.git
-    version: tier4/master
+    version: ef18bb868d92db70b541c21d188961ee6bcac024
   vendor/lidar-driver:
     type: git
     url: git@github.com:tier4/lidar_driver.git
-    version: main
+    version: v0.1.4
   vendor/rosbridge_suite:
     type: git
     url: https://github.com/tier4/rosbridge_suite.git
-    version: tier4/ros2
+    version: 2b2a07d1c444e7c886e03264b10ec503890f2dba
   vendor/rosauth:
     type: git
     url: https://github.com/GT-RAIL/rosauth.git
-    version: ros2
+    version: 3ca66938fb604c0d2f948f356ce7a1b9bdfb717e
   vendor/velodyne_vls:
     type: git
     url: https://github.com/tier4/velodyne_vls.git
-    version: ros2
+    version: 97700640ccd36ac66a210c7cfad2340dee5b0bbd
   vendor/rqt_runtime_monitor:
     type: git
     url: https://github.com/tier4/rqt_runtime_monitor.git
-    version: dashing-devel
+    version: e76c9846da6a8728d03e80b8b01dca61c4e4d99d
   vendor/operational-design-domains:
     type: git
     url: https://gitlab.com/autowarefoundation/operational-design-domains
-    version: master
+    version: 42321f9a04fcaef9caf3694530e1c63d3e27c47a
   vendor/ndt_omp:
     type: git
     url: https://github.com/tier4/ndt_omp.git
-    version: tier4/main
+    version: 84d313e98f70033f37a664003f90ef90813cb665
   vendor/mussp:
     type: git
     url: https://github.com/tier4/muSSP.git
-    version: tier4/main
+    version: f67f4df5b95fcb28634bb162e09cfeab2ed44d29
   vendor/pointcloud_to_laserscan:
     type: git
     url: https://github.com/tier4/pointcloud_to_laserscan.git
-    version: tier4/main
+    version: 8057177eeb26a3fd29b6e363e8a9a90d5daf391b
   vendor/ars408_driver:
     type: git
     url: https://github.com/tier4/ars408_driver.git
-    version: tier4/ros2
+    version: d8f391ab6f9b6241dd76c9845adf6a8c92c34d9d
   vendor/hash_library_vendor:
     type: git
     url: https://github.com/tier4/hash_library_vendor.git
-    version: main
+    version: fd300d33ac8f4dcc5e2c6d4f0415df5062660f23
   vendor/diagnostics:
     type: git
     url: https://github.com/tier4/diagnostics.git
-    version: tier4/main
+    version: da6cdbe674dd7bf1e71ee6fb73825e3e43644f0c
   # TODO: Remove behavior tree from repos after runtime error is resolved in released package
   vendor/behaviortree-cpp-v3:
     type: git
     url: https://github.com/BehaviorTree/BehaviorTree.CPP.git
-    version: 3.5.6
+    version: eb9ff2e63d713c94106f57dd91565a1840223a70
   vendor/spinnaker:
     type: git
     url: https://github.com/tier4/spinnaker.git
-    version: tier4/main
+    version: 4c74d319ef9186a4fb643dbd82e1b5f7918e75ea
   vendor/image_pipeline:
     type: git
     url: https://github.com/tier4/image_pipeline.git
-    version: tier4/ros2-camera-calibration
+    version: 47964112293eb19f9f57254b2e6b68706954cc63
   # TODO: Remove robot_state_publisher from repos after preventing timer publish is resolved in released package
   vendor/robot_state_publisher:
     type: git
@@ -195,4 +195,4 @@ repositories:
   missing_packages/astuff_sensor_msgs:
     type: git
     url: https://github.com/astuff/astuff_sensor_msgs.git
-    version: 3.2.0
+    version: fb1f3a6dcf2d41ed61611b87286e67f9f1b79624
