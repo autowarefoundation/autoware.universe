@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <rclcpp/rclcpp.hpp>
+
+#include <autoware_perception_msgs/msg/dynamic_object_array.hpp>
+
 #include <memory>
 #include <utility>
-
-#include "autoware_perception_msgs/msg/dynamic_object_array.hpp"
-#include "rclcpp/rclcpp.hpp"
 
 class EmptyObjectsPublisher : public rclcpp::Node
 {
 public:
-  EmptyObjectsPublisher()
-  : Node("empty_objects_publisher")
+  EmptyObjectsPublisher() : Node("empty_objects_publisher")
   {
     empty_objects_pub_ = this->create_publisher<autoware_perception_msgs::msg::DynamicObjectArray>(
       "~/output/objects", 1);

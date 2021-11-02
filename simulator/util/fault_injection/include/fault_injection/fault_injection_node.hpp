@@ -15,14 +15,15 @@
 #ifndef FAULT_INJECTION__FAULT_INJECTION_NODE_HPP__
 #define FAULT_INJECTION__FAULT_INJECTION_NODE_HPP__
 
-#include <string>
-#include <vector>
-
-#include "autoware_simulation_msgs/msg/simulation_events.hpp"
-#include "rclcpp/rclcpp.hpp"
-#include "diagnostic_updater/diagnostic_updater.hpp"
 #include "fault_injection/diagnostic_storage.hpp"
 
+#include <diagnostic_updater/diagnostic_updater.hpp>
+#include <rclcpp/rclcpp.hpp>
+
+#include <autoware_simulation_msgs/msg/simulation_events.hpp>
+
+#include <string>
+#include <vector>
 
 namespace fault_injection
 {
@@ -44,12 +45,10 @@ private:
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
 
   void updateEventDiag(
-    diagnostic_updater::DiagnosticStatusWrapper & wrap,
-    const std::string & event_name);
+    diagnostic_updater::DiagnosticStatusWrapper & wrap, const std::string & event_name);
 
   void addDiag(
-    const diagnostic_msgs::msg::DiagnosticStatus & status,
-    diagnostic_updater::Updater & updater);
+    const diagnostic_msgs::msg::DiagnosticStatus & status, diagnostic_updater::Updater & updater);
 
   std::vector<DiagConfig> readEventDiagList();
 
