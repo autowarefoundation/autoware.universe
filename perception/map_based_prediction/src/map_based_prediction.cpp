@@ -12,15 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "map_based_prediction.hpp"
+#include <cubic_spline.hpp>
+#include <map_based_prediction.hpp>
+
+#include <tf2/utils.h>
 
 #include <algorithm>
 #include <chrono>
 #include <vector>
-
-#include "cubic_spline.hpp"
-
-#include "tf2/utils.h"
 
 MapBasedPrediction::MapBasedPrediction(
   double interpolating_resolution, double time_horizon, double sampling_delta_time)
@@ -85,8 +84,7 @@ bool MapBasedPrediction::doPrediction(
     const double min_lon_velocity_ms_for_map_based_prediction = 1;
     if (
       std::fabs(object_with_lanes.object.state.twist_covariance.twist.linear.x) <
-      min_lon_velocity_ms_for_map_based_prediction)
-    {
+      min_lon_velocity_ms_for_map_based_prediction) {
       autoware_perception_msgs::msg::PredictedPath predicted_path;
       getLinearPredictedPath(
         object_with_lanes.object.state.pose_covariance.pose,
@@ -143,8 +141,8 @@ bool MapBasedPrediction::doPrediction(
 
         double lane_yaw = spline2d.calc_yaw(current_s_position);
         std::vector<double> origin_v = {std::cos(lane_yaw), std::sin(lane_yaw)};
-        std::vector<double> object_v = {object_point.x - nearest_point.x,
-          object_point.y - nearest_point.y};
+        std::vector<double> object_v = {
+          object_point.x - nearest_point.x, object_point.y - nearest_point.y};
         double cross2d = object_v[0] * origin_v[1] - object_v[1] * origin_v[0];
         if (cross2d < 0) {
           current_d_position *= -1;
@@ -257,9 +255,9 @@ bool MapBasedPrediction::getPredictedPath(
   double calculated_d, calculated_s;
   for (double i = 0; i < t; i += dt) {
     calculated_d = current_d_position + current_d_velocity * i + 0 * 2 * i * i +
-      x_3(0) * i * i * i + x_3(1) * i * i * i * i + x_3(2) * i * i * i * i * i;
+                   x_3(0) * i * i * i + x_3(1) * i * i * i * i + x_3(2) * i * i * i * i * i;
     calculated_s = current_s_position + current_s_velocity * i + 2 * 0 * i * i +
-      x_2(0) * i * i * i + x_2(1) * i * i * i * i;
+                   x_2(0) * i * i * i + x_2(1) * i * i * i * i;
 
     geometry_msgs::msg::PoseWithCovarianceStamped tmp_point;
     if (calculated_s > spline2d.s.back()) {
@@ -294,8 +292,8 @@ void MapBasedPrediction::getLinearPredictedPath(
   for (double dt = 0.0; dt < time_horizon + ep; dt += sampling_delta_time) {
     geometry_msgs::msg::PoseWithCovarianceStamped pose_cov_stamped;
     pose_cov_stamped.header = origin_header;
-    pose_cov_stamped.header.stamp = rclcpp::Time(origin_header.stamp) +
-      rclcpp::Duration::from_seconds(dt);
+    pose_cov_stamped.header.stamp =
+      rclcpp::Time(origin_header.stamp) + rclcpp::Duration::from_seconds(dt);
     geometry_msgs::msg::Pose object_frame_pose;
     geometry_msgs::msg::Pose world_frame_pose;
     object_frame_pose.position.x = object_twist.linear.x * dt;

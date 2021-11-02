@@ -21,14 +21,14 @@
 #ifndef CUBIC_SPLINE_HPP_
 #define CUBIC_SPLINE_HPP_
 
+#include <eigen3/Eigen/Eigen>
+
 #include <algorithm>
 #include <array>
 #include <iostream>
 #include <stdexcept>
 #include <string>
 #include <vector>
-
-#include "eigen3/Eigen/Eigen"
 
 static std::vector<double> vec_diff(const std::vector<double> & input)
 {

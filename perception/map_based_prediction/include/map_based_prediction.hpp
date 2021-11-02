@@ -15,14 +15,13 @@
 #ifndef MAP_BASED_PREDICTION_HPP_
 #define MAP_BASED_PREDICTION_HPP_
 
+#include <autoware_perception_msgs/msg/dynamic_object.hpp>
+#include <autoware_perception_msgs/msg/dynamic_object_array.hpp>
+#include <autoware_perception_msgs/msg/predicted_path.hpp>
+#include <geometry_msgs/msg/point.hpp>
+#include <geometry_msgs/msg/pose.hpp>
+
 #include <vector>
-
-#include "autoware_perception_msgs/msg/dynamic_object_array.hpp"
-#include "autoware_perception_msgs/msg/dynamic_object.hpp"
-#include "autoware_perception_msgs/msg/predicted_path.hpp"
-
-#include "geometry_msgs/msg/point.hpp"
-#include "geometry_msgs/msg/pose.hpp"
 
 struct DynamicObjectWithLanes
 {
@@ -49,8 +48,7 @@ private:
     const double height, const double current_d_position, const double current_d_velocity,
     const double current_s_position, const double current_s_velocity,
     const double target_s_position, const std_msgs::msg::Header & origin_header,
-    Spline2D & spline2d,
-    autoware_perception_msgs::msg::PredictedPath & path);
+    Spline2D & spline2d, autoware_perception_msgs::msg::PredictedPath & path);
 
   void getLinearPredictedPath(
     const geometry_msgs::msg::Pose & object_pose, const geometry_msgs::msg::Twist & object_twist,

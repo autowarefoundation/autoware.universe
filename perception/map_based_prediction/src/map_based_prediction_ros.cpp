@@ -13,8 +13,8 @@
 // limitations under the License.
 
 // headers in local files
-#include "map_based_prediction.hpp"
-#include "map_based_prediction_ros.hpp"
+#include <map_based_prediction.hpp>
+#include <map_based_prediction_ros.hpp>
 
 // headers in STL
 #include <chrono>
@@ -26,23 +26,25 @@
 #include <vector>
 
 // headers in ROS
-#include "rclcpp/rclcpp.hpp"
-#include "tf2/utils.h"
-#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
-#include "tf2_ros/buffer.h"
-#include "tf2_ros/transform_listener.h"
-#include "unique_identifier_msgs/msg/uuid.hpp"
+#include <rclcpp/rclcpp.hpp>
+
+#include <unique_identifier_msgs/msg/uuid.hpp>
+
+#include <tf2/utils.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
 
 // lanelet
-#include "lanelet2_core/LaneletMap.h"
-#include "lanelet2_core/geometry/BoundingBox.h"
-#include "lanelet2_core/geometry/Lanelet.h"
-#include "lanelet2_core/geometry/Point.h"
-#include "lanelet2_extension/utility/message_conversion.hpp"
-#include "lanelet2_extension/utility/utilities.hpp"
-#include "lanelet2_routing/RoutingGraph.h"
-#include "lanelet2_traffic_rules/TrafficRulesFactory.h"
+#include <lanelet2_extension/utility/message_conversion.hpp>
+#include <lanelet2_extension/utility/utilities.hpp>
 
+#include <lanelet2_core/LaneletMap.h>
+#include <lanelet2_core/geometry/BoundingBox.h>
+#include <lanelet2_core/geometry/Lanelet.h>
+#include <lanelet2_core/geometry/Point.h>
+#include <lanelet2_routing/RoutingGraph.h>
+#include <lanelet2_traffic_rules/TrafficRulesFactory.h>
 
 std::string toHexString(const unique_identifier_msgs::msg::UUID & id)
 {
@@ -108,8 +110,7 @@ bool MapBasedPredictionROS::getClosestLanelets(
       double abs_norm_delta = std::fabs(normalized_delta_yaw);
       if (
         lanelet.first < max_dist_for_searching_lanelet &&
-        abs_norm_delta < max_delta_yaw_threshold)
-      {
+        abs_norm_delta < max_delta_yaw_threshold) {
         target_closest_lanelet = lanelet.second;
         is_found_target_closest_lanelet = true;
         closest_lanelets.push_back(target_closest_lanelet);
@@ -159,8 +160,7 @@ bool MapBasedPredictionROS::getClosestLanelets(
         double abs_norm_delta = std::fabs(normalized_delta_yaw);
         if (
           lanelet.first < max_dist_for_searching_lanelet &&
-          abs_norm_delta < max_delta_yaw_threshold)
-        {
+          abs_norm_delta < max_delta_yaw_threshold) {
           target_closest_lanelet = lanelet.second;
           is_found_target_closest_lanelet = true;
           closest_lanelets.push_back(target_closest_lanelet);
@@ -176,8 +176,7 @@ bool MapBasedPredictionROS::getClosestLanelets(
 }
 
 double calculateDistance(
-  const geometry_msgs::msg::Point & point1,
-  const geometry_msgs::msg::Point & point2)
+  const geometry_msgs::msg::Point & point1, const geometry_msgs::msg::Point & point2)
 {
   double dx = point1.x - point2.x;
   double dy = point1.y - point2.y;
@@ -186,8 +185,7 @@ double calculateDistance(
 }
 
 MapBasedPredictionROS::MapBasedPredictionROS(const rclcpp::NodeOptions & node_options)
-: Node("map_based_prediction", node_options),
-  interpolating_resolution_(0.5)
+: Node("map_based_prediction", node_options), interpolating_resolution_(0.5)
 {
   rclcpp::Clock::SharedPtr clock = std::make_shared<rclcpp::Clock>(RCL_ROS_TIME);
   tf_buffer_ptr_ = std::make_shared<tf2_ros::Buffer>(clock);
@@ -260,8 +258,7 @@ void MapBasedPredictionROS::objectsCallback(
     if (
       object.semantic.type != autoware_perception_msgs::msg::Semantic::CAR &&
       object.semantic.type != autoware_perception_msgs::msg::Semantic::BUS &&
-      object.semantic.type != autoware_perception_msgs::msg::Semantic::TRUCK)
-    {
+      object.semantic.type != autoware_perception_msgs::msg::Semantic::TRUCK) {
       tmp_objects_without_map.objects.push_back(tmp_object.object);
       continue;
     }
@@ -277,9 +274,7 @@ void MapBasedPredictionROS::objectsCallback(
       geometry_msgs::msg::PointStamped debug_point;
       geometry_msgs::msg::PointStamped point_orig;
       point_orig.point = tmp_object.object.state.pose_covariance.pose.position;
-      tf2::doTransform(
-        point_orig, debug_point,
-        debug_map2lidar_transform);
+      tf2::doTransform(point_orig, debug_point, debug_map2lidar_transform);
       tmp_objects_without_map.objects.push_back(object);
       continue;
     }
@@ -324,8 +319,7 @@ void MapBasedPredictionROS::objectsCallback(
       lanelet::routing::LaneletPaths center_paths;
       double delta_sampling_meters = 20;
       for (double minimum_dist_for_route_search = 100; minimum_dist_for_route_search >= 20;
-        minimum_dist_for_route_search -= delta_sampling_meters)
-      {
+           minimum_dist_for_route_search -= delta_sampling_meters) {
         lanelet::routing::LaneletPaths tmp_paths = routing_graph_ptr_->possiblePaths(
           origin_lanelet, minimum_dist_for_route_search, 0, false);
         for (const auto & tmp_path : tmp_paths) {
@@ -350,9 +344,7 @@ void MapBasedPredictionROS::objectsCallback(
       geometry_msgs::msg::PointStamped debug_point;
       geometry_msgs::msg::PointStamped point_orig;
       point_orig.point = tmp_object.object.state.pose_covariance.pose.position;
-      tf2::doTransform(
-        point_orig, debug_point,
-        debug_map2lidar_transform);
+      tf2::doTransform(point_orig, debug_point, debug_map2lidar_transform);
       tmp_objects_without_map.objects.push_back(object);
       continue;
     }
@@ -444,5 +436,5 @@ void MapBasedPredictionROS::mapCallback(
   RCLCPP_INFO(get_logger(), "Map is loaded");
 }
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(MapBasedPredictionROS)
