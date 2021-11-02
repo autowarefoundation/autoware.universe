@@ -14,8 +14,8 @@
 
 /**
  * @file sim_model_ideal.hpp
- * @brief simple planning simulator ideal velocity model (no dynamics for desired velocity & angular-velocity or
- * steering)
+ * @brief simple planning simulator ideal velocity model (no dynamics for desired velocity &
+ * angular-velocity or steering)
  * @author Takamasa Horibe
  * @date 2019.08.17
  */
@@ -23,12 +23,12 @@
 #ifndef SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_IDEAL_HPP_
 #define SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_IDEAL_HPP_
 
-#include <iostream>
-
 #include "simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
 
-#include "eigen3/Eigen/Core"
-#include "eigen3/Eigen/LU"
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/LU>
+
+#include <iostream>
 
 /**
  * @class simple_planning_simulator ideal twist model
@@ -48,14 +48,12 @@ public:
   ~SimModelIdealTwist() = default;
 
 private:
-  enum IDX
-  {
+  enum IDX {
     X = 0,
     Y,
     YAW,
   };
-  enum IDX_U
-  {
+  enum IDX_U {
     VX_DES = 0,
     WZ_DES,
   };
@@ -123,14 +121,12 @@ public:
   ~SimModelIdealSteer() = default;
 
 private:
-  enum IDX
-  {
+  enum IDX {
     X = 0,
     Y,
     YAW,
   };
-  enum IDX_U
-  {
+  enum IDX_U {
     VX_DES = 0,
     STEER_DES,
   };
@@ -200,15 +196,13 @@ public:
   ~SimModelIdealAccel() = default;
 
 private:
-  enum IDX
-  {
+  enum IDX {
     X = 0,
     Y,
     YAW,
     VX,
   };
-  enum IDX_U
-  {
+  enum IDX_U {
     AX_DES = 0,
     STEER_DES,
   };

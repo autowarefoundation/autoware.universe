@@ -22,40 +22,40 @@
 #ifndef SIMPLE_PLANNING_SIMULATOR__SIMPLE_PLANNING_SIMULATOR_CORE_HPP_
 #define SIMPLE_PLANNING_SIMULATOR__SIMPLE_PLANNING_SIMULATOR_CORE_HPP_
 
-#include <memory>
-#include <random>
-#include <string>
-#include <vector>
-
-#include "rclcpp/rclcpp.hpp"
-
-#include "eigen3/Eigen/Core"
-#include "eigen3/Eigen/LU"
-#include "geometry_msgs/msg/pose_stamped.hpp"
-#include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
-#include "geometry_msgs/msg/twist_stamped.hpp"
-#include "tf2/LinearMath/Quaternion.h"
-#include "tf2/utils.h"
-#include "tf2_ros/buffer.h"
-#include "tf2_ros/transform_broadcaster.h"
-#include "tf2_ros/transform_listener.h"
-
-#include "autoware_api_utils/autoware_api_utils.hpp"
-#include "autoware_debug_msgs/msg/float32_stamped.hpp"
-#include "autoware_external_api_msgs/srv/initialize_pose.hpp"
-#include "autoware_planning_msgs/msg/trajectory.hpp"
-#include "autoware_vehicle_msgs/msg/control_mode.hpp"
-#include "autoware_vehicle_msgs/msg/engage.hpp"
-#include "autoware_vehicle_msgs/msg/shift_stamped.hpp"
-#include "autoware_vehicle_msgs/msg/steering.hpp"
-#include "autoware_vehicle_msgs/msg/turn_signal.hpp"
-#include "autoware_vehicle_msgs/msg/vehicle_command.hpp"
-
 #include "simple_planning_simulator/vehicle_model/sim_model_constant_acceleration.hpp"
 #include "simple_planning_simulator/vehicle_model/sim_model_ideal.hpp"
 #include "simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
 #include "simple_planning_simulator/vehicle_model/sim_model_time_delay.hpp"
-#include "vehicle_info_util/vehicle_info_util.hpp"
+
+#include <autoware_api_utils/autoware_api_utils.hpp>
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/LU>
+#include <rclcpp/rclcpp.hpp>
+#include <vehicle_info_util/vehicle_info_util.hpp>
+
+#include <autoware_debug_msgs/msg/float32_stamped.hpp>
+#include <autoware_external_api_msgs/srv/initialize_pose.hpp>
+#include <autoware_planning_msgs/msg/trajectory.hpp>
+#include <autoware_vehicle_msgs/msg/control_mode.hpp>
+#include <autoware_vehicle_msgs/msg/engage.hpp>
+#include <autoware_vehicle_msgs/msg/shift_stamped.hpp>
+#include <autoware_vehicle_msgs/msg/steering.hpp>
+#include <autoware_vehicle_msgs/msg/turn_signal.hpp>
+#include <autoware_vehicle_msgs/msg/vehicle_command.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
+
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/utils.h>
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_broadcaster.h>
+#include <tf2_ros/transform_listener.h>
+
+#include <memory>
+#include <random>
+#include <string>
+#include <vector>
 
 class Simulator : public rclcpp::Node
 {
@@ -149,8 +149,7 @@ private:
   std::shared_ptr<rclcpp::Time> prev_update_time_ptr_;  //!< @brief previously updated time
 
   /* vehicle model */
-  enum class VehicleModelType
-  {
+  enum class VehicleModelType {
     IDEAL_TWIST = 0,
     IDEAL_STEER = 1,
     DELAY_TWIST = 2,
@@ -166,15 +165,15 @@ private:
   /* to generate measurement noise */
   std::shared_ptr<std::mt19937> rand_engine_ptr_;  //!< @brief random engine for measurement noise
   std::shared_ptr<std::normal_distribution<>>
-  pos_norm_dist_ptr_;    //!< @brief Gaussian noise for position
+    pos_norm_dist_ptr_;  //!< @brief Gaussian noise for position
   std::shared_ptr<std::normal_distribution<>>
-  vel_norm_dist_ptr_;    //!< @brief Gaussian noise for velocity
+    vel_norm_dist_ptr_;  //!< @brief Gaussian noise for velocity
   std::shared_ptr<std::normal_distribution<>>
-  rpy_norm_dist_ptr_;    //!< @brief Gaussian noise for roll-pitch-yaw
+    rpy_norm_dist_ptr_;  //!< @brief Gaussian noise for roll-pitch-yaw
   std::shared_ptr<std::normal_distribution<>>
-  angvel_norm_dist_ptr_;    //!< @brief Gaussian noise for angular velocity
+    angvel_norm_dist_ptr_;  //!< @brief Gaussian noise for angular velocity
   std::shared_ptr<std::normal_distribution<>>
-  steer_norm_dist_ptr_;    //!< @brief Gaussian noise for steering angle
+    steer_norm_dist_ptr_;  //!< @brief Gaussian noise for steering angle
 
   /**
    * @brief set current_vehicle_cmd_ptr_ with received message
@@ -190,7 +189,6 @@ private:
    * @brief set current_trajectory_ptr_ with received message
    */
   void callbackTrajectory(const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr msg);
-
 
   // TODO(Takagi, Isamu): deprecated
   /**
@@ -266,15 +264,13 @@ private:
    * @brief publish pose_with_covariance
    * @param [in] cov pose with covariance to be published
    */
-  void publishPoseWithCov(
-    const geometry_msgs::msg::PoseWithCovariance & cov);
+  void publishPoseWithCov(const geometry_msgs::msg::PoseWithCovariance & cov);
 
   /**
    * @brief publish twist
    * @param [in] twist twist to be published
    */
-  void publishTwist(
-    const geometry_msgs::msg::Twist & twist);
+  void publishTwist(const geometry_msgs::msg::Twist & twist);
 
   /**
    * @brief publish tf

@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <algorithm>
-
 #include "simple_planning_simulator/vehicle_model/sim_model_constant_acceleration.hpp"
+
+#include <algorithm>
 
 SimModelConstantAccelTwist::SimModelConstantAccelTwist(
   double vx_lim, double wz_lim, double vx_rate, double wz_rate)
@@ -22,15 +22,17 @@ SimModelConstantAccelTwist::SimModelConstantAccelTwist(
   vx_lim_(vx_lim),
   wz_lim_(wz_lim),
   vx_rate_(vx_rate),
-  wz_rate_(wz_rate) {}
+  wz_rate_(wz_rate)
+{
+}
 
-double SimModelConstantAccelTwist::getX() {return state_(IDX::X);}
-double SimModelConstantAccelTwist::getY() {return state_(IDX::Y);}
-double SimModelConstantAccelTwist::getYaw() {return state_(IDX::YAW);}
-double SimModelConstantAccelTwist::getVx() {return state_(IDX::VX);}
-double SimModelConstantAccelTwist::getWz() {return state_(IDX::WZ);}
-double SimModelConstantAccelTwist::getSteer() {return 0.0;}
-void SimModelConstantAccelTwist::update(const double & dt) {updateRungeKutta(dt, input_);}
+double SimModelConstantAccelTwist::getX() { return state_(IDX::X); }
+double SimModelConstantAccelTwist::getY() { return state_(IDX::Y); }
+double SimModelConstantAccelTwist::getYaw() { return state_(IDX::YAW); }
+double SimModelConstantAccelTwist::getVx() { return state_(IDX::VX); }
+double SimModelConstantAccelTwist::getWz() { return state_(IDX::WZ); }
+double SimModelConstantAccelTwist::getSteer() { return 0.0; }
+void SimModelConstantAccelTwist::update(const double & dt) { updateRungeKutta(dt, input_); }
 Eigen::VectorXd SimModelConstantAccelTwist::calcModel(
   const Eigen::VectorXd & state, const Eigen::VectorXd & input)
 {

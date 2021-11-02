@@ -14,7 +14,8 @@
 
 /**
  * @file sim_model_time_delay.hpp
- * @brief simple planning simulator model with time delay and 1-dimensional dynamics for velocity & steering
+ * @brief simple planning simulator model with time delay and 1-dimensional dynamics for velocity &
+ * steering
  * @author Takamasa Horibe, Kim-Ngoc-Khanh Nguyen
  * @date 2019.08.17
  */
@@ -22,15 +23,15 @@
 #ifndef SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_TIME_DELAY_HPP_
 #define SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_TIME_DELAY_HPP_
 
-#include <iostream>
-#include <queue>
-#include <deque>
-
 #include "simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
 #include "simple_planning_simulator/vehicle_model/sim_model_util.hpp"
 
-#include "eigen3/Eigen/Core"
-#include "eigen3/Eigen/LU"
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/LU>
+
+#include <deque>
+#include <iostream>
+#include <queue>
 
 /**
  * @class simple_planning_simulator time delay twist model
@@ -65,16 +66,14 @@ public:
 private:
   const double MIN_TIME_CONSTANT;  //!< @brief minimum time constant
 
-  enum IDX
-  {
+  enum IDX {
     X = 0,
     Y,
     YAW,
     VX,
     WZ,
   };
-  enum IDX_U
-  {
+  enum IDX_U {
     VX_DES = 0,
     WZ_DES,
   };
@@ -173,16 +172,14 @@ public:
 private:
   const double MIN_TIME_CONSTANT;  //!< @brief minimum time constant
 
-  enum IDX
-  {
+  enum IDX {
     X = 0,
     Y,
     YAW,
     VX,
     STEER,
   };
-  enum IDX_U
-  {
+  enum IDX_U {
     VX_DES = 0,
     STEER_DES,
   };
@@ -281,8 +278,7 @@ public:
 private:
   const double MIN_TIME_CONSTANT;  //!< @brief minimum time constant
 
-  enum IDX
-  {
+  enum IDX {
     X = 0,
     Y,
     YAW,
@@ -290,8 +286,7 @@ private:
     STEER,
     ACCX,
   };
-  enum IDX_U
-  {
+  enum IDX_U {
     ACCX_DES = 0,
     STEER_DES,
     DRIVE_SHIFT,

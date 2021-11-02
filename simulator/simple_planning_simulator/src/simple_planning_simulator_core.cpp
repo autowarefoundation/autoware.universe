@@ -12,19 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <string>
-#include <memory>
-#include <utility>
-#include <vector>
-
 #include "simple_planning_simulator/simple_planning_simulator_core.hpp"
 
-#include "autoware_utils/ros/update_param.hpp"
+#include <autoware_utils/ros/update_param.hpp>
+
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
 Simulator::Simulator(const std::string & node_name, const rclcpp::NodeOptions & options)
 : Node(node_name, options)
 {
-  using namespace std::placeholders;
+  using std::placeholders::_1;
+  using std::placeholders::_2;
 
   /* simple_planning_simulator parameters */
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
@@ -41,8 +42,7 @@ Simulator::Simulator(const std::string & node_name, const rclcpp::NodeOptions & 
   autoware_api_utils::ServiceProxyNodeInterface proxy(this);
   group_api_service_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   srv_set_pose_ = proxy.create_service<autoware_external_api_msgs::srv::InitializePose>(
-    "/api/simulator/set/pose",
-    std::bind(&Simulator::serviceSetPose, this, _1, _2),
+    "/api/simulator/set/pose", std::bind(&Simulator::serviceSetPose, this, _1, _2),
     rmw_qos_profile_services_default, group_api_service_);
 
   /* set pub sub topic name */
@@ -60,8 +60,8 @@ Simulator::Simulator(const std::string & node_name, const rclcpp::NodeOptions & 
     "/vehicle/status/turn_signal", rclcpp::QoS{1});
   pub_shift_ = create_publisher<autoware_vehicle_msgs::msg::ShiftStamped>(
     "/vehicle/status/shift", rclcpp::QoS{1});
-  pub_cov_ = create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
-    "output/cov", rclcpp::QoS{1});
+  pub_cov_ =
+    create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("output/cov", rclcpp::QoS{1});
 
   sub_vehicle_cmd_ = create_subscription<autoware_vehicle_msgs::msg::VehicleCommand>(
     "input/vehicle_cmd", rclcpp::QoS{1},
@@ -92,16 +92,13 @@ Simulator::Simulator(const std::string & node_name, const rclcpp::NodeOptions & 
 
   /* set param callback */
   set_param_res_ =
-    this->add_on_set_parameters_callback(
-    std::bind(
-      &Simulator::onParameter, this,
-      _1));
+    this->add_on_set_parameters_callback(std::bind(&Simulator::onParameter, this, _1));
 
   /* Timer */
   {
     auto timer_callback = std::bind(&Simulator::timerCallbackSimulation, this);
-    auto period = std::chrono::duration_cast<std::chrono::nanoseconds>(
-      std::chrono::duration<double>(dt));
+    auto period =
+      std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(dt));
     timer_simulation_ = std::make_shared<rclcpp::GenericTimer<decltype(timer_callback)>>(
       this->get_clock(), period, std::move(timer_callback),
       this->get_node_base_interface()->get_context());
@@ -270,8 +267,7 @@ void Simulator::timerCallbackSimulation()
 {
   if (!is_initialized_) {
     RCLCPP_INFO_THROTTLE(
-      get_logger(), *this->get_clock(), 3000 /*ms*/,
-      "waiting initial position...");
+      get_logger(), *this->get_clock(), 3000 /*ms*/, "waiting initial position...");
     return;
   }
 
@@ -360,8 +356,7 @@ void Simulator::timerCallbackSimulation()
     if (
       cmd == autoware_vehicle_msgs::msg::TurnSignal::LEFT ||
       cmd == autoware_vehicle_msgs::msg::TurnSignal::RIGHT ||
-      cmd == autoware_vehicle_msgs::msg::TurnSignal::HAZARD)
-    {
+      cmd == autoware_vehicle_msgs::msg::TurnSignal::HAZARD) {
       turn_signal_msg.data = cmd;
     }
   }
@@ -370,9 +365,9 @@ void Simulator::timerCallbackSimulation()
   autoware_vehicle_msgs::msg::ShiftStamped shift_msg;
   shift_msg.header.frame_id = simulation_frame_id_;
   shift_msg.header.stamp = get_clock()->now();
-  shift_msg.shift.data = current_twist_.linear.x >= 0.0 ?
-    autoware_vehicle_msgs::msg::Shift::DRIVE :
-    autoware_vehicle_msgs::msg::Shift::REVERSE;
+  shift_msg.shift.data = current_twist_.linear.x >= 0.0
+                           ? autoware_vehicle_msgs::msg::Shift::DRIVE
+                           : autoware_vehicle_msgs::msg::Shift::REVERSE;
   pub_shift_->publish(shift_msg);
 
   /* publish control mode */
@@ -386,8 +381,7 @@ void Simulator::callbackVehicleCmd(
 
   if (
     vehicle_model_type_ == VehicleModelType::IDEAL_STEER ||
-    vehicle_model_type_ == VehicleModelType::DELAY_STEER)
-  {
+    vehicle_model_type_ == VehicleModelType::DELAY_STEER) {
     Eigen::VectorXd input(2);
     input << msg->control.velocity, msg->control.steering_angle;
     vehicle_model_ptr_->setInput(input);
@@ -475,8 +469,7 @@ void Simulator::getTransformFromTF(
   while (rclcpp::ok()) {
     try {
       const auto time_point = tf2::TimePoint(std::chrono::milliseconds(0));
-      transform = tf_buffer_->lookupTransform(
-        parent_frame, child_frame, time_point);
+      transform = tf_buffer_->lookupTransform(parent_frame, child_frame, time_point);
       break;
     } catch (tf2::TransformException & ex) {
       RCLCPP_ERROR(this->get_logger(), "%s", ex.what());
@@ -484,8 +477,7 @@ void Simulator::getTransformFromTF(
   }
 }
 
-void Simulator::publishTwist(
-  const geometry_msgs::msg::Twist & twist)
+void Simulator::publishTwist(const geometry_msgs::msg::Twist & twist)
 {
   rclcpp::Time current_time = get_clock()->now();
   geometry_msgs::msg::TwistStamped ts;
@@ -495,8 +487,7 @@ void Simulator::publishTwist(
   pub_twist_->publish(ts);
 }
 
-void Simulator::publishPoseWithCov(
-  const geometry_msgs::msg::PoseWithCovariance & cov)
+void Simulator::publishPoseWithCov(const geometry_msgs::msg::PoseWithCovariance & cov)
 {
   rclcpp::Time current_time = get_clock()->now();
   geometry_msgs::msg::PoseWithCovarianceStamped cs;
