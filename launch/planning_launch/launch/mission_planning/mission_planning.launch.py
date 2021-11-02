@@ -21,50 +21,53 @@ from launch_ros.descriptions import ComposableNode
 
 def generate_launch_description():
     container = ComposableNodeContainer(
-        name='mission_planning_container',
-        namespace='',
-        package='rclcpp_components',
-        executable='component_container',
+        name="mission_planning_container",
+        namespace="",
+        package="rclcpp_components",
+        executable="component_container",
         composable_node_descriptions=[
             ComposableNode(
-                package='mission_planner',
-                plugin='mission_planner::MissionPlannerLanelet2',
-                name='mission_planner',
+                package="mission_planner",
+                plugin="mission_planner::MissionPlannerLanelet2",
+                name="mission_planner",
                 remappings=[
-                    ('input/vector_map', '/map/vector_map'),
-                    ('input/goal_pose', '/planning/mission_planning/goal'),
-                    ('input/checkpoint', '/planning/mission_planning/checkpoint'),
-                    ('output/route', '/planning/mission_planning/route'),
-                    ('debug/route_marker',
-                     '/planning/mission_planning/route_marker'),
+                    ("input/vector_map", "/map/vector_map"),
+                    ("input/goal_pose", "/planning/mission_planning/goal"),
+                    ("input/checkpoint", "/planning/mission_planning/checkpoint"),
+                    ("output/route", "/planning/mission_planning/route"),
+                    ("debug/route_marker", "/planning/mission_planning/route_marker"),
                 ],
                 parameters=[
                     {
-                        'map_frame': 'map',
-                        'base_link_frame': 'base_link',
+                        "map_frame": "map",
+                        "base_link_frame": "base_link",
                     }
                 ],
-                extra_arguments=[{
-                    'use_intra_process_comms': LaunchConfiguration('use_intra_process')
-                }],
+                extra_arguments=[
+                    {"use_intra_process_comms": LaunchConfiguration("use_intra_process")}
+                ],
             ),
             ComposableNode(
-                package='mission_planner',
-                plugin='mission_planner::GoalPoseVisualizer',
-                name='goal_pose_visualizer',
+                package="mission_planner",
+                plugin="mission_planner::GoalPoseVisualizer",
+                name="goal_pose_visualizer",
                 remappings=[
-                    ('input/route', '/planning/mission_planning/route'),
-                    ('output/goal_pose',
-                     '/planning/mission_planning/echo_back_goal_pose'),
+                    ("input/route", "/planning/mission_planning/route"),
+                    ("output/goal_pose", "/planning/mission_planning/echo_back_goal_pose"),
                 ],
-                extra_arguments=[{
-                    'use_intra_process_comms': LaunchConfiguration('use_intra_process')
-                }],
-            )
+                extra_arguments=[
+                    {"use_intra_process_comms": LaunchConfiguration("use_intra_process")}
+                ],
+            ),
         ],
     )
-    return launch.LaunchDescription([
-        DeclareLaunchArgument('use_intra_process', default_value='false',
-                              description='use ROS2 component container communication'),
-        container
-    ])
+    return launch.LaunchDescription(
+        [
+            DeclareLaunchArgument(
+                "use_intra_process",
+                default_value="false",
+                description="use ROS2 component container communication",
+            ),
+            container,
+        ]
+    )
