@@ -17,22 +17,20 @@
  * @brief Velodyne monitor class
  */
 
+#include "velodyne_monitor/velodyne_monitor.hpp"
+
+#include <boost/algorithm/string/join.hpp>
+
 #include <algorithm>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 
-#include "velodyne_monitor/velodyne_monitor.hpp"
-
-#include "boost/algorithm/string/join.hpp"
-
 #define FMT_HEADER_ONLY
-#include "fmt/format.h"
+#include <fmt/format.h>
 
-VelodyneMonitor::VelodyneMonitor()
-: Node("velodyne_monitor"),
-  updater_(this)
+VelodyneMonitor::VelodyneMonitor() : Node("velodyne_monitor"), updater_(this)
 {
   timeout_ = declare_parameter("timeout", 0.5);
   ip_address_ = declare_parameter("ip_address", "192.168.1.201");
@@ -148,7 +146,9 @@ void VelodyneMonitor::checkTemperature(diagnostic_updater::DiagnosticStatusWrapp
   stat.addf("Top board", "%.3lf DegC", top_temp);
   stat.addf("Bottom board", "%.3lf DegC", bot_temp);
 
-  if (msg.empty()) {msg.emplace_back("OK");}
+  if (msg.empty()) {
+    msg.emplace_back("OK");
+  }
 
   stat.summary(std::max(level_top, level_bot), boost::algorithm::join(msg, ", "));
 }
