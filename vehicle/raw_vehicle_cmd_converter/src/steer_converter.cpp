@@ -12,10 +12,10 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
+#include "raw_vehicle_cmd_converter/steer_converter.hpp"
+
 #include <string>
 #include <vector>
-
-#include "raw_vehicle_cmd_converter/steer_converter.hpp"
 
 namespace raw_vehicle_cmd_converter
 {
@@ -50,9 +50,7 @@ double SteerConverter::calcFFSteer(
   rclcpp::Clock clock{RCL_ROS_TIME};
 
   if (!ff_map_initialized_) {
-    RCLCPP_WARN_THROTTLE(
-      logger_, clock, 3000,
-      "FF map is not initialized!");
+    RCLCPP_WARN_THROTTLE(logger_, clock, 3000, "FF map is not initialized!");
     return 0;
   }
 
@@ -69,9 +67,7 @@ double SteerConverter::calcFBSteer(
   rclcpp::Clock clock{RCL_ROS_TIME};
 
   if (!fb_gains_initialized_ || !fb_limits_initialized_) {
-    RCLCPP_WARN_THROTTLE(
-      logger_, clock, 3000,
-      "FB params are not initialized!");
+    RCLCPP_WARN_THROTTLE(logger_, clock, 3000, "FB params are not initialized!");
     return 0;
   }
 
@@ -96,9 +92,7 @@ bool SteerConverter::readSteerMapFromCSV(
   std::vector<std::vector<std::string>> table;
 
   if (!csv.readCSV(table)) {
-    RCLCPP_ERROR_THROTTLE(
-      logger_, clock, 3000,
-      "Cannot open %s", csv_path.c_str());
+    RCLCPP_ERROR_THROTTLE(logger_, clock, 3000, "Cannot open %s", csv_path.c_str());
     return false;
   }
 

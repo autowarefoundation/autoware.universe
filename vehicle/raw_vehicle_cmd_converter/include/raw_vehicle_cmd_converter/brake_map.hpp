@@ -15,15 +15,15 @@
 #ifndef RAW_VEHICLE_CMD_CONVERTER__BRAKE_MAP_HPP_
 #define RAW_VEHICLE_CMD_CONVERTER__BRAKE_MAP_HPP_
 
+#include "raw_vehicle_cmd_converter/csv_loader.hpp"
+#include "raw_vehicle_cmd_converter/interpolate.hpp"
+
+#include <rclcpp/rclcpp.hpp>
+
 #include <algorithm>
 #include <iostream>
 #include <string>
 #include <vector>
-
-#include "rclcpp/rclcpp.hpp"
-
-#include "raw_vehicle_cmd_converter/csv_loader.hpp"
-#include "raw_vehicle_cmd_converter/interpolate.hpp"
 
 namespace raw_vehicle_cmd_converter
 {
@@ -33,9 +33,9 @@ public:
   bool readBrakeMapFromCSV(std::string csv_path);
   bool getBrake(double acc, double vel, double & brake);
   bool getAcceleration(double brake, double vel, double & acc);
-  std::vector<double> getVelIdx() {return vel_index_;}
-  std::vector<double> getBrakeIdx() {return brake_index_;}
-  std::vector<std::vector<double>> getBrakeMap() {return brake_map_;}
+  std::vector<double> getVelIdx() { return vel_index_; }
+  std::vector<double> getBrakeIdx() { return brake_index_; }
+  std::vector<std::vector<double>> getBrakeMap() { return brake_map_; }
 
 private:
   rclcpp::Logger logger_{rclcpp::get_logger("raw_vehicle_cmd_converter").get_child("accel_map")};

@@ -12,11 +12,11 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
+#include "raw_vehicle_cmd_converter/node.hpp"
+
 #include <algorithm>
 #include <string>
 #include <vector>
-
-#include "raw_vehicle_cmd_converter/node.hpp"
 
 namespace raw_vehicle_cmd_converter
 {
@@ -51,23 +51,22 @@ RawVehicleCommandConverterNode::RawVehicleCommandConverterNode(
   const auto min_ret_i_steer{declare_parameter("steer_pid.min_i", -8.0)};
   const auto max_ret_d_steer{declare_parameter("steer_pid.max_d", 0.0)};
   const auto min_ret_d_steer{declare_parameter("steer_pid.min_d", 0.0)};
-  const auto invalid_integration_decay{declare_parameter(
-      "steer_pid.invalid_integration_decay",
-      0.97)};
+  const auto invalid_integration_decay{
+    declare_parameter("steer_pid.invalid_integration_decay", 0.97)};
   ff_map_initialized_ = true;
   if (convert_accel_cmd_) {
     if (!accel_map_.readAccelMapFromCSV(csv_path_accel_map)) {
       RCLCPP_ERROR(
-        get_logger(),
-        "Cannot read accelmap. csv path = %s. stop calculation.", csv_path_accel_map.c_str());
+        get_logger(), "Cannot read accelmap. csv path = %s. stop calculation.",
+        csv_path_accel_map.c_str());
       ff_map_initialized_ = false;
     }
   }
   if (convert_brake_cmd_) {
     if (!brake_map_.readBrakeMapFromCSV(csv_path_brake_map)) {
       RCLCPP_ERROR(
-        get_logger(),
-        "Cannot read brakemap. csv path = %s. stop calculation.", csv_path_brake_map.c_str());
+        get_logger(), "Cannot read brakemap. csv path = %s. stop calculation.",
+        csv_path_brake_map.c_str());
       ff_map_initialized_ = false;
     }
   }
@@ -75,8 +74,8 @@ RawVehicleCommandConverterNode::RawVehicleCommandConverterNode(
     steer_controller_.setDecay(invalid_integration_decay);
     if (!steer_controller_.setFFMap(csv_path_steer_map)) {
       RCLCPP_ERROR(
-        get_logger(),
-        "Cannot read steer map. csv path = %s. stop calculation.", csv_path_steer_map.c_str());
+        get_logger(), "Cannot read steer map. csv path = %s. stop calculation.",
+        csv_path_steer_map.c_str());
       ff_map_initialized_ = false;
     }
     steer_controller_.setFBGains(kp_steer, ki_steer, kd_steer);
@@ -84,13 +83,10 @@ RawVehicleCommandConverterNode::RawVehicleCommandConverterNode(
       max_ret_steer, min_ret_steer, max_ret_p_steer, min_ret_p_steer, max_ret_i_steer,
       min_ret_i_steer, max_ret_d_steer, min_ret_d_steer);
   }
-  pub_actuation_cmd_ =
-    create_publisher<ActuationCommandStamped>("/vehicle/actuation_cmd", 1);
-  sub_control_cmd_ =
-    create_subscription<ControlCommandStamped>(
+  pub_actuation_cmd_ = create_publisher<ActuationCommandStamped>("/vehicle/actuation_cmd", 1);
+  sub_control_cmd_ = create_subscription<ControlCommandStamped>(
     "/control/control_cmd", 1, std::bind(&RawVehicleCommandConverterNode::onControlCmd, this, _1));
-  sub_velocity_ =
-    create_subscription<TwistStamped>(
+  sub_velocity_ = create_subscription<TwistStamped>(
     "/localization/twist", 1, std::bind(&RawVehicleCommandConverterNode::onVelocity, this, _1));
   sub_steering_ = create_subscription<Steering>(
     "/vehicle/status/steering", 1,
@@ -107,8 +103,7 @@ void RawVehicleCommandConverterNode::publishActuationCmd()
   }
   if (!current_twist_ptr_ || !control_cmd_ptr_ || !current_steer_ptr_) {
     RCLCPP_WARN_EXPRESSION(
-      get_logger(), is_debugging_,
-      "some of twist/control_cmd/steer pointer is null");
+      get_logger(), is_debugging_, "some of twist/control_cmd/steer pointer is null");
     return;
   }
   double desired_accel_cmd = 0.0;
@@ -234,5 +229,5 @@ void RawVehicleCommandConverterNode::onControlCmd(const ControlCommandStamped::C
 }
 }  // namespace raw_vehicle_cmd_converter
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(raw_vehicle_cmd_converter::RawVehicleCommandConverterNode)
