@@ -15,22 +15,24 @@
 #ifndef SCENARIO_SELECTOR__SCENARIO_SELECTOR_NODE_HPP_
 #define SCENARIO_SELECTOR__SCENARIO_SELECTOR_NODE_HPP_
 
+#include <rclcpp/rclcpp.hpp>
+
+#include <autoware_lanelet2_msgs/msg/map_bin.hpp>
+#include <autoware_planning_msgs/msg/route.hpp>
+#include <autoware_planning_msgs/msg/scenario.hpp>
+#include <autoware_planning_msgs/msg/trajectory.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
+
+#include <lanelet2_core/LaneletMap.h>
+#include <lanelet2_routing/RoutingGraph.h>
+#include <lanelet2_traffic_rules/TrafficRules.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
+
 #include <deque>
 #include <memory>
 #include <string>
-
-#include "autoware_lanelet2_msgs/msg/map_bin.hpp"
-#include "autoware_planning_msgs/msg/route.hpp"
-#include "autoware_planning_msgs/msg/scenario.hpp"
-#include "autoware_planning_msgs/msg/trajectory.hpp"
-#include "geometry_msgs/msg/twist_stamped.hpp"
-#include "lanelet2_core/LaneletMap.h"
-#include "lanelet2_routing/RoutingGraph.h"
-#include "lanelet2_traffic_rules/TrafficRules.h"
-#include "rclcpp/rclcpp.hpp"
-#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
-#include "tf2_ros/buffer.h"
-#include "tf2_ros/transform_listener.h"
 
 class ScenarioSelectorNode : public rclcpp::Node
 {
@@ -48,8 +50,8 @@ public:
 
   void updateCurrentScenario();
   std::string selectScenarioByPosition();
-  autoware_planning_msgs::msg::Trajectory::ConstSharedPtr
-  getScenarioTrajectory(const std::string & scenario);
+  autoware_planning_msgs::msg::Trajectory::ConstSharedPtr getScenarioTrajectory(
+    const std::string & scenario);
 
 private:
   rclcpp::TimerBase::SharedPtr timer_;
@@ -62,8 +64,7 @@ private:
   rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr sub_twist_;
   rclcpp::Subscription<autoware_planning_msgs::msg::Trajectory>::SharedPtr
     sub_lane_driving_trajectory_;
-  rclcpp::Subscription<autoware_planning_msgs::msg::Trajectory>::SharedPtr
-    sub_parking_trajectory_;
+  rclcpp::Subscription<autoware_planning_msgs::msg::Trajectory>::SharedPtr sub_parking_trajectory_;
   rclcpp::Publisher<autoware_planning_msgs::msg::Trajectory>::SharedPtr pub_trajectory_;
   rclcpp::Publisher<autoware_planning_msgs::msg::Scenario>::SharedPtr pub_scenario_;
 
