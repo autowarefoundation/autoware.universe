@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "shift_decider/shift_decider.hpp"
+
+#include <rclcpp/timer.hpp>
+
 #include <cstddef>
 #include <functional>
 #include <memory>
 #include <utility>
-
-#include "shift_decider/shift_decider.hpp"
-
-#include "rclcpp/timer.hpp"
 
 ShiftDecider::ShiftDecider(const rclcpp::NodeOptions & node_options)
 : Node("shift_decider", node_options)
@@ -45,7 +45,9 @@ void ShiftDecider::onControlCmd(autoware_control_msgs::msg::ControlCommandStampe
 
 void ShiftDecider::onTimer()
 {
-  if (!control_cmd_) {return;}
+  if (!control_cmd_) {
+    return;
+  }
 
   updateCurrentShiftCmd();
   pub_shift_cmd_->publish(shift_cmd_);
@@ -73,5 +75,5 @@ void ShiftDecider::initTimer(double period_s)
   this->get_node_timers_interface()->add_timer(timer_, nullptr);
 }
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(ShiftDecider)
