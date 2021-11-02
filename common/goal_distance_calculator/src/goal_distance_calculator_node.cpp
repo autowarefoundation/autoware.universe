@@ -12,17 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "goal_distance_calculator/goal_distance_calculator_node.hpp"
+
+#include <autoware_utils/math/unit_conversion.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <rclcpp/timer.hpp>
+
+#include <autoware_debug_msgs/msg/float64_stamped.hpp>
+
 #include <chrono>
 #include <functional>
 #include <memory>
 #include <string>
 #include <utility>
-
-#include "autoware_utils/math/unit_conversion.hpp"
-#include "goal_distance_calculator/goal_distance_calculator_node.hpp"
-#include "rclcpp/rclcpp.hpp"
-#include "rclcpp/timer.hpp"
-#include "autoware_debug_msgs/msg/float64_stamped.hpp"
 
 namespace goal_distance_calculator
 {
@@ -48,7 +50,7 @@ GoalDistanceCalculatorNode::GoalDistanceCalculatorNode(const rclcpp::NodeOptions
   // Subscriber
   sub_route_ = create_subscription<autoware_planning_msgs::msg::Route>(
     "/planning/mission_planning/route", queue_size,
-    [&](const autoware_planning_msgs::msg::Route::SharedPtr msg_ptr) {route_ = msg_ptr;});
+    [&](const autoware_planning_msgs::msg::Route::SharedPtr msg_ptr) { route_ = msg_ptr; });
 
   // Wait for first self pose
   self_pose_listener_.waitForFirstPose();
@@ -133,5 +135,5 @@ void GoalDistanceCalculatorNode::onTimer()
 }
 }  // namespace goal_distance_calculator
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(goal_distance_calculator::GoalDistanceCalculatorNode)

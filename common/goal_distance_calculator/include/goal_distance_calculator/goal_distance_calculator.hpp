@@ -15,12 +15,13 @@
 #ifndef GOAL_DISTANCE_CALCULATOR__GOAL_DISTANCE_CALCULATOR_HPP_
 #define GOAL_DISTANCE_CALCULATOR__GOAL_DISTANCE_CALCULATOR_HPP_
 
-#include <boost/optional.hpp>
+#include <autoware_utils/geometry/pose_deviation.hpp>
+#include <rclcpp/rclcpp.hpp>
 
-#include "autoware_planning_msgs/msg/route.hpp"
-#include "autoware_utils/geometry/pose_deviation.hpp"
-#include "geometry_msgs/msg/pose_stamped.hpp"
-#include "rclcpp/rclcpp.hpp"
+#include <autoware_planning_msgs/msg/route.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+
+#include <boost/optional.hpp>
 
 namespace goal_distance_calculator
 {
@@ -46,7 +47,7 @@ class GoalDistanceCalculator
 public:
   Output update(const Input & input);
 
-  void setParam(const Param & param) {param_ = param;}
+  void setParam(const Param & param) { param_ = param; }
 
 private:
   Param param_;
