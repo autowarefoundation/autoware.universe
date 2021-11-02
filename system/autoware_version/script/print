@@ -3,12 +3,12 @@
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('target', choices=['arch'])
-parser.add_argument('format', choices=['full', 'type', 'version'], default='full', nargs='?')
+parser.add_argument("target", choices=["arch"])
+parser.add_argument("format", choices=["full", "type", "version"], default="full", nargs="?")
 args = parser.parse_args()
-data = {'arch': {'type': 'tier4/proposal', 'version': '1.0.0'}}
+data = {"arch": {"type": "tier4/proposal", "version": "1.0.0"}}
 
-if args.format == 'full':
-    print('{type} {version}'.format(**data[args.target]))
+if args.format == "full":
+    print("{type} {version}".format(**data[args.target]))
 else:
     print(data[args.target][args.format])
