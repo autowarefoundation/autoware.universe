@@ -28,105 +28,113 @@ def generate_launch_description():
 
     arguments = [
         # component
-        DeclareLaunchArgument('use_intra_process'),
-        DeclareLaunchArgument('target_container'),
-
+        DeclareLaunchArgument("use_intra_process"),
+        DeclareLaunchArgument("target_container"),
         # map file
         DeclareLaunchArgument(
-            'csv_path_accel_map',
-            default_value=[FindPackageShare('raw_vehicle_cmd_converter'), '/data/default/accel_map.csv'],  # noqa: E501
-            description='csv file path for accel map',
+            "csv_path_accel_map",
+            default_value=[
+                FindPackageShare("raw_vehicle_cmd_converter"),
+                "/data/default/accel_map.csv",
+            ],  # noqa: E501
+            description="csv file path for accel map",
         ),
         DeclareLaunchArgument(
-            'csv_path_brake_map',
-            default_value=[FindPackageShare('raw_vehicle_cmd_converter'), '/data/default/brake_map.csv'],  # noqa: E501
-            description='csv file path for brake map',
+            "csv_path_brake_map",
+            default_value=[
+                FindPackageShare("raw_vehicle_cmd_converter"),
+                "/data/default/brake_map.csv",
+            ],  # noqa: E501
+            description="csv file path for brake map",
         ),
-
         # settings
         DeclareLaunchArgument(
-            'ref_vel_gain',
-            default_value='3.0',
-            description='gain for external command accel',
+            "ref_vel_gain",
+            default_value="3.0",
+            description="gain for external command accel",
         ),
         DeclareLaunchArgument(
-            'wait_for_first_topic',
-            default_value='true',
-            description='disable topic disruption detection until subscribing first topics',
+            "wait_for_first_topic",
+            default_value="true",
+            description="disable topic disruption detection until subscribing first topics",
         ),
         DeclareLaunchArgument(
-            'control_command_timeout',
-            default_value='1.0',
-            description='external control command timeout',
+            "control_command_timeout",
+            default_value="1.0",
+            description="external control command timeout",
         ),
         DeclareLaunchArgument(
-            'emergency_stop_timeout',
-            default_value='3.0',
-            description='emergency stop timeout for external heartbeat',
+            "emergency_stop_timeout",
+            default_value="3.0",
+            description="emergency stop timeout for external heartbeat",
         ),
-
         # input
         DeclareLaunchArgument(
-            'in/external_control_cmd',
-            default_value='/external/selected/external_control_cmd',
+            "in/external_control_cmd",
+            default_value="/external/selected/external_control_cmd",
         ),
         DeclareLaunchArgument(
-            'in/shift_cmd',
-            default_value='/external/selected/shift_cmd',
+            "in/shift_cmd",
+            default_value="/external/selected/shift_cmd",
         ),
         DeclareLaunchArgument(
-            'in/emergency_stop',
-            default_value='/external/selected/heartbeat',
+            "in/emergency_stop",
+            default_value="/external/selected/heartbeat",
         ),
         DeclareLaunchArgument(
-            'in/current_gate_mode',
-            default_value='/control/current_gate_mode',
+            "in/current_gate_mode",
+            default_value="/control/current_gate_mode",
         ),
         DeclareLaunchArgument(
-            'in/twist',
-            default_value='/localization/twist',
+            "in/twist",
+            default_value="/localization/twist",
         ),
-
         # output
         DeclareLaunchArgument(
-            'out/control_cmd',
-            default_value='/external/selected/control_cmd',
+            "out/control_cmd",
+            default_value="/external/selected/control_cmd",
         ),
         DeclareLaunchArgument(
-            'out/latest_external_control_cmd',
-            default_value='/api/external/get/command/selected/control',
+            "out/latest_external_control_cmd",
+            default_value="/api/external/get/command/selected/control",
         ),
     ]
 
     component = ComposableNode(
-        package='external_cmd_converter',
-        plugin='external_cmd_converter::ExternalCmdConverterNode',
-        name='external_cmd_converter',
+        package="external_cmd_converter",
+        plugin="external_cmd_converter::ExternalCmdConverterNode",
+        name="external_cmd_converter",
         remappings=[
-            _create_mapping_tuple('in/external_control_cmd'),
-            _create_mapping_tuple('in/shift_cmd'),
-            _create_mapping_tuple('in/emergency_stop'),
-            _create_mapping_tuple('in/current_gate_mode'),
-            _create_mapping_tuple('in/twist'),
-            _create_mapping_tuple('out/control_cmd'),
-            _create_mapping_tuple('out/latest_external_control_cmd'),
+            _create_mapping_tuple("in/external_control_cmd"),
+            _create_mapping_tuple("in/shift_cmd"),
+            _create_mapping_tuple("in/emergency_stop"),
+            _create_mapping_tuple("in/current_gate_mode"),
+            _create_mapping_tuple("in/twist"),
+            _create_mapping_tuple("out/control_cmd"),
+            _create_mapping_tuple("out/latest_external_control_cmd"),
         ],
-        parameters=[dict([  # noqa: C406 for using helper function
-            _create_mapping_tuple('csv_path_accel_map'),
-            _create_mapping_tuple('csv_path_brake_map'),
-            _create_mapping_tuple('ref_vel_gain'),
-            _create_mapping_tuple('wait_for_first_topic'),
-            _create_mapping_tuple('control_command_timeout'),
-            _create_mapping_tuple('emergency_stop_timeout'),
-        ])],
-        extra_arguments=[{
-            'use_intra_process_comms': LaunchConfiguration('use_intra_process'),
-        }],
+        parameters=[
+            dict(  # noqa: C406 for using helper function
+                [
+                    _create_mapping_tuple("csv_path_accel_map"),
+                    _create_mapping_tuple("csv_path_brake_map"),
+                    _create_mapping_tuple("ref_vel_gain"),
+                    _create_mapping_tuple("wait_for_first_topic"),
+                    _create_mapping_tuple("control_command_timeout"),
+                    _create_mapping_tuple("emergency_stop_timeout"),
+                ]
+            )
+        ],
+        extra_arguments=[
+            {
+                "use_intra_process_comms": LaunchConfiguration("use_intra_process"),
+            }
+        ],
     )
 
     loader = LoadComposableNodes(
         composable_node_descriptions=[component],
-        target_container=LaunchConfiguration('target_container'),
+        target_container=LaunchConfiguration("target_container"),
     )
 
     return LaunchDescription(arguments + [loader])
