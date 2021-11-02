@@ -15,12 +15,13 @@
 #ifndef MOTION_VELOCITY_SMOOTHER__RESAMPLE_HPP_
 #define MOTION_VELOCITY_SMOOTHER__RESAMPLE_HPP_
 
-#include "boost/optional.hpp"
-
-#include "autoware_planning_msgs/msg/trajectory.hpp"
-#include "autoware_utils/trajectory/trajectory.hpp"
-
 #include "motion_velocity_smoother/trajectory_utils.hpp"
+
+#include <autoware_utils/trajectory/trajectory.hpp>
+
+#include <autoware_planning_msgs/msg/trajectory.hpp>
+
+#include <boost/optional.hpp>
 
 namespace motion_velocity_smoother
 {
@@ -44,8 +45,8 @@ boost::optional<Trajectory> resampleTrajectory(
   const ResampleParam & param);
 
 boost::optional<Trajectory> resampleTrajectory(
-  const Trajectory & input, const size_t closest_id,
-  const ResampleParam & param, const double nominal_ds);
+  const Trajectory & input, const size_t closest_id, const ResampleParam & param,
+  const double nominal_ds);
 }  // namespace resampling
 }  // namespace motion_velocity_smoother
 

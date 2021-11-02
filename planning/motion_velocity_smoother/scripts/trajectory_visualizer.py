@@ -33,10 +33,11 @@ from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-l', '--length', help='max arclength in plot')
+parser.add_argument("-l", "--length", help="max arclength in plot")
 parser.add_argument(
-    '-t', '--type',
-    help='Options  VEL(default): show velocity only, VEL_ACC_JERK: show vel & acc & jerk'
+    "-t",
+    "--type",
+    help="Options  VEL(default): show velocity only, VEL_ACC_JERK: show vel & acc & jerk",
 )
 
 args = parser.parse_args()
@@ -45,28 +46,27 @@ if args.length is None:
     PLOT_MAX_ARCLENGTH = 200
 else:
     PLOT_MAX_ARCLENGTH = int(args.length)
-print('max arclength = ' + str(PLOT_MAX_ARCLENGTH))
+print("max arclength = " + str(PLOT_MAX_ARCLENGTH))
 
 if args.type is None:
-    PLOT_TYPE = 'VEL'
-elif args.type == 'VEL':
-    PLOT_TYPE = 'VEL'
-elif args.type == 'VEL_ACC_JERK':
-    PLOT_TYPE = 'VEL_ACC_JERK'
+    PLOT_TYPE = "VEL"
+elif args.type == "VEL":
+    PLOT_TYPE = "VEL"
+elif args.type == "VEL_ACC_JERK":
+    PLOT_TYPE = "VEL_ACC_JERK"
 else:
-    print('invalid type. set default VEL.')
-    PLOT_TYPE = 'VEL'
-print('plot type = ' + PLOT_TYPE)
+    print("invalid type. set default VEL.")
+    PLOT_TYPE = "VEL"
+print("plot type = " + PLOT_TYPE)
 
-PATH_ORIGIN_FRAME = 'map'
-SELF_POSE_FRAME = 'base_link'
+PATH_ORIGIN_FRAME = "map"
+SELF_POSE_FRAME = "base_link"
 
 
 class TrajectoryVisualizer(Node):
-
     def __init__(self):
 
-        super().__init__('trajectory_visualizer')
+        super().__init__("trajectory_visualizer")
 
         self.fig = plt.figure()
 
@@ -89,8 +89,7 @@ class TrajectoryVisualizer(Node):
         self.update_traj_ob_stop = False
 
         self.tf_buffer = Buffer(node=self)
-        self.tf_listener = TransformListener(
-            self.tf_buffer, self, spin_thread=True)
+        self.tf_listener = TransformListener(self.tf_buffer, self, spin_thread=True)
 
         self.self_pose = Pose()
         self.self_pose_received = False
@@ -110,51 +109,61 @@ class TrajectoryVisualizer(Node):
 
         self.plotted = [False] * 9
         self.sub_localization_twist = self.create_subscription(
-            TwistStamped, '/localization/twist', self.CallbackLocalizationTwist, 1)
+            TwistStamped, "/localization/twist", self.CallbackLocalizationTwist, 1
+        )
         self.sub_vehicle_twist = self.create_subscription(
-            TwistStamped, '/vehicle/status/twist', self.CallbackVehicleTwist, 1)
+            TwistStamped, "/vehicle/status/twist", self.CallbackVehicleTwist, 1
+        )
 
         # BUFFER_SIZE = 65536*100
-        optimizer_debug = '/planning/scenario_planning/motion_velocity_smoother/debug/'
+        optimizer_debug = "/planning/scenario_planning/motion_velocity_smoother/debug/"
         self.sub1 = message_filters.Subscriber(
-            self, Trajectory, optimizer_debug + 'trajectory_external_velocity_limited')
+            self, Trajectory, optimizer_debug + "trajectory_external_velocity_limited"
+        )
         self.sub2 = message_filters.Subscriber(
-            self, Trajectory, optimizer_debug + 'trajectory_lateral_acc_filtered')
-        self.sub3 = message_filters.Subscriber(
-            self, Trajectory, optimizer_debug + 'trajectory_raw')
+            self, Trajectory, optimizer_debug + "trajectory_lateral_acc_filtered"
+        )
+        self.sub3 = message_filters.Subscriber(self, Trajectory, optimizer_debug + "trajectory_raw")
         self.sub4 = message_filters.Subscriber(
-            self, Trajectory, optimizer_debug + 'trajectory_time_resampled')
+            self, Trajectory, optimizer_debug + "trajectory_time_resampled"
+        )
         self.sub5 = message_filters.Subscriber(
-            self, Trajectory, '/planning/scenario_planning/trajectory')
+            self, Trajectory, "/planning/scenario_planning/trajectory"
+        )
 
-        lane_driving = '/planning/scenario_planning/lane_driving'
+        lane_driving = "/planning/scenario_planning/lane_driving"
         self.sub6 = message_filters.Subscriber(
-            self, PathWithLaneId, lane_driving + '/behavior_planning/path_with_lane_id')
-        self.sub7 = message_filters.Subscriber(
-            self, Path, lane_driving + '/behavior_planning/path')
+            self, PathWithLaneId, lane_driving + "/behavior_planning/path_with_lane_id"
+        )
+        self.sub7 = message_filters.Subscriber(self, Path, lane_driving + "/behavior_planning/path")
         self.sub8 = message_filters.Subscriber(
             self,
             Trajectory,
-            lane_driving +
-            '/motion_planning/obstacle_avoidance_planner/trajectory')
+            lane_driving + "/motion_planning/obstacle_avoidance_planner/trajectory",
+        )
         self.sub9 = message_filters.Subscriber(
-           self, Trajectory, '/planning/scenario_planning/trajectory')
+            self, Trajectory, "/planning/scenario_planning/trajectory"
+        )
 
         self.ts1 = message_filters.ApproximateTimeSynchronizer(
-            [self.sub1, self.sub2, self.sub3, self.sub4, self.sub5], 30, 0.5)
+            [self.sub1, self.sub2, self.sub3, self.sub4, self.sub5], 30, 0.5
+        )
         self.ts1.registerCallback(self.CallbackMotionVelOptTraj)
         self.ts2 = message_filters.ApproximateTimeSynchronizer(
-            [self.sub6, self.sub7, self.sub8, self.sub9], 30, 1, 0)
+            [self.sub6, self.sub7, self.sub8, self.sub9], 30, 1, 0
+        )
         self.ts2.registerCallback(self.CallBackLaneDrivingTraj)
 
         # main process
-        if PLOT_TYPE == 'VEL_ACC_JERK':
+        if PLOT_TYPE == "VEL_ACC_JERK":
             self.ani = animation.FuncAnimation(
-                self.fig, self.plotTrajectory, interval=100, blit=True)
+                self.fig, self.plotTrajectory, interval=100, blit=True
+            )
             self.setPlotTrajectory()
         else:
             self.ani = animation.FuncAnimation(
-                self.fig, self.plotTrajectoryVelocity, interval=100, blit=True)
+                self.fig, self.plotTrajectoryVelocity, interval=100, blit=True
+            )
             self.setPlotTrajectoryVelocity()
 
         plt.show()
@@ -162,7 +171,7 @@ class TrajectoryVisualizer(Node):
         return
 
     def test(self):
-        self.updatePose('map', 'base_link')
+        self.updatePose("map", "base_link")
 
     def CallbackLocalizationTwist(self, cmd):
         self.localization_twist = cmd.twist
@@ -221,43 +230,60 @@ class TrajectoryVisualizer(Node):
 
     def setPlotTrajectoryVelocity(self):
         self.ax1 = plt.subplot(1, 1, 1)  # row, col, index(<raw*col)
-        self.im1, = self.ax1.plot(
-            [], [], label='0: lane_change_path', marker='')
-        self.im2, = self.ax1.plot(
-            [], [], label='1: behavior_path', marker='', ls='--')
-        self.im3, = self.ax1.plot(
-            [], [], label='2: obstacle_avoid_traj', marker='', ls='-.')
-        self.im4, = self.ax1.plot(
-            [], [], label='3: obstacle_stop_traj', marker='', ls='--')
-        self.im5, = self.ax1.plot(
-            [], [], label='4-1: opt input', marker='', ls='--')
-        self.im6, = self.ax1.plot(
-            [], [], label='4-2: opt external_velocity_limited', marker='', ls='--')
-        self.im7, = self.ax1.plot(
-            [], [], label='4-3: opt lat_acc_filtered', marker='', ls='--')
-        self.im8, = self.ax1.plot(
-            [], [], label='4-4: opt time_resampled', marker='', ls='--')
-        self.im9, = self.ax1.plot(
-            [], [], label='4-5: opt final', marker='', ls='-')
-        self.im10, = self.ax1.plot(
-            [], [], label='localization twist vx', color='r', marker='*', ls=':', markersize=10)
-        self.im11, = self.ax1.plot(
-            [], [], label='vehicle twist vx', color='k', marker='+', ls=':', markersize=10)
+        (self.im1,) = self.ax1.plot([], [], label="0: lane_change_path", marker="")
+        (self.im2,) = self.ax1.plot([], [], label="1: behavior_path", marker="", ls="--")
+        (self.im3,) = self.ax1.plot([], [], label="2: obstacle_avoid_traj", marker="", ls="-.")
+        (self.im4,) = self.ax1.plot([], [], label="3: obstacle_stop_traj", marker="", ls="--")
+        (self.im5,) = self.ax1.plot([], [], label="4-1: opt input", marker="", ls="--")
+        (self.im6,) = self.ax1.plot(
+            [], [], label="4-2: opt external_velocity_limited", marker="", ls="--"
+        )
+        (self.im7,) = self.ax1.plot([], [], label="4-3: opt lat_acc_filtered", marker="", ls="--")
+        (self.im8,) = self.ax1.plot([], [], label="4-4: opt time_resampled", marker="", ls="--")
+        (self.im9,) = self.ax1.plot([], [], label="4-5: opt final", marker="", ls="-")
+        (self.im10,) = self.ax1.plot(
+            [], [], label="localization twist vx", color="r", marker="*", ls=":", markersize=10
+        )
+        (self.im11,) = self.ax1.plot(
+            [], [], label="vehicle twist vx", color="k", marker="+", ls=":", markersize=10
+        )
         self.ax1.set_title("trajectory's velocity")
         self.ax1.legend()
         self.ax1.set_xlim([0, PLOT_MAX_ARCLENGTH])
-        self.ax1.set_ylabel('vel [m/s]')
+        self.ax1.set_ylabel("vel [m/s]")
 
-        return self.im1, self.im2, self.im3, self.im4, self.im5, \
-            self.im6, self.im7, self.im8, self.im9, self.im10, self.im11
+        return (
+            self.im1,
+            self.im2,
+            self.im3,
+            self.im4,
+            self.im5,
+            self.im6,
+            self.im7,
+            self.im8,
+            self.im9,
+            self.im10,
+            self.im11,
+        )
 
     def plotTrajectoryVelocity(self, data):
         self.updatePose(PATH_ORIGIN_FRAME, SELF_POSE_FRAME)
         if self.self_pose_received is False:
-            print('plot start but self pose is not received')
-            return self.im1, self.im2, self.im3, self.im4, self.im5, \
-                self.im6, self.im7, self.im8, self.im9, self.im10, self.im11
-        print('plot start')
+            print("plot start but self pose is not received")
+            return (
+                self.im1,
+                self.im2,
+                self.im3,
+                self.im4,
+                self.im5,
+                self.im6,
+                self.im7,
+                self.im8,
+                self.im9,
+                self.im10,
+                self.im11,
+            )
+        print("plot start")
 
         # copy
         lane_change_path = self.lane_change_path
@@ -336,8 +362,19 @@ class TrajectoryVisualizer(Node):
         # change y-range
         self.ax1.set_ylim([self.min_vel - 1.0, self.max_vel + 1.0])
 
-        return self.im1, self.im2, self.im3, self.im4, self.im5, \
-            self.im6, self.im7, self.im8, self.im9, self.im10, self.im11
+        return (
+            self.im1,
+            self.im2,
+            self.im3,
+            self.im4,
+            self.im5,
+            self.im6,
+            self.im7,
+            self.im8,
+            self.im9,
+            self.im10,
+            self.im11,
+        )
 
     def CalcArcLength(self, traj):
         s_arr = []
@@ -352,7 +389,7 @@ class TrajectoryVisualizer(Node):
             p1 = traj.points[i]
             dx = p1.pose.position.x - p0.pose.position.x
             dy = p1.pose.position.y - p0.pose.position.y
-            ds = np.sqrt(dx**2 + dy**2)
+            ds = np.sqrt(dx ** 2 + dy ** 2)
             s_sum += ds
             s_arr.append(s_sum)
         return s_arr
@@ -370,7 +407,7 @@ class TrajectoryVisualizer(Node):
             p1 = traj.points[i].point
             dx = p1.pose.position.x - p0.pose.position.x
             dy = p1.pose.position.y - p0.pose.position.y
-            ds = np.sqrt(dx**2 + dy**2)
+            ds = np.sqrt(dx ** 2 + dy ** 2)
             s_sum += ds
             s_arr.append(s_sum)
         return s_arr
@@ -388,7 +425,7 @@ class TrajectoryVisualizer(Node):
             p1 = traj.points[i]
             dx = p1.pose.position.x - p0.pose.position.x
             dy = p1.pose.position.y - p0.pose.position.y
-            ds = np.sqrt(dx**2 + dy**2)
+            ds = np.sqrt(dx ** 2 + dy ** 2)
             s_sum += ds
             s_arr.append(s_sum)
         return s_arr
@@ -421,7 +458,7 @@ class TrajectoryVisualizer(Node):
             v = 0.5 * (v1 + v0)
             dx = p1.pose.position.x - p0.pose.position.x
             dy = p1.pose.position.y - p0.pose.position.y
-            ds = np.sqrt(dx**2 + dy**2)
+            ds = np.sqrt(dx ** 2 + dy ** 2)
             dt = ds / max(abs(v), 0.001)
             a = (v1 - v0) / dt
             a_arr.append(a)
@@ -442,11 +479,11 @@ class TrajectoryVisualizer(Node):
 
             dx0 = p1.pose.position.x - p0.pose.position.x
             dy0 = p1.pose.position.y - p0.pose.position.y
-            ds0 = np.sqrt(dx0**2 + dy0**2)
+            ds0 = np.sqrt(dx0 ** 2 + dy0 ** 2)
 
             dx1 = p2.pose.position.x - p1.pose.position.x
             dy1 = p2.pose.position.y - p1.pose.position.y
-            ds1 = np.sqrt(dx1**2 + dy1**2)
+            ds1 = np.sqrt(dx1 ** 2 + dy1 ** 2)
 
             dt0 = ds0 / max(abs(0.5 * (v1 + v0)), 0.001)
             dt1 = ds1 / max(abs(0.5 * (v2 + v1)), 0.001)
@@ -463,31 +500,31 @@ class TrajectoryVisualizer(Node):
 
     def setPlotTrajectory(self):
         self.ax1 = plt.subplot(3, 1, 1)  # row, col, index(<raw*col)
-        self.im0, = self.ax1.plot([], [], label='0: raw', marker='')
-        self.im1, = self.ax1.plot([], [], label='3: time_resampled', marker='')
-        self.im2, = self.ax1.plot([], [], label='4: final velocity', marker='')
+        (self.im0,) = self.ax1.plot([], [], label="0: raw", marker="")
+        (self.im1,) = self.ax1.plot([], [], label="3: time_resampled", marker="")
+        (self.im2,) = self.ax1.plot([], [], label="4: final velocity", marker="")
         self.ax1.set_title("trajectory's velocity")
         self.ax1.legend()
         self.ax1.set_xlim([0, PLOT_MAX_ARCLENGTH])
-        self.ax1.set_ylabel('vel [m/s]')
+        self.ax1.set_ylabel("vel [m/s]")
 
         self.ax2 = plt.subplot(3, 1, 2)
         self.ax2.set_xlim([0, PLOT_MAX_ARCLENGTH])
         self.ax2.set_ylim([-1, 1])
-        self.ax2.set_ylabel('acc [m/ss]')
-        self.im3, = self.ax2.plot([], [], label='final accel')
+        self.ax2.set_ylabel("acc [m/ss]")
+        (self.im3,) = self.ax2.plot([], [], label="final accel")
 
         self.ax3 = plt.subplot(3, 1, 3)
         self.ax3.set_xlim([0, PLOT_MAX_ARCLENGTH])
         self.ax3.set_ylim([-2, 2])
-        self.ax3.set_xlabel('arclength [m]')
-        self.ax3.set_ylabel('jerk [m/sss]')
-        self.im4, = self.ax3.plot([], [], label='final jerk')
+        self.ax3.set_xlabel("arclength [m]")
+        self.ax3.set_ylabel("jerk [m/sss]")
+        (self.im4,) = self.ax3.plot([], [], label="final jerk")
 
         return self.im0, self.im1, self.im2, self.im3, self.im4
 
     def plotTrajectory(self, data):
-        print('plot called')
+        print("plot called")
         self.updatePose(PATH_ORIGIN_FRAME, SELF_POSE_FRAME)
 
         # copy
@@ -548,8 +585,7 @@ class TrajectoryVisualizer(Node):
         closest = -1
         min_dist_squared = 1.0e10
         for i in range(0, len(path.points)):
-            dist_sq = self.calcSquaredDist2d(
-                self.self_pose, path.points[i].pose)
+            dist_sq = self.calcSquaredDist2d(self.self_pose, path.points[i].pose)
             if dist_sq < min_dist_squared:
                 min_dist_squared = dist_sq
                 closest = i
@@ -559,8 +595,7 @@ class TrajectoryVisualizer(Node):
         closest = -1
         min_dist_squared = 1.0e10
         for i in range(0, len(path.points)):
-            dist_sq = self.calcSquaredDist2d(
-                self.self_pose, path.points[i].point.pose)
+            dist_sq = self.calcSquaredDist2d(self.self_pose, path.points[i].point.pose)
             if dist_sq < min_dist_squared:
                 min_dist_squared = dist_sq
                 closest = i
@@ -570,8 +605,7 @@ class TrajectoryVisualizer(Node):
         closest = -1
         min_dist_squared = 1.0e10
         for i in range(0, len(path.points)):
-            dist_sq = self.calcSquaredDist2d(
-                self.self_pose, path.points[i].pose)
+            dist_sq = self.calcSquaredDist2d(self.self_pose, path.points[i].pose)
             if dist_sq < min_dist_squared:
                 min_dist_squared = dist_sq
                 closest = i
@@ -584,8 +618,7 @@ class TrajectoryVisualizer(Node):
 
     def updatePose(self, from_link, to_link):
         try:
-            tf = self.tf_buffer.lookup_transform(
-                from_link, to_link, rclpy.time.Time())
+            tf = self.tf_buffer.lookup_transform(from_link, to_link, rclpy.time.Time())
             self.self_pose.position.x = tf.transform.translation.x
             self.self_pose.position.y = tf.transform.translation.y
             self.self_pose.position.z = tf.transform.translation.z
@@ -593,13 +626,13 @@ class TrajectoryVisualizer(Node):
             self.self_pose.orientation.y = tf.transform.rotation.y
             self.self_pose.orientation.z = tf.transform.rotation.z
             self.self_pose.orientation.w = tf.transform.rotation.w
-            print('updatePose succeeded')
+            print("updatePose succeeded")
             self.self_pose_received = True
             return
         except tf2_ros.TransformException:
             self.get_logger().warn(
-                'lookup transform failed: from {} to {}'.format(
-                    from_link, to_link))
+                "lookup transform failed: from {} to {}".format(from_link, to_link)
+            )
             return
 
     def closeFigure(self):
@@ -618,5 +651,5 @@ def main(args=None):
         rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

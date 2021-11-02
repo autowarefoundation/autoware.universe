@@ -15,16 +15,17 @@
 #ifndef MOTION_VELOCITY_SMOOTHER__SMOOTHER__L2_PSEUDO_JERK_SMOOTHER_HPP_
 #define MOTION_VELOCITY_SMOOTHER__SMOOTHER__L2_PSEUDO_JERK_SMOOTHER_HPP_
 
-#include <vector>
-
-#include "boost/optional.hpp"
-
-#include "autoware_planning_msgs/msg/trajectory.hpp"
-#include "autoware_utils/geometry/geometry.hpp"
-#include "autoware_utils/trajectory/trajectory.hpp"
-#include "osqp_interface/osqp_interface.hpp"
-
 #include "motion_velocity_smoother/smoother/smoother_base.hpp"
+
+#include <autoware_utils/geometry/geometry.hpp>
+#include <autoware_utils/trajectory/trajectory.hpp>
+#include <osqp_interface/osqp_interface.hpp>
+
+#include <autoware_planning_msgs/msg/trajectory.hpp>
+
+#include <boost/optional.hpp>
+
+#include <vector>
 
 namespace motion_velocity_smoother
 {
@@ -43,21 +44,18 @@ public:
   explicit L2PseudoJerkSmoother(const Param & smoother_param);
 
   bool apply(
-    const double initial_vel, const double initial_acc,
-    const Trajectory & input, Trajectory & output,
-    std::vector<Trajectory> & debug_trajectories) override;
+    const double initial_vel, const double initial_acc, const Trajectory & input,
+    Trajectory & output, std::vector<Trajectory> & debug_trajectories) override;
 
   boost::optional<Trajectory> resampleTrajectory(
-    const Trajectory & input, const double v_current,
-    const int closest_id) const override;
+    const Trajectory & input, const double v_current, const int closest_id) const override;
 
   void setParam(const Param & smoother_param);
 
 private:
   Param smoother_param_;
   osqp::OSQPInterface qp_solver_;
-  rclcpp::Logger
-    logger_{rclcpp::get_logger("smoother").get_child("l2_pseudo_jerk_smoother")};
+  rclcpp::Logger logger_{rclcpp::get_logger("smoother").get_child("l2_pseudo_jerk_smoother")};
 };
 }  // namespace motion_velocity_smoother
 

@@ -12,16 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "motion_velocity_smoother/trajectory_utils.hpp"
+
+#include "motion_velocity_smoother/linear_interpolation.hpp"
+
+#include <interpolation/spline_interpolation.hpp>
+
 #include <algorithm>
 #include <limits>
 #include <map>
 #include <tuple>
 #include <utility>
 #include <vector>
-
-#include "motion_velocity_smoother/trajectory_utils.hpp"
-#include "motion_velocity_smoother/linear_interpolation.hpp"
-#include "interpolation/spline_interpolation.hpp"
 
 namespace motion_velocity_smoother
 {
@@ -54,7 +56,7 @@ inline double integ_v(double v0, double a0, double j0, double t)
   return v0 + a0 * t + 0.5 * j0 * t * t;
 }
 
-inline double integ_a(double a0, double j0, double t) {return a0 + j0 * t;}
+inline double integ_a(double a0, double j0, double t) { return a0 + j0 * t; }
 
 TrajectoryPoint calcInterpolatedTrajectoryPoint(
   const Trajectory & trajectory, const Pose & target_pose)
@@ -83,7 +85,7 @@ TrajectoryPoint calcInterpolatedTrajectoryPoint(
   // calc internal proportion
   const double prop{std::max(0.0, std::min(1.0, v1.dot(v2) / v1.length2()))};
 
-  auto interpolate = [&prop](double x1, double x2) {return prop * x1 + (1.0 - prop) * x2;};
+  auto interpolate = [&prop](double x1, double x2) { return prop * x1 + (1.0 - prop) * x2; };
 
   {
     const auto & seg_pt = trajectory.points.at(segment_idx);
@@ -99,8 +101,8 @@ TrajectoryPoint calcInterpolatedTrajectoryPoint(
 }
 
 boost::optional<Trajectory> extractPathAroundIndex(
-  const Trajectory & trajectory, const size_t index,
-  const double & ahead_length, const double & behind_length)
+  const Trajectory & trajectory, const size_t index, const double & ahead_length,
+  const double & behind_length)
 {
   if (trajectory.points.size() == 0 || trajectory.points.size() - 1 < index) {
     return {};
@@ -143,8 +145,7 @@ boost::optional<Trajectory> extractPathAroundIndex(
   return boost::optional<Trajectory>(extracted_traj);
 }
 
-double calcArcLength(
-  const Trajectory & path, const int idx1, const int idx2)
+double calcArcLength(const Trajectory & path, const int idx1, const int idx2)
 {
   if (idx1 == idx2) {  // zero distance
     return 0.0;
@@ -152,8 +153,7 @@ double calcArcLength(
 
   if (
     idx1 < 0 || idx2 < 0 || static_cast<int>(path.points.size()) - 1 < idx1 ||
-    static_cast<int>(path.points.size()) - 1 < idx2)
-  {
+    static_cast<int>(path.points.size()) - 1 < idx2) {
     RCLCPP_ERROR(
       rclcpp::get_logger("motion_velocity_smoother").get_child("trajectory_utils"),
       "invalid index");
@@ -184,8 +184,7 @@ std::vector<double> calcArclengthArray(const Trajectory & trajectory)
   return arclength;
 }
 
-std::vector<double> calcTrajectoryIntervalDistance(
-  const Trajectory & trajectory)
+std::vector<double> calcTrajectoryIntervalDistance(const Trajectory & trajectory)
 {
   std::vector<double> intervals;
   for (unsigned int i = 1; i < trajectory.points.size(); ++i) {
@@ -204,8 +203,8 @@ boost::optional<std::vector<double>> calcTrajectoryCurvatureFrom3Points(
   if (trajectory.points.size() < 2 * idx_dist + 1) {
     RCLCPP_DEBUG(
       rclcpp::get_logger("motion_velocity_smoother").get_child("trajectory_utils"),
-      "cannot calc curvature idx_dist = %lu, trajectory.size() = %lu",
-      idx_dist, trajectory.points.size());
+      "cannot calc curvature idx_dist = %lu, trajectory.size() = %lu", idx_dist,
+      trajectory.points.size());
     return {};
   }
 
@@ -222,7 +221,7 @@ boost::optional<std::vector<double>> calcTrajectoryCurvatureFrom3Points(
     p3.y = trajectory.points.at(i + idx_dist).pose.position.y;
     double den = std::max(
       autoware_utils::calcDistance2d(p1, p2) * autoware_utils::calcDistance2d(p2, p3) *
-      autoware_utils::calcDistance2d(p3, p1),
+        autoware_utils::calcDistance2d(p3, p1),
       0.0001);
     double curvature = 2.0 * ((p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x)) / den;
     k_arr.push_back(curvature);
@@ -255,7 +254,9 @@ double getMaxVelocity(const Trajectory & trajectory)
 {
   double max_vel = 0.0;
   for (auto & tp : trajectory.points) {
-    if (tp.twist.linear.x > max_vel) {max_vel = tp.twist.linear.x;}
+    if (tp.twist.linear.x > max_vel) {
+      max_vel = tp.twist.linear.x;
+    }
   }
   return max_vel;
 }
@@ -265,14 +266,15 @@ double getMaxAbsVelocity(const Trajectory & trajectory)
   double max_vel = 0.0;
   for (auto & tp : trajectory.points) {
     double abs_vel = std::fabs(tp.twist.linear.x);
-    if (abs_vel > max_vel) {max_vel = abs_vel;}
+    if (abs_vel > max_vel) {
+      max_vel = abs_vel;
+    }
   }
   return max_vel;
 }
 
 void applyMaximumVelocityLimit(
-  const size_t begin, const size_t end, const double max_vel,
-  Trajectory & trajectory)
+  const size_t begin, const size_t end, const double max_vel, Trajectory & trajectory)
 {
   for (size_t idx = begin; idx < end; ++idx) {
     if (trajectory.points.at(idx).twist.linear.x > max_vel) {
@@ -282,9 +284,8 @@ void applyMaximumVelocityLimit(
 }
 
 boost::optional<Trajectory> applyLinearInterpolation(
-  const std::vector<double> & base_index,
-  const Trajectory & base_trajectory, const std::vector<double> & out_index,
-  const bool use_spline_for_pose)
+  const std::vector<double> & base_index, const Trajectory & base_trajectory,
+  const std::vector<double> & out_index, const bool use_spline_for_pose)
 {
   std::vector<double> px, py, pz, pyaw, tlx, taz, alx, aaz;
   for (const auto & p : base_trajectory.points) {
@@ -348,8 +349,8 @@ bool calcStopDistWithJerkConstraints(
   double & stop_dist)
 {
   auto calculateTime = [](const double a0, const double target_acc, const double jerk) {
-      return (target_acc - a0) / jerk;
-    };
+    return (target_acc - a0) / jerk;
+  };
   enum class AccelerationType { TRAPEZOID = 0, TRIANGLE = 1, LINEAR = 2 } type;
 
   jerk_profile.clear();
@@ -361,7 +362,7 @@ bool calcStopDistWithJerkConstraints(
   double t_min;
   {
     const double v_diff_jerk_dec = 0.5 * calculateTime(a0, 0.0, jerk_dec) * a0 +
-      0.5 * calculateTime(0.0, min_acc, jerk_dec) * min_acc;
+                                   0.5 * calculateTime(0.0, min_acc, jerk_dec) * min_acc;
     const double v_diff_jerk_acc = 0.5 * calculateTime(min_acc, 0.0, jerk_acc) * min_acc;
     const double v_error = target_vel - v0;
     // From v_error = v_diff_jerk_dec + min_acc * t_min + v_diff_jerk_acc
@@ -387,83 +388,94 @@ bool calcStopDistWithJerkConstraints(
 
   switch (type) {
     case AccelerationType::TRAPEZOID: {
-        // Calculate time
-        double t1 = calculateTime(a0, min_acc, jerk_dec);
-        double t2 = t_min;
-        double t3 = calculateTime(min_acc, 0.0, jerk_acc);
-        if (t1 < t_threshold) {t1 = 0;}
-        if (t2 < t_threshold) {t2 = 0;}
-        if (t3 < t_threshold) {t3 = 0;}
-
-        // Set jerk profile
-        jerk_profile.insert(std::make_pair(jerk_dec, t1));
-        jerk_profile.insert(std::make_pair(0.0, t2));
-        jerk_profile.insert(std::make_pair(jerk_acc, t3));
-
-        // Calculate state = (x, v, a, j) at t = t1 + t2 + t3
-        const auto state = updateStateWithJerkConstraint(v0, a0, jerk_profile, t1 + t2 + t3);
-        if (!state) {
-          return false;
-        }
-        std::tie(x, v, a, j) = *state;
-        break;
+      // Calculate time
+      double t1 = calculateTime(a0, min_acc, jerk_dec);
+      double t2 = t_min;
+      double t3 = calculateTime(min_acc, 0.0, jerk_acc);
+      if (t1 < t_threshold) {
+        t1 = 0;
       }
+      if (t2 < t_threshold) {
+        t2 = 0;
+      }
+      if (t3 < t_threshold) {
+        t3 = 0;
+      }
+
+      // Set jerk profile
+      jerk_profile.insert(std::make_pair(jerk_dec, t1));
+      jerk_profile.insert(std::make_pair(0.0, t2));
+      jerk_profile.insert(std::make_pair(jerk_acc, t3));
+
+      // Calculate state = (x, v, a, j) at t = t1 + t2 + t3
+      const auto state = updateStateWithJerkConstraint(v0, a0, jerk_profile, t1 + t2 + t3);
+      if (!state) {
+        return false;
+      }
+      std::tie(x, v, a, j) = *state;
+      break;
+    }
 
     case AccelerationType::TRIANGLE: {
-        /*
-            v_error = v_diff_from_a0_to_zero + v_diff_from_zero_to_a1 + v_diff_from_a1_to_zero,
-            where v_diff_from_zero_to_a1 = 1/2 * ((a1 - 0.0) / jerk_dec) * a1, v_diff_from_a1_to_zero = 1/2 * ((0.0 - a1)
-           / jerk_acc) * a1. Thus a1^2 = (v_error - v_diff_from_a0_to_zero) * 2 * 1.0 / (1.0 / jerk_dec - 1.0 / jerk_acc).
-          */
-        const double v_error = target_vel - v0;
-        const double v_diff_from_a0_to_zero = 0.5 * calculateTime(a0, 0.0, jerk_dec) * a0;
-        const double a1_square =
-          (v_error - v_diff_from_a0_to_zero) * 2 * 1.0 / (1.0 / jerk_dec - 1.0 / jerk_acc);
-        const double a1 = -std::sqrt(a1_square);
+      /*
+          v_error = v_diff_from_a0_to_zero + v_diff_from_zero_to_a1 + v_diff_from_a1_to_zero,
+          where v_diff_from_zero_to_a1 = 1/2 * ((a1 - 0.0) / jerk_dec) * a1, v_diff_from_a1_to_zero
+         = 1/2 * ((0.0 - a1) / jerk_acc) * a1. Thus a1^2 = (v_error - v_diff_from_a0_to_zero) * 2
+         * 1.0 / (1.0 / jerk_dec - 1.0 / jerk_acc).
+        */
+      const double v_error = target_vel - v0;
+      const double v_diff_from_a0_to_zero = 0.5 * calculateTime(a0, 0.0, jerk_dec) * a0;
+      const double a1_square =
+        (v_error - v_diff_from_a0_to_zero) * 2 * 1.0 / (1.0 / jerk_dec - 1.0 / jerk_acc);
+      const double a1 = -std::sqrt(a1_square);
 
-        // Calculate time
-        double t1 = calculateTime(a0, a1, jerk_dec);
-        double t2 = calculateTime(a1, 0.0, jerk_acc);
-        if (t1 < t_threshold) {t1 = 0;}
-        if (t2 < t_threshold) {t2 = 0;}
-
-        // Set jerk profile
-        jerk_profile.insert(std::make_pair(jerk_dec, t1));
-        jerk_profile.insert(std::make_pair(jerk_acc, t2));
-
-        // Calculate state = (x, v, a, j) at t = t1 + t2
-        const auto state = updateStateWithJerkConstraint(v0, a0, jerk_profile, t1 + t2);
-        if (!state) {
-          return false;
-        }
-        std::tie(x, v, a, j) = *state;
-        break;
+      // Calculate time
+      double t1 = calculateTime(a0, a1, jerk_dec);
+      double t2 = calculateTime(a1, 0.0, jerk_acc);
+      if (t1 < t_threshold) {
+        t1 = 0;
       }
+      if (t2 < t_threshold) {
+        t2 = 0;
+      }
+
+      // Set jerk profile
+      jerk_profile.insert(std::make_pair(jerk_dec, t1));
+      jerk_profile.insert(std::make_pair(jerk_acc, t2));
+
+      // Calculate state = (x, v, a, j) at t = t1 + t2
+      const auto state = updateStateWithJerkConstraint(v0, a0, jerk_profile, t1 + t2);
+      if (!state) {
+        return false;
+      }
+      std::tie(x, v, a, j) = *state;
+      break;
+    }
 
     case AccelerationType::LINEAR: {
-        // Calculate time
-        const double jerk = (0.0 - a0 * a0) / (2 * (target_vel - v0));
-        double t1 = calculateTime(a0, 0.0, jerk);
-        if (t1 < 0) {
-          RCLCPP_WARN(
-            rclcpp::get_logger("motion_velocity_smoother").get_child("trajectory_utils"),
-            "t1 < 0. unexpected condition.");
-          return false;
-        } else if (t1 < t_threshold) {
-          t1 = 0;
-        }
-
-        // Set jerk profile
-        jerk_profile.insert(std::make_pair(jerk, t1));
-
-        // Calculate state = (x, v, a, j) at t = t1 + t2
-        const auto state = updateStateWithJerkConstraint(v0, a0, jerk_profile, t1);
-        if (!state) {
-          return false;
-        }
-        std::tie(x, v, a, j) = *state;
-        break;
+      // Calculate time
+      const double jerk = (0.0 - a0 * a0) / (2 * (target_vel - v0));
+      double t1 = calculateTime(a0, 0.0, jerk);
+      if (t1 < 0) {
+        RCLCPP_WARN(
+          rclcpp::get_logger("motion_velocity_smoother").get_child("trajectory_utils"),
+          "t1 < 0. unexpected condition.");
+        return false;
+      } else if (t1 < t_threshold) {
+        t1 = 0;
       }
+
+      // Set jerk profile
+      jerk_profile.insert(std::make_pair(jerk, t1));
+
+      // Calculate state = (x, v, a, j) at t = t1 + t2
+      const auto state = updateStateWithJerkConstraint(v0, a0, jerk_profile, t1);
+      if (!state) {
+        return false;
+      }
+      std::tie(x, v, a, j) = *state;
+      break;
+    }
   }
 
   constexpr double v_margin = 0.3;  // [m/s]
@@ -502,8 +514,8 @@ bool isValidStopDist(
 }
 
 boost::optional<Trajectory> applyDecelFilterWithJerkConstraint(
-  const Trajectory & input, const size_t start_index, const double v0,
-  const double a0, const double min_acc, const double decel_target_vel,
+  const Trajectory & input, const size_t start_index, const double v0, const double a0,
+  const double min_acc, const double decel_target_vel,
   const std::map<double, double> & jerk_profile)
 {
   double t_total{0.0};
@@ -577,7 +589,7 @@ boost::optional<Trajectory> applyDecelFilterWithJerkConstraint(
 
   const std::vector<double> distance_all = calcArclengthArray(output_trajectory);
   const auto it_end = std::find_if(
-    distance_all.begin(), distance_all.end(), [&xs](double x) {return x > xs.back();});
+    distance_all.begin(), distance_all.end(), [&xs](double x) { return x > xs.back(); });
   const std::vector<double> distance{distance_all.begin() + start_index, it_end};
 
   const auto vel_at_wp = linear_interpolation::interpolate(xs, vs, distance);

@@ -15,11 +15,11 @@
 #ifndef MOTION_VELOCITY_SMOOTHER__LINEAR_INTERPOLATION_HPP_
 #define MOTION_VELOCITY_SMOOTHER__LINEAR_INTERPOLATION_HPP_
 
+#include <boost/optional.hpp>
+
 #include <cmath>
 #include <iostream>
 #include <vector>
-
-#include "boost/optional.hpp"
 
 namespace motion_velocity_smoother
 {

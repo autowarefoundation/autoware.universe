@@ -30,26 +30,32 @@ bool calcStopDistWithJerkAndAccConstraints(
 {
   const double t_min =
     (target_vel - v0 - 0.5 * (0 - a0) / jerk_dec * a0 - 0.5 * min_acc / jerk_dec * min_acc -
-    0.5 * (0 - min_acc) / jerk_acc * min_acc) /
+     0.5 * (0 - min_acc) / jerk_acc * min_acc) /
     min_acc;
 
   if (t_min > 0) {
     double t1 = (min_acc - a0) / jerk_dec;
-    if (t1 < 0.01) {t1 = 0;}
+    if (t1 < 0.01) {
+      t1 = 0;
+    }
 
     const double a1 = a0 + jerk_dec * t1;
     const double v1 = v0 + a0 * t1 + 0.5 * jerk_dec * t1 * t1;
     const double x1 = v0 * t1 + 0.5 * a0 * t1 * t1 + (1.0 / 6.0) * jerk_dec * t1 * t1 * t1;
 
     double t2 = t_min;
-    if (t2 < 0.01) {t2 = 0;}
+    if (t2 < 0.01) {
+      t2 = 0;
+    }
 
     const double a2 = a1;
     const double v2 = v1 + a1 * t2;
     const double x2 = x1 + v1 * t2 + 0.5 * a1 * t2 * t2;
 
     double t3 = (0 - min_acc) / jerk_acc;
-    if (t3 < 0.01) {t3 = 0;}
+    if (t3 < 0.01) {
+      t3 = 0;
+    }
 
     const double a3 = a2 + jerk_acc * t3;
     const double v3 = v2 + a2 * t3 + 0.5 * jerk_acc * t3 * t3;
@@ -72,17 +78,21 @@ bool calcStopDistWithJerkAndAccConstraints(
     const double is_decel_needed = 0.5 * (0 - a0) / jerk_acc * a0 - (target_vel - v0);
     if (is_decel_needed > 0 || a0 > 0) {
       const double a1_square = (target_vel - v0 - 0.5 * (0 - a0) / jerk_dec * a0) *
-        (2 * jerk_acc * jerk_dec / (jerk_acc - jerk_dec));
+                               (2 * jerk_acc * jerk_dec / (jerk_acc - jerk_dec));
       const double a1 = -std::sqrt(a1_square);
 
       double t1 = (a1 - a0) / jerk_dec;
-      if (t1 < 0.01) {t1 = 0;}
+      if (t1 < 0.01) {
+        t1 = 0;
+      }
 
       const double v1 = v0 + a0 * t1 + 0.5 * jerk_dec * t1 * t1;
       const double x1 = v0 * t1 + 0.5 * a0 * t1 * t1 + (1.0 / 6.0) * jerk_dec * t1 * t1 * t1;
 
       double t2 = (0 - a1) / jerk_acc;
-      if (t2 < 0.01) {t2 = 0;}
+      if (t2 < 0.01) {
+        t2 = 0;
+      }
 
       const double a2 = a1 + jerk_acc * t2;
       const double v2 = v1 + a1 * t2 + 0.5 * jerk_acc * t2 * t2;
@@ -192,8 +202,8 @@ bool calcStopVelocityWithConstantJerkAccLimit(
   // for debug
   std::stringstream ss;
   for (unsigned int i = 0; i < ts.size(); ++i) {
-    ss << "t: " << ts.at(i) << ", x: " << xs.at(i) << ", v: " << vs.at(i) << ", a: " << as.at(i) <<
-      ", j: " << js.at(i) << std::endl;
+    ss << "t: " << ts.at(i) << ", x: " << xs.at(i) << ", v: " << vs.at(i) << ", a: " << as.at(i)
+       << ", j: " << js.at(i) << std::endl;
   }
   RCLCPP_DEBUG(
     rclcpp::get_logger("velocity_planning_utils"), "Calculate stop velocity. %s", ss.str().c_str());
@@ -219,7 +229,9 @@ bool calcStopVelocityWithConstantJerkAccLimit(
   for (size_t i = start_index; i < output_trajectory.points.size() - 1; ++i) {
     dist += autoware_utils::calcDistance2d(
       output_trajectory.points.at(i), output_trajectory.points.at(i + 1));
-    if (dist > xs.back()) {break;}
+    if (dist > xs.back()) {
+      break;
+    }
     dists.push_back(dist);
   }
 
@@ -234,8 +246,8 @@ bool calcStopVelocityWithConstantJerkAccLimit(
   // for debug
   std::stringstream ssi;
   for (unsigned int i = 0; i < dists.size(); ++i) {
-    ssi << "d: " << dists.at(i) << ", v: " << vel_at_wp->at(i) << ", a: " << acc_at_wp->at(i) <<
-      ", j: " << jerk_at_wp->at(i) << std::endl;
+    ssi << "d: " << dists.at(i) << ", v: " << vel_at_wp->at(i) << ", a: " << acc_at_wp->at(i)
+        << ", j: " << jerk_at_wp->at(i) << std::endl;
   }
   RCLCPP_DEBUG(
     rclcpp::get_logger("velocity_planning_utils"), "Interpolated = %s", ssi.str().c_str());
@@ -324,9 +336,9 @@ double integ_x(double x0, double v0, double a0, double j0, double t)
   return x0 + v0 * t + 0.5 * a0 * t * t + (1.0 / 6.0) * j0 * t * t * t;
 }
 
-double integ_v(double v0, double a0, double j0, double t) {return v0 + a0 * t + 0.5 * j0 * t * t;}
+double integ_v(double v0, double a0, double j0, double t) { return v0 + a0 * t + 0.5 * j0 * t * t; }
 
-double integ_a(double a0, double j0, double t) {return a0 + j0 * t;}
+double integ_a(double a0, double j0, double t) { return a0 + j0 * t; }
 
 }  // namespace analytical_velocity_planning_utils
 }  // namespace motion_velocity_smoother

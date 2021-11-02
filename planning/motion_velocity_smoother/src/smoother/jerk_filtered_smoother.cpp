@@ -12,17 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "motion_velocity_smoother/smoother/jerk_filtered_smoother.hpp"
+
+#include "motion_velocity_smoother/trajectory_utils.hpp"
+
+#include <eigen3/Eigen/Core>
+
 #include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <limits>
 #include <numeric>
 #include <vector>
-
-#include "eigen3/Eigen/Core"
-
-#include "motion_velocity_smoother/smoother/jerk_filtered_smoother.hpp"
-#include "motion_velocity_smoother/trajectory_utils.hpp"
 
 namespace motion_velocity_smoother
 {
@@ -42,15 +43,13 @@ void JerkFilteredSmoother::setParam(const Param & smoother_param)
 }
 
 bool JerkFilteredSmoother::apply(
-  const double v0, const double a0, const Trajectory & input,
-  Trajectory & output, std::vector<Trajectory> & debug_trajectories)
+  const double v0, const double a0, const Trajectory & input, Trajectory & output,
+  std::vector<Trajectory> & debug_trajectories)
 {
   output = input;
 
   if (input.points.empty()) {
-    RCLCPP_WARN(
-      logger_,
-      "Input Trajectory to the jerk filtered optimization is empty.");
+    RCLCPP_WARN(logger_, "Input Trajectory to the jerk filtered optimization is empty.");
     return false;
   }
 
@@ -66,9 +65,7 @@ bool JerkFilteredSmoother::apply(
   }
 
   if (std::fabs(input.points.front().twist.linear.x) < 0.1) {
-    RCLCPP_DEBUG(
-      logger_,
-      "v_max[0] < 0.1. assume vehicle stopped. return.");
+    RCLCPP_DEBUG(logger_, "v_max[0] < 0.1. assume vehicle stopped. return.");
     return false;
   }
 
@@ -289,9 +286,7 @@ bool JerkFilteredSmoother::apply(
   const auto tf1 = std::chrono::system_clock::now();
   const double dt_ms1 =
     std::chrono::duration_cast<std::chrono::nanoseconds>(tf1 - ts).count() * 1.0e-6;
-  RCLCPP_DEBUG(
-    logger_,
-    "optimization time = %f [ms]", dt_ms1);
+  RCLCPP_DEBUG(logger_, "optimization time = %f [ms]", dt_ms1);
 
   // get velocity & acceleration
   for (size_t i = 0; i < N; ++i) {
@@ -306,9 +301,7 @@ bool JerkFilteredSmoother::apply(
 
   const int status_val = std::get<3>(result);
   if (status_val != 1) {
-    RCLCPP_ERROR(
-      logger_,
-      "optimization failed : %s", qp_solver_.getStatusMessage().c_str());
+    RCLCPP_ERROR(logger_, "optimization failed : %s", qp_solver_.getStatusMessage().c_str());
   }
 
   if (TMP_SHOW_DEBUG_INFO) {
@@ -331,11 +324,11 @@ bool JerkFilteredSmoother::apply(
     // print
     size_t i = 0;
     auto getVx = [&i](const Trajectory & trajectory) {
-        return trajectory.points.at(i).twist.linear.x;
-      };
+      return trajectory.points.at(i).twist.linear.x;
+    };
     auto getAx = [&i](const Trajectory & trajectory) {
-        return trajectory.points.at(i).accel.linear.x;
-      };
+      return trajectory.points.at(i).accel.linear.x;
+    };
     printf("v0 = %.3f, a0 = %.3f\n", v0, a0);
     for (; i < input.points.size(); ++i) {
       double gamma = optval.at(IDX_GAMMA0 + i);
@@ -359,24 +352,24 @@ Trajectory JerkFilteredSmoother::forwardJerkFilter(
   const Trajectory & input) const
 {
   auto applyLimits = [&input, &a_start](double & v, double & a, size_t i) {
-      double v_lim = input.points.at(i).twist.linear.x;
-      static constexpr double ep = 1.0e-5;
-      if (v > v_lim + ep) {
-        v = v_lim;
-        a = 0.0;
+    double v_lim = input.points.at(i).twist.linear.x;
+    static constexpr double ep = 1.0e-5;
+    if (v > v_lim + ep) {
+      v = v_lim;
+      a = 0.0;
 
-        if (v_lim < 1e-3 && i < input.points.size() - 1) {
-          double next_v_lim = input.points.at(i + 1).twist.linear.x;
-          if (next_v_lim >= 1e-3) {
-            a = a_start;  // start from stop velocity
-          }
+      if (v_lim < 1e-3 && i < input.points.size() - 1) {
+        double next_v_lim = input.points.at(i + 1).twist.linear.x;
+        if (next_v_lim >= 1e-3) {
+          a = a_start;  // start from stop velocity
         }
       }
+    }
 
-      if (v < 0.0) {
-        v = a = 0.0;
-      }
-    };
+    if (v < 0.0) {
+      v = a = 0.0;
+    }
+  };
 
   auto output = input;
 
@@ -423,16 +416,15 @@ Trajectory JerkFilteredSmoother::backwardJerkFilter(
 
 Trajectory JerkFilteredSmoother::mergeFilteredTrajectory(
   const double v0, const double a0, const double a_min, const double j_min,
-  const Trajectory & forward_filtered,
-  const Trajectory & backward_filtered) const
+  const Trajectory & forward_filtered, const Trajectory & backward_filtered) const
 {
   Trajectory merged;
   merged.header = forward_filtered.header;
   merged.points = forward_filtered.points;
 
   auto getVx = [](const Trajectory & trajectory, int i) {
-      return trajectory.points.at(i).twist.linear.x;
-    };
+    return trajectory.points.at(i).twist.linear.x;
+  };
 
   size_t i = 0;
 
@@ -440,8 +432,7 @@ Trajectory JerkFilteredSmoother::mergeFilteredTrajectory(
     double current_vel = v0;
     double current_acc = a0;
     while (getVx(backward_filtered, i) < current_vel && current_vel <= getVx(forward_filtered, i) &&
-      i < merged.points.size() - 1)
-    {
+           i < merged.points.size() - 1) {
       merged.points.at(i).twist.linear.x = current_vel;
       merged.points.at(i).accel.linear.x = current_acc;
 
@@ -465,9 +456,9 @@ Trajectory JerkFilteredSmoother::mergeFilteredTrajectory(
 
   // take smaller velocity point
   for (; i < merged.points.size(); ++i) {
-    merged.points.at(i) = (getVx(forward_filtered, i) < getVx(backward_filtered, i)) ?
-      forward_filtered.points.at(i) :
-      backward_filtered.points.at(i);
+    merged.points.at(i) = (getVx(forward_filtered, i) < getVx(backward_filtered, i))
+                            ? forward_filtered.points.at(i)
+                            : backward_filtered.points.at(i);
   }
   return merged;
 }

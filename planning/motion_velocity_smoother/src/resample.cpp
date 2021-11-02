@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "motion_velocity_smoother/resample.hpp"
+
 #include <algorithm>
 #include <vector>
-
-#include "motion_velocity_smoother/resample.hpp"
 
 namespace motion_velocity_smoother
 {
@@ -88,8 +88,7 @@ boost::optional<Trajectory> resampleTrajectory(
     if (i > Nt && dist_i >= param.min_trajectory_length) {
       if (
         std::fabs(out_arclength.back() - (param.min_trajectory_length + front_arclength_value)) <
-        1e-3)
-      {
+        1e-3) {
         out_arclength.back() = param.min_trajectory_length + front_arclength_value;
       } else {
         out_arclength.push_back(param.min_trajectory_length + front_arclength_value);
@@ -104,8 +103,7 @@ boost::optional<Trajectory> resampleTrajectory(
         if (
           !out_arclength.empty() &&
           std::fabs(out_arclength.back() - (zero_vel_arclength_value + front_arclength_value)) <
-          1e-3)
-        {
+            1e-3) {
           out_arclength.back() = zero_vel_arclength_value + front_arclength_value;
         } else {
           out_arclength.push_back(zero_vel_arclength_value + front_arclength_value);
@@ -146,8 +144,8 @@ boost::optional<Trajectory> resampleTrajectory(
 }
 
 boost::optional<Trajectory> resampleTrajectory(
-  const Trajectory & input, const size_t closest_id,
-  const ResampleParam & param, const double nominal_ds)
+  const Trajectory & input, const size_t closest_id, const ResampleParam & param,
+  const double nominal_ds)
 {
   // input arclength
   std::vector<double> in_arclength = trajectory_utils::calcArclengthArray(input);
@@ -214,8 +212,7 @@ boost::optional<Trajectory> resampleTrajectory(
     if (dist_i >= param.min_trajectory_length) {
       if (
         std::fabs(out_arclength.back() - (param.min_trajectory_length + front_arclength_value)) <
-        1e-3)
-      {
+        1e-3) {
         out_arclength.back() = param.min_trajectory_length + front_arclength_value;
       } else {
         out_arclength.push_back(param.min_trajectory_length + front_arclength_value);
@@ -229,8 +226,7 @@ boost::optional<Trajectory> resampleTrajectory(
         // dist_i is much bigger than zero_vel_arclength_value
         if (
           !out_arclength.empty() &&
-          std::fabs(out_arclength.back() - (stop_arclength_value + front_arclength_value)) < 1e-3)
-        {
+          std::fabs(out_arclength.back() - (stop_arclength_value + front_arclength_value)) < 1e-3) {
           out_arclength.back() = stop_arclength_value + front_arclength_value;
         } else {
           out_arclength.push_back(stop_arclength_value + front_arclength_value);

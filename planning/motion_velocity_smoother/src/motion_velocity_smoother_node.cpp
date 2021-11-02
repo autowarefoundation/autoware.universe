@@ -12,6 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "motion_velocity_smoother/motion_velocity_smoother_node.hpp"
+
+#include "motion_velocity_smoother/smoother/jerk_filtered_smoother.hpp"
+#include "motion_velocity_smoother/smoother/l2_pseudo_jerk_smoother.hpp"
+#include "motion_velocity_smoother/smoother/linf_pseudo_jerk_smoother.hpp"
+
+#include <autoware_utils/ros/update_param.hpp>
+
 #include <algorithm>
 #include <chrono>
 #include <limits>
@@ -20,13 +28,6 @@
 #include <string>
 #include <tuple>
 #include <vector>
-
-#include "autoware_utils/ros/update_param.hpp"
-
-#include "motion_velocity_smoother/motion_velocity_smoother_node.hpp"
-#include "motion_velocity_smoother/smoother/jerk_filtered_smoother.hpp"
-#include "motion_velocity_smoother/smoother/l2_pseudo_jerk_smoother.hpp"
-#include "motion_velocity_smoother/smoother/linf_pseudo_jerk_smoother.hpp"
 
 // clang-format on
 namespace motion_velocity_smoother
@@ -38,73 +39,67 @@ MotionVelocitySmootherNode::MotionVelocitySmootherNode(const rclcpp::NodeOptions
 
   // set common params
   initCommonParam();
-  over_stop_velocity_warn_thr_ = declare_parameter(
-    "over_stop_velocity_warn_thr", autoware_utils::kmph2mps(
-      5.0));
+  over_stop_velocity_warn_thr_ =
+    declare_parameter("over_stop_velocity_warn_thr", autoware_utils::kmph2mps(5.0));
 
   // create smoother
   initSmootherBaseParam();
   switch (node_param_.algorithm_type) {
     case AlgorithmType::JERK_FILTERED: {
-        initJerkFilteredSmootherParam();
-        smoother_ = std::make_shared<JerkFilteredSmoother>(jerk_filtered_smoother_param_);
-        smoother_->setParam(base_param_);
+      initJerkFilteredSmootherParam();
+      smoother_ = std::make_shared<JerkFilteredSmoother>(jerk_filtered_smoother_param_);
+      smoother_->setParam(base_param_);
 
-        // Set Publisher for jerk filtered algorithm
-        pub_forward_filtered_trajectory_ =
-          create_publisher<Trajectory>("~/debug/forward_filtered_trajectory", 1);
-        pub_backward_filtered_trajectory_ =
-          create_publisher<Trajectory>("~/debug/backward_filtered_trajectory", 1);
-        pub_merged_filtered_trajectory_ =
-          create_publisher<Trajectory>("~/debug/merged_filtered_trajectory", 1);
-        pub_closest_merged_velocity_ =
-          create_publisher<Float32Stamped>("~/closest_merged_velocity", 1);
-        break;
-      }
+      // Set Publisher for jerk filtered algorithm
+      pub_forward_filtered_trajectory_ =
+        create_publisher<Trajectory>("~/debug/forward_filtered_trajectory", 1);
+      pub_backward_filtered_trajectory_ =
+        create_publisher<Trajectory>("~/debug/backward_filtered_trajectory", 1);
+      pub_merged_filtered_trajectory_ =
+        create_publisher<Trajectory>("~/debug/merged_filtered_trajectory", 1);
+      pub_closest_merged_velocity_ =
+        create_publisher<Float32Stamped>("~/closest_merged_velocity", 1);
+      break;
+    }
     case AlgorithmType::L2: {
-        initL2PseudoJerkSmootherParam();
-        smoother_ = std::make_shared<L2PseudoJerkSmoother>(l2_pseudo_jerk_smoother_param_);
-        smoother_->setParam(base_param_);
-        break;
-      }
+      initL2PseudoJerkSmootherParam();
+      smoother_ = std::make_shared<L2PseudoJerkSmoother>(l2_pseudo_jerk_smoother_param_);
+      smoother_->setParam(base_param_);
+      break;
+    }
     case AlgorithmType::LINF: {
-        initLinfPseudoJerkSmootherParam();
-        smoother_ = std::make_shared<LinfPseudoJerkSmoother>(linf_pseudo_jerk_smoother_param_);
-        smoother_->setParam(base_param_);
-        break;
-      }
+      initLinfPseudoJerkSmootherParam();
+      smoother_ = std::make_shared<LinfPseudoJerkSmoother>(linf_pseudo_jerk_smoother_param_);
+      smoother_->setParam(base_param_);
+      break;
+    }
     case AlgorithmType::ANALYTICAL: {
-        initAnalyticalJerkConstrainedSmootherParam();
-        smoother_ =
-          std::make_shared<AnalyticalJerkConstrainedSmoother>(
-          analytical_jerk_constrained_smoother_param_);
-        smoother_->setParam(base_param_);
-        break;
-      }
+      initAnalyticalJerkConstrainedSmootherParam();
+      smoother_ = std::make_shared<AnalyticalJerkConstrainedSmoother>(
+        analytical_jerk_constrained_smoother_param_);
+      smoother_->setParam(base_param_);
+      break;
+    }
     default:
       throw std::domain_error("[MotionVelocitySmootherNode] invalid algorithm");
   }
 
   // publishers, subscribers
   pub_trajectory_ = create_publisher<Trajectory>("~/output/trajectory", 1);
-  pub_velocity_limit_ =
-    create_publisher<VelocityLimit>(
+  pub_velocity_limit_ = create_publisher<VelocityLimit>(
     "~/output/current_velocity_limit_mps", rclcpp::QoS{1}.transient_local());
   pub_dist_to_stopline_ = create_publisher<Float32Stamped>("~/distance_to_stopline", 1);
   pub_over_stop_velocity_ = create_publisher<StopSpeedExceeded>("~/stop_speed_exceeded", 1);
-  sub_current_trajectory_ =
-    create_subscription<Trajectory>(
+  sub_current_trajectory_ = create_subscription<Trajectory>(
     "~/input/trajectory", 1, std::bind(&MotionVelocitySmootherNode::onCurrentTrajectory, this, _1));
-  sub_current_velocity_ =
-    create_subscription<TwistStamped>(
+  sub_current_velocity_ = create_subscription<TwistStamped>(
     "/localization/twist", 1, std::bind(&MotionVelocitySmootherNode::onCurrentVelocity, this, _1));
   sub_external_velocity_limit_ = create_subscription<VelocityLimit>(
     "~/input/external_velocity_limit_mps", 1,
     std::bind(&MotionVelocitySmootherNode::onExternalVelocityLimit, this, _1));
 
   // parameter update
-  set_param_res_ =
-    this->add_on_set_parameters_callback(
+  set_param_res_ = this->add_on_set_parameters_callback(
     std::bind(&MotionVelocitySmootherNode::onParameter, this, _1));
 
   // debug
@@ -115,12 +110,11 @@ MotionVelocitySmootherNode::MotionVelocitySmootherNode(const rclcpp::NodeOptions
   debug_closest_max_velocity_ = create_publisher<Float32Stamped>("~/closest_max_velocity", 1);
   debug_calculation_time_ = create_publisher<Float32Stamped>("~/calculation_time", 1);
   pub_trajectory_raw_ = create_publisher<Trajectory>("~/debug/trajectory_raw", 1);
-  pub_trajectory_vel_lim_ = create_publisher<Trajectory>(
-    "~/debug/trajectory_external_velocity_limited", 1);
-  pub_trajectory_latacc_filtered_ = create_publisher<Trajectory>(
-    "~/debug/trajectory_lateral_acc_filtered", 1);
-  pub_trajectory_resampled_ = create_publisher<Trajectory>(
-    "~/debug/trajectory_time_resampled", 1);
+  pub_trajectory_vel_lim_ =
+    create_publisher<Trajectory>("~/debug/trajectory_external_velocity_limited", 1);
+  pub_trajectory_latacc_filtered_ =
+    create_publisher<Trajectory>("~/debug/trajectory_lateral_acc_filtered", 1);
+  pub_trajectory_resampled_ = create_publisher<Trajectory>("~/debug/trajectory_time_resampled", 1);
 
   // Wait for first self pose
   self_pose_listener_.waitForFirstPose();
@@ -139,21 +133,20 @@ rcl_interfaces::msg::SetParametersResult MotionVelocitySmootherNode::onParameter
   const std::vector<rclcpp::Parameter> & parameters)
 {
   auto update_param = [&](const std::string & name, double & v) {
-      auto it = std::find_if(
-        parameters.cbegin(), parameters.cend(),
-        [&name](const rclcpp::Parameter & parameter) {return parameter.get_name() == name;});
-      if (it != parameters.cend()) {
-        v = it->as_double();
-        return true;
-      }
-      return false;
-    };
+    auto it = std::find_if(
+      parameters.cbegin(), parameters.cend(),
+      [&name](const rclcpp::Parameter & parameter) { return parameter.get_name() == name; });
+    if (it != parameters.cend()) {
+      v = it->as_double();
+      return true;
+    }
+    return false;
+  };
   {
     auto & p = node_param_;
     update_param("max_velocity", p.max_velocity);
     update_param(
-      "margin_to_insert_external_velocity_limit",
-      p.margin_to_insert_external_velocity_limit);
+      "margin_to_insert_external_velocity_limit", p.margin_to_insert_external_velocity_limit);
     update_param("replan_vel_deviation", p.replan_vel_deviation);
     update_param("engage_velocity", p.engage_velocity);
     update_param("engage_acceleration", p.engage_acceleration);
@@ -189,53 +182,52 @@ rcl_interfaces::msg::SetParametersResult MotionVelocitySmootherNode::onParameter
 
   switch (node_param_.algorithm_type) {
     case AlgorithmType::JERK_FILTERED: {
-        auto & p = jerk_filtered_smoother_param_;
-        update_param("jerk_weight", p.jerk_weight);
-        update_param("over_v_weight", p.over_v_weight);
-        update_param("over_a_weight", p.over_a_weight);
-        update_param("over_j_weight", p.over_j_weight);
-        update_param("jerk_filter_ds", p.jerk_filter_ds);
-        std::dynamic_pointer_cast<JerkFilteredSmoother>(smoother_)->setParam(p);
-        break;
-      }
+      auto & p = jerk_filtered_smoother_param_;
+      update_param("jerk_weight", p.jerk_weight);
+      update_param("over_v_weight", p.over_v_weight);
+      update_param("over_a_weight", p.over_a_weight);
+      update_param("over_j_weight", p.over_j_weight);
+      update_param("jerk_filter_ds", p.jerk_filter_ds);
+      std::dynamic_pointer_cast<JerkFilteredSmoother>(smoother_)->setParam(p);
+      break;
+    }
     case AlgorithmType::L2: {
-        auto & p = l2_pseudo_jerk_smoother_param_;
-        update_param("pseudo_jerk_weight", p.pseudo_jerk_weight);
-        update_param("over_v_weight", p.over_v_weight);
-        update_param("over_a_weight", p.over_a_weight);
-        std::dynamic_pointer_cast<L2PseudoJerkSmoother>(smoother_)->setParam(p);
-        break;
-      }
+      auto & p = l2_pseudo_jerk_smoother_param_;
+      update_param("pseudo_jerk_weight", p.pseudo_jerk_weight);
+      update_param("over_v_weight", p.over_v_weight);
+      update_param("over_a_weight", p.over_a_weight);
+      std::dynamic_pointer_cast<L2PseudoJerkSmoother>(smoother_)->setParam(p);
+      break;
+    }
     case AlgorithmType::LINF: {
-        auto & p = linf_pseudo_jerk_smoother_param_;
-        update_param("pseudo_jerk_weight", p.pseudo_jerk_weight);
-        update_param("over_v_weight", p.over_v_weight);
-        update_param("over_a_weight", p.over_a_weight);
-        std::dynamic_pointer_cast<LinfPseudoJerkSmoother>(smoother_)->setParam(p);
-        break;
-      }
+      auto & p = linf_pseudo_jerk_smoother_param_;
+      update_param("pseudo_jerk_weight", p.pseudo_jerk_weight);
+      update_param("over_v_weight", p.over_v_weight);
+      update_param("over_a_weight", p.over_a_weight);
+      std::dynamic_pointer_cast<LinfPseudoJerkSmoother>(smoother_)->setParam(p);
+      break;
+    }
     case AlgorithmType::ANALYTICAL: {
-        auto & p = analytical_jerk_constrained_smoother_param_;
-        update_param("resample.ds_resample", p.resample.ds_resample);
-        update_param("resample.num_resample", p.resample.num_resample);
-        update_param("resample.delta_yaw_threshold", p.resample.delta_yaw_threshold);
-        update_param(
-          "latacc.constant_velocity_dist_threshold",
-          p.latacc.constant_velocity_dist_threshold);
-        update_param("forward.max_acc", p.forward.max_acc);
-        update_param("forward.min_acc", p.forward.min_acc);
-        update_param("forward.max_jerk", p.forward.max_jerk);
-        update_param("forward.min_jerk", p.forward.min_jerk);
-        update_param("forward.kp", p.forward.kp);
-        update_param("backward.start_jerk", p.backward.start_jerk);
-        update_param("backward.min_jerk_mild_stop", p.backward.min_jerk_mild_stop);
-        update_param("backward.min_jerk", p.backward.min_jerk);
-        update_param("backward.min_acc_mild_stop", p.backward.min_acc_mild_stop);
-        update_param("backward.min_acc", p.backward.min_acc);
-        update_param("backward.span_jerk", p.backward.span_jerk);
-        std::dynamic_pointer_cast<AnalyticalJerkConstrainedSmoother>(smoother_)->setParam(p);
-        break;
-      }
+      auto & p = analytical_jerk_constrained_smoother_param_;
+      update_param("resample.ds_resample", p.resample.ds_resample);
+      update_param("resample.num_resample", p.resample.num_resample);
+      update_param("resample.delta_yaw_threshold", p.resample.delta_yaw_threshold);
+      update_param(
+        "latacc.constant_velocity_dist_threshold", p.latacc.constant_velocity_dist_threshold);
+      update_param("forward.max_acc", p.forward.max_acc);
+      update_param("forward.min_acc", p.forward.min_acc);
+      update_param("forward.max_jerk", p.forward.max_jerk);
+      update_param("forward.min_jerk", p.forward.min_jerk);
+      update_param("forward.kp", p.forward.kp);
+      update_param("backward.start_jerk", p.backward.start_jerk);
+      update_param("backward.min_jerk_mild_stop", p.backward.min_jerk_mild_stop);
+      update_param("backward.min_jerk", p.backward.min_jerk);
+      update_param("backward.min_acc_mild_stop", p.backward.min_acc_mild_stop);
+      update_param("backward.min_acc", p.backward.min_acc);
+      update_param("backward.span_jerk", p.backward.span_jerk);
+      std::dynamic_pointer_cast<AnalyticalJerkConstrainedSmoother>(smoother_)->setParam(p);
+      break;
+    }
     default:
       throw std::domain_error("[MotionVelocitySmootherNode] invalid algorithm");
   }
@@ -250,8 +242,8 @@ void MotionVelocitySmootherNode::initCommonParam()
 {
   auto & p = node_param_;
   p.max_velocity = declare_parameter("max_velocity", 20.0);  // 72.0 kmph
-  p.margin_to_insert_external_velocity_limit = declare_parameter(
-    "margin_to_insert_external_velocity_limit", 0.3);
+  p.margin_to_insert_external_velocity_limit =
+    declare_parameter("margin_to_insert_external_velocity_limit", 0.3);
   p.replan_vel_deviation = declare_parameter("replan_vel_deviation", 3.0);
   p.engage_velocity = declare_parameter("engage_velocity", 0.3);
   p.engage_acceleration = declare_parameter("engage_acceleration", 0.1);
@@ -263,17 +255,17 @@ void MotionVelocitySmootherNode::initCommonParam()
   p.extract_behind_dist = declare_parameter("extract_behind_dist", 3.0);
   p.stop_dist_to_prohibit_engage = declare_parameter("stop_dist_to_prohibit_engage", 1.5);
   p.delta_yaw_threshold = declare_parameter("delta_yaw_threshold", M_PI / 3.0);
-  p.post_resample_param.max_trajectory_length = declare_parameter(
-    "post_max_trajectory_length", 300.0);
-  p.post_resample_param.min_trajectory_length = declare_parameter(
-    "post_min_trajectory_length", 30.0);
+  p.post_resample_param.max_trajectory_length =
+    declare_parameter("post_max_trajectory_length", 300.0);
+  p.post_resample_param.min_trajectory_length =
+    declare_parameter("post_min_trajectory_length", 30.0);
   p.post_resample_param.resample_time = declare_parameter("post_resample_time", 10.0);
   p.post_resample_param.dense_resample_dt = declare_parameter("post_dense_resample_dt", 0.1);
-  p.post_resample_param.dense_min_interval_distance = declare_parameter(
-    "post_dense_min_interval_distance", 0.1);
+  p.post_resample_param.dense_min_interval_distance =
+    declare_parameter("post_dense_min_interval_distance", 0.1);
   p.post_resample_param.sparse_resample_dt = declare_parameter("post_sparse_resample_dt", 0.1);
-  p.post_resample_param.sparse_min_interval_distance = declare_parameter(
-    "post_sparse_min_interval_distance", 1.0);
+  p.post_resample_param.sparse_min_interval_distance =
+    declare_parameter("post_sparse_min_interval_distance", 1.0);
   p.algorithm_type = getAlgorithmType(declare_parameter("algorithm_type", "JerkFiltered"));
 }
 
@@ -289,17 +281,15 @@ void MotionVelocitySmootherNode::initSmootherBaseParam()
   p.decel_distance_before_curve = declare_parameter("decel_distance_before_curve", 3.5);
   p.decel_distance_after_curve = declare_parameter("decel_distance_after_curve", 0.0);
   p.min_curve_velocity = declare_parameter("min_curve_velocity", 1.38);
-  p.resample_param.max_trajectory_length = declare_parameter(
-    "max_trajectory_length", 200.0);
-  p.resample_param.min_trajectory_length = declare_parameter(
-    "min_trajectory_length", 30.0);
+  p.resample_param.max_trajectory_length = declare_parameter("max_trajectory_length", 200.0);
+  p.resample_param.min_trajectory_length = declare_parameter("min_trajectory_length", 30.0);
   p.resample_param.resample_time = declare_parameter("resample_time", 10.0);
   p.resample_param.dense_resample_dt = declare_parameter("dense_resample_dt", 0.1);
-  p.resample_param.dense_min_interval_distance = declare_parameter(
-    "dense_min_interval_distance", 0.1);
+  p.resample_param.dense_min_interval_distance =
+    declare_parameter("dense_min_interval_distance", 0.1);
   p.resample_param.sparse_resample_dt = declare_parameter("sparse_resample_dt", 0.5);
-  p.resample_param.sparse_min_interval_distance = declare_parameter(
-    "sparse_min_interval_distance", 4.0);
+  p.resample_param.sparse_min_interval_distance =
+    declare_parameter("sparse_min_interval_distance", 4.0);
 }
 
 void MotionVelocitySmootherNode::initJerkFilteredSmootherParam()
@@ -392,8 +382,7 @@ void MotionVelocitySmootherNode::onExternalVelocityLimit(const VelocityLimit::Co
           double stop_dist;
           std::map<double, double> jerk_profile;
           if (trajectory_utils::calcStopDistWithJerkConstraints(
-              v0, a0, j_max, j_min, a_min, msg->max_velocity, jerk_profile, stop_dist))
-          {
+                v0, a0, j_max, j_min, a_min, msg->max_velocity, jerk_profile, stop_dist)) {
             external_velocity_limit_dist_ = stop_dist + margin;
           } else {
             external_velocity_limit_dist_ = stop_dist + margin;
@@ -462,9 +451,8 @@ void MotionVelocitySmootherNode::onCurrentTrajectory(const Trajectory::ConstShar
     external_velocity_limit_dist_ -= travel_dist;
     external_velocity_limit_dist_ = std::max(external_velocity_limit_dist_, 0.0);
     RCLCPP_DEBUG(
-      get_logger(),
-      "run: travel_dist = %f, external_velocity_limit_dist_ = %f",
-      travel_dist, external_velocity_limit_dist_);
+      get_logger(), "run: travel_dist = %f, external_velocity_limit_dist_ = %f", travel_dist,
+      external_velocity_limit_dist_);
   }
 
   // calculate trajectory velocity
@@ -476,14 +464,13 @@ void MotionVelocitySmootherNode::onCurrentTrajectory(const Trajectory::ConstShar
 
   // Get the nearest point
   const auto output_closest_idx = autoware_utils::findNearestIndex(
-    output.points, current_pose_ptr_->pose,
-    std::numeric_limits<double>::max(), node_param_.delta_yaw_threshold);
+    output.points, current_pose_ptr_->pose, std::numeric_limits<double>::max(),
+    node_param_.delta_yaw_threshold);
   const auto output_closest_point =
     trajectory_utils::calcInterpolatedTrajectoryPoint(output, current_pose_ptr_->pose);
   if (!output_closest_idx) {
     RCLCPP_WARN_THROTTLE(
-      get_logger(), *get_clock(), 5000,
-      "Cannot find closest waypoint for output trajectory");
+      get_logger(), *get_clock(), 5000, "Cannot find closest waypoint for output trajectory");
     return;
   }
 
@@ -528,20 +515,18 @@ void MotionVelocitySmootherNode::onCurrentTrajectory(const Trajectory::ConstShar
     "==============================\n\n");
 }
 
-Trajectory MotionVelocitySmootherNode::calcTrajectoryVelocity(
-  const Trajectory & traj_input) const
+Trajectory MotionVelocitySmootherNode::calcTrajectoryVelocity(const Trajectory & traj_input) const
 {
   Trajectory output{};  // velocity is optimized by qp solver
 
   // Extract trajectory around self-position with desired forward-backward length
   const auto input_closest = autoware_utils::findNearestIndex(
-    traj_input.points, current_pose_ptr_->pose,
-    std::numeric_limits<double>::max(), node_param_.delta_yaw_threshold);
+    traj_input.points, current_pose_ptr_->pose, std::numeric_limits<double>::max(),
+    node_param_.delta_yaw_threshold);
   if (!input_closest) {
     auto clock{rclcpp::Clock{RCL_ROS_TIME}};
     RCLCPP_WARN_THROTTLE(
-      get_logger(), clock, 5000,
-      "Cannot find the closest point from input trajectory");
+      get_logger(), clock, 5000, "Cannot find the closest point from input trajectory");
     return prev_output_;
   }
 
@@ -557,7 +542,7 @@ Trajectory MotionVelocitySmootherNode::calcTrajectoryVelocity(
   // velocity
   const bool is_reverse = std::any_of(
     traj_extracted->points.begin(), traj_extracted->points.end(),
-    [](auto & pt) {return pt.twist.linear.x < 0;});
+    [](auto & pt) { return pt.twist.linear.x < 0; });
   if (is_reverse) {
     for (auto & pt : traj_extracted->points) {
       pt.twist.linear.x *= -1.0;
@@ -565,15 +550,17 @@ Trajectory MotionVelocitySmootherNode::calcTrajectoryVelocity(
   }
 
   // Debug
-  if (publish_debug_trajs_) {pub_trajectory_raw_->publish(*traj_extracted);}
+  if (publish_debug_trajs_) {
+    pub_trajectory_raw_->publish(*traj_extracted);
+  }
 
   // Apply external velocity limit
   applyExternalVelocityLimit(*traj_extracted);
 
   // Change trajectory velocity to zero when current_velocity == 0 & stop_dist is close
   const auto traj_extracted_closest = autoware_utils::findNearestIndex(
-    traj_extracted->points, current_pose_ptr_->pose,
-    std::numeric_limits<double>::max(), node_param_.delta_yaw_threshold);
+    traj_extracted->points, current_pose_ptr_->pose, std::numeric_limits<double>::max(),
+    node_param_.delta_yaw_threshold);
   if (!traj_extracted_closest) {
     RCLCPP_WARN(get_logger(), "Cannot find the closest point from extracted trajectory");
     return prev_output_;
@@ -583,7 +570,9 @@ Trajectory MotionVelocitySmootherNode::calcTrajectoryVelocity(
   applyStopApproachingVelocity(*traj_extracted);
 
   // Debug
-  if (publish_debug_trajs_) {pub_trajectory_vel_lim_->publish(*traj_extracted);}
+  if (publish_debug_trajs_) {
+    pub_trajectory_vel_lim_->publish(*traj_extracted);
+  }
 
   // Smoothing velocity
   if (!smoothVelocity(*traj_extracted, output)) {
@@ -611,8 +600,8 @@ bool MotionVelocitySmootherNode::smoothVelocity(
 
   // Resample trajectory with ego-velocity based interval distance
   const auto traj_pre_resampled_closest = autoware_utils::findNearestIndex(
-    traj_lateral_acc_filtered->points, current_pose_ptr_->pose,
-    std::numeric_limits<double>::max(), node_param_.delta_yaw_threshold);
+    traj_lateral_acc_filtered->points, current_pose_ptr_->pose, std::numeric_limits<double>::max(),
+    node_param_.delta_yaw_threshold);
   auto traj_resampled = smoother_->resampleTrajectory(
     *traj_lateral_acc_filtered, current_velocity_ptr_->twist.linear.x, *traj_pre_resampled_closest);
   if (!traj_resampled) {
@@ -633,8 +622,8 @@ bool MotionVelocitySmootherNode::smoothVelocity(
   double initial_acc{};
   InitializeType type{};
   const auto traj_resampled_closest = autoware_utils::findNearestIndex(
-    traj_resampled->points, current_pose_ptr_->pose,
-    std::numeric_limits<double>::max(), node_param_.delta_yaw_threshold);
+    traj_resampled->points, current_pose_ptr_->pose, std::numeric_limits<double>::max(),
+    node_param_.delta_yaw_threshold);
   if (!traj_resampled_closest) {
     RCLCPP_WARN(get_logger(), "Cannot find closest waypoint for resampled trajectory");
     return false;
@@ -674,8 +663,7 @@ bool MotionVelocitySmootherNode::smoothVelocity(
   insertBehindVelocity(*traj_resampled_closest, type, traj_smoothed);
 
   RCLCPP_DEBUG(
-    get_logger(), "smoothVelocity : traj_smoothed.size() = %lu",
-    traj_smoothed.points.size());
+    get_logger(), "smoothVelocity : traj_smoothed.size() = %lu", traj_smoothed.points.size());
   if (publish_debug_trajs_) {
     pub_trajectory_latacc_filtered_->publish(*traj_lateral_acc_filtered);
     pub_trajectory_resampled_->publish(*traj_resampled);
@@ -702,7 +690,7 @@ void MotionVelocitySmootherNode::insertBehindVelocity(
 {
   const bool keep_closest_vel_for_behind =
     (type == InitializeType::INIT || type == InitializeType::LARGE_DEVIATION_REPLAN ||
-    type == InitializeType::ENGAGING);
+     type == InitializeType::ENGAGING);
 
   for (size_t i = output_closest - 1; i < output.points.size(); --i) {
     if (keep_closest_vel_for_behind) {
@@ -740,8 +728,7 @@ void MotionVelocitySmootherNode::publishStopDistance(
 
 std::tuple<double, double, MotionVelocitySmootherNode::InitializeType>
 MotionVelocitySmootherNode::calcInitialMotion(
-  const Trajectory & input_traj, const size_t input_closest,
-  const Trajectory & prev_traj) const
+  const Trajectory & input_traj, const size_t input_closest, const Trajectory & prev_traj) const
 {
   const double vehicle_speed{std::fabs(current_velocity_ptr_->twist.linear.x)};
   const double target_vel{std::fabs(input_traj.points.at(input_closest).twist.linear.x)};
@@ -785,8 +772,8 @@ MotionVelocitySmootherNode::calcInitialMotion(
       const auto idx = autoware_utils::searchZeroVelocityIndex(input_traj.points);
       const double stop_dist =
         idx ? autoware_utils::calcDistance2d(
-        input_traj.points.at(*idx), input_traj.points.at(input_closest)) :
-        0.0;
+                input_traj.points.at(*idx), input_traj.points.at(input_closest))
+            : 0.0;
       if (!idx || stop_dist > node_param_.stop_dist_to_prohibit_engage) {
         type = InitializeType::ENGAGING;
         initial_vel = node_param_.engage_velocity;
@@ -800,8 +787,7 @@ MotionVelocitySmootherNode::calcInitialMotion(
         return std::make_tuple(initial_vel, initial_acc, type);
       } else {
         RCLCPP_DEBUG(
-          get_logger(),
-          "calcInitialMotion : stop point is close (%.3f[m]). no engage.", stop_dist);
+          get_logger(), "calcInitialMotion : stop point is close (%.3f[m]). no engage.", stop_dist);
       }
     } else if (target_vel > 0.0) {
       auto clock{rclcpp::Clock{RCL_ROS_TIME}};
@@ -875,15 +861,19 @@ void MotionVelocitySmootherNode::overwriteStopPoint(
 
 void MotionVelocitySmootherNode::applyExternalVelocityLimit(Trajectory & traj) const
 {
-  if (traj.points.size() < 1) {return;}
+  if (traj.points.size() < 1) {
+    return;
+  }
 
   trajectory_utils::applyMaximumVelocityLimit(
     0, traj.points.size(), max_velocity_with_deceleration_, traj);
 
   const auto closest_idx = autoware_utils::findNearestIndex(
-    traj.points, current_pose_ptr_->pose,
-    std::numeric_limits<double>::max(), node_param_.delta_yaw_threshold);
-  if (!closest_idx) {return;}
+    traj.points, current_pose_ptr_->pose, std::numeric_limits<double>::max(),
+    node_param_.delta_yaw_threshold);
+  if (!closest_idx) {
+    return;
+  }
 
   double dist = 0.0;
   for (size_t idx = *closest_idx; idx < traj.points.size() - 1; ++idx) {
@@ -896,22 +886,21 @@ void MotionVelocitySmootherNode::applyExternalVelocityLimit(Trajectory & traj) c
   }
   traj.points.back().twist.linear.x =
     std::min(traj.points.back().twist.linear.x, external_velocity_limit_);
-  RCLCPP_DEBUG(
-    get_logger(),
-    "externalVelocityLimit : limit_vel = %.3f", external_velocity_limit_);
+  RCLCPP_DEBUG(get_logger(), "externalVelocityLimit : limit_vel = %.3f", external_velocity_limit_);
 }
 
-void MotionVelocitySmootherNode::applyStopApproachingVelocity(
-  Trajectory & traj) const
+void MotionVelocitySmootherNode::applyStopApproachingVelocity(Trajectory & traj) const
 {
   const auto stop_idx = autoware_utils::searchZeroVelocityIndex(traj.points);
   if (!stop_idx) {
-    return;               // no stop point.
+    return;  // no stop point.
   }
   double distance_sum = 0.0;
   for (size_t i = *stop_idx - 1; i < traj.points.size(); --i) {  // search backward
     distance_sum += autoware_utils::calcDistance2d(traj.points.at(i), traj.points.at(i + 1));
-    if (distance_sum > node_param_.stopping_distance) {break;}
+    if (distance_sum > node_param_.stopping_distance) {
+      break;
+    }
     if (traj.points.at(i).twist.linear.x > node_param_.stopping_velocity) {
       traj.points.at(i).twist.linear.x = node_param_.stopping_velocity;
     }
@@ -947,17 +936,16 @@ void MotionVelocitySmootherNode::publishClosestVelocity(
   pub->publish(vel_data);
 }
 
-void MotionVelocitySmootherNode::publishClosestState(
-  const TrajectoryPoint & closest_point)
+void MotionVelocitySmootherNode::publishClosestState(const TrajectoryPoint & closest_point)
 {
-  auto publishFloat =
-    [ = ](const double data, const rclcpp::Publisher<Float32Stamped>::SharedPtr pub) {
-      Float32Stamped msg{};
-      msg.stamp = this->now();
-      msg.data = data;
-      pub->publish(msg);
-      return;
-    };
+  auto publishFloat = [=](
+                        const double data, const rclcpp::Publisher<Float32Stamped>::SharedPtr pub) {
+    Float32Stamped msg{};
+    msg.stamp = this->now();
+    msg.data = data;
+    pub->publish(msg);
+    return;
+  };
 
   const double curr_vel{closest_point.twist.linear.x};
   const double curr_acc{closest_point.accel.linear.x};
@@ -985,10 +973,18 @@ void MotionVelocitySmootherNode::publishClosestState(
 MotionVelocitySmootherNode::AlgorithmType MotionVelocitySmootherNode::getAlgorithmType(
   const std::string & algorithm_name) const
 {
-  if (algorithm_name == "JerkFiltered") {return AlgorithmType::JERK_FILTERED;}
-  if (algorithm_name == "L2") {return AlgorithmType::L2;}
-  if (algorithm_name == "Linf") {return AlgorithmType::LINF;}
-  if (algorithm_name == "Analytical") {return AlgorithmType::ANALYTICAL;}
+  if (algorithm_name == "JerkFiltered") {
+    return AlgorithmType::JERK_FILTERED;
+  }
+  if (algorithm_name == "L2") {
+    return AlgorithmType::L2;
+  }
+  if (algorithm_name == "Linf") {
+    return AlgorithmType::LINF;
+  }
+  if (algorithm_name == "Analytical") {
+    return AlgorithmType::ANALYTICAL;
+  }
 
   throw std::domain_error("[MotionVelocitySmootherNode] undesired algorithm is selected.");
   return AlgorithmType::INVALID;
@@ -1016,5 +1012,5 @@ bool MotionVelocitySmootherNode::isEngageStatus(const double target_vel) const
 
 }  // namespace motion_velocity_smoother
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(motion_velocity_smoother::MotionVelocitySmootherNode)

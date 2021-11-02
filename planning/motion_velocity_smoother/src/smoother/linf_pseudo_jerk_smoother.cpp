@@ -12,15 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "motion_velocity_smoother/smoother/linf_pseudo_jerk_smoother.hpp"
+
+#include "motion_velocity_smoother/trajectory_utils.hpp"
+
+#include <eigen3/Eigen/Core>
+
 #include <algorithm>
 #include <chrono>
 #include <limits>
 #include <vector>
-
-#include "eigen3/Eigen/Core"
-
-#include "motion_velocity_smoother/smoother/linf_pseudo_jerk_smoother.hpp"
-#include "motion_velocity_smoother/trajectory_utils.hpp"
 
 namespace motion_velocity_smoother
 {
@@ -40,8 +41,7 @@ void LinfPseudoJerkSmoother::setParam(const Param & smoother_param)
 }
 
 bool LinfPseudoJerkSmoother::apply(
-  const double initial_vel, const double initial_acc,
-  const Trajectory & input, Trajectory & output,
+  const double initial_vel, const double initial_acc, const Trajectory & input, Trajectory & output,
   std::vector<Trajectory> & debug_trajectories)
 {
   debug_trajectories.clear();
@@ -72,13 +72,11 @@ bool LinfPseudoJerkSmoother::apply(
   }
 
   /*
-  * x = [b0, b1, ..., bN, |  a0, a1, ..., aN, | delta0, delta1, ..., deltaN, | sigma0, sigma1, ..., sigmaN, | psi] in R^{4N+1}
-  * b: velocity^2
-  * a: acceleration
-  * delta: 0 < bi < v_max^2 + delta
-  * sigma: a_min < ai - sigma < a_max
-  * psi: a'*curr_v -  psi < 0, - a'*curr_v - psi < 0 (<=> |a'|*curr_v < psi)
-  */
+   * x = [b0, b1, ..., bN, |  a0, a1, ..., aN, | delta0, delta1, ..., deltaN, | sigma0, sigma1, ...,
+   * sigmaN, | psi] in R^{4N+1} b: velocity^2 a: acceleration delta: 0 < bi < v_max^2 + delta sigma:
+   * a_min < ai - sigma < a_max psi: a'*curr_v -  psi < 0, - a'*curr_v - psi < 0 (<=> |a'|*curr_v <
+   * psi)
+   */
   const size_t l_variables{4 * N + 1};
   const size_t l_constraints{3 * N + 1 + 2 * (N - 1)};
 
@@ -220,23 +218,18 @@ bool LinfPseudoJerkSmoother::apply(
 
   const int status_val = std::get<3>(result);
   if (status_val != 1) {
-    RCLCPP_WARN(
-      logger_,
-      "optimization failed : %s", qp_solver_.getStatusMessage().c_str());
+    RCLCPP_WARN(logger_, "optimization failed : %s", qp_solver_.getStatusMessage().c_str());
   }
 
   const auto tf2 = std::chrono::system_clock::now();
   const double dt_ms2 =
     std::chrono::duration_cast<std::chrono::nanoseconds>(tf2 - ts2).count() * 1.0e-6;
-  RCLCPP_DEBUG(
-    logger_,
-    "init time = %f [ms], optimization time = %f [ms]", dt_ms1, dt_ms2);
+  RCLCPP_DEBUG(logger_, "init time = %f [ms], optimization time = %f [ms]", dt_ms1, dt_ms2);
   return true;
 }
 
 boost::optional<Trajectory> LinfPseudoJerkSmoother::resampleTrajectory(
-  const Trajectory & input, const double v_current,
-  const int closest_id) const
+  const Trajectory & input, const double v_current, const int closest_id) const
 {
   return resampling::resampleTrajectory(input, v_current, closest_id, base_param_.resample_param);
 }
