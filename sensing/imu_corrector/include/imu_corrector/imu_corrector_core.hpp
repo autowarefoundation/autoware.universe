@@ -14,9 +14,9 @@
 #ifndef IMU_CORRECTOR__IMU_CORRECTOR_CORE_HPP_
 #define IMU_CORRECTOR__IMU_CORRECTOR_CORE_HPP_
 
-#include "sensor_msgs/msg/imu.hpp"
+#include <rclcpp/rclcpp.hpp>
 
-#include "rclcpp/rclcpp.hpp"
+#include <sensor_msgs/msg/imu.hpp>
 
 namespace imu_corrector
 {
