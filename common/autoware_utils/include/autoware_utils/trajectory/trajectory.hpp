@@ -42,7 +42,7 @@ boost::optional<size_t> searchZeroVelocityIndex(
 
   constexpr double epsilon = 1e-3;
   for (size_t i = src_idx; i < dst_idx; ++i) {
-    if (std::fabs(points_with_twist.at(i).twist.linear.x) < epsilon) {
+    if (std::fabs(points_with_twist.at(i).longitudinal_velocity_mps) < epsilon) {
       return i;
     }
   }

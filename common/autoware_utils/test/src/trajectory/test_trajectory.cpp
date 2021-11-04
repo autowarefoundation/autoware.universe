@@ -23,7 +23,7 @@
 
 namespace
 {
-using autoware_planning_msgs::msg::Trajectory;
+using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_utils::createPoint;
 using autoware_utils::createQuaternionFromRPY;
 using autoware_utils::transformPoint;
@@ -54,7 +54,7 @@ T generateTestTrajectory(
 
     Point p;
     p.pose = createPose(x, y, 0.0, 0.0, 0.0, theta);
-    p.twist.linear.x = vel;
+    p.longitudinal_velocity_mps = vel;
     traj.points.push_back(p);
   }
 
@@ -64,7 +64,7 @@ T generateTestTrajectory(
 template <class T>
 void updateTrajectoryVelocityAt(T & points, const size_t idx, const double vel)
 {
-  points.at(idx).twist.linear.x = vel;
+  points.at(idx).longitudinal_velocity_mps = vel;
 }
 }  // namespace
 

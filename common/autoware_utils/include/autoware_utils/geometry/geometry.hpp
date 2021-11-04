@@ -24,9 +24,9 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
-#include <autoware_planning_msgs/msg/path.hpp>
-#include <autoware_planning_msgs/msg/path_point_with_lane_id.hpp>
-#include <autoware_planning_msgs/msg/trajectory.hpp>
+#include <autoware_auto_planning_msgs/msg/path.hpp>
+#include <autoware_auto_planning_msgs/msg/path_point_with_lane_id.hpp>
+#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/quaternion.hpp>
@@ -67,20 +67,21 @@ inline geometry_msgs::msg::Point getPoint(const geometry_msgs::msg::PoseWithCova
 }
 
 template <>
-inline geometry_msgs::msg::Point getPoint(const autoware_planning_msgs::msg::PathPoint & p)
-{
-  return p.pose.position;
-}
-
-template <>
-inline geometry_msgs::msg::Point getPoint(const autoware_planning_msgs::msg::TrajectoryPoint & p)
+inline geometry_msgs::msg::Point getPoint(const autoware_auto_planning_msgs::msg::PathPoint & p)
 {
   return p.pose.position;
 }
 
 template <>
 inline geometry_msgs::msg::Point getPoint(
-  const autoware_planning_msgs::msg::PathPointWithLaneId & p)
+  const autoware_auto_planning_msgs::msg::TrajectoryPoint & p)
+{
+  return p.pose.position;
+}
+
+template <>
+inline geometry_msgs::msg::Point getPoint(
+  const autoware_auto_planning_msgs::msg::PathPointWithLaneId & p)
 {
   return p.point.pose.position;
 }
@@ -105,13 +106,13 @@ inline geometry_msgs::msg::Pose getPose(const geometry_msgs::msg::PoseStamped & 
 }
 
 template <>
-inline geometry_msgs::msg::Pose getPose(const autoware_planning_msgs::msg::PathPoint & p)
+inline geometry_msgs::msg::Pose getPose(const autoware_auto_planning_msgs::msg::PathPoint & p)
 {
   return p.pose;
 }
 
 template <>
-inline geometry_msgs::msg::Pose getPose(const autoware_planning_msgs::msg::TrajectoryPoint & p)
+inline geometry_msgs::msg::Pose getPose(const autoware_auto_planning_msgs::msg::TrajectoryPoint & p)
 {
   return p.pose;
 }

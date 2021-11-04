@@ -86,7 +86,7 @@ TEST(geometry, getPoint)
   }
 
   {
-    autoware_planning_msgs::msg::PathPoint p;
+    autoware_auto_planning_msgs::msg::PathPoint p;
     p.pose.position.x = x_ans;
     p.pose.position.y = y_ans;
     p.pose.position.z = z_ans;
@@ -97,7 +97,7 @@ TEST(geometry, getPoint)
   }
 
   {
-    autoware_planning_msgs::msg::TrajectoryPoint p;
+    autoware_auto_planning_msgs::msg::TrajectoryPoint p;
     p.pose.position.x = x_ans;
     p.pose.position.y = y_ans;
     p.pose.position.z = z_ans;
@@ -159,7 +159,7 @@ TEST(geometry, getPose)
   }
 
   {
-    autoware_planning_msgs::msg::PathPoint p;
+    autoware_auto_planning_msgs::msg::PathPoint p;
     p.pose.position.x = x_ans;
     p.pose.position.y = y_ans;
     p.pose.position.z = z_ans;
@@ -178,7 +178,7 @@ TEST(geometry, getPose)
   }
 
   {
-    autoware_planning_msgs::msg::TrajectoryPoint p;
+    autoware_auto_planning_msgs::msg::TrajectoryPoint p;
     p.pose.position.x = x_ans;
     p.pose.position.y = y_ans;
     p.pose.position.z = z_ans;
