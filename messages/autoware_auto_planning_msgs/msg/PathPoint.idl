@@ -7,7 +7,15 @@ module autoware_auto_planning_msgs {
       "Represents a pose from a lanelet map, contains twist information.")
     struct PathPoint {
       geometry_msgs::msg::Pose pose;
-      geometry_msgs::msg::Twist twist;
+
+      @default (value=0.0)
+      float longitudinal_velocity_mps;
+
+      @default (value=0.0)
+      float lateral_velocity_mps;
+
+      @default (value=0.0)
+      float heading_rate_rps;
 
       @verbatim(language = "comment", text =
         "Denotes that the point is final, doesn't need further updates.")
