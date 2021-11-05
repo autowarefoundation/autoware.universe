@@ -29,15 +29,9 @@ module autoware_auto_perception_msgs {
 
     struct TrackedObjectKinematics {
       @verbatim (language="comment", text=
-      " Convenience value, calculated from the shape."
-      " If there are several shapes, this refers to the first one.")
-      geometry_msgs::msg::Point centroid_position;
+      " Pose covariance is always provided by tracking.")
+      geometry_msgs::msg::PoseWithCovariance pose_with_covariance;
 
-      @verbatim (language="comment", text=
-      " Position covariance is always provided by tracking.")
-      double position_covariance[9];
-
-      geometry_msgs::msg::Quaternion orientation;
       uint8 orientation_availability;
 
       geometry_msgs::msg::TwistWithCovariance twist;

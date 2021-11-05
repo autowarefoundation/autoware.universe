@@ -27,13 +27,9 @@ module autoware_auto_perception_msgs {
     };
 
     struct DetectedObjectKinematics {
-      @verbatim (language="comment", text=
-      " Convenience value, calculated from the shape.")
-      geometry_msgs::msg::Point centroid_position;
-      double position_covariance[9];
-      boolean has_position_covariance;
+      geometry_msgs::msg::PoseWithCovariance pose_with_covariance;
 
-      geometry_msgs::msg::Quaternion orientation;
+      boolean has_position_covariance;
       uint8 orientation_availability;
 
       geometry_msgs::msg::TwistWithCovariance twist;
