@@ -4,17 +4,18 @@ module autoware_auto_perception_msgs {
       const uint8 UNKNOWN = 0;
       const uint8 CAR = 1;
       const uint8 TRUCK = 2;
-      const uint8 TRAILER = 3;
-      const uint8 MOTORCYCLE = 4;
-      const uint8 BICYCLE = 5;
-      const uint8 PEDESTRIAN = 6;
+      const uint8 BUS = 3;
+      const uint8 TRAILER = 4;
+      const uint8 MOTORCYCLE = 5;
+      const uint8 BICYCLE = 6;
+      const uint8 PEDESTRIAN = 7;
     };
 
     struct ObjectClassification {
       @verbatim (language="comment", text=
-        " Valid values for the classification field are provided in"
+        " Valid values for the label field are provided in"
         " ObjectClassification_Constants.")
-      uint8 classification;
+      uint8 label;
 
       @range (min=0.0, max=1.0)
       float probability;
