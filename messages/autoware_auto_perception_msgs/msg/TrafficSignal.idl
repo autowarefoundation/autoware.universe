@@ -1,0 +1,19 @@
+#include "autoware_auto_perception_msgs/msg/TrafficLight.idl"
+
+module autoware_auto_perception_msgs {
+  module msg {
+    @verbatim (language="comment", text=
+    " A TrafficSignal is defined here as a group of multiple TrafficLights" "\n"
+    " which each represent a single light, indicator, or bulb.")
+    struct TrafficSignal {
+      @verbatim (language="comment", text=
+        " A value of 0 indicates an invalid map_primitive_id. Signals which are not"
+        " associated with map primitives should not be used in planning because this"
+        " indicates that the required signal-to-lane mapping is not available.")
+      @default (value=0)
+      int32 map_primitive_id;
+
+      sequence<autoware_auto_perception_msgs::msg::TrafficLight, 10> lights;
+    };
+  };
+};

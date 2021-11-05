@@ -1,0 +1,10 @@
+#include "sensor_msgs/msg/RegionOfInterest.idl"
+
+module autoware_auto_perception_msgs {
+  module msg {
+    struct TrafficLightRoi {
+      sensor_msgs::msg::RegionOfInterest roi;
+      int32 id;
+    };
+  };
+};

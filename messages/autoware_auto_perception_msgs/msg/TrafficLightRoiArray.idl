@@ -1,0 +1,11 @@
+#include "autoware_auto_perception_msgs/msg/TrafficLightRoi.idl"
+#include "std_msgs/msg/Header.idl"
+
+module autoware_auto_perception_msgs {
+  module msg {
+    struct TrafficLightRoiArray {
+      std_msgs::msg::Header header;
+      sequence<autoware_auto_perception_msgs::msg::TrafficLightRoi> rois;
+    };
+  };
+};
