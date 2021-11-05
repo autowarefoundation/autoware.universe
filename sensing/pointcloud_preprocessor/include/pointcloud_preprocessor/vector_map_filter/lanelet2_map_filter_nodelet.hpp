@@ -20,7 +20,7 @@
 #include <lanelet2_extension/utility/query.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_lanelet2_msgs/msg/map_bin.hpp>
+#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
 #include <pcl/filters/voxel_grid.h>
@@ -52,7 +52,7 @@ private:
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
 
-  rclcpp::Subscription<autoware_lanelet2_msgs::msg::MapBin>::SharedPtr map_sub_;
+  rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr map_sub_;
   rclcpp::Subscription<PointCloud2>::SharedPtr pointcloud_sub_;
   rclcpp::Publisher<PointCloud2>::SharedPtr filtered_pointcloud_pub_;
 
@@ -64,7 +64,7 @@ private:
 
   void pointcloudCallback(const PointCloud2ConstPtr msg);
 
-  void mapCallback(const autoware_lanelet2_msgs::msg::MapBin::ConstSharedPtr msg);
+  void mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg);
 
   bool transformPointCloud(
     const std::string & in_target_frame, const PointCloud2ConstPtr & in_cloud_ptr,
