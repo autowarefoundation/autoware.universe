@@ -22,8 +22,8 @@
 #include <eigen3/Eigen/Geometry>
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <autoware_debug_msgs/msg/float32_stamped.hpp>
-#include <autoware_planning_msgs/msg/trajectory.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 
 class LateralErrorPublisher : public rclcpp::Node
@@ -36,7 +36,7 @@ private:
   double yaw_threshold_to_search_closest_;
 
   /* States */
-  autoware_planning_msgs::msg::Trajectory::SharedPtr
+  autoware_auto_planning_msgs::msg::Trajectory::SharedPtr
     current_trajectory_ptr_;  //!< @brief reference trajectory
   geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr
     current_vehicle_pose_ptr_;  //!< @brief current EKF pose
@@ -44,7 +44,7 @@ private:
     current_ground_truth_pose_ptr_;  //!< @brief current GNSS pose
 
   /* Publishers and Subscribers */
-  rclcpp::Subscription<autoware_planning_msgs::msg::Trajectory>::SharedPtr
+  rclcpp::Subscription<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr
     sub_trajectory_;  //!< @brief subscription for reference trajectory
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
     sub_vehicle_pose_;  //!< @brief subscription for vehicle pose
@@ -60,7 +60,7 @@ private:
   /**
    * @brief set current_trajectory_ with received message
    */
-  void onTrajectory(const autoware_planning_msgs::msg::Trajectory::SharedPtr);
+  void onTrajectory(const autoware_auto_planning_msgs::msg::Trajectory::SharedPtr);
   /**
    * @brief set current_vehicle_pose_ with received message
    */

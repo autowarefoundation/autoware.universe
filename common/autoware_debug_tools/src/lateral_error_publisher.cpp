@@ -26,7 +26,7 @@ LateralErrorPublisher::LateralErrorPublisher(const rclcpp::NodeOptions & node_op
     declare_parameter("yaw_threshold_to_search_closest", M_PI / 4.0);
 
   /* Publishers and Subscribers */
-  sub_trajectory_ = create_subscription<autoware_planning_msgs::msg::Trajectory>(
+  sub_trajectory_ = create_subscription<autoware_auto_planning_msgs::msg::Trajectory>(
     "~/input/reference_trajectory", rclcpp::QoS{1},
     std::bind(&LateralErrorPublisher::onTrajectory, this, _1));
   sub_vehicle_pose_ = create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
@@ -44,7 +44,7 @@ LateralErrorPublisher::LateralErrorPublisher(const rclcpp::NodeOptions & node_op
 }
 
 void LateralErrorPublisher::onTrajectory(
-  const autoware_planning_msgs::msg::Trajectory::SharedPtr msg)
+  const autoware_auto_planning_msgs::msg::Trajectory::SharedPtr msg)
 {
   current_trajectory_ptr_ = msg;
 }
