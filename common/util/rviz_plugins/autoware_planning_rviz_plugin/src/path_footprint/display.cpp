@@ -68,12 +68,10 @@ void AutowarePathFootprintDisplay::reset()
 }
 
 bool AutowarePathFootprintDisplay::validateFloats(
-  const autoware_planning_msgs::msg::Path::ConstSharedPtr & msg_ptr)
+  const autoware_auto_planning_msgs::msg::Path::ConstSharedPtr & msg_ptr)
 {
   for (auto && path_point : msg_ptr->points) {
-    if (
-      !rviz_common::validateFloats(path_point.pose) &&
-      !rviz_common::validateFloats(path_point.twist)) {
+    if (!rviz_common::validateFloats(path_point.pose)) {
       return false;
     }
   }
@@ -81,7 +79,7 @@ bool AutowarePathFootprintDisplay::validateFloats(
 }
 
 void AutowarePathFootprintDisplay::processMessage(
-  const autoware_planning_msgs::msg::Path::ConstSharedPtr msg_ptr)
+  const autoware_auto_planning_msgs::msg::Path::ConstSharedPtr msg_ptr)
 {
   if (!validateFloats(msg_ptr)) {
     setStatus(

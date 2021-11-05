@@ -135,12 +135,12 @@ void AutowareTrajectoryDisplay::reset()
 }
 
 bool AutowareTrajectoryDisplay::validateFloats(
-  const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr & msg_ptr)
+  const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr & msg_ptr)
 {
   for (auto && trajectory_point : msg_ptr->points) {
     if (
       !rviz_common::validateFloats(trajectory_point.pose) &&
-      !rviz_common::validateFloats(trajectory_point.twist)) {
+      !rviz_common::validateFloats(trajectory_point.longitudinal_velocity_mps)) {
       return false;
     }
   }
@@ -148,7 +148,7 @@ bool AutowareTrajectoryDisplay::validateFloats(
 }
 
 void AutowareTrajectoryDisplay::processMessage(
-  const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr msg_ptr)
+  const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr msg_ptr)
 {
   if (!validateFloats(msg_ptr)) {
     setStatus(
@@ -217,8 +217,8 @@ void AutowareTrajectoryDisplay::processMessage(
           color = rviz_common::properties::qtToOgre(property_path_color_->getColor());
         } else {
           /* color change depending on velocity */
-          std::unique_ptr<Ogre::ColourValue> dynamic_color_ptr =
-            setColorDependsOnVelocity(property_vel_max_->getFloat(), path_point.twist.linear.x);
+          std::unique_ptr<Ogre::ColourValue> dynamic_color_ptr = setColorDependsOnVelocity(
+            property_vel_max_->getFloat(), path_point.longitudinal_velocity_mps);
           color = *dynamic_color_ptr;
         }
         color.a = property_path_alpha_->getFloat();
@@ -229,7 +229,7 @@ void AutowareTrajectoryDisplay::processMessage(
           Eigen::Quaternionf quat(
             path_point.pose.orientation.w, path_point.pose.orientation.x,
             path_point.pose.orientation.y, path_point.pose.orientation.z);
-          if (path_point.twist.linear.x < 0) {
+          if (path_point.longitudinal_velocity_mps < 0) {
             quat *= quat_yaw_reverse;
             vec_in = -vec_in;
           }
@@ -244,7 +244,7 @@ void AutowareTrajectoryDisplay::processMessage(
           Eigen::Quaternionf quat(
             path_point.pose.orientation.w, path_point.pose.orientation.x,
             path_point.pose.orientation.y, path_point.pose.orientation.z);
-          if (path_point.twist.linear.x < 0) {
+          if (path_point.longitudinal_velocity_mps < 0) {
             quat *= quat_yaw_reverse;
             vec_in = -vec_in;
           }
@@ -264,8 +264,8 @@ void AutowareTrajectoryDisplay::processMessage(
           color = rviz_common::properties::qtToOgre(property_velocity_color_->getColor());
         } else {
           /* color change depending on velocity */
-          std::unique_ptr<Ogre::ColourValue> dynamic_color_ptr =
-            setColorDependsOnVelocity(property_vel_max_->getFloat(), path_point.twist.linear.x);
+          std::unique_ptr<Ogre::ColourValue> dynamic_color_ptr = setColorDependsOnVelocity(
+            property_vel_max_->getFloat(), path_point.longitudinal_velocity_mps);
           color = *dynamic_color_ptr;
         }
         color.a = property_velocity_alpha_->getFloat();
@@ -273,7 +273,7 @@ void AutowareTrajectoryDisplay::processMessage(
         velocity_manual_object_->position(
           path_point.pose.position.x, path_point.pose.position.y,
           path_point.pose.position.z +
-            path_point.twist.linear.x * property_velocity_scale_->getFloat());
+            path_point.longitudinal_velocity_mps * property_velocity_scale_->getFloat());
         velocity_manual_object_->colour(color);
       }
       /*
@@ -288,7 +288,7 @@ void AutowareTrajectoryDisplay::processMessage(
         node->setPosition(position);
 
         rviz_rendering::MovableText * text = velocity_texts_.at(point_idx);
-        double vel = path_point.twist.linear.x;
+        double vel = path_point.longitudinal_velocity_mps;
         text->setCaption(
           std::to_string(static_cast<int>(std::floor(vel))) + "." +
           std::to_string(static_cast<int>(std::floor(vel * 100))));

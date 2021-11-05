@@ -91,12 +91,10 @@ void AutowareTrajectoryFootprintDisplay::reset()
 }
 
 bool AutowareTrajectoryFootprintDisplay::validateFloats(
-  const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr & msg_ptr)
+  const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr & msg_ptr)
 {
   for (auto && trajectory_point : msg_ptr->points) {
-    if (
-      !rviz_common::validateFloats(trajectory_point.pose) &&
-      !rviz_common::validateFloats(trajectory_point.twist)) {
+    if (!rviz_common::validateFloats(trajectory_point.pose)) {
       return false;
     }
   }
@@ -104,7 +102,7 @@ bool AutowareTrajectoryFootprintDisplay::validateFloats(
 }
 
 void AutowareTrajectoryFootprintDisplay::processMessage(
-  const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr msg_ptr)
+  const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr msg_ptr)
 {
   if (!validateFloats(msg_ptr)) {
     setStatus(

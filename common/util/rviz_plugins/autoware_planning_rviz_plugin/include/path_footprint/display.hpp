@@ -25,7 +25,7 @@
 #include <rviz_common/properties/parse_color.hpp>
 #include <rviz_common/validate_floats.hpp>
 
-#include <autoware_planning_msgs/msg/path.hpp>
+#include <autoware_auto_planning_msgs/msg/path.hpp>
 
 #include <OgreBillboardSet.h>
 #include <OgreManualObject.h>
@@ -38,7 +38,7 @@
 namespace rviz_plugins
 {
 class AutowarePathFootprintDisplay
-: public rviz_common::MessageFilterDisplay<autoware_planning_msgs::msg::Path>
+: public rviz_common::MessageFilterDisplay<autoware_auto_planning_msgs::msg::Path>
 {
   Q_OBJECT
 
@@ -54,7 +54,8 @@ private Q_SLOTS:
   void updateVehicleInfo();
 
 protected:
-  void processMessage(const autoware_planning_msgs::msg::Path::ConstSharedPtr msg_ptr) override;
+  void processMessage(
+    const autoware_auto_planning_msgs::msg::Path::ConstSharedPtr msg_ptr) override;
   Ogre::ManualObject * path_footprint_manual_object_;
   rviz_common::properties::BoolProperty * property_path_footprint_view_;
   rviz_common::properties::ColorProperty * property_path_footprint_color_;
@@ -74,8 +75,8 @@ protected:
   std::shared_ptr<VehicleFootprintInfo> vehicle_footprint_info_;
 
 private:
-  autoware_planning_msgs::msg::Path::ConstSharedPtr last_msg_ptr_;
-  bool validateFloats(const autoware_planning_msgs::msg::Path::ConstSharedPtr & msg_ptr);
+  autoware_auto_planning_msgs::msg::Path::ConstSharedPtr last_msg_ptr_;
+  bool validateFloats(const autoware_auto_planning_msgs::msg::Path::ConstSharedPtr & msg_ptr);
 };
 
 }  // namespace rviz_plugins
