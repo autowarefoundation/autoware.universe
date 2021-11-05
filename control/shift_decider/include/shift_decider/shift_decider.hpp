@@ -17,8 +17,8 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_control_msgs/msg/control_command_stamped.hpp>
-#include <autoware_vehicle_msgs/msg/shift_stamped.hpp>
+#include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
+#include <autoware_auto_vehicle_msgs/msg/vehicle_state_command.hpp>
 
 #include <memory>
 
@@ -29,17 +29,17 @@ public:
 
 private:
   void onTimer();
-  void onControlCmd(autoware_control_msgs::msg::ControlCommandStamped::SharedPtr msg);
+  void onControlCmd(autoware_auto_control_msgs::msg::AckermannControlCommand::SharedPtr msg);
   void updateCurrentShiftCmd();
   void initTimer(double period_s);
 
-  rclcpp::Publisher<autoware_vehicle_msgs::msg::ShiftStamped>::SharedPtr pub_shift_cmd_;
-  rclcpp::Subscription<autoware_control_msgs::msg::ControlCommandStamped>::SharedPtr
+  rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::VehicleStateCommand>::SharedPtr pub_shift_cmd_;
+  rclcpp::Subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>::SharedPtr
     sub_control_cmd_;
   rclcpp::TimerBase::SharedPtr timer_;
 
-  autoware_control_msgs::msg::ControlCommandStamped::SharedPtr control_cmd_;
-  autoware_vehicle_msgs::msg::ShiftStamped shift_cmd_;
+  autoware_auto_control_msgs::msg::AckermannControlCommand::SharedPtr control_cmd_;
+  autoware_auto_vehicle_msgs::msg::VehicleStateCommand shift_cmd_;
 };
 
 #endif  // SHIFT_DECIDER__SHIFT_DECIDER_HPP_
