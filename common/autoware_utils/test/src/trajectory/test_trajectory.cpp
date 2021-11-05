@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "autoware_utils/geometry/boost_geometry.hpp"
+#include "autoware_utils/trajectory/tmp_conversion.hpp"
 #include "autoware_utils/trajectory/trajectory.hpp"
 
 #include <gtest/gtest.h>
@@ -24,6 +25,7 @@
 namespace
 {
 using autoware_auto_planning_msgs::msg::Trajectory;
+using TrajectoryPointArray = std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>;
 using autoware_utils::createPoint;
 using autoware_utils::createQuaternionFromRPY;
 using autoware_utils::transformPoint;
@@ -56,6 +58,26 @@ T generateTestTrajectory(
     p.pose = createPose(x, y, 0.0, 0.0, 0.0, theta);
     p.longitudinal_velocity_mps = vel;
     traj.points.push_back(p);
+  }
+
+  return traj;
+}
+
+TrajectoryPointArray generateTestTrajectoryPointArray(
+  const size_t num_points, const double point_interval, const double vel = 0.0,
+  const double init_theta = 0.0, const double delta_theta = 0.0)
+{
+  using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+  TrajectoryPointArray traj;
+  for (size_t i = 0; i < num_points; ++i) {
+    const double theta = init_theta + i * delta_theta;
+    const double x = i * point_interval * std::cos(theta);
+    const double y = i * point_interval * std::sin(theta);
+
+    TrajectoryPoint p;
+    p.pose = createPose(x, y, 0.0, 0.0, 0.0, theta);
+    p.longitudinal_velocity_mps = vel;
+    traj.push_back(p);
   }
 
   return traj;
@@ -578,4 +600,43 @@ TEST(trajectory, calcArcLength)
 
   // Whole Length
   EXPECT_NEAR(calcArcLength(traj.points), 9.0, epsilon);
+}
+
+TEST(trajectory, convertToTrajectory)
+{
+  using autoware_utils::convertToTrajectory;
+
+  // Size check
+  {
+    const auto traj_input = generateTestTrajectoryPointArray(50, 1.0);
+    const auto traj = convertToTrajectory(traj_input);
+    EXPECT_EQ(traj.points.size(), traj_input.size());
+  }
+
+  // Clipping check
+  {
+    const auto traj_input = generateTestTrajectoryPointArray(200, 1.0);
+    const auto traj = convertToTrajectory(traj_input);
+    EXPECT_EQ(traj.points.size(), traj.CAPACITY);
+    // Value check
+    for (size_t i = 0; i < traj.points.size(); ++i) {
+      EXPECT_EQ(traj.points.at(i), traj_input.at(i));
+    }
+  }
+}
+
+TEST(trajectory, convertToTrajectoryPointArray)
+{
+  using autoware_utils::convertToTrajectoryPointArray;
+
+  const auto traj_input = generateTestTrajectory<Trajectory>(100, 1.0);
+  const auto traj = convertToTrajectoryPointArray(traj_input);
+
+  // Size check
+  EXPECT_EQ(traj.size(), traj_input.points.size());
+
+  // Value check
+  for (size_t i = 0; i < traj.size(); ++i) {
+    EXPECT_EQ(traj.at(i), traj_input.points.at(i));
+  }
 }
