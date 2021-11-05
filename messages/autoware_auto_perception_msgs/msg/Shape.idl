@@ -2,7 +2,7 @@
 
 module autoware_auto_perception_msgs {
   module msg {
-    module Shape_Types {
+    module Shape_Constants {
       const uint8 BOUNDING_BOX=0;
       const uint8 CYLINDER=1;
       const uint8 POLYGON=2;
