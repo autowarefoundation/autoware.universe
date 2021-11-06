@@ -86,9 +86,9 @@ geometry_msgs::msg::PoseStamped::ConstSharedPtr getCurrentPose(
 
 bool isInLane(
   const std::shared_ptr<lanelet::LaneletMap> & lanelet_map_ptr,
-  const geometry_msgs::msg::Pose & current_pose)
+  const geometry_msgs::msg::Point & current_pos)
 {
-  const auto & p = current_pose.position;
+  const auto & p = current_pos;
   const lanelet::Point3d search_point(lanelet::InvalId, p.x, p.y, p.z);
 
   std::vector<std::pair<double, lanelet::Lanelet>> nearest_lanelets =
@@ -121,7 +121,7 @@ bool isInParkingLot(
 }
 
 bool isNearTrajectoryEnd(
-  const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr trajectory,
+  const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr trajectory,
   const geometry_msgs::msg::Pose & current_pose, const double th_dist)
 {
   if (!trajectory || trajectory->points.empty()) {
@@ -150,8 +150,8 @@ bool isStopped(
 
 }  // namespace
 
-autoware_planning_msgs::msg::Trajectory::ConstSharedPtr ScenarioSelectorNode::getScenarioTrajectory(
-  const std::string & scenario)
+autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr
+ScenarioSelectorNode::getScenarioTrajectory(const std::string & scenario)
 {
   if (scenario == autoware_planning_msgs::msg::Scenario::LANEDRIVING) {
     return lane_driving_trajectory_;
@@ -165,8 +165,8 @@ autoware_planning_msgs::msg::Trajectory::ConstSharedPtr ScenarioSelectorNode::ge
 
 std::string ScenarioSelectorNode::selectScenarioByPosition()
 {
-  const auto is_in_lane = isInLane(lanelet_map_ptr_, current_pose_->pose);
-  const auto is_goal_in_lane = isInLane(lanelet_map_ptr_, route_->goal_pose);
+  const auto is_in_lane = isInLane(lanelet_map_ptr_, current_pose_->pose.position);
+  const auto is_goal_in_lane = isInLane(lanelet_map_ptr_, route_->goal_point.position);
   const auto is_in_parking_lot = isInParkingLot(lanelet_map_ptr_, current_pose_->pose);
 
   if (current_scenario_ == autoware_planning_msgs::msg::Scenario::EMPTY) {
@@ -217,24 +217,29 @@ void ScenarioSelectorNode::updateCurrentScenario()
   }
 }
 
-void ScenarioSelectorNode::onMap(const autoware_lanelet2_msgs::msg::MapBin::ConstSharedPtr msg)
+void ScenarioSelectorNode::onMap(
+  const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg)
 {
   lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(
     *msg, lanelet_map_ptr_, &traffic_rules_ptr_, &routing_graph_ptr_);
 }
 
-void ScenarioSelectorNode::onRoute(const autoware_planning_msgs::msg::Route::ConstSharedPtr msg)
+void ScenarioSelectorNode::onRoute(
+  const autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr msg)
 {
   route_ = msg;
   current_scenario_ = autoware_planning_msgs::msg::Scenario::EMPTY;
 }
 
-void ScenarioSelectorNode::onTwist(const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg)
+void ScenarioSelectorNode::onOdom(const nav_msgs::msg::Odometry::ConstSharedPtr msg)
 {
-  twist_ = msg;
+  geometry_msgs::msg::TwistStamped::SharedPtr twist;
+  twist->header = msg->header;
+  twist->twist = msg->twist.twist;
 
-  twist_buffer_.push_back(msg);
+  twist_ = twist;
+  twist_buffer_.push_back(twist);
 
   // Delete old data in buffer
   while (true) {
@@ -275,7 +280,7 @@ void ScenarioSelectorNode::onTimer()
 }
 
 void ScenarioSelectorNode::onLaneDrivingTrajectory(
-  const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr msg)
+  const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr msg)
 {
   lane_driving_trajectory_ = msg;
 
@@ -287,7 +292,7 @@ void ScenarioSelectorNode::onLaneDrivingTrajectory(
 }
 
 void ScenarioSelectorNode::onParkingTrajectory(
-  const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr msg)
+  const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr msg)
 {
   parking_trajectory_ = msg;
 
@@ -299,7 +304,7 @@ void ScenarioSelectorNode::onParkingTrajectory(
 }
 
 void ScenarioSelectorNode::publishTrajectory(
-  const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr msg)
+  const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr msg)
 {
   const auto now = this->now();
   const auto delay_sec = (now - msg->header.stamp).seconds();
@@ -328,28 +333,29 @@ ScenarioSelectorNode::ScenarioSelectorNode(const rclcpp::NodeOptions & node_opti
   this->declare_parameter<bool>("is_parking_completed", false);
 
   // Input
-  sub_lane_driving_trajectory_ = this->create_subscription<autoware_planning_msgs::msg::Trajectory>(
-    "input/lane_driving/trajectory", rclcpp::QoS{1},
-    std::bind(&ScenarioSelectorNode::onLaneDrivingTrajectory, this, std::placeholders::_1));
+  sub_lane_driving_trajectory_ =
+    this->create_subscription<autoware_auto_planning_msgs::msg::Trajectory>(
+      "input/lane_driving/trajectory", rclcpp::QoS{1},
+      std::bind(&ScenarioSelectorNode::onLaneDrivingTrajectory, this, std::placeholders::_1));
 
-  sub_parking_trajectory_ = this->create_subscription<autoware_planning_msgs::msg::Trajectory>(
+  sub_parking_trajectory_ = this->create_subscription<autoware_auto_planning_msgs::msg::Trajectory>(
     "input/parking/trajectory", rclcpp::QoS{1},
     std::bind(&ScenarioSelectorNode::onParkingTrajectory, this, std::placeholders::_1));
 
-  sub_lanelet_map_ = this->create_subscription<autoware_lanelet2_msgs::msg::MapBin>(
+  sub_lanelet_map_ = this->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
     "input/lanelet_map", rclcpp::QoS{1}.transient_local(),
     std::bind(&ScenarioSelectorNode::onMap, this, std::placeholders::_1));
-  sub_route_ = this->create_subscription<autoware_planning_msgs::msg::Route>(
+  sub_route_ = this->create_subscription<autoware_auto_planning_msgs::msg::HADMapRoute>(
     "input/route", rclcpp::QoS{1},
     std::bind(&ScenarioSelectorNode::onRoute, this, std::placeholders::_1));
-  sub_twist_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
-    "input/twist", rclcpp::QoS{100},
-    std::bind(&ScenarioSelectorNode::onTwist, this, std::placeholders::_1));
+  sub_odom_ = this->create_subscription<nav_msgs::msg::Odometry>(
+    "input/odometry", rclcpp::QoS{100},
+    std::bind(&ScenarioSelectorNode::onOdom, this, std::placeholders::_1));
 
   // Output
   pub_scenario_ = this->create_publisher<autoware_planning_msgs::msg::Scenario>(
     "output/scenario", rclcpp::QoS{1});
-  pub_trajectory_ = this->create_publisher<autoware_planning_msgs::msg::Trajectory>(
+  pub_trajectory_ = this->create_publisher<autoware_auto_planning_msgs::msg::Trajectory>(
     "output/trajectory", rclcpp::QoS{1});
 
   // Timer Callback

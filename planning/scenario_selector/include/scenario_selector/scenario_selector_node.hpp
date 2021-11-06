@@ -17,11 +17,12 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_lanelet2_msgs/msg/map_bin.hpp>
-#include <autoware_planning_msgs/msg/route.hpp>
+#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
+#include <autoware_auto_planning_msgs/msg/had_map_route.hpp>
+#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <autoware_planning_msgs/msg/scenario.hpp>
-#include <autoware_planning_msgs/msg/trajectory.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
+#include <nav_msgs/msg/odometry.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_routing/RoutingGraph.h>
@@ -39,18 +40,19 @@ class ScenarioSelectorNode : public rclcpp::Node
 public:
   explicit ScenarioSelectorNode(const rclcpp::NodeOptions & node_options);
 
-  void onMap(const autoware_lanelet2_msgs::msg::MapBin::ConstSharedPtr msg);
-  void onRoute(const autoware_planning_msgs::msg::Route::ConstSharedPtr msg);
-  void onTwist(const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg);
+  void onMap(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg);
+  void onRoute(const autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr msg);
+  void onOdom(const nav_msgs::msg::Odometry::ConstSharedPtr msg);
 
   void onTimer();
-  void onLaneDrivingTrajectory(const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr msg);
-  void onParkingTrajectory(const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr msg);
-  void publishTrajectory(const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr msg);
+  void onLaneDrivingTrajectory(
+    const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr msg);
+  void onParkingTrajectory(const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr msg);
+  void publishTrajectory(const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr msg);
 
   void updateCurrentScenario();
   std::string selectScenarioByPosition();
-  autoware_planning_msgs::msg::Trajectory::ConstSharedPtr getScenarioTrajectory(
+  autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr getScenarioTrajectory(
     const std::string & scenario);
 
 private:
@@ -59,18 +61,19 @@ private:
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
 
-  rclcpp::Subscription<autoware_lanelet2_msgs::msg::MapBin>::SharedPtr sub_lanelet_map_;
-  rclcpp::Subscription<autoware_planning_msgs::msg::Route>::SharedPtr sub_route_;
-  rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr sub_twist_;
-  rclcpp::Subscription<autoware_planning_msgs::msg::Trajectory>::SharedPtr
+  rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr sub_lanelet_map_;
+  rclcpp::Subscription<autoware_auto_planning_msgs::msg::HADMapRoute>::SharedPtr sub_route_;
+  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
+  rclcpp::Subscription<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr
     sub_lane_driving_trajectory_;
-  rclcpp::Subscription<autoware_planning_msgs::msg::Trajectory>::SharedPtr sub_parking_trajectory_;
-  rclcpp::Publisher<autoware_planning_msgs::msg::Trajectory>::SharedPtr pub_trajectory_;
+  rclcpp::Subscription<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr
+    sub_parking_trajectory_;
+  rclcpp::Publisher<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr pub_trajectory_;
   rclcpp::Publisher<autoware_planning_msgs::msg::Scenario>::SharedPtr pub_scenario_;
 
-  autoware_planning_msgs::msg::Trajectory::ConstSharedPtr lane_driving_trajectory_;
-  autoware_planning_msgs::msg::Trajectory::ConstSharedPtr parking_trajectory_;
-  autoware_planning_msgs::msg::Route::ConstSharedPtr route_;
+  autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr lane_driving_trajectory_;
+  autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr parking_trajectory_;
+  autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr route_;
   geometry_msgs::msg::PoseStamped::ConstSharedPtr current_pose_;
   geometry_msgs::msg::TwistStamped::ConstSharedPtr twist_;
 
