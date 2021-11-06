@@ -73,14 +73,14 @@ ObstacleCollisionCheckerNode::ObstacleCollisionCheckerNode(const rclcpp::NodeOpt
   sub_obstacle_pointcloud_ = create_subscription<sensor_msgs::msg::PointCloud2>(
     "input/obstacle_pointcloud", 1,
     std::bind(&ObstacleCollisionCheckerNode::onObstaclePointcloud, this, _1));
-  sub_reference_trajectory_ = create_subscription<autoware_planning_msgs::msg::Trajectory>(
+  sub_reference_trajectory_ = create_subscription<autoware_auto_planning_msgs::msg::Trajectory>(
     "input/reference_trajectory", 1,
     std::bind(&ObstacleCollisionCheckerNode::onReferenceTrajectory, this, _1));
-  sub_predicted_trajectory_ = create_subscription<autoware_planning_msgs::msg::Trajectory>(
+  sub_predicted_trajectory_ = create_subscription<autoware_auto_planning_msgs::msg::Trajectory>(
     "input/predicted_trajectory", 1,
     std::bind(&ObstacleCollisionCheckerNode::onPredictedTrajectory, this, _1));
-  sub_twist_ = create_subscription<geometry_msgs::msg::TwistStamped>(
-    "input/twist", 1, std::bind(&ObstacleCollisionCheckerNode::onTwist, this, _1));
+  sub_odom_ = create_subscription<nav_msgs::msg::Odometry>(
+    "input/odometry", 1, std::bind(&ObstacleCollisionCheckerNode::onOdom, this, _1));
 
   // Publisher
   debug_publisher_ = std::make_shared<autoware_utils::DebugPublisher>(this, "debug/marker");
@@ -106,20 +106,20 @@ void ObstacleCollisionCheckerNode::onObstaclePointcloud(
 }
 
 void ObstacleCollisionCheckerNode::onReferenceTrajectory(
-  const autoware_planning_msgs::msg::Trajectory::SharedPtr msg)
+  const autoware_auto_planning_msgs::msg::Trajectory::SharedPtr msg)
 {
   reference_trajectory_ = msg;
 }
 
 void ObstacleCollisionCheckerNode::onPredictedTrajectory(
-  const autoware_planning_msgs::msg::Trajectory::SharedPtr msg)
+  const autoware_auto_planning_msgs::msg::Trajectory::SharedPtr msg)
 {
   predicted_trajectory_ = msg;
 }
 
-void ObstacleCollisionCheckerNode::onTwist(const geometry_msgs::msg::TwistStamped::SharedPtr msg)
+void ObstacleCollisionCheckerNode::onOdom(const nav_msgs::msg::Odometry::SharedPtr msg)
 {
-  current_twist_ = msg;
+  current_twist_ = std::make_shared<geometry_msgs::msg::Twist>(msg->twist.twist);
 }
 
 void ObstacleCollisionCheckerNode::initTimer(double period_s)

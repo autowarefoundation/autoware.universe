@@ -3,7 +3,7 @@
   <arg name="input/obstacle_pointcloud" default="/sensing/lidar/no_ground/pointcloud" />
   <arg name="input/reference_trajectory" default="/planning/scenario_planning/trajectory" />
   <arg name="input/predicted_trajectory" default="/control/trajectory_follower/predicted_trajectory" />
-  <arg name="input/twist" default="/localization/twist" />
+  <arg name="input/odometry" default="/localization/odometry" />
   <arg name="config_file" default="$(find-pkg-share obstacle_collision_checker)/config/obstacle_collision_checker.param.yaml" />
 
   <node pkg="obstacle_collision_checker" exec="obstacle_collision_checker_node" name="obstacle_collision_checker_node" output="screen">
@@ -12,6 +12,6 @@
     <remap from="input/obstacle_pointcloud" to="$(var input/obstacle_pointcloud)"/>
     <remap from="input/reference_trajectory" to="$(var input/reference_trajectory)"/>
     <remap from="input/predicted_trajectory" to="$(var input/predicted_trajectory)"/>
-    <remap from="input/twist" to="$(var input/twist)"/>
+    <remap from="input/odometry" to="$(var input/odometry)"/>
   </node>
 </launch>
