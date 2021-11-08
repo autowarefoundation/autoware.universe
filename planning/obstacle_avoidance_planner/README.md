@@ -10,12 +10,12 @@ obstacle_avoidance_planner は入力された path と drivable area、および
 
 ### input
 
-- reference_path [`autoware_planning_msgs/Path`] : Reference path and the corresponding drivable area.
-- objects [`autoware_perception_msgs/DynamicObjectArray`] : Recognized objects around the vehicle
+- reference_path [`autoware_auto_planning_msgs/Path`] : Reference path and the corresponding drivable area.
+- objects [`autoware_auto_perception_msgs/PredictedObjects`] : Recognized objects around the vehicle
 
 ### output
 
-- optimized_trajectory [`autoware_planning_msgs/Trajectory`] : Optimized trajectory that is feasible to drive and collision-free.
+- optimized_trajectory [`autoware_auto_planning_msgs/Trajectory`] : Optimized trajectory that is feasible to drive and collision-free.
 
 ## Flowchart
 

@@ -54,8 +54,8 @@ MPTOptimizer::MPTOptimizer(
 
 boost::optional<MPTTrajs> MPTOptimizer::getModelPredictiveTrajectory(
   const bool enable_avoidance,
-  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & smoothed_points,
-  const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points,
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & smoothed_points,
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
   const std::unique_ptr<Trajectories> & prev_trajs, const CVMaps & maps,
   const geometry_msgs::msg::Pose & ego_pose, DebugData * debug_data)
 {
@@ -114,8 +114,8 @@ boost::optional<MPTTrajs> MPTOptimizer::getModelPredictiveTrajectory(
 
 std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
   const geometry_msgs::msg::Pose & origin_pose, const geometry_msgs::msg::Pose & ego_pose,
-  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & points,
-  const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points,
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
   const std::unique_ptr<Trajectories> & prev_trajs, const CVMaps & maps,
   DebugData * debug_data) const
 {
@@ -133,8 +133,8 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
 }
 
 std::vector<ReferencePoint> MPTOptimizer::convertToReferencePoints(
-  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & points,
-  [[maybe_unused]] const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points,
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
+  [[maybe_unused]] const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
   const std::unique_ptr<Trajectories> & prev_trajs,
   [[maybe_unused]] const geometry_msgs::msg::Pose & ego_pose, [[maybe_unused]] const CVMaps & maps,
   DebugData * debug_data) const
@@ -178,13 +178,14 @@ void MPTOptimizer::calcOrientation(std::vector<ReferencePoint> * ref_points) con
 
 void MPTOptimizer::calcVelocity(
   std::vector<ReferencePoint> * ref_points,
-  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & points) const
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points) const
 {
   if (!ref_points) {
     return;
   }
   for (std::size_t i = 0; i < ref_points->size(); i++) {
-    ref_points->at(i).v = points[util::getNearestIdx(points, ref_points->at(i).p)].twist.linear.x;
+    ref_points->at(i).v =
+      points[util::getNearestIdx(points, ref_points->at(i).p)].longitudinal_velocity_mps;
   }
 }
 
@@ -319,7 +320,7 @@ void MPTOptimizer::calcInitialState(
  */
 boost::optional<MPTMatrix> MPTOptimizer::generateMPTMatrix(
   const std::vector<ReferencePoint> & reference_points,
-  const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points,
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
   const std::unique_ptr<Trajectories> & prev_trajs) const
 {
   const int N = reference_points.size();
@@ -516,7 +517,7 @@ void MPTOptimizer::addSteerWeightF(Eigen::VectorXd * f) const
 
 boost::optional<Eigen::VectorXd> MPTOptimizer::executeOptimization(
   const bool enable_avoidance, const MPTMatrix & m, const std::vector<ReferencePoint> & ref_points,
-  const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points, const CVMaps & maps,
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points, const CVMaps & maps,
   DebugData * debug_data)
 {
   auto t_start1 = std::chrono::high_resolution_clock::now();
@@ -571,23 +572,23 @@ Eigen::VectorXd MPTOptimizer::getState(
   return x0;
 }
 
-std::vector<autoware_planning_msgs::msg::TrajectoryPoint> MPTOptimizer::getMPTPoints(
+std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> MPTOptimizer::getMPTPoints(
   std::vector<ReferencePoint> & ref_points, const Eigen::VectorXd & Uex,
   const MPTMatrix & mpt_matrix,
-  [[maybe_unused]] const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> &
+  [[maybe_unused]] const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> &
     optimized_points) const
 {
   const int DIM_X = vehicle_model_ptr_->getDimX();
   const auto x0 = ref_points.front().optimized_state;
   Eigen::VectorXd Xex = mpt_matrix.Aex * x0 + mpt_matrix.Bex * Uex + mpt_matrix.Wex;
 
-  std::vector<autoware_planning_msgs::msg::TrajectoryPoint> traj_points;
+  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> traj_points;
   {
     const double lat_error = x0(0);
-    autoware_planning_msgs::msg::TrajectoryPoint traj_point;
+    autoware_auto_planning_msgs::msg::TrajectoryPoint traj_point;
     traj_point.pose.position.x = ref_points[0].p.x - std::sin(ref_points[0].yaw) * lat_error;
     traj_point.pose.position.y = ref_points[0].p.y + std::cos(ref_points[0].yaw) * lat_error;
-    traj_point.twist.linear.x = ref_points.front().v;
+    traj_point.longitudinal_velocity_mps = ref_points.front().v;
     traj_points.push_back(traj_point);
   }
 
@@ -595,10 +596,10 @@ std::vector<autoware_planning_msgs::msg::TrajectoryPoint> MPTOptimizer::getMPTPo
     const double lat_error = Xex((i - 1) * DIM_X);
     Eigen::Vector3d state = Xex.segment((i - 1) * DIM_X, DIM_X);
     setOptimizedState(&ref_points[i], state);
-    autoware_planning_msgs::msg::TrajectoryPoint traj_point;
+    autoware_auto_planning_msgs::msg::TrajectoryPoint traj_point;
     traj_point.pose.position.x = ref_points[i].p.x - std::sin(ref_points[i].yaw) * lat_error;
     traj_point.pose.position.y = ref_points[i].p.y + std::cos(ref_points[i].yaw) * lat_error;
-    traj_point.twist.linear.x = ref_points[i].v;
+    traj_point.longitudinal_velocity_mps = ref_points[i].v;
 
     traj_points.push_back(traj_point);
   }
@@ -897,7 +898,7 @@ ObjectiveMatrix MPTOptimizer::getObjectiveMatrix(
 ConstraintMatrix MPTOptimizer::getConstraintMatrix(
   const bool enable_avoidance, const Eigen::VectorXd & x0, const MPTMatrix & m, const CVMaps & maps,
   const std::vector<ReferencePoint> & ref_points,
-  [[maybe_unused]] const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points,
+  [[maybe_unused]] const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
   DebugData * debug_data) const
 {
   std::vector<double> dist_vec{

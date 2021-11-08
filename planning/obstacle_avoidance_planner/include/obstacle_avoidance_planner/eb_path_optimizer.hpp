@@ -18,10 +18,10 @@
 #include <opencv2/core.hpp>
 #include <rclcpp/clock.hpp>
 
-#include <autoware_perception_msgs/msg/dynamic_object.hpp>
-#include <autoware_planning_msgs/msg/path.hpp>
-#include <autoware_planning_msgs/msg/path_point.hpp>
-#include <autoware_planning_msgs/msg/trajectory.hpp>
+#include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
+#include <autoware_auto_planning_msgs/msg/path.hpp>
+#include <autoware_auto_planning_msgs/msg/path_point.hpp>
+#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <geometry_msgs/msg/point.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <nav_msgs/msg/map_meta_data.hpp>
@@ -152,10 +152,10 @@ struct TrajectoryParam
 
 struct Trajectories
 {
-  std::vector<autoware_planning_msgs::msg::TrajectoryPoint> smoothed_trajectory;
+  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> smoothed_trajectory;
   std::vector<ReferencePoint> mpt_ref_points;
-  std::vector<autoware_planning_msgs::msg::TrajectoryPoint> model_predictive_trajectory;
-  std::vector<autoware_planning_msgs::msg::TrajectoryPoint> extended_trajectory;
+  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> model_predictive_trajectory;
+  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> extended_trajectory;
 };
 
 struct ConstrainParam
@@ -194,7 +194,7 @@ struct VehicleParam
 struct FOAData
 {
   bool is_avoidance_possible = true;
-  std::vector<autoware_planning_msgs::msg::TrajectoryPoint> avoiding_traj_points;
+  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> avoiding_traj_points;
   std::vector<ConstrainRectangle> constrain_rectangles;
 };
 
@@ -212,9 +212,9 @@ struct DebugData
   std::vector<geometry_msgs::msg::Point> interpolated_points_for_extending;
   std::vector<util::Footprint> vehicle_footprints;
   std::vector<util::Footprint> current_vehicle_footprints;
-  std::vector<autoware_planning_msgs::msg::TrajectoryPoint> avoiding_traj_points;
-  std::vector<autoware_planning_msgs::msg::TrajectoryPoint> smoothed_points;
-  std::vector<autoware_perception_msgs::msg::DynamicObject> avoiding_objects;
+  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> avoiding_traj_points;
+  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> smoothed_points;
+  std::vector<autoware_auto_perception_msgs::msg::PredictedObject> avoiding_objects;
   std::vector<Bounds> bounds;
   std::vector<geometry_msgs::msg::Pose> bounds_candidate_for_base_points;
   std::vector<geometry_msgs::msg::Pose> bounds_candidate_for_top_points;
@@ -261,11 +261,11 @@ private:
 
   geometry_msgs::msg::Pose getOriginPose(
     const std::vector<geometry_msgs::msg::Point> & interpolated_points, const int interpolated_idx,
-    const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points);
+    const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points);
 
   Anchor getAnchor(
     const std::vector<geometry_msgs::msg::Point> & interpolated_points, const int interpolated_idx,
-    const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points) const;
+    const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points) const;
 
   boost::optional<std::vector<std::vector<geometry_msgs::msg::Point>>> getOccupancyPoints(
     const geometry_msgs::msg::Pose & origin, const cv::Mat & clearance_map,
@@ -297,8 +297,9 @@ private:
     const cv::Mat & only_objects_clearance_map) const;
 
   ConstrainRectangle getConstrainRectangle(
-    const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points, const Anchor & anchor,
-    const cv::Mat & clearance_map, const nav_msgs::msg::MapMetaData & map_info) const;
+    const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
+    const Anchor & anchor, const cv::Mat & clearance_map,
+    const nav_msgs::msg::MapMetaData & map_info) const;
 
   ConstrainRectangle getConstrainRectangle(
     const std::vector<std::vector<geometry_msgs::msg::Point>> & occupancy_points,
@@ -321,12 +322,12 @@ private:
     std::vector<geometry_msgs::msg::Point> & debug_detected_straight_points);
 
   int getEndPathIdx(
-    const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points,
+    const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
     const int begin_path_idx, const double required_trajectory_length);
 
   int getEndPathIdxInsideArea(
     const geometry_msgs::msg::Pose & ego_pose,
-    const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points,
+    const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
     const int begin_path_idx, const cv::Mat & drivable_area,
     const nav_msgs::msg::MapMetaData & map_info);
 
@@ -335,7 +336,7 @@ private:
     const std::vector<ConstrainRectangle> & road_constrains,
     const std::vector<ConstrainRectangle> & only_smooth_constrains,
     const std::vector<geometry_msgs::msg::Point> & interpolated_points,
-    const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points,
+    const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
     const int farthest_point_idx, const int num_fixed_points, const int straight_idx,
     DebugData * debug_data) const;
 
@@ -356,7 +357,7 @@ private:
     const std::vector<ConstrainRectangle> & road_constrains,
     const std::vector<ConstrainRectangle> & only_smooth_constrains,
     const std::vector<geometry_msgs::msg::Point> & interpolated_points,
-    const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points,
+    const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
     DebugData * debug_data) const;
 
   bool isPreFixIdx(
@@ -368,19 +369,19 @@ private:
     const cv::Mat & only_objects_clearance_map, const double distance_threshold) const;
 
   boost::optional<std::vector<ConstrainRectangle>> getConstrainRectangleVec(
-    const bool enable_avoidance, const autoware_planning_msgs::msg::Path & input_path,
+    const bool enable_avoidance, const autoware_auto_planning_msgs::msg::Path & input_path,
     const std::vector<geometry_msgs::msg::Point> & interpolated_points, const int num_fixed_points,
     const int farthest_point_idx, const int straight_idx, const cv::Mat & clearance_map,
     const cv::Mat & only_objects_clearance_map, DebugData * debug_data);
 
   boost::optional<std::vector<ConstrainRectangle>> getConstrainRectangleVec(
-    const autoware_planning_msgs::msg::Path & path,
+    const autoware_auto_planning_msgs::msg::Path & path,
     const std::vector<geometry_msgs::msg::Point> & interpolated_points, const int num_fixed_points,
     const int farthest_point_idx, const int straight_idx, const cv::Mat & clearance_map,
     const cv::Mat & only_objects_clearance_map);
 
   std::vector<ConstrainRectangle> getConstrainRectangleVec(
-    const std::vector<autoware_planning_msgs::msg::PathPoint> & input_path,
+    const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & input_path,
     const std::vector<geometry_msgs::msg::Point> & interpolated_points, const int num_fixed_points,
     const int farthest_point_idx);
 
@@ -399,33 +400,34 @@ private:
     const std::vector<geometry_msgs::msg::Pose> & fixed_points,
     const std::vector<geometry_msgs::msg::Point> & interpolated_points, const int farthest_idx);
 
-  boost::optional<std::vector<autoware_planning_msgs::msg::TrajectoryPoint>> getOptimizedTrajectory(
-    const bool enable_avoidance, const autoware_planning_msgs::msg::Path & path,
+  boost::optional<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>
+  getOptimizedTrajectory(
+    const bool enable_avoidance, const autoware_auto_planning_msgs::msg::Path & path,
     const CandidatePoints & candidate_points, const cv::Mat & clearance_map,
     const cv::Mat & only_objects_clearance_map, DebugData * debug_data);
 
-  std::vector<autoware_planning_msgs::msg::TrajectoryPoint> getExtendedOptimizedTrajectory(
-    const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points,
-    const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & optimized_points,
+  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> getExtendedOptimizedTrajectory(
+    const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
+    const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & optimized_points,
     DebugData * debug_data);
 
   void updateConstrain(
     const std::vector<geometry_msgs::msg::Point> & interpolated_points,
     const std::vector<ConstrainRectangle> & rectangle_points, const OptMode & opt_mode);
 
-  std::vector<autoware_planning_msgs::msg::TrajectoryPoint> convertOptimizedPointsToTrajectory(
+  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> convertOptimizedPointsToTrajectory(
     const std::vector<double> optimized_points, const std::vector<ConstrainRectangle> & constraint,
     const int farthest_idx);
 
   std::vector<geometry_msgs::msg::Pose> getFixedPoints(
     const geometry_msgs::msg::Pose & ego_pose,
-    const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points,
+    const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
     const std::unique_ptr<Trajectories> & prev_optimized_points, const cv::Mat & drivable_area,
     const nav_msgs::msg::MapMetaData & map_info);
 
   CandidatePoints getCandidatePoints(
     const geometry_msgs::msg::Pose & ego_pose,
-    const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points,
+    const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
     const std::unique_ptr<Trajectories> & prev_trajs, const cv::Mat & drivable_area,
     const nav_msgs::msg::MapMetaData & map_info, DebugData * debug_data);
 
@@ -434,14 +436,14 @@ private:
     const nav_msgs::msg::MapMetaData & map_info);
 
   CandidatePoints getDefaultCandidatePoints(
-    const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points);
+    const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points);
 
   std::vector<double> solveQP(const OptMode & opt_mode);
 
   bool isFixingPathPoint(
-    const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points) const;
+    const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points) const;
 
-  std::vector<autoware_planning_msgs::msg::TrajectoryPoint> calculateTrajectory(
+  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> calculateTrajectory(
     const std::vector<geometry_msgs::msg::Point> & padded_interpolated_points,
     const std::vector<ConstrainRectangle> & constrain_rectangles, const int farthest_idx,
     const OptMode & opt_mode);
@@ -460,9 +462,9 @@ public:
 
   boost::optional<Trajectories> generateOptimizedTrajectory(
     const bool enable_avoidance, const geometry_msgs::msg::Pose & ego_pose,
-    const autoware_planning_msgs::msg::Path & path,
+    const autoware_auto_planning_msgs::msg::Path & path,
     const std::unique_ptr<Trajectories> & prev_trajs,
-    const std::vector<autoware_perception_msgs::msg::DynamicObject> & objects,
+    const std::vector<autoware_auto_perception_msgs::msg::PredictedObject> & objects,
     DebugData * debug_data);
 };
 

@@ -18,8 +18,8 @@
 #include <autoware_utils/trajectory/trajectory.hpp>
 #include <eigen3/Eigen/Core>
 
-#include <autoware_planning_msgs/msg/path_point.hpp>
-#include <autoware_planning_msgs/msg/trajectory.hpp>
+#include <autoware_auto_planning_msgs/msg/path_point.hpp>
+#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 
 #include <boost/optional/optional_fwd.hpp>
 
@@ -99,7 +99,7 @@ int getNearestIdx(
   const int default_idx, const double delta_yaw_threshold);
 
 int getNearestIdxOverPoint(
-  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & points,
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
   const geometry_msgs::msg::Pose & pose, const int default_idx, const double delta_yaw_threshold);
 
 template <typename T>
@@ -117,20 +117,20 @@ int getNearestIdx(
 template <typename T>
 int getNearestPointIdx(const T & points, const geometry_msgs::msg::Point & point);
 
-std::vector<autoware_planning_msgs::msg::TrajectoryPoint> convertPathToTrajectory(
-  const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points);
+std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> convertPathToTrajectory(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points);
 
-std::vector<autoware_planning_msgs::msg::TrajectoryPoint> convertPointsToTrajectoryPointsWithYaw(
-  const std::vector<geometry_msgs::msg::Point> & points);
+std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>
+convertPointsToTrajectoryPointsWithYaw(const std::vector<geometry_msgs::msg::Point> & points);
 
-std::vector<autoware_planning_msgs::msg::TrajectoryPoint> fillTrajectoryWithVelocity(
-  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & traj_points,
+std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> fillTrajectoryWithVelocity(
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & traj_points,
   const double velocity);
 
 template <typename T>
-std::vector<autoware_planning_msgs::msg::TrajectoryPoint> alignVelocityWithPoints(
-  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & traj_points, const T & points,
-  const int zero_velocity_traj_idx, const int max_skip_comparison_idx);
+std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> alignVelocityWithPoints(
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & traj_points,
+  const T & points, const int zero_velocity_traj_idx, const int max_skip_comparison_idx);
 
 struct Rectangle
 {
@@ -149,12 +149,14 @@ Rectangle getLargestRectangleInRow(
 Rectangle getLargestRectangle(const std::vector<std::vector<int>> & input);
 
 boost::optional<geometry_msgs::msg::Point> getLastExtendedPoint(
-  const autoware_planning_msgs::msg::PathPoint & path_point, const geometry_msgs::msg::Pose & pose,
-  const double delta_yaw_threshold, const double delta_dist_threshold);
+  const autoware_auto_planning_msgs::msg::PathPoint & path_point,
+  const geometry_msgs::msg::Pose & pose, const double delta_yaw_threshold,
+  const double delta_dist_threshold);
 
-boost::optional<autoware_planning_msgs::msg::TrajectoryPoint> getLastExtendedTrajPoint(
-  const autoware_planning_msgs::msg::PathPoint & path_point, const geometry_msgs::msg::Pose & pose,
-  const double delta_yaw_threshold, const double delta_dist_threshold);
+boost::optional<autoware_auto_planning_msgs::msg::TrajectoryPoint> getLastExtendedTrajPoint(
+  const autoware_auto_planning_msgs::msg::PathPoint & path_point,
+  const geometry_msgs::msg::Pose & pose, const double delta_yaw_threshold,
+  const double delta_dist_threshold);
 
 struct Footprint
 {
@@ -166,7 +168,7 @@ struct Footprint
 };
 
 std::vector<Footprint> getVehicleFootprints(
-  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & optimized_points,
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & optimized_points,
   const VehicleParam & vehicle_param);
 
 std::vector<double> calcEuclidDist(const std::vector<double> & x, const std::vector<double> & y);
@@ -175,11 +177,12 @@ bool hasValidNearestPointFromEgo(
   const geometry_msgs::msg::Pose & ego_pose, const Trajectories & trajs,
   const TrajectoryParam & traj_param);
 
-std::vector<autoware_planning_msgs::msg::TrajectoryPoint> concatTraj(const Trajectories & trajs);
+std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> concatTraj(
+  const Trajectories & trajs);
 
 int getZeroVelocityIdx(
   const bool is_showing_debug_info, const std::vector<geometry_msgs::msg::Point> & fine_points,
-  const std::vector<autoware_planning_msgs::msg::PathPoint> & path_points,
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
   const std::unique_ptr<Trajectories> & opt_trajs, const TrajectoryParam & traj_param);
 
 template <typename T>
