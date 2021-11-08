@@ -38,7 +38,7 @@
 #include <lanelet2_extension/visualization/visualization.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_perception_msgs/msg/traffic_light_roi.hpp>
+#include <autoware_auto_perception_msgs/msg/traffic_light_roi.hpp>
 
 #include <lanelet2_core/Exceptions.h>
 #include <lanelet2_core/LaneletMap.h>
@@ -96,18 +96,18 @@ MapBasedDetector::MapBasedDetector(const rclcpp::NodeOptions & node_options)
   using std::placeholders::_1;
 
   // subscribers
-  map_sub_ = create_subscription<autoware_lanelet2_msgs::msg::MapBin>(
+  map_sub_ = create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
     "~/input/vector_map", rclcpp::QoS{1}.transient_local(),
     std::bind(&MapBasedDetector::mapCallback, this, _1));
   camera_info_sub_ = create_subscription<sensor_msgs::msg::CameraInfo>(
     "~/input/camera_info", rclcpp::SensorDataQoS(),
     std::bind(&MapBasedDetector::cameraInfoCallback, this, _1));
-  route_sub_ = create_subscription<autoware_planning_msgs::msg::Route>(
+  route_sub_ = create_subscription<autoware_auto_planning_msgs::msg::HADMapRoute>(
     "~/input/route", 1, std::bind(&MapBasedDetector::routeCallback, this, _1));
 
   // publishers
-  roi_pub_ =
-    this->create_publisher<autoware_perception_msgs::msg::TrafficLightRoiArray>("~/output/rois", 1);
+  roi_pub_ = this->create_publisher<autoware_auto_perception_msgs::msg::TrafficLightRoiArray>(
+    "~/output/rois", 1);
   viz_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/markers", 1);
 
   // parameter declaration needs default values: are 0.0 goof defaults for this?
@@ -128,7 +128,7 @@ void MapBasedDetector::cameraInfoCallback(
   image_geometry::PinholeCameraModel pinhole_camera_model;
   pinhole_camera_model.fromCameraInfo(*input_msg);
 
-  autoware_perception_msgs::msg::TrafficLightRoiArray output_msg;
+  autoware_auto_perception_msgs::msg::TrafficLightRoiArray output_msg;
   output_msg.header = input_msg->header;
 
   /* Camera pose */
@@ -171,7 +171,7 @@ void MapBasedDetector::cameraInfoCallback(
    * in image.
    */
   for (const auto & traffic_light : visible_traffic_lights) {
-    autoware_perception_msgs::msg::TrafficLightRoi tl_roi;
+    autoware_auto_perception_msgs::msg::TrafficLightRoi tl_roi;
     if (!getTrafficLightRoi(
           camera_pose_stamped.pose, pinhole_camera_model, traffic_light, config_, tl_roi)) {
       continue;
@@ -186,7 +186,7 @@ bool MapBasedDetector::getTrafficLightRoi(
   const geometry_msgs::msg::Pose & camera_pose,
   const image_geometry::PinholeCameraModel & pinhole_camera_model,
   const lanelet::ConstLineString3d traffic_light, const Config & config,
-  autoware_perception_msgs::msg::TrafficLightRoi & tl_roi)
+  autoware_auto_perception_msgs::msg::TrafficLightRoi & tl_roi)
 {
   const double tl_height = traffic_light.attributeOr("height", 0.0);
   const auto & tl_left_down_point = traffic_light.front();
@@ -265,7 +265,7 @@ bool MapBasedDetector::getTrafficLightRoi(
 }
 
 void MapBasedDetector::mapCallback(
-  const autoware_lanelet2_msgs::msg::MapBin::ConstSharedPtr input_msg)
+  const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr input_msg)
 {
   lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
 
@@ -289,17 +289,17 @@ void MapBasedDetector::mapCallback(
 }
 
 void MapBasedDetector::routeCallback(
-  const autoware_planning_msgs::msg::Route::ConstSharedPtr input_msg)
+  const autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr input_msg)
 {
   if (lanelet_map_ptr_ == nullptr) {
     RCLCPP_WARN(get_logger(), "cannot set traffic light in route because don't receive map");
     return;
   }
   lanelet::ConstLanelets route_lanelets;
-  for (const auto & route_section : input_msg->route_sections) {
-    for (const auto & lane_id : route_section.lane_ids) {
+  for (const auto & segment : input_msg->segments) {
+    for (const auto & primitive : segment.primitives) {
       try {
-        route_lanelets.push_back(lanelet_map_ptr_->laneletLayer.get(lane_id));
+        route_lanelets.push_back(lanelet_map_ptr_->laneletLayer.get(primitive.id));
       } catch (const lanelet::NoSuchPrimitiveError & ex) {
         RCLCPP_ERROR(get_logger(), "%s", ex.what());
         return;

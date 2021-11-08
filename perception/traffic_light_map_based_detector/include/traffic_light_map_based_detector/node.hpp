@@ -37,9 +37,9 @@
 #include <lanelet2_extension/utility/query.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_lanelet2_msgs/msg/map_bin.hpp>
-#include <autoware_perception_msgs/msg/traffic_light_roi_array.hpp>
-#include <autoware_planning_msgs/msg/route.hpp>
+#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
+#include <autoware_auto_perception_msgs/msg/traffic_light_roi_array.hpp>
+#include <autoware_auto_planning_msgs/msg/had_map_route.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <sensor_msgs/msg/camera_info.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
@@ -82,11 +82,11 @@ private:
   };
 
 private:
-  rclcpp::Subscription<autoware_lanelet2_msgs::msg::MapBin>::SharedPtr map_sub_;
+  rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr map_sub_;
   rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr camera_info_sub_;
-  rclcpp::Subscription<autoware_planning_msgs::msg::Route>::SharedPtr route_sub_;
+  rclcpp::Subscription<autoware_auto_planning_msgs::msg::HADMapRoute>::SharedPtr route_sub_;
 
-  rclcpp::Publisher<autoware_perception_msgs::msg::TrafficLightRoiArray>::SharedPtr roi_pub_;
+  rclcpp::Publisher<autoware_auto_perception_msgs::msg::TrafficLightRoiArray>::SharedPtr roi_pub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr viz_pub_;
 
   tf2_ros::Buffer tf_buffer_;
@@ -102,9 +102,9 @@ private:
   lanelet::routing::RoutingGraphPtr routing_graph_ptr_;
   Config config_;
 
-  void mapCallback(const autoware_lanelet2_msgs::msg::MapBin::ConstSharedPtr input_msg);
+  void mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr input_msg);
   void cameraInfoCallback(const sensor_msgs::msg::CameraInfo::ConstSharedPtr input_msg);
-  void routeCallback(const autoware_planning_msgs::msg::Route::ConstSharedPtr input_msg);
+  void routeCallback(const autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr input_msg);
   void getVisibleTrafficLights(
     const TrafficLightSet & all_traffic_lights, const geometry_msgs::msg::Pose & camera_pose,
     const image_geometry::PinholeCameraModel & pinhole_camera_model,
@@ -121,7 +121,7 @@ private:
     const geometry_msgs::msg::Pose & camera_pose,
     const image_geometry::PinholeCameraModel & pinhole_camera_model,
     const lanelet::ConstLineString3d traffic_light, const Config & config,
-    autoware_perception_msgs::msg::TrafficLightRoi & tl_roi);
+    autoware_auto_perception_msgs::msg::TrafficLightRoi & tl_roi);
   void publishVisibleTrafficLights(
     const geometry_msgs::msg::PoseStamped camera_pose_stamped,
     const std::vector<lanelet::ConstLineString3d> & visible_traffic_lights,
