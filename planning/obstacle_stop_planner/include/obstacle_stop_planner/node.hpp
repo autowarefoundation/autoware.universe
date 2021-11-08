@@ -27,12 +27,12 @@
 #include <signal_processing/lowpass_filter_1d.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
+#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
+#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <autoware_debug_msgs/msg/bool_stamped.hpp>
 #include <autoware_debug_msgs/msg/float32_multi_array_stamped.hpp>
 #include <autoware_debug_msgs/msg/float32_stamped.hpp>
-#include <autoware_perception_msgs/msg/dynamic_object_array.hpp>
 #include <autoware_planning_msgs/msg/expand_stop_range.hpp>
-#include <autoware_planning_msgs/msg/trajectory.hpp>
 #include <autoware_planning_msgs/msg/velocity_limit.hpp>
 #include <autoware_planning_msgs/msg/velocity_limit_clear_command.hpp>
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
@@ -58,13 +58,13 @@
 namespace motion_planning
 {
 namespace bg = boost::geometry;
+using autoware_auto_perception_msgs::msg::PredictedObjects;
+using autoware_auto_planning_msgs::msg::Trajectory;
+using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using autoware_debug_msgs::msg::BoolStamped;
 using autoware_debug_msgs::msg::Float32MultiArrayStamped;
 using autoware_debug_msgs::msg::Float32Stamped;
-using autoware_perception_msgs::msg::DynamicObjectArray;
 using autoware_planning_msgs::msg::ExpandStopRange;
-using autoware_planning_msgs::msg::Trajectory;
-using autoware_planning_msgs::msg::TrajectoryPoint;
 using autoware_planning_msgs::msg::VelocityLimit;
 using autoware_planning_msgs::msg::VelocityLimitClearCommand;
 using autoware_utils::Point2d;
@@ -166,8 +166,8 @@ private:
   // publisher and subscriber
   rclcpp::Subscription<Trajectory>::SharedPtr path_sub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr obstacle_pointcloud_sub_;
-  rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr current_velocity_sub_;
-  rclcpp::Subscription<DynamicObjectArray>::SharedPtr dynamic_object_sub_;
+  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr current_velocity_sub_;
+  rclcpp::Subscription<PredictedObjects>::SharedPtr dynamic_object_sub_;
   rclcpp::Subscription<ExpandStopRange>::SharedPtr expand_stop_range_sub_;
   rclcpp::Publisher<Trajectory>::SharedPtr path_pub_;
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticStatus>::SharedPtr stop_reason_diag_pub_;
@@ -181,11 +181,11 @@ private:
   tf2_ros::Buffer tf_buffer_{get_clock()};
   tf2_ros::TransformListener tf_listener_{tf_buffer_};
   sensor_msgs::msg::PointCloud2::SharedPtr obstacle_ros_pointcloud_ptr_{nullptr};
-  DynamicObjectArray::ConstSharedPtr object_ptr_{nullptr};
+  PredictedObjects::ConstSharedPtr object_ptr_{nullptr};
   rclcpp::Time last_detection_time_;
 
-  geometry_msgs::msg::TwistStamped::ConstSharedPtr current_velocity_ptr_{nullptr};
-  geometry_msgs::msg::TwistStamped::ConstSharedPtr prev_velocity_ptr_{nullptr};
+  nav_msgs::msg::Odometry::ConstSharedPtr current_velocity_ptr_{nullptr};
+  nav_msgs::msg::Odometry::ConstSharedPtr prev_velocity_ptr_{nullptr};
   double current_acc_{0.0};
 
   bool set_velocity_limit_{false};
@@ -200,8 +200,8 @@ private:
    */
   void obstaclePointcloudCallback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr input_msg);
   void pathCallback(const Trajectory::ConstSharedPtr input_msg);
-  void dynamicObjectCallback(const DynamicObjectArray::ConstSharedPtr input_msg);
-  void currentVelocityCallback(const geometry_msgs::msg::TwistStamped::ConstSharedPtr input_msg);
+  void dynamicObjectCallback(const PredictedObjects::ConstSharedPtr input_msg);
+  void currentVelocityCallback(const nav_msgs::msg::Odometry::ConstSharedPtr input_msg);
   void externalExpandStopRangeCallback(const ExpandStopRange::ConstSharedPtr input_msg);
 
 private:

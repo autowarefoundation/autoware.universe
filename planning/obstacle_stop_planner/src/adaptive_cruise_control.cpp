@@ -184,17 +184,17 @@ AdaptiveCruiseController::AdaptiveCruiseController(
 }
 
 void AdaptiveCruiseController::insertAdaptiveCruiseVelocity(
-  const autoware_planning_msgs::msg::Trajectory & trajectory, const int nearest_collision_point_idx,
-  const geometry_msgs::msg::Pose self_pose, const pcl::PointXYZ & nearest_collision_point,
-  const rclcpp::Time nearest_collision_point_time,
-  const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr object_ptr,
-  const geometry_msgs::msg::TwistStamped::ConstSharedPtr current_velocity_ptr, bool * need_to_stop,
-  autoware_planning_msgs::msg::Trajectory * output_trajectory)
+  const autoware_auto_planning_msgs::msg::Trajectory & trajectory,
+  const int nearest_collision_point_idx, const geometry_msgs::msg::Pose self_pose,
+  const pcl::PointXYZ & nearest_collision_point, const rclcpp::Time nearest_collision_point_time,
+  const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr object_ptr,
+  const nav_msgs::msg::Odometry::ConstSharedPtr current_velocity_ptr, bool * need_to_stop,
+  autoware_auto_planning_msgs::msg::Trajectory * output_trajectory)
 {
   debug_values_.data.clear();
   debug_values_.data.resize(num_debug_values_, 0.0);
 
-  const double current_velocity = current_velocity_ptr->twist.linear.x;
+  const double current_velocity = current_velocity_ptr->twist.twist.linear.x;
   double col_point_distance;
   double point_velocity;
   bool success_estimate_vel = false;
@@ -267,7 +267,7 @@ void AdaptiveCruiseController::insertAdaptiveCruiseVelocity(
 }
 
 void AdaptiveCruiseController::calcDistanceToNearestPointOnPath(
-  const autoware_planning_msgs::msg::Trajectory & trajectory, const int nearest_point_idx,
+  const autoware_auto_planning_msgs::msg::Trajectory & trajectory, const int nearest_point_idx,
   const geometry_msgs::msg::Pose & self_pose, const pcl::PointXYZ & nearest_collision_point,
   const rclcpp::Time & nearest_collision_point_time, double * distance)
 {
@@ -329,13 +329,13 @@ void AdaptiveCruiseController::calcDistanceToNearestPointOnPath(
 }
 
 double AdaptiveCruiseController::calcTrajYaw(
-  const autoware_planning_msgs::msg::Trajectory & trajectory, const int collision_point_idx)
+  const autoware_auto_planning_msgs::msg::Trajectory & trajectory, const int collision_point_idx)
 {
   return tf2::getYaw(trajectory.points.at(collision_point_idx).pose.orientation);
 }
 
 bool AdaptiveCruiseController::estimatePointVelocityFromObject(
-  const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr object_ptr,
+  const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr object_ptr,
   const double traj_yaw, const pcl::PointXYZ & nearest_collision_point, double * velocity)
 {
   geometry_msgs::msg::Point nearest_collision_p_ros;
@@ -350,11 +350,11 @@ bool AdaptiveCruiseController::estimatePointVelocityFromObject(
   const Point collision_point_2d = convertPointRosToBoost(nearest_collision_p_ros);
   for (const auto & obj : object_ptr->objects) {
     const Polygon obj_poly = getPolygon(
-      obj.state.pose_covariance.pose, obj.shape.dimensions, 0.0,
+      obj.kinematics.initial_pose.pose, obj.shape.front().dimensions, 0.0,
       param_.object_polygon_length_margin, param_.object_polygon_width_margin);
     if (boost::geometry::distance(obj_poly, collision_point_2d) <= 0) {
-      obj_vel = obj.state.twist_covariance.twist.linear.x;
-      obj_yaw = tf2::getYaw(obj.state.pose_covariance.pose.orientation);
+      obj_vel = obj.kinematics.initial_twist.twist.linear.x;
+      obj_yaw = tf2::getYaw(obj.kinematics.initial_pose.pose.orientation);
       get_obj = true;
       break;
     }
@@ -585,7 +585,8 @@ double AdaptiveCruiseController::calcTargetVelocityByPID(
 
 void AdaptiveCruiseController::insertMaxVelocityToPath(
   const geometry_msgs::msg::Pose self_pose, const double current_vel, const double target_vel,
-  const double dist_to_collision_point, autoware_planning_msgs::msg::Trajectory * output_trajectory)
+  const double dist_to_collision_point,
+  autoware_auto_planning_msgs::msg::Trajectory * output_trajectory)
 {
   // plus distance from self to next nearest point
   double dist = dist_to_collision_point;
@@ -611,7 +612,7 @@ void AdaptiveCruiseController::insertMaxVelocityToPath(
     const auto prev_p = output_trajectory->points[i - 1];
     const double p_dist = getDistanceFromTwoPoint(current_p.pose.position, prev_p.pose.position);
     total_dist += p_dist;
-    if (current_p.twist.linear.x > target_vel && total_dist >= 0) {
+    if (current_p.longitudinal_velocity_mps > target_vel && total_dist >= 0) {
       double next_pre_vel;
       if (std::fabs(clipped_acc) < 1e-05) {
         next_pre_vel = pre_vel;
@@ -627,8 +628,8 @@ void AdaptiveCruiseController::insertMaxVelocityToPath(
 
       if (total_dist >= margin_to_insert) {
         const double max_velocity = std::max(target_vel, next_pre_vel);
-        if (output_trajectory->points[i].twist.linear.x > max_velocity) {
-          output_trajectory->points[i].twist.linear.x = max_velocity;
+        if (output_trajectory->points[i].longitudinal_velocity_mps > max_velocity) {
+          output_trajectory->points[i].longitudinal_velocity_mps = max_velocity;
         }
       }
       pre_vel = next_pre_vel;
@@ -651,14 +652,13 @@ void AdaptiveCruiseController::registerQueToVelocity(
   }
 
   // append new que
-  geometry_msgs::msg::TwistStamped new_vel;
+  nav_msgs::msg::Odometry new_vel;
   new_vel.header.stamp = vel_time;
-  new_vel.twist.linear.x = vel;
+  new_vel.twist.twist.linear.x = vel;
   est_vel_que_.emplace_back(new_vel);
 }
 
-double AdaptiveCruiseController::getMedianVel(
-  const std::vector<geometry_msgs::msg::TwistStamped> vel_que)
+double AdaptiveCruiseController::getMedianVel(const std::vector<nav_msgs::msg::Odometry> vel_que)
 {
   if (vel_que.size() == 0) {
     RCLCPP_WARN_STREAM(node_->get_logger(), "size of vel que is 0. Something has wrong.");
@@ -667,7 +667,7 @@ double AdaptiveCruiseController::getMedianVel(
 
   std::vector<double> raw_vel_que;
   for (const auto vel : vel_que) {
-    raw_vel_que.emplace_back(vel.twist.linear.x);
+    raw_vel_que.emplace_back(vel.twist.twist.linear.x);
   }
 
   double med_vel;

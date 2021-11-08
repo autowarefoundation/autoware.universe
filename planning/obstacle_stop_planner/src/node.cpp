@@ -505,10 +505,10 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
   path_sub_ = this->create_subscription<Trajectory>(
     "~/input/trajectory", 1,
     std::bind(&ObstacleStopPlannerNode::pathCallback, this, std::placeholders::_1));
-  current_velocity_sub_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
+  current_velocity_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
     "~/input/twist", 1,
     std::bind(&ObstacleStopPlannerNode::currentVelocityCallback, this, std::placeholders::_1));
-  dynamic_object_sub_ = this->create_subscription<DynamicObjectArray>(
+  dynamic_object_sub_ = this->create_subscription<PredictedObjects>(
     "~/input/objects", 1,
     std::bind(&ObstacleStopPlannerNode::dynamicObjectCallback, this, std::placeholders::_1));
   expand_stop_range_sub_ = this->create_subscription<ExpandStopRange>(
@@ -846,7 +846,7 @@ void ObstacleStopPlannerNode::insertStopPoint(
   }
 
   for (size_t i = update_stop_idx; i < output.points.size(); ++i) {
-    output.points.at(i).twist.linear.x = 0.0;
+    output.points.at(i).longitudinal_velocity_mps = 0.0;
   }
 
   stop_reason_diag = makeStopReasonDiag("obstacle", p_insert.pose);
@@ -865,7 +865,7 @@ StopPoint ObstacleStopPlannerNode::searchInsertPoint(
   bool is_inserted_already_stop_point = false;
   const double epsilon = 1e-3;
   for (int j = max_dist_stop_point.index - 1; j < static_cast<int>(idx); ++j) {
-    if (std::abs(base_trajectory.points.at(std::max(j, 0)).twist.linear.x) < epsilon) {
+    if (std::abs(base_trajectory.points.at(std::max(j, 0)).longitudinal_velocity_mps) < epsilon) {
       is_inserted_already_stop_point = true;
       break;
     }
@@ -908,7 +908,7 @@ SlowDownSection ObstacleStopPlannerNode::createSlowDownSection(
   }
 
   if (slow_down_param_.consider_constraints) {
-    const auto & current_vel = current_velocity_ptr_->twist.linear.x;
+    const auto & current_vel = current_velocity_ptr_->twist.twist.linear.x;
     const auto margin_with_vel = calcFeasibleMarginAndVelocity(
       slow_down_param_, dist_baselink_to_obstacle + dist_remain, current_vel, current_acc_);
 
@@ -1038,8 +1038,9 @@ void ObstacleStopPlannerNode::insertSlowDownSection(
   }
 
   for (size_t i = update_start_idx; i <= update_end_idx; ++i) {
-    output.points.at(i).twist.linear.x =
-      std::min(slow_down_section.velocity, output.points.at(i).twist.linear.x);
+    output.points.at(i).longitudinal_velocity_mps = std::min(
+      slow_down_section.velocity,
+      static_cast<double>(output.points.at(i).longitudinal_velocity_mps));
   }
 
   debug_ptr_->pushPose(p_base_start.pose, PoseType::SlowDownStart);
@@ -1047,13 +1048,13 @@ void ObstacleStopPlannerNode::insertSlowDownSection(
 }
 
 void ObstacleStopPlannerNode::dynamicObjectCallback(
-  const DynamicObjectArray::ConstSharedPtr input_msg)
+  const PredictedObjects::ConstSharedPtr input_msg)
 {
   object_ptr_ = input_msg;
 }
 
 void ObstacleStopPlannerNode::currentVelocityCallback(
-  const geometry_msgs::msg::TwistStamped::ConstSharedPtr input_msg)
+  const nav_msgs::msg::Odometry::ConstSharedPtr input_msg)
 {
   current_velocity_ptr_ = input_msg;
 
@@ -1062,7 +1063,8 @@ void ObstacleStopPlannerNode::currentVelocityCallback(
     return;
   }
 
-  const double dv = current_velocity_ptr_->twist.linear.x - prev_velocity_ptr_->twist.linear.x;
+  const double dv =
+    current_velocity_ptr_->twist.twist.linear.x - prev_velocity_ptr_->twist.twist.linear.x;
   const double dt = std::max(
     (rclcpp::Time(current_velocity_ptr_->header.stamp) -
      rclcpp::Time(prev_velocity_ptr_->header.stamp))
@@ -1090,8 +1092,9 @@ TrajectoryPoint ObstacleStopPlannerNode::getExtendTrajectoryPoint(
   tf2::toMsg(map2extend_point, extend_pose);
   TrajectoryPoint extend_trajectory_point;
   extend_trajectory_point.pose = extend_pose;
-  extend_trajectory_point.twist = goal_point.twist;
-  extend_trajectory_point.accel = goal_point.accel;
+  extend_trajectory_point.longitudinal_velocity_mps = goal_point.longitudinal_velocity_mps;
+  extend_trajectory_point.lateral_velocity_mps = goal_point.lateral_velocity_mps;
+  extend_trajectory_point.acceleration_mps2 = goal_point.acceleration_mps2;
   return extend_trajectory_point;
 }
 
@@ -1403,7 +1406,7 @@ void ObstacleStopPlannerNode::setExternalVelocityLimit()
 
 void ObstacleStopPlannerNode::resetExternalVelocityLimit()
 {
-  const auto current_vel = current_velocity_ptr_->twist.linear.x;
+  const auto current_vel = current_velocity_ptr_->twist.twist.linear.x;
   const auto reach_target_vel =
     current_vel <
     slow_down_param_.slow_down_vel + slow_down_param_.vel_threshold_reset_velocity_limit_;
@@ -1428,7 +1431,7 @@ void ObstacleStopPlannerNode::resetExternalVelocityLimit()
 
 void ObstacleStopPlannerNode::publishDebugData(const PlannerData & planner_data)
 {
-  const auto & current_vel = current_velocity_ptr_->twist.linear.x;
+  const auto & current_vel = current_velocity_ptr_->twist.twist.linear.x;
   debug_ptr_->setDebugValues(DebugValues::TYPE::CURRENT_VEL, current_vel);
   debug_ptr_->setDebugValues(DebugValues::TYPE::CURRENT_ACC, current_acc_);
   debug_ptr_->setDebugValues(
