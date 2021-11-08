@@ -34,11 +34,11 @@ TrafficLightRoiVisualizerNodelet::TrafficLightRoiVisualizerNodelet(
 
   if (enable_fine_detection_) {
     sync_with_rough_roi_.reset(new SyncWithRoughRoi(
-      SyncPolicyWithRoughRoi(10), image_sub_, roi_sub_, rough_roi_sub_, tl_states_sub_));
+      SyncPolicyWithRoughRoi(10), image_sub_, roi_sub_, rough_roi_sub_, traffic_signals_sub_));
     sync_with_rough_roi_->registerCallback(
       std::bind(&TrafficLightRoiVisualizerNodelet::imageRoughRoiCallback, this, _1, _2, _3, _4));
   } else {
-    sync_.reset(new Sync(SyncPolicy(10), image_sub_, roi_sub_, tl_states_sub_));
+    sync_.reset(new Sync(SyncPolicy(10), image_sub_, roi_sub_, traffic_signals_sub_));
     sync_->registerCallback(
       std::bind(&TrafficLightRoiVisualizerNodelet::imageRoiCallback, this, _1, _2, _3));
   }
@@ -60,7 +60,7 @@ void TrafficLightRoiVisualizerNodelet::connectCb()
 {
   if (image_pub_.getNumSubscribers() == 0) {
     image_sub_.unsubscribe();
-    tl_states_sub_.unsubscribe();
+    traffic_signals_sub_.unsubscribe();
     roi_sub_.unsubscribe();
     if (enable_fine_detection_) {
       rough_roi_sub_.unsubscribe();
@@ -68,7 +68,7 @@ void TrafficLightRoiVisualizerNodelet::connectCb()
   } else if (!image_sub_.getSubscriber()) {
     image_sub_.subscribe(this, "~/input/image", "raw", rmw_qos_profile_sensor_data);
     roi_sub_.subscribe(this, "~/input/rois", rclcpp::QoS{1}.get_rmw_qos_profile());
-    tl_states_sub_.subscribe(
+    traffic_signals_sub_.subscribe(
       this, "~/input/traffic_light_states", rclcpp::QoS{1}.get_rmw_qos_profile());
     if (enable_fine_detection_) {
       rough_roi_sub_.subscribe(this, "~/input/rough/rois", rclcpp::QoS{1}.get_rmw_qos_profile());
@@ -77,7 +77,7 @@ void TrafficLightRoiVisualizerNodelet::connectCb()
 }
 
 bool TrafficLightRoiVisualizerNodelet::createRect(
-  cv::Mat & image, const autoware_perception_msgs::msg::TrafficLightRoi & tl_roi,
+  cv::Mat & image, const autoware_auto_perception_msgs::msg::TrafficLightRoi & tl_roi,
   const cv::Scalar & color)
 {
   cv::rectangle(
@@ -91,7 +91,7 @@ bool TrafficLightRoiVisualizerNodelet::createRect(
 }
 
 bool TrafficLightRoiVisualizerNodelet::createRect(
-  cv::Mat & image, const autoware_perception_msgs::msg::TrafficLightRoi & tl_roi,
+  cv::Mat & image, const autoware_auto_perception_msgs::msg::TrafficLightRoi & tl_roi,
   const ClassificationResult & result)
 {
   cv::Scalar color;
@@ -125,9 +125,9 @@ bool TrafficLightRoiVisualizerNodelet::createRect(
 
 void TrafficLightRoiVisualizerNodelet::imageRoiCallback(
   const sensor_msgs::msg::Image::ConstSharedPtr & input_image_msg,
-  const autoware_perception_msgs::msg::TrafficLightRoiArray::ConstSharedPtr & input_tl_roi_msg,
-  [[maybe_unused]] const autoware_perception_msgs::msg::TrafficLightStateArray::ConstSharedPtr &
-    input_tl_states_msg)
+  const autoware_auto_perception_msgs::msg::TrafficLightRoiArray::ConstSharedPtr & input_tl_roi_msg,
+  [[maybe_unused]] const autoware_auto_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr &
+    input_traffic_signals_msg)
 {
   cv_bridge::CvImagePtr cv_ptr;
   try {
@@ -143,31 +143,31 @@ void TrafficLightRoiVisualizerNodelet::imageRoiCallback(
 }
 
 bool TrafficLightRoiVisualizerNodelet::getClassificationResult(
-  int id, const autoware_perception_msgs::msg::TrafficLightStateArray & tl_states,
+  int id, const autoware_auto_perception_msgs::msg::TrafficSignalArray & traffic_signals,
   ClassificationResult & result)
 {
-  bool has_correspond_tl_state = false;
-  for (const auto & tl_state : tl_states.states) {
-    if (id != tl_state.id) {
+  bool has_correspond_traffic_signal = false;
+  for (const auto & traffic_signal : traffic_signals.signals) {
+    if (id != traffic_signal.map_primitive_id) {
       continue;
     }
-    has_correspond_tl_state = true;
-    for (size_t i = 0; i < tl_state.lamp_states.size(); i++) {
-      auto state = tl_state.lamp_states.at(i);
+    has_correspond_traffic_signal = true;
+    for (size_t i = 0; i < traffic_signal.lights.size(); i++) {
+      auto light = traffic_signal.lights.at(i);
       // all lamp confidence are the same
-      result.prob = state.confidence;
-      result.label += state2label_[state.type];
-      if (i < tl_state.lamp_states.size() - 1) {
+      result.prob = light.confidence;
+      result.label += (state2label_[light.color] + "-" + state2label_[light.shape]);
+      if (i < traffic_signal.lights.size() - 1) {
         result.label += ",";
       }
     }
   }
-  return has_correspond_tl_state;
+  return has_correspond_traffic_signal;
 }
 
 bool TrafficLightRoiVisualizerNodelet::getRoiFromId(
-  int id, const autoware_perception_msgs::msg::TrafficLightRoiArray::ConstSharedPtr & rois,
-  autoware_perception_msgs::msg::TrafficLightRoi & correspond_roi)
+  int id, const autoware_auto_perception_msgs::msg::TrafficLightRoiArray::ConstSharedPtr & rois,
+  autoware_auto_perception_msgs::msg::TrafficLightRoi & correspond_roi)
 {
   for (const auto roi : rois->rois) {
     if (roi.id == id) {
@@ -180,10 +180,11 @@ bool TrafficLightRoiVisualizerNodelet::getRoiFromId(
 
 void TrafficLightRoiVisualizerNodelet::imageRoughRoiCallback(
   const sensor_msgs::msg::Image::ConstSharedPtr & input_image_msg,
-  const autoware_perception_msgs::msg::TrafficLightRoiArray::ConstSharedPtr & input_tl_roi_msg,
-  const autoware_perception_msgs::msg::TrafficLightRoiArray::ConstSharedPtr &
+  const autoware_auto_perception_msgs::msg::TrafficLightRoiArray::ConstSharedPtr & input_tl_roi_msg,
+  const autoware_auto_perception_msgs::msg::TrafficLightRoiArray::ConstSharedPtr &
     input_tl_rough_roi_msg,
-  const autoware_perception_msgs::msg::TrafficLightStateArray::ConstSharedPtr & input_tl_states_msg)
+  const autoware_auto_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr &
+    input_traffic_signals_msg)
 {
   cv_bridge::CvImagePtr cv_ptr;
   try {
@@ -193,18 +194,18 @@ void TrafficLightRoiVisualizerNodelet::imageRoughRoiCallback(
       createRect(cv_ptr->image, tl_rough_roi, cv::Scalar(0, 255, 0));
 
       ClassificationResult result;
-      bool has_correspond_tl_state =
-        getClassificationResult(tl_rough_roi.id, *input_tl_states_msg, result);
-      autoware_perception_msgs::msg::TrafficLightRoi tl_roi;
+      bool has_correspond_traffic_signal =
+        getClassificationResult(tl_rough_roi.id, *input_traffic_signals_msg, result);
+      autoware_auto_perception_msgs::msg::TrafficLightRoi tl_roi;
       bool has_correspond_roi = getRoiFromId(tl_rough_roi.id, input_tl_roi_msg, tl_roi);
 
-      if (has_correspond_roi && has_correspond_tl_state) {
+      if (has_correspond_roi && has_correspond_traffic_signal) {
         // has fine detection and classification results
         createRect(cv_ptr->image, tl_roi, result);
-      } else if (has_correspond_roi && !has_correspond_tl_state) {
+      } else if (has_correspond_roi && !has_correspond_traffic_signal) {
         // has fine detection result and does not have classification result
         createRect(cv_ptr->image, tl_roi, cv::Scalar(255, 255, 255));
-      } else if (!has_correspond_roi && has_correspond_tl_state) {
+      } else if (!has_correspond_roi && has_correspond_traffic_signal) {
         // does not have fine detection result and has classification result
         createRect(cv_ptr->image, tl_rough_roi, result);
       } else {

@@ -19,8 +19,8 @@
 #include <lanelet2_extension/utility/query.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_lanelet2_msgs/msg/map_bin.hpp>
-#include <autoware_perception_msgs/msg/traffic_light_state_array.hpp>
+#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
+#include <autoware_auto_perception_msgs/msg/traffic_signal_array.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <memory>
@@ -34,16 +34,17 @@ class TrafficLightMapVisualizerNode : public rclcpp::Node
 public:
   TrafficLightMapVisualizerNode(const std::string & node_name, const rclcpp::NodeOptions & options);
   ~TrafficLightMapVisualizerNode() = default;
-  void trafficLightStatesCallback(
-    const autoware_perception_msgs::msg::TrafficLightStateArray::ConstSharedPtr
-      input_tl_states_msg);
-  void binMapCallback(const autoware_lanelet2_msgs::msg::MapBin::ConstSharedPtr input_map_msg);
+  void trafficSignalsCallback(
+    const autoware_auto_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr
+      input_traffic_signals_msg);
+  void binMapCallback(
+    const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr input_map_msg);
 
 private:
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr light_marker_pub_;
-  rclcpp::Subscription<autoware_perception_msgs::msg::TrafficLightStateArray>::SharedPtr
+  rclcpp::Subscription<autoware_auto_perception_msgs::msg::TrafficSignalArray>::SharedPtr
     tl_state_sub_;
-  rclcpp::Subscription<autoware_lanelet2_msgs::msg::MapBin>::SharedPtr vector_map_sub_;
+  rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr vector_map_sub_;
 
   std::vector<lanelet::AutowareTrafficLightConstPtr> aw_tl_reg_elems_;
 };

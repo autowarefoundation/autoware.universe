@@ -121,15 +121,16 @@ TrafficLightMapVisualizerNode::TrafficLightMapVisualizerNode(
 {
   light_marker_pub_ =
     create_publisher<visualization_msgs::msg::MarkerArray>("~/output/traffic_light", 1);
-  tl_state_sub_ = create_subscription<autoware_perception_msgs::msg::TrafficLightStateArray>(
+  tl_state_sub_ = create_subscription<autoware_auto_perception_msgs::msg::TrafficSignalArray>(
     "~/input/tl_state", 1,
-    std::bind(&TrafficLightMapVisualizerNode::trafficLightStatesCallback, this, _1));
-  vector_map_sub_ = create_subscription<autoware_lanelet2_msgs::msg::MapBin>(
+    std::bind(&TrafficLightMapVisualizerNode::trafficSignalsCallback, this, _1));
+  vector_map_sub_ = create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
     "~/input/vector_map", rclcpp::QoS{1}.transient_local(),
     std::bind(&TrafficLightMapVisualizerNode::binMapCallback, this, _1));
 }
-void TrafficLightMapVisualizerNode::trafficLightStatesCallback(
-  const autoware_perception_msgs::msg::TrafficLightStateArray::ConstSharedPtr input_tl_states_msg)
+void TrafficLightMapVisualizerNode::trafficSignalsCallback(
+  const autoware_auto_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr
+    input_traffic_signals)
 {
   visualization_msgs::msg::MarkerArray output_msg;
   const auto current_time = now();
@@ -140,8 +141,8 @@ void TrafficLightMapVisualizerNode::trafficLightStatesCallback(
       if (lsp.isLineString()) { // traffic lights can either polygons or
                                 // linestrings
         lanelet::ConstLineString3d ls = static_cast<lanelet::ConstLineString3d>(lsp);
-        for (const auto & input_tl_state : input_tl_states_msg->states) {
-          if (ls.id() != input_tl_state.id) {
+        for (const auto & input_traffic_signal : input_traffic_signals->signals) {
+          if (ls.id() != input_traffic_signal.map_primitive_id) {
             continue;
           }
           visualization_msgs::msg::Marker marker;
@@ -165,29 +166,29 @@ void TrafficLightMapVisualizerNode::trafficLightStatesCallback(
       if (!ls.hasAttribute("traffic_light_id")) {
         continue;
       }
-      for (const auto & input_tl_state : input_tl_states_msg->states) {
-        if (isAttributeValue(ls, "traffic_light_id", input_tl_state.id)) {
+      for (const auto & input_traffic_signal : input_traffic_signals->signals) {
+        if (isAttributeValue(ls, "traffic_light_id", input_traffic_signal.map_primitive_id)) {
           for (auto pt : ls) {
             if (!pt.hasAttribute("color")) {
               continue;
             }
 
-            for (const auto & lamp_state : input_tl_state.lamp_states) {
+            for (const auto & light : input_traffic_signal.lights) {
               visualization_msgs::msg::Marker marker;
               if (
                 isAttributeValue(pt, "color", "red") &&
-                lamp_state.type == autoware_perception_msgs::msg::LampState::RED) {
+                light.color == autoware_auto_perception_msgs::msg::TrafficLight::RED) {
                 lightAsMarker(
                   get_node_logging_interface(), pt, &marker, "traffic_light", current_time);
               } else if (  // NOLINT
                 isAttributeValue(pt, "color", "green") &&
-                lamp_state.type == autoware_perception_msgs::msg::LampState::GREEN) {
+                light.color == autoware_auto_perception_msgs::msg::TrafficLight::GREEN) {
                 lightAsMarker(
                   get_node_logging_interface(), pt, &marker, "traffic_light", current_time);
 
               } else if (  // NOLINT
                 isAttributeValue(pt, "color", "yellow") &&
-                lamp_state.type == autoware_perception_msgs::msg::LampState::YELLOW) {
+                light.color == autoware_auto_perception_msgs::msg::TrafficLight::AMBER) {
                 lightAsMarker(
                   get_node_logging_interface(), pt, &marker, "traffic_light", current_time);
               } else {
@@ -205,7 +206,7 @@ void TrafficLightMapVisualizerNode::trafficLightStatesCallback(
 }
 
 void TrafficLightMapVisualizerNode::binMapCallback(
-  const autoware_lanelet2_msgs::msg::MapBin::ConstSharedPtr input_map_msg)
+  const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr input_map_msg)
 {
   lanelet::LaneletMapPtr viz_lanelet_map(new lanelet::LaneletMap);
 
