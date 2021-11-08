@@ -34,9 +34,9 @@ module autoware_auto_perception_msgs {
 
       uint8 orientation_availability;
 
-      geometry_msgs::msg::TwistWithCovariance twist;
+      geometry_msgs::msg::TwistWithCovariance twist_with_covariance;
 
-      geometry_msgs::msg::AccelWithCovariance acceleration;
+      geometry_msgs::msg::AccelWithCovariance acceleration_with_covariance;
 
       @value (default=False)
       boolean is_stationary;

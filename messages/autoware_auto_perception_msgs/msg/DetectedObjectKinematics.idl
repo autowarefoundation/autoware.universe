@@ -32,7 +32,7 @@ module autoware_auto_perception_msgs {
       boolean has_position_covariance;
       uint8 orientation_availability;
 
-      geometry_msgs::msg::TwistWithCovariance twist;
+      geometry_msgs::msg::TwistWithCovariance twist_with_covariance;
 
       boolean has_twist;
       boolean has_twist_covariance;
