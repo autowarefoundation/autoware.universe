@@ -73,72 +73,29 @@ geometry_msgs::msg::PoseStamped::SharedPtr getCurrentPose(const tf2_ros::Buffer 
   return p;
 }
 
-std::string getStateMessage(const AutowareState & state)
-{
-  if (state == AutowareState::InitializingVehicle) {
-    return "Please wait for a while. If the current pose is not estimated automatically, please "
-           "set it manually.";
-  }
-
-  if (state == AutowareState::WaitingForRoute) {
-    return "Please send a route.";
-  }
-
-  if (state == AutowareState::Planning) {
-    return "Please wait for a while.";
-  }
-
-  if (state == AutowareState::WaitingForEngage) {
-    return "Please set engage.";
-  }
-
-  if (state == AutowareState::Driving) {
-    return "Under autonomous driving. Have fun!";
-  }
-
-  if (state == AutowareState::ArrivedGoal) {
-    return "Autonomous driving has completed. Thank you!";
-  }
-
-  if (state == AutowareState::Emergency) {
-    return "Emergency! Please recover the system.";
-  }
-
-  if (state == AutowareState::Finalizing) {
-    return "Finalizing Autoware...";
-  }
-
-  throw std::runtime_error("invalid state");
-}
-
 }  // namespace
 
 void AutowareStateMonitorNode::onAutowareEngage(
-  const autoware_vehicle_msgs::msg::Engage::ConstSharedPtr msg)
+  const autoware_auto_vehicle_msgs::msg::Engage::ConstSharedPtr msg)
 {
   state_input_.autoware_engage = msg;
 }
 
-void AutowareStateMonitorNode::onVehicleControlMode(
-  const autoware_vehicle_msgs::msg::ControlMode::ConstSharedPtr msg)
+void AutowareStateMonitorNode::onVehicleVehicleStateReport(
+  const autoware_auto_vehicle_msgs::msg::VehicleStateReport::ConstSharedPtr msg)
 {
-  state_input_.vehicle_control_mode = msg;
+  state_input_.vehicle_state_report = msg;
 }
 
-void AutowareStateMonitorNode::onHazardStatus(
-  const autoware_system_msgs::msg::HazardStatusStamped::ConstSharedPtr msg)
-{
-  state_input_.hazard_status = msg;
-}
-
-void AutowareStateMonitorNode::onRoute(const autoware_planning_msgs::msg::Route::ConstSharedPtr msg)
+void AutowareStateMonitorNode::onRoute(
+  const autoware_auto_planning_msgs::msg::Route::ConstSharedPtr msg)
 {
   state_input_.route = msg;
 
   // Get goal pose
   {
     geometry_msgs::msg::Pose::SharedPtr p = std::make_shared<geometry_msgs::msg::Pose>();
-    *p = msg->goal_pose;
+    *p = msg->goal_point.pose;
     state_input_.goal_pose = geometry_msgs::msg::Pose::ConstSharedPtr(p);
   }
 
@@ -148,22 +105,22 @@ void AutowareStateMonitorNode::onRoute(const autoware_planning_msgs::msg::Route:
   }
 }
 
-void AutowareStateMonitorNode::onTwist(const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg)
+void AutowareStateMonitorNode::onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg)
 {
-  state_input_.twist = msg;
+  state_input_.odometry = msg;
 
-  state_input_.twist_buffer.push_back(msg);
+  state_input_.odometry_buffer.push_back(msg);
 
   // Delete old data in buffer
   while (true) {
     const auto time_diff = rclcpp::Time(msg->header.stamp) -
-                           rclcpp::Time(state_input_.twist_buffer.front()->header.stamp);
+                           rclcpp::Time(state_input_.odometry_buffer.front()->header.stamp);
 
     if (time_diff.seconds() < state_param_.th_stopped_time_sec) {
       break;
     }
 
-    state_input_.twist_buffer.pop_front();
+    state_input_.odometry_buffer.pop_front();
   }
 }
 
@@ -257,8 +214,8 @@ void AutowareStateMonitorNode::onTimer()
 
   if (autoware_state != prev_autoware_state) {
     RCLCPP_INFO(
-      this->get_logger(), "state changed: %s -> %s", toString(prev_autoware_state).c_str(),
-      toString(autoware_state).c_str());
+      this->get_logger(), "state changed: %i -> %i", toMsg(prev_autoware_state),
+      toMsg(autoware_state));
   }
 
   // Disengage on event
@@ -269,19 +226,8 @@ void AutowareStateMonitorNode::onTimer()
 
   // Publish state message
   {
-    autoware_system_msgs::msg::AutowareState autoware_state_msg;
-    autoware_state_msg.state = toString(autoware_state);
-
-    // Add messages line by line
-    std::ostringstream oss;
-
-    oss << getStateMessage(autoware_state) << std::endl;
-
-    for (const auto & msg : state_machine_->getMessages()) {
-      oss << msg << std::endl;
-    }
-
-    autoware_state_msg.msg = oss.str();
+    autoware_auto_system_msgs::msg::AutowareState autoware_state_msg;
+    autoware_state_msg.state = toMsg(autoware_state);
 
     pub_autoware_state_->publish(autoware_state_msg);
   }
@@ -430,7 +376,7 @@ bool AutowareStateMonitorNode::isEngaged()
 
 void AutowareStateMonitorNode::setDisengage()
 {
-  autoware_vehicle_msgs::msg::Engage msg;
+  autoware_auto_vehicle_msgs::msg::Engage msg;
   msg.stamp = this->now();
   msg.engage = false;
   pub_autoware_engage_->publish(msg);
@@ -477,20 +423,20 @@ AutowareStateMonitorNode::AutowareStateMonitorNode()
   }
 
   // Subscriber
-  sub_autoware_engage_ = this->create_subscription<autoware_vehicle_msgs::msg::Engage>(
+  sub_autoware_engage_ = this->create_subscription<autoware_auto_vehicle_msgs::msg::Engage>(
     "input/autoware_engage", 1, std::bind(&AutowareStateMonitorNode::onAutowareEngage, this, _1),
     subscriber_option);
-  sub_vehicle_control_mode_ = this->create_subscription<autoware_vehicle_msgs::msg::ControlMode>(
-    "input/vehicle_control_mode", 1,
-    std::bind(&AutowareStateMonitorNode::onVehicleControlMode, this, _1), subscriber_option);
-  sub_hazard_status = this->create_subscription<autoware_system_msgs::msg::HazardStatusStamped>(
-    "input/hazard_status", 1, std::bind(&AutowareStateMonitorNode::onHazardStatus, this, _1),
-    subscriber_option);
-  sub_route_ = this->create_subscription<autoware_planning_msgs::msg::Route>(
+  sub_vehicle_state_report_ =
+    this->create_subscription<autoware_auto_vehicle_msgs::msg::VehicleStateReport>(
+      "input/vehicle_state_report", 1,
+      std::bind(&AutowareStateMonitorNode::onVehicleVehicleStateReport, this, _1),
+      subscriber_option);
+  sub_route_ = this->create_subscription<autoware_auto_planning_msgs::msg::Route>(
     "input/route", rclcpp::QoS{1}.transient_local(),
     std::bind(&AutowareStateMonitorNode::onRoute, this, _1), subscriber_option);
-  sub_twist_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
-    "input/twist", 100, std::bind(&AutowareStateMonitorNode::onTwist, this, _1), subscriber_option);
+  sub_odom_ = this->create_subscription<nav_msgs::msg::Odometry>(
+    "input/odometry", 100, std::bind(&AutowareStateMonitorNode::onOdometry, this, _1),
+    subscriber_option);
 
   // Service
   srv_shutdown_ = this->create_service<std_srvs::srv::Trigger>(
@@ -502,10 +448,10 @@ AutowareStateMonitorNode::AutowareStateMonitorNode()
     rmw_qos_profile_services_default, callback_group_services_);
 
   // Publisher
-  pub_autoware_state_ =
-    this->create_publisher<autoware_system_msgs::msg::AutowareState>("output/autoware_state", 1);
+  pub_autoware_state_ = this->create_publisher<autoware_auto_system_msgs::msg::AutowareState>(
+    "output/autoware_state", 1);
   pub_autoware_engage_ =
-    this->create_publisher<autoware_vehicle_msgs::msg::Engage>("output/autoware_engage", 1);
+    this->create_publisher<autoware_auto_vehicle_msgs::msg::Engage>("output/autoware_engage", 1);
 
   // Diagnostic Updater
   setupDiagnosticUpdater();

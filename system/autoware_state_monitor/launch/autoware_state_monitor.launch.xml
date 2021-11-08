@@ -1,10 +1,9 @@
 <launch>
   <!-- Input -->
   <arg name="input_autoware_engage" default="/api/autoware/get/engage" />
-  <arg name="input_vehicle_control_mode" default="/vehicle/status/control_mode" />
-  <arg name="input_hazard_status" default="/system/emergency/hazard_status" />
+  <arg name="input_vehicle_state_report" default="/vehicle/state_report" />
   <arg name="input_route" default="/planning/mission_planning/route" />
-  <arg name="input_twist" default="/localization/twist" />
+  <arg name="input_odometry" default="/localization/ekf_odom" />
 
   <!-- Output -->
   <arg name="output_autoware_state" default="/autoware/state" />
@@ -27,10 +26,9 @@
 
   <node pkg="autoware_state_monitor" exec="autoware_state_monitor" name="autoware_state_monitor" output="screen">
     <remap from="input/autoware_engage" to="$(var input_autoware_engage)"/>
-    <remap from="input/vehicle_control_mode" to="$(var input_vehicle_control_mode)"/>
-    <remap from="input/hazard_status" to="$(var input_hazard_status)"/>
+    <remap from="input/vehicle_state_report" to="$(var input_vehicle_state_report)"/>
     <remap from="input/route" to="$(var input_route)"/>
-    <remap from="input/twist" to="$(var input_twist)"/>
+    <remap from="input/odometry" to="$(var input_odometry)"/>
 
     <remap from="output/autoware_state" to="$(var output_autoware_state)"/>
     <remap from="output/autoware_engage" to="$(var output_autoware_engage)"/>

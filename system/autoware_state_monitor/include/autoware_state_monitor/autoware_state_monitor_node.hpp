@@ -23,14 +23,13 @@
 #include <rclcpp/rclcpp.hpp>
 #include <std_srvs/srv/trigger.hpp>
 
-#include <autoware_planning_msgs/msg/route.hpp>
-#include <autoware_planning_msgs/msg/trajectory.hpp>
-#include <autoware_system_msgs/msg/autoware_state.hpp>
-#include <autoware_system_msgs/msg/hazard_status_stamped.hpp>
-#include <autoware_vehicle_msgs/msg/control_mode.hpp>
-#include <autoware_vehicle_msgs/msg/engage.hpp>
+#include <autoware_auto_planning_msgs/msg/route.hpp>
+#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
+#include <autoware_auto_system_msgs/msg/autoware_state.hpp>
+#include <autoware_auto_vehicle_msgs/msg/engage.hpp>
+#include <autoware_auto_vehicle_msgs/msg/vehicle_state_report.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
-#include <geometry_msgs/msg/twist_stamped.hpp>
+#include <nav_msgs/msg/odometry.hpp>
 
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
@@ -66,18 +65,17 @@ private:
   rclcpp::CallbackGroup::SharedPtr callback_group_services_;
 
   // Subscriber
-  rclcpp::Subscription<autoware_vehicle_msgs::msg::Engage>::SharedPtr sub_autoware_engage_;
-  rclcpp::Subscription<autoware_vehicle_msgs::msg::ControlMode>::SharedPtr
-    sub_vehicle_control_mode_;
-  rclcpp::Subscription<autoware_system_msgs::msg::HazardStatusStamped>::SharedPtr sub_hazard_status;
-  rclcpp::Subscription<autoware_planning_msgs::msg::Route>::SharedPtr sub_route_;
-  rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr sub_twist_;
+  rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::Engage>::SharedPtr sub_autoware_engage_;
+  rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::VehicleStateReport>::SharedPtr
+    sub_vehicle_state_report_;
+  rclcpp::Subscription<autoware_auto_planning_msgs::msg::Route>::SharedPtr sub_route_;
+  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
 
-  void onAutowareEngage(const autoware_vehicle_msgs::msg::Engage::ConstSharedPtr msg);
-  void onVehicleControlMode(const autoware_vehicle_msgs::msg::ControlMode::ConstSharedPtr msg);
-  void onHazardStatus(const autoware_system_msgs::msg::HazardStatusStamped::ConstSharedPtr msg);
-  void onRoute(const autoware_planning_msgs::msg::Route::ConstSharedPtr msg);
-  void onTwist(const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg);
+  void onAutowareEngage(const autoware_auto_vehicle_msgs::msg::Engage::ConstSharedPtr msg);
+  void onVehicleVehicleStateReport(
+    const autoware_auto_vehicle_msgs::msg::VehicleStateReport::ConstSharedPtr msg);
+  void onRoute(const autoware_auto_planning_msgs::msg::Route::ConstSharedPtr msg);
+  void onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg);
 
   // Topic Buffer
   void onTopic(
@@ -103,8 +101,8 @@ private:
     std::shared_ptr<std_srvs::srv::Trigger::Response> response);
 
   // Publisher
-  rclcpp::Publisher<autoware_system_msgs::msg::AutowareState>::SharedPtr pub_autoware_state_;
-  rclcpp::Publisher<autoware_vehicle_msgs::msg::Engage>::SharedPtr pub_autoware_engage_;
+  rclcpp::Publisher<autoware_auto_system_msgs::msg::AutowareState>::SharedPtr pub_autoware_state_;
+  rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::Engage>::SharedPtr pub_autoware_engage_;
 
   bool isEngaged();
   void setDisengage();

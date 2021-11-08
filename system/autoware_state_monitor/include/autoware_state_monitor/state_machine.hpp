@@ -21,14 +21,13 @@
 
 #include <rclcpp/time.hpp>
 
-#include <autoware_planning_msgs/msg/route.hpp>
-#include <autoware_planning_msgs/msg/trajectory.hpp>
-#include <autoware_system_msgs/msg/autoware_state.hpp>
-#include <autoware_system_msgs/msg/hazard_status_stamped.hpp>
-#include <autoware_vehicle_msgs/msg/control_mode.hpp>
-#include <autoware_vehicle_msgs/msg/engage.hpp>
+#include <autoware_auto_planning_msgs/msg/route.hpp>
+#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
+#include <autoware_auto_system_msgs/msg/autoware_state.hpp>
+#include <autoware_auto_vehicle_msgs/msg/engage.hpp>
+#include <autoware_auto_vehicle_msgs/msg/vehicle_state_report.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
-#include <geometry_msgs/msg/twist_stamped.hpp>
+#include <nav_msgs/msg/odometry.hpp>
 
 #include <deque>
 #include <string>
@@ -45,14 +44,13 @@ struct StateInput
   geometry_msgs::msg::PoseStamped::ConstSharedPtr current_pose;
   geometry_msgs::msg::Pose::ConstSharedPtr goal_pose;
 
-  autoware_vehicle_msgs::msg::Engage::ConstSharedPtr autoware_engage;
-  autoware_vehicle_msgs::msg::ControlMode::ConstSharedPtr vehicle_control_mode;
-  autoware_system_msgs::msg::HazardStatusStamped::ConstSharedPtr hazard_status;
+  autoware_auto_vehicle_msgs::msg::Engage::ConstSharedPtr autoware_engage;
+  autoware_auto_vehicle_msgs::msg::VehicleStateReport::ConstSharedPtr vehicle_state_report;
   bool is_finalizing = false;
   bool is_route_reset_required = false;
-  autoware_planning_msgs::msg::Route::ConstSharedPtr route;
-  geometry_msgs::msg::TwistStamped::ConstSharedPtr twist;
-  std::deque<geometry_msgs::msg::TwistStamped::ConstSharedPtr> twist_buffer;
+  autoware_auto_planning_msgs::msg::Route::ConstSharedPtr route;
+  nav_msgs::msg::Odometry::ConstSharedPtr odometry;
+  std::deque<nav_msgs::msg::Odometry::ConstSharedPtr> odometry_buffer;
 };
 
 struct StateParam
@@ -89,11 +87,10 @@ private:
   StateInput state_input_;
   const StateParam state_param_;
 
-  mutable AutowareState state_before_emergency_ = AutowareState::InitializingVehicle;
   mutable std::vector<std::string> msgs_;
   mutable Times times_;
   mutable Flags flags_;
-  mutable autoware_planning_msgs::msg::Route::ConstSharedPtr executing_route_ = nullptr;
+  mutable autoware_auto_planning_msgs::msg::Route::ConstSharedPtr executing_route_ = nullptr;
 
   AutowareState judgeAutowareState() const;
 
@@ -104,7 +101,6 @@ private:
   bool isPlanningCompleted() const;
   bool isEngaged() const;
   bool isOverridden() const;
-  bool isEmergency() const;
   bool hasArrivedGoal() const;
   bool isFinalizing() const;
   bool isRouteResetRequired() const;

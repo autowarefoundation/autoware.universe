@@ -15,7 +15,7 @@
 #ifndef AUTOWARE_STATE_MONITOR__AUTOWARE_STATE_HPP_
 #define AUTOWARE_STATE_MONITOR__AUTOWARE_STATE_HPP_
 
-#include <autoware_system_msgs/msg/autoware_state.hpp>
+#include <autoware_auto_system_msgs/msg/autoware_state.hpp>
 
 #include <string>
 
@@ -26,15 +26,14 @@ enum class AutowareState : int8_t {
   WaitingForEngage,
   Driving,
   ArrivedGoal,
-  Emergency,
   Finalizing,
 };
 
-inline AutowareState fromString(const std::string & state)
+inline AutowareState fromMsg(const int state)
 {
-  using StateMessage = autoware_system_msgs::msg::AutowareState;
+  using StateMessage = autoware_auto_system_msgs::msg::AutowareState;
 
-  if (state == StateMessage::INITIALIZING_VEHICLE) {
+  if (state == StateMessage::INITIALIZING) {
     return AutowareState::InitializingVehicle;
   }
   if (state == StateMessage::WAITING_FOR_ROUTE) {
@@ -49,11 +48,8 @@ inline AutowareState fromString(const std::string & state)
   if (state == StateMessage::DRIVING) {
     return AutowareState::Driving;
   }
-  if (state == StateMessage::ARRIVAL_GOAL) {
+  if (state == StateMessage::ARRIVED_GOAL) {
     return AutowareState::ArrivedGoal;
-  }
-  if (state == StateMessage::EMERGENCY) {
-    return AutowareState::Emergency;
   }
   if (state == StateMessage::FINALIZING) {
     return AutowareState::Finalizing;
@@ -62,12 +58,12 @@ inline AutowareState fromString(const std::string & state)
   throw std::runtime_error("invalid state");
 }
 
-inline std::string toString(const AutowareState & state)
+inline int toMsg(const AutowareState & state)
 {
-  using StateMessage = autoware_system_msgs::msg::AutowareState;
+  using StateMessage = autoware_auto_system_msgs::msg::AutowareState;
 
   if (state == AutowareState::InitializingVehicle) {
-    return StateMessage::INITIALIZING_VEHICLE;
+    return StateMessage::INITIALIZING;
   }
   if (state == AutowareState::WaitingForRoute) {
     return StateMessage::WAITING_FOR_ROUTE;
@@ -82,10 +78,7 @@ inline std::string toString(const AutowareState & state)
     return StateMessage::DRIVING;
   }
   if (state == AutowareState::ArrivedGoal) {
-    return StateMessage::ARRIVAL_GOAL;
-  }
-  if (state == AutowareState::Emergency) {
-    return StateMessage::EMERGENCY;
+    return StateMessage::ARRIVED_GOAL;
   }
   if (state == AutowareState::Finalizing) {
     return StateMessage::FINALIZING;
