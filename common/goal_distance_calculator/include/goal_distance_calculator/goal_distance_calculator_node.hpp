@@ -21,8 +21,8 @@
 #include <autoware_utils/ros/self_pose_listener.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_auto_planning_msgs/msg/route.hpp>
 #include <autoware_debug_msgs/msg/float64_stamped.hpp>
-#include <autoware_planning_msgs/msg/route.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 
 #include <tf2_ros/transform_listener.h>
@@ -46,14 +46,14 @@ private:
   // Subscriber
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr sub_initial_pose_;
   autoware_utils::SelfPoseListener self_pose_listener_;
-  rclcpp::Subscription<autoware_planning_msgs::msg::Route>::SharedPtr sub_route_;
+  rclcpp::Subscription<autoware_auto_planning_msgs::msg::Route>::SharedPtr sub_route_;
 
   // Data Buffer
   geometry_msgs::msg::PoseStamped::ConstSharedPtr current_pose_;
-  autoware_planning_msgs::msg::Route::SharedPtr route_;
+  autoware_auto_planning_msgs::msg::Route::SharedPtr route_;
 
   // Callback
-  void onRoute(const autoware_planning_msgs::msg::Route::ConstSharedPtr & msg);
+  void onRoute(const autoware_auto_planning_msgs::msg::Route::ConstSharedPtr & msg);
 
   // Publisher
   autoware_utils::DebugPublisher debug_publisher_;
