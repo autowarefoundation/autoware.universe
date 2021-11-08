@@ -41,16 +41,13 @@ ObjectAssociationMergerNode::ObjectAssociationMergerNode(const rclcpp::NodeOptio
   using std::placeholders::_2;
   sync_.registerCallback(std::bind(&ObjectAssociationMergerNode::objectsCallback, this, _1, _2));
 
-  merged_object_pub_ =
-    create_publisher<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>(
-      "output/object", rclcpp::QoS{1});
+  merged_object_pub_ = create_publisher<autoware_auto_perception_msgs::msg::DetectedObjects>(
+    "output/object", rclcpp::QoS{1});
 }
 
 void ObjectAssociationMergerNode::objectsCallback(
-  const autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr &
-    input_object0_msg,
-  const autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr &
-    input_object1_msg)
+  const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr & input_object0_msg,
+  const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr & input_object1_msg)
 {
   // Guard
   if (merged_object_pub_->get_subscription_count() < 1) {
@@ -58,7 +55,7 @@ void ObjectAssociationMergerNode::objectsCallback(
   }
 
   // build output msg
-  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray output_msg;
+  autoware_auto_perception_msgs::msg::DetectedObjects output_msg;
   output_msg.header = input_object0_msg->header;
 
   /* global nearest neighbor */
@@ -67,28 +64,25 @@ void ObjectAssociationMergerNode::objectsCallback(
   Eigen::MatrixXd score_matrix =
     data_association_.calcScoreMatrix(*input_object1_msg, *input_object0_msg);
   data_association_.assign(score_matrix, direct_assignment, reverse_assignment);
-  for (size_t object0_idx = 0; object0_idx < input_object0_msg->feature_objects.size();
-       ++object0_idx) {
+  for (size_t object0_idx = 0; object0_idx < input_object0_msg->objects.size(); ++object0_idx) {
     if (direct_assignment.find(object0_idx) != direct_assignment.end()) {  // found
       // The one with the higher score will be hired.
       if (
-        input_object1_msg->feature_objects.at(direct_assignment.at(object0_idx))
-          .object.semantic.confidence <
-        input_object0_msg->feature_objects.at(object0_idx).object.semantic.confidence) {
-        output_msg.feature_objects.push_back(input_object0_msg->feature_objects.at(object0_idx));
+        input_object1_msg->objects.at(direct_assignment.at(object0_idx)).existence_probability <
+        input_object0_msg->objects.at(object0_idx).existence_probability) {
+        output_msg.objects.push_back(input_object0_msg->objects.at(object0_idx));
       } else {
-        output_msg.feature_objects.push_back(
-          input_object1_msg->feature_objects.at(direct_assignment.at(object0_idx)));
+        output_msg.objects.push_back(
+          input_object1_msg->objects.at(direct_assignment.at(object0_idx)));
       }
     } else {  // not found
-      output_msg.feature_objects.push_back(input_object0_msg->feature_objects.at(object0_idx));
+      output_msg.objects.push_back(input_object0_msg->objects.at(object0_idx));
     }
   }
-  for (size_t object1_idx = 0; object1_idx < input_object1_msg->feature_objects.size();
-       ++object1_idx) {
+  for (size_t object1_idx = 0; object1_idx < input_object1_msg->objects.size(); ++object1_idx) {
     if (reverse_assignment.find(object1_idx) != reverse_assignment.end()) {  // found
     } else {                                                                 // not found
-      output_msg.feature_objects.push_back(input_object1_msg->feature_objects.at(object1_idx));
+      output_msg.objects.push_back(input_object1_msg->objects.at(object1_idx));
     }
   }
 

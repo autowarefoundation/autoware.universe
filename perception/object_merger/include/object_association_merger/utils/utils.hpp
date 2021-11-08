@@ -15,7 +15,7 @@
 #ifndef OBJECT_ASSOCIATION_MERGER__UTILS__UTILS_HPP_
 #define OBJECT_ASSOCIATION_MERGER__UTILS__UTILS_HPP_
 
-#include <autoware_perception_msgs/msg/shape.hpp>
+#include <autoware_auto_perception_msgs/msg/shape.hpp>
 #include <geometry_msgs/msg/polygon.hpp>
 #include <geometry_msgs/msg/vector3.hpp>
 
@@ -26,7 +26,7 @@ namespace utils
 double getPolygonArea(const geometry_msgs::msg::Polygon & footprint);
 double getRectangleArea(const geometry_msgs::msg::Vector3 & dimensions);
 double getCircleArea(const geometry_msgs::msg::Vector3 & dimensions);
-double getArea(const autoware_perception_msgs::msg::Shape & shape);
+double getArea(const autoware_auto_perception_msgs::msg::Shape & shape);
 }  // namespace utils
 
 #endif  // OBJECT_ASSOCIATION_MERGER__UTILS__UTILS_HPP_

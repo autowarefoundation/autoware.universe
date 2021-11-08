@@ -26,246 +26,236 @@ DataAssociation::DataAssociation() : score_threshold_(0.1)
 {
   can_assign_matrix_ = Eigen::MatrixXi::Identity(20, 20);
   can_assign_matrix_(
-    autoware_perception_msgs::msg::Semantic::UNKNOWN,
-    autoware_perception_msgs::msg::Semantic::UNKNOWN) = 1;
+    autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN,
+    autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) = 1;
   can_assign_matrix_(
-    autoware_perception_msgs::msg::Semantic::CAR,
-    autoware_perception_msgs::msg::Semantic::UNKNOWN) = 0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::CAR,
+    autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) = 0;
   can_assign_matrix_(
-    autoware_perception_msgs::msg::Semantic::CAR, autoware_perception_msgs::msg::Semantic::TRUCK) =
-    1;
+    autoware_auto_perception_msgs::msg::ObjectClassification::CAR,
+    autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK) = 1;
   can_assign_matrix_(
-    autoware_perception_msgs::msg::Semantic::CAR, autoware_perception_msgs::msg::Semantic::BUS) = 1;
+    autoware_auto_perception_msgs::msg::ObjectClassification::CAR,
+    autoware_auto_perception_msgs::msg::ObjectClassification::BUS) = 1;
   can_assign_matrix_(
-    autoware_perception_msgs::msg::Semantic::TRUCK,
-    autoware_perception_msgs::msg::Semantic::UNKNOWN) = 0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK,
+    autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) = 0;
   can_assign_matrix_(
-    autoware_perception_msgs::msg::Semantic::TRUCK, autoware_perception_msgs::msg::Semantic::CAR) =
-    1;
+    autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK,
+    autoware_auto_perception_msgs::msg::ObjectClassification::CAR) = 1;
   can_assign_matrix_(
-    autoware_perception_msgs::msg::Semantic::TRUCK, autoware_perception_msgs::msg::Semantic::BUS) =
-    1;
+    autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK,
+    autoware_auto_perception_msgs::msg::ObjectClassification::BUS) = 1;
   can_assign_matrix_(
-    autoware_perception_msgs::msg::Semantic::BUS,
-    autoware_perception_msgs::msg::Semantic::UNKNOWN) = 0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::BUS,
+    autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) = 0;
   can_assign_matrix_(
-    autoware_perception_msgs::msg::Semantic::BUS, autoware_perception_msgs::msg::Semantic::CAR) = 1;
+    autoware_auto_perception_msgs::msg::ObjectClassification::BUS,
+    autoware_auto_perception_msgs::msg::ObjectClassification::CAR) = 1;
   can_assign_matrix_(
-    autoware_perception_msgs::msg::Semantic::BUS, autoware_perception_msgs::msg::Semantic::TRUCK) =
-    1;
+    autoware_auto_perception_msgs::msg::ObjectClassification::BUS,
+    autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK) = 1;
   can_assign_matrix_(
-    autoware_perception_msgs::msg::Semantic::BICYCLE,
-    autoware_perception_msgs::msg::Semantic::UNKNOWN) = 0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::BICYCLE,
+    autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) = 0;
   can_assign_matrix_(
-    autoware_perception_msgs::msg::Semantic::BICYCLE,
-    autoware_perception_msgs::msg::Semantic::MOTORBIKE) = 1;
+    autoware_auto_perception_msgs::msg::ObjectClassification::BICYCLE,
+    autoware_auto_perception_msgs::msg::ObjectClassification::MOTORCYCLE) = 1;
   can_assign_matrix_(
-    autoware_perception_msgs::msg::Semantic::MOTORBIKE,
-    autoware_perception_msgs::msg::Semantic::UNKNOWN) = 0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::MOTORCYCLE,
+    autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) = 0;
   can_assign_matrix_(
-    autoware_perception_msgs::msg::Semantic::MOTORBIKE,
-    autoware_perception_msgs::msg::Semantic::BICYCLE) = 1;
+    autoware_auto_perception_msgs::msg::ObjectClassification::MOTORCYCLE,
+    autoware_auto_perception_msgs::msg::ObjectClassification::BICYCLE) = 1;
   can_assign_matrix_(
-    autoware_perception_msgs::msg::Semantic::PEDESTRIAN,
-    autoware_perception_msgs::msg::Semantic::UNKNOWN) = 0;
-  can_assign_matrix_(
-    autoware_perception_msgs::msg::Semantic::ANIMAL,
-    autoware_perception_msgs::msg::Semantic::UNKNOWN) = 0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::PEDESTRIAN,
+    autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) = 0;
   max_dist_matrix_ = Eigen::MatrixXd::Constant(20, 20, 1.0);
   max_dist_matrix_(
-    autoware_perception_msgs::msg::Semantic::CAR,
-    autoware_perception_msgs::msg::Semantic::UNKNOWN) = 4.0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::CAR,
+    autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) = 4.0;
   max_dist_matrix_(
-    autoware_perception_msgs::msg::Semantic::CAR, autoware_perception_msgs::msg::Semantic::CAR) =
-    3.0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::CAR,
+    autoware_auto_perception_msgs::msg::ObjectClassification::CAR) = 3.0;
   max_dist_matrix_(
-    autoware_perception_msgs::msg::Semantic::CAR, autoware_perception_msgs::msg::Semantic::TRUCK) =
-    3.0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::CAR,
+    autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK) = 3.0;
   max_dist_matrix_(
-    autoware_perception_msgs::msg::Semantic::CAR, autoware_perception_msgs::msg::Semantic::BUS) =
-    3.0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::CAR,
+    autoware_auto_perception_msgs::msg::ObjectClassification::BUS) = 3.0;
   max_dist_matrix_(
-    autoware_perception_msgs::msg::Semantic::TRUCK,
-    autoware_perception_msgs::msg::Semantic::UNKNOWN) = 3.0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK,
+    autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) = 3.0;
   max_dist_matrix_(
-    autoware_perception_msgs::msg::Semantic::TRUCK, autoware_perception_msgs::msg::Semantic::CAR) =
-    3.0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK,
+    autoware_auto_perception_msgs::msg::ObjectClassification::CAR) = 3.0;
   max_dist_matrix_(
-    autoware_perception_msgs::msg::Semantic::TRUCK,
-    autoware_perception_msgs::msg::Semantic::TRUCK) = 3.0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK,
+    autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK) = 3.0;
   max_dist_matrix_(
-    autoware_perception_msgs::msg::Semantic::TRUCK, autoware_perception_msgs::msg::Semantic::BUS) =
-    3.0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK,
+    autoware_auto_perception_msgs::msg::ObjectClassification::BUS) = 3.0;
   max_dist_matrix_(
-    autoware_perception_msgs::msg::Semantic::BUS,
-    autoware_perception_msgs::msg::Semantic::UNKNOWN) = 3.0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::BUS,
+    autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) = 3.0;
   max_dist_matrix_(
-    autoware_perception_msgs::msg::Semantic::BUS, autoware_perception_msgs::msg::Semantic::CAR) =
-    3.0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::BUS,
+    autoware_auto_perception_msgs::msg::ObjectClassification::CAR) = 3.0;
   max_dist_matrix_(
-    autoware_perception_msgs::msg::Semantic::BUS, autoware_perception_msgs::msg::Semantic::TRUCK) =
-    3.0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::BUS,
+    autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK) = 3.0;
   max_dist_matrix_(
-    autoware_perception_msgs::msg::Semantic::BUS, autoware_perception_msgs::msg::Semantic::BUS) =
-    3.0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::BUS,
+    autoware_auto_perception_msgs::msg::ObjectClassification::BUS) = 3.0;
   max_dist_matrix_(
-    autoware_perception_msgs::msg::Semantic::BICYCLE,
-    autoware_perception_msgs::msg::Semantic::UNKNOWN) = 2.0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::BICYCLE,
+    autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) = 2.0;
   max_dist_matrix_(
-    autoware_perception_msgs::msg::Semantic::BICYCLE,
-    autoware_perception_msgs::msg::Semantic::BICYCLE) = 2.0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::BICYCLE,
+    autoware_auto_perception_msgs::msg::ObjectClassification::BICYCLE) = 2.0;
   max_dist_matrix_(
-    autoware_perception_msgs::msg::Semantic::BICYCLE,
-    autoware_perception_msgs::msg::Semantic::MOTORBIKE) = 2.0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::BICYCLE,
+    autoware_auto_perception_msgs::msg::ObjectClassification::MOTORCYCLE) = 2.0;
   max_dist_matrix_(
-    autoware_perception_msgs::msg::Semantic::MOTORBIKE,
-    autoware_perception_msgs::msg::Semantic::UNKNOWN) = 2.0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::MOTORCYCLE,
+    autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) = 2.0;
   max_dist_matrix_(
-    autoware_perception_msgs::msg::Semantic::MOTORBIKE,
-    autoware_perception_msgs::msg::Semantic::BICYCLE) = 2.0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::MOTORCYCLE,
+    autoware_auto_perception_msgs::msg::ObjectClassification::BICYCLE) = 2.0;
   max_dist_matrix_(
-    autoware_perception_msgs::msg::Semantic::MOTORBIKE,
-    autoware_perception_msgs::msg::Semantic::MOTORBIKE) = 2.0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::MOTORCYCLE,
+    autoware_auto_perception_msgs::msg::ObjectClassification::MOTORCYCLE) = 2.0;
   max_dist_matrix_(
-    autoware_perception_msgs::msg::Semantic::PEDESTRIAN,
-    autoware_perception_msgs::msg::Semantic::UNKNOWN) = 2.0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::PEDESTRIAN,
+    autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) = 2.0;
   max_dist_matrix_(
-    autoware_perception_msgs::msg::Semantic::PEDESTRIAN,
-    autoware_perception_msgs::msg::Semantic::PEDESTRIAN) = 2.0;
-  max_dist_matrix_(
-    autoware_perception_msgs::msg::Semantic::ANIMAL,
-    autoware_perception_msgs::msg::Semantic::UNKNOWN) = 2.0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::PEDESTRIAN,
+    autoware_auto_perception_msgs::msg::ObjectClassification::PEDESTRIAN) = 2.0;
   max_area_matrix_ = Eigen::MatrixXd::Constant(20, 20, /* large number */ 10000.0);
   max_area_matrix_(
-    autoware_perception_msgs::msg::Semantic::UNKNOWN,
-    autoware_perception_msgs::msg::Semantic::UNKNOWN) = 5.0 * 5.0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN,
+    autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) = 5.0 * 5.0;
   max_area_matrix_(
-    autoware_perception_msgs::msg::Semantic::CAR,
-    autoware_perception_msgs::msg::Semantic::UNKNOWN) = 2.2 * 5.5;
+    autoware_auto_perception_msgs::msg::ObjectClassification::CAR,
+    autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) = 2.2 * 5.5;
   max_area_matrix_(
-    autoware_perception_msgs::msg::Semantic::CAR, autoware_perception_msgs::msg::Semantic::CAR) =
-    2.2 * 5.5;
+    autoware_auto_perception_msgs::msg::ObjectClassification::CAR,
+    autoware_auto_perception_msgs::msg::ObjectClassification::CAR) = 2.2 * 5.5;
   max_area_matrix_(
-    autoware_perception_msgs::msg::Semantic::CAR, autoware_perception_msgs::msg::Semantic::TRUCK) =
-    2.5 * 7.9;
+    autoware_auto_perception_msgs::msg::ObjectClassification::CAR,
+    autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK) = 2.5 * 7.9;
   max_area_matrix_(
-    autoware_perception_msgs::msg::Semantic::CAR, autoware_perception_msgs::msg::Semantic::BUS) =
-    2.7 * 12.0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::CAR,
+    autoware_auto_perception_msgs::msg::ObjectClassification::BUS) = 2.7 * 12.0;
   max_area_matrix_(
-    autoware_perception_msgs::msg::Semantic::TRUCK,
-    autoware_perception_msgs::msg::Semantic::UNKNOWN) = 2.5 * 7.9;
+    autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK,
+    autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) = 2.5 * 7.9;
   max_area_matrix_(
-    autoware_perception_msgs::msg::Semantic::TRUCK, autoware_perception_msgs::msg::Semantic::CAR) =
-    2.2 * 5.5;
+    autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK,
+    autoware_auto_perception_msgs::msg::ObjectClassification::CAR) = 2.2 * 5.5;
   max_area_matrix_(
-    autoware_perception_msgs::msg::Semantic::TRUCK,
-    autoware_perception_msgs::msg::Semantic::TRUCK) = 2.5 * 7.9;
+    autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK,
+    autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK) = 2.5 * 7.9;
   max_area_matrix_(
-    autoware_perception_msgs::msg::Semantic::TRUCK, autoware_perception_msgs::msg::Semantic::BUS) =
-    2.7 * 12.0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK,
+    autoware_auto_perception_msgs::msg::ObjectClassification::BUS) = 2.7 * 12.0;
   max_area_matrix_(
-    autoware_perception_msgs::msg::Semantic::BUS,
-    autoware_perception_msgs::msg::Semantic::UNKNOWN) = 2.7 * 12.0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::BUS,
+    autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) = 2.7 * 12.0;
   max_area_matrix_(
-    autoware_perception_msgs::msg::Semantic::BUS, autoware_perception_msgs::msg::Semantic::CAR) =
-    2.2 * 5.5;
+    autoware_auto_perception_msgs::msg::ObjectClassification::BUS,
+    autoware_auto_perception_msgs::msg::ObjectClassification::CAR) = 2.2 * 5.5;
   max_area_matrix_(
-    autoware_perception_msgs::msg::Semantic::BUS, autoware_perception_msgs::msg::Semantic::TRUCK) =
-    2.5 * 7.9;
+    autoware_auto_perception_msgs::msg::ObjectClassification::BUS,
+    autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK) = 2.5 * 7.9;
   max_area_matrix_(
-    autoware_perception_msgs::msg::Semantic::BUS, autoware_perception_msgs::msg::Semantic::BUS) =
-    2.7 * 12.0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::BUS,
+    autoware_auto_perception_msgs::msg::ObjectClassification::BUS) = 2.7 * 12.0;
   max_area_matrix_(
-    autoware_perception_msgs::msg::Semantic::BICYCLE,
-    autoware_perception_msgs::msg::Semantic::UNKNOWN) = 2.5;
+    autoware_auto_perception_msgs::msg::ObjectClassification::BICYCLE,
+    autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) = 2.5;
   max_area_matrix_(
-    autoware_perception_msgs::msg::Semantic::BICYCLE,
-    autoware_perception_msgs::msg::Semantic::BICYCLE) = 2.5;
+    autoware_auto_perception_msgs::msg::ObjectClassification::BICYCLE,
+    autoware_auto_perception_msgs::msg::ObjectClassification::BICYCLE) = 2.5;
   max_area_matrix_(
-    autoware_perception_msgs::msg::Semantic::BICYCLE,
-    autoware_perception_msgs::msg::Semantic::MOTORBIKE) = 3.0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::BICYCLE,
+    autoware_auto_perception_msgs::msg::ObjectClassification::MOTORCYCLE) = 3.0;
   max_area_matrix_(
-    autoware_perception_msgs::msg::Semantic::MOTORBIKE,
-    autoware_perception_msgs::msg::Semantic::UNKNOWN) = 3.0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::MOTORCYCLE,
+    autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) = 3.0;
   max_area_matrix_(
-    autoware_perception_msgs::msg::Semantic::MOTORBIKE,
-    autoware_perception_msgs::msg::Semantic::BICYCLE) = 2.5;
+    autoware_auto_perception_msgs::msg::ObjectClassification::MOTORCYCLE,
+    autoware_auto_perception_msgs::msg::ObjectClassification::BICYCLE) = 2.5;
   max_area_matrix_(
-    autoware_perception_msgs::msg::Semantic::MOTORBIKE,
-    autoware_perception_msgs::msg::Semantic::MOTORBIKE) = 3.0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::MOTORCYCLE,
+    autoware_auto_perception_msgs::msg::ObjectClassification::MOTORCYCLE) = 3.0;
   max_area_matrix_(
-    autoware_perception_msgs::msg::Semantic::PEDESTRIAN,
-    autoware_perception_msgs::msg::Semantic::UNKNOWN) = 2.0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::PEDESTRIAN,
+    autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) = 2.0;
   max_area_matrix_(
-    autoware_perception_msgs::msg::Semantic::PEDESTRIAN,
-    autoware_perception_msgs::msg::Semantic::PEDESTRIAN) = 2.0;
-  max_area_matrix_(
-    autoware_perception_msgs::msg::Semantic::ANIMAL,
-    autoware_perception_msgs::msg::Semantic::UNKNOWN) = 2.0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::PEDESTRIAN,
+    autoware_auto_perception_msgs::msg::ObjectClassification::PEDESTRIAN) = 2.0;
   min_area_matrix_ = Eigen::MatrixXd::Constant(20, 20, /* small number */ 0.0);
   min_area_matrix_(
-    autoware_perception_msgs::msg::Semantic::CAR,
-    autoware_perception_msgs::msg::Semantic::UNKNOWN) = 1.2 * 3.0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::CAR,
+    autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) = 1.2 * 3.0;
   min_area_matrix_(
-    autoware_perception_msgs::msg::Semantic::CAR, autoware_perception_msgs::msg::Semantic::CAR) =
-    1.2 * 3.0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::CAR,
+    autoware_auto_perception_msgs::msg::ObjectClassification::CAR) = 1.2 * 3.0;
   min_area_matrix_(
-    autoware_perception_msgs::msg::Semantic::CAR, autoware_perception_msgs::msg::Semantic::TRUCK) =
-    1.5 * 4.0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::CAR,
+    autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK) = 1.5 * 4.0;
   min_area_matrix_(
-    autoware_perception_msgs::msg::Semantic::CAR, autoware_perception_msgs::msg::Semantic::BUS) =
-    2.0 * 5.0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::CAR,
+    autoware_auto_perception_msgs::msg::ObjectClassification::BUS) = 2.0 * 5.0;
   min_area_matrix_(
-    autoware_perception_msgs::msg::Semantic::TRUCK,
-    autoware_perception_msgs::msg::Semantic::UNKNOWN) = 1.5 * 4.0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK,
+    autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) = 1.5 * 4.0;
   min_area_matrix_(
-    autoware_perception_msgs::msg::Semantic::TRUCK, autoware_perception_msgs::msg::Semantic::CAR) =
-    1.2 * 3.0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK,
+    autoware_auto_perception_msgs::msg::ObjectClassification::CAR) = 1.2 * 3.0;
   min_area_matrix_(
-    autoware_perception_msgs::msg::Semantic::TRUCK,
-    autoware_perception_msgs::msg::Semantic::TRUCK) = 1.5 * 4.0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK,
+    autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK) = 1.5 * 4.0;
   min_area_matrix_(
-    autoware_perception_msgs::msg::Semantic::TRUCK, autoware_perception_msgs::msg::Semantic::BUS) =
-    2.0 * 5.0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK,
+    autoware_auto_perception_msgs::msg::ObjectClassification::BUS) = 2.0 * 5.0;
   min_area_matrix_(
-    autoware_perception_msgs::msg::Semantic::BUS,
-    autoware_perception_msgs::msg::Semantic::UNKNOWN) = 2.0 * 5.0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::BUS,
+    autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) = 2.0 * 5.0;
   min_area_matrix_(
-    autoware_perception_msgs::msg::Semantic::BUS, autoware_perception_msgs::msg::Semantic::CAR) =
-    1.2 * 3.0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::BUS,
+    autoware_auto_perception_msgs::msg::ObjectClassification::CAR) = 1.2 * 3.0;
   min_area_matrix_(
-    autoware_perception_msgs::msg::Semantic::BUS, autoware_perception_msgs::msg::Semantic::TRUCK) =
-    1.5 * 4.0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::BUS,
+    autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK) = 1.5 * 4.0;
   min_area_matrix_(
-    autoware_perception_msgs::msg::Semantic::BUS, autoware_perception_msgs::msg::Semantic::BUS) =
-    2.0 * 5.0;
+    autoware_auto_perception_msgs::msg::ObjectClassification::BUS,
+    autoware_auto_perception_msgs::msg::ObjectClassification::BUS) = 2.0 * 5.0;
   min_area_matrix_(
-    autoware_perception_msgs::msg::Semantic::BICYCLE,
-    autoware_perception_msgs::msg::Semantic::UNKNOWN) = 0.001;
+    autoware_auto_perception_msgs::msg::ObjectClassification::BICYCLE,
+    autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) = 0.001;
   min_area_matrix_(
-    autoware_perception_msgs::msg::Semantic::BICYCLE,
-    autoware_perception_msgs::msg::Semantic::BICYCLE) = 0.001;
+    autoware_auto_perception_msgs::msg::ObjectClassification::BICYCLE,
+    autoware_auto_perception_msgs::msg::ObjectClassification::BICYCLE) = 0.001;
   min_area_matrix_(
-    autoware_perception_msgs::msg::Semantic::BICYCLE,
-    autoware_perception_msgs::msg::Semantic::MOTORBIKE) = 0.001;
+    autoware_auto_perception_msgs::msg::ObjectClassification::BICYCLE,
+    autoware_auto_perception_msgs::msg::ObjectClassification::MOTORCYCLE) = 0.001;
   min_area_matrix_(
-    autoware_perception_msgs::msg::Semantic::MOTORBIKE,
-    autoware_perception_msgs::msg::Semantic::UNKNOWN) = 0.001;
+    autoware_auto_perception_msgs::msg::ObjectClassification::MOTORCYCLE,
+    autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) = 0.001;
   min_area_matrix_(
-    autoware_perception_msgs::msg::Semantic::MOTORBIKE,
-    autoware_perception_msgs::msg::Semantic::BICYCLE) = 0.001;
+    autoware_auto_perception_msgs::msg::ObjectClassification::MOTORCYCLE,
+    autoware_auto_perception_msgs::msg::ObjectClassification::BICYCLE) = 0.001;
   min_area_matrix_(
-    autoware_perception_msgs::msg::Semantic::MOTORBIKE,
-    autoware_perception_msgs::msg::Semantic::MOTORBIKE) = 0.001;
+    autoware_auto_perception_msgs::msg::ObjectClassification::MOTORCYCLE,
+    autoware_auto_perception_msgs::msg::ObjectClassification::MOTORCYCLE) = 0.001;
   min_area_matrix_(
-    autoware_perception_msgs::msg::Semantic::PEDESTRIAN,
-    autoware_perception_msgs::msg::Semantic::UNKNOWN) = 0.001;
+    autoware_auto_perception_msgs::msg::ObjectClassification::PEDESTRIAN,
+    autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) = 0.001;
   min_area_matrix_(
-    autoware_perception_msgs::msg::Semantic::PEDESTRIAN,
-    autoware_perception_msgs::msg::Semantic::PEDESTRIAN) = 0.001;
-  min_area_matrix_(
-    autoware_perception_msgs::msg::Semantic::ANIMAL,
-    autoware_perception_msgs::msg::Semantic::UNKNOWN) = 0.5;
+    autoware_auto_perception_msgs::msg::ObjectClassification::PEDESTRIAN,
+    autoware_auto_perception_msgs::msg::ObjectClassification::PEDESTRIAN) = 0.001;
 }
 
 bool DataAssociation::assign(
@@ -302,31 +292,31 @@ bool DataAssociation::assign(
 }
 
 Eigen::MatrixXd DataAssociation::calcScoreMatrix(
-  const autoware_perception_msgs::msg::DynamicObjectWithFeatureArray & object0,
-  const autoware_perception_msgs::msg::DynamicObjectWithFeatureArray & object1)
+  const autoware_auto_perception_msgs::msg::DetectedObjects & object0,
+  const autoware_auto_perception_msgs::msg::DetectedObjects & object1)
 {
   Eigen::MatrixXd score_matrix =
-    Eigen::MatrixXd::Zero(object1.feature_objects.size(), object0.feature_objects.size());
-  for (size_t object1_idx = 0; object1_idx < object1.feature_objects.size(); ++object1_idx) {
-    for (size_t object0_idx = 0; object0_idx < object0.feature_objects.size(); ++object0_idx) {
+    Eigen::MatrixXd::Zero(object1.objects.size(), object0.objects.size());
+  for (size_t object1_idx = 0; object1_idx < object1.objects.size(); ++object1_idx) {
+    for (size_t object0_idx = 0; object0_idx < object0.objects.size(); ++object0_idx) {
       double score = 0.0;
       if (can_assign_matrix_(
-            object1.feature_objects.at(object1_idx).object.semantic.type,
-            object0.feature_objects.at(object0_idx).object.semantic.type)) {
+            object1.objects.at(object1_idx).classification.front().label,
+            object0.objects.at(object0_idx).classification.front().label)) {
         const double max_dist = max_dist_matrix_(
-          object1.feature_objects.at(object1_idx).object.semantic.type,
-          object0.feature_objects.at(object0_idx).object.semantic.type);
+          object1.objects.at(object1_idx).classification.front().label,
+          object0.objects.at(object0_idx).classification.front().label);
         const double max_area = max_area_matrix_(
-          object1.feature_objects.at(object1_idx).object.semantic.type,
-          object0.feature_objects.at(object0_idx).object.semantic.type);
+          object1.objects.at(object1_idx).classification.front().label,
+          object0.objects.at(object0_idx).classification.front().label);
         const double min_area = min_area_matrix_(
-          object1.feature_objects.at(object1_idx).object.semantic.type,
-          object0.feature_objects.at(object0_idx).object.semantic.type);
+          object1.objects.at(object1_idx).classification.front().label,
+          object0.objects.at(object0_idx).classification.front().label);
         const double dist = getDistance(
-          object0.feature_objects.at(object0_idx).object.state.pose_covariance.pose.position,
-          object1.feature_objects.at(object1_idx).object.state.pose_covariance.pose.position);
-        const double area0 = utils::getArea(object0.feature_objects.at(object0_idx).object.shape);
-        const double area1 = utils::getArea(object1.feature_objects.at(object1_idx).object.shape);
+          object0.objects.at(object0_idx).kinematics.pose_with_covariance.pose.position,
+          object1.objects.at(object1_idx).kinematics.pose_with_covariance.pose.position);
+        const double area0 = utils::getArea(object0.objects.at(object0_idx).shape);
+        const double area1 = utils::getArea(object1.objects.at(object1_idx).shape);
         score = (max_dist - std::min(dist, max_dist)) / max_dist;
         if (max_dist < dist) {
           score = 0.0;

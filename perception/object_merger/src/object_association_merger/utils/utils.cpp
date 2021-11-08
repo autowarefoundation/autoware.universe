@@ -16,14 +16,14 @@
 
 namespace utils
 {
-double getArea(const autoware_perception_msgs::msg::Shape & shape)
+double getArea(const autoware_auto_perception_msgs::msg::Shape & shape)
 {
   double area = 0.0;
-  if (shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
+  if (shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
     area = getRectangleArea(shape.dimensions);
-  } else if (shape.type == autoware_perception_msgs::msg::Shape::CYLINDER) {
+  } else if (shape.type == autoware_auto_perception_msgs::msg::Shape::CYLINDER) {
     area = getCircleArea(shape.dimensions);
-  } else if (shape.type == autoware_perception_msgs::msg::Shape::POLYGON) {
+  } else if (shape.type == autoware_auto_perception_msgs::msg::Shape::POLYGON) {
     area = getPolygonArea(shape.footprint);
   }
   return area;
