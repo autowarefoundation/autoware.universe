@@ -1,6 +1,7 @@
 #include "autoware_auto_perception_msgs/msg/ObjectClassification.idl"
 #include "autoware_auto_perception_msgs/msg/Shape.idl"
 #include "autoware_auto_perception_msgs/msg/TrackedObjectKinematics.idl"
+#include "unique_identifier_msgs/msg/UUID.idl"
 
 module autoware_auto_perception_msgs {
   module msg {
