@@ -19,10 +19,10 @@
 #include <rclcpp/rclcpp.hpp>
 #include <std_srvs/srv/trigger.hpp>
 
+#include <autoware_auto_system_msgs/msg/autoware_state.hpp>
+#include <autoware_auto_system_msgs/msg/hazard_status_stamped.hpp>
+#include <autoware_auto_vehicle_msgs/msg/vehicle_state_report.hpp>
 #include <autoware_control_msgs/msg/gate_mode.hpp>
-#include <autoware_system_msgs/msg/autoware_state.hpp>
-#include <autoware_system_msgs/msg/hazard_status_stamped.hpp>
-#include <autoware_vehicle_msgs/msg/control_mode.hpp>
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 
 #include <boost/optional.hpp>
@@ -82,7 +82,7 @@ private:
 
   rclcpp::Time emergency_state_switch_time_;
   rclcpp::Time initialized_time_;
-  autoware_system_msgs::msg::HazardStatus hazard_status_{};
+  autoware_auto_system_msgs::msg::HazardStatus hazard_status_{};
   std::unordered_map<std::string, RequiredModules> required_modules_map_;
   std::string current_mode_;
 
@@ -96,25 +96,28 @@ private:
 
   // Subscriber
   rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr sub_diag_array_;
-  rclcpp::Subscription<autoware_system_msgs::msg::AutowareState>::SharedPtr sub_autoware_state_;
+  rclcpp::Subscription<autoware_auto_system_msgs::msg::AutowareState>::SharedPtr
+    sub_autoware_state_;
   rclcpp::Subscription<autoware_control_msgs::msg::GateMode>::SharedPtr sub_current_gate_mode_;
-  rclcpp::Subscription<autoware_vehicle_msgs::msg::ControlMode>::SharedPtr sub_control_mode_;
-  void onAutowareState(const autoware_system_msgs::msg::AutowareState::ConstSharedPtr msg);
+  rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::VehicleStateReport>::SharedPtr
+    sub_vehicle_state_report_;
+  void onAutowareState(const autoware_auto_system_msgs::msg::AutowareState::ConstSharedPtr msg);
   void onCurrentGateMode(const autoware_control_msgs::msg::GateMode::ConstSharedPtr msg);
-  void onControlMode(const autoware_vehicle_msgs::msg::ControlMode::ConstSharedPtr msg);
+  void onControlMode(const autoware_auto_vehicle_msgs::msg::VehicleStateReport::ConstSharedPtr msg);
   void onDiagArray(const diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr msg);
 
   const size_t diag_buffer_size_ = 100;
   std::unordered_map<std::string, DiagBuffer> diag_buffer_map_;
   diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr diag_array_;
-  autoware_system_msgs::msg::AutowareState::ConstSharedPtr autoware_state_;
+  autoware_auto_system_msgs::msg::AutowareState::ConstSharedPtr autoware_state_;
   autoware_control_msgs::msg::GateMode::ConstSharedPtr current_gate_mode_;
-  autoware_vehicle_msgs::msg::ControlMode::ConstSharedPtr control_mode_;
+  autoware_auto_vehicle_msgs::msg::VehicleStateReport::ConstSharedPtr vehicle_state_report_;
 
   // Publisher
-  rclcpp::Publisher<autoware_system_msgs::msg::HazardStatusStamped>::SharedPtr pub_hazard_status_;
+  rclcpp::Publisher<autoware_auto_system_msgs::msg::HazardStatusStamped>::SharedPtr
+    pub_hazard_status_;
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr pub_diagnostics_err_;
-  void publishHazardStatus(const autoware_system_msgs::msg::HazardStatus & hazard_status);
+  void publishHazardStatus(const autoware_auto_system_msgs::msg::HazardStatus & hazard_status);
 
   // Service
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr srv_clear_emergency_;
@@ -124,11 +127,11 @@ private:
 
   // Algorithm
   boost::optional<DiagStamped> getLatestDiag(const std::string & diag_name) const;
-  int getHazardLevel(const DiagConfig & required_module, const int diag_level) const;
+  uint8_t getHazardLevel(const DiagConfig & required_module, const int diag_level) const;
   void appendHazardDiag(
     const DiagConfig & required_module, const diagnostic_msgs::msg::DiagnosticStatus & diag,
-    autoware_system_msgs::msg::HazardStatus * hazard_status) const;
-  autoware_system_msgs::msg::HazardStatus judgeHazardStatus() const;
+    autoware_auto_system_msgs::msg::HazardStatus * hazard_status) const;
+  autoware_auto_system_msgs::msg::HazardStatus judgeHazardStatus() const;
   void updateHazardStatus();
   bool canAutoRecovery() const;
   bool isEmergencyHoldingRequired() const;
