@@ -35,6 +35,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   DEPENDENCIES
     "autoware_auto_geometry_msgs"
     "geometry_msgs"
+    "sensor_msgs"
     "std_msgs"
   ADD_LINTER_TESTS
 )
