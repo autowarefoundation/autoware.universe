@@ -24,6 +24,8 @@
 
 namespace
 {
+using TrajectoryPoints = std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>;
+
 geometry_msgs::msg::Pose lerpByPose(
   const geometry_msgs::msg::Pose & p1, const geometry_msgs::msg::Pose & p2, const double t)
 {
@@ -44,16 +46,16 @@ geometry_msgs::msg::Pose lerpByPose(
 
 bool applyMaxVelocity(
   const double max_velocity, const size_t start_index, const size_t end_index,
-  autoware_planning_msgs::msg::Trajectory & output_trajectory)
+  TrajectoryPoints & output_trajectory)
 {
-  if (end_index < start_index || output_trajectory.points.size() < end_index) {
+  if (end_index < start_index || output_trajectory.size() < end_index) {
     return false;
   }
 
   for (size_t i = start_index; i <= end_index; ++i) {
-    output_trajectory.points.at(i).twist.linear.x =
-      std::min(output_trajectory.points.at(i).twist.linear.x, max_velocity);
-    output_trajectory.points.at(i).accel.linear.x = 0.0;
+    output_trajectory.at(i).longitudinal_velocity_mps =
+      std::min(output_trajectory.at(i).longitudinal_velocity_mps, static_cast<float>(max_velocity));
+    output_trajectory.at(i).acceleration_mps2 = 0.0;
   }
   return true;
 }
@@ -72,13 +74,13 @@ void AnalyticalJerkConstrainedSmoother::setParam(const Param & smoother_param)
 }
 
 bool AnalyticalJerkConstrainedSmoother::apply(
-  const double initial_vel, const double initial_acc, const Trajectory & input, Trajectory & output,
-  [[maybe_unused]] std::vector<Trajectory> & debug_trajectories)
+  const double initial_vel, const double initial_acc, const TrajectoryPoints & input,
+  TrajectoryPoints & output, [[maybe_unused]] std::vector<TrajectoryPoints> & debug_trajectories)
 {
   RCLCPP_DEBUG(logger_, "-------------------- Start --------------------");
 
   // guard
-  if (input.points.empty()) {
+  if (input.empty()) {
     RCLCPP_DEBUG(logger_, "Fail. input trajectory is empty");
     return false;
   }
@@ -87,14 +89,14 @@ bool AnalyticalJerkConstrainedSmoother::apply(
   const size_t closest_index = 0;
 
   // Find deceleration targets
-  if (input.points.size() == 1) {
+  if (input.size() == 1) {
     RCLCPP_DEBUG(
       logger_,
       "Input trajectory size is too short. Cannot find decel targets and "
       "return v0, a0");
     output = input;
-    output.points.front().twist.linear.x = initial_vel;
-    output.points.front().accel.linear.x = initial_acc;
+    output.front().longitudinal_velocity_mps = initial_vel;
+    output.front().acceleration_mps2 = initial_acc;
     return true;
   }
   std::vector<std::pair<size_t, double>> decel_target_indices;
@@ -106,8 +108,8 @@ bool AnalyticalJerkConstrainedSmoother::apply(
   }
 
   // Apply filters according to deceleration targets
-  Trajectory reference_trajectory = input;
-  Trajectory filtered_trajectory = input;
+  TrajectoryPoints reference_trajectory = input;
+  TrajectoryPoints filtered_trajectory = input;
   for (size_t i = 0; i < decel_target_indices.size(); ++i) {
     size_t fwd_start_index;
     double fwd_start_vel;
@@ -118,8 +120,8 @@ bool AnalyticalJerkConstrainedSmoother::apply(
       fwd_start_acc = initial_acc;
     } else {
       fwd_start_index = decel_target_indices.at(i - 1).first;
-      fwd_start_vel = filtered_trajectory.points.at(fwd_start_index).twist.linear.x;
-      fwd_start_acc = filtered_trajectory.points.at(fwd_start_index).accel.linear.x;
+      fwd_start_vel = filtered_trajectory.at(fwd_start_index).longitudinal_velocity_mps;
+      fwd_start_acc = filtered_trajectory.at(fwd_start_index).acceleration_mps2;
     }
 
     RCLCPP_DEBUG(logger_, "Apply forward jerk filter from: %ld", fwd_start_index);
@@ -139,8 +141,8 @@ bool AnalyticalJerkConstrainedSmoother::apply(
       }
       if (decel_target_indices.at(j - 1).second < decel_target_indices.at(j).second) {
         bwd_start_index = decel_target_indices.at(j - 1).first;
-        bwd_start_vel = filtered_trajectory.points.at(bwd_start_index).twist.linear.x;
-        bwd_start_acc = filtered_trajectory.points.at(bwd_start_index).accel.linear.x;
+        bwd_start_vel = filtered_trajectory.at(bwd_start_index).longitudinal_velocity_mps;
+        bwd_start_acc = filtered_trajectory.at(bwd_start_index).acceleration_mps2;
         break;
       }
     }
@@ -164,13 +166,11 @@ bool AnalyticalJerkConstrainedSmoother::apply(
         logger_,
         "Failed to apply backward decel filter, so apply max velocity filter. max velocity = %f, "
         "start_index = %s, end_index = %zd",
-        decel_target_vel, strStartIndices(start_indices).c_str(),
-        filtered_trajectory.points.size() - 1);
+        decel_target_vel, strStartIndices(start_indices).c_str(), filtered_trajectory.size() - 1);
 
       const double ep = 0.001;
       if (std::abs(decel_target_vel) < ep) {
-        applyMaxVelocity(
-          0.0, bwd_start_index, filtered_trajectory.points.size() - 1, filtered_trajectory);
+        applyMaxVelocity(0.0, bwd_start_index, filtered_trajectory.size() - 1, filtered_trajectory);
         output = filtered_trajectory;
         RCLCPP_DEBUG(logger_, "-------------------- Finish --------------------");
         return true;
@@ -192,8 +192,8 @@ bool AnalyticalJerkConstrainedSmoother::apply(
     start_acc = initial_acc;
   } else {
     start_index = decel_target_indices.back().first;
-    start_vel = filtered_trajectory.points.at(start_index).twist.linear.x;
-    start_acc = filtered_trajectory.points.at(start_index).accel.linear.x;
+    start_vel = filtered_trajectory.at(start_index).longitudinal_velocity_mps;
+    start_acc = filtered_trajectory.at(start_index).acceleration_mps2;
   }
   RCLCPP_DEBUG(logger_, "Apply forward jerk filter from: %ld", start_index);
   applyForwardJerkFilter(
@@ -205,60 +205,59 @@ bool AnalyticalJerkConstrainedSmoother::apply(
   return true;
 }
 
-boost::optional<Trajectory> AnalyticalJerkConstrainedSmoother::resampleTrajectory(
-  const Trajectory & input, [[maybe_unused]] const double v_current,
+boost::optional<TrajectoryPoints> AnalyticalJerkConstrainedSmoother::resampleTrajectory(
+  const TrajectoryPoints & input, [[maybe_unused]] const double v_current,
   [[maybe_unused]] const int closest_id) const
 {
-  Trajectory output;
-  if (input.points.empty()) {
+  TrajectoryPoints output;
+  if (input.empty()) {
     RCLCPP_WARN(logger_, "Input trajectory is empty");
     return {};
   }
 
   const double ds = 1.0 / static_cast<double>(smoother_param_.resample.num_resample);
 
-  for (size_t i = 0; i < input.points.size() - 1; ++i) {
+  for (size_t i = 0; i < input.size() - 1; ++i) {
     double s = 0.0;
-    const TrajectoryPoint tp0 = input.points.at(i);
-    const TrajectoryPoint tp1 = input.points.at(i + 1);
+    const auto tp0 = input.at(i);
+    const auto tp1 = input.at(i + 1);
 
     const double dist_thr = 0.001;  // 1mm
     const double dist_tp0_tp1 = autoware_utils::calcDistance2d(tp0, tp1);
     if (std::fabs(dist_tp0_tp1) < dist_thr) {
-      output.points.push_back(input.points.at(i));
+      output.push_back(input.at(i));
       continue;
     }
 
     for (size_t j = 0; j < smoother_param_.resample.num_resample; ++j) {
-      auto tp = input.points.at(i);
+      auto tp = input.at(i);
 
       tp.pose = lerpByPose(tp0.pose, tp1.pose, s);
-      tp.twist.linear.x = tp0.twist.linear.x;
-      tp.twist.angular.z = (1.0 - s) * tp0.twist.angular.z + s * tp1.twist.angular.z;
-      tp.accel.linear.x = tp0.accel.linear.x;
-      tp.accel.angular.z = (1.0 - s) * tp0.accel.angular.z + s * tp1.accel.angular.z;
+      tp.longitudinal_velocity_mps = tp0.longitudinal_velocity_mps;
+      tp.heading_rate_rps = (1.0 - s) * tp0.heading_rate_rps + s * tp1.heading_rate_rps;
+      tp.acceleration_mps2 = tp0.acceleration_mps2;
+      // tp.accel.angular.z = (1.0 - s) * tp0.accel.angular.z + s * tp1.accel.angular.z;
 
-      output.points.push_back(tp);
+      output.push_back(tp);
 
       s += ds;
     }
   }
 
-  output.points.push_back(input.points.back());
-  output.header = input.header;
+  output.push_back(input.back());
 
-  return boost::optional<Trajectory>(output);
+  return boost::optional<TrajectoryPoints>(output);
 }
 
-boost::optional<Trajectory> AnalyticalJerkConstrainedSmoother::applyLateralAccelerationFilter(
-  const Trajectory & input) const
+boost::optional<TrajectoryPoints> AnalyticalJerkConstrainedSmoother::applyLateralAccelerationFilter(
+  const TrajectoryPoints & input) const
 {
-  if (input.points.empty()) {
+  if (input.empty()) {
     return boost::none;
   }
 
-  if (input.points.size() < 3) {
-    return boost::optional<Trajectory>(input);  // cannot calculate lateral acc. do nothing.
+  if (input.size() < 3) {
+    return boost::optional<TrajectoryPoints>(input);  // cannot calculate lateral acc. do nothing.
   }
 
   // Interpolate with constant interval distance for lateral acceleration calculation.
@@ -273,7 +272,7 @@ boost::optional<Trajectory> AnalyticalJerkConstrainedSmoother::applyLateralAccel
     RCLCPP_WARN(logger_, "Interpolation failed at lateral acceleration filter.");
     return boost::none;
   }
-  output->points.back().twist = input.points.back().twist;  // keep the final speed.
+  output->back() = input.back();  // keep the final speed.
 
   constexpr double curvature_calc_dist = 5.0;  // [m] calc curvature with 5m away points
   const size_t idx_dist =
@@ -282,7 +281,7 @@ boost::optional<Trajectory> AnalyticalJerkConstrainedSmoother::applyLateralAccel
   // Calculate curvature assuming the trajectory points interval is constant
   const auto curvature_v = trajectory_utils::calcTrajectoryCurvatureFrom3Points(*output, idx_dist);
   if (!curvature_v) {
-    return boost::optional<Trajectory>(input);
+    return boost::optional<TrajectoryPoints>(input);
   }
 
   // Decrease speed according to lateral G
@@ -293,17 +292,17 @@ boost::optional<Trajectory> AnalyticalJerkConstrainedSmoother::applyLateralAccel
   const double max_lateral_accel_abs = std::fabs(base_param_.max_lateral_accel);
 
   std::vector<int> filtered_points;
-  for (size_t i = 0; i < output->points.size(); ++i) {
+  for (size_t i = 0; i < output->size(); ++i) {
     double curvature = 0.0;
     const size_t start = i > before_decel_index ? i - before_decel_index : 0;
-    const size_t end = std::min(output->points.size(), i + after_decel_index);
+    const size_t end = std::min(output->size(), i + after_decel_index);
     for (size_t j = start; j < end; ++j) {
       curvature = std::max(curvature, std::fabs(curvature_v->at(j)));
     }
     double v_curvature_max = std::sqrt(max_lateral_accel_abs / std::max(curvature, 1.0E-5));
     v_curvature_max = std::max(v_curvature_max, base_param_.min_curve_velocity);
-    if (output->points.at(i).twist.linear.x > v_curvature_max) {
-      output->points.at(i).twist.linear.x = v_curvature_max;
+    if (output->at(i).longitudinal_velocity_mps > v_curvature_max) {
+      output->at(i).longitudinal_velocity_mps = v_curvature_max;
       filtered_points.push_back(i);
     }
   }
@@ -321,28 +320,27 @@ boost::optional<Trajectory> AnalyticalJerkConstrainedSmoother::applyLateralAccel
     if (is_updated == false) {
       start_index = index;
       end_index = index;
-      min_latacc_velocity = output->points.at(index).twist.linear.x;
+      min_latacc_velocity = output->at(index).longitudinal_velocity_mps;
       is_updated = true;
       continue;
     }
 
-    if (
-      autoware_utils::calcDistance2d(output->points.at(end_index), output->points.at(index)) <
-      dist_threshold) {
+    if (autoware_utils::calcDistance2d(output->at(end_index), output->at(index)) < dist_threshold) {
       end_index = index;
-      min_latacc_velocity = std::min(output->points.at(index).twist.linear.x, min_latacc_velocity);
+      min_latacc_velocity = std::min(
+        static_cast<double>(output->at(index).longitudinal_velocity_mps), min_latacc_velocity);
     } else {
       latacc_filtered_ranges.emplace_back(start_index, end_index, min_latacc_velocity);
       start_index = index;
       end_index = index;
-      min_latacc_velocity = output->points.at(index).twist.linear.x;
+      min_latacc_velocity = output->at(index).longitudinal_velocity_mps;
     }
   }
   if (is_updated) {
     latacc_filtered_ranges.emplace_back(start_index, end_index, min_latacc_velocity);
   }
 
-  for (size_t i = 0; i < output->points.size(); ++i) {
+  for (size_t i = 0; i < output->size(); ++i) {
     for (const auto & lat_acc_filtered_range : latacc_filtered_ranges) {
       const size_t start_index = std::get<0>(lat_acc_filtered_range);
       const size_t end_index = std::get<1>(lat_acc_filtered_range);
@@ -351,7 +349,7 @@ boost::optional<Trajectory> AnalyticalJerkConstrainedSmoother::applyLateralAccel
       if (
         start_index <= i && i <= end_index &&
         smoother_param_.latacc.enable_constant_velocity_while_turning) {
-        output->points.at(i).twist.linear.x = min_latacc_velocity;
+        output->at(i).longitudinal_velocity_mps = min_latacc_velocity;
         break;
       }
     }
@@ -361,27 +359,27 @@ boost::optional<Trajectory> AnalyticalJerkConstrainedSmoother::applyLateralAccel
 }
 
 bool AnalyticalJerkConstrainedSmoother::searchDecelTargetIndices(
-  const Trajectory & trajectory, const size_t closest_index,
+  const TrajectoryPoints & trajectory, const size_t closest_index,
   std::vector<std::pair<size_t, double>> & decel_target_indices) const
 {
   const double ep = -0.00001;
   const size_t start_index = std::max<size_t>(1, closest_index);
   std::vector<std::pair<size_t, double>> tmp_indices;
-  for (size_t i = start_index; i < trajectory.points.size() - 1; ++i) {
+  for (size_t i = start_index; i < trajectory.size() - 1; ++i) {
     const double dv_before =
-      trajectory.points.at(i).twist.linear.x - trajectory.points.at(i - 1).twist.linear.x;
+      trajectory.at(i).longitudinal_velocity_mps - trajectory.at(i - 1).longitudinal_velocity_mps;
     const double dv_after =
-      trajectory.points.at(i + 1).twist.linear.x - trajectory.points.at(i).twist.linear.x;
+      trajectory.at(i + 1).longitudinal_velocity_mps - trajectory.at(i).longitudinal_velocity_mps;
     if (dv_before < ep && dv_after > ep) {
-      tmp_indices.emplace_back(i, trajectory.points.at(i).twist.linear.x);
+      tmp_indices.emplace_back(i, trajectory.at(i).longitudinal_velocity_mps);
     }
   }
 
-  const unsigned int i = trajectory.points.size() - 1;
+  const unsigned int i = trajectory.size() - 1;
   const double dv_before =
-    trajectory.points.at(i).twist.linear.x - trajectory.points.at(i - 1).twist.linear.x;
+    trajectory.at(i).longitudinal_velocity_mps - trajectory.at(i - 1).longitudinal_velocity_mps;
   if (dv_before < ep) {
-    tmp_indices.emplace_back(i, trajectory.points.at(i).twist.linear.x);
+    tmp_indices.emplace_back(i, trajectory.at(i).longitudinal_velocity_mps);
   }
 
   if (!tmp_indices.empty()) {
@@ -403,22 +401,22 @@ bool AnalyticalJerkConstrainedSmoother::searchDecelTargetIndices(
 }
 
 bool AnalyticalJerkConstrainedSmoother::applyForwardJerkFilter(
-  const Trajectory & base_trajectory, const size_t start_index, const double initial_vel,
-  const double initial_acc, const Param & params, Trajectory & output_trajectory) const
+  const TrajectoryPoints & base_trajectory, const size_t start_index, const double initial_vel,
+  const double initial_acc, const Param & params, TrajectoryPoints & output_trajectory) const
 {
-  output_trajectory.points.at(start_index).twist.linear.x = initial_vel;
-  output_trajectory.points.at(start_index).accel.linear.x = initial_acc;
+  output_trajectory.at(start_index).longitudinal_velocity_mps = initial_vel;
+  output_trajectory.at(start_index).acceleration_mps2 = initial_acc;
 
-  for (size_t i = start_index + 1; i < base_trajectory.points.size(); ++i) {
-    const double prev_vel = output_trajectory.points.at(i - 1).twist.linear.x;
-    const double ds = autoware_utils::calcDistance2d(
-      base_trajectory.points.at(i - 1), base_trajectory.points.at(i));
+  for (size_t i = start_index + 1; i < base_trajectory.size(); ++i) {
+    const double prev_vel = output_trajectory.at(i - 1).longitudinal_velocity_mps;
+    const double ds =
+      autoware_utils::calcDistance2d(base_trajectory.at(i - 1), base_trajectory.at(i));
     const double dt = ds / std::max(prev_vel, 1.0);
 
-    const double prev_acc = output_trajectory.points.at(i - 1).accel.linear.x;
+    const double prev_acc = output_trajectory.at(i - 1).acceleration_mps2;
     const double curr_vel = prev_vel + prev_acc * dt;
 
-    const double error_vel = base_trajectory.points.at(i).twist.linear.x - curr_vel;
+    const double error_vel = base_trajectory.at(i).longitudinal_velocity_mps - curr_vel;
     const double fb_acc = params.forward.kp * error_vel;
     const double limited_acc =
       std::max(params.forward.min_acc, std::min(params.forward.max_acc, fb_acc));
@@ -428,8 +426,8 @@ bool AnalyticalJerkConstrainedSmoother::applyForwardJerkFilter(
 
     const double curr_acc = prev_acc + limited_jerk * dt;
 
-    output_trajectory.points.at(i).twist.linear.x = curr_vel;
-    output_trajectory.points.at(i).accel.linear.x = curr_acc;
+    output_trajectory.at(i).longitudinal_velocity_mps = curr_vel;
+    output_trajectory.at(i).acceleration_mps2 = curr_acc;
   }
 
   return true;
@@ -437,7 +435,7 @@ bool AnalyticalJerkConstrainedSmoother::applyForwardJerkFilter(
 
 bool AnalyticalJerkConstrainedSmoother::applyBackwardDecelFilter(
   const std::vector<size_t> & start_indices, const size_t decel_target_index,
-  const double decel_target_vel, const Param & params, Trajectory & output_trajectory) const
+  const double decel_target_vel, const Param & params, TrajectoryPoints & output_trajectory) const
 {
   const double ep = 0.001;
 
@@ -449,17 +447,16 @@ bool AnalyticalJerkConstrainedSmoother::applyBackwardDecelFilter(
 
   for (size_t start_index : start_indices) {
     double dist = 0.0;
-    std::vector<double> dist_to_target(output_trajectory.points.size(), 0);
+    std::vector<double> dist_to_target(output_trajectory.size(), 0);
     dist_to_target.at(decel_target_index) = dist;
     for (size_t i = start_index; i < decel_target_index; ++i) {
-      if (output_trajectory.points.at(i).twist.linear.x >= decel_target_vel) {
+      if (output_trajectory.at(i).longitudinal_velocity_mps >= decel_target_vel) {
         start_index = i;
         break;
       }
     }
     for (size_t i = decel_target_index; i > start_index; --i) {
-      dist += autoware_utils::calcDistance2d(
-        output_trajectory.points.at(i - 1), output_trajectory.points.at(i));
+      dist += autoware_utils::calcDistance2d(output_trajectory.at(i - 1), output_trajectory.at(i));
       dist_to_target.at(i - 1) = dist;
     }
 
@@ -536,12 +533,12 @@ bool AnalyticalJerkConstrainedSmoother::applyBackwardDecelFilter(
 }
 
 bool AnalyticalJerkConstrainedSmoother::calcEnoughDistForDecel(
-  const Trajectory & trajectory, const size_t start_index, const double decel_target_vel,
+  const TrajectoryPoints & trajectory, const size_t start_index, const double decel_target_vel,
   const double planning_jerk, const Param & params, const std::vector<double> & dist_to_target,
   bool & is_enough_dist, int & type, std::vector<double> & times, double & stop_dist) const
 {
-  const double v0 = trajectory.points.at(start_index).twist.linear.x;
-  const double a0 = trajectory.points.at(start_index).accel.linear.x;
+  const double v0 = trajectory.at(start_index).longitudinal_velocity_mps;
+  const double a0 = trajectory.at(start_index).acceleration_mps2;
   const double jerk_acc = std::abs(planning_jerk);
   const double jerk_dec = planning_jerk;
   // *INDENT-OFF*
@@ -583,10 +580,10 @@ bool AnalyticalJerkConstrainedSmoother::calcEnoughDistForDecel(
 bool AnalyticalJerkConstrainedSmoother::applyDecelVelocityFilter(
   const size_t decel_start_index, const double decel_target_vel, const double planning_jerk,
   const Param & params, const int type, const std::vector<double> & times,
-  Trajectory & output_trajectory) const
+  TrajectoryPoints & output_trajectory) const
 {
-  const double v0 = output_trajectory.points.at(decel_start_index).twist.linear.x;
-  const double a0 = output_trajectory.points.at(decel_start_index).accel.linear.x;
+  const double v0 = output_trajectory.at(decel_start_index).longitudinal_velocity_mps;
+  const double a0 = output_trajectory.at(decel_start_index).acceleration_mps2;
   const double jerk_acc = std::abs(planning_jerk);
   const double jerk_dec = planning_jerk;
   // *INDENT-OFF*

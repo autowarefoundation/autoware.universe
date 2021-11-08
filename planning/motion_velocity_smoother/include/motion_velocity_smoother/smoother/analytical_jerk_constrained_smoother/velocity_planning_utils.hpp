@@ -12,15 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// *INDENT-OFF*
 #ifndef MOTION_VELOCITY_SMOOTHER__SMOOTHER__ANALYTICAL_JERK_CONSTRAINED_SMOOTHER__VELOCITY_PLANNING_UTILS_HPP_  // NOLINT
 #define MOTION_VELOCITY_SMOOTHER__SMOOTHER__ANALYTICAL_JERK_CONSTRAINED_SMOOTHER__VELOCITY_PLANNING_UTILS_HPP_  // NOLINT
+// *INDENT-ON*
 
+#include "autoware_utils/trajectory/trajectory.hpp"
 #include "motion_velocity_smoother/linear_interpolation.hpp"
+#include "rclcpp/rclcpp.hpp"
 
-#include <autoware_utils/trajectory/trajectory.hpp>
-#include <rclcpp/rclcpp.hpp>
-
-#include <autoware_planning_msgs/msg/trajectory.hpp>
+#include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
 
 #include <cmath>
 #include <iostream>
@@ -31,7 +32,9 @@ namespace motion_velocity_smoother
 {
 namespace analytical_velocity_planning_utils
 {
-using autoware_planning_msgs::msg::Trajectory;
+using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+using TrajectoryPoints = std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>;
+
 bool calcStopDistWithJerkAndAccConstraints(
   const double v0, const double a0, const double jerk_acc, const double jerk_dec,
   const double min_acc, const double target_vel, int & type, std::vector<double> & times,
@@ -42,7 +45,8 @@ bool validCheckCalcStopDist(
 bool calcStopVelocityWithConstantJerkAccLimit(
   const double v0, const double a0, const double jerk_acc, const double jerk_dec,
   const double min_acc, const double decel_target_vel, const int type,
-  const std::vector<double> & times, const size_t start_index, Trajectory & output_trajectory);
+  const std::vector<double> & times, const size_t start_index,
+  TrajectoryPoints & output_trajectory);
 void updateStopVelocityStatus(
   double v0, double a0, double jerk_acc, double jerk_dec, int type, std::vector<double> times,
   double t, double & x, double & v, double & a, double & j);
@@ -52,6 +56,4 @@ double integ_a(double a0, double j0, double t);
 }  // namespace analytical_velocity_planning_utils
 }  // namespace motion_velocity_smoother
 
-// clang-format off
-#endif  // MOTION_VELOCITY_SMOOTHER__SMOOTHER__ANALYTICAL_JERK_CONSTRAINED_SMOOTHER__VELOCITY_PLANNING_UTILS_HPP_ // NOLINT
-// clang-format on
+#endif

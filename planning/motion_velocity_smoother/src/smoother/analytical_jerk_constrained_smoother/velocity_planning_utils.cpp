@@ -167,8 +167,7 @@ bool validCheckCalcStopDist(
 bool calcStopVelocityWithConstantJerkAccLimit(
   const double v0, const double a0, const double jerk_acc, const double jerk_dec,
   const double min_acc, const double decel_target_vel, const int type,
-  const std::vector<double> & times, const size_t start_index,
-  autoware_planning_msgs::msg::Trajectory & output_trajectory)
+  const std::vector<double> & times, const size_t start_index, TrajectoryPoints & output_trajectory)
 {
   const double t_total = std::accumulate(times.begin(), times.end(), 0.0);
   std::vector<double> ts, xs, vs, as, js;
@@ -216,9 +215,9 @@ bool calcStopVelocityWithConstantJerkAccLimit(
   }
 
   if (xs.empty()) {
-    for (size_t i = start_index; i < output_trajectory.points.size(); ++i) {
-      output_trajectory.points.at(i).twist.linear.x = decel_target_vel;
-      output_trajectory.points.at(i).accel.linear.x = 0.0;
+    for (size_t i = start_index; i < output_trajectory.size(); ++i) {
+      output_trajectory.at(i).longitudinal_velocity_mps = decel_target_vel;
+      output_trajectory.at(i).acceleration_mps2 = 0.0;
     }
     return true;
   }
@@ -226,9 +225,8 @@ bool calcStopVelocityWithConstantJerkAccLimit(
   double dist = 0.0;
   std::vector<double> dists;
   dists.push_back(dist);
-  for (size_t i = start_index; i < output_trajectory.points.size() - 1; ++i) {
-    dist += autoware_utils::calcDistance2d(
-      output_trajectory.points.at(i), output_trajectory.points.at(i + 1));
+  for (size_t i = start_index; i < output_trajectory.size() - 1; ++i) {
+    dist += autoware_utils::calcDistance2d(output_trajectory.at(i), output_trajectory.at(i + 1));
     if (dist > xs.back()) {
       break;
     }
@@ -253,12 +251,12 @@ bool calcStopVelocityWithConstantJerkAccLimit(
     rclcpp::get_logger("velocity_planning_utils"), "Interpolated = %s", ssi.str().c_str());
 
   for (size_t i = 0; i < vel_at_wp->size(); ++i) {
-    output_trajectory.points.at(start_index + i).twist.linear.x = vel_at_wp->at(i);
-    output_trajectory.points.at(start_index + i).accel.linear.x = acc_at_wp->at(i);
+    output_trajectory.at(start_index + i).longitudinal_velocity_mps = vel_at_wp->at(i);
+    output_trajectory.at(start_index + i).acceleration_mps2 = acc_at_wp->at(i);
   }
-  for (size_t i = start_index + vel_at_wp->size(); i < output_trajectory.points.size(); ++i) {
-    output_trajectory.points.at(i).twist.linear.x = decel_target_vel;
-    output_trajectory.points.at(i).accel.linear.x = 0.0;
+  for (size_t i = start_index + vel_at_wp->size(); i < output_trajectory.size(); ++i) {
+    output_trajectory.at(i).longitudinal_velocity_mps = decel_target_vel;
+    output_trajectory.at(i).acceleration_mps2 = 0.0;
   }
 
   return true;

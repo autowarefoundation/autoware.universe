@@ -15,23 +15,24 @@
 #ifndef MOTION_VELOCITY_SMOOTHER__SMOOTHER__SMOOTHER_BASE_HPP_
 #define MOTION_VELOCITY_SMOOTHER__SMOOTHER__SMOOTHER_BASE_HPP_
 
+#include "autoware_utils/geometry/geometry.hpp"
+#include "autoware_utils/trajectory/trajectory.hpp"
 #include "motion_velocity_smoother/resample.hpp"
 #include "motion_velocity_smoother/trajectory_utils.hpp"
+#include "rclcpp/rclcpp.hpp"
 
-#include <autoware_utils/geometry/geometry.hpp>
-#include <autoware_utils/trajectory/trajectory.hpp>
-#include <rclcpp/rclcpp.hpp>
+#include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
 
-#include <autoware_planning_msgs/msg/trajectory.hpp>
-
-#include <boost/optional.hpp>
+#include "boost/optional.hpp"
 
 #include <limits>
 #include <vector>
 
 namespace motion_velocity_smoother
 {
-using autoware_planning_msgs::msg::Trajectory;
+using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+using TrajectoryPoints = std::vector<TrajectoryPoint>;
+
 class SmootherBase
 {
 public:
@@ -51,14 +52,14 @@ public:
 
   virtual ~SmootherBase() = default;
   virtual bool apply(
-    const double initial_vel, const double initial_acc, const Trajectory & input,
-    Trajectory & output, std::vector<Trajectory> & debug_trajectories) = 0;
+    const double initial_vel, const double initial_acc, const TrajectoryPoints & input,
+    TrajectoryPoints & output, std::vector<TrajectoryPoints> & debug_trajectories) = 0;
 
-  virtual boost::optional<Trajectory> resampleTrajectory(
-    const Trajectory & input, const double v_current, const int closest_id) const = 0;
+  virtual boost::optional<TrajectoryPoints> resampleTrajectory(
+    const TrajectoryPoints & input, const double v_current, const int closest_id) const = 0;
 
-  virtual boost::optional<Trajectory> applyLateralAccelerationFilter(
-    const Trajectory & input) const;
+  virtual boost::optional<TrajectoryPoints> applyLateralAccelerationFilter(
+    const TrajectoryPoints & input) const;
 
   double getMaxAccel() const;
   double getMinDecel() const;

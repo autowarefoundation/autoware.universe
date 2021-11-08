@@ -33,15 +33,15 @@ double SmootherBase::getMaxJerk() const { return base_param_.max_jerk; }
 
 double SmootherBase::getMinJerk() const { return base_param_.min_jerk; }
 
-boost::optional<Trajectory> SmootherBase::applyLateralAccelerationFilter(
-  const Trajectory & input) const
+boost::optional<TrajectoryPoints> SmootherBase::applyLateralAccelerationFilter(
+  const TrajectoryPoints & input) const
 {
-  if (input.points.empty()) {
+  if (input.empty()) {
     return boost::none;
   }
 
-  if (input.points.size() < 3) {
-    return boost::optional<Trajectory>(input);  // cannot calculate lateral acc. do nothing.
+  if (input.size() < 3) {
+    return boost::optional<TrajectoryPoints>(input);  // cannot calculate lateral acc. do nothing.
   }
 
   // Interpolate with constant interval distance for lateral acceleration calculation.
@@ -58,7 +58,7 @@ boost::optional<Trajectory> SmootherBase::applyLateralAccelerationFilter(
       "interpolation failed at lateral acceleration filter.");
     return boost::none;
   }
-  output->points.back().twist = input.points.back().twist;  // keep the final speed.
+  output->back() = input.back();  // keep the final speed.
 
   constexpr double curvature_calc_dist = 5.0;  // [m] calc curvature with 5m away points
   const size_t idx_dist =
@@ -67,7 +67,7 @@ boost::optional<Trajectory> SmootherBase::applyLateralAccelerationFilter(
   // Calculate curvature assuming the trajectory points interval is constant
   const auto curvature_v = trajectory_utils::calcTrajectoryCurvatureFrom3Points(*output, idx_dist);
   if (!curvature_v) {
-    return boost::optional<Trajectory>(input);
+    return boost::optional<TrajectoryPoints>(input);
   }
 
   //  Decrease speed according to lateral G
@@ -77,17 +77,17 @@ boost::optional<Trajectory> SmootherBase::applyLateralAccelerationFilter(
     static_cast<size_t>(std::round(base_param_.decel_distance_after_curve / points_interval));
   const double max_lateral_accel_abs = std::fabs(base_param_.max_lateral_accel);
 
-  for (size_t i = 0; i < output->points.size(); ++i) {
+  for (size_t i = 0; i < output->size(); ++i) {
     double curvature = 0.0;
     const size_t start = i > before_decel_index ? i - before_decel_index : 0;
-    const size_t end = std::min(output->points.size(), i + after_decel_index);
+    const size_t end = std::min(output->size(), i + after_decel_index);
     for (size_t j = start; j < end; ++j) {
       curvature = std::max(curvature, std::fabs(curvature_v->at(j)));
     }
     double v_curvature_max = std::sqrt(max_lateral_accel_abs / std::max(curvature, 1.0E-5));
     v_curvature_max = std::max(v_curvature_max, base_param_.min_curve_velocity);
-    if (output->points.at(i).twist.linear.x > v_curvature_max) {
-      output->points.at(i).twist.linear.x = v_curvature_max;
+    if (output->at(i).longitudinal_velocity_mps > v_curvature_max) {
+      output->at(i).longitudinal_velocity_mps = v_curvature_max;
     }
   }
   return output;

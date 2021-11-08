@@ -15,19 +15,21 @@
 #ifndef MOTION_VELOCITY_SMOOTHER__RESAMPLE_HPP_
 #define MOTION_VELOCITY_SMOOTHER__RESAMPLE_HPP_
 
+#include "autoware_utils/trajectory/trajectory.hpp"
 #include "motion_velocity_smoother/trajectory_utils.hpp"
 
-#include <autoware_utils/trajectory/trajectory.hpp>
+#include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
 
-#include <autoware_planning_msgs/msg/trajectory.hpp>
+#include "boost/optional.hpp"
 
-#include <boost/optional.hpp>
+#include <vector>
 
 namespace motion_velocity_smoother
 {
 namespace resampling
 {
-using autoware_planning_msgs::msg::Trajectory;
+using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+using TrajectoryPoints = std::vector<TrajectoryPoint>;
 
 struct ResampleParam
 {
@@ -40,12 +42,12 @@ struct ResampleParam
   double sparse_min_interval_distance;  // minimum points-interval length for sparse sampling [m]
 };
 
-boost::optional<Trajectory> resampleTrajectory(
-  const Trajectory & input, const double v_current, const size_t closest_id,
+boost::optional<TrajectoryPoints> resampleTrajectory(
+  const TrajectoryPoints & input, const double v_current, const size_t closest_id,
   const ResampleParam & param);
 
-boost::optional<Trajectory> resampleTrajectory(
-  const Trajectory & input, const size_t closest_id, const ResampleParam & param,
+boost::optional<TrajectoryPoints> resampleTrajectory(
+  const TrajectoryPoints & input, const size_t closest_id, const ResampleParam & param,
   const double nominal_ds);
 }  // namespace resampling
 }  // namespace motion_velocity_smoother

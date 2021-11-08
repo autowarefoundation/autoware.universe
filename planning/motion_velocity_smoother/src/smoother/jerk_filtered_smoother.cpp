@@ -14,9 +14,8 @@
 
 #include "motion_velocity_smoother/smoother/jerk_filtered_smoother.hpp"
 
+#include "eigen3/Eigen/Core"
 #include "motion_velocity_smoother/trajectory_utils.hpp"
-
-#include <eigen3/Eigen/Core>
 
 #include <algorithm>
 #include <chrono>
@@ -43,20 +42,20 @@ void JerkFilteredSmoother::setParam(const Param & smoother_param)
 }
 
 bool JerkFilteredSmoother::apply(
-  const double v0, const double a0, const Trajectory & input, Trajectory & output,
-  std::vector<Trajectory> & debug_trajectories)
+  const double v0, const double a0, const TrajectoryPoints & input, TrajectoryPoints & output,
+  std::vector<TrajectoryPoints> & debug_trajectories)
 {
   output = input;
 
-  if (input.points.empty()) {
-    RCLCPP_WARN(logger_, "Input Trajectory to the jerk filtered optimization is empty.");
+  if (input.empty()) {
+    RCLCPP_WARN(logger_, "Input TrajectoryPoints to the jerk filtered optimization is empty.");
     return false;
   }
 
-  if (input.points.size() == 1) {
+  if (input.size() == 1) {
     // No need to do optimization
-    output.points.front().twist.linear.x = v0;
-    output.points.front().accel.linear.x = a0;
+    output.front().longitudinal_velocity_mps = v0;
+    output.front().acceleration_mps2 = a0;
     debug_trajectories.resize(3);
     debug_trajectories[0] = output;
     debug_trajectories[1] = output;
@@ -64,7 +63,7 @@ bool JerkFilteredSmoother::apply(
     return true;
   }
 
-  if (std::fabs(input.points.front().twist.linear.x) < 0.1) {
+  if (std::fabs(input.front().longitudinal_velocity_mps) < 0.1) {
     RCLCPP_DEBUG(logger_, "v_max[0] < 0.1. assume vehicle stopped. return.");
     return false;
   }
@@ -87,7 +86,7 @@ bool JerkFilteredSmoother::apply(
   const auto forward_filtered =
     forwardJerkFilter(v0, std::max(a0, a_min), a_max, a_stop_accel, j_max, input);
   const auto backward_filtered = backwardJerkFilter(
-    input.points.back().twist.linear.x, a_stop_decel, a_min, a_stop_decel, j_min, input);
+    input.back().longitudinal_velocity_mps, a_stop_decel, a_min, a_stop_decel, j_min, input);
   const auto filtered =
     mergeFilteredTrajectory(v0, a0, a_min, j_min, forward_filtered, backward_filtered);
 
@@ -97,7 +96,7 @@ bool JerkFilteredSmoother::apply(
   debug_trajectories[1] = backward_filtered;
   debug_trajectories[2] = filtered;
 
-  // Resample Trajectory for Optimization
+  // Resample TrajectoryPoints for Optimization
   auto opt_resampled_trajectory =
     resampling::resampleTrajectory(filtered, v0, 0, base_param_.resample_param);
 
@@ -106,13 +105,13 @@ bool JerkFilteredSmoother::apply(
     return false;
   }
   // Ensure terminal velocity is zero
-  opt_resampled_trajectory->points.back().twist.linear.x = 0.0;
+  opt_resampled_trajectory->back().longitudinal_velocity_mps = 0.0;
 
   // If Resampled Size is too small, we don't do optimization
-  if (opt_resampled_trajectory->points.size() == 1) {
+  if (opt_resampled_trajectory->size() == 1) {
     // No need to do optimization
-    output.points.front().twist.linear.x = v0;
-    output.points.front().accel.linear.x = a0;
+    output.front().longitudinal_velocity_mps = v0;
+    output.front().acceleration_mps2 = a0;
     debug_trajectories[0] = output;
     debug_trajectories[1] = output;
     debug_trajectories[2] = output;
@@ -122,7 +121,7 @@ bool JerkFilteredSmoother::apply(
   // to avoid getting 0 as a stop point, search zero velocity index from 1.
   // the size of the resampled trajectory must not be less than 2.
   const auto zero_vel_id = autoware_utils::searchZeroVelocityIndex(
-    opt_resampled_trajectory->points, 1, opt_resampled_trajectory->points.size());
+    *opt_resampled_trajectory, 1, opt_resampled_trajectory->size());
 
   if (!zero_vel_id) {
     RCLCPP_WARN(logger_, "opt_resampled_trajectory must have stop point.");
@@ -139,7 +138,7 @@ bool JerkFilteredSmoother::apply(
 
   std::vector<double> v_max_arr(N, 0.0);
   for (size_t i = 0; i < N; ++i) {
-    v_max_arr.at(i) = opt_resampled_trajectory->points.at(i).twist.linear.x;
+    v_max_arr.at(i) = opt_resampled_trajectory->at(i).longitudinal_velocity_mps;
   }
 
   /*
@@ -291,12 +290,12 @@ bool JerkFilteredSmoother::apply(
   // get velocity & acceleration
   for (size_t i = 0; i < N; ++i) {
     double b = optval.at(IDX_B0 + i);
-    output.points.at(i).twist.linear.x = std::sqrt(std::max(b, 0.0));
-    output.points.at(i).accel.linear.x = optval.at(IDX_A0 + i);
+    output.at(i).longitudinal_velocity_mps = std::sqrt(std::max(b, 0.0));
+    output.at(i).acceleration_mps2 = optval.at(IDX_A0 + i);
   }
-  for (size_t i = N; i < output.points.size(); ++i) {
-    output.points.at(i).twist.linear.x = 0.0;
-    output.points.at(i).accel.linear.x = a_stop_decel;
+  for (size_t i = N; i < output.size(); ++i) {
+    output.at(i).longitudinal_velocity_mps = 0.0;
+    output.at(i).acceleration_mps2 = a_stop_decel;
   }
 
   const int status_val = std::get<3>(result);
@@ -307,11 +306,11 @@ bool JerkFilteredSmoother::apply(
   if (TMP_SHOW_DEBUG_INFO) {
     // jerk calculation
     std::vector<double> p_jerk, jerk_converted, jerk_ideal;
-    for (size_t i = 0; i < input.points.size() - 1; ++i) {
-      double v_ref0 = filtered.points.at(i).twist.linear.x;
-      double v0 = output.points.at(i).twist.linear.x;
-      double a0 = output.points.at(i).accel.linear.x;
-      double a1 = output.points.at(i + 1).accel.linear.x;
+    for (size_t i = 0; i < input.size() - 1; ++i) {
+      double v_ref0 = filtered.at(i).longitudinal_velocity_mps;
+      double v0 = output.at(i).longitudinal_velocity_mps;
+      double a0 = output.at(i).acceleration_mps2;
+      double a1 = output.at(i + 1).acceleration_mps2;
       double ds = interval_dist_arr.at(i);
       p_jerk.push_back((a1 - a0) / ds);
       jerk_converted.push_back((a1 - a0) / ds * v_ref0);
@@ -323,14 +322,14 @@ bool JerkFilteredSmoother::apply(
 
     // print
     size_t i = 0;
-    auto getVx = [&i](const Trajectory & trajectory) {
-      return trajectory.points.at(i).twist.linear.x;
+    auto getVx = [&i](const TrajectoryPoints & trajectory) {
+      return trajectory.at(i).longitudinal_velocity_mps;
     };
-    auto getAx = [&i](const Trajectory & trajectory) {
-      return trajectory.points.at(i).accel.linear.x;
+    auto getAx = [&i](const TrajectoryPoints & trajectory) {
+      return trajectory.at(i).acceleration_mps2;
     };
     printf("v0 = %.3f, a0 = %.3f\n", v0, a0);
-    for (; i < input.points.size(); ++i) {
+    for (; i < input.size(); ++i) {
       double gamma = optval.at(IDX_GAMMA0 + i);
       printf(
         "i = %lu, input: %.3f, filt_f: (%.3f, %.3f), filt_b: (%.3f, %.3f), filt_fb: (%.3f, %.3f), "
@@ -347,19 +346,19 @@ bool JerkFilteredSmoother::apply(
   return true;
 }
 
-Trajectory JerkFilteredSmoother::forwardJerkFilter(
+TrajectoryPoints JerkFilteredSmoother::forwardJerkFilter(
   const double v0, const double a0, const double a_max, const double a_start, const double j_max,
-  const Trajectory & input) const
+  const TrajectoryPoints & input) const
 {
   auto applyLimits = [&input, &a_start](double & v, double & a, size_t i) {
-    double v_lim = input.points.at(i).twist.linear.x;
+    double v_lim = input.at(i).longitudinal_velocity_mps;
     static constexpr double ep = 1.0e-5;
     if (v > v_lim + ep) {
       v = v_lim;
       a = 0.0;
 
-      if (v_lim < 1e-3 && i < input.points.size() - 1) {
-        double next_v_lim = input.points.at(i + 1).twist.linear.x;
+      if (v_lim < 1e-3 && i < input.size() - 1) {
+        double next_v_lim = input.at(i + 1).longitudinal_velocity_mps;
         if (next_v_lim >= 1e-3) {
           a = a_start;  // start from stop velocity
         }
@@ -377,10 +376,10 @@ Trajectory JerkFilteredSmoother::forwardJerkFilter(
   double current_acc = a0;
   applyLimits(current_vel, current_acc, 0);
 
-  output.points.front().twist.linear.x = current_vel;
-  output.points.front().accel.linear.x = current_acc;
-  for (size_t i = 1; i < input.points.size(); ++i) {
-    const double ds = autoware_utils::calcDistance2d(input.points.at(i), input.points.at(i - 1));
+  output.front().longitudinal_velocity_mps = current_vel;
+  output.front().acceleration_mps2 = current_acc;
+  for (size_t i = 1; i < input.size(); ++i) {
+    const double ds = autoware_utils::calcDistance2d(input.at(i), input.at(i - 1));
     const double max_dt = std::pow(6.0 * ds / j_max, 1.0 / 3.0);  // assuming v0 = a0 = 0.
     const double dt = std::min(ds / std::max(current_vel, 1.0e-6), max_dt);
 
@@ -393,37 +392,36 @@ Trajectory JerkFilteredSmoother::forwardJerkFilter(
       current_acc = current_acc + j_max * dt;
     }
     applyLimits(current_vel, current_acc, i);
-    output.points.at(i).twist.linear.x = current_vel;
-    output.points.at(i).accel.linear.x = current_acc;
+    output.at(i).longitudinal_velocity_mps = current_vel;
+    output.at(i).acceleration_mps2 = current_acc;
   }
   return output;
 }
 
-Trajectory JerkFilteredSmoother::backwardJerkFilter(
+TrajectoryPoints JerkFilteredSmoother::backwardJerkFilter(
   const double v0, const double a0, const double a_min, const double a_stop, const double j_min,
-  const Trajectory & input) const
+  const TrajectoryPoints & input) const
 {
   auto input_rev = input;
-  std::reverse(input_rev.points.begin(), input_rev.points.end());
+  std::reverse(input_rev.begin(), input_rev.end());
   auto filtered = forwardJerkFilter(
     v0, std::fabs(a0), std::fabs(a_min), std::fabs(a_stop), std::fabs(j_min), input_rev);
-  std::reverse(filtered.points.begin(), filtered.points.end());
-  for (size_t i = 0; i < filtered.points.size(); ++i) {
-    filtered.points.at(i).accel.linear.x *= -1.0;  // Deceleration
+  std::reverse(filtered.begin(), filtered.end());
+  for (size_t i = 0; i < filtered.size(); ++i) {
+    filtered.at(i).acceleration_mps2 *= -1.0;  // Deceleration
   }
   return filtered;
 }
 
-Trajectory JerkFilteredSmoother::mergeFilteredTrajectory(
+TrajectoryPoints JerkFilteredSmoother::mergeFilteredTrajectory(
   const double v0, const double a0, const double a_min, const double j_min,
-  const Trajectory & forward_filtered, const Trajectory & backward_filtered) const
+  const TrajectoryPoints & forward_filtered, const TrajectoryPoints & backward_filtered) const
 {
-  Trajectory merged;
-  merged.header = forward_filtered.header;
-  merged.points = forward_filtered.points;
+  TrajectoryPoints merged;
+  merged = forward_filtered;
 
-  auto getVx = [](const Trajectory & trajectory, int i) {
-    return trajectory.points.at(i).twist.linear.x;
+  auto getVx = [](const TrajectoryPoints & trajectory, int i) {
+    return trajectory.at(i).longitudinal_velocity_mps;
   };
 
   size_t i = 0;
@@ -432,12 +430,12 @@ Trajectory JerkFilteredSmoother::mergeFilteredTrajectory(
     double current_vel = v0;
     double current_acc = a0;
     while (getVx(backward_filtered, i) < current_vel && current_vel <= getVx(forward_filtered, i) &&
-           i < merged.points.size() - 1) {
-      merged.points.at(i).twist.linear.x = current_vel;
-      merged.points.at(i).accel.linear.x = current_acc;
+           i < merged.size() - 1) {
+      merged.at(i).longitudinal_velocity_mps = current_vel;
+      merged.at(i).acceleration_mps2 = current_acc;
 
-      const double ds = autoware_utils::calcDistance2d(
-        forward_filtered.points.at(i + 1), forward_filtered.points.at(i));
+      const double ds =
+        autoware_utils::calcDistance2d(forward_filtered.at(i + 1), forward_filtered.at(i));
       const double max_dt =
         std::pow(6.0 * ds / std::fabs(j_min), 1.0 / 3.0);  // assuming v0 = a0 = 0.
       const double dt = std::min(ds / std::max(current_vel, 1.0e-6), max_dt);
@@ -455,16 +453,16 @@ Trajectory JerkFilteredSmoother::mergeFilteredTrajectory(
   }
 
   // take smaller velocity point
-  for (; i < merged.points.size(); ++i) {
-    merged.points.at(i) = (getVx(forward_filtered, i) < getVx(backward_filtered, i))
-                            ? forward_filtered.points.at(i)
-                            : backward_filtered.points.at(i);
+  for (; i < merged.size(); ++i) {
+    merged.at(i) = (getVx(forward_filtered, i) < getVx(backward_filtered, i))
+                     ? forward_filtered.at(i)
+                     : backward_filtered.at(i);
   }
   return merged;
 }
 
-boost::optional<Trajectory> JerkFilteredSmoother::resampleTrajectory(
-  const Trajectory & input, const double /*v_current*/, const int closest_id) const
+boost::optional<TrajectoryPoints> JerkFilteredSmoother::resampleTrajectory(
+  const TrajectoryPoints & input, const double /*v_current*/, const int closest_id) const
 {
   return resampling::resampleTrajectory(
     input, closest_id, base_param_.resample_param, smoother_param_.jerk_filter_ds);

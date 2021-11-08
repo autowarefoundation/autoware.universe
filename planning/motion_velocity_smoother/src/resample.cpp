@@ -21,22 +21,21 @@ namespace motion_velocity_smoother
 {
 namespace resampling
 {
-boost::optional<Trajectory> resampleTrajectory(
-  const Trajectory & input, const double v_current, const size_t closest_id,
+boost::optional<TrajectoryPoints> resampleTrajectory(
+  const TrajectoryPoints & input, const double v_current, const size_t closest_id,
   const ResampleParam & param)
 {
   // Arc length from the initial point to the closest point
   const double front_arclength_value = trajectory_utils::calcArcLength(input, 0, closest_id);
 
   // Get the nearest point where velocity is zero
-  auto zero_vel_id =
-    autoware_utils::searchZeroVelocityIndex(input.points, closest_id, input.points.size());
+  auto zero_vel_id = autoware_utils::searchZeroVelocityIndex(input, closest_id, input.size());
   // Arc length from the closest point to the point where velocity is zero
   double zero_vel_arclength_value = param.max_trajectory_length;
   if (zero_vel_id) {
     zero_vel_arclength_value = std::min(
       zero_vel_arclength_value,
-      autoware_utils::calcSignedArcLength(input.points, closest_id, *zero_vel_id));
+      autoware_utils::calcSignedArcLength(input, closest_id, *zero_vel_id));
   }
 
   // Get the resample size from the closest point
@@ -126,25 +125,25 @@ boost::optional<Trajectory> resampleTrajectory(
       rclcpp::get_logger("motion_velocity_smoother").get_child("resample"),
       "fail trajectory interpolation. size : in_arclength = %lu, "
       "input = %lu, out_arclength = %lu",
-      in_arclength.size(), input.points.size(), out_arclength.size());
+      in_arclength.size(), input.size(), out_arclength.size());
     return boost::none;
   }
 
   // add end point directly to consider the endpoint velocity.
   if (is_endpoint_included) {
     constexpr double ep_dist = 1.0E-3;
-    if (autoware_utils::calcDistance2d(output->points.back(), input.points.back()) < ep_dist) {
-      output->points.back() = input.points.back();
+    if (autoware_utils::calcDistance2d(output->back(), input.back()) < ep_dist) {
+      output->back() = input.back();
     } else {
-      output->points.push_back(input.points.back());
+      output->push_back(input.back());
     }
   }
 
   return output;
 }
 
-boost::optional<Trajectory> resampleTrajectory(
-  const Trajectory & input, const size_t closest_id, const ResampleParam & param,
+boost::optional<TrajectoryPoints> resampleTrajectory(
+  const TrajectoryPoints & input, const size_t closest_id, const ResampleParam & param,
   const double nominal_ds)
 {
   // input arclength
@@ -152,14 +151,12 @@ boost::optional<Trajectory> resampleTrajectory(
 
   // Get the nearest point where velocity is zero
   // to avoid getting closest_id as a stop point, search zero velocity index from closest_id + 1.
-  auto stop_id =
-    autoware_utils::searchZeroVelocityIndex(input.points, closest_id + 1, input.points.size());
+  auto stop_id = autoware_utils::searchZeroVelocityIndex(input, closest_id + 1, input.size());
   // Arc length from the closest point to the point where velocity is zero
   double stop_arclength_value = param.max_trajectory_length;
   if (stop_id) {
     stop_arclength_value = std::min(
-      stop_arclength_value,
-      autoware_utils::calcSignedArcLength(input.points, closest_id, *stop_id));
+      stop_arclength_value, autoware_utils::calcSignedArcLength(input, closest_id, *stop_id));
   }
 
   // Do dense resampling before the stop line(3[m] ahead of the stop line)
@@ -248,17 +245,17 @@ boost::optional<Trajectory> resampleTrajectory(
       rclcpp::get_logger("motion_velocity_smoother").get_child("resample"),
       "fail trajectory interpolation. size : in_arclength = %lu, "
       "input = %lu, out_arclength = %lu",
-      in_arclength.size(), input.points.size(), out_arclength.size());
+      in_arclength.size(), input.size(), out_arclength.size());
     return boost::none;
   }
 
   // add end point directly to consider the endpoint velocity.
   if (is_endpoint_included) {
     constexpr double ep_dist = 1.0E-3;
-    if (autoware_utils::calcDistance2d(output->points.back(), input.points.back()) < ep_dist) {
-      output->points.back() = input.points.back();
+    if (autoware_utils::calcDistance2d(output->back(), input.back()) < ep_dist) {
+      output->back() = input.back();
     } else {
-      output->points.push_back(input.points.back());
+      output->push_back(input.back());
     }
   }
 

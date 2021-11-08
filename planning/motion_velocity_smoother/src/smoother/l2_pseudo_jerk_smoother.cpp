@@ -14,9 +14,8 @@
 
 #include "motion_velocity_smoother/smoother/l2_pseudo_jerk_smoother.hpp"
 
+#include "eigen3/Eigen/Core"
 #include "motion_velocity_smoother/trajectory_utils.hpp"
-
-#include <eigen3/Eigen/Core>
 
 #include <algorithm>
 #include <chrono>
@@ -41,8 +40,8 @@ void L2PseudoJerkSmoother::setParam(const Param & smoother_param)
 }
 
 bool L2PseudoJerkSmoother::apply(
-  const double initial_vel, const double initial_acc, const Trajectory & input, Trajectory & output,
-  std::vector<Trajectory> & debug_trajectories)
+  const double initial_vel, const double initial_acc, const TrajectoryPoints & input,
+  TrajectoryPoints & output, std::vector<TrajectoryPoints> & debug_trajectories)
 {
   debug_trajectories.clear();
 
@@ -50,12 +49,12 @@ bool L2PseudoJerkSmoother::apply(
 
   output = input;
 
-  if (std::fabs(input.points.front().twist.linear.x) < 0.1) {
+  if (std::fabs(input.front().longitudinal_velocity_mps) < 0.1) {
     RCLCPP_DEBUG(logger_, "closest v_max < 0.1. assume vehicle stopped. return.");
     return false;
   }
 
-  const unsigned int N = input.points.size();
+  const unsigned int N = input.size();
 
   if (N < 2) {
     RCLCPP_WARN(logger_, "trajectory length is not enough.");
@@ -67,7 +66,7 @@ bool L2PseudoJerkSmoother::apply(
 
   std::vector<double> v_max(N, 0.0);
   for (unsigned int i = 0; i < N; ++i) {
-    v_max.at(i) = input.points.at(i).twist.linear.x;
+    v_max.at(i) = input.at(i).longitudinal_velocity_mps;
   }
   /*
    * x = [b0, b1, ..., bN, |  a0, a1, ..., aN, | delta0, delta1, ..., deltaN, | sigma0, sigma1, ...,
@@ -186,12 +185,12 @@ bool L2PseudoJerkSmoother::apply(
     double v = optval.at(i);
     // std::cout << "[smoother] v[" << i << "] : " << std::sqrt(std::max(v, 0.0)) <<
     // ", v_max[" << i << "] : " << v_max[i] << std::endl;
-    output.points.at(i).twist.linear.x = std::sqrt(std::max(v, 0.0));
-    output.points.at(i).accel.linear.x = optval.at(i + N);
+    output.at(i).longitudinal_velocity_mps = std::sqrt(std::max(v, 0.0));
+    output.at(i).acceleration_mps2 = optval.at(i + N);
   }
-  for (unsigned int i = N; i < output.points.size(); ++i) {
-    output.points.at(i).twist.linear.x = 0.0;
-    output.points.at(i).accel.linear.x = 0.0;
+  for (unsigned int i = N; i < output.size(); ++i) {
+    output.at(i).longitudinal_velocity_mps = 0.0;
+    output.at(i).acceleration_mps2 = 0.0;
   }
 
   // -- to check the all optimization variables --
@@ -216,8 +215,8 @@ bool L2PseudoJerkSmoother::apply(
   return true;
 }
 
-boost::optional<Trajectory> L2PseudoJerkSmoother::resampleTrajectory(
-  const Trajectory & input, const double v_current, const int closest_id) const
+boost::optional<TrajectoryPoints> L2PseudoJerkSmoother::resampleTrajectory(
+  const TrajectoryPoints & input, const double v_current, const int closest_id) const
 {
   return resampling::resampleTrajectory(input, v_current, closest_id, base_param_.resample_param);
 }
