@@ -30,9 +30,9 @@ This function checks if the relative angle at point1 generated from point2 and 3
 
 ### Input
 
-| Name                 | Type                                | Description                            |
-| -------------------- | ----------------------------------- | -------------------------------------- |
-| `~/input/trajectory` | `autoware_planning_msgs/Trajectory` | Planned Trajectory by planning modules |
+| Name                 | Type                                     | Description                            |
+| -------------------- | ---------------------------------------- | -------------------------------------- |
+| `~/input/trajectory` | `autoware_auto_planning_msgs/Trajectory` | Planned Trajectory by planning modules |
 
 ### Output
 

@@ -26,7 +26,7 @@ constexpr double NOMINAL_INTERVAL = 1.0;
 constexpr double ERROR_INTERVAL = 1000.0;
 constexpr double ERROR_CURVATURE = 2.0;
 
-using autoware_planning_msgs::msg::Trajectory;
+using autoware_auto_planning_msgs::msg::Trajectory;
 using diagnostic_msgs::msg::DiagnosticArray;
 using diagnostic_msgs::msg::DiagnosticStatus;
 using planning_diagnostics::PlanningErrorMonitorNode;

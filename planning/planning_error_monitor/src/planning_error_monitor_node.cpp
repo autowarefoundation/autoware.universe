@@ -146,20 +146,18 @@ bool PlanningErrorMonitorNode::checkFinite(const TrajectoryPoint & point)
 {
   const auto & o = point.pose.orientation;
   const auto & p = point.pose.position;
-  const auto & v = point.twist.linear;
-  const auto & w = point.twist.angular;
-  const auto & a = point.accel.linear;
-  const auto & z = point.accel.angular;
+  const auto & v = point.longitudinal_velocity_mps;
+  const auto & w = point.heading_rate_rps;
+  const auto & a = point.acceleration_mps2;
 
   const bool quat_result =
     std::isfinite(o.x) && std::isfinite(o.y) && std::isfinite(o.z) && std::isfinite(o.w);
   const bool p_result = std::isfinite(p.x) && std::isfinite(p.y) && std::isfinite(p.z);
-  const bool v_result = std::isfinite(v.x) && std::isfinite(v.y) && std::isfinite(v.z);
-  const bool w_result = std::isfinite(w.x) && std::isfinite(w.y) && std::isfinite(w.z);
-  const bool a_result = std::isfinite(a.x) && std::isfinite(a.y) && std::isfinite(a.z);
-  const bool z_result = std::isfinite(z.x) && std::isfinite(z.y) && std::isfinite(z.z);
+  const bool v_result = std::isfinite(v);
+  const bool w_result = std::isfinite(w);
+  const bool a_result = std::isfinite(a);
 
-  return quat_result && p_result && v_result && w_result && a_result && z_result;
+  return quat_result && p_result && v_result && w_result && a_result;
 }
 
 bool PlanningErrorMonitorNode::checkTrajectoryInterval(
@@ -206,8 +204,9 @@ bool PlanningErrorMonitorNode::checkTrajectoryRelativeAngle(
 
     // ignore invert driving direction
     if (
-      traj.points.at(p1_id).twist.linear.x < 0 || traj.points.at(p1_id + 1).twist.linear.x < 0 ||
-      traj.points.at(p1_id + 2).twist.linear.x < 0) {
+      traj.points.at(p1_id).longitudinal_velocity_mps < 0 ||
+      traj.points.at(p1_id + 1).longitudinal_velocity_mps < 0 ||
+      traj.points.at(p1_id + 2).longitudinal_velocity_mps < 0) {
       continue;
     }
 

@@ -41,7 +41,7 @@ if(BUILD_TESTING)
   )
   ament_target_dependencies(test_planning_error_monitor
     rclcpp
-    autoware_planning_msgs
+    autoware_auto_planning_msgs
   )
   target_link_libraries(test_planning_error_monitor
     planning_error_monitor_node
