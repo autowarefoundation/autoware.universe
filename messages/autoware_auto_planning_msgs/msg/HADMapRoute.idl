@@ -1,5 +1,5 @@
 #include "autoware_auto_mapping_msgs/msg/HADMapSegment.idl"
-#include "autoware_auto_planning_msgs/msg/RoutePoint.idl"
+#include "geometry_msgs/msg/Pose.idl"
 #include "std_msgs/msg/Header.idl"
 
 module autoware_auto_planning_msgs {
@@ -12,14 +12,14 @@ module autoware_auto_planning_msgs {
       std_msgs::msg::Header header;
 
       @verbatim (language="comment", text=
-        " The start_point must exist within the bounds of the primitives in the first"
+        " The start_pose must exist within the bounds of the primitives in the first"
         " segment defined in the route_segments array.")
-      autoware_auto_planning_msgs::msg::RoutePoint start_point;
+      geometry_msgs::msg::Pose start_pose;
 
       @verbatim (language="comment", text=
-        " The goal_point must exist within the bounds of the primitives in the last"
+        " The goal_pose must exist within the bounds of the primitives in the last"
         " segment defined in the route_semgents array.")
-      autoware_auto_planning_msgs::msg::RoutePoint goal_point;
+      geometry_msgs::msg::Pose goal_pose;
 
       sequence<autoware_auto_mapping_msgs::msg::HADMapSegment> segments;
     };

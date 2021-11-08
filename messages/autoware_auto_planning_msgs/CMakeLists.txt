@@ -15,7 +15,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/HADMapRoute.idl"
   "msg/OrderMovement.idl"
   "msg/Route.idl"
-  "msg/RoutePoint.idl"
   "msg/Trajectory.idl"
   "msg/TrajectoryPoint.idl"
   "msg/Path.idl"
