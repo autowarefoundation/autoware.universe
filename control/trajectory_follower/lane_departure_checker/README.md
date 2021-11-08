@@ -47,12 +47,11 @@ This package includes the following features:
 
 ### Input
 
-- /localization/twist [`geometry_msgs/msg/TwistStamped`]
-- /map/vector_map [`autoware_lanelet2_msgs::msg::MapBin`]
-- /planning/mission_planning/route [`autoware_planning_msgs::msg::Route`]
-- /planning/scenario_planning/trajectory [`autoware_planning_msgs::msg::Trajectory`]
-- /control/trajectory_follower/predicted_trajectory [`autoware_planning_msgs::msg::Trajectory`]
-- /localization/pose_with_covariance[`geometry_msgs/msg/PoseWithCovarianceStamped`]
+- /localization/odometry [`nav_msgs::msg::Odometry`]
+- /map/vector_map [`autoware_auto_mapping_msgs::msg::HADMapBin`]
+- /planning/mission_planning/route [`autoware_auto_planning_msgs::msg::HADMapRoute`]
+- /planning/scenario_planning/trajectory [`autoware_auto_planning_msgs::msg::Trajectory`]
+- /control/trajectory_follower/predicted_trajectory [`autoware_auto_planning_msgs::msg::Trajectory`]
 
 ### Output
 

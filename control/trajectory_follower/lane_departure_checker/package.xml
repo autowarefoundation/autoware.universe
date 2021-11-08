@@ -8,14 +8,16 @@
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
+  <depend>autoware_auto_mapping_msgs</depend>
+  <depend>autoware_auto_planning_msgs</depend>
   <depend>autoware_debug_msgs</depend>
-  <depend>autoware_planning_msgs</depend>
   <depend>autoware_utils</depend>
   <depend>boost</depend>
   <depend>diagnostic_updater</depend>
   <depend>eigen</depend>
   <depend>geometry_msgs</depend>
   <depend>lanelet2_extension</depend>
+  <depend>nav_msgs</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>tf2</depend>

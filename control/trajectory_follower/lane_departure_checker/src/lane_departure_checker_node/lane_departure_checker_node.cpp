@@ -20,6 +20,8 @@
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/visualization/visualization.hpp>
 
+#include <autoware_auto_mapping_msgs/msg/had_map_segment.hpp>
+
 #include <map>
 #include <memory>
 #include <string>
@@ -30,6 +32,8 @@ using autoware_utils::rad2deg;
 
 namespace
 {
+using autoware_auto_mapping_msgs::msg::HADMapSegment;
+
 std::array<geometry_msgs::msg::Point, 3> triangle2points(
   const geometry_msgs::msg::Polygon & triangle)
 {
@@ -48,8 +52,7 @@ std::array<geometry_msgs::msg::Point, 3> triangle2points(
 
 lanelet::ConstLanelets getRouteLanelets(
   const lanelet::LaneletMap & lanelet_map, const lanelet::routing::RoutingGraphPtr & routing_graph,
-  const std::vector<autoware_planning_msgs::msg::RouteSection> & route_sections,
-  const double vehicle_length)
+  const std::vector<HADMapSegment> & route_sections, const double vehicle_length)
 {
   lanelet::ConstLanelets route_lanelets;
 
@@ -57,7 +60,8 @@ lanelet::ConstLanelets getRouteLanelets(
   {
     const auto extension_length = 2 * vehicle_length;
 
-    for (const auto & lane_id : route_sections.front().lane_ids) {
+    for (const auto & primitive : route_sections.front().primitives) {
+      const auto lane_id = primitive.id;
       for (const auto & lanelet_sequence : lanelet::utils::query::getPrecedingLaneletSequences(
              routing_graph, lanelet_map.laneletLayer.get(lane_id), extension_length)) {
         for (const auto & preceding_lanelet : lanelet_sequence) {
@@ -68,7 +72,8 @@ lanelet::ConstLanelets getRouteLanelets(
   }
 
   for (const auto & route_section : route_sections) {
-    for (const auto & lane_id : route_section.lane_ids) {
+    for (const auto & primitive : route_section.primitives) {
+      const auto lane_id = primitive.id;
       route_lanelets.push_back(lanelet_map.laneletLayer.get(lane_id));
     }
   }
@@ -77,7 +82,8 @@ lanelet::ConstLanelets getRouteLanelets(
   {
     const auto extension_length = 2 * vehicle_length;
 
-    for (const auto & lane_id : route_sections.back().lane_ids) {
+    for (const auto & primitive : route_sections.back().primitives) {
+      const auto lane_id = primitive.id;
       for (const auto & lanelet_sequence : lanelet::utils::query::getSucceedingLaneletSequences(
              routing_graph, lanelet_map.laneletLayer.get(lane_id), extension_length)) {
         for (const auto & succeeding_lanelet : lanelet_sequence) {
@@ -138,21 +144,19 @@ LaneDepartureCheckerNode::LaneDepartureCheckerNode(const rclcpp::NodeOptions & o
   lane_departure_checker_->setParam(param_, vehicle_info);
 
   // Subscriber
-  sub_twist_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
-    "~/input/twist", 1, std::bind(&LaneDepartureCheckerNode::onTwist, this, _1));
-  sub_lanelet_map_bin_ = this->create_subscription<autoware_lanelet2_msgs::msg::MapBin>(
+  sub_odom_ = this->create_subscription<nav_msgs::msg::Odometry>(
+    "~/input/odometry", 1, std::bind(&LaneDepartureCheckerNode::onOdometry, this, _1));
+  sub_lanelet_map_bin_ = this->create_subscription<HADMapBin>(
     "~/input/lanelet_map_bin", rclcpp::QoS{1}.transient_local(),
     std::bind(&LaneDepartureCheckerNode::onLaneletMapBin, this, _1));
-  sub_route_ = this->create_subscription<autoware_planning_msgs::msg::Route>(
+  sub_route_ = this->create_subscription<HADMapRoute>(
     "~/input/route", 1, std::bind(&LaneDepartureCheckerNode::onRoute, this, _1));
-  sub_reference_trajectory_ = this->create_subscription<autoware_planning_msgs::msg::Trajectory>(
+  sub_reference_trajectory_ = this->create_subscription<Trajectory>(
     "~/input/reference_trajectory", 1,
     std::bind(&LaneDepartureCheckerNode::onReferenceTrajectory, this, _1));
-  sub_predicted_trajectory_ = this->create_subscription<autoware_planning_msgs::msg::Trajectory>(
+  sub_predicted_trajectory_ = this->create_subscription<Trajectory>(
     "~/input/predicted_trajectory", 1,
     std::bind(&LaneDepartureCheckerNode::onPredictedTrajectory, this, _1));
-  sub_pose_with_cov_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
-    "~/input/covariance", 1, std::bind(&LaneDepartureCheckerNode::onPoseWithCov, this, _1));
 
   // Publisher
   // Nothing
@@ -178,39 +182,27 @@ LaneDepartureCheckerNode::LaneDepartureCheckerNode(const rclcpp::NodeOptions & o
   this->get_node_timers_interface()->add_timer(timer_, nullptr);
 }
 
-void LaneDepartureCheckerNode::onTwist(const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg)
+void LaneDepartureCheckerNode::onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg)
 {
-  current_twist_ = msg;
+  current_odom_ = msg;
 }
 
-void LaneDepartureCheckerNode::onLaneletMapBin(
-  const autoware_lanelet2_msgs::msg::MapBin::ConstSharedPtr msg)
+void LaneDepartureCheckerNode::onLaneletMapBin(const HADMapBin::ConstSharedPtr msg)
 {
   lanelet_map_ = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(*msg, lanelet_map_, &traffic_rules_, &routing_graph_);
 }
 
-void LaneDepartureCheckerNode::onRoute(const autoware_planning_msgs::msg::Route::ConstSharedPtr msg)
-{
-  route_ = msg;
-}
+void LaneDepartureCheckerNode::onRoute(const HADMapRoute::ConstSharedPtr msg) { route_ = msg; }
 
-void LaneDepartureCheckerNode::onReferenceTrajectory(
-  const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr msg)
+void LaneDepartureCheckerNode::onReferenceTrajectory(const Trajectory::ConstSharedPtr msg)
 {
   reference_trajectory_ = msg;
 }
 
-void LaneDepartureCheckerNode::onPredictedTrajectory(
-  const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr msg)
+void LaneDepartureCheckerNode::onPredictedTrajectory(const Trajectory::ConstSharedPtr msg)
 {
   predicted_trajectory_ = msg;
-}
-
-void LaneDepartureCheckerNode::onPoseWithCov(
-  const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr msg)
-{
-  cov_ = msg;
 }
 
 bool LaneDepartureCheckerNode::isDataReady()
@@ -220,7 +212,7 @@ bool LaneDepartureCheckerNode::isDataReady()
     return false;
   }
 
-  if (!current_twist_) {
+  if (!current_odom_) {
     RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for current_twist msg...");
     return false;
   }
@@ -244,11 +236,6 @@ bool LaneDepartureCheckerNode::isDataReady()
   if (!predicted_trajectory_) {
     RCLCPP_INFO_THROTTLE(
       get_logger(), *get_clock(), 5000, "waiting for predicted_trajectory msg...");
-    return false;
-  }
-
-  if (!cov_) {
-    RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for covariance msg...");
     return false;
   }
 
@@ -290,19 +277,18 @@ void LaneDepartureCheckerNode::onTimer()
   // In order to wait for both of map and route will be ready, write this not in callback but here
   if (last_route_ != route_) {
     route_lanelets_ =
-      getRouteLanelets(*lanelet_map_, routing_graph_, route_->route_sections, vehicle_length_m_);
+      getRouteLanelets(*lanelet_map_, routing_graph_, route_->segments, vehicle_length_m_);
     last_route_ = route_;
   }
   processing_time_map["Node: getRouteLanelets"] = stop_watch.toc(true);
 
+  input_.current_odom = current_odom_;
   input_.current_pose = current_pose_;
-  input_.current_twist = current_twist_;
   input_.lanelet_map = lanelet_map_;
   input_.route = route_;
   input_.route_lanelets = route_lanelets_;
   input_.reference_trajectory = reference_trajectory_;
   input_.predicted_trajectory = predicted_trajectory_;
-  input_.covariance = cov_;
   processing_time_map["Node: setInputData"] = stop_watch.toc(true);
 
   output_ = lane_departure_checker_->update(input_);
@@ -472,7 +458,7 @@ visualization_msgs::msg::MarkerArray LaneDepartureCheckerNode::createMarkerArray
     }
   }
 
-  if (output_.resampled_trajectory.points.size() >= 2) {
+  if (output_.resampled_trajectory.size() >= 2) {
     // Line of resampled_trajectory
     {
       auto marker = createDefaultMarker(
@@ -480,7 +466,7 @@ visualization_msgs::msg::MarkerArray LaneDepartureCheckerNode::createMarkerArray
         visualization_msgs::msg::Marker::LINE_STRIP, createMarkerScale(0.05, 0, 0),
         createMarkerColor(1.0, 1.0, 1.0, 0.999));
 
-      for (const auto & p : output_.resampled_trajectory.points) {
+      for (const auto & p : output_.resampled_trajectory) {
         marker.points.push_back(p.pose.position);
         marker.colors.push_back(marker.color);
       }
@@ -495,7 +481,7 @@ visualization_msgs::msg::MarkerArray LaneDepartureCheckerNode::createMarkerArray
         visualization_msgs::msg::Marker::SPHERE_LIST, createMarkerScale(0.1, 0.1, 0.1),
         createMarkerColor(0.0, 1.0, 0.0, 0.999));
 
-      for (const auto & p : output_.resampled_trajectory.points) {
+      for (const auto & p : output_.resampled_trajectory) {
         marker.points.push_back(p.pose.position);
         marker.colors.push_back(marker.color);
       }
