@@ -15,11 +15,11 @@
 #ifndef TEST_PLANNING_ERROR_MONITOR_HELPER_HPP_
 #define TEST_PLANNING_ERROR_MONITOR_HELPER_HPP_
 
-#include <autoware_planning_msgs/msg/trajectory.hpp>
-#include <autoware_planning_msgs/msg/trajectory_point.hpp>
+#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
+#include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>
 
-using autoware_planning_msgs::msg::Trajectory;
-using autoware_planning_msgs::msg::TrajectoryPoint;
+using autoware_auto_planning_msgs::msg::Trajectory;
+using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 
 inline Trajectory generateTrajectory(double interval_distance)
 {
@@ -27,7 +27,7 @@ inline Trajectory generateTrajectory(double interval_distance)
   for (double s = 0.0; s <= 10.0 * interval_distance; s += interval_distance) {
     TrajectoryPoint p;
     p.pose.position.x = s;
-    p.twist.linear.x = 1.0;
+    p.longitudinal_velocity_mps = 1.0;
     traj.points.push_back(p);
   }
   return traj;
@@ -54,7 +54,7 @@ inline Trajectory generateBadCurvatureTrajectory()
   double y = 1.5;
   for (double s = 0.0; s <= 10.0; s += 1.0) {
     TrajectoryPoint p;
-    p.twist.linear.x = 1.0;
+    p.longitudinal_velocity_mps = 1.0;
     p.pose.position.x = s;
     p.pose.position.y = y;
     y *= -1.0;  // invert sign

@@ -25,7 +25,7 @@ constexpr double ERROR_CURVATURE = 2.0;
 
 TEST(PlanningErrorMonitor, ValidValueChecker)
 {
-  using autoware_planning_msgs::msg::Trajectory;
+  using autoware_auto_planning_msgs::msg::Trajectory;
   using planning_diagnostics::PlanningErrorMonitorNode;
 
   // Valid Trajectory
@@ -52,7 +52,7 @@ TEST(PlanningErrorMonitor, ValidValueChecker)
 
 TEST(PlanningErrorMonitor, TrajectoryIntervalChecker)
 {
-  using autoware_planning_msgs::msg::Trajectory;
+  using autoware_auto_planning_msgs::msg::Trajectory;
   using planning_diagnostics::PlanningErrorMonitorNode;
   PlanningErrorMonitorDebugNode debug_marker;
   // Normal Trajectory
@@ -83,7 +83,7 @@ TEST(PlanningErrorMonitor, TrajectoryIntervalChecker)
 
 TEST(PlanningErrorMonitor, TrajectoryCurvatureChecker)
 {
-  using autoware_planning_msgs::msg::Trajectory;
+  using autoware_auto_planning_msgs::msg::Trajectory;
   using planning_diagnostics::PlanningErrorMonitorNode;
   PlanningErrorMonitorDebugNode debug_marker;
   // Normal Trajectory
@@ -98,7 +98,7 @@ TEST(PlanningErrorMonitor, TrajectoryCurvatureChecker)
 
 TEST(PlanningErrorMonitor, TrajectoryRelativeAngleChecker)
 {
-  using autoware_planning_msgs::msg::Trajectory;
+  using autoware_auto_planning_msgs::msg::Trajectory;
   using planning_diagnostics::PlanningErrorMonitorNode;
   PlanningErrorMonitorDebugNode debug_marker;
   const double too_close_dist = 0.05;
