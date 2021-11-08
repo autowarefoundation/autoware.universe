@@ -9,12 +9,11 @@ if (!AutowareStateSubscriber) {
       var sub = new ROSLIB.Topic({
         ros: this.ros,
         name: "/autoware/state",
-        messageType: "autoware_system_msgs/AutowareState",
+        messageType: "autoware_auto_system_msgs/AutowareState",
       });
 
       sub.subscribe(function (message) {
         document.getElementById("autoware_state").innerHTML = message.state;
-        document.getElementById("autoware_state_msg").innerHTML = message.msg;
       });
     },
   };

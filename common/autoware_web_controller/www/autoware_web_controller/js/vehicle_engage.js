@@ -19,7 +19,7 @@ if (!VehicleEngagePublisher) {
       var pub = new ROSLIB.Topic({
         ros: this.ros,
         name: "/vehicle/engage",
-        messageType: "autoware_vehicle_msgs/Engage",
+        messageType: "autoware_auto_vehicle_msgs/Engage",
       });
 
       if (value == "Engage") {
@@ -71,7 +71,7 @@ if (!VehicleDisengagePublisher) {
       var pub = new ROSLIB.Topic({
         ros: this.ros,
         name: "/vehicle/engage",
-        messageType: "autoware_vehicle_msgs/Engage",
+        messageType: "autoware_auto_vehicle_msgs/Engage",
       });
 
       var str = new ROSLIB.Message({
@@ -111,7 +111,7 @@ if (!VehicleEngageStatusSubscriber) {
       var sub = new ROSLIB.Topic({
         ros: this.ros,
         name: "/vehicle/engage",
-        messageType: "autoware_vehicle_msgs/Engage",
+        messageType: "autoware_auto_vehicle_msgs/Engage",
       });
       sub.subscribe(function (message) {
         const div = document.getElementById("vehicle_engage_status");

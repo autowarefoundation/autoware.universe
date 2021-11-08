@@ -19,7 +19,7 @@ if (!AutowareEngagePublisher) {
       var pub = new ROSLIB.Topic({
         ros: this.ros,
         name: "/autoware/engage",
-        messageType: "autoware_vehicle_msgs/Engage",
+        messageType: "autoware_auto_vehicle_msgs/Engage",
         latch: "true",
       });
 
@@ -71,7 +71,7 @@ if (!AutowareEngageStatusSubscriber) {
       var sub = new ROSLIB.Topic({
         ros: this.ros,
         name: "/autoware/engage",
-        messageType: "autoware_vehicle_msgs/Engage",
+        messageType: "autoware_auto_vehicle_msgs/Engage",
       });
       sub.subscribe(function (message) {
         const div = document.getElementById("autoware_engage_status");
