@@ -22,8 +22,8 @@
 #include <rclcpp/rclcpp.hpp>
 #include <trt_ssd.hpp>
 
+#include <autoware_auto_perception_msgs/msg/traffic_light_roi_array.hpp>
 #include <autoware_debug_msgs/msg/float32_stamped.hpp>
-#include <autoware_perception_msgs/msg/traffic_light_roi_array.hpp>
 #include <sensor_msgs/image_encodings.hpp>
 #include <sensor_msgs/msg/image.hpp>
 
@@ -54,7 +54,7 @@ public:
   void connectCb();
   void callback(
     const sensor_msgs::msg::Image::ConstSharedPtr image_msg,
-    const autoware_perception_msgs::msg::TrafficLightRoiArray::ConstSharedPtr
+    const autoware_auto_perception_msgs::msg::TrafficLightRoiArray::ConstSharedPtr
       traffic_light_roi_msg);
 
 private:
@@ -67,27 +67,28 @@ private:
   bool fitInFrame(cv::Point & lt, cv::Point & rb, const cv::Size & size);
   void cvRect2TlRoiMsg(
     const cv::Rect & rect, const int32_t id,
-    autoware_perception_msgs::msg::TrafficLightRoi & tl_roi);
+    autoware_auto_perception_msgs::msg::TrafficLightRoi & tl_roi);
   bool readLabelFile(std::string filepath, std::vector<std::string> & labels);
   bool getTlrIdFromLabel(const std::vector<std::string> & labels, int & tlr_id);
 
   // variables
   std::shared_ptr<image_transport::ImageTransport> image_transport_;
   image_transport::SubscriberFilter image_sub_;
-  message_filters::Subscriber<autoware_perception_msgs::msg::TrafficLightRoiArray> roi_sub_;
+  message_filters::Subscriber<autoware_auto_perception_msgs::msg::TrafficLightRoiArray> roi_sub_;
   std::mutex connect_mutex_;
-  rclcpp::Publisher<autoware_perception_msgs::msg::TrafficLightRoiArray>::SharedPtr output_roi_pub_;
+  rclcpp::Publisher<autoware_auto_perception_msgs::msg::TrafficLightRoiArray>::SharedPtr
+    output_roi_pub_;
   rclcpp::Publisher<autoware_debug_msgs::msg::Float32Stamped>::SharedPtr exe_time_pub_;
   rclcpp::TimerBase::SharedPtr timer_;
 
   typedef message_filters::sync_policies::ExactTime<
-    sensor_msgs::msg::Image, autoware_perception_msgs::msg::TrafficLightRoiArray>
+    sensor_msgs::msg::Image, autoware_auto_perception_msgs::msg::TrafficLightRoiArray>
     SyncPolicy;
   typedef message_filters::Synchronizer<SyncPolicy> Sync;
   std::shared_ptr<Sync> sync_;
 
   typedef message_filters::sync_policies::ApproximateTime<
-    sensor_msgs::msg::Image, autoware_perception_msgs::msg::TrafficLightRoiArray>
+    sensor_msgs::msg::Image, autoware_auto_perception_msgs::msg::TrafficLightRoiArray>
     ApproximateSyncPolicy;
   typedef message_filters::Synchronizer<ApproximateSyncPolicy> ApproximateSync;
   std::shared_ptr<ApproximateSync> approximate_sync_;

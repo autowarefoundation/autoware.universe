@@ -89,7 +89,8 @@ TrafficLightSSDFineDetectorNodelet::TrafficLightSSDFineDetectorNodelet(
 
   std::lock_guard<std::mutex> lock(connect_mutex_);
   output_roi_pub_ =
-    this->create_publisher<autoware_perception_msgs::msg::TrafficLightRoiArray>("~/output/rois", 1);
+    this->create_publisher<autoware_auto_perception_msgs::msg::TrafficLightRoiArray>(
+      "~/output/rois", 1);
   exe_time_pub_ =
     this->create_publisher<autoware_debug_msgs::msg::Float32Stamped>("~/debug/exe_time_ms", 1);
   if (is_approximate_sync_) {
@@ -122,7 +123,7 @@ void TrafficLightSSDFineDetectorNodelet::connectCb()
 
 void TrafficLightSSDFineDetectorNodelet::callback(
   const sensor_msgs::msg::Image::ConstSharedPtr in_image_msg,
-  const autoware_perception_msgs::msg::TrafficLightRoiArray::ConstSharedPtr in_roi_msg)
+  const autoware_auto_perception_msgs::msg::TrafficLightRoiArray::ConstSharedPtr in_roi_msg)
 {
   if (in_image_msg->width < 2 || in_image_msg->height < 2) {
     return;
@@ -132,7 +133,7 @@ void TrafficLightSSDFineDetectorNodelet::callback(
   using std::chrono::milliseconds;
   const auto exe_start_time = high_resolution_clock::now();
   cv::Mat original_image;
-  autoware_perception_msgs::msg::TrafficLightRoiArray out_rois;
+  autoware_auto_perception_msgs::msg::TrafficLightRoiArray out_rois;
 
   rosMsg2CvMat(in_image_msg, original_image);
   int num_rois = in_roi_msg->rois.size();
@@ -197,7 +198,7 @@ void TrafficLightSSDFineDetectorNodelet::callback(
           lts.at(i).x + detections.at(i).x + detections.at(i).w,
           lts.at(i).y + detections.at(i).y + detections.at(i).h);
         fitInFrame(lt_roi, rb_roi, cv::Size(original_image.size()));
-        autoware_perception_msgs::msg::TrafficLightRoi tl_roi;
+        autoware_auto_perception_msgs::msg::TrafficLightRoi tl_roi;
         cvRect2TlRoiMsg(
           cv::Rect(lt_roi, rb_roi), in_roi_msg->rois.at(i + batch_count * batch_size).id, tl_roi);
         out_rois.rois.push_back(tl_roi);
@@ -317,7 +318,8 @@ bool TrafficLightSSDFineDetectorNodelet::fitInFrame(
 }
 
 void TrafficLightSSDFineDetectorNodelet::cvRect2TlRoiMsg(
-  const cv::Rect & rect, const int32_t id, autoware_perception_msgs::msg::TrafficLightRoi & tl_roi)
+  const cv::Rect & rect, const int32_t id,
+  autoware_auto_perception_msgs::msg::TrafficLightRoi & tl_roi)
 {
   tl_roi.id = id;
   tl_roi.roi.x_offset = rect.x;
