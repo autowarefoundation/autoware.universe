@@ -1,0 +1,17 @@
+#include "builtin_interfaces/msg/Time.idl"
+
+module autoware_auto_vehicle_msgs {
+  module msg {
+    @verbatim (language="comment", text=
+      " SteeringReport.msg")
+    struct SteeringReport {
+      builtin_interfaces::msg::Time stamp;
+
+      @verbatim (language="comment", text=
+        " Desired angle of the steering tire in radians left (positive)"
+        " or right (negative) of center (0.0)")
+      @default (value=0.0)
+      float steering_tire_angle;
+    };
+  };
+};

@@ -1,0 +1,14 @@
+#include "builtin_interfaces/msg/Time.idl"
+
+module autoware_auto_vehicle_msgs {
+  module msg {
+    @verbatim (language="comment", text=
+      " VelocityReport.msg")
+    struct VelocityReport {
+      builtin_interfaces::msg::Time stamp;
+
+      @default (value=0.0)
+      float velocity;
+    };
+  };
+};

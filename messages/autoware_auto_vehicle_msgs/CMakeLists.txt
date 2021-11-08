@@ -9,7 +9,10 @@ find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
 rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/ControlModeCommand.idl"
+  "msg/ControlModeReport.idl"
   "msg/Engage.idl"
+  "msg/GearCommand.idl"
   "msg/GearReport.idl"
   "msg/HandBrakeCommand.idl"
   "msg/HandBrakeReport.idl"
@@ -20,6 +23,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/HornCommand.idl"
   "msg/HornReport.idl"
   "msg/StationaryLockingCommand.idl"
+  "msg/SteeringReport.idl"
   "msg/TurnIndicatorsCommand.idl"
   "msg/TurnIndicatorsReport.idl"
   "msg/VehicleControlCommand.idl"
@@ -27,6 +31,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/VehicleOdometry.idl"
   "msg/VehicleStateCommand.idl"
   "msg/VehicleStateReport.idl"
+  "msg/VelocityReport.idl"
   "msg/WheelEncoder.idl"
   "msg/WipersCommand.idl"
   "msg/WipersReport.idl"
