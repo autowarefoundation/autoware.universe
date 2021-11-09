@@ -73,7 +73,7 @@ void TurnSignalDisplay::onDisable()
 }
 
 void TurnSignalDisplay::processMessage(
-  const autoware_vehicle_msgs::msg::TurnSignal::ConstSharedPtr msg_ptr)
+  const autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport::ConstSharedPtr msg_ptr)
 {
   if (!isEnabled()) {
     return;
@@ -98,7 +98,7 @@ void TurnSignalDisplay::update(float wall_dt, float ros_dt)
     if (!last_msg_ptr_) {
       return;
     }
-    signal_type = last_msg_ptr_->data;
+    signal_type = last_msg_ptr_->report;
   }
 
   QColor background_color;
@@ -113,19 +113,19 @@ void TurnSignalDisplay::update(float wall_dt, float ros_dt)
   // turn signal color
   QColor white_color(Qt::white);
   white_color.setAlpha(255);
-  if (signal_type == autoware_vehicle_msgs::msg::TurnSignal::RIGHT) {
+  if (signal_type == autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport::ENABLE_RIGHT) {
     painter.setPen(QPen(white_color, static_cast<int>(2), Qt::DotLine));
     painter.drawPolygon(left_arrow_polygon_, 7);
     painter.setBrush(QBrush(Qt::white, Qt::SolidPattern));
     painter.setPen(QPen(white_color, static_cast<int>(2), Qt::SolidLine));
     painter.drawPolygon(right_arrow_polygon_, 7);
-  } else if (signal_type == autoware_vehicle_msgs::msg::TurnSignal::LEFT) {
+  } else if (signal_type == autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport::ENABLE_LEFT) {
     painter.setPen(QPen(white_color, static_cast<int>(2), Qt::DotLine));
     painter.drawPolygon(right_arrow_polygon_, 7);
     painter.setBrush(QBrush(Qt::white, Qt::SolidPattern));
     painter.setPen(QPen(white_color, static_cast<int>(2), Qt::SolidLine));
     painter.drawPolygon(left_arrow_polygon_, 7);
-  } else if (signal_type == autoware_vehicle_msgs::msg::TurnSignal::HAZARD) {
+  } else if (signal_type == autoware_auto_vehicle_msgs::msg::HazardLightsReport::ENABLE) {
     painter.setBrush(QBrush(Qt::white, Qt::SolidPattern));
     painter.setPen(QPen(white_color, static_cast<int>(2), Qt::SolidLine));
     painter.drawPolygon(right_arrow_polygon_, 7);
