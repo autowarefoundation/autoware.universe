@@ -36,16 +36,14 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
       "~/input/hazard_status", rclcpp::QoS{1},
       std::bind(&EmergencyHandler::onHazardStatusStamped, this, _1));
   sub_prev_control_command_ =
-    create_subscription<autoware_auto_vehicle_msgs::msg::VehicleControlCommand>(
+    create_subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>(
       "~/input/prev_control_command", rclcpp::QoS{1},
       std::bind(&EmergencyHandler::onPrevControlCommand, this, _1));
   sub_odom_ = create_subscription<nav_msgs::msg::Odometry>(
     "~/input/odometry", rclcpp::QoS{1}, std::bind(&EmergencyHandler::onOdometry, this, _1));
   // subscribe control mode
-  sub_vehicle_state_report_ =
-    create_subscription<autoware_auto_vehicle_msgs::msg::VehicleStateReport>(
-      "~/input/vehicle_state_report", rclcpp::QoS{1},
-      std::bind(&EmergencyHandler::onVehicleStateReport, this, _1));
+  sub_control_mode_ = create_subscription<autoware_auto_vehicle_msgs::msg::ControlModeReport>(
+    "~/input/control_mode", rclcpp::QoS{1}, std::bind(&EmergencyHandler::onControlMode, this, _1));
 
   // Heartbeat
   heartbeat_hazard_status_ = std::make_shared<
@@ -55,16 +53,16 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
   // Publisher
   pub_control_command_ = create_publisher<autoware_auto_control_msgs::msg::AckermannControlCommand>(
     "~/output/control_command", rclcpp::QoS{1});
-  // publish shift and turn signal
-  pub_vehicle_state_cmd_ = create_publisher<autoware_auto_vehicle_msgs::msg::VehicleStateCommand>(
-    "~/output/vehicle_state_command", rclcpp::QoS{1});
+  pub_hazard_cmd_ = create_publisher<autoware_auto_vehicle_msgs::msg::HazardLightsCommand>(
+    "~/output/hazard", rclcpp::QoS{1});
+  pub_gear_cmd_ =
+    create_publisher<autoware_auto_vehicle_msgs::msg::GearCommand>("~/output/gear", rclcpp::QoS{1});
   pub_emergency_state_ = create_publisher<autoware_auto_system_msgs::msg::EmergencyState>(
     "~/output/emergency_state", rclcpp::QoS{1});
 
   // Initialize
   odom_ = std::make_shared<const nav_msgs::msg::Odometry>();
-  vehicle_state_report_ =
-    std::make_shared<const autoware_auto_vehicle_msgs::msg::VehicleStateReport>();
+  control_mode_ = std::make_shared<const autoware_auto_vehicle_msgs::msg::ControlModeReport>();
   prev_control_command_ = autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr(
     new autoware_auto_control_msgs::msg::AckermannControlCommand);
 
@@ -86,14 +84,10 @@ void EmergencyHandler::onHazardStatusStamped(
 
 // To be replaced by ControlCommand
 void EmergencyHandler::onPrevControlCommand(
-  const autoware_auto_vehicle_msgs::msg::VehicleControlCommand::ConstSharedPtr msg)
+  const autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr msg)
 {
-  const auto control_command = new autoware_auto_control_msgs::msg::AckermannControlCommand();
+  auto control_command = new autoware_auto_control_msgs::msg::AckermannControlCommand(*msg);
   control_command->stamp = msg->stamp;
-  // TODO(TierIV) use rear_wheel_angle_rad
-  control_command->lateral.steering_tire_angle = msg->front_wheel_angle_rad;
-  control_command->longitudinal.acceleration = msg->long_accel_mps2;
-  control_command->longitudinal.speed = msg->velocity_mps;
   prev_control_command_ =
     autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr(control_command);
 }
@@ -103,46 +97,37 @@ void EmergencyHandler::onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr 
   odom_ = msg;
 }
 
-void EmergencyHandler::onVehicleStateReport(
-  const autoware_auto_vehicle_msgs::msg::VehicleStateReport::ConstSharedPtr msg)
+void EmergencyHandler::onControlMode(
+  const autoware_auto_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr msg)
 {
-  vehicle_state_report_ = msg;
+  control_mode_ = msg;
 }
 
-autoware_auto_vehicle_msgs::msg::VehicleStateCommand EmergencyHandler::createVehicleStateCmdMsg()
+autoware_auto_vehicle_msgs::msg::HazardLightsCommand EmergencyHandler::createHazardCmdMsg()
 {
-  using autoware_auto_vehicle_msgs::msg::VehicleStateCommand;
-  autoware_auto_vehicle_msgs::msg::VehicleStateCommand msg;
-  msg.stamp = this->now();
-
-  // input blinker information
+  using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
+  HazardLightsCommand msg;
 
   // Check emergency
   const bool is_emergency = isEmergency(hazard_status_stamped_->status);
 
   if (hazard_status_stamped_->status.emergency_holding) {
     // turn hazard on during emergency holding
-    msg.blinker = VehicleStateCommand::BLINKER_HAZARD;
+    msg.command = HazardLightsCommand::ENABLE;
   } else if (is_emergency && param_.turning_hazard_on.emergency) {
     // turn hazard on if vehicle is in emergency state and
     // turning hazard on if emergency flag is true
-    msg.blinker = VehicleStateCommand::BLINKER_HAZARD;
-  } else {
-    msg.blinker = VehicleStateCommand::BLINKER_NO_COMMAND;
-  }
+    msg.command = HazardLightsCommand::ENABLE;
 
-  // input gear information
-  if (param_.use_parking_after_stopped && isStopped()) {
-    msg.gear = VehicleStateCommand::GEAR_PARK;
   } else {
-    msg.gear = VehicleStateCommand::GEAR_NO_COMMAND;
+    msg.command = HazardLightsCommand::NO_COMMAND;
   }
-
-  return msg;
 }
 
 void EmergencyHandler::publishControlCommands()
 {
+  using autoware_auto_vehicle_msgs::msg::GearCommand;
+
   // Create timestamp
   const auto stamp = this->now();
 
@@ -154,8 +139,15 @@ void EmergencyHandler::publishControlCommands()
     pub_control_command_->publish(msg);
   }
 
-  // Publish TurnSignal and Gear
-  pub_vehicle_state_cmd_->publish(createVehicleStateCmdMsg());
+  // Publish hazard command
+  pub_hazard_cmd_->publish(createHazardCmdMsg());
+
+  // Publish gear
+  if (param_.use_parking_after_stopped && isStopped()) {
+    GearCommand msg;
+    msg.command = GearCommand::PARK;
+    pub_gear_cmd_->publish(msg);
+  }
 
   // Publish Emergency State
   {
@@ -234,14 +226,14 @@ void EmergencyHandler::transitionTo(const int new_state)
 void EmergencyHandler::updateEmergencyState()
 {
   using autoware_auto_system_msgs::msg::EmergencyState;
-  using autoware_auto_vehicle_msgs::msg::VehicleStateReport;
+  using autoware_auto_vehicle_msgs::msg::ControlModeReport;
 
   // Check emergency
   const bool is_emergency = isEmergency(hazard_status_stamped_->status);
 
   // Get mode
-  const bool is_auto_mode = vehicle_state_report_->mode == VehicleStateReport::MODE_AUTONOMOUS;
-  const bool is_takeover_done = vehicle_state_report_->mode == VehicleStateReport::MODE_MANUAL;
+  const bool is_auto_mode = control_mode_->mode == ControlModeReport::AUTONOMOUS;
+  const bool is_takeover_done = control_mode_->mode == ControlModeReport::MANUAL;
 
   // State Machine
   if (emergency_state_ == EmergencyState::NORMAL) {
