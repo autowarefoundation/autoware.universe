@@ -6,8 +6,8 @@ repositories:
     version: use-autoware-auto-msgs
   autoware/launcher:
     type: git
-    url: git@github.com:tier4/autoware_launcher.git
-    version: 5527a3b1541466aad4586128cb4d1fa715143a12
+    url: git@github.com:tier4/AutowareArchitectureProposal_launcher.git
+    version: use-autoware-auto-msgs
   autoware/aip_launcher:
     type: git
     url: git@github.com:tier4/aip_launcher.iv.git
@@ -23,7 +23,7 @@ repositories:
   autoware/msgs/autoware_iv_msgs:
     type: git
     url: git@github.com:tier4/autoware_iv_msgs.git
-    version: 0477e88d1da64df4497b002c7793f8c619ffba52
+    version: use-autoware-auto-msgs
   autoware/msgs/autoware_auto_msgs:
     type: git
     url: git@github.com:tier4/autoware_auto_msgs.git
