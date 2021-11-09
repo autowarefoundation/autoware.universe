@@ -48,7 +48,7 @@ void ObjectRangeSplitterNode::objectCallback(
 
   // split
   for (const auto & object : input_msg->objects) {
-    const auto & position = object.kinematics.centroid_position;
+    const auto & position = object.kinematics.pose_with_covariance.pose.position;
     const auto object_sq_dist = position.x * position.x + position.y * position.y;
     if (object_sq_dist < spilt_range_ * spilt_range_) {  // short range
       output_short_range_object_msg.objects.push_back(object);
