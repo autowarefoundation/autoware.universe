@@ -14,9 +14,7 @@ module autoware_auto_perception_msgs {
       sequence<autoware_auto_perception_msgs::msg::ObjectClassification> classification;
       autoware_auto_perception_msgs::msg::TrackedObjectKinematics kinematics;
 
-      @verbatim (language="comment", text=
-        "If an object is not articulated, only index 0 is populated.")
-      sequence<autoware_auto_perception_msgs::msg::Shape, 5> shape;
+      autoware_auto_perception_msgs::msg::Shape shape;
     };
   };
 };
