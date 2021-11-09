@@ -290,7 +290,8 @@ void SurroundObstacleCheckerNode::getNearestObstacleByDynamicObject(
     // change frame of obj_pose to base_link
     geometry_msgs::msg::Pose pose_baselink;
     if (!convertPose(
-          obj.kinematics.initial_pose.pose, obj_frame, "base_link", obj_time, pose_baselink)) {
+          obj.kinematics.initial_pose_with_covariance.pose, obj_frame, "base_link", obj_time,
+          pose_baselink)) {
       return;
     }
 
@@ -308,7 +309,7 @@ void SurroundObstacleCheckerNode::getNearestObstacleByDynamicObject(
     // get minimum distance to obj
     if (dist_to_obj < *min_dist_to_obj) {
       *min_dist_to_obj = dist_to_obj;
-      *nearest_obj_point = obj.kinematics.initial_pose.pose.position;
+      *nearest_obj_point = obj.kinematics.initial_pose_with_covariance.pose.position;
     }
   }
 }
