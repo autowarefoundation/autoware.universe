@@ -81,10 +81,10 @@ void AutowareStateMonitorNode::onAutowareEngage(
   state_input_.autoware_engage = msg;
 }
 
-void AutowareStateMonitorNode::onVehicleVehicleStateReport(
-  const autoware_auto_vehicle_msgs::msg::VehicleStateReport::ConstSharedPtr msg)
+void AutowareStateMonitorNode::onVehicleControlMode(
+  const autoware_auto_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr msg)
 {
-  state_input_.vehicle_state_report = msg;
+  state_input_.control_mode_ = msg;
 }
 
 void AutowareStateMonitorNode::onRoute(
@@ -426,11 +426,9 @@ AutowareStateMonitorNode::AutowareStateMonitorNode()
   sub_autoware_engage_ = this->create_subscription<autoware_auto_vehicle_msgs::msg::Engage>(
     "input/autoware_engage", 1, std::bind(&AutowareStateMonitorNode::onAutowareEngage, this, _1),
     subscriber_option);
-  sub_vehicle_state_report_ =
-    this->create_subscription<autoware_auto_vehicle_msgs::msg::VehicleStateReport>(
-      "input/vehicle_state_report", 1,
-      std::bind(&AutowareStateMonitorNode::onVehicleVehicleStateReport, this, _1),
-      subscriber_option);
+  sub_control_mode_ = this->create_subscription<autoware_auto_vehicle_msgs::msg::ControlModeReport>(
+    "input/control_mode", 1, std::bind(&AutowareStateMonitorNode::onVehicleControlMode, this, _1),
+    subscriber_option);
   sub_route_ = this->create_subscription<autoware_auto_planning_msgs::msg::Route>(
     "input/route", rclcpp::QoS{1}.transient_local(),
     std::bind(&AutowareStateMonitorNode::onRoute, this, _1), subscriber_option);

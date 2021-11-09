@@ -10,11 +10,11 @@ This node manages AutowareState transitions.
 
 ### Input
 
-| Name                              | Type                                                  | Description                                       |
-| --------------------------------- | ----------------------------------------------------- | ------------------------------------------------- |
-| `/planning/mission_planning/rout` | `autoware_auto_planning_msgs::msg::Route`             | Subscribe route                                   |
-| `/localization/ekf_odom`          | `nav_msgs::msg::Odometry`                             | Used to decide whether vehicle is stopped or not  |
-| `/vehicle/state_report`           | `autoware_auto_vehicle_msgs::msg::VehicleStateReport` | Used to check vehicle mode: autonomous or manual. |
+| Name                               | Type                                                 | Description                                       |
+| ---------------------------------- | ---------------------------------------------------- | ------------------------------------------------- |
+| `/planning/mission_planning/route` | `autoware_auto_planning_msgs::msg::Route`            | Subscribe route                                   |
+| `/localization/kinematic_state`    | `nav_msgs::msg::Odometry`                            | Used to decide whether vehicle is stopped or not  |
+| `/vehicle/state_report`            | `autoware_auto_vehicle_msgs::msg::ControlModeReport` | Used to check vehicle mode: autonomous or manual. |
 
 ### Output
 
@@ -38,8 +38,8 @@ This node manages AutowareState transitions.
 | `th_arrived_distance_m`   | double | 1.0           | threshold distance to check if vehicle has arrived at the route's endpoint |
 | `th_stopped_time_sec`     | double | 1.0           | threshold time to check if vehicle is stopped                              |
 | `th_stopped_velocity_mps` | double | 0.01          | threshold velocity to check if vehicle is stopped                          |
-| `disengage_on_route`      | bool   | true          | send diengage flag or not when the route is subscribed                     |
-| `disengage_on_goal`       | bool   | true          | send diengage flag or not when the vehicle is arrived goal                 |
+| `disengage_on_route`      | bool   | true          | send disengage flag or not when the route is subscribed                    |
+| `disengage_on_goal`       | bool   | true          | send disengage flag or not when the vehicle is arrived goal                |
 
 ## Assumptions / Known limits
 

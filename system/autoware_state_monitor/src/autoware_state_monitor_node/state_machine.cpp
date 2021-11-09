@@ -158,13 +158,13 @@ bool StateMachine::isEngaged() const
     return false;
   }
 
-  if (!state_input_.vehicle_state_report) {
+  if (!state_input_.control_mode_) {
     return false;
   }
 
   if (
-    state_input_.vehicle_state_report->mode ==
-    autoware_auto_vehicle_msgs::msg::VehicleStateReport::MODE_MANUAL) {
+    state_input_.control_mode_->mode ==
+    autoware_auto_vehicle_msgs::msg::ControlModeReport::MANUAL) {
     return false;
   }
 
