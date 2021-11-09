@@ -83,14 +83,13 @@ RawVehicleCommandConverterNode::RawVehicleCommandConverterNode(
       max_ret_steer, min_ret_steer, max_ret_p_steer, min_ret_p_steer, max_ret_i_steer,
       min_ret_i_steer, max_ret_d_steer, min_ret_d_steer);
   }
-  pub_actuation_cmd_ = create_publisher<ActuationCommandStamped>("/vehicle/actuation_cmd", 1);
-  sub_control_cmd_ = create_subscription<ControlCommandStamped>(
-    "/control/control_cmd", 1, std::bind(&RawVehicleCommandConverterNode::onControlCmd, this, _1));
-  sub_velocity_ = create_subscription<TwistStamped>(
-    "/localization/twist", 1, std::bind(&RawVehicleCommandConverterNode::onVelocity, this, _1));
+  pub_actuation_cmd_ = create_publisher<ActuationCommandStamped>("~/output/actuation_cmd", 1);
+  sub_control_cmd_ = create_subscription<AckermannControlCommand>(
+    "~/input/control_cmd", 1, std::bind(&RawVehicleCommandConverterNode::onControlCmd, this, _1));
+  sub_velocity_ = create_subscription<Odometry>(
+    "~/input/odometry", 1, std::bind(&RawVehicleCommandConverterNode::onVelocity, this, _1));
   sub_steering_ = create_subscription<Steering>(
-    "/vehicle/status/steering", 1,
-    std::bind(&RawVehicleCommandConverterNode::onSteering, this, _1));
+    "~/input/steering", 1, std::bind(&RawVehicleCommandConverterNode::onSteering, this, _1));
   debug_pub_steer_pid_ = create_publisher<Float32MultiArrayStamped>(
     "/vehicle/raw_vehicle_cmd_converter/debug/steer_pid", 1);
 }
@@ -110,10 +109,10 @@ void RawVehicleCommandConverterNode::publishActuationCmd()
   double desired_brake_cmd = 0.0;
   double desired_steer_cmd = 0.0;
   ActuationCommandStamped actuation_cmd;
-  const double acc = control_cmd_ptr_->control.acceleration;
+  const double acc = control_cmd_ptr_->longitudinal.acceleration;
   const double vel = current_twist_ptr_->twist.linear.x;
-  const double steer = control_cmd_ptr_->control.steering_angle;
-  const double steer_rate = control_cmd_ptr_->control.steering_angle_velocity;
+  const double steer = control_cmd_ptr_->lateral.steering_tire_angle;
+  const double steer_rate = control_cmd_ptr_->lateral.steering_tire_rotation_rate;
   bool accel_cmd_is_zero = true;
   if (convert_accel_cmd_) {
     desired_accel_cmd = calculateAccelMap(vel, acc, accel_cmd_is_zero);
@@ -133,9 +132,10 @@ void RawVehicleCommandConverterNode::publishActuationCmd()
     desired_steer_cmd = calculateSteer(vel, steer, steer_rate);
   } else {
     // if conversion is disabled use steering angle as steer cmd
-    desired_steer_cmd = control_cmd_ptr_->control.steering_angle;
+    desired_steer_cmd = steer;
   }
-  actuation_cmd.header = control_cmd_ptr_->header;
+  actuation_cmd.header.frame_id = "base_link";
+  actuation_cmd.header.stamp = control_cmd_ptr_->stamp;
   actuation_cmd.actuation.accel_cmd = desired_accel_cmd;
   actuation_cmd.actuation.brake_cmd = desired_brake_cmd;
   actuation_cmd.actuation.steer_cmd = desired_steer_cmd;
@@ -159,12 +159,12 @@ double RawVehicleCommandConverterNode::calculateSteer(
   prev_time_steer_calculation_ = current_time;
   // feed-forward
   if (use_steer_ff_) {
-    ff_value = steer_controller_.calcFFSteer(steer_rate, current_steer_ptr_->data);
+    ff_value = steer_controller_.calcFFSteer(steer_rate, *current_steer_ptr_);
   }
   // feedback
   if (use_steer_fb_) {
     fb_value = steer_controller_.calcFBSteer(
-      steering, steer_rate, dt, vel, current_steer_ptr_->data, pid_contributions, pid_errors);
+      steering, dt, vel, *current_steer_ptr_, pid_contributions, pid_errors);
   }
   steering_output = ff_value + fb_value;
   // for steer debugging
@@ -214,15 +214,17 @@ double RawVehicleCommandConverterNode::calculateBrakeMap(
 
 void RawVehicleCommandConverterNode::onSteering(const Steering::ConstSharedPtr msg)
 {
-  current_steer_ptr_ = msg;
+  current_steer_ptr_ = std::make_unique<double>(msg->steering_tire_angle);
 }
 
-void RawVehicleCommandConverterNode::onVelocity(const TwistStamped::ConstSharedPtr msg)
+void RawVehicleCommandConverterNode::onVelocity(const Odometry::ConstSharedPtr msg)
 {
-  current_twist_ptr_ = msg;
+  current_twist_ptr_ = std::make_unique<TwistStamped>();
+  current_twist_ptr_->header = msg->header;
+  current_twist_ptr_->twist = msg->twist.twist;
 }
 
-void RawVehicleCommandConverterNode::onControlCmd(const ControlCommandStamped::ConstSharedPtr msg)
+void RawVehicleCommandConverterNode::onControlCmd(const AckermannControlCommand::ConstSharedPtr msg)
 {
   control_cmd_ptr_ = msg;
   publishActuationCmd();

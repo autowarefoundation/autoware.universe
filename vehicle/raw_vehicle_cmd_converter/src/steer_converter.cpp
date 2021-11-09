@@ -60,9 +60,9 @@ double SteerConverter::calcFFSteer(
 }
 
 double SteerConverter::calcFBSteer(
-  const double target_steer_angle, const double target_steer_angle_velocity, const double dt,
-  const double current_velocity, const double current_steer_angle,
-  std::vector<double> & pid_contributions, std::vector<double> & errors)
+  const double target_steer_angle, const double dt, const double current_velocity,
+  const double current_steer_angle, std::vector<double> & pid_contributions,
+  std::vector<double> & errors)
 {
   rclcpp::Clock clock{RCL_ROS_TIME};
 
@@ -120,11 +120,11 @@ bool SteerConverter::readSteerMapFromCSV(
       return false;
     }
     output_index.push_back(std::stod(table[i][0]));
-    std::vector<double> steer_angle_vels;
+    std::vector<double> steer_angle_velocities;
     for (unsigned int j = 1; j < table[i].size(); ++j) {
-      steer_angle_vels.push_back(std::stod(table[i][j]));
+      steer_angle_velocities.push_back(std::stod(table[i][j]));
     }
-    steer_map.push_back(steer_angle_vels);
+    steer_map.push_back(steer_angle_velocities);
   }
 
   return true;
@@ -135,7 +135,7 @@ void SteerConverter::calcFFMap(double steer_vel, double vehicle_vel, double & ou
   rclcpp::Clock clock{RCL_ROS_TIME};
 
   LinearInterpolate linear_interp;
-  std::vector<double> steer_angle_vels_interp;
+  std::vector<double> steer_angle_velocities_interp;
 
   if (vehicle_vel < vel_index_.front()) {
     RCLCPP_WARN_THROTTLE(
@@ -153,16 +153,17 @@ void SteerConverter::calcFFMap(double steer_vel, double vehicle_vel, double & ou
     vehicle_vel = vel_index_.back();
   }
 
-  for (std::vector<double> steer_angle_vels : steer_map_) {
+  for (std::vector<double> steer_angle_velocities : steer_map_) {
     double steer_angle_vel_interp;
-    linear_interp.interpolate(vel_index_, steer_angle_vels, vehicle_vel, steer_angle_vel_interp);
-    steer_angle_vels_interp.push_back(steer_angle_vel_interp);
+    linear_interp.interpolate(
+      vel_index_, steer_angle_velocities, vehicle_vel, steer_angle_vel_interp);
+    steer_angle_velocities_interp.push_back(steer_angle_vel_interp);
   }
-  if (steer_vel < steer_angle_vels_interp.front()) {
-    steer_vel = steer_angle_vels_interp.front();
-  } else if (steer_angle_vels_interp.back() < steer_vel) {
-    steer_vel = steer_angle_vels_interp.back();
+  if (steer_vel < steer_angle_velocities_interp.front()) {
+    steer_vel = steer_angle_velocities_interp.front();
+  } else if (steer_angle_velocities_interp.back() < steer_vel) {
+    steer_vel = steer_angle_velocities_interp.back();
   }
-  linear_interp.interpolate(steer_angle_vels_interp, output_index_, steer_vel, output);
+  linear_interp.interpolate(steer_angle_velocities_interp, output_index_, steer_vel, output);
 }
 }  // namespace raw_vehicle_cmd_converter
