@@ -15,8 +15,6 @@ find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/object_recognition/DetectedObjectWithFeature.msg"
-  "msg/object_recognition/DetectedObjectsWithFeature.msg"
   "msg/object_recognition/DynamicObject.msg"
   "msg/object_recognition/DynamicObjectArray.msg"
   "msg/object_recognition/DynamicObjectWithFeature.msg"
@@ -35,7 +33,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/traffic_light_recognition/TrafficLightStateArray.msg"
   "msg/traffic_light_recognition/TrafficLightStateStamped.msg"
   DEPENDENCIES
-    autoware_auto_perception_msgs
     builtin_interfaces
     geometry_msgs
     sensor_msgs
