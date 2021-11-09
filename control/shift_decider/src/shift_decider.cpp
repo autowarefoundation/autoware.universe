@@ -30,8 +30,8 @@ ShiftDecider::ShiftDecider(const rclcpp::NodeOptions & node_options)
   rclcpp::QoS durable_qos(queue_size);
   durable_qos.transient_local();
 
-  pub_shift_cmd_ = create_publisher<autoware_auto_vehicle_msgs::msg::VehicleStateCommand>(
-    "output/shift_cmd", durable_qos);
+  pub_shift_cmd_ =
+    create_publisher<autoware_auto_vehicle_msgs::msg::GearCommand>("output/shift_cmd", durable_qos);
   sub_control_cmd_ = create_subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>(
     "input/control_cmd", queue_size, std::bind(&ShiftDecider::onControlCmd, this, _1));
 
@@ -56,12 +56,14 @@ void ShiftDecider::onTimer()
 
 void ShiftDecider::updateCurrentShiftCmd()
 {
+  using autoware_auto_vehicle_msgs::msg::GearCommand;
+
   shift_cmd_.stamp = now();
   static constexpr double vel_threshold = 0.01;  // to prevent chattering
   if (control_cmd_->longitudinal.speed > vel_threshold) {
-    shift_cmd_.gear = autoware_auto_vehicle_msgs::msg::VehicleStateCommand::GEAR_DRIVE;
+    shift_cmd_.command = GearCommand::DRIVE;
   } else if (control_cmd_->longitudinal.speed < -vel_threshold) {
-    shift_cmd_.gear = autoware_auto_vehicle_msgs::msg::VehicleStateCommand::GEAR_REVERSE;
+    shift_cmd_.command = GearCommand::REVERSE;
   }
 }
 
