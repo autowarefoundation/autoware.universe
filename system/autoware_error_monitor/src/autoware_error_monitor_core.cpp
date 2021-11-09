@@ -220,10 +220,9 @@ AutowareErrorMonitor::AutowareErrorMonitor()
   sub_autoware_state_ = create_subscription<autoware_auto_system_msgs::msg::AutowareState>(
     "~/input/autoware_state", rclcpp::QoS{1},
     std::bind(&AutowareErrorMonitor::onAutowareState, this, _1));
-  sub_vehicle_state_report_ =
-    create_subscription<autoware_auto_vehicle_msgs::msg::VehicleStateReport>(
-      "~/input/vehicle_state_report", rclcpp::QoS{1},
-      std::bind(&AutowareErrorMonitor::onControlMode, this, _1));
+  sub_control_mode_ = create_subscription<autoware_auto_vehicle_msgs::msg::ControlModeReport>(
+    "~/input/control_mode", rclcpp::QoS{1},
+    std::bind(&AutowareErrorMonitor::onControlMode, this, _1));
 
   // Publisher
   pub_hazard_status_ = create_publisher<autoware_auto_system_msgs::msg::HazardStatusStamped>(
@@ -237,11 +236,10 @@ AutowareErrorMonitor::AutowareErrorMonitor()
     std::bind(&AutowareErrorMonitor::onClearEmergencyService, this, _1, _2));
 
   // Initialize
-  autoware_auto_vehicle_msgs::msg::VehicleStateReport vehicle_state_report;
-  vehicle_state_report.mode = autoware_auto_vehicle_msgs::msg::VehicleStateReport::MODE_MANUAL;
-  vehicle_state_report_ =
-    std::make_shared<const autoware_auto_vehicle_msgs::msg::VehicleStateReport>(
-      vehicle_state_report);
+  autoware_auto_vehicle_msgs::msg::ControlModeReport vehicle_state_report;
+  vehicle_state_report.mode = autoware_auto_vehicle_msgs::msg::ControlModeReport::MANUAL;
+  control_mode_ = std::make_shared<const autoware_auto_vehicle_msgs::msg::ControlModeReport>(
+    vehicle_state_report);
 
   // Timer
   initialized_time_ = this->now();
@@ -348,9 +346,9 @@ void AutowareErrorMonitor::onAutowareState(
 }
 
 void AutowareErrorMonitor::onControlMode(
-  const autoware_auto_vehicle_msgs::msg::VehicleStateReport::ConstSharedPtr msg)
+  const autoware_auto_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr msg)
 {
-  vehicle_state_report_ = msg;
+  control_mode_ = msg;
 }
 
 bool AutowareErrorMonitor::isDataReady()
@@ -370,7 +368,7 @@ bool AutowareErrorMonitor::isDataReady()
     return false;
   }
 
-  if (!vehicle_state_report_) {
+  if (!control_mode_) {
     RCLCPP_INFO_THROTTLE(
       get_logger(), *get_clock(), 5000, "waiting for vehicle_state_report msg...");
     return false;
@@ -565,8 +563,7 @@ bool AutowareErrorMonitor::isEmergencyHoldingRequired() const
 
   // Don't hold status during manual driving
   const bool is_manual_driving =
-    (vehicle_state_report_->mode ==
-     autoware_auto_vehicle_msgs::msg::VehicleStateReport::MODE_MANUAL);
+    (control_mode_->mode == autoware_auto_vehicle_msgs::msg::ControlModeReport::MANUAL);
   const auto no_hold_condition =
     (!params_.use_emergency_hold_in_manual_driving && is_manual_driving);
   if (no_hold_condition) {
