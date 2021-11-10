@@ -166,7 +166,7 @@ ScenarioSelectorNode::getScenarioTrajectory(const std::string & scenario)
 std::string ScenarioSelectorNode::selectScenarioByPosition()
 {
   const auto is_in_lane = isInLane(lanelet_map_ptr_, current_pose_->pose.position);
-  const auto is_goal_in_lane = isInLane(lanelet_map_ptr_, route_->goal_point.position);
+  const auto is_goal_in_lane = isInLane(lanelet_map_ptr_, route_->goal_pose.position);
   const auto is_in_parking_lot = isInParkingLot(lanelet_map_ptr_, current_pose_->pose);
 
   if (current_scenario_ == autoware_planning_msgs::msg::Scenario::EMPTY) {
