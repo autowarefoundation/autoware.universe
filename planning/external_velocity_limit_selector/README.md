@@ -61,16 +61,16 @@ Example:
 Example:
   ### Input
 
-  | Name                 | Type                                                | Description          |
-  | -------------------- | --------------------------------------------------- | -------------------- |
-  | `~/input/trajectory` | `autoware_planning_msgs::msg::Trajectory`           | reference trajectory |
-  | `~/input/obstacles`  | `autoware_perception_msgs::msg::DynamicObjectArray` | obstacles            |
+  | Name                 | Type                                                   | Description          |
+  | -------------------- | ------------------------------------------------------ | -------------------- |
+  | `~/input/trajectory` | `autoware_auto_planning_msgs::msg::Trajectory`         | reference trajectory |
+  | `~/input/obstacles`  | `autoware_auto_perception_msgs::msg::PredictedObjects` | obstacles            |
 
   ### Output
 
-  | Name                  | Type                                      | Description         |
-  | --------------------- | ----------------------------------------- | ------------------- |
-  | `~/output/trajectory` | `autoware_planning_msgs::msg::Trajectory` | modified trajectory |
+  | Name                  | Type                                           | Description         |
+  | --------------------- | ---------------------------------------------- | ------------------- |
+  | `~/output/trajectory` | `autoware_auto_planning_msgs::msg::Trajectory` | modified trajectory |
 -->
 
 ## Parameters
