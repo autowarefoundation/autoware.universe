@@ -87,10 +87,11 @@ void AutowareStatePanel::onInitialize()
   sub_gate_mode_ = raw_node_->create_subscription<autoware_control_msgs::msg::GateMode>(
     "/control/current_gate_mode", 10, std::bind(&AutowareStatePanel::onGateMode, this, _1));
 
-  sub_autoware_state_ = raw_node_->create_subscription<autoware_system_msgs::msg::AutowareState>(
-    "/autoware/state", 10, std::bind(&AutowareStatePanel::onAutowareState, this, _1));
+  sub_autoware_state_ =
+    raw_node_->create_subscription<autoware_auto_system_msgs::msg::AutowareState>(
+      "/autoware/state", 10, std::bind(&AutowareStatePanel::onAutowareState, this, _1));
 
-  sub_gear_ = raw_node_->create_subscription<autoware_vehicle_msgs::msg::ShiftStamped>(
+  sub_gear_ = raw_node_->create_subscription<autoware_auto_vehicle_msgs::msg::GearReport>(
     "/vehicle/status/shift", 10, std::bind(&AutowareStatePanel::onShift, this, _1));
 
   sub_engage_ = raw_node_->create_subscription<autoware_external_api_msgs::msg::EngageStatus>(
@@ -121,45 +122,46 @@ void AutowareStatePanel::onGateMode(const autoware_control_msgs::msg::GateMode::
 }
 
 void AutowareStatePanel::onAutowareState(
-  const autoware_system_msgs::msg::AutowareState::ConstSharedPtr msg)
+  const autoware_auto_system_msgs::msg::AutowareState::ConstSharedPtr msg)
 {
-  if (msg->state == autoware_system_msgs::msg::AutowareState::WAITING_FOR_ENGAGE) {
-    autoware_state_label_ptr_->setText(msg->state.c_str());
+  if (msg->state == autoware_auto_system_msgs::msg::AutowareState::INITIALIZING) {
+    autoware_state_label_ptr_->setText("INITIALIZING");
+    autoware_state_label_ptr_->setStyleSheet("background-color: #FFFF00;");
+  } else if (msg->state == autoware_auto_system_msgs::msg::AutowareState::WAITING_FOR_ROUTE) {
+    autoware_state_label_ptr_->setText("WAITING_FOR_ROUTE");
+    autoware_state_label_ptr_->setStyleSheet("background-color: #FFFF00;");
+  } else if (msg->state == autoware_auto_system_msgs::msg::AutowareState::PLANNING) {
+    autoware_state_label_ptr_->setText("PLANNING");
+    autoware_state_label_ptr_->setStyleSheet("background-color: #FFFF00;");
+  } else if (msg->state == autoware_auto_system_msgs::msg::AutowareState::WAITING_FOR_ENGAGE) {
+    autoware_state_label_ptr_->setText("WAITING_FOR_ENGAGE");
     autoware_state_label_ptr_->setStyleSheet("background-color: #00FFFF;");
-  } else if (msg->state == autoware_system_msgs::msg::AutowareState::DRIVING) {
-    autoware_state_label_ptr_->setText(msg->state.c_str());
+  } else if (msg->state == autoware_auto_system_msgs::msg::AutowareState::DRIVING) {
+    autoware_state_label_ptr_->setText("DRIVING");
     autoware_state_label_ptr_->setStyleSheet("background-color: #00FF00;");
-  } else if (msg->state == autoware_system_msgs::msg::AutowareState::ARRIVAL_GOAL) {
-    autoware_state_label_ptr_->setText(msg->state.c_str());
+  } else if (msg->state == autoware_auto_system_msgs::msg::AutowareState::ARRIVED_GOAL) {
+    autoware_state_label_ptr_->setText("ARRIVED_GOAL");
     autoware_state_label_ptr_->setStyleSheet("background-color: #FF00FF;");
-  } else if (msg->state == autoware_system_msgs::msg::AutowareState::EMERGENCY) {
-    autoware_state_label_ptr_->setText("Stop");
-    autoware_state_label_ptr_->setStyleSheet("background-color: #0000FF;");
-  } else {
-    autoware_state_label_ptr_->setText(msg->state.c_str());
+  } else if (msg->state == autoware_auto_system_msgs::msg::AutowareState::FINALIZING) {
+    autoware_state_label_ptr_->setText("FINALIZING");
     autoware_state_label_ptr_->setStyleSheet("background-color: #FFFF00;");
   }
 }
 
-void AutowareStatePanel::onShift(const autoware_vehicle_msgs::msg::ShiftStamped::ConstSharedPtr msg)
+void AutowareStatePanel::onShift(
+  const autoware_auto_vehicle_msgs::msg::GearReport::ConstSharedPtr msg)
 {
-  switch (msg->shift.data) {
-    case autoware_vehicle_msgs::msg::Shift::NONE:
-      gear_label_ptr_->setText("NONE");
-      break;
-    case autoware_vehicle_msgs::msg::Shift::PARKING:
+  switch (msg->report) {
+    case autoware_auto_vehicle_msgs::msg::GearReport::PARK:
       gear_label_ptr_->setText("PARKING");
       break;
-    case autoware_vehicle_msgs::msg::Shift::REVERSE:
+    case autoware_auto_vehicle_msgs::msg::GearReport::REVERSE:
       gear_label_ptr_->setText("REVERSE");
       break;
-    case autoware_vehicle_msgs::msg::Shift::NEUTRAL:
-      gear_label_ptr_->setText("NEUTRAL");
-      break;
-    case autoware_vehicle_msgs::msg::Shift::DRIVE:
+    case autoware_auto_vehicle_msgs::msg::GearReport::DRIVE:
       gear_label_ptr_->setText("DRIVE");
       break;
-    case autoware_vehicle_msgs::msg::Shift::LOW:
+    case autoware_auto_vehicle_msgs::msg::GearReport::LOW:
       gear_label_ptr_->setText("LOW");
       break;
   }

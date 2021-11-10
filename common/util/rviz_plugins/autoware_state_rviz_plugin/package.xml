@@ -8,10 +8,10 @@
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
+  <depend>autoware_auto_system_msgs</depend>
+  <depend>autoware_auto_vehicle_msgs</depend>
   <depend>autoware_control_msgs</depend>
   <depend>autoware_external_api_msgs</depend>
-  <depend>autoware_system_msgs</depend>
-  <depend>autoware_vehicle_msgs</depend>
   <depend>libqt5-core</depend>
   <depend>libqt5-gui</depend>
   <depend>libqt5-widgets</depend>
