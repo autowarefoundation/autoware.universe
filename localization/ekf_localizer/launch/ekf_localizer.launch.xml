@@ -37,6 +37,7 @@
   <arg name="proc_stddev_wz_c" default="1.0"/>
 
   <!-- output topic name -->
+  <arg name="output_odom_name" default="ekf_odom"/>
   <arg name="output_pose_name" default="ekf_pose"/>
   <arg name="output_pose_with_covariance_name" default="ekf_pose_with_covariance"/>
   <arg name="output_pose_without_yawbias_name" default="ekf_pose_without_yawbias"/>
@@ -84,6 +85,7 @@
     <param name="proc_stddev_vx_c" value="$(var proc_stddev_vx_c)"/>
     <param name="proc_stddev_wz_c" value="$(var proc_stddev_wz_c)"/>
 
+    <remap from="ekf_odom" to="$(var output_odom_name)"/>
     <remap from="ekf_pose" to="$(var output_pose_name)"/>
     <remap from="ekf_pose_with_covariance" to="$(var output_pose_with_covariance_name)"/>
     <remap from="ekf_pose_without_yawbias" to="$(var output_pose_without_yawbias_name)"/>

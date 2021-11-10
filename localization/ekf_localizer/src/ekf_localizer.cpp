@@ -97,6 +97,7 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
   pub_pose_ = create_publisher<geometry_msgs::msg::PoseStamped>("ekf_pose", 1);
   pub_pose_cov_ =
     create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("ekf_pose_with_covariance", 1);
+  pub_odom_ = create_publisher<nav_msgs::msg::Odometry>("ekf_odom", 1);
   pub_twist_ = create_publisher<geometry_msgs::msg::TwistStamped>("ekf_twist", 1);
   pub_twist_cov_ = create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>(
     "ekf_twist_with_covariance", 1);
@@ -731,6 +732,15 @@ void EKFLocalizer::publishEstimateResult()
   yawb.stamp = current_time;
   yawb.data = X(IDX::YAWB);
   pub_yaw_bias_->publish(yawb);
+
+  /* publish latest odometry */
+  nav_msgs::msg::Odometry odometry;
+  odometry.header.stamp = current_time;
+  odometry.header.frame_id = current_ekf_pose_.header.frame_id;
+  odometry.child_frame_id = "base_link";
+  odometry.pose = pose_cov.pose;
+  odometry.twist = twist_cov.twist;
+  pub_odom_->publish(odometry);
 
   /* debug measured pose */
   if (current_pose_ptr_ != nullptr) {
