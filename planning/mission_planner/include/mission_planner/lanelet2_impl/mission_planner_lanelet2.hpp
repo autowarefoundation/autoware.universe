@@ -25,8 +25,9 @@
 #include <tf2_ros/transform_listener.h>
 
 // Autoware
-#include "mission_planner/lanelet2_impl/route_handler.hpp"
 #include "mission_planner/mission_planner_base.hpp"
+
+#include <route_handler/route_handler.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_planning_msgs/msg/had_map_route.hpp>
@@ -36,10 +37,9 @@
 #include <lanelet2_routing/RoutingGraph.h>
 #include <lanelet2_traffic_rules/TrafficRulesFactory.h>
 
-using RouteSections = std::vector<autoware_auto_mapping_msgs::msg::HADMapSegment>;
-
 namespace mission_planner
 {
+using RouteSections = std::vector<autoware_auto_mapping_msgs::msg::HADMapSegment>;
 class MissionPlannerLanelet2 : public MissionPlanner
 {
 public:
@@ -47,12 +47,12 @@ public:
 
 private:
   bool is_graph_ready_;
-
   lanelet::LaneletMapPtr lanelet_map_ptr_;
   lanelet::routing::RoutingGraphPtr routing_graph_ptr_;
   lanelet::traffic_rules::TrafficRulesPtr traffic_rules_ptr_;
   lanelet::ConstLanelets road_lanelets_;
   lanelet::ConstLanelets shoulder_lanelets_;
+  route_handler::RouteHandler route_handler_;
 
   rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr map_subscriber_;
 
@@ -63,16 +63,6 @@ private:
   bool isRoutingGraphReady() const;
   autoware_auto_planning_msgs::msg::HADMapRoute planRoute();
   void visualizeRoute(const autoware_auto_planning_msgs::msg::HADMapRoute & route) const;
-
-  // routing
-  bool planPathBetweenCheckpoints(
-    const geometry_msgs::msg::PoseStamped & start_checkpoint,
-    const geometry_msgs::msg::PoseStamped & goal_checkpoint,
-    lanelet::ConstLanelets * path_lanelets_ptr) const;
-  lanelet::ConstLanelets getMainLanelets(
-    const lanelet::ConstLanelets & path_lanelets, const RouteHandler & lanelet_sequence_finder);
-  RouteSections createRouteSections(
-    const lanelet::ConstLanelets & main_path, const RouteHandler & route_handler);
 };
 }  // namespace mission_planner
 

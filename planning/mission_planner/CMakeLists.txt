@@ -17,7 +17,6 @@ ament_auto_find_build_dependencies()
 ament_auto_add_library(mission_planner_node SHARED
   lib/mission_planner_base.cpp
   src/mission_planner_lanelet2/mission_planner_lanelet2.cpp
-  src/mission_planner_lanelet2/route_handler.cpp
   src/mission_planner_lanelet2/utility_functions.cpp
 )
 
