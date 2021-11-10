@@ -8,7 +8,7 @@
   <arg name="warn_rate" description="warn rate[Hz]" />
   <arg name="error_rate" description="error rate[Hz]" />
   <arg name="timeout" description="timeout period[s]" />
-  <arg name="window_size" default="10" description="warn rate[Hz]" />
+  <arg name="window_size" default="10" description="window size" />
 
   <node pkg="topic_state_monitor" exec="topic_state_monitor_node" name="topic_state_monitor_$(var node_name_suffix)" output="screen">
     <param name="topic" value="$(var topic)" />
