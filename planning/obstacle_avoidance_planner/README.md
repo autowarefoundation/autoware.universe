@@ -9,10 +9,10 @@ Only position and orientation of trajectory are calculated in this module, and v
 
 ### input
 
-| Name             | Type                                          | Description                                        |
-| ---------------- | --------------------------------------------- | -------------------------------------------------- |
-| `reference_path` | autoware_auto_planning_msgs/Path              | Reference path and the corresponding drivable area |
-| `objects`        | autoware_auto_perception_msgs/DetectedObjects | Recognized objects around the vehicle              |
+| Name             | Type                                           | Description                                        |
+| ---------------- | ---------------------------------------------- | -------------------------------------------------- |
+| `reference_path` | autoware_auto_planning_msgs/Path               | Reference path and the corresponding drivable area |
+| `objects`        | autoware_auto_perception_msgs/PredictedObjects | Recognized objects around the vehicle              |
 
 ### output
 
