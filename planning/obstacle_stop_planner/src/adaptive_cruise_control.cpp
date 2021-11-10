@@ -350,11 +350,11 @@ bool AdaptiveCruiseController::estimatePointVelocityFromObject(
   const Point collision_point_2d = convertPointRosToBoost(nearest_collision_p_ros);
   for (const auto & obj : object_ptr->objects) {
     const Polygon obj_poly = getPolygon(
-      obj.kinematics.initial_pose.pose, obj.shape.front().dimensions, 0.0,
+      obj.kinematics.initial_pose_with_covariance.pose, obj.shape.dimensions, 0.0,
       param_.object_polygon_length_margin, param_.object_polygon_width_margin);
     if (boost::geometry::distance(obj_poly, collision_point_2d) <= 0) {
-      obj_vel = obj.kinematics.initial_twist.twist.linear.x;
-      obj_yaw = tf2::getYaw(obj.kinematics.initial_pose.pose.orientation);
+      obj_vel = obj.kinematics.initial_twist_with_covariance.twist.linear.x;
+      obj_yaw = tf2::getYaw(obj.kinematics.initial_pose_with_covariance.pose.orientation);
       get_obj = true;
       break;
     }
