@@ -47,20 +47,20 @@ As mentioned in stop condition section, it prevents chattering by changing thres
 
 ### Input
 
-| Name                                     | Type                                                     | Description          |
-| ---------------------------------------- | -------------------------------------------------------- | -------------------- |
-| `~/input/trajectory`                     | `autoware_auto_planning_msgs::msg::Trajectory`           | Reference trajectory |
-| `/sensing/lidar/no_ground/pointcloud`    | `sensor_msgs::msg::PointCloud2`                          | No ground pointcloud |
-| `/perception/object_recognition/objects` | `autoware_auto_perception_msgs::msg::DynamicObjectArray` | Dynamic objects      |
-| `/localization/kinematic_state`          | `nav_msgs::msg::Odometry`                                | Current twist        |
-| `/tf`                                    | `tf2_msgs::msg::TFMessage`                               | TF                   |
-| `/tf_static`                             | `tf2_msgs::msg::TFMessage`                               | TF static            |
+| Name                                     | Type                                                   | Description          |
+| ---------------------------------------- | ------------------------------------------------------ | -------------------- |
+| `~/input/trajectory`                     | `autoware_auto_planning_msgs::msg::Trajectory`         | Reference trajectory |
+| `/sensing/lidar/no_ground/pointcloud`    | `sensor_msgs::msg::PointCloud2`                        | No ground pointcloud |
+| `/perception/object_recognition/objects` | `autoware_auto_perception_msgs::msg::PredictedObjects` | Dynamic objects      |
+| `/localization/kinematic_state`          | `nav_msgs::msg::Odometry`                              | Current twist        |
+| `/tf`                                    | `tf2_msgs::msg::TFMessage`                             | TF                   |
+| `/tf_static`                             | `tf2_msgs::msg::TFMessage`                             | TF static            |
 
 ### Output
 
 | Name                       | Type                                           | Description              |
 | -------------------------- | ---------------------------------------------- | ------------------------ |
-| `~/output/trajectory`      | `autoware_planning_msgs/Trajectory`            | Modified trajectory      |
+| `~/output/trajectory`      | `autoware_auto_planning_msgs/Trajectory`       | Modified trajectory      |
 | `~/output/no_start_reason` | `diagnostic_msgs::msg::DiagnosticStatus`       | No start reason          |
 | `~/output/stop_reasons`    | `autoware_planning_msgs::msg::StopReasonArray` | Stop reasons             |
 | `~/debug/marker`           | `visualization_msgs::msg::MarkerArray`         | Marker for visualization |
