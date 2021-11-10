@@ -22,7 +22,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_perception_msgs/msg/lamp_state.hpp>
+#include <autoware_auto_perception_msgs/msg/traffic_light.hpp>
 
 #include <cv_bridge/cv_bridge.h>
 
@@ -58,9 +58,9 @@ public:
   explicit ColorClassifier(rclcpp::Node * node_ptr);
   virtual ~ColorClassifier() = default;
 
-  bool getLampState(
+  bool getTrafficSignal(
     const cv::Mat & input_image,
-    std::vector<autoware_perception_msgs::msg::LampState> & states) override;
+    autoware_auto_perception_msgs::msg::TrafficSignal & traffic_signal) override;
 
 private:
   bool filterHSV(

@@ -51,8 +51,8 @@ ColorClassifier::ColorClassifier(rclcpp::Node * node_ptr) : node_ptr_(node_ptr)
     std::bind(&ColorClassifier::parametersCallback, this, _1));
 }
 
-bool ColorClassifier::getLampState(
-  const cv::Mat & input_image, std::vector<autoware_perception_msgs::msg::LampState> & states)
+bool ColorClassifier::getTrafficSignal(
+  const cv::Mat & input_image, autoware_auto_perception_msgs::msg::TrafficSignal & traffic_signal)
 {
   cv::Mat green_image;
   cv::Mat yellow_image;
@@ -157,25 +157,25 @@ bool ColorClassifier::getLampState(
     static_cast<double>(red_filtered_bin_image.rows * red_filtered_bin_image.cols);
 
   if (yellow_ratio < green_ratio && red_ratio < green_ratio) {
-    autoware_perception_msgs::msg::LampState state;
-    state.type = autoware_perception_msgs::msg::LampState::GREEN;
-    state.confidence = std::min(1.0, static_cast<double>(green_pixel_num) / (20.0 * 20.0));
-    states.push_back(state);
+    autoware_auto_perception_msgs::msg::TrafficLight light;
+    light.color = autoware_auto_perception_msgs::msg::TrafficLight::GREEN;
+    light.confidence = std::min(1.0, static_cast<double>(green_pixel_num) / (20.0 * 20.0));
+    traffic_signal.lights.push_back(light);
   } else if (green_ratio < yellow_ratio && red_ratio < yellow_ratio) {
-    autoware_perception_msgs::msg::LampState state;
-    state.type = autoware_perception_msgs::msg::LampState::YELLOW;
-    state.confidence = std::min(1.0, static_cast<double>(yellow_pixel_num) / (20.0 * 20.0));
-    states.push_back(state);
+    autoware_auto_perception_msgs::msg::TrafficLight light;
+    light.color = autoware_auto_perception_msgs::msg::TrafficLight::AMBER;
+    light.confidence = std::min(1.0, static_cast<double>(yellow_pixel_num) / (20.0 * 20.0));
+    traffic_signal.lights.push_back(light);
   } else if (green_ratio < red_ratio && yellow_ratio < red_ratio) {
-    autoware_perception_msgs::msg::LampState state;
-    state.type = autoware_perception_msgs::msg::LampState::RED;
-    state.confidence = std::min(1.0, static_cast<double>(red_pixel_num) / (20.0 * 20.0));
-    states.push_back(state);
+    autoware_auto_perception_msgs::msg::TrafficLight light;
+    light.color = ::autoware_auto_perception_msgs::msg::TrafficLight::RED;
+    light.confidence = std::min(1.0, static_cast<double>(red_pixel_num) / (20.0 * 20.0));
+    traffic_signal.lights.push_back(light);
   } else {
-    autoware_perception_msgs::msg::LampState state;
-    state.type = autoware_perception_msgs::msg::LampState::UNKNOWN;
-    state.confidence = 0.0;
-    states.push_back(state);
+    autoware_auto_perception_msgs::msg::TrafficLight light;
+    light.color = ::autoware_auto_perception_msgs::msg::TrafficLight::UNKNOWN;
+    light.confidence = 0.0;
+    traffic_signal.lights.push_back(light);
   }
   return true;
 }

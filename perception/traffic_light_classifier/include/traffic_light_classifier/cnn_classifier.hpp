@@ -23,7 +23,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <trt_common.hpp>
 
-#include <autoware_perception_msgs/msg/lamp_state.hpp>
+#include <autoware_auto_perception_msgs/msg/traffic_light.hpp>
 
 #include <cv_bridge/cv_bridge.h>
 
@@ -40,40 +40,60 @@ public:
   explicit CNNClassifier(rclcpp::Node * node_ptr);
   virtual ~CNNClassifier() = default;
 
-  bool getLampState(
+  bool getTrafficSignal(
     const cv::Mat & input_image,
-    std::vector<autoware_perception_msgs::msg::LampState> & states) override;
+    autoware_auto_perception_msgs::msg::TrafficSignal & traffic_signal) override;
 
 private:
   void preProcess(cv::Mat & image, std::vector<float> & tensor, bool normalize = true);
   bool postProcess(
     std::vector<float> & output_data_host,
-    std::vector<autoware_perception_msgs::msg::LampState> & states);
+    autoware_auto_perception_msgs::msg::TrafficSignal & traffic_signal);
   bool readLabelfile(std::string filepath, std::vector<std::string> & labels);
+  bool isColorLabel(const std::string label);
   void calcSoftmax(std::vector<float> & data, std::vector<float> & probs, int num_output);
   std::vector<size_t> argsort(std::vector<float> & tensor, int num_output);
   void outputDebugImage(
-    cv::Mat & debug_image, const std::vector<autoware_perception_msgs::msg::LampState> & states);
+    cv::Mat & debug_image,
+    const autoware_auto_perception_msgs::msg::TrafficSignal & traffic_signal);
 
 private:
   std::map<int, std::string> state2label_{
-    {autoware_perception_msgs::msg::LampState::RED, "red"},
-    {autoware_perception_msgs::msg::LampState::YELLOW, "yellow"},
-    {autoware_perception_msgs::msg::LampState::GREEN, "green"},
-    {autoware_perception_msgs::msg::LampState::UP, "straight"},
-    {autoware_perception_msgs::msg::LampState::LEFT, "left"},
-    {autoware_perception_msgs::msg::LampState::RIGHT, "right"},
-    {autoware_perception_msgs::msg::LampState::UNKNOWN, "unknown"},
+    // color
+    {autoware_auto_perception_msgs::msg::TrafficLight::RED, "red"},
+    {autoware_auto_perception_msgs::msg::TrafficLight::AMBER, "yellow"},
+    {autoware_auto_perception_msgs::msg::TrafficLight::GREEN, "green"},
+    {autoware_auto_perception_msgs::msg::TrafficLight::WHITE, "white"},
+    // shape
+    {autoware_auto_perception_msgs::msg::TrafficLight::CIRCLE, "circle"},
+    {autoware_auto_perception_msgs::msg::TrafficLight::LEFT_ARROW, "left"},
+    {autoware_auto_perception_msgs::msg::TrafficLight::RIGHT_ARROW, "right"},
+    {autoware_auto_perception_msgs::msg::TrafficLight::UP_ARROW, "straight"},
+    {autoware_auto_perception_msgs::msg::TrafficLight::DOWN_ARROW, "down"},
+    {autoware_auto_perception_msgs::msg::TrafficLight::DOWN_LEFT_ARROW, "down_left"},
+    {autoware_auto_perception_msgs::msg::TrafficLight::DOWN_RIGHT_ARROW, "down_right"},
+    {autoware_auto_perception_msgs::msg::TrafficLight::CROSS, "cross"},
+    // other
+    {autoware_auto_perception_msgs::msg::TrafficLight::UNKNOWN, "unknown"},
   };
 
   std::map<std::string, int> label2state_{
-    {"red", autoware_perception_msgs::msg::LampState::RED},
-    {"yellow", autoware_perception_msgs::msg::LampState::YELLOW},
-    {"green", autoware_perception_msgs::msg::LampState::GREEN},
-    {"straight", autoware_perception_msgs::msg::LampState::UP},
-    {"left", autoware_perception_msgs::msg::LampState::LEFT},
-    {"right", autoware_perception_msgs::msg::LampState::RIGHT},
-    {"unknown", autoware_perception_msgs::msg::LampState::UNKNOWN},
+    // color
+    {"red", autoware_auto_perception_msgs::msg::TrafficLight::RED},
+    {"yellow", autoware_auto_perception_msgs::msg::TrafficLight::AMBER},
+    {"green", autoware_auto_perception_msgs::msg::TrafficLight::GREEN},
+    {"white", autoware_auto_perception_msgs::msg::TrafficLight::WHITE},
+    // shape
+    {"circle", autoware_auto_perception_msgs::msg::TrafficLight::CIRCLE},
+    {"left", autoware_auto_perception_msgs::msg::TrafficLight::LEFT_ARROW},
+    {"right", autoware_auto_perception_msgs::msg::TrafficLight::RIGHT_ARROW},
+    {"straight", autoware_auto_perception_msgs::msg::TrafficLight::UP_ARROW},
+    {"down", autoware_auto_perception_msgs::msg::TrafficLight::DOWN_ARROW},
+    {"down_left", autoware_auto_perception_msgs::msg::TrafficLight::DOWN_LEFT_ARROW},
+    {"down_right", autoware_auto_perception_msgs::msg::TrafficLight::DOWN_RIGHT_ARROW},
+    {"cross", autoware_auto_perception_msgs::msg::TrafficLight::CROSS},
+    // other
+    {"unknown", autoware_auto_perception_msgs::msg::TrafficLight::UNKNOWN},
   };
 
   rclcpp::Node * node_ptr_;
