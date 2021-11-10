@@ -2,72 +2,79 @@
 
 ## Purpose
 
-obstacle_avoidance_planner は入力された path と drivable area、および動物体情報をもとに、車両キネマティクスモデルを考慮して車が走行可能な軌道を生成する。trajectory 内の各経路点の位置姿勢のみ計画しており、速度や加速度の計算は後段の別モジュールで行われる。
-
-<!-- ここで計画されたtrajectoryが、後段の経路追従の制御であるmpc_followerで追従可能であることを想定している。??? -->
+This package generates a trajectory that is feasible to drive and collision free based on a reference path, drivable area, and static/dynamic obstacles.
+Only position and orientation of trajectory are calculated in this module, and velocity or acceleration will be updated in the latter modules.
 
 ## Inputs / Outputs
 
 ### input
 
-- reference_path [`autoware_auto_planning_msgs/Path`] : Reference path and the corresponding drivable area.
-- objects [`autoware_auto_perception_msgs/PredictedObjects`] : Recognized objects around the vehicle
+| Name             | Type                                          | Description                                        |
+| ---------------- | --------------------------------------------- | -------------------------------------------------- |
+| `reference_path` | autoware_auto_planning_msgs/Path              | Reference path and the corresponding drivable area |
+| `objects`        | autoware_auto_perception_msgs/DetectedObjects | Recognized objects around the vehicle              |
 
 ### output
 
-- optimized_trajectory [`autoware_auto_planning_msgs/Trajectory`] : Optimized trajectory that is feasible to drive and collision-free.
+| Name                   | Type                                   | Description                                                       |
+| ---------------------- | -------------------------------------- | ----------------------------------------------------------------- |
+| `optimized_trajectory` | autoware_auto_planning_msgs/Trajectory | Optimized trajectory that is feasible to drive and collision-free |
 
 ## Flowchart
 
-フローチャートとともに、各機能の概要をおおまかに説明する。
+Each module is explained briefly here based on the flowchart.
 
 ![obstacle_avoidance_planner_flowchart](./media/obstacle_avoidance_planner_flowchart.drawio.svg)
 
 ### Manage trajectory generation
 
-以下の条件のいずれかが満たされたときに、経路生成の関数を呼ぶ。それ以外の時は前回生成された経路を出力する。
+When one of the following conditions area realized, callback function to generate a trajectory is called and publish the trajectory.
+Otherwise, previously generated trajectory is published.
 
-- 前回経路生成時から一定距離走行 (default: 10.0 [m])
-- 一定時間経過 (default: 1.0 [s])
-- レーンチェンジなどで入力の path の形状が変わった時
-- 自車位置が前回経路から大きく外れた時
+- Ego moves a certain distance compared to the previous ego pose (default: 10.0 [m])
+- Time passes (default: 1.0 [s])
+- The path shape is changed (e.g. when starting planning lane change)
+- Ego is far from the previously generated trajectory
 
-入力の path の形状が変わった時と自車が前回経路から大きく外れた時は、保持している前回経路を破棄するリセット機能もある。
+The previously generated trajectory is memorized, but it is not when the path shape is changed and ego is far from the previously generated trajectory.
 
 ### Select objects to avoid
 
-静的で路肩にある障害物のみ回避対象とする。
-具体的には、以下の 3 つの条件を満たすものであり、図で示すと赤い id: 3, 4, 5 の物体である。
+Only obstacles that are static and locate in a shoulder lane is decided to avoid.
+In detail, this equals to the following three conditions at the same time, and the red obstacles in the figure (id: 3, 4, 5) is to be avoided.
 
-- 指定された速度以下 (default: 0.1 [m/s])
-- 物体重心が center line 上に存在しない（前車追従の車を避けないようにするため）
-- 少なくとも 1 つ以上の物体形状ポリゴン点が drivable area に存在する。
+- Velocity is under a certain value (default: 0.1 [m/s])
+- CoG of the obstacles is not on the center line
+  - so that the ego will not avoid the car in front of the ego in the same lane.
+- At least one point of the obstacle polygon is outside the drivable area.
 
 ![obstacle_to_avoid](./media/obstacle_to_avoid.drawio.svg)
 
 ### Generate object costmap
 
-回避対象である障害物からの距離に応じたコストマップを生成する。
+Cost map is generated according to the distance to the target obstacles to be avoided.
 
 ### Generate road boundary costmap
 
-道路からの距離に応じたコストマップを生成する。
+Cost map is generated according to the distance to the road boundaries.
 
-これらのコストマップは後段の Optimize trajectory の手法である Model predictive trajectory の障害物・道路境界に衝突しない制約条件を定式化する際に使用される。
+These cost maps area used in the optimization to generate a collision-free trajectory.
 
 ### Smooth path
 
-後段の最適化処理で曲率のなめらかな参照経路が必要であるため、最適化前に path をなめらかにして trajectory の形式で出力する。
-この平滑化は障害物を考慮しない。
+The latter optimization assumes that the reference path is smooth enough.
+Therefore the path from behavior is smoothed here, and send to the optimization as a format of trajectory.
+Obstacles are not considered.
 
 ### Optimize trajectory
 
 This module makes the trajectory kinematically-feasible and collision-free.
 We define vehicle pose in the frenet coordinate, and minimize tracking errors by optimization.
 This optimization also considers vehicle kinematics and collision checking with road boundary and obstacles.
+To decrease the computation cost, the optimization is applied to the shorter trajectory than the whole trajectory, and concatenate the remained trajectory with the optimized one at last.
 
-自車近傍の経路の急な変化を防ぐため、直近の経路は前回の経路をそのまま使用する。
-計算コストを抑えるため、最終的に出力する経路長よりも短い距離に対してのみ計算を行う。
+The trajectory just in front of the ego must not be changed a lot so that the steering wheel will be stable.
+Therefore, we use the previously generated trajectory in front of the ego.
 
 Optimization center on the vehicle, that tries to locate just on the trajectory, can be tuned along side the vehicle vertical axis.
 This parameter `optimization center offset` is defined as the signed length from the back-wheel center to the optimization center.
@@ -95,7 +102,8 @@ Optimization failure is dealt with the same as if the optimized trajectory is ou
 The output trajectory is memorized as a previously generated trajectory for the next cycle.
 
 _Rationale_
-現在の設計において、数値誤差による破綻を防ぐために障害物回避は全てソフト制約として考慮されており、生成された経路に置いて車両が走行可能領域内に入っているかの判定が必要。
+In the current design, since there are some modelling errors, the constraints are considered to be soft constraints.
+Therefore, we have to make sure that the optimized trajectory is inside the drivable area or not after optimization.
 
 ### Assign trajectory velocity
 
@@ -104,29 +112,25 @@ The shapes of the trajectory and the path are different, therefore the each near
 
 ## Algorithms
 
-Smooth path で使われている Elastic band と、Optimized trajectory で使われている Model predictive trajectory の詳細な説明をする。
+In this section, Elastic band (to smooth the path) and Model Predictive Trajectory (to optimize the trajectory) will be explained in detail.
 
 ### Elastic band
 
-#### 概要
+#### Abstract
 
-behavior_path_planner で計算された path は場合によってはなめらかではない可能性があるので、その path の平滑化をすることが目的である。
+Elastic band smooths the path generated in the behavior.
+Since the latter process of optimization uses the curvature and normal vector of the reference path, smoothing should be applied here so that the optimization will be stable.
 
-次の Model predictive trajectory でも平滑化項は入っているが、目標経路になるべく追従しようとする項も入っているため、目標経路がなめらかでなかった場合はこの 2 つの項が反発する。
-それを防ぐためにここで平滑化のみを行っている。
-また Model predictive trajectory では各点における曲率と法線を元に最適化しており、平滑化された目標経路を渡すことで最適化の結果を安定させる狙いもある。
+This smoothing process does not consider collision.
+Therefore the output path may have a collision with road boundaries or obstacles.
 
-平滑化の際、障害物や道路壁を考慮していないため障害物や道路壁に衝突した trajectory が計算されることもある。
+#### Formulation
 
-この Elastic band と次の Model predictive trajectory は、計算負荷を抑えるためにある程度の長さでクリップした trajectory を出力するようになっている。
+We formulate a QP problem minimizing the distance between the previous point and the next point for each point.
+Conditions that each point can move to a certain extent are used so that the path will not changed a lot but will be smoother.
 
-#### 数式
-
-前後の点からの距離の差の二乗を目的関数とする二次計画。
-
-各点は一定の範囲以内しか動かないという制約を設けることで、入力の軌道をよりなめらかにした軌道を得る。
-
-$\boldsymbol{p}_k$を$k$番目の経路点の座標ととしたとき以下のコスト関数を最小化する二次計画を解く。ここでは始点と終点である$\boldsymbol{p}_0$と$\boldsymbol{p}_n$は固定である。
+For $k$'th point ($\boldsymbol{p}_k$), the objective function is as follows.
+The beginning and end point are fixed during the optimization.
 
 $$
 \min \sum_{k=1}^{n-1} |\boldsymbol{p}_{k+1} - \boldsymbol{p}_{k}| - |\boldsymbol{p}_{k} - \boldsymbol{p}_{k-1}|
@@ -134,26 +138,27 @@ $$
 
 ### Model predictive trajectory
 
-#### 概要
+#### Abstract
 
-Elastic band で平滑化された trajectory に対して、以下の条件を満たすように修正を行うことが目的である。
+Model Predictive Trajectory (MPT) calculates the trajectory that realizes the following conditions.
 
-- 線形化された車両のキネマティクスモデルに基づき走行可能である
-- 障害物や道路壁面に衝突しない
+- Kinematically feasible for linear vehicle kinematics model
+- Collision free with obstacles and road boundaries
 
-障害物や道路壁面に衝突しない条件はハードではなくソフト制約として含まれている。車両の後輪位置、前輪位置、その中心位置において障害物・道路境界との距離から制約条件が計算されている。
-条件を満たさない解が出力された場合は、後段の後処理で弾かれ、前の周期で計画された trajectory を出力する。
+Conditions for collision free is considered to be not hard constraints but soft constraints.
+When the optimization failed or the optimized trajectory is not collision free, the output trajectory will be previously generated trajectory.
 
-自車付近の経路が振動しないように、自車近傍の経路点を前回の経路点と一致させる制約条件も含まれており、これが唯一の二次計画法のハード制約である。
+Trajectory near the ego must be stable, therefore the condition where trajectory points near the ego are the same as previously generated trajectory is considered, and this is the only hard constraints in MPT.
 
-#### 数式
+#### Formulation
 
-以下のように、経路に対して車両が追従するときの bicycle kinematics model を考える。
-時刻$k$における、経路上の車両の最近傍点の座標($x$座標は経路の接線に平行)から見た追従誤差に関して、横偏差$y_k$、向きの偏差$\theta_k$、ステア角$\delta_k$と定める。
+As the following figure, we consider the bicycle kinematics model in the frenet frame to track the reference path.
+At time step $k$, we define lateral distance to the reference path, heading angle against the reference path, and steer angle as $y_k$, $\theta_k$, and $\delta_k$ respectively.
 
 ![vehicle_error_kinematics](./media/vehicle_error_kinematics.png)
 
-指令ステア角度を$\delta_{des, k}$とすると、ステア角の遅延を考慮した車両キネマティクスモデルは以下で表される。この時、ステア角$\delta_k$は一次遅れ系として指令ステア角に追従すると仮定する。
+Assuming that the commanded steer angle is $\delta_{des, k}$, the kinematics model in the frenet frame is formulated as follows.
+We also assume that the steer angle $\delta_k$ is first-order lag to the commanded one.
 
 $$
 \begin{align}
@@ -163,11 +168,16 @@ y_{k+1} & = y_{k} + v \sin \theta_k dt \\
 \end{align}
 $$
 
-次にこれらの式を線形化する。$y_k$, $\theta_k$は追従誤差であるため微小近似でき、$\sin \theta_k \approx \theta_k$となる。
+Then we linearize these equations.
+$y_k$ and $\theta_k$ are tracking errors, so we assume that those are small enough.
+Therefore $\sin \theta_k \approx \theta_k$.
 
-$\delta_k$に関してはステア角であるため微小とみなせない。そこで、以下のように参照経路の曲率$\kappa_k$から計算されるステア角$\delta_{\mathrm{ref}, k}$を用いることにより、$\delta_k$を微小な値$\Delta \delta_k$で表す。
+Since $\delta_k$ is a steer angle, it is not always small.
+By using a reference steer angle $\delta_{\mathrm{ref}, k}$ calculated by the reference path curvature $\kappa_k$, we express $\delta_k$ with a small value $\Delta \delta_k$.
 
-ここで注意すべきこととしては、$\delta_k$は最大ステア角度$\delta_{\max}$以内の値を取る。曲率$\kappa_k$から計算された$\delta_{\mathrm{ref}, k}$が最大ステア角度$\delta_{\max}$より大きいときに$\delta_{\mathrm{ref}, k}$をそのまま使用して線形化すると、$\Delta \delta_k = \delta - \delta_{\mathrm{ref}, k} = \delta_{\max} - \delta_{\mathrm{ref}, k}$となり、$\Delta \delta_k$の絶対値が大きくなる。すなわち、$\delta_{\mathrm{ref}, k}$にも最大ステア角度制限を適用する必要がある。
+Note that the steer angle $\delta_k$ is within the steer angle limitation $\delta_{\max}$.
+When the reference steer angle $\delta_{\mathrm{ref}, k}$ is larger than the steer angle limitation $\delta_{\max}$, and $\delta_{\mathrm{ref}, k}$ is used to linearize the steer angle, $\Delta \delta_k$ is $\Delta \delta_k = \delta - \delta_{\mathrm{ref}, k} = \delta_{\max} - \delta_{\mathrm{ref}, k}$, and the absolute $\Delta \delta_k$ gets larger.
+Therefore, we have to apply the steer angle limitation to $\delta_{\mathrm{ref}, k}$ as well.
 
 $$
 \begin{align}
@@ -176,9 +186,9 @@ $$
 \end{align}
 $$
 
-$\mathrm{clamp}(v, v_{\min}, v_{\max})$は$v$を$v_{\min}$から$v_{\max}$の範囲内に丸める関数である。
+$\mathrm{clamp}(v, v_{\min}, v_{\max})$ is a function to convert $v$ to be larger than $v_{\min}$ and smaller than $v_{\max}$.
 
-この$\delta_{\mathrm{ref}, k}$を介して$\tan \delta_k$を線形な式で近似する。
+Using this $\delta_{\mathrm{ref}, k}$, $\tan \delta_k$ is linearized as follows.
 
 $$
 \begin{align}
@@ -188,7 +198,7 @@ $$
 \end{align}
 $$
 
-以上の線形化を踏まえ、誤差ダイナミクスは以下のように線形な行列演算で記述できる。
+Based on the linearization, the error kinematics is formulated with the following linear equations.
 
 $$
 \begin{align}
@@ -224,7 +234,7 @@ $$
 \end{align}
 $$
 
-平滑化と経路追従のための目的関数は以下で表され、
+The objective function for smoothing and tracking is shown as follows.
 
 $$
 \begin{align}
@@ -232,9 +242,8 @@ J_1 & (y_{0...N-1}, \theta_{0...N-1}, \delta_{0...N-1}) \\ & = w_y \sum_{k} y_k^
 \end{align}
 $$
 
-前述の通り、車両が障害物・道路境界に侵入しない条件はスラック変数を用いてソフト制約として表されている。
-車両の後輪位置、前輪位置、およびその中心位置における障害物・道路境界までの距離をそれぞれ$y_{\mathrm{base}, k}, y_{\mathrm{top}, k}, y_{\mathrm{mid}, k}$とする。
-ここでそれぞれに対するスラック変数 $\lambda_{\mathrm{base}}, \lambda_{\mathrm{top}}, \lambda_{\mathrm{mid}}$を定義し、
+As mentioned before, the constraints to be collision free with obstacles and road boundaries are formulated to be soft constraints.
+Assuming that the lateral distance to the road boundaries or obstacles from the back wheel center, front wheel center, and the point between them are $y_{\mathrm{base}, k}, y_{\mathrm{top}, k}, y_{\mathrm{mid}, k}$ respectively, and slack variables for each point are $\lambda_{\mathrm{base}}, \lambda_{\mathrm{top}}, \lambda_{\mathrm{mid}}$, the soft constraints can be formulated as follows.
 
 $$
 y_{\mathrm{base}, k, \min} - \lambda_{\mathrm{base}, k} \leq y_{\mathrm{base}, k} (y_k)  \leq y_{\mathrm{base}, k, \max} + \lambda_{\mathrm{base}, k}\\
@@ -242,7 +251,7 @@ y_{\mathrm{top}, k, \min} - \lambda_{\mathrm{top}, k} \leq y_{\mathrm{top}, k} (
 y_{\mathrm{mid}, k, \min} - \lambda_{\mathrm{mid}, k} \leq y_{\mathrm{mid}, k} (y_k) \leq y_{\mathrm{mid}, k, \max} + \lambda_{\mathrm{mid}, k}
 $$
 
-$y_{\mathrm{base}, k}, y_{\mathrm{top}, k}, y_{\mathrm{mid}, k}$は$y_k$の 1 次式として表現できるので、このソフト制約の目的関数は、以下のように記述できる。
+Since $y_{\mathrm{base}, k}, y_{\mathrm{top}, k}, y_{\mathrm{mid}, k}$ is formulated as a linear function of $y_k$, the objective function for soft constraints is formulated as follows.
 
 $$
 \begin{align}
@@ -250,7 +259,8 @@ J_2 & (\lambda_{\mathrm{base}, 0...N-1}, \lambda_{\mathrm{mid}, 0...N-1}, \lambd
 \end{align}
 $$
 
-スラック変数も二次計画法の設計変数となり、全ての設計変数をまとめたベクトル$\boldsymbol{x}$を定義する。
+Slack variables are also design variables for optimization.
+We define a vector $\boldsymbol{x}$, that concatenates all the design variables.
 
 $$
 \begin{align}
@@ -261,7 +271,7 @@ $$
 \end{align}
 $$
 
-これらの 2 つの目的関数の和を目的関数とする。
+The summation of these two objective functions is the objective function for the optimization problem.
 
 $$
 \begin{align}
@@ -269,7 +279,8 @@ $$
 \end{align}
 $$
 
-前述の通り、真にハードな制約条件は車両前方ある程度の距離$N_{fix}$までの経路点の状態は前回値になるような条件であり、以下のように記述できる。
+As mentioned before, we use hard constraints where some trajectory points in front of the ego are the same as the previously generated trajectory points.
+This hard constraints is formulated as follows.
 
 $$
 \begin{align}
@@ -277,7 +288,7 @@ $$
 \end{align}
 $$
 
-であり、これらを以下のような二次計画法の係数行列に変換して二次計画法を解く
+Finally we transform those objective functions to the following QP problem, and solve it.
 
 $$
 \begin{align}
@@ -288,64 +299,84 @@ $$
 
 ## Limitation
 
-- カーブ時に外側に膨らんだ経路を返す
-- behavior_path_planner と obstacle_avoidance_planner の経路計画の役割分担がはっきりと決まっていない
-  - behavior_path_planner 側で回避する場合と、obstacle_avoidance_planner で回避する場合がある
-- behavior_path_planner から来る path が道路壁に衝突していると、大きく外側に膨れた trajectory を計画する (柏の葉のカーブで顕著)
-- 計算負荷が高い
+- When turning right or left in the intersection, the output trajectory is close to the outside road boundary.
+- Roles of planning for behavior_path_planner and obstacle_avoidance_planner are not decided clearly.
+- High computation cost
+
+## Comparison to other methods
+
+Planning a trajectory that satisfies kinematic feasibility and collision-free has two main characteristics that makes hard to be solved: one is non-convex and the other is high dimension.
+According to the characteristics, we investigate pros and cons of the typical planning methods: optimization-based, sampling-based, and learning-based method.
+
+### Optimization-based method
+
+- pros: comparatively fast against high dimension by leveraging the gradient descent
+- cons: often converge to the local minima in the non-convex problem
+
+### Sampling-based method
+
+- pros: realize global optimization
+- cons: high computation cost especially in the complex case
+
+### Learning-based method
+
+under research yet
+
+Based on these pros/cons, we chose the optimization-based planner first.
+Although it has a cons to converge to the local minima, it can get a good solution by the preprocessing to approximate the convex problem that almost equals to the original non-convex problem.
 
 ## How to debug
 
-obstacle_avoidance_planner` から出力される debug 用の topic について説明する。
+Topics for debugging will be explained in this section.
 
 - **interpolated_points_marker**
-  - obstacle avoidance planner への入力経路をリサンプルしたもの。この経路が道路内に収まっているか（道路内にあることが必須ではない）、十分になめらかか（ある程度滑らかでないとロジックが破綻する）、などを確認する。
+  - Trajectory points that is resampled from the input trajectory of obstacle avoidance planner. Whether this trajectory is inside the drivable area, smooth enough can be checked.
 
 ![interpolated_points_marker](./media/interpolated_points_marker.png)
 
 - **smoothed_points_text**
-  - Elastic Band の計算結果。点群ではなく小さい数字が描画される。平滑化されたこの経路が道路内からはみ出ていないか、歪んでいないかなどを確認。
+  - The output trajectory points from Elastic Band. Not points but small numbers are visualized. Whether these smoothed points are distorted or not can be checked.
 
 ![smoothed_points_text](./media/smoothed_points_text.png)
 
 - **(base/top/mid)\_bounds_line**
-  - 壁との衝突判定における横方向の道路境界までの距離（正確には - vehicle_width / 2.0）。
-  - 車両の 3 箇所（base, top, mid）で衝突判定を行っており、3 つのマーカーが存在する。
-  - 黄色い線の各端点から道路境界までの距離が車幅の半分くらいであれば異常なし（ここがおかしい場合はロジック異常）。
+  - Lateral Distance to the road boundaries to check collision in MPT (More precisely, - vehicle_width / 2.0).
+  - This collision check is done with three points on the vehicle (base = back wheel center, top, mid), therefore three line markers are visualized for each trajectory point.
+  - If the distance between the edge of line markers and the road boundaries is not about the half width of the vehicle, collision check will fail.
 
 ![bounds_line](./media/bounds_line.png)
 
 - **optimized_points_marker**
-  - MPT の計算結果。道路からはみ出ていないか、振動していないかなどを確認
+  - The output trajectory points from MPT. Whether the trajectory is outside the drivable area can be checked.
 
 ![optimized_points_marker](./media/optimized_points_marker.png)
 
 - **Trajectory with footprint**
-  - TrajectoryFootprint の rviz_plugin を用いて経路上の footprint を描画することが可能。これを用いて obstacle_avoidance_planner への入出力の footprint、経路に収まっているかどうか等を確認する。
+  - Trajectory footprints can be visualized by TrajectoryFootprint of rviz_plugin. Whether trajectory footprints of input/output of obstacle_avoidance_planner is inside the drivable area or not can be checked.
 
 ![trajectory_with_footprint](./media/trajectory_with_footprint.png)
 
 - **Drivable Area**
-  - obstacle avoidance への入力の走行可能領域を表示する。Drivable Area の生成に不具合があると生成経路が歪む可能性がある。
-  - topic 名：`/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/debug/drivable_area`
-  - `nav_msgs/msg/OccupancyGrid` 型として出力される
+  - Drivable area. When drivable area generation failed, the drawn area may be distorted.
+  - `nav_msgs/msg/OccupancyGrid`
+  - topic name: `/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/debug/drivable_area`
 
 ![drivable_area](./media/drivable_area.png)
 
 - **area_with_objects**
-  - 入力された走行可能領域から障害物を取り除いた後の、走行可能領域
-  - `nav_msgs/msg/OccupancyGrid` 型として出力される
+  - Area where obstacles are removed from the drivable area
+  - `nav_msgs/msg/OccupancyGrid`
 
 ![area_with_objects](./media/area_with_objects.png)
 
 - **object_clearance_map**
-  - 回避対象の障害物からの距離を可視化したもの。
-  - `nav_msgs/msg/OccupancyGrid` 型として出力される
+  - Cost map for obstacles (distance to the target obstacles to be avoided)
+  - `nav_msgs/msg/OccupancyGrid`
 
 ![object_clearance_map](./media/object_clearance_map.png)
 
 - **clearance_map**
-  - 入力された走行可能領域からの距離を可視化したもの。
-  - `nav_msgs/msg/OccupancyGrid` 型として出力される
+  - Cost map for drivable area (distance to the road boundaries)
+  - `nav_msgs/msg/OccupancyGrid`
 
 ![clearance_map](./media/clearance_map.png)
