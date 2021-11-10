@@ -83,9 +83,7 @@ Example:
 
 ## (Optional) References/External links
 
-<!--
-- [RadiusSearchOutlier](https://vml.sakura.ne.jp/koeda/PCL/tutorials/html/remove_outliers.html)
--->
+- [RadiusSearchOutlier](https://pcl.readthedocs.io/projects/tutorials/en/latest/remove_outliers.html)
 
 <!-- Write links you referred to when you implemented.
 
