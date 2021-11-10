@@ -21,20 +21,20 @@ When the deceleration section is inserted, the start point of the section is ins
 
 ## Input topics
 
-| Name                        | Type                                         | Description         |
-| --------------------------- | -------------------------------------------- | ------------------- |
-| `~/input/pointcloud`        | sensor_msgs::PointCloud2                     | obstacle pointcloud |
-| `~/input/trajectory`        | autoware_planning_msgs::msg::Trajectory      | trajectory          |
-| `~/input/vector_map`        | autoware_lanelet2_msgs::MapBin               | vector map          |
-| `~/input/odometry`          | nav_msgs::Odometry                           | vehicle velocity    |
-| `~input/dynamic_objects`    | autoware_perception_msgs::DynamicObjectArray | dynamic objects     |
-| `~/input/expand_stop_range` | autoware_planning_msgs::msg::ExpandStopRange | expand stop range   |
+| Name                        | Type                                            | Description         |
+| --------------------------- | ----------------------------------------------- | ------------------- |
+| `~/input/pointcloud`        | sensor_msgs::PointCloud2                        | obstacle pointcloud |
+| `~/input/trajectory`        | autoware_auto_planning_msgs::msg::Trajectory    | trajectory          |
+| `~/input/vector_map`        | autoware_auto_mapping_msgs::HADMapBin           | vector map          |
+| `~/input/odometry`          | nav_msgs::Odometry                              | vehicle velocity    |
+| `~input/dynamic_objects`    | autoware_auto_perception_msgs::PredictedObjects | dynamic objects     |
+| `~/input/expand_stop_range` | autoware_planning_msgs::msg::ExpandStopRange    | expand stop range   |
 
 ## Output topics
 
 | Name                   | Type                                    | Description                            |
 | ---------------------- | --------------------------------------- | -------------------------------------- |
-| `~output/trajectory`   | autoware_planning_msgs::Trajectory      | trajectory to be followed              |
+| `~output/trajectory`   | autoware_auto_planning_msgs::Trajectory | trajectory to be followed              |
 | `~output/stop_reasons` | autoware_planning_msgs::StopReasonArray | reasons that cause the vehicle to stop |
 
 ## Modules
