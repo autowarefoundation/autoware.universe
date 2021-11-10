@@ -6,7 +6,7 @@
   <arg name="input_lane_driving_trajectory" default="" />
   <arg name="input_lanelet_map" default="" />
   <arg name="input_route" default="" />
-  <arg name="input_twist" default="" />
+  <arg name="input_odometry" default="" />
   <arg name="is_parking_completed" default="" />
 
   <node pkg="topic_tools" exec="relay" name="scenario_trajectory_relay" output="log">
