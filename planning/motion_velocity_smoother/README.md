@@ -86,13 +86,13 @@ After the optimization, a resampling called `post resampling` is performed befor
 
 ### Input
 
-| Name                                       | Type                                | Description                   |
-| ------------------------------------------ | ----------------------------------- | ----------------------------- |
-| `~/input/trajectory`                       | `autoware_planning_msgs/Trajectory` | Reference trajectory          |
-| `/planning/scenario_planning/max_velocity` | `std_msgs/Float32`                  | External velocity limit [m/s] |
-| `/localization/odometry`                   | `nav_msgs/Odometry`                 | Current odometry              |
-| `/tf`                                      | `tf2_msgs/TFMessage`                | TF                            |
-| `/tf_static`                               | `tf2_msgs/TFMessage`                | TF static                     |
+| Name                                       | Type                                     | Description                   |
+| ------------------------------------------ | ---------------------------------------- | ----------------------------- |
+| `~/input/trajectory`                       | `autoware_auto_planning_msgs/Trajectory` | Reference trajectory          |
+| `/planning/scenario_planning/max_velocity` | `std_msgs/Float32`                       | External velocity limit [m/s] |
+| `/localization/kinematic_state`            | `nav_msgs/Odometry`                      | Current odometry              |
+| `/tf`                                      | `tf2_msgs/TFMessage`                     | TF                            |
+| `/tf_static`                               | `tf2_msgs/TFMessage`                     | TF static                     |
 
 ### Output
 
