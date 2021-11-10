@@ -6,7 +6,7 @@
     <remap from="~/input/route" to="$(var input_route_topic_name)" />
     <remap from="~/input/vector_map" to="$(var map_topic_name)" />
     <remap from="~/input/perception" to="/perception/object_recognition/objects" />
-    <remap from="~/input/velocity" to="/localization/twist" />
+    <remap from="~/input/odometry" to="/localization/kinematic_state" />
     <remap from="~/output/path" to="path_with_lane_id" />
 
     <param from="$(find-pkg-share behavior_path_planner)/config/side_shift/side_shift.param.yaml" />

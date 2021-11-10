@@ -46,7 +46,7 @@ The following modules are currently supported:
 - /map/vector_map [autoware_lanelet2_msgs/MapBin] : Map information.
 - /perception/object_recognition/objects [`autoware_perception_msgs/DynamicObjectArray`] : dynamic objects from perception module.
 - /tf [`tf2_msgs/TFMessage`] : For ego-pose.
-- /localization/twist [`geometry_msgs/TwistStamped] : For ego-velocity.
+- /localization/kinematic_state [`nav_msgs/Odometry] : For ego-velocity.
 - path_change_approval [`std_msgs::Bool`] : (For remote control)
 - path_change_force [`autoware_planning_msgs::PathChangeModule`] : (For remote control)
 
