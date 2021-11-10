@@ -17,16 +17,16 @@
 
 #include "shape_estimation/model/model_interface.hpp"
 
-class ConvexhullShapeModel : public ShapeEstimationModelInterface
+class ConvexHullShapeModel : public ShapeEstimationModelInterface
 {
 public:
-  ConvexhullShapeModel() {}
+  ConvexHullShapeModel() {}
 
-  ~ConvexhullShapeModel() {}
+  ~ConvexHullShapeModel() {}
 
   bool estimate(
     const pcl::PointCloud<pcl::PointXYZ> & cluster,
-    autoware_perception_msgs::msg::Shape & shape_output,
+    autoware_auto_perception_msgs::msg::Shape & shape_output,
     geometry_msgs::msg::Pose & pose_output) override;
 };
 

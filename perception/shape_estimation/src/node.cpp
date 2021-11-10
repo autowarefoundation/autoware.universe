@@ -16,6 +16,8 @@
 
 #include <node.hpp>
 
+#include <autoware_auto_perception_msgs/msg/object_classification.hpp>
+
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/utils.h>
@@ -23,16 +25,16 @@
 
 #include <memory>
 
-using SemanticType = autoware_perception_msgs::msg::Semantic;
+using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 
 ShapeEstimationNode::ShapeEstimationNode(const rclcpp::NodeOptions & node_options)
 : Node("shape_estimation", node_options)
 {
   using std::placeholders::_1;
-  sub_ = create_subscription<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>(
+  sub_ = create_subscription<autoware_perception_msgs::msg::DetectedObjectsWithFeature>(
     "input", rclcpp::QoS{1}, std::bind(&ShapeEstimationNode::callback, this, _1));
 
-  pub_ = create_publisher<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>(
+  pub_ = create_publisher<autoware_auto_perception_msgs::msg::DetectedObjects>(
     "objects", rclcpp::QoS{1});
 
   bool use_corrector = declare_parameter("use_corrector", true);
@@ -42,7 +44,7 @@ ShapeEstimationNode::ShapeEstimationNode(const rclcpp::NodeOptions & node_option
 }
 
 void ShapeEstimationNode::callback(
-  const autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr input_msg)
+  const autoware_perception_msgs::msg::DetectedObjectsWithFeature::ConstSharedPtr input_msg)
 {
   // Guard
   if (pub_->get_subscription_count() < 1) {
@@ -50,16 +52,16 @@ void ShapeEstimationNode::callback(
   }
 
   // Create output msg
-  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray output_msg;
+  autoware_auto_perception_msgs::msg::DetectedObjects output_msg;
   output_msg.header = input_msg->header;
 
   // Estimate shape for each object and pack msg
   for (const auto & feature_object : input_msg->feature_objects) {
     const auto & object = feature_object.object;
-    const auto & type = object.semantic.type;
+    const auto & label = object.classification.front().label;
     const auto & feature = feature_object.feature;
-    const bool is_vehicle =
-      SemanticType::CAR == type || SemanticType::TRUCK == type || SemanticType::BUS == type;
+    const bool is_vehicle = Label::CAR == label || Label::TRUCK == label || Label::BUS == label ||
+                            Label::TRAILER == label;
 
     // convert ros to pcl
     pcl::PointCloud<pcl::PointXYZ>::Ptr cluster(new pcl::PointCloud<pcl::PointXYZ>);
@@ -71,23 +73,23 @@ void ShapeEstimationNode::callback(
     }
 
     // estimate shape and pose
-    autoware_perception_msgs::msg::Shape shape;
+    autoware_auto_perception_msgs::msg::Shape shape;
     geometry_msgs::msg::Pose pose;
     boost::optional<float> yaw = boost::none;
     if (use_vehicle_reference_yaw_ && is_vehicle) {
-      yaw = tf2::getYaw(object.state.pose_covariance.pose.orientation);
+      yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
     }
     const bool estimated_success =
-      estimator_->estimateShapeAndPose(object.semantic.type, *cluster, yaw, shape, pose);
+      estimator_->estimateShapeAndPose(label, *cluster, yaw, shape, pose);
 
     // If the shape estimation fails, ignore it.
     if (!estimated_success) {
       continue;
     }
 
-    output_msg.feature_objects.push_back(feature_object);
-    output_msg.feature_objects.back().object.shape = shape;
-    output_msg.feature_objects.back().object.state.pose_covariance.pose = pose;
+    output_msg.objects.push_back(object);
+    output_msg.objects.back().shape = shape;
+    output_msg.objects.back().kinematics.pose_with_covariance.pose = pose;
   }
 
   // Publish

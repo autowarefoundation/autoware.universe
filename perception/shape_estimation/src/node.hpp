@@ -19,7 +19,8 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_perception_msgs/msg/dynamic_object_with_feature_array.hpp>
+#include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
+#include <autoware_perception_msgs/msg/detected_objects_with_feature.hpp>
 
 #include <memory>
 
@@ -27,13 +28,12 @@ class ShapeEstimationNode : public rclcpp::Node
 {
 private:
   // ros
-  rclcpp::Publisher<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>::SharedPtr pub_;
-  rclcpp::Subscription<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>::SharedPtr
-    sub_;
+  rclcpp::Publisher<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr pub_;
+  rclcpp::Subscription<autoware_perception_msgs::msg::DetectedObjectsWithFeature>::SharedPtr sub_;
   // bool use_map_correct_;
 
   void callback(
-    const autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr input_msg);
+    const autoware_perception_msgs::msg::DetectedObjectsWithFeature::ConstSharedPtr input_msg);
 
 private:
   std::unique_ptr<ShapeEstimator> estimator_;

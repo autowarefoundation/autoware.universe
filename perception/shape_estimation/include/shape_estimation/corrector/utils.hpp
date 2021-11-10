@@ -17,7 +17,7 @@
 
 #include <autoware_utils/autoware_utils.hpp>
 
-#include <autoware_perception_msgs/msg/shape.hpp>
+#include <autoware_auto_perception_msgs/msg/shape.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 
 namespace utils
@@ -32,10 +32,10 @@ struct CorrectionParameters
   double avg_length;
 };
 bool correctVehicleBoundingBox(
-  const CorrectionParameters & param, autoware_perception_msgs::msg::Shape & shape_output,
+  const CorrectionParameters & param, autoware_auto_perception_msgs::msg::Shape & shape_output,
   geometry_msgs::msg::Pose & pose_output);
 bool correctVehicleBoundingBoxWithReferenceYaw(
-  const CorrectionParameters & param, autoware_perception_msgs::msg::Shape & shape_output,
+  const CorrectionParameters & param, autoware_auto_perception_msgs::msg::Shape & shape_output,
   geometry_msgs::msg::Pose & pose_output);
 }  // namespace utils
 

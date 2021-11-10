@@ -15,7 +15,7 @@
 #ifndef SHAPE_ESTIMATION__CORRECTOR__CORRECTOR_INTERFACE_HPP_
 #define SHAPE_ESTIMATION__CORRECTOR__CORRECTOR_INTERFACE_HPP_
 
-#include <autoware_perception_msgs/msg/shape.hpp>
+#include <autoware_auto_perception_msgs/msg/shape.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 
 #include <string>
@@ -28,7 +28,7 @@ public:
   virtual ~ShapeEstimationCorrectorInterface() {}
 
   virtual bool correct(
-    autoware_perception_msgs::msg::Shape & shape_output,
+    autoware_auto_perception_msgs::msg::Shape & shape_output,
     geometry_msgs::msg::Pose & pose_output) = 0;
 };
 

@@ -30,7 +30,7 @@
 namespace utils
 {
 bool correctVehicleBoundingBox(
-  const CorrectionParameters & param, autoware_perception_msgs::msg::Shape & shape_output,
+  const CorrectionParameters & param, autoware_auto_perception_msgs::msg::Shape & shape_output,
   geometry_msgs::msg::Pose & pose_output)
 {
   // TODO(Yukihiro Saito): refactor following code
@@ -242,7 +242,7 @@ bool correctVehicleBoundingBox(
 }
 
 bool correctVehicleBoundingBoxWithReferenceYaw(
-  const CorrectionParameters & param, autoware_perception_msgs::msg::Shape & shape_output,
+  const CorrectionParameters & param, autoware_auto_perception_msgs::msg::Shape & shape_output,
   geometry_msgs::msg::Pose & pose_output)
 {
   /*
