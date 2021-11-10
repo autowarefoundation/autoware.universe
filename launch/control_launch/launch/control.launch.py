@@ -61,7 +61,7 @@ def launch_setup(context, *args, **kwargs):
         namespace="trajectory_follower",
         remappings=[
             ("~/input/reference_trajectory", "/planning/scenario_planning/trajectory"),
-            ("~/input/current_velocity", "/localization/twist"),
+            ("~/input/current_velocity", "/localization/kinematic_state"),
             ("~/input/current_steering", "/vehicle/status/steering"),
             ("~/output/control_raw", "lateral/control_cmd"),
             ("~/output/predicted_trajectory", "predicted_trajectory"),
@@ -79,7 +79,7 @@ def launch_setup(context, *args, **kwargs):
         namespace="trajectory_follower",
         remappings=[
             ("input/reference_trajectory", "/planning/scenario_planning/trajectory"),
-            ("input/current_velocity", "/localization/twist"),
+            ("input/current_velocity", "/localization/kinematic_state"),
             ("output/control_raw", "lateral/control_cmd"),
         ],
         parameters=[
@@ -95,7 +95,7 @@ def launch_setup(context, *args, **kwargs):
         name="velocity_controller",
         namespace="trajectory_follower",
         remappings=[
-            ("~/current_velocity", "/localization/twist"),
+            ("~/current_velocity", "/localization/kinematic_state"),
             ("~/control_cmd", "longitudinal/control_cmd"),
             ("~/current_trajectory", "/planning/scenario_planning/trajectory"),
         ],
@@ -132,7 +132,7 @@ def launch_setup(context, *args, **kwargs):
         name="lane_departure_checker_node",
         namespace="trajectory_follower",
         remappings=[
-            ("~/input/twist", "/localization/twist"),
+            ("~/input/odometry", "/localization/kinematic_state"),
             ("~/input/lanelet_map_bin", "/map/vector_map"),
             ("~/input/route", "/planning/mission_planning/route"),
             ("~/input/reference_trajectory", "/planning/scenario_planning/trajectory"),
