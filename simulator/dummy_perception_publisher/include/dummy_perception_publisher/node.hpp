@@ -19,8 +19,8 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_perception_msgs/msg/dynamic_object_array.hpp>
-#include <autoware_perception_msgs/msg/dynamic_object_with_feature_array.hpp>
+#include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
+#include <autoware_perception_msgs/msg/detected_objects_with_feature.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
 #include <pcl/common/distances.h>
@@ -40,8 +40,10 @@ class DummyPerceptionPublisherNode : public rclcpp::Node
 {
 private:
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_pub_;
-  rclcpp::Publisher<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>::SharedPtr
-    dynamic_object_pub_;
+  rclcpp::Publisher<autoware_perception_msgs::msg::DetectedObjectsWithFeature>::SharedPtr
+    detected_object_with_feature_pub_;
+  rclcpp::Publisher<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr
+    detected_object_pub_;
   rclcpp::Subscription<dummy_perception_publisher::msg::Object>::SharedPtr object_sub_;
   rclcpp::TimerBase::SharedPtr timer_;
   tf2_ros::Buffer tf_buffer_;
@@ -51,6 +53,7 @@ private:
   double detection_successful_rate_;
   bool enable_ray_tracing_;
   bool use_object_recognition_;
+  bool real_use_param_;
   std::mt19937 random_generator_;
   void timerCallback();
   void createObjectPointcloud(

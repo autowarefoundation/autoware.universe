@@ -1,8 +1,8 @@
 std_msgs/Header header
 unique_identifier_msgs/UUID id
 dummy_perception_publisher/InitialState initial_state
-autoware_perception_msgs/Semantic semantic
-autoware_perception_msgs/Shape shape
+autoware_auto_perception_msgs/ObjectClassification classification
+autoware_auto_perception_msgs/Shape shape
 
 uint8 ADD=0
 uint8 MODIFY=1
