@@ -169,7 +169,7 @@ RoiClusterFusionNodelet::RoiClusterFusionNodelet(const rclcpp::NodeOptions & opt
   v_roi_sub_.resize(rois_number);
   for (int id = 0; id < static_cast<int>(v_roi_sub_.size()); ++id) {
     v_roi_sub_.at(id) = std::make_shared<
-      message_filters::Subscriber<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>>(
+      message_filters::Subscriber<autoware_perception_msgs::msg::DetectedObjectsWithFeature>>(
       this, "input/rois" + std::to_string(id), rclcpp::QoS{1}.get_rmw_qos_profile());
   }
   // add dummy callback to enable passthrough filter
@@ -227,7 +227,7 @@ RoiClusterFusionNodelet::RoiClusterFusionNodelet(const rclcpp::NodeOptions & opt
     std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6,
     std::placeholders::_7, std::placeholders::_8, std::placeholders::_9));
   labeled_cluster_pub_ =
-    this->create_publisher<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>(
+    this->create_publisher<autoware_perception_msgs::msg::DetectedObjectsWithFeature>(
       "output/labeled_clusters", rclcpp::QoS{1});
 
   const bool debug_mode = declare_parameter("debug_mode", false);
@@ -243,15 +243,15 @@ void RoiClusterFusionNodelet::cameraInfoCallback(
 }
 
 void RoiClusterFusionNodelet::fusionCallback(
-  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr input_cluster_msg,
-  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr input_roi0_msg,
-  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr input_roi1_msg,
-  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr input_roi2_msg,
-  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr input_roi3_msg,
-  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr input_roi4_msg,
-  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr input_roi5_msg,
-  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr input_roi6_msg,
-  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr input_roi7_msg)
+  autoware_perception_msgs::msg::DetectedObjectsWithFeature::ConstSharedPtr input_cluster_msg,
+  autoware_perception_msgs::msg::DetectedObjectsWithFeature::ConstSharedPtr input_roi0_msg,
+  autoware_perception_msgs::msg::DetectedObjectsWithFeature::ConstSharedPtr input_roi1_msg,
+  autoware_perception_msgs::msg::DetectedObjectsWithFeature::ConstSharedPtr input_roi2_msg,
+  autoware_perception_msgs::msg::DetectedObjectsWithFeature::ConstSharedPtr input_roi3_msg,
+  autoware_perception_msgs::msg::DetectedObjectsWithFeature::ConstSharedPtr input_roi4_msg,
+  autoware_perception_msgs::msg::DetectedObjectsWithFeature::ConstSharedPtr input_roi5_msg,
+  autoware_perception_msgs::msg::DetectedObjectsWithFeature::ConstSharedPtr input_roi6_msg,
+  autoware_perception_msgs::msg::DetectedObjectsWithFeature::ConstSharedPtr input_roi7_msg)
 {
   // Guard
   if (labeled_cluster_pub_->get_subscription_count() < 1) {
@@ -259,14 +259,15 @@ void RoiClusterFusionNodelet::fusionCallback(
   }
 
   // build output msg
-  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray output_msg;
+  autoware_perception_msgs::msg::DetectedObjectsWithFeature output_msg;
   output_msg = *input_cluster_msg;
 
   // reset cluster semantic type
   if (!use_cluster_semantic_type_) {
     for (auto & feature_object : output_msg.feature_objects) {
-      feature_object.object.semantic.type = autoware_perception_msgs::msg::Semantic::UNKNOWN;
-      feature_object.object.semantic.confidence = 0.0;
+      feature_object.object.classification.front().label =
+        autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN;
+      feature_object.object.existence_probability = 0.0;
     }
   }
 
@@ -373,7 +374,7 @@ void RoiClusterFusionNodelet::fusionCallback(
     }
 
     // calc iou
-    autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr input_roi_msg;
+    autoware_perception_msgs::msg::DetectedObjectsWithFeature::ConstSharedPtr input_roi_msg;
     if (id == 0) {
       input_roi_msg = input_roi0_msg;
     } else if (id == 1) {
@@ -416,10 +417,12 @@ void RoiClusterFusionNodelet::fusionCallback(
       }
       if (
         iou_threshold_ < max_iou &&
-        output_msg.feature_objects.at(index).object.semantic.confidence <=
-          input_roi_msg->feature_objects.at(i).object.semantic.confidence) {
-        output_msg.feature_objects.at(index).object.semantic =
-          input_roi_msg->feature_objects.at(i).object.semantic;
+        output_msg.feature_objects.at(index).object.existence_probability <=
+          input_roi_msg->feature_objects.at(i).object.existence_probability &&
+        input_roi_msg->feature_objects.at(i).object.classification.front().label !=
+          autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) {
+        output_msg.feature_objects.at(index).object.classification =
+          input_roi_msg->feature_objects.at(i).object.classification;
       }
       debug_image_rois.push_back(input_roi_msg->feature_objects.at(i).feature.roi);
     }
