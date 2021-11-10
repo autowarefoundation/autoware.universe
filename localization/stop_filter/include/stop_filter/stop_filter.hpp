@@ -20,6 +20,7 @@
 #include <autoware_debug_msgs/msg/bool_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
+#include <nav_msgs/msg/odometry.hpp>
 
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/utils.h>
@@ -39,30 +40,22 @@ public:
   StopFilter(const std::string & node_name, const rclcpp::NodeOptions & options);
 
 private:
+  rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pub_odom_;  //!< @brief odom publisher
   rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr
     pub_twist_;  //!< @brief twist publisher
   rclcpp::Publisher<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr
     pub_twist_with_covariance_;  //!< @brief twist with covariance publisher
   rclcpp::Publisher<autoware_debug_msgs::msg::BoolStamped>::SharedPtr
     pub_stop_flag_;  //!< @brief stop flag publisher
-  rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr
-    sub_twist_;  //!< @brief measurement twist subscriber
-  rclcpp::Subscription<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr
-    sub_twist_with_covariance_;  //!< @brief measurement twist with
-                                 //!< covariance subscriber
+  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr
+    sub_odom_;  //!< @brief measurement odometry subscriber
 
   double vx_threshold_;  //!< @brief vx threshold
   double wz_threshold_;  //!< @brief wz threshold
 
   /**
-   * @brief set twist measurement
+   * @brief set odometry measurement
    */
-  void callbackTwistStamped(const geometry_msgs::msg::TwistStamped::SharedPtr msg);
-
-  /**
-   * @brief set twistWithCovariance measurement
-   */
-  void callbackTwistWithCovarianceStamped(
-    const geometry_msgs::msg::TwistWithCovarianceStamped::SharedPtr msg);
+  void callbackOdometry(const nav_msgs::msg::Odometry::SharedPtr msg);
 };
 #endif  // STOP_FILTER__STOP_FILTER_HPP_
