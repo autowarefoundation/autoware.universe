@@ -92,7 +92,7 @@ def generate_launch_description():
                     ("~/input/route", "/planning/mission_planning/route"),
                     ("~/input/occupancy_grid", "costmap_generator/occupancy_grid"),
                     ("~/input/scenario", "/planning/scenario_planning/scenario"),
-                    ("~/input/twist", "/localization/twist"),
+                    ("~/input/odometry", "/localization/kinematic_state"),
                     ("~/output/trajectory", "/planning/scenario_planning/parking/trajectory"),
                     ("is_completed", "/planning/scenario_planning/parking/is_completed"),
                 ],
