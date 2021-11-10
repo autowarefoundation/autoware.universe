@@ -28,14 +28,15 @@
 #include "mission_planner/lanelet2_impl/route_handler.hpp"
 #include "mission_planner/mission_planner_base.hpp"
 
-#include <autoware_lanelet2_msgs/msg/map_bin.hpp>
+#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
+#include <autoware_auto_planning_msgs/msg/had_map_route.hpp>
 
 // lanelet
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_routing/RoutingGraph.h>
 #include <lanelet2_traffic_rules/TrafficRulesFactory.h>
 
-using RouteSections = std::vector<autoware_planning_msgs::msg::RouteSection>;
+using RouteSections = std::vector<autoware_auto_mapping_msgs::msg::HADMapSegment>;
 
 namespace mission_planner
 {
@@ -53,15 +54,15 @@ private:
   lanelet::ConstLanelets road_lanelets_;
   lanelet::ConstLanelets shoulder_lanelets_;
 
-  rclcpp::Subscription<autoware_lanelet2_msgs::msg::MapBin>::SharedPtr map_subscriber_;
+  rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr map_subscriber_;
 
-  void mapCallback(const autoware_lanelet2_msgs::msg::MapBin::ConstSharedPtr msg);
+  void mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg);
   bool isGoalValid() const;
 
   // virtual functions
   bool isRoutingGraphReady() const;
-  autoware_planning_msgs::msg::Route planRoute();
-  void visualizeRoute(const autoware_planning_msgs::msg::Route & route) const;
+  autoware_auto_planning_msgs::msg::HADMapRoute planRoute();
+  void visualizeRoute(const autoware_auto_planning_msgs::msg::HADMapRoute & route) const;
 
   // routing
   bool planPathBetweenCheckpoints(

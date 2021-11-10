@@ -53,10 +53,10 @@ bool isRouteLooped(const RouteSections & route_sections)
 {
   for (std::size_t i = 0; i < route_sections.size(); i++) {
     const auto & route_section = route_sections.at(i);
-    for (const auto & lane_id : route_section.lane_ids) {
+    for (const auto & lane_id : route_section.primitives) {
       for (std::size_t j = i + 1; j < route_sections.size(); j++) {
         const auto & future_route_section = route_sections.at(j);
-        if (exists(future_route_section.lane_ids, lane_id)) {
+        if (exists(future_route_section.primitives, lane_id)) {
           return true;
         }
       }
@@ -126,13 +126,13 @@ MissionPlannerLanelet2::MissionPlannerLanelet2(const rclcpp::NodeOptions & node_
 : MissionPlanner("mission_planner_node", node_options), is_graph_ready_(false)
 {
   using std::placeholders::_1;
-  map_subscriber_ = create_subscription<autoware_lanelet2_msgs::msg::MapBin>(
+  map_subscriber_ = create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
     "input/vector_map", rclcpp::QoS{10}.transient_local(),
     std::bind(&MissionPlannerLanelet2::mapCallback, this, _1));
 }
 
 void MissionPlannerLanelet2::mapCallback(
-  const autoware_lanelet2_msgs::msg::MapBin::ConstSharedPtr msg)
+  const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg)
 {
   lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(
@@ -145,21 +145,20 @@ void MissionPlannerLanelet2::mapCallback(
 
 bool MissionPlannerLanelet2::isRoutingGraphReady() const { return is_graph_ready_; }
 
-void MissionPlannerLanelet2::visualizeRoute(const autoware_planning_msgs::msg::Route & route) const
+void MissionPlannerLanelet2::visualizeRoute(
+  const autoware_auto_planning_msgs::msg::HADMapRoute & route) const
 {
   lanelet::ConstLanelets route_lanelets;
   lanelet::ConstLanelets end_lanelets;
   lanelet::ConstLanelets normal_lanelets;
   lanelet::ConstLanelets goal_lanelets;
 
-  for (const auto & route_section : route.route_sections) {
-    for (const auto & lane_id : route_section.lane_ids) {
-      auto lanelet = lanelet_map_ptr_->laneletLayer.get(lane_id);
+  for (const auto & route_section : route.segments) {
+    for (const auto & lane_id : route_section.primitives) {
+      auto lanelet = lanelet_map_ptr_->laneletLayer.get(lane_id.id);
       route_lanelets.push_back(lanelet);
-      if (route_section.preferred_lane_id == lane_id) {
+      if (route_section.preferred_primitive_id == lane_id.id) {
         goal_lanelets.push_back(lanelet);
-      } else if (exists(route_section.continued_lane_ids, lane_id)) {
-        normal_lanelets.push_back(lanelet);
       } else {
         end_lanelets.push_back(lanelet);
       }
@@ -248,7 +247,7 @@ bool MissionPlannerLanelet2::isGoalValid() const
   return false;
 }
 
-autoware_planning_msgs::msg::Route MissionPlannerLanelet2::planRoute()
+autoware_auto_planning_msgs::msg::HADMapRoute MissionPlannerLanelet2::planRoute()
 {
   std::stringstream ss;
   for (const auto & checkpoint : checkpoints_) {
@@ -259,7 +258,7 @@ autoware_planning_msgs::msg::Route MissionPlannerLanelet2::planRoute()
     get_logger(), "start planning route with checkpoints: " << std::endl
                                                             << ss.str());
 
-  autoware_planning_msgs::msg::Route route_msg;
+  autoware_auto_planning_msgs::msg::HADMapRoute route_msg;
   RouteSections route_sections;
 
   if (!isGoalValid()) {
@@ -290,7 +289,7 @@ autoware_planning_msgs::msg::Route MissionPlannerLanelet2::planRoute()
 
   route_msg.header.stamp = this->now();
   route_msg.header.frame_id = map_frame_;
-  route_msg.route_sections = route_sections;
+  route_msg.segments = route_sections;
   route_msg.goal_pose = goal_pose_.pose;
 
   return route_msg;
@@ -355,15 +354,15 @@ RouteSections MissionPlannerLanelet2::createRouteSections(
   }
 
   for (const auto & main_llt : main_path) {
-    autoware_planning_msgs::msg::RouteSection route_section_msg;
+    autoware_auto_mapping_msgs::msg::HADMapSegment route_section_msg;
     lanelet::ConstLanelets route_section_lanelets = route_handler.getNeighborsWithinRoute(main_llt);
-    route_section_msg.preferred_lane_id = main_llt.id();
+    route_section_msg.preferred_primitive_id = main_llt.id();
     for (const auto & section_llt : route_section_lanelets) {
-      route_section_msg.lane_ids.push_back(section_llt.id());
+      autoware_auto_mapping_msgs::msg::MapPrimitive mp;
+      mp.set__id(section_llt.id());
+      mp.set__primitive_type("lane");
+      route_section_msg.primitives.push_back(mp);
       lanelet::ConstLanelet next_lanelet;
-      if (route_handler.getNextLaneletWithinRoute(section_llt, &next_lanelet)) {
-        route_section_msg.continued_lane_ids.push_back(section_llt.id());
-      }
     }
     route_sections.push_back(route_section_msg);
   }

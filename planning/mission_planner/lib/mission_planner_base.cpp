@@ -43,7 +43,7 @@ MissionPlanner::MissionPlanner(
   rclcpp::QoS durable_qos{1};
   durable_qos.transient_local();
   route_publisher_ =
-    create_publisher<autoware_planning_msgs::msg::Route>("output/route", durable_qos);
+    create_publisher<autoware_auto_planning_msgs::msg::HADMapRoute>("output/route", durable_qos);
   marker_publisher_ =
     create_publisher<visualization_msgs::msg::MarkerArray>("debug/route_marker", durable_qos);
 }
@@ -105,7 +105,7 @@ void MissionPlanner::goalPoseCallback(
     return;
   }
 
-  autoware_planning_msgs::msg::Route route = planRoute();
+  autoware_auto_planning_msgs::msg::HADMapRoute route = planRoute();
   publishRoute(route);
 }  // namespace mission_planner
 
@@ -129,13 +129,13 @@ void MissionPlanner::checkpointCallback(
   // insert checkpoint before goal
   checkpoints_.insert(checkpoints_.end() - 1, transformed_checkpoint);
 
-  autoware_planning_msgs::msg::Route route = planRoute();
+  autoware_auto_planning_msgs::msg::HADMapRoute route = planRoute();
   publishRoute(route);
 }
 
-void MissionPlanner::publishRoute(const autoware_planning_msgs::msg::Route & route) const
+void MissionPlanner::publishRoute(const autoware_auto_planning_msgs::msg::HADMapRoute & route) const
 {
-  if (!route.route_sections.empty()) {
+  if (!route.segments.empty()) {
     RCLCPP_INFO(get_logger(), "Route successfully planned. Publishing...");
     route_publisher_->publish(route);
     visualizeRoute(route);

@@ -19,7 +19,7 @@ namespace mission_planner
 GoalPoseVisualizer::GoalPoseVisualizer(const rclcpp::NodeOptions & node_options)
 : Node("goal_pose_visualizer_node", node_options)
 {
-  sub_route_ = create_subscription<autoware_planning_msgs::msg::Route>(
+  sub_route_ = create_subscription<autoware_auto_planning_msgs::msg::HADMapRoute>(
     "input/route", rclcpp::QoS{1},
     std::bind(&GoalPoseVisualizer::echoBackRouteCallback, this, std::placeholders::_1));
   pub_goal_pose_ = create_publisher<geometry_msgs::msg::PoseStamped>(
@@ -27,7 +27,7 @@ GoalPoseVisualizer::GoalPoseVisualizer(const rclcpp::NodeOptions & node_options)
 }
 
 void GoalPoseVisualizer::echoBackRouteCallback(
-  const autoware_planning_msgs::msg::Route::ConstSharedPtr msg)
+  const autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr msg)
 {
   geometry_msgs::msg::PoseStamped goal_pose;
   goal_pose.header = msg->header;

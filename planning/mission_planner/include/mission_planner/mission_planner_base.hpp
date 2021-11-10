@@ -27,7 +27,7 @@
 #include <tf2_ros/transform_listener.h>
 
 // Autoware
-#include <autoware_planning_msgs/msg/route.hpp>
+#include <autoware_auto_planning_msgs/msg/had_map_route.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 
@@ -48,12 +48,13 @@ protected:
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr marker_publisher_;
 
   virtual bool isRoutingGraphReady() const = 0;
-  virtual autoware_planning_msgs::msg::Route planRoute() = 0;
-  virtual void visualizeRoute(const autoware_planning_msgs::msg::Route & route) const = 0;
-  virtual void publishRoute(const autoware_planning_msgs::msg::Route & route) const;
+  virtual autoware_auto_planning_msgs::msg::HADMapRoute planRoute() = 0;
+  virtual void visualizeRoute(
+    const autoware_auto_planning_msgs::msg::HADMapRoute & route) const = 0;
+  virtual void publishRoute(const autoware_auto_planning_msgs::msg::HADMapRoute & route) const;
 
 private:
-  rclcpp::Publisher<autoware_planning_msgs::msg::Route>::SharedPtr route_publisher_;
+  rclcpp::Publisher<autoware_auto_planning_msgs::msg::HADMapRoute>::SharedPtr route_publisher_;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr goal_subscriber_;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr checkpoint_subscriber_;
 
