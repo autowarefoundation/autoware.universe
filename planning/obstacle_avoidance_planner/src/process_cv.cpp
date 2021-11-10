@@ -182,11 +182,11 @@ PolygonPoints getPolygonPoints(
   std::vector<geometry_msgs::msg::Point> points_in_image;
   std::vector<geometry_msgs::msg::Point> points_in_map;
   PolygonPoints polygon_points;
-  if (object.shape.at(0).type == object.shape.at(0).BOUNDING_BOX) {
+  if (object.shape.type == object.shape.BOUNDING_BOX) {
     polygon_points = getPolygonPointsFromBB(object, map_info);
-  } else if (object.shape.at(0).type == object.shape.at(0).CYLINDER) {
+  } else if (object.shape.type == object.shape.CYLINDER) {
     polygon_points = getPolygonPointsFromCircle(object, map_info);
-  } else if (object.shape.at(0).type == object.shape.at(0).POLYGON) {
+  } else if (object.shape.type == object.shape.POLYGON) {
     polygon_points = getPolygonPointsFromPolygon(object, map_info);
   }
   return polygon_points;
@@ -198,8 +198,8 @@ PolygonPoints getPolygonPointsFromBB(
 {
   std::vector<geometry_msgs::msg::Point> points_in_image;
   std::vector<geometry_msgs::msg::Point> points_in_map;
-  const double dim_x = object.shape.at(0).dimensions.x;
-  const double dim_y = object.shape.at(0).dimensions.y;
+  const double dim_x = object.shape.dimensions.x;
+  const double dim_y = object.shape.dimensions.y;
   const std::vector<double> rel_x = {0.5 * dim_x, 0.5 * dim_x, -0.5 * dim_x, -0.5 * dim_x};
   const std::vector<double> rel_y = {0.5 * dim_y, -0.5 * dim_y, -0.5 * dim_y, 0.5 * dim_y};
   const geometry_msgs::msg::Pose object_pose = object.kinematics.initial_pose_with_covariance.pose;
@@ -226,7 +226,7 @@ PolygonPoints getPolygonPointsFromCircle(
 {
   std::vector<geometry_msgs::msg::Point> points_in_image;
   std::vector<geometry_msgs::msg::Point> points_in_map;
-  const double radius = object.shape.at(0).dimensions.x;
+  const double radius = object.shape.dimensions.x;
   const geometry_msgs::msg::Point center =
     object.kinematics.initial_pose_with_covariance.pose.position;
   constexpr int num_sampling_points = 5;
@@ -264,7 +264,7 @@ PolygonPoints getPolygonPointsFromPolygon(
 {
   std::vector<geometry_msgs::msg::Point> points_in_image;
   std::vector<geometry_msgs::msg::Point> points_in_map;
-  for (const auto & polygon_p : object.shape.at(0).footprint.points) {
+  for (const auto & polygon_p : object.shape.footprint.points) {
     geometry_msgs::msg::Point rel_point;
     rel_point.x = polygon_p.x;
     rel_point.y = polygon_p.y;
