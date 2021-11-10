@@ -297,10 +297,10 @@ void SurroundObstacleCheckerNode::getNearestObstacleByDynamicObject(
 
     // create obj polygon
     Polygon2d obj_poly;
-    if (obj.shape.front().type == autoware_auto_perception_msgs::msg::Shape::POLYGON) {
-      obj_poly = createObjPolygon(pose_baselink, obj.shape.front().footprint);
+    if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::POLYGON) {
+      obj_poly = createObjPolygon(pose_baselink, obj.shape.footprint);
     } else {
-      obj_poly = createObjPolygon(pose_baselink, obj.shape.front().dimensions);
+      obj_poly = createObjPolygon(pose_baselink, obj.shape.dimensions);
     }
 
     // calc distance
