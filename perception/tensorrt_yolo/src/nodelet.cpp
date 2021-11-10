@@ -14,6 +14,8 @@
 
 #include "tensorrt_yolo/nodelet.hpp"
 
+#include <autoware_auto_perception_msgs/msg/object_classification.hpp>
+
 #include <glob.h>
 
 #include <algorithm>
@@ -99,9 +101,8 @@ TensorrtYoloNodelet::TensorrtYoloNodelet(const rclcpp::NodeOptions & options)
 
   std::lock_guard<std::mutex> lock(connect_mutex_);
 
-  objects_pub_ =
-    this->create_publisher<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>(
-      "out/objects", 1);
+  objects_pub_ = this->create_publisher<autoware_perception_msgs::msg::DetectedObjectsWithFeature>(
+    "out/objects", 1);
   image_pub_ = image_transport::create_publisher(this, "out/image");
 
   out_scores_ =
@@ -126,7 +127,9 @@ void TensorrtYoloNodelet::connectCb()
 
 void TensorrtYoloNodelet::callback(const sensor_msgs::msg::Image::ConstSharedPtr in_image_msg)
 {
-  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray out_objects;
+  using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
+
+  autoware_perception_msgs::msg::DetectedObjectsWithFeature out_objects;
 
   cv_bridge::CvImagePtr in_image_ptr;
   try {
@@ -146,27 +149,27 @@ void TensorrtYoloNodelet::callback(const sensor_msgs::msg::Image::ConstSharedPtr
     if (out_scores_[i] < yolo_config_.ignore_thresh) {
       break;
     }
-    autoware_perception_msgs::msg::DynamicObjectWithFeature object;
+    autoware_perception_msgs::msg::DetectedObjectWithFeature object;
     object.feature.roi.x_offset = out_boxes_[4 * i] * width;
     object.feature.roi.y_offset = out_boxes_[4 * i + 1] * height;
     object.feature.roi.width = out_boxes_[4 * i + 2] * width;
     object.feature.roi.height = out_boxes_[4 * i + 3] * height;
-    object.object.semantic.confidence = out_scores_[i];
+    object.object.classification.front().probability = out_scores_[i];
     const auto class_id = static_cast<int>(out_classes_[i]);
     if (labels_[class_id] == "car") {
-      object.object.semantic.type = autoware_perception_msgs::msg::Semantic::CAR;
+      object.object.classification.front().label = Label::CAR;
     } else if (labels_[class_id] == "person") {
-      object.object.semantic.type = autoware_perception_msgs::msg::Semantic::PEDESTRIAN;
+      object.object.classification.front().label = Label::PEDESTRIAN;
     } else if (labels_[class_id] == "bus") {
-      object.object.semantic.type = autoware_perception_msgs::msg::Semantic::BUS;
+      object.object.classification.front().label = Label::BUS;
     } else if (labels_[class_id] == "truck") {
-      object.object.semantic.type = autoware_perception_msgs::msg::Semantic::TRUCK;
+      object.object.classification.front().label = Label::TRUCK;
     } else if (labels_[class_id] == "bicycle") {
-      object.object.semantic.type = autoware_perception_msgs::msg::Semantic::BICYCLE;
+      object.object.classification.front().label = Label::BICYCLE;
     } else if (labels_[class_id] == "motorbike") {
-      object.object.semantic.type = autoware_perception_msgs::msg::Semantic::MOTORBIKE;
+      object.object.classification.front().label = Label::MOTORCYCLE;
     } else {
-      object.object.semantic.type = autoware_perception_msgs::msg::Semantic::UNKNOWN;
+      object.object.classification.front().label = Label::UNKNOWN;
     }
     out_objects.feature_objects.push_back(object);
     const auto left = std::max(0, static_cast<int>(object.feature.roi.x_offset));
