@@ -46,6 +46,9 @@
 
 #include "lidar_apollo_instance_segmentation/cluster2d.hpp"
 
+#include <autoware_auto_perception_msgs/msg/detected_object_kinematics.hpp>
+#include <autoware_auto_perception_msgs/msg/object_classification.hpp>
+
 #include <pcl_conversions/pcl_conversions.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
@@ -240,24 +243,30 @@ void Cluster2D::classify(const std::shared_ptr<float> & inferred_data)
   }
 }
 
-autoware_perception_msgs::msg::DynamicObjectWithFeature Cluster2D::obstacleToObject(
+autoware_perception_msgs::msg::DetectedObjectWithFeature Cluster2D::obstacleToObject(
   const Obstacle & in_obstacle, const std_msgs::msg::Header & in_header)
 {
-  autoware_perception_msgs::msg::DynamicObjectWithFeature resulting_object;
+  using autoware_auto_perception_msgs::msg::DetectedObjectKinematics;
+  using autoware_auto_perception_msgs::msg::ObjectClassification;
+
+  autoware_perception_msgs::msg::DetectedObjectWithFeature resulting_object;
   // pcl::PointCloud<pcl::PointXYZI> in_cluster = *(in_obstacle.cloud_ptr);
 
-  resulting_object.object.semantic.confidence = in_obstacle.score;
+  resulting_object.object.classification.emplace_back(
+    autoware_auto_perception_msgs::build<ObjectClassification>()
+      .label(ObjectClassification::UNKNOWN)
+      .probability(in_obstacle.score));
   if (in_obstacle.meta_type == MetaType::META_PEDESTRIAN) {
-    resulting_object.object.semantic.type = autoware_perception_msgs::msg::Semantic::PEDESTRIAN;
+    resulting_object.object.classification.front().label = ObjectClassification::PEDESTRIAN;
   } else if (in_obstacle.meta_type == MetaType::META_NONMOT) {
-    resulting_object.object.semantic.type = autoware_perception_msgs::msg::Semantic::MOTORBIKE;
+    resulting_object.object.classification.front().label = ObjectClassification::MOTORCYCLE;
   } else if (in_obstacle.meta_type == MetaType::META_SMALLMOT) {
-    resulting_object.object.semantic.type = autoware_perception_msgs::msg::Semantic::CAR;
+    resulting_object.object.classification.front().label = ObjectClassification::CAR;
   } else if (in_obstacle.meta_type == MetaType::META_BIGMOT) {
-    resulting_object.object.semantic.type = autoware_perception_msgs::msg::Semantic::BUS;
+    resulting_object.object.classification.front().label = ObjectClassification::BUS;
   } else {
-    // resulting_object.object.semantic.type = autoware_perception_msgs::msg::Semantic::PEDESTRIAN;
-    resulting_object.object.semantic.type = autoware_perception_msgs::msg::Semantic::UNKNOWN;
+    // resulting_object.object.classification.front().label = ObjectClassification::PEDESTRIAN;
+    resulting_object.object.classification.front().label = ObjectClassification::UNKNOWN;
   }
 
   pcl::PointXYZ min_point;
@@ -312,20 +321,23 @@ autoware_perception_msgs::msg::DynamicObjectWithFeature Cluster2D::obstacleToObj
   const float height = max_point.z - min_point.z;
   const float length = max_point.x - min_point.x;
   const float width = max_point.y - min_point.y;
-  resulting_object.object.state.pose_covariance.pose.position.x = min_point.x + length / 2;
-  resulting_object.object.state.pose_covariance.pose.position.y = min_point.y + width / 2;
-  resulting_object.object.state.pose_covariance.pose.position.z = min_point.z + height / 2;
+  resulting_object.object.kinematics.pose_with_covariance.pose.position.x =
+    min_point.x + length / 2;
+  resulting_object.object.kinematics.pose_with_covariance.pose.position.y = min_point.y + width / 2;
+  resulting_object.object.kinematics.pose_with_covariance.pose.position.z =
+    min_point.z + height / 2;
 
-  resulting_object.object.state.pose_covariance.pose.orientation =
+  resulting_object.object.kinematics.pose_with_covariance.pose.orientation =
     getQuaternionFromRPY(0.0, 0.0, in_obstacle.heading);
-  resulting_object.object.state.orientation_reliable = false;
+  resulting_object.object.kinematics.orientation_availability =
+    DetectedObjectKinematics::SIGN_UNKNOWN;
 
   return resulting_object;
 }
 
 void Cluster2D::getObjects(
   const float confidence_thresh, const float height_thresh, const int min_pts_num,
-  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray & objects,
+  autoware_perception_msgs::msg::DetectedObjectsWithFeature & objects,
   const std_msgs::msg::Header & in_header)
 {
   for (size_t i = 0; i < point2grid_.size(); ++i) {
@@ -352,7 +364,7 @@ void Cluster2D::getObjects(
     if (static_cast<int>(obs->cloud_ptr->size()) < min_pts_num) {
       continue;
     }
-    autoware_perception_msgs::msg::DynamicObjectWithFeature out_obj =
+    autoware_perception_msgs::msg::DetectedObjectWithFeature out_obj =
       obstacleToObject(*obs, in_header);
     objects.feature_objects.push_back(out_obj);
   }

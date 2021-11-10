@@ -35,7 +35,7 @@ public:
   ~LidarApolloInstanceSegmentation() {}
   bool detectDynamicObjects(
     const sensor_msgs::msg::PointCloud2 & input,
-    autoware_perception_msgs::msg::DynamicObjectWithFeatureArray & output) override;
+    autoware_perception_msgs::msg::DetectedObjectsWithFeature & output) override;
 
 private:
   bool transformCloud(

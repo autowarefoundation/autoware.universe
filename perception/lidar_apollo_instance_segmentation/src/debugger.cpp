@@ -14,6 +14,7 @@
 
 #include "lidar_apollo_instance_segmentation/debugger.hpp"
 
+#include <autoware_auto_perception_msgs/msg/object_classification.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
 #include <pcl/point_cloud.h>
@@ -27,52 +28,53 @@ Debugger::Debugger(rclcpp::Node * node)
 }
 
 void Debugger::publishColoredPointCloud(
-  const autoware_perception_msgs::msg::DynamicObjectWithFeatureArray & input)
+  const autoware_perception_msgs::msg::DetectedObjectsWithFeature & input)
 {
+  using autoware_auto_perception_msgs::msg::ObjectClassification;
   pcl::PointCloud<pcl::PointXYZRGB> colored_pointcloud;
   for (size_t i = 0; i < input.feature_objects.size(); i++) {
     pcl::PointCloud<pcl::PointXYZI> object_pointcloud;
     pcl::fromROSMsg(input.feature_objects.at(i).feature.cluster, object_pointcloud);
 
     int red = 0, green = 0, blue = 0;
-    switch (input.feature_objects.at(i).object.semantic.type) {
-      case autoware_perception_msgs::msg::Semantic::CAR: {
+    switch (input.feature_objects.at(i).object.classification.front().label) {
+      case ObjectClassification::CAR: {
         red = 255;
         green = 0;
         blue = 0;
         break;
       }
-      case autoware_perception_msgs::msg::Semantic::TRUCK: {
+      case ObjectClassification::TRUCK: {
         red = 255;
         green = 127;
         blue = 0;
         break;
       }
-      case autoware_perception_msgs::msg::Semantic::BUS: {
+      case ObjectClassification::BUS: {
         red = 255;
         green = 0;
         blue = 127;
         break;
       }
-      case autoware_perception_msgs::msg::Semantic::PEDESTRIAN: {
+      case ObjectClassification::PEDESTRIAN: {
         red = 0;
         green = 255;
         blue = 0;
         break;
       }
-      case autoware_perception_msgs::msg::Semantic::BICYCLE: {
+      case ObjectClassification::BICYCLE: {
         red = 0;
         green = 0;
         blue = 255;
         break;
       }
-      case autoware_perception_msgs::msg::Semantic::MOTORBIKE: {
+      case ObjectClassification::MOTORCYCLE: {
         red = 0;
         green = 127;
         blue = 255;
         break;
       }
-      case autoware_perception_msgs::msg::Semantic::UNKNOWN: {
+      case ObjectClassification::UNKNOWN: {
         red = 255;
         green = 255;
         blue = 255;
