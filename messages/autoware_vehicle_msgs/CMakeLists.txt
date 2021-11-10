@@ -25,6 +25,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/ControlMode.msg"
   "msg/TurnSignal.msg"
   "msg/Steering.msg"
+  "msg/VehicleEmergencyStamped.msg"
   "msg/RawVehicleCommand.msg"
   "msg/RawControlCommand.msg"
   "srv/UpdateAccelBrakeMap.srv"
