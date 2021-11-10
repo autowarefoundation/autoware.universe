@@ -4,6 +4,8 @@ This is a 3D object detection implementation of CenterPoint supporting TensorRT 
 
 The models are trained with [OpenPCDet](https://github.com/tier4/OpenPCDet)
 
+The object.existence_probability is stored the value of classification confidence of DNN, not probability.
+
 ## Parameters
 
 ### Input Topics

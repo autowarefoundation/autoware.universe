@@ -52,9 +52,8 @@ LidarCenterPointNode::LidarCenterPointNode(const rclcpp::NodeOptions & node_opti
   pointcloud_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "~/input/pointcloud", rclcpp::SensorDataQoS{}.keep_last(1),
     std::bind(&LidarCenterPointNode::pointCloudCallback, this, std::placeholders::_1));
-  objects_pub_ =
-    this->create_publisher<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>(
-      "~/output/objects", rclcpp::QoS{1});
+  objects_pub_ = this->create_publisher<autoware_auto_perception_msgs::msg::DetectedObjects>(
+    "~/output/objects", rclcpp::QoS{1});
   pointcloud_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
     "~/debug/pointcloud_densification", rclcpp::SensorDataQoS{}.keep_last(1));
 }
@@ -73,7 +72,7 @@ void LidarCenterPointNode::pointCloudCallback(
   auto stacked_pointcloud_msg = densification_ptr_->stackPointCloud(*input_pointcloud_msg);
   std::vector<float> boxes3d_vec = detector_ptr_->detect(stacked_pointcloud_msg);
 
-  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray output_msg;
+  autoware_auto_perception_msgs::msg::DetectedObjects output_msg;
   output_msg.header = input_pointcloud_msg->header;
   for (size_t obj_i = 0; obj_i < boxes3d_vec.size() / Config::num_box_features; obj_i++) {
     float score = boxes3d_vec[obj_i * Config::num_box_features + 0];
@@ -90,46 +89,50 @@ void LidarCenterPointNode::pointCloudCallback(
     float h = boxes3d_vec[obj_i * Config::num_box_features + 7];
     float yaw = boxes3d_vec[obj_i * Config::num_box_features + 8];
 
-    autoware_perception_msgs::msg::DynamicObjectWithFeature feature_obj;
-    autoware_perception_msgs::msg::Semantic semantic;
+    autoware_auto_perception_msgs::msg::DetectedObject obj;
+    // TODO(yukke42): the value of classification confidence of DNN, not probability.
+    obj.existence_probability = score;
+
+    autoware_auto_perception_msgs::msg::ObjectClassification classification;
+    classification.probability = 1.0f;
     switch (class_id) {
       case 0:
-        semantic.type = autoware_perception_msgs::msg::Semantic::CAR;
+        classification.label = autoware_auto_perception_msgs::msg::ObjectClassification::CAR;
+
+        // Note: object size is referred from multi_object_tracker
+        if ((w * l > 2.2 * 5.5) && (w * l <= 2.5 * 7.9)) {
+          classification.label = autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK;
+        } else if (w * l > 2.5 * 7.9) {
+          classification.label = autoware_auto_perception_msgs::msg::ObjectClassification::BUS;
+        }
+        obj.kinematics.orientation_availability =
+          autoware_auto_perception_msgs::msg::DetectedObjectKinematics::SIGN_UNKNOWN;
         break;
       case 1:
-        semantic.type = autoware_perception_msgs::msg::Semantic::PEDESTRIAN;
+        classification.label = autoware_auto_perception_msgs::msg::ObjectClassification::PEDESTRIAN;
+        obj.kinematics.orientation_availability =
+          autoware_auto_perception_msgs::msg::DetectedObjectKinematics::UNAVAILABLE;
         break;
       case 2:
-        semantic.type = autoware_perception_msgs::msg::Semantic::BICYCLE;
+        classification.label = autoware_auto_perception_msgs::msg::ObjectClassification::BICYCLE;
+        obj.kinematics.orientation_availability =
+          autoware_auto_perception_msgs::msg::DetectedObjectKinematics::UNAVAILABLE;
         break;
       default:
-        semantic.type = autoware_perception_msgs::msg::Semantic::UNKNOWN;
+        classification.label = autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN;
+        obj.kinematics.orientation_availability =
+          autoware_auto_perception_msgs::msg::DetectedObjectKinematics::UNAVAILABLE;
     }
-    semantic.confidence = score;
-    feature_obj.object.semantic = semantic;
+    classification.probability = score;
+    obj.classification.emplace_back(classification);
 
-    geometry_msgs::msg::Pose pose;
-    pose.position = autoware_utils::createPoint(x, y, z);
-    pose.orientation = autoware_utils::createQuaternionFromYaw(yaw);
-    feature_obj.object.state.pose_covariance.pose = pose;
+    obj.kinematics.pose_with_covariance.pose.position = autoware_utils::createPoint(x, y, z);
+    obj.kinematics.pose_with_covariance.pose.orientation =
+      autoware_utils::createQuaternionFromYaw(yaw);
+    obj.shape.type = autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX;
+    obj.shape.dimensions = autoware_utils::createTranslation(l, w, h);
 
-    autoware_perception_msgs::msg::Shape shape;
-    shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
-    shape.dimensions.x = l;
-    shape.dimensions.y = w;
-    shape.dimensions.z = h;
-    feature_obj.object.shape = shape;
-
-    // Note: object size is referred from multi_object_tracker
-    if ((w * l > 2.2 * 5.5) && (w * l <= 2.5 * 7.9)) {
-      feature_obj.object.semantic.type = semantic.type =
-        autoware_perception_msgs::msg::Semantic::TRUCK;
-    } else if (w * l > 2.5 * 7.9) {
-      feature_obj.object.semantic.type = semantic.type =
-        autoware_perception_msgs::msg::Semantic::BUS;
-    }
-
-    output_msg.feature_objects.emplace_back(feature_obj);
+    output_msg.objects.emplace_back(obj);
   }
 
   if (objects_sub_count > 0) {
