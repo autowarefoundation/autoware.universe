@@ -9,7 +9,7 @@ module autoware_auto_planning_msgs {
 
       @verbatim(language = "comment", text =
         "Lanelet lane_id information.")
-      sequence<uint64> lane_ids;
+      sequence<int64> lane_ids;
     };
   };
 };
