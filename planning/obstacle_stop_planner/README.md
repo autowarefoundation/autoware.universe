@@ -26,7 +26,7 @@ When the deceleration section is inserted, the start point of the section is ins
 | `~/input/pointcloud`        | sensor_msgs::PointCloud2                     | obstacle pointcloud |
 | `~/input/trajectory`        | autoware_planning_msgs::msg::Trajectory      | trajectory          |
 | `~/input/vector_map`        | autoware_lanelet2_msgs::MapBin               | vector map          |
-| `~/input/twist`             | geometry_msgs::TwistStamped                  | vehicle velocity    |
+| `~/input/odometry`          | nav_msgs::Odometry                           | vehicle velocity    |
 | `~input/dynamic_objects`    | autoware_perception_msgs::DynamicObjectArray | dynamic objects     |
 | `~/input/expand_stop_range` | autoware_planning_msgs::msg::ExpandStopRange | expand stop range   |
 
