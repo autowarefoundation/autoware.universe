@@ -14,6 +14,8 @@
 
 #include "awapi_awiv_adapter/awapi_vehicle_state_publisher.hpp"
 
+#include "autoware_iv_auto_msgs_converter/autoware_iv_auto_msgs_converter.hpp"
+
 #include <limits>
 #include <memory>
 
@@ -41,8 +43,8 @@ void AutowareIvVehicleStatePublisher::statePublisher(const AutowareInfo & aw_inf
   getPoseInfo(aw_info.current_pose_ptr, &status);
   getSteerInfo(aw_info.steer_ptr, &status);
   getVehicleCmdInfo(aw_info.vehicle_cmd_ptr, &status);
-  getTurnSignalInfo(aw_info.turn_signal_ptr, &status);
-  getTwistInfo(aw_info.twist_ptr, &status);
+  getTurnSignalInfo(aw_info.turn_indicators_ptr, aw_info.hazard_lights_ptr, &status);
+  getTwistInfo(aw_info.odometry_ptr, &status);
   getGearInfo(aw_info.gear_ptr, &status);
   getBatteryInfo(aw_info.battery_ptr, &status);
   getGpsInfo(aw_info.nav_sat_ptr, &status);
@@ -82,7 +84,7 @@ void AutowareIvVehicleStatePublisher::getPoseInfo(
 }
 
 void AutowareIvVehicleStatePublisher::getSteerInfo(
-  const autoware_vehicle_msgs::msg::Steering::ConstSharedPtr & steer_ptr,
+  const autoware_auto_vehicle_msgs::msg::SteeringReport::ConstSharedPtr & steer_ptr,
   autoware_api_msgs::msg::AwapiVehicleStatus * status)
 {
   if (!steer_ptr) {
@@ -91,16 +93,15 @@ void AutowareIvVehicleStatePublisher::getSteerInfo(
   }
 
   // get steer
-  status->steering = steer_ptr->data;
+  using autoware_iv_auto_msgs_converter::convert;
+  status->steering = convert(*steer_ptr).data;
 
   // get steer vel
   if (previous_steer_ptr_) {
     // calculate steer vel from steer
-    const double ds = steer_ptr->data - previous_steer_ptr_->data;
+    const double ds = steer_ptr->steering_tire_angle - previous_steer_ptr_->steering_tire_angle;
     const double dt = std::max(
-      (rclcpp::Time(steer_ptr->header.stamp) - rclcpp::Time(previous_steer_ptr_->header.stamp))
-        .seconds(),
-      1e-03);
+      (rclcpp::Time(steer_ptr->stamp) - rclcpp::Time(previous_steer_ptr_->stamp)).seconds(), 1e-03);
     const double steer_vel = ds / dt;
 
     // apply lowpass filter
@@ -112,7 +113,7 @@ void AutowareIvVehicleStatePublisher::getSteerInfo(
   previous_steer_ptr_ = steer_ptr;
 }
 void AutowareIvVehicleStatePublisher::getVehicleCmdInfo(
-  const autoware_vehicle_msgs::msg::VehicleCommand::ConstSharedPtr & vehicle_cmd_ptr,
+  const autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr & vehicle_cmd_ptr,
   autoware_api_msgs::msg::AwapiVehicleStatus * status)
 {
   if (!vehicle_cmd_ptr) {
@@ -121,44 +122,53 @@ void AutowareIvVehicleStatePublisher::getVehicleCmdInfo(
   }
 
   // get command
-  status->target_acceleration = vehicle_cmd_ptr->control.acceleration;
-  status->target_velocity = vehicle_cmd_ptr->control.velocity;
-  status->target_steering = vehicle_cmd_ptr->control.steering_angle;
-  status->target_steering_velocity = vehicle_cmd_ptr->control.steering_angle_velocity;
+  status->target_acceleration = vehicle_cmd_ptr->longitudinal.acceleration;
+  status->target_velocity = vehicle_cmd_ptr->longitudinal.speed;
+  status->target_steering = vehicle_cmd_ptr->lateral.steering_tire_angle;
+  status->target_steering_velocity = vehicle_cmd_ptr->lateral.steering_tire_rotation_rate;
 }
 
 void AutowareIvVehicleStatePublisher::getTurnSignalInfo(
-  const autoware_vehicle_msgs::msg::TurnSignal::ConstSharedPtr & turn_signal_ptr,
+  const autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport::ConstSharedPtr & turn_indicators_ptr,
+  const autoware_auto_vehicle_msgs::msg::HazardLightsReport::ConstSharedPtr & hazard_lights_ptr,
   autoware_api_msgs::msg::AwapiVehicleStatus * status)
 {
-  if (!turn_signal_ptr) {
-    RCLCPP_DEBUG_STREAM_THROTTLE(logger_, *clock_, 5000 /* ms */, "turn signal is nullptr");
+  if (!turn_indicators_ptr) {
+    RCLCPP_DEBUG_STREAM_THROTTLE(logger_, *clock_, 5000 /* ms */, "turn indicators is nullptr");
+    return;
+  }
+
+  if (!hazard_lights_ptr) {
+    RCLCPP_DEBUG_STREAM_THROTTLE(logger_, *clock_, 5000 /* ms */, "hazard lights is nullptr");
     return;
   }
 
   // get turn signal
-  status->turn_signal = turn_signal_ptr->data;
+  using autoware_iv_auto_msgs_converter::convert;
+  status->turn_signal = convert(*turn_indicators_ptr, *hazard_lights_ptr).data;
 }
 
 void AutowareIvVehicleStatePublisher::getTwistInfo(
-  const geometry_msgs::msg::TwistStamped::ConstSharedPtr & twist_ptr,
+  const nav_msgs::msg::Odometry::ConstSharedPtr & odometry_ptr,
   autoware_api_msgs::msg::AwapiVehicleStatus * status)
 {
-  if (!twist_ptr) {
-    RCLCPP_DEBUG_STREAM_THROTTLE(logger_, *clock_, 5000 /* ms */, "twist is nullptr");
+  if (!odometry_ptr) {
+    RCLCPP_DEBUG_STREAM_THROTTLE(logger_, *clock_, 5000 /* ms */, "odometry is nullptr");
     return;
   }
 
   // get twist
-  status->velocity = twist_ptr->twist.linear.x;
-  status->angular_velocity = twist_ptr->twist.angular.z;
+  status->velocity = odometry_ptr->twist.twist.linear.x;
+  status->angular_velocity = odometry_ptr->twist.twist.angular.z;
 
   // get accel
-  if (previous_twist_ptr_) {
+  if (previous_odometry_ptr_) {
     // calculate acceleration from velocity
-    const double dv = twist_ptr->twist.linear.x - previous_twist_ptr_->twist.linear.x;
+    const double dv =
+      odometry_ptr->twist.twist.linear.x - previous_odometry_ptr_->twist.twist.linear.x;
     const double dt = std::max(
-      (rclcpp::Time(twist_ptr->header.stamp) - rclcpp::Time(previous_twist_ptr_->header.stamp))
+      (rclcpp::Time(odometry_ptr->header.stamp) -
+       rclcpp::Time(previous_odometry_ptr_->header.stamp))
         .seconds(),
       1e-03);
     const double accel = dv / dt;
@@ -168,11 +178,11 @@ void AutowareIvVehicleStatePublisher::getTwistInfo(
     prev_accel_ = lowpass_accel;
     status->acceleration = lowpass_accel;
   }
-  previous_twist_ptr_ = twist_ptr;
+  previous_odometry_ptr_ = odometry_ptr;
 }
 
 void AutowareIvVehicleStatePublisher::getGearInfo(
-  const autoware_vehicle_msgs::msg::ShiftStamped::ConstSharedPtr & gear_ptr,
+  const autoware_auto_vehicle_msgs::msg::GearReport::ConstSharedPtr & gear_ptr,
   autoware_api_msgs::msg::AwapiVehicleStatus * status)
 {
   if (!gear_ptr) {
@@ -181,7 +191,8 @@ void AutowareIvVehicleStatePublisher::getGearInfo(
   }
 
   // get gear (shift)
-  status->gear = gear_ptr->shift.data;
+  using autoware_iv_auto_msgs_converter::convert;
+  status->gear = convert(*gear_ptr).shift.data;
 }
 
 void AutowareIvVehicleStatePublisher::getBatteryInfo(

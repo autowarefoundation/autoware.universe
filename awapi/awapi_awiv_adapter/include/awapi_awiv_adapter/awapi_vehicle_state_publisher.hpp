@@ -40,19 +40,22 @@ private:
     const std::shared_ptr<geometry_msgs::msg::PoseStamped> & pose_ptr,
     autoware_api_msgs::msg::AwapiVehicleStatus * status);
   void getSteerInfo(
-    const autoware_vehicle_msgs::msg::Steering::ConstSharedPtr & steer_ptr,
+    const autoware_auto_vehicle_msgs::msg::SteeringReport::ConstSharedPtr & steer_ptr,
     autoware_api_msgs::msg::AwapiVehicleStatus * status);
   void getVehicleCmdInfo(
-    const autoware_vehicle_msgs::msg::VehicleCommand::ConstSharedPtr & vehicle_cmd_ptr,
+    const autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr &
+      vehicle_cmd_ptr,
     autoware_api_msgs::msg::AwapiVehicleStatus * status);
   void getTurnSignalInfo(
-    const autoware_vehicle_msgs::msg::TurnSignal::ConstSharedPtr & turn_signal_ptr,
+    const autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport::ConstSharedPtr &
+      turn_indicators_ptr,
+    const autoware_auto_vehicle_msgs::msg::HazardLightsReport::ConstSharedPtr & hazard_lights_ptr,
     autoware_api_msgs::msg::AwapiVehicleStatus * status);
   void getTwistInfo(
-    const geometry_msgs::msg::TwistStamped::ConstSharedPtr & twist_ptr,
+    const nav_msgs::msg::Odometry::ConstSharedPtr & odometry_ptr,
     autoware_api_msgs::msg::AwapiVehicleStatus * status);
   void getGearInfo(
-    const autoware_vehicle_msgs::msg::ShiftStamped::ConstSharedPtr & gear_ptr,
+    const autoware_auto_vehicle_msgs::msg::GearReport::ConstSharedPtr & gear_ptr,
     autoware_api_msgs::msg::AwapiVehicleStatus * status);
   void getBatteryInfo(
     const autoware_vehicle_msgs::msg::BatteryStatus::ConstSharedPtr & battery_ptr,
@@ -65,8 +68,8 @@ private:
   rclcpp::Clock::SharedPtr clock_;
 
   // parameters
-  geometry_msgs::msg::TwistStamped::ConstSharedPtr previous_twist_ptr_;
-  autoware_vehicle_msgs::msg::Steering::ConstSharedPtr previous_steer_ptr_;
+  nav_msgs::msg::Odometry::ConstSharedPtr previous_odometry_ptr_;
+  autoware_auto_vehicle_msgs::msg::SteeringReport::ConstSharedPtr previous_steer_ptr_;
   double prev_accel_;
   double prev_steer_vel_;
 

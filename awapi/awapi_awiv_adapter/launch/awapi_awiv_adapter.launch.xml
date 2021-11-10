@@ -6,9 +6,10 @@
   <arg name="stop_reason_thresh_dist" default="100.0" />
 
   <arg name="input_steer" default="/vehicle/status/steering" />
-  <arg name="input_vehicle_cmd" default="/control/vehicle_cmd" />
-  <arg name="input_turn_signal" default="/vehicle/status/turn_signal" />
-  <arg name="input_twist" default="/localization/twist" />
+  <arg name="input_vehicle_cmd" default="/control/command/ackermann_control_command" />
+  <arg name="input_turn_indicators" default="/vehicle/status/turn_indicators" />
+  <arg name="input_hazard_lights" default="/vehicle/status/hazard_lights" />
+  <arg name="input_odometry" default="/localization/odometry" />
   <arg name="input_gear" default="/vehicle/status/shift" />
   <arg name="input_battery" default="/vehicle/status/battery_charge" />
   <arg name="input_nav_sat" default="/sensing/gnss/ublox/nav_sat_fix" />
@@ -105,8 +106,9 @@
     <node pkg="awapi_awiv_adapter" exec="awapi_awiv_adapter" output="screen">
       <remap from="input/steer" to="$(var input_steer)" />
       <remap from="input/vehicle_cmd" to="$(var input_vehicle_cmd)" />
-      <remap from="input/turn_signal" to="$(var input_turn_signal)" />
-      <remap from="input/twist" to="$(var input_twist)" />
+      <remap from="input/turn_indicators" to="$(var input_turn_indicators)" />
+      <remap from="input/hazard_lights" to="$(var input_hazard_lights)" />
+      <remap from="input/odometry" to="$(var input_odometry)" />
       <remap from="input/gear" to="$(var input_gear)" />
       <remap from="input/battery" to="$(var input_battery)" />
       <remap from="input/nav_sat" to="$(var input_nav_sat)" />

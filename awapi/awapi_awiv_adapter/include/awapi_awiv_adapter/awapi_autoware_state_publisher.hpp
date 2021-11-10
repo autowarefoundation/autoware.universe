@@ -43,19 +43,19 @@ private:
 
   /* parameter for judging goal now */
   bool arrived_goal_;
-  autoware_system_msgs::msg::AutowareState::_state_type prev_state_;
+  autoware_auto_system_msgs::msg::AutowareState::_state_type prev_state_;
 
   void getAutowareStateInfo(
-    const autoware_system_msgs::msg::AutowareState::ConstSharedPtr & autoware_state_ptr,
+    const autoware_auto_system_msgs::msg::AutowareState::ConstSharedPtr & autoware_state_ptr,
     autoware_api_msgs::msg::AwapiAutowareStatus * status);
   void getControlModeInfo(
-    const autoware_vehicle_msgs::msg::ControlMode::ConstSharedPtr & control_mode_ptr,
+    const autoware_auto_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr & control_mode_ptr,
     autoware_api_msgs::msg::AwapiAutowareStatus * status);
   void getGateModeInfo(
     const autoware_control_msgs::msg::GateMode::ConstSharedPtr & gate_mode_ptr,
     autoware_api_msgs::msg::AwapiAutowareStatus * status);
   void getEmergencyStateInfo(
-    const autoware_system_msgs::msg::EmergencyStateStamped::ConstSharedPtr & emergency_state_ptr,
+    const autoware_auto_system_msgs::msg::EmergencyState::ConstSharedPtr & emergency_state_ptr,
     autoware_api_msgs::msg::AwapiAutowareStatus * status);
   void getCurrentMaxVelInfo(
     const autoware_planning_msgs::msg::VelocityLimit::ConstSharedPtr & current_max_velocity_ptr,
@@ -73,7 +73,7 @@ private:
     const pacmod_msgs::msg::GlobalRpt::ConstSharedPtr & global_rpt_ptr,
     autoware_api_msgs::msg::AwapiAutowareStatus * status);
 
-  bool isGoal(const autoware_system_msgs::msg::AutowareState::ConstSharedPtr & autoware_state);
+  bool isGoal(const autoware_auto_system_msgs::msg::AutowareState::ConstSharedPtr & autoware_state);
 };
 
 }  // namespace autoware_api

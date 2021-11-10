@@ -14,6 +14,7 @@
 
 #include "awapi_awiv_adapter/awapi_autoware_state_publisher.hpp"
 
+#include "autoware_iv_auto_msgs_converter/autoware_iv_auto_msgs_converter.hpp"
 #include "awapi_awiv_adapter/diagnostics_filter.hpp"
 
 #include <regex>
@@ -57,7 +58,7 @@ void AutowareIvAutowareStatePublisher::statePublisher(const AutowareInfo & aw_in
 }
 
 void AutowareIvAutowareStatePublisher::getAutowareStateInfo(
-  const autoware_system_msgs::msg::AutowareState::ConstSharedPtr & autoware_state_ptr,
+  const autoware_auto_system_msgs::msg::AutowareState::ConstSharedPtr & autoware_state_ptr,
   autoware_api_msgs::msg::AwapiAutowareStatus * status)
 {
   if (!autoware_state_ptr) {
@@ -66,12 +67,13 @@ void AutowareIvAutowareStatePublisher::getAutowareStateInfo(
   }
 
   // get autoware_state
-  status->autoware_state = autoware_state_ptr->state;
+  using autoware_iv_auto_msgs_converter::convert;
+  status->autoware_state = convert(*autoware_state_ptr).state;
   status->arrived_goal = isGoal(autoware_state_ptr);
 }
 
 void AutowareIvAutowareStatePublisher::getControlModeInfo(
-  const autoware_vehicle_msgs::msg::ControlMode::ConstSharedPtr & control_mode_ptr,
+  const autoware_auto_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr & control_mode_ptr,
   autoware_api_msgs::msg::AwapiAutowareStatus * status)
 {
   if (!control_mode_ptr) {
@@ -80,7 +82,8 @@ void AutowareIvAutowareStatePublisher::getControlModeInfo(
   }
 
   // get control mode
-  status->control_mode = control_mode_ptr->data;
+  using autoware_iv_auto_msgs_converter::convert;
+  status->control_mode = convert(*control_mode_ptr).data;
 }
 
 void AutowareIvAutowareStatePublisher::getGateModeInfo(
@@ -97,7 +100,7 @@ void AutowareIvAutowareStatePublisher::getGateModeInfo(
 }
 
 void AutowareIvAutowareStatePublisher::getEmergencyStateInfo(
-  const autoware_system_msgs::msg::EmergencyStateStamped::ConstSharedPtr & emergency_state_ptr,
+  const autoware_auto_system_msgs::msg::EmergencyState::ConstSharedPtr & emergency_state_ptr,
   autoware_api_msgs::msg::AwapiAutowareStatus * status)
 {
   if (!emergency_state_ptr) {
@@ -106,10 +109,10 @@ void AutowareIvAutowareStatePublisher::getEmergencyStateInfo(
   }
 
   // get emergency
-  using autoware_system_msgs::msg::EmergencyState;
-  status->emergency_stopped = (emergency_state_ptr->state.state == EmergencyState::MRM_OPERATING) ||
-                              (emergency_state_ptr->state.state == EmergencyState::MRM_SUCCEEDED) ||
-                              (emergency_state_ptr->state.state == EmergencyState::MRM_FAILED);
+  using autoware_auto_system_msgs::msg::EmergencyState;
+  status->emergency_stopped = (emergency_state_ptr->state == EmergencyState::MRM_OPERATING) ||
+                              (emergency_state_ptr->state == EmergencyState::MRM_SUCCEEDED) ||
+                              (emergency_state_ptr->state == EmergencyState::MRM_FAILED);
 }
 
 void AutowareIvAutowareStatePublisher::getCurrentMaxVelInfo(
@@ -152,7 +155,8 @@ void AutowareIvAutowareStatePublisher::getHazardStatusInfo(
   }
 
   // get emergency
-  status->hazard_status = *aw_info.hazard_status_ptr;
+  using autoware_iv_auto_msgs_converter::convert;
+  status->hazard_status = convert(*aw_info.hazard_status_ptr);
 
   // filter leaf diagnostics
   status->hazard_status.status.diagnostics_spf =
@@ -195,8 +199,8 @@ void AutowareIvAutowareStatePublisher::getDiagInfo(
 void AutowareIvAutowareStatePublisher::getErrorDiagInfo(
   const AutowareInfo & aw_info, autoware_api_msgs::msg::AwapiAutowareStatus * status)
 {
-  using autoware_system_msgs::msg::AutowareState;
-  using autoware_vehicle_msgs::msg::ControlMode;
+  using autoware_auto_system_msgs::msg::AutowareState;
+  using autoware_auto_vehicle_msgs::msg::ControlModeReport;
 
   if (!aw_info.autoware_state_ptr) {
     RCLCPP_DEBUG_STREAM_THROTTLE(
@@ -230,22 +234,22 @@ void AutowareIvAutowareStatePublisher::getErrorDiagInfo(
   const auto & hazard_status = aw_info.hazard_status_ptr->status;
   std::vector<DiagnosticStatus> error_diagnostics;
 
-  for (const auto & hazard_diag : hazard_status.diagnostics_spf) {
+  for (const auto & hazard_diag : hazard_status.diag_single_point_fault) {
     auto diag = hazard_diag;
     diag.message = "[Single Point Fault]" + hazard_diag.message;
     error_diagnostics.push_back(diag);
   }
-  for (const auto & hazard_diag : hazard_status.diagnostics_lf) {
+  for (const auto & hazard_diag : hazard_status.diag_latent_fault) {
     auto diag = hazard_diag;
     diag.message = "[Latent Fault]" + hazard_diag.message;
     error_diagnostics.push_back(diag);
   }
-  for (const auto & hazard_diag : hazard_status.diagnostics_sf) {
+  for (const auto & hazard_diag : hazard_status.diag_safe_fault) {
     auto diag = hazard_diag;
     diag.message = "[Safe Fault]" + hazard_diag.message;
     error_diagnostics.push_back(diag);
   }
-  for (const auto & hazard_diag : hazard_status.diagnostics_nf) {
+  for (const auto & hazard_diag : hazard_status.diag_no_fault) {
     auto diag = hazard_diag;
     diag.message = "[No Fault]" + hazard_diag.message;
     diag.level = DiagnosticStatus::OK;
@@ -270,22 +274,22 @@ void AutowareIvAutowareStatePublisher::getGlobalRptInfo(
 }
 
 bool AutowareIvAutowareStatePublisher::isGoal(
-  const autoware_system_msgs::msg::AutowareState::ConstSharedPtr & autoware_state)
+  const autoware_auto_system_msgs::msg::AutowareState::ConstSharedPtr & autoware_state)
 {
   // rename
   const auto & aw_state = autoware_state->state;
 
-  if (aw_state == autoware_system_msgs::msg::AutowareState::ARRIVAL_GOAL) {
+  if (aw_state == autoware_auto_system_msgs::msg::AutowareState::ARRIVED_GOAL) {
     arrived_goal_ = true;
   } else if (  // NOLINT
-    prev_state_ == autoware_system_msgs::msg::AutowareState::DRIVING &&
-    aw_state == autoware_system_msgs::msg::AutowareState::WAITING_FOR_ROUTE) {
+    prev_state_ == autoware_auto_system_msgs::msg::AutowareState::DRIVING &&
+    aw_state == autoware_auto_system_msgs::msg::AutowareState::WAITING_FOR_ROUTE) {
     arrived_goal_ = true;
   }
 
   if (
-    aw_state == autoware_system_msgs::msg::AutowareState::WAITING_FOR_ENGAGE ||
-    aw_state == autoware_system_msgs::msg::AutowareState::DRIVING) {
+    aw_state == autoware_auto_system_msgs::msg::AutowareState::WAITING_FOR_ENGAGE ||
+    aw_state == autoware_auto_system_msgs::msg::AutowareState::DRIVING) {
     // cancel goal state
     arrived_goal_ = false;
   }

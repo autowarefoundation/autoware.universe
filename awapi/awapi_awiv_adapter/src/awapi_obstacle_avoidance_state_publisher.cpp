@@ -14,6 +14,8 @@
 
 #include "awapi_awiv_adapter/awapi_obstacle_avoidance_state_publisher.hpp"
 
+#include "autoware_iv_auto_msgs_converter/autoware_iv_auto_msgs_converter.hpp"
+
 namespace autoware_api
 {
 AutowareIvObstacleAvoidanceStatePublisher::AutowareIvObstacleAvoidanceStatePublisher(
@@ -56,7 +58,7 @@ void AutowareIvObstacleAvoidanceStatePublisher::getObstacleAvoidReadyInfo(
 }
 
 void AutowareIvObstacleAvoidanceStatePublisher::getCandidatePathInfo(
-  const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr & path_ptr,
+  const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr & path_ptr,
   autoware_api_msgs::msg::ObstacleAvoidanceStatus * status)
 {
   if (!path_ptr) {
@@ -65,7 +67,8 @@ void AutowareIvObstacleAvoidanceStatePublisher::getCandidatePathInfo(
     return;
   }
 
-  status->candidate_path = *path_ptr;
+  using autoware_iv_auto_msgs_converter::convert;
+  status->candidate_path = convert(*path_ptr);
 }
 
 }  // namespace autoware_api

@@ -62,30 +62,37 @@ AutowareIvAdapter::AutowareIvAdapter()
 
   auto durable_qos = rclcpp::QoS{1}.transient_local();
 
-  sub_steer_ = this->create_subscription<autoware_vehicle_msgs::msg::Steering>(
+  sub_steer_ = this->create_subscription<autoware_auto_vehicle_msgs::msg::SteeringReport>(
     "input/steer", 1, std::bind(&AutowareIvAdapter::callbackSteer, this, _1));
-  sub_vehicle_cmd_ = this->create_subscription<autoware_vehicle_msgs::msg::VehicleCommand>(
-    "input/vehicle_cmd", durable_qos, std::bind(&AutowareIvAdapter::callbackVehicleCmd, this, _1));
-  sub_turn_signal_cmd_ = this->create_subscription<autoware_vehicle_msgs::msg::TurnSignal>(
-    "input/turn_signal", 1, std::bind(&AutowareIvAdapter::callbackTurnSignal, this, _1));
-  sub_twist_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
-    "input/twist", 1, std::bind(&AutowareIvAdapter::callbackTwist, this, _1));
-  sub_gear_ = this->create_subscription<autoware_vehicle_msgs::msg::ShiftStamped>(
+  sub_vehicle_cmd_ =
+    this->create_subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>(
+      "input/vehicle_cmd", durable_qos,
+      std::bind(&AutowareIvAdapter::callbackVehicleCmd, this, _1));
+  sub_turn_indicators_ =
+    this->create_subscription<autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport>(
+      "input/turn_indicators", 1, std::bind(&AutowareIvAdapter::callbackTurnIndicators, this, _1));
+  sub_hazard_lights_ =
+    this->create_subscription<autoware_auto_vehicle_msgs::msg::HazardLightsReport>(
+      "input/hazard_lights", 1, std::bind(&AutowareIvAdapter::callbackHazardLights, this, _1));
+  sub_odometry_ = this->create_subscription<nav_msgs::msg::Odometry>(
+    "input/odometry", 1, std::bind(&AutowareIvAdapter::callbackTwist, this, _1));
+  sub_gear_ = this->create_subscription<autoware_auto_vehicle_msgs::msg::GearReport>(
     "input/gear", 1, std::bind(&AutowareIvAdapter::callbackGear, this, _1));
   sub_battery_ = this->create_subscription<autoware_vehicle_msgs::msg::BatteryStatus>(
     "input/battery", 1, std::bind(&AutowareIvAdapter::callbackBattery, this, _1));
   sub_nav_sat_ = this->create_subscription<sensor_msgs::msg::NavSatFix>(
     "input/nav_sat", 1, std::bind(&AutowareIvAdapter::callbackNavSat, this, _1));
-  sub_autoware_state_ = this->create_subscription<autoware_system_msgs::msg::AutowareState>(
+  sub_autoware_state_ = this->create_subscription<autoware_auto_system_msgs::msg::AutowareState>(
     "input/autoware_state", 1, std::bind(&AutowareIvAdapter::callbackAutowareState, this, _1));
-  sub_control_mode_ = this->create_subscription<autoware_vehicle_msgs::msg::ControlMode>(
+  sub_control_mode_ = this->create_subscription<autoware_auto_vehicle_msgs::msg::ControlModeReport>(
     "input/control_mode", 1, std::bind(&AutowareIvAdapter::callbackControlMode, this, _1));
   sub_gate_mode_ = this->create_subscription<autoware_control_msgs::msg::GateMode>(
     "input/gate_mode", durable_qos, std::bind(&AutowareIvAdapter::callbackGateMode, this, _1));
-  sub_emergency_ = this->create_subscription<autoware_system_msgs::msg::EmergencyStateStamped>(
+  sub_emergency_ = this->create_subscription<autoware_auto_system_msgs::msg::EmergencyState>(
     "input/emergency_state", 1, std::bind(&AutowareIvAdapter::callbackEmergencyState, this, _1));
-  sub_hazard_status_ = this->create_subscription<autoware_system_msgs::msg::HazardStatusStamped>(
-    "input/hazard_status", 1, std::bind(&AutowareIvAdapter::callbackHazardStatus, this, _1));
+  sub_hazard_status_ =
+    this->create_subscription<autoware_auto_system_msgs::msg::HazardStatusStamped>(
+      "input/hazard_status", 1, std::bind(&AutowareIvAdapter::callbackHazardStatus, this, _1));
   sub_stop_reason_ = this->create_subscription<autoware_planning_msgs::msg::StopReasonArray>(
     "input/stop_reason", 100, std::bind(&AutowareIvAdapter::callbackStopReason, this, _1));
   sub_v2x_command_ = this->create_subscription<autoware_v2x_msgs::msg::InfrastructureCommandArray>(
@@ -102,7 +109,7 @@ AutowareIvAdapter::AutowareIvAdapter()
       std::bind(&AutowareIvAdapter::callbackLaneChangeAvailable, this, _1));
   sub_lane_change_ready_ = this->create_subscription<autoware_planning_msgs::msg::LaneChangeStatus>(
     "input/lane_change_ready", 1, std::bind(&AutowareIvAdapter::callbackLaneChangeReady, this, _1));
-  sub_lane_change_candidate_ = this->create_subscription<autoware_planning_msgs::msg::Path>(
+  sub_lane_change_candidate_ = this->create_subscription<autoware_auto_planning_msgs::msg::Path>(
     "input/lane_change_candidate_path", 1,
     std::bind(&AutowareIvAdapter::callbackLaneChangeCandidatePath, this, _1));
   sub_obstacle_avoid_ready_ =
@@ -110,7 +117,7 @@ AutowareIvAdapter::AutowareIvAdapter()
       "input/obstacle_avoid_ready", durable_qos,
       std::bind(&AutowareIvAdapter::callbackLaneObstacleAvoidReady, this, _1));
   sub_obstacle_avoid_candidate_ =
-    this->create_subscription<autoware_planning_msgs::msg::Trajectory>(
+    this->create_subscription<autoware_auto_planning_msgs::msg::Trajectory>(
       "input/obstacle_avoid_candidate_path", durable_qos,
       std::bind(&AutowareIvAdapter::callbackLaneObstacleAvoidCandidatePath, this, _1));
   sub_max_velocity_ = this->create_subscription<autoware_api_msgs::msg::VelocityLimit>(
@@ -120,7 +127,7 @@ AutowareIvAdapter::AutowareIvAdapter()
     std::bind(&AutowareIvAdapter::callbackCurrentMaxVelocity, this, _1));
   sub_temporary_stop_ = this->create_subscription<autoware_api_msgs::msg::StopCommand>(
     "input/temporary_stop", 1, std::bind(&AutowareIvAdapter::callbackTemporaryStop, this, _1));
-  sub_autoware_traj_ = this->create_subscription<autoware_planning_msgs::msg::Trajectory>(
+  sub_autoware_traj_ = this->create_subscription<autoware_auto_planning_msgs::msg::Trajectory>(
     "input/autoware_trajectory", 1,
     std::bind(&AutowareIvAdapter::callbackAutowareTrajectory, this, _1));
   sub_door_control_ = this->create_subscription<autoware_api_msgs::msg::DoorControlCommand>(
@@ -176,31 +183,36 @@ void AutowareIvAdapter::timerCallback()
 }
 
 void AutowareIvAdapter::callbackSteer(
-  const autoware_vehicle_msgs::msg::Steering::ConstSharedPtr msg_ptr)
+  const autoware_auto_vehicle_msgs::msg::SteeringReport::ConstSharedPtr msg_ptr)
 {
   aw_info_.steer_ptr = msg_ptr;
 }
 
 void AutowareIvAdapter::callbackVehicleCmd(
-  const autoware_vehicle_msgs::msg::VehicleCommand::ConstSharedPtr msg_ptr)
+  const autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr msg_ptr)
 {
   aw_info_.vehicle_cmd_ptr = msg_ptr;
 }
 
-void AutowareIvAdapter::callbackTurnSignal(
-  const autoware_vehicle_msgs::msg::TurnSignal::ConstSharedPtr msg_ptr)
+void AutowareIvAdapter::callbackTurnIndicators(
+  const autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport::ConstSharedPtr msg_ptr)
 {
-  aw_info_.turn_signal_ptr = msg_ptr;
+  aw_info_.turn_indicators_ptr = msg_ptr;
 }
 
-void AutowareIvAdapter::callbackTwist(
-  const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg_ptr)
+void AutowareIvAdapter::callbackHazardLights(
+  const autoware_auto_vehicle_msgs::msg::HazardLightsReport::ConstSharedPtr msg_ptr)
 {
-  aw_info_.twist_ptr = msg_ptr;
+  aw_info_.hazard_lights_ptr = msg_ptr;
+}
+
+void AutowareIvAdapter::callbackTwist(const nav_msgs::msg::Odometry::ConstSharedPtr msg_ptr)
+{
+  aw_info_.odometry_ptr = msg_ptr;
 }
 
 void AutowareIvAdapter::callbackGear(
-  const autoware_vehicle_msgs::msg::ShiftStamped::ConstSharedPtr msg_ptr)
+  const autoware_auto_vehicle_msgs::msg::GearReport::ConstSharedPtr msg_ptr)
 {
   aw_info_.gear_ptr = msg_ptr;
 }
@@ -234,12 +246,12 @@ void AutowareIvAdapter::getCurrentPose()
 }
 
 void AutowareIvAdapter::callbackAutowareState(
-  const autoware_system_msgs::msg::AutowareState::ConstSharedPtr msg_ptr)
+  const autoware_auto_system_msgs::msg::AutowareState::ConstSharedPtr msg_ptr)
 {
   aw_info_.autoware_state_ptr = msg_ptr;
 }
 void AutowareIvAdapter::callbackControlMode(
-  const autoware_vehicle_msgs::msg::ControlMode::ConstSharedPtr msg_ptr)
+  const autoware_auto_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr msg_ptr)
 {
   aw_info_.control_mode_ptr = msg_ptr;
 }
@@ -251,13 +263,13 @@ void AutowareIvAdapter::callbackGateMode(
 }
 
 void AutowareIvAdapter::callbackEmergencyState(
-  const autoware_system_msgs::msg::EmergencyStateStamped::ConstSharedPtr msg_ptr)
+  const autoware_auto_system_msgs::msg::EmergencyState::ConstSharedPtr msg_ptr)
 {
   aw_info_.emergency_state_ptr = msg_ptr;
 }
 
 void AutowareIvAdapter::callbackHazardStatus(
-  const autoware_system_msgs::msg::HazardStatusStamped::ConstSharedPtr msg_ptr)
+  const autoware_auto_system_msgs::msg::HazardStatusStamped::ConstSharedPtr msg_ptr)
 {
   aw_info_.hazard_status_ptr = msg_ptr;
 }
@@ -304,7 +316,7 @@ void AutowareIvAdapter::callbackLaneChangeReady(
 }
 
 void AutowareIvAdapter::callbackLaneChangeCandidatePath(
-  const autoware_planning_msgs::msg::Path::ConstSharedPtr msg_ptr)
+  const autoware_auto_planning_msgs::msg::Path::ConstSharedPtr msg_ptr)
 {
   aw_info_.lane_change_candidate_ptr = msg_ptr;
 }
@@ -316,7 +328,7 @@ void AutowareIvAdapter::callbackLaneObstacleAvoidReady(
 }
 
 void AutowareIvAdapter::callbackLaneObstacleAvoidCandidatePath(
-  const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr msg_ptr)
+  const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr msg_ptr)
 {
   aw_info_.obstacle_avoid_candidate_ptr = msg_ptr;
 }
@@ -349,7 +361,7 @@ void AutowareIvAdapter::callbackTemporaryStop(
 }
 
 void AutowareIvAdapter::callbackAutowareTrajectory(
-  const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr msg_ptr)
+  const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr msg_ptr)
 {
   aw_info_.autoware_planning_traj_ptr = msg_ptr;
 }

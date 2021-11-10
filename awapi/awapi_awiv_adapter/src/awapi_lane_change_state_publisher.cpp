@@ -14,6 +14,8 @@
 
 #include "awapi_awiv_adapter/awapi_lane_change_state_publisher.hpp"
 
+#include "autoware_iv_auto_msgs_converter/autoware_iv_auto_msgs_converter.hpp"
+
 namespace autoware_api
 {
 AutowareIvLaneChangeStatePublisher::AutowareIvLaneChangeStatePublisher(rclcpp::Node & node)
@@ -70,7 +72,7 @@ void AutowareIvLaneChangeStatePublisher::getLaneChangeReadyInfo(
 }
 
 void AutowareIvLaneChangeStatePublisher::getCandidatePathInfo(
-  const autoware_planning_msgs::msg::Path::ConstSharedPtr & path_ptr,
+  const autoware_auto_planning_msgs::msg::Path::ConstSharedPtr & path_ptr,
   autoware_api_msgs::msg::LaneChangeStatus * status)
 {
   if (!path_ptr) {
@@ -79,7 +81,8 @@ void AutowareIvLaneChangeStatePublisher::getCandidatePathInfo(
     return;
   }
 
-  status->candidate_path = *path_ptr;
+  using autoware_iv_auto_msgs_converter::convert;
+  status->candidate_path = convert(*path_ptr);
 }
 
 }  // namespace autoware_api

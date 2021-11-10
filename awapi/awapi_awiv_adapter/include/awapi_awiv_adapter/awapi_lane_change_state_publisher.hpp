@@ -43,7 +43,7 @@ private:
     const autoware_planning_msgs::msg::LaneChangeStatus::ConstSharedPtr & ready_ptr,
     autoware_api_msgs::msg::LaneChangeStatus * status);
   void getCandidatePathInfo(
-    const autoware_planning_msgs::msg::Path::ConstSharedPtr & path_ptr,
+    const autoware_auto_planning_msgs::msg::Path::ConstSharedPtr & path_ptr,
     autoware_api_msgs::msg::LaneChangeStatus * status);
 };
 

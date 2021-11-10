@@ -26,7 +26,7 @@ double lowpass_filter(const double current_value, const double prev_value, const
 namespace planning_util
 {
 bool calcClosestIndex(
-  const autoware_planning_msgs::msg::Trajectory & traj, const geometry_msgs::msg::Pose & pose,
+  const autoware_auto_planning_msgs::msg::Trajectory & traj, const geometry_msgs::msg::Pose & pose,
   size_t & output_closest_idx, const double dist_thr, const double angle_thr)
 {
   double dist_min = std::numeric_limits<double>::max();
@@ -74,7 +74,7 @@ double normalizeEulerAngle(double euler)
 }
 
 double calcArcLengthFromWayPoint(
-  const autoware_planning_msgs::msg::Trajectory & input_path, const size_t src_idx,
+  const autoware_auto_planning_msgs::msg::Trajectory & input_path, const size_t src_idx,
   const size_t dst_idx)
 {
   double length = 0;
@@ -89,7 +89,7 @@ double calcArcLengthFromWayPoint(
 }
 
 double calcDistanceAlongTrajectory(
-  const autoware_planning_msgs::msg::Trajectory & trajectory,
+  const autoware_auto_planning_msgs::msg::Trajectory & trajectory,
   const geometry_msgs::msg::Pose & current_pose, const geometry_msgs::msg::Pose & target_pose)
 {
   size_t self_idx;

@@ -27,21 +27,22 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
+#include <autoware_auto_planning_msgs/msg/path.hpp>
+#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
+#include <autoware_auto_system_msgs/msg/autoware_state.hpp>
+#include <autoware_auto_system_msgs/msg/emergency_state.hpp>
+#include <autoware_auto_vehicle_msgs/msg/control_mode_report.hpp>
+#include <autoware_auto_vehicle_msgs/msg/gear_report.hpp>
+#include <autoware_auto_vehicle_msgs/msg/hazard_lights_report.hpp>
+#include <autoware_auto_vehicle_msgs/msg/steering_report.hpp>
+#include <autoware_auto_vehicle_msgs/msg/turn_indicators_report.hpp>
 #include <autoware_control_msgs/msg/gate_mode.hpp>
-#include <autoware_planning_msgs/msg/path.hpp>
 #include <autoware_planning_msgs/msg/stop_reason_array.hpp>
-#include <autoware_planning_msgs/msg/trajectory.hpp>
-#include <autoware_system_msgs/msg/autoware_state.hpp>
-#include <autoware_system_msgs/msg/emergency_state_stamped.hpp>
 #include <autoware_v2x_msgs/msg/infrastructure_command_array.hpp>
 #include <autoware_v2x_msgs/msg/virtual_traffic_light_state_array.hpp>
-#include <autoware_vehicle_msgs/msg/control_mode.hpp>
-#include <autoware_vehicle_msgs/msg/shift_stamped.hpp>
-#include <autoware_vehicle_msgs/msg/steering.hpp>
-#include <autoware_vehicle_msgs/msg/turn_signal.hpp>
-#include <autoware_vehicle_msgs/msg/vehicle_command.hpp>
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
-#include <geometry_msgs/msg/twist_stamped.hpp>
+#include <nav_msgs/msg/odometry.hpp>
 #include <pacmod_msgs/msg/global_rpt.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
 
@@ -59,18 +60,24 @@ public:
 
 private:
   // subscriber
-  rclcpp::Subscription<autoware_vehicle_msgs::msg::Steering>::SharedPtr sub_steer_;
-  rclcpp::Subscription<autoware_vehicle_msgs::msg::VehicleCommand>::SharedPtr sub_vehicle_cmd_;
-  rclcpp::Subscription<autoware_vehicle_msgs::msg::TurnSignal>::SharedPtr sub_turn_signal_cmd_;
-  rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr sub_twist_;
-  rclcpp::Subscription<autoware_vehicle_msgs::msg::ShiftStamped>::SharedPtr sub_gear_;
+  rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::SteeringReport>::SharedPtr sub_steer_;
+  rclcpp::Subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>::SharedPtr
+    sub_vehicle_cmd_;
+  rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport>::SharedPtr
+    sub_turn_indicators_;
+  rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::HazardLightsReport>::SharedPtr
+    sub_hazard_lights_;
+  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odometry_;
+  rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::GearReport>::SharedPtr sub_gear_;
   rclcpp::Subscription<autoware_vehicle_msgs::msg::BatteryStatus>::SharedPtr sub_battery_;
   rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr sub_nav_sat_;
-  rclcpp::Subscription<autoware_system_msgs::msg::AutowareState>::SharedPtr sub_autoware_state_;
-  rclcpp::Subscription<autoware_vehicle_msgs::msg::ControlMode>::SharedPtr sub_control_mode_;
+  rclcpp::Subscription<autoware_auto_system_msgs::msg::AutowareState>::SharedPtr
+    sub_autoware_state_;
+  rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::ControlModeReport>::SharedPtr
+    sub_control_mode_;
   rclcpp::Subscription<autoware_control_msgs::msg::GateMode>::SharedPtr sub_gate_mode_;
-  rclcpp::Subscription<autoware_system_msgs::msg::EmergencyStateStamped>::SharedPtr sub_emergency_;
-  rclcpp::Subscription<autoware_system_msgs::msg::HazardStatusStamped>::SharedPtr
+  rclcpp::Subscription<autoware_auto_system_msgs::msg::EmergencyState>::SharedPtr sub_emergency_;
+  rclcpp::Subscription<autoware_auto_system_msgs::msg::HazardStatusStamped>::SharedPtr
     sub_hazard_status_;
   rclcpp::Subscription<autoware_planning_msgs::msg::StopReasonArray>::SharedPtr sub_stop_reason_;
   rclcpp::Subscription<autoware_v2x_msgs::msg::InfrastructureCommandArray>::SharedPtr
@@ -83,16 +90,17 @@ private:
     sub_lane_change_available_;
   rclcpp::Subscription<autoware_planning_msgs::msg::LaneChangeStatus>::SharedPtr
     sub_lane_change_ready_;
-  rclcpp::Subscription<autoware_planning_msgs::msg::Path>::SharedPtr sub_lane_change_candidate_;
+  rclcpp::Subscription<autoware_auto_planning_msgs::msg::Path>::SharedPtr
+    sub_lane_change_candidate_;
   rclcpp::Subscription<autoware_planning_msgs::msg::IsAvoidancePossible>::SharedPtr
     sub_obstacle_avoid_ready_;
-  rclcpp::Subscription<autoware_planning_msgs::msg::Trajectory>::SharedPtr
+  rclcpp::Subscription<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr
     sub_obstacle_avoid_candidate_;
   rclcpp::Subscription<autoware_api_msgs::msg::VelocityLimit>::SharedPtr sub_max_velocity_;
   rclcpp::Subscription<autoware_planning_msgs::msg::VelocityLimit>::SharedPtr
     sub_current_max_velocity_;
   rclcpp::Subscription<autoware_api_msgs::msg::StopCommand>::SharedPtr sub_temporary_stop_;
-  rclcpp::Subscription<autoware_planning_msgs::msg::Trajectory>::SharedPtr sub_autoware_traj_;
+  rclcpp::Subscription<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr sub_autoware_traj_;
   rclcpp::Subscription<autoware_api_msgs::msg::DoorControlCommand>::SharedPtr sub_door_control_;
   rclcpp::Subscription<pacmod_msgs::msg::SystemRptInt>::SharedPtr sub_door_status_;
 
@@ -111,21 +119,26 @@ private:
   tf2_ros::TransformListener tf_listener_;
 
   // callback function
-  void callbackSteer(const autoware_vehicle_msgs::msg::Steering::ConstSharedPtr msg_ptr);
-  void callbackVehicleCmd(const autoware_vehicle_msgs::msg::VehicleCommand::ConstSharedPtr msg_ptr);
-  void callbackTurnSignal(const autoware_vehicle_msgs::msg::TurnSignal::ConstSharedPtr msg_ptr);
-  void callbackTwist(const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg_ptr);
-  void callbackGear(const autoware_vehicle_msgs::msg::ShiftStamped::ConstSharedPtr msg_ptr);
+  void callbackSteer(const autoware_auto_vehicle_msgs::msg::SteeringReport::ConstSharedPtr msg_ptr);
+  void callbackVehicleCmd(
+    const autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr msg_ptr);
+  void callbackTurnIndicators(
+    const autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport::ConstSharedPtr msg_ptr);
+  void callbackHazardLights(
+    const autoware_auto_vehicle_msgs::msg::HazardLightsReport::ConstSharedPtr msg_ptr);
+  void callbackTwist(const nav_msgs::msg::Odometry::ConstSharedPtr msg_ptr);
+  void callbackGear(const autoware_auto_vehicle_msgs::msg::GearReport::ConstSharedPtr msg_ptr);
   void callbackBattery(const autoware_vehicle_msgs::msg::BatteryStatus::ConstSharedPtr msg_ptr);
   void callbackNavSat(const sensor_msgs::msg::NavSatFix::ConstSharedPtr msg_ptr);
   void callbackAutowareState(
-    const autoware_system_msgs::msg::AutowareState::ConstSharedPtr msg_ptr);
-  void callbackControlMode(const autoware_vehicle_msgs::msg::ControlMode::ConstSharedPtr msg_ptr);
+    const autoware_auto_system_msgs::msg::AutowareState::ConstSharedPtr msg_ptr);
+  void callbackControlMode(
+    const autoware_auto_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr msg_ptr);
   void callbackGateMode(const autoware_control_msgs::msg::GateMode::ConstSharedPtr msg_ptr);
   void callbackEmergencyState(
-    const autoware_system_msgs::msg::EmergencyStateStamped::ConstSharedPtr msg_ptr);
+    const autoware_auto_system_msgs::msg::EmergencyState::ConstSharedPtr msg_ptr);
   void callbackHazardStatus(
-    const autoware_system_msgs::msg::HazardStatusStamped::ConstSharedPtr msg_ptr);
+    const autoware_auto_system_msgs::msg::HazardStatusStamped::ConstSharedPtr msg_ptr);
   void callbackStopReason(
     const autoware_planning_msgs::msg::StopReasonArray::ConstSharedPtr msg_ptr);
   void callbackV2XCommand(
@@ -139,17 +152,17 @@ private:
   void callbackLaneChangeReady(
     const autoware_planning_msgs::msg::LaneChangeStatus::ConstSharedPtr msg_ptr);
   void callbackLaneChangeCandidatePath(
-    const autoware_planning_msgs::msg::Path::ConstSharedPtr msg_ptr);
+    const autoware_auto_planning_msgs::msg::Path::ConstSharedPtr msg_ptr);
   void callbackLaneObstacleAvoidReady(
     const autoware_planning_msgs::msg::IsAvoidancePossible::ConstSharedPtr msg_ptr);
   void callbackLaneObstacleAvoidCandidatePath(
-    const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr msg_ptr);
+    const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr msg_ptr);
   void callbackMaxVelocity(const autoware_api_msgs::msg::VelocityLimit::ConstSharedPtr msg_ptr);
   void callbackCurrentMaxVelocity(
     const autoware_planning_msgs::msg::VelocityLimit::ConstSharedPtr msg_ptr);
   void callbackTemporaryStop(const autoware_api_msgs::msg::StopCommand::ConstSharedPtr msg_ptr);
   void callbackAutowareTrajectory(
-    const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr msg_ptr);
+    const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr msg_ptr);
   void callbackDoorControl(
     const autoware_api_msgs::msg::DoorControlCommand::ConstSharedPtr msg_ptr);
   void callbackDoorStatus(const pacmod_msgs::msg::SystemRptInt::ConstSharedPtr msg_ptr);
