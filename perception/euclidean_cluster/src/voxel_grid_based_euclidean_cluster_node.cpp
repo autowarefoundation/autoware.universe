@@ -39,9 +39,8 @@ VoxelGridBasedEuclideanClusterNode::VoxelGridBasedEuclideanClusterNode(
     "input", rclcpp::SensorDataQoS().keep_last(1),
     std::bind(&VoxelGridBasedEuclideanClusterNode::onPointCloud, this, _1));
 
-  cluster_pub_ =
-    this->create_publisher<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>(
-      "output", rclcpp::QoS{1});
+  cluster_pub_ = this->create_publisher<autoware_perception_msgs::msg::DetectedObjectsWithFeature>(
+    "output", rclcpp::QoS{1});
   debug_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("debug/clusters", 1);
 }
 
@@ -57,7 +56,7 @@ void VoxelGridBasedEuclideanClusterNode::onPointCloud(
   cluster_->cluster(raw_pointcloud_ptr, clusters);
 
   // build output msg
-  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray output;
+  autoware_perception_msgs::msg::DetectedObjectsWithFeature output;
   convertPointCloudClusters2Msg(input_msg->header, clusters, output);
   cluster_pub_->publish(output);
 
