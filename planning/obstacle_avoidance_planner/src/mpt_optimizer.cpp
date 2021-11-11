@@ -527,7 +527,7 @@ boost::optional<Eigen::VectorXd> MPTOptimizer::executeOptimization(
   ConstraintMatrix const_m =
     getConstraintMatrix(enable_avoidance, x0, m, maps, ref_points, path_points, debug_data);
 
-  osqp_solver_ptr_ = std::make_unique<osqp::OSQPInterface>(
+  osqp_solver_ptr_ = std::make_unique<autoware::common::osqp::OSQPInterface>(
     obj_m.hessian, const_m.linear, obj_m.gradient, const_m.lower_bound, const_m.upper_bound,
     1.0e-3);
   osqp_solver_ptr_->updateEpsRel(1.0e-3);
@@ -913,8 +913,10 @@ ConstraintMatrix MPTOptimizer::getConstraintMatrix(
   const auto bounds = getReferenceBounds(enable_avoidance, ref_points, maps, debug_data);
 
   Eigen::MatrixXd A = Eigen::MatrixXd::Zero(3 * N_ref * N_point + N_ref, N_dec);
-  Eigen::VectorXd lb = Eigen::VectorXd::Constant(3 * N_ref * N_point + N_ref, -osqp::INF);
-  Eigen::VectorXd ub = Eigen::VectorXd::Constant(3 * N_ref * N_point + N_ref, osqp::INF);
+  Eigen::VectorXd lb =
+    Eigen::VectorXd::Constant(3 * N_ref * N_point + N_ref, -autoware::common::osqp::INF);
+  Eigen::VectorXd ub =
+    Eigen::VectorXd::Constant(3 * N_ref * N_point + N_ref, autoware::common::osqp::INF);
 
   // Define constraint matrices and vectors
   // Gap from reference point around vehicle base_link

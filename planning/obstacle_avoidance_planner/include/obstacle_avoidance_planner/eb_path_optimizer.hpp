@@ -69,7 +69,7 @@ struct OccupancyMaps
   std::vector<std::vector<int>> road_occupancy_map;
 };
 
-namespace osqp
+namespace autoware::common::osqp
 {
 class OSQPInterface;
 }
@@ -247,9 +247,9 @@ private:
 
   Eigen::MatrixXd default_a_matrix_;
   std::unique_ptr<geometry_msgs::msg::Vector3> keep_space_shape_ptr_;
-  std::unique_ptr<osqp::OSQPInterface> osqp_solver_ptr_;
-  std::unique_ptr<osqp::OSQPInterface> ex_osqp_solver_ptr_;
-  std::unique_ptr<osqp::OSQPInterface> vis_osqp_solver_ptr_;
+  std::unique_ptr<autoware::common::osqp::OSQPInterface> osqp_solver_ptr_;
+  std::unique_ptr<autoware::common::osqp::OSQPInterface> ex_osqp_solver_ptr_;
+  std::unique_ptr<autoware::common::osqp::OSQPInterface> vis_osqp_solver_ptr_;
 
   std::unique_ptr<MPTOptimizer> mpt_optimizer_ptr_;
 

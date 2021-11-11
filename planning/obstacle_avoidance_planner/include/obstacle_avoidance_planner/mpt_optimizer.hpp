@@ -58,7 +58,7 @@ namespace cv
 class Mat;
 }
 
-namespace osqp
+namespace autoware::common::osqp
 {
 class OSQPInterface;
 }
@@ -163,7 +163,7 @@ class MPTOptimizer
 private:
   bool is_showing_debug_info_;
 
-  std::unique_ptr<osqp::OSQPInterface> osqp_solver_ptr_;
+  std::unique_ptr<autoware::common::osqp::OSQPInterface> osqp_solver_ptr_;
   std::unique_ptr<MPTParam> mpt_param_ptr_;
   std::unique_ptr<TrajectoryParam> traj_param_ptr_;
   std::unique_ptr<QPParam> qp_param_ptr_;

@@ -71,15 +71,15 @@ void EBPathOptimizer::initializeSolver()
   std::vector<double> q(traj_param_.num_sampling_points * 2, 0.0);
   std::vector<double> lower_bound(traj_param_.num_sampling_points * 2, 0.0);
   std::vector<double> upper_bound(traj_param_.num_sampling_points * 2, 0.0);
-  osqp_solver_ptr_ = std::make_unique<osqp::OSQPInterface>(
+  osqp_solver_ptr_ = std::make_unique<autoware::common::osqp::OSQPInterface>(
     p, default_a_matrix_, q, lower_bound, upper_bound, qp_param_.eps_abs);
   osqp_solver_ptr_->updateEpsRel(qp_param_.eps_rel);
   osqp_solver_ptr_->updateMaxIter(qp_param_.max_iteration);
-  ex_osqp_solver_ptr_ = std::make_unique<osqp::OSQPInterface>(
+  ex_osqp_solver_ptr_ = std::make_unique<autoware::common::osqp::OSQPInterface>(
     p, default_a_matrix_, q, lower_bound, upper_bound, qp_param_.eps_abs);
   ex_osqp_solver_ptr_->updateEpsRel(qp_param_.eps_rel);
   ex_osqp_solver_ptr_->updateMaxIter(qp_param_.max_iteration);
-  vis_osqp_solver_ptr_ = std::make_unique<osqp::OSQPInterface>(
+  vis_osqp_solver_ptr_ = std::make_unique<autoware::common::osqp::OSQPInterface>(
     p, default_a_matrix_, q, lower_bound, upper_bound, qp_param_.eps_abs);
   vis_osqp_solver_ptr_->updateEpsRel(qp_param_.eps_rel);
   vis_osqp_solver_ptr_->updateMaxIter(qp_param_.max_iteration);
