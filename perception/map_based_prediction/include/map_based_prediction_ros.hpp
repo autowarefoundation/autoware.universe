@@ -17,9 +17,9 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_lanelet2_msgs/msg/map_bin.hpp>
-#include <autoware_perception_msgs/msg/dynamic_object.hpp>
-#include <autoware_perception_msgs/msg/dynamic_object_array.hpp>
+#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
+#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
+#include <autoware_auto_perception_msgs/msg/tracked_objects.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <unique_identifier_msgs/msg/uuid.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
@@ -61,9 +61,9 @@ private:
   double interpolating_resolution_;
   double debug_accumulated_time_;
 
-  rclcpp::Subscription<autoware_perception_msgs::msg::DynamicObjectArray>::SharedPtr sub_objects_;
-  rclcpp::Subscription<autoware_lanelet2_msgs::msg::MapBin>::SharedPtr sub_map_;
-  rclcpp::Publisher<autoware_perception_msgs::msg::DynamicObjectArray>::SharedPtr pub_objects_;
+  rclcpp::Subscription<autoware_auto_perception_msgs::msg::TrackedObjects>::SharedPtr sub_objects_;
+  rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr sub_map_;
+  rclcpp::Publisher<autoware_auto_perception_msgs::msg::PredictedObjects>::SharedPtr pub_objects_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_markers_;
 
   std::unordered_map<std::string, std::vector<int>> uuid2laneids_;
@@ -80,11 +80,11 @@ private:
   bool getSelfPoseInMap(geometry_msgs::msg::Pose & self_pose);
 
   void objectsCallback(
-    const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr in_objects);
-  void mapCallback(const autoware_lanelet2_msgs::msg::MapBin::ConstSharedPtr msg);
+    const autoware_auto_perception_msgs::msg::TrackedObjects::ConstSharedPtr in_objects);
+  void mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg);
 
   bool getClosestLanelets(
-    const autoware_perception_msgs::msg::DynamicObject & object,
+    const autoware_auto_perception_msgs::msg::TrackedObject & object,
     const lanelet::LaneletMapPtr & lanelet_map_ptr,
     std::vector<lanelet::Lanelet> & closest_lanelets, std::string uuid_string);
 
