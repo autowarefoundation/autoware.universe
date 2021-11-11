@@ -122,6 +122,7 @@ autoware_auto_vehicle_msgs::msg::HazardLightsCommand EmergencyHandler::createHaz
   } else {
     msg.command = HazardLightsCommand::NO_COMMAND;
   }
+  return msg;
 }
 
 void EmergencyHandler::publishControlCommands()
@@ -145,6 +146,7 @@ void EmergencyHandler::publishControlCommands()
   // Publish gear
   if (param_.use_parking_after_stopped && isStopped()) {
     GearCommand msg;
+    msg.stamp = stamp;
     msg.command = GearCommand::PARK;
     pub_gear_cmd_->publish(msg);
   }
