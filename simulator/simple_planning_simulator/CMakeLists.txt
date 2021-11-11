@@ -1,51 +1,53 @@
-cmake_minimum_required(VERSION 3.5)
-project(simple_planning_simulator)
+cmake_minimum_required(VERSION 3.6)
 
-### Compile options
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
-endif()
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
-endif()
+project(simple_planning_simulator)
 
 ### Dependencies
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
-# Add path of include dir
-include_directories(include)
 
-# Generate exe file
-set(SIMPLE_PLANNING_SIMULATOR_SRC
-  src/simple_planning_simulator_core.cpp
-  src/vehicle_model/sim_model_interface.cpp
-  src/vehicle_model/sim_model_ideal.cpp
-  src/vehicle_model/sim_model_constant_acceleration.cpp
-  src/vehicle_model/sim_model_time_delay.cpp
-  src/vehicle_model/sim_model_util.cpp
+# Component
+ament_auto_add_library(${PROJECT_NAME} SHARED
+  include/simple_planning_simulator/simple_planning_simulator_core.hpp
+  include/simple_planning_simulator/visibility_control.hpp
+  src/simple_planning_simulator/simple_planning_simulator_core.cpp
+  src/simple_planning_simulator/vehicle_model/sim_model_interface.cpp
+  src/simple_planning_simulator/vehicle_model/sim_model_ideal_steer_vel.cpp
+  src/simple_planning_simulator/vehicle_model/sim_model_ideal_steer_acc.cpp
+  src/simple_planning_simulator/vehicle_model/sim_model_ideal_steer_acc_geared.cpp
+  src/simple_planning_simulator/vehicle_model/sim_model_delay_steer_acc.cpp
+  src/simple_planning_simulator/vehicle_model/sim_model_delay_steer_acc_geared.cpp
 )
-ament_auto_add_executable(simple_planning_simulator_exe src/simple_planning_simulator_node.cpp ${SIMPLE_PLANNING_SIMULATOR_SRC})
+target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${tf2_INCLUDE_DIRS})
+autoware_set_compile_options(${PROJECT_NAME})
 
-## Install executables and/or libraries
-install(TARGETS simple_planning_simulator_exe
-  ARCHIVE DESTINATION lib/${PROJECT_NAME}
-  LIBRARY DESTINATION lib/${PROJECT_NAME}
-  RUNTIME DESTINATION lib/${PROJECT_NAME}
-)
+target_compile_options(${PROJECT_NAME} PRIVATE -Wno-old-style-cast) # RCLCPP_ERROR_THROTTLE() has built-in old-style casts.
 
-## Install project namespaced headers
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION include)
 
-install(DIRECTORY config launch
-  DESTINATION share/${PROJECT_NAME}
+# Node executable
+rclcpp_components_register_node(${PROJECT_NAME}
+  PLUGIN "simulation::simple_planning_simulator::SimplePlanningSimulator"
+  EXECUTABLE ${PROJECT_NAME}_exe
 )
 
+
+### Test
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
+
+  # Unit test
+  ament_add_gtest(
+    simple_planning_simulator_unit_tests
+    test/test_simple_planning_simulator.cpp
+    TIMEOUT 120)
+  autoware_set_compile_options(simple_planning_simulator_unit_tests)
+  target_link_libraries(simple_planning_simulator_unit_tests ${PROJECT_NAME})
+  target_include_directories(simple_planning_simulator_unit_tests PRIVATE "include")
 endif()
 
-# set at the end of cmakelists
-ament_auto_package()
+
+
+
+ament_auto_package(INSTALL_TO_SHARE param launch)

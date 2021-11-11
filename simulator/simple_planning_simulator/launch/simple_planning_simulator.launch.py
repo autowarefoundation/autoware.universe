@@ -1,10 +1,10 @@
-# Copyright 2020 Tier IV, Inc.
+# Copyright 2021 The Autoware Foundation.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+#     http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -12,59 +12,63 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
-from pathlib import Path
+import ament_index_python
+import launch
+import launch_ros.actions
 
-from launch import LaunchContext
-from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
-from launch_ros.actions import Node
-from launch_ros.substitutions import FindPackage
+from ament_index_python import get_package_share_directory
 
-context = LaunchContext()
-
-
-def find_pack(package_name):
-    """Return the absolute path to the share directory of the given package."""
-    return os.path.join(Path(FindPackage(package_name).perform(context)), "share", package_name)
+import os
 
 
 def generate_launch_description():
 
-    simple_planning_simulator_param_file = os.path.join(
-        find_pack("simple_planning_simulator"), "config/simple_planning_simulator.param.yaml"
+    default_vehicle_characteristics_param = os.path.join(
+        get_package_share_directory('simple_planning_simulator'),
+        'param/vehicle_characteristics.param.param.yaml')
+
+    vehicle_characteristics_param = DeclareLaunchArgument(
+        'vehicle_characteristics_param_file',
+        default_value=default_vehicle_characteristics_param,
+        description='Path to config file for vehicle characteristics'
     )
 
-    print(simple_planning_simulator_param_file)
-
-    simple_planning_simulator_param = DeclareLaunchArgument(
-        "simple_planning_simulator_param_file",
-        default_value=simple_planning_simulator_param_file,
-        description="Path to config file for simple_planning_simulator",
-    )
-
-    simple_planning_simulator = Node(
-        package="simple_planning_simulator",
-        node_executable="simple_planning_simulator_exe",
-        node_name="simple_planning_simulator",
-        node_namespace="simulation",
-        output="screen",
+    simple_planning_simulator_node = launch_ros.actions.Node(
+        package='simple_planning_simulator',
+        executable='simple_planning_simulator_exe',
+        name='simple_planning_simulator',
+        namespace='simulation',
+        output='screen',
         parameters=[
-            LaunchConfiguration("simple_planning_simulator_param_file"),
+            "{}/param/simple_planning_simulator_default.param.yaml".format(
+                ament_index_python.get_package_share_directory(
+                    "simple_planning_simulator"
+                )
+            ),
+            LaunchConfiguration('vehicle_characteristics_param_file'),
         ],
         remappings=[
-            ("base_trajectory", "/planning/scenario_planning/trajectory"),
-            ("output/current_pose", "current_pose"),
-            ("output/current_twist", "/vehicle/status/twist"),
-            ("output/status", "/vehicle/status"),
-            ("output/control_mode", "/vehicle/status/control_mode"),
-            ("input/vehicle_cmd", "/control/vehicle_cmd"),
-            ("input/turn_signal_cmd", "/control/turn_signal_cmd"),
-            ("input/initial_twist", "/initialtwist"),
-            ("input/initial_pose", "/initialpose"),
-            ("input/engage", "/vehicle/engage"),
-        ],
+            ('input/vehicle_control_command', '/vehicle/vehicle_command'),
+            ('input/ackermann_control_command', '/vehicle/ackermann_vehicle_command'),
+            ('input/vehicle_state_command', '/vehicle/state_command'),
+            ('output/kinematic_state', '/vehicle/vehicle_kinematic_state'),
+            ('output/vehicle_state_report', '/vehicle/state_report'),
+            ('/initialpose', '/localization/initialpose'),
+        ]
     )
 
-    return LaunchDescription([simple_planning_simulator_param, simple_planning_simulator])
+    map_to_odom_tf_publisher = launch_ros.actions.Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        name='static_map_to_odom_tf_publisher',
+        output='screen',
+        arguments=['0.0', '0.0', '0.0', '0', '0', '0', 'map', 'odom'])
+
+    ld = launch.LaunchDescription([
+        vehicle_characteristics_param,
+        simple_planning_simulator_node,
+        map_to_odom_tf_publisher
+    ])
+    return ld

@@ -1,10 +1,10 @@
-// Copyright 2015-2020 Autoware Foundation. All rights reserved.
+// Copyright 2021 The Autoware Foundation.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//     http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -12,285 +12,227 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/**
- * @file simple_planning_simulator_core.hpp
- * @brief vehicle dynamics simulation for autoware
- * @author Takamasa Horibe
- * @date 2019.08.17
- */
-
 #ifndef SIMPLE_PLANNING_SIMULATOR__SIMPLE_PLANNING_SIMULATOR_CORE_HPP_
 #define SIMPLE_PLANNING_SIMULATOR__SIMPLE_PLANNING_SIMULATOR_CORE_HPP_
 
-#include "simple_planning_simulator/vehicle_model/sim_model_constant_acceleration.hpp"
-#include "simple_planning_simulator/vehicle_model/sim_model_ideal.hpp"
-#include "simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
-#include "simple_planning_simulator/vehicle_model/sim_model_time_delay.hpp"
 
-#include <autoware_api_utils/autoware_api_utils.hpp>
-#include <eigen3/Eigen/Core>
-#include <eigen3/Eigen/LU>
-#include <rclcpp/rclcpp.hpp>
-#include <vehicle_info_util/vehicle_info_util.hpp>
-
-#include <autoware_debug_msgs/msg/float32_stamped.hpp>
-#include <autoware_external_api_msgs/srv/initialize_pose.hpp>
-#include <autoware_planning_msgs/msg/trajectory.hpp>
-#include <autoware_vehicle_msgs/msg/control_mode.hpp>
-#include <autoware_vehicle_msgs/msg/engage.hpp>
-#include <autoware_vehicle_msgs/msg/shift_stamped.hpp>
-#include <autoware_vehicle_msgs/msg/steering.hpp>
-#include <autoware_vehicle_msgs/msg/turn_signal.hpp>
-#include <autoware_vehicle_msgs/msg/vehicle_command.hpp>
-#include <geometry_msgs/msg/pose_stamped.hpp>
-#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
-#include <geometry_msgs/msg/twist_stamped.hpp>
-
-#include <tf2/LinearMath/Quaternion.h>
-#include <tf2/utils.h>
 #include <tf2_ros/buffer.h>
-#include <tf2_ros/transform_broadcaster.h>
 #include <tf2_ros/transform_listener.h>
 
 #include <memory>
-#include <random>
 #include <string>
-#include <vector>
+#include <random>
 
-class Simulator : public rclcpp::Node
+#include "rclcpp/rclcpp.hpp"
+
+#include "simple_planning_simulator/visibility_control.hpp"
+
+#include "geometry_msgs/msg/pose.hpp"
+#include "geometry_msgs/msg/pose_stamped.hpp"
+#include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
+#include "geometry_msgs/msg/twist.hpp"
+#include "geometry_msgs/msg/twist_stamped.hpp"
+#include "geometry_msgs/msg/transform_stamped.hpp"
+
+#include "autoware_auto_control_msgs/msg/ackermann_control_command.hpp"
+#include "autoware_auto_vehicle_msgs/msg/vehicle_kinematic_state.hpp"
+#include "autoware_auto_vehicle_msgs/msg/vehicle_control_command.hpp"
+#include "autoware_auto_vehicle_msgs/msg/vehicle_state_command.hpp"
+#include "autoware_auto_vehicle_msgs/msg/vehicle_state_report.hpp"
+#include "autoware_auto_geometry_msgs/msg/complex32.hpp"
+#include "common/types.hpp"
+
+#include "simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
+
+
+namespace simulation
+{
+namespace simple_planning_simulator
+{
+using autoware::common::types::float32_t;
+using autoware::common::types::float64_t;
+using autoware::common::types::bool8_t;
+
+using autoware_auto_control_msgs::msg::AckermannControlCommand;
+using autoware_auto_vehicle_msgs::msg::VehicleKinematicState;
+using autoware_auto_vehicle_msgs::msg::VehicleControlCommand;
+using autoware_auto_vehicle_msgs::msg::VehicleStateReport;
+using autoware_auto_vehicle_msgs::msg::VehicleStateCommand;
+using geometry_msgs::msg::TransformStamped;
+using geometry_msgs::msg::PoseWithCovarianceStamped;
+using geometry_msgs::msg::PoseStamped;
+using geometry_msgs::msg::Pose;
+using geometry_msgs::msg::Twist;
+using autoware_auto_geometry_msgs::msg::Complex32;
+
+class DeltaTime
 {
 public:
-  /**
-   * @brief constructor
-   */
-  explicit Simulator(const std::string & node_name, const rclcpp::NodeOptions & options);
+  DeltaTime()
+  : prev_updated_time_ptr_(nullptr) {}
+  float64_t get_dt(const rclcpp::Time & now)
+  {
+    if (prev_updated_time_ptr_ == nullptr) {
+      prev_updated_time_ptr_ = std::make_shared<rclcpp::Time>(now);
+      return 0.0;
+    }
+    const float64_t dt = (now - *prev_updated_time_ptr_).seconds();
+    *prev_updated_time_ptr_ = now;
+    return dt;
+  }
 
-  /**
-   * @brief default destructor
-   */
-  // ~Simulator() = default;
+private:
+  std::shared_ptr<rclcpp::Time> prev_updated_time_ptr_;
+};
+
+class MeasurementNoiseGenerator
+{
+public:
+  MeasurementNoiseGenerator() {}
+
+  std::shared_ptr<std::mt19937> rand_engine_;
+  std::shared_ptr<std::normal_distribution<>> pos_dist_;
+  std::shared_ptr<std::normal_distribution<>> vel_dist_;
+  std::shared_ptr<std::normal_distribution<>> rpy_dist_;
+  std::shared_ptr<std::normal_distribution<>> steer_dist_;
+};
+
+class PLANNING_SIMULATOR_PUBLIC SimplePlanningSimulator : public rclcpp::Node
+{
+public:
+  explicit SimplePlanningSimulator(const rclcpp::NodeOptions & options);
 
 private:
   /* ros system */
-  rclcpp::CallbackGroup::SharedPtr group_api_service_;
-  autoware_api_utils::Service<autoware_external_api_msgs::srv::InitializePose>::SharedPtr
-    srv_set_pose_;  //!< @brief service to set pose for simulation
+  rclcpp::Publisher<VehicleKinematicState>::SharedPtr pub_kinematic_state_;
+  rclcpp::Publisher<VehicleStateReport>::SharedPtr pub_state_report_;
+  rclcpp::Publisher<tf2_msgs::msg::TFMessage>::SharedPtr pub_tf_;
+  rclcpp::Publisher<PoseStamped>::SharedPtr pub_current_pose_;
 
-  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr
-    pub_pose_;  //!< @brief topic ros publisher for current pose
-  rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr
-    pub_twist_;  //!< @brief topic ros publisher for current twist
-  rclcpp::Publisher<autoware_vehicle_msgs::msg::Steering>::SharedPtr pub_steer_;
-  rclcpp::Publisher<autoware_debug_msgs::msg::Float32Stamped>::SharedPtr pub_velocity_;
-  rclcpp::Publisher<autoware_vehicle_msgs::msg::TurnSignal>::SharedPtr pub_turn_signal_;
-  rclcpp::Publisher<autoware_vehicle_msgs::msg::ShiftStamped>::SharedPtr pub_shift_;
-  rclcpp::Publisher<autoware_vehicle_msgs::msg::ControlMode>::SharedPtr pub_control_mode_;
-  rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pub_cov_;
+  rclcpp::Subscription<VehicleStateCommand>::SharedPtr sub_state_cmd_;
+  rclcpp::Subscription<VehicleControlCommand>::SharedPtr sub_vehicle_cmd_;
+  rclcpp::Subscription<AckermannControlCommand>::SharedPtr sub_ackermann_cmd_;
+  rclcpp::Subscription<PoseWithCovarianceStamped>::SharedPtr sub_init_pose_;
 
-  rclcpp::Subscription<autoware_vehicle_msgs::msg::VehicleCommand>::SharedPtr
-    sub_vehicle_cmd_;  //!< @brief topic subscriber for vehicle_cmd
-  rclcpp::Subscription<autoware_vehicle_msgs::msg::TurnSignal>::SharedPtr
-    sub_turn_signal_cmd_;  //!< @brief topic subscriber for turn_signal_cmd
-  rclcpp::Subscription<autoware_planning_msgs::msg::Trajectory>::SharedPtr
-    sub_trajectory_;  //!< @brief topic subscriber for trajectory used for z position
-  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
-    sub_initialpose_;  //!< @brief topic subscriber for initialpose topic
-  rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr
-    sub_initialtwist_;  //!< @brief topic subscriber for initialtwist topic
-  rclcpp::Subscription<autoware_vehicle_msgs::msg::Engage>::SharedPtr
-    sub_engage_;                                   //!< @brief topic subscriber for engage topic
-  rclcpp::TimerBase::SharedPtr timer_simulation_;  //!< @brief timer for simulation
-
-  OnSetParametersCallbackHandle::SharedPtr set_param_res_;
-  rcl_interfaces::msg::SetParametersResult onParameter(
-    const std::vector<rclcpp::Parameter> & parameters);
+  uint32_t timer_sampling_time_ms_;  //!< @brief timer sampling time
+  rclcpp::TimerBase::SharedPtr on_timer_;  //!< @brief timer for simulation
 
   /* tf */
-  std::shared_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
-  std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
-  std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
+  tf2_ros::Buffer tf_buffer_;
+  tf2_ros::TransformListener tf_listener_;
 
   /* received & published topics */
-  geometry_msgs::msg::PoseStamped::ConstSharedPtr
-    initial_pose_ptr_;  //!< @brief initial vehicle pose
-  geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr
-    initial_pose_with_cov_ptr_;  //!< @brief initial vehicle pose with cov
-  geometry_msgs::msg::TwistStamped::ConstSharedPtr
-    initial_twist_ptr_;                      //!< @brief initial vehicle velocity
-  geometry_msgs::msg::Pose current_pose_;    //!< @brief current vehicle position and angle
-  geometry_msgs::msg::Twist current_twist_;  //!< @brief current vehicle velocity
-  autoware_vehicle_msgs::msg::VehicleCommand::ConstSharedPtr
-    current_vehicle_cmd_ptr_;  //!< @brief latest received vehicle_cmd
-  autoware_planning_msgs::msg::Trajectory::ConstSharedPtr
-    current_trajectory_ptr_;  //!< @brief latest received trajectory
-  double closest_pos_z_;      //!< @brief z position on closest trajectory
-  autoware_vehicle_msgs::msg::TurnSignal::ConstSharedPtr current_turn_signal_cmd_ptr_;
-  autoware_vehicle_msgs::msg::ControlMode control_mode_;
+  VehicleKinematicState current_kinematic_state_;
+  VehicleControlCommand::ConstSharedPtr current_vehicle_cmd_ptr_;
+  AckermannControlCommand::ConstSharedPtr current_ackermann_cmd_ptr_;
+  VehicleStateCommand::ConstSharedPtr current_vehicle_state_cmd_ptr_;
 
   /* frame_id */
-  std::string
-    simulation_frame_id_;     //!< @brief vehicle frame id simulated by simple_planning_simulator
-  std::string map_frame_id_;  //!< @brief map frame_id
-
-  /* simple_planning_simulator parameters */
-  double loop_rate_;  //!< @brief frequency to calculate vehicle model & publish result
-  double wheelbase_;  //!< @brief wheelbase length to convert angular-velocity & steering
-  double sim_steering_gear_ratio_;  //!< @brief for steering wheel angle calculation
-  double x_stddev_;  //!< @brief x standard deviation for dummy covariance in map coordinate
-  double y_stddev_;  //!< @brief y standard deviation for dummy covariance in map coordinate
+  std::string simulated_frame_id_;  //!< @brief simulated vehicle frame id
+  std::string origin_frame_id_;  //!< @brief map frame_id
 
   /* flags */
-  bool is_initialized_ = false;                //!< @brief flag to check the initial position is set
-  bool add_measurement_noise_;                 //!< @brief flag to add measurement noise
-  bool simulator_engage_;                      //!< @brief flag to engage simulator
-  bool use_trajectory_for_z_position_source_;  //!< @brief flag to get z position from trajectory
+  bool8_t is_initialized_;         //!< @brief flag to check the initial position is set
+  bool8_t add_measurement_noise_;  //!< @brief flag to add measurement noise
 
-  /* saved values */
-  std::shared_ptr<rclcpp::Time> prev_update_time_ptr_;  //!< @brief previously updated time
+  DeltaTime delta_time_;  //!< @brief to calculate delta time
+
+  MeasurementNoiseGenerator measurement_noise_;  //!< @brief for measurement noise
+
+  float32_t cg_to_rear_m_;  //!< @brief length from baselink to CoM
+
 
   /* vehicle model */
-  enum class VehicleModelType {
-    IDEAL_TWIST = 0,
-    IDEAL_STEER = 1,
-    DELAY_TWIST = 2,
-    DELAY_STEER = 3,
-    CONST_ACCEL_TWIST = 4,
-    IDEAL_FORKLIFT_RLS = 5,
-    DELAY_FORKLIFT_RLS = 6,
-    IDEAL_ACCEL = 7,
-    DELAY_STEER_ACC = 8,
+  enum class VehicleModelType
+  {
+    IDEAL_STEER_ACC = 0,
+    IDEAL_STEER_ACC_GEARED = 1,
+    DELAY_STEER_ACC = 2,
+    DELAY_STEER_ACC_GEARED = 3,
+    IDEAL_STEER_VEL = 4,
   } vehicle_model_type_;  //!< @brief vehicle model type to decide the model dynamics
   std::shared_ptr<SimModelInterface> vehicle_model_ptr_;  //!< @brief vehicle model pointer
-
-  /* to generate measurement noise */
-  std::shared_ptr<std::mt19937> rand_engine_ptr_;  //!< @brief random engine for measurement noise
-  std::shared_ptr<std::normal_distribution<>>
-    pos_norm_dist_ptr_;  //!< @brief Gaussian noise for position
-  std::shared_ptr<std::normal_distribution<>>
-    vel_norm_dist_ptr_;  //!< @brief Gaussian noise for velocity
-  std::shared_ptr<std::normal_distribution<>>
-    rpy_norm_dist_ptr_;  //!< @brief Gaussian noise for roll-pitch-yaw
-  std::shared_ptr<std::normal_distribution<>>
-    angvel_norm_dist_ptr_;  //!< @brief Gaussian noise for angular velocity
-  std::shared_ptr<std::normal_distribution<>>
-    steer_norm_dist_ptr_;  //!< @brief Gaussian noise for steering angle
 
   /**
    * @brief set current_vehicle_cmd_ptr_ with received message
    */
-  void callbackVehicleCmd(const autoware_vehicle_msgs::msg::VehicleCommand::ConstSharedPtr msg);
+  void on_vehicle_cmd(const VehicleControlCommand::ConstSharedPtr msg);
 
   /**
-   * @brief set current_turn_signal_cmd_ptr with received message
+   * @brief set current_ackermann_cmd_ptr_ with received message
    */
-  void callbackTurnSignalCmd(const autoware_vehicle_msgs::msg::TurnSignal::ConstSharedPtr msg);
+  void on_ackermann_cmd(const AckermannControlCommand::ConstSharedPtr msg);
 
   /**
-   * @brief set current_trajectory_ptr_ with received message
+   * @brief set input steering, velocity, and acceleration of the vehicle model
    */
-  void callbackTrajectory(const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr msg);
+  void set_input(const float steer, const float vel, const float accel);
 
-  // TODO(Takagi, Isamu): deprecated
+  /**
+   * @brief set current_vehicle_state_ with received message
+   */
+  void on_state_cmd(const VehicleStateCommand::ConstSharedPtr msg);
+
   /**
    * @brief set initial pose for simulation with received message
    */
-  void callbackInitialPoseWithCov(
-    const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr msg);
-
-  // TODO(Takagi, Isamu): deprecated
-  /**
-   * @brief set initial pose with received message
-   */
-  void callbackInitialPoseStamped(const geometry_msgs::msg::PoseStamped::ConstSharedPtr msg);
-
-  /**
-   * @brief set initial twist with received message
-   */
-  void callbackInitialTwistStamped(const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg);
-
-  /**
-   * @brief set simulator engage with received message
-   */
-  void callbackEngage(const autoware_vehicle_msgs::msg::Engage::ConstSharedPtr msg);
-
-  /**
-   * @brief set pose for simulation with request
-   */
-  void serviceSetPose(
-    const autoware_external_api_msgs::srv::InitializePose::Request::SharedPtr request,
-    const autoware_external_api_msgs::srv::InitializePose::Response::SharedPtr response);
+  void on_initialpose(const PoseWithCovarianceStamped::ConstSharedPtr msg);
 
   /**
    * @brief get transform from two frame_ids
    * @param [in] parent_frame parent frame id
-   * @param [in] child frame id
-   * @param [out] transform transform from parent frame to child frame
+   * @param [in] child_frame child frame id
+   * @return transform from parent frame to child frame
    */
-  void getTransformFromTF(
-    const std::string parent_frame, const std::string child_frame,
-    geometry_msgs::msg::TransformStamped & transform);
+  TransformStamped get_transform_msg(const std::string parent_frame, const std::string child_frame);
 
   /**
    * @brief timer callback for simulation with loop_rate
    */
-  void timerCallbackSimulation();
+  void on_timer();
+
+  /**
+   * @brief initialize vehicle_model_ptr
+   */
+  void initialize_vehicle_model();
+
+  /**
+   * @brief add measurement noise
+   */
+  void add_measurement_noise(VehicleKinematicState & state) const;
 
   /**
    * @brief set initial state of simulated vehicle
    * @param [in] pose initial position and orientation
    * @param [in] twist initial velocity and angular velocity
    */
-  void setInitialState(
-    const geometry_msgs::msg::Pose & pose, const geometry_msgs::msg::Twist & twist);
+  void set_initial_state(const Pose & pose, const Twist & twist);
 
   /**
    * @brief set initial state of simulated vehicle with pose transformation based on frame_id
    * @param [in] pose initial position and orientation with header
    * @param [in] twist initial velocity and angular velocity
    */
-  void setInitialStateWithPoseTransform(
-    const geometry_msgs::msg::PoseStamped & pose, const geometry_msgs::msg::Twist & twist);
+  void set_initial_state_with_transform(const PoseStamped & pose, const Twist & twist);
 
   /**
-   * @brief set initial state of simulated vehicle with pose transformation based on frame_id
-   * @param [in] pose initial position and orientation with header
-   * @param [in] twist initial velocity and angular velocity
+   * @brief publish pose and twist
+   * @param [in] state The kinematic state to publish
    */
-  void setInitialStateWithPoseTransform(
-    const geometry_msgs::msg::PoseWithCovarianceStamped & pose,
-    const geometry_msgs::msg::Twist & twist);
+  void publish_kinematic_state(const VehicleKinematicState & state);
 
   /**
-   * @brief publish pose_with_covariance
-   * @param [in] cov pose with covariance to be published
+   * @brief publish vehicle state report
    */
-  void publishPoseWithCov(const geometry_msgs::msg::PoseWithCovariance & cov);
-
-  /**
-   * @brief publish twist
-   * @param [in] twist twist to be published
-   */
-  void publishTwist(const geometry_msgs::msg::Twist & twist);
+  void publish_state_report();
 
   /**
    * @brief publish tf
-   * @param [in] pose pose used for tf
+   * @param [in] state The kinematic state to publish as a TF
    */
-  void publishTF(const geometry_msgs::msg::Pose & pose);
-
-  /**
-   * @brief update closest pose to calculate pos_z
-   */
-  double getPosZFromTrajectory(const double x, const double y);
-
-  /**
-   * @brief convert roll-pitch-yaw Euler angle to ros Quaternion
-   * @param [in] roll roll angle [rad]
-   * @param [in] pitch pitch angle [rad]
-   * @param [in] yaw yaw angle [rad]
-   */
-  geometry_msgs::msg::Quaternion getQuaternionFromRPY(
-    const double & roll, const double & pitch, const double & yaw);
+  void publish_tf(const VehicleKinematicState & state);
 };
+}  // namespace simple_planning_simulator
+}  // namespace simulation
 
 #endif  // SIMPLE_PLANNING_SIMULATOR__SIMPLE_PLANNING_SIMULATOR_CORE_HPP_
