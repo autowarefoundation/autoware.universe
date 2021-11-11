@@ -111,11 +111,11 @@ void CarInitialPoseTool::onPoseSet(double x, double y, double theta)
   output_msg.header.stamp = clock_->now();
 
   // semantic
-  output_msg.semantic.type = autoware_perception_msgs::msg::Semantic::CAR;
-  output_msg.semantic.confidence = 1.0;
+  output_msg.classification.label = autoware_auto_perception_msgs::msg::ObjectClassification::CAR;
+  output_msg.classification.probability = 1.0;
 
   // shape
-  output_msg.shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
+  output_msg.shape.type = autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX;
   const double width = 1.8;
   const double length = 4.0;
   output_msg.shape.dimensions.x = length;

@@ -110,11 +110,12 @@ void UnknownInitialPoseTool::onPoseSet(double x, double y, double theta)
   output_msg.header.stamp = clock_->now();
 
   // semantic
-  output_msg.semantic.type = autoware_perception_msgs::msg::Semantic::UNKNOWN;
-  output_msg.semantic.confidence = 1.0;
+  output_msg.classification.label =
+    autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN;
+  output_msg.classification.probability = 1.0;
 
   // shape
-  output_msg.shape.type = autoware_perception_msgs::msg::Shape::POLYGON;
+  output_msg.shape.type = autoware_auto_perception_msgs::msg::Shape::POLYGON;
   const double width = 0.8;
   const double length = 0.8;
   output_msg.shape.dimensions.x = length;
