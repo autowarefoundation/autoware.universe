@@ -33,7 +33,7 @@ TurnSignalDisplay::TurnSignalDisplay()
     "Width", 256, "Width of the plotter window", this, SLOT(updateVisualization()), this);
   property_width_->setMin(10);
   property_height_ = new rviz_common::properties::IntProperty(
-    "Height", 256, "Width of the plotter window", this, SLOT(updateVisualization()), this);
+    "Height", 256, "Height of the plotter window", this, SLOT(updateVisualization()), this);
   property_height_->setMin(10);
 }
 
