@@ -1,0 +1,11 @@
+#include "autoware_auto_perception_msgs/msg/TrafficSignal.idl"
+#include "std_msgs/msg/Header.idl"
+
+module autoware_auto_perception_msgs {
+  module msg {
+    struct TrafficSignalStamped {
+      std_msgs::msg::Header header;
+      autoware_auto_perception_msgs::msg::TrafficSignal signal;
+    };
+  };
+};

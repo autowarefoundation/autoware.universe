@@ -1,0 +1,16 @@
+#include "autoware_auto_perception_msgs/msg/TrafficSignal.idl"
+
+module autoware_auto_perception_msgs {
+  module msg {
+    module TrafficSignalWithJudge_Constants {
+      const uint8 JUDGE = 1;
+      const uint8 NONE = 2;
+      const uint8 STOP = 3;
+      const uint8 GO = 4;
+    };
+    struct TrafficSignalWithJudge {
+      boolean has_state;
+      autoware_auto_perception_msgs::msg::TrafficSignal signal;
+    };
+  };
+};

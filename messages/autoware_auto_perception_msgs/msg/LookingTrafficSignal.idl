@@ -1,0 +1,14 @@
+#include "autoware_auto_perception_msgs/msg/TrafficSignalWithJudge.idl"
+#include "std_msgs/msg/Header.idl"
+
+module autoware_auto_perception_msgs {
+  module msg {
+    struct LookingTrafficSignal {
+      std_msgs::msg::Header header;
+      boolean is_module_running;
+      autoware_auto_perception_msgs::msg::TrafficSignalWithJudge perception;
+      autoware_auto_perception_msgs::msg::TrafficSignalWithJudge external;
+      autoware_auto_perception_msgs::msg::TrafficSignalWithJudge final;
+    };
+  };
+};
