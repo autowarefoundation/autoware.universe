@@ -26,8 +26,6 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
-using SemanticType = autoware_perception_msgs::msg::Semantic;
-
 namespace
 {
 std::optional<geometry_msgs::msg::Transform> getTransform(
@@ -46,10 +44,10 @@ std::optional<geometry_msgs::msg::Transform> getTransform(
   }
 }
 
-bool transformDynamicObjects(
-  const autoware_perception_msgs::msg::DynamicObjectArray & input_msg,
+bool transformTrackedObjects(
+  const autoware_auto_perception_msgs::msg::TrackedObjects & input_msg,
   const std::string & target_frame_id, const tf2_ros::Buffer & tf_buffer,
-  autoware_perception_msgs::msg::DynamicObjectArray & output_msg)
+  autoware_auto_perception_msgs::msg::TrackedObjects & output_msg)
 {
   output_msg = input_msg;
 
@@ -68,9 +66,9 @@ bool transformDynamicObjects(
       tf2::fromMsg(*ros_target2objects_world, tf_target2objects_world);
     }
     for (auto & object : output_msg.objects) {
-      tf2::fromMsg(object.state.pose_covariance.pose, tf_objects_world2objects);
+      tf2::fromMsg(object.kinematics.pose_with_covariance.pose, tf_objects_world2objects);
       tf_target2objects = tf_target2objects_world * tf_objects_world2objects;
-      tf2::toMsg(tf_target2objects, object.state.pose_covariance.pose);
+      tf2::toMsg(tf_target2objects, object.kinematics.pose_with_covariance.pose);
     }
   }
   return true;
@@ -78,17 +76,17 @@ bool transformDynamicObjects(
 
 void setClusterInObjectWithFeature(
   const std_msgs::msg::Header & header, const pcl::PointCloud<pcl::PointXYZ> & cluster,
-  autoware_perception_msgs::msg::DynamicObjectWithFeature & feature_object)
+  autoware_perception_msgs::msg::DetectedObjectWithFeature & feature_object)
 {
   sensor_msgs::msg::PointCloud2 ros_pointcloud;
   pcl::toROSMsg(cluster, ros_pointcloud);
   ros_pointcloud.header = header;
   feature_object.feature.cluster = ros_pointcloud;
 }
-autoware_perception_msgs::msg::Shape extendShape(
-  const autoware_perception_msgs::msg::Shape & shape, const float scale)
+autoware_auto_perception_msgs::msg::Shape extendShape(
+  const autoware_auto_perception_msgs::msg::Shape & shape, const float scale)
 {
-  autoware_perception_msgs::msg::Shape output = shape;
+  autoware_auto_perception_msgs::msg::Shape output = shape;
   output.dimensions.x *= scale;
   output.dimensions.y *= scale;
   output.dimensions.z *= scale;
@@ -100,14 +98,35 @@ autoware_perception_msgs::msg::Shape extendShape(
   return output;
 }
 
+autoware_auto_perception_msgs::msg::DetectedObjects toDetectedObjects(
+  const autoware_auto_perception_msgs::msg::TrackedObjects & tracked_objects)
+{
+  autoware_auto_perception_msgs::msg::DetectedObjects out_objects;
+  out_objects.header = tracked_objects.header;
+  for (auto & tracked_object : tracked_objects.objects) {
+    autoware_auto_perception_msgs::msg::DetectedObject object;
+    object.existence_probability = tracked_object.existence_probability;
+    object.classification = tracked_object.classification;
+    object.kinematics.pose_with_covariance = tracked_object.kinematics.pose_with_covariance;
+    object.kinematics.has_position_covariance = true;
+    object.kinematics.orientation_availability = tracked_object.kinematics.orientation_availability;
+    object.kinematics.twist_with_covariance = tracked_object.kinematics.twist_with_covariance;
+    object.kinematics.has_twist = true;
+    object.kinematics.has_twist_covariance = true;
+    object.shape = tracked_object.shape;
+    out_objects.objects.push_back(object);
+  }
+  return out_objects;
+}
+
 }  // namespace
 
-void TrackerHandler::onDynamicObjects(
-  const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr msg)
+void TrackerHandler::onTrackedObjects(
+  const autoware_auto_perception_msgs::msg::TrackedObjects::ConstSharedPtr msg)
 {
   constexpr size_t max_buffer_size = 10;
 
-  // Add dynamic objects to buffer
+  // Add tracked objects to buffer
   objects_buffer_.push_front(*msg);
 
   // Remove old data
@@ -116,8 +135,8 @@ void TrackerHandler::onDynamicObjects(
   }
 }
 
-bool TrackerHandler::estimateDynamicObjects(
-  const rclcpp::Time & time, autoware_perception_msgs::msg::DynamicObjectArray & output)
+bool TrackerHandler::estimateTrackedObjects(
+  const rclcpp::Time & time, autoware_auto_perception_msgs::msg::TrackedObjects & output)
 {
   if (objects_buffer_.empty()) {
     return false;
@@ -127,8 +146,8 @@ bool TrackerHandler::estimateDynamicObjects(
   const auto target_objects_iter = std::min_element(
     objects_buffer_.cbegin(), objects_buffer_.cend(),
     [&time](
-      autoware_perception_msgs::msg::DynamicObjectArray first,
-      autoware_perception_msgs::msg::DynamicObjectArray second) {
+      autoware_auto_perception_msgs::msg::TrackedObjects first,
+      autoware_auto_perception_msgs::msg::TrackedObjects second) {
       return std::fabs((time - first.header.stamp).seconds()) <
              std::fabs((time - second.header.stamp).seconds());
     });
@@ -138,23 +157,28 @@ bool TrackerHandler::estimateDynamicObjects(
   output.header.frame_id = target_objects_iter->header.frame_id;
   output.header.stamp = time;
   for (const auto & object : target_objects_iter->objects) {
-    const auto & x = object.state.pose_covariance.pose.position.x;
-    const auto & y = object.state.pose_covariance.pose.position.y;
-    const auto & z = object.state.pose_covariance.pose.position.z;
-    const float yaw = tf2::getYaw(object.state.pose_covariance.pose.orientation);
-    const auto & twist = object.state.twist_covariance.twist;
+    const auto & pose_with_covariance = object.kinematics.pose_with_covariance;
+    const auto & x = pose_with_covariance.pose.position.x;
+    const auto & y = pose_with_covariance.pose.position.y;
+    const auto & z = pose_with_covariance.pose.position.z;
+    const float yaw = tf2::getYaw(pose_with_covariance.pose.orientation);
+    const auto & twist = object.kinematics.twist_with_covariance.twist;
     const float & vx = twist.linear.x;
     const float & wz = twist.angular.z;
 
     // build output
-    autoware_perception_msgs::msg::DynamicObject estimated_object;
-    estimated_object.semantic = object.semantic;
+    autoware_auto_perception_msgs::msg::TrackedObject estimated_object;
+    estimated_object.object_id = object.object_id;
+    estimated_object.existence_probability = object.existence_probability;
+    estimated_object.classification = object.classification;
     estimated_object.shape = object.shape;
-    estimated_object.state.pose_covariance.pose.position.x = x + vx * std::cos(yaw) * dt.seconds();
-    estimated_object.state.pose_covariance.pose.position.y = y + vx * std::sin(yaw) * dt.seconds();
-    estimated_object.state.pose_covariance.pose.position.z = z;
+    estimated_object.kinematics.pose_with_covariance.pose.position.x =
+      x + vx * std::cos(yaw) * dt.seconds();
+    estimated_object.kinematics.pose_with_covariance.pose.position.y =
+      y + vx * std::sin(yaw) * dt.seconds();
+    estimated_object.kinematics.pose_with_covariance.pose.position.z = z;
     const float yaw_hat = autoware_utils::normalizeRadian(yaw + wz * dt.seconds());
-    estimated_object.state.pose_covariance.pose.orientation =
+    estimated_object.kinematics.pose_with_covariance.pose.orientation =
       autoware_utils::createQuaternionFromYaw(yaw_hat);
     output.objects.push_back(estimated_object);
   }
@@ -167,14 +191,14 @@ DetectionByTracker::DetectionByTracker(const rclcpp::NodeOptions & node_options)
   tf_listener_(tf_buffer_)
 {
   // Create publishers and subscribers
-  trackers_sub_ = create_subscription<autoware_perception_msgs::msg::DynamicObjectArray>(
+  trackers_sub_ = create_subscription<autoware_auto_perception_msgs::msg::TrackedObjects>(
     "~/input/tracked_objects", rclcpp::QoS{1},
-    std::bind(&TrackerHandler::onDynamicObjects, &tracker_handler_, std::placeholders::_1));
+    std::bind(&TrackerHandler::onTrackedObjects, &tracker_handler_, std::placeholders::_1));
   initial_objects_sub_ =
-    create_subscription<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>(
+    create_subscription<autoware_perception_msgs::msg::DetectedObjectsWithFeature>(
       "~/input/initial_objects", rclcpp::QoS{1},
       std::bind(&DetectionByTracker::onObjects, this, std::placeholders::_1));
-  objects_pub_ = create_publisher<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>(
+  objects_pub_ = create_publisher<autoware_auto_perception_msgs::msg::DetectedObjects>(
     "~/output", rclcpp::QoS{1});
 
   shape_estimator_ = std::make_shared<ShapeEstimator>(true, true);
@@ -183,71 +207,76 @@ DetectionByTracker::DetectionByTracker(const rclcpp::NodeOptions & node_options)
 }
 
 void DetectionByTracker::onObjects(
-  const autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr input_msg)
+  const autoware_perception_msgs::msg::DetectedObjectsWithFeature::ConstSharedPtr input_msg)
 {
-  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray detected_objects;
+  autoware_auto_perception_msgs::msg::DetectedObjects detected_objects;
   detected_objects.header = input_msg->header;
 
   // get objects from tracking module
-  autoware_perception_msgs::msg::DynamicObjectArray tracked_objects;
+  autoware_auto_perception_msgs::msg::TrackedObjects tracked_objects;
   {
-    autoware_perception_msgs::msg::DynamicObjectArray objects;
+    autoware_auto_perception_msgs::msg::TrackedObjects objects;
     const bool available_trackers =
-      tracker_handler_.estimateDynamicObjects(input_msg->header.stamp, objects);
+      tracker_handler_.estimateTrackedObjects(input_msg->header.stamp, objects);
     if (
       !available_trackers ||
-      !transformDynamicObjects(objects, input_msg->header.frame_id, tf_buffer_, tracked_objects)) {
+      !transformTrackedObjects(objects, input_msg->header.frame_id, tf_buffer_, tracked_objects)) {
       objects_pub_->publish(detected_objects);
       return;
     }
   }
 
+  // to simplify post processes, convert tracked_objects to DetectedObjects message.
+  autoware_auto_perception_msgs::msg::DetectedObjects tracked_objects_dt;
+  tracked_objects_dt = toDetectedObjects(tracked_objects);
+
   // merge over segmented objects
-  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray merged_objects;
-  autoware_perception_msgs::msg::DynamicObjectArray no_found_tracked_objects;
-  mergeOverSegmentedObjects(tracked_objects, *input_msg, no_found_tracked_objects, merged_objects);
+  autoware_perception_msgs::msg::DetectedObjectsWithFeature merged_objects;
+  autoware_auto_perception_msgs::msg::DetectedObjects no_found_tracked_objects;
+  mergeOverSegmentedObjects(
+    tracked_objects_dt, *input_msg, no_found_tracked_objects, merged_objects);
 
   // divide under segmented objects
-  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray divided_objects;
-  autoware_perception_msgs::msg::DynamicObjectArray temp_no_found_tracked_objects;
+  autoware_perception_msgs::msg::DetectedObjectsWithFeature divided_objects;
+  autoware_auto_perception_msgs::msg::DetectedObjects temp_no_found_tracked_objects;
   divideUnderSegmentedObjects(
     no_found_tracked_objects, *input_msg, temp_no_found_tracked_objects, divided_objects);
 
   // merge under/over segmented objects to build output objects
   for (const auto & merged_object : merged_objects.feature_objects) {
-    detected_objects.feature_objects.push_back(merged_object);
+    detected_objects.objects.push_back(merged_object.object);
   }
   for (const auto & divided_object : divided_objects.feature_objects) {
-    detected_objects.feature_objects.push_back(divided_object);
+    detected_objects.objects.push_back(divided_object.object);
   }
 
   objects_pub_->publish(detected_objects);
 }
 
 void DetectionByTracker::divideUnderSegmentedObjects(
-  const autoware_perception_msgs::msg::DynamicObjectArray & tracked_objects,
-  const autoware_perception_msgs::msg::DynamicObjectWithFeatureArray & in_objects,
-  autoware_perception_msgs::msg::DynamicObjectArray & out_no_found_tracked_objects,
-  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray & out_objects)
+  const autoware_auto_perception_msgs::msg::DetectedObjects & tracked_objects,
+  const autoware_perception_msgs::msg::DetectedObjectsWithFeature & in_cluster_objects,
+  autoware_auto_perception_msgs::msg::DetectedObjects & out_no_found_tracked_objects,
+  autoware_perception_msgs::msg::DetectedObjectsWithFeature & out_objects)
 {
   constexpr float recall_min_threshold = 0.4;
   constexpr float precision_max_threshold = 0.5;
   constexpr float max_search_range = 6.0;
   constexpr float min_score_threshold = 0.4;
 
-  out_objects.header = in_objects.header;
+  out_objects.header = in_cluster_objects.header;
   out_no_found_tracked_objects.header = tracked_objects.header;
 
   for (const auto & tracked_object : tracked_objects.objects) {
-    std::optional<autoware_perception_msgs::msg::DynamicObjectWithFeature>
+    std::optional<autoware_perception_msgs::msg::DetectedObjectWithFeature>
       highest_score_divided_object = std::nullopt;
     float highest_score = 0.0;
 
-    for (const auto & initial_object : in_objects.feature_objects) {
+    for (const auto & initial_object : in_cluster_objects.feature_objects) {
       // search near object
       const float distance = autoware_utils::calcDistance2d(
-        tracked_object.state.pose_covariance.pose,
-        initial_object.object.state.pose_covariance.pose);
+        tracked_object.kinematics.pose_with_covariance.pose,
+        initial_object.object.kinematics.pose_with_covariance.pose);
       if (max_search_range < distance) {
         continue;
       }
@@ -260,7 +289,7 @@ void DetectionByTracker::divideUnderSegmentedObjects(
         continue;
       }
       // optimize clustering
-      autoware_perception_msgs::msg::DynamicObjectWithFeature divided_object;
+      autoware_perception_msgs::msg::DetectedObjectWithFeature divided_object;
       float score = optimizeUnderSegmentedObject(
         tracked_object, initial_object.feature.cluster, divided_object);
       if (score < min_score_threshold) {
@@ -281,9 +310,9 @@ void DetectionByTracker::divideUnderSegmentedObjects(
 }
 
 float DetectionByTracker::optimizeUnderSegmentedObject(
-  const autoware_perception_msgs::msg::DynamicObject & target_object,
+  const autoware_auto_perception_msgs::msg::DetectedObject & target_object,
   const sensor_msgs::msg::PointCloud2 & under_segmented_cluster,
-  autoware_perception_msgs::msg::DynamicObjectWithFeature & output)
+  autoware_perception_msgs::msg::DetectedObjectWithFeature & output)
 {
   constexpr float iter_rate = 0.8;
   constexpr int iter_max_count = 5;
@@ -302,7 +331,7 @@ float DetectionByTracker::optimizeUnderSegmentedObject(
 
   // iterate to find best fit divided object
   float highest_iou = 0.0;
-  autoware_perception_msgs::msg::DynamicObjectWithFeature highest_iou_object;
+  autoware_perception_msgs::msg::DetectedObjectWithFeature highest_iou_object;
   for (int iter_count = 0; iter_count < iter_max_count;
        ++iter_count, cluster_range *= iter_rate, voxel_size *= iter_rate) {
     // divide under segmented cluster
@@ -313,14 +342,15 @@ float DetectionByTracker::optimizeUnderSegmentedObject(
 
     // find highest iou object in divided clusters
     float highest_iou_in_current_iter = 0.0f;
-    autoware_perception_msgs::msg::DynamicObjectWithFeature highest_iou_object_in_current_iter;
-    highest_iou_object_in_current_iter.object.semantic.type = target_object.semantic.type;
+    autoware_perception_msgs::msg::DetectedObjectWithFeature highest_iou_object_in_current_iter;
+    highest_iou_object_in_current_iter.object.classification = target_object.classification;
     for (const auto & divided_cluster : divided_clusters) {
-      if (!shape_estimator_->estimateShapeAndPose(
-            highest_iou_object_in_current_iter.object.semantic.type, divided_cluster,
-            tf2::getYaw(target_object.state.pose_covariance.pose.orientation),
-            highest_iou_object_in_current_iter.object.shape,
-            highest_iou_object_in_current_iter.object.state.pose_covariance.pose)) {
+      bool is_shape_estimated = shape_estimator_->estimateShapeAndPose(
+        target_object.classification.front().label, divided_cluster,
+        tf2::getYaw(target_object.kinematics.pose_with_covariance.pose.orientation),
+        highest_iou_object_in_current_iter.object.shape,
+        highest_iou_object_in_current_iter.object.kinematics.pose_with_covariance.pose);
+      if (!is_shape_estimated) {
         continue;
       }
       const float iou = utils::get2dIoU(highest_iou_object_in_current_iter.object, target_object);
@@ -342,33 +372,34 @@ float DetectionByTracker::optimizeUnderSegmentedObject(
   }
 
   // build output
-  highest_iou_object.object.semantic = target_object.semantic;
-  highest_iou_object.object.semantic.confidence = 0.1f;
+  highest_iou_object.object.classification = target_object.classification;
+  // TODO(yukkysaito): It is necessary to consider appropriate values in the future.
+  highest_iou_object.object.existence_probability = 0.1f;
   output = highest_iou_object;
   return highest_iou;
 }
 
 void DetectionByTracker::mergeOverSegmentedObjects(
-  const autoware_perception_msgs::msg::DynamicObjectArray & tracked_objects,
-  const autoware_perception_msgs::msg::DynamicObjectWithFeatureArray & in_objects,
-  autoware_perception_msgs::msg::DynamicObjectArray & out_no_found_tracked_objects,
-  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray & out_objects)
+  const autoware_auto_perception_msgs::msg::DetectedObjects & tracked_objects,
+  const autoware_perception_msgs::msg::DetectedObjectsWithFeature & in_cluster_objects,
+  autoware_auto_perception_msgs::msg::DetectedObjects & out_no_found_tracked_objects,
+  autoware_perception_msgs::msg::DetectedObjectsWithFeature & out_objects)
 {
   constexpr float precision_threshold = 0.5;
   constexpr float max_search_range = 5.0;
-  out_objects.header = in_objects.header;
+  out_objects.header = in_cluster_objects.header;
   out_no_found_tracked_objects.header = tracked_objects.header;
 
   for (const auto & tracked_object : tracked_objects.objects) {
     // extend shape
-    autoware_perception_msgs::msg::DynamicObject extended_tracked_object = tracked_object;
+    autoware_auto_perception_msgs::msg::DetectedObject extended_tracked_object = tracked_object;
     extended_tracked_object.shape = extendShape(tracked_object.shape, /*scale*/ 1.1);
 
     pcl::PointCloud<pcl::PointXYZ> pcl_merged_cluster;
-    for (const auto & initial_object : in_objects.feature_objects) {
+    for (const auto & initial_object : in_cluster_objects.feature_objects) {
       const float distance = autoware_utils::calcDistance2d(
-        tracked_object.state.pose_covariance.pose,
-        initial_object.object.state.pose_covariance.pose);
+        tracked_object.kinematics.pose_with_covariance.pose,
+        initial_object.object.kinematics.pose_with_covariance.pose);
 
       if (max_search_range < distance) {
         continue;
@@ -384,24 +415,26 @@ void DetectionByTracker::mergeOverSegmentedObjects(
       pcl_merged_cluster += pcl_cluster;
     }
 
-    if (pcl_merged_cluster.points.empty()) {  // not found
+    if (pcl_merged_cluster.points.empty()) {  // if clusters aren't found
       out_no_found_tracked_objects.objects.push_back(tracked_object);
       continue;
     }
 
-    // build output
-    autoware_perception_msgs::msg::DynamicObjectWithFeature feature_object;
-    feature_object.object.semantic = tracked_object.semantic;
-    feature_object.object.semantic.confidence = 0.1f;
-    if (!shape_estimator_->estimateShapeAndPose(
-          feature_object.object.semantic.type, pcl_merged_cluster,
-          tf2::getYaw(tracked_object.state.pose_covariance.pose.orientation),
-          feature_object.object.shape,
-          feature_object.object.state.pose_covariance.pose)) {  // fail to estimate shape and pose
+    // build output clusters
+    autoware_perception_msgs::msg::DetectedObjectWithFeature feature_object;
+    feature_object.object.existence_probability = 0.1f;
+    feature_object.object.classification = tracked_object.classification;
+
+    bool is_shape_estimated = shape_estimator_->estimateShapeAndPose(
+      tracked_object.classification.front().label, pcl_merged_cluster,
+      tf2::getYaw(tracked_object.kinematics.pose_with_covariance.pose.orientation),
+      feature_object.object.shape, feature_object.object.kinematics.pose_with_covariance.pose);
+    if (!is_shape_estimated) {
       out_no_found_tracked_objects.objects.push_back(tracked_object);
       continue;
     }
-    setClusterInObjectWithFeature(in_objects.header, pcl_merged_cluster, feature_object);
+
+    setClusterInObjectWithFeature(in_cluster_objects.header, pcl_merged_cluster, feature_object);
     out_objects.feature_objects.push_back(feature_object);
   }
 }

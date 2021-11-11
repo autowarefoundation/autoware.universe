@@ -17,8 +17,8 @@
 
 #include <autoware_utils/autoware_utils.hpp>
 
-#include <autoware_perception_msgs/msg/dynamic_object.hpp>
-#include <autoware_perception_msgs/msg/shape.hpp>
+#include <autoware_auto_perception_msgs/msg/detected_object.hpp>
+#include <autoware_auto_perception_msgs/msg/shape.hpp>
 #include <geometry_msgs/msg/polygon.hpp>
 #include <geometry_msgs/msg/vector3.hpp>
 
@@ -29,16 +29,16 @@ namespace utils
 double getPolygonArea(const geometry_msgs::msg::Polygon & footprint);
 double getRectangleArea(const geometry_msgs::msg::Vector3 & dimensions);
 double getCircleArea(const geometry_msgs::msg::Vector3 & dimensions);
-double getArea(const autoware_perception_msgs::msg::Shape & shape);
+double getArea(const autoware_auto_perception_msgs::msg::Shape & shape);
 double get2dIoU(
-  const autoware_perception_msgs::msg::DynamicObject & object1,
-  const autoware_perception_msgs::msg::DynamicObject & object2);
+  const autoware_auto_perception_msgs::msg::DetectedObject & object1,
+  const autoware_auto_perception_msgs::msg::DetectedObject & object2);
 double get2dPrecision(
-  const autoware_perception_msgs::msg::DynamicObject & source_object,
-  const autoware_perception_msgs::msg::DynamicObject & target_object);
+  const autoware_auto_perception_msgs::msg::DetectedObject & source_object,
+  const autoware_auto_perception_msgs::msg::DetectedObject & target_object);
 double get2dRecall(
-  const autoware_perception_msgs::msg::DynamicObject & source_object,
-  const autoware_perception_msgs::msg::DynamicObject & target_object);
+  const autoware_auto_perception_msgs::msg::DetectedObject & source_object,
+  const autoware_auto_perception_msgs::msg::DetectedObject & target_object);
 }  // namespace utils
 
 #endif  // DETECTION_BY_TRACKER__UTILS_HPP_

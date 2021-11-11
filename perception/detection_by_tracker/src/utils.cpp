@@ -25,18 +25,19 @@
 namespace utils
 {
 void toPolygon2d(
-  const autoware_perception_msgs::msg::DynamicObject & object, autoware_utils::Polygon2d & output);
+  const autoware_auto_perception_msgs::msg::DetectedObject & object,
+  autoware_utils::Polygon2d & output);
 bool isClockWise(const autoware_utils::Polygon2d & polygon);
 autoware_utils::Polygon2d inverseClockWise(const autoware_utils::Polygon2d & polygon);
 
-double getArea(const autoware_perception_msgs::msg::Shape & shape)
+double getArea(const autoware_auto_perception_msgs::msg::Shape & shape)
 {
   double area = 0.0;
-  if (shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
+  if (shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
     area = getRectangleArea(shape.dimensions);
-  } else if (shape.type == autoware_perception_msgs::msg::Shape::CYLINDER) {
+  } else if (shape.type == autoware_auto_perception_msgs::msg::Shape::CYLINDER) {
     area = getCircleArea(shape.dimensions);
-  } else if (shape.type == autoware_perception_msgs::msg::Shape::POLYGON) {
+  } else if (shape.type == autoware_auto_perception_msgs::msg::Shape::POLYGON) {
     area = getPolygonArea(shape.footprint);
   }
   return area;
@@ -66,8 +67,8 @@ double getCircleArea(const geometry_msgs::msg::Vector3 & dimensions)
 }
 
 double get2dIoU(
-  const autoware_perception_msgs::msg::DynamicObject & object1,
-  const autoware_perception_msgs::msg::DynamicObject & object2)
+  const autoware_auto_perception_msgs::msg::DetectedObject & object1,
+  const autoware_auto_perception_msgs::msg::DetectedObject & object2)
 {
   autoware_utils::Polygon2d polygon1, polygon2;
   toPolygon2d(object1, polygon1);
@@ -91,8 +92,8 @@ double get2dIoU(
 }
 
 double get2dPrecision(
-  const autoware_perception_msgs::msg::DynamicObject & source_object,
-  const autoware_perception_msgs::msg::DynamicObject & target_object)
+  const autoware_auto_perception_msgs::msg::DetectedObject & source_object,
+  const autoware_auto_perception_msgs::msg::DetectedObject & target_object)
 {
   autoware_utils::Polygon2d source_polygon, target_polygon;
   toPolygon2d(source_object, source_polygon);
@@ -112,8 +113,8 @@ double get2dPrecision(
 }
 
 double get2dRecall(
-  const autoware_perception_msgs::msg::DynamicObject & source_object,
-  const autoware_perception_msgs::msg::DynamicObject & target_object)
+  const autoware_auto_perception_msgs::msg::DetectedObject & source_object,
+  const autoware_auto_perception_msgs::msg::DetectedObject & target_object)
 {
   autoware_utils::Polygon2d source_polygon, target_polygon;
   toPolygon2d(source_object, source_polygon);
@@ -157,10 +158,11 @@ bool isClockWise(const autoware_utils::Polygon2d & polygon)
 }
 
 void toPolygon2d(
-  const autoware_perception_msgs::msg::DynamicObject & object, autoware_utils::Polygon2d & output)
+  const autoware_auto_perception_msgs::msg::DetectedObject & object,
+  autoware_utils::Polygon2d & output)
 {
-  if (object.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
-    const auto & pose = object.state.pose_covariance.pose;
+  if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+    const auto & pose = object.kinematics.pose_with_covariance.pose;
     const double yaw = autoware_utils::normalizeRadian(tf2::getYaw(pose.orientation));
     Eigen::Matrix2d rotation;
     rotation << std::cos(yaw), -std::sin(yaw), std::sin(yaw), std::cos(yaw);
@@ -182,8 +184,8 @@ void toPolygon2d(
     output.outer().push_back(boost::geometry::make<autoware_utils::Point2d>(
       pose.position.x + offset3.x(), pose.position.y + offset3.y()));
     output.outer().push_back(output.outer().front());
-  } else if (object.shape.type == autoware_perception_msgs::msg::Shape::CYLINDER) {
-    const auto & center = object.state.pose_covariance.pose.position;
+  } else if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::CYLINDER) {
+    const auto & center = object.kinematics.pose_with_covariance.pose.position;
     const auto & radius = object.shape.dimensions.x * 0.5;
     constexpr int n = 6;
     for (int i = 0; i < n; ++i) {
@@ -202,8 +204,8 @@ void toPolygon2d(
         boost::geometry::make<autoware_utils::Point2d>(point.x(), point.y()));
     }
     output.outer().push_back(output.outer().front());
-  } else if (object.shape.type == autoware_perception_msgs::msg::Shape::POLYGON) {
-    const auto & pose = object.state.pose_covariance.pose;
+  } else if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::POLYGON) {
+    const auto & pose = object.kinematics.pose_with_covariance.pose;
     for (const auto & point : object.shape.footprint.points) {
       output.outer().push_back(boost::geometry::make<autoware_utils::Point2d>(
         pose.position.x + point.x, pose.position.y + point.y));
