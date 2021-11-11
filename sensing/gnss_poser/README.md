@@ -1,65 +1,103 @@
 # gnss_poser
 
-## Overview
+## Purpose
 
-This is package to use GNSS with ROS messages.
+The `gnss_poser` is a node that subscribes gnss sensing messages and calculates vehicle pose with covariance.
 
-## Install
+## Inner-workings / Algorithms
 
-### GeographicLib
+<!-- Write how this package works. Flowcharts and figures are great. Add sub-sections as you like.
 
-This package use GeographicLib to calculate coordinates.
+Example:
+  ### Flowcharts
 
-1. Download files from <https://sourceforge.net/projects/geographiclib/files/distrib/>
+  ...(PlantUML or something)
 
-2. Build and install Geographiclib
+  ### State Transitions
 
-   ```sh
-   tar xfpz GeographicLib-1.50.1.
-   cd GeographicLib-1.50.1
-   mkdir BUILD
-   cd BUILD
-   ../configure --prefix=/usr
-   make
-   sudo make install
-   sudo cp /usr/share/cmake/GeographicLib/FindGeographicLib.cmake /usr/share/cmake-3.5/Modules
-   ```
+  ...(PlantUML or something)
 
-3. install geoid datasets
+  ### How to filter target obstacles
 
-   ```sh
-   geographiclib-get-geoids best
-   ```
+  ...
 
-### Ublox
+  ### How to optimize trajectory
 
-If you use ublox GNSS receiver, install below package.
-This allows to obtain heading while vehicle is stopping.
+  ...
+-->
 
-1. Download package <https://github.com/KumarRobotics/ublox.git>
-2. build package
+## Inputs / Outputs
 
-### gnss_poser package
+### Input
 
-This package use gnss package in autoware.
+| Name             | Type                          | Description                                                                                     |
+| ---------------- | ----------------------------- | ----------------------------------------------------------------------------------------------- |
+| `~/input/fix`    | `sensor_msgs::msg::NavSatFix` | gnss status message                                                                             |
+| `~/input/navpvt` | `ublox_msgs::msg::NavPVT`     | position, velocity and time solution (You can see detail description in reference document [1]) |
 
-1. download and build Autoware
-2. download and build this package
+### Output
 
-## Usage
+| Name                     | Type                                            | Description                                                    |
+| ------------------------ | ----------------------------------------------- | -------------------------------------------------------------- |
+| `~/output/pose`          | `geometry_msgs::msg::PoseStamped`               | vehicle pose calculated from gnss sensing data                 |
+| `~/output/gnss_pose_cov` | `geometry_msgs::msg::PoseWithCovarianceStamped` | vehicle pose with covariance calculated from gnss sensing data |
+| `~/output/gnss_fixed`    | `autoware_debug_msgs::msg::BoolStamped`         | gnss fix status                                                |
 
-```sh
-roslaunch gnss_poser gnss_poser.launch
-```
+## Parameters
 
-For ublox GNSS receiver
+### Core Parameters
 
-```sh
-roslaunch gnss_poser ubloxfix2mgrs.launch
-```
+| Name                 | Type   | Default Value    | Description                                                                                     |
+| -------------------- | ------ | ---------------- | ----------------------------------------------------------------------------------------------- |
+| `base_frame`         | string | "base_link"      | frame d                                                                                         |
+| `gnss_frame`         | string | "gnss"           | frame id                                                                                        |
+| `gnss_base_frame`    | string | "gnss_base_link" | frame id                                                                                        |
+| `map_frame`          | string | "map"            | frame id                                                                                        |
+| `use_ublox_receiver` | bool   | false            | flag to use ublox receiver                                                                      |
+| `plane_zone`         | int    | 9                | identification number of the plane rectangular coordinate systems (See, reference document [2]) |
 
-## Configuration
+## Assumptions / Known limits
 
-This package use egm2008-1 for geoid datasets.
+<!-- Write assumptions and limitations of your implementation.
 
-Parameters can be set in Launch file.
+Example:
+  This algorithm assumes obstacles are not moving, so if they rapidly move after the vehicle started to avoid them, it might collide with them.
+  Also, this algorithm doesn't care about blind spots. In general, since too close obstacles aren't visible due to the sensing performance limit, please take enough margin to obstacles.
+-->
+
+## (Optional) Error detection and handling
+
+<!-- Write how to detect errors and how to recover from them.
+
+Example:
+  This package can handle up to 20 obstacles. If more obstacles found, this node will give up and raise diagnostic errors.
+-->
+
+## (Optional) Performance characterization
+
+<!-- Write performance information like complexity. If it wouldn't be the bottleneck, not necessary.
+
+Example:
+  ### Complexity
+
+  This algorithm is O(N).
+
+  ### Processing time
+
+  ...
+-->
+
+## (Optional) References/External links
+
+[1] <https://github.com/KumarRobotics/ublox.git>
+
+[2] <https://www.gsi.go.jp/LAW/heimencho.html>
+
+## (Optional) Future extensions / Unimplemented parts
+
+<!-- Write future extensions of this package.
+
+Example:
+  Currently, this package can't handle the chattering obstacles well. We plan to add some probabilistic filters in the perception layer to improve it.
+  Also, there are some parameters that should be global(e.g. vehicle size, max steering, etc.). These will be refactored and defined as global parameters so that we can share the same parameters between different nodes.
+-->
