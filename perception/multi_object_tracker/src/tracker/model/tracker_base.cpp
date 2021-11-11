@@ -21,8 +21,10 @@
 #include <algorithm>
 #include <random>
 
-Tracker::Tracker(const rclcpp::Time & time, const int type)
-: type_(type),
+Tracker::Tracker(
+  const rclcpp::Time & time,
+  const std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> & classification)
+: classification_(classification),
   no_measurement_count_(0),
   total_no_measurement_count_(0),
   total_measurement_count_(1),
@@ -35,7 +37,7 @@ Tracker::Tracker(const rclcpp::Time & time, const int type)
 }
 
 bool Tracker::updateWithMeasurement(
-  const autoware_perception_msgs::msg::DynamicObject & object,
+  const autoware_auto_perception_msgs::msg::DetectedObject & object,
   const rclcpp::Time & measurement_time)
 {
   no_measurement_count_ = 0;
@@ -55,7 +57,7 @@ bool Tracker::updateWithoutMeasurement()
 geometry_msgs::msg::PoseWithCovariance Tracker::getPoseWithCovariance(
   const rclcpp::Time & time) const
 {
-  autoware_perception_msgs::msg::DynamicObject object;
-  getEstimatedDynamicObject(time, object);
-  return object.state.pose_covariance;
+  autoware_auto_perception_msgs::msg::TrackedObject object;
+  getTrackedObject(time, object);
+  return object.kinematics.pose_with_covariance;
 }

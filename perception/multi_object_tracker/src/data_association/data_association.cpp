@@ -148,32 +148,33 @@ void DataAssociation::assign(
 }
 
 Eigen::MatrixXd DataAssociation::calcScoreMatrix(
-  const autoware_perception_msgs::msg::DynamicObjectWithFeatureArray & measurements,
+  const autoware_auto_perception_msgs::msg::DetectedObjects & measurements,
   const std::list<std::shared_ptr<Tracker>> & trackers)
 {
   Eigen::MatrixXd score_matrix =
-    Eigen::MatrixXd::Zero(trackers.size(), measurements.feature_objects.size());
+    Eigen::MatrixXd::Zero(trackers.size(), measurements.objects.size());
   size_t tracker_idx = 0;
   for (auto tracker_itr = trackers.begin(); tracker_itr != trackers.end();
        ++tracker_itr, ++tracker_idx) {
-    for (size_t measurement_idx = 0; measurement_idx < measurements.feature_objects.size();
+    const std::uint8_t tracker_label = (*tracker_itr)->getHighestProbLabel();
+
+    for (size_t measurement_idx = 0; measurement_idx < measurements.objects.size();
          ++measurement_idx) {
+      const autoware_auto_perception_msgs::msg::DetectedObject & measurement_object =
+        measurements.objects.at(measurement_idx);
+      const std::uint8_t measurement_label =
+        utils::getHighestProbLabel(measurement_object.classification);
+
       double score = 0.0;
       const geometry_msgs::msg::PoseWithCovariance tracker_pose_covariance =
         (*tracker_itr)->getPoseWithCovariance(measurements.header.stamp);
-      const autoware_perception_msgs::msg::DynamicObject & measurement_object =
-        measurements.feature_objects.at(measurement_idx).object;
-      if (can_assign_matrix_((*tracker_itr)->getType(), measurement_object.semantic.type)) {
-        const double max_dist =
-          max_dist_matrix_((*tracker_itr)->getType(), measurement_object.semantic.type);
-        const double max_area =
-          max_area_matrix_((*tracker_itr)->getType(), measurement_object.semantic.type);
-        const double min_area =
-          min_area_matrix_((*tracker_itr)->getType(), measurement_object.semantic.type);
-        const double max_rad =
-          max_rad_matrix_((*tracker_itr)->getType(), measurement_object.semantic.type);
+      if (can_assign_matrix_(tracker_label, measurement_label)) {
+        const double max_dist = max_dist_matrix_(tracker_label, measurement_label);
+        const double max_area = max_area_matrix_(tracker_label, measurement_label);
+        const double min_area = min_area_matrix_(tracker_label, measurement_label);
+        const double max_rad = max_rad_matrix_(tracker_label, measurement_label);
         const double dist = getDistance(
-          measurement_object.state.pose_covariance.pose.position,
+          measurement_object.kinematics.pose_with_covariance.pose.position,
           tracker_pose_covariance.pose.position);
         const double area = utils::getArea(measurement_object.shape);
         score = (max_dist - std::min(dist, max_dist)) / max_dist;
@@ -187,7 +188,7 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
           // angle gate
         } else if (std::fabs(max_rad) < M_PI) {
           const double angle = getFormedYawAngle(
-            measurement_object.state.pose_covariance.pose.orientation,
+            measurement_object.kinematics.pose_with_covariance.pose.orientation,
             tracker_pose_covariance.pose.orientation, false);
           if (std::fabs(max_rad) < std::fabs(angle)) {
             score = 0.0;
@@ -195,8 +196,7 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
           // mahalanobis dist gate
         } else if (score < score_threshold_) {
           double mahalanobis_dist = getMahalanobisDistance(
-            measurements.feature_objects.at(measurement_idx)
-              .object.state.pose_covariance.pose.position,
+            measurements.objects.at(measurement_idx).kinematics.pose_with_covariance.pose.position,
             tracker_pose_covariance.pose.position, getXYCovariance(tracker_pose_covariance));
 
           if (2.448 /*95%*/ <= mahalanobis_dist) {

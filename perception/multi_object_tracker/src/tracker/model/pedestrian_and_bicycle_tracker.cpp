@@ -21,8 +21,8 @@
 #include <autoware_utils/autoware_utils.hpp>
 
 PedestrianAndBicycleTracker::PedestrianAndBicycleTracker(
-  const rclcpp::Time & time, const autoware_perception_msgs::msg::DynamicObject & object)
-: Tracker(time, object.semantic.type),
+  const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object)
+: Tracker(time, object.classification),
   pedestrian_tracker_(time, object),
   bicycle_tracker_(time, object)
 {
@@ -36,24 +36,26 @@ bool PedestrianAndBicycleTracker::predict(const rclcpp::Time & time)
 }
 
 bool PedestrianAndBicycleTracker::measure(
-  const autoware_perception_msgs::msg::DynamicObject & object, const rclcpp::Time & time)
+  const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time)
 {
   pedestrian_tracker_.measure(object, time);
   bicycle_tracker_.measure(object, time);
-  setType(object.semantic.type);
+  setClassification(object.classification);
   return true;
 }
 
-bool PedestrianAndBicycleTracker::getEstimatedDynamicObject(
-  const rclcpp::Time & time, autoware_perception_msgs::msg::DynamicObject & object) const
+bool PedestrianAndBicycleTracker::getTrackedObject(
+  const rclcpp::Time & time, autoware_auto_perception_msgs::msg::TrackedObject & object) const
 {
-  using autoware_perception_msgs::msg::Semantic;
-  if (getType() == Semantic::PEDESTRIAN) {
-    pedestrian_tracker_.getEstimatedDynamicObject(time, object);
-  } else if (getType() == Semantic::BICYCLE || getType() == Semantic::MOTORBIKE) {
-    bicycle_tracker_.getEstimatedDynamicObject(time, object);
+  using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
+  const uint8_t label = getHighestProbLabel();
+
+  if (label == Label::PEDESTRIAN) {
+    pedestrian_tracker_.getTrackedObject(time, object);
+  } else if (label == Label::BICYCLE || label == Label::MOTORCYCLE) {
+    bicycle_tracker_.getTrackedObject(time, object);
   }
-  object.id = getUUID();
-  object.semantic.type = getType();
+  object.object_id = getUUID();
+  object.classification = getClassification();
   return true;
 }

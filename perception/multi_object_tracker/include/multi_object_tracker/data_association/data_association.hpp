@@ -31,7 +31,7 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
-#include <autoware_perception_msgs/msg/dynamic_object_with_feature_array.hpp>
+#include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
 
 class DataAssociation
 {
@@ -54,7 +54,7 @@ public:
     const Eigen::MatrixXd & src, std::unordered_map<int, int> & direct_assignment,
     std::unordered_map<int, int> & reverse_assignment);
   Eigen::MatrixXd calcScoreMatrix(
-    const autoware_perception_msgs::msg::DynamicObjectWithFeatureArray & measurements,
+    const autoware_auto_perception_msgs::msg::DetectedObjects & measurements,
     const std::list<std::shared_ptr<Tracker>> & trackers);
   virtual ~DataAssociation() {}
 };

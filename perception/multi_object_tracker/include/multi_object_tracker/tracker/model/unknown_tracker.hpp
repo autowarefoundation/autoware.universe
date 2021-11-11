@@ -23,12 +23,10 @@
 
 #include <kalman_filter/kalman_filter.hpp>
 
-#include <autoware_perception_msgs/msg/dynamic_object.hpp>
-
 class UnknownTracker : public Tracker
 {
 private:
-  autoware_perception_msgs::msg::DynamicObject object_;
+  autoware_auto_perception_msgs::msg::DetectedObject object_;
   rclcpp::Logger logger_;
 
 private:
@@ -61,17 +59,18 @@ private:
 
 public:
   UnknownTracker(
-    const rclcpp::Time & time, const autoware_perception_msgs::msg::DynamicObject & object);
+    const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object);
 
   bool predict(const rclcpp::Time & time) override;
   bool predict(const double dt, KalmanFilter & ekf) const;
   bool measure(
-    const autoware_perception_msgs::msg::DynamicObject & object,
+    const autoware_auto_perception_msgs::msg::DetectedObject & object,
     const rclcpp::Time & time) override;
-  bool measureWithPose(const autoware_perception_msgs::msg::DynamicObject & object);
-  bool getEstimatedDynamicObject(
+  bool measureWithPose(const autoware_auto_perception_msgs::msg::DetectedObject & object);
+  bool measureWithShape(const autoware_auto_perception_msgs::msg::DetectedObject & object);
+  bool getTrackedObject(
     const rclcpp::Time & time,
-    autoware_perception_msgs::msg::DynamicObject & object) const override;
+    autoware_auto_perception_msgs::msg::TrackedObject & object) const override;
   virtual ~UnknownTracker() {}
 };
 

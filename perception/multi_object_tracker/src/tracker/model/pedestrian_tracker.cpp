@@ -33,11 +33,11 @@
 #include <Eigen/Geometry>
 
 PedestrianTracker::PedestrianTracker(
-  const rclcpp::Time & time, const autoware_perception_msgs::msg::DynamicObject & object)
-: Tracker(time, object.semantic.type),
+  const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object)
+: Tracker(time, object.classification),
   logger_(rclcpp::get_logger("PedestrianTracker")),
   last_update_time_(time),
-  z_(object.state.pose_covariance.pose.position.z)
+  z_(object.kinematics.pose_with_covariance.pose.position.z)
 {
   object_ = object;
 
@@ -74,12 +74,12 @@ PedestrianTracker::PedestrianTracker(
 
   // initialize X matrix
   Eigen::MatrixXd X(ekf_params_.dim_x, 1);
-  X(IDX::X) = object.state.pose_covariance.pose.position.x;
-  X(IDX::Y) = object.state.pose_covariance.pose.position.y;
-  X(IDX::YAW) = tf2::getYaw(object.state.pose_covariance.pose.orientation);
-  if (object.state.twist_reliable) {
-    X(IDX::VX) = object.state.twist_covariance.twist.linear.x;
-    X(IDX::WZ) = object.state.twist_covariance.twist.angular.z;
+  X(IDX::X) = object.kinematics.pose_with_covariance.pose.position.x;
+  X(IDX::Y) = object.kinematics.pose_with_covariance.pose.position.y;
+  X(IDX::YAW) = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
+  if (object.kinematics.has_twist) {
+    X(IDX::VX) = object.kinematics.twist_with_covariance.twist.linear.x;
+    X(IDX::WZ) = object.kinematics.twist_with_covariance.twist.angular.z;
   } else {
     X(IDX::VX) = 0.0;
     X(IDX::WZ) = 0.0;
@@ -89,9 +89,9 @@ PedestrianTracker::PedestrianTracker(
   Eigen::MatrixXd P = Eigen::MatrixXd::Zero(ekf_params_.dim_x, ekf_params_.dim_x);
   if (
     !ekf_params_.use_measurement_covariance ||
-    object.state.pose_covariance.covariance[utils::MSG_COV_IDX::X_X] == 0.0 ||
-    object.state.pose_covariance.covariance[utils::MSG_COV_IDX::Y_Y] == 0.0 ||
-    object.state.pose_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW] == 0.0) {
+    object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_X] == 0.0 ||
+    object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_Y] == 0.0 ||
+    object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW] == 0.0) {
     const double cos_yaw = std::cos(X(IDX::YAW));
     const double sin_yaw = std::sin(X(IDX::YAW));
     const double sin_2yaw = std::sin(2.0f * X(IDX::YAW));
@@ -107,14 +107,17 @@ PedestrianTracker::PedestrianTracker(
     P(IDX::VX, IDX::VX) = ekf_params_.p0_cov_vx;
     P(IDX::WZ, IDX::WZ) = ekf_params_.p0_cov_wz;
   } else {
-    P(IDX::X, IDX::X) = object.state.pose_covariance.covariance[utils::MSG_COV_IDX::X_X];
-    P(IDX::X, IDX::Y) = object.state.pose_covariance.covariance[utils::MSG_COV_IDX::X_Y];
-    P(IDX::Y, IDX::Y) = object.state.pose_covariance.covariance[utils::MSG_COV_IDX::Y_Y];
-    P(IDX::Y, IDX::X) = object.state.pose_covariance.covariance[utils::MSG_COV_IDX::Y_X];
-    P(IDX::YAW, IDX::YAW) = object.state.pose_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW];
-    if (object.state.twist_reliable) {
-      P(IDX::VX, IDX::VX) = object.state.twist_covariance.covariance[utils::MSG_COV_IDX::X_X];
-      P(IDX::WZ, IDX::WZ) = object.state.twist_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW];
+    P(IDX::X, IDX::X) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_X];
+    P(IDX::X, IDX::Y) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_Y];
+    P(IDX::Y, IDX::Y) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_Y];
+    P(IDX::Y, IDX::X) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_X];
+    P(IDX::YAW, IDX::YAW) =
+      object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW];
+    if (object.kinematics.has_twist_covariance) {
+      P(IDX::VX, IDX::VX) =
+        object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::X_X];
+      P(IDX::WZ, IDX::WZ) =
+        object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW];
     } else {
       P(IDX::VX, IDX::VX) = ekf_params_.p0_cov_vx;
       P(IDX::WZ, IDX::WZ) = ekf_params_.p0_cov_wz;
@@ -123,10 +126,10 @@ PedestrianTracker::PedestrianTracker(
 
   bounding_box_ = {0.5, 0.5, 1.7};
   cylinder_ = {0.3, 1.7};
-  if (object.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
+  if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
     bounding_box_ = {
       object.shape.dimensions.x, object.shape.dimensions.y, object.shape.dimensions.z};
-  } else if (object.shape.type == autoware_perception_msgs::msg::Shape::CYLINDER) {
+  } else if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::CYLINDER) {
     cylinder_ = {object.shape.dimensions.x, object.shape.dimensions.z};
   }
 
@@ -210,7 +213,8 @@ bool PedestrianTracker::predict(const double dt, KalmanFilter & ekf) const
   return true;
 }
 
-bool PedestrianTracker::measureWithPose(const autoware_perception_msgs::msg::DynamicObject & object)
+bool PedestrianTracker::measureWithPose(
+  const autoware_auto_perception_msgs::msg::DetectedObject & object)
 {
   constexpr int dim_y = 2;  // pos x, pos y depending on Pose output
   // double measurement_yaw =
@@ -232,7 +236,8 @@ bool PedestrianTracker::measureWithPose(const autoware_perception_msgs::msg::Dyn
 
   /* Set measurement matrix */
   Eigen::MatrixXd Y(dim_y, 1);
-  Y << object.state.pose_covariance.pose.position.x, object.state.pose_covariance.pose.position.y;
+  Y << object.kinematics.pose_with_covariance.pose.position.x,
+    object.kinematics.pose_with_covariance.pose.position.y;
 
   /* Set measurement matrix */
   Eigen::MatrixXd C = Eigen::MatrixXd::Zero(dim_y, ekf_params_.dim_x);
@@ -244,23 +249,23 @@ bool PedestrianTracker::measureWithPose(const autoware_perception_msgs::msg::Dyn
   Eigen::MatrixXd R = Eigen::MatrixXd::Zero(dim_y, dim_y);
   if (
     !ekf_params_.use_measurement_covariance ||
-    object.state.pose_covariance.covariance[utils::MSG_COV_IDX::X_X] == 0.0 ||
-    object.state.pose_covariance.covariance[utils::MSG_COV_IDX::Y_Y] == 0.0) {
+    object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_X] == 0.0 ||
+    object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_Y] == 0.0) {
     R(0, 0) = ekf_params_.r_cov_x;  // x - x
     R(0, 1) = 0.0;                  // x - y
     R(1, 1) = ekf_params_.r_cov_y;  // y - y
     R(1, 0) = R(0, 1);              // y - x
     // R(2, 2) = ekf_params_.r_cov_yaw;                        // yaw - yaw
   } else {
-    R(0, 0) = object.state.pose_covariance.covariance[utils::MSG_COV_IDX::X_X];
-    R(0, 1) = object.state.pose_covariance.covariance[utils::MSG_COV_IDX::X_Y];
-    // R(0, 2) = object.state.pose_covariance.covariance[utils::MSG_COV_IDX::X_YAW];
-    R(1, 0) = object.state.pose_covariance.covariance[utils::MSG_COV_IDX::Y_X];
-    R(1, 1) = object.state.pose_covariance.covariance[utils::MSG_COV_IDX::Y_Y];
-    // R(1, 2) = object.state.pose_covariance.covariance[utils::MSG_COV_IDX::Y_YAW];
-    // R(2, 0) = object.state.pose_covariance.covariance[utils::MSG_COV_IDX::YAW_X];
-    // R(2, 1) = object.state.pose_covariance.covariance[utils::MSG_COV_IDX::YAW_Y];
-    // R(2, 2) = object.state.pose_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW];
+    R(0, 0) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_X];
+    R(0, 1) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_Y];
+    // R(0, 2) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_YAW];
+    R(1, 0) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_X];
+    R(1, 1) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_Y];
+    // R(1, 2) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_YAW];
+    // R(2, 0) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_X];
+    // R(2, 1) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_Y];
+    // R(2, 2) = object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW];
   }
   if (!ekf_.update(Y, C, R)) {
     RCLCPP_WARN(logger_, "Cannot update");
@@ -284,20 +289,20 @@ bool PedestrianTracker::measureWithPose(const autoware_perception_msgs::msg::Dyn
 
   // position z
   constexpr float gain = 0.9;
-  z_ = gain * z_ + (1.0 - gain) * object.state.pose_covariance.pose.position.z;
+  z_ = gain * z_ + (1.0 - gain) * object.kinematics.pose_with_covariance.pose.position.z;
 
   return true;
 }
 
 bool PedestrianTracker::measureWithShape(
-  const autoware_perception_msgs::msg::DynamicObject & object)
+  const autoware_auto_perception_msgs::msg::DetectedObject & object)
 {
   constexpr float gain = 0.9;
-  if (object.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
+  if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
     bounding_box_.width = gain * bounding_box_.width + (1.0 - gain) * object.shape.dimensions.x;
     bounding_box_.length = gain * bounding_box_.length + (1.0 - gain) * object.shape.dimensions.y;
     bounding_box_.height = gain * bounding_box_.height + (1.0 - gain) * object.shape.dimensions.z;
-  } else if (object.shape.type == autoware_perception_msgs::msg::Shape::CYLINDER) {
+  } else if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::CYLINDER) {
     cylinder_.width = gain * cylinder_.width + (1.0 - gain) * object.shape.dimensions.x;
     cylinder_.height = gain * cylinder_.height + (1.0 - gain) * object.shape.dimensions.z;
   } else {
@@ -308,7 +313,7 @@ bool PedestrianTracker::measureWithShape(
 }
 
 bool PedestrianTracker::measure(
-  const autoware_perception_msgs::msg::DynamicObject & object, const rclcpp::Time & time)
+  const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time)
 {
   object_ = object;
 
@@ -324,14 +329,14 @@ bool PedestrianTracker::measure(
   return true;
 }
 
-bool PedestrianTracker::getEstimatedDynamicObject(
-  const rclcpp::Time & time, autoware_perception_msgs::msg::DynamicObject & object) const
+bool PedestrianTracker::getTrackedObject(
+  const rclcpp::Time & time, autoware_auto_perception_msgs::msg::TrackedObject & object) const
 {
-  object = object_;
-  object.id = getUUID();
-  object.semantic.type = getType();
+  object = utils::toTrackedObject(object_);
+  object.object_id = getUUID();
+  object.classification = getClassification();
 
-  // predict state
+  // predict kinematics
   KalmanFilter tmp_ekf_for_no_update = ekf_;
   const double dt = (time - last_update_time_).seconds();
   if (0.001 /*1msec*/ < dt) {
@@ -342,56 +347,63 @@ bool PedestrianTracker::getEstimatedDynamicObject(
   tmp_ekf_for_no_update.getX(X_t);
   tmp_ekf_for_no_update.getP(P);
 
-  // set position
-  object.state.pose_covariance.pose.position.x = X_t(IDX::X);
-  object.state.pose_covariance.pose.position.y = X_t(IDX::Y);
-  object.state.pose_covariance.pose.position.z = z_;
-
-  // set yaw
+  // position
+  object.kinematics.pose_with_covariance.pose.position.x = X_t(IDX::X);
+  object.kinematics.pose_with_covariance.pose.position.y = X_t(IDX::Y);
+  object.kinematics.pose_with_covariance.pose.position.z = z_;
+  // quaternion
   {
     double roll, pitch, yaw;
     tf2::Quaternion original_quaternion;
-    tf2::fromMsg(object_.state.pose_covariance.pose.orientation, original_quaternion);
+    tf2::fromMsg(object_.kinematics.pose_with_covariance.pose.orientation, original_quaternion);
     tf2::Matrix3x3(original_quaternion).getRPY(roll, pitch, yaw);
     tf2::Quaternion filtered_quaternion;
     filtered_quaternion.setRPY(roll, pitch, X_t(IDX::YAW));
-    object.state.pose_covariance.pose.orientation.x = filtered_quaternion.x();
-    object.state.pose_covariance.pose.orientation.y = filtered_quaternion.y();
-    object.state.pose_covariance.pose.orientation.z = filtered_quaternion.z();
-    object.state.pose_covariance.pose.orientation.w = filtered_quaternion.w();
+    object.kinematics.pose_with_covariance.pose.orientation.x = filtered_quaternion.x();
+    object.kinematics.pose_with_covariance.pose.orientation.y = filtered_quaternion.y();
+    object.kinematics.pose_with_covariance.pose.orientation.z = filtered_quaternion.z();
+    object.kinematics.pose_with_covariance.pose.orientation.w = filtered_quaternion.w();
+    object.kinematics.orientation_availability =
+      autoware_auto_perception_msgs::msg::TrackedObjectKinematics::SIGN_UNKNOWN;
   }
+  // position covariance
+  constexpr double z_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
+  constexpr double r_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
+  constexpr double p_cov = 0.1 * 0.1;  // TOTODO(yukkysaito)DO Currently tentative
+  object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_X] = P(IDX::X, IDX::X);
+  object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_Y] = P(IDX::X, IDX::Y);
+  object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_X] = P(IDX::Y, IDX::X);
+  object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_Y] = P(IDX::Y, IDX::Y);
+  object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Z_Z] = z_cov;
+  object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::ROLL_ROLL] = r_cov;
+  object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::PITCH_PITCH] = p_cov;
+  object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW] =
+    P(IDX::YAW, IDX::YAW);
 
-  // set covariance
-  object.state.pose_covariance.covariance[utils::MSG_COV_IDX::X_X] = P(IDX::X, IDX::X);
-  object.state.pose_covariance.covariance[utils::MSG_COV_IDX::X_Y] = P(IDX::X, IDX::Y);
-  object.state.pose_covariance.covariance[utils::MSG_COV_IDX::X_YAW] = P(IDX::X, IDX::YAW);
-  object.state.pose_covariance.covariance[utils::MSG_COV_IDX::Y_X] = P(IDX::Y, IDX::X);
-  object.state.pose_covariance.covariance[utils::MSG_COV_IDX::Y_Y] = P(IDX::Y, IDX::Y);
-  object.state.pose_covariance.covariance[utils::MSG_COV_IDX::Y_YAW] = P(IDX::Y, IDX::YAW);
-  object.state.pose_covariance.covariance[utils::MSG_COV_IDX::YAW_X] = P(IDX::YAW, IDX::X);
-  object.state.pose_covariance.covariance[utils::MSG_COV_IDX::YAW_Y] = P(IDX::YAW, IDX::Y);
-  object.state.pose_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW] = P(IDX::YAW, IDX::YAW);
-  object.state.twist_covariance.covariance[utils::MSG_COV_IDX::X_X] = P(IDX::VX, IDX::VX);
-  object.state.twist_covariance.covariance[utils::MSG_COV_IDX::X_YAW] = P(IDX::VX, IDX::WZ);
-  object.state.twist_covariance.covariance[utils::MSG_COV_IDX::YAW_X] = P(IDX::WZ, IDX::VX);
-  object.state.twist_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW] = P(IDX::WZ, IDX::WZ);
+  // twist
+  object.kinematics.twist_with_covariance.twist.linear.x = X_t(IDX::VX);
+  object.kinematics.twist_with_covariance.twist.angular.z = X_t(IDX::WZ);
+  // twist covariance
+  constexpr double vy_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
+  constexpr double vz_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
+  constexpr double wx_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
+  constexpr double wy_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
+  object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::X_X] = P(IDX::VX, IDX::VX);
+  object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::Y_Y] = vy_cov;
+  object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::Z_Z] = vz_cov;
+  object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::X_YAW] =
+    P(IDX::VX, IDX::WZ);
+  object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::YAW_X] =
+    P(IDX::WZ, IDX::VX);
+  object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::ROLL_ROLL] = wx_cov;
+  object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::PITCH_PITCH] = wy_cov;
+  object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW] =
+    P(IDX::WZ, IDX::WZ);
 
   // set shape
-  if (object.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
-    object.shape.dimensions.x = bounding_box_.width;
-    object.shape.dimensions.y = bounding_box_.length;
-    object.shape.dimensions.z = bounding_box_.height;
-  } else if (object.shape.type == autoware_perception_msgs::msg::Shape::CYLINDER) {
-    object.shape.dimensions.x = cylinder_.width;
-    object.shape.dimensions.y = cylinder_.width;
-    object.shape.dimensions.z = cylinder_.height;
-  }
-
-  // set velocity
-  object.state.twist_covariance.twist.linear.x = X_t(IDX::VX);
-  object.state.twist_covariance.twist.angular.z = X_t(IDX::WZ);
-
-  object.state.twist_reliable = true;
+  object.shape.dimensions.x = bounding_box_.width;
+  object.shape.dimensions.y = bounding_box_.length;
+  object.shape.dimensions.z = bounding_box_.height;
 
   return true;
 }

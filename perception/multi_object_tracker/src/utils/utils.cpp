@@ -29,18 +29,19 @@
 namespace utils
 {
 void toPolygon2d(
-  const autoware_perception_msgs::msg::DynamicObject & object, autoware_utils::Polygon2d & output);
+  const autoware_auto_perception_msgs::msg::TrackedObject & object,
+  autoware_utils::Polygon2d & output);
 bool isClockWise(const autoware_utils::Polygon2d & polygon);
 autoware_utils::Polygon2d inverseClockWise(const autoware_utils::Polygon2d & polygon);
 
-double getArea(const autoware_perception_msgs::msg::Shape & shape)
+double getArea(const autoware_auto_perception_msgs::msg::Shape & shape)
 {
   double area = 0.0;
-  if (shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
+  if (shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
     area = getRectangleArea(shape.dimensions);
-  } else if (shape.type == autoware_perception_msgs::msg::Shape::CYLINDER) {
+  } else if (shape.type == autoware_auto_perception_msgs::msg::Shape::CYLINDER) {
     area = getCircleArea(shape.dimensions);
-  } else if (shape.type == autoware_perception_msgs::msg::Shape::POLYGON) {
+  } else if (shape.type == autoware_auto_perception_msgs::msg::Shape::POLYGON) {
     area = getPolygonArea(shape.footprint);
   }
   return area;
@@ -70,8 +71,8 @@ double getCircleArea(const geometry_msgs::msg::Vector3 & dimensions)
 }
 
 double get2dIoU(
-  const autoware_perception_msgs::msg::DynamicObject & object1,
-  const autoware_perception_msgs::msg::DynamicObject & object2)
+  const autoware_auto_perception_msgs::msg::TrackedObject & object1,
+  const autoware_auto_perception_msgs::msg::TrackedObject & object2)
 {
   autoware_utils::Polygon2d polygon1, polygon2;
   toPolygon2d(object1, polygon1);
@@ -123,10 +124,11 @@ bool isClockWise(const autoware_utils::Polygon2d & polygon)
 }
 
 void toPolygon2d(
-  const autoware_perception_msgs::msg::DynamicObject & object, autoware_utils::Polygon2d & output)
+  const autoware_auto_perception_msgs::msg::TrackedObject & object,
+  autoware_utils::Polygon2d & output)
 {
-  if (object.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
-    const auto & pose = object.state.pose_covariance.pose;
+  if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+    const auto & pose = object.kinematics.pose_with_covariance.pose;
     double yaw = autoware_utils::normalizeRadian(tf2::getYaw(pose.orientation));
     Eigen::Matrix2d rotation;
     rotation << std::cos(yaw), -std::sin(yaw), std::sin(yaw), std::cos(yaw);
@@ -148,8 +150,8 @@ void toPolygon2d(
     output.outer().push_back(boost::geometry::make<autoware_utils::Point2d>(
       pose.position.x + offset3.x(), pose.position.y + offset3.y()));
     output.outer().push_back(output.outer().front());
-  } else if (object.shape.type == autoware_perception_msgs::msg::Shape::CYLINDER) {
-    const auto & center = object.state.pose_covariance.pose.position;
+  } else if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::CYLINDER) {
+    const auto & center = object.kinematics.pose_with_covariance.pose.position;
     const auto & radius = object.shape.dimensions.x * 0.5;
     constexpr int n = 6;
     for (int i = 0; i < n; ++i) {
@@ -168,8 +170,8 @@ void toPolygon2d(
         boost::geometry::make<autoware_utils::Point2d>(point.x(), point.y()));
     }
     output.outer().push_back(output.outer().front());
-  } else if (object.shape.type == autoware_perception_msgs::msg::Shape::POLYGON) {
-    const auto & pose = object.state.pose_covariance.pose;
+  } else if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::POLYGON) {
+    const auto & pose = object.kinematics.pose_with_covariance.pose;
     // don't use yaw
     // double yaw = autoware_utils::normalizeRadian(tf2::getYaw(pose.orientation));
     // Eigen::Matrix2d rotation;
@@ -181,6 +183,36 @@ void toPolygon2d(
     output.outer().push_back(output.outer().front());
   }
   output = isClockWise(output) ? output : inverseClockWise(output);
+}
+
+std::uint8_t getHighestProbLabel(
+  const std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> & classification)
+{
+  std::uint8_t label = autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN;
+  float highest_prob = 0.0;
+  for (const auto & _class : classification) {
+    if (highest_prob < _class.probability) {
+      highest_prob = _class.probability;
+      label = _class.label;
+    }
+  }
+  return label;
+}
+
+autoware_auto_perception_msgs::msg::TrackedObject toTrackedObject(
+  const autoware_auto_perception_msgs::msg::DetectedObject & detected_object)
+{
+  autoware_auto_perception_msgs::msg::TrackedObject tracked_object;
+  tracked_object.existence_probability = detected_object.existence_probability;
+
+  tracked_object.classification = detected_object.classification;
+
+  tracked_object.kinematics.pose_with_covariance = detected_object.kinematics.pose_with_covariance;
+  tracked_object.kinematics.twist_with_covariance =
+    detected_object.kinematics.twist_with_covariance;
+
+  tracked_object.shape = detected_object.shape;
+  return tracked_object;
 }
 
 }  // namespace utils

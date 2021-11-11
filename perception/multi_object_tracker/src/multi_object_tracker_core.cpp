@@ -35,7 +35,7 @@
 #include <Eigen/Geometry>
 #include <rclcpp_components/register_node_macro.hpp>
 
-using SemanticType = autoware_perception_msgs::msg::Semantic;
+using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 
 namespace
 {
@@ -55,10 +55,10 @@ boost::optional<geometry_msgs::msg::Transform> getTransform(
   }
 }
 
-bool transformDynamicObjects(
-  const autoware_perception_msgs::msg::DynamicObjectWithFeatureArray & input_msg,
+bool transformDetectedObjects(
+  const autoware_auto_perception_msgs::msg::DetectedObjects & input_msg,
   const std::string & target_frame_id, const tf2_ros::Buffer & tf_buffer,
-  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray & output_msg)
+  autoware_auto_perception_msgs::msg::DetectedObjects & output_msg)
 {
   output_msg = input_msg;
 
@@ -76,32 +76,33 @@ bool transformDynamicObjects(
       }
       tf2::fromMsg(*ros_target2objects_world, tf_target2objects_world);
     }
-    for (size_t i = 0; i < output_msg.feature_objects.size(); ++i) {
+    for (size_t i = 0; i < output_msg.objects.size(); ++i) {
       tf2::fromMsg(
-        output_msg.feature_objects.at(i).object.state.pose_covariance.pose,
-        tf_objects_world2objects);
+        output_msg.objects.at(i).kinematics.pose_with_covariance.pose, tf_objects_world2objects);
       tf_target2objects = tf_target2objects_world * tf_objects_world2objects;
-      tf2::toMsg(
-        tf_target2objects, output_msg.feature_objects.at(i).object.state.pose_covariance.pose);
+      tf2::toMsg(tf_target2objects, output_msg.objects.at(i).kinematics.pose_with_covariance.pose);
+      // TODO(yukkysaito) transform covariance
     }
   }
   return true;
 }
 
-inline float getVelocity(const autoware_perception_msgs::msg::DynamicObject & object)
+inline float getVelocity(const autoware_auto_perception_msgs::msg::TrackedObject & object)
 {
   return std::hypot(
-    object.state.twist_covariance.twist.linear.x, object.state.twist_covariance.twist.linear.y);
+    object.kinematics.twist_with_covariance.twist.linear.x,
+    object.kinematics.twist_with_covariance.twist.linear.y);
 }
 
-inline geometry_msgs::msg::Pose getPose(const autoware_perception_msgs::msg::DynamicObject & object)
+inline geometry_msgs::msg::Pose getPose(
+  const autoware_auto_perception_msgs::msg::TrackedObject & object)
 {
-  return object.state.pose_covariance.pose;
+  return object.kinematics.pose_with_covariance.pose;
 }
 
 float getXYSquareDistance(
   const geometry_msgs::msg::Transform & self_transform,
-  const autoware_perception_msgs::msg::DynamicObject & object)
+  const autoware_auto_perception_msgs::msg::TrackedObject & object)
 {
   const auto object_pos = getPose(object).position;
   const float x = self_transform.translation.x - object_pos.x;
@@ -121,8 +122,8 @@ bool isSpecificAlivePattern(
   const std::shared_ptr<const Tracker> & tracker, const rclcpp::Time & time,
   const geometry_msgs::msg::Transform & self_transform)
 {
-  autoware_perception_msgs::msg::DynamicObject object;
-  tracker->getEstimatedDynamicObject(time, object);
+  autoware_auto_perception_msgs::msg::TrackedObject object;
+  tracker->getTrackedObject(time, object);
 
   constexpr float min_detection_rate = 0.2;
   constexpr int min_measurement_count = 5;
@@ -130,12 +131,13 @@ bool isSpecificAlivePattern(
   constexpr float max_velocity = 1.0;
   constexpr float max_distance = 100.0;
 
+  const std::uint8_t label = tracker->getHighestProbLabel();
+
   const float detection_rate =
     tracker->getTotalMeasurementCount() /
     (tracker->getTotalNoMeasurementCount() + tracker->getTotalMeasurementCount());
 
-  const bool big_vehicle =
-    tracker->getType() == SemanticType::TRUCK || tracker->getType() == SemanticType::BUS;
+  const bool big_vehicle = (label == Label::TRUCK || label == Label::BUS);
 
   const bool slow_velocity = getVelocity(object) < max_velocity;
 
@@ -163,12 +165,11 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   tf_listener_(tf_buffer_)
 {
   // Create publishers and subscribers
-  dynamic_object_sub_ =
-    create_subscription<autoware_perception_msgs::msg::DynamicObjectWithFeatureArray>(
-      "input", rclcpp::QoS{1},
-      std::bind(&MultiObjectTracker::onMeasurement, this, std::placeholders::_1));
-  dynamic_object_pub_ =
-    create_publisher<autoware_perception_msgs::msg::DynamicObjectArray>("output", rclcpp::QoS{1});
+  detected_object_sub_ = create_subscription<autoware_auto_perception_msgs::msg::DetectedObjects>(
+    "input", rclcpp::QoS{1},
+    std::bind(&MultiObjectTracker::onMeasurement, this, std::placeholders::_1));
+  tracked_objects_pub_ =
+    create_publisher<autoware_auto_perception_msgs::msg::TrackedObjects>("output", rclcpp::QoS{1});
 
   // Parameters
   double publish_rate = declare_parameter<double>("publish_rate", 30.0);
@@ -204,8 +205,7 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
 }
 
 void MultiObjectTracker::onMeasurement(
-  const autoware_perception_msgs::msg::DynamicObjectWithFeatureArray::ConstSharedPtr
-    input_objects_msg)
+  const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr input_objects_msg)
 {
   const auto self_transform =
     getTransform(tf_buffer_, "base_link", world_frame_id_, input_objects_msg->header.stamp);
@@ -214,8 +214,8 @@ void MultiObjectTracker::onMeasurement(
   }
 
   /* transform to world coordinate */
-  autoware_perception_msgs::msg::DynamicObjectWithFeatureArray transformed_objects;
-  if (!transformDynamicObjects(
+  autoware_auto_perception_msgs::msg::DetectedObjects transformed_objects;
+  if (!transformDetectedObjects(
         *input_objects_msg, world_frame_id_, tf_buffer_, transformed_objects)) {
     return;
   }
@@ -238,8 +238,7 @@ void MultiObjectTracker::onMeasurement(
     if (direct_assignment.find(tracker_idx) != direct_assignment.end()) {  // found
       (*(tracker_itr))
         ->updateWithMeasurement(
-          transformed_objects.feature_objects.at(direct_assignment.find(tracker_idx)->second)
-            .object,
+          transformed_objects.objects.at(direct_assignment.find(tracker_idx)->second),
           measurement_time);
     } else {  // not found
       (*(tracker_itr))->updateWithoutMeasurement();
@@ -252,12 +251,11 @@ void MultiObjectTracker::onMeasurement(
   sanitizeTracker(list_tracker_, measurement_time);
 
   /* new tracker */
-  for (size_t i = 0; i < transformed_objects.feature_objects.size(); ++i) {
+  for (size_t i = 0; i < transformed_objects.objects.size(); ++i) {
     if (reverse_assignment.find(i) != reverse_assignment.end()) {  // found
       continue;
     }
-    list_tracker_.push_back(
-      createNewTracker(transformed_objects.feature_objects.at(i).object, measurement_time));
+    list_tracker_.push_back(createNewTracker(transformed_objects.objects.at(i), measurement_time));
   }
 
   if (publish_timer_ == nullptr) {
@@ -266,14 +264,15 @@ void MultiObjectTracker::onMeasurement(
 }
 
 std::shared_ptr<Tracker> MultiObjectTracker::createNewTracker(
-  const autoware_perception_msgs::msg::DynamicObject & object, const rclcpp::Time & time) const
+  const autoware_auto_perception_msgs::msg::DetectedObject & object,
+  const rclcpp::Time & time) const
 {
-  const int & type = object.semantic.type;
-  if (type == SemanticType::CAR || type == SemanticType::TRUCK || type == SemanticType::BUS) {
+  const std::uint8_t label = utils::getHighestProbLabel(object.classification);
+  if (label == Label::CAR || label == Label::TRUCK || label == Label::BUS) {
     return std::make_shared<MultipleVehicleTracker>(time, object);
-  } else if (type == SemanticType::PEDESTRIAN) {
+  } else if (label == Label::PEDESTRIAN) {
     return std::make_shared<PedestrianAndBicycleTracker>(time, object);
-  } else if (type == SemanticType::BICYCLE || type == SemanticType::MOTORBIKE) {
+  } else if (label == Label::BICYCLE || label == Label::MOTORCYCLE) {
     return std::make_shared<PedestrianAndBicycleTracker>(time, object);
   } else {
     return std::make_shared<UnknownTracker>(time, object);
@@ -323,16 +322,16 @@ void MultiObjectTracker::sanitizeTracker(
   constexpr double distance_threshold = 5.0;
   /* delete collision tracker */
   for (auto itr1 = list_tracker.begin(); itr1 != list_tracker.end(); ++itr1) {
-    autoware_perception_msgs::msg::DynamicObject object1;
-    (*itr1)->getEstimatedDynamicObject(time, object1);
+    autoware_auto_perception_msgs::msg::TrackedObject object1;
+    (*itr1)->getTrackedObject(time, object1);
     for (auto itr2 = std::next(itr1); itr2 != list_tracker.end(); ++itr2) {
-      autoware_perception_msgs::msg::DynamicObject object2;
-      (*itr2)->getEstimatedDynamicObject(time, object2);
+      autoware_auto_perception_msgs::msg::TrackedObject object2;
+      (*itr2)->getTrackedObject(time, object2);
       const double distance = std::hypot(
-        object1.state.pose_covariance.pose.position.x -
-          object2.state.pose_covariance.pose.position.x,
-        object1.state.pose_covariance.pose.position.y -
-          object2.state.pose_covariance.pose.position.y);
+        object1.kinematics.pose_with_covariance.pose.position.x -
+          object2.kinematics.pose_with_covariance.pose.position.x,
+        object1.kinematics.pose_with_covariance.pose.position.y -
+          object2.kinematics.pose_with_covariance.pose.position.y);
       if (distance_threshold < distance) {
         continue;
       }
@@ -362,26 +361,26 @@ inline bool MultiObjectTracker::shouldTrackerPublish(
 
 void MultiObjectTracker::publish(const rclcpp::Time & time) const
 {
-  const auto subscriber_count = dynamic_object_pub_->get_subscription_count() +
-                                dynamic_object_pub_->get_intra_process_subscription_count();
+  const auto subscriber_count = tracked_objects_pub_->get_subscription_count() +
+                                tracked_objects_pub_->get_intra_process_subscription_count();
   if (subscriber_count < 1) {
     return;
   }
   // Create output msg
-  autoware_perception_msgs::msg::DynamicObjectArray output_msg;
+  autoware_auto_perception_msgs::msg::TrackedObjects output_msg;
   output_msg.header.frame_id = world_frame_id_;
   output_msg.header.stamp = time;
   for (auto itr = list_tracker_.begin(); itr != list_tracker_.end(); ++itr) {
     if (!shouldTrackerPublish(*itr)) {
       continue;
     }
-    autoware_perception_msgs::msg::DynamicObject object;
-    (*itr)->getEstimatedDynamicObject(time, object);
+    autoware_auto_perception_msgs::msg::TrackedObject object;
+    (*itr)->getTrackedObject(time, object);
     output_msg.objects.push_back(object);
   }
 
   // Publish
-  dynamic_object_pub_->publish(output_msg);
+  tracked_objects_pub_->publish(output_msg);
 }
 
 RCLCPP_COMPONENTS_REGISTER_NODE(MultiObjectTracker)

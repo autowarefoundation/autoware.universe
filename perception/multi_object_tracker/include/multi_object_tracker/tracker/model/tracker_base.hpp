@@ -20,35 +20,50 @@
 #define MULTI_OBJECT_TRACKER__TRACKER__MODEL__TRACKER_BASE_HPP_
 
 #define EIGEN_MPL2_ONLY
+#include "multi_object_tracker/utils/utils.hpp"
+
 #include <Eigen/Core>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_perception_msgs/msg/dynamic_object.hpp>
-#include <geometry_msgs/msg/point.hpp>
-#include <unique_identifier_msgs/msg/uuid.hpp>
+#include "autoware_auto_perception_msgs/msg/detected_object.hpp"
+#include "autoware_auto_perception_msgs/msg/tracked_object.hpp"
+#include "geometry_msgs/msg/point.hpp"
+#include "unique_identifier_msgs/msg/uuid.hpp"
+
+#include <vector>
 
 class Tracker
 {
 protected:
   unique_identifier_msgs::msg::UUID getUUID() const { return uuid_; }
-  void setType(int type) { type_ = type; }
+  void setClassification(
+    const std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> & classification)
+  {
+    classification_ = classification;
+  }
 
 private:
   unique_identifier_msgs::msg::UUID uuid_;
-  int type_;
+  std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> classification_;
   int no_measurement_count_;
   int total_no_measurement_count_;
   int total_measurement_count_;
   rclcpp::Time last_update_with_measurement_time_;
 
 public:
-  Tracker(const rclcpp::Time & time, const int type);
+  Tracker(
+    const rclcpp::Time & time,
+    const std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> & classification);
   virtual ~Tracker() {}
   bool updateWithMeasurement(
-    const autoware_perception_msgs::msg::DynamicObject & object,
+    const autoware_auto_perception_msgs::msg::DetectedObject & object,
     const rclcpp::Time & measurement_time);
   bool updateWithoutMeasurement();
-  int getType() const { return type_; }
+  std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> getClassification() const
+  {
+    return classification_;
+  }
+  std::uint8_t getHighestProbLabel() const { return utils::getHighestProbLabel(classification_); }
   int getNoMeasurementCount() const { return no_measurement_count_; }
   int getTotalNoMeasurementCount() const { return total_no_measurement_count_; }
   int getTotalMeasurementCount() const { return total_measurement_count_; }
@@ -65,11 +80,13 @@ public:
 
 protected:
   virtual bool measure(
-    const autoware_perception_msgs::msg::DynamicObject & object, const rclcpp::Time & time) = 0;
+    const autoware_auto_perception_msgs::msg::DetectedObject & object,
+    const rclcpp::Time & time) = 0;
 
 public:
-  virtual bool getEstimatedDynamicObject(
-    const rclcpp::Time & time, autoware_perception_msgs::msg::DynamicObject & object) const = 0;
+  virtual bool getTrackedObject(
+    const rclcpp::Time & time,
+    autoware_auto_perception_msgs::msg::TrackedObject & object) const = 0;
   virtual bool predict(const rclcpp::Time & time) = 0;
 };
 

@@ -21,8 +21,8 @@
 #include <autoware_utils/autoware_utils.hpp>
 
 MultipleVehicleTracker::MultipleVehicleTracker(
-  const rclcpp::Time & time, const autoware_perception_msgs::msg::DynamicObject & object)
-: Tracker(time, object.semantic.type),
+  const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object)
+: Tracker(time, object.classification),
   normal_vehicle_tracker_(time, object),
   big_vehicle_tracker_(time, object)
 {
@@ -36,24 +36,26 @@ bool MultipleVehicleTracker::predict(const rclcpp::Time & time)
 }
 
 bool MultipleVehicleTracker::measure(
-  const autoware_perception_msgs::msg::DynamicObject & object, const rclcpp::Time & time)
+  const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time)
 {
   big_vehicle_tracker_.measure(object, time);
   normal_vehicle_tracker_.measure(object, time);
-  setType(object.semantic.type);
+  setClassification(object.classification);
   return true;
 }
 
-bool MultipleVehicleTracker::getEstimatedDynamicObject(
-  const rclcpp::Time & time, autoware_perception_msgs::msg::DynamicObject & object) const
+bool MultipleVehicleTracker::getTrackedObject(
+  const rclcpp::Time & time, autoware_auto_perception_msgs::msg::TrackedObject & object) const
 {
-  using autoware_perception_msgs::msg::Semantic;
-  if (getType() == Semantic::CAR) {
-    normal_vehicle_tracker_.getEstimatedDynamicObject(time, object);
-  } else if (getType() == Semantic::BUS || getType() == Semantic::TRUCK) {
-    big_vehicle_tracker_.getEstimatedDynamicObject(time, object);
+  using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
+  const uint8_t label = getHighestProbLabel();
+
+  if (label == Label::CAR) {
+    normal_vehicle_tracker_.getTrackedObject(time, object);
+  } else if (label == Label::BUS || label == Label::TRUCK) {
+    big_vehicle_tracker_.getTrackedObject(time, object);
   }
-  object.id = getUUID();
-  object.semantic.type = getType();
+  object.object_id = getUUID();
+  object.classification = getClassification();
   return true;
 }
