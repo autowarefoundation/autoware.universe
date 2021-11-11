@@ -63,6 +63,7 @@
 // ROS includes
 #include <diagnostic_updater/diagnostic_updater.hpp>
 
+#include <autoware_auto_vehicle_msgs/msg/velocity_report.hpp>
 #include <autoware_debug_msgs/msg/int32_stamped.hpp>
 #include <autoware_debug_msgs/msg/string_stamped.hpp>
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
@@ -117,7 +118,7 @@ private:
   /** \brief A vector of subscriber. */
   std::vector<rclcpp::Subscription<PointCloud2>::SharedPtr> filters_;
 
-  rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr sub_twist_;
+  rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::VelocityReport>::SharedPtr sub_twist_;
 
   rclcpp::TimerBase::SharedPtr timer_;
   diagnostic_updater::Updater updater_{this};
@@ -152,7 +153,7 @@ private:
   void cloud_callback(
     const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_ptr,
     const std::string & topic_name);
-  void twist_callback(const geometry_msgs::msg::TwistStamped::ConstSharedPtr input);
+  void twist_callback(const autoware_auto_vehicle_msgs::msg::VelocityReport::ConstSharedPtr input);
   void timer_callback();
 
   void checkConcatStatus(diagnostic_updater::DiagnosticStatusWrapper & stat);
