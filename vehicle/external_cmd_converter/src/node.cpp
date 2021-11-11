@@ -26,17 +26,15 @@ ExternalCmdConverterNode::ExternalCmdConverterNode(const rclcpp::NodeOptions & n
 {
   using std::placeholders::_1;
 
-  pub_cmd_ = create_publisher<autoware_control_msgs::msg::ControlCommandStamped>(
-    "out/control_cmd", rclcpp::QoS{1});
-  pub_current_cmd_ = create_publisher<autoware_external_api_msgs::msg::ControlCommandStamped>(
-    "out/latest_external_control_cmd", rclcpp::QoS{1});
-
-  sub_velocity_ = create_subscription<geometry_msgs::msg::TwistStamped>(
-    "in/twist", 1, std::bind(&ExternalCmdConverterNode::onVelocity, this, _1));
-  sub_control_cmd_ = create_subscription<autoware_external_api_msgs::msg::ControlCommandStamped>(
+  pub_cmd_ = create_publisher<AckermannControlCommand>("out/control_cmd", rclcpp::QoS{1});
+  pub_current_cmd_ =
+    create_publisher<ExternalControlCommand>("out/latest_external_control_cmd", rclcpp::QoS{1});
+  sub_velocity_ = create_subscription<Odometry>(
+    "in/odometry", 1, std::bind(&ExternalCmdConverterNode::onVelocity, this, _1));
+  sub_control_cmd_ = create_subscription<ExternalControlCommand>(
     "in/external_control_cmd", 1, std::bind(&ExternalCmdConverterNode::onExternalCmd, this, _1));
-  sub_shift_cmd_ = create_subscription<autoware_vehicle_msgs::msg::ShiftStamped>(
-    "in/shift_cmd", 1, std::bind(&ExternalCmdConverterNode::onShiftCmd, this, _1));
+  sub_shift_cmd_ = create_subscription<GearCommand>(
+    "in/shift_cmd", 1, std::bind(&ExternalCmdConverterNode::onGearCommand, this, _1));
   sub_gate_mode_ = create_subscription<autoware_control_msgs::msg::GateMode>(
     "in/current_gate_mode", 1, std::bind(&ExternalCmdConverterNode::onGateMode, this, _1));
   sub_emergency_stop_heartbeat_ = create_subscription<autoware_external_api_msgs::msg::Heartbeat>(
@@ -82,19 +80,17 @@ ExternalCmdConverterNode::ExternalCmdConverterNode(const rclcpp::NodeOptions & n
   updater_.add("remote_control_topic_status", this, &ExternalCmdConverterNode::checkTopicStatus);
 
   // Set default values
-  current_shift_cmd_ = std::make_shared<autoware_vehicle_msgs::msg::ShiftStamped>();
+  current_shift_cmd_ = std::make_shared<GearCommand>();
 }
 
 void ExternalCmdConverterNode::onTimer() { updater_.force_update(); }
 
-void ExternalCmdConverterNode::onVelocity(
-  const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg)
+void ExternalCmdConverterNode::onVelocity(const Odometry::ConstSharedPtr msg)
 {
-  current_velocity_ptr_ = std::make_shared<double>(msg->twist.linear.x);
+  current_velocity_ptr_ = std::make_shared<double>(msg->twist.twist.linear.x);
 }
 
-void ExternalCmdConverterNode::onShiftCmd(
-  const autoware_vehicle_msgs::msg::ShiftStamped::ConstSharedPtr msg)
+void ExternalCmdConverterNode::onGearCommand(const GearCommand::ConstSharedPtr msg)
 {
   current_shift_cmd_ = msg;
 }
@@ -106,8 +102,7 @@ void ExternalCmdConverterNode::onEmergencyStopHeartbeat(
   updater_.force_update();
 }
 
-void ExternalCmdConverterNode::onExternalCmd(
-  const autoware_external_api_msgs::msg::ControlCommandStamped::ConstSharedPtr cmd_ptr)
+void ExternalCmdConverterNode::onExternalCmd(const ExternalControlCommand::ConstSharedPtr cmd_ptr)
 {
   // Echo back received command
   {
@@ -126,21 +121,21 @@ void ExternalCmdConverterNode::onExternalCmd(
 
   // Calculate reference velocity and acceleration
   const double sign = getShiftVelocitySign(*current_shift_cmd_);
-  const double ref_acceleration = calculateAcc(cmd_ptr->control, std::fabs(*current_velocity_ptr_));
+  const double ref_acceleration = calculateAcc(*cmd_ptr, std::fabs(*current_velocity_ptr_));
 
   if (ref_acceleration > 0.0 && sign == 0.0) {
     RCLCPP_WARN_THROTTLE(
       get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
       "Target acceleration is positive, but the gear is not appropriate. accel: %f, gear: %d",
-      ref_acceleration, current_shift_cmd_->shift.data);
+      ref_acceleration, current_shift_cmd_->command);
   }
 
   double ref_velocity = *current_velocity_ptr_ + ref_acceleration * ref_vel_gain_ * sign;
-  if (current_shift_cmd_->shift.data == autoware_vehicle_msgs::msg::Shift::REVERSE) {
+  if (current_shift_cmd_->command == GearCommand::REVERSE) {
     ref_velocity = std::min(0.0, ref_velocity);
   } else if (
-    current_shift_cmd_->shift.data == autoware_vehicle_msgs::msg::Shift::DRIVE ||  // NOLINT
-    current_shift_cmd_->shift.data == autoware_vehicle_msgs::msg::Shift::LOW) {
+    current_shift_cmd_->command == GearCommand::DRIVE ||  // NOLINT
+    current_shift_cmd_->command == GearCommand::LOW) {
     ref_velocity = std::max(0.0, ref_velocity);
   } else {
     ref_velocity = 0.0;
@@ -148,21 +143,20 @@ void ExternalCmdConverterNode::onExternalCmd(
   }
 
   // Publish ControlCommand
-  autoware_control_msgs::msg::ControlCommandStamped output;
-  output.header.stamp = cmd_ptr->stamp;
-  output.control.steering_angle = cmd_ptr->control.steering_angle;
-  output.control.steering_angle_velocity = cmd_ptr->control.steering_angle_velocity;
-  output.control.velocity = ref_velocity;
-  output.control.acceleration = ref_acceleration;
+  autoware_auto_control_msgs::msg::AckermannControlCommand output;
+  output.stamp = cmd_ptr->stamp;
+  output.lateral.steering_tire_angle = cmd_ptr->control.steering_angle;
+  output.lateral.steering_tire_rotation_rate = cmd_ptr->control.steering_angle_velocity;
+  output.longitudinal.speed = ref_velocity;
+  output.longitudinal.acceleration = ref_acceleration;
 
   pub_cmd_->publish(output);
 }
 
-double ExternalCmdConverterNode::calculateAcc(
-  const autoware_external_api_msgs::msg::ControlCommand & cmd, const double vel)
+double ExternalCmdConverterNode::calculateAcc(const ExternalControlCommand & cmd, const double vel)
 {
-  const double desired_throttle = cmd.throttle;
-  const double desired_brake = cmd.brake;
+  const double desired_throttle = cmd.control.throttle;
+  const double desired_brake = cmd.control.brake;
   const double desired_pedal = desired_throttle - desired_brake;
 
   double ref_acceleration = 0.0;
@@ -175,18 +169,15 @@ double ExternalCmdConverterNode::calculateAcc(
   return ref_acceleration;
 }
 
-double ExternalCmdConverterNode::getShiftVelocitySign(
-  const autoware_vehicle_msgs::msg::ShiftStamped & cmd)
+double ExternalCmdConverterNode::getShiftVelocitySign(const GearCommand & cmd)
 {
-  using autoware_vehicle_msgs::msg::Shift;
-
-  if (cmd.shift.data == Shift::DRIVE) {
+  if (cmd.command == GearCommand::DRIVE) {
     return 1.0;
   }
-  if (cmd.shift.data == Shift::LOW) {
+  if (cmd.command == GearCommand::LOW) {
     return 1.0;
   }
-  if (cmd.shift.data == Shift::REVERSE) {
+  if (cmd.command == GearCommand::REVERSE) {
     return -1.0;
   }
 

@@ -16,7 +16,7 @@
   <arg name="in/shift_cmd" default="/external/selected/shift_cmd" />
   <arg name="in/emergency_stop" default="/external/selected/heartbeat" />
   <arg name="in/current_gate_mode" default="/control/current_gate_mode" />
-  <arg name="in/twist" default="/localization/twist" />
+  <arg name="in/odometry" default="/localization/kinematic_state" />
 
   <!-- output -->
   <arg name="out/control_cmd" default="/external/selected/control_cmd" />
@@ -34,7 +34,7 @@
     <remap from="in/shift_cmd" to="$(var in/shift_cmd)" />
     <remap from="in/emergency_stop" to="$(var in/emergency_stop)" />
     <remap from="in/current_gate_mode" to="$(var in/current_gate_mode)" />
-    <remap from="in/twist" to="$(var in/twist)" />
+    <remap from="in/odometry" to="$(var in/odometry)" />
     <remap from="out/control_cmd" to="$(var out/control_cmd)" />
     <remap from="out/latest_external_control_cmd" to="$(var out/latest_external_control_cmd)" />
   </node>

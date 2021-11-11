@@ -86,8 +86,8 @@ def generate_launch_description():
             default_value="/control/current_gate_mode",
         ),
         DeclareLaunchArgument(
-            "in/twist",
-            default_value="/localization/twist",
+            "in/odometry",
+            default_value="/localization/kinematic_state",
         ),
         # output
         DeclareLaunchArgument(
@@ -109,7 +109,7 @@ def generate_launch_description():
             _create_mapping_tuple("in/shift_cmd"),
             _create_mapping_tuple("in/emergency_stop"),
             _create_mapping_tuple("in/current_gate_mode"),
-            _create_mapping_tuple("in/twist"),
+            _create_mapping_tuple("in/odometry"),
             _create_mapping_tuple("out/control_cmd"),
             _create_mapping_tuple("out/latest_external_control_cmd"),
         ],
