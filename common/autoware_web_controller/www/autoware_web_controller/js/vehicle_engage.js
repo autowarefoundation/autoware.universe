@@ -152,7 +152,7 @@ if (!VehicleControlModeStatusSubscriber) {
       var sub = new ROSLIB.Topic({
         ros: this.ros,
         name: "/vehicle/status/control_mode",
-        messageType: "autoware_vehicle_msgs/ControlMode",
+        messageType: "autoware_auto_vehicle_msgs/ControlModeReport",
       });
       sub.subscribe(function (message) {
         const div = document.getElementById("vehicle_control_mode_status");
@@ -160,14 +160,16 @@ if (!VehicleControlModeStatusSubscriber) {
           div.removeChild(div.firstChild);
         }
         var res = "";
-        if (message.data == 0) {
+        if (message.mode == 0) {
+          res = "No command";
+        } else if (message.mode == 1) {
+          res = "Autonomous";
+        } else if (message.mode == 2) {
           res = "Manual";
-        } else if (message.data == 1) {
-          res = "Auto";
-        } else if (message.data == 2) {
-          res = "Auto Steer Only";
-        } else if (message.data == 3) {
-          res = "Auto Pedal Only";
+        } else if (message.mode == 3) {
+          res = "Disengaged";
+        } else if (message.mode == 4) {
+          res = "Not ready";
         } else {
           res = "Undefined";
         }
