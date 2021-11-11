@@ -93,4 +93,5 @@ repos:
         args: ["--quiet"]
         exclude: "(.cu)"
 
-exclude: ".svg"
+# ignore .svg file and packages that is back-ported by autoware.auto
+exclude: ".svg|control/trajectory_follower|control/trajectory_follower_nodes|tmp_autoware_auto_dependencies|common/math/osqp_interface|simulator/simple_planning_simulator"
