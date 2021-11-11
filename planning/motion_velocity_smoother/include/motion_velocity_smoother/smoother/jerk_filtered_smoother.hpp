@@ -53,7 +53,7 @@ public:
 
 private:
   Param smoother_param_;
-  osqp::OSQPInterface qp_solver_;
+  autoware::common::osqp::OSQPInterface qp_solver_;
   rclcpp::Logger logger_{rclcpp::get_logger("smoother").get_child("jerk_filtered_smoother")};
 
   TrajectoryPoints forwardJerkFilter(
