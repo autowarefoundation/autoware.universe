@@ -9,15 +9,17 @@
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
   <depend>autoware_api_utils</depend>
+  <depend>autoware_auto_control_msgs</depend>
+  <depend>autoware_auto_vehicle_msgs</depend>
   <depend>autoware_control_msgs</depend>
   <depend>autoware_external_api_msgs</depend>
-  <depend>autoware_vehicle_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>joy</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>sensor_msgs</depend>
   <depend>std_srvs</depend>
+<depend>nav_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>
