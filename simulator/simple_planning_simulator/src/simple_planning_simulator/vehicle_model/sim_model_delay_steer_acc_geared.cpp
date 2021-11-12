@@ -15,7 +15,7 @@
 #include <algorithm>
 
 #include "simple_planning_simulator/vehicle_model/sim_model_delay_steer_acc_geared.hpp"
-#include "autoware_auto_vehicle_msgs/msg/vehicle_state_command.hpp"
+#include "autoware_auto_vehicle_msgs/msg/gear_command.hpp"
 
 SimModelDelaySteerAccGeared::SimModelDelaySteerAccGeared(
   float64_t vx_lim, float64_t steer_lim, float64_t vx_rate_lim, float64_t steer_rate_lim,
@@ -67,7 +67,7 @@ void SimModelDelaySteerAccGeared::update(const float64_t & dt)
 
   state_(IDX::VX) = calcVelocityWithGear(state_, gear_);
 
-  // calc acc directly after gear considerataion
+  // calc acc directly after gear consideration
   state_(IDX::ACCX) = (state_(IDX::VX) - prev_vx) / std::max(dt, 1.0e-5);
 }
 
@@ -111,19 +111,24 @@ Eigen::VectorXd SimModelDelaySteerAccGeared::calcModel(
 float64_t SimModelDelaySteerAccGeared::calcVelocityWithGear(
   const Eigen::VectorXd & state, const uint8_t gear) const
 {
-  using autoware_auto_vehicle_msgs::msg::VehicleStateCommand;
-  if (gear == VehicleStateCommand::GEAR_DRIVE ||
-    gear == VehicleStateCommand::GEAR_LOW ||
-    gear == VehicleStateCommand::GEAR_NEUTRAL)
-  {
+  using autoware_auto_vehicle_msgs::msg::GearCommand;
+  if (
+    gear == GearCommand::DRIVE || gear == GearCommand::DRIVE_2 || gear == GearCommand::DRIVE_3 ||
+    gear == GearCommand::DRIVE_4 || gear == GearCommand::DRIVE_5 || gear == GearCommand::DRIVE_6 ||
+    gear == GearCommand::DRIVE_7 || gear == GearCommand::DRIVE_8 || gear == GearCommand::DRIVE_9 ||
+    gear == GearCommand::DRIVE_10 || gear == GearCommand::DRIVE_11 ||
+    gear == GearCommand::DRIVE_12 || gear == GearCommand::DRIVE_13 ||
+    gear == GearCommand::DRIVE_14 || gear == GearCommand::DRIVE_15 ||
+    gear == GearCommand::DRIVE_16 || gear == GearCommand::DRIVE_17 ||
+    gear == GearCommand::DRIVE_18 || gear == GearCommand::LOW || gear == GearCommand::LOW_2) {
     if (state(IDX::VX) < 0.0) {
       return 0.0;
     }
-  } else if (gear == VehicleStateCommand::GEAR_REVERSE) {
+  } else if (gear == GearCommand::REVERSE || gear == GearCommand::REVERSE_2) {
     if (state(IDX::VX) > 0.0) {
       return 0.0;
     }
-  } else if (gear == VehicleStateCommand::GEAR_PARK) {
+  } else if (gear == GearCommand::PARK) {
     return 0.0;
   }
 

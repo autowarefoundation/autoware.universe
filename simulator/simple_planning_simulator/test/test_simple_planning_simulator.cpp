@@ -19,8 +19,8 @@
 #include "motion_common/motion_common.hpp"
 
 using autoware_auto_control_msgs::msg::AckermannControlCommand;
+using autoware_auto_vehicle_msgs::msg::GearCommand;
 using autoware_auto_vehicle_msgs::msg::VehicleControlCommand;
-using autoware_auto_vehicle_msgs::msg::VehicleStateCommand;
 using autoware_auto_vehicle_msgs::msg::VehicleKinematicState;
 using geometry_msgs::msg::PoseWithCovarianceStamped;
 
@@ -267,9 +267,8 @@ TEST(TestSimplePlanningSimulatorIdealSteerVel, TestMoving)
     const float32_t target_steer = 0.2f;
 
     auto _resetInitialpose = [&]() {resetInitialpose(sim_node, pub_sub_node);};
-    auto _sendFwdGear = [&]() {sendGear(VehicleStateCommand::GEAR_DRIVE, sim_node, pub_sub_node);};
-    auto _sendBwdGear =
-      [&]() {sendGear(VehicleStateCommand::GEAR_REVERSE, sim_node, pub_sub_node);};
+    auto _sendFwdGear = [&]() { sendGear(GearCommand::DRIVE, sim_node, pub_sub_node); };
+    auto _sendBwdGear = [&]() { sendGear(GearCommand::REVERSE, sim_node, pub_sub_node); };
     auto _sendCommand = [&](const auto & _cmd) {
         sendCommand(_cmd, sim_node, pub_sub_node);
       };

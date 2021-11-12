@@ -2,8 +2,8 @@ simulation:
   simple_planning_simulator:
     ros__parameters:
       simulated_frame_id: "base_link"
-      origin_frame_id: "odom"
-      vehicle_model_type: "IDEAL_STEER_VEL"
+      origin_frame_id: "map"
+      vehicle_model_type: "DELAY_STEER_ACC_GEARED"
       initialize_source: "INITIAL_POSE_TOPIC"
       timer_sampling_time_ms: 25
       add_measurement_noise: False
@@ -16,4 +16,4 @@ simulation:
       steer_time_delay: 0.1
       steer_time_constant: 0.1
 
-# Note: vehicle characteristics parameters (e.g. wheelbase) are difined in a separate file.
+# Note: vehicle characteristics parameters (e.g. wheelbase) are defined in a separate file.

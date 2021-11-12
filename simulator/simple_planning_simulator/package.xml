@@ -16,6 +16,8 @@
   <depend>autoware_auto_tf2</depend>
   <depend>autoware_auto_common</depend>
   <depend>geometry_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>vehicle_info_util</depend>
 
   <depend>motion_common</depend>
 

@@ -38,13 +38,13 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 
   # Unit test
-  ament_add_gtest(
-    simple_planning_simulator_unit_tests
-    test/test_simple_planning_simulator.cpp
-    TIMEOUT 120)
-  autoware_set_compile_options(simple_planning_simulator_unit_tests)
-  target_link_libraries(simple_planning_simulator_unit_tests ${PROJECT_NAME})
-  target_include_directories(simple_planning_simulator_unit_tests PRIVATE "include")
+  #ament_add_gtest(
+  #  simple_planning_simulator_unit_tests
+  #  test/test_simple_planning_simulator.cpp
+  #  TIMEOUT 120)
+  #autoware_set_compile_options(simple_planning_simulator_unit_tests)
+  #target_link_libraries(simple_planning_simulator_unit_tests ${PROJECT_NAME})
+  #target_include_directories(simple_planning_simulator_unit_tests PRIVATE "include")
 endif()
 
 

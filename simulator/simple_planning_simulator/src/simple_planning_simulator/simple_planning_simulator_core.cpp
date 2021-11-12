@@ -28,6 +28,7 @@
 #include "autoware_auto_tf2/tf2_autoware_auto_msgs.hpp"
 #include "simple_planning_simulator/vehicle_model/sim_model.hpp"
 #include "motion_common/motion_common.hpp"
+#include "vehicle_info_util/vehicle_info_util.hpp"
 
 #include "rclcpp_components/register_node_macro.hpp"
 
@@ -35,36 +36,37 @@ using namespace std::chrono_literals;
 
 namespace
 {
-autoware_auto_vehicle_msgs::msg::VehicleKinematicState convert_baselink_to_com(
-  const autoware_auto_vehicle_msgs::msg::VehicleKinematicState & in, const float32_t baselink_to_com)
-{
-  autoware_auto_vehicle_msgs::msg::VehicleKinematicState out = in;
 
-  // TODO(Horibe) convert to CoM for vehicle_kinematic_state msg.
-  const auto yaw = motion::motion_common::to_angle(out.state.pose.orientation);
-  out.state.pose.position.x += static_cast<float64_t>(std::cos(yaw) * baselink_to_com);
-  out.state.pose.position.y += static_cast<float64_t>(std::sin(yaw) * baselink_to_com);
-
-  return out;
-}
-
-autoware_auto_vehicle_msgs::msg::VehicleKinematicState to_kinematic_state(
+autoware_auto_vehicle_msgs::msg::VelocityReport to_velocity_report(
   const std::shared_ptr<SimModelInterface> vehicle_model_ptr)
 {
-  autoware_auto_vehicle_msgs::msg::VehicleKinematicState s;
-  s.state.pose.position.x = vehicle_model_ptr->getX();
-  s.state.pose.position.y = vehicle_model_ptr->getY();
-  s.state.pose.orientation = motion::motion_common::from_angle(vehicle_model_ptr->getYaw());
-  s.state.longitudinal_velocity_mps =
-    static_cast<float32_t>(vehicle_model_ptr->getVx());
-  s.state.lateral_velocity_mps = 0.0;
-  s.state.acceleration_mps2 = static_cast<float32_t>(vehicle_model_ptr->getAx());
-  s.state.heading_rate_rps = static_cast<float32_t>(vehicle_model_ptr->getWz());
-  s.state.front_wheel_angle_rad =
-    static_cast<float32_t>(vehicle_model_ptr->getSteer());
-  s.state.rear_wheel_angle_rad = 0.0;
-  return s;
+  autoware_auto_vehicle_msgs::msg::VelocityReport velocity;
+  velocity.longitudinal_velocity = static_cast<float32_t>(vehicle_model_ptr->getVx());
+  velocity.lateral_velocity = 0.0F;
+  velocity.heading_rate = static_cast<float32_t>(vehicle_model_ptr->getWz());
+  return velocity;
 }
+
+nav_msgs::msg::Odometry to_odometry(const std::shared_ptr<SimModelInterface> vehicle_model_ptr)
+{
+  nav_msgs::msg::Odometry odometry;
+  odometry.pose.pose.position.x = vehicle_model_ptr->getX();
+  odometry.pose.pose.position.y = vehicle_model_ptr->getY();
+  odometry.pose.pose.orientation = motion::motion_common::from_angle(vehicle_model_ptr->getYaw());
+  odometry.twist.twist.linear.x = vehicle_model_ptr->getVx();
+  odometry.twist.twist.angular.z = vehicle_model_ptr->getWz();
+
+  return odometry;
+}
+
+autoware_auto_vehicle_msgs::msg::SteeringReport to_steering_report(
+  const std::shared_ptr<SimModelInterface> vehicle_model_ptr)
+{
+  autoware_auto_vehicle_msgs::msg::SteeringReport steer;
+  steer.steering_tire_angle = static_cast<float32_t>(vehicle_model_ptr->getSteer());
+  return steer;
+}
+
 }  // namespace
 
 namespace simulation
@@ -80,7 +82,6 @@ SimplePlanningSimulator::SimplePlanningSimulator(const rclcpp::NodeOptions & opt
   simulated_frame_id_ = declare_parameter("simulated_frame_id", "base_link");
   origin_frame_id_ = declare_parameter("origin_frame_id", "odom");
   add_measurement_noise_ = declare_parameter("add_measurement_noise", false);
-  cg_to_rear_m_ = static_cast<float>(declare_parameter("vehicle.cg_to_rear_m", 1.5));
 
   using rclcpp::QoS;
   using std::placeholders::_1;
@@ -94,13 +95,18 @@ SimplePlanningSimulator::SimplePlanningSimulator(const rclcpp::NodeOptions & opt
   sub_ackermann_cmd_ = create_subscription<AckermannControlCommand>(
     "input/ackermann_control_command", QoS{1},
     std::bind(&SimplePlanningSimulator::on_ackermann_cmd, this, _1));
-  sub_state_cmd_ = create_subscription<VehicleStateCommand>(
-    "input/vehicle_state_command", QoS{1},
-    std::bind(&SimplePlanningSimulator::on_state_cmd, this, _1));
+  sub_gear_cmd_ = create_subscription<GearCommand>(
+    "input/gear_command", QoS{1}, std::bind(&SimplePlanningSimulator::on_gear_cmd, this, _1));
+  sub_trajectory_ = create_subscription<Trajectory>(
+    "input/trajectory", QoS{1}, std::bind(&SimplePlanningSimulator::on_trajectory, this, _1));
 
-  pub_state_report_ = create_publisher<VehicleStateReport>("output/vehicle_state_report", QoS{1});
+  pub_control_mode_report_ =
+    create_publisher<ControlModeReport>("output/control_mode_report", QoS{1});
+  pub_gear_report_ = create_publisher<GearReport>("output/gear_report", QoS{1});
   pub_current_pose_ = create_publisher<geometry_msgs::msg::PoseStamped>("/current_pose", QoS{1});
-  pub_kinematic_state_ = create_publisher<VehicleKinematicState>("output/kinematic_state", QoS{1});
+  pub_velocity_ = create_publisher<VelocityReport>("output/twist", QoS{1});
+  pub_odom_ = create_publisher<Odometry>("output/odometry", QoS{1});
+  pub_steer_ = create_publisher<SteeringReport>("output/steering", QoS{1});
   pub_tf_ = create_publisher<tf2_msgs::msg::TFMessage>("/tf", QoS{1});
 
   timer_sampling_time_ms_ = static_cast<uint32_t>(declare_parameter("timer_sampling_time_ms", 25));
@@ -146,8 +152,6 @@ void SimplePlanningSimulator::initialize_vehicle_model()
 
   RCLCPP_INFO(this->get_logger(), "vehicle_model_type = %s", vehicle_model_type_str.c_str());
 
-  const float64_t cg_to_front_m = declare_parameter("vehicle.cg_to_front_m", 1.5);
-  const float64_t wheelbase = cg_to_front_m + static_cast<float64_t>(cg_to_rear_m_);
   const float64_t vel_lim = declare_parameter("vel_lim", 50.0);
   const float64_t vel_rate_lim = declare_parameter("vel_rate_lim", 7.0);
   const float64_t steer_lim = declare_parameter("steer_lim", 1.0);
@@ -156,6 +160,8 @@ void SimplePlanningSimulator::initialize_vehicle_model()
   const float64_t acc_time_constant = declare_parameter("acc_time_constant", 0.1);
   const float64_t steer_time_delay = declare_parameter("steer_time_delay", 0.24);
   const float64_t steer_time_constant = declare_parameter("steer_time_constant", 0.27);
+  const float64_t wheelbase =
+    vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo().wheel_base_m;
 
   if (vehicle_model_type_str == "IDEAL_STEER_VEL") {
     vehicle_model_type_ = VehicleModelType::IDEAL_STEER_VEL;
@@ -198,17 +204,24 @@ void SimplePlanningSimulator::on_timer()
     vehicle_model_ptr_->update(dt);
   }
 
-  // set current kinematic state
-  current_kinematic_state_ = to_kinematic_state(vehicle_model_ptr_);
+  // set current state
+  current_odometry_ = to_odometry(vehicle_model_ptr_);
+
+  current_velocity_ = to_velocity_report(vehicle_model_ptr_);
+  current_steer_ = to_steering_report(vehicle_model_ptr_);
 
   if (add_measurement_noise_) {
-    add_measurement_noise(current_kinematic_state_);
+    add_measurement_noise(current_odometry_, current_velocity_, current_steer_);
   }
 
   // publish vehicle state
-  publish_kinematic_state(convert_baselink_to_com(current_kinematic_state_, cg_to_rear_m_));
-  publish_state_report();
-  publish_tf(current_kinematic_state_);
+  publish_odometry(current_odometry_);
+  publish_velocity(current_velocity_);
+  publish_steering(current_steer_);
+
+  publish_control_mode_report();
+  publish_gear_report();
+  publish_tf(current_odometry_);
 }
 
 void SimplePlanningSimulator::on_initialpose(
@@ -258,29 +271,38 @@ void SimplePlanningSimulator::set_input(const float steer, const float vel, cons
   vehicle_model_ptr_->setInput(input);
 }
 
-void SimplePlanningSimulator::on_state_cmd(
-  const autoware_auto_vehicle_msgs::msg::VehicleStateCommand::ConstSharedPtr msg)
+void SimplePlanningSimulator::on_gear_cmd(
+  const autoware_auto_vehicle_msgs::msg::GearCommand::ConstSharedPtr msg)
 {
-  current_vehicle_state_cmd_ptr_ = msg;
+  current_gear_cmd_ptr_ = msg;
 
   if (vehicle_model_type_ == VehicleModelType::IDEAL_STEER_ACC_GEARED ||
     vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_GEARED)
   {
-    vehicle_model_ptr_->setGear(current_vehicle_state_cmd_ptr_->gear);
+    vehicle_model_ptr_->setGear(current_gear_cmd_ptr_->command);
   }
 }
 
-void SimplePlanningSimulator::add_measurement_noise(VehicleKinematicState & state) const
+void SimplePlanningSimulator::on_trajectory(const Trajectory::ConstSharedPtr msg)
+{
+  current_trajectory_ptr_ = msg;
+}
+
+void SimplePlanningSimulator::add_measurement_noise(
+  Odometry & odom, VelocityReport & vel, SteeringReport & steer) const
 {
   auto & n = measurement_noise_;
-  state.state.pose.position.x += (*n.pos_dist_)(*n.rand_engine_);
-  state.state.pose.position.y += (*n.pos_dist_)(*n.rand_engine_);
-  state.state.longitudinal_velocity_mps += static_cast<float32_t>((*n.vel_dist_)(*n.rand_engine_));
-  state.state.front_wheel_angle_rad += static_cast<float32_t>((*n.steer_dist_)(*n.rand_engine_));
-
-  float32_t yaw = motion::motion_common::to_angle(state.state.pose.orientation);
+  odom.pose.pose.position.x += (*n.pos_dist_)(*n.rand_engine_);
+  odom.pose.pose.position.y += (*n.pos_dist_)(*n.rand_engine_);
+  const auto velocity_noise = (*n.vel_dist_)(*n.rand_engine_);
+  odom.twist.twist.linear.x = velocity_noise;
+  float32_t yaw = motion::motion_common::to_angle(odom.pose.pose.orientation);
   yaw += static_cast<float>((*n.rpy_dist_)(*n.rand_engine_));
-  state.state.pose.orientation = motion::motion_common::from_angle(yaw);
+  odom.pose.pose.orientation = motion::motion_common::from_angle(yaw);
+
+  vel.longitudinal_velocity += static_cast<float32_t>(velocity_noise);
+
+  steer.steering_tire_angle += static_cast<float32_t>((*n.steer_dist_)(*n.rand_engine_));
 }
 
 
@@ -326,6 +348,34 @@ void SimplePlanningSimulator::set_initial_state(
   is_initialized_ = true;
 }
 
+double SimplePlanningSimulator::get_z_pose_from_trajectory(const double x, const double y)
+{
+  // calculate closest point on trajectory
+  if (!current_trajectory_ptr_) {
+    return 0.0;
+  }
+
+  const double max_sqrt_dist = std::numeric_limits<double>::max();
+  double min_sqrt_dist = max_sqrt_dist;
+  size_t index;
+  bool found = false;
+  for (size_t i = 0; i < current_trajectory_ptr_->points.size(); ++i) {
+    const double dist_x = (current_trajectory_ptr_->points.at(i).pose.position.x - x);
+    const double dist_y = (current_trajectory_ptr_->points.at(i).pose.position.y - y);
+    double sqrt_dist = dist_x * dist_x + dist_y * dist_y;
+    if (sqrt_dist < min_sqrt_dist) {
+      min_sqrt_dist = sqrt_dist;
+      index = i;
+      found = true;
+    }
+  }
+    if (found) {
+      return current_trajectory_ptr_->points.at(index).pose.position.z;
+    }
+
+    return 0.0;
+}
+
 geometry_msgs::msg::TransformStamped SimplePlanningSimulator::get_transform_msg(
   const std::string parent_frame, const std::string child_frame)
 {
@@ -345,37 +395,60 @@ geometry_msgs::msg::TransformStamped SimplePlanningSimulator::get_transform_msg(
   return transform;
 }
 
-void SimplePlanningSimulator::publish_kinematic_state(
-  const VehicleKinematicState & state)
+void SimplePlanningSimulator::publish_velocity(const VelocityReport & velocity)
 {
-  VehicleKinematicState msg = state;
+  VelocityReport msg = velocity;
+  msg.stamp = get_clock()->now();
+  pub_velocity_->publish(msg);
+}
+
+void SimplePlanningSimulator::publish_odometry(const Odometry & odometry)
+{
+  Odometry msg = odometry;
   msg.header.frame_id = origin_frame_id_;
   msg.header.stamp = get_clock()->now();
-
-  pub_kinematic_state_->publish(msg);
+  msg.child_frame_id = simulated_frame_id_;
+  msg.pose.pose.position.z =
+    get_z_pose_from_trajectory(odometry.pose.pose.position.x, odometry.pose.pose.position.y);
+  pub_odom_->publish(msg);
 }
 
-void SimplePlanningSimulator::publish_state_report()
+void SimplePlanningSimulator::publish_steering(const SteeringReport & steer)
 {
-  VehicleStateReport msg;
+  SteeringReport msg = steer;
   msg.stamp = get_clock()->now();
-  msg.mode = VehicleStateReport::MODE_AUTONOMOUS;
-  if (current_vehicle_state_cmd_ptr_) {
-    msg.gear = current_vehicle_state_cmd_ptr_->gear;
-  }
-  pub_state_report_->publish(msg);
+  pub_steer_->publish(msg);
 }
 
-void SimplePlanningSimulator::publish_tf(const VehicleKinematicState & state)
+void SimplePlanningSimulator::publish_control_mode_report()
+{
+  ControlModeReport msg;
+  msg.stamp = get_clock()->now();
+  msg.mode = ControlModeReport::AUTONOMOUS;
+  pub_control_mode_report_->publish(msg);
+}
+
+void SimplePlanningSimulator::publish_gear_report()
+{
+  if (!current_gear_cmd_ptr_) {
+    return;
+  }
+  GearReport msg;
+  msg.stamp = get_clock()->now();
+  msg.report = current_gear_cmd_ptr_->command;
+  pub_gear_report_->publish(msg);
+}
+
+void SimplePlanningSimulator::publish_tf(const Odometry & odometry)
 {
   geometry_msgs::msg::TransformStamped tf;
   tf.header.stamp = get_clock()->now();
   tf.header.frame_id = origin_frame_id_;
   tf.child_frame_id = simulated_frame_id_;
-  tf.transform.translation.x = state.state.pose.position.x;
-  tf.transform.translation.y = state.state.pose.position.y;
+  tf.transform.translation.x = odometry.pose.pose.position.x;
+  tf.transform.translation.y = odometry.pose.pose.position.y;
   tf.transform.translation.z = 0.0;
-  tf.transform.rotation = state.state.pose.orientation;
+  tf.transform.rotation = odometry.pose.pose.orientation;
 
   tf2_msgs::msg::TFMessage tf_msg{};
   tf_msg.transforms.emplace_back(std::move(tf));
