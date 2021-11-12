@@ -59,7 +59,7 @@ def generate_launch_description():
             ('output/steering', '/vehicle/status/steering'),
             ('output/gear_report', '/vehicle/status/shift'),
             ('output/control_mode_report', '/vehicle/status/control_mode'),
-            ('/initialpose', '/localization/initialpose'),
+            ('/initialpose', '/initialpose'),
         ]
     )
 
