@@ -37,7 +37,7 @@ using namespace std::chrono_literals;
 using ::motion::motion_common::to_angle;
 
 bool8_t MPC::calculateMPC(
-  const autoware_auto_vehicle_msgs::msg::VehicleKinematicState & current_steer,
+  const autoware_auto_vehicle_msgs::msg::SteeringReport & current_steer,
   const float64_t current_velocity,
   const geometry_msgs::msg::Pose & current_pose,
   autoware_auto_control_msgs::msg::AckermannLateralCommand & ctrl_cmd,
@@ -260,7 +260,7 @@ void MPC::setReferenceTrajectory(
 
 bool8_t MPC::getData(
   const trajectory_follower::MPCTrajectory & traj,
-  const autoware_auto_vehicle_msgs::msg::VehicleKinematicState & current_steer,
+  const autoware_auto_vehicle_msgs::msg::SteeringReport & current_steer,
   const geometry_msgs::msg::Pose & current_pose,
   MPCData * data)
 {
@@ -278,7 +278,7 @@ bool8_t MPC::getData(
 
   /* get data */
   data->nearest_idx = static_cast<int64_t>(nearest_idx);
-  data->steer = static_cast<float64_t>(current_steer.state.front_wheel_angle_rad);
+  data->steer = static_cast<float64_t>(current_steer.steering_tire_angle);
   data->lateral_err = trajectory_follower::MPCUtils::calcLateralError(
     current_pose,
     data->nearest_pose);
@@ -288,8 +288,7 @@ bool8_t MPC::getData(
 
   /* get predicted steer */
   if (!m_steer_prediction_prev) {
-    m_steer_prediction_prev = std::make_shared<float64_t>(
-      current_steer.state.front_wheel_angle_rad);
+    m_steer_prediction_prev = std::make_shared<float64_t>(current_steer.steering_tire_angle);
   }
   data->predicted_steer = calcSteerPrediction();
   *m_steer_prediction_prev = data->predicted_steer;

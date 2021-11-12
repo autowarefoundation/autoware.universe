@@ -26,7 +26,7 @@
 #include "autoware_auto_system_msgs/msg/float32_multi_array_diagnostic.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
-#include "autoware_auto_vehicle_msgs/msg/vehicle_kinematic_state.hpp"
+#include "autoware_auto_vehicle_msgs/msg/steering_report.hpp"
 #include "common/types.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 #include "gtest/gtest.h"
@@ -39,7 +39,7 @@ using autoware::common::types::bool8_t;
 namespace trajectory_follower = ::autoware::motion::control::trajectory_follower;
 typedef autoware_auto_planning_msgs::msg::Trajectory Trajectory;
 typedef autoware_auto_planning_msgs::msg::TrajectoryPoint TrajectoryPoint;
-typedef autoware_auto_vehicle_msgs::msg::VehicleKinematicState VehicleKinematicState;
+typedef autoware_auto_vehicle_msgs::msg::SteeringReport SteeringReport;
 typedef geometry_msgs::msg::Pose Pose;
 typedef geometry_msgs::msg::PoseStamped PoseStamped;
 typedef autoware_auto_control_msgs::msg::AckermannLateralCommand AckermannLateralCommand;
@@ -52,7 +52,7 @@ protected:
   // Test inputs
   Trajectory dummy_straight_trajectory;
   Trajectory dummy_right_turn_trajectory;
-  VehicleKinematicState neutral_steer;
+  SteeringReport neutral_steer;
   Pose pose_zero;
   PoseStamped::SharedPtr pose_zero_ptr;
   float64_t default_velocity = 1.0;
@@ -151,7 +151,7 @@ protected:
     p.longitudinal_velocity_mps = 1.0f;
     dummy_right_turn_trajectory.points.push_back(p);
 
-    neutral_steer.state.front_wheel_angle_rad = 0.0;
+    neutral_steer.steering_tire_angle = 0.0;
     pose_zero.position.x = 0.0;
     pose_zero.position.y = 0.0;
     pose_zero_ptr = std::make_shared<PoseStamped>();

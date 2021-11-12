@@ -37,7 +37,7 @@
 #include "autoware_auto_control_msgs/msg/ackermann_lateral_command.hpp"
 #include "autoware_auto_system_msgs/msg/float32_multi_array_diagnostic.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
-#include "autoware_auto_vehicle_msgs/msg/vehicle_kinematic_state.hpp"
+#include "autoware_auto_vehicle_msgs/msg/steering_report.hpp"
 #include "common/types.hpp"
 #include "geometry/common_2d.hpp"
 #include "geometry_msgs/msg/pose.hpp"
@@ -187,7 +187,7 @@ private:
    */
   bool8_t getData(
     const trajectory_follower::MPCTrajectory & traj,
-    const autoware_auto_vehicle_msgs::msg::VehicleKinematicState & current_steer,
+    const autoware_auto_vehicle_msgs::msg::SteeringReport & current_steer,
     const geometry_msgs::msg::Pose & current_pose,
     MPCData * data);
   /**
@@ -369,7 +369,7 @@ public:
    * @param [out] diagnostic diagnostic msg to be filled-out
    */
   bool8_t calculateMPC(
-    const autoware_auto_vehicle_msgs::msg::VehicleKinematicState & current_steer,
+    const autoware_auto_vehicle_msgs::msg::SteeringReport & current_steer,
     const float64_t current_velocity,
     const geometry_msgs::msg::Pose & current_pose,
     autoware_auto_control_msgs::msg::AckermannLateralCommand & ctrl_cmd,
