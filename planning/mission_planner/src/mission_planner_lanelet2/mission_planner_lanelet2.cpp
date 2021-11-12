@@ -276,6 +276,7 @@ autoware_auto_planning_msgs::msg::HADMapRoute MissionPlannerLanelet2::planRoute(
       return route_msg;
     }
     // create local route sections
+    route_handler_.setRouteLanelets(path_lanelets);
     const auto local_route_sections = route_handler_.createMapSegments(path_lanelets);
     route_sections = combineConsecutiveRouteSections(route_sections, local_route_sections);
   }
