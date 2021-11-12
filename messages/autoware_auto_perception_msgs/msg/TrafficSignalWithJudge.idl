@@ -9,6 +9,7 @@ module autoware_auto_perception_msgs {
       const uint8 GO = 4;
     };
     struct TrafficSignalWithJudge {
+      uint8 judge;
       boolean has_state;
       autoware_auto_perception_msgs::msg::TrafficSignal signal;
     };

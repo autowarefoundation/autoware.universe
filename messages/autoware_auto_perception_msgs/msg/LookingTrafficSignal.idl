@@ -8,7 +8,7 @@ module autoware_auto_perception_msgs {
       boolean is_module_running;
       autoware_auto_perception_msgs::msg::TrafficSignalWithJudge perception;
       autoware_auto_perception_msgs::msg::TrafficSignalWithJudge external;
-      autoware_auto_perception_msgs::msg::TrafficSignalWithJudge final;
+      autoware_auto_perception_msgs::msg::TrafficSignalWithJudge result;
     };
   };
 };
