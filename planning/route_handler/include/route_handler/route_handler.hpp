@@ -63,6 +63,7 @@ public:
   // non-const methods
   void setMap(const HADMapBin & map_msg);
   void setRoute(const HADMapRoute & route_msg);
+  void setRouteLanelets(const lanelet::ConstLanelets & path_lanelets);
   void setPullOverGoalPose(
     const lanelet::ConstLanelet target_lane, const double vehicle_width, const double margin);
 
@@ -146,7 +147,6 @@ private:
   bool is_handler_ready_{false};
 
   // non-const methods
-  void setRouteLanelets(const lanelet::ConstLanelets & path_lanelets);
   void setLaneletsFromRouteMsg();
 
   // const methods

@@ -187,6 +187,7 @@ void RouteHandler::setMap(const HADMapBin & map_msg)
   overall_graphs_ptr_ =
     std::make_shared<const lanelet::routing::RoutingGraphContainer>(overall_graphs);
   lanelet::ConstLanelets all_lanelets = lanelet::utils::query::laneletLayer(lanelet_map_ptr_);
+  road_lanelets_ = lanelet::utils::query::roadLanelets(all_lanelets);
   shoulder_lanelets_ = lanelet::utils::query::shoulderLanelets(all_lanelets);
 
   is_map_msg_ready_ = true;
@@ -1170,6 +1171,38 @@ lanelet::routing::RelationType RouteHandler::getRelation(
 }
 
 lanelet::ConstLanelets RouteHandler::getShoulderLanelets() const { return shoulder_lanelets_; }
+
+lanelet::ConstLanelets RouteHandler::getPreviousLaneletSequence(
+  const lanelet::ConstLanelets & lanelet_sequence) const
+{
+  lanelet::ConstLanelets previous_lanelet_sequence;
+  if (lanelet_sequence.empty()) {
+    return previous_lanelet_sequence;
+  }
+
+  auto first_lane = lanelet_sequence.front();
+  if (exists(start_lanelets_, first_lane)) {
+    return previous_lanelet_sequence;
+  }
+
+  auto right_relations =
+    lanelet::utils::query::getAllNeighborsRight(routing_graph_ptr_, first_lane);
+  for (const auto & right : right_relations) {
+    previous_lanelet_sequence = getLaneletSequenceUpTo(right);
+    if (!previous_lanelet_sequence.empty()) {
+      return previous_lanelet_sequence;
+    }
+  }
+
+  auto left_relations = lanelet::utils::query::getAllNeighborsLeft(routing_graph_ptr_, first_lane);
+  for (const auto & left : left_relations) {
+    previous_lanelet_sequence = getLaneletSequenceUpTo(left);
+    if (!previous_lanelet_sequence.empty()) {
+      return previous_lanelet_sequence;
+    }
+  }
+  return previous_lanelet_sequence;
+}
 
 lanelet::ConstLanelets RouteHandler::getLaneSequence(const lanelet::ConstLanelet & lanelet) const
 {
