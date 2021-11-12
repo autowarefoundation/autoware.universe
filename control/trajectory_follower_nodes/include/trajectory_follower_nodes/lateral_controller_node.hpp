@@ -35,7 +35,8 @@
 #include "autoware_auto_control_msgs/msg/ackermann_lateral_command.hpp"
 #include "autoware_auto_system_msgs/msg/float32_multi_array_diagnostic.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
-#include "autoware_auto_vehicle_msgs/msg/vehicle_kinematic_state.hpp"
+#include "autoware_auto_vehicle_msgs/msg/steering_report.hpp"
+#include "autoware_auto_vehicle_msgs/msg/vehicle_odometry.hpp"
 #include "common/types.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
@@ -45,6 +46,7 @@
 #include "tf2/utils.h"
 #include "tf2_msgs/msg/tf_message.hpp"
 #include "tf2_ros/buffer.h"
+#include "tf2_ros/transform_listener.h"
 
 
 namespace autoware
@@ -82,8 +84,10 @@ private:
     m_pub_diagnostic;
   //!< @brief topic subscription for reference waypoints
   rclcpp::Subscription<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr m_sub_ref_path;
-  //!< @brief subscription for current state
-  rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::VehicleKinematicState>::SharedPtr m_sub_steering;
+  //!< @brief subscription for current velocity
+  rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::VehicleOdometry>::SharedPtr m_sub_odometry;
+  //!< @brief subscription for current steering
+  rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::SteeringReport>::SharedPtr m_sub_steering;
   //!< @brief timer to update after a given interval
   rclcpp::TimerBase::SharedPtr m_timer;
   //!< @brief subscription for transform messages
@@ -112,8 +116,10 @@ private:
 
   //!< @brief measured pose
   geometry_msgs::msg::PoseStamped::SharedPtr m_current_pose_ptr;
-  //!< @brief measured state
-  autoware_auto_vehicle_msgs::msg::VehicleKinematicState::SharedPtr m_current_state_ptr;
+  //!< @brief measured velocity
+  autoware_auto_vehicle_msgs::msg::VehicleOdometry::SharedPtr m_current_odometry_ptr;
+  //!< @brief measured steering
+  autoware_auto_vehicle_msgs::msg::SteeringReport::SharedPtr m_current_steering_ptr;
   //!< @brief reference trajectory
   autoware_auto_planning_msgs::msg::Trajectory::SharedPtr
     m_current_trajectory_ptr;
@@ -128,6 +134,7 @@ private:
 
   //!< @brief buffer for transforms
   tf2::BufferCore m_tf_buffer{tf2::BUFFER_CORE_DEFAULT_CACHE_TIME};
+  tf2_ros::TransformListener m_tf_listener{m_tf_buffer};
 
   //!< initialize timer to work in real, simulation, and replay
   void initTimer(float64_t period_s);
@@ -142,18 +149,6 @@ private:
   void onTrajectory(const autoware_auto_planning_msgs::msg::Trajectory::SharedPtr);
 
   /**
-   * @brief callback for TF message
-   * @param [in] msg transform message
-   */
-  void callbackTF(const tf2_msgs::msg::TFMessage::ConstSharedPtr msg);
-
-  /**
-   * @brief callback for static TF message
-   * @param [in] msg static transform message
-   */
-  void callbackStaticTF(const tf2_msgs::msg::TFMessage::ConstSharedPtr msg);
-
-  /**
    * @brief update current_pose from tf
    * @return true if the current pose was updated, false otherwise
    */
@@ -165,9 +160,14 @@ private:
   bool8_t checkData() const;
 
   /**
-   * @brief set current_state with received message
+   * @brief set current_velocity with received message
    */
-  void onState(const autoware_auto_vehicle_msgs::msg::VehicleKinematicState::SharedPtr msg);
+  void onOdometry(const autoware_auto_vehicle_msgs::msg::VehicleOdometry::SharedPtr msg);
+
+  /**
+   * @brief set current_steering with received message
+   */
+  void onSteering(const autoware_auto_vehicle_msgs::msg::SteeringReport::SharedPtr msg);
 
   /**
    * @brief publish control command

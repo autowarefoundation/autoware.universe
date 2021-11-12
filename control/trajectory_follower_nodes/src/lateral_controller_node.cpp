@@ -155,14 +155,12 @@ LateralController::LateralController(const rclcpp::NodeOptions & node_options)
   m_sub_ref_path = create_subscription<autoware_auto_planning_msgs::msg::Trajectory>(
     "input/reference_trajectory", rclcpp::QoS{1},
     std::bind(&LateralController::onTrajectory, this, _1));
-  m_sub_steering = create_subscription<autoware_auto_vehicle_msgs::msg::VehicleKinematicState>(
-    "input/current_kinematic_state", rclcpp::QoS{1}, std::bind(
-      &LateralController::onState, this, _1));
-  m_tf_sub = create_subscription<tf2_msgs::msg::TFMessage>(
-    "input/tf", rclcpp::QoS{1}, std::bind(&LateralController::callbackTF, this, _1));
-  m_tf_static_sub = create_subscription<tf2_msgs::msg::TFMessage>(
-    "input/tf_static", rclcpp::QoS{1}.transient_local(),
-    std::bind(&LateralController::callbackStaticTF, this, _1));
+  m_sub_steering = create_subscription<autoware_auto_vehicle_msgs::msg::SteeringReport>(
+    "input/current_steering", rclcpp::QoS{1}, std::bind(
+      &LateralController::onSteering, this, _1));
+  m_sub_odometry = create_subscription<autoware_auto_vehicle_msgs::msg::VehicleOdometry>(
+    "input/current_odometry", rclcpp::QoS{1}, std::bind(
+      &LateralController::onOdometry, this, _1));
 
   // TODO(Frederik.Beaujean) ctor is too long, should factor out parameter declarations
   declareMPCparameters();
@@ -201,7 +199,7 @@ void LateralController::onTimer()
   }
 
   const bool8_t is_mpc_solved = m_mpc.calculateMPC(
-    *m_current_state_ptr, m_current_state_ptr->state.longitudinal_velocity_mps,
+    *m_current_steering_ptr, m_current_odometry_ptr->velocity_mps,
     m_current_pose_ptr->pose, ctrl_cmd, predicted_traj, diagnostic);
 
   if (isStoppedState()) {
@@ -244,10 +242,17 @@ bool8_t LateralController::checkData() const
     return false;
   }
 
-  if (!m_current_state_ptr) {
+  if (!m_current_odometry_ptr) {
     RCLCPP_DEBUG(
-      get_logger(), "waiting data. current_state = %d",
-      m_current_state_ptr != nullptr);
+      get_logger(), "waiting data. current_velocity = %d",
+      m_current_odometry_ptr != nullptr);
+    return false;
+  }
+
+  if (!m_current_steering_ptr) {
+    RCLCPP_DEBUG(
+      get_logger(), "waiting data. current_steering = %d",
+      m_current_steering_ptr != nullptr);
     return false;
   }
 
@@ -278,24 +283,6 @@ void LateralController::onTrajectory(const autoware_auto_planning_msgs::msg::Tra
     m_enable_yaw_recalculation, m_curvature_smoothing_num, m_current_pose_ptr);
 }
 
-void LateralController::callbackTF(const tf2_msgs::msg::TFMessage::ConstSharedPtr msg)
-{
-  for (const auto & tf : msg->transforms) {
-    if (!m_tf_buffer.setTransform(tf, "external", false)) {
-      RCLCPP_WARN(get_logger(), "Warning: tf2::BufferCore::setTransform failed");
-    }
-  }
-}
-
-void LateralController::callbackStaticTF(const tf2_msgs::msg::TFMessage::ConstSharedPtr msg)
-{
-  for (const auto & tf : msg->transforms) {
-    if (!m_tf_buffer.setTransform(tf, "external", true)) {
-      RCLCPP_WARN(get_logger(), "Warning: tf2::BufferCore::setTransform failed");
-    }
-  }
-}
-
 bool8_t LateralController::updateCurrentPose()
 {
   geometry_msgs::msg::TransformStamped transform;
@@ -324,9 +311,14 @@ bool8_t LateralController::updateCurrentPose()
   return true;
 }
 
-void LateralController::onState(const autoware_auto_vehicle_msgs::msg::VehicleKinematicState::SharedPtr msg)
+void LateralController::onOdometry(const autoware_auto_vehicle_msgs::msg::VehicleOdometry::SharedPtr msg)
 {
-  m_current_state_ptr = msg;
+  m_current_odometry_ptr = msg;
+}
+
+void LateralController::onSteering(const autoware_auto_vehicle_msgs::msg::SteeringReport::SharedPtr msg)
+{
+  m_current_steering_ptr = msg;
 }
 
 autoware_auto_control_msgs::msg::AckermannLateralCommand LateralController::getStopControlCommand() const
@@ -340,7 +332,7 @@ autoware_auto_control_msgs::msg::AckermannLateralCommand LateralController::getS
 autoware_auto_control_msgs::msg::AckermannLateralCommand LateralController::getInitialControlCommand() const
 {
   autoware_auto_control_msgs::msg::AckermannLateralCommand cmd;
-  cmd.steering_tire_angle = m_current_state_ptr->state.front_wheel_angle_rad;
+  cmd.steering_tire_angle = m_current_steering_ptr->steering_tire_angle;
   cmd.steering_tire_rotation_rate = 0.0;
   return cmd;
 }
@@ -364,7 +356,7 @@ bool8_t LateralController::isStoppedState() const
   }
   RCLCPP_DEBUG(get_logger(), "stop_dist = %f release stopping.", dist);
 
-  const float64_t current_vel = m_current_state_ptr->state.longitudinal_velocity_mps;
+  const float64_t current_vel = m_current_odometry_ptr->velocity_mps;
   const float64_t target_vel =
     m_current_trajectory_ptr->points.at(static_cast<size_t>(nearest)).longitudinal_velocity_mps;
   if (

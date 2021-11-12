@@ -20,7 +20,7 @@
 #include "ament_index_cpp/get_package_share_directory.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "autoware_auto_control_msgs/msg/longitudinal_command.hpp"
-#include "autoware_auto_vehicle_msgs/msg/vehicle_kinematic_state.hpp"
+#include "autoware_auto_vehicle_msgs/msg/vehicle_odometry.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
@@ -35,7 +35,7 @@ using LongitudinalController =
 using LongitudinalCommand = autoware_auto_control_msgs::msg::LongitudinalCommand;
 using Trajectory = autoware_auto_planning_msgs::msg::Trajectory;
 using TrajectoryPoint = autoware_auto_planning_msgs::msg::TrajectoryPoint;
-using VehicleState = autoware_auto_vehicle_msgs::msg::VehicleKinematicState;
+using VehicleOdometry = autoware_auto_vehicle_msgs::msg::VehicleOdometry;
 
 using FakeNodeFixture = autoware::tools::testing::FakeTestNode;
 
@@ -57,8 +57,7 @@ std::shared_ptr<LongitudinalController> makeLongitudinalNode()
 }
 
 
-// TODO(Maxime CLEMENT): disabled as this test is flaky in the CI but works locally
-TEST_F(FakeNodeFixture, DISABLED_longitudinal_keep_velocity) {
+TEST_F(FakeNodeFixture, longitudinal_keep_velocity) {
   // Data to test
   LongitudinalCommand::SharedPtr cmd_msg;
   bool received_longitudinal_command = false;
@@ -67,7 +66,7 @@ TEST_F(FakeNodeFixture, DISABLED_longitudinal_keep_velocity) {
   std::shared_ptr<LongitudinalController> node = makeLongitudinalNode();
 
   // Publisher/Subscribers
-  rclcpp::Publisher<VehicleState>::SharedPtr state_pub = this->create_publisher<VehicleState>(
+  rclcpp::Publisher<VehicleOdometry>::SharedPtr odom_pub = this->create_publisher<VehicleOdometry>(
     "input/current_state");
   rclcpp::Publisher<Trajectory>::SharedPtr traj_pub = this->create_publisher<Trajectory>(
     "input/current_trajectory");
@@ -86,17 +85,19 @@ TEST_F(FakeNodeFixture, DISABLED_longitudinal_keep_velocity) {
   br->sendTransform(transform);
   /// Already running at target vel + Non stopping trajectory -> no change in velocity
   // Publish velocity
-  VehicleState state;
-  state.header.stamp = node->now();
-  state.state.longitudinal_velocity_mps = 1.0;
-  state_pub->publish(state);
+  VehicleOdometry odom_msg;
+  odom_msg.stamp = node->now();
+  odom_msg.velocity_mps = 1.0;
+  odom_pub->publish(odom_msg);
   // the node needs to receive two velocity msg
   rclcpp::spin_some(node);
   rclcpp::spin_some(this->get_fake_node());
-  state.header.stamp = node->now();
-  state_pub->publish(state);
+  odom_msg.stamp = node->now();
+  odom_pub->publish(odom_msg);
   // Publish non stopping trajectory
   Trajectory traj;
+  traj.header.stamp = node->now();
+  traj.header.frame_id = "map";
   TrajectoryPoint point;
   point.pose.position.x = 0.0;
   point.pose.position.y = 0.0;
@@ -135,7 +136,7 @@ TEST_F(FakeNodeFixture, longitudinal_slow_down) {
   std::shared_ptr<LongitudinalController> node = makeLongitudinalNode();
 
   // Publisher/Subscribers
-  rclcpp::Publisher<VehicleState>::SharedPtr state_pub = this->create_publisher<VehicleState>(
+  rclcpp::Publisher<VehicleOdometry>::SharedPtr odom_pub = this->create_publisher<VehicleOdometry>(
     "input/current_state");
   rclcpp::Publisher<Trajectory>::SharedPtr traj_pub = this->create_publisher<Trajectory>(
     "input/current_trajectory");
@@ -154,17 +155,19 @@ TEST_F(FakeNodeFixture, longitudinal_slow_down) {
   br->sendTransform(transform);
   /// Already running at target vel + Non stopping trajectory -> no change in velocity
   // Publish velocity
-  VehicleState state;
-  state.header.stamp = node->now();
-  state.state.longitudinal_velocity_mps = 1.0;
-  state_pub->publish(state);
+  VehicleOdometry odom_msg;
+  odom_msg.stamp = node->now();
+  odom_msg.velocity_mps = 1.0;
+  odom_pub->publish(odom_msg);
   // the node needs to receive two velocity msg
   rclcpp::spin_some(node);
   rclcpp::spin_some(this->get_fake_node());
-  state.header.stamp = node->now();
-  state_pub->publish(state);
+  odom_msg.stamp = node->now();
+  odom_pub->publish(odom_msg);
   // Publish non stopping trajectory
   Trajectory traj;
+  traj.header.stamp = node->now();
+  traj.header.frame_id = "map";
   TrajectoryPoint point;
   point.pose.position.x = 0.0;
   point.pose.position.y = 0.0;
@@ -182,7 +185,7 @@ TEST_F(FakeNodeFixture, longitudinal_slow_down) {
   test_utils::waitForMessage(node, this, received_longitudinal_command);
 
   ASSERT_TRUE(received_longitudinal_command);
-  EXPECT_LT(cmd_msg->speed, state.state.longitudinal_velocity_mps);
+  EXPECT_LT(cmd_msg->speed, odom_msg.velocity_mps);
   EXPECT_LT(cmd_msg->acceleration, 0.0f);
 
   // Generate another control message
@@ -190,12 +193,11 @@ TEST_F(FakeNodeFixture, longitudinal_slow_down) {
   traj_pub->publish(traj);
   test_utils::waitForMessage(node, this, received_longitudinal_command);
   ASSERT_TRUE(received_longitudinal_command);
-  EXPECT_LT(cmd_msg->speed, state.state.longitudinal_velocity_mps);
+  EXPECT_LT(cmd_msg->speed, odom_msg.velocity_mps);
   EXPECT_LT(cmd_msg->acceleration, 0.0f);
 }
 
-// TODO(Maxime CLEMENT): disabled as this test is flaky in the CI but works locally
-TEST_F(FakeNodeFixture, DISABLED_longitudinal_accelerate) {
+TEST_F(FakeNodeFixture, longitudinal_accelerate) {
   // Data to test
   LongitudinalCommand::SharedPtr cmd_msg;
   bool received_longitudinal_command = false;
@@ -204,7 +206,7 @@ TEST_F(FakeNodeFixture, DISABLED_longitudinal_accelerate) {
   std::shared_ptr<LongitudinalController> node = makeLongitudinalNode();
 
   // Publisher/Subscribers
-  rclcpp::Publisher<VehicleState>::SharedPtr state_pub = this->create_publisher<VehicleState>(
+  rclcpp::Publisher<VehicleOdometry>::SharedPtr odom_pub = this->create_publisher<VehicleOdometry>(
     "input/current_state");
   rclcpp::Publisher<Trajectory>::SharedPtr traj_pub = this->create_publisher<Trajectory>(
     "input/current_trajectory");
@@ -223,17 +225,19 @@ TEST_F(FakeNodeFixture, DISABLED_longitudinal_accelerate) {
   br->sendTransform(transform);
   /// Below target vel + Non stopping trajectory -> accelerate
   // Publish velocity
-  VehicleState state;
-  state.header.stamp = node->now();
-  state.state.longitudinal_velocity_mps = 0.5;
-  state_pub->publish(state);
+  VehicleOdometry odom_msg;
+  odom_msg.stamp = node->now();
+  odom_msg.velocity_mps = 0.5;
+  odom_pub->publish(odom_msg);
   // the node needs to receive two velocity msg
   rclcpp::spin_some(node);
   rclcpp::spin_some(this->get_fake_node());
-  state.header.stamp = node->now();
-  state_pub->publish(state);
+  odom_msg.stamp = node->now();
+  odom_pub->publish(odom_msg);
   // Publish non stopping trajectory
   Trajectory traj;
+  traj.header.stamp = node->now();
+  traj.header.frame_id = "map";
   TrajectoryPoint point;
   point.pose.position.x = 0.0;
   point.pose.position.y = 0.0;
@@ -251,7 +255,7 @@ TEST_F(FakeNodeFixture, DISABLED_longitudinal_accelerate) {
   test_utils::waitForMessage(node, this, received_longitudinal_command);
 
   ASSERT_TRUE(received_longitudinal_command);
-  EXPECT_GT(cmd_msg->speed, state.state.longitudinal_velocity_mps);
+  EXPECT_GT(cmd_msg->speed, odom_msg.velocity_mps);
   EXPECT_GT(cmd_msg->acceleration, 0.0f);
 
   // Generate another control message
@@ -259,7 +263,7 @@ TEST_F(FakeNodeFixture, DISABLED_longitudinal_accelerate) {
   traj_pub->publish(traj);
   test_utils::waitForMessage(node, this, received_longitudinal_command);
   ASSERT_TRUE(received_longitudinal_command);
-  EXPECT_GT(cmd_msg->speed, state.state.longitudinal_velocity_mps);
+  EXPECT_GT(cmd_msg->speed, odom_msg.velocity_mps);
   EXPECT_GT(cmd_msg->acceleration, 0.0f);
 }
 
@@ -272,7 +276,7 @@ TEST_F(FakeNodeFixture, longitudinal_stopped) {
   std::shared_ptr<LongitudinalController> node = makeLongitudinalNode();
 
   // Publisher/Subscribers
-  rclcpp::Publisher<VehicleState>::SharedPtr state_pub = this->create_publisher<VehicleState>(
+  rclcpp::Publisher<VehicleOdometry>::SharedPtr odom_pub = this->create_publisher<VehicleOdometry>(
     "input/current_state");
   rclcpp::Publisher<Trajectory>::SharedPtr traj_pub = this->create_publisher<Trajectory>(
     "input/current_trajectory");
@@ -291,17 +295,19 @@ TEST_F(FakeNodeFixture, longitudinal_stopped) {
   br->sendTransform(transform);
   /// Below target vel + Non stopping trajectory -> accelerate
   // Publish velocity
-  VehicleState state;
-  state.header.stamp = node->now();
-  state.state.longitudinal_velocity_mps = 0.0;
-  state_pub->publish(state);
+  VehicleOdometry odom_msg;
+  odom_msg.stamp = node->now();
+  odom_msg.velocity_mps = 0.0;
+  odom_pub->publish(odom_msg);
   // the node needs to receive two velocity msg
   rclcpp::spin_some(node);
   rclcpp::spin_some(this->get_fake_node());
-  state.header.stamp = node->now();
-  state_pub->publish(state);
+  odom_msg.stamp = node->now();
+  odom_pub->publish(odom_msg);
   // Publish stopping trajectory
   Trajectory traj;
+  traj.header.stamp = node->now();
+  traj.header.frame_id = "map";
   TrajectoryPoint point;
   point.pose.position.x = 0.0;
   point.pose.position.y = 0.0;
@@ -323,8 +329,7 @@ TEST_F(FakeNodeFixture, longitudinal_stopped) {
   EXPECT_LT(cmd_msg->acceleration, 0.0f);  // when stopped negative acceleration to brake
 }
 
-// TODO(Maxime CLEMENT): disabled as this test is flaky in the CI but works locally
-TEST_F(FakeNodeFixture, DISABLED_longitudinal_reverse) {
+TEST_F(FakeNodeFixture, longitudinal_reverse) {
   // Data to test
   LongitudinalCommand::SharedPtr cmd_msg;
   bool received_longitudinal_command = false;
@@ -333,7 +338,7 @@ TEST_F(FakeNodeFixture, DISABLED_longitudinal_reverse) {
   std::shared_ptr<LongitudinalController> node = makeLongitudinalNode();
 
   // Publisher/Subscribers
-  rclcpp::Publisher<VehicleState>::SharedPtr state_pub = this->create_publisher<VehicleState>(
+  rclcpp::Publisher<VehicleOdometry>::SharedPtr odom_pub = this->create_publisher<VehicleOdometry>(
     "input/current_state");
   rclcpp::Publisher<Trajectory>::SharedPtr traj_pub = this->create_publisher<Trajectory>(
     "input/current_trajectory");
@@ -352,17 +357,19 @@ TEST_F(FakeNodeFixture, DISABLED_longitudinal_reverse) {
   br->sendTransform(transform);
   /// Below target vel + Non stopping trajectory -> accelerate
   // Publish velocity
-  VehicleState state;
-  state.header.stamp = node->now();
-  state.state.longitudinal_velocity_mps = 0.0;
-  state_pub->publish(state);
+  VehicleOdometry odom_msg;
+  odom_msg.stamp = node->now();
+  odom_msg.velocity_mps = 0.0;
+  odom_pub->publish(odom_msg);
   // the node needs to receive two velocity msg
   rclcpp::spin_some(node);
   rclcpp::spin_some(this->get_fake_node());
-  state.header.stamp = node->now();
-  state_pub->publish(state);
+  odom_msg.stamp = node->now();
+  odom_pub->publish(odom_msg);
   // Publish reverse
   Trajectory traj;
+  traj.header.stamp = node->now();
+  traj.header.frame_id = "map";
   TrajectoryPoint point;
   point.pose.position.x = 0.0;
   point.pose.position.y = 0.0;
@@ -393,7 +400,7 @@ TEST_F(FakeNodeFixture, longitudinal_emergency) {
   std::shared_ptr<LongitudinalController> node = makeLongitudinalNode();
 
   // Publisher/Subscribers
-  rclcpp::Publisher<VehicleState>::SharedPtr state_pub = this->create_publisher<VehicleState>(
+  rclcpp::Publisher<VehicleOdometry>::SharedPtr odom_pub = this->create_publisher<VehicleOdometry>(
     "input/current_state");
   rclcpp::Publisher<Trajectory>::SharedPtr traj_pub = this->create_publisher<Trajectory>(
     "input/current_trajectory");
@@ -412,17 +419,19 @@ TEST_F(FakeNodeFixture, longitudinal_emergency) {
   br->sendTransform(transform);
   /// Below target vel + Non stopping trajectory -> accelerate
   // Publish velocity
-  VehicleState state;
-  state.header.stamp = node->now();
-  state.state.longitudinal_velocity_mps = 0.0;
-  state_pub->publish(state);
+  VehicleOdometry odom_msg;
+  odom_msg.stamp = node->now();
+  odom_msg.velocity_mps = 0.0;
+  odom_pub->publish(odom_msg);
   // the node needs to receive two velocity msg
   rclcpp::spin_some(node);
   rclcpp::spin_some(this->get_fake_node());
-  state.header.stamp = node->now();
-  state_pub->publish(state);
+  odom_msg.stamp = node->now();
+  odom_pub->publish(odom_msg);
   // Publish trajectory starting away from the current ego pose
   Trajectory traj;
+  traj.header.stamp = node->now();
+  traj.header.frame_id = "map";
   TrajectoryPoint point;
   point.pose.position.x = 10.0;
   point.pose.position.y = 0.0;
@@ -445,8 +454,7 @@ TEST_F(FakeNodeFixture, longitudinal_emergency) {
   EXPECT_LT(cmd_msg->acceleration, 0.0f);
 }
 
-// TODO(Maxime CLEMENT): disabled as this test crashes in the CI but works locally
-TEST_F(FakeNodeFixture, DISABLED_longitudinal_set_param_smoke_test)
+TEST_F(FakeNodeFixture, longitudinal_set_param_smoke_test)
 {
   // Node
   std::shared_ptr<LongitudinalController> node = makeLongitudinalNode();

@@ -22,7 +22,7 @@
 
 #include "autoware_auto_control_msgs/msg/longitudinal_command.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
-#include "autoware_auto_vehicle_msgs/msg/vehicle_kinematic_state.hpp"
+#include "autoware_auto_vehicle_msgs/msg/vehicle_odometry.hpp"
 #include "autoware_auto_system_msgs/msg/float32_multi_array_diagnostic.hpp"
 #include "eigen3/Eigen/Core"
 #include "eigen3/Eigen/Geometry"
@@ -33,6 +33,7 @@
 #include "tf2/utils.h"
 #include "tf2_msgs/msg/tf_message.hpp"
 #include "tf2_ros/buffer.h"
+#include "tf2_ros/transform_listener.h"
 #include "trajectory_follower/debug_values.hpp"
 #include "trajectory_follower/longitudinal_controller_utils.hpp"
 #include "trajectory_follower/lowpass_filter.hpp"
@@ -80,8 +81,8 @@ private:
   };
 
   // ros variables
-  rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::VehicleKinematicState>::SharedPtr
-    m_sub_current_state;
+  rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::VehicleOdometry>::SharedPtr
+    m_sub_current_velocity;
   rclcpp::Subscription<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr m_sub_trajectory;
   rclcpp::Publisher<autoware_auto_control_msgs::msg::LongitudinalCommand>::SharedPtr m_pub_control_cmd;
   rclcpp::Publisher<autoware_auto_system_msgs::msg::Float32MultiArrayDiagnostic>::SharedPtr m_pub_slope;
@@ -91,14 +92,15 @@ private:
   rclcpp::Subscription<tf2_msgs::msg::TFMessage>::SharedPtr m_tf_sub;
   rclcpp::Subscription<tf2_msgs::msg::TFMessage>::SharedPtr m_tf_static_sub;
   tf2::BufferCore m_tf_buffer{tf2::BUFFER_CORE_DEFAULT_CACHE_TIME};
+  tf2_ros::TransformListener m_tf_listener{m_tf_buffer};
 
   OnSetParametersCallbackHandle::SharedPtr m_set_param_res;
   rcl_interfaces::msg::SetParametersResult paramCallback(
     const std::vector<rclcpp::Parameter> & parameters);
 
   // pointers for ros topic
-  std::shared_ptr<autoware_auto_vehicle_msgs::msg::VehicleKinematicState> m_current_state_ptr{nullptr};
-  std::shared_ptr<autoware_auto_vehicle_msgs::msg::VehicleKinematicState> m_prev_state_ptr{nullptr};
+  std::shared_ptr<autoware_auto_vehicle_msgs::msg::VehicleOdometry> m_current_velocity_ptr{nullptr};
+  std::shared_ptr<autoware_auto_vehicle_msgs::msg::VehicleOdometry> m_prev_velocity_ptr{nullptr};
   std::shared_ptr<autoware_auto_planning_msgs::msg::Trajectory> m_trajectory_ptr{nullptr};
 
   // vehicle info
@@ -203,8 +205,8 @@ private:
    * @brief set current and previous velocity with received message
    * @param [in] msg current state message
    */
-  void callbackCurrentState(
-    const autoware_auto_vehicle_msgs::msg::VehicleKinematicState::ConstSharedPtr msg);
+  void callbackCurrentVelocity(
+    const autoware_auto_vehicle_msgs::msg::VehicleOdometry::ConstSharedPtr msg);
 
   /**
    * @brief set reference trajectory with received message
@@ -216,18 +218,6 @@ private:
    * @brief compute control command, and publish periodically
    */
   void callbackTimerControl();
-
-  /**
-   * @brief callback for TF message
-   * @param [in] msg transform message
-   */
-  void callbackTF(const tf2_msgs::msg::TFMessage::ConstSharedPtr msg);
-
-  /**
-   * @brief callback for static TF message
-   * @param [in] msg static transform message
-   */
-  void callbackStaticTF(const tf2_msgs::msg::TFMessage::ConstSharedPtr msg);
 
   /**
    * @brief calculate data for controllers whose type is ControlData
