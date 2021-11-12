@@ -94,4 +94,4 @@ repos:
         exclude: "(.cu)"
 
 # ignore .svg file and packages that is back-ported by autoware.auto
-exclude: ".svg|control/trajectory_follower|control/trajectory_follower_nodes|tmp_autoware_auto_dependencies|common/math/osqp_interface|simulator/simple_planning_simulator"
+exclude: ".svg|control/trajectory_follower|control/trajectory_follower_nodes|tmp_autoware_auto_dependencies|common/math/osqp_interface|simulator/simple_planning_simulator|planning/scenario_planning/parking/freespace_planner|planning/scenario_planning/parking/astar_search|planning/scenario_planning/parking/costmap_generator"
