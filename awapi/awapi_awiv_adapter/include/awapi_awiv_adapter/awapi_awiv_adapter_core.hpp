@@ -43,7 +43,7 @@
 #include <autoware_v2x_msgs/msg/virtual_traffic_light_state_array.hpp>
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <nav_msgs/msg/odometry.hpp>
-#include <pacmod_msgs/msg/global_rpt.hpp>
+#include <pacmod3_msgs/msg/global_rpt.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
 
 #include <tf2_ros/buffer.h>
@@ -85,7 +85,7 @@ private:
   rclcpp::Subscription<autoware_v2x_msgs::msg::VirtualTrafficLightStateArray>::SharedPtr
     sub_v2x_state_;
   rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr sub_diagnostics_;
-  rclcpp::Subscription<pacmod_msgs::msg::GlobalRpt>::SharedPtr sub_global_rpt_;
+  rclcpp::Subscription<pacmod3_msgs::msg::GlobalRpt>::SharedPtr sub_global_rpt_;
   rclcpp::Subscription<autoware_planning_msgs::msg::LaneChangeStatus>::SharedPtr
     sub_lane_change_available_;
   rclcpp::Subscription<autoware_planning_msgs::msg::LaneChangeStatus>::SharedPtr
@@ -102,10 +102,10 @@ private:
   rclcpp::Subscription<autoware_api_msgs::msg::StopCommand>::SharedPtr sub_temporary_stop_;
   rclcpp::Subscription<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr sub_autoware_traj_;
   rclcpp::Subscription<autoware_api_msgs::msg::DoorControlCommand>::SharedPtr sub_door_control_;
-  rclcpp::Subscription<pacmod_msgs::msg::SystemRptInt>::SharedPtr sub_door_status_;
+  rclcpp::Subscription<pacmod3_msgs::msg::SystemRptInt>::SharedPtr sub_door_status_;
 
   // publisher
-  rclcpp::Publisher<pacmod_msgs::msg::SystemCmdInt>::SharedPtr pub_door_control_;
+  rclcpp::Publisher<pacmod3_msgs::msg::SystemCmdInt>::SharedPtr pub_door_control_;
   rclcpp::Publisher<autoware_api_msgs::msg::DoorStatus>::SharedPtr pub_door_status_;
   rclcpp::Publisher<autoware_v2x_msgs::msg::InfrastructureCommandArray>::SharedPtr pub_v2x_command_;
   rclcpp::Publisher<autoware_v2x_msgs::msg::VirtualTrafficLightStateArray>::SharedPtr
@@ -146,7 +146,7 @@ private:
   void callbackV2XState(
     const autoware_v2x_msgs::msg::VirtualTrafficLightStateArray::ConstSharedPtr msg_ptr);
   void callbackDiagnostics(const diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr msg_ptr);
-  void callbackGlobalRpt(const pacmod_msgs::msg::GlobalRpt::ConstSharedPtr msg_ptr);
+  void callbackGlobalRpt(const pacmod3_msgs::msg::GlobalRpt::ConstSharedPtr msg_ptr);
   void callbackLaneChangeAvailable(
     const autoware_planning_msgs::msg::LaneChangeStatus::ConstSharedPtr msg_ptr);
   void callbackLaneChangeReady(
@@ -165,7 +165,7 @@ private:
     const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr msg_ptr);
   void callbackDoorControl(
     const autoware_api_msgs::msg::DoorControlCommand::ConstSharedPtr msg_ptr);
-  void callbackDoorStatus(const pacmod_msgs::msg::SystemRptInt::ConstSharedPtr msg_ptr);
+  void callbackDoorStatus(const pacmod3_msgs::msg::SystemRptInt::ConstSharedPtr msg_ptr);
 
   // timer function
   void timerCallback();

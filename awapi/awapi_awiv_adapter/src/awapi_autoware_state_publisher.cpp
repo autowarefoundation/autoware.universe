@@ -261,7 +261,7 @@ void AutowareIvAutowareStatePublisher::getErrorDiagInfo(
 }
 
 void AutowareIvAutowareStatePublisher::getGlobalRptInfo(
-  const pacmod_msgs::msg::GlobalRpt::ConstSharedPtr & global_rpt_ptr,
+  const pacmod3_msgs::msg::GlobalRpt::ConstSharedPtr & global_rpt_ptr,
   autoware_api_msgs::msg::AwapiAutowareStatus * status)
 {
   if (!global_rpt_ptr) {

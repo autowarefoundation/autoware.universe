@@ -70,7 +70,7 @@ private:
   void getErrorDiagInfo(
     const AutowareInfo & aw_info, autoware_api_msgs::msg::AwapiAutowareStatus * status);
   void getGlobalRptInfo(
-    const pacmod_msgs::msg::GlobalRpt::ConstSharedPtr & global_rpt_ptr,
+    const pacmod3_msgs::msg::GlobalRpt::ConstSharedPtr & global_rpt_ptr,
     autoware_api_msgs::msg::AwapiAutowareStatus * status);
 
   bool isGoal(const autoware_auto_system_msgs::msg::AutowareState::ConstSharedPtr & autoware_state);

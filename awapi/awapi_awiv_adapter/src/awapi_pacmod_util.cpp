@@ -19,10 +19,10 @@ namespace autoware_api
 namespace pacmod_util
 {
 autoware_api_msgs::msg::DoorStatus getDoorStatusMsg(
-  const pacmod_msgs::msg::SystemRptInt::ConstSharedPtr & msg_ptr)
+  const pacmod3_msgs::msg::SystemRptInt::ConstSharedPtr & msg_ptr)
 {
   using autoware_api_msgs::msg::DoorStatus;
-  using pacmod_msgs::msg::SystemRptInt;
+  using pacmod3_msgs::msg::SystemRptInt;
   DoorStatus door_status;
 
   if (!msg_ptr) {
@@ -48,21 +48,21 @@ autoware_api_msgs::msg::DoorStatus getDoorStatusMsg(
   return door_status;
 }
 
-pacmod_msgs::msg::SystemCmdInt createClearOverrideDoorCommand(
+pacmod3_msgs::msg::SystemCmdInt createClearOverrideDoorCommand(
   const rclcpp::Clock::SharedPtr & clock)
 {
-  pacmod_msgs::msg::SystemCmdInt door_cmd;
+  pacmod3_msgs::msg::SystemCmdInt door_cmd;
   door_cmd.header.frame_id = "base_link";
   door_cmd.header.stamp = clock->now();
   door_cmd.clear_override = true;
   return door_cmd;
 }
 
-pacmod_msgs::msg::SystemCmdInt createDoorCommand(
+pacmod3_msgs::msg::SystemCmdInt createDoorCommand(
   const rclcpp::Clock::SharedPtr & clock,
   const autoware_api_msgs::msg::DoorControlCommand::ConstSharedPtr & msg_ptr)
 {
-  using pacmod_msgs::msg::SystemCmdInt;
+  using pacmod3_msgs::msg::SystemCmdInt;
 
   SystemCmdInt door_cmd;
   door_cmd.header.frame_id = "base_link";

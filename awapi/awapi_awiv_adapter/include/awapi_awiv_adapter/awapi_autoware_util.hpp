@@ -41,8 +41,8 @@
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
-#include <pacmod_msgs/msg/global_rpt.hpp>
-#include <pacmod_msgs/msg/system_rpt_int.hpp>
+#include <pacmod3_msgs/msg/global_rpt.hpp>
+#include <pacmod3_msgs/msg/system_rpt_int.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
 
 #include <tf2/utils.h>
@@ -74,7 +74,7 @@ struct AutowareInfo
   autoware_v2x_msgs::msg::InfrastructureCommandArray::ConstSharedPtr v2x_command_ptr;
   autoware_v2x_msgs::msg::VirtualTrafficLightStateArray::ConstSharedPtr v2x_state_ptr;
   diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr diagnostic_ptr;
-  pacmod_msgs::msg::GlobalRpt::ConstSharedPtr global_rpt_ptr;
+  pacmod3_msgs::msg::GlobalRpt::ConstSharedPtr global_rpt_ptr;
   autoware_planning_msgs::msg::LaneChangeStatus::ConstSharedPtr lane_change_available_ptr;
   autoware_planning_msgs::msg::LaneChangeStatus::ConstSharedPtr lane_change_ready_ptr;
   autoware_auto_planning_msgs::msg::Path::ConstSharedPtr lane_change_candidate_ptr;
@@ -84,7 +84,7 @@ struct AutowareInfo
   autoware_planning_msgs::msg::VelocityLimit::ConstSharedPtr current_max_velocity_ptr;
   autoware_api_msgs::msg::StopCommand::ConstSharedPtr temporary_stop_ptr;
   autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr autoware_planning_traj_ptr;
-  pacmod_msgs::msg::SystemRptInt::ConstSharedPtr door_state_ptr;
+  pacmod3_msgs::msg::SystemRptInt::ConstSharedPtr door_state_ptr;
 };
 
 template <class T>
