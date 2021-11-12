@@ -22,7 +22,7 @@
 #include <rviz_common/ros_topic_display.hpp>
 #include <rviz_common/validate_floats.hpp>
 
-#include <geometry_msgs/msg/twist_stamped.hpp>
+#include <autoware_auto_vehicle_msgs/msg/velocity_report.hpp>
 
 #include <OgreColourValue.h>
 #include <OgreManualObject.h>
@@ -35,7 +35,8 @@
 
 namespace rviz_plugins
 {
-class VelocityHistoryDisplay : public rviz_common::RosTopicDisplay<geometry_msgs::msg::TwistStamped>
+class VelocityHistoryDisplay
+: public rviz_common::RosTopicDisplay<autoware_auto_vehicle_msgs::msg::VelocityReport>
 {
   Q_OBJECT
 
@@ -51,7 +52,8 @@ private Q_SLOTS:
 
 protected:
   void update(float wall_dt, float ros_dt) override;
-  void processMessage(const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg_ptr) override;
+  void processMessage(
+    const autoware_auto_vehicle_msgs::msg::VelocityReport::ConstSharedPtr msg_ptr) override;
   std::unique_ptr<Ogre::ColourValue> setColorDependsOnVelocity(
     const double vel_max, const double cmd_vel);
   std::unique_ptr<Ogre::ColourValue> gradation(
@@ -65,9 +67,11 @@ protected:
   rviz_common::properties::FloatProperty * property_vel_max_;
 
 private:
-  std::deque<std::tuple<geometry_msgs::msg::TwistStamped::ConstSharedPtr, Ogre::Vector3>>
+  std::deque<
+    std::tuple<autoware_auto_vehicle_msgs::msg::VelocityReport::ConstSharedPtr, Ogre::Vector3>>
     histories_;
-  bool validateFloats(const geometry_msgs::msg::TwistStamped::ConstSharedPtr & msg_ptr);
+  bool validateFloats(
+    const autoware_auto_vehicle_msgs::msg::VelocityReport::ConstSharedPtr & msg_ptr);
   std::mutex mutex_;
 };
 

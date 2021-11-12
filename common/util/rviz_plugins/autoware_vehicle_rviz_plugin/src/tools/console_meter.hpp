@@ -27,12 +27,13 @@
 #include <rviz_common/properties/int_property.hpp>
 #include <rviz_common/ros_topic_display.hpp>
 
-#include <geometry_msgs/msg/twist_stamped.hpp>
+#include <autoware_auto_vehicle_msgs/msg/velocity_report.hpp>
 #endif
 
 namespace rviz_plugins
 {
-class ConsoleMeterDisplay : public rviz_common::RosTopicDisplay<geometry_msgs::msg::TwistStamped>
+class ConsoleMeterDisplay
+: public rviz_common::RosTopicDisplay<autoware_auto_vehicle_msgs::msg::VelocityReport>
 {
   Q_OBJECT
 
@@ -49,7 +50,8 @@ private Q_SLOTS:
 
 protected:
   void update(float wall_dt, float ros_dt) override;
-  void processMessage(const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg_ptr) override;
+  void processMessage(
+    const autoware_auto_vehicle_msgs::msg::VelocityReport::ConstSharedPtr msg_ptr) override;
   jsk_rviz_plugins::OverlayObject::Ptr overlay_;
   rviz_common::properties::ColorProperty * property_text_color_;
   rviz_common::properties::IntProperty * property_left_;
@@ -83,7 +85,7 @@ private:
   Arc outer_arc_;
 
   std::mutex mutex_;
-  geometry_msgs::msg::TwistStamped::ConstSharedPtr last_msg_ptr_;
+  autoware_auto_vehicle_msgs::msg::VelocityReport::ConstSharedPtr last_msg_ptr_;
 };
 
 }  // namespace rviz_plugins

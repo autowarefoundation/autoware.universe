@@ -89,7 +89,7 @@ void ConsoleMeterDisplay::update(float wall_dt, float ros_dt)
     if (!last_msg_ptr_) {
       return;
     }
-    linear_x = last_msg_ptr_->twist.linear.x;
+    linear_x = last_msg_ptr_->longitudinal_velocity;
   }
 
   QColor background_color;
@@ -152,7 +152,7 @@ void ConsoleMeterDisplay::update(float wall_dt, float ros_dt)
 }
 
 void ConsoleMeterDisplay::processMessage(
-  const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg_ptr)
+  const autoware_auto_vehicle_msgs::msg::VelocityReport::ConstSharedPtr msg_ptr)
 {
   if (!isEnabled()) {
     return;
