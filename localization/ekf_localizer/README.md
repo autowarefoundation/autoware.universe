@@ -63,6 +63,10 @@ The parameters and input topic names can be set in the `ekf_localizer.launch` fi
 
 ### Published Topics
 
+- ekf_odom (nav_msgs/Odometry)
+
+  Estimated odometry.
+
 - ekf_pose (geometry_msgs/PoseStamped)
 
   Estimated pose.
