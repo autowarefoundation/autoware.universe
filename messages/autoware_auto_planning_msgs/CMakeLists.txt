@@ -9,6 +9,7 @@ find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
 rosidl_generate_interfaces(${PROJECT_NAME}
+  "action/PlannerCostmap.idl"
   "action/PlanTrajectory.idl"
   "action/RecordTrajectory.idl"
   "action/ReplayTrajectory.idl"

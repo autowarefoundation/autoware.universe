@@ -1,0 +1,26 @@
+#include "autoware_auto_planning_msgs/msg/HADMapRoute.idl"
+#include "nav_msgs/msg/OccupancyGrid.idl"
+#include "std_msgs/msg/Empty.idl"
+
+module autoware_auto_planning_msgs {
+  module action {
+    struct PlannerCostmap_Goal
+    {
+      @verbatim(language = "comment", text =
+        "Route defined by start and goal point and map primitives"
+        "between given points.")
+      autoware_auto_planning_msgs::msg::HADMapRoute route;
+    };
+    struct PlannerCostmap_Result
+    {
+      @verbatim(language = "comment", text =
+        "Costmap with obstacles and lanelets position applied")
+      nav_msgs::msg::OccupancyGrid costmap;
+    };
+    struct PlannerCostmap_Feedback {
+      @verbatim(language = "comment", text =
+        "Currently there is no feedback, but variable is needed to compile")
+      std_msgs::msg::Empty unused_variable;
+    };
+  };
+};
