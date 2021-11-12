@@ -14,6 +14,8 @@
 
 #include "external_cmd_selector/external_cmd_selector_node.hpp"
 
+#include <autoware_iv_auto_msgs_converter/autoware_iv_auto_msgs_converter.hpp>
+
 #include <chrono>
 #include <memory>
 #include <string>
@@ -127,7 +129,9 @@ void ExternalCmdSelector::onLocalTurnSignalCmd(const ExternalTurnSignal::ConstSh
   if (current_selector_mode_.data != CommandSourceMode::LOCAL) {
     return;
   }
-  pub_turn_signal_cmd_->publish(convert(*msg));
+  auto light_signal = autoware_iv_auto_msgs_converter::convert(*msg);
+  pub_turn_signal_cmd_->publish(light_signal.turn_signal);
+  pub_hazard_signal_cmd_->publish(light_signal.hazard_signal);
 }
 
 void ExternalCmdSelector::onLocalHeartbeat(const ExternalHeartbeat::ConstSharedPtr msg)
@@ -159,7 +163,9 @@ void ExternalCmdSelector::onRemoteTurnSignalCmd(const ExternalTurnSignal::ConstS
   if (current_selector_mode_.data != CommandSourceMode::REMOTE) {
     return;
   }
-  pub_turn_signal_cmd_->publish(convert(*msg));
+  auto light_signal = autoware_iv_auto_msgs_converter::convert(*msg);
+  pub_turn_signal_cmd_->publish(light_signal.turn_signal);
+  pub_hazard_signal_cmd_->publish(light_signal.hazard_signal);
 }
 
 void ExternalCmdSelector::onRemoteHeartbeat(const ExternalHeartbeat::ConstSharedPtr msg)
@@ -185,21 +191,7 @@ void ExternalCmdSelector::onTimer() { pub_current_selector_mode_->publish(curren
 ExternalCmdSelector::InternalGearShift ExternalCmdSelector::convert(
   const ExternalGearShift & command)
 {
-  InternalGearShift message;
-  message.header.stamp = command.stamp;
-  message.header.frame_id = "base_link";  // dummy
-  message.shift.data = command.gear_shift.data;
-  return message;
-}
-
-ExternalCmdSelector::InternalTurnSignal ExternalCmdSelector::convert(
-  const ExternalTurnSignal & command)
-{
-  InternalTurnSignal message;
-  message.header.stamp = command.stamp;
-  message.header.frame_id = "base_link";  // dummy
-  message.data = command.turn_signal.data;
-  return message;
+  return autoware_iv_auto_msgs_converter::convert(command);
 }
 
 ExternalCmdSelector::InternalHeartbeat ExternalCmdSelector::convert(

@@ -19,6 +19,9 @@
 #include <diagnostic_updater/update_functions.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_auto_vehicle_msgs/msg/gear_command.hpp>
+#include <autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp>
+#include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
 #include <autoware_control_msgs/msg/external_command_selector_mode.hpp>
 #include <autoware_control_msgs/srv/external_command_select.hpp>
 #include <autoware_external_api_msgs/msg/control_command_stamped.hpp>
@@ -38,8 +41,9 @@ public:
 private:
   using CommandSourceSelect = autoware_control_msgs::srv::ExternalCommandSelect;
   using CommandSourceMode = autoware_control_msgs::msg::ExternalCommandSelectorMode;
-  using InternalGearShift = autoware_vehicle_msgs::msg::ShiftStamped;
-  using InternalTurnSignal = autoware_vehicle_msgs::msg::TurnSignal;
+  using InternalGearShift = autoware_auto_vehicle_msgs::msg::GearCommand;
+  using InternalTurnSignal = autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand;
+  using InternalHazardSignal = autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
   using InternalHeartbeat = autoware_external_api_msgs::msg::Heartbeat;
   using ExternalControlCommand = autoware_external_api_msgs::msg::ControlCommandStamped;
   using ExternalGearShift = autoware_external_api_msgs::msg::GearShiftStamped;
@@ -55,6 +59,7 @@ private:
   rclcpp::Publisher<ExternalControlCommand>::SharedPtr pub_control_cmd_;
   rclcpp::Publisher<InternalGearShift>::SharedPtr pub_shift_cmd_;
   rclcpp::Publisher<InternalTurnSignal>::SharedPtr pub_turn_signal_cmd_;
+  rclcpp::Publisher<InternalHazardSignal>::SharedPtr pub_hazard_signal_cmd_;
   rclcpp::Publisher<InternalHeartbeat>::SharedPtr pub_heartbeat_;
 
   // Subscriber
@@ -93,7 +98,6 @@ private:
 
   // Converter
   static InternalGearShift convert(const ExternalGearShift & command);
-  static InternalTurnSignal convert(const ExternalTurnSignal & command);
   static InternalHeartbeat convert(const ExternalHeartbeat & command);
 
   // Diagnostics Updater
