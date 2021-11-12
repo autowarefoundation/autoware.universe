@@ -317,6 +317,7 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
           object1.objects.at(object1_idx).kinematics.pose_with_covariance.pose.position);
         const double area0 = utils::getArea(object0.objects.at(object0_idx).shape);
         const double area1 = utils::getArea(object1.objects.at(object1_idx).shape);
+        // the score (=cost) is reversed in ssp solver
         score = (max_dist - std::min(dist, max_dist)) / max_dist;
         if (max_dist < dist) {
           score = 0.0;
