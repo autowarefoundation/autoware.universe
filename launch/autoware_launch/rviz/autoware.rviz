@@ -718,64 +718,145 @@ Visualization Manager:
       Displays:
         - Class: rviz_common/Group
           Displays:
-            - Class: rviz_default_plugins/MarkerArray
+            - BUS:
+                Alpha: 0.999
+                Color: 30; 144; 255
+              CAR:
+                Alpha: 0.999
+                Color: 30; 144; 255
+              CYCLIST:
+                Alpha: 0.999
+                Color: 119; 11; 32
+              Class: autoware_auto_perception_rviz_plugin/DetectedObjects
+              Display 3d polygon: true
+              Display Label: true
+              Display PoseWithCovariance: true
+              Display Predicted Path Confidence: true
+              Display Predicted Paths: true
+              Display Twist: true
+              Display UUID: true
+              Display Velocity: true
               Enabled: true
-              Name: DynamicObjects
+              MOTORCYCLE:
+                Alpha: 0.999
+                Color: 119; 11; 32
+              Name: DetectedObjects
               Namespaces:
-                label: true
-                path: false
-                path confidence: true
-                position covariance: true
-                shape: true
-                twist: true
+                {}
+              PEDESTRIAN:
+                Alpha: 0.999
+                Color: 255; 192; 203
+              TRAILER:
+                Alpha: 0.999
+                Color: 30; 144; 255
+              TRUCK:
+                Alpha: 0.999
+                Color: 30; 144; 255
               Topic:
                 Depth: 5
                 Durability Policy: Volatile
                 History Policy: Keep Last
                 Reliability Policy: Reliable
-                Value: /perception/object_recognition/detection/objects/visualization
+                Value: /perception/object_recognition/detection/objects
+              UNKNOWN:
+                Alpha: 0.999
+                Color: 255; 255; 255
               Value: true
           Enabled: false
           Name: Detection
         - Class: rviz_common/Group
           Displays:
-            - Class: rviz_default_plugins/MarkerArray
+            - BUS:
+                Alpha: 0.999
+                Color: 30; 144; 255
+              CAR:
+                Alpha: 0.999
+                Color: 30; 144; 255
+              CYCLIST:
+                Alpha: 0.999
+                Color: 119; 11; 32
+              Class: autoware_auto_perception_rviz_plugin/TrackedObjects
+              Display 3d polygon: true
+              Display Label: true
+              Display PoseWithCovariance: true
+              Display Predicted Path Confidence: true
+              Display Predicted Paths: true
+              Display Twist: true
+              Display UUID: true
+              Display Velocity: true
               Enabled: true
-              Name: DynamicObjects
+              MOTORCYCLE:
+                Alpha: 0.999
+                Color: 119; 11; 32
+              Name: TrackedObjects
               Namespaces:
-                label: true
-                path: false
-                path confidence: true
-                position covariance: true
-                shape: true
-                twist: true
+                {}
+              PEDESTRIAN:
+                Alpha: 0.999
+                Color: 255; 192; 203
+              TRAILER:
+                Alpha: 0.999
+                Color: 30; 144; 255
+              TRUCK:
+                Alpha: 0.999
+                Color: 30; 144; 255
               Topic:
                 Depth: 5
                 Durability Policy: Volatile
                 History Policy: Keep Last
                 Reliability Policy: Reliable
-                Value: /perception/object_recognition/tracking/objects/visualization
+                Value: /perception/object_recognition/tracking/objects
+              UNKNOWN:
+                Alpha: 0.999
+                Color: 255; 255; 255
               Value: true
           Enabled: false
           Name: Tracking
         - Class: rviz_common/Group
           Displays:
-            - Class: rviz_default_plugins/MarkerArray
+            - BUS:
+                Alpha: 0.999
+                Color: 30; 144; 255
+              CAR:
+                Alpha: 0.999
+                Color: 30; 144; 255
+              CYCLIST:
+                Alpha: 0.999
+                Color: 119; 11; 32
+              Class: autoware_auto_perception_rviz_plugin/PredictedObjects
+              Display 3d polygon: true
+              Display Label: true
+              Display PoseWithCovariance: true
+              Display Predicted Path Confidence: true
+              Display Predicted Paths: true
+              Display Twist: true
+              Display UUID: true
+              Display Velocity: true
               Enabled: true
-              Name: DynamicObjects
+              MOTORCYCLE:
+                Alpha: 0.999
+                Color: 119; 11; 32
+              Name: PredictedObjects
               Namespaces:
-                label: true
-                path: true
-                path confidence: true
-                position covariance: false
-                shape: true
-                twist: true
+                {}
+              PEDESTRIAN:
+                Alpha: 0.999
+                Color: 255; 192; 203
+              TRAILER:
+                Alpha: 0.999
+                Color: 30; 144; 255
+              TRUCK:
+                Alpha: 0.999
+                Color: 30; 144; 255
               Topic:
                 Depth: 5
                 Durability Policy: Volatile
                 History Policy: Keep Last
                 Reliability Policy: Reliable
-                Value: /perception/object_recognition/objects/visualization
+                Value: /perception/object_recognition/objects
+              UNKNOWN:
+                Alpha: 0.999
+                Color: 255; 255; 255
               Value: true
           Enabled: true
           Name: Prediction
