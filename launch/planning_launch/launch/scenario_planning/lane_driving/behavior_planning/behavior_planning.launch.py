@@ -250,7 +250,7 @@ def generate_launch_description():
         remappings=[
             ("~/input/path_with_lane_id", "path_with_lane_id"),
             ("~/input/vector_map", "/map/vector_map"),
-            ("~/input/odometry", "/localization/kinematic_state"),
+            ("~/input/vehicle_odometry", "/localization/kinematic_state"),
             ("~/input/dynamic_objects", "/perception/object_recognition/objects"),
             ("~/input/no_ground_pointcloud", "/sensing/lidar/no_ground/pointcloud"),
             (
