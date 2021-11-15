@@ -154,7 +154,9 @@ void TensorrtYoloNodelet::callback(const sensor_msgs::msg::Image::ConstSharedPtr
     object.feature.roi.y_offset = out_boxes_[4 * i + 1] * height;
     object.feature.roi.width = out_boxes_[4 * i + 2] * width;
     object.feature.roi.height = out_boxes_[4 * i + 3] * height;
-    object.object.classification.front().probability = out_scores_[i];
+    object.object.classification.emplace_back(autoware_auto_perception_msgs::build<Label>()
+                                                .label(Label::UNKNOWN)
+                                                .probability(out_scores_[i]));
     const auto class_id = static_cast<int>(out_classes_[i]);
     if (labels_[class_id] == "car") {
       object.object.classification.front().label = Label::CAR;
