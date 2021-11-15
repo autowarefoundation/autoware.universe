@@ -2,8 +2,8 @@
 
 ## Purpose
 
-It is a rviz plugin for visualizing the result from perception module.
-The visualization function developed in Autoware Architecture Proposal has been added to the implementation based rviz plugin in Autoware.Auto.
+It is an rviz plugin for visualizing the result from perception module. This package is based on the implementation of the rviz plugin developed by Autoware.Auto.
+
 See Autoware.Auto design documentation for the original design philosophy. [[1]](https://gitlab.com/autowarefoundation/autoware.auto/AutowareAuto/-/blob/master/src/tools/visualization/autoware_rviz_plugins)
 
 <!-- Write the purpose of this package and briefly describe the features.
