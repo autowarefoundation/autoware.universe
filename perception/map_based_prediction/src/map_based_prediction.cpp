@@ -162,6 +162,11 @@ bool MapBasedPrediction::doPrediction(
           object_point.z, current_d_position, current_d_velocity, current_s_position,
           current_s_velocity, spline2d, path);
         tmp_object.kinematics.predicted_paths.push_back(path);
+        if (
+          tmp_object.kinematics.predicted_paths.size() >=
+          tmp_object.kinematics.predicted_paths.capacity()) {
+          break;
+        }
       } else {
         continue;
       }
@@ -297,6 +302,9 @@ bool MapBasedPrediction::getPredictedPath(
     quat.setRPY(0.0, 0.0, yaw);
     tmp_point.orientation = tf2::toMsg(quat);
     path.path.push_back(tmp_point);
+    if (path.path.size() >= path.path.max_size()) {
+      break;
+    }
   }
   path.confidence = calculateLikelihood(current_d_position);
   path.time_step = rclcpp::Duration::from_seconds(dt);
@@ -331,6 +339,9 @@ void MapBasedPrediction::getLinearPredictedPath(
     tf2::toMsg(tf_world2future, world_frame_pose);
     tmp_pose = world_frame_pose;
     predicted_path.path.push_back(tmp_pose);
+    if (predicted_path.path.size() >= predicted_path.path.max_size()) {
+      break;
+    }
   }
 
   predicted_path.confidence = 1.0;
