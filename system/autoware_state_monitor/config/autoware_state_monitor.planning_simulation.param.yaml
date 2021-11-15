@@ -66,7 +66,7 @@
           module: "planning"
           timeout: 0.0
           warn_rate: 0.0
-          type: "autoware_auto_planning_msgs/msg/Route"
+          type: "autoware_auto_planning_msgs/msg/HADMapRoute"
           transient_local: True
 
         /planning/scenario_planning/trajectory:

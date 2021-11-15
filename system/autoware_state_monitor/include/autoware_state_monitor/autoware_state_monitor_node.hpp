@@ -23,7 +23,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <std_srvs/srv/trigger.hpp>
 
-#include <autoware_auto_planning_msgs/msg/route.hpp>
+#include <autoware_auto_planning_msgs/msg/had_map_route.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <autoware_auto_system_msgs/msg/autoware_state.hpp>
 #include <autoware_auto_vehicle_msgs/msg/control_mode_report.hpp>
@@ -68,13 +68,13 @@ private:
   rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::Engage>::SharedPtr sub_autoware_engage_;
   rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::ControlModeReport>::SharedPtr
     sub_control_mode_;
-  rclcpp::Subscription<autoware_auto_planning_msgs::msg::Route>::SharedPtr sub_route_;
+  rclcpp::Subscription<autoware_auto_planning_msgs::msg::HADMapRoute>::SharedPtr sub_route_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
 
   void onAutowareEngage(const autoware_auto_vehicle_msgs::msg::Engage::ConstSharedPtr msg);
   void onVehicleControlMode(
     const autoware_auto_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr msg);
-  void onRoute(const autoware_auto_planning_msgs::msg::Route::ConstSharedPtr msg);
+  void onRoute(const autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr msg);
   void onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg);
 
   // Topic Buffer

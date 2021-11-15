@@ -88,14 +88,14 @@ void AutowareStateMonitorNode::onVehicleControlMode(
 }
 
 void AutowareStateMonitorNode::onRoute(
-  const autoware_auto_planning_msgs::msg::Route::ConstSharedPtr msg)
+  const autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr msg)
 {
   state_input_.route = msg;
 
   // Get goal pose
   {
     geometry_msgs::msg::Pose::SharedPtr p = std::make_shared<geometry_msgs::msg::Pose>();
-    *p = msg->goal_point.pose;
+    *p = msg->goal_pose;
     state_input_.goal_pose = geometry_msgs::msg::Pose::ConstSharedPtr(p);
   }
 
@@ -429,7 +429,7 @@ AutowareStateMonitorNode::AutowareStateMonitorNode()
   sub_control_mode_ = this->create_subscription<autoware_auto_vehicle_msgs::msg::ControlModeReport>(
     "input/control_mode", 1, std::bind(&AutowareStateMonitorNode::onVehicleControlMode, this, _1),
     subscriber_option);
-  sub_route_ = this->create_subscription<autoware_auto_planning_msgs::msg::Route>(
+  sub_route_ = this->create_subscription<autoware_auto_planning_msgs::msg::HADMapRoute>(
     "input/route", rclcpp::QoS{1}.transient_local(),
     std::bind(&AutowareStateMonitorNode::onRoute, this, _1), subscriber_option);
   sub_odom_ = this->create_subscription<nav_msgs::msg::Odometry>(

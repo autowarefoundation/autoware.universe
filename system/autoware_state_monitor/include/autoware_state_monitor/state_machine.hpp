@@ -21,7 +21,7 @@
 
 #include <rclcpp/time.hpp>
 
-#include <autoware_auto_planning_msgs/msg/route.hpp>
+#include <autoware_auto_planning_msgs/msg/had_map_route.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <autoware_auto_system_msgs/msg/autoware_state.hpp>
 #include <autoware_auto_vehicle_msgs/msg/control_mode_report.hpp>
@@ -48,7 +48,7 @@ struct StateInput
   autoware_auto_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr control_mode_;
   bool is_finalizing = false;
   bool is_route_reset_required = false;
-  autoware_auto_planning_msgs::msg::Route::ConstSharedPtr route;
+  autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr route;
   nav_msgs::msg::Odometry::ConstSharedPtr odometry;
   std::deque<nav_msgs::msg::Odometry::ConstSharedPtr> odometry_buffer;
 };
@@ -90,7 +90,7 @@ private:
   mutable std::vector<std::string> msgs_;
   mutable Times times_;
   mutable Flags flags_;
-  mutable autoware_auto_planning_msgs::msg::Route::ConstSharedPtr executing_route_ = nullptr;
+  mutable autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr executing_route_ = nullptr;
 
   AutowareState judgeAutowareState() const;
 
