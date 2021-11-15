@@ -48,12 +48,12 @@ void DistortionCorrectorComponent::onVelocityReport(
   while (!velocity_report_queue_.empty()) {
     // for replay rosbag
     if (
-      rclcpp::Time(velocity_report_queue_.front().stamp) >
-      rclcpp::Time(velocity_report_msg->stamp)) {
+      rclcpp::Time(velocity_report_queue_.front().header.stamp) >
+      rclcpp::Time(velocity_report_msg->header.stamp)) {
       velocity_report_queue_.pop_front();
     } else if (  // NOLINT
-      rclcpp::Time(velocity_report_queue_.front().stamp) <
-      rclcpp::Time(velocity_report_msg->stamp) - rclcpp::Duration::from_seconds(1.0)) {
+      rclcpp::Time(velocity_report_queue_.front().header.stamp) <
+      rclcpp::Time(velocity_report_msg->header.stamp) - rclcpp::Duration::from_seconds(1.0)) {
       velocity_report_queue_.pop_front();
     }
     break;
@@ -141,8 +141,9 @@ bool DistortionCorrectorComponent::undistortPointCloud(
 
   auto velocity_report_it = std::lower_bound(
     std::begin(velocity_report_queue_), std::end(velocity_report_queue_),
-    first_point_time_stamp_sec,
-    [](const VelocityReport & x, const double t) { return rclcpp::Time(x.stamp).seconds() < t; });
+    first_point_time_stamp_sec, [](const VelocityReport & x, const double t) {
+      return rclcpp::Time(x.header.stamp).seconds() < t;
+    });
   velocity_report_it = velocity_report_it == std::end(velocity_report_queue_)
                          ? std::end(velocity_report_queue_) - 1
                          : velocity_report_it;
@@ -151,14 +152,14 @@ bool DistortionCorrectorComponent::undistortPointCloud(
   for (; it_x != it_x.end(); ++it_x, ++it_y, ++it_z, ++it_time_stamp) {
     for (;
          (velocity_report_it != std::end(velocity_report_queue_) - 1 &&
-          *it_time_stamp > rclcpp::Time(velocity_report_it->stamp).seconds());
+          *it_time_stamp > rclcpp::Time(velocity_report_it->header.stamp).seconds());
          ++velocity_report_it) {
     }
 
     float v{static_cast<float>(velocity_report_it->longitudinal_velocity)};
     float w{static_cast<float>(velocity_report_it->heading_rate)};
 
-    if (std::abs(*it_time_stamp - rclcpp::Time(velocity_report_it->stamp).seconds()) > 0.1) {
+    if (std::abs(*it_time_stamp - rclcpp::Time(velocity_report_it->header.stamp).seconds()) > 0.1) {
       RCLCPP_WARN_STREAM_THROTTLE(
         get_logger(), *get_clock(), 10000 /* ms */,
         "velocity_report time_stamp is too late. Cloud not interpolate.");
