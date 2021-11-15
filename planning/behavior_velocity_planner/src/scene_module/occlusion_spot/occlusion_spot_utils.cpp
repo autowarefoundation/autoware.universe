@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <autoware_utils/geometry/geometry.hpp>
+#include <autoware_utils/math/normalization.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <scene_module/occlusion_spot/occlusion_spot_utils.hpp>
 #include <utilization/path_utilization.hpp>
@@ -62,7 +63,7 @@ ROAD_TYPE getCurrentRoadType(
 }
 
 void calcVelocityAndHeightToPossibleCollision(
-  const int closest_idx, const autoware_planning_msgs::msg::PathWithLaneId & path,
+  const int closest_idx, const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const double offset_from_ego_to_target, std::vector<PossibleCollisionInfo> & possible_collisions)
 {
   if (possible_collisions.empty()) {
@@ -97,10 +98,10 @@ void calcVelocityAndHeightToPossibleCollision(
       for (; collision_index < possible_collisions.size(); collision_index++) {
         const double current_dist2col =
           possible_collisions[collision_index].arc_lane_dist_at_collision.length;
-        possible_collisions[collision_index].collision_path_point.twist.linear.x =
+        possible_collisions[collision_index].collision_path_point.longitudinal_velocity_mps =
           getInterpolatedValue(
-            dist_along_path_point, p_prev.twist.linear.x, dist_to_col, dist_along_next_path_point,
-            p_next.twist.linear.x);
+            dist_along_path_point, p_prev.longitudinal_velocity_mps, dist_to_col,
+            dist_along_next_path_point, p_next.longitudinal_velocity_mps);
         const double height = getInterpolatedValue(
           dist_along_path_point, p_prev.pose.position.z, dist_to_col, dist_along_next_path_point,
           p_next.pose.position.z);
@@ -121,24 +122,25 @@ void calcVelocityAndHeightToPossibleCollision(
   }
 }
 
-autoware_planning_msgs::msg::Path toPath(
-  const autoware_planning_msgs::msg::PathWithLaneId & path_with_id)
+autoware_auto_planning_msgs::msg::Path toPath(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path_with_id)
 {
-  autoware_planning_msgs::msg::Path path;
+  autoware_auto_planning_msgs::msg::Path path;
   for (const auto & p : path_with_id.points) {
     path.points.push_back(p.point);
   }
   return path;
 }
 
-lanelet::ConstLanelet buildPathLanelet(const autoware_planning_msgs::msg::PathWithLaneId & path)
+lanelet::ConstLanelet buildPathLanelet(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
-  autoware_planning_msgs::msg::Path converted_path = filterLitterPathPoint(toPath(path));
+  autoware_auto_planning_msgs::msg::Path converted_path = filterLitterPathPoint(toPath(path));
   if (converted_path.points.empty()) {
     return lanelet::ConstLanelet();
   }
   const double max_length = 100000.0;  // interpolate as much as possible for extracted lane
-  autoware_planning_msgs::msg::Path interpolated_path =
+  autoware_auto_planning_msgs::msg::Path interpolated_path =
     interpolatePath(converted_path, max_length, 2.0);
   lanelet::BasicLineString2d path_line;
   path_line.reserve(interpolated_path.points.size());
@@ -186,7 +188,7 @@ void calculateCollisionPathPointFromOcclusionSpot(
   double path_angle = lanelet::utils::getLaneletAngle(path_lanelet, search_point);
   tf2::Quaternion quat;
   quat.setRPY(0, 0, path_angle);
-  autoware_planning_msgs::msg::PathPoint collision_path_point;
+  autoware_auto_planning_msgs::msg::PathPoint collision_path_point;
   pc.collision_path_point.pose.position.x = col_point[0];
   pc.collision_path_point.pose.position.y = col_point[1];
   pc.collision_path_point.pose.orientation = tf2::toMsg(quat);
@@ -208,9 +210,9 @@ void calculateCollisionPathPointFromOcclusionSpot(
 
 void createPossibleCollisionBehindParkedVehicle(
   std::vector<PossibleCollisionInfo> & possible_collisions,
-  const autoware_planning_msgs::msg::PathWithLaneId & path, const PlannerParam & param,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const PlannerParam & param,
   const double offset_from_ego_to_target,
-  const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr & dyn_obj_arr)
+  const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr & dyn_obj_arr)
 {
   lanelet::ConstLanelet path_lanelet = buildPathLanelet(path);
   if (path_lanelet.centerline2d().empty()) {
@@ -227,18 +229,22 @@ void createPossibleCollisionBehindParkedVehicle(
   for (const auto & dyn : dyn_obj_arr->objects) {
     // consider if dynamic object is a car or bus or truck
     if (
-      dyn.semantic.type != autoware_perception_msgs::msg::Semantic::CAR &&
-      dyn.semantic.type != autoware_perception_msgs::msg::Semantic::TRUCK &&
-      dyn.semantic.type != autoware_perception_msgs::msg::Semantic::BUS) {
+      dyn.classification.at(0).label !=
+        autoware_auto_perception_msgs::msg::ObjectClassification::CAR &&
+      dyn.classification.at(0).label !=
+        autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK &&
+      dyn.classification.at(0).label !=
+        autoware_auto_perception_msgs::msg::ObjectClassification::BUS) {
       continue;
     }
-    const auto & state = dyn.state;
+    const auto & state = dyn.kinematics;
     // ignore if vehicle is moving
-    if (state.twist_covariance.twist.linear.x > param.stuck_vehicle_vel) {
+    if (state.initial_twist_with_covariance.twist.linear.x > param.stuck_vehicle_vel) {
       continue;
     }
-    const geometry_msgs::msg::Point & p = dyn.state.pose_covariance.pose.position;
-    const geometry_msgs::msg::Quaternion & q = dyn.state.pose_covariance.pose.orientation;
+    const geometry_msgs::msg::Point & p = dyn.kinematics.initial_pose_with_covariance.pose.position;
+    const geometry_msgs::msg::Quaternion & q =
+      dyn.kinematics.initial_pose_with_covariance.pose.orientation;
     lanelet::BasicPoint2d obj_point;
     obj_point[0] = p.x;
     obj_point[1] = p.y;
@@ -272,7 +278,8 @@ void createPossibleCollisionBehindParkedVehicle(
     double path_angle = lanelet::utils::getLaneletAngle(path_lanelet, search_point);
     // ignore if angle is more different than 10[degree]
     double obj_angle = tf2::getYaw(q);
-    if (std::abs(path_angle - obj_angle) > param.angle_thr) {
+    const double diff_angle = autoware_utils::normalizeRadian(path_angle - obj_angle);
+    if (std::abs(diff_angle) > param.angle_thr) {
       continue;
     }
     lanelet::BasicPoint2d obstacle_point = lanelet::geometry::fromArcCoordinates(
@@ -286,9 +293,9 @@ void createPossibleCollisionBehindParkedVehicle(
 
 bool extractTargetRoad(
   const int closest_idx, const lanelet::LaneletMapPtr lanelet_map_ptr, const double max_range,
-  const autoware_planning_msgs::msg::PathWithLaneId & src_path,
-  double & offset_from_closest_to_target, autoware_planning_msgs::msg::PathWithLaneId & tar_path,
-  const ROAD_TYPE & target_road_type)
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & src_path,
+  double & offset_from_closest_to_target,
+  autoware_auto_planning_msgs::msg::PathWithLaneId & tar_path, const ROAD_TYPE & target_road_type)
 {
   bool found_target = false;
   // search lanelet that includes target_road_type only
@@ -317,7 +324,7 @@ bool extractTargetRoad(
 
 void generatePossibleCollisions(
   std::vector<PossibleCollisionInfo> & possible_collisions,
-  const autoware_planning_msgs::msg::PathWithLaneId & path, const grid_map::GridMap & grid,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const grid_map::GridMap & grid,
   const double offset_from_ego_to_closest, const double offset_from_closest_to_target,
   const PlannerParam & param, std::vector<lanelet::BasicPolygon2d> & debug)
 {

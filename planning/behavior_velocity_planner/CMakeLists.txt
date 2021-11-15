@@ -24,7 +24,8 @@ ament_auto_find_build_dependencies()
 
 set(BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES
   autoware_api_msgs
-  autoware_perception_msgs
+  autoware_auto_perception_msgs
+  autoware_auto_planning_msgs
   autoware_planning_msgs
   autoware_utils
   Boost

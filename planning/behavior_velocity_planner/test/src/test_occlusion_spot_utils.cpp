@@ -22,10 +22,10 @@
 #include <memory>
 #include <vector>
 
-autoware_planning_msgs::msg::Path toPath(
-  const autoware_planning_msgs::msg::PathWithLaneId & path_with_id)
+autoware_auto_planning_msgs::msg::Path toPath(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path_with_id)
 {
-  autoware_planning_msgs::msg::Path path;
+  autoware_auto_planning_msgs::msg::Path path;
   for (const auto & p : path_with_id.points) {
     path.points.push_back(p.point);
   }
@@ -38,7 +38,7 @@ TEST(spline, splineInterpolate)
   using std::chrono::duration_cast;
   using std::chrono::high_resolution_clock;
   using std::chrono::microseconds;
-  autoware_planning_msgs::msg::PathWithLaneId path = test::generatePath(0, 0.0, 6.0, 0.0, 7);
+  autoware_auto_planning_msgs::msg::PathWithLaneId path = test::generatePath(0, 0.0, 6.0, 0.0, 7);
   const auto path_interp = behavior_velocity_planner::interpolatePath(toPath(path), 100, 0.5);
   for (const auto & p : path_interp.points) {
     std::cout << "interp" << p.pose.position.x << std::endl;
@@ -58,7 +58,7 @@ TEST(buildPathLanelet, nominal)
     3       x
     4         x
   */
-  autoware_planning_msgs::msg::PathWithLaneId path = test::generatePath(0, 0, 4, 4, 5);
+  autoware_auto_planning_msgs::msg::PathWithLaneId path = test::generatePath(0, 0, 4, 4, 5);
   path_lanelet = buildPathLanelet(path);
   ASSERT_EQ(path_lanelet.centerline2d().front().x(), 0.0);
   ASSERT_EQ(path_lanelet.centerline2d().front().y(), 0.0);
@@ -77,7 +77,8 @@ TEST(calcVelocityAndHeightToPossibleCollision, TooManyPossibleCollisions)
   using std::chrono::microseconds;
   std::vector<PossibleCollisionInfo> possible_collisions;
   // make a path with 2000 points from x=0 to x=4
-  autoware_planning_msgs::msg::PathWithLaneId path = test::generatePath(0.0, 3.0, 4.0, 3.0, 2000);
+  autoware_auto_planning_msgs::msg::PathWithLaneId path =
+    test::generatePath(0.0, 3.0, 4.0, 3.0, 2000);
   // make 2000 possible collision from x=0 to x=10
   test::generatePossibleCollisions(possible_collisions, 0.0, 3.0, 4.0, 3.0, 2000);
 
@@ -110,10 +111,11 @@ TEST(calcVelocityAndHeightToPossibleCollision, ConsiderSignedOffset)
   using std::chrono::microseconds;
   std::vector<PossibleCollisionInfo> possible_collisions;
   const double offset = 2;
-  autoware_planning_msgs::msg::PathWithLaneId path = test::generatePath(offset, 3.0, 6.0, 3.0, 5);
+  autoware_auto_planning_msgs::msg::PathWithLaneId path =
+    test::generatePath(offset, 3.0, 6.0, 3.0, 5);
   test::generatePossibleCollisions(possible_collisions, 3.0, 3.0, 6.0, 3.0, 3);
   for (size_t i = 0; i < path.points.size(); i++) {
-    path.points[i].point.twist.linear.x = static_cast<double>(i + offset);
+    path.points[i].point.longitudinal_velocity_mps = static_cast<double>(i + offset);
   }
 
   /**
@@ -129,9 +131,9 @@ TEST(calcVelocityAndHeightToPossibleCollision, ConsiderSignedOffset)
    */
 
   calcVelocityAndHeightToPossibleCollision(0, path, offset, possible_collisions);
-  EXPECT_EQ(possible_collisions[0].collision_path_point.twist.linear.x, 3);
-  EXPECT_EQ(possible_collisions[1].collision_path_point.twist.linear.x, 4.5);
-  EXPECT_EQ(possible_collisions[2].collision_path_point.twist.linear.x, 6);
+  EXPECT_EQ(possible_collisions[0].collision_path_point.longitudinal_velocity_mps, 3);
+  EXPECT_EQ(possible_collisions[1].collision_path_point.longitudinal_velocity_mps, 4.5);
+  EXPECT_EQ(possible_collisions[2].collision_path_point.longitudinal_velocity_mps, 6);
 }
 
 TEST(createPossibleCollisionBehindParkedVehicle, TooManyPathPointsAndObstacles)
@@ -143,7 +145,8 @@ TEST(createPossibleCollisionBehindParkedVehicle, TooManyPathPointsAndObstacles)
   using std::chrono::microseconds;
 
   // make a path with 200 points from x=0 to x=200
-  autoware_planning_msgs::msg::PathWithLaneId path = test::generatePath(0.0, 3.0, 200.0, 3.0, 100);
+  autoware_auto_planning_msgs::msg::PathWithLaneId path =
+    test::generatePath(0.0, 3.0, 200.0, 3.0, 100);
   // There is a parked bus,car,truck along with ego path.
   // Ignore vehicle dimensions to simplify test
   std::cout << " 6 -   |TRU|   |   |     -> truck is ignored because of lateral distance   \n"
@@ -155,37 +158,36 @@ TEST(createPossibleCollisionBehindParkedVehicle, TooManyPathPointsAndObstacles)
             << " 1 -   |   |   |   |                    \n"
             << " 0 | 1 | 2 | 3 | 4 | \n";
 
-  autoware_perception_msgs::msg::DynamicObjectArray obj_arr;
-  autoware_perception_msgs::msg::DynamicObject obj;
+  autoware_auto_perception_msgs::msg::PredictedObjects obj_arr;
+  autoware_auto_perception_msgs::msg::PredictedObject obj;
   obj.shape.dimensions.x = 0.0;
   obj.shape.dimensions.y = 0.0;
-  tf2::Quaternion q;
-  obj.state.pose_covariance.pose.orientation = tf2::toMsg(q);
-  obj.state.orientation_reliable = true;
-  obj.state.twist_reliable = true;
-  obj.state.twist_covariance.twist.linear.x = 0;
+  obj.kinematics.initial_pose_with_covariance.pose.orientation =
+    autoware_utils::createQuaternionFromYaw(0.0);
+  obj.kinematics.initial_twist_with_covariance.twist.linear.x = 0;
+  obj.classification.push_back(autoware_auto_perception_msgs::msg::ObjectClassification{});
 
   // car
-  obj.state.pose_covariance.pose.position.x = 2.5;
-  obj.state.pose_covariance.pose.position.y = 4.0;
-  obj.semantic.type = autoware_perception_msgs::msg::Semantic::CAR;
+  obj.kinematics.initial_pose_with_covariance.pose.position.x = 2.5;
+  obj.kinematics.initial_pose_with_covariance.pose.position.y = 4.0;
+  obj.classification.at(0).label = autoware_auto_perception_msgs::msg::ObjectClassification::CAR;
   const size_t num_car = 30;
   for (size_t i = 0; i < num_car; i++) {
     obj_arr.objects.emplace_back(obj);
   }
 
   // truck
-  obj.state.pose_covariance.pose.position.x = 2.5;
-  obj.state.pose_covariance.pose.position.y = 6.0;
-  obj.semantic.type = autoware_perception_msgs::msg::Semantic::TRUCK;
+  obj.kinematics.initial_pose_with_covariance.pose.position.x = 2.5;
+  obj.kinematics.initial_pose_with_covariance.pose.position.y = 6.0;
+  obj.classification.at(0).label = autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK;
   obj_arr.objects.emplace_back(obj);
 
   // bus
-  q.setRPY(0, 0, M_PI);
-  obj.state.pose_covariance.pose.position.x = 4.5;
-  obj.state.pose_covariance.pose.position.y = 2.0;
-  obj.state.pose_covariance.pose.orientation = tf2::toMsg(q);
-  obj.semantic.type = autoware_perception_msgs::msg::Semantic::BUS;
+  obj.kinematics.initial_pose_with_covariance.pose.position.x = 4.5;
+  obj.kinematics.initial_pose_with_covariance.pose.position.y = 2.0;
+  obj.kinematics.initial_pose_with_covariance.pose.orientation =
+    autoware_utils::createQuaternionFromYaw(M_PI);
+  obj.classification.at(0).label = autoware_auto_perception_msgs::msg::ObjectClassification::BUS;
   obj_arr.objects.emplace_back(obj);
 
   // Set parameters: enable sidewalk obstacles
@@ -197,7 +199,8 @@ TEST(createPossibleCollisionBehindParkedVehicle, TooManyPathPointsAndObstacles)
   parameters.lateral_distance_thr = 2.5;
   parameters.angle_thr = 2.5;
 
-  auto obj_arr_ptr = std::make_shared<autoware_perception_msgs::msg::DynamicObjectArray>(obj_arr);
+  auto obj_arr_ptr =
+    std::make_shared<autoware_auto_perception_msgs::msg::PredictedObjects>(obj_arr);
   auto start_naive = high_resolution_clock::now();
   std::vector<behavior_velocity_planner::occlusion_spot_utils::PossibleCollisionInfo>
     possible_collisions;

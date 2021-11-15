@@ -75,7 +75,7 @@ public:
     const rclcpp::Clock::SharedPtr clock);
 
   bool modifyPathVelocity(
-    autoware_planning_msgs::msg::PathWithLaneId * path,
+    autoware_auto_planning_msgs::msg::PathWithLaneId * path,
     autoware_planning_msgs::msg::StopReason * stop_reason) override;
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
@@ -86,18 +86,18 @@ private:
   geometry_msgs::msg::Point getCenterOfStopLine(const lanelet::ConstLineString3d & stop_line);
 
   boost::optional<StopLineModule::SegmentIndexWithPoint2d> findCollision(
-    const autoware_planning_msgs::msg::PathWithLaneId & path, const LineString2d & stop_line);
+    const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const LineString2d & stop_line);
 
   boost::optional<StopLineModule::SegmentIndexWithOffset> findOffsetSegment(
-    const autoware_planning_msgs::msg::PathWithLaneId & path,
+    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
     const StopLineModule::SegmentIndexWithPoint2d & collision);
 
   boost::optional<StopLineModule::SegmentIndexWithPose> calcStopPose(
-    const autoware_planning_msgs::msg::PathWithLaneId & path,
+    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
     const boost::optional<StopLineModule::SegmentIndexWithOffset> & offset_segment);
 
-  autoware_planning_msgs::msg::PathWithLaneId insertStopPose(
-    const autoware_planning_msgs::msg::PathWithLaneId & path,
+  autoware_auto_planning_msgs::msg::PathWithLaneId insertStopPose(
+    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
     const StopLineModule::SegmentIndexWithPose & insert_index_with_pose,
     autoware_planning_msgs::msg::StopReason * stop_reason);
 

@@ -39,7 +39,7 @@ CrosswalkModule::CrosswalkModule(
 }
 
 bool CrosswalkModule::modifyPathVelocity(
-  autoware_planning_msgs::msg::PathWithLaneId * path,
+  autoware_auto_planning_msgs::msg::PathWithLaneId * path,
   autoware_planning_msgs::msg::StopReason * stop_reason)
 {
   debug_data_ = DebugData();
@@ -69,10 +69,10 @@ bool CrosswalkModule::modifyPathVelocity(
 
   if (state_ == State::APPROACH) {
     // check person in polygon
-    const auto objects_ptr = planner_data_->dynamic_objects;
+    const auto objects_ptr = planner_data_->predicted_objects;
     const auto no_ground_pointcloud_ptr = planner_data_->no_ground_pointcloud;
 
-    autoware_planning_msgs::msg::PathWithLaneId slow_path, stop_path;
+    autoware_auto_planning_msgs::msg::PathWithLaneId slow_path, stop_path;
     if (!checkSlowArea(input, polygon, objects_ptr, no_ground_pointcloud_ptr, slow_path)) {
       return false;
     }
@@ -97,10 +97,10 @@ bool CrosswalkModule::modifyPathVelocity(
 }
 
 bool CrosswalkModule::checkStopArea(
-  const autoware_planning_msgs::msg::PathWithLaneId & input, const Polygon & crosswalk_polygon,
-  const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr & objects_ptr,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & input, const Polygon & crosswalk_polygon,
+  const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr & objects_ptr,
   [[maybe_unused]] const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & no_ground_pointcloud_ptr,
-  autoware_planning_msgs::msg::PathWithLaneId & output, bool * insert_stop)
+  autoware_auto_planning_msgs::msg::PathWithLaneId & output, bool * insert_stop)
 {
   output = input;
   *insert_stop = false;
@@ -148,22 +148,27 @@ bool CrosswalkModule::checkStopArea(
 
     if (isTargetType(object)) {
       Point point(
-        object.state.pose_covariance.pose.position.x, object.state.pose_covariance.pose.position.y);
+        object.kinematics.initial_pose_with_covariance.pose.position.x,
+        object.kinematics.initial_pose_with_covariance.pose.position.y);
       if (!bg::within(point, crosswalk_polygon)) {
         continue;
       }
       if (bg::within(point, stop_polygon)) {
         pedestrian_found = true;
-        debug_data_.stop_factor_points.emplace_back(object.state.pose_covariance.pose.position);
+        debug_data_.stop_factor_points.emplace_back(
+          object.kinematics.initial_pose_with_covariance.pose.position);
         break;
       }
-      for (const auto & object_path : object.state.predicted_paths) {
+      for (const auto & object_path : object.kinematics.predicted_paths) {
         for (size_t k = 0; k < object_path.path.size() - 1; ++k) {
+          const auto predicted_time =
+            rclcpp::Time(objects_ptr->header.stamp) +
+            rclcpp::Duration(object_path.time_step) * static_cast<double>(k);
           if (
-            (rclcpp::Time(object_path.path.at(k).header.stamp) - current_time).seconds() <
-            planner_param_.stop_dynamic_object_prediction_time_margin) {
-            const auto op0 = object_path.path.at(k).pose.pose.position;
-            const auto op1 = object_path.path.at(k + 1).pose.pose.position;
+            (predicted_time - current_time).seconds() <
+            planner_param_.stop_predicted_object_prediction_time_margin) {
+            const auto op0 = object_path.path.at(k).position;
+            const auto op1 = object_path.path.at(k + 1).position;
             const Line line{{op0.x, op0.y}, {op1.x, op1.y}};
             std::vector<Point> line_collision_points;
             bg::intersection(stop_polygon, line, line_collision_points);
@@ -172,7 +177,7 @@ bool CrosswalkModule::checkStopArea(
             }
             if (pedestrian_found) {
               debug_data_.stop_factor_points.emplace_back(
-                object.state.pose_covariance.pose.position);
+                object.kinematics.initial_pose_with_covariance.pose.position);
               break;
             }
           }
@@ -216,10 +221,10 @@ bool CrosswalkModule::checkStopArea(
 }
 
 bool CrosswalkModule::checkSlowArea(
-  const autoware_planning_msgs::msg::PathWithLaneId & input, const Polygon & crosswalk_polygon,
-  const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr & objects_ptr,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & input, const Polygon & crosswalk_polygon,
+  const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr & objects_ptr,
   [[maybe_unused]] const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & no_ground_pointcloud_ptr,
-  autoware_planning_msgs::msg::PathWithLaneId & output)
+  autoware_auto_planning_msgs::msg::PathWithLaneId & output)
 {
   output = input;
   bool pedestrian_found = false;
@@ -249,7 +254,8 @@ bool CrosswalkModule::checkSlowArea(
   for (const auto & object : objects_ptr->objects) {
     if (isTargetType(object)) {
       Point point(
-        object.state.pose_covariance.pose.position.x, object.state.pose_covariance.pose.position.y);
+        object.kinematics.initial_pose_with_covariance.pose.position.x,
+        object.kinematics.initial_pose_with_covariance.pose.position.y);
       if (!bg::within(point, crosswalk_polygon)) {
         continue;
       }
@@ -292,7 +298,7 @@ bool CrosswalkModule::checkSlowArea(
   return true;
 }
 bool CrosswalkModule::createVehiclePathPolygonInCrosswalk(
-  const autoware_planning_msgs::msg::PathWithLaneId & input,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & input,
   const boost::geometry::model::polygon<boost::geometry::model::d2::point_xy<double>> &
     crosswalk_polygon,
   const float extended_width, Polygon & path_polygon)
@@ -351,11 +357,13 @@ bool CrosswalkModule::createVehiclePathPolygonInCrosswalk(
   return true;
 }
 
-bool CrosswalkModule::isTargetType(const autoware_perception_msgs::msg::DynamicObject & obj)
+bool CrosswalkModule::isTargetType(const autoware_auto_perception_msgs::msg::PredictedObject & obj)
 {
   if (
-    obj.semantic.type == autoware_perception_msgs::msg::Semantic::PEDESTRIAN ||
-    obj.semantic.type == autoware_perception_msgs::msg::Semantic::BICYCLE) {
+    obj.classification.at(0).label ==
+      autoware_auto_perception_msgs::msg::ObjectClassification::PEDESTRIAN ||
+    obj.classification.at(0).label ==
+      autoware_auto_perception_msgs::msg::ObjectClassification::BICYCLE) {
     return true;
   }
   return false;

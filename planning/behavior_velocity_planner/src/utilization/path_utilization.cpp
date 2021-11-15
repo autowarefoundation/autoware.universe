@@ -25,11 +25,11 @@
 
 namespace behavior_velocity_planner
 {
-autoware_planning_msgs::msg::Path interpolatePath(
-  const autoware_planning_msgs::msg::Path & path, const double length, const double interval)
+autoware_auto_planning_msgs::msg::Path interpolatePath(
+  const autoware_auto_planning_msgs::msg::Path & path, const double length, const double interval)
 {
   const auto logger{rclcpp::get_logger("behavior_velocity_planner").get_child("path_utilization")};
-  autoware_planning_msgs::msg::Path interpolated_path;
+  autoware_auto_planning_msgs::msg::Path interpolated_path;
 
   std::vector<double> x, x_interp;
   std::vector<double> y, y_interp;
@@ -54,7 +54,7 @@ autoware_planning_msgs::msg::Path interpolatePath(
       x.push_back(path_point.pose.position.x);
       y.push_back(path_point.pose.position.y);
       z.push_back(path_point.pose.position.z);
-      v.push_back(path_point.twist.linear.x);
+      v.push_back(path_point.longitudinal_velocity_mps);
       if (idx != 0) {
         const auto path_point_prev = path.points.at(idx - 1);
         s += autoware_utils::calcDistance3d(path_point_prev.pose, path_point.pose);
@@ -101,11 +101,11 @@ autoware_planning_msgs::msg::Path interpolatePath(
 
   // Insert path point to interpolated_path
   for (size_t idx = 0; idx < v_interp.size() - 1; ++idx) {
-    autoware_planning_msgs::msg::PathPoint path_point;
+    autoware_auto_planning_msgs::msg::PathPoint path_point;
     path_point.pose.position.x = x_interp.at(idx);
     path_point.pose.position.y = y_interp.at(idx);
     path_point.pose.position.z = z_interp.at(idx);
-    path_point.twist.linear.x = v_interp.at(idx);
+    path_point.longitudinal_velocity_mps = v_interp.at(idx);
     const double yaw =
       std::atan2(y_interp.at(idx + 1) - y_interp.at(idx), x_interp.at(idx + 1) - x_interp.at(idx));
     tf2::Quaternion quat;
@@ -118,10 +118,10 @@ autoware_planning_msgs::msg::Path interpolatePath(
   return interpolated_path;
 }
 
-autoware_planning_msgs::msg::Path filterLitterPathPoint(
-  const autoware_planning_msgs::msg::Path & path)
+autoware_auto_planning_msgs::msg::Path filterLitterPathPoint(
+  const autoware_auto_planning_msgs::msg::Path & path)
 {
-  autoware_planning_msgs::msg::Path filtered_path;
+  autoware_auto_planning_msgs::msg::Path filtered_path;
 
   const double epsilon = 0.01;
   size_t latest_id = 0;
@@ -138,24 +138,25 @@ autoware_planning_msgs::msg::Path filterLitterPathPoint(
       latest_id = i;
       filtered_path.points.push_back(path.points.at(latest_id));
     } else {
-      filtered_path.points.back().twist.linear.x =
-        std::min(filtered_path.points.back().twist.linear.x, path.points.at(i).twist.linear.x);
+      filtered_path.points.back().longitudinal_velocity_mps = std::min(
+        filtered_path.points.back().longitudinal_velocity_mps,
+        path.points.at(i).longitudinal_velocity_mps);
     }
   }
 
   return filtered_path;
 }
-autoware_planning_msgs::msg::Path filterStopPathPoint(
-  const autoware_planning_msgs::msg::Path & path)
+autoware_auto_planning_msgs::msg::Path filterStopPathPoint(
+  const autoware_auto_planning_msgs::msg::Path & path)
 {
-  autoware_planning_msgs::msg::Path filtered_path = path;
+  autoware_auto_planning_msgs::msg::Path filtered_path = path;
   bool found_stop = false;
   for (size_t i = 0; i < filtered_path.points.size(); ++i) {
-    if (std::fabs(filtered_path.points.at(i).twist.linear.x) < 0.01) {
+    if (std::fabs(filtered_path.points.at(i).longitudinal_velocity_mps) < 0.01) {
       found_stop = true;
     }
     if (found_stop) {
-      filtered_path.points.at(i).twist.linear.x = 0.0;
+      filtered_path.points.at(i).longitudinal_velocity_mps = 0.0;
     }
   }
   return filtered_path;

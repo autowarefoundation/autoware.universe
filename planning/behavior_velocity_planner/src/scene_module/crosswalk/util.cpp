@@ -15,7 +15,7 @@
 #include <scene_module/crosswalk/util.hpp>
 #include <utilization/util.hpp>
 
-#include <autoware_perception_msgs/msg/dynamic_object_array.hpp>
+#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 
 #include <boost/assert.hpp>
 #include <boost/assign/list_of.hpp>
@@ -56,9 +56,9 @@ bool getBackwardPointFromBasePoint(
 }
 
 bool insertTargetVelocityPoint(
-  const autoware_planning_msgs::msg::PathWithLaneId & input, const Polygon & polygon,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & input, const Polygon & polygon,
   const double & margin, const double & velocity, const PlannerData & planner_data,
-  autoware_planning_msgs::msg::PathWithLaneId & output, DebugData & debug_data,
+  autoware_auto_planning_msgs::msg::PathWithLaneId & output, DebugData & debug_data,
   boost::optional<int> & first_stop_path_point_index)
 {
   output = input;
@@ -120,7 +120,7 @@ bool insertTargetVelocityPoint(
 
     // create target point
     Eigen::Vector2d target_point;
-    autoware_planning_msgs::msg::PathPointWithLaneId target_point_with_lane_id;
+    autoware_auto_planning_msgs::msg::PathPointWithLaneId target_point_with_lane_id;
     getBackwardPointFromBasePoint(point2, point1, point2, length_sum - target_length, target_point);
     const int target_velocity_point_idx =
       std::max(static_cast<int>(insert_target_point_idx) - 1, 0);
@@ -142,7 +142,7 @@ bool insertTargetVelocityPoint(
       const double yaw = std::atan2(point1.y() - point2.y(), point1.x() - point2.x());
       target_point_with_lane_id.point.pose.orientation = planning_utils::getQuaternionFromYaw(yaw);
     }
-    target_point_with_lane_id.point.twist.linear.x = velocity;
+    target_point_with_lane_id.point.longitudinal_velocity_mps = velocity;
     if (velocity == 0.0 && target_velocity_point_idx < first_stop_path_point_index) {
       first_stop_path_point_index = target_velocity_point_idx;
       // -- debug code --
@@ -163,8 +163,8 @@ bool insertTargetVelocityPoint(
 
     // insert 0 velocity after target point
     for (size_t j = insert_target_point_idx; j < output.points.size(); ++j) {
-      output.points.at(j).point.twist.linear.x =
-        std::min(velocity, output.points.at(j).point.twist.linear.x);
+      output.points.at(j).point.longitudinal_velocity_mps =
+        std::min(static_cast<float>(velocity), output.points.at(j).point.longitudinal_velocity_mps);
     }
     return true;
   }
@@ -196,9 +196,9 @@ lanelet::Optional<lanelet::ConstLineString3d> getStopLineFromMap(
 }
 
 bool insertTargetVelocityPoint(
-  const autoware_planning_msgs::msg::PathWithLaneId & input,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & input,
   const lanelet::ConstLineString3d & stop_line, const double & margin, const double & velocity,
-  const PlannerData & planner_data, autoware_planning_msgs::msg::PathWithLaneId & output,
+  const PlannerData & planner_data, autoware_auto_planning_msgs::msg::PathWithLaneId & output,
   DebugData & debug_data, boost::optional<int> & first_stop_path_point_index)
 {
   using lanelet::utils::to2D;
@@ -262,7 +262,7 @@ bool insertTargetVelocityPoint(
 
     // create target point
     Eigen::Vector2d target_point;
-    autoware_planning_msgs::msg::PathPointWithLaneId target_point_with_lane_id;
+    autoware_auto_planning_msgs::msg::PathPointWithLaneId target_point_with_lane_id;
     getBackwardPointFromBasePoint(point2, point1, point2, length_sum - target_length, target_point);
     const int target_velocity_point_idx =
       std::max(static_cast<int>(insert_target_point_idx) - 1, 0);
@@ -284,7 +284,7 @@ bool insertTargetVelocityPoint(
       const double yaw = std::atan2(point1.y() - point2.y(), point1.x() - point2.x());
       target_point_with_lane_id.point.pose.orientation = planning_utils::getQuaternionFromYaw(yaw);
     }
-    target_point_with_lane_id.point.twist.linear.x = velocity;
+    target_point_with_lane_id.point.longitudinal_velocity_mps = velocity;
     if (velocity == 0.0 && target_velocity_point_idx < first_stop_path_point_index) {
       first_stop_path_point_index = target_velocity_point_idx;
       // -- debug code --
@@ -305,8 +305,8 @@ bool insertTargetVelocityPoint(
 
     // insert 0 velocity after target point
     for (size_t j = insert_target_point_idx; j < output.points.size(); ++j) {
-      output.points.at(j).point.twist.linear.x =
-        std::min(velocity, output.points.at(j).point.twist.linear.x);
+      output.points.at(j).point.longitudinal_velocity_mps =
+        std::min(static_cast<float>(velocity), output.points.at(j).point.longitudinal_velocity_mps);
     }
     return true;
   }

@@ -20,9 +20,9 @@
 #include <scene_module/scene_module_interface.hpp>
 #include <utilization/boost_geometry_helper.hpp>
 
-#include <autoware_perception_msgs/msg/dynamic_object.hpp>
-#include <autoware_perception_msgs/msg/dynamic_object_array.hpp>
-#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
+#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
+#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <geometry_msgs/msg/point.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 
@@ -60,12 +60,12 @@ public:
    * @brief plan occlusion spot velocity at unknown area in occupancy grid
    */
   bool modifyPathVelocity(
-    autoware_planning_msgs::msg::PathWithLaneId * path,
+    autoware_auto_planning_msgs::msg::PathWithLaneId * path,
     autoware_planning_msgs::msg::StopReason * stop_reason) override;
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
 
 private:
-  autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr dynamic_objects_array_;
+  autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr predicted_objects_array_;
   rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr publisher_;
 
   // Parameter

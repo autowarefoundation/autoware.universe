@@ -38,7 +38,7 @@ TEST(performances, many_sidewalk_occlusion_spots)
 
   std::vector<PossibleCollisionInfo> possible_collisions;
 
-  autoware_planning_msgs::msg::PathWithLaneId trajectory =
+  autoware_auto_planning_msgs::msg::PathWithLaneId trajectory =
     test::generatePath(0.5, 0.5, 300.0, 0.5, 3000);
   grid_map::GridMap grid = test::generateGrid(3000, 3000, 0.1);
   for (int x = 0; x < grid.getSize().x(); ++x) {

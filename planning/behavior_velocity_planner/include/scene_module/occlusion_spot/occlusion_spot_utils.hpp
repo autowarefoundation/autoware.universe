@@ -21,8 +21,8 @@
 #include <scene_module/occlusion_spot/geometry.hpp>
 #include <scene_module/occlusion_spot/grid_utils.hpp>
 
-#include <autoware_perception_msgs/msg/dynamic_object_array.hpp>
-#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
+#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
@@ -98,14 +98,15 @@ struct ObstacleInfo
  */
 struct PossibleCollisionInfo
 {
-  ObstacleInfo obstacle_info;                                   // For hidden obstacle
-  autoware_planning_msgs::msg::PathPoint collision_path_point;  // For baselink at collision point
-  geometry_msgs::msg::Pose intersection_pose;                   // For egp path and hidden obstacle
+  ObstacleInfo obstacle_info;  // For hidden obstacle
+  autoware_auto_planning_msgs::msg::PathPoint
+    collision_path_point;                              // For baselink at collision point
+  geometry_msgs::msg::Pose intersection_pose;          // For egp path and hidden obstacle
   lanelet::ArcCoordinates arc_lane_dist_at_collision;  // For ego distance to obstacle in s-d
   PossibleCollisionInfo() = default;
   PossibleCollisionInfo(
     const ObstacleInfo & obstacle_info,
-    const autoware_planning_msgs::msg::PathPoint & collision_path_point,
+    const autoware_auto_planning_msgs::msg::PathPoint & collision_path_point,
     const geometry_msgs::msg::Pose & intersection_pose,
     const lanelet::ArcCoordinates & arc_lane_dist_to_occlusion)
   : obstacle_info(obstacle_info),
@@ -119,7 +120,8 @@ struct PossibleCollisionInfo
 ROAD_TYPE getCurrentRoadType(
   const lanelet::ConstLanelet & current_lanelet, const lanelet::LaneletMapPtr & lanelet_map_ptr);
 //!< @brief build a Lanelet from a interpolated path
-lanelet::ConstLanelet buildPathLanelet(const autoware_planning_msgs::msg::PathWithLaneId & path);
+lanelet::ConstLanelet buildPathLanelet(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path);
 //!< @brief calculate intersection and collision point from occlusion spot
 void calculateCollisionPathPointFromOcclusionSpot(
   PossibleCollisionInfo & pc, const lanelet::BasicPoint2d & obstacle_point,
@@ -128,23 +130,23 @@ void calculateCollisionPathPointFromOcclusionSpot(
 //!< @brief create hidden collision behind parked car
 void createPossibleCollisionBehindParkedVehicle(
   std::vector<PossibleCollisionInfo> & possible_collisions,
-  const autoware_planning_msgs::msg::PathWithLaneId & path, const PlannerParam & param,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const PlannerParam & param,
   const double offset_from_ego_to_target,
-  const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr & dyn_obj_arr);
+  const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr & dyn_obj_arr);
 //!< @brief set velocity and orientation to collision point based on previous Path with laneId
 void calcVelocityAndHeightToPossibleCollision(
-  const int closest_idx, const autoware_planning_msgs::msg::PathWithLaneId & path,
+  const int closest_idx, const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const double offset_from_ego_to_target, std::vector<PossibleCollisionInfo> & possible_collisions);
 //!< @brief extract lanelet that includes target_road_type only
 bool extractTargetRoad(
   const int closest_idx, const lanelet::LaneletMapPtr lanelet_map_ptr, const double max_range,
-  const autoware_planning_msgs::msg::PathWithLaneId & src_path,
-  double & offset_from_closest_to_target, autoware_planning_msgs::msg::PathWithLaneId & tar_path,
-  const ROAD_TYPE & target_road_type);
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & src_path,
+  double & offset_from_closest_to_target,
+  autoware_auto_planning_msgs::msg::PathWithLaneId & tar_path, const ROAD_TYPE & target_road_type);
 //!< @brief generate collision coming from occlusion spots of the given grid map and lanelet map
 void generatePossibleCollisions(
   std::vector<PossibleCollisionInfo> & possible_collisions,
-  const autoware_planning_msgs::msg::PathWithLaneId & path, const grid_map::GridMap & grid,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const grid_map::GridMap & grid,
   const double offset_from_ego_to_closest, const double offset_from_closest_to_target,
   const PlannerParam & param, std::vector<lanelet::BasicPolygon2d> & debug);
 //!< @brief convert a set of occlusion spots found on sidewalk slice

@@ -31,7 +31,7 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
-#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 
 namespace behavior_velocity_planner
 {
@@ -52,10 +52,10 @@ struct DebugData
 };
 
 bool insertTargetVelocityPoint(
-  const autoware_planning_msgs::msg::PathWithLaneId & input,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & input,
   const boost::geometry::model::polygon<boost::geometry::model::d2::point_xy<double>> & polygon,
   const double & margin, const double & velocity, const PlannerData & planner_data,
-  autoware_planning_msgs::msg::PathWithLaneId & output, DebugData & debug_data,
+  autoware_auto_planning_msgs::msg::PathWithLaneId & output, DebugData & debug_data,
   boost::optional<int> & first_stop_path_point_index);
 
 lanelet::Optional<lanelet::ConstLineString3d> getStopLineFromMap(
@@ -63,9 +63,9 @@ lanelet::Optional<lanelet::ConstLineString3d> getStopLineFromMap(
   const std::string & attribute_name);
 
 bool insertTargetVelocityPoint(
-  const autoware_planning_msgs::msg::PathWithLaneId & input,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & input,
   const lanelet::ConstLineString3d & stop_line, const double & margin, const double & velocity,
-  const PlannerData & planner_data, autoware_planning_msgs::msg::PathWithLaneId & output,
+  const PlannerData & planner_data, autoware_auto_planning_msgs::msg::PathWithLaneId & output,
   DebugData & debug_data, boost::optional<int> & first_stop_path_point_index);
 
 bool isClockWise(

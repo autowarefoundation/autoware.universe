@@ -24,7 +24,7 @@ namespace behavior_velocity_planner
 namespace
 {
 std::vector<lanelet::TrafficSignConstPtr> getTrafficSignRegElemsOnPath(
-  const autoware_planning_msgs::msg::PathWithLaneId & path,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const lanelet::LaneletMapPtr lanelet_map)
 {
   std::vector<lanelet::TrafficSignConstPtr> traffic_sign_reg_elems;
@@ -47,7 +47,7 @@ std::vector<lanelet::TrafficSignConstPtr> getTrafficSignRegElemsOnPath(
 }
 
 std::vector<lanelet::ConstLineString3d> getStopLinesOnPath(
-  const autoware_planning_msgs::msg::PathWithLaneId & path,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const lanelet::LaneletMapPtr lanelet_map)
 {
   std::vector<lanelet::ConstLineString3d> stop_lines;
@@ -67,7 +67,7 @@ std::vector<lanelet::ConstLineString3d> getStopLinesOnPath(
 }
 
 std::set<int64_t> getStopLineIdSetOnPath(
-  const autoware_planning_msgs::msg::PathWithLaneId & path,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const lanelet::LaneletMapPtr lanelet_map)
 {
   std::set<int64_t> stop_line_id_set;
@@ -92,7 +92,7 @@ StopLineModuleManager::StopLineModuleManager(rclcpp::Node & node)
 }
 
 void StopLineModuleManager::launchNewModules(
-  const autoware_planning_msgs::msg::PathWithLaneId & path)
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
   for (const auto & stop_line : getStopLinesOnPath(path, planner_data_->lanelet_map)) {
     const auto module_id = stop_line.id();
@@ -105,7 +105,7 @@ void StopLineModuleManager::launchNewModules(
 
 std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
 StopLineModuleManager::getModuleExpiredFunction(
-  const autoware_planning_msgs::msg::PathWithLaneId & path)
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
   const auto stop_line_id_set = getStopLineIdSetOnPath(path, planner_data_->lanelet_map);
 

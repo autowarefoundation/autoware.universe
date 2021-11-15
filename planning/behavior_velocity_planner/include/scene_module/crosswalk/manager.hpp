@@ -21,7 +21,7 @@
 #include <scene_module/scene_module_interface.hpp>
 
 #include <autoware_api_msgs/msg/crosswalk_status.hpp>
-#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <functional>
 #include <memory>
@@ -38,10 +38,10 @@ public:
 private:
   CrosswalkModule::PlannerParam crosswalk_planner_param_;
   WalkwayModule::PlannerParam walkway_planner_param_;
-  void launchNewModules(const autoware_planning_msgs::msg::PathWithLaneId & path) override;
+  void launchNewModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
 
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
-    const autoware_planning_msgs::msg::PathWithLaneId & path) override;
+    const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
 };
 }  // namespace behavior_velocity_planner
 

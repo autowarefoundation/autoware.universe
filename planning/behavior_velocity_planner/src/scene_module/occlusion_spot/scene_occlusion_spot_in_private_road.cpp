@@ -36,7 +36,7 @@ OcclusionSpotInPrivateModule::OcclusionSpotInPrivateModule(
 }
 
 bool OcclusionSpotInPrivateModule::modifyPathVelocity(
-  autoware_planning_msgs::msg::PathWithLaneId * path,
+  autoware_auto_planning_msgs::msg::PathWithLaneId * path,
   [[maybe_unused]] autoware_planning_msgs::msg::StopReason * stop_reason)
 {
   if (path->points.size() < 2) {
@@ -55,13 +55,13 @@ bool OcclusionSpotInPrivateModule::modifyPathVelocity(
   }
 
   int closest_idx = -1;
-  if (!planning_utils::calcClosestIndex<autoware_planning_msgs::msg::PathWithLaneId>(
+  if (!planning_utils::calcClosestIndex<autoware_auto_planning_msgs::msg::PathWithLaneId>(
         *path, ego_pose, closest_idx, param_.dist_thr, param_.angle_thr)) {
     return true;
   }
 
   const auto target_road_type = occlusion_spot_utils::ROAD_TYPE::PRIVATE;
-  autoware_planning_msgs::msg::PathWithLaneId limited_path;
+  autoware_auto_planning_msgs::msg::PathWithLaneId limited_path;
   double offset_from_ego_to_closest = 0;
   double offset_from_closest_to_target = 0;
   const double max_range = occ_grid_ptr->info.width * occ_grid_ptr->info.resolution;

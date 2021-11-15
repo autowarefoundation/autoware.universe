@@ -29,25 +29,25 @@ namespace behavior_velocity_planner
 namespace util
 {
 bool setVelocityFrom(
-  const size_t idx, const double vel, autoware_planning_msgs::msg::PathWithLaneId * input);
+  const size_t idx, const double vel, autoware_auto_planning_msgs::msg::PathWithLaneId * input);
 
 bool splineInterpolate(
-  const autoware_planning_msgs::msg::PathWithLaneId & input, const double interval,
-  autoware_planning_msgs::msg::PathWithLaneId * output, const rclcpp::Logger logger);
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & input, const double interval,
+  autoware_auto_planning_msgs::msg::PathWithLaneId * output, const rclcpp::Logger logger);
 
 int insertPoint(
   const geometry_msgs::msg::Pose & in_pose,
-  autoware_planning_msgs::msg::PathWithLaneId * inout_path);
+  autoware_auto_planning_msgs::msg::PathWithLaneId * inout_path);
 
 geometry_msgs::msg::Pose getAheadPose(
   const size_t start_idx, const double ahead_dist,
-  const autoware_planning_msgs::msg::PathWithLaneId & path);
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path);
 
 bool isAheadOf(const geometry_msgs::msg::Pose & target, const geometry_msgs::msg::Pose & origin);
-bool hasLaneId(const autoware_planning_msgs::msg::PathPointWithLaneId & p, const int id);
+bool hasLaneId(const autoware_auto_planning_msgs::msg::PathPointWithLaneId & p, const int id);
 bool hasDuplicatedPoint(
-  const autoware_planning_msgs::msg::PathWithLaneId & path, const geometry_msgs::msg::Point & point,
-  int * duplicated_point_idx);
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const geometry_msgs::msg::Point & point, int * duplicated_point_idx);
 
 /**
  * @brief get objective polygons for detection area
@@ -73,8 +73,8 @@ bool generateStopLine(
   const int lane_id, const std::vector<lanelet::CompoundPolygon3d> detection_areas,
   const std::shared_ptr<const PlannerData> & planner_data,
   const IntersectionModule::PlannerParam & planner_param,
-  autoware_planning_msgs::msg::PathWithLaneId * original_path,
-  const autoware_planning_msgs::msg::PathWithLaneId & target_path, int * stop_line_idx,
+  autoware_auto_planning_msgs::msg::PathWithLaneId * original_path,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & target_path, int * stop_line_idx,
   int * pass_judge_line_idx, int * first_idx_inside_lane, const rclcpp::Logger logger);
 
 /**
@@ -84,7 +84,7 @@ bool generateStopLine(
  * @return path point index
  */
 int getFirstPointInsidePolygons(
-  const autoware_planning_msgs::msg::PathWithLaneId & path,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const std::vector<lanelet::CompoundPolygon3d> & polygons);
 
 /**
@@ -93,7 +93,7 @@ int getFirstPointInsidePolygons(
  * @return true when the stop point is defined on map.
  */
 bool getStopPoseIndexFromMap(
-  const autoware_planning_msgs::msg::PathWithLaneId & path, const int lane_id,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int lane_id,
   const std::shared_ptr<const PlannerData> & planner_data, int & stop_idx_ip, int dist_thr,
   const rclcpp::Logger logger);
 

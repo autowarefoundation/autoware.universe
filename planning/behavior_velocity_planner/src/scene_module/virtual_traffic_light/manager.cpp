@@ -28,7 +28,7 @@ using lanelet::autoware::VirtualTrafficLight;
 
 template <class T>
 std::unordered_map<typename T::ConstPtr, lanelet::ConstLanelet> getRegElemMapOnPath(
-  const autoware_planning_msgs::msg::PathWithLaneId & path,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const lanelet::LaneletMapPtr lanelet_map)
 {
   std::unordered_map<typename T::ConstPtr, lanelet::ConstLanelet> reg_elem_map_on_path;
@@ -46,7 +46,7 @@ std::unordered_map<typename T::ConstPtr, lanelet::ConstLanelet> getRegElemMapOnP
 }
 
 std::set<int64_t> getLaneletIdSetOnPath(
-  const autoware_planning_msgs::msg::PathWithLaneId & path,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const lanelet::LaneletMapPtr lanelet_map)
 {
   std::set<int64_t> id_set;
@@ -72,7 +72,7 @@ VirtualTrafficLightModuleManager::VirtualTrafficLightModuleManager(rclcpp::Node 
 }
 
 void VirtualTrafficLightModuleManager::launchNewModules(
-  const autoware_planning_msgs::msg::PathWithLaneId & path)
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
   for (const auto & m :
        getRegElemMapOnPath<VirtualTrafficLight>(path, planner_data_->lanelet_map)) {
@@ -88,7 +88,7 @@ void VirtualTrafficLightModuleManager::launchNewModules(
 
 std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
 VirtualTrafficLightModuleManager::getModuleExpiredFunction(
-  const autoware_planning_msgs::msg::PathWithLaneId & path)
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
   const auto id_set = getLaneletIdSetOnPath(path, planner_data_->lanelet_map);
 

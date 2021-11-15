@@ -37,7 +37,7 @@ WalkwayModule::WalkwayModule(
 }
 
 bool WalkwayModule::modifyPathVelocity(
-  autoware_planning_msgs::msg::PathWithLaneId * path,
+  autoware_auto_planning_msgs::msg::PathWithLaneId * path,
   autoware_planning_msgs::msg::StopReason * stop_reason)
 {
   debug_data_ = DebugData();

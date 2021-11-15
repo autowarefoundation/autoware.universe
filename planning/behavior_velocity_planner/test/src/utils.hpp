@@ -18,8 +18,8 @@
 #include <grid_map_core/GridMap.hpp>
 #include <scene_module/occlusion_spot/occlusion_spot_utils.hpp>
 
-#include <autoware_planning_msgs/msg/path_point_with_lane_id.hpp>
-#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_auto_planning_msgs/msg/path_point_with_lane_id.hpp>
+#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <lanelet2_core/geometry/Lanelet.h>
 #include <lanelet2_core/primitives/Lanelet.h>
@@ -97,14 +97,14 @@ inline grid_map::GridMap generateGrid(int w, int h, double res)
   return grid;
 }
 
-inline autoware_planning_msgs::msg::PathWithLaneId generatePath(
+inline autoware_auto_planning_msgs::msg::PathWithLaneId generatePath(
   double x0, double y0, double x, double y, int nb_points)
 {
-  autoware_planning_msgs::msg::PathWithLaneId path{};
+  autoware_auto_planning_msgs::msg::PathWithLaneId path{};
   double x_step = (x - x0) / (nb_points - 1);
   double y_step = (y - y0) / (nb_points - 1);
   for (int i = 0; i < nb_points; ++i) {
-    autoware_planning_msgs::msg::PathPointWithLaneId point{};
+    autoware_auto_planning_msgs::msg::PathPointWithLaneId point{};
     point.point.pose.position.x = x0 + x_step * i;
     point.point.pose.position.y = y0 + y_step * i;
     point.point.pose.position.z = 0.0;
@@ -148,7 +148,7 @@ inline void generatePossibleCollisions(
     intersection_pose.position.x = y0 + y_step * i;
 
     // collision path point
-    autoware_planning_msgs::msg::PathPoint collision_path_point{};
+    autoware_auto_planning_msgs::msg::PathPoint collision_path_point{};
     collision_path_point.pose.position.x = x0 + x_step * i + lon;
     collision_path_point.pose.position.y = y0 + y_step * i;
 
@@ -161,25 +161,24 @@ inline void generatePossibleCollisions(
   }
 }
 inline void addConstantVelocity(
-  autoware_planning_msgs::msg::PathWithLaneId & trajectory, double velocity)
+  autoware_auto_planning_msgs::msg::PathWithLaneId & trajectory, double velocity)
 {
   for (auto & p : trajectory.points) {
-    p.point.twist.linear.x = velocity;
+    p.point.longitudinal_velocity_mps = velocity;
   }
 }
-inline autoware_perception_msgs::msg::DynamicObject generateDynamicObject(double x)
+inline autoware_auto_perception_msgs::msg::PredictedObject generatePredictedObject(double x)
 {
-  autoware_perception_msgs::msg::DynamicObject obj;
+  autoware_auto_perception_msgs::msg::PredictedObject obj;
   obj.shape.dimensions.x = 5.0;
   obj.shape.dimensions.y = 2.0;
   tf2::Quaternion q;
-  obj.state.pose_covariance.pose.orientation = tf2::toMsg(q);
-  obj.state.orientation_reliable = true;
-  obj.state.twist_reliable = true;
-  obj.state.twist_covariance.twist.linear.x = 0;
-  obj.state.pose_covariance.pose.position.x = x;
-  obj.state.pose_covariance.pose.position.y = 0;
-  obj.semantic.type = autoware_perception_msgs::msg::Semantic::CAR;
+  obj.kinematics.initial_pose_with_covariance.pose.orientation = tf2::toMsg(q);
+  obj.kinematics.initial_twist_with_covariance.twist.linear.x = 0;
+  obj.kinematics.initial_pose_with_covariance.pose.position.x = x;
+  obj.kinematics.initial_pose_with_covariance.pose.position.y = 0;
+  obj.classification.push_back(autoware_auto_perception_msgs::msg::ObjectClassification{});
+  obj.classification.at(0).label = autoware_auto_perception_msgs::msg::ObjectClassification::CAR;
   return obj;
 }
 inline geometry_msgs::msg::Pose generatePose(double x)

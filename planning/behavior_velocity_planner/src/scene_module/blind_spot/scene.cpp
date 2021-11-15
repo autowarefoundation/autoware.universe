@@ -57,7 +57,7 @@ BlindSpotModule::BlindSpotModule(
 }
 
 bool BlindSpotModule::modifyPathVelocity(
-  autoware_planning_msgs::msg::PathWithLaneId * path,
+  autoware_auto_planning_msgs::msg::PathWithLaneId * path,
   autoware_planning_msgs::msg::StopReason * stop_reason)
 {
   debug_data_ = DebugData();
@@ -124,7 +124,7 @@ bool BlindSpotModule::modifyPathVelocity(
   }
 
   /* get dynamic object */
-  const auto objects_ptr = planner_data_->dynamic_objects;
+  const auto objects_ptr = planner_data_->predicted_objects;
 
   /* calculate dynamic collision around detection area */
   bool has_obstacle = checkObstacleInBlindSpot(
@@ -150,7 +150,7 @@ bool BlindSpotModule::modifyPathVelocity(
 }
 
 boost::optional<int> BlindSpotModule::getFirstPointConflictingLanelets(
-  const autoware_planning_msgs::msg::PathWithLaneId & path,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const lanelet::ConstLanelets & lanelets) const
 {
   using lanelet::utils::to2D;
@@ -181,7 +181,7 @@ boost::optional<int> BlindSpotModule::getFirstPointConflictingLanelets(
 
 bool BlindSpotModule::generateStopLine(
   const lanelet::ConstLanelets straight_lanelets,
-  autoware_planning_msgs::msg::PathWithLaneId * path, int * stop_line_idx,
+  autoware_auto_planning_msgs::msg::PathWithLaneId * path, int * stop_line_idx,
   int * pass_judge_line_idx) const
 {
   /* set judge line dist */
@@ -199,7 +199,7 @@ bool BlindSpotModule::generateStopLine(
   const int pass_judge_idx_dist = std::ceil(pass_judge_line_dist / interval);
 
   /* spline interpolation */
-  autoware_planning_msgs::msg::PathWithLaneId path_ip;
+  autoware_auto_planning_msgs::msg::PathWithLaneId path_ip;
   if (!util::splineInterpolate(*path, interval, &path_ip, logger_)) {
     return false;
   }
@@ -234,7 +234,7 @@ bool BlindSpotModule::generateStopLine(
   /* if another stop point exist before intersection stop_line, disable judge_line. */
   bool has_prior_stopline = false;
   for (int i = 0; i < *stop_line_idx; ++i) {
-    if (std::fabs(path->points.at(i).point.twist.linear.x) < 0.1) {
+    if (std::fabs(path->points.at(i).point.longitudinal_velocity_mps) < 0.1) {
       has_prior_stopline = true;
       break;
     }
@@ -260,25 +260,31 @@ bool BlindSpotModule::generateStopLine(
 }
 
 void BlindSpotModule::cutPredictPathWithDuration(
-  autoware_perception_msgs::msg::DynamicObjectArray * objects_ptr, const double time_thr) const
+  autoware_auto_perception_msgs::msg::PredictedObjects * objects_ptr, const double time_thr) const
 {
   const rclcpp::Time current_time = clock_->now();
-  for (auto & object : objects_ptr->objects) {                    // each objects
-    for (auto & predicted_path : object.state.predicted_paths) {  // each predicted paths
-      std::vector<geometry_msgs::msg::PoseWithCovarianceStamped> vp;
-      for (auto & predicted_pose : predicted_path.path) {  // each path points
-        if ((rclcpp::Time(predicted_pose.header.stamp) - current_time).seconds() < time_thr) {
-          vp.push_back(predicted_pose);
+
+  for (auto & object : objects_ptr->objects) {                         // each objects
+    for (auto & predicted_path : object.kinematics.predicted_paths) {  // each predicted paths
+      const auto origin_path = predicted_path;
+      predicted_path.path.clear();
+
+      for (size_t k = 0; k < origin_path.path.size(); ++k) {  // each path points
+        const auto & predicted_pose = origin_path.path.at(k);
+        const auto predicted_time =
+          rclcpp::Time(objects_ptr->header.stamp) +
+          rclcpp::Duration(origin_path.time_step) * static_cast<double>(k);
+        if ((predicted_time - current_time).seconds() < time_thr) {
+          predicted_path.path.push_back(predicted_pose);
         }
       }
-      predicted_path.path = vp;
     }
   }
 }
 
 int BlindSpotModule::insertPoint(
-  const int insert_idx_ip, const autoware_planning_msgs::msg::PathWithLaneId path_ip,
-  autoware_planning_msgs::msg::PathWithLaneId * inout_path) const
+  const int insert_idx_ip, const autoware_auto_planning_msgs::msg::PathWithLaneId path_ip,
+  autoware_auto_planning_msgs::msg::PathWithLaneId * inout_path) const
 {
   double insert_point_s = 0.0;
   for (int i = 1; i <= insert_idx_ip; i++) {
@@ -298,7 +304,7 @@ int BlindSpotModule::insertPoint(
   }
   if (insert_idx >= 0) {
     const auto it = inout_path->points.begin() + insert_idx;
-    autoware_planning_msgs::msg::PathPointWithLaneId inserted_point;
+    autoware_auto_planning_msgs::msg::PathPointWithLaneId inserted_point;
     // copy from previous point
     inserted_point = inout_path->points.at(std::max(insert_idx - 1, 0));
     inserted_point.point.pose = path_ip.points[insert_idx_ip].point.pose;
@@ -309,8 +315,8 @@ int BlindSpotModule::insertPoint(
 
 bool BlindSpotModule::checkObstacleInBlindSpot(
   lanelet::LaneletMapConstPtr lanelet_map_ptr, lanelet::routing::RoutingGraphPtr routing_graph_ptr,
-  const autoware_planning_msgs::msg::PathWithLaneId & path,
-  const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr objects_ptr,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
   const int closest_idx, const geometry_msgs::msg::Pose & stop_line_pose) const
 {
   /* get detection area */
@@ -325,7 +331,7 @@ bool BlindSpotModule::checkObstacleInBlindSpot(
     debug_data_.detection_area_for_blind_spot = areas_opt.get().detection_area;
     debug_data_.conflict_area_for_blind_spot = areas_opt.get().conflict_area;
 
-    autoware_perception_msgs::msg::DynamicObjectArray objects = *objects_ptr;
+    autoware_auto_perception_msgs::msg::PredictedObjects objects = *objects_ptr;
     cutPredictPathWithDuration(&objects, planner_param_.max_future_movement_time);
 
     // check objects in blind spot areas
@@ -336,7 +342,7 @@ bool BlindSpotModule::checkObstacleInBlindSpot(
       }
 
       bool exist_in_detection_area = bg::within(
-        to_bg2d(object.state.pose_covariance.pose.position),
+        to_bg2d(object.kinematics.initial_pose_with_covariance.pose.position),
         lanelet::utils::to2D(areas_opt.get().detection_area));
       bool exist_in_conflict_area = isPredictedPathInArea(object, areas_opt.get().conflict_area);
       if (exist_in_detection_area && exist_in_conflict_area) {
@@ -351,14 +357,14 @@ bool BlindSpotModule::checkObstacleInBlindSpot(
 }
 
 bool BlindSpotModule::isPredictedPathInArea(
-  const autoware_perception_msgs::msg::DynamicObject & object,
+  const autoware_auto_perception_msgs::msg::PredictedObject & object,
   const lanelet::CompoundPolygon3d & area) const
 {
   bool exist_in_conflict_area = false;
-  for (const auto & predicted_path : object.state.predicted_paths) {
+  for (const auto & predicted_path : object.kinematics.predicted_paths) {
     for (const auto & predicted_point : predicted_path.path) {
       exist_in_conflict_area =
-        bg::within(to_bg2d(predicted_point.pose.pose.position), lanelet::utils::to2D(area));
+        bg::within(to_bg2d(predicted_point.position), lanelet::utils::to2D(area));
       if (exist_in_conflict_area) {
         return true;
       }
@@ -399,7 +405,7 @@ lanelet::ConstLanelet BlindSpotModule::generateHalfLanelet(
 boost::optional<BlindSpotPolygons> BlindSpotModule::generateBlindSpotPolygons(
   lanelet::LaneletMapConstPtr lanelet_map_ptr,
   [[maybe_unused]] lanelet::routing::RoutingGraphPtr routing_graph_ptr,
-  const autoware_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
   const geometry_msgs::msg::Pose & stop_line_pose) const
 {
   std::vector<int64_t> lane_ids;
@@ -495,12 +501,15 @@ lanelet::LineString2d BlindSpotModule::getVehicleEdge(
 }
 
 bool BlindSpotModule::isTargetObjectType(
-  const autoware_perception_msgs::msg::DynamicObject & object) const
+  const autoware_auto_perception_msgs::msg::PredictedObject & object) const
 {
   if (
-    object.semantic.type == autoware_perception_msgs::msg::Semantic::BICYCLE ||
-    object.semantic.type == autoware_perception_msgs::msg::Semantic::PEDESTRIAN ||
-    object.semantic.type == autoware_perception_msgs::msg::Semantic::MOTORBIKE) {
+    object.classification.at(0).label ==
+      autoware_auto_perception_msgs::msg::ObjectClassification::BICYCLE ||
+    object.classification.at(0).label ==
+      autoware_auto_perception_msgs::msg::ObjectClassification::PEDESTRIAN ||
+    object.classification.at(0).label ==
+      autoware_auto_perception_msgs::msg::ObjectClassification::MOTORCYCLE) {
     return true;
   }
   return false;

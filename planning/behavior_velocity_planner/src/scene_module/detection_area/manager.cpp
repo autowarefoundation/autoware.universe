@@ -29,7 +29,7 @@ namespace behavior_velocity_planner
 namespace
 {
 std::vector<lanelet::DetectionAreaConstPtr> getDetectionAreaRegElemsOnPath(
-  const autoware_planning_msgs::msg::PathWithLaneId & path,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const lanelet::LaneletMapPtr lanelet_map)
 {
   std::vector<lanelet::DetectionAreaConstPtr> detection_area_reg_elems;
@@ -47,7 +47,7 @@ std::vector<lanelet::DetectionAreaConstPtr> getDetectionAreaRegElemsOnPath(
 }
 
 std::set<int64_t> getDetectionAreaIdSetOnPath(
-  const autoware_planning_msgs::msg::PathWithLaneId & path,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const lanelet::LaneletMapPtr lanelet_map)
 {
   std::set<int64_t> detection_area_id_set;
@@ -70,7 +70,7 @@ DetectionAreaModuleManager::DetectionAreaModuleManager(rclcpp::Node & node)
 }
 
 void DetectionAreaModuleManager::launchNewModules(
-  const autoware_planning_msgs::msg::PathWithLaneId & path)
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
   for (const auto & detection_area :
        getDetectionAreaRegElemsOnPath(path, planner_data_->lanelet_map)) {
@@ -86,7 +86,7 @@ void DetectionAreaModuleManager::launchNewModules(
 
 std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
 DetectionAreaModuleManager::getModuleExpiredFunction(
-  const autoware_planning_msgs::msg::PathWithLaneId & path)
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
   const auto detection_area_id_set = getDetectionAreaIdSetOnPath(path, planner_data_->lanelet_map);
 

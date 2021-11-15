@@ -21,7 +21,7 @@
 #include <scene_module/crosswalk/util.hpp>
 #include <scene_module/scene_module_interface.hpp>
 
-#include <autoware_perception_msgs/msg/dynamic_object_array.hpp>
+#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
@@ -47,7 +47,7 @@ public:
     const rclcpp::Clock::SharedPtr clock);
 
   bool modifyPathVelocity(
-    autoware_planning_msgs::msg::PathWithLaneId * path,
+    autoware_auto_planning_msgs::msg::PathWithLaneId * path,
     autoware_planning_msgs::msg::StopReason * stop_reason) override;
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;

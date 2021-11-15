@@ -151,7 +151,7 @@ boost::optional<SegmentIndexWithPoint> findCollision(
 }
 
 SegmentIndexWithOffset findForwardOffsetSegment(
-  const autoware_planning_msgs::msg::PathWithLaneId & path, const size_t base_idx,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const size_t base_idx,
   const double offset_length)
 {
   double sum_length = 0.0;
@@ -177,7 +177,7 @@ SegmentIndexWithOffset findForwardOffsetSegment(
 }
 
 SegmentIndexWithOffset findBackwardOffsetSegment(
-  const autoware_planning_msgs::msg::PathWithLaneId & path, const size_t base_idx,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const size_t base_idx,
   const double offset_length)
 {
   double sum_length = 0.0;
@@ -200,7 +200,8 @@ SegmentIndexWithOffset findBackwardOffsetSegment(
 }
 
 SegmentIndexWithOffset findOffsetSegment(
-  const autoware_planning_msgs::msg::PathWithLaneId & path, const size_t index, const double offset)
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const size_t index,
+  const double offset)
 {
   if (offset >= 0) {
     return findForwardOffsetSegment(path, index, offset);
@@ -210,7 +211,8 @@ SegmentIndexWithOffset findOffsetSegment(
 }
 
 geometry_msgs::msg::Pose calcInterpolatedPose(
-  const autoware_planning_msgs::msg::PathWithLaneId & path, const size_t index, const double offset)
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const size_t index,
+  const double offset)
 {
   // Get segment points
   const auto & p_front = path.points.at(index).point.pose.position;
@@ -242,16 +244,16 @@ geometry_msgs::msg::Pose calcInterpolatedPose(
   return interpolated_pose;
 }
 
-void insertStopVelocityFromStart(autoware_planning_msgs::msg::PathWithLaneId * path)
+void insertStopVelocityFromStart(autoware_auto_planning_msgs::msg::PathWithLaneId * path)
 {
   for (auto & p : path->points) {
-    p.point.twist.linear.x = 0.0;
+    p.point.longitudinal_velocity_mps = 0.0;
   }
 }
 
 size_t insertStopVelocityAtCollision(
   const SegmentIndexWithPoint & collision, const double offset,
-  autoware_planning_msgs::msg::PathWithLaneId * path)
+  autoware_auto_planning_msgs::msg::PathWithLaneId * path)
 {
   const auto collision_offset =
     autoware_utils::calcLongitudinalOffsetToSegment(path->points, collision.index, collision.point);
@@ -273,7 +275,7 @@ size_t insertStopVelocityAtCollision(
 
   // Insert 0 velocity after stop point
   for (size_t i = insert_index; i < path->points.size(); ++i) {
-    path->points.at(i).point.twist.linear.x = 0.0;
+    path->points.at(i).point.longitudinal_velocity_mps = 0.0;
   }
 
   return insert_index;
@@ -338,7 +340,7 @@ VirtualTrafficLightModule::VirtualTrafficLightModule(
 }
 
 bool VirtualTrafficLightModule::modifyPathVelocity(
-  autoware_planning_msgs::msg::PathWithLaneId * path,
+  autoware_auto_planning_msgs::msg::PathWithLaneId * path,
   autoware_planning_msgs::msg::StopReason * stop_reason)
 {
   // Initialize
@@ -545,7 +547,7 @@ bool VirtualTrafficLightModule::hasRightOfWay(
 }
 
 void VirtualTrafficLightModule::insertStopVelocityAtStopLine(
-  autoware_planning_msgs::msg::PathWithLaneId * path,
+  autoware_auto_planning_msgs::msg::PathWithLaneId * path,
   autoware_planning_msgs::msg::StopReason * stop_reason)
 {
   const auto collision = findCollision(path->points, *map_data_.stop_line);
@@ -569,7 +571,7 @@ void VirtualTrafficLightModule::insertStopVelocityAtStopLine(
 }
 
 void VirtualTrafficLightModule::insertStopVelocityAtEndLine(
-  autoware_planning_msgs::msg::PathWithLaneId * path,
+  autoware_auto_planning_msgs::msg::PathWithLaneId * path,
   autoware_planning_msgs::msg::StopReason * stop_reason)
 {
   const auto collision = findCollision(path->points, map_data_.end_lines);

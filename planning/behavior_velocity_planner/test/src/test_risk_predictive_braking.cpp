@@ -73,7 +73,7 @@ TEST(insertSafeVelocityToPath, replace_original_at_too_close_case)
   behavior_velocity_planner::occlusion_spot_utils::PlannerParam param;
   param.angle_thr = 1.0;
   param.dist_thr = 10.0;
-  autoware_planning_msgs::msg::PathWithLaneId path =
+  autoware_auto_planning_msgs::msg::PathWithLaneId path =
     test::generatePath(0.0, 0.0, static_cast<double>(num_path_point - 1), 0.0, num_path_point);
   geometry_msgs::msg::Pose pose{};
   pose.position.x = 2;
@@ -106,7 +106,7 @@ TEST(insertSafeVelocityToPath, dont_insert_last_point)
   behavior_velocity_planner::occlusion_spot_utils::PlannerParam param;
   param.angle_thr = 1.0;
   param.dist_thr = 10.0;
-  autoware_planning_msgs::msg::PathWithLaneId path =
+  autoware_auto_planning_msgs::msg::PathWithLaneId path =
     test::generatePath(0.0, 0.0, static_cast<double>(num_path - 1), 0.0, num_path);
   ASSERT_EQ(insertSafeVelocityToPath(pose, safe_vel, param, &path), -1);
   ASSERT_EQ(path.points.size(), static_cast<size_t>(num_path));

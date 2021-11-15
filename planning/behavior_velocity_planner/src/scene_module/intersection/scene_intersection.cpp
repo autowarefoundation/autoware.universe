@@ -47,7 +47,7 @@ IntersectionModule::IntersectionModule(
 }
 
 bool IntersectionModule::modifyPathVelocity(
-  autoware_planning_msgs::msg::PathWithLaneId * path,
+  autoware_auto_planning_msgs::msg::PathWithLaneId * path,
   autoware_planning_msgs::msg::StopReason * stop_reason)
 {
   const bool external_go =
@@ -133,7 +133,7 @@ bool IntersectionModule::modifyPathVelocity(
   }
 
   /* get dynamic object */
-  const auto objects_ptr = planner_data_->dynamic_objects;
+  const auto objects_ptr = planner_data_->predicted_objects;
 
   /* calculate dynamic collision around detection area */
   bool has_collision =
@@ -184,27 +184,32 @@ bool IntersectionModule::modifyPathVelocity(
 }
 
 void IntersectionModule::cutPredictPathWithDuration(
-  autoware_perception_msgs::msg::DynamicObjectArray * objects_ptr, const double time_thr) const
+  autoware_auto_perception_msgs::msg::PredictedObjects * objects_ptr, const double time_thr) const
 {
   const rclcpp::Time current_time = clock_->now();
-  for (auto & object : objects_ptr->objects) {                    // each objects
-    for (auto & predicted_path : object.state.predicted_paths) {  // each predicted paths
-      std::vector<geometry_msgs::msg::PoseWithCovarianceStamped> vp;
-      for (auto & predicted_pose : predicted_path.path) {  // each path points
-        if ((rclcpp::Time(predicted_pose.header.stamp) - current_time).seconds() < time_thr) {
-          vp.push_back(predicted_pose);
+  for (auto & object : objects_ptr->objects) {                         // each objects
+    for (auto & predicted_path : object.kinematics.predicted_paths) {  // each predicted paths
+      const auto origin_path = predicted_path;
+      predicted_path.path.clear();
+
+      for (size_t k = 0; k < origin_path.path.size(); ++k) {  // each path points
+        const auto & predicted_pose = origin_path.path.at(k);
+        const auto predicted_time =
+          rclcpp::Time(objects_ptr->header.stamp) +
+          rclcpp::Duration(origin_path.time_step) * static_cast<double>(k);
+        if ((predicted_time - current_time).seconds() < time_thr) {
+          predicted_path.path.push_back(predicted_pose);
         }
       }
-      predicted_path.path = vp;
     }
   }
 }
 
 bool IntersectionModule::checkCollision(
-  const autoware_planning_msgs::msg::PathWithLaneId & path,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const std::vector<lanelet::CompoundPolygon3d> & detection_areas,
   const std::vector<int> & detection_area_lanelet_ids,
-  const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr objects_ptr,
+  const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
   const int closest_idx)
 {
   /* generate ego-lane polygon */
@@ -213,7 +218,8 @@ bool IntersectionModule::checkCollision(
   debug_data_.ego_lane_polygon = toGeomMsg(ego_poly);
 
   /* extract target objects */
-  autoware_perception_msgs::msg::DynamicObjectArray target_objects;
+  autoware_auto_perception_msgs::msg::PredictedObjects target_objects;
+  target_objects.header = objects_ptr->header;
   for (const auto & object : objects_ptr->objects) {
     // ignore non-vehicle type objects, such as pedestrian.
     if (!isTargetCollisionVehicleType(object)) {
@@ -221,7 +227,7 @@ bool IntersectionModule::checkCollision(
     }
 
     // ignore vehicle in ego-lane. (TODO update check algorithm)
-    const auto object_pose = object.state.pose_covariance.pose;
+    const auto object_pose = object.kinematics.initial_pose_with_covariance.pose;
     const bool is_in_ego_lane = bg::within(to_bg2d(object_pose.position), ego_poly);
     if (is_in_ego_lane) {
       continue;  // TODO(Kenji Miyake): check direction?
@@ -229,7 +235,8 @@ bool IntersectionModule::checkCollision(
 
     // keep vehicle in detection_area
     const Point2d obj_point(
-      object.state.pose_covariance.pose.position.x, object.state.pose_covariance.pose.position.y);
+      object.kinematics.initial_pose_with_covariance.pose.position.x,
+      object.kinematics.initial_pose_with_covariance.pose.position.y);
     for (const auto & detection_area : detection_areas) {
       const auto detection_poly = lanelet::utils::to2D(detection_area).basicPolygon();
       const double dist_to_detection_area =
@@ -256,12 +263,17 @@ bool IntersectionModule::checkCollision(
   bool collision_detected = false;
   for (const auto & object : target_objects.objects) {
     bool has_collision = false;
-    for (const auto & predicted_path : object.state.predicted_paths) {
+    for (const auto & predicted_path : object.kinematics.predicted_paths) {
       if (predicted_path.confidence < planner_param_.min_predicted_path_confidence) {
         // ignore the predicted path with too low confidence
         continue;
       }
-      has_collision = bg::intersects(ego_poly, to_bg2d(predicted_path.path));
+
+      std::vector<geometry_msgs::msg::Pose> predicted_poses;
+      for (const auto & pose : predicted_path.path) {
+        predicted_poses.push_back(pose);
+      }
+      has_collision = bg::intersects(ego_poly, to_bg2d(predicted_poses));
       if (has_collision) {
         collision_detected = true;
         debug_data_.conflicting_targets.objects.push_back(object);
@@ -274,7 +286,7 @@ bool IntersectionModule::checkCollision(
 }
 
 Polygon2d IntersectionModule::generateEgoIntersectionLanePolygon(
-  const autoware_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
   const int start_idx, const double extra_dist, const double ignore_dist) const
 {
   const size_t assigned_lane_start_idx = start_idx;
@@ -342,7 +354,7 @@ Polygon2d IntersectionModule::generateEgoIntersectionLanePolygon(
 }
 
 double IntersectionModule::calcIntersectionPassingTime(
-  const autoware_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
   const int objective_lane_id) const
 {
   double closest_vel =
@@ -381,9 +393,9 @@ double IntersectionModule::calcIntersectionPassingTime(
 }
 
 bool IntersectionModule::checkStuckVehicleInIntersection(
-  const autoware_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
   const int stop_idx,
-  const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr objects_ptr) const
+  const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr) const
 {
   const double detect_length =
     planner_param_.stuck_vehicle_detect_dist + planner_data_->vehicle_info_.vehicle_length_m;
@@ -395,7 +407,7 @@ bool IntersectionModule::checkStuckVehicleInIntersection(
     if (!isTargetStuckVehicleType(object)) {
       continue;  // not target vehicle type
     }
-    const auto obj_v = std::fabs(object.state.twist_covariance.twist.linear.x);
+    const auto obj_v = std::fabs(object.kinematics.initial_twist_with_covariance.twist.linear.x);
     if (obj_v > planner_param_.stuck_vehicle_vel_thr) {
       continue;  // not stop vehicle
     }
@@ -413,40 +425,50 @@ bool IntersectionModule::checkStuckVehicleInIntersection(
 }
 
 Polygon2d IntersectionModule::toFootprintPolygon(
-  const autoware_perception_msgs::msg::DynamicObject & object) const
+  const autoware_auto_perception_msgs::msg::PredictedObject & object) const
 {
   Polygon2d obj_footprint;
-  if (object.shape.type == autoware_perception_msgs::msg::Shape::POLYGON) {
+  if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::POLYGON) {
     obj_footprint = toBoostPoly(object.shape.footprint);
   } else {
     // cylinder type is treated as square-polygon
-    obj_footprint = obj2polygon(object.state.pose_covariance.pose, object.shape.dimensions);
+    obj_footprint =
+      obj2polygon(object.kinematics.initial_pose_with_covariance.pose, object.shape.dimensions);
   }
   return obj_footprint;
 }
 
 bool IntersectionModule::isTargetCollisionVehicleType(
-  const autoware_perception_msgs::msg::DynamicObject & object) const
+  const autoware_auto_perception_msgs::msg::PredictedObject & object) const
 {
   if (
-    object.semantic.type == autoware_perception_msgs::msg::Semantic::CAR ||
-    object.semantic.type == autoware_perception_msgs::msg::Semantic::BUS ||
-    object.semantic.type == autoware_perception_msgs::msg::Semantic::TRUCK ||
-    object.semantic.type == autoware_perception_msgs::msg::Semantic::MOTORBIKE ||
-    object.semantic.type == autoware_perception_msgs::msg::Semantic::BICYCLE) {
+    object.classification.at(0).label ==
+      autoware_auto_perception_msgs::msg::ObjectClassification::CAR ||
+    object.classification.at(0).label ==
+      autoware_auto_perception_msgs::msg::ObjectClassification::BUS ||
+    object.classification.at(0).label ==
+      autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK ||
+    object.classification.at(0).label ==
+      autoware_auto_perception_msgs::msg::ObjectClassification::MOTORCYCLE ||
+    object.classification.at(0).label ==
+      autoware_auto_perception_msgs::msg::ObjectClassification::BICYCLE) {
     return true;
   }
   return false;
 }
 
 bool IntersectionModule::isTargetStuckVehicleType(
-  const autoware_perception_msgs::msg::DynamicObject & object) const
+  const autoware_auto_perception_msgs::msg::PredictedObject & object) const
 {
   if (
-    object.semantic.type == autoware_perception_msgs::msg::Semantic::CAR ||
-    object.semantic.type == autoware_perception_msgs::msg::Semantic::BUS ||
-    object.semantic.type == autoware_perception_msgs::msg::Semantic::TRUCK ||
-    object.semantic.type == autoware_perception_msgs::msg::Semantic::MOTORBIKE) {
+    object.classification.at(0).label ==
+      autoware_auto_perception_msgs::msg::ObjectClassification::CAR ||
+    object.classification.at(0).label ==
+      autoware_auto_perception_msgs::msg::ObjectClassification::BUS ||
+    object.classification.at(0).label ==
+      autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK ||
+    object.classification.at(0).label ==
+      autoware_auto_perception_msgs::msg::ObjectClassification::MOTORCYCLE) {
     return true;
   }
   return false;

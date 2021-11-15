@@ -44,7 +44,7 @@ MergeFromPrivateRoadModule::MergeFromPrivateRoadModule(
 }
 
 bool MergeFromPrivateRoadModule::modifyPathVelocity(
-  autoware_planning_msgs::msg::PathWithLaneId * path,
+  autoware_auto_planning_msgs::msg::PathWithLaneId * path,
   autoware_planning_msgs::msg::StopReason * stop_reason)
 {
   debug_data_ = DebugData();
@@ -135,15 +135,15 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(
   return true;
 }
 
-autoware_planning_msgs::msg::PathWithLaneId
+autoware_auto_planning_msgs::msg::PathWithLaneId
 MergeFromPrivateRoadModule::extractPathNearExitOfPrivateRoad(
-  const autoware_planning_msgs::msg::PathWithLaneId & path, const double extend_length)
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const double extend_length)
 {
   if (path.points.size() < 2) {
     return path;
   }
 
-  autoware_planning_msgs::msg::PathWithLaneId private_path = path;
+  autoware_auto_planning_msgs::msg::PathWithLaneId private_path = path;
   private_path.points.clear();
 
   double sum_dist = 0.0;

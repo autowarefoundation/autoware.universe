@@ -17,7 +17,7 @@
 
 #include <autoware_utils/geometry/geometry.hpp>
 
-#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <boost/optional.hpp>
 

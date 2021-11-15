@@ -22,7 +22,7 @@
 TEST(to_footprint_polygon, nominal)
 {
   using behavior_velocity_planner::planning_utils::toFootprintPolygon;
-  autoware_perception_msgs::msg::DynamicObject obj = test::generateDynamicObject(0.0);
+  autoware_auto_perception_msgs::msg::PredictedObject obj = test::generatePredictedObject(0.0);
   auto poly = toFootprintPolygon(obj);
   EXPECT_TRUE(true);
 }

@@ -28,7 +28,7 @@ namespace behavior_velocity_planner
 namespace
 {
 std::vector<lanelet::ConstLanelet> getLaneletsOnPath(
-  const autoware_planning_msgs::msg::PathWithLaneId & path,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const lanelet::LaneletMapPtr lanelet_map)
 {
   std::vector<lanelet::ConstLanelet> lanelets;
@@ -41,7 +41,7 @@ std::vector<lanelet::ConstLanelet> getLaneletsOnPath(
 }
 
 bool hasPublicRoadOnPath(
-  const autoware_planning_msgs::msg::PathWithLaneId & path,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const lanelet::LaneletMapPtr lanelet_map)
 {
   for (const auto & ll : getLaneletsOnPath(path, lanelet_map)) {
@@ -55,7 +55,7 @@ bool hasPublicRoadOnPath(
 }
 
 bool hasPrivateRoadOnPath(
-  const autoware_planning_msgs::msg::PathWithLaneId & path,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const lanelet::LaneletMapPtr lanelet_map)
 {
   for (const auto & ll : getLaneletsOnPath(path, lanelet_map)) {
@@ -111,7 +111,7 @@ OcclusionSpotModuleManager::OcclusionSpotModuleManager(rclcpp::Node & node)
 }
 
 void OcclusionSpotModuleManager::launchNewModules(
-  const autoware_planning_msgs::msg::PathWithLaneId & path)
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
   const int64_t private_road_module_id = static_cast<int64_t>(ModuleID::PRIVATE);
   const int64_t public_road_module_id = static_cast<int64_t>(ModuleID::PUBLIC);
@@ -135,7 +135,7 @@ void OcclusionSpotModuleManager::launchNewModules(
 
 std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
 OcclusionSpotModuleManager::getModuleExpiredFunction(
-  const autoware_planning_msgs::msg::PathWithLaneId & path)
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
   const bool has_public_road = hasPublicRoadOnPath(path, planner_data_->lanelet_map);
   const bool has_private_road = hasPrivateRoadOnPath(path, planner_data_->lanelet_map);

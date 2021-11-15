@@ -53,10 +53,10 @@ geometry_msgs::msg::PoseStamped transform2pose(
   return pose;
 }
 
-autoware_planning_msgs::msg::Path to_path(
-  const autoware_planning_msgs::msg::PathWithLaneId & path_with_id)
+autoware_auto_planning_msgs::msg::Path to_path(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path_with_id)
 {
-  autoware_planning_msgs::msg::Path path;
+  autoware_auto_planning_msgs::msg::Path path;
   for (const auto & path_point : path_with_id.points) {
     path.points.push_back(path_point.point);
   }
@@ -73,27 +73,27 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   using std::placeholders::_1;
   // Trigger Subscriber
   trigger_sub_path_with_lane_id_ =
-    this->create_subscription<autoware_planning_msgs::msg::PathWithLaneId>(
+    this->create_subscription<autoware_auto_planning_msgs::msg::PathWithLaneId>(
       "~/input/path_with_lane_id", 1, std::bind(&BehaviorVelocityPlannerNode::onTrigger, this, _1));
 
   // Subscribers
-  sub_dynamic_objects_ =
-    this->create_subscription<autoware_perception_msgs::msg::DynamicObjectArray>(
+  sub_predicted_objects_ =
+    this->create_subscription<autoware_auto_perception_msgs::msg::PredictedObjects>(
       "~/input/dynamic_objects", 1,
-      std::bind(&BehaviorVelocityPlannerNode::onDynamicObjects, this, _1));
+      std::bind(&BehaviorVelocityPlannerNode::onPredictedObjects, this, _1));
   sub_no_ground_pointcloud_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "~/input/no_ground_pointcloud", rclcpp::SensorDataQoS(),
     std::bind(&BehaviorVelocityPlannerNode::onNoGroundPointCloud, this, _1));
-  sub_vehicle_velocity_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
-    "~/input/vehicle_velocity", 1,
+  sub_vehicle_odometry_ = this->create_subscription<nav_msgs::msg::Odometry>(
+    "~/input/vehicle_odometry", 1,
     std::bind(&BehaviorVelocityPlannerNode::onVehicleVelocity, this, _1));
-  sub_lanelet_map_ = this->create_subscription<autoware_lanelet2_msgs::msg::MapBin>(
+  sub_lanelet_map_ = this->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
     "~/input/vector_map", rclcpp::QoS(10).transient_local(),
     std::bind(&BehaviorVelocityPlannerNode::onLaneletMap, this, _1));
-  sub_traffic_light_states_ =
-    this->create_subscription<autoware_perception_msgs::msg::TrafficLightStateArray>(
-      "~/input/traffic_light_states", 10,
-      std::bind(&BehaviorVelocityPlannerNode::onTrafficLightStates, this, _1));
+  sub_traffic_signals_ =
+    this->create_subscription<autoware_auto_perception_msgs::msg::TrafficSignalArray>(
+      "~/input/traffic_signals", 10,
+      std::bind(&BehaviorVelocityPlannerNode::onTrafficSignals, this, _1));
   sub_external_crosswalk_states_ =
     this->create_subscription<autoware_api_msgs::msg::CrosswalkStatus>(
       "~/input/external_crosswalk_states", 10,
@@ -102,10 +102,10 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
     this->create_subscription<autoware_api_msgs::msg::IntersectionStatus>(
       "~/input/external_intersection_states", 10,
       std::bind(&BehaviorVelocityPlannerNode::onExternalIntersectionStates, this, _1));
-  sub_external_traffic_light_states_ =
-    this->create_subscription<autoware_perception_msgs::msg::TrafficLightStateArray>(
-      "~/input/external_traffic_light_states", 10,
-      std::bind(&BehaviorVelocityPlannerNode::onExternalTrafficLightStates, this, _1));
+  sub_external_traffic_signals_ =
+    this->create_subscription<autoware_auto_perception_msgs::msg::TrafficSignalArray>(
+      "~/input/external_traffic_signals", 10,
+      std::bind(&BehaviorVelocityPlannerNode::onExternalTrafficSignals, this, _1));
   sub_virtual_traffic_light_states_ =
     this->create_subscription<autoware_v2x_msgs::msg::VirtualTrafficLightStateArray>(
       "~/input/virtual_traffic_light_states", 10,
@@ -115,7 +115,7 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
     std::bind(&BehaviorVelocityPlannerNode::onOccupancyGrid, this, _1));
 
   // Publishers
-  path_pub_ = this->create_publisher<autoware_planning_msgs::msg::Path>("~/output/path", 1);
+  path_pub_ = this->create_publisher<autoware_auto_planning_msgs::msg::Path>("~/output/path", 1);
   stop_reason_diag_pub_ =
     this->create_publisher<diagnostic_msgs::msg::DiagnosticStatus>("~/output/stop_reason", 1);
   debug_viz_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/path", 1);
@@ -167,7 +167,7 @@ bool BehaviorVelocityPlannerNode::isDataReady()
   if (!d.current_velocity) {
     return false;
   }
-  if (!d.dynamic_objects) {
+  if (!d.predicted_objects) {
     return false;
   }
   if (!d.no_ground_pointcloud) {
@@ -186,10 +186,10 @@ void BehaviorVelocityPlannerNode::onOccupancyGrid(
   planner_data_.occupancy_grid = msg;
 }
 
-void BehaviorVelocityPlannerNode::onDynamicObjects(
-  const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr msg)
+void BehaviorVelocityPlannerNode::onPredictedObjects(
+  const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr msg)
 {
-  planner_data_.dynamic_objects = msg;
+  planner_data_.predicted_objects = msg;
 }
 
 void BehaviorVelocityPlannerNode::onNoGroundPointCloud(
@@ -215,13 +215,17 @@ void BehaviorVelocityPlannerNode::onNoGroundPointCloud(
 }
 
 void BehaviorVelocityPlannerNode::onVehicleVelocity(
-  const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg)
+  const nav_msgs::msg::Odometry::ConstSharedPtr msg)
 {
-  planner_data_.current_velocity = msg;
+  auto current_velocity = std::make_shared<geometry_msgs::msg::TwistStamped>();
+  current_velocity->header = msg->header;
+  current_velocity->twist = msg->twist.twist;
+  planner_data_.current_velocity = current_velocity;
+
   planner_data_.updateCurrentAcc();
 
   // Add velocity to buffer
-  planner_data_.velocity_buffer.push_front(*msg);
+  planner_data_.velocity_buffer.push_front(*current_velocity);
   const auto now = this->now();
   while (true) {
     // Check oldest data time
@@ -238,7 +242,7 @@ void BehaviorVelocityPlannerNode::onVehicleVelocity(
 }
 
 void BehaviorVelocityPlannerNode::onLaneletMap(
-  const autoware_lanelet2_msgs::msg::MapBin::ConstSharedPtr msg)
+  const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg)
 {
   // Load map
   planner_data_.lanelet_map = std::make_shared<lanelet::LaneletMap>();
@@ -269,14 +273,14 @@ void BehaviorVelocityPlannerNode::onLaneletMap(
   }
 }
 
-void BehaviorVelocityPlannerNode::onTrafficLightStates(
-  const autoware_perception_msgs::msg::TrafficLightStateArray::ConstSharedPtr msg)
+void BehaviorVelocityPlannerNode::onTrafficSignals(
+  const autoware_auto_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr msg)
 {
-  for (const auto & state : msg->states) {
-    autoware_perception_msgs::msg::TrafficLightStateStamped traffic_light_state;
-    traffic_light_state.header = msg->header;
-    traffic_light_state.state = state;
-    planner_data_.traffic_light_id_map[state.id] = traffic_light_state;
+  for (const auto & signal : msg->signals) {
+    autoware_auto_perception_msgs::msg::TrafficSignalStamped traffic_signal;
+    traffic_signal.header = msg->header;
+    traffic_signal.signal = signal;
+    planner_data_.traffic_light_id_map[signal.map_primitive_id] = traffic_signal;
   }
 }
 
@@ -292,14 +296,14 @@ void BehaviorVelocityPlannerNode::onExternalIntersectionStates(
   planner_data_.external_intersection_status_input = *msg;
 }
 
-void BehaviorVelocityPlannerNode::onExternalTrafficLightStates(
-  const autoware_perception_msgs::msg::TrafficLightStateArray::ConstSharedPtr msg)
+void BehaviorVelocityPlannerNode::onExternalTrafficSignals(
+  const autoware_auto_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr msg)
 {
-  for (const auto & state : msg->states) {
-    autoware_perception_msgs::msg::TrafficLightStateStamped traffic_light_state;
-    traffic_light_state.header = msg->header;
-    traffic_light_state.state = state;
-    planner_data_.external_traffic_light_id_map[state.id] = traffic_light_state;
+  for (const auto & signal : msg->signals) {
+    autoware_auto_perception_msgs::msg::TrafficSignalStamped traffic_signal;
+    traffic_signal.header = msg->header;
+    traffic_signal.signal = signal;
+    planner_data_.external_traffic_light_id_map[signal.map_primitive_id] = traffic_signal;
   }
 }
 
@@ -310,7 +314,7 @@ void BehaviorVelocityPlannerNode::onVirtualTrafficLightStates(
 }
 
 void BehaviorVelocityPlannerNode::onTrigger(
-  const autoware_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg)
+  const autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg)
 {
   // Check ready
   try {
@@ -351,7 +355,8 @@ void BehaviorVelocityPlannerNode::onTrigger(
   }
 }
 
-void BehaviorVelocityPlannerNode::publishDebugMarker(const autoware_planning_msgs::msg::Path & path)
+void BehaviorVelocityPlannerNode::publishDebugMarker(
+  const autoware_auto_planning_msgs::msg::Path & path)
 {
   visualization_msgs::msg::MarkerArray output_msg;
   for (size_t i = 0; i < path.points.size(); ++i) {

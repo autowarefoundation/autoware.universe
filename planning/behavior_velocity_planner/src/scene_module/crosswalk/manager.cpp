@@ -24,7 +24,7 @@ namespace behavior_velocity_planner
 namespace
 {
 std::vector<lanelet::ConstLanelet> getCrosswalksOnPath(
-  const autoware_planning_msgs::msg::PathWithLaneId & path,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const lanelet::LaneletMapPtr lanelet_map,
   const std::shared_ptr<const lanelet::routing::RoutingGraphContainer> & overall_graphs)
 {
@@ -49,7 +49,7 @@ std::vector<lanelet::ConstLanelet> getCrosswalksOnPath(
 }
 
 std::set<int64_t> getCrosswalkIdSetOnPath(
-  const autoware_planning_msgs::msg::PathWithLaneId & path,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const lanelet::LaneletMapPtr lanelet_map,
   const std::shared_ptr<const lanelet::routing::RoutingGraphContainer> & overall_graphs)
 {
@@ -75,8 +75,8 @@ CrosswalkModuleManager::CrosswalkModuleManager(rclcpp::Node & node)
   cp.stop_margin = node.declare_parameter(ns + ".crosswalk.stop_margin", 1.0);
   cp.slow_margin = node.declare_parameter(ns + ".crosswalk.slow_margin", 2.0);
   cp.slow_velocity = node.declare_parameter(ns + ".crosswalk.slow_velocity", 5.0 / 3.6);
-  cp.stop_dynamic_object_prediction_time_margin =
-    node.declare_parameter(ns + ".crosswalk.stop_dynamic_object_prediction_time_margin", 3.0);
+  cp.stop_predicted_object_prediction_time_margin =
+    node.declare_parameter(ns + ".crosswalk.stop_predicted_object_prediction_time_margin", 3.0);
   cp.external_input_timeout = node.declare_parameter(ns + ".crosswalk.external_input_timeout", 1.0);
 
   // for walkway parameters
@@ -88,7 +88,7 @@ CrosswalkModuleManager::CrosswalkModuleManager(rclcpp::Node & node)
 }
 
 void CrosswalkModuleManager::launchNewModules(
-  const autoware_planning_msgs::msg::PathWithLaneId & path)
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
   for (const auto & crosswalk :
        getCrosswalksOnPath(path, planner_data_->lanelet_map, planner_data_->overall_graphs)) {
@@ -110,7 +110,7 @@ void CrosswalkModuleManager::launchNewModules(
 
 std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
 CrosswalkModuleManager::getModuleExpiredFunction(
-  const autoware_planning_msgs::msg::PathWithLaneId & path)
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
   const auto crosswalk_id_set =
     getCrosswalkIdSetOnPath(path, planner_data_->lanelet_map, planner_data_->overall_graphs);

@@ -58,7 +58,7 @@ public:
   struct ModuleData
   {
     geometry_msgs::msg::Pose head_pose{};
-    autoware_planning_msgs::msg::PathWithLaneId path{};
+    autoware_auto_planning_msgs::msg::PathWithLaneId path{};
     boost::optional<geometry_msgs::msg::Pose> stop_head_pose_at_stop_line;
     boost::optional<geometry_msgs::msg::Pose> stop_head_pose_at_end_line;
   };
@@ -75,7 +75,7 @@ public:
     const rclcpp::Clock::SharedPtr clock);
 
   bool modifyPathVelocity(
-    autoware_planning_msgs::msg::PathWithLaneId * path,
+    autoware_auto_planning_msgs::msg::PathWithLaneId * path,
     autoware_planning_msgs::msg::StopReason * stop_reason) override;
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
@@ -111,11 +111,11 @@ private:
   bool hasRightOfWay(const autoware_v2x_msgs::msg::VirtualTrafficLightState & state);
 
   void insertStopVelocityAtStopLine(
-    autoware_planning_msgs::msg::PathWithLaneId * path,
+    autoware_auto_planning_msgs::msg::PathWithLaneId * path,
     autoware_planning_msgs::msg::StopReason * stop_reason);
 
   void insertStopVelocityAtEndLine(
-    autoware_planning_msgs::msg::PathWithLaneId * path,
+    autoware_auto_planning_msgs::msg::PathWithLaneId * path,
     autoware_planning_msgs::msg::StopReason * stop_reason);
 };
 }  // namespace behavior_velocity_planner

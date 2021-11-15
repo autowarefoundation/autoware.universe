@@ -21,9 +21,9 @@
 #include <scene_module/occlusion_spot/scene_occlusion_spot_in_public_road.hpp>
 #include <scene_module/scene_module_interface.hpp>
 
-#include <autoware_perception_msgs/msg/dynamic_object.hpp>
-#include <autoware_perception_msgs/msg/dynamic_object_array.hpp>
-#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
+#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
+#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <geometry_msgs/msg/point.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 
@@ -50,10 +50,10 @@ private:
 
   PlannerParam planner_param_;
 
-  void launchNewModules(const autoware_planning_msgs::msg::PathWithLaneId & path) override;
+  void launchNewModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
 
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
-    const autoware_planning_msgs::msg::PathWithLaneId & path) override;
+    const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
 
   rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr pub_debug_occupancy_grid_;
 };

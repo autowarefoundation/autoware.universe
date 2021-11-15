@@ -20,21 +20,21 @@ So for example, in order to stop at a stop line with the vehicles' front on the 
 
 ## Input topics
 
-| Name                          | Type                                             | Description          |
-| ----------------------------- | ------------------------------------------------ | -------------------- |
-| `~input/path_with_lane_id`    | autoware_planning_msgs::PathWithLaneId           | path with lane_id    |
-| `~input/vector_map`           | autoware_lanelet2_msgs::MapBin                   | vector map           |
-| `~input/vehicle_velocity`     | geometry_msgs::TwistStamped                      | vehicle velocity     |
-| `~input/dynamic_objects`      | autoware_perception_msgs::DynamicObjectArray     | dynamic objects      |
-| `~input/no_ground_pointcloud` | sensor_msgs::PointCloud2                         | obstacle pointcloud  |
-| `~input/traffic_light_states` | autoware_perception_msgs::TrafficLightStateArray | traffic light states |
+| Name                          | Type                                                   | Description          |
+| ----------------------------- | ------------------------------------------------------ | -------------------- |
+| `~input/path_with_lane_id`    | autoware_auto_planning_msgs::msg::PathWithLaneId       | path with lane_id    |
+| `~input/vector_map`           | autoware_auto_mapping_msgs::msg::HADMapBin             | vector map           |
+| `~input/vehicle_odometry`     | nav_msgs::msg::Odometry                                | vehicle velocity     |
+| `~input/dynamic_objects`      | autoware_auto_perception_msgs::msg::PredictedObjects   | dynamic objects      |
+| `~input/no_ground_pointcloud` | sensor_msgs::msg::PointCloud2                          | obstacle pointcloud  |
+| `~input/traffic_signals`      | autoware_auto_perception_msgs::msg::TrafficSignalArray | traffic light states |
 
 ## Output topics
 
-| Name                   | Type                                    | Description                            |
-| ---------------------- | --------------------------------------- | -------------------------------------- |
-| `~output/path`         | autoware_planning_msgs::Path            | path to be followed                    |
-| `~output/stop_reasons` | autoware_planning_msgs::StopReasonArray | reasons that cause the vehicle to stop |
+| Name                   | Type                                         | Description                            |
+| ---------------------- | -------------------------------------------- | -------------------------------------- |
+| `~output/path`         | autoware_auto_planning_msgs::msg::Path       | path to be followed                    |
+| `~output/stop_reasons` | autoware_planning_msgs::msg::StopReasonArray | reasons that cause the vehicle to stop |
 
 ## Node parameters
 
@@ -367,16 +367,16 @@ Launches when there is a crosswalk on the target lane.
 
 #### Module Parameters
 
-| Parameter                                              | Type   | Description                                                              |
-| ------------------------------------------------------ | ------ | ------------------------------------------------------------------------ |
-| `crosswalk/stop_line_distance`                         | double | [m] make stop line away from crosswalk when no explicit stop line exists |
-| `crosswalk/stop_margin`                                | double | [m] a margin that the vehicle tries to stop before stop_line             |
-| `crosswalk/slow_margin`                                | bool   | [m] a margin that the vehicle tries to slow down before stop_line        |
-| `crosswalk/slow_velocity`                              | double | [m] a slow down velocity                                                 |
-| `crosswalk/stop_dynamic_object_prediction_time_margin` | double | [s] time margin for decision of ego vehicle to stop or not               |
-| `walkway/stop_line_distance`                           | double | [m] make stop line away from crosswalk when no explicit stop line exists |
-| `walkway/stop_margin`                                  | double | [m] a margin that the vehicle tries to stop before walkway               |
-| `walkway/stop_duration_sec`                            | double | [s] time margin for decision of ego vehicle to stop                      |
+| Parameter                                                | Type   | Description                                                              |
+| -------------------------------------------------------- | ------ | ------------------------------------------------------------------------ |
+| `crosswalk/stop_line_distance`                           | double | [m] make stop line away from crosswalk when no explicit stop line exists |
+| `crosswalk/stop_margin`                                  | double | [m] a margin that the vehicle tries to stop before stop_line             |
+| `crosswalk/slow_margin`                                  | bool   | [m] a margin that the vehicle tries to slow down before stop_line        |
+| `crosswalk/slow_velocity`                                | double | [m] a slow down velocity                                                 |
+| `crosswalk/stop_predicted_object_prediction_time_margin` | double | [s] time margin for decision of ego vehicle to stop or not               |
+| `walkway/stop_line_distance`                             | double | [m] make stop line away from crosswalk when no explicit stop line exists |
+| `walkway/stop_margin`                                    | double | [m] a margin that the vehicle tries to stop before walkway               |
+| `walkway/stop_duration_sec`                              | double | [s] time margin for decision of ego vehicle to stop                      |
 
 #### Flowchart
 

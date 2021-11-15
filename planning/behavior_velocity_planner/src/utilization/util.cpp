@@ -23,14 +23,15 @@ namespace behavior_velocity_planner
 {
 namespace planning_utils
 {
-Polygon2d toFootprintPolygon(const autoware_perception_msgs::msg::DynamicObject & object)
+Polygon2d toFootprintPolygon(const autoware_auto_perception_msgs::msg::PredictedObject & object)
 {
   Polygon2d obj_footprint;
-  if (object.shape.type == autoware_perception_msgs::msg::Shape::POLYGON) {
+  if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::POLYGON) {
     obj_footprint = toBoostPoly(object.shape.footprint);
   } else {
     // cylinder type is treated as square-polygon
-    obj_footprint = obj2polygon(object.state.pose_covariance.pose, object.shape.dimensions);
+    obj_footprint =
+      obj2polygon(object.kinematics.initial_pose_with_covariance.pose, object.shape.dimensions);
   }
   return obj_footprint;
 }
@@ -43,7 +44,7 @@ bool isAheadOf(const geometry_msgs::msg::Pose & target, const geometry_msgs::msg
 }
 
 Polygon2d generatePathPolygon(
-  const autoware_planning_msgs::msg::PathWithLaneId & path, const size_t start_idx,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const size_t start_idx,
   const size_t end_idx, const double width)
 {
   Polygon2d ego_area;  // open polygon
@@ -116,14 +117,14 @@ bool calcClosestIndex(
   return closest == -1 ? false : true;
 }
 
-template bool calcClosestIndex<autoware_planning_msgs::msg::Trajectory>(
-  const autoware_planning_msgs::msg::Trajectory & path, const geometry_msgs::msg::Pose & pose,
+template bool calcClosestIndex<autoware_auto_planning_msgs::msg::Trajectory>(
+  const autoware_auto_planning_msgs::msg::Trajectory & path, const geometry_msgs::msg::Pose & pose,
   int & closest, double dist_thr, double angle_thr);
-template bool calcClosestIndex<autoware_planning_msgs::msg::PathWithLaneId>(
-  const autoware_planning_msgs::msg::PathWithLaneId & path, const geometry_msgs::msg::Pose & pose,
-  int & closest, double dist_thr, double angle_thr);
-template bool calcClosestIndex<autoware_planning_msgs::msg::Path>(
-  const autoware_planning_msgs::msg::Path & path, const geometry_msgs::msg::Pose & pose,
+template bool calcClosestIndex<autoware_auto_planning_msgs::msg::PathWithLaneId>(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const geometry_msgs::msg::Pose & pose, int & closest, double dist_thr, double angle_thr);
+template bool calcClosestIndex<autoware_auto_planning_msgs::msg::Path>(
+  const autoware_auto_planning_msgs::msg::Path & path, const geometry_msgs::msg::Pose & pose,
   int & closest, double dist_thr, double angle_thr);
 
 template <class T>
@@ -149,14 +150,14 @@ bool calcClosestIndex(
 
   return closest == -1 ? false : true;
 }
-template bool calcClosestIndex<autoware_planning_msgs::msg::Trajectory>(
-  const autoware_planning_msgs::msg::Trajectory & path, const geometry_msgs::msg::Point & point,
-  int & closest, double dist_thr);
-template bool calcClosestIndex<autoware_planning_msgs::msg::PathWithLaneId>(
-  const autoware_planning_msgs::msg::PathWithLaneId & path, const geometry_msgs::msg::Point & point,
-  int & closest, double dist_thr);
-template bool calcClosestIndex<autoware_planning_msgs::msg::Path>(
-  const autoware_planning_msgs::msg::Path & path, const geometry_msgs::msg::Point & point,
+template bool calcClosestIndex<autoware_auto_planning_msgs::msg::Trajectory>(
+  const autoware_auto_planning_msgs::msg::Trajectory & path,
+  const geometry_msgs::msg::Point & point, int & closest, double dist_thr);
+template bool calcClosestIndex<autoware_auto_planning_msgs::msg::PathWithLaneId>(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const geometry_msgs::msg::Point & point, int & closest, double dist_thr);
+template bool calcClosestIndex<autoware_auto_planning_msgs::msg::Path>(
+  const autoware_auto_planning_msgs::msg::Path & path, const geometry_msgs::msg::Point & point,
   int & closest, double dist_thr);
 
 geometry_msgs::msg::Pose transformRelCoordinate2D(
@@ -258,11 +259,11 @@ void appendStopReason(
 }
 
 std::vector<geometry_msgs::msg::Point> toRosPoints(
-  const autoware_perception_msgs::msg::DynamicObjectArray & object)
+  const autoware_auto_perception_msgs::msg::PredictedObjects & object)
 {
   std::vector<geometry_msgs::msg::Point> points;
   for (const auto & obj : object.objects) {
-    points.emplace_back(obj.state.pose_covariance.pose.position);
+    points.emplace_back(obj.kinematics.initial_pose_with_covariance.pose.position);
   }
   return points;
 }

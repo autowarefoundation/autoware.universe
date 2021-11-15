@@ -122,7 +122,7 @@ std::vector<visualization_msgs::msg::Marker> makeCollisionMarkers(
     std::ostringstream string_stream;
     string_stream << "(s,d,v)=(" << possible_collision.arc_lane_dist_at_collision.length << " , "
                   << possible_collision.arc_lane_dist_at_collision.distance << " , "
-                  << possible_collision.collision_path_point.twist.linear.x << ")";
+                  << possible_collision.collision_path_point.longitudinal_velocity_mps << ")";
     debug_marker.text = string_stream.str();
     debug_markers.push_back(debug_marker);
   }

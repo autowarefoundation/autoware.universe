@@ -24,7 +24,7 @@ namespace behavior_velocity_planner
 namespace occlusion_spot_utils
 {
 void applySafeVelocityConsideringPossibleCollison(
-  autoware_planning_msgs::msg::PathWithLaneId * inout_path,
+  autoware_auto_planning_msgs::msg::PathWithLaneId * inout_path,
   std::vector<PossibleCollisionInfo> & possible_collisions, const double current_vel,
   const EgoVelocity & ego, const PlannerParam & param)
 {
@@ -36,7 +36,7 @@ void applySafeVelocityConsideringPossibleCollison(
   }
   for (auto & possible_collision : possible_collisions) {
     const double dist_to_collision = possible_collision.arc_lane_dist_at_collision.length;
-    const double original_vel = possible_collision.collision_path_point.twist.linear.x;
+    const double original_vel = possible_collision.collision_path_point.longitudinal_velocity_mps;
     const double d_obs = possible_collision.arc_lane_dist_at_collision.distance;
     const double v_obs = possible_collision.obstacle_info.max_velocity;
     // skip if obstacle velocity is below zero
@@ -62,7 +62,7 @@ void applySafeVelocityConsideringPossibleCollison(
     const double pbs_limited_rpb_vel = getPBSLimitedRPBVelocity(
       predictive_braking_system_velocity, risk_predictive_braking_velocity, ego.min_velocity,
       original_vel);
-    possible_collision.collision_path_point.twist.linear.x = pbs_limited_rpb_vel;
+    possible_collision.collision_path_point.longitudinal_velocity_mps = pbs_limited_rpb_vel;
     insertSafeVelocityToPath(
       possible_collision.collision_path_point.pose, pbs_limited_rpb_vel, param, inout_path);
   }
@@ -76,25 +76,25 @@ bool isAheadOf(const geometry_msgs::msg::Pose & target, const geometry_msgs::msg
 }
 
 bool setVelocityFrom(
-  const size_t idx, const double vel, autoware_planning_msgs::msg::PathWithLaneId * input)
+  const size_t idx, const double vel, autoware_auto_planning_msgs::msg::PathWithLaneId * input)
 {
   for (size_t i = idx; i < input->points.size(); ++i) {
-    input->points.at(i).point.twist.linear.x =
-      std::min(vel, input->points.at(i).point.twist.linear.x);
+    input->points.at(i).point.longitudinal_velocity_mps =
+      std::min(static_cast<float>(vel), input->points.at(i).point.longitudinal_velocity_mps);
   }
   return true;
 }
 
 int insertSafeVelocityToPath(
   const geometry_msgs::msg::Pose & in_pose, const double safe_vel, const PlannerParam & param,
-  autoware_planning_msgs::msg::PathWithLaneId * inout_path)
+  autoware_auto_planning_msgs::msg::PathWithLaneId * inout_path)
 {
   int closest_idx = -1;
   if (!planning_utils::calcClosestIndex(
         *inout_path, in_pose, closest_idx, param.dist_thr, param.angle_thr)) {
     return -1;
   }
-  autoware_planning_msgs::msg::PathPointWithLaneId inserted_point;
+  autoware_auto_planning_msgs::msg::PathPointWithLaneId inserted_point;
   inserted_point = inout_path->points.at(closest_idx);
   int insert_idx = closest_idx;
   // insert velocity to path if distance is not too close else insert new collision point

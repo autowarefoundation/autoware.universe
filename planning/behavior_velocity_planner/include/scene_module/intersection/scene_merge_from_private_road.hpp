@@ -21,9 +21,9 @@
 #include <scene_module/scene_module_interface.hpp>
 #include <utilization/boost_geometry_helper.hpp>
 
-#include <autoware_perception_msgs/msg/dynamic_object.hpp>
-#include <autoware_perception_msgs/msg/dynamic_object_array.hpp>
-#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
+#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
+#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <geometry_msgs/msg/point.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
@@ -82,7 +82,7 @@ public:
 
   struct DebugData
   {
-    autoware_planning_msgs::msg::PathWithLaneId path_raw;
+    autoware_auto_planning_msgs::msg::PathWithLaneId path_raw;
 
     geometry_msgs::msg::Pose virtual_wall_pose;
     geometry_msgs::msg::Pose stop_point_pose;
@@ -91,9 +91,9 @@ public:
     geometry_msgs::msg::Polygon stuck_vehicle_detect_area;
     std::vector<lanelet::ConstLanelet> intersection_detection_lanelets;
     std::vector<lanelet::CompoundPolygon3d> detection_area;
-    autoware_planning_msgs::msg::PathWithLaneId spline_path;
+    autoware_auto_planning_msgs::msg::PathWithLaneId spline_path;
     geometry_msgs::msg::Point first_collision_point;
-    autoware_perception_msgs::msg::DynamicObjectArray stuck_targets;
+    autoware_auto_perception_msgs::msg::PredictedObjects stuck_targets;
   };
 
 public:
@@ -113,7 +113,7 @@ public:
    * and object predicted path
    */
   bool modifyPathVelocity(
-    autoware_planning_msgs::msg::PathWithLaneId * path,
+    autoware_auto_planning_msgs::msg::PathWithLaneId * path,
     autoware_planning_msgs::msg::StopReason * stop_reason) override;
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
@@ -123,8 +123,8 @@ private:
   std::string turn_direction_;
   bool has_traffic_light_;
 
-  autoware_planning_msgs::msg::PathWithLaneId extractPathNearExitOfPrivateRoad(
-    const autoware_planning_msgs::msg::PathWithLaneId & path, const double extend_length);
+  autoware_auto_planning_msgs::msg::PathWithLaneId extractPathNearExitOfPrivateRoad(
+    const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const double extend_length);
 
   // Parameter
   PlannerParam planner_param_;

@@ -17,7 +17,7 @@
 
 #include <scene_module/occlusion_spot/occlusion_spot_utils.hpp>
 
-#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <algorithm>
 #include <vector>
@@ -27,13 +27,13 @@ namespace behavior_velocity_planner
 namespace occlusion_spot_utils
 {
 void applySafeVelocityConsideringPossibleCollison(
-  autoware_planning_msgs::msg::PathWithLaneId * inout_path,
+  autoware_auto_planning_msgs::msg::PathWithLaneId * inout_path,
   std::vector<PossibleCollisionInfo> & possible_collisions, const double current_vel,
   const EgoVelocity & ego, const PlannerParam & param);
 
 int insertSafeVelocityToPath(
   const geometry_msgs::msg::Pose & in_pose, const double safe_vel, const PlannerParam & param,
-  autoware_planning_msgs::msg::PathWithLaneId * inout_path);
+  autoware_auto_planning_msgs::msg::PathWithLaneId * inout_path);
 
 // @brief calculates the maximum velocity allowing to decelerate within the given distance
 inline double calculatePredictiveBrakingVelocity(

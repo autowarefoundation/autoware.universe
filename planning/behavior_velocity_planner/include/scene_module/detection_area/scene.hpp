@@ -67,7 +67,7 @@ public:
     const rclcpp::Clock::SharedPtr clock);
 
   bool modifyPathVelocity(
-    autoware_planning_msgs::msg::PathWithLaneId * path,
+    autoware_auto_planning_msgs::msg::PathWithLaneId * path,
     autoware_planning_msgs::msg::StopReason * stop_reason) override;
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
@@ -80,18 +80,18 @@ private:
   bool canClearStopState() const;
 
   bool isOverLine(
-    const autoware_planning_msgs::msg::PathWithLaneId & path,
+    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
     const geometry_msgs::msg::Pose & self_pose, const geometry_msgs::msg::Pose & line_pose) const;
 
   bool hasEnoughBrakingDistance(
     const geometry_msgs::msg::Pose & self_pose, const geometry_msgs::msg::Pose & line_pose) const;
 
-  autoware_planning_msgs::msg::PathWithLaneId insertStopPoint(
-    const autoware_planning_msgs::msg::PathWithLaneId & path,
+  autoware_auto_planning_msgs::msg::PathWithLaneId insertStopPoint(
+    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
     const PathIndexWithPose & stop_point) const;
 
   boost::optional<PathIndexWithPose> createTargetPoint(
-    const autoware_planning_msgs::msg::PathWithLaneId & path, const LineString2d & stop_line,
+    const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const LineString2d & stop_line,
     const double margin) const;
 
   // Key Feature

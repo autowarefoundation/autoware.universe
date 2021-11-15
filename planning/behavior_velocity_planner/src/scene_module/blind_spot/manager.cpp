@@ -28,7 +28,7 @@ namespace behavior_velocity_planner
 namespace
 {
 std::vector<lanelet::ConstLanelet> getLaneletsOnPath(
-  const autoware_planning_msgs::msg::PathWithLaneId & path,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const lanelet::LaneletMapPtr lanelet_map)
 {
   std::vector<lanelet::ConstLanelet> lanelets;
@@ -41,7 +41,7 @@ std::vector<lanelet::ConstLanelet> getLaneletsOnPath(
   return lanelets;
 }
 
-std::set<int64_t> getLaneIdSetOnPath(const autoware_planning_msgs::msg::PathWithLaneId & path)
+std::set<int64_t> getLaneIdSetOnPath(const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
   std::set<int64_t> lane_id_set;
 
@@ -68,7 +68,7 @@ BlindSpotModuleManager::BlindSpotModuleManager(rclcpp::Node & node)
 }
 
 void BlindSpotModuleManager::launchNewModules(
-  const autoware_planning_msgs::msg::PathWithLaneId & path)
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
   for (const auto & ll : getLaneletsOnPath(path, planner_data_->lanelet_map)) {
     const auto lane_id = ll.id();
@@ -92,7 +92,7 @@ void BlindSpotModuleManager::launchNewModules(
 
 std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
 BlindSpotModuleManager::getModuleExpiredFunction(
-  const autoware_planning_msgs::msg::PathWithLaneId & path)
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
   const auto lane_id_set = getLaneIdSetOnPath(path);
 

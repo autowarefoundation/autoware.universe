@@ -17,8 +17,8 @@
 
 #include "behavior_velocity_planner/planner_data.hpp"
 
-#include <autoware_planning_msgs/msg/path.hpp>
-#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_auto_planning_msgs/msg/path.hpp>
+#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_planning_msgs/msg/stop_reason.hpp>
 #include <autoware_planning_msgs/msg/stop_reason_array.hpp>
 #include <autoware_v2x_msgs/msg/infrastructure_command_array.hpp>
@@ -45,7 +45,7 @@ public:
   virtual ~SceneModuleInterface() = default;
 
   virtual bool modifyPathVelocity(
-    autoware_planning_msgs::msg::PathWithLaneId * path,
+    autoware_auto_planning_msgs::msg::PathWithLaneId * path,
     autoware_planning_msgs::msg::StopReason * stop_reason) = 0;
   virtual visualization_msgs::msg::MarkerArray createDebugMarkerArray() = 0;
 
@@ -100,7 +100,7 @@ public:
 
   void updateSceneModuleInstances(
     const std::shared_ptr<const PlannerData> & planner_data,
-    const autoware_planning_msgs::msg::PathWithLaneId & path)
+    const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
   {
     planner_data_ = planner_data;
 
@@ -108,7 +108,7 @@ public:
     deleteExpiredModules(path);
   }
 
-  virtual void modifyPathVelocity(autoware_planning_msgs::msg::PathWithLaneId * path)
+  virtual void modifyPathVelocity(autoware_auto_planning_msgs::msg::PathWithLaneId * path)
   {
     visualization_msgs::msg::MarkerArray debug_marker_array;
     autoware_planning_msgs::msg::StopReasonArray stop_reason_array;
@@ -146,12 +146,12 @@ public:
   }
 
 protected:
-  virtual void launchNewModules(const autoware_planning_msgs::msg::PathWithLaneId & path) = 0;
+  virtual void launchNewModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) = 0;
 
   virtual std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
-  getModuleExpiredFunction(const autoware_planning_msgs::msg::PathWithLaneId & path) = 0;
+  getModuleExpiredFunction(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) = 0;
 
-  void deleteExpiredModules(const autoware_planning_msgs::msg::PathWithLaneId & path)
+  void deleteExpiredModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
   {
     const auto isModuleExpired = getModuleExpiredFunction(path);
 

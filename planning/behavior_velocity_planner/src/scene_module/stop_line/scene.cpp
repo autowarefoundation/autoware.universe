@@ -31,7 +31,7 @@ double calcYawFromPoints(
 }
 
 geometry_msgs::msg::Pose calcInterpolatedPose(
-  const autoware_planning_msgs::msg::PathWithLaneId & path,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const StopLineModule::SegmentIndexWithOffset & offset_segment)
 {
   // Get segment points
@@ -65,7 +65,7 @@ geometry_msgs::msg::Pose calcInterpolatedPose(
 }
 
 boost::optional<StopLineModule::SegmentIndexWithOffset> findBackwardOffsetSegment(
-  const autoware_planning_msgs::msg::PathWithLaneId & path, const size_t base_idx,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const size_t base_idx,
   const double offset_length)
 {
   double sum_length = 0.0;
@@ -88,14 +88,15 @@ boost::optional<StopLineModule::SegmentIndexWithOffset> findBackwardOffsetSegmen
 }
 
 StopLineModule::SegmentIndexWithOffset findNearestSegment(
-  const autoware_planning_msgs::msg::PathWithLaneId & path, const geometry_msgs::msg::Point & point)
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const geometry_msgs::msg::Point & point)
 {
   std::vector<double> distances;
   distances.reserve(path.points.size());
 
   std::transform(
     path.points.cbegin(), path.points.cend(), std::back_inserter(distances),
-    [&point](const autoware_planning_msgs::msg::PathPointWithLaneId & p) {
+    [&point](const autoware_auto_planning_msgs::msg::PathPointWithLaneId & p) {
       return planning_utils::calcDist2d(p.point.pose.position, point);
     });
 
@@ -124,7 +125,7 @@ StopLineModule::SegmentIndexWithOffset findNearestSegment(
 }
 
 double calcSignedArcLength(
-  const autoware_planning_msgs::msg::PathWithLaneId & path, const size_t & idx_front,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const size_t & idx_front,
   const size_t & idx_back)
 {
   // If flipped, reverse index and take negative
@@ -143,8 +144,8 @@ double calcSignedArcLength(
 }
 
 double calcSignedArcLength(
-  const autoware_planning_msgs::msg::PathWithLaneId & path, const geometry_msgs::msg::Point & p1,
-  const geometry_msgs::msg::Point & p2)
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2)
 {
   const auto seg_1 = findNearestSegment(path, p1);
   const auto seg_2 = findNearestSegment(path, p2);
@@ -167,7 +168,7 @@ StopLineModule::StopLineModule(
 }
 
 boost::optional<StopLineModule::SegmentIndexWithPoint2d> StopLineModule::findCollision(
-  const autoware_planning_msgs::msg::PathWithLaneId & path, const LineString2d & stop_line)
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const LineString2d & stop_line)
 {
   for (size_t i = 0; i < path.points.size() - 1; ++i) {
     const auto & p_front = path.points.at(i).point.pose.position;
@@ -193,7 +194,7 @@ boost::optional<StopLineModule::SegmentIndexWithPoint2d> StopLineModule::findCol
 }
 
 boost::optional<StopLineModule::SegmentIndexWithOffset> StopLineModule::findOffsetSegment(
-  const autoware_planning_msgs::msg::PathWithLaneId & path,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const StopLineModule::SegmentIndexWithPoint2d & collision)
 {
   const auto base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
@@ -206,7 +207,7 @@ boost::optional<StopLineModule::SegmentIndexWithOffset> StopLineModule::findOffs
 }
 
 boost::optional<StopLineModule::SegmentIndexWithPose> StopLineModule::calcStopPose(
-  const autoware_planning_msgs::msg::PathWithLaneId & path,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const boost::optional<StopLineModule::SegmentIndexWithOffset> & offset_segment)
 {
   // If no stop point found due to out of range, use front point on path
@@ -218,8 +219,8 @@ boost::optional<StopLineModule::SegmentIndexWithPose> StopLineModule::calcStopPo
     offset_segment->index, calcInterpolatedPose(path, *offset_segment)};
 }
 
-autoware_planning_msgs::msg::PathWithLaneId StopLineModule::insertStopPose(
-  const autoware_planning_msgs::msg::PathWithLaneId & path,
+autoware_auto_planning_msgs::msg::PathWithLaneId StopLineModule::insertStopPose(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const StopLineModule::SegmentIndexWithPose & stop_pose_with_index,
   autoware_planning_msgs::msg::StopReason * stop_reason)
 {
@@ -229,7 +230,7 @@ autoware_planning_msgs::msg::PathWithLaneId StopLineModule::insertStopPose(
   const int insert_index = stop_pose_with_index.index + 1;
   auto stop_point_with_lane_id = modified_path.points.at(insert_index);
   stop_point_with_lane_id.point.pose = stop_pose_with_index.pose;
-  stop_point_with_lane_id.point.twist.linear.x = 0.0;
+  stop_point_with_lane_id.point.longitudinal_velocity_mps = 0.0;
 
   // Update first stop index
   first_stop_path_point_index_ = insert_index;
@@ -240,7 +241,7 @@ autoware_planning_msgs::msg::PathWithLaneId StopLineModule::insertStopPose(
 
   // Insert 0 velocity after stop point
   for (size_t j = insert_index; j < modified_path.points.size(); ++j) {
-    modified_path.points.at(j).point.twist.linear.x = 0.0;
+    modified_path.points.at(j).point.longitudinal_velocity_mps = 0.0;
   }
 
   // Get stop point and stop factor
@@ -255,7 +256,7 @@ autoware_planning_msgs::msg::PathWithLaneId StopLineModule::insertStopPose(
 }
 
 bool StopLineModule::modifyPathVelocity(
-  autoware_planning_msgs::msg::PathWithLaneId * path,
+  autoware_auto_planning_msgs::msg::PathWithLaneId * path,
   autoware_planning_msgs::msg::StopReason * stop_reason)
 {
   debug_data_ = DebugData();

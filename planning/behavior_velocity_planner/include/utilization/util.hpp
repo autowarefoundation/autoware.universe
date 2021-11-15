@@ -18,13 +18,13 @@
 #include <lanelet2_extension/utility/query.hpp>
 #include <utilization/boost_geometry_helper.hpp>
 
-#include <autoware_perception_msgs/msg/dynamic_object.hpp>
-#include <autoware_perception_msgs/msg/dynamic_object_array.hpp>
-#include <autoware_planning_msgs/msg/path.hpp>
-#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
+#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
+#include <autoware_auto_planning_msgs/msg/path.hpp>
+#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
+#include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>
 #include <autoware_planning_msgs/msg/stop_reason.hpp>
-#include <autoware_planning_msgs/msg/trajectory.hpp>
-#include <autoware_planning_msgs/msg/trajectory_point.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/quaternion.hpp>
 #include <visualization_msgs/msg/marker.hpp>
@@ -52,30 +52,32 @@ inline geometry_msgs::msg::Point getPoint(const geometry_msgs::msg::PoseStamped 
 {
   return p.pose.position;
 }
-inline geometry_msgs::msg::Point getPoint(const autoware_planning_msgs::msg::PathPoint & p)
+inline geometry_msgs::msg::Point getPoint(const autoware_auto_planning_msgs::msg::PathPoint & p)
 {
   return p.pose.position;
 }
 inline geometry_msgs::msg::Point getPoint(
-  const autoware_planning_msgs::msg::PathPointWithLaneId & p)
+  const autoware_auto_planning_msgs::msg::PathPointWithLaneId & p)
 {
   return p.point.pose.position;
 }
-inline geometry_msgs::msg::Point getPoint(const autoware_planning_msgs::msg::TrajectoryPoint & p)
+inline geometry_msgs::msg::Point getPoint(
+  const autoware_auto_planning_msgs::msg::TrajectoryPoint & p)
 {
   return p.pose.position;
 }
-inline geometry_msgs::msg::Pose getPose(const autoware_planning_msgs::msg::Path & path, int idx)
+inline geometry_msgs::msg::Pose getPose(
+  const autoware_auto_planning_msgs::msg::Path & path, int idx)
 {
   return path.points.at(idx).pose;
 }
 inline geometry_msgs::msg::Pose getPose(
-  const autoware_planning_msgs::msg::PathWithLaneId & path, int idx)
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, int idx)
 {
   return path.points.at(idx).point.pose;
 }
 inline geometry_msgs::msg::Pose getPose(
-  const autoware_planning_msgs::msg::Trajectory & traj, int idx)
+  const autoware_auto_planning_msgs::msg::Trajectory & traj, int idx)
 {
   return traj.points.at(idx).pose;
 }
@@ -111,10 +113,10 @@ geometry_msgs::msg::Pose transformRelCoordinate2D(
   const geometry_msgs::msg::Pose & target, const geometry_msgs::msg::Pose & origin);
 geometry_msgs::msg::Pose transformAbsCoordinate2D(
   const geometry_msgs::msg::Pose & relative, const geometry_msgs::msg::Pose & origin);
-Polygon2d toFootprintPolygon(const autoware_perception_msgs::msg::DynamicObject & object);
+Polygon2d toFootprintPolygon(const autoware_auto_perception_msgs::msg::PredictedObject & object);
 bool isAheadOf(const geometry_msgs::msg::Pose & target, const geometry_msgs::msg::Pose & origin);
 Polygon2d generatePathPolygon(
-  const autoware_planning_msgs::msg::PathWithLaneId & path, const size_t start_idx,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const size_t start_idx,
   const size_t end_idx, const double width);
 
 double calcJudgeLineDistWithAccLimit(
@@ -131,7 +133,7 @@ void appendStopReason(
   autoware_planning_msgs::msg::StopReason * stop_reason);
 
 std::vector<geometry_msgs::msg::Point> toRosPoints(
-  const autoware_perception_msgs::msg::DynamicObjectArray & object);
+  const autoware_auto_perception_msgs::msg::PredictedObjects & object);
 
 geometry_msgs::msg::Point toRosPoint(const pcl::PointXYZ & pcl_point);
 geometry_msgs::msg::Point toRosPoint(const Point2d & boost_point, const double z);

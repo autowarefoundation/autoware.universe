@@ -20,9 +20,9 @@
 #include <scene_module/scene_module_interface.hpp>
 #include <utilization/boost_geometry_helper.hpp>
 
-#include <autoware_perception_msgs/msg/dynamic_object.hpp>
-#include <autoware_perception_msgs/msg/dynamic_object_array.hpp>
-#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
+#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
+#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <geometry_msgs/msg/point.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
@@ -78,7 +78,7 @@ public:
   struct DebugData
   {
     bool stop_required;
-    autoware_planning_msgs::msg::PathWithLaneId path_raw;
+    autoware_auto_planning_msgs::msg::PathWithLaneId path_raw;
 
     geometry_msgs::msg::Pose slow_wall_pose;
     geometry_msgs::msg::Pose stop_wall_pose;
@@ -88,8 +88,8 @@ public:
     geometry_msgs::msg::Polygon stuck_vehicle_detect_area;
     std::vector<lanelet::ConstLanelet> intersection_detection_lanelets;
     std::vector<lanelet::CompoundPolygon3d> detection_area;
-    autoware_perception_msgs::msg::DynamicObjectArray conflicting_targets;
-    autoware_perception_msgs::msg::DynamicObjectArray stuck_targets;
+    autoware_auto_perception_msgs::msg::PredictedObjects conflicting_targets;
+    autoware_auto_perception_msgs::msg::PredictedObjects stuck_targets;
   };
 
 public:
@@ -123,7 +123,7 @@ public:
    * and object predicted path
    */
   bool modifyPathVelocity(
-    autoware_planning_msgs::msg::PathWithLaneId * path,
+    autoware_auto_planning_msgs::msg::PathWithLaneId * path,
     autoware_planning_msgs::msg::StopReason * stop_reason) override;
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
@@ -148,10 +148,10 @@ private:
    * @return true if collision is detected
    */
   bool checkCollision(
-    const autoware_planning_msgs::msg::PathWithLaneId & path,
+    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
     const std::vector<lanelet::CompoundPolygon3d> & detection_areas,
     const std::vector<int> & detection_area_lanelet_ids,
-    const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr objects_ptr,
+    const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
     const int closest_idx);
 
   /**
@@ -162,9 +162,9 @@ private:
    * @return true if exists
    */
   bool checkStuckVehicleInIntersection(
-    const autoware_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
+    const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
     const int stop_idx,
-    const autoware_perception_msgs::msg::DynamicObjectArray::ConstSharedPtr objects_ptr) const;
+    const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr) const;
 
   /**
    * @brief Calculate the polygon of the path from the ego-car position to the end of the
@@ -176,7 +176,7 @@ private:
    * @return generated polygon
    */
   Polygon2d generateEgoIntersectionLanePolygon(
-    const autoware_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
+    const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
     const int start_idx, const double extra_dist, const double ignore_dist) const;
 
   /**
@@ -185,7 +185,8 @@ private:
    * @param time_thr    time threshold to cut path
    */
   void cutPredictPathWithDuration(
-    autoware_perception_msgs::msg::DynamicObjectArray * objects_ptr, const double time_thr) const;
+    autoware_auto_perception_msgs::msg::PredictedObjects * objects_ptr,
+    const double time_thr) const;
 
   /**
    * @brief Calculate time that is needed for ego-vehicle to cross the intersection. (to be updated)
@@ -195,7 +196,7 @@ private:
    * @return calculated time [s]
    */
   double calcIntersectionPassingTime(
-    const autoware_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
+    const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
     const int objective_lane_id) const;
 
   /**
@@ -204,21 +205,23 @@ private:
    * @return true if the object has a target type
    */
   bool isTargetCollisionVehicleType(
-    const autoware_perception_msgs::msg::DynamicObject & object) const;
+    const autoware_auto_perception_msgs::msg::PredictedObject & object) const;
 
   /**
    * @brief check if the object has a target type for stuck check
    * @param object target object
    * @return true if the object has a target type
    */
-  bool isTargetStuckVehicleType(const autoware_perception_msgs::msg::DynamicObject & object) const;
+  bool isTargetStuckVehicleType(
+    const autoware_auto_perception_msgs::msg::PredictedObject & object) const;
 
   /**
    * @brief convert object to footprint polygon
    * @param object detected object
    * @return 2d polygon of the object footprint
    */
-  Polygon2d toFootprintPolygon(const autoware_perception_msgs::msg::DynamicObject & object) const;
+  Polygon2d toFootprintPolygon(
+    const autoware_auto_perception_msgs::msg::PredictedObject & object) const;
 
   /**
    * @brief Whether target autoware_api_msgs::Intersection::status is valid or not
