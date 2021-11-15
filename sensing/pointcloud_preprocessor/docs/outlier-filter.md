@@ -1,4 +1,4 @@
-# pointcloud_preprocessor : occupancy_grid_map_outlier_filter
+# outlier_filter
 
 ## Purpose
 
@@ -6,6 +6,12 @@ This node is an outlier filter based on a occupancy grid map.
 Depending on the implementation of occupancy grid map, it can be called an outlier filter in time series, since the occupancy grid map expresses the occupancy probabilities in time series.
 
 ## Inner-workings / Algorithms
+
+### Dual Return Outlier Filter
+
+WIP
+
+### Occupancy GridMap Outlier Filter
 
 1. Use the occupancy grid map to separate point clouds into those with low occupancy probability and those with high occupancy probability.
 
@@ -17,6 +23,18 @@ The following video is a sample. Yellow points are high occupancy probability, g
 
 - [movie1](https://www.youtube.com/watch?v=hEVv0LaTpP8)
 - [movie2](https://www.youtube.com/watch?v=VaHs1CdLcD0)
+
+### Radius Search 2d Outlier Filter [1]
+
+WIP
+
+### Ring Outlier Filter
+
+WIP
+
+### Voxel Grid Outlier Filter
+
+WIP
 
 ## Inputs / Outputs
 
@@ -50,53 +68,14 @@ The following video is a sample. Yellow points are high occupancy probability, g
 | `radius_search_2d_filter/min_points`                    | int    | Minimum number of point clouds per radius                                                                                                                                                                                      |
 | `radius_search_2d_filter/max_points`                    | int    | Maximum number of point clouds per radius                                                                                                                                                                                      |
 
-<!-- ## Assumptions / Known limits -->
+## Assumptions / Known limits
 
-<!-- Write assumptions and limitations of your implementation.
+## (Optional) Error detection and handling
 
-Example:
-  This algorithm assumes obstacles are not moving, so if they rapidly move after the vehicle started to avoid them, it might collide with them.
-  Also, this algorithm doesn't care about blind spots. In general, since too close obstacles aren't visible due to the sensing performance limit, please take enough margin to obstacles.
--->
-
-<!-- ## (Optional) Error detection and handling -->
-
-<!-- Write how to detect errors and how to recover from them.
-
-Example:
-  This package can handle up to 20 obstacles. If more obstacles found, this node will give up and raise diagnostic errors.
--->
-
-<!-- ## (Optional) Performance characterization -->
-
-<!-- Write performance information like complexity. If it wouldn't be the bottleneck, not necessary.
-
-Example:
-  ### Complexity
-
-  This algorithm is O(N).
-
-  ### Processing time
-
-  ...
--->
+## (Optional) Performance characterization
 
 ## (Optional) References/External links
 
-- [RadiusSearchOutlier](https://pcl.readthedocs.io/projects/tutorials/en/latest/remove_outliers.html)
-
-<!-- Write links you referred to when you implemented.
-
-Example:
-  [1] {link_to_a_thesis}
-  [2] {link_to_an_issue}
--->
+[1] <https://pcl.readthedocs.io/projects/tutorials/en/latest/remove_outliers.html>
 
 ## (Optional) Future extensions / Unimplemented parts
-
-<!-- Write future extensions of this package.
-
-Example:
-  Currently, this package can't handle the chattering obstacles well. We plan to add some probabilistic filters in the perception layer to improve it.
-  Also, there are some parameters that should be global(e.g. vehicle size, max steering, etc.). These will be refactored and defined as global parameters so that we can share the same parameters between different nodes.
--->
