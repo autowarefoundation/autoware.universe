@@ -283,7 +283,7 @@ boost::optional<TrajectoryPoints> applyLinearInterpolation(
   const std::vector<double> & base_index, const TrajectoryPoints & base_trajectory,
   const std::vector<double> & out_index, const bool use_spline_for_pose)
 {
-  std::vector<double> px, py, pz, pyaw, tlx, taz, alx, aaz;
+  std::vector<double> px, py, pz, pyaw, tlx, taz, alx;
   for (const auto & p : base_trajectory) {
     px.push_back(p.pose.position.x);
     py.push_back(p.pose.position.y);
@@ -292,7 +292,6 @@ boost::optional<TrajectoryPoints> applyLinearInterpolation(
     tlx.push_back(p.longitudinal_velocity_mps);
     taz.push_back(p.heading_rate_rps);
     alx.push_back(p.acceleration_mps2);
-    // aaz.push_back(p.accel.angular.z);
   }
 
   convertEulerAngleToMonotonic(pyaw);
@@ -312,9 +311,8 @@ boost::optional<TrajectoryPoints> applyLinearInterpolation(
   const auto tlx_p = linear_interpolation::interpolate(base_index, tlx, out_index);
   const auto taz_p = linear_interpolation::interpolate(base_index, taz, out_index);
   const auto alx_p = linear_interpolation::interpolate(base_index, alx, out_index);
-  const auto aaz_p = linear_interpolation::interpolate(base_index, aaz, out_index);
 
-  if (!px_p || !py_p || !pz_p || !pyaw_p || !tlx_p || !taz_p || !alx_p || !aaz_p) {
+  if (!px_p || !py_p || !pz_p || !pyaw_p || !tlx_p || !taz_p || !alx_p) {
     RCLCPP_WARN(
       rclcpp::get_logger("motion_velocity_smoother").get_child("trajectory_utils"),
       "interpolation error!!");
@@ -332,7 +330,6 @@ boost::optional<TrajectoryPoints> applyLinearInterpolation(
     point.longitudinal_velocity_mps = tlx_p->at(i);
     point.heading_rate_rps = taz_p->at(i);
     point.acceleration_mps2 = alx_p->at(i);
-    // point.accel.angular.z = aaz_p->at(i);
     out_trajectory.push_back(point);
   }
   return boost::optional<TrajectoryPoints>(out_trajectory);

@@ -92,7 +92,7 @@ MotionVelocitySmootherNode::MotionVelocitySmootherNode(const rclcpp::NodeOptions
   sub_current_trajectory_ = create_subscription<Trajectory>(
     "~/input/trajectory", 1, std::bind(&MotionVelocitySmootherNode::onCurrentTrajectory, this, _1));
   sub_current_odometry_ = create_subscription<Odometry>(
-    "/localization/odometry", 1,
+    "/localization/kinematic_state", 1,
     std::bind(&MotionVelocitySmootherNode::onCurrentOdometry, this, _1));
   sub_external_velocity_limit_ = create_subscription<VelocityLimit>(
     "~/input/external_velocity_limit_mps", 1,
