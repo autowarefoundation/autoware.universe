@@ -136,7 +136,7 @@ void VelocityHistoryDisplay::processMessage(
   Ogre::Vector3 position;
   Ogre::Quaternion orientation;
   std_msgs::msg::Header header;
-  header.stamp = msg_ptr->stamp;
+  header.stamp = msg_ptr->header.stamp;
   header.frame_id = "base_link";
   if (!context_->getFrameManager()->getTransform(header, position, orientation)) {
     RCLCPP_DEBUG(
@@ -169,7 +169,7 @@ void VelocityHistoryDisplay::updateVisualization()
   while (!histories_.empty()) {
     if (
       property_velocity_timeout_->getFloat() <
-      (current_time - std::get<0>(histories_.front())->stamp).seconds()) {
+      (current_time - std::get<0>(histories_.front())->header.stamp).seconds()) {
       histories_.pop_front();
     } else {
       break;
@@ -190,7 +190,7 @@ void VelocityHistoryDisplay::updateVisualization()
         property_vel_max_->getFloat(), std::get<0>(history)->longitudinal_velocity);
       color = *dynamic_color_ptr;
     }
-    color.a = 1.0 - (current_time - std::get<0>(history)->stamp).seconds() /
+    color.a = 1.0 - (current_time - std::get<0>(history)->header.stamp).seconds() /
                       property_velocity_timeout_->getFloat();
     color.a = std::min(std::max(color.a, 0.0f), 1.0f);
     // std::cout << __LINE__ << ":" <<std::get<1>(histories_.front()) <<std::endl;
