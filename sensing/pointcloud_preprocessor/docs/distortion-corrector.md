@@ -10,10 +10,10 @@ The `distortion_corrector` is a node that compensates pointcloud distortion caus
 
 ### Input
 
-| Name             | Type                               | Description      |
-| ---------------- | ---------------------------------- | ---------------- |
-| `~/input/points` | `sensor_msgs::msg::PointCloud2`    | reference points |
-| `~/input/twist`  | `geometry_msgs::msg::TwistStamped` | vehicle velocity |
+| Name                      | Type                                              | Description      |
+| ------------------------- | ------------------------------------------------- | ---------------- |
+| `~/input/points`          | `sensor_msgs::msg::PointCloud2`                   | reference points |
+| `~/input/velocity_report` | `autoware_auto_vehicle_msgs::msg::VelocityReport` | vehicle velocity |
 
 ### Output
 

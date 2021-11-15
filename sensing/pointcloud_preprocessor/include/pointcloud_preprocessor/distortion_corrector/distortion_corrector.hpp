@@ -17,7 +17,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <geometry_msgs/msg/twist_stamped.hpp>
+#include <autoware_auto_vehicle_msgs/msg/velocity_report.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 
@@ -31,7 +31,7 @@
 
 namespace pointcloud_preprocessor
 {
-using geometry_msgs::msg::TwistStamped;
+using autoware_auto_vehicle_msgs::msg::VelocityReport;
 using rcl_interfaces::msg::SetParametersResult;
 using sensor_msgs::msg::PointCloud2;
 
@@ -42,23 +42,23 @@ public:
 
 private:
   void onPointCloud(PointCloud2::UniquePtr points_msg);
-  void onTwist(const TwistStamped::ConstSharedPtr twist_msg);
+  void onVelocityReport(const VelocityReport::ConstSharedPtr velocity_report_msg);
   bool getTransform(
     const std::string & target_frame, const std::string & source_frame,
     tf2::Transform * tf2_transform_ptr);
 
   bool undistortPointCloud(
-    const std::deque<TwistStamped> & twist_queue, const tf2::Transform & tf2_base_link_to_sensor,
-    PointCloud2 & points);
+    const std::deque<VelocityReport> & velocity_report_queue,
+    const tf2::Transform & tf2_base_link_to_sensor, PointCloud2 & points);
 
   rclcpp::Subscription<PointCloud2>::SharedPtr input_points_sub_;
-  rclcpp::Subscription<TwistStamped>::SharedPtr twist_sub_;
+  rclcpp::Subscription<VelocityReport>::SharedPtr velocity_report_sub_;
   rclcpp::Publisher<PointCloud2>::SharedPtr undistorted_points_pub_;
 
   tf2_ros::Buffer tf2_buffer_{get_clock()};
   tf2_ros::TransformListener tf2_listener_{tf2_buffer_};
 
-  std::deque<geometry_msgs::msg::TwistStamped> twist_queue_;
+  std::deque<autoware_auto_vehicle_msgs::msg::VelocityReport> velocity_report_queue_;
 
   std::string base_link_frame_ = "base_link";
   std::string time_stamp_field_name_;
