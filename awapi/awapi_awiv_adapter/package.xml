@@ -15,6 +15,7 @@
   <depend>autoware_auto_system_msgs</depend>
   <depend>autoware_auto_vehicle_msgs</depend>
   <depend>autoware_control_msgs</depend>
+  <depend>autoware_external_api_msgs</depend>
   <depend>autoware_iv_auto_msgs_converter</depend>
   <depend>autoware_planning_msgs</depend>
   <depend>autoware_v2x_msgs</depend>
