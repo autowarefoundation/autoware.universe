@@ -546,6 +546,39 @@ lanelet::ConstLanelets RouteHandler::getLaneletSequence(
   return lanelet_sequence;
 }
 
+lanelet::ConstLanelets RouteHandler::getLaneletSequence(
+  const lanelet::ConstLanelet & lanelet, const Pose & current_pose, const double backward_distance,
+  const double forward_distance) const
+{
+  lanelet::ConstLanelets lanelet_sequence;
+  lanelet::ConstLanelets lanelet_sequence_backward;
+  lanelet::ConstLanelets lanelet_sequence_forward;
+  if (!exists(route_lanelets_, lanelet)) {
+    return lanelet_sequence;
+  }
+
+  lanelet_sequence_forward = getLaneletSequenceAfter(lanelet, forward_distance);
+
+  const auto arc_coordinate = lanelet::utils::getArcCoordinates({lanelet}, current_pose);
+  if (arc_coordinate.length < backward_distance) {
+    lanelet_sequence_backward = getLaneletSequenceUpTo(lanelet, backward_distance);
+  }
+
+  // loop check
+  if (!lanelet_sequence_forward.empty() && !lanelet_sequence_backward.empty()) {
+    if (lanelet_sequence_backward.back().id() == lanelet_sequence_forward.front().id()) {
+      return lanelet_sequence_forward;
+    }
+  }
+  lanelet_sequence.insert(
+    lanelet_sequence.end(), lanelet_sequence_backward.begin(), lanelet_sequence_backward.end());
+  lanelet_sequence.push_back(lanelet);
+  lanelet_sequence.insert(
+    lanelet_sequence.end(), lanelet_sequence_forward.begin(), lanelet_sequence_forward.end());
+
+  return lanelet_sequence;
+}
+
 bool RouteHandler::getFollowingShoulderLanelet(
   const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * following_lanelet) const
 {

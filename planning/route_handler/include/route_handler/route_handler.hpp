@@ -90,11 +90,15 @@ public:
   std::vector<lanelet::ConstLanelet> getLanesAfterGoal(const double vehicle_length) const;
 
   // for lanelet
+  bool isDeadEndLanelet(const lanelet::ConstLanelet & lanelet) const;
   int getNumLaneToPreferredLane(const lanelet::ConstLanelet & lanelet) const;
   bool getClosestLaneletWithinRoute(
     const Pose & search_pose, lanelet::ConstLanelet * closest_lanelet) const;
   lanelet::ConstLanelet getLaneletsFromId(const lanelet::Id id) const;
   lanelet::ConstLanelets getLaneletsFromIds(const lanelet::Ids ids) const;
+  lanelet::ConstLanelets getLaneletSequence(
+    const lanelet::ConstLanelet & lanelet, const Pose & current_pose,
+    const double backward_distance, const double forward_distance) const;
   lanelet::ConstLanelets getLaneletSequence(
     const lanelet::ConstLanelet & lanelet,
     const double backward_distance = std::numeric_limits<double>::max(),
@@ -154,7 +158,6 @@ private:
   lanelet::ConstLanelets getMainLanelets(const lanelet::ConstLanelets & path_lanelets) const;
 
   // for lanelet
-  bool isDeadEndLanelet(const lanelet::ConstLanelet & lanelet) const;
   bool isInTargetLane(const PoseStamped & pose, const lanelet::ConstLanelets & target) const;
   bool isInPreferredLane(const PoseStamped & pose) const;
   bool isBijectiveConnection(
