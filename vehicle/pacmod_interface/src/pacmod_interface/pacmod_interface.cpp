@@ -256,7 +256,7 @@ void PacmodInterface::callbackPacmodRpt(
   /* publish vehicle status twist */
   {
     autoware_auto_vehicle_msgs::msg::VelocityReport twist;
-    twist.stamp = header.stamp;
+    twist.header.stamp = header.stamp;
     twist.longitudinal_velocity = current_velocity;                                 // [m/s]
     twist.heading_rate = current_velocity * std::tan(current_steer) / wheel_base_;  // [rad/s]
     vehicle_twist_pub_->publish(twist);
