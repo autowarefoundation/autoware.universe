@@ -398,7 +398,8 @@ geometry_msgs::msg::TransformStamped SimplePlanningSimulator::get_transform_msg(
 void SimplePlanningSimulator::publish_velocity(const VelocityReport & velocity)
 {
   VelocityReport msg = velocity;
-  msg.stamp = get_clock()->now();
+  msg.header.stamp = get_clock()->now();
+  msg.header.frame_id = simulated_frame_id_;
   pub_velocity_->publish(msg);
 }
 
