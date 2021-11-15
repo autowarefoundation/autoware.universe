@@ -18,8 +18,9 @@
 #include "behavior_path_planner/scene_module/pull_out/pull_out_module.hpp"
 #include "behavior_path_planner/utilities.hpp"
 
-#include <autoware_perception_msgs/msg/dynamic_object_array.hpp>
-#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
+#include <autoware_auto_perception_msgs/msg/predicted_path.hpp>
+#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 
@@ -32,8 +33,9 @@ namespace behavior_path_planner
 {
 namespace pull_out_utils
 {
-using autoware_perception_msgs::msg::DynamicObjectArray;
-using autoware_planning_msgs::msg::PathWithLaneId;
+using autoware_auto_perception_msgs::msg::PredictedObjects;
+using autoware_auto_perception_msgs::msg::PredictedPath;
+using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
 
@@ -64,14 +66,14 @@ std::vector<PullOutPath> selectValidPaths(
 bool selectSafePath(
   const std::vector<PullOutPath> & paths, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes,
-  const DynamicObjectArray::ConstSharedPtr & dynamic_objects, const Pose & current_pose,
+  const PredictedObjects::ConstSharedPtr & dynamic_objects, const Pose & current_pose,
   const Twist & current_twist, const double vehicle_width,
   const behavior_path_planner::PullOutParameters & ros_parameters,
   const autoware_utils::LinearRing2d & vehicle_footprint, PullOutPath * selected_path);
 bool isPullOutPathSafe(
   const behavior_path_planner::PullOutPath & path, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes,
-  const DynamicObjectArray::ConstSharedPtr & dynamic_objects,
+  const PredictedObjects::ConstSharedPtr & dynamic_objects,
   const behavior_path_planner::PullOutParameters & ros_parameters,
   const autoware_utils::LinearRing2d & vehicle_footprint, const bool use_buffer = true,
   const bool use_dynamic_object = false);

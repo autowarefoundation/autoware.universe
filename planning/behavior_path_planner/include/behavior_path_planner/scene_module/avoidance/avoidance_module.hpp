@@ -21,10 +21,10 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_perception_msgs/msg/dynamic_object_array.hpp>
-#include <autoware_planning_msgs/msg/path.hpp>
-#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
-#include <autoware_vehicle_msgs/msg/turn_signal.hpp>
+#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
+#include <autoware_auto_planning_msgs/msg/path.hpp>
+#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
 
 #include <memory>
 #include <string>
@@ -149,7 +149,7 @@ private:
   // intersection (old)
   boost::optional<AvoidPoint> calcIntersectionShiftPoint(const AvoidancePlanningData & data) const;
 
-  bool isTargetObjectType(const DynamicObject & object) const;
+  bool isTargetObjectType(const PredictedObject & object) const;
 
   // debug
   mutable DebugData debug_data_;

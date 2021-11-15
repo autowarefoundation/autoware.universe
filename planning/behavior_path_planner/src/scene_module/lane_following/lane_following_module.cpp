@@ -93,8 +93,8 @@ PathWithLaneId LaneFollowingModule::getReferencePath() const
     return reference_path;
   }
 
-  reference_path = route_handler->getCenterLinePath(
-    current_lanes, current_pose, p.backward_path_length, p.forward_path_length, p);
+  reference_path = util::getCenterLinePath(
+    *route_handler, current_lanes, current_pose, p.backward_path_length, p.forward_path_length, p);
 
   {
     // buffer for min_lane_change_length
@@ -102,8 +102,9 @@ PathWithLaneId LaneFollowingModule::getReferencePath() const
     const int num_lane_change =
       std::abs(route_handler->getNumLaneToPreferredLane(current_lanes.back()));
     const double lane_change_buffer = num_lane_change * (p.minimum_lane_change_length + buffer);
-    reference_path = route_handler->setDecelerationVelocity(
-      reference_path, current_lanes, parameters_.lane_change_prepare_duration, lane_change_buffer);
+    reference_path = util::setDecelerationVelocity(
+      *route_handler, reference_path, current_lanes, parameters_.lane_change_prepare_duration,
+      lane_change_buffer);
   }
 
   if (parameters_.expand_drivable_area) {

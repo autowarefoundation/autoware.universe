@@ -16,6 +16,7 @@
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__PULL_OUT__PULL_OUT_MODULE_HPP_
 
 #include "behavior_path_planner/path_shifter/path_shifter.hpp"
+#include "behavior_path_planner/scene_module/pull_out/pull_out_path.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 #include "behavior_path_planner/utilities.hpp"
 
@@ -23,7 +24,7 @@
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <vehicle_info_util/vehicle_info.hpp>
 
-#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <tf2/utils.h>
 

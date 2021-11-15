@@ -40,9 +40,6 @@ std::string toStr(const behavior_path_planner::ShiftPoint & p)
 
 namespace behavior_path_planner
 {
-using autoware_planning_msgs::msg::PathPointWithLaneId;
-using autoware_planning_msgs::msg::PathWithLaneId;
-
 void PathShifter::setPath(const PathWithLaneId & path)
 {
   reference_path_ = path;

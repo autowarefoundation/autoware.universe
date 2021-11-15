@@ -19,9 +19,9 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_perception_msgs/msg/dynamic_object_array.hpp>
-#include <autoware_planning_msgs/msg/path.hpp>
-#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
+#include <autoware_auto_planning_msgs/msg/path.hpp>
+#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 
 #include <memory>
@@ -30,9 +30,9 @@
 
 namespace behavior_path_planner
 {
-using autoware_perception_msgs::msg::DynamicObject;
-using autoware_perception_msgs::msg::DynamicObjectArray;
-using autoware_planning_msgs::msg::PathWithLaneId;
+using autoware_auto_perception_msgs::msg::PredictedObject;
+using autoware_auto_perception_msgs::msg::PredictedObjects;
+using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseStamped;
@@ -130,12 +130,12 @@ struct AvoidanceParameters
 struct ObjectData  // avoidance target
 {
   ObjectData() = default;
-  ObjectData(const DynamicObject & obj, double lat, double lon, double overhang)
+  ObjectData(const PredictedObject & obj, double lat, double lon, double overhang)
   : object(obj), lateral(lat), longitudinal(lon), overhang_dist(overhang)
   {
   }
 
-  DynamicObject object;
+  PredictedObject object;
 
   // lateral position of the CoM, in Frenet coordinate from ego-pose
   double lateral;

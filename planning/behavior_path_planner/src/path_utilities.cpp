@@ -33,10 +33,6 @@ namespace behavior_path_planner
 {
 namespace util
 {
-using autoware_perception_msgs::msg::PredictedPath;
-using autoware_planning_msgs::msg::PathPointWithLaneId;
-using autoware_planning_msgs::msg::PathWithLaneId;
-
 /**
  * @brief calc path arclength on each points from start point to end point.
  */
@@ -144,8 +140,10 @@ PathWithLaneId resamplePathWithSpline(const PathWithLaneId & path, double interv
     }
     auto & p = resampled_path.points.at(i);
     p.lane_ids = path.points.at(ref_idx).lane_ids;
-    p.point.type = path.points.at(ref_idx).point.type;
-    p.point.twist = path.points.at(ref_idx).point.twist;
+    p.point.longitudinal_velocity_mps = path.points.at(ref_idx).point.longitudinal_velocity_mps;
+    p.point.lateral_velocity_mps = path.points.at(ref_idx).point.lateral_velocity_mps;
+    p.point.heading_rate_rps = path.points.at(ref_idx).point.heading_rate_rps;
+    p.point.is_final = path.points.at(ref_idx).point.is_final;
   }
 
   // For Yaw

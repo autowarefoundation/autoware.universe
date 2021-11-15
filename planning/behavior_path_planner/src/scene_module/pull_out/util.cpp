@@ -39,9 +39,6 @@ namespace behavior_path_planner
 {
 namespace pull_out_utils
 {
-using autoware_perception_msgs::msg::PredictedPath;
-using autoware_planning_msgs::msg::PathPoint;
-
 PathWithLaneId combineReferencePath(const PathWithLaneId path1, const PathWithLaneId path2)
 {
   PathWithLaneId path;
@@ -126,7 +123,8 @@ std::vector<PullOutPath> getPullOutPaths(
       reference_path1 = route_handler.getCenterLinePath(shoulder_lanelets, s_start, s_end);
     }
     for (auto & point : reference_path1.points) {
-      point.point.twist.linear.x = std::min(point.point.twist.linear.x, minimum_pull_out_velocity);
+      point.point.longitudinal_velocity_mps = std::min(
+        point.point.longitudinal_velocity_mps, static_cast<float>(minimum_pull_out_velocity));
     }
 
     // Apply shifting before shift
@@ -209,17 +207,18 @@ std::vector<PullOutPath> getPullOutPaths(
       for (size_t i = 0; i < shifted_path.path.points.size(); ++i) {
         auto & point = shifted_path.path.points.at(i);
         if (i < *pull_out_end_idx) {
-          point.point.twist.linear.x = std::min(
-            point.point.twist.linear.x, reference_path1.points.back().point.twist.linear.x);
+          point.point.longitudinal_velocity_mps = std::min(
+            point.point.longitudinal_velocity_mps,
+            reference_path1.points.back().point.longitudinal_velocity_mps);
           continue;
         } else if (i > *goal_idx) {
-          point.point.twist.linear.x = 0.0;
+          point.point.longitudinal_velocity_mps = 0.0;
           continue;
         }
 
         auto distance_to_goal = autoware_utils::calcDistance2d(
           point.point.pose, shifted_path.path.points.at(*goal_idx).point.pose);
-        point.point.twist.linear.x = std::min(
+        point.point.longitudinal_velocity_mps = std::min(
           minimum_pull_out_velocity,
           std::max(
             0.0, (distance_to_goal / distance_pull_out_end_to_goal * minimum_pull_out_velocity)));
@@ -240,10 +239,6 @@ std::vector<PullOutPath> getPullOutPaths(
       continue;
     }
 
-    // set fixed flag
-    for (auto & pt : candidate_path.path.points) {
-      pt.point.type = PathPoint::FIXED;
-    }
     // ROS_ERROR("candidate path is push backed");
     candidate_paths.push_back(candidate_path);
   }
@@ -275,14 +270,14 @@ PullOutPath getBackPaths(
     for (auto & point : reference_path1.points) {
       // auto arc_length =
       //   lanelet::utils::getArcCoordinates(shoulder_lanelets, point.point.pose).length;
-      point.point.twist.linear.x = -5;
+      point.point.longitudinal_velocity_mps = -5;
       // ROS_ERROR("back_distance:%f", back_distance);
       // if (arc_position.length - arc_length > back_distance) {
-      //   point.point.twist.linear.x = 0;
+      //   point.point.longitudinal_velocity_mps = 0;
       // }
     }
     // std::reverse(reference_path1.points.begin(), reference_path1.points.end());
-    // reference_path1.points.front().point.twist.linear.x = 0;
+    // reference_path1.points.front().point.longitudinal_velocity_mps = 0;
   }
 
   // Apply shifting before shift
@@ -304,10 +299,6 @@ PullOutPath getBackPaths(
 
   PullOutPath candidate_path;
 
-  // set fixed flag
-  for (auto & pt : candidate_path.path.points) {
-    pt.point.type = PathPoint::FIXED;
-  }
   candidate_path.path = reference_path1;
 
   return candidate_path;
@@ -346,7 +337,7 @@ std::vector<PullOutPath> selectValidPaths(
 bool selectSafePath(
   const std::vector<PullOutPath> & paths, const lanelet::ConstLanelets & road_lanes,
   const lanelet::ConstLanelets & shoulder_lanes,
-  const DynamicObjectArray::ConstSharedPtr & dynamic_objects,
+  const PredictedObjects::ConstSharedPtr & dynamic_objects,
   [[maybe_unused]] const Pose & current_pose, [[maybe_unused]] const Twist & current_twist,
   [[maybe_unused]] const double vehicle_width, const PullOutParameters & ros_parameters,
   const autoware_utils::LinearRing2d & local_vehicle_footprint, PullOutPath * selected_path)
@@ -406,7 +397,7 @@ bool hasEnoughDistance(
 bool isPullOutPathSafe(
   const behavior_path_planner::PullOutPath & path, const lanelet::ConstLanelets & road_lanes,
   const lanelet::ConstLanelets & shoulder_lanes,
-  const DynamicObjectArray::ConstSharedPtr & dynamic_objects,
+  const PredictedObjects::ConstSharedPtr & dynamic_objects,
   const PullOutParameters & ros_parameters,
   const autoware_utils::LinearRing2d & local_vehicle_footprint, const bool use_buffer,
   const bool use_dynamic_object)
@@ -450,7 +441,8 @@ bool isPullOutPathSafe(
         is_object_in_shoulder = true;
       } else {
         for (const auto & llt : shoulder_lanes) {
-          if (lanelet::utils::isInLanelet(obj.state.pose_covariance.pose, llt, 0.1)) {
+          if (lanelet::utils::isInLanelet(
+                obj.kinematics.initial_pose_with_covariance.pose, llt, 0.1)) {
             is_object_in_shoulder = true;
           }
         }

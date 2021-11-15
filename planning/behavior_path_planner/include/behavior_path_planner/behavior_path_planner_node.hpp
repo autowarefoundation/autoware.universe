@@ -17,7 +17,6 @@
 
 #include "behavior_path_planner/behavior_tree_manager.hpp"
 #include "behavior_path_planner/data_manager.hpp"
-#include "behavior_path_planner/route_handler.hpp"
 #include "behavior_path_planner/scene_module/avoidance/avoidance_module.hpp"
 #include "behavior_path_planner/scene_module/lane_change/lane_change_module.hpp"
 #include "behavior_path_planner/scene_module/lane_following/lane_following_module.hpp"
@@ -27,18 +26,22 @@
 #include "behavior_path_planner/turn_signal_decider.hpp"
 
 #include <autoware_utils/ros/self_pose_listener.hpp>
+#include <route_handler/route_handler.hpp>
 
-#include <autoware_lanelet2_msgs/msg/map_bin.hpp>
-#include <autoware_perception_msgs/msg/dynamic_object_array.hpp>
+#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
+#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
+#include <autoware_auto_planning_msgs/msg/had_map_route.hpp>
+#include <autoware_auto_planning_msgs/msg/path.hpp>
+#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp>
+#include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
 #include <autoware_planning_msgs/msg/approval.hpp>
-#include <autoware_planning_msgs/msg/path.hpp>
 #include <autoware_planning_msgs/msg/path_change_module.hpp>
 #include <autoware_planning_msgs/msg/path_change_module_array.hpp>
 #include <autoware_planning_msgs/msg/path_change_module_id.hpp>
-#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
-#include <autoware_planning_msgs/msg/route.hpp>
 #include <autoware_planning_msgs/msg/stop_reason_array.hpp>
-#include <autoware_vehicle_msgs/msg/turn_signal.hpp>
+#include <nav_msgs/msg/occupancy_grid.hpp>
+#include <nav_msgs/msg/odometry.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_routing/RoutingGraph.h>
@@ -51,16 +54,19 @@
 namespace behavior_path_planner
 {
 using ApprovalMsg = autoware_planning_msgs::msg::Approval;
-using autoware_lanelet2_msgs::msg::MapBin;
-using autoware_perception_msgs::msg::DynamicObjectArray;
-using autoware_planning_msgs::msg::Path;
+using autoware_auto_mapping_msgs::msg::HADMapBin;
+using autoware_auto_perception_msgs::msg::PredictedObjects;
+using autoware_auto_planning_msgs::msg::HADMapRoute;
+using autoware_auto_planning_msgs::msg::Path;
+using autoware_auto_planning_msgs::msg::PathWithLaneId;
+using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
+using autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand;
 using autoware_planning_msgs::msg::PathChangeModule;
 using autoware_planning_msgs::msg::PathChangeModuleArray;
-using autoware_planning_msgs::msg::PathWithLaneId;
-using autoware_planning_msgs::msg::Route;
-using autoware_vehicle_msgs::msg::TurnSignal;
 using geometry_msgs::msg::TwistStamped;
 using nav_msgs::msg::OccupancyGrid;
+using nav_msgs::msg::Odometry;
+using route_handler::RouteHandler;
 using visualization_msgs::msg::MarkerArray;
 
 class BehaviorPathPlannerNode : public rclcpp::Node
@@ -69,10 +75,10 @@ public:
   explicit BehaviorPathPlannerNode(const rclcpp::NodeOptions & node_options);
 
 private:
-  rclcpp::Subscription<Route>::SharedPtr route_subscriber_;
-  rclcpp::Subscription<MapBin>::SharedPtr vector_map_subscriber_;
-  rclcpp::Subscription<TwistStamped>::SharedPtr velocity_subscriber_;
-  rclcpp::Subscription<DynamicObjectArray>::SharedPtr perception_subscriber_;
+  rclcpp::Subscription<HADMapRoute>::SharedPtr route_subscriber_;
+  rclcpp::Subscription<HADMapBin>::SharedPtr vector_map_subscriber_;
+  rclcpp::Subscription<Odometry>::SharedPtr velocity_subscriber_;
+  rclcpp::Subscription<PredictedObjects>::SharedPtr perception_subscriber_;
   rclcpp::Subscription<ApprovalMsg>::SharedPtr external_approval_subscriber_;
   rclcpp::Subscription<PathChangeModule>::SharedPtr force_approval_subscriber_;
   rclcpp::Publisher<PathWithLaneId>::SharedPtr path_publisher_;
@@ -80,7 +86,8 @@ private:
   rclcpp::Publisher<PathChangeModuleArray>::SharedPtr force_available_publisher_;
   rclcpp::Publisher<PathChangeModule>::SharedPtr plan_ready_publisher_;
   rclcpp::Publisher<PathChangeModuleArray>::SharedPtr plan_running_publisher_;
-  rclcpp::Publisher<TurnSignal>::SharedPtr turn_signal_publisher_;
+  rclcpp::Publisher<TurnIndicatorsCommand>::SharedPtr turn_signal_publisher_;
+  rclcpp::Publisher<HazardLightsCommand>::SharedPtr hazard_signal_publisher_;
   rclcpp::TimerBase::SharedPtr timer_;
 
   std::shared_ptr<PlannerData> planner_data_;
@@ -105,12 +112,12 @@ private:
   PullOutParameters getPullOutParam();
 
   // callback
-  void onVelocity(const TwistStamped::ConstSharedPtr msg);
-  void onPerception(const DynamicObjectArray::ConstSharedPtr msg);
+  void onVelocity(const Odometry::ConstSharedPtr msg);
+  void onPerception(const PredictedObjects::ConstSharedPtr msg);
   void onExternalApproval(const ApprovalMsg::ConstSharedPtr msg);
   void onForceApproval(const PathChangeModule::ConstSharedPtr msg);
-  void onMap(const MapBin::ConstSharedPtr map_msg);
-  void onRoute(const Route::ConstSharedPtr route_msg);
+  void onMap(const HADMapBin::ConstSharedPtr map_msg);
+  void onRoute(const HADMapRoute::ConstSharedPtr route_msg);
 
   /**
    * @brief Modify the path points near the goal to smoothly connect the lanelet and the goal point.

@@ -28,8 +28,6 @@
 #include <rclcpp/rclcpp.hpp>
 #include <vehicle_info_util/vehicle_info.hpp>
 
-#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
-
 #include <algorithm>
 #include <memory>
 #include <string>
@@ -81,7 +79,7 @@ bool PullOutModule::isExecutionRequested() const
   }
 
   const bool car_is_stopping =
-    (util::l2Norm(planner_data_->self_velocity->twist.linear) <= 1.5) ? true : false;
+    (util::l2Norm(planner_data_->self_odometry->twist.twist.linear) <= 1.5) ? true : false;
 
   lanelet::Lanelet closest_shoulder_lanelet;
 
@@ -230,7 +228,7 @@ BehaviorModuleOutput PullOutModule::planWaitingApproval()
       common_parameters.vehicle_length, *route_handler);
   }
   for (size_t i = 1; i < candidatePath.points.size(); i++) {
-    candidatePath.points.at(i).point.twist.linear.x = 0.0;
+    candidatePath.points.at(i).point.longitudinal_velocity_mps = 0.0;
   }
   out.path = std::make_shared<PathWithLaneId>(candidatePath);
 
@@ -257,7 +255,7 @@ void PullOutModule::updatePullOutStatus()
   status_.pull_out_lanes = pull_out_lanes;
 
   const auto current_pose = planner_data_->self_pose->pose;
-  // const auto current_twist = planner_data_->self_velocity->twist;
+  // const auto current_twist = planner_data_->self_odometry->twist.twist;
   // const auto common_parameters = planner_data_->parameters;
 
   // Find pull_out path
@@ -332,12 +330,12 @@ PathWithLaneId PullOutModule::getReferencePath() const
     return reference_path;
   }
 
-  reference_path = route_handler->getCenterLinePath(
-    pull_out_lanes, current_pose, common_parameters.backward_path_length,
+  reference_path = util::getCenterLinePath(
+    *route_handler, pull_out_lanes, current_pose, common_parameters.backward_path_length,
     common_parameters.forward_path_length, common_parameters);
 
-  reference_path = route_handler->setDecelerationVelocity(
-    reference_path, current_lanes, parameters_.after_pull_out_straight_distance,
+  reference_path = util::setDecelerationVelocity(
+    *route_handler, reference_path, current_lanes, parameters_.after_pull_out_straight_distance,
     common_parameters.minimum_pull_out_length, parameters_.before_pull_out_straight_distance,
     parameters_.deceleration_interval, goal_pose);
 
@@ -407,7 +405,7 @@ std::pair<bool, bool> PullOutModule::getSafePath(
 
   const auto & route_handler = planner_data_->route_handler;
   const auto current_pose = planner_data_->self_pose->pose;
-  const auto current_twist = planner_data_->self_velocity->twist;
+  const auto current_twist = planner_data_->self_odometry->twist.twist;
   const auto common_parameters = planner_data_->parameters;
   const auto road_lanes = getCurrentLanes();
 
@@ -459,7 +457,7 @@ std::pair<bool, bool> PullOutModule::getSafeRetreatPath(
 
   const auto & route_handler = planner_data_->route_handler;
   const auto current_pose = planner_data_->self_pose->pose;
-  const auto current_twist = planner_data_->self_velocity->twist;
+  const auto current_twist = planner_data_->self_odometry->twist.twist;
   const auto common_parameters = planner_data_->parameters;
 
   const auto road_lanes = getCurrentLanes();
@@ -530,7 +528,7 @@ bool PullOutModule::getBackDistance(
 
   const auto & route_handler = planner_data_->route_handler;
   const auto current_pose = planner_data_->self_pose->pose;
-  const auto current_twist = planner_data_->self_velocity->twist;
+  const auto current_twist = planner_data_->self_odometry->twist.twist;
   const auto common_parameters = planner_data_->parameters;
 
   const double back_distance_search_resolution = 1;
@@ -654,7 +652,7 @@ bool PullOutModule::isNearEndOfLane() const
 
 bool PullOutModule::isCurrentSpeedLow() const
 {
-  const auto current_twist = planner_data_->self_velocity->twist;
+  const auto current_twist = planner_data_->self_odometry->twist.twist;
   const double threshold_kmph = 10;
   return util::l2Norm(current_twist.linear) < threshold_kmph * 1000 / 3600;
 }
@@ -690,7 +688,7 @@ TurnSignalInfo PullOutModule::calcTurnSignalInfo(const ShiftPoint & shift_point)
   TurnSignalInfo turn_signal;
 
   if (status_.is_retreat_path_valid && !status_.back_finished) {
-    turn_signal.turn_signal.data = TurnSignal::HAZARD;
+    turn_signal.hazard_signal.command = HazardLightsCommand::ENABLE;
     turn_signal.signal_distance =
       autoware_utils::calcDistance2d(status_.backed_pose, planner_data_->self_pose->pose);
     return turn_signal;
@@ -736,11 +734,11 @@ TurnSignalInfo PullOutModule::calcTurnSignalInfo(const ShiftPoint & shift_point)
   }
 
   if (distance_to_pull_out_start < turn_signal_on_threshold) {
-    turn_signal.turn_signal.data = TurnSignal::RIGHT;
+    turn_signal.turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
     if (distance_to_pull_out_end < turn_signal_off_threshold) {
-      turn_signal.turn_signal.data = TurnSignal::NONE;
+      turn_signal.turn_signal.command = TurnIndicatorsCommand::DISABLE;
       if (distance_to_target_pose < turn_hazard_on_threshold) {
-        turn_signal.turn_signal.data = TurnSignal::HAZARD;
+        turn_signal.hazard_signal.command = HazardLightsCommand::ENABLE;
       }
     }
   }

@@ -24,8 +24,6 @@
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <opencv2/opencv.hpp>
 
-#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
-
 #include <algorithm>
 #include <iomanip>
 #include <limits>
@@ -187,7 +185,7 @@ ObjectDataArray AvoidanceModule::calcAvoidanceTargetObjects(
   ObjectDataArray target_objects;
   for (const auto & i : lane_filtered_objects_index) {
     const auto & object = objects_candidate.objects.at(i);
-    const auto & object_pos = object.state.pose_covariance.pose.position;
+    const auto & object_pos = object.kinematics.initial_pose_with_covariance.pose.position;
 
     if (!isTargetObjectType(object)) {
       DEBUG_PRINT("Ignore object: (isTargetObjectType is false)");
@@ -580,7 +578,7 @@ AvoidPointArray AvoidanceModule::combineRawShiftPointsWithUniqueCheck(
     return true;
   };
   const auto hasSameObjectId = [](const auto & a, const auto & b) {
-    return a.object.object.id == b.object.object.id;
+    return a.object.object.object_id == b.object.object.object_id;
   };
 
   auto combined = base_points;  // initialized
@@ -835,7 +833,7 @@ std::vector<size_t> AvoidanceModule::calcParentIds(
     // object at the same time as registering the avoidance shift to remove the complexity of the
     // addReturnShift().
     for (const auto & ap_local : parent_candidates) {
-      if (ap_local.object.object.id == ap.object.object.id) {
+      if (ap_local.object.object.object_id == ap.object.object.object_id) {
         ids.insert(ap_local.id);
       }
     }
@@ -1642,8 +1640,8 @@ void AvoidanceModule::modifyPathVelocityToPreventAccelerationOnAvoidance(Shifted
   // apply velocity limit
   constexpr size_t VLIM_APPLY_IDX_MARGIN = 0;
   for (size_t i = ego_idx + VLIM_APPLY_IDX_MARGIN; i < N; ++i) {
-    path.path.points.at(i).point.twist.linear.x =
-      std::min(path.path.points.at(i).point.twist.linear.x, vmax);
+    path.path.points.at(i).point.longitudinal_velocity_mps =
+      std::min(path.path.points.at(i).point.longitudinal_velocity_mps, static_cast<float>(vmax));
   }
 
   DEBUG_PRINT(
@@ -1685,8 +1683,8 @@ PathWithLaneId AvoidanceModule::calcCenterLinePath(
 
   const lanelet::ConstLanelets current_lanes =
     calcLaneAroundPose(planner_data, pose.pose, backward_length);
-  centerline_path = route_handler->getCenterLinePath(
-    current_lanes, pose.pose, backward_length, p.forward_path_length, p);
+  centerline_path = util::getCenterLinePath(
+    *route_handler, current_lanes, pose.pose, backward_length, p.forward_path_length, p);
 
   // for debug: check if the path backward distance is same as the desired length.
   // {
@@ -2013,7 +2011,7 @@ boost::optional<AvoidPointArray> AvoidanceModule::findNewShiftPoint(
 
 double AvoidanceModule::getEgoSpeed() const
 {
-  return std::abs(planner_data_->self_velocity->twist.linear.x);
+  return std::abs(planner_data_->self_odometry->twist.twist.linear.x);
 }
 
 double AvoidanceModule::getNominalAvoidanceEgoSpeed() const
@@ -2125,8 +2123,9 @@ void AvoidanceModule::updateData()
 
 std::string getUuidStr(const ObjectData & obj)
 {
-  return std::to_string(obj.object.id.uuid.at(0)) + std::to_string(obj.object.id.uuid.at(1)) +
-         std::to_string(obj.object.id.uuid.at(2));
+  return std::to_string(obj.object.object_id.uuid.at(0)) +
+         std::to_string(obj.object.object_id.uuid.at(1)) +
+         std::to_string(obj.object.object_id.uuid.at(2));
 }
 
 std::string getUuidStr(const ObjectDataArray & objs)
@@ -2151,9 +2150,9 @@ void AvoidanceModule::updateRegisteredObject(const ObjectDataArray & now_objects
 {
   const auto updateIfDetectedNow = [&now_objects, this](auto & registered_object) {
     const auto & n = now_objects;
-    const auto r_id = registered_object.object.id;
-    const auto same_id_obj =
-      std::find_if(n.begin(), n.end(), [&r_id](const auto & o) { return o.object.id == r_id; });
+    const auto r_id = registered_object.object.object_id;
+    const auto same_id_obj = std::find_if(
+      n.begin(), n.end(), [&r_id](const auto & o) { return o.object.object_id == r_id; });
 
     // same id object is detected. update registered.
     if (same_id_obj != n.end()) {
@@ -2162,9 +2161,9 @@ void AvoidanceModule::updateRegisteredObject(const ObjectDataArray & now_objects
     }
 
     constexpr auto POS_THR = 1.5;
-    const auto r_pos = registered_object.object.state.pose_covariance.pose;
+    const auto r_pos = registered_object.object.kinematics.initial_pose_with_covariance.pose;
     const auto similar_pos_obj = std::find_if(n.begin(), n.end(), [&](const auto & o) {
-      return calcDistance2d(r_pos, o.object.state.pose_covariance.pose) < POS_THR;
+      return calcDistance2d(r_pos, o.object.kinematics.initial_pose_with_covariance.pose) < POS_THR;
     });
 
     // same id object is not detected, but object is found around registered. update registered.
@@ -2195,12 +2194,13 @@ void AvoidanceModule::updateRegisteredObject(const ObjectDataArray & now_objects
 
   const auto isAlreadyRegistered = [this](const auto & n_id) {
     const auto & r = registered_objects_;
-    return std::any_of(r.begin(), r.end(), [&n_id](const auto & o) { return o.object.id == n_id; });
+    return std::any_of(
+      r.begin(), r.end(), [&n_id](const auto & o) { return o.object.object_id == n_id; });
   };
 
   // -- check now_objects, add it if it has new object id --
   for (const auto now_obj : now_objects) {
-    if (!isAlreadyRegistered(now_obj.object.id)) {
+    if (!isAlreadyRegistered(now_obj.object.object_id)) {
       registered_objects_.push_back(now_obj);
     }
   }
@@ -2218,11 +2218,12 @@ void AvoidanceModule::CompensateDetectionLost(ObjectDataArray & now_objects) con
 
   const auto isDetectedNow = [&](const auto & r_id) {
     const auto & n = now_objects;
-    return std::any_of(n.begin(), n.end(), [&r_id](const auto & o) { return o.object.id == r_id; });
+    return std::any_of(
+      n.begin(), n.end(), [&r_id](const auto & o) { return o.object.object_id == r_id; });
   };
 
   for (const auto & registered : registered_objects_) {
-    if (!isDetectedNow(registered.object.id)) {
+    if (!isDetectedNow(registered.object.object_id)) {
       now_objects.push_back(registered);
     }
   }
@@ -2272,11 +2273,13 @@ void AvoidanceModule::clipPathLength(PathWithLaneId & path) const
   util::clipPathLength(path, getEgoPosition(), forward, backward);
 }
 
-bool AvoidanceModule::isTargetObjectType(const DynamicObject & object) const
+bool AvoidanceModule::isTargetObjectType(const PredictedObject & object) const
 {
-  using autoware_perception_msgs::msg::Semantic;
-  const auto t = object.semantic.type;
-  const auto is_object_type = (t == Semantic::CAR || t == Semantic::TRUCK || t == Semantic::BUS);
+  using autoware_auto_perception_msgs::msg::ObjectClassification;
+  const auto t = util::getHighestProbLabel(object.classification);
+  const auto is_object_type =
+    (t == ObjectClassification::CAR || t == ObjectClassification::TRUCK ||
+     t == ObjectClassification::BUS);
   return is_object_type;
 }
 
@@ -2299,9 +2302,9 @@ TurnSignalInfo AvoidanceModule::calcTurnSignalInfo(const ShiftedPath & path) con
       const double diff = path.shift_length.at(latest_shift_point.end_idx) -
                           path.shift_length.at(latest_shift_point.start_idx);
       if (diff > tl_on_threshold) {
-        turn_signal.turn_signal.data = TurnSignal::LEFT;
+        turn_signal.turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
       } else if (diff < -tl_on_threshold) {
-        turn_signal.turn_signal.data = TurnSignal::RIGHT;
+        turn_signal.turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
       }
     }
   }

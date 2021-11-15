@@ -32,7 +32,7 @@ inline int64_t bitShift(int64_t original_id) { return original_id << (sizeof(int
 
 MarkerArray createShiftLengthMarkerArray(
   const std::vector<double> shift_distance,
-  const autoware_planning_msgs::msg::PathWithLaneId & reference, const std::string & ns,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & reference, const std::string & ns,
   const double r, const double g, const double b)
 {
   MarkerArray ma;
@@ -288,7 +288,7 @@ MarkerArray createPolygonMarkerArray(
 }
 
 MarkerArray createObjectsMarkerArray(
-  const DynamicObjectArray & objects, const std::string & ns, const int64_t lane_id, const double r,
+  const PredictedObjects & objects, const std::string & ns, const int64_t lane_id, const double r,
   const double g, const double b)
 {
   const auto current_time = rclcpp::Clock{RCL_ROS_TIME}.now();
@@ -306,7 +306,7 @@ MarkerArray createObjectsMarkerArray(
     marker.lifetime = rclcpp::Duration::from_seconds(0.2);
     marker.type = Marker::CUBE;
     marker.action = Marker::ADD;
-    marker.pose = object.state.pose_covariance.pose;
+    marker.pose = object.kinematics.initial_pose_with_covariance.pose;
     marker.scale = autoware_utils::createMarkerScale(3.0, 1.0, 1.0);
     marker.color = autoware_utils::createMarkerColor(r, g, b, 0.8);
     msg.markers.push_back(marker);
@@ -335,7 +335,7 @@ MarkerArray createAvoidanceObjectsMarkerArray(
     marker.lifetime = rclcpp::Duration::from_seconds(0.2);
     marker.type = Marker::CUBE;
     marker.action = Marker::ADD;
-    marker.pose = object.object.state.pose_covariance.pose;
+    marker.pose = object.object.kinematics.initial_pose_with_covariance.pose;
     marker.scale = autoware_utils::createMarkerScale(3.0, 1.5, 1.5);
     marker.color = object.lost_count == 0 ? normal_color : disappearing_color;
     msg.markers.push_back(marker);

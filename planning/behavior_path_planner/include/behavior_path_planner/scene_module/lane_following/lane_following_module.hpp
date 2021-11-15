@@ -20,14 +20,14 @@
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <memory>
 #include <string>
 
 namespace behavior_path_planner
 {
-using autoware_planning_msgs::msg::PathWithLaneId;
+using autoware_auto_planning_msgs::msg::PathWithLaneId;
 
 struct LaneFollowingParameters
 {

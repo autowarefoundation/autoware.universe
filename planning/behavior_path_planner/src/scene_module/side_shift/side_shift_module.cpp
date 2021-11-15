@@ -185,7 +185,7 @@ bool SideShiftModule::addShiftPoint()
   for (int i = static_cast<int>(shift_points.size()) - 1; i >= 0; --i) {
     const auto dist_to_start = calcLongitudinal(shift_points.at(i));
     const double remove_threshold =
-      std::max(planner_data_->self_velocity->twist.linear.x * 1.0 /* sec */, 2.0 /* m */);
+      std::max(planner_data_->self_odometry->twist.twist.linear.x * 1.0 /* sec */, 2.0 /* m */);
     if (dist_to_start > remove_threshold) {  // TODO(Horibe)
       shift_points.erase(shift_points.begin() + i);
     }
@@ -298,7 +298,7 @@ void SideShiftModule::onLateralOffset(const LateralOffset::ConstSharedPtr latera
 ShiftPoint SideShiftModule::calcShiftPoint() const
 {
   const auto & p = parameters_;
-  const auto ego_speed = std::abs(planner_data_->self_velocity->twist.linear.x);
+  const auto ego_speed = std::abs(planner_data_->self_odometry->twist.twist.linear.x);
   const auto ego_point = planner_data_->self_pose->pose.position;
 
   const double dist_to_start =
@@ -403,8 +403,8 @@ PathWithLaneId SideShiftModule::calcCenterLinePath(
 
   const lanelet::ConstLanelets current_lanes =
     calcLaneAroundPose(planner_data, pose.pose, backward_length);
-  centerline_path = route_handler->getCenterLinePath(
-    current_lanes, pose.pose, backward_length, p.forward_path_length, p);
+  centerline_path = util::getCenterLinePath(
+    *route_handler, current_lanes, pose.pose, backward_length, p.forward_path_length, p);
 
   centerline_path.header = route_handler->getRouteHeader();
 

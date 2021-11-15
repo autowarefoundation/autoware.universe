@@ -20,8 +20,6 @@
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 
-#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
-
 #include <algorithm>
 #include <iomanip>
 #include <limits>
@@ -128,13 +126,13 @@ void clipByMinStartIdx(const AvoidPointArray & shift_points, PathWithLaneId & pa
 }
 
 double calcDistanceToClosestFootprintPoint(
-  const PathWithLaneId & path, const DynamicObject & object, const Point & ego_pos)
+  const PathWithLaneId & path, const PredictedObject & object, const Point & ego_pos)
 {
   autoware_utils::Polygon2d object_poly{};
   util::calcObjectPolygon(object, &object_poly);
 
   double distance = autoware_utils::calcSignedArcLength(
-    path.points, ego_pos, object.state.pose_covariance.pose.position);
+    path.points, ego_pos, object.kinematics.initial_pose_with_covariance.pose.position);
   for (const auto & p : object_poly.outer()) {
     const auto point = autoware_utils::createPoint(p.x(), p.y(), 0.0);
     distance = std::min(distance, autoware_utils::calcSignedArcLength(path.points, ego_pos, point));

@@ -20,8 +20,8 @@
 
 #include <autoware_utils/ros/marker_helper.hpp>
 
-#include <autoware_perception_msgs/msg/dynamic_object_array.hpp>
-#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
+#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <geometry_msgs/msg/polygon.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
@@ -33,8 +33,8 @@
 
 namespace marker_utils
 {
-using autoware_perception_msgs::msg::DynamicObjectArray;
-using autoware_planning_msgs::msg::PathWithLaneId;
+using autoware_auto_perception_msgs::msg::PredictedObjects;
+using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using behavior_path_planner::AvoidPoint;
 using behavior_path_planner::AvoidPointArray;
 using behavior_path_planner::ShiftPoint;
@@ -69,7 +69,7 @@ MarkerArray createPolygonMarkerArray(
   const double g, const double b);
 
 MarkerArray createObjectsMarkerArray(
-  const DynamicObjectArray & objects, const std::string & ns, const int64_t lane_id, const double r,
+  const PredictedObjects & objects, const std::string & ns, const int64_t lane_id, const double r,
   const double g, const double b);
 
 MarkerArray createAvoidanceObjectsMarkerArray(

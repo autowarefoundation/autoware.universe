@@ -24,9 +24,9 @@
 
 namespace behavior_path_planner
 {
-TurnSignal TurnSignalDecider::getTurnSignal(
+TurnIndicatorsCommand TurnSignalDecider::getTurnSignal(
   const PathWithLaneId & path, const Pose & current_pose, const RouteHandler & route_handler,
-  const TurnSignal & turn_signal_plan, const double plan_distance) const
+  const TurnIndicatorsCommand & turn_signal_plan, const double plan_distance) const
 {
   auto turn_signal = turn_signal_plan;
 
@@ -37,22 +37,17 @@ TurnSignal TurnSignalDecider::getTurnSignal(
   const auto intersection_distance = intersection_result.second;
 
   if (intersection_distance < plan_distance) {
-    turn_signal.data = intersection_turn_signal.data;
+    turn_signal.command = intersection_turn_signal.command;
   }
-
-  // Set time stamp
-  auto clock{rclcpp::Clock{RCL_ROS_TIME}};
-  turn_signal.header.stamp = clock.now();
-  turn_signal.header.frame_id = "base_link";
 
   return turn_signal;
 }
 
-std::pair<TurnSignal, double> TurnSignalDecider::getIntersectionTurnSignal(
+std::pair<TurnIndicatorsCommand, double> TurnSignalDecider::getIntersectionTurnSignal(
   const PathWithLaneId & path, const Pose & current_pose, const RouteHandler & route_handler) const
 {
-  TurnSignal turn_signal{};
-  turn_signal.data = TurnSignal::NONE;
+  TurnIndicatorsCommand turn_signal{};
+  turn_signal.command = TurnIndicatorsCommand::DISABLE;
   double distance = std::numeric_limits<double>::max();
   auto clock{rclcpp::Clock{RCL_ROS_TIME}};
 
@@ -96,12 +91,12 @@ std::pair<TurnSignal, double> TurnSignalDecider::getIntersectionTurnSignal(
         }
       }
       if (lane.attributeOr("turn_direction", std::string("none")) == "left") {
-        turn_signal.data = TurnSignal::LEFT;
+        turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
         distance = distance_from_vehicle_front;
         return std::make_pair(turn_signal, distance);
       }
       if (lane.attributeOr("turn_direction", std::string("none")) == "right") {
-        turn_signal.data = TurnSignal::RIGHT;
+        turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
         distance = distance_from_vehicle_front;
         return std::make_pair(turn_signal, distance);
       }

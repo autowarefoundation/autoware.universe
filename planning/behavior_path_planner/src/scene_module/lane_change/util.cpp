@@ -34,9 +34,6 @@ namespace behavior_path_planner
 {
 namespace lane_change_utils
 {
-using autoware_perception_msgs::msg::PredictedPath;
-using autoware_planning_msgs::msg::PathPoint;
-
 PathWithLaneId combineReferencePath(const PathWithLaneId path1, const PathWithLaneId path2)
 {
   PathWithLaneId path;
@@ -131,9 +128,10 @@ std::vector<LaneChangePath> getLaneChangePaths(
       reference_path1 = route_handler.getCenterLinePath(original_lanelets, s_start, s_end);
     }
 
-    reference_path1.points.back().point.twist.linear.x = std::min(
-      reference_path1.points.back().point.twist.linear.x,
-      std::max(straight_distance / lane_change_prepare_duration, minimum_lane_change_velocity));
+    reference_path1.points.back().point.longitudinal_velocity_mps = std::min(
+      reference_path1.points.back().point.longitudinal_velocity_mps,
+      static_cast<float>(
+        std::max(straight_distance / lane_change_prepare_duration, minimum_lane_change_velocity)));
 
     PathWithLaneId reference_path2{};
     {
@@ -149,9 +147,10 @@ std::vector<LaneChangePath> getLaneChangePaths(
     }
 
     for (auto & point : reference_path2.points) {
-      point.point.twist.linear.x = std::min(
-        point.point.twist.linear.x,
-        std::max(lane_change_distance / lane_changing_duration, minimum_lane_change_velocity));
+      point.point.longitudinal_velocity_mps = std::min(
+        point.point.longitudinal_velocity_mps,
+        static_cast<float>(
+          std::max(lane_change_distance / lane_changing_duration, minimum_lane_change_velocity)));
     }
 
     if (reference_path1.points.empty() || reference_path2.points.empty()) {
@@ -211,13 +210,15 @@ std::vector<LaneChangePath> getLaneChangePaths(
           point.lane_ids.insert(
             point.lane_ids.end(), reference_path2.points.front().lane_ids.begin(),
             reference_path2.points.front().lane_ids.end());
-          point.point.twist.linear.x = std::min(
-            point.point.twist.linear.x, reference_path1.points.back().point.twist.linear.x);
+          point.point.longitudinal_velocity_mps = std::min(
+            point.point.longitudinal_velocity_mps,
+            reference_path1.points.back().point.longitudinal_velocity_mps);
           continue;
         }
-        point.point.twist.linear.x = std::min(
-          point.point.twist.linear.x,
-          std::max(lane_change_distance / lane_changing_duration, minimum_lane_change_velocity));
+        point.point.longitudinal_velocity_mps = std::min(
+          point.point.longitudinal_velocity_mps,
+          static_cast<float>(
+            std::max(lane_change_distance / lane_changing_duration, minimum_lane_change_velocity)));
         const auto nearest_idx =
           autoware_utils::findNearestIndex(reference_path2.points, point.point.pose);
         point.lane_ids = reference_path2.points.at(*nearest_idx).lane_ids;
@@ -236,10 +237,6 @@ std::vector<LaneChangePath> getLaneChangePaths(
       continue;
     }
 
-    // set fixed flag
-    for (auto & pt : candidate_path.path.points) {
-      pt.point.type = PathPoint::FIXED;
-    }
     candidate_paths.push_back(candidate_path);
   }
 
@@ -268,7 +265,7 @@ std::vector<LaneChangePath> selectValidPaths(
 bool selectSafePath(
   const std::vector<LaneChangePath> & paths, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes,
-  const DynamicObjectArray::ConstSharedPtr & dynamic_objects, const Pose & current_pose,
+  const PredictedObjects::ConstSharedPtr & dynamic_objects, const Pose & current_pose,
   const Twist & current_twist, const double vehicle_width,
   const LaneChangeParameters & ros_parameters, LaneChangePath * selected_path)
 {
@@ -326,7 +323,7 @@ bool hasEnoughDistance(
 bool isLaneChangePathSafe(
   const PathWithLaneId & path, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes,
-  const DynamicObjectArray::ConstSharedPtr & dynamic_objects, const Pose & current_pose,
+  const PredictedObjects::ConstSharedPtr & dynamic_objects, const Pose & current_pose,
   const Twist & current_twist, const double vehicle_width,
   const LaneChangeParameters & ros_parameters, const bool use_buffer, const double acceleration)
 {
@@ -387,10 +384,12 @@ bool isLaneChangePathSafe(
     const auto & obj = dynamic_objects->objects.at(i);
     std::vector<PredictedPath> predicted_paths;
     if (ros_parameters.use_all_predicted_path) {
-      predicted_paths = obj.state.predicted_paths;
+      std::copy(
+        obj.kinematics.predicted_paths.begin(), obj.kinematics.predicted_paths.end(),
+        predicted_paths.begin());
     } else {
       auto & max_confidence_path = *(std::max_element(
-        obj.state.predicted_paths.begin(), obj.state.predicted_paths.end(),
+        obj.kinematics.predicted_paths.begin(), obj.kinematics.predicted_paths.end(),
         [](const auto & path1, const auto & path2) {
           return path1.confidence > path2.confidence;
         }));
@@ -401,10 +400,11 @@ bool isLaneChangePathSafe(
         obj_path, vehicle_predicted_path, current_lane_check_start_time,
         current_lane_check_end_time, time_resolution);
       double thresh;
-      if (isObjectFront(current_pose, obj.state.pose_covariance.pose)) {
+      if (isObjectFront(current_pose, obj.kinematics.initial_pose_with_covariance.pose)) {
         thresh = util::l2Norm(current_twist.linear) * stop_time;
       } else {
-        thresh = util::l2Norm(obj.state.twist_covariance.twist.linear) * stop_time;
+        thresh =
+          util::l2Norm(obj.kinematics.initial_twist_with_covariance.twist.linear) * stop_time;
       }
       thresh = std::max(thresh, min_thresh);
       thresh += buffer;
@@ -419,10 +419,12 @@ bool isLaneChangePathSafe(
     const auto & obj = dynamic_objects->objects.at(i);
     std::vector<PredictedPath> predicted_paths;
     if (ros_parameters.use_all_predicted_path) {
-      predicted_paths = obj.state.predicted_paths;
+      std::copy(
+        obj.kinematics.predicted_paths.begin(), obj.kinematics.predicted_paths.end(),
+        predicted_paths.begin());
     } else {
       auto & max_confidence_path = *(std::max_element(
-        obj.state.predicted_paths.begin(), obj.state.predicted_paths.end(),
+        obj.kinematics.predicted_paths.begin(), obj.kinematics.predicted_paths.end(),
         [](const auto & path1, const auto & path2) {
           return path1.confidence > path2.confidence;
         }));
@@ -434,7 +436,7 @@ bool isLaneChangePathSafe(
       is_object_in_target = true;
     } else {
       for (const auto & llt : target_lanes) {
-        if (lanelet::utils::isInLanelet(obj.state.pose_covariance.pose, llt)) {
+        if (lanelet::utils::isInLanelet(obj.kinematics.initial_pose_with_covariance.pose, llt)) {
           is_object_in_target = true;
         }
       }
@@ -446,10 +448,11 @@ bool isLaneChangePathSafe(
           obj_path, vehicle_predicted_path, target_lane_check_start_time,
           target_lane_check_end_time, time_resolution);
         double thresh;
-        if (isObjectFront(current_pose, obj.state.pose_covariance.pose)) {
+        if (isObjectFront(current_pose, obj.kinematics.initial_pose_with_covariance.pose)) {
           thresh = util::l2Norm(current_twist.linear) * stop_time;
         } else {
-          thresh = util::l2Norm(obj.state.twist_covariance.twist.linear) * stop_time;
+          thresh =
+            util::l2Norm(obj.kinematics.initial_twist_with_covariance.twist.linear) * stop_time;
         }
         thresh = std::max(thresh, min_thresh);
         thresh += buffer;
@@ -462,7 +465,7 @@ bool isLaneChangePathSafe(
         obj, vehicle_predicted_path, target_lane_check_start_time, target_lane_check_end_time,
         time_resolution);
       double thresh = min_thresh;
-      if (isObjectFront(current_pose, obj.state.pose_covariance.pose)) {
+      if (isObjectFront(current_pose, obj.kinematics.initial_pose_with_covariance.pose)) {
         thresh = std::max(thresh, util::l2Norm(current_twist.linear) * stop_time);
       }
       thresh += buffer;

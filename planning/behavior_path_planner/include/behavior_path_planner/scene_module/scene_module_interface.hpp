@@ -20,9 +20,11 @@
 #include "behavior_path_planner/utilities.hpp"
 
 #include <rclcpp/rclcpp.hpp>
+#include <route_handler/route_handler.hpp>
 
-#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
-#include <autoware_vehicle_msgs/msg/turn_signal.hpp>
+#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp>
+#include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
 
 #include <boost/optional.hpp>
 
@@ -35,17 +37,26 @@
 
 namespace behavior_path_planner
 {
-using autoware_planning_msgs::msg::PathWithLaneId;
-using autoware_vehicle_msgs::msg::TurnSignal;
+using autoware_auto_planning_msgs::msg::PathWithLaneId;
+using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
+using autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand;
+using route_handler::LaneChangeDirection;
+using route_handler::PullOutDirection;
+using route_handler::PullOverDirection;
 using visualization_msgs::msg::MarkerArray;
 using PlanResult = PathWithLaneId::SharedPtr;
 
 struct TurnSignalInfo
 {
-  TurnSignalInfo() { turn_signal.data = TurnSignal::NONE; }
+  TurnSignalInfo()
+  {
+    turn_signal.command = TurnIndicatorsCommand::NO_COMMAND;
+    hazard_signal.command = HazardLightsCommand::NO_COMMAND;
+  }
 
   // desired turn signal
-  TurnSignal turn_signal;
+  TurnIndicatorsCommand turn_signal;
+  HazardLightsCommand hazard_signal;
 
   // TODO(Horibe) replace with point. Distance should be calculates in turn_signal_decider.
   // distance to the turn signal trigger point (to choose nearest signal for multiple requests)

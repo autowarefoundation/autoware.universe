@@ -22,7 +22,7 @@
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 
-#include <autoware_perception_msgs/msg/semantic.hpp>
+#include <autoware_auto_perception_msgs/msg/object_classification.hpp>
 
 #include <algorithm>
 #include <limits>
@@ -33,7 +33,7 @@
 
 namespace behavior_path_planner
 {
-using autoware_perception_msgs::msg::Semantic;
+using autoware_auto_perception_msgs::msg::ObjectClassification;
 
 LaneChangeModule::LaneChangeModule(
   const std::string & name, rclcpp::Node & node, const LaneChangeParameters & parameters)
@@ -243,11 +243,12 @@ PathWithLaneId LaneChangeModule::getReferencePath() const
   const double lane_change_buffer =
     num_lane_change * (common_parameters.minimum_lane_change_length + buffer);
 
-  reference_path = route_handler->getCenterLinePath(
-    current_lanes, current_pose, common_parameters.backward_path_length,
+  reference_path = util::getCenterLinePath(
+    *route_handler, current_lanes, current_pose, common_parameters.backward_path_length,
     common_parameters.forward_path_length, common_parameters);
-  reference_path = route_handler->setDecelerationVelocity(
-    reference_path, current_lanes, parameters_.lane_change_prepare_duration, lane_change_buffer);
+  reference_path = util::setDecelerationVelocity(
+    *route_handler, reference_path, current_lanes, parameters_.lane_change_prepare_duration,
+    lane_change_buffer);
   reference_path.drivable_area = util::generateDrivableArea(
     current_lanes, *planner_data_->self_pose, common_parameters.drivable_area_width,
     common_parameters.drivable_area_height, common_parameters.drivable_area_resolution,
@@ -280,7 +281,7 @@ lanelet::ConstLanelets LaneChangeModule::getLaneChangeLanes(
   lanelet::ConstLanelets lane_change_lanes;
   const auto & route_handler = planner_data_->route_handler;
   const auto current_pose = planner_data_->self_pose->pose;
-  const auto current_twist = planner_data_->self_velocity->twist;
+  const auto current_twist = planner_data_->self_odometry->twist.twist;
 
   if (current_lanes.empty()) {
     return lane_change_lanes;
@@ -313,7 +314,7 @@ std::pair<bool, bool> LaneChangeModule::getSafePath(
 
   const auto & route_handler = planner_data_->route_handler;
   const auto current_pose = planner_data_->self_pose->pose;
-  const auto current_twist = planner_data_->self_velocity->twist;
+  const auto current_twist = planner_data_->self_odometry->twist.twist;
   const auto common_parameters = planner_data_->parameters;
 
   const auto current_lanes = getCurrentLanes();
@@ -403,14 +404,14 @@ TurnSignalInfo LaneChangeModule::getTurnSignalAndDistance(const PathWithLaneId &
         if (
           relation == lanelet::routing::RelationType::Left ||
           relation == lanelet::routing::RelationType::AdjacentLeft) {
-          turn_signal.turn_signal.data = TurnSignal::LEFT;
+          turn_signal.turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
           turn_signal.signal_distance = distance_from_vehicle_front;
           return turn_signal;
         }
         if (
           relation == lanelet::routing::RelationType::Right ||
           relation == lanelet::routing::RelationType::AdjacentRight) {
-          turn_signal.turn_signal.data = TurnSignal::RIGHT;
+          turn_signal.turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
           turn_signal.signal_distance = distance_from_vehicle_front;
           return turn_signal;
         }
@@ -437,7 +438,7 @@ bool LaneChangeModule::isNearEndOfLane() const
 
 bool LaneChangeModule::isCurrentSpeedLow() const
 {
-  const auto current_twist = planner_data_->self_velocity->twist;
+  const auto current_twist = planner_data_->self_odometry->twist.twist;
   const double threshold_kmph = 10;
   return util::l2Norm(current_twist.linear) < threshold_kmph * 1000 / 3600;
 }
@@ -470,13 +471,14 @@ bool LaneChangeModule::isLaneBlocked(const lanelet::ConstLanelets & lanes) const
   }
 
   for (const auto & obj : planner_data_->dynamic_object->objects) {
+    const auto label = util::getHighestProbLabel(obj.classification);
     if (
-      obj.semantic.type == Semantic::CAR || obj.semantic.type == Semantic::TRUCK ||
-      obj.semantic.type == Semantic::BUS || obj.semantic.type == Semantic::MOTORBIKE) {
-      const auto velocity = util::l2Norm(obj.state.twist_covariance.twist.linear);
+      label == ObjectClassification::CAR || label == ObjectClassification::TRUCK ||
+      label == ObjectClassification::BUS || label == ObjectClassification::MOTORCYCLE) {
+      const auto velocity = util::l2Norm(obj.kinematics.initial_twist_with_covariance.twist.linear);
       if (velocity < static_obj_velocity_thresh) {
-        const auto position =
-          lanelet::utils::conversion::toLaneletPoint(obj.state.pose_covariance.pose.position);
+        const auto position = lanelet::utils::conversion::toLaneletPoint(
+          obj.kinematics.initial_pose_with_covariance.pose.position);
         const auto distance = boost::geometry::distance(
           lanelet::utils::to2D(position).basicPoint(),
           lanelet::utils::to2D(polygon).basicPolygon());
@@ -493,7 +495,7 @@ bool LaneChangeModule::isAbortConditionSatisfied() const
 {
   const auto & route_handler = planner_data_->route_handler;
   const auto current_pose = planner_data_->self_pose->pose;
-  const auto current_twist = planner_data_->self_velocity->twist;
+  const auto current_twist = planner_data_->self_odometry->twist.twist;
   const auto objects = planner_data_->dynamic_object;
   const auto common_parameters = planner_data_->parameters;
 

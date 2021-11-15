@@ -16,21 +16,21 @@
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SIDE_SHIFT__SIDE_SHIFT_MODULE_HPP_
 
 #include "behavior_path_planner/path_shifter/path_shifter.hpp"
-#include "behavior_path_planner/route_handler.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 
 #include <rclcpp/rclcpp.hpp>
+#include <route_handler/route_handler.hpp>
 
+#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_planning_msgs/msg/lateral_offset.hpp>
-#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <memory>
 #include <string>
 
 namespace behavior_path_planner
 {
+using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using autoware_planning_msgs::msg::LateralOffset;
-using autoware_planning_msgs::msg::PathWithLaneId;
 using geometry_msgs::msg::Pose;
 using nav_msgs::msg::OccupancyGrid;
 

@@ -15,10 +15,10 @@
 #ifndef BEHAVIOR_PATH_PLANNER__TURN_SIGNAL_DECIDER_HPP_
 #define BEHAVIOR_PATH_PLANNER__TURN_SIGNAL_DECIDER_HPP_
 
-#include "behavior_path_planner/route_handler.hpp"
+#include <route_handler/route_handler.hpp>
 
-#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
-#include <autoware_vehicle_msgs/msg/turn_signal.hpp>
+#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 
@@ -27,15 +27,16 @@
 
 namespace behavior_path_planner
 {
-using autoware_planning_msgs::msg::PathWithLaneId;
-using autoware_vehicle_msgs::msg::TurnSignal;
+using autoware_auto_planning_msgs::msg::PathWithLaneId;
+using autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand;
 using geometry_msgs::msg::Pose;
+using route_handler::RouteHandler;
 class TurnSignalDecider
 {
 public:
-  TurnSignal getTurnSignal(
+  TurnIndicatorsCommand getTurnSignal(
     const PathWithLaneId & path, const Pose & current_pose, const RouteHandler & route_handler,
-    const TurnSignal & turn_signal_plan, const double plan_distance) const;
+    const TurnIndicatorsCommand & turn_signal_plan, const double plan_distance) const;
 
   void setParameters(const double base_link2front, const double intersection_search_distance)
   {
@@ -44,7 +45,7 @@ public:
   }
 
 private:
-  std::pair<TurnSignal, double> getIntersectionTurnSignal(
+  std::pair<TurnIndicatorsCommand, double> getIntersectionTurnSignal(
     const PathWithLaneId & path, const Pose & current_pose,
     const RouteHandler & route_handler) const;
 

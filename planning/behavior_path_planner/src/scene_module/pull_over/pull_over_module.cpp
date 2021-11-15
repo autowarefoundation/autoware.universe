@@ -243,12 +243,12 @@ PathWithLaneId PullOverModule::getReferencePath() const
     return reference_path;
   }
 
-  reference_path = route_handler->getCenterLinePath(
-    current_lanes, current_pose, common_parameters.backward_path_length,
+  reference_path = util::getCenterLinePath(
+    *route_handler, current_lanes, current_pose, common_parameters.backward_path_length,
     common_parameters.forward_path_length, common_parameters);
 
-  reference_path = route_handler->setDecelerationVelocity(
-    reference_path, current_lanes, parameters_.after_pull_over_straight_distance,
+  reference_path = util::setDecelerationVelocity(
+    *route_handler, reference_path, current_lanes, parameters_.after_pull_over_straight_distance,
     common_parameters.minimum_pull_over_length, parameters_.before_pull_over_straight_distance,
     parameters_.deceleration_interval, goal_pose);
 
@@ -315,7 +315,7 @@ std::pair<bool, bool> PullOverModule::getSafePath(
 
   const auto & route_handler = planner_data_->route_handler;
   const auto current_pose = planner_data_->self_pose->pose;
-  const auto current_twist = planner_data_->self_velocity->twist;
+  const auto current_twist = planner_data_->self_odometry->twist.twist;
   const auto common_parameters = planner_data_->parameters;
 
   const auto current_lanes = getCurrentLanes();
@@ -395,7 +395,7 @@ bool PullOverModule::isNearEndOfLane() const
 
 bool PullOverModule::isCurrentSpeedLow() const
 {
-  const auto current_twist = planner_data_->self_velocity->twist;
+  const auto current_twist = planner_data_->self_odometry->twist.twist;
   const double threshold_kmph = 10;
   return util::l2Norm(current_twist.linear) < threshold_kmph * 1000 / 3600;
 }
@@ -414,7 +414,7 @@ bool PullOverModule::hasFinishedPullOver() const
       : false;
 
   // check ego car is stopping
-  const double ego_vel = util::l2Norm(planner_data_->self_velocity->twist.linear);
+  const double ego_vel = util::l2Norm(planner_data_->self_odometry->twist.twist.linear);
   const bool car_is_stopping = (ego_vel == 0.0) ? true : false;
 
   lanelet::Lanelet closest_shoulder_lanelet;
@@ -479,11 +479,11 @@ TurnSignalInfo PullOverModule::calcTurnSignalInfo(const ShiftPoint & shift_point
   }
 
   if (distance_to_pull_over_start < turn_signal_on_threshold) {
-    turn_signal.turn_signal.data = TurnSignal::LEFT;
+    turn_signal.turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
     if (distance_to_pull_over_end < turn_signal_off_threshold) {
-      turn_signal.turn_signal.data = TurnSignal::NONE;
+      turn_signal.turn_signal.command = TurnIndicatorsCommand::DISABLE;
       if (distance_to_target_pose < turn_hazard_on_threshold) {
-        turn_signal.turn_signal.data = TurnSignal::HAZARD;
+        turn_signal.hazard_signal.command = HazardLightsCommand::ENABLE;
       }
     }
   }

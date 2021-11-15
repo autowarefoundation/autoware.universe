@@ -16,8 +16,9 @@
 #define BEHAVIOR_PATH_PLANNER__BEHAVIOR_TREE_MANAGER_HPP_
 
 #include "behavior_path_planner/data_manager.hpp"
-#include "behavior_path_planner/route_handler.hpp"
 #include "behavior_path_planner/scene_module/scene_module_bt_node_interface.hpp"
+
+#include <route_handler/route_handler.hpp>
 
 #include <visualization_msgs/msg/marker_array.hpp>
 

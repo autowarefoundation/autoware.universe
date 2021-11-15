@@ -22,8 +22,6 @@
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_planning_msgs/msg/path_point.hpp>
-
 #include <boost/geometry/algorithms/dispatch/distance.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
@@ -40,9 +38,6 @@ namespace behavior_path_planner
 {
 namespace pull_over_utils
 {
-using autoware_perception_msgs::msg::PredictedPath;
-using autoware_planning_msgs::msg::PathPoint;
-
 PathWithLaneId combineReferencePath(const PathWithLaneId path1, const PathWithLaneId path2)
 {
   PathWithLaneId path;
@@ -157,11 +152,12 @@ std::vector<PullOverPath> getPullOverPaths(
         const auto arclength =
           lanelet::utils::getArcCoordinates(original_lanelets, point.point.pose).length;
         const double distance_to_pull_over_start = std::max(0.0, s_end - arclength);
-        point.point.twist.linear.x = std::min(
-          point.point.twist.linear.x,
-          (distance_to_pull_over_start / deceleration_interval) *
-              (point.point.twist.linear.x - minimum_pull_over_velocity) +
-            minimum_pull_over_velocity);
+        point.point.longitudinal_velocity_mps = std::min(
+          point.point.longitudinal_velocity_mps,
+          static_cast<float>(
+            (distance_to_pull_over_start / deceleration_interval) *
+              (point.point.longitudinal_velocity_mps - minimum_pull_over_velocity) +
+            minimum_pull_over_velocity));
       }
     }
 
@@ -245,18 +241,19 @@ std::vector<PullOverPath> getPullOverPaths(
         auto & point = shifted_path.path.points.at(i);
         if (i < *shift_end_idx) {
           // set velocity during shift
-          point.point.twist.linear.x = std::min(
-            point.point.twist.linear.x, reference_path1.points.back().point.twist.linear.x);
+          point.point.longitudinal_velocity_mps = std::min(
+            point.point.longitudinal_velocity_mps,
+            reference_path1.points.back().point.longitudinal_velocity_mps);
           continue;
         } else if (i > *goal_idx) {
           // set velocity after goal
-          point.point.twist.linear.x = 0.0;
+          point.point.longitudinal_velocity_mps = 0.0;
           continue;
         }
         // set velocity between shift end and goal. decelerate linearly from shift end to 0
         auto distance_to_goal = autoware_utils::calcDistance2d(
           point.point.pose, shifted_path.path.points.at(*goal_idx).point.pose);
-        point.point.twist.linear.x = std::min(
+        point.point.longitudinal_velocity_mps = std::min(
           minimum_pull_over_velocity,
           std::max(
             0.0, (distance_to_goal / distance_pull_over_end_to_goal * minimum_pull_over_velocity)));
@@ -275,10 +272,6 @@ std::vector<PullOverPath> getPullOverPaths(
       continue;
     }
 
-    // set fixed flag
-    for (auto & pt : candidate_path.path.points) {
-      pt.point.type = PathPoint::FIXED;
-    }
     // ROS_ERROR("candidate path is push backed");
     candidate_paths.push_back(candidate_path);
   }
@@ -308,7 +301,7 @@ std::vector<PullOverPath> selectValidPaths(
 bool selectSafePath(
   const std::vector<PullOverPath> & paths, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes,
-  const DynamicObjectArray::ConstSharedPtr & dynamic_objects, const Pose & current_pose,
+  const PredictedObjects::ConstSharedPtr & dynamic_objects, const Pose & current_pose,
   const Twist & current_twist, const double vehicle_width,
   const PullOverParameters & ros_parameters, PullOverPath * selected_path)
 {
@@ -366,7 +359,7 @@ bool hasEnoughDistance(
 bool isPullOverPathSafe(
   const PathWithLaneId & path, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes,
-  const DynamicObjectArray::ConstSharedPtr & dynamic_objects, const Pose & current_pose,
+  const PredictedObjects::ConstSharedPtr & dynamic_objects, const Pose & current_pose,
   const Twist & current_twist, const double vehicle_width,
   const PullOverParameters & ros_parameters, const bool use_buffer, const double acceleration)
 {
@@ -427,10 +420,12 @@ bool isPullOverPathSafe(
     const auto & obj = dynamic_objects->objects.at(i);
     std::vector<PredictedPath> predicted_paths;
     if (ros_parameters.use_all_predicted_path) {
-      predicted_paths = obj.state.predicted_paths;
+      std::copy(
+        obj.kinematics.predicted_paths.begin(), obj.kinematics.predicted_paths.end(),
+        predicted_paths.begin());
     } else {
       auto & max_confidence_path = *(std::max_element(
-        obj.state.predicted_paths.begin(), obj.state.predicted_paths.end(),
+        obj.kinematics.predicted_paths.begin(), obj.kinematics.predicted_paths.end(),
         [](const auto & path1, const auto & path2) {
           return path1.confidence > path2.confidence;
         }));
@@ -441,10 +436,11 @@ bool isPullOverPathSafe(
         obj_path, vehicle_predicted_path, current_lane_check_start_time,
         current_lane_check_end_time, time_resolution);
       double thresh;
-      if (isObjectFront(current_pose, obj.state.pose_covariance.pose)) {
+      if (isObjectFront(current_pose, obj.kinematics.initial_pose_with_covariance.pose)) {
         thresh = util::l2Norm(current_twist.linear) * stop_time;
       } else {
-        thresh = util::l2Norm(obj.state.twist_covariance.twist.linear) * stop_time;
+        thresh =
+          util::l2Norm(obj.kinematics.initial_twist_with_covariance.twist.linear) * stop_time;
       }
       thresh = std::max(thresh, min_thresh);
       thresh += buffer;
@@ -459,10 +455,12 @@ bool isPullOverPathSafe(
     const auto & obj = dynamic_objects->objects.at(i);
     std::vector<PredictedPath> predicted_paths;
     if (ros_parameters.use_all_predicted_path) {
-      predicted_paths = obj.state.predicted_paths;
+      std::copy(
+        obj.kinematics.predicted_paths.begin(), obj.kinematics.predicted_paths.end(),
+        predicted_paths.begin());
     } else {
       auto & max_confidence_path = *(std::max_element(
-        obj.state.predicted_paths.begin(), obj.state.predicted_paths.end(),
+        obj.kinematics.predicted_paths.begin(), obj.kinematics.predicted_paths.end(),
         [](const auto & path1, const auto & path2) {
           return path1.confidence > path2.confidence;
         }));
@@ -474,7 +472,7 @@ bool isPullOverPathSafe(
       is_object_in_target = true;
     } else {
       for (const auto & llt : target_lanes) {
-        if (lanelet::utils::isInLanelet(obj.state.pose_covariance.pose, llt)) {
+        if (lanelet::utils::isInLanelet(obj.kinematics.initial_pose_with_covariance.pose, llt)) {
           is_object_in_target = true;
         }
       }
@@ -486,10 +484,11 @@ bool isPullOverPathSafe(
           obj_path, vehicle_predicted_path, target_lane_check_start_time,
           target_lane_check_end_time, time_resolution);
         double thresh;
-        if (isObjectFront(current_pose, obj.state.pose_covariance.pose)) {
+        if (isObjectFront(current_pose, obj.kinematics.initial_pose_with_covariance.pose)) {
           thresh = util::l2Norm(current_twist.linear) * stop_time;
         } else {
-          thresh = util::l2Norm(obj.state.twist_covariance.twist.linear) * stop_time;
+          thresh =
+            util::l2Norm(obj.kinematics.initial_twist_with_covariance.twist.linear) * stop_time;
         }
         thresh = std::max(thresh, min_thresh);
         thresh += buffer;
@@ -502,7 +501,7 @@ bool isPullOverPathSafe(
         obj, vehicle_predicted_path, target_lane_check_start_time, target_lane_check_end_time,
         time_resolution);
       double thresh = min_thresh;
-      if (isObjectFront(current_pose, obj.state.pose_covariance.pose)) {
+      if (isObjectFront(current_pose, obj.kinematics.initial_pose_with_covariance.pose)) {
         thresh = std::max(thresh, util::l2Norm(current_twist.linear) * stop_time);
       }
       thresh += buffer;
