@@ -1,11 +1,11 @@
-#include "builtin_interfaces/msg/Time.idl"
+#include "std_msgs/msg/Header.idl"
 
 module autoware_auto_vehicle_msgs {
   module msg {
     @verbatim (language="comment", text=
       " VelocityReport.msg")
     struct VelocityReport {
-      builtin_interfaces::msg::Time stamp;
+      std_msgs::msg::Header header;
 
       @default (value=0.0)
       float longitudinal_velocity;
