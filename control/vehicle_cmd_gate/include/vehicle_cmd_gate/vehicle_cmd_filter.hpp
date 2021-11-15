@@ -15,7 +15,7 @@
 #ifndef VEHICLE_CMD_GATE__VEHICLE_CMD_FILTER_HPP_
 #define VEHICLE_CMD_GATE__VEHICLE_CMD_FILTER_HPP_
 
-#include <autoware_control_msgs/msg/control_command_stamped.hpp>
+#include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
 
 class VehicleCmdFilter
 {
@@ -29,17 +29,21 @@ public:
   void setLonJerkLim(double v) { lon_jerk_lim_ = v; }
   void setLatAccLim(double v) { lat_acc_lim_ = v; }
   void setLatJerkLim(double v) { lat_jerk_lim_ = v; }
-  void setPrevCmd(const autoware_control_msgs::msg::ControlCommand & v) { prev_cmd_ = v; }
+  void setPrevCmd(const autoware_auto_control_msgs::msg::AckermannControlCommand & v)
+  {
+    prev_cmd_ = v;
+  }
 
-  void limitLongitudinalWithVel(autoware_control_msgs::msg::ControlCommand & input) const;
+  void limitLongitudinalWithVel(
+    autoware_auto_control_msgs::msg::AckermannControlCommand & input) const;
   void limitLongitudinalWithAcc(
-    const double dt, autoware_control_msgs::msg::ControlCommand & input) const;
+    const double dt, autoware_auto_control_msgs::msg::AckermannControlCommand & input) const;
   void limitLongitudinalWithJerk(
-    const double dt, autoware_control_msgs::msg::ControlCommand & input) const;
+    const double dt, autoware_auto_control_msgs::msg::AckermannControlCommand & input) const;
   void limitLateralWithLatAcc(
-    const double dt, autoware_control_msgs::msg::ControlCommand & input) const;
+    const double dt, autoware_auto_control_msgs::msg::AckermannControlCommand & input) const;
   void limitLateralWithLatJerk(
-    const double dt, autoware_control_msgs::msg::ControlCommand & input) const;
+    const double dt, autoware_auto_control_msgs::msg::AckermannControlCommand & input) const;
 
 private:
   double wheel_base_;
@@ -48,9 +52,9 @@ private:
   double lon_jerk_lim_;
   double lat_acc_lim_;
   double lat_jerk_lim_;
-  autoware_control_msgs::msg::ControlCommand prev_cmd_;
+  autoware_auto_control_msgs::msg::AckermannControlCommand prev_cmd_;
 
-  double calcLatAcc(const autoware_control_msgs::msg::ControlCommand & cmd) const;
+  double calcLatAcc(const autoware_auto_control_msgs::msg::AckermannControlCommand & cmd) const;
   double calcSteerFromLatacc(const double v, const double latacc) const;
   double limitDiff(const double curr, const double prev, const double diff_lim) const;
 };
