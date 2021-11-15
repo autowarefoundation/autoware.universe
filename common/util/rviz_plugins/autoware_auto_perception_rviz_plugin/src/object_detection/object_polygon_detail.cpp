@@ -181,6 +181,7 @@ visualization_msgs::msg::Marker::SharedPtr get_uuid_marker_ptr(
 {
   auto marker_ptr = std::make_shared<Marker>();
   marker_ptr->type = Marker::TEXT_VIEW_FACING;
+  marker_ptr->ns = std::string("uuid");
   marker_ptr->text = uuid.substr(0, 4);
   marker_ptr->action = Marker::MODIFY;
   marker_ptr->scale.z = 0.5;
