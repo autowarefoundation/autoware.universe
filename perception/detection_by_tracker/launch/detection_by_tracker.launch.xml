@@ -18,21 +18,4 @@
     <remap from="~/input/initial_objects" to="initial_objects"/>
     <remap from="~/output" to="$(var output)"/>
   </node>
-
-  <!-- visualization -->
-  <group>
-    <include file="$(find-pkg-share dynamic_object_visualization)/launch/dynamic_object_visualizer.launch.xml">
-      <arg name="input" value="objects"/>
-      <arg name="with_feature" value="true"/>
-      <arg name="only_known_objects" value="true"/>
-    </include>
-  </group>
-  <group>
-    <include file="$(find-pkg-share dynamic_object_visualization)/launch/dynamic_object_visualizer.launch.xml">
-      <arg name="input" value="initial_objects"/>
-      <arg name="with_feature" value="true"/>
-      <arg name="only_known_objects" value="false"/>
-    </include>
-  </group>
-
 </launch>
