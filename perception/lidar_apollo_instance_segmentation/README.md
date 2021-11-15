@@ -1,4 +1,56 @@
+# lidar_apollo_instance_segmentation
+
 ![Peek 2020-04-07 00-17](https://user-images.githubusercontent.com/8327598/78574862-92507d80-7865-11ea-9a2d-56d3453bdb7a.gif)
+
+## Purpose
+
+This node segments 3D pointcloud data from lidar sensors into obstacles, e.g., cars, trucks, bicycles, and pedestrians
+based on CNN based model and obstacle clustering method.
+
+## Inner-workings / Algorithms
+
+See the [original design](https://github.com/ApolloAuto/apollo/blob/master/docs/specs/3d_obstacle_perception.md) by Apollo.
+
+## Inputs / Outputs
+
+### Input
+
+| Name               | Type                      | Description                        |
+| ------------------ | ------------------------- | ---------------------------------- |
+| `input/pointcloud` | `sensor_msgs/PointCloud2` | Pointcloud data from lidar sensors |
+
+### Output
+
+| Name                        | Type                                                  | Description                                       |
+| --------------------------- | ----------------------------------------------------- | ------------------------------------------------- |
+| `output/labeled_clusters`   | `autoware_perception_msgs/DetectedObjectsWithFeature` | Detected objects with labeled pointcloud cluster. |
+| `debug/instance_pointcloud` | `sensor_msgs/PointCloud2`                             | Segmented pointcloud for visualization.           |
+
+## Parameters
+
+### Node Parameters
+
+None
+
+### Core Parameters
+
+| Name                    | Type   | Default Value        | Description                                                                        |
+| ----------------------- | ------ | -------------------- | ---------------------------------------------------------------------------------- |
+| `score_threshold`       | double | 0.8                  | If the score of a detected object is lower than this value, the object is ignored. |
+| `range`                 | int    | 60                   | Half of the length of feature map sides. [m]                                       |
+| `width`                 | int    | 640                  | The grid width of feature map.                                                     |
+| `height`                | int    | 640                  | The grid height of feature map.                                                    |
+| `engine_file`           | string | "vls-128.engine"     | The name of TensorRT engine file for CNN model.                                    |
+| `prototxt_file`         | string | "vls-128.prototxt"   | The name of prototxt file for CNN model.                                           |
+| `caffemodel_file`       | string | "vls-128.caffemodel" | The name of caffemodel file for CNN model.                                         |
+| `use_intensity_feature` | bool   | true                 | The flag to use intensity feature of pointcloud.                                   |
+| `use_constant_feature`  | bool   | false                | The flag to use direction and distance feature of pointcloud.                      |
+| `target_frame`          | string | "base_link"          | Pointcloud data is transformed into this frame.                                    |
+| `z_offset`              | int    | 2                    | z offset from target frame. [m]                                                    |
+
+## Assumptions / Known limits
+
+There is no training code for CNN model.
 
 ### Note
 
