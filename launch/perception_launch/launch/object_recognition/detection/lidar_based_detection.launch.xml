@@ -24,13 +24,6 @@
     <group>
       <include file="$(find-pkg-share lidar_centerpoint)/launch/lidar_centerpoint.launch.xml" />
     </group>
-    <group>
-      <include file="$(find-pkg-share dynamic_object_visualization)/launch/dynamic_object_visualizer.launch.xml">
-        <arg name="input" value="objects"/>
-        <arg name="with_feature" value="true"/>
-        <arg name="only_known_objects" value="true"/>
-      </include>
-    </group>
   </group>
 
   <!-- Lidar Apollo Instance Segmentation -->
@@ -41,13 +34,6 @@
       <include file="$(find-pkg-share shape_estimation)/launch/shape_estimation.launch.xml">
         <arg name="output/objects" value="objects"/>
         <arg name="use_map_current" value="$(var use_vector_map)"/>
-      </include>
-    </group>
-    <group>
-      <include file="$(find-pkg-share dynamic_object_visualization)/launch/dynamic_object_visualizer.launch.xml">
-        <arg name="input" value="objects"/>
-        <arg name="with_feature" value="true"/>
-        <arg name="only_known_objects" value="true"/>
       </include>
     </group>
   </group>

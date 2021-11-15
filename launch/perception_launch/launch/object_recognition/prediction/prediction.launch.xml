@@ -13,11 +13,4 @@
     <include file="$(find-pkg-share naive_path_prediction)/launch/naive_path_prediction.launch.xml">
     </include>
   </group>
-
-  <!-- visualization -->
-  <include file="$(find-pkg-share dynamic_object_visualization)/launch/dynamic_object_visualizer.launch.xml">
-    <arg name="input" value="/perception/object_recognition/objects"/>
-    <arg name="with_feature" value="false"/>
-    <arg name="only_known_objects" value="true"/>
-  </include>
 </launch>
