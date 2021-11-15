@@ -234,7 +234,7 @@ void ScenarioSelectorNode::onRoute(
 
 void ScenarioSelectorNode::onOdom(const nav_msgs::msg::Odometry::ConstSharedPtr msg)
 {
-  geometry_msgs::msg::TwistStamped::SharedPtr twist;
+  auto twist = std::make_shared<geometry_msgs::msg::TwistStamped>();
   twist->header = msg->header;
   twist->twist = msg->twist.twist;
 
