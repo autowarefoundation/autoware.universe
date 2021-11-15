@@ -10,13 +10,11 @@
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
-  <exec_depend>dynamic_object_visualization</exec_depend>
   <exec_depend>euclidean_cluster</exec_depend>
   <exec_depend>image_transport_decompressor</exec_depend>
   <exec_depend>lidar_apollo_instance_segmentation</exec_depend>
   <exec_depend>map_based_prediction</exec_depend>
   <exec_depend>multi_object_tracker</exec_depend>
-  <exec_depend>naive_path_prediction</exec_depend>
   <exec_depend>object_merger</exec_depend>
   <exec_depend>object_range_splitter</exec_depend>
   <exec_depend>roi_cluster_fusion</exec_depend>
