@@ -682,7 +682,7 @@
                                         <relative_minimum>-1000</relative_minimum>
                                         <type>0</type>
                                     </scale>
-                                    <topic>/vehicle/status/steering</topic>
+                                    <topic>/vehicle/status/steering_status</topic>
                                     <type>autoware_vehicle_msgs/Steering</type>
                                 </x_axis>
                                 <y_axis>
@@ -695,7 +695,7 @@
                                         <relative_minimum>-1000</relative_minimum>
                                         <type>0</type>
                                     </scale>
-                                    <topic>/vehicle/status/steering</topic>
+                                    <topic>/vehicle/status/steering_status</topic>
                                     <type>autoware_vehicle_msgs/Steering</type>
                                 </y_axis>
                             </axes>
@@ -758,7 +758,7 @@
                                         <relative_minimum>-1000</relative_minimum>
                                         <type>0</type>
                                     </scale>
-                                    <topic>/vehicle/status/twist</topic>
+                                    <topic>/vehicle/status/velocity_status</topic>
                                     <type>geometry_msgs/TwistStamped</type>
                                 </x_axis>
                                 <y_axis>
@@ -771,7 +771,7 @@
                                         <relative_minimum>-1000</relative_minimum>
                                         <type>0</type>
                                     </scale>
-                                    <topic>/vehicle/status/twist</topic>
+                                    <topic>/vehicle/status/velocity_status</topic>
                                     <type>geometry_msgs/TwistStamped</type>
                                 </y_axis>
                             </axes>
