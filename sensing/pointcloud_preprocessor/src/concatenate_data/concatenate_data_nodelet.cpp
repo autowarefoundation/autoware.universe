@@ -412,7 +412,7 @@ void PointCloudConcatenateDataSynchronizerComponent::twist_callback(
     twist_ptr_queue_.pop_front();
   }
 
-  geometry_msgs::msg::TwistStamped::SharedPtr twist_ptr;
+  auto twist_ptr = std::make_shared<geometry_msgs::msg::TwistStamped>();
   twist_ptr->header.stamp = input->header.stamp;
   twist_ptr->twist.linear.x = input->longitudinal_velocity;
   twist_ptr->twist.linear.y = input->lateral_velocity;
