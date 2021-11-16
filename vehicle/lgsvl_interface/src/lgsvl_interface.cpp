@@ -29,15 +29,15 @@
 
 #include "lgsvl_interface/lgsvl_interface.hpp"
 
-#include "autoware_auto_msgs/msg/gear_report.hpp"
-#include "autoware_auto_msgs/msg/hazard_lights_command.hpp"
-#include "autoware_auto_msgs/msg/hazard_lights_report.hpp"
-#include "autoware_auto_msgs/msg/headlights_command.hpp"
-#include "autoware_auto_msgs/msg/headlights_report.hpp"
-#include "autoware_auto_msgs/msg/horn_command.hpp"
-#include "autoware_auto_msgs/msg/horn_report.hpp"
-#include "autoware_auto_msgs/msg/wipers_command.hpp"
-#include "autoware_auto_msgs/msg/wipers_report.hpp"
+#include "autoware_auto_vehicle_msgs/msg/gear_report.hpp"
+#include "autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp"
+#include "autoware_auto_vehicle_msgs/msg/hazard_lights_report.hpp"
+#include "autoware_auto_vehicle_msgs/msg/headlights_command.hpp"
+#include "autoware_auto_vehicle_msgs/msg/headlights_report.hpp"
+#include "autoware_auto_vehicle_msgs/msg/horn_command.hpp"
+#include "autoware_auto_vehicle_msgs/msg/horn_report.hpp"
+#include "autoware_auto_vehicle_msgs/msg/wipers_command.hpp"
+#include "autoware_auto_vehicle_msgs/msg/wipers_report.hpp"
 
 using autoware::common::types::bool8_t;
 using autoware::common::types::float64_t;
@@ -46,14 +46,14 @@ using namespace std::chrono_literals;
 
 namespace lgsvl_interface
 {
-using autoware_auto_msgs::msg::HazardLightsCommand;
-using autoware_auto_msgs::msg::HazardLightsReport;
-using autoware_auto_msgs::msg::HeadlightsCommand;
-using autoware_auto_msgs::msg::HeadlightsReport;
-using autoware_auto_msgs::msg::HornCommand;
-using autoware_auto_msgs::msg::HornReport;
-using autoware_auto_msgs::msg::WipersCommand;
-using autoware_auto_msgs::msg::WipersReport;
+using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
+using autoware_auto_vehicle_msgs::msg::HazardLightsReport;
+using autoware_auto_vehicle_msgs::msg::HeadlightsCommand;
+using autoware_auto_vehicle_msgs::msg::HeadlightsReport;
+using autoware_auto_vehicle_msgs::msg::HornCommand;
+using autoware_auto_vehicle_msgs::msg::HornReport;
+using autoware_auto_vehicle_msgs::msg::WipersCommand;
+using autoware_auto_vehicle_msgs::msg::WipersReport;
 
 const std::unordered_map<WIPER_TYPE, WIPER_TYPE> LgsvlInterface::autoware_to_lgsvl_wiper {
   {WipersCommand::NO_COMMAND, static_cast<WIPER_TYPE>(VSD::WIPERS_OFF)},
@@ -152,7 +152,7 @@ LgsvlInterface::LgsvlInterface(
       rclcpp::QoS{10},
       [this](nav_msgs::msg::Odometry::SharedPtr msg) {on_odometry(*msg);});
     // Ground truth state/pose publishers only work if there's a ground truth input
-    m_kinematic_state_pub = node.create_publisher<autoware_auto_msgs::msg::VehicleKinematicState>(
+    m_kinematic_state_pub = node.create_publisher<autoware_auto_vehicle_msgs::msg::VehicleKinematicState>(
       kinematic_state_topic, rclcpp::QoS{10});
 
     if (publish_pose) {
@@ -169,32 +169,32 @@ LgsvlInterface::LgsvlInterface(
     sim_state_report_topic,
     rclcpp::QoS{10},
     [this](lgsvl_msgs::msg::CanBusData::SharedPtr msg) {
-      autoware_auto_msgs::msg::VehicleStateReport state_report;
+      autoware_auto_vehicle_msgs::msg::VehicleStateReport state_report;
       // state_report.set__fuel(nullptr);  // no fuel status from LGSVL
       if (msg->left_turn_signal_active) {
-        state_report.set__blinker(autoware_auto_msgs::msg::VehicleStateReport::BLINKER_LEFT);
+        state_report.set__blinker(autoware_auto_vehicle_msgs::msg::VehicleStateReport::BLINKER_LEFT);
       } else if (msg->right_turn_signal_active) {
-        state_report.set__blinker(autoware_auto_msgs::msg::VehicleStateReport::BLINKER_RIGHT);
+        state_report.set__blinker(autoware_auto_vehicle_msgs::msg::VehicleStateReport::BLINKER_RIGHT);
       } else {
-        state_report.set__blinker(autoware_auto_msgs::msg::VehicleStateReport::BLINKER_OFF);
+        state_report.set__blinker(autoware_auto_vehicle_msgs::msg::VehicleStateReport::BLINKER_OFF);
       }
 
       if (msg->low_beams_active) {
-        state_report.set__headlight(autoware_auto_msgs::msg::VehicleStateReport::HEADLIGHT_ON);
+        state_report.set__headlight(autoware_auto_vehicle_msgs::msg::VehicleStateReport::HEADLIGHT_ON);
         headlights_report().report = HeadlightsReport::ENABLE_LOW;
       } else if (msg->high_beams_active) {
-        state_report.set__headlight(autoware_auto_msgs::msg::VehicleStateReport::HEADLIGHT_HIGH);
+        state_report.set__headlight(autoware_auto_vehicle_msgs::msg::VehicleStateReport::HEADLIGHT_HIGH);
         headlights_report().report = HeadlightsReport::ENABLE_HIGH;
       } else {
-        state_report.set__headlight(autoware_auto_msgs::msg::VehicleStateReport::HEADLIGHT_OFF);
+        state_report.set__headlight(autoware_auto_vehicle_msgs::msg::VehicleStateReport::HEADLIGHT_OFF);
         headlights_report().report = HeadlightsReport::DISABLE;
       }
 
       if (msg->wipers_active) {
-        state_report.set__wiper(autoware_auto_msgs::msg::VehicleStateReport::WIPER_LOW);
+        state_report.set__wiper(autoware_auto_vehicle_msgs::msg::VehicleStateReport::WIPER_LOW);
         wipers_report().report = WipersReport::ENABLE_LOW;
       } else {
-        state_report.set__wiper(autoware_auto_msgs::msg::VehicleStateReport::WIPER_OFF);
+        state_report.set__wiper(autoware_auto_vehicle_msgs::msg::VehicleStateReport::WIPER_OFF);
         wipers_report().report = WipersReport::DISABLE;
       }
 
@@ -257,7 +257,7 @@ bool8_t LgsvlInterface::update(std::chrono::nanoseconds timeout)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-bool8_t LgsvlInterface::send_state_command(const autoware_auto_msgs::msg::VehicleStateCommand & msg)
+bool8_t LgsvlInterface::send_state_command(const autoware_auto_vehicle_msgs::msg::VehicleStateCommand & msg)
 {
   auto msg_corrected = msg;
 
@@ -314,14 +314,14 @@ bool8_t LgsvlInterface::send_state_command(const autoware_auto_msgs::msg::Vehicl
 
 ////////////////////////////////////////////////////////////////////////////////
 bool8_t LgsvlInterface::send_control_command(
-  const autoware_auto_msgs::msg::VehicleControlCommand & msg)
+  const autoware_auto_vehicle_msgs::msg::VehicleControlCommand & msg)
 {
-  autoware_auto_msgs::msg::RawControlCommand raw_msg;
+  autoware_auto_vehicle_msgs::msg::RawControlCommand raw_msg;
   raw_msg.stamp = msg.stamp;
   raw_msg.throttle = 0;
   raw_msg.brake = 0;
 
-  using VSR = autoware_auto_msgs::msg::VehicleStateReport;
+  using VSR = autoware_auto_vehicle_msgs::msg::VehicleStateReport;
   const auto directional_accel = get_state_report().gear ==
     VSR::GEAR_REVERSE ? -msg.long_accel_mps2 : msg.long_accel_mps2;
 
@@ -342,9 +342,9 @@ bool8_t LgsvlInterface::send_control_command(
 
 ////////////////////////////////////////////////////////////////////////////////
 bool8_t LgsvlInterface::send_control_command(
-  const autoware_auto_msgs::msg::AckermannControlCommand & msg)
+  const autoware_auto_control_msgs::msg::AckermannControlCommand & msg)
 {
-  autoware_auto_msgs::msg::RawControlCommand raw_msg;
+  autoware_auto_vehicle_msgs::msg::RawControlCommand raw_msg;
   raw_msg.stamp = msg.stamp;
   raw_msg.throttle = 0;
   raw_msg.brake = 0;
@@ -364,7 +364,7 @@ bool8_t LgsvlInterface::send_control_command(
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-bool8_t LgsvlInterface::send_control_command(const autoware_auto_msgs::msg::RawControlCommand & msg)
+bool8_t LgsvlInterface::send_control_command(const autoware_auto_vehicle_msgs::msg::RawControlCommand & msg)
 {
   // Front steer semantically is z up, ccw positive, but LGSVL thinks its the opposite
   lgsvl_msgs::msg::VehicleControlData control_data;
@@ -378,7 +378,7 @@ bool8_t LgsvlInterface::send_control_command(const autoware_auto_msgs::msg::RawC
 }
 
 bool8_t LgsvlInterface::handle_mode_change_request(
-  autoware_auto_msgs::srv::AutonomyModeChange_Request::SharedPtr request)
+  autoware_auto_vehicle_msgs::srv::AutonomyModeChange_Request::SharedPtr request)
 {
   // TODO(JWhitleyWork) Actually enable/disable this internally to
   // mimic a real vehicle and allow commanding the vehicle to be disabled
@@ -386,9 +386,9 @@ bool8_t LgsvlInterface::handle_mode_change_request(
   return true;
 }
 
-void LgsvlInterface::send_headlights_command(const autoware_auto_msgs::msg::HeadlightsCommand & msg)
+void LgsvlInterface::send_headlights_command(const autoware_auto_vehicle_msgs::msg::HeadlightsCommand & msg)
 {
-  /// lgsvl_msgs values are shifted down one from autoware_auto_msgs values
+  /// lgsvl_msgs values are shifted down one from autoware_auto_vehicle_msgs values
   /// However, lgsvl_msgs values have no "NO_COMMAND" option so 0 is ignored
   auto shifted_command = msg.command;
 
@@ -399,14 +399,14 @@ void LgsvlInterface::send_headlights_command(const autoware_auto_msgs::msg::Head
   m_lgsvl_state.set__headlight_state(shifted_command);
 }
 
-void LgsvlInterface::send_horn_command(const autoware_auto_msgs::msg::HornCommand & msg)
+void LgsvlInterface::send_horn_command(const autoware_auto_vehicle_msgs::msg::HornCommand & msg)
 {
   m_lgsvl_state.set__horn_active(msg.active);
 }
 
-void LgsvlInterface::send_wipers_command(const autoware_auto_msgs::msg::WipersCommand & msg)
+void LgsvlInterface::send_wipers_command(const autoware_auto_vehicle_msgs::msg::WipersCommand & msg)
 {
-  /// lgsvl_msgs values are shifted down one from autoware_auto_msgs values
+  /// lgsvl_msgs values are shifted down one from autoware_auto_vehicle_msgs values
   /// However, lgsvl_msgs values have no "NO_COMMAND" option so 0 is ignored
   auto shifted_command = msg.command;
 
@@ -444,7 +444,7 @@ void LgsvlInterface::on_odometry(const nav_msgs::msg::Odometry & msg)
 
     // Only create vehicle kinematic state when required tf is available
     if (m_nav_base_tf_set) {
-      autoware_auto_msgs::msg::VehicleKinematicState vse_t{};
+      autoware_auto_vehicle_msgs::msg::VehicleKinematicState vse_t{};
 
       // Apply a transform representing the odometry observation of the original
       // child frame in the odometry parent frame to the VehicleKinematicState
@@ -461,7 +461,7 @@ void LgsvlInterface::on_odometry(const nav_msgs::msg::Odometry & msg)
       // Steer semantically is z up, ccw positive, but LGSVL thinks its the opposite
       vse_t.state.front_wheel_angle_rad = -get_odometry().front_wheel_angle_rad;
       vse_t.state.rear_wheel_angle_rad = -get_odometry().rear_wheel_angle_rad;
-      if (state_report().gear == autoware_auto_msgs::msg::VehicleStateReport::GEAR_REVERSE) {
+      if (state_report().gear == autoware_auto_vehicle_msgs::msg::VehicleStateReport::GEAR_REVERSE) {
         vse_t.state.longitudinal_velocity_mps *= -1.0f;
       }
 
@@ -514,11 +514,11 @@ void LgsvlInterface::on_odometry(const nav_msgs::msg::Odometry & msg)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void LgsvlInterface::on_state_report(const autoware_auto_msgs::msg::VehicleStateReport & msg)
+void LgsvlInterface::on_state_report(const autoware_auto_vehicle_msgs::msg::VehicleStateReport & msg)
 {
   auto corrected_report = msg;
 
-  // in autoware_auto_msgs::msg::VehicleStateCommand 1 is drive, 2 is reverse, https://gitlab.com/autowarefoundation/autoware.auto/AutowareAuto/-/blob/9744f6dc/src/messages/autoware_auto_msgs/msg/VehicleStateCommand.msg#L32
+  // in autoware_auto_vehicle_msgs::msg::VehicleStateCommand 1 is drive, 2 is reverse, https://gitlab.com/autowarefoundation/autoware.auto/AutowareAuto/-/blob/9744f6dc/src/messages/autoware_auto_vehicle_msgs/msg/VehicleStateCommand.msg#L32
   // in lgsvl 0 is drive and 1 is reverse https://github.com/lgsvl/simulator/blob/cb937deb8e633573f6c0cc76c9f451398b8b9eff/Assets/Scripts/Sensors/VehicleStateSensor.cs#L70
 
 

@@ -15,8 +15,8 @@ autoware_set_compile_options(${PROJECT_NAME})
 
 if(BUILD_TESTING)
   # Lint
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
+  # find_package(ament_lint_auto REQUIRED)
+  # ament_lint_auto_find_test_dependencies()
   # Test
   ament_add_gtest(${PROJECT_NAME}_test
     test/gtest_main.cpp

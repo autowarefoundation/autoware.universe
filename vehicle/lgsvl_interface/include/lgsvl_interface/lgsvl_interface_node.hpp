@@ -25,10 +25,10 @@
 #include <chrono>
 #include <string>
 
-#include "autoware_auto_msgs/msg/headlights_report.hpp"
-#include "autoware_auto_msgs/msg/horn_report.hpp"
-#include "autoware_auto_msgs/msg/wipers_report.hpp"
-#include "autoware_auto_msgs/msg/hazard_lights_report.hpp"
+#include "autoware_auto_vehicle_msgs/msg/headlights_report.hpp"
+#include "autoware_auto_vehicle_msgs/msg/horn_report.hpp"
+#include "autoware_auto_vehicle_msgs/msg/wipers_report.hpp"
+#include "autoware_auto_vehicle_msgs/msg/hazard_lights_report.hpp"
 
 namespace lgsvl_interface
 {
