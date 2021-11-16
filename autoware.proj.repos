@@ -97,14 +97,6 @@ repositories:
     type: git
     url: https://github.com/tier4/topic_tools.git
     version: ac3af3357f009925d29c8979f7613bcf111e58c4
-  vendor/pacmod3: # TODO remove after foxy-version is released
-    type: git
-    url: https://github.com/astuff/pacmod3.git
-    version: deec9f5bcf8585d1443f26f4731bbb7b4e6fb8eb
-  vendor/kvaser_interface: # TODO remove after foxy-version is released
-    type: git
-    url: https://github.com/tier4/kvaser_interface.git
-    version: 3602a186b4dfebfeea17bcaaedede8cd04d4baea
   vendor/usb_cam: # TODO remove after https://github.com/ros-drivers/usb_cam/pull/132 is available in foxy
     type: git
     url: https://github.com/tier4/usb_cam.git

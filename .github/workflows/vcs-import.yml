@@ -15,10 +15,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Install pip
+      - name: Install pip and apt-transport-https
         run: |
           apt-get -y update
-          apt-get -y install python3-pip
+          apt-get -y install python3-pip apt-transport-https
+
+      - name: Add Autonomoustuff repository
+        run: |
+          sh -c 'echo "yaml https://s3.amazonaws.com/autonomoustuff-repo/autonomoustuff-public-galactic.yaml" > /etc/ros/rosdep/sources.list.d/40-autonomoustuff-public-galactic.list'
+          sh -c 'echo "deb [trusted=yes] https://s3.amazonaws.com/autonomoustuff-repo/ focal main" > /etc/apt/sources.list.d/autonomoustuff-public.list'
 
       - name: Install tools
         run: |

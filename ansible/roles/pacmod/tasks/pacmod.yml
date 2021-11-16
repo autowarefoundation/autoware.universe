@@ -19,18 +19,25 @@
   shell: lsb_release -sc
   register: lsb_release
 
-- name: Add AS public repo
+- name: Add autonomoustuff public repo
   lineinfile:
     path: /etc/apt/sources.list.d/autonomoustuff-public.list
     line: "deb [trusted=yes] https://s3.amazonaws.com/autonomoustuff-repo/ {{ lsb_release.stdout }} main"
     state: present
   become: yes
 
-- name: Install AS public modules
+- name: Add rosdep list file for autonomoustuff
+  file:
+    path: /etc/ros/rosdep/sources.list.d/40-autonomoustuff-public-{{ rosdistro }}.list
+    owner: root
+    group: root
+    mode: 0644
+    state: touch
   become: yes
-  apt:
-    name:
-      - libas-common
-      - ros-{{ rosdistro }}-pacmod3
-      - ros-{{ rosdistro }}-kvaser-interface
-    update_cache: yes
+
+- name: Add autonomoustuff rosdep yaml
+  lineinfile:
+    path: /etc/ros/rosdep/sources.list.d/40-autonomoustuff-public-{{ rosdistro }}.list
+    line: "yaml https://s3.amazonaws.com/autonomoustuff-repo/autonomoustuff-public-{{ rosdistro }}.yaml"
+    state: present
+  become: yes
