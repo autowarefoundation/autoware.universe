@@ -70,16 +70,16 @@ TEST_F(FakeNodeFixture, no_input)
   // Publisher/Subscribers
   rclcpp::Publisher<Trajectory>::SharedPtr traj_pub =
     this->create_publisher<Trajectory>(
-    "input/reference_trajectory");
+    "lateral_controller/input/reference_trajectory");
   rclcpp::Publisher<VehicleOdometry>::SharedPtr odom_pub =
     this->create_publisher<VehicleOdometry>(
-    "input/current_odometry");
+    "lateral_controller/input/current_odometry");
   rclcpp::Publisher<SteeringReport>::SharedPtr steer_pub =
     this->create_publisher<SteeringReport>(
-    "input/current_steering");
+    "lateral_controller/input/current_steering");
   rclcpp::Subscription<LateralCommand>::SharedPtr cmd_sub =
     this->create_subscription<LateralCommand>(
-    "output/lateral/control_cmd", *this->get_fake_node(),
+    "lateral_controller/output/control_cmd", *this->get_fake_node(),
     [&cmd_msg, &received_lateral_command](const LateralCommand::SharedPtr msg) {
       cmd_msg = msg; received_lateral_command = true;
     });
@@ -103,16 +103,16 @@ TEST_F(FakeNodeFixture, empty_trajectory)
   // Publisher/Subscribers
   rclcpp::Publisher<Trajectory>::SharedPtr traj_pub =
     this->create_publisher<Trajectory>(
-    "input/reference_trajectory");
+    "lateral_controller/input/reference_trajectory");
   rclcpp::Publisher<VehicleOdometry>::SharedPtr odom_pub =
     this->create_publisher<VehicleOdometry>(
-    "input/current_odometry");
+    "lateral_controller/input/current_odometry");
   rclcpp::Publisher<SteeringReport>::SharedPtr steer_pub =
     this->create_publisher<SteeringReport>(
-    "input/current_steering");
+    "lateral_controller/input/current_steering");
   rclcpp::Subscription<LateralCommand>::SharedPtr cmd_sub =
     this->create_subscription<LateralCommand>(
-    "output/lateral/control_cmd", *this->get_fake_node(),
+    "lateral_controller/output/control_cmd", *this->get_fake_node(),
     [&cmd_msg, &received_lateral_command](const LateralCommand::SharedPtr msg) {
       cmd_msg = msg; received_lateral_command = true;
     });
@@ -155,16 +155,16 @@ TEST_F(FakeNodeFixture, straight_trajectory)
   // Publisher/Subscribers
   rclcpp::Publisher<Trajectory>::SharedPtr traj_pub =
     this->create_publisher<Trajectory>(
-    "input/reference_trajectory");
+    "lateral_controller/input/reference_trajectory");
   rclcpp::Publisher<VehicleOdometry>::SharedPtr odom_pub =
     this->create_publisher<VehicleOdometry>(
-    "input/current_odometry");
+    "lateral_controller/input/current_odometry");
   rclcpp::Publisher<SteeringReport>::SharedPtr steer_pub =
     this->create_publisher<SteeringReport>(
-    "input/current_steering");
+    "lateral_controller/input/current_steering");
   rclcpp::Subscription<LateralCommand>::SharedPtr cmd_sub =
     this->create_subscription<LateralCommand>(
-    "output/lateral/control_cmd", *this->get_fake_node(),
+    "lateral_controller/output/control_cmd", *this->get_fake_node(),
     [&cmd_msg, &received_lateral_command](const LateralCommand::SharedPtr msg) {
       cmd_msg = msg; received_lateral_command = true;
     });
@@ -225,16 +225,16 @@ TEST_F(FakeNodeFixture, right_turn)
   // Publisher/Subscribers
   rclcpp::Publisher<Trajectory>::SharedPtr traj_pub =
     this->create_publisher<Trajectory>(
-    "input/reference_trajectory");
+    "lateral_controller/input/reference_trajectory");
   rclcpp::Publisher<VehicleOdometry>::SharedPtr odom_pub =
     this->create_publisher<VehicleOdometry>(
-    "input/current_odometry");
+    "lateral_controller/input/current_odometry");
   rclcpp::Publisher<SteeringReport>::SharedPtr steer_pub =
     this->create_publisher<SteeringReport>(
-    "input/current_steering");
+    "lateral_controller/input/current_steering");
   rclcpp::Subscription<LateralCommand>::SharedPtr cmd_sub =
     this->create_subscription<LateralCommand>(
-    "output/lateral/control_cmd", *this->get_fake_node(),
+    "lateral_controller/output/control_cmd", *this->get_fake_node(),
     [&cmd_msg, &received_lateral_command](const LateralCommand::SharedPtr msg) {
       cmd_msg = msg; received_lateral_command = true;
     });
@@ -295,16 +295,16 @@ TEST_F(FakeNodeFixture, left_turn)
   // Publisher/Subscribers
   rclcpp::Publisher<Trajectory>::SharedPtr traj_pub =
     this->create_publisher<Trajectory>(
-    "input/reference_trajectory");
+    "lateral_controller/input/reference_trajectory");
   rclcpp::Publisher<VehicleOdometry>::SharedPtr odom_pub =
     this->create_publisher<VehicleOdometry>(
-    "input/current_odometry");
+    "lateral_controller/input/current_odometry");
   rclcpp::Publisher<SteeringReport>::SharedPtr steer_pub =
     this->create_publisher<SteeringReport>(
-    "input/current_steering");
+    "lateral_controller/input/current_steering");
   rclcpp::Subscription<LateralCommand>::SharedPtr cmd_sub =
     this->create_subscription<LateralCommand>(
-    "output/lateral/control_cmd", *this->get_fake_node(),
+    "lateral_controller/output/control_cmd", *this->get_fake_node(),
     [&cmd_msg, &received_lateral_command](const LateralCommand::SharedPtr msg) {
       cmd_msg = msg; received_lateral_command = true;
     });
@@ -365,16 +365,16 @@ TEST_F(FakeNodeFixture, stopped)
   // Publisher/Subscribers
   rclcpp::Publisher<Trajectory>::SharedPtr traj_pub =
     this->create_publisher<Trajectory>(
-    "input/reference_trajectory");
+    "lateral_controller/input/reference_trajectory");
   rclcpp::Publisher<VehicleOdometry>::SharedPtr odom_pub =
     this->create_publisher<VehicleOdometry>(
-    "input/current_odometry");
+    "lateral_controller/input/current_odometry");
   rclcpp::Publisher<SteeringReport>::SharedPtr steer_pub =
     this->create_publisher<SteeringReport>(
-    "input/current_steering");
+    "lateral_controller/input/current_steering");
   rclcpp::Subscription<LateralCommand>::SharedPtr cmd_sub =
     this->create_subscription<LateralCommand>(
-    "output/lateral/control_cmd", *this->get_fake_node(),
+    "lateral_controller/output/control_cmd", *this->get_fake_node(),
     [&cmd_msg, &received_lateral_command](const LateralCommand::SharedPtr msg) {
       cmd_msg = msg; received_lateral_command = true;
     });

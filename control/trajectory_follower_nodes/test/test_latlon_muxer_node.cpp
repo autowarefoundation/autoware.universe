@@ -51,13 +51,13 @@ TEST_F(FakeNodeFixture, TestCorrectOutput)
   // Publisher/Subscribers
   rclcpp::Publisher<LateralCommand>::SharedPtr lat_pub =
     this->create_publisher<LateralCommand>(
-    "input/lateral/control_cmd");
+    "latlon_muxer/input/lateral/control_cmd");
   rclcpp::Publisher<LongitudinalCommand>::SharedPtr lon_pub =
     this->create_publisher<LongitudinalCommand>(
-    "input/longitudinal/control_cmd");
+    "latlon_muxer/input/longitudinal/control_cmd");
   rclcpp::Subscription<ControlCommand>::SharedPtr cmd_sub =
     this->create_subscription<ControlCommand>(
-    "output/control_cmd", *node,
+    "latlon_muxer/output/control_cmd", *node,
     [&cmd_msg, &received_combined_command](const ControlCommand::SharedPtr msg) {
       cmd_msg = msg; received_combined_command = true;
     });
@@ -98,13 +98,13 @@ TEST_F(FakeNodeFixture, TestLateralTimeout)
   // Publisher/Subscribers
   rclcpp::Publisher<LateralCommand>::SharedPtr lat_pub =
     this->create_publisher<LateralCommand>(
-    "input/lateral/control_cmd");
+    "latlon_muxer/input/lateral/control_cmd");
   rclcpp::Publisher<LongitudinalCommand>::SharedPtr lon_pub =
     this->create_publisher<LongitudinalCommand>(
-    "input/longitudinal/control_cmd");
+    "latlon_muxer/input/longitudinal/control_cmd");
   rclcpp::Subscription<ControlCommand>::SharedPtr cmd_sub =
     this->create_subscription<ControlCommand>(
-    "output/control_cmd", *node,
+    "latlon_muxer/output/control_cmd", *node,
     [&cmd_msg, &received_combined_command](const ControlCommand::SharedPtr msg) {
       cmd_msg = msg; received_combined_command = true;
     });
@@ -136,13 +136,13 @@ TEST_F(FakeNodeFixture, TestLongitudinalTimeout)
   // Publisher/Subscribers
   rclcpp::Publisher<LateralCommand>::SharedPtr lat_pub =
     this->create_publisher<LateralCommand>(
-    "input/lateral/control_cmd");
+    "latlon_muxer/input/lateral/control_cmd");
   rclcpp::Publisher<LongitudinalCommand>::SharedPtr lon_pub =
     this->create_publisher<LongitudinalCommand>(
-    "input/longitudinal/control_cmd");
+    "latlon_muxer/input/longitudinal/control_cmd");
   rclcpp::Subscription<ControlCommand>::SharedPtr cmd_sub =
     this->create_subscription<ControlCommand>(
-    "output/control_cmd", *node,
+    "latlon_muxer/output/control_cmd", *node,
     [&cmd_msg, &received_combined_command](const ControlCommand::SharedPtr msg) {
       cmd_msg = msg; received_combined_command = true;
     });
@@ -174,13 +174,13 @@ TEST_F(FakeNodeFixture, TestLatlonTimeout)
   // Publisher/Subscribers
   rclcpp::Publisher<LateralCommand>::SharedPtr lat_pub =
     this->create_publisher<LateralCommand>(
-    "input/lateral/control_cmd");
+    "latlon_muxer/input/lateral/control_cmd");
   rclcpp::Publisher<LongitudinalCommand>::SharedPtr lon_pub =
     this->create_publisher<LongitudinalCommand>(
-    "input/longitudinal/control_cmd");
+    "latlon_muxer/input/longitudinal/control_cmd");
   rclcpp::Subscription<ControlCommand>::SharedPtr cmd_sub =
     this->create_subscription<ControlCommand>(
-    "output/control_cmd", *node,
+    "latlon_muxer/output/control_cmd", *node,
     [&cmd_msg, &received_combined_command](const ControlCommand::SharedPtr msg) {
       cmd_msg = msg; received_combined_command = true;
     });

@@ -170,17 +170,17 @@ LongitudinalController::LongitudinalController(const rclcpp::NodeOptions & node_
 
   // subscriber, publisher
   m_sub_current_velocity = create_subscription<autoware_auto_vehicle_msgs::msg::VehicleOdometry>(
-    "input/current_state", rclcpp::QoS{1},
+    "~/input/current_odometry", rclcpp::QoS{1},
     std::bind(&LongitudinalController::callbackCurrentVelocity, this, _1));
   m_sub_trajectory = create_subscription<autoware_auto_planning_msgs::msg::Trajectory>(
-    "input/current_trajectory", rclcpp::QoS{1},
+    "~/input/current_trajectory", rclcpp::QoS{1},
     std::bind(&LongitudinalController::callbackTrajectory, this, _1));
   m_pub_control_cmd = create_publisher<autoware_auto_control_msgs::msg::LongitudinalCommand>(
-    "output/longitudinal_control_cmd", rclcpp::QoS{1});
+    "~/output/control_cmd", rclcpp::QoS{1});
   m_pub_slope = create_publisher<autoware_auto_system_msgs::msg::Float32MultiArrayDiagnostic>(
-    "output/slope_angle", rclcpp::QoS{1});
+    "~/output/slope_angle", rclcpp::QoS{1});
   m_pub_debug = create_publisher<autoware_auto_system_msgs::msg::Float32MultiArrayDiagnostic>(
-    "output/longitudinal/diagnostic", rclcpp::QoS{1});
+    "~/output/diagnostic", rclcpp::QoS{1});
 
 
   // Timer
