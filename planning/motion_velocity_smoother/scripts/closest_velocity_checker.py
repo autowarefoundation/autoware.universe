@@ -27,6 +27,7 @@ from autoware_vehicle_msgs.msg import VehicleCommand
 from geometry_msgs.msg import Pose
 from geometry_msgs.msg import Twist
 from geometry_msgs.msg import TwistStamped
+from nav_msgs.msg import Odometry
 import numpy as np
 import rclpy
 from rclpy.node import Node
@@ -132,7 +133,7 @@ class VelocityChecker(Node):
             TwistStamped, "/localization/twist", self.CallBackLocalizationTwist, 1
         )
         self.sub11 = self.create_subscription(
-            TwistStamped, "/vehicle/status/twist", self.CallBackVehicleTwist, 1
+            Odometry, "/vehicle/status/vehicle_status", self.CallBackVehicleTwist, 1
         )
 
         # publish data
