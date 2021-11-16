@@ -40,6 +40,7 @@
 #include "common/types.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
+#include "nav_msgs/msg/odometry.hpp"
 #include "osqp_interface/osqp_interface.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_components/register_node_macro.hpp"
@@ -85,7 +86,7 @@ private:
   //!< @brief topic subscription for reference waypoints
   rclcpp::Subscription<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr m_sub_ref_path;
   //!< @brief subscription for current velocity
-  rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::VehicleOdometry>::SharedPtr m_sub_odometry;
+  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr m_sub_odometry;
   //!< @brief subscription for current steering
   rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::SteeringReport>::SharedPtr m_sub_steering;
   //!< @brief timer to update after a given interval
@@ -117,7 +118,7 @@ private:
   //!< @brief measured pose
   geometry_msgs::msg::PoseStamped::SharedPtr m_current_pose_ptr;
   //!< @brief measured velocity
-  autoware_auto_vehicle_msgs::msg::VehicleOdometry::SharedPtr m_current_odometry_ptr;
+  nav_msgs::msg::Odometry::SharedPtr m_current_odometry_ptr;
   //!< @brief measured steering
   autoware_auto_vehicle_msgs::msg::SteeringReport::SharedPtr m_current_steering_ptr;
   //!< @brief reference trajectory
@@ -162,7 +163,7 @@ private:
   /**
    * @brief set current_velocity with received message
    */
-  void onOdometry(const autoware_auto_vehicle_msgs::msg::VehicleOdometry::SharedPtr msg);
+  void onOdometry(const nav_msgs::msg::Odometry::SharedPtr msg);
 
   /**
    * @brief set current_steering with received message

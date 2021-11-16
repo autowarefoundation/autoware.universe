@@ -158,7 +158,7 @@ LateralController::LateralController(const rclcpp::NodeOptions & node_options)
   m_sub_steering = create_subscription<autoware_auto_vehicle_msgs::msg::SteeringReport>(
     "~/input/current_steering", rclcpp::QoS{1}, std::bind(
       &LateralController::onSteering, this, _1));
-  m_sub_odometry = create_subscription<autoware_auto_vehicle_msgs::msg::VehicleOdometry>(
+  m_sub_odometry = create_subscription<nav_msgs::msg::Odometry>(
     "~/input/current_odometry", rclcpp::QoS{1}, std::bind(
       &LateralController::onOdometry, this, _1));
 
@@ -199,7 +199,7 @@ void LateralController::onTimer()
   }
 
   const bool8_t is_mpc_solved = m_mpc.calculateMPC(
-    *m_current_steering_ptr, m_current_odometry_ptr->velocity_mps,
+    *m_current_steering_ptr, m_current_odometry_ptr->twist.twist.linear.x,
     m_current_pose_ptr->pose, ctrl_cmd, predicted_traj, diagnostic);
 
   if (isStoppedState()) {
@@ -311,7 +311,7 @@ bool8_t LateralController::updateCurrentPose()
   return true;
 }
 
-void LateralController::onOdometry(const autoware_auto_vehicle_msgs::msg::VehicleOdometry::SharedPtr msg)
+void LateralController::onOdometry(const nav_msgs::msg::Odometry::SharedPtr msg)
 {
   m_current_odometry_ptr = msg;
 }
@@ -356,7 +356,7 @@ bool8_t LateralController::isStoppedState() const
   }
   RCLCPP_DEBUG(get_logger(), "stop_dist = %f release stopping.", dist);
 
-  const float64_t current_vel = m_current_odometry_ptr->velocity_mps;
+  const float64_t current_vel = m_current_odometry_ptr->twist.twist.linear.x;
   const float64_t target_vel =
     m_current_trajectory_ptr->points.at(static_cast<size_t>(nearest)).longitudinal_velocity_mps;
   if (

@@ -169,7 +169,7 @@ LongitudinalController::LongitudinalController(const rclcpp::NodeOptions & node_
   m_min_pitch_rad = declare_parameter<float64_t>("min_pitch_rad");  // [rad]
 
   // subscriber, publisher
-  m_sub_current_velocity = create_subscription<autoware_auto_vehicle_msgs::msg::VehicleOdometry>(
+  m_sub_current_velocity = create_subscription<nav_msgs::msg::Odometry>(
     "~/input/current_odometry", rclcpp::QoS{1},
     std::bind(&LongitudinalController::callbackCurrentVelocity, this, _1));
   m_sub_trajectory = create_subscription<autoware_auto_planning_msgs::msg::Trajectory>(
@@ -206,12 +206,12 @@ LongitudinalController::LongitudinalController(const rclcpp::NodeOptions & node_
 }
 
 void LongitudinalController::callbackCurrentVelocity(
-  const autoware_auto_vehicle_msgs::msg::VehicleOdometry::ConstSharedPtr msg)
+  const nav_msgs::msg::Odometry::ConstSharedPtr msg)
 {
   if (m_current_velocity_ptr) {
     m_prev_velocity_ptr = m_current_velocity_ptr;
   }
-  m_current_velocity_ptr = std::make_shared<autoware_auto_vehicle_msgs::msg::VehicleOdometry>(*msg);
+  m_current_velocity_ptr = std::make_shared<nav_msgs::msg::Odometry>(*msg);
 }
 
 void LongitudinalController::callbackTrajectory(
@@ -688,15 +688,15 @@ float64_t LongitudinalController::getDt()
 
 LongitudinalController::Motion LongitudinalController::getCurrentMotion() const
 {
-  const float64_t dv = m_current_velocity_ptr->velocity_mps -
-    m_prev_velocity_ptr->velocity_mps;
+  const float64_t dv = m_current_velocity_ptr->twist.twist.linear.x -
+    m_prev_velocity_ptr->twist.twist.linear.x;
   const float64_t dt =
     std::max(
-    (rclcpp::Time(m_current_velocity_ptr->stamp) -
-    rclcpp::Time(m_prev_velocity_ptr->stamp)).seconds(), 1e-03);
+    (rclcpp::Time(m_current_velocity_ptr->header.stamp) -
+    rclcpp::Time(m_prev_velocity_ptr->header.stamp)).seconds(), 1e-03);
   const float64_t accel = dv / dt;
 
-  const float64_t current_vel = m_current_velocity_ptr->velocity_mps;
+  const float64_t current_vel = m_current_velocity_ptr->twist.twist.linear.x;
   const float64_t current_acc = m_lpf_acc->filter(accel);
 
   return Motion{current_vel, current_acc};

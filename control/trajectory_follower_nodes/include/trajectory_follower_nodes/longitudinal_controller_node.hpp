@@ -29,6 +29,7 @@
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "motion_common/motion_common.hpp"
 #include "motion_common/trajectory_common.hpp"
+#include "nav_msgs/msg/odometry.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tf2/utils.h"
 #include "tf2_msgs/msg/tf_message.hpp"
@@ -81,7 +82,7 @@ private:
   };
 
   // ros variables
-  rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::VehicleOdometry>::SharedPtr
+  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr
     m_sub_current_velocity;
   rclcpp::Subscription<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr m_sub_trajectory;
   rclcpp::Publisher<autoware_auto_control_msgs::msg::LongitudinalCommand>::SharedPtr m_pub_control_cmd;
@@ -99,8 +100,8 @@ private:
     const std::vector<rclcpp::Parameter> & parameters);
 
   // pointers for ros topic
-  std::shared_ptr<autoware_auto_vehicle_msgs::msg::VehicleOdometry> m_current_velocity_ptr{nullptr};
-  std::shared_ptr<autoware_auto_vehicle_msgs::msg::VehicleOdometry> m_prev_velocity_ptr{nullptr};
+  std::shared_ptr<nav_msgs::msg::Odometry> m_current_velocity_ptr{nullptr};
+  std::shared_ptr<nav_msgs::msg::Odometry> m_prev_velocity_ptr{nullptr};
   std::shared_ptr<autoware_auto_planning_msgs::msg::Trajectory> m_trajectory_ptr{nullptr};
 
   // vehicle info
@@ -206,7 +207,7 @@ private:
    * @param [in] msg current state message
    */
   void callbackCurrentVelocity(
-    const autoware_auto_vehicle_msgs::msg::VehicleOdometry::ConstSharedPtr msg);
+    const nav_msgs::msg::Odometry::ConstSharedPtr msg);
 
   /**
    * @brief set reference trajectory with received message

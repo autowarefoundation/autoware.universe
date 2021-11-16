@@ -26,6 +26,7 @@
 #include "geometry_msgs/msg/pose.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
+#include "nav_msgs/msg/odometry.hpp"
 #include "gtest/gtest.h"
 #include "fake_test_node/fake_test_node.hpp"
 #include "rclcpp/rclcpp.hpp"
@@ -37,7 +38,7 @@ using LateralController = autoware::motion::control::trajectory_follower_nodes::
 using LateralCommand = autoware_auto_control_msgs::msg::AckermannLateralCommand;
 using Trajectory = autoware_auto_planning_msgs::msg::Trajectory;
 using TrajectoryPoint = autoware_auto_planning_msgs::msg::TrajectoryPoint;
-using VehicleOdometry = autoware_auto_vehicle_msgs::msg::VehicleOdometry;
+using VehicleOdometry = nav_msgs::msg::Odometry;
 using SteeringReport = autoware_auto_vehicle_msgs::msg::SteeringReport;
 
 using FakeNodeFixture = autoware::tools::testing::FakeTestNode;
@@ -130,8 +131,8 @@ TEST_F(FakeNodeFixture, empty_trajectory)
   VehicleOdometry odom_msg;
   SteeringReport steer_msg;
   traj_msg.header.stamp = node->now();
-  odom_msg.stamp = node->now();
-  odom_msg.velocity_mps = 0.0;
+  odom_msg.header.stamp = node->now();
+  odom_msg.twist.twist.linear.x = 0.0;
   steer_msg.stamp = node->now();
   steer_msg.steering_tire_angle = 0.0;
   traj_pub->publish(traj_msg);
@@ -201,8 +202,8 @@ TEST_F(FakeNodeFixture, straight_trajectory)
   p.longitudinal_velocity_mps = 1.0f;
   traj_msg.points.push_back(p);
   traj_pub->publish(traj_msg);
-  odom_msg.stamp = node->now();
-  odom_msg.velocity_mps = 1.0;
+  odom_msg.header.stamp = node->now();
+  odom_msg.twist.twist.linear.x = 1.0;
   steer_msg.stamp = node->now();
   steer_msg.steering_tire_angle = 0.0;
   odom_pub->publish(odom_msg);
@@ -271,8 +272,8 @@ TEST_F(FakeNodeFixture, right_turn)
   p.longitudinal_velocity_mps = 1.0f;
   traj_msg.points.push_back(p);
   traj_pub->publish(traj_msg);
-  odom_msg.stamp = node->now();
-  odom_msg.velocity_mps = 1.0;
+  odom_msg.header.stamp = node->now();
+  odom_msg.twist.twist.linear.x = 1.0;
   steer_msg.stamp = node->now();
   steer_msg.steering_tire_angle = 0.0;
   odom_pub->publish(odom_msg);
@@ -341,8 +342,8 @@ TEST_F(FakeNodeFixture, left_turn)
   p.longitudinal_velocity_mps = 1.0f;
   traj_msg.points.push_back(p);
   traj_pub->publish(traj_msg);
-  odom_msg.stamp = node->now();
-  odom_msg.velocity_mps = 1.0;
+  odom_msg.header.stamp = node->now();
+  odom_msg.twist.twist.linear.x = 1.0;
   steer_msg.stamp = node->now();
   steer_msg.steering_tire_angle = 0.0;
   odom_pub->publish(odom_msg);
@@ -412,8 +413,8 @@ TEST_F(FakeNodeFixture, stopped)
   p.longitudinal_velocity_mps = 0.0f;
   traj_msg.points.push_back(p);
   traj_pub->publish(traj_msg);
-  odom_msg.stamp = node->now();
-  odom_msg.velocity_mps = 0.0;
+  odom_msg.header.stamp = node->now();
+  odom_msg.twist.twist.linear.x = 0.0;
   steer_msg.stamp = node->now();
   steer_msg.steering_tire_angle = -0.5;
   odom_pub->publish(odom_msg);

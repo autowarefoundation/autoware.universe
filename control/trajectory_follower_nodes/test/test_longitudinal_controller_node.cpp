@@ -24,6 +24,7 @@
 #include "geometry_msgs/msg/pose.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
+#include "nav_msgs/msg/odometry.hpp"
 #include "fake_test_node/fake_test_node.hpp"
 #include "gtest/gtest.h"
 #include "rclcpp/rclcpp.hpp"
@@ -35,7 +36,7 @@ using LongitudinalController =
 using LongitudinalCommand = autoware_auto_control_msgs::msg::LongitudinalCommand;
 using Trajectory = autoware_auto_planning_msgs::msg::Trajectory;
 using TrajectoryPoint = autoware_auto_planning_msgs::msg::TrajectoryPoint;
-using VehicleOdometry = autoware_auto_vehicle_msgs::msg::VehicleOdometry;
+using VehicleOdometry = nav_msgs::msg::Odometry;
 
 using FakeNodeFixture = autoware::tools::testing::FakeTestNode;
 
@@ -86,13 +87,13 @@ TEST_F(FakeNodeFixture, longitudinal_keep_velocity) {
   /// Already running at target vel + Non stopping trajectory -> no change in velocity
   // Publish velocity
   VehicleOdometry odom_msg;
-  odom_msg.stamp = node->now();
-  odom_msg.velocity_mps = 1.0;
+  odom_msg.header.stamp = node->now();
+  odom_msg.twist.twist.linear.x = 1.0;
   odom_pub->publish(odom_msg);
   // the node needs to receive two velocity msg
   rclcpp::spin_some(node);
   rclcpp::spin_some(this->get_fake_node());
-  odom_msg.stamp = node->now();
+  odom_msg.header.stamp = node->now();
   odom_pub->publish(odom_msg);
   // Publish non stopping trajectory
   Trajectory traj;
@@ -156,13 +157,13 @@ TEST_F(FakeNodeFixture, longitudinal_slow_down) {
   /// Already running at target vel + Non stopping trajectory -> no change in velocity
   // Publish velocity
   VehicleOdometry odom_msg;
-  odom_msg.stamp = node->now();
-  odom_msg.velocity_mps = 1.0;
+  odom_msg.header.stamp = node->now();
+  odom_msg.twist.twist.linear.x = 1.0;
   odom_pub->publish(odom_msg);
   // the node needs to receive two velocity msg
   rclcpp::spin_some(node);
   rclcpp::spin_some(this->get_fake_node());
-  odom_msg.stamp = node->now();
+  odom_msg.header.stamp = node->now();
   odom_pub->publish(odom_msg);
   // Publish non stopping trajectory
   Trajectory traj;
@@ -185,7 +186,7 @@ TEST_F(FakeNodeFixture, longitudinal_slow_down) {
   test_utils::waitForMessage(node, this, received_longitudinal_command);
 
   ASSERT_TRUE(received_longitudinal_command);
-  EXPECT_LT(cmd_msg->speed, odom_msg.velocity_mps);
+  EXPECT_LT(cmd_msg->speed, static_cast<float>(odom_msg.twist.twist.linear.x));
   EXPECT_LT(cmd_msg->acceleration, 0.0f);
 
   // Generate another control message
@@ -193,7 +194,7 @@ TEST_F(FakeNodeFixture, longitudinal_slow_down) {
   traj_pub->publish(traj);
   test_utils::waitForMessage(node, this, received_longitudinal_command);
   ASSERT_TRUE(received_longitudinal_command);
-  EXPECT_LT(cmd_msg->speed, odom_msg.velocity_mps);
+  EXPECT_LT(cmd_msg->speed, static_cast<float>(odom_msg.twist.twist.linear.x));
   EXPECT_LT(cmd_msg->acceleration, 0.0f);
 }
 
@@ -226,13 +227,13 @@ TEST_F(FakeNodeFixture, longitudinal_accelerate) {
   /// Below target vel + Non stopping trajectory -> accelerate
   // Publish velocity
   VehicleOdometry odom_msg;
-  odom_msg.stamp = node->now();
-  odom_msg.velocity_mps = 0.5;
+  odom_msg.header.stamp = node->now();
+  odom_msg.twist.twist.linear.x = 0.5;
   odom_pub->publish(odom_msg);
   // the node needs to receive two velocity msg
   rclcpp::spin_some(node);
   rclcpp::spin_some(this->get_fake_node());
-  odom_msg.stamp = node->now();
+  odom_msg.header.stamp = node->now();
   odom_pub->publish(odom_msg);
   // Publish non stopping trajectory
   Trajectory traj;
@@ -255,7 +256,7 @@ TEST_F(FakeNodeFixture, longitudinal_accelerate) {
   test_utils::waitForMessage(node, this, received_longitudinal_command);
 
   ASSERT_TRUE(received_longitudinal_command);
-  EXPECT_GT(cmd_msg->speed, odom_msg.velocity_mps);
+  EXPECT_GT(cmd_msg->speed, static_cast<float>(odom_msg.twist.twist.linear.x));
   EXPECT_GT(cmd_msg->acceleration, 0.0f);
 
   // Generate another control message
@@ -263,7 +264,7 @@ TEST_F(FakeNodeFixture, longitudinal_accelerate) {
   traj_pub->publish(traj);
   test_utils::waitForMessage(node, this, received_longitudinal_command);
   ASSERT_TRUE(received_longitudinal_command);
-  EXPECT_GT(cmd_msg->speed, odom_msg.velocity_mps);
+  EXPECT_GT(cmd_msg->speed, static_cast<float>(odom_msg.twist.twist.linear.x));
   EXPECT_GT(cmd_msg->acceleration, 0.0f);
 }
 
@@ -296,13 +297,13 @@ TEST_F(FakeNodeFixture, longitudinal_stopped) {
   /// Below target vel + Non stopping trajectory -> accelerate
   // Publish velocity
   VehicleOdometry odom_msg;
-  odom_msg.stamp = node->now();
-  odom_msg.velocity_mps = 0.0;
+  odom_msg.header.stamp = node->now();
+  odom_msg.twist.twist.linear.x = 0.0;
   odom_pub->publish(odom_msg);
   // the node needs to receive two velocity msg
   rclcpp::spin_some(node);
   rclcpp::spin_some(this->get_fake_node());
-  odom_msg.stamp = node->now();
+  odom_msg.header.stamp = node->now();
   odom_pub->publish(odom_msg);
   // Publish stopping trajectory
   Trajectory traj;
@@ -358,13 +359,13 @@ TEST_F(FakeNodeFixture, longitudinal_reverse) {
   /// Below target vel + Non stopping trajectory -> accelerate
   // Publish velocity
   VehicleOdometry odom_msg;
-  odom_msg.stamp = node->now();
-  odom_msg.velocity_mps = 0.0;
+  odom_msg.header.stamp = node->now();
+  odom_msg.twist.twist.linear.x = 0.0;
   odom_pub->publish(odom_msg);
   // the node needs to receive two velocity msg
   rclcpp::spin_some(node);
   rclcpp::spin_some(this->get_fake_node());
-  odom_msg.stamp = node->now();
+  odom_msg.header.stamp = node->now();
   odom_pub->publish(odom_msg);
   // Publish reverse
   Trajectory traj;
@@ -420,13 +421,13 @@ TEST_F(FakeNodeFixture, longitudinal_emergency) {
   /// Below target vel + Non stopping trajectory -> accelerate
   // Publish velocity
   VehicleOdometry odom_msg;
-  odom_msg.stamp = node->now();
-  odom_msg.velocity_mps = 0.0;
+  odom_msg.header.stamp = node->now();
+  odom_msg.twist.twist.linear.x = 0.0;
   odom_pub->publish(odom_msg);
   // the node needs to receive two velocity msg
   rclcpp::spin_some(node);
   rclcpp::spin_some(this->get_fake_node());
-  odom_msg.stamp = node->now();
+  odom_msg.header.stamp = node->now();
   odom_pub->publish(odom_msg);
   // Publish trajectory starting away from the current ego pose
   Trajectory traj;
