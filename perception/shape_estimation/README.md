@@ -1,4 +1,52 @@
-# Shape Estimation
+# shape_estimation
+
+## Purpose
+
+This node calculates a refined object shape (bounding box, cylinder, convex hull) in which a pointcloud cluster fits according to a label.
+
+## Inner-workings / Algorithms
+
+### Fitting algorithms
+
+- bounding box
+
+  L-shape fitting. See reference below for details.
+
+- cylinder
+
+  `cv::minEnclosingCircle`
+
+- convex hull
+
+  `cv::convexHull`
+
+## Inputs / Outputs
+
+### Input
+
+| Name    | Type                                                        | Description                           |
+| ------- | ----------------------------------------------------------- | ------------------------------------- |
+| `input` | `autoware_perception_msgs::msg::DetectedObjectsWithFeature` | detected objects with labeled cluster |
+
+### Output
+
+| Name             | Type                                                  | Description                         |
+| ---------------- | ----------------------------------------------------- | ----------------------------------- |
+| `output/objects` | `autoware_auto_perception_msgs::msg::DetectedObjects` | detected objects with refined shape |
+
+## Parameters
+
+| Name                        | Type | Default Value | Description                                         |
+| --------------------------- | ---- | ------------- | --------------------------------------------------- |
+| `use_corrector`             | bool | true          | The flag to apply rule-based filter                 |
+| `use_filter`                | bool | true          | The flag to apply rule-based corrector              |
+| `use_vehicle_reference_yaw` | bool | true          | The flag to use vehicle reference yaw for corrector |
+
+## Assumptions / Known limits
+
+TBD
+
+## References/External links
 
 L-shape fitting implementation of the paper:
 
@@ -11,56 +59,4 @@ year = {2017},
 month = {June},
 keywords = {autonomous driving, laser scanner, perception, segmentation},
 }
-```
-
-## How to launch
-
-### From RTM
-
-Computing tab -> Detection -> lidar_detector -> lidar_shape_estimation
-
-Configure parameters using the `[app]` button.
-
-### From the command line
-
-From a sourced command line:
-`roslaunch lidar_shape_estimation shape_estimation_clustering.launch`
-
-Launch files also include the visualization node.
-
-## Requirements
-
-1. LiDAR data segmented.
-1. Objects
-
-## Parameters
-
-| Parameter | Type     | Description                                                             | Default                                     |
-| --------- | -------- | ----------------------------------------------------------------------- | ------------------------------------------- |
-| `input`   | _String_ | Topic name containing the objects detected by the Lidar in 3D space.    | `/detection/lidar_detector/objects`         |
-| `output`  | _String_ | Topic name containing the objects with the shape estimated in 3D space. | `/detection/lidar_shape_estimation/objects` |
-
-## Usage example
-
-1. Launch a ground filter algorithm from the `Points Preprocessor` section in the **Sensing** tab. (adjust the parameters to your vehicle setup).
-1. Launch a Lidar Detector from the Computing tab.
-1. Launch this node.
-
-## Node info
-
-```txt
-Node [/lidar_shape_estimation]
-Publications:
- * /detection/shape_estimation/objects [autoware_perception_msgs/DetectedObjectArray]
-
-Subscriptions:
- * /detection/lidar_detector/objects [autoware_perception_msgs/DetectedObjectArray]
-
--------------------------
-Node [/detection/shape_estimation/shape_estimation_visualization]
-Publications:
- * /detection/shape_estimation/objects_markers [visualization_msgs/MarkerArray]
-
-Subscriptions:
- * /detection/shape_estimation/objects [autoware_perception_msgs/DetectedObjectArray]
 ```
