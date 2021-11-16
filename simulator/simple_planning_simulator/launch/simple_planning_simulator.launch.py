@@ -57,7 +57,7 @@ def generate_launch_description():
             ('output/twist', '/vehicle/status/velocity_status'),
             ('output/odometry', '/localization/kinematic_state'),
             ('output/steering', '/vehicle/status/steering_status'),
-            ('output/gear_report', '/vehicle/status/shift'),
+            ('output/gear_report', '/vehicle/status/gear_status'),
             ('output/control_mode_report', '/vehicle/status/control_mode'),
             ('/initialpose', '/initialpose'),
         ]
