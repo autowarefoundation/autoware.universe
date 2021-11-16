@@ -19,6 +19,10 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/ControlCommand.msg"
   "msg/ControlCommandStamped.msg"
   "msg/ExternalCommandSelectorMode.msg"
+  "msg/ActuationCommand.msg"
+  "msg/ActuationCommandStamped.msg"
+  "msg/ActuationStatus.msg"
+  "msg/ActuationStatusStamped.msg"
   "srv/ExternalCommandSelect.srv"
   DEPENDENCIES
     std_msgs
