@@ -1,0 +1,35 @@
+# based on vehicle_interface.param.template.yaml
+/**:
+  ros__parameters:
+    cycle_time_ms: 10
+    # Only one of the four control command topics need be specified
+    # "raw", "basic", "ackermann", or "high_level"
+    control_command: "raw"
+    lgsvl:
+      use_nav_odometry_topic: True
+      throttle:
+        domain: [0.0, 3.0]
+        range: [0.0, 100.0]
+      brake:
+        domain: [-3.0, 0.0]
+        range: [100.0, 0.0]
+      steer:
+        domain: [-0.331, 0.331]
+        range: [-100.0, 100.0]
+      publish_tf: False
+      odom_child_frame: "base_link"
+    state_machine:
+      gear_shift_velocity_threshold_mps: 0.5
+      acceleration_limits:
+        min: -3.0
+        max: 3.0
+        threshold: 1.0
+      front_steer_limits:
+        min: -0.331
+        max: 0.331
+        threshold: 0.3
+      time_step_ms: 100
+      timeout_acceleration_mps2: 3.0
+      state_transition_timeout_ms: 3000
+      gear_shift_accel_deadzone_mps2: 0.5
+    features: ["headlights", "horn", "wipers"]
