@@ -41,20 +41,20 @@ PacmodDiagPublisher::PacmodDiagPublisher()
 
   steer_wheel_rpt_sub_ =
     std::make_unique<message_filters::Subscriber<pacmod3_msgs::msg::SystemRptFloat>>(
-      this, "/pacmod/parsed_tx/steer_rpt");
+      this, "/pacmod/steering_rpt");
   wheel_speed_rpt_sub_ =
     std::make_unique<message_filters::Subscriber<pacmod3_msgs::msg::WheelSpeedRpt>>(
-      this, "/pacmod/parsed_tx/wheel_speed_rpt");
+      this, "/pacmod/wheel_speed_rpt");
   accel_rpt_sub_ = std::make_unique<message_filters::Subscriber<pacmod3_msgs::msg::SystemRptFloat>>(
-    this, "/pacmod/parsed_tx/accel_rpt");
+    this, "/pacmod/accel_rpt");
   brake_rpt_sub_ = std::make_unique<message_filters::Subscriber<pacmod3_msgs::msg::SystemRptFloat>>(
-    this, "/pacmod/parsed_tx/brake_rpt");
+    this, "/pacmod/brake_rpt");
   shift_rpt_sub_ = std::make_unique<message_filters::Subscriber<pacmod3_msgs::msg::SystemRptInt>>(
-    this, "/pacmod/parsed_tx/shift_rpt");
+    this, "/pacmod/shift_rpt");
   turn_rpt_sub_ = std::make_unique<message_filters::Subscriber<pacmod3_msgs::msg::SystemRptInt>>(
-    this, "/pacmod/parsed_tx/turn_rpt");
+    this, "/pacmod/turn_rpt");
   global_rpt_sub_ = std::make_unique<message_filters::Subscriber<pacmod3_msgs::msg::GlobalRpt>>(
-    this, "/pacmod/parsed_tx/global_rpt");
+    this, "/pacmod/global_rpt");
 
   pacmod_feedbacks_sync_ =
     std::make_unique<message_filters::Synchronizer<PacmodFeedbacksSyncPolicy>>(
