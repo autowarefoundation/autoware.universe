@@ -52,8 +52,7 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
 
   // Publisher
   vehicle_cmd_emergency_pub_ =
-    this->create_publisher<autoware_auto_system_msgs::msg::EmergencyState>(
-      "output/vehicle_cmd_emergency", durable_qos);
+    this->create_publisher<VehicleEmergencyStamped>("output/vehicle_cmd_emergency", durable_qos);
   control_cmd_pub_ =
     this->create_publisher<autoware_auto_control_msgs::msg::AckermannControlCommand>(
       "output/control_cmd", durable_qos);
@@ -430,8 +429,8 @@ void VehicleCmdGate::publishControlCommands(const Commands & commands)
   filtered_commands.control = filterControlCommand(filtered_commands.control);
 
   // tmp: Publish vehicle emergency status
-  autoware_auto_system_msgs::msg::EmergencyState vehicle_cmd_emergency;
-  vehicle_cmd_emergency.state = (use_emergency_handling_ && is_system_emergency_);
+  VehicleEmergencyStamped vehicle_cmd_emergency;
+  vehicle_cmd_emergency.emergency = (use_emergency_handling_ && is_system_emergency_);
   vehicle_cmd_emergency.stamp = filtered_commands.control.stamp;
 
   // Publish commands
@@ -470,9 +469,9 @@ void VehicleCmdGate::publishEmergencyStopControlCommands()
   hazard_light.command = autoware_auto_vehicle_msgs::msg::HazardLightsCommand::ENABLE;
 
   // VehicleCommand emergency;
-  autoware_auto_system_msgs::msg::EmergencyState vehicle_cmd_emergency;
+  VehicleEmergencyStamped vehicle_cmd_emergency;
   vehicle_cmd_emergency.stamp = stamp;
-  vehicle_cmd_emergency.state = true;
+  vehicle_cmd_emergency.emergency = true;
 
   // Engage
   autoware_auto_vehicle_msgs::msg::Engage autoware_engage;

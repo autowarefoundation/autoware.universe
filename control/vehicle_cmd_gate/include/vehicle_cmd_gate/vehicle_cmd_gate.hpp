@@ -35,6 +35,7 @@
 #include <autoware_external_api_msgs/msg/heartbeat.hpp>
 #include <autoware_external_api_msgs/srv/engage.hpp>
 #include <autoware_external_api_msgs/srv/set_emergency.hpp>
+#include <autoware_vehicle_msgs/msg/vehicle_emergency_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 
 #include <memory>
@@ -49,13 +50,14 @@ struct Commands
 
 class VehicleCmdGate : public rclcpp::Node
 {
+  using VehicleEmergencyStamped = autoware_vehicle_msgs::msg::VehicleEmergencyStamped;
+
 public:
   explicit VehicleCmdGate(const rclcpp::NodeOptions & node_options);
 
 private:
   // Publisher
-  rclcpp::Publisher<autoware_auto_system_msgs::msg::EmergencyState>::SharedPtr
-    vehicle_cmd_emergency_pub_;
+  rclcpp::Publisher<VehicleEmergencyStamped>::SharedPtr vehicle_cmd_emergency_pub_;
   rclcpp::Publisher<autoware_auto_control_msgs::msg::AckermannControlCommand>::SharedPtr
     control_cmd_pub_;
   rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::GearCommand>::SharedPtr gear_cmd_pub_;
