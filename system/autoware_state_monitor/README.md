@@ -18,10 +18,10 @@ This node manages AutowareState transitions.
 
 ### Output
 
-| Name               | Type                                                    | Description                                        |
-| ------------------ | ------------------------------------------------------- | -------------------------------------------------- |
-| `/autoware/engage` | `autoware_auto_system_msgs::msg::EmergencyStateStamped` | publish AutowareState                              |
-| `/autoware/state`  | `autoware_auto_system_msgs::msg::AutowareState`         | publish disengage flag on AutowareState transition |
+| Name               | Type                                            | Description                                        |
+| ------------------ | ----------------------------------------------- | -------------------------------------------------- |
+| `/autoware/engage` | `autoware_auto_vehicle_msgs::msg::Engage`       | publish disengage flag on AutowareState transition |
+| `/autoware/state`  | `autoware_auto_system_msgs::msg::AutowareState` | publish AutowareState                              |
 
 ## Parameters
 
