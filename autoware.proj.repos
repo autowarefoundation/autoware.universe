@@ -140,7 +140,7 @@ repositories:
   vendor/velodyne_vls:
     type: git
     url: https://github.com/tier4/velodyne_vls.git
-    version: 97700640ccd36ac66a210c7cfad2340dee5b0bbd
+    version: use-autoware-auto-msgs
   vendor/rqt_runtime_monitor:
     type: git
     url: https://github.com/tier4/rqt_runtime_monitor.git
