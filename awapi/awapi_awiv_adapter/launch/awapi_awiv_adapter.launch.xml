@@ -5,7 +5,7 @@
   <arg name="stop_reason_timeout" default="0.5" />
   <arg name="stop_reason_thresh_dist" default="100.0" />
 
-  <arg name="input_steer" default="/vehicle/status/steering" />
+  <arg name="input_steer" default="/vehicle/status/steering_status" />
   <arg name="input_vehicle_cmd" default="/control/command/ackermann_control_command" />
   <arg name="input_turn_indicators" default="/vehicle/status/turn_indicators" />
   <arg name="input_hazard_lights" default="/vehicle/status/hazard_lights" />
