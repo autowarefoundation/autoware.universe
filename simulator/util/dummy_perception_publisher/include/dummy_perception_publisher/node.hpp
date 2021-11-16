@@ -53,7 +53,7 @@ private:
   double detection_successful_rate_;
   bool enable_ray_tracing_;
   bool use_object_recognition_;
-  bool real_use_param_;
+  bool use_real_param_;
   std::mt19937 random_generator_;
   void timerCallback();
   void createObjectPointcloud(
