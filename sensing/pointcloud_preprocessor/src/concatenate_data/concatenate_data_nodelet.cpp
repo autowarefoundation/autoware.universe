@@ -133,7 +133,7 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
     auto twist_cb = std::bind(
       &PointCloudConcatenateDataSynchronizerComponent::twist_callback, this, std::placeholders::_1);
     sub_twist_ = this->create_subscription<autoware_auto_vehicle_msgs::msg::VelocityReport>(
-      "/vehicle/status/twist", rclcpp::QoS{100}, twist_cb);
+      "/vehicle/status/velocity_status", rclcpp::QoS{100}, twist_cb);
   }
 
   // Set timer
