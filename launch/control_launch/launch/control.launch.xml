@@ -1,12 +1,12 @@
 <launch>
 
   <!-- common parameters -->
-  <arg name="lateral_controller_mode" default="mpc_follower" description="options: mpc_follower, pure_pursuit"/>
+  <!-- <arg name="lateral_controller_mode" default="mpc_follower" description="options: mpc_follower, pure_pursuit"/> -->
 
   <!-- control parameter -->
-  <arg name="mpc_follower_param_path" default="$(find-pkg-share control_launch)/config/mpc_follower/mpc_follower.param.yaml"/>
-  <arg name="pure_pursuit_param_path" default="$(find-pkg-share control_launch)/config/pure_pursuit/pure_pursuit.param.yaml"/>
-  <arg name="velocity_controller_param_path" default="$(find-pkg-share control_launch)/config/velocity_controller/velocity_controller.param.yaml"/>
+  <arg name="lat_controller_param_path" default="$(find-pkg-share control_launch)/config/trajectory_follower/lateral_controller.param.yaml"/>
+  <arg name="lon_controller_param_path" default="$(find-pkg-share control_launch)/config/trajectory_follower/longitudinal_controller.param.yaml"/>
+  <arg name="latlon_muxer_param_path" default="$(find-pkg-share control_launch)/config/trajectory_follower/latlon_muxer.param.yaml"/>
   <arg name="vehicle_cmd_gate_param_path" default="$(find-pkg-share control_launch)/config/vehicle_cmd_gate/vehicle_cmd_gate.param.yaml"/>
 
   <!-- control module -->
@@ -18,29 +18,24 @@
       <push-ros-namespace namespace="trajectory_follower"/>
 
       <!-- lateral controller -->
-      <group if="$(eval &quot;'$(var lateral_controller_mode)'=='mpc_follower'&quot;)">
-        <include file="$(find-pkg-share mpc_follower)/launch/mpc_follower.launch.xml">
-          <arg name="mpc_follower_param_path" value="$(var mpc_follower_param_path)" />
-        </include>
-      </group>
-
-      <group if="$(eval &quot;'$(var lateral_controller_mode)'=='pure_pursuit'&quot;)">
-        <include file="$(find-pkg-share pure_pursuit)/launch/pure_pursuit.launch.xml">
-          <arg name="pure_pursuit_param_path" value="$(var pure_pursuit_param_path)" />
-        </include>
-      </group>
+      <!-- <group if="$(eval &quot;'$(var lateral_controller_mode)'=='mpc_follower'&quot;)"> -->
+      <include file="$(find-pkg-share trajectory_follower_nodes)/launch/lateral_controller.launch.xml">
+        <arg name="lat_controller_param_path" value="$(var lat_controller_param_path)" />
+      </include>
+      <!-- </group> -->
 
       <!-- longitudinal controller -->
-      <include file="$(find-pkg-share velocity_controller)/launch/velocity_controller.launch.xml">
-        <arg name="velocity_controller_param_path" value="$(var velocity_controller_param_path)"/>
+      <include file="$(find-pkg-share trajectory_follower_nodes)/launch/longitudinal_controller.launch.xml">
+        <arg name="lon_controller_param_path" value="$(var lon_controller_param_path)"/>
       </include>
 
       <!-- latlon coupler -->
-      <node pkg="latlon_muxer" exec="latlon_muxer" name="latlon_muxer" output="screen">
+      <include file="$(find-pkg-share trajectory_follower_nodes)/launch/latlon_muxer.launch.xml">
+        <arg name="latlon_muxer_param_path" value="$(var lon_controller_param_path)"/>
         <remap from="input/lateral/control_cmd" to="lateral/control_cmd"/>
         <remap from="input/longitudinal/control_cmd" to="longitudinal/control_cmd"/>
         <remap from="output/control_cmd" to="control_cmd"/>
-      </node>
+      </include>
 
       <!-- lane departure checker -->
       <include file="$(find-pkg-share lane_departure_checker)/launch/lane_departure_checker.launch.xml">
