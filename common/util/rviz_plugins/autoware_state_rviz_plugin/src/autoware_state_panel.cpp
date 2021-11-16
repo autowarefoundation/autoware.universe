@@ -92,7 +92,7 @@ void AutowareStatePanel::onInitialize()
       "/autoware/state", 10, std::bind(&AutowareStatePanel::onAutowareState, this, _1));
 
   sub_gear_ = raw_node_->create_subscription<autoware_auto_vehicle_msgs::msg::GearReport>(
-    "/vehicle/status/shift", 10, std::bind(&AutowareStatePanel::onShift, this, _1));
+    "/vehicle/status/gear_status", 10, std::bind(&AutowareStatePanel::onShift, this, _1));
 
   sub_engage_ = raw_node_->create_subscription<autoware_external_api_msgs::msg::EngageStatus>(
     "/api/external/get/engage", 10, std::bind(&AutowareStatePanel::onEngageStatus, this, _1));

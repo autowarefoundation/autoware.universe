@@ -9,12 +9,12 @@ This plugin also can engage from the panel.
 
 ### Input
 
-| Name                         | Type                                            | Description                                        |
-| ---------------------------- | ----------------------------------------------- | -------------------------------------------------- |
-| `/control/current_gate_mode` | `autoware_control_msgs::msg::GateMode`          | The topic represents the state of AUTO or EXTERNAL |
-| `/autoware/state`            | `autoware_auto_system_msgs::msg::AutowareState` | The topic represents the state of Autoware         |
-| `/vehicle/status/shift`      | `autoware_auto_vehicle_msgs::msg::GearReport`   | The topic represents the state of Shift            |
-| `/api/external/get/engage`   | `autoware_external_api_msgs::msg::EngageStatus` | The topic represents the state of Engage           |
+| Name                          | Type                                            | Description                                        |
+| ----------------------------- | ----------------------------------------------- | -------------------------------------------------- |
+| `/control/current_gate_mode`  | `autoware_control_msgs::msg::GateMode`          | The topic represents the state of AUTO or EXTERNAL |
+| `/autoware/state`             | `autoware_auto_system_msgs::msg::AutowareState` | The topic represents the state of Autoware         |
+| `/vehicle/status/gear_status` | `autoware_auto_vehicle_msgs::msg::GearReport`   | The topic represents the state of Gear             |
+| `/api/external/get/engage`    | `autoware_external_api_msgs::msg::EngageStatus` | The topic represents the state of Engage           |
 
 ### Output
 
