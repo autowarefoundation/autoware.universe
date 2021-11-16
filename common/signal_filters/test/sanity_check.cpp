@@ -57,7 +57,7 @@ using TestTypes = ::testing::Types<
   TypeParams<float64_t, std::chrono::steady_clock>
 >;
 // cppcheck-suppress syntaxError
-TYPED_TEST_CASE(TypedChecks, TestTypes, );
+TYPED_TEST_SUITE(TypedChecks, TestTypes, );
 
 TYPED_TEST(TypedChecks, EmptyFactory)
 {
@@ -101,7 +101,7 @@ using BasicTypes = ::testing::Types<
   BasicParams<float64_t, std::chrono::system_clock, FilterType::LowPassFilter>,
   BasicParams<float64_t, std::chrono::steady_clock, FilterType::LowPassFilter>
 >;
-TYPED_TEST_CASE(FilterChecks, BasicTypes, );
+TYPED_TEST_SUITE(FilterChecks, BasicTypes, );
 
 TYPED_TEST(FilterChecks, BadFactory)
 {
@@ -268,7 +268,7 @@ using SanityCheckTypes = ::testing::Types<
   SanityCheckParam<double, std::chrono::system_clock, FilterType::LowPassFilter, 1, 100, 1>,
   SanityCheckParam<double, std::chrono::steady_clock, FilterType::LowPassFilter, 1, 100, 1>
 >;
-TYPED_TEST_CASE(SanityCheck, SanityCheckTypes, );
+TYPED_TEST_SUITE(SanityCheck, SanityCheckTypes, );
 
 TYPED_TEST(SanityCheck, Basic)
 {
