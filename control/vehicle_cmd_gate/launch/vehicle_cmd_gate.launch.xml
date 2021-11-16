@@ -6,7 +6,7 @@
 
   <node pkg="vehicle_cmd_gate" exec="vehicle_cmd_gate" name="vehicle_cmd_gate" output="screen">
     <remap from="input/emergency_state" to="/system/emergency/emergency_state"/>
-    <remap from="input/steering" to="/vehicle/status/steering"/>
+    <remap from="input/steering" to="/vehicle/status/steering_status"/>
 
     <remap from="input/auto/control_cmd" to="trajectory_follower/control_cmd"/>
     <remap from="input/auto/turn_indicators_cmd" to="/planning/turn_signal_decider/turn_indicators_cmd"/>
@@ -24,7 +24,7 @@
     <remap from="input/emergency/hazard_lights_cmd" to="/system/emergency/hazard_lights_cmd"/>
     <remap from="input/emergency/gear_cmd" to="/system/emergency/gear_cmd"/>
 
-    <remap from="output/vehicle_cmd_emergency" to="/control/command/vehicle_cmd_emergency"/>
+    <remap from="output/vehicle_cmd_emergency" to="/control/command/emergency_cmd"/>
     <remap from="output/control_cmd" to="/control/command/control_cmd"/>
     <remap from="output/gear_cmd" to="/control/command/gear_cmd"/>
     <remap from="output/turn_indicators_cmd" to="/control/command/turn_indicators_cmd"/>
