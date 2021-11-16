@@ -94,10 +94,10 @@ SSCInterface::SSCInterface() : Node("ssc_interface")
     "/vehicle/status/control_mode", rclcpp::QoS{10});
   current_shift_pub_ = create_publisher<autoware_vehicle_msgs::msg::ShiftStamped>(
     "/vehicle/status/shift", rclcpp::QoS{10});
-  current_twist_pub_ =
-    create_publisher<geometry_msgs::msg::TwistStamped>("/vehicle/status/twist", rclcpp::QoS{10});
+  current_twist_pub_ = create_publisher<geometry_msgs::msg::TwistStamped>(
+    "/vehicle/status/velocity_status", rclcpp::QoS{10});
   current_steer_pub_ = create_publisher<autoware_vehicle_msgs::msg::Steering>(
-    "/vehicle/status/steering", rclcpp::QoS{10});
+    "/vehicle/status/steering_status", rclcpp::QoS{10});
   current_steer_wheel_deg_pub_ = create_publisher<autoware_debug_msgs::msg::Float32Stamped>(
     "/vehicle/status/steering_wheel_deg", rclcpp::QoS{10});
   current_velocity_pub_ = create_publisher<autoware_debug_msgs::msg::Float32Stamped>(
