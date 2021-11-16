@@ -19,13 +19,13 @@
 #define VEHICLE_INTERFACE__SAFETY_STATE_MACHINE_HPP_
 
 #include <common/types.hpp>
-#include <autoware_auto_msgs/msg/wipers_command.hpp>
-#include <autoware_auto_msgs/msg/headlights_command.hpp>
-#include <autoware_auto_msgs/msg/horn_command.hpp>
-#include <autoware_auto_msgs/msg/vehicle_control_command.hpp>
-#include <autoware_auto_msgs/msg/vehicle_odometry.hpp>
-#include <autoware_auto_msgs/msg/vehicle_state_command.hpp>
-#include <autoware_auto_msgs/msg/vehicle_state_report.hpp>
+#include <autoware_auto_vehicle_msgs/msg/wipers_command.hpp>
+#include <autoware_auto_vehicle_msgs/msg/headlights_command.hpp>
+#include <autoware_auto_vehicle_msgs/msg/horn_command.hpp>
+#include <autoware_auto_vehicle_msgs/msg/vehicle_control_command.hpp>
+#include <autoware_auto_vehicle_msgs/msg/vehicle_odometry.hpp>
+#include <autoware_auto_vehicle_msgs/msg/vehicle_state_command.hpp>
+#include <autoware_auto_vehicle_msgs/msg/vehicle_state_report.hpp>
 #include <vehicle_interface/visibility_control.hpp>
 
 #include <experimental/optional>
@@ -41,13 +41,13 @@ namespace drivers
 {
 namespace vehicle_interface
 {
-using autoware_auto_msgs::msg::HeadlightsCommand;
-using autoware_auto_msgs::msg::HornCommand;
-using autoware_auto_msgs::msg::WipersCommand;
-using MaybeStateCommand = std::experimental::optional<autoware_auto_msgs::msg::VehicleStateCommand>;
-using BasicControlCommand = autoware_auto_msgs::msg::VehicleControlCommand;
-using Odometry = autoware_auto_msgs::msg::VehicleOdometry;
-using StateReport = autoware_auto_msgs::msg::VehicleStateReport;
+using autoware_auto_vehicle_msgs::msg::HeadlightsCommand;
+using autoware_auto_vehicle_msgs::msg::HornCommand;
+using autoware_auto_vehicle_msgs::msg::WipersCommand;
+using MaybeStateCommand = std::experimental::optional<autoware_auto_vehicle_msgs::msg::VehicleStateCommand>;
+using BasicControlCommand = autoware_auto_vehicle_msgs::msg::VehicleControlCommand;
+using Odometry = autoware_auto_vehicle_msgs::msg::VehicleOdometry;
+using StateReport = autoware_auto_vehicle_msgs::msg::VehicleStateReport;
 /// Simple wrapper for control command and state command together
 class VEHICLE_INTERFACE_PUBLIC Command
 {
@@ -200,7 +200,7 @@ public:
   const StateMachineConfig & get_config() const noexcept;
 
 private:
-  using VSC = autoware_auto_msgs::msg::VehicleStateCommand;
+  using VSC = autoware_auto_vehicle_msgs::msg::VehicleStateCommand;
   using MaybeEnum = std::experimental::optional<decltype(VSC::blinker)>;
   //lint -save -e9150 NOLINT Pure aggregate and only used internally; no constraints on state
   template<typename T>

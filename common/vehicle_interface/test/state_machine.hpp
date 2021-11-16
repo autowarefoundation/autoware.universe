@@ -30,12 +30,12 @@ using autoware::drivers::vehicle_interface::SafetyStateMachine;
 using autoware::drivers::vehicle_interface::StateMachineConfig;
 using autoware::drivers::vehicle_interface::StateMachineReport;
 
-using autoware_auto_msgs::msg::WipersCommand;
-using autoware_auto_msgs::msg::HeadlightsCommand;
-using VO = autoware_auto_msgs::msg::VehicleOdometry;
-using VSR = autoware_auto_msgs::msg::VehicleStateReport;
-using VSC = autoware_auto_msgs::msg::VehicleStateCommand;
-using VCC = autoware_auto_msgs::msg::VehicleControlCommand;
+using autoware_auto_vehicle_msgs::msg::WipersCommand;
+using autoware_auto_vehicle_msgs::msg::HeadlightsCommand;
+using VO = autoware_auto_vehicle_msgs::msg::VehicleOdometry;
+using VSR = autoware_auto_vehicle_msgs::msg::VehicleStateReport;
+using VSC = autoware_auto_vehicle_msgs::msg::VehicleStateCommand;
+using VCC = autoware_auto_vehicle_msgs::msg::VehicleControlCommand;
 
 class state_machine : public ::testing::Test
 {

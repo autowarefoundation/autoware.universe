@@ -27,14 +27,14 @@
 #include <reference_tracking_controller/reference_tracking_controller.hpp>
 #include <signal_filters/signal_filter.hpp>
 
-#include <autoware_auto_msgs/msg/ackermann_control_command.hpp>
-#include <autoware_auto_msgs/msg/high_level_control_command.hpp>
-#include <autoware_auto_msgs/msg/raw_control_command.hpp>
-#include <autoware_auto_msgs/msg/vehicle_control_command.hpp>
-#include <autoware_auto_msgs/msg/vehicle_odometry.hpp>
-#include <autoware_auto_msgs/msg/vehicle_state_command.hpp>
-#include <autoware_auto_msgs/msg/vehicle_state_report.hpp>
-#include <autoware_auto_msgs/srv/autonomy_mode_change.hpp>
+#include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
+#include <autoware_auto_control_msgs/msg/high_level_control_command.hpp>
+#include <autoware_auto_vehicle_msgs/msg/raw_control_command.hpp>
+#include <autoware_auto_vehicle_msgs/msg/vehicle_control_command.hpp>
+#include <autoware_auto_vehicle_msgs/msg/vehicle_odometry.hpp>
+#include <autoware_auto_vehicle_msgs/msg/vehicle_state_command.hpp>
+#include <autoware_auto_vehicle_msgs/msg/vehicle_state_report.hpp>
+#include <autoware_auto_vehicle_msgs/srv/autonomy_mode_change.hpp>
 
 #include <experimental/optional>
 #include <chrono>
@@ -52,12 +52,12 @@ namespace vehicle_interface
 {
 
 using Real = decltype(BasicControlCommand::long_accel_mps2);
-using autoware_auto_msgs::msg::HeadlightsCommand;
-using autoware_auto_msgs::msg::HeadlightsReport;
-using autoware_auto_msgs::msg::HornCommand;
-using autoware_auto_msgs::msg::HornReport;
-using autoware_auto_msgs::msg::WipersCommand;
-using autoware_auto_msgs::msg::WipersReport;
+using autoware_auto_vehicle_msgs::msg::HeadlightsCommand;
+using autoware_auto_vehicle_msgs::msg::HeadlightsReport;
+using autoware_auto_vehicle_msgs::msg::HornCommand;
+using autoware_auto_vehicle_msgs::msg::HornReport;
+using autoware_auto_vehicle_msgs::msg::WipersCommand;
+using autoware_auto_vehicle_msgs::msg::WipersReport;
 
 /// Convenience struct for construction
 struct TopicNumMatches
@@ -97,8 +97,8 @@ protected:
   using ControllerBasePtr =
     std::unique_ptr<common::reference_tracking_controller::ReferenceTrackerBase<Real>>;
   using FilterBasePtr = std::unique_ptr<common::signal_filters::FilterBase<Real>>;
-  using ModeChangeRequest = autoware_auto_msgs::srv::AutonomyModeChange_Request;
-  using ModeChangeResponse = autoware_auto_msgs::srv::AutonomyModeChange_Response;
+  using ModeChangeRequest = autoware_auto_vehicle_msgs::srv::AutonomyModeChange_Request;
+  using ModeChangeResponse = autoware_auto_vehicle_msgs::srv::AutonomyModeChange_Response;
 
   struct VehicleFilter
   {
@@ -167,9 +167,9 @@ private:
   VEHICLE_INTERFACE_LOCAL void state_machine_report();
 
   rclcpp::TimerBase::SharedPtr m_read_timer{nullptr};
-  rclcpp::Publisher<autoware_auto_msgs::msg::VehicleOdometry>::SharedPtr m_odom_pub{nullptr};
-  rclcpp::Publisher<autoware_auto_msgs::msg::VehicleStateReport>::SharedPtr m_state_pub{nullptr};
-  rclcpp::Subscription<autoware_auto_msgs::msg::VehicleStateCommand>::SharedPtr
+  rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::VehicleOdometry>::SharedPtr m_odom_pub{nullptr};
+  rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::VehicleStateReport>::SharedPtr m_state_pub{nullptr};
+  rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::VehicleStateCommand>::SharedPtr
     m_state_sub{nullptr};
   rclcpp::Publisher<HeadlightsReport>::SharedPtr m_headlights_rpt_pub{nullptr};
   rclcpp::Subscription<HeadlightsCommand>::SharedPtr m_headlights_cmd_sub{nullptr};
@@ -177,14 +177,14 @@ private:
   rclcpp::Subscription<HornCommand>::SharedPtr m_horn_cmd_sub{nullptr};
   rclcpp::Publisher<WipersReport>::SharedPtr m_wipers_rpt_pub{nullptr};
   rclcpp::Subscription<WipersCommand>::SharedPtr m_wipers_cmd_sub{nullptr};
-  rclcpp::Service<autoware_auto_msgs::srv::AutonomyModeChange>::SharedPtr m_mode_service{nullptr};
+  rclcpp::Service<autoware_auto_vehicle_msgs::srv::AutonomyModeChange>::SharedPtr m_mode_service{nullptr};
 
   using BasicSub = rclcpp::Subscription<BasicControlCommand>::SharedPtr;
-  using RawSub = rclcpp::Subscription<autoware_auto_msgs::msg::RawControlCommand>::SharedPtr;
+  using RawSub = rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::RawControlCommand>::SharedPtr;
   using HighLevelSub =
-    rclcpp::Subscription<autoware_auto_msgs::msg::HighLevelControlCommand>::SharedPtr;
+    rclcpp::Subscription<autoware_auto_control_msgs::msg::HighLevelControlCommand>::SharedPtr;
   using AckermannSub =
-    rclcpp::Subscription<autoware_auto_msgs::msg::AckermannControlCommand>::SharedPtr;
+    rclcpp::Subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>::SharedPtr;
 
   mpark::variant<RawSub, BasicSub, HighLevelSub, AckermannSub> m_command_sub{};
 

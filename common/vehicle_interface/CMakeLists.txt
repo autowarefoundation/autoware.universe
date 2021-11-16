@@ -35,11 +35,6 @@ if(BUILD_TESTING)
   autoware_set_compile_options(${PROJECT_NAME}_test)
   target_include_directories(${PROJECT_NAME}_test PRIVATE "include")
   target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME})
-  ament_target_dependencies(vehicle_interface_test
-    "autoware_auto_msgs"
-    "rclcpp"
-    "reference_tracking_controller"
-    "signal_filters")
 endif()
 
 ament_auto_package(INSTALL_TO_SHARE param)

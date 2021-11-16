@@ -11,7 +11,8 @@
   <buildtool_depend>autoware_auto_cmake</buildtool_depend>
 
   <depend>autoware_auto_common</depend>
-  <depend>autoware_auto_msgs</depend>
+  <depend>autoware_auto_control_msgs</depend>
+  <depend>autoware_auto_vehicle_msgs</depend>
   <depend>mpark_variant_vendor</depend>
   <depend>rclcpp</depend>
   <depend>reference_tracking_controller</depend>

@@ -23,12 +23,12 @@
 
 #include "vehicle_interface/safety_state_machine.hpp"
 
-#include "autoware_auto_msgs/msg/headlights_command.hpp"
-#include "autoware_auto_msgs/msg/headlights_report.hpp"
-#include "autoware_auto_msgs/msg/horn_command.hpp"
-#include "autoware_auto_msgs/msg/horn_report.hpp"
-#include "autoware_auto_msgs/msg/wipers_command.hpp"
-#include "autoware_auto_msgs/msg/wipers_report.hpp"
+#include "autoware_auto_vehicle_msgs/msg/headlights_command.hpp"
+#include "autoware_auto_vehicle_msgs/msg/headlights_report.hpp"
+#include "autoware_auto_vehicle_msgs/msg/horn_command.hpp"
+#include "autoware_auto_vehicle_msgs/msg/horn_report.hpp"
+#include "autoware_auto_vehicle_msgs/msg/wipers_command.hpp"
+#include "autoware_auto_vehicle_msgs/msg/wipers_report.hpp"
 
 using autoware::common::types::bool8_t;
 namespace comp = autoware::common::helper_functions::comparisons;
@@ -41,14 +41,14 @@ namespace vehicle_interface
 {
 namespace
 {
-using VSC = autoware_auto_msgs::msg::VehicleStateCommand;
+using VSC = autoware_auto_vehicle_msgs::msg::VehicleStateCommand;
 using VSR = StateReport;
-using autoware_auto_msgs::msg::HeadlightsCommand;
-using autoware_auto_msgs::msg::HeadlightsReport;
-using autoware_auto_msgs::msg::HornCommand;
-using autoware_auto_msgs::msg::HornReport;
-using autoware_auto_msgs::msg::WipersCommand;
-using autoware_auto_msgs::msg::WipersReport;
+using autoware_auto_vehicle_msgs::msg::HeadlightsCommand;
+using autoware_auto_vehicle_msgs::msg::HeadlightsReport;
+using autoware_auto_vehicle_msgs::msg::HornCommand;
+using autoware_auto_vehicle_msgs::msg::HornReport;
+using autoware_auto_vehicle_msgs::msg::WipersCommand;
+using autoware_auto_vehicle_msgs::msg::WipersReport;
 static_assert(VSC::BLINKER_OFF == VSR::BLINKER_OFF, "BLINKER_OFF!=");
 static_assert(VSC::BLINKER_LEFT == VSR::BLINKER_LEFT, "BLINKER_LEFT !=");
 static_assert(VSC::BLINKER_RIGHT == VSR::BLINKER_RIGHT, "BLINKER_RIGHT !=");
@@ -69,7 +69,7 @@ static_assert(VSC::MODE_AUTONOMOUS == VSR::MODE_AUTONOMOUS, "MODE_AUTONOMOUS !="
 static_assert(VSC::MODE_MANUAL == VSR::MODE_MANUAL, "MODE_MANUAL !=");
 }  // namespace
 
-using VCC = autoware_auto_msgs::msg::VehicleControlCommand;
+using VCC = autoware_auto_vehicle_msgs::msg::VehicleControlCommand;
 
 ////////////////////////////////////////////////////////////////////////////////
 StateMachineConfig::StateMachineConfig(

@@ -27,8 +27,8 @@
 #include <utility>
 #include <vector>
 
-#include "autoware_auto_msgs/msg/headlights_command.hpp"
-#include "autoware_auto_msgs/msg/wipers_command.hpp"
+#include "autoware_auto_vehicle_msgs/msg/headlights_command.hpp"
+#include "autoware_auto_vehicle_msgs/msg/wipers_command.hpp"
 
 #include "vehicle_interface/vehicle_interface_node.hpp"
 
@@ -42,14 +42,14 @@ using autoware::drivers::vehicle_interface::FilterConfig;
 using autoware::drivers::vehicle_interface::TopicNumMatches;
 using autoware::drivers::vehicle_interface::ViFeature;
 
-using autoware_auto_msgs::msg::HeadlightsCommand;
-using autoware_auto_msgs::msg::WipersCommand;
-using autoware_auto_msgs::msg::RawControlCommand;
-using autoware_auto_msgs::msg::VehicleControlCommand;
-using autoware_auto_msgs::msg::VehicleStateCommand;
-using autoware_auto_msgs::msg::AckermannControlCommand;
-using ModeChangeRequest = autoware_auto_msgs::srv::AutonomyModeChange_Request;
-using ModeChangeResponse = autoware_auto_msgs::srv::AutonomyModeChange_Response;
+using autoware_auto_control_msgs::msg::AckermannControlCommand;
+using autoware_auto_vehicle_msgs::msg::HeadlightsCommand;
+using autoware_auto_vehicle_msgs::msg::WipersCommand;
+using autoware_auto_vehicle_msgs::msg::RawControlCommand;
+using autoware_auto_vehicle_msgs::msg::VehicleControlCommand;
+using autoware_auto_vehicle_msgs::msg::VehicleStateCommand;
+using ModeChangeRequest = autoware_auto_vehicle_msgs::srv::AutonomyModeChange_Request;
+using ModeChangeResponse = autoware_auto_vehicle_msgs::srv::AutonomyModeChange_Response;
 
 /// Fake instantiation of interface, only checks that certain things were ever called
 /// Each of the overloaded functions fails in a rotating manner. After 5 iterations, the
@@ -67,14 +67,14 @@ public:
     m_update_called = true;
     return (m_count % 5) != 4;
   }
-  bool8_t send_state_command(const autoware_auto_msgs::msg::VehicleStateCommand & msg) override
+  bool8_t send_state_command(const autoware_auto_vehicle_msgs::msg::VehicleStateCommand & msg) override
   {
     (void)msg;
     m_state_called = true;
     m_state = msg;
     return (m_count % 5) != 3;
   }
-  bool8_t send_control_command(const autoware_auto_msgs::msg::VehicleControlCommand & msg) override
+  bool8_t send_control_command(const autoware_auto_vehicle_msgs::msg::VehicleControlCommand & msg) override
   {
     if (m_fail) {
       ++m_count;
@@ -94,7 +94,7 @@ public:
     m_ackermann_controls.push_back(msg);
     return (m_count % 5) != 2;
   }
-  bool8_t send_control_command(const autoware_auto_msgs::msg::RawControlCommand & msg) override
+  bool8_t send_control_command(const autoware_auto_vehicle_msgs::msg::RawControlCommand & msg) override
   {
     if (m_fail) {
       ++m_count;

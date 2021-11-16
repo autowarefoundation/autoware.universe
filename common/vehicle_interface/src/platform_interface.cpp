@@ -15,8 +15,8 @@
 // Co-developed by Tier IV, Inc. and Apex.AI, Inc.
 #include "vehicle_interface/platform_interface.hpp"
 
-#include "autoware_auto_msgs/msg/headlights_command.hpp"
-#include "autoware_auto_msgs/msg/horn_command.hpp"
+#include "autoware_auto_vehicle_msgs/msg/headlights_command.hpp"
+#include "autoware_auto_vehicle_msgs/msg/horn_command.hpp"
 
 namespace autoware
 {
@@ -24,83 +24,83 @@ namespace drivers
 {
 namespace vehicle_interface
 {
-const autoware_auto_msgs::msg::VehicleStateReport &
+const autoware_auto_vehicle_msgs::msg::VehicleStateReport &
 PlatformInterface::get_state_report() const noexcept
 {
   return m_state_report;
 }
 
-const autoware_auto_msgs::msg::VehicleOdometry & PlatformInterface::get_odometry() const noexcept
+const autoware_auto_vehicle_msgs::msg::VehicleOdometry & PlatformInterface::get_odometry() const noexcept
 {
   return m_odometry;
 }
 
-autoware_auto_msgs::msg::VehicleStateReport & PlatformInterface::state_report() noexcept
+autoware_auto_vehicle_msgs::msg::VehicleStateReport & PlatformInterface::state_report() noexcept
 {
   return m_state_report;
 }
 
-const autoware_auto_msgs::msg::HeadlightsReport &
+const autoware_auto_vehicle_msgs::msg::HeadlightsReport &
 PlatformInterface::get_headlights_report() const noexcept
 {
   return m_headlights_report;
 }
 
-const autoware_auto_msgs::msg::HornReport &
+const autoware_auto_vehicle_msgs::msg::HornReport &
 PlatformInterface::get_horn_report() const noexcept
 {
   return m_horn_report;
 }
 
-const autoware_auto_msgs::msg::WipersReport &
+const autoware_auto_vehicle_msgs::msg::WipersReport &
 PlatformInterface::get_wipers_report() const noexcept
 {
   return m_wipers_report;
 }
 
-autoware_auto_msgs::msg::VehicleOdometry & PlatformInterface::odometry() noexcept
+autoware_auto_vehicle_msgs::msg::VehicleOdometry & PlatformInterface::odometry() noexcept
 {
   return m_odometry;
 }
 
-autoware_auto_msgs::msg::HeadlightsReport & PlatformInterface::headlights_report() noexcept
+autoware_auto_vehicle_msgs::msg::HeadlightsReport & PlatformInterface::headlights_report() noexcept
 {
   return m_headlights_report;
 }
 
-autoware_auto_msgs::msg::HornReport & PlatformInterface::horn_report() noexcept
+autoware_auto_vehicle_msgs::msg::HornReport & PlatformInterface::horn_report() noexcept
 {
   return m_horn_report;
 }
 
-autoware_auto_msgs::msg::WipersReport & PlatformInterface::wipers_report() noexcept
+autoware_auto_vehicle_msgs::msg::WipersReport & PlatformInterface::wipers_report() noexcept
 {
   return m_wipers_report;
 }
 
 void PlatformInterface::send_headlights_command(
-  const autoware_auto_msgs::msg::HeadlightsCommand & msg)
+  const autoware_auto_vehicle_msgs::msg::HeadlightsCommand & msg)
 {
   (void)msg;
   throw std::runtime_error("HeadlightsCommand not supported by this vehicle interface");
 }
 
 void PlatformInterface::send_horn_command(
-  const autoware_auto_msgs::msg::HornCommand & msg)
+  const autoware_auto_vehicle_msgs::msg::HornCommand & msg)
 {
   (void)msg;
   throw std::runtime_error("HornCommand not supported by this vehicle interface");
 }
 
 void PlatformInterface::send_wipers_command(
-  const autoware_auto_msgs::msg::WipersCommand & msg)
+  const autoware_auto_vehicle_msgs::msg::WipersCommand & msg)
 {
   (void)msg;
   throw std::runtime_error("WipersCommand not supported by this vehicle interface");
 }
 
 void PlatformInterface::send_hazard_lights_command(
-  const autoware_auto_msgs::msg::HazardLightsCommand & msg)
+  const autoware_auto_vehicle_msgs::msg::HazardLightsCommand & msg)
 {
   (void)msg;
   throw std::runtime_error("HazardLightsCommand not supported by this vehicle interface");

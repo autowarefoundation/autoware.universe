@@ -19,43 +19,43 @@
 #define VEHICLE_INTERFACE__PLATFORM_INTERFACE_HPP_
 
 #include <common/types.hpp>
-#include <autoware_auto_msgs/msg/hazard_lights_command.hpp>
-#include <autoware_auto_msgs/msg/hazard_lights_report.hpp>
-#include <autoware_auto_msgs/msg/headlights_command.hpp>
-#include <autoware_auto_msgs/msg/headlights_report.hpp>
-#include <autoware_auto_msgs/msg/horn_command.hpp>
-#include <autoware_auto_msgs/msg/horn_report.hpp>
-#include <autoware_auto_msgs/msg/wipers_command.hpp>
-#include <autoware_auto_msgs/msg/wipers_report.hpp>
-#include <autoware_auto_msgs/msg/raw_control_command.hpp>
-#include <autoware_auto_msgs/msg/ackermann_control_command.hpp>
-#include <autoware_auto_msgs/msg/vehicle_control_command.hpp>
-#include <autoware_auto_msgs/msg/vehicle_odometry.hpp>
-#include <autoware_auto_msgs/msg/vehicle_state_command.hpp>
-#include <autoware_auto_msgs/msg/vehicle_state_report.hpp>
-#include <autoware_auto_msgs/srv/autonomy_mode_change.hpp>
+#include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
+#include <autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp>
+#include <autoware_auto_vehicle_msgs/msg/hazard_lights_report.hpp>
+#include <autoware_auto_vehicle_msgs/msg/headlights_command.hpp>
+#include <autoware_auto_vehicle_msgs/msg/headlights_report.hpp>
+#include <autoware_auto_vehicle_msgs/msg/horn_command.hpp>
+#include <autoware_auto_vehicle_msgs/msg/horn_report.hpp>
+#include <autoware_auto_vehicle_msgs/msg/wipers_command.hpp>
+#include <autoware_auto_vehicle_msgs/msg/wipers_report.hpp>
+#include <autoware_auto_vehicle_msgs/msg/raw_control_command.hpp>
+#include <autoware_auto_vehicle_msgs/msg/vehicle_control_command.hpp>
+#include <autoware_auto_vehicle_msgs/msg/vehicle_odometry.hpp>
+#include <autoware_auto_vehicle_msgs/msg/vehicle_state_command.hpp>
+#include <autoware_auto_vehicle_msgs/msg/vehicle_state_report.hpp>
+#include <autoware_auto_vehicle_msgs/srv/autonomy_mode_change.hpp>
 #include <vehicle_interface/visibility_control.hpp>
 
 #include <chrono>
 
 using autoware::common::types::bool8_t;
 
-using autoware_auto_msgs::msg::HazardLightsCommand;
-using autoware_auto_msgs::msg::HazardLightsReport;
-using autoware_auto_msgs::msg::HeadlightsCommand;
-using autoware_auto_msgs::msg::HeadlightsReport;
-using autoware_auto_msgs::msg::HornCommand;
-using autoware_auto_msgs::msg::HornReport;
-using autoware_auto_msgs::msg::WipersCommand;
-using autoware_auto_msgs::msg::WipersReport;
-using autoware_auto_msgs::msg::RawControlCommand;
-using autoware_auto_msgs::msg::AckermannControlCommand;
-using autoware_auto_msgs::msg::VehicleControlCommand;
-using autoware_auto_msgs::msg::VehicleStateCommand;
-using autoware_auto_msgs::msg::VehicleStateReport;
-using autoware_auto_msgs::msg::VehicleOdometry;
-using ModeChangeRequest = autoware_auto_msgs::srv::AutonomyModeChange_Request;
-using ModeChangeResponse = autoware_auto_msgs::srv::AutonomyModeChange_Response;
+using autoware_auto_control_msgs::msg::AckermannControlCommand;
+using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
+using autoware_auto_vehicle_msgs::msg::HazardLightsReport;
+using autoware_auto_vehicle_msgs::msg::HeadlightsCommand;
+using autoware_auto_vehicle_msgs::msg::HeadlightsReport;
+using autoware_auto_vehicle_msgs::msg::HornCommand;
+using autoware_auto_vehicle_msgs::msg::HornReport;
+using autoware_auto_vehicle_msgs::msg::WipersCommand;
+using autoware_auto_vehicle_msgs::msg::WipersReport;
+using autoware_auto_vehicle_msgs::msg::RawControlCommand;
+using autoware_auto_vehicle_msgs::msg::VehicleControlCommand;
+using autoware_auto_vehicle_msgs::msg::VehicleStateCommand;
+using autoware_auto_vehicle_msgs::msg::VehicleStateReport;
+using autoware_auto_vehicle_msgs::msg::VehicleOdometry;
+using ModeChangeRequest = autoware_auto_vehicle_msgs::srv::AutonomyModeChange_Request;
+using ModeChangeResponse = autoware_auto_vehicle_msgs::srv::AutonomyModeChange_Response;
 
 namespace autoware
 {
