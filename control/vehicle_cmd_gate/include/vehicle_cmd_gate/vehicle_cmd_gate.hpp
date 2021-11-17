@@ -46,6 +46,11 @@ struct Commands
   autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand turn_indicator;
   autoware_auto_vehicle_msgs::msg::HazardLightsCommand hazard_light;
   autoware_auto_vehicle_msgs::msg::GearCommand gear;
+  explicit Commands(
+    const uint8_t & default_gear = autoware_auto_vehicle_msgs::msg::GearCommand::PARK)
+  {
+    gear.command = default_gear;
+  }
 };
 
 class VehicleCmdGate : public rclcpp::Node
