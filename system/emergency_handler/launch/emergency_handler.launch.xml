@@ -6,8 +6,8 @@
   <arg name="input_control_mode" default="/vehicle/status/control_mode" />
 
   <arg name="output_control_command" default="/system/emergency/control_cmd" />
-  <arg name="output_gear" default="/system/emergency/shift_cmd" />
-  <arg name="output_hazard" default="/system/emergency/hazard_cmd" />
+  <arg name="output_gear" default="/system/emergency/gear_cmd" />
+  <arg name="output_hazard" default="/system/emergency/hazard_lights_cmd" />
   <arg name="output_emergency_state" default="/system/emergency/emergency_state" />
 
   <arg name="config_file" default="$(find-pkg-share emergency_handler)/config/emergency_handler.param.yaml" />
