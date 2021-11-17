@@ -256,6 +256,23 @@ bool LaneDepartureCheckerNode::isDataTimeout()
   return false;
 }
 
+bool LaneDepartureCheckerNode::isValidData()
+{
+  if (reference_trajectory_->points.empty()) {
+    RCLCPP_ERROR_THROTTLE(
+      get_logger(), *get_clock(), 1000, "reference_trajectory is empty. Not expected!");
+    return false;
+  }
+
+  if (predicted_trajectory_->points.empty()) {
+    RCLCPP_ERROR_THROTTLE(
+      get_logger(), *get_clock(), 1000, "predicted_trajectory is empty. Not expected!");
+    return false;
+  }
+
+  return true;
+}
+
 void LaneDepartureCheckerNode::onTimer()
 {
   std::map<std::string, double> processing_time_map;
@@ -269,6 +286,10 @@ void LaneDepartureCheckerNode::onTimer()
   }
 
   if (isDataTimeout()) {
+    return;
+  }
+
+  if (isValidData()) {
     return;
   }
 
