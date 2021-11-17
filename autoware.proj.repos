@@ -35,7 +35,7 @@ repositories:
   autoware/calibration_tools:
     type: git
     url: git@github.com:tier4/calibration_tools.git
-    version: e8651a36963f117fabf9cf2bdf68f9ad1d3df98e
+    version: use-autoware-auto-msgs
   # description
   description/sensor/sensor_component_description:
     type: git
