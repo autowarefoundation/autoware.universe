@@ -24,18 +24,17 @@
 
 #include <memory>
 
+using autoware_auto_perception_msgs::msg::DetectedObjects;
+using autoware_perception_msgs::msg::DetectedObjectsWithFeature;
 class ShapeEstimationNode : public rclcpp::Node
 {
 private:
   // ros
-  rclcpp::Publisher<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr pub_;
-  rclcpp::Subscription<autoware_perception_msgs::msg::DetectedObjectsWithFeature>::SharedPtr sub_;
-  // bool use_map_correct_;
+  rclcpp::Publisher<DetectedObjectsWithFeature>::SharedPtr pub_;
+  rclcpp::Subscription<DetectedObjectsWithFeature>::SharedPtr sub_;
 
-  void callback(
-    const autoware_perception_msgs::msg::DetectedObjectsWithFeature::ConstSharedPtr input_msg);
+  void callback(const DetectedObjectsWithFeature::ConstSharedPtr input_msg);
 
-private:
   std::unique_ptr<ShapeEstimator> estimator_;
   bool use_vehicle_reference_yaw_;
 

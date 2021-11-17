@@ -31,20 +31,17 @@ ShapeEstimationNode::ShapeEstimationNode(const rclcpp::NodeOptions & node_option
 : Node("shape_estimation", node_options)
 {
   using std::placeholders::_1;
-  sub_ = create_subscription<autoware_perception_msgs::msg::DetectedObjectsWithFeature>(
+  sub_ = create_subscription<DetectedObjectsWithFeature>(
     "input", rclcpp::QoS{1}, std::bind(&ShapeEstimationNode::callback, this, _1));
 
-  pub_ = create_publisher<autoware_auto_perception_msgs::msg::DetectedObjects>(
-    "objects", rclcpp::QoS{1});
-
+  pub_ = create_publisher<DetectedObjectsWithFeature>("objects", rclcpp::QoS{1});
   bool use_corrector = declare_parameter("use_corrector", true);
   bool use_filter = declare_parameter("use_filter", true);
   use_vehicle_reference_yaw_ = declare_parameter("use_vehicle_reference_yaw", true);
   estimator_ = std::make_unique<ShapeEstimator>(use_corrector, use_filter);
 }
 
-void ShapeEstimationNode::callback(
-  const autoware_perception_msgs::msg::DetectedObjectsWithFeature::ConstSharedPtr input_msg)
+void ShapeEstimationNode::callback(const DetectedObjectsWithFeature::ConstSharedPtr input_msg)
 {
   // Guard
   if (pub_->get_subscription_count() < 1) {
@@ -52,7 +49,7 @@ void ShapeEstimationNode::callback(
   }
 
   // Create output msg
-  autoware_auto_perception_msgs::msg::DetectedObjects output_msg;
+  DetectedObjectsWithFeature output_msg;
   output_msg.header = input_msg->header;
 
   // Estimate shape for each object and pack msg
@@ -87,9 +84,9 @@ void ShapeEstimationNode::callback(
       continue;
     }
 
-    output_msg.objects.push_back(object);
-    output_msg.objects.back().shape = shape;
-    output_msg.objects.back().kinematics.pose_with_covariance.pose = pose;
+    output_msg.feature_objects.push_back(feature_object);
+    output_msg.feature_objects.back().object.shape = shape;
+    output_msg.feature_objects.back().object.kinematics.pose_with_covariance.pose = pose;
   }
 
   // Publish
