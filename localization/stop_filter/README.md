@@ -18,12 +18,10 @@ This node aims to:
 
 ### Output
 
-| Name                           | Type                                             | Description                                              |
-| ------------------------------ | ------------------------------------------------ | -------------------------------------------------------- |
-| `output/odom`                  | `nav_msgs::msg::Odometry`                        | odometry with suppressed longitudinal and yaw twist      |
-| `output/twist`                 | `geometry_msgs::msg::TwistStamped`               | twist with suppressed longitudinal and yaw twist         |
-| `output/twist_with_covariance` | `geometry_msgs::msg::TwistWithCovarianceStamped` | twist with suppressed longitudinal and yaw twist         |
-| `debug/stop_flag`              | `autoware_debug_msgs::msg::BoolStamped`          | flag to represent whether the vehicle is stopping or not |
+| Name              | Type                                    | Description                                              |
+| ----------------- | --------------------------------------- | -------------------------------------------------------- |
+| `output/odom`     | `nav_msgs::msg::Odometry`               | odometry with suppressed longitudinal and yaw twist      |
+| `debug/stop_flag` | `autoware_debug_msgs::msg::BoolStamped` | flag to represent whether the vehicle is stopping or not |
 
 ## Parameters
 

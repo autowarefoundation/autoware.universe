@@ -41,10 +41,6 @@ public:
 
 private:
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pub_odom_;  //!< @brief odom publisher
-  rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr
-    pub_twist_;  //!< @brief twist publisher
-  rclcpp::Publisher<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr
-    pub_twist_with_covariance_;  //!< @brief twist with covariance publisher
   rclcpp::Publisher<autoware_debug_msgs::msg::BoolStamped>::SharedPtr
     pub_stop_flag_;  //!< @brief stop flag publisher
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr
