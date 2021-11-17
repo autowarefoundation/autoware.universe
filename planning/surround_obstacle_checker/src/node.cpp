@@ -92,7 +92,9 @@ void SurroundObstacleCheckerNode::pathCallback(
   }
 
   // parameter description
-  autoware_auto_planning_msgs::msg::Trajectory output_msg = *input_msg;
+  TrajectoryPoints output_trajectory_points =
+    autoware_utils::convertToTrajectoryPointArray(*input_msg);
+
   diagnostic_msgs::msg::DiagnosticStatus no_start_reason_diag;
 
   // get current pose in traj frame
@@ -102,7 +104,7 @@ void SurroundObstacleCheckerNode::pathCallback(
   }
 
   // get closest idx
-  const size_t closest_idx = getClosestIdx(*input_msg, current_pose);
+  const size_t closest_idx = getClosestIdx(output_trajectory_points, current_pose);
 
   // get nearest object
   double min_dist_to_obj = std::numeric_limits<double>::max();
@@ -125,7 +127,7 @@ void SurroundObstacleCheckerNode::pathCallback(
     RCLCPP_WARN_THROTTLE(
       get_logger(), *this->get_clock(), 500 /* ms */,
       "do not start because there is obstacle near the ego vehicle.");
-    insertStopVelocity(closest_idx, &output_msg);
+    insertStopVelocity(closest_idx, &output_trajectory_points);
 
     // visualization for debug
     if (is_obstacle_found) {
@@ -138,6 +140,8 @@ void SurroundObstacleCheckerNode::pathCallback(
   }
 
   // publish trajectory and debug info
+  auto output_msg = autoware_utils::convertToTrajectory(output_trajectory_points);
+  output_msg.header = input_msg->header;
   path_pub_->publish(output_msg);
   stop_reason_diag_pub_->publish(no_start_reason_diag);
   debug_ptr_->publish();
@@ -162,11 +166,11 @@ void SurroundObstacleCheckerNode::currentVelocityCallback(
 }
 
 void SurroundObstacleCheckerNode::insertStopVelocity(
-  const size_t closest_idx, autoware_auto_planning_msgs::msg::Trajectory * traj)
+  const size_t closest_idx, TrajectoryPoints * traj)
 {
   // set zero velocity from closest idx to last idx
-  for (size_t i = closest_idx; i < traj->points.size(); i++) {
-    traj->points.at(i).longitudinal_velocity_mps = 0.0;
+  for (size_t i = closest_idx; i < traj->size(); i++) {
+    traj->at(i).longitudinal_velocity_mps = 0.0;
   }
 }
 
@@ -215,14 +219,13 @@ bool SurroundObstacleCheckerNode::convertPose(
 }
 
 size_t SurroundObstacleCheckerNode::getClosestIdx(
-  const autoware_auto_planning_msgs::msg::Trajectory & traj,
-  const geometry_msgs::msg::Pose current_pose)
+  const TrajectoryPoints & traj, const geometry_msgs::msg::Pose current_pose)
 {
   double min_dist = std::numeric_limits<double>::max();
   size_t min_dist_idx = 0;
-  for (size_t i = 0; i < traj.points.size(); ++i) {
-    const double x = traj.points.at(i).pose.position.x - current_pose.position.x;
-    const double y = traj.points.at(i).pose.position.y - current_pose.position.y;
+  for (size_t i = 0; i < traj.size(); ++i) {
+    const double x = traj.at(i).pose.position.x - current_pose.position.x;
+    const double y = traj.at(i).pose.position.y - current_pose.position.y;
     const double dist = std::hypot(x, y);
     if (dist < min_dist) {
       min_dist_idx = i;

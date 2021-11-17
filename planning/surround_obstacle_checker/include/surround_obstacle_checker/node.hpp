@@ -15,6 +15,7 @@
 #ifndef SURROUND_OBSTACLE_CHECKER__NODE_HPP_
 #define SURROUND_OBSTACLE_CHECKER__NODE_HPP_
 
+#include "autoware_utils/trajectory/tmp_conversion.hpp"
 #include "surround_obstacle_checker/debug_marker.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -42,10 +43,14 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 using Point2d = boost::geometry::model::d2::point_xy<double>;
 using Polygon2d =
   boost::geometry::model::polygon<Point2d, false, false>;  // counter-clockwise, open
+using autoware_auto_planning_msgs::msg::Trajectory;
+using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+using TrajectoryPoints = std::vector<TrajectoryPoint>;
 
 enum class State { PASS, STOP };
 
@@ -55,13 +60,12 @@ public:
   explicit SurroundObstacleCheckerNode(const rclcpp::NodeOptions & node_options);
 
 private:
-  void pathCallback(const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr input_msg);
+  void pathCallback(const Trajectory::ConstSharedPtr input_msg);
   void pointCloudCallback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr input_msg);
   void dynamicObjectCallback(
     const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr input_msg);
   void currentVelocityCallback(const nav_msgs::msg::Odometry::ConstSharedPtr input_msg);
-  void insertStopVelocity(
-    const size_t closest_idx, autoware_auto_planning_msgs::msg::Trajectory * traj);
+  void insertStopVelocity(const size_t closest_idx, TrajectoryPoints * traj);
   bool convertPose(
     const geometry_msgs::msg::Pose & pose, const std::string & source, const std::string & target,
     const rclcpp::Time & time, geometry_msgs::msg::Pose & conv_pose);
@@ -74,10 +78,8 @@ private:
     double * min_dist_to_obj, geometry_msgs::msg::Point * nearest_obj_point);
   bool isObstacleFound(const double min_dist_to_obj);
   bool isStopRequired(const bool is_obstacle_found, const bool is_stopped);
-  size_t getClosestIdx(
-    const autoware_auto_planning_msgs::msg::Trajectory & traj,
-    const geometry_msgs::msg::Pose current_pose);
-  bool checkStop(const autoware_auto_planning_msgs::msg::TrajectoryPoint & closest_point);
+  size_t getClosestIdx(const TrajectoryPoints & traj, const geometry_msgs::msg::Pose current_pose);
+  bool checkStop(const TrajectoryPoint & closest_point);
   Polygon2d createSelfPolygon();
   Polygon2d createObjPolygon(
     const geometry_msgs::msg::Pose & pose, const geometry_msgs::msg::Vector3 & size);
@@ -91,12 +93,12 @@ private:
    * ROS
    */
   // publisher and subscriber
-  rclcpp::Subscription<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr path_sub_;
+  rclcpp::Subscription<Trajectory>::SharedPtr path_sub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_sub_;
   rclcpp::Subscription<autoware_auto_perception_msgs::msg::PredictedObjects>::SharedPtr
     dynamic_object_sub_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr current_velocity_sub_;
-  rclcpp::Publisher<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr path_pub_;
+  rclcpp::Publisher<Trajectory>::SharedPtr path_pub_;
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticStatus>::SharedPtr stop_reason_diag_pub_;
   std::shared_ptr<SurroundObstacleCheckerDebugNode> debug_ptr_;
   tf2_ros::Buffer tf_buffer_;

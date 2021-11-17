@@ -14,6 +14,7 @@
   <depend>autoware_auto_perception_msgs</depend>
   <depend>autoware_auto_planning_msgs</depend>
   <depend>autoware_planning_msgs</depend>
+  <depend>autoware_utils</depend>
   <depend>diagnostic_msgs</depend>
   <depend>eigen</depend>
   <depend>libpcl-all-dev</depend>
