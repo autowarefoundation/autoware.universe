@@ -69,9 +69,12 @@ def generate_launch_description():
         DeclareLaunchArgument(
             "output/control_cmd", default_value="/external/selected/external_control_cmd"
         ),
-        DeclareLaunchArgument("output/shift_cmd", default_value="/external/selected/shift_cmd"),
+        DeclareLaunchArgument("output/gear_cmd", default_value="/external/selected/gear_cmd"),
         DeclareLaunchArgument(
-            "output/turn_signal_cmd", default_value="/external/selected/turn_signal_cmd"
+            "output/turn_indicators_cmd", default_value="/external/selected/turn_indicators_cmd"
+        ),
+        DeclareLaunchArgument(
+            "output/hazard_lights_cmd", default_value="/external/selected/hazard_lights_cmd"
         ),
         DeclareLaunchArgument("output/heartbeat", default_value="/external/selected/heartbeat"),
         DeclareLaunchArgument(
@@ -94,8 +97,9 @@ def generate_launch_description():
             _create_mapping_tuple("input/remote/turn_signal_cmd"),
             _create_mapping_tuple("input/remote/heartbeat"),
             _create_mapping_tuple("output/control_cmd"),
-            _create_mapping_tuple("output/shift_cmd"),
-            _create_mapping_tuple("output/turn_signal_cmd"),
+            _create_mapping_tuple("output/gear_cmd"),
+            _create_mapping_tuple("output/turn_indicators_cmd"),
+            _create_mapping_tuple("output/hazard_lights_cmd"),
             _create_mapping_tuple("output/heartbeat"),
             _create_mapping_tuple("output/current_selector_mode"),
         ],

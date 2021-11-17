@@ -28,8 +28,6 @@
 #include <autoware_external_api_msgs/msg/gear_shift_stamped.hpp>
 #include <autoware_external_api_msgs/msg/heartbeat.hpp>
 #include <autoware_external_api_msgs/msg/turn_signal_stamped.hpp>
-#include <autoware_vehicle_msgs/msg/shift_stamped.hpp>
-#include <autoware_vehicle_msgs/msg/turn_signal.hpp>
 
 #include <memory>
 

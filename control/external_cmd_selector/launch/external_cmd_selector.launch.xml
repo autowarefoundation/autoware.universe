@@ -20,8 +20,9 @@
 
   <!-- output -->
   <arg name="output/control_cmd" default="/external/selected/external_control_cmd" />
-  <arg name="output/shift_cmd" default="/external/selected/shift_cmd" />
-  <arg name="output/turn_signal_cmd" default="/external/selected/turn_signal_cmd" />
+  <arg name="output/gear_cmd" default="/external/selected/gear_cmd" />
+  <arg name="output/turn_indicators_cmd" default="/external/selected/turn_indicators_cmd" />
+  <arg name="output/hazard_lights_cmd" default="/external/selected/hazard_lights_cmd" />
   <arg name="output/heartbeat" default="/external/selected/heartbeat" />
   <arg name="output/current_selector_mode" default="~/current_selector_mode" />
 
@@ -37,8 +38,9 @@
     <remap from="~/input/remote/turn_signal_cmd" to="$(var input/remote/turn_signal_cmd)" />
     <remap from="~/input/remote/heartbeat" to="$(var input/remote/heartbeat)" />
     <remap from="~/output/control_cmd" to="$(var output/control_cmd)" />
-    <remap from="~/output/shift_cmd" to="$(var output/shift_cmd)" />
-    <remap from="~/output/turn_signal_cmd" to="$(var output/turn_signal_cmd)" />
+    <remap from="~/output/gear_cmd" to="$(var output/gear_cmd)" />
+    <remap from="~/output/turn_indicators_cmd" to="$(var output/turn_indicators_cmd)" />
+    <remap from="~/output/hazard_lights_cmd" to="$(var output/hazard_lights_cmd)" />
     <remap from="~/output/heartbeat" to="$(var output/heartbeat)" />
     <remap from="~/output/current_selector_mode" to="$(var output/current_selector_mode)" />
     <param name="initial_selector_mode" value="$(var initial_selector_mode)" />
