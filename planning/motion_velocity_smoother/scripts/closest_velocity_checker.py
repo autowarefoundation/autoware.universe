@@ -16,17 +16,15 @@
 
 import time
 
-from autoware_control_msgs.msg import ControlCommandStamped
+from autoware_auto_control_msgs.msg import AckermannControlCommand
+from autoware_auto_planning_msgs.msg import Path
+from autoware_auto_planning_msgs.msg import PathWithLaneId
+from autoware_auto_planning_msgs.msg import Trajectory
+from autoware_auto_vehicle_msgs.msg import Engage
+from autoware_auto_vehicle_msgs.msg import VelocityReport
 from autoware_debug_msgs.msg import Float32MultiArrayStamped
-from autoware_planning_msgs.msg import Path
-from autoware_planning_msgs.msg import PathWithLaneId
-from autoware_planning_msgs.msg import Trajectory
 from autoware_planning_msgs.msg import VelocityLimit
-from autoware_vehicle_msgs.msg import Engage
-from autoware_vehicle_msgs.msg import VehicleCommand
 from geometry_msgs.msg import Pose
-from geometry_msgs.msg import Twist
-from geometry_msgs.msg import TwistStamped
 from nav_msgs.msg import Odometry
 import numpy as np
 import rclpy
@@ -58,10 +56,8 @@ class VelocityChecker(Node):
         self.autoware_engage = None
         self.vehicle_engage = None
         self.external_v_lim = np.nan
-        self.localization_twist = Twist()
-        self.localization_twist.linear.x = np.nan
-        self.vehicle_twist = Twist()
-        self.vehicle_twist.linear.x = np.nan
+        self.localization_twist_vx = np.nan
+        self.vehicle_twist_vx = np.nan
         self.self_pose = Pose()
         self.data_arr = [np.nan] * DATA_NUM
         self.count = 0
@@ -105,13 +101,13 @@ class VelocityChecker(Node):
 
         # control commands
         self.sub6 = self.create_subscription(
-            ControlCommandStamped,
+            AckermannControlCommand,
             "/control/trajectory_follower/control_cmd",
             self.CallBackControlCmd,
             1,
         )
         self.sub7 = self.create_subscription(
-            VehicleCommand, "/control/vehicle_cmd", self.CallBackVehicleCmd, 1
+            AckermannControlCommand, "/control/command/control_cmd", self.CallBackVehicleCmd, 1
         )
 
         # others related to velocity
@@ -130,10 +126,10 @@ class VelocityChecker(Node):
 
         # self twist
         self.sub10 = self.create_subscription(
-            TwistStamped, "/localization/twist", self.CallBackLocalizationTwist, 1
+            Odometry, "/localization/kinematic_state", self.CallBackLocalizationTwist, 1
         )
         self.sub11 = self.create_subscription(
-            Odometry, "/vehicle/status/vehicle_status", self.CallBackVehicleTwist, 1
+            VelocityReport, "/vehicle/status/velocity_status", self.CallBackVehicleTwist, 1
         )
 
         # publish data
@@ -165,8 +161,8 @@ class VelocityChecker(Node):
         acc_ctrl_cmd = self.data_arr[CONTROL_CMD_ACC]
         vel_vehicle_cmd = self.data_arr[VEHICLE_CMD] * mps2kmph
         acc_vehicle_cmd = self.data_arr[VEHICLE_CMD_ACC]
-        vel_localization = self.localization_twist.linear.x * mps2kmph
-        vel_vehicle = self.vehicle_twist.linear.x * mps2kmph
+        vel_localization = self.localization_twist_vx * mps2kmph
+        vel_vehicle = self.vehicle_twist_vx * mps2kmph
         engage = (
             "None"
             if self.autoware_engage is None
@@ -216,57 +212,57 @@ class VelocityChecker(Node):
         self.external_v_lim = msg.max_velocity
 
     def CallBackLocalizationTwist(self, msg):
-        self.localization_twist = msg.twist
+        self.localization_twist_vx = msg.twist.twist.linear.x
 
     def CallBackVehicleTwist(self, msg):
-        self.vehicle_twist = msg.twist
+        self.vehicle_twist_vx = msg.longitudinal_velocity
 
     def CallBackBehaviorPathWLid(self, msg):
         # self.get_logger().info('LANE_CHANGE called')
         closest = self.calcClosestPathWLid(msg)
-        self.data_arr[LANE_CHANGE] = msg.points[closest].point.twist.linear.x
+        self.data_arr[LANE_CHANGE] = msg.points[closest].point.longitudinal_velocity_mps
         return
 
     def CallBackBehaviorPath(self, msg):
         # self.get_logger().info('BEHAVIOR_VELOCITY called')
         closest = self.calcClosestPath(msg)
-        self.data_arr[BEHAVIOR_VELOCITY] = msg.points[closest].twist.linear.x
+        self.data_arr[BEHAVIOR_VELOCITY] = msg.points[closest].longitudinal_velocity_mps
         return
 
     def CallBackAvoidTrajectory(self, msg):
         # self.get_logger().info('OBSTACLE_AVOID called')
         closest = self.calcClosestTrajectory(msg)
-        self.data_arr[OBSTACLE_AVOID] = msg.points[closest].twist.linear.x
+        self.data_arr[OBSTACLE_AVOID] = msg.points[closest].longitudinal_velocity_mps
         return
 
     def CallBackLaneDriveTrajectory(self, msg):
         # self.get_logger().info('OBSTACLE_STOP called')
         closest = self.calcClosestTrajectory(msg)
-        self.data_arr[OBSTACLE_STOP] = msg.points[closest].twist.linear.x
+        self.data_arr[OBSTACLE_STOP] = msg.points[closest].longitudinal_velocity_mps
         return
 
     def CallBackLataccTrajectory(self, msg):
         # self.get_logger().info('LAT_ACC called')
         closest = self.calcClosestTrajectory(msg)
-        self.data_arr[LAT_ACC] = msg.points[closest].twist.linear.x
+        self.data_arr[LAT_ACC] = msg.points[closest].longitudinal_velocity_mps
         return
 
     def CallBackScenarioTrajectory(self, msg):
         # self.get_logger().info('VELOCITY_OPTIMIZE called')
         closest = self.calcClosestTrajectory(msg)
-        self.data_arr[VELOCITY_OPTIMIZE] = msg.points[closest].twist.linear.x
+        self.data_arr[VELOCITY_OPTIMIZE] = msg.points[closest].longitudinal_velocity_mps
         return
 
     def CallBackControlCmd(self, msg):
         # self.get_logger().info('CONTROL_CMD called')
-        self.data_arr[CONTROL_CMD] = msg.control.velocity
-        self.data_arr[CONTROL_CMD_ACC] = msg.control.acceleration
+        self.data_arr[CONTROL_CMD] = msg.longitudinal.speed
+        self.data_arr[CONTROL_CMD_ACC] = msg.longitudinal.acceleration
         return
 
     def CallBackVehicleCmd(self, msg):
         # self.get_logger().info('VEHICLE_CMD called')
-        self.data_arr[VEHICLE_CMD] = msg.control.velocity
-        self.data_arr[VEHICLE_CMD_ACC] = msg.control.acceleration
+        self.data_arr[VEHICLE_CMD] = msg.longitudinal.speed
+        self.data_arr[VEHICLE_CMD_ACC] = msg.longitudinal.acceleration
         return
 
     def calcClosestPath(self, path):
