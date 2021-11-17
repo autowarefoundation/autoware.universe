@@ -189,6 +189,9 @@ private:
     const TrajectoryPoints & trajectory, const Pose & current_pose,
     const rclcpp::Publisher<Float32Stamped>::SharedPtr pub) const;
 
+  Trajectory toTrajectoryMsg(
+    const TrajectoryPoints & points, const std_msgs::msg::Header & header) const;
+
   // parameter handling
   void initCommonParam();
 

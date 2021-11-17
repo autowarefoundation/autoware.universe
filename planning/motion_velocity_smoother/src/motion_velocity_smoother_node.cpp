@@ -554,7 +554,7 @@ TrajectoryPoints MotionVelocitySmootherNode::calcTrajectoryVelocity(
 
   // Debug
   if (publish_debug_trajs_) {
-    pub_trajectory_raw_->publish(autoware_utils::convertToTrajectory(*traj_extracted));
+    pub_trajectory_raw_->publish(toTrajectoryMsg(*traj_extracted, base_traj_raw_ptr_->header));
   }
 
   // Apply external velocity limit
@@ -574,7 +574,7 @@ TrajectoryPoints MotionVelocitySmootherNode::calcTrajectoryVelocity(
 
   // Debug
   if (publish_debug_trajs_) {
-    pub_trajectory_vel_lim_->publish(autoware_utils::convertToTrajectory(*traj_extracted));
+    pub_trajectory_vel_lim_->publish(toTrajectoryMsg(*traj_extracted, base_traj_raw_ptr_->header));
   }
 
   // Smoothing velocity
@@ -667,8 +667,9 @@ bool MotionVelocitySmootherNode::smoothVelocity(
   RCLCPP_DEBUG(get_logger(), "smoothVelocity : traj_smoothed.size() = %lu", traj_smoothed.size());
   if (publish_debug_trajs_) {
     pub_trajectory_latacc_filtered_->publish(
-      autoware_utils::convertToTrajectory(*traj_lateral_acc_filtered));
-    pub_trajectory_resampled_->publish(autoware_utils::convertToTrajectory(*traj_resampled));
+      toTrajectoryMsg(*traj_lateral_acc_filtered, base_traj_raw_ptr_->header));
+    pub_trajectory_resampled_->publish(
+      toTrajectoryMsg(*traj_resampled, base_traj_raw_ptr_->header));
 
     if (!debug_trajectories.empty()) {
       for (auto & debug_trajectory : debug_trajectories) {
@@ -919,12 +920,10 @@ void MotionVelocitySmootherNode::publishDebugTrajectories(
       RCLCPP_WARN(get_logger(), "Size of the debug trajectories is incorrect");
       return;
     }
-    pub_forward_filtered_trajectory_->publish(
-      autoware_utils::convertToTrajectory(debug_trajectories.at(0)));
-    pub_backward_filtered_trajectory_->publish(
-      autoware_utils::convertToTrajectory(debug_trajectories.at(1)));
-    pub_merged_filtered_trajectory_->publish(
-      autoware_utils::convertToTrajectory(debug_trajectories.at(2)));
+    const auto & h = base_traj_raw_ptr_->header;
+    pub_forward_filtered_trajectory_->publish(toTrajectoryMsg(debug_trajectories.at(0), h));
+    pub_backward_filtered_trajectory_->publish(toTrajectoryMsg(debug_trajectories.at(1), h));
+    pub_merged_filtered_trajectory_->publish(toTrajectoryMsg(debug_trajectories.at(2), h));
     publishClosestVelocity(
       debug_trajectories.at(2), current_pose_ptr_->pose, pub_closest_merged_velocity_);
   }
@@ -1015,6 +1014,14 @@ bool MotionVelocitySmootherNode::isEngageStatus(const double target_vel) const
   const double vehicle_speed = std::fabs(current_odometry_ptr_->twist.twist.linear.x);
   const double engage_vel_thr = node_param_.engage_velocity * node_param_.engage_exit_ratio;
   return vehicle_speed < engage_vel_thr && target_vel >= node_param_.engage_velocity;
+}
+
+Trajectory MotionVelocitySmootherNode::toTrajectoryMsg(
+  const TrajectoryPoints & points, const std_msgs::msg::Header & header) const
+{
+  auto trajectory = autoware_utils::convertToTrajectory(points);
+  trajectory.header = header;
+  return trajectory;
 }
 
 }  // namespace motion_velocity_smoother
