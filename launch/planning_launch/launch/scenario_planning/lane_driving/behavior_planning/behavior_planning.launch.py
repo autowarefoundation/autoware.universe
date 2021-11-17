@@ -156,7 +156,8 @@ def generate_launch_description():
                 "/planning/scenario_planning/lane_driving/behavior_planning/"
                 "behavior_path_planner/force_available",
             ),
-            ("~/output/turn_signal_cmd", "/planning/turn_signal_decider/turn_signal_cmd"),
+            ("~/output/turn_indicators_cmd", "/planning/turn_indicators_cmd"),
+            ("~/output/hazard_lights_cmd", "/planning/hazard_lights_cmd"),
         ],
         parameters=[
             side_shift_param,
