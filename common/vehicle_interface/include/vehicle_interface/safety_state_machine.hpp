@@ -44,7 +44,8 @@ namespace vehicle_interface
 using autoware_auto_vehicle_msgs::msg::HeadlightsCommand;
 using autoware_auto_vehicle_msgs::msg::HornCommand;
 using autoware_auto_vehicle_msgs::msg::WipersCommand;
-using MaybeStateCommand = std::experimental::optional<autoware_auto_vehicle_msgs::msg::VehicleStateCommand>;
+using MaybeStateCommand =
+  std::experimental::optional<autoware_auto_vehicle_msgs::msg::VehicleStateCommand>;
 using BasicControlCommand = autoware_auto_vehicle_msgs::msg::VehicleControlCommand;
 using Odometry = autoware_auto_vehicle_msgs::msg::VehicleOdometry;
 using StateReport = autoware_auto_vehicle_msgs::msg::VehicleStateReport;

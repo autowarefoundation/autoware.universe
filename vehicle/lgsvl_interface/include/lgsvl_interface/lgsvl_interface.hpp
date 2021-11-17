@@ -115,19 +115,24 @@ public:
   bool update(std::chrono::nanoseconds timeout) override;
   /// Queues up data to be sent along with the next control command.
   /// Only gear shifting between drive and reverse is supported at this time.
-  bool send_state_command(const autoware_auto_vehicle_msgs::msg::VehicleStateCommand & msg) override;
+  bool send_state_command(
+    const autoware_auto_vehicle_msgs::msg::VehicleStateCommand & msg) override;
   /// Send control command data with whatever state data came along last
-  bool send_control_command(const autoware_auto_vehicle_msgs::msg::VehicleControlCommand & msg) override;
+  bool send_control_command(const autoware_auto_vehicle_msgs::msg::VehicleControlCommand & msg)
+  override;
   /// Send control command data with whatever state data came along last
-  bool send_control_command(const autoware_auto_control_msgs::msg::AckermannControlCommand & msg) override;
+  bool send_control_command(const autoware_auto_control_msgs::msg::AckermannControlCommand & msg)
+  override;
   /// Send control data with whatever state data came along last; applies scaling here too.
   /// If both brake and throttle is nonzero, decide based on config
-  bool send_control_command(const autoware_auto_vehicle_msgs::msg::RawControlCommand & msg) override;
+  bool send_control_command(
+    const autoware_auto_vehicle_msgs::msg::RawControlCommand & msg) override;
   /// Respond to request for changing autonomy mode. For LGSVL, this means nothing.
   bool handle_mode_change_request(
     autoware_auto_vehicle_msgs::srv::AutonomyModeChange_Request::SharedPtr request) override;
   /// Send headlights command data.
-  void send_headlights_command(const autoware_auto_vehicle_msgs::msg::HeadlightsCommand & msg) override;
+  void send_headlights_command(const autoware_auto_vehicle_msgs::msg::HeadlightsCommand & msg)
+  override;
   /// Send horn command data.
   void send_horn_command(const autoware_auto_vehicle_msgs::msg::HornCommand & msg) override;
   /// Send wipers command data.

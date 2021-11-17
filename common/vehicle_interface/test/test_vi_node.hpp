@@ -67,14 +67,16 @@ public:
     m_update_called = true;
     return (m_count % 5) != 4;
   }
-  bool8_t send_state_command(const autoware_auto_vehicle_msgs::msg::VehicleStateCommand & msg) override
+  bool8_t send_state_command(const autoware_auto_vehicle_msgs::msg::VehicleStateCommand & msg)
+  override
   {
     (void)msg;
     m_state_called = true;
     m_state = msg;
     return (m_count % 5) != 3;
   }
-  bool8_t send_control_command(const autoware_auto_vehicle_msgs::msg::VehicleControlCommand & msg) override
+  bool8_t send_control_command(const autoware_auto_vehicle_msgs::msg::VehicleControlCommand & msg)
+  override
   {
     if (m_fail) {
       ++m_count;
@@ -94,7 +96,8 @@ public:
     m_ackermann_controls.push_back(msg);
     return (m_count % 5) != 2;
   }
-  bool8_t send_control_command(const autoware_auto_vehicle_msgs::msg::RawControlCommand & msg) override
+  bool8_t send_control_command(const autoware_auto_vehicle_msgs::msg::RawControlCommand & msg)
+  override
   {
     if (m_fail) {
       ++m_count;

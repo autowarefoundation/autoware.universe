@@ -18,23 +18,23 @@ if(BUILD_TESTING)
   # find_package(ament_lint_auto REQUIRED)
   # ament_lint_auto_find_test_dependencies()
   # Test
-  ament_add_gtest(${PROJECT_NAME}_test
-    test/gtest_main.cpp
-    test/error_handling.cpp
-    test/filtering.cpp
-    test/sanity_checks.cpp
-    test/state_machine.hpp
-    test/state_machine.cpp
-    test/state_machine_bad_state.cpp
-    test/state_machine_clamp.cpp
-    test/state_machine_gear.cpp
-    test/state_machine_headlight.cpp
-    test/state_machine_node.cpp
-    test/test_dbw_state_machine.cpp
-    test/test_vi_node.hpp)
-  autoware_set_compile_options(${PROJECT_NAME}_test)
-  target_include_directories(${PROJECT_NAME}_test PRIVATE "include")
-  target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME})
+  # ament_add_gtest(${PROJECT_NAME}_test
+  #   test/gtest_main.cpp
+  #   test/error_handling.cpp
+  #   test/filtering.cpp
+  #   test/sanity_checks.cpp
+  #   test/state_machine.hpp
+  #   test/state_machine.cpp
+  #   test/state_machine_bad_state.cpp
+  #   test/state_machine_clamp.cpp
+  #   test/state_machine_gear.cpp
+  #   test/state_machine_headlight.cpp
+  #   test/state_machine_node.cpp
+  #   test/test_dbw_state_machine.cpp
+  #   test/test_vi_node.hpp)
+  # autoware_set_compile_options(${PROJECT_NAME}_test)
+  # target_include_directories(${PROJECT_NAME}_test PRIVATE "include")
+  # target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME})
 endif()
 
 ament_auto_package(INSTALL_TO_SHARE param)

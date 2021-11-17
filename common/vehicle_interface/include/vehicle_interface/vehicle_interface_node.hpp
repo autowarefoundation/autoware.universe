@@ -168,7 +168,8 @@ private:
 
   rclcpp::TimerBase::SharedPtr m_read_timer{nullptr};
   rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::VehicleOdometry>::SharedPtr m_odom_pub{nullptr};
-  rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::VehicleStateReport>::SharedPtr m_state_pub{nullptr};
+  rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::VehicleStateReport>::SharedPtr m_state_pub{
+    nullptr};
   rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::VehicleStateCommand>::SharedPtr
     m_state_sub{nullptr};
   rclcpp::Publisher<HeadlightsReport>::SharedPtr m_headlights_rpt_pub{nullptr};
@@ -177,10 +178,12 @@ private:
   rclcpp::Subscription<HornCommand>::SharedPtr m_horn_cmd_sub{nullptr};
   rclcpp::Publisher<WipersReport>::SharedPtr m_wipers_rpt_pub{nullptr};
   rclcpp::Subscription<WipersCommand>::SharedPtr m_wipers_cmd_sub{nullptr};
-  rclcpp::Service<autoware_auto_vehicle_msgs::srv::AutonomyModeChange>::SharedPtr m_mode_service{nullptr};
+  rclcpp::Service<autoware_auto_vehicle_msgs::srv::AutonomyModeChange>::SharedPtr m_mode_service{
+    nullptr};
 
   using BasicSub = rclcpp::Subscription<BasicControlCommand>::SharedPtr;
-  using RawSub = rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::RawControlCommand>::SharedPtr;
+  using RawSub =
+    rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::RawControlCommand>::SharedPtr;
   using HighLevelSub =
     rclcpp::Subscription<autoware_auto_control_msgs::msg::HighLevelControlCommand>::SharedPtr;
   using AckermannSub =

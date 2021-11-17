@@ -30,7 +30,8 @@ PlatformInterface::get_state_report() const noexcept
   return m_state_report;
 }
 
-const autoware_auto_vehicle_msgs::msg::VehicleOdometry & PlatformInterface::get_odometry() const noexcept
+const autoware_auto_vehicle_msgs::msg::VehicleOdometry & PlatformInterface::get_odometry() const
+noexcept
 {
   return m_odometry;
 }

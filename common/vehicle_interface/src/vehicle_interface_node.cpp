@@ -94,7 +94,7 @@ VehicleInterfaceNode::VehicleInterfaceNode(
       return FilterConfig{type, cutoff};
     };
   // Check for enabled features
-  std::vector<std::string> feature_list_string; 
+  std::vector<std::string> feature_list_string;
 
   if (get_parameter("features", feature_list_string)) {
     for (const auto & feature : feature_list_string) {
@@ -289,7 +289,9 @@ void VehicleInterfaceNode::init(
   m_state_pub = create_publisher<autoware_auto_vehicle_msgs::msg::VehicleStateReport>(
     state_report.topic + "_out", rclcpp::QoS{10U});
   m_odom_pub =
-    create_publisher<autoware_auto_vehicle_msgs::msg::VehicleOdometry>(odometry.topic, rclcpp::QoS{10U});
+    create_publisher<autoware_auto_vehicle_msgs::msg::VehicleOdometry>(
+    odometry.topic,
+    rclcpp::QoS{10U});
   // Make subordinate subscriber TODO(c.ho) parameterize time better
   using VSC = autoware_auto_vehicle_msgs::msg::VehicleStateCommand;
   m_state_sub = create_subscription<VSC>(

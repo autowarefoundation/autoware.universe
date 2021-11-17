@@ -9,8 +9,8 @@ ament_auto_add_library(${PROJECT_NAME} SHARED src/signal_filter.cpp)
 autoware_set_compile_options(${PROJECT_NAME})
 
 if(BUILD_TESTING)
-  # find_package(ament_lint_auto REQUIRED)
-  # ament_lint_auto_find_test_dependencies()
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
 
   ament_add_gtest(signal_filter_test test/sanity_check.cpp test/gtest_main.cpp)
   autoware_set_compile_options(signal_filter_test)

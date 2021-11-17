@@ -152,7 +152,8 @@ LgsvlInterface::LgsvlInterface(
       rclcpp::QoS{10},
       [this](nav_msgs::msg::Odometry::SharedPtr msg) {on_odometry(*msg);});
     // Ground truth state/pose publishers only work if there's a ground truth input
-    m_kinematic_state_pub = node.create_publisher<autoware_auto_vehicle_msgs::msg::VehicleKinematicState>(
+    m_kinematic_state_pub =
+      node.create_publisher<autoware_auto_vehicle_msgs::msg::VehicleKinematicState>(
       kinematic_state_topic, rclcpp::QoS{10});
 
     if (publish_pose) {
@@ -172,21 +173,29 @@ LgsvlInterface::LgsvlInterface(
       autoware_auto_vehicle_msgs::msg::VehicleStateReport state_report;
       // state_report.set__fuel(nullptr);  // no fuel status from LGSVL
       if (msg->left_turn_signal_active) {
-        state_report.set__blinker(autoware_auto_vehicle_msgs::msg::VehicleStateReport::BLINKER_LEFT);
+        state_report.set__blinker(
+          autoware_auto_vehicle_msgs::msg::VehicleStateReport::BLINKER_LEFT);
       } else if (msg->right_turn_signal_active) {
-        state_report.set__blinker(autoware_auto_vehicle_msgs::msg::VehicleStateReport::BLINKER_RIGHT);
+        state_report.set__blinker(
+          autoware_auto_vehicle_msgs::msg::VehicleStateReport::BLINKER_RIGHT);
       } else {
         state_report.set__blinker(autoware_auto_vehicle_msgs::msg::VehicleStateReport::BLINKER_OFF);
       }
 
       if (msg->low_beams_active) {
-        state_report.set__headlight(autoware_auto_vehicle_msgs::msg::VehicleStateReport::HEADLIGHT_ON);
+        state_report.set__headlight(
+          autoware_auto_vehicle_msgs::msg::VehicleStateReport::
+          HEADLIGHT_ON);
         headlights_report().report = HeadlightsReport::ENABLE_LOW;
       } else if (msg->high_beams_active) {
-        state_report.set__headlight(autoware_auto_vehicle_msgs::msg::VehicleStateReport::HEADLIGHT_HIGH);
+        state_report.set__headlight(
+          autoware_auto_vehicle_msgs::msg::VehicleStateReport::
+          HEADLIGHT_HIGH);
         headlights_report().report = HeadlightsReport::ENABLE_HIGH;
       } else {
-        state_report.set__headlight(autoware_auto_vehicle_msgs::msg::VehicleStateReport::HEADLIGHT_OFF);
+        state_report.set__headlight(
+          autoware_auto_vehicle_msgs::msg::VehicleStateReport::
+          HEADLIGHT_OFF);
         headlights_report().report = HeadlightsReport::DISABLE;
       }
 
@@ -257,7 +266,8 @@ bool8_t LgsvlInterface::update(std::chrono::nanoseconds timeout)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-bool8_t LgsvlInterface::send_state_command(const autoware_auto_vehicle_msgs::msg::VehicleStateCommand & msg)
+bool8_t LgsvlInterface::send_state_command(
+  const autoware_auto_vehicle_msgs::msg::VehicleStateCommand & msg)
 {
   auto msg_corrected = msg;
 
@@ -364,7 +374,8 @@ bool8_t LgsvlInterface::send_control_command(
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-bool8_t LgsvlInterface::send_control_command(const autoware_auto_vehicle_msgs::msg::RawControlCommand & msg)
+bool8_t LgsvlInterface::send_control_command(
+  const autoware_auto_vehicle_msgs::msg::RawControlCommand & msg)
 {
   // Front steer semantically is z up, ccw positive, but LGSVL thinks its the opposite
   lgsvl_msgs::msg::VehicleControlData control_data;
@@ -386,7 +397,8 @@ bool8_t LgsvlInterface::handle_mode_change_request(
   return true;
 }
 
-void LgsvlInterface::send_headlights_command(const autoware_auto_vehicle_msgs::msg::HeadlightsCommand & msg)
+void LgsvlInterface::send_headlights_command(
+  const autoware_auto_vehicle_msgs::msg::HeadlightsCommand & msg)
 {
   /// lgsvl_msgs values are shifted down one from autoware_auto_vehicle_msgs values
   /// However, lgsvl_msgs values have no "NO_COMMAND" option so 0 is ignored
@@ -461,7 +473,9 @@ void LgsvlInterface::on_odometry(const nav_msgs::msg::Odometry & msg)
       // Steer semantically is z up, ccw positive, but LGSVL thinks its the opposite
       vse_t.state.front_wheel_angle_rad = -get_odometry().front_wheel_angle_rad;
       vse_t.state.rear_wheel_angle_rad = -get_odometry().rear_wheel_angle_rad;
-      if (state_report().gear == autoware_auto_vehicle_msgs::msg::VehicleStateReport::GEAR_REVERSE) {
+      if (state_report().gear ==
+        autoware_auto_vehicle_msgs::msg::VehicleStateReport::GEAR_REVERSE)
+      {
         vse_t.state.longitudinal_velocity_mps *= -1.0f;
       }
 
@@ -514,7 +528,8 @@ void LgsvlInterface::on_odometry(const nav_msgs::msg::Odometry & msg)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void LgsvlInterface::on_state_report(const autoware_auto_vehicle_msgs::msg::VehicleStateReport & msg)
+void LgsvlInterface::on_state_report(
+  const autoware_auto_vehicle_msgs::msg::VehicleStateReport & msg)
 {
   auto corrected_report = msg;
 
