@@ -79,7 +79,7 @@ Visualization Manager:
                 Durability Policy: Volatile
                 History Policy: Keep Last
                 Reliability Policy: Reliable
-                Value: /vehicle/status/steering
+                Value: /vehicle/status/steering_status
               Value: true
               Value height offset: 0
             - Class: rviz_plugins/ConsoleMeter
@@ -95,7 +95,7 @@ Visualization Manager:
                 Durability Policy: Volatile
                 History Policy: Keep Last
                 Reliability Policy: Reliable
-                Value: /vehicle/status/twist
+                Value: /vehicle/status/velocity_status
               Value: true
               Value height offset: 0
             - Alpha: 0.999
@@ -113,7 +113,7 @@ Visualization Manager:
                 Durability Policy: Volatile
                 History Policy: Keep Last
                 Reliability Policy: Reliable
-                Value: /vehicle/status/twist
+                Value: /vehicle/status/velocity_status
               Value: true
             - Alpha: 0.30000001192092896
               Class: rviz_default_plugins/RobotModel
