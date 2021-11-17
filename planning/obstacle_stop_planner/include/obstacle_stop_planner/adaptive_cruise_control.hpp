@@ -30,6 +30,8 @@
 
 namespace motion_planning
 {
+using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+using TrajectoryPoints = std::vector<TrajectoryPoint>;
 class AdaptiveCruiseController
 {
 public:
@@ -38,12 +40,12 @@ public:
     const double baselink2front);
 
   void insertAdaptiveCruiseVelocity(
-    const autoware_auto_planning_msgs::msg::Trajectory & trajectory,
-    const int nearest_collision_point_idx, const geometry_msgs::msg::Pose self_pose,
-    const pcl::PointXYZ & nearest_collision_point, const rclcpp::Time nearest_collision_point_time,
+    const TrajectoryPoints & trajectory, const int nearest_collision_point_idx,
+    const geometry_msgs::msg::Pose self_pose, const pcl::PointXYZ & nearest_collision_point,
+    const rclcpp::Time nearest_collision_point_time,
     const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr object_ptr,
     const nav_msgs::msg::Odometry::ConstSharedPtr current_velocity_ptr, bool * need_to_stop,
-    autoware_auto_planning_msgs::msg::Trajectory * output_trajectory);
+    TrajectoryPoints * output_trajectory, const std_msgs::msg::Header trajectory_header);
 
 private:
   rclcpp::Publisher<autoware_debug_msgs::msg::Float32MultiArrayStamped>::SharedPtr pub_debug_;
@@ -174,11 +176,11 @@ private:
   double getMedianVel(const std::vector<nav_msgs::msg::Odometry> vel_que);
   double lowpass_filter(const double current_value, const double prev_value, const double gain);
   void calcDistanceToNearestPointOnPath(
-    const autoware_auto_planning_msgs::msg::Trajectory & trajectory, const int nearest_point_idx,
+    const TrajectoryPoints & trajectory, const int nearest_point_idx,
     const geometry_msgs::msg::Pose & self_pose, const pcl::PointXYZ & nearest_collision_point,
-    const rclcpp::Time & nearest_collision_point_time, double * distance);
-  double calcTrajYaw(
-    const autoware_auto_planning_msgs::msg::Trajectory & trajectory, const int collision_point_idx);
+    const rclcpp::Time & nearest_collision_point_time, double * distance,
+    const std_msgs::msg::Header & trajectory_header);
+  double calcTrajYaw(const TrajectoryPoints & trajectory, const int collision_point_idx);
   bool estimatePointVelocityFromObject(
     const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr object_ptr,
     const double traj_yaw, const pcl::PointXYZ & nearest_collision_point, double * velocity);
@@ -198,8 +200,7 @@ private:
 
   void insertMaxVelocityToPath(
     const geometry_msgs::msg::Pose self_pose, const double current_vel, const double target_vel,
-    const double dist_to_collision_point,
-    autoware_auto_planning_msgs::msg::Trajectory * output_trajectory);
+    const double dist_to_collision_point, TrajectoryPoints * output_trajectory);
   void registerQueToVelocity(const double vel, const rclcpp::Time & vel_time);
 
   /* Debug */

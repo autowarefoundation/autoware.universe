@@ -19,6 +19,7 @@
 #include "obstacle_stop_planner/debug_marker.hpp"
 
 #include <autoware_utils/autoware_utils.hpp>
+#include <autoware_utils/trajectory/tmp_conversion.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -61,6 +62,7 @@ namespace bg = boost::geometry;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+using TrajectoryPoints = std::vector<TrajectoryPoint>;
 using autoware_debug_msgs::msg::BoolStamped;
 using autoware_debug_msgs::msg::Float32MultiArrayStamped;
 using autoware_debug_msgs::msg::Float32Stamped;
@@ -214,20 +216,24 @@ private:
     const std::vector<cv::Point2d> & pointcloud, std::vector<cv::Point2d> & polygon_points);
 
   void searchObstacle(
-    const Trajectory & decimate_trajectory, Trajectory & output, PlannerData & planner_data);
+    const TrajectoryPoints & decimate_trajectory, TrajectoryPoints & output,
+    PlannerData & planner_data, const std_msgs::msg::Header & trajectory_header);
 
-  void insertVelocity(Trajectory & trajectory, PlannerData & planner_data);
+  void insertVelocity(
+    TrajectoryPoints & trajectory, PlannerData & planner_data,
+    const std_msgs::msg::Header & trajectory_header);
 
-  Trajectory decimateTrajectory(
-    const Trajectory & input, const double step_length, std::map<size_t, size_t> & index_map);
+  TrajectoryPoints decimateTrajectory(
+    const TrajectoryPoints & input, const double step_length, std::map<size_t, size_t> & index_map);
 
-  Trajectory trimTrajectoryWithIndexFromSelfPose(
-    const Trajectory & input, const geometry_msgs::msg::Pose & self_pose, size_t & index);
+  TrajectoryPoints trimTrajectoryWithIndexFromSelfPose(
+    const TrajectoryPoints & input, const geometry_msgs::msg::Pose & self_pose, size_t & index);
 
   bool searchPointcloudNearTrajectory(
-    const Trajectory & trajectory,
+    const TrajectoryPoints & trajectory,
     const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_points_ptr,
-    pcl::PointCloud<pcl::PointXYZ>::Ptr output_points_ptr);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr output_points_ptr,
+    const std_msgs::msg::Header & trajectory_header);
 
   void createOneStepPolygon(
     const geometry_msgs::msg::Pose & base_step_pose,
@@ -249,27 +255,27 @@ private:
   geometry_msgs::msg::Pose getVehicleCenterFromBase(const geometry_msgs::msg::Pose & base_pose);
 
   void insertStopPoint(
-    const StopPoint & stop_point, Trajectory & output,
+    const StopPoint & stop_point, TrajectoryPoints & output,
     diagnostic_msgs::msg::DiagnosticStatus & stop_reason_diag);
 
   StopPoint searchInsertPoint(
-    const int idx, const Trajectory & base_trajectory, const double dist_remain);
+    const int idx, const TrajectoryPoints & base_trajectory, const double dist_remain);
 
   StopPoint createTargetPoint(
-    const int idx, const double margin, const Trajectory & base_trajectory,
+    const int idx, const double margin, const TrajectoryPoints & base_trajectory,
     const double dist_remain);
 
   SlowDownSection createSlowDownSection(
-    const int idx, const Trajectory & base_trajectory, const double lateral_deviation,
+    const int idx, const TrajectoryPoints & base_trajectory, const double lateral_deviation,
     const double dist_remain, const double dist_vehicle_to_obstacle);
 
   SlowDownSection createSlowDownSectionFromMargin(
-    const int idx, const Trajectory & base_trajectory, const double forward_margin,
+    const int idx, const TrajectoryPoints & base_trajectory, const double forward_margin,
     const double backward_margin, const double velocity);
 
-  void insertSlowDownSection(const SlowDownSection & slow_down_section, Trajectory & output);
+  void insertSlowDownSection(const SlowDownSection & slow_down_section, TrajectoryPoints & output);
 
-  Trajectory extendTrajectory(const Trajectory & input, const double extend_distance);
+  TrajectoryPoints extendTrajectory(const TrajectoryPoints & input, const double extend_distance);
 
   TrajectoryPoint getExtendTrajectoryPoint(
     double extend_distance, const TrajectoryPoint & goal_point);
