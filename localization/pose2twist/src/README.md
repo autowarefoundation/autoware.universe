@@ -11,9 +11,9 @@ The `twist.angular` is calculated as `d_roll / dt`, `d_pitch / dt` and `d_yaw / 
 
 ### Input
 
-| Name | Type                            | Description                                      |
-| ---- | ------------------------------- | ------------------------------------------------ |
-| pose | geometry_msgs::msg::PoseStamped | pose source to used for the velocity calculation |
+| Name | Type                            | Description                                       |
+| ---- | ------------------------------- | ------------------------------------------------- |
+| pose | geometry_msgs::msg::PoseStamped | pose source to used for the velocity calculation. |
 
 ### Output
 
