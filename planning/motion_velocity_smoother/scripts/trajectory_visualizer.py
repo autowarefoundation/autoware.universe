@@ -16,12 +16,11 @@
 
 import argparse
 
-from autoware_planning_msgs.msg import Path
-from autoware_planning_msgs.msg import PathWithLaneId
-from autoware_planning_msgs.msg import Trajectory
+from autoware_auto_planning_msgs.msg import Path
+from autoware_auto_planning_msgs.msg import PathWithLaneId
+from autoware_auto_planning_msgs.msg import Trajectory
+from autoware_auto_vehicle_msgs.msg import VelocityReport
 from geometry_msgs.msg import Pose
-from geometry_msgs.msg import Twist
-from geometry_msgs.msg import TwistStamped
 from matplotlib import animation
 import matplotlib.pyplot as plt
 import message_filters
@@ -94,8 +93,8 @@ class TrajectoryVisualizer(Node):
 
         self.self_pose = Pose()
         self.self_pose_received = False
-        self.localization_twist = Twist()
-        self.vehicle_twist = Twist()
+        self.localization_vx = 0.0
+        self.vehicle_vx = 0.0
 
         self.trajectory_external_velocity_limited = Trajectory()
         self.trajectory_lateral_acc_filtered = Trajectory()
@@ -110,10 +109,10 @@ class TrajectoryVisualizer(Node):
 
         self.plotted = [False] * 9
         self.sub_localization_twist = self.create_subscription(
-            TwistStamped, "/localization/twist", self.CallbackLocalizationTwist, 1
+            Odometry, "/localization/kinematic_state", self.CallbackLocalizationTwist, 1
         )
         self.sub_vehicle_twist = self.create_subscription(
-            Odometry, "/vehicle/status/vehicle_status", self.CallbackVehicleTwist, 1
+            VelocityReport, "/vehicle/status/velocity_status", self.CallbackVehicleTwist, 1
         )
 
         # BUFFER_SIZE = 65536*100
@@ -150,6 +149,7 @@ class TrajectoryVisualizer(Node):
             [self.sub1, self.sub2, self.sub3, self.sub4, self.sub5], 30, 0.5
         )
         self.ts1.registerCallback(self.CallbackMotionVelOptTraj)
+
         self.ts2 = message_filters.ApproximateTimeSynchronizer(
             [self.sub6, self.sub7, self.sub8, self.sub9], 30, 1, 0
         )
@@ -175,12 +175,13 @@ class TrajectoryVisualizer(Node):
         self.updatePose("map", "base_link")
 
     def CallbackLocalizationTwist(self, cmd):
-        self.localization_twist = cmd.twist
+        self.localization_vx = cmd.twist.twist.linear.x
 
     def CallbackVehicleTwist(self, cmd):
-        self.vehicle_twist = cmd.twist
+        self.vehicle_vx = cmd.longitudinal_velocity
 
     def CallbackMotionVelOptTraj(self, cmd1, cmd2, cmd3, cmd4, cmd5):
+        print("CallbackMotionVelOptTraj called")
         self.CallBackTrajExVelLim(cmd1)
         self.CallBackTrajLatAccFiltered(cmd2)
         self.CallBackTrajRaw(cmd3)
@@ -208,6 +209,7 @@ class TrajectoryVisualizer(Node):
         self.update_traj_final = True
 
     def CallBackLaneDrivingTraj(self, cmd6, cmd7, cmd8, cmd9):
+        print("CallBackLaneDrivingTraj called")
         self.CallBackLaneChangePath(cmd6)
         self.CallBackBehaviorPath(cmd7)
         self.CallbackObstacleAvoidTraj(cmd8)
@@ -357,8 +359,8 @@ class TrajectoryVisualizer(Node):
             closest = self.calcClosestTrajectory(trajectory_final)
             if closest >= 0:
                 x_closest = x[closest]
-                self.im10.set_data(x_closest, self.localization_twist.linear.x)
-                self.im11.set_data(x_closest, self.vehicle_twist.linear.x)
+                self.im10.set_data(x_closest, self.localization_vx)
+                self.im11.set_data(x_closest, self.vehicle_vx)
 
         # change y-range
         self.ax1.set_ylim([self.min_vel - 1.0, self.max_vel + 1.0])
@@ -434,19 +436,19 @@ class TrajectoryVisualizer(Node):
     def ToVelList(self, traj):
         v_list = []
         for p in traj.points:
-            v_list.append(p.twist.linear.x)
+            v_list.append(p.longitudinal_velocity_mps)
         return v_list
 
     def ToVelListPathWLid(self, traj):
         v_list = []
         for p in traj.points:
-            v_list.append(p.point.twist.linear.x)
+            v_list.append(p.point.longitudinal_velocity_mps)
         return v_list
 
     def ToVelListPath(self, traj):
         v_list = []
         for p in traj.points:
-            v_list.append(p.twist.linear.x)
+            v_list.append(p.longitudinal_velocity_mps)
         return v_list
 
     def CalcAcceleration(self, traj):
@@ -454,8 +456,8 @@ class TrajectoryVisualizer(Node):
         for i in range(1, len(traj.points) - 1):
             p0 = traj.points[i - 1]
             p1 = traj.points[i]
-            v0 = p0.twist.linear.x
-            v1 = p1.twist.linear.x
+            v0 = p0.longitudinal_velocity_mps
+            v1 = p1.longitudinal_velocity_mps
             v = 0.5 * (v1 + v0)
             dx = p1.pose.position.x - p0.pose.position.x
             dy = p1.pose.position.y - p0.pose.position.y
@@ -474,9 +476,9 @@ class TrajectoryVisualizer(Node):
             p0 = traj.points[i - 1]
             p1 = traj.points[i]
             p2 = traj.points[i + 1]
-            v0 = p0.twist.linear.x
-            v1 = p1.twist.linear.x
-            v2 = p2.twist.linear.x
+            v0 = p0.longitudinal_velocity_mps
+            v1 = p1.longitudinal_velocity_mps
+            v2 = p2.longitudinal_velocity_mps
 
             dx0 = p1.pose.position.x - p0.pose.position.x
             dy0 = p1.pose.position.y - p0.pose.position.y
