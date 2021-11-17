@@ -69,6 +69,16 @@ inline geometry_msgs::msg::TransformStamped getDummyTransform()
   transform_stamped.child_frame_id = "base_link";
   return transform_stamped;
 }
+// TODO(Horibe): modify the controller nodes so that they does not publish topics when data is not ready.
+// then, remove this function.
+template <typename T>
+inline void spinWhile(T &node){
+    for (size_t i = 0; i < 10; i++) {
+      rclcpp::spin_some(node);  
+      const auto dt{std::chrono::milliseconds{100LL}};
+      std::this_thread::sleep_for(dt);
+  }
+}
 }  // namespace test_utils
 
 #endif  // TRAJECTORY_FOLLOWER_TEST_UTILS_HPP_
