@@ -4,14 +4,14 @@
 module autoware_auto_planning_msgs {
   module msg {
     module Trajectory_Constants {
-      const uint32 CAPACITY = 100;
+      const uint32 CAPACITY = 10000;
     };
     @verbatim (language="comment", text=
       " A set of trajectory points for the controller")
     struct Trajectory {
       std_msgs::msg::Header header;
 
-      sequence<autoware_auto_planning_msgs::msg::TrajectoryPoint, 100> points;
+      sequence<autoware_auto_planning_msgs::msg::TrajectoryPoint, 10000> points;
     };
   };
 };
