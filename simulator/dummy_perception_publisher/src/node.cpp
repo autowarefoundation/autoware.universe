@@ -32,22 +32,15 @@ DummyPerceptionPublisherNode::DummyPerceptionPublisherNode()
   detection_successful_rate_ = this->declare_parameter("detection_successful_rate", 0.8);
   enable_ray_tracing_ = this->declare_parameter("enable_ray_tracing", true);
   use_object_recognition_ = this->declare_parameter("use_object_recognition", true);
-  use_real_param_ = this->declare_parameter("use_real_param", true);
 
   std::random_device seed_gen;
   random_generator_.seed(seed_gen());
 
   rclcpp::QoS qos{1};
   qos.transient_local();
-  if (use_real_param_) {
-    detected_object_with_feature_pub_ =
-      this->create_publisher<autoware_perception_msgs::msg::DetectedObjectsWithFeature>(
-        "output/dynamic_object", qos);
-  } else {
-    detected_object_pub_ =
-      this->create_publisher<autoware_auto_perception_msgs::msg::DetectedObjects>(
-        "output/dynamic_object", qos);
-  }
+  detected_object_with_feature_pub_ =
+    this->create_publisher<autoware_perception_msgs::msg::DetectedObjectsWithFeature>(
+      "output/dynamic_object", qos);
   pointcloud_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("output/points_raw", qos);
   object_sub_ = this->create_subscription<dummy_perception_publisher::msg::Object>(
     "input/object", 100,
@@ -229,17 +222,7 @@ void DummyPerceptionPublisherNode::timerCallback()
   // publish
   pointcloud_pub_->publish(output_pointcloud_msg);
   if (use_object_recognition_) {
-    if (use_real_param_) {
-      detected_object_with_feature_pub_->publish(output_dynamic_object_msg);
-    } else {
-      autoware_auto_perception_msgs::msg::DetectedObjects output_objects_msg;
-      output_objects_msg.header.frame_id = output_dynamic_object_msg.header.frame_id;
-      output_objects_msg.header.stamp = output_dynamic_object_msg.header.stamp;
-      for (const auto & feature_object : output_dynamic_object_msg.feature_objects) {
-        output_objects_msg.objects.push_back(feature_object.object);
-      }
-      detected_object_pub_->publish(output_objects_msg);
-    }
+    detected_object_with_feature_pub_->publish(output_dynamic_object_msg);
   }
 }
 
