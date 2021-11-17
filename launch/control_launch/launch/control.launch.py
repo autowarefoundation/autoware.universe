@@ -158,10 +158,10 @@ def launch_setup(context, *args, **kwargs):
             ("input/auto/turn_indicators_cmd", "/planning/turn_indicators_cmd"),
             ("input/auto/hazard_lights_cmd", "/planning/hazard_lights_cmd"),
             ("input/auto/gear_cmd", "/control/shift_decider/gear_cmd"),
-            # TODO(Fumiya Watanabe): fix remapping when external_cmd_selector and external_cmd_converter is ported
             ("input/external/control_cmd", "/external/selected/control_cmd"),
-            ("input/external/turn_signal_cmd", "/external/selected/turn_signal_cmd"),
-            ("input/external/shift_cmd", "/external/selected/shift_cmd"),
+            ("input/external/turn_indicators_cmd", "/external/selected/turn_indicators_cmd"),
+            ("input/external/hazard_lights_cmd", "/external/selected/hazard_lights_cmd"),
+            ("input/external/gear_cmd", "/external/selected/gear_cmd"),
             ("input/external_emergency_stop_heartbeat", "/external/selected/heartbeat"),
             ("input/gate_mode", "/control/gate_mode_cmd"),
             ("input/emergency/control_cmd", "/system/emergency/control_cmd"),
