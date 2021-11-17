@@ -11,7 +11,7 @@ repositories:
   autoware/aip_launcher:
     type: git
     url: git@github.com:tier4/aip_launcher.iv.git
-    version: 539ab421cd988ce9126ac3fb625914d9fd429445
+    version: use-autoware-auto-msgs
   autoware/autoware_api_adaptor:
     type: git
     url: git@github.com:tier4/autoware_api_adaptor.git
