@@ -1,7 +1,7 @@
 <launch>
   <arg name="input_hazard_status" default="/system/emergency/hazard_status" />
   <!-- To be replaced by ControlCommand -->
-  <arg name="input_prev_control_command" default="/control/vehicle_cmd" />
+  <arg name="input_prev_control_command" default="/control/command/control_cmd" />
   <arg name="input_odometry" default="/localization/kinematic_state" />
   <arg name="input_control_mode" default="/vehicle/status/control_mode" />
 
