@@ -10,7 +10,7 @@ repositories:
     version: use-autoware-auto-msgs
   autoware/aip_launcher:
     type: git
-    url: git@github.com:tier4/aip_launcher.iv.git
+    url: git@github.com:tier4/AutowareArchitectureProposal_aip_launcher.git
     version: use-autoware-auto-msgs
   autoware/autoware_api_adaptor:
     type: git
