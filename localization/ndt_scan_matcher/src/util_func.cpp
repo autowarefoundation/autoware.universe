@@ -212,7 +212,7 @@ Eigen::Affine3d fromRosPoseToEigen(const geometry_msgs::msg::Pose & ros_pose)
   return eigen_pose;
 }
 
-geometry_msgs::msg::PoseArray createRandomPoseArray(
+std::vector<geometry_msgs::msg::Pose> createRandomPoseArray(
   const geometry_msgs::msg::PoseWithCovarianceStamped & base_pose_with_cov,
   const size_t particle_num)
 {
@@ -229,8 +229,7 @@ geometry_msgs::msg::PoseArray createRandomPoseArray(
 
   const auto base_rpy = getRPY(base_pose_with_cov);
 
-  geometry_msgs::msg::PoseArray pose_array;
-  pose_array.header = base_pose_with_cov.header;
+  std::vector<geometry_msgs::msg::Pose> poses;
   for (size_t i = 0; i < particle_num; ++i) {
     geometry_msgs::msg::Vector3 xyz;
     geometry_msgs::msg::Vector3 rpy;
@@ -251,8 +250,8 @@ geometry_msgs::msg::PoseArray createRandomPoseArray(
     pose.position.z = xyz.z;
     pose.orientation = tf2::toMsg(tf_quaternion);
 
-    pose_array.poses.push_back(pose);
+    poses.push_back(pose);
   }
 
-  return pose_array;
+  return poses;
 }
