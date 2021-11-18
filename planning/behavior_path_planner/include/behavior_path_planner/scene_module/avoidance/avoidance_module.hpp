@@ -121,7 +121,7 @@ private:
 
   // -- for shift point operations --
   void alignShiftPointsOrder(
-    AvoidPointArray & shift_points, const bool recalc_start_length = true) const;
+    AvoidPointArray & shift_points, const bool recalculate_start_length = true) const;
   AvoidPointArray fillAdditionalInfo(const AvoidPointArray & shift_points) const;
   AvoidPoint fillAdditionalInfo(const AvoidPoint & shift_point) const;
   void fillAdditionalInfoFromPoint(AvoidPointArray & shift_points) const;
