@@ -140,6 +140,9 @@ private:
   std::map<std::string, sensor_msgs::msg::PointCloud2::ConstSharedPtr> cloud_stdmap_tmp_;
   std::mutex mutex_;
 
+  std::vector<double> input_offset_;
+  std::map<std::string, double> offset_map_;
+
   void transformPointCloud(const PointCloud2::ConstSharedPtr & in, PointCloud2::SharedPtr & out);
   void combineClouds(
     const PointCloud2::ConstSharedPtr & in1, const PointCloud2::ConstSharedPtr & in2,

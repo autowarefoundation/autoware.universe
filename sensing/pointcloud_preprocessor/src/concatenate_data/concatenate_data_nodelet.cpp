@@ -90,12 +90,25 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
     // Optional parameters
     maximum_queue_size_ = static_cast<int>(declare_parameter("max_queue_size", 5));
     timeout_sec_ = static_cast<double>(declare_parameter("timeout_sec", 0.1));
+
+    input_offset_ = declare_parameter("input_offset", std::vector<double>{});
+    if (!input_offset_.empty() && input_topics_.size() != input_offset_.size()) {
+      RCLCPP_ERROR(get_logger(), "The number of topics does not match the number of offsets.");
+      return;
+    }
   }
 
   // Initialize not_subscribed_topic_names_
   {
     for (const std::string & e : input_topics_) {
       not_subscribed_topic_names_.insert(e);
+    }
+  }
+
+  // Initialize offset map
+  {
+    for (size_t i = 0; i < input_offset_.size(); ++i) {
+      offset_map_[input_topics_[i]] = input_offset_[i];
     }
   }
 
@@ -370,6 +383,16 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
 
       timer_->cancel();
       publish();
+    } else if (offset_map_.size() > 0) {
+      timer_->cancel();
+      auto period = std::chrono::duration_cast<std::chrono::nanoseconds>(
+        std::chrono::duration<double>(timeout_sec_ - offset_map_[topic_name]));
+      try {
+        setPeriod(period.count());
+      } catch (rclcpp::exceptions::RCLError & ex) {
+        RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000, "%s", ex.what());
+      }
+      timer_->reset();
     }
   }
 }
