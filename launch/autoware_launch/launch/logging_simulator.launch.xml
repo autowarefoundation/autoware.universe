@@ -74,6 +74,8 @@
     <include file="$(find-pkg-share perception_launch)/launch/perception.launch.xml" if="$(var perception)">
       <!-- options for mode: camera_lidar_fusion, lidar, camera -->
       <arg name="mode" value="camera_lidar_fusion" />
+      <arg name="vehicle_param_file" value="$(find-pkg-share $(var vehicle_model)_description)/config/vehicle_info.param.yaml"/>
+      <arg name="sensor_model" value="$(var sensor_model)"/>
     </include>
   </group>
 
