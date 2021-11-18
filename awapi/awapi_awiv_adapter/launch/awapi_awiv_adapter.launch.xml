@@ -22,7 +22,7 @@
   <arg name="input_v2x_command" default="/planning/scenario_planning/status/infrastructure_commands" />
   <arg name="input_v2x_state" default="/system/v2x/virtual_traffic_light_states" />
   <arg name="input_diagnostics" default="/diagnostics_agg" />
-  <arg name="input_global_rpt" default="/pacmod/parsed_tx/global_rpt" />
+  <arg name="input_global_rpt" default="/pacmod/global_rpt" />
   <arg name="input_lane_change_available" default="/planning/scenario_planning/lane_driving/lane_change_available" />
   <arg name="input_lane_change_ready" default="/planning/scenario_planning/lane_driving/lane_change_ready" />
   <arg name="input_lane_change_candidate_path" default="/planning/scenario_planning/lane_driving/lane_change_candidate_path" />
@@ -37,7 +37,7 @@
   <arg name="input_nearest_traffic_light_state" default="/planning/scenario_planning/lane_driving/behavior_planning/debug/traffic_light_state" />
   <arg name="input_trajectory" default="/planning/scenario_planning/trajectory" />
   <arg name="input_current_max_velocity" default="/planning/scenario_planning/current_max_velocity" />
-  <arg name="input_door_status" default="/pacmod/parsed_tx/rear_pass_door_rpt" />
+  <arg name="input_door_status" default="/pacmod/rear_pass_door_rpt" />
   <arg name="input_stop_speed_exceeded" default="/planning/scenario_planning/motion_velocity_smoother/stop_speed_exceeded" />
   <arg name="input_external_crosswalk_status" default="/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/input/external_crosswalk_states" />
   <arg name="input_external_intersection_status" default="/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/input/external_intersection_states" />
