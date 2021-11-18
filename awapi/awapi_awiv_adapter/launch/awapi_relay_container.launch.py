@@ -51,7 +51,7 @@ def generate_launch_description():
                 {
                     "input_topic": LaunchConfiguration("input_object"),
                     "output_topic": LaunchConfiguration("get_predicted_object"),
-                    "type": "autoware_perception_msgs/msg/DynamicObjectArray",
+                    "type": "autoware_auto_perception_msgs/msg/PredictedObjects",
                 }
             ],
             extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
@@ -68,7 +68,7 @@ def generate_launch_description():
                 {
                     "input_topic": LaunchConfiguration("input_nearest_traffic_light_state"),
                     "output_topic": LaunchConfiguration("get_nearest_traffic_light_status"),
-                    "type": "autoware_perception_msgs/msg/LookingTrafficLightState",
+                    "type": "autoware_auto_perception_msgs/msg/LookingTrafficSignal",
                 }
             ],
             extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
@@ -136,7 +136,7 @@ def generate_launch_description():
                 {
                     "input_topic": LaunchConfiguration("set_engage"),
                     "output_topic": LaunchConfiguration("output_autoware_engage"),
-                    "type": "autoware_vehicle_msgs/msg/Engage",
+                    "type": "autoware_auto_vehicle_msgs/msg/Engage",
                 }
             ],
             extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
@@ -153,7 +153,7 @@ def generate_launch_description():
                 {
                     "input_topic": LaunchConfiguration("set_engage"),
                     "output_topic": LaunchConfiguration("output_vehicle_engage"),
-                    "type": "autoware_vehicle_msgs/msg/Engage",
+                    "type": "autoware_auto_vehicle_msgs/msg/Engage",
                 }
             ],
             extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
@@ -290,7 +290,7 @@ def generate_launch_description():
                 {
                     "input_topic": LaunchConfiguration("input_traffic_light_state"),
                     "output_topic": LaunchConfiguration("get_traffic_light_status"),
-                    "type": "autoware_perception_msgs/msg/TrafficLightStateArray",
+                    "type": "autoware_auto_perception_msgs/msg/TrafficSignalArray",
                 }
             ],
             extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
@@ -307,7 +307,7 @@ def generate_launch_description():
                 {
                     "input_topic": LaunchConfiguration("set_overwrite_traffic_light_state"),
                     "output_topic": LaunchConfiguration("output_overwrite_traffic_light_state"),
-                    "type": "autoware_perception_msgs/msg/TrafficLightStateArray",
+                    "type": "autoware_auto_perception_msgs/msg/TrafficSignalArray",
                 }
             ],
             extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
