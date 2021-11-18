@@ -34,7 +34,7 @@ def generate_launch_description():
                 {
                     "input_topic": LaunchConfiguration("input_route"),
                     "output_topic": LaunchConfiguration("get_route"),
-                    "type": "autoware_planning_msgs/msg/Route",
+                    "type": "autoware_auto_planning_msgs/msg/HADMapRoute",
                 }
             ],
             extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
@@ -170,7 +170,7 @@ def generate_launch_description():
                 {
                     "input_topic": LaunchConfiguration("set_route"),
                     "output_topic": LaunchConfiguration("output_route"),
-                    "type": "autoware_planning_msgs/msg/Route",
+                    "type": "autoware_auto_planning_msgs/msg/HADMapRoute",
                     "durability": "transient_local",
                 }
             ],
