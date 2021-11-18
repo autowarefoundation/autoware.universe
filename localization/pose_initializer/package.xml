@@ -11,7 +11,6 @@
   <depend>autoware_api_utils</depend>
   <depend>autoware_external_api_msgs</depend>
   <depend>autoware_localization_msgs</depend>
-  <depend>autoware_localization_srvs</depend>
   <depend>geometry_msgs</depend>
   <depend>libpcl-all-dev</depend>
   <depend>pcl_conversions</depend>

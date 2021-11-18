@@ -29,8 +29,7 @@
 #include <rviz_common/panel.hpp>
 #include <rviz_common/properties/ros_topic_property.hpp>
 #endif
-#include <autoware_localization_srvs/srv/pose_with_covariance_stamped.hpp>
-
+#include <autoware_localization_msgs/srv/pose_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 
 namespace autoware_localization_rviz_plugin
@@ -51,7 +50,7 @@ public Q_SLOTS:
 protected:
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pose_cov_sub_;
 
-  rclcpp::Client<autoware_localization_srvs::srv::PoseWithCovarianceStamped>::SharedPtr client_;
+  rclcpp::Client<autoware_localization_msgs::srv::PoseWithCovarianceStamped>::SharedPtr client_;
 
   QLabel * topic_label_;
   QLineEdit * topic_edit_;

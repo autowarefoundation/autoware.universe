@@ -64,14 +64,14 @@ PoseInitializer::PoseInitializer()
   initial_pose_pub_ =
     this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("initialpose3d", 10);
 
-  ndt_client_ = this->create_client<autoware_localization_srvs::srv::PoseWithCovarianceStamped>(
+  ndt_client_ = this->create_client<autoware_localization_msgs::srv::PoseWithCovarianceStamped>(
     "ndt_align_srv");
   while (!ndt_client_->wait_for_service(std::chrono::seconds(1)) && rclcpp::ok()) {
     RCLCPP_INFO(get_logger(), "Waiting for service...");
   }
 
   initialize_pose_service_ =
-    this->create_service<autoware_localization_srvs::srv::PoseWithCovarianceStamped>(
+    this->create_service<autoware_localization_msgs::srv::PoseWithCovarianceStamped>(
       "service/initialize_pose", std::bind(
                                    &PoseInitializer::serviceInitializePose, this,
                                    std::placeholders::_1, std::placeholders::_2));
@@ -94,13 +94,13 @@ void PoseInitializer::callbackMapPoints(
 }
 
 void PoseInitializer::serviceInitializePose(
-  const std::shared_ptr<autoware_localization_srvs::srv::PoseWithCovarianceStamped::Request> req,
-  std::shared_ptr<autoware_localization_srvs::srv::PoseWithCovarianceStamped::Response> res)
+  const std::shared_ptr<autoware_localization_msgs::srv::PoseWithCovarianceStamped::Request> req,
+  std::shared_ptr<autoware_localization_msgs::srv::PoseWithCovarianceStamped::Response> res)
 {
   enable_gnss_callback_ = false;  // get only first topic
 
   auto add_height_pose_msg_ptr = std::make_shared<geometry_msgs::msg::PoseWithCovarianceStamped>();
-  getHeight(req->pose_with_cov, add_height_pose_msg_ptr);
+  getHeight(req->pose_with_covariance, add_height_pose_msg_ptr);
 
   // TODO(YamatoAndo)
   add_height_pose_msg_ptr->pose.covariance[0] = 1.0;
@@ -211,28 +211,29 @@ bool PoseInitializer::callAlignServiceAndPublishResult(
     return false;
   }
   auto req =
-    std::make_shared<autoware_localization_srvs::srv::PoseWithCovarianceStamped::Request>();
-  req->pose_with_cov = *input_pose_msg;
+    std::make_shared<autoware_localization_msgs::srv::PoseWithCovarianceStamped::Request>();
+  req->pose_with_covariance = *input_pose_msg;
   req->seq = ++request_id_;
 
   RCLCPP_INFO(get_logger(), "call NDT Align Server");
 
   ndt_client_->async_send_request(
     req,
-    [this](rclcpp::Client<autoware_localization_srvs::srv::PoseWithCovarianceStamped>::SharedFuture
+    [this](rclcpp::Client<autoware_localization_msgs::srv::PoseWithCovarianceStamped>::SharedFuture
              result) {
       if (result.get()->success) {
         RCLCPP_INFO(get_logger(), "called NDT Align Server");
         response_id_ = result.get()->seq;
         // NOTE temporary cov
-        geometry_msgs::msg::PoseWithCovarianceStamped & pose_with_cov = result.get()->pose_with_cov;
-        pose_with_cov.pose.covariance[0] = 1.0;
-        pose_with_cov.pose.covariance[1 * 6 + 1] = 1.0;
-        pose_with_cov.pose.covariance[2 * 6 + 2] = 0.01;
-        pose_with_cov.pose.covariance[3 * 6 + 3] = 0.01;
-        pose_with_cov.pose.covariance[4 * 6 + 4] = 0.01;
-        pose_with_cov.pose.covariance[5 * 6 + 5] = 0.2;
-        initial_pose_pub_->publish(pose_with_cov);
+        geometry_msgs::msg::PoseWithCovarianceStamped & pose_with_covariance =
+          result.get()->pose_with_covariance;
+        pose_with_covariance.pose.covariance[0] = 1.0;
+        pose_with_covariance.pose.covariance[1 * 6 + 1] = 1.0;
+        pose_with_covariance.pose.covariance[2 * 6 + 2] = 0.01;
+        pose_with_covariance.pose.covariance[3 * 6 + 3] = 0.01;
+        pose_with_covariance.pose.covariance[4 * 6 + 4] = 0.01;
+        pose_with_covariance.pose.covariance[5 * 6 + 5] = 0.2;
+        initial_pose_pub_->publish(pose_with_covariance);
         enable_gnss_callback_ = false;
       } else {
         RCLCPP_INFO(get_logger(), "failed NDT Align Server");

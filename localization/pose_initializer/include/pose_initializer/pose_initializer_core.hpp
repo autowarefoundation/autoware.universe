@@ -16,11 +16,11 @@
 #define POSE_INITIALIZER__POSE_INITIALIZER_CORE_HPP_
 
 #include <autoware_api_utils/autoware_api_utils.hpp>
-#include <autoware_localization_srvs/srv/pose_with_covariance_stamped.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_external_api_msgs/srv/initialize_pose_auto.hpp>
 #include <autoware_localization_msgs/msg/pose_initialization_request.hpp>
+#include <autoware_localization_msgs/srv/pose_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
@@ -41,8 +41,8 @@ public:
 private:
   void callbackMapPoints(sensor_msgs::msg::PointCloud2::ConstSharedPtr pointcloud2_msg_ptr);
   void serviceInitializePose(
-    const std::shared_ptr<autoware_localization_srvs::srv::PoseWithCovarianceStamped::Request> req,
-    std::shared_ptr<autoware_localization_srvs::srv::PoseWithCovarianceStamped::Response> res);
+    const std::shared_ptr<autoware_localization_msgs::srv::PoseWithCovarianceStamped::Request> req,
+    std::shared_ptr<autoware_localization_msgs::srv::PoseWithCovarianceStamped::Response> res);
   void serviceInitializePoseAuto(
     const std::shared_ptr<autoware_external_api_msgs::srv::InitializePoseAuto::Request> req,
     std::shared_ptr<autoware_external_api_msgs::srv::InitializePoseAuto::Response> res);
@@ -70,9 +70,9 @@ private:
 
   rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr initial_pose_pub_;
 
-  rclcpp::Client<autoware_localization_srvs::srv::PoseWithCovarianceStamped>::SharedPtr ndt_client_;
+  rclcpp::Client<autoware_localization_msgs::srv::PoseWithCovarianceStamped>::SharedPtr ndt_client_;
 
-  rclcpp::Service<autoware_localization_srvs::srv::PoseWithCovarianceStamped>::SharedPtr
+  rclcpp::Service<autoware_localization_msgs::srv::PoseWithCovarianceStamped>::SharedPtr
     initialize_pose_service_;
   rclcpp::Service<autoware_external_api_msgs::srv::InitializePoseAuto>::SharedPtr
     initialize_pose_auto_service_;

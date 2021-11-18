@@ -10,7 +10,7 @@
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
-  <depend>autoware_localization_srvs</depend>
+  <depend>autoware_localization_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>libqt5-core</depend>
   <depend>libqt5-widgets</depend>
