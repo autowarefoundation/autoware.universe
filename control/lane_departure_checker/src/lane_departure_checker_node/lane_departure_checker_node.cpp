@@ -256,7 +256,7 @@ bool LaneDepartureCheckerNode::isDataTimeout()
   return false;
 }
 
-bool LaneDepartureCheckerNode::isValidData()
+bool LaneDepartureCheckerNode::isDataValid()
 {
   if (reference_trajectory_->points.empty()) {
     RCLCPP_ERROR_THROTTLE(
@@ -289,7 +289,7 @@ void LaneDepartureCheckerNode::onTimer()
     return;
   }
 
-  if (isValidData()) {
+  if (!isDataValid()) {
     return;
   }
 

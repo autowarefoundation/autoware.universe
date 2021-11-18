@@ -92,7 +92,7 @@ private:
 
   bool isDataReady();
   bool isDataTimeout();
-  bool isValidData();
+  bool isDataValid();
   void onTimer();
 
   // Parameter
