@@ -11,6 +11,7 @@
 
   <depend>autoware_auto_perception_msgs</depend>
   <depend>autoware_perception_msgs</depend>
+  <depend>compare_map_segmentation</depend>
   <depend>geometry_msgs</depend>
   <depend>libpcl-all-dev</depend>
   <depend>pcl_conversions</depend>

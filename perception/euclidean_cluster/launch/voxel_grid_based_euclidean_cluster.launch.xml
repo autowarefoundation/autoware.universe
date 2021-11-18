@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <launch>
-  <arg name="input_pointcloud" default="/sensing/lidar/no_ground/pointcloud"/>
+  <arg name="input_pointcloud" default="/perception/object_segmentation/pointcloud"/>
   <arg name="input_map" default="/map/pointcloud_map" />
   <arg name="output_clusters" default="clusters"/>
   <arg name="use_pointcloud_map" default="false"/>

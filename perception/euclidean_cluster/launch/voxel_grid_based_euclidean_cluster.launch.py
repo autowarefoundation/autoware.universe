@@ -37,9 +37,9 @@ def launch_setup(context, *args, **kwargs):
 
     # set compare map filter as a component
     compare_map_filter_component = ComposableNode(
-        package="pointcloud_preprocessor",
+        package="compare_map_segmentation",
         namespace=ns,
-        plugin="pointcloud_preprocessor::VoxelBasedCompareMapFilterComponent",
+        plugin="compare_map_segmentation::VoxelBasedCompareMapFilterComponent",
         name=AnonName("compare_map_filter"),
         remappings=[
             ("input", LaunchConfiguration("input_pointcloud")),
@@ -126,7 +126,7 @@ def generate_launch_description():
 
     return launch.LaunchDescription(
         [
-            add_launch_arg("input_pointcloud", "/sensing/lidar/no_ground/pointcloud"),
+            add_launch_arg("input_pointcloud", "/perception/object_segmentation/pointcloud"),
             add_launch_arg("input_map", "/map/pointcloud_map"),
             add_launch_arg("output_clusters", "clusters"),
             add_launch_arg("use_pointcloud_map", "false"),
