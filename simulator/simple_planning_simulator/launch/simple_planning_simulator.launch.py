@@ -50,7 +50,6 @@ def generate_launch_description():
             LaunchConfiguration('vehicle_characteristics_param_file'),
         ],
         remappings=[
-            ('input/vehicle_control_command', '/vehicle/vehicle_command'),
             ('input/ackermann_control_command', '/control/command/control_cmd'),
             ('input/gear_command', '/control/command/gear_cmd'),
             ('input/trajectory', '/planning/scenario_planning/trajectory'),

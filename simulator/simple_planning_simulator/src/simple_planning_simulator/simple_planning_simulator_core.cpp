@@ -89,9 +89,6 @@ SimplePlanningSimulator::SimplePlanningSimulator(const rclcpp::NodeOptions & opt
   sub_init_pose_ = create_subscription<PoseWithCovarianceStamped>(
     "/initialpose", QoS{1},
     std::bind(&SimplePlanningSimulator::on_initialpose, this, _1));
-  sub_vehicle_cmd_ = create_subscription<VehicleControlCommand>(
-    "input/vehicle_control_command", QoS{1},
-    std::bind(&SimplePlanningSimulator::on_vehicle_cmd, this, _1));
   sub_ackermann_cmd_ = create_subscription<AckermannControlCommand>(
     "input/ackermann_control_command", QoS{1},
     std::bind(&SimplePlanningSimulator::on_ackermann_cmd, this, _1));
@@ -233,13 +230,6 @@ void SimplePlanningSimulator::on_initialpose(
   initial_pose.header = msg->header;
   initial_pose.pose = msg->pose.pose;
   set_initial_state_with_transform(initial_pose, initial_twist);
-}
-
-void SimplePlanningSimulator::on_vehicle_cmd(
-  const autoware_auto_vehicle_msgs::msg::VehicleControlCommand::ConstSharedPtr msg)
-{
-  current_vehicle_cmd_ptr_ = msg;
-  set_input(msg->front_wheel_angle_rad, msg->velocity_mps, msg->long_accel_mps2);
 }
 
 void SimplePlanningSimulator::on_ackermann_cmd(
