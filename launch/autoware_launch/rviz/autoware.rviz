@@ -1022,6 +1022,8 @@ Visualization Manager:
                       Enabled: true
                       Name: Intersection
                       Namespaces:
+                        candidate_collision_ego_lane_polygon: false
+                        candidate_collision_object_polygons: false
                         conflicting_targets: false
                         detection_area: false
                         ego_lane: false
@@ -1141,6 +1143,25 @@ Visualization Manager:
                         History Policy: Keep Last
                         Reliability Policy: Reliable
                         Value: /planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/occlusion_spot
+                      Value: true
+                    - Class: rviz_default_plugins/MarkerArray
+                      Enabled: true
+                      Name: NoStoppingArea
+                      Namespaces:
+                        no_stopping_area_correspondence: false
+                        no_stopping_area_id: false
+                        no_stopping_area_polygon: false
+                        stuck_vehicle_detect_area: false
+                        stop_line_detect_area: false
+                        stuck_points: false
+                        stop_factor_text: true
+                        stop_virtual_wall: true
+                      Topic:
+                        Depth: 5
+                        Durability Policy: Volatile
+                        History Policy: Keep Last
+                        Reliability Policy: Reliable
+                        Value: /planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/no_stopping_area
                       Value: true
                     - Class: rviz_plugins/Path
                       Color Border Vel Max: 3
