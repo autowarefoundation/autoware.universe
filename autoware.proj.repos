@@ -54,18 +54,6 @@ repositories:
     url: https://github.com/tier4/lexus_description.iv.git
     version: 4a3a06e297f85a737d2b5879b508843b2998038a
   # simulator
-  simulator/planning_simulator:
-    type: git
-    url: git@github.com:tier4/planning_simulator.git
-    version: 512aaa59a16231b6a3d5cfe17ec2e54094c99be9
-  simulator/planning_simulator_launcher:
-    type: git
-    url: git@github.com:tier4/planning_sim_launcher.git
-    version: 8db18efcafa3a7647d0958454177f242d3dcb70e
-  simulator/scenario_runner:
-    type: git
-    url: git@github.com:tier4/scenario_simulator_v1.git
-    version: 1eef79449f7670d0c2a11ba821f48ce8ed0960e7
   simulator/scenario_simulator:
     type: git
     url: https://github.com/tier4/scenario_simulator_v2.git
