@@ -73,6 +73,12 @@ TrafficLightSSDFineDetectorNodelet::TrafficLightSSDFineDetectorNodelet(
     net_ptr_.reset(new ssd::Net(onnx_file, mode, max_batch_size));
     net_ptr_->save(engine_path);
   }
+  channel_ = net_ptr_->getInputSize()[0];
+  width_ = net_ptr_->getInputSize()[1];
+  height_ = net_ptr_->getInputSize()[2];
+  detection_per_class_ = net_ptr_->getOutputScoreSize()[0];
+  class_num_ = net_ptr_->getOutputScoreSize()[1];
+
   is_approximate_sync_ = this->declare_parameter<bool>("approximate_sync", false);
   score_thresh_ = this->declare_parameter<double>("score_thresh", 0.7);
   mean_ = toFloatVector(this->declare_parameter("mean", std::vector<double>({0.5, 0.5, 0.5})));
@@ -101,12 +107,6 @@ TrafficLightSSDFineDetectorNodelet::TrafficLightSSDFineDetectorNodelet(
     sync_.reset(new Sync(SyncPolicy(10), image_sub_, roi_sub_));
     sync_->registerCallback(std::bind(&TrafficLightSSDFineDetectorNodelet::callback, this, _1, _2));
   }
-
-  channel_ = net_ptr_->getInputSize()[0];
-  width_ = net_ptr_->getInputSize()[1];
-  height_ = net_ptr_->getInputSize()[2];
-  detection_per_class_ = net_ptr_->getOutputScoreSize()[0];
-  class_num_ = net_ptr_->getOutputScoreSize()[1];
 }
 
 void TrafficLightSSDFineDetectorNodelet::connectCb()
