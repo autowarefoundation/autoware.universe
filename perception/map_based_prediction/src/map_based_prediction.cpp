@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <autoware_utils/autoware_utils.hpp>
 #include <cubic_spline.hpp>
 #include <map_based_prediction.hpp>
 
@@ -29,95 +30,33 @@ MapBasedPrediction::MapBasedPrediction(
 {
 }
 
-double calculateEuclideanDistance(
-  const geometry_msgs::msg::Point & point1, const geometry_msgs::msg::Point & point2)
-{
-  double dx = point1.x - point2.x;
-  double dy = point1.y - point2.y;
-  double distance = std::sqrt(dx * dx + dy * dy);
-  return distance;
-}
-
-bool getNearestPoint(
-  const std::vector<geometry_msgs::msg::Point> & points, const geometry_msgs::msg::Point point,
-  geometry_msgs::msg::Point & nearest_point)
-{
-  double min_dist = 1e+10;
-  bool flag = false;
-  for (const auto & tmp_point : points) {
-    double distance = calculateEuclideanDistance(point, tmp_point);
-    if (distance < min_dist) {
-      min_dist = distance;
-      nearest_point = point;
-      flag = true;
-    }
-  }
-  return flag;
-}
-
-bool getNearestPointIdx(
-  const std::vector<geometry_msgs::msg::Point> & points, const geometry_msgs::msg::Point point,
-  geometry_msgs::msg::Point & nearest_point, size_t & nearest_index)
-{
-  double min_dist = 10000000;
-  bool flag = false;
-  size_t index = 0;
-  for (const auto & tmp_point : points) {
-    double distance = calculateEuclideanDistance(point, tmp_point);
-    if (distance < min_dist) {
-      min_dist = distance;
-      nearest_point = tmp_point;
-      flag = true;
-      nearest_index = index;
-    }
-    index++;
-  }
-  return flag;
-}
-
 bool MapBasedPrediction::doPrediction(
   const DynamicObjectWithLanesArray & in_objects,
-  std::vector<autoware_auto_perception_msgs::msg::PredictedObject> & out_objects,
-  std::vector<geometry_msgs::msg::Point> & debug_interpolated_points)
+  std::vector<autoware_auto_perception_msgs::msg::PredictedObject> & out_objects)
 {
   for (auto & object_with_lanes : in_objects.objects) {
-    const double min_lon_velocity_ms_for_map_based_prediction = 1;
-    if (
-      std::fabs(object_with_lanes.object.kinematics.twist_with_covariance.twist.linear.x) <
-      min_lon_velocity_ms_for_map_based_prediction) {
-      autoware_auto_perception_msgs::msg::PredictedPath predicted_path;
-      getLinearPredictedPath(
-        object_with_lanes.object.kinematics.pose_with_covariance.pose,
-        object_with_lanes.object.kinematics.twist_with_covariance.twist, predicted_path);
-      autoware_auto_perception_msgs::msg::PredictedObject tmp_object;
-      // convert to predicted object
-      tmp_object = convertToPredictedObject(object_with_lanes.object);
-      tmp_object.kinematics.predicted_paths.push_back(predicted_path);
-      out_objects.push_back(tmp_object);
-      continue;
-    }
     autoware_auto_perception_msgs::msg::PredictedObject tmp_object;
     tmp_object = convertToPredictedObject(object_with_lanes.object);
-    for (const auto & path : object_with_lanes.lanes) {
+    for (size_t path_id = 0; path_id < object_with_lanes.lanes.size(); ++path_id) {
       std::vector<double> tmp_x;
       std::vector<double> tmp_y;
-      std::vector<geometry_msgs::msg::Pose> geometry_points = path;
+      std::vector<geometry_msgs::msg::Pose> path = object_with_lanes.lanes.at(path_id);
       for (size_t i = 0; i < path.size(); i++) {
         if (i > 0) {
-          double dist = calculateEuclideanDistance(
-            geometry_points[i].position, geometry_points[i - 1].position);
+          double dist = autoware_utils::calcDistance2d(path.at(i), path.at(i - 1));
           if (dist < interpolating_resolution_) {
             continue;
           }
         }
-        tmp_x.push_back(geometry_points[i].position.x);
-        tmp_y.push_back(geometry_points[i].position.y);
+        tmp_x.push_back(path.at(i).position.x);
+        tmp_y.push_back(path.at(i).position.y);
       }
 
+      // Generate Splined Trajectory Arc-Length Position and Yaw angle
       Spline2D spline2d(tmp_x, tmp_y);
       std::vector<geometry_msgs::msg::Point> interpolated_points;
       std::vector<double> interpolated_yaws;
-      for (float s = 0.0; s < spline2d.s.back(); s += interpolating_resolution_) {
+      for (double s = 0.0; s < spline2d.s.back(); s += interpolating_resolution_) {
         std::array<double, 2> point1 = spline2d.calc_position(s);
         geometry_msgs::msg::Point g_point;
         g_point.x = point1[0];
@@ -126,50 +65,67 @@ bool MapBasedPrediction::doPrediction(
         interpolated_points.push_back(g_point);
         interpolated_yaws.push_back(spline2d.calc_yaw(s));
       }
-      debug_interpolated_points = interpolated_points;
 
+      // calculate initial position in Frenet coordinate
+      // Optimal Trajectory Generation for Dynamic Street Scenarios in a Frenet Frame
+      // Path Planning for Highly Automated Driving on Embedded GPUs
       geometry_msgs::msg::Point object_point =
         object_with_lanes.object.kinematics.pose_with_covariance.pose.position;
-      geometry_msgs::msg::Point nearest_point;
-      size_t nearest_point_idx;
-      if (getNearestPointIdx(interpolated_points, object_point, nearest_point, nearest_point_idx)) {
-        // calculate initial position in Frenet coordinate
-        // Optimal Trajectory Generation for Dynamic Street Scenarios in a Frenet Frame
-        // Path Planning for Highly Automated Driving on Embedded GPUs
-        double current_s_position =
-          interpolating_resolution_ * static_cast<double>(nearest_point_idx);
-        double current_d_position = calculateEuclideanDistance(nearest_point, object_point);
 
-        double lane_yaw = spline2d.calc_yaw(current_s_position);
-        std::vector<double> origin_v = {std::cos(lane_yaw), std::sin(lane_yaw)};
-        std::vector<double> object_v = {
-          object_point.x - nearest_point.x, object_point.y - nearest_point.y};
-        double cross2d = object_v[0] * origin_v[1] - object_v[1] * origin_v[0];
-        if (cross2d < 0) {
-          current_d_position *= -1;
-        }
-
-        // Does not consider orientation of twist since predicting lane-direction
-        double current_d_velocity =
-          object_with_lanes.object.kinematics.twist_with_covariance.twist.linear.y;
-        double current_s_velocity =
-          std::fabs(object_with_lanes.object.kinematics.twist_with_covariance.twist.linear.x);
-        autoware_auto_perception_msgs::msg::PredictedPath path;
-
-        geometry_msgs::msg::PoseWithCovarianceStamped point;
-        point.pose.pose.position = object_point;
-        getPredictedPath(
-          object_point.z, current_d_position, current_d_velocity, current_s_position,
-          current_s_velocity, spline2d, path);
-        tmp_object.kinematics.predicted_paths.push_back(path);
-        if (
-          tmp_object.kinematics.predicted_paths.size() >=
-          tmp_object.kinematics.predicted_paths.capacity()) {
-          break;
-        }
-      } else {
+      const size_t nearest_segment_idx =
+        autoware_utils::findNearestSegmentIndex(interpolated_points, object_point);
+      const double l = autoware_utils::calcLongitudinalOffsetToSegment(
+        interpolated_points, nearest_segment_idx, object_point);
+      const double current_s_position =
+        autoware_utils::calcSignedArcLength(interpolated_points, 0, nearest_segment_idx) + l;
+      if (current_s_position > spline2d.s.back()) {
         continue;
       }
+      std::array<double, 2> s_point = spline2d.calc_position(current_s_position);
+      geometry_msgs::msg::Point nearest_point =
+        autoware_utils::createPoint(s_point[0], s_point[1], object_point.z);
+      double current_d_position = autoware_utils::calcDistance2d(nearest_point, object_point);
+      const double lane_yaw = spline2d.calc_yaw(current_s_position);
+      const std::vector<double> origin_v = {std::cos(lane_yaw), std::sin(lane_yaw)};
+      const std::vector<double> object_v = {
+        object_point.x - nearest_point.x, object_point.y - nearest_point.y};
+      const double cross2d = object_v.at(0) * origin_v.at(1) - object_v.at(1) * origin_v.at(0);
+      if (cross2d < 0) {
+        current_d_position *= -1;
+      }
+
+      // Does not consider orientation of twist since predicting lane-direction
+      const double current_d_velocity =
+        object_with_lanes.object.kinematics.twist_with_covariance.twist.linear.y;
+      const double current_s_velocity =
+        std::fabs(object_with_lanes.object.kinematics.twist_with_covariance.twist.linear.x);
+
+      // Predict Path
+      autoware_auto_perception_msgs::msg::PredictedPath predicted_path;
+      getPredictedPath(
+        object_point.z, current_d_position, current_d_velocity, current_s_position,
+        current_s_velocity, in_objects.header, spline2d, predicted_path);
+      // substitute confidence value
+      predicted_path.confidence = object_with_lanes.confidence.at(path_id);
+
+      // Check if the path is already generated
+      const double CLOSE_PATH_THRESHOLD = 0.1;
+      bool duplicate_flag = false;
+      for (const auto & prev_path : tmp_object.kinematics.predicted_paths) {
+        const auto prev_path_end = prev_path.path.back().position;
+        const auto current_path_end = predicted_path.path.back().position;
+        const double dist = autoware_utils::calcDistance2d(prev_path_end, current_path_end);
+        if (dist < CLOSE_PATH_THRESHOLD) {
+          duplicate_flag = true;
+          break;
+        }
+      }
+
+      if (duplicate_flag) {
+        continue;
+      }
+
+      tmp_object.kinematics.predicted_paths.push_back(predicted_path);
     }
 
     normalizeLikelihood(tmp_object.kinematics);
@@ -223,20 +179,20 @@ void MapBasedPrediction::normalizeLikelihood(
   autoware_auto_perception_msgs::msg::PredictedObjectKinematics & predicted_object_kinematics)
 {
   // might not be the smartest way
-  double sum_confidence = 0;
-  for (size_t i = 0; i < predicted_object_kinematics.predicted_paths.size(); ++i) {
-    sum_confidence += 1 / predicted_object_kinematics.predicted_paths.at(i).confidence;
+  double sum_confidence = 0.0;
+  for (const auto & path : predicted_object_kinematics.predicted_paths) {
+    sum_confidence += path.confidence;
   }
 
-  for (size_t i = 0; i < predicted_object_kinematics.predicted_paths.size(); ++i) {
-    predicted_object_kinematics.predicted_paths.at(i).confidence =
-      (1 / predicted_object_kinematics.predicted_paths.at(i).confidence) / sum_confidence;
+  for (auto & path : predicted_object_kinematics.predicted_paths) {
+    path.confidence = path.confidence / sum_confidence;
   }
 }
 
 bool MapBasedPrediction::getPredictedPath(
   const double height, const double current_d_position, const double current_d_velocity,
-  const double current_s_position, const double current_s_velocity, Spline2D & spline2d,
+  const double current_s_position, const double current_s_velocity,
+  const std_msgs::msg::Header & origin_header, Spline2D & spline2d,
   autoware_auto_perception_msgs::msg::PredictedPath & path)
 {
   // Quintic polynomial for d
@@ -282,12 +238,12 @@ bool MapBasedPrediction::getPredictedPath(
   // sampling points from calculated path
   double dt = sampling_delta_time_;
   std::vector<double> d_vec;
-  double calculated_d, calculated_s;
   for (double i = 0; i < t; i += dt) {
-    calculated_d = current_d_position + current_d_velocity * i + 0 * 2 * i * i +
-                   x_3(0) * i * i * i + x_3(1) * i * i * i * i + x_3(2) * i * i * i * i * i;
-    calculated_s = current_s_position + current_s_velocity * i + 2 * 0 * i * i +
-                   x_2(0) * i * i * i + x_2(1) * i * i * i * i;
+    const double calculated_d = current_d_position + current_d_velocity * i + 0 * 2 * i * i +
+                                x_3(0) * i * i * i + x_3(1) * i * i * i * i +
+                                x_3(2) * i * i * i * i * i;
+    const double calculated_s = current_s_position + current_s_velocity * i + 2 * 0 * i * i +
+                                x_2(0) * i * i * i + x_2(1) * i * i * i * i;
 
     geometry_msgs::msg::Pose tmp_point;
     if (calculated_s > spline2d.s.back()) {
@@ -306,10 +262,8 @@ bool MapBasedPrediction::getPredictedPath(
       break;
     }
   }
-  path.confidence = calculateLikelihood(current_d_position);
-  path.time_step = rclcpp::Duration::from_seconds(dt);
 
-  return false;
+  return true;
 }
 
 void MapBasedPrediction::getLinearPredictedPath(
@@ -346,11 +300,4 @@ void MapBasedPrediction::getLinearPredictedPath(
 
   predicted_path.confidence = 1.0;
   predicted_path.time_step = rclcpp::Duration::from_seconds(sampling_delta_time);
-}
-
-double MapBasedPrediction::calculateLikelihood(const double current_d)
-{
-  double d_std = 0.5;
-  double likelihood = std::abs(current_d) / d_std;
-  return likelihood;
 }

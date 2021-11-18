@@ -26,6 +26,7 @@ struct DynamicObjectWithLanes
 {
   autoware_auto_perception_msgs::msg::TrackedObject object;
   std::vector<std::vector<geometry_msgs::msg::Pose>> lanes;
+  std::vector<double> confidence;
 };
 
 struct DynamicObjectWithLanesArray
@@ -45,14 +46,13 @@ private:
 
   bool getPredictedPath(
     const double height, const double current_d_position, const double current_d_velocity,
-    const double current_s_position, const double current_s_velocity, Spline2D & spline2d,
+    const double current_s_position, const double current_s_velocity,
+    const std_msgs::msg::Header & origin_header, Spline2D & spline2d,
     autoware_auto_perception_msgs::msg::PredictedPath & path);
 
   void getLinearPredictedPath(
     const geometry_msgs::msg::Pose & object_pose, const geometry_msgs::msg::Twist & object_twist,
     autoware_auto_perception_msgs::msg::PredictedPath & predicted_path);
-
-  double calculateLikelihood(const double current_d);
 
   void normalizeLikelihood(
     autoware_auto_perception_msgs::msg::PredictedObjectKinematics & predicted_object_kinematics);
@@ -66,8 +66,7 @@ public:
 
   bool doPrediction(
     const DynamicObjectWithLanesArray & in_objects,
-    std::vector<autoware_auto_perception_msgs::msg::PredictedObject> & out_objects,
-    std::vector<geometry_msgs::msg::Point> & debug_interpolated_points);
+    std::vector<autoware_auto_perception_msgs::msg::PredictedObject> & out_objects);
 
   bool doLinearPrediction(
     const autoware_auto_perception_msgs::msg::PredictedObjects & in_objects,
