@@ -383,12 +383,11 @@ void MotionVelocitySmootherNode::onExternalVelocityLimit(const VelocityLimit::Co
             msg->use_constraints ? msg->constraints.min_jerk : smoother_->getMinJerk();
           double stop_dist;
           std::map<double, double> jerk_profile;
-          if (trajectory_utils::calcStopDistWithJerkConstraints(
+          if (!trajectory_utils::calcStopDistWithJerkConstraints(
                 v0, a0, j_max, j_min, a_min, msg->max_velocity, jerk_profile, stop_dist)) {
-            external_velocity_limit_dist_ = stop_dist + margin;
-          } else {
-            external_velocity_limit_dist_ = stop_dist + margin;
+            RCLCPP_WARN(get_logger(), "Stop distance calculation is failed!");
           }
+          external_velocity_limit_dist_ = stop_dist + margin;
           // If the closest acceleration is positive, velocity will increase
           // until the acceleration becomes zero
           // So we set the maximum increased velocity as the velocity limit
@@ -434,11 +433,8 @@ void MotionVelocitySmootherNode::onCurrentTrajectory(const Trajectory::ConstShar
 {
   base_traj_raw_ptr_ = msg;
 
-  const auto t_start = std::chrono::system_clock::now();
-  RCLCPP_DEBUG(
-    get_logger(),
-    "============================== run start "
-    "==============================");
+  stop_watch_.tic();
+  RCLCPP_DEBUG(get_logger(), "========================= run start =========================");
 
   current_pose_ptr_ = self_pose_listener_.getCurrentPose();
 
@@ -501,20 +497,13 @@ void MotionVelocitySmootherNode::onCurrentTrajectory(const Trajectory::ConstShar
   prev_output_ = output;
   prev_closest_point_ = output_closest_point;
 
-  const auto t_end = std::chrono::system_clock::now();
-  const double elapsed =
-    std::chrono::duration_cast<std::chrono::nanoseconds>(t_end - t_start).count();
-
   // Publish Calculation Time
   Float32Stamped calculation_time_data{};
   calculation_time_data.stamp = this->now();
-  calculation_time_data.data = elapsed * 1.0e-6;
+  calculation_time_data.data = stop_watch_.toc();
   debug_calculation_time_->publish(calculation_time_data);
-  RCLCPP_DEBUG(get_logger(), "run: calculation time = %f [ms]", elapsed * 1.0e-6);
-  RCLCPP_DEBUG(
-    get_logger(),
-    "============================== run() end "
-    "==============================\n\n");
+  RCLCPP_DEBUG(get_logger(), "run: calculation time = %f [ms]", calculation_time_data.data);
+  RCLCPP_DEBUG(get_logger(), "========================== run() end ==========================\n\n");
 }
 
 TrajectoryPoints MotionVelocitySmootherNode::calcTrajectoryVelocity(
@@ -762,8 +751,7 @@ MotionVelocitySmootherNode::calcInitialMotion(
     initial_acc = prev_output_closest_point.acceleration_mps2;
     RCLCPP_DEBUG(
       get_logger(),
-      "calcInitialMotion : Large deviation error for speed control. Use "
-      "current speed for "
+      "calcInitialMotion : Large deviation error for speed control. Use current speed for "
       "initial value, desired_vel = %f, vehicle_speed = %f, vel_error = %f, error_thr = %f",
       desired_vel, vehicle_speed, vel_error, node_param_.replan_vel_deviation);
     return std::make_tuple(initial_vel, initial_acc, type);
@@ -784,8 +772,7 @@ MotionVelocitySmootherNode::calcInitialMotion(
         initial_acc = node_param_.engage_acceleration;
         RCLCPP_DEBUG(
           get_logger(),
-          "calcInitialMotion : vehicle speed is low (%.3f), and desired "
-          "speed is high (%.3f). Use "
+          "calcInitialMotion : vehicle speed is low (%.3f), and desired speed is high (%.3f). Use "
           "engage speed (%.3f) until vehicle speed reaches engage_vel_thr (%.3f). stop_dist = %.3f",
           vehicle_speed, target_vel, node_param_.engage_velocity, engage_vel_thr, stop_dist);
         return std::make_tuple(initial_vel, initial_acc, type);
@@ -797,9 +784,7 @@ MotionVelocitySmootherNode::calcInitialMotion(
       auto clock{rclcpp::Clock{RCL_ROS_TIME}};
       RCLCPP_WARN_THROTTLE(
         get_logger(), clock, 3000,
-        "calcInitialMotion : target velocity(%.3f[m/s]) is lower than "
-        "engage "
-        "velocity(%.3f[m/s]). ",
+        "calcInitialMotion : target velocity(%.3f[m/s]) is lower than engage velocity(%.3f[m/s]). ",
         target_vel, node_param_.engage_velocity);
     }
   }
@@ -810,8 +795,7 @@ MotionVelocitySmootherNode::calcInitialMotion(
   initial_acc = prev_output_closest_point.acceleration_mps2;
   RCLCPP_DEBUG(
     get_logger(),
-    "calcInitialMotion : normal update. v0 = %f, a0 = %f, vehicle_speed = "
-    "%f, target_vel = %f",
+    "calcInitialMotion : normal update. v0 = %f, a0 = %f, vehicle_speed = %f, target_vel = %f",
     initial_vel, initial_acc, vehicle_speed, target_vel);
   return std::make_tuple(initial_vel, initial_acc, type);
 }
@@ -843,16 +827,14 @@ void MotionVelocitySmootherNode::overwriteStopPoint(
       *nearest_output_point_idx, output.size(), 0.0, output);
     RCLCPP_DEBUG(
       get_logger(),
-      "replan : input_stop_idx = %lu, stop velocity : input = %f, output "
-      "= %f, thr = %f",
+      "replan : input_stop_idx = %lu, stop velocity : input = %f, output = %f, thr = %f",
       *nearest_output_point_idx, input_stop_vel, output_stop_vel, over_stop_velocity_warn_thr_);
   } else {
     input_stop_vel = -1.0;
     output_stop_vel = -1.0;
     RCLCPP_DEBUG(
       get_logger(),
-      "replan : input_stop_idx = -1, stop velocity : input = %f, output = "
-      "%f, thr = %f",
+      "replan : input_stop_idx = -1, stop velocity : input = %f, output = %f, thr = %f",
       input_stop_vel, output_stop_vel, over_stop_velocity_warn_thr_);
   }
 
@@ -917,7 +899,7 @@ void MotionVelocitySmootherNode::publishDebugTrajectories(
 {
   if (node_param_.algorithm_type == AlgorithmType::JERK_FILTERED) {
     if (debug_trajectories.size() != 3) {
-      RCLCPP_WARN(get_logger(), "Size of the debug trajectories is incorrect");
+      RCLCPP_DEBUG(get_logger(), "Size of the debug trajectories is incorrect");
       return;
     }
     const auto & h = base_traj_raw_ptr_->header;

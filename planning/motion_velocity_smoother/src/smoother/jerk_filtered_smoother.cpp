@@ -63,11 +63,6 @@ bool JerkFilteredSmoother::apply(
     return true;
   }
 
-  if (std::fabs(input.front().longitudinal_velocity_mps) < 0.1) {
-    RCLCPP_DEBUG(logger_, "v_max[0] < 0.1. assume vehicle stopped. return.");
-    return false;
-  }
-
   bool TMP_SHOW_DEBUG_INFO = false;
 
   const auto ts = std::chrono::system_clock::now();

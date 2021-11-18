@@ -141,9 +141,7 @@ class TrajectoryVisualizer(Node):
             Trajectory,
             lane_driving + "/motion_planning/obstacle_avoidance_planner/trajectory",
         )
-        self.sub9 = message_filters.Subscriber(
-            self, Trajectory, "/planning/scenario_planning/trajectory"
-        )
+        self.sub9 = message_filters.Subscriber(self, Trajectory, lane_driving + "/trajectory")
 
         self.ts1 = message_filters.ApproximateTimeSynchronizer(
             [self.sub1, self.sub2, self.sub3, self.sub4, self.sub5], 30, 0.5
