@@ -615,7 +615,7 @@ TEST(trajectory, convertToTrajectory)
 
   // Clipping check
   {
-    const auto traj_input = generateTestTrajectoryPointArray(200, 1.0);
+    const auto traj_input = generateTestTrajectoryPointArray(10000, 1.0);
     const auto traj = convertToTrajectory(traj_input);
     EXPECT_EQ(traj.points.size(), traj.CAPACITY);
     // Value check

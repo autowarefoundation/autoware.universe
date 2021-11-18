@@ -16,6 +16,7 @@
 #define AUTOWARE_UTILS__GEOMETRY__GEOMETRY_HPP_
 
 #include <exception>
+#include <string>
 #include <vector>
 
 #define EIGEN_MPL2_ONLY
@@ -278,11 +279,12 @@ inline geometry_msgs::msg::Transform pose2transform(const geometry_msgs::msg::Po
 }
 
 inline geometry_msgs::msg::TransformStamped pose2transform(
-  const geometry_msgs::msg::PoseStamped & pose)
+  const geometry_msgs::msg::PoseStamped & pose, const std::string child_frame_id)
 {
   geometry_msgs::msg::TransformStamped transform;
   transform.header = pose.header;
   transform.transform = pose2transform(pose.pose);
+  transform.child_frame_id = child_frame_id;
   return transform;
 }
 

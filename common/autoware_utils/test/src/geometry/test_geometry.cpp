@@ -17,6 +17,8 @@
 
 #include <gtest/gtest.h>
 
+#include <string>
+
 constexpr double epsilon = 1e-6;
 
 TEST(geometry, getPoint)
@@ -605,10 +607,13 @@ TEST(geometry, pose2transform)
     pose_stamped.pose.position.y = 2.0;
     pose_stamped.pose.position.z = 3.0;
     pose_stamped.pose.orientation = createQuaternionFromRPY(deg2rad(30), deg2rad(30), deg2rad(30));
+    const std::string child_frame_id = "child";
 
-    const geometry_msgs::msg::TransformStamped transform_stamped = pose2transform(pose_stamped);
+    const geometry_msgs::msg::TransformStamped transform_stamped =
+      pose2transform(pose_stamped, child_frame_id);
 
     EXPECT_EQ(pose_stamped.header.frame_id, transform_stamped.header.frame_id);
+    EXPECT_EQ(child_frame_id, transform_stamped.child_frame_id);
     EXPECT_DOUBLE_EQ(
       rclcpp::Time(pose_stamped.header.stamp).seconds(),
       rclcpp::Time(transform_stamped.header.stamp).seconds());
