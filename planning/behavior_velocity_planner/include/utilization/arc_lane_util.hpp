@@ -21,6 +21,8 @@
 
 #include <boost/optional.hpp>
 
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+
 #include <algorithm>
 #include <memory>
 #include <utility>

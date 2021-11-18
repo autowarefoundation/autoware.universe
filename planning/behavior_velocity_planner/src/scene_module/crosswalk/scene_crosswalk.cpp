@@ -298,9 +298,7 @@ bool CrosswalkModule::checkSlowArea(
   return true;
 }
 bool CrosswalkModule::createVehiclePathPolygonInCrosswalk(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & input,
-  const boost::geometry::model::polygon<boost::geometry::model::d2::point_xy<double>> &
-    crosswalk_polygon,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & input, const Polygon & crosswalk_polygon,
   const float extended_width, Polygon & path_polygon)
 {
   std::vector<Point> path_collision_points;
@@ -328,17 +326,32 @@ bool CrosswalkModule::createVehiclePathPolygonInCrosswalk(
 
   Polygon candidate_path_polygon;
   {
-    const double width = planner_data_->vehicle_info_.vehicle_width_m;
-    const double d = (width / 2.0) + extended_width;
     const auto cp0 = path_collision_points.at(0);
     const auto cp1 = path_collision_points.at(1);
-    const double yaw = std::atan2(cp1.y() - cp0.y(), cp1.x() - cp0.x()) + M_PI_2;
-    const double dcosyaw = d * std::cos(yaw);
-    const double dsinyaw = d * std::sin(yaw);
-    candidate_path_polygon.outer().push_back(bg::make<Point>(cp0.x() + dcosyaw, cp0.y() + dsinyaw));
-    candidate_path_polygon.outer().push_back(bg::make<Point>(cp1.x() + dcosyaw, cp1.y() + dsinyaw));
-    candidate_path_polygon.outer().push_back(bg::make<Point>(cp1.x() - dcosyaw, cp1.y() - dsinyaw));
-    candidate_path_polygon.outer().push_back(bg::make<Point>(cp0.x() - dcosyaw, cp0.y() - dsinyaw));
+
+    const double vehicle_width = planner_data_->vehicle_info_.vehicle_width_m;
+    const double polygon_width = (vehicle_width / 2.0) + extended_width;
+    const double polygon_extend_length = std::hypot(cp0.x() - cp1.x(), cp0.y() - cp1.y());
+
+    const double yaw = std::atan2(cp1.y() - cp0.y(), cp1.x() - cp0.x());
+    const double w_cos = polygon_width * std::cos(yaw);
+    const double w_sin = polygon_width * std::sin(yaw);
+    const double l_cos = polygon_extend_length * std::cos(yaw);
+    const double l_sin = polygon_extend_length * std::sin(yaw);
+
+    // The candidate_path_polygon is generated to be
+    // a constant width(polygon_width) from the centerline of the path
+    // across the crosswalk. The length of the candidate_path_polygon
+    // is also extended so that the four corners of the polygon
+    // are not inside the crosswalk polygon.
+    candidate_path_polygon.outer().push_back(
+      bg::make<Point>(cp0.x() + w_sin - l_cos, cp0.y() - w_cos - l_sin));
+    candidate_path_polygon.outer().push_back(
+      bg::make<Point>(cp0.x() - w_sin - l_cos, cp0.y() + w_cos - l_sin));
+    candidate_path_polygon.outer().push_back(
+      bg::make<Point>(cp1.x() - w_sin + l_cos, cp1.y() + w_cos + l_sin));
+    candidate_path_polygon.outer().push_back(
+      bg::make<Point>(cp1.x() + w_sin + l_cos, cp1.y() - w_cos + l_sin));
     candidate_path_polygon.outer().push_back(candidate_path_polygon.outer().front());
   }
   candidate_path_polygon = isClockWise(candidate_path_polygon)

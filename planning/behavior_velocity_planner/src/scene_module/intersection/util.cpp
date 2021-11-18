@@ -523,5 +523,20 @@ std::vector<int> getLaneletIdsFromLaneletsVec(const std::vector<lanelet::ConstLa
   return id_list;
 }
 
+double calcArcLengthFromPath(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path, const size_t src_idx,
+  const size_t dst_idx)
+{
+  double length{0.0};
+  for (size_t i = src_idx; i < dst_idx; ++i) {
+    const double dx_wp = input_path.points.at(i + 1).point.pose.position.x -
+                         input_path.points.at(i).point.pose.position.x;
+    const double dy_wp = input_path.points.at(i + 1).point.pose.position.y -
+                         input_path.points.at(i).point.pose.position.y;
+    length += std::hypot(dx_wp, dy_wp);
+  }
+  return length;
+}
+
 }  // namespace util
 }  // namespace behavior_velocity_planner

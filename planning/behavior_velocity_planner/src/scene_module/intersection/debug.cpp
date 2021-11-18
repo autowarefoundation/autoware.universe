@@ -283,6 +283,20 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createDebugMarkerArray(
     current_time, &debug_marker_array);
 
   appendMarkerArray(
+    createPolygonMarkerArray(
+      debug_data_.candidate_collision_ego_lane_polygon, "candidate_collision_ego_lane_polygon",
+      lane_id_, 0.5, 0.0, 0.0),
+    current_time, &debug_marker_array);
+
+  size_t i{0};
+  for (const auto & p : debug_data_.candidate_collision_object_polygons) {
+    appendMarkerArray(
+      createPolygonMarkerArray(
+        p, "candidate_collision_object_polygons", lane_id_ + i++, 0.0, 0.5, 0.5),
+      current_time, &debug_marker_array);
+  }
+
+  appendMarkerArray(
     createObjectsMarkerArray(
       debug_data_.conflicting_targets, "conflicting_targets", lane_id_, 0.99, 0.4, 0.0),
     current_time, &debug_marker_array);

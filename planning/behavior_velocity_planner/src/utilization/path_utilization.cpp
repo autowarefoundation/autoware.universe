@@ -83,6 +83,11 @@ autoware_auto_planning_msgs::msg::Path interpolatePath(
     }
   }
 
+  if (s_out.empty()) {
+    RCLCPP_WARN(logger, "Do not interpolate because s_out is empty.");
+    return path;
+  }
+
   // Interpolate
   x_interp = interpolation::slerp(s_in, x, s_out);
   y_interp = interpolation::slerp(s_in, y, s_out);

@@ -14,9 +14,12 @@
 
 #include <autoware_utils/geometry/geometry.hpp>
 #include <autoware_utils/math/normalization.hpp>
+#include <interpolation/spline_interpolation.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <scene_module/occlusion_spot/occlusion_spot_utils.hpp>
+#include <utilization/interpolate.hpp>
 #include <utilization/path_utilization.hpp>
+#include <utilization/util.hpp>
 
 #include <functional>
 #include <limits>
@@ -29,6 +32,82 @@ namespace behavior_velocity_planner
 {
 namespace occlusion_spot_utils
 {
+bool splineInterpolate(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & input, const double interval,
+  autoware_auto_planning_msgs::msg::PathWithLaneId * output, const rclcpp::Logger logger)
+{
+  *output = input;
+
+  if (input.points.size() <= 1) {
+    RCLCPP_WARN(logger, "Do not interpolate because path size is 1.");
+    return false;
+  }
+
+  static constexpr double ep = 1.0e-8;
+
+  // calc arclength for path
+  std::vector<double> base_x;
+  std::vector<double> base_y;
+  std::vector<double> base_z;
+  for (const auto & p : input.points) {
+    base_x.push_back(p.point.pose.position.x);
+    base_y.push_back(p.point.pose.position.y);
+    base_z.push_back(p.point.pose.position.z);
+  }
+  std::vector<double> base_s = interpolation::calcEuclidDist(base_x, base_y);
+
+  // remove duplicating sample points
+  {
+    size_t Ns = base_s.size();
+    size_t i = 1;
+    while (i < Ns) {
+      if (std::fabs(base_s[i - 1] - base_s[i]) < ep) {
+        base_s.erase(base_s.begin() + i);
+        base_x.erase(base_x.begin() + i);
+        base_y.erase(base_y.begin() + i);
+        base_z.erase(base_z.begin() + i);
+        Ns -= 1;
+        i -= 1;
+      }
+      ++i;
+    }
+  }
+
+  std::vector<double> resampled_s;
+  for (double d = 0.0; d < base_s.back() - ep; d += interval) {
+    resampled_s.push_back(d);
+  }
+
+  // do spline for xy
+  const std::vector<double> resampled_x = ::interpolation::slerp(base_s, base_x, resampled_s);
+  const std::vector<double> resampled_y = ::interpolation::slerp(base_s, base_y, resampled_s);
+  const std::vector<double> resampled_z = ::interpolation::slerp(base_s, base_z, resampled_s);
+
+  // set xy
+  output->points.clear();
+  for (size_t i = 0; i < resampled_s.size(); i++) {
+    autoware_auto_planning_msgs::msg::PathPointWithLaneId p;
+    p.point.pose.position.x = resampled_x.at(i);
+    p.point.pose.position.y = resampled_y.at(i);
+    p.point.pose.position.z = resampled_z.at(i);
+    output->points.push_back(p);
+  }
+
+  // set yaw
+  for (int i = 1; i < static_cast<int>(resampled_s.size()) - 1; i++) {
+    auto p = output->points.at(i - 1).point.pose.position;
+    auto n = output->points.at(i + 1).point.pose.position;
+    double yaw = std::atan2(n.y - p.y, n.x - p.x);
+    output->points.at(i).point.pose.orientation = planning_utils::getQuaternionFromYaw(yaw);
+  }
+  if (output->points.size() > 1) {
+    size_t l = resampled_s.size();
+    output->points.front().point.pose.orientation = output->points.at(1).point.pose.orientation;
+    output->points.back().point.pose.orientation = output->points.at(l - 1).point.pose.orientation;
+  }
+  return true;
+}
+
 ROAD_TYPE getCurrentRoadType(
   const lanelet::ConstLanelet & current_lanelet,
   [[maybe_unused]] const lanelet::LaneletMapPtr & lanelet_map_ptr)
@@ -62,7 +141,16 @@ ROAD_TYPE getCurrentRoadType(
   return road_type;
 }
 
-void calcVelocityAndHeightToPossibleCollision(
+geometry_msgs::msg::Point setPoint(double x, double y, double z)
+{
+  geometry_msgs::msg::Point p;
+  p.x = x;
+  p.y = y;
+  p.z = z;
+  return p;
+}
+
+void calcSlowDownPointsForPossibleCollision(
   const int closest_idx, const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const double offset_from_ego_to_target, std::vector<PossibleCollisionInfo> & possible_collisions)
 {
@@ -96,19 +184,23 @@ void calcVelocityAndHeightToPossibleCollision(
     // process if nearest possible collision is between current and next path point
     if (dist_along_path_point < dist_to_col) {
       for (; collision_index < possible_collisions.size(); collision_index++) {
-        const double current_dist2col =
-          possible_collisions[collision_index].arc_lane_dist_at_collision.length;
-        possible_collisions[collision_index].collision_path_point.longitudinal_velocity_mps =
-          getInterpolatedValue(
-            dist_along_path_point, p_prev.longitudinal_velocity_mps, dist_to_col,
-            dist_along_next_path_point, p_next.longitudinal_velocity_mps);
-        const double height = getInterpolatedValue(
-          dist_along_path_point, p_prev.pose.position.z, dist_to_col, dist_along_next_path_point,
-          p_next.pose.position.z);
+        const double d0 = dist_along_path_point;  // distance at arc coordinate
+        const double d1 = dist_along_next_path_point;
+        const auto p0 = p_prev.pose.position;
+        const auto p1 = p_next.pose.position;
+        auto & col = possible_collisions[collision_index];
+        auto & v = col.collision_path_point.longitudinal_velocity_mps;
+        const double current_dist2col = col.arc_lane_dist_at_collision.length;
+        v = getInterpolatedValue(
+          d0, p_prev.longitudinal_velocity_mps, dist_to_col, d1, p_next.longitudinal_velocity_mps);
+        const double x = getInterpolatedValue(d0, p0.x, dist_to_col, d1, p1.x);
+        const double y = getInterpolatedValue(d0, p0.y, dist_to_col, d1, p1.y);
+        const double z = getInterpolatedValue(d0, p0.z, dist_to_col, d1, p1.z);
         // height is used to visualize marker correctly
-        possible_collisions[collision_index].collision_path_point.pose.position.z = height;
-        possible_collisions[collision_index].intersection_pose.position.z = height;
-        possible_collisions[collision_index].obstacle_info.position.z = height;
+
+        possible_collisions[collision_index].collision_path_point.pose.position = setPoint(x, y, z);
+        possible_collisions[collision_index].intersection_pose.position.z = z;
+        possible_collisions[collision_index].obstacle_info.position.z = z;
         // break searching if dist to collision is farther than next path point
         if (dist_along_next_path_point < current_dist2col) {
           break;
@@ -139,14 +231,12 @@ lanelet::ConstLanelet buildPathLanelet(
   if (converted_path.points.empty()) {
     return lanelet::ConstLanelet();
   }
-  const double max_length = 100000.0;  // interpolate as much as possible for extracted lane
-  autoware_auto_planning_msgs::msg::Path interpolated_path =
-    interpolatePath(converted_path, max_length, 2.0);
+  // interpolation is done previously
   lanelet::BasicLineString2d path_line;
-  path_line.reserve(interpolated_path.points.size());
+  path_line.reserve(converted_path.points.size());
   // skip last point that will creates extra ordinary path
-  for (size_t i = 0; i < interpolated_path.points.size() - 1; ++i) {
-    const auto & pose_i = interpolated_path.points[i].pose;
+  for (size_t i = 0; i < converted_path.points.size() - 1; ++i) {
+    const auto & pose_i = converted_path.points[i].pose;
     path_line.emplace_back(pose_i.position.x, pose_i.position.y);
   }
   // set simplified line to lanelet

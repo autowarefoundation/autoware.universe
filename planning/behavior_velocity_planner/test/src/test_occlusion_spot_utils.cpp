@@ -67,9 +67,9 @@ TEST(buildPathLanelet, nominal)
   std::cout << "path lanelet size: " << path_lanelet.centerline2d().size() << std::endl;
 }
 
-TEST(calcVelocityAndHeightToPossibleCollision, TooManyPossibleCollisions)
+TEST(calcSlowDownPointsForPossibleCollision, TooManyPossibleCollisions)
 {
-  using behavior_velocity_planner::occlusion_spot_utils::calcVelocityAndHeightToPossibleCollision;
+  using behavior_velocity_planner::occlusion_spot_utils::calcSlowDownPointsForPossibleCollision;
   using behavior_velocity_planner::occlusion_spot_utils::PossibleCollisionInfo;
   using std::chrono::duration;
   using std::chrono::duration_cast;
@@ -90,7 +90,7 @@ TEST(calcVelocityAndHeightToPossibleCollision, TooManyPossibleCollisions)
    */
 
   auto start_naive = high_resolution_clock::now();
-  calcVelocityAndHeightToPossibleCollision(0, path, 0, possible_collisions);
+  calcSlowDownPointsForPossibleCollision(0, path, 0, possible_collisions);
 
   auto end_naive = high_resolution_clock::now();
   // 2000 path * 2000 possible collisions
@@ -101,9 +101,9 @@ TEST(calcVelocityAndHeightToPossibleCollision, TooManyPossibleCollisions)
             << duration_cast<microseconds>(end_naive - start_naive).count() << std::endl;
 }
 
-TEST(calcVelocityAndHeightToPossibleCollision, ConsiderSignedOffset)
+TEST(calcSlowDownPointsForPossibleCollision, ConsiderSignedOffset)
 {
-  using behavior_velocity_planner::occlusion_spot_utils::calcVelocityAndHeightToPossibleCollision;
+  using behavior_velocity_planner::occlusion_spot_utils::calcSlowDownPointsForPossibleCollision;
   using behavior_velocity_planner::occlusion_spot_utils::PossibleCollisionInfo;
   using std::chrono::duration;
   using std::chrono::duration_cast;
@@ -130,7 +130,7 @@ TEST(calcVelocityAndHeightToPossibleCollision, ConsiderSignedOffset)
    *    c : collision
    */
 
-  calcVelocityAndHeightToPossibleCollision(0, path, offset, possible_collisions);
+  calcSlowDownPointsForPossibleCollision(0, path, offset, possible_collisions);
   EXPECT_EQ(possible_collisions[0].collision_path_point.longitudinal_velocity_mps, 3);
   EXPECT_EQ(possible_collisions[1].collision_path_point.longitudinal_velocity_mps, 4.5);
   EXPECT_EQ(possible_collisions[2].collision_path_point.longitudinal_velocity_mps, 6);

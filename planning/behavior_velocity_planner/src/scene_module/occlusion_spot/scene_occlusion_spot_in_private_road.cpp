@@ -77,8 +77,9 @@ bool OcclusionSpotInPrivateModule::modifyPathVelocity(
       -planning_utils::transformRelCoordinate2D(ego_pose, path->points[closest_idx].point.pose)
          .position.x;
   }
-  // this module use spline interpolation that needs more than 4 points
-  if (limited_path.points.size() < 4) {
+  autoware_auto_planning_msgs::msg::PathWithLaneId interp_path;
+  occlusion_spot_utils::splineInterpolate(limited_path, 1.0, &interp_path, logger_);
+  if (interp_path.points.size() < 4) {
     return true;
   }
   nav_msgs::msg::OccupancyGrid occ_grid = *occ_grid_ptr;
@@ -94,12 +95,12 @@ bool OcclusionSpotInPrivateModule::modifyPathVelocity(
   RCLCPP_DEBUG_STREAM_THROTTLE(
     logger_, *clock_, 3000, "offset_from_ego_to_target : " << offset_from_ego_to_target);
   occlusion_spot_utils::generatePossibleCollisions(
-    possible_collisions, limited_path, grid_map, offset_from_ego_to_closest,
+    possible_collisions, interp_path, grid_map, offset_from_ego_to_closest,
     offset_from_closest_to_target, param_, debug_data_.sidewalks);
   RCLCPP_DEBUG_STREAM_THROTTLE(
     logger_, *clock_, 3000, "num possible collision:" << possible_collisions.size());
-  behavior_velocity_planner::occlusion_spot_utils::calcVelocityAndHeightToPossibleCollision(
-    closest_idx, *path, offset_from_ego_to_target, possible_collisions);
+  behavior_velocity_planner::occlusion_spot_utils::calcSlowDownPointsForPossibleCollision(
+    closest_idx, interp_path, offset_from_ego_to_target, possible_collisions);
   // apply safe velocity using ebs and pbs deceleration
   applySafeVelocityConsideringPossibleCollison(
     path, possible_collisions, ego_velocity, param_.private_road, param_);

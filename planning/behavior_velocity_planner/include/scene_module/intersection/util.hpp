@@ -20,6 +20,8 @@
 
 #include <geometry_msgs/msg/point.hpp>
 
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+
 #include <memory>
 #include <string>
 #include <vector>
@@ -101,6 +103,10 @@ std::vector<lanelet::CompoundPolygon3d> getPolygon3dFromLaneletsVec(
   const std::vector<lanelet::ConstLanelets> & ll_vec, double clip_length);
 
 std::vector<int> getLaneletIdsFromLaneletsVec(const std::vector<lanelet::ConstLanelets> & ll_vec);
+
+double calcArcLengthFromPath(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path, const size_t src_idx,
+  const size_t dst_idx);
 
 }  // namespace util
 }  // namespace behavior_velocity_planner

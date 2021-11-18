@@ -73,7 +73,9 @@ bool OcclusionSpotInPublicModule::modifyPathVelocity(
       -planning_utils::transformRelCoordinate2D(ego_pose, path->points[closest_idx].point.pose)
          .position.x;
   }
-  if (limited_path.points.size() < 4) {
+  autoware_auto_planning_msgs::msg::PathWithLaneId interp_path;
+  occlusion_spot_utils::splineInterpolate(limited_path, 1.0, &interp_path, logger_);
+  if (interp_path.points.size() < 4) {
     return true;
   }
   std::vector<behavior_velocity_planner::occlusion_spot_utils::PossibleCollisionInfo>
@@ -84,10 +86,10 @@ bool OcclusionSpotInPublicModule::modifyPathVelocity(
   const double offset_from_ego_to_target =
     offset_from_ego_to_closest + offset_from_closest_to_target;
   behavior_velocity_planner::occlusion_spot_utils::createPossibleCollisionBehindParkedVehicle(
-    possible_collisions, limited_path, param_, offset_from_ego_to_target, dynamic_obj_arr_ptr);
+    possible_collisions, interp_path, param_, offset_from_ego_to_target, dynamic_obj_arr_ptr);
   // set orientation to each possible collision
-  behavior_velocity_planner::occlusion_spot_utils::calcVelocityAndHeightToPossibleCollision(
-    closest_idx, *path, offset_from_ego_to_target, possible_collisions);
+  behavior_velocity_planner::occlusion_spot_utils::calcSlowDownPointsForPossibleCollision(
+    closest_idx, interp_path, offset_from_ego_to_target, possible_collisions);
   // apply safe velocity using ebs and pbs deceleration
   applySafeVelocityConsideringPossibleCollison(
     path, possible_collisions, ego_velocity, param_.public_road, param_);

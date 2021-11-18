@@ -32,6 +32,7 @@
 #include <scene_module/crosswalk/manager.hpp>
 #include <scene_module/detection_area/manager.hpp>
 #include <scene_module/intersection/manager.hpp>
+#include <scene_module/no_stopping_area/manager.hpp>
 #include <scene_module/occlusion_spot/manager.hpp>
 #include <scene_module/stop_line/manager.hpp>
 #include <scene_module/traffic_light/manager.hpp>
@@ -128,9 +129,6 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   planner_data_.stop_line_extend_length = this->declare_parameter("stop_line_extend_length", 5.0);
 
   // Initialize PlannerManager
-  if (this->declare_parameter("launch_stop_line", true)) {
-    planner_manager_.launchSceneModule(std::make_shared<StopLineModuleManager>(*this));
-  }
   if (this->declare_parameter("launch_crosswalk", true)) {
     planner_manager_.launchSceneModule(std::make_shared<CrosswalkModuleManager>(*this));
   }
@@ -151,6 +149,14 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   }
   if (this->declare_parameter("launch_occlusion_spot", true)) {
     planner_manager_.launchSceneModule(std::make_shared<OcclusionSpotModuleManager>(*this));
+  }
+  // this module requires all the stop line.Therefore this modules should be placed at the bottom.
+  if (this->declare_parameter("launch_no_stopping_area", true)) {
+    planner_manager_.launchSceneModule(std::make_shared<NoStoppingAreaModuleManager>(*this));
+  }
+  // permanent stop line module should be after no stopping area
+  if (this->declare_parameter("launch_stop_line", true)) {
+    planner_manager_.launchSceneModule(std::make_shared<StopLineModuleManager>(*this));
   }
 }
 

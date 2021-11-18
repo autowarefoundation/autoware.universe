@@ -257,7 +257,6 @@ Launches when there is an intersection area on a target lane
 | --------------------------------------------- | ------ | ----------------------------------------------------------------------------- |
 | `intersection/state_transit_margin_time`      | double | [m] time margin to change state                                               |
 | `intersection/decel_velocity`                 | double | [m] deceleration velocity in intersection                                     |
-| `intersection/path_expand_width`              | bool   | [m] path area to see with expansion                                           |
 | `intersection/stop_line_margin`               | double | [m] margin before stop line                                                   |
 | `intersection/stuck_vehicle_detect_dist`      | double | [m] this should be the length between cars when they are stopped.             |
 | `intersection/stuck_vehicle_ignore_dist`      | double | [m] obstacle stop max distance(5.0m) + stuck vehicle size / 2 (0.0m-)         |
@@ -268,6 +267,8 @@ Launches when there is an intersection area on a target lane
 | `intersection/detection_area_length`          | double | [m] range for lidar detection 200m is by default                              |
 | `intersection/detection_area_angle_threshold` | double | [rad] threshold of angle difference between the detection object and lane     |
 | `intersection/min_predicted_path_confidence`  | double | [-] minimum confidence value of predicted path to use for collision detection |
+| `collision_start_margin_time`                 | double | [s] margin time before objects enter intersection lane                        |
+| `collision_end_margin_time`                   | double | [s] margin time after objects exit intersection lane                          |
 | `merge_from_private_road/stop_duration_sec`   | double | [s] duration to stop                                                          |
 
 #### Flowchart
@@ -646,5 +647,120 @@ endif
 :insertSafeVelocityToPath;
 
 stop
+@enduml
+```
+
+### No Stopping Area
+
+#### Role
+
+This module plans to avoid stop in 'no stopping area`.
+
+![brief](./docs/no_stopping_area/NoStoppingArea.svg)
+
+#### ModelParameter
+
+| Parameter                    | Type   | Description                                                         |
+| ---------------------------- | ------ | ------------------------------------------------------------------- |
+| `state_clear_time`           | double | [s] time to clear stop state                                        |
+| `stuck_vehicle_vel_thr`      | double | [m/s] vehicles below this velocity are considered as stuck vehicle. |
+| `stop_margin`                | double | [m] margin to stop line at no stopping area                         |
+| `dead_line_margin`           | double | [m] if ego pass this position GO                                    |
+| `stop_line_margin`           | double | [m] margin to auto-gen stop line at no stopping area                |
+| `detection_area_length`      | double | [m] length of searching polygon                                     |
+| `stuck_vehicle_front_margin` | double | [m] obstacle stop max distance                                      |
+
+#### Flowchart
+
+```plantuml
+@startuml
+title modifyPathVelocity
+start
+
+if (ego path has "no stopping area" ?) then (yes)
+else (no)
+  stop
+endif
+
+partition pass_through_condition {
+if (ego vehicle is not after dead line?) then (yes)
+else (no)
+  stop
+endif
+if (ego vehicle is stoppable before stop line consider jerk limit?) then (yes)
+else (no)
+  stop
+endif
+}
+note right
+  - ego vehicle is already over dead line(1.0[m] forward stop line) Do Not Stop.
+  - "pass through or not" considering jerk limit is judged only once to avoid chattering.
+end note
+
+:generate ego "stuck_vehicle_detect_area" polygon;
+note right
+"stuck_vehicle_detect_area" polygon includes space of
+ vehicle_length + obstacle_stop_max_distance
+ after "no stopping area"
+end note
+
+:generate ego "stop_line_detect_area" polygon;
+note right
+"stop_line_detect_area" polygon includes space of
+ vehicle_length + margin
+ after "no stopping area"
+end note
+
+:set current judgement as GO;
+if (Is stuck vehicle inside "stuck_vehicle_detect_area" polygon?) then (yes)
+note right
+only consider stuck vehicle following condition.
+- below velocity 3.0 [m/s]
+- semantic type of car bus truck or motorbike
+only consider stop line as following condition.
+- low velocity that is in path with lane id is considered.
+end note
+if (Is stop line inside "stop_line_detect_area" polygon?) then (yes)
+  :set current judgement as STOP;
+endif
+endif
+
+partition set_state_with_margin_time {
+
+if (current judgement is same as previous state) then (yes)
+  :reset timer;
+else if (state is GO->STOP) then (yes)
+  :set state as STOP;
+  :reset timer;
+else if (state is STOP -> GO) then (yes)
+  if (start time is not set) then (yes)
+    :set start time;
+  else(no)
+   :calculate duration;
+   if(duration is more than margin time)then (yes)
+    :set state GO;
+    :reset timer;
+  else(no)
+   endif
+  endif
+else(no)
+endif
+
+}
+
+note right
+  - it takes 2 seconds to change state from STOP -> GO
+  - it takes 0 seconds to change state from GO -> STOP
+  - reset timer if no state change
+end note
+
+if (state is STOP) then (yes)
+  :set stop velocity;
+  :set stop reason and factor;
+  else(no)
+endif
+stop
+
+
 @enduml
 ```

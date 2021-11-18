@@ -176,6 +176,23 @@ ament_target_dependencies(scene_module_detection_area ${BEHAVIOR_VELOCITY_PLANNE
 
 target_link_libraries(scene_module_detection_area scene_module_lib)
 
+# Scene Module: No Stopping Area
+ament_auto_add_library(scene_module_no_stopping_area SHARED
+  src/scene_module/no_stopping_area/manager.cpp
+  src/scene_module/no_stopping_area/scene_no_stopping_area.cpp
+  src/scene_module/no_stopping_area/debug.cpp
+)
+
+target_include_directories(scene_module_no_stopping_area
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
+
+ament_target_dependencies(scene_module_no_stopping_area ${BEHAVIOR_VELOCITY_PLANNER_DEPENDENCIES})
+
+target_link_libraries(scene_module_no_stopping_area scene_module_lib)
+
 
 # Scene Module: Virtual Traffic Light
 ament_auto_add_library(scene_module_virtual_traffic_light SHARED
@@ -255,6 +272,7 @@ target_link_libraries(behavior_velocity_planner
   scene_module_blind_spot
   scene_module_occlusion_spot
   scene_module_detection_area
+  scene_module_no_stopping_area
   scene_module_virtual_traffic_light
   scene_module_manager
 )
@@ -265,6 +283,7 @@ rclcpp_components_register_node(behavior_velocity_planner
   PLUGIN "behavior_velocity_planner::BehaviorVelocityPlannerNode"
   EXECUTABLE behavior_velocity_planner_node
 )
+
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -297,6 +316,7 @@ if(BUILD_TESTING)
     gtest_main
     scene_module_occlusion_spot
   )
+
 endif()
 
 ament_auto_package(INSTALL_TO_SHARE
