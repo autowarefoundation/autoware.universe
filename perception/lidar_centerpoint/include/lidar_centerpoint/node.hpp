@@ -28,9 +28,12 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace centerpoint
 {
+using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
+
 class LidarCenterPointNode : public rclcpp::Node
 {
 public:
@@ -39,6 +42,9 @@ public:
 private:
   void pointCloudCallback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr input_pointcloud_msg);
 
+  static uint8_t getSemanticType(const std::string & class_name);
+  static bool isCarLikeVehicleLabel(const uint8_t label);
+
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_sub_;
   rclcpp::Publisher<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr objects_pub_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_pub_;
@@ -46,16 +52,19 @@ private:
   float score_threshold_{0.0};
   std::string densification_base_frame_;
   int densification_past_frames_{0};
-  bool use_vfe_trt_{false};
+  bool use_encoder_trt_{false};
   bool use_head_trt_{false};
   std::string trt_precision_;
 
-  std::string vfe_onnx_path_;
-  std::string vfe_engine_path_;
-  std::string vfe_pt_path_;
+  std::string encoder_onnx_path_;
+  std::string encoder_engine_path_;
+  std::string encoder_pt_path_;
   std::string head_onnx_path_;
   std::string head_engine_path_;
   std::string head_pt_path_;
+
+  std::vector<std::string> class_names_;
+  bool rename_car_to_truck_and_bus_{false};
 
   std::unique_ptr<PointCloudDensification> densification_ptr_{nullptr};
   std::unique_ptr<CenterPointTRT> detector_ptr_{nullptr};

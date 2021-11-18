@@ -79,6 +79,7 @@ if(TRT_AVAIL AND CUDA_AVAIL AND TORCH_AVAIL)
   execute_process(COMMAND mkdir -p ${DATA_PATH})
 
   function(download FILE_NAME GFILE_ID FILE_HASH)
+    # https://drive.google.com/file/d/GFILE_ID/view
     message(STATUS "Checking and downloading ${FILE_NAME}")
     set(FILE_PATH ${DATA_PATH}/${FILE_NAME})
     if(EXISTS ${FILE_PATH})
@@ -92,10 +93,18 @@ if(TRT_AVAIL AND CUDA_AVAIL AND TORCH_AVAIL)
       execute_process(COMMAND gdown --quiet https://drive.google.com//uc?id=${GFILE_ID} -O ${FILE_PATH})
     endif()
   endfunction()
-  download(centerpoint_vfe.pt 1NUOn3GILXO2uTVjONBHRZYLKLiLirBpK 825dc48c799d05b3785ac314afe49c0b)
-  download(centerpoint_head.pt 1WxXtxKYWkhwW90MRHnHxqa1QkHu_bjFk 3164deaa33f3ec456379b53137808384)
-  download(centerpoint_vfe.onnx 1TsNwIYVPat-rZxRRVhW7DpNWu2W7srox 14cc03fab1670267f1872edfa1b83a48)
-  download(centerpoint_head.onnx 1nmdNpmnhHa15VsoCaHoh0oreL6pDux_k d27881e2c72363e2cd765358f9f479bc)
+
+  # default model
+  download(pts_voxel_encoder_default.onnx 1_8OCQmrPm_R4ZVh70QsS9HZo6uGrlbgz 01b860612e497591c4375d90dff61ef7)
+  download(pts_voxel_encoder_default.pt 1RZ7cuDnI-RBrDiWe-2vEs16mR_z0e9Uo 33136caa97e3bcef2cf3e04bbc93d1e4)
+  download(pts_backbone_neck_head_default.onnx 1UxDyt8T-TMJS7Ujx-1vbbqGRfDbMUZg2 e23a8ad4ea440f923e44dbe072b070da)
+  download(pts_backbone_neck_head_default.pt 1toAhmOriX8bwVI-ohuas9_2EBZnltoXh eb0df29b30acf9c1082ac4490af0bbc5)
+
+  # aip_x2 model
+  download(pts_voxel_encoder_aip_x2.onnx 1x-NAHQ3W0lbLmjJlrL6Nhvdq8yz6Ux0n 65eeb95c5e48ebfe6894146cdb48c160)
+  download(pts_voxel_encoder_aip_x2.pt 1jzKopAhXWjnEgo_v8rtYy0hQIayUE-oL 4db81ce8edc6571aa0afb1ae43ee72e9)
+  download(pts_backbone_neck_head_aip_x2.onnx 1l2fdIQcBWr3-6stVoNkudnL4OZaPqmNT a33c8910fd9c9c910b10904d3cd96717)
+  download(pts_backbone_neck_head_aip_x2.pt 18iOAlRsjvcWoUG9KiL1PlD7OY5mi9BSw 274fdf1580dd899e36c050c1366f1883)
 
   find_package(ament_cmake_auto REQUIRED)
   ament_auto_find_build_dependencies()
@@ -148,6 +157,7 @@ if(TRT_AVAIL AND CUDA_AVAIL AND TORCH_AVAIL)
     INSTALL_TO_SHARE
       launch
       data
+      config
   )
 else()
   find_package(ament_cmake_auto REQUIRED)

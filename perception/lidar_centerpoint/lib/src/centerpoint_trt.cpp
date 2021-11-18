@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <autoware_utils/math/constants.hpp>
 #include <centerpoint_trt.hpp>
 #include <heatmap_utils.hpp>
 
@@ -32,15 +33,16 @@ namespace centerpoint
 using torch::indexing::Slice;
 
 CenterPointTRT::CenterPointTRT(
-  const NetworkParam & vfe_param, const NetworkParam & head_param, const bool verbose)
+  const NetworkParam & encoder_param, const NetworkParam & head_param, const bool verbose)
 {
   vg_ptr_ = std::make_unique<VoxelGenerator>();
 
-  if (vfe_param.use_trt()) {
-    vfe_trt_ptr_ = std::make_unique<VoxelEncoderTRT>(verbose);
-    vfe_trt_ptr_->init(vfe_param.onnx_path(), vfe_param.engine_path(), vfe_param.trt_precision());
+  if (encoder_param.use_trt()) {
+    encoder_trt_ptr_ = std::make_unique<VoxelEncoderTRT>(verbose);
+    encoder_trt_ptr_->init(
+      encoder_param.onnx_path(), encoder_param.engine_path(), encoder_param.trt_precision());
   } else {
-    loadTorchScript(vfe_pt_, vfe_param.pt_path());
+    loadTorchScript(encoder_pt_, encoder_param.pt_path());
   }
 
   if (head_param.use_trt()) {
@@ -49,12 +51,12 @@ CenterPointTRT::CenterPointTRT(
       head_param.onnx_path(), head_param.engine_path(), head_param.trt_precision());
     head_trt_ptr_->context_->setBindingDimensions(
       0, nvinfer1::Dims4(
-           1, Config::num_vfe_output_features, Config::grid_size_y, Config::grid_size_x));
+           1, Config::num_encoder_output_features, Config::grid_size_y, Config::grid_size_x));
   } else {
     loadTorchScript(head_pt_, head_param.pt_path());
   }
 
-  initPtr(vfe_param.use_trt(), head_param.use_trt());
+  initPtr(encoder_param.use_trt(), head_param.use_trt());
 
   torch::set_num_threads(1);  // disable CPU parallelization
 
@@ -69,11 +71,11 @@ CenterPointTRT::~CenterPointTRT()
   }
 }
 
-bool CenterPointTRT::initPtr(const bool use_vfe_trt, const bool use_head_trt)
+bool CenterPointTRT::initPtr(const bool use_encoder_trt, const bool use_head_trt)
 {
-  if (use_vfe_trt) {
+  if (use_encoder_trt) {
     output_pillar_feature_t_ = torch::zeros(
-      {Config::max_num_voxels, Config::num_vfe_output_features},
+      {Config::max_num_voxels, Config::num_encoder_output_features},
       torch::TensorOptions().device(device_).dtype(torch::kFloat));
   }
 
@@ -83,21 +85,24 @@ bool CenterPointTRT::initPtr(const bool use_vfe_trt, const bool use_head_trt)
     const int downsample_grid_y =
       static_cast<int>(static_cast<float>(Config::grid_size_y) / Config::downsample_factor);
     const int batch_size = 1;
-    output_dim_t_ = torch::zeros(
-      {batch_size, Config::num_output_dim_features, downsample_grid_y, downsample_grid_x},
-      torch::TensorOptions().device(device_).dtype(torch::kFloat));
+    auto torch_options = torch::TensorOptions().device(device_).dtype(torch::kFloat);
     output_heatmap_t_ = torch::zeros(
-      {batch_size, Config::num_class, downsample_grid_y, downsample_grid_x},
-      torch::TensorOptions().device(device_).dtype(torch::kFloat));
+      {batch_size, Config::num_class, downsample_grid_y, downsample_grid_x}, torch_options);
     output_offset_t_ = torch::zeros(
       {batch_size, Config::num_output_offset_features, downsample_grid_y, downsample_grid_x},
-      torch::TensorOptions().device(device_).dtype(torch::kFloat));
-    output_rot_t_ = torch::zeros(
-      {batch_size, Config::num_output_rot_features, downsample_grid_y, downsample_grid_x},
-      torch::TensorOptions().device(device_).dtype(torch::kFloat));
+      torch_options);
     output_z_t_ = torch::zeros(
       {batch_size, Config::num_output_z_features, downsample_grid_y, downsample_grid_x},
-      torch::TensorOptions().device(device_).dtype(torch::kFloat));
+      torch_options);
+    output_dim_t_ = torch::zeros(
+      {batch_size, Config::num_output_dim_features, downsample_grid_y, downsample_grid_x},
+      torch_options);
+    output_rot_t_ = torch::zeros(
+      {batch_size, Config::num_output_rot_features, downsample_grid_y, downsample_grid_x},
+      torch_options);
+    output_vel_t_ = torch::zeros(
+      {batch_size, Config::num_output_vel_features, downsample_grid_y, downsample_grid_x},
+      torch_options);
   }
 
   return true;
@@ -130,19 +135,22 @@ std::vector<float> CenterPointTRT::detect(
   // Note: num_voxels <= max_num_voxels, so input_features[num_voxels:] are invalid features.
   input_features.index_put_({Slice(num_voxels)}, 0);
 
-  if (vfe_trt_ptr_ && vfe_trt_ptr_->context_) {
-    std::vector<void *> vfe_buffers{input_features.data_ptr(), output_pillar_feature_t_.data_ptr()};
-    vfe_trt_ptr_->context_->setBindingDimensions(
-      0,
-      nvinfer1::Dims3(
-        Config::max_num_voxels, Config::max_num_points_per_voxel, Config::num_vfe_input_features));
-    vfe_trt_ptr_->context_->enqueueV2(vfe_buffers.data(), stream_, nullptr);
+  if (encoder_trt_ptr_ && encoder_trt_ptr_->context_) {
+    std::vector<void *> encoder_buffers{
+      input_features.data_ptr(), output_pillar_feature_t_.data_ptr()};
+    encoder_trt_ptr_->context_->setBindingDimensions(
+      0, nvinfer1::Dims3(
+           Config::max_num_voxels, Config::max_num_points_per_voxel,
+           Config::num_encoder_input_features));
+    encoder_trt_ptr_->context_->enqueueV2(encoder_buffers.data(), stream_, nullptr);
   } else {
     std::vector<torch::jit::IValue> batch_input_features;
     batch_input_features.emplace_back(input_features);
+    batch_input_features.emplace_back(num_points_per_voxel_t_);
+    batch_input_features.emplace_back(coordinates_t_);
     {
       torch::NoGradGuard no_grad;
-      output_pillar_feature_t_ = vfe_pt_.forward(batch_input_features).toTensor();
+      output_pillar_feature_t_ = encoder_pt_.forward(batch_input_features).toTensor();
     }
   }
 
@@ -150,26 +158,28 @@ std::vector<float> CenterPointTRT::detect(
     scatterPillarFeatures(output_pillar_feature_t_, coordinates_t_.to(torch::kLong));
 
   if (head_trt_ptr_ && head_trt_ptr_->context_) {
-    std::vector<void *> head_buffers = {spatial_features.data_ptr(),  output_dim_t_.data_ptr(),
-                                        output_heatmap_t_.data_ptr(), output_offset_t_.data_ptr(),
-                                        output_rot_t_.data_ptr(),     output_z_t_.data_ptr()};
+    std::vector<void *> head_buffers = {spatial_features.data_ptr(), output_heatmap_t_.data_ptr(),
+                                        output_offset_t_.data_ptr(), output_z_t_.data_ptr(),
+                                        output_dim_t_.data_ptr(),    output_rot_t_.data_ptr(),
+                                        output_vel_t_.data_ptr()};
     head_trt_ptr_->context_->enqueueV2(head_buffers.data(), stream_, nullptr);
   } else {
     std::vector<torch::jit::IValue> batch_spatial_features;
     batch_spatial_features.emplace_back(spatial_features);
+
     {
       torch::NoGradGuard no_grad;
       auto pred_arr = head_pt_.forward(batch_spatial_features).toTuple()->elements();
-      output_dim_t_ = pred_arr[0].toTensor();
-      output_heatmap_t_ = pred_arr[1].toTensor();
-      output_offset_t_ = pred_arr[2].toTensor();
-      output_rot_t_ = pred_arr[3].toTensor();
-      output_z_t_ = pred_arr[4].toTensor();
+      output_heatmap_t_ = pred_arr[0].toTensor();
+      output_offset_t_ = pred_arr[1].toTensor();
+      output_z_t_ = pred_arr[2].toTensor();
+      output_dim_t_ = pred_arr[3].toTensor();
+      output_rot_t_ = pred_arr[4].toTensor();
+      output_vel_t_ = pred_arr[5].toTensor();
     }
   }
 
-  at::Tensor boxes3d = generatePredictedBoxes(
-    output_dim_t_, output_heatmap_t_, output_offset_t_, output_rot_t_, output_z_t_);
+  at::Tensor boxes3d = generatePredictedBoxes();
   std::vector<float> boxes3d_vec =
     std::vector<float>(boxes3d.data_ptr<float>(), boxes3d.data_ptr<float>() + boxes3d.numel());
 
@@ -198,11 +208,7 @@ at::Tensor CenterPointTRT::createInputFeatures(
   at::Tensor center_y =
     voxels.slice(2, 1, 2) -
     (coords_f.slice(1, 1, 2).unsqueeze(2) * Config::voxel_size_y + Config::offset_y);
-  at::Tensor center_z =
-    voxels.slice(2, 2, 3) -
-    (coords_f.slice(1, 0, 1).unsqueeze(2) * Config::voxel_size_z + Config::offset_z);
-  at::Tensor input_features =
-    torch::cat({voxels, cluster, center_x, center_y, center_z}, /*dim=*/2);
+  at::Tensor input_features = torch::cat({voxels, cluster, center_x, center_y}, /*dim=*/2);
 
   // paddings_indicator
   const size_t axis = 0;
@@ -222,29 +228,29 @@ at::Tensor CenterPointTRT::createInputFeatures(
 at::Tensor CenterPointTRT::scatterPillarFeatures(
   const at::Tensor & pillar_features, const at::Tensor & coordinates)
 {
-  // pillar_features (float): (num_pillars, num_vfe_output_features)
+  // pillar_features (float): (num_pillars, num_encoder_output_features)
   // coordinates (float): (num_pillars, num_point_dims)
 
   at::Tensor spatial_feature = torch::zeros(
-    {Config::num_vfe_output_features, Config::grid_size_y * Config::grid_size_x},
+    {Config::num_encoder_output_features, Config::grid_size_y * Config::grid_size_x},
     torch::TensorOptions().dtype(pillar_features.dtype()).device(pillar_features.device()));
   auto index = coordinates.select(1, 1) * Config::grid_size_x + coordinates.select(1, 2);
   spatial_feature.index_put_({"...", index}, pillar_features.t());
 
-  return spatial_feature.view({1, -1, Config::grid_size_y, Config::grid_size_x}).contiguous();
+  return spatial_feature.view({1 /*batch size*/, -1, Config::grid_size_y, Config::grid_size_x})
+    .contiguous();
 }
 
-at::Tensor CenterPointTRT::generatePredictedBoxes(
-  const at::Tensor & output_dim, const at::Tensor & output_heatmap,
-  const at::Tensor & output_offset, const at::Tensor & output_rot, const at::Tensor & output_z)
+at::Tensor CenterPointTRT::generatePredictedBoxes()
 {
-  // output_dim (float): (batch_size, num_dim_features, H, W)
   // output_heatmap (float): (batch_size, num_class, H, W)
   // output_offset (float): (batch_size, num_offset_features, H, W)
-  // output_rot (float): (batch_size, num_rot_features, H, W)
   // output_z (float): (batch_size, num_z_features, H, W)
+  // output_dim (float): (batch_size, num_dim_features, H, W)
+  // output_rot (float): (batch_size, num_rot_features, H, W)
+  // output_vel (float): (batch_size, num_vel_features, H, W)
 
-  at::Tensor heatmap_pred = output_heatmap;
+  at::Tensor heatmap_pred = output_heatmap_t_.clone();
   heatmap_pred = sigmoid_hm(heatmap_pred);
   heatmap_pred = nms_hm(heatmap_pred);
 
@@ -255,10 +261,11 @@ at::Tensor CenterPointTRT::generatePredictedBoxes(
   at::Tensor ys = std::get<3>(topk_tuple);
   at::Tensor xs = std::get<4>(topk_tuple);
 
-  at::Tensor dim_poi = select_point_of_interest(index, output_dim);
-  at::Tensor offset_poi = select_point_of_interest(index, output_offset);
-  at::Tensor rot_poi = select_point_of_interest(index, output_rot);
-  at::Tensor z_poi = select_point_of_interest(index, output_z);
+  at::Tensor offset_poi = select_point_of_interest(index, output_offset_t_);
+  at::Tensor z_poi = select_point_of_interest(index, output_z_t_);
+  at::Tensor dim_poi = select_point_of_interest(index, output_dim_t_);
+  at::Tensor rot_poi = select_point_of_interest(index, output_rot_t_);
+  at::Tensor vel_poi = select_point_of_interest(index, output_vel_t_);
 
   at::Tensor x = Config::voxel_size_x * Config::downsample_factor *
                    (xs.view({1, -1, 1}) + offset_poi.slice(2, 0, 1)) +
@@ -268,10 +275,12 @@ at::Tensor CenterPointTRT::generatePredictedBoxes(
                  Config::pointcloud_range_ymin;
   dim_poi = torch::exp(dim_poi);
   at::Tensor rot = torch::atan2(rot_poi.slice(2, 0, 1), rot_poi.slice(2, 1, 2));
+  rot = -rot - autoware_utils::pi / 2;
 
   at::Tensor boxes3d =
     torch::cat(
-      {scores.view({1, -1, 1}), classes.view({1, -1, 1}), x, y, z_poi, dim_poi, rot}, /*dim=*/2)
+      {scores.view({1, -1, 1}), classes.view({1, -1, 1}), x, y, z_poi, dim_poi, rot, vel_poi},
+      /*dim=*/2)
       .contiguous()
       .to(torch::kCPU)
       .to(torch::kFloat);

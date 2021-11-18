@@ -21,6 +21,7 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace centerpoint
@@ -31,23 +32,25 @@ LidarCenterPointNode::LidarCenterPointNode(const rclcpp::NodeOptions & node_opti
   score_threshold_ = this->declare_parameter("score_threshold", 0.4);
   densification_base_frame_ = this->declare_parameter("densification_base_frame", "map");
   densification_past_frames_ = this->declare_parameter("densification_past_frames", 1);
-  use_vfe_trt_ = this->declare_parameter("use_vfe_trt", false);
+  use_encoder_trt_ = this->declare_parameter("use_encoder_trt", false);
   use_head_trt_ = this->declare_parameter("use_head_trt", true);
   trt_precision_ = this->declare_parameter("trt_precision", "fp16");
-  vfe_onnx_path_ = this->declare_parameter("vfe_onnx_path", "");
-  vfe_engine_path_ = this->declare_parameter("vfe_engine_path", "");
-  vfe_pt_path_ = this->declare_parameter("vfe_pt_path", "");
+  encoder_onnx_path_ = this->declare_parameter("encoder_onnx_path", "");
+  encoder_engine_path_ = this->declare_parameter("encoder_engine_path", "");
+  encoder_pt_path_ = this->declare_parameter("encoder_pt_path", "");
   head_onnx_path_ = this->declare_parameter("head_onnx_path", "");
   head_engine_path_ = this->declare_parameter("head_engine_path", "");
   head_pt_path_ = this->declare_parameter("head_pt_path", "");
+  class_names_ = this->declare_parameter<std::vector<std::string>>("class_names");
+  rename_car_to_truck_and_bus_ = this->declare_parameter("rename_car_to_truck_and_bus", false);
 
-  NetworkParam vfe_param(
-    vfe_onnx_path_, vfe_engine_path_, vfe_pt_path_, trt_precision_, use_vfe_trt_);
+  NetworkParam encoder_param(
+    encoder_onnx_path_, encoder_engine_path_, encoder_pt_path_, trt_precision_, use_encoder_trt_);
   NetworkParam head_param(
     head_onnx_path_, head_engine_path_, head_pt_path_, trt_precision_, use_head_trt_);
   densification_ptr_ = std::make_unique<PointCloudDensification>(
     densification_base_frame_, densification_past_frames_, this->get_clock());
-  detector_ptr_ = std::make_unique<CenterPointTRT>(vfe_param, head_param, /*verbose=*/false);
+  detector_ptr_ = std::make_unique<CenterPointTRT>(encoder_param, head_param, /*verbose=*/false);
 
   pointcloud_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "~/input/pointcloud", rclcpp::SensorDataQoS{}.keep_last(1),
@@ -84,46 +87,34 @@ void LidarCenterPointNode::pointCloudCallback(
     float x = boxes3d_vec[obj_i * Config::num_box_features + 2];
     float y = boxes3d_vec[obj_i * Config::num_box_features + 3];
     float z = boxes3d_vec[obj_i * Config::num_box_features + 4];
-    float l = boxes3d_vec[obj_i * Config::num_box_features + 5];
-    float w = boxes3d_vec[obj_i * Config::num_box_features + 6];
+    float w = boxes3d_vec[obj_i * Config::num_box_features + 5];
+    float l = boxes3d_vec[obj_i * Config::num_box_features + 6];
     float h = boxes3d_vec[obj_i * Config::num_box_features + 7];
     float yaw = boxes3d_vec[obj_i * Config::num_box_features + 8];
+    float vel_x = boxes3d_vec[obj_i * Config::num_box_features + 9];
+    float vel_y = boxes3d_vec[obj_i * Config::num_box_features + 10];
 
     autoware_auto_perception_msgs::msg::DetectedObject obj;
     // TODO(yukke42): the value of classification confidence of DNN, not probability.
     obj.existence_probability = score;
-
     autoware_auto_perception_msgs::msg::ObjectClassification classification;
     classification.probability = 1.0f;
-    switch (class_id) {
-      case 0:
-        classification.label = autoware_auto_perception_msgs::msg::ObjectClassification::CAR;
+    classification.label = getSemanticType(class_names_[class_id]);
 
-        // Note: object size is referred from multi_object_tracker
-        if ((w * l > 2.2 * 5.5) && (w * l <= 2.5 * 7.9)) {
-          classification.label = autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK;
-        } else if (w * l > 2.5 * 7.9) {
-          classification.label = autoware_auto_perception_msgs::msg::ObjectClassification::BUS;
-        }
-        obj.kinematics.orientation_availability =
-          autoware_auto_perception_msgs::msg::DetectedObjectKinematics::SIGN_UNKNOWN;
-        break;
-      case 1:
-        classification.label = autoware_auto_perception_msgs::msg::ObjectClassification::PEDESTRIAN;
-        obj.kinematics.orientation_availability =
-          autoware_auto_perception_msgs::msg::DetectedObjectKinematics::UNAVAILABLE;
-        break;
-      case 2:
-        classification.label = autoware_auto_perception_msgs::msg::ObjectClassification::BICYCLE;
-        obj.kinematics.orientation_availability =
-          autoware_auto_perception_msgs::msg::DetectedObjectKinematics::UNAVAILABLE;
-        break;
-      default:
-        classification.label = autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN;
-        obj.kinematics.orientation_availability =
-          autoware_auto_perception_msgs::msg::DetectedObjectKinematics::UNAVAILABLE;
+    if (classification.label == Label::CAR && rename_car_to_truck_and_bus_) {
+      // Note: object size is referred from multi_object_tracker
+      if ((w * l > 2.2 * 5.5) && (w * l <= 2.5 * 7.9)) {
+        classification.label = Label::TRUCK;
+      } else if (w * l > 2.5 * 7.9) {
+        classification.label = Label::BUS;
+      }
     }
-    classification.probability = score;
+
+    if (isCarLikeVehicleLabel(classification.label)) {
+      obj.kinematics.orientation_availability =
+        autoware_auto_perception_msgs::msg::DetectedObjectKinematics::SIGN_UNKNOWN;
+    }
+
     obj.classification.emplace_back(classification);
 
     obj.kinematics.pose_with_covariance.pose.position = autoware_utils::createPoint(x, y, z);
@@ -131,6 +122,12 @@ void LidarCenterPointNode::pointCloudCallback(
       autoware_utils::createQuaternionFromYaw(yaw);
     obj.shape.type = autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX;
     obj.shape.dimensions = autoware_utils::createTranslation(l, w, h);
+
+    geometry_msgs::msg::Twist twist;
+    twist.linear.x = std::sqrt(std::pow(vel_x, 2) + std::pow(vel_y, 2));
+    twist.angular.z = 2 * (std::atan2(vel_y, vel_x) - yaw);
+    obj.kinematics.twist_with_covariance.twist = twist;
+    obj.kinematics.has_twist = true;
 
     output_msg.objects.emplace_back(obj);
   }
@@ -141,6 +138,33 @@ void LidarCenterPointNode::pointCloudCallback(
   if (pointcloud_sub_count > 0) {
     pointcloud_pub_->publish(stacked_pointcloud_msg);
   }
+}
+
+uint8_t LidarCenterPointNode::getSemanticType(const std::string & class_name)
+{
+  if (class_name == "CAR") {
+    return Label::CAR;
+  } else if (class_name == "TRUCK") {
+    return Label::TRUCK;
+  } else if (class_name == "BUS") {
+    return Label::BUS;
+  } else if (class_name == "TRAILER") {
+    return Label::TRAILER;
+  } else if (class_name == "BICYCLE") {
+    return Label::BICYCLE;
+  } else if (class_name == "MOTORBIKE") {
+    return Label::MOTORCYCLE;
+  } else if (class_name == "PEDESTRIAN") {
+    return Label::PEDESTRIAN;
+  } else {
+    return Label::UNKNOWN;
+  }
+}
+
+bool LidarCenterPointNode::isCarLikeVehicleLabel(const uint8_t label)
+{
+  return label == Label::CAR || label == Label::TRUCK || label == Label::BUS ||
+         label == Label::TRAILER;
 }
 
 }  // namespace centerpoint

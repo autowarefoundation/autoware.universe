@@ -2,7 +2,7 @@
 
 This is a 3D object detection implementation of CenterPoint supporting TensorRT inference.
 
-The models are trained with [OpenPCDet](https://github.com/tier4/OpenPCDet)
+The models are trained with [Mmdetection3D](https://github.com/tier4/autoware_mmdetection3d)
 
 The object.existence_probability is stored the value of classification confidence of DNN, not probability.
 
@@ -28,13 +28,12 @@ The object.existence_probability is stored the value of classification confidenc
 | score_threshold           | float  | detected objects with score less than threshold are ignored | `0.4`   |
 | densification_base_frame  | string | the base frame id to fuse multi-frame pointcloud            | `map`   |
 | densification_past_frames | int    | the number of past frames to fuse with the current frame    | `1`     |
-| use_cuda_preprocessor     | bool   | transform pointcloud to voxel-format on GPU                 | `false` |
-| use_vfe_trt               | bool   | use TensorRT VoxelFeatureEncoder                            | `false` |
+| use_encoder_trt           | bool   | use TensorRT VoxelFeatureEncoder                            | `false` |
 | use_head_trt              | bool   | use TensorRT DetectionHead                                  | `true`  |
 | trt_precision             | string | TensorRT inference precision: `fp32` or `fp16`              | `fp16`  |
-| vfe_onnx_path             | string | path to VoxelFeatureEncoder ONNX file                       |         |
-| vfe_engine_path           | string | path to VoxelFeatureEncoder TensorRT Engine file            |         |
-| vfe_pt_path               | string | path to VoxelFeatureEncoder TorchScript file                |         |
+| encoder_onnx_path         | string | path to VoxelFeatureEncoder ONNX file                       |         |
+| encoder_engine_path       | string | path to VoxelFeatureEncoder TensorRT Engine file            |         |
+| encoder_pt_path           | string | path to VoxelFeatureEncoder TorchScript file                |         |
 | head_onnx_path            | string | path to DetectionHead ONNX file                             |         |
 | head_engine_path          | string | path to DetectionHead TensorRT Engine file                  |         |
 | head_pt_path              | string | path to DetectionHead TorchScript file                      |         |
