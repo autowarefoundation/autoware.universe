@@ -24,7 +24,7 @@
 #ifndef __TRT_NET_H_
 #define __TRT_NET_H_
 
-#include <Utils.hpp>
+#include "Utils.hpp"
 
 #include <NvCaffeParser.h>
 #include <NvInferPlugin.h>
