@@ -1,6 +1,8 @@
 <?xml version="1.0"?>
 
 <launch>
+  <arg name="vehicle_param_file" />
+  <arg name="sensor_model" />
   <!-- common parameters -->
   <arg name="mode" default="camera_lidar_fusion" description="options: `camera_lidar_fusion`, `lidar` or `camera`"/>
   <arg name="image_raw0" default="/sensing/camera/camera0/image_rect_color" description="image raw topic name"/>
@@ -26,6 +28,22 @@
   <!-- perception module -->
   <group>
     <push-ros-namespace namespace="perception"/>
+
+    <!-- object segmentation module -->
+    <group>
+      <push-ros-namespace namespace="object_segmentation"/>
+      <!-- ground segmentation module -->
+      <group>
+        <push-ros-namespace namespace="ground_segmentation"/>
+        <include file="$(find-pkg-share perception_launch)/launch/object_segmentation/ground_segmentation/ground_segmentation.launch.py">
+          <arg name="base_frame" value="base_link" />
+          <arg name="vehicle_param_file" value="$(var vehicle_param_file)" />
+          <arg name="use_intra_process" value="true" />
+          <arg name="use_multithread" value="true" />
+          <arg name="perception_config_file" value="$(find-pkg-share perception_launch)/config/object_segmentation/ground_segmentation/$(var sensor_model)_perception.param.yaml"/>
+        </include>
+      </group>
+    </group>
 
     <!-- object recognition module -->
     <group unless="$(var use_empty_dynamic_object_publisher)">
