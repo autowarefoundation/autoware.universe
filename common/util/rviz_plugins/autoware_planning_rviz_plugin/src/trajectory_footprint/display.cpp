@@ -19,6 +19,8 @@
 #include <eigen3/Eigen/Geometry>
 #include <trajectory_footprint/display.hpp>
 
+#include <tf2/utils.h>
+
 namespace rviz_plugins
 {
 AutowareTrajectoryFootprintDisplay::AutowareTrajectoryFootprintDisplay()
@@ -58,6 +60,8 @@ AutowareTrajectoryFootprintDisplay::AutowareTrajectoryFootprintDisplay()
     this);
   property_trajectory_point_radius_ = new rviz_common::properties::FloatProperty(
     "Radius", 0.1, "", property_trajectory_point_view_, SLOT(updateVisualization()), this);
+  property_trajectory_point_offset_ = new rviz_common::properties::FloatProperty(
+    "Offset", 0.0, "", property_trajectory_point_view_, SLOT(updateVisualization()), this);
 
   updateVehicleInfo();
 }
@@ -193,23 +197,26 @@ void AutowareTrajectoryFootprintDisplay::processMessage(
         color = rviz_common::properties::qtToOgre(property_trajectory_point_color_->getColor());
         color.a = property_trajectory_point_alpha_->getFloat();
 
+        const double offset = property_trajectory_point_offset_->getFloat();
+        const double yaw = tf2::getYaw(path_point.pose.orientation);
+        const double base_x = path_point.pose.position.x + offset * std::cos(yaw);
+        const double base_y = path_point.pose.position.y + offset * std::sin(yaw);
+        const double base_z = path_point.pose.position.z;
+
         const double radius = property_trajectory_point_radius_->getFloat();
         for (size_t s_idx = 0; s_idx < 8; ++s_idx) {
           const double current_angle = static_cast<double>(s_idx) / 8.0 * 2.0 * M_PI;
           const double next_angle = static_cast<double>(s_idx + 1) / 8.0 * 2.0 * M_PI;
           trajectory_point_manual_object_->position(
-            path_point.pose.position.x + radius * std::cos(current_angle),
-            path_point.pose.position.y + radius * std::sin(current_angle),
-            path_point.pose.position.z);
+            base_x + radius * std::cos(current_angle), base_y + radius * std::sin(current_angle),
+            base_z);
           trajectory_point_manual_object_->colour(color);
 
           trajectory_point_manual_object_->position(
-            path_point.pose.position.x + radius * std::cos(next_angle),
-            path_point.pose.position.y + radius * std::sin(next_angle), path_point.pose.position.z);
+            base_x + radius * std::cos(next_angle), base_y + radius * std::sin(next_angle), base_z);
           trajectory_point_manual_object_->colour(color);
 
-          trajectory_point_manual_object_->position(
-            path_point.pose.position.x, path_point.pose.position.y, path_point.pose.position.z);
+          trajectory_point_manual_object_->position(base_x, base_y, base_z);
           trajectory_point_manual_object_->colour(color);
         }
       }

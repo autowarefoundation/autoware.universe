@@ -69,6 +69,7 @@ protected:
   rviz_common::properties::ColorProperty * property_trajectory_point_color_;
   rviz_common::properties::FloatProperty * property_trajectory_point_alpha_;
   rviz_common::properties::FloatProperty * property_trajectory_point_radius_;
+  rviz_common::properties::FloatProperty * property_trajectory_point_offset_;
 
   struct VehicleFootprintInfo
   {
