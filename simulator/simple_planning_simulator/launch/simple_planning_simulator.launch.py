@@ -27,7 +27,7 @@ def generate_launch_description():
 
     default_vehicle_characteristics_param = os.path.join(
         get_package_share_directory('simple_planning_simulator'),
-        'param/vehicle_characteristics.param.param.yaml')
+        'param/vehicle_characteristics.param.yaml')
 
     vehicle_characteristics_param = DeclareLaunchArgument(
         'vehicle_characteristics_param_file',
