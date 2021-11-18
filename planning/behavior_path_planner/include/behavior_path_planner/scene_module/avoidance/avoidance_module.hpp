@@ -181,11 +181,8 @@ private:
   PoseStamped getEgoPose() const;
   PoseStamped getUnshiftedEgoPose(const ShiftedPath & prev_path) const;
   double getCurrentBaseShift() const { return path_shifter_.getBaseOffset(); }
-  double getCurrentLinearShift() const
-  {
-    return prev_linear_shift_path_.shift_length.at(
-      autoware_utils::findNearestIndex(prev_linear_shift_path_.path.points, getEgoPosition()));
-  }
+  double getCurrentShift() const;
+  double getCurrentLinearShift() const;
 };
 
 }  // namespace behavior_path_planner

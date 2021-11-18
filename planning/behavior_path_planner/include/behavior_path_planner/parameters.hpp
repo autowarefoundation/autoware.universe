@@ -29,6 +29,9 @@ struct BehaviorPathPlannerParameters
   double drivable_area_width;
   double drivable_area_height;
   double refine_goal_search_radius_range;
+  double turn_light_on_threshold_dis_lat;
+  double turn_light_on_threshold_dis_long;
+  double turn_light_on_threshold_time;
 
   // vehicle info
   double wheel_base;

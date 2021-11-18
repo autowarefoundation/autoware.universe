@@ -15,6 +15,8 @@
 #ifndef BEHAVIOR_PATH_PLANNER__PATH_SHIFTER__PATH_SHIFTER_HPP_
 #define BEHAVIOR_PATH_PLANNER__PATH_SHIFTER__PATH_SHIFTER_HPP_
 
+#include "behavior_path_planner/parameters.hpp"
+
 #include <autoware_utils/ros/marker_helper.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -29,6 +31,7 @@
 
 #include <algorithm>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace behavior_path_planner

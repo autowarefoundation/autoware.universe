@@ -27,6 +27,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <algorithm>
+#include <limits>
 #include <memory>
 #include <string>
 #include <utility>
@@ -134,8 +135,25 @@ BehaviorModuleOutput PullOverModule::plan()
 
   BehaviorModuleOutput output;
   output.path = std::make_shared<PathWithLaneId>(path);
-  output.turn_signal_info = calcTurnSignalInfo(status_.pull_over_path.shift_point);
 
+  const auto hazard_info = getHazard(
+    status_.pull_over_lanes, planner_data_->self_pose->pose,
+    planner_data_->route_handler->getGoalPose(), planner_data_->self_odometry->twist.twist.linear.x,
+    parameters_.hazard_on_threshold_dis, parameters_.hazard_on_threshold_vel,
+    planner_data_->parameters.base_link2front);
+
+  const auto turn_info = util::getPathTurnSignal(
+    status_.current_lanes, status_.pull_over_path.shifted_path, status_.pull_over_path.shift_point,
+    planner_data_->self_pose->pose, planner_data_->self_odometry->twist.twist.linear.x,
+    planner_data_->parameters, parameters_.pull_over_search_distance);
+
+  if (hazard_info.first.command == HazardLightsCommand::ENABLE) {
+    output.turn_signal_info.hazard_signal.command = hazard_info.first.command;
+    output.turn_signal_info.signal_distance = hazard_info.second;
+  } else {
+    output.turn_signal_info.turn_signal.command = turn_info.first.command;
+    output.turn_signal_info.signal_distance = turn_info.second;
+  }
   return output;
 }
 
@@ -435,61 +453,32 @@ bool PullOverModule::hasFinishedPullOver() const
   return false;
 }
 
-TurnSignalInfo PullOverModule::calcTurnSignalInfo(const ShiftPoint & shift_point) const
+std::pair<HazardLightsCommand, double> PullOverModule::getHazard(
+  const lanelet::ConstLanelets & target_lanes, const Pose & current_pose, const Pose & goal_pose,
+  const double & velocity, const double & hazard_on_threshold_dis,
+  const double & hazard_on_threshold_vel, const double & base_link2front) const
 {
-  TurnSignalInfo turn_signal;
-  const auto current_lanes = getCurrentLanes();
-  const auto pull_over_lanes = getPullOverLanes(current_lanes);
-  const double turn_signal_on_threshold = 30;
-  const double turn_signal_off_threshold = -2;
-  const double turn_hazard_on_threshold = 3;
+  HazardLightsCommand hazard_signal;
+  const double max_distance = std::numeric_limits<double>::max();
 
-  // calculate distance to pull_over start on current lanes
-  double distance_to_pull_over_start;
+  double distance_to_target_pose;   // distance from current pose to target pose on target lanes
+  double distance_to_target_point;  // distance from vehicle front to target point on target lanes.
   {
-    const auto pull_over_start = shift_point.start;
-    const auto arc_position_pull_over_start =
-      lanelet::utils::getArcCoordinates(current_lanes, pull_over_start);
+    const auto arc_position_target_pose =
+      lanelet::utils::getArcCoordinates(target_lanes, goal_pose);
     const auto arc_position_current_pose =
-      lanelet::utils::getArcCoordinates(current_lanes, planner_data_->self_pose->pose);
-    distance_to_pull_over_start =
-      arc_position_pull_over_start.length - arc_position_current_pose.length;
-  }
-
-  // calculate distance to shift end on target lanes
-  double distance_to_pull_over_end;
-  {
-    const auto pull_over_end = shift_point.end;
-    const auto arc_position_pull_over_end =
-      lanelet::utils::getArcCoordinates(pull_over_lanes, pull_over_end);
-    const auto arc_position_current_pose =
-      lanelet::utils::getArcCoordinates(pull_over_lanes, planner_data_->self_pose->pose);
-    distance_to_pull_over_end =
-      arc_position_pull_over_end.length - arc_position_current_pose.length;
-  }
-
-  // calculate distance to shift start on target lanes
-  double distance_to_target_pose;
-  {
-    const auto arc_position_target_pose = lanelet::utils::getArcCoordinates(
-      pull_over_lanes, planner_data_->route_handler->getGoalPose());
-    const auto arc_position_current_pose =
-      lanelet::utils::getArcCoordinates(pull_over_lanes, planner_data_->self_pose->pose);
+      lanelet::utils::getArcCoordinates(target_lanes, current_pose);
     distance_to_target_pose = arc_position_target_pose.length - arc_position_current_pose.length;
+    distance_to_target_point = distance_to_target_pose - base_link2front;
   }
 
-  if (distance_to_pull_over_start < turn_signal_on_threshold) {
-    turn_signal.turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
-    if (distance_to_pull_over_end < turn_signal_off_threshold) {
-      turn_signal.turn_signal.command = TurnIndicatorsCommand::DISABLE;
-      if (distance_to_target_pose < turn_hazard_on_threshold) {
-        turn_signal.hazard_signal.command = HazardLightsCommand::ENABLE;
-      }
-    }
+  if (
+    distance_to_target_pose < hazard_on_threshold_dis && abs(velocity) < hazard_on_threshold_vel) {
+    hazard_signal.command = HazardLightsCommand::ENABLE;
+    return std::make_pair(hazard_signal, distance_to_target_point);
   }
-  turn_signal.signal_distance = distance_to_pull_over_end;
 
-  return turn_signal;
+  return std::make_pair(hazard_signal, max_distance);
 }
 
 }  // namespace behavior_path_planner

@@ -25,6 +25,7 @@
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp>
 
 #include <tf2/utils.h>
 
@@ -35,6 +36,7 @@
 
 namespace behavior_path_planner
 {
+using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
 struct PullOverParameters
 {
   double min_stop_distance;
@@ -60,6 +62,8 @@ struct PullOverParameters
   double maximum_lateral_jerk;
   double minimum_lateral_jerk;
   double deceleration_interval;
+  double hazard_on_threshold_dis;
+  double hazard_on_threshold_vel;
 };
 
 struct PullOverStatus
@@ -109,7 +113,10 @@ private:
   TurnSignalInfo getTurnSignalAndDistance(const PathWithLaneId & path) const;
 
   // turn signal
-  TurnSignalInfo calcTurnSignalInfo(const ShiftPoint & shift_point) const;
+  std::pair<HazardLightsCommand, double> getHazard(
+    const lanelet::ConstLanelets & target_lanes, const Pose & current_pose, const Pose & goal_pose,
+    const double & velocity, const double & hazard_on_threshold_dis,
+    const double & hazard_on_threshold_vel, const double & base_link2front) const;
 
   void updatePullOverStatus();
   bool isInLane(

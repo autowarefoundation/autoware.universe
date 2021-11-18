@@ -158,6 +158,9 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.drivable_area_width = declare_parameter("drivable_area_width", 100.0);
   p.drivable_area_height = declare_parameter("drivable_area_height", 50.0);
   p.refine_goal_search_radius_range = declare_parameter("refine_goal_search_radius_range", 7.5);
+  p.turn_light_on_threshold_dis_lat = declare_parameter("turn_light_on_threshold_dis_lat", 0.3);
+  p.turn_light_on_threshold_dis_long = declare_parameter("turn_light_on_threshold_dis_long", 10.0);
+  p.turn_light_on_threshold_time = declare_parameter("turn_light_on_threshold_time", 3.0);
 
   // vehicle info
   const auto vehicle_info = VehicleInfoUtil(*this).getVehicleInfo();
@@ -232,6 +235,7 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
 
   p.min_avoidance_speed_for_acc_prevention = dp("min_avoidance_speed_for_acc_prevention", 3.0);
   p.max_avoidance_acceleration = dp("max_avoidance_acceleration", 0.5);
+  p.avoidance_search_distance = dp("avoidance_search_distance", 30.0);
 
   p.publish_debug_marker = dp("publish_debug_marker", false);
   p.print_debug_info = dp("print_debug_info", false);
@@ -332,6 +336,8 @@ PullOverParameters BehaviorPathPlannerNode::getPullOverParam()
   p.maximum_lateral_jerk = dp("maximum_lateral_jerk", 3.0);
   p.minimum_lateral_jerk = dp("minimum_lateral_jerk", 1.0);
   p.deceleration_interval = dp("deceleration_interval", 10.0);
+  p.hazard_on_threshold_dis = dp("hazard_on_threshold_dis", 1.0);
+  p.hazard_on_threshold_vel = dp("hazard_on_threshold_vel", 0.5);
 
   // validation of parameters
   if (p.pull_over_sampling_num < 1) {

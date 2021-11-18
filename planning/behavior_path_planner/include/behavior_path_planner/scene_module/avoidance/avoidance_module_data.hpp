@@ -122,6 +122,10 @@ struct AvoidanceParameters
   // acceleration.
   double max_avoidance_acceleration;
 
+  // if distance between vehicle front and shift end point is larger than this length,
+  // turn signal is not turned on.
+  double avoidance_search_distance;
+
   // debug
   bool publish_debug_marker = false;
   bool print_debug_info = false;

@@ -184,6 +184,10 @@ std::vector<LaneChangePath> getLaneChangePaths(
       shift_point.length = lane_change_start_on_self_lane_arc.distance;
       shift_point.start = lane_change_start_on_self_lane;
       shift_point.end = lane_change_end_on_target_lane;
+      shift_point.start_idx = autoware_utils::findNearestIndex(
+        target_lane_reference_path.points, lane_change_start_on_self_lane.position);
+      shift_point.end_idx = autoware_utils::findNearestIndex(
+        target_lane_reference_path.points, lane_change_end_on_target_lane.position);
     }
 
     PathShifter path_shifter;
@@ -225,6 +229,8 @@ std::vector<LaneChangePath> getLaneChangePaths(
       }
 
       candidate_path.path = combineReferencePath(reference_path1, shifted_path.path);
+      candidate_path.shifted_path = shifted_path;
+      candidate_path.shift_point = shift_point;
     } else {
       RCLCPP_ERROR_STREAM(
         rclcpp::get_logger("behavior_path_planner").get_child("lane_change").get_child("util"),

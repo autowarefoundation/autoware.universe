@@ -306,6 +306,12 @@ AvoidPointArray AvoidanceModule::calcShiftPoints(
    * Add return-to-center shift point from the last shift point, if needed.
    * If there is no shift points, set return-to center shift from ego.
    */
+  // TODO(Horibe) Here, the return point is calculated considering the prepare distance,
+  // but there is an issue that sometimes this prepare distance is erased by the trimSimilarGrad,
+  // and it suddenly tries to return from ego. Then steer rotates aggressively.
+  // It is temporally solved by changing the threshold of trimSimilarGrad, but it needs to be
+  // fixed in a proper way.
+  // Maybe after merge, all shift points before the prepare distance can be deleted.
   addReturnShiftPointFromEgo(total_raw_shift_points, current_raw_shift_points);
   printShiftPoints(total_raw_shift_points, "total_raw_shift_points_with_extra_return_shift");
 
@@ -390,8 +396,7 @@ AvoidPointArray AvoidanceModule::calcRawShiftPointsFromObjects(
   const auto prepare_distance = getNominalPrepareDistance();
 
   // To be consistent with changes in the ego position, the current shift length is considered.
-  const auto current_ego_shift =
-    prev_output_.shift_length.at(findNearestIndex(prev_output_.path.points, getEgoPosition()));
+  const auto current_ego_shift = getCurrentShift();
 
   AvoidPointArray avoid_points;
   for (auto & o : objects) {
@@ -419,6 +424,9 @@ AvoidPointArray AvoidanceModule::calcRawShiftPointsFromObjects(
     const auto remaining_distance = o.longitudinal - prepare_distance;
     if (!has_enough_distance) {
       if (remaining_distance <= 0.0) {
+        // TODO(Horibe) Even if there is no enough distance for avoidance shift, the
+        // return-to-center shift must be considered for each object if the current_shift
+        // is not zero.
         DEBUG_PRINT("object is ignored since remaining_distance <= 0");
         continue;
       }
@@ -888,7 +896,7 @@ AvoidPointArray AvoidanceModule::trimShiftPoint(
 
   // - Combine avoid points that have almost same gradient (again)
   {
-    const auto CHANGE_SHIFT_THRESHOLD = 0.3;
+    const auto CHANGE_SHIFT_THRESHOLD = 0.2;
     trimSimilarGradShiftPoint(sp_array_trimmed, CHANGE_SHIFT_THRESHOLD);
     debug.trim_similar_grad_shift_second = sp_array_trimmed;
     printShiftPoints(sp_array_trimmed, "after trim_similar_grad_shift_second");
@@ -1379,6 +1387,7 @@ void AvoidanceModule::addReturnShiftPointFromEgo(
   const bool has_candidate_point = !sp_candidates.empty();
   const bool has_registered_point = !path_shifter_.getShiftPoints().empty();
 
+  // If the return-to-center shift points are already registered, do nothing.
   if (!has_registered_point && std::fabs(getCurrentBaseShift()) < ep) {
     DEBUG_PRINT("No shift points, not base offset. Do not have to add return-shift.");
     return;
@@ -1391,9 +1400,12 @@ void AvoidanceModule::addReturnShiftPointFromEgo(
     return;
   }
 
+  // From here, the return-to-center is not registered. But perhaps the candidate is
+  // already generated.
+
   // If it has a shift point, add return shift from the existing last shift point.
   // If not, add return shift from ego point. (prepare distance is considered for both.)
-  ShiftPoint last_sp;  // the return-shift will be generated after the last shist point.
+  ShiftPoint last_sp;  // the return-shift will be generated after the last shift point.
   {
     // avoidance points: Yes, shift points: No -> select last avoidance point.
     if (has_candidate_point && !has_registered_point) {
@@ -1424,11 +1436,11 @@ void AvoidanceModule::addReturnShiftPointFromEgo(
   }
   printShiftPoints(ShiftPointArray{last_sp}, "last shift point");
 
-  // There already is a shift point to go back to center line, but it could be too sharp
+  // There already is a shift point candidates to go back to center line, but it could be too sharp
   // due to detection noise or timing.
   // Here the return-shift from ego is added for the in case.
   if (std::fabs(last_sp.length) < RETURN_SHIFT_THRESHOLD) {
-    const auto current_base_shift = getCurrentBaseShift();
+    const auto current_base_shift = getCurrentShift();
     if (std::abs(current_base_shift) < ep) {
       DEBUG_PRINT("last shift almost is zero, and current base_shift is zero. do nothing.");
       return;
@@ -1455,7 +1467,7 @@ void AvoidanceModule::addReturnShiftPointFromEgo(
       "return shift already exists, but they are all candidates. Add return shift for overwrite.");
     last_sp.end = getEgoPose().pose;
     last_sp.end_idx = avoidance_data_.ego_closest_path_index;
-    last_sp.length = getCurrentBaseShift();
+    last_sp.length = current_base_shift;
   }
 
   const auto & arclength_from_ego = avoidance_data_.arclength_from_ego;
@@ -1825,15 +1837,14 @@ BehaviorModuleOutput AvoidanceModule::plan()
     }
   }
 
+  BehaviorModuleOutput output;
+  output.turn_signal_info = calcTurnSignalInfo(avoidance_path);
   // sparse resampling for computational cost
   {
     avoidance_path.path =
       util::resamplePathWithSpline(avoidance_path.path, parameters_.resample_interval_for_output);
   }
-
-  BehaviorModuleOutput output;
   output.path = std::make_shared<PathWithLaneId>(avoidance_path.path);
-  output.turn_signal_info = calcTurnSignalInfo(avoidance_path);
 
   clipPathLength(*output.path);
 
@@ -2294,32 +2305,34 @@ TurnSignalInfo AvoidanceModule::calcTurnSignalInfo(const ShiftedPath & path) con
 
   const auto latest_shift_point = shift_points.front();  // assuming it is sorted.
 
-  // Set turn signal if the shift length is larger than threshold.
-  // TODO(Horibe) Turn signal should be turned on only when the vehicle across the lane.
-  const auto tl_on_threshold = 0.3;  // [m]
+  const auto turn_info = util::getPathTurnSignal(
+    avoidance_data_.current_lanelets, path, latest_shift_point, planner_data_->self_pose->pose,
+    planner_data_->self_odometry->twist.twist.linear.x, planner_data_->parameters,
+    parameters_.avoidance_search_distance);
+
+  // Set turn signal if the vehicle across the lane.
   if (!path.shift_length.empty()) {
     if (isAvoidancePlanRunning()) {
-      const double diff = path.shift_length.at(latest_shift_point.end_idx) -
-                          path.shift_length.at(latest_shift_point.start_idx);
-      if (diff > tl_on_threshold) {
-        turn_signal.turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
-      } else if (diff < -tl_on_threshold) {
-        turn_signal.turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
-      }
+      turn_signal.turn_signal.command = turn_info.first.command;
     }
   }
 
   // calc distance from ego to latest_shift_point end point.
-  {
-    const double distance =
-      calcSignedArcLength(path.path.points, getEgoPosition(), latest_shift_point.end.position) -
-      planner_data_->parameters.base_link2front;
-    if (distance >= 0.0) {
-      turn_signal.signal_distance = distance;
-    }
+  if (turn_info.second >= 0.0) {
+    turn_signal.signal_distance = turn_info.second;
   }
 
   return turn_signal;
+}
+
+double AvoidanceModule::getCurrentShift() const
+{
+  return prev_output_.shift_length.at(findNearestIndex(prev_output_.path.points, getEgoPosition()));
+}
+double AvoidanceModule::getCurrentLinearShift() const
+{
+  return prev_linear_shift_path_.shift_length.at(
+    findNearestIndex(prev_linear_shift_path_.path.points, getEgoPosition()));
 }
 
 void AvoidanceModule::setDebugData(const PathShifter & shifter, const DebugData & debug)

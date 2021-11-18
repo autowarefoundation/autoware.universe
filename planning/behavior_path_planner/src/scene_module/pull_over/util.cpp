@@ -261,6 +261,10 @@ std::vector<PullOverPath> getPullOverPaths(
       }
       candidate_path.path = combineReferencePath(reference_path1, shifted_path.path);
       candidate_path.shifted_path = shifted_path;
+      shift_point.start_idx =
+        autoware_utils::findNearestIndex(shifted_path.path.points, shift_point.start.position);
+      shift_point.end_idx =
+        autoware_utils::findNearestIndex(shifted_path.path.points, shift_point.end.position);
       candidate_path.shift_point = shift_point;
       // candidate_path.acceleration = acceleration;
       candidate_path.preparation_length = straight_distance;

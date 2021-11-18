@@ -132,7 +132,6 @@ BehaviorModuleOutput LaneChangeModule::plan()
 {
   constexpr double RESAMPLE_INTERVAL = 1.0;
   auto path = util::resamplePathWithSpline(status_.lane_change_path.path, RESAMPLE_INTERVAL);
-
   // Generate drivable area
   {
     const auto & route_handler = planner_data_->route_handler;
@@ -157,7 +156,13 @@ BehaviorModuleOutput LaneChangeModule::plan()
 
   BehaviorModuleOutput output;
   output.path = std::make_shared<PathWithLaneId>(path);
-  output.turn_signal_info = getTurnSignalAndDistance(path);
+  const auto turn_signal_info = util::getPathTurnSignal(
+    status_.current_lanes, status_.lane_change_path.shifted_path,
+    status_.lane_change_path.shift_point, planner_data_->self_pose->pose,
+    planner_data_->self_odometry->twist.twist.linear.x, planner_data_->parameters,
+    parameters_.lane_change_search_distance);
+  output.turn_signal_info.turn_signal.command = turn_signal_info.first.command;
+  output.turn_signal_info.signal_distance = turn_signal_info.second;
   return output;
 }
 
@@ -353,75 +358,6 @@ std::pair<bool, bool> LaneChangeModule::getSafePath(
   }
 
   return std::make_pair(false, false);
-}
-
-TurnSignalInfo LaneChangeModule::getTurnSignalAndDistance(const PathWithLaneId & path) const
-{
-  TurnSignalInfo turn_signal{};
-
-  const auto & route_handler = planner_data_->route_handler;
-  const auto current_pose = planner_data_->self_pose->pose;
-  const auto common_parameters = planner_data_->parameters;
-
-  if (path.points.empty()) {
-    return {};
-  }
-
-  util::FrenetCoordinate3d vehicle_pose_frenet{};
-  auto clock{rclcpp::Clock{RCL_ROS_TIME}};
-  if (!convertToFrenetCoordinate3d(path, current_pose.position, &vehicle_pose_frenet)) {
-    RCLCPP_ERROR_THROTTLE(
-      getLogger(), clock, 5000, "failed to convert vehicle pose into frenet coordinate");
-    return {};
-  }
-
-  double accumulated_distance = 0;
-
-  for (size_t idx = 1; idx < path.points.size(); ++idx) {
-    const auto path_point = path.points.at(idx);
-    const auto prev_point = path.points.at(idx - 1);
-    const auto prev_lane_ids = path.points.at(idx - 1).lane_ids;
-    accumulated_distance += autoware_utils::calcDistance3d(
-      prev_point.point.pose.position, path_point.point.pose.position);
-    const double distance_from_vehicle_front =
-      accumulated_distance - vehicle_pose_frenet.length - common_parameters.base_link2front;
-    if (distance_from_vehicle_front < 0.0) {
-      continue;
-    }
-    if (prev_lane_ids == path_point.lane_ids) {
-      continue;
-    }
-    const auto prev_lanes = route_handler->getLaneletsFromIds(prev_lane_ids);
-    const auto lanes = route_handler->getLaneletsFromIds(path_point.lane_ids);
-    for (const auto & prev_lane : prev_lanes) {
-      for (const auto & lane : lanes) {
-        if (prev_lane.id() == lane.id()) {
-          continue;
-        }
-
-        // check lane change relation
-        const auto relation = route_handler->getRelation(prev_lane, lane);
-        if (
-          relation == lanelet::routing::RelationType::Left ||
-          relation == lanelet::routing::RelationType::AdjacentLeft) {
-          turn_signal.turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
-          turn_signal.signal_distance = distance_from_vehicle_front;
-          return turn_signal;
-        }
-        if (
-          relation == lanelet::routing::RelationType::Right ||
-          relation == lanelet::routing::RelationType::AdjacentRight) {
-          turn_signal.turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
-          turn_signal.signal_distance = distance_from_vehicle_front;
-          return turn_signal;
-        }
-      }
-    }
-    if (distance_from_vehicle_front > parameters_.lane_change_search_distance) {
-      return {};
-    }
-  }
-  return {};
 }
 
 bool LaneChangeModule::isSafe() const { return status_.is_safe; }

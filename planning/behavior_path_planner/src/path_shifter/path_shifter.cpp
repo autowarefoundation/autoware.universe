@@ -19,8 +19,11 @@
 
 #include <autoware_utils/autoware_utils.hpp>
 #include <interpolation/spline_interpolation.hpp>
+#include <lanelet2_extension/utility/utilities.hpp>
 
+#include <limits>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace
@@ -79,7 +82,7 @@ bool PathShifter::generate(
 
   if (!is_index_aligned_) {
     updateShiftPointIndices();
-    for (const auto shift_point : shift_points_) {
+    for (const auto & shift_point : shift_points_) {
       int idx_gap = shift_point.end_idx - shift_point.start_idx;
       if (idx_gap <= 1) {
         RCLCPP_WARN_STREAM(

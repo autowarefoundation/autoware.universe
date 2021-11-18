@@ -15,10 +15,13 @@
 #ifndef BEHAVIOR_PATH_PLANNER__PATH_UTILITIES_HPP_
 #define BEHAVIOR_PATH_PLANNER__PATH_UTILITIES_HPP_
 
+#include <behavior_path_planner/parameters.hpp>
+#include <behavior_path_planner/path_shifter/path_shifter.hpp>
 #include <opencv2/opencv.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
 #include <geometry_msgs/msg/point.hpp>
 
 #include <boost/geometry/geometries/box.hpp>
@@ -32,6 +35,7 @@
 #include <lanelet2_routing/RoutingGraphContainer.h>
 
 #include <limits>
+#include <utility>
 #include <vector>
 
 namespace behavior_path_planner
@@ -40,7 +44,9 @@ namespace util
 {
 using autoware_auto_planning_msgs::msg::Path;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
+using autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand;
 using geometry_msgs::msg::Point;
+using geometry_msgs::msg::Pose;
 
 std::vector<double> calcPathArcLengthArray(
   const PathWithLaneId & path, size_t start = 0, size_t end = std::numeric_limits<size_t>::max(),
@@ -58,6 +64,11 @@ size_t getIdxByArclength(
 
 void clipPathLength(
   PathWithLaneId & path, const Point base_pos, const double forward, const double backward);
+
+std::pair<TurnIndicatorsCommand, double> getPathTurnSignal(
+  const lanelet::ConstLanelets & current_lanes, const ShiftedPath & path,
+  const ShiftPoint & shift_point, const Pose & pose, const double & velocity,
+  const BehaviorPathPlannerParameters & common_parameter, const double & search_distance);
 
 }  // namespace util
 }  // namespace behavior_path_planner
