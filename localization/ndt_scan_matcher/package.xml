@@ -8,7 +8,7 @@
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
   <depend>autoware_debug_msgs</depend>
-  <depend>autoware_localization_srvs</depend>
+  <depend>autoware_localization_msgs</depend>
   <depend>autoware_utils</depend>
   <depend>diagnostic_msgs</depend>
   <depend>geometry_msgs</depend>

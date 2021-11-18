@@ -25,11 +25,11 @@
 #include <vector>
 
 #define FMT_HEADER_ONLY
-#include <autoware_localization_srvs/srv/pose_with_covariance_stamped.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_debug_msgs/msg/float32_stamped.hpp>
 #include <autoware_debug_msgs/msg/int32_stamped.hpp>
+#include <autoware_localization_msgs/srv/pose_with_covariance_stamped.hpp>
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
@@ -109,8 +109,8 @@ public:
 
 private:
   void serviceNDTAlign(
-    const autoware_localization_srvs::srv::PoseWithCovarianceStamped::Request::SharedPtr req,
-    autoware_localization_srvs::srv::PoseWithCovarianceStamped::Response::SharedPtr res);
+    const autoware_localization_msgs::srv::PoseWithCovarianceStamped::Request::SharedPtr req,
+    autoware_localization_msgs::srv::PoseWithCovarianceStamped::Response::SharedPtr res);
 
   void callbackMapPoints(sensor_msgs::msg::PointCloud2::ConstSharedPtr pointcloud2_msg_ptr);
   void callbackSensorPoints(sensor_msgs::msg::PointCloud2::ConstSharedPtr pointcloud2_msg_ptr);
@@ -165,7 +165,7 @@ private:
     ndt_monte_carlo_initial_pose_marker_pub_;
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr diagnostics_pub_;
 
-  rclcpp::Service<autoware_localization_srvs::srv::PoseWithCovarianceStamped>::SharedPtr service_;
+  rclcpp::Service<autoware_localization_msgs::srv::PoseWithCovarianceStamped>::SharedPtr service_;
 
   tf2_ros::Buffer tf2_buffer_;
   tf2_ros::TransformListener tf2_listener_;

@@ -149,7 +149,7 @@ NDTScanMatcher::NDTScanMatcher()
   diagnostics_pub_ =
     this->create_publisher<diagnostic_msgs::msg::DiagnosticArray>("/diagnostics", 10);
 
-  service_ = this->create_service<autoware_localization_srvs::srv::PoseWithCovarianceStamped>(
+  service_ = this->create_service<autoware_localization_msgs::srv::PoseWithCovarianceStamped>(
     "ndt_align_srv",
     std::bind(
       &NDTScanMatcher::serviceNDTAlign, this, std::placeholders::_1, std::placeholders::_2));
@@ -210,17 +210,17 @@ void NDTScanMatcher::timerDiagnostic()
 }
 
 void NDTScanMatcher::serviceNDTAlign(
-  const autoware_localization_srvs::srv::PoseWithCovarianceStamped::Request::SharedPtr req,
-  autoware_localization_srvs::srv::PoseWithCovarianceStamped::Response::SharedPtr res)
+  const autoware_localization_msgs::srv::PoseWithCovarianceStamped::Request::SharedPtr req,
+  autoware_localization_msgs::srv::PoseWithCovarianceStamped::Response::SharedPtr res)
 {
   // get TF from pose_frame to map_frame
   auto TF_pose_to_map_ptr = std::make_shared<geometry_msgs::msg::TransformStamped>();
-  getTransform(map_frame_, req->pose_with_cov.header.frame_id, TF_pose_to_map_ptr);
+  getTransform(map_frame_, req->pose_with_covariance.header.frame_id, TF_pose_to_map_ptr);
 
   // transform pose_frame to map_frame
   auto mapTF_initial_pose_msg_ptr =
     std::make_shared<geometry_msgs::msg::PoseWithCovarianceStamped>();
-  *mapTF_initial_pose_msg_ptr = transform(req->pose_with_cov, *TF_pose_to_map_ptr);
+  *mapTF_initial_pose_msg_ptr = transform(req->pose_with_covariance, *TF_pose_to_map_ptr);
 
   if (ndt_ptr_->getInputTarget() == nullptr) {
     res->success = false;
@@ -240,11 +240,11 @@ void NDTScanMatcher::serviceNDTAlign(
   std::lock_guard<std::mutex> lock(ndt_map_mtx_);
 
   key_value_stdmap_["state"] = "Aligning";
-  res->pose_with_cov = alignUsingMonteCarlo(ndt_ptr_, *mapTF_initial_pose_msg_ptr);
+  res->pose_with_covariance = alignUsingMonteCarlo(ndt_ptr_, *mapTF_initial_pose_msg_ptr);
   key_value_stdmap_["state"] = "Sleeping";
   res->success = true;
   res->seq = req->seq;
-  res->pose_with_cov.pose.covariance = req->pose_with_cov.pose.covariance;
+  res->pose_with_covariance.pose.covariance = req->pose_with_covariance.pose.covariance;
 }
 
 void NDTScanMatcher::callbackInitialPose(
