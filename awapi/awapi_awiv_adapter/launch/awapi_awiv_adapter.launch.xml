@@ -58,7 +58,7 @@
   <arg name="output_path_change_approval" default="/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/path_change_approval" />
   <arg name="output_path_change_force" default="/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/path_change_force" />
   <arg name="output_obstacle_avoid_approval" default="/planning/scenario_planning/lane_driving/obstacle_avoidance_approval" />
-  <arg name="output_door_control" default="/pacmod/as_rx/rear_pass_door_cmd" />
+  <arg name="output_door_control" default="/pacmod/rear_pass_door_cmd" />
   <!-- output_force_obstacle_avoid is not implemented -->
   <arg name="output_force_obstacle_avoid" default="tmp" />
   <arg name="output_overwrite_traffic_light_state" default="/external/traffic_light_recognition/traffic_light_states" />
