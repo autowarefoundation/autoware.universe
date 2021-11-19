@@ -326,7 +326,7 @@ Visualization Manager:
                 Durability Policy: Volatile
                 History Policy: Keep Last
                 Reliability Policy: Reliable
-                Value: /control/turn_signal_cmd
+                Value: /vehicle/status/turn_indicators_status
               Value: true
               Width: 512
           Enabled: true
