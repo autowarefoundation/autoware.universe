@@ -31,6 +31,8 @@
     min_d_effort: 0.0
     lpf_vel_error_gain: 0.9
     current_vel_threshold_pid_integration: 0.5
+    enable_brake_keeping_before_stop: false
+    brake_keeping_acc: -0.2
 
     # smooth stop state
     smooth_stop_max_strong_acc: -0.5
@@ -70,10 +72,11 @@
     min_pitch_rad: -0.1
 
     # vehicle parameters
-    mass_kg: 2400.0
-    mass_fl: 600.0
-    mass_fr: 600.0
-    mass_rl: 600.0
-    mass_rr: 600.0
-    cf: 155494.663
-    cr: 155494.663
+    vehicle:
+      mass_kg: 2400.0
+      mass_fl: 600.0
+      mass_fr: 600.0
+      mass_rl: 600.0
+      mass_rr: 600.0
+      cf: 155494.663
+      cr: 155494.663

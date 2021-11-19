@@ -93,6 +93,14 @@ The reference acceleration set in the trajectory and slope compensation terms ar
 
 Tracking errors causing modeling or discretization errors are removed by the feedback control (now using PID).
 
+#### Brake keeping
+
+From the viewpoint of ride comfort, stopping with 0 acceleration is important because it reduces the impact of braking. However, if the target acceleration when stopping is 0, the vehicle may cross over the stop line or accelerate a little in front of the stop line due to vehicle model error or gradient estimation error.
+
+For reliable stopping, the target acceleration calculated by the FeedForward system is limited to a negative acceleration when stopping.
+
+![BrakeKeepingDiagram](./media/BrakeKeeping.drawio.svg)
+
 ### Slope compensation
 
 Based on the slope information, a compensation term is added to the target acceleration.

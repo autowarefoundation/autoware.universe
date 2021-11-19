@@ -145,6 +145,8 @@ private:
   trajectory_follower::PIDController m_pid_vel;
   std::shared_ptr<trajectory_follower::LowpassFilter1d> m_lpf_vel_error{nullptr};
   float64_t m_current_vel_threshold_pid_integrate;
+  bool8_t m_enable_brake_keeping_before_stop;
+  float64_t m_brake_keeping_acc;
 
   // smooth stop
   trajectory_follower::SmoothStop m_smooth_stop;
@@ -303,6 +305,15 @@ private:
   float64_t applySlopeCompensation(
     const float64_t acc, const float64_t pitch,
     const Shift shift) const;
+
+  /**
+   * @brief keep target motion acceleration negative before stop
+   * @param [in] traj reference trajectory
+   * @param [in] motion delay compensated target motion
+   */
+  Motion keepBrakeBeforeStop(
+    const autoware_auto_planning_msgs::msg::Trajectory & traj, const Motion & target_motion,
+    const size_t nearest_idx) const;
 
   /**
    * @brief interpolate trajectory point that is nearest to vehicle
