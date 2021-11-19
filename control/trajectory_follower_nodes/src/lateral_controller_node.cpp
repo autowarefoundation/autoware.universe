@@ -71,8 +71,6 @@ LateralController::LateralController(const rclcpp::NodeOptions & node_options)
   m_stop_state_entry_ego_speed = declare_parameter<float64_t>("stop_state_entry_ego_speed");
   m_stop_state_entry_target_speed =
     declare_parameter<float64_t>("stop_state_entry_target_speed");
-  m_stop_state_keep_stopping_dist =
-    declare_parameter<float64_t>("stop_state_keep_stopping_dist");
 
   /* mpc parameters */
   const float64_t steer_lim_deg = declare_parameter<float64_t>("steer_lim_deg");
@@ -345,22 +343,16 @@ const
 
 bool8_t LateralController::isStoppedState() const
 {
+  // Note: This function used to take into account the distance to the stop line
+  // for the stop state judgement. However, it has been removed since the steering
+  // control was turned off when approaching/exceeding the stop line on a curve or
+  // emergency stop situation and it caused large tracking error.
   const int64_t nearest = trajectory_follower::MPCUtils::calcNearestIndex(
     *m_current_trajectory_ptr,
     m_current_pose_ptr->pose);
+
   // If the nearest index is not found, return false
   if (nearest < 0) {return false;}
-  const float64_t dist = trajectory_follower::MPCUtils::calcStopDistance(
-    *m_current_trajectory_ptr,
-    nearest);
-  if (dist < m_stop_state_keep_stopping_dist) {
-    RCLCPP_DEBUG(
-      get_logger(),
-      "stop_dist = %f < %f : m_stop_state_keep_stopping_dist. keep stopping.", dist,
-      m_stop_state_keep_stopping_dist);
-    return true;
-  }
-  RCLCPP_DEBUG(get_logger(), "stop_dist = %f release stopping.", dist);
 
   const float64_t current_vel = m_current_odometry_ptr->twist.twist.linear.x;
   const float64_t target_vel =

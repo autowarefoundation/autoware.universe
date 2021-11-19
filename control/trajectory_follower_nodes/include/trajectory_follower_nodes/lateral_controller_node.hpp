@@ -112,7 +112,6 @@ private:
   /* parameters for stop state */
   float64_t m_stop_state_entry_ego_speed;
   float64_t m_stop_state_entry_target_speed;
-  float64_t m_stop_state_keep_stopping_dist;
 
   // MPC object
   trajectory_follower::MPC m_mpc;

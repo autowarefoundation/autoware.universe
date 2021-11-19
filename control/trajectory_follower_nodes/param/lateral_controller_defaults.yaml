@@ -57,7 +57,6 @@
     # stop state
     stop_state_entry_ego_speed: 0.2
     stop_state_entry_target_speed: 0.5
-    stop_state_keep_stopping_dist: 0.5
 
     # vehicle parameters
     mass_kg: 2400.0
