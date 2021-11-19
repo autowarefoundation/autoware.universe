@@ -120,7 +120,7 @@ TrajectoryPoint lerpTrajectoryPoint(const T & points, const Point & point)
     trajectory_common::calcLongitudinalOffsetToSegment(points, nearest_seg_idx, point);
   const float64_t len_segment =
     trajectory_common::calcSignedArcLength(points, nearest_seg_idx, nearest_seg_idx + 1);
-  const float64_t interpolate_ratio = len_to_interpolated / len_segment;
+  const float64_t interpolate_ratio = std::clamp(len_to_interpolated / len_segment, 0.0, 1.0);
 
   {
     const size_t i = nearest_seg_idx;
