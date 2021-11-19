@@ -36,7 +36,7 @@
   <group>
     <push-ros-namespace namespace="euclidean"/>
     <include file="$(find-pkg-share euclidean_cluster)/launch/voxel_grid_based_euclidean_cluster.launch.xml">
-      <arg name="output/clusters" value="lidar/clusters"/>
+      <arg name="output_clusters" value="lidar/clusters"/>
     </include>
     <include file="$(find-pkg-share roi_cluster_fusion)/launch/roi_cluster_fusion.launch.xml">
       <arg name="input/camera_info0" value="$(var camera_info0)"/>
@@ -56,7 +56,7 @@
       <arg name="input/camera_info7" value="$(var camera_info7)"/>
       <arg name="input/rois7" value="/perception/object_recognition/detection/rois7"/>
       <arg name="input/rois_number" value="$(var image_number)"/>
-      <arg name="input/clusters" value="lidar/clusters"/>
+      <arg name="input/clusters" value="clustering/lidar/clusters"/>
       <arg name="input/image0" value="$(var image_raw0)"/>
       <arg name="input/image1" value="$(var image_raw1)"/>
       <arg name="input/image2" value="$(var image_raw2)"/>
@@ -70,8 +70,13 @@
     <include file="$(find-pkg-share shape_estimation)/launch/shape_estimation.launch.xml">
       <arg name="use_map_current" value="$(var use_vector_map)"/>
       <arg name="input/objects" value="camera_lidar_fusion/clusters" />
-      <arg name="output/objects" value="camera_lidar_fusion/objects" />
+      <arg name="output/objects" value="camera_lidar_fusion/objects_with_feature" />
       <arg name="orientation_reliable" value="false"/>
+    </include>
+    <!-- convert DynamicObjectsWithFeatureArray to DynamicObjects -->
+    <include file="$(find-pkg-share detected_object_feature_remover)/launch/detected_object_feature_remover.launch.xml">
+      <arg name="input" value="camera_lidar_fusion/objects_with_feature" />
+      <arg name="output" value="camera_lidar_fusion/objects" />
     </include>
     <include file="$(find-pkg-share object_range_splitter)/launch/object_range_splitter.launch.xml">
       <arg name="input/object" value="camera_lidar_fusion/objects"/>
