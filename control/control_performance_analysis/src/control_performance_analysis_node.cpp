@@ -71,16 +71,15 @@ ControlPerformanceAnalysisNode::ControlPerformanceAnalysisNode(
     "~/input/reference_trajectory", 1,
     std::bind(&ControlPerformanceAnalysisNode::onTrajectory, this, _1));
 
-  sub_control_steering_ = create_subscription<ControlCommandStamped>(
+  sub_control_steering_ = create_subscription<AckermannLateralCommand>(
     "~/input/control_raw", 1, std::bind(&ControlPerformanceAnalysisNode::onControlRaw, this, _1));
 
-  sub_vehicle_steering_ = create_subscription<Steering>(
+  sub_vehicle_steering_ = create_subscription<SteeringReport>(
     "~/input/measured_steering", 1,
     std::bind(&ControlPerformanceAnalysisNode::onVecSteeringMeasured, this, _1));
 
-  sub_velocity_ = create_subscription<TwistStamped>(
-    "~/input/current_velocity", 1,
-    std::bind(&ControlPerformanceAnalysisNode::onVelocity, this, _1));
+  sub_velocity_ = create_subscription<Odometry>(
+    "~/input/odometry", 1, std::bind(&ControlPerformanceAnalysisNode::onVelocity, this, _1));
 
   // Publishers
   pub_error_msg_ = create_publisher<ErrorStamped>("~/output/error_stamped", 1);
@@ -116,7 +115,7 @@ void ControlPerformanceAnalysisNode::onTrajectory(const Trajectory::ConstSharedP
 }
 
 void ControlPerformanceAnalysisNode::onControlRaw(
-  const ControlCommandStamped::ConstSharedPtr control_msg)
+  const AckermannLateralCommand::ConstSharedPtr control_msg)
 {
   if (!control_msg) {
     RCLCPP_ERROR(get_logger(), "steering signal has not been received yet ...");
@@ -126,7 +125,7 @@ void ControlPerformanceAnalysisNode::onControlRaw(
 }
 
 void ControlPerformanceAnalysisNode::onVecSteeringMeasured(
-  const Steering::ConstSharedPtr meas_steer_msg)
+  const SteeringReport::ConstSharedPtr meas_steer_msg)
 {
   if (!meas_steer_msg) {
     RCLCPP_WARN_THROTTLE(
@@ -136,9 +135,9 @@ void ControlPerformanceAnalysisNode::onVecSteeringMeasured(
   current_vec_steering_msg_ptr_ = meas_steer_msg;
 }
 
-void ControlPerformanceAnalysisNode::onVelocity(const TwistStamped::ConstSharedPtr msg)
+void ControlPerformanceAnalysisNode::onVelocity(const Odometry::ConstSharedPtr msg)
 {
-  current_velocity_ptr_ = msg;
+  current_odom_ptr_ = msg;
 }
 
 void ControlPerformanceAnalysisNode::onTimer()
@@ -185,8 +184,8 @@ bool ControlPerformanceAnalysisNode::isDataReady() const
     return false;
   }
 
-  if (!current_velocity_ptr_) {
-    RCLCPP_WARN_THROTTLE(get_logger(), clock, 1000, "waiting for current_velocity ...");
+  if (!current_odom_ptr_) {
+    RCLCPP_WARN_THROTTLE(get_logger(), clock, 1000, "waiting for current_odom ...");
     return false;
   }
 
@@ -211,7 +210,7 @@ ControlPerformanceAnalysisNode::computeTargetPerformanceMsgVars() const
   // Set trajectory and current pose of controller_performance_core.
   control_performance_core_ptr_->setCurrentWaypoints(*current_trajectory_ptr_);
   control_performance_core_ptr_->setCurrentPose(current_pose_->pose);
-  control_performance_core_ptr_->setCurrentVelocities(current_velocity_ptr_->twist);
+  control_performance_core_ptr_->setCurrentVelocities(current_odom_ptr_->twist.twist);
   control_performance_core_ptr_->setCurrentControlValue(*current_control_msg_ptr_);
 
   // Find the index of the next waypoint.
@@ -240,13 +239,12 @@ bool ControlPerformanceAnalysisNode::isValidTrajectory(const Trajectory & traj)
   bool check_condition = std::all_of(traj.points.cbegin(), traj.points.cend(), [](auto point) {
     const auto & p = point.pose.position;
     const auto & o = point.pose.orientation;
-    const auto & t = point.twist.linear;
-    const auto & a = point.accel.linear;
+    const auto & t = point.longitudinal_velocity_mps;
+    const auto & a = point.acceleration_mps2;
 
     if (
       !isfinite(p.x) || !isfinite(p.y) || !isfinite(p.z) || !isfinite(o.x) || !isfinite(o.y) ||
-      !isfinite(o.z) || !isfinite(o.w) || !isfinite(t.x) || !isfinite(t.y) || !isfinite(t.z) ||
-      !isfinite(a.x) || !isfinite(a.y) || !isfinite(a.z)) {
+      !isfinite(o.z) || !isfinite(o.w) || !isfinite(t) || !isfinite(a)) {
       return false;
     } else {
       return true;

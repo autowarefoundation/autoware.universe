@@ -53,9 +53,9 @@ void ControlPerformanceAnalysisCore::setCurrentPose(const Pose & msg)
   current_vec_pose_ptr_ = std::make_shared<Pose>(msg);
 }
 
-void ControlPerformanceAnalysisCore::setCurrentControlValue(const ControlCommandStamped & msg)
+void ControlPerformanceAnalysisCore::setCurrentControlValue(const AckermannLateralCommand & msg)
 {
-  current_control_ptr_ = std::make_shared<ControlCommandStamped>(msg);
+  current_control_ptr_ = std::make_shared<AckermannLateralCommand>(msg);
 }
 
 std::pair<bool, int32_t> ControlPerformanceAnalysisCore::findClosestPrevWayPointIdx_path_direction()
@@ -216,7 +216,7 @@ std::pair<bool, TargetPerformanceMsgVars> ControlPerformanceAnalysisCore::getPer
   target_vars.lateral_error = lateral_error;
   target_vars.heading_error = heading_yaw_error;
 
-  double steering_val = current_control_ptr_->control.steering_angle;
+  double steering_val = current_control_ptr_->steering_tire_angle;
   target_vars.control_effort_energy = contR * steering_val * steering_val;  // u*R*u';
 
   Eigen::Vector2d error_vec;
@@ -321,7 +321,7 @@ std::pair<bool, Pose> ControlPerformanceAnalysisCore::calculateClosestPose()
   double dy_prev2next = current_waypoints_ptr_->poses.at(*idx_next_wp_).position.y -
                         current_waypoints_ptr_->poses.at(*idx_prev_wp_).position.y;
 
-  double dpsi_prev2next = utils::angleDistance(next_yaw, prev_yaw);
+  double delta_psi_prev2next = utils::angleDistance(next_yaw, prev_yaw);
 
   // Create a vector from p0 (prev) --> p1 (to next wp)
   std::vector<double> v_prev2next_wp{dx_prev2next, dy_prev2next};
@@ -369,7 +369,7 @@ std::pair<bool, Pose> ControlPerformanceAnalysisCore::calculateClosestPose()
   interpolated_pose.position.z = 0.0;
 
   // Interpolate the yaw angle of pi : interpolated waypoint
-  double interp_yaw_angle = prev_yaw + ratio_t * dpsi_prev2next;
+  double interp_yaw_angle = prev_yaw + ratio_t * delta_psi_prev2next;
 
   Quaternion orient_msg = utils::createOrientationMsgFromYaw(interp_yaw_angle);
   interpolated_pose.orientation = orient_msg;
@@ -396,7 +396,7 @@ double ControlPerformanceAnalysisCore::estimateCurvature()
 
   Pose front_axleWP_pose_prev = current_waypoints_ptr_->poses.at(idx_prev_waypoint);
 
-  // Compute current interpoint arc-length ds.
+  // Compute arc-length ds between 2 points.
   double ds_arc_length = std::hypot(
     front_axleWP_pose_prev.position.x - front_axleWP_pose.position.x,
     front_axleWP_pose_prev.position.y - front_axleWP_pose.position.y);

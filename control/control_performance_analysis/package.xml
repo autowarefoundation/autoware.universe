@@ -10,12 +10,13 @@
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
   <buildtool_depend>rosidl_default_generators</buildtool_depend>
 
-  <depend>autoware_control_msgs</depend>
-  <depend>autoware_planning_msgs</depend>
+  <depend>autoware_auto_control_msgs</depend>
+  <depend>autoware_auto_planning_msgs</depend>
+  <depend>autoware_auto_vehicle_msgs</depend>
   <depend>autoware_utils</depend>
-  <depend>autoware_vehicle_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>libboost-dev</depend>
+  <depend>nav_msgs</depend>
   <depend>rclcpp</depend>
   <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>

@@ -19,8 +19,8 @@
 
 #include <eigen3/Eigen/Core>
 
-#include <autoware_control_msgs/msg/control_command_stamped.hpp>
-#include <autoware_planning_msgs/msg/trajectory.hpp>
+#include <autoware_auto_control_msgs/msg/ackermann_lateral_command.hpp>
+#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/pose_array.hpp>
 #include <geometry_msgs/msg/twist.hpp>
@@ -31,8 +31,8 @@
 
 namespace control_performance_analysis
 {
-using autoware_control_msgs::msg::ControlCommandStamped;
-using autoware_planning_msgs::msg::Trajectory;
+using autoware_auto_control_msgs::msg::AckermannLateralCommand;
+using autoware_auto_planning_msgs::msg::Trajectory;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseArray;
 using geometry_msgs::msg::Twist;
@@ -62,7 +62,7 @@ public:
   void setCurrentPose(const Pose & msg);
   void setCurrentWaypoints(const Trajectory & trajectory);
   void setCurrentVelocities(const Twist & twist_msg);
-  void setCurrentControlValue(const ControlCommandStamped & msg);
+  void setCurrentControlValue(const AckermannLateralCommand & msg);
   void setInterpolatedPose(Pose & interpolated_pose);
 
   void findCurveRefIdx();
@@ -84,7 +84,7 @@ private:
   std::shared_ptr<PoseArray> current_waypoints_ptr_;
   std::shared_ptr<Pose> current_vec_pose_ptr_;
   std::shared_ptr<std::vector<double>> current_velocities_ptr_;  // [Vx, Heading rate]
-  std::shared_ptr<ControlCommandStamped> current_control_ptr_;
+  std::shared_ptr<AckermannLateralCommand> current_control_ptr_;
 
   // Variables computed
   std::unique_ptr<int32_t> idx_prev_wp_;       // the waypoint index, vehicle
