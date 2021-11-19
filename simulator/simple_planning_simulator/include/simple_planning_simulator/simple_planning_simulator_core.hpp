@@ -40,6 +40,10 @@
 #include "autoware_auto_vehicle_msgs/msg/control_mode_report.hpp"
 #include "autoware_auto_vehicle_msgs/msg/gear_command.hpp"
 #include "autoware_auto_vehicle_msgs/msg/gear_report.hpp"
+#include "autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp"
+#include "autoware_auto_vehicle_msgs/msg/turn_indicators_report.hpp"
+#include "autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp"
+#include "autoware_auto_vehicle_msgs/msg/hazard_lights_report.hpp"
 #include "autoware_auto_vehicle_msgs/msg/vehicle_control_command.hpp"
 #include "autoware_auto_vehicle_msgs/msg/velocity_report.hpp"
 #include "autoware_auto_geometry_msgs/msg/complex32.hpp"
@@ -62,6 +66,10 @@ using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_vehicle_msgs::msg::ControlModeReport;
 using autoware_auto_vehicle_msgs::msg::GearCommand;
 using autoware_auto_vehicle_msgs::msg::GearReport;
+using autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand;
+using autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport;
+using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
+using autoware_auto_vehicle_msgs::msg::HazardLightsReport;
 using autoware_auto_vehicle_msgs::msg::SteeringReport;
 using autoware_auto_vehicle_msgs::msg::VehicleControlCommand;
 using autoware_auto_vehicle_msgs::msg::VelocityReport;
@@ -116,10 +124,14 @@ private:
   rclcpp::Publisher<SteeringReport>::SharedPtr pub_steer_;
   rclcpp::Publisher<ControlModeReport>::SharedPtr pub_control_mode_report_;
   rclcpp::Publisher<GearReport>::SharedPtr pub_gear_report_;
+  rclcpp::Publisher<TurnIndicatorsReport>::SharedPtr pub_turn_indicators_report_;
+  rclcpp::Publisher<HazardLightsReport>::SharedPtr pub_hazard_lights_report_;
   rclcpp::Publisher<tf2_msgs::msg::TFMessage>::SharedPtr pub_tf_;
   rclcpp::Publisher<PoseStamped>::SharedPtr pub_current_pose_;
 
   rclcpp::Subscription<GearCommand>::SharedPtr sub_gear_cmd_;
+  rclcpp::Subscription<TurnIndicatorsCommand>::SharedPtr sub_turn_indicators_cmd_;
+  rclcpp::Subscription<HazardLightsCommand>::SharedPtr sub_hazard_lights_cmd_;
   rclcpp::Subscription<VehicleControlCommand>::SharedPtr sub_vehicle_cmd_;
   rclcpp::Subscription<AckermannControlCommand>::SharedPtr sub_ackermann_cmd_;
   rclcpp::Subscription<PoseWithCovarianceStamped>::SharedPtr sub_init_pose_;
@@ -139,6 +151,8 @@ private:
   VehicleControlCommand::ConstSharedPtr current_vehicle_cmd_ptr_;
   AckermannControlCommand::ConstSharedPtr current_ackermann_cmd_ptr_;
   GearCommand::ConstSharedPtr current_gear_cmd_ptr_;
+  TurnIndicatorsCommand::ConstSharedPtr current_turn_indicators_cmd_ptr_;
+  HazardLightsCommand::ConstSharedPtr current_hazard_lights_cmd_ptr_;
   Trajectory::ConstSharedPtr current_trajectory_ptr_;
 
   /* frame_id */
@@ -183,6 +197,16 @@ private:
    * @brief set current_vehicle_state_ with received message
    */
   void on_gear_cmd(const GearCommand::ConstSharedPtr msg);
+
+  /**
+ * @brief set current_vehicle_state_ with received message
+ */
+  void on_turn_indicators_cmd(const TurnIndicatorsCommand::ConstSharedPtr msg);
+
+  /**
+ * @brief set current_vehicle_state_ with received message
+ */
+  void on_hazard_lights_cmd(const HazardLightsCommand::ConstSharedPtr msg);
 
   /**
    * @brief set initial pose for simulation with received message
@@ -269,6 +293,16 @@ private:
    * @brief publish gear report
    */
   void publish_gear_report();
+
+  /**
+   * @brief publish turn indicators report
+   */
+  void publish_turn_indicators_report();
+
+  /**
+ * @brief publish hazard lights report
+ */
+  void publish_hazard_lights_report();
 
   /**
    * @brief publish tf

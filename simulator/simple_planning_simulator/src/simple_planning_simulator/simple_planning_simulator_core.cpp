@@ -94,13 +94,23 @@ SimplePlanningSimulator::SimplePlanningSimulator(const rclcpp::NodeOptions & opt
     std::bind(&SimplePlanningSimulator::on_ackermann_cmd, this, _1));
   sub_gear_cmd_ = create_subscription<GearCommand>(
     "input/gear_command", QoS{1}, std::bind(&SimplePlanningSimulator::on_gear_cmd, this, _1));
+  sub_turn_indicators_cmd_ = create_subscription<TurnIndicatorsCommand>(
+    "input/turn_indicators_command", QoS{1},
+    std::bind(&SimplePlanningSimulator::on_turn_indicators_cmd, this, _1));
+  sub_hazard_lights_cmd_ = create_subscription<HazardLightsCommand>(
+    "input/hazard_lights_command", QoS{1},
+    std::bind(&SimplePlanningSimulator::on_hazard_lights_cmd, this, _1));
   sub_trajectory_ = create_subscription<Trajectory>(
     "input/trajectory", QoS{1}, std::bind(&SimplePlanningSimulator::on_trajectory, this, _1));
 
   pub_control_mode_report_ =
     create_publisher<ControlModeReport>("output/control_mode_report", QoS{1});
   pub_gear_report_ = create_publisher<GearReport>("output/gear_report", QoS{1});
-  pub_current_pose_ = create_publisher<geometry_msgs::msg::PoseStamped>("/current_pose", QoS{1});
+  pub_turn_indicators_report_ =
+    create_publisher<TurnIndicatorsReport>("output/turn_indicators_report", QoS{1});
+  pub_hazard_lights_report_ =
+    create_publisher<HazardLightsReport>("output/hazard_lights_report", QoS{1});
+  pub_current_pose_ = create_publisher<PoseStamped>("/current_pose", QoS{1});
   pub_velocity_ = create_publisher<VelocityReport>("output/twist", QoS{1});
   pub_odom_ = create_publisher<Odometry>("output/odometry", QoS{1});
   pub_steer_ = create_publisher<SteeringReport>("output/steering", QoS{1});
@@ -119,9 +129,9 @@ SimplePlanningSimulator::SimplePlanningSimulator(const rclcpp::NodeOptions & opt
   const auto initialize_source = declare_parameter("initialize_source", "INITIAL_POSE_TOPIC");
   RCLCPP_INFO(this->get_logger(), "initialize_source : %s", initialize_source.c_str());
   if (initialize_source == "ORIGIN") {
-    geometry_msgs::msg::Pose p;
+    Pose p;
     p.orientation.w = 1.0;                                 // yaw = 0
-    set_initial_state(p, geometry_msgs::msg::Twist{});     // initialize with 0 for all variables
+    set_initial_state(p, Twist{});     // initialize with 0 for all variables
   } else if (initialize_source == "INITIAL_POSE_TOPIC") {
     // initialpose sub already exists. Do nothing.
   }
@@ -218,15 +228,17 @@ void SimplePlanningSimulator::on_timer()
 
   publish_control_mode_report();
   publish_gear_report();
+  publish_turn_indicators_report();
+  publish_hazard_lights_report();
   publish_tf(current_odometry_);
 }
 
 void SimplePlanningSimulator::on_initialpose(
-  const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr msg)
+  const PoseWithCovarianceStamped::ConstSharedPtr msg)
 {
   // save initial pose
-  geometry_msgs::msg::Twist initial_twist;
-  geometry_msgs::msg::PoseStamped initial_pose;
+  Twist initial_twist;
+  PoseStamped initial_pose;
   initial_pose.header = msg->header;
   initial_pose.pose = msg->pose.pose;
   set_initial_state_with_transform(initial_pose, initial_twist);
@@ -262,7 +274,7 @@ void SimplePlanningSimulator::set_input(const float steer, const float vel, cons
 }
 
 void SimplePlanningSimulator::on_gear_cmd(
-  const autoware_auto_vehicle_msgs::msg::GearCommand::ConstSharedPtr msg)
+  const GearCommand::ConstSharedPtr msg)
 {
   current_gear_cmd_ptr_ = msg;
 
@@ -271,6 +283,18 @@ void SimplePlanningSimulator::on_gear_cmd(
   {
     vehicle_model_ptr_->setGear(current_gear_cmd_ptr_->command);
   }
+}
+
+void SimplePlanningSimulator::on_turn_indicators_cmd(
+  const TurnIndicatorsCommand::ConstSharedPtr msg)
+{
+  current_turn_indicators_cmd_ptr_ = msg;
+}
+
+void SimplePlanningSimulator::on_hazard_lights_cmd(
+  const HazardLightsCommand::ConstSharedPtr msg)
+{
+  current_hazard_lights_cmd_ptr_ = msg;
 }
 
 void SimplePlanningSimulator::on_trajectory(const Trajectory::ConstSharedPtr msg)
@@ -297,10 +321,10 @@ void SimplePlanningSimulator::add_measurement_noise(
 
 
 void SimplePlanningSimulator::set_initial_state_with_transform(
-  const geometry_msgs::msg::PoseStamped & pose_stamped, const geometry_msgs::msg::Twist & twist)
+  const PoseStamped & pose_stamped, const Twist & twist)
 {
   auto transform = get_transform_msg(origin_frame_id_, pose_stamped.header.frame_id);
-  geometry_msgs::msg::Pose pose;
+  Pose pose;
   pose.position.x = pose_stamped.pose.position.x + transform.transform.translation.x;
   pose.position.y = pose_stamped.pose.position.y + transform.transform.translation.y;
   pose.position.z = pose_stamped.pose.position.z + transform.transform.translation.z;
@@ -309,7 +333,7 @@ void SimplePlanningSimulator::set_initial_state_with_transform(
 }
 
 void SimplePlanningSimulator::set_initial_state(
-  const geometry_msgs::msg::Pose & pose, const geometry_msgs::msg::Twist & twist)
+  const Pose & pose, const Twist & twist)
 {
   const float64_t x = pose.position.x;
   const float64_t y = pose.position.y;
@@ -359,17 +383,17 @@ double SimplePlanningSimulator::get_z_pose_from_trajectory(const double x, const
       found = true;
     }
   }
-    if (found) {
-      return current_trajectory_ptr_->points.at(index).pose.position.z;
-    }
+  if (found) {
+    return current_trajectory_ptr_->points.at(index).pose.position.z;
+  }
 
-    return 0.0;
+  return 0.0;
 }
 
-geometry_msgs::msg::TransformStamped SimplePlanningSimulator::get_transform_msg(
+TransformStamped SimplePlanningSimulator::get_transform_msg(
   const std::string parent_frame, const std::string child_frame)
 {
-  geometry_msgs::msg::TransformStamped transform;
+  TransformStamped transform;
   while (true) {
     try {
       const auto time_point = tf2::TimePoint(std::chrono::milliseconds(0));
@@ -430,9 +454,31 @@ void SimplePlanningSimulator::publish_gear_report()
   pub_gear_report_->publish(msg);
 }
 
+void SimplePlanningSimulator::publish_turn_indicators_report()
+{
+  if (!current_turn_indicators_cmd_ptr_) {
+    return;
+  }
+  TurnIndicatorsReport msg;
+  msg.stamp = get_clock()->now();
+  msg.report = current_turn_indicators_cmd_ptr_->command;
+  pub_turn_indicators_report_->publish(msg);
+}
+
+void SimplePlanningSimulator::publish_hazard_lights_report()
+{
+  if (!current_hazard_lights_cmd_ptr_) {
+    return;
+  }
+  HazardLightsReport msg;
+  msg.stamp = get_clock()->now();
+  msg.report = current_hazard_lights_cmd_ptr_->command;
+  pub_hazard_lights_report_->publish(msg);
+}
+
 void SimplePlanningSimulator::publish_tf(const Odometry & odometry)
 {
-  geometry_msgs::msg::TransformStamped tf;
+  TransformStamped tf;
   tf.header.stamp = get_clock()->now();
   tf.header.frame_id = origin_frame_id_;
   tf.child_frame_id = simulated_frame_id_;
