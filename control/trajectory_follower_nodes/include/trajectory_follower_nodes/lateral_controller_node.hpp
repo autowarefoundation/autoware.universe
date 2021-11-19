@@ -77,7 +77,8 @@ public:
 
 private:
   //!< @brief topic publisher for control command
-  rclcpp::Publisher<autoware_auto_control_msgs::msg::AckermannLateralCommand>::SharedPtr m_pub_ctrl_cmd;
+  rclcpp::Publisher<autoware_auto_control_msgs::msg::AckermannLateralCommand>::SharedPtr
+    m_pub_ctrl_cmd;
   //!< @brief topic publisher for predicted trajectory
   rclcpp::Publisher<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr m_pub_predicted_traj;
   //!< @brief topic publisher for control diagnostic
@@ -98,12 +99,12 @@ private:
   /* parameters for path smoothing */
   //!< @brief flag for path smoothing
   bool8_t m_enable_path_smoothing;
-  //!< @brief flag for recalculation of yaw angle after resampling
-  bool8_t m_enable_yaw_recalculation;
   //!< @brief param of moving average filter for path smoothing
   int64_t m_path_filter_moving_ave_num;
-  //!< @brief point-to-point index distance for curvature calculation
-  int64_t m_curvature_smoothing_num;
+  //!< @brief point-to-point index distance for curvature calculation for trajectory  //NOLINT
+  int64_t m_curvature_smoothing_num_traj;
+  //!< @brief point-to-point index distance for curvature calculation for reference steer command  //NOLINT
+  int64_t m_curvature_smoothing_num_ref_steer;
   //!< @brief path resampling interval [m]
   float64_t m_traj_resample_dist;
 
@@ -186,7 +187,8 @@ private:
    * @brief publish diagnostic message
    * @param [in] diagnostic published diagnostic
    */
-  void publishDiagnostic(autoware_auto_system_msgs::msg::Float32MultiArrayDiagnostic & diagnostic) const;
+  void publishDiagnostic(autoware_auto_system_msgs::msg::Float32MultiArrayDiagnostic & diagnostic)
+  const;
 
   /**
    * @brief get stop command
