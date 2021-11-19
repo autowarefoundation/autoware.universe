@@ -249,7 +249,7 @@ Example:
 
 ## (Optional) References/External links
 
-[1] B. Stellato, et al., "OSQP: an operator splitting solver for quadratic programs", Mathematical Programming Computation, 2020, [10.1007/s12532-020-00179-2](https://doi.org/10.1007/s12532-020-00179-2).
+[1] B. Stellato, et al., "OSQP: an operator splitting solver for quadratic programs", Mathematical Programming Computation, 2020, [10.1007/s12532-020-00179-2](https://link.springer.com/article/10.1007/s12532-020-00179-2).
 
 [2] Y. Zhang, et al., "Toward a More Complete, Flexible, and Safer Speed Planning for Autonomous Driving via Convex Optimization", Sensors, vol. 18, no. 7, p. 2185, 2018, [10.3390/s18072185](https://doi.org/10.3390/s18072185)
 
