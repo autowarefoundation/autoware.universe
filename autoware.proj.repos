@@ -2,31 +2,31 @@ repositories:
   # autoware
   autoware/autoware.iv:
     type: git
-    url: git@github.com:tier4/AutowareArchitectureProposal.iv
+    url: https://github.com/tier4/AutowareArchitectureProposal.iv
     version: use-autoware-auto-msgs
   autoware/launcher:
     type: git
-    url: git@github.com:tier4/AutowareArchitectureProposal_launcher.git
+    url: https://github.com/tier4/AutowareArchitectureProposal_launcher.git
     version: use-autoware-auto-msgs
   autoware/aip_launcher:
     type: git
-    url: git@github.com:tier4/AutowareArchitectureProposal_aip_launcher.git
+    url: https://github.com/tier4/AutowareArchitectureProposal_aip_launcher.git
     version: use-autoware-auto-msgs
   autoware/autoware_api_adaptor:
     type: git
-    url: git@github.com:tier4/AutowareArchitectureProposal_api_adaptor.git
+    url: https://github.com/tier4/AutowareArchitectureProposal_api_adaptor.git
     version: use-autoware-auto-msgs
   autoware/msgs/autoware_api_msgs:
     type: git
-    url: git@github.com:tier4/AutowareArchitectureProposal_api_msgs.git
+    url: https://github.com/tier4/AutowareArchitectureProposal_api_msgs.git
     version: 9d683fd2d47c2664fd1dcb8dd93cffe696535a43
   autoware/msgs/autoware_iv_msgs:
     type: git
-    url: git@github.com:tier4/AutowareArchitectureProposal_msgs.git
+    url: https://github.com/tier4/AutowareArchitectureProposal_msgs.git
     version: use-autoware-auto-msgs
   autoware/msgs/autoware_auto_msgs:
     type: git
-    url: git@github.com:tier4/autoware_auto_msgs.git
+    url: https://github.com/tier4/autoware_auto_msgs.git
     version: tier4/main
   autoware/individual_params:
     type: git
