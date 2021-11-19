@@ -48,6 +48,7 @@
 #include "tf2_msgs/msg/tf_message.hpp"
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
+#include "vehicle_info_util/vehicle_info_util.hpp"
 
 
 namespace autoware

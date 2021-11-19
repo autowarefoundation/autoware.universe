@@ -60,13 +60,11 @@
     stop_state_keep_stopping_dist: 0.5
 
     # vehicle parameters
-    vehicle:
-      cg_to_front_m: 1.228
-      cg_to_rear_m: 1.5618
-      mass_kg: 2400.0
-      mass_fl: 600.0
-      mass_fr: 600.0
-      mass_rl: 600.0
-      mass_rr: 600.0
-      cf: 155494.663
-      cr: 155494.663
+    mass_kg: 2400.0
+    mass_fl: 600.0
+    mass_fr: 600.0
+    mass_rl: 600.0
+    mass_rr: 600.0
+    cf: 155494.663
+    cr: 155494.663
+

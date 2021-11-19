@@ -41,9 +41,7 @@ LongitudinalController::LongitudinalController(const rclcpp::NodeOptions & node_
   // parameters timer
   m_control_rate = declare_parameter<float64_t>("control_rate");
 
-  const float64_t cog_to_rear_axle = declare_parameter<float64_t>("vehicle.cg_to_rear_m");
-  const float64_t cog_to_front_axle = declare_parameter<float64_t>("vehicle.cg_to_front_m");
-  m_wheel_base = cog_to_rear_axle + cog_to_front_axle;
+  m_wheel_base = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo().wheel_base_m;
 
   // parameters for delay compensation
   m_delay_compensation_time = declare_parameter<float64_t>("delay_compensation_time");  // [s]
@@ -361,7 +359,8 @@ void LongitudinalController::callbackTimerControl()
   // wait for initial pointers
   if (
     !m_current_velocity_ptr || !m_prev_velocity_ptr || !m_trajectory_ptr ||
-    !m_tf_buffer.canTransform(m_trajectory_ptr->header.frame_id, "base_link", tf2::TimePointZero)) {
+    !m_tf_buffer.canTransform(m_trajectory_ptr->header.frame_id, "base_link", tf2::TimePointZero))
+  {
     return;
   }
 
@@ -781,8 +780,10 @@ float64_t LongitudinalController::applySlopeCompensation(
   return compensated_acc;
 }
 
-autoware_auto_planning_msgs::msg::TrajectoryPoint LongitudinalController::calcInterpolatedTargetValue(
-  const autoware_auto_planning_msgs::msg::Trajectory & traj, const geometry_msgs::msg::Point & point,
+autoware_auto_planning_msgs::msg::TrajectoryPoint LongitudinalController::
+calcInterpolatedTargetValue(
+  const autoware_auto_planning_msgs::msg::Trajectory & traj,
+  const geometry_msgs::msg::Point & point,
   const size_t nearest_idx) const
 {
   if (traj.points.size() == 1) {

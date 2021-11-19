@@ -40,6 +40,7 @@
 #include "trajectory_follower/lowpass_filter.hpp"
 #include "trajectory_follower/pid.hpp"
 #include "trajectory_follower/smooth_stop.hpp"
+#include "vehicle_info_util/vehicle_info_util.hpp"
 
 namespace autoware
 {

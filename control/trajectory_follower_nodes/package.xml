@@ -17,6 +17,7 @@
   <depend>trajectory_follower</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
+  <depend>vehicle_info_util</depend>
 
   <exec_depend>ros2launch</exec_depend>
 

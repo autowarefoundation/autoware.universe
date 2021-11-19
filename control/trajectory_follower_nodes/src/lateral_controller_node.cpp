@@ -80,9 +80,8 @@ LateralController::LateralController(const rclcpp::NodeOptions & node_options)
   constexpr float64_t deg2rad = static_cast<float64_t>(autoware::common::types::PI) / 180.0;
   m_mpc.m_steer_lim = steer_lim_deg * deg2rad;
   m_mpc.m_steer_rate_lim = steer_rate_lim_dps * deg2rad;
-  const float64_t cg_to_front_m = declare_parameter<float64_t>("vehicle.cg_to_front_m");
-  const float64_t cg_to_rear_m = declare_parameter<float64_t>("vehicle.cg_to_rear_m");
-  const float64_t wheelbase = cg_to_front_m + cg_to_rear_m;
+  const float64_t wheelbase =
+    vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo().wheel_base_m;
 
   /* vehicle model setup */
   const std::string vehicle_model_type = declare_parameter<std::string>("vehicle_model_type");
