@@ -139,8 +139,7 @@ struct MPCMatrix
   Eigen::MatrixXd Qex;
   Eigen::MatrixXd R1ex;
   Eigen::MatrixXd R2ex;
-  Eigen::MatrixXd Urefex;
-  Eigen::MatrixXd Yrefex;
+  Eigen::MatrixXd Uref_ex;
 };
 /**
  * MPC-based waypoints follower class
@@ -204,6 +203,10 @@ private:
    * @brief set the reference trajectory to follow
    */
   void storeSteerCmd(const float64_t steer);
+  /**
+   * @brief reset previous result of MPC
+   */
+  void resetPrevResult(const autoware_auto_vehicle_msgs::msg::SteeringReport & current_steer);
   /**
    * @brief set initial condition for mpc
    * @param [in] data mpc data
@@ -384,8 +387,8 @@ public:
     const float64_t traj_resample_dist,
     const bool8_t enable_path_smoothing,
     const int64_t path_filter_moving_ave_num,
-    const bool8_t enable_yaw_recalculation,
-    const int64_t curvature_smoothing_num,
+    const int64_t curvature_smoothing_num_traj,
+    const int64_t curvature_smoothing_num_ref_steer,
     const geometry_msgs::msg::PoseStamped::SharedPtr current_pose_ptr);
   /**
    * @brief set the vehicle model of this MPC

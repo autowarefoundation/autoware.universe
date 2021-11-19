@@ -109,27 +109,3 @@ TEST(TestInterpolate, Failure) {
   // Input size 1
   ASSERT_FALSE(linearInterpolate({1.5}, {1.5}, {1.0, 3.5}, target_values));
 }
-
-TEST(TestInterpolate, SplineSmokeTest) {
-  using autoware::motion::control::trajectory_follower::SplineInterpolate;
-
-  const std::vector<float64_t> v = {0.0, 10.0, 20.0, 30.0};
-  std::vector<float64_t> query = {0.5, 15.0};
-  std::vector<float64_t> result;
-  SplineInterpolate spline_interp0;
-  // uninitialized case
-  EXPECT_EQ(spline_interp0.getValue(0.5), 0.0);
-  spline_interp0.getValueVector(query, result);
-  EXPECT_TRUE(result.empty());
-  // initialize
-  spline_interp0.generateSpline(v);
-  spline_interp0.getValueVector(query, result);
-  ASSERT_EQ(result.size(), size_t(2));
-  EXPECT_EQ(result[0], spline_interp0.getValue(query[0]));
-  EXPECT_EQ(result[1], spline_interp0.getValue(query[1]));
-
-  SplineInterpolate spline_interp1(v);
-  for (float64_t i = 0.0; i < 1000.0; i += 0.42) {
-    EXPECT_EQ(spline_interp0.getValue(i), spline_interp1.getValue(i));
-  }
-}

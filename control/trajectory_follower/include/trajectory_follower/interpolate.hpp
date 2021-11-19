@@ -52,51 +52,6 @@ TRAJECTORY_FOLLOWER_PUBLIC bool8_t linearInterpolate(
 TRAJECTORY_FOLLOWER_PUBLIC bool8_t linearInterpolate(
   const std::vector<float64_t> & base_index, const std::vector<float64_t> & base_value,
   const float64_t & return_index, float64_t & return_value);
-
-/**
- * @brief Class for spline interpolation
- */
-class TRAJECTORY_FOLLOWER_PUBLIC SplineInterpolate
-{
-  bool8_t initialized_ = false;
-  std::vector<float64_t> m_a;  //!< @brief temporal vector for calculation
-  std::vector<float64_t> m_b;  //!< @brief temporal vector for calculation
-  std::vector<float64_t> m_c;  //!< @brief temporal vector for calculation
-  std::vector<float64_t> m_d;  //!< @brief temporal vector for calculation
-
-public:
-  /**
-   * @brief default constructor
-   */
-  SplineInterpolate() = default;
-  /**
-   * @brief constructor from a vector of values
-   * @param [in] x vector of values
-   */
-  explicit SplineInterpolate(const std::vector<float64_t> & x);
-  /**
-   * @brief initialize the spline for the given vector of values
-   * @param [in] x vector of values
-   */
-  void generateSpline(const std::vector<float64_t> & x);
-  /**
-   * @brief linearly interpolate the given values assuming a base indexing and a new desired indexing
-   * @param [in] s desired index
-   * @return corresponding value
-   */
-  float64_t getValue(const float64_t & s);
-  /**
-   * @brief linearly interpolate the given values assuming a base indexing and a new desired indexing
-   * @param [in] base_index indexes for each base value
-   * @param [in] base_value values for each base index
-   * @param [in] return_index desired interpolated indexes
-   * @param [out] return_value resulting interpolated values
-   */
-  bool8_t interpolate(
-    const std::vector<float64_t> & base_index, const std::vector<float64_t> & base_value,
-    const std::vector<float64_t> & return_index, std::vector<float64_t> & return_value);
-  void getValueVector(const std::vector<float64_t> & s_v, std::vector<float64_t> & value_v);
-};
 }  // namespace trajectory_follower
 }  // namespace control
 }  // namespace motion
