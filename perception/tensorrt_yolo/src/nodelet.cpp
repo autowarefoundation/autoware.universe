@@ -121,7 +121,8 @@ void TensorrtYoloNodelet::connectCb()
     image_sub_.shutdown();
   } else if (!image_sub_) {
     image_sub_ = image_transport::create_subscription(
-      this, "in/image", std::bind(&TensorrtYoloNodelet::callback, this, _1), "raw");
+      this, "in/image", std::bind(&TensorrtYoloNodelet::callback, this, _1), "raw",
+      rmw_qos_profile_sensor_data);
   }
 }
 
