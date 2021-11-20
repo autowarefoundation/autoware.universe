@@ -171,8 +171,3 @@ repositories:
     type: git
     url: https://github.com/ros/robot_state_publisher.git
     version: 51c5f53baa19232e6f99e2638619a9faa6697d78
-  # missing_packages
-  missing_packages/astuff_sensor_msgs:
-    type: git
-    url: https://github.com/astuff/astuff_sensor_msgs.git
-    version: fb1f3a6dcf2d41ed61611b87286e67f9f1b79624
