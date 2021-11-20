@@ -121,10 +121,6 @@ repositories:
     type: git
     url: https://github.com/tier4/velodyne_vls.git
     version: use-autoware-auto-msgs
-  vendor/rqt_runtime_monitor:
-    type: git
-    url: https://github.com/tier4/rqt_runtime_monitor.git
-    version: e76c9846da6a8728d03e80b8b01dca61c4e4d99d
   vendor/operational-design-domains:
     type: git
     url: https://gitlab.com/autowarefoundation/operational-design-domains
