@@ -31,6 +31,8 @@
     min_d_effort: 0.0
     lpf_vel_error_gain: 0.9
     current_vel_threshold_pid_integration: 0.5
+    enable_brake_keeping_before_stop: false
+    brake_keeping_acc: -0.2
 
     # smooth stop state
     smooth_stop_max_strong_acc: -0.5
