@@ -94,7 +94,7 @@ LgsvlInterfaceNode::LgsvlInterfaceNode(
   pub_steer_ = create_publisher<SteeringReport>("output/steering", QoS{1});
 
   sub_odom_ = create_subscription<Odometry>(
-    "/lgsvl/gnss_odom", QoS{1}, [&](const Odometry::ConstSharedPtr odom_msg) {
+    "gnss_odom", QoS{1}, [&](const Odometry::ConstSharedPtr odom_msg) {
       pub_odom_->publish(*odom_msg);
 
       VelocityReport velocity;
@@ -103,14 +103,14 @@ LgsvlInterfaceNode::LgsvlInterfaceNode(
       velocity.heading_rate = static_cast<float>(odom_msg->twist.twist.angular.z);
       pub_velocity_->publish(velocity);
     });
-  sub_vehicle_odom_ = create_subscription<VehicleOdometry>(
-    "/lgsvl/vehicle_odom", QoS{1}, [&](const VehicleOdometry::ConstSharedPtr odom_msg) {
+  sub_vehicle_odom_ = create_subscription<lgsvl_msgs::msg::VehicleOdometry>(
+    "vehicle_odom", QoS{1}, [&](const lgsvl_msgs::msg::VehicleOdometry::ConstSharedPtr odom_msg) {
       autoware_auto_vehicle_msgs::msg::SteeringReport steer;
-      steer.steering_tire_angle = static_cast<float>(odom_msg->front_wheel_angle_rad);
+      steer.steering_tire_angle = static_cast<float>(odom_msg->front_wheel_angle);
       pub_steer_->publish(steer);
     });
   sub_state_ = create_subscription<lgsvl_msgs::msg::CanBusData>(
-    "/lgsvl/vehicle_odom", QoS{1}, [&](const lgsvl_msgs::msg::CanBusData::ConstSharedPtr state_msg) {
+    "state_report", QoS{1}, [&](const lgsvl_msgs::msg::CanBusData::ConstSharedPtr state_msg) {
       {
         GearReport msg;
         msg.stamp = get_clock()->now();

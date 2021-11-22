@@ -36,6 +36,7 @@
 #include "autoware_auto_vehicle_msgs/msg/gear_report.hpp"
 #include "autoware_auto_vehicle_msgs/msg/velocity_report.hpp"
 #include "lgsvl_msgs/msg/can_bus_data.hpp"
+#include "lgsvl_msgs/msg/vehicle_odometry.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 
 namespace lgsvl_interface
@@ -59,7 +60,7 @@ private:
   rclcpp::Publisher<GearReport>::SharedPtr pub_gear_report_;
 
   rclcpp::Subscription<Odometry>::SharedPtr sub_odom_;
-  rclcpp::Subscription<VehicleOdometry>::SharedPtr sub_vehicle_odom_;
+  rclcpp::Subscription<lgsvl_msgs::msg::VehicleOdometry>::SharedPtr sub_vehicle_odom_;
   rclcpp::Subscription<lgsvl_msgs::msg::CanBusData>::SharedPtr sub_state_;
 
 
