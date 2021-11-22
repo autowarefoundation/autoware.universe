@@ -29,15 +29,40 @@
 #include "autoware_auto_vehicle_msgs/msg/horn_report.hpp"
 #include "autoware_auto_vehicle_msgs/msg/wipers_report.hpp"
 #include "autoware_auto_vehicle_msgs/msg/hazard_lights_report.hpp"
+#include "autoware_auto_planning_msgs/msg/trajectory.hpp"
+#include "autoware_auto_vehicle_msgs/msg/steering_report.hpp"
+#include "autoware_auto_vehicle_msgs/msg/control_mode_report.hpp"
+#include "autoware_auto_vehicle_msgs/msg/gear_command.hpp"
+#include "autoware_auto_vehicle_msgs/msg/gear_report.hpp"
+#include "autoware_auto_vehicle_msgs/msg/velocity_report.hpp"
+#include "lgsvl_msgs/msg/can_bus_data.hpp"
+#include "nav_msgs/msg/odometry.hpp"
 
 namespace lgsvl_interface
 {
+using autoware_auto_vehicle_msgs::msg::ControlModeReport;
+using autoware_auto_vehicle_msgs::msg::GearReport;
+using autoware_auto_vehicle_msgs::msg::SteeringReport;
+using autoware_auto_vehicle_msgs::msg::VelocityReport;
+using nav_msgs::msg::Odometry;
 
 /// Node wrapping LgsvlInterface.
 /// For a full list of behaviors, see \ref lgsvl
 class LGSVL_INTERFACE_PUBLIC LgsvlInterfaceNode
   : public ::autoware::drivers::vehicle_interface::VehicleInterfaceNode
 {
+private:
+  rclcpp::Publisher<VelocityReport>::SharedPtr pub_velocity_;
+  rclcpp::Publisher<Odometry>::SharedPtr pub_odom_;
+  rclcpp::Publisher<SteeringReport>::SharedPtr pub_steer_;
+  rclcpp::Publisher<ControlModeReport>::SharedPtr pub_control_mode_report_;
+  rclcpp::Publisher<GearReport>::SharedPtr pub_gear_report_;
+
+  rclcpp::Subscription<Odometry>::SharedPtr sub_odom_;
+  rclcpp::Subscription<VehicleOdometry>::SharedPtr sub_vehicle_odom_;
+  rclcpp::Subscription<lgsvl_msgs::msg::CanBusData>::SharedPtr sub_state_;
+
+
 public:
   /// ROS 2 parameter constructor
   /// \param[in] options An rclcpp::NodeOptions object

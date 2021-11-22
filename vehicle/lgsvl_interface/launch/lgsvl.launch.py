@@ -70,7 +70,12 @@ def generate_launch_description():
             ("state_report", "/lgsvl/state_report"),
             ("state_report_out", "state_report"),
             ("gnss_odom", "/lgsvl/gnss_odom"),
-            ("vehicle_odom", "/lgsvl/vehicle_odom")
+            ("vehicle_odom", "/lgsvl/vehicle_odom"),
+            ('output/twist', '/vehicle/status/velocity_status'),
+            ('output/odometry', '/localization/kinematic_state'),
+            ('output/steering', '/vehicle/status/steering_status'),
+            ('output/gear_report', '/vehicle/status/gear_status'),
+            ('output/control_mode_report', '/vehicle/status/control_mode'),
         ]
     )
 

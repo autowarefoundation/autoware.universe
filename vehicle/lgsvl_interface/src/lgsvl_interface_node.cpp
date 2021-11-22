@@ -82,6 +82,63 @@ LgsvlInterfaceNode::LgsvlInterfaceNode(
       pub_pose
   ));
   // TODO(c.ho) low pass filter and velocity controller
+
+  // Replicate published topics from the SimplePlanningSimulator
+  // TODO(Maxime CLEMENT): move to another node ?
+  using rclcpp::QoS;
+  pub_control_mode_report_ =
+    create_publisher<ControlModeReport>("output/control_mode_report", QoS{1});
+  pub_gear_report_ = create_publisher<GearReport>("output/gear_report", QoS{1});
+  pub_velocity_ = create_publisher<VelocityReport>("output/twist", QoS{1});
+  pub_odom_ = create_publisher<Odometry>("output/odometry", QoS{1});
+  pub_steer_ = create_publisher<SteeringReport>("output/steering", QoS{1});
+
+  sub_odom_ = create_subscription<Odometry>(
+    "/lgsvl/gnss_odom", QoS{1}, [&](const Odometry::ConstSharedPtr odom_msg) {
+      pub_odom_->publish(*odom_msg);
+
+      VelocityReport velocity;
+      velocity.longitudinal_velocity = static_cast<float>(odom_msg->twist.twist.linear.x);
+      velocity.lateral_velocity = 0.0F;
+      velocity.heading_rate = static_cast<float>(odom_msg->twist.twist.angular.z);
+      pub_velocity_->publish(velocity);
+    });
+  sub_vehicle_odom_ = create_subscription<VehicleOdometry>(
+    "/lgsvl/vehicle_odom", QoS{1}, [&](const VehicleOdometry::ConstSharedPtr odom_msg) {
+      autoware_auto_vehicle_msgs::msg::SteeringReport steer;
+      steer.steering_tire_angle = static_cast<float>(odom_msg->front_wheel_angle_rad);
+      pub_steer_->publish(steer);
+    });
+  sub_state_ = create_subscription<lgsvl_msgs::msg::CanBusData>(
+    "/lgsvl/vehicle_odom", QoS{1}, [&](const lgsvl_msgs::msg::CanBusData::ConstSharedPtr state_msg) {
+      {
+        GearReport msg;
+        msg.stamp = get_clock()->now();
+        switch(state_msg->selected_gear) {
+          case (lgsvl_msgs::msg::CanBusData::GEAR_DRIVE):
+            msg.report = GearReport::DRIVE;
+            break;
+          case (lgsvl_msgs::msg::CanBusData::GEAR_REVERSE):
+            msg.report = GearReport::REVERSE;
+            break;
+          case (lgsvl_msgs::msg::CanBusData::GEAR_LOW):
+            msg.report = GearReport::LOW;
+            break;
+          case (lgsvl_msgs::msg::CanBusData::GEAR_NEUTRAL):
+          case (lgsvl_msgs::msg::CanBusData::GEAR_PARKING):
+          default:
+            msg.report = GearReport::PARK;
+            break;
+        }
+        pub_gear_report_->publish(msg);
+      }
+      {
+        ControlModeReport msg;
+        msg.stamp = get_clock()->now();
+        msg.mode = ControlModeReport::AUTONOMOUS;
+        pub_control_mode_report_->publish(msg);
+      }
+    });
 }
 
 }  // namespace lgsvl_interface
