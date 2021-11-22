@@ -4,7 +4,6 @@
     # -- system --
     ctrl_period: 0.03               # control period [s]
     traj_resample_dist: 0.1         # path resampling interval [m]
-    enable_yaw_recalculation: false # flag for recalculation of yaw angle after resampling
     use_steer_prediction: false     # flag for using steer prediction (do not use steer measurement)
     admissible_position_error: 5.0  # stop mpc calculation when error is larger than the following value
     admissible_yaw_error_rad: 1.57  # stop mpc calculation when error is larger than the following value
@@ -12,7 +11,8 @@
     # -- path smoothing --
     enable_path_smoothing: false   # flag for path smoothing
     path_filter_moving_ave_num: 25 # param of moving average filter for path smoothing
-    curvature_smoothing_num: 15    # point-to-point index distance used in curvature calculation : curvature is calculated from three points p(i-num), p(i), p(i+num)
+    curvature_smoothing_num_traj: 1         # point-to-point index distance used in curvature calculation (for trajectory): curvature is calculated from three points p(i-num), p(i), p(i+num)
+    curvature_smoothing_num_ref_steer: 15   # point-to-point index distance used in curvature calculation (for steer command reference): curvature is calculated from three points p(i-num), p(i), p(i+num)
 
     # -- mpc optimization --
     qp_solver_type: "osqp"                       # optimization solver option (unconstraint_fast or osqp)
@@ -57,7 +57,6 @@
     # stop state
     stop_state_entry_ego_speed: 0.2
     stop_state_entry_target_speed: 0.5
-    stop_state_keep_stopping_dist: 0.5
 
     # vehicle parameters
     vehicle:
