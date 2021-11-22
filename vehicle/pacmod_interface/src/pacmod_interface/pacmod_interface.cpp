@@ -146,6 +146,8 @@ PacmodInterface::PacmodInterface()
     "/vehicle/status/hazard_lights_status", rclcpp::QoS{1});
   actuation_status_pub_ =
     create_publisher<ActuationStatusStamped>("/vehicle/status/actuation_status", 1);
+  steering_wheel_status_pub_ =
+    create_publisher<SteeringWheelStatusStamped>("/vehicle/status/steering_wheel_status", 1);
 
   // Timer
   auto timer_callback = std::bind(&PacmodInterface::publishCommands, this);
@@ -239,6 +241,14 @@ void PacmodInterface::callbackPacmodRpt(
   std_msgs::msg::Header header;
   header.frame_id = base_frame_id_;
   header.stamp = get_clock()->now();
+
+  /* publish steering wheel status */
+  {
+    SteeringWheelStatusStamped steering_wheel_status_msg;
+    steering_wheel_status_msg.stamp = header.stamp;
+    steering_wheel_status_msg.data = current_steer_wheel;
+    steering_wheel_status_pub_->publish(steering_wheel_status_msg);
+  }
 
   /* publish vehicle status control_mode */
   {
