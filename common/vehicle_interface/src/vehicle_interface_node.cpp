@@ -67,6 +67,7 @@ VehicleInterfaceNode::VehicleInterfaceNode(
   std::experimental::optional<StateMachineConfig> state_machine_config{};
   {
     float64_t velocity_threshold;
+    declare_parameter<float64_t>("state_machine.gear_shift_velocity_threshold_mps");
     if (get_parameter("state_machine.gear_shift_velocity_threshold_mps", velocity_threshold)) {
       state_machine_config = StateMachineConfig{
         static_cast<float32_t>(velocity_threshold),

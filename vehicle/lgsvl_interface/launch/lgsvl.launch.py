@@ -39,7 +39,7 @@ def generate_launch_description():
     # only one of them can be active at a time with a value
     control_command_param = DeclareLaunchArgument(
         'control_command',
-        default_value="raw",  # use "raw", "basic" or "high_level"
+        default_value="ackermann",  # use "raw", "basic" or "high_level"
         description='command control mode')
 
     # Default lgsvl_interface params
@@ -71,6 +71,7 @@ def generate_launch_description():
             ("state_report_out", "state_report"),
             ("gnss_odom", "/lgsvl/gnss_odom"),
             ("vehicle_odom", "/lgsvl/vehicle_odom"),
+            ("ackermann_vehicle_command", "/control/command/control_cmd"),
             ('output/twist', '/vehicle/status/velocity_status'),
             ('output/odometry', '/localization/kinematic_state'),
             ('output/steering', '/vehicle/status/steering_status'),
