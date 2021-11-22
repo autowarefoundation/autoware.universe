@@ -466,7 +466,7 @@ Visualization Manager:
                 Durability Policy: Volatile
                 History Policy: Keep Last
                 Reliability Policy: Best Effort
-                Value: /sensing/lidar/no_ground/pointcloud
+                Value: /perception/object_segmentation/pointcloud
               Use Fixed Frame: true
               Use rainbow: true
               Value: true
