@@ -263,6 +263,7 @@ bool MapBasedPrediction::getPredictedPath(
     }
   }
 
+  path.time_step = rclcpp::Duration::from_seconds(dt);
   return true;
 }
 
