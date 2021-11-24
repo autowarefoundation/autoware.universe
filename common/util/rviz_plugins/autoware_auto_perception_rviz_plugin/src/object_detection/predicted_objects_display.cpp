@@ -104,6 +104,7 @@ void PredictedObjectsDisplay::processMessage(PredictedObjects::ConstSharedPtr ms
     }
 
     // Add marker for each candidate path
+    int32_t path_count = 0;
     for (const auto & predicted_path : object.kinematics.predicted_paths) {
       // Get marker for predicted path
       auto predicted_path_marker =
@@ -111,12 +112,15 @@ void PredictedObjectsDisplay::processMessage(PredictedObjects::ConstSharedPtr ms
       if (predicted_path_marker) {
         auto predicted_path_marker_ptr = predicted_path_marker.value();
         predicted_path_marker_ptr->header = msg->header;
-        predicted_path_marker_ptr->id = uuid_to_marker_id(object.object_id);
+        predicted_path_marker_ptr->id =
+          uuid_to_marker_id(object.object_id) + path_count * PATH_ID_CONSTANT;
         add_marker(predicted_path_marker_ptr);
+        path_count++;
       }
     }
 
     // Add confidence text marker for each candidate path
+    path_count = 0;
     for (const auto & predicted_path : object.kinematics.predicted_paths) {
       if (predicted_path.path.empty()) {
         continue;
@@ -126,8 +130,10 @@ void PredictedObjectsDisplay::processMessage(PredictedObjects::ConstSharedPtr ms
       if (path_confidence_marker) {
         auto path_confidence_marker_ptr = path_confidence_marker.value();
         path_confidence_marker_ptr->header = msg->header;
-        path_confidence_marker_ptr->id = uuid_to_marker_id(object.object_id);
+        path_confidence_marker_ptr->id =
+          uuid_to_marker_id(object.object_id) + path_count * PATH_ID_CONSTANT;
         add_marker(path_confidence_marker_ptr);
+        path_count++;
       }
     }
   }
