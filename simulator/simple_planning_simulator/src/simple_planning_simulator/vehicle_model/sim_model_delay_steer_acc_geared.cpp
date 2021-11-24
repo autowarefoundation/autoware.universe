@@ -130,7 +130,9 @@ float64_t SimModelDelaySteerAccGeared::calcVelocityWithGear(
     }
   } else if (gear == GearCommand::PARK) {
     return 0.0;
+  } else {
+    return 0.0;
   }
 
-  return 0.0;
+  return state(IDX::VX);
 }

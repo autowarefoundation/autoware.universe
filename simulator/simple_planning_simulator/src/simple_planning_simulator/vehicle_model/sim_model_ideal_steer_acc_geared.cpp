@@ -81,7 +81,9 @@ float64_t SimModelIdealSteerAccGeared::calcVelocityWithGear(
     }
   } else if (gear == GearCommand::PARK) {
     return 0.0;
+  } else {
+    return 0.0;
   }
 
-  return 0.0;
+  return state(IDX::VX);
 }
