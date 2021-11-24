@@ -213,6 +213,8 @@ void SimplePlanningSimulator::on_timer()
 
   // set current state
   current_odometry_ = to_odometry(vehicle_model_ptr_);
+  current_odometry_.pose.pose.position.z = get_z_pose_from_trajectory(
+    current_odometry_.pose.pose.position.x, current_odometry_.pose.pose.position.y);
 
   current_velocity_ = to_velocity_report(vehicle_model_ptr_);
   current_steer_ = to_steering_report(vehicle_model_ptr_);
@@ -423,8 +425,6 @@ void SimplePlanningSimulator::publish_odometry(const Odometry & odometry)
   msg.header.frame_id = origin_frame_id_;
   msg.header.stamp = get_clock()->now();
   msg.child_frame_id = simulated_frame_id_;
-  msg.pose.pose.position.z =
-    get_z_pose_from_trajectory(odometry.pose.pose.position.x, odometry.pose.pose.position.y);
   pub_odom_->publish(msg);
 }
 
@@ -484,7 +484,7 @@ void SimplePlanningSimulator::publish_tf(const Odometry & odometry)
   tf.child_frame_id = simulated_frame_id_;
   tf.transform.translation.x = odometry.pose.pose.position.x;
   tf.transform.translation.y = odometry.pose.pose.position.y;
-  tf.transform.translation.z = 0.0;
+  tf.transform.translation.z = odometry.pose.pose.position.z;
   tf.transform.rotation = odometry.pose.pose.orientation;
 
   tf2_msgs::msg::TFMessage tf_msg{};

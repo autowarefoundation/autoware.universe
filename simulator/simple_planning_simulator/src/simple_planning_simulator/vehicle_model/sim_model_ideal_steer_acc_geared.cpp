@@ -83,5 +83,5 @@ float64_t SimModelIdealSteerAccGeared::calcVelocityWithGear(
     return 0.0;
   }
 
-  return state(IDX::VX);
+  return 0.0;
 }

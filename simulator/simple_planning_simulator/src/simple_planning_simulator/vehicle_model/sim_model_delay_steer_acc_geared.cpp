@@ -132,5 +132,5 @@ float64_t SimModelDelaySteerAccGeared::calcVelocityWithGear(
     return 0.0;
   }
 
-  return state(IDX::VX);
+  return 0.0;
 }
