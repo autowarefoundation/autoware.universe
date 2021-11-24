@@ -92,6 +92,8 @@ nav:
           - Node diagram: design/software_architecture/NodeDiagram.md
       - Repository: design/repository/Repository.md
       - Release: design/release/Release.md
+  - UserGuide:
+      - RViz panels: user_guide/RVizPanels.md
   - DeveloperGuide:
       - Coding guideline: developer_guide/CodingGuideline.md
       - Pull request guideline: developer_guide/PullRequestGuideline.md
