@@ -89,7 +89,7 @@ bool OcclusionSpotInPublicModule::modifyPathVelocity(
     possible_collisions, interp_path, param_, offset_from_ego_to_target, dynamic_obj_arr_ptr);
   // set orientation to each possible collision
   behavior_velocity_planner::occlusion_spot_utils::calcSlowDownPointsForPossibleCollision(
-    closest_idx, interp_path, offset_from_ego_to_target, possible_collisions);
+    closest_idx, *path, offset_from_ego_to_target, possible_collisions);
   // apply safe velocity using ebs and pbs deceleration
   applySafeVelocityConsideringPossibleCollison(
     path, possible_collisions, ego_velocity, param_.public_road, param_);

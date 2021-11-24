@@ -100,7 +100,7 @@ bool OcclusionSpotInPrivateModule::modifyPathVelocity(
   RCLCPP_DEBUG_STREAM_THROTTLE(
     logger_, *clock_, 3000, "num possible collision:" << possible_collisions.size());
   behavior_velocity_planner::occlusion_spot_utils::calcSlowDownPointsForPossibleCollision(
-    closest_idx, interp_path, offset_from_ego_to_target, possible_collisions);
+    closest_idx, *path, offset_from_ego_to_target, possible_collisions);
   // apply safe velocity using ebs and pbs deceleration
   applySafeVelocityConsideringPossibleCollison(
     path, possible_collisions, ego_velocity, param_.private_road, param_);
