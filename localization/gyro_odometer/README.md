@@ -10,7 +10,6 @@
 
 | Name                            | Type                                             | Description                        |
 | ------------------------------- | ------------------------------------------------ | ---------------------------------- |
-| `vehicle/twist`                 | `geometry_msgs::msg::TwistStamped`               | twist from vehicle                 |
 | `vehicle/twist_with_covariance` | `geometry_msgs::msg::TwistWithCovarianceStamped` | twist with covariance from vehicle |
 | `imu`                           | `sensor_msgs::msg::Imu`                          | imu from sensor                    |
 
@@ -23,10 +22,9 @@
 
 ## Parameters
 
-| Parameter                   | Type   | Description                             |
-| --------------------------- | ------ | --------------------------------------- |
-| `output_frame`              | String | output's frame id                       |
-| `use_twist_with_covariance` | bool   | true when twist with covariance is used |
+| Parameter      | Type   | Description       |
+| -------------- | ------ | ----------------- |
+| `output_frame` | String | output's frame id |
 
 ## Assumptions / Known limits
 

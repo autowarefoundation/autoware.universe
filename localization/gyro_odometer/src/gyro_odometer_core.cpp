@@ -26,14 +26,6 @@ GyroOdometer::GyroOdometer()
   tf_listener_(tf_buffer_),
   output_frame_(declare_parameter("base_link", "base_link"))
 {
-  use_twist_with_covariance_ = declare_parameter("use_twist_with_covariance", true);
-
-  vehicle_twist_sub_ = create_subscription<geometry_msgs::msg::TwistStamped>(
-    "vehicle/twist", rclcpp::QoS{100},
-    std::bind(
-      &GyroOdometer::callbackTwist, this,
-      std::placeholders::_1));  // Deprecated
-
   vehicle_twist_with_cov_sub_ = create_subscription<geometry_msgs::msg::TwistWithCovarianceStamped>(
     "vehicle/twist_with_covariance", rclcpp::QoS{100},
     std::bind(&GyroOdometer::callbackTwistWithCovariance, this, std::placeholders::_1));
@@ -50,40 +42,9 @@ GyroOdometer::GyroOdometer()
 
 GyroOdometer::~GyroOdometer() {}
 
-void GyroOdometer::callbackTwist(
-  const geometry_msgs::msg::TwistStamped::ConstSharedPtr twist_msg_ptr)
-{
-  if (use_twist_with_covariance_) {
-    return;
-  }
-
-  // TODO(YamatoAndo) trans from twist_msg_ptr->header to base_frame
-
-  geometry_msgs::msg::TwistWithCovarianceStamped twist_with_cov_msg;
-  twist_with_cov_msg.header = twist_msg_ptr->header;
-  twist_with_cov_msg.twist.twist = twist_msg_ptr->twist;
-
-  // NOTE
-  // linear.y, linear.z, angular.x, and angular.y are not measured values.
-  // Therefore, they should be assigned large variance values.
-  twist_with_cov_msg.twist.covariance[0] = 0.2 * 0.2;
-  twist_with_cov_msg.twist.covariance[7] = 10000.0;
-  twist_with_cov_msg.twist.covariance[14] = 10000.0;
-  twist_with_cov_msg.twist.covariance[21] = 10000.0;
-  twist_with_cov_msg.twist.covariance[28] = 10000.0;
-  twist_with_cov_msg.twist.covariance[35] = 0.1 * 0.1;
-
-  twist_with_cov_msg_ptr_ =
-    std::make_shared<geometry_msgs::msg::TwistWithCovarianceStamped>(twist_with_cov_msg);
-}
-
 void GyroOdometer::callbackTwistWithCovariance(
   const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist_with_cov_msg_ptr)
 {
-  if (!use_twist_with_covariance_) {
-    return;
-  }
-
   // TODO(YamatoAndo) trans from twist_with_cov_msg_ptr->header to base_frame
   twist_with_cov_msg_ptr_ = twist_with_cov_msg_ptr;
 }
