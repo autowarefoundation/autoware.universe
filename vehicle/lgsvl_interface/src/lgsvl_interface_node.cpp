@@ -113,7 +113,7 @@ LgsvlInterfaceNode::LgsvlInterfaceNode(
     "state_report", QoS{1}, [&](const lgsvl_msgs::msg::CanBusData::ConstSharedPtr state_msg) {
       {
         GearReport msg;
-        msg.stamp = get_clock()->now();
+        msg.stamp = state_msg->header.stamp;
         switch(state_msg->selected_gear) {
           case (lgsvl_msgs::msg::CanBusData::GEAR_DRIVE):
             msg.report = GearReport::DRIVE;
@@ -134,7 +134,7 @@ LgsvlInterfaceNode::LgsvlInterfaceNode(
       }
       {
         ControlModeReport msg;
-        msg.stamp = get_clock()->now();
+        msg.stamp = state_msg->header.stamp;
         msg.mode = ControlModeReport::AUTONOMOUS;
         pub_control_mode_report_->publish(msg);
       }
