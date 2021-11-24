@@ -447,7 +447,7 @@ bool TrafficLightModule::isPassthrough(const double & signed_arc_length) const
 bool TrafficLightModule::isTrafficSignalStop(
   const autoware_auto_perception_msgs::msg::TrafficSignal & tl_state) const
 {
-  if (hasTrafficLight(tl_state, autoware_auto_perception_msgs::msg::TrafficLight::GREEN)) {
+  if (hasTrafficLightColor(tl_state, autoware_auto_perception_msgs::msg::TrafficLight::GREEN)) {
     return false;
   }
 
@@ -458,17 +458,17 @@ bool TrafficLightModule::isTrafficSignalStop(
   }
   if (
     turn_direction == "right" &&
-    hasTrafficLight(tl_state, autoware_auto_perception_msgs::msg::TrafficLight::RIGHT_ARROW)) {
+    hasTrafficLightShape(tl_state, autoware_auto_perception_msgs::msg::TrafficLight::RIGHT_ARROW)) {
     return false;
   }
   if (
     turn_direction == "left" &&
-    hasTrafficLight(tl_state, autoware_auto_perception_msgs::msg::TrafficLight::LEFT_ARROW)) {
+    hasTrafficLightShape(tl_state, autoware_auto_perception_msgs::msg::TrafficLight::LEFT_ARROW)) {
     return false;
   }
   if (
     turn_direction == "straight" &&
-    hasTrafficLight(tl_state, autoware_auto_perception_msgs::msg::TrafficLight::UP_ARROW)) {
+    hasTrafficLightShape(tl_state, autoware_auto_perception_msgs::msg::TrafficLight::UP_ARROW)) {
     return false;
   }
 
@@ -573,13 +573,24 @@ autoware_auto_planning_msgs::msg::PathWithLaneId TrafficLightModule::insertStopP
   return modified_path;
 }
 
-bool TrafficLightModule::hasTrafficLight(
+bool TrafficLightModule::hasTrafficLightColor(
   const autoware_auto_perception_msgs::msg::TrafficSignal & tl_state,
   const uint8_t & lamp_color) const
 {
   const auto it_lamp = std::find_if(
     tl_state.lights.begin(), tl_state.lights.end(),
     [&lamp_color](const auto & x) { return x.color == lamp_color; });
+
+  return it_lamp != tl_state.lights.end();
+}
+
+bool TrafficLightModule::hasTrafficLightShape(
+  const autoware_auto_perception_msgs::msg::TrafficSignal & tl_state,
+  const uint8_t & lamp_shape) const
+{
+  const auto it_lamp = std::find_if(
+    tl_state.lights.begin(), tl_state.lights.end(),
+    [&lamp_shape](const auto & x) { return x.shape == lamp_shape; });
 
   return it_lamp != tl_state.lights.end();
 }

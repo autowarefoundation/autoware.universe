@@ -101,9 +101,13 @@ private:
 
   bool isPassthrough(const double & signed_arc_length) const;
 
-  bool hasTrafficLight(
+  bool hasTrafficLightColor(
     const autoware_auto_perception_msgs::msg::TrafficSignal & tl_state,
     const uint8_t & lamp_color) const;
+
+  bool hasTrafficLightShape(
+    const autoware_auto_perception_msgs::msg::TrafficSignal & tl_state,
+    const uint8_t & lamp_shape) const;
 
   bool getHighestConfidenceTrafficSignal(
     const lanelet::ConstLineStringsOrPolygons3d & traffic_lights,
