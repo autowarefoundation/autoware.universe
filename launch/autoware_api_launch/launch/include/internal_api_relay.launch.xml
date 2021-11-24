@@ -4,7 +4,7 @@
     <node pkg="topic_tools" exec="relay" name="traffic_light_states">
       <param name="input_topic" value="/api/autoware/set/traffic_light_states"/>
       <param name="output_topic" value="/external/traffic_light_recognition/traffic_light_states"/>
-      <param name="type" value="autoware_perception_msgs/msg/TrafficLightStateArray"/>
+      <param name="type" value="autoware_auto_perception_msgs/msg/TrafficSignalArray"/>
     </node>
     <node pkg="topic_tools" exec="relay" name="intersection_states">
       <param name="input_topic" value="/api/autoware/set/intersection_states"/>
