@@ -62,12 +62,12 @@ def generate_launch_description():
         ComposableNode(
             package="topic_tools",
             plugin="topic_tools::RelayNode",
-            name="nearest_traffic_light_relay",
+            name="nearest_traffic_signal_relay",
             namespace="awapi",
             parameters=[
                 {
-                    "input_topic": LaunchConfiguration("input_nearest_traffic_light_state"),
-                    "output_topic": LaunchConfiguration("get_nearest_traffic_light_status"),
+                    "input_topic": LaunchConfiguration("input_nearest_traffic_signal"),
+                    "output_topic": LaunchConfiguration("get_nearest_traffic_signal"),
                     "type": "autoware_auto_perception_msgs/msg/LookingTrafficSignal",
                 }
             ],
@@ -284,12 +284,12 @@ def generate_launch_description():
         ComposableNode(
             package="topic_tools",
             plugin="topic_tools::RelayNode",
-            name="traffic_light_relay",
+            name="traffic_signal_relay",
             namespace="awapi",
             parameters=[
                 {
-                    "input_topic": LaunchConfiguration("input_traffic_light_state"),
-                    "output_topic": LaunchConfiguration("get_traffic_light_status"),
+                    "input_topic": LaunchConfiguration("input_traffic_signals"),
+                    "output_topic": LaunchConfiguration("get_traffic_signals"),
                     "type": "autoware_auto_perception_msgs/msg/TrafficSignalArray",
                 }
             ],
@@ -301,12 +301,12 @@ def generate_launch_description():
         ComposableNode(
             package="topic_tools",
             plugin="topic_tools::RelayNode",
-            name="overwrite_traffic_light_state_relay",
+            name="overwrite_traffic_signals_relay",
             namespace="awapi",
             parameters=[
                 {
-                    "input_topic": LaunchConfiguration("set_overwrite_traffic_light_state"),
-                    "output_topic": LaunchConfiguration("output_overwrite_traffic_light_state"),
+                    "input_topic": LaunchConfiguration("set_overwrite_traffic_signals"),
+                    "output_topic": LaunchConfiguration("output_overwrite_traffic_signals"),
                     "type": "autoware_auto_perception_msgs/msg/TrafficSignalArray",
                 }
             ],

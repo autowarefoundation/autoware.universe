@@ -33,8 +33,8 @@
   <arg name="input_obstacle_avoid_candidate_path" default="/planning/scenario_planning/lane_driving/obstacle_avoidance_candidate_trajectory" />
   <arg name="input_route" default="/planning/mission_planning/route" />
   <arg name="input_object" default="/perception/object_recognition/objects" />
-  <arg name="input_traffic_light_state" default="/perception/traffic_light_recognition/traffic_light_states" />
-  <arg name="input_nearest_traffic_light_state" default="/planning/scenario_planning/lane_driving/behavior_planning/debug/traffic_light_state" />
+  <arg name="input_traffic_signals" default="/perception/traffic_light_recognition/traffic_signals" />
+  <arg name="input_nearest_traffic_signal" default="/planning/scenario_planning/lane_driving/behavior_planning/debug/traffic_signal" />
   <arg name="input_trajectory" default="/planning/scenario_planning/trajectory" />
   <arg name="input_current_max_velocity" default="/planning/scenario_planning/current_max_velocity" />
   <arg name="input_door_status" default="/pacmod/rear_pass_door_rpt" />
@@ -61,7 +61,7 @@
   <arg name="output_door_control" default="/pacmod/rear_pass_door_cmd" />
   <!-- output_force_obstacle_avoid is not implemented -->
   <arg name="output_force_obstacle_avoid" default="tmp" />
-  <arg name="output_overwrite_traffic_light_state" default="/external/traffic_light_recognition/traffic_light_states" />
+  <arg name="output_overwrite_traffic_signals" default="/external/traffic_light_recognition/traffic_signals" />
 
   <arg name="node_emergency_stop" default="/control/vehicle_cmd_gate" />
   <arg name="param_emergency_stop" default="use_external_emergency_stop" />
@@ -79,7 +79,7 @@
   <arg name="set_path_change_force" default="path_change/put/force" />
   <arg name="set_obstacle_avoid_approval" default="object_avoidance/put/approval" />
   <arg name="set_force_obstacle_avoid" default="object_avoidance/put/force" />
-  <arg name="set_overwrite_traffic_light_state" default="traffic_light/put/traffic_light_status" />
+  <arg name="set_overwrite_traffic_signals" default="traffic_light/put/traffic_signals" />
   <arg name="set_door_control" default="vehicle/put/door" />
   <arg name="set_crosswalk_status" default="autoware/put/crosswalk_states" />
   <arg name="set_intersection_status" default="autoware/put/intersection_states" />
@@ -90,8 +90,8 @@
   <arg name="get_predicted_object" default="prediction/get/objects" />
   <arg name="get_door_status" default="vehicle/get/door" />
   <arg name="get_stop_speed_exceeded" default="autoware/get/stop_speed_exceeded" />
-  <arg name="get_traffic_light_status" default="traffic_light/get/status" />
-  <arg name="get_nearest_traffic_light_status" default="traffic_light/get/nearest_traffic_light_status" />
+  <arg name="get_traffic_signals" default="traffic_light/get/traffic_signals" />
+  <arg name="get_nearest_traffic_signal" default="traffic_light/get/nearest_traffic_signal" />
   <arg name="get_v2x_command" default="/awapi/tmp/infrastructure_commands" />
   <arg name="get_v2x_state" default="/awapi/tmp/virtual_traffic_light_states" />
   <arg name="get_path_change_ready" default="path_change/get/ready_module" />
