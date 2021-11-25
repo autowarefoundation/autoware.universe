@@ -1,3 +1,0 @@
-/**:
-  ros__parameters:
-    additional_lidars: ["front_upper", "front_lower"]
