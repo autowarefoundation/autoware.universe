@@ -117,7 +117,7 @@ def generate_launch_description():
                 remappings=[
                     ("~/input/image", LaunchConfiguration("input/image")),
                     ("~/input/rois", "rois"),
-                    ("~/output/traffic_light_states", "traffic_light_states"),
+                    ("~/output/traffic_signals", "traffic_signals"),
                 ],
                 extra_arguments=[
                     {"use_intra_process_comms": LaunchConfiguration("use_intra_process")}
@@ -132,7 +132,7 @@ def generate_launch_description():
                     ("~/input/image", LaunchConfiguration("input/image")),
                     ("~/input/rois", "rois"),
                     ("~/input/rough/rois", "rough/rois"),
-                    ("~/input/traffic_light_states", "traffic_light_states"),
+                    ("~/input/traffic_signals", "traffic_signals"),
                     ("~/output/image", "debug/rois"),
                     ("~/output/image/compressed", "debug/rois/compressed"),
                     ("~/output/image/compressedDepth", "debug/rois/compressedDepth"),
