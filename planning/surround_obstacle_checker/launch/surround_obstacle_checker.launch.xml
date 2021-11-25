@@ -4,7 +4,7 @@
   <arg name="input_trajectory" default="input/trajectory" />
   <arg name="input_objects" default="/perception/object_recognition/objects" />
   <arg name="input_odometry" default="/localization/kinematic_state" />
-  <arg name="input_pointcloud" default="/sensing/lidar/no_ground/pointcloud" />
+  <arg name="input_pointcloud" default="/perception/object_segmentation/pointcloud" />
   <arg name="output_trajectory" default="output/trajectory" />
 
   <node pkg="surround_obstacle_checker" exec="surround_obstacle_checker_node" name="surround_obstacle_checker" output="screen">
