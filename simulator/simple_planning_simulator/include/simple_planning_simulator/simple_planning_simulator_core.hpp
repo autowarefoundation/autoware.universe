@@ -49,6 +49,9 @@
 #include "autoware_auto_geometry_msgs/msg/complex32.hpp"
 #include "common/types.hpp"
 
+#include "autoware_api_utils/autoware_api_utils.hpp"
+#include "autoware_external_api_msgs/srv/initialize_pose.hpp"
+
 #include "simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
 
 
@@ -73,6 +76,7 @@ using autoware_auto_vehicle_msgs::msg::HazardLightsReport;
 using autoware_auto_vehicle_msgs::msg::SteeringReport;
 using autoware_auto_vehicle_msgs::msg::VehicleControlCommand;
 using autoware_auto_vehicle_msgs::msg::VelocityReport;
+using autoware_external_api_msgs::srv::InitializePose;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseStamped;
 using geometry_msgs::msg::PoseWithCovarianceStamped;
@@ -136,6 +140,9 @@ private:
   rclcpp::Subscription<AckermannControlCommand>::SharedPtr sub_ackermann_cmd_;
   rclcpp::Subscription<PoseWithCovarianceStamped>::SharedPtr sub_init_pose_;
   rclcpp::Subscription<Trajectory>::SharedPtr sub_trajectory_;
+
+  rclcpp::CallbackGroup::SharedPtr group_api_service_;
+  autoware_api_utils::Service<InitializePose>::SharedPtr srv_set_pose_;
 
   uint32_t timer_sampling_time_ms_;  //!< @brief timer sampling time
   rclcpp::TimerBase::SharedPtr on_timer_;  //!< @brief timer for simulation
@@ -212,6 +219,13 @@ private:
    * @brief set initial pose for simulation with received message
    */
   void on_initialpose(const PoseWithCovarianceStamped::ConstSharedPtr msg);
+
+  /**
+   * @brief set initial pose for simulation with received request
+   */
+  void on_set_pose(
+    const InitializePose::Request::ConstSharedPtr request,
+    const InitializePose::Response::SharedPtr response);
 
   /**
    * @brief subscribe trajectory for deciding self z position.
