@@ -40,7 +40,7 @@
     <remap from="~/input/vector_map" to="$(var map_topic_name)" />
     <remap from="~/input/vehicle_odometry" to="/localization/kinematic_state" />
     <remap from="~/input/dynamic_objects" to="/perception/object_recognition/objects" />
-    <remap from="~/input/no_ground_pointcloud" to="/sensing/lidar/no_ground/pointcloud" />
+    <remap from="~/input/no_ground_pointcloud" to="/perception/object_segmentation/pointcloud" />
     <remap from="~/input/traffic_signals" to="$(var input_traffic_light_topic_name)" />
     <remap from="~/input/external_traffic_signals" to="$(var external_traffic_light_topic_name)" />
     <remap from="~/input/virtual_traffic_light_states" to="$(var virtual_traffic_light_topic_name)" />
