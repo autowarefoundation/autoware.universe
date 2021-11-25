@@ -24,7 +24,7 @@
       names: [
         "/map/vector_map",
         "/map/pointcloud_map",
-        "/sensing/lidar/no_ground/pointcloud",
+        "/perception/object_segmentation/pointcloud",
         "/initialpose3d",
         "/localization/pose_twist_fusion_filter/pose",
         "/perception/object_recognition/objects",
@@ -52,7 +52,7 @@
           type: "sensor_msgs/msg/PointCloud2"
           transient_local: True
 
-        /sensing/lidar/no_ground/pointcloud:
+        /perception/object_segmentation/pointcloud:
           module: "sensing"
           timeout: 1.0
           warn_rate: 5.0
