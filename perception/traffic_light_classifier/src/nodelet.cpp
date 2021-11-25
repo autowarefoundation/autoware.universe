@@ -38,7 +38,7 @@ TrafficLightClassifierNodelet::TrafficLightClassifierNodelet(const rclcpp::NodeO
 
   traffic_signal_array_pub_ =
     this->create_publisher<autoware_auto_perception_msgs::msg::TrafficSignalArray>(
-      "~/output/traffic_light_states", rclcpp::QoS{1});
+      "~/output/traffic_signals", rclcpp::QoS{1});
 
   //
   auto timer_callback = std::bind(&TrafficLightClassifierNodelet::connectCb, this);
