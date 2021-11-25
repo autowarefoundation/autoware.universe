@@ -263,12 +263,12 @@ def generate_launch_description():
             ("~/input/dynamic_objects", "/perception/object_recognition/objects"),
             ("~/input/no_ground_pointcloud", "/sensing/lidar/no_ground/pointcloud"),
             (
-                "~/input/traffic_light_states",
-                "/perception/traffic_light_recognition/traffic_light_states",
+                "~/input/traffic_signals",
+                "/perception/traffic_light_recognition/traffic_signals",
             ),
             (
-                "~/input/external_traffic_light_states",
-                "/external/traffic_light_recognition/traffic_light_states",
+                "~/input/external_traffic_signals",
+                "/external/traffic_light_recognition/traffic_signals",
             ),
             ("~/input/virtual_traffic_light_states", "/awapi/tmp/virtual_traffic_light_states"),
             ("~/input/occupancy_grid", "/sensing/lidar/occupancy_grid"),
@@ -278,7 +278,7 @@ def generate_launch_description():
                 "~/output/infrastructure_commands",
                 "/planning/scenario_planning/status/infrastructure_commands",
             ),
-            ("~/output/traffic_light_state", "debug/traffic_light_state"),
+            ("~/output/traffic_signal", "debug/traffic_signal"),
         ],
         parameters=[
             {
