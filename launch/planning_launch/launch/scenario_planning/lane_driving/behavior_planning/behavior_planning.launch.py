@@ -261,7 +261,10 @@ def generate_launch_description():
             ("~/input/vector_map", "/map/vector_map"),
             ("~/input/vehicle_odometry", "/localization/kinematic_state"),
             ("~/input/dynamic_objects", "/perception/object_recognition/objects"),
-            ("~/input/no_ground_pointcloud", "/sensing/lidar/no_ground/pointcloud"),
+            (
+                "~/input/no_ground_pointcloud",
+                "/perception/object_segmentation/pointcloud",
+            ),
             (
                 "~/input/traffic_signals",
                 "/perception/traffic_light_recognition/traffic_signals",

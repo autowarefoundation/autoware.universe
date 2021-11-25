@@ -43,7 +43,7 @@
       <arg name="enable_slow_down" value="false" />
       <!-- remap topic name -->
       <arg name="input_trajectory" value="surround_obstacle_checker/trajectory" />
-      <arg name="input_pointcloud" value="/sensing/lidar/no_ground/pointcloud" />
+      <arg name="input_pointcloud" value="/perception/object_segmentation/pointcloud" />
       <arg name="output_trajectory" value="/planning/scenario_planning/lane_driving/trajectory" />
     </include>
   </group>

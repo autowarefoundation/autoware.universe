@@ -90,7 +90,10 @@ def generate_launch_description():
             ("~/output/no_start_reason", "/planning/scenario_planning/status/no_start_reason"),
             ("~/output/stop_reasons", "/planning/scenario_planning/status/stop_reasons"),
             ("~/output/trajectory", "surround_obstacle_checker/trajectory"),
-            ("~/input/pointcloud", "/sensing/lidar/no_ground/pointcloud"),
+            (
+                "~/input/pointcloud",
+                "/perception/object_segmentation/pointcloud",
+            ),
             ("~/input/objects", "/perception/object_recognition/objects"),
             ("~/input/odometry", "/localization/kinematic_state"),
             ("~/input/trajectory", "obstacle_avoidance_planner/trajectory"),
@@ -154,7 +157,10 @@ def generate_launch_description():
                 "/planning/scenario_planning/clear_velocity_limit",
             ),
             ("~/output/trajectory", "/planning/scenario_planning/lane_driving/trajectory"),
-            ("~/input/pointcloud", "/sensing/lidar/no_ground/pointcloud"),
+            (
+                "~/input/pointcloud",
+                "/perception/object_segmentation/pointcloud",
+            ),
             ("~/input/objects", "/perception/object_recognition/objects"),
             ("~/input/odometry", "/localization/kinematic_state"),
             ("~/input/trajectory", "surround_obstacle_checker/trajectory"),
