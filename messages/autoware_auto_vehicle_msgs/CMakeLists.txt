@@ -22,6 +22,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/HeadlightsReport.idl"
   "msg/HornCommand.idl"
   "msg/HornReport.idl"
+  "msg/RawControlCommand.idl"
   "msg/StationaryLockingCommand.idl"
   "msg/SteeringReport.idl"
   "msg/TurnIndicatorsCommand.idl"
