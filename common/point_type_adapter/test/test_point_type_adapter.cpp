@@ -12,13 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <common/types.hpp>
-#include <point_cloud_msg_wrapper/point_cloud_msg_wrapper.hpp>
-#include <memory>
-#include <vector>
-#include <limits>
 #include "gtest/gtest.h"
 #include "point_type_adapter/point_type_adapter_node.hpp"
+
+#include <common/types.hpp>
+#include <point_cloud_msg_wrapper/point_cloud_msg_wrapper.hpp>
+
+#include <limits>
+#include <memory>
+#include <vector>
 
 using autoware::common::types::float32_t;
 using autoware::common::types::float64_t;
@@ -33,23 +35,16 @@ struct PointSvl
   friend bool operator==(const PointSvl & p1, const PointSvl & p2) noexcept
   {
     using autoware::common::helper_functions::comparisons::rel_eq;
-    return rel_eq(
-      p1.x, p2.x,
-      std::numeric_limits<float32_t>::epsilon()) &&
-           rel_eq(
-      p1.y, p2.y,
-      std::numeric_limits<float32_t>::epsilon()) &&
-           rel_eq(
-      p1.z, p2.z,
-      std::numeric_limits<float32_t>::epsilon()) &&
+    return rel_eq(p1.x, p2.x, std::numeric_limits<float32_t>::epsilon()) &&
+           rel_eq(p1.y, p2.y, std::numeric_limits<float32_t>::epsilon()) &&
+           rel_eq(p1.z, p2.z, std::numeric_limits<float32_t>::epsilon()) &&
            p1.intensity == p2.intensity &&
-           rel_eq(
-      p1.timestamp, p2.timestamp,
-      std::numeric_limits<float64_t>::epsilon());
+           rel_eq(p1.timestamp, p2.timestamp, std::numeric_limits<float64_t>::epsilon());
   }
 };
 
-TEST(TestPointTypeAdapter, TestCloudConverter) {
+TEST(TestPointTypeAdapter, TestCloudConverter)
+{
   using PointXYZI = autoware::common::types::PointXYZI;
   using sensor_msgs::msg::PointCloud2;
   PointCloud2::SharedPtr cloud_svl_ptr = std::make_shared<PointCloud2>();
@@ -70,8 +65,8 @@ TEST(TestPointTypeAdapter, TestCloudConverter) {
   node_options.parameter_overrides(params);
   autoware::tools::point_type_adapter::PointTypeAdapterNode point_type_adapter_node(node_options);
 
-  PointCloud2::SharedPtr cloud_xyzi_ptr = point_type_adapter_node.cloud_in_to_cloud_xyzi(
-    cloud_svl_ptr);
+  PointCloud2::SharedPtr cloud_xyzi_ptr =
+    point_type_adapter_node.cloud_in_to_cloud_xyzi(cloud_svl_ptr);
   rclcpp::shutdown();
 
   using CloudViewXyzi = point_cloud_msg_wrapper::PointCloud2View<PointXYZI>;

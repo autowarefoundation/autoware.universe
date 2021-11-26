@@ -16,14 +16,16 @@
 #define ODOM_GROUND_TRUTH__HPP_
 
 #include <lgsvl_ground_truth/visibility_control.hpp>
-#include <nav_msgs/msg/odometry.hpp>
 #include <rclcpp/rclcpp.hpp>
+
+#include <nav_msgs/msg/odometry.hpp>
+
 #include <tf2_ros/transform_broadcaster.h>
 
 #include <memory>
 
-namespace lgsvl_ground_truth {
-
+namespace lgsvl_ground_truth
+{
 class LGSVL_GROUND_TRUTH_PUBLIC OdomGroundTruth : public rclcpp::Node
 {
 private:

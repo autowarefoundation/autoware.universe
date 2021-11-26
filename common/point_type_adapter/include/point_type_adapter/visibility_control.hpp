@@ -17,21 +17,21 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 #if defined(__WIN32)
-  #if defined(POINT_TYPE_ADAPTER_BUILDING_DLL) || defined(POINT_TYPE_ADAPTER_EXPORTS)
-    #define POINT_TYPE_ADAPTER_PUBLIC __declspec(dllexport)
-    #define POINT_TYPE_ADAPTER_LOCAL
-  #else  // defined(POINT_TYPE_ADAPTER_BUILDING_DLL) || defined(POINT_TYPE_ADAPTER_EXPORTS)
-    #define POINT_TYPE_ADAPTER_PUBLIC __declspec(dllimport)
-    #define POINT_TYPE_ADAPTER_LOCAL
-  #endif  // defined(POINT_TYPE_ADAPTER_BUILDING_DLL) || defined(POINT_TYPE_ADAPTER_EXPORTS)
+#if defined(POINT_TYPE_ADAPTER_BUILDING_DLL) || defined(POINT_TYPE_ADAPTER_EXPORTS)
+#define POINT_TYPE_ADAPTER_PUBLIC __declspec(dllexport)
+#define POINT_TYPE_ADAPTER_LOCAL
+#else  // defined(POINT_TYPE_ADAPTER_BUILDING_DLL) || defined(POINT_TYPE_ADAPTER_EXPORTS)
+#define POINT_TYPE_ADAPTER_PUBLIC __declspec(dllimport)
+#define POINT_TYPE_ADAPTER_LOCAL
+#endif  // defined(POINT_TYPE_ADAPTER_BUILDING_DLL) || defined(POINT_TYPE_ADAPTER_EXPORTS)
 #elif defined(__linux__)
-  #define POINT_TYPE_ADAPTER_PUBLIC __attribute__((visibility("default")))
-  #define POINT_TYPE_ADAPTER_LOCAL __attribute__((visibility("hidden")))
+#define POINT_TYPE_ADAPTER_PUBLIC __attribute__((visibility("default")))
+#define POINT_TYPE_ADAPTER_LOCAL __attribute__((visibility("hidden")))
 #elif defined(__APPLE__)
-  #define POINT_TYPE_ADAPTER_PUBLIC __attribute__((visibility("default")))
-  #define POINT_TYPE_ADAPTER_LOCAL __attribute__((visibility("hidden")))
+#define POINT_TYPE_ADAPTER_PUBLIC __attribute__((visibility("default")))
+#define POINT_TYPE_ADAPTER_LOCAL __attribute__((visibility("hidden")))
 #else
-  #error "Unsupported Build Configuration"
+#error "Unsupported Build Configuration"
 #endif
 
 #endif  // POINT_TYPE_ADAPTER__VISIBILITY_CONTROL_HPP_

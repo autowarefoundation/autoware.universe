@@ -19,13 +19,16 @@
 #ifndef POINT_TYPE_ADAPTER__POINT_TYPE_ADAPTER_NODE_HPP_
 #define POINT_TYPE_ADAPTER__POINT_TYPE_ADAPTER_NODE_HPP_
 
-#include <rclcpp/rclcpp.hpp>
-#include <sensor_msgs/msg/point_cloud2.hpp>
+#include "point_cloud2_intensity_wrapper.hpp"
+#include "point_type_adapter/visibility_control.hpp"
+
 #include <common/types.hpp>
 #include <helper_functions/float_comparisons.hpp>
+#include <rclcpp/rclcpp.hpp>
+
+#include <sensor_msgs/msg/point_cloud2.hpp>
+
 #include <limits>
-#include "point_type_adapter/visibility_control.hpp"
-#include "point_cloud2_intensity_wrapper.hpp"
 
 namespace autoware
 {
@@ -33,7 +36,6 @@ namespace tools
 {
 namespace point_type_adapter
 {
-
 /// \class PointTypeAdapterNode
 /// \brief ROS 2 Node for converting PointCloud2 clouds with
 /// different fields to Autoware.Auto default format

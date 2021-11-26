@@ -22,31 +22,31 @@
 //     https://gcc.gnu.org/wiki/Visibility
 
 #if defined _WIN32 || defined __CYGWIN__
-  #ifdef __GNUC__
-    #define LGSVL_GROUND_TRUTH_EXPORT __attribute__ ((dllexport))
-    #define LGSVL_GROUND_TRUTH_IMPORT __attribute__ ((dllimport))
-  #else
-    #define LGSVL_GROUND_TRUTH_EXPORT __declspec(dllexport)
-    #define LGSVL_GROUND_TRUTH_IMPORT __declspec(dllimport)
-  #endif
-  #ifdef LGSVL_GROUND_TRUTH_BUILDING_LIBRARY
-    #define LGSVL_GROUND_TRUTH_PUBLIC LGSVL_GROUND_TRUTH_EXPORT
-  #else
-    #define LGSVL_GROUND_TRUTH_PUBLIC LGSVL_GROUND_TRUTH_IMPORT
-  #endif
-  #define LGSVL_GROUND_TRUTH_PUBLIC_TYPE LGSVL_GROUND_TRUTH_PUBLIC
-  #define LGSVL_GROUND_TRUTH_LOCAL
+#ifdef __GNUC__
+#define LGSVL_GROUND_TRUTH_EXPORT __attribute__((dllexport))
+#define LGSVL_GROUND_TRUTH_IMPORT __attribute__((dllimport))
 #else
-  #define LGSVL_GROUND_TRUTH_EXPORT __attribute__ ((visibility("default")))
-  #define LGSVL_GROUND_TRUTH_IMPORT
-  #if __GNUC__ >= 4
-    #define LGSVL_GROUND_TRUTH_PUBLIC __attribute__ ((visibility("default")))
-    #define LGSVL_GROUND_TRUTH_LOCAL  __attribute__ ((visibility("hidden")))
-  #else
-    #define LGSVL_GROUND_TRUTH_PUBLIC
-    #define LGSVL_GROUND_TRUTH_LOCAL
-  #endif
-  #define LGSVL_GROUND_TRUTH_PUBLIC_TYPE
+#define LGSVL_GROUND_TRUTH_EXPORT __declspec(dllexport)
+#define LGSVL_GROUND_TRUTH_IMPORT __declspec(dllimport)
+#endif
+#ifdef LGSVL_GROUND_TRUTH_BUILDING_LIBRARY
+#define LGSVL_GROUND_TRUTH_PUBLIC LGSVL_GROUND_TRUTH_EXPORT
+#else
+#define LGSVL_GROUND_TRUTH_PUBLIC LGSVL_GROUND_TRUTH_IMPORT
+#endif
+#define LGSVL_GROUND_TRUTH_PUBLIC_TYPE LGSVL_GROUND_TRUTH_PUBLIC
+#define LGSVL_GROUND_TRUTH_LOCAL
+#else
+#define LGSVL_GROUND_TRUTH_EXPORT __attribute__((visibility("default")))
+#define LGSVL_GROUND_TRUTH_IMPORT
+#if __GNUC__ >= 4
+#define LGSVL_GROUND_TRUTH_PUBLIC __attribute__((visibility("default")))
+#define LGSVL_GROUND_TRUTH_LOCAL __attribute__((visibility("hidden")))
+#else
+#define LGSVL_GROUND_TRUTH_PUBLIC
+#define LGSVL_GROUND_TRUTH_LOCAL
+#endif
+#define LGSVL_GROUND_TRUTH_PUBLIC_TYPE
 #endif
 
 #endif  // LGSVL_GROUND_TRUTH__VISIBILITY_CONTROL_HPP_

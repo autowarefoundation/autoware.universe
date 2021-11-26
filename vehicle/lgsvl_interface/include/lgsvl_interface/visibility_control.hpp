@@ -22,31 +22,31 @@
 //     https://gcc.gnu.org/wiki/Visibility
 
 #if defined _WIN32 || defined __CYGWIN__
-  #ifdef __GNUC__
-    #define LGSVL_INTERFACE_EXPORT __attribute__ ((dllexport))
-    #define LGSVL_INTERFACE_IMPORT __attribute__ ((dllimport))
-  #else
-    #define LGSVL_INTERFACE_EXPORT __declspec(dllexport)
-    #define LGSVL_INTERFACE_IMPORT __declspec(dllimport)
-  #endif
-  #ifdef LGSVL_INTERFACE_BUILDING_LIBRARY
-    #define LGSVL_INTERFACE_PUBLIC LGSVL_INTERFACE_EXPORT
-  #else
-    #define LGSVL_INTERFACE_PUBLIC LGSVL_INTERFACE_IMPORT
-  #endif
-  #define LGSVL_INTERFACE_PUBLIC_TYPE LGSVL_INTERFACE_PUBLIC
-  #define LGSVL_INTERFACE_LOCAL
+#ifdef __GNUC__
+#define LGSVL_INTERFACE_EXPORT __attribute__((dllexport))
+#define LGSVL_INTERFACE_IMPORT __attribute__((dllimport))
 #else
-  #define LGSVL_INTERFACE_EXPORT __attribute__ ((visibility("default")))
-  #define LGSVL_INTERFACE_IMPORT
-  #if __GNUC__ >= 4
-    #define LGSVL_INTERFACE_PUBLIC __attribute__ ((visibility("default")))
-    #define LGSVL_INTERFACE_LOCAL  __attribute__ ((visibility("hidden")))
-  #else
-    #define LGSVL_INTERFACE_PUBLIC
-    #define LGSVL_INTERFACE_LOCAL
-  #endif
-  #define LGSVL_INTERFACE_PUBLIC_TYPE
+#define LGSVL_INTERFACE_EXPORT __declspec(dllexport)
+#define LGSVL_INTERFACE_IMPORT __declspec(dllimport)
+#endif
+#ifdef LGSVL_INTERFACE_BUILDING_LIBRARY
+#define LGSVL_INTERFACE_PUBLIC LGSVL_INTERFACE_EXPORT
+#else
+#define LGSVL_INTERFACE_PUBLIC LGSVL_INTERFACE_IMPORT
+#endif
+#define LGSVL_INTERFACE_PUBLIC_TYPE LGSVL_INTERFACE_PUBLIC
+#define LGSVL_INTERFACE_LOCAL
+#else
+#define LGSVL_INTERFACE_EXPORT __attribute__((visibility("default")))
+#define LGSVL_INTERFACE_IMPORT
+#if __GNUC__ >= 4
+#define LGSVL_INTERFACE_PUBLIC __attribute__((visibility("default")))
+#define LGSVL_INTERFACE_LOCAL __attribute__((visibility("hidden")))
+#else
+#define LGSVL_INTERFACE_PUBLIC
+#define LGSVL_INTERFACE_LOCAL
+#endif
+#define LGSVL_INTERFACE_PUBLIC_TYPE
 #endif
 
 #endif  // LGSVL_INTERFACE__VISIBILITY_CONTROL_HPP_

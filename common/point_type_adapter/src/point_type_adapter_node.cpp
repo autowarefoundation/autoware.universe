@@ -12,16 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <sensor_msgs/msg/point_cloud2.hpp>
-#include <sensor_msgs/point_cloud2_iterator.hpp>
+#include "point_type_adapter/point_type_adapter_node.hpp"
+
 #include <common/types.hpp>
 #include <point_cloud_msg_wrapper/point_cloud_msg_wrapper.hpp>
-#include <memory>
+
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <sensor_msgs/point_cloud2_iterator.hpp>
+
 #include <algorithm>
 #include <exception>
+#include <memory>
 #include <string>
 #include <vector>
-#include "point_type_adapter/point_type_adapter_node.hpp"
 
 namespace
 {
@@ -38,17 +41,12 @@ using common::types::PointXYZI;
 using sensor_msgs::msg::PointCloud2;
 
 PointTypeAdapterNode::PointTypeAdapterNode(const rclcpp::NodeOptions & options)
-:  Node("point_type_adapter", options),
+: Node("point_type_adapter", options),
   pub_ptr_cloud_output_{this->create_publisher<sensor_msgs::msg::PointCloud2>(
-      "points_xyzi",
-      rclcpp::QoS(rclcpp::KeepLast(::QOS_HISTORY_DEPTH)))}
-  ,
+    "points_xyzi", rclcpp::QoS(rclcpp::KeepLast(::QOS_HISTORY_DEPTH)))},
   sub_ptr_cloud_input_(this->create_subscription<PointCloud2>(
-      "points_raw",
-      rclcpp::QoS(rclcpp::KeepLast(::QOS_HISTORY_DEPTH)),
-      std::bind(&PointTypeAdapterNode::callback_cloud_input,
-      this,
-      std::placeholders::_1)))
+    "points_raw", rclcpp::QoS(rclcpp::KeepLast(::QOS_HISTORY_DEPTH)),
+    std::bind(&PointTypeAdapterNode::callback_cloud_input, this, std::placeholders::_1)))
 {
 }
 
@@ -58,9 +56,7 @@ void PointTypeAdapterNode::callback_cloud_input(const PointCloud2::SharedPtr msg
     PointCloud2::SharedPtr cloud_out = cloud_in_to_cloud_xyzi(msg_ptr);
     pub_ptr_cloud_output_->publish(*cloud_out);
   } catch (std::exception & ex) {
-    RCLCPP_ERROR(
-      this->get_logger(),
-      ("Exception occured: " + std::string(ex.what())).c_str());
+    RCLCPP_ERROR(this->get_logger(), ("Exception occured: " + std::string(ex.what())).c_str());
     rclcpp::shutdown();
   }
 }
@@ -71,15 +67,13 @@ PointCloud2::SharedPtr PointTypeAdapterNode::cloud_in_to_cloud_xyzi(
   using CloudModifier = point_cloud_msg_wrapper::PointCloud2Modifier<PointXYZI>;
   PointCloud2::SharedPtr cloud_out_ptr = std::make_shared<PointCloud2>();
 
-  auto fields_contain_field_with_name_and_datatype = [this](
-    const std::vector<sensor_msgs::msg::PointField> & fields,
-    const std::string & name,
-    uint8_t datatype) {
+  auto fields_contain_field_with_name_and_datatype =
+    [this](
+      const std::vector<sensor_msgs::msg::PointField> & fields, const std::string & name,
+      uint8_t datatype) {
       auto iter_search = std::find_if(
-        fields.cbegin(), fields.cend(), [&name](
-          const sensor_msgs::msg::PointField & field) {
-          return field.name == name;
-        });
+        fields.cbegin(), fields.cend(),
+        [&name](const sensor_msgs::msg::PointField & field) { return field.name == name; });
       if (iter_search == fields.cend()) {
         // Given field doesn't exist within given point cloud.
         RCLCPP_ERROR(
@@ -91,16 +85,13 @@ PointCloud2::SharedPtr PointTypeAdapterNode::cloud_in_to_cloud_xyzi(
       return iter_search->datatype == datatype;
     };
 
-  if (!fields_contain_field_with_name_and_datatype(
-      cloud_in->fields, "x",
-      sensor_msgs::msg::PointField::FLOAT32) ||
+  if (
     !fields_contain_field_with_name_and_datatype(
-      cloud_in->fields, "y",
-      sensor_msgs::msg::PointField::FLOAT32) ||
+      cloud_in->fields, "x", sensor_msgs::msg::PointField::FLOAT32) ||
     !fields_contain_field_with_name_and_datatype(
-      cloud_in->fields, "z",
-      sensor_msgs::msg::PointField::FLOAT32))
-  {
+      cloud_in->fields, "y", sensor_msgs::msg::PointField::FLOAT32) ||
+    !fields_contain_field_with_name_and_datatype(
+      cloud_in->fields, "z", sensor_msgs::msg::PointField::FLOAT32)) {
     throw std::runtime_error("x,y,z fields either don't exist or they are not FLOAT32");
   }
 
@@ -112,19 +103,15 @@ PointCloud2::SharedPtr PointTypeAdapterNode::cloud_in_to_cloud_xyzi(
   sensor_msgs::PointCloud2ConstIterator<float32_t> iter_y(*cloud_in, "y");
   sensor_msgs::PointCloud2ConstIterator<float32_t> iter_z(*cloud_in, "z");
 
-
   CloudModifier cloud_modifier_out(*cloud_out_ptr, cloud_in->header.frame_id);
   cloud_out_ptr->header = cloud_in->header;
 
   cloud_modifier_out.reserve(cloud_in->width);
 
-  while (iter_x != iter_x.end() ||
-    iter_y != iter_y.end() ||
-    iter_z != iter_z.end() ||
-    !intensity_iter_wrapper.is_end())
-  {
-    PointXYZI point_xyzi{*iter_x, *iter_y, *iter_z,
-      intensity_iter_wrapper.get_current_value<float32_t>()};
+  while (iter_x != iter_x.end() || iter_y != iter_y.end() || iter_z != iter_z.end() ||
+         !intensity_iter_wrapper.is_end()) {
+    PointXYZI point_xyzi{
+      *iter_x, *iter_y, *iter_z, intensity_iter_wrapper.get_current_value<float32_t>()};
     cloud_modifier_out.push_back(point_xyzi);
     iter_x += 1;
     iter_y += 1;

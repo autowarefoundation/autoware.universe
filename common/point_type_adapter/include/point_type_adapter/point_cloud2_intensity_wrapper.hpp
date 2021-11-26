@@ -20,8 +20,10 @@
 #define POINT_TYPE_ADAPTER__POINT_CLOUD2_INTENSITY_WRAPPER_HPP_
 
 #include <common/types.hpp>
+
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
+
 #include <cstdint>
 
 class IntensityIteratorWrapper
@@ -36,18 +38,13 @@ private:
 
 public:
   explicit IntensityIteratorWrapper(const PointCloud2 & msg)
-  : m_intensity_it_uint8(msg, "intensity"),
-    m_intensity_it_float32(msg, "intensity")
+  : m_intensity_it_uint8(msg, "intensity"), m_intensity_it_float32(msg, "intensity")
   {
-    auto intensity_field_it =
-      std::find_if(
+    auto intensity_field_it = std::find_if(
       std::cbegin(msg.fields), std::cend(msg.fields),
-      [](const sensor_msgs::msg::PointField & field) {
-        return field.name == "intensity";
-      });
-    if (intensity_field_it == msg.fields.cend() ) {
-      throw std::runtime_error(
-              "Required field \"intensity\" doesn't exit in the point cloud.");
+      [](const sensor_msgs::msg::PointField & field) { return field.name == "intensity"; });
+    if (intensity_field_it == msg.fields.cend()) {
+      throw std::runtime_error("Required field \"intensity\" doesn't exit in the point cloud.");
     }
     m_intensity_datatype = intensity_field_it->datatype;
     switch (m_intensity_datatype) {
@@ -56,8 +53,7 @@ public:
         break;
       default:
         throw std::runtime_error(
-                "Intensity type not supported: " +
-                std::to_string(m_intensity_datatype));
+          "Intensity type not supported: " + std::to_string(m_intensity_datatype));
     }
   }
 
@@ -71,8 +67,7 @@ public:
         return !(m_intensity_it_float32 != m_intensity_it_float32.end());
       default:
         throw std::runtime_error(
-                "Intensity type not supported: " +
-                std::to_string(m_intensity_datatype));
+          "Intensity type not supported: " + std::to_string(m_intensity_datatype));
     }
   }
 
@@ -87,12 +82,11 @@ public:
         break;
       default:
         throw std::runtime_error(
-                "Intensity type not supported: " +
-                std::to_string(m_intensity_datatype));
+          "Intensity type not supported: " + std::to_string(m_intensity_datatype));
     }
   }
 
-  template<typename PointFieldValueT>
+  template <typename PointFieldValueT>
   PointFieldValueT get_current_value()
   {
     switch (m_intensity_datatype) {
@@ -102,8 +96,7 @@ public:
         return *m_intensity_it_float32;
       default:
         throw std::runtime_error(
-                "Intensity type not supported: " +
-                std::to_string(m_intensity_datatype));
+          "Intensity type not supported: " + std::to_string(m_intensity_datatype));
     }
   }
 };
