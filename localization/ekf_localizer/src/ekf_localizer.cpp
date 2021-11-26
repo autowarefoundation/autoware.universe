@@ -48,18 +48,11 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
   pose_measure_uncertainty_time_ = declare_parameter("pose_measure_uncertainty_time", 0.01);
   pose_rate_ = declare_parameter("pose_rate", 10.0);  // used for covariance calculation
   pose_gate_dist_ = declare_parameter("pose_gate_dist", 10000.0);  // Mahalanobis limit
-  pose_stddev_x_ = declare_parameter("pose_stddev_x", 0.05);
-  pose_stddev_y_ = declare_parameter("pose_stddev_y", 0.05);
-  pose_stddev_yaw_ = declare_parameter("pose_stddev_yaw", 0.035);
-  use_pose_with_covariance_ = declare_parameter("use_pose_with_covariance", false);
 
   /* twist measurement */
   twist_additional_delay_ = declare_parameter("twist_additional_delay", 0.0);
   twist_rate_ = declare_parameter("twist_rate", 10.0);  // used for covariance calculation
   twist_gate_dist_ = declare_parameter("twist_gate_dist", 10000.0);  // Mahalanobis limit
-  twist_stddev_vx_ = declare_parameter("twist_stddev_vx", 0.2);
-  twist_stddev_wz_ = declare_parameter("twist_stddev_wz", 0.03);
-  use_twist_with_covariance_ = declare_parameter("use_twist_with_covariance", false);
 
   /* process noise */
   double proc_stddev_yaw_c, proc_stddev_yaw_bias_c, proc_stddev_vx_c, proc_stddev_wz_c;
@@ -111,12 +104,8 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
     "initialpose", 1, std::bind(&EKFLocalizer::callbackInitialPose, this, _1));
   sub_pose_with_cov_ = create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
     "in_pose_with_covariance", 1, std::bind(&EKFLocalizer::callbackPoseWithCovariance, this, _1));
-  sub_pose_ = create_subscription<geometry_msgs::msg::PoseStamped>(
-    "in_pose", 1, std::bind(&EKFLocalizer::callbackPose, this, _1));
   sub_twist_with_cov_ = create_subscription<geometry_msgs::msg::TwistWithCovarianceStamped>(
     "in_twist_with_covariance", 1, std::bind(&EKFLocalizer::callbackTwistWithCovariance, this, _1));
-  sub_twist_ = create_subscription<geometry_msgs::msg::TwistStamped>(
-    "in_twist", 1, std::bind(&EKFLocalizer::callbackTwist, this, _1));
 
   dim_x_ex_ = dim_x_ * extend_state_step_;
 
@@ -304,38 +293,16 @@ void EKFLocalizer::callbackInitialPose(
 }
 
 /*
- * callbackPose
- */
-void EKFLocalizer::callbackPose(geometry_msgs::msg::PoseStamped::SharedPtr msg)
-{
-  if (!use_pose_with_covariance_) {
-    current_pose_ptr_ = std::make_shared<geometry_msgs::msg::PoseStamped>(*msg);
-  }
-}
-
-/*
  * callbackPoseWithCovariance
  */
 void EKFLocalizer::callbackPoseWithCovariance(
   geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg)
 {
-  if (use_pose_with_covariance_) {
-    geometry_msgs::msg::PoseStamped pose;
-    pose.header = msg->header;
-    pose.pose = msg->pose.pose;
-    current_pose_ptr_ = std::make_shared<geometry_msgs::msg::PoseStamped>(pose);
-    current_pose_covariance_ = msg->pose.covariance;
-  }
-}
-
-/*
- * callbackTwist
- */
-void EKFLocalizer::callbackTwist(geometry_msgs::msg::TwistStamped::SharedPtr msg)
-{
-  if (!use_twist_with_covariance_) {
-    current_twist_ptr_ = std::make_shared<geometry_msgs::msg::TwistStamped>(*msg);
-  }
+  geometry_msgs::msg::PoseStamped pose;
+  pose.header = msg->header;
+  pose.pose = msg->pose.pose;
+  current_pose_ptr_ = std::make_shared<geometry_msgs::msg::PoseStamped>(pose);
+  current_pose_covariance_ = msg->pose.covariance;
 }
 
 /*
@@ -344,13 +311,11 @@ void EKFLocalizer::callbackTwist(geometry_msgs::msg::TwistStamped::SharedPtr msg
 void EKFLocalizer::callbackTwistWithCovariance(
   geometry_msgs::msg::TwistWithCovarianceStamped::SharedPtr msg)
 {
-  if (use_twist_with_covariance_) {
-    geometry_msgs::msg::TwistStamped twist;
-    twist.header = msg->header;
-    twist.twist = msg->twist.twist;
-    current_twist_ptr_ = std::make_shared<geometry_msgs::msg::TwistStamped>(twist);
-    current_twist_covariance_ = msg->twist.covariance;
-  }
+  geometry_msgs::msg::TwistStamped twist;
+  twist.header = msg->header;
+  twist.twist = msg->twist.twist;
+  current_twist_ptr_ = std::make_shared<geometry_msgs::msg::TwistStamped>(twist);
+  current_twist_covariance_ = msg->twist.covariance;
 }
 
 /*
@@ -528,27 +493,15 @@ void EKFLocalizer::measurementUpdatePose(const geometry_msgs::msg::PoseStamped &
 
   /* Set measurement noise covariance */
   Eigen::MatrixXd R = Eigen::MatrixXd::Zero(dim_y, dim_y);
-  if (use_pose_with_covariance_) {
-    R(0, 0) = current_pose_covariance_.at(0);   // x - x
-    R(0, 1) = current_pose_covariance_.at(1);   // x - y
-    R(0, 2) = current_pose_covariance_.at(5);   // x - yaw
-    R(1, 0) = current_pose_covariance_.at(6);   // y - x
-    R(1, 1) = current_pose_covariance_.at(7);   // y - y
-    R(1, 2) = current_pose_covariance_.at(11);  // y - yaw
-    R(2, 0) = current_pose_covariance_.at(30);  // yaw - x
-    R(2, 1) = current_pose_covariance_.at(31);  // yaw - y
-    R(2, 2) = current_pose_covariance_.at(35);  // yaw - yaw
-  } else {
-    const double ekf_yaw = ekf_.getXelement(delay_step * dim_x_ + IDX::YAW);
-    const double vx = ekf_.getXelement(delay_step * dim_x_ + IDX::VX);
-    const double wz = ekf_.getXelement(delay_step * dim_x_ + IDX::WZ);
-    const double cov_tu_pos_x = std::pow(pose_measure_uncertainty_time_ * vx * cos(ekf_yaw), 2.0);
-    const double cov_tu_pos_y = std::pow(pose_measure_uncertainty_time_ * vx * sin(ekf_yaw), 2.0);
-    const double cov_tu_yaw = std::pow(pose_measure_uncertainty_time_ * wz, 2.0);
-    R(0, 0) = (pose_stddev_x_ * pose_stddev_x_) + cov_tu_pos_x;    // pos_x
-    R(1, 1) = (pose_stddev_y_ * pose_stddev_y_) + cov_tu_pos_y;    // pos_y
-    R(2, 2) = (pose_stddev_yaw_ * pose_stddev_yaw_) + cov_tu_yaw;  // yaw
-  }
+  R(0, 0) = current_pose_covariance_.at(0);   // x - x
+  R(0, 1) = current_pose_covariance_.at(1);   // x - y
+  R(0, 2) = current_pose_covariance_.at(5);   // x - yaw
+  R(1, 0) = current_pose_covariance_.at(6);   // y - x
+  R(1, 1) = current_pose_covariance_.at(7);   // y - y
+  R(1, 2) = current_pose_covariance_.at(11);  // y - yaw
+  R(2, 0) = current_pose_covariance_.at(30);  // yaw - x
+  R(2, 1) = current_pose_covariance_.at(31);  // yaw - y
+  R(2, 2) = current_pose_covariance_.at(35);  // yaw - yaw
 
   /* In order to avoid a large change at the time of updating,
    * measurement update is performed by dividing at every step. */
@@ -637,15 +590,10 @@ void EKFLocalizer::measurementUpdateTwist(const geometry_msgs::msg::TwistStamped
 
   /* Set measurement noise covariance */
   Eigen::MatrixXd R = Eigen::MatrixXd::Zero(dim_y, dim_y);
-  if (use_twist_with_covariance_) {
-    R(0, 0) = current_twist_covariance_.at(0);   // vx - vx
-    R(0, 1) = current_twist_covariance_.at(5);   // vx - wz
-    R(1, 0) = current_twist_covariance_.at(30);  // wz - vx
-    R(1, 1) = current_twist_covariance_.at(35);  // wz - wz
-  } else {
-    R(0, 0) = twist_stddev_vx_ * twist_stddev_vx_;  // for vx
-    R(1, 1) = twist_stddev_wz_ * twist_stddev_wz_;  // for wz
-  }
+  R(0, 0) = current_twist_covariance_.at(0);   // vx - vx
+  R(0, 1) = current_twist_covariance_.at(5);   // vx - wz
+  R(1, 0) = current_twist_covariance_.at(30);  // wz - vx
+  R(1, 1) = current_twist_covariance_.at(35);  // wz - wz
 
   /* In order to avoid a large change by update, measurement update is performed
    * by dividing at every step. measurement update is performed by dividing at every step. */

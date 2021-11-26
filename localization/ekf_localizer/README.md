@@ -43,19 +43,11 @@ The parameters and input topic names can be set in the `ekf_localizer.launch` fi
 
 - measured_pose_with_covariance (geometry_msgs/PoseWithCovarianceStamped)
 
-  Input pose source with measurement covariance matrix, used when `use_pose_with_covariance` is true.
+  Input pose source with measurement covariance matrix.
 
 - measured_twist_with_covariance (geometry_msgs/PoseWithCovarianceStamped)
 
-  Input twist source with measurement covariance matrix, used when `use_twist_with_covariance` is true.
-
-- measured_pose (geometry_msgs/PoseStamped)
-
-  Input pose source, used when `use_pose_with_covariance` is false.
-
-- measured_twist (geometry_msgs/TwistStamped)
-
-  Input twist source, used when `use_twist_with_covariance` is false.
+  Input twist source with measurement covariance matrix.
 
 - initialpose (geometry_msgs/PoseWithCovarianceStamped)
 
@@ -125,27 +117,20 @@ The parameters are set in `launch/ekf_localizer.launch` .
 
 ### For pose measurement
 
-| Name                          | Type   | Description                                                                               | Default value |
-| :---------------------------- | :----- | :---------------------------------------------------------------------------------------- | :------------ |
-| pose_additional_delay         | double | Additional delay time for pose measurement [s]                                            | 0.0           |
-| pose_measure_uncertainty_time | double | Measured time uncertainty used for covariance calculation [s]                             | 0.01          |
-| pose_rate                     | double | Approximated input pose rate used for covariance calculation [Hz]                         | 10.0          |
-| pose_gate_dist                | double | Limit of Mahalanobis distance used for outliers detection                                 | 10000.0       |
-| use_pose_with_covariance      | bool   | Flag to use covariance in pose_with_covariance message                                    | false         |
-| pose_stddev_x                 | double | Standard deviation for pose position x [m] (used when use_pose_with_covariance is false)  | 0.05          |
-| pose_stddev_y                 | double | Standard deviation for pose position y [m] (used when use_pose_with_covariance is false)  | 0.05          |
-| pose_stddev_yaw               | double | Standard deviation for pose yaw angle [rad] (used when use_pose_with_covariance is false) | 0.025         |
+| Name                          | Type   | Description                                                       | Default value |
+| :---------------------------- | :----- | :---------------------------------------------------------------- | :------------ |
+| pose_additional_delay         | double | Additional delay time for pose measurement [s]                    | 0.0           |
+| pose_measure_uncertainty_time | double | Measured time uncertainty used for covariance calculation [s]     | 0.01          |
+| pose_rate                     | double | Approximated input pose rate used for covariance calculation [Hz] | 10.0          |
+| pose_gate_dist                | double | Limit of Mahalanobis distance used for outliers detection         | 10000.0       |
 
 ### For twist measurement
 
-| Name                      | Type   | Description                                                                                   | Default value |
-| :------------------------ | :----- | :-------------------------------------------------------------------------------------------- | :------------ |
-| twist_additional_delay    | double | Additional delay time for twist [s]                                                           | 0.0           |
-| twist_rate                | double | Approximated input twist rate used for covariance calculation [Hz]                            | 10.0          |
-| twist_gate_dist           | double | Limit of Mahalanobis distance used for outliers detection                                     | 10000.0       |
-| use_twist_with_covariance | bool   | Flag to use covariance in twist_with_covariance message                                       | false         |
-| twist_stddev_vx           | double | Standard deviation for twist linear x [m/s] (used when use_twist_with_covariance is false)    | 0.2           |
-| twist_stddev_wz           | double | Standard deviation for twist angular z [rad/s] (used when use_twist_with_covariance is false) | 0.03          |
+| Name                   | Type   | Description                                                        | Default value |
+| :--------------------- | :----- | :----------------------------------------------------------------- | :------------ |
+| twist_additional_delay | double | Additional delay time for twist [s]                                | 0.0           |
+| twist_rate             | double | Approximated input twist rate used for covariance calculation [Hz] | 10.0          |
+| twist_gate_dist        | double | Limit of Mahalanobis distance used for outliers detection          | 10000.0       |
 
 ### For process noise
 
@@ -171,12 +156,7 @@ Set sensor-rate and standard-deviation from the basic information of the sensor.
 
 - `pose_measure_uncertainty_time`
 - `pose_rate`
-- `pose_stddev_x`
-- `pose_stddev_y`
-- `pose_stddev_yaw`
 - `twist_rate`
-- `twist_stddev_vx`
-- `twist_stddev_wz`
 
 ### 2. Set process model parameters
 
@@ -184,19 +164,6 @@ Set sensor-rate and standard-deviation from the basic information of the sensor.
 - `proc_stddev_wz_c` : set to maximum angular acceleration
 - `proc_stddev_yaw_c` : This parameter describes the correlation between the yaw and yaw-rate. Large value means the change in yaw does not correlate to the estimated yaw-rate. If this is set to 0, it means the change in estimate yaw is equal to yaw-rate. Usually this should be set to 0.
 - `proc_stddev_yaw_bias_c` : This parameter is the standard deviation for the rate of change in yaw bias. In most cases, yaw bias is constant, so it can be very small, but must be non-zero.
-
-### 3. Tune sensor standard deviation parameters with rosbag simulation
-
-If the position measurement seems more reliable, make these parameters smaller. If the estimated position seems to be noisy due to pose measurement noise, make these values bigger.
-
-- `pose_stddev_x`
-- `pose_stddev_y`
-- `pose_stddev_yaw`
-
-If the twist measurement seems more reliable, make these parameters smaller. If the estimated twist seems to be noisy due to pose measurement noise, make these values bigger.
-
-- `twist_stddev_vx`
-- `twist_stddev_wz`
 
 ## Kalman Filter Model
 
