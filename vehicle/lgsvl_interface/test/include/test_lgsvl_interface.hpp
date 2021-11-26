@@ -40,7 +40,6 @@ const auto gear_report_topic = "test_gear_report";
 const auto steer_report_topic = "test_steer_report";
 const auto control_mode_report_topic = "test_control_mode_report";
 const auto twist_topic = "test_twist";
-const auto odom_topic = "test_odom";
 const auto sim_odom_child_frame = "base_link";
 
 class LgsvlInterfaceTest : public ::testing::Test
@@ -55,7 +54,7 @@ protected:
     lgsvl_interface_ = std::make_unique<lgsvl_interface::LgsvlInterface>(
       *node_, sim_ctrl_cmd_topic, sim_state_cmd_topic, sim_state_rpt_topic, sim_nav_odom_topic,
       sim_veh_odom_topic, kinematic_state_topic, gear_report_topic, steer_report_topic,
-      control_mode_report_topic, twist_topic, odom_topic, sim_odom_child_frame,
+      control_mode_report_topic, twist_topic, sim_odom_child_frame,
       Table1D({0.0, 3.0}, {0.0, 100.0}), Table1D({-3.0, 0.0}, {100.0, 0.0}),
       Table1D({-0.331, 0.331}, {-100.0, 100.0}));
 

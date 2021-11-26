@@ -84,9 +84,8 @@ LgsvlInterface::LgsvlInterface(
   const std::string & sim_veh_odom_topic, const std::string & kinematic_state_topic,
   const std::string & gear_report_topic, const std::string & steer_report_topic,
   const std::string & control_mode_report_topic, const std::string & twist_topic,
-  const std::string & odom_topic, const std::string & sim_odom_child_frame,
-  Table1D && throttle_table, Table1D && brake_table, Table1D && steer_table, bool publish_tf,
-  bool publish_pose, bool publish_clock)
+  const std::string & sim_odom_child_frame, Table1D && throttle_table, Table1D && brake_table,
+  Table1D && steer_table, bool publish_tf, bool publish_pose)
 : m_throttle_table{throttle_table},
   m_brake_table{brake_table},
   m_steer_table{steer_table},
@@ -149,7 +148,6 @@ LgsvlInterface::LgsvlInterface(
     twist_topic, rclcpp::QoS{10});
   m_steer_pub = node.create_publisher<autoware_auto_vehicle_msgs::msg::SteeringReport>(
     steer_report_topic, rclcpp::QoS{10});
-  m_odom_pub = node.create_publisher<nav_msgs::msg::Odometry>(odom_topic, rclcpp::QoS{10});
 
   // Make subscribers
   if (!sim_nav_odom_topic.empty() && ("null" != sim_nav_odom_topic)) {
@@ -168,13 +166,6 @@ LgsvlInterface::LgsvlInterface(
 
     if (publish_tf) {
       m_tf_pub = node.create_publisher<tf2_msgs::msg::TFMessage>("/tf", rclcpp::QoS{10});
-    }
-
-    if (publish_clock) {
-      m_clock_pub = node.create_publisher<rosgraph_msgs::msg::Clock>("/clock", rclcpp::QoS{10});
-      m_clock_sub = node.create_subscription<rosgraph_msgs::msg::Clock>(
-        "/lgsvl/clock", rclcpp::QoS{10},
-        [this](rosgraph_msgs::msg::Clock::SharedPtr msg) { m_clock_pub->publish(*msg); });
     }
   }
 
@@ -558,7 +549,6 @@ void LgsvlInterface::on_odometry(const nav_msgs::msg::Odometry & msg)
   }
   // Autoware.iv interface
   {
-    m_odom_pub->publish(msg);
     autoware_auto_vehicle_msgs::msg::VelocityReport velocity;
     velocity.longitudinal_velocity = static_cast<float>(msg.twist.twist.linear.x);
     velocity.lateral_velocity = 0.0F;

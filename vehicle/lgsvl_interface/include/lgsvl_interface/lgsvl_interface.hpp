@@ -102,9 +102,8 @@ public:
     const std::string & sim_veh_odom_topic, const std::string & kinematic_state_topic,
     const std::string & gear_report_topic, const std::string & steer_report_topic,
     const std::string & control_mode_report_topic, const std::string & twist_topic,
-    const std::string & odom_topic, const std::string & sim_odom_child_frame,
-    Table1D && throttle_table, Table1D && brake_table, Table1D && steer_table,
-    bool publish_tf = NO_PUBLISH, bool publish_pose = PUBLISH, bool publish_clock = NO_PUBLISH);
+    const std::string & sim_odom_child_frame, Table1D && throttle_table, Table1D && brake_table,
+    Table1D && steer_table, bool publish_tf = NO_PUBLISH, bool publish_pose = PUBLISH);
 
   ~LgsvlInterface() noexcept override = default;
   /// Receives data from ROS 2 subscriber, and updates output messages.
@@ -159,11 +158,6 @@ private:
   rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::ControlModeReport>::SharedPtr
     m_control_mode_report_pub{};
   rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::GearReport>::SharedPtr m_gear_report_pub{};
-  rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr m_odom_pub{};
-
-  // clock pub/sub
-  rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr m_clock_pub{};
-  rclcpp::Subscription<rosgraph_msgs::msg::Clock>::SharedPtr m_clock_sub{};
 
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr m_nav_odom_sub{};
   rclcpp::Subscription<lgsvl_msgs::msg::CanBusData>::SharedPtr m_state_sub{};

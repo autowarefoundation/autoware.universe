@@ -76,7 +76,6 @@ def generate_launch_description():
             ("steer_report", "/vehicle/status/steering_status"),
             ("gear_report", "/vehicle/status/gear_status"),
             ("control_mode_report", "/vehicle/status/control_mode"),
-            ("odom", "/localization/kinematic_state"),
         ],
     )
 

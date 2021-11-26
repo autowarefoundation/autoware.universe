@@ -49,7 +49,6 @@ LgsvlInterfaceNode::LgsvlInterfaceNode(const rclcpp::NodeOptions & options)
   const auto steer_report_topic = "steer_report";
   const auto control_mode_report_topic = "control_mode_report";
   const auto twist_topic = "twist";
-  const auto odom_topic = "odom";
   // Optional
   const std::string sim_nav_odom_topic =
     declare_parameter("use_nav_odometry_topic", true) ? "gnss_odom" : "";
@@ -63,14 +62,13 @@ LgsvlInterfaceNode::LgsvlInterfaceNode(const rclcpp::NodeOptions & options)
   };
   const bool8_t pub_pose = declare_parameter<bool8_t>("lgsvl.publish_pose", PUBLISH);
   const bool8_t pub_tf = declare_parameter<bool8_t>("lgsvl.publish_tf", NO_PUBLISH);
-  const bool8_t pub_clock = declare_parameter<bool8_t>("lgsvl.publish_clock", NO_PUBLISH);
 
   // Set up interface
   set_interface(std::make_unique<LgsvlInterface>(
     *this, sim_ctrl_cmd_topic, sim_state_cmd_topic, sim_state_rpt_topic, sim_nav_odom_topic,
     sim_veh_odom_topic, kinematic_state_topic, gear_report_topic, steer_report_topic,
-    control_mode_report_topic, twist_topic, odom_topic, sim_odom_child_frame, table("throttle"),
-    table("brake"), table("steer"), pub_tf, pub_pose, pub_clock));
+    control_mode_report_topic, twist_topic, sim_odom_child_frame, table("throttle"), table("brake"),
+    table("steer"), pub_tf, pub_pose));
   // TODO(c.ho) low pass filter and velocity controller
 }
 
