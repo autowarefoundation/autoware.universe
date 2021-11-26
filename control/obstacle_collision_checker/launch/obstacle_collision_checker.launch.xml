@@ -3,7 +3,7 @@
   <arg name="input/obstacle_pointcloud" default="/perception/object_segmentation/pointcloud" />
   <arg name="input/reference_trajectory" default="/planning/scenario_planning/trajectory" />
   <arg name="input/predicted_trajectory" default="/control/trajectory_follower/predicted_trajectory" />
-  <arg name="input/odometry" default="/localization/odometry" />
+  <arg name="input/odometry" default="/localization/kinematic_state" />
   <arg name="config_file" default="$(find-pkg-share obstacle_collision_checker)/config/obstacle_collision_checker.param.yaml" />
 
   <node pkg="obstacle_collision_checker" exec="obstacle_collision_checker_node" name="obstacle_collision_checker_node" output="screen">
