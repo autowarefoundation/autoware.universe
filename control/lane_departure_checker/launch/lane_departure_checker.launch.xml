@@ -1,5 +1,5 @@
 <launch>
-  <arg name="input/odometry" default="/localization/odometry" />
+  <arg name="input/odometry" default="/localization/kinematic_state" />
   <arg name="input/lanelet_map_bin" default="/map/vector_map" />
   <arg name="input/route" default="/planning/mission_planning/route" />
   <arg name="input/reference_trajectory" default="/planning/scenario_planning/trajectory" />

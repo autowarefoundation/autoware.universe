@@ -47,7 +47,7 @@ This package includes the following features:
 
 ### Input
 
-- /localization/odometry [`nav_msgs::msg::Odometry`]
+- /localization/kinematic_state [`nav_msgs::msg::Odometry`]
 - /map/vector_map [`autoware_auto_mapping_msgs::msg::HADMapBin`]
 - /planning/mission_planning/route [`autoware_auto_planning_msgs::msg::HADMapRoute`]
 - /planning/scenario_planning/trajectory [`autoware_auto_planning_msgs::msg::Trajectory`]
