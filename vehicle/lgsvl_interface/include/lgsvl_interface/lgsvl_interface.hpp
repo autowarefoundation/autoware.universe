@@ -18,35 +18,36 @@
 #ifndef LGSVL_INTERFACE__LGSVL_INTERFACE_HPP_
 #define LGSVL_INTERFACE__LGSVL_INTERFACE_HPP_
 
-#include <lgsvl_interface/visibility_control.hpp>
-
-#include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
-#include <autoware_auto_vehicle_msgs/msg/gear_report.hpp>
-#include <autoware_auto_vehicle_msgs/msg/headlights_command.hpp>
-#include <autoware_auto_vehicle_msgs/msg/horn_command.hpp>
-#include <autoware_auto_vehicle_msgs/msg/wipers_command.hpp>
-#include <autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp>
-#include <autoware_auto_vehicle_msgs/msg/raw_control_command.hpp>
-#include <autoware_auto_vehicle_msgs/msg/vehicle_kinematic_state.hpp>
-#include <autoware_auto_vehicle_msgs/msg/vehicle_state_command.hpp>
-#include <autoware_auto_vehicle_msgs/msg/vehicle_state_report.hpp>
-#include <autoware_auto_vehicle_msgs/srv/autonomy_mode_change.hpp>
-
-#include <lgsvl_msgs/msg/vehicle_odometry.hpp>
-#include <lgsvl_msgs/msg/can_bus_data.hpp>
-#include <lgsvl_msgs/msg/vehicle_control_data.hpp>
-#include <lgsvl_msgs/msg/vehicle_state_data.hpp>
-
-#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
-#include <nav_msgs/msg/odometry.hpp>
-#include <tf2_msgs/msg/tf_message.hpp>
-
 #include <geometry/lookup_table.hpp>
+#include <lgsvl_interface/visibility_control.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <vehicle_interface/platform_interface.hpp>
 
-#include <tf2_ros/transform_listener.h>
+#include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
+#include <autoware_auto_vehicle_msgs/msg/control_mode_report.hpp>
+#include <autoware_auto_vehicle_msgs/msg/gear_command.hpp>
+#include <autoware_auto_vehicle_msgs/msg/gear_report.hpp>
+#include <autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp>
+#include <autoware_auto_vehicle_msgs/msg/headlights_command.hpp>
+#include <autoware_auto_vehicle_msgs/msg/horn_command.hpp>
+#include <autoware_auto_vehicle_msgs/msg/raw_control_command.hpp>
+#include <autoware_auto_vehicle_msgs/msg/steering_report.hpp>
+#include <autoware_auto_vehicle_msgs/msg/vehicle_kinematic_state.hpp>
+#include <autoware_auto_vehicle_msgs/msg/vehicle_state_command.hpp>
+#include <autoware_auto_vehicle_msgs/msg/vehicle_state_report.hpp>
+#include <autoware_auto_vehicle_msgs/msg/velocity_report.hpp>
+#include <autoware_auto_vehicle_msgs/msg/wipers_command.hpp>
+#include <autoware_auto_vehicle_msgs/srv/autonomy_mode_change.hpp>
+#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+#include <lgsvl_msgs/msg/can_bus_data.hpp>
+#include <lgsvl_msgs/msg/vehicle_control_data.hpp>
+#include <lgsvl_msgs/msg/vehicle_odometry.hpp>
+#include <lgsvl_msgs/msg/vehicle_state_data.hpp>
+#include <nav_msgs/msg/odometry.hpp>
+#include <tf2_msgs/msg/tf_message.hpp>
+
 #include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
 
 #include <chrono>
 #include <memory>
@@ -56,7 +57,6 @@
 
 namespace lgsvl_interface
 {
-
 using Table1D = ::autoware::common::helper_functions::LookupTable1D<double>;
 
 // initialise default covariance for each measurement
@@ -80,7 +80,8 @@ constexpr static int32_t COV_RZ = 35;
 constexpr bool PUBLISH = true;
 constexpr bool NO_PUBLISH = false;
 
-// in lgsvl 0 is drive and 1 is reverse https://github.com/lgsvl/simulator/blob/cb937deb8e633573f6c0cc76c9f451398b8b9eff/Assets/Scripts/Sensors/VehicleStateSensor.cs#L70
+// in lgsvl 0 is drive and 1 is reverse
+// https://github.com/lgsvl/simulator/blob/cb937deb8e633573f6c0cc76c9f451398b8b9eff/Assets/Scripts/Sensors/VehicleStateSensor.cs#L70
 using VSC = autoware_auto_vehicle_msgs::msg::VehicleStateCommand;
 using VSD = lgsvl_msgs::msg::VehicleStateData;
 using WIPER_TYPE = decltype(VSC::wiper);
@@ -91,23 +92,18 @@ using MODE_TYPE = decltype(VSC::mode);
 /// where custom logic is required to get simulator data to adhere to ROS conventions.
 /// For a full list of behaviors, see \ref lgsvl
 class LGSVL_INTERFACE_PUBLIC LgsvlInterface
-  : public ::autoware::drivers::vehicle_interface::PlatformInterface
+: public ::autoware::drivers::vehicle_interface::PlatformInterface
 {
 public:
   LgsvlInterface(
-    rclcpp::Node & node,
-    const std::string & sim_cmd_topic,
-    const std::string & sim_state_cmd_topic,
-    const std::string & sim_state_report_topic,
-    const std::string & sim_nav_odom_topic,
-    const std::string & sim_veh_odom_topic,
-    const std::string & kinematic_state_topic,
-    const std::string & sim_odom_child_frame,
-    Table1D && throttle_table,
-    Table1D && brake_table,
-    Table1D && steer_table,
-    bool publish_tf = NO_PUBLISH,
-    bool publish_pose = PUBLISH);
+    rclcpp::Node & node, const std::string & sim_cmd_topic, const std::string & sim_state_cmd_topic,
+    const std::string & sim_state_report_topic, const std::string & sim_nav_odom_topic,
+    const std::string & sim_veh_odom_topic, const std::string & kinematic_state_topic,
+    const std::string & gear_report_topic, const std::string & steer_report_topic,
+    const std::string & control_mode_report_topic, const std::string & twist_topic,
+    const std::string & odom_topic, const std::string & sim_odom_child_frame,
+    Table1D && throttle_table, Table1D && brake_table, Table1D && steer_table,
+    bool publish_tf = NO_PUBLISH, bool publish_pose = PUBLISH);
 
   ~LgsvlInterface() noexcept override = default;
   /// Receives data from ROS 2 subscriber, and updates output messages.
@@ -118,11 +114,11 @@ public:
   bool send_state_command(
     const autoware_auto_vehicle_msgs::msg::VehicleStateCommand & msg) override;
   /// Send control command data with whatever state data came along last
-  bool send_control_command(const autoware_auto_vehicle_msgs::msg::VehicleControlCommand & msg)
-  override;
+  bool send_control_command(
+    const autoware_auto_vehicle_msgs::msg::VehicleControlCommand & msg) override;
   /// Send control command data with whatever state data came along last
-  bool send_control_command(const autoware_auto_control_msgs::msg::AckermannControlCommand & msg)
-  override;
+  bool send_control_command(
+    const autoware_auto_control_msgs::msg::AckermannControlCommand & msg) override;
   /// Send control data with whatever state data came along last; applies scaling here too.
   /// If both brake and throttle is nonzero, decide based on config
   bool send_control_command(
@@ -131,8 +127,8 @@ public:
   bool handle_mode_change_request(
     autoware_auto_vehicle_msgs::srv::AutonomyModeChange_Request::SharedPtr request) override;
   /// Send headlights command data.
-  void send_headlights_command(const autoware_auto_vehicle_msgs::msg::HeadlightsCommand & msg)
-  override;
+  void send_headlights_command(
+    const autoware_auto_vehicle_msgs::msg::HeadlightsCommand & msg) override;
   /// Send horn command data.
   void send_horn_command(const autoware_auto_vehicle_msgs::msg::HornCommand & msg) override;
   /// Send wipers command data.
@@ -156,6 +152,13 @@ private:
     m_kinematic_state_pub{};
   rclcpp::Publisher<tf2_msgs::msg::TFMessage>::SharedPtr m_tf_pub{};
   rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr m_pose_pub{};
+  // Autoware.iv publishers
+  rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::VelocityReport>::SharedPtr m_pub_velocity{};
+  rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::SteeringReport>::SharedPtr m_pub_steer{};
+  rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::ControlModeReport>::SharedPtr
+    m_pub_control_mode_report{};
+  rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::GearReport>::SharedPtr m_pub_gear_report{};
+  rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr m_pub_odom{};
 
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr m_nav_odom_sub{};
   rclcpp::Subscription<lgsvl_msgs::msg::CanBusData>::SharedPtr m_state_sub{};

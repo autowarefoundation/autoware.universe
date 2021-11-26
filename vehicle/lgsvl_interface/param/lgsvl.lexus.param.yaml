@@ -4,7 +4,7 @@
     cycle_time_ms: 10
     # Only one of the four control command topics need be specified
     # "raw", "basic", "ackermann", or "high_level"
-    control_command: "raw"
+    control_command: "ackermann"
     lgsvl:
       use_nav_odometry_topic: True
       throttle:
@@ -14,8 +14,9 @@
         domain: [-3.0, 0.0]
         range: [100.0, 0.0]
       steer:
-        domain: [-0.331, 0.331]
+        domain: [-0.531, 0.531]
         range: [-100.0, 100.0]
+      publish_pose: False
       publish_tf: False
       odom_child_frame: "base_link"
     state_machine:
@@ -25,8 +26,8 @@
         max: 3.0
         threshold: 1.0
       front_steer_limits:
-        min: -0.331
-        max: 0.331
+        min: -0.531
+        max: 0.531
         threshold: 0.3
       time_step_ms: 100
       timeout_acceleration_mps2: 3.0

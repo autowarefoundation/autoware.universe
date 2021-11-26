@@ -13,21 +13,11 @@
 // limitations under the License.
 //
 // Co-developed by Tier IV, Inc. and Apex.AI, Inc.
+#include "lgsvl_interface/lgsvl_interface.hpp"
+
 #include <common/types.hpp>
-#include <geometry_msgs/msg/quaternion.hpp>
 #include <helper_functions/float_comparisons.hpp>
 #include <motion_common/motion_common.hpp>
-
-#include <algorithm>
-#include <chrono>
-#include <cmath>
-#include <limits>
-#include <memory>
-#include <string>
-#include <unordered_map>
-#include <utility>
-
-#include "lgsvl_interface/lgsvl_interface.hpp"
 
 #include "autoware_auto_vehicle_msgs/msg/gear_report.hpp"
 #include "autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp"
@@ -38,11 +28,21 @@
 #include "autoware_auto_vehicle_msgs/msg/horn_report.hpp"
 #include "autoware_auto_vehicle_msgs/msg/wipers_command.hpp"
 #include "autoware_auto_vehicle_msgs/msg/wipers_report.hpp"
+#include <geometry_msgs/msg/quaternion.hpp>
+
+#include <algorithm>
+#include <chrono>
+#include <cmath>
+#include <limits>
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <utility>
 
 using autoware::common::types::bool8_t;
 using autoware::common::types::float64_t;
+using std::chrono_literals::operator""s;
 namespace comp = autoware::common::helper_functions::comparisons;
-using namespace std::chrono_literals;
 
 namespace lgsvl_interface
 {
@@ -55,7 +55,7 @@ using autoware_auto_vehicle_msgs::msg::HornReport;
 using autoware_auto_vehicle_msgs::msg::WipersCommand;
 using autoware_auto_vehicle_msgs::msg::WipersReport;
 
-const std::unordered_map<WIPER_TYPE, WIPER_TYPE> LgsvlInterface::autoware_to_lgsvl_wiper {
+const std::unordered_map<WIPER_TYPE, WIPER_TYPE> LgsvlInterface::autoware_to_lgsvl_wiper{
   {WipersCommand::NO_COMMAND, static_cast<WIPER_TYPE>(VSD::WIPERS_OFF)},
   {WipersCommand::DISABLE, static_cast<WIPER_TYPE>(VSD::WIPERS_OFF)},
   {WipersCommand::ENABLE_LOW, static_cast<WIPER_TYPE>(VSD::WIPERS_LOW)},
@@ -63,7 +63,7 @@ const std::unordered_map<WIPER_TYPE, WIPER_TYPE> LgsvlInterface::autoware_to_lgs
   {WipersCommand::ENABLE_CLEAN, static_cast<WIPER_TYPE>(VSD::WIPERS_OFF)},
 };
 
-const std::unordered_map<GEAR_TYPE, GEAR_TYPE> LgsvlInterface::autoware_to_lgsvl_gear {
+const std::unordered_map<GEAR_TYPE, GEAR_TYPE> LgsvlInterface::autoware_to_lgsvl_gear{
   {VSC::GEAR_NO_COMMAND, static_cast<GEAR_TYPE>(VSD::GEAR_NEUTRAL)},
   {VSC::GEAR_DRIVE, static_cast<GEAR_TYPE>(VSD::GEAR_DRIVE)},
   {VSC::GEAR_REVERSE, static_cast<GEAR_TYPE>(VSD::GEAR_REVERSE)},
@@ -72,25 +72,20 @@ const std::unordered_map<GEAR_TYPE, GEAR_TYPE> LgsvlInterface::autoware_to_lgsvl
   {VSC::GEAR_NEUTRAL, static_cast<GEAR_TYPE>(VSD::GEAR_NEUTRAL)},
 };
 
-const std::unordered_map<MODE_TYPE, MODE_TYPE> LgsvlInterface::autoware_to_lgsvl_mode {
+const std::unordered_map<MODE_TYPE, MODE_TYPE> LgsvlInterface::autoware_to_lgsvl_mode{
   {VSC::MODE_NO_COMMAND, static_cast<MODE_TYPE>(VSD::VEHICLE_MODE_COMPLETE_MANUAL)},
   {VSC::MODE_AUTONOMOUS, static_cast<MODE_TYPE>(VSD::VEHICLE_MODE_COMPLETE_AUTO_DRIVE)},
   {VSC::MODE_MANUAL, static_cast<MODE_TYPE>(VSD::VEHICLE_MODE_COMPLETE_MANUAL)},
 };
 
 LgsvlInterface::LgsvlInterface(
-  rclcpp::Node & node,
-  const std::string & sim_cmd_topic,
-  const std::string & sim_state_cmd_topic,
-  const std::string & sim_state_report_topic,
-  const std::string & sim_nav_odom_topic,
-  const std::string & sim_veh_odom_topic,
-  const std::string & kinematic_state_topic,
-  const std::string & sim_odom_child_frame,
-  Table1D && throttle_table,
-  Table1D && brake_table,
-  Table1D && steer_table,
-  bool publish_tf,
+  rclcpp::Node & node, const std::string & sim_cmd_topic, const std::string & sim_state_cmd_topic,
+  const std::string & sim_state_report_topic, const std::string & sim_nav_odom_topic,
+  const std::string & sim_veh_odom_topic, const std::string & kinematic_state_topic,
+  const std::string & gear_report_topic, const std::string & steer_report_topic,
+  const std::string & control_mode_report_topic, const std::string & twist_topic,
+  const std::string & odom_topic, const std::string & sim_odom_child_frame,
+  Table1D && throttle_table, Table1D && brake_table, Table1D && steer_table, bool publish_tf,
   bool publish_pose)
 : m_throttle_table{throttle_table},
   m_brake_table{brake_table},
@@ -98,16 +93,15 @@ LgsvlInterface::LgsvlInterface(
   m_logger{node.get_logger()}
 {
   const auto check = [](const auto value, const auto ref) -> bool8_t {
-      constexpr auto EPS = std::numeric_limits<decltype(value)>::epsilon();
-      return comp::abs_gt(value, ref, EPS);
-    };
+    constexpr auto EPS = std::numeric_limits<decltype(value)>::epsilon();
+    return comp::abs_gt(value, ref, EPS);
+  };
   // check throttle table
   if (check(m_throttle_table.domain().front(), 0.0)) {
     throw std::domain_error{"Throttle table domain must be [0, ...)"};
   }
-  if (check(m_throttle_table.range().front(), 0.0) ||
-    check(m_throttle_table.range().back(), 100.0))
-  {
+  if (
+    check(m_throttle_table.range().front(), 0.0) || check(m_throttle_table.range().back(), 100.0)) {
     throw std::domain_error{"Throttle table range must go from 0 to 100"};
   }
   for (const auto val : m_throttle_table.range()) {
@@ -131,8 +125,9 @@ LgsvlInterface::LgsvlInterface(
   if (check(m_steer_table.range().front(), -100.0) || check(m_steer_table.range().back(), 100.0)) {
     throw std::domain_error{"Steer table must go from -100 to 100"};
   }
-  if ((m_steer_table.domain().front() >= 0.0) ||  // Should be negative...
-    (m_steer_table.domain().back() <= 0.0) ||  // to positive...
+  if (
+    (m_steer_table.domain().front() >= 0.0) ||                              // Should be negative...
+    (m_steer_table.domain().back() <= 0.0) ||                               // to positive...
     check(m_steer_table.domain().back(), -m_steer_table.domain().front()))  // with symmetry
   {
     // Warn if steer domain is not equally straddling zero: could be right, but maybe not
@@ -140,21 +135,31 @@ LgsvlInterface::LgsvlInterface(
   }
 
   // Make publishers
-  m_cmd_pub = node.create_publisher<lgsvl_msgs::msg::VehicleControlData>(
-    sim_cmd_topic, rclcpp::QoS{10});
-  m_state_pub = node.create_publisher<lgsvl_msgs::msg::VehicleStateData>(
-    sim_state_cmd_topic, rclcpp::QoS{10});
+  m_cmd_pub =
+    node.create_publisher<lgsvl_msgs::msg::VehicleControlData>(sim_cmd_topic, rclcpp::QoS{10});
+  m_state_pub =
+    node.create_publisher<lgsvl_msgs::msg::VehicleStateData>(sim_state_cmd_topic, rclcpp::QoS{10});
+  // publishers for Autoware.iv
+  m_pub_control_mode_report =
+    node.create_publisher<autoware_auto_vehicle_msgs::msg::ControlModeReport>(
+      control_mode_report_topic, rclcpp::QoS{10});
+  m_pub_gear_report = node.create_publisher<autoware_auto_vehicle_msgs::msg::GearReport>(
+    gear_report_topic, rclcpp::QoS{10});
+  m_pub_velocity = node.create_publisher<autoware_auto_vehicle_msgs::msg::VelocityReport>(
+    twist_topic, rclcpp::QoS{10});
+  m_pub_steer = node.create_publisher<autoware_auto_vehicle_msgs::msg::SteeringReport>(
+    steer_report_topic, rclcpp::QoS{10});
+  m_pub_odom = node.create_publisher<nav_msgs::msg::Odometry>(odom_topic, rclcpp::QoS{10});
 
   // Make subscribers
   if (!sim_nav_odom_topic.empty() && ("null" != sim_nav_odom_topic)) {
     m_nav_odom_sub = node.create_subscription<nav_msgs::msg::Odometry>(
-      sim_nav_odom_topic,
-      rclcpp::QoS{10},
-      [this](nav_msgs::msg::Odometry::SharedPtr msg) {on_odometry(*msg);});
+      sim_nav_odom_topic, rclcpp::QoS{10},
+      [this](nav_msgs::msg::Odometry::SharedPtr msg) { on_odometry(*msg); });
     // Ground truth state/pose publishers only work if there's a ground truth input
     m_kinematic_state_pub =
       node.create_publisher<autoware_auto_vehicle_msgs::msg::VehicleKinematicState>(
-      kinematic_state_topic, rclcpp::QoS{10});
+        kinematic_state_topic, rclcpp::QoS{10});
 
     if (publish_pose) {
       m_pose_pub = node.create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
@@ -167,9 +172,7 @@ LgsvlInterface::LgsvlInterface(
   }
 
   m_state_sub = node.create_subscription<lgsvl_msgs::msg::CanBusData>(
-    sim_state_report_topic,
-    rclcpp::QoS{10},
-    [this](lgsvl_msgs::msg::CanBusData::SharedPtr msg) {
+    sim_state_report_topic, rclcpp::QoS{10}, [this](lgsvl_msgs::msg::CanBusData::SharedPtr msg) {
       autoware_auto_vehicle_msgs::msg::VehicleStateReport state_report;
       // state_report.set__fuel(nullptr);  // no fuel status from LGSVL
       if (msg->left_turn_signal_active) {
@@ -184,18 +187,15 @@ LgsvlInterface::LgsvlInterface(
 
       if (msg->low_beams_active) {
         state_report.set__headlight(
-          autoware_auto_vehicle_msgs::msg::VehicleStateReport::
-          HEADLIGHT_ON);
+          autoware_auto_vehicle_msgs::msg::VehicleStateReport::HEADLIGHT_ON);
         headlights_report().report = HeadlightsReport::ENABLE_LOW;
       } else if (msg->high_beams_active) {
         state_report.set__headlight(
-          autoware_auto_vehicle_msgs::msg::VehicleStateReport::
-          HEADLIGHT_HIGH);
+          autoware_auto_vehicle_msgs::msg::VehicleStateReport::HEADLIGHT_HIGH);
         headlights_report().report = HeadlightsReport::ENABLE_HIGH;
       } else {
         state_report.set__headlight(
-          autoware_auto_vehicle_msgs::msg::VehicleStateReport::
-          HEADLIGHT_OFF);
+          autoware_auto_vehicle_msgs::msg::VehicleStateReport::HEADLIGHT_OFF);
         headlights_report().report = HeadlightsReport::DISABLE;
       }
 
@@ -212,16 +212,51 @@ LgsvlInterface::LgsvlInterface(
       state_report.set__hand_brake(msg->parking_brake_active);
       // state_report.set__horn()  // no horn status from LGSVL
       on_state_report(state_report);
+
+      // Autoware.iv interface
+      {
+        using autoware_auto_vehicle_msgs::msg::GearReport;
+        GearReport gear_report;
+        gear_report.stamp = msg->header.stamp;
+        switch (msg->selected_gear) {
+          case (lgsvl_msgs::msg::CanBusData::GEAR_DRIVE):
+            gear_report.report = GearReport::DRIVE;
+            break;
+          case (lgsvl_msgs::msg::CanBusData::GEAR_REVERSE):
+            gear_report.report = GearReport::REVERSE;
+            break;
+          case (lgsvl_msgs::msg::CanBusData::GEAR_LOW):
+            gear_report.report = GearReport::LOW;
+            break;
+          case (lgsvl_msgs::msg::CanBusData::GEAR_NEUTRAL):
+          case (lgsvl_msgs::msg::CanBusData::GEAR_PARKING):
+          default:
+            gear_report.report = GearReport::PARK;
+            break;
+        }
+        m_pub_gear_report->publish(gear_report);
+      }
+      {
+        autoware_auto_vehicle_msgs::msg::ControlModeReport mode_report;
+        mode_report.stamp = msg->header.stamp;
+        mode_report.mode = autoware_auto_vehicle_msgs::msg::ControlModeReport::AUTONOMOUS;
+        m_pub_control_mode_report->publish(mode_report);
+      }
     });
 
   m_veh_odom_sub = node.create_subscription<lgsvl_msgs::msg::VehicleOdometry>(
-    sim_veh_odom_topic,
-    rclcpp::QoS{10},
-    [this](lgsvl_msgs::msg::VehicleOdometry::SharedPtr msg) {
+    sim_veh_odom_topic, rclcpp::QoS{10}, [this](lgsvl_msgs::msg::VehicleOdometry::SharedPtr msg) {
       odometry().set__stamp(msg->header.stamp);
       odometry().set__velocity_mps(msg->velocity);
       odometry().set__rear_wheel_angle_rad(msg->rear_wheel_angle);
       odometry().set__front_wheel_angle_rad(msg->front_wheel_angle);
+      // Autoware.iv interface
+      {
+        autoware_auto_vehicle_msgs::msg::SteeringReport steer;
+        // Inverse steering angle as SVL uses positive angle for right steer instead of left
+        steer.steering_tire_angle = -1 * msg->front_wheel_angle;
+        m_pub_steer->publish(steer);
+      }
     });
 
   // Setup Tf Buffer with listener
@@ -231,30 +266,27 @@ LgsvlInterface::LgsvlInterface(
   // Initialize m_nav_base_in_child_frame with no offset until TF arrives
   m_nav_base_in_child_frame.header.frame_id = sim_odom_child_frame;
 
-  m_nav_base_tf_timer = node.create_wall_timer(
-    1s,
-    [this, sim_odom_child_frame]() {
-      if (m_tf_buffer->canTransform(sim_odom_child_frame, "nav_base", tf2::TimePointZero)) {
-        // Cancel timer because we were able to find the transform
-        m_nav_base_tf_timer->cancel();
-        m_nav_base_tf_set = true;
+  m_nav_base_tf_timer = node.create_wall_timer(1s, [this, sim_odom_child_frame]() {
+    if (m_tf_buffer->canTransform(sim_odom_child_frame, "nav_base", tf2::TimePointZero)) {
+      // Cancel timer because we were able to find the transform
+      m_nav_base_tf_timer->cancel();
+      m_nav_base_tf_set = true;
 
-        geometry_msgs::msg::TransformStamped nav_base_tf{};
-        nav_base_tf = m_tf_buffer->lookupTransform(
-          sim_odom_child_frame, "nav_base", tf2::TimePointZero);
+      geometry_msgs::msg::TransformStamped nav_base_tf{};
+      nav_base_tf =
+        m_tf_buffer->lookupTransform(sim_odom_child_frame, "nav_base", tf2::TimePointZero);
 
-        // Create Vehicle Kinematic State from the transform between nav_base and
-        // the odometry child frame from the simulator
-        m_nav_base_in_child_frame.state.pose.position.x = nav_base_tf.transform.translation.x;
-        m_nav_base_in_child_frame.state.pose.position.y = nav_base_tf.transform.translation.y;
-        m_nav_base_in_child_frame.state.pose.orientation = nav_base_tf.transform.rotation;
-      } else {
-        RCLCPP_ERROR(
-          m_logger,
-          "Transform from nav_base to %s is unavailable. Waiting...",
-          sim_odom_child_frame.c_str());
-      }
-    });
+      // Create Vehicle Kinematic State from the transform between nav_base and
+      // the odometry child frame from the simulator
+      m_nav_base_in_child_frame.state.pose.position.x = nav_base_tf.transform.translation.x;
+      m_nav_base_in_child_frame.state.pose.position.y = nav_base_tf.transform.translation.y;
+      m_nav_base_in_child_frame.state.pose.orientation = nav_base_tf.transform.rotation;
+    } else {
+      RCLCPP_ERROR(
+        m_logger, "Transform from nav_base to %s is unavailable. Waiting...",
+        sim_odom_child_frame.c_str());
+    }
+  });
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -314,8 +346,7 @@ bool8_t LgsvlInterface::send_state_command(
   m_lgsvl_state.set__vehicle_mode(msg_corrected.mode);
   m_lgsvl_state.set__hand_brake_active(msg_corrected.hand_brake);
   m_lgsvl_state.set__autonomous_mode_active(
-    msg_corrected.mode ==
-    VSD::VEHICLE_MODE_COMPLETE_AUTO_DRIVE ? true : false);
+    msg_corrected.mode == VSD::VEHICLE_MODE_COMPLETE_AUTO_DRIVE ? true : false);
 
   m_state_pub->publish(m_lgsvl_state);
 
@@ -332,16 +363,15 @@ bool8_t LgsvlInterface::send_control_command(
   raw_msg.brake = 0;
 
   using VSR = autoware_auto_vehicle_msgs::msg::VehicleStateReport;
-  const auto directional_accel = get_state_report().gear ==
-    VSR::GEAR_REVERSE ? -msg.long_accel_mps2 : msg.long_accel_mps2;
+  const auto directional_accel =
+    get_state_report().gear == VSR::GEAR_REVERSE ? -msg.long_accel_mps2 : msg.long_accel_mps2;
 
-  if (directional_accel >= decltype(msg.long_accel_mps2) {}) {
+  if (directional_accel >= decltype(msg.long_accel_mps2){}) {
     // TODO(c.ho)  cast to double...
     raw_msg.throttle =
       static_cast<decltype(raw_msg.throttle)>(m_throttle_table.lookup(directional_accel));
   } else {
-    raw_msg.brake =
-      static_cast<decltype(raw_msg.brake)>(m_brake_table.lookup(directional_accel));
+    raw_msg.brake = static_cast<decltype(raw_msg.brake)>(m_brake_table.lookup(directional_accel));
   }
   raw_msg.front_steer =
     static_cast<decltype(raw_msg.front_steer)>(m_steer_table.lookup(msg.front_wheel_angle_rad));
@@ -359,7 +389,7 @@ bool8_t LgsvlInterface::send_control_command(
   raw_msg.throttle = 0;
   raw_msg.brake = 0;
 
-  if (msg.longitudinal.acceleration >= decltype(msg.longitudinal.acceleration) {}) {
+  if (msg.longitudinal.acceleration >= decltype(msg.longitudinal.acceleration){}) {
     raw_msg.throttle = static_cast<decltype(raw_msg.throttle)>(
       m_throttle_table.lookup(msg.longitudinal.acceleration));
   } else {
@@ -473,9 +503,8 @@ void LgsvlInterface::on_odometry(const nav_msgs::msg::Odometry & msg)
       // Steer semantically is z up, ccw positive, but LGSVL thinks its the opposite
       vse_t.state.front_wheel_angle_rad = -get_odometry().front_wheel_angle_rad;
       vse_t.state.rear_wheel_angle_rad = -get_odometry().rear_wheel_angle_rad;
-      if (state_report().gear ==
-        autoware_auto_vehicle_msgs::msg::VehicleStateReport::GEAR_REVERSE)
-      {
+      if (
+        state_report().gear == autoware_auto_vehicle_msgs::msg::VehicleStateReport::GEAR_REVERSE) {
         vse_t.state.longitudinal_velocity_mps *= -1.0f;
       }
 
@@ -505,25 +534,29 @@ void LgsvlInterface::on_odometry(const nav_msgs::msg::Odometry & msg)
     pose.pose.pose.position.z = pz;
 
     constexpr auto EPS = std::numeric_limits<float64_t>::epsilon();
-    if (std::fabs(msg.pose.covariance[COV_X]) > EPS ||
-      std::fabs(msg.pose.covariance[COV_Y]) > EPS ||
-      std::fabs(msg.pose.covariance[COV_Z]) > EPS ||
-      std::fabs(msg.pose.covariance[COV_RX]) > EPS ||
+    if (
+      std::fabs(msg.pose.covariance[COV_X]) > EPS || std::fabs(msg.pose.covariance[COV_Y]) > EPS ||
+      std::fabs(msg.pose.covariance[COV_Z]) > EPS || std::fabs(msg.pose.covariance[COV_RX]) > EPS ||
       std::fabs(msg.pose.covariance[COV_RY]) > EPS ||
-      std::fabs(msg.pose.covariance[COV_RZ]) > EPS)
-    {
+      std::fabs(msg.pose.covariance[COV_RZ]) > EPS) {
       pose.pose.covariance = {
-        COV_X_VAR, 0.0, 0.0, 0.0, 0.0, 0.0,
-        0.0, COV_Y_VAR, 0.0, 0.0, 0.0, 0.0,
-        0.0, 0.0, COV_Z_VAR, 0.0, 0.0, 0.0,
-        0.0, 0.0, 0.0, COV_RX_VAR, 0.0, 0.0,
-        0.0, 0.0, 0.0, 0.0, COV_RY_VAR, 0.0,
-        0.0, 0.0, 0.0, 0.0, 0.0, COV_RZ_VAR};
+        COV_X_VAR,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, COV_Y_VAR,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        COV_Z_VAR,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, COV_RX_VAR, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        COV_RY_VAR, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, COV_RZ_VAR};
     } else {
       pose.pose.covariance = msg.pose.covariance;
     }
 
     m_pose_pub->publish(pose);
+  }
+  // Autoware.iv interface
+  {
+    m_pub_odom->publish(msg);
+    autoware_auto_vehicle_msgs::msg::VelocityReport velocity;
+    velocity.longitudinal_velocity = static_cast<float>(msg.twist.twist.linear.x);
+    velocity.lateral_velocity = 0.0F;
+    velocity.heading_rate = static_cast<float>(msg.twist.twist.angular.z);
+    m_pub_velocity->publish(velocity);
   }
 }
 
@@ -533,17 +566,17 @@ void LgsvlInterface::on_state_report(
 {
   auto corrected_report = msg;
 
-  // in autoware_auto_vehicle_msgs::msg::VehicleStateCommand 1 is drive, 2 is reverse, https://gitlab.com/autowarefoundation/autoware.auto/AutowareAuto/-/blob/9744f6dc/src/messages/autoware_auto_vehicle_msgs/msg/VehicleStateCommand.msg#L32
-  // in lgsvl 0 is drive and 1 is reverse https://github.com/lgsvl/simulator/blob/cb937deb8e633573f6c0cc76c9f451398b8b9eff/Assets/Scripts/Sensors/VehicleStateSensor.cs#L70
-
+  // in autoware_auto_vehicle_msgs::msg::VehicleStateCommand 1 is drive, 2 is reverse,
+  // https://gitlab.com/autowarefoundation/autoware.auto/AutowareAuto/-/blob/9744f6dc/src/messages/autoware_auto_vehicle_msgs/msg/VehicleStateCommand.msg#L32
+  // in lgsvl 0 is drive and 1 is reverse
+  // https://github.com/lgsvl/simulator/blob/cb937deb8e633573f6c0cc76c9f451398b8b9eff/Assets/Scripts/Sensors/VehicleStateSensor.cs#L70
 
   // Find autoware gear via inverse mapping
   const auto value_same = [&msg](const auto & kv) -> bool {  // also do some capture
-      return msg.gear == kv.second;
-    };
-  const auto it = std::find_if(
-    autoware_to_lgsvl_gear.begin(),
-    autoware_to_lgsvl_gear.end(), value_same);
+    return msg.gear == kv.second;
+  };
+  const auto it =
+    std::find_if(autoware_to_lgsvl_gear.begin(), autoware_to_lgsvl_gear.end(), value_same);
 
   if (it != autoware_to_lgsvl_gear.end()) {
     corrected_report.gear = it->first;

@@ -14,6 +14,10 @@
 //
 // Co-developed by Tier IV, Inc. and Apex.AI, Inc.
 
+#include "lgsvl_interface/lgsvl_interface_node.hpp"
+
+#include "lgsvl_interface/lgsvl_interface.hpp"
+
 #include <common/types.hpp>
 
 #include <memory>
@@ -21,124 +25,52 @@
 #include <unordered_set>
 #include <vector>
 
-#include "lgsvl_interface/lgsvl_interface_node.hpp"
-#include "lgsvl_interface/lgsvl_interface.hpp"
-
 using autoware::common::types::bool8_t;
 using autoware::common::types::float64_t;
 using autoware::drivers::vehicle_interface::ViFeature;
 
 namespace lgsvl_interface
 {
-
-LgsvlInterfaceNode::LgsvlInterfaceNode(
-  const rclcpp::NodeOptions & options)
+LgsvlInterfaceNode::LgsvlInterfaceNode(const rclcpp::NodeOptions & options)
 : VehicleInterfaceNode{
     "lgsvl_interface",
-    std::unordered_set<ViFeature> {
+    std::unordered_set<ViFeature>{
       ViFeature::HEADLIGHTS,
       ViFeature::HORN,
       ViFeature::WIPERS,
     },
-    options
-}
+    options}
 {
   const auto sim_ctrl_cmd_topic = "vehicle_control_cmd";
   const auto sim_state_cmd_topic = "vehicle_state_cmd";
   const auto sim_state_rpt_topic = "state_report";
   const auto sim_veh_odom_topic = "vehicle_odom";
+  const auto gear_report_topic = "gear_report";
+  const auto steer_report_topic = "steer_report";
+  const auto control_mode_report_topic = "control_mode_report";
+  const auto twist_topic = "twist";
+  const auto odom_topic = "odom";
   // Optional
   const std::string sim_nav_odom_topic =
-    declare_parameter("use_nav_odometry_topic", true) ?
-    "gnss_odom" : "";
+    declare_parameter("use_nav_odometry_topic", true) ? "gnss_odom" : "";
   const auto kinematic_state_topic = "vehicle_kinematic_state";
-  const std::string sim_odom_child_frame =
-    declare_parameter("lgsvl.odom_child_frame", "base_link");
+  const std::string sim_odom_child_frame = declare_parameter("lgsvl.odom_child_frame", "base_link");
   const auto table = [this](const std::string & prefix_raw) -> Table1D {
-      const std::string prefix = "lgsvl." + prefix_raw + ".";
-      return Table1D{
+    const std::string prefix = "lgsvl." + prefix_raw + ".";
+    return Table1D{
       declare_parameter<std::vector<float64_t>>(prefix + "domain"),
-      declare_parameter<std::vector<float64_t>>(prefix + "range")
-      };
-    };
+      declare_parameter<std::vector<float64_t>>(prefix + "range")};
+  };
   const bool8_t pub_pose = declare_parameter<bool8_t>("lgsvl.publish_pose", PUBLISH);
   const bool8_t pub_tf = declare_parameter<bool8_t>("lgsvl.publish_tf", NO_PUBLISH);
 
   // Set up interface
-  set_interface(
-    std::make_unique<LgsvlInterface>(
-      *this,
-      sim_ctrl_cmd_topic,
-      sim_state_cmd_topic,
-      sim_state_rpt_topic,
-      sim_nav_odom_topic,
-      sim_veh_odom_topic,
-      kinematic_state_topic,
-      sim_odom_child_frame,
-      table("throttle"),
-      table("brake"),
-      table("steer"),
-      pub_tf,
-      pub_pose
-  ));
+  set_interface(std::make_unique<LgsvlInterface>(
+    *this, sim_ctrl_cmd_topic, sim_state_cmd_topic, sim_state_rpt_topic, sim_nav_odom_topic,
+    sim_veh_odom_topic, kinematic_state_topic, gear_report_topic, steer_report_topic,
+    control_mode_report_topic, twist_topic, odom_topic, sim_odom_child_frame, table("throttle"),
+    table("brake"), table("steer"), pub_tf, pub_pose));
   // TODO(c.ho) low pass filter and velocity controller
-
-  // Replicate published topics from the SimplePlanningSimulator
-  // TODO(Maxime CLEMENT): move to another node ?
-  using rclcpp::QoS;
-  pub_control_mode_report_ =
-    create_publisher<ControlModeReport>("output/control_mode_report", QoS{1});
-  pub_gear_report_ = create_publisher<GearReport>("output/gear_report", QoS{1});
-  pub_velocity_ = create_publisher<VelocityReport>("output/twist", QoS{1});
-  pub_odom_ = create_publisher<Odometry>("output/odometry", QoS{1});
-  pub_steer_ = create_publisher<SteeringReport>("output/steering", QoS{1});
-
-  sub_odom_ = create_subscription<Odometry>(
-    "gnss_odom", QoS{1}, [&](const Odometry::ConstSharedPtr odom_msg) {
-      pub_odom_->publish(*odom_msg);
-
-      VelocityReport velocity;
-      velocity.longitudinal_velocity = static_cast<float>(odom_msg->twist.twist.linear.x);
-      velocity.lateral_velocity = 0.0F;
-      velocity.heading_rate = static_cast<float>(odom_msg->twist.twist.angular.z);
-      pub_velocity_->publish(velocity);
-    });
-  sub_vehicle_odom_ = create_subscription<lgsvl_msgs::msg::VehicleOdometry>(
-    "vehicle_odom", QoS{1}, [&](const lgsvl_msgs::msg::VehicleOdometry::ConstSharedPtr odom_msg) {
-      autoware_auto_vehicle_msgs::msg::SteeringReport steer;
-      steer.steering_tire_angle = static_cast<float>(odom_msg->front_wheel_angle);
-      pub_steer_->publish(steer);
-    });
-  sub_state_ = create_subscription<lgsvl_msgs::msg::CanBusData>(
-    "state_report", QoS{1}, [&](const lgsvl_msgs::msg::CanBusData::ConstSharedPtr state_msg) {
-      {
-        GearReport msg;
-        msg.stamp = state_msg->header.stamp;
-        switch(state_msg->selected_gear) {
-          case (lgsvl_msgs::msg::CanBusData::GEAR_DRIVE):
-            msg.report = GearReport::DRIVE;
-            break;
-          case (lgsvl_msgs::msg::CanBusData::GEAR_REVERSE):
-            msg.report = GearReport::REVERSE;
-            break;
-          case (lgsvl_msgs::msg::CanBusData::GEAR_LOW):
-            msg.report = GearReport::LOW;
-            break;
-          case (lgsvl_msgs::msg::CanBusData::GEAR_NEUTRAL):
-          case (lgsvl_msgs::msg::CanBusData::GEAR_PARKING):
-          default:
-            msg.report = GearReport::PARK;
-            break;
-        }
-        pub_gear_report_->publish(msg);
-      }
-      {
-        ControlModeReport msg;
-        msg.stamp = state_msg->header.stamp;
-        msg.mode = ControlModeReport::AUTONOMOUS;
-        pub_control_mode_report_->publish(msg);
-      }
-    });
 }
 
 }  // namespace lgsvl_interface
