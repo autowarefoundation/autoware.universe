@@ -147,6 +147,10 @@ private:
   uint32_t timer_sampling_time_ms_;  //!< @brief timer sampling time
   rclcpp::TimerBase::SharedPtr on_timer_;  //!< @brief timer for simulation
 
+  OnSetParametersCallbackHandle::SharedPtr set_param_res_;
+  rcl_interfaces::msg::SetParametersResult on_parameter(
+    const std::vector<rclcpp::Parameter> & parameters);
+
   /* tf */
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
@@ -173,6 +177,9 @@ private:
   DeltaTime delta_time_;  //!< @brief to calculate delta time
 
   MeasurementNoiseGenerator measurement_noise_;  //!< @brief for measurement noise
+
+  float64_t x_stddev_;  //!< @brief x standard deviation for dummy covariance in map coordinate
+  float64_t y_stddev_;  //!< @brief y standard deviation for dummy covariance in map coordinate
 
   /* vehicle model */
   enum class VehicleModelType

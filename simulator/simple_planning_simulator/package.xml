@@ -20,6 +20,7 @@
   <depend>geometry_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>vehicle_info_util</depend>
+  <depend>autoware_utils</depend>
 
   <depend>motion_common</depend>
 

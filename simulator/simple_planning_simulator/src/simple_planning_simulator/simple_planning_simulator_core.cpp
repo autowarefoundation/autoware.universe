@@ -25,6 +25,7 @@
 #include "simple_planning_simulator/simple_planning_simulator_core.hpp"
 
 #include "common/types.hpp"
+#include "autoware_utils/ros/update_param.hpp"
 #include "autoware_auto_tf2/tf2_autoware_auto_msgs.hpp"
 #include "simple_planning_simulator/vehicle_model/sim_model.hpp"
 #include "motion_common/motion_common.hpp"
@@ -117,6 +118,10 @@ SimplePlanningSimulator::SimplePlanningSimulator(const rclcpp::NodeOptions & opt
   pub_steer_ = create_publisher<SteeringReport>("output/steering", QoS{1});
   pub_tf_ = create_publisher<tf2_msgs::msg::TFMessage>("/tf", QoS{1});
 
+  /* set param callback */
+  set_param_res_ =
+    this->add_on_set_parameters_callback(std::bind(&SimplePlanningSimulator::on_parameter, this, _1));
+
   timer_sampling_time_ms_ = static_cast<uint32_t>(declare_parameter("timer_sampling_time_ms", 25));
   on_timer_ = create_wall_timer(
     std::chrono::milliseconds(timer_sampling_time_ms_),
@@ -156,6 +161,9 @@ SimplePlanningSimulator::SimplePlanningSimulator(const rclcpp::NodeOptions & opt
     m.vel_dist_ = std::make_shared<std::normal_distribution<>>(0.0, vel_noise_stddev);
     m.rpy_dist_ = std::make_shared<std::normal_distribution<>>(0.0, rpy_noise_stddev);
     m.steer_dist_ = std::make_shared<std::normal_distribution<>>(0.0, steer_noise_stddev);
+
+    x_stddev_ = declare_parameter("x_stddev", 0.0001);
+    y_stddev_ = declare_parameter("y_stddev", 0.0001);
   }
 }
 
@@ -173,8 +181,8 @@ void SimplePlanningSimulator::initialize_vehicle_model()
   const float64_t acc_time_constant = declare_parameter("acc_time_constant", 0.1);
   const float64_t steer_time_delay = declare_parameter("steer_time_delay", 0.24);
   const float64_t steer_time_constant = declare_parameter("steer_time_constant", 0.27);
-  const float64_t wheelbase =
-    vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo().wheel_base_m;
+  const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
+  const float64_t wheelbase = vehicle_info.wheel_base_m;
 
   if (vehicle_model_type_str == "IDEAL_STEER_VEL") {
     vehicle_model_type_ = VehicleModelType::IDEAL_STEER_VEL;
@@ -204,6 +212,24 @@ void SimplePlanningSimulator::initialize_vehicle_model()
   }
 }
 
+rcl_interfaces::msg::SetParametersResult SimplePlanningSimulator::on_parameter(
+  const std::vector<rclcpp::Parameter> & parameters)
+{
+  rcl_interfaces::msg::SetParametersResult result;
+  result.successful = true;
+  result.reason = "success";
+
+  try {
+    autoware_utils::updateParam(parameters, "x_stddev", x_stddev_);
+    autoware_utils::updateParam(parameters, "y_stddev", y_stddev_);
+  } catch (const rclcpp::exceptions::InvalidParameterTypeException & e) {
+    result.successful = false;
+    result.reason = e.what();
+  }
+
+  return result;
+}
+
 void SimplePlanningSimulator::on_timer()
 {
   if (!is_initialized_) {
@@ -227,6 +253,12 @@ void SimplePlanningSimulator::on_timer()
 
   if (add_measurement_noise_) {
     add_measurement_noise(current_odometry_, current_velocity_, current_steer_);
+  }
+
+  // add estimate covariance
+  {
+    current_odometry_.pose.covariance[0 * 6 + 0] = x_stddev_;
+    current_odometry_.pose.covariance[1 * 6 + 1] = y_stddev_;
   }
 
   // publish vehicle state
