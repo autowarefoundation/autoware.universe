@@ -18,6 +18,7 @@
         range: [-100.0, 100.0]
       publish_pose: False
       publish_tf: False
+      publish_clock: True
       odom_child_frame: "base_link"
     state_machine:
       gear_shift_velocity_threshold_mps: 0.5

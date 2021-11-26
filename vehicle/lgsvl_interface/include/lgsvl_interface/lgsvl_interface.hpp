@@ -44,6 +44,7 @@
 #include <lgsvl_msgs/msg/vehicle_odometry.hpp>
 #include <lgsvl_msgs/msg/vehicle_state_data.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <rosgraph_msgs/msg/clock.hpp>
 #include <tf2_msgs/msg/tf_message.hpp>
 
 #include <tf2_ros/buffer.h>
@@ -103,7 +104,7 @@ public:
     const std::string & control_mode_report_topic, const std::string & twist_topic,
     const std::string & odom_topic, const std::string & sim_odom_child_frame,
     Table1D && throttle_table, Table1D && brake_table, Table1D && steer_table,
-    bool publish_tf = NO_PUBLISH, bool publish_pose = PUBLISH);
+    bool publish_tf = NO_PUBLISH, bool publish_pose = PUBLISH, bool publish_clock = NO_PUBLISH);
 
   ~LgsvlInterface() noexcept override = default;
   /// Receives data from ROS 2 subscriber, and updates output messages.
@@ -153,12 +154,16 @@ private:
   rclcpp::Publisher<tf2_msgs::msg::TFMessage>::SharedPtr m_tf_pub{};
   rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr m_pose_pub{};
   // Autoware.iv publishers
-  rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::VelocityReport>::SharedPtr m_pub_velocity{};
-  rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::SteeringReport>::SharedPtr m_pub_steer{};
+  rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::VelocityReport>::SharedPtr m_velocity_pub{};
+  rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::SteeringReport>::SharedPtr m_steer_pub{};
   rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::ControlModeReport>::SharedPtr
-    m_pub_control_mode_report{};
-  rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::GearReport>::SharedPtr m_pub_gear_report{};
-  rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr m_pub_odom{};
+    m_control_mode_report_pub{};
+  rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::GearReport>::SharedPtr m_gear_report_pub{};
+  rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr m_odom_pub{};
+
+  // clock pub/sub
+  rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr m_clock_pub{};
+  rclcpp::Subscription<rosgraph_msgs::msg::Clock>::SharedPtr m_clock_sub{};
 
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr m_nav_odom_sub{};
   rclcpp::Subscription<lgsvl_msgs::msg::CanBusData>::SharedPtr m_state_sub{};

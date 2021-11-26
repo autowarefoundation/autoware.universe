@@ -86,7 +86,7 @@ LgsvlInterface::LgsvlInterface(
   const std::string & control_mode_report_topic, const std::string & twist_topic,
   const std::string & odom_topic, const std::string & sim_odom_child_frame,
   Table1D && throttle_table, Table1D && brake_table, Table1D && steer_table, bool publish_tf,
-  bool publish_pose)
+  bool publish_pose, bool publish_clock)
 : m_throttle_table{throttle_table},
   m_brake_table{brake_table},
   m_steer_table{steer_table},
@@ -140,16 +140,16 @@ LgsvlInterface::LgsvlInterface(
   m_state_pub =
     node.create_publisher<lgsvl_msgs::msg::VehicleStateData>(sim_state_cmd_topic, rclcpp::QoS{10});
   // publishers for Autoware.iv
-  m_pub_control_mode_report =
+  m_control_mode_report_pub =
     node.create_publisher<autoware_auto_vehicle_msgs::msg::ControlModeReport>(
       control_mode_report_topic, rclcpp::QoS{10});
-  m_pub_gear_report = node.create_publisher<autoware_auto_vehicle_msgs::msg::GearReport>(
+  m_gear_report_pub = node.create_publisher<autoware_auto_vehicle_msgs::msg::GearReport>(
     gear_report_topic, rclcpp::QoS{10});
-  m_pub_velocity = node.create_publisher<autoware_auto_vehicle_msgs::msg::VelocityReport>(
+  m_velocity_pub = node.create_publisher<autoware_auto_vehicle_msgs::msg::VelocityReport>(
     twist_topic, rclcpp::QoS{10});
-  m_pub_steer = node.create_publisher<autoware_auto_vehicle_msgs::msg::SteeringReport>(
+  m_steer_pub = node.create_publisher<autoware_auto_vehicle_msgs::msg::SteeringReport>(
     steer_report_topic, rclcpp::QoS{10});
-  m_pub_odom = node.create_publisher<nav_msgs::msg::Odometry>(odom_topic, rclcpp::QoS{10});
+  m_odom_pub = node.create_publisher<nav_msgs::msg::Odometry>(odom_topic, rclcpp::QoS{10});
 
   // Make subscribers
   if (!sim_nav_odom_topic.empty() && ("null" != sim_nav_odom_topic)) {
@@ -168,6 +168,13 @@ LgsvlInterface::LgsvlInterface(
 
     if (publish_tf) {
       m_tf_pub = node.create_publisher<tf2_msgs::msg::TFMessage>("/tf", rclcpp::QoS{10});
+    }
+
+    if (publish_clock) {
+      m_clock_pub = node.create_publisher<rosgraph_msgs::msg::Clock>("/clock", rclcpp::QoS{10});
+      m_clock_sub = node.create_subscription<rosgraph_msgs::msg::Clock>(
+        "/lgsvl/clock", rclcpp::QoS{10},
+        [this](rosgraph_msgs::msg::Clock::SharedPtr msg) { m_clock_pub->publish(*msg); });
     }
   }
 
@@ -234,13 +241,13 @@ LgsvlInterface::LgsvlInterface(
             gear_report.report = GearReport::PARK;
             break;
         }
-        m_pub_gear_report->publish(gear_report);
+        m_gear_report_pub->publish(gear_report);
       }
       {
         autoware_auto_vehicle_msgs::msg::ControlModeReport mode_report;
         mode_report.stamp = msg->header.stamp;
         mode_report.mode = autoware_auto_vehicle_msgs::msg::ControlModeReport::AUTONOMOUS;
-        m_pub_control_mode_report->publish(mode_report);
+        m_control_mode_report_pub->publish(mode_report);
       }
     });
 
@@ -255,7 +262,7 @@ LgsvlInterface::LgsvlInterface(
         autoware_auto_vehicle_msgs::msg::SteeringReport steer;
         // Inverse steering angle as SVL uses positive angle for right steer instead of left
         steer.steering_tire_angle = -1 * msg->front_wheel_angle;
-        m_pub_steer->publish(steer);
+        m_steer_pub->publish(steer);
       }
     });
 
@@ -551,12 +558,12 @@ void LgsvlInterface::on_odometry(const nav_msgs::msg::Odometry & msg)
   }
   // Autoware.iv interface
   {
-    m_pub_odom->publish(msg);
+    m_odom_pub->publish(msg);
     autoware_auto_vehicle_msgs::msg::VelocityReport velocity;
     velocity.longitudinal_velocity = static_cast<float>(msg.twist.twist.linear.x);
     velocity.lateral_velocity = 0.0F;
     velocity.heading_rate = static_cast<float>(msg.twist.twist.angular.z);
-    m_pub_velocity->publish(velocity);
+    m_velocity_pub->publish(velocity);
   }
 }
 
