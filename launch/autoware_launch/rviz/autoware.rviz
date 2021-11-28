@@ -438,39 +438,6 @@ Visualization Manager:
               Use rainbow: true
               Value: true
             - Alpha: 0.999
-              Autocompute Intensity Bounds: true
-              Autocompute Value Bounds:
-                Max Value: 15
-                Min Value: -2
-                Value: false
-              Axis: Z
-              Channel Name: z
-              Class: rviz_default_plugins/PointCloud2
-              Color: 200; 200; 200
-              Color Transformer: FlatColor
-              Decay Time: 0
-              Enabled: true
-              Invert Rainbow: false
-              Max Color: 255; 255; 255
-              Max Intensity: 15
-              Min Color: 0; 0; 0
-              Min Intensity: -5
-              Name: NoGroundPointCloud
-              Position Transformer: XYZ
-              Selectable: true
-              Size (Pixels): 3
-              Size (m): 0.02
-              Style: Points
-              Topic:
-                Depth: 5
-                Durability Policy: Volatile
-                History Policy: Keep Last
-                Reliability Policy: Best Effort
-                Value: /perception/object_segmentation/pointcloud
-              Use Fixed Frame: true
-              Use rainbow: true
-              Value: true
-            - Alpha: 0.999
               Class: rviz_default_plugins/Polygon
               Color: 25; 255; 0
               Enabled: false
@@ -716,6 +683,43 @@ Visualization Manager:
       Name: Localization
     - Class: rviz_common/Group
       Displays:
+        - Class: rviz_common/Group
+          Displays:
+            - Alpha: 0.999
+              Autocompute Intensity Bounds: true
+              Autocompute Value Bounds:
+                Max Value: 15
+                Min Value: -2
+                Value: false
+              Axis: Z
+              Channel Name: z
+              Class: rviz_default_plugins/PointCloud2
+              Color: 200; 200; 200
+              Color Transformer: FlatColor
+              Decay Time: 0
+              Enabled: true
+              Invert Rainbow: false
+              Max Color: 255; 255; 255
+              Max Intensity: 15
+              Min Color: 0; 0; 0
+              Min Intensity: -5
+              Name: NoGroundPointCloud
+              Position Transformer: XYZ
+              Selectable: true
+              Size (Pixels): 3
+              Size (m): 0.02
+              Style: Points
+              Topic:
+                Depth: 5
+                Durability Policy: Volatile
+                History Policy: Keep Last
+                Reliability Policy: Best Effort
+                Value: /perception/object_segmentation/pointcloud
+              Use Fixed Frame: true
+              Use rainbow: true
+              Value: true
+          Enabled: true
+          Name: Segmentation
         - Class: rviz_common/Group
           Displays:
             - BUS:
