@@ -1,4 +1,4 @@
-// Copyright 2021 The Autoware Foundation
+// Copyright 2020 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,8 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
-// Co-developed by Tier IV, Inc. and Robotec.AI sp. z o.o.
 
 /*
  *  Copyright (c) 2018, Nagoya University
@@ -47,118 +45,149 @@
 #ifndef COSTMAP_GENERATOR__COSTMAP_GENERATOR_HPP_
 #define COSTMAP_GENERATOR__COSTMAP_GENERATOR_HPP_
 
-#include <lanelet2_core/primitives/Lanelet.h>
+#include "costmap_generator/objects_to_costmap.hpp"
+#include "costmap_generator/points_to_costmap.hpp"
+
+#include <grid_map_ros/GridMapRosConverter.hpp>
+#include <grid_map_ros/grid_map_ros.hpp>
+#include <lanelet2_extension/utility/message_conversion.hpp>
+#include <rclcpp/rclcpp.hpp>
+
+#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
+#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
+#include <autoware_planning_msgs/msg/scenario.hpp>
+
+#include <grid_map_msgs/msg/grid_map.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
-#include <autoware_auto_planning_msgs/action/planner_costmap.hpp>
-#include <costmap_generator/visibility_control.hpp>
-#include <grid_map_ros/GridMapRosConverter.hpp>
-#include <grid_map_ros/grid_map_ros.hpp>
-#include <rclcpp/rclcpp.hpp>
-#include <rclcpp_action/rclcpp_action.hpp>
-#include <std_msgs/msg/bool.hpp>
-
-#include <visualization_msgs/msg/marker.hpp>
-#include <visualization_msgs/msg/marker_array.hpp>
-
 #include <memory>
 #include <string>
 #include <vector>
-#include <tuple>
 
-
-namespace autoware
-{
-namespace planning
-{
-namespace costmap_generator
-{
-/// \brief Struct holding costmap layer names
-struct COSTMAP_GENERATOR_PUBLIC LayerName
-{
-  /// Name of layer only with lanelet2 info
-  static constexpr const char * WAYAREA = "wayarea";
-  /// Name of layer which has all information applied
-  static constexpr const char * COMBINED = "combined";
-};
-
-/// \brief Parameters for CostmapGenerator class
-struct COSTMAP_GENERATOR_PUBLIC CostmapGeneratorParams
-{
-  bool use_wayarea;           ///< Decide if apply Lanelet2 info to costmap
-  bool bound_costmap;         ///< Decide if truncate costmap regarding only crucial information
-  double grid_min_value;      ///< Minimal costmap grid value (freespace)
-  double grid_max_value;      ///< Maximal costmap grid value (obstacle)
-  double grid_resolution;     ///< Costmap resolution
-  double grid_length_x;       ///< Costmap x direction size
-  double grid_length_y;       ///< Costmap y direction size
-  double grid_position_x;     ///< X position of costmap in its frame
-  double grid_position_y;     ///< Y position of costmap in its frame
-  std::string costmap_frame;  ///< Costmap frame name
-};
-
-/// \class CostmapGenerator
-/// \brief Costmap generation algorithm regarding lanelet2 data
-class COSTMAP_GENERATOR_PUBLIC CostmapGenerator
+class CostmapGenerator : public rclcpp::Node
 {
 public:
-  /// \brief Initialize gridmap parameters based on rosparam
-  /// \param [in] generator_params Costmap generation algorithm configuration
-  explicit CostmapGenerator(const CostmapGeneratorParams & generator_params);
-
-  /// \brief Generate costmap
-  /// \details This is main function which is capable of creating
-  ///          GridMap, basing on lanelet2 information and
-  ///          transforms between map, costmap, and vehicle
-  ///          positions. It is possible to decide if the function
-  ///          should truncate the final costmap or apply driveable
-  ///          areas by setting proper configuration parameters
-  /// \param [in] lanelet_ptr Pointer to lanelet2 map, used for applying driveable areas to costmap
-  /// \param [in] vehicle_to_grid_position Translation between costmap and vehicle frame used to
-  ///                                     align costmap and vehicle center
-  /// \param [in] map_to_costmap_transform Transform between map and costmap. Used for converting
-  ///                                     lanelet polygon points when marking driveable areas
-  /// \return Generated costmap
-  grid_map::GridMap generateCostmap(
-    lanelet::LaneletMapPtr lanelet_ptr, const grid_map::Position & vehicle_to_grid_position,
-    const geometry_msgs::msg::TransformStamped & map_to_costmap_transform);
+  explicit CostmapGenerator(const rclcpp::NodeOptions & node_options);
 
 private:
+  bool use_objects_;
+  bool use_points_;
+  bool use_wayarea_;
+
+  lanelet::LaneletMapPtr lanelet_map_;
+  autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_;
+  sensor_msgs::msg::PointCloud2::ConstSharedPtr points_;
+
+  std::string costmap_frame_;
+  std::string vehicle_frame_;
+  std::string map_frame_;
+
+  double update_rate_;
+
+  double grid_min_value_;
+  double grid_max_value_;
+  double grid_resolution_;
+  double grid_length_x_;
+  double grid_length_y_;
+  double grid_position_x_;
+  double grid_position_y_;
+
+  double maximum_lidar_height_thres_;
+  double minimum_lidar_height_thres_;
+
+  double expand_polygon_size_;
+  int size_of_expansion_kernel_;
+
   grid_map::GridMap costmap_;
-  CostmapGeneratorParams params_;
+
+  rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr pub_costmap_;
+  rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr pub_occupancy_grid_;
+
+  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_points_;
+  rclcpp::Subscription<autoware_auto_perception_msgs::msg::PredictedObjects>::SharedPtr sub_objects_;
+  rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr sub_lanelet_bin_map_;
+  rclcpp::Subscription<autoware_planning_msgs::msg::Scenario>::SharedPtr sub_scenario_;
+
+  rclcpp::TimerBase::SharedPtr timer_;
+
+  tf2_ros::Buffer tf_buffer_;
+  tf2_ros::TransformListener tf_listener_;
+
   std::vector<std::vector<geometry_msgs::msg::Point>> area_points_;
 
-  /// \brief Fills costmap data according to given lanelet roads and parking areas
-  void loadDrivableAreasFromLaneletMap(lanelet::LaneletMapPtr lanelet_ptr);
+  PointsToCostmap points2costmap_;
+  ObjectsToCostmap objects2costmap_;
 
-  /// \brief Find bounding box for all received lanelet polygons
-  std::tuple<grid_map::Position, grid_map::Position> calculateAreaPointsBoundingBox() const;
+  autoware_planning_msgs::msg::Scenario::ConstSharedPtr scenario_;
 
-  /// \brief Perform final costmap bounding regarding received lanelet information
-  grid_map::GridMap boundCostmap(
-    const grid_map::Position & min_point, const grid_map::Position & max_point) const;
+  struct LayerName
+  {
+    static constexpr const char * objects = "objects";
+    static constexpr const char * points = "points";
+    static constexpr const char * wayarea = "wayarea";
+    static constexpr const char * combined = "combined";
+  };
 
-  /// \brief set area_points_ from lanelet polygons
-  void loadRoadAreasFromLaneletMap(lanelet::LaneletMapPtr lanelet_map);
+  /// \brief wait for lanelet2 map to load and build routing graph
+  void initLaneletMap();
 
-  /// \brief set area_points_ from parking areas
-  void loadParkingAreasFromLaneletMap(lanelet::LaneletMapPtr lanelet_map);
+  /// \brief callback for loading lanelet2 map
+  void onLaneletMapBin(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg);
+
+  /// \brief callback for DynamicObjectArray
+  /// \param[in] in_objects input DynamicObjectArray usually from prediction or perception
+  /// component
+  void onObjects(const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr msg);
+
+  /// \brief callback for sensor_msgs::PointCloud2
+  /// \param[in] in_points input sensor_msgs::PointCloud2. Assuming ground-filtered pointcloud
+  /// by default
+  void onPoints(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);
+
+  void onScenario(const autoware_planning_msgs::msg::Scenario::ConstSharedPtr msg);
+
+  void onTimer();
+
+  /// \brief initialize gridmap parameters based on rosparam
+  void initGridmap();
+
+  /// \brief publish ros msg: grid_map::GridMap, and nav_msgs::OccupancyGrid
+  /// \param[in] gridmap with calculated cost
+  void publishCostmap(const grid_map::GridMap & costmap);
+
+  /// \brief set area_points from lanelet polygons
+  /// \param [in] input lanelet_map
+  /// \param [out] calculated area_points of lanelet polygons
+  void loadRoadAreasFromLaneletMap(
+    const lanelet::LaneletMapPtr lanelet_map,
+    std::vector<std::vector<geometry_msgs::msg::Point>> * area_points);
+
+  /// \brief set area_points from parking-area polygons
+  /// \param [in] input lanelet_map
+  /// \param [out] calculated area_points of lanelet polygons
+  void loadParkingAreasFromLaneletMap(
+    const lanelet::LaneletMapPtr lanelet_map,
+    std::vector<std::vector<geometry_msgs::msg::Point>> * area_points);
+
+  /// \brief calculate cost from pointcloud data
+  /// \param[in] in_points: subscribed pointcloud data
+  grid_map::Matrix generatePointsCostmap(
+    const sensor_msgs::msg::PointCloud2::ConstSharedPtr & in_points);
+
+  /// \brief calculate cost from DynamicObjectArray
+  /// \param[in] in_objects: subscribed DynamicObjectArray
+  grid_map::Matrix generateObjectsCostmap(
+    const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr in_objects);
 
   /// \brief calculate cost from lanelet2 map
-  grid_map::Matrix generateWayAreaCostmap(
-    const geometry_msgs::msg::TransformStamped & map_to_costmap_transform) const;
+  grid_map::Matrix generateWayAreaCostmap();
 
-  /// \brief Calculate costmap layer costs for final output
-  /// \return Costmap layer
-  grid_map::Matrix generateCombinedCostmap() const;
+  /// \brief calculate cost for final output
+  grid_map::Matrix generateCombinedCostmap();
 };
-
-}  // namespace costmap_generator
-}  // namespace planning
-}  // namespace autoware
 
 #endif  // COSTMAP_GENERATOR__COSTMAP_GENERATOR_HPP_
