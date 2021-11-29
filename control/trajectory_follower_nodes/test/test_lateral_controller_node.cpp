@@ -89,10 +89,8 @@ TEST_F(FakeNodeFixture, no_input)
     std::make_shared<tf2_ros::StaticTransformBroadcaster>(this->get_fake_node());
 
   // No published data: expect a stopped command
-  test_utils::waitForMessage(node, this, received_lateral_command);
-  ASSERT_TRUE(received_lateral_command);
-  EXPECT_EQ(cmd_msg->steering_tire_angle, 0.0f);
-  EXPECT_EQ(cmd_msg->steering_tire_rotation_rate, 0.0f);
+  test_utils::waitForMessage(node, this, received_lateral_command, std::chrono::seconds{1LL}, false);
+  ASSERT_FALSE(received_lateral_command);
 }
 
 TEST_F(FakeNodeFixture, empty_trajectory)
@@ -125,6 +123,10 @@ TEST_F(FakeNodeFixture, empty_trajectory)
   geometry_msgs::msg::TransformStamped transform = test_utils::getDummyTransform();
   transform.header.stamp = node->now();
   br->sendTransform(transform);
+
+  // Spin for transform to be published
+  test_utils::spinWhile(node);
+
   // Empty trajectory: expect a stopped command
   Trajectory traj_msg;
   traj_msg.header.stamp = node->now();
@@ -140,11 +142,8 @@ TEST_F(FakeNodeFixture, empty_trajectory)
   odom_pub->publish(odom_msg);
   steer_pub->publish(steer_msg);
 
-  test_utils::waitForMessage(node, this, received_lateral_command);
-  ASSERT_TRUE(received_lateral_command);
-  EXPECT_EQ(cmd_msg->steering_tire_angle, 0.0f);
-  EXPECT_EQ(cmd_msg->steering_tire_rotation_rate, 0.0f);
-  EXPECT_GT(rclcpp::Time(cmd_msg->stamp), rclcpp::Time(traj_msg.header.stamp));
+  test_utils::waitForMessage(node, this, received_lateral_command, std::chrono::seconds{1LL}, false);
+  ASSERT_FALSE(received_lateral_command);
 }
 
 TEST_F(FakeNodeFixture, straight_trajectory)
@@ -177,6 +176,10 @@ TEST_F(FakeNodeFixture, straight_trajectory)
   geometry_msgs::msg::TransformStamped transform = test_utils::getDummyTransform();
   transform.header.stamp = node->now();
   br->sendTransform(transform);
+
+  // Spin for transform to be published
+  test_utils::spinWhile(node);
+
   // Straight trajectory: expect no steering
   received_lateral_command = false;
   Trajectory traj_msg;
@@ -247,6 +250,10 @@ TEST_F(FakeNodeFixture, right_turn)
   geometry_msgs::msg::TransformStamped transform = test_utils::getDummyTransform();
   transform.header.stamp = node->now();
   br->sendTransform(transform);
+
+  // Spin for transform to be published
+  test_utils::spinWhile(node);
+
   // Right turning trajectory: expect right steering
   received_lateral_command = false;
   Trajectory traj_msg;
@@ -280,7 +287,6 @@ TEST_F(FakeNodeFixture, right_turn)
   odom_pub->publish(odom_msg);
   steer_pub->publish(steer_msg);
 
-  test_utils::spinWhile(node);
   test_utils::waitForMessage(node, this, received_lateral_command);
   ASSERT_TRUE(received_lateral_command);
   EXPECT_LT(cmd_msg->steering_tire_angle, 0.0f);
@@ -318,6 +324,10 @@ TEST_F(FakeNodeFixture, left_turn)
   geometry_msgs::msg::TransformStamped transform = test_utils::getDummyTransform();
   transform.header.stamp = node->now();
   br->sendTransform(transform);
+
+  // Spin for transform to be published
+  test_utils::spinWhile(node);
+
   // Left turning trajectory: expect left steering
   received_lateral_command = false;
   Trajectory traj_msg;
@@ -351,7 +361,6 @@ TEST_F(FakeNodeFixture, left_turn)
   odom_pub->publish(odom_msg);
   steer_pub->publish(steer_msg);
 
-  test_utils::spinWhile(node);
   test_utils::waitForMessage(node, this, received_lateral_command);
   ASSERT_TRUE(received_lateral_command);
   EXPECT_GT(cmd_msg->steering_tire_angle, 0.0f);
@@ -389,6 +398,10 @@ TEST_F(FakeNodeFixture, stopped)
   geometry_msgs::msg::TransformStamped transform = test_utils::getDummyTransform();
   transform.header.stamp = node->now();
   br->sendTransform(transform);
+
+  // Spin for transform to be published
+  test_utils::spinWhile(node);
+
   // Straight trajectory: expect no steering
   received_lateral_command = false;
   Trajectory traj_msg;
@@ -423,7 +436,6 @@ TEST_F(FakeNodeFixture, stopped)
   odom_pub->publish(odom_msg);
   steer_pub->publish(steer_msg);
 
-  test_utils::spinWhile(node);
   test_utils::waitForMessage(node, this, received_lateral_command);
   ASSERT_TRUE(received_lateral_command);
   EXPECT_EQ(cmd_msg->steering_tire_angle, steer_msg.steering_tire_angle);
