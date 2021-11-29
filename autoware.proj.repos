@@ -57,7 +57,7 @@ repositories:
   simulator/scenario_simulator:
     type: git
     url: https://github.com/tier4/scenario_simulator_v2.git
-    version: 94ed2861739d01490e2fe7c8ec27be76ee72e0eb
+    version: use-autoware-auto-msgs
   simulator/logsim:
     type: git
     url: git@github.com:tier4/logsim.git
