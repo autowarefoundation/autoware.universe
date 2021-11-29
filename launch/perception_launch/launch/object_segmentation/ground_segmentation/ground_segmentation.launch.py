@@ -315,7 +315,7 @@ def launch_setup(context, *args, **kwargs):
             if bool(ground_segmentation_param["additional_lidars"])
             else "no_ground/pointcloud",
             "input/raw_pointcloud": "/sensing/lidar/concatenated/pointcloud",
-            "output": "occupancy_grid",
+            "output": "/perception/occupancy_grid_map/map",
             "use_intra_process": LaunchConfiguration("use_intra_process"),
         }.items(),
         condition=UnlessCondition(
@@ -331,7 +331,7 @@ def launch_setup(context, *args, **kwargs):
         plugin="pointcloud_preprocessor::OccupancyGridMapOutlierFilterComponent",
         name="occupancy_grid_map_outlier_filter",
         remappings=[
-            ("~/input/occupancy_grid_map", "occupancy_grid"),
+            ("~/input/occupancy_grid_map", "/perception/occupancy_grid_map/map"),
             (
                 "~/input/pointcloud",
                 "no_ground/oneshot/pointcloud"
