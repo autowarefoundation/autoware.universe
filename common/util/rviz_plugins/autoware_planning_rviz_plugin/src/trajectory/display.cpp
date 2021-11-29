@@ -231,7 +231,6 @@ void AutowareTrajectoryDisplay::processMessage(
             path_point.pose.orientation.y, path_point.pose.orientation.z);
           if (path_point.longitudinal_velocity_mps < 0) {
             quat *= quat_yaw_reverse;
-            vec_in = -vec_in;
           }
           vec_out = quat * vec_in;
           path_manual_object_->position(
@@ -246,7 +245,6 @@ void AutowareTrajectoryDisplay::processMessage(
             path_point.pose.orientation.y, path_point.pose.orientation.z);
           if (path_point.longitudinal_velocity_mps < 0) {
             quat *= quat_yaw_reverse;
-            vec_in = -vec_in;
           }
           vec_out = quat * vec_in;
           path_manual_object_->position(
