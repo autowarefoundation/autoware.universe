@@ -30,11 +30,11 @@
 
     <!-- object segmentation module -->
     <group>
-      <push-ros-namespace namespace="object_segmentation"/>
+      <push-ros-namespace namespace="obstacle_segmentation"/>
       <!-- ground segmentation module -->
       <group>
         <push-ros-namespace namespace="ground_segmentation"/>
-        <include file="$(find-pkg-share perception_launch)/launch/object_segmentation/ground_segmentation/ground_segmentation.launch.py">
+        <include file="$(find-pkg-share perception_launch)/launch/obstacle_segmentation/ground_segmentation/ground_segmentation.launch.py">
           <arg name="base_frame" value="base_link" />
           <arg name="vehicle_param_file" value="$(var vehicle_param_file)" />
           <arg name="use_intra_process" value="true" />

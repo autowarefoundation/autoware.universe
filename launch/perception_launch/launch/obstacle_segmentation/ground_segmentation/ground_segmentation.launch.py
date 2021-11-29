@@ -212,7 +212,7 @@ def create_elevation_map_filter_pipeline():
         name="voxel_grid_outlier_filter",
         remappings=[
             ("input", "voxel_grid_filtered/pointcloud"),
-            ("output", "/perception/object_segmentation/pointcloud"),
+            ("output", "/perception/obstacle_segmentation/pointcloud"),
         ],
         parameters=[
             {
@@ -238,7 +238,7 @@ def launch_setup(context, *args, **kwargs):
 
     ground_segmentation_param_path = os.path.join(
         get_package_share_directory("perception_launch"),
-        "config/object_segmentation/ground_segmentation/ground_segmentation.param.yaml",
+        "config/obstacle_segmentation/ground_segmentation/ground_segmentation.param.yaml",
     )
     with open(ground_segmentation_param_path, "r") as f:
         ground_segmentation_param = yaml.safe_load(f)["/**"]["ros__parameters"]
@@ -310,7 +310,7 @@ def launch_setup(context, *args, **kwargs):
             ]
         ),
         launch_arguments={
-            "container": "/perception/object_segmentation/ground_segmentation/perception_pipeline_container",
+            "container": "/perception/obstacle_segmentation/ground_segmentation/perception_pipeline_container",
             "input/obstacle_pointcloud": "no_ground/oneshot/pointcloud"
             if bool(ground_segmentation_param["additional_lidars"])
             else "no_ground/pointcloud",
@@ -338,7 +338,7 @@ def launch_setup(context, *args, **kwargs):
                 if bool(ground_segmentation_param["additional_lidars"])
                 else "no_ground/pointcloud",
             ),
-            ("~/output/pointcloud", "/perception/object_segmentation/pointcloud"),
+            ("~/output/pointcloud", "/perception/obstacle_segmentation/pointcloud"),
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
