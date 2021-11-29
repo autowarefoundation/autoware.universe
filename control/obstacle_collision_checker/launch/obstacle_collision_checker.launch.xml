@@ -1,6 +1,6 @@
 <launch>
   <arg name="input/lanelet_map_bin" default="/map/vector_map" />
-  <arg name="input/obstacle_pointcloud" default="/perception/object_segmentation/pointcloud" />
+  <arg name="input/obstacle_pointcloud" default="/perception/obstacle_segmentation/pointcloud" />
   <arg name="input/reference_trajectory" default="/planning/scenario_planning/trajectory" />
   <arg name="input/predicted_trajectory" default="/control/trajectory_follower/predicted_trajectory" />
   <arg name="input/odometry" default="/localization/kinematic_state" />
