@@ -274,7 +274,10 @@ def generate_launch_description():
                 "/external/traffic_light_recognition/traffic_signals",
             ),
             ("~/input/virtual_traffic_light_states", "/awapi/tmp/virtual_traffic_light_states"),
-            ("~/input/occupancy_grid", "/sensing/lidar/occupancy_grid"),
+            (
+                "~/input/occupancy_grid",
+                "/perception/occupancy_grid_map/map",
+            ),
             ("~/output/path", "path"),
             ("~/output/stop_reasons", "/planning/scenario_planning/status/stop_reasons"),
             (
