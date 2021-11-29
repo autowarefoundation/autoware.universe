@@ -126,7 +126,7 @@ def generate_launch_description():
 
     return launch.LaunchDescription(
         [
-            add_launch_arg("input_pointcloud", "/perception/object_segmentation/pointcloud"),
+            add_launch_arg("input_pointcloud", "/perception/obstacle_segmentation/pointcloud"),
             add_launch_arg("input_map", "/map/pointcloud_map"),
             add_launch_arg("output_clusters", "clusters"),
             add_launch_arg("use_pointcloud_map", "false"),
