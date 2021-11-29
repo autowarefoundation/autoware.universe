@@ -62,6 +62,10 @@ repositories:
     type: git
     url: git@github.com:tier4/logsim.git
     version: 83901be3b7f70f3580aff610103ab90d2f002782
+  simulator/awml_evaluation:
+    type: git
+    url: git@github.com:tier4/AWMLevaluation.git
+    version: main
   # ecu_system_setup
   ecu_system_setup:
     type: git
