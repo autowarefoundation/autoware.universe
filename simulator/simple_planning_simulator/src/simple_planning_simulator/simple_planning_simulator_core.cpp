@@ -308,7 +308,17 @@ void SimplePlanningSimulator::on_ackermann_cmd(
 
 void SimplePlanningSimulator::set_input(const float steer, const float vel, const float accel)
 {
+  using autoware_auto_vehicle_msgs::msg::GearCommand;
   Eigen::VectorXd input(vehicle_model_ptr_->getDimU());
+
+  // TODO (Watanabe): The definition of the sign of acceleration in REVERSE mode is different
+  // between .auto and proposal.iv, and will be discussed later.
+  float acc = accel;
+  if(!current_gear_cmd_ptr_) {
+    acc = 0.0;
+  } else if (current_gear_cmd_ptr_->command == GearCommand::REVERSE || current_gear_cmd_ptr_->command == GearCommand::REVERSE_2) {
+    acc = -accel;
+  }
 
   if (vehicle_model_type_ == VehicleModelType::IDEAL_STEER_VEL) {
     input << vel, steer;
@@ -316,12 +326,12 @@ void SimplePlanningSimulator::set_input(const float steer, const float vel, cons
     vehicle_model_type_ == VehicleModelType::IDEAL_STEER_ACC ||
     vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC)
   {
-    input << accel, steer;
+    input << acc, steer;
   } else if (  // NOLINT
     vehicle_model_type_ == VehicleModelType::IDEAL_STEER_ACC_GEARED ||
     vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_GEARED)
   {
-    input << accel, steer;
+    input << acc, steer;
   }
   vehicle_model_ptr_->setInput(input);
 }
