@@ -263,7 +263,7 @@ def generate_launch_description():
             ("~/input/dynamic_objects", "/perception/object_recognition/objects"),
             (
                 "~/input/no_ground_pointcloud",
-                "/perception/object_segmentation/pointcloud",
+                "/perception/obstacle_segmentation/pointcloud",
             ),
             (
                 "~/input/traffic_signals",

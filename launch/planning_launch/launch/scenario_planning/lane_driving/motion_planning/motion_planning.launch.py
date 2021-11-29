@@ -92,7 +92,7 @@ def generate_launch_description():
             ("~/output/trajectory", "surround_obstacle_checker/trajectory"),
             (
                 "~/input/pointcloud",
-                "/perception/object_segmentation/pointcloud",
+                "/perception/obstacle_segmentation/pointcloud",
             ),
             ("~/input/objects", "/perception/object_recognition/objects"),
             ("~/input/odometry", "/localization/kinematic_state"),
@@ -159,7 +159,7 @@ def generate_launch_description():
             ("~/output/trajectory", "/planning/scenario_planning/lane_driving/trajectory"),
             (
                 "~/input/pointcloud",
-                "/perception/object_segmentation/pointcloud",
+                "/perception/obstacle_segmentation/pointcloud",
             ),
             ("~/input/objects", "/perception/object_recognition/objects"),
             ("~/input/odometry", "/localization/kinematic_state"),

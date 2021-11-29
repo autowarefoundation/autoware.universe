@@ -54,7 +54,7 @@ def generate_launch_description():
                     ("~/input/objects", "/perception/object_recognition/objects"),
                     (
                         "~/input/points_no_ground",
-                        "/perception/object_segmentation/pointcloud",
+                        "/perception/obstacle_segmentation/pointcloud",
                     ),
                     ("~/input/vector_map", "/map/vector_map"),
                     ("~/input/scenario", "/planning/scenario_planning/scenario"),
