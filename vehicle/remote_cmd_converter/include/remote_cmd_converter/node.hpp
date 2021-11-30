@@ -50,19 +50,21 @@ private:
     sub_control_cmd_;
   rclcpp::Subscription<autoware_vehicle_msgs::msg::ShiftStamped>::SharedPtr sub_shift_cmd_;
   rclcpp::Subscription<autoware_control_msgs::msg::GateMode>::SharedPtr sub_gate_mode_;
-  rclcpp::Subscription<autoware_control_msgs::msg::EmergencyMode>::SharedPtr sub_emergency_;
+  rclcpp::Subscription<autoware_control_msgs::msg::EmergencyMode>::SharedPtr sub_emergency_stop_;
 
   void onVelocity(const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg);
   void onRemoteCmd(
     const autoware_vehicle_msgs::msg::RawControlCommandStamped::ConstSharedPtr remote_cmd_ptr);
   void onShiftCmd(const autoware_vehicle_msgs::msg::ShiftStamped::ConstSharedPtr msg);
   void onGateMode(const autoware_control_msgs::msg::GateMode::ConstSharedPtr msg);
-  void onEmergency(const autoware_control_msgs::msg::EmergencyMode::ConstSharedPtr msg);
+  void onEmergencyStop(const autoware_control_msgs::msg::EmergencyMode::ConstSharedPtr msg);
 
   std::shared_ptr<double> current_velocity_ptr_;  // [m/s]
+  std::shared_ptr<rclcpp::Time> latest_emergency_stop_received_time_;
   std::shared_ptr<rclcpp::Time> latest_cmd_received_time_;
   autoware_vehicle_msgs::msg::ShiftStamped::ConstSharedPtr current_shift_cmd_;
   autoware_control_msgs::msg::GateMode::ConstSharedPtr current_gate_mode_;
+
   bool current_emergency_cmd_ = false;
 
   // Timer
@@ -71,13 +73,16 @@ private:
 
   // Parameter
   double ref_vel_gain_;  // reference velocity = current velocity + desired acceleration * gain
-  double time_threshold_;
+  bool wait_for_first_topic_;
+  double control_command_timeout_;
+  double emergency_stop_timeout_;
 
   // Diagnostics
   diagnostic_updater::Updater updater_;
 
   void checkTopicStatus(diagnostic_updater::DiagnosticStatusWrapper & stat);
-  void checkEmergency(diagnostic_updater::DiagnosticStatusWrapper & stat);
+  void checkEmergencyStop(diagnostic_updater::DiagnosticStatusWrapper & stat);
+  bool checkEmergencyStopTopicTimeout();
   bool checkRemoteTopicRate();
 
   // Algorithm

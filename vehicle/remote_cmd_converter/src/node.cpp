@@ -40,15 +40,18 @@ RemoteCmdConverter::RemoteCmdConverter()
     "in/shift_cmd", 1, std::bind(&RemoteCmdConverter::onShiftCmd, this, _1));
   sub_gate_mode_ = create_subscription<autoware_control_msgs::msg::GateMode>(
     "in/current_gate_mode", 1, std::bind(&RemoteCmdConverter::onGateMode, this, _1));
-  sub_emergency_ = create_subscription<autoware_control_msgs::msg::EmergencyMode>(
-    "in/emergency", 1, std::bind(&RemoteCmdConverter::onEmergency, this, _1));
+  sub_emergency_stop_ = create_subscription<autoware_control_msgs::msg::EmergencyMode>(
+    "in/emergency_stop", 1, std::bind(&RemoteCmdConverter::onEmergencyStop, this, _1));
 
   // Parameter
   ref_vel_gain_ = declare_parameter("ref_vel_gain", 3.0);
 
   // Parameter for Hz check
-  time_threshold_ = declare_parameter("time_threshold", 3.0);
   const double timer_rate = declare_parameter("timer_rate", 10.0);
+  wait_for_first_topic_ = declare_parameter("wait_for_first_topic", true);
+  control_command_timeout_ = declare_parameter("control_command_timeout", 1.0);
+  emergency_stop_timeout_ = declare_parameter("emergency_stop_timeout", 3.0);
+
 
   auto timer_callback = std::bind(&RemoteCmdConverter::onTimer, this);
   auto period = std::chrono::duration_cast<std::chrono::nanoseconds>(
@@ -78,7 +81,6 @@ RemoteCmdConverter::RemoteCmdConverter()
   // Diagnostics
   updater_.setHardwareID("remote_cmd_converter");
   updater_.add("remote_control_topic_status", this, &RemoteCmdConverter::checkTopicStatus);
-  updater_.add("emergency_stop_operation", this, &RemoteCmdConverter::checkEmergency);
 
   // Set default values
   current_shift_cmd_ = std::make_shared<autoware_vehicle_msgs::msg::ShiftStamped>();
@@ -97,10 +99,11 @@ void RemoteCmdConverter::onShiftCmd(
   current_shift_cmd_ = msg;
 }
 
-void RemoteCmdConverter::onEmergency(
+void RemoteCmdConverter::onEmergencyStop(
   const autoware_control_msgs::msg::EmergencyMode::ConstSharedPtr msg)
 {
   current_emergency_cmd_ = msg->is_emergency;
+  latest_emergency_stop_received_time_ = std::make_shared<rclcpp::Time>(this->now());
   updater_.force_update();
 }
 
@@ -126,6 +129,13 @@ void RemoteCmdConverter::onRemoteCmd(
   const double sign = getShiftVelocitySign(*current_shift_cmd_);
   const double ref_acceleration =
     calculateAcc(raw_control_cmd_ptr->control, std::fabs(*current_velocity_ptr_));
+
+  if (ref_acceleration > 0.0 && sign == 0.0) {
+    RCLCPP_WARN_THROTTLE(
+      get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
+      "Target acceleration is positive, but the gear is not appropriate. accel: %f, gear: %d",
+      ref_acceleration, current_shift_cmd_->shift.data);
+  }
 
   double ref_velocity = *current_velocity_ptr_ + ref_acceleration * ref_vel_gain_ * sign;
   if (current_shift_cmd_->shift.data == autoware_vehicle_msgs::msg::Shift::REVERSE) {
@@ -179,43 +189,55 @@ void RemoteCmdConverter::checkTopicStatus(diagnostic_updater::DiagnosticStatusWr
   using diagnostic_msgs::msg::DiagnosticStatus;
 
   DiagnosticStatus status;
-  if (!checkRemoteTopicRate()) {
+  if (!checkEmergencyStopTopicTimeout()) {
+    status.level = DiagnosticStatus::ERROR;
+    status.message = "emergency stop topic is timeout";
+  } else if (!checkRemoteTopicRate()) {
     status.level = DiagnosticStatus::ERROR;
     status.message = "low topic rate for remote vehicle_cmd";
   } else {
     status.level = DiagnosticStatus::OK;
+    status.message = "OK";
   }
 
   stat.summary(status.level, status.message);
 }
 
-void RemoteCmdConverter::checkEmergency(diagnostic_updater::DiagnosticStatusWrapper & stat)
-{
-  using diagnostic_msgs::msg::DiagnosticStatus;
-
-  DiagnosticStatus status;
-  if (current_emergency_cmd_) {
-    status.level = DiagnosticStatus::ERROR;
-    status.message = "remote emergency requested";
-  } else {
-    status.level = DiagnosticStatus::OK;
-  }
-
-  stat.summary(status.level, status.message);
-}
 
 void RemoteCmdConverter::onGateMode(const autoware_control_msgs::msg::GateMode::ConstSharedPtr msg)
 {
   current_gate_mode_ = msg;
 }
 
+bool RemoteCmdConverter::checkEmergencyStopTopicTimeout()
+{
+  if (!latest_emergency_stop_received_time_) {
+    if (wait_for_first_topic_)
+      return true;
+    else
+      return false;
+  }
+
+  const auto duration = (this->now() - *latest_emergency_stop_received_time_);
+  if (duration.seconds() > emergency_stop_timeout_) {return false;}
+
+  return true;
+}
+
 bool RemoteCmdConverter::checkRemoteTopicRate()
 {
-  if (!latest_cmd_received_time_ || !current_gate_mode_) {return true;}
+  if (!current_gate_mode_) {return true;}
+
+  if (!latest_cmd_received_time_) {
+    if (wait_for_first_topic_)
+      return true;
+    else
+      return false;
+  }
 
   if (current_gate_mode_->data == autoware_control_msgs::msg::GateMode::REMOTE) {
     const auto duration = (this->now() - *latest_cmd_received_time_);
-    if (duration.seconds() > time_threshold_) {return false;}
+    if (duration.seconds() > control_command_timeout_) {return false;}
   } else {
     latest_cmd_received_time_ = nullptr;  // reset;
   }

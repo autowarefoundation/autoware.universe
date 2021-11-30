@@ -5,6 +5,9 @@
   <arg name="csv_path_brake_map" default="$(find-pkg-share raw_vehicle_cmd_converter)/data/default/brake_map.csv"/>
 
   <arg name="ref_vel_gain" default="3.0"/>
+  <arg name="wait_for_first_topic" default="true"/>
+  <arg name="control_command_timeout" default="1.0"/>
+  <arg name="emergency_stop_timeout" default="3.0"/>
 
   <node pkg="remote_cmd_converter" exec="remote_cmd_converter_node" name="remote_cmd_converter" output="screen">
     <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
@@ -12,6 +15,9 @@
     <param name="csv_path_brake_map" value="$(var csv_path_brake_map)" />
 
     <param name="ref_vel_gain" value="$(var ref_vel_gain)" />
+    <param name="wait_for_first_topic" value="$(var wait_for_first_topic)" />
+    <param name="control_command_timeout" value="$(var control_command_timeout)" />
+    <param name="emergency_stop_timeout" value="$(var emergency_stop_timeout)" />
 
     <remap from="in/raw_control_cmd" to="/remote/raw_control_cmd" />
     <remap from="in/shift_cmd" to="/remote/shift_cmd" />
