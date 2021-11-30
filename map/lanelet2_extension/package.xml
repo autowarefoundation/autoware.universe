@@ -20,6 +20,7 @@
   <depend>lanelet2_routing</depend>
   <depend>lanelet2_traffic_rules</depend>
   <depend>lanelet2_validation</depend>
+  <depend>tf2</depend>
   <depend>autoware_lanelet2_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>visualization_msgs</depend>
