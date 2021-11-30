@@ -37,6 +37,19 @@
 
 namespace fs = boost::filesystem;
 
+bool isPcdFile(const fs::path & p)
+{
+  if (!fs::is_regular_file(p)) {
+    return false;
+  }
+
+  if (p.extension() != ".pcd" && p.extension() != ".PCD") {
+    return false;
+  }
+
+  return true;
+}
+
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
@@ -50,7 +63,7 @@ int main(int argc, char * argv[])
       std::cerr << msg;
     }
 
-    if (fs::is_regular_file(arg)) {
+    if (isPcdFile(arg)) {
       pcd_paths.push_back(argv[i]);
     }
 
@@ -58,11 +71,7 @@ int main(int argc, char * argv[])
       for (const auto & f : fs::directory_iterator(arg)) {
         const auto & p = f.path();
 
-        if (!fs::is_regular_file(p)) {
-          continue;
-        }
-
-        if (p.extension() != ".pcd" && p.extension() != ".PCD") {
+        if (!isPcdFile(p)) {
           continue;
         }
 
