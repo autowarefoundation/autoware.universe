@@ -2,11 +2,19 @@
 <launch>
 
   <arg name="pacmod_param_path" default="$(find-pkg-share as)/config/pacmod.param.yaml"/>
+  <arg name="pacmod_extra_param_path" default="$(find-pkg-share as)/config/pacmod_extra.param.yaml"/>
 
 
   <!-- pacmod interface -->
   <node pkg="as" exec="pacmod_interface" name="pacmod_interface" output="screen">
     <param from="$(var pacmod_param_path)" />
+  </node>
+
+  <!-- pacmod additional parameter changer -->
+  <node pkg="as" exec="pacmod_dynamic_parameter_changer" name="pacmod_dynamic_parameter_changer" output="screen">
+    <param from="$(var pacmod_extra_param_path)" />
+    <remap from="~/output/can" to="/pacmod/can_rx"/>
+    <remap from="~/input/steer_rpt" to="/pacmod/parsed_tx/steer_rpt"/>
   </node>
 
 </launch>

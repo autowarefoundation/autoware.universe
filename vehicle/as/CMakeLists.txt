@@ -13,6 +13,16 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wno-unused-parameter -Wall -Wextra -Wpedantic)
 endif()
 
+ament_auto_add_executable(pacmod_additional_debug_publisher
+  src/pacmod_additional_debug_publisher/pacmod_additional_debug_publisher_node.cpp
+  src/pacmod_additional_debug_publisher/pacmod_additional_debug_publisher_main.cpp
+)
+
+ament_auto_add_executable(pacmod_dynamic_parameter_changer
+  src/pacmod_dynamic_parameter_changer/pacmod_dynamic_parameter_changer_node.cpp
+  src/pacmod_dynamic_parameter_changer/pacmod_dynamic_parameter_changer_main.cpp
+)
+
 ament_auto_add_executable(ssc_interface
   src/ssc_interface/ssc_interface_node.cpp
   src/ssc_interface/ssc_interface.cpp
@@ -21,11 +31,6 @@ ament_auto_add_executable(ssc_interface
 ament_auto_add_executable(pacmod_interface
   src/pacmod_interface/pacmod_interface.cpp
   src/pacmod_interface/pacmod_interface_node.cpp
-)
-
-ament_auto_add_executable(pacmod_additional_debug_publisher
-  src/pacmod_additional_debug_publisher/pacmod_additional_debug_publisher_node.cpp
-  src/pacmod_additional_debug_publisher/pacmod_additional_debug_publisher_main.cpp
 )
 
 if(BUILD_TESTING)
