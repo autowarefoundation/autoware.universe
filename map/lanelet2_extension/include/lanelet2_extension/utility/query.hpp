@@ -76,6 +76,12 @@ lanelet::ConstLanelets walkwayLanelets(const lanelet::ConstLanelets lls);
 lanelet::ConstLanelets roadLanelets(const lanelet::ConstLanelets lls);
 
 /**
+ * [shoulderLanelets extracts shoulder lanelets]
+ * @param  lls [input lanelets with subtype shoulder]
+ * @return     [shoulder lanelets]
+ */
+lanelet::ConstLanelets shoulderLanelets(const lanelet::ConstLanelets lls);
+/**
  * [trafficLights extracts Traffic Light regulatory element from lanelets]
  * @param lanelets [input lanelets]
  * @return         [traffic light that are associated with input lanelets]

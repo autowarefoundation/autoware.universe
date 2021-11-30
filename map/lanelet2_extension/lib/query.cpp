@@ -102,6 +102,11 @@ lanelet::ConstLanelets query::roadLanelets(const lanelet::ConstLanelets lls)
   return query::subtypeLanelets(lls, lanelet::AttributeValueString::Road);
 }
 
+lanelet::ConstLanelets query::shoulderLanelets(const lanelet::ConstLanelets lls)
+{
+  return query::subtypeLanelets(lls, "road_shoulder");
+}
+
 std::vector<lanelet::TrafficLightConstPtr> query::trafficLights(
   const lanelet::ConstLanelets lanelets)
 {
@@ -688,6 +693,9 @@ bool query::getClosestLanelet(
       double angle_diff = getAngleDifference(segment_angle, pose_yaw);
       if (angle_diff < min_angle) {
         min_angle = angle_diff;
+        *closest_lanelet_ptr = llt;
+      } else if ((segment_angle - pose_yaw) < 1e-04) {
+        min_angle = std::abs(segment_angle - pose_yaw);
         *closest_lanelet_ptr = llt;
       }
     }

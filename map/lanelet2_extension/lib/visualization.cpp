@@ -466,11 +466,11 @@ void visualization::lanelet2Polygon(
 }
 
 visualization_msgs::msg::MarkerArray visualization::laneletDirectionAsMarkerArray(
-  const lanelet::ConstLanelets lanelets)
+  const lanelet::ConstLanelets lanelets, const std::string & additional_namespace)
 {
   visualization_msgs::msg::MarkerArray marker_array;
   visualization_msgs::msg::Marker marker;
-  initLaneletDirectionMarker(&marker, "lanelet direction");
+  initLaneletDirectionMarker(&marker, additional_namespace + "lanelet direction");
 
   for (auto lli = lanelets.begin(); lli != lanelets.end(); lli++) {
     lanelet::ConstLanelet ll = *lli;
@@ -791,16 +791,19 @@ visualization_msgs::msg::MarkerArray visualization::lineStringsAsMarkerArray(
 
 visualization_msgs::msg::MarkerArray visualization::laneletsBoundaryAsMarkerArray(
   const lanelet::ConstLanelets & lanelets, const std_msgs::msg::ColorRGBA c,
-  const bool viz_centerline)
+  const bool viz_centerline, const std::string & additional_namespace)
 {
   double lss = 0.1;  // line string size
   double lss_center = std::max(lss * 0.1, 0.02);
 
   std::unordered_set<lanelet::Id> added;
   visualization_msgs::msg::Marker left_line_strip, right_line_strip, center_line_strip;
-  visualization::initLineStringMarker(&left_line_strip, "map", "left_lane_bound", c);
-  visualization::initLineStringMarker(&right_line_strip, "map", "right_lane_bound", c);
-  visualization::initLineStringMarker(&center_line_strip, "map", "center_lane_line", c);
+  visualization::initLineStringMarker(
+    &left_line_strip, "map", additional_namespace + "left_lane_bound", c);
+  visualization::initLineStringMarker(
+    &right_line_strip, "map", additional_namespace + "right_lane_bound", c);
+  visualization::initLineStringMarker(
+    &center_line_strip, "map", additional_namespace + "center_lane_line", c);
 
   for (auto li = lanelets.begin(); li != lanelets.end(); li++) {
     lanelet::ConstLanelet lll = *li;
