@@ -353,43 +353,56 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr ElevationMapLoaderNode::getLaneFilteredPoint
   const lanelet::ConstLanelets & intersected_lanelets,
   const pcl::PointCloud<pcl::PointXYZ>::Ptr & cloud)
 {
-  pcl::PointCloud<pcl::PointXYZ> output_cloud;
-  output_cloud.header = cloud->header;
+  pcl::PointCloud<pcl::PointXYZ> filtered_cloud;
+  filtered_cloud.header = cloud->header;
+
+  pcl::PointCloud<pcl::PointXYZ>::Ptr centralized_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+  centralized_cloud->reserve(cloud->size());
+
+  // The coordinates of the point cloud are too large, resulting in calculation errors,
+  // so offset them to the center.
+  // https://github.com/PointCloudLibrary/pcl/issues/4895
+  Eigen::Vector4f centroid;
+  pcl::compute3DCentroid(*cloud, centroid);
+  for (const auto & p : cloud->points) {
+    centralized_cloud->points.push_back(
+      pcl::PointXYZ(p.x - centroid[0], p.y - centroid[1], p.z - centroid[2]));
+  }
+
   pcl::PointCloud<pcl::PointXYZ>::Ptr downsampled_cloud(new pcl::PointCloud<pcl::PointXYZ>);
   pcl::VoxelGrid<pcl::PointXYZ> voxel_grid;
   voxel_grid.setLeafSize(lane_filter_.voxel_size_x_, lane_filter_.voxel_size_y_, 100000.0);
-  voxel_grid.setInputCloud(cloud);
+  voxel_grid.setInputCloud(centralized_cloud);
   voxel_grid.setSaveLeafLayout(true);
   voxel_grid.filter(*downsampled_cloud);
 
   std::unordered_map<size_t, pcl::PointCloud<pcl::PointXYZ>> downsampled2original_map;
-  for (const auto & p : cloud->points) {
+  for (const auto & p : centralized_cloud->points) {
     if (std::isnan(p.x) || std::isnan(p.y) || std::isnan(p.z)) {
       continue;
     }
-    const int index = voxel_grid.getCentroidIndexAt(voxel_grid.getGridCoordinates(p.x, p.y, p.z));
-    if (index == -1) {
-      continue;
-    }
+    const size_t index = voxel_grid.getCentroidIndex(p);
     downsampled2original_map[index].points.push_back(p);
   }
 
-  for (const auto & point : downsampled_cloud->points) {
-    if (checkPointWithinLanelets(point, intersected_lanelets)) {
-      const int index =
-        voxel_grid.getCentroidIndexAt(voxel_grid.getGridCoordinates(point.x, point.y, point.z));
-      if (index == -1) {
-        continue;
-      }
-      for (const auto & original_point : downsampled2original_map[index].points) {
-        output_cloud.points.push_back(original_point);
+  for (auto & point : downsampled_cloud->points) {
+    if (checkPointWithinLanelets(
+        pcl::PointXYZ(point.x + centroid[0], point.y + centroid[1], point.z + centroid[2]),
+        intersected_lanelets))
+    {
+      const size_t index = voxel_grid.getCentroidIndex(point);
+      for (auto & original_point : downsampled2original_map[index].points) {
+        original_point.x += centroid[0];
+        original_point.y += centroid[1];
+        original_point.z += centroid[2];
+        filtered_cloud.points.push_back(original_point);
       }
     }
   }
 
-  pcl::PointCloud<pcl::PointXYZ>::Ptr output_cloud_ptr;
-  output_cloud_ptr = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>(output_cloud);
-  return output_cloud_ptr;
+  pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_cloud_ptr;
+  filtered_cloud_ptr = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>(filtered_cloud);
+  return filtered_cloud_ptr;
 }
 
 pcl::PointCloud<pcl::PointXYZ>::Ptr ElevationMapLoaderNode::createPointcloudFromElevationMap()
