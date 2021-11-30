@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <iostream>
+#include <string>
+
 #include "rclcpp/rclcpp.hpp"
 
 #include "lanelet2_extension/projection/mgrs_projector.hpp"
@@ -20,9 +23,6 @@
 #include "lanelet2_core/primitives/Lanelet.h"
 #include "lanelet2_io/Io.h"
 #include "lanelet2_projection/UTM.h"
-
-#include <iostream>
-#include <string>
 
 void loadingAutowareOSMFile(const std::string map_file_path)
 {

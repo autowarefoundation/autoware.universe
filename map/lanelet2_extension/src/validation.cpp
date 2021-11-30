@@ -12,6 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <iostream>
+#include <string>
+
+#include "rclcpp/rclcpp.hpp"
+
+#include "pugixml.hpp"
+
 #include "lanelet2_core/primitives/BasicRegulatoryElements.h"
 #include "lanelet2_core/primitives/Lanelet.h"
 #include "lanelet2_io/Io.h"
@@ -23,13 +30,6 @@
 
 #include "lanelet2_extension/projection/mgrs_projector.hpp"
 #include "lanelet2_extension/regulatory_elements/autoware_traffic_light.hpp"
-
-#include <iostream>
-#include <string>
-
-#include "rclcpp/rclcpp.hpp"
-
-#include "pugixml.hpp"
 
 namespace
 {

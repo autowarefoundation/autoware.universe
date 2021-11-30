@@ -1,21 +1,26 @@
-/*
- * Copyright 2015-2019 Autoware Foundation. All rights reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- * Authors: Kenji Miyake, Ryohsuke Mitsudome
- *
- */
+// Copyright 2015-2019 Autoware Foundation. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// Authors: Kenji Miyake, Ryohsuke Mitsudome
+
+#include "lanelet2_extension/utility/utilities.hpp"
+
+#include <algorithm>
+#include <limits>
+#include <map>
+#include <utility>
+#include <vector>
 
 #include "lanelet2_core/geometry/LineString.h"
 #include "lanelet2_core/primitives/BasicRegulatoryElements.h"
@@ -26,12 +31,6 @@
 
 #include "lanelet2_extension/utility/message_conversion.hpp"
 #include "lanelet2_extension/utility/query.hpp"
-#include "lanelet2_extension/utility/utilities.hpp"
-
-#include <algorithm>
-#include <map>
-#include <utility>
-#include <vector>
 
 namespace lanelet
 {
@@ -379,16 +378,20 @@ bool lineStringToPolygon(
   const lanelet::ConstLineString3d & linestring, lanelet::ConstPolygon3d * polygon)
 {
   if (polygon == nullptr) {
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("lanelet2_extension.visualization"), __func__ << ": polygon is null pointer! Failed to convert to polygon.");
+    RCLCPP_ERROR_STREAM(
+      rclcpp::get_logger(
+        "lanelet2_extension.visualization"),
+      __func__ << ": polygon is null pointer! Failed to convert to polygon.");
     return false;
   }
   if (linestring.size() < 4) {
     if (linestring.size() < 3 || linestring.front().id() == linestring.back().id()) {
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger("lanelet2_extension.visualization"),
-        __func__ << ": linestring" << linestring.id()
-                 << " must have more than different 3 points! (size is " << linestring.size() << ")"
-                 << std::endl
-                 << "Failed to convert to polygon.");
+      RCLCPP_ERROR_STREAM(
+        rclcpp::get_logger("lanelet2_extension.visualization"),
+        __func__ << ": linestring" << linestring.id() <<
+          " must have more than different 3 points! (size is " << linestring.size() << ")" <<
+          std::endl <<
+          "Failed to convert to polygon.");
       return false;
     }
   }
@@ -396,11 +399,12 @@ bool lineStringToPolygon(
   lanelet::Polygon3d llt_poly;
 
   for (const auto & lp : linestring) {
-    llt_poly.push_back(lanelet::Point3d(
-      lanelet::InvalId, lp.basicPoint().x(), lp.basicPoint().y(), lp.basicPoint().z()));
+    llt_poly.push_back(
+      lanelet::Point3d(
+        lanelet::InvalId, lp.basicPoint().x(), lp.basicPoint().y(), lp.basicPoint().z()));
   }
 
-  if (linestring.front().id() == linestring.back().id()) llt_poly.pop_back();
+  if (linestring.front().id() == linestring.back().id()) {llt_poly.pop_back();}
 
   *polygon = llt_poly;
 

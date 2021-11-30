@@ -1,23 +1,24 @@
-/*
- * Copyright 2015-2019 Autoware Foundation. All rights reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- * Authors: Simon Thompson, Ryohsuke Mitsudome
- */
+// Copyright 2015-2019 Autoware Foundation. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// Authors: Simon Thompson, Ryohsuke Mitsudome
 
-#ifndef LANELET2_EXTENSION_VISUALIZATION_VISUALIZATION_H
-#define LANELET2_EXTENSION_VISUALIZATION_VISUALIZATION_H
+#ifndef LANELET2_EXTENSION__VISUALIZATION__VISUALIZATION_HPP_
+#define LANELET2_EXTENSION__VISUALIZATION__VISUALIZATION_HPP_
+
+#include <string>
+#include <vector>
 
 #include "geometry_msgs/msg/polygon.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
@@ -29,9 +30,6 @@
 
 #include "lanelet2_extension/regulatory_elements/autoware_traffic_light.hpp"
 #include "lanelet2_extension/utility/query.hpp"
-
-#include <string>
-#include <vector>
 
 namespace lanelet
 {
@@ -183,7 +181,8 @@ visualization_msgs::msg::MarkerArray trafficLightsAsTriangleMarkerArray(
  * @param  duration     [lifetime of the marker]
  */
 visualization_msgs::msg::MarkerArray detectionAreasAsMarkerArray(
-  const std::vector<lanelet::DetectionAreaConstPtr> & da_reg_elems, const std_msgs::msg::ColorRGBA c,
+  const std::vector<lanelet::DetectionAreaConstPtr> & da_reg_elems,
+  const std_msgs::msg::ColorRGBA c,
   const rclcpp::Duration duration = rclcpp::Duration(0, 0));
 
 /**
@@ -228,4 +227,4 @@ visualization_msgs::msg::MarkerArray obstaclePolygonsAsMarkerArray(
 }  // namespace visualization
 }  // namespace lanelet
 
-#endif  // LANELET2_EXTENSION_VISUALIZATION_VISUALIZATION_H
+#endif  // LANELET2_EXTENSION__VISUALIZATION__VISUALIZATION_HPP_

@@ -12,9 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "gtest/gtest.h"
-#include "lanelet2_extension/utility/query.hpp"
 #include <math.h>
+
+#include "gtest/gtest.h"
+
+#include "lanelet2_extension/utility/query.hpp"
 
 using lanelet::Lanelet;
 using lanelet::LineString3d;
