@@ -31,6 +31,7 @@ T getParameter(rclcpp::Node & node, const std::string & name)
     RCLCPP_ERROR(
       node.get_logger(), "Failed to get parameter `%s`, please set it when you launch the node.",
       name.c_str());
+    throw(ex);
   }
 }
 }  // namespace
@@ -52,48 +53,16 @@ VehicleInfoUtil::VehicleInfoUtil(rclcpp::Node & node)
 
 VehicleInfo VehicleInfoUtil::getVehicleInfo()
 {
-  // Base parameters
-  const double wheel_radius_m = vehicle_info_.wheel_radius_m;
-  const double wheel_width_m = vehicle_info_.wheel_width_m;
-  const double wheel_base_m = vehicle_info_.wheel_base_m;
-  const double wheel_tread_m = vehicle_info_.wheel_tread_m;
-  const double front_overhang_m = vehicle_info_.front_overhang_m;
-  const double rear_overhang_m = vehicle_info_.rear_overhang_m;
-  const double left_overhang_m = vehicle_info_.left_overhang_m;
-  const double right_overhang_m = vehicle_info_.right_overhang_m;
-  const double vehicle_height_m = vehicle_info_.vehicle_height_m;
-
-  // Derived parameters
-  const double vehicle_length_m_ = front_overhang_m + wheel_base_m + rear_overhang_m;
-  const double vehicle_width_m_ = wheel_tread_m + left_overhang_m + right_overhang_m;
-  const double min_longitudinal_offset_m_ = -rear_overhang_m;
-  const double max_longitudinal_offset_m_ = front_overhang_m + wheel_base_m;
-  const double min_lateral_offset_m_ = -(wheel_tread_m / 2.0 + right_overhang_m);
-  const double max_lateral_offset_m_ = wheel_tread_m / 2.0 + left_overhang_m;
-  const double min_height_offset_m_ = 0.0;
-  const double max_height_offset_m_ = vehicle_height_m;
-
-  return VehicleInfo{
-    // Base parameters
-    wheel_radius_m,
-    wheel_width_m,
-    wheel_base_m,
-    wheel_tread_m,
-    front_overhang_m,
-    rear_overhang_m,
-    left_overhang_m,
-    right_overhang_m,
-    vehicle_height_m,
-    // Derived parameters
-    vehicle_length_m_,
-    vehicle_width_m_,
-    min_longitudinal_offset_m_,
-    max_longitudinal_offset_m_,
-    min_lateral_offset_m_,
-    max_lateral_offset_m_,
-    min_height_offset_m_,
-    max_height_offset_m_,
-  };
+  return createVehicleInfo(
+    vehicle_info_.wheel_radius_m,
+    vehicle_info_.wheel_width_m,
+    vehicle_info_.wheel_base_m,
+    vehicle_info_.wheel_tread_m,
+    vehicle_info_.front_overhang_m,
+    vehicle_info_.rear_overhang_m,
+    vehicle_info_.left_overhang_m,
+    vehicle_info_.right_overhang_m,
+    vehicle_info_.vehicle_height_m);
 }
 
 }  // namespace vehicle_info_util
