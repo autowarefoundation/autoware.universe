@@ -42,15 +42,15 @@ BasicPoint3d MGRSProjector::forward(const GPSPoint & gps, const int precision) c
 
   BasicPoint3d mgrs_point{0., 0., gps.ele};
   BasicPoint3d utm_point{0., 0., gps.ele};
-  int zone;
-  bool northp;
+  int zone{};
+  bool northp{};
   std::string mgrs_code;
 
   try {
     GeographicLib::UTMUPS::Forward(gps.lat, gps.lon, zone, northp, utm_point.x(), utm_point.y());
     GeographicLib::MGRS::Forward(
       zone, northp, utm_point.x(), utm_point.y(), gps.lat, precision, mgrs_code);
-  } catch (GeographicLib::GeographicErr err) {
+  } catch (const GeographicLib::GeographicErr & err) {
     std::cerr << err.what() << std::endl;
     return mgrs_point;
   }
@@ -92,15 +92,16 @@ GPSPoint MGRSProjector::reverse(
   GPSPoint gps{0., 0., mgrs_point.z()};
   BasicPoint3d utm_point{0., 0., gps.ele};
 
-  int zone, prec;
-  bool northp;
+  int zone{};
+  int prec{};
+  bool northp{};
   try {
     GeographicLib::MGRS::Reverse(
       mgrs_code, zone, northp, utm_point.x(), utm_point.y(), prec, false);
     utm_point.x() += fmod(mgrs_point.x(), pow(10, 5 - prec));
     utm_point.y() += fmod(mgrs_point.y(), pow(10, 5 - prec));
     GeographicLib::UTMUPS::Reverse(zone, northp, utm_point.x(), utm_point.y(), gps.lat, gps.lon);
-  } catch (GeographicLib::GeographicErr err) {
+  } catch (const GeographicLib::GeographicErr & err) {
     std::cerr << "Failed to convert from MGRS to WGS";
     return gps;
   }
@@ -113,15 +114,15 @@ void MGRSProjector::setMGRSCode(const std::string & mgrs_code) {mgrs_code_ = mgr
 void MGRSProjector::setMGRSCode(const GPSPoint & gps, const int precision)
 {
   BasicPoint3d utm_point{0., 0., gps.ele};
-  int zone;
-  bool northp;
+  int zone{};
+  bool northp{};
   std::string mgrs_code;
 
   try {
     GeographicLib::UTMUPS::Forward(gps.lat, gps.lon, zone, northp, utm_point.x(), utm_point.y());
     GeographicLib::MGRS::Forward(
       zone, northp, utm_point.x(), utm_point.y(), gps.lat, precision, mgrs_code);
-  } catch (GeographicLib::GeographicErr err) {
+  } catch (const GeographicLib::GeographicErr & err) {
     std::cerr << err.what() << std::endl;
   }
 
