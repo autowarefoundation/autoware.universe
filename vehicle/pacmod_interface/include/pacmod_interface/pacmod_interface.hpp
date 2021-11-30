@@ -29,8 +29,8 @@
 #include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
 #include <autoware_auto_vehicle_msgs/msg/turn_indicators_report.hpp>
 #include <autoware_auto_vehicle_msgs/msg/velocity_report.hpp>
-#include <autoware_vehicle_msgs/msg/actuation_command_stamped.hpp>
-#include <autoware_vehicle_msgs/msg/actuation_status_stamped.hpp>
+#include <autoware_control_msgs/msg/actuation_command_stamped.hpp>
+#include <autoware_control_msgs/msg/actuation_status_stamped.hpp>
 #include <autoware_vehicle_msgs/msg/vehicle_emergency_stamped.hpp>
 #include <pacmod3_msgs/msg/global_rpt.hpp>
 #include <pacmod3_msgs/msg/steering_cmd.hpp>
@@ -54,6 +54,8 @@
 class PacmodInterface : public rclcpp::Node
 {
 public:
+  using ActuationCommandStamped = autoware_control_msgs::msg::ActuationCommandStamped;
+  using ActuationStatusStamped = autoware_control_msgs::msg::ActuationStatusStamped;
   PacmodInterface();
 
 private:
@@ -73,8 +75,7 @@ private:
   rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::HazardLightsCommand>::SharedPtr
     hazard_lights_cmd_sub_;
   rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::Engage>::SharedPtr engage_cmd_sub_;
-  rclcpp::Subscription<autoware_vehicle_msgs::msg::ActuationCommandStamped>::SharedPtr
-    actuation_cmd_sub_;
+  rclcpp::Subscription<ActuationCommandStamped>::SharedPtr actuation_cmd_sub_;
   rclcpp::Subscription<autoware_vehicle_msgs::msg::VehicleEmergencyStamped>::SharedPtr
     emergency_sub_;
 
@@ -111,8 +112,7 @@ private:
     turn_indicators_status_pub_;
   rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::HazardLightsReport>::SharedPtr
     hazard_lights_status_pub_;
-  rclcpp::Publisher<autoware_vehicle_msgs::msg::ActuationStatusStamped>::SharedPtr
-    actuation_status_pub_;
+  rclcpp::Publisher<ActuationStatusStamped>::SharedPtr actuation_status_pub_;
 
   rclcpp::TimerBase::SharedPtr timer_;
 
@@ -152,7 +152,7 @@ private:
   vehicle_info_util::VehicleInfo vehicle_info_;
 
   /* input values */
-  autoware_vehicle_msgs::msg::ActuationCommandStamped::ConstSharedPtr actuation_cmd_ptr_;
+  ActuationCommandStamped::ConstSharedPtr actuation_cmd_ptr_;
   autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr control_cmd_ptr_;
   autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand::ConstSharedPtr turn_indicators_cmd_ptr_;
   autoware_auto_vehicle_msgs::msg::HazardLightsCommand::ConstSharedPtr hazard_lights_cmd_ptr_;
@@ -174,8 +174,7 @@ private:
   rclcpp::Time last_shift_inout_matched_time_;
 
   /* callbacks */
-  void callbackActuationCmd(
-    const autoware_vehicle_msgs::msg::ActuationCommandStamped::ConstSharedPtr msg);
+  void callbackActuationCmd(const ActuationCommandStamped::ConstSharedPtr msg);
   void callbackControlCmd(
     const autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr msg);
 

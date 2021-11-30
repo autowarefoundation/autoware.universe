@@ -66,23 +66,25 @@ PacmodInterface::PacmodInterface()
 
   // From autoware
   control_cmd_sub_ = create_subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>(
-    "/control/control_cmd", 1, std::bind(&PacmodInterface::callbackControlCmd, this, _1));
+    "/control/command/control_cmd", 1, std::bind(&PacmodInterface::callbackControlCmd, this, _1));
   gear_cmd_sub_ = create_subscription<autoware_auto_vehicle_msgs::msg::GearCommand>(
-    "/control/gear_cmd", 1, std::bind(&PacmodInterface::callbackGearCmd, this, _1));
+    "/control/command/gear_cmd", 1, std::bind(&PacmodInterface::callbackGearCmd, this, _1));
   turn_indicators_cmd_sub_ =
     create_subscription<autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand>(
-      "/control/turn_indicators_cmd", rclcpp::QoS{1},
+      "/control/command/turn_indicators_cmd", rclcpp::QoS{1},
       std::bind(&PacmodInterface::callbackTurnIndicatorsCommand, this, _1));
   hazard_lights_cmd_sub_ =
     create_subscription<autoware_auto_vehicle_msgs::msg::HazardLightsCommand>(
-      "/control/hazard_lights_cmd", rclcpp::QoS{1},
+      "/control/command/hazard_lights_cmd", rclcpp::QoS{1},
       std::bind(&PacmodInterface::callbackHazardLightsCommand, this, _1));
   engage_cmd_sub_ = create_subscription<autoware_auto_vehicle_msgs::msg::Engage>(
     "/vehicle/engage", rclcpp::QoS{1}, std::bind(&PacmodInterface::callbackEngage, this, _1));
-  actuation_cmd_sub_ = create_subscription<autoware_vehicle_msgs::msg::ActuationCommandStamped>(
-    "/vehicle/actuation_cmd", 1, std::bind(&PacmodInterface::callbackActuationCmd, this, _1));
+  actuation_cmd_sub_ = create_subscription<ActuationCommandStamped>(
+    "/control/command/actuation_cmd", 1,
+    std::bind(&PacmodInterface::callbackActuationCmd, this, _1));
   emergency_sub_ = create_subscription<autoware_vehicle_msgs::msg::VehicleEmergencyStamped>(
-    "/control/emergency_cmd", 1, std::bind(&PacmodInterface::callbackEmergencyCmd, this, _1));
+    "/control/command/emergency_cmd", 1,
+    std::bind(&PacmodInterface::callbackEmergencyCmd, this, _1));
 
   // From pacmod
 
@@ -132,18 +134,18 @@ PacmodInterface::PacmodInterface()
   control_mode_pub_ = create_publisher<autoware_auto_vehicle_msgs::msg::ControlModeReport>(
     "/vehicle/status/control_mode", rclcpp::QoS{1});
   vehicle_twist_pub_ = create_publisher<autoware_auto_vehicle_msgs::msg::VelocityReport>(
-    "/vehicle/status/twist", rclcpp::QoS{1});
+    "/vehicle/status/velocity_status", rclcpp::QoS{1});
   steering_status_pub_ = create_publisher<autoware_auto_vehicle_msgs::msg::SteeringReport>(
-    "/vehicle/status/steering", rclcpp::QoS{1});
+    "/vehicle/status/steering_status", rclcpp::QoS{1});
   gear_status_pub_ = create_publisher<autoware_auto_vehicle_msgs::msg::GearReport>(
-    "/vehicle/status/gear_cmd", rclcpp::QoS{1});
+    "/vehicle/status/gear_status", rclcpp::QoS{1});
   turn_indicators_status_pub_ =
     create_publisher<autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport>(
-      "/vehicle/status/turn_indicators", rclcpp::QoS{1});
+      "/vehicle/status/turn_indicators_status", rclcpp::QoS{1});
   hazard_lights_status_pub_ = create_publisher<autoware_auto_vehicle_msgs::msg::HazardLightsReport>(
-    "/vehicle/status/hazard_lights", rclcpp::QoS{1});
-  actuation_status_pub_ = create_publisher<autoware_vehicle_msgs::msg::ActuationStatusStamped>(
-    "/vehicle/status/actuation_status", 1);
+    "/vehicle/status/hazard_lights_status", rclcpp::QoS{1});
+  actuation_status_pub_ =
+    create_publisher<ActuationStatusStamped>("/vehicle/status/actuation_status", 1);
 
   // Timer
   auto timer_callback = std::bind(&PacmodInterface::publishCommands, this);
@@ -155,8 +157,7 @@ PacmodInterface::PacmodInterface()
   this->get_node_timers_interface()->add_timer(timer_, nullptr);
 }
 
-void PacmodInterface::callbackActuationCmd(
-  const autoware_vehicle_msgs::msg::ActuationCommandStamped::ConstSharedPtr msg)
+void PacmodInterface::callbackActuationCmd(const ActuationCommandStamped::ConstSharedPtr msg)
 {
   actuation_command_received_time_ = this->now();
   actuation_cmd_ptr_ = msg;
@@ -256,7 +257,7 @@ void PacmodInterface::callbackPacmodRpt(
   /* publish vehicle status twist */
   {
     autoware_auto_vehicle_msgs::msg::VelocityReport twist;
-    twist.header.stamp = header.stamp;
+    twist.header = header;
     twist.longitudinal_velocity = current_velocity;                                 // [m/s]
     twist.heading_rate = current_velocity * std::tan(current_steer) / wheel_base_;  // [rad/s]
     vehicle_twist_pub_->publish(twist);
@@ -283,7 +284,7 @@ void PacmodInterface::callbackPacmodRpt(
 
   /* publish control status */
   {
-    autoware_vehicle_msgs::msg::ActuationStatusStamped actuation_status;
+    ActuationStatusStamped actuation_status;
     actuation_status.header = header;
     actuation_status.status.accel_status = accel_rpt_ptr_->output;
     actuation_status.status.brake_status = brake_rpt_ptr_->output;
