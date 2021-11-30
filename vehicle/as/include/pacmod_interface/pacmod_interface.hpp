@@ -28,10 +28,10 @@
 #include <autoware_auto_vehicle_msgs/msg/steering_report.hpp>
 #include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
 #include <autoware_auto_vehicle_msgs/msg/turn_indicators_report.hpp>
+#include <autoware_auto_vehicle_msgs/msg/velocity_report.hpp>
 #include <autoware_vehicle_msgs/msg/actuation_command_stamped.hpp>
 #include <autoware_vehicle_msgs/msg/actuation_status_stamped.hpp>
 #include <autoware_vehicle_msgs/msg/vehicle_emergency_stamped.hpp>
-#include <geometry_msgs/msg/twist_stamped.hpp>
 #include <pacmod_msgs/msg/global_rpt.hpp>
 #include <pacmod_msgs/msg/steer_system_cmd.hpp>
 #include <pacmod_msgs/msg/system_cmd_float.hpp>
@@ -103,7 +103,7 @@ private:
   // To Autoware
   rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::ControlModeReport>::SharedPtr
     control_mode_pub_;
-  rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr vehicle_twist_pub_;
+  rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::VelocityReport>::SharedPtr vehicle_twist_pub_;
   rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::SteeringReport>::SharedPtr
     steering_status_pub_;
   rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::GearReport>::SharedPtr gear_status_pub_;

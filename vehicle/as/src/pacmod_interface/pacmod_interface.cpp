@@ -131,8 +131,8 @@ PacmodInterface::PacmodInterface()
   // To Autoware
   control_mode_pub_ = create_publisher<autoware_auto_vehicle_msgs::msg::ControlModeReport>(
     "/vehicle/status/control_mode", rclcpp::QoS{1});
-  vehicle_twist_pub_ =
-    create_publisher<geometry_msgs::msg::TwistStamped>("/vehicle/status/twist", rclcpp::QoS{1});
+  vehicle_twist_pub_ = create_publisher<autoware_auto_vehicle_msgs::msg::VelocityReport>(
+    "/vehicle/status/twist", rclcpp::QoS{1});
   steering_status_pub_ = create_publisher<autoware_auto_vehicle_msgs::msg::SteeringReport>(
     "/vehicle/status/steering", rclcpp::QoS{1});
   gear_status_pub_ = create_publisher<autoware_auto_vehicle_msgs::msg::GearReport>(
@@ -255,10 +255,10 @@ void PacmodInterface::callbackPacmodRpt(
 
   /* publish vehicle status twist */
   {
-    geometry_msgs::msg::TwistStamped twist;
-    twist.header = header;
-    twist.twist.linear.x = current_velocity;                                           // [m/s]
-    twist.twist.angular.z = current_velocity * std::tan(current_steer) / wheel_base_;  // [rad/s]
+    autoware_auto_vehicle_msgs::msg::VelocityReport twist;
+    twist.stamp = header.stamp;
+    twist.longitudinal_velocity = current_velocity;                                 // [m/s]
+    twist.heading_rate = current_velocity * std::tan(current_steer) / wheel_base_;  // [rad/s]
     vehicle_twist_pub_->publish(twist);
   }
 
