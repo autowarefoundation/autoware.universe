@@ -131,6 +131,10 @@ private:
   automotive_navigation_msgs::ModuleState module_states_;
   ros::Rate * rate_;
 
+  pacmod_msgs::WheelSpeedRptConstPtr wheel_speed_rpt_ptr_;
+  automotive_platform_msgs::VelocityAccelCovConstPtr vel_acc_cov_ptr_;
+  automotive_platform_msgs::GearFeedbackConstPtr gear_feedback_ptr_;
+
   // callbacks
   void callbackFromVehicleCmd(const autoware_vehicle_msgs::VehicleCommandConstPtr & msg);
   void callbackFromTurnSignalCmd(const autoware_vehicle_msgs::TurnSignalConstPtr & msg);
@@ -146,6 +150,11 @@ private:
     const pacmod_msgs::SystemRptFloatConstPtr & msg_steering_wheel);
   // functions
   void publishCommand();
+  double calculateVehicleVelocity(
+    const pacmod_msgs::WheelSpeedRpt & wheel_speed_rpt,
+    const automotive_platform_msgs::VelocityAccelCov & vel_acc_cov,
+    const automotive_platform_msgs::GearFeedback & gear_feedback, const bool use_rear_wheel_speed);
+  uint8_t toSSCShiftCmd(const autoware_vehicle_msgs::Shift & shift);
 };
 
 #endif  // SSC_INTERFACE_H

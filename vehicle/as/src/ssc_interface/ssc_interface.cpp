@@ -167,14 +167,13 @@ void SSCInterface::callbackFromSSCFeedbacks(
   published_msgs_header.frame_id = BASE_FRAME_ID;
   published_msgs_header.stamp = msg_velocity->header.stamp;
 
+  wheel_speed_rpt_ptr_ = msg_wheel_speed;
+  vel_acc_cov_ptr_ = msg_velocity;
+  gear_feedback_ptr_ = msg_gear;
+
   // current speed
-  double speed =
-    !use_rear_wheel_speed_
-      ? (msg_velocity->velocity)
-      : (msg_wheel_speed->rear_left_wheel_speed + msg_wheel_speed->rear_right_wheel_speed) *
-          tire_radius_ / 2.;
-  speed = std::abs(speed);
-  if (msg_gear->current_gear.gear == automotive_platform_msgs::Gear::REVERSE) speed *= -1.0;
+  double speed = calculateVehicleVelocity(
+    *wheel_speed_rpt_ptr_, *vel_acc_cov_ptr_, *gear_feedback_ptr_, use_rear_wheel_speed_);
 
   // update adaptive gear ratio (avoiding zero divizion)
   adaptive_gear_ratio_ = std::max(
@@ -230,7 +229,12 @@ void SSCInterface::callbackFromSSCFeedbacks(
 
 void SSCInterface::publishCommand()
 {
-  if (!command_initialized_) {
+  /* guard */
+  if (!command_initialized_ || !wheel_speed_rpt_ptr_ || !vel_acc_cov_ptr_ || !gear_feedback_ptr_) {
+    ROS_INFO_DELAYED_THROTTLE(
+      1.0, "vehicle_cmd = %d, wheel_speed_rpt = %d, vel_acc_cov = %d, gear_feedback = %d",
+      command_initialized_, wheel_speed_rpt_ptr_ != nullptr, vel_acc_cov_ptr_ != nullptr,
+      gear_feedback_ptr_ != nullptr);
     return;
   }
 
@@ -250,18 +254,6 @@ void SSCInterface::publishCommand()
                                     : (vehicle_cmd_.control.steering_angle + steering_offset_) *
                                         ssc_gear_ratio_ / adaptive_gear_ratio_;
   double desired_curvature = std::tan(desired_steering_angle) / wheel_base_;
-
-  // Gear (TODO: Use vehicle_cmd.gear)
-  unsigned char desired_shift = automotive_platform_msgs::Gear::NONE;
-  if (engage_) {
-    if (vehicle_cmd_.shift.data == autoware_vehicle_msgs::Shift::DRIVE) {
-      desired_shift = automotive_platform_msgs::Gear::DRIVE;
-    } else if (vehicle_cmd_.shift.data == autoware_vehicle_msgs::Shift::PARKING) {
-      desired_shift = automotive_platform_msgs::Gear::PARK;
-    } else if (vehicle_cmd_.shift.data == autoware_vehicle_msgs::Shift::REVERSE) {
-      desired_shift = automotive_platform_msgs::Gear::REVERSE;
-    }
-  }
 
   // Turn signal
   unsigned char desired_turn_signal = automotive_platform_msgs::TurnSignalCommand::NONE;
@@ -291,6 +283,21 @@ void SSCInterface::publishCommand()
     ROS_ERROR_THROTTLE(
       1.0, "Timeout Stopping, emergency = %d, timeouted = %d", emergency, timeouted);
     desired_speed = 0.0;
+  }
+
+  /* check shift change */
+  double current_velocity = calculateVehicleVelocity(
+    *wheel_speed_rpt_ptr_, *vel_acc_cov_ptr_, *gear_feedback_ptr_, use_rear_wheel_speed_);
+  uint8_t desired_shift = gear_feedback_ptr_->current_gear.gear;
+  if (std::abs(current_velocity) < 0.1) {  // velocity is low -> the shift can be changed
+    if (toSSCShiftCmd(vehicle_cmd_.shift) != gear_feedback_ptr_->current_gear.gear) {
+      desired_speed = 0.0;
+      deceleration_limit = 0.0;  // set quick stop mode to change the shift
+      desired_shift = toSSCShiftCmd(vehicle_cmd_.shift);
+      ROS_INFO_THROTTLE(
+        1.0, "Doing shift change. current = %d, desired = %d. set quick stop mode",
+        gear_feedback_ptr_->current_gear.gear, toSSCShiftCmd(vehicle_cmd_.shift));
+    }
   }
 
   // speed command
@@ -335,4 +342,32 @@ void SSCInterface::publishCommand()
                   << "Curvature: " << steer_mode.curvature << ", "
                   << "Gear: " << (int)gear_cmd.command.gear << ", "
                   << "TurnSignal: " << (int)turn_signal.turn_signal);
+}
+
+double SSCInterface::calculateVehicleVelocity(
+  const pacmod_msgs::WheelSpeedRpt & wheel_speed_rpt,
+  const automotive_platform_msgs::VelocityAccelCov & vel_acc_cov,
+  const automotive_platform_msgs::GearFeedback & gear_feedback, const bool use_rear_wheel_speed)
+{
+  const auto rear_wheel_speed =
+    (wheel_speed_rpt.rear_left_wheel_speed + wheel_speed_rpt.rear_right_wheel_speed) *
+    tire_radius_ / 2.0;
+  double speed = !use_rear_wheel_speed ? vel_acc_cov.velocity : rear_wheel_speed;
+  speed = std::abs(speed);
+  if (gear_feedback.current_gear.gear == automotive_platform_msgs::Gear::REVERSE) speed *= -1.0;
+  return speed;
+}
+
+uint8_t SSCInterface::toSSCShiftCmd(const autoware_vehicle_msgs::Shift & shift)
+{
+  using automotive_platform_msgs::Gear;
+  using autoware_vehicle_msgs::Shift;
+
+  if (shift.data == Shift::PARKING) return Gear::PARK;
+  if (shift.data == Shift::REVERSE) return Gear::REVERSE;
+  if (shift.data == Shift::NEUTRAL) return Gear::NEUTRAL;
+  if (shift.data == Shift::DRIVE) return Gear::DRIVE;
+  if (shift.data == Shift::LOW) return Gear::LOW;
+
+  return Gear::NONE;
 }
