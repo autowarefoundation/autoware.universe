@@ -67,7 +67,8 @@ PacmodDiagPublisher::PacmodDiagPublisher()
     std::placeholders::_7));
 }
 
-void PacmodDiagPublisher::callbackCan(const can_msgs::msg::Frame::ConstSharedPtr can)
+void PacmodDiagPublisher::callbackCan(
+  [[maybe_unused]] const can_msgs::msg::Frame::ConstSharedPtr can)
 {
   last_can_received_time_ = this->now();
 }
