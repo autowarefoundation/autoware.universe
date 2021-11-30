@@ -550,6 +550,10 @@ void LgsvlInterface::on_odometry(const nav_msgs::msg::Odometry & msg)
   // Autoware.iv interface
   {
     autoware_auto_vehicle_msgs::msg::VelocityReport velocity;
+    velocity.header = msg.header;
+    // TODO(Maxime CLEMENT) this is usually odom but node
+    // /localization/twist_estimator/vehicle_velocity_converter_node only accepts base_link frame
+    velocity.header.frame_id = "base_link";
     velocity.longitudinal_velocity = static_cast<float>(msg.twist.twist.linear.x);
     velocity.lateral_velocity = 0.0F;
     velocity.heading_rate = static_cast<float>(msg.twist.twist.angular.z);
