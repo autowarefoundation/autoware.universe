@@ -1,9 +1,6 @@
 <?xml version="1.0"?>
 <launch>
 
-  <arg name="csv_path_accel_map" default="$(find raw_vehicle_cmd_converter)/data/default/accel_map.csv"/>
-  <arg name="csv_path_brake_map" default="$(find raw_vehicle_cmd_converter)/data/default/brake_map.csv"/>
-
   <arg name="base_frame_id" default="base_link"/>
   <arg name="command_timeout_ms" default="1000"/>
   <arg name="loop_rate" default="30.0"/>
@@ -22,14 +19,6 @@
   <arg name="vgr_coef_a" default="15.713"/>
   <arg name="vgr_coef_b" default="0.053"/>
   <arg name="vgr_coef_c" default="0.042"/>
-
-  <!-- accel map converter for throttle and brake -->
-  <node pkg="raw_vehicle_cmd_converter" type="raw_vehicle_cmd_converter_node" name="raw_vehicle_cmd_converter" output="screen">
-    <param name="csv_path_accel_map" value="$(arg csv_path_accel_map)" />
-    <param name="csv_path_brake_map" value="$(arg csv_path_brake_map)" />
-    <param name="max_throttle" value="$(arg max_throttle)" />
-    <param name="max_brake" value="$(arg max_brake)" />
-  </node>
 
   <!-- pacmod interface -->
   <node pkg="as" type="pacmod_interface" name="pacmod_interface" output="screen">
