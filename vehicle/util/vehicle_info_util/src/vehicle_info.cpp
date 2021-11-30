@@ -44,7 +44,7 @@ VehicleInfo::VehicleInfo(
 
 bool VehicleInfo::parametersAlreadyDeclared(rclcpp::Node & node)
 {
-  return (
+  return
     node.has_parameter("wheel_radius") &&
     node.has_parameter("wheel_width") &&
     node.has_parameter("wheel_base") &&
@@ -54,13 +54,12 @@ bool VehicleInfo::parametersAlreadyDeclared(rclcpp::Node & node)
     node.has_parameter("left_overhang") &&
     node.has_parameter("right_overhang") &&
     node.has_parameter("vehicle_height")
-  );
+  ;
 }
 
 VehicleInfo VehicleInfo::create(rclcpp::Node & node)
 {
-  if(!parametersAlreadyDeclared(node))
-  {
+  if (!parametersAlreadyDeclared(node)) {
     const double wheel_radius_m = node.declare_parameter("wheel_radius").get<double>();
     const double wheel_width_m = node.declare_parameter("wheel_width").get<double>();
     const double wheel_base_m = node.declare_parameter("wheel_base").get<double>();
@@ -73,9 +72,7 @@ VehicleInfo VehicleInfo::create(rclcpp::Node & node)
     return VehicleInfo(
       wheel_radius_m, wheel_width_m, wheel_base_m, wheel_tread_m, front_overhang_m, rear_overhang_m,
       left_overhang_m, right_overhang_m, vehicle_height_m);
-  }
-  else
-  {
+  } else {
     const double wheel_radius_m = node.get_parameter("wheel_radius").as_double();
     const double wheel_width_m = node.get_parameter("wheel_width").as_double();
     const double wheel_base_m = node.get_parameter("wheel_base").as_double();

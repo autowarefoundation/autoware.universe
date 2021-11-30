@@ -68,10 +68,10 @@ PacmodInterface::PacmodInterface()
 
   steer_wheel_rpt_sub_ =
     std::make_unique<message_filters::Subscriber<pacmod_msgs::msg::SystemRptFloat>>(
-      this, "/pacmod/parsed_tx/steer_rpt");
+    this, "/pacmod/parsed_tx/steer_rpt");
   wheel_speed_rpt_sub_ =
     std::make_unique<message_filters::Subscriber<pacmod_msgs::msg::WheelSpeedRpt>>(
-      this, "/pacmod/parsed_tx/wheel_speed_rpt");
+    this, "/pacmod/parsed_tx/wheel_speed_rpt");
   accel_rpt_sub_ = std::make_unique<message_filters::Subscriber<pacmod_msgs::msg::SystemRptFloat>>(
     this, "/pacmod/parsed_tx/accel_rpt");
   brake_rpt_sub_ = std::make_unique<message_filters::Subscriber<pacmod_msgs::msg::SystemRptFloat>>(
@@ -85,13 +85,14 @@ PacmodInterface::PacmodInterface()
 
   pacmod_feedbacks_sync_ =
     std::make_unique<message_filters::Synchronizer<PacmodFeedbacksSyncPolicy>>(
-      PacmodFeedbacksSyncPolicy(10), *steer_wheel_rpt_sub_, *wheel_speed_rpt_sub_, *accel_rpt_sub_,
-      *brake_rpt_sub_, *shift_rpt_sub_, *turn_rpt_sub_, *global_rpt_sub_);
+    PacmodFeedbacksSyncPolicy(10), *steer_wheel_rpt_sub_, *wheel_speed_rpt_sub_, *accel_rpt_sub_,
+    *brake_rpt_sub_, *shift_rpt_sub_, *turn_rpt_sub_, *global_rpt_sub_);
 
-  pacmod_feedbacks_sync_->registerCallback(std::bind(
-    &PacmodInterface::callbackPacmodRpt, this, std::placeholders::_1, std::placeholders::_2,
-    std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6,
-    std::placeholders::_7));
+  pacmod_feedbacks_sync_->registerCallback(
+    std::bind(
+      &PacmodInterface::callbackPacmodRpt, this, std::placeholders::_1, std::placeholders::_2,
+      std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6,
+      std::placeholders::_7));
 
   /* publisher */
   // To pacmod
@@ -292,7 +293,8 @@ void PacmodInterface::publishCommands()
   if (std::fabs(current_velocity) < 0.1) {  // velocity is low -> the shift can be changed
     if (
       toPacmodShiftCmd(raw_vehicle_cmd_ptr_->shift) !=
-      shift_rpt_ptr_->output) {  // need shift change.
+      shift_rpt_ptr_->output)    // need shift change.
+    {
       desired_throttle = 0.0;
       desired_brake = brake_for_shift_trans;  // set brake to change the shift
       desired_shift = toPacmodShiftCmd(raw_vehicle_cmd_ptr_->shift);
@@ -381,7 +383,7 @@ double PacmodInterface::calculateVehicleVelocity(
 {
   double sign = (shift_rpt.output == pacmod_msgs::msg::SystemRptInt::SHIFT_REVERSE) ? -1 : 1;
   double vel = (wheel_speed_rpt.rear_left_wheel_speed + wheel_speed_rpt.rear_right_wheel_speed) *
-               0.5 * tire_radius_;
+    0.5 * tire_radius_;
   return sign * vel;
 }
 

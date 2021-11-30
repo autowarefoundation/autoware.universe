@@ -40,17 +40,20 @@ public:
 private:
   // Publisher
   rclcpp::Publisher<autoware_control_msgs::msg::ControlCommandStamped>::SharedPtr pub_cmd_;
-  rclcpp::Publisher<autoware_vehicle_msgs::msg::RawControlCommandStamped>::SharedPtr pub_current_cmd_;
+  rclcpp::Publisher<autoware_vehicle_msgs::msg::RawControlCommandStamped>::SharedPtr
+    pub_current_cmd_;
 
   // Subscriber
   rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr sub_velocity_;
-  rclcpp::Subscription<autoware_vehicle_msgs::msg::RawControlCommandStamped>::SharedPtr sub_control_cmd_;
+  rclcpp::Subscription<autoware_vehicle_msgs::msg::RawControlCommandStamped>::SharedPtr
+    sub_control_cmd_;
   rclcpp::Subscription<autoware_vehicle_msgs::msg::ShiftStamped>::SharedPtr sub_shift_cmd_;
   rclcpp::Subscription<autoware_control_msgs::msg::GateMode>::SharedPtr sub_gate_mode_;
   rclcpp::Subscription<autoware_control_msgs::msg::EmergencyMode>::SharedPtr sub_emergency_;
 
   void onVelocity(const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg);
-  void onRemoteCmd(const autoware_vehicle_msgs::msg::RawControlCommandStamped::ConstSharedPtr remote_cmd_ptr);
+  void onRemoteCmd(
+    const autoware_vehicle_msgs::msg::RawControlCommandStamped::ConstSharedPtr remote_cmd_ptr);
   void onShiftCmd(const autoware_vehicle_msgs::msg::ShiftStamped::ConstSharedPtr msg);
   void onGateMode(const autoware_control_msgs::msg::GateMode::ConstSharedPtr msg);
   void onEmergency(const autoware_control_msgs::msg::EmergencyMode::ConstSharedPtr msg);

@@ -79,7 +79,7 @@ RemoteCmdConverter::RemoteCmdConverter()
   current_shift_cmd_ = std::make_shared<autoware_vehicle_msgs::msg::ShiftStamped>();
 }
 
-void RemoteCmdConverter::onTimer() { updater_.force_update(); }
+void RemoteCmdConverter::onTimer() {updater_.force_update();}
 
 void RemoteCmdConverter::onVelocity(const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg)
 {
@@ -162,9 +162,9 @@ double RemoteCmdConverter::getShiftVelocitySign(
 {
   using autoware_vehicle_msgs::msg::Shift;
 
-  if (cmd.shift.data == Shift::DRIVE) return 1.0;
-  if (cmd.shift.data == Shift::LOW) return 1.0;
-  if (cmd.shift.data == Shift::REVERSE) return -1.0;
+  if (cmd.shift.data == Shift::DRIVE) {return 1.0;}
+  if (cmd.shift.data == Shift::LOW) {return 1.0;}
+  if (cmd.shift.data == Shift::REVERSE) {return -1.0;}
 
   return 0.0;
 }
@@ -206,11 +206,11 @@ void RemoteCmdConverter::onGateMode(const autoware_control_msgs::msg::GateMode::
 
 bool RemoteCmdConverter::checkRemoteTopicRate()
 {
-  if (!latest_cmd_received_time_ || !current_gate_mode_) return true;
+  if (!latest_cmd_received_time_ || !current_gate_mode_) {return true;}
 
   if (current_gate_mode_->data == autoware_control_msgs::msg::GateMode::REMOTE) {
     const auto duration = (this->now() - *latest_cmd_received_time_);
-    if (duration.seconds() > time_threshold_) return false;
+    if (duration.seconds() > time_threshold_) {return false;}
   } else {
     latest_cmd_received_time_ = nullptr;  // reset;
   }

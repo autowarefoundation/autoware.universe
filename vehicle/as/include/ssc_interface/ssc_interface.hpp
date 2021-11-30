@@ -60,11 +60,11 @@ public:
 
 private:
   typedef message_filters::sync_policies::ApproximateTime<
-    automotive_platform_msgs::msg::VelocityAccelCov,
-    automotive_platform_msgs::msg::CurvatureFeedback,
-    automotive_platform_msgs::msg::ThrottleFeedback, automotive_platform_msgs::msg::BrakeFeedback,
-    automotive_platform_msgs::msg::GearFeedback, pacmod_msgs::msg::WheelSpeedRpt,
-    pacmod_msgs::msg::SystemRptFloat>
+      automotive_platform_msgs::msg::VelocityAccelCov,
+      automotive_platform_msgs::msg::CurvatureFeedback,
+      automotive_platform_msgs::msg::ThrottleFeedback, automotive_platform_msgs::msg::BrakeFeedback,
+      automotive_platform_msgs::msg::GearFeedback, pacmod_msgs::msg::WheelSpeedRpt,
+      pacmod_msgs::msg::SystemRptFloat>
     SSCFeedbacksSyncPolicy;
 
   // subscribers
@@ -74,18 +74,18 @@ private:
   rclcpp::Subscription<automotive_navigation_msgs::msg::ModuleState>::SharedPtr module_states_sub_;
 
   std::unique_ptr<message_filters::Subscriber<automotive_platform_msgs::msg::VelocityAccelCov>>
-    velocity_accel_cov_sub_;
+  velocity_accel_cov_sub_;
   std::unique_ptr<message_filters::Subscriber<automotive_platform_msgs::msg::CurvatureFeedback>>
-    curvature_feedback_sub_;
+  curvature_feedback_sub_;
   std::unique_ptr<message_filters::Subscriber<automotive_platform_msgs::msg::ThrottleFeedback>>
-    throttle_feedback_sub_;
+  throttle_feedback_sub_;
   std::unique_ptr<message_filters::Subscriber<automotive_platform_msgs::msg::BrakeFeedback>>
-    brake_feedback_sub_;
+  brake_feedback_sub_;
   std::unique_ptr<message_filters::Subscriber<automotive_platform_msgs::msg::GearFeedback>>
-    gear_feedback_sub_;
+  gear_feedback_sub_;
   std::unique_ptr<message_filters::Subscriber<pacmod_msgs::msg::WheelSpeedRpt>> wheel_speed_sub_;
   std::unique_ptr<message_filters::Subscriber<pacmod_msgs::msg::SystemRptFloat>>
-    steering_wheel_sub_;
+  steering_wheel_sub_;
   std::unique_ptr<message_filters::Synchronizer<SSCFeedbacksSyncPolicy>> ssc_feedbacks_sync_;
 
   // TEMP to support turn_signal

@@ -51,9 +51,9 @@ public:
 
 private:
   typedef message_filters::sync_policies::ApproximateTime<
-    pacmod_msgs::msg::SystemRptFloat, pacmod_msgs::msg::WheelSpeedRpt,
-    pacmod_msgs::msg::SystemRptFloat, pacmod_msgs::msg::SystemRptFloat,
-    pacmod_msgs::msg::SystemRptInt, pacmod_msgs::msg::SystemRptInt, pacmod_msgs::msg::GlobalRpt>
+      pacmod_msgs::msg::SystemRptFloat, pacmod_msgs::msg::WheelSpeedRpt,
+      pacmod_msgs::msg::SystemRptFloat, pacmod_msgs::msg::SystemRptFloat,
+      pacmod_msgs::msg::SystemRptInt, pacmod_msgs::msg::SystemRptInt, pacmod_msgs::msg::GlobalRpt>
     PacmodFeedbacksSyncPolicy;
 
   /* subscribers */
@@ -65,9 +65,9 @@ private:
 
   // From Pacmod
   std::unique_ptr<message_filters::Subscriber<pacmod_msgs::msg::SystemRptFloat>>
-    steer_wheel_rpt_sub_;
+  steer_wheel_rpt_sub_;
   std::unique_ptr<message_filters::Subscriber<pacmod_msgs::msg::WheelSpeedRpt>>
-    wheel_speed_rpt_sub_;
+  wheel_speed_rpt_sub_;
   std::unique_ptr<message_filters::Subscriber<pacmod_msgs::msg::SystemRptFloat>> accel_rpt_sub_;
   std::unique_ptr<message_filters::Subscriber<pacmod_msgs::msg::SystemRptFloat>> brake_rpt_sub_;
   std::unique_ptr<message_filters::Subscriber<pacmod_msgs::msg::SystemRptInt>> shift_rpt_sub_;

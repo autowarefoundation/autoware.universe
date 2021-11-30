@@ -67,6 +67,7 @@ public:
   const double max_lateral_offset_m_;
   const double min_height_offset_m_;
   const double max_height_offset_m_;
+
 private:
   // Used to check if parameters are already declared or not in order to avoid
   // declaring parameters multiple times.

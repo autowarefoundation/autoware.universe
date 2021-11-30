@@ -47,7 +47,8 @@ private:
   double max_throttle_;  //!< @brief maximum throttle that can be passed to low level controller. In general [0.0, 1.0]
   double max_brake_;  //!< @brief maximum brake value that can be passed to low level controller. In general [0.0, 1.0]
 
-  void callbackVehicleCmd(const autoware_vehicle_msgs::msg::VehicleCommand::ConstSharedPtr vehicle_cmd_ptr);
+  void callbackVehicleCmd(
+    const autoware_vehicle_msgs::msg::VehicleCommand::ConstSharedPtr vehicle_cmd_ptr);
   void callbackVelocity(const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg);
   void calculateAccelMap(
     const double current_velocity, const double desired_acc, double * desired_throttle,

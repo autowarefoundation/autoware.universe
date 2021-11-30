@@ -14,7 +14,8 @@
 
 #include "raw_vehicle_cmd_converter/brake_map.hpp"
 
-BrakeMap::BrakeMap(const rclcpp::Logger & logger) : logger_(logger), logger_ros_clock_(RCL_ROS_TIME){}
+BrakeMap::BrakeMap(const rclcpp::Logger & logger)
+: logger_(logger), logger_ros_clock_(RCL_ROS_TIME) {}
 
 BrakeMap::~BrakeMap() {}
 
@@ -29,7 +30,8 @@ bool BrakeMap::readBrakeMapFromCSV(std::string csv_path)
   }
 
   if (table[0].size() < 2) {
-    RCLCPP_ERROR(logger_, 
+    RCLCPP_ERROR(
+      logger_,
       "[Brake Map] Cannot read %s. CSV file should have at least 2 column", csv_path.c_str());
     return false;
   }
@@ -41,7 +43,8 @@ bool BrakeMap::readBrakeMapFromCSV(std::string csv_path)
 
   for (unsigned int i = 1; i < table.size(); i++) {
     if (table[0].size() != table[i].size()) {
-      RCLCPP_ERROR(logger_, 
+      RCLCPP_ERROR(
+        logger_,
         "[Brake Map] Cannot read %s. Each row should have a same number of columns",
         csv_path.c_str());
       return false;
