@@ -27,7 +27,7 @@ class MapHashGenerator(Node):
 
     def __init__(self):
         super().__init__('map_hash_generator')
-        qos_profile = QoSProfile(depth=1, durability=QoSDurabilityPolicy.RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL)
+        qos_profile = QoSProfile(depth=1, durability=QoSDurabilityPolicy.TRANSIENT_LOCAL)
         msg = MapHash()
         msg.lanelet = self.generateFileHash(self.declare_parameter('lanelet2_map_path').value)
         self.pub = self.create_publisher(MapHash, '/api/autoware/get/map/info/hash', qos_profile)
