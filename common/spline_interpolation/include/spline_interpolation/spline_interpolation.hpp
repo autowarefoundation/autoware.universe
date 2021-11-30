@@ -48,7 +48,7 @@ class PreconditionedConjugateGradient : public LinearSystemSolver
 {
 public:
   PreconditionedConjugateGradient() = default;
-  std::vector<double> solve() const;
+  std::vector<double> solve() const override;
 
 private:
   std::vector<double> calcMatrixVectorProduct(const std::vector<double> & src) const;
@@ -60,7 +60,7 @@ class SOR : public LinearSystemSolver
 {
 public:
   SOR() = default;
-  std::vector<double> solve() const;
+  std::vector<double> solve() const override;
 
 private:
   const double omega_ = 1.8;
@@ -87,8 +87,8 @@ private:
 
   std::vector<double> solveLinearSystemExplicit();
 
-  bool initialized_;
-  Method method_;
+  bool initialized_{};
+  Method method_{};
 
   std::vector<double> a_;
   std::vector<double> b_;

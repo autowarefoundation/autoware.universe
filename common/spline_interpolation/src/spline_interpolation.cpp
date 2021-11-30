@@ -97,8 +97,8 @@ bool SplineInterpolator::interpolate(
   generateSpline(base_index, base_value);
 
   // interpolate values at query points
-  for (size_t i = 0; i < return_index.size(); ++i) {
-    return_value.push_back(getValue(return_index[i], base_index));
+  for (const double i : return_index) {
+    return_value.push_back(getValue(i, base_index));
   }
   return true;
 }
@@ -251,8 +251,8 @@ std::vector<double> PreconditionedConjugateGradient::solve() const
     // (1) y_k = A * p_k
     const std::vector<double> y = calcMatrixVectorProduct(p);
     // (2) alpha = (r_k' * z_k) / (p_k' * y_k);
-    const double alpha = std::inner_product(r.begin(), r.end(), z.begin(), 0.0f) /
-      std::inner_product(p.begin(), p.end(), y.begin(), 0.0f);
+    const double alpha = std::inner_product(r.begin(), r.end(), z.begin(), 0.0) /
+      std::inner_product(p.begin(), p.end(), y.begin(), 0.0);
     // (3) x_k+1 = x_k + alpha * p_k
     std::transform(
       x_in.begin(), x_in.end(), p.begin(), x_in.begin(), [alpha](double x, double p) {
@@ -271,8 +271,8 @@ std::vector<double> PreconditionedConjugateGradient::solve() const
     // (6) zn = DiagonalScaling(rn)
     zn = calcDiagonalScaling(rn);
     // (7) beta = (r_k+1' * z_k+1) / (r_k * z_k)
-    const double beta = std::inner_product(rn.begin(), rn.end(), zn.begin(), 0.0f) /
-      std::inner_product(r.begin(), r.end(), z.begin(), 0.0f);
+    const double beta = std::inner_product(rn.begin(), rn.end(), zn.begin(), 0.0) /
+      std::inner_product(r.begin(), r.end(), z.begin(), 0.0);
     // (8) p_k+1 = z_k+1 + beta * p_k
     std::transform(
       zn.begin(), zn.end(), p.begin(), p.begin(), [beta](double zn, double p) {
