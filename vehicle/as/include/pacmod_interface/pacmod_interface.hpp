@@ -84,7 +84,8 @@ private:
   rclcpp::Publisher<pacmod_msgs::msg::SteerSystemCmd>::SharedPtr steer_cmd_pub_;
   rclcpp::Publisher<pacmod_msgs::msg::SystemCmdInt>::SharedPtr shift_cmd_pub_;
   rclcpp::Publisher<pacmod_msgs::msg::SystemCmdInt>::SharedPtr turn_cmd_pub_;
-  rclcpp::Publisher<pacmod_msgs::msg::SteerSystemCmd>::SharedPtr raw_steer_cmd_pub_;  //only for debug
+  rclcpp::Publisher<pacmod_msgs::msg::SteerSystemCmd>::SharedPtr
+    raw_steer_cmd_pub_;  // only for debug
 
   // To Autoware
   rclcpp::Publisher<autoware_vehicle_msgs::msg::ControlMode>::SharedPtr control_mode_pub_;

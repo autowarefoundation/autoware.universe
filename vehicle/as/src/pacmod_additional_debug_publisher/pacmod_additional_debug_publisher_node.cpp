@@ -1,18 +1,16 @@
-/*
- * Copyright 2020 Tier IV, Inc. All rights reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2020 Tier IV, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #include "pacmod_additional_debug_publisher/pacmod_additional_debug_publisher_node.hpp"
 
@@ -20,9 +18,9 @@ namespace
 {
 bool isTargetId(uint32_t id)
 {
-  return (
+  return
     id == 0x32C || id == 0x451 || id == 0x452 || id == 0x453 || id == 0x454 || id == 0x455 ||
-    id == 0x456 || id == 0x457);
+    id == 0x456 || id == 0x457;
 }
 }  // namespace
 
@@ -39,7 +37,8 @@ PacmodAdditionalDebugPublisherNode::PacmodAdditionalDebugPublisherNode()
   debug_value_.data.resize(17);
 }
 
-void PacmodAdditionalDebugPublisherNode::canTxCallback(const can_msgs::msg::Frame::ConstSharedPtr msg)
+void PacmodAdditionalDebugPublisherNode::canTxCallback(
+  const can_msgs::msg::Frame::ConstSharedPtr msg)
 {
   if (isTargetId(msg->id)) {
     float debug1 = 0.0;
@@ -57,18 +56,17 @@ void PacmodAdditionalDebugPublisherNode::canTxCallback(const can_msgs::msg::Fram
       temp = (static_cast<int16_t>(msg->data[6]) << 8) | msg->data[7];
       debug4 = temp / 100.0;
     } else {
-      union Data
-      {
+      union Data {
         uint32_t uint32_value;
         float float_value;
       } temp;
       temp.uint32_value = (static_cast<int32_t>(msg->data[3]) << 24) |
-                          (static_cast<int32_t>(msg->data[2]) << 16) |
-                          (static_cast<int32_t>(msg->data[1]) << 8) | msg->data[0];
+        (static_cast<int32_t>(msg->data[2]) << 16) |
+        (static_cast<int32_t>(msg->data[1]) << 8) | msg->data[0];
       debug1 = temp.float_value;
       temp.uint32_value = (static_cast<int32_t>(msg->data[7]) << 24) |
-                          (static_cast<int32_t>(msg->data[6]) << 16) |
-                          (static_cast<int32_t>(msg->data[5]) << 8) | msg->data[4];
+        (static_cast<int32_t>(msg->data[6]) << 16) |
+        (static_cast<int32_t>(msg->data[5]) << 8) | msg->data[4];
       debug2 = temp.float_value;
     }
     switch (msg->id) {

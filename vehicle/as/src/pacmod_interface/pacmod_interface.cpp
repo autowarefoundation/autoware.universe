@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <algorithm>
+#include <limits>
 #include <memory>
 #include <utility>
 
@@ -117,7 +118,7 @@ PacmodInterface::PacmodInterface()
   turn_cmd_pub_ =
     create_publisher<pacmod_msgs::msg::SystemCmdInt>("pacmod/as_rx/turn_cmd", rclcpp::QoS{1});
   raw_steer_cmd_pub_ = create_publisher<pacmod_msgs::msg::SteerSystemCmd>(
-    "pacmod/as_rx/raw_steer_cmd", rclcpp::QoS{1});  //only for debug
+    "pacmod/as_rx/raw_steer_cmd", rclcpp::QoS{1});  // only for debug
 
   // To Autoware
   control_mode_pub_ = create_publisher<autoware_vehicle_msgs::msg::ControlMode>(
@@ -484,11 +485,11 @@ uint16_t PacmodInterface::toPacmodShiftCmd(const autoware_vehicle_msgs::msg::Shi
   using autoware_vehicle_msgs::msg::Shift;
   using pacmod_msgs::msg::SystemCmdInt;
 
-  if (shift.data == Shift::PARKING) return SystemCmdInt::SHIFT_PARK;
-  if (shift.data == Shift::REVERSE) return SystemCmdInt::SHIFT_REVERSE;
-  if (shift.data == Shift::NEUTRAL) return SystemCmdInt::SHIFT_NEUTRAL;
-  if (shift.data == Shift::DRIVE) return SystemCmdInt::SHIFT_FORWARD;
-  if (shift.data == Shift::LOW) return SystemCmdInt::SHIFT_LOW;
+  if (shift.data == Shift::PARKING) {return SystemCmdInt::SHIFT_PARK;}
+  if (shift.data == Shift::REVERSE) {return SystemCmdInt::SHIFT_REVERSE;}
+  if (shift.data == Shift::NEUTRAL) {return SystemCmdInt::SHIFT_NEUTRAL;}
+  if (shift.data == Shift::DRIVE) {return SystemCmdInt::SHIFT_FORWARD;}
+  if (shift.data == Shift::LOW) {return SystemCmdInt::SHIFT_LOW;}
 
   return SystemCmdInt::SHIFT_NONE;
 }
@@ -498,11 +499,11 @@ int32_t PacmodInterface::toAutowareShiftCmd(const pacmod_msgs::msg::SystemRptInt
   using autoware_vehicle_msgs::msg::Shift;
   using pacmod_msgs::msg::SystemRptInt;
 
-  if (shift.output == SystemRptInt::SHIFT_PARK) return Shift::PARKING;
-  if (shift.output == SystemRptInt::SHIFT_REVERSE) return Shift::REVERSE;
-  if (shift.output == SystemRptInt::SHIFT_NEUTRAL) return Shift::NEUTRAL;
-  if (shift.output == SystemRptInt::SHIFT_FORWARD) return Shift::DRIVE;
-  if (shift.output == SystemRptInt::SHIFT_LOW) return Shift::LOW;
+  if (shift.output == SystemRptInt::SHIFT_PARK) {return Shift::PARKING;}
+  if (shift.output == SystemRptInt::SHIFT_REVERSE) {return Shift::REVERSE;}
+  if (shift.output == SystemRptInt::SHIFT_NEUTRAL) {return Shift::NEUTRAL;}
+  if (shift.output == SystemRptInt::SHIFT_FORWARD) {return Shift::DRIVE;}
+  if (shift.output == SystemRptInt::SHIFT_LOW) {return Shift::LOW;}
 
   return Shift::NONE;
 }
@@ -512,9 +513,9 @@ uint16_t PacmodInterface::toPacmodTurnCmd(const autoware_vehicle_msgs::msg::Turn
   using autoware_vehicle_msgs::msg::TurnSignal;
   using pacmod_msgs::msg::SystemCmdInt;
 
-  if (turn.data == TurnSignal::LEFT) return SystemCmdInt::TURN_LEFT;
-  if (turn.data == TurnSignal::RIGHT) return SystemCmdInt::TURN_RIGHT;
-  if (turn.data == TurnSignal::HAZARD) return SystemCmdInt::TURN_HAZARDS;
+  if (turn.data == TurnSignal::LEFT) {return SystemCmdInt::TURN_LEFT;}
+  if (turn.data == TurnSignal::RIGHT) {return SystemCmdInt::TURN_RIGHT;}
+  if (turn.data == TurnSignal::HAZARD) {return SystemCmdInt::TURN_HAZARDS;}
 
   return SystemCmdInt::TURN_NONE;
 }
@@ -542,19 +543,22 @@ uint16_t PacmodInterface::toPacmodTurnCmdWithHazardRecover(
 
   if (
     turn_rpt_ptr_->command != SystemRptInt::TURN_HAZARDS &&
-    turn_rpt_ptr_->output == SystemRptInt::TURN_HAZARDS) {
+    turn_rpt_ptr_->output == SystemRptInt::TURN_HAZARDS)
+  {
     // publish hazard commands for turning off the hazard lights
     return SystemRptInt::TURN_HAZARDS;
-  } else if (
+  } else if (  // NOLINT
     turn_rpt_ptr_->command == SystemRptInt::TURN_HAZARDS &&
-    turn_rpt_ptr_->output != SystemRptInt::TURN_HAZARDS) {
+    turn_rpt_ptr_->output != SystemRptInt::TURN_HAZARDS)
+  {
     // publish none commands for turning on the hazard lights
     return SystemRptInt::TURN_NONE;
   } else {
     // something wrong
-    RCLCPP_ERROR_STREAM(get_logger(),
-      "turn singnal command and output do not match. "
-      << "COMMAND: " << turn_rpt_ptr_->command << "; OUTPUT: " << turn_rpt_ptr_->output);
+    RCLCPP_ERROR_STREAM(
+      get_logger(),
+      "turn singnal command and output do not match. " <<
+        "COMMAND: " << turn_rpt_ptr_->command << "; OUTPUT: " << turn_rpt_ptr_->output);
     return toPacmodTurnCmd(turn);
   }
 }
@@ -576,8 +580,9 @@ int32_t PacmodInterface::toAutowareTurnSignal(const pacmod_msgs::msg::SystemRptI
 }
 
 double PacmodInterface::steerWheelRateLimiter(
-  const double current_steer_cmd, const double prev_steer_cmd, const rclcpp::Time & current_steer_time,
-  const rclcpp::Time & prev_steer_time, const double steer_rate, const double current_steer_output,
+  const double current_steer_cmd, const double prev_steer_cmd,
+  const rclcpp::Time & current_steer_time, const rclcpp::Time & prev_steer_time,
+  const double steer_rate, const double current_steer_output,
   const bool engage)
 {
   if (!engage) {

@@ -212,10 +212,11 @@ void RemoteCmdConverter::onGateMode(const autoware_control_msgs::msg::GateMode::
 bool RemoteCmdConverter::checkEmergencyStopTopicTimeout()
 {
   if (!latest_emergency_stop_received_time_) {
-    if (wait_for_first_topic_)
+    if (wait_for_first_topic_) {
       return true;
-    else
+    } else {
       return false;
+    }
   }
 
   const auto duration = (this->now() - *latest_emergency_stop_received_time_);
@@ -229,10 +230,11 @@ bool RemoteCmdConverter::checkRemoteTopicRate()
   if (!current_gate_mode_) {return true;}
 
   if (!latest_cmd_received_time_) {
-    if (wait_for_first_topic_)
+    if (wait_for_first_topic_) {
       return true;
-    else
+    } else {
       return false;
+    }
   }
 
   if (current_gate_mode_->data == autoware_control_msgs::msg::GateMode::REMOTE) {
