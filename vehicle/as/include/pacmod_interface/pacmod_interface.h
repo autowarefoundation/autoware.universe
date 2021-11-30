@@ -55,7 +55,8 @@ public:
 private:
   typedef message_filters::sync_policies::ApproximateTime<
     pacmod_msgs::SystemRptFloat, pacmod_msgs::WheelSpeedRpt, pacmod_msgs::SystemRptFloat,
-    pacmod_msgs::SystemRptFloat, pacmod_msgs::SystemRptInt, pacmod_msgs::GlobalRpt>
+    pacmod_msgs::SystemRptFloat, pacmod_msgs::SystemRptInt, pacmod_msgs::SystemRptInt,
+    pacmod_msgs::GlobalRpt>
     PacmodFeedbacksSyncPolicy;
 
   /* handle */
@@ -74,6 +75,7 @@ private:
   message_filters::Subscriber<pacmod_msgs::SystemRptFloat> * accel_rpt_sub_;
   message_filters::Subscriber<pacmod_msgs::SystemRptFloat> * brake_rpt_sub_;
   message_filters::Subscriber<pacmod_msgs::SystemRptInt> * shift_rpt_sub_;
+  message_filters::Subscriber<pacmod_msgs::SystemRptInt> * turn_rpt_sub_;
   message_filters::Subscriber<pacmod_msgs::GlobalRpt> * global_rpt_sub_;
   message_filters::Synchronizer<PacmodFeedbacksSyncPolicy> * pacmod_feedbacks_sync_;
 
@@ -90,6 +92,7 @@ private:
   ros::Publisher vehicle_twist_pub_;
   ros::Publisher steering_status_pub_;
   ros::Publisher shift_status_pub_;
+  ros::Publisher turn_signal_status_pub_;
 
   /* ros param */
   ros::Rate * rate_;
@@ -139,6 +142,7 @@ private:
     const pacmod_msgs::SystemRptFloatConstPtr & accel_rpt,
     const pacmod_msgs::SystemRptFloatConstPtr & brake_rpt,
     const pacmod_msgs::SystemRptIntConstPtr & shift_rpt,
+    const pacmod_msgs::SystemRptIntConstPtr & turn_rpt,
     const pacmod_msgs::GlobalRptConstPtr & global_rpt);
 
   /*  functions */
@@ -149,8 +153,9 @@ private:
   double calculateVariableGearRatio(const double vel, const double steer_wheel);
   double calcSteerWheelRateCmd(const double gear_ratio);
   uint16_t toPacmodShiftCmd(const autoware_vehicle_msgs::Shift & shift);
-  int32_t toAutowareShiftCmd(const pacmod_msgs::SystemRptInt & shift);
   uint16_t toPacmodTurnCmd(const autoware_vehicle_msgs::TurnSignal & turn);
+  int32_t toAutowareShiftCmd(const pacmod_msgs::SystemRptInt & shift);
+  int32_t toAutowareTurnSignal(const pacmod_msgs::SystemRptInt & turn);
 };
 
 #endif

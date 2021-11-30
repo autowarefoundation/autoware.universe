@@ -94,13 +94,15 @@ PacmodInterface::PacmodInterface()
     nh_, "/pacmod/parsed_tx/brake_rpt", 1);
   shift_rpt_sub_ = new message_filters::Subscriber<pacmod_msgs::SystemRptInt>(
     nh_, "/pacmod/parsed_tx/shift_rpt", 1);
+  turn_rpt_sub_ = new message_filters::Subscriber<pacmod_msgs::SystemRptInt>(
+    nh_, "/pacmod/parsed_tx/turn_rpt", 1);
   global_rpt_sub_ =
     new message_filters::Subscriber<pacmod_msgs::GlobalRpt>(nh_, "/pacmod/parsed_tx/global_rpt", 1);
   pacmod_feedbacks_sync_ = new message_filters::Synchronizer<PacmodFeedbacksSyncPolicy>(
     PacmodFeedbacksSyncPolicy(10), *steer_wheel_rpt_sub_, *wheel_speed_rpt_sub_, *accel_rpt_sub_,
-    *brake_rpt_sub_, *shift_rpt_sub_, *global_rpt_sub_);
+    *brake_rpt_sub_, *shift_rpt_sub_, *turn_rpt_sub_, *global_rpt_sub_);
   pacmod_feedbacks_sync_->registerCallback(
-    boost::bind(&PacmodInterface::callbackPacmodRpt, this, _1, _2, _3, _4, _5, _6));
+    boost::bind(&PacmodInterface::callbackPacmodRpt, this, _1, _2, _3, _4, _5, _6, _7));
 
   /* publisher */
   // To pacmod
@@ -118,6 +120,8 @@ PacmodInterface::PacmodInterface()
     nh_.advertise<autoware_vehicle_msgs::Steering>("/vehicle/status/steering", 1);
   shift_status_pub_ =
     nh_.advertise<autoware_vehicle_msgs::ShiftStamped>("/vehicle/status/shift", 1);
+  turn_signal_status_pub_ =
+    nh_.advertise<autoware_vehicle_msgs::TurnSignal>("/vehicle/status/turn_signal", 1);
 }
 
 PacmodInterface::~PacmodInterface() {}
@@ -152,6 +156,7 @@ void PacmodInterface::callbackPacmodRpt(
   const pacmod_msgs::SystemRptFloatConstPtr & accel_rpt,
   const pacmod_msgs::SystemRptFloatConstPtr & brake_rpt,
   const pacmod_msgs::SystemRptIntConstPtr & shift_rpt,
+  const pacmod_msgs::SystemRptIntConstPtr & turn_rpt,
   const pacmod_msgs::GlobalRptConstPtr & global_rpt)
 {
   is_pacmod_rpt_received_ = true;
@@ -218,6 +223,11 @@ void PacmodInterface::callbackPacmodRpt(
   steer_msg.header = header;
   steer_msg.data = curr_steer;
   steering_status_pub_.publish(steer_msg);
+
+  autoware_vehicle_msgs::TurnSignal turn_msg;
+  turn_msg.header = header;
+  turn_msg.data = toAutowareTurnSignal(*turn_rpt);
+  turn_signal_status_pub_.publish(turn_msg);
 }
 
 void PacmodInterface::publishCommands()
@@ -428,5 +438,21 @@ uint16_t PacmodInterface::toPacmodTurnCmd(const autoware_vehicle_msgs::TurnSigna
     return pacmod_msgs::SystemCmdInt::TURN_HAZARDS;
   } else {
     return pacmod_msgs::SystemCmdInt::TURN_NONE;
+  }
+}
+
+int32_t PacmodInterface::toAutowareTurnSignal(const pacmod_msgs::SystemRptInt & turn)
+{
+  using pacmod_msgs::SystemRptInt;
+  if (turn.output == SystemRptInt::TURN_RIGHT) {
+    return autoware_vehicle_msgs::TurnSignal::RIGHT;
+  } else if (turn.output == SystemRptInt::TURN_LEFT) {
+    return autoware_vehicle_msgs::TurnSignal::LEFT;
+  } else if (turn.output == SystemRptInt::TURN_NONE) {
+    return autoware_vehicle_msgs::TurnSignal::NONE;
+  } else if (turn.output == SystemRptInt::TURN_HAZARDS) {
+    return autoware_vehicle_msgs::TurnSignal::HAZARD;
+  } else {
+    return autoware_vehicle_msgs::TurnSignal::NONE;
   }
 }
