@@ -61,7 +61,7 @@ void validateElevationTag(const std::string filename)
     exit(1);
   }
 
-  auto osmNode = doc.child("osm");
+  auto osmNode = doc.child(keyword::Osm);
   for (auto node = osmNode.child(keyword::Node); node;  // NOLINT
     node = node.next_sibling(keyword::Node))
   {
