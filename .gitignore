@@ -2,31 +2,15 @@
 *.swp
 *.swo
 
-# VSCode
+# Visual Studio Code
 .vscode/
 *.code-workspace
 
-# catkin / colcon
+# colcon
 build/
-devel/
 install/
-logs/
 log/
-.catkin_tools/
-.catkin_workspace
-/src/CMakeLists.txt
-
-# Ansible
-*.retry
-/ansible/roles/caffe/caffe/
-ansible/roles/osqp/osqp/
 
 # Python
 *.pyc
 
-# Lanelet2
-/src/map/lanelet2
-/src/map/mrt_cmake_modules
-
-# us sample path data
-src/planning/util/path_loader/data/us_sample_path.csv
