@@ -8,7 +8,7 @@ Dynamic objects (e.g. pedestrians and other vehicles) and dynamic map informatio
 Therefore, the output topic is only published when the goal pose or check points are given and will be latched until the new goal pose or check points are given.
 
 The core implementation does not depend on a map format.
-In current Autoware.IV, only Lanelet2 map format is supported.
+In current Autoware.universe, only Lanelet2 map format is supported.
 
 ## Inputs / Outputs
 
