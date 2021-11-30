@@ -9,6 +9,7 @@
     <param name="center_line_resolution" value="$(var center_line_resolution)" />
   </node>
   <node pkg="map_loader" exec="lanelet2_map_visualization" name="lanelet2_map_visualization">
+    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
     <remap from="input/lanelet2_map" to="$(var lanelet2_map_topic)" />
     <remap from="output/lanelet2_map_marker" to="$(var lanelet2_map_marker_topic)" />
   </node>

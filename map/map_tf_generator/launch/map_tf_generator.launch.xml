@@ -5,6 +5,7 @@
   <arg name="viewer_frame" default="viewer" />
 
   <node pkg="map_tf_generator" exec="map_tf_generator" name="map_tf_generator">
+    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
     <remap from="pointcloud_map" to="$(var input_map_points_topic)" />
 
     <param name="map_frame" value="$(var map_frame)" />
