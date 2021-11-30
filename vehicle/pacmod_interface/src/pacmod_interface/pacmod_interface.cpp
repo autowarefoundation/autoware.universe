@@ -90,20 +90,20 @@ PacmodInterface::PacmodInterface()
 
   steer_wheel_rpt_sub_ =
     std::make_unique<message_filters::Subscriber<pacmod3_msgs::msg::SystemRptFloat>>(
-      this, "/pacmod/parsed_tx/steer_rpt");
+      this, "/pacmod/steering_rpt");
   wheel_speed_rpt_sub_ =
     std::make_unique<message_filters::Subscriber<pacmod3_msgs::msg::WheelSpeedRpt>>(
-      this, "/pacmod/parsed_tx/wheel_speed_rpt");
+      this, "/pacmod/wheel_speed_rpt");
   accel_rpt_sub_ = std::make_unique<message_filters::Subscriber<pacmod3_msgs::msg::SystemRptFloat>>(
-    this, "/pacmod/parsed_tx/accel_rpt");
+    this, "/pacmod/accel_rpt");
   brake_rpt_sub_ = std::make_unique<message_filters::Subscriber<pacmod3_msgs::msg::SystemRptFloat>>(
-    this, "/pacmod/parsed_tx/brake_rpt");
+    this, "/pacmod/brake_rpt");
   shift_rpt_sub_ = std::make_unique<message_filters::Subscriber<pacmod3_msgs::msg::SystemRptInt>>(
-    this, "/pacmod/parsed_tx/shift_rpt");
+    this, "/pacmod/shift_rpt");
   turn_rpt_sub_ = std::make_unique<message_filters::Subscriber<pacmod3_msgs::msg::SystemRptInt>>(
-    this, "/pacmod/parsed_tx/turn_rpt");
+    this, "/pacmod/turn_rpt");
   global_rpt_sub_ = std::make_unique<message_filters::Subscriber<pacmod3_msgs::msg::GlobalRpt>>(
-    this, "/pacmod/parsed_tx/global_rpt");
+    this, "/pacmod/global_rpt");
 
   pacmod_feedbacks_sync_ =
     std::make_unique<message_filters::Synchronizer<PacmodFeedbacksSyncPolicy>>(
@@ -118,17 +118,17 @@ PacmodInterface::PacmodInterface()
   /* publisher */
   // To pacmod
   accel_cmd_pub_ =
-    create_publisher<pacmod3_msgs::msg::SystemCmdFloat>("pacmod/as_rx/accel_cmd", rclcpp::QoS{1});
+    create_publisher<pacmod3_msgs::msg::SystemCmdFloat>("/pacmod/accel_cmd", rclcpp::QoS{1});
   brake_cmd_pub_ =
-    create_publisher<pacmod3_msgs::msg::SystemCmdFloat>("pacmod/as_rx/brake_cmd", rclcpp::QoS{1});
+    create_publisher<pacmod3_msgs::msg::SystemCmdFloat>("/pacmod/brake_cmd", rclcpp::QoS{1});
   steer_cmd_pub_ =
-    create_publisher<pacmod3_msgs::msg::SteeringCmd>("pacmod/as_rx/steer_cmd", rclcpp::QoS{1});
+    create_publisher<pacmod3_msgs::msg::SteeringCmd>("/pacmod/steering_cmd", rclcpp::QoS{1});
   shift_cmd_pub_ =
-    create_publisher<pacmod3_msgs::msg::SystemCmdInt>("pacmod/as_rx/shift_cmd", rclcpp::QoS{1});
+    create_publisher<pacmod3_msgs::msg::SystemCmdInt>("/pacmod/shift_cmd", rclcpp::QoS{1});
   turn_cmd_pub_ =
-    create_publisher<pacmod3_msgs::msg::SystemCmdInt>("pacmod/as_rx/turn_cmd", rclcpp::QoS{1});
+    create_publisher<pacmod3_msgs::msg::SystemCmdInt>("/pacmod/turn_cmd", rclcpp::QoS{1});
   raw_steer_cmd_pub_ = create_publisher<pacmod3_msgs::msg::SteeringCmd>(
-    "pacmod/as_rx/raw_steer_cmd", rclcpp::QoS{1});  // only for debug
+    "/pacmod/raw_steer_cmd", rclcpp::QoS{1});  // only for debug
 
   // To Autoware
   control_mode_pub_ = create_publisher<autoware_auto_vehicle_msgs::msg::ControlModeReport>(
