@@ -7,6 +7,7 @@
   <arg name="ref_vel_gain" default="3.0"/>
 
   <node pkg="remote_cmd_converter" exec="remote_cmd_converter_node" name="remote_cmd_converter" output="screen">
+    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
     <param name="csv_path_accel_map" value="$(var csv_path_accel_map)" />
     <param name="csv_path_brake_map" value="$(var csv_path_brake_map)" />
 

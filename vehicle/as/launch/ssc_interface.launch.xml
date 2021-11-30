@@ -10,6 +10,7 @@
   <arg name="steering_offset" default="0.0"/>
 
   <node pkg="as" exec="ssc_interface" name="ssc_interface" output="screen">
+    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
     <param name="use_rear_wheel_speed" value="$(var use_rear_wheel_speed)" />
     <param name="use_adaptive_gear_ratio" value="$(var use_adaptive_gear_ratio)" />
     <param name="command_timeout" value="$(var command_timeout)" />

@@ -27,6 +27,7 @@
 
   <!-- pacmod interface -->
   <node pkg="as" exec="pacmod_interface" name="pacmod_interface" output="screen">
+    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
     <param name="base_frame_id" value="$(var base_frame_id)" />
     <param name="command_timeout_ms" value="$(var command_timeout_ms)" />
     <param name="loop_rate" value="$(var loop_rate)" />
