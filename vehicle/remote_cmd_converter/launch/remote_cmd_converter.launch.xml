@@ -21,7 +21,7 @@
 
     <remap from="in/raw_control_cmd" to="/remote/raw_control_cmd" />
     <remap from="in/shift_cmd" to="/remote/shift_cmd" />
-    <remap from="in/emergency" to="/remote/emergency" />
+    <remap from="in/emergency_stop" to="/remote/emergency_stop" />
     <remap from="in/current_gate_mode" to="/control/current_gate_mode" />
     <remap from="in/twist" to="/localization/twist" />
 
