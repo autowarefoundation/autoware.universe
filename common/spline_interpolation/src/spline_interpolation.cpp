@@ -64,9 +64,18 @@ double SplineInterpolator::getValue(
     return 0.0;
   }
 
+  // Find corresponding index
   size_t j = 0;
-  while (base_index[j] <= query) {++j;}
+  while (base_index[j] <= query) {
+    ++j;
+
+    // Prevent out-of-range access at endpoint
+    if (j == base_index.size()) {
+      break;
+    }
+  }
   --j;
+
   const double ds = query - base_index[j];
   return a_[j] + (b_[j] + (c_[j] + d_[j] * ds) * ds) * ds;
 }
