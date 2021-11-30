@@ -20,7 +20,7 @@
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/SparseCore>
 
-#include "osqp_interface/csc_matrix_conv.h"
+#include "osqp_interface/csc_matrix_conv.hpp"
 
 namespace osqp
 {

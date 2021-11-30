@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "spline_interpolation/spline_interpolation.h"
+#include "spline_interpolation/spline_interpolation.hpp"
 
 namespace spline_interpolation
 {
