@@ -52,7 +52,7 @@ private:
 
     const unsigned int sum = clouds.points.size();
     double coordinate[3] = {0, 0, 0};
-    for (int i = 0; i < sum; i++) {
+    for (unsigned int i = 0; i < sum; i++) {
       coordinate[0] += clouds.points[i].x;
       coordinate[1] += clouds.points[i].y;
       coordinate[2] += clouds.points[i].z;
