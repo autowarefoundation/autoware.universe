@@ -10,6 +10,10 @@
     <param from="$(var pacmod_param_path)" />
   </node>
 
+  <!-- pacmod diagnostics publisher -->
+  <node pkg="as" exec="pacmod_diag_publisher" name="pacmod_diag_publisher" output="screen">
+  </node>
+
   <!-- pacmod additional parameter changer -->
   <node pkg="as" exec="pacmod_dynamic_parameter_changer" name="pacmod_dynamic_parameter_changer" output="screen">
     <param from="$(var pacmod_extra_param_path)" />
