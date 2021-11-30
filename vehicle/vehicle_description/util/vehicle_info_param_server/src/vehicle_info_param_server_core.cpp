@@ -22,24 +22,15 @@
 VehicleInfoParamServer::VehicleInfoParamServer()
 : Node("vehicle_info_param_server")
 {
-  const double wheel_radius_m =
-    this->declare_parameter("wheel_radius", rclcpp::PARAMETER_DOUBLE).get<double>();
-  const double wheel_width_m =
-    this->declare_parameter("wheel_width", rclcpp::PARAMETER_DOUBLE).get<double>();
-  const double wheel_base_m =
-    this->declare_parameter("wheel_base", rclcpp::PARAMETER_DOUBLE).get<double>();
-  const double wheel_tread_m =
-    this->declare_parameter("wheel_tread", rclcpp::PARAMETER_DOUBLE).get<double>();
-  const double front_overhang_m =
-    this->declare_parameter("front_overhang", rclcpp::PARAMETER_DOUBLE).get<double>();
-  const double rear_overhang_m =
-    this->declare_parameter("rear_overhang", rclcpp::PARAMETER_DOUBLE).get<double>();
-  const double left_overhang_m =
-    this->declare_parameter("left_overhang", rclcpp::PARAMETER_DOUBLE).get<double>();
-  const double right_overhang_m =
-    this->declare_parameter("right_overhang", rclcpp::PARAMETER_DOUBLE).get<double>();
-  const double vehicle_height_m =
-    this->declare_parameter("vehicle_height", rclcpp::PARAMETER_DOUBLE).get<double>();
+  const double wheel_radius_m = this->declare_parameter("wheel_radius").get<double>();
+  const double wheel_width_m = this->declare_parameter("wheel_width").get<double>();
+  const double wheel_base_m = this->declare_parameter("wheel_base").get<double>();
+  const double wheel_tread_m = this->declare_parameter("wheel_tread").get<double>();
+  const double front_overhang_m = this->declare_parameter("front_overhang").get<double>();
+  const double rear_overhang_m = this->declare_parameter("rear_overhang").get<double>();
+  const double left_overhang_m = this->declare_parameter("left_overhang").get<double>();
+  const double right_overhang_m = this->declare_parameter("right_overhang").get<double>();
+  const double vehicle_height_m = this->declare_parameter("vehicle_height").get<double>();
 
   // create vehicle_info_params
   vehicle_info_params.emplace_back(rclcpp::Parameter("wheel_radius", wheel_radius_m));
