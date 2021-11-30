@@ -44,6 +44,51 @@ struct VehicleInfo
   double min_height_offset_m;
   double max_height_offset_m;
 };
+
+/// Create vehicle info from base parameters
+inline VehicleInfo createVehicleInfo(
+  const double wheel_radius_m,
+  const double wheel_width_m,
+  const double wheel_base_m,
+  const double wheel_tread_m,
+  const double front_overhang_m,
+  const double rear_overhang_m,
+  const double left_overhang_m,
+  const double right_overhang_m,
+  const double vehicle_height_m)
+{
+  // Calculate derived parameters
+  const double vehicle_length_m_ = front_overhang_m + wheel_base_m + rear_overhang_m;
+  const double vehicle_width_m_ = wheel_tread_m + left_overhang_m + right_overhang_m;
+  const double min_longitudinal_offset_m_ = -rear_overhang_m;
+  const double max_longitudinal_offset_m_ = front_overhang_m + wheel_base_m;
+  const double min_lateral_offset_m_ = -(wheel_tread_m / 2.0 + right_overhang_m);
+  const double max_lateral_offset_m_ = wheel_tread_m / 2.0 + left_overhang_m;
+  const double min_height_offset_m_ = 0.0;
+  const double max_height_offset_m_ = vehicle_height_m;
+
+  return VehicleInfo{
+    // Base parameters
+    wheel_radius_m,
+    wheel_width_m,
+    wheel_base_m,
+    wheel_tread_m,
+    front_overhang_m,
+    rear_overhang_m,
+    left_overhang_m,
+    right_overhang_m,
+    vehicle_height_m,
+    // Derived parameters
+    vehicle_length_m_,
+    vehicle_width_m_,
+    min_longitudinal_offset_m_,
+    max_longitudinal_offset_m_,
+    min_lateral_offset_m_,
+    max_lateral_offset_m_,
+    min_height_offset_m_,
+    max_height_offset_m_,
+  };
+}
 }  // namespace vehicle_info_util
 
 #endif  // VEHICLE_INFO_UTIL__VEHICLE_INFO_HPP_
