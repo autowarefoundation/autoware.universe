@@ -32,7 +32,7 @@ Here is an example osm syntax for node object.
 Default Lanelet2 format uses LineString(`way`) or Polygon class to represent the shape of a traffic light. For Autoware, traffic light objects must be represented only by LineString to avoid confusion, where start point is at bottom left edge and end point is at bottom right edge. Also, "height" tag must be added in order to represent the size in vertical direction (not the position).
 
 The Following image illustrates how LineString is used to represent shape of Traffic Light in Autoware.
-<img src="./traffic_light.png" width="600">
+![How LineString is used to represent shape of Traffic Light in Autoware](traffic_light.png)
 
 Here is an example osm syntax for traffic light object.
 
@@ -57,7 +57,7 @@ This tags only take following values:
 
 Following image illustrates how lanelets should be tagged.
 
-<img src="./turn_direction.png" width="600">
+![Turn Directions: How lanelets should be tagged](turn_direction.png)
 
 Here is an example of osm syntax for lanelets in intersections.
 
@@ -136,7 +136,7 @@ However, region_tlr node in Autoware uses positions of each light bulbs to recog
 
 Following image illustrates how "light_bulbs" LineString should be created.
 
-<img src="./light_bulbs.png" width="400">
+![How "light_bulbs" LineString should be created](light_bulbs.png)
 
 Here is an example of osm syntax for light_bulb object:
 
@@ -170,7 +170,7 @@ Here is an example of osm syntax for light_bulb object:
 After creating "light_bulbs" elements, you have to register them to traffic_light regulatory element as role "light_bulbs".
 The following illustrates how light_bulbs are registered to traffic_light regulatory elements.
 
-<img src="./traffic_light_regulatory_element.png" width="800">
+![How light_bulbs are registered to traffic_light regulatory elements](traffic_light_regulatory_element.png)
 
 ```xml
 <relation id='8' visible='true' version='1'>
