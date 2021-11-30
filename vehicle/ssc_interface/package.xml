@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>as</name>
+  <name>ssc_interface</name>
   <version>0.1.0</version>
-  <description>AutonomouStuff vehicle interface as a ROS 2 node</description>
+  <description>AutonomouStuff vehicle interface ssc_interface a ROS 2 node</description>
   <maintainer email="aohsato@gmail.com">Akihito Ohsato</maintainer>
   <license>Apache License 2.0</license>
 
@@ -13,18 +13,13 @@
 
   <depend>automotive_navigation_msgs</depend>
   <depend>automotive_platform_msgs</depend>
-  <depend>autoware_auto_control_msgs</depend>
-  <depend>autoware_auto_vehicle_msgs</depend>
   <depend>autoware_debug_msgs</depend>
   <depend>autoware_vehicle_msgs</depend>
-  <depend>can_msgs</depend>
-  <depend>diagnostic_updater</depend>
   <depend>geometry_msgs</depend>
   <depend>message_filters</depend>
   <depend>pacmod3_msgs</depend>
   <depend>rclcpp</depend>
   <depend>std_msgs</depend>
-  <depend>vehicle_info_util</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>

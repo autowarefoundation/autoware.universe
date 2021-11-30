@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(as)
+project(pacmod_interface)
 
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
@@ -21,11 +21,6 @@ ament_auto_add_executable(pacmod_additional_debug_publisher
 ament_auto_add_executable(pacmod_dynamic_parameter_changer
   src/pacmod_dynamic_parameter_changer/pacmod_dynamic_parameter_changer_node.cpp
   src/pacmod_dynamic_parameter_changer/pacmod_dynamic_parameter_changer_main.cpp
-)
-
-ament_auto_add_executable(ssc_interface
-  src/ssc_interface/ssc_interface_node.cpp
-  src/ssc_interface/ssc_interface.cpp
 )
 
 ament_auto_add_executable(pacmod_interface
