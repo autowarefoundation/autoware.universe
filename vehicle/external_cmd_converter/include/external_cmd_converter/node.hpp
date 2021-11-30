@@ -22,8 +22,8 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include "autoware_external_api_msgs/msg/control_command_stamped.hpp"
+#include "autoware_external_api_msgs/msg/heartbeat.hpp"
 #include "autoware_control_msgs/msg/control_command_stamped.hpp"
-#include "autoware_control_msgs/msg/emergency_mode.hpp"
 #include "autoware_control_msgs/msg/gate_mode.hpp"
 #include "autoware_vehicle_msgs/msg/shift_stamped.hpp"
 #include "autoware_vehicle_msgs/msg/vehicle_command.hpp"
@@ -52,22 +52,22 @@ private:
     sub_control_cmd_;
   rclcpp::Subscription<autoware_vehicle_msgs::msg::ShiftStamped>::SharedPtr sub_shift_cmd_;
   rclcpp::Subscription<autoware_control_msgs::msg::GateMode>::SharedPtr sub_gate_mode_;
-  rclcpp::Subscription<autoware_control_msgs::msg::EmergencyMode>::SharedPtr sub_emergency_stop_;
+  rclcpp::Subscription<autoware_external_api_msgs::msg::Heartbeat>::SharedPtr
+    sub_emergency_stop_heartbeat_;
 
   void onVelocity(const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg);
   void onExternalCmd(
     const autoware_external_api_msgs::msg::ControlCommandStamped::ConstSharedPtr cmd_ptr);
   void onShiftCmd(const autoware_vehicle_msgs::msg::ShiftStamped::ConstSharedPtr msg);
   void onGateMode(const autoware_control_msgs::msg::GateMode::ConstSharedPtr msg);
-  void onEmergencyStop(const autoware_control_msgs::msg::EmergencyMode::ConstSharedPtr msg);
+  void onEmergencyStopHeartbeat(
+    const autoware_external_api_msgs::msg::Heartbeat::ConstSharedPtr msg);
 
   std::shared_ptr<double> current_velocity_ptr_;  // [m/s]
-  std::shared_ptr<rclcpp::Time> latest_emergency_stop_received_time_;
+  std::shared_ptr<rclcpp::Time> latest_emergency_stop_heartbeat_received_time_;
   std::shared_ptr<rclcpp::Time> latest_cmd_received_time_;
   autoware_vehicle_msgs::msg::ShiftStamped::ConstSharedPtr current_shift_cmd_;
   autoware_control_msgs::msg::GateMode::ConstSharedPtr current_gate_mode_;
-
-  bool current_emergency_cmd_ = false;
 
   // Timer
   void onTimer();
