@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "raw_vehicle_cmd_converter/accel_map.h"
+#include "raw_vehicle_cmd_converter/accel_map.hpp"
 #include <chrono>
 using namespace std::chrono_literals;
 

@@ -31,8 +31,8 @@
 #include <autoware_vehicle_msgs/msg/vehicle_command.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 
-#include <raw_vehicle_cmd_converter/accel_map.h>
-#include <raw_vehicle_cmd_converter/brake_map.h>
+#include <raw_vehicle_cmd_converter/accel_map.hpp>
+#include <raw_vehicle_cmd_converter/brake_map.hpp>
 
 class RemoteCmdConverter : public rclcpp::Node
 {

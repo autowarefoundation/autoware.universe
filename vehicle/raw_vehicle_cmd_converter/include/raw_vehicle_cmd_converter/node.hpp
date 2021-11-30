@@ -17,8 +17,8 @@
 #ifndef VEHICLE_RAW_VEHICLE_CMD_CONVERTER_INCLUDE_RAW_VEHICLE_CMD_CONVERTER_NODE_HPP_
 #define VEHICLE_RAW_VEHICLE_CMD_CONVERTER_INCLUDE_RAW_VEHICLE_CMD_CONVERTER_NODE_HPP_
 
-#include <raw_vehicle_cmd_converter/accel_map.h>
-#include <raw_vehicle_cmd_converter/brake_map.h>
+#include <raw_vehicle_cmd_converter/accel_map.hpp>
+#include <raw_vehicle_cmd_converter/brake_map.hpp>
 
 #include <rclcpp/rclcpp.hpp>
 

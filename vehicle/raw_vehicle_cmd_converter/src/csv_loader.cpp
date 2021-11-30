@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "raw_vehicle_cmd_converter/csv_loader.h"
+#include "raw_vehicle_cmd_converter/csv_loader.hpp"
 
 CSVLoader::CSVLoader(std::string csv_path) { csv_path_ = csv_path; }
 

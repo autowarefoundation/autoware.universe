@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "ssc_interface/ssc_interface.h"
+#include "ssc_interface/ssc_interface.hpp"
 
 SSCInterface::SSCInterface() : Node("ssc_interface")
 {

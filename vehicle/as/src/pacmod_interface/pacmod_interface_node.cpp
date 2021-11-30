@@ -16,7 +16,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include "pacmod_interface/pacmod_interface.h"
+#include "pacmod_interface/pacmod_interface.hpp"
 
 int main(int argc, char ** argv)
 {

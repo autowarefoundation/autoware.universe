@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "pacmod_interface/pacmod_interface.h"
+#include "pacmod_interface/pacmod_interface.hpp"
 
 PacmodInterface::PacmodInterface()
 : Node("pacmod_interface"),
