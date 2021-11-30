@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include <remote_cmd_converter/node.hpp>
 
 int main(int argc, char ** argv)
 {
-  ros::init(argc, argv, "remote_cmd_converter");
+  rclcpp::init(argc, argv);
 
-  RemoteCmdConverter node;
+  auto node = std::make_shared<RemoteCmdConverter>();
 
-  ros::spin();
+  rclcpp::spin(node);
+
+  rclcpp::shutdown();
 
   return 0;
 }

@@ -7,12 +7,17 @@
   <author email="horibe.takamasa@gmail.com">Horibe Takamasa</author>
   <license>Apache 2</license>
 
-  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
-  <depend>roscpp</depend>
+  <depend>rclcpp</depend>
   <depend>std_msgs</depend>
   <depend>autoware_vehicle_msgs</depend>
   <depend>autoware_control_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>raw_vehicle_cmd_converter</depend>
+  <depend>diagnostic_updater</depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>

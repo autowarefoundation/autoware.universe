@@ -1,47 +1,23 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5)
 project(remote_cmd_converter)
-add_compile_options(-std=c++11)
 
-find_package(
-  catkin REQUIRED COMPONENTS
-  roscpp
-  std_msgs
-  autoware_vehicle_msgs
-  autoware_control_msgs
-  geometry_msgs
-  raw_vehicle_cmd_converter
-)
+### Compile options
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+  add_compile_options(-Wno-unused-parameter)
+endif()
 
-catkin_package(
-  INCLUDE_DIRS include
-  CATKIN_DEPENDS roscpp std_msgs autoware_vehicle_msgs autoware_control_msgs geometry_msgs raw_vehicle_cmd_converter
-)
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
 
-include_directories(
-  include
-  ${catkin_INCLUDE_DIRS}
-)
-
-add_executable(remote_cmd_converter_node
+ament_auto_add_executable(remote_cmd_converter_node
   src/node.cpp
   src/main.cpp
 )
-add_dependencies(remote_cmd_converter_node ${catkin_EXPORTED_TARGETS})
-target_link_libraries(remote_cmd_converter_node ${catkin_LIBRARIES})
 
-install(TARGETS
-    remote_cmd_converter_node
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-)
-
-install(
-  DIRECTORY
-    launch
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+ament_auto_package(INSTALL_TO_SHARE
+  launch
 )
