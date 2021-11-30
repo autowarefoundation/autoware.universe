@@ -3,6 +3,8 @@ project(osqp_interface)
 
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
+  set(CMAKE_CXX_EXTENSIONS OFF)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -35,5 +37,10 @@ ament_target_dependencies(osqp_interface osqp_vendor)
 ament_export_include_directories("${OSQP_INCLUDE_DIR}")
 # crucial so the linking order is correct in a downstream package: libosqp_interface.a should come before libosqp.a
 ament_export_libraries(osqp::osqpstatic)
+
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
+endif()
 
 ament_auto_package()
