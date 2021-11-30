@@ -19,8 +19,15 @@ ament_auto_find_build_dependencies()
 find_package(PCL REQUIRED)
 
 # Generate exe file
-ament_auto_add_executable(map_tf_generator nodes/map_tf_generator.cpp)
-target_link_libraries(map_tf_generator ${PCL_LIBRARIES})
+ament_auto_add_library(map_tf_generator_node SHARED
+  src/map_tf_generator_node.cpp
+)
+target_link_libraries(map_tf_generator_node ${PCL_LIBRARIES})
+
+rclcpp_components_register_node(map_tf_generator_node
+  PLUGIN "MapTFGeneratorNode"
+  EXECUTABLE map_tf_generator
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

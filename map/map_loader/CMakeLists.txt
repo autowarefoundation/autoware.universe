@@ -8,17 +8,37 @@ if(NOT CMAKE_CXX_STANDARD)
 endif()
 
 find_package(PCL REQUIRED COMPONENTS io)
-find_package(Boost REQUIRED COMPONENTS filesystem)
 
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
-ament_auto_add_executable(pointcloud_map_loader src/pointcloud_map_loader/main.cpp src/pointcloud_map_loader/pointcloud_map_loader_node.cpp)
-target_link_libraries(pointcloud_map_loader ${Boost_LIBRARIES} ${PCL_LIBRARIES})
+ament_auto_add_library(pointcloud_map_loader_node SHARED
+  src/pointcloud_map_loader/pointcloud_map_loader_node.cpp
+)
+target_link_libraries(pointcloud_map_loader_node ${PCL_LIBRARIES})
 
-ament_auto_add_executable(lanelet2_map_loader src/lanelet2_map_loader/lanelet2_map_loader.cpp)
+rclcpp_components_register_node(pointcloud_map_loader_node
+  PLUGIN "PointCloudMapLoaderNode"
+  EXECUTABLE pointcloud_map_loader
+)
 
-ament_auto_add_executable(lanelet2_map_visualization src/lanelet2_map_loader/lanelet2_map_visualization.cpp)
+ament_auto_add_library(lanelet2_map_loader_node SHARED
+  src/lanelet2_map_loader/lanelet2_map_loader_node.cpp
+)
+
+rclcpp_components_register_node(lanelet2_map_loader_node
+  PLUGIN "Lanelet2MapLoaderNode"
+  EXECUTABLE lanelet2_map_loader
+)
+
+ament_auto_add_library(lanelet2_map_visualization_node SHARED
+  src/lanelet2_map_loader/lanelet2_map_visualization_node.cpp
+)
+
+rclcpp_components_register_node(lanelet2_map_visualization_node
+  PLUGIN "Lanelet2MapVisualizationNode"
+  EXECUTABLE lanelet2_map_visualization
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

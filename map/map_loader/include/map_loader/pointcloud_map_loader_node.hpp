@@ -1,4 +1,4 @@
-// Copyright 2020 TierIV
+// Copyright 2020 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@
 class PointCloudMapLoaderNode : public rclcpp::Node
 {
 public:
-  explicit PointCloudMapLoaderNode(const std::vector<std::string> & pcd_paths);
+  explicit PointCloudMapLoaderNode(const rclcpp::NodeOptions & options);
 
 private:
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_pointcloud_map_;

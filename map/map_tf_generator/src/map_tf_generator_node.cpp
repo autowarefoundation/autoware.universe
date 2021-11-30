@@ -11,6 +11,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+#include <memory>
+#include <string>
+
 #include "pcl/point_cloud.h"
 #include "pcl/point_types.h"
 #include "tf2/LinearMath/Quaternion.h"
@@ -20,20 +24,19 @@
 
 #include "pcl_conversions/pcl_conversions.h"
 
-typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
-
-class MapTFGenerator : public rclcpp::Node
+class MapTFGeneratorNode : public rclcpp::Node
 {
 public:
-  MapTFGenerator()
-  : Node("map_tf_generator")
+  using PointCloud = pcl::PointCloud<pcl::PointXYZ>;
+  explicit MapTFGeneratorNode(const rclcpp::NodeOptions & options)
+  : Node("map_tf_generator", options)
   {
     map_frame_ = declare_parameter("map_frame", "map");
     viewer_frame_ = declare_parameter("viewer_frame", "viewer");
 
     sub_ = create_subscription<sensor_msgs::msg::PointCloud2>(
       "pointcloud_map", rclcpp::QoS{1}.transient_local(),
-      std::bind(&MapTFGenerator::Callback, this, std::placeholders::_1));
+      std::bind(&MapTFGeneratorNode::onPointCloud, this, std::placeholders::_1));
 
     static_broadcaster_ = std::make_shared<tf2_ros::StaticTransformBroadcaster>(this);
   }
@@ -45,7 +48,7 @@ private:
 
   std::shared_ptr<tf2_ros::StaticTransformBroadcaster> static_broadcaster_;
 
-  void Callback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr clouds_ros)
+  void onPointCloud(const sensor_msgs::msg::PointCloud2::ConstSharedPtr clouds_ros)
   {
     PointCloud clouds;
     pcl::fromROSMsg<pcl::PointXYZ>(*clouds_ros, clouds);
@@ -62,7 +65,7 @@ private:
     coordinate[2] = coordinate[2] / sum;
 
     geometry_msgs::msg::TransformStamped static_transformStamped;
-    static_transformStamped.header.stamp = get_clock()->now();
+    static_transformStamped.header.stamp = this->now();
     static_transformStamped.header.frame_id = map_frame_;
     static_transformStamped.child_frame_id = viewer_frame_;
     static_transformStamped.transform.translation.x = coordinate[0];
@@ -84,11 +87,5 @@ private:
   }
 };
 
-int main(int argc, char ** argv)
-{
-  rclcpp::init(argc, argv);
-  auto node = std::make_shared<MapTFGenerator>();
-  rclcpp::spin(node);
-  rclcpp::shutdown();
-  return 0;
-}
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(MapTFGeneratorNode)

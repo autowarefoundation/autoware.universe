@@ -1,4 +1,4 @@
-// Copyright 2020 TierIV
+// Copyright 2020 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -28,19 +28,66 @@
  * limitations under the License.
  */
 
-#include "map_loader/pointcloud_map_loader_node.hpp"
+#include <glob.h>
 #include <string>
 #include <vector>
+
 #include "pcl/io/pcd_io.h"
 #include "pcl_conversions/pcl_conversions.h"
+#include "rcutils/filesystem.h"  // To be replaced by std::filesystem in C++17
 
-PointCloudMapLoaderNode::PointCloudMapLoaderNode(const std::vector<std::string> & pcd_paths)
-: Node("pointcloud_map_loader")
+#include "map_loader/pointcloud_map_loader_node.hpp"
+
+namespace
+{
+bool isPcdFile(const std::string & p)
+{
+  if (!rcutils_is_file(p.c_str())) {
+    return false;
+  }
+
+  const auto ext = p.substr(p.find_last_of(".") + 1);
+
+  if (ext != "pcd" && ext != "PCD") {
+    return false;
+  }
+
+  return true;
+}
+}  // namespace
+
+PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & options)
+: Node("pointcloud_map_loader", options)
 {
   rclcpp::QoS durable_qos{1};
   durable_qos.transient_local();
   pub_pointcloud_map_ =
     this->create_publisher<sensor_msgs::msg::PointCloud2>("output/pointcloud_map", durable_qos);
+
+  const auto pcd_paths_or_directory = declare_parameter(
+    "pcd_paths_or_directory",
+    std::vector<std::string>({}));
+
+  std::vector<std::string> pcd_paths{};
+
+  for (const auto & p : pcd_paths_or_directory) {
+    if (!rcutils_exists(p.c_str())) {
+      RCLCPP_ERROR_STREAM(get_logger(), "invalid path: " << p);
+    }
+
+    if (isPcdFile(p)) {
+      pcd_paths.push_back(p);
+    }
+
+    if (rcutils_is_directory(p.c_str())) {
+      glob_t glob_buf;
+      glob((p + "/*.pcd").c_str(), 0, NULL, &glob_buf);
+      for (size_t i = 0; i < glob_buf.gl_pathc; ++i) {
+        pcd_paths.push_back(glob_buf.gl_pathv[i]);
+      }
+      globfree(&glob_buf);
+    }
+  }
 
   const auto pcd = loadPCDFiles(pcd_paths);
 
@@ -77,3 +124,6 @@ sensor_msgs::msg::PointCloud2 PointCloudMapLoaderNode::loadPCDFiles(
 
   return whole_pcd;
 }
+
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(PointCloudMapLoaderNode)

@@ -11,9 +11,9 @@
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
   <depend>rclcpp</depend>
+  <depend>rclcpp_components</depend>
   <depend>geometry_msgs</depend>
   <depend>lanelet2_extension</depend>
-  <depend>libboost-filesystem-dev</depend>
   <depend>libpcl-all-dev</depend>
   <depend>pcl_conversions</depend>
   <depend>std_msgs</depend>
@@ -22,7 +22,7 @@
   <depend>visualization_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>
-  <test_depend>ament_cmake_cppcheck</test_depend>
+  <test_depend>ament_lint_common</test_depend>
 
   <export>
     <build_type>ament_cmake</build_type>
