@@ -36,7 +36,7 @@ RawVehicleCommandConverterNode::RawVehicleCommandConverterNode(
   max_brake_cmd_ = declare_parameter("max_brake", 0.8);
   max_steer_cmd_ = declare_parameter("max_steer", 10.0);
   min_steer_cmd_ = declare_parameter("min_steer", -10.0);
-  is_debugging_ = declare_parameter("is_debugging", true);
+  is_debugging_ = declare_parameter("is_debugging", false);
   // for steering steer controller
   use_steer_ff_ = declare_parameter("use_steer_ff", true);
   use_steer_fb_ = declare_parameter("use_steer_fb", true);
@@ -54,13 +54,13 @@ RawVehicleCommandConverterNode::RawVehicleCommandConverterNode(
   const auto invalid_integration_decay{declare_parameter(
       "steer_pid.invalid_integration_decay",
       0.97)};
-  ffmap_initialized_ = true;
+  ff_map_initialized_ = true;
   if (convert_accel_cmd_) {
     if (!accel_map_.readAccelMapFromCSV(csv_path_accel_map)) {
       RCLCPP_ERROR(
         get_logger(),
         "Cannot read accelmap. csv path = %s. stop calculation.", csv_path_accel_map.c_str());
-      ffmap_initialized_ = false;
+      ff_map_initialized_ = false;
     }
   }
   if (convert_brake_cmd_) {
@@ -68,7 +68,7 @@ RawVehicleCommandConverterNode::RawVehicleCommandConverterNode(
       RCLCPP_ERROR(
         get_logger(),
         "Cannot read brakemap. csv path = %s. stop calculation.", csv_path_brake_map.c_str());
-      ffmap_initialized_ = false;
+      ff_map_initialized_ = false;
     }
   }
   if (convert_steer_cmd_) {
@@ -77,7 +77,7 @@ RawVehicleCommandConverterNode::RawVehicleCommandConverterNode(
       RCLCPP_ERROR(
         get_logger(),
         "Cannot read steer map. csv path = %s. stop calculation.", csv_path_steer_map.c_str());
-      ffmap_initialized_ = false;
+      ff_map_initialized_ = false;
     }
     steer_controller_.setFBGains(kp_steer, ki_steer, kd_steer);
     steer_controller_.setFBLimits(
@@ -101,7 +101,7 @@ RawVehicleCommandConverterNode::RawVehicleCommandConverterNode(
 
 void RawVehicleCommandConverterNode::publishActuationCmd()
 {
-  if (!ffmap_initialized_) {
+  if (!ff_map_initialized_) {
     RCLCPP_WARN_EXPRESSION(get_logger(), is_debugging_, "ff map is not initialized");
     return;
   }
