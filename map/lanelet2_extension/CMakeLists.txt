@@ -3,6 +3,8 @@ project(lanelet2_extension)
 
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
+  set(CMAKE_CXX_EXTENSIONS OFF)
 endif()
 
 find_package(ament_cmake_auto REQUIRED)
@@ -73,6 +75,8 @@ if(BUILD_TESTING)
   target_link_libraries(regulatory_elements-test lanelet2_extension_lib)
   ament_add_gtest(utilities-test test/src/test_utilities.cpp)
   target_link_libraries(utilities-test lanelet2_extension_lib)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
 endif()
 
 ament_auto_package()
