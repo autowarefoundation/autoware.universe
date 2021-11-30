@@ -11,13 +11,6 @@ VelocityLimit.msg contains not only **max velocity** but also information about 
 
 ![selector algorithm](./image/external_velocity_limit_selector.png)
 
-<!-- Write the purpose of this package and briefly describe the features.
-
-Example:
-  {package_name} is a package for planning trajectories that can avoid obstacles.
-  This feature consists of two steps: obstacle filtering and optimizing trajectory.
--->
-
 ## Inner-workings / Algorithms
 
 WIP
@@ -56,53 +49,19 @@ Example:
 | ---------------------- | ------------------------------------- | ------------------------------------------------- |
 | `~output/max_velocity` | autoware_planning_msgs::VelocityLimit | current information of the hardest velocity limit |
 
-<!-- Write inputs/outputs of this package.
-
-Example:
-  ### Input
-
-  | Name                 | Type                                                   | Description          |
-  | -------------------- | ------------------------------------------------------ | -------------------- |
-  | `~/input/trajectory` | `autoware_auto_planning_msgs::msg::Trajectory`         | reference trajectory |
-  | `~/input/obstacles`  | `autoware_auto_perception_msgs::msg::PredictedObjects` | obstacles            |
-
-  ### Output
-
-  | Name                  | Type                                           | Description         |
-  | --------------------- | ---------------------------------------------- | ------------------- |
-  | `~/output/trajectory` | `autoware_auto_planning_msgs::msg::Trajectory` | modified trajectory |
--->
-
 ## Parameters
 
 | Parameter         | Type   | Description                                |
 | ----------------- | ------ | ------------------------------------------ |
 | `max_velocity`    | double | default max velocity [m/s]                 |
-| `normal/min_acc`  | double | minimum acceleration [m/ss]                |
-| `normal/max_acc`  | double | maximum acceleration [m/ss]                |
-| `normal/min_jerk` | double | minimum jerk [m/sss]                       |
-| `normal/max_jerk` | double | maximum jerk [m/sss]                       |
-| `limit/min_acc`   | double | minimum acceleration to be observed [m/ss] |
-| `limit/max_acc`   | double | maximum acceleration to be observed [m/ss] |
-| `limit/min_jerk`  | double | minimum jerk to be observed [m/sss]        |
-| `limit/max_jerk`  | double | maximum jerk to be observed [m/sss]        |
-
-<!-- Write parameters of this package.
-
-Example:
-  ### Node Parameters
-
-  | Name                   | Type | Description                     |
-  | ---------------------- | ---- | ------------------------------- |
-  | `output_debug_markers` | bool | whether to output debug markers |
-
-  ### Core Parameters
-
-  | Name                 | Type   | Description                                                          |
-  | -------------------- | ------ | -------------------------------------------------------------------- |
-  | `min_object_size_m`  | double | minimum object size to be selected as avoidance target obstacles [m] |
-  | `avoidance_margin_m` | double | avoidance margin to obstacles [m]                                    |
--->
+| `normal.min_acc`  | double | minimum acceleration [m/ss]                |
+| `normal.max_acc`  | double | maximum acceleration [m/ss]                |
+| `normal.min_jerk` | double | minimum jerk [m/sss]                       |
+| `normal.max_jerk` | double | maximum jerk [m/sss]                       |
+| `limit.min_acc`   | double | minimum acceleration to be observed [m/ss] |
+| `limit.max_acc`   | double | maximum acceleration to be observed [m/ss] |
+| `limit.min_jerk`  | double | minimum jerk to be observed [m/sss]        |
+| `limit.max_jerk`  | double | maximum jerk to be observed [m/sss]        |
 
 ## Assumptions / Known limits
 
