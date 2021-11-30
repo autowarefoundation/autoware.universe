@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
 <launch>
-  <arg name="in/raw_control_cmd" />
+  <arg name="in/external_control_cmd" />
   <arg name="in/shift_cmd" />
   <arg name="in/emergency_stop" default="/remote/emergency_stop" />
   <arg name="in/current_gate_mode" default="/control/current_gate_mode" />
   <arg name="in/twist" default="/localization/twist" />
 
   <arg name="out/control_cmd" />
-  <arg name="out/latest_raw_control_cmd" default="/remote/latest_raw_control_cmd" />
+  <arg name="out/latest_remote_control_cmd" default="/remote/latest_remote_control_cmd" />
 
   <arg name="csv_path_accel_map" default="$(find-pkg-share raw_vehicle_cmd_converter)/data/default/accel_map.csv"/>
   <arg name="csv_path_brake_map" default="$(find-pkg-share raw_vehicle_cmd_converter)/data/default/brake_map.csv"/>
@@ -26,13 +26,13 @@
     <param name="control_command_timeout" value="$(var control_command_timeout)" />
     <param name="emergency_stop_timeout" value="$(var emergency_stop_timeout)" />
 
-    <remap from="~/in/raw_control_cmd" to="$(var in/raw_control_cmd)" />
+    <remap from="~/in/external_control_cmd" to="$(var in/external_control_cmd)" />
     <remap from="~/in/shift_cmd" to="$(var in/shift_cmd)" />
     <remap from="~/in/emergency_stop" to="$(var in/emergency_stop)" />
     <remap from="~/in/current_gate_mode" to="$(var in/current_gate_mode)" />
     <remap from="~/in/twist" to="$(var in/twist)" />
 
     <remap from="~/out/control_cmd" to="$(var out/control_cmd)" />
-    <remap from="~/out/latest_raw_control_cmd" to="$(var out/latest_raw_control_cmd)" />
+    <remap from="~/out/latest_remote_control_cmd" to="$(var out/latest_remote_control_cmd)" />
   </node>
 </launch>

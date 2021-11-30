@@ -24,8 +24,8 @@
 #include "autoware_control_msgs/msg/control_command_stamped.hpp"
 #include "autoware_control_msgs/msg/emergency_mode.hpp"
 #include "autoware_control_msgs/msg/gate_mode.hpp"
-#include "autoware_vehicle_msgs/msg/raw_control_command.hpp"
-#include "autoware_vehicle_msgs/msg/raw_control_command_stamped.hpp"
+#include "autoware_vehicle_msgs/msg/external_control_command.hpp"
+#include "autoware_vehicle_msgs/msg/external_control_command_stamped.hpp"
 #include "autoware_vehicle_msgs/msg/shift_stamped.hpp"
 #include "autoware_vehicle_msgs/msg/vehicle_command.hpp"
 #include "geometry_msgs/msg/twist_stamped.hpp"
@@ -41,12 +41,12 @@ public:
 private:
   // Publisher
   rclcpp::Publisher<autoware_control_msgs::msg::ControlCommandStamped>::SharedPtr pub_cmd_;
-  rclcpp::Publisher<autoware_vehicle_msgs::msg::RawControlCommandStamped>::SharedPtr
+  rclcpp::Publisher<autoware_vehicle_msgs::msg::ExternalControlCommandStamped>::SharedPtr
     pub_current_cmd_;
 
   // Subscriber
   rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr sub_velocity_;
-  rclcpp::Subscription<autoware_vehicle_msgs::msg::RawControlCommandStamped>::SharedPtr
+  rclcpp::Subscription<autoware_vehicle_msgs::msg::ExternalControlCommandStamped>::SharedPtr
     sub_control_cmd_;
   rclcpp::Subscription<autoware_vehicle_msgs::msg::ShiftStamped>::SharedPtr sub_shift_cmd_;
   rclcpp::Subscription<autoware_control_msgs::msg::GateMode>::SharedPtr sub_gate_mode_;
@@ -54,7 +54,7 @@ private:
 
   void onVelocity(const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg);
   void onRemoteCmd(
-    const autoware_vehicle_msgs::msg::RawControlCommandStamped::ConstSharedPtr remote_cmd_ptr);
+    const autoware_vehicle_msgs::msg::ExternalControlCommandStamped::ConstSharedPtr remote_cmd_ptr);
   void onShiftCmd(const autoware_vehicle_msgs::msg::ShiftStamped::ConstSharedPtr msg);
   void onGateMode(const autoware_control_msgs::msg::GateMode::ConstSharedPtr msg);
   void onEmergencyStop(const autoware_control_msgs::msg::EmergencyMode::ConstSharedPtr msg);
@@ -90,7 +90,9 @@ private:
   BrakeMap brake_map_;
   bool acc_map_initialized_;
 
-  double calculateAcc(const autoware_vehicle_msgs::msg::RawControlCommand & cmd, const double vel);
+  double calculateAcc(
+    const autoware_vehicle_msgs::msg::ExternalControlCommand & cmd,
+    const double vel);
   double getShiftVelocitySign(const autoware_vehicle_msgs::msg::ShiftStamped & cmd);
 };
 
