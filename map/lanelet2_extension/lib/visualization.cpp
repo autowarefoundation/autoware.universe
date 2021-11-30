@@ -477,6 +477,7 @@ void visualization::lanelet2Polygon(
 visualization_msgs::msg::MarkerArray visualization::laneletDirectionAsMarkerArray(
   const lanelet::ConstLanelets lanelets)
 {
+  visualization_msgs::msg::MarkerArray marker_array;
   visualization_msgs::msg::Marker marker;
   initLaneletDirectionMarker(&marker, "lanelet direction");
 
@@ -486,8 +487,9 @@ visualization_msgs::msg::MarkerArray visualization::laneletDirectionAsMarkerArra
       pushLaneletDirectionMarker(&marker, ll);
     }
   }
-
-  visualization_msgs::msg::MarkerArray marker_array;
+  if(marker.points.empty()){
+    return marker_array;
+  }
   marker_array.markers.push_back(marker);
   return marker_array;
 }
@@ -496,6 +498,10 @@ visualization_msgs::msg::MarkerArray visualization::autowareTrafficLightsAsMarke
   const std::vector<lanelet::AutowareTrafficLightConstPtr> tl_reg_elems,
   const std_msgs::msg::ColorRGBA c, const rclcpp::Duration duration, const double scale)
 {
+  visualization_msgs::msg::MarkerArray tl_marker_array;
+  if(tl_reg_elems.empty()){
+    return tl_marker_array;
+  }
   visualization_msgs::msg::Marker marker_tri;
   visualization_msgs::msg::Marker marker_sph;
   visualization::initTrafficLightTriangleMarker(&marker_tri, "traffic_light_triangle", duration);
@@ -524,7 +530,7 @@ visualization_msgs::msg::MarkerArray visualization::autowareTrafficLightsAsMarke
     }
   }
 
-  visualization_msgs::msg::MarkerArray tl_marker_array;
+
   tl_marker_array.markers.push_back(marker_tri);
   tl_marker_array.markers.push_back(marker_sph);
   return tl_marker_array;
@@ -727,6 +733,10 @@ visualization_msgs::msg::MarkerArray visualization::lineStringsAsMarkerArray(
   const std::vector<lanelet::ConstLineString3d> line_strings, const std::string name_space,
   const std_msgs::msg::ColorRGBA c, const double lss)
 {
+  visualization_msgs::msg::MarkerArray ls_marker_array;
+  if (line_strings.empty()) {
+    return ls_marker_array;
+  }
   std::unordered_set<lanelet::Id> added;
   visualization_msgs::msg::Marker ls_marker;
   visualization::initLineStringMarker(&ls_marker, "map", name_space, c);
@@ -738,8 +748,6 @@ visualization_msgs::msg::MarkerArray visualization::lineStringsAsMarkerArray(
       added.insert(ls.id());
     }
   }
-
-  visualization_msgs::msg::MarkerArray ls_marker_array;
   ls_marker_array.markers.push_back(ls_marker);
   return ls_marker_array;
 }
