@@ -20,6 +20,10 @@
   <depend>tf2_geometry_msgs</depend>
   <depend>tf2_ros</depend>
   <depend>visualization_msgs</depend>
+  <depend>grid_map_pcl</depend>
+  <depend>grid_map_ros</depend>
+  <depend>grid_map_cv</depend>
+  <depend>autoware_utils</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
