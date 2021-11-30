@@ -5,7 +5,7 @@
   <description>The remote_cmd_converter package</description>
   <maintainer email="horibe.takamasa@gmail.com">Horibe Takamasa</maintainer>
   <author email="horibe.takamasa@gmail.com">Horibe Takamasa</author>
-  <license>Apache 2</license>
+  <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
