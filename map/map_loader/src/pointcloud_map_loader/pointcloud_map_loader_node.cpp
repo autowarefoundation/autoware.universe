@@ -35,7 +35,7 @@
 #include "pcl_conversions/pcl_conversions.h"
 
 PointCloudMapLoaderNode::PointCloudMapLoaderNode(const std::vector<std::string> & pcd_paths)
-: Node("poincloud_map_loader")
+: Node("pointcloud_map_loader")
 {
   rclcpp::QoS durable_qos{1};
   durable_qos.transient_local();
