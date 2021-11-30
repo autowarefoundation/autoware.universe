@@ -40,6 +40,7 @@
 #include <automotive_platform_msgs/TurnSignalCommand.h>
 #include <automotive_platform_msgs/VelocityAccelCov.h>
 #include <pacmod_msgs/SystemRptFloat.h>
+#include <pacmod_msgs/SystemRptInt.h>
 #include <pacmod_msgs/WheelSpeedRpt.h>
 
 #include <autoware_vehicle_msgs/ControlMode.h>
@@ -84,6 +85,8 @@ private:
   message_filters::Subscriber<pacmod_msgs::SystemRptFloat> * steering_wheel_sub_;
   message_filters::Synchronizer<SSCFeedbacksSyncPolicy> * ssc_feedbacks_sync_;
 
+  ros::Subscriber pacmod_turn_sub_;  // TEMP to support turn_signal
+
   // publishers
   ros::Publisher steer_mode_pub_;
   ros::Publisher speed_mode_pub_;
@@ -96,6 +99,7 @@ private:
   ros::Publisher current_steer_wheel_deg_pub_;
   ros::Publisher current_velocity_pub_;
   ros::Publisher current_velocity_kmph_pub_;
+  ros::Publisher current_turn_signal_pub_;
 
   // ros param
   int command_timeout_;        // vehicle_cmd timeout [ms]
@@ -148,6 +152,8 @@ private:
     const automotive_platform_msgs::GearFeedbackConstPtr & msg_gear,
     const pacmod_msgs::WheelSpeedRptConstPtr & msg_wheel_speed,
     const pacmod_msgs::SystemRptFloatConstPtr & msg_steering_wheel);
+  void callbackTurnSignal(const pacmod_msgs::SystemRptInt & turn);
+
   // functions
   void publishCommand();
   double calculateVehicleVelocity(
@@ -155,6 +161,7 @@ private:
     const automotive_platform_msgs::VelocityAccelCov & vel_acc_cov,
     const automotive_platform_msgs::GearFeedback & gear_feedback, const bool use_rear_wheel_speed);
   uint8_t toSSCShiftCmd(const autoware_vehicle_msgs::Shift & shift);
+  int32_t toAutowareTurnSignal(const pacmod_msgs::SystemRptInt & turn) const;
 };
 
 #endif  // SSC_INTERFACE_H

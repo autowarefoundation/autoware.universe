@@ -98,6 +98,8 @@ SSCInterface::SSCInterface()
   ssc_feedbacks_sync_->registerCallback(
     boost::bind(&SSCInterface::callbackFromSSCFeedbacks, this, _1, _2, _3, _4, _5, _6, _7));
 
+  pacmod_turn_sub_ = nh_.subscribe("/pacmod/parsed_tx/turn_rpt", 1, &SSCInterface::callbackTurnSignal, this);
+
   // publishers to autoware
   control_mode_pub_ =
     nh_.advertise<autoware_vehicle_msgs::ControlMode>("/vehicle/status/control_mode", 10);
@@ -111,6 +113,7 @@ SSCInterface::SSCInterface()
   current_velocity_pub_ = nh_.advertise<std_msgs::Float32>("/vehicle/status/velocity", 10);
   current_velocity_kmph_pub_ =
     nh_.advertise<std_msgs::Float32>("/vehicle/status/velocity_kmph", 10);
+  current_turn_signal_pub_ = nh_.advertise<autoware_vehicle_msgs::TurnSignal>("/vehicle/status/turn_signal", 10);
 
   // publishers to SSC
   steer_mode_pub_ =
@@ -370,4 +373,26 @@ uint8_t SSCInterface::toSSCShiftCmd(const autoware_vehicle_msgs::Shift & shift)
   if (shift.data == Shift::LOW) return Gear::LOW;
 
   return Gear::NONE;
+}
+
+void SSCInterface::callbackTurnSignal(const pacmod_msgs::SystemRptInt & turn) {
+  autoware_vehicle_msgs::TurnSignal cmd;
+  cmd.header.stamp = turn.header.stamp;
+  cmd.header.frame_id = BASE_FRAME_ID;
+  cmd.data = toAutowareTurnSignal(turn);
+  current_turn_signal_pub_.publish(cmd);
+}
+
+// TEMP for pacmod turn_signal status
+int32_t SSCInterface::toAutowareTurnSignal(const pacmod_msgs::SystemRptInt & turn) const
+{
+  using autoware_vehicle_msgs::TurnSignal;
+  using pacmod_msgs::SystemRptInt;
+
+  if (turn.output == SystemRptInt::TURN_RIGHT) return TurnSignal::RIGHT;
+  if (turn.output == SystemRptInt::TURN_LEFT) return TurnSignal::LEFT;
+  if (turn.output == SystemRptInt::TURN_NONE) return TurnSignal::NONE;
+  if (turn.output == SystemRptInt::TURN_HAZARDS) return TurnSignal::HAZARD;
+
+  return TurnSignal::NONE;
 }
