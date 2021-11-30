@@ -95,7 +95,7 @@ void initLightMarker(visualization_msgs::msg::Marker * marker, const std::string
 
   marker->header.frame_id = "map";
   marker->header.stamp = rclcpp::Time();
-  marker->frame_locked - true;
+  marker->frame_locked = true;
   marker->ns = ns;
   marker->id = 0;
   marker->lifetime = rclcpp::Duration(0, 0);
