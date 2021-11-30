@@ -42,7 +42,7 @@
 #include "autoware_vehicle_msgs/msg/shift_stamped.hpp"
 #include "autoware_vehicle_msgs/msg/steering.hpp"
 #include "autoware_vehicle_msgs/msg/turn_signal.hpp"
-#include "vehicle_info_util/vehicle_info.hpp"
+#include "vehicle_info_util/vehicle_info_util.hpp"
 
 class PacmodInterface : public rclcpp::Node
 {

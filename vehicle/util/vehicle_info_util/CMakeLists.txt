@@ -15,8 +15,8 @@ find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
 
-ament_auto_add_library(vehicle_info SHARED
-  src/vehicle_info.cpp
+ament_auto_add_library(vehicle_info_util SHARED
+  src/vehicle_info_util.cpp
 )
 
 if(BUILD_TESTING)

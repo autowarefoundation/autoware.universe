@@ -21,7 +21,7 @@
 
 PacmodInterface::PacmodInterface()
 : Node("pacmod_interface"),
-  vehicle_info_(vehicle_info_util::VehicleInfo::create(*this))
+  vehicle_info_(vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo())
 {
   /* setup parameters */
   base_frame_id_ = declare_parameter("base_frame_id", "base_link");
@@ -29,8 +29,8 @@ PacmodInterface::PacmodInterface()
   loop_rate_ = declare_parameter("loop_rate", 30.0);
 
   /* parameters for vehicle specifications */
-  tire_radius_ = vehicle_info_.wheel_radius_m_;
-  wheel_base_ = vehicle_info_.wheel_base_m_;
+  tire_radius_ = vehicle_info_.wheel_radius_m;
+  wheel_base_ = vehicle_info_.wheel_base_m;
 
 
   steering_offset_ = declare_parameter("steering_offset", 0.0);
