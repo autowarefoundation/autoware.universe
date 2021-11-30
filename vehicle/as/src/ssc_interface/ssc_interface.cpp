@@ -47,7 +47,7 @@ SSCInterface::SSCInterface()
     "/control/turn_signal_cmd", rclcpp::QoS{1},
     std::bind(&SSCInterface::callbackFromTurnSignalCmd, this, _1));
   engage_sub_ = create_subscription<autoware_vehicle_msgs::msg::Engage>(
-    "/vehcle/engage", rclcpp::QoS{1},
+    "/vehicle/engage", rclcpp::QoS{1},
     std::bind(&SSCInterface::callbackFromEngage, this, _1));
 
   // subscribers from SSC and PACMod
@@ -280,18 +280,18 @@ void SSCInterface::publishCommand()
 
   // Override desired speed to ZERO by emergency/timeout
   bool emergency = (vehicle_cmd_.emergency == 1);
-  bool timeouted = (((get_clock()->now() - command_time_).seconds() * 1000) > command_timeout_);
+  bool timed_out = (((get_clock()->now() - command_time_).seconds() * 1000) > command_timeout_);
 
   if (emergency) {
     RCLCPP_ERROR_THROTTLE(
       get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
-      "Emergency Stopping, emergency = %d, timeouted = %d", emergency, timeouted);
+      "Emergency Stopping, emergency = %d, timed_out = %d", emergency, timed_out);
     desired_speed = 0.0;
     deceleration_limit = 0.0;
-  } else if (timeouted) {
+  } else if (timed_out) {
     RCLCPP_ERROR_THROTTLE(
       get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
-      "Timeout Stopping, emergency = %d, timeouted = %d", emergency, timeouted);
+      "Timeout Stopping, emergency = %d, timed_out = %d", emergency, timed_out);
     desired_speed = 0.0;
   }
 

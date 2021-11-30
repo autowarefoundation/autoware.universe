@@ -241,7 +241,7 @@ void PacmodInterface::callbackPacmodRpt(
     shift_status_pub_->publish(shift_msg);
   }
 
-  /* publish current steernig angle */
+  /* publish current steering angle */
   {
     autoware_vehicle_msgs::msg::Steering steer_msg;
     steer_msg.header = header;
@@ -280,12 +280,12 @@ void PacmodInterface::publishCommands()
   const bool emergency = (raw_vehicle_cmd_ptr_->emergency == 1);
   const double vehicle_cmd_delta_time_ms =
     (get_clock()->now() - vehicle_command_received_time_).seconds() * 1000.0;
-  const bool timeouted =
+  const bool timed_out =
     (command_timeout_ms_ >= 0.0) ? (vehicle_cmd_delta_time_ms > command_timeout_ms_) : false;
-  if (emergency || timeouted) {
+  if (emergency || timed_out) {
     RCLCPP_ERROR(
-      get_logger(), "Emergency Stopping, emergency = %d, timeouted = %d",
-      emergency, timeouted);
+      get_logger(), "Emergency Stopping, emergency = %d, timed_out = %d",
+      emergency, timed_out);
     desired_throttle = 0.0;
     desired_brake = emergency_brake_;
   }
@@ -312,17 +312,17 @@ void PacmodInterface::publishCommands()
   if (!prev_override_ && global_rpt_ptr_->override_active) {
     RCLCPP_WARN_THROTTLE(
       get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
-      "Pacmod is overrided, enable flag is back to false");
+      "Pacmod is overridden, enable flag is back to false");
     engage_cmd_ = false;
   }
   prev_override_ = global_rpt_ptr_->override_active;
 
-  /* make engage cmd false when vehicle report is timeouted, e.g. E-stop is depressed */
-  const bool report_timeouted = ((this->now() - global_rpt_ptr_->header.stamp).seconds() > 1.0);
-  if (report_timeouted) {
+  /* make engage cmd false when vehicle report is timed out, e.g. E-stop is depressed */
+  const bool report_timed_out = ((this->now() - global_rpt_ptr_->header.stamp).seconds() > 1.0);
+  if (report_timed_out) {
     RCLCPP_WARN_THROTTLE(
       get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
-      "Pacmod report is timeouted, enable flag is back to false");
+      "Pacmod report is timed out, enable flag is back to false");
     engage_cmd_ = false;
   }
 
@@ -557,7 +557,7 @@ uint16_t PacmodInterface::toPacmodTurnCmdWithHazardRecover(
     // something wrong
     RCLCPP_ERROR_STREAM(
       get_logger(),
-      "turn singnal command and output do not match. " <<
+      "turn signal command and output do not match. " <<
         "COMMAND: " << turn_rpt_ptr_->command << "; OUTPUT: " << turn_rpt_ptr_->output);
     return toPacmodTurnCmd(turn);
   }
@@ -593,7 +593,7 @@ double PacmodInterface::steerWheelRateLimiter(
   const double dsteer = current_steer_cmd - prev_steer_cmd;
   const double dt = std::max(0.0, (current_steer_time - prev_steer_time).seconds());
   const double max_dsteer = std::fabs(steer_rate) * dt;
-  const double limitted_steer_cmd =
+  const double limited_steer_cmd =
     prev_steer_cmd + std::min(std::max(-max_dsteer, dsteer), max_dsteer);
-  return limitted_steer_cmd;
+  return limited_steer_cmd;
 }
