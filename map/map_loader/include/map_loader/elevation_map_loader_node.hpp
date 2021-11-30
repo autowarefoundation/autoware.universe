@@ -25,7 +25,7 @@
 #include <nlohmann/json.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_lanelet2_msgs/msg/map_bin.hpp>
+#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
 #include <pcl/pcl_base.h>
@@ -42,11 +42,11 @@ public:
 
 private:
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_pointcloud_map_;
-  rclcpp::Subscription<autoware_lanelet2_msgs::msg::MapBin>::SharedPtr sub_vector_map_;
+  rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr sub_vector_map_;
   rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr pub_elevation_map_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_elevation_map_cloud_;
   void onPointcloudMap(const sensor_msgs::msg::PointCloud2::ConstSharedPtr pointcloud_map);
-  void onVectorMap(const autoware_lanelet2_msgs::msg::MapBin::ConstSharedPtr vector_map);
+  void onVectorMap(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr vector_map);
   void setVerbosityLevelToDebugIfFlagSet();
   void createElevationMapFromPointcloud();
   autoware_utils::LinearRing2d getConvexHull(

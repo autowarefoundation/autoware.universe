@@ -67,10 +67,10 @@ Lanelet2MapLoaderNode::Lanelet2MapLoaderNode(const rclcpp::NodeOptions & options
   lanelet::io_handlers::AutowareOsmParser::parseVersions(
     lanelet2_filename, &format_version, &map_version);
 
-  pub_map_bin_ = this->create_publisher<autoware_lanelet2_msgs::msg::MapBin>(
+  pub_map_bin_ = this->create_publisher<autoware_auto_mapping_msgs::msg::HADMapBin>(
     "output/lanelet2_map", rclcpp::QoS{1}.transient_local());
 
-  autoware_lanelet2_msgs::msg::MapBin map_bin_msg;
+  autoware_auto_mapping_msgs::msg::HADMapBin map_bin_msg;
   map_bin_msg.header.stamp = this->now();
   map_bin_msg.header.frame_id = "map";
   map_bin_msg.format_version = format_version;

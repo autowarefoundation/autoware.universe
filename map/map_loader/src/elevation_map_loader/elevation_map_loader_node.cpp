@@ -161,7 +161,7 @@ ElevationMapLoaderNode::ElevationMapLoaderNode(const rclcpp::NodeOptions & optio
     sub_pointcloud_map_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
       "input/pointcloud_map", durable_qos,
       std::bind(&ElevationMapLoaderNode::onPointcloudMap, this, _1));
-    sub_vector_map_ = this->create_subscription<autoware_lanelet2_msgs::msg::MapBin>(
+    sub_vector_map_ = this->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
       "input/vector_map", durable_qos, std::bind(&ElevationMapLoaderNode::onVectorMap, this, _1));
   } else if (info.st_mode & S_IFDIR) {
     RCLCPP_INFO(this->get_logger(), "Load elevation map from: %s", elevation_map_path_.c_str());
@@ -186,7 +186,7 @@ void ElevationMapLoaderNode::onPointcloudMap(
 }
 
 void ElevationMapLoaderNode::onVectorMap(
-  const autoware_lanelet2_msgs::msg::MapBin::ConstSharedPtr vector_map)
+  const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr vector_map)
 {
   RCLCPP_INFO(this->get_logger(), "subscribe vector_map");
   already_sub_vector_map_ = false;

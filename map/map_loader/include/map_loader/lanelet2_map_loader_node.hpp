@@ -17,7 +17,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_lanelet2_msgs/msg/map_bin.hpp>
+#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 
 #include <memory>
 
@@ -27,7 +27,7 @@ public:
   explicit Lanelet2MapLoaderNode(const rclcpp::NodeOptions & options);
 
 private:
-  rclcpp::Publisher<autoware_lanelet2_msgs::msg::MapBin>::SharedPtr pub_map_bin_;
+  rclcpp::Publisher<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr pub_map_bin_;
 };
 
 #endif  // MAP_LOADER__LANELET2_MAP_LOADER_NODE_HPP_
