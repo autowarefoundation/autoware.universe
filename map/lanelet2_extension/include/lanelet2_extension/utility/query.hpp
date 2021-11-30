@@ -217,7 +217,7 @@ std::vector<lanelet::ConstLanelets> getSucceedingLaneletSequences(
   const double length);
 
 /**
- * [getPreceedingLaneletSequences retrieves a sequence of lanelets before the given lanelet.
+ * [getPrecedingLaneletSequences retrieves a sequence of lanelets before the given lanelet.
  * The total length of retrieved lanelet sequence at least given length. Returned lanelet sequence
  * does not include input lanelet.]
  * @param graph [input lanelet routing graph]
@@ -225,7 +225,7 @@ std::vector<lanelet::ConstLanelets> getSucceedingLaneletSequences(
  * @param length [minimum length of retrieved lanelet sequence]
  * @return   [lanelet sequence that leads to given lanelet]
  */
-std::vector<lanelet::ConstLanelets> getPreceedingLaneletSequences(
+std::vector<lanelet::ConstLanelets> getPrecedingLaneletSequences(
   const routing::RoutingGraphPtr & graph, const lanelet::ConstLanelet & lanelet,
   const double length);
 
