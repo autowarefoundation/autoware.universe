@@ -34,6 +34,8 @@ extra:
   font:
     text: Roboto
     code: Roboto Mono
+  version:
+    provider: mike
 
 extra_css:
   - https://use.fontawesome.com/releases/v5.15.4/css/all.css
