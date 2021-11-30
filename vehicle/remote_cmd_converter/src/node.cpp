@@ -62,8 +62,8 @@ RemoteCmdConverter::RemoteCmdConverter(const rclcpp::NodeOptions & node_options)
   this->get_node_timers_interface()->add_timer(rate_check_timer_, nullptr);
 
   // Parameter for accel/brake map
-  const std::string csv_path_accel_map = declare_parameter("csv_path_accel_map").get<std::string>();
-  const std::string csv_path_brake_map = declare_parameter("csv_path_brake_map").get<std::string>();
+  const std::string csv_path_accel_map = declare_parameter<std::string>("csv_path_accel_map");
+  const std::string csv_path_brake_map = declare_parameter<std::string>("csv_path_brake_map");
   acc_map_initialized_ = true;
   if (!accel_map_.readAccelMapFromCSV(csv_path_accel_map)) {
     RCLCPP_ERROR(

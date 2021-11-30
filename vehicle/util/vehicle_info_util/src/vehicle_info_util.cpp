@@ -26,7 +26,7 @@ T getParameter(rclcpp::Node & node, const std::string & name)
   }
 
   try {
-    return node.declare_parameter(name).get<T>();
+    return node.declare_parameter<T>(name);
   } catch (const rclcpp::ParameterTypeException & ex) {
     RCLCPP_ERROR(
       node.get_logger(), "Failed to get parameter `%s`, please set it when you launch the node.",
