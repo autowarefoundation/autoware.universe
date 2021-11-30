@@ -149,7 +149,7 @@ int main(int argc, char * argv[])
 
   std::string map_path;
   try {
-    map_path = node->declare_parameter("map_file").get<std::string>();
+    map_path = node->declare_parameter<std::string>("map_file");
   } catch (...) {
     std::cerr << "failed find map_file parameter! No file to load" << std::endl;
     printUsage();
