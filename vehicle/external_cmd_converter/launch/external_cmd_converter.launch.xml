@@ -7,7 +7,7 @@
   <arg name="in/twist" default="/localization/twist" />
 
   <arg name="out/control_cmd" />
-  <arg name="out/latest_remote_control_cmd" default="/remote/latest_remote_control_cmd" />
+  <arg name="out/latest_external_control_cmd" default="/external/selected/latest_external_control_cmd" />
 
   <arg name="csv_path_accel_map" default="$(find-pkg-share raw_vehicle_cmd_converter)/data/default/accel_map.csv"/>
   <arg name="csv_path_brake_map" default="$(find-pkg-share raw_vehicle_cmd_converter)/data/default/brake_map.csv"/>
@@ -17,7 +17,7 @@
   <arg name="control_command_timeout" default="1.0"/>
   <arg name="emergency_stop_timeout" default="3.0"/>
 
-  <node pkg="remote_cmd_converter" exec="remote_cmd_converter_node" name="remote_cmd_converter" output="screen">
+  <node pkg="external_cmd_converter" exec="external_cmd_converter_node" name="external_cmd_converter" output="screen">
     <param name="csv_path_accel_map" value="$(var csv_path_accel_map)" />
     <param name="csv_path_brake_map" value="$(var csv_path_brake_map)" />
 
@@ -33,6 +33,6 @@
     <remap from="~/in/twist" to="$(var in/twist)" />
 
     <remap from="~/out/control_cmd" to="$(var out/control_cmd)" />
-    <remap from="~/out/latest_remote_control_cmd" to="$(var out/latest_remote_control_cmd)" />
+    <remap from="~/out/latest_external_control_cmd" to="$(var out/latest_external_control_cmd)" />
   </node>
 </launch>

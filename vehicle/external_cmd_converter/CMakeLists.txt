@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(remote_cmd_converter)
+project(external_cmd_converter)
 
 ### Compile options
 if(NOT CMAKE_CXX_STANDARD)
@@ -14,13 +14,13 @@ endif()
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
-ament_auto_add_library(remote_cmd_converter SHARED
+ament_auto_add_library(external_cmd_converter SHARED
   src/node.cpp
 )
 
-rclcpp_components_register_node(remote_cmd_converter
-  PLUGIN "RemoteCmdConverter"
-  EXECUTABLE remote_cmd_converter_node
+rclcpp_components_register_node(external_cmd_converter
+  PLUGIN "external_cmd_converter::ExternalCmdConverterNode"
+  EXECUTABLE external_cmd_converter_node
 )
 
 if(BUILD_TESTING)

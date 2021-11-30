@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef REMOTE_CMD_CONVERTER__NODE_HPP_
-#define REMOTE_CMD_CONVERTER__NODE_HPP_
+#ifndef EXTERNAL_CMD_CONVERTER__NODE_HPP_
+#define EXTERNAL_CMD_CONVERTER__NODE_HPP_
 
 #include <memory>
 #include <string>
@@ -21,11 +21,10 @@
 #include "diagnostic_updater/diagnostic_updater.hpp"
 #include "rclcpp/rclcpp.hpp"
 
+#include "autoware_external_api_msgs/msg/control_command_stamped.hpp"
 #include "autoware_control_msgs/msg/control_command_stamped.hpp"
 #include "autoware_control_msgs/msg/emergency_mode.hpp"
 #include "autoware_control_msgs/msg/gate_mode.hpp"
-#include "autoware_vehicle_msgs/msg/external_control_command.hpp"
-#include "autoware_vehicle_msgs/msg/external_control_command_stamped.hpp"
 #include "autoware_vehicle_msgs/msg/shift_stamped.hpp"
 #include "autoware_vehicle_msgs/msg/vehicle_command.hpp"
 #include "geometry_msgs/msg/twist_stamped.hpp"
@@ -33,28 +32,31 @@
 #include "raw_vehicle_cmd_converter/accel_map.hpp"
 #include "raw_vehicle_cmd_converter/brake_map.hpp"
 
-class RemoteCmdConverter : public rclcpp::Node
+namespace external_cmd_converter
+{
+
+class ExternalCmdConverterNode : public rclcpp::Node
 {
 public:
-  explicit RemoteCmdConverter(const rclcpp::NodeOptions & node_options);
+  explicit ExternalCmdConverterNode(const rclcpp::NodeOptions & node_options);
 
 private:
   // Publisher
   rclcpp::Publisher<autoware_control_msgs::msg::ControlCommandStamped>::SharedPtr pub_cmd_;
-  rclcpp::Publisher<autoware_vehicle_msgs::msg::ExternalControlCommandStamped>::SharedPtr
+  rclcpp::Publisher<autoware_external_api_msgs::msg::ControlCommandStamped>::SharedPtr
     pub_current_cmd_;
 
   // Subscriber
   rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr sub_velocity_;
-  rclcpp::Subscription<autoware_vehicle_msgs::msg::ExternalControlCommandStamped>::SharedPtr
+  rclcpp::Subscription<autoware_external_api_msgs::msg::ControlCommandStamped>::SharedPtr
     sub_control_cmd_;
   rclcpp::Subscription<autoware_vehicle_msgs::msg::ShiftStamped>::SharedPtr sub_shift_cmd_;
   rclcpp::Subscription<autoware_control_msgs::msg::GateMode>::SharedPtr sub_gate_mode_;
   rclcpp::Subscription<autoware_control_msgs::msg::EmergencyMode>::SharedPtr sub_emergency_stop_;
 
   void onVelocity(const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg);
-  void onRemoteCmd(
-    const autoware_vehicle_msgs::msg::ExternalControlCommandStamped::ConstSharedPtr remote_cmd_ptr);
+  void onExternalCmd(
+    const autoware_external_api_msgs::msg::ControlCommandStamped::ConstSharedPtr cmd_ptr);
   void onShiftCmd(const autoware_vehicle_msgs::msg::ShiftStamped::ConstSharedPtr msg);
   void onGateMode(const autoware_control_msgs::msg::GateMode::ConstSharedPtr msg);
   void onEmergencyStop(const autoware_control_msgs::msg::EmergencyMode::ConstSharedPtr msg);
@@ -91,9 +93,10 @@ private:
   bool acc_map_initialized_;
 
   double calculateAcc(
-    const autoware_vehicle_msgs::msg::ExternalControlCommand & cmd,
-    const double vel);
+    const autoware_external_api_msgs::msg::ControlCommand & cmd, const double vel);
   double getShiftVelocitySign(const autoware_vehicle_msgs::msg::ShiftStamped & cmd);
 };
 
-#endif  // REMOTE_CMD_CONVERTER__NODE_HPP_
+}  // namespace external_cmd_converter
+
+#endif  // EXTERNAL_CMD_CONVERTER__NODE_HPP_
