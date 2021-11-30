@@ -15,8 +15,10 @@
  */
 
 #include "raw_vehicle_cmd_converter/accel_map.h"
+#include <chrono>
+using namespace std::chrono_literals;
 
-AccelMap::AccelMap() {}
+AccelMap::AccelMap(const rclcpp::Logger & logger) : logger_(logger), logger_ros_clock_(RCL_ROS_TIME) {}
 
 AccelMap::~AccelMap() {}
 
@@ -26,12 +28,12 @@ bool AccelMap::readAccelMapFromCSV(std::string csv_path)
   std::vector<std::vector<std::string>> table;
 
   if (!csv.readCSV(table)) {
-    ROS_ERROR("[Accel Map] Cannot open %s", csv_path.c_str());
+    RCLCPP_ERROR(logger_, "[Accel Map] Cannot open %s", csv_path.c_str());
     return false;
   }
 
   if (table[0].size() < 2) {
-    ROS_ERROR(
+    RCLCPP_ERROR(logger_, 
       "[Accel Map] Cannot read %s. CSV file should have at least 2 column", csv_path.c_str());
     return false;
   }
@@ -42,7 +44,7 @@ bool AccelMap::readAccelMapFromCSV(std::string csv_path)
 
   for (unsigned int i = 1; i < table.size(); i++) {
     if (table[0].size() != table[i].size()) {
-      ROS_ERROR(
+      RCLCPP_ERROR(logger_, 
         "[Accel Map] Cannot read %s. Each row should have a same number of columns",
         csv_path.c_str());
       return false;
@@ -64,15 +66,17 @@ bool AccelMap::getThrottle(double acc, double vel, double & throttle)
   std::vector<double> accs_interpolated;
 
   if (vel < vel_index_.front()) {
-    ROS_WARN_DELAYED_THROTTLE(
-      1.0,
+    RCLCPP_WARN_SKIPFIRST_THROTTLE(logger_,
+      logger_ros_clock_,
+      RCUTILS_S_TO_NS(1),
       "[Accel Map] Exceeding the vel range. Current vel: %f < min vel on map: %f. Use min "
       "velocity.",
       vel, vel_index_.front());
     vel = vel_index_.front();
   } else if (vel_index_.back() < vel) {
-    ROS_WARN_DELAYED_THROTTLE(
-      1.0,
+    RCLCPP_WARN_SKIPFIRST_THROTTLE(logger_, 
+      logger_ros_clock_,
+      RCUTILS_S_TO_NS(1),
       "[Accel Map] Exceeding the vel range. Current vel: %f > max vel on map: %f. Use max "
       "velocity.",
       vel, vel_index_.back());
@@ -106,15 +110,17 @@ bool AccelMap::getAcceleration(double throttle, double vel, double & acc)
   std::vector<double> accs_interpolated;
 
   if (vel < vel_index_.front()) {
-    ROS_WARN_DELAYED_THROTTLE(
-      1.0,
+    RCLCPP_WARN_SKIPFIRST_THROTTLE(logger_, 
+      logger_ros_clock_,
+      RCUTILS_S_TO_NS(1),
       "[Accel Map] Exceeding the vel range. Current vel: %f < min vel on map: %f. Use min "
       "velocity.",
       vel, vel_index_.front());
     vel = vel_index_.front();
   } else if (vel_index_.back() < vel) {
-    ROS_WARN_DELAYED_THROTTLE(
-      1.0,
+    RCLCPP_WARN_SKIPFIRST_THROTTLE(logger_, 
+      logger_ros_clock_,
+      RCUTILS_S_TO_NS(1),
       "[Accel Map] Exceeding the vel range. Current vel: %f > max vel on map: %f. Use max "
       "velocity.",
       vel, vel_index_.back());
@@ -134,8 +140,10 @@ bool AccelMap::getAcceleration(double throttle, double vel, double & acc)
   const double max_throttle = throttle_index_.back();
   const double min_throttle = throttle_index_.front();
   if (throttle < min_throttle || max_throttle < throttle) {
-    ROS_WARN_DELAYED_THROTTLE(
-      1.0, "[Accel Map] Input throttle: %f is out off range. use closest value.", throttle);
+    RCLCPP_WARN_SKIPFIRST_THROTTLE(logger_, 
+      logger_ros_clock_,
+      RCUTILS_S_TO_NS(1),
+      "[Accel Map] Input throttle: %f is out off range. use closest value.", throttle);
     throttle = std::min(std::max(throttle, min_throttle), max_throttle);
   }
 
