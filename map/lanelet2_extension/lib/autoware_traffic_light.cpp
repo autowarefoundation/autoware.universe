@@ -142,7 +142,7 @@ bool AutowareTrafficLight::removeLightBulbs(const LineStringOrPolygon3d & primit
 }
 
 #if __cplusplus < 201703L
-constexpr char AutowareTrafficLight::RuleName[];  // instanciate string in cpp file
+constexpr char AutowareTrafficLight::RuleName[];  // instantiate string in cpp file
 #endif
 
 }  // namespace autoware

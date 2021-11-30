@@ -12,7 +12,7 @@ However, there are some custom tags that is used by the parser.
 
 Currently, this includes:
 * overwriting x,y values with `local_x` and `local_y` tags.
-* reading `<MapMetaInfo>` tag wich contains information about map format version and map version.
+* reading `<MapMetaInfo>` tag which contains information about map format version and map version.
 
 The parser is registered as "autoware_osm_handler" as lanelet parser
 
@@ -41,13 +41,13 @@ Currently it contains following conversions:
 This module contains functions to retrieve various information from maps.
 e.g. crosswalks, trafficlights, stoplines
 
-#### Utilties
+#### Utilities
 This module contains other useful functions related to Lanelet.
 e.g. matching waypoint with lanelets
 
 ### Visualization
 Visualization contains functions to convert lanelet objects into visualization marker messages.
-Currenly it contains following conversions:
+Currently it contains following conversions:
 * lanelet::Lanelet to Triangle Markers
 * lanelet::LineString to LineStrip Markers
 * TrafficLights to Triangle Markers
@@ -55,7 +55,7 @@ Currenly it contains following conversions:
 ## Nodes
 ### lanelet2_extension_sample
 Code for this explains how this lanelet2_extension library is used.
-The executable is not meanto to do anything. 
+The executable is not meant to do anything.
 
 ### autoware_lanelet2_extension
 This node checks if an .osm file follows the Autoware version of Lanelet2 format.

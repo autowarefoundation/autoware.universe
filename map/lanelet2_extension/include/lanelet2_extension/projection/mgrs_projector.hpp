@@ -103,7 +103,7 @@ private:
   std::string mgrs_code_;
 
   /**
-   * mgrs grid code that was last projected in previous foward function.
+   * mgrs grid code that was last projected in previous forward function.
    * reverse function will use this if isMGRSCodeSet() returns false.
    */
   mutable std::string projected_grid_;

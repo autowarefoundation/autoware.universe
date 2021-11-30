@@ -19,6 +19,7 @@
 #ifndef LANELET2_EXTENSION_UTILITY_UTILITIES_H
 #define LANELET2_EXTENSION_UTILITY_UTILITIES_H
 
+#include <rclcpp/rclcpp.hpp>
 #include "geometry_msgs/msg/point.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 
@@ -33,6 +34,8 @@ namespace utils
 {
 lanelet::LineString3d generateFineCenterline(
   const lanelet::ConstLanelet & lanelet_obj, const double resolution = 5.0);
+lanelet::ConstLineString3d getCenterlineWithOffset(
+  const lanelet::ConstLanelet & lanelet_obj, const double offset, const double resolution = 5.0);
 
 /**
  * @brief  Apply a patch for centerline because the original implementation
@@ -46,6 +49,9 @@ lanelet::ConstLanelets getConflictingLanelets(
   const lanelet::routing::RoutingGraphConstPtr & graph, const lanelet::ConstLanelet & lanelet);
 
 bool lineStringWithWidthToPolygon(
+  const lanelet::ConstLineString3d & linestring, lanelet::ConstPolygon3d * polygon);
+
+bool lineStringToPolygon(
   const lanelet::ConstLineString3d & linestring, lanelet::ConstPolygon3d * polygon);
 
 double getLaneletLength2d(const lanelet::ConstLanelet & lanelet);
@@ -63,6 +69,9 @@ lanelet::CompoundPolygon3d getPolygonFromArcLength(
   const lanelet::ConstLanelets & lanelets, const double s1, const double s2);
 double getLaneletAngle(
   const lanelet::ConstLanelet & lanelet, const geometry_msgs::msg::Point & search_point);
+bool isInLanelet(
+  const geometry_msgs::msg::Pose & current_pose, const lanelet::ConstLanelet & lanelet,
+  const double radius = 0.0);
 
 }  // namespace utils
 }  // namespace lanelet

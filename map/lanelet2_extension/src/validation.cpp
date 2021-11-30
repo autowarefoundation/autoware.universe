@@ -145,7 +145,7 @@ void validateTurnDirection(const lanelet::LaneletMapPtr lanelet_map)
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  auto node = rclcpp::Node::make_shared("sample_code");
+  auto node = rclcpp::Node::make_shared("autoware_lanelet_validation");
 
   std::string map_path;
   try {

@@ -22,7 +22,7 @@ Here is an example osm syntax for node object.
 ```
 
 ### TrafficLights
-Default Lanelet2 format uses LineString(`way`) or Polygon class to represent the shape of a traffic light. For Autoware, traffic light objects must be represented only by LineString to avoid confusion, where start point is at bottom left edge and end point is at bottom right edge. Also, "height" tag must be added in order to represent the size in verticle direction(not the position). 
+Default Lanelet2 format uses LineString(`way`) or Polygon class to represent the shape of a traffic light. For Autoware, traffic light objects must be represented only by LineString to avoid confusion, where start point is at bottom left edge and end point is at bottom right edge. Also, "height" tag must be added in order to represent the size in vertical direction (not the position).
 
 The Following image illustrates how LineString is used to represent shape of Traffic Light in Autoware.
 <img src="./traffic_light.png" width="600">
@@ -39,7 +39,7 @@ Here is an example osm syntax for traffic light object.
 </way>
 ```
 
-### Turn Diretions
+### Turn Directions
 Users must add "turn_direction" tags to lanelets within intersections to indicate vehicle's turning direction. You do not need this tags for lanelets that are not in intersections. If you do not have this tag, Autoware will not be able to light up turning indicators. 
 This tags only take following values:
 * left
@@ -50,7 +50,7 @@ Following image illustrates how lanelets should be tagged.
 
 <img src="./turn_direction.png" width="600">
 
-Here is an example of osm sytax for lanelets in intersections. 
+Here is an example of osm syntax for lanelets in intersections.
 ```
 <relation id='1' visible='true' version='1'>
   <member type='way' ref='2' role='left' />
@@ -68,7 +68,7 @@ Here is an example of osm sytax for lanelets in intersections.
 Following tags are optional tags that you may want to add depending on how you want to use your map in Autoware. 
 
 ### Meta Info
-Users may add the `MetaInfo` element to their OSM file to indicate format version and map version of their OSM file. This information is not meant to influence Autoware vehicle's behavior, but is published as ROS message so that developers could know which map was used from ROSBAG log files. MetaInfo elements exists in the same hiararchy with `node`, `way`, and `relation` elements, otherwise JOSM wouldn't be able to load the file correctly.
+Users may add the `MetaInfo` element to their OSM file to indicate format version and map version of their OSM file. This information is not meant to influence Autoware vehicle's behavior, but is published as ROS message so that developers could know which map was used from ROSBAG log files. MetaInfo elements exists in the same hierarchy with `node`, `way`, and `relation` elements, otherwise JOSM wouldn't be able to load the file correctly.
 
 Here is an example of MetaInfo in osm file:
 ```
@@ -120,7 +120,7 @@ Following image illustrates how "light_bulbs" LineString should be created.
 
 <img src="./light_bulbs.png" width="400">
 
-Here is an exmaple of osm syntax for light_bulb object:
+Here is an example of osm syntax for light_bulb object:
 ```
 <node id=1 version='1' lat='49.00541994701' lon='8.41565013855'>
   <tag k='ele' v='5'/>

@@ -60,6 +60,8 @@ target_link_libraries(lanelet2_extension_sample
 ament_auto_add_executable(autoware_lanelet2_validation src/validation.cpp)
 add_dependencies(autoware_lanelet2_validation lanelet2_extension_lib)
 target_link_libraries(autoware_lanelet2_validation
+  ${catkin_LIBRARIES}
+  ${PUGIXML_LIBRARIES}
   lanelet2_extension_lib
 )
 

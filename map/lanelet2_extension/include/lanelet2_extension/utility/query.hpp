@@ -100,8 +100,16 @@ std::vector<lanelet::AutowareTrafficLightConstPtr> autowareTrafficLights(
  */
 std::vector<lanelet::DetectionAreaConstPtr> detectionAreas(const lanelet::ConstLanelets & lanelets);
 
+// query all obstacle polygons in lanelet2 map
+lanelet::ConstPolygons3d getAllObstaclePolygons(
+  const lanelet::LaneletMapConstPtr & lanelet_map_ptr);
+
 // query all parking lots in lanelet2 map
 lanelet::ConstPolygons3d getAllParkingLots(const lanelet::LaneletMapConstPtr & lanelet_map_ptr);
+
+// query all pedestrian markings in lanelet2 map
+lanelet::ConstLineStrings3d getAllPedestrianMarkings(
+  const lanelet::LaneletMapConstPtr & lanelet_map_ptr);
 
 // query all parking spaces in lanelet2 map
 lanelet::ConstLineStrings3d getAllParkingSpaces(

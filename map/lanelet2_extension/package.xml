@@ -2,11 +2,11 @@
 <package format="3">
   <name>lanelet2_extension</name>
   <version>0.1.0</version>
-  <description>The lanelet2_extension pacakge contains libraries to handle Lanelet2 format data.</description>
+  <description>The lanelet2_extension package contains libraries to handle Lanelet2 format data.</description>
 
   <maintainer email="ryohsuke.mitsudome@tier4.jp">mitsudome-r</maintainer>
 
-  <license>Apach 2</license>
+  <license>Apache 2</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>ament_cmake_auto</buildtool_depend>

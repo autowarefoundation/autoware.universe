@@ -72,7 +72,7 @@ void AutowareOsmParser::parseVersions(
   auto result = doc.load_file(filename.c_str());
   if (!result) {
     throw lanelet::ParseError(
-            std::string("Errors occured while parsing osm file: ") + result.description());
+      std::string("Errors occurred while parsing osm file: ") + result.description());
   }
 
   auto osmNode = doc.child("osm");

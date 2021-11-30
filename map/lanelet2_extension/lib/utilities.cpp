@@ -275,6 +275,37 @@ lanelet::LineString3d generateFineCenterline(
   return centerline;
 }
 
+lanelet::ConstLineString3d getCenterlineWithOffset(
+  const lanelet::ConstLanelet & lanelet_obj, const double offset, const double resolution)
+{
+  // Get length of longer border
+  const double left_length = lanelet::geometry::length(lanelet_obj.leftBound());
+  const double right_length = lanelet::geometry::length(lanelet_obj.rightBound());
+  const double longer_distance = (left_length > right_length) ? left_length : right_length;
+  const int num_segments = std::max(static_cast<int>(ceil(longer_distance / resolution)), 1);
+
+  // Resample points
+  const auto left_points = lanelet::utils::resamplePoints(lanelet_obj.leftBound(), num_segments);
+  const auto right_points = resamplePoints(lanelet_obj.rightBound(), num_segments);
+
+  // Create centerline
+  lanelet::LineString3d centerline(lanelet::utils::getId());
+  for (int i = 0; i < num_segments + 1; i++) {
+    // Add ID for the average point of left and right
+    const auto center_basic_point = (right_points.at(i) + left_points.at(i)) / 2;
+
+    const auto vec_right_2_left = (left_points.at(i) - right_points.at(i)).normalized();
+
+    const auto offset_center_basic_point = center_basic_point + vec_right_2_left * offset;
+
+    const lanelet::Point3d center_point(
+      lanelet::utils::getId(), offset_center_basic_point.x(), offset_center_basic_point.y(),
+      offset_center_basic_point.z());
+    centerline.push_back(center_point);
+  }
+  return static_cast<lanelet::ConstLineString3d>(centerline);
+}
+
 void overwriteLaneletsCenterline(
   lanelet::LaneletMapPtr lanelet_map, const double resolution, const bool force_overwrite)
 {
@@ -338,6 +369,38 @@ bool lineStringWithWidthToPolygon(
   const lanelet::Point3d p4(lanelet::InvalId, eigen_p4.x(), eigen_p4.y(), eigen_p4.z());
 
   *polygon = lanelet::Polygon3d(lanelet::InvalId, {p1, p2, p3, p4});
+
+  return true;
+}
+
+bool lineStringToPolygon(
+  const lanelet::ConstLineString3d & linestring, lanelet::ConstPolygon3d * polygon)
+{
+  if (polygon == nullptr) {
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("lanelet2_extension.visualization"), __func__ << ": polygon is null pointer! Failed to convert to polygon.");
+    return false;
+  }
+  if (linestring.size() < 4) {
+    if (linestring.size() < 3 || linestring.front().id() == linestring.back().id()) {
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("lanelet2_extension.visualization"),
+        __func__ << ": linestring" << linestring.id()
+                 << " must have more than different 3 points! (size is " << linestring.size() << ")"
+                 << std::endl
+                 << "Failed to convert to polygon.");
+      return false;
+    }
+  }
+
+  lanelet::Polygon3d llt_poly;
+
+  for (const auto & lp : linestring) {
+    llt_poly.push_back(lanelet::Point3d(
+      lanelet::InvalId, lp.basicPoint().x(), lp.basicPoint().y(), lp.basicPoint().z()));
+  }
+
+  if (linestring.front().id() == linestring.back().id()) llt_poly.pop_back();
+
+  *polygon = llt_poly;
 
   return true;
 }
@@ -460,6 +523,17 @@ double getLaneletAngle(
   lanelet::ConstLineString3d segment = getClosestSegment(llt_search_point, lanelet.centerline());
   return std::atan2(
     segment.back().y() - segment.front().y(), segment.back().x() - segment.front().x());
+}
+
+bool isInLanelet(
+  const geometry_msgs::msg::Pose & current_pose, const lanelet::ConstLanelet & lanelet,
+  const double radius)
+{
+  const lanelet::BasicPoint2d p(current_pose.position.x, current_pose.position.y);
+  if (boost::geometry::distance(p, lanelet.polygon2d().basicPolygon()) < radius) {
+    return true;
+  }
+  return false;
 }
 
 }  // namespace utils

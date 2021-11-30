@@ -150,7 +150,7 @@ void DetectionArea::setStopLine(const LineString3d & stopLine)
 void DetectionArea::removeStopLine() {parameters()[RoleName::RefLine] = {};}
 
 #if __cplusplus < 201703L
-constexpr char DetectionArea::RuleName[];  // instanciate string in cpp file
+constexpr char DetectionArea::RuleName[];  // instantiate string in cpp file
 #endif
 
 }  // namespace autoware

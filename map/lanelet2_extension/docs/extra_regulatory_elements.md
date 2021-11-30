@@ -1,7 +1,7 @@
 # Extra Regulatory Elements
 
 ## Detection Area
-This regualtory element specifies region of interest which vehicle must pay attention whenever it is driving along the associated lanelet. When there are any obstcle in the detection area, vehicle must stop at specified stopline
+This regulatory element specifies region of interest which vehicle must pay attention whenever it is driving along the associated lanelet. When there are any obstacle in the detection area, vehicle must stop at specified stopline
 
 * refers: refers to detection area polygon. There could be multiple detection areas registered to a single regulatory element.
 * refline: refers to stop line of the detection area
