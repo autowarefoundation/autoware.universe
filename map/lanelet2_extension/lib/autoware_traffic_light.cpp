@@ -16,10 +16,10 @@
  * Authors: Ryohsuke Mitsudome
  */
 
-#include <boost/variant.hpp>
+#include "boost/variant.hpp"
 
-#include <lanelet2_core/primitives/RegulatoryElement.h>
-#include <lanelet2_extension/regulatory_elements/autoware_traffic_light.hpp>
+#include "lanelet2_core/primitives/RegulatoryElement.h"
+#include "lanelet2_extension/regulatory_elements/autoware_traffic_light.hpp"
 
 #include <algorithm>
 #include <vector>

@@ -19,7 +19,7 @@
 #ifndef LANELET2_EXTENSION_IO_AUTOWARE_OSM_PARSER_H
 #define LANELET2_EXTENSION_IO_AUTOWARE_OSM_PARSER_H
 
-#include <lanelet2_io/io_handlers/OsmHandler.h>
+#include "lanelet2_io/io_handlers/OsmHandler.h"
 
 #include <string>
 

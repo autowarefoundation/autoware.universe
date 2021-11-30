@@ -31,9 +31,9 @@
 #include <string>
 #include <vector>
 
-#include <rclcpp/rclcpp.hpp>
+#include "rclcpp/rclcpp.hpp"
 
-#include <sensor_msgs/msg/point_cloud2.hpp>
+#include "sensor_msgs/msg/point_cloud2.hpp"
 
 class PointCloudMapLoaderNode : public rclcpp::Node
 {

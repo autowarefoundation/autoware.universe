@@ -13,10 +13,10 @@
 // limitations under the License.
 #include <math.h>
 
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/query.hpp>
+#include "lanelet2_extension/utility/message_conversion.hpp"
+#include "lanelet2_extension/utility/query.hpp"
 
 using lanelet::Lanelet;
 using lanelet::LineString3d;

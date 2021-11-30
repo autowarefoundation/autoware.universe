@@ -19,8 +19,8 @@
 #ifndef LANELET2_EXTENSION_REGULATORY_ELEMENTS_AUTOWARE_TRAFFIC_LIGHT_H
 #define LANELET2_EXTENSION_REGULATORY_ELEMENTS_AUTOWARE_TRAFFIC_LIGHT_H
 
-#include <lanelet2_core/primitives/BasicRegulatoryElements.h>
-#include <lanelet2_core/primitives/Lanelet.h>
+#include "lanelet2_core/primitives/BasicRegulatoryElements.h"
+#include "lanelet2_core/primitives/Lanelet.h"
 #include <vector>
 
 namespace lanelet

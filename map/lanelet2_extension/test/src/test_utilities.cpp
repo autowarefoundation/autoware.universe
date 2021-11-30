@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <gtest/gtest.h>
-#include <lanelet2_extension/utility/utilities.hpp>
-#include <lanelet2_routing/RoutingGraphContainer.h>
-#include <lanelet2_traffic_rules/TrafficRulesFactory.h>
+#include "gtest/gtest.h"
+#include "lanelet2_extension/utility/utilities.hpp"
+#include "lanelet2_routing/RoutingGraphContainer.h"
+#include "lanelet2_traffic_rules/TrafficRulesFactory.h"
 #include <map>
 
 using lanelet::Lanelet;

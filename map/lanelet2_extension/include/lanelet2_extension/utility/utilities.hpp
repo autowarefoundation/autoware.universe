@@ -19,11 +19,11 @@
 #ifndef LANELET2_EXTENSION_UTILITY_UTILITIES_H
 #define LANELET2_EXTENSION_UTILITY_UTILITIES_H
 
-#include <geometry_msgs/msg/point.hpp>
-#include <geometry_msgs/msg/pose.hpp>
+#include "geometry_msgs/msg/point.hpp"
+#include "geometry_msgs/msg/pose.hpp"
 
-#include <lanelet2_routing/Route.h>
-#include <lanelet2_routing/RoutingGraph.h>
+#include "lanelet2_routing/Route.h"
+#include "lanelet2_routing/RoutingGraph.h"
 
 #include <map>
 

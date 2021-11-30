@@ -17,16 +17,16 @@
  *
  */
 
-#include <lanelet2_core/geometry/LineString.h>
-#include <lanelet2_core/primitives/BasicRegulatoryElements.h>
-#include <lanelet2_traffic_rules/TrafficRules.h>
-#include <lanelet2_traffic_rules/TrafficRulesFactory.h>
+#include "lanelet2_core/geometry/LineString.h"
+#include "lanelet2_core/primitives/BasicRegulatoryElements.h"
+#include "lanelet2_traffic_rules/TrafficRules.h"
+#include "lanelet2_traffic_rules/TrafficRulesFactory.h"
 
-#include <lanelet2_core/geometry/Lanelet.h>
+#include "lanelet2_core/geometry/Lanelet.h"
 
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/query.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
+#include "lanelet2_extension/utility/message_conversion.hpp"
+#include "lanelet2_extension/utility/query.hpp"
+#include "lanelet2_extension/utility/utilities.hpp"
 
 #include <algorithm>
 #include <map>

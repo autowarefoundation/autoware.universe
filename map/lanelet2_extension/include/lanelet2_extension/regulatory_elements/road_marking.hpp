@@ -15,8 +15,8 @@
 #ifndef LANELET2_EXTENSION_REGULATORY_ELEMENTS_ROAD_MARKING_H
 #define LANELET2_EXTENSION_REGULATORY_ELEMENTS_ROAD_MARKING_H
 
-#include <lanelet2_core/primitives/BasicRegulatoryElements.h>
-#include <lanelet2_core/primitives/LineString.h>
+#include "lanelet2_core/primitives/BasicRegulatoryElements.h"
+#include "lanelet2_core/primitives/LineString.h"
 #include <vector>
 
 namespace lanelet
