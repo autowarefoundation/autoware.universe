@@ -21,7 +21,7 @@ import yaml
 
 
 def launch_setup(context, *args, **kwargs):
-    vehicle_param_file = LaunchConfiguration('config_file').perform(context)
+    vehicle_param_file = LaunchConfiguration('vehicle_info_param_file').perform(context)
     with open(vehicle_param_file, 'r') as f:
         vehicle_param = yaml.safe_load(f)['/**']['ros__parameters']
     return [SetParameter(name=k, value=v) for (k, v) in vehicle_param.items()]
@@ -29,6 +29,6 @@ def launch_setup(context, *args, **kwargs):
 
 def generate_launch_description():
     return LaunchDescription([
-        DeclareLaunchArgument('config_file'),
+        DeclareLaunchArgument('vehicle_info_param_file'),
         OpaqueFunction(function=launch_setup),
     ])
