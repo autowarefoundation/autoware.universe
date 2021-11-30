@@ -23,10 +23,10 @@
 #include <lanelet2_io/Io.h>
 #include <lanelet2_projection/UTM.h>
 
-#include <lanelet2_extension/io/autoware_osm_parser.h>
-#include <lanelet2_extension/projection/mgrs_projector.h>
-#include <lanelet2_extension/utility/message_conversion.h>
-#include <lanelet2_extension/utility/utilities.h>
+#include <lanelet2_extension/io/autoware_osm_parser.hpp>
+#include <lanelet2_extension/projection/mgrs_projector.hpp>
+#include <lanelet2_extension/utility/message_conversion.hpp>
+#include <lanelet2_extension/utility/utilities.hpp>
 
 #include <autoware_lanelet2_msgs/msg/map_bin.hpp>
 

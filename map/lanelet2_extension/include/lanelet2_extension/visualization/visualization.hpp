@@ -27,8 +27,8 @@
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_core/primitives/Lanelet.h>
 
-#include <lanelet2_extension/regulatory_elements/autoware_traffic_light.h>
-#include <lanelet2_extension/utility/query.h>
+#include <lanelet2_extension/regulatory_elements/autoware_traffic_light.hpp>
+#include <lanelet2_extension/utility/query.hpp>
 
 #include <string>
 #include <vector>

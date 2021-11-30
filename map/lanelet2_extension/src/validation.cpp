@@ -23,8 +23,8 @@
 #include <lanelet2_routing/RoutingGraph.h>
 #include <lanelet2_traffic_rules/TrafficRulesFactory.h>
 
-#include <lanelet2_extension/projection/mgrs_projector.h>
-#include <lanelet2_extension/regulatory_elements/autoware_traffic_light.h>
+#include <lanelet2_extension/projection/mgrs_projector.hpp>
+#include <lanelet2_extension/regulatory_elements/autoware_traffic_light.hpp>
 
 #include <iostream>
 #include <string>

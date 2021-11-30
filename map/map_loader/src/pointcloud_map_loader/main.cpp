@@ -34,7 +34,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <map_loader/pointcloud_map_loader_node.h>
+#include <map_loader/pointcloud_map_loader_node.hpp>
 
 namespace fs = boost::filesystem;
 

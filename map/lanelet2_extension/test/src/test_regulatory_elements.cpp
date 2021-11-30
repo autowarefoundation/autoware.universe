@@ -19,7 +19,7 @@
 #include <lanelet2_core/Attribute.h>
 #include <lanelet2_core/LaneletMap.h>
 
-#include <lanelet2_extension/regulatory_elements/autoware_traffic_light.h>
+#include <lanelet2_extension/regulatory_elements/autoware_traffic_light.hpp>
 
 #include <math.h>
 #include <vector>

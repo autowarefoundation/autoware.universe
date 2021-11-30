@@ -15,7 +15,7 @@
  */
 
 #include <gtest/gtest.h>
-#include <lanelet2_extension/utility/query.h>
+#include <lanelet2_extension/utility/query.hpp>
 #include <math.h>
 
 using lanelet::Lanelet;

@@ -16,8 +16,8 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <lanelet2_extension/projection/mgrs_projector.h>
-#include <lanelet2_extension/regulatory_elements/autoware_traffic_light.h>
+#include <lanelet2_extension/projection/mgrs_projector.hpp>
+#include <lanelet2_extension/regulatory_elements/autoware_traffic_light.hpp>
 
 #include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_io/Io.h>

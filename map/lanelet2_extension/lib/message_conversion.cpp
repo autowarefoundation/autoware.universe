@@ -24,8 +24,8 @@
 #include <lanelet2_io/io_handlers/Serialize.h>
 #include <lanelet2_projection/UTM.h>
 
-#include <lanelet2_extension/projection/mgrs_projector.h>
-#include <lanelet2_extension/utility/message_conversion.h>
+#include <lanelet2_extension/projection/mgrs_projector.hpp>
+#include <lanelet2_extension/utility/message_conversion.hpp>
 
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>

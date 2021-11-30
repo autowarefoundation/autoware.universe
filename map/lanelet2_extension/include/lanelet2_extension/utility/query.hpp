@@ -25,8 +25,8 @@
 
 #include <geometry_msgs/msg/point.hpp>
 #include <geometry_msgs/msg/pose.hpp>
-#include <lanelet2_extension/regulatory_elements/autoware_traffic_light.h>
-#include <lanelet2_extension/regulatory_elements/detection_area.h>
+#include <lanelet2_extension/regulatory_elements/autoware_traffic_light.hpp>
+#include <lanelet2_extension/regulatory_elements/detection_area.hpp>
 
 #include <string>
 #include <vector>

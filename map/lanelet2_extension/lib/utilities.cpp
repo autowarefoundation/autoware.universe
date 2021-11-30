@@ -24,9 +24,9 @@
 
 #include <lanelet2_core/geometry/Lanelet.h>
 
-#include <lanelet2_extension/utility/message_conversion.h>
-#include <lanelet2_extension/utility/query.h>
-#include <lanelet2_extension/utility/utilities.h>
+#include <lanelet2_extension/utility/message_conversion.hpp>
+#include <lanelet2_extension/utility/query.hpp>
+#include <lanelet2_extension/utility/utilities.hpp>
 
 #include <algorithm>
 #include <map>

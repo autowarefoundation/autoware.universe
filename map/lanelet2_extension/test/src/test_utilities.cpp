@@ -15,7 +15,7 @@
  */
 
 #include <gtest/gtest.h>
-#include <lanelet2_extension/utility/utilities.h>
+#include <lanelet2_extension/utility/utilities.hpp>
 #include <lanelet2_routing/RoutingGraphContainer.h>
 #include <lanelet2_traffic_rules/TrafficRulesFactory.h>
 #include <map>
