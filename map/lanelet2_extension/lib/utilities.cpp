@@ -27,7 +27,6 @@
 #include <lanelet2_extension/utility/message_conversion.h>
 #include <lanelet2_extension/utility/query.h>
 #include <lanelet2_extension/utility/utilities.h>
-#include <ros/ros.h>
 
 #include <algorithm>
 #include <map>
@@ -61,12 +60,12 @@ void getContactingLanelets(
   const lanelet::BasicPoint2d search_point, std::vector<int> * contacting_lanelet_ids)
 {
   if (!lanelet_map) {
-    ROS_ERROR_STREAM("No lanelet map is set!");
+    std::cerr << "No lanelet map is set!" << std::endl;
     return;
   }
 
   if (contacting_lanelet_ids == nullptr) {
-    ROS_ERROR_STREAM(__FUNCTION__ << " contacting_lanelet_ids is null pointer!");
+    std::cerr << __FUNCTION__ << " contacting_lanelet_ids is null pointer!" << std::endl;
     return;
   }
 
@@ -275,7 +274,8 @@ lanelet::LineString3d generateFineCenterline(
   return centerline;
 }
 
-void overwriteLaneletsCenterline(lanelet::LaneletMapPtr lanelet_map, const double resolution, const bool force_overwrite)
+void overwriteLaneletsCenterline(
+  lanelet::LaneletMapPtr lanelet_map, const double resolution, const bool force_overwrite)
 {
   for (auto & lanelet_obj : lanelet_map->laneletLayer) {
     if (force_overwrite || !lanelet_obj.hasCustomCenterline()) {
@@ -304,20 +304,19 @@ bool lineStringWithWidthToPolygon(
   const lanelet::ConstLineString3d & linestring, lanelet::ConstPolygon3d * polygon)
 {
   if (polygon == nullptr) {
-    ROS_ERROR_STREAM(__func__ << ": polygon is null pointer! Failed to convert to polygon.");
+    std::cerr << __func__ << ": polygon is null pointer! Failed to convert to polygon."
+              << std::endl;
     return false;
   }
   if (linestring.size() != 2) {
-    ROS_ERROR_STREAM(
-      __func__ << ": linestring" << linestring.id() << " must have 2 points! (" << linestring.size()
-               << " != 2)" << std::endl
-               << "Failed to convert to polygon.");
+    std::cerr << __func__ << ": linestring" << linestring.id() << " must have 2 points! ("
+              << linestring.size() << " != 2)" << std::endl
+              << "Failed to convert to polygon.";
     return false;
   }
   if (!linestring.hasAttribute("width")) {
-    ROS_ERROR_STREAM(
-      __func__ << ": linestring" << linestring.id()
-               << " does not have width tag. Failed to convert to polygon.");
+    std::cerr << __func__ << ": linestring" << linestring.id()
+              << " does not have width tag. Failed to convert to polygon.";
     return false;
   }
 
@@ -371,7 +370,7 @@ double getLaneletLength3d(const lanelet::ConstLanelets & lanelet_sequence)
 }
 
 lanelet::ArcCoordinates getArcCoordinates(
-  const lanelet::ConstLanelets & lanelet_sequence, const geometry_msgs::Pose & pose)
+  const lanelet::ConstLanelets & lanelet_sequence, const geometry_msgs::msg::Pose & pose)
 {
   lanelet::ConstLanelet closest_lanelet;
   lanelet::utils::query::getClosestLanelet(lanelet_sequence, pose, &closest_lanelet);
@@ -454,7 +453,7 @@ lanelet::CompoundPolygon3d getPolygonFromArcLength(
 }
 
 double getLaneletAngle(
-  const lanelet::ConstLanelet & lanelet, const geometry_msgs::Point & search_point)
+  const lanelet::ConstLanelet & lanelet, const geometry_msgs::msg::Point & search_point)
 {
   lanelet::BasicPoint2d llt_search_point(search_point.x, search_point.y);
   lanelet::ConstLineString3d segment = getClosestSegment(llt_search_point, lanelet.centerline());

@@ -1,5 +1,0 @@
-<launch>
-
-  <test test-name="test-query" pkg="lanelet2_extension" type="query-test" name="test"/>
-
-</launch>

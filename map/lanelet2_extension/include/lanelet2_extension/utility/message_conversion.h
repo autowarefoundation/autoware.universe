@@ -19,10 +19,10 @@
 #ifndef LANELET2_EXTENSION_UTILITY_MESSAGE_CONVERSION_H
 #define LANELET2_EXTENSION_UTILITY_MESSAGE_CONVERSION_H
 
-#include <autoware_lanelet2_msgs/MapBin.h>
-#include <geometry_msgs/Point.h>
-#include <geometry_msgs/Point32.h>
-#include <geometry_msgs/Polygon.h>
+#include <autoware_lanelet2_msgs/msg/map_bin.hpp>
+#include <geometry_msgs/msg/point.hpp>
+#include <geometry_msgs/msg/point32.hpp>
+#include <geometry_msgs/msg/polygon.hpp>
 #include <lanelet2_core/LaneletMap.h>
 
 #include <lanelet2_routing/RoutingGraph.h>
@@ -40,7 +40,7 @@ namespace conversion
  * @param map [lanelet map data]
  * @param msg [converted ROS message. Only "data" field is filled]
  */
-void toBinMsg(const lanelet::LaneletMapPtr & map, autoware_lanelet2_msgs::MapBin * msg);
+void toBinMsg(const lanelet::LaneletMapPtr & map, autoware_lanelet2_msgs::msg::MapBin * msg);
 
 /**
  * [fromBinMsg converts ROS message into lanelet2 data. Similar implementation
@@ -48,51 +48,51 @@ void toBinMsg(const lanelet::LaneletMapPtr & map, autoware_lanelet2_msgs::MapBin
  * @param msg [ROS message for lanelet map]
  * @param map [Converted lanelet2 data]
  */
-void fromBinMsg(const autoware_lanelet2_msgs::MapBin & msg, lanelet::LaneletMapPtr map);
+void fromBinMsg(const autoware_lanelet2_msgs::msg::MapBin & msg, lanelet::LaneletMapPtr map);
 void fromBinMsg(
-  const autoware_lanelet2_msgs::MapBin & msg, lanelet::LaneletMapPtr map,
+  const autoware_lanelet2_msgs::msg::MapBin & msg, lanelet::LaneletMapPtr map,
   lanelet::traffic_rules::TrafficRulesPtr * traffic_rules,
   lanelet::routing::RoutingGraphPtr * routing_graph);
 
 /**
  * [toGeomMsgPt converts various point types to geometry_msgs point]
- * @param src [input point(geometry_msgs::Point3,
+ * @param src [input point(geometry_msgs::msg::Point3,
  * Eigen::VEctor3d=lanelet::BasicPoint3d, lanelet::Point3d, lanelet::Point2d) ]
  * @param dst [converted geometry_msgs point]
  */
-void toGeomMsgPt(const geometry_msgs::Point32 & src, geometry_msgs::Point * dst);
-void toGeomMsgPt(const Eigen::Vector3d & src, geometry_msgs::Point * dst);
-void toGeomMsgPt(const lanelet::ConstPoint3d & src, geometry_msgs::Point * dst);
-void toGeomMsgPt(const lanelet::ConstPoint2d & src, geometry_msgs::Point * dst);
+void toGeomMsgPt(const geometry_msgs::msg::Point32 & src, geometry_msgs::msg::Point * dst);
+void toGeomMsgPt(const Eigen::Vector3d & src, geometry_msgs::msg::Point * dst);
+void toGeomMsgPt(const lanelet::ConstPoint3d & src, geometry_msgs::msg::Point * dst);
+void toGeomMsgPt(const lanelet::ConstPoint2d & src, geometry_msgs::msg::Point * dst);
 
 /**
  * [toGeomMsgPt converts various point types to geometry_msgs point]
- * @param src [input point(geometry_msgs::Point3,
+ * @param src [input point(geometry_msgs::msg::Point3,
  * Eigen::VEctor3d=lanelet::BasicPoint3d, lanelet::Point3d, lanelet::Point2d) ]
  * @return    [converted geometry_msgs point]
  */
-geometry_msgs::Point toGeomMsgPt(const geometry_msgs::Point32 & src);
-geometry_msgs::Point toGeomMsgPt(const Eigen::Vector3d & src);
-geometry_msgs::Point toGeomMsgPt(const lanelet::ConstPoint3d & src);
-geometry_msgs::Point toGeomMsgPt(const lanelet::ConstPoint2d & src);
+geometry_msgs::msg::Point toGeomMsgPt(const geometry_msgs::msg::Point32 & src);
+geometry_msgs::msg::Point toGeomMsgPt(const Eigen::Vector3d & src);
+geometry_msgs::msg::Point toGeomMsgPt(const lanelet::ConstPoint3d & src);
+geometry_msgs::msg::Point toGeomMsgPt(const lanelet::ConstPoint2d & src);
 
-lanelet::ConstPoint3d toLaneletPoint(const geometry_msgs::Point & src);
-void toLaneletPoint(const geometry_msgs::Point & src, lanelet::ConstPoint3d * dst);
+lanelet::ConstPoint3d toLaneletPoint(const geometry_msgs::msg::Point & src);
+void toLaneletPoint(const geometry_msgs::msg::Point & src, lanelet::ConstPoint3d * dst);
 
 /**
  * [toGeomMsgPoly converts lanelet polygon to geometry_msgs polygon]
  * @param ll_poly   [input polygon]
  * @param geom_poly [converted geometry_msgs point]
  */
-void toGeomMsgPoly(const lanelet::ConstPolygon3d & ll_poly, geometry_msgs::Polygon * geom_poly);
+void toGeomMsgPoly(const lanelet::ConstPolygon3d & ll_poly, geometry_msgs::msg::Polygon * geom_poly);
 
 /**
  * [toGeomMsgPt32 converts Eigen::Vector3d(lanelet:BasicPoint3d to
- * geometry_msgs::Point32)]
+ * geometry_msgs::msg::Point32)]
  * @param src [input point]
  * @param dst [conveted point]
  */
-void toGeomMsgPt32(const Eigen::Vector3d & src, geometry_msgs::Point32 * dst);
+void toGeomMsgPt32(const Eigen::Vector3d & src, geometry_msgs::msg::Point32 * dst);
 
 }  // namespace conversion
 }  // namespace utils

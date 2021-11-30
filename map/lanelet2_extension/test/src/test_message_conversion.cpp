@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include <math.h>
-#include <ros/ros.h>
 
 #include <gtest/gtest.h>
 
@@ -56,7 +55,7 @@ private:
 
 TEST_F(TestSuite, BinMsgConversion)
 {
-  autoware_lanelet2_msgs::MapBin bin_msg;
+  autoware_lanelet2_msgs::msg::MapBin bin_msg;
   lanelet::LaneletMapPtr regenerated_map(new lanelet::LaneletMap);
 
   lanelet::utils::conversion::toBinMsg(single_lanelet_map_ptr, &bin_msg);
@@ -76,27 +75,27 @@ TEST_F(TestSuite, ToGeomMsgPt)
 {
   Point3d lanelet_pt(getId(), -0.1, 0.2, 3.0);
 
-  geometry_msgs::Point32 geom_pt32;
+  geometry_msgs::msg::Point32 geom_pt32;
   geom_pt32.x = -0.1;
   geom_pt32.y = 0.2;
   geom_pt32.z = 3.0;
 
-  geometry_msgs::Point geom_pt;
+  geometry_msgs::msg::Point geom_pt;
   toGeomMsgPt(geom_pt32, &geom_pt);
   ASSERT_FLOAT_EQ(geom_pt32.x, geom_pt.x)
-    << " converted value is different from original geometry_msgs::Point";
+    << " converted value is different from original geometry_msgs::msg::Point";
   ASSERT_FLOAT_EQ(geom_pt32.y, geom_pt.y)
-    << " converted value is different from original geometry_msgs::Point";
+    << " converted value is different from original geometry_msgs::msg::Point";
   ASSERT_FLOAT_EQ(geom_pt32.z, geom_pt.z)
-    << " converted value is different from original geometry_msgs::Point";
+    << " converted value is different from original geometry_msgs::msg::Point";
 
   geom_pt = toGeomMsgPt(geom_pt32);
   ASSERT_FLOAT_EQ(geom_pt32.x, geom_pt.x)
-    << " converted value is different from original geometry_msgs::Point";
+    << " converted value is different from original geometry_msgs::msg::Point";
   ASSERT_FLOAT_EQ(geom_pt32.y, geom_pt.y)
-    << " converted value is different from original geometry_msgs::Point";
+    << " converted value is different from original geometry_msgs::msg::Point";
   ASSERT_FLOAT_EQ(geom_pt32.z, geom_pt.z)
-    << " converted value is different from original geometry_msgs::Point";
+    << " converted value is different from original geometry_msgs::msg::Point";
 
   toGeomMsgPt(lanelet_pt.basicPoint(), &geom_pt);
   ASSERT_DOUBLE_EQ(lanelet_pt.basicPoint().x(), geom_pt.x)
@@ -158,6 +157,5 @@ TEST_F(TestSuite, ToGeomMsgPt)
 int main(int argc, char ** argv)
 {
   testing::InitGoogleTest(&argc, argv);
-  ros::init(argc, argv, "TestNode");
   return RUN_ALL_TESTS();
 }

@@ -19,8 +19,8 @@
 #ifndef LANELET2_EXTENSION_UTILITY_UTILITIES_H
 #define LANELET2_EXTENSION_UTILITY_UTILITIES_H
 
-#include <geometry_msgs/Point.h>
-#include <geometry_msgs/Pose.h>
+#include <geometry_msgs/msg/point.hpp>
+#include <geometry_msgs/msg/pose.hpp>
 
 #include <lanelet2_routing/Route.h>
 #include <lanelet2_routing/RoutingGraph.h>
@@ -53,7 +53,7 @@ double getLaneletLength2d(const lanelet::ConstLanelets & lanelet_sequence);
 double getLaneletLength3d(const lanelet::ConstLanelets & lanelet_sequence);
 
 lanelet::ArcCoordinates getArcCoordinates(
-  const lanelet::ConstLanelets & lanelet_sequence, const geometry_msgs::Pose & pose);
+  const lanelet::ConstLanelets & lanelet_sequence, const geometry_msgs::msg::Pose & pose);
 
 lanelet::ConstLineString3d getClosestSegment(
   const lanelet::BasicPoint2d & search_pt, const lanelet::ConstLineString3d & linestring);
@@ -61,7 +61,7 @@ lanelet::ConstLineString3d getClosestSegment(
 lanelet::CompoundPolygon3d getPolygonFromArcLength(
   const lanelet::ConstLanelets & lanelets, const double s1, const double s2);
 double getLaneletAngle(
-  const lanelet::ConstLanelet & lanelet, const geometry_msgs::Point & search_point);
+  const lanelet::ConstLanelet & lanelet, const geometry_msgs::msg::Point & search_point);
 
 }  // namespace utils
 }  // namespace lanelet

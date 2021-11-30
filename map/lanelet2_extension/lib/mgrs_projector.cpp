@@ -17,11 +17,11 @@
  */
 
 #include <lanelet2_extension/projection/mgrs_projector.h>
-#include <ros/ros.h>
 
 #include <set>
 #include <string>
 #include <vector>
+#include <iostream>
 
 namespace lanelet
 {
@@ -50,7 +50,7 @@ BasicPoint3d MGRSProjector::forward(const GPSPoint & gps, const int precision) c
     GeographicLib::MGRS::Forward(
       zone, northp, utm_point.x(), utm_point.y(), gps.lat, precision, mgrs_code);
   } catch (GeographicLib::GeographicErr err) {
-    ROS_ERROR_STREAM(err.what());
+    std::cerr << err.what() << std::endl;
     return mgrs_point;
   }
 
@@ -60,11 +60,10 @@ BasicPoint3d MGRSProjector::forward(const GPSPoint & gps, const int precision) c
   projected_grid_ = mgrs_code;
 
   if (!prev_projected_grid.empty() && prev_projected_grid != projected_grid_) {
-    ROS_ERROR_STREAM(
-      "Projected MGRS Grid changed from last projection. Projected point "
-      "might be far away from previously projected point."
-      << std::endl
-      << "You may want to use different projector.");
+    std::cerr << "Projected MGRS Grid changed from last projection. Projected point"
+                 "might be far away from previously projected point." 
+              << std::endl
+              << "You may want to use different projector.";
   }
 
   return mgrs_point;
@@ -79,13 +78,8 @@ GPSPoint MGRSProjector::reverse(const BasicPoint3d & mgrs_point) const
   } else if (!projected_grid_.empty()) {
     gps = reverse(mgrs_point, projected_grid_);
   } else {
-    ROS_ERROR_STREAM(
-      "cannot run reverse operation if mgrs code is not set in projector."
-      << std::endl
-      << "use setMGRSCode function "
-         "or explicitly give mgrs "
-         "code as an "
-         "argument.");
+    std::cerr << "cannot run reverse operation if mgrs code is not set in projector." << std::endl
+              << "use setMGRSCode function or explicitly give mgrs code as an argument.";
   }
   return gps;
 }
@@ -105,7 +99,7 @@ GPSPoint MGRSProjector::reverse(
     utm_point.y() += fmod(mgrs_point.y(), pow(10, 5 - prec));
     GeographicLib::UTMUPS::Reverse(zone, northp, utm_point.x(), utm_point.y(), gps.lat, gps.lon);
   } catch (GeographicLib::GeographicErr err) {
-    ROS_ERROR_STREAM("Failed to convert from MGRS to WGS" << err.what());
+    std::cerr << "Failed to convert from MGRS to WGS";
     return gps;
   }
 
@@ -126,7 +120,7 @@ void MGRSProjector::setMGRSCode(const GPSPoint & gps, const int precision)
     GeographicLib::MGRS::Forward(
       zone, northp, utm_point.x(), utm_point.y(), gps.lat, precision, mgrs_code);
   } catch (GeographicLib::GeographicErr err) {
-    ROS_ERROR_STREAM(err.what());
+    std::cerr << err.what() << std::endl;
   }
 
   setMGRSCode(mgrs_code);

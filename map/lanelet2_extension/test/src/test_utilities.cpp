@@ -18,7 +18,6 @@
 #include <lanelet2_extension/utility/utilities.h>
 #include <lanelet2_routing/RoutingGraphContainer.h>
 #include <lanelet2_traffic_rules/TrafficRulesFactory.h>
-#include <ros/ros.h>
 #include <map>
 
 using lanelet::Lanelet;
@@ -29,7 +28,8 @@ using lanelet::utils::getId;
 class TestSuite : public ::testing::Test
 {
 public:
-  TestSuite() : sample_map_ptr(new lanelet::LaneletMap())
+  TestSuite()
+  : sample_map_ptr(new lanelet::LaneletMap())
   {  // NOLINT
     // create sample lanelets
     Point3d p1, p2, p3, p4, p5, p6, p7, p8, p9, p10;
@@ -106,6 +106,5 @@ TEST_F(TestSuite, OverwriteLaneletsCenterline)
 int main(int argc, char ** argv)
 {
   testing::InitGoogleTest(&argc, argv);
-  ros::init(argc, argv, "TestNode");
   return RUN_ALL_TESTS();
 }

@@ -16,8 +16,6 @@
  * Authors: Simon Thompson, Ryohsuke Mitsudome
  */
 
-#include <ros/ros.h>
-
 #include <Eigen/Eigen>
 
 #include <lanelet2_core/geometry/Lanelet.h>
@@ -57,7 +55,7 @@ lanelet::ConstLanelets query::laneletLayer(const lanelet::LaneletMapConstPtr & l
 {
   lanelet::ConstLanelets lanelets;
   if (!ll_map) {
-    ROS_WARN("No map received!");
+    std::cerr << "No map received!";
     return lanelets;
   }
 
@@ -528,10 +526,10 @@ ConstLanelets query::getLaneletsWithinRange(
 }
 
 ConstLanelets query::getLaneletsWithinRange(
-  const lanelet::ConstLanelets & lanelets, const geometry_msgs::Point & search_point,
+  const lanelet::ConstLanelets & lanelets, const geometry_msgs::msg::Point & search_point,
   const double range)
 {
-  getLaneletsWithinRange(lanelets, lanelet::BasicPoint2d(search_point.x, search_point.y), range);
+  return getLaneletsWithinRange(lanelets, lanelet::BasicPoint2d(search_point.x, search_point.y), range);
 }
 
 ConstLanelets query::getLaneChangeableNeighbors(
@@ -542,7 +540,7 @@ ConstLanelets query::getLaneChangeableNeighbors(
 
 ConstLanelets query::getLaneChangeableNeighbors(
   const routing::RoutingGraphPtr & graph, const ConstLanelets & road_lanelets,
-  const geometry_msgs::Point & search_point)
+  const geometry_msgs::msg::Point & search_point)
 {
   const auto lanelets =
     getLaneletsWithinRange(road_lanelets, search_point, std::numeric_limits<double>::epsilon());
@@ -599,7 +597,7 @@ ConstLanelets query::getAllNeighborsLeft(
 
 ConstLanelets query::getAllNeighbors(
   const routing::RoutingGraphPtr & graph, const ConstLanelets & road_lanelets,
-  const geometry_msgs::Point & search_point)
+  const geometry_msgs::msg::Point & search_point)
 {
   const auto lanelets =
     getLaneletsWithinRange(road_lanelets, search_point, std::numeric_limits<double>::epsilon());
@@ -612,11 +610,11 @@ ConstLanelets query::getAllNeighbors(
 }
 
 bool query::getClosestLanelet(
-  const ConstLanelets & lanelets, const geometry_msgs::Pose & search_pose,
+  const ConstLanelets & lanelets, const geometry_msgs::msg::Pose & search_pose,
   ConstLanelet * closest_lanelet_ptr)
 {
   if (closest_lanelet_ptr == nullptr) {
-    ROS_ERROR("argument closest_lanelet_ptr is null! Failed to find closest lanelet");
+    std::cerr << "argument closest_lanelet_ptr is null! Failed to find closest lanelet" << std::endl;
     return false;
   }
 

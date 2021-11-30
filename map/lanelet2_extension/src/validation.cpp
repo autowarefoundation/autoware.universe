@@ -29,7 +29,7 @@
 #include <iostream>
 #include <string>
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 
 #include <pugixml.hpp>
 
@@ -48,8 +48,8 @@ constexpr const char * Elevation = "ele";
 void printUsage()
 {
   std::cout << "Usage:" << std::endl
-            << "rosrun lanelet2_extension autoware_lanelet2_validation"
-               "_map_file:=<path to osm file>"
+            << "ros2 run lanelet2_extension autoware_lanelet2_validation"
+               " --ros-args -p map_file:=<path to osm file>"
             << std::endl;
 }
 }  // namespace
@@ -59,7 +59,7 @@ void validateElevationTag(const std::string filename)
   pugi::xml_document doc;
   auto result = doc.load_file(filename.c_str());
   if (!result) {
-    ROS_FATAL_STREAM(result.description());
+    std::cerr << result.description() << std::endl;
     exit(1);
   }
 
@@ -68,7 +68,7 @@ void validateElevationTag(const std::string filename)
        node = node.next_sibling(keyword::Node)) {
     const auto id = node.attribute(keyword::Id).as_llong(lanelet::InvalId);
     if (!node.find_child_by_attribute(keyword::Tag, keyword::Key, keyword::Elevation)) {
-      ROS_ERROR_STREAM("failed to find elevation tag for node: " << id);
+      std::cerr << "failed to find elevation tag for node: " << id << std::endl;
     }
   }
 }
@@ -76,7 +76,7 @@ void validateElevationTag(const std::string filename)
 void validateTrafficLight(const lanelet::LaneletMapPtr lanelet_map)
 {
   if (!lanelet_map) {
-    ROS_FATAL_STREAM("Missing map. Are you sure you set correct path for map?");
+    std::cerr << "Missing map. Are you sure you set correct path for map?" << std::endl;
     exit(1);
   }
 
@@ -86,28 +86,29 @@ void validateTrafficLight(const lanelet::LaneletMapPtr lanelet_map)
     if (autoware_traffic_lights.empty()) continue;
     for (auto light : autoware_traffic_lights) {
       if (light->lightBulbs().size() == 0) {
-        ROS_WARN_STREAM(
-          "regulatory element traffic light "
-          << light->id()
-          << " is missing optional light_bulb member. You won't "
-             "be able to use region_tlr node with this map");
+        std::cerr << "regulatory element traffic light " << light->id()
+                  << " is missing optional light_bulb member. You won't be able to use region_tlr "
+                     "node with this map"
+                  << std::endl;
+        ;
       }
       for (auto light_string : light->lightBulbs()) {
         if (!light_string.hasAttribute("traffic_light_id")) {
-          ROS_ERROR_STREAM(
-            "light_bulb " << light_string.id() << " is missing traffic_light_id tag");
+          std::cerr << "light_bulb " << light_string.id() << " is missing traffic_light_id tag"
+                    << std::endl;
         }
       }
       for (auto base_string_or_poly : light->trafficLights()) {
         if (!base_string_or_poly.isLineString()) {
-          ROS_ERROR_STREAM(
-            "traffic_light " << base_string_or_poly.id()
-                             << " is polygon, and only linestring class is currently supported for "
-                                "traffic lights");
+          std::cerr
+            << "traffic_light " << base_string_or_poly.id()
+            << " is polygon, and only linestring class is currently supported for traffic lights"
+            << std::endl;
         }
         auto base_string = static_cast<lanelet::LineString3d>(base_string_or_poly);
         if (!base_string.hasAttribute("height")) {
-          ROS_ERROR_STREAM("traffic_light " << base_string.id() << " is missing height tag");
+          std::cerr << "traffic_light " << base_string.id() << " is missing height tag"
+                    << std::endl;
         }
       }
     }
@@ -117,7 +118,7 @@ void validateTrafficLight(const lanelet::LaneletMapPtr lanelet_map)
 void validateTurnDirection(const lanelet::LaneletMapPtr lanelet_map)
 {
   if (!lanelet_map) {
-    ROS_FATAL_STREAM("Missing map. Are you sure you set correct path for map?");
+    std::cerr << "Missing map. Are you sure you set correct path for map?" << std::endl;
     exit(1);
   }
 
@@ -135,29 +136,27 @@ void validateTurnDirection(const lanelet::LaneletMapPtr lanelet_map)
     const auto conflicting_lanelets_or_areas = vehicle_graph->conflicting(lanelet);
     if (conflicting_lanelets_or_areas.size() == 0) continue;
     if (!lanelet.hasAttribute("turn_direction")) {
-      ROS_ERROR_STREAM(
-        "lanelet " << lanelet.id()
-                   << " seems to be intersecting other lanelet, but does "
-                      "not have turn_direction tagging.");
+      std::cerr
+        << "lanelet " << lanelet.id()
+        << " seems to be intersecting other lanelet, but does not have turn_direction tagging."
+        << std::endl;
     }
   }
 }
 
 int main(int argc, char * argv[])
 {
-  ros::init(argc, argv, "autoware_lanelet_valdiation");
-  ros::NodeHandle node;
-  ros::NodeHandle private_rosnode("~");
+  rclcpp::init(argc, argv);
+  auto node = rclcpp::Node::make_shared("sample_code");
 
-  if (!private_rosnode.hasParam("map_file")) {
-    ROS_FATAL_STREAM("failed find map_file parameter! No file to load");
+  std::string map_path;
+  try {
+    map_path = node->declare_parameter("map_file").get<std::string>();
+  } catch (...) {
+    std::cerr << "failed find map_file parameter! No file to load" << std::endl;
     printUsage();
     return 1;
   }
-
-  std::string map_path = "";
-  private_rosnode.getParam("map_file", map_path);
-
   lanelet::LaneletMapPtr lanelet_map;
   lanelet::ErrorMessages errors;
   lanelet::projection::MGRSProjector projector;

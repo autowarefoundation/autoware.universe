@@ -23,9 +23,8 @@
 #include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_routing/RoutingGraph.h>
 
-#include <geometry_msgs/Point.h>
-#include <geometry_msgs/PolygonStamped.h>
-#include <geometry_msgs/Pose.h>
+#include <geometry_msgs/msg/point.hpp>
+#include <geometry_msgs/msg/pose.hpp>
 #include <lanelet2_extension/regulatory_elements/autoware_traffic_light.h>
 #include <lanelet2_extension/regulatory_elements/detection_area.h>
 
@@ -174,14 +173,14 @@ ConstLanelets getLaneletsWithinRange(
   const lanelet::ConstLanelets & lanelets, const lanelet::BasicPoint2d & search_point,
   const double range);
 ConstLanelets getLaneletsWithinRange(
-  const lanelet::ConstLanelets & lanelets, const geometry_msgs::Point & search_point,
+  const lanelet::ConstLanelets & lanelets, const geometry_msgs::msg::Point & search_point,
   const double range);
 
 ConstLanelets getLaneChangeableNeighbors(
   const routing::RoutingGraphPtr & graph, const ConstLanelet & lanelet);
 ConstLanelets getLaneChangeableNeighbors(
   const routing::RoutingGraphPtr & graph, const ConstLanelets & road_lanelets,
-  const geometry_msgs::Point & search_point);
+  const geometry_msgs::msg::Point & search_point);
 
 ConstLanelets getAllNeighbors(const routing::RoutingGraphPtr & graph, const ConstLanelet & lanelet);
 ConstLanelets getAllNeighborsLeft(
@@ -190,10 +189,10 @@ ConstLanelets getAllNeighborsRight(
   const routing::RoutingGraphPtr & graph, const ConstLanelet & lanelet);
 ConstLanelets getAllNeighbors(
   const routing::RoutingGraphPtr & graph, const ConstLanelets & road_lanelets,
-  const geometry_msgs::Point & search_point);
+  const geometry_msgs::msg::Point & search_point);
 
 bool getClosestLanelet(
-  const ConstLanelets & lanelets, const geometry_msgs::Pose & search_pose,
+  const ConstLanelets & lanelets, const geometry_msgs::msg::Pose & search_pose,
   ConstLanelet * closest_lanelet_ptr);
 
 /**
