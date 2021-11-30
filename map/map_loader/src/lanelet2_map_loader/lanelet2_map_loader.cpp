@@ -36,9 +36,9 @@ void printUsage(const rclcpp::Logger & logger)
 {
   RCLCPP_ERROR_STREAM(
     logger,
-    "Usage:" << std::endl
-             << "rosrun map_loader lanelet2_map_loader [.OSM]" << std::endl
-             << "rosrun map_loader lanelet2_map_loader download [X] [Y]: WARNING not implemented");
+    "Usage:" << std::endl <<
+      "rosrun map_loader lanelet2_map_loader [.OSM]" << std::endl <<
+      "rosrun map_loader lanelet2_map_loader download [X] [Y]: WARNING not implemented");
 }
 
 int main(int argc, char ** argv)

@@ -29,9 +29,9 @@
 
 void printUsage()
 {
-  std::cerr << "Please set following private parameters:" << std::endl
-            << "llt_map_path" << std::endl
-            << "output_path" << std::endl;
+  std::cerr << "Please set following private parameters:" << std::endl <<
+    "llt_map_path" << std::endl <<
+    "output_path" << std::endl;
 }
 
 bool loadLaneletMap(

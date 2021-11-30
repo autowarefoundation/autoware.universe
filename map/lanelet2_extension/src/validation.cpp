@@ -45,10 +45,10 @@ constexpr const char * Elevation = "ele";
 
 void printUsage()
 {
-  std::cout << "Usage:" << std::endl
-            << "ros2 run lanelet2_extension autoware_lanelet2_validation"
-               " --ros-args -p map_file:=<path to osm file>"
-            << std::endl;
+  std::cout << "Usage:" << std::endl <<
+    "ros2 run lanelet2_extension autoware_lanelet2_validation"
+    " --ros-args -p map_file:=<path to osm file>" <<
+    std::endl;
 }
 }  // namespace
 
@@ -63,7 +63,8 @@ void validateElevationTag(const std::string filename)
 
   auto osmNode = doc.child("osm");
   for (auto node = osmNode.child(keyword::Node); node;  // NOLINT
-       node = node.next_sibling(keyword::Node)) {
+    node = node.next_sibling(keyword::Node))
+  {
     const auto id = node.attribute(keyword::Id).as_llong(lanelet::InvalId);
     if (!node.find_child_by_attribute(keyword::Tag, keyword::Key, keyword::Elevation)) {
       std::cerr << "failed to find elevation tag for node: " << id << std::endl;
@@ -81,32 +82,31 @@ void validateTrafficLight(const lanelet::LaneletMapPtr lanelet_map)
   for (auto lanelet : lanelet_map->laneletLayer) {
     auto autoware_traffic_lights =
       lanelet.regulatoryElementsAs<lanelet::autoware::AutowareTrafficLight>();
-    if (autoware_traffic_lights.empty()) continue;
+    if (autoware_traffic_lights.empty()) {continue;}
     for (auto light : autoware_traffic_lights) {
       if (light->lightBulbs().size() == 0) {
-        std::cerr << "regulatory element traffic light " << light->id()
-                  << " is missing optional light_bulb member. You won't be able to use region_tlr "
-                     "node with this map"
-                  << std::endl;
-        ;
+        std::cerr << "regulatory element traffic light " << light->id() <<
+          " is missing optional light_bulb member. You won't be able to use region_tlr "
+          "node with this map" <<
+          std::endl;
       }
       for (auto light_string : light->lightBulbs()) {
         if (!light_string.hasAttribute("traffic_light_id")) {
-          std::cerr << "light_bulb " << light_string.id() << " is missing traffic_light_id tag"
-                    << std::endl;
+          std::cerr << "light_bulb " << light_string.id() << " is missing traffic_light_id tag" <<
+            std::endl;
         }
       }
       for (auto base_string_or_poly : light->trafficLights()) {
         if (!base_string_or_poly.isLineString()) {
-          std::cerr
-            << "traffic_light " << base_string_or_poly.id()
-            << " is polygon, and only linestring class is currently supported for traffic lights"
-            << std::endl;
+          std::cerr <<
+            "traffic_light " << base_string_or_poly.id() <<
+            " is polygon, and only linestring class is currently supported for traffic lights" <<
+            std::endl;
         }
         auto base_string = static_cast<lanelet::LineString3d>(base_string_or_poly);
         if (!base_string.hasAttribute("height")) {
-          std::cerr << "traffic_light " << base_string.id() << " is missing height tag"
-                    << std::endl;
+          std::cerr << "traffic_light " << base_string.id() << " is missing height tag" <<
+            std::endl;
         }
       }
     }
@@ -122,7 +122,7 @@ void validateTurnDirection(const lanelet::LaneletMapPtr lanelet_map)
 
   lanelet::traffic_rules::TrafficRulesPtr traffic_rules =
     lanelet::traffic_rules::TrafficRulesFactory::create(
-      lanelet::Locations::Germany, lanelet::Participants::Vehicle);
+    lanelet::Locations::Germany, lanelet::Participants::Vehicle);
   lanelet::routing::RoutingGraphPtr vehicle_graph =
     lanelet::routing::RoutingGraph::build(*lanelet_map, *traffic_rules);
 
@@ -132,12 +132,12 @@ void validateTurnDirection(const lanelet::LaneletMapPtr lanelet_map)
     }
 
     const auto conflicting_lanelets_or_areas = vehicle_graph->conflicting(lanelet);
-    if (conflicting_lanelets_or_areas.size() == 0) continue;
+    if (conflicting_lanelets_or_areas.size() == 0) {continue;}
     if (!lanelet.hasAttribute("turn_direction")) {
-      std::cerr
-        << "lanelet " << lanelet.id()
-        << " seems to be intersecting other lanelet, but does not have turn_direction tagging."
-        << std::endl;
+      std::cerr <<
+        "lanelet " << lanelet.id() <<
+        " seems to be intersecting other lanelet, but does not have turn_direction tagging." <<
+        std::endl;
     }
   }
 }

@@ -32,10 +32,10 @@
 
 void printUsage()
 {
-  std::cerr << "Please set following private parameters:" << std::endl
-            << "llt_map_path" << std::endl
-            << "pcd_map_path" << std::endl
-            << "output_path" << std::endl;
+  std::cerr << "Please set following private parameters:" << std::endl <<
+    "llt_map_path" << std::endl <<
+    "pcd_map_path" << std::endl <<
+    "output_path" << std::endl;
 }
 
 bool loadLaneletMap(
@@ -58,13 +58,12 @@ bool loadLaneletMap(
 
 bool loadPCDMap(const std::string & pcd_map_path, pcl::PointCloud<pcl::PointXYZ>::Ptr & pcd_map_ptr)
 {
-  if (pcl::io::loadPCDFile<pcl::PointXYZ>(pcd_map_path, *pcd_map_ptr) == -1)  //* load the file
-  {
+  if (pcl::io::loadPCDFile<pcl::PointXYZ>(pcd_map_path, *pcd_map_ptr) == -1) { //* load the file
     PCL_ERROR("Couldn't read file test_pcd.pcd \n");
     return false;
   }
-  std::cout << "Loaded " << pcd_map_ptr->width * pcd_map_ptr->height << " data points."
-            << std::endl;
+  std::cout << "Loaded " << pcd_map_ptr->width * pcd_map_ptr->height << " data points." <<
+    std::endl;
   return true;
 }
 
@@ -77,7 +76,8 @@ double getMinHeightAroundPoint(
   std::vector<float> pointRadiusSquaredDistance;
   if (
     kdtree.radiusSearch(
-      search_pt, search_radius3d, pointIdxRadiusSearch, pointRadiusSquaredDistance) <= 0) {
+      search_pt, search_radius3d, pointIdxRadiusSearch, pointRadiusSquaredDistance) <= 0)
+  {
     std::cout << "no points found within 3d radius " << search_radius3d << std::endl;
     return search_pt.z;
   }
@@ -88,7 +88,7 @@ double getMinHeightAroundPoint(
   for (std::size_t i = 0; i < pointIdxRadiusSearch.size(); i++) {
     std::size_t pt_idx = pointIdxRadiusSearch.at(i);
     const auto pt = pcd_map_ptr->points.at(pt_idx);
-    if (pt.z > min_height) continue;
+    if (pt.z > min_height) {continue;}
     double distance2d = std::hypot(pt.x - search_pt.x, pt.y - search_pt.y);
     if (distance2d < search_radius2d) {
       found = true;

@@ -91,16 +91,16 @@ void binMapCallback(const autoware_lanelet2_msgs::msg::MapBin::SharedPtr msg)
 
   insertMarkerArray(
     &map_marker_array, lanelet::visualization::laneletsBoundaryAsMarkerArray(
-                         road_lanelets, cl_ll_borders, g_viz_lanelets_centerline));
+      road_lanelets, cl_ll_borders, g_viz_lanelets_centerline));
   insertMarkerArray(
     &map_marker_array,
     lanelet::visualization::laneletsAsTriangleMarkerArray("road_lanelets", road_lanelets, cl_road));
   insertMarkerArray(
     &map_marker_array, lanelet::visualization::laneletsAsTriangleMarkerArray(
-                         "crosswalk_lanelets", crosswalk_lanelets, cl_cross));
+      "crosswalk_lanelets", crosswalk_lanelets, cl_cross));
   insertMarkerArray(
     &map_marker_array, lanelet::visualization::laneletsAsTriangleMarkerArray(
-                         "walkway_lanelets", walkway_lanelets, cl_cross));
+      "walkway_lanelets", walkway_lanelets, cl_cross));
   insertMarkerArray(
     &map_marker_array, lanelet::visualization::laneletDirectionAsMarkerArray(road_lanelets));
   insertMarkerArray(

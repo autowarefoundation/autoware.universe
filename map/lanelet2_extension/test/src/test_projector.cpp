@@ -35,14 +35,14 @@ TEST(TestSuite, ForwardProjection)
   lanelet::BasicPoint3d mgrs_point = projector.forward(gps_point);
 
   // projected z value should not change
-  ASSERT_DOUBLE_EQ(mgrs_point.z(), gps_point.ele)
-    << "Forward projected z value should be " << gps_point.ele;
+  ASSERT_DOUBLE_EQ(mgrs_point.z(), gps_point.ele) <<
+    "Forward projected z value should be " << gps_point.ele;
 
   // https://www.movable-type.co.uk/scripts/latlong-utm-mgrs.html
   // round the projected value to mm since the above reference only gives value
   // in mm precision
-  ASSERT_EQ(projector.getProjectedMGRSGrid(), "54SUE") << "Projected grid should be "
-                                                       << "54SUE";
+  ASSERT_EQ(projector.getProjectedMGRSGrid(), "54SUE") << "Projected grid should be " <<
+    "54SUE";
   double rounded_x_mm = round(mgrs_point.x() * 1000) / 1000.0;
   ASSERT_DOUBLE_EQ(rounded_x_mm, 94946.081) << "Forward projected x value should be " << 94946.081;
   double rounded_y_mm = round(mgrs_point.y() * 1000) / 1000.0;
@@ -61,18 +61,18 @@ TEST(TestSuite, ReverseProjection)
   lanelet::GPSPoint gps_point = projector.reverse(mgrs_point);
 
   // projected z value should not change
-  ASSERT_DOUBLE_EQ(gps_point.ele, mgrs_point.z())
-    << "Reverse projected z value should be " << mgrs_point.z();
+  ASSERT_DOUBLE_EQ(gps_point.ele, mgrs_point.z()) <<
+    "Reverse projected z value should be " << mgrs_point.z();
 
   // https://www.movable-type.co.uk/scripts/latlong-utm-mgrs.html
   // round the projected value since the above reference only gives value up to
   // precision of 1e-8
   double rounded_lat = round(gps_point.lat * 1e8) / 1e8;
-  ASSERT_DOUBLE_EQ(rounded_lat, 35.65282525)
-    << "Reverse projected latitude value should be " << 35.65282525;
+  ASSERT_DOUBLE_EQ(rounded_lat, 35.65282525) <<
+    "Reverse projected latitude value should be " << 35.65282525;
   double rounded_lon = round(gps_point.lon * 1e8) / 1e8;
-  ASSERT_DOUBLE_EQ(rounded_lon, 139.83947721)
-    << "Reverse projected longitude value should be " << 139.83947721;
+  ASSERT_DOUBLE_EQ(rounded_lon, 139.83947721) <<
+    "Reverse projected longitude value should be " << 139.83947721;
 }
 
 int main(int argc, char ** argv)

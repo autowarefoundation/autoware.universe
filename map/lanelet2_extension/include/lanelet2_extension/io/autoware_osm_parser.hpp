@@ -52,9 +52,9 @@ public:
   static void parseVersions(
     const std::string & filename, std::string * format_version, std::string * map_version);
 
-  static constexpr const char * extension() { return ".osm"; }
+  static constexpr const char * extension() {return ".osm";}
 
-  static constexpr const char * name() { return "autoware_osm_handler"; }
+  static constexpr const char * name() {return "autoware_osm_handler";}
 };
 
 }  // namespace io_handlers

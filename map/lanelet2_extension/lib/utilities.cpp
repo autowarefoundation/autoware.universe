@@ -127,7 +127,8 @@ std::pair<size_t, size_t> findNearestIndexPair(
   for (auto i = 1; i < N; ++i) {
     if (
       accumulated_lengths.at(i - 1) <= target_length &&
-      target_length <= accumulated_lengths.at(i)) {
+      target_length <= accumulated_lengths.at(i))
+    {
       return std::make_pair(i - 1, i);
     }
   }
@@ -304,19 +305,19 @@ bool lineStringWithWidthToPolygon(
   const lanelet::ConstLineString3d & linestring, lanelet::ConstPolygon3d * polygon)
 {
   if (polygon == nullptr) {
-    std::cerr << __func__ << ": polygon is null pointer! Failed to convert to polygon."
-              << std::endl;
+    std::cerr << __func__ << ": polygon is null pointer! Failed to convert to polygon." <<
+      std::endl;
     return false;
   }
   if (linestring.size() != 2) {
-    std::cerr << __func__ << ": linestring" << linestring.id() << " must have 2 points! ("
-              << linestring.size() << " != 2)" << std::endl
-              << "Failed to convert to polygon.";
+    std::cerr << __func__ << ": linestring" << linestring.id() << " must have 2 points! (" <<
+      linestring.size() << " != 2)" << std::endl <<
+      "Failed to convert to polygon.";
     return false;
   }
   if (!linestring.hasAttribute("width")) {
-    std::cerr << __func__ << ": linestring" << linestring.id()
-              << " does not have width tag. Failed to convert to polygon.";
+    std::cerr << __func__ << ": linestring" << linestring.id() <<
+      " does not have width tag. Failed to convert to polygon.";
     return false;
   }
 

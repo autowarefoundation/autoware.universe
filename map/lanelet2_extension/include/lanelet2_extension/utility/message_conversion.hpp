@@ -84,7 +84,9 @@ void toLaneletPoint(const geometry_msgs::msg::Point & src, lanelet::ConstPoint3d
  * @param ll_poly   [input polygon]
  * @param geom_poly [converted geometry_msgs point]
  */
-void toGeomMsgPoly(const lanelet::ConstPolygon3d & ll_poly, geometry_msgs::msg::Polygon * geom_poly);
+void toGeomMsgPoly(
+  const lanelet::ConstPolygon3d & ll_poly,
+  geometry_msgs::msg::Polygon * geom_poly);
 
 /**
  * [toGeomMsgPt32 converts Eigen::Vector3d(lanelet:BasicPoint3d to

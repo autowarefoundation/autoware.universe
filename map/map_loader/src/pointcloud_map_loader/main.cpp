@@ -70,8 +70,7 @@ int main(int argc, char * argv[])
     }
   }
 
-  if(pcd_paths.empty())
-  {
+  if (pcd_paths.empty()) {
     const std::string msg = "no valid_path";
     throw std::runtime_error(msg);
   }

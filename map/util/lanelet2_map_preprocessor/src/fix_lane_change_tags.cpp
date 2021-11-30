@@ -30,9 +30,9 @@
 
 void printUsage()
 {
-  std::cerr << "Please set following private parameters:" << std::endl
-            << "llt_map_path" << std::endl
-            << "output_path" << std::endl;
+  std::cerr << "Please set following private parameters:" << std::endl <<
+    "llt_map_path" << std::endl <<
+    "output_path" << std::endl;
 }
 
 using lanelet::utils::getId;
@@ -74,7 +74,7 @@ void fixTags(lanelet::LaneletMapPtr & lanelet_map_ptr)
   auto lanelets = convertToVector(lanelet_map_ptr);
   lanelet::traffic_rules::TrafficRulesPtr trafficRules =
     lanelet::traffic_rules::TrafficRulesFactory::create(
-      lanelet::Locations::Germany, lanelet::Participants::Vehicle);
+    lanelet::Locations::Germany, lanelet::Participants::Vehicle);
   lanelet::routing::RoutingGraphUPtr routingGraph =
     lanelet::routing::RoutingGraph::build(*lanelet_map_ptr, *trafficRules);
 

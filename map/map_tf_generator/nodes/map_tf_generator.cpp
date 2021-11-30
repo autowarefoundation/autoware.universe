@@ -25,7 +25,8 @@ typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 class MapTFGenerator : public rclcpp::Node
 {
 public:
-  MapTFGenerator() : Node("map_tf_generator")
+  MapTFGenerator()
+  : Node("map_tf_generator")
   {
     map_frame_ = declare_parameter("map_frame", "map");
     viewer_frame_ = declare_parameter("viewer_frame", "viewer");
@@ -77,9 +78,9 @@ private:
     static_broadcaster_->sendTransform(static_transformStamped);
 
     RCLCPP_INFO_STREAM(
-      get_logger(), "broadcast static tf. map_frame:"
-                      << map_frame_ << ", viewer_frame:" << viewer_frame_ << ", x:" << coordinate[0]
-                      << ", y:" << coordinate[1] << ", z:" << coordinate[2]);
+      get_logger(), "broadcast static tf. map_frame:" <<
+        map_frame_ << ", viewer_frame:" << viewer_frame_ << ", x:" << coordinate[0] <<
+        ", y:" << coordinate[1] << ", z:" << coordinate[2]);
   }
 };
 
