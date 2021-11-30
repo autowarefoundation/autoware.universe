@@ -75,7 +75,7 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             "in/shift_cmd",
-            default_value="/external/selected/shift_cmd",
+            default_value="/external/selected/gear_cmd",
         ),
         DeclareLaunchArgument(
             "in/emergency_stop",
