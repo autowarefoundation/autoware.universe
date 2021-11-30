@@ -140,11 +140,11 @@ void RemoteCmdConverter::onRemoteCmd(
   double ref_velocity = *current_velocity_ptr_ + ref_acceleration * ref_vel_gain_ * sign;
   if (current_shift_cmd_->shift.data == autoware_vehicle_msgs::msg::Shift::REVERSE) {
     ref_velocity = std::min(0.0, ref_velocity);
-  } else if (current_shift_cmd_->shift.data == autoware_vehicle_msgs::msg::Shift::DRIVE ||
+  } else if (current_shift_cmd_->shift.data == autoware_vehicle_msgs::msg::Shift::DRIVE || //NOLINT
     current_shift_cmd_->shift.data == autoware_vehicle_msgs::msg::Shift::LOW)
   {
     ref_velocity = std::max(0.0, ref_velocity);
-  } else {  // autoware_vehicle_msgs::Shift::PARKING or autoware_vehicle_msgs::Shift::NEUTRAL or autoware_vehicle_msgs::Shift::NONE
+  } else {
     ref_velocity = 0.0;
     // TODO(Hiroki OTA): ref_acceleration also must be correct value for stopping.
   }
