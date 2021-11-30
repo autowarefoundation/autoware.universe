@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <string>
+#include <vector>
+
 #include "raw_vehicle_cmd_converter/csv_loader.hpp"
 
 CSVLoader::CSVLoader(std::string csv_path) {csv_path_ = csv_path;}

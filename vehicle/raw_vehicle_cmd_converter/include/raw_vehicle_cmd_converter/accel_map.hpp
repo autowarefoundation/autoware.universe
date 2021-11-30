@@ -12,23 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef RAW_VEHICLE_CMD_CONVERTER_ACCEL_MAP_H
-#define RAW_VEHICLE_CMD_CONVERTER_ACCEL_MAP_H
-
-#include "raw_vehicle_cmd_converter/csv_loader.hpp"
-#include "raw_vehicle_cmd_converter/interpolate.hpp"
-
-#include "rclcpp/rclcpp.hpp"
+#ifndef RAW_VEHICLE_CMD_CONVERTER__ACCEL_MAP_HPP_
+#define RAW_VEHICLE_CMD_CONVERTER__ACCEL_MAP_HPP_
 
 #include <algorithm>
 #include <iostream>
 #include <string>
 #include <vector>
 
+#include "rclcpp/rclcpp.hpp"
+
+#include "raw_vehicle_cmd_converter/csv_loader.hpp"
+#include "raw_vehicle_cmd_converter/interpolate.hpp"
+
 class AccelMap
 {
 public:
-  AccelMap(const rclcpp::Logger & logger);
+  explicit AccelMap(const rclcpp::Logger & logger);
   ~AccelMap();
 
   bool readAccelMapFromCSV(std::string csv_path);
@@ -44,4 +44,4 @@ private:
   std::vector<std::vector<double>> accel_map_;
 };
 
-#endif
+#endif  // RAW_VEHICLE_CMD_CONVERTER__ACCEL_MAP_HPP_

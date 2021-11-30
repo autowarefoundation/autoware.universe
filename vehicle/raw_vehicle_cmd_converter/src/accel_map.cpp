@@ -12,8 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "raw_vehicle_cmd_converter/accel_map.hpp"
+#include <algorithm>
 #include <chrono>
+#include <string>
+#include <vector>
+
+#include "raw_vehicle_cmd_converter/accel_map.hpp"
+
 using namespace std::chrono_literals;
 
 AccelMap::AccelMap(const rclcpp::Logger & logger)

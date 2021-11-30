@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef RAW_VEHICLE_CMD_CONVERTER_CSV_LOADER_H
-#define RAW_VEHICLE_CMD_CONVERTER_CSV_LOADER_H
+#ifndef RAW_VEHICLE_CMD_CONVERTER__CSV_LOADER_HPP_
+#define RAW_VEHICLE_CMD_CONVERTER__CSV_LOADER_HPP_
 
 #include <fstream>
 #include <iostream>
@@ -24,7 +24,7 @@
 class CSVLoader
 {
 public:
-  CSVLoader(std::string csv_path);
+  explicit CSVLoader(std::string csv_path);
   ~CSVLoader();
 
   bool readCSV(std::vector<std::vector<std::string>> & result, const char delim = ',');
@@ -33,4 +33,4 @@ private:
   std::string csv_path_;
 };
 
-#endif
+#endif  // RAW_VEHICLE_CMD_CONVERTER__CSV_LOADER_HPP_
