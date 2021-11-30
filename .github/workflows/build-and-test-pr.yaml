@@ -9,6 +9,9 @@ jobs:
     with:
       script-ref: tier4/proposal
 
+  get-modified-source-files:
+    uses: autowarefoundation/autoware-github-actions/.github/workflows/reusable-get-modified-source-files.yaml@tier4/proposal
+
   build-and-test:
     needs: get-modified-packages
     if: ${{ needs.get-modified-packages.outputs.modified-packages != '' }}
@@ -17,3 +20,14 @@ jobs:
       rosdistro: galactic
       build-depends-repos: build_depends.repos
       target-packages: ${{ needs.get-modified-packages.outputs.modified-packages }}
+
+  clang-tidy:
+    needs: [get-modified-source-files, build-and-test]
+    if: ${{ needs.get-modified-source-files.outputs.modified-source-files != '' }}
+    uses: autowarefoundation/autoware-github-actions/.github/workflows/reusable-clang-tidy.yaml@tier4/proposal
+    with:
+      script-ref: tier4/proposal
+      rosdistro: galactic
+      build-depends-repos: build_depends.repos
+      target-files: ${{ needs.get-modified-source-files.outputs.modified-source-files }}
+      compile-commands-hash: ${{ needs.build-and-test.outputs.compile-commands-hash }}
