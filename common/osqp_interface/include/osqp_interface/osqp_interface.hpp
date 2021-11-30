@@ -1,28 +1,30 @@
-/*
- * Copyright 2015-2019 Autoware Foundation. All rights reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- * Author: Robin Karlsson
- */
-#ifndef OSQP_INTERFACE_H
-#define OSQP_INTERFACE_H
+// Copyright 2015-2019 Autoware Foundation. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// Author: Robin Karlsson
+//
+#ifndef OSQP_INTERFACE__OSQP_INTERFACE_HPP_
+#define OSQP_INTERFACE__OSQP_INTERFACE_HPP_
 
-#include "eigen3/Eigen/Core"
 #include <string>
 #include <vector>
-#include "osqp.h"
+#include <tuple>
+#include <memory>
 
+#include "osqp/osqp.h"
+
+#include "eigen3/Eigen/Core"
 namespace osqp
 {
 struct CSC_Matrix;
@@ -74,9 +76,9 @@ private:
   /*****************************
    * OSQP WORKSPACE STRUCTURES
    *****************************/
-  OSQPWorkspace * work;
-  OSQPSettings * settings;
-  OSQPData * data;
+  std::unique_ptr<OSQPWorkspace, std::function<void(OSQPWorkspace *)>> work;
+  std::unique_ptr<OSQPSettings> settings;
+  std::unique_ptr<OSQPData> data;
 
   // store last work info since work is cleaned up at every execution to prevent memory leak.
   OSQPInfo latest_work_info;
@@ -113,6 +115,8 @@ private:
 
   inline bool isEqual(double x, double y);
 
+  static void OSQPWorkspaceDeleter(OSQPWorkspace * ptr) noexcept;
+
 public:
   // Returns a flag for asserting interface condition (Healthy condition: 0).
   c_int getExitFlag(void);
@@ -126,7 +130,7 @@ public:
   // Steps:
   //   1. Initializes the OSQP object (incl. settings, data objects).
   //   2. Solver settings (accuracy etc.).
-  OSQPInterface(const c_float eps_abs = 1.0e-4, const bool polish = true);
+  explicit OSQPInterface(const c_float eps_abs = 1.0e-4, const bool polish = true);
 
   // Initializes the OSQP solver interface and sets up the problem.
   //
@@ -154,11 +158,12 @@ public:
   /****************
    * OPTIMIZATION
    ****************/
-  // Solves the stored convec quadratic program (QP) problem using the OSQP solver.
+  // Solves the stored convex quadratic program (QP) problem using the OSQP solver.
   //
   // The function returns a tuple containing the solution as two float vectors.
-  // The first element of the tuple contains the 'primal' solution. The second element contains the 'lagrange
-  // multiplier' solution. The third element contains an integer with solver polish status information.
+  // The first element of the tuple contains the 'primal' solution.
+  // The second element contains the 'lagrange multiplier' solution.
+  // The third element contains an integer with solver polish status information.
   //
   // How to use:
   //   1. Generate the Eigen matrices P, A and vectors q, l, u according to the problem.
@@ -176,8 +181,9 @@ public:
   // Solves convex quadratic programs (QPs) using the OSQP solver.
   //
   // The function returns a tuple containing the solution as two float vectors.
-  // The first element of the tuple contains the 'primal' solution. The second element contains the 'lagrange
-  // multiplier' solution. The third element contains an integer with solver polish status information.
+  // The first element of the tuple contains the 'primal' solution.
+  // The second element contains the 'lagrange multiplier' solution.
+  // The third element contains an integer with solver polish status information.
   //
   // How to use:
   //   1. Generate the Eigen matrices P, A and vectors q, l, u according to the problem.
@@ -230,14 +236,14 @@ public:
   void updateVerbose(const bool verbose);
   void updateRhoInterval(const int rho_interval);
 
-  int getTakenIter() { return static_cast<int>(latest_work_info.iter); }
-  std::string getStatusMessage() { return static_cast<std::string>(latest_work_info.status); }
-  int getStatus() { return static_cast<int>(latest_work_info.status_val); }
-  int getStatusPolish() { return static_cast<int>(latest_work_info.status_polish); }
-  double getRunTime() { return static_cast<double>(latest_work_info.run_time); }
-  double getObjVal() { return static_cast<double>(latest_work_info.obj_val); }
+  int getTakenIter() {return static_cast<int>(latest_work_info.iter);}
+  std::string getStatusMessage() {return static_cast<std::string>(latest_work_info.status);}
+  int getStatus() {return static_cast<int>(latest_work_info.status_val);}
+  int getStatusPolish() {return static_cast<int>(latest_work_info.status_polish);}
+  double getRunTime() {return static_cast<double>(latest_work_info.run_time);}
+  double getObjVal() {return static_cast<double>(latest_work_info.obj_val);}
 };
 
 }  // namespace osqp
 
-#endif  // OSQP_INTERFACE_H
+#endif  // OSQP_INTERFACE__OSQP_INTERFACE_HPP_

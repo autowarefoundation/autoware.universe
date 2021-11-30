@@ -20,7 +20,8 @@ find_package(Eigen3 REQUIRED)
 find_package(osqp_vendor REQUIRED)
 
 find_package(osqp REQUIRED)
-get_target_property(OSQP_INCLUDE_DIR osqp::osqp INTERFACE_INCLUDE_DIRECTORIES)
+get_target_property(OSQP_INCLUDE_SUB_DIR osqp::osqp INTERFACE_INCLUDE_DIRECTORIES)
+get_filename_component(OSQP_INCLUDE_DIR ${OSQP_INCLUDE_SUB_DIR} PATH)
 
 ament_auto_add_library(osqp_interface SHARED
   src/osqp_interface.cpp
@@ -41,6 +42,10 @@ ament_export_libraries(osqp::osqp)
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
+
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(osqp_interface_test test/osqp_interface_test.cpp)
+  target_link_libraries(osqp_interface_test osqp_interface ${EIGEN3_LIBRARIES})
 endif()
 
 ament_auto_package()

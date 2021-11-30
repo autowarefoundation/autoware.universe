@@ -41,8 +41,8 @@ CSC_Matrix calCSCMatrix(const Eigen::MatrixXd & mat)
 
   col_idxs.push_back(0);
 
-  for (int j = 0; j < cols; j++) { // col iteration
-    for (int i = 0; i < rows; i++) { // row iteration
+  for (int j = 0; j < cols; j++) {  // col iteration
+    for (int i = 0; i < rows; i++) {  // row iteration
       // Get values of nonzero elements
       val = mat(i, j);
       if (std::fabs(val) < 1e-9) {
@@ -87,8 +87,8 @@ CSC_Matrix calCSCMatrixTrapezoidal(const Eigen::MatrixXd & mat)
 
   col_idxs.push_back(0);
 
-  for (int j = 0; j < cols; j++) { // col iteration
-    for (int i = 0; i <= trap_last_idx; i++) { // row iteration
+  for (int j = 0; j < cols; j++) {  // col iteration
+    for (int i = 0; i <= trap_last_idx; i++) {  // row iteration
       // Get values of nonzero elements
       val = mat(i, j);
       if (std::fabs(val) < 1e-9) {
