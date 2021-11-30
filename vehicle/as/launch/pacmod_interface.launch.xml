@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <launch>
 
-  <arg name="pacmod_param_path" default="$(find-pkg-share as)/config/pacmod_param.yaml"/>
+  <arg name="pacmod_param_path" default="$(find-pkg-share as)/config/pacmod.param.yaml"/>
 
-  <arg name="vehicle_info_param" default="$(find-pkg-share lexus_description)/config/vehicle_info.yaml" />
+  <arg name="vehicle_info_param" default="$(find-pkg-share lexus_description)/config/vehicle_info.param.yaml" />
 
   <!-- pacmod interface -->
   <node pkg="as" exec="pacmod_interface" name="pacmod_interface" output="screen">
