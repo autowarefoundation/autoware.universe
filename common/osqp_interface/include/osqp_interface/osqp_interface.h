@@ -25,7 +25,8 @@
 namespace osqp
 {
 struct CSC_Matrix;
-}
+const c_float INF = OSQP_INFTY;
+}  // namespace osqp
 
 namespace osqp
 {
@@ -82,7 +83,7 @@ private:
   bool problem_in_memory = false;
 
   // Runs the solver on the stored problem.
-  std::tuple<std::vector<double>, std::vector<double>, int> solve();
+  std::tuple<std::vector<double>, std::vector<double>, int, int> solve();
 
   /*****************************
    * DATA CONVERSION FUNCTIONS
@@ -162,7 +163,7 @@ public:
   //        std::vector<float> param = std::get<0>(result);
   //        double x_0 = param[0];
   //        double x_1 = param[1];
-  std::tuple<std::vector<double>, std::vector<double>, int> optimize();
+  std::tuple<std::vector<double>, std::vector<double>, int, int> optimize();
 
   // Solves convex quadratic programs (QPs) using the OSQP solver.
   //
@@ -181,7 +182,7 @@ public:
   //        std::vector<float> param = std::get<0>(result);
   //        double x_0 = param[0];
   //        double x_1 = param[1];
-  std::tuple<std::vector<double>, std::vector<double>, int> optimize(
+  std::tuple<std::vector<double>, std::vector<double>, int, int> optimize(
     const Eigen::MatrixXd & P, const Eigen::MatrixXd & A, const std::vector<double> & q,
     const std::vector<double> & l, const std::vector<double> & u);
 
@@ -218,6 +219,7 @@ public:
   void updateEpsAbs(const double eps_abs);
   void updateEpsRel(const double eps_rel);
   void updateMaxIter(const int iter);
+  void updateVerbose(const bool verbose);
 
   int getTakenIter();
 };
