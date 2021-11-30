@@ -42,6 +42,7 @@
 #include "autoware_vehicle_msgs/msg/shift_stamped.hpp"
 #include "autoware_vehicle_msgs/msg/steering.hpp"
 #include "autoware_vehicle_msgs/msg/turn_signal.hpp"
+#include "vehicle_info_util/vehicle_info.hpp"
 
 class PacmodInterface : public rclcpp::Node
 {
@@ -116,6 +117,9 @@ private:
   double max_steering_wheel_rate_;     // [rad/s]
   double min_steering_wheel_rate_;     // [rad/s]
   bool enable_steering_rate_control_;  // use steering angle speed for command [rad/s]
+
+  vehicle_info_util::VehicleInfo vehicle_info_;
+
 
   /* input values */
   autoware_vehicle_msgs::msg::RawVehicleCommand::ConstSharedPtr raw_vehicle_cmd_ptr_;

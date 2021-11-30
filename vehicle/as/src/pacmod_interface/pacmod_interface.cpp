@@ -25,7 +25,8 @@ PacmodInterface::PacmodInterface()
   is_clear_override_needed_(false),
   prev_override_(true),
   engage_cmd_(false),
-  prev_engage_cmd_(false)
+  prev_engage_cmd_(false),
+  vehicle_info_(vehicle_info_util::VehicleInfo::create(*this))
 {
   /* setup parameters */
   base_frame_id_ = declare_parameter("base_frame_id", "base_link");
@@ -33,8 +34,10 @@ PacmodInterface::PacmodInterface()
   loop_rate_ = declare_parameter("loop_rate", 30.0);
 
   /* parameters for vehicle specifications */
-  tire_radius_ = declare_parameter("vehicle_info.wheel_radius", 0.5);
-  wheel_base_ = declare_parameter("vehicle_info.wheel_base", 4.0);
+  tire_radius_ = vehicle_info_.wheel_radius_m_;
+  wheel_base_ = vehicle_info_.wheel_base_m_;
+
+
   steering_offset_ = declare_parameter("steering_offset", 0.0);
   enable_steering_rate_control_ = declare_parameter("enable_steering_rate_control", false);
 
