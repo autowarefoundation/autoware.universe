@@ -47,15 +47,9 @@ struct VehicleInfo
 
 /// Create vehicle info from base parameters
 inline VehicleInfo createVehicleInfo(
-  const double wheel_radius_m,
-  const double wheel_width_m,
-  const double wheel_base_m,
-  const double wheel_tread_m,
-  const double front_overhang_m,
-  const double rear_overhang_m,
-  const double left_overhang_m,
-  const double right_overhang_m,
-  const double vehicle_height_m)
+  const double wheel_radius_m, const double wheel_width_m, const double wheel_base_m,
+  const double wheel_tread_m, const double front_overhang_m, const double rear_overhang_m,
+  const double left_overhang_m, const double right_overhang_m, const double vehicle_height_m)
 {
   // Calculate derived parameters
   const double vehicle_length_m_ = front_overhang_m + wheel_base_m + rear_overhang_m;
