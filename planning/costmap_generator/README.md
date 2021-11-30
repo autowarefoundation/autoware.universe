@@ -6,19 +6,19 @@ This node reads `PointCloud` and/or `DynamicObjectArray` and creates an `Occupan
 
 ### Input topics
 
-| Name                      | Type                                         | Description                                                                  |
-| ------------------------- | -------------------------------------------- | ---------------------------------------------------------------------------- |
-| `~input/objects`          | autoware_perception_msgs::DynamicObjectArray | predicted objects, for obstacles areas                                       |
-| `~input/points_no_ground` | sensor_msgs::PointCloud2                     | ground-removed points, for obstacle areas which can't be detected as objects |
-| `~input/vector_map`       | autoware_lanelet2_msgs::MapBin               | vector map, for drivable areas                                               |
-| `~input/scenario`         | autoware_planning_msgs::Scenario             | scenarios to be activated, for node activation                               |
+| Name                      | Type                                            | Description                                                                  |
+| ------------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------- |
+| `~input/objects`          | autoware_auto_perception_msgs::PredictedObjects | predicted objects, for obstacles areas                                       |
+| `~input/points_no_ground` | sensor_msgs::PointCloud2                        | ground-removed points, for obstacle areas which can't be detected as objects |
+| `~input/vector_map`       | autoware_auto_mapping_msgs::HADMapBin           | vector map, for drivable areas                                               |
+| `~input/scenario`         | autoware_planning_msgs::Scenario                | scenarios to be activated, for node activation                               |
 
 ### Output topics
 
-| Name                     | Type                    | Description                                          |
-| ------------------------ | ----------------------- | ---------------------------------------------------- |
-| `~output/grid_map`       | grid_map_msgs::GridMap  | - costmap as GridMap, values are from 0.0 to 1.0     |
-| `~output/occupancy_grid` | nav_msgs::OccupancyGrid | - costmap as OccupancyGrid, values are from 0 to 100 |
+| Name                     | Type                    | Description                                        |
+| ------------------------ | ----------------------- | -------------------------------------------------- |
+| `~output/grid_map`       | grid_map_msgs::GridMap  | costmap as GridMap, values are from 0.0 to 1.0     |
+| `~output/occupancy_grid` | nav_msgs::OccupancyGrid | costmap as OccupancyGrid, values are from 0 to 100 |
 
 ### Output TFs
 
