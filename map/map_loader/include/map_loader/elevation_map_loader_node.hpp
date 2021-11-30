@@ -30,6 +30,7 @@
 #include "pcl/point_types.h"
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
+#include "nlohmann/json.hpp"
 
 class ElevationMapLoaderNode : public rclcpp::Node
 {
@@ -65,7 +66,8 @@ private:
   pcl::PointCloud<pcl::PointXYZ>::Ptr map_pcl_ptr_;
   grid_map::GridMap elevation_map_;
   std::string layer_name_;
-  std::string elevation_map_file_path_;
+  std::filesystem::path elevation_map_path_;
+  nlohmann::json hash_json_;
   std::string map_frame_;
   bool use_inpaint_;
   float inpaint_radius_;

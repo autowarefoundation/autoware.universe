@@ -24,6 +24,8 @@
   <depend>grid_map_ros</depend>
   <depend>grid_map_cv</depend>
   <depend>autoware_utils</depend>
+  <depend>hash_library_vendor</depend>
+  <depend>nlohmann-json-dev</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
