@@ -12,6 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <memory>
+#include <string>
+#include <utility>
+
 #include "ssc_interface/ssc_interface.hpp"
 
 SSCInterface::SSCInterface()
@@ -190,7 +194,8 @@ void SSCInterface::callbackFromSSCFeedbacks(
   const double steering_angle = std::atan(curvature * wheel_base_);
   // constexpr double tread = 1.64;  // spec sheet 1.63
   // double omega =
-  //   (-msg_wheel_speed->rear_right_wheel_speed + msg_wheel_speed->rear_left_wheel_speed) * tire_radius_ / tread;
+  //   (-msg_wheel_speed->rear_right_wheel_speed + msg_wheel_speed->rear_left_wheel_speed) *
+  //   tire_radius_ / tread;
 
   // as_current_velocity (geometry_msgs::msg::TwistStamped)
   geometry_msgs::msg::TwistStamped twist;

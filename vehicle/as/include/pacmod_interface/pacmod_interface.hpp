@@ -12,18 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef VEHICLE_AS_PACMOD_INTERFACE_H
-#define VEHICLE_AS_PACMOD_INTERFACE_H
-
-#include "message_filters/subscriber.h"
-#include "message_filters/sync_policies/approximate_time.h"
-#include "message_filters/synchronizer.h"
+#ifndef PACMOD_INTERFACE__PACMOD_INTERFACE_HPP_
+#define PACMOD_INTERFACE__PACMOD_INTERFACE_HPP_
 
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
 #include <memory>
 #include <string>
+
+#include "message_filters/subscriber.h"
+#include "message_filters/sync_policies/approximate_time.h"
+#include "message_filters/synchronizer.h"
 
 #include "geometry_msgs/msg/twist_stamped.hpp"
 #include "rclcpp/rclcpp.hpp"
@@ -157,4 +157,4 @@ private:
   int32_t toAutowareTurnSignal(const pacmod_msgs::msg::SystemRptInt & turn);
 };
 
-#endif
+#endif  // PACMOD_INTERFACE__PACMOD_INTERFACE_HPP_

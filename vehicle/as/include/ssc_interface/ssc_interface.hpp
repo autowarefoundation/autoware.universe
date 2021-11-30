@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SSC_INTERFACE_H
-#define SSC_INTERFACE_H
+#ifndef SSC_INTERFACE__SSC_INTERFACE_HPP_
+#define SSC_INTERFACE__SSC_INTERFACE_HPP_
+
+#include <memory>
+#include <string>
 
 #include "message_filters/subscriber.h"
 #include "message_filters/sync_policies/approximate_time.h"
 #include "message_filters/synchronizer.h"
-
-#include <memory>
-#include <string>
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -171,4 +171,4 @@ private:
   int32_t toAutowareTurnSignal(const pacmod_msgs::msg::SystemRptInt & turn) const;
 };
 
-#endif  // SSC_INTERFACE_H
+#endif  // SSC_INTERFACE__SSC_INTERFACE_HPP_

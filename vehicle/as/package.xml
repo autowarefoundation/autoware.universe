@@ -5,10 +5,11 @@
   <version>0.1.0</version>
   <description>AutonomouStuff vehicle interface as a ROS 2 node</description>
   <maintainer email="aohsato@gmail.com">Akihito Ohsato</maintainer>
+  <license>Apache License 2.0</license>
+  
   <author email="aohsato@gmail.com">Akihito Ohsato</author>
   <author email="antm678@ertl.jp">T.Ando</author>
   <author email="horibe.takamasa@gmail.com">Horibe Takamasa</author>
-  <license>Apache License 2.0</license>
 
   <depend>rclcpp</depend>
   <depend>automotive_navigation_msgs</depend>
@@ -19,6 +20,9 @@
   <depend>message_filters</depend>
   <depend>pacmod_msgs</depend>
   <depend>std_msgs</depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
 
   <export>
     <build_type>ament_cmake</build_type>
