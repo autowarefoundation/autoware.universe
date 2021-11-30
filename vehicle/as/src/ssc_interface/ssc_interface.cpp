@@ -46,7 +46,7 @@ SSCInterface::SSCInterface()
   turn_signal_cmd_sub_ = create_subscription<autoware_vehicle_msgs::msg::TurnSignal>(
     "/control/turn_signal_cmd", rclcpp::QoS{1},
     std::bind(&SSCInterface::callbackFromTurnSignalCmd, this, _1));
-  engage_sub_ = create_subscription<std_msgs::msg::Bool>(
+  engage_sub_ = create_subscription<autoware_vehicle_msgs::msg::Engage>(
     "/vehcle/engage", rclcpp::QoS{1},
     std::bind(&SSCInterface::callbackFromEngage, this, _1));
 
@@ -101,12 +101,12 @@ SSCInterface::SSCInterface()
     create_publisher<geometry_msgs::msg::TwistStamped>("/vehicle/status/twist", rclcpp::QoS{10});
   current_steer_pub_ = create_publisher<autoware_vehicle_msgs::msg::Steering>(
     "/vehicle/status/steering", rclcpp::QoS{10});
-  current_steer_wheel_deg_pub_ =
-    create_publisher<std_msgs::msg::Float32>("/vehicle/status/steering_wheel_deg", rclcpp::QoS{10});
-  current_velocity_pub_ =
-    create_publisher<std_msgs::msg::Float32>("/vehicle/status/velocity", rclcpp::QoS{10});
-  current_velocity_kmph_pub_ =
-    create_publisher<std_msgs::msg::Float32>("/vehicle/status/velocity_kmph", rclcpp::QoS{10});
+  current_steer_wheel_deg_pub_ = create_publisher<autoware_debug_msgs::msg::Float32Stamped>(
+    "/vehicle/status/steering_wheel_deg", rclcpp::QoS{10});
+  current_velocity_pub_ = create_publisher<autoware_debug_msgs::msg::Float32Stamped>(
+    "/vehicle/status/velocity", rclcpp::QoS{10});
+  current_velocity_kmph_pub_ = create_publisher<autoware_debug_msgs::msg::Float32Stamped>(
+    "/vehicle/status/velocity_kmph", rclcpp::QoS{10});
   current_turn_signal_pub_ = create_publisher<autoware_vehicle_msgs::msg::TurnSignal>(
     "/vehicle/status/turn_signal", rclcpp::QoS{10});
 
@@ -147,9 +147,9 @@ void SSCInterface::callbackFromTurnSignalCmd(
   turn_signal_cmd_ = *msg;
   turn_signal_cmd_initialized_ = true;
 }
-void SSCInterface::callbackFromEngage(const std_msgs::msg::Bool::ConstSharedPtr msg)
+void SSCInterface::callbackFromEngage(const autoware_vehicle_msgs::msg::Engage::ConstSharedPtr msg)
 {
-  engage_ = msg->data;
+  engage_ = msg->engage;
 }
 
 void SSCInterface::callbackFromSSCModuleStates(

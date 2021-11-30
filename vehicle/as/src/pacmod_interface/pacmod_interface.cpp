@@ -72,7 +72,7 @@ PacmodInterface::PacmodInterface()
   turn_signal_cmd_sub_ = create_subscription<autoware_vehicle_msgs::msg::TurnSignal>(
     "/control/turn_signal_cmd", rclcpp::QoS{1},
     std::bind(&PacmodInterface::callbackTurnSignalCmd, this, _1));
-  engage_cmd_sub_ = create_subscription<std_msgs::msg::Bool>(
+  engage_cmd_sub_ = create_subscription<autoware_vehicle_msgs::msg::Engage>(
     "/vehicle/engage", rclcpp::QoS{1}, std::bind(&PacmodInterface::callbackEngage, this, _1));
 
   // From pacmod
@@ -153,9 +153,9 @@ void PacmodInterface::callbackTurnSignalCmd(
 {
   turn_signal_cmd_ptr_ = msg;
 }
-void PacmodInterface::callbackEngage(const std_msgs::msg::Bool::ConstSharedPtr msg)
+void PacmodInterface::callbackEngage(const autoware_vehicle_msgs::msg::Engage::ConstSharedPtr msg)
 {
-  engage_cmd_ = msg->data;
+  engage_cmd_ = msg->engage;
   is_clear_override_needed_ = true;
 }
 

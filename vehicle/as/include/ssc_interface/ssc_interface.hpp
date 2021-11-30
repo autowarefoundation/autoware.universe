@@ -26,8 +26,6 @@
 
 #include "builtin_interfaces/msg/time.hpp"
 #include "geometry_msgs/msg/twist_stamped.hpp"
-#include "std_msgs/msg/bool.hpp"
-#include "std_msgs/msg/float32.hpp"
 #include "std_msgs/msg/header.hpp"
 
 #include "automotive_navigation_msgs/msg/module_state.hpp"
@@ -44,7 +42,9 @@
 #include "pacmod_msgs/msg/system_rpt_int.hpp"
 #include "pacmod_msgs/msg/wheel_speed_rpt.hpp"
 
+#include "autoware_debug_msgs/msg/float32_stamped.hpp"
 #include "autoware_vehicle_msgs/msg/control_mode.hpp"
+#include "autoware_vehicle_msgs/msg/engage.hpp"
 #include "autoware_vehicle_msgs/msg/shift_stamped.hpp"
 #include "autoware_vehicle_msgs/msg/steering.hpp"
 #include "autoware_vehicle_msgs/msg/turn_signal.hpp"
@@ -70,7 +70,7 @@ private:
   // subscribers
   rclcpp::Subscription<autoware_vehicle_msgs::msg::VehicleCommand>::SharedPtr vehicle_cmd_sub_;
   rclcpp::Subscription<autoware_vehicle_msgs::msg::TurnSignal>::SharedPtr turn_signal_cmd_sub_;
-  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr engage_sub_;
+  rclcpp::Subscription<autoware_vehicle_msgs::msg::Engage>::SharedPtr engage_sub_;
   rclcpp::Subscription<automotive_navigation_msgs::msg::ModuleState>::SharedPtr module_states_sub_;
 
   std::unique_ptr<message_filters::Subscriber<automotive_platform_msgs::msg::VelocityAccelCov>>
@@ -100,9 +100,10 @@ private:
   rclcpp::Publisher<autoware_vehicle_msgs::msg::ControlMode>::SharedPtr control_mode_pub_;
   rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr current_twist_pub_;
   rclcpp::Publisher<autoware_vehicle_msgs::msg::Steering>::SharedPtr current_steer_pub_;
-  rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr current_steer_wheel_deg_pub_;
-  rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr current_velocity_pub_;
-  rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr current_velocity_kmph_pub_;
+  rclcpp::Publisher<autoware_debug_msgs::msg::Float32Stamped>::SharedPtr
+    current_steer_wheel_deg_pub_;
+  rclcpp::Publisher<autoware_debug_msgs::msg::Float32Stamped>::SharedPtr current_velocity_pub_;
+  rclcpp::Publisher<autoware_debug_msgs::msg::Float32Stamped>::SharedPtr current_velocity_kmph_pub_;
   rclcpp::Publisher<autoware_vehicle_msgs::msg::TurnSignal>::SharedPtr current_turn_signal_pub_;
 
   rclcpp::TimerBase::SharedPtr timer_;
@@ -147,7 +148,7 @@ private:
   // callbacks
   void callbackFromVehicleCmd(const autoware_vehicle_msgs::msg::VehicleCommand::ConstSharedPtr msg);
   void callbackFromTurnSignalCmd(const autoware_vehicle_msgs::msg::TurnSignal::ConstSharedPtr msg);
-  void callbackFromEngage(const std_msgs::msg::Bool::ConstSharedPtr msg);
+  void callbackFromEngage(const autoware_vehicle_msgs::msg::Engage::ConstSharedPtr msg);
   void callbackFromSSCModuleStates(
     const automotive_navigation_msgs::msg::ModuleState::ConstSharedPtr msg);
   void callbackFromSSCFeedbacks(
