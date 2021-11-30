@@ -4,7 +4,7 @@
   <version>0.1.0</version>
   <description>The osqp_interface package</description>
   <maintainer email="robin.karlsson@tier4.jp">Robin Karlsson</maintainer>
-  <license>Apache 2</license>
+  <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>eigen3_cmake_module</buildtool_depend>
