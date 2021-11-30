@@ -132,19 +132,24 @@ void pushLightMarker(visualization_msgs::msg::Marker * marker, lanelet::ConstPoi
   color.r = 0.0f;
   color.g = 0.0f;
   color.b = 0.0f;
-  color.a = 0.999f;
+  color.a = 0.3f;
 
   if (isAttributeValue(p, "color", "red")) {
-    color.r = 1.0f;
+    color.r = 0.3f;
+    color.g = 0.0f;
+    color.b = 0.0f;
   } else if (isAttributeValue(p, "color", "green")) {
-    color.g = 1.0f;
+    color.r = 0.0f;
+    color.g = 0.3f;
+    color.b = 0.0f;
   } else if (isAttributeValue(p, "color", "yellow")) {
-    color.r = 1.0f;
-    color.g = 1.0f;
+    color.r = 0.3f;
+    color.g = 0.3f;
+    color.b = 0.0f;
   } else {
-    color.r = 1.0f;
-    color.g = 1.0f;
-    color.b = 1.0f;
+    color.r = 0.3f;
+    color.g = 0.3f;
+    color.b = 0.3f;
   }
 
   marker->points.push_back(point);
