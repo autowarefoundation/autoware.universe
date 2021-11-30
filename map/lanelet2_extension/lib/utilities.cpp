@@ -39,6 +39,7 @@ namespace utils
 {
 namespace
 {
+[[maybe_unused]]
 bool exists(const std::vector<int> & array, const int element)
 {
   return std::find(array.begin(), array.end(), element) != array.end();
@@ -49,11 +50,12 @@ bool exists(const std::vector<int> & array, const int element)
  * search_point]
  * @param  lanelet_map   [pointer to lanelet]
  * @param  trafficRules  [traffic rules to ignore lanelets that are not
- * traversible]
+ * traversable]
  * @param  search_point  [2D point used for searching]
  * @param  contacting_lanelet_ids [array of lanelet ids that is contacting with
  * search_point]
  */
+[[maybe_unused]]
 void getContactingLanelets(
   const lanelet::LaneletMapPtr lanelet_map,
   const lanelet::traffic_rules::TrafficRulesPtr traffic_rules,
@@ -124,7 +126,7 @@ std::pair<size_t, size_t> findNearestIndexPair(
   }
 
   // Middle
-  for (auto i = 1; i < N; ++i) {
+  for (std::size_t i = 1; i < N; ++i) {
     if (
       accumulated_lengths.at(i - 1) <= target_length &&
       target_length <= accumulated_lengths.at(i))

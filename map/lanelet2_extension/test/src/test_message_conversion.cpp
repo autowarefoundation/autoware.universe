@@ -59,7 +59,7 @@ TEST_F(TestSuite, BinMsgConversion)
 
   lanelet::utils::conversion::toBinMsg(single_lanelet_map_ptr, &bin_msg);
 
-  ASSERT_NE(0, bin_msg.data.size()) << "converted bin message does not have any data";
+  ASSERT_NE(0U, bin_msg.data.size()) << "converted bin message does not have any data";
 
   lanelet::utils::conversion::fromBinMsg(bin_msg, regenerated_map);
 

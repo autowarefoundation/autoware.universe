@@ -63,6 +63,7 @@ void adjacentPoints(
   }
 }
 
+[[maybe_unused]]
 double hypot(const geometry_msgs::msg::Point32 & p0, const geometry_msgs::msg::Point32 & p1)
 {
   return sqrt(pow((p1.x - p0.x), 2.0) + pow((p1.y - p0.y), 2.0));
@@ -212,7 +213,6 @@ void pushLaneletDirectionMarker(
   lanelet::BasicPoint3d pc, pc2;
   lanelet::ConstLineString3d center_ls = ll.centerline();
   lanelet::Attribute attr = ll.attribute("turn_direction");
-  double turn_dir = 0;
 
   std_msgs::msg::ColorRGBA c;
   c.r = 0.5;
@@ -221,18 +221,16 @@ void pushLaneletDirectionMarker(
   c.a = 0.5;
 
   if (isLaneletAttributeValue(ll, "turn_direction", "right")) {
-    turn_dir = -M_PI / 2.0;
     c.r = 0.5;
     c.g = 0.5;
     c.b = 0.6;
   } else if (isLaneletAttributeValue(ll, "turn_direction", "left")) {
-    turn_dir = M_PI / 2.0;
     c.r = 0.5;
     c.g = 0.6;
     c.b = 0.6;
   }
 
-  for (int ci = 0; ci < center_ls.size() - 1; ) {
+  for (std::size_t ci = 0; ci < center_ls.size() - 1; ) {
     pc = center_ls[ci];
     if (center_ls.size() > 1) {
       pc2 = center_ls[ci + 1];
@@ -272,7 +270,7 @@ bool isClockWise(const geometry_msgs::msg::Polygon & polygon)
   const double x_offset = polygon.points[0].x;
   const double y_offset = polygon.points[0].y;
   double sum = 0.0;
-  for (int i = 0; i < polygon.points.size(); ++i) {
+  for (std::size_t i = 0; i < polygon.points.size(); ++i) {
     sum += (polygon.points[i].x - x_offset) * (polygon.points[(i + 1) % N].y - y_offset) -
            (polygon.points[i].y - y_offset) * (polygon.points[(i + 1) % N].x - x_offset);
   }
@@ -298,7 +296,7 @@ bool isWithinTriangle(
   double c2 = (c.x - b.x) * (p.y - c.y) - (c.y - b.y) * (p.x - c.x);
   double c3 = (a.x - c.x) * (p.y - a.y) - (a.y - c.y) * (p.x - a.x);
 
-  return c1 > 0.0 && c2 > 0.0 && c3 > 0.0 || c1 < 0.0 && c2 < 0.0 && c3 < 0.0;
+  return (c1 > 0.0 && c2 > 0.0 && c3 > 0.0) || (c1 < 0.0 && c2 < 0.0 && c3 < 0.0);
 }
 
 visualization_msgs::msg::Marker createPolygonMarker(
@@ -583,7 +581,6 @@ visualization_msgs::msg::MarkerArray visualization::detectionAreasAsMarkerArray(
   line_c.a = 0.999;
   visualization::initLineStringMarker(&line_marker, "map", "detection_area_stopline", line_c);
 
-  int da_count = 0;
   for (const auto & da_reg_elem : da_reg_elems) {
     marker.points.clear();
     marker.colors.clear();

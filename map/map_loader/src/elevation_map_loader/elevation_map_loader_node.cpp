@@ -82,7 +82,9 @@ ElevationMapLoaderNode::ElevationMapLoaderNode(const rclcpp::NodeOptions & optio
     sub_vector_map_ = this->create_subscription<autoware_lanelet2_msgs::msg::MapBin>(
       "input/vector_map", durable_qos, std::bind(&ElevationMapLoaderNode::onVectorMap, this, _1));
   } else if (info.st_mode & S_IFDIR) {
-    RCLCPP_INFO(this->get_logger(), "Load elevation map from ", elevation_map_file_path_.c_str());
+    RCLCPP_INFO(
+      this->get_logger(), "Load elevation map from: %s",
+      elevation_map_file_path_.c_str());
     use_elevation_map_file_ = grid_map::GridMapRosConverter::loadFromBag(
       elevation_map_file_path_, "elevation_map", elevation_map_);
     publishElevationMap();
@@ -92,7 +94,7 @@ ElevationMapLoaderNode::ElevationMapLoaderNode(const rclcpp::NodeOptions & optio
 void ElevationMapLoaderNode::onPointcloudMap(
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr pointcloud_map)
 {
-  RCLCPP_INFO(this->get_logger(), "subscribe pointcloud_map", elevation_map_file_path_.c_str());
+  RCLCPP_INFO(this->get_logger(), "subscribe pointcloud_map: %s", elevation_map_file_path_.c_str());
   pcl::PointCloud<pcl::PointXYZ> map_pcl;
   pcl::fromROSMsg<pcl::PointXYZ>(*pointcloud_map, map_pcl);
   map_pcl_ptr_ = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>(map_pcl);
@@ -104,7 +106,7 @@ void ElevationMapLoaderNode::onPointcloudMap(
 void ElevationMapLoaderNode::onVectorMap(
   const autoware_lanelet2_msgs::msg::MapBin::ConstSharedPtr vector_map)
 {
-  RCLCPP_INFO(this->get_logger(), "subscribe vector_map", elevation_map_file_path_.c_str());
+  RCLCPP_INFO(this->get_logger(), "subscribe vector_map: %s", elevation_map_file_path_.c_str());
   already_sub_vector_map_ = false;
   lanelet::LaneletMapPtr lanelet_map_ptr;
   lanelet_map_ptr = std::make_shared<lanelet::LaneletMap>();
@@ -318,7 +320,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr ElevationMapLoaderNode::createPointcloudFrom
 {
   pcl::PointCloud<pcl::PointXYZ> output_cloud;
   output_cloud.header.frame_id = elevation_map_.getFrameId();
-  size_t i = 0;
+
   for (grid_map::GridMapIterator iterator(elevation_map_); !iterator.isPastEnd(); ++iterator) {
     float z = elevation_map_.at(layer_name_, *iterator);
     if (!std::isnan(z)) {

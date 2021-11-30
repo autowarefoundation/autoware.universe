@@ -79,6 +79,7 @@ LineStringsOrPolygons3d getLsOrPoly(const RuleParameterMap & paramsMap, RoleName
   return result;
 }
 
+[[maybe_unused]]
 ConstLineStringsOrPolygons3d getConstLsOrPoly(const RuleParameterMap & params, RoleName role)
 {
   auto cast_func = [](auto & lsOrPoly) {
@@ -87,6 +88,7 @@ ConstLineStringsOrPolygons3d getConstLsOrPoly(const RuleParameterMap & params, R
   return utils::transform(getLsOrPoly(params, role), cast_func);
 }
 
+[[maybe_unused]]
 RegulatoryElementDataPtr constructAutowareTrafficLightData(
   Id id, const AttributeMap & attributes, const LineStringsOrPolygons3d & trafficLights,
   const Optional<LineString3d> & stopLine, const LineStrings3d & lightBulbs)
