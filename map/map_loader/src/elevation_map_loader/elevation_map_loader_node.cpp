@@ -137,8 +137,9 @@ ElevationMapLoaderNode::ElevationMapLoaderNode(const rclcpp::NodeOptions & optio
       "output/elevation_map_cloud", durable_qos);
   }
 
-  std::string pointcloud_map_path = this->declare_parameter("pointcloud_map_path", "path_default");
-  hash_json_ = getPcdMapHashJson(pointcloud_map_path);
+  std::filesystem::path pointcloud_map_path(
+    this->declare_parameter("pointcloud_map_path", "path_default"));
+  hash_json_ = getPcdMapHashJson(pointcloud_map_path.lexically_normal().string());
 
   const auto elevation_map_hash = getMd5Sum(hash_json_.dump());
   const std::string elevation_map_directory = this->declare_parameter(
