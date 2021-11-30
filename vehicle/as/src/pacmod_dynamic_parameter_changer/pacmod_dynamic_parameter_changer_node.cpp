@@ -40,14 +40,14 @@ PacmodDynamicParameterChangerNode::PacmodDynamicParameterChangerNode()
 
   current_param_list_ = curve_course_param_;
 
-  can_pub_ = create_publisher<can_msgs::msg::Frame>("output/can", rclcpp::QoS{1});
+  can_pub_ = create_publisher<can_msgs::msg::Frame>("~/output/can", rclcpp::QoS{1});
   debug_pub_ =
-    create_publisher<std_msgs::msg::Float32MultiArray>("debug/parameter", rclcpp::QoS{1});
+    create_publisher<std_msgs::msg::Float32MultiArray>("~/debug/parameter", rclcpp::QoS{1});
 
   using std::placeholders::_1;
   steer_rpt_sub_ =
     create_subscription<pacmod_msgs::msg::SystemRptFloat>(
-    "input/steer_rpt", rclcpp::QoS{1}, std::bind(
+    "~/input/steer_rpt", rclcpp::QoS{1}, std::bind(
       &PacmodDynamicParameterChangerNode::subSteerRpt, this,
       _1));
 }
