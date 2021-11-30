@@ -20,6 +20,9 @@
   <arg name="vgr_coef_b" default="0.053"/>
   <arg name="vgr_coef_c" default="0.042"/>
 
+  <arg name="accel_pedal_offset" default="0.0" />
+  <arg name="brake_pedal_offset" default="0.0" />
+
   <!-- pacmod interface -->
   <node pkg="as" type="pacmod_interface" name="pacmod_interface" output="screen">
     <param name="base_frame_id" value="$(arg base_frame_id)" />

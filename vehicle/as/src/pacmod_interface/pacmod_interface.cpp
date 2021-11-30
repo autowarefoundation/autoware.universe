@@ -69,6 +69,9 @@ PacmodInterface::PacmodInterface()
   private_nh_.param<double>("vgr_coef_b", vgr_coef_b_, 0.053);
   private_nh_.param<double>("vgr_coef_c", vgr_coef_c_, 0.042);
 
+  private_nh_.param<double>("accel_pedal_offset", accel_pedal_offset_, 0.0);
+  private_nh_.param<double>("brake_pedal_offset", brake_pedal_offset_, 0.0);
+
   /* parameters for limitter */
   private_nh_.param<double>("max_steering_wheel", max_steering_wheel_, 2.7 * M_PI);
   private_nh_.param<double>("max_steering_wheel_rate", max_steering_wheel_rate_, 6.6);
@@ -243,8 +246,8 @@ void PacmodInterface::publishCommands()
 
   const ros::Time current_time = ros::Time::now();
 
-  double desired_throttle = raw_vehicle_cmd_ptr_->control.throttle;
-  double desired_brake = raw_vehicle_cmd_ptr_->control.brake;
+  double desired_throttle = raw_vehicle_cmd_ptr_->control.throttle + accel_pedal_offset_;
+  double desired_brake = raw_vehicle_cmd_ptr_->control.brake + brake_pedal_offset_;
 
   /* check emergency and timeout */
   const bool emergency = (raw_vehicle_cmd_ptr_->emergency == 1);
@@ -315,7 +318,7 @@ void PacmodInterface::publishCommands()
   accel_cmd.ignore_overrides = false;
   accel_cmd.clear_override = clear_override;
   accel_cmd.clear_faults = false;
-  accel_cmd.command = std::min(desired_throttle, max_throttle_);
+  accel_cmd.command = std::max(0.0, std::min(desired_throttle, max_throttle_));
   accel_cmd_pub_.publish(accel_cmd);
 
   /* publish brake cmd */
@@ -326,7 +329,7 @@ void PacmodInterface::publishCommands()
   brake_cmd.ignore_overrides = false;
   brake_cmd.clear_override = clear_override;
   brake_cmd.clear_faults = false;
-  brake_cmd.command = std::min(desired_brake, max_brake_);
+  brake_cmd.command = std::max(0.0, std::min(desired_brake, max_brake_));
   brake_cmd_pub_.publish(brake_cmd);
 
   /* publish steering cmd */
