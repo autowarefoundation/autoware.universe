@@ -87,7 +87,7 @@ private:
   // For destructor to know if matrices P, A are in
   bool problem_in_memory = false;
 
-  // Flag to check if the currnet work exists
+  // Flag to check if the current work exists
   bool work_initialized = false;
 
   // Runs the solver on the stored problem.
