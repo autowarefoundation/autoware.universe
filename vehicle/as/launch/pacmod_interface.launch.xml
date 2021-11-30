@@ -6,7 +6,6 @@
 
   <!-- pacmod interface -->
   <node pkg="as" exec="pacmod_interface" name="pacmod_interface" output="screen">
-    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
     <param from="$(var pacmod_param_path)" />
   </node>
 
