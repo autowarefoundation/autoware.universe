@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<launch>
+
+  <arg name="base_frame_id" default="base_link"/>
+  <arg name="command_timeout_ms" default="1000"/>
+  <arg name="loop_rate" default="30.0"/>
+  <arg name="show_debug_info" default="false"/>
+
+  <arg name="emergency_brake" default="0.7"/>
+  <arg name="max_throttle" default="0.4"/>
+  <arg name="max_brake" default="0.8"/>
+  <arg name="max_steering_wheel" default="11.0"/>
+  <arg name="min_steering_wheel" default="-11.0"/>
+  <arg name="max_steering_wheel_rate" default="5.0"/>
+  <arg name="min_steering_wheel_rate" default="3.0"/>
+  <arg name="steering_offset" default="0.0"/>
+  <arg name="enable_steering_rate_control" default="false"/>
+
+  <arg name="vgr_coef_a" default="15.713"/>
+  <arg name="vgr_coef_b" default="0.053"/>
+  <arg name="vgr_coef_c" default="0.042"/>
+
+  <arg name="accel_pedal_offset" default="0.0" />
+  <arg name="brake_pedal_offset" default="0.0" />
+
+  <!-- pacmod interface -->
+  <node pkg="as" type="pacmod_interface" name="pacmod_interface" output="screen">
+    <param name="base_frame_id" value="$(arg base_frame_id)" />
+    <param name="command_timeout_ms" value="$(arg command_timeout_ms)" />
+    <param name="loop_rate" value="$(arg loop_rate)" />
+    <param name="show_debug_info" value="$(arg show_debug_info)" />
+
+    <param name="emergency_brake" value="$(arg emergency_brake)" />
+    <param name="max_steering_wheel" value="$(arg max_steering_wheel)" />
+    <param name="min_steering_wheel" value="$(arg min_steering_wheel)" />
+    <param name="max_steering_wheel_rate" value="$(arg max_steering_wheel_rate)" />
+    <param name="min_steering_wheel_rate" value="$(arg min_steering_wheel_rate)" />
+    <param name="max_throttle" value="$(arg max_throttle)" />
+    <param name="max_brake" value="$(arg max_brake)" />
+
+    <param name="vgr_coef_a" value="$(arg vgr_coef_a)" />
+    <param name="vgr_coef_b" value="$(arg vgr_coef_b)" />
+    <param name="vgr_coef_c" value="$(arg vgr_coef_c)" />
+    <param name="steering_offset" value="$(arg steering_offset)" />
+    <param name="enable_steering_rate_control" value="$(arg enable_steering_rate_control)" />
+  </node>
+</launch>
