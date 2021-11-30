@@ -36,9 +36,9 @@
 #include <autoware_vehicle_msgs/msg/turn_signal.hpp>
 #include <autoware_vehicle_msgs/msg/vehicle_command.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
-#include <pacmod_msgs/msg/system_rpt_float.hpp>
-#include <pacmod_msgs/msg/system_rpt_int.hpp>
-#include <pacmod_msgs/msg/wheel_speed_rpt.hpp>
+#include <pacmod3_msgs/msg/system_rpt_float.hpp>
+#include <pacmod3_msgs/msg/system_rpt_int.hpp>
+#include <pacmod3_msgs/msg/wheel_speed_rpt.hpp>
 #include <std_msgs/msg/header.hpp>
 
 #include <message_filters/subscriber.h>
@@ -61,8 +61,8 @@ private:
     automotive_platform_msgs::msg::VelocityAccelCov,
     automotive_platform_msgs::msg::CurvatureFeedback,
     automotive_platform_msgs::msg::ThrottleFeedback, automotive_platform_msgs::msg::BrakeFeedback,
-    automotive_platform_msgs::msg::GearFeedback, pacmod_msgs::msg::WheelSpeedRpt,
-    pacmod_msgs::msg::SystemRptFloat>
+    automotive_platform_msgs::msg::GearFeedback, pacmod3_msgs::msg::WheelSpeedRpt,
+    pacmod3_msgs::msg::SystemRptFloat>
     SSCFeedbacksSyncPolicy;
 
   // subscribers
@@ -81,13 +81,13 @@ private:
     brake_feedback_sub_;
   std::unique_ptr<message_filters::Subscriber<automotive_platform_msgs::msg::GearFeedback>>
     gear_feedback_sub_;
-  std::unique_ptr<message_filters::Subscriber<pacmod_msgs::msg::WheelSpeedRpt>> wheel_speed_sub_;
-  std::unique_ptr<message_filters::Subscriber<pacmod_msgs::msg::SystemRptFloat>>
+  std::unique_ptr<message_filters::Subscriber<pacmod3_msgs::msg::WheelSpeedRpt>> wheel_speed_sub_;
+  std::unique_ptr<message_filters::Subscriber<pacmod3_msgs::msg::SystemRptFloat>>
     steering_wheel_sub_;
   std::unique_ptr<message_filters::Synchronizer<SSCFeedbacksSyncPolicy>> ssc_feedbacks_sync_;
 
   // TEMP to support turn_signal
-  rclcpp::Subscription<pacmod_msgs::msg::SystemRptInt>::SharedPtr pacmod_turn_sub_;
+  rclcpp::Subscription<pacmod3_msgs::msg::SystemRptInt>::SharedPtr pacmod_turn_sub_;
 
   // publishers
   rclcpp::Publisher<automotive_platform_msgs::msg::SteerMode>::SharedPtr steer_mode_pub_;
@@ -139,7 +139,7 @@ private:
   autoware_vehicle_msgs::msg::TurnSignal turn_signal_cmd_;
   automotive_navigation_msgs::msg::ModuleState module_states_;
 
-  pacmod_msgs::msg::WheelSpeedRpt::ConstSharedPtr wheel_speed_rpt_ptr_;
+  pacmod3_msgs::msg::WheelSpeedRpt::ConstSharedPtr wheel_speed_rpt_ptr_;
   automotive_platform_msgs::msg::VelocityAccelCov::ConstSharedPtr vel_acc_cov_ptr_;
   automotive_platform_msgs::msg::GearFeedback::ConstSharedPtr gear_feedback_ptr_;
 
@@ -155,19 +155,19 @@ private:
     const automotive_platform_msgs::msg::ThrottleFeedback::ConstSharedPtr msg_throttle,
     const automotive_platform_msgs::msg::BrakeFeedback::ConstSharedPtr msg_brake,
     const automotive_platform_msgs::msg::GearFeedback::ConstSharedPtr msg_gear,
-    const pacmod_msgs::msg::WheelSpeedRpt::ConstSharedPtr msg_wheel_speed,
-    const pacmod_msgs::msg::SystemRptFloat::ConstSharedPtr msg_steering_wheel);
-  void callbackTurnSignal(const pacmod_msgs::msg::SystemRptInt::ConstSharedPtr turn);
+    const pacmod3_msgs::msg::WheelSpeedRpt::ConstSharedPtr msg_wheel_speed,
+    const pacmod3_msgs::msg::SystemRptFloat::ConstSharedPtr msg_steering_wheel);
+  void callbackTurnSignal(const pacmod3_msgs::msg::SystemRptInt::ConstSharedPtr turn);
 
   // functions
   void publishCommand();
   double calculateVehicleVelocity(
-    const pacmod_msgs::msg::WheelSpeedRpt & wheel_speed_rpt,
+    const pacmod3_msgs::msg::WheelSpeedRpt & wheel_speed_rpt,
     const automotive_platform_msgs::msg::VelocityAccelCov & vel_acc_cov,
     const automotive_platform_msgs::msg::GearFeedback & gear_feedback,
     const bool use_rear_wheel_speed);
   uint8_t toSSCShiftCmd(const autoware_vehicle_msgs::msg::Shift & shift);
-  int32_t toAutowareTurnSignal(const pacmod_msgs::msg::SystemRptInt & turn) const;
+  int32_t toAutowareTurnSignal(const pacmod3_msgs::msg::SystemRptInt & turn) const;
 };
 
 #endif  // SSC_INTERFACE__SSC_INTERFACE_HPP_

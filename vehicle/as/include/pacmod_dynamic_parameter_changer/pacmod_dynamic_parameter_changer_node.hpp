@@ -18,7 +18,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <can_msgs/msg/frame.hpp>
-#include <pacmod_msgs/msg/system_rpt_float.hpp>
+#include <pacmod3_msgs/msg/system_rpt_float.hpp>
 #include <std_msgs/msg/float32_multi_array.hpp>
 
 struct ParamList
@@ -34,7 +34,7 @@ class PacmodDynamicParameterChangerNode : public rclcpp::Node
 private:
   rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr debug_pub_;
   rclcpp::Publisher<can_msgs::msg::Frame>::SharedPtr can_pub_;
-  rclcpp::Subscription<pacmod_msgs::msg::SystemRptFloat>::SharedPtr steer_rpt_sub_;
+  rclcpp::Subscription<pacmod3_msgs::msg::SystemRptFloat>::SharedPtr steer_rpt_sub_;
 
   ParamList straight_course_param_;
   ParamList curve_course_param_;
@@ -48,7 +48,7 @@ private:
 
 public:
   PacmodDynamicParameterChangerNode();
-  void subSteerRpt(const pacmod_msgs::msg::SystemRptFloat::ConstSharedPtr msg);
+  void subSteerRpt(const pacmod3_msgs::msg::SystemRptFloat::ConstSharedPtr msg);
   ParamList calculateParam(
     const double current_steer_cmd, const double current_steer, const bool enabled);
   void sendCanMsg(const ParamList param_list);

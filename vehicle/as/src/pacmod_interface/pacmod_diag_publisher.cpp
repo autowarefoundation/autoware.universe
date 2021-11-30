@@ -23,11 +23,11 @@
 PacmodDiagPublisher::PacmodDiagPublisher()
 : Node("pacmod_diag_publisher"),
   last_can_received_time_(this->now()),
-  last_pacmod_msgs_received_time_(this->now())
+  last_pacmod3_msgs_received_time_(this->now())
 {
   /* ros parameters */
   can_timeout_sec_ = declare_parameter("can_timeout_sec", 10.0);
-  pacmod_msgs_timeout_sec_ = declare_parameter("pacmod_msg_timeout_sec", 10.0);
+  pacmod3_msgs_timeout_sec_ = declare_parameter("pacmod_msg_timeout_sec", 10.0);
   const double update_rate = declare_parameter("update_rate", 10.0);
 
   /* Diagnostic Updater */
@@ -40,20 +40,20 @@ PacmodDiagPublisher::PacmodDiagPublisher()
     "/pacmod/can_tx", 1, std::bind(&PacmodDiagPublisher::callbackCan, this, std::placeholders::_1));
 
   steer_wheel_rpt_sub_ =
-    std::make_unique<message_filters::Subscriber<pacmod_msgs::msg::SystemRptFloat>>(
+    std::make_unique<message_filters::Subscriber<pacmod3_msgs::msg::SystemRptFloat>>(
       this, "/pacmod/parsed_tx/steer_rpt");
   wheel_speed_rpt_sub_ =
-    std::make_unique<message_filters::Subscriber<pacmod_msgs::msg::WheelSpeedRpt>>(
+    std::make_unique<message_filters::Subscriber<pacmod3_msgs::msg::WheelSpeedRpt>>(
       this, "/pacmod/parsed_tx/wheel_speed_rpt");
-  accel_rpt_sub_ = std::make_unique<message_filters::Subscriber<pacmod_msgs::msg::SystemRptFloat>>(
+  accel_rpt_sub_ = std::make_unique<message_filters::Subscriber<pacmod3_msgs::msg::SystemRptFloat>>(
     this, "/pacmod/parsed_tx/accel_rpt");
-  brake_rpt_sub_ = std::make_unique<message_filters::Subscriber<pacmod_msgs::msg::SystemRptFloat>>(
+  brake_rpt_sub_ = std::make_unique<message_filters::Subscriber<pacmod3_msgs::msg::SystemRptFloat>>(
     this, "/pacmod/parsed_tx/brake_rpt");
-  shift_rpt_sub_ = std::make_unique<message_filters::Subscriber<pacmod_msgs::msg::SystemRptInt>>(
+  shift_rpt_sub_ = std::make_unique<message_filters::Subscriber<pacmod3_msgs::msg::SystemRptInt>>(
     this, "/pacmod/parsed_tx/shift_rpt");
-  turn_rpt_sub_ = std::make_unique<message_filters::Subscriber<pacmod_msgs::msg::SystemRptInt>>(
+  turn_rpt_sub_ = std::make_unique<message_filters::Subscriber<pacmod3_msgs::msg::SystemRptInt>>(
     this, "/pacmod/parsed_tx/turn_rpt");
-  global_rpt_sub_ = std::make_unique<message_filters::Subscriber<pacmod_msgs::msg::GlobalRpt>>(
+  global_rpt_sub_ = std::make_unique<message_filters::Subscriber<pacmod3_msgs::msg::GlobalRpt>>(
     this, "/pacmod/parsed_tx/global_rpt");
 
   pacmod_feedbacks_sync_ =
@@ -73,15 +73,15 @@ void PacmodDiagPublisher::callbackCan(const can_msgs::msg::Frame::ConstSharedPtr
 }
 
 void PacmodDiagPublisher::callbackPacmodRpt(
-  const pacmod_msgs::msg::SystemRptFloat::ConstSharedPtr steer_wheel_rpt,
-  const pacmod_msgs::msg::WheelSpeedRpt::ConstSharedPtr wheel_speed_rpt,
-  const pacmod_msgs::msg::SystemRptFloat::ConstSharedPtr accel_rpt,
-  const pacmod_msgs::msg::SystemRptFloat::ConstSharedPtr brake_rpt,
-  const pacmod_msgs::msg::SystemRptInt::ConstSharedPtr shift_rpt,
-  const pacmod_msgs::msg::SystemRptInt::ConstSharedPtr turn_rpt,
-  const pacmod_msgs::msg::GlobalRpt::ConstSharedPtr global_rpt)
+  const pacmod3_msgs::msg::SystemRptFloat::ConstSharedPtr steer_wheel_rpt,
+  const pacmod3_msgs::msg::WheelSpeedRpt::ConstSharedPtr wheel_speed_rpt,
+  const pacmod3_msgs::msg::SystemRptFloat::ConstSharedPtr accel_rpt,
+  const pacmod3_msgs::msg::SystemRptFloat::ConstSharedPtr brake_rpt,
+  const pacmod3_msgs::msg::SystemRptInt::ConstSharedPtr shift_rpt,
+  const pacmod3_msgs::msg::SystemRptInt::ConstSharedPtr turn_rpt,
+  const pacmod3_msgs::msg::GlobalRpt::ConstSharedPtr global_rpt)
 {
-  last_pacmod_msgs_received_time_ = this->now();
+  last_pacmod3_msgs_received_time_ = this->now();
   steer_wheel_rpt_ptr_ = steer_wheel_rpt;
   wheel_speed_rpt_ptr_ = wheel_speed_rpt;
   accel_rpt_ptr_ = accel_rpt;
@@ -161,25 +161,25 @@ bool PacmodDiagPublisher::isTimeoutCanMsgs()
 
 bool PacmodDiagPublisher::isTimeoutPacmodMsgs()
 {
-  const double dt = (this->now() - last_pacmod_msgs_received_time_).seconds();
-  return dt > pacmod_msgs_timeout_sec_;
+  const double dt = (this->now() - last_pacmod3_msgs_received_time_).seconds();
+  return dt > pacmod3_msgs_timeout_sec_;
 }
 
 bool PacmodDiagPublisher::receivedPacmodMsgs() { return is_pacmod_rpt_received_; }
 
 bool PacmodDiagPublisher::isBrakeActuatorAccident()
 {
-  return global_rpt_ptr_->fault_active && brake_rpt_ptr_->pacmod_fault;
+  return global_rpt_ptr_->pacmod_sys_fault_active && brake_rpt_ptr_->pacmod_fault;
 }
 
 bool PacmodDiagPublisher::isBrakeWireAccident()
 {
-  return global_rpt_ptr_->fault_active && brake_rpt_ptr_->command_output_fault;
+  return global_rpt_ptr_->pacmod_sys_fault_active && brake_rpt_ptr_->command_output_fault;
 }
 
 bool PacmodDiagPublisher::isAccelAccident()
 {
-  return global_rpt_ptr_->fault_active && accel_rpt_ptr_->input_output_fault;
+  return global_rpt_ptr_->pacmod_sys_fault_active && accel_rpt_ptr_->input_output_fault;
 }
 
-bool PacmodDiagPublisher::isOtherAccident() { return global_rpt_ptr_->fault_active; }
+bool PacmodDiagPublisher::isOtherAccident() { return global_rpt_ptr_->pacmod_sys_fault_active; }

@@ -64,10 +64,11 @@ SSCInterface::SSCInterface() : Node("ssc_interface")
   gear_feedback_sub_ =
     std::make_unique<message_filters::Subscriber<automotive_platform_msgs::msg::GearFeedback>>(
       this, "as/gear_feedback");
-  wheel_speed_sub_ = std::make_unique<message_filters::Subscriber<pacmod_msgs::msg::WheelSpeedRpt>>(
-    this, "pacmod/parsed_tx/wheel_speed_rpt");
+  wheel_speed_sub_ =
+    std::make_unique<message_filters::Subscriber<pacmod3_msgs::msg::WheelSpeedRpt>>(
+      this, "pacmod/parsed_tx/wheel_speed_rpt");
   steering_wheel_sub_ =
-    std::make_unique<message_filters::Subscriber<pacmod_msgs::msg::SystemRptFloat>>(
+    std::make_unique<message_filters::Subscriber<pacmod3_msgs::msg::SystemRptFloat>>(
       this, "pacmod/parsed_tx/steer_rpt");
 
   ssc_feedbacks_sync_ = std::make_unique<message_filters::Synchronizer<SSCFeedbacksSyncPolicy>>(
@@ -84,7 +85,7 @@ SSCInterface::SSCInterface() : Node("ssc_interface")
     std::bind(&SSCInterface::callbackFromSSCModuleStates, this, _1));
 
   // TEMP from pacmod
-  pacmod_turn_sub_ = create_subscription<pacmod_msgs::msg::SystemRptInt>(
+  pacmod_turn_sub_ = create_subscription<pacmod3_msgs::msg::SystemRptInt>(
     "/pacmod/parsed_tx/turn_rpt", rclcpp::QoS{1},
     std::bind(&SSCInterface::callbackTurnSignal, this, _1));
 
@@ -162,8 +163,8 @@ void SSCInterface::callbackFromSSCFeedbacks(
   const automotive_platform_msgs::msg::ThrottleFeedback::ConstSharedPtr msg_throttle,
   const automotive_platform_msgs::msg::BrakeFeedback::ConstSharedPtr msg_brake,
   const automotive_platform_msgs::msg::GearFeedback::ConstSharedPtr msg_gear,
-  const pacmod_msgs::msg::WheelSpeedRpt::ConstSharedPtr msg_wheel_speed,
-  const pacmod_msgs::msg::SystemRptFloat::ConstSharedPtr msg_steering_wheel)
+  const pacmod3_msgs::msg::WheelSpeedRpt::ConstSharedPtr msg_wheel_speed,
+  const pacmod3_msgs::msg::SystemRptFloat::ConstSharedPtr msg_steering_wheel)
 {
   std_msgs::msg::Header published_msgs_header;
   published_msgs_header.frame_id = BASE_FRAME_ID;
@@ -345,7 +346,7 @@ void SSCInterface::publishCommand()
 }
 
 double SSCInterface::calculateVehicleVelocity(
-  const pacmod_msgs::msg::WheelSpeedRpt & wheel_speed_rpt,
+  const pacmod3_msgs::msg::WheelSpeedRpt & wheel_speed_rpt,
   const automotive_platform_msgs::msg::VelocityAccelCov & vel_acc_cov,
   const automotive_platform_msgs::msg::GearFeedback & gear_feedback,
   const bool use_rear_wheel_speed)
@@ -385,7 +386,7 @@ uint8_t SSCInterface::toSSCShiftCmd(const autoware_vehicle_msgs::msg::Shift & sh
   return Gear::NONE;
 }
 
-void SSCInterface::callbackTurnSignal(const pacmod_msgs::msg::SystemRptInt::ConstSharedPtr turn)
+void SSCInterface::callbackTurnSignal(const pacmod3_msgs::msg::SystemRptInt::ConstSharedPtr turn)
 {
   autoware_vehicle_msgs::msg::TurnSignal cmd;
   cmd.header.stamp = turn->header.stamp;
@@ -395,10 +396,10 @@ void SSCInterface::callbackTurnSignal(const pacmod_msgs::msg::SystemRptInt::Cons
 }
 
 // TEMP for pacmod turn_signal status
-int32_t SSCInterface::toAutowareTurnSignal(const pacmod_msgs::msg::SystemRptInt & turn) const
+int32_t SSCInterface::toAutowareTurnSignal(const pacmod3_msgs::msg::SystemRptInt & turn) const
 {
   using autoware_vehicle_msgs::msg::TurnSignal;
-  using pacmod_msgs::msg::SystemRptInt;
+  using pacmod3_msgs::msg::SystemRptInt;
 
   if (turn.output == SystemRptInt::TURN_RIGHT) {
     return TurnSignal::RIGHT;

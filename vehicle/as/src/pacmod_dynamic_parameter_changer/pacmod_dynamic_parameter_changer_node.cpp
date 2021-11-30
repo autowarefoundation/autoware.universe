@@ -45,13 +45,13 @@ PacmodDynamicParameterChangerNode::PacmodDynamicParameterChangerNode()
     create_publisher<std_msgs::msg::Float32MultiArray>("~/debug/parameter", rclcpp::QoS{1});
 
   using std::placeholders::_1;
-  steer_rpt_sub_ = create_subscription<pacmod_msgs::msg::SystemRptFloat>(
+  steer_rpt_sub_ = create_subscription<pacmod3_msgs::msg::SystemRptFloat>(
     "~/input/steer_rpt", rclcpp::QoS{1},
     std::bind(&PacmodDynamicParameterChangerNode::subSteerRpt, this, _1));
 }
 
 void PacmodDynamicParameterChangerNode::subSteerRpt(
-  const pacmod_msgs::msg::SystemRptFloat::ConstSharedPtr msg)
+  const pacmod3_msgs::msg::SystemRptFloat::ConstSharedPtr msg)
 {
   current_param_list_ = calculateParam(std::abs(msg->command), std::abs(msg->output), msg->enabled);
   current_param_time_ = now();
