@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>lanelet2_extension</name>
+  <version>0.1.0</version>
+  <description>The lanelet2_extension pacakge contains libraries to handle Lanelet2 format data.</description>
+
+  <maintainer email="ryohsuke.mitsudome@tier4.jp">mitsudome-r</maintainer>
+
+  <license>Apach 2</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>roscpp</depend>
+  <depend>geographiclib</depend>
+  <depend>lanelet2_core</depend>
+  <depend>lanelet2_io</depend>
+  <depend>lanelet2_maps</depend>
+  <depend>lanelet2_projection</depend>
+  <depend>lanelet2_routing</depend>
+  <depend>lanelet2_traffic_rules</depend>
+  <depend>lanelet2_validation</depend>
+  <depend>autoware_lanelet2_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>visualization_msgs</depend>
+  <depend>pugixml-dev</depend>
+  <depend>roslint</depend>
+</package>

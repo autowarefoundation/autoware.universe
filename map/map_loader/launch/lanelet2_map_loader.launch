@@ -1,0 +1,16 @@
+<launch>
+  <arg name="file_name" />
+  <arg name="lanelet2_map_topic" default="vector_map"/>
+  <arg name="lanelet2_map_marker_topic" default="vector_map_marker"/>
+  <arg name="center_line_resolution" default="5.0"/>
+
+  <node pkg="map_loader" type="lanelet2_map_loader" name="lanelet2_map_loader" args="$(arg file_name)">
+    <remap from="~output/lanelet2_map" to="$(arg lanelet2_map_topic)" />
+    <param name="center_line_resolution" value="$(arg center_line_resolution)" />
+  </node>
+  <node pkg="map_loader" type="lanelet2_map_visualization" name="lanelet2_map_visualization">
+    <remap from="~input/lanelet2_map" to="$(arg lanelet2_map_topic)" />
+    <remap from="~output/lanelet2_map_marker" to="$(arg lanelet2_map_marker_topic)" />
+  </node>
+
+</launch>
