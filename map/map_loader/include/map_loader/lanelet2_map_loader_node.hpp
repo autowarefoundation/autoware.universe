@@ -15,11 +15,11 @@
 #ifndef MAP_LOADER__LANELET2_MAP_LOADER_NODE_HPP_
 #define MAP_LOADER__LANELET2_MAP_LOADER_NODE_HPP_
 
+#include <rclcpp/rclcpp.hpp>
+
+#include <autoware_lanelet2_msgs/msg/map_bin.hpp>
+
 #include <memory>
-
-#include "rclcpp/rclcpp.hpp"
-
-#include "autoware_lanelet2_msgs/msg/map_bin.hpp"
 
 class Lanelet2MapLoaderNode : public rclcpp::Node
 {

@@ -16,21 +16,20 @@
 
 #include "lanelet2_extension/utility/utilities.hpp"
 
+#include "lanelet2_extension/utility/message_conversion.hpp"
+#include "lanelet2_extension/utility/query.hpp"
+
+#include <lanelet2_core/geometry/Lanelet.h>
+#include <lanelet2_core/geometry/LineString.h>
+#include <lanelet2_core/primitives/BasicRegulatoryElements.h>
+#include <lanelet2_traffic_rules/TrafficRules.h>
+#include <lanelet2_traffic_rules/TrafficRulesFactory.h>
+
 #include <algorithm>
 #include <limits>
 #include <map>
 #include <utility>
 #include <vector>
-
-#include "lanelet2_core/geometry/LineString.h"
-#include "lanelet2_core/primitives/BasicRegulatoryElements.h"
-#include "lanelet2_traffic_rules/TrafficRules.h"
-#include "lanelet2_traffic_rules/TrafficRulesFactory.h"
-
-#include "lanelet2_core/geometry/Lanelet.h"
-
-#include "lanelet2_extension/utility/message_conversion.hpp"
-#include "lanelet2_extension/utility/query.hpp"
 
 namespace lanelet
 {
@@ -38,8 +37,7 @@ namespace utils
 {
 namespace
 {
-[[maybe_unused]]
-bool exists(const std::vector<int> & array, const int element)
+[[maybe_unused]] bool exists(const std::vector<int> & array, const int element)
 {
   return std::find(array.begin(), array.end(), element) != array.end();
 }
@@ -54,8 +52,7 @@ bool exists(const std::vector<int> & array, const int element)
  * @param  contacting_lanelet_ids [array of lanelet ids that is contacting with
  * search_point]
  */
-[[maybe_unused]]
-void getContactingLanelets(
+[[maybe_unused]] void getContactingLanelets(
   const lanelet::LaneletMapPtr lanelet_map,
   const lanelet::traffic_rules::TrafficRulesPtr traffic_rules,
   const lanelet::BasicPoint2d search_point, std::vector<int> * contacting_lanelet_ids)
@@ -128,8 +125,7 @@ std::pair<size_t, size_t> findNearestIndexPair(
   for (std::size_t i = 1; i < N; ++i) {
     if (
       accumulated_lengths.at(i - 1) <= target_length &&
-      target_length <= accumulated_lengths.at(i))
-    {
+      target_length <= accumulated_lengths.at(i)) {
       return std::make_pair(i - 1, i);
     }
   }
@@ -333,12 +329,12 @@ lanelet::ConstLanelet getExpandedLanelet(
   }
 
   const auto toPoints3d = [](const lanelet::BasicLineString2d & ls2d, const double z) {
-      lanelet::Points3d output;
-      for (const auto & pt : ls2d) {
-        output.push_back(lanelet::Point3d(lanelet::InvalId, pt.x(), pt.y(), z));
-      }
-      return output;
-    };
+    lanelet::Points3d output;
+    for (const auto & pt : ls2d) {
+      output.push_back(lanelet::Point3d(lanelet::InvalId, pt.x(), pt.y(), z));
+    }
+    return output;
+  };
 
   // Original z value cannot be used directly since the offset function can vary the points size.
   const lanelet::Points3d ex_lefts =
@@ -348,8 +344,7 @@ lanelet::ConstLanelet getExpandedLanelet(
 
   const auto & extended_left_bound_3d = lanelet::LineString3d(lanelet::InvalId, ex_lefts);
   const auto & expanded_right_bound_3d = lanelet::LineString3d(lanelet::InvalId, ex_rights);
-  const auto & lanelet =
-    lanelet::Lanelet(
+  const auto & lanelet = lanelet::Lanelet(
     lanelet_obj.id(), extended_left_bound_3d, expanded_right_bound_3d, lanelet_obj.attributes());
 
   return lanelet;
@@ -395,19 +390,19 @@ bool lineStringWithWidthToPolygon(
   const lanelet::ConstLineString3d & linestring, lanelet::ConstPolygon3d * polygon)
 {
   if (polygon == nullptr) {
-    std::cerr << __func__ << ": polygon is null pointer! Failed to convert to polygon." <<
-      std::endl;
+    std::cerr << __func__ << ": polygon is null pointer! Failed to convert to polygon."
+              << std::endl;
     return false;
   }
   if (linestring.size() != 2) {
-    std::cerr << __func__ << ": linestring" << linestring.id() << " must have 2 points! (" <<
-      linestring.size() << " != 2)" << std::endl <<
-      "Failed to convert to polygon.";
+    std::cerr << __func__ << ": linestring" << linestring.id() << " must have 2 points! ("
+              << linestring.size() << " != 2)" << std::endl
+              << "Failed to convert to polygon.";
     return false;
   }
   if (!linestring.hasAttribute("width")) {
-    std::cerr << __func__ << ": linestring" << linestring.id() <<
-      " does not have width tag. Failed to convert to polygon.";
+    std::cerr << __func__ << ": linestring" << linestring.id()
+              << " does not have width tag. Failed to convert to polygon.";
     return false;
   }
 
@@ -437,8 +432,7 @@ bool lineStringToPolygon(
 {
   if (polygon == nullptr) {
     RCLCPP_ERROR_STREAM(
-      rclcpp::get_logger(
-        "lanelet2_extension.visualization"),
+      rclcpp::get_logger("lanelet2_extension.visualization"),
       __func__ << ": polygon is null pointer! Failed to convert to polygon.");
     return false;
   }
@@ -446,10 +440,10 @@ bool lineStringToPolygon(
     if (linestring.size() < 3 || linestring.front().id() == linestring.back().id()) {
       RCLCPP_ERROR_STREAM(
         rclcpp::get_logger("lanelet2_extension.visualization"),
-        __func__ << ": linestring" << linestring.id() <<
-          " must have more than different 3 points! (size is " << linestring.size() << ")" <<
-          std::endl <<
-          "Failed to convert to polygon.");
+        __func__ << ": linestring" << linestring.id()
+                 << " must have more than different 3 points! (size is " << linestring.size() << ")"
+                 << std::endl
+                 << "Failed to convert to polygon.");
       return false;
     }
   }
@@ -457,12 +451,13 @@ bool lineStringToPolygon(
   lanelet::Polygon3d llt_poly;
 
   for (const auto & lp : linestring) {
-    llt_poly.push_back(
-      lanelet::Point3d(
-        lanelet::InvalId, lp.basicPoint().x(), lp.basicPoint().y(), lp.basicPoint().z()));
+    llt_poly.push_back(lanelet::Point3d(
+      lanelet::InvalId, lp.basicPoint().x(), lp.basicPoint().y(), lp.basicPoint().z()));
   }
 
-  if (linestring.front().id() == linestring.back().id()) {llt_poly.pop_back();}
+  if (linestring.front().id() == linestring.back().id()) {
+    llt_poly.pop_back();
+  }
 
   *polygon = llt_poly;
 

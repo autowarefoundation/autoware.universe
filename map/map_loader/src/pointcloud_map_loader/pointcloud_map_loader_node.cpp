@@ -28,15 +28,15 @@
  * limitations under the License.
  */
 
+#include "map_loader/pointcloud_map_loader_node.hpp"
+
 #include <glob.h>
+#include <pcl/io/pcd_io.h>
+#include <pcl_conversions/pcl_conversions.h>
+#include <rcutils/filesystem.h>  // To be replaced by std::filesystem in C++17
+
 #include <string>
 #include <vector>
-
-#include "pcl/io/pcd_io.h"
-#include "pcl_conversions/pcl_conversions.h"
-#include "rcutils/filesystem.h"  // To be replaced by std::filesystem in C++17
-
-#include "map_loader/pointcloud_map_loader_node.hpp"
 
 namespace
 {
@@ -64,9 +64,8 @@ PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & opt
   pub_pointcloud_map_ =
     this->create_publisher<sensor_msgs::msg::PointCloud2>("output/pointcloud_map", durable_qos);
 
-  const auto pcd_paths_or_directory = declare_parameter(
-    "pcd_paths_or_directory",
-    std::vector<std::string>({}));
+  const auto pcd_paths_or_directory =
+    declare_parameter("pcd_paths_or_directory", std::vector<std::string>({}));
 
   std::vector<std::string> pcd_paths{};
 
@@ -125,5 +124,5 @@ sensor_msgs::msg::PointCloud2 PointCloudMapLoaderNode::loadPCDFiles(
   return whole_pcd;
 }
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(PointCloudMapLoaderNode)

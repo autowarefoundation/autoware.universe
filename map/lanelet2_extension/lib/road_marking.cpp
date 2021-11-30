@@ -14,14 +14,14 @@
 
 #include "lanelet2_extension/regulatory_elements/road_marking.hpp"
 
+#include <boost/variant.hpp>
+
+#include <lanelet2_core/primitives/RegulatoryElement.h>
+
 #include <algorithm>
 #include <memory>
 #include <utility>
 #include <vector>
-
-#include "boost/variant.hpp"
-
-#include "lanelet2_core/primitives/RegulatoryElement.h"
 
 namespace lanelet
 {
@@ -43,8 +43,7 @@ RegulatoryElementDataPtr constructRoadMarkingData(
 }
 }  // namespace
 
-RoadMarking::RoadMarking(const RegulatoryElementDataPtr & data)
-: RegulatoryElement(data)
+RoadMarking::RoadMarking(const RegulatoryElementDataPtr & data) : RegulatoryElement(data)
 {
   if (getParameters<ConstLineString3d>(RoleName::Refers).size() != 1) {
     throw InvalidInputError("There must be exactly one road marking defined!");
@@ -71,7 +70,7 @@ void RoadMarking::setRoadMarking(const LineString3d & road_marking)
   parameters()[RoleName::Refers] = {road_marking};
 }
 
-void RoadMarking::removeRoadMarking() {parameters()[RoleName::Refers] = {};}
+void RoadMarking::removeRoadMarking() { parameters()[RoleName::Refers] = {}; }
 
 #if __cplusplus < 201703L
 constexpr char RoadMarking::RuleName[];  // instantiate string in cpp file

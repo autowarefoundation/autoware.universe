@@ -16,23 +16,23 @@
 
 #include "lanelet2_extension/visualization/visualization.hpp"
 
+#include "lanelet2_extension/utility/message_conversion.hpp"
+#include "lanelet2_extension/utility/query.hpp"
+#include "lanelet2_extension/utility/utilities.hpp"
+
+#include <Eigen/Eigen>
+
+#include <visualization_msgs/msg/marker.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
+
 #include <algorithm>
 #include <string>
 #include <unordered_set>
 #include <vector>
 
-#include "Eigen/Eigen"
-
-#include "visualization_msgs/msg/marker.hpp"
-#include "visualization_msgs/msg/marker_array.hpp"
-
-#include "lanelet2_extension/utility/message_conversion.hpp"
-#include "lanelet2_extension/utility/query.hpp"
-#include "lanelet2_extension/utility/utilities.hpp"
-
 namespace
 {
-template<typename T>
+template <typename T>
 bool exists(const std::unordered_set<T> & set, const T & element)
 {
   return std::find(set.begin(), set.end(), element) != set.end();
@@ -40,8 +40,8 @@ bool exists(const std::unordered_set<T> & set, const T & element)
 
 void adjacentPoints(
   const int i, const int N, const geometry_msgs::msg::Polygon poly,
-  geometry_msgs::msg::Point32 * p0,
-  geometry_msgs::msg::Point32 * p1, geometry_msgs::msg::Point32 * p2)
+  geometry_msgs::msg::Point32 * p0, geometry_msgs::msg::Point32 * p1,
+  geometry_msgs::msg::Point32 * p2)
 {
   if (p0 == nullptr || p1 == nullptr || p2 == nullptr) {
     std::cerr << __FUNCTION__ << ": either p0, p1, or p2 is null pointer!" << std::endl;
@@ -62,8 +62,8 @@ void adjacentPoints(
   }
 }
 
-[[maybe_unused]]
-double hypot(const geometry_msgs::msg::Point32 & p0, const geometry_msgs::msg::Point32 & p1)
+[[maybe_unused]] double hypot(
+  const geometry_msgs::msg::Point32 & p0, const geometry_msgs::msg::Point32 & p1)
 {
   return sqrt(pow((p1.x - p0.x), 2.0) + pow((p1.y - p0.y), 2.0));
 }
@@ -72,7 +72,9 @@ bool isAttributeValue(
   const lanelet::ConstPoint3d p, const std::string attr_str, const std::string value_str)
 {
   lanelet::Attribute attr = p.attribute(attr_str);
-  if (attr.value().compare(value_str) == 0) {return true;}
+  if (attr.value().compare(value_str) == 0) {
+    return true;
+  }
   return false;
 }
 
@@ -80,7 +82,9 @@ bool isLaneletAttributeValue(
   const lanelet::ConstLanelet ll, const std::string attr_str, const std::string value_str)
 {
   lanelet::Attribute attr = ll.attribute(attr_str);
-  if (attr.value().compare(value_str) == 0) {return true;}
+  if (attr.value().compare(value_str) == 0) {
+    return true;
+  }
   return false;
 }
 
@@ -145,8 +149,7 @@ bool inputLightMarker(visualization_msgs::msg::Marker * marker, lanelet::ConstPo
   return true;
 }
 
-void initLaneletDirectionMarker(
-  visualization_msgs::msg::Marker * marker, const std::string ns)
+void initLaneletDirectionMarker(visualization_msgs::msg::Marker * marker, const std::string ns)
 {
   if (marker == nullptr) {
     std::cerr << __FUNCTION__ << ": marker is null pointer!" << std::endl;
@@ -218,7 +221,7 @@ void pushLaneletDirectionMarker(
     c.b = 0.6;
   }
 
-  for (std::size_t ci = 0; ci < center_ls.size() - 1; ) {
+  for (std::size_t ci = 0; ci < center_ls.size() - 1;) {
     pc = center_ls[ci];
     if (center_ls.size() > 1) {
       pc2 = center_ls[ci + 1];
@@ -260,7 +263,7 @@ bool isClockWise(const geometry_msgs::msg::Polygon & polygon)
   double sum = 0.0;
   for (std::size_t i = 0; i < polygon.points.size(); ++i) {
     sum += (polygon.points[i].x - x_offset) * (polygon.points[(i + 1) % N].y - y_offset) -
-      (polygon.points[i].y - y_offset) * (polygon.points[(i + 1) % N].x - x_offset);
+           (polygon.points[i].y - y_offset) * (polygon.points[(i + 1) % N].x - x_offset);
   }
 
   return sum < 0.0;
@@ -313,8 +316,8 @@ visualization_msgs::msg::Marker createPolygonMarker(
 }
 
 void pushPolygonMarker(
-  visualization_msgs::msg::Marker * marker,
-  const lanelet::ConstPolygon3d & polygon, const std_msgs::msg::ColorRGBA & color)
+  visualization_msgs::msg::Marker * marker, const lanelet::ConstPolygon3d & polygon,
+  const std_msgs::msg::ColorRGBA & color)
 {
   if (marker == nullptr) {
     std::cerr << __FUNCTION__ << ": marker is null pointer!" << std::endl;
@@ -363,7 +366,9 @@ void visualization::polygon2Triangle(
   const geometry_msgs::msg::Polygon & polygon, std::vector<geometry_msgs::msg::Polygon> * triangles)
 {
   geometry_msgs::msg::Polygon poly = polygon;
-  if (!isClockWise(poly)) {std::reverse(poly.points.begin(), poly.points.end());}
+  if (!isClockWise(poly)) {
+    std::reverse(poly.points.begin(), poly.points.end());
+  }
 
   // ear clipping: find smallest internal angle in polygon
   int N = poly.points.size();
@@ -406,9 +411,9 @@ void visualization::polygon2Triangle(
     }
     if (clipped_vertex < 0 || clipped_vertex >= N) {
       // print in yellow to indicate warning
-      std::cerr <<
-        "\033[1;33mCould not find valid vertex for ear clipping triangulation. "
-        "Triangulation result might be invalid\033[0m" << std::endl;
+      std::cerr << "\033[1;33mCould not find valid vertex for ear clipping triangulation. "
+                   "Triangulation result might be invalid\033[0m"
+                << std::endl;
       clipped_vertex = 0;
     }
 
@@ -540,8 +545,8 @@ visualization_msgs::msg::MarkerArray visualization::generateTrafficLightIdMaker(
 
     const auto lights = tl->trafficLights();
     for (const auto & lsp : lights) {
-      if (lsp.isLineString()) { // traffic lights can either polygons or
-                                // linestrings
+      if (lsp.isLineString()) {  // traffic lights can either polygons or
+                                 // linestrings
         lanelet::ConstLineString3d ls = static_cast<lanelet::ConstLineString3d>(lsp);
 
         visualization_msgs::msg::Marker marker;
@@ -573,8 +578,7 @@ visualization_msgs::msg::MarkerArray visualization::generateTrafficLightIdMaker(
 
 visualization_msgs::msg::MarkerArray visualization::detectionAreasAsMarkerArray(
   const std::vector<lanelet::DetectionAreaConstPtr> & da_reg_elems,
-  const std_msgs::msg::ColorRGBA c,
-  const rclcpp::Duration duration)
+  const std_msgs::msg::ColorRGBA c, const rclcpp::Duration duration)
 {
   visualization_msgs::msg::MarkerArray marker_array;
   visualization_msgs::msg::Marker marker;
@@ -649,8 +653,7 @@ visualization_msgs::msg::MarkerArray visualization::detectionAreasAsMarkerArray(
 
 visualization_msgs::msg::MarkerArray visualization::noStoppingAreasAsMarkerArray(
   const std::vector<lanelet::NoStoppingAreaConstPtr> & no_reg_elems,
-  const std_msgs::msg::ColorRGBA c,
-  const rclcpp::Duration duration)
+  const std_msgs::msg::ColorRGBA c, const rclcpp::Duration duration)
 {
   visualization_msgs::msg::MarkerArray marker_array;
   visualization_msgs::msg::Marker marker;
@@ -720,7 +723,9 @@ visualization_msgs::msg::MarkerArray visualization::noStoppingAreasAsMarkerArray
       visualization::pushLineStringMarker(&line_marker, stop_line.value(), line_c, 0.5);
     }
   }  // for regulatory elements
-  if (!line_marker.points.empty()) {marker_array.markers.push_back(line_marker);}
+  if (!line_marker.points.empty()) {
+    marker_array.markers.push_back(line_marker);
+  }
   return marker_array;
 }
 
@@ -739,8 +744,7 @@ visualization_msgs::msg::MarkerArray visualization::pedestrianMarkingsAsMarkerAr
       pushPolygonMarker(&marker, polygon, c);
     } else {
       RCLCPP_ERROR_STREAM(
-        rclcpp::get_logger(
-          "lanelet2_extension.visualization"),
+        rclcpp::get_logger("lanelet2_extension.visualization"),
         "pedestrian marking " << linestring.id() << " failed conversion.");
     }
   }
@@ -1000,8 +1004,7 @@ visualization_msgs::msg::MarkerArray visualization::laneletsAsTriangleMarkerArra
 }
 
 void visualization::initTrafficLightTriangleMarker(
-  visualization_msgs::msg::Marker * marker,
-  const std::string ns, const rclcpp::Duration duration)
+  visualization_msgs::msg::Marker * marker, const std::string ns, const rclcpp::Duration duration)
 {
   if (marker == nullptr) {
     std::cerr << __FUNCTION__ << ": marker is null pointer!" << std::endl;
@@ -1088,8 +1091,8 @@ void visualization::initLineStringMarker(
 {
   if (marker == nullptr) {
     RCLCPP_ERROR_STREAM(
-      rclcpp::get_logger(
-        "lanelet2_extension.visualization"), __FUNCTION__ << ": marker is null pointer!");
+      rclcpp::get_logger("lanelet2_extension.visualization"),
+      __FUNCTION__ << ": marker is null pointer!");
     return;
   }
 
@@ -1117,16 +1120,16 @@ void visualization::pushLineStringMarker(
 {
   if (marker == nullptr) {
     RCLCPP_ERROR_STREAM(
-      rclcpp::get_logger(
-        "lanelet2_extension.visualization"), __FUNCTION__ << ": marker is null pointer!");
+      rclcpp::get_logger("lanelet2_extension.visualization"),
+      __FUNCTION__ << ": marker is null pointer!");
     return;
   }
 
   // fill out lane line
   if (ls.size() < 2) {
     RCLCPP_ERROR_STREAM(
-      rclcpp::get_logger(
-        "lanelet2_extension.visualization"), __FUNCTION__ << ": marker line size is 1 or 0!");
+      rclcpp::get_logger("lanelet2_extension.visualization"),
+      __FUNCTION__ << ": marker line size is 1 or 0!");
     return;
   }
   for (auto i = ls.begin(); i + 1 != ls.end(); i++) {

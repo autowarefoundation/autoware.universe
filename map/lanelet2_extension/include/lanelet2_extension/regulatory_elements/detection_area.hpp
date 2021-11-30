@@ -17,11 +17,11 @@
 #ifndef LANELET2_EXTENSION__REGULATORY_ELEMENTS__DETECTION_AREA_HPP_
 #define LANELET2_EXTENSION__REGULATORY_ELEMENTS__DETECTION_AREA_HPP_
 
+#include <lanelet2_core/primitives/BasicRegulatoryElements.h>
+#include <lanelet2_core/primitives/Lanelet.h>
+
 #include <memory>
 #include <vector>
-
-#include "lanelet2_core/primitives/BasicRegulatoryElements.h"
-#include "lanelet2_core/primitives/Lanelet.h"
 
 namespace lanelet
 {

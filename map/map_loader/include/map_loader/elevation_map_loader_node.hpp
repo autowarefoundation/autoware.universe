@@ -15,22 +15,25 @@
 #ifndef MAP_LOADER__ELEVATION_MAP_LOADER_NODE_HPP_
 #define MAP_LOADER__ELEVATION_MAP_LOADER_NODE_HPP_
 
+#include <autoware_utils/geometry/boost_geometry.hpp>
+#include <filters/filter_chain.hpp>
+#include <grid_map_core/GridMap.hpp>
+#include <grid_map_pcl/GridMapPclLoader.hpp>
+#include <grid_map_ros/GridMapRosConverter.hpp>
+#include <lanelet2_extension/utility/message_conversion.hpp>
+#include <lanelet2_extension/utility/query.hpp>
+#include <nlohmann/json.hpp>
+#include <rclcpp/rclcpp.hpp>
+
+#include <autoware_lanelet2_msgs/msg/map_bin.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+
+#include <pcl/pcl_base.h>
+#include <pcl/point_types.h>
+
+#include <filesystem>
 #include <string>
 #include <vector>
-
-#include "autoware_lanelet2_msgs/msg/map_bin.hpp"
-#include "autoware_utils/geometry/boost_geometry.hpp"
-#include "filters/filter_chain.hpp"
-#include "grid_map_core/GridMap.hpp"
-#include "grid_map_pcl/GridMapPclLoader.hpp"
-#include "grid_map_ros/GridMapRosConverter.hpp"
-#include "lanelet2_extension/utility/message_conversion.hpp"
-#include "lanelet2_extension/utility/query.hpp"
-#include "pcl/pcl_base.h"
-#include "pcl/point_types.h"
-#include "rclcpp/rclcpp.hpp"
-#include "sensor_msgs/msg/point_cloud2.hpp"
-#include "nlohmann/json.hpp"
 
 class ElevationMapLoaderNode : public rclcpp::Node
 {

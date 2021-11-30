@@ -12,16 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <lanelet2_extension/io/autoware_osm_parser.hpp>
+#include <lanelet2_extension/projection/mgrs_projector.hpp>
+#include <lanelet2_extension/utility/message_conversion.hpp>
 
-#include "ros/ros.h"
-
-#include "lanelet2_core/LaneletMap.h"
-#include "lanelet2_core/geometry/Lanelet.h"
-#include "lanelet2_io/Io.h"
-
-#include "lanelet2_extension/io/autoware_osm_parser.hpp"
-#include "lanelet2_extension/projection/mgrs_projector.hpp"
-#include "lanelet2_extension/utility/message_conversion.hpp"
+#include <lanelet2_core/LaneletMap.h>
+#include <lanelet2_core/geometry/Lanelet.h>
+#include <lanelet2_io/Io.h>
+#include <ros/ros.h>
 
 #include <iostream>
 #include <unordered_set>
@@ -29,9 +27,9 @@
 
 void printUsage()
 {
-  std::cerr << "Please set following private parameters:" << std::endl <<
-    "llt_map_path" << std::endl <<
-    "output_path" << std::endl;
+  std::cerr << "Please set following private parameters:" << std::endl
+            << "llt_map_path" << std::endl
+            << "output_path" << std::endl;
 }
 
 bool loadLaneletMap(
@@ -66,8 +64,8 @@ lanelet::Points3d convertPointsLayerToPoints(lanelet::LaneletMapPtr & lanelet_ma
   return points;
 }
 
-// lanelet::LineString3d mergeClosePoints(const lanelet::ConstLineString3d& line1, const lanelet::ConstLineString3d&
-// line2)
+// lanelet::LineString3d mergeClosePoints(const lanelet::ConstLineString3d& line1, const
+// lanelet::ConstLineString3d& line2)
 // {
 //   lanelet::Points3d new_points;
 //   for (const auto& p1 : line1)

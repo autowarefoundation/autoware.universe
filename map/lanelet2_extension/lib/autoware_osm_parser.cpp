@@ -16,13 +16,13 @@
 
 #include "lanelet2_extension/io/autoware_osm_parser.hpp"
 
+#include <lanelet2_core/geometry/LineString.h>
+#include <lanelet2_io/io_handlers/Factory.h>
+#include <lanelet2_io/io_handlers/OsmFile.h>
+#include <lanelet2_io/io_handlers/OsmHandler.h>
+
 #include <memory>
 #include <string>
-
-#include "lanelet2_core/geometry/LineString.h"
-#include "lanelet2_io/io_handlers/Factory.h"
-#include "lanelet2_io/io_handlers/OsmFile.h"
-#include "lanelet2_io/io_handlers/OsmHandler.h"
 
 namespace lanelet
 {
@@ -71,7 +71,7 @@ void AutowareOsmParser::parseVersions(
   auto result = doc.load_file(filename.c_str());
   if (!result) {
     throw lanelet::ParseError(
-            std::string("Errors occurred while parsing osm file: ") + result.description());
+      std::string("Errors occurred while parsing osm file: ") + result.description());
   }
 
   auto osmNode = doc.child("osm");
@@ -79,7 +79,9 @@ void AutowareOsmParser::parseVersions(
   if (metainfo.attribute("format_version")) {
     *format_version = metainfo.attribute("format_version").value();
   }
-  if (metainfo.attribute("map_version")) {*map_version = metainfo.attribute("map_version").value();}
+  if (metainfo.attribute("map_version")) {
+    *map_version = metainfo.attribute("map_version").value();
+  }
 }
 
 }  // namespace io_handlers

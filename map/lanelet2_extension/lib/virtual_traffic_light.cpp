@@ -12,15 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "lanelet2_extension/regulatory_elements/virtual_traffic_light.hpp"
+
+#include <boost/variant.hpp>
+
+#include <lanelet2_core/primitives/RegulatoryElement.h>
+
 #include <algorithm>
 #include <memory>
 #include <utility>
 #include <vector>
-
-#include "boost/variant.hpp"
-
-#include "lanelet2_core/primitives/RegulatoryElement.h"
-#include "lanelet2_extension/regulatory_elements/virtual_traffic_light.hpp"
 
 namespace lanelet
 {
@@ -54,8 +55,7 @@ VirtualTrafficLight::VirtualTrafficLight(const RegulatoryElementDataPtr & data)
 }
 
 VirtualTrafficLight::VirtualTrafficLight(
-  const Id id, const AttributeMap & attributes,
-  const LineString3d & virtual_traffic_light)
+  const Id id, const AttributeMap & attributes, const LineString3d & virtual_traffic_light)
 : VirtualTrafficLight(constructVirtualTrafficLightData(id, attributes, virtual_traffic_light))
 {
 }

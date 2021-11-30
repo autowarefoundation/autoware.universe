@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <map>
-
-#include "gtest/gtest.h"
-
 #include "lanelet2_extension/utility/utilities.hpp"
-#include "lanelet2_routing/RoutingGraphContainer.h"
-#include "lanelet2_traffic_rules/TrafficRulesFactory.h"
+
+#include <gtest/gtest.h>
+#include <lanelet2_routing/RoutingGraphContainer.h>
+#include <lanelet2_traffic_rules/TrafficRulesFactory.h>
+
+#include <map>
 
 using lanelet::Lanelet;
 using lanelet::LineString3d;
@@ -28,8 +28,7 @@ using lanelet::utils::getId;
 class TestSuite : public ::testing::Test
 {
 public:
-  TestSuite()
-  : sample_map_ptr(new lanelet::LaneletMap())
+  TestSuite() : sample_map_ptr(new lanelet::LaneletMap())
   {  // NOLINT
     // create sample lanelets
     Point3d p1, p2, p3, p4, p5, p6, p7, p8, p9, p10;

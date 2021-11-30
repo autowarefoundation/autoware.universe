@@ -15,11 +15,11 @@
 #ifndef LANELET2_EXTENSION__REGULATORY_ELEMENTS__ROAD_MARKING_HPP_
 #define LANELET2_EXTENSION__REGULATORY_ELEMENTS__ROAD_MARKING_HPP_
 
+#include <lanelet2_core/primitives/BasicRegulatoryElements.h>
+#include <lanelet2_core/primitives/LineString.h>
+
 #include <memory>
 #include <vector>
-
-#include "lanelet2_core/primitives/BasicRegulatoryElements.h"
-#include "lanelet2_core/primitives/LineString.h"
 
 namespace lanelet
 {

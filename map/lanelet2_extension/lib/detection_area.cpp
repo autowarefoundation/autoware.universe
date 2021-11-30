@@ -16,14 +16,14 @@
 
 #include "lanelet2_extension/regulatory_elements/detection_area.hpp"
 
+#include <boost/variant.hpp>
+
+#include <lanelet2_core/primitives/RegulatoryElement.h>
+
 #include <algorithm>
-#include <utility>
 #include <memory>
+#include <utility>
 #include <vector>
-
-#include "boost/variant.hpp"
-
-#include "lanelet2_core/primitives/RegulatoryElement.h"
 
 namespace lanelet
 {
@@ -31,7 +31,7 @@ namespace autoware
 {
 namespace
 {
-template<typename T>
+template <typename T>
 bool findAndErase(const T & primitive, RuleParameters * member)
 {
   if (member == nullptr) {
@@ -46,10 +46,10 @@ bool findAndErase(const T & primitive, RuleParameters * member)
   return true;
 }
 
-template<typename T>
+template <typename T>
 RuleParameters toRuleParameters(const std::vector<T> & primitives)
 {
-  auto cast_func = [](const auto & elem) {return static_cast<RuleParameter>(elem);};
+  auto cast_func = [](const auto & elem) { return static_cast<RuleParameter>(elem); };
   return utils::transform(primitives, cast_func);
 }
 
@@ -79,7 +79,7 @@ Polygons3d getPoly(const RuleParameterMap & paramsMap, RoleName role)
 
 ConstPolygons3d getConstPoly(const RuleParameterMap & params, RoleName role)
 {
-  auto cast_func = [](auto & poly) {return static_cast<ConstPolygon3d>(poly);};
+  auto cast_func = [](auto & poly) { return static_cast<ConstPolygon3d>(poly); };
   return utils::transform(getPoly(params, role), cast_func);
 }
 
@@ -99,8 +99,7 @@ RegulatoryElementDataPtr constructDetectionAreaData(
 }
 }  // namespace
 
-DetectionArea::DetectionArea(const RegulatoryElementDataPtr & data)
-: RegulatoryElement(data)
+DetectionArea::DetectionArea(const RegulatoryElementDataPtr & data) : RegulatoryElement(data)
 {
   if (getConstPoly(data->parameters, RoleName::Refers).empty()) {
     throw InvalidInputError("No detection area defined!");
@@ -121,7 +120,7 @@ ConstPolygons3d DetectionArea::detectionAreas() const
 {
   return getConstPoly(parameters(), RoleName::Refers);
 }
-Polygons3d DetectionArea::detectionAreas() {return getPoly(parameters(), RoleName::Refers);}
+Polygons3d DetectionArea::detectionAreas() { return getPoly(parameters(), RoleName::Refers); }
 
 void DetectionArea::addDetectionArea(const Polygon3d & primitive)
 {
@@ -148,7 +147,7 @@ void DetectionArea::setStopLine(const LineString3d & stopLine)
   parameters()[RoleName::RefLine] = {stopLine};
 }
 
-void DetectionArea::removeStopLine() {parameters()[RoleName::RefLine] = {};}
+void DetectionArea::removeStopLine() { parameters()[RoleName::RefLine] = {}; }
 
 #if __cplusplus < 201703L
 constexpr char DetectionArea::RuleName[];  // instantiate string in cpp file

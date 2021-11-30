@@ -28,16 +28,15 @@
  * limitations under the License.
  */
 
-
 #ifndef MAP_LOADER__POINTCLOUD_MAP_LOADER_NODE_HPP_
 #define MAP_LOADER__POINTCLOUD_MAP_LOADER_NODE_HPP_
 
+#include <rclcpp/rclcpp.hpp>
+
+#include <sensor_msgs/msg/point_cloud2.hpp>
+
 #include <string>
 #include <vector>
-
-#include "rclcpp/rclcpp.hpp"
-
-#include "sensor_msgs/msg/point_cloud2.hpp"
 
 class PointCloudMapLoaderNode : public rclcpp::Node
 {

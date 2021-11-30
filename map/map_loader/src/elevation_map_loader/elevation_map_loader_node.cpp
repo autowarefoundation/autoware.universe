@@ -12,34 +12,38 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <filesystem>
-#include <vector>
-#include <string>
-#include <memory>
-#include <utility>
-#include <unordered_map>
-
-#include "boost/geometry/algorithms/convex_hull.hpp"
-#include "boost/geometry/algorithms/intersects.hpp"
-#include "boost/iostreams/device/mapped_file.hpp"
-#include "grid_map_core/GridMap.hpp"
-#include "grid_map_cv/InpaintFilter.hpp"
-#include "grid_map_msgs/msg/grid_map.hpp"
-#include "grid_map_pcl/GridMapPclLoader.hpp"
-#include "grid_map_pcl/helpers.hpp"
-#include "grid_map_ros/GridMapRosConverter.hpp"
-#include "hash_library_vendor/md5.h"
-#include "lanelet2_core/geometry/Polygon.h"
 #include "map_loader/elevation_map_loader_node.hpp"
-#include "pcl/filters/voxel_grid.h"
-#include "pcl/pcl_base.h"
-#include "pcl/point_types.h"
-#include "pcl_conversions/pcl_conversions.h"
-#include "sensor_msgs/msg/point_cloud2.h"
+
+#include <grid_map_core/GridMap.hpp>
+#include <grid_map_cv/InpaintFilter.hpp>
+#include <grid_map_pcl/GridMapPclLoader.hpp>
+#include <grid_map_pcl/helpers.hpp>
+#include <grid_map_ros/GridMapRosConverter.hpp>
+
+#include <grid_map_msgs/msg/grid_map.hpp>
+
+#include <boost/geometry/algorithms/convex_hull.hpp>
+#include <boost/geometry/algorithms/intersects.hpp>
+#include <boost/iostreams/device/mapped_file.hpp>
+
+#include <hash_library_vendor/md5.h>
+#include <lanelet2_core/geometry/Polygon.h>
+#include <pcl/filters/voxel_grid.h>
+#include <pcl/pcl_base.h>
+#include <pcl/point_types.h>
+#include <pcl_conversions/pcl_conversions.h>
+#include <sensor_msgs/msg/point_cloud2.h>
+
+#include <filesystem>
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 #define EIGEN_MPL2_ONLY
-#include "Eigen/Core"
-#include "Eigen/Geometry"
+#include <Eigen/Core>
+#include <Eigen/Geometry>
 
 namespace
 {
@@ -82,14 +86,15 @@ std::string getMd5Sum(const std::filesystem::path & file_path)
   return digest_md5.getHash();
 }
 
-nlohmann::json getPcdMapHashJson(
-  const std::string & file_path)
+nlohmann::json getPcdMapHashJson(const std::string & file_path)
 {
   // Get PCD file paths
   std::vector<std::filesystem::path> pcd_file_paths;
   if (std::filesystem::is_directory(file_path)) {
     for (const auto & file : std::filesystem::directory_iterator(file_path)) {
-      if (!isPcdFile(file.path())) {continue;}
+      if (!isPcdFile(file.path())) {
+        continue;
+      }
       pcd_file_paths.push_back(file.path());
     }
   } else if (isPcdFile(file_path)) {
@@ -114,8 +119,8 @@ ElevationMapLoaderNode::ElevationMapLoaderNode(const rclcpp::NodeOptions & optio
   map_frame_ = this->declare_parameter("map_frame", "map");
   use_inpaint_ = this->declare_parameter("use_inpaint", true);
   inpaint_radius_ = this->declare_parameter("inpaint_radius", 0.3);
-  use_elevation_map_cloud_publisher_ = this->declare_parameter(
-    "use_elevation_map_cloud_publisher", false);
+  use_elevation_map_cloud_publisher_ =
+    this->declare_parameter("use_elevation_map_cloud_publisher", false);
 
   lane_filter_.use_lane_filter_ = this->declare_parameter("use_lane_filter", false);
   lane_filter_.lane_margin_ = this->declare_parameter("lane_margin", 0.5);
@@ -142,8 +147,8 @@ ElevationMapLoaderNode::ElevationMapLoaderNode(const rclcpp::NodeOptions & optio
   hash_json_ = getPcdMapHashJson(pointcloud_map_path.lexically_normal().string());
 
   const auto elevation_map_hash = getMd5Sum(hash_json_.dump());
-  const std::string elevation_map_directory = this->declare_parameter(
-    "elevation_map_directory", "path_default");
+  const std::string elevation_map_directory =
+    this->declare_parameter("elevation_map_directory", "path_default");
   elevation_map_path_ = std::filesystem::path(elevation_map_directory) / elevation_map_hash;
 
   use_elevation_map_file_ = false;
@@ -159,9 +164,7 @@ ElevationMapLoaderNode::ElevationMapLoaderNode(const rclcpp::NodeOptions & optio
     sub_vector_map_ = this->create_subscription<autoware_lanelet2_msgs::msg::MapBin>(
       "input/vector_map", durable_qos, std::bind(&ElevationMapLoaderNode::onVectorMap, this, _1));
   } else if (info.st_mode & S_IFDIR) {
-    RCLCPP_INFO(
-      this->get_logger(), "Load elevation map from: %s",
-      elevation_map_path_.c_str());
+    RCLCPP_INFO(this->get_logger(), "Load elevation map from: %s", elevation_map_path_.c_str());
     use_elevation_map_file_ = grid_map::GridMapRosConverter::loadFromBag(
       elevation_map_path_, "elevation_map", elevation_map_);
     publishElevationMap();
@@ -177,7 +180,9 @@ void ElevationMapLoaderNode::onPointcloudMap(
   map_pcl_ptr_ = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>(map_pcl);
 
   already_sub_pointcloud_map_ = true;
-  if (already_sub_vector_map_) {publishElevationMap();}
+  if (already_sub_vector_map_) {
+    publishElevationMap();
+  }
 }
 
 void ElevationMapLoaderNode::onVectorMap(
@@ -192,7 +197,9 @@ void ElevationMapLoaderNode::onVectorMap(
   lane_filter_.road_lanelets_ = lanelet::utils::query::roadLanelets(all_lanelets);
 
   already_sub_vector_map_ = true;
-  if (already_sub_pointcloud_map_) {publishElevationMap();}
+  if (already_sub_pointcloud_map_) {
+    publishElevationMap();
+  }
 }
 
 void ElevationMapLoaderNode::publishElevationMap()
@@ -205,15 +212,17 @@ void ElevationMapLoaderNode::publishElevationMap()
       lanelet::ConstLanelets intersected_lanelets =
         getIntersectedLanelets(convex_hull, lane_filter_.road_lanelets_);
       // filter pointcloud by lanelet
-      pcl::PointCloud<pcl::PointXYZ>::Ptr lane_filtered_map_pcl_ptr = getLaneFilteredPointCloud(
-        intersected_lanelets, map_pcl_ptr_);
+      pcl::PointCloud<pcl::PointXYZ>::Ptr lane_filtered_map_pcl_ptr =
+        getLaneFilteredPointCloud(intersected_lanelets, map_pcl_ptr_);
       grid_map_pcl_loader_->setInputCloud(lane_filtered_map_pcl_ptr);
     } else {
       grid_map_pcl_loader_->setInputCloud(map_pcl_ptr_);
     }
     createElevationMapFromPointcloud();
     elevation_map_ = grid_map_pcl_loader_->getGridMap();
-    if (use_inpaint_) {inpaintElevationMap(inpaint_radius_);}
+    if (use_inpaint_) {
+      inpaintElevationMap(inpaint_radius_);
+    }
     saveElevationMap();
   }
 
@@ -313,10 +322,9 @@ bool ElevationMapLoaderNode::checkPointWithinLanelets(
   autoware_utils::Point2d point2d(point.x, point.y);
   for (const auto & lanelet : intersected_lanelets) {
     if (lane_filter_.lane_margin_ > 0) {
-      if (boost::geometry::distance(
-          point2d,
-          lanelet.polygon2d().basicPolygon()) > lane_filter_.lane_margin_)
-      {
+      if (
+        boost::geometry::distance(point2d, lanelet.polygon2d().basicPolygon()) >
+        lane_filter_.lane_margin_) {
         continue;
       }
     } else {
@@ -388,9 +396,8 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr ElevationMapLoaderNode::getLaneFilteredPoint
 
   for (auto & point : downsampled_cloud->points) {
     if (checkPointWithinLanelets(
-        pcl::PointXYZ(point.x + centroid[0], point.y + centroid[1], point.z + centroid[2]),
-        intersected_lanelets))
-    {
+          pcl::PointXYZ(point.x + centroid[0], point.y + centroid[1], point.z + centroid[2]),
+          intersected_lanelets)) {
       const size_t index = voxel_grid.getCentroidIndex(point);
       for (auto & original_point : downsampled2original_map[index].points) {
         original_point.x += centroid[0];
@@ -431,8 +438,8 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr ElevationMapLoaderNode::createPointcloudFrom
 
 void ElevationMapLoaderNode::saveElevationMap()
 {
-  const bool saving_successful = grid_map::GridMapRosConverter::saveToBag(
-    elevation_map_, elevation_map_path_, "elevation_map");
+  const bool saving_successful =
+    grid_map::GridMapRosConverter::saveToBag(elevation_map_, elevation_map_path_, "elevation_map");
 
   std::ofstream json_file(elevation_map_path_ / "input_pcd.json");
   json_file << hash_json_;
@@ -442,5 +449,5 @@ void ElevationMapLoaderNode::saveElevationMap()
     this->get_logger(), "Saving elevation map successful: " << std::boolalpha << saving_successful);
 }
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(ElevationMapLoaderNode)

@@ -12,17 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
-#include <algorithm>
-#include <vector>
-#include <utility>
-#include <memory>
-
-#include "boost/variant.hpp"
-
-#include "lanelet2_core/primitives/RegulatoryElement.h"
 #include "lanelet2_extension/regulatory_elements/no_stopping_area.hpp"
 
+#include <boost/variant.hpp>
+
+#include <lanelet2_core/primitives/RegulatoryElement.h>
+
+#include <algorithm>
+#include <memory>
+#include <utility>
+#include <vector>
 
 namespace lanelet
 {
@@ -30,7 +29,7 @@ namespace autoware
 {
 namespace
 {
-template<typename T>
+template <typename T>
 bool findAndErase(const T & primitive, RuleParameters * member)
 {
   if (member == nullptr) {
@@ -45,7 +44,7 @@ bool findAndErase(const T & primitive, RuleParameters * member)
   return true;
 }
 
-template<typename T>
+template <typename T>
 Optional<T> tryGetFront(const std::vector<T> & vec)
 {
   if (vec.empty()) {
@@ -54,10 +53,10 @@ Optional<T> tryGetFront(const std::vector<T> & vec)
   return vec.front();
 }
 
-template<typename T>
+template <typename T>
 RuleParameters toRuleParameters(const std::vector<T> & primitives)
 {
-  auto cast_func = [](const auto & elem) {return static_cast<RuleParameter>(elem);};
+  auto cast_func = [](const auto & elem) { return static_cast<RuleParameter>(elem); };
   return utils::transform(primitives, cast_func);
 }
 
@@ -80,7 +79,7 @@ Polygons3d getPoly(const RuleParameterMap & paramsMap, RoleName role)
 
 ConstPolygons3d getConstPoly(const RuleParameterMap & params, RoleName role)
 {
-  auto cast_func = [](auto & poly) {return static_cast<ConstPolygon3d>(poly);};
+  auto cast_func = [](auto & poly) { return static_cast<ConstPolygon3d>(poly); };
   return utils::transform(getPoly(params, role), cast_func);
 }
 
@@ -100,8 +99,7 @@ RegulatoryElementDataPtr constructNoStoppingAreaData(
 }
 }  // namespace
 
-NoStoppingArea::NoStoppingArea(const RegulatoryElementDataPtr & data)
-: RegulatoryElement(data)
+NoStoppingArea::NoStoppingArea(const RegulatoryElementDataPtr & data) : RegulatoryElement(data)
 {
   if (getConstPoly(data->parameters, RoleName::Refers).empty()) {
     throw InvalidInputError("no stopping area defined!");
@@ -122,7 +120,7 @@ ConstPolygons3d NoStoppingArea::noStoppingAreas() const
 {
   return getConstPoly(parameters(), RoleName::Refers);
 }
-Polygons3d NoStoppingArea::noStoppingAreas() {return getPoly(parameters(), RoleName::Refers);}
+Polygons3d NoStoppingArea::noStoppingAreas() { return getPoly(parameters(), RoleName::Refers); }
 
 void NoStoppingArea::addNoStoppingArea(const Polygon3d & primitive)
 {
@@ -149,7 +147,7 @@ void NoStoppingArea::setStopLine(const LineString3d & stopLine)
   parameters()[RoleName::RefLine] = {stopLine};
 }
 
-void NoStoppingArea::removeStopLine() {parameters()[RoleName::RefLine] = {};}
+void NoStoppingArea::removeStopLine() { parameters()[RoleName::RefLine] = {}; }
 
 #if __cplusplus < 201703L
 constexpr char NoStoppingArea::RuleName[];  // instantiate string in cpp file

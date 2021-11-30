@@ -31,23 +31,23 @@
  *
  */
 
-#include <vector>
-#include <memory>
-
-#include "rclcpp/rclcpp.hpp"
-
-#include "lanelet2_core/LaneletMap.h"
-#include "lanelet2_projection/UTM.h"
-#include "autoware_lanelet2_msgs/msg/map_bin.hpp"
-#include "sensor_msgs/msg/point_cloud2.hpp"
-#include "visualization_msgs/msg/marker_array.hpp"
-
-#include "lanelet2_extension/regulatory_elements/autoware_traffic_light.hpp"
-#include "lanelet2_extension/utility/message_conversion.hpp"
-#include "lanelet2_extension/utility/query.hpp"
-#include "lanelet2_extension/visualization/visualization.hpp"
-
 #include "map_loader/lanelet2_map_visualization_node.hpp"
+
+#include <lanelet2_extension/regulatory_elements/autoware_traffic_light.hpp>
+#include <lanelet2_extension/utility/message_conversion.hpp>
+#include <lanelet2_extension/utility/query.hpp>
+#include <lanelet2_extension/visualization/visualization.hpp>
+#include <rclcpp/rclcpp.hpp>
+
+#include <autoware_lanelet2_msgs/msg/map_bin.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
+
+#include <lanelet2_core/LaneletMap.h>
+#include <lanelet2_projection/UTM.h>
+
+#include <memory>
+#include <vector>
 
 namespace
 {
@@ -144,13 +144,13 @@ void Lanelet2MapVisualizationNode::onMapBin(
     &map_marker_array, lanelet::visualization::laneletDirectionAsMarkerArray(road_lanelets));
   insertMarkerArray(
     &map_marker_array, lanelet::visualization::laneletsAsTriangleMarkerArray(
-      "crosswalk_lanelets", crosswalk_lanelets, cl_cross));
+                         "crosswalk_lanelets", crosswalk_lanelets, cl_cross));
   insertMarkerArray(
     &map_marker_array, lanelet::visualization::pedestrianMarkingsAsMarkerArray(
-      pedestrian_markings, cl_pedestrian_markings));
+                         pedestrian_markings, cl_pedestrian_markings));
   insertMarkerArray(
     &map_marker_array, lanelet::visualization::laneletsAsTriangleMarkerArray(
-      "walkway_lanelets", walkway_lanelets, cl_cross));
+                         "walkway_lanelets", walkway_lanelets, cl_cross));
   insertMarkerArray(
     &map_marker_array,
     lanelet::visualization::obstaclePolygonsAsMarkerArray(obstacle_polygons, cl_obstacle_polygons));
@@ -172,7 +172,7 @@ void Lanelet2MapVisualizationNode::onMapBin(
       shoulder_lanelets, cl_shoulder_borders, viz_lanelets_centerline_, "shoulder_"));
   insertMarkerArray(
     &map_marker_array, lanelet::visualization::laneletsBoundaryAsMarkerArray(
-      road_lanelets, cl_ll_borders, viz_lanelets_centerline_));
+                         road_lanelets, cl_ll_borders, viz_lanelets_centerline_));
   insertMarkerArray(
     &map_marker_array,
     lanelet::visualization::autowareTrafficLightsAsMarkerArray(aw_tl_reg_elems, cl_trafficlights));
@@ -187,7 +187,7 @@ void Lanelet2MapVisualizationNode::onMapBin(
     lanelet::visualization::generateLaneletIdMarker(road_lanelets, cl_lanelet_id));
   insertMarkerArray(
     &map_marker_array, lanelet::visualization::laneletsAsTriangleMarkerArray(
-      "shoulder_road_lanelets", shoulder_lanelets, cl_shoulder));
+                         "shoulder_road_lanelets", shoulder_lanelets, cl_shoulder));
   insertMarkerArray(
     &map_marker_array,
     lanelet::visualization::laneletsAsTriangleMarkerArray("road_lanelets", road_lanelets, cl_road));
@@ -195,5 +195,5 @@ void Lanelet2MapVisualizationNode::onMapBin(
   pub_marker_->publish(map_marker_array);
 }
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(Lanelet2MapVisualizationNode)

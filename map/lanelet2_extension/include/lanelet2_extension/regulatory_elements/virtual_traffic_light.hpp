@@ -15,11 +15,11 @@
 #ifndef LANELET2_EXTENSION__REGULATORY_ELEMENTS__VIRTUAL_TRAFFIC_LIGHT_HPP_
 #define LANELET2_EXTENSION__REGULATORY_ELEMENTS__VIRTUAL_TRAFFIC_LIGHT_HPP_
 
+#include <lanelet2_core/primitives/BasicRegulatoryElements.h>
+#include <lanelet2_core/primitives/LineString.h>
+
 #include <memory>
 #include <vector>
-
-#include "lanelet2_core/primitives/BasicRegulatoryElements.h"
-#include "lanelet2_core/primitives/LineString.h"
 
 namespace lanelet
 {
@@ -57,10 +57,7 @@ public:
     return getParameters<ConstLineString3d>("start_line").front();
   }
 
-  ConstLineStrings3d getEndLines() const
-  {
-    return getParameters<ConstLineString3d>("end_line");
-  }
+  ConstLineStrings3d getEndLines() const { return getParameters<ConstLineString3d>("end_line"); }
 
 private:
   // the following lines are required so that lanelet2 can create this object

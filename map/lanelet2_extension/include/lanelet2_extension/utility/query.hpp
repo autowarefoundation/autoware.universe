@@ -17,19 +17,20 @@
 #ifndef LANELET2_EXTENSION__UTILITY__QUERY_HPP_
 #define LANELET2_EXTENSION__UTILITY__QUERY_HPP_
 
-#include <memory>
-#include <string>
-#include <vector>
-
-#include "lanelet2_core/LaneletMap.h"
-#include "lanelet2_core/primitives/Lanelet.h"
-#include "lanelet2_routing/RoutingGraph.h"
-
-#include "geometry_msgs/msg/point.hpp"
-#include "geometry_msgs/msg/pose.hpp"
 #include "lanelet2_extension/regulatory_elements/autoware_traffic_light.hpp"
 #include "lanelet2_extension/regulatory_elements/detection_area.hpp"
 #include "lanelet2_extension/regulatory_elements/no_stopping_area.hpp"
+
+#include <geometry_msgs/msg/point.hpp>
+#include <geometry_msgs/msg/pose.hpp>
+
+#include <lanelet2_core/LaneletMap.h>
+#include <lanelet2_core/primitives/Lanelet.h>
+#include <lanelet2_routing/RoutingGraph.h>
+
+#include <memory>
+#include <string>
+#include <vector>
 
 namespace lanelet
 {

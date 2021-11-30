@@ -26,8 +26,7 @@ namespace lanelet
 {
 namespace projection
 {
-MGRSProjector::MGRSProjector(Origin origin)
-: Projector(origin) {}
+MGRSProjector::MGRSProjector(Origin origin) : Projector(origin) {}
 
 BasicPoint3d MGRSProjector::forward(const GPSPoint & gps) const
 {
@@ -61,9 +60,9 @@ BasicPoint3d MGRSProjector::forward(const GPSPoint & gps, const int precision) c
 
   if (!prev_projected_grid.empty() && prev_projected_grid != projected_grid_) {
     std::cerr << "Projected MGRS Grid changed from last projection. Projected point"
-      "might be far away from previously projected point." <<
-      std::endl <<
-      "You may want to use different projector.";
+                 "might be far away from previously projected point."
+              << std::endl
+              << "You may want to use different projector.";
   }
 
   return mgrs_point;
@@ -78,9 +77,8 @@ GPSPoint MGRSProjector::reverse(const BasicPoint3d & mgrs_point) const
   } else if (!projected_grid_.empty()) {
     gps = reverse(mgrs_point, projected_grid_);
   } else {
-    std::cerr << "cannot run reverse operation if mgrs code is not set in projector." <<
-      std::endl <<
-      "use setMGRSCode function or explicitly give mgrs code as an argument.";
+    std::cerr << "cannot run reverse operation if mgrs code is not set in projector." << std::endl
+              << "use setMGRSCode function or explicitly give mgrs code as an argument.";
   }
   return gps;
 }
@@ -108,7 +106,7 @@ GPSPoint MGRSProjector::reverse(
   return gps;
 }
 
-void MGRSProjector::setMGRSCode(const std::string & mgrs_code) {mgrs_code_ = mgrs_code;}
+void MGRSProjector::setMGRSCode(const std::string & mgrs_code) { mgrs_code_ = mgrs_code; }
 
 void MGRSProjector::setMGRSCode(const GPSPoint & gps, const int precision)
 {

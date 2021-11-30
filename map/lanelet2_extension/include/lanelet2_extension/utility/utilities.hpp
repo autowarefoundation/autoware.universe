@@ -18,13 +18,14 @@
 #define LANELET2_EXTENSION__UTILITY__UTILITIES_HPP_
 
 #include <rclcpp/rclcpp.hpp>
+
+#include <geometry_msgs/msg/point.hpp>
+#include <geometry_msgs/msg/pose.hpp>
+
+#include <lanelet2_routing/Route.h>
+#include <lanelet2_routing/RoutingGraph.h>
+
 #include <map>
-
-#include "geometry_msgs/msg/point.hpp"
-#include "geometry_msgs/msg/pose.hpp"
-
-#include "lanelet2_routing/Route.h"
-#include "lanelet2_routing/RoutingGraph.h"
 
 namespace lanelet
 {
