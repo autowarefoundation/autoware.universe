@@ -1,23 +1,8 @@
-# To install:
-#
-#     pip install pre-commit
-#
-# To use:
-#
-#     pre-commit run -a
-#
-# Or:
-#
-#     pre-commit install  # (runs every time you commit in git)
-#
-# To update this file:
-#
-#     pre-commit autoupdate
-#
-# See https://github.com/pre-commit/pre-commit
+ci:
+  autofix_commit_msg: "ci(pre-commit): autofix"
+  autoupdate_commit_msg: "ci(pre-commit): autoupdate"
 
 repos:
-  # Standard hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.0.1
     hooks:
@@ -91,7 +76,6 @@ repos:
     hooks:
       - id: cpplint
         args: ["--quiet"]
-        exclude: "(.cu)"
+        exclude: ".cu"
 
-# ignore .svg file and packages that is back-ported by autoware.auto
-exclude: ".svg|control/trajectory_follower|control/trajectory_follower_nodes|tmp_autoware_auto_dependencies|common/math/osqp_interface|simulator/simple_planning_simulator|planning/scenario_planning/parking/freespace_planner|planning/scenario_planning/parking/astar_search|planning/scenario_planning/parking/costmap_generator|common/util/rviz_plugins/autoware_auto_perception_rviz_plugin"
+exclude: ".svg"
