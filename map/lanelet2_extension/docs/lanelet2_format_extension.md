@@ -7,10 +7,13 @@ About the basics of the default format, please refer to main [Lanelet2 repositor
 In addition to default Lanelet2 Format, users should add following mandatory/optional tags to their osm lanelet files as explained in reset of this document.
 Users may use `autoware_lanelet2_validation` [node](../README.md#nodes) to check if their maps are valid.
 
-There are also [extra regulatory elements](./ExtraRegulatoryElements) added for Autoware:
+The following is the extra format added for Autoware:
 
-- Detection Area
-- Road Marking
+- [extra regulatory elements](extra_regulatory_elements.md)
+  - Detection Area
+  - Road Marking
+- [extra lanelet subtype](extra_lanelet_subtypes.md)
+  - Roadside Lane
 
 ## Mandatory Tags
 
