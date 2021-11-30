@@ -198,9 +198,10 @@ bool getClosestLanelet(
 
 /**
  * [getSucceedingLaneletSequences retrieves a sequence of lanelets after the given lanelet.
- * The total length of retrieved lanelet sequence at least given length.]
+ * The total length of retrieved lanelet sequence at least given length. Returned lanelet sequence
+ * does not include input lanelet.]
  * @param graph [input lanelet routing graph]
- * @param lanelet [starting lanelet of the lanelet sequence]
+ * @param lanelet [input lanelet]
  * @param length [minimum length of retrieved lanelet sequence]
  * @return   [lanelet sequence that follows given lanelet]
  */
@@ -210,9 +211,10 @@ std::vector<lanelet::ConstLanelets> getSucceedingLaneletSequences(
 
 /**
  * [getPreceedingLaneletSequences retrieves a sequence of lanelets before the given lanelet.
- * The total length of retrieved lanelet sequence at least given length.]
+ * The total length of retrieved lanelet sequence at least given length. Returned lanelet sequence
+ * does not include input lanelet.]
  * @param graph [input lanelet routing graph]
- * @param lanelet [ending lanelet of the lanelet sequence]
+ * @param lanelet [input lanelet]
  * @param length [minimum length of retrieved lanelet sequence]
  * @return   [lanelet sequence that leads to given lanelet]
  */
