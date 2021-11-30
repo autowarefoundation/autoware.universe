@@ -114,9 +114,9 @@ void Lanelet2MapVisualizationNode::onMapBin(
   std_msgs::msg::ColorRGBA cl_road, cl_cross, cl_pedestrian_markings, cl_ll_borders, cl_stoplines,
     cl_trafficlights, cl_detection_areas, cl_parking_lots, cl_parking_spaces, cl_lanelet_id,
     cl_obstacle_polygons;
-  setColor(&cl_road, 0.7, 0.7, 0.7, 0.2);
-  setColor(&cl_cross, 0.7, 1.0, 0.7, 0.2);
-  setColor(&cl_pedestrian_markings, 0.5, 0.5, 0.5, 0.8);
+  setColor(&cl_road, 0.27, 0.27, 0.27, 0.999);
+  setColor(&cl_cross, 0.27, 0.3, 0.27, 0.5);
+  setColor(&cl_pedestrian_markings, 0.5, 0.5, 0.5, 0.999);
   setColor(&cl_ll_borders, 0.5, 0.5, 0.5, 0.999);
   setColor(&cl_stoplines, 0.5, 0.5, 0.5, 0.999);
   setColor(&cl_trafficlights, 0.5, 0.5, 0.5, 0.8);
