@@ -79,7 +79,7 @@ lanelet::ConstLanelets roadLanelets(const lanelet::ConstLanelets lls);
 /**
  * [trafficLights extracts Traffic Light regulatory element from lanelets]
  * @param lanelets [input lanelets]
- * @return         [traffic light that are associated with input lanenets]
+ * @return         [traffic light that are associated with input lanelets]
  */
 std::vector<lanelet::TrafficLightConstPtr> trafficLights(const lanelet::ConstLanelets lanelets);
 
@@ -88,7 +88,7 @@ std::vector<lanelet::TrafficLightConstPtr> trafficLights(const lanelet::ConstLan
  * from lanelets]
  * @param lanelets [input lanelets]
  * @return         [autoware traffic light that are associated with input
- * lanenets]
+ * lanelets]
  */
 std::vector<lanelet::AutowareTrafficLightConstPtr> autowareTrafficLights(
   const lanelet::ConstLanelets lanelets);
@@ -169,7 +169,7 @@ std::vector<lanelet::ConstLineString3d> stopLinesLanelets(const lanelet::ConstLa
 std::vector<lanelet::ConstLineString3d> stopLinesLanelet(const lanelet::ConstLanelet ll);
 
 /**
- * [stopSignes extracts stoplines that are associated with stopsignes]
+ * [stopSignStopLines extracts stoplines that are associated with stop signs]
  * @param lanelets     [input lanelets]
  * @param stop_sign_id [sign id of stop sign]
  * @return             [array of stoplines]
