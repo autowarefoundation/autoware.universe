@@ -86,7 +86,6 @@ VehicleInfo VehicleInfo::create(rclcpp::Node & node)
       wheel_radius_m, wheel_width_m, wheel_base_m, wheel_tread_m, front_overhang_m, rear_overhang_m,
       left_overhang_m, right_overhang_m, vehicle_height_m);
   }
-
 }
 
 }  // namespace vehicle_info_util
