@@ -12,14 +12,14 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
+#include "raw_vehicle_cmd_converter/accel_map.hpp"
+
 #include <algorithm>
 #include <chrono>
 #include <string>
 #include <vector>
 
-#include "raw_vehicle_cmd_converter/accel_map.hpp"
-
-using namespace std::chrono_literals;
+using namespace std::literals::chrono_literals;
 
 namespace raw_vehicle_cmd_converter
 {
@@ -35,8 +35,7 @@ bool AccelMap::readAccelMapFromCSV(std::string csv_path)
 
   if (table[0].size() < 2) {
     RCLCPP_ERROR(
-      logger_,
-      "Cannot read %s. CSV file should have at least 2 column", csv_path.c_str());
+      logger_, "Cannot read %s. CSV file should have at least 2 column", csv_path.c_str());
     return false;
   }
   vehicle_name_ = table[0][0];
@@ -47,9 +46,7 @@ bool AccelMap::readAccelMapFromCSV(std::string csv_path)
   for (unsigned int i = 1; i < table.size(); i++) {
     if (table[0].size() != table[i].size()) {
       RCLCPP_ERROR(
-        logger_,
-        "Cannot read %s. Each row should have a same number of columns",
-        csv_path.c_str());
+        logger_, "Cannot read %s. Each row should have a same number of columns", csv_path.c_str());
       return false;
     }
     throttle_index_.push_back(std::stod(table[i][0]));
@@ -140,8 +137,7 @@ bool AccelMap::getAcceleration(double throttle, double vel, double & acc)
   const double min_throttle = throttle_index_.front();
   if (throttle < min_throttle || max_throttle < throttle) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
-      logger_, clock_, 1000,
-      "Input throttle: %f is out off range. use closest value.", throttle);
+      logger_, clock_, 1000, "Input throttle: %f is out off range. use closest value.", throttle);
     throttle = std::min(std::max(throttle, min_throttle), max_throttle);
   }
 

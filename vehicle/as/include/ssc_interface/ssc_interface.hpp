@@ -15,40 +15,38 @@
 #ifndef SSC_INTERFACE__SSC_INTERFACE_HPP_
 #define SSC_INTERFACE__SSC_INTERFACE_HPP_
 
+#include <builtin_interfaces/msg/time.hpp>
+#include <rclcpp/rclcpp.hpp>
+
+#include <automotive_navigation_msgs/msg/module_state.hpp>
+#include <automotive_platform_msgs/msg/brake_feedback.hpp>
+#include <automotive_platform_msgs/msg/curvature_feedback.hpp>
+#include <automotive_platform_msgs/msg/gear_command.hpp>
+#include <automotive_platform_msgs/msg/gear_feedback.hpp>
+#include <automotive_platform_msgs/msg/speed_mode.hpp>
+#include <automotive_platform_msgs/msg/steer_mode.hpp>
+#include <automotive_platform_msgs/msg/throttle_feedback.hpp>
+#include <automotive_platform_msgs/msg/turn_signal_command.hpp>
+#include <automotive_platform_msgs/msg/velocity_accel_cov.hpp>
+#include <autoware_debug_msgs/msg/float32_stamped.hpp>
+#include <autoware_vehicle_msgs/msg/control_mode.hpp>
+#include <autoware_vehicle_msgs/msg/engage.hpp>
+#include <autoware_vehicle_msgs/msg/shift_stamped.hpp>
+#include <autoware_vehicle_msgs/msg/steering.hpp>
+#include <autoware_vehicle_msgs/msg/turn_signal.hpp>
+#include <autoware_vehicle_msgs/msg/vehicle_command.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
+#include <pacmod_msgs/msg/system_rpt_float.hpp>
+#include <pacmod_msgs/msg/system_rpt_int.hpp>
+#include <pacmod_msgs/msg/wheel_speed_rpt.hpp>
+#include <std_msgs/msg/header.hpp>
+
+#include <message_filters/subscriber.h>
+#include <message_filters/sync_policies/approximate_time.h>
+#include <message_filters/synchronizer.h>
+
 #include <memory>
 #include <string>
-
-#include "message_filters/subscriber.h"
-#include "message_filters/sync_policies/approximate_time.h"
-#include "message_filters/synchronizer.h"
-
-#include "rclcpp/rclcpp.hpp"
-
-#include "builtin_interfaces/msg/time.hpp"
-#include "geometry_msgs/msg/twist_stamped.hpp"
-#include "std_msgs/msg/header.hpp"
-
-#include "automotive_navigation_msgs/msg/module_state.hpp"
-#include "automotive_platform_msgs/msg/brake_feedback.hpp"
-#include "automotive_platform_msgs/msg/curvature_feedback.hpp"
-#include "automotive_platform_msgs/msg/gear_command.hpp"
-#include "automotive_platform_msgs/msg/gear_feedback.hpp"
-#include "automotive_platform_msgs/msg/speed_mode.hpp"
-#include "automotive_platform_msgs/msg/steer_mode.hpp"
-#include "automotive_platform_msgs/msg/throttle_feedback.hpp"
-#include "automotive_platform_msgs/msg/turn_signal_command.hpp"
-#include "automotive_platform_msgs/msg/velocity_accel_cov.hpp"
-#include "pacmod_msgs/msg/system_rpt_float.hpp"
-#include "pacmod_msgs/msg/system_rpt_int.hpp"
-#include "pacmod_msgs/msg/wheel_speed_rpt.hpp"
-
-#include "autoware_debug_msgs/msg/float32_stamped.hpp"
-#include "autoware_vehicle_msgs/msg/control_mode.hpp"
-#include "autoware_vehicle_msgs/msg/engage.hpp"
-#include "autoware_vehicle_msgs/msg/shift_stamped.hpp"
-#include "autoware_vehicle_msgs/msg/steering.hpp"
-#include "autoware_vehicle_msgs/msg/turn_signal.hpp"
-#include "autoware_vehicle_msgs/msg/vehicle_command.hpp"
 
 static const char BASE_FRAME_ID[] = "base_link";
 
@@ -60,11 +58,11 @@ public:
 
 private:
   typedef message_filters::sync_policies::ApproximateTime<
-      automotive_platform_msgs::msg::VelocityAccelCov,
-      automotive_platform_msgs::msg::CurvatureFeedback,
-      automotive_platform_msgs::msg::ThrottleFeedback, automotive_platform_msgs::msg::BrakeFeedback,
-      automotive_platform_msgs::msg::GearFeedback, pacmod_msgs::msg::WheelSpeedRpt,
-      pacmod_msgs::msg::SystemRptFloat>
+    automotive_platform_msgs::msg::VelocityAccelCov,
+    automotive_platform_msgs::msg::CurvatureFeedback,
+    automotive_platform_msgs::msg::ThrottleFeedback, automotive_platform_msgs::msg::BrakeFeedback,
+    automotive_platform_msgs::msg::GearFeedback, pacmod_msgs::msg::WheelSpeedRpt,
+    pacmod_msgs::msg::SystemRptFloat>
     SSCFeedbacksSyncPolicy;
 
   // subscribers
@@ -74,18 +72,18 @@ private:
   rclcpp::Subscription<automotive_navigation_msgs::msg::ModuleState>::SharedPtr module_states_sub_;
 
   std::unique_ptr<message_filters::Subscriber<automotive_platform_msgs::msg::VelocityAccelCov>>
-  velocity_accel_cov_sub_;
+    velocity_accel_cov_sub_;
   std::unique_ptr<message_filters::Subscriber<automotive_platform_msgs::msg::CurvatureFeedback>>
-  curvature_feedback_sub_;
+    curvature_feedback_sub_;
   std::unique_ptr<message_filters::Subscriber<automotive_platform_msgs::msg::ThrottleFeedback>>
-  throttle_feedback_sub_;
+    throttle_feedback_sub_;
   std::unique_ptr<message_filters::Subscriber<automotive_platform_msgs::msg::BrakeFeedback>>
-  brake_feedback_sub_;
+    brake_feedback_sub_;
   std::unique_ptr<message_filters::Subscriber<automotive_platform_msgs::msg::GearFeedback>>
-  gear_feedback_sub_;
+    gear_feedback_sub_;
   std::unique_ptr<message_filters::Subscriber<pacmod_msgs::msg::WheelSpeedRpt>> wheel_speed_sub_;
   std::unique_ptr<message_filters::Subscriber<pacmod_msgs::msg::SystemRptFloat>>
-  steering_wheel_sub_;
+    steering_wheel_sub_;
   std::unique_ptr<message_filters::Synchronizer<SSCFeedbacksSyncPolicy>> ssc_feedbacks_sync_;
 
   // TEMP to support turn_signal

@@ -15,14 +15,14 @@
 #ifndef RAW_VEHICLE_CMD_CONVERTER__STEER_CONVERTER_HPP_
 #define RAW_VEHICLE_CMD_CONVERTER__STEER_CONVERTER_HPP_
 
-#include <string>
-#include <vector>
-
-#include "rclcpp/rclcpp.hpp"
-
 #include "raw_vehicle_cmd_converter/csv_loader.hpp"
 #include "raw_vehicle_cmd_converter/interpolate.hpp"
 #include "raw_vehicle_cmd_converter/pid.hpp"
+
+#include <rclcpp/rclcpp.hpp>
+
+#include <string>
+#include <vector>
 
 namespace raw_vehicle_cmd_converter
 {
@@ -40,7 +40,7 @@ public:
     const double target_steer_angle, const double target_steer_angle_velocity, const double dt,
     const double current_velocity, const double current_steer_angle,
     std::vector<double> & pid_contributions, std::vector<double> & errors);
-  void setDecay(const double decay) {pid_.setDecay(decay);}
+  void setDecay(const double decay) { pid_.setDecay(decay); }
 
 private:
   double kp_, ki_, kd_;
@@ -53,8 +53,8 @@ private:
   bool fb_gains_initialized_{false};
   bool fb_limits_initialized_{false};
 
-  rclcpp::Logger
-    logger_{rclcpp::get_logger("raw_vehicle_cmd_converter").get_child("steer_converter")};
+  rclcpp::Logger logger_{
+    rclcpp::get_logger("raw_vehicle_cmd_converter").get_child("steer_converter")};
 
   bool readSteerMapFromCSV(
     const std::string & csv_path, std::string & vehicle_name, std::vector<double> & vel_index,

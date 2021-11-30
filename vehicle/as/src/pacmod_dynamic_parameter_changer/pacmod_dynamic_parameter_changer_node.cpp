@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <algorithm>
+#include <pacmod_dynamic_parameter_changer/pacmod_dynamic_parameter_changer_node.hpp>
 
-#include "pacmod_dynamic_parameter_changer/pacmod_dynamic_parameter_changer_node.hpp"
+#include <algorithm>
 
 PacmodDynamicParameterChangerNode::PacmodDynamicParameterChangerNode()
 : Node("pacmod_dynamic_parameter_changer")
@@ -45,11 +45,9 @@ PacmodDynamicParameterChangerNode::PacmodDynamicParameterChangerNode()
     create_publisher<std_msgs::msg::Float32MultiArray>("~/debug/parameter", rclcpp::QoS{1});
 
   using std::placeholders::_1;
-  steer_rpt_sub_ =
-    create_subscription<pacmod_msgs::msg::SystemRptFloat>(
-    "~/input/steer_rpt", rclcpp::QoS{1}, std::bind(
-      &PacmodDynamicParameterChangerNode::subSteerRpt, this,
-      _1));
+  steer_rpt_sub_ = create_subscription<pacmod_msgs::msg::SystemRptFloat>(
+    "~/input/steer_rpt", rclcpp::QoS{1},
+    std::bind(&PacmodDynamicParameterChangerNode::subSteerRpt, this, _1));
 }
 
 void PacmodDynamicParameterChangerNode::subSteerRpt(

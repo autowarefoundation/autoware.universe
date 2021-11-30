@@ -15,22 +15,21 @@
 #ifndef EXTERNAL_CMD_CONVERTER__NODE_HPP_
 #define EXTERNAL_CMD_CONVERTER__NODE_HPP_
 
+#include <diagnostic_updater/diagnostic_updater.hpp>
+#include <raw_vehicle_cmd_converter/accel_map.hpp>
+#include <raw_vehicle_cmd_converter/brake_map.hpp>
+#include <rclcpp/rclcpp.hpp>
+
+#include <autoware_control_msgs/msg/control_command_stamped.hpp>
+#include <autoware_control_msgs/msg/gate_mode.hpp>
+#include <autoware_external_api_msgs/msg/control_command_stamped.hpp>
+#include <autoware_external_api_msgs/msg/heartbeat.hpp>
+#include <autoware_vehicle_msgs/msg/shift_stamped.hpp>
+#include <autoware_vehicle_msgs/msg/vehicle_command.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
+
 #include <memory>
 #include <string>
-
-#include "diagnostic_updater/diagnostic_updater.hpp"
-#include "rclcpp/rclcpp.hpp"
-
-#include "autoware_external_api_msgs/msg/control_command_stamped.hpp"
-#include "autoware_external_api_msgs/msg/heartbeat.hpp"
-#include "autoware_control_msgs/msg/control_command_stamped.hpp"
-#include "autoware_control_msgs/msg/gate_mode.hpp"
-#include "autoware_vehicle_msgs/msg/shift_stamped.hpp"
-#include "autoware_vehicle_msgs/msg/vehicle_command.hpp"
-#include "geometry_msgs/msg/twist_stamped.hpp"
-
-#include "raw_vehicle_cmd_converter/accel_map.hpp"
-#include "raw_vehicle_cmd_converter/brake_map.hpp"
 
 namespace external_cmd_converter
 {

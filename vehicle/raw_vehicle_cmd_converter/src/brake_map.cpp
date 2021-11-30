@@ -12,11 +12,11 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
+#include "raw_vehicle_cmd_converter/brake_map.hpp"
+
 #include <algorithm>
 #include <string>
 #include <vector>
-
-#include "raw_vehicle_cmd_converter/brake_map.hpp"
 
 namespace raw_vehicle_cmd_converter
 {
@@ -32,8 +32,7 @@ bool BrakeMap::readBrakeMapFromCSV(std::string csv_path)
 
   if (table[0].size() < 2) {
     RCLCPP_ERROR(
-      logger_,
-      "Cannot read %s. CSV file should have at least 2 column", csv_path.c_str());
+      logger_, "Cannot read %s. CSV file should have at least 2 column", csv_path.c_str());
     return false;
   }
 
@@ -45,9 +44,7 @@ bool BrakeMap::readBrakeMapFromCSV(std::string csv_path)
   for (unsigned int i = 1; i < table.size(); i++) {
     if (table[0].size() != table[i].size()) {
       RCLCPP_ERROR(
-        logger_,
-        "Cannot read %s. Each row should have a same number of columns",
-        csv_path.c_str());
+        logger_, "Cannot read %s. Each row should have a same number of columns", csv_path.c_str());
       return false;
     }
     brake_index_.push_back(std::stod(table[i][0]));
@@ -149,8 +146,7 @@ bool BrakeMap::getAcceleration(double brake, double vel, double & acc)
   const double min_brake = brake_index_.front();
   if (brake < min_brake || max_brake < brake) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
-      logger_, clock_, 1000,
-      "Input brake: %f is out off range. use closest value.", brake);
+      logger_, clock_, 1000, "Input brake: %f is out off range. use closest value.", brake);
     brake = std::min(std::max(brake, min_brake), max_brake);
   }
 

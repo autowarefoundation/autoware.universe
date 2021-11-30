@@ -12,11 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <pacmod_interface/pacmod_interface.hpp>
+#include <rclcpp/rclcpp.hpp>
+
 #include <memory>
-
-#include "rclcpp/rclcpp.hpp"
-
-#include "pacmod_interface/pacmod_interface.hpp"
 
 int main(int argc, char ** argv)
 {

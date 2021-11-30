@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <pacmod_interface/pacmod_diag_publisher.hpp>
+
 #include <algorithm>
 #include <limits>
 #include <memory>
 #include <string>
 #include <utility>
-
-#include "pacmod_interface/pacmod_diag_publisher.hpp"
 
 PacmodDiagPublisher::PacmodDiagPublisher()
 : Node("pacmod_diag_publisher"),
@@ -41,10 +41,10 @@ PacmodDiagPublisher::PacmodDiagPublisher()
 
   steer_wheel_rpt_sub_ =
     std::make_unique<message_filters::Subscriber<pacmod_msgs::msg::SystemRptFloat>>(
-    this, "/pacmod/parsed_tx/steer_rpt");
+      this, "/pacmod/parsed_tx/steer_rpt");
   wheel_speed_rpt_sub_ =
     std::make_unique<message_filters::Subscriber<pacmod_msgs::msg::WheelSpeedRpt>>(
-    this, "/pacmod/parsed_tx/wheel_speed_rpt");
+      this, "/pacmod/parsed_tx/wheel_speed_rpt");
   accel_rpt_sub_ = std::make_unique<message_filters::Subscriber<pacmod_msgs::msg::SystemRptFloat>>(
     this, "/pacmod/parsed_tx/accel_rpt");
   brake_rpt_sub_ = std::make_unique<message_filters::Subscriber<pacmod_msgs::msg::SystemRptFloat>>(
@@ -58,14 +58,13 @@ PacmodDiagPublisher::PacmodDiagPublisher()
 
   pacmod_feedbacks_sync_ =
     std::make_unique<message_filters::Synchronizer<PacmodFeedbacksSyncPolicy>>(
-    PacmodFeedbacksSyncPolicy(10), *steer_wheel_rpt_sub_, *wheel_speed_rpt_sub_, *accel_rpt_sub_,
-    *brake_rpt_sub_, *shift_rpt_sub_, *turn_rpt_sub_, *global_rpt_sub_);
+      PacmodFeedbacksSyncPolicy(10), *steer_wheel_rpt_sub_, *wheel_speed_rpt_sub_, *accel_rpt_sub_,
+      *brake_rpt_sub_, *shift_rpt_sub_, *turn_rpt_sub_, *global_rpt_sub_);
 
-  pacmod_feedbacks_sync_->registerCallback(
-    std::bind(
-      &PacmodDiagPublisher::callbackPacmodRpt, this, std::placeholders::_1, std::placeholders::_2,
-      std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6,
-      std::placeholders::_7));
+  pacmod_feedbacks_sync_->registerCallback(std::bind(
+    &PacmodDiagPublisher::callbackPacmodRpt, this, std::placeholders::_1, std::placeholders::_2,
+    std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6,
+    std::placeholders::_7));
 }
 
 void PacmodDiagPublisher::callbackCan(const can_msgs::msg::Frame::ConstSharedPtr can)
@@ -166,7 +165,7 @@ bool PacmodDiagPublisher::isTimeoutPacmodMsgs()
   return dt > pacmod_msgs_timeout_sec_;
 }
 
-bool PacmodDiagPublisher::receivedPacmodMsgs() {return is_pacmod_rpt_received_;}
+bool PacmodDiagPublisher::receivedPacmodMsgs() { return is_pacmod_rpt_received_; }
 
 bool PacmodDiagPublisher::isBrakeActuatorAccident()
 {
@@ -183,4 +182,4 @@ bool PacmodDiagPublisher::isAccelAccident()
   return global_rpt_ptr_->fault_active && accel_rpt_ptr_->input_output_fault;
 }
 
-bool PacmodDiagPublisher::isOtherAccident() {return global_rpt_ptr_->fault_active;}
+bool PacmodDiagPublisher::isOtherAccident() { return global_rpt_ptr_->fault_active; }

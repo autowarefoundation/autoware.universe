@@ -12,10 +12,10 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
+#include "raw_vehicle_cmd_converter/pid.hpp"
+
 #include <algorithm>
 #include <vector>
-
-#include "raw_vehicle_cmd_converter/pid.hpp"
 
 namespace raw_vehicle_cmd_converter
 {
@@ -30,8 +30,8 @@ double PIDController::calculatePID(
     error_integral_ += error * dt;
     error_integral_ = std::min(std::max(error_integral_, min_ret_i_ / ki_), max_ret_i_ / ki_);
     if (is_debugging) {
-      std::cout << "error: " << error << ", dt: " << dt << ", integ_error: " << error_integral_ <<
-        std::endl;
+      std::cout << "error: " << error << ", dt: " << dt << ", integ_error: " << error_integral_
+                << std::endl;
     }
   } else {
     error_integral_ *= invalid_integration_decay_;

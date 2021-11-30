@@ -15,22 +15,23 @@
 #ifndef RAW_VEHICLE_CMD_CONVERTER__NODE_HPP_
 #define RAW_VEHICLE_CMD_CONVERTER__NODE_HPP_
 
-#include <memory>
-#include <string>
-#include <vector>
-
-#include "autoware_control_msgs/msg/control_command_stamped.hpp"
-#include "autoware_debug_msgs/msg/float32_multi_array_stamped.hpp"
-#include "autoware_vehicle_msgs/msg/actuation_command_stamped.hpp"
-#include "autoware_vehicle_msgs/msg/shift.hpp"
-#include "autoware_vehicle_msgs/msg/steering.hpp"
-#include "geometry_msgs/msg/twist_stamped.hpp"
-#include "rclcpp/rclcpp.hpp"
-
 #include "raw_vehicle_cmd_converter/accel_map.hpp"
 #include "raw_vehicle_cmd_converter/brake_map.hpp"
 #include "raw_vehicle_cmd_converter/pid.hpp"
 #include "raw_vehicle_cmd_converter/steer_converter.hpp"
+
+#include <rclcpp/rclcpp.hpp>
+
+#include <autoware_control_msgs/msg/control_command_stamped.hpp>
+#include <autoware_debug_msgs/msg/float32_multi_array_stamped.hpp>
+#include <autoware_vehicle_msgs/msg/actuation_command_stamped.hpp>
+#include <autoware_vehicle_msgs/msg/shift.hpp>
+#include <autoware_vehicle_msgs/msg/steering.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
+
+#include <memory>
+#include <string>
+#include <vector>
 
 namespace raw_vehicle_cmd_converter
 {
@@ -43,8 +44,7 @@ using geometry_msgs::msg::TwistStamped;
 class DebugValues
 {
 public:
-  enum class TYPE
-  {
+  enum class TYPE {
     CURR_TIME = 0,
     P = 1,
     I = 2,
@@ -57,9 +57,9 @@ public:
     ERROR_D = 9,
     SIZE  // this is the number of enum elements
   };
-  std::array<double, static_cast<int>(TYPE::SIZE)> getValues() const {return values_;}
-  void setValues(TYPE type, double val) {values_.at(static_cast<int>(type)) = val;}
-  void setValues(int type, double val) {values_.at(type) = val;}
+  std::array<double, static_cast<int>(TYPE::SIZE)> getValues() const { return values_; }
+  void setValues(TYPE type, double val) { values_.at(static_cast<int>(type)) = val; }
+  void setValues(int type, double val) { values_.at(type) = val; }
 
 private:
   std::array<double, static_cast<int>(TYPE::SIZE)> values_;

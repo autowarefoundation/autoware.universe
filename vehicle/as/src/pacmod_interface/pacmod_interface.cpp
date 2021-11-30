@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <pacmod_interface/pacmod_interface.hpp>
+
 #include <algorithm>
 #include <limits>
 #include <memory>
 #include <utility>
-
-#include "pacmod_interface/pacmod_interface.hpp"
 
 PacmodInterface::PacmodInterface()
 : Node("pacmod_interface"),
@@ -31,7 +31,6 @@ PacmodInterface::PacmodInterface()
   /* parameters for vehicle specifications */
   tire_radius_ = vehicle_info_.wheel_radius_m;
   wheel_base_ = vehicle_info_.wheel_base_m;
-
 
   steering_offset_ = declare_parameter("steering_offset", 0.0);
   enable_steering_rate_control_ = declare_parameter("enable_steering_rate_control", false);
@@ -84,10 +83,10 @@ PacmodInterface::PacmodInterface()
 
   steer_wheel_rpt_sub_ =
     std::make_unique<message_filters::Subscriber<pacmod_msgs::msg::SystemRptFloat>>(
-    this, "/pacmod/parsed_tx/steer_rpt");
+      this, "/pacmod/parsed_tx/steer_rpt");
   wheel_speed_rpt_sub_ =
     std::make_unique<message_filters::Subscriber<pacmod_msgs::msg::WheelSpeedRpt>>(
-    this, "/pacmod/parsed_tx/wheel_speed_rpt");
+      this, "/pacmod/parsed_tx/wheel_speed_rpt");
   accel_rpt_sub_ = std::make_unique<message_filters::Subscriber<pacmod_msgs::msg::SystemRptFloat>>(
     this, "/pacmod/parsed_tx/accel_rpt");
   brake_rpt_sub_ = std::make_unique<message_filters::Subscriber<pacmod_msgs::msg::SystemRptFloat>>(
@@ -101,14 +100,13 @@ PacmodInterface::PacmodInterface()
 
   pacmod_feedbacks_sync_ =
     std::make_unique<message_filters::Synchronizer<PacmodFeedbacksSyncPolicy>>(
-    PacmodFeedbacksSyncPolicy(10), *steer_wheel_rpt_sub_, *wheel_speed_rpt_sub_, *accel_rpt_sub_,
-    *brake_rpt_sub_, *shift_rpt_sub_, *turn_rpt_sub_, *global_rpt_sub_);
+      PacmodFeedbacksSyncPolicy(10), *steer_wheel_rpt_sub_, *wheel_speed_rpt_sub_, *accel_rpt_sub_,
+      *brake_rpt_sub_, *shift_rpt_sub_, *turn_rpt_sub_, *global_rpt_sub_);
 
-  pacmod_feedbacks_sync_->registerCallback(
-    std::bind(
-      &PacmodInterface::callbackPacmodRpt, this, std::placeholders::_1, std::placeholders::_2,
-      std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6,
-      std::placeholders::_7));
+  pacmod_feedbacks_sync_->registerCallback(std::bind(
+    &PacmodInterface::callbackPacmodRpt, this, std::placeholders::_1, std::placeholders::_2,
+    std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6,
+    std::placeholders::_7));
 
   /* publisher */
   // To pacmod
@@ -256,7 +254,7 @@ void PacmodInterface::callbackPacmodRpt(
   {
     geometry_msgs::msg::TwistStamped twist;
     twist.header = header;
-    twist.twist.linear.x = current_velocity;                                        // [m/s]
+    twist.twist.linear.x = current_velocity;                                           // [m/s]
     twist.twist.angular.z = current_velocity * std::tan(current_steer) / wheel_base_;  // [rad/s]
     vehicle_twist_pub_->publish(twist);
   }
@@ -299,13 +297,10 @@ void PacmodInterface::callbackPacmodRpt(
 void PacmodInterface::publishCommands()
 {
   /* guard */
-  if (!actuation_cmd_ptr_ || !control_cmd_ptr_ ||
-    !is_pacmod_rpt_received_ || !shift_cmd_ptr_)
-  {
+  if (!actuation_cmd_ptr_ || !control_cmd_ptr_ || !is_pacmod_rpt_received_ || !shift_cmd_ptr_) {
     RCLCPP_INFO_THROTTLE(
       get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
-      "vehicle_cmd = %d, pacmod_msgs = %d", actuation_cmd_ptr_ != nullptr,
-      is_pacmod_rpt_received_);
+      "vehicle_cmd = %d, pacmod_msgs = %d", actuation_cmd_ptr_ != nullptr, is_pacmod_rpt_received_);
     return;
   }
 
@@ -329,8 +324,7 @@ void PacmodInterface::publishCommands()
   }
   if (is_emergency_ || timeouted) {
     RCLCPP_ERROR(
-      get_logger(),
-      "Emergency Stopping, emergency = %d, timeouted = %d", is_emergency_, timeouted);
+      get_logger(), "Emergency Stopping, emergency = %d, timeouted = %d", is_emergency_, timeouted);
     desired_throttle = 0.0;
     desired_brake = emergency_brake_;
   }
@@ -393,8 +387,7 @@ void PacmodInterface::publishCommands()
       desired_brake = brake_for_shift_trans;  // set brake to change the shift
       desired_shift = toPacmodShiftCmd(shift_cmd_ptr_->shift);
       RCLCPP_DEBUG(
-        get_logger(),
-        "Doing shift change. current = %d, desired = %d. set brake_cmd to %f",
+        get_logger(), "Doing shift change. current = %d, desired = %d. set brake_cmd to %f",
         shift_rpt_ptr_->output, toPacmodShiftCmd(shift_cmd_ptr_->shift), desired_brake);
     }
   }
@@ -527,11 +520,21 @@ uint16_t PacmodInterface::toPacmodShiftCmd(const autoware_vehicle_msgs::msg::Shi
   using autoware_vehicle_msgs::msg::Shift;
   using pacmod_msgs::msg::SystemCmdInt;
 
-  if (shift.data == Shift::PARKING) {return SystemCmdInt::SHIFT_PARK;}
-  if (shift.data == Shift::REVERSE) {return SystemCmdInt::SHIFT_REVERSE;}
-  if (shift.data == Shift::NEUTRAL) {return SystemCmdInt::SHIFT_NEUTRAL;}
-  if (shift.data == Shift::DRIVE) {return SystemCmdInt::SHIFT_FORWARD;}
-  if (shift.data == Shift::LOW) {return SystemCmdInt::SHIFT_LOW;}
+  if (shift.data == Shift::PARKING) {
+    return SystemCmdInt::SHIFT_PARK;
+  }
+  if (shift.data == Shift::REVERSE) {
+    return SystemCmdInt::SHIFT_REVERSE;
+  }
+  if (shift.data == Shift::NEUTRAL) {
+    return SystemCmdInt::SHIFT_NEUTRAL;
+  }
+  if (shift.data == Shift::DRIVE) {
+    return SystemCmdInt::SHIFT_FORWARD;
+  }
+  if (shift.data == Shift::LOW) {
+    return SystemCmdInt::SHIFT_LOW;
+  }
 
   return SystemCmdInt::SHIFT_NONE;
 }
@@ -541,11 +544,21 @@ int32_t PacmodInterface::toAutowareShiftCmd(const pacmod_msgs::msg::SystemRptInt
   using autoware_vehicle_msgs::msg::Shift;
   using pacmod_msgs::msg::SystemRptInt;
 
-  if (shift.output == SystemRptInt::SHIFT_PARK) {return Shift::PARKING;}
-  if (shift.output == SystemRptInt::SHIFT_REVERSE) {return Shift::REVERSE;}
-  if (shift.output == SystemRptInt::SHIFT_NEUTRAL) {return Shift::NEUTRAL;}
-  if (shift.output == SystemRptInt::SHIFT_FORWARD) {return Shift::DRIVE;}
-  if (shift.output == SystemRptInt::SHIFT_LOW) {return Shift::LOW;}
+  if (shift.output == SystemRptInt::SHIFT_PARK) {
+    return Shift::PARKING;
+  }
+  if (shift.output == SystemRptInt::SHIFT_REVERSE) {
+    return Shift::REVERSE;
+  }
+  if (shift.output == SystemRptInt::SHIFT_NEUTRAL) {
+    return Shift::NEUTRAL;
+  }
+  if (shift.output == SystemRptInt::SHIFT_FORWARD) {
+    return Shift::DRIVE;
+  }
+  if (shift.output == SystemRptInt::SHIFT_LOW) {
+    return Shift::LOW;
+  }
 
   return Shift::NONE;
 }
@@ -555,9 +568,15 @@ uint16_t PacmodInterface::toPacmodTurnCmd(const autoware_vehicle_msgs::msg::Turn
   using autoware_vehicle_msgs::msg::TurnSignal;
   using pacmod_msgs::msg::SystemCmdInt;
 
-  if (turn.data == TurnSignal::LEFT) {return SystemCmdInt::TURN_LEFT;}
-  if (turn.data == TurnSignal::RIGHT) {return SystemCmdInt::TURN_RIGHT;}
-  if (turn.data == TurnSignal::HAZARD) {return SystemCmdInt::TURN_HAZARDS;}
+  if (turn.data == TurnSignal::LEFT) {
+    return SystemCmdInt::TURN_LEFT;
+  }
+  if (turn.data == TurnSignal::RIGHT) {
+    return SystemCmdInt::TURN_RIGHT;
+  }
+  if (turn.data == TurnSignal::HAZARD) {
+    return SystemCmdInt::TURN_HAZARDS;
+  }
 
   return SystemCmdInt::TURN_NONE;
 }
@@ -585,22 +604,20 @@ uint16_t PacmodInterface::toPacmodTurnCmdWithHazardRecover(
 
   if (
     turn_rpt_ptr_->command != SystemRptInt::TURN_HAZARDS &&
-    turn_rpt_ptr_->output == SystemRptInt::TURN_HAZARDS)
-  {
+    turn_rpt_ptr_->output == SystemRptInt::TURN_HAZARDS) {
     // publish hazard commands for turning off the hazard lights
     return SystemRptInt::TURN_HAZARDS;
   } else if (  // NOLINT
     turn_rpt_ptr_->command == SystemRptInt::TURN_HAZARDS &&
-    turn_rpt_ptr_->output != SystemRptInt::TURN_HAZARDS)
-  {
+    turn_rpt_ptr_->output != SystemRptInt::TURN_HAZARDS) {
     // publish none commands for turning on the hazard lights
     return SystemRptInt::TURN_NONE;
   } else {
     // something wrong
     RCLCPP_ERROR_STREAM(
-      get_logger(),
-      "turn signal command and output do not match. " <<
-        "COMMAND: " << turn_rpt_ptr_->command << "; OUTPUT: " << turn_rpt_ptr_->output);
+      get_logger(), "turn signal command and output do not match. "
+                      << "COMMAND: " << turn_rpt_ptr_->command
+                      << "; OUTPUT: " << turn_rpt_ptr_->output);
     return toPacmodTurnCmd(turn);
   }
 }
@@ -624,8 +641,7 @@ int32_t PacmodInterface::toAutowareTurnSignal(const pacmod_msgs::msg::SystemRptI
 double PacmodInterface::steerWheelRateLimiter(
   const double current_steer_cmd, const double prev_steer_cmd,
   const rclcpp::Time & current_steer_time, const rclcpp::Time & prev_steer_time,
-  const double steer_rate, const double current_steer_output,
-  const bool engage)
+  const double steer_rate, const double current_steer_output, const bool engage)
 {
   if (!engage) {
     // return current steer as steer command ( do not apply steer rate filter )

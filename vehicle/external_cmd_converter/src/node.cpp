@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "external_cmd_converter/node.hpp"
+
 #include <algorithm>
 #include <memory>
 #include <string>
 #include <utility>
-
-#include "external_cmd_converter/node.hpp"
 
 namespace external_cmd_converter
 {
@@ -52,7 +52,6 @@ ExternalCmdConverterNode::ExternalCmdConverterNode(const rclcpp::NodeOptions & n
   control_command_timeout_ = declare_parameter("control_command_timeout", 1.0);
   emergency_stop_timeout_ = declare_parameter("emergency_stop_timeout", 3.0);
 
-
   auto timer_callback = std::bind(&ExternalCmdConverterNode::onTimer, this);
   auto period = std::chrono::duration_cast<std::chrono::nanoseconds>(
     std::chrono::duration<double>(1.0 / timer_rate));
@@ -86,7 +85,7 @@ ExternalCmdConverterNode::ExternalCmdConverterNode(const rclcpp::NodeOptions & n
   current_shift_cmd_ = std::make_shared<autoware_vehicle_msgs::msg::ShiftStamped>();
 }
 
-void ExternalCmdConverterNode::onTimer() {updater_.force_update();}
+void ExternalCmdConverterNode::onTimer() { updater_.force_update(); }
 
 void ExternalCmdConverterNode::onVelocity(
   const geometry_msgs::msg::TwistStamped::ConstSharedPtr msg)
@@ -127,8 +126,7 @@ void ExternalCmdConverterNode::onExternalCmd(
 
   // Calculate reference velocity and acceleration
   const double sign = getShiftVelocitySign(*current_shift_cmd_);
-  const double ref_acceleration =
-    calculateAcc(cmd_ptr->control, std::fabs(*current_velocity_ptr_));
+  const double ref_acceleration = calculateAcc(cmd_ptr->control, std::fabs(*current_velocity_ptr_));
 
   if (ref_acceleration > 0.0 && sign == 0.0) {
     RCLCPP_WARN_THROTTLE(
@@ -140,9 +138,9 @@ void ExternalCmdConverterNode::onExternalCmd(
   double ref_velocity = *current_velocity_ptr_ + ref_acceleration * ref_vel_gain_ * sign;
   if (current_shift_cmd_->shift.data == autoware_vehicle_msgs::msg::Shift::REVERSE) {
     ref_velocity = std::min(0.0, ref_velocity);
-  } else if (current_shift_cmd_->shift.data == autoware_vehicle_msgs::msg::Shift::DRIVE || // NOLINT
-    current_shift_cmd_->shift.data == autoware_vehicle_msgs::msg::Shift::LOW)
-  {
+  } else if (
+    current_shift_cmd_->shift.data == autoware_vehicle_msgs::msg::Shift::DRIVE ||  // NOLINT
+    current_shift_cmd_->shift.data == autoware_vehicle_msgs::msg::Shift::LOW) {
     ref_velocity = std::max(0.0, ref_velocity);
   } else {
     ref_velocity = 0.0;
@@ -182,9 +180,15 @@ double ExternalCmdConverterNode::getShiftVelocitySign(
 {
   using autoware_vehicle_msgs::msg::Shift;
 
-  if (cmd.shift.data == Shift::DRIVE) {return 1.0;}
-  if (cmd.shift.data == Shift::LOW) {return 1.0;}
-  if (cmd.shift.data == Shift::REVERSE) {return -1.0;}
+  if (cmd.shift.data == Shift::DRIVE) {
+    return 1.0;
+  }
+  if (cmd.shift.data == Shift::LOW) {
+    return 1.0;
+  }
+  if (cmd.shift.data == Shift::REVERSE) {
+    return -1.0;
+  }
 
   return 0.0;
 }
@@ -208,7 +212,6 @@ void ExternalCmdConverterNode::checkTopicStatus(diagnostic_updater::DiagnosticSt
   stat.summary(status.level, status.message);
 }
 
-
 void ExternalCmdConverterNode::onGateMode(
   const autoware_control_msgs::msg::GateMode::ConstSharedPtr msg)
 {
@@ -226,14 +229,18 @@ bool ExternalCmdConverterNode::checkEmergencyStopTopicTimeout()
   }
 
   const auto duration = (this->now() - *latest_emergency_stop_heartbeat_received_time_);
-  if (duration.seconds() > emergency_stop_timeout_) {return false;}
+  if (duration.seconds() > emergency_stop_timeout_) {
+    return false;
+  }
 
   return true;
 }
 
 bool ExternalCmdConverterNode::checkRemoteTopicRate()
 {
-  if (!current_gate_mode_) {return true;}
+  if (!current_gate_mode_) {
+    return true;
+  }
 
   if (!latest_cmd_received_time_) {
     if (wait_for_first_topic_) {
@@ -245,7 +252,9 @@ bool ExternalCmdConverterNode::checkRemoteTopicRate()
 
   if (current_gate_mode_->data == autoware_control_msgs::msg::GateMode::EXTERNAL) {
     const auto duration = (this->now() - *latest_cmd_received_time_);
-    if (duration.seconds() > control_command_timeout_) {return false;}
+    if (duration.seconds() > control_command_timeout_) {
+      return false;
+    }
   } else {
     latest_cmd_received_time_ = nullptr;  // reset;
   }
@@ -254,5 +263,5 @@ bool ExternalCmdConverterNode::checkRemoteTopicRate()
 }
 }  // namespace external_cmd_converter
 
-#include "rclcpp_components/register_node_macro.hpp"
+#include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(external_cmd_converter::ExternalCmdConverterNode)

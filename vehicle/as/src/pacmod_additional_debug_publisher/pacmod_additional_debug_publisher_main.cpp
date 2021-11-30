@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <pacmod_additional_debug_publisher/pacmod_additional_debug_publisher_node.hpp>
+
 #include <algorithm>
 #include <memory>
 #include <utility>
-
-#include "pacmod_additional_debug_publisher/pacmod_additional_debug_publisher_node.hpp"
 
 int main(int argc, char ** argv)
 {

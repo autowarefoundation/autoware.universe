@@ -15,37 +15,36 @@
 #ifndef PACMOD_INTERFACE__PACMOD_INTERFACE_HPP_
 #define PACMOD_INTERFACE__PACMOD_INTERFACE_HPP_
 
+#include <rclcpp/rclcpp.hpp>
+#include <vehicle_info_util/vehicle_info_util.hpp>
+
+#include <autoware_control_msgs/msg/control_command_stamped.hpp>
+#include <autoware_vehicle_msgs/msg/actuation_command_stamped.hpp>
+#include <autoware_vehicle_msgs/msg/actuation_status_stamped.hpp>
+#include <autoware_vehicle_msgs/msg/control_mode.hpp>
+#include <autoware_vehicle_msgs/msg/engage.hpp>
+#include <autoware_vehicle_msgs/msg/shift_stamped.hpp>
+#include <autoware_vehicle_msgs/msg/steering.hpp>
+#include <autoware_vehicle_msgs/msg/turn_signal.hpp>
+#include <autoware_vehicle_msgs/msg/vehicle_command.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
+#include <pacmod_msgs/msg/global_rpt.hpp>
+#include <pacmod_msgs/msg/steer_system_cmd.hpp>
+#include <pacmod_msgs/msg/system_cmd_float.hpp>
+#include <pacmod_msgs/msg/system_cmd_int.hpp>
+#include <pacmod_msgs/msg/system_rpt_float.hpp>
+#include <pacmod_msgs/msg/system_rpt_int.hpp>
+#include <pacmod_msgs/msg/wheel_speed_rpt.hpp>
+
+#include <message_filters/subscriber.h>
+#include <message_filters/sync_policies/approximate_time.h>
+#include <message_filters/synchronizer.h>
+
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
 #include <memory>
 #include <string>
-
-#include "message_filters/subscriber.h"
-#include "message_filters/sync_policies/approximate_time.h"
-#include "message_filters/synchronizer.h"
-
-#include "geometry_msgs/msg/twist_stamped.hpp"
-#include "rclcpp/rclcpp.hpp"
-
-#include "pacmod_msgs/msg/global_rpt.hpp"
-#include "pacmod_msgs/msg/steer_system_cmd.hpp"
-#include "pacmod_msgs/msg/system_cmd_float.hpp"
-#include "pacmod_msgs/msg/system_cmd_int.hpp"
-#include "pacmod_msgs/msg/system_rpt_float.hpp"
-#include "pacmod_msgs/msg/system_rpt_int.hpp"
-#include "pacmod_msgs/msg/wheel_speed_rpt.hpp"
-
-#include "autoware_control_msgs/msg/control_command_stamped.hpp"
-#include "autoware_vehicle_msgs/msg/actuation_command_stamped.hpp"
-#include "autoware_vehicle_msgs/msg/actuation_status_stamped.hpp"
-#include "autoware_vehicle_msgs/msg/control_mode.hpp"
-#include "autoware_vehicle_msgs/msg/engage.hpp"
-#include "autoware_vehicle_msgs/msg/shift_stamped.hpp"
-#include "autoware_vehicle_msgs/msg/steering.hpp"
-#include "autoware_vehicle_msgs/msg/turn_signal.hpp"
-#include "autoware_vehicle_msgs/msg/vehicle_command.hpp"
-#include "vehicle_info_util/vehicle_info_util.hpp"
 
 class PacmodInterface : public rclcpp::Node
 {
@@ -54,11 +53,10 @@ public:
 
 private:
   typedef message_filters::sync_policies::ApproximateTime<
-      pacmod_msgs::msg::SystemRptFloat, pacmod_msgs::msg::WheelSpeedRpt,
-      pacmod_msgs::msg::SystemRptFloat, pacmod_msgs::msg::SystemRptFloat,
-      pacmod_msgs::msg::SystemRptInt, pacmod_msgs::msg::SystemRptInt, pacmod_msgs::msg::GlobalRpt>
+    pacmod_msgs::msg::SystemRptFloat, pacmod_msgs::msg::WheelSpeedRpt,
+    pacmod_msgs::msg::SystemRptFloat, pacmod_msgs::msg::SystemRptFloat,
+    pacmod_msgs::msg::SystemRptInt, pacmod_msgs::msg::SystemRptInt, pacmod_msgs::msg::GlobalRpt>
     PacmodFeedbacksSyncPolicy;
-
 
   /* subscribers */
   // From Autoware
@@ -69,21 +67,19 @@ private:
   rclcpp::Subscription<autoware_vehicle_msgs::msg::Engage>::SharedPtr engage_cmd_sub_;
   rclcpp::Subscription<autoware_vehicle_msgs::msg::ActuationCommandStamped>::SharedPtr
     actuation_cmd_sub_;
-  rclcpp::Subscription<autoware_vehicle_msgs::msg::VehicleCommand>::SharedPtr
-    vehicle_cmd_sub_;
+  rclcpp::Subscription<autoware_vehicle_msgs::msg::VehicleCommand>::SharedPtr vehicle_cmd_sub_;
 
   // From Pacmod
   std::unique_ptr<message_filters::Subscriber<pacmod_msgs::msg::SystemRptFloat>>
-  steer_wheel_rpt_sub_;
+    steer_wheel_rpt_sub_;
   std::unique_ptr<message_filters::Subscriber<pacmod_msgs::msg::WheelSpeedRpt>>
-  wheel_speed_rpt_sub_;
+    wheel_speed_rpt_sub_;
   std::unique_ptr<message_filters::Subscriber<pacmod_msgs::msg::SystemRptFloat>> accel_rpt_sub_;
   std::unique_ptr<message_filters::Subscriber<pacmod_msgs::msg::SystemRptFloat>> brake_rpt_sub_;
   std::unique_ptr<message_filters::Subscriber<pacmod_msgs::msg::SystemRptInt>> shift_rpt_sub_;
   std::unique_ptr<message_filters::Subscriber<pacmod_msgs::msg::SystemRptInt>> turn_rpt_sub_;
   std::unique_ptr<message_filters::Subscriber<pacmod_msgs::msg::GlobalRpt>> global_rpt_sub_;
   std::unique_ptr<message_filters::Synchronizer<PacmodFeedbacksSyncPolicy>> pacmod_feedbacks_sync_;
-
 
   /* publishers */
   // To Pacmod
@@ -167,8 +163,7 @@ private:
     const autoware_vehicle_msgs::msg::ActuationCommandStamped::ConstSharedPtr msg);
   void callbackControlCmd(
     const autoware_control_msgs::msg::ControlCommandStamped::ConstSharedPtr msg);
-  void callbackVehicleCmd(
-    const autoware_vehicle_msgs::msg::VehicleCommand::ConstSharedPtr msg);
+  void callbackVehicleCmd(const autoware_vehicle_msgs::msg::VehicleCommand::ConstSharedPtr msg);
   void callbackShiftCmd(const autoware_vehicle_msgs::msg::ShiftStamped::ConstSharedPtr msg);
   void callbackTurnSignalCmd(const autoware_vehicle_msgs::msg::TurnSignal::ConstSharedPtr msg);
   void callbackEngage(const autoware_vehicle_msgs::msg::Engage::ConstSharedPtr msg);

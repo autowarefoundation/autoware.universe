@@ -32,7 +32,7 @@ public:
     const double max_ret, const double min_ret, const double max_ret_p, const double min_ret_p,
     const double max_ret_i, const double min_ret_i, const double max_ret_d, const double min_ret_d);
   void reset();
-  void setDecay(const double decay) {invalid_integration_decay_ = decay;}
+  void setDecay(const double decay) { invalid_integration_decay_ = decay; }
 
 private:
   // parameters

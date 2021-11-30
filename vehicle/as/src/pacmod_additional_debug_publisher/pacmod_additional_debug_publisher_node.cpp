@@ -12,15 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "pacmod_additional_debug_publisher/pacmod_additional_debug_publisher_node.hpp"
+#include <pacmod_additional_debug_publisher/pacmod_additional_debug_publisher_node.hpp>
 
 namespace
 {
 bool isTargetId(uint32_t id)
 {
-  return
-    id == 0x32C || id == 0x451 || id == 0x452 || id == 0x453 || id == 0x454 || id == 0x455 ||
-    id == 0x456 || id == 0x457 || id == 0x790 || id == 0x791 || id == 0x792;
+  return id == 0x32C || id == 0x451 || id == 0x452 || id == 0x453 || id == 0x454 || id == 0x455 ||
+         id == 0x456 || id == 0x457 || id == 0x790 || id == 0x791 || id == 0x792;
 }
 }  // namespace
 
@@ -102,12 +101,12 @@ void PacmodAdditionalDebugPublisherNode::canTxCallback(
         float float_value;
       } temp;
       temp.uint32_value = (static_cast<int32_t>(msg->data[3]) << 24) |
-        (static_cast<int32_t>(msg->data[2]) << 16) |
-        (static_cast<int32_t>(msg->data[1]) << 8) | msg->data[0];
+                          (static_cast<int32_t>(msg->data[2]) << 16) |
+                          (static_cast<int32_t>(msg->data[1]) << 8) | msg->data[0];
       debug1 = temp.float_value;
       temp.uint32_value = (static_cast<int32_t>(msg->data[7]) << 24) |
-        (static_cast<int32_t>(msg->data[6]) << 16) |
-        (static_cast<int32_t>(msg->data[5]) << 8) | msg->data[4];
+                          (static_cast<int32_t>(msg->data[6]) << 16) |
+                          (static_cast<int32_t>(msg->data[5]) << 8) | msg->data[4];
       debug2 = temp.float_value;
     }
     switch (msg->id) {

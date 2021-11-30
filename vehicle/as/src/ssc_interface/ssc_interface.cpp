@@ -12,14 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <ssc_interface/ssc_interface.hpp>
+
 #include <memory>
 #include <string>
 #include <utility>
 
-#include "ssc_interface/ssc_interface.hpp"
-
-SSCInterface::SSCInterface()
-: Node("ssc_interface")
+SSCInterface::SSCInterface() : Node("ssc_interface")
 {
   using std::placeholders::_1;
 
@@ -47,41 +46,38 @@ SSCInterface::SSCInterface()
     "/control/turn_signal_cmd", rclcpp::QoS{1},
     std::bind(&SSCInterface::callbackFromTurnSignalCmd, this, _1));
   engage_sub_ = create_subscription<autoware_vehicle_msgs::msg::Engage>(
-    "/vehicle/engage", rclcpp::QoS{1},
-    std::bind(&SSCInterface::callbackFromEngage, this, _1));
+    "/vehicle/engage", rclcpp::QoS{1}, std::bind(&SSCInterface::callbackFromEngage, this, _1));
 
   // subscribers from SSC and PACMod
   velocity_accel_cov_sub_ =
     std::make_unique<message_filters::Subscriber<automotive_platform_msgs::msg::VelocityAccelCov>>(
-    this, "as/velocity_accel_cov");
+      this, "as/velocity_accel_cov");
   curvature_feedback_sub_ =
     std::make_unique<message_filters::Subscriber<automotive_platform_msgs::msg::CurvatureFeedback>>(
-    this, "as/curvature_feedback");
+      this, "as/curvature_feedback");
   throttle_feedback_sub_ =
     std::make_unique<message_filters::Subscriber<automotive_platform_msgs::msg::ThrottleFeedback>>(
-    this, "as/throttle_feedback");
+      this, "as/throttle_feedback");
   brake_feedback_sub_ =
     std::make_unique<message_filters::Subscriber<automotive_platform_msgs::msg::BrakeFeedback>>(
-    this, "as/brake_feedback");
+      this, "as/brake_feedback");
   gear_feedback_sub_ =
     std::make_unique<message_filters::Subscriber<automotive_platform_msgs::msg::GearFeedback>>(
-    this, "as/gear_feedback");
+      this, "as/gear_feedback");
   wheel_speed_sub_ = std::make_unique<message_filters::Subscriber<pacmod_msgs::msg::WheelSpeedRpt>>(
     this, "pacmod/parsed_tx/wheel_speed_rpt");
   steering_wheel_sub_ =
     std::make_unique<message_filters::Subscriber<pacmod_msgs::msg::SystemRptFloat>>(
-    this, "pacmod/parsed_tx/steer_rpt");
+      this, "pacmod/parsed_tx/steer_rpt");
 
   ssc_feedbacks_sync_ = std::make_unique<message_filters::Synchronizer<SSCFeedbacksSyncPolicy>>(
     SSCFeedbacksSyncPolicy(10), *velocity_accel_cov_sub_, *curvature_feedback_sub_,
     *throttle_feedback_sub_, *brake_feedback_sub_, *gear_feedback_sub_, *wheel_speed_sub_,
     *steering_wheel_sub_);
 
-  ssc_feedbacks_sync_->registerCallback(
-    std::bind(
-      &SSCInterface::callbackFromSSCFeedbacks, this, _1, std::placeholders::_2,
-      std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6,
-      std::placeholders::_7));
+  ssc_feedbacks_sync_->registerCallback(std::bind(
+    &SSCInterface::callbackFromSSCFeedbacks, this, _1, std::placeholders::_2, std::placeholders::_3,
+    std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
 
   module_states_sub_ = create_subscription<automotive_navigation_msgs::msg::ModuleState>(
     "as/module_states", rclcpp::QoS{1},
@@ -184,13 +180,13 @@ void SSCInterface::callbackFromSSCFeedbacks(
   // update adaptive gear ratio (avoiding zero division)
   adaptive_gear_ratio_ = std::max(
     1e-5, agr_coef_a_ + agr_coef_b_ * speed * speed -
-    agr_coef_c_ * std::fabs(msg_steering_wheel->output));
+            agr_coef_c_ * std::fabs(msg_steering_wheel->output));
   // current steering curvature
   double curvature =
-    !use_adaptive_gear_ratio_ ?
-    (msg_curvature->curvature) :
-    std::tan(msg_steering_wheel->output / adaptive_gear_ratio_ - steering_offset_) /
-    wheel_base_;
+    !use_adaptive_gear_ratio_
+      ? (msg_curvature->curvature)
+      : std::tan(msg_steering_wheel->output / adaptive_gear_ratio_ - steering_offset_) /
+          wheel_base_;
   const double steering_angle = std::atan(curvature * wheel_base_);
   // constexpr double tread = 1.64;  // spec sheet 1.63
   // double omega =
@@ -223,8 +219,8 @@ void SSCInterface::callbackFromSSCFeedbacks(
   // control mode
   autoware_vehicle_msgs::msg::ControlMode mode;
   mode.header = published_msgs_header;
-  mode.data = (module_states_.state == "active") ? autoware_vehicle_msgs::msg::ControlMode::AUTO :
-    autoware_vehicle_msgs::msg::ControlMode::MANUAL;
+  mode.data = (module_states_.state == "active") ? autoware_vehicle_msgs::msg::ControlMode::AUTO
+                                                 : autoware_vehicle_msgs::msg::ControlMode::MANUAL;
   control_mode_pub_->publish(mode);
 
   // steering
@@ -257,10 +253,10 @@ void SSCInterface::publishCommand()
   double deceleration_limit = deceleration_limit_;
 
   // Curvature for SSC steer_model
-  double desired_steering_angle = !use_adaptive_gear_ratio_ ?
-    vehicle_cmd_.control.steering_angle + steering_offset_ :
-    (vehicle_cmd_.control.steering_angle + steering_offset_) *
-    ssc_gear_ratio_ / adaptive_gear_ratio_;
+  double desired_steering_angle = !use_adaptive_gear_ratio_
+                                    ? vehicle_cmd_.control.steering_angle + steering_offset_
+                                    : (vehicle_cmd_.control.steering_angle + steering_offset_) *
+                                        ssc_gear_ratio_ / adaptive_gear_ratio_;
   double desired_curvature = std::tan(desired_steering_angle) / wheel_base_;
 
   // Turn signal
@@ -370,11 +366,21 @@ uint8_t SSCInterface::toSSCShiftCmd(const autoware_vehicle_msgs::msg::Shift & sh
   using automotive_platform_msgs::msg::Gear;
   using autoware_vehicle_msgs::msg::Shift;
 
-  if (shift.data == Shift::PARKING) {return Gear::PARK;}
-  if (shift.data == Shift::REVERSE) {return Gear::REVERSE;}
-  if (shift.data == Shift::NEUTRAL) {return Gear::NEUTRAL;}
-  if (shift.data == Shift::DRIVE) {return Gear::DRIVE;}
-  if (shift.data == Shift::LOW) {return Gear::LOW;}
+  if (shift.data == Shift::PARKING) {
+    return Gear::PARK;
+  }
+  if (shift.data == Shift::REVERSE) {
+    return Gear::REVERSE;
+  }
+  if (shift.data == Shift::NEUTRAL) {
+    return Gear::NEUTRAL;
+  }
+  if (shift.data == Shift::DRIVE) {
+    return Gear::DRIVE;
+  }
+  if (shift.data == Shift::LOW) {
+    return Gear::LOW;
+  }
 
   return Gear::NONE;
 }
@@ -394,10 +400,18 @@ int32_t SSCInterface::toAutowareTurnSignal(const pacmod_msgs::msg::SystemRptInt 
   using autoware_vehicle_msgs::msg::TurnSignal;
   using pacmod_msgs::msg::SystemRptInt;
 
-  if (turn.output == SystemRptInt::TURN_RIGHT) {return TurnSignal::RIGHT;}
-  if (turn.output == SystemRptInt::TURN_LEFT) {return TurnSignal::LEFT;}
-  if (turn.output == SystemRptInt::TURN_NONE) {return TurnSignal::NONE;}
-  if (turn.output == SystemRptInt::TURN_HAZARDS) {return TurnSignal::HAZARD;}
+  if (turn.output == SystemRptInt::TURN_RIGHT) {
+    return TurnSignal::RIGHT;
+  }
+  if (turn.output == SystemRptInt::TURN_LEFT) {
+    return TurnSignal::LEFT;
+  }
+  if (turn.output == SystemRptInt::TURN_NONE) {
+    return TurnSignal::NONE;
+  }
+  if (turn.output == SystemRptInt::TURN_HAZARDS) {
+    return TurnSignal::HAZARD;
+  }
 
   return TurnSignal::NONE;
 }
