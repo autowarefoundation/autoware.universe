@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 
 #include "pacmod_interface/pacmod_interface.h"
 
 int main(int argc, char ** argv)
 {
-  ros::init(argc, argv, "pacmod_interface");
-  PacmodInterface node;
-  node.run();
-
+  rclcpp::init(argc, argv);
+  auto node = std::make_shared<PacmodInterface>();
+  rclcpp::spin(node);
+  rclcpp::shutdown();
   return 0;
 }

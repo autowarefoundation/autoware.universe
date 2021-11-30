@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#include <ros/ros.h>
-
 #include "ssc_interface/ssc_interface.h"
+
+#include <rclcpp/rclcpp.hpp>
 
 int main(int argc, char ** argv)
 {
-  ros::init(argc, argv, "ssc_interface");
-  SSCInterface node;
-  node.run();
+  rclcpp::init(argc, argv);
+  rclcpp::spin(std::make_shared<SSCInterface>());
+  rclcpp::shutdown();
 
   return 0;
 }
