@@ -12,7 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <memory>
+
 #include "rclcpp/rclcpp.hpp"
+
 #include "remote_cmd_converter/node.hpp"
 
 int main(int argc, char ** argv)

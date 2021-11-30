@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#pragma once
+#ifndef REMOTE_CMD_CONVERTER__NODE_HPP_
+#define REMOTE_CMD_CONVERTER__NODE_HPP_
 
 #include <memory>
 #include <string>
@@ -21,8 +22,8 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include "autoware_control_msgs/msg/control_command_stamped.hpp"
-#include "autoware_control_msgs/msg/gate_mode.hpp"
 #include "autoware_control_msgs/msg/emergency_mode.hpp"
+#include "autoware_control_msgs/msg/gate_mode.hpp"
 #include "autoware_vehicle_msgs/msg/raw_control_command.hpp"
 #include "autoware_vehicle_msgs/msg/raw_control_command_stamped.hpp"
 #include "autoware_vehicle_msgs/msg/shift_stamped.hpp"
@@ -87,3 +88,5 @@ private:
   double calculateAcc(const autoware_vehicle_msgs::msg::RawControlCommand & cmd, const double vel);
   double getShiftVelocitySign(const autoware_vehicle_msgs::msg::ShiftStamped & cmd);
 };
+
+#endif  // REMOTE_CMD_CONVERTER__NODE_HPP_

@@ -12,6 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <algorithm>
+#include <memory>
+#include <string>
+#include <utility>
+
 #include "remote_cmd_converter/node.hpp"
 
 using std::placeholders::_1;
