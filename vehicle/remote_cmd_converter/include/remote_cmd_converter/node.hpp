@@ -36,7 +36,7 @@
 class RemoteCmdConverter : public rclcpp::Node
 {
 public:
-  RemoteCmdConverter();
+  explicit RemoteCmdConverter(const rclcpp::NodeOptions & node_options);
 
 private:
   // Publisher

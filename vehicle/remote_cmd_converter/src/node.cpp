@@ -21,8 +21,8 @@
 
 using std::placeholders::_1;
 
-RemoteCmdConverter::RemoteCmdConverter()
-: Node("remote_cmd_converter"),
+RemoteCmdConverter::RemoteCmdConverter(const rclcpp::NodeOptions & node_options)
+: Node("remote_cmd_converter", node_options),
   updater_(this),
   accel_map_(get_logger()),
   brake_map_(get_logger())
@@ -246,3 +246,6 @@ bool RemoteCmdConverter::checkRemoteTopicRate()
 
   return true;
 }
+
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(RemoteCmdConverter)

@@ -15,9 +15,13 @@ endif()
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
-ament_auto_add_executable(remote_cmd_converter_node
+ament_auto_add_library(remote_cmd_converter SHARED
   src/node.cpp
-  src/main.cpp
+)
+
+rclcpp_components_register_node(remote_cmd_converter
+  PLUGIN "RemoteCmdConverter"
+  EXECUTABLE remote_cmd_converter_node
 )
 
 if(BUILD_TESTING)
