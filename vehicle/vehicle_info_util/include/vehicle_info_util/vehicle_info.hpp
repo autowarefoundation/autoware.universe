@@ -15,7 +15,7 @@
 #ifndef VEHICLE_INFO_UTIL_VEHICLE_INFO_CORE_HPP_
 #define VEHICLE_INFO_UTIL_VEHICLE_INFO_CORE_HPP_
 
-#include <rclcpp/rclcpp.hpp>
+#include "rclcpp/rclcpp.hpp"
 
 namespace vehicle_info_util
 {
