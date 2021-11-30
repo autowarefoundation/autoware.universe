@@ -309,7 +309,7 @@ std::vector<double> SOR::solve() const
     }
     ++num_iter;
   }
-  if (num_iter > max_iter_) RCLCPP_WARN(rclcpp::get_logger("PreconditionedConjugateGradient"), "[interpolate (SOR)] unconverged!");
+  if (num_iter > max_iter_) RCLCPP_WARN(rclcpp::get_logger("SOR"), "[interpolate (SOR)] unconverged!");
   return ans_next;
 }
 
