@@ -160,8 +160,9 @@ void SSCInterface::callbackFromSSCModuleStates(
 void SSCInterface::callbackFromSSCFeedbacks(
   const automotive_platform_msgs::msg::VelocityAccelCov::ConstSharedPtr msg_velocity,
   const automotive_platform_msgs::msg::CurvatureFeedback::ConstSharedPtr msg_curvature,
-  const automotive_platform_msgs::msg::ThrottleFeedback::ConstSharedPtr msg_throttle,
-  const automotive_platform_msgs::msg::BrakeFeedback::ConstSharedPtr msg_brake,
+  [[maybe_unused]] const automotive_platform_msgs::msg::ThrottleFeedback::ConstSharedPtr
+    msg_throttle,
+  [[maybe_unused]] const automotive_platform_msgs::msg::BrakeFeedback::ConstSharedPtr msg_brake,
   const automotive_platform_msgs::msg::GearFeedback::ConstSharedPtr msg_gear,
   const pacmod3_msgs::msg::WheelSpeedRpt::ConstSharedPtr msg_wheel_speed,
   const pacmod3_msgs::msg::SystemRptFloat::ConstSharedPtr msg_steering_wheel)
