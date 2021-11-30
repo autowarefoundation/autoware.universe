@@ -29,7 +29,6 @@
 
 namespace osqp
 {
-
 void OSQPInterface::OSQPWorkspaceDeleter(OSQPWorkspace * ptr) noexcept
 {
   if (ptr != nullptr) {
@@ -188,39 +187,55 @@ void OSQPInterface::updateBounds(
 
 void OSQPInterface::updateEpsAbs(const double eps_abs)
 {
-  settings->eps_abs = eps_abs;                               // for default setting
+  settings->eps_abs = eps_abs;  // for default setting
   if (work_initialized) {
-    osqp_update_eps_abs(work.get(), eps_abs);                      // for current work
+    osqp_update_eps_abs(work.get(), eps_abs);  // for current work
   }
 }
 
 void OSQPInterface::updateEpsRel(const double eps_rel)
 {
-  settings->eps_rel = eps_rel;                               // for default setting
+  settings->eps_rel = eps_rel;  // for default setting
   if (work_initialized) {
-    osqp_update_eps_rel(work.get(), eps_rel);                      // for current work
+    osqp_update_eps_rel(work.get(), eps_rel);  // for current work
   }
 }
 
 void OSQPInterface::updateMaxIter(const int max_iter)
 {
-  settings->max_iter = max_iter;                               // for default setting
+  settings->max_iter = max_iter;  // for default setting
   if (work_initialized) {
-    osqp_update_max_iter(work.get(), max_iter);                      // for current work
+    osqp_update_max_iter(work.get(), max_iter);  // for current work
   }
 }
 
 void OSQPInterface::updateVerbose(const bool is_verbose)
 {
-  settings->verbose = is_verbose;                               // for default setting
+  settings->verbose = is_verbose;  // for default setting
   if (work_initialized) {
-    osqp_update_verbose(work.get(), is_verbose);                      // for current work
+    osqp_update_verbose(work.get(), is_verbose);  // for current work
   }
 }
 
 void OSQPInterface::updateRhoInterval(const int rho_interval)
 {
   settings->adaptive_rho_interval = rho_interval;  // for default setting
+}
+
+void OSQPInterface::updateRho(const double rho)
+{
+  settings->rho = rho;
+  if (work_initialized) {
+    osqp_update_rho(work.get(), rho);
+  }
+}
+
+void OSQPInterface::updateAlpha(const double alpha)
+{
+  settings->alpha = alpha;
+  if (work_initialized) {
+    osqp_update_alpha(work.get(), alpha);
+  }
 }
 
 std::tuple<std::vector<double>, std::vector<double>, int, int> OSQPInterface::solve()
