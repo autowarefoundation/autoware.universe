@@ -20,7 +20,7 @@
 #include <numeric>
 #include <vector>
 
-#include <rclcpp/rclcpp.hpp>
+#include "rclcpp/rclcpp.hpp"
 
 namespace spline_interpolation
 {

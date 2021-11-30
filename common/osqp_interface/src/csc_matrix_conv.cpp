@@ -15,8 +15,8 @@
 #include <iostream>
 #include <vector>
 
-#include <eigen3/Eigen/Core>
-#include <eigen3/Eigen/SparseCore>
+#include "eigen3/Eigen/Core"
+#include "eigen3/Eigen/SparseCore"
 
 #include "osqp_interface/csc_matrix_conv.hpp"
 
