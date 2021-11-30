@@ -25,12 +25,11 @@
 #include "raw_vehicle_cmd_converter/csv_loader.hpp"
 #include "raw_vehicle_cmd_converter/interpolate.hpp"
 
+namespace raw_vehicle_cmd_converter
+{
 class BrakeMap
 {
 public:
-  explicit BrakeMap(const rclcpp::Logger & logger);
-  ~BrakeMap();
-
   bool readBrakeMapFromCSV(std::string csv_path);
   bool getBrake(double acc, double vel, double & brake);
   bool getAcceleration(double brake, double vel, double & acc);
@@ -39,13 +38,14 @@ public:
   std::vector<std::vector<double>> getBrakeMap() {return brake_map_;}
 
 private:
-  rclcpp::Logger logger_;
-  rclcpp::Clock logger_ros_clock_;
+  rclcpp::Logger logger_{rclcpp::get_logger("raw_vehicle_cmd_converter").get_child("accel_map")};
+  rclcpp::Clock clock_{RCL_ROS_TIME};
   std::string vehicle_name_;
   std::vector<double> vel_index_;
   std::vector<double> brake_index_;
   std::vector<double> brake_index_rev_;
   std::vector<std::vector<double>> brake_map_;
 };
+}  // namespace raw_vehicle_cmd_converter
 
 #endif  // RAW_VEHICLE_CMD_CONVERTER__BRAKE_MAP_HPP_

@@ -36,12 +36,15 @@
 #include "pacmod_msgs/msg/system_rpt_int.hpp"
 #include "pacmod_msgs/msg/wheel_speed_rpt.hpp"
 
+#include "autoware_control_msgs/msg/control_command_stamped.hpp"
+#include "autoware_vehicle_msgs/msg/actuation_command_stamped.hpp"
+#include "autoware_vehicle_msgs/msg/actuation_status_stamped.hpp"
 #include "autoware_vehicle_msgs/msg/control_mode.hpp"
 #include "autoware_vehicle_msgs/msg/engage.hpp"
-#include "autoware_vehicle_msgs/msg/raw_vehicle_command.hpp"
 #include "autoware_vehicle_msgs/msg/shift_stamped.hpp"
 #include "autoware_vehicle_msgs/msg/steering.hpp"
 #include "autoware_vehicle_msgs/msg/turn_signal.hpp"
+#include "autoware_vehicle_msgs/msg/vehicle_command.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
 
 class PacmodInterface : public rclcpp::Node
@@ -59,10 +62,15 @@ private:
 
   /* subscribers */
   // From Autoware
-  rclcpp::Subscription<autoware_vehicle_msgs::msg::RawVehicleCommand>::SharedPtr
-    raw_vehicle_cmd_sub_;
+  rclcpp::Subscription<autoware_control_msgs::msg::ControlCommandStamped>::SharedPtr
+    control_cmd_sub_;
+  rclcpp::Subscription<autoware_vehicle_msgs::msg::ShiftStamped>::SharedPtr shift_cmd_sub_;
   rclcpp::Subscription<autoware_vehicle_msgs::msg::TurnSignal>::SharedPtr turn_signal_cmd_sub_;
   rclcpp::Subscription<autoware_vehicle_msgs::msg::Engage>::SharedPtr engage_cmd_sub_;
+  rclcpp::Subscription<autoware_vehicle_msgs::msg::ActuationCommandStamped>::SharedPtr
+    actuation_cmd_sub_;
+  rclcpp::Subscription<autoware_vehicle_msgs::msg::VehicleCommand>::SharedPtr
+    vehicle_cmd_sub_;
 
   // From Pacmod
   std::unique_ptr<message_filters::Subscriber<pacmod_msgs::msg::SystemRptFloat>>
@@ -93,6 +101,8 @@ private:
   rclcpp::Publisher<autoware_vehicle_msgs::msg::Steering>::SharedPtr steering_status_pub_;
   rclcpp::Publisher<autoware_vehicle_msgs::msg::ShiftStamped>::SharedPtr shift_status_pub_;
   rclcpp::Publisher<autoware_vehicle_msgs::msg::TurnSignal>::SharedPtr turn_signal_status_pub_;
+  rclcpp::Publisher<autoware_vehicle_msgs::msg::ActuationStatusStamped>::SharedPtr
+    actuation_status_pub_;
 
   rclcpp::TimerBase::SharedPtr timer_;
 
@@ -132,8 +142,10 @@ private:
   vehicle_info_util::VehicleInfo vehicle_info_;
 
   /* input values */
-  autoware_vehicle_msgs::msg::RawVehicleCommand::ConstSharedPtr raw_vehicle_cmd_ptr_;
+  autoware_vehicle_msgs::msg::ActuationCommandStamped::ConstSharedPtr actuation_cmd_ptr_;
+  autoware_control_msgs::msg::ControlCommandStamped::ConstSharedPtr control_cmd_ptr_;
   autoware_vehicle_msgs::msg::TurnSignal::ConstSharedPtr turn_signal_cmd_ptr_;
+  autoware_vehicle_msgs::msg::ShiftStamped::ConstSharedPtr shift_cmd_ptr_;
 
   pacmod_msgs::msg::SystemRptFloat::ConstSharedPtr steer_wheel_rpt_ptr_;  // [rad]
   pacmod_msgs::msg::WheelSpeedRpt::ConstSharedPtr wheel_speed_rpt_ptr_;   // [m/s]
@@ -144,12 +156,20 @@ private:
   pacmod_msgs::msg::SystemRptInt::ConstSharedPtr turn_rpt_ptr_;
   pacmod_msgs::msg::SteerSystemCmd prev_steer_cmd_;
 
-  bool engage_cmd_ = false;
-  rclcpp::Time vehicle_command_received_time_;
+  bool engage_cmd_{false};
+  bool is_emergency_{false};
+  rclcpp::Time control_command_received_time_;
+  rclcpp::Time actuation_command_received_time_;
   rclcpp::Time last_shift_inout_matched_time_;
 
   /* callbacks */
-  void callbackVehicleCmd(const autoware_vehicle_msgs::msg::RawVehicleCommand::ConstSharedPtr msg);
+  void callbackActuationCmd(
+    const autoware_vehicle_msgs::msg::ActuationCommandStamped::ConstSharedPtr msg);
+  void callbackControlCmd(
+    const autoware_control_msgs::msg::ControlCommandStamped::ConstSharedPtr msg);
+  void callbackVehicleCmd(
+    const autoware_vehicle_msgs::msg::VehicleCommand::ConstSharedPtr msg);
+  void callbackShiftCmd(const autoware_vehicle_msgs::msg::ShiftStamped::ConstSharedPtr msg);
   void callbackTurnSignalCmd(const autoware_vehicle_msgs::msg::TurnSignal::ConstSharedPtr msg);
   void callbackEngage(const autoware_vehicle_msgs::msg::Engage::ConstSharedPtr msg);
   void callbackPacmodRpt(
