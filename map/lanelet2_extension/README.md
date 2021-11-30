@@ -46,7 +46,7 @@ Autoware Traffic Light class contains following members:
 This contains functions to convert lanelet map objects into ROS messages.
 Currently it contains following conversions:
 
-- lanelet::LaneletMapPtr to/from lanelet_msgs::MapBinMsg
+- lanelet::LaneletMapPtr to/from autoware_auto_mapping_msgs::msg::HADMapBin
 - lanelet::Point3d to geometry_msgs::Point
 - lanelet::Point2d to geometry_msgs::Point
 - lanelet::BasicPoint3d to geometry_msgs::Point
@@ -83,5 +83,5 @@ This node checks if an .osm file follows the Autoware version of Lanelet2 format
 You can check by running:
 
 ```sh
-rosrun lanelet2_extension autoware_lanelet2_validation _map_file:=<path/to/map.osm>
+ros2 run lanelet2_extension autoware_lanelet2_validation _map_file:=<path/to/map.osm>
 ```
