@@ -234,7 +234,7 @@ void SSCInterface::publishCommand()
   /* guard */
   if (!command_initialized_ || !wheel_speed_rpt_ptr_ || !vel_acc_cov_ptr_ || !gear_feedback_ptr_) {
     RCLCPP_INFO_THROTTLE(
-      get_logger(), *get_clock(), 1.0,
+      get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
       "vehicle_cmd = %d, wheel_speed_rpt = %d, vel_acc_cov = %d, gear_feedback = %d",
       command_initialized_, wheel_speed_rpt_ptr_ != nullptr, vel_acc_cov_ptr_ != nullptr,
       gear_feedback_ptr_ != nullptr);
@@ -279,14 +279,14 @@ void SSCInterface::publishCommand()
 
   if (emergency) {
     RCLCPP_ERROR_THROTTLE(
-      get_logger(), *get_clock(), 1.0, "Emergency Stopping, emergency = %d, timeouted = %d",
-      emergency, timeouted);
+      get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
+      "Emergency Stopping, emergency = %d, timeouted = %d", emergency, timeouted);
     desired_speed = 0.0;
     deceleration_limit = 0.0;
   } else if (timeouted) {
     RCLCPP_ERROR_THROTTLE(
-      get_logger(), *get_clock(), 1.0, "Timeout Stopping, emergency = %d, timeouted = %d",
-      emergency, timeouted);
+      get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
+      "Timeout Stopping, emergency = %d, timeouted = %d", emergency, timeouted);
     desired_speed = 0.0;
   }
 
@@ -300,7 +300,7 @@ void SSCInterface::publishCommand()
       deceleration_limit = 0.0;  // set quick stop mode to change the shift
       desired_shift = toSSCShiftCmd(vehicle_cmd_.shift);
       RCLCPP_INFO_THROTTLE(
-        get_logger(), *get_clock(), 1.0,
+        get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
         "Doing shift change. current = %d, desired = %d. set quick stop mode",
         gear_feedback_ptr_->current_gear.gear, toSSCShiftCmd(vehicle_cmd_.shift));
     }

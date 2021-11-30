@@ -233,8 +233,9 @@ void PacmodInterface::publishCommands()
   /* guard */
   if (!raw_vehicle_cmd_ptr_ || !is_pacmod_rpt_received_) {
     RCLCPP_INFO_THROTTLE(
-      get_logger(), *get_clock(), 1.0, "vehicle_cmd = %d, pacmod_msgs = %d",
-      raw_vehicle_cmd_ptr_ != nullptr, is_pacmod_rpt_received_);
+      get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
+      "vehicle_cmd = %d, pacmod_msgs = %d", raw_vehicle_cmd_ptr_ != nullptr,
+      is_pacmod_rpt_received_);
     return;
   }
 

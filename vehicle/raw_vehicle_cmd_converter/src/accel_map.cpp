@@ -68,7 +68,7 @@ bool AccelMap::getThrottle(double acc, double vel, double & throttle)
   if (vel < vel_index_.front()) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(logger_,
       logger_ros_clock_,
-      RCUTILS_S_TO_NS(1),
+      std::chrono::milliseconds(1000).count(),
       "[Accel Map] Exceeding the vel range. Current vel: %f < min vel on map: %f. Use min "
       "velocity.",
       vel, vel_index_.front());
@@ -76,7 +76,7 @@ bool AccelMap::getThrottle(double acc, double vel, double & throttle)
   } else if (vel_index_.back() < vel) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(logger_, 
       logger_ros_clock_,
-      RCUTILS_S_TO_NS(1),
+      std::chrono::milliseconds(1000).count(),
       "[Accel Map] Exceeding the vel range. Current vel: %f > max vel on map: %f. Use max "
       "velocity.",
       vel, vel_index_.back());
@@ -112,7 +112,7 @@ bool AccelMap::getAcceleration(double throttle, double vel, double & acc)
   if (vel < vel_index_.front()) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(logger_, 
       logger_ros_clock_,
-      RCUTILS_S_TO_NS(1),
+      std::chrono::milliseconds(1000).count(),
       "[Accel Map] Exceeding the vel range. Current vel: %f < min vel on map: %f. Use min "
       "velocity.",
       vel, vel_index_.front());
@@ -120,7 +120,7 @@ bool AccelMap::getAcceleration(double throttle, double vel, double & acc)
   } else if (vel_index_.back() < vel) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(logger_, 
       logger_ros_clock_,
-      RCUTILS_S_TO_NS(1),
+      std::chrono::milliseconds(1000).count(),
       "[Accel Map] Exceeding the vel range. Current vel: %f > max vel on map: %f. Use max "
       "velocity.",
       vel, vel_index_.back());
@@ -142,7 +142,7 @@ bool AccelMap::getAcceleration(double throttle, double vel, double & acc)
   if (throttle < min_throttle || max_throttle < throttle) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(logger_, 
       logger_ros_clock_,
-      RCUTILS_S_TO_NS(1),
+      std::chrono::milliseconds(1000).count(),
       "[Accel Map] Input throttle: %f is out off range. use closest value.", throttle);
     throttle = std::min(std::max(throttle, min_throttle), max_throttle);
   }

@@ -71,7 +71,7 @@ bool BrakeMap::getBrake(double acc, double vel, double & brake)
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       logger_,
       logger_ros_clock_,
-      1.0,
+      std::chrono::milliseconds(1000).count(),
       "[Brake Map] Exceeding the vel range. Current vel: %f < min vel on map: %f. Use min "
       "velocity.",
       vel, vel_index_.front());
@@ -80,7 +80,7 @@ bool BrakeMap::getBrake(double acc, double vel, double & brake)
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       logger_,
       logger_ros_clock_,
-      1.0,
+      std::chrono::milliseconds(1000).count(),
       "[Brake Map] Exceeding the vel range. Current vel: %f > max vel on map: %f. Use max "
       "velocity.",
       vel, vel_index_.back());
@@ -101,7 +101,7 @@ bool BrakeMap::getBrake(double acc, double vel, double & brake)
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       logger_,
       logger_ros_clock_,
-      1.0,
+      std::chrono::milliseconds(1000).count(),
       "[Brake Map] Exceeding the acc range. Desired acc: %f < min acc on map: %f. return max "
       "value.",
       acc, accs_interpolated.back());
@@ -127,7 +127,7 @@ bool BrakeMap::getAcceleration(double brake, double vel, double & acc)
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       logger_,
       logger_ros_clock_,
-      1.0,
+      std::chrono::milliseconds(1000).count(),
       "[Brake Map] Exceeding the vel range. Current vel: %f < min vel on map: %f. Use min "
       "velocity.",
       vel, vel_index_.front());
@@ -136,7 +136,7 @@ bool BrakeMap::getAcceleration(double brake, double vel, double & acc)
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       logger_,
       logger_ros_clock_,
-      1.0,
+      std::chrono::milliseconds(1000).count(),
       "[Brake Map] Exceeding the vel range. Current vel: %f > max vel on map: %f. Use max "
       "velocity.",
       vel, vel_index_.back());
@@ -157,9 +157,8 @@ bool BrakeMap::getAcceleration(double brake, double vel, double & acc)
   const double min_brake = brake_index_.front();
   if (brake < min_brake || max_brake < brake) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
-      logger_,
-      logger_ros_clock_,
-      1.0, "[Brake Map] Input brake: %f is out off range. use closest value.", brake);
+      logger_, logger_ros_clock_, std::chrono::milliseconds(1000).count(),
+      "[Brake Map] Input brake: %f is out off range. use closest value.", brake);
     brake = std::min(std::max(brake, min_brake), max_brake);
   }
 
