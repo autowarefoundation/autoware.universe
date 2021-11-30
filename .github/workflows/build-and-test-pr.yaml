@@ -1,0 +1,19 @@
+name: build-and-test-pr
+
+on:
+  pull_request:
+
+jobs:
+  get-modified-packages:
+    uses: autowarefoundation/autoware-github-actions/.github/workflows/reusable-get-modified-packages.yaml@tier4/proposal
+    with:
+      script-ref: tier4/proposal
+
+  build-and-test:
+    needs: get-modified-packages
+    if: ${{ needs.get-modified-packages.outputs.modified-packages != '' }}
+    uses: autowarefoundation/autoware-github-actions/.github/workflows/reusable-colcon-build-and-test.yaml@tier4/proposal
+    with:
+      rosdistro: galactic
+      build-depends-repos: build_depends.repos
+      target-packages: ${{ needs.get-modified-packages.outputs.modified-packages }}
