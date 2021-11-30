@@ -70,7 +70,9 @@ int main(int argc, char ** argv)
     return EXIT_FAILURE;
   }
 
-  lanelet::utils::overwriteLaneletsCenterline(map, false);
+  double center_line_resolution;
+  pnh.param<double>("center_line_resolution", center_line_resolution, 5.0);
+  lanelet::utils::overwriteLaneletsCenterline(map, center_line_resolution, false);
 
   std::string format_version, map_version;
   lanelet::io_handlers::AutowareOsmParser::parseVersions(

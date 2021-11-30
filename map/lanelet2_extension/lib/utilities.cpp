@@ -275,11 +275,11 @@ lanelet::LineString3d generateFineCenterline(
   return centerline;
 }
 
-void overwriteLaneletsCenterline(lanelet::LaneletMapPtr lanelet_map, const bool force_overwrite)
+void overwriteLaneletsCenterline(lanelet::LaneletMapPtr lanelet_map, const double resolution, const bool force_overwrite)
 {
   for (auto & lanelet_obj : lanelet_map->laneletLayer) {
     if (force_overwrite || !lanelet_obj.hasCustomCenterline()) {
-      const auto fine_center_line = generateFineCenterline(lanelet_obj);
+      const auto fine_center_line = generateFineCenterline(lanelet_obj, resolution);
       lanelet_obj.setCenterline(fine_center_line);
     }
   }

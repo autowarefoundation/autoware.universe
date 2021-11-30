@@ -94,7 +94,9 @@ private:
 
 TEST_F(TestSuite, OverwriteLaneletsCenterline)
 {
-  lanelet::utils::overwriteLaneletsCenterline(sample_map_ptr);
+  double resolution = 5.0;
+  bool force_overwrite = false;
+  lanelet::utils::overwriteLaneletsCenterline(sample_map_ptr, resolution, force_overwrite);
 
   for (const auto & lanelet : sample_map_ptr->laneletLayer) {
     ASSERT_TRUE(lanelet.hasCustomCenterline()) << "failed to calculate fine centerline";
