@@ -54,6 +54,11 @@ rclcpp_components_register_node(lanelet2_map_visualization_node
   EXECUTABLE lanelet2_map_visualization
 )
 
+install(PROGRAMS
+  script/map_hash_generator
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
