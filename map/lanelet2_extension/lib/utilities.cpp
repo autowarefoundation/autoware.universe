@@ -349,7 +349,8 @@ lanelet::ConstLanelet getExpandedLanelet(
   const auto & extended_left_bound_3d = lanelet::LineString3d(lanelet::InvalId, ex_lefts);
   const auto & expanded_right_bound_3d = lanelet::LineString3d(lanelet::InvalId, ex_rights);
   const auto & lanelet =
-    lanelet::Lanelet(lanelet_obj.id(), extended_left_bound_3d, expanded_right_bound_3d);
+    lanelet::Lanelet(
+    lanelet_obj.id(), extended_left_bound_3d, expanded_right_bound_3d, lanelet_obj.attributes());
 
   return lanelet;
 }
