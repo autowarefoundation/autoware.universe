@@ -20,26 +20,40 @@ import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSDurabilityPolicy
 from rclpy.qos import QoSProfile
+from autoware_external_api_msgs.srv import GetTextFile
 from autoware_external_api_msgs.msg import MapHash
+from autoware_external_api_msgs.msg import ResponseStatus
 
 
 class MapHashGenerator(Node):
 
     def __init__(self):
         super().__init__('map_hash_generator')
+        self.lanelet_path = self.declare_parameter('lanelet2_map_path', '').value
+        self.lanelet_text = self.load_lanelet_text(self.lanelet_path)
+        self.lanelet_hash = self.generate_file_hash(self.lanelet_text)
+
         qos_profile = QoSProfile(depth=1, durability=QoSDurabilityPolicy.TRANSIENT_LOCAL)
         msg = MapHash()
-        msg.lanelet = self.generateFileHash(self.declare_parameter('lanelet2_map_path').value)
+        msg.lanelet = self.lanelet_hash
         self.pub = self.create_publisher(MapHash, '/api/autoware/get/map/info/hash', qos_profile)
         self.pub.publish(msg)
 
+        self.srv = self.create_service(GetTextFile, '/api/autoware/get/map/lanelet/xml', self.on_get_lanelet_xml)  # noqa: E501
+
+    def on_get_lanelet_xml(self, request, response):
+        response.status.code = ResponseStatus.SUCCESS
+        response.file.text = self.lanelet_text
+        return response
+
     @staticmethod
-    def generateFileHash(path):
+    def load_lanelet_text(path):
         path = pathlib.Path(path)
-        if path.exists():
-            with path.open('rb') as fp:
-                return hashlib.sha256(fp.read()).hexdigest()
-        return ''
+        return path.read_text() if path.is_file() else ''
+
+    @staticmethod
+    def generate_file_hash(data):
+        return hashlib.sha256(data.encode()).hexdigest() if data else ''
 
 
 def main(args=None):
