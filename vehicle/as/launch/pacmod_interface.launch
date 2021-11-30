@@ -11,8 +11,8 @@
   <arg name="max_brake" default="0.8"/>
   <arg name="max_steering_wheel" default="11.0"/>
   <arg name="min_steering_wheel" default="-11.0"/>
-  <arg name="max_steering_wheel_rate" default="6.6"/>
-  <arg name="min_steering_wheel_rate" default="0.5"/>
+  <arg name="max_steering_wheel_rate" default="5.0"/>
+  <arg name="min_steering_wheel_rate" default="3.0"/>
   <arg name="steering_offset" default="0.0"/>
   <arg name="enable_steering_rate_control" default="false"/>
 
