@@ -226,7 +226,7 @@ std::vector<lanelet::ConstLanelets> getSucceedingLaneletSequences(
  */
 std::vector<lanelet::ConstLanelets> getPrecedingLaneletSequences(
   const routing::RoutingGraphPtr & graph, const lanelet::ConstLanelet & lanelet,
-  const double length);
+  const double length, const lanelet::ConstLanelets & exclude_lanelets = {});
 
 }  // namespace query
 }  // namespace utils
