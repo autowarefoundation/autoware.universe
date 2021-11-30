@@ -47,7 +47,7 @@ VehicleInfoParamServer::VehicleInfoParamServer()
   // timer
   while (rclcpp::ok()) {
     setVehicleInfoParameters();
-    rclcpp::Rate(10.0).sleep();
+    rclcpp::Rate(1.0).sleep();
   }
 }
 
@@ -70,6 +70,10 @@ void VehicleInfoParamServer::setVehicleInfoParameters()
       continue;
     }
 
+    if(n.find("transform_listener_impl") != std::string::npos) {
+      continue;
+    }
+
     if (!rclcpp::ok()) {
       RCLCPP_ERROR(this->get_logger(), "Interrupted while waiting for the service. Exiting.");
       break;
@@ -84,14 +88,14 @@ void VehicleInfoParamServer::setVehicleInfoParameters()
     }
 
     // Check that the node has vehicle_info client or not
-    bool has_param = false;
+    bool has_param = true;
     if (
       !hasParameter(
         parameters_client, "ready_vehicle_info_param", request_timeout_sec_, &has_param) ||
       !has_param)
     {
       // No need to set vehicle parameter.
-      if (has_param) {set_node_list_.emplace_back(n);}
+      if (!has_param) {set_node_list_.emplace_back(n);}
       continue;
     }
 
