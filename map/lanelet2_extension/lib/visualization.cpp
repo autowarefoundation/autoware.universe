@@ -123,7 +123,7 @@ bool inputLightMarker(visualization_msgs::msg::Marker * marker, lanelet::ConstPo
   marker->color.r = 0.0f;
   marker->color.g = 0.0f;
   marker->color.b = 0.0f;
-  marker->color.a = 0.6f;
+  marker->color.a = 0.3f;
 
   if (isAttributeValue(p, "color", "red")) {
     marker->color.r = 0.3f;
