@@ -333,12 +333,12 @@ lanelet::ConstLanelet getExpandedLanelet(
   }
 
   const auto toPoints3d = [](const lanelet::BasicLineString2d & ls2d, const double z) {
-    lanelet::Points3d output;
-    for (const auto & pt : ls2d) {
-      output.push_back(lanelet::Point3d(lanelet::InvalId, pt.x(), pt.y(), z));
-    }
-    return output;
-  };
+      lanelet::Points3d output;
+      for (const auto & pt : ls2d) {
+        output.push_back(lanelet::Point3d(lanelet::InvalId, pt.x(), pt.y(), z));
+      }
+      return output;
+    };
 
   // Original z value cannot be used directly since the offset function can vary the points size.
   const lanelet::Points3d ex_lefts =
