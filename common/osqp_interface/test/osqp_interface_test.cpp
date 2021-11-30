@@ -48,6 +48,57 @@ TEST(OSQPInterface, Solve)
   EXPECT_LE(std::fabs(x_optimal[1]), tolerance);
 }
 
+TEST(OSQPInterface, Exception)
+{
+  constexpr int num_vars = 2;
+  c_float eps_abs = 0.1;
+
+  {
+    Eigen::MatrixXd P = Eigen::MatrixXd::Identity(num_vars, num_vars + 1);
+    Eigen::MatrixXd A = Eigen::MatrixXd::Identity(num_vars, num_vars);
+    std::vector<double> q(num_vars, 1.0);
+    std::vector<double> l(num_vars, 0.0);
+    std::vector<double> u(num_vars, 1.0);
+    EXPECT_THROW(osqp::OSQPInterface solver(P, A, q, l, u, eps_abs), std::invalid_argument);
+  }
+
+  {
+    Eigen::MatrixXd P = Eigen::MatrixXd::Identity(num_vars, num_vars);
+    Eigen::MatrixXd A = Eigen::MatrixXd::Identity(num_vars, num_vars);
+    std::vector<double> q(num_vars + 1, 1.0);
+    std::vector<double> l(num_vars, 0.0);
+    std::vector<double> u(num_vars, 1.0);
+    EXPECT_THROW(osqp::OSQPInterface solver(P, A, q, l, u, eps_abs), std::invalid_argument);
+  }
+
+  {
+    Eigen::MatrixXd P = Eigen::MatrixXd::Identity(num_vars, num_vars);
+    Eigen::MatrixXd A = Eigen::MatrixXd::Identity(num_vars, num_vars + 1);
+    std::vector<double> q(num_vars, 1.0);
+    std::vector<double> l(num_vars, 0.0);
+    std::vector<double> u(num_vars, 1.0);
+    EXPECT_THROW(osqp::OSQPInterface solver(P, A, q, l, u, eps_abs), std::invalid_argument);
+  }
+
+  {
+    Eigen::MatrixXd P = Eigen::MatrixXd::Identity(num_vars, num_vars);
+    Eigen::MatrixXd A = Eigen::MatrixXd::Identity(num_vars, num_vars);
+    std::vector<double> q(num_vars, 1.0);
+    std::vector<double> l(num_vars + 1, 0.0);
+    std::vector<double> u(num_vars, 1.0);
+    EXPECT_THROW(osqp::OSQPInterface solver(P, A, q, l, u, eps_abs), std::invalid_argument);
+  }
+
+  {
+    Eigen::MatrixXd P = Eigen::MatrixXd::Identity(num_vars, num_vars);
+    Eigen::MatrixXd A = Eigen::MatrixXd::Identity(num_vars, num_vars);
+    std::vector<double> q(num_vars, 1.0);
+    std::vector<double> l(num_vars, 0.0);
+    std::vector<double> u(num_vars + 1, 1.0);
+    EXPECT_THROW(osqp::OSQPInterface solver(P, A, q, l, u, eps_abs), std::invalid_argument);
+  }
+}
+
 int main(int argc, char * argv[])
 {
   ::testing::InitGoogleTest(&argc, argv);
