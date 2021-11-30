@@ -787,9 +787,15 @@ visualization_msgs::msg::MarkerArray visualization::laneletsBoundaryAsMarkerArra
   }
 
   visualization_msgs::msg::MarkerArray marker_array;
-  marker_array.markers.push_back(left_line_strip);
-  marker_array.markers.push_back(right_line_strip);
-  marker_array.markers.push_back(center_line_strip);
+  if (!left_line_strip.points.empty()) {
+    marker_array.markers.push_back(left_line_strip);
+  }
+  if (!right_line_strip.points.empty()) {
+    marker_array.markers.push_back(right_line_strip);
+  }
+  if (!center_line_strip.points.empty()) {
+    marker_array.markers.push_back(center_line_strip);
+  }
   return marker_array;
 }
 
