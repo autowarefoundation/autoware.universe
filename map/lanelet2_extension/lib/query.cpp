@@ -193,6 +193,34 @@ std::vector<lanelet::DetectionAreaConstPtr> query::detectionAreas(
   return da_reg_elems;
 }
 
+std::vector<lanelet::NoStoppingAreaConstPtr> query::noStoppingAreas(
+  const lanelet::ConstLanelets & lanelets)
+{
+  std::vector<lanelet::NoStoppingAreaConstPtr> no_reg_elems;
+
+  for (auto i = lanelets.begin(); i != lanelets.end(); i++) {
+    lanelet::ConstLanelet ll = *i;
+    std::vector<lanelet::NoStoppingAreaConstPtr> ll_no_re =
+      ll.regulatoryElementsAs<lanelet::autoware::NoStoppingArea>();
+
+    // insert unique tl into array
+    for (const auto & no_ptr : ll_no_re) {
+      lanelet::Id id = no_ptr->id();
+      bool unique_id = true;
+
+      for (auto ii = no_reg_elems.begin(); ii != no_reg_elems.end(); ii++) {
+        if (id == (*ii)->id()) {
+          unique_id = false;
+          break;
+        }
+      }
+
+      if (unique_id) {no_reg_elems.push_back(no_ptr);}
+    }
+  }
+  return no_reg_elems;
+}
+
 lanelet::ConstPolygons3d query::getAllObstaclePolygons(
   const lanelet::LaneletMapConstPtr & lanelet_map_ptr)
 {

@@ -29,6 +29,7 @@
 #include "lanelet2_core/primitives/Lanelet.h"
 
 #include "lanelet2_extension/regulatory_elements/autoware_traffic_light.hpp"
+#include "lanelet2_extension/regulatory_elements/no_stopping_area.hpp"
 #include "lanelet2_extension/utility/query.hpp"
 
 namespace lanelet
@@ -195,6 +196,17 @@ visualization_msgs::msg::MarkerArray trafficLightsAsTriangleMarkerArray(
  */
 visualization_msgs::msg::MarkerArray detectionAreasAsMarkerArray(
   const std::vector<lanelet::DetectionAreaConstPtr> & da_reg_elems,
+  const std_msgs::msg::ColorRGBA c,
+  const rclcpp::Duration duration = rclcpp::Duration(0, 0));
+
+/**
+ * [noStoppingAreasAsMarkerArray creates marker array to visualize detection areas]
+ * @param  no_reg_elems [mp stopping area regulatory elements]
+ * @param  c            [color of the marker]
+ * @param  duration     [lifetime of the marker]
+ */
+visualization_msgs::msg::MarkerArray noStoppingAreasAsMarkerArray(
+  const std::vector<lanelet::NoStoppingAreaConstPtr> & no_reg_elems,
   const std_msgs::msg::ColorRGBA c,
   const rclcpp::Duration duration = rclcpp::Duration(0, 0));
 

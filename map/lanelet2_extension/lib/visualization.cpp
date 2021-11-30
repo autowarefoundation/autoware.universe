@@ -647,6 +647,83 @@ visualization_msgs::msg::MarkerArray visualization::detectionAreasAsMarkerArray(
   return marker_array;
 }
 
+visualization_msgs::msg::MarkerArray visualization::noStoppingAreasAsMarkerArray(
+  const std::vector<lanelet::NoStoppingAreaConstPtr> & no_reg_elems,
+  const std_msgs::msg::ColorRGBA c,
+  const rclcpp::Duration duration)
+{
+  visualization_msgs::msg::MarkerArray marker_array;
+  visualization_msgs::msg::Marker marker;
+  visualization_msgs::msg::Marker line_marker;
+
+  if (no_reg_elems.empty()) {
+    return marker_array;
+  }
+
+  marker.header.frame_id = "map";
+  marker.header.stamp = rclcpp::Time();
+  marker.frame_locked = true;
+  marker.ns = "no_stopping_area";
+  marker.id = 0;
+  marker.type = visualization_msgs::msg::Marker::TRIANGLE_LIST;
+  marker.lifetime = duration;
+  marker.pose.position.x = 0.0;  // p.x();
+  marker.pose.position.y = 0.0;  // p.y();
+  marker.pose.position.z = 0.0;  // p.z();
+  marker.pose.orientation.x = 0.0;
+  marker.pose.orientation.y = 0.0;
+  marker.pose.orientation.z = 0.0;
+  marker.pose.orientation.w = 1.0;
+  marker.scale.x = 1.0;
+  marker.scale.y = 1.0;
+  marker.scale.z = 1.0;
+  marker.color.r = 1.0f;
+  marker.color.g = 1.0f;
+  marker.color.b = 1.0f;
+  marker.color.a = 0.999;
+
+  std_msgs::msg::ColorRGBA line_c;
+  line_c.r = 0.5;
+  line_c.g = 0.5;
+  line_c.b = 0.5;
+  line_c.a = 0.999;
+  visualization::initLineStringMarker(&line_marker, "map", "no_stopping_area_stopline", line_c);
+
+  for (const auto & no_reg_elem : no_reg_elems) {
+    marker.points.clear();
+    marker.colors.clear();
+    marker.id = no_reg_elem->id();
+
+    // area visualization
+    const auto no_stopping_areas = no_reg_elem->noStoppingAreas();
+    for (const auto & no_stopping_area : no_stopping_areas) {
+      geometry_msgs::msg::Polygon geom_poly;
+      utils::conversion::toGeomMsgPoly(no_stopping_area, &geom_poly);
+
+      std::vector<geometry_msgs::msg::Polygon> triangles;
+      polygon2Triangle(geom_poly, &triangles);
+
+      for (auto tri : triangles) {
+        geometry_msgs::msg::Point tri0[3];
+
+        for (int i = 0; i < 3; i++) {
+          utils::conversion::toGeomMsgPt(tri.points[i], &tri0[i]);
+          marker.points.push_back(tri0[i]);
+          marker.colors.push_back(c);
+        }
+      }  // for triangles0
+    }    // for no_stopping areas
+    marker_array.markers.push_back(marker);
+    const auto & stop_line = no_reg_elem->stopLine();
+    // stop line visualization
+    if (stop_line) {
+      visualization::pushLineStringMarker(&line_marker, stop_line.value(), line_c, 0.5);
+    }
+  }  // for regulatory elements
+  if (!line_marker.points.empty()) {marker_array.markers.push_back(line_marker);}
+  return marker_array;
+}
+
 visualization_msgs::msg::MarkerArray visualization::pedestrianMarkingsAsMarkerArray(
   const lanelet::ConstLineStrings3d & pedestrian_markings, const std_msgs::msg::ColorRGBA & c)
 {
