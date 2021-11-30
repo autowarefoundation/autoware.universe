@@ -1,6 +1,6 @@
 <launch>
   <!-- common param -->
-  <arg name="common_param_path" />
+  <arg name="common_param_path" default="$(find-pkg-share motion_velocity_smoother)/config/default_common.param.yaml"/>
 
   <!-- input/output -->
   <arg name="input_trajectory" default="/planning/scenario_planning/scenario_selector/trajectory"/>
@@ -8,7 +8,7 @@
 
   <!-- debug flags -->
   <arg name="publish_debug_trajs" default="true"/>
-  <arg name="smoother_type" default="JerkFiltered"/>
+  <arg name="smoother_type" default="JerkFiltered"/> <!-- Analytical, JerkFiltered, L2, or Linf -->
 
   <arg name="param_path" default="$(find-pkg-share motion_velocity_smoother)/config/default_motion_velocity_smoother.param.yaml" />
   <arg name="smoother_param_path" default="$(find-pkg-share motion_velocity_smoother)/config/$(var smoother_type).param.yaml" />
