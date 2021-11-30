@@ -538,6 +538,50 @@ visualization_msgs::msg::MarkerArray visualization::autowareTrafficLightsAsMarke
   return tl_marker_array;
 }
 
+visualization_msgs::msg::MarkerArray visualization::generateTrafficLightIdMaker(
+  const std::vector<lanelet::AutowareTrafficLightConstPtr> tl_reg_elems,
+  const std_msgs::msg::ColorRGBA c, const rclcpp::Duration duration, const double scale)
+{
+
+  visualization_msgs::msg::MarkerArray tl_id_marker_array;
+
+  for (auto tli = tl_reg_elems.begin(); tli != tl_reg_elems.end(); tli++) {
+    lanelet::ConstLineStrings3d light_bulbs;
+    lanelet::AutowareTrafficLightConstPtr tl = *tli;
+
+    const auto lights = tl->trafficLights();
+    for (const auto & lsp : lights) {
+      if (lsp.isLineString())  // traffic lights can either polygons or
+      {                        // linestrings
+        lanelet::ConstLineString3d ls = static_cast<lanelet::ConstLineString3d>(lsp);
+
+        visualization_msgs::msg::Marker marker;
+        marker.header.frame_id = "map";
+        marker.header.stamp = rclcpp::Time();
+        marker.ns = "traffic_light_id";
+        marker.id = ls.id();
+        marker.type = marker.TEXT_VIEW_FACING;
+        marker.lifetime = duration;
+        marker.action = marker.ADD;
+        marker.pose.position.x = (ls.front().x() + ls.back().x()) / 2;
+        marker.pose.position.y = (ls.front().y() + ls.back().y()) / 2;
+        marker.pose.position.z = ls.front().z() + 1.0;
+        marker.pose.orientation.x = 0.0;
+        marker.pose.orientation.y = 0.0;
+        marker.pose.orientation.z = 0.0;
+        marker.pose.orientation.w = 1.0;
+        marker.color = c;
+        marker.scale.z = scale;
+        marker.frame_locked = true;
+        marker.text = std::to_string(ls.id());
+        tl_id_marker_array.markers.push_back(marker);
+      }
+    }
+  }
+
+  return (tl_id_marker_array);
+}
+
 visualization_msgs::msg::MarkerArray visualization::detectionAreasAsMarkerArray(
   const std::vector<lanelet::DetectionAreaConstPtr> & da_reg_elems,
   const std_msgs::msg::ColorRGBA c,
