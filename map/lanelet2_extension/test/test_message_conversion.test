@@ -1,5 +1,0 @@
-<launch>
-
-  <test test-name="test-message_conversion" pkg="lanelet2_extension" type="message_conversion-test" name="test"/>
-
-</launch>
