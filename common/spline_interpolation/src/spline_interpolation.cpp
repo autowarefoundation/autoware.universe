@@ -267,7 +267,7 @@ std::vector<double> PreconditionedConjugateGradient::solve() const
 
   for (size_t i = 1; i < x.size(); ++i) x[i] = x_in[i - 1];
 
-  if (num_iter == max_iter_) ROS_WARN("[interpolate (PCG)] unconverged!");
+  if (num_iter == max_iter_) RCLCPP_WARN(rclcpp::get_logger("PreconditionedConjugateGradient"), "[interpolate (PCG)] unconverged!");
   return x;
 }
 
@@ -309,7 +309,7 @@ std::vector<double> SOR::solve() const
     }
     ++num_iter;
   }
-  if (num_iter > max_iter_) ROS_WARN("[interpolate (SOR)] unconverged!");
+  if (num_iter > max_iter_) RCLCPP_WARN(rclcpp::get_logger("PreconditionedConjugateGradient"), "[interpolate (SOR)] unconverged!");
   return ans_next;
 }
 

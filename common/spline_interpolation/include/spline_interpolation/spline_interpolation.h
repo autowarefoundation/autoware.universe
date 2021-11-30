@@ -22,7 +22,7 @@
 #include <numeric>
 #include <vector>
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 
 namespace spline_interpolation
 {
