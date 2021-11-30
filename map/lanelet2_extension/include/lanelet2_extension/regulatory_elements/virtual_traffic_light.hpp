@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LANELET2_EXTENSION_REGULATORY_ELEMENTS_VIRTUAL_TRAFFIC_LIGHT_H
-#define LANELET2_EXTENSION_REGULATORY_ELEMENTS_VIRTUAL_TRAFFIC_LIGHT_H
+#ifndef LANELET2_EXTENSION__REGULATORY_ELEMENTS__VIRTUAL_TRAFFIC_LIGHT_HPP_
+#define LANELET2_EXTENSION__REGULATORY_ELEMENTS__VIRTUAL_TRAFFIC_LIGHT_HPP_
 
 #include <memory>
 #include <vector>
@@ -78,4 +78,4 @@ static lanelet::RegisterRegulatoryElement<VirtualTrafficLight> regVirtualTraffic
 }  // namespace autoware
 }  // namespace lanelet
 
-#endif  // LANELET2_EXTENSION_REGULATORY_ELEMENTS_VIRTUAL_TRAFFIC_LIGHT_H
+#endif  // LANELET2_EXTENSION__REGULATORY_ELEMENTS__VIRTUAL_TRAFFIC_LIGHT_HPP_

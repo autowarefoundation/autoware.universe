@@ -13,6 +13,8 @@
 // limitations under the License.
 
 #include <algorithm>
+#include <memory>
+#include <utility>
 #include <vector>
 
 #include "boost/variant.hpp"
