@@ -51,26 +51,28 @@ bool VehicleInfo::parametersAlreadyDeclared(rclcpp::Node & node)
          node.has_parameter("vehicle_height");
 }
 
-void VehicleInfo::declearVehicleParameters(rclcpp::Node & node)
+VehicleInfo VehicleInfo::declareAndGetVehicleInfo(rclcpp::Node & node)
 {
   /*
-  Node:
+  Note:
    By setting allow_undeclared_parameters to true,
    it becomes posiible to declare prameter without default value, and
    wait parameters by this->get_parameter().get_type() == rclcpp::ParameterType::PARAMETER_NOT_SET.
    But from a code safety point of view, do not do it.
   */
 
-  node.declare_parameter("wheel_radius", 0.0);
-  node.declare_parameter("wheel_width", 0.0);
-  node.declare_parameter("wheel_base", 0.0);
-  node.declare_parameter("wheel_tread", 0.0);
-  node.declare_parameter("front_overhang", 0.0);
-  node.declare_parameter("rear_overhang", 0.0);
-  node.declare_parameter("left_overhang", 0.0);
-  node.declare_parameter("right_overhang", 0.0);
-  node.declare_parameter("vehicle_height", 0.0);
-  node.declare_parameter("ready_vehicle_info_param", false);
+  const double wheel_radius_m = node.declare_parameter("wheel_radius").get<double>();
+  const double wheel_width_m = node.declare_parameter("wheel_width").get<double>();
+  const double wheel_base_m = node.declare_parameter("wheel_base").get<double>();
+  const double wheel_tread_m = node.declare_parameter("wheel_tread").get<double>();
+  const double front_overhang_m = node.declare_parameter("front_overhang").get<double>();
+  const double rear_overhang_m = node.declare_parameter("rear_overhang").get<double>();
+  const double left_overhang_m = node.declare_parameter("left_overhang").get<double>();
+  const double right_overhang_m = node.declare_parameter("right_overhang").get<double>();
+  const double vehicle_height_m = node.declare_parameter("vehicle_height").get<double>();
+  return VehicleInfo(
+    wheel_radius_m, wheel_width_m, wheel_base_m, wheel_tread_m, front_overhang_m, rear_overhang_m,
+    left_overhang_m, right_overhang_m, vehicle_height_m);
 }
 
 VehicleInfo VehicleInfo::getVehicleInfo(rclcpp::Node & node)
@@ -89,24 +91,13 @@ VehicleInfo VehicleInfo::getVehicleInfo(rclcpp::Node & node)
     left_overhang_m, right_overhang_m, vehicle_height_m);
 }
 
-void VehicleInfo::waitVehicleInfo(rclcpp::Node & node)
-{
-  while (rclcpp::ok() && !node.get_parameter("ready_vehicle_info_param").as_bool()) {
-    RCLCPP_INFO_STREAM_THROTTLE(
-      node.get_logger(), *node.get_clock(), 5000 /* ms */, "wait for vehicle info");
-    rclcpp::spin_some(node.get_node_base_interface());
-    rclcpp::Rate(100.0).sleep();
-  }
-}
-
 VehicleInfo VehicleInfo::create(rclcpp::Node & node)
 {
   if (!parametersAlreadyDeclared(node)) {
-    declearVehicleParameters(node);
-    waitVehicleInfo(node);
+    return declareAndGetVehicleInfo(node);
+  } else {
+    return getVehicleInfo(node);
   }
-
-  return getVehicleInfo(node);
 }
 
 }  // namespace vehicle_info_util

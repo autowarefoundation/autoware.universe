@@ -72,9 +72,8 @@ private:
   // Used to check if parameters are already declared or not in order to avoid
   // declaring parameters multiple times.
   static bool parametersAlreadyDeclared(rclcpp::Node & node);
-  static void declearVehicleParameters(rclcpp::Node & node);
+  static VehicleInfo declareAndGetVehicleInfo(rclcpp::Node & node);
   static VehicleInfo getVehicleInfo(rclcpp::Node & node);
-  static void waitVehicleInfo(rclcpp::Node & node);
 };
 
 }  // namespace vehicle_info_util

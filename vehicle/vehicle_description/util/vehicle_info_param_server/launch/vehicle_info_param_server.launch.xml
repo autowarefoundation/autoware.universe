@@ -1,9 +1,0 @@
-<launch>
-
-    <arg name="config_file" />
-
-    <node pkg="vehicle_info_param_server" exec="vehicle_info_param_server" name="vehicle_info_param_server" output="log">
-        <param from="$(var config_file)"/>
-    </node>
-
-</launch>
