@@ -101,6 +101,7 @@ private:
   bool is_pacmod_rpt_received_;
   bool is_pacmod_enabled_;
   bool is_clear_override_needed_;
+  bool prev_override_;
   bool show_debug_info_;
   double loop_rate_;        // [Hz]
   double tire_radius_;      // [m]

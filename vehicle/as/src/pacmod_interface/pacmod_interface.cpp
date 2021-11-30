@@ -45,7 +45,8 @@ PacmodInterface::PacmodInterface()
   prev_engage_cmd_(false),
   is_pacmod_rpt_received_(false),
   is_pacmod_enabled_(false),
-  is_clear_override_needed_(false)
+  is_clear_override_needed_(false),
+  prev_override_(true)
 {
   /* setup parameters */
   private_nh_.param<std::string>("base_frame_id", base_frame_id_, "base_link");
@@ -276,6 +277,13 @@ void PacmodInterface::publishCommands()
   } else if (is_clear_override_needed_ == true) {
     clear_override = true;
   }
+
+  /* make engage cmd false when a driver overrides vehicle control */
+  if (!prev_override_ && global_rpt_ptr_->override_active) {
+    engage_cmd_ = false;
+  }
+  prev_override_ = global_rpt_ptr_->override_active;
+
   ROS_INFO_COND(
     show_debug_info_,
     "[Pacmod Interface] is_pacmod_enabled_ = %d, is_clear_override_needed_ = %d, clear_override = "
