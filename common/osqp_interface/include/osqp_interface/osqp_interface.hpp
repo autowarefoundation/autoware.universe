@@ -17,14 +17,14 @@
 #ifndef OSQP_INTERFACE__OSQP_INTERFACE_HPP_
 #define OSQP_INTERFACE__OSQP_INTERFACE_HPP_
 
-#include <string>
-#include <vector>
-#include <tuple>
+#include <eigen3/Eigen/Core>
+
+#include <osqp/osqp.h>
+
 #include <memory>
-
-#include "osqp/osqp.h"
-
-#include "eigen3/Eigen/Core"
+#include <string>
+#include <tuple>
+#include <vector>
 namespace osqp
 {
 struct CSC_Matrix;
@@ -36,8 +36,9 @@ namespace osqp
 /**
  * Implementation of a native C++ interface for the OSQP solver.
  *
- * The interface takes in the problem formulation as Eigen matrices and vectors, converts these objects into C-style
- * CSC matrices and dynamic arrays, loads the data into the OSQP workspace dataholder, and runs the optimizer.
+ * The interface takes in the problem formulation as Eigen matrices and vectors, converts these
+ * objects into C-style CSC matrices and dynamic arrays, loads the data into the OSQP workspace
+ * dataholder, and runs the optimizer.
  *
  * The optimization results are return as a vector tuple by the optimization function.
  *   std::tuple<std::vector<double>, std::vector<double>> result = osqp_interface.optimize();
@@ -47,9 +48,8 @@ namespace osqp
  *
  * The interface can be used in several ways:
  *
- *   1. Initialize the interface WITHOUT data. Load the problem formulation at the optimization call.
- *        osqp_interface = OSQPInterface();
- *        osqp_interface.optimize(P, A, q, l, u);
+ *   1. Initialize the interface WITHOUT data. Load the problem formulation at the optimization
+ * call. osqp_interface = OSQPInterface(); osqp_interface.optimize(P, A, q, l, u);
  *
  *   2. Initialize the interface WITH data.
  *        osqp_interface = OSQPInterface(P, A, q, l, u);
@@ -238,12 +238,12 @@ public:
   void updateRho(const double rho);
   void updateAlpha(const double alpha);
 
-  int getTakenIter() {return static_cast<int>(latest_work_info.iter);}
-  std::string getStatusMessage() {return static_cast<std::string>(latest_work_info.status);}
-  int getStatus() {return static_cast<int>(latest_work_info.status_val);}
-  int getStatusPolish() {return static_cast<int>(latest_work_info.status_polish);}
-  double getRunTime() {return static_cast<double>(latest_work_info.run_time);}
-  double getObjVal() {return static_cast<double>(latest_work_info.obj_val);}
+  int getTakenIter() { return static_cast<int>(latest_work_info.iter); }
+  std::string getStatusMessage() { return static_cast<std::string>(latest_work_info.status); }
+  int getStatus() { return static_cast<int>(latest_work_info.status_val); }
+  int getStatusPolish() { return static_cast<int>(latest_work_info.status_polish); }
+  double getRunTime() { return static_cast<double>(latest_work_info.run_time); }
+  double getObjVal() { return static_cast<double>(latest_work_info.obj_val); }
 };
 
 }  // namespace osqp

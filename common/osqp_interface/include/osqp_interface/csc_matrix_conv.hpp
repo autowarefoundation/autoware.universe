@@ -14,11 +14,11 @@
 #ifndef OSQP_INTERFACE__CSC_MATRIX_CONV_HPP_
 #define OSQP_INTERFACE__CSC_MATRIX_CONV_HPP_
 
+#include <eigen3/Eigen/Core>
+
+#include <osqp/types.h>  // for 'c_int' type ('long' or 'long long')
+
 #include <vector>
-
-#include "osqp/types.h"  // for 'c_int' type ('long' or 'long long')
-
-#include "eigen3/Eigen/Core"
 
 namespace osqp
 {

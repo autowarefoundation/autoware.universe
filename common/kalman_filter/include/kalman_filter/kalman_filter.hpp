@@ -15,8 +15,8 @@
 #ifndef KALMAN_FILTER__KALMAN_FILTER_HPP_
 #define KALMAN_FILTER__KALMAN_FILTER_HPP_
 
-#include "eigen3/Eigen/Core"
-#include "eigen3/Eigen/LU"
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/LU>
 
 /**
  * @file kalman_filter.h
@@ -125,8 +125,8 @@ public:
   double getXelement(unsigned int i);
 
   /**
-   * @brief calculate kalman filter state and covariance by prediction model with A, B, Q matrix. This is mainly for EKF
-   * with variable matrix.
+   * @brief calculate kalman filter state and covariance by prediction model with A, B, Q matrix.
+   * This is mainly for EKF with variable matrix.
    * @param u input for model
    * @param A coefficient matrix of x for process model
    * @param B coefficient matrix of u for process model
@@ -138,8 +138,8 @@ public:
     const Eigen::MatrixXd & Q);
 
   /**
-   * @brief calculate kalman filter covariance with prediction model with x, A, Q matrix. This is mainly for EKF with
-   * variable matrix.
+   * @brief calculate kalman filter covariance with prediction model with x, A, Q matrix. This is
+   * mainly for EKF with variable matrix.
    * @param x_next predicted state
    * @param A coefficient matrix of x for process model
    * @param Q covariance matrix for process model
@@ -149,8 +149,8 @@ public:
     const Eigen::MatrixXd & x_next, const Eigen::MatrixXd & A, const Eigen::MatrixXd & Q);
 
   /**
-   * @brief calculate kalman filter covariance with prediction model with x, A, Q matrix. This is mainly for EKF with
-   * variable matrix.
+   * @brief calculate kalman filter covariance with prediction model with x, A, Q matrix. This is
+   * mainly for EKF with variable matrix.
    * @param x_next predicted state
    * @param A coefficient matrix of x for process model
    * @return bool to check matrix operations are being performed properly
@@ -158,15 +158,16 @@ public:
   bool predict(const Eigen::MatrixXd & x_next, const Eigen::MatrixXd & A);
 
   /**
-   * @brief calculate kalman filter state by prediction model with A, B and Q being class member variables.
+   * @brief calculate kalman filter state by prediction model with A, B and Q being class member
+   * variables.
    * @param u input for the model
    * @return bool to check matrix operations are being performed properly
    */
   bool predict(const Eigen::MatrixXd & u);
 
   /**
-   * @brief calculate kalman filter state by measurement model with y_pred, C and R matrix. This is mainly for EKF with
-   * variable matrix.
+   * @brief calculate kalman filter state by measurement model with y_pred, C and R matrix. This is
+   * mainly for EKF with variable matrix.
    * @param y measured values
    * @param y output values expected from measurement model
    * @param C coefficient matrix of x for measurement model
@@ -178,8 +179,8 @@ public:
     const Eigen::MatrixXd & R);
 
   /**
-   * @brief calculate kalman filter state by measurement model with C and R matrix. This is mainly for EKF with variable
-   * matrix.
+   * @brief calculate kalman filter state by measurement model with C and R matrix. This is mainly
+   * for EKF with variable matrix.
    * @param y measured values
    * @param C coefficient matrix of x for measurement model
    * @param R covariance matrix for measurement model
@@ -188,7 +189,8 @@ public:
   bool update(const Eigen::MatrixXd & y, const Eigen::MatrixXd & C, const Eigen::MatrixXd & R);
 
   /**
-   * @brief calculate kalman filter state by measurement model with C and R being class member variables.
+   * @brief calculate kalman filter state by measurement model with C and R being class member
+   * variables.
    * @param y measured values
    * @return bool to check matrix operations are being performed properly
    */

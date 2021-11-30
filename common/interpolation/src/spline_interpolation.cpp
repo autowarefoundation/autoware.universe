@@ -12,9 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <vector>
 #include "interpolation/spline_interpolation.hpp"
+
 #include "interpolation/interpolation_utils.hpp"
+
+#include <vector>
 
 namespace
 {
@@ -83,7 +85,7 @@ interpolation::MultiSplineCoef generateSplineCoefficients(
 {
   const size_t num_base = base_keys.size();  // N+1
 
-  std::vector<double> diff_keys;  // N
+  std::vector<double> diff_keys;    // N
   std::vector<double> diff_values;  // N
   for (size_t i = 0; i < num_base - 1; ++i) {
     diff_keys.push_back(base_keys.at(i + 1) - base_keys.at(i));
@@ -101,12 +103,11 @@ interpolation::MultiSplineCoef generateSplineCoefficients(
         tdma_coef.a[i] = diff_keys[i + 1];
         tdma_coef.c[i] = diff_keys[i + 1];
       }
-      tdma_coef.d[i] = 6.0 *
-        (diff_values[i + 1] / diff_keys[i + 1] - diff_values[i] / diff_keys[i]);
+      tdma_coef.d[i] =
+        6.0 * (diff_values[i + 1] / diff_keys[i + 1] - diff_values[i] / diff_keys[i]);
     }
 
-    const std::vector<double> tdma_res =
-      solveTridiagonalMatrixAlgorithm(tdma_coef);
+    const std::vector<double> tdma_res = solveTridiagonalMatrixAlgorithm(tdma_coef);
 
     // calculate v
     v.insert(v.end(), tdma_res.begin(), tdma_res.end());
@@ -118,8 +119,8 @@ interpolation::MultiSplineCoef generateSplineCoefficients(
   for (size_t i = 0; i < num_base - 1; ++i) {
     multi_spline_coef.a[i] = (v[i + 1] - v[i]) / 6.0 / diff_keys[i];
     multi_spline_coef.b[i] = v[i] / 2.0;
-    multi_spline_coef.c[i] = diff_values[i] / diff_keys[i] - diff_keys[i] * (2 * v[i] + v[i + 1]) /
-      6.0;
+    multi_spline_coef.c[i] =
+      diff_values[i] / diff_keys[i] - diff_keys[i] * (2 * v[i] + v[i + 1]) / 6.0;
     multi_spline_coef.d[i] = base_values[i];
   }
 
