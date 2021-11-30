@@ -32,7 +32,7 @@ public:
     viewer_frame_ = declare_parameter("viewer_frame", "viewer");
 
     sub_ = create_subscription<sensor_msgs::msg::PointCloud2>(
-      "pointcloud_map", rclcpp::QoS{1},
+      "pointcloud_map", rclcpp::QoS{1}.transient_local(),
       std::bind(&MapTFGenerator::Callback, this, std::placeholders::_1));
 
     static_broadcaster_ = std::make_shared<tf2_ros::StaticTransformBroadcaster>(this);

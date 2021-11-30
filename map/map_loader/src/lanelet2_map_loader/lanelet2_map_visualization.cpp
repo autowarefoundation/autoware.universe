@@ -127,7 +127,7 @@ int main(int argc, char ** argv)
   rclcpp::init(argc, argv);
   auto node = rclcpp::Node::make_shared("lanelet2_map_visualizer");
   auto bin_map_sub = node->create_subscription<autoware_lanelet2_msgs::msg::MapBin>(
-    "input/lanelet2_map", rclcpp::QoS{1}, std::bind(&binMapCallback, std::placeholders::_1));
+    "input/lanelet2_map", rclcpp::QoS{1}.transient_local(), std::bind(&binMapCallback, std::placeholders::_1));
 
   rclcpp::QoS durable_qos{1};
   durable_qos.transient_local();
