@@ -14,7 +14,7 @@
 
 #include "ssc_interface/ssc_interface.hpp"
 
-#include <rclcpp/rclcpp.hpp>
+#include "rclcpp/rclcpp.hpp"
 
 int main(int argc, char ** argv)
 {
