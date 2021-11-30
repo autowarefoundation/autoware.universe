@@ -137,7 +137,9 @@ void ElevationMapLoaderNode::publishElevationMap()
     createElevationMapFromPointcloud();
     elevation_map_ = grid_map_pcl_loader_->getGridMap();
     if (use_inpaint_) {inpaintElevationMap(inpaint_radius_);}
-    saveElevationMap();
+    // saveElevationMap does not work with autoware.prod.launch.xml, so disable it temporarily.
+    // https://star4.slack.com/archives/C017JDNQCMV/p1629440661421400?thread_ts=1629419500.383700&cid=C017JDNQCMV
+    // saveElevationMap();
   }
 
   elevation_map_.setFrameId(map_frame_);
