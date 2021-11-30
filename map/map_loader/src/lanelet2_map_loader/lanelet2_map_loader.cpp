@@ -17,7 +17,7 @@
  *
  */
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_io/Io.h>
@@ -28,31 +28,32 @@
 #include <lanelet2_extension/utility/message_conversion.h>
 #include <lanelet2_extension/utility/utilities.h>
 
-#include <autoware_lanelet2_msgs/MapBin.h>
+#include <autoware_lanelet2_msgs/msg/map_bin.hpp>
 
 #include <string>
 
-void printUsage()
+void printUsage(const rclcpp::Logger & logger)
 {
-  ROS_ERROR_STREAM("Usage:");
-  ROS_ERROR_STREAM("rosrun map_loader lanelet2_map_loader [.OSM]");
-  ROS_ERROR_STREAM(
-    "rosrun map_loader lanelet2_map_loader download [X] [Y]: WARNING not implemented");
+  RCLCPP_ERROR_STREAM(
+    logger,
+    "Usage:" << std::endl
+             << "rosrun map_loader lanelet2_map_loader [.OSM]" << std::endl
+             << "rosrun map_loader lanelet2_map_loader download [X] [Y]: WARNING not implemented");
 }
 
 int main(int argc, char ** argv)
 {
-  ros::init(argc, argv, "lanelet_map_loader");
-  ros::NodeHandle pnh("~");
+  rclcpp::init(argc, argv);
+  auto node = rclcpp::Node::make_shared("lanelet_map_loader");
 
   if (argc < 2) {
-    printUsage();
+    printUsage(node->get_logger());
     return EXIT_FAILURE;
   }
 
   std::string mode(argv[1]);
   if (mode == "download" && argc < 4) {
-    printUsage();
+    printUsage(node->get_logger());
     return EXIT_FAILURE;
   }
 
@@ -64,32 +65,36 @@ int main(int argc, char ** argv)
   lanelet::LaneletMapPtr map = lanelet::load(lanelet2_filename, projector, &errors);
 
   for (const auto & error : errors) {
-    ROS_ERROR_STREAM(error);
+    RCLCPP_ERROR_STREAM(node->get_logger(), error);
   }
   if (!errors.empty()) {
     return EXIT_FAILURE;
   }
 
   double center_line_resolution;
-  pnh.param<double>("center_line_resolution", center_line_resolution, 5.0);
+  center_line_resolution = node->declare_parameter("center_line_resolution", 5.0);
   lanelet::utils::overwriteLaneletsCenterline(map, center_line_resolution, false);
 
   std::string format_version, map_version;
   lanelet::io_handlers::AutowareOsmParser::parseVersions(
     lanelet2_filename, &format_version, &map_version);
 
-  ros::Publisher map_bin_pub =
-    pnh.advertise<autoware_lanelet2_msgs::MapBin>("output/lanelet2_map", 1, true);
-  autoware_lanelet2_msgs::MapBin map_bin_msg;
-  map_bin_msg.header.stamp = ros::Time::now();
+  rclcpp::QoS durable_qos{1};
+  durable_qos.transient_local();
+  const auto map_bin_pub =
+    node->create_publisher<autoware_lanelet2_msgs::msg::MapBin>("output/lanelet2_map", durable_qos);
+  autoware_lanelet2_msgs::msg::MapBin map_bin_msg;
+  rclcpp::Clock ros_clock(RCL_ROS_TIME);
+  map_bin_msg.header.stamp = ros_clock.now();
   map_bin_msg.header.frame_id = "map";
   map_bin_msg.format_version = format_version;
   map_bin_msg.map_version = map_version;
   lanelet::utils::conversion::toBinMsg(map, &map_bin_msg);
 
-  map_bin_pub.publish(map_bin_msg);
+  map_bin_pub->publish(map_bin_msg);
 
-  ros::spin();
+  rclcpp::spin(node);
 
+  rclcpp::shutdown();
   return 0;
 }

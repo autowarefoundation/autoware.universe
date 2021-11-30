@@ -32,7 +32,7 @@
 
 #include <boost/filesystem.hpp>
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 
 #include <map_loader/pointcloud_map_loader_node.h>
 
@@ -40,7 +40,7 @@ namespace fs = boost::filesystem;
 
 int main(int argc, char * argv[])
 {
-  ros::init(argc, argv, "pointcloud_map_loader");
+  rclcpp::init(argc, argv);
 
   std::vector<std::string> pcd_paths;
   for (int i = 1; i < argc; ++i) {
@@ -48,7 +48,7 @@ int main(int argc, char * argv[])
 
     if (!fs::exists(arg)) {
       const std::string msg = "invalid path: " + arg.string();
-      throw std::runtime_error(msg);
+      std::cerr << msg;
     }
 
     if (fs::is_regular_file(arg)) {
@@ -72,9 +72,15 @@ int main(int argc, char * argv[])
     }
   }
 
-  PointCloudMapLoaderNode pointcloud_map_loader_node(pcd_paths);
+  if(pcd_paths.empty())
+  {
+    const std::string msg = "no valid_path";
+    throw std::runtime_error(msg);
+  }
 
-  ros::spin();
+  const auto pointcloud_map_loader_node = std::make_shared<PointCloudMapLoaderNode>(pcd_paths);
+  rclcpp::spin(pointcloud_map_loader_node);
+  rclcpp::shutdown();
 
   return 0;
 }

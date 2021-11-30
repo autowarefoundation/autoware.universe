@@ -17,13 +17,13 @@
  *
  */
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 
-#include <visualization_msgs/MarkerArray.h>
-
-#include <autoware_lanelet2_msgs/MapBin.h>
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_projection/UTM.h>
+#include <autoware_lanelet2_msgs/msg/map_bin.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
 
 #include <lanelet2_extension/regulatory_elements/autoware_traffic_light.h>
 #include <lanelet2_extension/utility/message_conversion.h>
@@ -33,15 +33,16 @@
 #include <vector>
 
 static bool g_viz_lanelets_centerline = true;
-static ros::Publisher g_map_pub;
+static rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr g_map_pub;
+static std::shared_ptr<rclcpp::Logger> g_logger;
 
 void insertMarkerArray(
-  visualization_msgs::MarkerArray * a1, const visualization_msgs::MarkerArray & a2)
+  visualization_msgs::msg::MarkerArray * a1, const visualization_msgs::msg::MarkerArray & a2)
 {
   a1->markers.insert(a1->markers.end(), a2.markers.begin(), a2.markers.end());
 }
 
-void setColor(std_msgs::ColorRGBA * cl, double r, double g, double b, double a)
+void setColor(std_msgs::msg::ColorRGBA * cl, double r, double g, double b, double a)
 {
   cl->r = r;
   cl->g = g;
@@ -49,12 +50,12 @@ void setColor(std_msgs::ColorRGBA * cl, double r, double g, double b, double a)
   cl->a = a;
 }
 
-void binMapCallback(autoware_lanelet2_msgs::MapBin msg)
+void binMapCallback(const autoware_lanelet2_msgs::msg::MapBin::SharedPtr msg)
 {
   lanelet::LaneletMapPtr viz_lanelet_map(new lanelet::LaneletMap);
 
-  lanelet::utils::conversion::fromBinMsg(msg, viz_lanelet_map);
-  ROS_INFO("Map is loaded\n");
+  lanelet::utils::conversion::fromBinMsg(*msg, viz_lanelet_map);
+  RCLCPP_INFO((*g_logger), "Map is loaded\n");
 
   // get lanelets etc to visualize
   lanelet::ConstLanelets all_lanelets = lanelet::utils::query::laneletLayer(viz_lanelet_map);
@@ -75,7 +76,7 @@ void binMapCallback(autoware_lanelet2_msgs::MapBin msg)
     lanelet::utils::query::getAllParkingSpaces(viz_lanelet_map);
   lanelet::ConstPolygons3d parking_lots = lanelet::utils::query::getAllParkingLots(viz_lanelet_map);
 
-  std_msgs::ColorRGBA cl_road, cl_cross, cl_ll_borders, cl_stoplines, cl_trafficlights,
+  std_msgs::msg::ColorRGBA cl_road, cl_cross, cl_ll_borders, cl_stoplines, cl_trafficlights,
     cl_detection_areas, cl_parking_lots, cl_parking_spaces;
   setColor(&cl_road, 0.2, 0.7, 0.7, 0.3);
   setColor(&cl_cross, 0.2, 0.7, 0.2, 0.3);
@@ -86,7 +87,7 @@ void binMapCallback(autoware_lanelet2_msgs::MapBin msg)
   setColor(&cl_parking_lots, 0.7, 0.7, 0.0, 0.3);
   setColor(&cl_parking_spaces, 1.0, 0.647, 0.0, 0.6);
 
-  visualization_msgs::MarkerArray map_marker_array;
+  visualization_msgs::msg::MarkerArray map_marker_array;
 
   insertMarkerArray(
     &map_marker_array, lanelet::visualization::laneletsBoundaryAsMarkerArray(
@@ -118,19 +119,24 @@ void binMapCallback(autoware_lanelet2_msgs::MapBin msg)
     &map_marker_array,
     lanelet::visualization::parkingSpacesAsMarkerArray(parking_spaces, cl_parking_spaces));
 
-  g_map_pub.publish(map_marker_array);
+  g_map_pub->publish(map_marker_array);
 }
 
 int main(int argc, char ** argv)
 {
-  ros::init(argc, argv, "lanelet2_map_visualizer");
-  ros::NodeHandle pnh("~");
-  ros::Subscriber bin_map_sub;
+  rclcpp::init(argc, argv);
+  auto node = rclcpp::Node::make_shared("lanelet2_map_visualizer");
+  auto bin_map_sub = node->create_subscription<autoware_lanelet2_msgs::msg::MapBin>(
+    "input/lanelet2_map", rclcpp::QoS{1}, std::bind(&binMapCallback, std::placeholders::_1));
 
-  bin_map_sub = pnh.subscribe("input/lanelet2_map", 1, binMapCallback);
-  g_map_pub = pnh.advertise<visualization_msgs::MarkerArray>("output/lanelet2_map_marker", 1, true);
+  rclcpp::QoS durable_qos{1};
+  durable_qos.transient_local();
+  g_map_pub = node->create_publisher<visualization_msgs::msg::MarkerArray>(
+    "output/lanelet2_map_marker", durable_qos);
 
-  ros::spin();
+  g_logger = std::make_shared<rclcpp::Logger>(node->get_logger());
+  rclcpp::spin(node);
+  rclcpp::shutdown();
 
   return 0;
 }

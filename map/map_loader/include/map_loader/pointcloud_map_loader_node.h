@@ -33,20 +33,17 @@
 #include <string>
 #include <vector>
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 
-#include <sensor_msgs/PointCloud2.h>
+#include <sensor_msgs/msg/point_cloud2.hpp>
 
-class PointCloudMapLoaderNode
+class PointCloudMapLoaderNode : public rclcpp::Node
 {
 public:
   explicit PointCloudMapLoaderNode(const std::vector<std::string> & pcd_paths);
 
 private:
-  ros::NodeHandle nh_{""};
-  ros::NodeHandle private_nh_{"~"};
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_pointcloud_map_;
 
-  ros::Publisher pub_pointcloud_map_;
-
-  sensor_msgs::PointCloud2 loadPCDFiles(const std::vector<std::string> & pcd_paths);
+  sensor_msgs::msg::PointCloud2 loadPCDFiles(const std::vector<std::string> & pcd_paths);
 };
