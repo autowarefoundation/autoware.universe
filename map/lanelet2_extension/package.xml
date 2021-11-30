@@ -11,8 +11,9 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
-  <depend>rclcpp</depend>
+  <depend>autoware_lanelet2_msgs</depend>
   <depend>geographiclib</depend>
+  <depend>geometry_msgs</depend>
   <depend>lanelet2_core</depend>
   <depend>lanelet2_io</depend>
   <depend>lanelet2_maps</depend>
@@ -20,11 +21,10 @@
   <depend>lanelet2_routing</depend>
   <depend>lanelet2_traffic_rules</depend>
   <depend>lanelet2_validation</depend>
-  <depend>tf2</depend>
-  <depend>autoware_lanelet2_msgs</depend>
-  <depend>geometry_msgs</depend>
-  <depend>visualization_msgs</depend>
   <depend>pugixml-dev</depend>
+  <depend>rclcpp</depend>
+  <depend>tf2</depend>
+  <depend>visualization_msgs</depend>
 
   <test_depend>ament_cmake_gtest</test_depend>
   <test_depend>ament_lint_auto</test_depend>
