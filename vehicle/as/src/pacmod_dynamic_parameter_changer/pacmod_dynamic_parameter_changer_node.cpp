@@ -141,21 +141,21 @@ ParamList PacmodDynamicParameterChangerNode::interpolateParam(
 ParamList PacmodDynamicParameterChangerNode::rateLimit(
   const ParamList new_param, const ParamList current_param)
 {
-  ParamList limitted_param;
+  ParamList limited_param;
   const double dt = (now() - current_param_time_).seconds();
 
   // apply rate limit
-  limitted_param.p_gain = rateLimit(
+  limited_param.p_gain = rateLimit(
     new_param.p_gain, current_param.p_gain, dt, param_max_rate_.p_gain, param_min_rate_.p_gain);
-  limitted_param.i_gain = rateLimit(
+  limited_param.i_gain = rateLimit(
     new_param.i_gain, current_param.i_gain, dt, param_max_rate_.i_gain, param_min_rate_.i_gain);
-  limitted_param.lugre_fc = rateLimit(
+  limited_param.lugre_fc = rateLimit(
     new_param.lugre_fc, current_param.lugre_fc, dt, param_max_rate_.lugre_fc,
     param_min_rate_.lugre_fc);
-  limitted_param.rtz_offset = rateLimit(
+  limited_param.rtz_offset = rateLimit(
     new_param.rtz_offset, current_param.rtz_offset, dt, param_max_rate_.rtz_offset,
     param_min_rate_.rtz_offset);
-  return limitted_param;
+  return limited_param;
 }
 
 double PacmodDynamicParameterChangerNode::rateLimit(
