@@ -37,9 +37,9 @@ public:
   double calcFFSteer(
     const double target_steer_angle_velocity, const double current_steer_angle) const;
   double calcFBSteer(
-    const double target_steer_angle, const double target_steer_angle_velocity, const double dt,
-    const double current_velocity, const double current_steer_angle,
-    std::vector<double> & pid_contributions, std::vector<double> & errors);
+    const double target_steer_angle, const double dt, const double current_velocity,
+    const double current_steer_angle, std::vector<double> & pid_contributions,
+    std::vector<double> & errors);
   void setDecay(const double decay) { pid_.setDecay(decay); }
 
 private:
