@@ -17,6 +17,9 @@
  *
  */
 
+#include <vector>
+#include <memory>
+
 #include "rclcpp/rclcpp.hpp"
 
 #include "lanelet2_core/LaneletMap.h"
@@ -30,7 +33,6 @@
 #include "lanelet2_extension/utility/query.hpp"
 #include "lanelet2_extension/visualization/visualization.hpp"
 
-#include <vector>
 
 static bool g_viz_lanelets_centerline = true;
 static rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr g_map_pub;
@@ -106,7 +108,7 @@ void binMapCallback(const autoware_lanelet2_msgs::msg::MapBin::SharedPtr msg)
       "crosswalk_lanelets", crosswalk_lanelets, cl_cross));
   insertMarkerArray(
     &map_marker_array, lanelet::visualization::pedestrianMarkingsAsMarkerArray(
-                         pedestrian_markings, cl_pedestrian_markings));
+      pedestrian_markings, cl_pedestrian_markings));
   insertMarkerArray(
     &map_marker_array, lanelet::visualization::laneletsAsTriangleMarkerArray(
       "walkway_lanelets", walkway_lanelets, cl_cross));
@@ -124,7 +126,7 @@ void binMapCallback(const autoware_lanelet2_msgs::msg::MapBin::SharedPtr msg)
     lanelet::visualization::parkingSpacesAsMarkerArray(parking_spaces, cl_parking_spaces));
   insertMarkerArray(
     &map_marker_array, lanelet::visualization::laneletsBoundaryAsMarkerArray(
-                         road_lanelets, cl_ll_borders, g_viz_lanelets_centerline));
+      road_lanelets, cl_ll_borders, g_viz_lanelets_centerline));
   insertMarkerArray(
     &map_marker_array,
     lanelet::visualization::autowareTrafficLightsAsMarkerArray(aw_tl_reg_elems, cl_trafficlights));
@@ -143,7 +145,8 @@ int main(int argc, char ** argv)
   rclcpp::init(argc, argv);
   auto node = rclcpp::Node::make_shared("lanelet2_map_visualizer");
   auto bin_map_sub = node->create_subscription<autoware_lanelet2_msgs::msg::MapBin>(
-    "input/lanelet2_map", rclcpp::QoS{1}.transient_local(), std::bind(&binMapCallback, std::placeholders::_1));
+    "input/lanelet2_map", rclcpp::QoS{1}.transient_local(),
+    std::bind(&binMapCallback, std::placeholders::_1));
 
   rclcpp::QoS durable_qos{1};
   durable_qos.transient_local();

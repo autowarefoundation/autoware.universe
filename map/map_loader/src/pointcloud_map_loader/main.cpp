@@ -28,10 +28,11 @@
  * limitations under the License.
  */
 
+#include <string>
+#include <vector>
+#include <memory>
 #include "boost/filesystem.hpp"
-
 #include "rclcpp/rclcpp.hpp"
-
 #include "map_loader/pointcloud_map_loader_node.hpp"
 
 namespace fs = boost::filesystem;

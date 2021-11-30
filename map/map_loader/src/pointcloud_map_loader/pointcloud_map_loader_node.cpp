@@ -29,7 +29,8 @@
  */
 
 #include "map_loader/pointcloud_map_loader_node.hpp"
-
+#include <string>
+#include <vector>
 #include "pcl/io/pcd_io.h"
 #include "pcl_conversions/pcl_conversions.h"
 

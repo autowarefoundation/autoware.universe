@@ -17,6 +17,8 @@
  *
  */
 
+#include <string>
+
 #include "rclcpp/rclcpp.hpp"
 
 #include "lanelet2_core/LaneletMap.h"
@@ -29,8 +31,6 @@
 #include "lanelet2_extension/utility/utilities.hpp"
 
 #include "autoware_lanelet2_msgs/msg/map_bin.hpp"
-
-#include <string>
 
 void printUsage(const rclcpp::Logger & logger)
 {

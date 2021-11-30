@@ -63,32 +63,49 @@ void polygon2Triangle(
 void lanelet2Polygon(const lanelet::ConstLanelet & ll, geometry_msgs::msg::Polygon * polygon);
 
 /**
- * [lineString2Marker creates marker to visualize shape of linestring]
- * @param ls         [input linestring]
- * @param marker [output marker message]
+ * [initLineStringMarker initializes marker to visualize shape of linestring]
+ * @param marker     [output marker message]
  * @param frame_id   [frame id of the marker]
  * @param ns         [namespace of the marker]
  * @param c          [color of the marker]
+ */
+void initLineStringMarker(
+  visualization_msgs::msg::Marker * marker, const std::string frame_id, const std::string ns,
+  const std_msgs::msg::ColorRGBA c);
+
+/**
+ * [pushLineStringMarker pushes marker vertices to visualize shape of linestring]
+ * @param marker     [output marker message]
+ * @param ls         [input linestring]
+ * @param c          [color of the marker]
  * @param lss        [thickness of the marker]
  */
-void lineString2Marker(
-  const lanelet::ConstLineString3d ls, visualization_msgs::msg::Marker * marker,
-  const std::string frame_id, const std::string ns, const std_msgs::msg::ColorRGBA c,
-  const float lss = 0.1);
+void pushLineStringMarker(
+  visualization_msgs::msg::Marker * marker, const lanelet::ConstLineString3d & ls,
+  const std_msgs::msg::ColorRGBA c, const float lss = 0.1);
+
 /**
- * [trafficLight2TriangleMarker creates marker to visualize shape of traffic
+ * [initTrafficLightTriangleMarker initializes marker to visualize shape of traffic
  * lights]
- * @param ls       [linestring that represents traffic light shape]
  * @param marker   [created marker]
  * @param ns       [namespace of the marker]
- * @param cl       [color of the marker]
  * @param duration [lifetime of the marker]
  */
-void trafficLight2TriangleMarker(
-  const lanelet::ConstLineString3d ls, visualization_msgs::msg::Marker * marker,
-  const std::string ns,
-  const std_msgs::msg::ColorRGBA cl, const rclcpp::Duration duration = rclcpp::Duration(0, 0),
-  const double scale = 1.0);
+void initTrafficLightTriangleMarker(
+  visualization_msgs::msg::Marker * marker,
+  const std::string ns, const rclcpp::Duration duration = rclcpp::Duration(0, 0));
+
+/**
+ * [pushTrafficLightTriangleMarker pushes marker vertices to visualize shape of traffic
+ * lights]
+ * @param marker   [created marker]
+ * @param ls       [linestring that represents traffic light shape]
+ * @param cl       [color of the marker]
+ * @param scale    [scale of the marker]
+ */
+void pushTrafficLightTriangleMarker(
+  visualization_msgs::msg::Marker * marker, const lanelet::ConstLineString3d ls,
+  const std_msgs::msg::ColorRGBA cl, const double scale = 1.0);
 
 /**
  * [laneletsBoundaryAsMarkerArray create marker array to visualize shape of

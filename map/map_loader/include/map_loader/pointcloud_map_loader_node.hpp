@@ -28,6 +28,10 @@
  * limitations under the License.
  */
 
+
+#ifndef MAP_LOADER__POINTCLOUD_MAP_LOADER_NODE_HPP_
+#define MAP_LOADER__POINTCLOUD_MAP_LOADER_NODE_HPP_
+
 #include <string>
 #include <vector>
 
@@ -45,3 +49,5 @@ private:
 
   sensor_msgs::msg::PointCloud2 loadPCDFiles(const std::vector<std::string> & pcd_paths);
 };
+
+#endif  // MAP_LOADER__POINTCLOUD_MAP_LOADER_NODE_HPP_
