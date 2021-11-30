@@ -1,0 +1,5 @@
+<launch>
+
+  <test test-name="test-projector" pkg="lanelet2_extension" type="projector-test" name="test"/>
+
+</launch>
