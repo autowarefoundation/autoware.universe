@@ -13,7 +13,8 @@
 
   <depend>automotive_navigation_msgs</depend>
   <depend>automotive_platform_msgs</depend>
-  <depend>autoware_control_msgs</depend>
+  <depend>autoware_auto_control_msgs</depend>
+  <depend>autoware_auto_vehicle_msgs</depend>
   <depend>autoware_debug_msgs</depend>
   <depend>autoware_vehicle_msgs</depend>
   <depend>can_msgs</depend>

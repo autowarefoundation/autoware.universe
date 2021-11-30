@@ -18,15 +18,19 @@
 #include <rclcpp/rclcpp.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
-#include <autoware_control_msgs/msg/control_command_stamped.hpp>
+#include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
+#include <autoware_auto_vehicle_msgs/msg/control_mode_report.hpp>
+#include <autoware_auto_vehicle_msgs/msg/engage.hpp>
+#include <autoware_auto_vehicle_msgs/msg/gear_command.hpp>
+#include <autoware_auto_vehicle_msgs/msg/gear_report.hpp>
+#include <autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp>
+#include <autoware_auto_vehicle_msgs/msg/hazard_lights_report.hpp>
+#include <autoware_auto_vehicle_msgs/msg/steering_report.hpp>
+#include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
+#include <autoware_auto_vehicle_msgs/msg/turn_indicators_report.hpp>
 #include <autoware_vehicle_msgs/msg/actuation_command_stamped.hpp>
 #include <autoware_vehicle_msgs/msg/actuation_status_stamped.hpp>
-#include <autoware_vehicle_msgs/msg/control_mode.hpp>
-#include <autoware_vehicle_msgs/msg/engage.hpp>
-#include <autoware_vehicle_msgs/msg/shift_stamped.hpp>
-#include <autoware_vehicle_msgs/msg/steering.hpp>
-#include <autoware_vehicle_msgs/msg/turn_signal.hpp>
-#include <autoware_vehicle_msgs/msg/vehicle_command.hpp>
+#include <autoware_vehicle_msgs/msg/vehicle_emergency_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <pacmod_msgs/msg/global_rpt.hpp>
 #include <pacmod_msgs/msg/steer_system_cmd.hpp>
@@ -44,6 +48,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <memory>
+#include <optional>
 #include <string>
 
 class PacmodInterface : public rclcpp::Node
@@ -60,14 +65,18 @@ private:
 
   /* subscribers */
   // From Autoware
-  rclcpp::Subscription<autoware_control_msgs::msg::ControlCommandStamped>::SharedPtr
+  rclcpp::Subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>::SharedPtr
     control_cmd_sub_;
-  rclcpp::Subscription<autoware_vehicle_msgs::msg::ShiftStamped>::SharedPtr shift_cmd_sub_;
-  rclcpp::Subscription<autoware_vehicle_msgs::msg::TurnSignal>::SharedPtr turn_signal_cmd_sub_;
-  rclcpp::Subscription<autoware_vehicle_msgs::msg::Engage>::SharedPtr engage_cmd_sub_;
+  rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::GearCommand>::SharedPtr gear_cmd_sub_;
+  rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand>::SharedPtr
+    turn_indicators_cmd_sub_;
+  rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::HazardLightsCommand>::SharedPtr
+    hazard_lights_cmd_sub_;
+  rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::Engage>::SharedPtr engage_cmd_sub_;
   rclcpp::Subscription<autoware_vehicle_msgs::msg::ActuationCommandStamped>::SharedPtr
     actuation_cmd_sub_;
-  rclcpp::Subscription<autoware_vehicle_msgs::msg::VehicleCommand>::SharedPtr vehicle_cmd_sub_;
+  rclcpp::Subscription<autoware_vehicle_msgs::msg::VehicleEmergencyStamped>::SharedPtr
+    emergency_sub_;
 
   // From Pacmod
   std::unique_ptr<message_filters::Subscriber<pacmod_msgs::msg::SystemRptFloat>>
@@ -92,11 +101,16 @@ private:
     raw_steer_cmd_pub_;  // only for debug
 
   // To Autoware
-  rclcpp::Publisher<autoware_vehicle_msgs::msg::ControlMode>::SharedPtr control_mode_pub_;
+  rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::ControlModeReport>::SharedPtr
+    control_mode_pub_;
   rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr vehicle_twist_pub_;
-  rclcpp::Publisher<autoware_vehicle_msgs::msg::Steering>::SharedPtr steering_status_pub_;
-  rclcpp::Publisher<autoware_vehicle_msgs::msg::ShiftStamped>::SharedPtr shift_status_pub_;
-  rclcpp::Publisher<autoware_vehicle_msgs::msg::TurnSignal>::SharedPtr turn_signal_status_pub_;
+  rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::SteeringReport>::SharedPtr
+    steering_status_pub_;
+  rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::GearReport>::SharedPtr gear_status_pub_;
+  rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport>::SharedPtr
+    turn_indicators_status_pub_;
+  rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::HazardLightsReport>::SharedPtr
+    hazard_lights_status_pub_;
   rclcpp::Publisher<autoware_vehicle_msgs::msg::ActuationStatusStamped>::SharedPtr
     actuation_status_pub_;
 
@@ -139,16 +153,17 @@ private:
 
   /* input values */
   autoware_vehicle_msgs::msg::ActuationCommandStamped::ConstSharedPtr actuation_cmd_ptr_;
-  autoware_control_msgs::msg::ControlCommandStamped::ConstSharedPtr control_cmd_ptr_;
-  autoware_vehicle_msgs::msg::TurnSignal::ConstSharedPtr turn_signal_cmd_ptr_;
-  autoware_vehicle_msgs::msg::ShiftStamped::ConstSharedPtr shift_cmd_ptr_;
+  autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr control_cmd_ptr_;
+  autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand::ConstSharedPtr turn_indicators_cmd_ptr_;
+  autoware_auto_vehicle_msgs::msg::HazardLightsCommand::ConstSharedPtr hazard_lights_cmd_ptr_;
+  autoware_auto_vehicle_msgs::msg::GearCommand::ConstSharedPtr gear_cmd_ptr_;
 
   pacmod_msgs::msg::SystemRptFloat::ConstSharedPtr steer_wheel_rpt_ptr_;  // [rad]
   pacmod_msgs::msg::WheelSpeedRpt::ConstSharedPtr wheel_speed_rpt_ptr_;   // [m/s]
   pacmod_msgs::msg::SystemRptFloat::ConstSharedPtr accel_rpt_ptr_;
-  pacmod_msgs::msg::SystemRptFloat::ConstSharedPtr brake_rpt_ptr_;  // [m/s]
-  pacmod_msgs::msg::SystemRptInt::ConstSharedPtr shift_rpt_ptr_;    // [m/s]
-  pacmod_msgs::msg::GlobalRpt::ConstSharedPtr global_rpt_ptr_;      // [m/s]
+  pacmod_msgs::msg::SystemRptFloat::ConstSharedPtr brake_rpt_ptr_;   // [m/s]
+  pacmod_msgs::msg::SystemRptInt::ConstSharedPtr gear_cmd_rpt_ptr_;  // [m/s]
+  pacmod_msgs::msg::GlobalRpt::ConstSharedPtr global_rpt_ptr_;       // [m/s]
   pacmod_msgs::msg::SystemRptInt::ConstSharedPtr turn_rpt_ptr_;
   pacmod_msgs::msg::SteerSystemCmd prev_steer_cmd_;
 
@@ -162,17 +177,23 @@ private:
   void callbackActuationCmd(
     const autoware_vehicle_msgs::msg::ActuationCommandStamped::ConstSharedPtr msg);
   void callbackControlCmd(
-    const autoware_control_msgs::msg::ControlCommandStamped::ConstSharedPtr msg);
-  void callbackVehicleCmd(const autoware_vehicle_msgs::msg::VehicleCommand::ConstSharedPtr msg);
-  void callbackShiftCmd(const autoware_vehicle_msgs::msg::ShiftStamped::ConstSharedPtr msg);
-  void callbackTurnSignalCmd(const autoware_vehicle_msgs::msg::TurnSignal::ConstSharedPtr msg);
-  void callbackEngage(const autoware_vehicle_msgs::msg::Engage::ConstSharedPtr msg);
+    const autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr msg);
+
+  void callbackEmergencyCmd(
+    const autoware_vehicle_msgs::msg::VehicleEmergencyStamped::ConstSharedPtr msg);
+
+  void callbackGearCmd(const autoware_auto_vehicle_msgs::msg::GearCommand::ConstSharedPtr msg);
+  void callbackTurnIndicatorsCommand(
+    const autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand::ConstSharedPtr msg);
+  void callbackHazardLightsCommand(
+    const autoware_auto_vehicle_msgs::msg::HazardLightsCommand::ConstSharedPtr msg);
+  void callbackEngage(const autoware_auto_vehicle_msgs::msg::Engage::ConstSharedPtr msg);
   void callbackPacmodRpt(
     const pacmod_msgs::msg::SystemRptFloat::ConstSharedPtr steer_wheel_rpt,
     const pacmod_msgs::msg::WheelSpeedRpt::ConstSharedPtr wheel_speed_rpt,
     const pacmod_msgs::msg::SystemRptFloat::ConstSharedPtr accel_rpt,
     const pacmod_msgs::msg::SystemRptFloat::ConstSharedPtr brake_rpt,
-    const pacmod_msgs::msg::SystemRptInt::ConstSharedPtr shift_rpt,
+    const pacmod_msgs::msg::SystemRptInt::ConstSharedPtr gear_cmd_rpt,
     const pacmod_msgs::msg::SystemRptInt::ConstSharedPtr turn_rpt,
     const pacmod_msgs::msg::GlobalRpt::ConstSharedPtr global_rpt);
 
@@ -183,11 +204,17 @@ private:
     const pacmod_msgs::msg::SystemRptInt & shift_rpt);
   double calculateVariableGearRatio(const double vel, const double steer_wheel);
   double calcSteerWheelRateCmd(const double gear_ratio);
-  uint16_t toPacmodShiftCmd(const autoware_vehicle_msgs::msg::Shift & shift);
-  uint16_t toPacmodTurnCmd(const autoware_vehicle_msgs::msg::TurnSignal & turn);
-  uint16_t toPacmodTurnCmdWithHazardRecover(const autoware_vehicle_msgs::msg::TurnSignal & turn);
-  int32_t toAutowareShiftCmd(const pacmod_msgs::msg::SystemRptInt & shift);
-  int32_t toAutowareTurnSignal(const pacmod_msgs::msg::SystemRptInt & turn);
+  uint16_t toPacmodShiftCmd(const autoware_auto_vehicle_msgs::msg::GearCommand & gear_cmd);
+  uint16_t toPacmodTurnCmd(
+    const autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand & turn,
+    const autoware_auto_vehicle_msgs::msg::HazardLightsCommand & hazard);
+  uint16_t toPacmodTurnCmdWithHazardRecover(
+    const autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand & turn,
+    const autoware_auto_vehicle_msgs::msg::HazardLightsCommand & hazard);
+
+  std::optional<int32_t> toAutowareShiftReport(const pacmod_msgs::msg::SystemRptInt & shift);
+  int32_t toAutowareTurnIndicatorsReport(const pacmod_msgs::msg::SystemRptInt & turn);
+  int32_t toAutowareHazardLightsReport(const pacmod_msgs::msg::SystemRptInt & turn);
   double steerWheelRateLimiter(
     const double current_steer_cmd, const double prev_steer_cmd,
     const rclcpp::Time & current_steer_time, const rclcpp::Time & prev_steer_time,
