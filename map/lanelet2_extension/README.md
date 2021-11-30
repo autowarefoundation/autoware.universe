@@ -5,7 +5,7 @@ This package contains external library for Lanelet2 and is meant to ease the use
 Autoware uses extended Lanelet2 Format for Autoware, which means you need to add some tags to default OSM file if you want to fully use Lanelet2 maps. For details about custom tags, please refer to this [document](./docs/lanelet2_format_extension.md).
 
 ## Code API
-### IO 
+### IO
 #### Autoware OSM Parser
 Autoware Lanelet2 Format uses .osm extension as original Lanelet2.
 However, there are some custom tags that is used by the parser.
@@ -18,7 +18,7 @@ The parser is registered as "autoware_osm_handler" as lanelet parser
 
 ### Projection
 #### MGRS Projector
-MGRS projector projects latitude longitude into MGRS Coordinates. 
+MGRS projector projects latitude longitude into MGRS Coordinates.
 
 ### Regulatory Elements
 #### Autoware Traffic Light

@@ -55,7 +55,6 @@ This regulatory element specifies related road markings to a lanelet as shown be
 
 \* Note that the stopline in the image is for stoplines that are for reference, and normal stoplines should be expressed using TrafficSign regulatory element.
 
-refers: linestring with type attribute. Type explains the what road marking it represents (e.g. stopline). 
+refers: linestring with type attribute. Type explains the what road marking it represents (e.g. stopline).
 
 <img src="./road_mark.png" width="400">
-
