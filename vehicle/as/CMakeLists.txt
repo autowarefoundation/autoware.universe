@@ -23,6 +23,11 @@ ament_auto_add_executable(pacmod_interface
   src/pacmod_interface/pacmod_interface_node.cpp
 )
 
+ament_auto_add_executable(pacmod_additional_debug_publisher
+  src/pacmod_additional_debug_publisher/pacmod_additional_debug_publisher_node.cpp
+  src/pacmod_additional_debug_publisher/pacmod_additional_debug_publisher_main.cpp
+)
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
@@ -31,4 +36,5 @@ endif()
 ament_auto_package(
   INSTALL_TO_SHARE
   launch
+  config
 )

@@ -6,7 +6,7 @@
   <description>AutonomouStuff vehicle interface as a ROS 2 node</description>
   <maintainer email="aohsato@gmail.com">Akihito Ohsato</maintainer>
   <license>Apache License 2.0</license>
-  
+
   <author email="aohsato@gmail.com">Akihito Ohsato</author>
   <author email="antm678@ertl.jp">T.Ando</author>
   <author email="horibe.takamasa@gmail.com">Horibe Takamasa</author>
@@ -16,11 +16,13 @@
   <depend>automotive_platform_msgs</depend>
   <depend>autoware_control_msgs</depend>
   <depend>autoware_vehicle_msgs</depend>
+  <depend>autoware_debug_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>message_filters</depend>
   <depend>pacmod_msgs</depend>
   <depend>std_msgs</depend>
   <depend>vehicle_info_util</depend>
+  <depend>can_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

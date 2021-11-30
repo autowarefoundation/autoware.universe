@@ -1,0 +1,8 @@
+<launch>
+  <arg name="input_topic" default="/pacmod/can_tx"/>
+  <arg name="output_topic" default="/pacmod/parsed_tx/debug"/>
+  <node pkg="as" exec="pacmod_additional_debug_publisher" name="pacmod_additional_debug_publisher" output="screen">
+    <remap from="input/can_tx" to="$(var input_topic)" />
+    <remap from="output/debug" to="$(var output_topic)" />
+  </node>
+</launch>

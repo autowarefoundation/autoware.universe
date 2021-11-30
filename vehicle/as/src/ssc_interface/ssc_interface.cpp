@@ -181,7 +181,7 @@ void SSCInterface::callbackFromSSCFeedbacks(
   double speed = calculateVehicleVelocity(
     *wheel_speed_rpt_ptr_, *vel_acc_cov_ptr_, *gear_feedback_ptr_, use_rear_wheel_speed_);
 
-  // update adaptive gear ratio (avoiding zero divizion)
+  // update adaptive gear ratio (avoiding zero division)
   adaptive_gear_ratio_ = std::max(
     1e-5, agr_coef_a_ + agr_coef_b_ * speed * speed -
     agr_coef_c_ * std::fabs(msg_steering_wheel->output));

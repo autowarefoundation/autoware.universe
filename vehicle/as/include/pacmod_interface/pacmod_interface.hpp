@@ -48,7 +48,6 @@ class PacmodInterface : public rclcpp::Node
 {
 public:
   PacmodInterface();
-  ~PacmodInterface();
 
 private:
   typedef message_filters::sync_policies::ApproximateTime<
@@ -56,6 +55,7 @@ private:
       pacmod_msgs::msg::SystemRptFloat, pacmod_msgs::msg::SystemRptFloat,
       pacmod_msgs::msg::SystemRptInt, pacmod_msgs::msg::SystemRptInt, pacmod_msgs::msg::GlobalRpt>
     PacmodFeedbacksSyncPolicy;
+
 
   /* subscribers */
   // From Autoware
@@ -76,6 +76,7 @@ private:
   std::unique_ptr<message_filters::Subscriber<pacmod_msgs::msg::GlobalRpt>> global_rpt_sub_;
   std::unique_ptr<message_filters::Synchronizer<PacmodFeedbacksSyncPolicy>> pacmod_feedbacks_sync_;
 
+
   /* publishers */
   // To Pacmod
   rclcpp::Publisher<pacmod_msgs::msg::SystemCmdFloat>::SharedPtr accel_cmd_pub_;
@@ -83,6 +84,7 @@ private:
   rclcpp::Publisher<pacmod_msgs::msg::SteerSystemCmd>::SharedPtr steer_cmd_pub_;
   rclcpp::Publisher<pacmod_msgs::msg::SystemCmdInt>::SharedPtr shift_cmd_pub_;
   rclcpp::Publisher<pacmod_msgs::msg::SystemCmdInt>::SharedPtr turn_cmd_pub_;
+  rclcpp::Publisher<pacmod_msgs::msg::SteerSystemCmd>::SharedPtr raw_steer_cmd_pub_;  //only for debug
 
   // To Autoware
   rclcpp::Publisher<autoware_vehicle_msgs::msg::ControlMode>::SharedPtr control_mode_pub_;
@@ -96,10 +98,10 @@ private:
   /* ros param */
   std::string base_frame_id_;
   int command_timeout_ms_;  // vehicle_cmd timeout [ms]
-  bool is_pacmod_rpt_received_;
-  bool is_pacmod_enabled_;
-  bool is_clear_override_needed_;
-  bool prev_override_;
+  bool is_pacmod_rpt_received_ = false;
+  bool is_pacmod_enabled_ = false;
+  bool is_clear_override_needed_ = false;
+  bool prev_override_ = false;
   double loop_rate_;           // [Hz]
   double tire_radius_;         // [m]
   double wheel_base_;          // [m]
@@ -110,16 +112,23 @@ private:
   double accel_pedal_offset_;  // offset of accel pedal value
   double brake_pedal_offset_;  // offset of brake pedal value
 
-  double emergency_brake_;             // brake command when emergency [m/s^2]
-  double max_throttle_;                // max throttle [0~1]
-  double max_brake_;                   // max throttle [0~1]
-  double max_steering_wheel_;          // max steering wheel angle [rad]
-  double max_steering_wheel_rate_;     // [rad/s]
-  double min_steering_wheel_rate_;     // [rad/s]
+  double emergency_brake_;              // brake command when emergency [m/s^2]
+  double max_throttle_;                 // max throttle [0~1]
+  double max_brake_;                    // max throttle [0~1]
+  double max_steering_wheel_;           // max steering wheel angle [rad]
+  double max_steering_wheel_rate_;      // [rad/s]
+  double min_steering_wheel_rate_;      // [rad/s]
+  double steering_wheel_rate_low_vel_;  // [rad/s]
+  double steering_wheel_rate_stopped_;  // [rad/s]
+  double low_vel_thresh_;               // [m/s]
+
   bool enable_steering_rate_control_;  // use steering angle speed for command [rad/s]
 
-  vehicle_info_util::VehicleInfo vehicle_info_;
+  double hazard_thresh_time_;
+  int hazard_recover_count_ = 0;
+  const int hazard_recover_cmd_num_ = 5;
 
+  vehicle_info_util::VehicleInfo vehicle_info_;
 
   /* input values */
   autoware_vehicle_msgs::msg::RawVehicleCommand::ConstSharedPtr raw_vehicle_cmd_ptr_;
@@ -131,9 +140,12 @@ private:
   pacmod_msgs::msg::SystemRptFloat::ConstSharedPtr brake_rpt_ptr_;  // [m/s]
   pacmod_msgs::msg::SystemRptInt::ConstSharedPtr shift_rpt_ptr_;    // [m/s]
   pacmod_msgs::msg::GlobalRpt::ConstSharedPtr global_rpt_ptr_;      // [m/s]
-  bool engage_cmd_;
-  bool prev_engage_cmd_;
+  pacmod_msgs::msg::SystemRptInt::ConstSharedPtr turn_rpt_ptr_;
+  pacmod_msgs::msg::SteerSystemCmd prev_steer_cmd_;
+
+  bool engage_cmd_ = false;
   rclcpp::Time vehicle_command_received_time_;
+  rclcpp::Time last_shift_inout_matched_time_;
 
   /* callbacks */
   void callbackVehicleCmd(const autoware_vehicle_msgs::msg::RawVehicleCommand::ConstSharedPtr msg);
@@ -157,8 +169,13 @@ private:
   double calcSteerWheelRateCmd(const double gear_ratio);
   uint16_t toPacmodShiftCmd(const autoware_vehicle_msgs::msg::Shift & shift);
   uint16_t toPacmodTurnCmd(const autoware_vehicle_msgs::msg::TurnSignal & turn);
+  uint16_t toPacmodTurnCmdWithHazardRecover(const autoware_vehicle_msgs::msg::TurnSignal & turn);
   int32_t toAutowareShiftCmd(const pacmod_msgs::msg::SystemRptInt & shift);
   int32_t toAutowareTurnSignal(const pacmod_msgs::msg::SystemRptInt & turn);
+  double steerWheelRateLimiter(
+    const double current_steer_cmd, const double prev_steer_cmd,
+    const rclcpp::Time & current_steer_time, const rclcpp::Time & prev_steer_time,
+    const double steer_rate, const double current_steer_output, const bool engage);
 };
 
 #endif  // PACMOD_INTERFACE__PACMOD_INTERFACE_HPP_
