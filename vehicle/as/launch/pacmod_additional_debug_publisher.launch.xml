@@ -6,6 +6,7 @@
   <arg name="output_steer_cal_topic" default="/pacmod/parsed_tx/steer_cal_rpt"/>
   <arg name="calibration_active" default="false"/>
   <node pkg="as" exec="pacmod_additional_debug_publisher" name="pacmod_additional_debug_publisher" output="screen">
+    <param name="use_sim_time" value="$(env AW_ROS2_USE_SIM_TIME false)"/>
     <remap from="input/can_tx" to="$(var input_topic)" />
     <remap from="output/debug" to="$(var output_topic)" />
     <remap from="output/accel_cal_rpt" to="$(var output_accel_cal_topic)" />
