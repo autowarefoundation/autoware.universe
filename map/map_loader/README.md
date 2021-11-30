@@ -6,11 +6,11 @@ This package provides the features of loading various maps.
 
 ### Feature
 
-pointcloud_map_loader loads PointCloud file and publish the map data as sensor_msgs/PointCloud2 message.
+pointcloud_map_loader loads PointCloud file and publishes the map data as sensor_msgs/PointCloud2 message.
 
 ### How to run
 
-`rosrun map_loader pointcloud_map_loader path/to/pointcloud1.pcd path/to/pointcloud2.pcd ...`
+`ros2 run map_loader pointcloud_map_loader --ros-args -p "pcd_paths_or_directory:=[path/to/pointcloud1.pcd, path/to/pointcloud2.pcd, ...]"`
 
 ### Published Topics
 
@@ -22,12 +22,12 @@ pointcloud_map_loader loads PointCloud file and publish the map data as sensor_m
 
 ### Feature
 
-lanelet2_map_loader loads Lanelet2 file and publish the map data as autoware_lanelet2_msgs/MapBin message.
+lanelet2_map_loader loads Lanelet2 file and publishes the map data as autoware_lanelet2_msgs/MapBin message.
 The node projects lan/lon coordinates into MGRS coordinates.
 
 ### How to run
 
-`rosrun map_loader lanelet2_map_loader path/to/map.osm`
+`ros2 run map_loader lanelet2_map_loader --ros-args -p lanelet2_map_path:=path/to/map.osm`
 
 ### Published Topics
 
@@ -43,7 +43,7 @@ lanelet2_map_visualization visualizes autoware_lanelet2_msgs/MapBin messages int
 
 ### How to Run
 
-`rosrun map_loader lanelet2_map_visualization`
+`ros2 run map_loader lanelet2_map_visualization`
 
 ### Subscribed Topics
 
@@ -51,7 +51,7 @@ lanelet2_map_visualization visualizes autoware_lanelet2_msgs/MapBin messages int
 
 ### Published Topics
 
-- ~output/lanelet2_map_marker (visualization_msgs/MarkerArray) : visualization messages for RVIZ
+- ~output/lanelet2_map_marker (visualization_msgs/MarkerArray) : visualization messages for RViz
 
 ---
 
@@ -71,7 +71,7 @@ Cells with No elevation value can be inpainted using the values of neighboring c
 
 ### How to run
 
-`ros2 run map_loader elevation_map_loader --ros-args grid_map_msgs::msg::GridMap -p param_file_path:=path/to/elevation_map_parameters.yaml -p elevation_map_file_path:=path/to/elevation_map/`
+`ros2 run map_loader elevation_map_loader --ros-args -p param_file_path:=path/to/elevation_map_parameters.yaml -p elevation_map_directory:=path/to/elevation_map_directory -p pointcloud_map_path:=path/to/pointcloud.pcd`
 
 ### Subscribed Topics
 
@@ -105,7 +105,7 @@ Cells with No elevation value can be inpainted using the values of neighboring c
 
 #### GridMap parameters
 
-The parameters are described on `config/elevation_map_parameters.yaml`
+The parameters are described on `config/elevation_map_parameters.yaml`.
 
 ##### General parameters
 
@@ -118,45 +118,48 @@ The parameters are described on `config/elevation_map_parameters.yaml`
 See: <https://github.com/ANYbotics/grid_map/tree/ros2/grid_map_pcl>
 
 Resulting grid map parameters.
-| Name | Type | Description | Default value |
+
+| Name                                                     | Type  | Description                                                                                                                                      | Default value |
 | :------------------------------------------------------- | :---- | :----------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
-| pcl_grid_map_extraction/grid_map/min_num_points_per_cell | int | Minimum number of points in the point cloud that have to fall within any of the grid map cells. Otherwise the cell elevation will be set to NaN. | 3 |
-| pcl_grid_map_extraction/grid_map/resolution | float | Resolution of the grid map. Width and length are computed automatically. | 0.3 |
+| pcl_grid_map_extraction/grid_map/min_num_points_per_cell | int   | Minimum number of points in the point cloud that have to fall within any of the grid map cells. Otherwise the cell elevation will be set to NaN. | 3             |
+| pcl_grid_map_extraction/grid_map/resolution              | float | Resolution of the grid map. Width and length are computed automatically.                                                                         | 0.3           |
 
 #### Point Cloud Pre-processing Parameters
 
 ##### Rigid body transform parameters
 
 Rigid body transform that is applied to the point cloud before computing elevation.
-| Name | Type | Description | Default value |
+
+| Name                                                | Type  | Description                                                                                                             | Default value |
 | :-------------------------------------------------- | :---- | :---------------------------------------------------------------------------------------------------------------------- | :------------ |
-| pcl_grid_map_extraction/cloud_transform/translation | float | Translation (xyz) that is applied to the input point cloud before computing elevation. | 0.0 |
-| pcl_grid_map_extraction/cloud_transform/rotation | float | Rotation (intrinsic rotation, convention X-Y'-Z'') that is applied to the input point cloud before computing elevation. | 0.0 |
+| pcl_grid_map_extraction/cloud_transform/translation | float | Translation (xyz) that is applied to the input point cloud before computing elevation.                                  | 0.0           |
+| pcl_grid_map_extraction/cloud_transform/rotation    | float | Rotation (intrinsic rotation, convention X-Y'-Z'') that is applied to the input point cloud before computing elevation. | 0.0           |
 
 ##### Cluster extraction parameters
 
-Cluster extraction is based on pcl algorithms. See: <http://pointclouds.org/documentation/tutorials/cluster_extraction.php> for more details.
-| Name | Type | Description | Default value |
+Cluster extraction is based on pcl algorithms. See <https://pointclouds.org/documentation/tutorials/cluster_extraction.html> for more details.
+
+| Name                                                         | Type  | Description                                                                            | Default value |
 | :----------------------------------------------------------- | :---- | :------------------------------------------------------------------------------------- | :------------ |
-| pcl_grid_map_extraction/cluster_extraction/cluster_tolerance | float | Distance between points below which they will still be considered part of one cluster. | 0.2 |
-| pcl_grid_map_extraction/cluster_extraction/min_num_points | int | Min number of points that a cluster needs to have (otherwise it will be discarded). | 3 |
-| pcl_grid_map_extraction/cluster_extraction/max_num_points | int | Max number of points that a cluster can have (otherwise it will be discarded). | 1000000 |
+| pcl_grid_map_extraction/cluster_extraction/cluster_tolerance | float | Distance between points below which they will still be considered part of one cluster. | 0.2           |
+| pcl_grid_map_extraction/cluster_extraction/min_num_points    | int   | Min number of points that a cluster needs to have (otherwise it will be discarded).    | 3             |
+| pcl_grid_map_extraction/cluster_extraction/max_num_points    | int   | Max number of points that a cluster can have (otherwise it will be discarded).         | 1000000       |
 
 ##### Outlier removal parameters
 
-See <http://pointclouds.org/documentation/tutorials/statistical_outlier.php> for more explanation on outlier removal.
-| Name | Type | Description | Default value |
+See <https://pointclouds.org/documentation/tutorials/statistical_outlier.html> for more explanation on outlier removal.
+
+| Name                                                       | Type  | Description                                                                    | Default value |
 | :--------------------------------------------------------- | :---- | :----------------------------------------------------------------------------- | :------------ |
-| pcl_grid_map_extraction/outlier_removal/is_remove_outliers | float | Whether to perform statistical outlier removal. | false |
-| pcl_grid_map_extraction/outlier_removal/mean_K | float | Number of neighbours to analyze for estimating statistics of a point. | 10 |
-| pcl_grid_map_extraction/outlier_removal/stddev_threshold | float | Number of standard deviations under which points are considered to be inliers. | 1.0 |
+| pcl_grid_map_extraction/outlier_removal/is_remove_outliers | float | Whether to perform statistical outlier removal.                                | false         |
+| pcl_grid_map_extraction/outlier_removal/mean_K             | float | Number of neighbours to analyze for estimating statistics of a point.          | 10            |
+| pcl_grid_map_extraction/outlier_removal/stddev_threshold   | float | Number of standard deviations under which points are considered to be inliers. | 1.0           |
 
 ##### Subsampling parameters
 
-See <http://pointclouds.org/documentation/tutorials/voxel_grid.php> for more explanation on point cloud downsampling
-| Name | Type | Description | Default value |
-| :------------------------------------------------------- | :---- | :-------------------------------------- | :------------ |
-| pcl_grid_map_extraction/downsampling/is_downsample_cloud | bool | Whether to perform downsampling or not. | false |
-| pcl_grid_map_extraction/downsampling/voxel_size | float | Voxel sizes (xyz) in meters. | 0.02 |
+See <https://pointclouds.org/documentation/tutorials/voxel_grid.html> for more explanation on point cloud downsampling.
 
----
+| Name                                                     | Type  | Description                             | Default value |
+| :------------------------------------------------------- | :---- | :-------------------------------------- | :------------ |
+| pcl_grid_map_extraction/downsampling/is_downsample_cloud | bool  | Whether to perform downsampling or not. | false         |
+| pcl_grid_map_extraction/downsampling/voxel_size          | float | Voxel sizes (xyz) in meters.            | 0.02          |
