@@ -493,6 +493,7 @@ void PacmodInterface::publishCommands()
     turn_cmd.clear_override = clear_override;
     turn_cmd.command =
       toPacmodTurnCmdWithHazardRecover(*turn_indicators_cmd_ptr_, *hazard_lights_cmd_ptr_);
+    turn_cmd_pub_->publish(turn_cmd);
   }
 }
 
