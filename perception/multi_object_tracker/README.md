@@ -46,14 +46,14 @@ Example:
 
 ### Input
 
-| Name      | Type                                                      | Description |
-| --------- | --------------------------------------------------------- | ----------- |
+| Name      | Type                                                  | Description |
+| --------- | ----------------------------------------------------- | ----------- |
 | `~/input` | `autoware_auto_perception_msgs::msg::DetectedObjects` | obstacles   |
 
 ### Output
 
-| Name       | Type                                                | Description        |
-| ---------- | --------------------------------------------------- | ------------------ |
+| Name       | Type                                                  | Description        |
+| ---------- | ----------------------------------------------------- | ------------------ |
 | `~/output` | `autoware_auto_perception_msgs::msg::DetectedObjects` | modified obstacles |
 
 ## Parameters
