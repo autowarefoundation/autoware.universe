@@ -1,4 +1,4 @@
-# multi object tracker
+# multi_object_tracker
 
 ## Purpose
 
@@ -48,13 +48,13 @@ Example:
 
 | Name      | Type                                                      | Description |
 | --------- | --------------------------------------------------------- | ----------- |
-| `~/input` | `autoware_perception_msgs::DynamicObjectWithFeatureArray` | obstacles   |
+| `~/input` | `autoware_auto_perception_msgs::msg::DetectedObjects` | obstacles   |
 
 ### Output
 
 | Name       | Type                                                | Description        |
 | ---------- | --------------------------------------------------- | ------------------ |
-| `~/output` | `autoware_perception_msgs::msg::DynamicObjectArray` | modified obstacles |
+| `~/output` | `autoware_auto_perception_msgs::msg::DetectedObjects` | modified obstacles |
 
 ## Parameters
 
