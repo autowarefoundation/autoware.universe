@@ -9,6 +9,7 @@ theme:
   name: material
   features:
     - navigation.expand
+    - navigation.indexes
     - navigation.instant
     - navigation.sections
     - navigation.tabs
