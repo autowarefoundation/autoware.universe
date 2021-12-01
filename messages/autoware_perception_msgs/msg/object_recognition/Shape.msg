@@ -4,4 +4,4 @@ uint8 POLYGON=2
 
 uint8 type
 geometry_msgs/Vector3 dimensions
-geometry_msgs/Polygon footprint 
+geometry_msgs/Polygon footprint
