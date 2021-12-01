@@ -9,16 +9,19 @@ Only position and orientation of trajectory are calculated in this module, and v
 
 ### input
 
-| Name             | Type                                           | Description                                        |
-| ---------------- | ---------------------------------------------- | -------------------------------------------------- |
-| `reference_path` | autoware_auto_planning_msgs/Path               | Reference path and the corresponding drivable area |
-| `objects`        | autoware_auto_perception_msgs/PredictedObjects | Recognized objects around the vehicle              |
+| Name                                                                   | Type                                           | Description                                        |
+| ---------------------------------------------------------------------- | ---------------------------------------------- | -------------------------------------------------- |
+| `~/input/path`                                                         | autoware_auto_planning_msgs/Path               | Reference path and the corresponding drivable area |
+| `~/input/objects`                                                      | autoware_auto_perception_msgs/PredictedObjects | Recognized objects around the vehicle              |
+| `/localization/kinematic_state`                                        | nav_msgs/Odometry                              | Current Velocity of ego vehicle                    |
+| `/planning/scenario_planning/lane_driving/obstacle_avoidance_approval` | autoware_planning_msgs/EnableAvoidance         | Approval to execute obstacle avoidance             |
+
 
 ### output
 
-| Name                   | Type                                   | Description                                                       |
-| ---------------------- | -------------------------------------- | ----------------------------------------------------------------- |
-| `optimized_trajectory` | autoware_auto_planning_msgs/Trajectory | Optimized trajectory that is feasible to drive and collision-free |
+| Name            | Type                                   | Description                                                       |
+| --------------- | -------------------------------------- | ----------------------------------------------------------------- |
+| `~/output/path` | autoware_auto_planning_msgs/Trajectory | Optimized trajectory that is feasible to drive and collision-free |
 
 ## Flowchart
 
