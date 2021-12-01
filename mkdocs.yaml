@@ -21,12 +21,13 @@ theme:
     repo: fontawesome/brands/github
   language: en
   palette:
-    - primary: white
     - scheme: default
+      primary: white
       toggle:
         icon: material/weather-sunny
         name: Switch to dark mode
     - scheme: slate
+      primary: grey
       toggle:
         icon: material/weather-night
         name: Switch to light mode
