@@ -23,7 +23,6 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import SetParameter
 from launch_ros.substitutions import FindPackageShare
-import yaml
 
 
 def launch_setup(context, *args, **kwargs):
