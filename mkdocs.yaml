@@ -39,6 +39,7 @@ extra:
     provider: mike
 
 extra_css:
+  - docs/assets/css/extra.css
   - https://use.fontawesome.com/releases/v5.15.4/css/all.css
 
 extra_javascript:
