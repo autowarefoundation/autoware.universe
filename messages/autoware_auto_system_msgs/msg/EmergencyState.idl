@@ -27,4 +27,3 @@ module autoware_auto_system_msgs {
     };
   };
 };
-

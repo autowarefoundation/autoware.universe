@@ -31,7 +31,7 @@ If a quantity described by a field has an associated unit of measurement, the fo
 Only deviate from the SI units when absolutely necessary and with justification.
 
 | Quantity        | Unit                        | Suffix  | Notes                                                   |
-|-----------------|-----------------------------|---------|---------------------------------------------------------|
+| --------------- | --------------------------- | ------- | ------------------------------------------------------- |
 | distance        | meters                      | None    |                                                         |
 |                 | micrometers                 | `_um`   |                                                         |
 |                 | millimeters                 | `_mm`   |                                                         |

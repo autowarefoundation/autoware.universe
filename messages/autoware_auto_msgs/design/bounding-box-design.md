@@ -1,5 +1,4 @@
-BoundingBox message design {#bounding-box-design}
-==========================
+# BoundingBox message design {#bounding-box-design}
 
 # Motivation
 
@@ -14,7 +13,6 @@ between object detection and tracking is required, specialized combined stacks c
 In order to facilitate the isolation of object detectors as a module, common messages types are
 defined as an interface or output of the object detectors to other components.
 
-
 # Use cases
 
 The instantaneous detection of objects primarily has three use cases:
@@ -25,7 +23,6 @@ The instantaneous detection of objects primarily has three use cases:
 
 In addition, there is the implied use case that this message representation is used on a safety-
 critical system.
-
 
 # Requirements
 
@@ -39,18 +36,16 @@ the maximum size is no more than `64kB`, which is also the maximum size of a sin
 requirement ensures that latency is kept to a minimum if interprocess communication is necessary at
 the interface of the object detection algorithms.
 
-
 ## Collision detection
 
 In order to detect collisions, the representation must have:
 
 1. A position at least in 2-space (with the assumption that the object is on the same plane as the
-ego)
+   ego)
 2. A bounding volume representation which fully contains the detected object
 3. A way to ensure the object representation is in a consistent coordinate frame with respect to the
-ego
+   ego
 4. Optionally uncertainty representation of the above parameters
-
 
 ## Tracking
 
@@ -88,7 +83,6 @@ As such, the features needed to satisfy this use case are similar to that of the
 2. Shape/object information
 3. Optionally uncertainty information
 
-
 # Message definition
 
 Based on the requirements laid out, some assumptions and simplifications can be made, and a message
@@ -100,7 +94,6 @@ encapsulates multiple software components should be made.
 
 In the case when a stack cannot populate certain fields of the interface, the field should be in
 an identifiably non-normal state, such as zero or NaN.
-
 
 ## Safety critical requirements
 
@@ -116,7 +109,6 @@ scene. Applying a healthy safety factor gives a maximum object bound of 256 obje
 
 These two assumptions combined lead us to have a maximum representation size of `250B`.
 
-
 ## Position requirements
 
 Minimally, a 3D position is used to satisfy the position requirement inherent in all use cases. A 3D
@@ -126,7 +118,6 @@ To satisfy the compatibility of representational spaces, it's assumed that all o
 in a common frame. This frame can then be represented by a string in the aggregate object type.
 It is assumed that it is the responsibility of the consuming algorithm to have and transform the
 position space into the correct coordinate frame given this information.
-
 
 ## Shape requirements
 
@@ -156,7 +147,6 @@ for fine-grained collision detection. Similarly, the size of the bounding may be
 extent observations in the tracking case, whereas the corners may be treated as proxy observations
 of the centroid.
 
-
 ## Object/Other requirements
 
 Of all the object features proposed, only a classification label is bounded in representation size
@@ -177,7 +167,7 @@ MOTORCYCLE=4
 ```
 
 The `signal_label` field contains the back signal state of the car and can take any of the following
- default values:
+default values:
 
 ```
 NO_SIGNAL=0
@@ -190,7 +180,6 @@ Next, additional kinematic fields can potentially be populated at minimal size c
 velocity, heading, and heading rate, assuming a FMCW/doppler-effect sensor is available. The
 inclusion of such fields can greatly improve the performance of tracking, or in some cases remove
 the necessity of tracking (i.e. predictive collision detection).
-
 
 ## Uncertainty requirements
 
@@ -209,14 +198,12 @@ off-diagonal elements of the full covariance matrix are zero, and thus need not 
 Second, the coarse modeling assumption of a uniformly distributed class assignment residual can
 be used. As a result, class uncertainty can be represented with a single value.
 
-
 # Future extensions
 
 The currently proposed representation for bounding boxes takes up approximately `150B` of the total
 size budget of `230B`. This leaves room for up to 18 floating point values. These could be used to
 cover the other optional requirements as a vector of floating points, with an optional ID denoting
 the intended interpretation.
-
 
 # Related issues
 

@@ -1,5 +1,4 @@
-autoware_auto_msgs internal message design
-=========================
+# autoware_auto_msgs internal message design
 
 [TOC]
 
@@ -30,7 +29,6 @@ sensor_msgs/PointCloud2[] clusters
 This message represents a set of point clusters as a result of object detection or clustering.
 `PointCloud2` was used as a cluster can be conceived as a subset of a point cloud, and
 `PointCloud2` is the standard representation for point clouds.
-
 
 ## Tracking
 

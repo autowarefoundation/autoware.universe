@@ -1,5 +1,4 @@
-autoware_auto_msgs
-==================
+# autoware_auto_msgs
 
 [TOC]
 
@@ -27,6 +26,7 @@ geometry_msgs/Point32[4] corners
 float32 value
 uint32 label
 ```
+
 See the [design document](bounding-box-design.md) for further details.
 
 ## BoundingBoxArray
@@ -37,6 +37,7 @@ BoundingBox[256] boxes
 uint32 size
 uint32 CAPACITY=256
 ```
+
 <!-- # TODO refactor and add rationale -->
 
 ## DiagnosticHeader
@@ -211,8 +212,8 @@ follow a geometric reference path.
 
 For more details see [vehicle interface design]().
 
-
 ## Vehicle Control Command
+
 ```
 builtin_interfaces/Time stamp
 float32 long_accel_mps2
@@ -255,9 +256,11 @@ such as forklifts.
 For more details, see [Controller design](@ref controller-design)
 
 ## Vehicle Kinematic State
+
 **Source**: Vehicle interface
 
 **Recipient(s)**: Behavior Planner
+
 ```
 std_msgs/Header header
 TrajectoryPoint state
@@ -406,7 +409,6 @@ can satisfy.
 **Rationale**: Since commands here represent a state transition, a command of NONE denotion "no
 state transition" is also valid
 
-
 ## Vehicle State Report
 
 ```
@@ -493,6 +495,7 @@ introduced. The constant 0 is reserved for NO_COMMAND in VehicleStateCommand.
 ### Apollo
 
 Controller/Interface Messages
+
 - [VehicleSignal](https://github.com/ApolloAuto/apollo/blob/fb12723bd6dcba88ecccb6123ea850da1e050171/modules/common/proto/vehicle_signal.proto)
 - [Lexus](https://github.com/ApolloAuto/apollo/blob/51651b9105e55c14e65cc2bd349b479e55fffa36/modules/canbus/proto/lexus.proto)
 - [DriveState](https://github.com/ApolloAuto/apollo/blob/51651b9105e55c14e65cc2bd349b479e55fffa36/modules/common/proto/drive_state.proto)
@@ -500,12 +503,14 @@ Controller/Interface Messages
 - [ControlCmd](https://github.com/ApolloAuto/apollo/blob/3d6f86e21a3c3ac43cf08423d4c3f92bc63ecac9/modules/control/proto/control_cmd.proto)
 
 Configuration Messages
+
 - [LonControllerConf](https://github.com/ApolloAuto/apollo/blob/3d6f86e21a3c3ac43cf08423d4c3f92bc63ecac9/modules/control/proto/lon_controller_conf.proto)
 - [LatControllerConf](https://github.com/ApolloAuto/apollo/blob/e9156ced04a8f0e372c781d803fd43428ab6c497/modules/control/proto/lat_controller_conf.proto)
 - [ControlConf](https://github.com/ApolloAuto/apollo/blob/51651b9105e55c14e65cc2bd349b479e55fffa36/modules/control/proto/control_conf.proto)
 - [MPCControllerConf](https://github.com/ApolloAuto/apollo/blob/51651b9105e55c14e65cc2bd349b479e55fffa36/modules/control/proto/mpc_controller_conf.proto)
 
 Algorithm Status Messages
+
 - [PlanningStatus](https://github.com/ApolloAuto/apollo/blob/51651b9105e55c14e65cc2bd349b479e55fffa36/modules/planning/proto/planning_status.proto)
 - [LocalizationStatus](https://github.com/ApolloAuto/apollo/blob/51651b9105e55c14e65cc2bd349b479e55fffa36/modules/localization/proto/localization_status.proto)
 - [PlanningStats](https://github.com/ApolloAuto/apollo/blob/51651b9105e55c14e65cc2bd349b479e55fffa36/modules/planning/proto/planning_stats.proto)
