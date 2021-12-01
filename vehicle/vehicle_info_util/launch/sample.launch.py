@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import os
-import yaml
+
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
@@ -23,6 +23,7 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import SetParameter
 from launch_ros.substitutions import FindPackageShare
+import yaml
 
 
 def launch_setup(context, *args, **kwargs):
@@ -39,9 +40,7 @@ def launch_setup(context, *args, **kwargs):
         PythonLaunchDescriptionSource(
             [FindPackageShare("vehicle_info_util"), "/launch/vehicle_info.launch.py"]
         ),
-        launch_arguments={
-            "vehicle_info_param_file": [vehicle_info_param_path]
-        }.items(),
+        launch_arguments={"vehicle_info_param_file": [vehicle_info_param_path]}.items(),
     )
 
     return [
