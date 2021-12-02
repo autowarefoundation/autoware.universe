@@ -32,14 +32,31 @@ WIP
 
 ## Inputs / Outputs
 
-### Input
+### Compare Elevation Map Filter
+
+#### Input
 
 | Name                    | Type                            | Description      |
 | ----------------------- | ------------------------------- | ---------------- |
 | `~/input/points`        | `sensor_msgs::msg::PointCloud2` | reference points |
 | `~/input/elevation_map` | `grid_map::msg::GridMap`        | elevation map    |
 
-### Output
+#### Output
+
+| Name              | Type                            | Description     |
+| ----------------- | ------------------------------- | --------------- |
+| `~/output/points` | `sensor_msgs::msg::PointCloud2` | filtered points |
+
+### Other Filters
+
+#### Input
+
+| Name                    | Type                            | Description      |
+| ----------------------- | ------------------------------- | ---------------- |
+| `~/input/points`        | `sensor_msgs::msg::PointCloud2` | reference points |
+| `~/input/map`           | `grid_map::msg::GridMap`        | map              |
+
+#### Output
 
 | Name              | Type                            | Description     |
 | ----------------- | ------------------------------- | --------------- |
