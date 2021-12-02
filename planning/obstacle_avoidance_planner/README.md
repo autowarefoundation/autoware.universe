@@ -16,7 +16,6 @@ Only position and orientation of trajectory are calculated in this module, and v
 | `/localization/kinematic_state`                                        | nav_msgs/Odometry                              | Current Velocity of ego vehicle                    |
 | `/planning/scenario_planning/lane_driving/obstacle_avoidance_approval` | autoware_planning_msgs/EnableAvoidance         | Approval to execute obstacle avoidance             |
 
-
 ### output
 
 | Name            | Type                                   | Description                                                       |
