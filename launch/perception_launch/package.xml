@@ -20,6 +20,7 @@
   <exec_depend>object_merger</exec_depend>
   <exec_depend>object_range_splitter</exec_depend>
   <exec_depend>occupancy_grid_map_outlier_filter</exec_depend>
+  <exec_depend>pointcloud_preprocessor</exec_depend>
   <exec_depend>pointcloud_to_laserscan</exec_depend>
   <exec_depend>roi_cluster_fusion</exec_depend>
   <exec_depend>shape_estimation</exec_depend>
