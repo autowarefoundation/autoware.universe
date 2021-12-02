@@ -41,19 +41,27 @@ Note: You don't need to worry about whether the current state is red or green du
 
 The value of each cell in the map is gray at first, and it changes from blue to red as the number of valid data in the cell accumulates. It is preferable to continue the calibration until each cell of the map becomes close to red. In particular, the performance near the stop depends strongly on the velocity of 0 ~ 6m/s range and the pedal value of +0.2 ~ -0.4, range so it is desirable to focus on those areas.
 
-### Check the recommended notifications for map updates
+### Diagnostics
+
+The `accel brake map_calibrator` publishes diagnostics message depending on the calibration status.
+Diagnostic type `WARN` indicates that the current accel/brake map is estimated to be inaccurate. In this situation, it is strongly recommended to perform a re-calibration of the accel/brake map.
+
+| Status                  | Diagnostics Type | Diagnostics message                        | Description                                         |
+| ----------------------- | ---------------- | ------------------------------------------ | --------------------------------------------------- |
+| No calibration required | `OK`             | "OK"                                       |                                                     |
+| Calibration Required    | `WARN`           | "Accel/brake map Calibration is required." | The accuracy of current accel/brake map may be low. |
+
+This diagnostics status can be also checked on the following ROS topic.
 
 ```sh
 ros2 topic echo /accel_brake_map_calibrator/output/update_suggest
 ```
 
-(It is desirable to monitor this topic while driving)
+When the diagnostics type is `WARN`, `True` is published on this topic and the update of the accel/brake map is suggested.
 
-If `true`, the map was updated correctly. If `false`, not correctly.
+### Evaluation of the accel / brake map accuracy
 
-### Error evaluation of the accel / brake map
-
-The error of map is evaluated by the **Root Mean Squared Error (RMSE)** between the observed acceleration and predicted acceleration.
+The accuracy of map is evaluated by the **Root Mean Squared Error (RMSE)** between the observed acceleration and predicted acceleration.
 
 **TERMS:**
 
