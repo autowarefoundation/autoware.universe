@@ -33,6 +33,7 @@ def generate_launch_description():
         parameters=[
             {
                 "lanelet2_map_path": LaunchConfiguration("lanelet2_map_path"),
+                "pointcloud_map_path": LaunchConfiguration("pointcloud_map_path"),
             }
         ],
     )
