@@ -1,12 +1,12 @@
-## Related Issue
+## Related Issue(required)
 
 <!-- Link related issue -->
 
-## Description
+## Description(required)
 
 <!-- Describe what this PR changes. -->
 
-## Review Procedure
+## Review Procedure(required)
 
 <!-- Explain how to review this PR. -->
 
@@ -14,25 +14,23 @@
 
 <!-- Link related PR -->
 
-## Remarks(optional)
-
-<!-- Write remarks as you like if you need them. -->
-
 ## Pre-Review Checklist for the PR Author
 
 **PR Author should check the checkboxes below when creating the PR.**
 
-- [ ] Check documentation
-- [ ] Check sample files
 - [ ] Read [commit-guidelines][commit-guidelines]
 - [ ] Assign PR to reviewer
+
+If you are adding new package following items are required:
+
+- [ ] Documentation with description of the package is available
+- [ ] A sample launch file and parameter file are available if the package contains executable nodes
 
 ## Checklist for the PR Reviewer
 
 **Reviewers should check the checkboxes below before approval.**
 
 - [ ] Commits are properly organized and messages are according to the guideline
-- [ ] (Optional) Unit tests have been written for new behavior
 - [ ] PR title describes the changes
 
 ## Post-Review Checklist for the PR Author
