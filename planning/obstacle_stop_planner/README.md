@@ -24,10 +24,10 @@ When the deceleration section is inserted, the start point of the section is ins
 | Name                        | Type                                            | Description         |
 | --------------------------- | ----------------------------------------------- | ------------------- |
 | `~/input/pointcloud`        | sensor_msgs::PointCloud2                        | obstacle pointcloud |
-| `~/input/trajectory`        | autoware_auto_planning_msgs::msg::Trajectory    | trajectory          |
+| `~/input/trajectory`        | autoware_auto_planning_msgs::Trajectory         | trajectory          |
 | `~/input/vector_map`        | autoware_auto_mapping_msgs::HADMapBin           | vector map          |
 | `~/input/odometry`          | nav_msgs::Odometry                              | vehicle velocity    |
-| `~input/dynamic_objects`    | autoware_auto_perception_msgs::PredictedObjects | dynamic objects     |
+| `~/input/dynamic_objects`   | autoware_auto_perception_msgs::PredictedObjects | dynamic objects     |
 | `~/input/expand_stop_range` | autoware_planning_msgs::msg::ExpandStopRange    | expand stop range   |
 
 ## Output topics
@@ -50,7 +50,7 @@ When the deceleration section is inserted, the start point of the section is ins
 | `stop_planner.stop_margin`              | double | stop margin distance from obstacle on the path [m]                            |
 | `stop_planner.min_behavior_stop_margin` | double | stop margin distance when any other stop point is inserted in stop margin [m] |
 | `stop_planner.step_length`              | double | step length for pointcloud search range [m]                                   |
-| `stop_planner.extend_distance`          | double | extend trajectory to consider after goal obstacle in the extend_distance      |
+| `stop_planner.extend_distance`          | double | extend trajectory to consider after goal obstacle in the extend_distance [m]  |
 | `stop_planner.expand_stop_range`        | double | margin of vehicle footprint [m]                                               |
 
 #### Flowchart
