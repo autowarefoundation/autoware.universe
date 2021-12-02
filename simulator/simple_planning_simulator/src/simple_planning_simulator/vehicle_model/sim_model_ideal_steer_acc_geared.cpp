@@ -12,25 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <algorithm>
-
 #include "simple_planning_simulator/vehicle_model/sim_model_ideal_steer_acc_geared.hpp"
+
 #include "autoware_auto_vehicle_msgs/msg/gear_command.hpp"
 
-SimModelIdealSteerAccGeared::SimModelIdealSteerAccGeared(float64_t wheelbase)
-: SimModelInterface(4 /* dim x */, 2 /* dim u */), wheelbase_(wheelbase), current_acc_(0.0) {}
+#include <algorithm>
 
-float64_t SimModelIdealSteerAccGeared::getX() {return state_(IDX::X);}
-float64_t SimModelIdealSteerAccGeared::getY() {return state_(IDX::Y);}
-float64_t SimModelIdealSteerAccGeared::getYaw() {return state_(IDX::YAW);}
-float64_t SimModelIdealSteerAccGeared::getVx() {return state_(IDX::VX);}
-float64_t SimModelIdealSteerAccGeared::getVy() {return 0.0;}
-float64_t SimModelIdealSteerAccGeared::getAx() {return current_acc_;}
+SimModelIdealSteerAccGeared::SimModelIdealSteerAccGeared(float64_t wheelbase)
+: SimModelInterface(4 /* dim x */, 2 /* dim u */), wheelbase_(wheelbase), current_acc_(0.0)
+{
+}
+
+float64_t SimModelIdealSteerAccGeared::getX() { return state_(IDX::X); }
+float64_t SimModelIdealSteerAccGeared::getY() { return state_(IDX::Y); }
+float64_t SimModelIdealSteerAccGeared::getYaw() { return state_(IDX::YAW); }
+float64_t SimModelIdealSteerAccGeared::getVx() { return state_(IDX::VX); }
+float64_t SimModelIdealSteerAccGeared::getVy() { return 0.0; }
+float64_t SimModelIdealSteerAccGeared::getAx() { return current_acc_; }
 float64_t SimModelIdealSteerAccGeared::getWz()
 {
   return state_(IDX::VX) * std::tan(input_(IDX_U::STEER_DES)) / wheelbase_;
 }
-float64_t SimModelIdealSteerAccGeared::getSteer() {return input_(IDX_U::STEER_DES);}
+float64_t SimModelIdealSteerAccGeared::getSteer() { return input_(IDX_U::STEER_DES); }
 void SimModelIdealSteerAccGeared::update(const float64_t & dt)
 {
   const auto prev_vx = state_(IDX::VX);

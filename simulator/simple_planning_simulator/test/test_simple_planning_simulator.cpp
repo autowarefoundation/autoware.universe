@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <memory>
 #include "gtest/gtest.h"
-
-#include "simple_planning_simulator/simple_planning_simulator_core.hpp"
 #include "motion_common/motion_common.hpp"
+#include "simple_planning_simulator/simple_planning_simulator_core.hpp"
+
+#include <memory>
 
 using autoware_auto_control_msgs::msg::AckermannControlCommand;
 using autoware_auto_vehicle_msgs::msg::GearCommand;
@@ -30,46 +30,35 @@ std::string toStrInfo(const VehicleKinematicState & state)
 {
   const auto & s = state.state;
   std::stringstream ss;
-  ss << "state x: " << s.pose.position.x << ", y: " << s.pose.position.y << ", yaw: " <<
-    motion::motion_common::to_angle(
-    s.pose.orientation) << ", vx = " << s.longitudinal_velocity_mps << ", vy: " <<
-    s.lateral_velocity_mps <<
-    ", ax: " << s.acceleration_mps2 << ", steer: " << s.front_wheel_angle_rad;
+  ss << "state x: " << s.pose.position.x << ", y: " << s.pose.position.y
+     << ", yaw: " << motion::motion_common::to_angle(s.pose.orientation)
+     << ", vx = " << s.longitudinal_velocity_mps << ", vy: " << s.lateral_velocity_mps
+     << ", ax: " << s.acceleration_mps2 << ", steer: " << s.front_wheel_angle_rad;
   return ss.str();
 }
 
-const std::vector<std::string> vehicle_model_type_vec = { // NOLINT
-  "IDEAL_STEER_VEL",
-  "IDEAL_STEER_ACC",
-  "IDEAL_STEER_ACC_GEARED",
-  "DELAY_STEER_ACC",
-  "DELAY_STEER_ACC_GEARED",
+const std::vector<std::string> vehicle_model_type_vec = {
+  // NOLINT
+  "IDEAL_STEER_VEL", "IDEAL_STEER_ACC",        "IDEAL_STEER_ACC_GEARED",
+  "DELAY_STEER_ACC", "DELAY_STEER_ACC_GEARED",
 };
 
 static constexpr float64_t COM_TO_BASELINK = 1.5;
 class PubSubNode : public rclcpp::Node
 {
 public:
-  PubSubNode()
-  : Node{"test_simple_planning_simulator_pubsub"}
+  PubSubNode() : Node{"test_simple_planning_simulator_pubsub"}
   {
     kinematic_state_sub_ = create_subscription<VehicleKinematicState>(
       "output/kinematic_state", rclcpp::QoS{1},
-      [this](const VehicleKinematicState::SharedPtr msg) {
-        current_state_ = msg;
-      });
-    pub_control_command_ = create_publisher<VehicleControlCommand>(
-      "input/vehicle_control_command",
-      rclcpp::QoS{1});
-    pub_ackermann_command_ = create_publisher<AckermannControlCommand>(
-      "input/ackermann_control_command",
-      rclcpp::QoS{1});
-    pub_initialpose_ = create_publisher<PoseWithCovarianceStamped>(
-      "/initialpose",
-      rclcpp::QoS{1});
-    pub_state_cmd_ = create_publisher<VehicleStateCommand>(
-      "/input/vehicle_state_command",
-      rclcpp::QoS{1});
+      [this](const VehicleKinematicState::SharedPtr msg) { current_state_ = msg; });
+    pub_control_command_ =
+      create_publisher<VehicleControlCommand>("input/vehicle_control_command", rclcpp::QoS{1});
+    pub_ackermann_command_ =
+      create_publisher<AckermannControlCommand>("input/ackermann_control_command", rclcpp::QoS{1});
+    pub_initialpose_ = create_publisher<PoseWithCovarianceStamped>("/initialpose", rclcpp::QoS{1});
+    pub_state_cmd_ =
+      create_publisher<VehicleStateCommand>("/input/vehicle_state_command", rclcpp::QoS{1});
   }
 
   rclcpp::Publisher<VehicleControlCommand>::SharedPtr pub_control_command_;
@@ -134,8 +123,7 @@ void resetInitialpose(rclcpp::Node::SharedPtr sim_node, std::shared_ptr<PubSubNo
 }
 
 void sendGear(
-  uint8_t gear, rclcpp::Node::SharedPtr sim_node,
-  std::shared_ptr<PubSubNode> pub_sub_node)
+  uint8_t gear, rclcpp::Node::SharedPtr sim_node, std::shared_ptr<PubSubNode> pub_sub_node)
 {
   VehicleStateCommand cmd;
   cmd.stamp = sim_node->now();
@@ -192,7 +180,6 @@ VehicleKinematicState comToBaselink(const VehicleKinematicState & com)
   baselink.state.pose.position.y -= COM_TO_BASELINK * std::sin(yaw);
   return baselink;
 }
-
 
 // Check which direction the vehicle is heading on the baselink coordinates.
 //                      y
@@ -266,12 +253,10 @@ TEST(TestSimplePlanningSimulatorIdealSteerVel, TestMoving)
     const float32_t target_acc = 5.0f;
     const float32_t target_steer = 0.2f;
 
-    auto _resetInitialpose = [&]() {resetInitialpose(sim_node, pub_sub_node);};
+    auto _resetInitialpose = [&]() { resetInitialpose(sim_node, pub_sub_node); };
     auto _sendFwdGear = [&]() { sendGear(GearCommand::DRIVE, sim_node, pub_sub_node); };
     auto _sendBwdGear = [&]() { sendGear(GearCommand::REVERSE, sim_node, pub_sub_node); };
-    auto _sendCommand = [&](const auto & _cmd) {
-        sendCommand(_cmd, sim_node, pub_sub_node);
-      };
+    auto _sendCommand = [&](const auto & _cmd) { sendCommand(_cmd, sim_node, pub_sub_node); };
 
     // check pub-sub connections
     {
@@ -335,13 +320,14 @@ TEST(test_simple_planning_simulator, test_moving_ackermann)
     const float32_t target_acc = 5.0f;
     const float32_t target_steer = 0.2f;
 
-    auto _resetInitialpose = [&]() {resetInitialpose(sim_node, pub_sub_node);};
-    auto _sendFwdGear = [&]() {sendGear(VehicleStateCommand::GEAR_DRIVE, sim_node, pub_sub_node);};
-    auto _sendBwdGear =
-      [&]() {sendGear(VehicleStateCommand::GEAR_REVERSE, sim_node, pub_sub_node);};
-    auto _sendCommand = [&](const auto & _cmd) {
-        sendCommand(_cmd, sim_node, pub_sub_node);
-      };
+    auto _resetInitialpose = [&]() { resetInitialpose(sim_node, pub_sub_node); };
+    auto _sendFwdGear = [&]() {
+      sendGear(VehicleStateCommand::GEAR_DRIVE, sim_node, pub_sub_node);
+    };
+    auto _sendBwdGear = [&]() {
+      sendGear(VehicleStateCommand::GEAR_REVERSE, sim_node, pub_sub_node);
+    };
+    auto _sendCommand = [&](const auto & _cmd) { sendCommand(_cmd, sim_node, pub_sub_node); };
 
     // check pub-sub connections
     {
