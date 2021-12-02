@@ -51,10 +51,10 @@ WIP
 
 #### Input
 
-| Name                    | Type                            | Description      |
-| ----------------------- | ------------------------------- | ---------------- |
-| `~/input/points`        | `sensor_msgs::msg::PointCloud2` | reference points |
-| `~/input/map`           | `grid_map::msg::GridMap`        | map              |
+| Name             | Type                            | Description      |
+| ---------------- | ------------------------------- | ---------------- |
+| `~/input/points` | `sensor_msgs::msg::PointCloud2` | reference points |
+| `~/input/map`    | `grid_map::msg::GridMap`        | map              |
 
 #### Output
 
