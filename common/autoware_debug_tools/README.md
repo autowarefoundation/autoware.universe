@@ -10,15 +10,15 @@ This tool converts any `tf` to `pose` topic.
 With this tool, for example, you can plot `x` values of `tf` in `rqt_multiplot`.
 
 ```sh
-rosrun autoware_debug_tools tf2pose {tf_from} {tf_to} {hz}
+ros2 run autoware_debug_tools tf2pose {tf_from} {tf_to} {hz}
 ```
 
 Example:
 
 ```sh
-$ rosrun autoware_debug_tools tf2pose base_link ndt_base_link 100
+$ ros2 run autoware_debug_tools tf2pose base_link ndt_base_link 100
 
-$ rostopic echo /tf2pose/pose -n1
+$ ros2 topic echo /tf2pose/pose -n1
 header:
   seq: 13
   stamp:
@@ -43,7 +43,7 @@ pose:
 This tool converts any `pose` topic to `tf`.
 
 ```sh
-rosrun autoware_debug_tools pose2tf {pose_topic_name} {tf_name}
+ros2 run autoware_debug_tools pose2tf {pose_topic_name} {tf_name}
 ```
 
 Example:
@@ -65,21 +65,21 @@ This tool extracts `pose` from `stop_reasons`.
 Topics without numbers such as `/stop_reason2pose/pose/detection_area` are the nearest stop_reasons, and topics with numbers are individual stop_reasons that are roughly matched with previous ones.
 
 ```sh
-rosrun autoware_debug_tools stop_reason2pose {stop_reason_topic_name}
+ros2 run autoware_debug_tools stop_reason2pose {stop_reason_topic_name}
 ```
 
 Example:
 
 ```sh
-$ rosrun autoware_debug_tools stop_reason2pose /planning/scenario_planning/status/stop_reasons
+$ ros2 run autoware_debug_tools stop_reason2pose /planning/scenario_planning/status/stop_reasons
 
-$ rostopic list | ag stop_reason2pose
+$ ros2 topic list | ag stop_reason2pose
 /stop_reason2pose/pose/detection_area
 /stop_reason2pose/pose/detection_area_1
 /stop_reason2pose/pose/obstacle_stop
 /stop_reason2pose/pose/obstacle_stop_1
 
-$ rostopic echo /stop_reason2pose/pose/detection_area -n1
+$ ros2 topic echo /stop_reason2pose/pose/detection_area -n1
 header:
   seq: 1
   stamp:
@@ -111,7 +111,7 @@ rosrun autoware_debug_tools stop_reason2tf {stop_reason_name}
 Example:
 
 ```sh
-$ rosrun autoware_debug_tools stop_reason2tf obstacle_stop
+$ ros2 run autoware_debug_tools stop_reason2tf obstacle_stop
 At time 1605168359.501
 - Translation: [0.291, -0.095, 0.266]
 - Rotation: in Quaternion [0.007, 0.011, -0.005, 1.000]
