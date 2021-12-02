@@ -16,17 +16,14 @@ import os
 from ament_index_python.packages import get_package_share_directory
 import launch
 from launch.actions import DeclareLaunchArgument
-from launch.actions import IncludeLaunchDescription
 from launch.actions import OpaqueFunction
 from launch.actions import SetLaunchConfiguration
 from launch.conditions import IfCondition
 from launch.conditions import UnlessCondition
-from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.actions import LoadComposableNodes
 from launch_ros.descriptions import ComposableNode
-from launch_ros.substitutions import FindPackageShare
 import yaml
 
 
@@ -302,33 +299,9 @@ def launch_setup(context, *args, **kwargs):
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
 
-    laserscan_to_occupancy_grid_map_loader = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            [
-                FindPackageShare("laserscan_to_occupancy_grid_map"),
-                "/launch/laserscan_to_occupancy_grid_map.launch.py",
-            ]
-        ),
-        launch_arguments={
-            "container": "/perception/obstacle_segmentation/ground_segmentation/perception_pipeline_container",
-            "input/obstacle_pointcloud": "no_ground/oneshot/pointcloud"
-            if bool(ground_segmentation_param["additional_lidars"])
-            else "no_ground/pointcloud",
-            "input/raw_pointcloud": "/sensing/lidar/concatenated/pointcloud",
-            "output": "/perception/occupancy_grid_map/map",
-            "use_intra_process": LaunchConfiguration("use_intra_process"),
-        }.items(),
-        condition=UnlessCondition(
-            LaunchConfiguration(
-                "use_compare_map_pipeline",
-                default=ground_segmentation_param["use_compare_map_pipeline"],
-            )
-        ),
-    )
-
     occupancy_outlier_filter_component = ComposableNode(
-        package="pointcloud_preprocessor",
-        plugin="pointcloud_preprocessor::OccupancyGridMapOutlierFilterComponent",
+        package="occupancy_grid_map_outlier_filter",
+        plugin="occupancy_grid_map_outlier_filter::OccupancyGridMapOutlierFilterComponent",
         name="occupancy_grid_map_outlier_filter",
         remappings=[
             ("~/input/occupancy_grid_map", "/perception/occupancy_grid_map/map"),
@@ -406,7 +379,6 @@ def launch_setup(context, *args, **kwargs):
         compare_map_component_loader,
         concat_data_component_loader,
         occupancy_grid_outlier_filter_component_loader,
-        laserscan_to_occupancy_grid_map_loader,
     ]
 
 
