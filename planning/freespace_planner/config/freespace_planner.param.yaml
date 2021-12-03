@@ -14,7 +14,6 @@
     # -- Configurations common to the all planners --
     # base configs
     time_limit: 30000.0
-    # robot configs # TODO replace by vehicle_info
     minimum_turning_radius: 9.0
     maximum_turning_radius: 9.0
     turning_radius_size: 1

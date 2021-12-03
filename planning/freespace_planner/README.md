@@ -1,4 +1,4 @@
-# The `freespace_planner` Package
+# The `freespace_planner`
 
 ## freespace_planner_node
 
