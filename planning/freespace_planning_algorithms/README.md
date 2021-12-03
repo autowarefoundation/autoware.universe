@@ -1,4 +1,4 @@
-# The `freespace planning algorithms` package
+# `freespace planning algorithms`
 
 ## Role
 
