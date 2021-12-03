@@ -19,9 +19,9 @@ The successive shortest path algorithm is used to solve the data association pro
 
 ### Output
 
-| Name            | Type                                                  | Description         |
-| --------------- | ----------------------------------------------------- | ------------------- |
-| `output/object` | `autoware_auto_perception_msgs::msg::DetectedObjects` | modified trajectory |
+| Name            | Type                                                  | Description      |
+| --------------- | ----------------------------------------------------- | ---------------- |
+| `output/object` | `autoware_auto_perception_msgs::msg::DetectedObjects` | modified Objects |
 
 ## Parameters
 
