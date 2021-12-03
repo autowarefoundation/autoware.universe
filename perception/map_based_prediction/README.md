@@ -2,7 +2,7 @@
 
 ## Role
 
-`map_besed_prediction` is a module to predict the future paths of other vehicles and humans according to the shape of the map and the surrounding environment..
+`map_based_prediction` is a module to predict the future paths of other vehicles and pedestrians according to the shape of the map and the surrounding environment.
 
 ## Inner-workings / Algorithms
 
