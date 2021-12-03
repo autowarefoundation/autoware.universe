@@ -52,9 +52,9 @@ Example:
 
 ### Output
 
-| Name       | Type                                                  | Description        |
-| ---------- | ----------------------------------------------------- | ------------------ |
-| `~/output` | `autoware_auto_perception_msgs::msg::DetectedObjects` | modified obstacles |
+| Name       | Type                                                 | Description        |
+| ---------- | ---------------------------------------------------- | ------------------ |
+| `~/output` | `autoware_auto_perception_msgs::msg::TrackedObjects` | modified obstacles |
 
 ## Parameters
 
