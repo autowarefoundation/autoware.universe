@@ -15,50 +15,43 @@
 #ifndef AUTOWARE_API_UTILS__RCLCPP__PROXY_HPP_
 #define AUTOWARE_API_UTILS__RCLCPP__PROXY_HPP_
 
+#include "autoware_api_utils/rclcpp/client.hpp"
+#include "autoware_api_utils/rclcpp/service.hpp"
+#include "rclcpp/rclcpp.hpp"
+
 #include <string>
 #include <utility>
-#include "rclcpp/rclcpp.hpp"
-#include "autoware_api_utils/rclcpp/service.hpp"
-#include "autoware_api_utils/rclcpp/client.hpp"
 
 namespace autoware_api_utils
 {
-
-template<class NodeT>
+template <class NodeT>
 class ServiceProxyNodeInterface
 {
 public:
   // Use a raw pointer because shared_from_this cannot be used in constructor.
-  explicit ServiceProxyNodeInterface(NodeT * node)
-  {
-    node_ = node;
-  }
+  explicit ServiceProxyNodeInterface(NodeT * node) { node_ = node; }
 
-  template<typename ServiceT, typename CallbackT>
-  typename Service<ServiceT>::SharedPtr
-  create_service(
-    const std::string & service_name,
-    CallbackT && callback,
+  template <typename ServiceT, typename CallbackT>
+  typename Service<ServiceT>::SharedPtr create_service(
+    const std::string & service_name, CallbackT && callback,
     const rmw_qos_profile_t & qos_profile = rmw_qos_profile_services_default,
     rclcpp::CallbackGroup::SharedPtr group = nullptr)
   {
     auto wrapped_callback = Service<ServiceT>::template wrap<CallbackT>(
       std::forward<CallbackT>(callback), node_->get_logger());
-    return Service<ServiceT>::make_shared(
-      node_->template create_service<ServiceT>(
-        service_name, std::move(wrapped_callback), qos_profile, group));
+    return Service<ServiceT>::make_shared(node_->template create_service<ServiceT>(
+      service_name, std::move(wrapped_callback), qos_profile, group));
   }
 
-  template<typename ServiceT>
-  typename Client<ServiceT>::SharedPtr
-  create_client(
+  template <typename ServiceT>
+  typename Client<ServiceT>::SharedPtr create_client(
     const std::string & service_name,
     const rmw_qos_profile_t & qos_profile = rmw_qos_profile_services_default,
     rclcpp::CallbackGroup::SharedPtr group = nullptr)
   {
     return Client<ServiceT>::make_shared(
-      node_->template create_client<ServiceT>(
-        service_name, qos_profile, group), node_->get_logger());
+      node_->template create_client<ServiceT>(service_name, qos_profile, group),
+      node_->get_logger());
   }
 
 private:

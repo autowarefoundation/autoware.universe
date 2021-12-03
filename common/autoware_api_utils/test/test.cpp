@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "autoware_api_utils/autoware_api_utils.hpp"
 #include "gtest/gtest.h"
 #include "rclcpp/rclcpp.hpp"
-#include "autoware_api_utils/autoware_api_utils.hpp"
 
-TEST(autoware_api_utils, instantiate) {
+TEST(autoware_api_utils, instantiate)
+{
   rclcpp::Node node("autoware_api_utils_test");
   autoware_api_utils::ServiceProxyNodeInterface proxy(&node);
 }

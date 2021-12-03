@@ -19,30 +19,25 @@
 
 namespace autoware_api_utils
 {
-
-template<typename ServiceT>
+template <typename ServiceT>
 class Service
 {
 public:
   RCLCPP_SMART_PTR_DEFINITIONS(Service)
 
-  explicit Service(typename rclcpp::Service<ServiceT>::SharedPtr service)
-  : service_(service)
-  {
-  }
+  explicit Service(typename rclcpp::Service<ServiceT>::SharedPtr service) : service_(service) {}
 
-  template<typename CallbackT>
+  template <typename CallbackT>
   static auto wrap(CallbackT && callback, const rclcpp::Logger & logger)
   {
     auto wrapped_callback = [logger, callback](
-      typename ServiceT::Request::SharedPtr request,
-      typename ServiceT::Response::SharedPtr response)
-      {
-        // TODO(Takagi, Isamu): use rosidl_generator_traits::to_yaml (galactic)
-        RCLCPP_INFO(logger, "service request");
-        callback(request, response);
-        RCLCPP_INFO(logger, "service response");
-      };
+                              typename ServiceT::Request::SharedPtr request,
+                              typename ServiceT::Response::SharedPtr response) {
+      // TODO(Takagi, Isamu): use rosidl_generator_traits::to_yaml (galactic)
+      RCLCPP_INFO(logger, "service request");
+      callback(request, response);
+      RCLCPP_INFO(logger, "service response");
+    };
     return wrapped_callback;
   }
 
