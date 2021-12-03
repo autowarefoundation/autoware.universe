@@ -21,10 +21,10 @@ If the node receives no route information, it looks at a radius of 200 meters an
 
 ## Output topics
 
-| Name             | Type                                           | Description                                                          |
-| ---------------- | ---------------------------------------------- | -------------------------------------------------------------------- |
-| `~output/rois`   | autoware_perception_msgs::TrafficLightRoiArray | location of traffic lights in image corresponding to the camera info |
-| `~debug/markers` | visualization_msgs::MarkerArray                | visualization to debug                                               |
+| Name             | Type                                                | Description                                                          |
+| ---------------- | --------------------------------------------------- | -------------------------------------------------------------------- |
+| `~output/rois`   | autoware_auto_perception_msgs::TrafficLightRoiArray | location of traffic lights in image corresponding to the camera info |
+| `~debug/markers` | visualization_msgs::MarkerArray                     | visualization to debug                                               |
 
 ## Node parameters
 
