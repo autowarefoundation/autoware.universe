@@ -19,7 +19,7 @@ Based on the various input from planning, control, and vehicle, it publishes the
 | `/control/trajectory_follower/lateral/control_cmd` | autoware_auto_control_msgs::msg::AckermannLateralCommand | Output lateral control command from control module. |
 | `/vehicle/status/steering_status`                  | autoware_auto_vehicle_msgs::msg::SteeringReport          | Steering information from vehicle.                  |
 | `/localization/kinematic_state`                    | nav_msgs::msg::Odometry                                  | Use twist from odometry.                            |
-| `/tf`                                              | `tf2_msgs::msg::TFMessage                                | Extract ego pose from tf.                           |
+| `/tf`                                              | tf2_msgs::msg::TFMessage                                 | Extract ego pose from tf.                           |
 
 ### Output topics
 
