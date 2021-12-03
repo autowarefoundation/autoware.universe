@@ -82,7 +82,6 @@ void EmergencyHandler::onHazardStatusStamped(
   hazard_status_stamped_ = msg;
 }
 
-// To be replaced by ControlCommand
 void EmergencyHandler::onPrevControlCommand(
   const autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr msg)
 {
