@@ -1,4 +1,4 @@
-# The `costmap_generator` Package
+# costmap_generator
 
 ## costmap_generator_node
 
