@@ -2,8 +2,6 @@
 
 This is a 3D object detection implementation of CenterPoint supporting TensorRT inference.
 
-The models are trained with [Mmdetection3D](https://github.com/tier4/autoware_mmdetection3d)
-
 The object.existence_probability is stored the value of classification confidence of DNN, not probability.
 
 ## Parameters
