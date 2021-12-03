@@ -5,6 +5,6 @@ on:
 
 jobs:
   spell-check:
-    uses: autowarefoundation/autoware-github-actions/.github/workflows/reusable-spell-check.yaml@6a086d5eac5effbed9876049233213f5cd358914
+    uses: autowarefoundation/autoware-github-actions/.github/workflows/spell-check.yaml@feature/composite-action
     with:
       cspell-json-url: https://raw.githubusercontent.com/tier4/autoware-spell-check-dict/main/cspell/.cspell.json
