@@ -86,7 +86,10 @@ std::vector<size_t> getReversingIndices(const Trajectory & trajectory)
   std::vector<size_t> indices;
 
   for (size_t i = 0; i < trajectory.points.size() - 1; ++i) {
-    if (trajectory.points.at(i).longitudinal_velocity_mps * trajectory.points.at(i + 1).longitudinal_velocity_mps < 0) {
+    if (
+      trajectory.points.at(i).longitudinal_velocity_mps *
+        trajectory.points.at(i + 1).longitudinal_velocity_mps <
+      0) {
       indices.push_back(i);
     }
   }
@@ -162,7 +165,7 @@ Trajectory createTrajectory(
     point.pose = awp.pose.pose;
 
     point.pose.position.z = current_pose.pose.position.z;  // height = const
-    point.longitudinal_velocity_mps = velocity / 3.6;                 // velocity = const
+    point.longitudinal_velocity_mps = velocity / 3.6;      // velocity = const
 
     // switch sign by forward/backward
     point.longitudinal_velocity_mps = (awp.is_back ? -1 : 1) * point.longitudinal_velocity_mps;
@@ -189,8 +192,7 @@ Trajectory createStopTrajectory(const PoseStamped & current_pose)
 }
 
 bool isStopped(
-  const std::deque<Odometry::ConstSharedPtr> & odom_buffer,
-  const double th_stopped_velocity_mps)
+  const std::deque<Odometry::ConstSharedPtr> & odom_buffer, const double th_stopped_velocity_mps)
 {
   for (const auto & odom : odom_buffer) {
     if (std::abs(odom->twist.twist.linear.x) > th_stopped_velocity_mps) {
