@@ -122,7 +122,8 @@ geometry_msgs::msg::Point ObjectsToCostmap::makeExpandedPoint(
 
 grid_map::Polygon ObjectsToCostmap::makePolygonFromObjectConvexHull(
   const std_msgs::msg::Header & header,
-  const autoware_auto_perception_msgs::msg::PredictedObject & in_object, const double expand_polygon_size)
+  const autoware_auto_perception_msgs::msg::PredictedObject & in_object,
+  const double expand_polygon_size)
 {
   grid_map::Polygon polygon;
   polygon.setFrameId(header.frame_id);
@@ -130,7 +131,8 @@ grid_map::Polygon ObjectsToCostmap::makePolygonFromObjectConvexHull(
   double initial_z = in_object.shape.footprint.points[0].z;
   for (size_t index = 0; index < in_object.shape.footprint.points.size(); index++) {
     if (in_object.shape.footprint.points[index].z == initial_z) {
-      geometry_msgs::msg::Point centroid = in_object.kinematics.initial_pose_with_covariance.pose.position;
+      geometry_msgs::msg::Point centroid =
+        in_object.kinematics.initial_pose_with_covariance.pose.position;
       geometry_msgs::msg::Point expanded_point =
         makeExpandedPoint(centroid, in_object.shape.footprint.points[index], expand_polygon_size);
       polygon.addVertex(grid_map::Position(expanded_point.x, expanded_point.y));
@@ -171,11 +173,12 @@ grid_map::Matrix ObjectsToCostmap::makeCostmapFromObjects(
       // TODO(Kenji Miyake): Add makePolygonFromObjectCylinder
       polygon = makePolygonFromObjectBox(in_objects->header, object, expand_polygon_size);
     }
-    const auto highest_probability_label = *std::max_element(object.classification.begin(), object.classification.end(), [](const auto & c1, const auto & c2){ return c1.probability < c2.probability; });
+    const auto highest_probability_label = *std::max_element(
+      object.classification.begin(), object.classification.end(),
+      [](const auto & c1, const auto & c2) { return c1.probability < c2.probability; });
     const double highest_probability = static_cast<double>(highest_probability_label.probability);
     setCostInPolygon(polygon, OBJECTS_COSTMAP_LAYER_, highest_probability, objects_costmap);
-    setCostInPolygon(
-      polygon, BLURRED_OBJECTS_COSTMAP_LAYER_, highest_probability, objects_costmap);
+    setCostInPolygon(polygon, BLURRED_OBJECTS_COSTMAP_LAYER_, highest_probability, objects_costmap);
   }
 
   // Applying mean filter to expanded gridmap
