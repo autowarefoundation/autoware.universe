@@ -4,6 +4,6 @@ This package provides a command line tool to know the architecture version. This
 
 ## How to use
 
-``` sh
+```sh
 ros2 run autoware_version print arch {full,type,version}
 ```
