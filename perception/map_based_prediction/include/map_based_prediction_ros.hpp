@@ -80,7 +80,6 @@ class MapBasedPrediction;
 class MapBasedPredictionROS : public rclcpp::Node
 {
 private:
-  bool has_subscribed_map_;
   double prediction_time_horizon_;
   double prediction_sampling_delta_time_;
   double min_velocity_for_map_based_prediction_;
@@ -90,7 +89,6 @@ private:
   double delta_yaw_threshold_for_searching_lanelet_;
   double sigma_lateral_offset_;
   double sigma_yaw_angle_;
-  double object_buffer_time_length_;
   double history_time_length_;
   double dist_ratio_threshold_to_left_bound_;
   double dist_ratio_threshold_to_right_bound_;

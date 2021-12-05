@@ -57,7 +57,6 @@ MapBasedPredictionROS::MapBasedPredictionROS(const rclcpp::NodeOptions & node_op
   rclcpp::Clock::SharedPtr clock = std::make_shared<rclcpp::Clock>(RCL_ROS_TIME);
   tf_buffer_ptr_ = std::make_shared<tf2_ros::Buffer>(clock);
   tf_listener_ptr_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_ptr_);
-  has_subscribed_map_ = declare_parameter("map_based_prediction.has_subscribed_map", false);
   prediction_time_horizon_ = declare_parameter("prediction_time_horizon", 10.0);
   prediction_sampling_delta_time_ = declare_parameter("prediction_sampling_delta_time", 0.5);
   min_velocity_for_map_based_prediction_ =
@@ -68,7 +67,6 @@ MapBasedPredictionROS::MapBasedPredictionROS(const rclcpp::NodeOptions & node_op
     declare_parameter("delta_yaw_threshold_for_searching_lanelet", 0.785);
   sigma_lateral_offset_ = declare_parameter("sigma_lateral_offset", 0.5);
   sigma_yaw_angle_ = declare_parameter("sigma_yaw_angle", 5.0);
-  object_buffer_time_length_ = declare_parameter("object_buffer_time_length", 2.0);
   history_time_length_ = declare_parameter("history_time_length", 1.0);
   dist_ratio_threshold_to_left_bound_ =
     declare_parameter("dist_ratio_threshold_to_left_bound", -0.5);

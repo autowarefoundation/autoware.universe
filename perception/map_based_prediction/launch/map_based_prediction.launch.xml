@@ -8,7 +8,6 @@
   <arg name="delta_yaw_threshold_for_searching_lanelet" default="0.785" />
   <arg name="sigma_lateral_offset" default="0.5" /> <!-- [m]-->
   <arg name="sigma_yaw_angle" default="5.0" /> <!-- [angle degree] -->
-  <arg name="object_buffer_time_length" default="2.0" /> <!-- [s] -->
   <arg name="history_time_length" default="1.0" /> <!-- [s] -->
   <arg name="dist_ratio_threshold_to_left_bound" default="-0.5" /> <!-- [ratio] -->
   <arg name="dist_ratio_threshold_to_right_bound" default="0.5" /> <!-- [ratio] -->
@@ -24,7 +23,6 @@
     <param name="delta_yaw_threshold_for_searching_lanelet" value="$(var delta_yaw_threshold_for_searching_lanelet)" />
     <param name="sigma_lateral_offset" value="$(var sigma_lateral_offset)" />
     <param name="sigma_yaw_angle" value="$(var sigma_yaw_angle)" />
-    <param name="object_buffer_time_length" value="$(var object_buffer_time_length)" />
     <param name="history_time_length" value="$(var history_time_length)" />
     <param name="dist_ratio_threshold_to_left_bound" value="$(var dist_ratio_threshold_to_left_bound)" />
     <param name="dist_ratio_threshold_to_right_bound" value="$(var dist_ratio_threshold_to_right_bound)" />
