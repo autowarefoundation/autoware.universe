@@ -21,9 +21,11 @@ from launch.actions import SetLaunchConfiguration
 from launch.conditions import IfCondition
 from launch.conditions import UnlessCondition
 from launch.substitutions import LaunchConfiguration
+from launch.substitutions import PathJoinSubstitution
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.actions import LoadComposableNodes
 from launch_ros.descriptions import ComposableNode
+from launch_ros.substitutions import FindPackageShare
 import yaml
 
 
@@ -162,15 +164,53 @@ def create_ransac_pipeline(ground_segmentation_param):
     ]
 
 
-def create_elevation_map_filter_pipeline():
+def create_elevation_map_filter_pipeline(ground_segmentation_param):
+
+    elevation_map_loader = ComposableNode(
+        package="elevation_map_loader",
+        plugin="ElevationMapLoaderNode",
+        name="elevation_map_loader",
+        remappings=[
+            ("output/elevation_map", "elevation_map"),
+            ("input/pointcloud_map", "/map/pointcloud_map"),
+            ("input/vector_map", "/map/vector_map"),
+        ],
+        parameters=[
+            {
+                "use_lane_filter": False,
+                "use_inpaint": True,
+                "inpaint_radius": 1.0,
+                "param_file_path": PathJoinSubstitution(
+                    [
+                        FindPackageShare("perception_launch"),
+                        "config",
+                        "object_segmentation",
+                        "ground_segmentation",
+                        "elevation_map_parameters.yaml",
+                    ]
+                ),
+                "elevation_map_directory": PathJoinSubstitution(
+                    [FindPackageShare("elevation_map_loader"), "data", "elevation_maps"]
+                ),
+                "use_elevation_map_cloud_publisher": False,
+            }
+        ],
+        extra_arguments=[{"use_intra_process_comms": False}],
+    )
+
     compare_elevation_map_filter_component = ComposableNode(
         package="compare_map_segmentation",
         plugin="compare_map_segmentation::CompareElevationMapFilterComponent",
         name="compare_elevation_map_filter",
         remappings=[
-            ("input", "no_ground/oneshot/pointcloud"),
+            (
+                "input",
+                "no_ground/oneshot/pointcloud"
+                if bool(ground_segmentation_param["additional_lidars"])
+                else "no_ground/pointcloud",
+            ),
             ("output", "map_filtered/pointcloud"),
-            ("input/elevation_map", "/map/elevation_map"),
+            ("input/elevation_map", "elevation_map"),
         ],
         parameters=[
             {
@@ -224,6 +264,7 @@ def create_elevation_map_filter_pipeline():
     )
 
     return [
+        elevation_map_loader,
         compare_elevation_map_filter_component,
         downsampling_component,
         voxel_grid_outlier_filter_component,
@@ -369,7 +410,9 @@ def launch_setup(context, *args, **kwargs):
     )
 
     compare_map_component_loader = LoadComposableNodes(
-        composable_node_descriptions=create_elevation_map_filter_pipeline(),
+        composable_node_descriptions=create_elevation_map_filter_pipeline(
+            ground_segmentation_param
+        ),
         target_container=target_container,
         condition=IfCondition(
             LaunchConfiguration(
