@@ -71,7 +71,8 @@ float64_t SimModelIdealSteerAccGeared::calcVelocityWithGear(
     gear == GearCommand::DRIVE_12 || gear == GearCommand::DRIVE_13 ||
     gear == GearCommand::DRIVE_14 || gear == GearCommand::DRIVE_15 ||
     gear == GearCommand::DRIVE_16 || gear == GearCommand::DRIVE_17 ||
-    gear == GearCommand::DRIVE_18 || gear == GearCommand::LOW || gear == GearCommand::LOW_2) {
+    gear == GearCommand::DRIVE_18 || gear == GearCommand::LOW || gear == GearCommand::LOW_2)
+  {
     if (state(IDX::VX) < 0.0) {
       return 0.0;
     }
