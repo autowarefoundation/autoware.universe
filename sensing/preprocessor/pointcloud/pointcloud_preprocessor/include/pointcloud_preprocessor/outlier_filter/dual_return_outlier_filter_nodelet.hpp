@@ -66,7 +66,7 @@ protected:
 private:
   void onVisibilityChecker(DiagnosticStatusWrapper & stat);
   Updater updater_{this};
-  double visibility_ = 1.f;
+  double visibility_ = -1.0f;
   double weak_first_distance_ratio_;
   double general_distance_ratio_;
   int weak_first_local_noise_threshold_;
