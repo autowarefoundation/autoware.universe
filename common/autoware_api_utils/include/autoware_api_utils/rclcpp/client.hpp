@@ -23,7 +23,7 @@
 
 namespace autoware_api_utils
 {
-template<typename ServiceT>
+template <typename ServiceT>
 class Client
 {
 public:
