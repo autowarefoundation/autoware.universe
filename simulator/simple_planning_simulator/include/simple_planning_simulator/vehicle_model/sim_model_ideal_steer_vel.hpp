@@ -15,11 +15,12 @@
 #ifndef SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_IDEAL_STEER_VEL_HPP_
 #define SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_IDEAL_STEER_VEL_HPP_
 
+#include <iostream>
+
 #include "eigen3/Eigen/Core"
 #include "eigen3/Eigen/LU"
-#include "simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
 
-#include <iostream>
+#include "simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
 /**
  * @class SimModelIdealSteerVel
  * @brief calculate ideal steering dynamics
@@ -39,8 +40,14 @@ public:
   ~SimModelIdealSteerVel() = default;
 
 private:
-  enum IDX { X = 0, Y, YAW };
-  enum IDX_U {
+  enum IDX
+  {
+    X = 0,
+    Y,
+    YAW
+  };
+  enum IDX_U
+  {
     VX_DES = 0,
     STEER_DES,
   };
