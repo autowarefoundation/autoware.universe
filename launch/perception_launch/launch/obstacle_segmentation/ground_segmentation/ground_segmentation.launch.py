@@ -102,6 +102,7 @@ def create_ransac_pipeline(ground_segmentation_param):
                 "timeout_sec": 1.0,
             }
         ],
+        extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
 
     short_height_obstacle_detection_area_filter_component = ComposableNode(
