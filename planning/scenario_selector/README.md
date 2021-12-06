@@ -1,4 +1,4 @@
-# The `scenario_selector` Package
+# scenario_selector
 
 ## scenario_selector_node
 
