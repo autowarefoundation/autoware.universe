@@ -34,8 +34,8 @@ repos:
       - id: prettier-package-xml
       - id: sort-package-xml
 
-  - repo: https://github.com/gruntwork-io/pre-commit
-    rev: v0.1.17
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.8.0.1
     hooks:
       - id: shellcheck
 
