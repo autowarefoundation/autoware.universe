@@ -48,29 +48,29 @@ inline bool is_error(const autoware_external_api_msgs::msg::ResponseStatus & sta
 inline ResponseStatus response_success(const std::string & message = "")
 {
   return autoware_external_api_msgs::build<autoware_external_api_msgs::msg::ResponseStatus>()
-    .code(autoware_external_api_msgs::msg::ResponseStatus::SUCCESS)
-    .message(message);
+         .code(autoware_external_api_msgs::msg::ResponseStatus::SUCCESS)
+         .message(message);
 }
 
 inline ResponseStatus response_ignored(const std::string & message = "")
 {
   return autoware_external_api_msgs::build<autoware_external_api_msgs::msg::ResponseStatus>()
-    .code(autoware_external_api_msgs::msg::ResponseStatus::IGNORED)
-    .message(message);
+         .code(autoware_external_api_msgs::msg::ResponseStatus::IGNORED)
+         .message(message);
 }
 
 inline ResponseStatus response_warn(const std::string & message = "")
 {
   return autoware_external_api_msgs::build<autoware_external_api_msgs::msg::ResponseStatus>()
-    .code(autoware_external_api_msgs::msg::ResponseStatus::WARN)
-    .message(message);
+         .code(autoware_external_api_msgs::msg::ResponseStatus::WARN)
+         .message(message);
 }
 
 inline ResponseStatus response_error(const std::string & message = "")
 {
   return autoware_external_api_msgs::build<autoware_external_api_msgs::msg::ResponseStatus>()
-    .code(autoware_external_api_msgs::msg::ResponseStatus::ERROR)
-    .message(message);
+         .code(autoware_external_api_msgs::msg::ResponseStatus::ERROR)
+         .message(message);
 }
 
 }  // namespace autoware_api_utils
