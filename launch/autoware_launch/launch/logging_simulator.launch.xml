@@ -20,6 +20,8 @@
   <arg name="lanelet2_map_file" default="lanelet2_map.osm" description="lanelet2 map file name"/>
   <arg name="pointcloud_map_file" default="pointcloud_map.pcd" description="pointcloud map file name"/>
   <arg name="vehicle_simulation" default="false" description="use vehicle simulation"/>
+  <arg name="use_pointcloud_container" default="true" description="launch pointcloud container"/>
+  <arg name="pointcloud_container_name" default="pointcloud_container"/>
   <!-- Optional parameters for scenario simulation -->
   <arg name="scenario_simulation" default="false" description="use scenario simulation"/>
 
@@ -27,6 +29,12 @@
   <include file="$(find-pkg-share autoware_global_parameter_loader)/launch/global_params.launch.py">
     <arg name="use_sim_time" value="true" />
     <arg name="vehicle_model" value="$(var vehicle_model)"/>
+  </include>
+
+  <!-- Pointcloud container -->
+  <include file="$(find-pkg-share autoware_launch)/launch/pointcloud_container.launch.py" if="$(var use_pointcloud_container)">
+    <arg name="use_multithread" value="true" />
+    <arg name="container_name" value="$(var pointcloud_container_name)"/>
   </include>
 
   <!-- Vehicle -->
@@ -62,6 +70,8 @@
       <arg name="sensor_model" value="$(var sensor_model)"/>
       <arg name="vehicle_param_file" value="$(find-pkg-share $(var vehicle_model)_description)/config/vehicle_info.param.yaml"/>
       <arg name="vehicle_mirror_param_file" value="$(find-pkg-share $(var vehicle_model)_description)/config/mirror.param.yaml"/>
+      <arg name="use_pointcloud_container" value="$(var use_pointcloud_container)" />
+      <arg name="pointcloud_container_name" value="$(var pointcloud_container_name)"/>
     </include>
   </group>
 
@@ -77,6 +87,8 @@
       <!-- options for mode: camera_lidar_fusion, lidar, camera -->
       <arg name="mode" value="camera_lidar_fusion" />
       <arg name="vehicle_param_file" value="$(find-pkg-share $(var vehicle_model)_description)/config/vehicle_info.param.yaml"/>
+      <arg name="use_pointcloud_container" value="$(var use_pointcloud_container)" />
+      <arg name="pointcloud_container_name" value="$(var pointcloud_container_name)"/>
     </include>
   </group>
 
