@@ -49,9 +49,9 @@ ros2 run autoware_debug_tools pose2tf {pose_topic_name} {tf_name}
 Example:
 
 ```sh
-$ rosrun autoware_debug_tools pose2tf /localization/pose_estimator/pose ndt_pose
+$ ros2 run autoware_debug_tools pose2tf /localization/pose_estimator/pose ndt_pose
 
-$ rosrun tf tf_echo ndt_pose ndt_base_link 100
+$ ros2 run tf tf_echo ndt_pose ndt_base_link 100
 At time 1605168365.449
 - Translation: [0.000, 0.000, 0.000]
 - Rotation: in Quaternion [0.000, 0.000, 0.000, 1.000]
@@ -105,7 +105,7 @@ This is an all-in-one script that uses `tf2pose`, `pose2tf`, and `stop_reason2po
 With this tool, you can view the relative position from base_link to the nearest stop_reason.
 
 ```sh
-rosrun autoware_debug_tools stop_reason2tf {stop_reason_name}
+ros2 run autoware_debug_tools stop_reason2tf {stop_reason_name}
 ```
 
 Example:
