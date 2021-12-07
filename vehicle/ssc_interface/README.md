@@ -1,8 +1,8 @@
 # ssc_interface
 
-`ssc_interface` is the package to connect Autoware with the AutonomouStuff Speed and Steering Control (SSC)*.
+`ssc_interface` is the package to connect Autoware with the AutonomouStuff Speed and Steering Control (SSC)\*.
 
-* SSC ... https://autonomoustuff.com/products/astuff-speed-steering-control-software
+- SSC ... <https://autonomoustuff.com/products/astuff-speed-steering-control-software>
 
 ## Input / Output
 
@@ -50,17 +50,17 @@
 
 ## ROS Parameters
 
- | Name                      | Type   | Description                                                                           |
- | ------------------------- | ------ | ------------------------------------------------------------------------------------- |
- | `use_rear_wheel_speed`    | bool   | use rear wheel speed to calculate vehicle speed or not                                |
- | `use_adaptive_gear_ratio` | bool   | use adaptive gear ratio to calculate current steering wheel angle from steering angle |
- | `ssc_gear_ratio_`         | double | default gear ratio ( it used only when `use_adaptive_gear_ratio` is False )           |
- | `command_timeout`         | double | timeout [ms]                                                                          |
- | `loop_rate`               | double | loop rate to publish *commands*                                                       |
- | `acceleration_limit`      | double | maximum accleration sent to SSC                                                       |
- | `deceleration_limit`      | double | maximum deceleration (absolute value) sent to SSC                                     |
- | `max_curvature_rate`      | double | maximum curvature rate   sent to SSC                                                  |
- | `agr_coef_a`              | double | coefficient to calculate adaptive gear ratio for steering wheel angle                 |
- | `agr_coef_b`              | double | coefficient to calculate adaptive gear ratio for steering wheel angle                 |
- | `agr_coef_c`              | double | coefficient to calculate adaptive gear ratio for steering wheel angle                 |
- | `steering_offset`         | double | steering wheel angle offset                                                           |
+| Name                      | Type   | Description                                                                           |
+| ------------------------- | ------ | ------------------------------------------------------------------------------------- |
+| `use_rear_wheel_speed`    | bool   | use rear wheel speed to calculate vehicle speed or not                                |
+| `use_adaptive_gear_ratio` | bool   | use adaptive gear ratio to calculate current steering wheel angle from steering angle |
+| `ssc_gear_ratio_`         | double | default gear ratio ( it used only when `use_adaptive_gear_ratio` is False )           |
+| `command_timeout`         | double | timeout [ms]                                                                          |
+| `loop_rate`               | double | loop rate to publish _commands_                                                       |
+| `acceleration_limit`      | double | maximum accleration sent to SSC                                                       |
+| `deceleration_limit`      | double | maximum deceleration (absolute value) sent to SSC                                     |
+| `max_curvature_rate`      | double | maximum curvature rate sent to SSC                                                    |
+| `agr_coef_a`              | double | coefficient to calculate adaptive gear ratio for steering wheel angle                 |
+| `agr_coef_b`              | double | coefficient to calculate adaptive gear ratio for steering wheel angle                 |
+| `agr_coef_c`              | double | coefficient to calculate adaptive gear ratio for steering wheel angle                 |
+| `steering_offset`         | double | steering wheel angle offset                                                           |
