@@ -23,7 +23,7 @@ Cells with No elevation value can be inpainted using the values of neighboring c
 ### Subscribed Topics
 
 - input/pointcloud_map (sensor_msgs:PointCloud2) : PointCloud Map
-- input/vector_map (autoware_lanelet2_msgs/MapBin) : binary data of Lanelet2 Map
+- input/vector_map (autoware_auto_mapping_msgs/HADMapBin) : binary data of Lanelet2 Map
 
 ### Published Topics
 
