@@ -184,7 +184,7 @@ def create_elevation_map_filter_pipeline(ground_segmentation_param):
                     [
                         FindPackageShare("perception_launch"),
                         "config",
-                        "object_segmentation",
+                        "obstacle_segmentation",
                         "ground_segmentation",
                         "elevation_map_parameters.yaml",
                     ]
