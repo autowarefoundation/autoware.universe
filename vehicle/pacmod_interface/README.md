@@ -45,15 +45,15 @@
 
 - To Autoware
 
-  | Name                                     | Type                                                   | Description                                          |
-  | ---------------------------------------- | ------------------------------------------------------ | ---------------------------------------------------- |
-  | `/vehicle/status/control_mode`           | autoware_auto_vehicle_mgs::msg::ControlModeReport      | control mode                                         |
-  | `/vehicle/status/velocity_status`        | autoware_auto_vehicle_mgs::msg::VelocityReport         | velocity                                             |
-  | `/vehicle/status/steering_status`        | autoware_auto_vehicle_mgs::msg::SteeringReport         | steering wheel angle                                 |
-  | `/vehicle/status/gear_status`            | autoware_auto_vehicle_mgs::msg::GearReport             | gear status                                          |
-  | `/vehicle/status/turn_indicators_status` | autoware_auto_vehicle_mgs::msg::TurnIndicatorsReport   | turn indicators status                               |
-  | `/vehicle/status/hazard_lights_status`   | autoware_auto_vehicle_mgs::msg::HazardLightsReport     | hazard lights status                                 |
-  | `/vehicle/status/actuation_status`       | autoware_auto_vehicle_mgs::msg::ActuationStatusStamped | actuation (accel/brake pedal, steering wheel) status |
+  | Name                                     | Type                                                    | Description                                          |
+  | ---------------------------------------- | ------------------------------------------------------- | ---------------------------------------------------- |
+  | `/vehicle/status/control_mode`           | autoware_auto_vehicle_msgs::msg::ControlModeReport      | control mode                                         |
+  | `/vehicle/status/velocity_status`        | autoware_auto_vehicle_msgs::msg::VelocityReport         | velocity                                             |
+  | `/vehicle/status/steering_status`        | autoware_auto_vehicle_msgs::msg::SteeringReport         | steering wheel angle                                 |
+  | `/vehicle/status/gear_status`            | autoware_auto_vehicle_msgs::msg::GearReport             | gear status                                          |
+  | `/vehicle/status/turn_indicators_status` | autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport   | turn indicators status                               |
+  | `/vehicle/status/hazard_lights_status`   | autoware_auto_vehicle_msgs::msg::HazardLightsReport     | hazard lights status                                 |
+  | `/vehicle/status/actuation_status`       | autoware_auto_vehicle_msgs::msg::ActuationStatusStamped | actuation (accel/brake pedal, steering wheel) status |
 
 ## ROS Parameters
 
