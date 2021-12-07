@@ -26,14 +26,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/object_recognition/Semantic.msg"
   "msg/object_recognition/Shape.msg"
   "msg/object_recognition/State.msg"
-  "msg/traffic_light_recognition/LampState.msg"
-  "msg/traffic_light_recognition/LookingTrafficLightState.msg"
-  "msg/traffic_light_recognition/TrafficLightStateWithJudge.msg"
-  "msg/traffic_light_recognition/TrafficLightRoi.msg"
-  "msg/traffic_light_recognition/TrafficLightRoiArray.msg"
-  "msg/traffic_light_recognition/TrafficLightState.msg"
-  "msg/traffic_light_recognition/TrafficLightStateArray.msg"
-  "msg/traffic_light_recognition/TrafficLightStateStamped.msg"
   DEPENDENCIES
     autoware_auto_perception_msgs
     builtin_interfaces
