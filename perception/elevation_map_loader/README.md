@@ -18,7 +18,7 @@ Cells with No elevation value can be inpainted using the values of neighboring c
 
 ### How to run
 
-`ros2 run map_loader elevation_map_loader --ros-args -p param_file_path:=path/to/elevation_map_parameters.yaml -p elevation_map_directory:=path/to/elevation_map_directory -p pointcloud_map_path:=path/to/pointcloud.pcd`
+`ros2 run elevation_map_loader elevation_map_loader --ros-args -p param_file_path:=path/to/elevation_map_parameters.yaml -p elevation_map_directory:=path/to/elevation_map_directory -p pointcloud_map_path:=path/to/pointcloud.pcd`
 
 ### Subscribed Topics
 
