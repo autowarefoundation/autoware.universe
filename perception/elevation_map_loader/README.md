@@ -1,4 +1,4 @@
-# map_loader package
+# elevation_map_loader package
 
 This package provides elevation map for compare_map_segmentation.
 
