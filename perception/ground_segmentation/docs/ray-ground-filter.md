@@ -37,7 +37,7 @@ This implementation inherits `pointcloud_preprocessor::Filter` class, please ref
 | `min_x`                       | double | The parameter to set vehicle footprint manually                                                                                                                                                                                |
 | `max_x`                       | double | The parameter to set vehicle footprint manually                                                                                                                                                                                |
 | `min_y`                       | double | The parameter to set vehicle footprint manually                                                                                                                                                                                |
-| `max_x`                       | double | The parameter to set vehicle footprint manually                                                                                                                                                                                |
+| `max_y`                       | double | The parameter to set vehicle footprint manually                                                                                                                                                                                |
 
 ## Assumptions / Known limits
 
