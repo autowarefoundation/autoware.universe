@@ -26,6 +26,16 @@ def generate_launch_description():
     def add_launch_arg(name: str, default_value=None):
         return DeclareLaunchArgument(name, default_value=default_value)
 
+    default_vehicle_info_param = os.path.join(
+        get_package_share_directory('vehicle_info_util'),
+        'config/vehicle_info.param.yaml')
+
+    vehicle_info_param = DeclareLaunchArgument(
+        'vehicle_info_param_file',
+        default_value=default_vehicle_info_param,
+        description='Path to config file for vehicle information'
+    )
+
     nodes = [
         ComposableNode(
             package="ground_segmentation",
@@ -41,7 +51,8 @@ def generate_launch_description():
                     "local_slope_max_angle_deg": 30.0,
                     "split_points_distance_tolerance": 0.2,
                     "split_height_distance": 0.2,
-                }
+                },
+                LaunchConfiguration('vehicle_info_param_file'),
             ],
         ),
     ]
@@ -64,6 +75,7 @@ def generate_launch_description():
 
     return launch.LaunchDescription(
         [
+            vehicle_info_param,
             add_launch_arg("container", ""),
             add_launch_arg("input/pointcloud", "pointcloud"),
             add_launch_arg("output/pointcloud", "no_ground/pointcloud"),
