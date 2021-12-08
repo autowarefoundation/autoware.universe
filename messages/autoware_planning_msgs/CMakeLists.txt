@@ -19,6 +19,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/EnableAvoidance.msg"
   "msg/ExpandStopRange.msg"
   "msg/IsAvoidancePossible.msg"
+  "msg/LaneChangeCommand.msg"
+  "msg/LaneChangeStatus.msg"
   "msg/LateralOffset.msg"
   "msg/Path.msg"
   "msg/PathChangeModule.msg"
