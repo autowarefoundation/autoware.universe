@@ -22,7 +22,7 @@
 
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
 #include <autoware_auto_vehicle_msgs/msg/gear_command.hpp>
-#include <autoware_control_msgs/msg/gate_mode.hpp>
+#include <tier4_control_msgs/msg/gate_mode.hpp>
 #include <autoware_external_api_msgs/msg/control_command_stamped.hpp>
 #include <autoware_external_api_msgs/msg/heartbeat.hpp>
 #include <nav_msgs/msg/odometry.hpp>
@@ -57,14 +57,14 @@ private:
   rclcpp::Subscription<autoware_external_api_msgs::msg::ControlCommandStamped>::SharedPtr
     sub_control_cmd_;
   rclcpp::Subscription<GearCommand>::SharedPtr sub_shift_cmd_;
-  rclcpp::Subscription<autoware_control_msgs::msg::GateMode>::SharedPtr sub_gate_mode_;
+  rclcpp::Subscription<tier4_control_msgs::msg::GateMode>::SharedPtr sub_gate_mode_;
   rclcpp::Subscription<autoware_external_api_msgs::msg::Heartbeat>::SharedPtr
     sub_emergency_stop_heartbeat_;
 
   void onVelocity(const Odometry::ConstSharedPtr msg);
   void onExternalCmd(const ExternalControlCommand::ConstSharedPtr cmd_ptr);
   void onGearCommand(const GearCommand::ConstSharedPtr msg);
-  void onGateMode(const autoware_control_msgs::msg::GateMode::ConstSharedPtr msg);
+  void onGateMode(const tier4_control_msgs::msg::GateMode::ConstSharedPtr msg);
   void onEmergencyStopHeartbeat(
     const autoware_external_api_msgs::msg::Heartbeat::ConstSharedPtr msg);
 
@@ -72,7 +72,7 @@ private:
   std::shared_ptr<rclcpp::Time> latest_emergency_stop_heartbeat_received_time_;
   std::shared_ptr<rclcpp::Time> latest_cmd_received_time_;
   GearCommand::ConstSharedPtr current_shift_cmd_;
-  autoware_control_msgs::msg::GateMode::ConstSharedPtr current_gate_mode_;
+  tier4_control_msgs::msg::GateMode::ConstSharedPtr current_gate_mode_;
 
   // Timer
   void onTimer();

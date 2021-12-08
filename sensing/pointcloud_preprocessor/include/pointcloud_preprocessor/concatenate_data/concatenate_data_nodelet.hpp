@@ -64,8 +64,8 @@
 #include <diagnostic_updater/diagnostic_updater.hpp>
 
 #include <autoware_auto_vehicle_msgs/msg/velocity_report.hpp>
-#include <autoware_debug_msgs/msg/int32_stamped.hpp>
-#include <autoware_debug_msgs/msg/string_stamped.hpp>
+#include <tier4_debug_msgs/msg/int32_stamped.hpp>
+#include <tier4_debug_msgs/msg/string_stamped.hpp>
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>

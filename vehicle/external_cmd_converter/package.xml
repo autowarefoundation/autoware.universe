@@ -11,9 +11,9 @@
 
   <depend>autoware_auto_control_msgs</depend>
   <depend>autoware_auto_vehicle_msgs</depend>
-  <depend>autoware_control_msgs</depend>
+  <depend>tier4_control_msgs</depend>
   <depend>autoware_external_api_msgs</depend>
-  <depend>autoware_system_msgs</depend>
+  <depend>tier4_system_msgs</depend>
   <depend>diagnostic_updater</depend>
   <depend>geometry_msgs</depend>
   <depend>nav_msgs</depend>

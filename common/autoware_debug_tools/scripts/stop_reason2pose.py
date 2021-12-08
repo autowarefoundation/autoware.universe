@@ -18,7 +18,7 @@ import argparse
 import math
 import sys
 
-from autoware_planning_msgs.msg import StopReasonArray
+from tier4_planning_msgs.msg import StopReasonArray
 from case_converter import pascal2snake
 from geometry_msgs.msg import PoseStamped
 import numpy as np

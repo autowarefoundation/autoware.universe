@@ -84,7 +84,7 @@ void AutowareStatePanel::onInitialize()
 {
   raw_node_ = this->getDisplayContext()->getRosNodeAbstraction().lock()->get_raw_node();
 
-  sub_gate_mode_ = raw_node_->create_subscription<autoware_control_msgs::msg::GateMode>(
+  sub_gate_mode_ = raw_node_->create_subscription<tier4_control_msgs::msg::GateMode>(
     "/control/current_gate_mode", 10, std::bind(&AutowareStatePanel::onGateMode, this, _1));
 
   sub_autoware_state_ =
@@ -101,15 +101,15 @@ void AutowareStatePanel::onInitialize()
     "/api/external/set/engage", rmw_qos_profile_services_default);
 }
 
-void AutowareStatePanel::onGateMode(const autoware_control_msgs::msg::GateMode::ConstSharedPtr msg)
+void AutowareStatePanel::onGateMode(const tier4_control_msgs::msg::GateMode::ConstSharedPtr msg)
 {
   switch (msg->data) {
-    case autoware_control_msgs::msg::GateMode::AUTO:
+    case tier4_control_msgs::msg::GateMode::AUTO:
       gate_mode_label_ptr_->setText("AUTO");
       gate_mode_label_ptr_->setStyleSheet("background-color: #00FF00;");
       break;
 
-    case autoware_control_msgs::msg::GateMode::EXTERNAL:
+    case tier4_control_msgs::msg::GateMode::EXTERNAL:
       gate_mode_label_ptr_->setText("EXTERNAL");
       gate_mode_label_ptr_->setStyleSheet("background-color: #FFFF00;");
       break;

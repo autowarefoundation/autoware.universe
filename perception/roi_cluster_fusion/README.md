@@ -16,9 +16,9 @@ The clusters are projected onto image planes, and then if the ROIs of clusters a
 
 | Name                  | Type                                                        | Description                                                                        |
 | --------------------- | ----------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| `clusters`            | `autoware_perception_msgs::msg::DetectedObjectsWithFeature` | clustered pointcloud                                                               |
+| `clusters`            | `tier4_perception_msgs::msg::DetectedObjectsWithFeature` | clustered pointcloud                                                               |
 | `input/camera_infoID` | `sensor_msgs::msg::CameraInfo`                              | camera information to project 3d points onto image planes, `ID` is between 0 and 7 |
-| `input/roisID`        | `autoware_perception_msgs::msg::DetectedObjectsWithFeature` | ROIs from each image, `ID` is between 0 and 7                                      |
+| `input/roisID`        | `tier4_perception_msgs::msg::DetectedObjectsWithFeature` | ROIs from each image, `ID` is between 0 and 7                                      |
 | `input/image_rawID`   | `sensor_msgs::msg::Image`                                   | images for visualization, `ID` is between 0 and 7                                  |
 
 ### Output

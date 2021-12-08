@@ -30,7 +30,7 @@ using autoware_joy_controller::GearShiftType;
 using autoware_joy_controller::TurnSignalType;
 using GearShift = autoware_external_api_msgs::msg::GearShift;
 using TurnSignal = autoware_external_api_msgs::msg::TurnSignal;
-using GateMode = autoware_control_msgs::msg::GateMode;
+using GateMode = tier4_control_msgs::msg::GateMode;
 
 GearShiftType getUpperShift(const GearShiftType & shift)
 {
@@ -124,7 +124,7 @@ const char * getTurnSignalName(const TurnSignalType & turn_signal)
 
 const char * getGateModeName(const GateModeType & gate_mode)
 {
-  using autoware_control_msgs::msg::GateMode;
+  using tier4_control_msgs::msg::GateMode;
 
   if (gate_mode == GateMode::AUTO) {
     return "AUTO";
@@ -350,7 +350,7 @@ void AutowareJoyControllerNode::publishTurnSignal()
 
 void AutowareJoyControllerNode::publishGateMode()
 {
-  autoware_control_msgs::msg::GateMode gate_mode;
+  tier4_control_msgs::msg::GateMode gate_mode;
 
   if (prev_gate_mode_ == GateMode::AUTO) {
     gate_mode.data = GateMode::EXTERNAL;
@@ -494,7 +494,7 @@ AutowareJoyControllerNode::AutowareJoyControllerNode(const rclcpp::NodeOptions &
   pub_turn_signal_ = this->create_publisher<autoware_external_api_msgs::msg::TurnSignalStamped>(
     "output/turn_signal", 1);
   pub_gate_mode_ =
-    this->create_publisher<autoware_control_msgs::msg::GateMode>("output/gate_mode", 1);
+    this->create_publisher<tier4_control_msgs::msg::GateMode>("output/gate_mode", 1);
   pub_heartbeat_ =
     this->create_publisher<autoware_external_api_msgs::msg::Heartbeat>("output/heartbeat", 1);
   pub_vehicle_engage_ =

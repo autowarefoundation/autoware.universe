@@ -20,7 +20,7 @@ Note that the distance means the arc-length along the path, not the Euclidean di
 
 | Name         | Type                                       | Description                                                                                           |
 | ------------ | ------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
-| `~/distance` | `autoware_debug_msgs::msg::Float64Stamped` | Publish a distance from the closest path point from the self-position to the end point of the path[m] |
+| `~/distance` | `tier4_debug_msgs::msg::Float64Stamped` | Publish a distance from the closest path point from the self-position to the end point of the path[m] |
 
 ## Parameters
 

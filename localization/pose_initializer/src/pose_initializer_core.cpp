@@ -57,21 +57,21 @@ PoseInitializer::PoseInitializer()
     "gnss_pose_cov", 1,
     std::bind(&PoseInitializer::callbackGNSSPoseCov, this, std::placeholders::_1));
   pose_initialization_request_sub_ =
-    this->create_subscription<autoware_localization_msgs::msg::PoseInitializationRequest>(
+    this->create_subscription<tier4_localization_msgs::msg::PoseInitializationRequest>(
       "pose_initialization_request", rclcpp::QoS{1}.transient_local(),
       std::bind(&PoseInitializer::callbackPoseInitializationRequest, this, std::placeholders::_1));
 
   initial_pose_pub_ =
     this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("initialpose3d", 10);
 
-  ndt_client_ = this->create_client<autoware_localization_msgs::srv::PoseWithCovarianceStamped>(
+  ndt_client_ = this->create_client<tier4_localization_msgs::srv::PoseWithCovarianceStamped>(
     "ndt_align_srv");
   while (!ndt_client_->wait_for_service(std::chrono::seconds(1)) && rclcpp::ok()) {
     RCLCPP_INFO(get_logger(), "Waiting for service...");
   }
 
   initialize_pose_service_ =
-    this->create_service<autoware_localization_msgs::srv::PoseWithCovarianceStamped>(
+    this->create_service<tier4_localization_msgs::srv::PoseWithCovarianceStamped>(
       "service/initialize_pose", std::bind(
                                    &PoseInitializer::serviceInitializePose, this,
                                    std::placeholders::_1, std::placeholders::_2));
@@ -94,8 +94,8 @@ void PoseInitializer::callbackMapPoints(
 }
 
 void PoseInitializer::serviceInitializePose(
-  const std::shared_ptr<autoware_localization_msgs::srv::PoseWithCovarianceStamped::Request> req,
-  std::shared_ptr<autoware_localization_msgs::srv::PoseWithCovarianceStamped::Response> res)
+  const std::shared_ptr<tier4_localization_msgs::srv::PoseWithCovarianceStamped::Request> req,
+  std::shared_ptr<tier4_localization_msgs::srv::PoseWithCovarianceStamped::Response> res)
 {
   enable_gnss_callback_ = false;  // get only first topic
 
@@ -166,7 +166,7 @@ void PoseInitializer::serviceInitializePoseAuto(
 }
 
 void PoseInitializer::callbackPoseInitializationRequest(
-  const autoware_localization_msgs::msg::PoseInitializationRequest::ConstSharedPtr request_msg_ptr)
+  const tier4_localization_msgs::msg::PoseInitializationRequest::ConstSharedPtr request_msg_ptr)
 {
   RCLCPP_INFO(this->get_logger(), "Called Pose Initialize");
   enable_gnss_callback_ = request_msg_ptr->data;
@@ -211,7 +211,7 @@ bool PoseInitializer::callAlignServiceAndPublishResult(
     return false;
   }
   auto req =
-    std::make_shared<autoware_localization_msgs::srv::PoseWithCovarianceStamped::Request>();
+    std::make_shared<tier4_localization_msgs::srv::PoseWithCovarianceStamped::Request>();
   req->pose_with_covariance = *input_pose_msg;
   req->seq = ++request_id_;
 
@@ -219,7 +219,7 @@ bool PoseInitializer::callAlignServiceAndPublishResult(
 
   ndt_client_->async_send_request(
     req,
-    [this](rclcpp::Client<autoware_localization_msgs::srv::PoseWithCovarianceStamped>::SharedFuture
+    [this](rclcpp::Client<tier4_localization_msgs::srv::PoseWithCovarianceStamped>::SharedFuture
              result) {
       if (result.get()->success) {
         RCLCPP_INFO(get_logger(), "called NDT Align Server");

@@ -12,7 +12,7 @@ The `detected_object_feature_remover` is a package to convert topic-type from `D
 
 | Name      | Type                                                            | Description                         |
 | --------- | --------------------------------------------------------------- | ----------------------------------- |
-| `~/input` | `autoware_perception_msgs::msg::DetectedObjectWithFeatureArray` | detected objects with feature field |
+| `~/input` | `tier4_perception_msgs::msg::DetectedObjectWithFeatureArray` | detected objects with feature field |
 
 ### Output
 

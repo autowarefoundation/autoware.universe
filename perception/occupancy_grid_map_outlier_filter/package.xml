@@ -18,7 +18,7 @@
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
   <depend>autoware_auto_vehicle_msgs</depend>
-  <depend>autoware_debug_msgs</depend>
+  <depend>tier4_debug_msgs</depend>
   <depend>autoware_utils</depend>
   <depend>diagnostic_updater</depend>
   <depend>image_transport</depend>

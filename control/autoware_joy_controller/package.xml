@@ -11,7 +11,7 @@
   <depend>autoware_api_utils</depend>
   <depend>autoware_auto_control_msgs</depend>
   <depend>autoware_auto_vehicle_msgs</depend>
-  <depend>autoware_control_msgs</depend>
+  <depend>tier4_control_msgs</depend>
   <depend>autoware_external_api_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>joy</depend>

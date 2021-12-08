@@ -14,7 +14,7 @@
 
 | Name                     | Type                                                | Description                                             |
 | ------------------------ | --------------------------------------------------- | ------------------------------------------------------- |
-| `~/output/actuation_cmd` | autoware_vehicle_msgs::msg::ActuationCommandStamped | actuation command for vehicle to apply mechanical input |
+| `~/output/actuation_cmd` | tier4_vehicle_msgs::msg::ActuationCommandStamped | actuation command for vehicle to apply mechanical input |
 
 ## Parameters
 

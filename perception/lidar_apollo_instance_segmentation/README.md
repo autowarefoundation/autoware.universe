@@ -23,7 +23,7 @@ See the [original design](https://github.com/ApolloAuto/apollo/blob/master/docs/
 
 | Name                        | Type                                                  | Description                                       |
 | --------------------------- | ----------------------------------------------------- | ------------------------------------------------- |
-| `output/labeled_clusters`   | `autoware_perception_msgs/DetectedObjectsWithFeature` | Detected objects with labeled pointcloud cluster. |
+| `output/labeled_clusters`   | `tier4_perception_msgs/DetectedObjectsWithFeature` | Detected objects with labeled pointcloud cluster. |
 | `debug/instance_pointcloud` | `sensor_msgs/PointCloud2`                             | Segmented pointcloud for visualization.           |
 
 ## Parameters

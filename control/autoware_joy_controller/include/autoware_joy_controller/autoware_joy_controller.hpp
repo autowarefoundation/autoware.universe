@@ -21,7 +21,7 @@
 
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
 #include <autoware_auto_vehicle_msgs/msg/engage.hpp>
-#include <autoware_control_msgs/msg/gate_mode.hpp>
+#include <tier4_control_msgs/msg/gate_mode.hpp>
 #include <autoware_external_api_msgs/msg/control_command_stamped.hpp>
 #include <autoware_external_api_msgs/msg/gear_shift_stamped.hpp>
 #include <autoware_external_api_msgs/msg/heartbeat.hpp>
@@ -40,7 +40,7 @@ namespace autoware_joy_controller
 {
 using GearShiftType = autoware_external_api_msgs::msg::GearShift::_data_type;
 using TurnSignalType = autoware_external_api_msgs::msg::TurnSignal::_data_type;
-using GateModeType = autoware_control_msgs::msg::GateMode::_data_type;
+using GateModeType = tier4_control_msgs::msg::GateMode::_data_type;
 
 class AutowareJoyControllerNode : public rclcpp::Node
 {
@@ -87,7 +87,7 @@ private:
   rclcpp::Publisher<autoware_external_api_msgs::msg::GearShiftStamped>::SharedPtr pub_shift_;
   rclcpp::Publisher<autoware_external_api_msgs::msg::TurnSignalStamped>::SharedPtr pub_turn_signal_;
   rclcpp::Publisher<autoware_external_api_msgs::msg::Heartbeat>::SharedPtr pub_heartbeat_;
-  rclcpp::Publisher<autoware_control_msgs::msg::GateMode>::SharedPtr pub_gate_mode_;
+  rclcpp::Publisher<tier4_control_msgs::msg::GateMode>::SharedPtr pub_gate_mode_;
   rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::Engage>::SharedPtr pub_vehicle_engage_;
 
   void publishControlCommand();
@@ -109,7 +109,7 @@ private:
   autoware_external_api_msgs::msg::ControlCommand prev_external_control_command_;
   GearShiftType prev_shift_ = autoware_external_api_msgs::msg::GearShift::NONE;
   TurnSignalType prev_turn_signal_ = autoware_external_api_msgs::msg::TurnSignal::NONE;
-  GateModeType prev_gate_mode_ = autoware_control_msgs::msg::GateMode::AUTO;
+  GateModeType prev_gate_mode_ = tier4_control_msgs::msg::GateMode::AUTO;
 
   // Timer
   rclcpp::TimerBase::SharedPtr timer_;

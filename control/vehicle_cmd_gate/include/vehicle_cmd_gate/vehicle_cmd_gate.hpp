@@ -29,13 +29,13 @@
 #include <autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp>
 #include <autoware_auto_vehicle_msgs/msg/steering_report.hpp>
 #include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
-#include <autoware_control_msgs/msg/gate_mode.hpp>
-#include <autoware_debug_msgs/msg/bool_stamped.hpp>
+#include <tier4_control_msgs/msg/gate_mode.hpp>
+#include <tier4_debug_msgs/msg/bool_stamped.hpp>
 #include <autoware_external_api_msgs/msg/emergency.hpp>
 #include <autoware_external_api_msgs/msg/heartbeat.hpp>
 #include <autoware_external_api_msgs/srv/engage.hpp>
 #include <autoware_external_api_msgs/srv/set_emergency.hpp>
-#include <autoware_vehicle_msgs/msg/vehicle_emergency_stamped.hpp>
+#include <tier4_vehicle_msgs/msg/vehicle_emergency_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 
 #include <memory>
@@ -55,7 +55,7 @@ struct Commands
 
 class VehicleCmdGate : public rclcpp::Node
 {
-  using VehicleEmergencyStamped = autoware_vehicle_msgs::msg::VehicleEmergencyStamped;
+  using VehicleEmergencyStamped = tier4_vehicle_msgs::msg::VehicleEmergencyStamped;
 
 public:
   explicit VehicleCmdGate(const rclcpp::NodeOptions & node_options);
@@ -70,7 +70,7 @@ private:
     turn_indicator_cmd_pub_;
   rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::HazardLightsCommand>::SharedPtr
     hazard_light_cmd_pub_;
-  rclcpp::Publisher<autoware_control_msgs::msg::GateMode>::SharedPtr gate_mode_pub_;
+  rclcpp::Publisher<tier4_control_msgs::msg::GateMode>::SharedPtr gate_mode_pub_;
   rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::Engage>::SharedPtr engage_pub_;
 
   // Subscription
@@ -78,10 +78,10 @@ private:
     emergency_state_sub_;
   rclcpp::Subscription<autoware_external_api_msgs::msg::Heartbeat>::SharedPtr
     external_emergency_stop_heartbeat_sub_;
-  rclcpp::Subscription<autoware_control_msgs::msg::GateMode>::SharedPtr gate_mode_sub_;
+  rclcpp::Subscription<tier4_control_msgs::msg::GateMode>::SharedPtr gate_mode_sub_;
   rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::SteeringReport>::SharedPtr steer_sub_;
 
-  void onGateMode(autoware_control_msgs::msg::GateMode::ConstSharedPtr msg);
+  void onGateMode(tier4_control_msgs::msg::GateMode::ConstSharedPtr msg);
   void onEmergencyState(autoware_auto_system_msgs::msg::EmergencyState::ConstSharedPtr msg);
   void onExternalEmergencyStopHeartbeat(
     autoware_external_api_msgs::msg::Heartbeat::ConstSharedPtr msg);
@@ -91,7 +91,7 @@ private:
   bool is_system_emergency_ = false;
   bool is_external_emergency_stop_ = false;
   double current_steer_ = 0;
-  autoware_control_msgs::msg::GateMode current_gate_mode_;
+  tier4_control_msgs::msg::GateMode current_gate_mode_;
 
   // Heartbeat
   std::shared_ptr<rclcpp::Time> emergency_state_heartbeat_received_time_;
@@ -233,7 +233,7 @@ private:
 
     rclcpp::Node * node_;
     rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr request_start_cli_;
-    rclcpp::Publisher<autoware_debug_msgs::msg::BoolStamped>::SharedPtr request_start_pub_;
+    rclcpp::Publisher<tier4_debug_msgs::msg::BoolStamped>::SharedPtr request_start_pub_;
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr current_twist_sub_;
     void onCurrentTwist(nav_msgs::msg::Odometry::ConstSharedPtr msg);
   };

@@ -9,7 +9,7 @@
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
-  <depend>autoware_debug_msgs</depend>
+  <depend>tier4_debug_msgs</depend>
   <depend>geo_pos_conv</depend>
   <depend>geographiclib</depend>
   <depend>geometry_msgs</depend>

@@ -18,10 +18,10 @@ namespace autoware_api
 {
 namespace pacmod_util
 {
-autoware_api_msgs::msg::DoorStatus getDoorStatusMsg(
+tier4_api_msgs::msg::DoorStatus getDoorStatusMsg(
   const pacmod3_msgs::msg::SystemRptInt::ConstSharedPtr & msg_ptr)
 {
-  using autoware_api_msgs::msg::DoorStatus;
+  using tier4_api_msgs::msg::DoorStatus;
   using pacmod3_msgs::msg::SystemRptInt;
   DoorStatus door_status;
 
@@ -60,7 +60,7 @@ pacmod3_msgs::msg::SystemCmdInt createClearOverrideDoorCommand(
 
 pacmod3_msgs::msg::SystemCmdInt createDoorCommand(
   const rclcpp::Clock::SharedPtr & clock,
-  const autoware_api_msgs::msg::DoorControlCommand::ConstSharedPtr & msg_ptr)
+  const tier4_api_msgs::msg::DoorControlCommand::ConstSharedPtr & msg_ptr)
 {
   using pacmod3_msgs::msg::SystemCmdInt;
 

@@ -15,13 +15,13 @@ ros2 run rqt_reconfigure rqt_reconfigure
 
 | Name                    | Type                                                 | Description            |
 | ----------------------- | ---------------------------------------------------- | ---------------------- |
-| `~/input/command_array` | `autoware_v2x_msgs::msg::InfrastructureCommandArray` | Infrastructure command |
+| `~/input/command_array` | `tier4_v2x_msgs::msg::InfrastructureCommandArray` | Infrastructure command |
 
 ### Outputs
 
 | Name                   | Type                                                    | Description                 |
 | ---------------------- | ------------------------------------------------------- | --------------------------- |
-| `~/output/state_array` | `autoware_v2x_msgs::msg::VirtualTrafficLightStateArray` | Virtual traffic light array |
+| `~/output/state_array` | `tier4_v2x_msgs::msg::VirtualTrafficLightStateArray` | Virtual traffic light array |
 
 ## Parameters
 

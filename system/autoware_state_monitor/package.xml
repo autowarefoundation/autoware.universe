@@ -25,7 +25,7 @@
   <depend>tf2_geometry_msgs</depend>
   <depend>tf2_ros</depend>
 
-  <exec_depend>autoware_perception_msgs</exec_depend>
+  <exec_depend>tier4_perception_msgs</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>

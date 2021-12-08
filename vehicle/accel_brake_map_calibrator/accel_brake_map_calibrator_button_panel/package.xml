@@ -10,7 +10,7 @@
   <license>Apache 2</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
-  <depend>autoware_vehicle_msgs</depend>
+  <depend>tier4_vehicle_msgs</depend>
   <depend>libqt5-core</depend>
   <depend>libqt5-widgets</depend>
   <depend>qtbase5-dev</depend>

@@ -10,7 +10,7 @@
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
   <depend>autoware_auto_planning_msgs</depend>
-  <depend>autoware_debug_msgs</depend>
+  <depend>tier4_debug_msgs</depend>
   <depend>builtin_interfaces</depend>
   <depend>diagnostic_msgs</depend>
   <depend>geometry_msgs</depend>

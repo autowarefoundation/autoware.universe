@@ -35,11 +35,11 @@
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp>
 #include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
-#include <autoware_planning_msgs/msg/approval.hpp>
-#include <autoware_planning_msgs/msg/path_change_module.hpp>
-#include <autoware_planning_msgs/msg/path_change_module_array.hpp>
-#include <autoware_planning_msgs/msg/path_change_module_id.hpp>
-#include <autoware_planning_msgs/msg/stop_reason_array.hpp>
+#include <tier4_planning_msgs/msg/approval.hpp>
+#include <tier4_planning_msgs/msg/path_change_module.hpp>
+#include <tier4_planning_msgs/msg/path_change_module_array.hpp>
+#include <tier4_planning_msgs/msg/path_change_module_id.hpp>
+#include <tier4_planning_msgs/msg/stop_reason_array.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 
@@ -53,7 +53,7 @@
 
 namespace behavior_path_planner
 {
-using ApprovalMsg = autoware_planning_msgs::msg::Approval;
+using ApprovalMsg = tier4_planning_msgs::msg::Approval;
 using autoware_auto_mapping_msgs::msg::HADMapBin;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_planning_msgs::msg::HADMapRoute;
@@ -61,8 +61,8 @@ using autoware_auto_planning_msgs::msg::Path;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
 using autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand;
-using autoware_planning_msgs::msg::PathChangeModule;
-using autoware_planning_msgs::msg::PathChangeModuleArray;
+using tier4_planning_msgs::msg::PathChangeModule;
+using tier4_planning_msgs::msg::PathChangeModuleArray;
 using geometry_msgs::msg::TwistStamped;
 using nav_msgs::msg::OccupancyGrid;
 using nav_msgs::msg::Odometry;

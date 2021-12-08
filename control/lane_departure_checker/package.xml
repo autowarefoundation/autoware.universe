@@ -10,7 +10,7 @@
 
   <depend>autoware_auto_mapping_msgs</depend>
   <depend>autoware_auto_planning_msgs</depend>
-  <depend>autoware_debug_msgs</depend>
+  <depend>tier4_debug_msgs</depend>
   <depend>autoware_utils</depend>
   <depend>boost</depend>
   <depend>diagnostic_updater</depend>

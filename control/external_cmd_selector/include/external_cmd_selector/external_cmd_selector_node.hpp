@@ -22,8 +22,8 @@
 #include <autoware_auto_vehicle_msgs/msg/gear_command.hpp>
 #include <autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp>
 #include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
-#include <autoware_control_msgs/msg/external_command_selector_mode.hpp>
-#include <autoware_control_msgs/srv/external_command_select.hpp>
+#include <tier4_control_msgs/msg/external_command_selector_mode.hpp>
+#include <tier4_control_msgs/srv/external_command_select.hpp>
 #include <autoware_external_api_msgs/msg/control_command_stamped.hpp>
 #include <autoware_external_api_msgs/msg/gear_shift_stamped.hpp>
 #include <autoware_external_api_msgs/msg/heartbeat.hpp>
@@ -37,8 +37,8 @@ public:
   explicit ExternalCmdSelector(const rclcpp::NodeOptions & node_options);
 
 private:
-  using CommandSourceSelect = autoware_control_msgs::srv::ExternalCommandSelect;
-  using CommandSourceMode = autoware_control_msgs::msg::ExternalCommandSelectorMode;
+  using CommandSourceSelect = tier4_control_msgs::srv::ExternalCommandSelect;
+  using CommandSourceMode = tier4_control_msgs::msg::ExternalCommandSelectorMode;
   using InternalGearShift = autoware_auto_vehicle_msgs::msg::GearCommand;
   using InternalTurnSignal = autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand;
   using InternalHazardSignal = autoware_auto_vehicle_msgs::msg::HazardLightsCommand;

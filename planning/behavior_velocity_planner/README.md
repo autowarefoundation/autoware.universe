@@ -35,7 +35,7 @@ So for example, in order to stop at a stop line with the vehicles' front on the 
 | Name                   | Type                                         | Description                            |
 | ---------------------- | -------------------------------------------- | -------------------------------------- |
 | `~output/path`         | autoware_auto_planning_msgs::msg::Path       | path to be followed                    |
-| `~output/stop_reasons` | autoware_planning_msgs::msg::StopReasonArray | reasons that cause the vehicle to stop |
+| `~output/stop_reasons` | tier4_planning_msgs::msg::StopReasonArray | reasons that cause the vehicle to stop |
 
 ## Node parameters
 

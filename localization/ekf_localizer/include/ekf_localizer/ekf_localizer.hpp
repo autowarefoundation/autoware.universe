@@ -21,8 +21,8 @@
 #include <kalman_filter/time_delay_kalman_filter.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_debug_msgs/msg/float64_multi_array_stamped.hpp>
-#include <autoware_debug_msgs/msg/float64_stamped.hpp>
+#include <tier4_debug_msgs/msg/float64_multi_array_stamped.hpp>
+#include <tier4_debug_msgs/msg/float64_stamped.hpp>
 #include <geometry_msgs/msg/pose_array.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
@@ -59,11 +59,11 @@ private:
   //!< @brief ekf estimated twist with covariance publisher
   rclcpp::Publisher<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr pub_twist_cov_;
   //!< @brief debug info publisher
-  rclcpp::Publisher<autoware_debug_msgs::msg::Float64MultiArrayStamped>::SharedPtr pub_debug_;
+  rclcpp::Publisher<tier4_debug_msgs::msg::Float64MultiArrayStamped>::SharedPtr pub_debug_;
   //!< @brief debug measurement pose publisher
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_measured_pose_;
   //!< @brief ekf estimated yaw bias publisher
-  rclcpp::Publisher<autoware_debug_msgs::msg::Float64Stamped>::SharedPtr pub_yaw_bias_;
+  rclcpp::Publisher<tier4_debug_msgs::msg::Float64Stamped>::SharedPtr pub_yaw_bias_;
   //!< @brief ekf estimated yaw bias publisher
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_pose_no_yawbias_;
   //!< @brief ekf estimated yaw bias publisher

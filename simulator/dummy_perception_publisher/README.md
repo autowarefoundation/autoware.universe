@@ -19,7 +19,7 @@ This node publishes the result of the dummy detection with the type of perceptio
 
 | Name                    | Type                                                        | Description            |
 | ----------------------- | ----------------------------------------------------------- | ---------------------- |
-| `output/dynamic_object` | `autoware_perception_msgs::msg::DetectedObjectsWithFeature` | Publishes objects      |
+| `output/dynamic_object` | `tier4_perception_msgs::msg::DetectedObjectsWithFeature` | Publishes objects      |
 | `output/points_raw`     | `sensor_msgs::msg::PointCloud2`                             | point cloud of objects |
 
 ## Parameters
