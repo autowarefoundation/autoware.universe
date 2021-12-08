@@ -17,7 +17,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/ActuationCommandStamped.msg"
   "msg/ActuationStatus.msg"
   "msg/ActuationStatusStamped.msg"
-  "msg/Engage.msg"
   "msg/Shift.msg"
   "msg/ShiftStamped.msg"
   "msg/ControlMode.msg"
