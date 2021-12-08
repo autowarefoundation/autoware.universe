@@ -65,6 +65,7 @@ TEST(state_machine, set_state_go_with_margin_time)
   while (state_machine.getState() == State::STOP) {
     EXPECT_EQ(enumToInt(state_machine.getState()), enumToInt(State::STOP));
     rclcpp::Clock current_time = rclcpp::Clock(RCL_ROS_TIME);
+    std::cout<< "stop duration : " << state_machine.getDuration()<<std::endl;
     EXPECT_TRUE(state_machine.getDuration() < margin_time);
     state_machine.setStateWithMarginTime(State::GO, logger, current_time);
   }
