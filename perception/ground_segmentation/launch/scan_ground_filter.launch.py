@@ -21,6 +21,7 @@ from launch_ros.actions import ComposableNodeContainer
 from launch_ros.actions import LoadComposableNodes
 from launch_ros.descriptions import ComposableNode
 
+import os
 
 def generate_launch_description():
     def add_launch_arg(name: str, default_value=None):
