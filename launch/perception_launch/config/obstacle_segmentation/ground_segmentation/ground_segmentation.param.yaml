@@ -1,8 +1,9 @@
 /**:
   ros__parameters:
     additional_lidars: []
-    use_ransac_pipeline: False
-    use_compare_map_pipeline: False
+    ransac_input_topics: []
+    use_single_frame_filter: False
+    use_time_series_filter: True
 
     common_crop_box_filter:
       parameters:
