@@ -103,7 +103,8 @@ MapBasedDetector::MapBasedDetector(const rclcpp::NodeOptions & node_options)
     "~/input/camera_info", rclcpp::SensorDataQoS(),
     std::bind(&MapBasedDetector::cameraInfoCallback, this, _1));
   route_sub_ = create_subscription<autoware_auto_planning_msgs::msg::HADMapRoute>(
-    "~/input/route", 1, std::bind(&MapBasedDetector::routeCallback, this, _1));
+    "~/input/route", rclcpp::QoS{1}.transient_local(),
+    std::bind(&MapBasedDetector::routeCallback, this, _1));
 
   // publishers
   roi_pub_ = this->create_publisher<autoware_auto_perception_msgs::msg::TrafficLightRoiArray>(
@@ -173,7 +174,8 @@ void MapBasedDetector::cameraInfoCallback(
   for (const auto & traffic_light : visible_traffic_lights) {
     autoware_auto_perception_msgs::msg::TrafficLightRoi tl_roi;
     if (!getTrafficLightRoi(
-          camera_pose_stamped.pose, pinhole_camera_model, traffic_light, config_, tl_roi)) {
+        camera_pose_stamped.pose, pinhole_camera_model, traffic_light, config_, tl_roi))
+    {
       continue;
     }
     output_msg.rois.push_back(tl_roi);
@@ -275,7 +277,8 @@ void MapBasedDetector::mapCallback(
     lanelet::utils::query::autowareTrafficLights(all_lanelets);
   all_traffic_lights_ptr_ = std::make_shared<MapBasedDetector::TrafficLightSet>();
   for (auto tl_itr = all_lanelet_traffic_lights.begin(); tl_itr != all_lanelet_traffic_lights.end();
-       ++tl_itr) {
+    ++tl_itr)
+  {
     lanelet::AutowareTrafficLightConstPtr tl = *tl_itr;
 
     auto lights = tl->trafficLights();
@@ -310,7 +313,8 @@ void MapBasedDetector::routeCallback(
     lanelet::utils::query::autowareTrafficLights(route_lanelets);
   route_traffic_lights_ptr_ = std::make_shared<MapBasedDetector::TrafficLightSet>();
   for (auto tl_itr = route_lanelet_traffic_lights.begin();
-       tl_itr != route_lanelet_traffic_lights.end(); ++tl_itr) {
+    tl_itr != route_lanelet_traffic_lights.end(); ++tl_itr)
+  {
     lanelet::AutowareTrafficLightConstPtr tl = *tl_itr;
 
     auto lights = tl->trafficLights();
@@ -355,8 +359,8 @@ void MapBasedDetector::getVisibleTrafficLights(
     // get direction of z axis
     tf2::Vector3 camera_z_dir(0, 0, 1);
     tf2::Matrix3x3 camera_rotation_matrix(tf2::Quaternion(
-      camera_pose.orientation.x, camera_pose.orientation.y, camera_pose.orientation.z,
-      camera_pose.orientation.w));
+        camera_pose.orientation.x, camera_pose.orientation.y, camera_pose.orientation.z,
+        camera_pose.orientation.w));
     camera_z_dir = camera_rotation_matrix * camera_z_dir;
     double camera_yaw = std::atan2(camera_z_dir.y(), camera_z_dir.x());
     camera_yaw = autoware_utils::normalizeRadian(camera_yaw);
@@ -392,7 +396,7 @@ bool MapBasedDetector::isInDistanceRange(
   const double max_distance_range) const
 {
   const double sq_dist = (tl_point.x - camera_point.x) * (tl_point.x - camera_point.x) +
-                         (tl_point.y - camera_point.y) * (tl_point.y - camera_point.y);
+    (tl_point.y - camera_point.y) * (tl_point.y - camera_point.y);
   return sq_dist < (max_distance_range * max_distance_range);
 }
 

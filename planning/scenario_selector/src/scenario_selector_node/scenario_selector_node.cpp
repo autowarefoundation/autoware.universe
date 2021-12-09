@@ -31,7 +31,7 @@
 
 namespace
 {
-template <class T>
+template<class T>
 void onData(const T & data, T * buffer)
 {
   *buffer = data;
@@ -335,8 +335,8 @@ ScenarioSelectorNode::ScenarioSelectorNode(const rclcpp::NodeOptions & node_opti
   // Input
   sub_lane_driving_trajectory_ =
     this->create_subscription<autoware_auto_planning_msgs::msg::Trajectory>(
-      "input/lane_driving/trajectory", rclcpp::QoS{1},
-      std::bind(&ScenarioSelectorNode::onLaneDrivingTrajectory, this, std::placeholders::_1));
+    "input/lane_driving/trajectory", rclcpp::QoS{1},
+    std::bind(&ScenarioSelectorNode::onLaneDrivingTrajectory, this, std::placeholders::_1));
 
   sub_parking_trajectory_ = this->create_subscription<autoware_auto_planning_msgs::msg::Trajectory>(
     "input/parking/trajectory", rclcpp::QoS{1},
@@ -346,7 +346,7 @@ ScenarioSelectorNode::ScenarioSelectorNode(const rclcpp::NodeOptions & node_opti
     "input/lanelet_map", rclcpp::QoS{1}.transient_local(),
     std::bind(&ScenarioSelectorNode::onMap, this, std::placeholders::_1));
   sub_route_ = this->create_subscription<autoware_auto_planning_msgs::msg::HADMapRoute>(
-    "input/route", rclcpp::QoS{1},
+    "input/route", rclcpp::QoS{1}.transient_local(),
     std::bind(&ScenarioSelectorNode::onRoute, this, std::placeholders::_1));
   sub_odom_ = this->create_subscription<nav_msgs::msg::Odometry>(
     "input/odometry", rclcpp::QoS{100},
