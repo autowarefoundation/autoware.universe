@@ -74,7 +74,8 @@ public:
 
   inline const Eigen::Matrix<double, 6, 6> getHessian() const { return hessian_; }
 
-  inline const std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> getFinalTransformationArray() const
+  inline const std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>>
+  getFinalTransformationArray() const
   {
     return transformation_array_;
   }
