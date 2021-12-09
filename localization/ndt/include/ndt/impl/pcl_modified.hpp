@@ -139,7 +139,7 @@ NormalDistributionsTransformPCLModified<PointSource, PointTarget>::getFinalTrans
 }
 
 template <class PointSource, class PointTarget>
-std::vector<Eigen::Matrix4f> NormalDistributionsTransformPCLModified<
+std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> NormalDistributionsTransformPCLModified<
   PointSource, PointTarget>::getFinalTransformationArray() const
 {
   return ndt_ptr_->getFinalTransformationArray();
