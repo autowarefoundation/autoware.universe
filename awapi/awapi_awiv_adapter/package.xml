@@ -13,7 +13,7 @@
   <depend>autoware_auto_planning_msgs</depend>
   <depend>autoware_auto_system_msgs</depend>
   <depend>autoware_auto_vehicle_msgs</depend>
-  <depend>autoware_external_api_msgs</depend>
+  <depend>tier4_external_api_msgs</depend>
   <depend>autoware_iv_auto_msgs_converter</depend>
   <depend>diagnostic_msgs</depend>
   <depend>geometry_msgs</depend>

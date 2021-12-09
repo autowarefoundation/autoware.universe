@@ -18,7 +18,7 @@
 #include <autoware_api_utils/autoware_api_utils.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_external_api_msgs/srv/initialize_pose_auto.hpp>
+#include <tier4_external_api_msgs/srv/initialize_pose_auto.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <tier4_localization_msgs/msg/pose_initialization_request.hpp>
@@ -44,8 +44,8 @@ private:
     const std::shared_ptr<tier4_localization_msgs::srv::PoseWithCovarianceStamped::Request> req,
     std::shared_ptr<tier4_localization_msgs::srv::PoseWithCovarianceStamped::Response> res);
   void serviceInitializePoseAuto(
-    const std::shared_ptr<autoware_external_api_msgs::srv::InitializePoseAuto::Request> req,
-    std::shared_ptr<autoware_external_api_msgs::srv::InitializePoseAuto::Response> res);
+    const std::shared_ptr<tier4_external_api_msgs::srv::InitializePoseAuto::Request> req,
+    std::shared_ptr<tier4_external_api_msgs::srv::InitializePoseAuto::Response> res);
   void callbackInitialPose(
     geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose_cov_msg_ptr);
   void callbackGNSSPoseCov(
@@ -74,7 +74,7 @@ private:
 
   rclcpp::Service<tier4_localization_msgs::srv::PoseWithCovarianceStamped>::SharedPtr
     initialize_pose_service_;
-  rclcpp::Service<autoware_external_api_msgs::srv::InitializePoseAuto>::SharedPtr
+  rclcpp::Service<tier4_external_api_msgs::srv::InitializePoseAuto>::SharedPtr
     initialize_pose_auto_service_;
 
   tf2::BufferCore tf2_buffer_;

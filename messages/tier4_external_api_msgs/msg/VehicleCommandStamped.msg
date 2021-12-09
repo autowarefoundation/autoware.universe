@@ -1,2 +1,2 @@
 builtin_interfaces/Time stamp
-autoware_external_api_msgs/VehicleCommand command
+tier4_external_api_msgs/VehicleCommand command

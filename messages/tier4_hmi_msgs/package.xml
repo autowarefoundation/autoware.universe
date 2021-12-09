@@ -16,7 +16,7 @@
   <exec_depend>builtin_interfaces</exec_depend>
   <exec_depend>rosidl_default_runtime</exec_depend>
 
-  <depend>autoware_external_api_msgs</depend>
+  <depend>tier4_external_api_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

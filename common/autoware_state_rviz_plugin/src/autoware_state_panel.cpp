@@ -94,10 +94,10 @@ void AutowareStatePanel::onInitialize()
   sub_gear_ = raw_node_->create_subscription<autoware_auto_vehicle_msgs::msg::GearReport>(
     "/vehicle/status/gear_status", 10, std::bind(&AutowareStatePanel::onShift, this, _1));
 
-  sub_engage_ = raw_node_->create_subscription<autoware_external_api_msgs::msg::EngageStatus>(
+  sub_engage_ = raw_node_->create_subscription<tier4_external_api_msgs::msg::EngageStatus>(
     "/api/external/get/engage", 10, std::bind(&AutowareStatePanel::onEngageStatus, this, _1));
 
-  client_engage_ = raw_node_->create_client<autoware_external_api_msgs::srv::Engage>(
+  client_engage_ = raw_node_->create_client<tier4_external_api_msgs::srv::Engage>(
     "/api/external/set/engage", rmw_qos_profile_services_default);
 }
 
@@ -168,14 +168,14 @@ void AutowareStatePanel::onShift(
 }
 
 void AutowareStatePanel::onEngageStatus(
-  const autoware_external_api_msgs::msg::EngageStatus::ConstSharedPtr msg)
+  const tier4_external_api_msgs::msg::EngageStatus::ConstSharedPtr msg)
 {
   engage_status_label_ptr_->setText(QString::fromStdString(Bool2String(msg->engage)));
 }
 
 void AutowareStatePanel::onClickAutowareEngage()
 {
-  auto req = std::make_shared<autoware_external_api_msgs::srv::Engage::Request>();
+  auto req = std::make_shared<tier4_external_api_msgs::srv::Engage::Request>();
   req->engage = true;
 
   RCLCPP_INFO(raw_node_->get_logger(), "client request");
@@ -186,7 +186,7 @@ void AutowareStatePanel::onClickAutowareEngage()
   }
 
   client_engage_->async_send_request(
-    req, [this](rclcpp::Client<autoware_external_api_msgs::srv::Engage>::SharedFuture result) {
+    req, [this](rclcpp::Client<tier4_external_api_msgs::srv::Engage>::SharedFuture result) {
       RCLCPP_INFO(
         raw_node_->get_logger(), "Status: %d, %s", result.get()->status.code,
         result.get()->status.message.c_str());

@@ -77,7 +77,7 @@ PoseInitializer::PoseInitializer()
                                    std::placeholders::_1, std::placeholders::_2));
 
   initialize_pose_auto_service_ =
-    this->create_service<autoware_external_api_msgs::srv::InitializePoseAuto>(
+    this->create_service<tier4_external_api_msgs::srv::InitializePoseAuto>(
       "service/initialize_pose_auto", std::bind(
                                         &PoseInitializer::serviceInitializePoseAuto, this,
                                         std::placeholders::_1, std::placeholders::_2));
@@ -157,8 +157,8 @@ void PoseInitializer::callbackGNSSPoseCov(
 }
 
 void PoseInitializer::serviceInitializePoseAuto(
-  const std::shared_ptr<autoware_external_api_msgs::srv::InitializePoseAuto::Request> req,
-  std::shared_ptr<autoware_external_api_msgs::srv::InitializePoseAuto::Response> res)
+  const std::shared_ptr<tier4_external_api_msgs::srv::InitializePoseAuto::Request> req,
+  std::shared_ptr<tier4_external_api_msgs::srv::InitializePoseAuto::Response> res)
 {
   RCLCPP_INFO(this->get_logger(), "Called Pose Initialize Service");
   enable_gnss_callback_ = true;

@@ -18,7 +18,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   srv/Announce.srv
   DEPENDENCIES
     builtin_interfaces
-    autoware_external_api_msgs
+    tier4_external_api_msgs
 )
 
 if(BUILD_TESTING)

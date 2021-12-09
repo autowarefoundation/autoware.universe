@@ -69,14 +69,14 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
     this->create_publisher<tier4_control_msgs::msg::GateMode>("output/gate_mode", durable_qos);
   engage_pub_ =
     this->create_publisher<autoware_auto_vehicle_msgs::msg::Engage>("output/engage", durable_qos);
-  pub_external_emergency_ = this->create_publisher<autoware_external_api_msgs::msg::Emergency>(
+  pub_external_emergency_ = this->create_publisher<tier4_external_api_msgs::msg::Emergency>(
     "output/external_emergency", durable_qos);
 
   // Subscriber
   emergency_state_sub_ = this->create_subscription<autoware_auto_system_msgs::msg::EmergencyState>(
     "input/emergency_state", 1, std::bind(&VehicleCmdGate::onEmergencyState, this, _1));
   external_emergency_stop_heartbeat_sub_ =
-    this->create_subscription<autoware_external_api_msgs::msg::Heartbeat>(
+    this->create_subscription<tier4_external_api_msgs::msg::Heartbeat>(
       "input/external_emergency_stop_heartbeat", 1,
       std::bind(&VehicleCmdGate::onExternalEmergencyStopHeartbeat, this, _1));
   gate_mode_sub_ = this->create_subscription<tier4_control_msgs::msg::GateMode>(
@@ -165,9 +165,9 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
   current_gate_mode_.data = tier4_control_msgs::msg::GateMode::AUTO;
 
   // Service
-  srv_engage_ = create_service<autoware_external_api_msgs::srv::Engage>(
+  srv_engage_ = create_service<tier4_external_api_msgs::srv::Engage>(
     "~/service/engage", std::bind(&VehicleCmdGate::onEngageService, this, _1, _2));
-  srv_external_emergency_ = create_service<autoware_external_api_msgs::srv::SetEmergency>(
+  srv_external_emergency_ = create_service<tier4_external_api_msgs::srv::SetEmergency>(
     "~/service/external_emergency",
     std::bind(&VehicleCmdGate::onExternalEmergencyStopService, this, _1, _2, _3));
   srv_external_emergency_stop_ = this->create_service<std_srvs::srv::Trigger>(
@@ -368,7 +368,7 @@ void VehicleCmdGate::onTimer()
   autoware_engage.engage = is_engaged_;
 
   // External emergency
-  autoware_external_api_msgs::msg::Emergency external_emergency;
+  tier4_external_api_msgs::msg::Emergency external_emergency;
   external_emergency.stamp = this->now();
   external_emergency.emergency = is_external_emergency_stop_;
 
@@ -479,7 +479,7 @@ void VehicleCmdGate::publishEmergencyStopControlCommands()
   autoware_engage.engage = is_engaged_;
 
   // External emergency
-  autoware_external_api_msgs::msg::Emergency external_emergency;
+  tier4_external_api_msgs::msg::Emergency external_emergency;
   external_emergency.stamp = stamp;
   external_emergency.emergency = is_external_emergency_stop_;
 
@@ -550,7 +550,7 @@ void VehicleCmdGate::onEmergencyState(
 }
 
 void VehicleCmdGate::onExternalEmergencyStopHeartbeat(
-  [[maybe_unused]] autoware_external_api_msgs::msg::Heartbeat::ConstSharedPtr msg)
+  [[maybe_unused]] tier4_external_api_msgs::msg::Heartbeat::ConstSharedPtr msg)
 {
   external_emergency_stop_heartbeat_received_time_ = std::make_shared<rclcpp::Time>(this->now());
 }
@@ -573,8 +573,8 @@ void VehicleCmdGate::onEngage(autoware_auto_vehicle_msgs::msg::Engage::ConstShar
 }
 
 void VehicleCmdGate::onEngageService(
-  const autoware_external_api_msgs::srv::Engage::Request::SharedPtr request,
-  const autoware_external_api_msgs::srv::Engage::Response::SharedPtr response)
+  const tier4_external_api_msgs::srv::Engage::Request::SharedPtr request,
+  const tier4_external_api_msgs::srv::Engage::Response::SharedPtr response)
 {
   is_engaged_ = request->engage;
   response->status = autoware_api_utils::response_success();
@@ -601,8 +601,8 @@ double VehicleCmdGate::getDt()
 
 void VehicleCmdGate::onExternalEmergencyStopService(
   const std::shared_ptr<rmw_request_id_t> request_header,
-  const std::shared_ptr<autoware_external_api_msgs::srv::SetEmergency::Request> request,
-  const std::shared_ptr<autoware_external_api_msgs::srv::SetEmergency::Response> response)
+  const std::shared_ptr<tier4_external_api_msgs::srv::SetEmergency::Request> request,
+  const std::shared_ptr<tier4_external_api_msgs::srv::SetEmergency::Response> response)
 {
   auto req = std::make_shared<std_srvs::srv::Trigger::Request>();
   auto res = std::make_shared<std_srvs::srv::Trigger::Response>();

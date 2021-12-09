@@ -27,8 +27,8 @@
 #include "autoware_auto_vehicle_msgs/msg/steering_report.hpp"
 #include "autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp"
 #include "autoware_auto_vehicle_msgs/msg/turn_indicators_report.hpp"
-#include "autoware_external_api_msgs/msg/gear_shift_stamped.hpp"
-#include "autoware_external_api_msgs/msg/turn_signal_stamped.hpp"
+#include "tier4_external_api_msgs/msg/gear_shift_stamped.hpp"
+#include "tier4_external_api_msgs/msg/turn_signal_stamped.hpp"
 #include "tier4_planning_msgs/msg/path.hpp"
 #include "tier4_planning_msgs/msg/trajectory.hpp"
 #include "tier4_system_msgs/msg/autoware_state.hpp"
@@ -185,21 +185,21 @@ inline auto convert(const autoware_auto_vehicle_msgs::msg::GearReport & gear)
   return iv_shift;
 }
 
-inline auto convert(const autoware_external_api_msgs::msg::GearShiftStamped & shift)
+inline auto convert(const tier4_external_api_msgs::msg::GearShiftStamped & shift)
 {
   autoware_auto_vehicle_msgs::msg::GearCommand auto_gear;
   auto_gear.stamp = shift.stamp;
   switch (shift.gear_shift.data) {
-    case autoware_external_api_msgs::msg::GearShift::PARKING:
+    case tier4_external_api_msgs::msg::GearShift::PARKING:
       auto_gear.command = autoware_auto_vehicle_msgs::msg::GearCommand::PARK;
       break;
-    case autoware_external_api_msgs::msg::GearShift::REVERSE:
+    case tier4_external_api_msgs::msg::GearShift::REVERSE:
       auto_gear.command = autoware_auto_vehicle_msgs::msg::GearCommand::REVERSE;
       break;
-    case autoware_external_api_msgs::msg::GearShift::DRIVE:
+    case tier4_external_api_msgs::msg::GearShift::DRIVE:
       auto_gear.command = autoware_auto_vehicle_msgs::msg::GearCommand::DRIVE;
       break;
-    case autoware_external_api_msgs::msg::GearShift::LOW:
+    case tier4_external_api_msgs::msg::GearShift::LOW:
       auto_gear.command = autoware_auto_vehicle_msgs::msg::GearCommand::LOW;
       break;
     default:
@@ -237,7 +237,7 @@ inline auto convert(
   return iv_turn_signal;
 }
 
-inline auto convert(const autoware_external_api_msgs::msg::TurnSignalStamped & in_signal)
+inline auto convert(const tier4_external_api_msgs::msg::TurnSignalStamped & in_signal)
 {
   autoware_auto_vehicle_msgs::msg::HazardLightsCommand hazard;
   hazard.stamp = in_signal.stamp;

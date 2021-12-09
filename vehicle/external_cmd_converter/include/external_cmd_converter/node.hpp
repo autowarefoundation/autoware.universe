@@ -22,8 +22,8 @@
 
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
 #include <autoware_auto_vehicle_msgs/msg/gear_command.hpp>
-#include <autoware_external_api_msgs/msg/control_command_stamped.hpp>
-#include <autoware_external_api_msgs/msg/heartbeat.hpp>
+#include <tier4_external_api_msgs/msg/control_command_stamped.hpp>
+#include <tier4_external_api_msgs/msg/heartbeat.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <tier4_control_msgs/msg/gate_mode.hpp>
 
@@ -34,7 +34,7 @@ namespace external_cmd_converter
 {
 using GearCommand = autoware_auto_vehicle_msgs::msg::GearCommand;
 using AckermannControlCommand = autoware_auto_control_msgs::msg::AckermannControlCommand;
-using ExternalControlCommand = autoware_external_api_msgs::msg::ControlCommandStamped;
+using ExternalControlCommand = tier4_external_api_msgs::msg::ControlCommandStamped;
 using Odometry = nav_msgs::msg::Odometry;
 using raw_vehicle_cmd_converter::AccelMap;
 using raw_vehicle_cmd_converter::BrakeMap;
@@ -49,16 +49,16 @@ public:
 private:
   // Publisher
   rclcpp::Publisher<AckermannControlCommand>::SharedPtr pub_cmd_;
-  rclcpp::Publisher<autoware_external_api_msgs::msg::ControlCommandStamped>::SharedPtr
+  rclcpp::Publisher<tier4_external_api_msgs::msg::ControlCommandStamped>::SharedPtr
     pub_current_cmd_;
 
   // Subscriber
   rclcpp::Subscription<Odometry>::SharedPtr sub_velocity_;
-  rclcpp::Subscription<autoware_external_api_msgs::msg::ControlCommandStamped>::SharedPtr
+  rclcpp::Subscription<tier4_external_api_msgs::msg::ControlCommandStamped>::SharedPtr
     sub_control_cmd_;
   rclcpp::Subscription<GearCommand>::SharedPtr sub_shift_cmd_;
   rclcpp::Subscription<tier4_control_msgs::msg::GateMode>::SharedPtr sub_gate_mode_;
-  rclcpp::Subscription<autoware_external_api_msgs::msg::Heartbeat>::SharedPtr
+  rclcpp::Subscription<tier4_external_api_msgs::msg::Heartbeat>::SharedPtr
     sub_emergency_stop_heartbeat_;
 
   void onVelocity(const Odometry::ConstSharedPtr msg);
@@ -66,7 +66,7 @@ private:
   void onGearCommand(const GearCommand::ConstSharedPtr msg);
   void onGateMode(const tier4_control_msgs::msg::GateMode::ConstSharedPtr msg);
   void onEmergencyStopHeartbeat(
-    const autoware_external_api_msgs::msg::Heartbeat::ConstSharedPtr msg);
+    const tier4_external_api_msgs::msg::Heartbeat::ConstSharedPtr msg);
 
   std::shared_ptr<double> current_velocity_ptr_;  // [m/s]
   std::shared_ptr<rclcpp::Time> latest_emergency_stop_heartbeat_received_time_;

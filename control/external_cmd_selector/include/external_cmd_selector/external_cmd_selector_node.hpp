@@ -22,10 +22,10 @@
 #include <autoware_auto_vehicle_msgs/msg/gear_command.hpp>
 #include <autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp>
 #include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
-#include <autoware_external_api_msgs/msg/control_command_stamped.hpp>
-#include <autoware_external_api_msgs/msg/gear_shift_stamped.hpp>
-#include <autoware_external_api_msgs/msg/heartbeat.hpp>
-#include <autoware_external_api_msgs/msg/turn_signal_stamped.hpp>
+#include <tier4_external_api_msgs/msg/control_command_stamped.hpp>
+#include <tier4_external_api_msgs/msg/gear_shift_stamped.hpp>
+#include <tier4_external_api_msgs/msg/heartbeat.hpp>
+#include <tier4_external_api_msgs/msg/turn_signal_stamped.hpp>
 #include <tier4_control_msgs/msg/external_command_selector_mode.hpp>
 #include <tier4_control_msgs/srv/external_command_select.hpp>
 
@@ -42,11 +42,11 @@ private:
   using InternalGearShift = autoware_auto_vehicle_msgs::msg::GearCommand;
   using InternalTurnSignal = autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand;
   using InternalHazardSignal = autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
-  using InternalHeartbeat = autoware_external_api_msgs::msg::Heartbeat;
-  using ExternalControlCommand = autoware_external_api_msgs::msg::ControlCommandStamped;
-  using ExternalGearShift = autoware_external_api_msgs::msg::GearShiftStamped;
-  using ExternalTurnSignal = autoware_external_api_msgs::msg::TurnSignalStamped;
-  using ExternalHeartbeat = autoware_external_api_msgs::msg::Heartbeat;
+  using InternalHeartbeat = tier4_external_api_msgs::msg::Heartbeat;
+  using ExternalControlCommand = tier4_external_api_msgs::msg::ControlCommandStamped;
+  using ExternalGearShift = tier4_external_api_msgs::msg::GearShiftStamped;
+  using ExternalTurnSignal = tier4_external_api_msgs::msg::TurnSignalStamped;
+  using ExternalHeartbeat = tier4_external_api_msgs::msg::Heartbeat;
 
   // CallbackGroups
   rclcpp::CallbackGroup::SharedPtr callback_group_subscribers_;

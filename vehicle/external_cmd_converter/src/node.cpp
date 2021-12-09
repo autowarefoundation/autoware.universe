@@ -37,7 +37,7 @@ ExternalCmdConverterNode::ExternalCmdConverterNode(const rclcpp::NodeOptions & n
     "in/shift_cmd", 1, std::bind(&ExternalCmdConverterNode::onGearCommand, this, _1));
   sub_gate_mode_ = create_subscription<tier4_control_msgs::msg::GateMode>(
     "in/current_gate_mode", 1, std::bind(&ExternalCmdConverterNode::onGateMode, this, _1));
-  sub_emergency_stop_heartbeat_ = create_subscription<autoware_external_api_msgs::msg::Heartbeat>(
+  sub_emergency_stop_heartbeat_ = create_subscription<tier4_external_api_msgs::msg::Heartbeat>(
     "in/emergency_stop", 1,
     std::bind(&ExternalCmdConverterNode::onEmergencyStopHeartbeat, this, _1));
 
@@ -96,7 +96,7 @@ void ExternalCmdConverterNode::onGearCommand(const GearCommand::ConstSharedPtr m
 }
 
 void ExternalCmdConverterNode::onEmergencyStopHeartbeat(
-  [[maybe_unused]] const autoware_external_api_msgs::msg::Heartbeat::ConstSharedPtr msg)
+  [[maybe_unused]] const tier4_external_api_msgs::msg::Heartbeat::ConstSharedPtr msg)
 {
   latest_emergency_stop_heartbeat_received_time_ = std::make_shared<rclcpp::Time>(this->now());
   updater_.force_update();
