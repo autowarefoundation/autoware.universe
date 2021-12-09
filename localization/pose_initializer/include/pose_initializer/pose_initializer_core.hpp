@@ -18,9 +18,9 @@
 #include <autoware_api_utils/autoware_api_utils.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <tier4_external_api_msgs/srv/initialize_pose_auto.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <tier4_external_api_msgs/srv/initialize_pose_auto.hpp>
 #include <tier4_localization_msgs/msg/pose_initialization_request.hpp>
 #include <tier4_localization_msgs/srv/pose_with_covariance_stamped.hpp>
 
