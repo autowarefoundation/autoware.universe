@@ -37,7 +37,7 @@ def generate_launch_description():
 
     default_vehicle_info_param = os.path.join(
         get_package_share_directory('vehicle_info_util'),
-        '/config/vehicle_info.param.yaml')
+        'config/vehicle_info.param.yaml')
 
     vehicle_info_param = DeclareLaunchArgument(
         'vehicle_info_param_file',
