@@ -16,8 +16,8 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <tier4_perception_msgs/msg/detected_objects_with_feature.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <tier4_perception_msgs/msg/detected_objects_with_feature.hpp>
 
 #include <memory>
 

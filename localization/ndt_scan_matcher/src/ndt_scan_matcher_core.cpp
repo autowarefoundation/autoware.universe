@@ -183,15 +183,13 @@ NDTScanMatcher::NDTScanMatcher()
   initial_pose_with_covariance_pub_ =
     this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
       "initial_pose_with_covariance", 10);
-  exe_time_pub_ =
-    this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("exe_time_ms", 10);
+  exe_time_pub_ = this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("exe_time_ms", 10);
   transform_probability_pub_ =
     this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("transform_probability", 10);
   iteration_num_pub_ =
     this->create_publisher<tier4_debug_msgs::msg::Int32Stamped>("iteration_num", 10);
   initial_to_result_distance_pub_ =
-    this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>(
-      "initial_to_result_distance", 10);
+    this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("initial_to_result_distance", 10);
   initial_to_result_distance_old_pub_ =
     this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>(
       "initial_to_result_distance_old", 10);

@@ -24,9 +24,9 @@
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>
-#include <tier4_planning_msgs/msg/stop_reason.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/quaternion.hpp>
+#include <tier4_planning_msgs/msg/stop_reason.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 
 #include <boost/geometry.hpp>

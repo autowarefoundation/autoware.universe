@@ -22,9 +22,9 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <tier4_debug_msgs/msg/float32_stamped.hpp>
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <tier4_debug_msgs/msg/float32_stamped.hpp>
 
 #include <cv_bridge/cv_bridge.h>
 #include <pcl/filters/voxel_grid.h>

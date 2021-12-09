@@ -17,10 +17,10 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <tier4_api_msgs/msg/door_control_command.hpp>
-#include <tier4_api_msgs/msg/door_status.hpp>
 #include <pacmod3_msgs/msg/system_cmd_int.hpp>
 #include <pacmod3_msgs/msg/system_rpt_int.hpp>
+#include <tier4_api_msgs/msg/door_control_command.hpp>
+#include <tier4_api_msgs/msg/door_status.hpp>
 
 namespace autoware_api
 {

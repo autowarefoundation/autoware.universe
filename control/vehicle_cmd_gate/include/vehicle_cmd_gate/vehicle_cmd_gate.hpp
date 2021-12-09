@@ -29,14 +29,14 @@
 #include <autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp>
 #include <autoware_auto_vehicle_msgs/msg/steering_report.hpp>
 #include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
-#include <tier4_control_msgs/msg/gate_mode.hpp>
-#include <tier4_debug_msgs/msg/bool_stamped.hpp>
 #include <autoware_external_api_msgs/msg/emergency.hpp>
 #include <autoware_external_api_msgs/msg/heartbeat.hpp>
 #include <autoware_external_api_msgs/srv/engage.hpp>
 #include <autoware_external_api_msgs/srv/set_emergency.hpp>
-#include <tier4_vehicle_msgs/msg/vehicle_emergency_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <tier4_control_msgs/msg/gate_mode.hpp>
+#include <tier4_debug_msgs/msg/bool_stamped.hpp>
+#include <tier4_vehicle_msgs/msg/vehicle_emergency_stamped.hpp>
 
 #include <memory>
 

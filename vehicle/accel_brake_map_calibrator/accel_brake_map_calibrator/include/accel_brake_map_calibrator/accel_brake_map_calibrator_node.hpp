@@ -27,16 +27,16 @@
 
 #include "autoware_auto_vehicle_msgs/msg/steering_report.hpp"
 #include "autoware_auto_vehicle_msgs/msg/velocity_report.hpp"
-#include "tier4_debug_msgs/msg/float32_multi_array_stamped.hpp"
-#include "tier4_debug_msgs/msg/float32_stamped.hpp"
-#include "tier4_vehicle_msgs/msg/actuation_status_stamped.hpp"
-#include "tier4_vehicle_msgs/srv/update_accel_brake_map.hpp"
 #include "geometry_msgs/msg/twist_stamped.hpp"
 #include "nav_msgs/msg/occupancy_grid.hpp"
 #include "std_msgs/msg/bool.hpp"
 #include "std_msgs/msg/float32_multi_array.hpp"
 #include "std_msgs/msg/multi_array_dimension.hpp"
 #include "std_msgs/msg/string.hpp"
+#include "tier4_debug_msgs/msg/float32_multi_array_stamped.hpp"
+#include "tier4_debug_msgs/msg/float32_stamped.hpp"
+#include "tier4_vehicle_msgs/msg/actuation_status_stamped.hpp"
+#include "tier4_vehicle_msgs/srv/update_accel_brake_map.hpp"
 
 #include <fstream>
 #include <iomanip>
@@ -84,8 +84,7 @@ private:
     actuation_status_sub_;
 
   // Service
-  rclcpp::Service<tier4_vehicle_msgs::srv::UpdateAccelBrakeMap>::SharedPtr
-    update_map_dir_server_;
+  rclcpp::Service<tier4_vehicle_msgs::srv::UpdateAccelBrakeMap>::SharedPtr update_map_dir_server_;
 
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::TimerBase::SharedPtr timer_output_csv_;

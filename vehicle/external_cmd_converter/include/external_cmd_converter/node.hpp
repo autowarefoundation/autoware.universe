@@ -22,10 +22,10 @@
 
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
 #include <autoware_auto_vehicle_msgs/msg/gear_command.hpp>
-#include <tier4_control_msgs/msg/gate_mode.hpp>
 #include <autoware_external_api_msgs/msg/control_command_stamped.hpp>
 #include <autoware_external_api_msgs/msg/heartbeat.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <tier4_control_msgs/msg/gate_mode.hpp>
 
 #include <memory>
 #include <string>

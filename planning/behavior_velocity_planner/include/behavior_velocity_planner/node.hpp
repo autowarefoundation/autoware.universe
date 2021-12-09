@@ -20,8 +20,6 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <tier4_api_msgs/msg/crosswalk_status.hpp>
-#include <tier4_api_msgs/msg/intersection_status.hpp>
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path.hpp>
@@ -29,6 +27,8 @@
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <tier4_api_msgs/msg/crosswalk_status.hpp>
+#include <tier4_api_msgs/msg/intersection_status.hpp>
 
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>

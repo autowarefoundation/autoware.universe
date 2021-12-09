@@ -38,8 +38,7 @@ void AutowareIvMaxVelocityPublisher::statePublisher(const AutowareInfo & aw_info
 
 bool AutowareIvMaxVelocityPublisher::calcMaxVelocity(
   const tier4_api_msgs::msg::VelocityLimit::ConstSharedPtr & max_velocity_ptr,
-  const tier4_api_msgs::msg::StopCommand::ConstSharedPtr & temporary_stop_ptr,
-  float * max_velocity)
+  const tier4_api_msgs::msg::StopCommand::ConstSharedPtr & temporary_stop_ptr, float * max_velocity)
 {
   if (!max_velocity_ptr && !temporary_stop_ptr) {
     // receive no max velocity information

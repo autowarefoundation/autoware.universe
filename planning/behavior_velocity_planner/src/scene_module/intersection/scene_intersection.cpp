@@ -67,8 +67,7 @@ bool IntersectionModule::modifyPathVelocity(
   autoware_auto_planning_msgs::msg::PathWithLaneId * path,
   tier4_planning_msgs::msg::StopReason * stop_reason)
 {
-  const bool external_go =
-    isTargetExternalInputStatus(tier4_api_msgs::msg::IntersectionStatus::GO);
+  const bool external_go = isTargetExternalInputStatus(tier4_api_msgs::msg::IntersectionStatus::GO);
   const bool external_stop =
     isTargetExternalInputStatus(tier4_api_msgs::msg::IntersectionStatus::STOP);
   RCLCPP_DEBUG(logger_, "===== plan start =====");

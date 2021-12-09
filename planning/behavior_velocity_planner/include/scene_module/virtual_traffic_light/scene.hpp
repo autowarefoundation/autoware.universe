@@ -93,8 +93,7 @@ private:
   void updateInfrastructureCommand();
 
   void setStopReason(
-    const geometry_msgs::msg::Pose & stop_pose,
-    tier4_planning_msgs::msg::StopReason * stop_reason);
+    const geometry_msgs::msg::Pose & stop_pose, tier4_planning_msgs::msg::StopReason * stop_reason);
 
   bool isBeforeStartLine();
 

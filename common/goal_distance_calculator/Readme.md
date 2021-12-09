@@ -17,8 +17,8 @@ This node publishes deviation of self-pose from goal pose.
 
 ### Output
 
-| Name                     | Type                                       | Description                                                   |
-| ------------------------ | ------------------------------------------ | ------------------------------------------------------------- |
+| Name                     | Type                                    | Description                                                   |
+| ------------------------ | --------------------------------------- | ------------------------------------------------------------- |
 | `deviation/lateral`      | `tier4_debug_msgs::msg::Float64Stamped` | publish lateral deviation of self-pose from goal pose[m]      |
 | `deviation/longitudinal` | `tier4_debug_msgs::msg::Float64Stamped` | publish longitudinal deviation of self-pose from goal pose[m] |
 | `deviation/yaw`          | `tier4_debug_msgs::msg::Float64Stamped` | publish yaw deviation of self-pose from goal pose[rad]        |

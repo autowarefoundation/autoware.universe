@@ -493,8 +493,7 @@ AutowareJoyControllerNode::AutowareJoyControllerNode(const rclcpp::NodeOptions &
     this->create_publisher<autoware_external_api_msgs::msg::GearShiftStamped>("output/shift", 1);
   pub_turn_signal_ = this->create_publisher<autoware_external_api_msgs::msg::TurnSignalStamped>(
     "output/turn_signal", 1);
-  pub_gate_mode_ =
-    this->create_publisher<tier4_control_msgs::msg::GateMode>("output/gate_mode", 1);
+  pub_gate_mode_ = this->create_publisher<tier4_control_msgs::msg::GateMode>("output/gate_mode", 1);
   pub_heartbeat_ =
     this->create_publisher<autoware_external_api_msgs::msg::Heartbeat>("output/heartbeat", 1);
   pub_vehicle_engage_ =

@@ -17,9 +17,9 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <tier4_debug_msgs/msg/float32_stamped.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
+#include <tier4_debug_msgs/msg/float32_stamped.hpp>
 
 class Pose2Twist : public rclcpp::Node
 {

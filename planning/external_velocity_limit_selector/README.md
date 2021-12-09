@@ -37,16 +37,16 @@ Example:
 
 ## Inputs
 
-| Name                                                | Type                                              | Description                                   |
-| --------------------------------------------------- | ------------------------------------------------- | --------------------------------------------- |
+| Name                                                | Type                                           | Description                                   |
+| --------------------------------------------------- | ---------------------------------------------- | --------------------------------------------- |
 | `~input/velocity_limit_from_api`                    | tier4_planning_msgs::VelocityLimit             | velocity limit from api                       |
 | `~input/velocity_limit_from_internal`               | tier4_planning_msgs::VelocityLimit             | velocity limit from autoware internal modules |
 | `~input/velocity_limit_clear_command_from_internal` | tier4_planning_msgs::VelocityLimitClearCommand | velocity limit clear command                  |
 
 ## Outputs
 
-| Name                   | Type                                  | Description                                       |
-| ---------------------- | ------------------------------------- | ------------------------------------------------- |
+| Name                   | Type                               | Description                                       |
+| ---------------------- | ---------------------------------- | ------------------------------------------------- |
 | `~output/max_velocity` | tier4_planning_msgs::VelocityLimit | current information of the hardest velocity limit |
 
 ## Parameters

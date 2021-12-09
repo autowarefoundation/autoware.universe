@@ -24,8 +24,8 @@ This node calculates a refined object shape (bounding box, cylinder, convex hull
 
 ### Input
 
-| Name    | Type                                                        | Description                           |
-| ------- | ----------------------------------------------------------- | ------------------------------------- |
+| Name    | Type                                                     | Description                           |
+| ------- | -------------------------------------------------------- | ------------------------------------- |
 | `input` | `tier4_perception_msgs::msg::DetectedObjectsWithFeature` | detected objects with labeled cluster |
 
 ### Output

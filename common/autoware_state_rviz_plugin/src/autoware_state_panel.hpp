@@ -24,9 +24,9 @@
 
 #include <autoware_auto_system_msgs/msg/autoware_state.hpp>
 #include <autoware_auto_vehicle_msgs/msg/gear_report.hpp>
-#include <tier4_control_msgs/msg/gate_mode.hpp>
 #include <autoware_external_api_msgs/msg/engage_status.hpp>
 #include <autoware_external_api_msgs/srv/engage.hpp>
+#include <tier4_control_msgs/msg/gate_mode.hpp>
 
 namespace rviz_plugins
 {

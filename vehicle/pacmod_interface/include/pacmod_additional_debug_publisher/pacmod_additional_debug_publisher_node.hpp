@@ -17,19 +17,16 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <tier4_debug_msgs/msg/float32_multi_array_stamped.hpp>
 #include <can_msgs/msg/frame.hpp>
+#include <tier4_debug_msgs/msg/float32_multi_array_stamped.hpp>
 
 class PacmodAdditionalDebugPublisherNode : public rclcpp::Node
 {
 private:
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>::SharedPtr debug_pub_;
-  rclcpp::Publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>::SharedPtr
-    accel_cal_rpt_pub_;
-  rclcpp::Publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>::SharedPtr
-    brake_cal_rpt_pub_;
-  rclcpp::Publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>::SharedPtr
-    steer_cal_rpt_pub_;
+  rclcpp::Publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>::SharedPtr accel_cal_rpt_pub_;
+  rclcpp::Publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>::SharedPtr brake_cal_rpt_pub_;
+  rclcpp::Publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>::SharedPtr steer_cal_rpt_pub_;
 
   rclcpp::Subscription<can_msgs::msg::Frame>::SharedPtr sub_;
   tier4_debug_msgs::msg::Float32MultiArrayStamped debug_value_;

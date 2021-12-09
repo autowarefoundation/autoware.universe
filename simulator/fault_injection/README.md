@@ -21,8 +21,8 @@ launch_test test/test_fault_injection_node.test.py
 
 ### Input
 
-| Name                        | Type                                              | Description       |
-| --------------------------- | ------------------------------------------------- | ----------------- |
+| Name                        | Type                                           | Description       |
+| --------------------------- | ---------------------------------------------- | ----------------- |
 | `~/input/simulation_events` | `tier4_simulation_msgs::msg::SimulationEvents` | simulation events |
 
 ### Output

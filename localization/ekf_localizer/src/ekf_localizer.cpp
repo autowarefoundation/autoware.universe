@@ -94,8 +94,7 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
   pub_twist_ = create_publisher<geometry_msgs::msg::TwistStamped>("ekf_twist", 1);
   pub_twist_cov_ = create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>(
     "ekf_twist_with_covariance", 1);
-  pub_yaw_bias_ =
-    create_publisher<tier4_debug_msgs::msg::Float64Stamped>("estimated_yaw_bias", 1);
+  pub_yaw_bias_ = create_publisher<tier4_debug_msgs::msg::Float64Stamped>("estimated_yaw_bias", 1);
   pub_pose_no_yawbias_ =
     create_publisher<geometry_msgs::msg::PoseStamped>("ekf_pose_without_yawbias", 1);
   pub_pose_cov_no_yawbias_ = create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(

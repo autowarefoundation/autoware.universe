@@ -33,8 +33,8 @@ Simply looking at the overlap between the unknown object and the tracker does no
 
 ### Input
 
-| Name                      | Type                                                        | Description     |
-| ------------------------- | ----------------------------------------------------------- | --------------- |
+| Name                      | Type                                                     | Description     |
+| ------------------------- | -------------------------------------------------------- | --------------- |
 | `~/input/initial_objects` | `tier4_perception_msgs::msg::DetectedObjectsWithFeature` | unknown objects |
 | `~/input/tracked_objects` | `tier4_perception_msgs::msg::TrackedObjects`             | trackers        |
 

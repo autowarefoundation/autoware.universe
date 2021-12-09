@@ -30,9 +30,9 @@
 namespace behavior_path_planner
 {
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
-using tier4_planning_msgs::msg::LateralOffset;
 using geometry_msgs::msg::Pose;
 using nav_msgs::msg::OccupancyGrid;
+using tier4_planning_msgs::msg::LateralOffset;
 
 struct SideShiftParameters
 {

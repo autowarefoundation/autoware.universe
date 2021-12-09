@@ -65,8 +65,7 @@ private:
   void getStopReasonInfo(
     const tier4_planning_msgs::msg::StopReasonArray::ConstSharedPtr & stop_reason_ptr,
     tier4_api_msgs::msg::AwapiAutowareStatus * status);
-  void getDiagInfo(
-    const AutowareInfo & aw_info, tier4_api_msgs::msg::AwapiAutowareStatus * status);
+  void getDiagInfo(const AutowareInfo & aw_info, tier4_api_msgs::msg::AwapiAutowareStatus * status);
   void getErrorDiagInfo(
     const AutowareInfo & aw_info, tier4_api_msgs::msg::AwapiAutowareStatus * status);
   void getGlobalRptInfo(

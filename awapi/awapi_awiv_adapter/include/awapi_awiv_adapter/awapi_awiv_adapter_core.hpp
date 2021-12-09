@@ -37,14 +37,14 @@
 #include <autoware_auto_vehicle_msgs/msg/hazard_lights_report.hpp>
 #include <autoware_auto_vehicle_msgs/msg/steering_report.hpp>
 #include <autoware_auto_vehicle_msgs/msg/turn_indicators_report.hpp>
-#include <tier4_control_msgs/msg/gate_mode.hpp>
-#include <tier4_planning_msgs/msg/stop_reason_array.hpp>
-#include <tier4_v2x_msgs/msg/infrastructure_command_array.hpp>
-#include <tier4_v2x_msgs/msg/virtual_traffic_light_state_array.hpp>
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <pacmod3_msgs/msg/global_rpt.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
+#include <tier4_control_msgs/msg/gate_mode.hpp>
+#include <tier4_planning_msgs/msg/stop_reason_array.hpp>
+#include <tier4_v2x_msgs/msg/infrastructure_command_array.hpp>
+#include <tier4_v2x_msgs/msg/virtual_traffic_light_state_array.hpp>
 
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
@@ -80,8 +80,7 @@ private:
   rclcpp::Subscription<autoware_auto_system_msgs::msg::HazardStatusStamped>::SharedPtr
     sub_hazard_status_;
   rclcpp::Subscription<tier4_planning_msgs::msg::StopReasonArray>::SharedPtr sub_stop_reason_;
-  rclcpp::Subscription<tier4_v2x_msgs::msg::InfrastructureCommandArray>::SharedPtr
-    sub_v2x_command_;
+  rclcpp::Subscription<tier4_v2x_msgs::msg::InfrastructureCommandArray>::SharedPtr sub_v2x_command_;
   rclcpp::Subscription<tier4_v2x_msgs::msg::VirtualTrafficLightStateArray>::SharedPtr
     sub_v2x_state_;
   rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr sub_diagnostics_;
@@ -108,8 +107,7 @@ private:
   rclcpp::Publisher<pacmod3_msgs::msg::SystemCmdInt>::SharedPtr pub_door_control_;
   rclcpp::Publisher<tier4_api_msgs::msg::DoorStatus>::SharedPtr pub_door_status_;
   rclcpp::Publisher<tier4_v2x_msgs::msg::InfrastructureCommandArray>::SharedPtr pub_v2x_command_;
-  rclcpp::Publisher<tier4_v2x_msgs::msg::VirtualTrafficLightStateArray>::SharedPtr
-    pub_v2x_state_;
+  rclcpp::Publisher<tier4_v2x_msgs::msg::VirtualTrafficLightStateArray>::SharedPtr pub_v2x_state_;
 
   // timer
   rclcpp::TimerBase::SharedPtr timer_;
@@ -139,8 +137,7 @@ private:
     const autoware_auto_system_msgs::msg::EmergencyState::ConstSharedPtr msg_ptr);
   void callbackHazardStatus(
     const autoware_auto_system_msgs::msg::HazardStatusStamped::ConstSharedPtr msg_ptr);
-  void callbackStopReason(
-    const tier4_planning_msgs::msg::StopReasonArray::ConstSharedPtr msg_ptr);
+  void callbackStopReason(const tier4_planning_msgs::msg::StopReasonArray::ConstSharedPtr msg_ptr);
   void callbackV2XCommand(
     const tier4_v2x_msgs::msg::InfrastructureCommandArray::ConstSharedPtr msg_ptr);
   void callbackV2XState(
@@ -163,8 +160,7 @@ private:
   void callbackTemporaryStop(const tier4_api_msgs::msg::StopCommand::ConstSharedPtr msg_ptr);
   void callbackAutowareTrajectory(
     const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr msg_ptr);
-  void callbackDoorControl(
-    const tier4_api_msgs::msg::DoorControlCommand::ConstSharedPtr msg_ptr);
+  void callbackDoorControl(const tier4_api_msgs::msg::DoorControlCommand::ConstSharedPtr msg_ptr);
   void callbackDoorStatus(const pacmod3_msgs::msg::SystemRptInt::ConstSharedPtr msg_ptr);
 
   // timer function

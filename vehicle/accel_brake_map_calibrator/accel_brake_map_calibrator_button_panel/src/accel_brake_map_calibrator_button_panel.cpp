@@ -122,8 +122,10 @@ void AccelBrakeMapCalibratorButtonPanel::pushCalibrationButton()
     req->path = "";
 
     client_->async_send_request(
-      req, [this]([[maybe_unused]] rclcpp::Client<
-                  tier4_vehicle_msgs::srv::UpdateAccelBrakeMap>::SharedFuture result) {
+      req,
+      [this](
+        [[maybe_unused]] rclcpp::Client<tier4_vehicle_msgs::srv::UpdateAccelBrakeMap>::SharedFuture
+          result) {
         status_label_->setStyleSheet("QLabel { background-color : lightgreen;}");
         status_label_->setText("OK!!!");
 

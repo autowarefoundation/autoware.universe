@@ -23,9 +23,9 @@
 #include <trt_ssd.hpp>
 
 #include <autoware_auto_perception_msgs/msg/traffic_light_roi_array.hpp>
-#include <tier4_debug_msgs/msg/float32_stamped.hpp>
 #include <sensor_msgs/image_encodings.hpp>
 #include <sensor_msgs/msg/image.hpp>
+#include <tier4_debug_msgs/msg/float32_stamped.hpp>
 
 #include <cv_bridge/cv_bridge.h>
 #include <message_filters/subscriber.h>

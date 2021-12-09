@@ -64,8 +64,8 @@ PoseInitializer::PoseInitializer()
   initial_pose_pub_ =
     this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("initialpose3d", 10);
 
-  ndt_client_ = this->create_client<tier4_localization_msgs::srv::PoseWithCovarianceStamped>(
-    "ndt_align_srv");
+  ndt_client_ =
+    this->create_client<tier4_localization_msgs::srv::PoseWithCovarianceStamped>("ndt_align_srv");
   while (!ndt_client_->wait_for_service(std::chrono::seconds(1)) && rclcpp::ok()) {
     RCLCPP_INFO(get_logger(), "Waiting for service...");
   }
@@ -210,8 +210,7 @@ bool PoseInitializer::callAlignServiceAndPublishResult(
     RCLCPP_ERROR(get_logger(), "Did not receive response for previous NDT Align Server call");
     return false;
   }
-  auto req =
-    std::make_shared<tier4_localization_msgs::srv::PoseWithCovarianceStamped::Request>();
+  auto req = std::make_shared<tier4_localization_msgs::srv::PoseWithCovarianceStamped::Request>();
   req->pose_with_covariance = *input_pose_msg;
   req->seq = ++request_id_;
 

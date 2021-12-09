@@ -17,8 +17,6 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <tier4_api_msgs/msg/stop_command.hpp>
-#include <tier4_api_msgs/msg/velocity_limit.hpp>
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
@@ -30,6 +28,14 @@
 #include <autoware_auto_vehicle_msgs/msg/hazard_lights_report.hpp>
 #include <autoware_auto_vehicle_msgs/msg/steering_report.hpp>
 #include <autoware_auto_vehicle_msgs/msg/turn_indicators_report.hpp>
+#include <diagnostic_msgs/msg/diagnostic_array.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <nav_msgs/msg/odometry.hpp>
+#include <pacmod3_msgs/msg/global_rpt.hpp>
+#include <pacmod3_msgs/msg/system_rpt_int.hpp>
+#include <sensor_msgs/msg/nav_sat_fix.hpp>
+#include <tier4_api_msgs/msg/stop_command.hpp>
+#include <tier4_api_msgs/msg/velocity_limit.hpp>
 #include <tier4_control_msgs/msg/gate_mode.hpp>
 #include <tier4_planning_msgs/msg/is_avoidance_possible.hpp>
 #include <tier4_planning_msgs/msg/lane_change_status.hpp>
@@ -38,12 +44,6 @@
 #include <tier4_v2x_msgs/msg/infrastructure_command_array.hpp>
 #include <tier4_v2x_msgs/msg/virtual_traffic_light_state_array.hpp>
 #include <tier4_vehicle_msgs/msg/battery_status.hpp>
-#include <diagnostic_msgs/msg/diagnostic_array.hpp>
-#include <geometry_msgs/msg/pose_stamped.hpp>
-#include <nav_msgs/msg/odometry.hpp>
-#include <pacmod3_msgs/msg/global_rpt.hpp>
-#include <pacmod3_msgs/msg/system_rpt_int.hpp>
-#include <sensor_msgs/msg/nav_sat_fix.hpp>
 
 #include <tf2/utils.h>
 #include <tf2_ros/transform_broadcaster.h>

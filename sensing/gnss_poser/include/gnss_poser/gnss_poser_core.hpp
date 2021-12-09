@@ -19,10 +19,10 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <tier4_debug_msgs/msg/bool_stamped.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
+#include <tier4_debug_msgs/msg/bool_stamped.hpp>
 #include <ublox_msgs/msg/nav_pvt.hpp>
 
 #include <boost/circular_buffer.hpp>

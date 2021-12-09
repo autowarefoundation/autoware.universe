@@ -21,8 +21,8 @@
 #include <image_transport/image_transport.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <tier4_perception_msgs/msg/detected_objects_with_feature.hpp>
 #include <sensor_msgs/msg/camera_info.hpp>
+#include <tier4_perception_msgs/msg/detected_objects_with_feature.hpp>
 
 #include <boost/circular_buffer.hpp>
 
@@ -93,13 +93,11 @@ private:
   std::vector<rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr> v_camera_info_sub_;
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_ptr_;
-  message_filters::Subscriber<tier4_perception_msgs::msg::DetectedObjectsWithFeature>
-    cluster_sub_;
+  message_filters::Subscriber<tier4_perception_msgs::msg::DetectedObjectsWithFeature> cluster_sub_;
   std::vector<std::shared_ptr<
     message_filters::Subscriber<tier4_perception_msgs::msg::DetectedObjectsWithFeature>>>
     v_roi_sub_;
-  message_filters::PassThrough<tier4_perception_msgs::msg::DetectedObjectsWithFeature>
-    passthrough_;
+  message_filters::PassThrough<tier4_perception_msgs::msg::DetectedObjectsWithFeature> passthrough_;
   typedef message_filters::sync_policies::ApproximateTime<
     tier4_perception_msgs::msg::DetectedObjectsWithFeature,
     tier4_perception_msgs::msg::DetectedObjectsWithFeature,

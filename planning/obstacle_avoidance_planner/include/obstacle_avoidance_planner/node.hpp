@@ -21,8 +21,6 @@
 #include <autoware_auto_planning_msgs/msg/path_point.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>
-#include <tier4_planning_msgs/msg/enable_avoidance.hpp>
-#include <tier4_planning_msgs/msg/is_avoidance_possible.hpp>
 #include <geometry_msgs/msg/point.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/twist.hpp>
@@ -30,6 +28,8 @@
 #include <nav_msgs/msg/map_meta_data.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <tier4_planning_msgs/msg/enable_avoidance.hpp>
+#include <tier4_planning_msgs/msg/is_avoidance_possible.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <boost/optional/optional_fwd.hpp>

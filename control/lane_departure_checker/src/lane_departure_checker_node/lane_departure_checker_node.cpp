@@ -323,8 +323,7 @@ void LaneDepartureCheckerNode::onTimer()
     const auto & deviation = output_.trajectory_deviation;
     debug_publisher_.publish<tier4_debug_msgs::msg::Float64Stamped>(
       "deviation/lateral", deviation.lateral);
-    debug_publisher_.publish<tier4_debug_msgs::msg::Float64Stamped>(
-      "deviation/yaw", deviation.yaw);
+    debug_publisher_.publish<tier4_debug_msgs::msg::Float64Stamped>("deviation/yaw", deviation.yaw);
     debug_publisher_.publish<tier4_debug_msgs::msg::Float64Stamped>(
       "deviation/yaw_deg", rad2deg(deviation.yaw));
   }

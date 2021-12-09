@@ -19,10 +19,10 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <tier4_debug_msgs/msg/float32_multi_array_stamped.hpp>
-#include <tier4_planning_msgs/msg/stop_reason_array.hpp>
 #include <geometry_msgs/msg/point.hpp>
 #include <geometry_msgs/msg/pose.hpp>
+#include <tier4_debug_msgs/msg/float32_multi_array_stamped.hpp>
+#include <tier4_planning_msgs/msg/stop_reason_array.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 

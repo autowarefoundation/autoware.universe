@@ -19,8 +19,8 @@
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
-#include <tier4_debug_msgs/msg/float32_multi_array_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <tier4_debug_msgs/msg/float32_multi_array_stamped.hpp>
 
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>

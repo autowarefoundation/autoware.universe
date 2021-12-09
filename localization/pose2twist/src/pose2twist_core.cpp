@@ -32,8 +32,7 @@ Pose2Twist::Pose2Twist() : Node("pose2twist_core")
     "pose", queue_size, std::bind(&Pose2Twist::callbackPose, this, _1));
 
   twist_pub_ = create_publisher<geometry_msgs::msg::TwistStamped>("twist", durable_qos);
-  linear_x_pub_ =
-    create_publisher<tier4_debug_msgs::msg::Float32Stamped>("linear_x", durable_qos);
+  linear_x_pub_ = create_publisher<tier4_debug_msgs::msg::Float32Stamped>("linear_x", durable_qos);
   angular_z_pub_ =
     create_publisher<tier4_debug_msgs::msg::Float32Stamped>("angular_z", durable_qos);
 }

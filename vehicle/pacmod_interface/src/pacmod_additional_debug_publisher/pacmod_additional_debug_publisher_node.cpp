@@ -36,12 +36,12 @@ PacmodAdditionalDebugPublisherNode::PacmodAdditionalDebugPublisherNode()
   debug_value_.data.resize(17);
   calibration_active_ = this->declare_parameter("calibration_active", false);
   if (calibration_active_) {
-    accel_cal_rpt_pub_ = create_publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>(
-      "output/accel_cal_rpt", 1);
-    brake_cal_rpt_pub_ = create_publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>(
-      "output/brake_cal_rpt", 1);
-    steer_cal_rpt_pub_ = create_publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>(
-      "output/steer_cal_rpt", 1);
+    accel_cal_rpt_pub_ =
+      create_publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>("output/accel_cal_rpt", 1);
+    brake_cal_rpt_pub_ =
+      create_publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>("output/brake_cal_rpt", 1);
+    steer_cal_rpt_pub_ =
+      create_publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>("output/steer_cal_rpt", 1);
     accel_cal_rpt_.data.resize(3);
     brake_cal_rpt_.data.resize(5);
     steer_cal_rpt_.data.resize(3);

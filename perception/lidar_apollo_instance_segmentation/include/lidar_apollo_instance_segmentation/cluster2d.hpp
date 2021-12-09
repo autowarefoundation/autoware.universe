@@ -49,9 +49,9 @@
 #include "disjoint_set.hpp"
 #include "util.hpp"
 
+#include <std_msgs/msg/header.hpp>
 #include <tier4_perception_msgs/msg/detected_object_with_feature.hpp>
 #include <tier4_perception_msgs/msg/detected_objects_with_feature.hpp>
-#include <std_msgs/msg/header.hpp>
 
 #include <pcl/PointIndices.h>
 #include <pcl/point_cloud.h>

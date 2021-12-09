@@ -95,10 +95,9 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
     this->create_subscription<autoware_auto_perception_msgs::msg::TrafficSignalArray>(
       "~/input/traffic_signals", 10,
       std::bind(&BehaviorVelocityPlannerNode::onTrafficSignals, this, _1));
-  sub_external_crosswalk_states_ =
-    this->create_subscription<tier4_api_msgs::msg::CrosswalkStatus>(
-      "~/input/external_crosswalk_states", 10,
-      std::bind(&BehaviorVelocityPlannerNode::onExternalCrosswalkStates, this, _1));
+  sub_external_crosswalk_states_ = this->create_subscription<tier4_api_msgs::msg::CrosswalkStatus>(
+    "~/input/external_crosswalk_states", 10,
+    std::bind(&BehaviorVelocityPlannerNode::onExternalCrosswalkStates, this, _1));
   sub_external_intersection_states_ =
     this->create_subscription<tier4_api_msgs::msg::IntersectionStatus>(
       "~/input/external_intersection_states", 10,

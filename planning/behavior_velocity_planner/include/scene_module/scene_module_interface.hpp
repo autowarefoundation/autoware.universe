@@ -85,8 +85,8 @@ public:
   {
     const auto ns = std::string("~/debug/") + module_name;
     pub_debug_ = node.create_publisher<visualization_msgs::msg::MarkerArray>(ns, 20);
-    pub_stop_reason_ = node.create_publisher<tier4_planning_msgs::msg::StopReasonArray>(
-      "~/output/stop_reasons", 20);
+    pub_stop_reason_ =
+      node.create_publisher<tier4_planning_msgs::msg::StopReasonArray>("~/output/stop_reasons", 20);
     pub_infrastructure_commands_ =
       node.create_publisher<tier4_v2x_msgs::msg::InfrastructureCommandArray>(
         "~/output/infrastructure_commands", 20);

@@ -24,9 +24,9 @@
 
 #include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
 #include <autoware_auto_perception_msgs/msg/tracked_objects.hpp>
-#include <tier4_perception_msgs/msg/detected_objects_with_feature.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <tier4_perception_msgs/msg/detected_objects_with_feature.hpp>
 
 #include <tf2/LinearMath/Transform.h>
 #include <tf2/convert.h>

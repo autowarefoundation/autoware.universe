@@ -21,8 +21,8 @@ namespace pacmod_util
 tier4_api_msgs::msg::DoorStatus getDoorStatusMsg(
   const pacmod3_msgs::msg::SystemRptInt::ConstSharedPtr & msg_ptr)
 {
-  using tier4_api_msgs::msg::DoorStatus;
   using pacmod3_msgs::msg::SystemRptInt;
+  using tier4_api_msgs::msg::DoorStatus;
   DoorStatus door_status;
 
   if (!msg_ptr) {
