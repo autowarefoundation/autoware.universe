@@ -9,19 +9,17 @@ jobs:
   build-and-test-scheduled:
     runs-on: ${{ matrix.os }}
     container: ros:galactic
-
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, ARM64]
-
     steps:
       - name: Get self packages
         id: get-self-packages
         uses: autowarefoundation/autoware-github-actions/get-self-packages@tier4/proposal
 
       - name: Build and test
-        uses: autowarefoundation/autoware-github-actions/colcon-build-and-test@feature/composite-action
+        uses: autowarefoundation/autoware-github-actions/colcon-build-and-test@tier4/proposal
         with:
           rosdistro: galactic
           build-depends-repos: build_depends.repos
