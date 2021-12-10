@@ -135,10 +135,7 @@ def launch_setup(context, *args, **kwargs):
                 "/control/trajectory_follower/lateral/predicted_trajectory",
             ),
         ],
-        parameters=[
-            lane_departure_checker_param,
-            vehicle_info_param
-        ],
+        parameters=[lane_departure_checker_param, vehicle_info_param],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
 
@@ -280,7 +277,7 @@ def generate_launch_description():
             FindPackageShare("vehicle_info_util"),
             "/config/vehicle_info.param.yaml",
         ],
-        "path to the parameter file of vehicle information"
+        "path to the parameter file of vehicle information",
     )
 
     add_launch_arg(
