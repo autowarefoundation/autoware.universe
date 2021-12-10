@@ -1,4 +1,4 @@
-name: build-and-test-pr-arm
+name: build-and-test-arm-pr
 
 on:
   pull_request:
@@ -6,7 +6,7 @@ on:
       - labeled
 
 jobs:
-  build-and-test:
+  build-and-test-arm:
     if: ${{ github.event.label.name == 'ARM64' }}
     runs-on: [self-hosted, linux, ARM64]
     container: ros:galactic

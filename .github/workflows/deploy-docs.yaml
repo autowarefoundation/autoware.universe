@@ -1,0 +1,27 @@
+name: deploy-docs
+
+on:
+  push:
+    branches:
+      - main
+      - tier4/proposal
+    paths:
+      - "mkdocs.yaml"
+      - "**/*.md"
+      - "**/*.svg"
+      - "**/*.png"
+      - "**/*.jpg"
+      - "**/*.css"
+  pull_request:
+    types:
+      - labeled
+
+jobs:
+  deploy-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy docs
+        if: ${{ github.event.push || github.event.label.name == 'documentation' }}
+        uses: autowarefoundation/autoware-github-actions/deploy-docs@feature/composite-action
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}

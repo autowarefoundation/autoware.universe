@@ -5,6 +5,12 @@ on:
 
 jobs:
   spell-check:
-    uses: autowarefoundation/autoware-github-actions/.github/workflows/spell-check.yaml@feature/composite-action
-    with:
-      cspell-json-url: https://raw.githubusercontent.com/tier4/autoware-spell-check-dict/main/cspell/.cspell.json
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Run spell-check
+        uses: autowarefoundation/autoware-github-actions/spell-check@tier4/proposal
+        with:
+          cspell-json-url: https://raw.githubusercontent.com/tier4/autoware-spell-check-dict/main/cspell/.cspell.json
