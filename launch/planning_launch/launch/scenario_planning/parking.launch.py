@@ -18,6 +18,8 @@ from ament_index_python.packages import get_package_share_directory
 import launch
 from launch.actions import DeclareLaunchArgument
 from launch.actions import GroupAction
+from launch.actions import IncludeLaunchDescription
+from launch.actions import OpaqueFunction
 from launch.actions import SetLaunchConfiguration
 from launch.conditions import IfCondition
 from launch.conditions import UnlessCondition
@@ -25,10 +27,16 @@ from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.actions import PushRosNamespace
 from launch_ros.descriptions import ComposableNode
+from launch_ros.substitutions import FindPackageShare
 import yaml
 
 
-def generate_launch_description():
+def launch_setup(context, *args, **kwargs):
+
+    vehicle_info_param_path = LaunchConfiguration("vehicle_info_param_file").perform(context)
+    with open(vehicle_info_param_path, "r") as f:
+        vehicle_info_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+
     freespace_planner_param_path = os.path.join(
         get_package_share_directory("planning_launch"),
         "config",
@@ -82,6 +90,7 @@ def generate_launch_description():
                         "expand_polygon_size": 1.0,
                         "size_of_expansion_kernel": 9,
                     },
+                    vehicle_info_param,
                 ],
                 extra_arguments=[
                     {"use_intra_process_comms": LaunchConfiguration("use_intra_process")}
@@ -101,6 +110,7 @@ def generate_launch_description():
                 ],
                 parameters=[
                     freespace_planner_param,
+                    vehicle_info_param,
                 ],
                 extra_arguments=[
                     {"use_intra_process_comms": LaunchConfiguration("use_intra_process")}
@@ -108,6 +118,37 @@ def generate_launch_description():
             ),
         ],
     )
+
+
+    group = GroupAction(
+        [
+            PushRosNamespace("parking"),
+            container,
+        ]
+    )
+
+    return [group]
+
+def generate_launch_description():
+    launch_arguments = []
+
+    def add_launch_arg(name: str, default_value=None, description=None):
+        launch_arguments.append(
+            DeclareLaunchArgument(name, default_value=default_value, description=description)
+        )
+
+    add_launch_arg(
+        "vehicle_info_param_file",
+        [
+            FindPackageShare("vehicle_info_util"),
+            "/config/vehicle_info.param.yaml",
+        ],
+        "path to the parameter file of vehicle information"
+    )
+
+    # component
+    add_launch_arg("use_intra_process", "false", "use ROS2 component container communication")
+    add_launch_arg("use_multithread", "false", "use multithread")
 
     set_container_executable = SetLaunchConfiguration(
         "container_executable",
@@ -121,17 +162,10 @@ def generate_launch_description():
     )
 
     return launch.LaunchDescription(
-        [
-            DeclareLaunchArgument(
-                "use_intra_process",
-                default_value="false",
-                description="use ROS2 component container communication",
-            ),
-            DeclareLaunchArgument(
-                "use_multithread", default_value="false", description="use multithread"
-            ),
+        launch_arguments
+        + [
             set_container_executable,
             set_container_mt_executable,
-            GroupAction([PushRosNamespace("parking"), container]),
         ]
+        + [OpaqueFunction(function=launch_setup)]
     )

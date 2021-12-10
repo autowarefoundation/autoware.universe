@@ -1,6 +1,7 @@
 <launch>
   <!-- common param -->
   <arg name="common_param_path" default="$(find-pkg-share planning_launch)/config/scenario_planning/common/common.param.yaml"/>
+  <arg name="vehicle_info_param_file" />
 
   <!-- scenario selector -->
   <include file="$(find-pkg-share scenario_selector)/launch/scenario_selector.launch.xml">
@@ -39,9 +40,11 @@
     <!-- lane driving -->
     <include file="$(find-pkg-share planning_launch)/launch/scenario_planning/lane_driving.launch.xml">
       <arg name="common_param_path" value="$(var common_param_path)"/>
+      <arg name="vehicle_info_param_file" value="$(var vehicle_info_param_file)" />
     </include>
     <!-- parking -->
     <include file="$(find-pkg-share planning_launch)/launch/scenario_planning/parking.launch.py">
+      <arg name="vehicle_info_param_file" value="$(var vehicle_info_param_file)" />
     </include>
   </group>
 </launch>

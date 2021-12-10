@@ -17,6 +17,9 @@ import os
 from ament_index_python.packages import get_package_share_directory
 import launch
 from launch.actions import DeclareLaunchArgument
+from launch.actions import GroupAction
+from launch.actions import IncludeLaunchDescription
+from launch.actions import OpaqueFunction
 from launch.actions import SetLaunchConfiguration
 from launch.conditions import IfCondition
 from launch.conditions import UnlessCondition
@@ -24,10 +27,16 @@ from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.actions import LoadComposableNodes
 from launch_ros.descriptions import ComposableNode
+from launch_ros.substitutions import FindPackageShare
 import yaml
 
 
-def generate_launch_description():
+def launch_setup(context, *args, **kwargs):
+    # vehicle information param path
+    vehicle_info_param_path = LaunchConfiguration("vehicle_info_param_file").perform(context)
+    with open(vehicle_info_param_path, "r") as f:
+        vehicle_info_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+
     # planning common param path
     common_param_path = os.path.join(
         get_package_share_directory("planning_launch"),
@@ -63,6 +72,7 @@ def generate_launch_description():
         ],
         parameters=[
             obstacle_avoidance_planner_param,
+            vehicle_info_param,
             {"is_showing_debug_info": False},
             {"is_stopping_if_outside_drivable_area": True},
         ],
@@ -100,6 +110,7 @@ def generate_launch_description():
         ],
         parameters=[
             surround_obstacle_checker_param,
+            vehicle_info_param,
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
@@ -169,6 +180,7 @@ def generate_launch_description():
             common_param,
             obstacle_stop_planner_param,
             obstacle_stop_planner_acc_param,
+            vehicle_info_param,
             {"enable_slow_down": False},
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
@@ -197,6 +209,45 @@ def generate_launch_description():
         condition=UnlessCondition(LaunchConfiguration("use_surround_obstacle_check")),
     )
 
+    group = GroupAction(
+        [
+            container,
+            surround_obstacle_checker_loader,
+            relay_loader
+        ]
+    )
+
+    return [group]
+
+def generate_launch_description():
+    launch_arguments = []
+    def add_launch_arg(name: str, default_value=None, description=None):
+        launch_arguments.append(
+            DeclareLaunchArgument(name, default_value=default_value, description=description)
+        )
+
+    # vehicle information parameter file
+    add_launch_arg(
+        "vehicle_info_param_file",
+        [
+            FindPackageShare("vehicle_info_util"),
+            "/config/vehicle_info.param.yaml",
+        ],
+        "path to the parameter file of vehicle information"
+    )
+
+    # obstacle_avoidance_planner
+    add_launch_arg("input_path_topic",
+    "/planning/scenario_planning/lane_driving/behavior_planning/path",
+    "input path topic of obstacle_avoidance_planner"
+    )
+
+    # surround obstacle checker
+    add_launch_arg("use_surround_obstacle_check", "true", "launch surround_obstacle_checker or not")
+
+    add_launch_arg("use_intra_process", "false", "use ROS2 component container communication")
+    add_launch_arg("use_multithread", "false", "use multithread")
+
     set_container_executable = SetLaunchConfiguration(
         "container_executable",
         "component_container",
@@ -209,18 +260,10 @@ def generate_launch_description():
     )
 
     return launch.LaunchDescription(
-        [
-            DeclareLaunchArgument(
-                "input_path_topic",
-                default_value="/planning/scenario_planning/lane_driving/behavior_planning/path",
-            ),
-            DeclareLaunchArgument("use_surround_obstacle_check", default_value="true"),
-            DeclareLaunchArgument("use_intra_process", default_value="false"),
-            DeclareLaunchArgument("use_multithread", default_value="false"),
+        launch_arguments
+        + [
             set_container_executable,
             set_container_mt_executable,
-            container,
-            surround_obstacle_checker_loader,
-            relay_loader,
         ]
+        + [OpaqueFunction(function=launch_setup)]
     )

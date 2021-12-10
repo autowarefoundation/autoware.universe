@@ -1,5 +1,8 @@
 <launch>
   <!-- planning module -->
+
+  <arg name="vehicle_info_param_file" />
+
   <group>
     <push-ros-namespace namespace="planning"/>
     <!-- mission planning module -->
@@ -13,6 +16,7 @@
     <group>
       <push-ros-namespace namespace="scenario_planning"/>
       <include file="$(find-pkg-share planning_launch)/launch/scenario_planning/scenario_planning.launch.xml">
+        <arg name="vehicle_info_param_file" value="$(var vehicle_info_param_file)" />
       </include>
     </group>
 
