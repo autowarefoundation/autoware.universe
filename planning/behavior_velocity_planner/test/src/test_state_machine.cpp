@@ -75,10 +75,10 @@ TEST(state_machine, set_state_go_with_margin_time)
     loop_counter++;
   }
   // time past STOP -> GO
-  if(loop_counter >2 ){
+  if (loop_counter > 2) {
     EXPECT_TRUE(state_machine.getDuration() > margin_time);
     EXPECT_EQ(enumToInt(state_machine.getState()), enumToInt(State::GO));
-  } else{
-    std::cerr<<"[Warning] computational resource is not enough"<<std::endl;
+  } else {
+    std::cerr << "[Warning] computational resource is not enough" << std::endl;
   }
 }
