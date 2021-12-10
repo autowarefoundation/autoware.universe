@@ -45,7 +45,7 @@ double calcBrakingDistance(
   return (abs_velocity * abs_velocity) / (2.0 * max_deceleration) + delay_time * abs_velocity;
 }
 
-bool isInAnyLane(const lanelet::ConstLanelets & candidate_lanelets, const Point2d & point)
+bool isInAnyLane(const lanelet::ConstLanelets & candidate_lanelets, const Point2d point)
 {
   for (const auto & ll : candidate_lanelets) {
     if (boost::geometry::within(point, ll.polygon2d().basicPolygon())) {
