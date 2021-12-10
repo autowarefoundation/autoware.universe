@@ -31,6 +31,9 @@ import yaml
 
 
 def launch_setup(context, *args, **kwargs):
+    vehicle_info_param_path = LaunchConfiguration("vehicle_info_param_file").perform(context)
+    with open(vehicle_info_param_path, "r") as f:
+        vehicle_info_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     lat_controller_param_path = LaunchConfiguration("lat_controller_param_path").perform(context)
     with open(lat_controller_param_path, "r") as f:
         lat_controller_param = yaml.safe_load(f)["/**"]["ros__parameters"]
@@ -68,6 +71,7 @@ def launch_setup(context, *args, **kwargs):
         ],
         parameters=[
             lat_controller_param,
+            vehicle_info_param,
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
@@ -87,6 +91,7 @@ def launch_setup(context, *args, **kwargs):
         ],
         parameters=[
             lon_controller_param,
+            vehicle_info_param,
             {
                 "control_rate": LaunchConfiguration("control_rate"),
                 "show_debug_info": LaunchConfiguration("show_debug_info"),
@@ -130,7 +135,10 @@ def launch_setup(context, *args, **kwargs):
                 "/control/trajectory_follower/lateral/predicted_trajectory",
             ),
         ],
-        parameters=[lane_departure_checker_param],
+        parameters=[
+            lane_departure_checker_param,
+            vehicle_info_param
+        ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
 
@@ -184,6 +192,7 @@ def launch_setup(context, *args, **kwargs):
         ],
         parameters=[
             vehicle_cmd_gate_param,
+            vehicle_info_param,
             {
                 "use_emergency_handling": LaunchConfiguration("use_emergency_handling"),
                 "use_external_emergency_stop": LaunchConfiguration("use_external_emergency_stop"),
@@ -264,6 +273,15 @@ def generate_launch_description():
     #     "mpc_follower",
     #     "lateral controller mode: `mpc_follower` or `pure_pursuit`",
     # )
+
+    add_launch_arg(
+        "vehicle_info_param_file",
+        [
+            FindPackageShare("vehicle_info_util"),
+            "/config/vehicle_info.param.yaml",
+        ],
+        "path to the parameter file of vehicle information"
+    )
 
     add_launch_arg(
         "lat_controller_param_path",
