@@ -13,10 +13,9 @@
 # limitations under the License.
 
 import os
-import yaml
 
-import launch
 from ament_index_python.packages import get_package_share_directory
+import launch
 from launch.actions import DeclareLaunchArgument
 from launch.actions import GroupAction
 from launch.actions import OpaqueFunction
@@ -26,8 +25,8 @@ from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.actions import LoadComposableNodes
 from launch_ros.descriptions import ComposableNode
+import yaml
 
-import os
 
 def launch_setup(context, *args, **kwargs):
     vehicle_info_param_path = LaunchConfiguration("vehicle_info_param_file").perform(context)
@@ -71,7 +70,6 @@ def launch_setup(context, *args, **kwargs):
         condition=LaunchConfigurationEquals("container", ""),
     )
 
-
     group = GroupAction(
         [
             container,
@@ -80,6 +78,7 @@ def launch_setup(context, *args, **kwargs):
     )
 
     return [group]
+
 
 def generate_launch_description():
     def add_launch_arg(name: str, default_value=None):
@@ -100,7 +99,7 @@ def generate_launch_description():
             vehicle_info_param,
             add_launch_arg("container", ""),
             add_launch_arg("input/pointcloud", "pointcloud"),
-            add_launch_arg("output/pointcloud", "no_ground/pointcloud")
+            add_launch_arg("output/pointcloud", "no_ground/pointcloud"),
         ]
         + [OpaqueFunction(function=launch_setup)]
     )
