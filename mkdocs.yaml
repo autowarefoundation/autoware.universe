@@ -48,6 +48,10 @@ extra_javascript:
 
 plugins:
   - awesome-pages
+  - exclude:
+      regex:
+        - '^(?!(.*/)?assets/).*\.(?!(.*\.)?md|(.*\.)?svg|(.*\.)?png|(.*\.)?jpg).*$'
+        - "^(.*/)?[^.]*$"
   - same-dir
   - search
 
