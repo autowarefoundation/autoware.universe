@@ -51,7 +51,7 @@ plugins:
   - exclude:
       regex:
         - '^(?!(.*/)?assets/).*\.(?!(.*\.)?md|(.*\.)?svg|(.*\.)?png|(.*\.)?jpg).*$'
-        - '^(.*/)?[^.]*$'
+        - "^(.*/)?[^.]*$"
   - same-dir
   - search
 
