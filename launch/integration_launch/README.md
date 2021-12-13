@@ -7,7 +7,6 @@
 ## Package Dependencies
 
 - autoware_launch
-- scenario_runner
 
 ## Notes
 
