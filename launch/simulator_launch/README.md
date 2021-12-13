@@ -17,4 +17,4 @@ Please see `<exec_depend>` in `package.xml`.
   </include>
 ```
 
-The simultor model used in simple_plannings_simulator is loaded from "config/simulator_model.param.yaml" in the "`VEHICLE_MODEL`_description" package.
+The simulator model used in simple_planning_simulator is loaded from "config/simulator_model.param.yaml" in the "`VEHICLE_MODEL`_description" package.
