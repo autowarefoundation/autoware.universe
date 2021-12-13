@@ -209,18 +209,14 @@ def launch_setup(context, *args, **kwargs):
         condition=UnlessCondition(LaunchConfiguration("use_surround_obstacle_check")),
     )
 
-    group = GroupAction(
-        [
-            container,
-            surround_obstacle_checker_loader,
-            relay_loader
-        ]
-    )
+    group = GroupAction([container, surround_obstacle_checker_loader, relay_loader])
 
     return [group]
 
+
 def generate_launch_description():
     launch_arguments = []
+
     def add_launch_arg(name: str, default_value=None, description=None):
         launch_arguments.append(
             DeclareLaunchArgument(name, default_value=default_value, description=description)
@@ -233,13 +229,14 @@ def generate_launch_description():
             FindPackageShare("vehicle_info_util"),
             "/config/vehicle_info.param.yaml",
         ],
-        "path to the parameter file of vehicle information"
+        "path to the parameter file of vehicle information",
     )
 
     # obstacle_avoidance_planner
-    add_launch_arg("input_path_topic",
-    "/planning/scenario_planning/lane_driving/behavior_planning/path",
-    "input path topic of obstacle_avoidance_planner"
+    add_launch_arg(
+        "input_path_topic",
+        "/planning/scenario_planning/lane_driving/behavior_planning/path",
+        "input path topic of obstacle_avoidance_planner",
     )
 
     # surround obstacle checker

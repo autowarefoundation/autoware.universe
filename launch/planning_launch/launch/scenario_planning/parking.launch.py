@@ -119,7 +119,6 @@ def launch_setup(context, *args, **kwargs):
         ],
     )
 
-
     group = GroupAction(
         [
             PushRosNamespace("parking"),
@@ -128,6 +127,7 @@ def launch_setup(context, *args, **kwargs):
     )
 
     return [group]
+
 
 def generate_launch_description():
     launch_arguments = []
@@ -143,7 +143,7 @@ def generate_launch_description():
             FindPackageShare("vehicle_info_util"),
             "/config/vehicle_info.param.yaml",
         ],
-        "path to the parameter file of vehicle information"
+        "path to the parameter file of vehicle information",
     )
 
     # component

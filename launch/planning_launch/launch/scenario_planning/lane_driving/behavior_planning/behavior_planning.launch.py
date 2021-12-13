@@ -17,10 +17,10 @@ import os
 from ament_index_python.packages import get_package_share_directory
 import launch
 from launch.actions import DeclareLaunchArgument
+from launch.actions import ExecuteProcess
 from launch.actions import GroupAction
 from launch.actions import IncludeLaunchDescription
 from launch.actions import OpaqueFunction
-from launch.actions import ExecuteProcess
 from launch.actions import SetLaunchConfiguration
 from launch.conditions import IfCondition
 from launch.conditions import UnlessCondition
@@ -352,7 +352,8 @@ def launch_setup(context, *args, **kwargs):
                     "{approval: true}",
                     "-r",
                     "10",
-                ])
+                ]
+            ),
         ]
     )
 
@@ -373,10 +374,12 @@ def generate_launch_description():
             FindPackageShare("vehicle_info_util"),
             "/config/vehicle_info.param.yaml",
         ],
-        "path to the parameter file of vehicle information"
+        "path to the parameter file of vehicle information",
     )
 
-    add_launch_arg("input_route_topic_name", "/planning/mission_planning/route", "input topic of route")
+    add_launch_arg(
+        "input_route_topic_name", "/planning/mission_planning/route", "input topic of route"
+    )
     add_launch_arg("map_topic_name", "/map/vector_map", "input topic of map")
 
     # component
