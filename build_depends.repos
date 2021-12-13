@@ -51,3 +51,10 @@ repositories:
     type: git
     url: https://github.com/astuff/pacmod3_msgs
     version: main
+
+  ## for launch packages
+
+  description/sensor/velodyne_simulator:
+    type: git
+    url: https://github.com/tier4/velodyne_simulator.git
+    version: ros2
