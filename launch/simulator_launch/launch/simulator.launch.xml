@@ -1,4 +1,5 @@
 <launch>
+  <arg name="vehicle_info_param_file" />
   <arg name="scenario_simulation" default="" description="use scenario simulation"/>
 
   <arg name="perception/enable_detection_failure" default="true" description="enable to simulate detection failure when using dummy perception"/>
@@ -29,7 +30,8 @@
     <group unless="$(var scenario_simulation)">
       <arg name="simulator_model" default="$(var vehicle_model_pkg)/config/simulator_model.param.yaml" description="path to the file of simulator model"/>
       <include file="$(find-pkg-share simple_planning_simulator)/launch/simple_planning_simulator.launch.py">
-        <arg name="simulator_model" value="$(var simulator_model)"/>
+        <arg name="vehicle_info_param_file" value="$(var vehicle_info_param_file)" />
+        <arg name="simulator_model_param_file" value="$(var simulator_model)"/>
         <arg name="initial_engage_state" value="$(var initial_engage_state)"/>
       </include>
     </group>
