@@ -236,8 +236,10 @@ class GroundSegmentationPipeline:
                     ("input", "range_cropped/pointcloud"),
                     ("output", output_topic),
                 ],
-                parameters=[self.ground_segmentation_param["common_ground_filter"]["parameters"],
-                            self.vehicle_info],
+                parameters=[
+                    self.ground_segmentation_param["common_ground_filter"]["parameters"],
+                    self.vehicle_info,
+                ],
                 extra_arguments=[
                     {"use_intra_process_comms": LaunchConfiguration("use_intra_process")}
                 ],
@@ -435,8 +437,7 @@ class GroundSegmentationPipeline:
                     "output_frame": LaunchConfiguration("base_frame"),
                 }
             ],
-            extra_arguments=[
-                {"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
+            extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
         )
 
     @staticmethod
@@ -452,8 +453,7 @@ class GroundSegmentationPipeline:
                     "output_frame": LaunchConfiguration("base_frame"),
                 }
             ],
-            extra_arguments=[
-                {"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
+            extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
         )
 
 
