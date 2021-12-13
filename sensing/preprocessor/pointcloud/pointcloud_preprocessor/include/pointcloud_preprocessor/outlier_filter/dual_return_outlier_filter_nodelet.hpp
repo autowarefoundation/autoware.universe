@@ -70,7 +70,8 @@ private:
   double weak_first_distance_ratio_;
   double general_distance_ratio_;
   int weak_first_local_noise_threshold_;
-  double visibility_threshold_;
+  double visibility_error_threshold_;
+  double visibility_warn_threshold_;
   int vertical_bins_;
   float max_azimuth_diff_;
 

@@ -43,7 +43,10 @@ DualReturnOutlierFilterComponent::DualReturnOutlierFilterComponent(
 
     weak_first_local_noise_threshold_ =
       static_cast<int>(declare_parameter("weak_first_local_noise_threshold", 10));
-    visibility_threshold_ = static_cast<float>(declare_parameter("visibility_threshold", 0.5));
+    visibility_error_threshold_ =
+      static_cast<float>(declare_parameter("visibility_threshold", 0.5));
+    visibility_warn_threshold_ =
+      static_cast<float>(declare_parameter("visibility_warn_threshold", 0.7));
   }
   updater_.setHardwareID("dual_return_outlier_filter");
   updater_.add(
@@ -72,9 +75,9 @@ void DualReturnOutlierFilterComponent::onVisibilityChecker(DiagnosticStatusWrapp
   auto level = DiagnosticStatus::OK;
   if (visibility_ < 0) {
     level = DiagnosticStatus::STALE;
-  } else if (visibility_ < visibility_threshold_) {
+  } else if (visibility_ < visibility_error_threshold_) {
     level = DiagnosticStatus::ERROR;
-  } else if (visibility_ < (1 + visibility_threshold_) / 2) {
+  } else if (visibility_ < visibility_warn_threshold_) {
     level = DiagnosticStatus::WARN;
   } else {
     level = DiagnosticStatus::OK;
