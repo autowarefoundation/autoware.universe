@@ -42,8 +42,7 @@ Visualization Manager:
           Show Arrows: true
           Show Axes: true
           Show Names: true
-          Tree:
-            {}
+          Tree: {}
           Update Interval: 0
           Value: false
         - Alpha: 0.5
@@ -648,8 +647,7 @@ Visualization Manager:
             - Class: rviz_default_plugins/MarkerArray
               Enabled: true
               Name: MonteCarloInitialPose
-              Namespaces:
-                {}
+              Namespaces: {}
               Topic:
                 Depth: 5
                 Durability Policy: Volatile
@@ -745,8 +743,7 @@ Visualization Manager:
                 Alpha: 0.999
                 Color: 119; 11; 32
               Name: DetectedObjects
-              Namespaces:
-                {}
+              Namespaces: {}
               PEDESTRIAN:
                 Alpha: 0.999
                 Color: 255; 192; 203
@@ -793,8 +790,7 @@ Visualization Manager:
                 Alpha: 0.999
                 Color: 119; 11; 32
               Name: TrackedObjects
-              Namespaces:
-                {}
+              Namespaces: {}
               PEDESTRIAN:
                 Alpha: 0.999
                 Color: 255; 192; 203
@@ -841,8 +837,7 @@ Visualization Manager:
                 Alpha: 0.999
                 Color: 119; 11; 32
               Name: PredictedObjects
-              Namespaces:
-                {}
+              Namespaces: {}
               PEDESTRIAN:
                 Alpha: 0.999
                 Color: 255; 192; 203
@@ -883,8 +878,7 @@ Visualization Manager:
             - Class: rviz_default_plugins/MarkerArray
               Enabled: true
               Name: MapBasedDetectionResult
-              Namespaces:
-                {}
+              Namespaces: {}
               Topic:
                 Depth: 5
                 Durability Policy: Volatile
@@ -991,8 +985,7 @@ Visualization Manager:
                     - Class: rviz_default_plugins/MarkerArray
                       Enabled: false
                       Name: Arrow
-                      Namespaces:
-                        {}
+                      Namespaces: {}
                       Topic:
                         Depth: 5
                         Durability Policy: Volatile
@@ -1402,8 +1395,7 @@ Visualization Manager:
         - Class: rviz_default_plugins/MarkerArray
           Enabled: false
           Name: Debug/MPC
-          Namespaces:
-            {}
+          Namespaces: {}
           Topic:
             Depth: 5
             Durability Policy: Volatile
@@ -1414,8 +1406,7 @@ Visualization Manager:
         - Class: rviz_default_plugins/MarkerArray
           Enabled: false
           Name: Debug/PurePursuit
-          Namespaces:
-            {}
+          Namespaces: {}
           Topic:
             Depth: 5
             Durability Policy: Volatile
