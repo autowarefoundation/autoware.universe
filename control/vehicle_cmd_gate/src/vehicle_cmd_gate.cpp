@@ -14,8 +14,8 @@
 
 #include "vehicle_cmd_gate/vehicle_cmd_gate.hpp"
 
-#include <tier4_api_utils/tier4_api_utils.hpp>
 #include <rclcpp/logging.hpp>
+#include <tier4_api_utils/tier4_api_utils.hpp>
 
 #include <chrono>
 #include <functional>

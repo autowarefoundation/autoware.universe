@@ -90,12 +90,12 @@ endif
 
 ### Input
 
-| Name                         | Type                                                 | Description                                                                                                                                                                                   |
-| ---------------------------- | ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Name                         | Type                                                 | Description                                                                                                                                                                                 |
+| ---------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `/diagnostics_agg`           | `diagnostic_msgs::msg::DiagnosticArray`              | Diagnostic information aggregated based [diagnostic_aggregator setting](https://github.com/tier4/autoware.iv/tree/main/system/system_error_monitor/config/diagnostic_aggregator) is used to |
-| `/autoware/state`            | `autoware_auto_system_msgs::msg::AutowareState`      | Required to ignore error during Route, Planning and Finalizing.                                                                                                                               |
-| `/control/current_gate_mode` | `tier4_control_msgs::msg::GateMode`                  | Required to select the appropriate module from `autonomous_driving` or `external_control`                                                                                                     |
-| `/vehicle/control_mode`      | `autoware_auto_vehicle_msgs::msg::ControlModeReport` | Required to not hold emergency during manual driving                                                                                                                                          |
+| `/autoware/state`            | `autoware_auto_system_msgs::msg::AutowareState`      | Required to ignore error during Route, Planning and Finalizing.                                                                                                                             |
+| `/control/current_gate_mode` | `tier4_control_msgs::msg::GateMode`                  | Required to select the appropriate module from `autonomous_driving` or `external_control`                                                                                                   |
+| `/vehicle/control_mode`      | `autoware_auto_vehicle_msgs::msg::ControlModeReport` | Required to not hold emergency during manual driving                                                                                                                                        |
 
 ### Output
 
@@ -108,11 +108,11 @@ endif
 
 ### Node Parameters
 
-| Name                         | Type   | Default Value | Explanation                                                                                                                                               |
-| ---------------------------- | ------ | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ignore_missing_diagnostics` | bool   | `false`       | If this parameter is turned off, it will be ignored if required modules have not been received.                                                           |
-| `add_leaf_diagnostics`       | bool   | `true`        | Required to use children diagnostics.                                                                                                                     |
-| `diag_timeout_sec`           | double | `1.0` (sec)   | If required diagnostic is not received for a `diag_timeout_sec`, the diagnostic state become STALE state.                                                 |
+| Name                         | Type   | Default Value | Explanation                                                                                                                                             |
+| ---------------------------- | ------ | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ignore_missing_diagnostics` | bool   | `false`       | If this parameter is turned off, it will be ignored if required modules have not been received.                                                         |
+| `add_leaf_diagnostics`       | bool   | `true`        | Required to use children diagnostics.                                                                                                                   |
+| `diag_timeout_sec`           | double | `1.0` (sec)   | If required diagnostic is not received for a `diag_timeout_sec`, the diagnostic state become STALE state.                                               |
 | `data_ready_timeout`         | double | `30.0`        | If input topics required for system_error_monitor are not available for `data_ready_timeout` seconds, autoware_state will translate to emergency state. |
 
 ### Core Parameters

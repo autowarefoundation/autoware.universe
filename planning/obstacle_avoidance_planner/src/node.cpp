@@ -20,10 +20,10 @@
 #include "obstacle_avoidance_planner/process_cv.hpp"
 #include "obstacle_avoidance_planner/util.hpp"
 
-#include <tier4_autoware_utils/trajectory/tmp_conversion.hpp>
 #include <opencv2/core.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/time.hpp>
+#include <tier4_autoware_utils/trajectory/tmp_conversion.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
@@ -601,7 +601,8 @@ void ObstacleAvoidancePlanner::publishingDebugData(
   traj.header = path.header;
   avoiding_traj_pub_->publish(traj);
 
-  auto debug_smoothed_points = tier4_autoware_utils::convertToTrajectory(debug_data.smoothed_points);
+  auto debug_smoothed_points =
+    tier4_autoware_utils::convertToTrajectory(debug_data.smoothed_points);
   debug_smoothed_points.header = path.header;
   debug_smoothed_points_pub_->publish(debug_smoothed_points);
 

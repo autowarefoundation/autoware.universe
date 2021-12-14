@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <scene_module/virtual_traffic_light/scene.hpp>
+#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 using tier4_autoware_utils::appendMarkerArray;
 using tier4_autoware_utils::createDefaultMarker;

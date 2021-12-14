@@ -16,12 +16,12 @@
 
 #include "obstacle_collision_checker/util/create_vehicle_footprint.hpp"
 
+#include <pcl_ros/transforms.hpp>
+#include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/math/normalization.hpp>
 #include <tier4_autoware_utils/math/unit_conversion.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
-#include <pcl_ros/transforms.hpp>
-#include <rclcpp/rclcpp.hpp>
 
 #include <boost/geometry.hpp>
 
@@ -192,8 +192,9 @@ std::vector<LinearRing2d> ObstacleCollisionChecker::createVehicleFootprints(
   // Create vehicle footprint on each TrajectoryPoint
   std::vector<LinearRing2d> vehicle_footprints;
   for (const auto & p : trajectory.points) {
-    vehicle_footprints.push_back(tier4_autoware_utils::transformVector<tier4_autoware_utils::LinearRing2d>(
-      local_vehicle_footprint, tier4_autoware_utils::pose2transform(p.pose)));
+    vehicle_footprints.push_back(
+      tier4_autoware_utils::transformVector<tier4_autoware_utils::LinearRing2d>(
+        local_vehicle_footprint, tier4_autoware_utils::pose2transform(p.pose)));
   }
 
   return vehicle_footprints;
@@ -248,7 +249,8 @@ bool ObstacleCollisionChecker::hasCollision(
   const LinearRing2d & vehicle_footprint)
 {
   for (const auto & point : obstacle_pointcloud) {
-    if (boost::geometry::within(tier4_autoware_utils::Point2d{point.x, point.y}, vehicle_footprint)) {
+    if (boost::geometry::within(
+          tier4_autoware_utils::Point2d{point.x, point.y}, vehicle_footprint)) {
       RCLCPP_WARN(
         rclcpp::get_logger("obstacle_collision_checker"),
         "[ObstacleCollisionChecker] Collide to Point x: %f y: %f", point.x, point.y);

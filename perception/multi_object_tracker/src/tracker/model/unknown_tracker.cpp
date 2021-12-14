@@ -36,14 +36,14 @@ UnknownTracker::UnknownTracker(
 
   // initialize params
   ekf_params_.use_measurement_covariance = false;
-  float q_stddev_x = 0.0;                              // [m/s]
-  float q_stddev_y = 0.0;                              // [m/s]
+  float q_stddev_x = 0.0;                                    // [m/s]
+  float q_stddev_y = 0.0;                                    // [m/s]
   float q_stddev_vx = tier4_autoware_utils::kmph2mps(0.1);   // [m/(s*s)]
   float q_stddev_vy = tier4_autoware_utils::kmph2mps(0.1);   // [m/(s*s)]
-  float r_stddev_x = 0.4;                              // [m]
-  float r_stddev_y = 0.4;                              // [m]
-  float p0_stddev_x = 1.0;                             // [m/s]
-  float p0_stddev_y = 1.0;                             // [m/s]
+  float r_stddev_x = 0.4;                                    // [m]
+  float r_stddev_y = 0.4;                                    // [m]
+  float p0_stddev_x = 1.0;                                   // [m/s]
+  float p0_stddev_y = 1.0;                                   // [m/s]
   float p0_stddev_vx = tier4_autoware_utils::kmph2mps(0.1);  // [m/(s*s)]
   float p0_stddev_vy = tier4_autoware_utils::kmph2mps(0.1);  // [m/(s*s)]
   ekf_params_.q_cov_x = std::pow(q_stddev_x, 2.0);

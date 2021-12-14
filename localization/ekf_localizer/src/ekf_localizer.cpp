@@ -14,8 +14,8 @@
 
 #include "ekf_localizer/ekf_localizer.hpp"
 
-#include <tier4_autoware_utils/math/unit_conversion.hpp>
 #include <rclcpp/logging.hpp>
+#include <tier4_autoware_utils/math/unit_conversion.hpp>
 
 #include <algorithm>
 #include <functional>
@@ -185,7 +185,8 @@ void EKFLocalizer::setCurrentResult()
     tf2::Matrix3x3(q_tf).getRPY(roll, pitch, yaw_tmp);
   }
   double yaw = ekf_.getXelement(IDX::YAW) + ekf_.getXelement(IDX::YAWB);
-  current_ekf_pose_.pose.orientation = tier4_autoware_utils::createQuaternionFromRPY(roll, pitch, yaw);
+  current_ekf_pose_.pose.orientation =
+    tier4_autoware_utils::createQuaternionFromRPY(roll, pitch, yaw);
 
   current_ekf_pose_no_yawbias_ = current_ekf_pose_;
   current_ekf_pose_no_yawbias_.pose.orientation =

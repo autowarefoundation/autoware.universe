@@ -21,8 +21,8 @@
 #include <vector>
 
 #define FMT_HEADER_ONLY
-#include "system_error_monitor/system_error_monitor_core.hpp"
 #include "system_error_monitor/diagnostics_filter.hpp"
+#include "system_error_monitor/system_error_monitor_core.hpp"
 
 #include <fmt/format.h>
 

@@ -16,12 +16,12 @@
 
 #include "behavior_path_planner/utilities.hpp"
 
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <interpolation/spline_interpolation.hpp>
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <opencv2/opencv.hpp>
+#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <tf2/utils.h>
 
@@ -49,7 +49,8 @@ std::vector<double> calcPathArcLengthArray(
   end = std::min(end, path.points.size());
 
   for (size_t i = start; i < end; ++i) {
-    sum += tier4_autoware_utils::calcDistance2d(path.points.at(i).point, path.points.at(i - 1).point);
+    sum +=
+      tier4_autoware_utils::calcDistance2d(path.points.at(i).point, path.points.at(i - 1).point);
     out.push_back(sum);
   }
   return out;
@@ -76,7 +77,8 @@ double calcPathArcLength(const PathWithLaneId & path, size_t start, size_t end)
 
   double sum = 0.0;
   for (size_t i = start; i < end; ++i) {
-    sum += tier4_autoware_utils::calcDistance2d(path.points.at(i).point, path.points.at(i - 1).point);
+    sum +=
+      tier4_autoware_utils::calcDistance2d(path.points.at(i).point, path.points.at(i - 1).point);
   }
 
   return is_negative_direction ? -sum : sum;

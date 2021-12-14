@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <tier4_autoware_utils/math/constants.hpp>
 #include <centerpoint_trt.hpp>
 #include <heatmap_utils.hpp>
+#include <tier4_autoware_utils/math/constants.hpp>
 
 #include <ATen/cuda/CUDAContext.h>
 #include <NvOnnxParser.h>

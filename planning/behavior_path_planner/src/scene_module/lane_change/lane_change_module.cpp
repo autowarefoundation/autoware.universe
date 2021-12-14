@@ -18,9 +18,9 @@
 #include "behavior_path_planner/scene_module/lane_change/util.hpp"
 #include "behavior_path_planner/utilities.hpp"
 
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
+#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <autoware_auto_perception_msgs/msg/object_classification.hpp>
 

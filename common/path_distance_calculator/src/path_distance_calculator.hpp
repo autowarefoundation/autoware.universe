@@ -15,8 +15,8 @@
 #ifndef PATH_DISTANCE_CALCULATOR_HPP_
 #define PATH_DISTANCE_CALCULATOR_HPP_
 
-#include <tier4_autoware_utils/ros/self_pose_listener.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/ros/self_pose_listener.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <tier4_debug_msgs/msg/float64_stamped.hpp>

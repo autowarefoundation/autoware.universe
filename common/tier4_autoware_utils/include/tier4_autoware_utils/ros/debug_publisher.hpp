@@ -31,8 +31,8 @@ namespace debug_publisher
 {
 template <
   class T_msg, class T,
-  std::enable_if_t<tier4_autoware_utils::debug_traits::is_debug_message<T_msg>::value, std::nullptr_t> =
-    nullptr>
+  std::enable_if_t<
+    tier4_autoware_utils::debug_traits::is_debug_message<T_msg>::value, std::nullptr_t> = nullptr>
 T_msg toDebugMsg(const T & data, const rclcpp::Time & stamp)
 {
   T_msg msg;

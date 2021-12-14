@@ -208,8 +208,8 @@ double AstarSearch::estimateCost(const geometry_msgs::msg::Pose & pose)
     total_cost +=
       calcReedsSheppDistance(pose, goal_pose_, radius) * astar_param_.distance_heuristic_weight;
   } else {
-    total_cost +=
-      tier4_autoware_utils::calcDistance2d(pose, goal_pose_) * astar_param_.distance_heuristic_weight;
+    total_cost += tier4_autoware_utils::calcDistance2d(pose, goal_pose_) *
+                  astar_param_.distance_heuristic_weight;
   }
   return total_cost;
 }
@@ -336,7 +336,8 @@ bool AstarSearch::isGoal(const AstarNode & node)
 {
   const double lateral_goal_range = planner_common_param_.lateral_goal_range / 2.0;
   const double longitudinal_goal_range = planner_common_param_.longitudinal_goal_range / 2.0;
-  const double goal_angle = tier4_autoware_utils::deg2rad(planner_common_param_.angle_goal_range / 2.0);
+  const double goal_angle =
+    tier4_autoware_utils::deg2rad(planner_common_param_.angle_goal_range / 2.0);
 
   const auto relative_pose = calcRelativePose(goal_pose_, node2pose(node));
 
@@ -351,7 +352,8 @@ bool AstarSearch::isGoal(const AstarNode & node)
     return false;
   }
 
-  const auto angle_diff = tier4_autoware_utils::normalizeRadian(tf2::getYaw(relative_pose.orientation));
+  const auto angle_diff =
+    tier4_autoware_utils::normalizeRadian(tf2::getYaw(relative_pose.orientation));
   if (std::abs(angle_diff) > goal_angle) {
     return false;
   }

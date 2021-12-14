@@ -22,9 +22,9 @@
 
 namespace planning_diagnostics
 {
+using diagnostic_msgs::msg::DiagnosticStatus;
 using tier4_autoware_utils::calcCurvature;
 using tier4_autoware_utils::calcDistance2d;
-using diagnostic_msgs::msg::DiagnosticStatus;
 
 PlanningErrorMonitorNode::PlanningErrorMonitorNode(const rclcpp::NodeOptions & node_options)
 : Node("planning_error_monitor", node_options)

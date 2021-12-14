@@ -18,8 +18,8 @@
 #include "control_performance_analysis/control_performance_analysis_core.hpp"
 #include "control_performance_analysis/msg/error_stamped.hpp"
 
-#include <tier4_autoware_utils/ros/self_pose_listener.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/ros/self_pose_listener.hpp>
 
 #include <autoware_auto_control_msgs/msg/ackermann_lateral_command.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>

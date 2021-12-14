@@ -122,7 +122,9 @@ PathWithLaneId removeOverlappingPoints(const PathWithLaneId & input_path)
     }
 
     constexpr double min_dist = 0.001;
-    if (tier4_autoware_utils::calcDistance3d(filtered_path.points.back().point, pt.point) < min_dist) {
+    if (
+      tier4_autoware_utils::calcDistance3d(filtered_path.points.back().point, pt.point) <
+      min_dist) {
       filtered_path.points.back().lane_ids.push_back(pt.lane_ids.front());
       filtered_path.points.back().point.longitudinal_velocity_mps = std::min(
         pt.point.longitudinal_velocity_mps,
@@ -380,8 +382,8 @@ void RouteHandler::setPullOverGoalPose(
     lanelet::utils::getArcCoordinates({target_lane}, route_msg_.goal_pose);
   Path centerline_path = convertToPathFromPathWithLaneId(
     getCenterLinePath({target_lane}, 0.0, arc_position_goal.length + 10));
-  const auto seg_idx =
-    tier4_autoware_utils::findNearestSegmentIndex(centerline_path.points, route_msg_.goal_pose.position);
+  const auto seg_idx = tier4_autoware_utils::findNearestSegmentIndex(
+    centerline_path.points, route_msg_.goal_pose.position);
   const double d_lat = tier4_autoware_utils::calcLongitudinalOffsetToSegment(
     centerline_path.points, seg_idx, route_msg_.goal_pose.position);
   const auto shoulder_point =

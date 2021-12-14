@@ -17,10 +17,10 @@
 #include "behavior_path_planner/path_shifter/path_shifter.hpp"
 #include "behavior_path_planner/path_utilities.hpp"
 
-#include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 
 #include <boost/geometry/algorithms/dispatch/distance.hpp>
 
@@ -261,8 +261,8 @@ std::vector<PullOverPath> getPullOverPaths(
       }
       candidate_path.path = combineReferencePath(reference_path1, shifted_path.path);
       candidate_path.shifted_path = shifted_path;
-      shift_point.start_idx =
-        tier4_autoware_utils::findNearestIndex(shifted_path.path.points, shift_point.start.position);
+      shift_point.start_idx = tier4_autoware_utils::findNearestIndex(
+        shifted_path.path.points, shift_point.start.position);
       shift_point.end_idx =
         tier4_autoware_utils::findNearestIndex(shifted_path.path.points, shift_point.end.position);
       candidate_path.shift_point = shift_point;

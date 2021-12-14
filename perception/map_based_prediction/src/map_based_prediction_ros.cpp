@@ -16,8 +16,8 @@
 
 #include "map_based_prediction.hpp"
 
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <unique_identifier_msgs/msg/uuid.hpp>
 
@@ -135,8 +135,8 @@ double MapBasedPredictionROS::calculateLikelihood(
   }
 
   // Euclid Lateral Distance
-  const double abs_d = std::fabs(
-    tier4_autoware_utils::calcLateralOffset(path, object.kinematics.pose_with_covariance.pose.position));
+  const double abs_d = std::fabs(tier4_autoware_utils::calcLateralOffset(
+    path, object.kinematics.pose_with_covariance.pose.position));
 
   // Yaw Difference between obstacle and lane angle
   const double lane_yaw = tf2::getYaw(path.at(nearest_segment_idx).orientation);
@@ -339,7 +339,8 @@ bool MapBasedPredictionROS::updateObjectBuffer(
     single_object_data.future_possible_lanelets = current_lanelets;
     single_object_data.pose = current_object_pose;
     const double object_yaw = getObjectYaw(object);
-    single_object_data.pose.pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(object_yaw);
+    single_object_data.pose.pose.orientation =
+      tier4_autoware_utils::createQuaternionFromYaw(object_yaw);
 
     std::deque<ObjectData> object_data;
     object_data.push_back(single_object_data);
@@ -355,7 +356,8 @@ bool MapBasedPredictionROS::updateObjectBuffer(
     single_object_data.future_possible_lanelets = current_lanelets;
     single_object_data.pose = current_object_pose;
     const double object_yaw = getObjectYaw(object);
-    single_object_data.pose.pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(object_yaw);
+    single_object_data.pose.pose.orientation =
+      tier4_autoware_utils::createQuaternionFromYaw(object_yaw);
 
     // push new object data
     object_data.push_back(single_object_data);

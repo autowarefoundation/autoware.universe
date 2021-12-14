@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "tier4_api_utils/tier4_api_utils.hpp"
 #include "gtest/gtest.h"
 #include "rclcpp/rclcpp.hpp"
+#include "tier4_api_utils/tier4_api_utils.hpp"
 
 TEST(tier4_api_utils, instantiate)
 {

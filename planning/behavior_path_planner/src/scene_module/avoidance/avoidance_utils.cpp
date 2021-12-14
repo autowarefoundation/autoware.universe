@@ -16,9 +16,9 @@
 #include "behavior_path_planner/scene_module/avoidance/avoidance_module.hpp"
 #include "behavior_path_planner/utilities.hpp"
 
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
+#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <algorithm>
 #include <iomanip>
@@ -135,7 +135,8 @@ double calcDistanceToClosestFootprintPoint(
     path.points, ego_pos, object.kinematics.initial_pose_with_covariance.pose.position);
   for (const auto & p : object_poly.outer()) {
     const auto point = tier4_autoware_utils::createPoint(p.x(), p.y(), 0.0);
-    distance = std::min(distance, tier4_autoware_utils::calcSignedArcLength(path.points, ego_pos, point));
+    distance =
+      std::min(distance, tier4_autoware_utils::calcSignedArcLength(path.points, ego_pos, point));
   }
   return distance;
 }

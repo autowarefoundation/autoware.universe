@@ -635,8 +635,8 @@ std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> alignVelocityWith
     const double closest_to_target_dist = tier4_autoware_utils::calcSignedArcLength(
       truncated_points, truncated_points.at(closest_seg_idx).pose.position,
       traj_points[i].pose.position);
-    const double seg_dist =
-      tier4_autoware_utils::calcSignedArcLength(truncated_points, closest_seg_idx, closest_seg_idx + 1);
+    const double seg_dist = tier4_autoware_utils::calcSignedArcLength(
+      truncated_points, closest_seg_idx, closest_seg_idx + 1);
 
     // interpolate 1st-nearest (v1) value and 2nd-nearest value (v2)
     const auto lerp = [&](const double v1, const double v2, const double ratio) {

@@ -14,11 +14,11 @@
 
 #include "behavior_path_planner/utilities.hpp"
 
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <opencv2/opencv.hpp>
+#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <algorithm>
 #include <limits>
@@ -654,7 +654,9 @@ PathWithLaneId removeOverlappingPoints(const PathWithLaneId & input_path)
     }
 
     constexpr double min_dist = 0.001;
-    if (tier4_autoware_utils::calcDistance3d(filtered_path.points.back().point, pt.point) < min_dist) {
+    if (
+      tier4_autoware_utils::calcDistance3d(filtered_path.points.back().point, pt.point) <
+      min_dist) {
       filtered_path.points.back().lane_ids.push_back(pt.lane_ids.front());
       filtered_path.points.back().point.longitudinal_velocity_mps = std::min(
         pt.point.longitudinal_velocity_mps,
@@ -692,8 +694,8 @@ bool setGoal(
       const double closest_to_goal_dist = tier4_autoware_utils::calcSignedArcLength(
         input.points, input.points.at(closest_seg_idx).point.pose.position,
         goal.position);  // TODO(murooka) implement calcSignedArcLength(points, idx, point)
-      const double seg_dist =
-        tier4_autoware_utils::calcSignedArcLength(input.points, closest_seg_idx, closest_seg_idx + 1);
+      const double seg_dist = tier4_autoware_utils::calcSignedArcLength(
+        input.points, closest_seg_idx, closest_seg_idx + 1);
       const double closest_z = input.points.at(closest_seg_idx).point.pose.position.z;
       const double next_z = input.points.at(closest_seg_idx + 1).point.pose.position.z;
       const double goal_z = std::abs(seg_dist) < 1e-6
@@ -722,8 +724,8 @@ bool setGoal(
     pre_refined_goal.point.pose.orientation = goal.orientation;
 
     {  // NOTE: interpolate z and velocity of pre_refined_goal
-      const size_t closest_seg_idx =
-        tier4_autoware_utils::findNearestSegmentIndex(input.points, pre_refined_goal.point.pose.position);
+      const size_t closest_seg_idx = tier4_autoware_utils::findNearestSegmentIndex(
+        input.points, pre_refined_goal.point.pose.position);
       const double closest_to_pre_goal_dist = tier4_autoware_utils::calcSignedArcLength(
         input.points, input.points.at(closest_seg_idx).point.pose.position,
         pre_refined_goal.point.pose.position);

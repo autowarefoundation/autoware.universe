@@ -43,16 +43,16 @@ PedestrianTracker::PedestrianTracker(
 
   // initialize params
   ekf_params_.use_measurement_covariance = false;
-  float q_stddev_x = 0.0;                               // [m/s]
-  float q_stddev_y = 0.0;                               // [m/s]
+  float q_stddev_x = 0.0;                                     // [m/s]
+  float q_stddev_y = 0.0;                                     // [m/s]
   float q_stddev_yaw = tier4_autoware_utils::deg2rad(20);     // [rad/s]
   float q_stddev_vx = tier4_autoware_utils::kmph2mps(5);      // [m/(s*s)]
   float q_stddev_wz = tier4_autoware_utils::deg2rad(20);      // [rad/(s*s)]
-  float r_stddev_x = 0.4;                               // [m]
-  float r_stddev_y = 0.4;                               // [m]
+  float r_stddev_x = 0.4;                                     // [m]
+  float r_stddev_y = 0.4;                                     // [m]
   float r_stddev_yaw = tier4_autoware_utils::deg2rad(30);     // [rad]
-  float p0_stddev_x = 1.0;                              // [m/s]
-  float p0_stddev_y = 1.0;                              // [m/s]
+  float p0_stddev_x = 1.0;                                    // [m/s]
+  float p0_stddev_y = 1.0;                                    // [m/s]
   float p0_stddev_yaw = tier4_autoware_utils::deg2rad(1000);  // [rad/s]
   float p0_stddev_vx = tier4_autoware_utils::kmph2mps(5);     // [m/(s*s)]
   float p0_stddev_wz = tier4_autoware_utils::deg2rad(10);     // [rad/(s*s)]

@@ -14,8 +14,8 @@
 
 #include "awapi_awiv_adapter/awapi_autoware_state_publisher.hpp"
 
-#include "tier4_auto_msgs_converter/tier4_auto_msgs_converter.hpp"
 #include "awapi_awiv_adapter/diagnostics_filter.hpp"
+#include "tier4_auto_msgs_converter/tier4_auto_msgs_converter.hpp"
 
 #include <regex>
 #include <string>

@@ -121,5 +121,4 @@ void InitialPoseButtonPanel::pushInitializeButton()
 
 }  // end namespace tier4_localization_rviz_plugin
 
-PLUGINLIB_EXPORT_CLASS(
-  tier4_localization_rviz_plugin::InitialPoseButtonPanel, rviz_common::Panel)
+PLUGINLIB_EXPORT_CLASS(tier4_localization_rviz_plugin::InitialPoseButtonPanel, rviz_common::Panel)

@@ -14,10 +14,10 @@
 
 #include "motion_velocity_smoother/motion_velocity_smoother_node.hpp"
 
-#include "tier4_autoware_utils/ros/update_param.hpp"
 #include "motion_velocity_smoother/smoother/jerk_filtered_smoother.hpp"
 #include "motion_velocity_smoother/smoother/l2_pseudo_jerk_smoother.hpp"
 #include "motion_velocity_smoother/smoother/linf_pseudo_jerk_smoother.hpp"
+#include "tier4_autoware_utils/ros/update_param.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -249,7 +249,8 @@ void MotionVelocitySmootherNode::initCommonParam()
   p.engage_acceleration = declare_parameter("engage_acceleration", 0.1);
   p.engage_exit_ratio = declare_parameter("engage_exit_ratio", 0.5);
   p.engage_exit_ratio = std::min(std::max(p.engage_exit_ratio, 0.0), 1.0);
-  p.stopping_velocity = declare_parameter("stopping_velocity", tier4_autoware_utils::kmph2mps(10.0));
+  p.stopping_velocity =
+    declare_parameter("stopping_velocity", tier4_autoware_utils::kmph2mps(10.0));
   p.stopping_distance = declare_parameter("stopping_distance", 0.0);
   p.extract_ahead_dist = declare_parameter("extract_ahead_dist", 200.0);
   p.extract_behind_dist = declare_parameter("extract_behind_dist", 3.0);
@@ -454,8 +455,8 @@ void MotionVelocitySmootherNode::onCurrentTrajectory(const Trajectory::ConstShar
   }
 
   // calculate trajectory velocity
-  TrajectoryPoints output =
-    calcTrajectoryVelocity(tier4_autoware_utils::convertToTrajectoryPointArray(*base_traj_raw_ptr_));
+  TrajectoryPoints output = calcTrajectoryVelocity(
+    tier4_autoware_utils::convertToTrajectoryPointArray(*base_traj_raw_ptr_));
   if (output.empty()) {
     RCLCPP_WARN(get_logger(), "Output Point is empty");
     return;
@@ -763,9 +764,9 @@ MotionVelocitySmootherNode::calcInitialMotion(
   if (vehicle_speed < engage_vel_thr) {
     if (target_vel >= node_param_.engage_velocity) {
       const auto idx = tier4_autoware_utils::searchZeroVelocityIndex(input_traj);
-      const double stop_dist =
-        idx ? tier4_autoware_utils::calcDistance2d(input_traj.at(*idx), input_traj.at(input_closest))
-            : 0.0;
+      const double stop_dist = idx ? tier4_autoware_utils::calcDistance2d(
+                                       input_traj.at(*idx), input_traj.at(input_closest))
+                                   : 0.0;
       if (!idx || stop_dist > node_param_.stop_dist_to_prohibit_engage) {
         type = InitializeType::ENGAGING;
         initial_vel = node_param_.engage_velocity;
@@ -984,7 +985,8 @@ double MotionVelocitySmootherNode::calcTravelDistance() const
     trajectory_utils::calcInterpolatedTrajectoryPoint(prev_output_, current_pose_ptr_->pose);
 
   if (prev_closest_point_) {
-    const double travel_dist = tier4_autoware_utils::calcDistance2d(*prev_closest_point_, closest_point);
+    const double travel_dist =
+      tier4_autoware_utils::calcDistance2d(*prev_closest_point_, closest_point);
     return travel_dist;
   }
 

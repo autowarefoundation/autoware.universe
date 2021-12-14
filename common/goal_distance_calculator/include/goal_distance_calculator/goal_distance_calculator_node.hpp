@@ -17,9 +17,9 @@
 
 #include "goal_distance_calculator/goal_distance_calculator.hpp"
 
+#include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/ros/debug_publisher.hpp>
 #include <tier4_autoware_utils/ros/self_pose_listener.hpp>
-#include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_planning_msgs/msg/route.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>

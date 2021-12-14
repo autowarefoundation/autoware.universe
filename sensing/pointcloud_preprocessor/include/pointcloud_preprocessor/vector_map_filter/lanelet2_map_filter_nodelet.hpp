@@ -15,10 +15,10 @@
 #ifndef POINTCLOUD_PREPROCESSOR__VECTOR_MAP_FILTER__LANELET2_MAP_FILTER_NODELET_HPP_
 #define POINTCLOUD_PREPROCESSOR__VECTOR_MAP_FILTER__LANELET2_MAP_FILTER_NODELET_HPP_
 
-#include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>

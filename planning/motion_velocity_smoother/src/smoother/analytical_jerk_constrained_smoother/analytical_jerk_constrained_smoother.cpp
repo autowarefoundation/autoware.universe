@@ -325,7 +325,9 @@ boost::optional<TrajectoryPoints> AnalyticalJerkConstrainedSmoother::applyLatera
       continue;
     }
 
-    if (tier4_autoware_utils::calcDistance2d(output->at(end_index), output->at(index)) < dist_threshold) {
+    if (
+      tier4_autoware_utils::calcDistance2d(output->at(end_index), output->at(index)) <
+      dist_threshold) {
       end_index = index;
       min_latacc_velocity = std::min(
         static_cast<double>(output->at(index).longitudinal_velocity_mps), min_latacc_velocity);
@@ -456,7 +458,8 @@ bool AnalyticalJerkConstrainedSmoother::applyBackwardDecelFilter(
       }
     }
     for (size_t i = decel_target_index; i > start_index; --i) {
-      dist += tier4_autoware_utils::calcDistance2d(output_trajectory.at(i - 1), output_trajectory.at(i));
+      dist +=
+        tier4_autoware_utils::calcDistance2d(output_trajectory.at(i - 1), output_trajectory.at(i));
       dist_to_target.at(i - 1) = dist;
     }
 

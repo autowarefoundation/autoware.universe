@@ -14,11 +14,11 @@
 
 #include "lane_departure_checker/lane_departure_checker_node.hpp"
 
+#include <lanelet2_extension/utility/query.hpp>
+#include <lanelet2_extension/visualization/visualization.hpp>
 #include <tier4_autoware_utils/math/unit_conversion.hpp>
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
-#include <lanelet2_extension/utility/query.hpp>
-#include <lanelet2_extension/visualization/visualization.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_segment.hpp>
 

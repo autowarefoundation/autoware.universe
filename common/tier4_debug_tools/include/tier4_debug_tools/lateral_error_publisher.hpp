@@ -17,10 +17,10 @@
 
 #define EIGEN_MPL2_ONLY
 
-#include <tier4_autoware_utils/trajectory/trajectory.hpp>
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Geometry>
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/trajectory/trajectory.hpp>
 
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>

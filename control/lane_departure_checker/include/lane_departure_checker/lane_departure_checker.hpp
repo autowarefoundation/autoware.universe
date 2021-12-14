@@ -15,9 +15,9 @@
 #ifndef LANE_DEPARTURE_CHECKER__LANE_DEPARTURE_CHECKER_HPP_
 #define LANE_DEPARTURE_CHECKER__LANE_DEPARTURE_CHECKER_HPP_
 
+#include <rosidl_runtime_cpp/message_initialization.hpp>
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 #include <tier4_autoware_utils/geometry/pose_deviation.hpp>
-#include <rosidl_runtime_cpp/message_initialization.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <autoware_auto_planning_msgs/msg/had_map_route.hpp>

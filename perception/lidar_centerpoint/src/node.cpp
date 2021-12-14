@@ -14,9 +14,9 @@
 
 #include "lidar_centerpoint/node.hpp"
 
-#include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <config.hpp>
 #include <pcl_ros/transforms.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
 
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 

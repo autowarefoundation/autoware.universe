@@ -22,10 +22,10 @@
 #include "behavior_path_planner/util/create_vehicle_footprint.hpp"
 #include "behavior_path_planner/utilities.hpp"
 
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <vehicle_info_util/vehicle_info.hpp>
 
 #include <algorithm>
@@ -92,7 +92,8 @@ bool PullOutModule::isExecutionRequested() const
     const auto vehicle_info = getVehicleInfo(planner_data_->parameters);
     const auto local_vehicle_footprint = createVehicleFootprint(vehicle_info);
     const auto vehicle_footprint = transformVector(
-      local_vehicle_footprint, tier4_autoware_utils::pose2transform(planner_data_->self_pose->pose));
+      local_vehicle_footprint,
+      tier4_autoware_utils::pose2transform(planner_data_->self_pose->pose));
     const auto road_lanes = getCurrentLanes();
 
     // check if goal pose is in shoulder lane and distance is long enough for pull out
@@ -552,7 +553,8 @@ bool PullOutModule::getBackDistance(
     const auto shoulder_line_path = route_handler->getCenterLinePath(
       pull_out_lanes, arc_position_pose.length - pull_out_lane_length_,
       arc_position_pose.length + pull_out_lane_length_);
-    const auto idx = tier4_autoware_utils::findNearestIndex(shoulder_line_path.points, current_pose);
+    const auto idx =
+      tier4_autoware_utils::findNearestIndex(shoulder_line_path.points, current_pose);
     yaw_shoulder_lane = tf2::getYaw(shoulder_line_path.points.at(*idx).point.pose.orientation);
   }
 

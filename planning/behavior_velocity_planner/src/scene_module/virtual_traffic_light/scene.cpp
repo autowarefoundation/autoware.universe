@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <tier4_autoware_utils/trajectory/trajectory.hpp>
 #include <scene_module/virtual_traffic_light/scene.hpp>
+#include <tier4_autoware_utils/trajectory/trajectory.hpp>
 #include <utilization/util.hpp>
 
 #include <tier4_v2x_msgs/msg/key_value.hpp>
@@ -105,7 +105,8 @@ boost::optional<SegmentIndexWithPoint> findCollision(
     // Create path segment
     const auto & p_front = tier4_autoware_utils::getPoint(points.at(i));
     const auto & p_back = tier4_autoware_utils::getPoint(points.at(i + 1));
-    const tier4_autoware_utils::LineString2d path_segment{{p_front.x, p_front.y}, {p_back.x, p_back.y}};
+    const tier4_autoware_utils::LineString2d path_segment{
+      {p_front.x, p_front.y}, {p_back.x, p_back.y}};
 
     // Find intersection
     std::vector<tier4_autoware_utils::Point2d> collision_points;
@@ -127,8 +128,8 @@ boost::optional<SegmentIndexWithPoint> findCollision(
     const double interpolated_z = p_front.z + interpolate_ratio * (p_back.z - p_front.z);
 
     // To point
-    const auto collision_point =
-      tier4_autoware_utils::createPoint(collision_point_2d.x(), collision_point_2d.y(), interpolated_z);
+    const auto collision_point = tier4_autoware_utils::createPoint(
+      collision_point_2d.x(), collision_point_2d.y(), interpolated_z);
 
     return SegmentIndexWithPoint{i, collision_point};
   }
@@ -255,8 +256,8 @@ size_t insertStopVelocityAtCollision(
   const SegmentIndexWithPoint & collision, const double offset,
   autoware_auto_planning_msgs::msg::PathWithLaneId * path)
 {
-  const auto collision_offset =
-    tier4_autoware_utils::calcLongitudinalOffsetToSegment(path->points, collision.index, collision.point);
+  const auto collision_offset = tier4_autoware_utils::calcLongitudinalOffsetToSegment(
+    path->points, collision.index, collision.point);
 
   const auto offset_segment = findOffsetSegment(*path, collision.index, offset + collision_offset);
   const auto interpolated_pose =

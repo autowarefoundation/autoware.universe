@@ -241,7 +241,8 @@ tier4_autoware_utils::LinearRing2d ElevationMapLoaderNode::getConvexHull(
 }
 
 lanelet::ConstLanelets ElevationMapLoaderNode::getIntersectedLanelets(
-  const tier4_autoware_utils::LinearRing2d & convex_hull, const lanelet::ConstLanelets & road_lanelets)
+  const tier4_autoware_utils::LinearRing2d & convex_hull,
+  const lanelet::ConstLanelets & road_lanelets)
 {
   lanelet::ConstLanelets intersected_lanelets;
   for (const auto & road_lanelet : road_lanelets) {

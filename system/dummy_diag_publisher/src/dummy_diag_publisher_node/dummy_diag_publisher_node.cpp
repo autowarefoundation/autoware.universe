@@ -14,8 +14,8 @@
 
 #include "dummy_diag_publisher/dummy_diag_publisher_node.hpp"
 
-#include <tier4_autoware_utils/ros/update_param.hpp>
 #include <rclcpp/create_timer.hpp>
+#include <tier4_autoware_utils/ros/update_param.hpp>
 
 #include <memory>
 #include <string>

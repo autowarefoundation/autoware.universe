@@ -14,9 +14,9 @@
 
 #include "goal_distance_calculator/goal_distance_calculator_node.hpp"
 
-#include <tier4_autoware_utils/math/unit_conversion.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/timer.hpp>
+#include <tier4_autoware_utils/math/unit_conversion.hpp>
 
 #include <tier4_debug_msgs/msg/float64_stamped.hpp>
 
