@@ -40,7 +40,7 @@ def generate_launch_description():
     # only one of them can be active at a time with a value
     control_command_param = DeclareLaunchArgument(
         "control_command",
-        default_value="ackermann",  # use "raw", "basic" or "high_level"
+        default_value="ackermann",  # use 'raw', 'basic' or 'high_level'
         description="command control mode",
     )
 

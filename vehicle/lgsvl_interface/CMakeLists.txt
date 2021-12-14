@@ -22,7 +22,6 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
 
-  find_package(autoware_testing REQUIRED)
   # TODO(Maxime CLEMENT): smoke test is broken since port from .Auto
   # add_smoke_test(${PROJECT_NAME} ${NODE_NAME})
 
