@@ -11,7 +11,7 @@
   <depend>autoware_auto_control_msgs</depend>
   <depend>autoware_auto_system_msgs</depend>
   <depend>autoware_auto_vehicle_msgs</depend>
-  <depend>autoware_utils</depend>
+  <depend>tier4_autoware_utils</depend>
   <depend>nav_msgs</depend>
   <depend>rclcpp</depend>
   <depend>std_msgs</depend>

@@ -15,7 +15,7 @@
 #ifndef GOAL_DISTANCE_CALCULATOR__GOAL_DISTANCE_CALCULATOR_HPP_
 #define GOAL_DISTANCE_CALCULATOR__GOAL_DISTANCE_CALCULATOR_HPP_
 
-#include <autoware_utils/geometry/pose_deviation.hpp>
+#include <tier4_autoware_utils/geometry/pose_deviation.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_planning_msgs/msg/route.hpp>
@@ -25,7 +25,7 @@
 
 namespace goal_distance_calculator
 {
-using autoware_utils::PoseDeviation;
+using tier4_autoware_utils::PoseDeviation;
 
 struct Param
 {

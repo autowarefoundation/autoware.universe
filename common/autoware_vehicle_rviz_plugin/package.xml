@@ -8,7 +8,7 @@
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
   <depend>autoware_auto_vehicle_msgs</depend>
-  <depend>autoware_utils</depend>
+  <depend>tier4_autoware_utils</depend>
   <depend>libqt5-core</depend>
   <depend>libqt5-gui</depend>
   <depend>libqt5-widgets</depend>

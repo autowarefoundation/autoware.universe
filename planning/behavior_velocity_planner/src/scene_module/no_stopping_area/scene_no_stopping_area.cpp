@@ -18,7 +18,7 @@
 #include "utilization/interpolate.hpp"
 #include "utilization/util.hpp"
 
-#include <autoware_utils/autoware_utils.hpp>
+#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <interpolation/spline_interpolation.hpp>
 
 #include <lanelet2_core/utility/Optional.h>
@@ -156,7 +156,7 @@ boost::optional<LineString2d> NoStoppingAreaModule::getStopLineGeometry2d(
         if (collision_points.empty()) {
           continue;
         }
-        const double yaw = autoware_utils::calcAzimuthAngle(p0, p1);
+        const double yaw = tier4_autoware_utils::calcAzimuthAngle(p0, p1);
         if (!collision_points.empty()) {
           geometry_msgs::msg::Point left_point;
           const double w = planner_data_->vehicle_info_.vehicle_width_m;
@@ -422,7 +422,7 @@ bool NoStoppingAreaModule::isOverDeadLine(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const geometry_msgs::msg::Pose & self_pose, const geometry_msgs::msg::Pose & line_pose) const
 {
-  return autoware_utils::calcSignedArcLength(path.points, self_pose.position, line_pose.position) +
+  return tier4_autoware_utils::calcSignedArcLength(path.points, self_pose.position, line_pose.position) +
            planner_param_.dead_line_margin <
          0.0;
 }

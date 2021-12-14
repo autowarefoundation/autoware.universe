@@ -12,7 +12,7 @@
   <buildtool_depend>eigen3_cmake_module</buildtool_depend>
 
   <depend>autoware_auto_perception_msgs</depend>
-  <depend>autoware_utils</depend>
+  <depend>tier4_autoware_utils</depend>
   <depend>eigen</depend>
   <depend>kalman_filter</depend>
   <depend>mussp</depend>

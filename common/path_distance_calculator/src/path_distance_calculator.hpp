@@ -15,7 +15,7 @@
 #ifndef PATH_DISTANCE_CALCULATOR_HPP_
 #define PATH_DISTANCE_CALCULATOR_HPP_
 
-#include <autoware_utils/ros/self_pose_listener.hpp>
+#include <tier4_autoware_utils/ros/self_pose_listener.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path.hpp>
@@ -30,7 +30,7 @@ private:
   rclcpp::Subscription<autoware_auto_planning_msgs::msg::Path>::SharedPtr sub_path_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float64Stamped>::SharedPtr pub_dist_;
   rclcpp::TimerBase::SharedPtr timer_;
-  autoware_utils::SelfPoseListener self_pose_listener_;
+  tier4_autoware_utils::SelfPoseListener self_pose_listener_;
   autoware_auto_planning_msgs::msg::Path::SharedPtr path_;
 };
 

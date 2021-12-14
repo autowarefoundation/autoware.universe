@@ -7,7 +7,7 @@
   <license>Apache License 2.0</license>
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
-  <depend>autoware_utils</depend>
+  <depend>tier4_autoware_utils</depend>
   <depend>diagnostic_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>nav_msgs</depend>

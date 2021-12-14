@@ -11,7 +11,7 @@
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
   <depend>autoware_auto_mapping_msgs</depend>
-  <depend>autoware_utils</depend>
+  <depend>tier4_autoware_utils</depend>
   <depend>grid_map_cv</depend>
   <depend>grid_map_pcl</depend>
   <depend>grid_map_ros</depend>

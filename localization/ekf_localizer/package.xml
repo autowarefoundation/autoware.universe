@@ -11,7 +11,7 @@
   <buildtool_depend>eigen3_cmake_module</buildtool_depend>
   <build_depend>eigen</build_depend>
 
-  <depend>autoware_utils</depend>
+  <depend>tier4_autoware_utils</depend>
   <depend>geometry_msgs</depend>
   <depend>kalman_filter</depend>
   <depend>nav_msgs</depend>

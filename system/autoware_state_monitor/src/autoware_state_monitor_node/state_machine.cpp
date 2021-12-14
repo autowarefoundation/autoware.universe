@@ -38,7 +38,7 @@ bool isValidAngle(
 {
   const double yaw_curr = tf2::getYaw(current_pose.orientation);
   const double yaw_ref = tf2::getYaw(ref_pose.orientation);
-  const double yaw_diff = autoware_utils::normalizeRadian(yaw_curr - yaw_ref);
+  const double yaw_diff = tier4_autoware_utils::normalizeRadian(yaw_curr - yaw_ref);
   return std::fabs(yaw_diff) < th_angle_rad;
 }
 

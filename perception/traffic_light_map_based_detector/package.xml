@@ -12,7 +12,7 @@
   <depend>autoware_auto_mapping_msgs</depend>
   <depend>autoware_auto_perception_msgs</depend>
   <depend>autoware_auto_planning_msgs</depend>
-  <depend>autoware_utils</depend>
+  <depend>tier4_autoware_utils</depend>
   <depend>geometry_msgs</depend>
   <depend>image_geometry</depend>
   <depend>lanelet2_extension</depend>

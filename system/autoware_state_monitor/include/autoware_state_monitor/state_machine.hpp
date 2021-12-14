@@ -18,8 +18,8 @@
 #include "autoware_state_monitor/autoware_state.hpp"
 #include "autoware_state_monitor/config.hpp"
 #include "autoware_state_monitor/module_name.hpp"
-#include "autoware_utils/math/normalization.hpp"
-#include "autoware_utils/math/unit_conversion.hpp"
+#include "tier4_autoware_utils/math/normalization.hpp"
+#include "tier4_autoware_utils/math/unit_conversion.hpp"
 
 #include <rclcpp/time.hpp>
 

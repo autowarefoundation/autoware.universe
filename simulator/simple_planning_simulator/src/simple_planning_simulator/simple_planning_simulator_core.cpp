@@ -15,7 +15,7 @@
 #include "simple_planning_simulator/simple_planning_simulator_core.hpp"
 
 #include "autoware_auto_tf2/tf2_autoware_auto_msgs.hpp"
-#include "autoware_utils/ros/update_param.hpp"
+#include "tier4_autoware_utils/ros/update_param.hpp"
 #include "common/types.hpp"
 #include "motion_common/motion_common.hpp"
 #include "rclcpp_components/register_node_macro.hpp"
@@ -212,8 +212,8 @@ rcl_interfaces::msg::SetParametersResult SimplePlanningSimulator::on_parameter(
   result.reason = "success";
 
   try {
-    autoware_utils::updateParam(parameters, "x_stddev", x_stddev_);
-    autoware_utils::updateParam(parameters, "y_stddev", y_stddev_);
+    tier4_autoware_utils::updateParam(parameters, "x_stddev", x_stddev_);
+    tier4_autoware_utils::updateParam(parameters, "y_stddev", y_stddev_);
   } catch (const rclcpp::exceptions::InvalidParameterTypeException & e) {
     result.successful = false;
     result.reason = e.what();

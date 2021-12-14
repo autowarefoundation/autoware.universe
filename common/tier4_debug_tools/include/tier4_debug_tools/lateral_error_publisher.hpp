@@ -17,7 +17,7 @@
 
 #define EIGEN_MPL2_ONLY
 
-#include <autoware_utils/trajectory/trajectory.hpp>
+#include <tier4_autoware_utils/trajectory/trajectory.hpp>
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Geometry>
 #include <rclcpp/rclcpp.hpp>

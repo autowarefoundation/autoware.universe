@@ -9,7 +9,7 @@
   <license>Apache License 2.0</license>
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
-  <depend>autoware_utils</depend>
+  <depend>tier4_autoware_utils</depend>
   <depend>eigen3_cmake_module</depend>
   <depend>laser_geometry</depend>
   <depend>message_filters</depend>
