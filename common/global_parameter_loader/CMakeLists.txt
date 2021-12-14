@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(autoware_global_parameter_loader)
+project(global_parameter_loader)
 
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()

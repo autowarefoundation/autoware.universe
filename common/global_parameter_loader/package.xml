@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>autoware_global_parameter_loader</name>
+  <name>global_parameter_loader</name>
   <version>0.1.0</version>
-  <description>The autoware_global_parameter_loader package</description>
+  <description>The global_parameter_loader package</description>
   <maintainer email="kenji.miyake@tier4.jp">Kenji Miyake</maintainer>
   <license>Apache License 2.0</license>
 
