@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(autoware_error_monitor)
+project(system_error_monitor)
 
 ### Compile options
 if(NOT CMAKE_CXX_STANDARD)
@@ -16,14 +16,14 @@ find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
 # Target
-## autoware_error_monitor_node
-set(AUTOWARE_ERROR_MONITOR_SRC
-  src/autoware_error_monitor_core.cpp
+## system_error_monitor_node
+set(SYSTEM_ERROR_MONITOR_SRC
+  src/system_error_monitor_core.cpp
 )
 
 ament_auto_add_executable(${PROJECT_NAME}
-  src/autoware_error_monitor_node.cpp
-  ${AUTOWARE_ERROR_MONITOR_SRC}
+  src/system_error_monitor_node.cpp
+  ${SYSTEM_ERROR_MONITOR_SRC}
 )
 
 if(BUILD_TESTING)

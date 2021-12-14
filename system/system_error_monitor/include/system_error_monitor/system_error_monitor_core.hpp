@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_ERROR_MONITOR__AUTOWARE_ERROR_MONITOR_CORE_HPP_
-#define AUTOWARE_ERROR_MONITOR__AUTOWARE_ERROR_MONITOR_CORE_HPP_
+#ifndef SYSTEM_ERROR_MONITOR__SYSTEM_ERROR_MONITOR_CORE_HPP_
+#define SYSTEM_ERROR_MONITOR__SYSTEM_ERROR_MONITOR_CORE_HPP_
 
 #include <rclcpp/create_timer.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -137,4 +137,4 @@ private:
   bool isEmergencyHoldingRequired() const;
 };
 
-#endif  // AUTOWARE_ERROR_MONITOR__AUTOWARE_ERROR_MONITOR_CORE_HPP_
+#endif  // SYSTEM_ERROR_MONITOR__SYSTEM_ERROR_MONITOR_CORE_HPP_

@@ -1,4 +1,4 @@
-# autoware_error_monitor
+# system_error_monitor
 
 ## Purpose
 
@@ -92,7 +92,7 @@ endif
 
 | Name                         | Type                                                 | Description                                                                                                                                                                                   |
 | ---------------------------- | ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/diagnostics_agg`           | `diagnostic_msgs::msg::DiagnosticArray`              | Diagnostic information aggregated based [diagnostic_aggregator setting](https://github.com/tier4/autoware.iv/tree/main/system/autoware_error_monitor/config/diagnostic_aggregator) is used to |
+| `/diagnostics_agg`           | `diagnostic_msgs::msg::DiagnosticArray`              | Diagnostic information aggregated based [diagnostic_aggregator setting](https://github.com/tier4/autoware.iv/tree/main/system/system_error_monitor/config/diagnostic_aggregator) is used to |
 | `/autoware/state`            | `autoware_auto_system_msgs::msg::AutowareState`      | Required to ignore error during Route, Planning and Finalizing.                                                                                                                               |
 | `/control/current_gate_mode` | `tier4_control_msgs::msg::GateMode`                  | Required to select the appropriate module from `autonomous_driving` or `external_control`                                                                                                     |
 | `/vehicle/control_mode`      | `autoware_auto_vehicle_msgs::msg::ControlModeReport` | Required to not hold emergency during manual driving                                                                                                                                          |
@@ -113,7 +113,7 @@ endif
 | `ignore_missing_diagnostics` | bool   | `false`       | If this parameter is turned off, it will be ignored if required modules have not been received.                                                           |
 | `add_leaf_diagnostics`       | bool   | `true`        | Required to use children diagnostics.                                                                                                                     |
 | `diag_timeout_sec`           | double | `1.0` (sec)   | If required diagnostic is not received for a `diag_timeout_sec`, the diagnostic state become STALE state.                                                 |
-| `data_ready_timeout`         | double | `30.0`        | If input topics required for autoware_error_monitor are not available for `data_ready_timeout` seconds, autoware_state will translate to emergency state. |
+| `data_ready_timeout`         | double | `30.0`        | If input topics required for system_error_monitor are not available for `data_ready_timeout` seconds, autoware_state will translate to emergency state. |
 
 ### Core Parameters
 
@@ -124,7 +124,7 @@ endif
 | `use_emergency_hold_in_manual_driving` | bool   | `false`       | If this parameter is turned off, emergencies will be ignored during manual driving.                   |
 | `emergency_hazard_level`               | int    | `2`           | If hazard_level is more than emergency_hazard_level, autoware state will translate to emergency state |
 
-### YAML format for autoware_error_monitor
+### YAML format for system_error_monitor
 
 The parameter key should be filled with the hierarchical diagnostics output by diagnostic_aggregator. Parameters prefixed with `required_modules.autonomous_driving` are for autonomous driving. Parameters with the `required_modules.remote_control` prefix are for remote control. If the value is `default`, the default value will be set.
 

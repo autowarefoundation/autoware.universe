@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_ERROR_MONITOR__DIAGNOSTICS_FILTER_HPP_
-#define AUTOWARE_ERROR_MONITOR__DIAGNOSTICS_FILTER_HPP_
+#ifndef SYSTEM_ERROR_MONITOR__DIAGNOSTICS_FILTER_HPP_
+#define SYSTEM_ERROR_MONITOR__DIAGNOSTICS_FILTER_HPP_
 
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
 
@@ -100,4 +100,4 @@ inline std::vector<diagnostic_msgs::msg::DiagnosticStatus> extractLeafChildrenDi
 
 }  // namespace diagnostics_filter
 
-#endif  // AUTOWARE_ERROR_MONITOR__DIAGNOSTICS_FILTER_HPP_
+#endif  // SYSTEM_ERROR_MONITOR__DIAGNOSTICS_FILTER_HPP_

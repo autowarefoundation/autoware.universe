@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>autoware_error_monitor</name>
+  <name>system_error_monitor</name>
   <version>0.1.1</version>
-  <description>The autoware_error_monitor package in ROS2</description>
+  <description>The system_error_monitor package in ROS2</description>
   <maintainer email="kenji.miyake@tier4.jp">Kenji Miyake</maintainer>
   <license>Apache License 2.0</license>
 

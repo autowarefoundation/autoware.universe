@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_error_monitor/autoware_error_monitor_core.hpp"
+#include "system_error_monitor/system_error_monitor_core.hpp"
 
 #include <memory>
 

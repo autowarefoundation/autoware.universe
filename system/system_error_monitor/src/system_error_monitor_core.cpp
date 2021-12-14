@@ -21,8 +21,8 @@
 #include <vector>
 
 #define FMT_HEADER_ONLY
-#include "autoware_error_monitor/autoware_error_monitor_core.hpp"
-#include "autoware_error_monitor/diagnostics_filter.hpp"
+#include "system_error_monitor/system_error_monitor_core.hpp"
+#include "system_error_monitor/diagnostics_filter.hpp"
 
 #include <fmt/format.h>
 
@@ -152,8 +152,8 @@ autoware_auto_system_msgs::msg::HazardStatus createTimeoutHazardStatus()
   hazard_status.emergency = true;
   hazard_status.emergency_holding = false;
   diagnostic_msgs::msg::DiagnosticStatus diag;
-  diag.name = "autoware_error_monitor/input_data_timeout";
-  diag.hardware_id = "autoware_error_monitor";
+  diag.name = "system_error_monitor/input_data_timeout";
+  diag.hardware_id = "system_error_monitor";
   diag.level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
   hazard_status.diag_single_point_fault.push_back(diag);
   return hazard_status;
@@ -189,7 +189,7 @@ int isInNoFaultCondition(
 
 AutowareErrorMonitor::AutowareErrorMonitor()
 : Node(
-    "autoware_error_monitor",
+    "system_error_monitor",
     rclcpp::NodeOptions().automatically_declare_parameters_from_overrides(true))
 {
   // Parameter
@@ -465,7 +465,7 @@ autoware_auto_system_msgs::msg::HazardStatus AutowareErrorMonitor::judgeHazardSt
         DiagnosticStatus missing_diag;
 
         missing_diag.name = diag_name;
-        missing_diag.hardware_id = "autoware_error_monitor";
+        missing_diag.hardware_id = "system_error_monitor";
         missing_diag.level = DiagnosticStatus::STALE;
         missing_diag.message = "no diag found";
 

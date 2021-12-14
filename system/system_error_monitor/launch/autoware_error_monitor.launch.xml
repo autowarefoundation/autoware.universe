@@ -1,5 +1,5 @@
 <launch>
-  <arg name="config_file" default="$(find-pkg-share autoware_error_monitor)/config/autoware_error_monitor.param.yaml" />
+  <arg name="config_file" default="$(find-pkg-share system_error_monitor)/config/system_error_monitor.param.yaml" />
   <arg name="ignore_missing_diagnostics" default="false" />
   <arg name="add_leaf_diagnostics" default="true" />
   <arg name="data_ready_timeout" default="30.0" />
@@ -8,16 +8,16 @@
   <arg name="use_emergency_hold" default="false" />
   <arg name="use_emergency_hold_in_manual_driving" default="false" />
 
-  <arg name="agg_config_file_control" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/control.param.yaml" />
-  <arg name="agg_config_file_localization" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/localization.param.yaml" />
-  <arg name="agg_config_file_map" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/map.param.yaml" />
-  <arg name="agg_config_file_perception" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/perception.param.yaml" />
-  <arg name="agg_config_file_planning" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/planning.param.yaml" />
-  <arg name="agg_config_file_sensing" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/sensing.param.yaml" />
-  <arg name="agg_config_file_system" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/system.param.yaml" />
-  <arg name="agg_config_file_vehicle" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/vehicle.param.yaml" />
-  <arg name="extra_agg_config_file_sensing" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/_empty.param.yaml" />
-  <arg name="extra_agg_config_file_vehicle" default="$(find-pkg-share autoware_error_monitor)/config/diagnostic_aggregator/_empty.param.yaml" />
+  <arg name="agg_config_file_control" default="$(find-pkg-share system_error_monitor)/config/diagnostic_aggregator/control.param.yaml" />
+  <arg name="agg_config_file_localization" default="$(find-pkg-share system_error_monitor)/config/diagnostic_aggregator/localization.param.yaml" />
+  <arg name="agg_config_file_map" default="$(find-pkg-share system_error_monitor)/config/diagnostic_aggregator/map.param.yaml" />
+  <arg name="agg_config_file_perception" default="$(find-pkg-share system_error_monitor)/config/diagnostic_aggregator/perception.param.yaml" />
+  <arg name="agg_config_file_planning" default="$(find-pkg-share system_error_monitor)/config/diagnostic_aggregator/planning.param.yaml" />
+  <arg name="agg_config_file_sensing" default="$(find-pkg-share system_error_monitor)/config/diagnostic_aggregator/sensing.param.yaml" />
+  <arg name="agg_config_file_system" default="$(find-pkg-share system_error_monitor)/config/diagnostic_aggregator/system.param.yaml" />
+  <arg name="agg_config_file_vehicle" default="$(find-pkg-share system_error_monitor)/config/diagnostic_aggregator/vehicle.param.yaml" />
+  <arg name="extra_agg_config_file_sensing" default="$(find-pkg-share system_error_monitor)/config/diagnostic_aggregator/_empty.param.yaml" />
+  <arg name="extra_agg_config_file_vehicle" default="$(find-pkg-share system_error_monitor)/config/diagnostic_aggregator/_empty.param.yaml" />
 
   <group>
     <push-ros-namespace namespace="/"/>
@@ -38,7 +38,7 @@
     </node>
   </group>
 
-  <include file="$(find-pkg-share autoware_error_monitor)/launch/autoware_error_monitor_node.launch.xml">
+  <include file="$(find-pkg-share system_error_monitor)/launch/system_error_monitor_node.launch.xml">
     <arg name="config_file" value="$(var config_file)"/>
     <arg name="ignore_missing_diagnostics" value="$(var ignore_missing_diagnostics)"/>
     <arg name="add_leaf_diagnostics" value="$(var add_leaf_diagnostics)"/>
