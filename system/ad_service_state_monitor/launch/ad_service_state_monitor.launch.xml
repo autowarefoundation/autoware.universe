@@ -14,7 +14,7 @@
   <arg name="service_reset_route" default="/autoware/reset_route" />
 
   <!-- Config -->
-  <arg name="config_file" default="$(find-pkg-share autoware_state_monitor)/config/autoware_state_monitor.param.yaml" />
+  <arg name="config_file" default="$(find-pkg-share ad_service_state_monitor)/config/ad_service_state_monitor.param.yaml" />
 
   <!-- Parameter -->
   <arg name="update_rate" default="10.0" />
@@ -25,7 +25,7 @@
   <arg name="disengage_on_route" default="true" />
   <arg name="disengage_on_goal" default="true" />
 
-  <node pkg="autoware_state_monitor" exec="autoware_state_monitor" name="autoware_state_monitor" output="screen">
+  <node pkg="ad_service_state_monitor" exec="ad_service_state_monitor" name="ad_service_state_monitor" output="screen">
     <remap from="input/autoware_engage" to="$(var input_autoware_engage)"/>
     <remap from="input/control_mode" to="$(var input_control_mode)"/>
     <remap from="input/route" to="$(var input_route)"/>

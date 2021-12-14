@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(autoware_state_monitor)
+project(ad_service_state_monitor)
 
 ### Compile options
 if(NOT CMAKE_CXX_STANDARD)
@@ -17,16 +17,16 @@ ament_auto_find_build_dependencies()
 
 # Target
 ## Set source files
-set(AUTOWARE_STATE_MONITOR_SRC
-  src/autoware_state_monitor_node/autoware_state_monitor_node.cpp
-  src/autoware_state_monitor_node/state_machine.cpp
-  src/autoware_state_monitor_node/diagnostics.cpp
+set(AD_SERVICE_STATE_MONITOR_SRC
+  src/ad_service_state_monitor_node/ad_service_state_monitor_node.cpp
+  src/ad_service_state_monitor_node/state_machine.cpp
+  src/ad_service_state_monitor_node/diagnostics.cpp
 )
 
 ## Add executables
-ament_auto_add_executable(autoware_state_monitor
-  src/autoware_state_monitor_node/main.cpp
-  ${AUTOWARE_STATE_MONITOR_SRC}
+ament_auto_add_executable(ad_service_state_monitor
+  src/ad_service_state_monitor_node/main.cpp
+  ${AD_SERVICE_STATE_MONITOR_SRC}
 )
 
 if(BUILD_TESTING)

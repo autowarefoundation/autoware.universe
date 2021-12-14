@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_state_monitor/autoware_state_monitor_node.hpp"
+#include "ad_service_state_monitor/ad_service_state_monitor_node.hpp"
 
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
@@ -24,7 +24,7 @@
 
 void AutowareStateMonitorNode::setupDiagnosticUpdater()
 {
-  updater_.setHardwareID("autoware_state_monitor");
+  updater_.setHardwareID("ad_service_state_monitor");
 
   const auto module_names = this->declare_parameter<std::vector<std::string>>("module_names");
 

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_state_monitor/autoware_state_monitor_node.hpp"
+#include "ad_service_state_monitor/ad_service_state_monitor_node.hpp"
 
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
@@ -383,7 +383,7 @@ void AutowareStateMonitorNode::setDisengage()
 }
 
 AutowareStateMonitorNode::AutowareStateMonitorNode()
-: Node("autoware_state_monitor"),
+: Node("ad_service_state_monitor"),
   tf_buffer_(this->get_clock()),
   tf_listener_(tf_buffer_),
   updater_(this)

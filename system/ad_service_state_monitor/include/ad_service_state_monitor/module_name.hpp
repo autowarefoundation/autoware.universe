@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_STATE_MONITOR__MODULE_NAME_HPP_
-#define AUTOWARE_STATE_MONITOR__MODULE_NAME_HPP_
+#ifndef AD_SERVICE_STATE_MONITOR__MODULE_NAME_HPP_
+#define AD_SERVICE_STATE_MONITOR__MODULE_NAME_HPP_
 
 struct ModuleName
 {
@@ -27,4 +27,4 @@ struct ModuleName
   static constexpr const char * system = "system";
 };
 
-#endif  // AUTOWARE_STATE_MONITOR__MODULE_NAME_HPP_
+#endif  // AD_SERVICE_STATE_MONITOR__MODULE_NAME_HPP_

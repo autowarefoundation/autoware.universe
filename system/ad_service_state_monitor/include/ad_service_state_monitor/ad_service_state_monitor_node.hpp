@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_STATE_MONITOR__AUTOWARE_STATE_MONITOR_NODE_HPP_
-#define AUTOWARE_STATE_MONITOR__AUTOWARE_STATE_MONITOR_NODE_HPP_
+#ifndef AD_SERVICE_STATE_MONITOR__AD_SERVICE_STATE_MONITOR_NODE_HPP_
+#define AD_SERVICE_STATE_MONITOR__AD_SERVICE_STATE_MONITOR_NODE_HPP_
 
-#include "autoware_state_monitor/autoware_state.hpp"
-#include "autoware_state_monitor/config.hpp"
-#include "autoware_state_monitor/state_machine.hpp"
+#include "ad_service_state_monitor/ad_service_state.hpp"
+#include "ad_service_state_monitor/config.hpp"
+#include "ad_service_state_monitor/state_machine.hpp"
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -131,4 +131,4 @@ private:
     diagnostic_updater::DiagnosticStatusWrapper & stat, const std::string & module_name);
 };
 
-#endif  // AUTOWARE_STATE_MONITOR__AUTOWARE_STATE_MONITOR_NODE_HPP_
+#endif  // AD_SERVICE_STATE_MONITOR__AD_SERVICE_STATE_MONITOR_NODE_HPP_

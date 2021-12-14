@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_STATE_MONITOR__STATE_MACHINE_HPP_
-#define AUTOWARE_STATE_MONITOR__STATE_MACHINE_HPP_
+#ifndef AD_SERVICE_STATE_MONITOR__STATE_MACHINE_HPP_
+#define AD_SERVICE_STATE_MONITOR__STATE_MACHINE_HPP_
 
-#include "autoware_state_monitor/autoware_state.hpp"
-#include "autoware_state_monitor/config.hpp"
-#include "autoware_state_monitor/module_name.hpp"
+#include "ad_service_state_monitor/ad_service_state.hpp"
+#include "ad_service_state_monitor/config.hpp"
+#include "ad_service_state_monitor/module_name.hpp"
 #include "tier4_autoware_utils/math/normalization.hpp"
 #include "tier4_autoware_utils/math/unit_conversion.hpp"
 
@@ -111,4 +111,4 @@ private:
   bool isRouteResetRequired() const;
 };
 
-#endif  // AUTOWARE_STATE_MONITOR__STATE_MACHINE_HPP_
+#endif  // AD_SERVICE_STATE_MONITOR__STATE_MACHINE_HPP_

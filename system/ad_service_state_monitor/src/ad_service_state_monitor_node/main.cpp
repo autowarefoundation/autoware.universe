@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_state_monitor/autoware_state_monitor_node.hpp"
+#include "ad_service_state_monitor/ad_service_state_monitor_node.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
