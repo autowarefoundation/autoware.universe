@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>autoware_debug_tools</name>
+  <name>tier4_debug_tools</name>
   <version>0.1.0</version>
-  <description>The autoware_debug_tools package</description>
+  <description>The tier4_debug_tools package</description>
   <maintainer email="kenji.miyake@tier4.jp">Kenji Miyake</maintainer>
   <license>Apache License 2.0</license>
 

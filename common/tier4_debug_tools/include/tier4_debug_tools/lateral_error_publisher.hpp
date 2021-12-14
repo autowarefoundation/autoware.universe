@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_DEBUG_TOOLS__LATERAL_ERROR_PUBLISHER_HPP_
-#define AUTOWARE_DEBUG_TOOLS__LATERAL_ERROR_PUBLISHER_HPP_
+#ifndef TIER4_DEBUG_TOOLS__LATERAL_ERROR_PUBLISHER_HPP_
+#define TIER4_DEBUG_TOOLS__LATERAL_ERROR_PUBLISHER_HPP_
 
 #define EIGEN_MPL2_ONLY
 
@@ -71,4 +71,4 @@ private:
   void onGroundTruthPose(const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg);
 };
 
-#endif  // AUTOWARE_DEBUG_TOOLS__LATERAL_ERROR_PUBLISHER_HPP_
+#endif  // TIER4_DEBUG_TOOLS__LATERAL_ERROR_PUBLISHER_HPP_

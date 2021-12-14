@@ -1,4 +1,4 @@
-# autoware_debug_tools
+# tier4_debug_tools
 
 This package provides useful features for debugging Autoware.
 
@@ -10,13 +10,13 @@ This tool converts any `tf` to `pose` topic.
 With this tool, for example, you can plot `x` values of `tf` in `rqt_multiplot`.
 
 ```sh
-ros2 run autoware_debug_tools tf2pose {tf_from} {tf_to} {hz}
+ros2 run tier4_debug_tools tf2pose {tf_from} {tf_to} {hz}
 ```
 
 Example:
 
 ```sh
-$ ros2 run autoware_debug_tools tf2pose base_link ndt_base_link 100
+$ ros2 run tier4_debug_tools tf2pose base_link ndt_base_link 100
 
 $ ros2 topic echo /tf2pose/pose -n1
 header:
@@ -43,13 +43,13 @@ pose:
 This tool converts any `pose` topic to `tf`.
 
 ```sh
-ros2 run autoware_debug_tools pose2tf {pose_topic_name} {tf_name}
+ros2 run tier4_debug_tools pose2tf {pose_topic_name} {tf_name}
 ```
 
 Example:
 
 ```sh
-$ ros2 run autoware_debug_tools pose2tf /localization/pose_estimator/pose ndt_pose
+$ ros2 run tier4_debug_tools pose2tf /localization/pose_estimator/pose ndt_pose
 
 $ ros2 run tf tf_echo ndt_pose ndt_base_link 100
 At time 1605168365.449
@@ -65,13 +65,13 @@ This tool extracts `pose` from `stop_reasons`.
 Topics without numbers such as `/stop_reason2pose/pose/detection_area` are the nearest stop_reasons, and topics with numbers are individual stop_reasons that are roughly matched with previous ones.
 
 ```sh
-ros2 run autoware_debug_tools stop_reason2pose {stop_reason_topic_name}
+ros2 run tier4_debug_tools stop_reason2pose {stop_reason_topic_name}
 ```
 
 Example:
 
 ```sh
-$ ros2 run autoware_debug_tools stop_reason2pose /planning/scenario_planning/status/stop_reasons
+$ ros2 run tier4_debug_tools stop_reason2pose /planning/scenario_planning/status/stop_reasons
 
 $ ros2 topic list | ag stop_reason2pose
 /stop_reason2pose/pose/detection_area
@@ -105,13 +105,13 @@ This is an all-in-one script that uses `tf2pose`, `pose2tf`, and `stop_reason2po
 With this tool, you can view the relative position from base_link to the nearest stop_reason.
 
 ```sh
-ros2 run autoware_debug_tools stop_reason2tf {stop_reason_name}
+ros2 run tier4_debug_tools stop_reason2tf {stop_reason_name}
 ```
 
 Example:
 
 ```sh
-$ ros2 run autoware_debug_tools stop_reason2tf obstacle_stop
+$ ros2 run tier4_debug_tools stop_reason2tf obstacle_stop
 At time 1605168359.501
 - Translation: [0.291, -0.095, 0.266]
 - Rotation: in Quaternion [0.007, 0.011, -0.005, 1.000]
@@ -128,5 +128,5 @@ This node calculate the control error and localization error in the trajectory n
 Set the reference trajectory, vehicle pose and ground truth pose in the launch file.
 
 ```sh
-ros2 launch autoware_debug_tools lateral_error_publisher.launch.xml
+ros2 launch tier4_debug_tools lateral_error_publisher.launch.xml
 ```

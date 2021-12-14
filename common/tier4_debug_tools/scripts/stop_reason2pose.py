@@ -66,7 +66,7 @@ class StopReason2PoseNode(Node):
                     pose_id = self._register_pose(snake_case_stop_reason, pose.pose)
 
                 pose_topic_name = "{snake_case_stop_reason}_{pose_id}".format(**locals())
-                topic_ns = "/autoware_debug_tools/stop_reason2pose/"
+                topic_ns = "/tier4_debug_tools/stop_reason2pose/"
                 if pose_topic_name not in self._pub_pose_map:
                     self._pub_pose_map[pose_topic_name] = self.create_publisher(
                         PoseStamped, topic_ns + pose_topic_name, 1
@@ -82,7 +82,7 @@ class StopReason2PoseNode(Node):
 
             if nearest_pose.pose:
                 if snake_case_stop_reason not in self._pub_pose_map:
-                    topic_ns = "/autoware_debug_tools/stop_reason2pose/"
+                    topic_ns = "/tier4_debug_tools/stop_reason2pose/"
                     self._pub_pose_map[snake_case_stop_reason] = self.create_publisher(
                         PoseStamped, topic_ns + snake_case_stop_reason, 1
                     )

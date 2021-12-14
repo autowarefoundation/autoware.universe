@@ -32,7 +32,7 @@ class Tf2PoseNode(Node):
         self._options = options
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
-        self._pub_pose = self.create_publisher(PoseStamped, "/autoware_debug_tools/tf2pose/pose", 1)
+        self._pub_pose = self.create_publisher(PoseStamped, "/tier4_debug_tools/tf2pose/pose", 1)
         self.timer = self.create_timer((1.0 / self._options.hz), self._on_timer)
 
     def _on_timer(self):
