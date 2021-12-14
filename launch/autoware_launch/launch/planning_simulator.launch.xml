@@ -54,6 +54,13 @@
     <arg name="vehicle_info_param_file" value="$(find-pkg-share $(var vehicle_model)_description)/config/vehicle_info.param.yaml"/>
   </include>
 
+  <!-- Initial Pose Relay -->
+    <node pkg="topic_tools" exec="relay" name="initial_pose_2d">
+      <param name="input_topic" value="/initialpose"/>
+      <param name="output_topic" value="/initialpose2d"/>
+      <param name="type" value="geometry_msgs/msg/PoseWithCovarianceStamped"/>
+    </node>
+
   <!-- Rviz -->
   <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen" args="-d $(var rviz_config) -s $(find-pkg-share autoware_launch)/rviz/image/autoware.png" if="$(var rviz)"/>
 
