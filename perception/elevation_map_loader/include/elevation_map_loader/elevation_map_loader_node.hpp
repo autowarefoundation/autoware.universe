@@ -15,7 +15,6 @@
 #ifndef MAP_LOADER__ELEVATION_MAP_LOADER_NODE_HPP_
 #define MAP_LOADER__ELEVATION_MAP_LOADER_NODE_HPP_
 
-#include <autoware_utils/geometry/boost_geometry.hpp>
 #include <filters/filter_chain.hpp>
 #include <grid_map_core/GridMap.hpp>
 #include <grid_map_pcl/GridMapPclLoader.hpp>
@@ -23,6 +22,7 @@
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 
 #include "tier4_external_api_msgs/msg/map_hash.hpp"
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
@@ -74,10 +74,10 @@ private:
   void createElevationMap();
   void setVerbosityLevelToDebugIfFlagSet();
   void createElevationMapFromPointcloud();
-  autoware_utils::LinearRing2d getConvexHull(
+  tier4_autoware_utils::LinearRing2d getConvexHull(
     const pcl::PointCloud<pcl::PointXYZ>::Ptr & input_cloud);
   lanelet::ConstLanelets getIntersectedLanelets(
-    const autoware_utils::LinearRing2d & convex_hull,
+    const tier4_autoware_utils::LinearRing2d & convex_hull,
     const lanelet::ConstLanelets & road_lanelets_);
   pcl::PointCloud<pcl::PointXYZ>::Ptr getLaneFilteredPointCloud(
     const lanelet::ConstLanelets & joint_lanelets,
@@ -93,6 +93,7 @@ private:
   grid_map::GridMap elevation_map_;
   std::string layer_name_;
   std::string map_frame_;
+  std::string elevation_map_directory_;
   bool use_inpaint_;
   float inpaint_radius_;
   bool use_elevation_map_cloud_publisher_;

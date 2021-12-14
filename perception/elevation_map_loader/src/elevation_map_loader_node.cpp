@@ -55,7 +55,7 @@ ElevationMapLoaderNode::ElevationMapLoaderNode(const rclcpp::NodeOptions & optio
   inpaint_radius_ = this->declare_parameter("inpaint_radius", 0.3);
   use_elevation_map_cloud_publisher_ =
     this->declare_parameter("use_elevation_map_cloud_publisher", false);
-
+  elevation_map_directory_ = this->declare_parameter("elevation_map_directory", "path_default");
   const bool use_lane_filter = this->declare_parameter("use_lane_filter", false);
   data_manager_.use_lane_filter_ = use_lane_filter;
 
@@ -124,10 +124,8 @@ void ElevationMapLoaderNode::onMapHash(
 {
   RCLCPP_INFO(this->get_logger(), "subscribe map_hash");
   const auto elevation_map_hash = map_hash->pcd;
-  const std::string elevation_map_directory =
-    this->declare_parameter("elevation_map_directory", "path_default");
   data_manager_.elevation_map_path_ = std::make_unique<std::filesystem::path>(
-    std::filesystem::path(elevation_map_directory) / elevation_map_hash);
+    std::filesystem::path(elevation_map_directory_) / elevation_map_hash);
   if (data_manager_.isInitialized()) {
     publish();
   }
@@ -220,7 +218,7 @@ void ElevationMapLoaderNode::inpaintElevationMap(const float radius)
   elevation_map_.erase("inpaint_mask");
 }
 
-autoware_utils::LinearRing2d ElevationMapLoaderNode::getConvexHull(
+tier4_autoware_utils::LinearRing2d ElevationMapLoaderNode::getConvexHull(
   const pcl::PointCloud<pcl::PointXYZ>::Ptr & input_cloud)
 {
   // downsample pointcloud to reduce convex hull calculation cost
@@ -231,19 +229,20 @@ autoware_utils::LinearRing2d ElevationMapLoaderNode::getConvexHull(
   filter.setLeafSize(0.5, 0.5, 100.0);
   filter.filter(*downsampled_cloud);
 
-  autoware_utils::MultiPoint2d candidate_points;
+  tier4_autoware_utils::MultiPoint2d candidate_points;
   for (const auto & p : downsampled_cloud->points) {
     candidate_points.emplace_back(p.x, p.y);
   }
 
-  autoware_utils::LinearRing2d convex_hull;
+  tier4_autoware_utils::LinearRing2d convex_hull;
   boost::geometry::convex_hull(candidate_points, convex_hull);
 
   return convex_hull;
 }
 
 lanelet::ConstLanelets ElevationMapLoaderNode::getIntersectedLanelets(
-  const autoware_utils::LinearRing2d & convex_hull, const lanelet::ConstLanelets & road_lanelets)
+  const tier4_autoware_utils::LinearRing2d & convex_hull,
+  const lanelet::ConstLanelets & road_lanelets)
 {
   lanelet::ConstLanelets intersected_lanelets;
   for (const auto & road_lanelet : road_lanelets) {
@@ -257,7 +256,7 @@ lanelet::ConstLanelets ElevationMapLoaderNode::getIntersectedLanelets(
 bool ElevationMapLoaderNode::checkPointWithinLanelets(
   const pcl::PointXYZ & point, const lanelet::ConstLanelets & intersected_lanelets)
 {
-  autoware_utils::Point2d point2d(point.x, point.y);
+  tier4_autoware_utils::Point2d point2d(point.x, point.y);
   for (const auto & lanelet : intersected_lanelets) {
     if (lane_filter_.lane_margin_ > 0) {
       if (
