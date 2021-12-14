@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_JOY_CONTROLLER__JOY_CONVERTER__JOY_CONVERTER_BASE_HPP_
-#define AUTOWARE_JOY_CONTROLLER__JOY_CONVERTER__JOY_CONVERTER_BASE_HPP_
+#ifndef JOY_CONTROLLER__JOY_CONVERTER__JOY_CONVERTER_BASE_HPP_
+#define JOY_CONTROLLER__JOY_CONVERTER__JOY_CONVERTER_BASE_HPP_
 
 #include <sensor_msgs/msg/joy.hpp>
 
 #include <algorithm>
 
-namespace autoware_joy_controller
+namespace joy_controller
 {
 class JoyConverterBase
 {
@@ -50,6 +50,6 @@ public:
   virtual bool vehicle_engage() const = 0;
   virtual bool vehicle_disengage() const = 0;
 };
-}  // namespace autoware_joy_controller
+}  // namespace joy_controller
 
-#endif  // AUTOWARE_JOY_CONTROLLER__JOY_CONVERTER__JOY_CONVERTER_BASE_HPP_
+#endif  // JOY_CONTROLLER__JOY_CONVERTER__JOY_CONVERTER_BASE_HPP_

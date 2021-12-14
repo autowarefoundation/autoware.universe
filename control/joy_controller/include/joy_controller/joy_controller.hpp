@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_JOY_CONTROLLER__AUTOWARE_JOY_CONTROLLER_HPP_
-#define AUTOWARE_JOY_CONTROLLER__AUTOWARE_JOY_CONTROLLER_HPP_
+#ifndef JOY_CONTROLLER__JOY_CONTROLLER_HPP_
+#define JOY_CONTROLLER__JOY_CONTROLLER_HPP_
 
-#include "autoware_joy_controller/joy_converter/joy_converter_base.hpp"
+#include "joy_controller/joy_converter/joy_converter_base.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -36,7 +36,7 @@
 #include <memory>
 #include <string>
 
-namespace autoware_joy_controller
+namespace joy_controller
 {
 using GearShiftType = tier4_external_api_msgs::msg::GearShift::_data_type;
 using TurnSignalType = tier4_external_api_msgs::msg::TurnSignal::_data_type;
@@ -118,6 +118,6 @@ private:
   bool isDataReady();
   void onTimer();
 };
-}  // namespace autoware_joy_controller
+}  // namespace joy_controller
 
-#endif  // AUTOWARE_JOY_CONTROLLER__AUTOWARE_JOY_CONTROLLER_HPP_
+#endif  // JOY_CONTROLLER__JOY_CONTROLLER_HPP_
