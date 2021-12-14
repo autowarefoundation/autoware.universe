@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_IV_AUTO_MSGS_CONVERTER__AUTOWARE_IV_AUTO_MSGS_CONVERTER_HPP_
-#define AUTOWARE_IV_AUTO_MSGS_CONVERTER__AUTOWARE_IV_AUTO_MSGS_CONVERTER_HPP_
+#ifndef TIER4_AUTO_MSGS_CONVERTER__TIER4_AUTO_MSGS_CONVERTER_HPP_
+#define TIER4_AUTO_MSGS_CONVERTER__TIER4_AUTO_MSGS_CONVERTER_HPP_
 
 #include "autoware_auto_planning_msgs/msg/path.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
@@ -38,7 +38,7 @@
 #include "tier4_vehicle_msgs/msg/steering.hpp"
 #include "tier4_vehicle_msgs/msg/turn_signal.hpp"
 
-namespace autoware_iv_auto_msgs_converter
+namespace tier4_auto_msgs_converter
 {
 struct LightSignal
 {
@@ -276,6 +276,6 @@ inline auto convert(const autoware_auto_vehicle_msgs::msg::SteeringReport & stee
   return iv_steering;
 }
 
-}  // namespace autoware_iv_auto_msgs_converter
+}  // namespace tier4_auto_msgs_converter
 
-#endif  // AUTOWARE_IV_AUTO_MSGS_CONVERTER__AUTOWARE_IV_AUTO_MSGS_CONVERTER_HPP_
+#endif  // TIER4_AUTO_MSGS_CONVERTER__TIER4_AUTO_MSGS_CONVERTER_HPP_

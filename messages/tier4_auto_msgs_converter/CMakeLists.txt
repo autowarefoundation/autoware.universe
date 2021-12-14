@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(autoware_iv_auto_msgs_converter)
+project(tier4_auto_msgs_converter)
 
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
