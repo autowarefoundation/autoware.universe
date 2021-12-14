@@ -16,7 +16,7 @@ Panels:
     Expanded: ~
     Name: Views
     Splitter Ratio: 0.5
-  - Class: autoware_localization_rviz_plugin/InitialPoseButtonPanel
+  - Class: tier4_localization_rviz_plugin/InitialPoseButtonPanel
     Name: InitialPoseButtonPanel
   - Class: rviz_common/Time
     Experimental: false

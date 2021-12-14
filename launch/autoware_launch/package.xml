@@ -9,9 +9,8 @@
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
-  <exec_depend>autoware_api_launch</exec_depend>
-  <exec_depend>autoware_global_parameter_loader</exec_depend>
-  <exec_depend>autoware_web_controller</exec_depend>
+  <exec_depend>global_parameter_loader</exec_depend>
+  <exec_depend>web_controller</exec_depend>
   <exec_depend>control_launch</exec_depend>
   <exec_depend>localization_launch</exec_depend>
   <exec_depend>map_launch</exec_depend>

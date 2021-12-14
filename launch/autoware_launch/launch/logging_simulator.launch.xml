@@ -26,7 +26,7 @@
   <arg name="scenario_simulation" default="false" description="use scenario simulation"/>
 
   <!-- Global parameters -->
-  <include file="$(find-pkg-share autoware_global_parameter_loader)/launch/global_params.launch.py">
+  <include file="$(find-pkg-share global_parameter_loader)/launch/global_params.launch.py">
     <arg name="use_sim_time" value="true" />
     <arg name="vehicle_model" value="$(var vehicle_model)"/>
   </include>
@@ -108,19 +108,13 @@
     </include>
   </group>
 
-  <!-- Autoware API -->
-  <include file="$(find-pkg-share autoware_api_launch)/launch/autoware_api.launch.xml">
-    <arg name="init_simulator_pose" value="false"/>
-    <arg name="init_localization_pose" value="true"/>
-  </include>
-
   <!-- Rviz -->
   <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen" args="-d $(find-pkg-share autoware_launch)/rviz/autoware.rviz -s $(find-pkg-share autoware_launch)/rviz/image/autoware.png" if="$(var rviz)">
   </node>
 
   <!-- Web Controller -->
   <group>
-    <include file="$(find-pkg-share autoware_web_controller)/launch/autoware_web_controller.launch.xml" />
+    <include file="$(find-pkg-share web_controller)/launch/web_controller.launch.xml" />
   </group>
 
   <!-- Simulator -->
