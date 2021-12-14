@@ -2,8 +2,8 @@ repositories:
   # autoware
   autoware/autoware.iv:
     type: git
-    url: https://github.com/tier4/AutowareArchitectureProposal.iv
-    version: use-autoware-auto-msgs
+    url: https://github.com/autowarefoundation/autoware.universe.git
+    version: tier4/proposal
   autoware/launcher:
     type: git
     url: https://github.com/tier4/AutowareArchitectureProposal_launcher.git
