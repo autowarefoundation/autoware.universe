@@ -1,4 +1,4 @@
-# autoware_web_controller
+# web_controller
 
 ## Purpose
 
@@ -37,6 +37,6 @@ TBD.
 
 ## Usage
 
-1. Access to <http://localhost:8085/autoware_web_controller> after launching Autoware.
+1. Access to <http://localhost:8085/web_controller> after launching Autoware.
    ![select_panel](./images/web_controller.png)
 2. Check the status of Autoware or send topics by the buttons.
