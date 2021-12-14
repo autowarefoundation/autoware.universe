@@ -8,7 +8,7 @@
   <license>Apache License 2.0</license>
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <depend>autoware_api_utils</depend>
+  <depend>tier4_api_utils</depend>
   <depend>geometry_msgs</depend>
   <depend>libpcl-all-dev</depend>
   <depend>pcl_conversions</depend>

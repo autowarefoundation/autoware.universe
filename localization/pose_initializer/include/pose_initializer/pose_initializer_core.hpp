@@ -15,7 +15,7 @@
 #ifndef POSE_INITIALIZER__POSE_INITIALIZER_CORE_HPP_
 #define POSE_INITIALIZER__POSE_INITIALIZER_CORE_HPP_
 
-#include <autoware_api_utils/autoware_api_utils.hpp>
+#include <tier4_api_utils/tier4_api_utils.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>

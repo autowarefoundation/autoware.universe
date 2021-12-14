@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_API_UTILS__TYPES__RESPONSE_HPP_
-#define AUTOWARE_API_UTILS__TYPES__RESPONSE_HPP_
+#ifndef TIER4_API_UTILS__TYPES__RESPONSE_HPP_
+#define TIER4_API_UTILS__TYPES__RESPONSE_HPP_
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -21,7 +21,7 @@
 
 #include <string>
 
-namespace autoware_api_utils
+namespace tier4_api_utils
 {
 using ResponseStatus = tier4_external_api_msgs::msg::ResponseStatus;
 
@@ -73,6 +73,6 @@ inline ResponseStatus response_error(const std::string & message = "")
     .message(message);
 }
 
-}  // namespace autoware_api_utils
+}  // namespace tier4_api_utils
 
-#endif  // AUTOWARE_API_UTILS__TYPES__RESPONSE_HPP_
+#endif  // TIER4_API_UTILS__TYPES__RESPONSE_HPP_

@@ -12,16 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_API_UTILS__RCLCPP__CLIENT_HPP_
-#define AUTOWARE_API_UTILS__RCLCPP__CLIENT_HPP_
+#ifndef TIER4_API_UTILS__RCLCPP__CLIENT_HPP_
+#define TIER4_API_UTILS__RCLCPP__CLIENT_HPP_
 
-#include "autoware_api_utils/types/response.hpp"
 #include "rclcpp/client.hpp"
+#include "tier4_api_utils/types/response.hpp"
 
 #include <chrono>
 #include <utility>
 
-namespace autoware_api_utils
+namespace tier4_api_utils
 {
 template <typename ServiceT>
 class Client
@@ -65,6 +65,6 @@ private:
   rclcpp::Logger logger_;
 };
 
-}  // namespace autoware_api_utils
+}  // namespace tier4_api_utils
 
-#endif  // AUTOWARE_API_UTILS__RCLCPP__CLIENT_HPP_
+#endif  // TIER4_API_UTILS__RCLCPP__CLIENT_HPP_

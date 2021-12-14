@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_API_UTILS__RCLCPP__PROXY_HPP_
-#define AUTOWARE_API_UTILS__RCLCPP__PROXY_HPP_
+#ifndef TIER4_API_UTILS__RCLCPP__PROXY_HPP_
+#define TIER4_API_UTILS__RCLCPP__PROXY_HPP_
 
-#include "autoware_api_utils/rclcpp/client.hpp"
-#include "autoware_api_utils/rclcpp/service.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "tier4_api_utils/rclcpp/client.hpp"
+#include "tier4_api_utils/rclcpp/service.hpp"
 
 #include <string>
 #include <utility>
 
-namespace autoware_api_utils
+namespace tier4_api_utils
 {
 template <class NodeT>
 class ServiceProxyNodeInterface
@@ -58,6 +58,6 @@ private:
   NodeT * node_;
 };
 
-}  // namespace autoware_api_utils
+}  // namespace tier4_api_utils
 
-#endif  // AUTOWARE_API_UTILS__RCLCPP__PROXY_HPP_
+#endif  // TIER4_API_UTILS__RCLCPP__PROXY_HPP_

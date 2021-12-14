@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(autoware_api_utils)
+project(tier4_api_utils)
 
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)

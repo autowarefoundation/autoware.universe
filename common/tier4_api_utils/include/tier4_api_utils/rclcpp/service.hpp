@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_API_UTILS__RCLCPP__SERVICE_HPP_
-#define AUTOWARE_API_UTILS__RCLCPP__SERVICE_HPP_
+#ifndef TIER4_API_UTILS__RCLCPP__SERVICE_HPP_
+#define TIER4_API_UTILS__RCLCPP__SERVICE_HPP_
 
 #include "rclcpp/service.hpp"
 
-namespace autoware_api_utils
+namespace tier4_api_utils
 {
 template <typename ServiceT>
 class Service
@@ -46,6 +46,6 @@ private:
   typename rclcpp::Service<ServiceT>::SharedPtr service_;
 };
 
-}  // namespace autoware_api_utils
+}  // namespace tier4_api_utils
 
-#endif  // AUTOWARE_API_UTILS__RCLCPP__SERVICE_HPP_
+#endif  // TIER4_API_UTILS__RCLCPP__SERVICE_HPP_

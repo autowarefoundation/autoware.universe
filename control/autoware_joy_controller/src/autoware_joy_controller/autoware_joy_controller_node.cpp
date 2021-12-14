@@ -16,7 +16,7 @@
 #include "autoware_joy_controller/joy_converter/ds4_joy_converter.hpp"
 #include "autoware_joy_controller/joy_converter/g29_joy_converter.hpp"
 
-#include <autoware_api_utils/autoware_api_utils.hpp>
+#include <tier4_api_utils/tier4_api_utils.hpp>
 
 #include <algorithm>
 #include <memory>
@@ -384,7 +384,7 @@ void AutowareJoyControllerNode::sendEmergencyRequest(bool emergency)
     request, [this, emergency](
                rclcpp::Client<tier4_external_api_msgs::srv::SetEmergency>::SharedFuture result) {
       auto response = result.get();
-      if (autoware_api_utils::is_success(response->status)) {
+      if (tier4_api_utils::is_success(response->status)) {
         RCLCPP_INFO(get_logger(), "service succeeded");
       } else {
         RCLCPP_WARN(get_logger(), "service failed: %s", response->status.message.c_str());

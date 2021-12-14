@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_API_UTILS__AUTOWARE_API_UTILS_HPP_
-#define AUTOWARE_API_UTILS__AUTOWARE_API_UTILS_HPP_
+#ifndef TIER4_API_UTILS__TIER4_API_UTILS_HPP_
+#define TIER4_API_UTILS__TIER4_API_UTILS_HPP_
 
-#include "autoware_api_utils/rclcpp/proxy.hpp"
-#include "autoware_api_utils/types/response.hpp"
+#include "tier4_api_utils/rclcpp/proxy.hpp"
+#include "tier4_api_utils/types/response.hpp"
 
-#endif  // AUTOWARE_API_UTILS__AUTOWARE_API_UTILS_HPP_
+#endif  // TIER4_API_UTILS__TIER4_API_UTILS_HPP_
