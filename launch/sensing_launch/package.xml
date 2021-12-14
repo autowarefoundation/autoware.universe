@@ -13,6 +13,7 @@
   <exec_depend>aip_x2_launch</exec_depend>
   <exec_depend>aip_xx1_launch</exec_depend>
   <exec_depend>common_sensor_launch</exec_depend>
+  <exec_depend>vehicle_info_util</exec_depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>
 
