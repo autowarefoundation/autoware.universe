@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AD_SERVICE_STATE_MONITOR__AUTOWARE_STATE_HPP_
-#define AD_SERVICE_STATE_MONITOR__AUTOWARE_STATE_HPP_
+#ifndef AD_SERVICE_STATE_MONITOR__AD_SERVICE_STATE_HPP_
+#define AD_SERVICE_STATE_MONITOR__AD_SERVICE_STATE_HPP_
 
 #include <autoware_auto_system_msgs/msg/autoware_state.hpp>
 
@@ -87,4 +87,4 @@ inline int toMsg(const AutowareState & state)
   throw std::runtime_error("invalid state");
 }
 
-#endif  // AD_SERVICE_STATE_MONITOR__AUTOWARE_STATE_HPP_
+#endif  // AD_SERVICE_STATE_MONITOR__AD_SERVICE_STATE_HPP_
