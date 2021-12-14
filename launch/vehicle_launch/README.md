@@ -28,8 +28,6 @@ This package finds some external packages and settings with variables and packag
 
 ex.)
 
-<https://github.com/tier4/autoware_launcher/blob/d880474/vehicle_launch/launch/vehicle_interface.launch.xml#L9>
-
 ```xml
 <let name="vehicle_model_pkg" value="$(find-pkg-share $(var vehicle_model)_description)"/>
 ```
