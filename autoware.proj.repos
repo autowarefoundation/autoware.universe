@@ -15,7 +15,7 @@ repositories:
   autoware/autoware_api_adaptor:
     type: git
     url: https://github.com/tier4/AutowareArchitectureProposal_api_adaptor.git
-    version: use-autoware-auto-msgs
+    version: tier4/universe
   autoware/msgs/autoware_api_msgs:
     type: git
     url: https://github.com/tier4/AutowareArchitectureProposal_api_msgs.git
