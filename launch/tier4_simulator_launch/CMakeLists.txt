@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(simulator_launch)
+project(tier4_simulator_launch)
 
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()

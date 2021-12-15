@@ -68,7 +68,7 @@
   <include file="$(find-pkg-share web_controller)/launch/web_controller.launch.xml" unless="$(var scenario_simulation)"/>
 
   <!-- Simulator -->
-  <include file="$(find-pkg-share simulator_launch)/launch/simulator.launch.xml">
+  <include file="$(find-pkg-share tier4_simulator_launch)/launch/simulator.launch.xml">
     <arg name="scenario_simulation" value="$(var scenario_simulation)"/>
     <arg name="perception/enable_detection_failure" value="$(var perception/enable_detection_failure)"/>
     <arg name="perception/enable_object_recognition" value="$(var perception/enable_object_recognition)"/>
