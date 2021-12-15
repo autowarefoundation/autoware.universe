@@ -32,7 +32,7 @@
   </include>
 
   <!-- Pointcloud container -->
-  <include file="$(find-pkg-share autoware_launch)/launch/pointcloud_container.launch.py" if="$(var use_pointcloud_container)">
+  <include file="$(find-pkg-share tier4_autoware_launch)/launch/pointcloud_container.launch.py" if="$(var use_pointcloud_container)">
     <arg name="use_multithread" value="true" />
     <arg name="container_name" value="$(var pointcloud_container_name)"/>
   </include>
@@ -109,7 +109,7 @@
   </group>
 
   <!-- Rviz -->
-  <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen" args="-d $(find-pkg-share autoware_launch)/rviz/autoware.rviz -s $(find-pkg-share autoware_launch)/rviz/image/autoware.png" if="$(var rviz)">
+  <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen" args="-d $(find-pkg-share tier4_autoware_launch)/rviz/autoware.rviz -s $(find-pkg-share tier4_autoware_launch)/rviz/image/autoware.png" if="$(var rviz)">
   </node>
 
   <!-- Web Controller -->

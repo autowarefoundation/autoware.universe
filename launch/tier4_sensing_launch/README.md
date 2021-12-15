@@ -42,7 +42,6 @@ This package finds settings with variables.
 
 ex.)
 
-<https://github.com/tier4/autoware_launcher/blob/d880474/sensing_launch/launch/sensing.launch.xml#L12>
 
 ```xml
 <include file="$(find-pkg-share sensing_launch)/launch/$(var sensor_model)/lidar.launch.xml">
