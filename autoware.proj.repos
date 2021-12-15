@@ -1,8 +1,12 @@
 repositories:
   # autoware
-  autoware/autoware.iv:
+  autoware/universe:
     type: git
     url: https://github.com/autowarefoundation/autoware.universe.git
+    version: tier4/proposal
+  autoware/common:
+    type: git
+    url: https://github.com/autowarefoundation/autoware_common.git
     version: tier4/proposal
   autoware/launcher:
     type: git
@@ -12,19 +16,15 @@ repositories:
     type: git
     url: https://github.com/tier4/AutowareArchitectureProposal_aip_launcher.git
     version: use-autoware-auto-msgs
-  autoware/autoware_api_adaptor:
+  autoware/api_adaptor:
     type: git
     url: https://github.com/tier4/AutowareArchitectureProposal_api_adaptor.git
     version: tier4/universe
-  autoware/msgs/autoware_api_msgs:
+  autoware/api_msgs:
     type: git
     url: https://github.com/tier4/AutowareArchitectureProposal_api_msgs.git
     version: use-autoware-auto-msgs
-  autoware/msgs/autoware_iv_msgs:
-    type: git
-    url: https://github.com/tier4/AutowareArchitectureProposal_msgs.git
-    version: use-autoware-auto-msgs
-  autoware/msgs/autoware_auto_msgs:
+  autoware/auto_msgs:
     type: git
     url: https://github.com/tier4/autoware_auto_msgs.git
     version: tier4/main
@@ -35,7 +35,7 @@ repositories:
   autoware/calibration_tools:
     type: git
     url: git@github.com:tier4/calibration_tools.git
-    version: use-autoware-auto-msgs
+    version: tier4/universe
   # description
   description/sensor/sensor_component_description:
     type: git
