@@ -1,6 +1,6 @@
 <launch>
   <!-- common param -->
-  <arg name="common_param_path" default="$(find-pkg-share planning_launch)/config/scenario_planning/common/common.param.yaml"/>
+  <arg name="common_param_path" default="$(find-pkg-share tier4_planning_launch)/config/scenario_planning/common/common.param.yaml"/>
   <arg name="vehicle_info_param_file" />
 
   <!-- scenario selector -->
@@ -17,7 +17,7 @@
 
   <!-- velocity planning with max velocity, acceleration, jerk, stop point constraint -->
   <group>
-    <arg name="param_path" default="$(find-pkg-share planning_launch)/config/scenario_planning/common/motion_velocity_smoother/motion_velocity_smoother.param.yaml"/>
+    <arg name="param_path" default="$(find-pkg-share tier4_planning_launch)/config/scenario_planning/common/motion_velocity_smoother/motion_velocity_smoother.param.yaml"/>
     <!-- external velocity limit selector -->
     <include file="$(find-pkg-share external_velocity_limit_selector)/launch/external_velocity_limit_selector.launch.xml">
       <arg name="common_param_path" value="$(var common_param_path)"/>
@@ -31,19 +31,19 @@
       <arg name="smoother_type" value="$(var smoother_type)" />
       <arg name="common_param_path" value="$(var common_param_path)"/>
       <arg name="param_path" value="$(var param_path)"/>
-      <arg name="smoother_param_path" value="$(find-pkg-share planning_launch)/config/scenario_planning/common/motion_velocity_smoother/$(var smoother_type).param.yaml"/>
+      <arg name="smoother_param_path" value="$(find-pkg-share tier4_planning_launch)/config/scenario_planning/common/motion_velocity_smoother/$(var smoother_type).param.yaml"/>
     </include>
   </group>
 
   <!-- scenarios-->
   <group>
     <!-- lane driving -->
-    <include file="$(find-pkg-share planning_launch)/launch/scenario_planning/lane_driving.launch.xml">
+    <include file="$(find-pkg-share tier4_planning_launch)/launch/scenario_planning/lane_driving.launch.xml">
       <arg name="common_param_path" value="$(var common_param_path)"/>
       <arg name="vehicle_info_param_file" value="$(var vehicle_info_param_file)" />
     </include>
     <!-- parking -->
-    <include file="$(find-pkg-share planning_launch)/launch/scenario_planning/parking.launch.py">
+    <include file="$(find-pkg-share tier4_planning_launch)/launch/scenario_planning/parking.launch.py">
       <arg name="vehicle_info_param_file" value="$(var vehicle_info_param_file)" />
     </include>
   </group>

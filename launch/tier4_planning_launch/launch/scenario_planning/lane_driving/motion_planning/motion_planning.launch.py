@@ -38,7 +38,7 @@ def launch_setup(context, *args, **kwargs):
 
     # planning common param path
     common_param_path = os.path.join(
-        get_package_share_directory("planning_launch"),
+        get_package_share_directory("tier4_planning_launch"),
         "config",
         "scenario_planning",
         "common",
@@ -49,7 +49,7 @@ def launch_setup(context, *args, **kwargs):
 
     # obstacle avoidance planner
     obstacle_avoidance_planner_param_path = os.path.join(
-        get_package_share_directory("planning_launch"),
+        get_package_share_directory("tier4_planning_launch"),
         "config",
         "scenario_planning",
         "lane_driving",
@@ -80,7 +80,7 @@ def launch_setup(context, *args, **kwargs):
 
     # surround obstacle checker
     surround_obstacle_checker_param_path = os.path.join(
-        get_package_share_directory("planning_launch"),
+        get_package_share_directory("tier4_planning_launch"),
         "config",
         "scenario_planning",
         "lane_driving",
@@ -132,7 +132,7 @@ def launch_setup(context, *args, **kwargs):
 
     # obstacle stop planner
     obstacle_stop_planner_param_path = os.path.join(
-        get_package_share_directory("planning_launch"),
+        get_package_share_directory("tier4_planning_launch"),
         "config",
         "scenario_planning",
         "lane_driving",
@@ -141,7 +141,7 @@ def launch_setup(context, *args, **kwargs):
         "obstacle_stop_planner.param.yaml",
     )
     obstacle_stop_planner_acc_param_path = os.path.join(
-        get_package_share_directory("planning_launch"),
+        get_package_share_directory("tier4_planning_launch"),
         "config",
         "scenario_planning",
         "lane_driving",

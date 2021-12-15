@@ -9,7 +9,7 @@
   <!-- path planning for avoiding obstacle with dynamic object info -->
   <group>
     <include file="$(find-pkg-share obstacle_avoidance_planner)/launch/obstacle_avoidance_planner.launch.xml">
-      <arg name="param_path" value="$(find-pkg-share planning_launch)/config/scenario_planning/lane_driving/motion_planning/obstacle_avoidance_planner/obstacle_avoidance_planner.param.yaml"/>
+      <arg name="param_path" value="$(find-pkg-share tier4_planning_launch)/config/scenario_planning/lane_driving/motion_planning/obstacle_avoidance_planner/obstacle_avoidance_planner.param.yaml"/>
       <arg name="input_path_topic" value="$(var input_path_topic)" />
       <arg name="output_path_topic" value="obstacle_avoidance_planner/trajectory" />
       <arg name="vehicle_info_param_file" value="$(var vehicle_info_param_file)" />
@@ -22,7 +22,7 @@
     <include file="$(find-pkg-share surround_obstacle_checker)/launch/surround_obstacle_checker.launch.xml">
       <arg name="input_trajectory" value="obstacle_avoidance_planner/trajectory" />
       <arg name="output_trajectory" value="surround_obstacle_checker/trajectory" />
-      <arg name="param_path" value="$(find-pkg-share planning_launch)/config/scenario_planning/lane_driving/motion_planning/surround_obstacle_checker/surround_obstacle_checker.param.yaml"/>
+      <arg name="param_path" value="$(find-pkg-share tier4_planning_launch)/config/scenario_planning/lane_driving/motion_planning/surround_obstacle_checker/surround_obstacle_checker.param.yaml"/>
       <arg name="vehicle_info_param_file" value="$(var vehicle_info_param_file)" />
     </include>
   </group>
@@ -42,8 +42,8 @@
       <!-- load config files -->
       <arg name="common_param_path" value="$(var common_param_path)"/>
       <arg name="vehicle_info_param_file" value="$(var vehicle_info_param_file)" />
-      <arg name="adaptive_cruise_control_param_path" value="$(find-pkg-share planning_launch)/config/obstacle_stop_planner/adaptive_cruise_control.param.yaml" />
-      <arg name="obstacle_stop_planner_param_path" value="$(find-pkg-share planning_launch)/config/obstacle_stop_planner/obstacle_stop_planner.param.yaml" />
+      <arg name="adaptive_cruise_control_param_path" value="$(find-pkg-share tier4_planning_launch)/config/obstacle_stop_planner/adaptive_cruise_control.param.yaml" />
+      <arg name="obstacle_stop_planner_param_path" value="$(find-pkg-share tier4_planning_launch)/config/obstacle_stop_planner/obstacle_stop_planner.param.yaml" />
       <arg name="enable_slow_down" value="false" />
       <!-- remap topic name -->
       <arg name="input_trajectory" value="surround_obstacle_checker/trajectory" />

@@ -37,7 +37,7 @@ def launch_setup(context, *args, **kwargs):
         vehicle_info_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     freespace_planner_param_path = os.path.join(
-        get_package_share_directory("planning_launch"),
+        get_package_share_directory("tier4_planning_launch"),
         "config",
         "scenario_planning",
         "parking",

@@ -94,7 +94,7 @@
 
   <!-- Planning -->
   <group>
-    <include file="$(find-pkg-share planning_launch)/launch/planning.launch.xml" if="$(var planning)">
+    <include file="$(find-pkg-share tier4_planning_launch)/launch/planning.launch.xml" if="$(var planning)">
       <arg name="vehicle_info_param_file" value="$(find-pkg-share $(var vehicle_model)_description)/config/vehicle_info.param.yaml"/>
     </include>
   </group>

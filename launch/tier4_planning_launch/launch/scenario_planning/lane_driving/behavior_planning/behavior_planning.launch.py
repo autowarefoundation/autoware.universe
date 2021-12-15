@@ -39,7 +39,7 @@ def launch_setup(context, *args, **kwargs):
 
     # behavior path planner
     side_shift_param_path = os.path.join(
-        get_package_share_directory("planning_launch"),
+        get_package_share_directory("tier4_planning_launch"),
         "config",
         "scenario_planning",
         "lane_driving",
@@ -52,7 +52,7 @@ def launch_setup(context, *args, **kwargs):
         side_shift_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     avoidance_param_path = os.path.join(
-        get_package_share_directory("planning_launch"),
+        get_package_share_directory("tier4_planning_launch"),
         "config",
         "scenario_planning",
         "lane_driving",
@@ -65,7 +65,7 @@ def launch_setup(context, *args, **kwargs):
         avoidance_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     lane_change_param_path = os.path.join(
-        get_package_share_directory("planning_launch"),
+        get_package_share_directory("tier4_planning_launch"),
         "config",
         "scenario_planning",
         "lane_driving",
@@ -78,7 +78,7 @@ def launch_setup(context, *args, **kwargs):
         lane_change_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     lane_following_param_path = os.path.join(
-        get_package_share_directory("planning_launch"),
+        get_package_share_directory("tier4_planning_launch"),
         "config",
         "scenario_planning",
         "lane_driving",
@@ -91,7 +91,7 @@ def launch_setup(context, *args, **kwargs):
         lane_following_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     pull_over_param_path = os.path.join(
-        get_package_share_directory("planning_launch"),
+        get_package_share_directory("tier4_planning_launch"),
         "config",
         "scenario_planning",
         "lane_driving",
@@ -104,7 +104,7 @@ def launch_setup(context, *args, **kwargs):
         pull_over_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     pull_out_param_path = os.path.join(
-        get_package_share_directory("planning_launch"),
+        get_package_share_directory("tier4_planning_launch"),
         "config",
         "scenario_planning",
         "lane_driving",
@@ -117,7 +117,7 @@ def launch_setup(context, *args, **kwargs):
         pull_out_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     behavior_path_planner_param_path = os.path.join(
-        get_package_share_directory("planning_launch"),
+        get_package_share_directory("tier4_planning_launch"),
         "config",
         "scenario_planning",
         "lane_driving",
