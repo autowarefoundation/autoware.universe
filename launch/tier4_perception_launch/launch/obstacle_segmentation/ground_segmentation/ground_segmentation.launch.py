@@ -34,7 +34,7 @@ class GroundSegmentationPipeline:
         self.context = context
         self.vehicle_info = self.get_vehicle_info()
         ground_segmentation_param_path = os.path.join(
-            get_package_share_directory("perception_launch"),
+            get_package_share_directory("tier4_perception_launch"),
             "config/obstacle_segmentation/ground_segmentation/ground_segmentation.param.yaml",
         )
         with open(ground_segmentation_param_path, "r") as f:
@@ -329,7 +329,7 @@ class GroundSegmentationPipeline:
                         "inpaint_radius": 1.0,
                         "param_file_path": PathJoinSubstitution(
                             [
-                                FindPackageShare("perception_launch"),
+                                FindPackageShare("tier4_perception_launch"),
                                 "config",
                                 "obstacle_segmentation",
                                 "ground_segmentation",
