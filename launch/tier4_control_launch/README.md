@@ -1,8 +1,8 @@
-# control_launch
+# tier4_control_launch
 
 ## Structure
 
-![control_launch](./control_launch.drawio.svg)
+![tier4_control_launch](./control_launch.drawio.svg)
 
 ## Package Dependencies
 
@@ -13,7 +13,7 @@ Please see `<exec_depend>` in `package.xml`.
 You can include as follows in `*.launch.xml` to use `control.launch.py`.
 
 ```xml
-<include file="$(find-pkg-share control_launch)/launch/control.launch.py">
+<include file="$(find-pkg-share tier4_control_launch)/launch/control.launch.py">
   <!-- options for lateral_controller_mode: mpc_follower, pure_pursuit -->
   <arg name="lateral_controller_mode" value="mpc_follower" />
 </include>

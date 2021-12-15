@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(control_launch)
+project(tier4_control_launch)
 
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)

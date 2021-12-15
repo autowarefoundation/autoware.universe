@@ -283,7 +283,7 @@ def generate_launch_description():
     add_launch_arg(
         "lat_controller_param_path",
         [
-            FindPackageShare("control_launch"),
+            FindPackageShare("tier4_control_launch"),
             "/config/trajectory_follower/lateral_controller.param.yaml",
         ],
         "path to the parameter file of lateral controller",
@@ -291,7 +291,7 @@ def generate_launch_description():
     add_launch_arg(
         "lon_controller_param_path",
         [
-            FindPackageShare("control_launch"),
+            FindPackageShare("tier4_control_launch"),
             "/config/trajectory_follower/longitudinal_controller.param.yaml",
         ],
         "path to the parameter file of longitudinal controller",
@@ -299,7 +299,7 @@ def generate_launch_description():
     add_launch_arg(
         "latlon_muxer_param_path",
         [
-            FindPackageShare("control_launch"),
+            FindPackageShare("tier4_control_launch"),
             "/config/trajectory_follower/latlon_muxer.param.yaml",
         ],
         "path to the parameter file of latlon muxer",
@@ -307,7 +307,7 @@ def generate_launch_description():
     add_launch_arg(
         "vehicle_cmd_gate_param_path",
         [
-            FindPackageShare("control_launch"),
+            FindPackageShare("tier4_control_launch"),
             "/config/vehicle_cmd_gate/vehicle_cmd_gate.param.yaml",
         ],
         "path to the parameter file of vehicle_cmd_gate",
