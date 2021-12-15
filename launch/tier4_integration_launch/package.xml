@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>integration_launch</name>
+  <name>tier4_integration_launch</name>
   <version>0.1.0</version>
-  <description>The integration_launch package</description>
+  <description>The tier4_integration_launch package</description>
 
   <maintainer email="hiroyuki.obinata@tier4.jp">Hiroyuki Obinata</maintainer>
   <license>Apache 2</license>

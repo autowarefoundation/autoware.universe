@@ -1,8 +1,8 @@
-# integration_launch
+# tier4_integration_launch
 
 ## Structure
 
-![integration_launch](./integration_launch.drawio.svg)
+![tier4_integration_launch](./integration_launch.drawio.svg)
 
 ## Package Dependencies
 
