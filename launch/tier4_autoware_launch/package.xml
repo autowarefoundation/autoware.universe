@@ -11,7 +11,7 @@
 
   <exec_depend>tier4_control_launch</exec_depend>
   <exec_depend>global_parameter_loader</exec_depend>
-  <exec_depend>localization_launch</exec_depend>
+  <exec_depend>tier4_localization_launch</exec_depend>
   <exec_depend>tier4_map_launch</exec_depend>
   <exec_depend>perception_launch</exec_depend>
   <exec_depend>tier4_planning_launch</exec_depend>

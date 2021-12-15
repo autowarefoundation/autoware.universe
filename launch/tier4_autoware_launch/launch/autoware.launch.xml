@@ -51,7 +51,7 @@
   </include>
 
   <!-- Localization -->
-  <include file="$(find-pkg-share localization_launch)/launch/localization.launch.xml">
+  <include file="$(find-pkg-share tier4_localization_launch)/launch/localization.launch.xml">
   </include>
 
   <!-- Perception -->

@@ -90,19 +90,19 @@ def generate_launch_description():
     add_launch_arg(
         "crop_box_filter_measurement_range_param_path",
         [
-            FindPackageShare("localization_launch"),
+            FindPackageShare("tier4_localization_launch"),
             "/config/crop_box_filter_measurement_range.param.yaml",
         ],
         "path to the parameter file of crop_box_filter_measurement_range",
     )
     add_launch_arg(
         "voxel_grid_downsample_filter_param_path",
-        [FindPackageShare("localization_launch"), "/config/voxel_grid_filter.param.yaml"],
+        [FindPackageShare("tier4_localization_launch"), "/config/voxel_grid_filter.param.yaml"],
         "path to the parameter file of voxel_grid_downsample_filter",
     )
     add_launch_arg(
         "random_downsample_filter_param_path",
-        [FindPackageShare("localization_launch"), "/config/random_downsample_filter.param.yaml"],
+        [FindPackageShare("tier4_localization_launch"), "/config/random_downsample_filter.param.yaml"],
         "path to the parameter file of random_downsample_filter",
     )
     add_launch_arg("use_intra_process", "true", "use ROS2 component container communication")
