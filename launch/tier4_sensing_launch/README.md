@@ -42,7 +42,6 @@ This package finds settings with variables.
 
 ex.)
 
-
 ```xml
 <include file="$(find-pkg-share tier4_sensing_launch)/launch/$(var sensor_model)/lidar.launch.xml">
 ```

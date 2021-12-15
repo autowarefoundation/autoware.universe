@@ -32,7 +32,6 @@ ex.)
 <let name="vehicle_model_pkg" value="$(find-pkg-share $(var vehicle_model)_description)"/>
 ```
 
-
 ```xml
 <arg name="config_dir" default="$(find-pkg-share individual_params)/config/$(var vehicle_id)/$(var sensor_model)"/>
 ```

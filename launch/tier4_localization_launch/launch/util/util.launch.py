@@ -102,7 +102,10 @@ def generate_launch_description():
     )
     add_launch_arg(
         "random_downsample_filter_param_path",
-        [FindPackageShare("tier4_localization_launch"), "/config/random_downsample_filter.param.yaml"],
+        [
+            FindPackageShare("tier4_localization_launch"),
+            "/config/random_downsample_filter.param.yaml",
+        ],
         "path to the parameter file of random_downsample_filter",
     )
     add_launch_arg("use_intra_process", "true", "use ROS2 component container communication")
