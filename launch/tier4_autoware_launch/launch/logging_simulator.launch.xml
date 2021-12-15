@@ -49,7 +49,7 @@
 
   <!-- System -->
   <group>
-    <include file="$(find-pkg-share system_launch)/launch/system.launch.xml" if="$(var system)">
+    <include file="$(find-pkg-share tier4_system_launch)/launch/system.launch.xml" if="$(var system)">
       <arg name="run_mode" value="online"/>
       <arg name="sensor_model" value="$(var sensor_model)"/>
     </include>

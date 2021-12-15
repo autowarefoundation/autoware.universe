@@ -1,8 +1,8 @@
-# system_launch
+# tier4_system_launch
 
 ## Structure
 
-![system_launch](./system_launch.drawio.svg)
+![tier4_system_launch](./system_launch.drawio.svg)
 
 ## Package Dependencies
 
@@ -11,7 +11,7 @@ Please see `<exec_depend>` in `package.xml`.
 ## Usage
 
 ```xml
-  <include file="$(find-pkg-share system_launch)/launch/system.launch.xml">
+  <include file="$(find-pkg-share tier4_system_launch)/launch/system.launch.xml">
     <arg name="run_mode" value="online"/>
     <arg name="sensor_model" value="SENSOR_MODEL"/>
   </include>

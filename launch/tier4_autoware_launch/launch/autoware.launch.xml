@@ -29,7 +29,7 @@
   </include>
 
   <!-- System -->
-  <include file="$(find-pkg-share system_launch)/launch/system.launch.xml">
+  <include file="$(find-pkg-share tier4_system_launch)/launch/system.launch.xml">
     <arg name="run_mode" value="online"/>
     <arg name="sensor_model" value="$(var sensor_model)"/>
   </include>
