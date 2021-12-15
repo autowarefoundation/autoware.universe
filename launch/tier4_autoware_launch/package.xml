@@ -12,7 +12,7 @@
   <exec_depend>control_launch</exec_depend>
   <exec_depend>global_parameter_loader</exec_depend>
   <exec_depend>localization_launch</exec_depend>
-  <exec_depend>map_launch</exec_depend>
+  <exec_depend>tier4_map_launch</exec_depend>
   <exec_depend>perception_launch</exec_depend>
   <exec_depend>planning_launch</exec_depend>
   <exec_depend>python3-bson</exec_depend>

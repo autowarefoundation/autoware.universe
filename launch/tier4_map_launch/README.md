@@ -1,8 +1,8 @@
-# map_launch
+# tier4_map_launch
 
 ## Structure
 
-![map_launch](./map_launch.drawio.svg)
+![tier4_map_launch](./map_launch.drawio.svg)
 
 ## Package Dependencies
 
@@ -17,7 +17,7 @@ You can include as follows in `*.launch.xml` to use `map.launch.py`.
 <arg name="lanelet2_map_file" default="lanelet2_map.osm" description="lanelet2 map file name"/>
 <arg name="pointcloud_map_file" default="pointcloud_map.pcd" description="pointcloud map file name"/>
 
-<include file="$(find-pkg-share map_launch)/launch/map.launch.py">
+<include file="$(find-pkg-share tier4_map_launch)/launch/map.launch.py">
   <arg name="lanelet2_map_path" value="$(var map_path)/$(var lanelet2_map_file)" />
   <arg name="pointcloud_map_path" value="$(var map_path)/$(var pointcloud_map_file)"/>
 </include>

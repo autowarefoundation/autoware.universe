@@ -57,7 +57,7 @@
 
   <!-- Map -->
   <group>
-    <include file="$(find-pkg-share map_launch)/launch/map.launch.py" if="$(var map)">
+    <include file="$(find-pkg-share tier4_map_launch)/launch/map.launch.py" if="$(var map)">
       <arg name="lanelet2_map_path" value="$(var map_path)/$(var lanelet2_map_file)" />
       <arg name="pointcloud_map_path" value="$(var map_path)/$(var pointcloud_map_file)"/>
     </include>

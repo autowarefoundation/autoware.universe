@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>map_launch</name>
+  <name>tier4_map_launch</name>
   <version>0.1.0</version>
-  <description>The map_launch package</description>
+  <description>The tier4_map_launch package</description>
 
   <maintainer email="ryohsuke.mitsudome@tier4.jp">mitsudome-r</maintainer>
 

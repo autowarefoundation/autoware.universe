@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(map_launch)
+project(tier4_map_launch)
 
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
