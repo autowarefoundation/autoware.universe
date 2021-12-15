@@ -2,7 +2,7 @@
 
 ## Structure
 
-![tier4_autoware_launch](./tier4_autoware_launch.drawio.svg)
+![tier4_autoware_launch](./autoware_launch.drawio.svg)
 
 ## Package Dependencies
 
