@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(vehicle_launch)
+project(tier4_vehicle_launch)
 
 add_compile_options(-std=c++14)
 
