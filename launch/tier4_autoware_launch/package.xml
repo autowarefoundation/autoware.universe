@@ -12,6 +12,9 @@
   <exec_depend>global_parameter_loader</exec_depend>
   <exec_depend>python3-bson</exec_depend>
   <exec_depend>python3-tornado</exec_depend>
+  <exec_depend>lgsvl_bridge</exec_depend>
+  <exec_depend>lgsvl_ground_truth</exec_depend>
+  <exec_depend>lgsvl_interface</exec_depend>
   <exec_depend>rviz2</exec_depend>
   <exec_depend>tier4_control_launch</exec_depend>
   <exec_depend>tier4_localization_launch</exec_depend>
@@ -21,6 +24,7 @@
   <exec_depend>tier4_sensing_launch</exec_depend>
   <exec_depend>tier4_simulator_launch</exec_depend>
   <exec_depend>tier4_system_launch</exec_depend>
+  <exec_depend>tier4_svl_sensing_launch</exec_depend>
   <exec_depend>tier4_vehicle_launch</exec_depend>
   <exec_depend>web_controller</exec_depend>
 
