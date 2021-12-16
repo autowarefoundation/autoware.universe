@@ -24,7 +24,6 @@ from launch_ros.actions import PushRosNamespace
 from launch_ros.actions import SetParameter
 from launch_ros.descriptions import ComposableNode
 from launch_ros.substitutions import FindPackageShare
-
 import yaml
 
 
@@ -48,6 +47,7 @@ def get_vehicle_mirror_info(context):
     with open(path, "r") as f:
         p = yaml.safe_load(f)["/**"]["ros__parameters"]
     return p
+
 
 def launch_setup(context, *args, **kwargs):
     def create_parameter_dict(*args):
@@ -91,7 +91,7 @@ def launch_setup(context, *args, **kwargs):
     # TODO hardcoded change to not detect the mirrors as obstacle in SVL
     # this seems caused by some delay in the pointcloud update which cause points of the mirror to "stay in place" for a short time while the car moves.
     # when the car moves the points stay behind their actual position and can get out of the crop box if it is too small.
-    mirror_cropbox_parameters["min_x"] = 1.0 # mirror_info["min_longitudinal_offset"]
+    mirror_cropbox_parameters["min_x"] = 1.0  # mirror_info["min_longitudinal_offset"]
     mirror_cropbox_parameters["max_x"] = mirror_info["max_longitudinal_offset"]
     mirror_cropbox_parameters["min_y"] = mirror_info["min_lateral_offset"]
     mirror_cropbox_parameters["max_y"] = mirror_info["max_lateral_offset"]
@@ -140,7 +140,7 @@ def launch_setup(context, *args, **kwargs):
         output="screen",
     )
 
-    left_components=[]
+    left_components = []
 
     left_components.append(
         ComposableNode(
@@ -181,7 +181,7 @@ def launch_setup(context, *args, **kwargs):
         output="screen",
     )
 
-    right_components=[]
+    right_components = []
 
     right_components.append(
         ComposableNode(
@@ -229,53 +229,51 @@ def launch_setup(context, *args, **kwargs):
     ]
 
 
-
 def generate_launch_description():
 
-    return launch.LaunchDescription([
-        DeclareLaunchArgument("vehicle_model"),
-        DeclareLaunchArgument(
-            "vehicle_param_file",
-            default_value=[
-                FindPackageShare(
-                    [LaunchConfiguration("vehicle_model"), "_description"]
-                ),
-                "/config/vehicle_info.param.yaml",
-            ],
-        ),
-        DeclareLaunchArgument(
-            "vehicle_mirror_param_file",
-            default_value=[
-                FindPackageShare(
-                    [LaunchConfiguration("vehicle_model"), "_description"]
-                ),
-                "/config/mirror.param.yaml",
-            ],
-        ),
-        DeclareLaunchArgument(
-            "input_frame", default_value="base_link"
-        ),
-        DeclareLaunchArgument(
-            "output_frame", default_value="base_link"
-        ),
-        SetParameter(
-            name="use_sim_time",
-            value=True,
-        ),
-        OpaqueFunction(function=launch_setup),
-        GroupAction([
-            PushRosNamespace("/sensing/lidar"),
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(
-                    [FindPackageShare("aip_xx1_launch"), "/launch/pointcloud_preprocessor.launch.py"]
-                ),
-                launch_arguments={
-                    "base_frame": "base_link",
-                    "use_concat_filter": "true",
-                    "vehicle_param_file": LaunchConfiguration("vehicle_param_file"),
-                    "use_intra_process": "true",
-                    "use_multithread": "true",
-                }.items(),
-            )
-        ]),
-     ])
+    return launch.LaunchDescription(
+        [
+            DeclareLaunchArgument("vehicle_model"),
+            DeclareLaunchArgument(
+                "vehicle_param_file",
+                default_value=[
+                    FindPackageShare([LaunchConfiguration("vehicle_model"), "_description"]),
+                    "/config/vehicle_info.param.yaml",
+                ],
+            ),
+            DeclareLaunchArgument(
+                "vehicle_mirror_param_file",
+                default_value=[
+                    FindPackageShare([LaunchConfiguration("vehicle_model"), "_description"]),
+                    "/config/mirror.param.yaml",
+                ],
+            ),
+            DeclareLaunchArgument("input_frame", default_value="base_link"),
+            DeclareLaunchArgument("output_frame", default_value="base_link"),
+            SetParameter(
+                name="use_sim_time",
+                value=True,
+            ),
+            OpaqueFunction(function=launch_setup),
+            GroupAction(
+                [
+                    PushRosNamespace("/sensing/lidar"),
+                    IncludeLaunchDescription(
+                        PythonLaunchDescriptionSource(
+                            [
+                                FindPackageShare("aip_xx1_launch"),
+                                "/launch/pointcloud_preprocessor.launch.py",
+                            ]
+                        ),
+                        launch_arguments={
+                            "base_frame": "base_link",
+                            "use_concat_filter": "true",
+                            "vehicle_param_file": LaunchConfiguration("vehicle_param_file"),
+                            "use_intra_process": "true",
+                            "use_multithread": "true",
+                        }.items(),
+                    ),
+                ]
+            ),
+        ]
+    )
