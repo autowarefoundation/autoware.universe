@@ -46,7 +46,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   srv/Engage.srv
   srv/GetMetadataPackages.srv
   srv/GetTextFile.srv
-  srv/GetVersion.srv
   srv/InitializePose.srv
   srv/InitializePoseAuto.srv
   srv/PauseDriving.srv
