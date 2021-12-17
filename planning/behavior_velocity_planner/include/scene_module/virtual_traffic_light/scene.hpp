@@ -66,6 +66,8 @@ public:
   struct PlannerParam
   {
     double max_delay_sec;
+    double near_line_distance;
+    bool check_timeout_after_stop_line;
   };
 
 public:

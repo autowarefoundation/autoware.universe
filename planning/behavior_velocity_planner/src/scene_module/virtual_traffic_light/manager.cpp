@@ -68,6 +68,9 @@ VirtualTrafficLightModuleManager::VirtualTrafficLightModuleManager(rclcpp::Node 
   {
     auto & p = planner_param_;
     p.max_delay_sec = node.declare_parameter(ns + ".max_delay_sec", 3.0);
+    p.near_line_distance = node.declare_parameter(ns + ".near_line_distance", 1.0);
+    p.check_timeout_after_stop_line =
+      node.declare_parameter(ns + ".check_timeout_after_stop_line", true);
   }
 }
 
