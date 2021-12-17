@@ -63,3 +63,7 @@ repositories:
     type: git
     url: https://github.com/tier4/velodyne_vls.git
     version: use-autoware-auto-msgs
+  vendor/ros2-lgsvl-bridge:
+    type: git
+    url: https://github.com/lgsvl/ros2-lgsvl-bridge.git
+    version: galactic-devel
