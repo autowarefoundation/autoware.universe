@@ -19,3 +19,4 @@
     - { role: pacmod, rosdistro: galactic, tags: ["pacmod"] }
     - { role: autoware, rosdistro: galactic, tags: ["autoware"] }
     - { role: libtorch, tags: ["libtorch"] }
+    - { role: pre-commit, tags: ["pre-commit"] }

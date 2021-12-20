@@ -1,0 +1,11 @@
+---
+- name: pre-commit (add go ppa)
+  apt_repository:
+    repo: ppa:longsleep/golang-backports
+  become: yes
+
+- name: pre-commit (install golang)
+  become: yes
+  apt:
+    name: golang
+    update_cache: yes
