@@ -676,7 +676,7 @@ bool exists(std::vector<T> vec, T element)
 }
 
 boost::optional<size_t> findNearestIndexToGoal(
-  const std::vector<autoware_planning_msgs::msg::PathPointWithLaneId> & points,
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
   const geometry_msgs::msg::Pose & goal, const int64_t goal_lane_id,
   const double max_dist = std::numeric_limits<double>::max())
 {
