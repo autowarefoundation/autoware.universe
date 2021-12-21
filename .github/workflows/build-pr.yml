@@ -12,20 +12,6 @@ jobs:
     runs-on: ubuntu-20.04
 
     steps:
-      # https://github.community/t/bug-strange-no-space-left-on-device-ioexceptions-on-github-runners/17616
-      - name: Free disk space
-        run: |
-          sudo apt-get -y --allow-remove-essential purge \
-            aria2 ansible azure-cli shellcheck rpm xorriso zsync clang* dotnet-sdk* esl-erlang firefox g++-8 gfortran* \
-            google* ghc* cabal-install* imagemagick libmagick* ant ant-optional kubectl libnginx* \
-            mercurial apt-transport-https mono-complete mysql-client libmysqlclient-dev mysql-server mssql-tools unixodbc-dev \
-            yarn chrpath libssl-dev libxft-dev libfreetype6 libfreetype6-dev libfontconfig1 libfontconfig1-dev php*
-          sudo apt-get -y autoremove
-          sudo apt-get -y autoclean
-          sudo rm -rf /usr/local/lib/android
-          docker rmi $(docker image ls -aq)
-          df -h
-
       - name: Checkout repository
         uses: actions/checkout@v2
 
@@ -50,10 +36,10 @@ jobs:
 
       - name: Install vcstool
         run: |
-          sudo apt update && sudo apt install curl gnupg lsb-release
+          sudo apt-get -y update && sudo apt-get -y install curl gnupg lsb-release
           sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key  -o /usr/share/keyrings/ros-archive-keyring.gpg
           echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
-          sudo apt-get update && sudo apt-get install python3-vcstool
+          sudo apt-get -y update && sudo apt-get -y install python3-vcstool
 
       - name: Run vcs import
         run: |
