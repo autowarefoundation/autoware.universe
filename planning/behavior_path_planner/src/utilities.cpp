@@ -792,8 +792,8 @@ bool setGoal(
     }
 
     // find min_dist_index whose distance to goal is shorter than search_radius_range
-    const auto min_dist_index_opt =
-      tier4_autoware_utils::findNearestIndexToGoal(input.points, goal, goal_lane_id, search_radius_range);
+    const auto min_dist_index_opt = tier4_autoware_utils::findNearestIndexToGoal(
+      input.points, goal, goal_lane_id, search_radius_range);
     if (!min_dist_index_opt) {
       return false;
     }
