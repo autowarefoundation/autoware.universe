@@ -52,7 +52,7 @@ repositories:
   description/vehicle/lexus_description:
     type: git
     url: https://github.com/tier4/lexus_description.iv.git
-    version: use-autoware-auto-msgs
+    version: tier4/universe
   # simulator
   simulator/scenario_simulator:
     type: git
