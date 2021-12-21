@@ -712,9 +712,6 @@ boost::optional<size_t> findNearestIndexToGoal(
     if (max_dist < dist) {
       break;
     }
-    if (i == 0) {
-      break;
-    }
   }
   return min_dist_out_of_range_index;
 }
