@@ -704,7 +704,7 @@ boost::optional<size_t> findNearestIndexToGoal(
   }
 
   size_t min_dist_out_of_range_index;
-  for (size_t i = min_dist_index;; --i) {
+  for (size_t i = min_dist_index; i != 0; --i) {
     const double x = points.at(i).point.pose.position.x - goal.position.x;
     const double y = points.at(i).point.pose.position.y - goal.position.y;
     const double dist = std::hypot(x, y);
