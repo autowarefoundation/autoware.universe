@@ -881,7 +881,7 @@ OccupancyGrid generateDrivableArea(
     const double origin_offset_x_m = (-width / 4) * cos(yaw) - (-height / 2) * sin(yaw);
     const double origin_offset_y_m = (-width / 4) * sin(yaw) + (-height / 2) * cos(yaw);
     // Only current yaw should be considered as the orientation of grid_origin.
-    grid_origin.pose.orientation = autoware_utils::createQuaternionFromYaw(yaw);
+    grid_origin.pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(yaw);
     grid_origin.pose.position.x = current_pose.pose.position.x + origin_offset_x_m;
     grid_origin.pose.position.y = current_pose.pose.position.y + origin_offset_y_m;
     grid_origin.pose.position.z = current_pose.pose.position.z;
