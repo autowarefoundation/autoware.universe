@@ -57,7 +57,11 @@ repositories:
   simulator/scenario_simulator:
     type: git
     url: https://github.com/tier4/scenario_simulator_v2.git
-    version: use-autoware-auto-msgs
+    version: master
+  simulator/AutowareArchitectureProposal_msgs: # for scenario_simulator_v2 backward compatibility.
+    type: git
+    url: https://github.com/tier4/AutowareArchitectureProposal_msgs.git
+    version: main
   simulator/logsim:
     type: git
     url: git@github.com:tier4/logsim.git
