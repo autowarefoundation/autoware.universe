@@ -25,11 +25,11 @@ This implementation inherits `pointcloud_preprocessor::Filter` class, please ref
 
 ### Output
 
-| Name                                           | Type                                       | Description                                             |
-| ---------------------------------------------- | ------------------------------------------ | ------------------------------------------------------- |
-| `/dual_return_outlier_filter/frequency_image`  | `sensor_msgs::msg::Image`                  | The histogram image that represent visibility           |
+| Name                                           | Type                                    | Description                                             |
+| ---------------------------------------------- | --------------------------------------- | ------------------------------------------------------- |
+| `/dual_return_outlier_filter/frequency_image`  | `sensor_msgs::msg::Image`               | The histogram image that represent visibility           |
 | `/dual_return_outlier_filter/visibility`       | `tier4_debug_msgs::msg::Float32Stamped` | A representation of visibility with a value from 0 to 1 |
-| `/dual_return_outlier_filter/pointcloud_noise` | `sensor_msgs::msg::Pointcloud2`            | The pointcloud removed as noise                         |
+| `/dual_return_outlier_filter/pointcloud_noise` | `sensor_msgs::msg::Pointcloud2`         | The pointcloud removed as noise                         |
 
 ## Parameters
 
