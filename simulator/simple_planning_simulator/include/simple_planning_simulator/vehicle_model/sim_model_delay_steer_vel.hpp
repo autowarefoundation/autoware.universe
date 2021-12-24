@@ -33,14 +33,15 @@ public:
   /**
    * @brief constructor
    * @param [in] vx_lim velocity limit [m/s]
-   * @param [in] angel_lim angular velocity limit [m/s]
+   * @param [in] steer_lim steering limit [rad]
    * @param [in] vx_rate_lim acceleration limit [m/ss]
-   * @param [in] wz_rate_lim angular acceleration limit [rad/ss]
+   * @param [in] steer_rate_lim steering angular velocity limit [rad/ss]
+   * @param [in] wheelbase vehicle wheelbase length [m]
    * @param [in] dt delta time information to set input buffer for delay
    * @param [in] vx_delay time delay for velocity command [s]
    * @param [in] vx_time_constant time constant for 1D model of velocity dynamics
-   * @param [in] wx_delay time delay for angular-velocity command [s]
-   * @param [in] wz_time_constant time constant for 1D model of angular-velocity dynamics
+   * @param [in] steer_delay time delay for steering command [s]
+   * @param [in] steer_time_constant time constant for 1D model of steering dynamics
    */
   SimModelDelaySteerVel(
     float64_t vx_lim, float64_t steer_lim, float64_t vx_rate_lim, float64_t steer_rate_lim,
