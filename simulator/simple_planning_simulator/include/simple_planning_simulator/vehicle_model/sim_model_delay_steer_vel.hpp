@@ -89,7 +89,7 @@ private:
    * @brief set queue buffer for input command
    * @param [in] dt delta time
    */
-  void initializeInputQueue(const float_t & dt);
+  void initializeInputQueue(const float64_t & dt);
 
   /**
    * @brief get vehicle position x
