@@ -46,6 +46,15 @@ autoware_auto_vehicle_msgs::msg::VelocityReport to_velocity_report(
   return velocity;
 }
 
+geometry_msgs::msg::PoseStamped to_pose_stamped(const std::shared_ptr<SimModelInterface> vehicle_model_ptr)
+{
+  geometry_msgs::msg::PoseStamped pose_stamped;
+  pose_stamped.pose.position.x = vehicle_model_ptr->getX();
+  pose_stamped.pose.position.y = vehicle_model_ptr->getY();
+  pose_stamped.pose.orientation = motion::motion_common::from_angle(vehicle_model_ptr->getYaw());
+  return pose_stamped;
+}
+
 nav_msgs::msg::Odometry to_odometry(const std::shared_ptr<SimModelInterface> vehicle_model_ptr)
 {
   nav_msgs::msg::Odometry odometry;
@@ -236,6 +245,7 @@ void SimplePlanningSimulator::on_timer()
   }
 
   // set current state
+  current_pose_ = to_pose_stamped(vehicle_model_ptr_);
   current_odometry_ = to_odometry(vehicle_model_ptr_);
   current_odometry_.pose.pose.position.z = get_z_pose_from_trajectory(
     current_odometry_.pose.pose.position.x, current_odometry_.pose.pose.position.y);
@@ -254,6 +264,7 @@ void SimplePlanningSimulator::on_timer()
   }
 
   // publish vehicle state
+  publish_pose(current_pose_);
   publish_odometry(current_odometry_);
   publish_velocity(current_velocity_);
   publish_steering(current_steer_);
@@ -476,6 +487,14 @@ void SimplePlanningSimulator::publish_odometry(const Odometry & odometry)
   msg.header.stamp = get_clock()->now();
   msg.child_frame_id = simulated_frame_id_;
   pub_odom_->publish(msg);
+}
+
+void SimplePlanningSimulator::publish_pose(const PoseStamped & pose)
+{
+  PoseStamped msg = pose;
+  msg.header.frame_id = origin_frame_id_;
+  msg.header.stamp = get_clock()->now();
+  pub_current_pose_->publish(msg);
 }
 
 void SimplePlanningSimulator::publish_steering(const SteeringReport & steer)

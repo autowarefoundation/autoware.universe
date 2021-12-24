@@ -157,6 +157,7 @@ private:
 
   /* received & published topics */
   VelocityReport current_velocity_;
+  PoseStamped current_pose_;
   Odometry current_odometry_;
   SteeringReport current_steer_;
   VehicleControlCommand::ConstSharedPtr current_vehicle_cmd_ptr_;
@@ -298,6 +299,12 @@ private:
    * @param [in] odometry The odometry to publish
    */
   void publish_odometry(const Odometry & odometry);
+
+  /**
+   * @brief publish pose
+   * @param [in] pose_stamped The pose to publish
+   */
+  void publish_pose(const PoseStamped & pose);
 
   /**
    * @brief publish steering
