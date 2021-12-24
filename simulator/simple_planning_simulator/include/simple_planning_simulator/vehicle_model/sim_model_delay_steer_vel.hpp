@@ -43,9 +43,9 @@ public:
    * @param [in] wz_time_constant time constant for 1D model of angular-velocity dynamics
    */
   SimModelDelaySteerVel(
-    float64_t vx_lim, float64_t angel_lim, float64_t vx_rate_lim, float64_t wz_rate_lim,
-    float64_t dt, float64_t vx_delay, float64_t vx_time_constant, float64_t wz_delay,
-    float64_t wz_time_constant);
+    float64_t vx_lim, float64_t steer_lim, float64_t vx_rate_lim, float64_t steer_rate_lim,
+    float64_t wheelbase, float64_t dt, float64_t vx_delay, float64_t vx_time_constant,
+    float64_t steer_delay, float64_t steer_time_constant);
 
   /**
    * @brief destructor
@@ -61,27 +61,28 @@ private:
     Y,
     YAW,
     VX,
-    WZ,
+    STEER,
   };
   enum IDX_U
   {
     VX_DES = 0,
-    WZ_DES,
+    STEER_DES,
   };
 
   const float64_t vx_lim_;       //!< @brief velocity limit
   const float64_t vx_rate_lim_;  //!< @brief acceleration limit
-  const float64_t wz_lim_;       //!< @brief angular velocity limit
-  const float64_t wz_rate_lim_;  //!< @brief angular acceleration limit
+  const float64_t steer_lim_;       //!< @brief steering limit [rad]
+  const float64_t steer_rate_lim_;  //!< @brief steering angular velocity limit [rad/s]
+  const float64_t wheelbase_;       //!< @brief vehicle wheelbase length [m]
 
   std::deque<float64_t> vx_input_queue_;  //!< @brief buffer for velocity command
-  std::deque<float64_t> wz_input_queue_;  //!< @brief buffer for angular velocity command
+  std::deque<float64_t> steer_input_queue_;  //!< @brief buffer for angular velocity command
   const float64_t vx_delay_;              //!< @brief time delay for velocity command [s]
   const float64_t vx_time_constant_;
     //!< @brief time constant for 1D model of velocity dynamics
-  const float64_t wz_delay_;              //!< @brief time delay for angular-velocity command [s]
+  const float64_t steer_delay_;              //!< @brief time delay for angular-velocity command [s]
   const float64_t
-    wz_time_constant_;  //!< @brief time constant for 1D model of angular-velocity dynamics
+    steer_time_constant_;  //!< @brief time constant for 1D model of angular-velocity dynamics
 
   /**
    * @brief set queue buffer for input command
@@ -108,6 +109,16 @@ private:
    * @brief get vehicle longitudinal velocity
    */
   float64_t getVx() override;
+
+  /**
+   * @brief get vehicle lateral velocity
+   */
+  float64_t getVy() override;
+
+  /**
+   * @brief get vehicle longiudinal acceleration
+   */
+  float64_t getAx() override;
 
   /**
    * @brief get vehicle angular-velocity wz
