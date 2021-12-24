@@ -175,6 +175,8 @@ void SimplePlanningSimulator::initialize_vehicle_model()
   const float64_t steer_rate_lim = declare_parameter("steer_rate_lim", 5.0);
   const float64_t acc_time_delay = declare_parameter("acc_time_delay", 0.1);
   const float64_t acc_time_constant = declare_parameter("acc_time_constant", 0.1);
+  const float64_t vel_time_delay = declare_parameter("vel_time_delay", 0.25);
+  const float64_t vel_time_constant = declare_parameter("vel_time_constant", 0.5);
   const float64_t steer_time_delay = declare_parameter("steer_time_delay", 0.24);
   const float64_t steer_time_constant = declare_parameter("steer_time_constant", 0.27);
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
@@ -189,6 +191,11 @@ void SimplePlanningSimulator::initialize_vehicle_model()
   } else if (vehicle_model_type_str == "IDEAL_STEER_ACC_GEARED") {
     vehicle_model_type_ = VehicleModelType::IDEAL_STEER_ACC_GEARED;
     vehicle_model_ptr_ = std::make_shared<SimModelIdealSteerAccGeared>(wheelbase);
+  } else if (vehicle_model_type_str == "DELAY_STEER_VEL") {
+    vehicle_model_type_ = VehicleModelType::DELAY_STEER_VEL;
+    vehicle_model_ptr_ = std::make_shared<SimModelDelaySteerVel>(
+      vel_lim, steer_lim, vel_rate_lim, steer_rate_lim, timer_sampling_time_ms_ / 1000.0,
+      vel_time_delay, vel_time_constant, steer_time_delay, steer_time_constant);
   } else if (vehicle_model_type_str == "DELAY_STEER_ACC") {
     vehicle_model_type_ = VehicleModelType::DELAY_STEER_ACC;
     vehicle_model_ptr_ = std::make_shared<SimModelDelaySteerAcc>(
