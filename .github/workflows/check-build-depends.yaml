@@ -1,0 +1,28 @@
+name: check-build-depends
+
+on:
+  pull_request:
+    paths:
+      - build_depends.repos
+
+jobs:
+  check-build-depends:
+    runs-on: ubuntu-latest
+    container: ros:galactic
+    steps:
+      - name: Cancel previous runs
+        uses: styfle/cancel-workflow-action@0.9.1
+
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Get self packages
+        id: get-self-packages
+        uses: autowarefoundation/autoware-github-actions/get-self-packages@tier4/proposal
+
+      - name: Build and test
+        uses: autowarefoundation/autoware-github-actions/colcon-build-and-test@tier4/proposal
+        with:
+          rosdistro: galactic
+          target-packages: ${{ steps.get-self-packages.outputs.self-packages }}
+          build-depends-repos: build_depends.repos
