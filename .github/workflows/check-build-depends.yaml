@@ -16,6 +16,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      - name: Remove exec_depend
+        uses: autowarefoundation/autoware-github-actions/remove-exec-depend@tier4/proposal
+
       - name: Get self packages
         id: get-self-packages
         uses: autowarefoundation/autoware-github-actions/get-self-packages@tier4/proposal
