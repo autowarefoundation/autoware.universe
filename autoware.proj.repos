@@ -149,19 +149,10 @@ repositories:
     type: git
     url: https://github.com/tier4/ars408_driver.git
     version: use-autoware-auto-msgs
-  vendor/hash_library_vendor:
-    type: git
-    url: https://github.com/tier4/hash_library_vendor.git
-    version: fd300d33ac8f4dcc5e2c6d4f0415df5062660f23
   vendor/diagnostics:
     type: git
     url: https://github.com/tier4/diagnostics.git
     version: da6cdbe674dd7bf1e71ee6fb73825e3e43644f0c
-  # TODO: Remove behavior tree from repos after runtime error is resolved in released package
-  vendor/behaviortree-cpp-v3:
-    type: git
-    url: https://github.com/BehaviorTree/BehaviorTree.CPP.git
-    version: eb9ff2e63d713c94106f57dd91565a1840223a70
   vendor/spinnaker:
     type: git
     url: https://github.com/tier4/spinnaker.git
@@ -170,8 +161,3 @@ repositories:
     type: git
     url: https://github.com/tier4/image_pipeline.git
     version: 47964112293eb19f9f57254b2e6b68706954cc63
-  # TODO: Remove robot_state_publisher from repos after preventing timer publish is resolved in released package
-  vendor/robot_state_publisher:
-    type: git
-    url: https://github.com/ros/robot_state_publisher.git
-    version: 51c5f53baa19232e6f99e2638619a9faa6697d78
