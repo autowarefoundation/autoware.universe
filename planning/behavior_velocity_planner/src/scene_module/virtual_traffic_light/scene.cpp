@@ -472,7 +472,7 @@ bool VirtualTrafficLightModule::isBeforeStopLine()
   const auto signed_arc_length = tier4_autoware_utils::calcSignedArcLength(
     module_data_.path.points, module_data_.head_pose.position, collision->point);
 
-  return signed_arc_length > -planner_param_.near_line_distance;
+  return signed_arc_length > -planner_param_.dead_line_margin;
 }
 
 bool VirtualTrafficLightModule::isAfterAnyEndLine()
@@ -493,7 +493,7 @@ bool VirtualTrafficLightModule::isAfterAnyEndLine()
   const auto signed_arc_length = tier4_autoware_utils::calcSignedArcLength(
     module_data_.path.points, module_data_.head_pose.position, collision->point);
 
-  return signed_arc_length < -planner_param_.near_line_distance;
+  return signed_arc_length < -planner_param_.dead_line_margin;
 }
 
 bool VirtualTrafficLightModule::isNearAnyEndLine()
