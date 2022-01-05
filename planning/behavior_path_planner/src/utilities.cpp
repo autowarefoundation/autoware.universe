@@ -66,7 +66,6 @@ bool convertToFrenetCoordinate3d(
   }
 
   const auto search_pt = tier4_autoware_utils::fromMsg(search_point_geom);
-  bool found = false;
   double min_distance = std::numeric_limits<double>::max();
 
   // get frenet coordinate based on points
