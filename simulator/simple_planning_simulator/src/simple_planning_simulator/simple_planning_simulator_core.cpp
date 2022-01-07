@@ -323,7 +323,8 @@ void SimplePlanningSimulator::set_input(const float steer, const float vel, cons
     acc = -accel;
   }
 
-  if (vehicle_model_type_ == VehicleModelType::IDEAL_STEER_VEL) {
+  if (vehicle_model_type_ == VehicleModelType::IDEAL_STEER_VEL ||
+      vehicle_model_type_ == VehicleModelType::DELAY_STEER_VEL) {
     input << vel, steer;
   } else if (  // NOLINT
     vehicle_model_type_ == VehicleModelType::IDEAL_STEER_ACC ||
@@ -419,6 +420,10 @@ void SimplePlanningSimulator::set_initial_state(const Pose & pose, const Twist &
     vehicle_model_type_ == VehicleModelType::IDEAL_STEER_ACC_GEARED)
   {
     state << x, y, yaw, vx;
+  } else if (  // NOLINT
+    vehicle_model_type_ == VehicleModelType::DELAY_STEER_VEL)
+  {
+    state << x, y, yaw, vx, steer;
   } else if (  // NOLINT
     vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC ||
     vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_GEARED)

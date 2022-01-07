@@ -38,7 +38,7 @@ SimModelDelaySteerVel::SimModelDelaySteerVel(
 float64_t SimModelDelaySteerVel::getX() { return state_(IDX::X); }
 float64_t SimModelDelaySteerVel::getY() { return state_(IDX::Y); }
 float64_t SimModelDelaySteerVel::getYaw() { return state_(IDX::YAW); }
-float64_t SimModelDelaySteerVel::getVx() { return input_(IDX::VX); }
+float64_t SimModelDelaySteerVel::getVx() { return state_(IDX::VX); }
 float64_t SimModelDelaySteerVel::getVy() {return 0.0;}
 float64_t SimModelDelaySteerVel::getAx() {return current_ax_;}
 float64_t SimModelDelaySteerVel::getWz()
