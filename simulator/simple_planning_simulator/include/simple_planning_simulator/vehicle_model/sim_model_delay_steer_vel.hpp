@@ -75,6 +75,8 @@ private:
   const float64_t steer_lim_;       //!< @brief steering limit [rad]
   const float64_t steer_rate_lim_;  //!< @brief steering angular velocity limit [rad/s]
   const float64_t wheelbase_;       //!< @brief vehicle wheelbase length [m]
+  float64_t prev_vx_ = 0.0;
+  float64_t current_ax_ = 0.0;
 
   std::deque<float64_t> vx_input_queue_;  //!< @brief buffer for velocity command
   std::deque<float64_t> steer_input_queue_;  //!< @brief buffer for angular velocity command

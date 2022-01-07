@@ -40,6 +40,7 @@ float64_t SimModelDelaySteerVel::getY() { return state_(IDX::Y); }
 float64_t SimModelDelaySteerVel::getYaw() { return state_(IDX::YAW); }
 float64_t SimModelDelaySteerVel::getVx() { return input_(IDX::VX); }
 float64_t SimModelDelaySteerVel::getVy() {return 0.0;}
+float64_t SimModelDelaySteerVel::getAx() {return current_ax_;}
 float64_t SimModelDelaySteerVel::getWz()
 {
   return state_(IDX::VX) * std::tan(state_(IDX::STEER)) / wheelbase_;
@@ -57,6 +58,8 @@ void SimModelDelaySteerVel::update(const float64_t & dt)
   steer_input_queue_.pop_front();
   // do not use deadzone_delta_steer (Steer IF does not exist in this model)
   updateRungeKutta(dt, delayed_input);
+  current_ax_ = (input_(IDX_U::VX_DES) - prev_vx_) / dt;
+  prev_vx_ = input_(IDX_U::VX_DES);
 }
 
 void SimModelDelaySteerVel::initializeInputQueue(const float64_t & dt)
