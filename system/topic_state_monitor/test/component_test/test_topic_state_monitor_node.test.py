@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import os
+import time
 from time import sleep
 import pytest
 import unittest
@@ -24,7 +25,8 @@ import launch_testing.actions
 import launch_testing.asserts
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import AnyLaunchDescriptionSource
-
+from std_msgs.msg import String
+from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus
 
 
 @pytest.mark.launch_test
@@ -59,9 +61,40 @@ class TestTopicStateMonitor(unittest.TestCase):
         # Shutdown the ROS context
         rclpy.shutdown()
 
+    def setUp(self):
+        self.test_node = rclpy.create_node("test_node")
+        self.evaluation_time = 3.0
+
+    def tearDown(self):
+        self.test_node.destroy_node()
+
     def test_topic_state_monitor(self):
-        # sleep(20.0)
-        self.assertTrue(True)
+        """
+        Test that the topic_state_monitor node is able to publish a
+        DiagnosticArray message.
+        """
+
+        pub_topic = self.test_node.create_publisher(String, "/test_topic", 10)
+        msg = String(data="test_message")
+
+        msg_buffer = []
+        self.test_node.create_subscription(
+            DiagnosticArray, "/diagnostics", lambda msg: msg_buffer.append(msg), 10
+        )
+
+        # Wait until the talker transmits two messages over the ROS topic
+        end_time = time.time() + self.evaluation_time
+        while time.time() < end_time:
+            pub_topic.publish(msg)
+            rclpy.spin_once(self.test_node, timeout_sec=0.1)
+            if len(msg_buffer) > 0:
+                break
+
+        # Check that the message has the correct structure
+        self.assertGreater(len(msg_buffer), 0)
+        self.assertEqual(msg_buffer[0].status[0].name, "topic_state_monitor_test: test_topic_status")
+        self.assertEqual(msg_buffer[0].status[0].message, "OK")
+        self.assertEqual(msg_buffer[0].status[0].level, DiagnosticStatus.OK)
 
 
 @launch_testing.post_shutdown_test()
