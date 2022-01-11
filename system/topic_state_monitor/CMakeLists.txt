@@ -26,6 +26,23 @@ rclcpp_components_register_node(topic_state_monitor
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
+
+  # Unit tests
+  ament_add_gtest(test_topic_state_monitor
+    test/unit_test/test_topic_state_monitor.cpp
+  )
+  target_link_libraries(test_topic_state_monitor topic_state_monitor)
+
+  # Component tests
+  find_package(launch_testing_ament_cmake REQUIRED)
+  add_launch_test(
+    test/component_test/test_topic_state_monitor_node.test.py
+    TARGET topic_state_monitor_component_test)
+  set_tests_properties(topic_state_monitor_component_test PROPERTIES LABELS "component_test")
+  install(DIRECTORY
+    test/component_test/launch
+    DESTINATION share/${PROJECT_NAME}/test/
+  )
 endif()
 
 # Install

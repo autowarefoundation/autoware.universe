@@ -1,0 +1,11 @@
+<launch>
+  <include file="$(find-pkg-share topic_state_monitor)/launch/topic_state_monitor.launch.xml">
+    <arg name="node_name_suffix" value="test"/>
+    <arg name="topic" value="/test_topic"/>
+    <arg name="topic_type" value="std_msgs/msg/String"/>
+    <arg name="diag_name" value="test_topic_status"/>
+    <arg name="warn_rate" value="5.0"/>
+    <arg name="error_rate" value="1.0"/>
+    <arg name="timeout" value="1.0"/>
+  </include>
+</launch>
