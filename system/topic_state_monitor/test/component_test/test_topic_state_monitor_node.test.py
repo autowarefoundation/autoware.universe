@@ -14,7 +14,6 @@
 
 import os
 import time
-from time import sleep
 import unittest
 
 from ament_index_python.packages import get_package_share_directory
@@ -71,10 +70,11 @@ class TestTopicStateMonitor(unittest.TestCase):
 
     def test_topic_state_monitor(self):
         """
+        Test the topic_state_monitor node.
+
         Test that the topic_state_monitor node is able to publish a
         DiagnosticArray message.
         """
-
         pub_topic = self.test_node.create_publisher(String, "/test_topic", 10)
         msg = String(data="test_message")
 
