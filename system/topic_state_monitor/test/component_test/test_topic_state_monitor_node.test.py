@@ -15,18 +15,19 @@
 import os
 import time
 from time import sleep
-import pytest
 import unittest
-import rclpy
 
 from ament_index_python.packages import get_package_share_directory
+from diagnostic_msgs.msg import DiagnosticArray
+from diagnostic_msgs.msg import DiagnosticStatus
 import launch
-import launch_testing.actions
-import launch_testing.asserts
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import AnyLaunchDescriptionSource
+import launch_testing.actions
+import launch_testing.asserts
+import pytest
+import rclpy
 from std_msgs.msg import String
-from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus
 
 
 @pytest.mark.launch_test
@@ -92,7 +93,9 @@ class TestTopicStateMonitor(unittest.TestCase):
 
         # Check that the message has the correct structure
         self.assertGreater(len(msg_buffer), 0)
-        self.assertEqual(msg_buffer[0].status[0].name, "topic_state_monitor_test: test_topic_status")
+        self.assertEqual(
+            msg_buffer[0].status[0].name, "topic_state_monitor_test: test_topic_status"
+        )
         self.assertEqual(msg_buffer[0].status[0].message, "OK")
         self.assertEqual(msg_buffer[0].status[0].level, DiagnosticStatus.OK)
 

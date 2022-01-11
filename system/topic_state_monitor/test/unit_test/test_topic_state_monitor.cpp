@@ -12,12 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "topic_state_monitor/topic_state_monitor.hpp"
 #include "gtest/gtest.h"
-
+#include "topic_state_monitor/topic_state_monitor.hpp"
 
 using namespace topic_state_monitor;
-
 
 class TestTopicStateMonitor : public ::testing::Test
 {
@@ -28,10 +26,7 @@ public:
     test_node_ = std::make_shared<rclcpp::Node>("test_node");
   }
 
-  ~TestTopicStateMonitor() override
-  {
-    rclcpp::shutdown();
-  }
+  ~TestTopicStateMonitor() override { rclcpp::shutdown(); }
 
   rclcpp::Node::SharedPtr test_node_;
 };
@@ -39,17 +34,8 @@ public:
 TEST_F(TestTopicStateMonitor, getTopicRateShouldReturnZeroWhenNoMessagesReceived)
 {
   TopicStateMonitor topic_state_monitor(*test_node_);
-  topic_state_monitor.setParam(Param{
-    "test_topic",
-    "test_type",
-    false,
-    false,
-    "test_diag_name",
-    0.1,
-    0.2,
-    0.3,
-    10
-  });
+  topic_state_monitor.setParam(
+    Param{"test_topic", "test_type", false, false, "test_diag_name", 0.1, 0.2, 0.3, 10});
 
   // Test that the topic rate is max(100000.0) when no messages have been received.
   EXPECT_EQ(topic_state_monitor.getTopicStatus(), TopicStatus::NotReceived);
@@ -60,17 +46,8 @@ TEST_F(TestTopicStateMonitor, getTopicRateShouldReturnExpectedRate)
 {
   // rclcpp::Node test_node("test_node");
   TopicStateMonitor topic_state_monitor(*test_node_);
-  topic_state_monitor.setParam(Param{
-    "test_topic",
-    "test_type",
-    false,
-    false,
-    "test_diag_name",
-    0.1,
-    0.2,
-    0.3,
-    10
-  });
+  topic_state_monitor.setParam(
+    Param{"test_topic", "test_type", false, false, "test_diag_name", 0.1, 0.2, 0.3, 10});
 
   // Set 2 messages with a rate of 10.0.
   topic_state_monitor.update();
