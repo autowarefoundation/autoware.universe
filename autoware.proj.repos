@@ -2,8 +2,8 @@ repositories:
   # autoware
   autoware/universe:
     type: git
-    url: https://github.com/autowarefoundation/autoware.universe.git
-    version: tier4/proposal
+    url: https://github.com/tier4/autoware.universe.git
+    version: tier4/main
   autoware/common:
     type: git
     url: https://github.com/autowarefoundation/autoware_common.git
