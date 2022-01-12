@@ -17,7 +17,6 @@
 
 #include <geometry_msgs/msg/pose_array.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
-
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include <vector>

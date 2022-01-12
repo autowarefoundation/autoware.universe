@@ -19,7 +19,6 @@
 #include "ad_service_state_monitor/state_machine.hpp"
 
 #include <fmt/format.h>
-
 #include <tf2/utils.h>
 
 namespace

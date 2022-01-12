@@ -15,9 +15,9 @@
 #include "ground_segmentation/ransac_ground_filter_nodelet.hpp"
 
 #include <pcl_ros/transforms.hpp>
+#include <tf2_eigen/tf2_eigen.hpp>
 
 #include <pcl/common/centroid.h>
-#include <tf2_eigen/tf2_eigen.hpp>
 
 #include <limits>
 #include <random>

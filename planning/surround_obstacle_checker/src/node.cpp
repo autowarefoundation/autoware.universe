@@ -14,11 +14,12 @@
 
 #include "surround_obstacle_checker/node.hpp"
 
+#include <tf2_eigen/tf2_eigen.hpp>
+
 #include <pcl/common/transforms.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
-#include <tf2_eigen/tf2_eigen.hpp>
 
 #include <algorithm>
 #include <functional>

@@ -13,12 +13,12 @@
 // limitations under the License.
 
 #include <scene_module/traffic_light/scene.hpp>
+#include <tf2_eigen/tf2_eigen.hpp>
 #include <utilization/util.hpp>
 
 #include <boost/optional.hpp>  // To be replaced by std::optional in C++17
 
 #include <tf2/utils.h>
-#include <tf2_eigen/tf2_eigen.hpp>
 
 #include <algorithm>
 #include <map>

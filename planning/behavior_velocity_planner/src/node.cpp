@@ -15,6 +15,7 @@
 #include "behavior_velocity_planner/node.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
+#include <tf2_eigen/tf2_eigen.hpp>
 #include <utilization/path_utilization.hpp>
 
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
@@ -22,7 +23,6 @@
 
 #include <lanelet2_routing/Route.h>
 #include <pcl/common/transforms.h>
-#include <tf2_eigen/tf2_eigen.hpp>
 
 #include <functional>
 #include <memory>

@@ -15,13 +15,13 @@
 #ifndef NDT_SCAN_MATCHER__UTIL_FUNC_HPP_
 #define NDT_SCAN_MATCHER__UTIL_FUNC_HPP_
 
+#include <tf2_eigen/tf2_eigen.hpp>
+
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <std_msgs/msg/color_rgba.hpp>
-#include <visualization_msgs/msg/marker_array.hpp>
-
-#include <tf2_eigen/tf2_eigen.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
 
 #include <algorithm>
 #include <cmath>
