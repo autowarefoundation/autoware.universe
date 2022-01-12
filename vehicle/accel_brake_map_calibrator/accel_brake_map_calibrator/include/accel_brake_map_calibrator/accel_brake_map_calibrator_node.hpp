@@ -21,7 +21,7 @@
 #include "raw_vehicle_cmd_converter/accel_map.hpp"
 #include "raw_vehicle_cmd_converter/brake_map.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "tf2/utils.h"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 #include "tier4_autoware_utils/planning/planning_marker_helper.hpp"
 #include "tier4_autoware_utils/ros/transform_listener.hpp"
 

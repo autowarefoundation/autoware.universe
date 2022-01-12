@@ -17,7 +17,6 @@
 #include <Eigen/Dense>
 
 #include <tf2/utils.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 #include <algorithm>
 #include <cmath>

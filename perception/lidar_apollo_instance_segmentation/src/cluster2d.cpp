@@ -50,7 +50,7 @@
 #include <autoware_auto_perception_msgs/msg/object_classification.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 geometry_msgs::msg::Quaternion getQuaternionFromRPY(const double r, const double p, const double y)
 {

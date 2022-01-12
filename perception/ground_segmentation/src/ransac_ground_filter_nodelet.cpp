@@ -17,7 +17,7 @@
 #include <pcl_ros/transforms.hpp>
 
 #include <pcl/common/centroid.h>
-#include <tf2_eigen/tf2_eigen.h>
+#include <tf2_eigen/tf2_eigen.hpp>
 
 #include <limits>
 #include <random>

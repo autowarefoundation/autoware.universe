@@ -14,7 +14,7 @@
 
 #include "pose2twist/pose2twist_core.hpp"
 
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include <cmath>
 #include <cstddef>

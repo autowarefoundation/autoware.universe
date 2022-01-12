@@ -18,7 +18,7 @@
 
 #include <tier4_autoware_utils/planning/planning_marker_helper.hpp>
 
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include <string>
 #include <vector>

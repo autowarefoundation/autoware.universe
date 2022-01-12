@@ -15,7 +15,7 @@
 #include "pose_initializer/pose_initializer_core.hpp"
 
 #include <pcl_conversions/pcl_conversions.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include <algorithm>
 #include <chrono>

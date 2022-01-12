@@ -14,7 +14,7 @@
 
 #include "gyro_odometer/gyro_odometer_core.hpp"
 
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include <cmath>
 #include <memory>

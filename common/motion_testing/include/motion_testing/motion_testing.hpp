@@ -18,6 +18,7 @@
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <autoware_auto_vehicle_msgs/msg/vehicle_control_command.hpp>
 #include <autoware_auto_vehicle_msgs/msg/vehicle_kinematic_state.hpp>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include <chrono>
 #include <random>

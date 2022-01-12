@@ -21,6 +21,7 @@
 
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
 struct Ellipse

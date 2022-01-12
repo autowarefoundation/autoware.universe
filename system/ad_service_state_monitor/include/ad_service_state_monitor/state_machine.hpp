@@ -31,7 +31,7 @@
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 
-#include <tf2/utils.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include <deque>
 #include <string>

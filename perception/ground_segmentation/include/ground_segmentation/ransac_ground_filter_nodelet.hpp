@@ -25,7 +25,7 @@
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <tf2/transform_datatypes.h>
-#include <tf2_eigen/tf2_eigen.h>
+#include <tf2_eigen/tf2_eigen.hpp>
 #include <tf2_ros/transform_listener.h>
 
 #include <chrono>

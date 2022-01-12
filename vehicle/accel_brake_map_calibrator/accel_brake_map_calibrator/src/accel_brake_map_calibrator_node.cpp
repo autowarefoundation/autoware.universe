@@ -18,6 +18,8 @@
 
 #include "rclcpp/logging.hpp"
 
+#include "tf2/utils.h"
+
 #include <algorithm>
 #include <limits>
 #include <memory>

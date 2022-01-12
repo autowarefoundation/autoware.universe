@@ -22,7 +22,7 @@
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <lanelet2_core/utility/Optional.h>
-#include <tf2_eigen/tf2_eigen.h>
+#include <tf2_eigen/tf2_eigen.hpp>
 
 #include <algorithm>
 #include <limits>

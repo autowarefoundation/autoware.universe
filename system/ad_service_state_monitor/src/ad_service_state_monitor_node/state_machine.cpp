@@ -20,6 +20,8 @@
 
 #include <fmt/format.h>
 
+#include <tf2/utils.h>
+
 namespace
 {
 double calcDistance2d(const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2)

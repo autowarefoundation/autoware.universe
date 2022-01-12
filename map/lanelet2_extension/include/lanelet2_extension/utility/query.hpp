@@ -28,6 +28,8 @@
 #include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_routing/RoutingGraph.h>
 
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+
 #include <memory>
 #include <string>
 #include <vector>

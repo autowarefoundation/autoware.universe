@@ -65,7 +65,7 @@ FaultInjectionNode::FaultInjectionNode(rclcpp::NodeOptions node_options)
 void FaultInjectionNode::onSimulationEvents(const SimulationEvents::ConstSharedPtr msg)
 {
   RCLCPP_DEBUG(
-    this->get_logger(), "Received data: %s", rosidl_generator_traits::to_yaml(*msg).c_str());
+    this->get_logger(), "Received data: %s", tier4_simulation_msgs::msg::to_yaml(*msg).c_str());
   for (const auto & event : msg->fault_injection_events) {
     if (diagnostic_storage_.isEventRegistered(event.name)) {
       diagnostic_storage_.updateLevel(event.name, event.level);

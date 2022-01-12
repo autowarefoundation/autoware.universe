@@ -19,7 +19,7 @@
 #include <pointcloud_densification.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include <memory>
 #include <string>

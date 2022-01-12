@@ -16,6 +16,8 @@
 
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
+#include <tf2/utils.h>
+
 #include <vector>
 
 namespace freespace_planning_algorithms

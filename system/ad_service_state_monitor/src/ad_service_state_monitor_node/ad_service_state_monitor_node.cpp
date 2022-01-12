@@ -14,7 +14,7 @@
 
 #include "ad_service_state_monitor/ad_service_state_monitor_node.hpp"
 
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include <deque>
 #include <memory>

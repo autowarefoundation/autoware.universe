@@ -135,7 +135,7 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
       cloud_stdmap_tmp_ = cloud_stdmap_;
 
       // CAN'T use auto type here.
-      std::function<void(const sensor_msgs::msg::PointCloud2::SharedPtr msg)> cb = std::bind(
+      std::function<void(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)> cb = std::bind(
         &PointCloudConcatenateDataSynchronizerComponent::cloud_callback, this,
         std::placeholders::_1, input_topics_[d]);
 

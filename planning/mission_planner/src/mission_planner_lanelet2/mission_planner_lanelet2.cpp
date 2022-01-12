@@ -25,7 +25,7 @@
 #include <lanelet2_routing/Route.h>
 #include <lanelet2_routing/RoutingCost.h>
 #include <tf2/utils.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include <limits>
 #include <memory>

@@ -60,7 +60,7 @@
 #include <grid_map_msgs/msg/grid_map.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 

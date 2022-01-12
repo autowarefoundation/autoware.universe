@@ -52,7 +52,7 @@
 #include <pcl_ros/transforms.hpp>
 
 #include <tf2/utils.h>
-#include <tf2_eigen/tf2_eigen.h>
+#include <tf2_eigen/tf2_eigen.hpp>
 
 #include <memory>
 #include <string>

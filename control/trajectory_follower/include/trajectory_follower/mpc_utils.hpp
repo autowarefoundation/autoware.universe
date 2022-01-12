@@ -36,7 +36,7 @@
 #include "motion_common/motion_common.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tf2/utils.h"
-#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 
 
 namespace autoware

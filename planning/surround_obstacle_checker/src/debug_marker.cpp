@@ -14,7 +14,7 @@
 
 #include "surround_obstacle_checker/debug_marker.hpp"
 
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include <memory>
 
