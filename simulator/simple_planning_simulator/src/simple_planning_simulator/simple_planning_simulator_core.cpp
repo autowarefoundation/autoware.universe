@@ -76,7 +76,8 @@ namespace simple_planning_simulator
 SimplePlanningSimulator::SimplePlanningSimulator(const rclcpp::NodeOptions & options)
 : Node("simple_planning_simulator", options),
   tf_buffer_(get_clock()),
-  tf_listener_(tf_buffer_, std::shared_ptr<rclcpp::Node>(this, [](auto) {}), false)
+  tf_listener_(tf_buffer_, std::shared_ptr<rclcpp::Node>(this, [](auto) {}), false),
+  current_engage_(false)
 {
   simulated_frame_id_ = declare_parameter("simulated_frame_id", "base_link");
   origin_frame_id_ = declare_parameter("origin_frame_id", "odom");
@@ -101,6 +102,8 @@ SimplePlanningSimulator::SimplePlanningSimulator(const rclcpp::NodeOptions & opt
     std::bind(&SimplePlanningSimulator::on_hazard_lights_cmd, this, _1));
   sub_trajectory_ = create_subscription<Trajectory>(
     "input/trajectory", QoS{1}, std::bind(&SimplePlanningSimulator::on_trajectory, this, _1));
+  sub_engage_ = create_subscription<Engage>(
+    "input/engage", rclcpp::QoS{1}, std::bind(&SimplePlanningSimulator::on_engage, this, _1));
 
   pub_control_mode_report_ =
     create_publisher<ControlModeReport>("output/control_mode_report", QoS{1});
@@ -175,6 +178,8 @@ void SimplePlanningSimulator::initialize_vehicle_model()
   const float64_t steer_rate_lim = declare_parameter("steer_rate_lim", 5.0);
   const float64_t acc_time_delay = declare_parameter("acc_time_delay", 0.1);
   const float64_t acc_time_constant = declare_parameter("acc_time_constant", 0.1);
+  const float64_t vel_time_delay = declare_parameter("vel_time_delay", 0.25);
+  const float64_t vel_time_constant = declare_parameter("vel_time_constant", 0.5);
   const float64_t steer_time_delay = declare_parameter("steer_time_delay", 0.24);
   const float64_t steer_time_constant = declare_parameter("steer_time_constant", 0.27);
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
@@ -189,6 +194,11 @@ void SimplePlanningSimulator::initialize_vehicle_model()
   } else if (vehicle_model_type_str == "IDEAL_STEER_ACC_GEARED") {
     vehicle_model_type_ = VehicleModelType::IDEAL_STEER_ACC_GEARED;
     vehicle_model_ptr_ = std::make_shared<SimModelIdealSteerAccGeared>(wheelbase);
+  } else if (vehicle_model_type_str == "DELAY_STEER_VEL") {
+    vehicle_model_type_ = VehicleModelType::DELAY_STEER_VEL;
+    vehicle_model_ptr_ = std::make_shared<SimModelDelaySteerVel>(
+      vel_lim, steer_lim, vel_rate_lim, steer_rate_lim, wheelbase, timer_sampling_time_ms_ / 1000.0,
+      vel_time_delay, vel_time_constant, steer_time_delay, steer_time_constant);
   } else if (vehicle_model_type_str == "DELAY_STEER_ACC") {
     vehicle_model_type_ = VehicleModelType::DELAY_STEER_ACC;
     vehicle_model_ptr_ = std::make_shared<SimModelDelaySteerAcc>(
@@ -313,7 +323,8 @@ void SimplePlanningSimulator::set_input(const float steer, const float vel, cons
     acc = -accel;
   }
 
-  if (vehicle_model_type_ == VehicleModelType::IDEAL_STEER_VEL) {
+  if (vehicle_model_type_ == VehicleModelType::IDEAL_STEER_VEL ||
+      vehicle_model_type_ == VehicleModelType::DELAY_STEER_VEL) {
     input << vel, steer;
   } else if (  // NOLINT
     vehicle_model_type_ == VehicleModelType::IDEAL_STEER_ACC ||
@@ -355,6 +366,11 @@ void SimplePlanningSimulator::on_hazard_lights_cmd(const HazardLightsCommand::Co
 void SimplePlanningSimulator::on_trajectory(const Trajectory::ConstSharedPtr msg)
 {
   current_trajectory_ptr_ = msg;
+}
+
+void SimplePlanningSimulator::on_engage(const Engage::ConstSharedPtr msg)
+{
+  current_engage_ = msg->engage;
 }
 
 void SimplePlanningSimulator::add_measurement_noise(
@@ -404,6 +420,10 @@ void SimplePlanningSimulator::set_initial_state(const Pose & pose, const Twist &
     vehicle_model_type_ == VehicleModelType::IDEAL_STEER_ACC_GEARED)
   {
     state << x, y, yaw, vx;
+  } else if (  // NOLINT
+    vehicle_model_type_ == VehicleModelType::DELAY_STEER_VEL)
+  {
+    state << x, y, yaw, vx, steer;
   } else if (  // NOLINT
     vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC ||
     vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_GEARED)
@@ -489,7 +509,11 @@ void SimplePlanningSimulator::publish_control_mode_report()
 {
   ControlModeReport msg;
   msg.stamp = get_clock()->now();
-  msg.mode = ControlModeReport::AUTONOMOUS;
+  if (current_engage_) {
+    msg.mode = ControlModeReport::AUTONOMOUS;
+  } else {
+    msg.mode = ControlModeReport::MANUAL;
+  }
   pub_control_mode_report_->publish(msg);
 }
 

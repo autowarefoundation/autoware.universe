@@ -2,7 +2,7 @@ name: build-and-test-scheduled
 
 on:
   schedule:
-    - cron: "0 19 * * *" # run at 4 AM JST
+    - cron: 0 19 * * * # run at 4 AM JST
   workflow_dispatch:
 
 jobs:
@@ -16,6 +16,14 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+
+      - name: Remove exec_depend
+        uses: autowarefoundation/autoware-github-actions/remove-exec-depend@tier4/proposal
+
+      - name: Register AutonomouStuff repository
+        uses: autowarefoundation/autoware-github-actions/register-autonomoustuff-repository@tier4/proposal
+        with:
+          rosdistro: galactic
 
       - name: Get self packages
         id: get-self-packages

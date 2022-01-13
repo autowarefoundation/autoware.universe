@@ -66,7 +66,6 @@ bool convertToFrenetCoordinate3d(
   }
 
   const auto search_pt = tier4_autoware_utils::fromMsg(search_point_geom);
-  bool found = false;
   double min_distance = std::numeric_limits<double>::max();
 
   // get frenet coordinate based on points
@@ -88,15 +87,17 @@ bool convertToFrenetCoordinate3d(
 
       const double tmp_distance = current2search_pt.norm();
       if (tmp_distance < min_distance) {
-        found = true;
         min_distance = tmp_distance;
         frenet_coordinate->distance = tmp_distance;
         frenet_coordinate->length = accumulated_length;
+      } else {
+        break;
       }
     }
   }
 
   // get frenet coordinate based on lines
+  bool found_on_line = false;
   {
     auto prev_geom_pt = linestring.front();
     double accumulated_length = 0;
@@ -113,17 +114,26 @@ bool convertToFrenetCoordinate3d(
       if (tmp_length >= 0 && tmp_length <= line_segment_length) {
         double tmp_distance = direction.cross(start2search_pt).norm();
         if (tmp_distance < min_distance) {
-          found = true;
           min_distance = tmp_distance;
           frenet_coordinate->distance = tmp_distance;
           frenet_coordinate->length = accumulated_length + tmp_length;
+
+          if (found_on_line) {
+            break;
+          }
+
+          found_on_line = true;
+        } else if (found_on_line) {
+          break;
         }
+      } else if (found_on_line) {
+        break;
       }
       accumulated_length += line_segment_length;
       prev_geom_pt = geom_pt;
     }
   }
-  return found;
+  return found_on_line;
 }
 
 std::vector<Point> convertToGeometryPointArray(const PathWithLaneId & path)
@@ -675,10 +685,51 @@ bool exists(std::vector<T> vec, T element)
   return std::find(vec.begin(), vec.end(), element) != vec.end();
 }
 
+boost::optional<size_t> findNearestIndexToGoal(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
+  const geometry_msgs::msg::Pose & goal, const int64_t goal_lane_id,
+  const double max_dist = std::numeric_limits<double>::max())
+{
+  if (points.empty()) {
+    return boost::none;
+  }
+
+  size_t min_dist_index;
+  double min_dist = std::numeric_limits<double>::max();
+  {
+    bool found = false;
+    for (size_t i = 0; i < points.size(); ++i) {
+      const double x = points.at(i).point.pose.position.x - goal.position.x;
+      const double y = points.at(i).point.pose.position.y - goal.position.y;
+      const double dist = std::hypot(x, y);
+      if (dist < max_dist && dist < min_dist && exists(points.at(i).lane_ids, goal_lane_id)) {
+        min_dist_index = i;
+        min_dist = dist;
+        found = true;
+      }
+    }
+    if (!found) {
+      return boost::none;
+    }
+  }
+
+  size_t min_dist_out_of_range_index = min_dist_index;
+  for (size_t i = min_dist_index; i != 0; --i) {
+    const double x = points.at(i).point.pose.position.x - goal.position.x;
+    const double y = points.at(i).point.pose.position.y - goal.position.y;
+    const double dist = std::hypot(x, y);
+    min_dist_out_of_range_index = i;
+    if (max_dist < dist) {
+      break;
+    }
+  }
+  return min_dist_out_of_range_index;
+}
+
 // goal does not have z
 bool setGoal(
   const double search_radius_range, [[maybe_unused]] const double search_rad_range,
-  const PathWithLaneId & input, const Pose & goal, [[maybe_unused]] const int64_t goal_lane_id,
+  const PathWithLaneId & input, const Pose & goal, const int64_t goal_lane_id,
   PathWithLaneId * output_ptr)
 {
   try {
@@ -752,7 +803,7 @@ bool setGoal(
 
     // find min_dist_index whose distance to goal is shorter than search_radius_range
     const auto min_dist_index_opt =
-      tier4_autoware_utils::findNearestIndex(input.points, goal, search_radius_range);
+      findNearestIndexToGoal(input.points, goal, goal_lane_id, search_radius_range);
     if (!min_dist_index_opt) {
       return false;
     }
@@ -880,7 +931,8 @@ OccupancyGrid generateDrivableArea(
     const double yaw = tf2::getYaw(current_pose.pose.orientation);
     const double origin_offset_x_m = (-width / 4) * cos(yaw) - (-height / 2) * sin(yaw);
     const double origin_offset_y_m = (-width / 4) * sin(yaw) + (-height / 2) * cos(yaw);
-    grid_origin.pose.orientation = current_pose.pose.orientation;
+    // Only current yaw should be considered as the orientation of grid_origin.
+    grid_origin.pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(yaw);
     grid_origin.pose.position.x = current_pose.pose.position.x + origin_offset_x_m;
     grid_origin.pose.position.y = current_pose.pose.position.y + origin_offset_y_m;
     grid_origin.pose.position.z = current_pose.pose.position.z;
