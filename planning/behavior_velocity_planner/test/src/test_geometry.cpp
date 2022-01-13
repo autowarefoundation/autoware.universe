@@ -20,7 +20,6 @@
 
 #include <vector>
 
-
 TEST(buildSlices, one_full_slice)
 {
   using behavior_velocity_planner::geometry::buildSlices;
@@ -77,7 +76,8 @@ TEST(buildSlices, 3x3square_slice)
   range.max_distance = -3.0;
   const double slice_length = 1.0;
   const double slice_width = 1.0;
-  const int num_right_slice = (len - 1)/slice_length * std::abs(range.max_distance - range.min_distance)/slice_width;
+  const int num_right_slice =
+    (len - 1) / slice_length * std::abs(range.max_distance - range.min_distance) / slice_width;
   {
     std::vector<Slice> slices;
     buildSlices(slices, traj_lanelet, range, slice_length, slice_width, 0.5);

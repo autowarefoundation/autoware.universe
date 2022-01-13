@@ -37,7 +37,7 @@ lanelet::ConstLanelet toPathLanelet(const PathWithLaneId & path)
   lanelet::Points3d path_points;
   path_points.reserve(path.points.size());
   for (const auto & path_point : path.points) {
-    const auto &p = path_point.point.pose.position;
+    const auto & p = path_point.point.pose.position;
     path_points.emplace_back(lanelet::InvalId, p.x, p.y, p.z);
   }
   lanelet::LineString3d centerline(lanelet::InvalId, path_points);
