@@ -106,6 +106,9 @@ bool OcclusionSpotInPrivateModule::modifyPathVelocity(
     path, possible_collisions, ego_velocity, param_.private_road, param_);
   debug_data_.z = path->points.front().point.pose.position.z;
   debug_data_.possible_collisions = possible_collisions;
+  debug_data_.original_path = *path;
+  debug_data_.limited_path = limited_path;
+  debug_data_.interpolated_path = interp_path;
   return true;
 }
 

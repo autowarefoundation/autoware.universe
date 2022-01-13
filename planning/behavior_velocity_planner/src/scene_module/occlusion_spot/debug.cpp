@@ -18,6 +18,7 @@
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
 #include <utilization/marker_helper.hpp>
 #include <utilization/util.hpp>
+#include "autoware_auto_planning_msgs/msg/detail/path_point_with_lane_id__struct.hpp"
 
 #include <string>
 #include <vector>
@@ -152,6 +153,28 @@ std::vector<visualization_msgs::msg::Marker> makePolygonMarker(
   return debug_markers;
 }
 
+visualization_msgs::msg::MarkerArray makePathMarkers(
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & positions, double z, int id, const std::string & ns)
+{
+  visualization_msgs::msg::MarkerArray debug_markers;
+  visualization_msgs::msg::Marker debug_marker;
+  debug_marker.header.frame_id = "map";
+  debug_marker.id = id;
+  debug_marker.type = visualization_msgs::msg::Marker::SPHERE;
+  debug_marker.action = visualization_msgs::msg::Marker::ADD;
+  debug_marker.pose.orientation = tier4_autoware_utils::createMarkerOrientation(0, 0, 0, 1.0);
+  debug_marker.scale = tier4_autoware_utils::createMarkerScale(1.0, 0.5, 0.05);
+  debug_marker.color = tier4_autoware_utils::createMarkerColor(0.5, 0.5, 1.0, 0.2);
+  debug_marker.lifetime = rclcpp::Duration::from_seconds(0.1);
+  debug_marker.ns = ns;
+  for (const auto & position : positions) {
+    debug_marker.pose.position = tier4_autoware_utils::createMarkerPosition(position.point.pose.position.x, position.point.pose.position.y, z);
+    debug_markers.markers.push_back(debug_marker);
+    debug_marker.id++;
+  }
+  return debug_markers;
+}
+
 template <class T>
 visualization_msgs::msg::MarkerArray createMarkers(
   T & debug_data, [[maybe_unused]] const int64_t module_id_)
@@ -207,8 +230,19 @@ visualization_msgs::msg::MarkerArray createMarkers(
       }
     }
   }
+
   debug_data.sidewalks.clear();
   return occlusion_spot_slowdown_markers;
+}
+
+template <class T>
+visualization_msgs::msg::MarkerArray createPathMarkers(const T & debug_data, const builtin_interfaces::msg::Time current_time) {
+  int id = 0;
+  visualization_msgs::msg::MarkerArray path_markers;
+  appendMarkerArray(makePathMarkers(debug_data.original_path.points, debug_data.z, id++, "original_path"), current_time, &path_markers);
+  appendMarkerArray(makePathMarkers(debug_data.limited_path.points, debug_data.z, id++, "limited_path"), current_time, &path_markers);
+  appendMarkerArray(makePathMarkers(debug_data.interpolated_path.points, debug_data.z, id++, "interpolated_path"), current_time, &path_markers);
+  return path_markers;
 }
 
 }  // namespace
@@ -227,6 +261,7 @@ visualization_msgs::msg::MarkerArray OcclusionSpotInPrivateModule::createDebugMa
 
   visualization_msgs::msg::MarkerArray debug_marker_array;
   appendMarkerArray(createMarkers(debug_data_, module_id_), current_time, &debug_marker_array);
+  appendMarkerArray(createPathMarkers(debug_data_, current_time), current_time, &debug_marker_array);
   return debug_marker_array;
 }
 }  // namespace behavior_velocity_planner

@@ -48,6 +48,9 @@ public:
     std::string road_type = "private";
     std::vector<lanelet::BasicPolygon2d> sidewalks;
     std::vector<occlusion_spot_utils::PossibleCollisionInfo> possible_collisions;
+    autoware_auto_planning_msgs::msg::PathWithLaneId original_path;
+    autoware_auto_planning_msgs::msg::PathWithLaneId limited_path;
+    autoware_auto_planning_msgs::msg::PathWithLaneId interpolated_path;
   };
 
   OcclusionSpotInPrivateModule(
