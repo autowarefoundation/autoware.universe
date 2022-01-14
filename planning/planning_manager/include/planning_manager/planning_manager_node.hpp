@@ -15,6 +15,7 @@
 #ifndef PLANNING_MANAGER__PLANNING_MANAGER_CORE_CPP_
 #define PLANNING_MANAGER__PLANNING_MANAGER_CORE_CPP_
 
+#include "planning_manager/srv/behavior_path_planner.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 #include "autoware_auto_planning_msgs/msg/had_map_route.hpp"
@@ -22,7 +23,6 @@
 #include "autoware_auto_planning_msgs/msg/path_with_lane_id.hpp"
 #include "autoware_auto_planning_msgs/msg/planning_data.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
-#include "autoware_auto_planning_msgs/srv/behavior_path_planner.hpp"
 
 namespace planning_manager
 {
@@ -40,11 +40,11 @@ private:
   rclcpp::Subscription<autoware_auto_planning_msgs::msg::HADMapRoute>::SharedPtr route_sub_;
 
   // clients
-  rclcpp::Client<autoware_auto_planning_msgs::srv::BehaviorPathPlanner>::SharedPtr
+  rclcpp::Client<planning_manager::srv::BehaviorPathPlanner>::SharedPtr
     client_behavior_path_planner_;
 
   autoware_auto_planning_msgs::msg::HADMapRoute route_;
-  autoware_auto_planning_msgs::msg::PlanningData planning_data_;
+  planning_manager::msg::PlanningData planning_data_;
   autoware_auto_planning_msgs::msg::PathWithLaneId path_with_lane_id_;
   autoware_auto_planning_msgs::msg::Path path_;
   autoware_auto_planning_msgs::msg::Trajectory trajectory_;

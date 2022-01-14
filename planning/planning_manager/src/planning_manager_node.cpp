@@ -48,10 +48,9 @@ PlanningManagerNode::PlanningManagerNode(const rclcpp::NodeOptions & node_option
     const auto callback_group_services =
       this->create_callback_group(rclcpp::CallbackGroupType::Reentrant);
 
-    client_behavior_path_planner_ =
-      this->create_client<autoware_auto_planning_msgs::srv::BehaviorPathPlanner>(
-        "~/srv/behavior_path_planner", rmw_qos_profile_services_default, callback_group_services);
-    waitForService<autoware_auto_planning_msgs::srv::BehaviorPathPlanner>(
+    client_behavior_path_planner_ = this->create_client<planning_manager::srv::BehaviorPathPlanner>(
+      "~/srv/behavior_path_planner", rmw_qos_profile_services_default, callback_group_services);
+    waitForService<planning_manager::srv::BehaviorPathPlanner>(
       client_behavior_path_planner_, "behavior_path_planner");
 
     // TODO(murooka) add other clients
@@ -81,15 +80,13 @@ void PlanningManagerNode::run()
   planning_data_.header.stamp = this->now();
 
   {  // behavior path planner
-    auto request =
-      std::make_shared<autoware_auto_planning_msgs::srv::BehaviorPathPlanner::Request>();
+    auto request = std::make_shared<planning_manager::srv::BehaviorPathPlanner::Request>();
     request->route = route_;
     request->planning_data = planning_data_;
 
     client_behavior_path_planner_->async_send_request(
       request,
-      [this](rclcpp::Client<autoware_auto_planning_msgs::srv::BehaviorPathPlanner>::SharedFuture
-               result) {
+      [this](rclcpp::Client<planning_manager::srv::BehaviorPathPlanner>::SharedFuture result) {
         const auto response = result.get();
         path_with_lane_id_ = response->path_with_lane_id;
       });

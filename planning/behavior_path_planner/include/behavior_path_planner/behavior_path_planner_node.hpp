@@ -24,12 +24,12 @@
 #include "behavior_path_planner/scene_module/pull_over/pull_over_module.hpp"
 #include "behavior_path_planner/scene_module/side_shift/side_shift_module.hpp"
 #include "behavior_path_planner/turn_signal_decider.hpp"
+#include "planning_manager/srv/behavior_path_planner.hpp"
 
 #include <route_handler/route_handler.hpp>
 #include <tier4_autoware_utils/ros/self_pose_listener.hpp>
 
 #include "autoware_auto_planning_msgs/msg/planning_data.hpp"
-#include "autoware_auto_planning_msgs/srv/behavior_path_planner.hpp"
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/had_map_route.hpp>
@@ -61,12 +61,12 @@ using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_planning_msgs::msg::HADMapRoute;
 using autoware_auto_planning_msgs::msg::Path;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
-using autoware_auto_planning_msgs::msg::PlanningData;
 using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
 using autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand;
 using geometry_msgs::msg::TwistStamped;
 using nav_msgs::msg::OccupancyGrid;
 using nav_msgs::msg::Odometry;
+using planning_manager::msg::PlanningData;
 using route_handler::RouteHandler;
 using tier4_planning_msgs::msg::PathChangeModule;
 using tier4_planning_msgs::msg::PathChangeModuleArray;
@@ -90,8 +90,7 @@ private:
   rclcpp::Publisher<PathChangeModuleArray>::SharedPtr plan_running_publisher_;
   rclcpp::Publisher<TurnIndicatorsCommand>::SharedPtr turn_signal_publisher_;
   rclcpp::Publisher<HazardLightsCommand>::SharedPtr hazard_signal_publisher_;
-  rclcpp::Service<autoware_auto_planning_msgs::srv::BehaviorPathPlanner>::SharedPtr
-    srv_planning_manager_;
+  rclcpp::Service<planning_manager::srv::BehaviorPathPlanner>::SharedPtr srv_planning_manager_;
 
   std::shared_ptr<PlannerData> planner_data_;
   std::shared_ptr<BehaviorTreeManager> bt_manager_;
@@ -136,8 +135,8 @@ private:
    * @brief Execute behavior tree and publish planned data.
    */
   void onPlanningService(
-    const autoware_auto_planning_msgs::srv::BehaviorPathPlanner::Request::SharedPtr request,
-    const autoware_auto_planning_msgs::srv::BehaviorPathPlanner::Response::SharedPtr response);
+    const planning_manager::srv::BehaviorPathPlanner::Request::SharedPtr request,
+    const planning_manager::srv::BehaviorPathPlanner::Response::SharedPtr response);
 
   /**
    * @brief extract path from behavior tree output

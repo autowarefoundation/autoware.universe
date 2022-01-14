@@ -1,0 +1,20 @@
+#include "autoware_auto_planning_msgs/msg/HADMapRoute.idl"
+#include "autoware_auto_planning_msgs/msg/PathWithLaneId.idl"
+
+module planning_manager {
+  module srv {
+    struct BehaviorPathPlanner_Request
+    {
+      @verbatim(language = "comment", text =
+        "route and planning data")
+      autoware_auto_planning_msgs::msg::HADMapRoute route;
+      planning_manager::msg::PlanningData planning_data;
+    };
+    struct BehaviorPathPlanner_Response
+    {
+      @verbatim(language = "comment", text =
+        "Planned path with lane id")
+      autoware_auto_planning_msgs::msg::PathWithLaneId path_with_lane_id;
+    };
+  };
+};

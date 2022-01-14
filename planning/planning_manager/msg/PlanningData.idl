@@ -1,0 +1,11 @@
+#include "std_msgs/msg/Header.idl"
+
+module planning_manager {
+  module msg {
+    @verbatim (language="comment", text=
+      "Planning data from planning manager")
+    struct PlanningData {
+      std_msgs::msg::Header header;
+    };
+  };
+};

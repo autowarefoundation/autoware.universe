@@ -12,13 +12,24 @@ endif()
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
+rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/PlanningData.idl"
+  "srv/BehaviorPathPlanner.idl"
+  DEPENDENCIES
+    "autoware_auto_planning_msgs"
+    "std_msgs"
+)
+
 ament_auto_add_library(planning_manager_node SHARED
   src/planning_manager_node.cpp
 )
 
+rosidl_target_interfaces(planning_manager_node
+  ${PROJECT_NAME} "rosidl_typesupport_cpp")
+
 rclcpp_components_register_node(planning_manager_node
   PLUGIN "planning_manager::PlanningManagerNode"
-  EXECUTABLE planning_manager
+  EXECUTABLE planning_manager_exe
 )
 
 if(BUILD_TESTING)

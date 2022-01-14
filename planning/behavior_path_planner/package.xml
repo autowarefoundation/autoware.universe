@@ -23,6 +23,7 @@
   <depend>lanelet2_extension</depend>
   <depend>libboost-dev</depend>
   <depend>libopencv-dev</depend>
+  <depend>planning_manager</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>route_handler</depend>

@@ -130,7 +130,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   // TODO(murooka) remove planning_hz parameter
 
   // service
-  srv_planning_manager_ = create_service<autoware_auto_planning_msgs::srv::BehaviorPathPlanner>(
+  srv_planning_manager_ = create_service<planning_manager::srv::BehaviorPathPlanner>(
     "~/srv/planning_manager", std::bind(&BehaviorPathPlannerNode::onPlanningService, this, _1, _2));
 }
 
@@ -438,8 +438,8 @@ void BehaviorPathPlannerNode::waitForData()
 }
 
 void BehaviorPathPlannerNode::onPlanningService(
-  const autoware_auto_planning_msgs::srv::BehaviorPathPlanner::Request::SharedPtr request,
-  const autoware_auto_planning_msgs::srv::BehaviorPathPlanner::Response::SharedPtr response)
+  const planning_manager::srv::BehaviorPathPlanner::Request::SharedPtr request,
+  const planning_manager::srv::BehaviorPathPlanner::Response::SharedPtr response)
 {
   RCLCPP_DEBUG(get_logger(), "----- BehaviorPathPlannerNode start -----");
 
