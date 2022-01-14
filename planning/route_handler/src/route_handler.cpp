@@ -202,7 +202,6 @@ void RouteHandler::setRoute(const HADMapRoute & route_msg)
 {
   if (!isRouteLooped(route_msg)) {
     route_msg_ = route_msg;
-    is_route_msg_ready_ = true;
     is_handler_ready_ = false;
     setLaneletsFromRouteMsg();
   } else {
@@ -314,7 +313,7 @@ void RouteHandler::setRouteLanelets(const lanelet::ConstLanelets & path_lanelets
 
 void RouteHandler::setLaneletsFromRouteMsg()
 {
-  if (!is_route_msg_ready_ || !is_map_msg_ready_) {
+  if (!is_map_msg_ready_) {
     return;
   }
   route_lanelets_.clear();

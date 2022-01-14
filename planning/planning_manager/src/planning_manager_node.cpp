@@ -34,6 +34,8 @@ void waitForService(
 }
 }  // namespace
 
+namespace planning_manager
+{
 PlanningManagerNode::PlanningManagerNode(const rclcpp::NodeOptions & node_options)
 : Node("planning_manager", node_options)
 {
@@ -48,7 +50,7 @@ PlanningManagerNode::PlanningManagerNode(const rclcpp::NodeOptions & node_option
 
     client_behavior_path_planner_ =
       this->create_client<autoware_auto_planning_msgs::srv::BehaviorPathPlanner>(
-        "srv/behavior_path_planner", rmw_qos_profile_services_default, callback_group_services);
+        "~/srv/behavior_path_planner", rmw_qos_profile_services_default, callback_group_services);
     waitForService<autoware_auto_planning_msgs::srv::BehaviorPathPlanner>(
       client_behavior_path_planner_, "behavior_path_planner");
 
@@ -99,6 +101,6 @@ void PlanningManagerNode::run()
 
   // TODO(murooka) validate
 }
-
+}  // namespace planning_manager
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(PlanningManagerNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(planning_manager::PlanningManagerNode)

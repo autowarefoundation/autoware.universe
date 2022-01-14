@@ -146,7 +146,6 @@ private:
 
   rclcpp::Logger logger_{rclcpp::get_logger("route_handler")};
 
-  bool is_route_msg_ready_{false};
   bool is_map_msg_ready_{false};
   bool is_handler_ready_{false};
 

@@ -39,6 +39,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
 : Node("behavior_path_planner", node_options)
 {
   using std::placeholders::_1;
+  using std::placeholders::_2;
   using std::chrono_literals::operator""ms;
 
   // data_manager
@@ -61,8 +62,6 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   vector_map_subscriber_ = create_subscription<HADMapBin>(
     "~/input/vector_map", rclcpp::QoS{1}.transient_local(),
     std::bind(&BehaviorPathPlannerNode::onMap, this, _1));
-  route_subscriber_ = create_subscription<HADMapRoute>(
-    "~/input/route", 1, std::bind(&BehaviorPathPlannerNode::onRoute, this, _1));
 
   // publisher
   path_publisher_ = create_publisher<PathWithLaneId>("~/output/path", 1);
@@ -128,16 +127,11 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
 
   waitForData();
 
-  // Start timer. This must be done after all data (e.g. vehicle pose, velocity) are ready.
-  {
-    const auto planning_hz = declare_parameter("planning_hz", 10.0);
-    const auto period = rclcpp::Rate(planning_hz).period();
-    auto on_timer = std::bind(&BehaviorPathPlannerNode::run, this);
-    timer_ = std::make_shared<rclcpp::GenericTimer<decltype(on_timer)>>(
-      this->get_clock(), period, std::move(on_timer),
-      this->get_node_base_interface()->get_context());
-    this->get_node_timers_interface()->add_timer(timer_, nullptr);
-  }
+  // TODO(murooka) remove planning_hz parameter
+
+  // service
+  srv_planning_manager_ = create_service<autoware_auto_planning_msgs::srv::BehaviorPathPlanner>(
+    "~/srv/planning_manager", std::bind(&BehaviorPathPlannerNode::onPlanningService, this, _1, _2));
 }
 
 BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
@@ -443,9 +437,15 @@ void BehaviorPathPlannerNode::waitForData()
   planner_data_->self_pose = self_pose_listener_.getCurrentPose();
 }
 
-void BehaviorPathPlannerNode::run()
+void BehaviorPathPlannerNode::onPlanningService(
+  const autoware_auto_planning_msgs::srv::BehaviorPathPlanner::Request::SharedPtr request,
+  const autoware_auto_planning_msgs::srv::BehaviorPathPlanner::Response::SharedPtr response)
 {
   RCLCPP_DEBUG(get_logger(), "----- BehaviorPathPlannerNode start -----");
+
+  // set data from request
+  setRoute(request->route);
+  setPlanningData(request->planning_data);
 
   // update planner data
   updateCurrentPose();
@@ -463,6 +463,8 @@ void BehaviorPathPlannerNode::run()
 
   if (!clipped_path.points.empty()) {
     path_publisher_->publish(clipped_path);
+    // respond to planning manager
+    response->path_with_lane_id = clipped_path;
   } else {
     RCLCPP_ERROR(get_logger(), "behavior path output is empty! Stop publish.");
   }
@@ -642,11 +644,11 @@ void BehaviorPathPlannerNode::onMap(const HADMapBin::ConstSharedPtr msg)
 {
   planner_data_->route_handler->setMap(*msg);
 }
-void BehaviorPathPlannerNode::onRoute(const HADMapRoute::ConstSharedPtr msg)
+void BehaviorPathPlannerNode::setRoute(const HADMapRoute route)
 {
   const bool is_first_time = !(planner_data_->route_handler->isHandlerReady());
 
-  planner_data_->route_handler->setRoute(*msg);
+  planner_data_->route_handler->setRoute(route);
 
   // Reset behavior tree when new route is received,
   // so that the each modules do not have to care about the "route jump".
@@ -654,6 +656,11 @@ void BehaviorPathPlannerNode::onRoute(const HADMapRoute::ConstSharedPtr msg)
     RCLCPP_DEBUG(get_logger(), "new route is received. reset behavior tree.");
     bt_manager_->resetBehaviorTree();
   }
+}
+
+void BehaviorPathPlannerNode::setPlanningData([[maybe_unused]] const PlanningData planning_data)
+{
+  // planner_data_->route_handler->setPlanningData(planning_data);
 }
 
 void BehaviorPathPlannerNode::clipPathLength(PathWithLaneId & path) const

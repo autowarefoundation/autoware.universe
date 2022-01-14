@@ -24,6 +24,8 @@
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "autoware_auto_planning_msgs/srv/behavior_path_planner.hpp"
 
+namespace planning_manager
+{
 class PlanningManagerNode : public rclcpp::Node
 {
 public:
@@ -49,5 +51,6 @@ private:
 
   void onRoute(const autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr msg);
 };
+}  // namespace planning_manager
 
 #endif  // PLANNING_MANAGER__PLANNING_MANAGER_CORE_CPP_
