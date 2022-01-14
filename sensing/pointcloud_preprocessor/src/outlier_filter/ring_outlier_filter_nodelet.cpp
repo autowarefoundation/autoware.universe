@@ -94,7 +94,7 @@ void RingOutlierFilterComponent::filter(
         continue;
       }
       if (isCluster(input_ptr, tmp_indices)) {
-        for (const auto tmp_idx : tmp_indices) {
+        for (const auto & tmp_idx : tmp_indices) {
           output_modifier.push_back(
             std::move(*reinterpret_cast<PointXYZI *>(&input_ptr->data[tmp_idx])));
         }
@@ -105,7 +105,7 @@ void RingOutlierFilterComponent::filter(
       continue;
     }
     if (isCluster(input_ptr, tmp_indices)) {
-      for (const auto tmp_idx : tmp_indices) {
+      for (const auto & tmp_idx : tmp_indices) {
         output_modifier.push_back(
           std::move(*reinterpret_cast<PointXYZI *>(&input_ptr->data[tmp_idx])));
       }
