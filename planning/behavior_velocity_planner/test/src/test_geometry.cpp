@@ -45,7 +45,7 @@ TEST(buildSlices, one_full_slice)
   const double slice_width = 1.5;
   std::vector<Slice> slices;
   buildSlices(slices, traj_lanelet, range, slice_length, slice_width, 0.5);
-  ASSERT_EQ(slices.size(), static_cast<size_t>(2));
+  ASSERT_EQ(slices.size(), static_cast<size_t>(4));
   EXPECT_EQ(slices[0].range.min_length, 0.0);
   EXPECT_EQ(slices[0].range.min_distance, 0.0);
   EXPECT_EQ(slices[0].range.max_length, 3.0);
@@ -65,50 +65,29 @@ TEST(buildSlices, 3x3square_slice)
       1 | |     |
       2 | |SLICE|
       3 | |-----|
-      4 | |
-      5 | |
       */
-  const int nb_points = 6;
-  const double len = 5.0;
-  lanelet::ConstLanelet traj_lanelet = test::verticalLanelet({0.0, 0.0}, 1.0, len, nb_points);
+  const int nb_points = 4;
+  const double len = 3.0;
+  lanelet::ConstLanelet lanelet = test::createLanelet({0.0, 0.0}, {0.0, len}, nb_points);
   SliceRange range;
-  range.min_distance = 0.0;
+  range.min_distance = -1.0;
   range.max_distance = -3.0;
   const double slice_length = 1.0;
   const double slice_width = 1.0;
   const int num_right_slice =
-    (len - 1) / slice_length * std::abs(range.max_distance - range.min_distance) / slice_width;
+    (len / slice_length) * (std::abs(range.max_distance - range.min_distance) / slice_width);
+  //
   {
     std::vector<Slice> slices;
-    buildSlices(slices, traj_lanelet, range, slice_length, slice_width, 0.5);
-    SliceRange ref;
+    buildSlices(slices, lanelet, range, slice_length, slice_width, 1.0);
     ASSERT_EQ(slices.size(), static_cast<size_t>(num_right_slice));
-    for (double l = range.min_length; l < range.max_length; l += slice_length) {
-      for (double d = range.min_distance; d > range.max_distance; d -= slice_width) {
-        ref.min_length = l;
-        ref.max_length = l + slice_length;
-        ref.min_distance = d;
-        ref.max_distance = d - slice_width;
-        // EXPECT_NE(std::find_if(slices.begin(), slices.end(), equal_range), slices.end());
-      }
-    }
   }
-
   // change to the left side (positive distance)
+  range.min_distance = 1.0;
   range.max_distance = 3.0;
   {
     std::vector<Slice> slices;
-    buildSlices(slices, traj_lanelet, range, slice_length, slice_width, 0.5);
-    SliceRange ref;
+    buildSlices(slices, lanelet, range, slice_length, slice_width, 1.0);
     ASSERT_EQ(slices.size(), static_cast<size_t>(num_right_slice));
-    for (double l = range.min_length; l < range.max_length; l += slice_length) {
-      for (double d = range.min_distance; d < range.max_distance; d += slice_width) {
-        ref.min_length = l;
-        ref.max_length = l + slice_length;
-        ref.min_distance = d;
-        ref.max_distance = d + slice_width;
-        // EXPECT_NE(std::find_if(slices.begin(), slices.end(), equal_range), slices.end());
-      }
-    }
   }
 }

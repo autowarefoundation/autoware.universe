@@ -31,7 +31,7 @@ namespace bg = boost::geometry;
 namespace lg = lanelet::geometry;
 
 void createOffsetLineString(
-  BasicLineString2d & in, const double offset, BasicLineString2d & offset_line_string)
+  const BasicLineString2d & in, const double offset, BasicLineString2d & offset_line_string)
 {
   for (size_t i = 0; i < in.size() - 1; i++) {
     const auto & p0 = in.at(i);
@@ -45,9 +45,13 @@ void createOffsetLineString(
     const double offset_x = p0[0] - std::sin(yaw) * offset;
     const double offset_y = p0[1] + std::cos(yaw) * offset;
     offset_line_string.emplace_back(BasicPoint2d{offset_x, offset_y});
+    //! insert final offset linestring using prev vertical direction
+    if (i == in.size() - 2) {
+      const double offset_x = p1[0] - std::sin(yaw) * offset;
+      const double offset_y = p1[1] + std::cos(yaw) * offset;
+      offset_line_string.emplace_back(BasicPoint2d{offset_x, offset_y});
+    }
   }
-  // to make inner bound same size as outer
-  in.pop_back();
   return;
 }
 
@@ -65,13 +69,15 @@ void buildSlices(
    */
   BasicLineString2d inner_bounds = path_lanelet.centerline2d().basicLineString();
   BasicLineString2d outer_bounds;
+  if (inner_bounds.size() < 2) return;
   createOffsetLineString(inner_bounds, range.max_distance, outer_bounds);
   const double ratio_dist_start = std::abs(range.min_distance / range.max_distance);
   const double ratio_dist_increment = std::min(1.0, slice_width / std::abs(range.max_distance));
   lanelet::BasicPolygon2d poly;
   const int num_step = static_cast<int>(slice_length / resolution);
-  const int loop_num = static_cast<int>(inner_bounds.size()) - 1 - num_step;
-  for (int s = 0; s < loop_num; s += num_step) {
+  //! max index is the last index of path point
+  const int max_index = static_cast<int>(inner_bounds.size() - 1);
+  for (int s = 0; s < max_index; s += num_step) {
     const double length = s * slice_length;
     const double next_length = (s + num_step) * resolution;
     for (int d = 0; d < num_lateral_slice; d++) {
@@ -82,6 +88,7 @@ void buildSlices(
       BasicLineString2d outer_polygons;
       // build interpolated polygon for lateral
       for (int i = 0; i <= num_step; i++) {
+        if (s + i >= max_index) continue;
         inner_polygons.emplace_back(
           lerp(inner_bounds.at(s + i), outer_bounds.at(s + i), ratio_dist));
         outer_polygons.emplace_back(
@@ -110,13 +117,15 @@ void buildSidewalkSlices(
   const double longitudinal_max_dist = lg::length2d(path_lanelet);
   SliceRange left_slice_range = {
     longitudinal_offset, longitudinal_max_dist, lateral_offset, lateral_offset + lateral_max_dist};
-  const double slice_length = 2.0 * slice_size;
+  // in most case lateral distance is much more effective for velocity planning
+  const double slice_length = 4.0 * slice_size;
   const double slice_width = slice_size;
-  buildSlices(left_slices, path_lanelet, left_slice_range, slice_length, slice_width, 0.5);
+  const double resolution = 1.0;
+  buildSlices(left_slices, path_lanelet, left_slice_range, slice_length, slice_width, resolution);
   SliceRange right_slice_range = {
     longitudinal_offset, longitudinal_max_dist, -lateral_offset,
     -lateral_offset - lateral_max_dist};
-  buildSlices(right_slices, path_lanelet, right_slice_range, slice_length, slice_width, 0.5);
+  buildSlices(right_slices, path_lanelet, right_slice_range, slice_length, slice_width, resolution);
   // Properly order lanelets from closest to furthest
   slices = left_slices;
   slices.insert(slices.end(), right_slices.begin(), right_slices.end());
