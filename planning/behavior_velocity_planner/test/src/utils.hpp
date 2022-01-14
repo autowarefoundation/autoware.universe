@@ -34,7 +34,7 @@ namespace test
 // Default grid parameter such that UNKNOWN cells have a value of 50
 const behavior_velocity_planner::grid_utils::GridParam grid_param = {10, 51};
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
-using ConstDpair = const std::pair<double, double>;
+using ConstPair = const std::pair<double, double>;
 
 /* lanelet
         0 1 2 3 4 5
@@ -46,7 +46,7 @@ using ConstDpair = const std::pair<double, double>;
       5           x
       */
 inline lanelet::ConstLanelet createLanelet(
-  ConstDpair & start = {0, 0}, ConstDpair & end = {5, 5}, int nb_points = 6)
+  ConstPair & start = {0, 0}, ConstPair & end = {5, 5}, int nb_points = 6)
 {
   const double interval =
     std::hypot(end.first - start.first, end.second - start.second) / (nb_points - 1);
