@@ -595,7 +595,7 @@ bool calcObjectPolygon(const PredictedObject & object, Polygon2d * object_polygo
     }
   } else if (object.shape.type == Shape::POLYGON) {
     tf2::Transform tf_map2obj;
-    tf2::fromMsg(object.state.pose_covariance.pose, tf_map2obj);
+    tf2::fromMsg(object.kinematics.initial_pose_with_covariance.pose, tf_map2obj);
     const auto obj_points = object.shape.footprint.points;
     for (const auto & obj_point : obj_points) {
       tf2::Vector3 obj(obj_point.x, obj_point.y, obj_point.z);
