@@ -506,11 +506,11 @@ void BehaviorPathPlannerNode::onPlanningService(
 }
 
 void BehaviorPathPlannerNode::onValidateService(
-  const planning_manager::srv::BehaviorPathPlannerValidate::Request::SharedPtr request,
-  const planning_manager::srv::BehaviorPathPlannerValidate::Response::SharedPtr response)
+  const BehaviorPathPlannerValidate::Request::SharedPtr request,
+  BehaviorPathPlannerValidate::Response::SharedPtr response)
 {
   request->trajectory;
-  response->status.data = true;
+  response->result.data = true;
 }
 
 PathWithLaneId::SharedPtr BehaviorPathPlannerNode::getPath(const BehaviorModuleOutput & bt_output)

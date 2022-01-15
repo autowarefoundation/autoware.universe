@@ -14,7 +14,7 @@ module planning_manager {
     {
       @verbatim(language = "comment", text =
         "Validated result")
-      std_msgs::msg::Bool status;
+      std_msgs::msg::Bool result;
     };
   };
 };

@@ -147,7 +147,7 @@ private:
    */
   void onValidateService(
     const BehaviorPathPlannerValidate::Request::SharedPtr request,
-    const BehaviorPathPlannerValidate::Response::SharedPtr response);
+    BehaviorPathPlannerValidate::Response::SharedPtr response);
 
   /**
    * @brief extract path from behavior tree output

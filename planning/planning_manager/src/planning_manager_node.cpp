@@ -14,6 +14,7 @@
 
 #include "planning_manager/planning_manager_node.hpp"
 
+#include <chrono>
 #include <string>
 
 namespace
@@ -29,8 +30,20 @@ void waitForService(
     }
     RCLCPP_INFO_STREAM(
       rclcpp::get_logger("planning_manager"),
-      "Waiting for " << service_name << " service connection...");
+      "waiting for " << service_name << " service connection...");
   }
+}
+
+template <typename T>
+typename T::Response::SharedPtr sendRequest(
+  typename rclcpp::Client<T>::SharedPtr client, typename T::Request::SharedPtr request,
+  const int timeout_s = 3)
+{
+  const auto response = client->async_send_request(request);
+  if (response.wait_for(std::chrono::seconds(timeout_s)) != std::future_status::ready) {
+    return nullptr;
+  }
+  return response.get();
 }
 }  // namespace
 
@@ -39,26 +52,30 @@ namespace planning_manager
 PlanningManagerNode::PlanningManagerNode(const rclcpp::NodeOptions & node_options)
 : Node("planning_manager", node_options)
 {
+  // parameter
+  is_showing_debug_info_ = true;
+
   // subscriber
   using std::placeholders::_1;
   route_sub_ = this->create_subscription<autoware_auto_planning_msgs::msg::HADMapRoute>(
     "~/input/route", 1, std::bind(&PlanningManagerNode::onRoute, this, _1));
 
+  // TODO(murooka) add subscribers for planning data
+
   {  // client
-    const auto callback_group_services =
-      this->create_callback_group(rclcpp::CallbackGroupType::Reentrant);
+    callback_group_services_ = this->create_callback_group(rclcpp::CallbackGroupType::Reentrant);
 
     client_behavior_path_planner_plan_ =
       this->create_client<planning_manager::srv::BehaviorPathPlannerPlan>(
         "~/srv/behavior_path_planner/plan", rmw_qos_profile_services_default,
-        callback_group_services);
+        callback_group_services_);
     waitForService<planning_manager::srv::BehaviorPathPlannerPlan>(
       client_behavior_path_planner_plan_, "behavior_path_planner/plan");
 
     client_behavior_path_planner_validate_ =
       this->create_client<planning_manager::srv::BehaviorPathPlannerValidate>(
         "~/srv/behavior_path_planner/validate", rmw_qos_profile_services_default,
-        callback_group_services);
+        callback_group_services_);
     waitForService<planning_manager::srv::BehaviorPathPlannerValidate>(
       client_behavior_path_planner_validate_, "behavior_path_planner/validate");
 
@@ -86,57 +103,70 @@ void PlanningManagerNode::onRoute(
 void PlanningManagerNode::run()
 {
   if (!route_) {
+    RCLCPP_INFO_EXPRESSION(get_logger(), is_showing_debug_info_, "waiting for route");
     return;
   }
 
   // TODO(murooka) prepare planning data
   planning_data_.header.stamp = this->now();
 
-  planTrajectory();
+  const auto traj = planTrajectory(*route_);
 
-  optimizeVelocity();
+  const auto traj_with_optimal_vel = optimizeVelocity(traj);
 
-  validateTrajectory();
+  validateTrajectory(traj_with_optimal_vel);
+
+  publishTraajectory();
+  publishDiagnostics();
 }
 
-void PlanningManagerNode::planTrajectory()
+Trajectory PlanningManagerNode::planTrajectory(HADMapRoute route)
 {
+  RCLCPP_INFO_EXPRESSION(get_logger(), is_showing_debug_info_, "start planTrajectory");
+
   {  // behavior path planner
+    RCLCPP_INFO_EXPRESSION(get_logger(), is_showing_debug_info_, "start BehaviorPathPlannerPlan");
+
     auto request = std::make_shared<planning_manager::srv::BehaviorPathPlannerPlan::Request>();
-    request->route = *route_;
+    request->route = route;
     request->planning_data = planning_data_;
 
-    client_behavior_path_planner_plan_->async_send_request(
-      request,
-      [this](rclcpp::Client<planning_manager::srv::BehaviorPathPlannerPlan>::SharedFuture result) {
-        const auto response = result.get();
-        path_with_lane_id_ = response->path_with_lane_id;
-      });
-    // TODO(murooka) add wait function here?
+    const auto behavior_path_planner_plan_result =
+      sendRequest<BehaviorPathPlannerPlan>(client_behavior_path_planner_plan_, request);
+    RCLCPP_ERROR_STREAM(
+      rclcpp::get_logger("PO"), behavior_path_planner_plan_result->path_with_lane_id.points.size());
   }
 
   // TODO(murooka) add other services
+  return Trajectory{};
 }
 
 // TODO(murooka) optimize velocity
-void PlanningManagerNode::optimizeVelocity() {}
+Trajectory PlanningManagerNode::optimizeVelocity([[maybe_unused]] Trajectory traj)
+{
+  RCLCPP_INFO_EXPRESSION(get_logger(), is_showing_debug_info_, "start optimizeVelocity");
+  return Trajectory{};
+}
 
 // TODO(murooka) validate
-void PlanningManagerNode::validateTrajectory()
+void PlanningManagerNode::validateTrajectory([[maybe_unused]] Trajectory traj)
 {
+  RCLCPP_INFO_EXPRESSION(get_logger(), is_showing_debug_info_, "start validateTrajectory");
+
   {  // behavior path planner
+    RCLCPP_INFO_EXPRESSION(
+      get_logger(), is_showing_debug_info_, "start BehaviorPathPlannerValidate");
+
     auto request = std::make_shared<planning_manager::srv::BehaviorPathPlannerValidate::Request>();
     request->trajectory = motion_trajectory_;
 
-    client_behavior_path_planner_validate_->async_send_request(
-      request,
-      [this](
-        rclcpp::Client<planning_manager::srv::BehaviorPathPlannerValidate>::SharedFuture result) {
-        const auto response = result.get();
-        [[maybe_unused]] const bool status = response->status.data;
-      });
+    const auto behavior_path_planner_validate_result =
+      sendRequest<BehaviorPathPlannerValidate>(client_behavior_path_planner_validate_, request);
   }
 }
+
+void PlanningManagerNode::publishTraajectory() {}
+void PlanningManagerNode::publishDiagnostics() {}
 
 }  // namespace planning_manager
 #include <rclcpp_components/register_node_macro.hpp>

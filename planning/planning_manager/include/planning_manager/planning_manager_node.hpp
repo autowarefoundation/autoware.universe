@@ -27,6 +27,13 @@
 
 namespace planning_manager
 {
+using HADMapRoute = autoware_auto_planning_msgs::msg::HADMapRoute;
+using PathWithLaneId = autoware_auto_planning_msgs::msg::PathWithLaneId;
+using Path = autoware_auto_planning_msgs::msg::Path;
+using Trajectory = autoware_auto_planning_msgs::msg::Trajectory;
+using BehaviorPathPlannerPlan = planning_manager::srv::BehaviorPathPlannerPlan;
+using BehaviorPathPlannerValidate = planning_manager::srv::BehaviorPathPlannerValidate;
+
 class PlanningManagerNode : public rclcpp::Node
 {
 public:
@@ -40,11 +47,16 @@ private:
   // subscriber
   rclcpp::Subscription<autoware_auto_planning_msgs::msg::HADMapRoute>::SharedPtr route_sub_;
 
+  // NOTE: callback group for client must be member variable
+  rclcpp::CallbackGroup::SharedPtr callback_group_services_;
+
   // clients
   rclcpp::Client<planning_manager::srv::BehaviorPathPlannerPlan>::SharedPtr
     client_behavior_path_planner_plan_;
   rclcpp::Client<planning_manager::srv::BehaviorPathPlannerValidate>::SharedPtr
     client_behavior_path_planner_validate_;
+
+  bool is_showing_debug_info_;
 
   autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr route_;
   planning_manager::msg::PlanningData planning_data_;
@@ -55,9 +67,11 @@ private:
 
   void onRoute(const autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr msg);
 
-  void planTrajectory();
-  void optimizeVelocity();
-  void validateTrajectory();
+  Trajectory planTrajectory(HADMapRoute route);
+  Trajectory optimizeVelocity(Trajectory traj);
+  void validateTrajectory(Trajectory traj);
+  void publishTraajectory();
+  void publishDiagnostics();
 };
 }  // namespace planning_manager
 
