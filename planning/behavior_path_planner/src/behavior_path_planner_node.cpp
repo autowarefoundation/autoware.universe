@@ -132,7 +132,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   // service
   srv_planning_manager_plan_ = create_service<BehaviorPathPlannerPlan>(
     "~/srv/planning_manager/plan",
-    std::bind(&BehaviorPathPlannerNode::onPlanningService, this, _1, _2));
+    std::bind(&BehaviorPathPlannerNode::onPlanService, this, _1, _2));
   srv_planning_manager_validate_ = create_service<BehaviorPathPlannerValidate>(
     "~/srv/planning_manager/validate",
     std::bind(&BehaviorPathPlannerNode::onValidateService, this, _1, _2));
@@ -441,7 +441,7 @@ void BehaviorPathPlannerNode::waitForData()
   planner_data_->self_pose = self_pose_listener_.getCurrentPose();
 }
 
-void BehaviorPathPlannerNode::onPlanningService(
+void BehaviorPathPlannerNode::onPlanService(
   const planning_manager::srv::BehaviorPathPlannerPlan::Request::SharedPtr request,
   const planning_manager::srv::BehaviorPathPlannerPlan::Response::SharedPtr response)
 {
@@ -507,7 +507,7 @@ void BehaviorPathPlannerNode::onPlanningService(
 
 void BehaviorPathPlannerNode::onValidateService(
   const BehaviorPathPlannerValidate::Request::SharedPtr request,
-  BehaviorPathPlannerValidate::Response::SharedPtr response)
+  const BehaviorPathPlannerValidate::Response::SharedPtr response)
 {
   request->trajectory;
   response->result.data = true;

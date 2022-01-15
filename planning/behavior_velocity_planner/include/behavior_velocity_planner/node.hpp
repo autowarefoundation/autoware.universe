@@ -17,9 +17,12 @@
 
 #include "behavior_velocity_planner/planner_data.hpp"
 #include "behavior_velocity_planner/planner_manager.hpp"
+#include "planning_manager/srv/behavior_velocity_planner_plan.hpp"
+#include "planning_manager/srv/behavior_velocity_planner_validate.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
+#include "planning_manager/msg/planning_data.hpp"
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path.hpp>
@@ -49,8 +52,6 @@ private:
   tf2_ros::TransformListener tf_listener_;
 
   // subscriber
-  rclcpp::Subscription<autoware_auto_planning_msgs::msg::PathWithLaneId>::SharedPtr
-    trigger_sub_path_with_lane_id_;
   rclcpp::Subscription<autoware_auto_perception_msgs::msg::PredictedObjects>::SharedPtr
     sub_predicted_objects_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_no_ground_pointcloud_;
@@ -68,8 +69,6 @@ private:
     sub_virtual_traffic_light_states_;
   rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr sub_occupancy_grid_;
 
-  void onTrigger(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg);
   void onPredictedObjects(
     const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr msg);
   void onNoGroundPointCloud(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);
@@ -86,10 +85,23 @@ private:
     const tier4_v2x_msgs::msg::VirtualTrafficLightStateArray::ConstSharedPtr msg);
   void onOccupancyGrid(const nav_msgs::msg::OccupancyGrid::ConstSharedPtr msg);
 
+  void setPlanningData(const planning_manager::msg::PlanningData planning_data);
+
+  void onPlanService(
+    const planning_manager::srv::BehaviorVelocityPlannerPlan::Request::SharedPtr request,
+    const planning_manager::srv::BehaviorVelocityPlannerPlan::Response::SharedPtr response);
+
+  void onValidateService(
+    const planning_manager::srv::BehaviorVelocityPlannerValidate::Request::SharedPtr request,
+    const planning_manager::srv::BehaviorVelocityPlannerValidate::Response::SharedPtr response);
+
   // publisher
   rclcpp::Publisher<autoware_auto_planning_msgs::msg::Path>::SharedPtr path_pub_;
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticStatus>::SharedPtr stop_reason_diag_pub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_viz_pub_;
+
+  rclcpp::Service<planning_manager::srv::BehaviorVelocityPlannerPlan>::SharedPtr srv_planning_manager_plan_;
+  rclcpp::Service<planning_manager::srv::BehaviorVelocityPlannerValidate>::SharedPtr srv_planning_manager_validate_;
 
   void publishDebugMarker(const autoware_auto_planning_msgs::msg::Path & path);
 

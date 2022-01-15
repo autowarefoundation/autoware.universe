@@ -1,0 +1,20 @@
+#include "autoware_auto_planning_msgs/msg/Trajectory.idl"
+#include "std_msgs/msg/bool.hpp"
+
+// TODO(murooka) add time?
+module planning_manager {
+  module srv {
+    struct BehaviorVelocityPlannerValidate_Request
+    {
+      @verbatim(language = "comment", text =
+        "Optimized trajectory")
+      autoware_auto_planning_msgs::msg::Trajectory trajectory;
+    };
+    struct BehaviorVelocityPlannerValidate_Response
+    {
+      @verbatim(language = "comment", text =
+        "Validated result")
+      std_msgs::msg::Bool result;
+    };
+  };
+};

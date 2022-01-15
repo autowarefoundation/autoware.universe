@@ -72,10 +72,7 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   planner_data_(*this)
 {
   using std::placeholders::_1;
-  // Trigger Subscriber
-  trigger_sub_path_with_lane_id_ =
-    this->create_subscription<autoware_auto_planning_msgs::msg::PathWithLaneId>(
-      "~/input/path_with_lane_id", 1, std::bind(&BehaviorVelocityPlannerNode::onTrigger, this, _1));
+  using std::placeholders::_2;
 
   // Subscribers
   sub_predicted_objects_ =
@@ -157,6 +154,14 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   if (this->declare_parameter("launch_stop_line", true)) {
     planner_manager_.launchSceneModule(std::make_shared<StopLineModuleManager>(*this));
   }
+
+  // service
+  srv_planning_manager_plan_ = create_service<planning_manager::srv::BehaviorVelocityPlannerPlan>(
+    "~/srv/planning_manager/plan",
+    std::bind(&BehaviorVelocityPlannerNode::onPlanService, this, _1, _2));
+  srv_planning_manager_validate_ = create_service<planning_manager::srv::BehaviorVelocityPlannerValidate>(
+    "~/srv/planning_manager/validate",
+    std::bind(&BehaviorVelocityPlannerNode::onValidateService, this, _1, _2));
 }
 
 bool BehaviorVelocityPlannerNode::isDataReady()
@@ -318,9 +323,13 @@ void BehaviorVelocityPlannerNode::onVirtualTrafficLightStates(
   planner_data_.virtual_traffic_light_states = msg;
 }
 
-void BehaviorVelocityPlannerNode::onTrigger(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg)
+void BehaviorVelocityPlannerNode::onPlanService(
+  const planning_manager::srv::BehaviorVelocityPlannerPlan::Request::SharedPtr request,
+  const planning_manager::srv::BehaviorVelocityPlannerPlan::Response::SharedPtr response)
 {
+  const auto path_with_lane_id = request->path_with_lane_id;
+  setPlanningData(request->planning_data);
+
   // Check ready
   try {
     planner_data_.current_pose =
@@ -336,7 +345,7 @@ void BehaviorVelocityPlannerNode::onTrigger(
 
   // Plan path velocity
   const auto velocity_planned_path = planner_manager_.planPathVelocity(
-    std::make_shared<const PlannerData>(planner_data_), *input_path_msg);
+    std::make_shared<const PlannerData>(planner_data_), path_with_lane_id);
 
   // screening
   const auto filtered_path = filterLitterPathPoint(to_path(velocity_planned_path));
@@ -350,7 +359,7 @@ void BehaviorVelocityPlannerNode::onTrigger(
   output_path_msg.header.stamp = this->now();
 
   // TODO(someone): This must be updated in each scene module, but copy from input message for now.
-  output_path_msg.drivable_area = input_path_msg->drivable_area;
+  output_path_msg.drivable_area = path_with_lane_id.drivable_area;
 
   path_pub_->publish(output_path_msg);
   stop_reason_diag_pub_->publish(planner_manager_.getStopReasonDiag());
@@ -358,6 +367,20 @@ void BehaviorVelocityPlannerNode::onTrigger(
   if (debug_viz_pub_->get_subscription_count() > 0) {
     publishDebugMarker(output_path_msg);
   }
+
+  response->path = output_path_msg;
+}
+
+void BehaviorVelocityPlannerNode::onValidateService(
+  const planning_manager::srv::BehaviorVelocityPlannerValidate::Request::SharedPtr request,
+  const planning_manager::srv::BehaviorVelocityPlannerValidate::Response::SharedPtr response)
+{
+  request->trajectory;
+  response->result.data = true;
+}
+
+void BehaviorVelocityPlannerNode::setPlanningData([[maybe_unused]] const planning_manager::msg::PlanningData planning_data)
+{
 }
 
 void BehaviorVelocityPlannerNode::publishDebugMarker(

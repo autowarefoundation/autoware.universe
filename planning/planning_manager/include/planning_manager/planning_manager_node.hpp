@@ -17,6 +17,8 @@
 
 #include "planning_manager/srv/behavior_path_planner_plan.hpp"
 #include "planning_manager/srv/behavior_path_planner_validate.hpp"
+#include "planning_manager/srv/behavior_velocity_planner_plan.hpp"
+#include "planning_manager/srv/behavior_velocity_planner_validate.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 #include "autoware_auto_planning_msgs/msg/had_map_route.hpp"
@@ -33,6 +35,8 @@ using Path = autoware_auto_planning_msgs::msg::Path;
 using Trajectory = autoware_auto_planning_msgs::msg::Trajectory;
 using BehaviorPathPlannerPlan = planning_manager::srv::BehaviorPathPlannerPlan;
 using BehaviorPathPlannerValidate = planning_manager::srv::BehaviorPathPlannerValidate;
+using BehaviorVelocityPlannerPlan = planning_manager::srv::BehaviorVelocityPlannerPlan;
+using BehaviorVelocityPlannerValidate = planning_manager::srv::BehaviorVelocityPlannerValidate;
 
 class PlanningManagerNode : public rclcpp::Node
 {
@@ -43,6 +47,9 @@ public:
 private:
   // timer
   rclcpp::TimerBase::SharedPtr timer_;
+
+  // publisher
+  rclcpp::Publisher<Trajectory>::SharedPtr traj_pub_;
 
   // subscriber
   rclcpp::Subscription<autoware_auto_planning_msgs::msg::HADMapRoute>::SharedPtr route_sub_;
@@ -55,6 +62,10 @@ private:
     client_behavior_path_planner_plan_;
   rclcpp::Client<planning_manager::srv::BehaviorPathPlannerValidate>::SharedPtr
     client_behavior_path_planner_validate_;
+  rclcpp::Client<planning_manager::srv::BehaviorVelocityPlannerPlan>::SharedPtr
+    client_behavior_velocity_planner_plan_;
+  rclcpp::Client<planning_manager::srv::BehaviorVelocityPlannerValidate>::SharedPtr
+    client_behavior_velocity_planner_validate_;
 
   bool is_showing_debug_info_;
 
@@ -67,10 +78,10 @@ private:
 
   void onRoute(const autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr msg);
 
-  Trajectory planTrajectory(HADMapRoute route);
-  Trajectory optimizeVelocity(Trajectory traj);
-  void validateTrajectory(Trajectory traj);
-  void publishTraajectory();
+  Trajectory planTrajectory(const HADMapRoute & route);
+  Trajectory optimizeVelocity(const Trajectory & traj);
+  void validateTrajectory(const Trajectory & traj);
+  void publishTrajectory(const Trajectory & traj);
   void publishDiagnostics();
 };
 }  // namespace planning_manager

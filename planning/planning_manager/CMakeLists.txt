@@ -16,6 +16,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/PlanningData.idl"
   "srv/BehaviorPathPlannerPlan.idl"
   "srv/BehaviorPathPlannerValidate.idl"
+  "srv/BehaviorVelocityPlannerPlan.idl"
+  "srv/BehaviorVelocityPlannerValidate.idl"
   DEPENDENCIES
     "autoware_auto_planning_msgs"
     "std_msgs"

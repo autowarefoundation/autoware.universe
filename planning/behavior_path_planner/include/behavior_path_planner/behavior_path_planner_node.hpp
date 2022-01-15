@@ -30,7 +30,7 @@
 #include <route_handler/route_handler.hpp>
 #include <tier4_autoware_utils/ros/self_pose_listener.hpp>
 
-#include "autoware_auto_planning_msgs/msg/planning_data.hpp"
+#include "planning_manager/msg/planning_data.hpp"
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/had_map_route.hpp>
@@ -138,7 +138,7 @@ private:
   /**
    * @brief Execute behavior tree and publish planned data.
    */
-  void onPlanningService(
+  void onPlanService(
     const BehaviorPathPlannerPlan::Request::SharedPtr request,
     const BehaviorPathPlannerPlan::Response::SharedPtr response);
 
@@ -147,7 +147,7 @@ private:
    */
   void onValidateService(
     const BehaviorPathPlannerValidate::Request::SharedPtr request,
-    BehaviorPathPlannerValidate::Response::SharedPtr response);
+    const BehaviorPathPlannerValidate::Response::SharedPtr response);
 
   /**
    * @brief extract path from behavior tree output
