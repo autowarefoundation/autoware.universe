@@ -15,7 +15,8 @@
 #ifndef PLANNING_MANAGER__PLANNING_MANAGER_CORE_CPP_
 #define PLANNING_MANAGER__PLANNING_MANAGER_CORE_CPP_
 
-#include "planning_manager/srv/behavior_path_planner.hpp"
+#include "planning_manager/srv/behavior_path_planner_plan.hpp"
+#include "planning_manager/srv/behavior_path_planner_validate.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 #include "autoware_auto_planning_msgs/msg/had_map_route.hpp"
@@ -40,16 +41,23 @@ private:
   rclcpp::Subscription<autoware_auto_planning_msgs::msg::HADMapRoute>::SharedPtr route_sub_;
 
   // clients
-  rclcpp::Client<planning_manager::srv::BehaviorPathPlanner>::SharedPtr
-    client_behavior_path_planner_;
+  rclcpp::Client<planning_manager::srv::BehaviorPathPlannerPlan>::SharedPtr
+    client_behavior_path_planner_plan_;
+  rclcpp::Client<planning_manager::srv::BehaviorPathPlannerValidate>::SharedPtr
+    client_behavior_path_planner_validate_;
 
-  autoware_auto_planning_msgs::msg::HADMapRoute route_;
+  autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr route_;
   planning_manager::msg::PlanningData planning_data_;
   autoware_auto_planning_msgs::msg::PathWithLaneId path_with_lane_id_;
   autoware_auto_planning_msgs::msg::Path path_;
-  autoware_auto_planning_msgs::msg::Trajectory trajectory_;
+  autoware_auto_planning_msgs::msg::Trajectory behavior_trajectory_;
+  autoware_auto_planning_msgs::msg::Trajectory motion_trajectory_;
 
   void onRoute(const autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr msg);
+
+  void planTrajectory();
+  void optimizeVelocity();
+  void validateTrajectory();
 };
 }  // namespace planning_manager
 

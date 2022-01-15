@@ -130,8 +130,12 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   // TODO(murooka) remove planning_hz parameter
 
   // service
-  srv_planning_manager_ = create_service<planning_manager::srv::BehaviorPathPlanner>(
-    "~/srv/planning_manager", std::bind(&BehaviorPathPlannerNode::onPlanningService, this, _1, _2));
+  srv_planning_manager_plan_ = create_service<BehaviorPathPlannerPlan>(
+    "~/srv/planning_manager/plan",
+    std::bind(&BehaviorPathPlannerNode::onPlanningService, this, _1, _2));
+  srv_planning_manager_validate_ = create_service<BehaviorPathPlannerValidate>(
+    "~/srv/planning_manager/validate",
+    std::bind(&BehaviorPathPlannerNode::onValidateService, this, _1, _2));
 }
 
 BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
@@ -438,8 +442,8 @@ void BehaviorPathPlannerNode::waitForData()
 }
 
 void BehaviorPathPlannerNode::onPlanningService(
-  const planning_manager::srv::BehaviorPathPlanner::Request::SharedPtr request,
-  const planning_manager::srv::BehaviorPathPlanner::Response::SharedPtr response)
+  const planning_manager::srv::BehaviorPathPlannerPlan::Request::SharedPtr request,
+  const planning_manager::srv::BehaviorPathPlannerPlan::Response::SharedPtr response)
 {
   RCLCPP_DEBUG(get_logger(), "----- BehaviorPathPlannerNode start -----");
 
@@ -463,6 +467,7 @@ void BehaviorPathPlannerNode::onPlanningService(
 
   if (!clipped_path.points.empty()) {
     path_publisher_->publish(clipped_path);
+
     // respond to planning manager
     response->path_with_lane_id = clipped_path;
   } else {
@@ -498,6 +503,14 @@ void BehaviorPathPlannerNode::onPlanningService(
   publishDebugMarker(bt_manager_->getDebugMarkers());
 
   RCLCPP_DEBUG(get_logger(), "----- behavior path planner end -----\n\n");
+}
+
+void BehaviorPathPlannerNode::onValidateService(
+  const planning_manager::srv::BehaviorPathPlannerValidate::Request::SharedPtr request,
+  const planning_manager::srv::BehaviorPathPlannerValidate::Response::SharedPtr response)
+{
+  request->trajectory;
+  response->status.data = true;
 }
 
 PathWithLaneId::SharedPtr BehaviorPathPlannerNode::getPath(const BehaviorModuleOutput & bt_output)

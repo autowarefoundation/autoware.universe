@@ -24,7 +24,8 @@
 #include "behavior_path_planner/scene_module/pull_over/pull_over_module.hpp"
 #include "behavior_path_planner/scene_module/side_shift/side_shift_module.hpp"
 #include "behavior_path_planner/turn_signal_decider.hpp"
-#include "planning_manager/srv/behavior_path_planner.hpp"
+#include "planning_manager/srv/behavior_path_planner_plan.hpp"
+#include "planning_manager/srv/behavior_path_planner_validate.hpp"
 
 #include <route_handler/route_handler.hpp>
 #include <tier4_autoware_utils/ros/self_pose_listener.hpp>
@@ -67,6 +68,8 @@ using geometry_msgs::msg::TwistStamped;
 using nav_msgs::msg::OccupancyGrid;
 using nav_msgs::msg::Odometry;
 using planning_manager::msg::PlanningData;
+using planning_manager::srv::BehaviorPathPlannerPlan;
+using planning_manager::srv::BehaviorPathPlannerValidate;
 using route_handler::RouteHandler;
 using tier4_planning_msgs::msg::PathChangeModule;
 using tier4_planning_msgs::msg::PathChangeModuleArray;
@@ -90,7 +93,8 @@ private:
   rclcpp::Publisher<PathChangeModuleArray>::SharedPtr plan_running_publisher_;
   rclcpp::Publisher<TurnIndicatorsCommand>::SharedPtr turn_signal_publisher_;
   rclcpp::Publisher<HazardLightsCommand>::SharedPtr hazard_signal_publisher_;
-  rclcpp::Service<planning_manager::srv::BehaviorPathPlanner>::SharedPtr srv_planning_manager_;
+  rclcpp::Service<BehaviorPathPlannerPlan>::SharedPtr srv_planning_manager_plan_;
+  rclcpp::Service<BehaviorPathPlannerValidate>::SharedPtr srv_planning_manager_validate_;
 
   std::shared_ptr<PlannerData> planner_data_;
   std::shared_ptr<BehaviorTreeManager> bt_manager_;
@@ -135,8 +139,15 @@ private:
    * @brief Execute behavior tree and publish planned data.
    */
   void onPlanningService(
-    const planning_manager::srv::BehaviorPathPlanner::Request::SharedPtr request,
-    const planning_manager::srv::BehaviorPathPlanner::Response::SharedPtr response);
+    const BehaviorPathPlannerPlan::Request::SharedPtr request,
+    const BehaviorPathPlannerPlan::Response::SharedPtr response);
+
+  /**
+   * @brief Validate final trajectory
+   */
+  void onValidateService(
+    const BehaviorPathPlannerValidate::Request::SharedPtr request,
+    const BehaviorPathPlannerValidate::Response::SharedPtr response);
 
   /**
    * @brief extract path from behavior tree output

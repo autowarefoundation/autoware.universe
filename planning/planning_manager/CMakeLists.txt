@@ -14,7 +14,8 @@ ament_auto_find_build_dependencies()
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/PlanningData.idl"
-  "srv/BehaviorPathPlanner.idl"
+  "srv/BehaviorPathPlannerPlan.idl"
+  "srv/BehaviorPathPlannerValidate.idl"
   DEPENDENCIES
     "autoware_auto_planning_msgs"
     "std_msgs"

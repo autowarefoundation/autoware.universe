@@ -1,16 +1,17 @@
 #include "autoware_auto_planning_msgs/msg/HADMapRoute.idl"
 #include "autoware_auto_planning_msgs/msg/PathWithLaneId.idl"
 
+// TODO(murooka) add time?
 module planning_manager {
   module srv {
-    struct BehaviorPathPlanner_Request
+    struct BehaviorPathPlannerPlan_Request
     {
       @verbatim(language = "comment", text =
-        "route and planning data")
+        "Route and planning data")
       autoware_auto_planning_msgs::msg::HADMapRoute route;
       planning_manager::msg::PlanningData planning_data;
     };
-    struct BehaviorPathPlanner_Response
+    struct BehaviorPathPlannerPlan_Response
     {
       @verbatim(language = "comment", text =
         "Planned path with lane id")
