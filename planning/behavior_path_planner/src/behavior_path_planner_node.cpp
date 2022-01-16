@@ -401,15 +401,6 @@ BehaviorTreeManagerParam BehaviorPathPlannerNode::getBehaviorTreeManagerParam()
   return p;
 }
 
-void BehaviorPathPlannerNode::waitForData()
-{
-  while (!planner_data_->route_handler->isHandlerReady() && rclcpp::ok()) {
-    RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for route to be ready");
-    rclcpp::spin_some(this->get_node_base_interface());
-    rclcpp::Rate(100).sleep();
-  }
-}
-
 void BehaviorPathPlannerNode::onPlanService(
   const planning_manager::srv::BehaviorPathPlannerPlan::Request::SharedPtr request,
   const planning_manager::srv::BehaviorPathPlannerPlan::Response::SharedPtr response)
@@ -419,9 +410,6 @@ void BehaviorPathPlannerNode::onPlanService(
   // set data from request
   setRoute(request->route);
   setPlanningData(request->planning_data);
-
-  // wait for planning data to be ready
-  waitForData();
 
   // update planner data
   updateCurrentPose();
@@ -641,6 +629,18 @@ void BehaviorPathPlannerNode::setPlanningData([[maybe_unused]] const PlanningDat
   planner_data_->approval.is_force_approved.module_name =
     getModuleName(planning_data.force_approval.module);
   planner_data_->approval.is_force_approved.stamp = planning_data.header.stamp;
+
+  // wait for route handler to be ready
+  waitForRouteHandler();
+}
+
+void BehaviorPathPlannerNode::waitForRouteHandler()
+{
+  while (!planner_data_->route_handler->isHandlerReady() && rclcpp::ok()) {
+    RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for route to be ready");
+    rclcpp::spin_some(this->get_node_base_interface());
+    rclcpp::Rate(100).sleep();
+  }
 }
 
 void BehaviorPathPlannerNode::clipPathLength(PathWithLaneId & path) const

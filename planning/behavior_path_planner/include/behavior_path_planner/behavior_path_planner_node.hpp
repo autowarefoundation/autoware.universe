@@ -99,9 +99,6 @@ private:
 
   TurnSignalDecider turn_signal_decider_;
 
-  // setup
-  void waitForData();
-
   // parameters
   BehaviorPathPlannerParameters getCommonParam();
   BehaviorTreeManagerParam getBehaviorTreeManagerParam();
@@ -115,6 +112,8 @@ private:
   // callback
   void setRoute(const HADMapRoute route);
   void setPlanningData(const PlanningData planning_data);
+
+  void waitForRouteHandler();
 
   /**
    * @brief Modify the path points near the goal to smoothly connect the lanelet and the goal point.
