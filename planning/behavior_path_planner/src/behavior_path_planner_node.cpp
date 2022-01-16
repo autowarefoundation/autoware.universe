@@ -622,7 +622,8 @@ void BehaviorPathPlannerNode::setPlanningData([[maybe_unused]] const PlanningDat
 
   planner_data_->route_handler->setMap(planning_data.had_map_bin);
   planner_data_->self_odometry = std::make_shared<Odometry>(planning_data.ego_odom);
-  planner_data_->dynamic_object = std::make_shared<PredictedObjects>(planning_data.predicted_objects);
+  planner_data_->dynamic_object =
+    std::make_shared<PredictedObjects>(planning_data.predicted_objects);
 
   // external approval
   planner_data_->approval.is_approved.data = planning_data.external_approval.approval;
@@ -637,7 +638,8 @@ void BehaviorPathPlannerNode::setPlanningData([[maybe_unused]] const PlanningDat
       return "NONE";
     }
   };
-  planner_data_->approval.is_force_approved.module_name = getModuleName(planning_data.force_approval.module);
+  planner_data_->approval.is_force_approved.module_name =
+    getModuleName(planning_data.force_approval.module);
   planner_data_->approval.is_force_approved.stamp = planning_data.header.stamp;
 }
 

@@ -159,9 +159,10 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   srv_planning_manager_plan_ = create_service<planning_manager::srv::BehaviorVelocityPlannerPlan>(
     "~/srv/planning_manager/plan",
     std::bind(&BehaviorVelocityPlannerNode::onPlanService, this, _1, _2));
-  srv_planning_manager_validate_ = create_service<planning_manager::srv::BehaviorVelocityPlannerValidate>(
-    "~/srv/planning_manager/validate",
-    std::bind(&BehaviorVelocityPlannerNode::onValidateService, this, _1, _2));
+  srv_planning_manager_validate_ =
+    create_service<planning_manager::srv::BehaviorVelocityPlannerValidate>(
+      "~/srv/planning_manager/validate",
+      std::bind(&BehaviorVelocityPlannerNode::onValidateService, this, _1, _2));
 }
 
 bool BehaviorVelocityPlannerNode::isDataReady()
@@ -379,7 +380,8 @@ void BehaviorVelocityPlannerNode::onValidateService(
   response->result.data = true;
 }
 
-void BehaviorVelocityPlannerNode::setPlanningData([[maybe_unused]] const planning_manager::msg::PlanningData planning_data)
+void BehaviorVelocityPlannerNode::setPlanningData(
+  [[maybe_unused]] const planning_manager::msg::PlanningData planning_data)
 {
 }
 

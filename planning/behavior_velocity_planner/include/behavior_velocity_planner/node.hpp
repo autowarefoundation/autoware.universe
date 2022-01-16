@@ -17,12 +17,12 @@
 
 #include "behavior_velocity_planner/planner_data.hpp"
 #include "behavior_velocity_planner/planner_manager.hpp"
+#include "planning_manager/msg/planning_data.hpp"
 #include "planning_manager/srv/behavior_velocity_planner_plan.hpp"
 #include "planning_manager/srv/behavior_velocity_planner_validate.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
-#include "planning_manager/msg/planning_data.hpp"
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path.hpp>
@@ -100,8 +100,10 @@ private:
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticStatus>::SharedPtr stop_reason_diag_pub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_viz_pub_;
 
-  rclcpp::Service<planning_manager::srv::BehaviorVelocityPlannerPlan>::SharedPtr srv_planning_manager_plan_;
-  rclcpp::Service<planning_manager::srv::BehaviorVelocityPlannerValidate>::SharedPtr srv_planning_manager_validate_;
+  rclcpp::Service<planning_manager::srv::BehaviorVelocityPlannerPlan>::SharedPtr
+    srv_planning_manager_plan_;
+  rclcpp::Service<planning_manager::srv::BehaviorVelocityPlannerValidate>::SharedPtr
+    srv_planning_manager_validate_;
 
   void publishDebugMarker(const autoware_auto_planning_msgs::msg::Path & path);
 

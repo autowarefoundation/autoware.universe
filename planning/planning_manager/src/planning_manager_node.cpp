@@ -73,11 +73,12 @@ PlanningManagerNode::PlanningManagerNode(const rclcpp::NodeOptions & node_option
     std::bind(&PlanningManagerNode::onMap, this, _1));
   odom_sub_ = create_subscription<nav_msgs::msg::Odometry>(
     "~/input/odometry", 1, std::bind(&PlanningManagerNode::onOdometry, this, _1));
-  predicted_objects_sub_ = create_subscription<autoware_auto_perception_msgs::msg::PredictedObjects>(
-    "~/input/predicted_objects", 1, std::bind(&PlanningManagerNode::onPredictedObjects, this, _1));
+  predicted_objects_sub_ =
+    create_subscription<autoware_auto_perception_msgs::msg::PredictedObjects>(
+      "~/input/predicted_objects", 1,
+      std::bind(&PlanningManagerNode::onPredictedObjects, this, _1));
   external_approval_sub_ = create_subscription<Approval>(
-    "~/input/external_approval", 1,
-    std::bind(&PlanningManagerNode::onExternalApproval, this, _1));
+    "~/input/external_approval", 1, std::bind(&PlanningManagerNode::onExternalApproval, this, _1));
   force_approval_sub_ = create_subscription<PathChangeModule>(
     "~/input/force_approval", 1, std::bind(&PlanningManagerNode::onForceApproval, this, _1));
 
@@ -256,10 +257,12 @@ void PlanningManagerNode::validateTrajectory([[maybe_unused]] const Trajectory &
       client_behavior_velocity_planner_validate_, behavior_velocity_request);
 }
 
-void PlanningManagerNode::publishTrajectory(const Trajectory & traj) {
+void PlanningManagerNode::publishTrajectory(const Trajectory & traj)
+{
   // TODO(murooka) use thread local for member variable?
   RCLCPP_INFO_EXPRESSION(get_logger(), is_showing_debug_info_, "start publishTrajectory");
-  traj_pub_->publish(traj); }
+  traj_pub_->publish(traj);
+}
 void PlanningManagerNode::publishDiagnostics() {}
 
 }  // namespace planning_manager

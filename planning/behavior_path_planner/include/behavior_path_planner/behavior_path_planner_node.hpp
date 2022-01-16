@@ -24,13 +24,13 @@
 #include "behavior_path_planner/scene_module/pull_over/pull_over_module.hpp"
 #include "behavior_path_planner/scene_module/side_shift/side_shift_module.hpp"
 #include "behavior_path_planner/turn_signal_decider.hpp"
+#include "planning_manager/msg/planning_data.hpp"
 #include "planning_manager/srv/behavior_path_planner_plan.hpp"
 #include "planning_manager/srv/behavior_path_planner_validate.hpp"
 
 #include <route_handler/route_handler.hpp>
 #include <tier4_autoware_utils/ros/self_pose_listener.hpp>
 
-#include "planning_manager/msg/planning_data.hpp"
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/had_map_route.hpp>

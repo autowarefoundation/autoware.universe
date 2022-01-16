@@ -26,7 +26,6 @@
 #include "autoware_auto_planning_msgs/msg/path_with_lane_id.hpp"
 #include "autoware_auto_planning_msgs/msg/planning_data.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
-
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <nav_msgs/msg/odometry.hpp>
@@ -36,21 +35,21 @@
 namespace planning_manager
 {
 using autoware_auto_planning_msgs::msg::HADMapRoute;
-using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using autoware_auto_planning_msgs::msg::Path;
+using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using autoware_auto_planning_msgs::msg::Trajectory;
+using planning_manager::msg::PlanningData;
 using planning_manager::srv::BehaviorPathPlannerPlan;
 using planning_manager::srv::BehaviorPathPlannerValidate;
 using planning_manager::srv::BehaviorVelocityPlannerPlan;
 using planning_manager::srv::BehaviorVelocityPlannerValidate;
-using planning_manager::msg::PlanningData;
 
 // MEMO(murooka) beahvior path
-using tier4_planning_msgs::msg::Approval;
 using autoware_auto_mapping_msgs::msg::HADMapBin;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_planning_msgs::msg::HADMapRoute;
 using nav_msgs::msg::Odometry;
+using tier4_planning_msgs::msg::Approval;
 using tier4_planning_msgs::msg::PathChangeModule;
 
 class PlanningManagerNode : public rclcpp::Node
@@ -87,12 +86,9 @@ private:
   rclcpp::CallbackGroup::SharedPtr callback_group_services_;
 
   // clients
-  rclcpp::Client<BehaviorPathPlannerPlan>::SharedPtr
-    client_behavior_path_planner_plan_;
-  rclcpp::Client<BehaviorPathPlannerValidate>::SharedPtr
-    client_behavior_path_planner_validate_;
-  rclcpp::Client<BehaviorVelocityPlannerPlan>::SharedPtr
-    client_behavior_velocity_planner_plan_;
+  rclcpp::Client<BehaviorPathPlannerPlan>::SharedPtr client_behavior_path_planner_plan_;
+  rclcpp::Client<BehaviorPathPlannerValidate>::SharedPtr client_behavior_path_planner_validate_;
+  rclcpp::Client<BehaviorVelocityPlannerPlan>::SharedPtr client_behavior_velocity_planner_plan_;
   rclcpp::Client<BehaviorVelocityPlannerValidate>::SharedPtr
     client_behavior_velocity_planner_validate_;
 
