@@ -81,11 +81,6 @@ public:
   explicit BehaviorPathPlannerNode(const rclcpp::NodeOptions & node_options);
 
 private:
-  rclcpp::Subscription<HADMapBin>::SharedPtr vector_map_subscriber_;
-  rclcpp::Subscription<Odometry>::SharedPtr velocity_subscriber_;
-  rclcpp::Subscription<PredictedObjects>::SharedPtr perception_subscriber_;
-  rclcpp::Subscription<ApprovalMsg>::SharedPtr external_approval_subscriber_;
-  rclcpp::Subscription<PathChangeModule>::SharedPtr force_approval_subscriber_;
   rclcpp::Publisher<PathWithLaneId>::SharedPtr path_publisher_;
   rclcpp::Publisher<Path>::SharedPtr path_candidate_publisher_;
   rclcpp::Publisher<PathChangeModuleArray>::SharedPtr force_available_publisher_;
@@ -118,12 +113,6 @@ private:
   PullOutParameters getPullOutParam();
 
   // callback
-  void onVelocity(const Odometry::ConstSharedPtr msg);
-  void onPerception(const PredictedObjects::ConstSharedPtr msg);
-  void onExternalApproval(const ApprovalMsg::ConstSharedPtr msg);
-  void onForceApproval(const PathChangeModule::ConstSharedPtr msg);
-  void onMap(const HADMapBin::ConstSharedPtr map_msg);
-
   void setRoute(const HADMapRoute route);
   void setPlanningData(const PlanningData planning_data);
 

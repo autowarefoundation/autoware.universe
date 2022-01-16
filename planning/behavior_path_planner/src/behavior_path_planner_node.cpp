@@ -48,21 +48,6 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     planner_data_->parameters = getCommonParam();
   }
 
-  velocity_subscriber_ = create_subscription<Odometry>(
-    "~/input/odometry", 1, std::bind(&BehaviorPathPlannerNode::onVelocity, this, _1));
-  perception_subscriber_ = create_subscription<PredictedObjects>(
-    "~/input/perception", 1, std::bind(&BehaviorPathPlannerNode::onPerception, this, _1));
-  external_approval_subscriber_ = create_subscription<ApprovalMsg>(
-    "~/input/external_approval", 1,
-    std::bind(&BehaviorPathPlannerNode::onExternalApproval, this, _1));
-  force_approval_subscriber_ = create_subscription<PathChangeModule>(
-    "~/input/force_approval", 1, std::bind(&BehaviorPathPlannerNode::onForceApproval, this, _1));
-
-  // route_handler
-  vector_map_subscriber_ = create_subscription<HADMapBin>(
-    "~/input/vector_map", rclcpp::QoS{1}.transient_local(),
-    std::bind(&BehaviorPathPlannerNode::onMap, this, _1));
-
   // publisher
   path_publisher_ = create_publisher<PathWithLaneId>("~/output/path", 1);
   path_candidate_publisher_ = create_publisher<Path>("~/output/path_candidate", 1);
@@ -125,10 +110,6 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
       planner_data_->parameters.base_link2front, intersection_search_distance);
   }
 
-  waitForData();
-
-  // TODO(murooka) remove planning_hz parameter
-
   // service
   srv_planning_manager_plan_ = create_service<BehaviorPathPlannerPlan>(
     "~/srv/planning_manager/plan",
@@ -136,6 +117,9 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   srv_planning_manager_validate_ = create_service<BehaviorPathPlannerValidate>(
     "~/srv/planning_manager/validate",
     std::bind(&BehaviorPathPlannerNode::onValidateService, this, _1, _2));
+
+  self_pose_listener_.waitForFirstPose();
+  planner_data_->self_pose = self_pose_listener_.getCurrentPose();
 }
 
 BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
@@ -419,26 +403,11 @@ BehaviorTreeManagerParam BehaviorPathPlannerNode::getBehaviorTreeManagerParam()
 
 void BehaviorPathPlannerNode::waitForData()
 {
-  // wait until mandatory data is ready
   while (!planner_data_->route_handler->isHandlerReady() && rclcpp::ok()) {
     RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for route to be ready");
     rclcpp::spin_some(this->get_node_base_interface());
     rclcpp::Rate(100).sleep();
   }
-
-  while (rclcpp::ok()) {
-    if (planner_data_->dynamic_object && planner_data_->self_odometry) {
-      break;
-    }
-    RCLCPP_WARN_THROTTLE(
-      get_logger(), *get_clock(), 5000,
-      "waiting for vehicle pose, vehicle_velocity, and obstacles");
-    rclcpp::spin_some(this->get_node_base_interface());
-    rclcpp::Rate(100).sleep();
-  }
-
-  self_pose_listener_.waitForFirstPose();
-  planner_data_->self_pose = self_pose_listener_.getCurrentPose();
 }
 
 void BehaviorPathPlannerNode::onPlanService(
@@ -450,6 +419,9 @@ void BehaviorPathPlannerNode::onPlanService(
   // set data from request
   setRoute(request->route);
   setPlanningData(request->planning_data);
+
+  // wait for planning data to be ready
+  waitForData();
 
   // update planner data
   updateCurrentPose();
@@ -627,38 +599,10 @@ void BehaviorPathPlannerNode::updateCurrentPose()
   planner_data_->self_pose = self_pose;
 }
 
-void BehaviorPathPlannerNode::onVelocity(const Odometry::ConstSharedPtr msg)
-{
-  planner_data_->self_odometry = msg;
-}
-void BehaviorPathPlannerNode::onPerception(const PredictedObjects::ConstSharedPtr msg)
-{
-  planner_data_->dynamic_object = msg;
-}
-void BehaviorPathPlannerNode::onExternalApproval(const ApprovalMsg::ConstSharedPtr msg)
-{
-  planner_data_->approval.is_approved.data = msg->approval;
-  // TODO(wep21): Replace msg stamp after {stamp: now} is implemented in ros2 topic pub
-  planner_data_->approval.is_approved.stamp = this->now();
-}
-void BehaviorPathPlannerNode::onForceApproval(const PathChangeModule::ConstSharedPtr msg)
-{
-  auto getModuleName = [](PathChangeModuleId module) {
-    if (module.type == PathChangeModuleId::FORCE_LANE_CHANGE) {
-      return "ForceLaneChange";
-    } else {
-      return "NONE";
-    }
-  };
-  planner_data_->approval.is_force_approved.module_name = getModuleName(msg->module);
-  planner_data_->approval.is_force_approved.stamp = msg->header.stamp;
-}
-void BehaviorPathPlannerNode::onMap(const HADMapBin::ConstSharedPtr msg)
-{
-  planner_data_->route_handler->setMap(*msg);
-}
 void BehaviorPathPlannerNode::setRoute(const HADMapRoute route)
 {
+  // TODO(murooka)
+  // is_first_time is not available
   const bool is_first_time = !(planner_data_->route_handler->isHandlerReady());
 
   planner_data_->route_handler->setRoute(route);
@@ -673,7 +617,28 @@ void BehaviorPathPlannerNode::setRoute(const HADMapRoute route)
 
 void BehaviorPathPlannerNode::setPlanningData([[maybe_unused]] const PlanningData planning_data)
 {
-  // planner_data_->route_handler->setPlanningData(planning_data);
+  // TODO(murooka) remove this. should use kinematic state topic than tf?
+  // planner_data_->self_pose = planning_data.ego_pose;
+
+  planner_data_->route_handler->setMap(planning_data.had_map_bin);
+  planner_data_->self_odometry = std::make_shared<Odometry>(planning_data.ego_odom);
+  planner_data_->dynamic_object = std::make_shared<PredictedObjects>(planning_data.predicted_objects);
+
+  // external approval
+  planner_data_->approval.is_approved.data = planning_data.external_approval.approval;
+  // TODO(wep21): Replace msg stamp after {stamp: now} is implemented in ros2 topic pub
+  planner_data_->approval.is_approved.stamp = planning_data.header.stamp;
+
+  // force approval
+  const auto getModuleName = [](PathChangeModuleId module) {
+    if (module.type == PathChangeModuleId::FORCE_LANE_CHANGE) {
+      return "ForceLaneChange";
+    } else {
+      return "NONE";
+    }
+  };
+  planner_data_->approval.is_force_approved.module_name = getModuleName(planning_data.force_approval.module);
+  planner_data_->approval.is_force_approved.stamp = planning_data.header.stamp;
 }
 
 void BehaviorPathPlannerNode::clipPathLength(PathWithLaneId & path) const

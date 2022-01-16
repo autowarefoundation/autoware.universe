@@ -74,7 +74,7 @@ PlanningManagerNode::PlanningManagerNode(const rclcpp::NodeOptions & node_option
   odom_sub_ = create_subscription<nav_msgs::msg::Odometry>(
     "~/input/odometry", 1, std::bind(&PlanningManagerNode::onOdometry, this, _1));
   predicted_objects_sub_ = create_subscription<autoware_auto_perception_msgs::msg::PredictedObjects>(
-    "~/input/perception", 1, std::bind(&PlanningManagerNode::onPredictedObjects, this, _1));
+    "~/input/predicted_objects", 1, std::bind(&PlanningManagerNode::onPredictedObjects, this, _1));
   external_approval_sub_ = create_subscription<Approval>(
     "~/input/external_approval", 1,
     std::bind(&PlanningManagerNode::onExternalApproval, this, _1));
@@ -146,31 +146,16 @@ void PlanningManagerNode::onPredictedObjects(const PredictedObjects::ConstShared
 void PlanningManagerNode::onExternalApproval(const Approval::ConstSharedPtr msg)
 {
   planning_data_.external_approval = *msg;
-  // TODO(murooka)
-  // planning_data_.external_approval.is_approved.stamp = this->now();
 }
 
 void PlanningManagerNode::onForceApproval(const PathChangeModule::ConstSharedPtr msg)
 {
-  // TODO(murooka)
   planning_data_.force_approval = *msg;
-  /*
-  auto getModuleName = [](PathChangeModuleId module) {
-    if (module.type == PathChangeModuleId::FORCE_LANE_CHANGE) {
-      return "ForceLaneChange";
-    } else {
-      return "NONE";
-    }
-  };
-  planner_data_->approval.is_force_approved.module_name = getModuleName(msg->module);
-  planner_data_->approval.is_force_approved.stamp = msg->header.stamp;
-  */
 }
+
 void PlanningManagerNode::onMap(const HADMapBin::ConstSharedPtr msg)
 {
-  // TODO(murooka)
   planning_data_.had_map_bin = *msg;
-  // planner_data_->route_handler->setMap(*msg);
 }
 
 void PlanningManagerNode::run()
@@ -180,8 +165,11 @@ void PlanningManagerNode::run()
     return;
   }
 
-  // TODO(murooka) prepare planning data
+  // TODO(murooka) wait for planning data to be ready in a reasonable way
   planning_data_.header.stamp = this->now();
+  while (planning_data_.had_map_bin.data.empty() && rclcpp::ok()) {
+    rclcpp::Rate(100).sleep();
+  }
 
   const auto traj = planTrajectory(*route_);
 
