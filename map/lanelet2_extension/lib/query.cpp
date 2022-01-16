@@ -40,7 +40,16 @@ double getAngleDifference(const double angle1, const double angle2)
   Eigen::Vector2d vec1, vec2;
   vec1 << std::cos(angle1), std::sin(angle1);
   vec2 << std::cos(angle2), std::sin(angle2);
-  const double diff_angle = std::acos(vec1.dot(vec2));
+  double inner_product = vec1.dot(vec2);
+  double diff_angle;
+  if (inner_product <= -1.0)
+  {
+    diff_angle = M_PI;
+  }else if (inner_product >= 1.0){
+    diff_angle = 0.0;
+  }else{
+    diff_angle = std::acos(inner_product);
+  }
   return std::fabs(diff_angle);
 }
 
