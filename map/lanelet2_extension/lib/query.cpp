@@ -42,12 +42,11 @@ double getAngleDifference(const double angle1, const double angle2)
   vec2 << std::cos(angle2), std::sin(angle2);
   double inner_product = vec1.dot(vec2);
   double diff_angle;
-  if (inner_product <= -1.0)
-  {
+  if (inner_product <= -1.0) {
     diff_angle = M_PI;
-  }else if (inner_product >= 1.0){
+  } else if (inner_product >= 1.0) {
     diff_angle = 0.0;
-  }else{
+  } else {
     diff_angle = std::acos(inner_product);
   }
   return std::fabs(diff_angle);
