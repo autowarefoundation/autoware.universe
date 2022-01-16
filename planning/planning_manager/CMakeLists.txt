@@ -20,6 +20,9 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/BehaviorVelocityPlannerValidate.idl"
   DEPENDENCIES
     "autoware_auto_planning_msgs"
+    "autoware_auto_perception_msgs"
+    "tier4_planning_msgs"
+    "nav_msgs"
     "std_msgs"
 )
 

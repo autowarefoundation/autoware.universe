@@ -1,4 +1,5 @@
 #include "std_msgs/msg/Header.idl"
+#include "autoware_auto_perception_msgs/msg/PredictedObjects.idl"
 
 module planning_manager {
   module msg {
@@ -6,6 +7,18 @@ module planning_manager {
       "Planning data from planning manager")
     struct PlanningData {
       std_msgs::msg::Header header;
+
+      // behavior path
+      geometry_msgs::msg::Pose ego_pose;
+      nav_msgs::msg::Odometry ego_odom;
+      autoware_auto_perception_msgs::msg::PredictedObjects predicted_objects;
+      tier4_planning_msgs::msg::Approval external_approval;
+      tier4_planning_msgs::msg::PathChangeModule force_approval; // path_change_module;
+      autoware_auto_mapping_msgs::msg::HADMapBin had_map_bin;
+
+      // behavior vel
+
+      // motion
     };
   };
 };

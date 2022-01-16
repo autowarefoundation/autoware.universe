@@ -27,16 +27,31 @@
 #include "autoware_auto_planning_msgs/msg/planning_data.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 
+#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
+#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
+#include <nav_msgs/msg/odometry.hpp>
+#include <tier4_planning_msgs/msg/approval.hpp>
+#include <tier4_planning_msgs/msg/path_change_module.hpp>
+
 namespace planning_manager
 {
-using HADMapRoute = autoware_auto_planning_msgs::msg::HADMapRoute;
-using PathWithLaneId = autoware_auto_planning_msgs::msg::PathWithLaneId;
-using Path = autoware_auto_planning_msgs::msg::Path;
-using Trajectory = autoware_auto_planning_msgs::msg::Trajectory;
-using BehaviorPathPlannerPlan = planning_manager::srv::BehaviorPathPlannerPlan;
-using BehaviorPathPlannerValidate = planning_manager::srv::BehaviorPathPlannerValidate;
-using BehaviorVelocityPlannerPlan = planning_manager::srv::BehaviorVelocityPlannerPlan;
-using BehaviorVelocityPlannerValidate = planning_manager::srv::BehaviorVelocityPlannerValidate;
+using autoware_auto_planning_msgs::msg::HADMapRoute;
+using autoware_auto_planning_msgs::msg::PathWithLaneId;
+using autoware_auto_planning_msgs::msg::Path;
+using autoware_auto_planning_msgs::msg::Trajectory;
+using planning_manager::srv::BehaviorPathPlannerPlan;
+using planning_manager::srv::BehaviorPathPlannerValidate;
+using planning_manager::srv::BehaviorVelocityPlannerPlan;
+using planning_manager::srv::BehaviorVelocityPlannerValidate;
+using planning_manager::msg::PlanningData;
+
+// MEMO(murooka) beahvior path
+using tier4_planning_msgs::msg::Approval;
+using autoware_auto_mapping_msgs::msg::HADMapBin;
+using autoware_auto_perception_msgs::msg::PredictedObjects;
+using autoware_auto_planning_msgs::msg::HADMapRoute;
+using nav_msgs::msg::Odometry;
+using tier4_planning_msgs::msg::PathChangeModule;
 
 class PlanningManagerNode : public rclcpp::Node
 {
@@ -52,19 +67,33 @@ private:
   rclcpp::Publisher<Trajectory>::SharedPtr traj_pub_;
 
   // subscriber
-  rclcpp::Subscription<autoware_auto_planning_msgs::msg::HADMapRoute>::SharedPtr route_sub_;
+  rclcpp::Subscription<HADMapRoute>::SharedPtr route_sub_;
+  void onRoute(const HADMapRoute::ConstSharedPtr msg);
+
+  // MEMO(murooka) subscriber for behavior path
+  rclcpp::Subscription<HADMapBin>::SharedPtr vector_map_sub_;
+  rclcpp::Subscription<Odometry>::SharedPtr odom_sub_;
+  rclcpp::Subscription<PredictedObjects>::SharedPtr predicted_objects_sub_;
+  rclcpp::Subscription<Approval>::SharedPtr external_approval_sub_;
+  rclcpp::Subscription<PathChangeModule>::SharedPtr force_approval_sub_;
+
+  void onMap(const HADMapBin::ConstSharedPtr map_msg);
+  void onOdometry(const Odometry::ConstSharedPtr msg);
+  void onPredictedObjects(const PredictedObjects::ConstSharedPtr msg);
+  void onExternalApproval(const Approval::ConstSharedPtr msg);
+  void onForceApproval(const PathChangeModule::ConstSharedPtr msg);
 
   // NOTE: callback group for client must be member variable
   rclcpp::CallbackGroup::SharedPtr callback_group_services_;
 
   // clients
-  rclcpp::Client<planning_manager::srv::BehaviorPathPlannerPlan>::SharedPtr
+  rclcpp::Client<BehaviorPathPlannerPlan>::SharedPtr
     client_behavior_path_planner_plan_;
-  rclcpp::Client<planning_manager::srv::BehaviorPathPlannerValidate>::SharedPtr
+  rclcpp::Client<BehaviorPathPlannerValidate>::SharedPtr
     client_behavior_path_planner_validate_;
-  rclcpp::Client<planning_manager::srv::BehaviorVelocityPlannerPlan>::SharedPtr
+  rclcpp::Client<BehaviorVelocityPlannerPlan>::SharedPtr
     client_behavior_velocity_planner_plan_;
-  rclcpp::Client<planning_manager::srv::BehaviorVelocityPlannerValidate>::SharedPtr
+  rclcpp::Client<BehaviorVelocityPlannerValidate>::SharedPtr
     client_behavior_velocity_planner_validate_;
 
   bool is_showing_debug_info_;
@@ -75,8 +104,6 @@ private:
   autoware_auto_planning_msgs::msg::Path path_;
   autoware_auto_planning_msgs::msg::Trajectory behavior_trajectory_;
   autoware_auto_planning_msgs::msg::Trajectory motion_trajectory_;
-
-  void onRoute(const autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr msg);
 
   Trajectory planTrajectory(const HADMapRoute & route);
   Trajectory optimizeVelocity(const Trajectory & traj);

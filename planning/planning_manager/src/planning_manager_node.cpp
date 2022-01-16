@@ -56,6 +56,8 @@ PlanningManagerNode::PlanningManagerNode(const rclcpp::NodeOptions & node_option
 
   // parameter
   is_showing_debug_info_ = true;
+  const double planning_hz =
+    declare_parameter<double>("planning_hz", 10.0);  // TODO(murooka) remove default parameter
 
   // publisher
   traj_pub_ = this->create_publisher<Trajectory>("~/output/trajectory", 1);
@@ -65,6 +67,19 @@ PlanningManagerNode::PlanningManagerNode(const rclcpp::NodeOptions & node_option
     "~/input/route", 1, std::bind(&PlanningManagerNode::onRoute, this, _1));
 
   // TODO(murooka) add subscribers for planning data
+  // MEMO(murooka) planning data for behavior path
+  vector_map_sub_ = create_subscription<HADMapBin>(
+    "~/input/vector_map", rclcpp::QoS{1}.transient_local(),
+    std::bind(&PlanningManagerNode::onMap, this, _1));
+  odom_sub_ = create_subscription<nav_msgs::msg::Odometry>(
+    "~/input/odometry", 1, std::bind(&PlanningManagerNode::onOdometry, this, _1));
+  predicted_objects_sub_ = create_subscription<autoware_auto_perception_msgs::msg::PredictedObjects>(
+    "~/input/perception", 1, std::bind(&PlanningManagerNode::onPredictedObjects, this, _1));
+  external_approval_sub_ = create_subscription<Approval>(
+    "~/input/external_approval", 1,
+    std::bind(&PlanningManagerNode::onExternalApproval, this, _1));
+  force_approval_sub_ = create_subscription<PathChangeModule>(
+    "~/input/force_approval", 1, std::bind(&PlanningManagerNode::onForceApproval, this, _1));
 
   {
     callback_group_services_ = this->create_callback_group(rclcpp::CallbackGroupType::Reentrant);
@@ -103,8 +118,6 @@ PlanningManagerNode::PlanningManagerNode(const rclcpp::NodeOptions & node_option
   }
 
   {  // timer
-    const double planning_hz =
-      declare_parameter<double>("planning_hz", 10.0);  // TODO(murooka) remove default parameter
     const auto period = rclcpp::Rate(planning_hz).period();
     auto on_timer = std::bind(&PlanningManagerNode::run, this);
     timer_ = std::make_shared<rclcpp::GenericTimer<decltype(on_timer)>>(
@@ -118,6 +131,46 @@ void PlanningManagerNode::onRoute(
   const autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr msg)
 {
   route_ = msg;
+}
+
+void PlanningManagerNode::onOdometry(const Odometry::ConstSharedPtr msg)
+{
+  planning_data_.ego_odom = *msg;
+}
+
+void PlanningManagerNode::onPredictedObjects(const PredictedObjects::ConstSharedPtr msg)
+{
+  planning_data_.predicted_objects = *msg;
+}
+
+void PlanningManagerNode::onExternalApproval(const Approval::ConstSharedPtr msg)
+{
+  planning_data_.external_approval = *msg;
+  // TODO(murooka)
+  // planning_data_.external_approval.is_approved.stamp = this->now();
+}
+
+void PlanningManagerNode::onForceApproval(const PathChangeModule::ConstSharedPtr msg)
+{
+  // TODO(murooka)
+  planning_data_.force_approval = *msg;
+  /*
+  auto getModuleName = [](PathChangeModuleId module) {
+    if (module.type == PathChangeModuleId::FORCE_LANE_CHANGE) {
+      return "ForceLaneChange";
+    } else {
+      return "NONE";
+    }
+  };
+  planner_data_->approval.is_force_approved.module_name = getModuleName(msg->module);
+  planner_data_->approval.is_force_approved.stamp = msg->header.stamp;
+  */
+}
+void PlanningManagerNode::onMap(const HADMapBin::ConstSharedPtr msg)
+{
+  // TODO(murooka)
+  planning_data_.had_map_bin = *msg;
+  // planner_data_->route_handler->setMap(*msg);
 }
 
 void PlanningManagerNode::run()
@@ -215,7 +268,10 @@ void PlanningManagerNode::validateTrajectory([[maybe_unused]] const Trajectory &
       client_behavior_velocity_planner_validate_, behavior_velocity_request);
 }
 
-void PlanningManagerNode::publishTrajectory(const Trajectory & traj) { traj_pub_->publish(traj); }
+void PlanningManagerNode::publishTrajectory(const Trajectory & traj) {
+  // TODO(murooka) use thread local for member variable?
+  RCLCPP_INFO_EXPRESSION(get_logger(), is_showing_debug_info_, "start publishTrajectory");
+  traj_pub_->publish(traj); }
 void PlanningManagerNode::publishDiagnostics() {}
 
 }  // namespace planning_manager
