@@ -90,7 +90,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     const bool enable_avoidance = declare_parameter("enable_avoidance", true);
     const bool enable_lane_following = declare_parameter("enable_lane_following", true);
     const bool enable_lane_change = declare_parameter("enable_lane_change", true);
-    //[[maybe_unused]]const bool enable_pull_over = declare_parameter("enable_pull_over", true);
+    const bool enable_pull_over = declare_parameter("enable_pull_over", true);
     const bool enable_pull_out = declare_parameter("enable_pull_out", true);
 
     bt_manager_ = std::make_shared<BehaviorTreeManager>(*this, getBehaviorTreeManagerParam());
@@ -102,10 +102,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     registerModule<LaneChangeModule>(enable_lane_change, "LaneChange", lane_change_param);
     registerModule<LaneChangeModule>(enable_lane_change, "ForceLaneChange", lane_change_param);
     bt_manager_->registerForceApproval("ForceLaneChange");
-    //! pull over can't apply registerModule -> rosparam error
-    auto pull_over_module = std::make_shared<PullOverModule>("PullOver", *this, getPullOverParam());
-    bt_manager_->registerSceneModule(pull_over_module);
-    // registerModule<PullOverModule>(enable_pull_over, "PullOverModule", getPullOverParam());
+    registerModule<PullOverModule>(enable_pull_over, "PullOver", getPullOverParam());
     registerModule<PullOutModule>(enable_pull_out, "PullOut", getPullOutParam());
     bt_manager_->createBehaviorTree();
   }
