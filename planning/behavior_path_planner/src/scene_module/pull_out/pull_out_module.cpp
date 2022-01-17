@@ -74,6 +74,7 @@ void PullOutModule::onExit()
 
 bool PullOutModule::isExecutionRequested() const
 {
+  if (!planner_data_->parameters.enable_pull_out) return false;
   if (current_state_ == BT::NodeStatus::RUNNING) {
     return true;
   }

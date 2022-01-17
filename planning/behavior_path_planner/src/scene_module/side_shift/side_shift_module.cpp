@@ -97,6 +97,7 @@ void SideShiftModule::setParameters(const SideShiftParameters & parameters)
 
 bool SideShiftModule::isExecutionRequested() const
 {
+  if (!planner_data_->parameters.enable_side_shift) return false;
   if (current_state_ == BT::NodeStatus::RUNNING) {
     return true;
   }

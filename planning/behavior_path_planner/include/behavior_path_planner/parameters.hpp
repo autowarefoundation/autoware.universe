@@ -44,6 +44,14 @@ struct BehaviorPathPlannerParameters
   double right_over_hang;
   double base_link2front;
   double base_link2rear;
+
+  // is module ready
+  bool enable_lane_following{true};
+  bool enable_side_shift{true};
+  bool enable_avoidance{true};
+  bool enable_lane_change{true};
+  bool enable_pull_over{true};
+  bool enable_pull_out{true};
 };
 
 #endif  // BEHAVIOR_PATH_PLANNER__PARAMETERS_HPP_

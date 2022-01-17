@@ -33,7 +33,11 @@ void LaneFollowingModule::initParam()
   approval_handler_.clearWaitApproval();  // no need approval
 }
 
-bool LaneFollowingModule::isExecutionRequested() const { return true; }
+bool LaneFollowingModule::isExecutionRequested() const
+{
+  if (!planner_data_->parameters.enable_lane_following) return false;
+  return true;
+}
 
 bool LaneFollowingModule::isExecutionReady() const { return true; }
 
