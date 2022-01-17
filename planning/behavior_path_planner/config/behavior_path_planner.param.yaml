@@ -9,7 +9,6 @@
     drivable_area_height: 50.0
     refine_goal_search_radius_range: 7.5
     intersection_search_distance: 30.0
-    enable_lane_following: true
     enable_lane_change: true
     enable_side_sift: true
     enable_avoidance: true

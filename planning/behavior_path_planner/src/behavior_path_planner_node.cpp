@@ -88,7 +88,6 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     // get enable parameter of behavior
     const bool enable_side_sift = declare_parameter("enable_side_sift", true);
     const bool enable_avoidance = declare_parameter("enable_avoidance", true);
-    const bool enable_lane_following = declare_parameter("enable_lane_following", true);
     const bool enable_lane_change = declare_parameter("enable_lane_change", true);
     const bool enable_pull_over = declare_parameter("enable_pull_over", true);
     const bool enable_pull_out = declare_parameter("enable_pull_out", true);
@@ -96,8 +95,8 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     bt_manager_ = std::make_shared<BehaviorTreeManager>(*this, getBehaviorTreeManagerParam());
     registerModule<SideShiftModule>(enable_side_sift, "SideShift", getSideShiftParam());
     registerModule<AvoidanceModule>(enable_avoidance, "Avoidance", getAvoidanceParam());
-    registerModule<LaneFollowingModule>(
-      enable_lane_following, "LaneFollowing", getLaneFollowingParam());
+    // lane following should always be enabled
+    registerModule<LaneFollowingModule>(true, "LaneFollowing", getLaneFollowingParam());
     const auto lane_change_param = getLaneChangeParam();
     registerModule<LaneChangeModule>(enable_lane_change, "LaneChange", lane_change_param);
     registerModule<LaneChangeModule>(enable_lane_change, "ForceLaneChange", lane_change_param);
