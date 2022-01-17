@@ -23,6 +23,7 @@
 
 #include <lanelet2_core/geometry/Lanelet.h>
 #include <lanelet2_routing/RoutingGraph.h>
+#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <tf2/utils.h>
 
 #include <deque>
@@ -37,19 +38,10 @@ namespace
 {
 double getAngleDifference(const double angle1, const double angle2)
 {
-  Eigen::Vector2d vec1, vec2;
-  vec1 << std::cos(angle1), std::sin(angle1);
-  vec2 << std::cos(angle2), std::sin(angle2);
-  const double inner_product = vec1.dot(vec2);
-  double diff_angle;
-  if (inner_product < -1.0) {
-    diff_angle = M_PI;
-  } else if (inner_product > 1.0) {
-    diff_angle = 0.0;
-  } else {
-    diff_angle = std::acos(inner_product);
-  }
-  return std::fabs(diff_angle);
+  const double normalized_angle1 = tier4_autoware_utils::normalizeRadian(angle1);
+  const double normalized_angle2 = tier4_autoware_utils::normalizeRadian(angle2);
+  const double diff_angle = std::fabs(normalized_angle1 - normalized_angle2);
+  return diff_angle;
 }
 
 }  // namespace
