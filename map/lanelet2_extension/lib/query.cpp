@@ -20,10 +20,10 @@
 #include "lanelet2_extension/utility/utilities.hpp"
 
 #include <Eigen/Eigen>
+#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <lanelet2_core/geometry/Lanelet.h>
 #include <lanelet2_routing/RoutingGraph.h>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <tf2/utils.h>
 
 #include <deque>
