@@ -16,6 +16,7 @@
 
 #include "behavior_path_planner/path_utilities.hpp"
 #include "behavior_path_planner/scene_module/avoidance/avoidance_module.hpp"
+#include "behavior_path_planner/scene_module/empty/empty_module.hpp"
 #include "behavior_path_planner/scene_module/lane_change/lane_change_module.hpp"
 #include "behavior_path_planner/scene_module/pull_out/pull_out_module.hpp"
 #include "behavior_path_planner/scene_module/pull_over/pull_over_module.hpp"
@@ -84,16 +85,25 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
 
   // behavior tree manager
   {
+    // get enable parameter of behavior
+    const bool enable_side_sift = declare_parameter("enable_side_sift", true);
+    const bool enable_avoidance = declare_parameter("enable_avoidance", true);
+    const bool enable_lane_following = declare_parameter("enable_lane_following", true);
+    const bool enable_lane_change = declare_parameter("enable_lane_change", true);
+    const bool enable_pull_over = declare_parameter("enable_pull_over", true);
+    const bool enable_pull_out = declare_parameter("enable_pull_out", true);
+
     bt_manager_ = std::make_shared<BehaviorTreeManager>(*this, getBehaviorTreeManagerParam());
-    registerModule<SideShiftModule>("SideShift", getSideShiftParam());
-    registerModule<AvoidanceModule>("Avoidance", getAvoidanceParam());
-    registerModule<LaneFollowingModule>("LaneFollowing", getLaneFollowingParam());
-    auto lane_change_param = getLaneChangeParam();
-    registerModule<LaneChangeModule>("LaneChange", lane_change_param);
-    registerModule<LaneChangeModule>("ForceLaneChange", lane_change_param);
+    registerModule<SideShiftModule>(enable_side_sift, "SideShift", getSideShiftParam());
+    registerModule<AvoidanceModule>(enable_avoidance, "Avoidance", getAvoidanceParam());
+    registerModule<LaneFollowingModule>(
+      enable_lane_following, "LaneFollowing", getLaneFollowingParam());
+    const auto lane_change_param = getLaneChangeParam();
+    registerModule<LaneChangeModule>(enable_lane_change, "LaneChange", lane_change_param);
+    registerModule<LaneChangeModule>(enable_lane_change, "ForceLaneChange", lane_change_param);
     bt_manager_->registerForceApproval("ForceLaneChange");
-    registerModule<PullOverModule>("PullOver", getPullOverParam());
-    registerModule<PullOutModule>("PullOut", getPullOutParam());
+    registerModule<PullOverModule>(enable_pull_over, "PullOver", getPullOverParam());
+    registerModule<PullOutModule>(enable_pull_out, "PullOut", getPullOutParam());
     bt_manager_->createBehaviorTree();
   }
 
@@ -119,10 +129,17 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
 }
 
 template <typename T, typename P>
-void BehaviorPathPlannerNode::registerModule(const std::string & name, const P & p)
+void BehaviorPathPlannerNode::registerModule(
+  const bool enable, const std::string & name, const P & p)
 {
-  const auto m = std::make_shared<T>(name, *this, p);
-  bt_manager_->registerSceneModule(m);
+  if (enable) {
+    const auto m = std::make_shared<T>(name, *this, p);
+    bt_manager_->registerSceneModule(m);
+  } else {
+    EmptyParameters ep;
+    auto e = std::make_shared<EmptyModule>(name, *this, ep);
+    bt_manager_->registerSceneModule(e);
+  }
 }
 
 BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
@@ -160,13 +177,6 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.base_link2front = vehicle_info.max_longitudinal_offset_m;
   p.base_link2rear = p.rear_overhang;
 
-  // get enable parameter of behavior
-  p.enable_lane_change = declare_parameter("enable_lane_change", true);
-  p.enable_side_shift = declare_parameter("enable_side_shift", true);
-  p.enable_avoidance = declare_parameter("enable_avoidance", true);
-  p.enable_lane_following = declare_parameter("enable_lane_following", true);
-  p.enable_pull_over = declare_parameter("enable_pull_over", true);
-  p.enable_pull_out = declare_parameter("enable_pull_out", true);
   return p;
 }
 

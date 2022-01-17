@@ -72,7 +72,6 @@ void LaneChangeModule::onExit()
 
 bool LaneChangeModule::isExecutionRequested() const
 {
-  if (!planner_data_->parameters.enable_lane_change) return false;
   if (current_state_ == BT::NodeStatus::RUNNING) {
     return true;
   }

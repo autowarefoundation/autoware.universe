@@ -71,7 +71,6 @@ void PullOverModule::onExit()
 
 bool PullOverModule::isExecutionRequested() const
 {
-  if (!planner_data_->parameters.enable_pull_over) return false;
   if (current_state_ == BT::NodeStatus::RUNNING) {
     return true;
   }

@@ -57,7 +57,6 @@ AvoidanceModule::AvoidanceModule(
 
 bool AvoidanceModule::isExecutionRequested() const
 {
-  if (!planner_data_->parameters.enable_avoidance) return false;
   DEBUG_PRINT("AVOIDANCE isExecutionRequested");
 
   if (current_state_ == BT::NodeStatus::RUNNING) {
