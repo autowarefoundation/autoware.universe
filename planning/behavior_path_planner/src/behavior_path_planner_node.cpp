@@ -86,30 +86,21 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   // behavior tree manager
   {
     // get enable parameter of behavior
-    const bool enable_lane_following = declare_parameter("enable_lane_following", true);
-    // const bool enable_lane_change = true;//declare_parameter("enable_lane_change", true);
     const bool enable_side_sift = declare_parameter("enable_side_sift", true);
     const bool enable_avoidance = declare_parameter("enable_avoidance", true);
-    // const bool enable_pull_over = true;//declare_parameter("enable_pull_over", true);
-    // const bool enable_pull_out = true;//declare_parameter("enable_pull_out", true);
+    const bool enable_lane_following = declare_parameter("enable_lane_following", true);
+    const bool enable_lane_change = true;  // declare_parameter("enable_lane_change", true);
+    // const bool enable_pull_over = true;    // declare_parameter("enable_pull_over", true);
+    // const bool enable_pull_out = true;     // declare_parameter("enable_pull_out", true);
 
     bt_manager_ = std::make_shared<BehaviorTreeManager>(*this, getBehaviorTreeManagerParam());
     registerModule<SideShiftModule>(enable_side_sift, "SideShift", getSideShiftParam());
     registerModule<AvoidanceModule>(enable_avoidance, "Avoidance", getAvoidanceParam());
-
     registerModule<LaneFollowingModule>(
       enable_lane_following, "LaneFollowing", getLaneFollowingParam());
-
     const auto lane_change_param = getLaneChangeParam();
-
-    auto lane_change_module =
-      std::make_shared<LaneChangeModule>("LaneChange", *this, lane_change_param);
-    bt_manager_->registerSceneModule(lane_change_module);
-
-    auto force_lane_change_module =
-      std::make_shared<LaneChangeModule>("ForceLaneChange", *this, lane_change_param);
-    bt_manager_->registerSceneModule(force_lane_change_module);
-
+    registerModule<LaneChangeModule>(enable_lane_change, "LaneChange", lane_change_param);
+    registerModule<LaneChangeModule>(enable_lane_change, "ForceLaneChange", lane_change_param);
     bt_manager_->registerForceApproval("ForceLaneChange");
 
     auto pull_over_module = std::make_shared<PullOverModule>("PullOver", *this, getPullOverParam());
