@@ -35,6 +35,7 @@
 
 #include <memory>
 #include <string>
+#include <mutex>
 
 namespace behavior_velocity_planner
 {
@@ -99,11 +100,12 @@ private:
 
   // member
   PlannerData planner_data_;
+  std::mutex mutex_;
   BehaviorVelocityPlannerManager planner_manager_;
 
   // function
   geometry_msgs::msg::PoseStamped getCurrentPose();
-  bool isDataReady();
+  bool isDataReady(const PlannerData planner_data) const;
 };
 }  // namespace behavior_velocity_planner
 
