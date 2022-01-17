@@ -15,6 +15,7 @@
 #include "planning_manager/planning_manager_node.hpp"
 
 #include <chrono>
+#include <random>
 #include <string>
 
 namespace
@@ -56,8 +57,11 @@ PlanningManagerNode::PlanningManagerNode(const rclcpp::NodeOptions & node_option
 
   // parameter
   is_showing_debug_info_ = true;
-  const double planning_hz =
+  planning_hz_ =
     declare_parameter<double>("planning_hz", 10.0);  // TODO(murooka) remove default parameter
+  // TODO(murooka) 1000 Hz
+  const double main_hz =
+    declare_parameter<double>("main_hz", 50.0);  // TODO(murooka) remove default parameter
 
   // publisher
   traj_pub_ = this->create_publisher<Trajectory>("~/output/trajectory", 1);
@@ -83,7 +87,9 @@ PlanningManagerNode::PlanningManagerNode(const rclcpp::NodeOptions & node_option
     "~/input/force_approval", 1, std::bind(&PlanningManagerNode::onForceApproval, this, _1));
 
   {
-    callback_group_services_ = this->create_callback_group(rclcpp::CallbackGroupType::Reentrant);
+    // TODO(murooka) exclusive
+    callback_group_services_ =
+      this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
     // behavior path planner
     client_behavior_path_planner_plan_ =
@@ -119,12 +125,15 @@ PlanningManagerNode::PlanningManagerNode(const rclcpp::NodeOptions & node_option
   }
 
   {  // timer
-    const auto period = rclcpp::Rate(planning_hz).period();
+    callback_group_timer_ =
+      this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+
+    const auto period = rclcpp::Rate(main_hz).period();
     auto on_timer = std::bind(&PlanningManagerNode::run, this);
     timer_ = std::make_shared<rclcpp::GenericTimer<decltype(on_timer)>>(
       this->get_clock(), period, std::move(on_timer),
       this->get_node_base_interface()->get_context());
-    this->get_node_timers_interface()->add_timer(timer_, nullptr);
+    this->get_node_timers_interface()->add_timer(timer_, callback_group_timer_);
   }
 }
 
@@ -176,12 +185,105 @@ void PlanningManagerNode::run()
 
   const auto traj_with_optimal_vel = optimizeVelocity(traj);
 
-  validateTrajectory(traj_with_optimal_vel);
+  // validateTrajectory(traj_with_optimal_vel);
 
   publishTrajectory(traj_with_optimal_vel);
   publishDiagnostics();
 }
 
+Trajectory PlanningManagerNode::planTrajectory(const HADMapRoute & route)
+{
+  RCLCPP_INFO_EXPRESSION(get_logger(), is_showing_debug_info_, "start planTrajectory");
+  if ((rclcpp::Clock().now() - prev_plan_time_).seconds() > 1.0 / planning_hz_) {
+    prev_plan_time_ = rclcpp::Clock().now();
+
+    // TODO(murooka)
+    current_id_++;
+    const int unique_id = current_id_;
+    modules_result_map_[unique_id] = ModulesResult();
+    modules_result_map_[unique_id].behavior_path_planner.status = Status::WAITING;
+
+    RCLCPP_INFO_EXPRESSION(
+      get_logger(), is_showing_debug_info_, "%d: start new planning", unique_id);
+
+    if (current_id_ == 10000) {
+      current_id_ = 0;
+    }
+  }
+
+  for (auto itr = modules_result_map_.begin(); itr != modules_result_map_.end(); ++itr) {
+    const int id = itr->first;
+    RCLCPP_INFO_EXPRESSION(
+      get_logger(), is_showing_debug_info_, "%d / %ld", id, modules_result_map_.size());
+
+    // behavior path planner
+    if (itr->second.behavior_path_planner.status == Status::WAITING) {
+      RCLCPP_INFO_EXPRESSION(
+        get_logger(), is_showing_debug_info_, "%d: start BehaviorPathPlannerPlan", id);
+      itr->second.behavior_path_planner.status = Status::EXECUTING;
+
+      auto behavior_path_request =
+        std::make_shared<planning_manager::srv::BehaviorPathPlannerPlan::Request>();
+      behavior_path_request->route = route;
+      behavior_path_request->planning_data = planning_data_;
+
+      client_behavior_path_planner_plan_->async_send_request(
+        behavior_path_request,
+        [this, itr, id](rclcpp::Client<BehaviorPathPlannerPlan>::SharedFuture future) {
+          // std::lock_guard<std::mutex> lock(mutex_);
+          RCLCPP_INFO_EXPRESSION(
+            get_logger(), is_showing_debug_info_, "%d: get BehaviorPathPlannerPlan", id);
+          const auto response = future.get();
+          itr->second.behavior_path_planner.result = response->path_with_lane_id;
+          itr->second.behavior_path_planner.status = Status::FINISHED;
+          itr->second.behavior_velocity_planner.status = Status::WAITING;
+        });
+    }
+
+    // behavior velocity planner
+    if (
+      itr->second.behavior_path_planner.status == Status::FINISHED &&
+      itr->second.behavior_velocity_planner.status == Status::WAITING) {
+      RCLCPP_INFO_EXPRESSION(
+        get_logger(), is_showing_debug_info_, "%d: start BehaviorVelocityPlannerPlan", id);
+      itr->second.behavior_velocity_planner.status = Status::EXECUTING;
+
+      auto behavior_velocity_request =
+        std::make_shared<planning_manager::srv::BehaviorVelocityPlannerPlan::Request>();
+      behavior_velocity_request->path_with_lane_id = itr->second.behavior_path_planner.result;
+      behavior_velocity_request->planning_data = planning_data_;
+
+      client_behavior_velocity_planner_plan_->async_send_request(
+        behavior_velocity_request,
+        [this, itr, id](rclcpp::Client<BehaviorVelocityPlannerPlan>::SharedFuture future) {
+          // std::lock_guard<std::mutex> lock(mutex_);
+          RCLCPP_INFO_EXPRESSION(
+            get_logger(), is_showing_debug_info_, "%d: get BehaviorVelocityPlannerPlan", id);
+          const auto response = future.get();
+          itr->second.behavior_velocity_planner.result = response->path;
+          itr->second.behavior_velocity_planner.status = Status::FINISHED;
+        });
+    }
+  }
+
+  {  // TODO(murooka) use remove_if
+    auto itr = modules_result_map_.begin();
+    while (itr != modules_result_map_.end()) {
+      if (itr->second.behavior_velocity_planner.status == Status::FINISHED) {
+        const int id = itr->first;
+
+        RCLCPP_INFO_EXPRESSION(get_logger(), is_showing_debug_info_, "%d: remove planning", id);
+        itr = modules_result_map_.erase(itr);
+      } else {
+        itr++;
+      }
+    }
+  }
+
+  return Trajectory{};
+}
+
+/*
 Trajectory PlanningManagerNode::planTrajectory(const HADMapRoute & route)
 {
   RCLCPP_INFO_EXPRESSION(get_logger(), is_showing_debug_info_, "start planTrajectory");
@@ -221,36 +323,38 @@ Trajectory PlanningManagerNode::planTrajectory(const HADMapRoute & route)
 
   return Trajectory{};
 }
+*/
 
 // TODO(murooka) optimize velocity
 Trajectory PlanningManagerNode::optimizeVelocity([[maybe_unused]] const Trajectory & traj)
 {
-  RCLCPP_INFO_EXPRESSION(get_logger(), is_showing_debug_info_, "start optimizeVelocity");
+  // RCLCPP_INFO_EXPRESSION(get_logger(), is_showing_debug_info_, "start optimizeVelocity");
   return Trajectory{};
 }
 
 // TODO(murooka) validate
 void PlanningManagerNode::validateTrajectory([[maybe_unused]] const Trajectory & traj)
 {
-  RCLCPP_INFO_EXPRESSION(get_logger(), is_showing_debug_info_, "start validateTrajectory");
+  // RCLCPP_INFO_EXPRESSION(get_logger(), is_showing_debug_info_, "start validateTrajectory");
 
   // behavior path planner
-  RCLCPP_INFO_EXPRESSION(get_logger(), is_showing_debug_info_, "start BehaviorPathPlannerValidate");
+  // RCLCPP_INFO_EXPRESSION(get_logger(), is_showing_debug_info_, "start
+  // BehaviorPathPlannerValidate");
 
   auto behavior_path_request =
     std::make_shared<planning_manager::srv::BehaviorPathPlannerValidate::Request>();
-  behavior_path_request->trajectory = motion_trajectory_;
+  behavior_path_request->trajectory = Trajectory{};  // motion_trajectory_;
 
   const auto behavior_path_planner_validate_result = sendRequest<BehaviorPathPlannerValidate>(
     client_behavior_path_planner_validate_, behavior_path_request);
 
   // behavior velocity planner
-  RCLCPP_INFO_EXPRESSION(
-    get_logger(), is_showing_debug_info_, "start BehaviorVelocityPlannerValidate");
+  // RCLCPP_INFO_EXPRESSION(
+  //   get_logger(), is_showing_debug_info_, "start BehaviorVelocityPlannerValidate");
 
   auto behavior_velocity_request =
     std::make_shared<planning_manager::srv::BehaviorVelocityPlannerValidate::Request>();
-  behavior_velocity_request->trajectory = motion_trajectory_;
+  behavior_velocity_request->trajectory = Trajectory{};  // motion_trajectory_;
 
   const auto behavior_velocity_planner_validate_result =
     sendRequest<BehaviorVelocityPlannerValidate>(
@@ -260,7 +364,7 @@ void PlanningManagerNode::validateTrajectory([[maybe_unused]] const Trajectory &
 void PlanningManagerNode::publishTrajectory(const Trajectory & traj)
 {
   // TODO(murooka) use thread local for member variable?
-  RCLCPP_INFO_EXPRESSION(get_logger(), is_showing_debug_info_, "start publishTrajectory");
+  // RCLCPP_INFO_EXPRESSION(get_logger(), is_showing_debug_info_, "start publishTrajectory");
   traj_pub_->publish(traj);
 }
 void PlanningManagerNode::publishDiagnostics() {}

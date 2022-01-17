@@ -24,13 +24,15 @@
 #include "autoware_auto_planning_msgs/msg/had_map_route.hpp"
 #include "autoware_auto_planning_msgs/msg/path.hpp"
 #include "autoware_auto_planning_msgs/msg/path_with_lane_id.hpp"
-#include "autoware_auto_planning_msgs/msg/planning_data.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <tier4_planning_msgs/msg/approval.hpp>
 #include <tier4_planning_msgs/msg/path_change_module.hpp>
+
+#include <mutex>
+#include <unordered_map>
 
 namespace planning_manager
 {
@@ -59,6 +61,32 @@ public:
   void run();
 
 private:
+  enum class Status : int {
+    WAITING = 0,
+    EXECUTING,
+    FINISHED,
+  };
+
+  template <typename T>
+  struct ResultWithStatus
+  {
+    Status status = Status::WAITING;
+    T result;
+    PlanningData planning_data;
+  };
+
+  struct ModulesResult
+  {
+    ResultWithStatus<PathWithLaneId> behavior_path_planner;
+    ResultWithStatus<Path> behavior_velocity_planner;
+  };
+  std::unordered_map<int, ModulesResult> modules_result_map_ = {};
+
+  // TODO(murooka) remove this
+  int current_id_ = 0;
+
+  std::mutex mutex_;
+
   // timer
   rclcpp::TimerBase::SharedPtr timer_;
 
@@ -84,6 +112,7 @@ private:
 
   // NOTE: callback group for client must be member variable
   rclcpp::CallbackGroup::SharedPtr callback_group_services_;
+  rclcpp::CallbackGroup::SharedPtr callback_group_timer_;
 
   // clients
   rclcpp::Client<BehaviorPathPlannerPlan>::SharedPtr client_behavior_path_planner_plan_;
@@ -93,13 +122,15 @@ private:
     client_behavior_velocity_planner_validate_;
 
   bool is_showing_debug_info_;
+  rclcpp::Time prev_plan_time_;
+  double planning_hz_;
 
   autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr route_;
   planning_manager::msg::PlanningData planning_data_;
-  autoware_auto_planning_msgs::msg::PathWithLaneId path_with_lane_id_;
-  autoware_auto_planning_msgs::msg::Path path_;
-  autoware_auto_planning_msgs::msg::Trajectory behavior_trajectory_;
-  autoware_auto_planning_msgs::msg::Trajectory motion_trajectory_;
+  // autoware_auto_planning_msgs::msg::PathWithLaneId path_with_lane_id_;
+  // autoware_auto_planning_msgs::msg::Path path_;
+  // autoware_auto_planning_msgs::msg::Trajectory behavior_trajectory_;
+  // autoware_auto_planning_msgs::msg::Trajectory motion_trajectory_;
 
   Trajectory planTrajectory(const HADMapRoute & route);
   Trajectory optimizeVelocity(const Trajectory & traj);
