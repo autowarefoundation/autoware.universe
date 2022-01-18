@@ -20,6 +20,7 @@
 #include "lanelet2_extension/regulatory_elements/autoware_traffic_light.hpp"
 #include "lanelet2_extension/regulatory_elements/detection_area.hpp"
 #include "lanelet2_extension/regulatory_elements/no_stopping_area.hpp"
+
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <geometry_msgs/msg/point.hpp>

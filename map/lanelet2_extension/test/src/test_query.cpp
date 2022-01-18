@@ -45,13 +45,13 @@ TEST(normalizedAngleDifference, getAngleDifference)
 
   constexpr double eps = 0.1;
   constexpr double pi = M_PI;
-  constexpr double pi2 = 2.0*M_PI;
+  constexpr double pi2 = 2.0 * M_PI;
   // case normal
   {
     // abs diff
     EXPECT_FLOAT_EQ(getAngleDifference(-pi, 0), pi);
     // abs diff
-    EXPECT_FLOAT_EQ(getAngleDifference(pi, 0), pi);    
+    EXPECT_FLOAT_EQ(getAngleDifference(pi, 0), pi);
   }
   // case inverse angle
   {
@@ -68,7 +68,6 @@ TEST(normalizedAngleDifference, getAngleDifference)
     EXPECT_FLOAT_EQ(getAngleDifference(-pi2, pi), pi);
   }
 }
-
 
 class TestSuite : public ::testing::Test
 {
