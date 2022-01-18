@@ -15,6 +15,7 @@
 #ifndef PLANNING_MANAGER__PLANNING_MANAGER_CORE_CPP_
 #define PLANNING_MANAGER__PLANNING_MANAGER_CORE_CPP_
 
+#include "planning_manager/module.hpp"
 #include "planning_manager/srv/behavior_path_planner_plan.hpp"
 #include "planning_manager/srv/behavior_path_planner_validate.hpp"
 #include "planning_manager/srv/behavior_velocity_planner_plan.hpp"
@@ -62,18 +63,11 @@ public:
   void run();
 
 private:
-  enum class Status : int {
-    WAITING = 0,
-    EXECUTING,
-    FINISHED,
-  };
-
+  /*
   template <typename T>
   struct ResultWithStatus
   {
-    Status status = Status::WAITING;
     T result;
-    PlanningData planning_data;
   };
 
   struct ModulesResult
@@ -100,11 +94,12 @@ private:
       return true;
     }
   };
+  */
 
   // TODO(murooka) remove this
   int current_id_ = 0;
 
-  std::mutex mutex_;
+  // std::mutex mutex_;
 
   // timer
   rclcpp::TimerBase::SharedPtr timer_;
@@ -130,15 +125,19 @@ private:
   void onForceApproval(const PathChangeModule::ConstSharedPtr msg);
 
   // NOTE: callback group for client must be member variable
-  std::vector<rclcpp::CallbackGroup::SharedPtr> callback_group_service_vec_;
+  // std::vector<rclcpp::CallbackGroup::SharedPtr> callback_group_service_vec_;
   rclcpp::CallbackGroup::SharedPtr callback_group_timer_;
 
+  std::vector<Module> modules_;
+
+  /*
   // clients
   rclcpp::Client<BehaviorPathPlannerPlan>::SharedPtr client_behavior_path_planner_plan_;
   rclcpp::Client<BehaviorPathPlannerValidate>::SharedPtr client_behavior_path_planner_validate_;
   rclcpp::Client<BehaviorVelocityPlannerPlan>::SharedPtr client_behavior_velocity_planner_plan_;
   rclcpp::Client<BehaviorVelocityPlannerValidate>::SharedPtr
     client_behavior_velocity_planner_validate_;
+  */
 
   bool is_showing_debug_info_;
   rclcpp::Time prev_plan_time_;
@@ -147,8 +146,11 @@ private:
   autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr route_;
   planning_manager::msg::PlanningData planning_data_;
   std::mutex planning_data_mutex_;
-  std::unordered_map<int, ModulesResult> modules_result_map_ = {};
-  std::mutex map_mutex_;
+  // std::unordered_map<int, ModulesResult> modules_result_map_ = {};
+  // std::mutex map_mutex_;
+
+  // parallel planning num
+  std::vector<int> planning_num_;
 
   // autoware_auto_planning_msgs::msg::PathWithLaneId path_with_lane_id_;
   // autoware_auto_planning_msgs::msg::Path path_;

@@ -31,41 +31,6 @@ rclcpp::SubscriptionOptions createSubscriptionOptions(
 
   return sub_opt;
 }
-
-rclcpp::CallbackGroup::SharedPtr createNewCallbackGroup(
-  rclcpp::Node * node_ptr, std::vector<rclcpp::CallbackGroup::SharedPtr> & group_ptr_vec,
-  const rclcpp::CallbackGroupType & group_type = rclcpp::CallbackGroupType::MutuallyExclusive)
-{
-  group_ptr_vec.push_back(node_ptr->create_callback_group(group_type));
-  return group_ptr_vec.back();
-}
-
-template <typename T>
-void waitForService(
-  const typename rclcpp::Client<T>::SharedPtr client, const std::string & service_name)
-{
-  while (!client->wait_for_service(std::chrono::seconds(1))) {
-    if (!rclcpp::ok()) {
-      rclcpp::shutdown();
-      return;
-    }
-    RCLCPP_INFO_STREAM(
-      rclcpp::get_logger("planning_manager"),
-      "waiting for " << service_name << " service connection...");
-  }
-}
-
-template <typename T>
-typename T::Response::SharedPtr sendRequest(
-  typename rclcpp::Client<T>::SharedPtr client, typename T::Request::SharedPtr request,
-  const int timeout_s = 3)
-{
-  const auto response = client->async_send_request(request);
-  if (response.wait_for(std::chrono::seconds(timeout_s)) != std::future_status::ready) {
-    return nullptr;
-  }
-  return response.get();
-}
 }  // namespace
 
 namespace planning_manager
@@ -76,7 +41,8 @@ PlanningManagerNode::PlanningManagerNode(const rclcpp::NodeOptions & node_option
   using std::placeholders::_1;
 
   // parameter
-  is_showing_debug_info_ = true;
+  is_showing_debug_info_ = declare_parameter<double>(
+    "is_showing_debug_info", true);  // TODO(murooka) remove default parameter
   planning_hz_ =
     declare_parameter<double>("planning_hz", 10.0);  // TODO(murooka) remove default parameter
   const double main_hz =
@@ -111,35 +77,11 @@ PlanningManagerNode::PlanningManagerNode(const rclcpp::NodeOptions & node_option
   }
 
   {  // service client
-    // behavior path planner
-    client_behavior_path_planner_plan_ =
-      this->create_client<planning_manager::srv::BehaviorPathPlannerPlan>(
-        "~/srv/behavior_path_planner/plan", rmw_qos_profile_services_default,
-        createNewCallbackGroup(this, callback_group_service_vec_));
-    waitForService<planning_manager::srv::BehaviorPathPlannerPlan>(
-      client_behavior_path_planner_plan_, "behavior_path_planner/plan");
-
-    client_behavior_path_planner_validate_ =
-      this->create_client<planning_manager::srv::BehaviorPathPlannerValidate>(
-        "~/srv/behavior_path_planner/validate", rmw_qos_profile_services_default,
-        createNewCallbackGroup(this, callback_group_service_vec_));
-    waitForService<planning_manager::srv::BehaviorPathPlannerValidate>(
-      client_behavior_path_planner_validate_, "behavior_path_planner/validate");
-
-    // behavior velocity planner
-    client_behavior_velocity_planner_plan_ =
-      this->create_client<planning_manager::srv::BehaviorVelocityPlannerPlan>(
-        "~/srv/behavior_velocity_planner/plan", rmw_qos_profile_services_default,
-        createNewCallbackGroup(this, callback_group_service_vec_));
-    waitForService<planning_manager::srv::BehaviorVelocityPlannerPlan>(
-      client_behavior_velocity_planner_plan_, "behavior_velocity_planner/plan");
-
-    client_behavior_velocity_planner_validate_ =
-      this->create_client<planning_manager::srv::BehaviorVelocityPlannerValidate>(
-        "~/srv/behavior_velocity_planner/validate", rmw_qos_profile_services_default,
-        createNewCallbackGroup(this, callback_group_service_vec_));
-    waitForService<planning_manager::srv::BehaviorVelocityPlannerValidate>(
-      client_behavior_velocity_planner_validate_, "behavior_velocity_planner/validate");
+    modules_ = {
+      Module<BehaviorPathPlannerPlan, BehaviorPathPlannerValidate>(
+        this, "behavior_path_module", is_showing_debug_info_),
+      Module<BehaviorVelocityPlannerPlan, BehaviorVelocityPlannerValidate>(
+        this, "behavior_velocity_module", is_showing_debug_info_)};
   }
 
   {  // timer
@@ -210,7 +152,6 @@ void PlanningManagerNode::run()
   planning_data_mutex_.unlock();
 
   planTrajectory(*route_, planning_data);
-  optimizeVelocity(planning_data);
   validateTrajectory(planning_data);
 
   publishTrajectory();
@@ -222,7 +163,6 @@ void PlanningManagerNode::run()
 void PlanningManagerNode::planTrajectory(
   const HADMapRoute & route, const PlanningData & planning_data)
 {
-  std::lock_guard<std::mutex> lock(map_mutex_);
   // RCLCPP_INFO_EXPRESSION(get_logger(), is_showing_debug_info_, "start planTrajectory");
 
   // spawn new planning in a certain hz (= planning_hz)
@@ -233,74 +173,43 @@ void PlanningManagerNode::planTrajectory(
     current_id_++;
     const int unique_id = current_id_;
     {
-      // std::lock_guard<std::mutex> lock(map_mutex_);
-      modules_result_map_[unique_id] = ModulesResult();
-      modules_result_map_[unique_id].behavior_path_planner_plan.status = Status::WAITING;
+      planning_num_.push_back(unique_id);
+      modules_.front().setStatus(Status::Ready);
     }
 
     RCLCPP_INFO_EXPRESSION(
       get_logger(), is_showing_debug_info_, "%d / %ld: start new planning", unique_id,
-      modules_result_map_.size());
+      planning_num_.size());
 
     if (current_id_ == 10000) {
       current_id_ = 0;
     }
   }
 
-  for (auto itr = modules_result_map_.begin(); itr != modules_result_map_.end(); ++itr) {
-    const int id = itr->first;
-    // RCLCPP_INFO_EXPRESSION(
-    //   get_logger(), is_showing_debug_info_, "%d / %ld", id, modules_result_map_.size());
-
-    // behavior path planner
-    if (itr->second.behavior_path_planner_plan.status == Status::WAITING) {
-      RCLCPP_INFO_EXPRESSION(
-        get_logger(), is_showing_debug_info_, "%d / %ld: start BehaviorPathPlannerPlan", id,
-        modules_result_map_.size());
-      itr->second.behavior_path_planner_plan.status = Status::EXECUTING;
-
-      auto request = std::make_shared<planning_manager::srv::BehaviorPathPlannerPlan::Request>();
-      request->route = route;
-      request->planning_data = planning_data;
-
-      client_behavior_path_planner_plan_->async_send_request(
-        request, [this, itr, id](rclcpp::Client<BehaviorPathPlannerPlan>::SharedFuture future) {
-          std::lock_guard<std::mutex> lock(map_mutex_);
-          RCLCPP_INFO_EXPRESSION(
-            get_logger(), is_showing_debug_info_, "%d / %ld: get BehaviorPathPlannerPlan", id,
-            modules_result_map_.size());
-          const auto response = future.get();
-          itr->second.behavior_path_planner_plan.result = response->path_with_lane_id;
-          itr->second.behavior_path_planner_plan.status = Status::FINISHED;
-          itr->second.behavior_velocity_planner_plan.status = Status::WAITING;
-        });
+  for (const int id : planning_num_) {
+    // plan
+    for (auto m_itr = modules_.begin(); m_itr != modules_.end(); ++m_itr) {
+      if (m_itr->getStatus() == Status::Ready) {
+        const auto pre_mdule_result =
+          (m_itr == modules_.begin()) ? route : (m_itr - 1).getPlanRresult(id)->output;
+        m_itr->plan(id, pre_module_result, planning_data);
+      }
     }
 
-    // behavior velocity planner
-    if (
-      itr->second.behavior_path_planner_plan.status == Status::FINISHED &&
-      itr->second.behavior_velocity_planner_plan.status == Status::WAITING) {
-      RCLCPP_INFO_EXPRESSION(
-        get_logger(), is_showing_debug_info_, "%d / %ld: start BehaviorVelocityPlannerPlan", id,
-        modules_result_map_.size());
-      itr->second.behavior_velocity_planner_plan.status = Status::EXECUTING;
+    // check planning
+    for (auto m_itr = modules_.begin(); m_itr != modules_.end(); ++m_itr) {
+      if (m_itr->getStatus() == Status::JustFinished) {
+        m_itr->setPlanStatus(Status::Finished);
 
-      auto request =
-        std::make_shared<planning_manager::srv::BehaviorVelocityPlannerPlan::Request>();
-      request->path_with_lane_id = itr->second.behavior_path_planner_plan.result;
-      request->planning_data = planning_data;
-
-      client_behavior_velocity_planner_plan_->async_send_request(
-        request, [this, itr, id](rclcpp::Client<BehaviorVelocityPlannerPlan>::SharedFuture future) {
-          std::lock_guard<std::mutex> lock(map_mutex_);
-          RCLCPP_INFO_EXPRESSION(
-            get_logger(), is_showing_debug_info_, "%d / %ld: get BehaviorVelocityPlannerPlan", id,
-            modules_result_map_.size());
-          const auto response = future.get();
-          itr->second.behavior_velocity_planner_plan.result = response->path;
-          itr->second.behavior_velocity_planner_plan.status = Status::FINISHED;
-        });
+        if (m_itr == modules_.end() - 1) {  // last module
+          modules_.begin()->setValidateStatus(Status::Ready);
+        } else {  // not last module
+          (m_itr + 1)->setPlanStatus(Status::Ready);
+        }
+      }
     }
+
+    // TODO(murooka) validate
   }
 }
 
@@ -312,63 +221,63 @@ void PlanningManagerNode::optimizeVelocity([[maybe_unused]] const PlanningData &
 
 void PlanningManagerNode::validateTrajectory([[maybe_unused]] const PlanningData & planning_data)
 {
-  std::lock_guard<std::mutex> lock(map_mutex_);
-  // RCLCPP_INFO_EXPRESSION(get_logger(), is_showing_debug_info_, "start validateTrajectory");
+  /*
+    std::lock_guard<std::mutex> lock(map_mutex_);
+    // RCLCPP_INFO_EXPRESSION(get_logger(), is_showing_debug_info_, "start validateTrajectory");
 
-  for (auto itr = modules_result_map_.begin(); itr != modules_result_map_.end(); ++itr) {
-    const int id = itr->first;
+    for (auto itr = modules_result_map_.begin(); itr != modules_result_map_.end(); ++itr) {
+      const int id = itr->first;
 
-    // if (itr->second.motion_velocity_smoother_plan.status == Status::FINISHED) { // TODO(murooka)
-    if (itr->second.behavior_velocity_planner_plan.status == Status::FINISHED) {
-      // behavior path planner
-      if (itr->second.behavior_velocity_planner_validate.status == Status::WAITING) {
-        RCLCPP_INFO_EXPRESSION(
-          get_logger(), is_showing_debug_info_, "%d / %ld: start BehaviorPathPlannerValidate", id,
-          modules_result_map_.size());
+      // if (itr->second.motion_velocity_smoother_plan.status == Status::FINISHED) { //
+    TODO(murooka) if (itr->second.behavior_velocity_planner_plan.status == Status::FINISHED) {
+        // behavior path planner
+        if (itr->second.behavior_velocity_planner_validate.status == Status::WAITING) {
+          RCLCPP_INFO_EXPRESSION(
+            get_logger(), is_showing_debug_info_, "%d / %ld: start BehaviorPathPlannerValidate", id,
+            modules_result_map_.size());
 
-        itr->second.behavior_path_planner_validate.status = Status::EXECUTING;
+          itr->second.behavior_path_planner_validate.status = Status::EXECUTING;
 
-        auto request =
-          std::make_shared<planning_manager::srv::BehaviorPathPlannerValidate::Request>();
-        request->trajectory = itr->second.motion_velocity_smoother_plan.result;
+          auto request =
+            std::make_shared<planning_manager::srv::BehaviorPathPlannerValidate::Request>();
+          request->trajectory = itr->second.motion_velocity_smoother_plan.result;
 
-        client_behavior_path_planner_validate_->async_send_request(
-          request,
-          [this, itr, id](rclcpp::Client<BehaviorPathPlannerValidate>::SharedFuture future) {
-            std::lock_guard<std::mutex> lock(map_mutex_);
-            RCLCPP_INFO_EXPRESSION(
-              get_logger(), is_showing_debug_info_, "%d / %ld: get BehaviorPathPlannerValidate", id,
-              modules_result_map_.size());
-            const auto response = future.get();
-            itr->second.behavior_path_planner_validate.status = Status::FINISHED;
-          });
-      }
+          client_behavior_path_planner_validate_->async_send_request(
+            request,
+            [this, itr, id](rclcpp::Client<BehaviorPathPlannerValidate>::SharedFuture future) {
+              std::lock_guard<std::mutex> lock(map_mutex_);
+              RCLCPP_INFO_EXPRESSION(
+                get_logger(), is_showing_debug_info_, "%d / %ld: get BehaviorPathPlannerValidate",
+    id, modules_result_map_.size()); const auto response = future.get();
+              itr->second.behavior_path_planner_validate.status = Status::FINISHED;
+            });
+        }
 
-      // behavior velocity planner
-      if (itr->second.behavior_velocity_planner_validate.status == Status::WAITING) {
-        RCLCPP_INFO_EXPRESSION(
-          get_logger(), is_showing_debug_info_, "%d / %ld: start BehaviorVelocityPlannerValidate",
-          id, modules_result_map_.size());
+        // behavior velocity planner
+        if (itr->second.behavior_velocity_planner_validate.status == Status::WAITING) {
+          RCLCPP_INFO_EXPRESSION(
+            get_logger(), is_showing_debug_info_, "%d / %ld: start BehaviorVelocityPlannerValidate",
+            id, modules_result_map_.size());
 
-        itr->second.behavior_velocity_planner_validate.status = Status::EXECUTING;
+          itr->second.behavior_velocity_planner_validate.status = Status::EXECUTING;
 
-        auto request =
-          std::make_shared<planning_manager::srv::BehaviorVelocityPlannerValidate::Request>();
-        request->trajectory = itr->second.motion_velocity_smoother_plan.result;
+          auto request =
+            std::make_shared<planning_manager::srv::BehaviorVelocityPlannerValidate::Request>();
+          request->trajectory = itr->second.motion_velocity_smoother_plan.result;
 
-        client_behavior_velocity_planner_validate_->async_send_request(
-          request,
-          [this, itr, id](rclcpp::Client<BehaviorVelocityPlannerValidate>::SharedFuture future) {
-            std::lock_guard<std::mutex> lock(map_mutex_);
-            RCLCPP_INFO_EXPRESSION(
-              get_logger(), is_showing_debug_info_, "%d / %ld: get BehaviorVelocityPlannerValidate",
-              id, modules_result_map_.size());
-            const auto response = future.get();
-            itr->second.behavior_velocity_planner_validate.status = Status::FINISHED;
-          });
+          client_behavior_velocity_planner_validate_->async_send_request(
+            request,
+            [this, itr, id](rclcpp::Client<BehaviorVelocityPlannerValidate>::SharedFuture future) {
+              std::lock_guard<std::mutex> lock(map_mutex_);
+              RCLCPP_INFO_EXPRESSION(
+                get_logger(), is_showing_debug_info_, "%d / %ld: get
+    BehaviorVelocityPlannerValidate", id, modules_result_map_.size()); const auto response =
+    future.get(); itr->second.behavior_velocity_planner_validate.status = Status::FINISHED;
+            });
+        }
       }
     }
-  }
+  */
 }
 
 void PlanningManagerNode::publishTrajectory()
@@ -382,20 +291,18 @@ void PlanningManagerNode::publishDiagnostics() {}
 
 void PlanningManagerNode::removeFinishedMap()
 {
-  std::lock_guard<std::mutex> lock(map_mutex_);
+  // std::lock_guard<std::mutex> lock(map_mutex_);
   // TODO(murooka) use remove_if
   // TODO(murooka) finally move this part to publishTrajectory or create removeFinishedMap
-  auto itr = modules_result_map_.begin();
-  while (itr != modules_result_map_.end()) {
-    if (itr->second.isValidateFinished()) {
-      const int id = itr->first;
 
+  for (const int id : planning_num_) {
+    if (modules_.back().validate_result_map_->result) {
       RCLCPP_INFO_EXPRESSION(
         get_logger(), is_showing_debug_info_, "%d / %ld: remove planning", id,
-        modules_result_map_.size());
-      itr = modules_result_map_.erase(itr);
-    } else {
-      itr++;
+        planning_num_.size());
+      for (auto & module : modules_) {
+        module.removeResultMap(id);
+      }
     }
   }
 }
