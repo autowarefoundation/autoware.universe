@@ -78,10 +78,27 @@ private:
 
   struct ModulesResult
   {
-    ResultWithStatus<PathWithLaneId> behavior_path_planner;
-    ResultWithStatus<Path> behavior_velocity_planner;
+    // plan
+    ResultWithStatus<PathWithLaneId> behavior_path_planner_plan;
+    ResultWithStatus<Path> behavior_velocity_planner_plan;
 
-    ResultWithStatus<Trajectory> motion_velocity_smoother;
+    ResultWithStatus<Trajectory> motion_velocity_smoother_plan;
+
+    // validate
+    ResultWithStatus<PathWithLaneId> behavior_path_planner_validate;
+    ResultWithStatus<Path> behavior_velocity_planner_validate;
+
+    ResultWithStatus<Trajectory> motion_velocity_smoother_validate;
+
+    bool isValidateFinished()
+    {
+      if (
+        behavior_path_planner_validate.status != Status::FINISHED ||
+        behavior_velocity_planner_validate.status != Status::FINISHED) {
+        return false;
+      }
+      return true;
+    }
   };
 
   // TODO(murooka) remove this
@@ -140,7 +157,7 @@ private:
 
   void planTrajectory(const HADMapRoute & route, const PlanningData & planning_data);
   void optimizeVelocity(const PlanningData & planning_data);
-  void validateTrajectory(const Trajectory & traj, const PlanningData & planning_data);
+  void validateTrajectory(const PlanningData & planning_data);
   void publishTrajectory();
   void publishDiagnostics();
   void removeFinishedMap();
