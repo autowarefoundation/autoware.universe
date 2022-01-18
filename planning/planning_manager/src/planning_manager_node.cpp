@@ -222,6 +222,7 @@ void PlanningManagerNode::run()
 void PlanningManagerNode::planTrajectory(
   const HADMapRoute & route, const PlanningData & planning_data)
 {
+  std::lock_guard<std::mutex> lock(map_mutex_);
   // RCLCPP_INFO_EXPRESSION(get_logger(), is_showing_debug_info_, "start planTrajectory");
 
   // spawn new planning in a certain hz (= planning_hz)
@@ -264,7 +265,7 @@ void PlanningManagerNode::planTrajectory(
 
       client_behavior_path_planner_plan_->async_send_request(
         request, [this, itr, id](rclcpp::Client<BehaviorPathPlannerPlan>::SharedFuture future) {
-          // std::lock_guard<std::mutex> lock(mutex_);
+          std::lock_guard<std::mutex> lock(map_mutex_);
           RCLCPP_INFO_EXPRESSION(
             get_logger(), is_showing_debug_info_, "%d / %ld: get BehaviorPathPlannerPlan", id,
             modules_result_map_.size());
@@ -291,7 +292,7 @@ void PlanningManagerNode::planTrajectory(
 
       client_behavior_velocity_planner_plan_->async_send_request(
         request, [this, itr, id](rclcpp::Client<BehaviorVelocityPlannerPlan>::SharedFuture future) {
-          // std::lock_guard<std::mutex> lock(mutex_);
+          std::lock_guard<std::mutex> lock(map_mutex_);
           RCLCPP_INFO_EXPRESSION(
             get_logger(), is_showing_debug_info_, "%d / %ld: get BehaviorVelocityPlannerPlan", id,
             modules_result_map_.size());
@@ -311,6 +312,7 @@ void PlanningManagerNode::optimizeVelocity([[maybe_unused]] const PlanningData &
 
 void PlanningManagerNode::validateTrajectory([[maybe_unused]] const PlanningData & planning_data)
 {
+  std::lock_guard<std::mutex> lock(map_mutex_);
   // RCLCPP_INFO_EXPRESSION(get_logger(), is_showing_debug_info_, "start validateTrajectory");
 
   for (auto itr = modules_result_map_.begin(); itr != modules_result_map_.end(); ++itr) {
@@ -333,7 +335,7 @@ void PlanningManagerNode::validateTrajectory([[maybe_unused]] const PlanningData
         client_behavior_path_planner_validate_->async_send_request(
           request,
           [this, itr, id](rclcpp::Client<BehaviorPathPlannerValidate>::SharedFuture future) {
-            // std::lock_guard<std::mutex> lock(mutex_);
+            std::lock_guard<std::mutex> lock(map_mutex_);
             RCLCPP_INFO_EXPRESSION(
               get_logger(), is_showing_debug_info_, "%d / %ld: get BehaviorPathPlannerValidate", id,
               modules_result_map_.size());
@@ -357,7 +359,7 @@ void PlanningManagerNode::validateTrajectory([[maybe_unused]] const PlanningData
         client_behavior_velocity_planner_validate_->async_send_request(
           request,
           [this, itr, id](rclcpp::Client<BehaviorVelocityPlannerValidate>::SharedFuture future) {
-            // std::lock_guard<std::mutex> lock(mutex_);
+            std::lock_guard<std::mutex> lock(map_mutex_);
             RCLCPP_INFO_EXPRESSION(
               get_logger(), is_showing_debug_info_, "%d / %ld: get BehaviorVelocityPlannerValidate",
               id, modules_result_map_.size());
@@ -380,6 +382,7 @@ void PlanningManagerNode::publishDiagnostics() {}
 
 void PlanningManagerNode::removeFinishedMap()
 {
+  std::lock_guard<std::mutex> lock(map_mutex_);
   // TODO(murooka) use remove_if
   // TODO(murooka) finally move this part to publishTrajectory or create removeFinishedMap
   auto itr = modules_result_map_.begin();
