@@ -47,10 +47,9 @@ namespace lanelet
 {
 namespace utils
 {
-inline double getAngleDifference(const double angle1, const double angle2)
+inline double [[deprecated]] getAngleDifference(const double angle1, const double angle2)
 {
-  const double diff_angle = std::abs(tier4_autoware_utils::normalizeRadian(angle1 - angle2));
-  return diff_angle;
+  return std::abs(tier4_autoware_utils::normalizeRadian(angle1 - angle2));
 }
 namespace query
 {
