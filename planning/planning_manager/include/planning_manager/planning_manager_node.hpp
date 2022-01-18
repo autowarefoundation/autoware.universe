@@ -33,6 +33,7 @@
 
 #include <mutex>
 #include <unordered_map>
+#include <vector>
 
 namespace planning_manager
 {
@@ -79,6 +80,8 @@ private:
   {
     ResultWithStatus<PathWithLaneId> behavior_path_planner;
     ResultWithStatus<Path> behavior_velocity_planner;
+
+    ResultWithStatus<Trajectory> motion_velocity_smoother;
   };
 
   // TODO(murooka) remove this
@@ -135,11 +138,12 @@ private:
   // autoware_auto_planning_msgs::msg::Trajectory behavior_trajectory_;
   // autoware_auto_planning_msgs::msg::Trajectory motion_trajectory_;
 
-  Trajectory planTrajectory(const HADMapRoute & route, const PlanningData & planning_data);
-  Trajectory optimizeVelocity(const Trajectory & traj, const PlanningData & planning_data);
+  void planTrajectory(const HADMapRoute & route, const PlanningData & planning_data);
+  void optimizeVelocity(const PlanningData & planning_data);
   void validateTrajectory(const Trajectory & traj, const PlanningData & planning_data);
-  void publishTrajectory(const Trajectory & traj);
+  void publishTrajectory();
   void publishDiagnostics();
+  void removeFinishedMap();
 };
 }  // namespace planning_manager
 

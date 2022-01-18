@@ -209,17 +209,18 @@ void PlanningManagerNode::run()
   const auto planning_data = planning_data_;
   planning_data_mutex_.unlock();
 
-  const auto traj = planTrajectory(*route_, planning_data);
-
-  const auto traj_with_optimal_vel = optimizeVelocity(traj, planning_data);
+  planTrajectory(*route_, planning_data);
+  optimizeVelocity(planning_data);
 
   // validateTrajectory(traj_with_optimal_vel, planning_data);
 
-  publishTrajectory(traj_with_optimal_vel);
+  publishTrajectory();
   publishDiagnostics();
+
+  removeFinishedMap();
 }
 
-Trajectory PlanningManagerNode::planTrajectory(
+void PlanningManagerNode::planTrajectory(
   const HADMapRoute & route, const PlanningData & planning_data)
 {
   // RCLCPP_INFO_EXPRESSION(get_logger(), is_showing_debug_info_, "start planTrajectory");
@@ -302,31 +303,12 @@ Trajectory PlanningManagerNode::planTrajectory(
         });
     }
   }
-
-  {  // TODO(murooka) use remove_if
-    auto itr = modules_result_map_.begin();
-    while (itr != modules_result_map_.end()) {
-      if (itr->second.behavior_velocity_planner.status == Status::FINISHED) {
-        const int id = itr->first;
-
-        RCLCPP_INFO_EXPRESSION(
-          get_logger(), is_showing_debug_info_, "%d / %ld: remove planning", id,
-          modules_result_map_.size());
-        itr = modules_result_map_.erase(itr);
-      } else {
-        itr++;
-      }
-    }
-  }
-
-  return Trajectory{};
 }
 
-Trajectory PlanningManagerNode::optimizeVelocity(
-  [[maybe_unused]] const Trajectory & traj, [[maybe_unused]] const PlanningData & planning_data)
+void PlanningManagerNode::optimizeVelocity([[maybe_unused]] const PlanningData & planning_data)
 {
+  // TODO(murooka) implement the same loop as planTrajectory
   // RCLCPP_INFO_EXPRESSION(get_logger(), is_showing_debug_info_, "start optimizeVelocity");
-  return Trajectory{};
 }
 
 void PlanningManagerNode::validateTrajectory(
@@ -358,13 +340,33 @@ void PlanningManagerNode::validateTrajectory(
       client_behavior_velocity_planner_validate_, behavior_velocity_request);
 }
 
-void PlanningManagerNode::publishTrajectory(const Trajectory & traj)
+void PlanningManagerNode::publishTrajectory()
 {
-  // TODO(murooka) use thread local for member variable?
   // RCLCPP_INFO_EXPRESSION(get_logger(), is_showing_debug_info_, "start publishTrajectory");
-  traj_pub_->publish(traj);
+
+  // TODO(murooka) publish trajectory where all validates are finished, and remove the id from map
+  // traj_pub_->publish(traj);
 }
 void PlanningManagerNode::publishDiagnostics() {}
+
+void PlanningManagerNode::removeFinishedMap()
+{
+  // TODO(murooka) use remove_if
+  // TODO(murooka) finally move this part to publishTrajectory or create removeFinishedMap
+  auto itr = modules_result_map_.begin();
+  while (itr != modules_result_map_.end()) {
+    if (itr->second.behavior_velocity_planner.status == Status::FINISHED) {
+      const int id = itr->first;
+
+      RCLCPP_INFO_EXPRESSION(
+        get_logger(), is_showing_debug_info_, "%d / %ld: remove planning", id,
+        modules_result_map_.size());
+      itr = modules_result_map_.erase(itr);
+    } else {
+      itr++;
+    }
+  }
+}
 
 }  // namespace planning_manager
 
