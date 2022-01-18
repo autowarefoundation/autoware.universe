@@ -47,7 +47,7 @@ using planning_manager::srv::BehaviorPathPlannerValidate;
 using planning_manager::srv::BehaviorVelocityPlannerPlan;
 using planning_manager::srv::BehaviorVelocityPlannerValidate;
 
-// MEMO(murooka) beahvior path
+// MEMO(murooka) behavior path
 using autoware_auto_mapping_msgs::msg::HADMapBin;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_planning_msgs::msg::HADMapRoute;
