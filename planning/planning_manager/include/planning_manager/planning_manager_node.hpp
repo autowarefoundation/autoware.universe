@@ -80,7 +80,6 @@ private:
     ResultWithStatus<PathWithLaneId> behavior_path_planner;
     ResultWithStatus<Path> behavior_velocity_planner;
   };
-  std::unordered_map<int, ModulesResult> modules_result_map_ = {};
 
   // TODO(murooka) remove this
   int current_id_ = 0;
@@ -111,7 +110,7 @@ private:
   void onForceApproval(const PathChangeModule::ConstSharedPtr msg);
 
   // NOTE: callback group for client must be member variable
-  rclcpp::CallbackGroup::SharedPtr callback_group_services_;
+  std::vector<rclcpp::CallbackGroup::SharedPtr> callback_group_service_vec_;
   rclcpp::CallbackGroup::SharedPtr callback_group_timer_;
 
   // clients
@@ -127,14 +126,18 @@ private:
 
   autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr route_;
   planning_manager::msg::PlanningData planning_data_;
+  std::mutex planning_data_mutex_;
+  std::unordered_map<int, ModulesResult> modules_result_map_ = {};
+  std::mutex map_mutex_;
+
   // autoware_auto_planning_msgs::msg::PathWithLaneId path_with_lane_id_;
   // autoware_auto_planning_msgs::msg::Path path_;
   // autoware_auto_planning_msgs::msg::Trajectory behavior_trajectory_;
   // autoware_auto_planning_msgs::msg::Trajectory motion_trajectory_;
 
-  Trajectory planTrajectory(const HADMapRoute & route);
-  Trajectory optimizeVelocity(const Trajectory & traj);
-  void validateTrajectory(const Trajectory & traj);
+  Trajectory planTrajectory(const HADMapRoute & route, const PlanningData & planning_data);
+  Trajectory optimizeVelocity(const Trajectory & traj, const PlanningData & planning_data);
+  void validateTrajectory(const Trajectory & traj, const PlanningData & planning_data);
   void publishTrajectory(const Trajectory & traj);
   void publishDiagnostics();
 };
