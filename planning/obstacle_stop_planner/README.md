@@ -242,7 +242,45 @@ stop
 ```
 
 This module works only when the obstacle pointcloud is found in the detection area of the `Obstacle stop planner` module.
-At first, the velocity of the pointcloud is estimated. The velocity estimation uses the velocity information of dynamic objects, or the distance to the point cloud found in the previous step.
+At first, the velocity of the pointcloud is estimated.
+
+```plantuml
+@startuml
+title estimate pointcloud velocity
+start
+
+if (Is there a dynamic object with a bounding box that overlaps the pointcloud?) then (yes)
+:use the velocity of dynamic object;
+stop
+else (no)
+endif
+
+if (The target pointcloud is found in the previous step?) then (yes)
+else (no(failed to estimate the pointcloud velocity))
+stop
+endif
+
+:calculate the pointcloud velocity from the pointclouds of the previous and current step;
+
+if (The calculated velocity is valid?) then (yes)
+else (no(failed to estimate the pointcloud velocity))
+stop
+endif
+
+:use the velocity of pointclouds;
+
+stop
+@enduml
+```
+
+The velocity estimation of the pointcloud uses the velocity information of dynamic objects, or the distance to the point cloud found in the previous step. If the pointcloud is contained in the bounding box of a dynamic object geometrically, the velocity of the dynamic object is used as the pointcloud velocity. If not, and when a target pointcloud is found in the previous step, the pointcloud velocity is calculated using the target pointcloud found in the previous step and current step; the distance and time difference between two point clouds is used for calculating pointcloud velocity. For the stability of the velocity estimation, the median of the calculation result for several steps is used as pointcloud velocity.
+
+If the calculated velocity is within the threshold range, it is used as the pointcloud velocity.
+
+\*The sources of velocity estimation can be changed by the following ROS parameters.
+
+- `adaptive_cruise_control.use_object_to_estimate_vel`
+- `adaptive_cruise_control.use_pcl_to_estimate_vel`
 
 Only when the estimation is succeeded and the estimated velocity exceeds the value of `obstacle_stop_velocity_thresh_*`, the distance to the pointcloud from self-position is calculated. For prevent chattering in the mode transition, `obstacle_velocity_thresh_to_start_acc` is used for the threshold to start adaptive cruise, and `obstacle_velocity_thresh_to_stop_acc` is used for the threshold to stop adaptive cruise. When the calculated distance value exceeds the emergency distance $d\_{emergency}$ calculated by emergency_stop parameters, target velocity to insert is calculated.
 
