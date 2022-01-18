@@ -1,0 +1,20 @@
+#include "autoware_auto_planning_msgs/msg/Trajectory.idl"
+
+// TODO(murooka) add time?
+module planning_manager {
+  module srv {
+    struct MotionVelocitySmootherPlan_Request
+    {
+      @verbatim(language = "comment", text =
+        "Trajectory and planning data")
+      autoware_auto_planning_msgs::msg::Trajectory trajectory;
+      planning_manager::msg::PlanningData planning_data;
+    };
+    struct MotionVelocitySmootherPlan_Response
+    {
+      @verbatim(language = "comment", text =
+        "Planned trajectory")
+      autoware_auto_planning_msgs::msg::Trajectory trajectory;
+    };
+  };
+};

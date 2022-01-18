@@ -1,0 +1,21 @@
+#include "autoware_auto_planning_msgs/msg/Trajectory.idl"
+#include "autoware_auto_planning_msgs/msg/Path.idl"
+
+// TODO(murooka) add time?
+module planning_manager {
+  module srv {
+    struct ObstacleAvoidancePlannerPlan_Request
+    {
+      @verbatim(language = "comment", text =
+        "Path and planning data")
+      autoware_auto_planning_msgs::msg::Path path;
+      planning_manager::msg::PlanningData planning_data;
+    };
+    struct ObstacleAvoidancePlannerPlan_Response
+    {
+      @verbatim(language = "comment", text =
+        "Planned trajectory")
+      autoware_auto_planning_msgs::msg::Trajectory trajectory;
+    };
+  };
+};
