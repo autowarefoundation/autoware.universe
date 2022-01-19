@@ -32,6 +32,7 @@
 #include <tier4_planning_msgs/msg/approval.hpp>
 #include <tier4_planning_msgs/msg/path_change_module.hpp>
 
+#include <any>
 #include <mutex>
 #include <unordered_map>
 #include <vector>
@@ -128,7 +129,11 @@ private:
   // std::vector<rclcpp::CallbackGroup::SharedPtr> callback_group_service_vec_;
   rclcpp::CallbackGroup::SharedPtr callback_group_timer_;
 
-  std::vector<Module> modules_;
+  // std::vector<std::any> modules_;
+  // std::vector<Module<std::any, std::any>> modules_;
+  // std::vector<Module> modules_;
+  std::vector<ModuleBase*> modules_;
+  // std::vector<Module> modules_;
 
   /*
   // clients

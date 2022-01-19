@@ -53,8 +53,14 @@ namespace planning_manager
 {
 using planning_manager::msg::PlanningData;
 
+class ModuleBase
+{
+public:
+  virtual ~ModuleBase() = default;
+};
+
 template <typename PlanService, typename ValidateService>
-class Module
+class Module : public ModuleBase
 {
 public:
   Module(

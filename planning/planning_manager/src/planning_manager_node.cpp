@@ -78,10 +78,11 @@ PlanningManagerNode::PlanningManagerNode(const rclcpp::NodeOptions & node_option
 
   {  // service client
     modules_ = {
-      Module<BehaviorPathPlannerPlan, BehaviorPathPlannerValidate>(
+      new Module<BehaviorPathPlannerPlan, BehaviorPathPlannerValidate>(
         this, "behavior_path_module", is_showing_debug_info_),
-      Module<BehaviorVelocityPlannerPlan, BehaviorVelocityPlannerValidate>(
-        this, "behavior_velocity_module", is_showing_debug_info_)};
+      new Module<BehaviorVelocityPlannerPlan, BehaviorVelocityPlannerValidate>(
+        this, "behavior_velocity_module", is_showing_debug_info_)
+    };
   }
 
   {  // timer
@@ -174,7 +175,16 @@ void PlanningManagerNode::planTrajectory(
     const int unique_id = current_id_;
     {
       planning_num_.push_back(unique_id);
-      modules_.front().setStatus(Status::Ready);
+      // static_cast<decltype(modules_.front())>(modules_.front()).setPlanStatus(Status::Ready);
+      // static_cast<decltype(modules_.front())>(modules_.front()).setPlanStatus(Status::Ready);
+      // static_cast<Module<BehaviorPathPlannerPlan, BehaviorPathPlannerValidate>>(modules_.front()).setPlanStatus(Status::Ready);
+      dynamic_cast<Module<BehaviorPathPlannerPlan, BehaviorPathPlannerValidate>*>(modules_.front())->setPlanStatus(Status::Ready);
+      // dynamic_cast<decltype(*modules_.front())*>(modules_.front())->setPlanStatus(Status::Ready);
+
+      // auto & module = std::any_cast<Module<BehaviorPathPlannerPlan, BehaviorPathPlannerValidate>>(modules_.front());
+      // Module<std::any_cast<module>, std::any_cast<module>>(module)
+      // const auto module = std::any_cast<Module<BehaviorPathPlannerPlan, BehaviorPathPlannerValidate>>(modules_.front());
+      // module.setPlanStatus(Status::Ready);
     }
 
     RCLCPP_INFO_EXPRESSION(
@@ -189,22 +199,22 @@ void PlanningManagerNode::planTrajectory(
   for (const int id : planning_num_) {
     // plan
     for (auto m_itr = modules_.begin(); m_itr != modules_.end(); ++m_itr) {
-      if (m_itr->getStatus() == Status::Ready) {
+      if ((*m_itr)->getPlanStatus() == Status::Ready) {
         const auto pre_mdule_result =
-          (m_itr == modules_.begin()) ? route : (m_itr - 1).getPlanRresult(id)->output;
-        m_itr->plan(id, pre_module_result, planning_data);
+          (m_itr == modules_.begin()) ? route : *(m_itr - 1)->getPlanRresult(id)->output;
+        *m_itr->plan(id, pre_module_result, planning_data);
       }
     }
 
     // check planning
     for (auto m_itr = modules_.begin(); m_itr != modules_.end(); ++m_itr) {
-      if (m_itr->getStatus() == Status::JustFinished) {
-        m_itr->setPlanStatus(Status::Finished);
+      if (*m_itr->getPlanStatus() == Status::JustFinished) {
+        *m_itr->setPlanStatus(Status::Finished);
 
         if (m_itr == modules_.end() - 1) {  // last module
           modules_.begin()->setValidateStatus(Status::Ready);
         } else {  // not last module
-          (m_itr + 1)->setPlanStatus(Status::Ready);
+          *(m_itr + 1)->setPlanStatus(Status::Ready);
         }
       }
     }
@@ -301,7 +311,7 @@ void PlanningManagerNode::removeFinishedMap()
         get_logger(), is_showing_debug_info_, "%d / %ld: remove planning", id,
         planning_num_.size());
       for (auto & module : modules_) {
-        module.removeResultMap(id);
+        module->removeResultMap(id);
       }
     }
   }
