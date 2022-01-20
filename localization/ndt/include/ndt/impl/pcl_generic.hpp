@@ -111,6 +111,14 @@ double NormalDistributionsTransformPCLGeneric<
 }
 
 template <class PointSource, class PointTarget>
+double NormalDistributionsTransformPCLGeneric<
+  PointSource, PointTarget>::getNearestVoxelTransformationProbability() const
+{
+  // return ndt_ptr_->getTransformationProbability();
+  return 0.0;
+}
+
+template <class PointSource, class PointTarget>
 double NormalDistributionsTransformPCLGeneric<PointSource, PointTarget>::getFitnessScore()
 {
   return ndt_ptr_->getFitnessScore();

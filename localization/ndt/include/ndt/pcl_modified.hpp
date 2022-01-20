@@ -48,6 +48,7 @@ public:
   double getStepSize() const override;
   double getTransformationEpsilon() override;
   double getTransformationProbability() const override;
+  double getNearestVoxelTransformationProbability() const override;
   double getFitnessScore() override;
   boost::shared_ptr<const pcl::PointCloud<PointTarget>> getInputTarget() const override;
   boost::shared_ptr<const pcl::PointCloud<PointSource>> getInputSource() const override;

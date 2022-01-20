@@ -109,6 +109,12 @@ double NormalDistributionsTransformOMP<PointSource, PointTarget>::getTransformat
 }
 
 template <class PointSource, class PointTarget>
+double NormalDistributionsTransformOMP<PointSource, PointTarget>::getNearestVoxelTransformationProbability() const
+{
+  return ndt_ptr_->getNearestVoxelTransformationProbability();
+}
+
+template <class PointSource, class PointTarget>
 double NormalDistributionsTransformOMP<PointSource, PointTarget>::getFitnessScore()
 {
   return ndt_ptr_->getFitnessScore();
@@ -181,6 +187,13 @@ pclomp::NeighborSearchMethod
 NormalDistributionsTransformOMP<PointSource, PointTarget>::getNeighborhoodSearchMethod() const
 {
   return ndt_ptr_->getNeighborhoodSearchMethod();
+}
+
+template <class PointSource, class PointTarget>
+double
+NormalDistributionsTransformOMP<PointSource, PointTarget>::calculateScore(const pcl::PointCloud<PointSource> & trans_cloud) const
+{
+  return ndt_ptr_->calculateScore(trans_cloud);
 }
 
 #endif  // NDT__IMPL__OMP_HPP_

@@ -44,6 +44,7 @@ public:
   virtual double getStepSize() const = 0;
   virtual double getTransformationEpsilon() = 0;
   virtual double getTransformationProbability() const = 0;
+  virtual double getNearestVoxelTransformationProbability() const = 0;
   virtual double getFitnessScore() = 0;
   virtual boost::shared_ptr<const pcl::PointCloud<PointTarget>> getInputTarget() const = 0;
   virtual boost::shared_ptr<const pcl::PointCloud<PointSource>> getInputSource() const = 0;

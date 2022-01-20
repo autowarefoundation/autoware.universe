@@ -47,6 +47,7 @@ public:
   double getStepSize() const override;
   double getTransformationEpsilon() override;
   double getTransformationProbability() const override;
+  double getNearestVoxelTransformationProbability() const override;
   double getFitnessScore() override;
   boost::shared_ptr<const pcl::PointCloud<PointTarget>> getInputTarget() const override;
   boost::shared_ptr<const pcl::PointCloud<PointSource>> getInputSource() const override;
@@ -64,7 +65,7 @@ public:
 
   int getNumThreads() const;
   pclomp::NeighborSearchMethod getNeighborhoodSearchMethod() const;
-
+  double calculateScore(const pcl::PointCloud<PointSource> & trans_cloud) const;
 private:
   boost::shared_ptr<pclomp::NormalDistributionsTransform<PointSource, PointTarget>> ndt_ptr_;
 };
