@@ -34,8 +34,8 @@
 #include <tf2_ros/transform_listener.h>
 
 #include <memory>
-#include <string>
 #include <mutex>
+#include <string>
 
 namespace behavior_velocity_planner
 {
@@ -100,8 +100,10 @@ private:
 
   // member
   PlannerData planner_data_;
-  std::mutex mutex_;
   BehaviorVelocityPlannerManager planner_manager_;
+
+  // mutex for planner_data_
+  std::mutex mutex_;
 
   // function
   geometry_msgs::msg::PoseStamped getCurrentPose();

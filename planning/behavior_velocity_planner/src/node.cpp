@@ -341,13 +341,10 @@ void BehaviorVelocityPlannerNode::onVirtualTrafficLightStates(
 void BehaviorVelocityPlannerNode::onTrigger(
   const autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg)
 {
-  mutex_.lock();  // for planner_data_ and planner_manager_
-  // NOTE: planner_data must not be referenced for multitheading
-  auto planner_data = planner_data_;
-
+  mutex_.lock();  // for planner_data_
   // Check ready
   try {
-    planner_data.current_pose =
+    planner_data_.current_pose =
       transform2pose(tf_buffer_.lookupTransform("map", "base_link", tf2::TimePointZero));
   } catch (tf2::TransformException & e) {
     RCLCPP_INFO(get_logger(), "waiting for transform from `map` to `base_link`");
@@ -355,18 +352,18 @@ void BehaviorVelocityPlannerNode::onTrigger(
     return;
   }
 
-  if (!isDataReady(planner_data)) {
+  if (!isDataReady(planner_data_)) {
     mutex_.unlock();
     return;
   }
 
+  // NOTE: planner_data must not be referenced for multitheading
+  const auto planner_data = planner_data_;
+  mutex_.unlock();
+
   // Plan path velocity
   const auto velocity_planned_path = planner_manager_.planPathVelocity(
     std::make_shared<const PlannerData>(planner_data), *input_path_msg);
-
-  // NOTE: planner_data must not be referenced for multitheading
-  auto planner_manager = planner_manager_;
-  mutex_.unlock();
 
   // screening
   const auto filtered_path = filterLitterPathPoint(to_path(velocity_planned_path));
@@ -383,7 +380,7 @@ void BehaviorVelocityPlannerNode::onTrigger(
   output_path_msg.drivable_area = input_path_msg->drivable_area;
 
   path_pub_->publish(output_path_msg);
-  stop_reason_diag_pub_->publish(planner_manager.getStopReasonDiag());
+  stop_reason_diag_pub_->publish(planner_manager_.getStopReasonDiag());
 
   if (debug_viz_pub_->get_subscription_count() > 0) {
     publishDebugMarker(output_path_msg);
