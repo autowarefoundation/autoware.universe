@@ -563,7 +563,7 @@ void ObstacleStopPlannerNode::obstaclePointcloudCallback(
 void ObstacleStopPlannerNode::pathCallback(const Trajectory::ConstSharedPtr input_msg)
 {
   mutex_.lock();
-  // NOTE: these vairables must not be referenced for multithreading
+  // NOTE: these variables must not be referenced for multithreading
   const auto vehicle_info = vehicle_info_;
   const auto stop_param = stop_param_;
   const double current_acc = current_acc_;
