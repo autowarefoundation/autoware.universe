@@ -46,6 +46,30 @@ PoseInitializer::PoseInitializer()
 {
   enable_gnss_callback_ = this->declare_parameter("enable_gnss_callback", true);
 
+  this->declare_parameter("initialpose_particle_covariance");
+  std::vector<double> initialpose_particle_covariance = this->get_parameter("initialpose_particle_covariance").as_double_array();
+  for (std::size_t i = 0; i < initialpose_particle_covariance.size(); ++i) {
+    initialpose_particle_covariance_[i] = initialpose_particle_covariance[i];
+  }
+
+  this->declare_parameter("gnss_particle_covariance");
+  std::vector<double> gnss_particle_covariance = this->get_parameter("gnss_particle_covariance").as_double_array();
+  for (std::size_t i = 0; i < gnss_particle_covariance.size(); ++i) {
+    gnss_particle_covariance_[i] = gnss_particle_covariance[i];
+  }
+
+  this->declare_parameter("service_particle_covariance");
+  std::vector<double> service_particle_covariance = this->get_parameter("service_particle_covariance").as_double_array();
+  for (std::size_t i = 0; i < service_particle_covariance.size(); ++i) {
+    service_particle_covariance_[i] = service_particle_covariance[i];
+  }
+
+  this->declare_parameter("output_pose_covariance");
+  std::vector<double> output_pose_covariance = this->get_parameter("output_pose_covariance").as_double_array();
+  for (std::size_t i = 0; i < output_pose_covariance.size(); ++i) {
+    output_pose_covariance_[i] = output_pose_covariance[i];
+  }
+  
   // We can't use _1 because pcl leaks an alias to boost::placeholders::_1, so it would be ambiguous
   initial_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
     "initialpose", 10,
@@ -102,13 +126,7 @@ void PoseInitializer::serviceInitializePose(
   auto add_height_pose_msg_ptr = std::make_shared<geometry_msgs::msg::PoseWithCovarianceStamped>();
   getHeight(req->pose_with_covariance, add_height_pose_msg_ptr);
 
-  // TODO(YamatoAndo)
-  add_height_pose_msg_ptr->pose.covariance[0] = 1.0;
-  add_height_pose_msg_ptr->pose.covariance[1 * 6 + 1] = 1.0;
-  add_height_pose_msg_ptr->pose.covariance[2 * 6 + 2] = 0.01;
-  add_height_pose_msg_ptr->pose.covariance[3 * 6 + 3] = 0.01;
-  add_height_pose_msg_ptr->pose.covariance[4 * 6 + 4] = 0.01;
-  add_height_pose_msg_ptr->pose.covariance[5 * 6 + 5] = 1.0;
+  add_height_pose_msg_ptr->pose.covariance = service_particle_covariance_;
 
   res->success = callAlignServiceAndPublishResult(add_height_pose_msg_ptr);
 }
@@ -121,13 +139,7 @@ void PoseInitializer::callbackInitialPose(
   auto add_height_pose_msg_ptr = std::make_shared<geometry_msgs::msg::PoseWithCovarianceStamped>();
   getHeight(*pose_cov_msg_ptr, add_height_pose_msg_ptr);
 
-  // TODO(YamatoAndo)
-  add_height_pose_msg_ptr->pose.covariance[0] = 2.0;
-  add_height_pose_msg_ptr->pose.covariance[1 * 6 + 1] = 2.0;
-  add_height_pose_msg_ptr->pose.covariance[2 * 6 + 2] = 0.01;
-  add_height_pose_msg_ptr->pose.covariance[3 * 6 + 3] = 0.01;
-  add_height_pose_msg_ptr->pose.covariance[4 * 6 + 4] = 0.01;
-  add_height_pose_msg_ptr->pose.covariance[5 * 6 + 5] = 0.3;
+  add_height_pose_msg_ptr->pose.covariance = initialpose_particle_covariance_;
 
   callAlignServiceAndPublishResult(add_height_pose_msg_ptr);
 }
@@ -145,13 +157,7 @@ void PoseInitializer::callbackGNSSPoseCov(
   auto add_height_pose_msg_ptr = std::make_shared<geometry_msgs::msg::PoseWithCovarianceStamped>();
   getHeight(*pose_cov_msg_ptr, add_height_pose_msg_ptr);
 
-  // TODO(YamatoAndo)
-  add_height_pose_msg_ptr->pose.covariance[0] = 1.0;
-  add_height_pose_msg_ptr->pose.covariance[1 * 6 + 1] = 1.0;
-  add_height_pose_msg_ptr->pose.covariance[2 * 6 + 2] = 0.01;
-  add_height_pose_msg_ptr->pose.covariance[3 * 6 + 3] = 0.01;
-  add_height_pose_msg_ptr->pose.covariance[4 * 6 + 4] = 0.01;
-  add_height_pose_msg_ptr->pose.covariance[5 * 6 + 5] = 3.14;
+  add_height_pose_msg_ptr->pose.covariance = gnss_particle_covariance_;
 
   callAlignServiceAndPublishResult(add_height_pose_msg_ptr);
 }
@@ -226,12 +232,7 @@ bool PoseInitializer::callAlignServiceAndPublishResult(
         // NOTE temporary cov
         geometry_msgs::msg::PoseWithCovarianceStamped & pose_with_covariance =
           result.get()->pose_with_covariance;
-        pose_with_covariance.pose.covariance[0] = 1.0;
-        pose_with_covariance.pose.covariance[1 * 6 + 1] = 1.0;
-        pose_with_covariance.pose.covariance[2 * 6 + 2] = 0.01;
-        pose_with_covariance.pose.covariance[3 * 6 + 3] = 0.01;
-        pose_with_covariance.pose.covariance[4 * 6 + 4] = 0.01;
-        pose_with_covariance.pose.covariance[5 * 6 + 5] = 0.2;
+        pose_with_covariance.pose.covariance = output_pose_covariance_;
         initial_pose_pub_->publish(pose_with_covariance);
         enable_gnss_callback_ = false;
       } else {

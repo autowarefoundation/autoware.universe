@@ -91,6 +91,11 @@ private:
   uint32_t response_id_ = 0;
 
   bool enable_gnss_callback_;
+  std::array<double, 36> initialpose_particle_covariance_;
+  std::array<double, 36> gnss_particle_covariance_;
+  std::array<double, 36> service_particle_covariance_;
+  std::array<double, 36> output_pose_covariance_;
+
 };
 
 #endif  // POSE_INITIALIZER__POSE_INITIALIZER_CORE_HPP_
