@@ -185,7 +185,7 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   }
 }
 
-// NOTE: argument planner_data must not be referenced for multitheading
+// NOTE: argument planner_data must not be referenced for multithreading
 bool BehaviorVelocityPlannerNode::isDataReady(const PlannerData planner_data) const
 {
   const auto & d = planner_data;
@@ -357,7 +357,7 @@ void BehaviorVelocityPlannerNode::onTrigger(
     return;
   }
 
-  // NOTE: planner_data must not be referenced for multitheading
+  // NOTE: planner_data must not be referenced for multithreading
   const auto planner_data = planner_data_;
   mutex_.unlock();
 
