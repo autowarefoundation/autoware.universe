@@ -199,7 +199,7 @@ private:
   SlowDownParam slow_down_param_;
 
   // mutex for vehicle_info_, stop_param_, current_acc_, lpf_acc_, obstacle_ros_pointcloud_ptr_
-  // NOTE: shared_ptr its self is thread safe so we do not have to care if *ptr is not used
+  // NOTE: shared_ptr itself is thread safe so we do not have to care if *ptr is not used
   //   (current_velocity_ptr_, prev_velocity_ptr_)
   std::mutex mutex_;
 
