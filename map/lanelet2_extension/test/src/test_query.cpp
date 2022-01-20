@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include "lanelet2_extension/utility/query.hpp"
-#include "tier4_autoware_utils/math/normalization.hpp"
 
 #include <gtest/gtest.h>
 #include <math.h>
@@ -24,51 +23,6 @@ using lanelet::LineStringOrPolygon3d;
 using lanelet::Point3d;
 using lanelet::Points3d;
 using lanelet::utils::getId;
-
-// Copyright 2020 Tier IV, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-TEST(normalizedAngleDifference, getAngleDifference)
-{
-  using lanelet::utils::getAngleDifference;
-
-  constexpr double eps = 0.1;
-  constexpr double pi = M_PI;
-  constexpr double pi2 = 2.0*M_PI;
-  // case normal
-  {
-    // abs diff
-    EXPECT_FLOAT_EQ(getAngleDifference(-pi, 0), pi);
-    // abs diff
-    EXPECT_FLOAT_EQ(getAngleDifference(pi, 0), pi);    
-  }
-  // case inverse angle
-  {
-    // return normalized angle diff
-    EXPECT_FLOAT_EQ(getAngleDifference(-pi - eps, pi), eps);
-    // return 0 if same direction
-    EXPECT_FLOAT_EQ(getAngleDifference(-pi, pi), 0);
-  }
-  // case more than 2PI angle
-  {
-    // return normalized angle diff
-    EXPECT_FLOAT_EQ(getAngleDifference(-pi2 - eps, pi2), eps);
-    // return pi if invert direction
-    EXPECT_FLOAT_EQ(getAngleDifference(-pi2, pi), pi);
-  }
-}
-
 
 class TestSuite : public ::testing::Test
 {

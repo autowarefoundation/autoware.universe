@@ -20,7 +20,7 @@
 #include "lanelet2_extension/utility/utilities.hpp"
 
 #include <Eigen/Eigen>
-
+#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <lanelet2_core/geometry/Lanelet.h>
 #include <lanelet2_routing/RoutingGraph.h>
@@ -34,6 +34,17 @@
 #include <vector>
 
 using lanelet::utils::to2D;
+namespace
+{
+double getAngleDifference(const double angle1, const double angle2)
+{
+  const double normalized_angle1 = tier4_autoware_utils::normalizeRadian(angle1);
+  const double normalized_angle2 = tier4_autoware_utils::normalizeRadian(angle2);
+  const double diff_angle = std::fabs(normalized_angle1 - normalized_angle2);
+  return diff_angle;
+}
+
+}  // namespace
 
 namespace lanelet
 {
