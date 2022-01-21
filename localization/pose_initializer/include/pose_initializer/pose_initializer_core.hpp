@@ -36,16 +36,15 @@ class PoseInitializer : public rclcpp::Node
 {
 public:
   PoseInitializer();
-  ~PoseInitializer();
 
 private:
-  void callbackMapPoints(sensor_msgs::msg::PointCloud2::ConstSharedPtr pointcloud2_msg_ptr);
+  void callbackMapPoints(sensor_msgs::msg::PointCloud2::ConstSharedPtr map_points_msg_ptr);
   void serviceInitializePose(
-    const std::shared_ptr<tier4_localization_msgs::srv::PoseWithCovarianceStamped::Request> req,
-    std::shared_ptr<tier4_localization_msgs::srv::PoseWithCovarianceStamped::Response> res);
+    const tier4_localization_msgs::srv::PoseWithCovarianceStamped::Request::SharedPtr req,
+    tier4_localization_msgs::srv::PoseWithCovarianceStamped::Response::SharedPtr res);
   void serviceInitializePoseAuto(
-    const std::shared_ptr<tier4_external_api_msgs::srv::InitializePoseAuto::Request> req,
-    std::shared_ptr<tier4_external_api_msgs::srv::InitializePoseAuto::Response> res);
+    const tier4_external_api_msgs::srv::InitializePoseAuto::Request::SharedPtr req,
+    tier4_external_api_msgs::srv::InitializePoseAuto::Response::SharedPtr res);
   void callbackInitialPose(
     geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose_cov_msg_ptr);
   void callbackGNSSPoseCov(

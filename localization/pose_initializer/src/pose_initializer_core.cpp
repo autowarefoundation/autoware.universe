@@ -107,8 +107,6 @@ PoseInitializer::PoseInitializer()
                                         std::placeholders::_1, std::placeholders::_2));
 }
 
-PoseInitializer::~PoseInitializer() {}
-
 void PoseInitializer::callbackMapPoints(
   sensor_msgs::msg::PointCloud2::ConstSharedPtr map_points_msg_ptr)
 {
@@ -118,8 +116,8 @@ void PoseInitializer::callbackMapPoints(
 }
 
 void PoseInitializer::serviceInitializePose(
-  const std::shared_ptr<tier4_localization_msgs::srv::PoseWithCovarianceStamped::Request> req,
-  std::shared_ptr<tier4_localization_msgs::srv::PoseWithCovarianceStamped::Response> res)
+  const tier4_localization_msgs::srv::PoseWithCovarianceStamped::Request::SharedPtr req,
+  tier4_localization_msgs::srv::PoseWithCovarianceStamped::Response::SharedPtr res)
 {
   enable_gnss_callback_ = false;  // get only first topic
 
@@ -163,9 +161,11 @@ void PoseInitializer::callbackGNSSPoseCov(
 }
 
 void PoseInitializer::serviceInitializePoseAuto(
-  const std::shared_ptr<tier4_external_api_msgs::srv::InitializePoseAuto::Request> req,
-  std::shared_ptr<tier4_external_api_msgs::srv::InitializePoseAuto::Response> res)
+  const tier4_external_api_msgs::srv::InitializePoseAuto::Request::SharedPtr req,
+  tier4_external_api_msgs::srv::InitializePoseAuto::Response::SharedPtr res)
 {
+  (void)req;
+
   RCLCPP_INFO(this->get_logger(), "Called Pose Initialize Service");
   enable_gnss_callback_ = true;
   res->status = tier4_api_utils::response_success();
