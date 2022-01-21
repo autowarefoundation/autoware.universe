@@ -1,6 +1,5 @@
 repos:
-  - repo: https://github.com/ComPWA/mirrors-markdown-link-check
-    rev: v3.9.1
+  - repo: https://github.com/tcort/markdown-link-check
+    rev: v3.9.2
     hooks:
       - id: markdown-link-check
-        files: \.md$
