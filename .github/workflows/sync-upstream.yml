@@ -7,8 +7,8 @@ on:
 
 env:
   UPSTREAM_REPO: https://github.com/tier4/autoware.proj.git
-  BASE_BRANCH: main
-  SYNC_TARGET_BRANCH: main
+  BASE_BRANCH: tier4/universe
+  SYNC_TARGET_BRANCH: tier4/universe
   SYNC_BRANCH: sync-upstream
 
 jobs:

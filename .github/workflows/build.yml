@@ -12,8 +12,7 @@ jobs:
       fail-fast: false
       matrix:
         branch:
-          - main
-          - develop
+          - tier4/universe
 
     steps:
       - name: Checkout repository
