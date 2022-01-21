@@ -1,6 +1,6 @@
 <launch>
 
-  <arg name="config_file" default="$(find-pkg-share pose_initializer)/config/pose_initializer.yaml"/>
+  <arg name="config_file" default="$(find-pkg-share pose_initializer)/config/pose_initializer.param.yaml"/>
 
   <node pkg="pose_initializer" exec="pose_initializer" name="pose_initializer" output="log">
     <remap from="initialpose" to="/initialpose" />
