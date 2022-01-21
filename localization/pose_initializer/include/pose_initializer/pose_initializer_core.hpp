@@ -95,6 +95,7 @@ private:
   std::array<double, 36> gnss_particle_covariance_;
   std::array<double, 36> service_particle_covariance_;
   std::array<double, 36> output_pose_covariance_;
+
 };
 
 #endif  // POSE_INITIALIZER__POSE_INITIALIZER_CORE_HPP_
