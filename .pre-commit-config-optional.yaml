@@ -1,0 +1,6 @@
+repos:
+  - repo: https://github.com/ComPWA/mirrors-markdown-link-check
+    rev: v3.9.1
+    hooks:
+      - id: markdown-link-check
+        files: \.md$
