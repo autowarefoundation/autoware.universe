@@ -165,7 +165,8 @@ NDTScanMatcher::NDTScanMatcher()
   converged_param_transform_probability_ = this->declare_parameter(
     "converged_param_transform_probability", converged_param_transform_probability_);
 
-  std::vector<double> output_pose_covariance = this->declare_parameter<std::vector<double>>("output_pose_covariance");
+  std::vector<double> output_pose_covariance =
+    this->declare_parameter<std::vector<double>>("output_pose_covariance");
   for (std::size_t i = 0; i < output_pose_covariance.size(); ++i) {
     output_pose_covariance_[i] = output_pose_covariance[i];
   }
