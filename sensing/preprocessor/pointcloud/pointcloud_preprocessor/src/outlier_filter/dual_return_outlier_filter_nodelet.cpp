@@ -55,11 +55,11 @@ DualReturnOutlierFilterComponent::DualReturnOutlierFilterComponent(
   updater_.setPeriod(0.1);
 
   image_pub_ =
-    image_transport::create_publisher(this, "/dual_return_outlier_filter/frequency_image");
+    image_transport::create_publisher(this, "dual_return_outlier_filter/debug/frequency_image");
   visibility_pub_ = create_publisher<tier4_debug_msgs::msg::Float32Stamped>(
-    "/dual_return_outlier_filter/visibility", rclcpp::SensorDataQoS());
+    "dual_return_outlier_filter/debug/visibility", rclcpp::SensorDataQoS());
   noise_cloud_pub_ = create_publisher<sensor_msgs::msg::PointCloud2>(
-    "/dual_return_outlier_filter/pointcloud_noise", rclcpp::SensorDataQoS());
+    "dual_return_outlier_filter/debug/pointcloud_noise", rclcpp::SensorDataQoS());
 
   using std::placeholders::_1;
   set_param_res_ = this->add_on_set_parameters_callback(
