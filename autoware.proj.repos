@@ -136,7 +136,7 @@ repositories:
   vendor/ndt_omp:
     type: git
     url: https://github.com/tier4/ndt_omp.git
-    version: 84d313e98f70033f37a664003f90ef90813cb665
+    version: b9b717010e9a70110075cdbf2bf3deb19873c04f
   vendor/mussp:
     type: git
     url: https://github.com/tier4/muSSP.git
