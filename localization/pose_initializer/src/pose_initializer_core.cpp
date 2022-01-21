@@ -47,29 +47,33 @@ PoseInitializer::PoseInitializer()
   enable_gnss_callback_ = this->declare_parameter("enable_gnss_callback", true);
 
   this->declare_parameter("initialpose_particle_covariance");
-  std::vector<double> initialpose_particle_covariance = this->get_parameter("initialpose_particle_covariance").as_double_array();
+  std::vector<double> initialpose_particle_covariance =
+    this->get_parameter("initialpose_particle_covariance").as_double_array();
   for (std::size_t i = 0; i < initialpose_particle_covariance.size(); ++i) {
     initialpose_particle_covariance_[i] = initialpose_particle_covariance[i];
   }
 
   this->declare_parameter("gnss_particle_covariance");
-  std::vector<double> gnss_particle_covariance = this->get_parameter("gnss_particle_covariance").as_double_array();
+  std::vector<double> gnss_particle_covariance =
+    this->get_parameter("gnss_particle_covariance").as_double_array();
   for (std::size_t i = 0; i < gnss_particle_covariance.size(); ++i) {
     gnss_particle_covariance_[i] = gnss_particle_covariance[i];
   }
 
   this->declare_parameter("service_particle_covariance");
-  std::vector<double> service_particle_covariance = this->get_parameter("service_particle_covariance").as_double_array();
+  std::vector<double> service_particle_covariance =
+    this->get_parameter("service_particle_covariance").as_double_array();
   for (std::size_t i = 0; i < service_particle_covariance.size(); ++i) {
     service_particle_covariance_[i] = service_particle_covariance[i];
   }
 
   this->declare_parameter("output_pose_covariance");
-  std::vector<double> output_pose_covariance = this->get_parameter("output_pose_covariance").as_double_array();
+  std::vector<double> output_pose_covariance =
+    this->get_parameter("output_pose_covariance").as_double_array();
   for (std::size_t i = 0; i < output_pose_covariance.size(); ++i) {
     output_pose_covariance_[i] = output_pose_covariance[i];
   }
-  
+
   // We can't use _1 because pcl leaks an alias to boost::placeholders::_1, so it would be ambiguous
   initial_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
     "initialpose", 10,
