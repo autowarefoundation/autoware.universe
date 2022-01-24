@@ -2,10 +2,11 @@
   ros__parameters:
     occlusion_spot:
       pedestrian_vel: 1.0                  # [m/s] assume pedestrian is dashing from occlusion at this velocity
-      safety_time_buffer: 0.1                  # [m/s] assume pedestrian is dashing from occlusion at this velocity
+      safety_time_buffer: 0.1              # [s] delay for the system response
       threshold:
-        detection_area_length: 200.0        # [m] the length of path to consider occlusion spot
+        detection_area_length: 100.0        # [m] the length of path to consider perception range
         stuck_vehicle_vel: 1.0              # [m/s] velocity below this value is assumed to stop
+        lateral_deviation: 0.5              # [m] minimum lateral deviation as parked vehicle
         lateral_distance: 1.5               # [m] maximum lateral distance to consider hidden collision
       # road type parameters
       public_road:
