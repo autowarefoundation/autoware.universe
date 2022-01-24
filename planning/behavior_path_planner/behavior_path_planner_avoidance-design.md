@@ -267,7 +267,9 @@ The shift length is subjected to the following constraints.
 
 <!-- spell-checker:disable -->
 
-$$ \text{shift_length}=\begin{cases}d_{lcsb}+d_{lcm}+\frac{1}{2}(W_{ego})&\text{if}&(d_{lcsb}+d_{lcm}+W_{ego}+d_{rssm})\lt d_{trsd}\\0 &\textrm{if}&\left(d_{lcsb}+d_{lcm}+W_{ego}+d_{rssm}\right)\geq d_{trsd}\end{cases} $$
+$$
+\text{shift_length}=\begin{cases}d_{lcsb}+d_{lcm}+\frac{1}{2}(W_{ego})&\text{if}&(d_{lcsb}+d_{lcm}+W_{ego}+d_{rssm})\lt d_{trsd}\\0 &\textrm{if}&\left(d_{lcsb}+d_{lcm}+W_{ego}+d_{rssm}\right)\geq d_{trsd}\end{cases}
+$$
 
 where
 
