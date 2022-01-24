@@ -85,7 +85,7 @@ void MetricsCalculator::setPreviousTrajectory(const Trajectory & traj)
   previous_trajectory_ = traj;
 }
 
-void MetricsCalculator::setDynamicObjects(const DynamicObjectArray & objects)
+void MetricsCalculator::setPredictedObjects(const PredictedObjects & objects)
 {
   dynamic_objects_ = objects;
 }

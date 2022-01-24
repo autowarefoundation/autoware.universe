@@ -17,14 +17,14 @@
 
 #include "planning_evaluator/stat.hpp"
 
-#include "autoware_perception_msgs/msg/dynamic_object_array.hpp"
+#include "autoware_auto_perception_msgs/msg/predicted_objects.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 
 namespace planning_diagnostics
 {
 namespace metrics
 {
-using autoware_perception_msgs::msg::DynamicObjectArray;
+using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_planning_msgs::msg::Trajectory;
 
 /**
@@ -33,7 +33,7 @@ using autoware_auto_planning_msgs::msg::Trajectory;
  * @param [in] traj trajectory
  * @return calculated statistics
  */
-Stat<double> calcDistanceToObstacle(const DynamicObjectArray & obstacles, const Trajectory & traj);
+Stat<double> calcDistanceToObstacle(const PredictedObjects & obstacles, const Trajectory & traj);
 
 /**
  * @brief calculate the time to collision of the trajectory with the given obstacles
@@ -43,7 +43,7 @@ Stat<double> calcDistanceToObstacle(const DynamicObjectArray & obstacles, const 
  * @return calculated statistics
  */
 Stat<double> calcTimeToCollision(
-  const DynamicObjectArray & obstacles, const Trajectory & traj, const double distance_threshold);
+  const PredictedObjects & obstacles, const Trajectory & traj, const double distance_threshold);
 
 }  // namespace metrics
 }  // namespace planning_diagnostics

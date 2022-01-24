@@ -21,7 +21,7 @@
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
 
-#include "autoware_perception_msgs/msg/dynamic_object_array.hpp"
+#include "autoware_auto_perception_msgs/msg/predicted_objects.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
 #include "diagnostic_msgs/msg/diagnostic_array.hpp"
@@ -34,7 +34,7 @@
 
 namespace planning_diagnostics
 {
-using autoware_perception_msgs::msg::DynamicObjectArray;
+using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using diagnostic_msgs::msg::DiagnosticArray;
@@ -65,7 +65,7 @@ public:
    * @brief callback on receiving a dynamic objects array
    * @param [in] objects_msg received dynamic object array message
    */
-  void onObjects(const DynamicObjectArray::ConstSharedPtr objects_msg);
+  void onObjects(const PredictedObjects::ConstSharedPtr objects_msg);
 
   /**
    * @brief update the ego pose stored in the MetricsCalculator
@@ -84,7 +84,7 @@ private:
   // ROS
   rclcpp::Subscription<Trajectory>::SharedPtr traj_sub_;
   rclcpp::Subscription<Trajectory>::SharedPtr ref_sub_;
-  rclcpp::Subscription<DynamicObjectArray>::SharedPtr objects_sub_;
+  rclcpp::Subscription<PredictedObjects>::SharedPtr objects_sub_;
   rclcpp::Publisher<DiagnosticArray>::SharedPtr metrics_pub_;
   std::shared_ptr<tf2_ros::TransformListener> transform_listener_{nullptr};
   std::unique_ptr<tf2_ros::Buffer> tf_buffer_;

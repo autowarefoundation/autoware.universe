@@ -20,7 +20,7 @@
 
 #include <planning_evaluator/planning_evaluator_node.hpp>
 
-#include "autoware_perception_msgs/msg/dynamic_object_array.hpp"
+#include "autoware_auto_perception_msgs/msg/predicted_objects.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "diagnostic_msgs/msg/diagnostic_array.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
@@ -35,7 +35,7 @@
 using EvalNode = planning_diagnostics::PlanningEvaluatorNode;
 using Trajectory = autoware_auto_planning_msgs::msg::Trajectory;
 using TrajectoryPoint = autoware_auto_planning_msgs::msg::TrajectoryPoint;
-using Objects = autoware_perception_msgs::msg::DynamicObjectArray;
+using Objects = autoware_auto_perception_msgs::msg::PredictedObjects;
 using diagnostic_msgs::msg::DiagnosticArray;
 
 class EvalTest : public ::testing::Test
@@ -376,9 +376,9 @@ TEST_F(EvalTest, TestObstacleDistance)
 {
   setTargetMetric(planning_diagnostics::Metric::obstacle_distance);
   Objects objs;
-  autoware_perception_msgs::msg::DynamicObject obj;
-  obj.state.pose_covariance.pose.position.x = 0.0;
-  obj.state.pose_covariance.pose.position.y = 0.0;
+  autoware_auto_perception_msgs::msg::PredictedObject obj;
+  obj.kinematics.initial_pose_with_covariance.pose.position.x = 0.0;
+  obj.kinematics.initial_pose_with_covariance.pose.position.y = 0.0;
   objs.objects.push_back(obj);
   publishObjects(objs);
 
@@ -392,9 +392,9 @@ TEST_F(EvalTest, TestObstacleTTC)
 {
   setTargetMetric(planning_diagnostics::Metric::obstacle_ttc);
   Objects objs;
-  autoware_perception_msgs::msg::DynamicObject obj;
-  obj.state.pose_covariance.pose.position.x = 0.0;
-  obj.state.pose_covariance.pose.position.y = 0.0;
+  autoware_auto_perception_msgs::msg::PredictedObject obj;
+  obj.kinematics.initial_pose_with_covariance.pose.position.x = 0.0;
+  obj.kinematics.initial_pose_with_covariance.pose.position.y = 0.0;
   objs.objects.push_back(obj);
   publishObjects(objs);
 

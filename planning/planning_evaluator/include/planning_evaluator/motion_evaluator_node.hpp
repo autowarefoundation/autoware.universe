@@ -24,7 +24,7 @@
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
-#include "geometry_msgs/msg/twist_stamped.hpp"
+#include <nav_msgs/msg/odometry.hpp>
 
 #include <deque>
 #include <memory>
@@ -49,13 +49,13 @@ public:
    * @brief callback on vehicle twist message
    * @param [in] twist_msg twist message
    */
-  void onTwist(const geometry_msgs::msg::TwistStamped::SharedPtr msg);
+  void onOdom(const nav_msgs::msg::Odometry::SharedPtr msg);
 
 private:
   geometry_msgs::msg::Pose getCurrentEgoPose() const;
 
   // ROS
-  rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr twist_sub_;
+  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr twist_sub_;
   std::unique_ptr<tf2_ros::Buffer> tf_buffer_ptr_;
   std::unique_ptr<tf2_ros::TransformListener> tf_listener_ptr_;
 

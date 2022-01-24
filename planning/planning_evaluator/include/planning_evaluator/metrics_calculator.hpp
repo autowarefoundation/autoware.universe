@@ -19,14 +19,14 @@
 #include "planning_evaluator/parameters.hpp"
 #include "planning_evaluator/stat.hpp"
 
-#include "autoware_perception_msgs/msg/dynamic_object_array.hpp"
+#include "autoware_auto_perception_msgs/msg/predicted_objects.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 
 namespace planning_diagnostics
 {
-using autoware_perception_msgs::msg::DynamicObjectArray;
+using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 
@@ -60,7 +60,7 @@ public:
    * @brief set the dynamic objects used to calculate obstacle metrics
    * @param [in] traj input previous trajectory
    */
-  void setDynamicObjects(const DynamicObjectArray & objects);
+  void setPredictedObjects(const PredictedObjects & objects);
 
   /**
    * @brief set the ego pose
@@ -84,7 +84,7 @@ private:
   Trajectory reference_trajectory_lookahead_;
   Trajectory previous_trajectory_;
   Trajectory previous_trajectory_lookahead_;
-  DynamicObjectArray dynamic_objects_;
+  PredictedObjects dynamic_objects_;
   geometry_msgs::msg::Pose ego_pose_;
 };  // class MetricsCalculator
 

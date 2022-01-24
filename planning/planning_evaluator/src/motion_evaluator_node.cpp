@@ -28,9 +28,9 @@ MotionEvaluatorNode::MotionEvaluatorNode(const rclcpp::NodeOptions & node_option
   tf_buffer_ptr_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
   tf_listener_ptr_ = std::make_unique<tf2_ros::TransformListener>(*tf_buffer_ptr_);
 
-  twist_sub_ = create_subscription<geometry_msgs::msg::TwistStamped>(
+  twist_sub_ = create_subscription<nav_msgs::msg::Odometry>(
     "~/input/twist", rclcpp::QoS{1},
-    std::bind(&MotionEvaluatorNode::onTwist, this, std::placeholders::_1));
+    std::bind(&MotionEvaluatorNode::onOdom, this, std::placeholders::_1));
 
   output_file_str_ = declare_parameter<std::string>("output_file");
 
@@ -60,16 +60,16 @@ MotionEvaluatorNode::~MotionEvaluatorNode()
   f.close();
 }
 
-void MotionEvaluatorNode::onTwist(const geometry_msgs::msg::TwistStamped::SharedPtr msg)
+void MotionEvaluatorNode::onOdom(const nav_msgs::msg::Odometry::SharedPtr msg)
 {
   // TODO(Maxime CLEMENT): set some desired minimum time/distance between two points
   TrajectoryPoint current_point;
   current_point.pose = getCurrentEgoPose();
-  current_point.twist = msg->twist;
+  current_point.longitudinal_velocity_mps = msg->twist.twist.linear.x;
   const rclcpp::Time now = this->get_clock()->now();
   if (!accumulated_trajectory_.points.empty()) {
     current_point.acceleration_mps2 =
-      (msg->longitudinal_velocity_mps - accumulated_trajectory_.points.back().longitudinal_velocity_mps) /
+      (msg->twist.twist.linear.x - accumulated_trajectory_.points.back().longitudinal_velocity_mps) /
       (now - stamps_.back()).seconds();
   }
   accumulated_trajectory_.points.push_back(current_point);
