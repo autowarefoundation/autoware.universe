@@ -267,9 +267,7 @@ The shift length is subjected to the following constraints.
 
 <!-- spell-checker:disable -->
 
-![shift_length_equation](./image/shift_length_equation.png)
-
-<!--<img src="https://latex.codecogs.com/gif.latex?\textrm{shift&space;length}=\left\{\begin{matrix}&space;d_{lcsb}&plus;d_{lcm}&plus;\frac{1}{2}(W_{ego})&\textrm{if}&\left(d_{lcsb}&plus;d_{lcm}&plus;W_{ego}&plus;d_{rssm}\right)<d_{trsd}\\&space;0&space;&&space;\textrm{if}&\left(d_{lcsb}&plus;d_{lcm}&plus;W_{ego}&plus;d_{rssm}\right)\geq&space;d_{trsd}&space;\end{matrix}\right." title="shift_length_computation" /> -->
+$$ \text{shift_length}=\begin{cases}d_{lcsb}+d_{lcm}+\frac{1}{2}(W_{ego})&\text{if}&(d_{lcsb}+d_{lcm}+W_{ego}+d_{rssm})\lt d_{trsd}\\0 &\textrm{if}&\left(d_{lcsb}+d_{lcm}+W_{ego}+d_{rssm}\right)\geq d_{trsd}\end{cases} $$
 
 where
 
