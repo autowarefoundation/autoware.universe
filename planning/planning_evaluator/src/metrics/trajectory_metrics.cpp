@@ -14,8 +14,8 @@
 
 #include "planning_evaluator/metrics/trajectory_metrics.hpp"
 
-#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 #include "planning_evaluator/metrics/metrics_utils.hpp"
+#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
 namespace planning_diagnostics
 {
@@ -54,7 +54,8 @@ Stat<double> calcTrajectoryRelativeAngle(const Trajectory & traj, const double m
 
     // ignore invert driving direction
     if (
-      traj.points.at(p1_id).longitudinal_velocity_mps < 0 || traj.points.at(p1_id + 1).longitudinal_velocity_mps < 0 ||
+      traj.points.at(p1_id).longitudinal_velocity_mps < 0 ||
+      traj.points.at(p1_id + 1).longitudinal_velocity_mps < 0 ||
       traj.points.at(p1_id + 2).longitudinal_velocity_mps < 0) {
       continue;
     }

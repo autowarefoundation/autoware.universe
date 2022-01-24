@@ -182,7 +182,8 @@ bool PlanningEvaluatorNode::isFinite(const TrajectoryPoint & point)
 
   return std::isfinite(o.x) && std::isfinite(o.y) && std::isfinite(o.z) && std::isfinite(o.w) &&
          std::isfinite(p.x) && std::isfinite(p.y) && std::isfinite(p.z) && std::isfinite(v) &&
-         std::isfinite(w) && std::isfinite(a) && std::isfinite(z) && std::isfinite(f) && std::isfinite(r);
+         std::isfinite(w) && std::isfinite(a) && std::isfinite(z) && std::isfinite(f) &&
+         std::isfinite(r);
 }
 }  // namespace planning_diagnostics
 

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 #include "planning_evaluator/metrics/trajectory_metrics.hpp"
+#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
 namespace planning_diagnostics
 {

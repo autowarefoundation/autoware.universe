@@ -35,8 +35,10 @@ Stat<double> calcLateralDeviation(const Trajectory & ref, const Trajectory & tra
    * need more precise calculation, e.g., lateral distance from spline of the reference traj
    */
   for (TrajectoryPoint p : traj.points) {
-    const size_t nearest_index = tier4_autoware_utils::findNearestIndex(ref.points, p.pose.position);
-    stat.add(tier4_autoware_utils::calcLateralDeviation(ref.points[nearest_index].pose, p.pose.position));
+    const size_t nearest_index =
+      tier4_autoware_utils::findNearestIndex(ref.points, p.pose.position);
+    stat.add(
+      tier4_autoware_utils::calcLateralDeviation(ref.points[nearest_index].pose, p.pose.position));
   }
   return stat;
 }
@@ -53,7 +55,8 @@ Stat<double> calcYawDeviation(const Trajectory & ref, const Trajectory & traj)
    * need more precise calculation, e.g., yaw distance from spline of the reference traj
    */
   for (TrajectoryPoint p : traj.points) {
-    const size_t nearest_index = tier4_autoware_utils::findNearestIndex(ref.points, p.pose.position);
+    const size_t nearest_index =
+      tier4_autoware_utils::findNearestIndex(ref.points, p.pose.position);
     stat.add(tier4_autoware_utils::calcYawDeviation(ref.points[nearest_index].pose, p.pose));
   }
   return stat;
@@ -69,7 +72,8 @@ Stat<double> calcVelocityDeviation(const Trajectory & ref, const Trajectory & tr
 
   // TODO(Maxime CLEMENT) need more precise calculation
   for (TrajectoryPoint p : traj.points) {
-    const size_t nearest_index = tier4_autoware_utils::findNearestIndex(ref.points, p.pose.position);
+    const size_t nearest_index =
+      tier4_autoware_utils::findNearestIndex(ref.points, p.pose.position);
     stat.add(p.longitudinal_velocity_mps - ref.points[nearest_index].longitudinal_velocity_mps);
   }
   return stat;

@@ -69,7 +69,8 @@ void MotionEvaluatorNode::onOdom(const nav_msgs::msg::Odometry::SharedPtr msg)
   const rclcpp::Time now = this->get_clock()->now();
   if (!accumulated_trajectory_.points.empty()) {
     current_point.acceleration_mps2 =
-      (msg->twist.twist.linear.x - accumulated_trajectory_.points.back().longitudinal_velocity_mps) /
+      (msg->twist.twist.linear.x -
+       accumulated_trajectory_.points.back().longitudinal_velocity_mps) /
       (now - stamps_.back()).seconds();
   }
   accumulated_trajectory_.points.push_back(current_point);
