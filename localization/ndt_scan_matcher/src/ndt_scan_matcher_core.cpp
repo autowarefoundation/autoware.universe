@@ -67,8 +67,9 @@ double norm(const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Poin
 }
 
 bool isLocalOptimalSolutionOscillation(
-  const std::vector<Eigen::Matrix4f> & result_pose_matrix_array, const float oscillation_threshold,
-  const float inversion_vector_threshold)
+  const std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> &
+    result_pose_matrix_array,
+  const float oscillation_threshold, const float inversion_vector_threshold)
 {
   bool prev_oscillation = false;
   int oscillation_cnt = 0;
@@ -163,6 +164,12 @@ NDTScanMatcher::NDTScanMatcher()
 
   converged_param_transform_probability_ = this->declare_parameter(
     "converged_param_transform_probability", converged_param_transform_probability_);
+
+  std::vector<double> output_pose_covariance =
+    this->declare_parameter<std::vector<double>>("output_pose_covariance");
+  for (std::size_t i = 0; i < output_pose_covariance.size(); ++i) {
+    output_pose_covariance_[i] = output_pose_covariance[i];
+  }
 
   rclcpp::CallbackGroup::SharedPtr initial_pose_callback_group;
   initial_pose_callback_group =
@@ -450,8 +457,8 @@ void NDTScanMatcher::callbackSensorPoints(
   result_pose_affine.matrix() = result_pose_matrix.cast<double>();
   const geometry_msgs::msg::Pose result_pose_msg = tf2::toMsg(result_pose_affine);
 
-  const std::vector<Eigen::Matrix4f> result_pose_matrix_array =
-    ndt_ptr_->getFinalTransformationArray();
+  const std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>>
+    result_pose_matrix_array = ndt_ptr_->getFinalTransformationArray();
   std::vector<geometry_msgs::msg::Pose> result_pose_msg_array;
   for (const auto & pose_matrix : result_pose_matrix_array) {
     Eigen::Affine3d pose_affine;
@@ -509,15 +516,7 @@ void NDTScanMatcher::callbackSensorPoints(
   result_pose_with_cov_msg.header.stamp = sensor_ros_time;
   result_pose_with_cov_msg.header.frame_id = map_frame_;
   result_pose_with_cov_msg.pose.pose = result_pose_msg;
-
-  // TODO(Tier IV): temporary value
-  Eigen::Map<RowMatrixXd> covariance(&result_pose_with_cov_msg.pose.covariance[0], 6, 6);
-  covariance(0, 0) = 0.025;
-  covariance(1, 1) = 0.025;
-  covariance(2, 2) = 0.025;
-  covariance(3, 3) = 0.000625;
-  covariance(4, 4) = 0.000625;
-  covariance(5, 5) = 0.000625;
+  result_pose_with_cov_msg.pose.covariance = output_pose_covariance_;
 
   if (is_converged) {
     ndt_pose_pub_->publish(result_pose_stamped_msg);
