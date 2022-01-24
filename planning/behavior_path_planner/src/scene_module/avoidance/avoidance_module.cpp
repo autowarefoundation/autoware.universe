@@ -156,6 +156,10 @@ ObjectDataArray AvoidanceModule::calcAvoidanceTargetObjects(
   const lanelet::ConstLanelets & current_lanes, const PathWithLaneId & reference_path,
   DebugData & debug) const
 {
+  using lanelet::geometry::distance2d;
+  using lanelet::utils::getId;
+  using lanelet::utils::to2D;
+
   const auto & path_points = reference_path.points;
   const auto & ego_pos = getEgoPosition();
 
@@ -221,18 +225,64 @@ ObjectDataArray AvoidanceModule::calcAvoidanceTargetObjects(
     const auto object_closest_pose = path_points.at(object_closest_index).point.pose;
     object_data.lateral = calcLateralDeviation(object_closest_pose, object_pos);
 
+    // Find the footprint point closest to the path, set to object_data.overhang_distance.
+    object_data.overhang_dist =
+      calcOverhangDistance(object_data, object_closest_pose, object_data.overhang_pose.position);
+
+    lanelet::ConstLanelet overhang_lanelet;
+    if (!rh->getClosestLaneletWithinRoute(object_closest_pose, &overhang_lanelet)) {
+      continue;
+    }
+
+    if (overhang_lanelet.id()) {
+      object_data.overhang_lanelet = overhang_lanelet;
+      lanelet::BasicPoint3d overhang_basic_pose(
+        object_data.overhang_pose.position.x, object_data.overhang_pose.position.y,
+        object_data.overhang_pose.position.z);
+      if (isOnRight(object_data)) {
+        const auto & target_left_line = [this, &rh, &overhang_lanelet]() {
+          if (
+            parameters_.enable_avoidance_over_same_direction &&
+            parameters_.enable_avoidance_over_opposite_direction) {
+            return rh->getLeftMostLinestring(overhang_lanelet);
+          } else if (
+            parameters_.enable_avoidance_over_same_direction &&
+            !parameters_.enable_avoidance_over_opposite_direction) {
+            return rh->getLeftMostSameDirectionLinestring(overhang_lanelet);
+          }
+          return overhang_lanelet.leftBound();
+        }();
+        object_data.to_road_shoulder_distance =
+          distance2d(to2D(overhang_basic_pose), to2D(target_left_line.basicLineString()));
+      } else {
+        const auto & target_right_line = [this, &rh, &overhang_lanelet]() {
+          if (
+            parameters_.enable_avoidance_over_same_direction &&
+            parameters_.enable_avoidance_over_opposite_direction) {
+            return rh->getRightMostLinestring(overhang_lanelet);
+          } else if (
+            parameters_.enable_avoidance_over_same_direction &&
+            !parameters_.enable_avoidance_over_opposite_direction) {
+            return rh->getRightMostSameDirectionLinestring(overhang_lanelet);
+          }
+          return overhang_lanelet.rightBound();
+        }();
+        object_data.to_road_shoulder_distance =
+          distance2d(to2D(overhang_basic_pose), to2D(target_right_line.basicLineString()));
+      }
+    }
+
+    DEBUG_PRINT(
+      "set object_data: longitudinal = %f, lateral = %f, largest_overhang = %f, "
+      "to_road_shoulder_distance = %f",
+      object_data.longitudinal, object_data.lateral, object_data.overhang_dist,
+      object_data.to_road_shoulder_distance);
+
     // Object is on center line -> ignore.
     if (std::abs(object_data.lateral) < parameters_.threshold_distance_object_is_on_center) {
       DEBUG_PRINT("Ignore object: (object is on center line)");
       continue;
     }
-
-    // Find the footprint point closest to the path, set to object_data.overhang_distance.
-    object_data.overhang_dist = calcOverhangDistance(object_data, object_closest_pose);
-
-    DEBUG_PRINT(
-      "set object_data: longitudinal = %f, lateral = %f, largest_overhang = %f",
-      object_data.longitudinal, object_data.lateral, object_data.overhang_dist);
 
     // set data
     target_objects.push_back(object_data);
@@ -393,20 +443,42 @@ void AvoidanceModule::registerRawShiftPoints(const AvoidPointArray & future)
 AvoidPointArray AvoidanceModule::calcRawShiftPointsFromObjects(
   const ObjectDataArray & objects) const
 {
-  const auto avoid_margin =
-    parameters_.lateral_collision_margin + 0.5 * planner_data_->parameters.vehicle_width;
   const auto prepare_distance = getNominalPrepareDistance();
 
   // To be consistent with changes in the ego position, the current shift length is considered.
   const auto current_ego_shift = getCurrentShift();
+  // // implement lane detection here.
+  const auto & lat_collision_safety_buffer = parameters_.lateral_collision_safety_buffer;
+  const auto & lat_collision_margin = parameters_.lateral_collision_margin;
+  const auto & vehicle_width = planner_data_->parameters.vehicle_width;
+  const auto & road_shoulder_safety_margin = parameters_.road_shoulder_safety_margin;
+  const auto max_allowable_lateral_distance =
+    lat_collision_safety_buffer + lat_collision_margin + vehicle_width;
+
+  const auto avoid_margin =
+    lat_collision_safety_buffer + lat_collision_margin + 0.5 * vehicle_width;
 
   AvoidPointArray avoid_points;
   for (auto & o : objects) {
-    // calc shift length with margin and shift limit
-    const auto shift_length = isOnRight(o)
-                                ? std::min(o.overhang_dist + avoid_margin, getLeftShiftBound())
-                                : std::max(o.overhang_dist - avoid_margin, getRightShiftBound());
+    const auto max_shift_length =
+      o.to_road_shoulder_distance - road_shoulder_safety_margin - 0.5 * vehicle_width;
+    const auto max_left_shift_limit = [&o, &max_allowable_lateral_distance, &max_shift_length,
+                                       this]() noexcept {
+      const auto left_shift_constraint = std::min(getLeftShiftBound(), max_shift_length);
+      return (o.to_road_shoulder_distance > max_allowable_lateral_distance) ? left_shift_constraint
+                                                                            : 0.0;
+    };
 
+    const auto max_right_shift_limit = [&o, &max_allowable_lateral_distance, &max_shift_length,
+                                        this]() noexcept {
+      const auto right_shift_constraint = std::max(getRightShiftBound(), -max_shift_length);
+      return (o.to_road_shoulder_distance > max_allowable_lateral_distance) ? right_shift_constraint
+                                                                            : 0.0;
+    };
+
+    const auto shift_length = isOnRight(o)
+                                ? std::min(o.overhang_dist + avoid_margin, max_left_shift_limit())
+                                : std::max(o.overhang_dist - avoid_margin, max_right_shift_limit());
     const auto avoiding_shift = shift_length - current_ego_shift;
     const auto return_shift = shift_length;
 
@@ -1584,16 +1656,34 @@ double AvoidanceModule::getLeftShiftBound() const
   return parameters_.max_left_shift_length;
 }
 
-// TODO (murooka) judge when and which way to extend drivable area. current implementation is keep extending during avoidance module
-// TODO (murooka) freespace during turning in intersection where there is no neighbour lanes
-// NOTE: Assume that there is no situation where there is an object in the middle lane of more than two lanes since which way to avoid is not obvious
+// TODO(murooka) judge when and which way to extend drivable area. current implementation is keep
+// extending during avoidance module
+// TODO(murooka) freespace during turning in intersection where there is no neighbour lanes
+// NOTE: Assume that there is no situation where there is an object in the middle lane of more than
+// two lanes since which way to avoid is not obvious
 void AvoidanceModule::generateExtendedDrivableArea(ShiftedPath * shifted_path) const
 {
   const auto & route_handler = planner_data_->route_handler;
   lanelet::ConstLanelets extended_lanelets = avoidance_data_.current_lanelets;
 
+  for (const auto & obstacle : avoidance_data_.objects) {
+    auto object_lanelet = obstacle.overhang_lanelet;
+    if (isOnRight(obstacle)) {
+      const auto lanelet_at_left = planner_data_->route_handler->getLeftLanelet(object_lanelet);
+      if (lanelet_at_left) {
+        extended_lanelets.push_back(lanelet_at_left.get());
+      }
+    } else {
+      const auto lanelet_at_right = planner_data_->route_handler->getRightLanelet(object_lanelet);
+      if (lanelet_at_right) {
+        extended_lanelets.push_back(lanelet_at_right.get());
+      }
+    }
+  }
+
   for (const auto & lane : avoidance_data_.current_lanelets) {
-    {  // 1. extend to right/left or adjacent right/left (where lane_change tag = no, but not a problem to extend for avoidance) lane if it exists
+    {  // 1. extend to right/left or adjacent right/left (where lane_change tag = no, but not a
+       // problem to extend for avoidance) lane if it exists
       // this can be available only if line string is shared
       const auto opt_right_lane = route_handler->getRightLanelet(lane);
       const auto opt_left_lane = route_handler->getLeftLanelet(lane);
@@ -1607,61 +1697,64 @@ void AvoidanceModule::generateExtendedDrivableArea(ShiftedPath * shifted_path) c
       }
     }
 
-    {  // 2. when there are multiple turning lanes whose previous lanelet is the same in intersection
+    {  // 2. when there are multiple turning lanes whose previous lanelet is the same in
+       // intersection
       const bool update_extended_lanelets = [&]() {
-          // lanelet is not turning lane
-          const std::string turn_direction = lane.attributeOr("turn_direction", "none");
-          if (turn_direction != "right" && turn_direction != "left") {
-            return false;
-          }
-
-          // get previous lane, and return false if previous lane does not exist
-          lanelet::ConstLanelet prev_lane;
-          if (!route_handler->getPreviousLaneletWithinRoute(lane, &prev_lane)) {
-            return false;
-          }
-
-          // get next lanes from the previous lane, and return false if next lanes do not exist
-          const auto next_lanes = route_handler->getNextLanelets(lane);
-          if (next_lanes.empty()) {
-            return false;
-          }
-
-          // look for neighbour lane, where end line of the lane is connected to end line of the original lane
-          for (const auto & next_lane : next_lanes) {
-            if (lane.id() == next_lane.id()) {
-              continue;
-            }
-
-            const Eigen::Vector2d & next_left_back_point_2d =
-              next_lane.leftBound2d().back().basicPoint();
-            const Eigen::Vector2d & next_right_back_point_2d =
-              next_lane.rightBound2d().back().basicPoint();
-
-            const Eigen::Vector2d & orig_left_back_point_2d =
-              lane.leftBound2d().back().basicPoint();
-            const Eigen::Vector2d & orig_right_back_point_2d =
-              lane.rightBound2d().back().basicPoint();
-
-            constexpr double epsilon = 1e-5;
-            const bool is_neighbour_lane =
-              (next_left_back_point_2d - orig_right_back_point_2d).norm() < epsilon ||
-              (next_right_back_point_2d - orig_left_back_point_2d).norm() < epsilon;
-            if (is_neighbour_lane) {
-              extended_lanelets.push_back(next_lane);
-              return true;
-            }
-          }
-
+        // lanelet is not turning lane
+        const std::string turn_direction = lane.attributeOr("turn_direction", "none");
+        if (turn_direction != "right" && turn_direction != "left") {
           return false;
-        } ();
+        }
+
+        // get previous lane, and return false if previous lane does not exist
+        lanelet::ConstLanelet prev_lane;
+        if (!route_handler->getPreviousLaneletWithinRoute(lane, &prev_lane)) {
+          return false;
+        }
+
+        // get next lanes from the previous lane, and return false if next lanes do not exist
+        const auto next_lanes = route_handler->getNextLanelets(lane);
+        if (next_lanes.empty()) {
+          return false;
+        }
+
+        // look for neighbour lane, where end line of the lane is connected to end line of the
+        // original lane
+        for (const auto & next_lane : next_lanes) {
+          if (lane.id() == next_lane.id()) {
+            continue;
+          }
+
+          const Eigen::Vector2d & next_left_back_point_2d =
+            next_lane.leftBound2d().back().basicPoint();
+          const Eigen::Vector2d & next_right_back_point_2d =
+            next_lane.rightBound2d().back().basicPoint();
+
+          const Eigen::Vector2d & orig_left_back_point_2d = lane.leftBound2d().back().basicPoint();
+          const Eigen::Vector2d & orig_right_back_point_2d =
+            lane.rightBound2d().back().basicPoint();
+
+          constexpr double epsilon = 1e-5;
+          const bool is_neighbour_lane =
+            (next_left_back_point_2d - orig_right_back_point_2d).norm() < epsilon ||
+            (next_right_back_point_2d - orig_left_back_point_2d).norm() < epsilon;
+          if (is_neighbour_lane) {
+            extended_lanelets.push_back(next_lane);
+            return true;
+          }
+        }
+
+        return false;
+      }();
       if (update_extended_lanelets) {
         continue;
       }
     }
 
-    {  // 3. deal with the problem that line string is not shared to neighbour lanelets in intersection (for left lane), assuming that points are shared
-      // this part will be removed when the map format is modified correctly wrt sharing line string since 1 works for this
+    {  // 3. deal with the problem that line string is not shared to neighbour lanelets in
+       // intersection (for left lane), assuming that points are shared
+      // this part will be removed when the map format is modified correctly wrt sharing line string
+      // since 1 works for this
       bool update_extended_lanelets = false;
       const auto & left_lane_candidates =
         route_handler->getLaneletsFromPoint(lane.leftBound().front());
@@ -1685,8 +1778,10 @@ void AvoidanceModule::generateExtendedDrivableArea(ShiftedPath * shifted_path) c
       }
     }
 
-    {  // 4. deal with the problem that line string is not shared to neighbour lanelets in intersection (for right lane), assuming that points are shared
-      // this part will be removed if the map format is modified correctly wrt sharing line string since 1 works for this
+    {  // 4. deal with the problem that line string is not shared to neighbour lanelets in
+       // intersection (for right lane), assuming that points are shared
+      // this part will be removed if the map format is modified correctly wrt sharing line string
+      // since 1 works for this
       bool update_extended_lanelets = false;
       const auto & right_lane_candidates =
         route_handler->getLaneletsFromPoint(lane.rightBound().front());
@@ -1711,8 +1806,9 @@ void AvoidanceModule::generateExtendedDrivableArea(ShiftedPath * shifted_path) c
     }
 
     {
-      // 5. if drivable area cannot be extended inside the same-direction lane, extend to even opposite lane
-      const auto opposite_lanes = route_handler->getOppositeLanelets(lane);
+      // 5. if drivable area cannot be extended inside the same-direction lane, extend to even
+      // opposite lane
+      const auto opposite_lanes = route_handler->getRightOppositeLanelets(lane);
 
       if (!opposite_lanes.empty()) {
         for (const auto & opposite_lane : opposite_lanes) {
@@ -1722,8 +1818,10 @@ void AvoidanceModule::generateExtendedDrivableArea(ShiftedPath * shifted_path) c
       }
     }
 
-    {  // 6. deal with the problem that line string is not shared to neighbour oppsite lanelet, assuming that points are shared
-      // this part will be removed when the map format is modified correctly wrt sharing line string since 5 works for this
+    {  // 6. deal with the problem that line string is not shared to neighbour opposite lanelet,
+       // assuming that points are shared
+      // this part will be removed when the map format is modified correctly wrt sharing line string
+      // since 5 works for this
       bool update_extended_lanelets = false;
       const auto & opposite_lane_candidates =
         route_handler->getLaneletsFromPoint(lane.rightBound().front());
