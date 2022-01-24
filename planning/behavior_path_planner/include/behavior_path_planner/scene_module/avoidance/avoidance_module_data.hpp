@@ -265,6 +265,7 @@ struct DebugData
 {
   std::shared_ptr<lanelet::ConstLanelets> expanded_lanelets;
   std::shared_ptr<lanelet::ConstLanelets> current_lanelets;
+  std::shared_ptr<lanelet::ConstLineStrings3d> linestring_wrt_overhang;
 
   AvoidPointArray current_shift_points;  // in path shifter
   AvoidPointArray new_shift_points;      // in path shifter
