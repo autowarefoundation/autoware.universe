@@ -277,7 +277,7 @@ ObjectDataArray AvoidanceModule::calcAvoidanceTargetObjects(
     }
 
     DEBUG_PRINT(
-      "set object_data: longitudinal = %f, lateral = %f, largest_overhang = %f, "
+      "set object_data: longitudinal = %f, lateral = %f, largest_overhang = %f,"
       "to_road_shoulder_distance = %f",
       object_data.longitudinal, object_data.lateral, object_data.overhang_dist,
       object_data.to_road_shoulder_distance);
@@ -294,7 +294,8 @@ ObjectDataArray AvoidanceModule::calcAvoidanceTargetObjects(
 
   // debug
   {
-    debug.linestring_wrt_overhang = std::make_shared<lanelet::ConstLineStrings3d>(debug_linestring);
+    debug.farthest_linestring_from_overhang =
+      std::make_shared<lanelet::ConstLineStrings3d>(debug_linestring);
     debug.current_lanelets = std::make_shared<lanelet::ConstLanelets>(current_lanes);
     debug.expanded_lanelets = std::make_shared<lanelet::ConstLanelets>(expanded_lanelets);
   }
@@ -2626,7 +2627,7 @@ void AvoidanceModule::setDebugData(const PathShifter & shifter, const DebugData 
   add(createAvoidanceObjectsMarkerArray(avoidance_data_.objects, "avoidance_object"));
   add(makeOverhangToRoadShoulderMarkerArray(avoidance_data_.objects));
   add(createOvehangFurthestLineStringMarkerArray(
-    *debug.linestring_wrt_overhang, "linestring_to_overhang", 1.0, 0.0, 1.0));
+    *debug.farthest_linestring_from_overhang, "farthest_linestring_from_overhang", 1.0, 0.0, 1.0));
 
   // parent object info
   addAvoidPoint(debug.registered_raw_shift, "p_registered_shift", 0.8, 0.8, 0.0);
