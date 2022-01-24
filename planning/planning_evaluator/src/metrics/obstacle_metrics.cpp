@@ -14,10 +14,10 @@
 
 #include "planning_evaluator/metrics/obstacle_metrics.hpp"
 
-#include "autoware_utils/autoware_utils.hpp"
+#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 #include "eigen3/Eigen/Core"
 
-#include "autoware_planning_msgs/msg/trajectory_point.hpp"
+#include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -26,8 +26,8 @@ namespace planning_diagnostics
 {
 namespace metrics
 {
-using autoware_planning_msgs::msg::TrajectoryPoint;
-using autoware_utils::calcDistance2d;
+using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+using tier4_autoware_utils::calcDistance2d;
 
 Stat<double> calcDistanceToObstacle(const DynamicObjectArray & obstacles, const Trajectory & traj)
 {
@@ -59,8 +59,8 @@ Stat<double> calcTimeToCollision(
   double t = 0.0;  // [s] time from start of trajectory
   for (const TrajectoryPoint & p : traj.points) {
     const double traj_dist = calcDistance2d(p0, p);
-    if (p0.twist.linear.x != 0) {
-      const double dt = traj_dist / std::abs(p0.twist.linear.x);
+    if (p0.longitudinal_velocity_mps != 0) {
+      const double dt = traj_dist / std::abs(p0.longitudinal_velocity_mps);
       t += dt;
       for (auto obstacle : obstacles.objects) {
         const double obst_dist = calcDistance2d(p, obstacle.state.pose_covariance.pose);

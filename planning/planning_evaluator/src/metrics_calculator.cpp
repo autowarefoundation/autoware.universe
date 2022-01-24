@@ -14,7 +14,7 @@
 
 #include "planning_evaluator/metrics_calculator.hpp"
 
-#include "autoware_utils/autoware_utils.hpp"
+#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 #include "planning_evaluator/metrics/deviation_metrics.hpp"
 #include "planning_evaluator/metrics/obstacle_metrics.hpp"
 #include "planning_evaluator/metrics/stability_metrics.hpp"
@@ -99,7 +99,7 @@ Trajectory MetricsCalculator::getLookaheadTrajectory(
     return traj;
   }
 
-  const auto ego_index = autoware_utils::findNearestSegmentIndex(traj.points, ego_pose_.position);
+  const auto ego_index = tier4_autoware_utils::findNearestSegmentIndex(traj.points, ego_pose_.position);
   Trajectory lookahead_traj;
   lookahead_traj.header = traj.header;
   double dist = 0.0;
@@ -109,10 +109,10 @@ Trajectory MetricsCalculator::getLookaheadTrajectory(
   while (curr_point_it != traj.points.end() && dist <= max_dist_m && time <= max_time_s) {
     lookahead_traj.points.push_back(*curr_point_it);
     const auto d =
-      autoware_utils::calcDistance2d(prev_point_it->pose.position, curr_point_it->pose.position);
+      tier4_autoware_utils::calcDistance2d(prev_point_it->pose.position, curr_point_it->pose.position);
     dist += d;
-    if (prev_point_it->twist.linear.x != 0.0) {
-      time += d / std::abs(prev_point_it->twist.linear.x);
+    if (prev_point_it->longitudinal_velocity_mps != 0.0) {
+      time += d / std::abs(prev_point_it->longitudinal_velocity_mps);
     }
     prev_point_it = curr_point_it;
     ++curr_point_it;

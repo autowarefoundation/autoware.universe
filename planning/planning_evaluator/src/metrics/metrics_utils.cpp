@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_utils/autoware_utils.hpp"
+#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 #include "planning_evaluator/metrics/trajectory_metrics.hpp"
 
 namespace planning_diagnostics
@@ -21,9 +21,9 @@ namespace metrics
 {
 namespace utils
 {
-using autoware_planning_msgs::msg::Trajectory;
-using autoware_planning_msgs::msg::TrajectoryPoint;
-using autoware_utils::calcDistance2d;
+using autoware_auto_planning_msgs::msg::Trajectory;
+using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+using tier4_autoware_utils::calcDistance2d;
 
 size_t getIndexAfterDistance(const Trajectory & traj, const size_t curr_id, const double distance)
 {

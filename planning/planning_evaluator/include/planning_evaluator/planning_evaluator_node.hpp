@@ -22,8 +22,8 @@
 #include "tf2_ros/transform_listener.h"
 
 #include "autoware_perception_msgs/msg/dynamic_object_array.hpp"
-#include "autoware_planning_msgs/msg/trajectory.hpp"
-#include "autoware_planning_msgs/msg/trajectory_point.hpp"
+#include "autoware_auto_planning_msgs/msg/trajectory.hpp"
+#include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
 #include "diagnostic_msgs/msg/diagnostic_array.hpp"
 
 #include <array>
@@ -35,8 +35,8 @@
 namespace planning_diagnostics
 {
 using autoware_perception_msgs::msg::DynamicObjectArray;
-using autoware_planning_msgs::msg::Trajectory;
-using autoware_planning_msgs::msg::TrajectoryPoint;
+using autoware_auto_planning_msgs::msg::Trajectory;
+using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using diagnostic_msgs::msg::DiagnosticArray;
 using diagnostic_msgs::msg::DiagnosticStatus;
 

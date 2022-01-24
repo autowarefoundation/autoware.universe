@@ -14,14 +14,14 @@
 
 #include "planning_evaluator/metrics/deviation_metrics.hpp"
 
-#include "autoware_utils/autoware_utils.hpp"
+#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
 namespace planning_diagnostics
 {
 namespace metrics
 {
-using autoware_planning_msgs::msg::Trajectory;
-using autoware_planning_msgs::msg::TrajectoryPoint;
+using autoware_auto_planning_msgs::msg::Trajectory;
+using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 
 Stat<double> calcLateralDeviation(const Trajectory & ref, const Trajectory & traj)
 {
@@ -35,8 +35,8 @@ Stat<double> calcLateralDeviation(const Trajectory & ref, const Trajectory & tra
    * need more precise calculation, e.g., lateral distance from spline of the reference traj
    */
   for (TrajectoryPoint p : traj.points) {
-    const size_t nearest_index = autoware_utils::findNearestIndex(ref.points, p.pose.position);
-    stat.add(autoware_utils::calcLateralDeviation(ref.points[nearest_index].pose, p.pose.position));
+    const size_t nearest_index = tier4_autoware_utils::findNearestIndex(ref.points, p.pose.position);
+    stat.add(tier4_autoware_utils::calcLateralDeviation(ref.points[nearest_index].pose, p.pose.position));
   }
   return stat;
 }
@@ -53,8 +53,8 @@ Stat<double> calcYawDeviation(const Trajectory & ref, const Trajectory & traj)
    * need more precise calculation, e.g., yaw distance from spline of the reference traj
    */
   for (TrajectoryPoint p : traj.points) {
-    const size_t nearest_index = autoware_utils::findNearestIndex(ref.points, p.pose.position);
-    stat.add(autoware_utils::calcYawDeviation(ref.points[nearest_index].pose, p.pose));
+    const size_t nearest_index = tier4_autoware_utils::findNearestIndex(ref.points, p.pose.position);
+    stat.add(tier4_autoware_utils::calcYawDeviation(ref.points[nearest_index].pose, p.pose));
   }
   return stat;
 }
@@ -69,8 +69,8 @@ Stat<double> calcVelocityDeviation(const Trajectory & ref, const Trajectory & tr
 
   // TODO(Maxime CLEMENT) need more precise calculation
   for (TrajectoryPoint p : traj.points) {
-    const size_t nearest_index = autoware_utils::findNearestIndex(ref.points, p.pose.position);
-    stat.add(p.twist.linear.x - ref.points[nearest_index].twist.linear.x);
+    const size_t nearest_index = tier4_autoware_utils::findNearestIndex(ref.points, p.pose.position);
+    stat.add(p.longitudinal_velocity_mps - ref.points[nearest_index].longitudinal_velocity_mps);
   }
   return stat;
 }

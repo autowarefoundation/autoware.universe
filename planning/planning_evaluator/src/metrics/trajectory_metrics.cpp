@@ -14,15 +14,15 @@
 
 #include "planning_evaluator/metrics/trajectory_metrics.hpp"
 
-#include "autoware_utils/autoware_utils.hpp"
+#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 #include "planning_evaluator/metrics/metrics_utils.hpp"
 
 namespace planning_diagnostics
 {
 namespace metrics
 {
-using autoware_utils::calcCurvature;
-using autoware_utils::calcDistance2d;
+using tier4_autoware_utils::calcCurvature;
+using tier4_autoware_utils::calcDistance2d;
 
 Stat<double> calcTrajectoryInterval(const Trajectory & traj)
 {
@@ -54,8 +54,8 @@ Stat<double> calcTrajectoryRelativeAngle(const Trajectory & traj, const double m
 
     // ignore invert driving direction
     if (
-      traj.points.at(p1_id).twist.linear.x < 0 || traj.points.at(p1_id + 1).twist.linear.x < 0 ||
-      traj.points.at(p1_id + 2).twist.linear.x < 0) {
+      traj.points.at(p1_id).longitudinal_velocity_mps < 0 || traj.points.at(p1_id + 1).longitudinal_velocity_mps < 0 ||
+      traj.points.at(p1_id + 2).longitudinal_velocity_mps < 0) {
       continue;
     }
 
@@ -127,7 +127,7 @@ Stat<double> calcTrajectoryDuration(const Trajectory & traj)
   double duration = 0.0;
   for (size_t i = 0; i < traj.points.size() - 1; ++i) {
     const double length = calcDistance2d(traj.points.at(i), traj.points.at(i + 1));
-    const double velocity = traj.points.at(i).twist.linear.x;
+    const double velocity = traj.points.at(i).longitudinal_velocity_mps;
     if (velocity != 0) {
       duration += length / std::abs(velocity);
     }
@@ -141,7 +141,7 @@ Stat<double> calcTrajectoryVelocity(const Trajectory & traj)
 {
   Stat<double> stat;
   for (TrajectoryPoint p : traj.points) {
-    stat.add(p.twist.linear.x);
+    stat.add(p.longitudinal_velocity_mps);
   }
   return stat;
 }
@@ -150,7 +150,7 @@ Stat<double> calcTrajectoryAcceleration(const Trajectory & traj)
 {
   Stat<double> stat;
   for (TrajectoryPoint p : traj.points) {
-    stat.add(p.accel.linear.x);
+    stat.add(p.acceleration_mps2);
   }
   return stat;
 }
@@ -159,13 +159,13 @@ Stat<double> calcTrajectoryJerk(const Trajectory & traj)
 {
   Stat<double> stat;
   for (size_t i = 0; i < traj.points.size() - 1; ++i) {
-    const double vel = traj.points.at(i).twist.linear.x;
+    const double vel = traj.points.at(i).longitudinal_velocity_mps;
     if (vel != 0) {
       const double duration =
         calcDistance2d(traj.points.at(i), traj.points.at(i + 1)) / std::abs(vel);
       if (duration != 0) {
-        const double start_accel = traj.points.at(i).accel.linear.x;
-        const double end_accel = traj.points.at(i + 1).accel.linear.x;
+        const double start_accel = traj.points.at(i).acceleration_mps2;
+        const double end_accel = traj.points.at(i + 1).acceleration_mps2;
         stat.add(end_accel - start_accel / duration);
       }
     }

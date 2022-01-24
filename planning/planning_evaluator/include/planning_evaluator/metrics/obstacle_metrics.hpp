@@ -18,14 +18,14 @@
 #include "planning_evaluator/stat.hpp"
 
 #include "autoware_perception_msgs/msg/dynamic_object_array.hpp"
-#include "autoware_planning_msgs/msg/trajectory.hpp"
+#include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 
 namespace planning_diagnostics
 {
 namespace metrics
 {
 using autoware_perception_msgs::msg::DynamicObjectArray;
-using autoware_planning_msgs::msg::Trajectory;
+using autoware_auto_planning_msgs::msg::Trajectory;
 
 /**
  * @brief calculate the distance to the closest obstacle at each point of the trajectory

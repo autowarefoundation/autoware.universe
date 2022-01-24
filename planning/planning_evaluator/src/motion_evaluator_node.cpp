@@ -68,8 +68,8 @@ void MotionEvaluatorNode::onTwist(const geometry_msgs::msg::TwistStamped::Shared
   current_point.twist = msg->twist;
   const rclcpp::Time now = this->get_clock()->now();
   if (!accumulated_trajectory_.points.empty()) {
-    current_point.accel.linear.x =
-      (msg->twist.linear.x - accumulated_trajectory_.points.back().twist.linear.x) /
+    current_point.acceleration_mps2 =
+      (msg->longitudinal_velocity_mps - accumulated_trajectory_.points.back().longitudinal_velocity_mps) /
       (now - stamps_.back()).seconds();
   }
   accumulated_trajectory_.points.push_back(current_point);

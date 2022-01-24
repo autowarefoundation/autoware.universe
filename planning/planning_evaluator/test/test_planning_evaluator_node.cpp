@@ -21,7 +21,7 @@
 #include <planning_evaluator/planning_evaluator_node.hpp>
 
 #include "autoware_perception_msgs/msg/dynamic_object_array.hpp"
-#include "autoware_planning_msgs/msg/trajectory.hpp"
+#include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "diagnostic_msgs/msg/diagnostic_array.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
 
@@ -33,8 +33,8 @@
 #include <vector>
 
 using EvalNode = planning_diagnostics::PlanningEvaluatorNode;
-using Trajectory = autoware_planning_msgs::msg::Trajectory;
-using TrajectoryPoint = autoware_planning_msgs::msg::TrajectoryPoint;
+using Trajectory = autoware_auto_planning_msgs::msg::Trajectory;
+using TrajectoryPoint = autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using Objects = autoware_perception_msgs::msg::DynamicObjectArray;
 using diagnostic_msgs::msg::DiagnosticArray;
 
@@ -230,7 +230,7 @@ TEST_F(EvalTest, TestVelocity)
   setTargetMetric(planning_diagnostics::Metric::velocity);
   Trajectory t = makeTrajectory({{0.0, 0.0}, {0.0, 1.0}, {0.0, 2.0}, {0.0, 3.0}});
   for (TrajectoryPoint & p : t.points) {
-    p.twist.linear.x = 1.0;
+    p.longitudinal_velocity_mps = 1.0;
   }
 }
 
@@ -239,11 +239,11 @@ TEST_F(EvalTest, TestDuration)
   setTargetMetric(planning_diagnostics::Metric::duration);
   Trajectory t = makeTrajectory({{0.0, 0.0}, {0.0, 1.0}, {0.0, 2.0}, {0.0, 3.0}});
   for (TrajectoryPoint & p : t.points) {
-    p.twist.linear.x = 1.0;
+    p.longitudinal_velocity_mps = 1.0;
   }
   EXPECT_DOUBLE_EQ(publishTrajectoryAndGetMetric(t), 3.0);
   for (TrajectoryPoint & p : t.points) {
-    p.twist.linear.x = 3.0;
+    p.longitudinal_velocity_mps = 3.0;
   }
   EXPECT_DOUBLE_EQ(publishTrajectoryAndGetMetric(t), 1.0);
 }
@@ -252,14 +252,14 @@ TEST_F(EvalTest, TestAcceleration)
 {
   setTargetMetric(planning_diagnostics::Metric::acceleration);
   Trajectory t = makeTrajectory({{0.0, 0.0}, {0.0, 1.0}});
-  t.points[0].accel.linear.x = 1.0;
-  t.points[1].accel.linear.x = 1.0;
+  t.points[0].acceleration_mps2 = 1.0;
+  t.points[1].acceleration_mps2 = 1.0;
   EXPECT_DOUBLE_EQ(publishTrajectoryAndGetMetric(t), 1.0);
-  t.points[0].accel.linear.x = -1.0;
-  t.points[1].accel.linear.x = -1.0;
+  t.points[0].acceleration_mps2 = -1.0;
+  t.points[1].acceleration_mps2 = -1.0;
   EXPECT_DOUBLE_EQ(publishTrajectoryAndGetMetric(t), -1.0);
-  t.points[0].accel.linear.x = 0.0;
-  t.points[1].accel.linear.x = 1.0;
+  t.points[0].acceleration_mps2 = 0.0;
+  t.points[1].acceleration_mps2 = 1.0;
   EXPECT_DOUBLE_EQ(publishTrajectoryAndGetMetric(t), 0.5);
 }
 
@@ -267,15 +267,15 @@ TEST_F(EvalTest, TestJerk)
 {
   setTargetMetric(planning_diagnostics::Metric::jerk);
   Trajectory t = makeTrajectory({{0.0, 0.0}, {0.0, 1.0}});
-  t.points[0].twist.linear.x = 1.0;
-  t.points[0].accel.linear.x = 1.0;
-  t.points[1].twist.linear.x = 2.0;
-  t.points[1].accel.linear.x = 1.0;
+  t.points[0].longitudinal_velocity_mps = 1.0;
+  t.points[0].acceleration_mps2 = 1.0;
+  t.points[1].longitudinal_velocity_mps = 2.0;
+  t.points[1].acceleration_mps2 = 1.0;
   EXPECT_DOUBLE_EQ(publishTrajectoryAndGetMetric(t), 0.0);
-  t.points[0].twist.linear.x = 1.0;
-  t.points[0].accel.linear.x = 1.0;
-  t.points[1].twist.linear.x = 1.0;
-  t.points[1].accel.linear.x = 0.0;
+  t.points[0].longitudinal_velocity_mps = 1.0;
+  t.points[0].acceleration_mps2 = 1.0;
+  t.points[1].longitudinal_velocity_mps = 1.0;
+  t.points[1].acceleration_mps2 = 0.0;
   EXPECT_DOUBLE_EQ(publishTrajectoryAndGetMetric(t), -1.0);
 }
 
@@ -322,12 +322,12 @@ TEST_F(EvalTest, TestVelocityDeviation)
   setTargetMetric(planning_diagnostics::Metric::velocity_deviation);
   Trajectory t = makeTrajectory({{0.0, 0.0}, {1.0, 1.0}, {2.0, 2.0}});
   for (auto & p : t.points) {
-    p.twist.linear.x = 0.0;
+    p.longitudinal_velocity_mps = 0.0;
   }
   publishReferenceTrajectory(t);
   EXPECT_DOUBLE_EQ(publishTrajectoryAndGetMetric(t), 0.0);
   for (auto & p : t.points) {
-    p.twist.linear.x = 1.0;
+    p.longitudinal_velocity_mps = 1.0;
   }
   EXPECT_DOUBLE_EQ(publishTrajectoryAndGetMetric(t), 1.0);
 }
@@ -400,7 +400,7 @@ TEST_F(EvalTest, TestObstacleTTC)
 
   Trajectory t = makeTrajectory({{3.0, 0.0}, {0.0, 0.0}, {-1.0, 0.0}});
   for (TrajectoryPoint & p : t.points) {
-    p.twist.linear.x = 1.0;
+    p.longitudinal_velocity_mps = 1.0;
   }
   EXPECT_DOUBLE_EQ(publishTrajectoryAndGetMetric(t), 3.0);
   // if no exact collision point, last point before collision is used
