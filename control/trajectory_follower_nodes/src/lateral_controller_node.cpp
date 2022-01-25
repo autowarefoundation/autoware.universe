@@ -24,7 +24,6 @@
 
 #include "tf2_ros/create_timer_ros.h"
 
-
 namespace autoware
 {
 namespace motion
