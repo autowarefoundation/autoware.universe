@@ -37,6 +37,7 @@ jobs:
           build-depends-repos: build_depends.repos
 
       - name: Upload coverage to Codecov
+        if: ${{ steps.get-modified-packages.outputs.modified-packages != '' }}
         uses: codecov/codecov-action@v2
         with:
           files: lcov/total_coverage.info,coveragepy/.coverage
