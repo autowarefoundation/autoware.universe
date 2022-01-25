@@ -258,9 +258,9 @@ stop
 @enduml
 ```
 
-(*1) The target vehicle point is calculated as a closest obstacle PointCloud from ego along the trajectory.
+(\*1) The target vehicle point is calculated as a closest obstacle PointCloud from ego along the trajectory.
 
-(*2) The sources of velocity estimation can be changed by the following ROS parameters.
+(\*2) The sources of velocity estimation can be changed by the following ROS parameters.
 
 - `adaptive_cruise_control.use_object_to_estimate_vel`
 - `adaptive_cruise_control.use_pcl_to_estimate_vel`
