@@ -530,7 +530,7 @@ MarkerArray createOvehangFurthestLineStringMarkerArray(
     marker.type = Marker::LINE_STRIP;
     marker.action = Marker::ADD;
     marker.pose.orientation = tier4_autoware_utils::createMarkerOrientation(0, 0, 0, 1.0);
-    marker.scale = tier4_autoware_utils::createMarkerScale(0.1, 0.0, 0.0);
+    marker.scale = tier4_autoware_utils::createMarkerScale(0.4, 0.0, 0.0);
     marker.color = tier4_autoware_utils::createMarkerColor(r, g, b, 0.999);
     for (const auto & p : linestring.basicLineString()) {
       Point point;
@@ -539,14 +539,11 @@ MarkerArray createOvehangFurthestLineStringMarkerArray(
       point.z = p.z();
       marker.points.push_back(point);
     }
-    if (!marker.points.empty()) {
-      marker.points.push_back(marker.points.front());
-    }
     msg.markers.push_back(marker);
     marker.ns = "linestring id";
     marker.type = Marker::TEXT_VIEW_FACING;
     Pose text_id_pose;
-    marker.scale = tier4_autoware_utils::createMarkerScale(1.0, 1.0, 1.0);
+    marker.scale = tier4_autoware_utils::createMarkerScale(1.5, 1.5, 1.5);
     marker.color = tier4_autoware_utils::createMarkerColor(1.0, 1.0, 1.0, 0.8);
     text_id_pose.position.x = linestring.front().x();
     text_id_pose.position.y = linestring.front().y();
