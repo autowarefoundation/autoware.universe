@@ -242,7 +242,10 @@ void SimplePlanningSimulator::on_timer()
   // update vehicle dynamics
   {
     const float64_t dt = delta_time_.get_dt(get_clock()->now());
-    vehicle_model_ptr_->update(dt);
+
+    if (current_engage_) {
+      vehicle_model_ptr_->update(dt);
+    }
   }
 
   // set current state
