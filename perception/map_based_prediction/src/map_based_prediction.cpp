@@ -192,7 +192,7 @@ void MapBasedPrediction::normalizeLikelihood(
 bool MapBasedPrediction::getPredictedPath(
   const double height, const double current_d_position, const double current_d_velocity,
   const double current_s_position, const double current_s_velocity,
-  const std_msgs::msg::Header & origin_header, Spline2D & spline2d,
+  [[maybe_unused]] const std_msgs::msg::Header & origin_header, Spline2D & spline2d,
   autoware_auto_perception_msgs::msg::PredictedPath & path)
 {
   // Quintic polynomial for d
