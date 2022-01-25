@@ -82,17 +82,17 @@ bool WalkwayModule::modifyPathVelocity(
     planning_utils::appendStopReason(stop_factor, stop_reason);
 
     // use arc length to identify if ego vehicle is in front of walkway stop or not.
-    const double distance = tier4_autoware_utils::calcSignedArcLength(
+    const double signed_arc_dist_to_stop_point = tier4_autoware_utils::calcSignedArcLength(
       path->points, planner_data_->current_pose.pose.position,
       debug_data_.first_stop_pose.position);
     const double distance_threshold = 1.0;
     debug_data_.stop_judge_range = distance_threshold;
     if (
-      distance < distance_threshold &&
+      signed_arc_dist_to_stop_point < distance_threshold &&
       planner_data_->isVehicleStopped(planner_param_.stop_duration_sec)) {
       // If ego vehicle is after walkway stop and stopped then move to stop state
       state_ = State::STOP;
-      if (distance < -distance_threshold) {
+      if (signed_arc_dist_to_stop_point < -distance_threshold) {
         RCLCPP_ERROR(
           logger_, "Failed to stop near walkway but ego stopped. Change state to STOPPED");
       }
