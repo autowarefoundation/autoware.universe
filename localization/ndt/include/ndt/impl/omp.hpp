@@ -203,4 +203,8 @@ NormalDistributionsTransformOMP<PointSource, PointTarget>::getNeighborhoodSearch
   return ndt_ptr_->getNeighborhoodSearchMethod();
 }
 
+<<<<<<< HEAD
 #endif  // NDT__IMPL__OMP_HPP_
+=======
+#endif  // NORMAL_DISTRIBUTIONS_TRANSFORM_OMP_HPP
+>>>>>>> add calculateTransformationProbability funcs
