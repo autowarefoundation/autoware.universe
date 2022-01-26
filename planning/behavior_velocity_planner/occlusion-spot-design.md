@@ -160,9 +160,6 @@ note right
   100m considering perception range
 end note
 :interpolate ego path;
-note right
-  using spline interpolation and interpolate (x,y,z,v)
-end note
 :get closest index from ego position in interpolated path;
 }
 partition preprocess_dynamic_object {
