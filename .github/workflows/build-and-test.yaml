@@ -1,4 +1,4 @@
-name: build-and-test-scheduled
+name: build-and-test
 
 on:
   push:
@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-test-scheduled:
+  build-and-test:
     runs-on: ${{ matrix.os }}
     container: ros:galactic
     strategy:
