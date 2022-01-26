@@ -387,7 +387,7 @@ std::pair<double, double> extractTargetRoadArcLength(
     const auto & next_p = path.points[i + 1].point.pose.position;
     dist_sum += tier4_autoware_utils::calcDistance2d(curr_p, next_p);
   }
-  if(!found_target) dist_sum = 0.0;
+  if (!found_target) dist_sum = 0.0;
   return std::pair<int, int>(start_dist, dist_sum);
 }
 
