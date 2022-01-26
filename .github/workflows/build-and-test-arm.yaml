@@ -1,20 +1,16 @@
-name: build-and-test
+name: build-and-test-arm
 
 on:
-  push:
-    branches:
-      - main
-      - tier4/proposal
   schedule:
     - cron: 0 19 * * * # run at 4 AM JST
   workflow_dispatch:
 
 jobs:
-  build-and-test:
-    runs-on: ubuntu-latest
+  build-and-test-arm:
+    runs-on: ARM64
     container: ros:galactic
     steps:
-      - name: Check out repository
+      - name: Checkout repository
         uses: actions/checkout@v2
 
       - name: Remove exec_depend
