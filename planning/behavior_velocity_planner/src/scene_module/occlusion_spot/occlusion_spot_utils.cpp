@@ -224,44 +224,9 @@ void calcSlowDownPointsForPossibleCollision(
   }
 }
 
-// !generate center line from right/left lanelets
-void generateCenterLaneLine(
-  const PathWithLaneId & path, const lanelet::routing::RoutingGraphPtr & routing_graph_ptr,
-  const lanelet::LaneletMapPtr & lanelet_map_ptr,
-  std::vector<lanelet::BasicLineString2d> & attention_line)
-{
-  std::set<int> ids;
-  for (const auto & p : path.points) {
-    for (const int id : p.lane_ids) {
-      ids.insert(id);
-    }
-  }
-  for (const auto id : ids) {
-    const auto ll = lanelet_map_ptr->laneletLayer.get(id);
-    const auto polygon2d = ll.polygon2d().basicPolygon();
-    attention_line.emplace_back(ll.centerline2d().basicLineString());
-    const auto right_ll = (!!routing_graph_ptr->right(ll)) ? routing_graph_ptr->right(ll)
-                                                           : routing_graph_ptr->adjacentRight(ll);
-    const auto left_ll = (!!routing_graph_ptr->left(ll)) ? routing_graph_ptr->left(ll)
-                                                         : routing_graph_ptr->adjacentLeft(ll);
-    if (right_ll) {
-      attention_line.emplace_back(right_ll.get().centerline2d().basicLineString());
-      for (const auto l : routing_graph_ptr->following(right_ll.get())) {
-        attention_line.emplace_back(l.centerline2d().basicLineString());
-      }
-    }
-    if (left_ll) {
-      attention_line.emplace_back(left_ll.get().centerline2d().basicLineString());
-      for (const auto l : routing_graph_ptr->following(left_ll.get())) {
-        attention_line.emplace_back(l.centerline2d().basicLineString());
-      }
-    }
-  }
-}
-
 std::vector<PredictedObject> getParkedVehicles(
-  const PredictedObjects & dyn_objects, const std::vector<BasicLineString2d> & attention_line,
-  const PlannerParam & param, std::vector<Point> & debug_point)
+  const PredictedObjects & dyn_objects, const PlannerParam & param,
+  std::vector<Point> & debug_point)
 {
   std::vector<PredictedObject> parked_vehicles;
   std::vector<Point> points;
@@ -272,12 +237,6 @@ std::vector<PredictedObject> getParkedVehicles(
     }
     const geometry_msgs::msg::Point & p = obj.kinematics.initial_pose_with_covariance.pose.position;
     BasicPoint2d obj_point(p.x, p.y);
-    for (const auto & line : attention_line) {
-      if (boost::geometry::distance(obj_point, line) < param.lateral_deviation_thr) {
-        is_parked_vehicle = false;
-        break;
-      }
-    }
     if (is_parked_vehicle) {
       parked_vehicles.emplace_back(obj);
       points.emplace_back(p);
@@ -407,8 +366,8 @@ std::pair<double, double> extractTargetRoadArcLength(
   const ROAD_TYPE & target_road_type)
 {
   bool found_target = false;
-  double start_dist = 0;
-  double dist_sum = 0;
+  double start_dist = 0.0;
+  double dist_sum = 0.0;
   // search lanelet that includes target_road_type only
   for (size_t i = 0; i < path.points.size() - 1; i++) {
     ROAD_TYPE search_road_type = occlusion_spot_utils::getCurrentRoadType(
@@ -428,6 +387,7 @@ std::pair<double, double> extractTargetRoadArcLength(
     const auto & next_p = path.points[i + 1].point.pose.position;
     dist_sum += tier4_autoware_utils::calcDistance2d(curr_p, next_p);
   }
+  if(!found_target) dist_sum = 0.0;
   return std::pair<int, int>(start_dist, dist_sum);
 }
 
@@ -442,7 +402,6 @@ void filterCollisionByRoadType(
     const auto & pc_len = it->arc_lane_dist_at_collision.length;
     if (focus_length.first < pc_len && pc_len < focus_length.second) {
       it++;
-      continue;
     } else {
       // -----erase-----|start------target-------end|----erase---
       it = possible_collisions.erase(it);
@@ -510,6 +469,9 @@ void generateSidewalkPossibleCollisionFromOcclusionSpot(
 {
   const double baselink_to_front = param.vehicle_info.baselink_to_front;
   const double half_vehicle_width = param.vehicle_info.vehicle_width * 0.5;
+  double distance_lower_bound = std::numeric_limits<double>::max();
+  PossibleCollisionInfo candidate;
+  bool has_collision = false;
   for (grid_map::Position occlusion_spot_position : occlusion_spot_positions) {
     // arc intersection
     lanelet::BasicPoint2d obstacle_point = {occlusion_spot_position[0], occlusion_spot_position[1]};
@@ -526,11 +488,15 @@ void generateSidewalkPossibleCollisionFromOcclusionSpot(
     const auto & ip = pc.intersection_pose.position;
     bool collision_free_at_intersection =
       grid_utils::isCollisionFree(grid, occlusion_spot_position, grid_map::Position(ip.x, ip.y));
-    if (collision_free_at_intersection) {
-      possible_collisions.emplace_back(pc);
-      break;
+    // this is going to extract collision that is nearest to path
+    if (
+      collision_free_at_intersection && distance_lower_bound > arc_coord_collision_point.distance) {
+      distance_lower_bound = arc_coord_collision_point.distance;
+      candidate = {pc};
+      has_collision = true;
     }
   }
+  if (has_collision) possible_collisions.emplace_back(candidate);
 }
 
 }  // namespace occlusion_spot_utils

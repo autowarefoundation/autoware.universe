@@ -40,24 +40,6 @@ autoware_auto_planning_msgs::msg::Path toPath(
   return path;
 }
 
-Point setPoint(const double x, const double y, const double z)
-{
-  Point p;
-  p.x = x;
-  p.y = y;
-  p.z = z;
-  return p;
-}
-
-Vector3 setVector3(const double x, const double y, const double z)
-{
-  Vector3 p;
-  p.x = x;
-  p.y = y;
-  p.z = z;
-  return p;
-}
-
 TEST(spline, splineInterpolate)
 {
   using std::chrono::duration;

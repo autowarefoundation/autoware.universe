@@ -46,8 +46,6 @@ public:
     std::string road_type = "public";
     double z;
     std::vector<lanelet::BasicPolygon2d> sidewalks;
-    std::vector<lanelet::BasicPolygon2d> attention_area;
-    std::vector<lanelet::BasicLineString2d> attention_line;
     std::vector<geometry_msgs::msg::Point> parked_vehicle_point;
     std::vector<occlusion_spot_utils::PossibleCollisionInfo> possible_collisions;
   };

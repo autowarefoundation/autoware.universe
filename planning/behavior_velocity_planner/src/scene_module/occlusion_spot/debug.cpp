@@ -211,55 +211,6 @@ visualization_msgs::msg::MarkerArray createMarkers(
   return occlusion_spot_slowdown_markers;
 }
 
-visualization_msgs::msg::MarkerArray makeLineMarker(
-  const std::vector<lanelet::BasicLineString2d> & lines, double z, int id)
-{
-  visualization_msgs::msg::MarkerArray debug_markers;
-  visualization_msgs::msg::Marker debug_marker;
-  debug_marker.header.frame_id = "map";
-  debug_marker.id = id;
-  debug_marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
-  debug_marker.action = visualization_msgs::msg::Marker::ADD;
-  debug_marker.pose.position = tier4_autoware_utils::createMarkerPosition(0.0, 0.0, z);
-  debug_marker.pose.orientation = tier4_autoware_utils::createMarkerOrientation(0, 0, 0, 1.0);
-  debug_marker.scale = tier4_autoware_utils::createMarkerScale(1.0, 0.5, 0.05);
-  debug_marker.color = tier4_autoware_utils::createMarkerColor(0.5, 0.5, 1.0, 0.2);
-  debug_marker.lifetime = rclcpp::Duration::from_seconds(0.1);
-  debug_marker.ns = "ignore_around_center";
-  for (const auto line : lines) {
-    for (const auto & p : line) {
-      geometry_msgs::msg::Point point =
-        tier4_autoware_utils::createMarkerPosition(p.x(), p.y(), 0.0);
-      debug_marker.points.push_back(point);
-    }
-    if (!debug_marker.points.empty()) {
-      debug_markers.markers.emplace_back(debug_marker);
-    }
-    debug_marker.points.clear();
-    debug_marker.id++;
-  }
-  return debug_markers;
-}
-
-visualization_msgs::msg::MarkerArray createParkedVehicleMarkerArray(
-  const std::vector<geometry_msgs::msg::Point> & points, const rclcpp::Time & now)
-{
-  visualization_msgs::msg::MarkerArray msg;
-  {
-    auto marker = createDefaultMarker(
-      "map", now, "park_vehicle_point", 0, visualization_msgs::msg::Marker::SPHERE,
-      createMarkerColor(1.0, 1.0, 0.0, 0.5));
-    marker.scale = createMarkerScale(1.5, 1.5, 0.1);
-    marker.lifetime = rclcpp::Duration::from_seconds(0.5);
-    for (size_t i = 0; i < points.size(); ++i) {
-      marker.id = i;
-      marker.pose.position = points.at(i);
-      msg.markers.push_back(marker);
-    }
-  }
-  return msg;
-}
-
 }  // namespace
 
 visualization_msgs::msg::MarkerArray OcclusionSpotInPublicModule::createDebugMarkerArray()
@@ -267,16 +218,6 @@ visualization_msgs::msg::MarkerArray OcclusionSpotInPublicModule::createDebugMar
   const auto current_time = this->clock_->now();
 
   visualization_msgs::msg::MarkerArray debug_marker_array;
-  if (!debug_data_.parked_vehicle_point.empty()) {
-    appendMarkerArray(
-      createParkedVehicleMarkerArray(debug_data_.parked_vehicle_point, current_time), current_time,
-      &debug_marker_array);
-  }
-  if (!debug_data_.attention_line.empty()) {
-    appendMarkerArray(
-      makeLineMarker(debug_data_.attention_line, debug_data_.z, 0), current_time,
-      &debug_marker_array);
-  }
   appendMarkerArray(createMarkers(debug_data_, module_id_), current_time, &debug_marker_array);
   return debug_marker_array;
 }

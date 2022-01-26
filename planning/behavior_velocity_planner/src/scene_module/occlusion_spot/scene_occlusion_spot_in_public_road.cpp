@@ -44,6 +44,7 @@ bool OcclusionSpotInPublicModule::modifyPathVelocity(
   autoware_auto_planning_msgs::msg::PathWithLaneId * path,
   [[maybe_unused]] tier4_planning_msgs::msg::StopReason * stop_reason)
 {
+  debug_data_ = DebugData();
   if (path->points.size() < 2) {
     return true;
   }
@@ -62,11 +63,6 @@ bool OcclusionSpotInPublicModule::modifyPathVelocity(
   }
   PathWithLaneId clipped_path;
   utils::clipPathByLength(*path, clipped_path, param_.detection_area_length);
-  std::vector<lanelet::BasicLineString2d> attention_line;
-  utils::generateCenterLaneLine(*path, routing_graph_ptr, lanelet_map_ptr, attention_line);
-  debug_data_.attention_line = attention_line;
-  std::vector<PredictedObject> obj = utils::getParkedVehicles(
-    *dynamic_obj_arr_ptr, attention_line, param_, debug_data_.parked_vehicle_point);
   PathWithLaneId interp_path;
   utils::splineInterpolate(clipped_path, 1.0, &interp_path, logger_);
   int closest_idx = -1;
@@ -74,6 +70,8 @@ bool OcclusionSpotInPublicModule::modifyPathVelocity(
         interp_path, ego_pose, closest_idx, param_.dist_thr, param_.angle_thr)) {
     return true;
   }
+  std::vector<PredictedObject> obj =
+    utils::getParkedVehicles(*dynamic_obj_arr_ptr, param_, debug_data_.parked_vehicle_point);
   double offset_from_start_to_ego = utils::offsetFromStartToEgo(interp_path, ego_pose, closest_idx);
   // Note: Don't consider offset from path start to ego here
   std::vector<PossibleCollisionInfo> possible_collisions =

@@ -85,7 +85,6 @@ OcclusionSpotModuleManager::OcclusionSpotModuleManager(rclcpp::Node & node)
   pp.detection_area_length = node.declare_parameter(ns + ".threshold.detection_area_length", 200.0);
   pp.stuck_vehicle_vel = node.declare_parameter(ns + ".threshold.stuck_vehicle_vel", 1.0);
   pp.lateral_distance_thr = node.declare_parameter(ns + ".threshold.lateral_distance", 10.0);
-  pp.lateral_deviation_thr = node.declare_parameter(ns + ".threshold.lateral_deviation", 10.0);
 
   pp.dist_thr = node.declare_parameter(ns + ".threshold.search_dist", 10.0);
   pp.angle_thr = node.declare_parameter(ns + ".threshold.search_angle", M_PI / 5.0);

@@ -91,7 +91,6 @@ struct PlannerParam
   double detection_area_length;  // [m]
   double stuck_vehicle_vel;      // [m/s]
   double lateral_distance_thr;   // [m] lateral distance threshold to consider
-  double lateral_deviation_thr;  // [m] lateral distance threshold to consider
   double pedestrian_vel;         // [m/s]
 
   double dist_thr;       // [m]
@@ -199,13 +198,9 @@ void filterCollisionByRoadType(
 bool splineInterpolate(
   const PathWithLaneId & input, const double interval, PathWithLaneId * output,
   const rclcpp::Logger logger);
-// !generate center line from right/left lanelets
-void generateCenterLaneLine(
-  const PathWithLaneId & path, const lanelet::routing::RoutingGraphPtr & routing_graph_ptr,
-  const LaneletMapPtr & lanelet_map_ptr, std::vector<lanelet::BasicLineString2d> & attention_line);
 std::vector<PredictedObject> getParkedVehicles(
-  const PredictedObjects & dyn_objects, const std::vector<BasicLineString2d> & attention_line,
-  const PlannerParam & param, std::vector<Point> & debug_point);
+  const PredictedObjects & dyn_objects, const PlannerParam & param,
+  std::vector<Point> & debug_point);
 std::vector<PossibleCollisionInfo> generatePossibleCollisionBehindParkedVehicle(
   const PathWithLaneId & path, const PlannerParam & param, const double offset_from_start_to_ego,
   const std::vector<PredictedObject> & dyn_objects);
