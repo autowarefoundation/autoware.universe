@@ -164,6 +164,20 @@ NormalDistributionsTransformOMP<PointSource, PointTarget>::getSearchMethodTarget
 }
 
 template <class PointSource, class PointTarget>
+double
+NormalDistributionsTransformOMP<PointSource, PointTarget>::calculateTransformationProbability(const pcl::PointCloud<PointSource> & trans_cloud) const
+{
+  return ndt_ptr_->calculateTransformationProbability(trans_cloud);
+}
+
+template <class PointSource, class PointTarget>
+double
+NormalDistributionsTransformOMP<PointSource, PointTarget>::calculateNearestVoxelTransformationProbability(const pcl::PointCloud<PointSource> & trans_cloud) const
+{
+  return ndt_ptr_->calculateNearestVoxelTransformationProbability(trans_cloud);
+}
+
+template <class PointSource, class PointTarget>
 void NormalDistributionsTransformOMP<PointSource, PointTarget>::setNumThreads(int n)
 {
   ndt_ptr_->setNumThreads(n);
@@ -187,13 +201,6 @@ pclomp::NeighborSearchMethod
 NormalDistributionsTransformOMP<PointSource, PointTarget>::getNeighborhoodSearchMethod() const
 {
   return ndt_ptr_->getNeighborhoodSearchMethod();
-}
-
-template <class PointSource, class PointTarget>
-double
-NormalDistributionsTransformOMP<PointSource, PointTarget>::calculateScore(const pcl::PointCloud<PointSource> & trans_cloud) const
-{
-  return ndt_ptr_->calculateScore(trans_cloud);
 }
 
 #endif  // NDT__IMPL__OMP_HPP_

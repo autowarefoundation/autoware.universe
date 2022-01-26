@@ -629,17 +629,13 @@ void NDTScanMatcher::callbackSensorPoints(
     key_value_stdmap_["is_local_optimal_solution_oscillation"] = "0";
   }
 
-  if (ndt_implement_type_ == NDTImplementType::OMP) {
-    using T = NormalDistributionsTransformOMP<PointSource, PointTarget>;
-
-    std::shared_ptr<T> ndt_omp_ptr = std::dynamic_pointer_cast<T>(ndt_ptr_);
-
+  {
     nav_msgs::msg::OccupancyGrid grid_map_msg;
     grid_map_msg.header.stamp = sensor_ros_time;
     grid_map_msg.header.frame_id = map_frame_;
     grid_map_msg.info.resolution = 1.0;
-    grid_map_msg.info.width = 19;
-    grid_map_msg.info.height = 19 ;
+    grid_map_msg.info.width = 21;
+    grid_map_msg.info.height = 21 ;
     auto rpy = getRPY(result_pose_msg);
     grid_map_msg.info.origin = result_pose_msg;
     double orig_x = -static_cast<int>(grid_map_msg.info.width)/2*grid_map_msg.info.resolution -grid_map_msg.info.resolution/2.0;
@@ -661,7 +657,7 @@ void NDTScanMatcher::callbackSensorPoints(
         auto offset_sensor_points_mapTF_ptr = std::make_shared<pcl::PointCloud<PointSource>>();
         pcl::transformPointCloud(*sensor_points_mapTF_ptr, *offset_sensor_points_mapTF_ptr, offset_pose_matrix);
 
-        double tp = ndt_omp_ptr->calculateScore(*offset_sensor_points_mapTF_ptr);
+        double tp = ndt_ptr_->calculateNearestVoxelTransformationProbability(*offset_sensor_points_mapTF_ptr);
         std::cerr << tp << " ";
         tp -= 2.0;
         tp *= 200.0;

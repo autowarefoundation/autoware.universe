@@ -59,6 +59,9 @@ public:
 
   boost::shared_ptr<pcl::search::KdTree<PointTarget>> getSearchMethodTarget() const override;
 
+  double calculateTransformationProbability(const pcl::PointCloud<PointSource> & trans_cloud) const override;
+  double calculateNearestVoxelTransformationProbability(const pcl::PointCloud<PointSource> & trans_cloud) const override;
+
 private:
   boost::shared_ptr<pcl::NormalDistributionsTransform<PointSource, PointTarget>> ndt_ptr_;
 };

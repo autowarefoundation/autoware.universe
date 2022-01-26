@@ -55,6 +55,9 @@ public:
   virtual Eigen::Matrix<double, 6, 6> getHessian() const = 0;
 
   virtual boost::shared_ptr<pcl::search::KdTree<PointTarget>> getSearchMethodTarget() const = 0;
+
+  virtual double calculateTransformationProbability(const pcl::PointCloud<PointSource> & trans_cloud) const = 0;
+  virtual double calculateNearestVoxelTransformationProbability(const pcl::PointCloud<PointSource> & trans_cloud) const = 0;
 };
 
 #include "ndt/impl/base.hpp"

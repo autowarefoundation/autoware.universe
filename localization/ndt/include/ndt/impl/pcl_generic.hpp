@@ -168,4 +168,20 @@ NormalDistributionsTransformPCLGeneric<PointSource, PointTarget>::getSearchMetho
   return ndt_ptr_->getSearchMethodTarget();
 }
 
+template <class PointSource, class PointTarget>
+double
+NormalDistributionsTransformPCLGeneric<PointSource, PointTarget>::calculateTransformationProbability(const pcl::PointCloud<PointSource> & trans_cloud) const
+{
+  // return ndt_ptr_->calculateTransformationProbability(trans_cloud);
+  return 0.0;
+}
+
+template <class PointSource, class PointTarget>
+double
+NormalDistributionsTransformPCLGeneric<PointSource, PointTarget>::calculateNearestVoxelTransformationProbability(const pcl::PointCloud<PointSource> & trans_cloud) const
+{
+  // return ndt_ptr_->calculateNearestVoxelTransformationProbability(trans_cloud);
+  return 0.0;
+}
+
 #endif  // NDT__IMPL__PCL_GENERIC_HPP_
