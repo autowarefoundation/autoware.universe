@@ -91,8 +91,16 @@ Note that the accuracy and performance of this search method is limited due to t
 title modifyPathVelocity (Private/Public) Road
 start
 
-:get current road type;
+partition process_path {
+:clip path by length;
+:interpolate path;
+note right
+  using spline interpolation and interpolate (x,y,z,v)
+end note
+:calc closest path point from ego;
+}
 
+partition process_sensor_data {
 if (road type is PUBLIC) then (yes)
   :preprocess dynamic object;
 else if (road type is PRIVATE) then (yes)
@@ -100,22 +108,41 @@ else if (road type is PRIVATE) then (yes)
 else (no)
   stop
 endif
-
+}
+partition find_possible_collision {
+:calculate offset from ego to target;
 :generate possible collision;
+:calculate collision path point and intersection point;
+note right
+  - occlusion spot is calculated by longitudinally closest point of unknown cells.
+  - intersection point is where ego front bumper and darting object will crash.
+  - collision path point is calculated by arc coordinate consider ego vehicle's geometry.
+end note
 
-:find possible collision between path and occlusion spot;
-
-if (possible collision is found?) then (yes)
-else (no)
-  stop
-endif
-
-:calculate collision path point;
-
-:calculate safe velocity consider lateral distance and safe velocity;
-
-:insertSafeVelocityToPath;
-
+}
+partition process_possible_collision {
+:filter possible collision by road type;
+note right
+extract target road type start and end pair
+end note
+:handle collision offset;
+note right
+consider offset from path start to ego vehicle for possible collision
+end note
+:calculate original velocity and height for the possible collision;
+note right
+calculated (x,y,z,v) at the path using linear interpolation between interpolated path points.
+end note
+:apply safe velocity consider possible collision;
+note right
+calculated by
+- ebs deceleration [m/s] emergency braking system consider lateral distance to the occlusion spot.
+- maximum allowed deceleration [m/s]
+- min velocity [m/s] the velocity that is allowed on the road.
+- original_velocity [m/s]
+set minimum velocity for path point after occlusion spot.
+end note
+}
 stop
 @enduml
 ```
@@ -126,36 +153,30 @@ stop
 @startuml
 title modifyPathVelocity For Public Road
 start
-partition parking_vehicle_selection {
-:get all lanelet id on ego path;
-:get right/left lanelets around ego path;
-:get center lane lines from lanelets around ego path;
-:get parked vehicle from dynamic object array;
+
+partition process_path {
+:clip path by length;
 note right
-  target parked vehicle is define as follow .
-  - dynamic object's semantic type is "car","bus","track".
-  - velocity is below `stuck_vehicle_vel`.
-  - lateral position from lane center is farther than `lateral_deviation_threshold`.
+  100m considering perception range
 end note
-}
-partition offset_calculation {
 :interpolate ego path;
 note right
   using spline interpolation and interpolate (x,y,z,v)
 end note
 :get closest index from ego position in interpolated path;
-:calculate offset from path start to ego;
 }
-:convert interpolated path to `path_lanelet`;
+partition preprocess_dynamic_object {
+:get parked vehicle from dynamic object array;
 note right
-  `path_lanelet` is lanelet which is created by ego path
-    and mainly used for arc coordinate conversion.
+  target parked vehicle is define as follow .
+  - dynamic object's semantic type is "car","bus","track".
+  - velocity is below `stuck_vehicle_vel`.
 end note
-partition generate_possible_collision {
+}
+partition find_possible_collision {
 :generate possible collision behind parked vehicle;
 note right
   - occlusion spot candidate is stuck vehicle polygon 2 points farther which is closer to ego path.
-  - consider occlusion which is nearer than `lateral_distance_threshold`.
 end note
 :calculate collision path point and intersection point;
 note right
@@ -164,25 +185,13 @@ note right
   - collision path point is calculated by arc coordinate consider ego vehicle's geometry.
 end note
 }
+partition process_possible_collision {
 :extract target road type start/end distance by arc length;
 :calculate original velocity and height for the possible collision;
-note right
-calculated (x,y,z,v) at the path using linear interpolation between interpolated path points.
-end note
-partition calculate_safe_velocity {
+:handle collision;
 :calculate safe velocity consider lateral distance and safe velocity;
-note right
-calculated by
-- ebs deceleration [m/s] emergency braking system consider lateral distance to the occlusion spot.
-- pbs deceleration [m/s] predictive braking system consider distance to the possible collision.
-- min velocity [m/s] the velocity that is allowed on the road.
-- original_velocity [m/s]
-end note
-}
 :insert safe velocity to path;
-note right
- set minimum velocity for path point after occlusion spot.
-end note
+}
 stop
 @enduml
 ```
@@ -193,6 +202,15 @@ stop
 @startuml
 title modifyPathVelocity For Private Road
 start
+
+partition process_path {
+:clip path by length;
+note right
+  50m considering occupancy grid range
+end note
+:interpolate ego path;
+:get closest index from ego position in interpolated path;
+}
 partition occupancy_grid_preprocess {
 :convert occupancy grid to image;
 note right
@@ -208,51 +226,22 @@ note right
   convert from occupancy grid to image to use opencv functions.
 end note
 }
-partition offset_calculation {
-:interpolate ego path;
-note right
-  using spline interpolation and interpolate (x,y,z,v)
-end note
-:get closest index from ego position in interpolated path;
-:calculate offset from path start to ego;
-}
-:convert interpolated path to `path_lanelet`;
-note right
-  `path_lanelet` is lanelet which is created by ego path
-    and mainly used for arc coordinate conversion.
-end note
 partition generate_possible_collision {
+:calculate offset from path start to ego;
 :generate possible collision from occlusion spot;
 note right
   - occlusion spot candidate is N by N size unknown cells.
   - consider occlusion which is nearer than `lateral_distance_threshold`.
 end note
 :calculate collision path point and intersection point;
-note right
-  - occlusion spot is calculated by longitudinally closest point of unknown cells.
-  - intersection point is where ego front bumper and darting object will crash.
-  - collision path point is calculated by arc coordinate consider ego vehicle's geometry.
-end note
 }
+partition handle_possible_collision{
 :extract target road type start/end distance by arc length;
 :calculate original velocity and height for the possible collision;
-note right
-calculated (x,y,z,v) at the path using linear interpolation between interpolated path points.
-end note
-partition calculate_safe_velocity {
+:handle collision offset;
 :calculate safe velocity consider lateral distance and safe velocity;
-note right
-calculated by
-- ebs deceleration [m/s] emergency braking system consider lateral distance to the occlusion spot.
-- pbs deceleration [m/s] predictive braking system consider distance to the possible collision.
-- min velocity [m/s] the velocity that is allowed on the road.
-- original_velocity [m/s]
-end note
-}
 :insert safe velocity to path;
-note right
- set minimum velocity for path point after occlusion spot.
-end note
+}
 stop
 @enduml
 ```
