@@ -114,7 +114,7 @@ else (no)
 endif
 }
 partition find_possible_collision {
-:calculate offset from ego to target;
+:calculate offset from start to ego;
 :generate possible collision;
 :calculate collision path point and intersection point;
 note right
@@ -129,13 +129,13 @@ partition process_possible_collision {
 note right
 filter by target road type start and end pair
 end note
+:calculate slow down points for possible collision;
+note right
+calculate original velocity and height for the possible collision
+end note
 :handle collision offset;
 note right
 consider offset from path start to ego vehicle for possible collision
-end note
-:calculate original velocity and height for the possible collision;
-note right
-calculated (x,y,z,v) at the path using linear interpolation between interpolated path points.
 end note
 :apply safe velocity consider possible collision;
 note right
@@ -189,8 +189,8 @@ end note
 }
 partition process_possible_collision {
 :filter collision by road type;
-:calculate original velocity and height for the possible collision;
-:handle collision;
+:calculate slow down points for possible collision;
+:handle collision offset;
 :calculate safe velocity consider lateral distance and safe velocity;
 :insert safe velocity to path;
 }
@@ -239,7 +239,7 @@ end note
 }
 partition handle_possible_collision{
 :filter collision by road type;
-:calculate original velocity and height for the possible collision;
+:calculate slow down points for possible collision;
 :handle collision offset;
 :calculate safe velocity consider lateral distance and safe velocity;
 :insert safe velocity to path;
