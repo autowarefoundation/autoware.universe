@@ -59,6 +59,7 @@ using lanelet::ConstLineString2d;
 using lanelet::LaneletMapPtr;
 using lanelet::geometry::fromArcCoordinates;
 using lanelet::geometry::toArcCoordinates;
+using DetectionAreaIdx = boost::optional<std::pair<double, double>>;
 
 namespace occlusion_spot_utils
 {
@@ -192,9 +193,7 @@ inline bool isStuckVehicle(PredictedObject obj, const double min_vel)
   return false;
 }
 void filterCollisionByRoadType(
-  const LaneletMapPtr & lanelet_map_ptr, const PathWithLaneId & path,
-  std::vector<PossibleCollisionInfo> & possible_collisions, const ROAD_TYPE road_type,
-  const PlannerParam & param);
+  std::vector<PossibleCollisionInfo> & possible_collisions, const DetectionAreaIdx road_type);
 bool splineInterpolate(
   const PathWithLaneId & input, const double interval, PathWithLaneId * output,
   const rclcpp::Logger logger);
@@ -221,7 +220,7 @@ void calcSlowDownPointsForPossibleCollision(
   const int closest_idx, const PathWithLaneId & path, const double offset,
   std::vector<PossibleCollisionInfo> & possible_collisions);
 //!< @brief extract lanelet that includes target_road_type only
-std::pair<double, double> extractTargetRoadArcLength(
+DetectionAreaIdx extractTargetRoadArcLength(
   const LaneletMapPtr lanelet_map_ptr, const double max_range, const PathWithLaneId & path,
   const ROAD_TYPE & target_road_type);
 //!< @brief generate collision coming from occlusion spots of the given grid map and lanelet map

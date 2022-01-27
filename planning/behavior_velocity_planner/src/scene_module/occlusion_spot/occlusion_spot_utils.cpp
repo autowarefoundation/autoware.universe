@@ -361,7 +361,7 @@ std::vector<PossibleCollisionInfo> generatePossibleCollisionBehindParkedVehicle(
   return possible_collisions;
 }
 
-std::pair<double, double> extractTargetRoadArcLength(
+DetectionAreaIdx extractTargetRoadArcLength(
   const lanelet::LaneletMapPtr lanelet_map_ptr, const double max_range, const PathWithLaneId & path,
   const ROAD_TYPE & target_road_type)
 {
@@ -387,17 +387,14 @@ std::pair<double, double> extractTargetRoadArcLength(
     const auto & next_p = path.points[i + 1].point.pose.position;
     dist_sum += tier4_autoware_utils::calcDistance2d(curr_p, next_p);
   }
-  if (!found_target) dist_sum = 0.0;
-  return std::pair<int, int>(start_dist, dist_sum);
+  if (!found_target) return {};
+  return DetectionAreaIdx(std::make_pair(start_dist, dist_sum));
 }
 
 void filterCollisionByRoadType(
-  const LaneletMapPtr & lanelet_map_ptr, const PathWithLaneId & path,
-  std::vector<PossibleCollisionInfo> & possible_collisions, const ROAD_TYPE road_type,
-  const PlannerParam & param)
+  std::vector<PossibleCollisionInfo> & possible_collisions, const DetectionAreaIdx area)
 {
-  std::pair<double, double> focus_length =
-    extractTargetRoadArcLength(lanelet_map_ptr, param.detection_area_length, path, road_type);
+  std::pair<int, int> focus_length = area.get();
   for (auto it = possible_collisions.begin(); it != possible_collisions.end();) {
     const auto & pc_len = it->arc_lane_dist_at_collision.length;
     if (focus_length.first < pc_len && pc_len < focus_length.second) {

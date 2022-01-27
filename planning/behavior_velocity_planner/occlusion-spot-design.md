@@ -98,6 +98,10 @@ note right
   using spline interpolation and interpolate (x,y,z,v)
 end note
 :calc closest path point from ego;
+:extract target road pair;
+note right
+extract target road type start and end pair and early return if none
+end note
 }
 
 partition process_sensor_data {
@@ -123,7 +127,7 @@ end note
 partition process_possible_collision {
 :filter possible collision by road type;
 note right
-extract target road type start and end pair
+filter by target road type start and end pair
 end note
 :handle collision offset;
 note right
@@ -161,6 +165,7 @@ note right
 end note
 :interpolate ego path;
 :get closest index from ego position in interpolated path;
+:extract target road type start/end distance by arc length;
 }
 partition preprocess_dynamic_object {
 :get parked vehicle from dynamic object array;
@@ -183,7 +188,7 @@ note right
 end note
 }
 partition process_possible_collision {
-:extract target road type start/end distance by arc length;
+:filter collision by road type;
 :calculate original velocity and height for the possible collision;
 :handle collision;
 :calculate safe velocity consider lateral distance and safe velocity;
@@ -233,7 +238,7 @@ end note
 :calculate collision path point and intersection point;
 }
 partition handle_possible_collision{
-:extract target road type start/end distance by arc length;
+:filter collision by road type;
 :calculate original velocity and height for the possible collision;
 :handle collision offset;
 :calculate safe velocity consider lateral distance and safe velocity;

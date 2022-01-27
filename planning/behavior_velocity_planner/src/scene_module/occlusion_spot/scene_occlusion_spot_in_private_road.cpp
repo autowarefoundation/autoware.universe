@@ -70,6 +70,9 @@ bool OcclusionSpotInPrivateModule::modifyPathVelocity(
         interp_path, ego_pose, closest_idx, param_.dist_thr, param_.angle_thr)) {
     return true;
   }
+  DetectionAreaIdx focus_area =
+    extractTargetRoadArcLength(lanelet_map_ptr, max_range, *path, PRIVATE);
+  if (!focus_area) return true;
   nav_msgs::msg::OccupancyGrid occ_grid = *occ_grid_ptr;
   grid_map::GridMap grid_map;
   grid_utils::denoiseOccupancyGridCV(occ_grid, grid_map, param_.grid);
@@ -84,7 +87,7 @@ bool OcclusionSpotInPrivateModule::modifyPathVelocity(
   // Note: Don't consider offset from path start to ego here
   utils::generatePossibleCollisions(
     possible_collisions, interp_path, grid_map, param_, debug_data_.sidewalks);
-  utils::filterCollisionByRoadType(lanelet_map_ptr, *path, possible_collisions, PRIVATE, param_);
+  utils::filterCollisionByRoadType(possible_collisions, focus_area);
   RCLCPP_DEBUG_STREAM_THROTTLE(
     logger_, *clock_, 3000, "num possible collision:" << possible_collisions.size());
   utils::calcSlowDownPointsForPossibleCollision(0, interp_path, 0.0, possible_collisions);
