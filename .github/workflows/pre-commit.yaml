@@ -1,10 +1,10 @@
-name: pre-commit-optional
+name: pre-commit
 
 on:
   pull_request:
 
 jobs:
-  pre-commit-optional:
+  pre-commit:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -13,4 +13,4 @@ jobs:
       - name: Run pre-commit
         uses: autowarefoundation/autoware-github-actions/pre-commit@tier4/proposal
         with:
-          pre-commit-config: .pre-commit-config-optional.yaml
+          pre-commit-config: .pre-commit-config.yaml
