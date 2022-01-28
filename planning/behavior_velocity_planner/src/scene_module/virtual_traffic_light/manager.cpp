@@ -12,9 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "tier4_autoware_utils/math/unit_conversion.hpp"
-
 #include <scene_module/virtual_traffic_light/manager.hpp>
+#include <tier4_autoware_utils/math/unit_conversion.hpp>
 
 #include <memory>
 #include <set>
