@@ -48,7 +48,7 @@ CPUMonitorBase::CPUMonitorBase(const std::string & node_name, const rclcpp::Node
   usage_warn_(declare_parameter<float>("usage_warn", 0.96)),
   usage_error_(declare_parameter<float>("usage_error", 1.00)),
   usage_count_(declare_parameter<int>("usage_count", 2)),
-  usage_avg_(declare_parameter<bool>("usage_avg", true))
+  usage_avg_(declare_parameter<bool>("usage_avg", true))//,
 {
   gethostname(hostname_, sizeof(hostname_));
   num_cores_ = boost::thread::hardware_concurrency();
@@ -64,6 +64,12 @@ CPUMonitorBase::CPUMonitorBase(const std::string & node_name, const rclcpp::Node
   updater_.add("CPU Load Average", this, &CPUMonitorBase::checkLoad);
   updater_.add("CPU Thermal Throttling", this, &CPUMonitorBase::checkThrottling);
   updater_.add("CPU Frequency", this, &CPUMonitorBase::checkFrequency);
+
+  // Publisher
+  rclcpp::QoS durable_qos{1};
+  durable_qos.transient_local();
+  pub_cpu_usage_ = this->create_publisher<tier4_external_api_msgs::msg::CpuUsage>("~/output/cpu_usage", durable_qos); // TBD : topic name
+
 }
 
 void CPUMonitorBase::update() { updater_.force_update(); }
@@ -113,10 +119,16 @@ void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & st
   // Remember start time to measure elapsed time
   const auto t_start = SystemMonitorUtility::startMeasurement();
 
+  tier4_external_api_msgs::msg::CpuUsage cpu_usage;
+  tier4_external_api_msgs::msg::CpuStatus STATUS;
+  int cpu_num = 0;
+
   if (!mpstat_exists_) {
     stat.summary(DiagStatus::ERROR, "mpstat error");
     stat.add(
       "mpstat", "Command 'mpstat' not found, but can be installed with: sudo apt install sysstat");
+    cpu_usage.all.status=STATUS.STALE;
+    publishCpuUsage(cpu_usage);
     return;
   }
 
@@ -131,6 +143,8 @@ void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & st
     is_err >> os.rdbuf();
     stat.summary(DiagStatus::ERROR, "mpstat error");
     stat.add("mpstat", os.str().c_str());
+    cpu_usage.all.status=STATUS.STALE;
+    publishCpuUsage(cpu_usage);
     return;
   }
 
@@ -165,15 +179,35 @@ void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & st
           }
           if (boost::optional<float> v = cpu_load.get_optional<float>("usr")) {
             usr = v.get();
+            if (cpu_name == "all") {
+              cpu_usage.all.usr = usr;
+            } else {
+              cpu_usage.cpus[cpu_num].usr = usr;
+            }
           }
           if (boost::optional<float> v = cpu_load.get_optional<float>("nice")) {
             nice = v.get();
+            if (cpu_name == "all") {
+              cpu_usage.all.nice = nice;
+            } else {
+              cpu_usage.cpus[cpu_num].nice = nice;
+            }
           }
           if (boost::optional<float> v = cpu_load.get_optional<float>("sys")) {
             sys = v.get();
+            if (cpu_name == "all") {
+              cpu_usage.all.sys = sys;
+            } else {
+              cpu_usage.cpus[cpu_num].sys = sys;
+            }
           }
           if (boost::optional<float> v = cpu_load.get_optional<float>("idle")) {
             idle = v.get();
+            if (cpu_name == "all") {
+              cpu_usage.all.idle = idle;
+            } else {
+              cpu_usage.cpus[cpu_num].idle = idle;
+            }
           }
 
           total = 100.0 - iowait - idle;
@@ -182,6 +216,14 @@ void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & st
             level = CpuUsageToLevel(cpu_name, usage);
           } else {
             level = CpuUsageToLevel(std::string("err"), usage);
+          }
+
+          if (cpu_name == "all") {
+            cpu_usage.all.total = total;
+            cpu_usage.all.status = level;
+          } else {
+            cpu_usage.cpus[cpu_num].total = total;
+            cpu_usage.cpus[cpu_num].status = level;
           }
 
           stat.add(fmt::format("CPU {}: status", cpu_name), load_dict_.at(level));
@@ -198,6 +240,7 @@ void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & st
           } else {
             whole_level = std::max(whole_level, level);
           }
+          cpu_num++;
         }
       }
     }
@@ -205,10 +248,16 @@ void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & st
     stat.summary(DiagStatus::ERROR, "mpstat exception");
     stat.add("mpstat", e.what());
     std::fill(usage_check_cnt_.begin(), usage_check_cnt_.end(), 0);
+    cpu_usage.all.status=STATUS.STALE;
+    publishCpuUsage(cpu_usage);
     return;
   }
 
   stat.summary(whole_level, load_dict_.at(whole_level));
+
+  // Publish msg
+  publishCpuUsage(cpu_usage);
+
 
   // Measure elapsed time since start time and report
   SystemMonitorUtility::stopMeasurement(t_start, stat);
@@ -365,4 +414,13 @@ void CPUMonitorBase::getFreqNames()
   std::sort(freqs_.begin(), freqs_.end(), [](const cpu_freq_info & c1, const cpu_freq_info & c2) {
     return c1.index_ < c2.index_;
   });  // NOLINT
+}
+
+void CPUMonitorBase::publishCpuUsage(tier4_external_api_msgs::msg::CpuUsage usage)
+{
+  // Create timestamp
+  const auto stamp = this->now();
+  
+  usage.stamp = stamp;
+  pub_cpu_usage_->publish(usage);
 }

@@ -22,6 +22,10 @@
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
 
+#include <tier4_external_api_msgs/msg/cpu_usage.hpp>
+#include <tier4_external_api_msgs/msg/cpu_status.hpp>
+
+
 #include <climits>
 #include <map>
 #include <string>
@@ -161,6 +165,13 @@ protected:
    */
   const std::map<int, const char *> thermal_dict_ = {
     {DiagStatus::OK, "OK"}, {DiagStatus::WARN, "unused"}, {DiagStatus::ERROR, "throttling"}};
+
+  //Publisher
+  rclcpp::Publisher<tier4_external_api_msgs::msg::CpuUsage>::SharedPtr pub_cpu_usage_;
+  // void publishCpuUsage(const tier4_external_api_msgs::msg::CpuUsage & cpu_usage);
+
+  virtual void publishCpuUsage(tier4_external_api_msgs::msg::CpuUsage usage);
+
 };
 
 #endif  // SYSTEM_MONITOR__CPU_MONITOR__CPU_MONITOR_BASE_HPP_
