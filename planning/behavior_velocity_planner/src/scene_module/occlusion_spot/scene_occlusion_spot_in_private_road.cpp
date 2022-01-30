@@ -85,14 +85,15 @@ bool OcclusionSpotInPrivateModule::modifyPathVelocity(
     logger_, *clock_, 3000, "offset_from_start_to_ego : " << offset_from_start_to_ego);
   std::vector<utils::PossibleCollisionInfo> possible_collisions;
   // Note: Don't consider offset from path start to ego here
-  utils::generatePossibleCollisions(
-    possible_collisions, interp_path, grid_map, param_, debug_data_.sidewalks);
+  utils::generateSidewalkPossibleCollisions(
+    possible_collisions, grid_map, interp_path, offset_from_start_to_ego, param_,
+    debug_data_.sidewalks);
   utils::filterCollisionByRoadType(possible_collisions, focus_area);
   RCLCPP_DEBUG_STREAM_THROTTLE(
     logger_, *clock_, 3000, "num possible collision:" << possible_collisions.size());
   utils::calcSlowDownPointsForPossibleCollision(0, interp_path, 0.0, possible_collisions);
   // Note: Consider offset from path start to ego here
-  occlusion_spot_utils::handleCollisionOffset(possible_collisions, offset_from_start_to_ego, 0.0);
+  utils::handleCollisionOffset(possible_collisions, offset_from_start_to_ego, 0.0);
   // apply safe velocity using ebs and pbs deceleration
   applySafeVelocityConsideringPossibleCollison(
     path, possible_collisions, ego_velocity, param_.private_road, param_);

@@ -223,21 +223,17 @@ void calcSlowDownPointsForPossibleCollision(
 DetectionAreaIdx extractTargetRoadArcLength(
   const LaneletMapPtr lanelet_map_ptr, const double max_range, const PathWithLaneId & path,
   const ROAD_TYPE & target_road_type);
-//!< @brief generate collision coming from occlusion spots of the given grid map and lanelet map
-void generatePossibleCollisions(
-  std::vector<PossibleCollisionInfo> & possible_collisions, const PathWithLaneId & path,
-  const grid_map::GridMap & grid, const PlannerParam & param,
-  std::vector<lanelet::BasicPolygon2d> & debug);
 //!< @brief convert a set of occlusion spots found on sidewalk slice
 void generateSidewalkPossibleCollisionFromOcclusionSpot(
   std::vector<PossibleCollisionInfo> & possible_collisions, const grid_map::GridMap & grid,
   const std::vector<grid_map::Position> & occlusion_spot_positions,
-  const lanelet::ConstLanelet & path_lanelet, const PlannerParam & param);
+  const double offset_from_start_to_ego, const lanelet::ConstLanelet & path_lanelet,
+  const PlannerParam & param);
 //!< @brief generate possible collisions coming from occlusion spots on the side of the path
 void generateSidewalkPossibleCollisions(
   std::vector<PossibleCollisionInfo> & possible_collisions, const grid_map::GridMap & grid,
-  const lanelet::ConstLanelet & path_lanelet, const PlannerParam & param,
-  std::vector<lanelet::BasicPolygon2d> & debug);
+  const PathWithLaneId & path, const double offset_from_start_to_ego, const PlannerParam & param,
+  std::vector<BasicPolygon2d> & debug);
 
 }  // namespace occlusion_spot_utils
 }  // namespace behavior_velocity_planner

@@ -406,26 +406,15 @@ void filterCollisionByRoadType(
   }
 }
 
-void generatePossibleCollisions(
-  std::vector<PossibleCollisionInfo> & possible_collisions,
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const grid_map::GridMap & grid,
-  const PlannerParam & param, std::vector<lanelet::BasicPolygon2d> & debug)
+void generateSidewalkPossibleCollisions(
+  std::vector<PossibleCollisionInfo> & possible_collisions, const grid_map::GridMap & grid,
+  const PathWithLaneId & path, const double offset_from_start_to_ego, const PlannerParam & param,
+  std::vector<lanelet::BasicPolygon2d> & debug)
 {
   lanelet::ConstLanelet path_lanelet = toPathLanelet(path);
   if (path_lanelet.centerline2d().empty()) {
     return;
   }
-  // generate sidewalk possible collision
-  generateSidewalkPossibleCollisions(possible_collisions, grid, path_lanelet, param, debug);
-  possible_collisions.insert(
-    possible_collisions.end(), possible_collisions.begin(), possible_collisions.end());
-}
-
-void generateSidewalkPossibleCollisions(
-  std::vector<PossibleCollisionInfo> & possible_collisions, const grid_map::GridMap & grid,
-  const lanelet::ConstLanelet & path_lanelet, const PlannerParam & param,
-  std::vector<lanelet::BasicPolygon2d> & debug)
-{
   std::vector<geometry::Slice> sidewalk_slices;
   geometry::buildSidewalkSlices(
     sidewalk_slices, path_lanelet, 0.0, param.vehicle_info.vehicle_width * 0.5,
@@ -447,7 +436,8 @@ void generateSidewalkPossibleCollisions(
         occlusion_spot_positions, grid, sidewalk_slice.polygon,
         param.sidewalk.min_occlusion_spot_size);
       generateSidewalkPossibleCollisionFromOcclusionSpot(
-        possible_collisions, grid, occlusion_spot_positions, path_lanelet, param);
+        possible_collisions, grid, occlusion_spot_positions, offset_from_start_to_ego, path_lanelet,
+        param);
       if (!possible_collisions.empty()) {
         length_lower_bound = sidewalk_slice.range.min_length;
         distance_lower_bound = std::abs(sidewalk_slice.range.min_distance);
@@ -462,7 +452,8 @@ void generateSidewalkPossibleCollisions(
 void generateSidewalkPossibleCollisionFromOcclusionSpot(
   std::vector<PossibleCollisionInfo> & possible_collisions, const grid_map::GridMap & grid,
   const std::vector<grid_map::Position> & occlusion_spot_positions,
-  const lanelet::ConstLanelet & path_lanelet, const PlannerParam & param)
+  const double offset_from_start_to_ego, const lanelet::ConstLanelet & path_lanelet,
+  const PlannerParam & param)
 {
   const double baselink_to_front = param.vehicle_info.baselink_to_front;
   const double half_vehicle_width = param.vehicle_info.vehicle_width * 0.5;
@@ -477,7 +468,7 @@ void generateSidewalkPossibleCollisionFromOcclusionSpot(
     const double length_to_col = arc_coord_occlusion_point.length - baselink_to_front;
     ArcCoordinates arc_coord_collision_point = {
       length_to_col, calcSgnValue(arc_coord_occlusion_point.distance, half_vehicle_width)};
-    if (length_to_col < 0) {
+    if (length_to_col < offset_from_start_to_ego) {
       continue;
     }
     PossibleCollisionInfo pc = calculateCollisionPathPointFromOcclusionSpot(
