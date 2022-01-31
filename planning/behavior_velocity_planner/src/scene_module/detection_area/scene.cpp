@@ -28,7 +28,7 @@ namespace bg = boost::geometry;
 
 namespace
 {
-std::pair<int, double> findWayPointAndDistance(
+boost::optional<PathIndexWithOffset> findWayPointAndDistance(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const geometry_msgs::msg::Point & p)
 {
@@ -54,18 +54,16 @@ std::pair<int, double> findWayPointAndDistance(
 
     // if the point p is back of the way point, return negative distance
     if (dist * std::cos(theta) < 0) {
-      return std::make_pair(static_cast<int>(i), -1.0 * dist);
+      return std::make_pair(i, -1.0 * dist);
     }
 
     if (dist * std::cos(theta) < dist_wp) {
-      return std::make_pair(static_cast<int>(i), dist);
+      return std::make_pair(i, dist);
     }
   }
 
-  // if the way point is not found, return negative distance from the way point at 0
-  const double dx = p.x - path.points.front().point.pose.position.x;
-  const double dy = p.y - path.points.front().point.pose.position.y;
-  return std::make_pair(-1, -1.0 * std::hypot(dx, dy));
+  // the way point is not found
+  return {};
 }
 
 double calcArcLengthFromWayPoint(
@@ -87,20 +85,21 @@ double calcSignedArcLength(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2)
 {
-  const std::pair<int, double> src = findWayPointAndDistance(path, p1);
-  const std::pair<int, double> dst = findWayPointAndDistance(path, p2);
-  if (dst.first == -1) {
+  const auto src = findWayPointAndDistance(path, p1);
+  const auto dst = findWayPointAndDistance(path, p2);
+  if (!src || !dst) {
     const double dx = p1.x - p2.x;
     const double dy = p1.y - p2.y;
     return -1.0 * std::hypot(dx, dy);
   }
 
-  if (src.first < dst.first) {
-    return calcArcLengthFromWayPoint(path, src.first, dst.first) - src.second + dst.second;
-  } else if (src.first > dst.first) {
-    return -1.0 * (calcArcLengthFromWayPoint(path, dst.first, src.first) - dst.second + src.second);
+  if (src->first < dst->first) {
+    return calcArcLengthFromWayPoint(path, src->first, dst->first) - src->second + dst->second;
+  } else if (src->first > dst->first) {
+    return -1.0 *
+           (calcArcLengthFromWayPoint(path, dst->first, src->first) - dst->second + src->second);
   } else {
-    return dst.second - src.second;
+    return dst->second - src->second;
   }
 }
 
