@@ -7,8 +7,16 @@ on:
   workflow_dispatch:
 
 jobs:
+  pre_condition:
+    name: Don't run scheduled jobs on forks
+    runs-on: ubuntu-latest
+    if: ${{ (github.event_name != 'schedule') || (github.event_name == 'schedule' && github.repository == 'autowarefoundation/autoware.universe') }}
+    steps:
+      - run: "true"
+
   build-and-test:
     if: ${{ github.event_name != 'push' || github.ref_name == github.event.repository.default_branch }}
+    needs: pre_condition
     runs-on: ubuntu-latest
     container: ghcr.io/autowarefoundation/autoware-universe:latest
     steps:
