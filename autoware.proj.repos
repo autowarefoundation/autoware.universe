@@ -85,10 +85,6 @@ repositories:
     type: git
     url: https://github.com/tier4/grid_map.git
     version: 657cc055eb90a042057738a85a5651c03e42b1bb
-  vendor/perception_pcl:
-    type: git
-    url: https://github.com/ros-perception/perception_pcl.git
-    version: adff50fe9b6adf4770c75275252707de798c4ea6
   vendor/topic_tools:
     type: git
     url: https://github.com/tier4/topic_tools.git
