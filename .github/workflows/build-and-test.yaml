@@ -1,18 +1,19 @@
-name: check-build-depends
+name: build-and-test
 
 on:
-  pull_request:
-    paths:
-      - build_depends.repos
+  push:
+    branches:
+      - main
+      - tier4/proposal
+  schedule:
+    - cron: 0 19 * * * # run at 4 AM JST
+  workflow_dispatch:
 
 jobs:
-  check-build-depends:
+  build-and-test:
     runs-on: ubuntu-latest
     container: ros:galactic
     steps:
-      - name: Cancel previous runs
-        uses: styfle/cancel-workflow-action@0.9.1
-
       - name: Check out repository
         uses: actions/checkout@v2
 
@@ -34,3 +35,10 @@ jobs:
           rosdistro: galactic
           target-packages: ${{ steps.get-self-packages.outputs.self-packages }}
           build-depends-repos: build_depends.repos
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          files: lcov/total_coverage.info,coveragepy/.coverage
+          fail_ci_if_error: true
+          verbose: true
