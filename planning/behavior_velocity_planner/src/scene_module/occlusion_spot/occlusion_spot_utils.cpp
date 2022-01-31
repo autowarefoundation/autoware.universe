@@ -421,6 +421,13 @@ void generateSidewalkPossibleCollisions(
     param.sidewalk.slice_size, param.sidewalk.focus_range);
   double length_lower_bound = std::numeric_limits<double>::max();
   double distance_lower_bound = std::numeric_limits<double>::max();
+  // sort distance closest first to skip inferior collision
+  std::sort(
+    sidewalk_slices.begin(), sidewalk_slices.end(),
+    [](const geometry::Slice & s1, const geometry::Slice & s2) {
+      return s1.range.min_distance < s2.range.min_distance;
+    });
+
   std::sort(
     sidewalk_slices.begin(), sidewalk_slices.end(),
     [](const geometry::Slice & s1, const geometry::Slice & s2) {
