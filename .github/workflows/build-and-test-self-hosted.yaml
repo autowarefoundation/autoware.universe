@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  pre_condition:
+  pre-condition:
     name: Don't run scheduled jobs on forks
     runs-on: ubuntu-latest
     if: ${{ (github.event_name != 'schedule') || (github.event_name == 'schedule' && github.repository == 'autowarefoundation/autoware.universe') }}
