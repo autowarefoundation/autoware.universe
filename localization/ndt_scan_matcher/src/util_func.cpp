@@ -229,7 +229,7 @@ std::vector<geometry_msgs::msg::Pose> createRandomPoseArray(
   const auto base_rpy = getRPY(base_pose_with_cov);
 
   std::vector<geometry_msgs::msg::Pose> poses;
-  for (std::size_t i = 0; i < particle_num; ++i) {
+  for (int i = 0; i < particle_num; ++i) {
     geometry_msgs::msg::Vector3 xyz;
     geometry_msgs::msg::Vector3 rpy;
 
