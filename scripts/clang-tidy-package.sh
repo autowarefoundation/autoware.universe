@@ -23,7 +23,7 @@ if [ ! -d "${1}" ]; then
     exit 1
 fi
 
-if ! (type clang-tidy > /dev/null 2>&1); then
+if ! (type clang-tidy >/dev/null 2>&1); then
     echo "Error: missing Clang-Tidy"
     echo -e "Please install Clang-Tidy:\n   sudo apt install clang-tidy"
     exit 1
@@ -43,6 +43,6 @@ if [ ! -f ./build/compile_commands.json ]; then
 fi
 
 find "${1}" \
-     -regex ".*\(cpp\|hpp\)" -print0 \
-     -or -path "*test*" -prune \
-     | xargs -0 clang-tidy -p build/
+    -regex ".*\(cpp\|hpp\)" -print0 \
+    -or -path "*test*" -prune |
+    xargs -0 clang-tidy -p build/
