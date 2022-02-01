@@ -1,0 +1,4 @@
+collections:
+  - name: https://github.com/autowarefoundation/autoware.git#/ansible
+    type: git
+    version: tier4/proposal
