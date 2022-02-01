@@ -214,7 +214,7 @@ Eigen::Affine3d fromRosPoseToEigen(const geometry_msgs::msg::Pose & ros_pose)
 
 std::vector<geometry_msgs::msg::Pose> createRandomPoseArray(
   const geometry_msgs::msg::PoseWithCovarianceStamped & base_pose_with_cov,
-  const std::size_t particle_num)
+  const int particle_num)
 {
   std::default_random_engine engine(seed_gen());
   const Eigen::Map<const RowMatrixXd> covariance =
