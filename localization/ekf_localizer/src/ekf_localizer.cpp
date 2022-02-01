@@ -73,12 +73,12 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
   /* initialize ros system */
   auto period_control_ns =
     std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(ekf_dt_));
-  timer_control_ = rclcpp::create_timer(this, get_clock(), period_control_ns,
-    std::bind(&EKFLocalizer::timerCallback, this));
+  timer_control_ = rclcpp::create_timer(
+    this, get_clock(), period_control_ns, std::bind(&EKFLocalizer::timerCallback, this));
 
   const auto period_tf_ns = rclcpp::Rate(tf_rate_).period();
-  timer_tf_ = rclcpp::create_timer(this, get_clock(), period_tf_ns,
-    std::bind(&EKFLocalizer::timerTFCallback, this));
+  timer_tf_ = rclcpp::create_timer(
+    this, get_clock(), period_tf_ns, std::bind(&EKFLocalizer::timerTFCallback, this));
 
   pub_pose_ = create_publisher<geometry_msgs::msg::PoseStamped>("ekf_pose", 1);
   pub_pose_cov_ =

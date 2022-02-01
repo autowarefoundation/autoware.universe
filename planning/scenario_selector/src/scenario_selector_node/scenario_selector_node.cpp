@@ -361,8 +361,8 @@ ScenarioSelectorNode::ScenarioSelectorNode(const rclcpp::NodeOptions & node_opti
   // Timer Callback
   const auto period_ns = rclcpp::Rate(static_cast<double>(update_rate_)).period();
 
-  timer_ = rclcpp::create_timer(this, get_clock(), period_ns,
-    std::bind(&ScenarioSelectorNode::onTimer, this));
+  timer_ = rclcpp::create_timer(
+    this, get_clock(), period_ns, std::bind(&ScenarioSelectorNode::onTimer, this));
 
   // Wait for first tf
   while (rclcpp::ok()) {

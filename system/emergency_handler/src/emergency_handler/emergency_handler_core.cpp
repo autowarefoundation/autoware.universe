@@ -68,8 +68,8 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
 
   // Timer
   const auto update_period_ns = rclcpp::Rate(param_.update_rate).period();
-  timer_ = rclcpp::create_timer(this, get_clock(), update_period_ns,
-    std::bind(&EmergencyHandler::onTimer, this));
+  timer_ = rclcpp::create_timer(
+    this, get_clock(), update_period_ns, std::bind(&EmergencyHandler::onTimer, this));
 }
 
 void EmergencyHandler::onHazardStatusStamped(

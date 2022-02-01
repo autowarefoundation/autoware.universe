@@ -96,6 +96,6 @@ DummyDiagPublisherNode::DummyDiagPublisherNode() : Node("dummy_diag_publisher")
 
   // Timer
   const auto period_ns = rclcpp::Rate(update_rate_).period();
-  timer_ = rclcpp::create_timer(this, get_clock(), period_ns,
-    std::bind(&DummyDiagPublisherNode::onTimer, this));
+  timer_ = rclcpp::create_timer(
+    this, get_clock(), period_ns, std::bind(&DummyDiagPublisherNode::onTimer, this));
 }

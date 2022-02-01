@@ -126,8 +126,8 @@ void ObstacleCollisionCheckerNode::initTimer(double period_s)
 {
   const auto period_ns =
     std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(period_s));
-  timer_ = rclcpp::create_timer(this, get_clock(), period_ns,
-    std::bind(&ObstacleCollisionCheckerNode::onTimer, this));
+  timer_ = rclcpp::create_timer(
+    this, get_clock(), period_ns, std::bind(&ObstacleCollisionCheckerNode::onTimer, this));
 }
 
 bool ObstacleCollisionCheckerNode::isDataReady()

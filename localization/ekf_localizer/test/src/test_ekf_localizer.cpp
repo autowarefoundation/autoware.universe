@@ -49,8 +49,8 @@ public:
       "/ekf_pose", 1, std::bind(&TestEKFLocalizerNode::testCallbackPose, this, _1));
 
     using std::chrono_literals::operator""ms;
-    test_timer_ = rclcpp::create_timer(this, get_clock(), 100ms,
-      std::bind(&TestEKFLocalizerNode::testTimerCallback, this));
+    test_timer_ = rclcpp::create_timer(
+      this, get_clock(), 100ms, std::bind(&TestEKFLocalizerNode::testTimerCallback, this));
   }
   ~TestEKFLocalizerNode() {}
 

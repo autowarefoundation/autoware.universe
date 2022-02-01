@@ -51,8 +51,8 @@ ExternalCmdConverterNode::ExternalCmdConverterNode(const rclcpp::NodeOptions & n
   emergency_stop_timeout_ = declare_parameter("emergency_stop_timeout", 3.0);
 
   const auto period_ns = rclcpp::Rate(timer_rate).period();
-  rate_check_timer_ = rclcpp::create_timer(this, get_clock(), period_ns,
-    std::bind(&ExternalCmdConverterNode::onTimer, this));
+  rate_check_timer_ = rclcpp::create_timer(
+    this, get_clock(), period_ns, std::bind(&ExternalCmdConverterNode::onTimer, this));
 
   // Parameter for accel/brake map
   const std::string csv_path_accel_map = declare_parameter<std::string>("csv_path_accel_map");

@@ -71,8 +71,8 @@ void ShiftDecider::initTimer(double period_s)
 {
   const auto period_ns =
     std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(period_s));
-  timer_ = rclcpp::create_timer(this, get_clock(), period_ns,
-    std::bind(&ShiftDecider::onTimer, this));
+  timer_ =
+    rclcpp::create_timer(this, get_clock(), period_ns, std::bind(&ShiftDecider::onTimer, this));
 }
 
 #include <rclcpp_components/register_node_macro.hpp>

@@ -174,8 +174,8 @@ LaneDepartureCheckerNode::LaneDepartureCheckerNode(const rclcpp::NodeOptions & o
 
   // Timer
   const auto period_ns = rclcpp::Rate(node_param_.update_rate).period();
-  timer_ = rclcpp::create_timer(this, get_clock(), period_ns,
-    std::bind(&LaneDepartureCheckerNode::onTimer, this));
+  timer_ = rclcpp::create_timer(
+    this, get_clock(), period_ns, std::bind(&LaneDepartureCheckerNode::onTimer, this));
 }
 
 void LaneDepartureCheckerNode::onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg)

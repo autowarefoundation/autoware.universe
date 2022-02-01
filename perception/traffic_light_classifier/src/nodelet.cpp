@@ -41,8 +41,8 @@ TrafficLightClassifierNodelet::TrafficLightClassifierNodelet(const rclcpp::NodeO
       "~/output/traffic_signals", rclcpp::QoS{1});
 
   using std::chrono_literals::operator""ms;
-  timer_ = rclcpp::create_timer(this, get_clock(), 100ms,
-    std::bind(&TrafficLightClassifierNodelet::connectCb, this));
+  timer_ = rclcpp::create_timer(
+    this, get_clock(), 100ms, std::bind(&TrafficLightClassifierNodelet::connectCb, this));
 
   int classifier_type = this->declare_parameter(
     "classifier_type", static_cast<int>(TrafficLightClassifierNodelet::ClassifierType::HSVFilter));

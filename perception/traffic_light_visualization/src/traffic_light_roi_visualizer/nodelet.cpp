@@ -44,8 +44,8 @@ TrafficLightRoiVisualizerNodelet::TrafficLightRoiVisualizerNodelet(
   }
 
   using std::chrono_literals::operator""ms;
-  timer_ = rclcpp::create_timer(this, get_clock(), 100ms,
-     std::bind(&TrafficLightRoiVisualizerNodelet::connectCb, this));
+  timer_ = rclcpp::create_timer(
+    this, get_clock(), 100ms, std::bind(&TrafficLightRoiVisualizerNodelet::connectCb, this));
 
   image_pub_ =
     image_transport::create_publisher(this, "~/output/image", rclcpp::QoS{1}.get_rmw_qos_profile());

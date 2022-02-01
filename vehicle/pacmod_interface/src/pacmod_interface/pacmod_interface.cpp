@@ -152,8 +152,8 @@ PacmodInterface::PacmodInterface()
 
   // Timer
   const auto period_ns = rclcpp::Rate(loop_rate_).period();
-  timer_ = rclcpp::create_timer(this, get_clock(), period_ns,
-    std::bind(&PacmodInterface::publishCommands, this));
+  timer_ = rclcpp::create_timer(
+    this, get_clock(), period_ns, std::bind(&PacmodInterface::publishCommands, this));
 }
 
 void PacmodInterface::callbackActuationCmd(const ActuationCommandStamped::ConstSharedPtr msg)

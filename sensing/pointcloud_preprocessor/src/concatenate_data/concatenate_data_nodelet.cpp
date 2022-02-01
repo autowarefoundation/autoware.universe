@@ -153,7 +153,8 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
   {
     const auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
       std::chrono::duration<double>(timeout_sec_));
-    timer_ = rclcpp::create_timer(this, get_clock(), period_ns,
+    timer_ = rclcpp::create_timer(
+      this, get_clock(), period_ns,
       std::bind(&PointCloudConcatenateDataSynchronizerComponent::timer_callback, this));
   }
 

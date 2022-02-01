@@ -203,7 +203,8 @@ void AccelBrakeMapCalibrator::initOutputCSVTimer(double period_s)
 {
   const auto period_ns =
     std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(period_s));
-  timer_output_csv_ = rclcpp::create_timer(this, get_clock(), period_ns,
+  timer_output_csv_ = rclcpp::create_timer(
+    this, get_clock(), period_ns,
     std::bind(&AccelBrakeMapCalibrator::timerCallbackOutputCSV, this));
 }
 
@@ -211,8 +212,8 @@ void AccelBrakeMapCalibrator::initTimer(double period_s)
 {
   const auto period_ns =
     std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(period_s));
-  timer_ = rclcpp::create_timer(this, get_clock(), period_ns,
-    std::bind(&AccelBrakeMapCalibrator::timerCallback, this));
+  timer_ = rclcpp::create_timer(
+    this, get_clock(), period_ns, std::bind(&AccelBrakeMapCalibrator::timerCallback, this));
 }
 
 bool AccelBrakeMapCalibrator::getCurrentPitchFromTF(double * pitch)

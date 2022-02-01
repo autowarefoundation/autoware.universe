@@ -29,8 +29,8 @@ public:
         "~/output/objects", 1);
 
     using std::chrono_literals::operator""ms;
-    timer_ = rclcpp::create_timer(this, get_clock(), 100ms,
-      std::bind(&EmptyObjectsPublisher::timerCallback, this));
+    timer_ = rclcpp::create_timer(
+      this, get_clock(), 100ms, std::bind(&EmptyObjectsPublisher::timerCallback, this));
   }
 
 private:

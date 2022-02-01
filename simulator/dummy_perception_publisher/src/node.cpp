@@ -47,8 +47,8 @@ DummyPerceptionPublisherNode::DummyPerceptionPublisherNode()
     std::bind(&DummyPerceptionPublisherNode::objectCallback, this, std::placeholders::_1));
 
   using std::chrono_literals::operator""ms;
-  timer_ = rclcpp::create_timer(this, get_clock(), 100ms,
-    std::bind(&DummyPerceptionPublisherNode::timerCallback, this));
+  timer_ = rclcpp::create_timer(
+    this, get_clock(), 100ms, std::bind(&DummyPerceptionPublisherNode::timerCallback, this));
 }
 
 void DummyPerceptionPublisherNode::timerCallback()

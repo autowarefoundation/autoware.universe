@@ -91,8 +91,8 @@ TensorrtYoloNodelet::TensorrtYoloNodelet(const rclcpp::NodeOptions & options)
     net_ptr_->save(engine_file);
   }
   using std::chrono_literals::operator""ms;
-  timer_ = rclcpp::create_timer(this, get_clock(), 100ms,
-    std::bind(&TensorrtYoloNodelet::connectCb, this));
+  timer_ = rclcpp::create_timer(
+    this, get_clock(), 100ms, std::bind(&TensorrtYoloNodelet::connectCb, this));
 
   std::lock_guard<std::mutex> lock(connect_mutex_);
 

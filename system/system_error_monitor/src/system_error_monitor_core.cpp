@@ -244,8 +244,8 @@ AutowareErrorMonitor::AutowareErrorMonitor()
   // Timer
   initialized_time_ = this->now();
   const auto period_ns = rclcpp::Rate(params_.update_rate).period();
-  timer_ = rclcpp::create_timer(this, get_clock(), period_ns,
-    std::bind(&AutowareErrorMonitor::onTimer, this));
+  timer_ = rclcpp::create_timer(
+    this, get_clock(), period_ns, std::bind(&AutowareErrorMonitor::onTimer, this));
 }
 
 void AutowareErrorMonitor::loadRequiredModules(const std::string & key)

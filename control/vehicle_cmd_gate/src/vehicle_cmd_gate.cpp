@@ -191,8 +191,8 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
   // Timer
   const auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
     std::chrono::duration<double>(update_period_));
-  timer_ = rclcpp::create_timer(this, get_clock(), period_ns,
-    std::bind(&VehicleCmdGate::onTimer, this));
+  timer_ =
+    rclcpp::create_timer(this, get_clock(), period_ns, std::bind(&VehicleCmdGate::onTimer, this));
 }
 
 bool VehicleCmdGate::isHeartbeatTimeout(

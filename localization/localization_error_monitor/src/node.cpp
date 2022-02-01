@@ -56,8 +56,8 @@ LocalizationErrorMonitor::LocalizationErrorMonitor()
 
   // Set timer
   using std::chrono_literals::operator""ms;
-  timer_ = rclcpp::create_timer(this, get_clock(), 100ms,
-    std::bind(&LocalizationErrorMonitor::onTimer, this));
+  timer_ = rclcpp::create_timer(
+    this, get_clock(), 100ms, std::bind(&LocalizationErrorMonitor::onTimer, this));
 }
 
 void LocalizationErrorMonitor::onTimer() { updater_.force_update(); }

@@ -80,8 +80,8 @@ TopicStateMonitorNode::TopicStateMonitorNode(const rclcpp::NodeOptions & node_op
 
   // Timer
   const auto period_ns = rclcpp::Rate(node_param_.update_rate).period();
-  timer_ = rclcpp::create_timer(this, get_clock(), period_ns,
-    std::bind(&TopicStateMonitorNode::onTimer, this));
+  timer_ = rclcpp::create_timer(
+    this, get_clock(), period_ns, std::bind(&TopicStateMonitorNode::onTimer, this));
 }
 
 rcl_interfaces::msg::SetParametersResult TopicStateMonitorNode::onParameter(

@@ -183,8 +183,8 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   // Create ROS time based timer
   if (enable_delay_compensation) {
     const auto period_ns = rclcpp::Rate(publish_rate).period();
-    publish_timer_ = rclcpp::create_timer(this, get_clock(), period_ns,
-      std::bind(&MultiObjectTracker::onTimer, this));
+    publish_timer_ = rclcpp::create_timer(
+      this, get_clock(), period_ns, std::bind(&MultiObjectTracker::onTimer, this));
   }
 
   const auto tmp = this->declare_parameter<std::vector<int64_t>>("can_assign_matrix");

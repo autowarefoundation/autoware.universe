@@ -85,8 +85,8 @@ TrafficLightSSDFineDetectorNodelet::TrafficLightSSDFineDetectorNodelet(
   std_ = toFloatVector(this->declare_parameter("std", std::vector<double>({0.5, 0.5, 0.5})));
 
   using std::chrono_literals::operator""ms;
-  timer_ = rclcpp::create_timer(this, get_clock(), 100ms,
-    std::bind(&TrafficLightSSDFineDetectorNodelet::connectCb, this));
+  timer_ = rclcpp::create_timer(
+    this, get_clock(), 100ms, std::bind(&TrafficLightSSDFineDetectorNodelet::connectCb, this));
 
   std::lock_guard<std::mutex> lock(connect_mutex_);
   output_roi_pub_ =
