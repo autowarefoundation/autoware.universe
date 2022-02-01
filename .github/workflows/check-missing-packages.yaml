@@ -1,4 +1,4 @@
-name: Check missing packages
+name: check-missing-packages
 
 on:
   schedule:

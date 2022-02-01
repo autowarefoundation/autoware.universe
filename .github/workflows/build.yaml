@@ -18,10 +18,11 @@ jobs:
         run: |
           apt-get -y update
           apt-get -y install sudo
+          touch ~/.bashrc
+          mkdir src
 
       - name: Run setup script
         run: |
-          touch ~/.bashrc
           ./setup_ubuntu20.04.sh -c
 
       - name: Set git config for private repositories
