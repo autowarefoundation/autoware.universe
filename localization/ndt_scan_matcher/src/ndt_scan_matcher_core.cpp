@@ -713,3 +713,23 @@ bool NDTScanMatcher::getTransform(
   }
   return true;
 }
+
+bool NDTScanMatcher::validateTimeStampDifference(const rclcpp::Time & target_time, const rclcpp::Time & refarence_time, const double time_tolerance_sec)
+{
+  double time_stamp_diff_sec = std::abs((target_time - refarence_time).seconds());
+  if (time_stamp_diff_sec > time_tolerance_sec) {
+    RCLCPP_WARN(get_logger(), "Validation error. The reference time is %lf[sec], but the target time is %lf[sec]. The difference is %lf[sec] (the tolerance is %lf[sec]).", refarence_time.seconds(), target_time.seconds(), time_stamp_diff_sec, time_tolerance_sec);
+    return false;
+  }
+  return true;
+}
+
+bool NDTScanMatcher::validatePositionDifference(const geometry_msgs::msg::Point & target_point, const geometry_msgs::msg::Point & reference_point, const double distance_tolerance_m_)
+{
+  double distance_m = norm(target_point, reference_point);
+  if (distance_m > distance_tolerance_m_) {
+    RCLCPP_WARN(get_logger(), "Validation error. The distance from reference position to target position is %lf[m] (the tolerance is %lf[m]).", distance_m, distance_tolerance_m_);
+    return false;
+  }
+  return true;
+}
