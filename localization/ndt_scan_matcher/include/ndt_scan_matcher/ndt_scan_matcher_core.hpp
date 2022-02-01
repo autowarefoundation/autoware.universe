@@ -154,6 +154,8 @@ private:
   std::string map_frame_;
   double converged_param_transform_probability_;
   int initial_estimate_particles_num_;
+  double initial_pose_stamp_tolerance_sec_;
+  double initial_pose_distance_tolerance_m_;
   float inversion_vector_threshold_;
   float oscillation_threshold_;
   std::array<double, 36> output_pose_covariance_;

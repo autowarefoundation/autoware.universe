@@ -103,7 +103,12 @@ NDTScanMatcher::NDTScanMatcher()
   ndt_base_frame_("ndt_base_link"),
   map_frame_("map"),
   converged_param_transform_probability_(4.5),
+<<<<<<< HEAD
   initial_estimate_particles_num_(100),
+=======
+  initial_pose_stamp_tolerance_sec_(1.0),
+  initial_pose_distance_tolerance_m_(3.0),
+>>>>>>> feat(ndt_scan_matcher): add tolerance of initial pose
   inversion_vector_threshold_(-0.9),
   oscillation_threshold_(10)
 {
@@ -168,6 +173,12 @@ NDTScanMatcher::NDTScanMatcher()
 
   initial_estimate_particles_num_ =
     this->declare_parameter("initial_estimate_particles_num", initial_estimate_particles_num_);
+
+  initial_pose_stamp_tolerance_sec_ = this->declare_parameter(
+    "initial_pose_stamp_tolerance_sec", initial_pose_stamp_tolerance_sec_);
+
+  initial_pose_distance_tolerance_m_ = this->declare_parameter(
+    "initial_pose_distance_tolerance_m", initial_pose_distance_tolerance_m_);
 
   std::vector<double> output_pose_covariance =
     this->declare_parameter<std::vector<double>>("output_pose_covariance");
@@ -433,9 +444,23 @@ void NDTScanMatcher::callbackSensorPoints(
     initial_pose_msg_ptr_array_, sensor_ros_time, initial_pose_old_msg_ptr,
     initial_pose_new_msg_ptr);
   popOldPose(initial_pose_msg_ptr_array_, sensor_ros_time);
-  // TODO(Tier IV): check pose_timestamp - sensor_ros_time
+
+  // check the time stamp
+  bool valid_old_timestamp = validateTimeStampDifference(initial_pose_old_msg_ptr->header.stamp, sensor_ros_time, initial_pose_stamp_tolerance_sec_);
+  bool valid_new_timestamp = validateTimeStampDifference(initial_pose_new_msg_ptr->header.stamp, sensor_ros_time, initial_pose_stamp_tolerance_sec_);
+
+  // check the position jumping (ex. immediately after the initial pose estimation)
+  bool valid_new_to_old_distance = validatePositionDifference(initial_pose_old_msg_ptr->pose.pose.position, initial_pose_new_msg_ptr->pose.pose.position, initial_pose_distance_tolerance_m_);
+
+  // must all validations are true
+  if (!(valid_old_timestamp && valid_new_timestamp && valid_new_to_old_distance)) {
+    RCLCPP_WARN(get_logger(), "Validation error.");
+    return;
+  }
+
   const auto initial_pose_msg =
     interpolatePose(*initial_pose_old_msg_ptr, *initial_pose_new_msg_ptr, sensor_ros_time);
+
   // enf of critical section for initial_pose_msg_ptr_array_
   initial_pose_array_lock.unlock();
 
