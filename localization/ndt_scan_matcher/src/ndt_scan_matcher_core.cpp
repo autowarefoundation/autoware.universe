@@ -103,12 +103,9 @@ NDTScanMatcher::NDTScanMatcher()
   ndt_base_frame_("ndt_base_link"),
   map_frame_("map"),
   converged_param_transform_probability_(4.5),
-<<<<<<< HEAD
   initial_estimate_particles_num_(100),
-=======
   initial_pose_stamp_tolerance_sec_(1.0),
-  initial_pose_distance_tolerance_m_(3.0),
->>>>>>> feat(ndt_scan_matcher): add tolerance of initial pose
+  initial_pose_distance_tolerance_m_(10.0),
   inversion_vector_threshold_(-0.9),
   oscillation_threshold_(10)
 {
