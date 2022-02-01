@@ -10,19 +10,19 @@ repositories:
     version: tier4/proposal
   autoware/launcher:
     type: git
-    url: https://github.com/tier4/AutowareArchitectureProposal_launcher.git
+    url: https://github.com/tier4/autoware_launch.git
     version: tier4/universe
   autoware/aip_launcher:
     type: git
-    url: https://github.com/tier4/AutowareArchitectureProposal_aip_launcher.git
-    version: use-autoware-auto-msgs
-  autoware/api_adaptor:
-    type: git
-    url: https://github.com/tier4/AutowareArchitectureProposal_api_adaptor.git
+    url: https://github.com/tier4/aip_launcher.git
     version: tier4/universe
-  autoware/tier4_msgs:
+  autoware/ad_api_adaptor:
     type: git
-    url: https://github.com/tier4/AutowareArchitectureProposal_msgs.git
+    url: https://github.com/tier4/tier4_ad_api_adaptor.git
+    version: tier4/universe
+  autoware/tier4_autoware_msgs:
+    type: git
+    url: https://github.com/tier4/tier4_autoware_msgs.git
     version: tier4/universe
   autoware/auto_msgs:
     type: git
@@ -58,9 +58,9 @@ repositories:
     type: git
     url: https://github.com/tier4/scenario_simulator_v2.git
     version: master
-  simulator/AutowareArchitectureProposal_msgs: # for scenario_simulator_v2 backward compatibility.
+  simulator/tier4_autoware_msgs: # for scenario_simulator_v2 backward compatibility.
     type: git
-    url: https://github.com/tier4/AutowareArchitectureProposal_msgs.git
+    url: https://github.com/tier4/tier4_autoware_msgs.git
     version: main
   simulator/logsim:
     type: git
