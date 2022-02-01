@@ -13,9 +13,22 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v2
 
+      # TODO: Install this in the script and remove this
+      - name: Install dependencies for the setup script
+        run: |
+          apt-get -y update
+          apt-get -y install sudo
+
       - name: Run setup script
         run: |
-          ./setup-dev-env.sh -y universe
+          touch ~/.bashrc
+          ./setup_ubuntu20.04.sh -c
+
+      - name: Set git config for private repositories
+        run: |
+          git config --local --unset-all http.https://github.com/.extraheader || true
+          git config --global url.https://x-access-token:${{ secrets.REPO_TOKEN }}@github.com/.insteadOf 'https://github.com/'
+          git config --global url.https://x-access-token:${{ secrets.REPO_TOKEN }}@github.com/.insteadOf 'git@github.com:'
 
       - name: Run vcs import
         run: |

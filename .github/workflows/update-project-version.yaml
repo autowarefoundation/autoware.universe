@@ -3,7 +3,7 @@ name: update-project-version
 on:
   push:
     branches:
-      - rc/**
+      - beta/**
 
 jobs:
   update-project-version:

@@ -1,0 +1,28 @@
+name: sync-upstream
+
+on:
+  schedule:
+    - cron: 0 19 * * * # run at 4 AM JST
+  workflow_dispatch:
+
+jobs:
+  sync-upstream:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate token
+        id: generate-token
+        uses: tibdex/github-app-token@v1
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.PRIVATE_KEY }}
+
+      - name: Run sync-branches
+        uses: autowarefoundation/autoware-github-actions/sync-branches@tier4/proposal
+        with:
+          token: ${{ steps.generate-token.outputs.token }}
+          base-branch: tier4/universe
+          sync-pr-branch: sync-upstream
+          sync-target-repository: https://github.com/tier4/autoware.proj.git
+          sync-target-branch: tier4/universe
+          pr-title: "chore: sync upstream"
+          auto-merge-method: merge

@@ -1,4 +1,4 @@
-name: update rc branch
+name: update beta branch
 
 on:
   schedule:
@@ -6,22 +6,20 @@ on:
   workflow_dispatch:
 
 env:
-  SYNC_BRANCH_PREFIX: update-rc-branch
+  SYNC_BRANCH_PREFIX: update-beta-branch
 
 jobs:
-  update-rc-branch:
+  update-beta-branch:
     runs-on: ubuntu-20.04
-
     strategy:
       fail-fast: false
       matrix:
-        rc_branch:
-          - rc/v1.0.0 # TODO(maintainer): Edit here in each fork repository
-
+        beta-branch:
+          - beta/v1.0.0 # TODO(maintainer): Edit here in each fork repository
     steps:
       - name: Set BASE_BRANCH
         run: |
-          echo "BASE_BRANCH=${{ matrix.rc_branch }}" >> $GITHUB_ENV
+          echo "BASE_BRANCH=${{ matrix.beta-branch }}" >> $GITHUB_ENV
 
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -30,8 +28,8 @@ jobs:
           fetch-depth: 0
 
       - name: Generate token
-        uses: tibdex/github-app-token@v1
         id: generate-token
+        uses: tibdex/github-app-token@v1
         with:
           app_id: ${{ secrets.APP_ID }}
           private_key: ${{ secrets.APP_PRIVATE_KEY }}
@@ -61,7 +59,7 @@ jobs:
           rm -rf autoware-release-scripts/ src/
 
       - name: Create PR
-        id: create_pr
+        id: create-pr
         uses: peter-evans/create-pull-request@v3
         with:
           token: ${{ steps.generate-token.outputs.token }}
@@ -81,5 +79,5 @@ jobs:
 
       - name: Check outputs
         run: |
-          echo "Pull Request Number - ${{ steps.create_pr.outputs.pull-request-number }}"
-          echo "Pull Request URL - ${{ steps.create_pr.outputs.pull-request-url }}"
+          echo "Pull Request Number - ${{ steps.create-pr.outputs.pull-request-number }}"
+          echo "Pull Request URL - ${{ steps.create-pr.outputs.pull-request-url }}"
