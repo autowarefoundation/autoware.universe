@@ -260,7 +260,7 @@ void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & st
             whole_level = std::max(whole_level, level);
           }
           // cpu_num++;
-          cpu_usage.cpus.push_back(cpu_status);
+          if (cpu_name != "all") cpu_usage.cpus.push_back(cpu_status);
         }
       }
     }
