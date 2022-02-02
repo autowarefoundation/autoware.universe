@@ -79,7 +79,7 @@ public:
   /****************
    * OPTIMIZATION
    ****************/
-  /// \brief Solves the stored convec quadratic program (QP) problem using the OSQP solver.
+  /// \brief Solves the stored convex quadratic program (QP) problem using the OSQP solver.
   //
   /// \return The function returns a tuple containing the solution as two float vectors.
   /// \return The first element of the tuple contains the 'primal' solution.
