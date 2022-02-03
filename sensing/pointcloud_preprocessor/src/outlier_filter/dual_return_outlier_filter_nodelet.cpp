@@ -40,9 +40,9 @@ DualReturnOutlierFilterComponent::DualReturnOutlierFilterComponent(
     y_min_ = static_cast<float>(declare_parameter("y_min", -2.0));
     z_max_ = static_cast<float>(declare_parameter("z_max", 10.0));
     z_min_ = static_cast<float>(declare_parameter("z_min", 0.0));
-    min_azimuth_ = static_cast<float>(declare_parameter("min_azimuth",13500.0));
+    min_azimuth_ = static_cast<float>(declare_parameter("min_azimuth", 13500.0));
     max_azimuth_ = static_cast<float>(declare_parameter("max_azimuth", 22500.0));
-    max_distance_ = static_cast<float>(declare_parameter("max_distance",12.0));
+    max_distance_ = static_cast<float>(declare_parameter("max_distance", 12.0));
     vertical_bins_ = static_cast<int>(declare_parameter("vertical_bins", 128));
     max_azimuth_diff_ = static_cast<float>(declare_parameter("max_azimuth_diff", 50.0));
     weak_first_distance_ratio_ =
@@ -53,9 +53,11 @@ DualReturnOutlierFilterComponent::DualReturnOutlierFilterComponent(
     weak_first_local_noise_threshold_ =
       static_cast<int>(declare_parameter("weak_first_local_noise_threshold", 10));
     visibility_threshold_ = static_cast<float>(declare_parameter("visibility_threshold", 0.5));
-    ROI_mode_ = static_cast<uchar>(declare_parameter("ROI_mode",0));
-    weak_first_segment_check_size_h_ = static_cast<uint>(declare_parameter("weak_first_segment_check_size_h",30));
-    weak_first_segment_check_size_v_ = static_cast<uint>(declare_parameter("weak_first_segment_check_size_v",3));
+    ROI_mode_ = static_cast<uchar>(declare_parameter("ROI_mode", 0));
+    weak_first_segment_check_size_h_ =
+      static_cast<uint>(declare_parameter("weak_first_segment_check_size_h", 30));
+    weak_first_segment_check_size_v_ =
+      static_cast<uint>(declare_parameter("weak_first_segment_check_size_v", 3));
   }
   updater_.setHardwareID("dual_return_outlier_filter");
   updater_.add(
@@ -110,24 +112,21 @@ void DualReturnOutlierFilterComponent::filter(
   uint32_t horizontal_bins = 36;
   float max_azimuth = 36000.0f;
   float min_azimuth = 0;
-  switch (ROI_mode_)
-  {
-  case 3:
-    {
+  switch (ROI_mode_) {
+    case 3: {
       max_azimuth = max_azimuth_;
       min_azimuth = min_azimuth_;
-    break;
+      break;
     }
-  
-  default:
-    {
+
+    default: {
       max_azimuth = 36000.0f;
       min_azimuth = 0.0f;
-    break;
+      break;
     }
   }
 
-  uint32_t horizontal_res = static_cast<uint32_t> ((max_azimuth - min_azimuth)/horizontal_bins);
+  uint32_t horizontal_res = static_cast<uint32_t>((max_azimuth - min_azimuth) / horizontal_bins);
 
   pcl::PointCloud<return_type_cloud::PointXYZIRADT>::Ptr pcl_output(
     new pcl::PointCloud<return_type_cloud::PointXYZIRADT>);
@@ -147,7 +146,7 @@ void DualReturnOutlierFilterComponent::filter(
   const uint azimuth_steps = 36000;
   float * distance_inputpcl_array = new float[ring_number * azimuth_steps];
   float * distance_weakfirstpcl_array = new float[ring_number * azimuth_steps];
-  for (uint i = 0; i < ring_number * azimuth_steps; i++){
+  for (uint i = 0; i < ring_number * azimuth_steps; i++) {
     distance_inputpcl_array[i] = -1.0f;
     distance_weakfirstpcl_array[i] = -1.0f;
   }
@@ -156,10 +155,10 @@ void DualReturnOutlierFilterComponent::filter(
     uint azimuth_ind = static_cast<uint>(p.azimuth < 0.0f ? p.azimuth + 36000.0f : p.azimuth);
     if (p.return_type == ReturnType::DUAL_WEAK_FIRST) {
       weak_first_pcl_input_ring_array.at(p.ring).push_back(p);
-      distance_weakfirstpcl_array[p.ring*azimuth_steps + azimuth_ind] = p.distance;
+      distance_weakfirstpcl_array[p.ring * azimuth_steps + azimuth_ind] = p.distance;
     } else {
       pcl_input_ring_array.at(p.ring).push_back(p);
-      distance_inputpcl_array[p.ring * azimuth_steps +azimuth_ind] = p.distance;
+      distance_inputpcl_array[p.ring * azimuth_steps + azimuth_ind] = p.distance;
     }
   }
 
@@ -178,37 +177,43 @@ void DualReturnOutlierFilterComponent::filter(
     uint ring_id = weak_first_single_ring.points.front().ring;
     for (auto iter = std::begin(weak_first_single_ring) + 1;
          iter != std::end(weak_first_single_ring) - 1; ++iter) {
-      uint azimuth_id = static_cast<uint> (iter->azimuth);
-      uint segment_check = 0, segment_check_thresh = 2; 
+      uint azimuth_id = static_cast<uint>(iter->azimuth);
+      uint segment_check = 0, segment_check_thresh = 2;
       uint weakfirst_ring_min = 0, weakfirst_ring_max = ring_number;
       uint weakfirst_w_min = 0, weakfirst_w_max = azimuth_steps;
-      
-      weakfirst_ring_min = ring_id > weak_first_segment_check_size_v_ ? 
-        ring_id - weak_first_segment_check_size_v_ : 0;
-      weakfirst_ring_max = ring_id + weak_first_segment_check_size_v_ < ring_number ? 
-        ring_id + weak_first_segment_check_size_v_ + 1: ring_number;
-      weakfirst_w_min = azimuth_id > weak_first_segment_check_size_h_ ? 
-        azimuth_id - weak_first_segment_check_size_h_ : 0;
-      weakfirst_w_max = azimuth_id + weak_first_segment_check_size_h_ < azimuth_steps ? 
-        azimuth_id + weak_first_segment_check_size_h_ +1 : azimuth_steps;
 
-      for ( auto i = weakfirst_ring_min; i < weakfirst_ring_max; i++){
-        for (auto j = weakfirst_w_min; j < weakfirst_w_max; j++){
-          if(distance_weakfirstpcl_array[i*azimuth_steps + j] > 0.0){
-          const float min_dist = std::min(iter->distance, distance_weakfirstpcl_array[i*azimuth_steps + j]);
-          const float max_dist = std::max(iter->distance, distance_weakfirstpcl_array[i* azimuth_steps + j]);
-      float azimuth_diff = (iter + 1)->azimuth - iter->azimuth;
-      azimuth_diff = azimuth_diff < 0.f ? azimuth_diff + 36000.f : azimuth_diff;
+      weakfirst_ring_min =
+        ring_id > weak_first_segment_check_size_v_ ? ring_id - weak_first_segment_check_size_v_ : 0;
+      weakfirst_ring_max = ring_id + weak_first_segment_check_size_v_ < ring_number
+                             ? ring_id + weak_first_segment_check_size_v_ + 1
+                             : ring_number;
+      weakfirst_w_min = azimuth_id > weak_first_segment_check_size_h_
+                          ? azimuth_id - weak_first_segment_check_size_h_
+                          : 0;
+      weakfirst_w_max = azimuth_id + weak_first_segment_check_size_h_ < azimuth_steps
+                          ? azimuth_id + weak_first_segment_check_size_h_ + 1
+                          : azimuth_steps;
 
-          if (max_dist < min_dist * weak_first_distance_ratio_){
-            segment_check++;
+      for (auto i = weakfirst_ring_min; i < weakfirst_ring_max; i++) {
+        for (auto j = weakfirst_w_min; j < weakfirst_w_max; j++) {
+          if (distance_weakfirstpcl_array[i * azimuth_steps + j] > 0.0) {
+            const float min_dist =
+              std::min(iter->distance, distance_weakfirstpcl_array[i * azimuth_steps + j]);
+            const float max_dist =
+              std::max(iter->distance, distance_weakfirstpcl_array[i * azimuth_steps + j]);
+            float azimuth_diff = (iter + 1)->azimuth - iter->azimuth;
+            azimuth_diff = azimuth_diff < 0.f ? azimuth_diff + 36000.f : azimuth_diff;
+
+            if (max_dist < min_dist * weak_first_distance_ratio_) {
+              segment_check++;
+            }
           }
+          if (segment_check >= segment_check_thresh) {
+            goto exit_segment_check;
           }
-          if (segment_check >= segment_check_thresh ){
-            goto exit_segment_check;}
         }
       }
-      exit_segment_check:
+    exit_segment_check:
 
       if (segment_check >= segment_check_thresh) {
         temp_segment.points.push_back(*iter);
@@ -219,60 +224,65 @@ void DualReturnOutlierFilterComponent::filter(
         // Analyse segment points here
       } else {
         // Log the deleted azimuth and its distance for analysis
-        switch (ROI_mode_)
-        {
-        case 1: //dynamic ROI free space 
-        {
-          // check surrounding normal pcl
-          uint neighbor_check = 0, h_range = 3, w_range = 10;
-          uint min_h = 0, max_h = ring_number;
-          uint min_w = 0, max_w = azimuth_steps;
-          min_h = iter->ring > h_range ? iter->ring - h_range : 0;
-          max_h = iter->ring < ring_number - h_range ? iter->ring + h_range : ring_number;
-          
-          min_w = azimuth_id > w_range ? azimuth_id - w_range : 0;
-          max_w = azimuth_id < azimuth_steps - w_range ?  azimuth_id + w_range : azimuth_steps;
-          for (auto i = min_h ; i < max_h; i++){
-            for (auto j = min_w ; j < max_w; j++){
-              if((distance_inputpcl_array[i*azimuth_steps + j] > 0.0f) && (iter->distance > 
-                (distance_inputpcl_array[i*azimuth_steps + j] - neighbor_r_thresh_))){
-                neighbor_check++;
-              }
-              if (neighbor_check > 1){
-                goto exit_neighbor_check;
+        switch (ROI_mode_) {
+          case 1:  // dynamic ROI free space
+          {
+            // check surrounding normal pcl
+            uint neighbor_check = 0, h_range = 3, w_range = 10;
+            uint min_h = 0, max_h = ring_number;
+            uint min_w = 0, max_w = azimuth_steps;
+            min_h = iter->ring > h_range ? iter->ring - h_range : 0;
+            max_h = iter->ring < ring_number - h_range ? iter->ring + h_range : ring_number;
+
+            min_w = azimuth_id > w_range ? azimuth_id - w_range : 0;
+            max_w = azimuth_id < azimuth_steps - w_range ? azimuth_id + w_range : azimuth_steps;
+            for (auto i = min_h; i < max_h; i++) {
+              for (auto j = min_w; j < max_w; j++) {
+                if (
+                  (distance_inputpcl_array[i * azimuth_steps + j] > 0.0f) &&
+                  (iter->distance >
+                   (distance_inputpcl_array[i * azimuth_steps + j] - neighbor_r_thresh_))) {
+                  neighbor_check++;
+                }
+                if (neighbor_check > 1) {
+                  goto exit_neighbor_check;
+                }
               }
             }
-          }
           exit_neighbor_check:
-          if(neighbor_check < 2){
-          deleted_azimuths.push_back(iter->azimuth < 0.f ? 0.f : iter->azimuth);
-          deleted_distances.push_back(iter->distance);
-          noise_output->points.push_back(*iter);}
-          break;
-        }
-        case 2: //base_link xyz-ROI
-        {
-          if (iter->x > x_min_ && iter->x < x_max_ && iter->y > y_min_ && iter->y < y_max_ && iter->z > z_min_ && iter->z < z_max_){
-          deleted_azimuths.push_back(iter->azimuth < 0.f ? 0.f : iter->azimuth);
-          deleted_distances.push_back(iter->distance);
-          noise_output->points.push_back(*iter);}
-          break;
-        }
-        case 3:
-        {
-
-          if (iter->azimuth > min_azimuth && iter->azimuth < max_azimuth && iter->distance < max_distance_){
-          deleted_azimuths.push_back(iter->azimuth < 0.f ? 0.f : iter->azimuth);
-          noise_output->points.push_back(*iter);
-          deleted_distances.push_back(iter->distance);}
-          break;
-        }
-        default:
+            if (neighbor_check < 2) {
+              deleted_azimuths.push_back(iter->azimuth < 0.f ? 0.f : iter->azimuth);
+              deleted_distances.push_back(iter->distance);
+              noise_output->points.push_back(*iter);
+            }
+            break;
+          }
+          case 2:  // base_link xyz-ROI
           {
-          deleted_azimuths.push_back(iter->azimuth < 0.f ? 0.f : iter->azimuth);
-          deleted_distances.push_back(iter->distance);
-          noise_output->points.push_back(*iter);
-          break;
+            if (
+              iter->x > x_min_ && iter->x < x_max_ && iter->y > y_min_ && iter->y < y_max_ &&
+              iter->z > z_min_ && iter->z < z_max_) {
+              deleted_azimuths.push_back(iter->azimuth < 0.f ? 0.f : iter->azimuth);
+              deleted_distances.push_back(iter->distance);
+              noise_output->points.push_back(*iter);
+            }
+            break;
+          }
+          case 3: {
+            if (
+              iter->azimuth > min_azimuth && iter->azimuth < max_azimuth &&
+              iter->distance < max_distance_) {
+              deleted_azimuths.push_back(iter->azimuth < 0.f ? 0.f : iter->azimuth);
+              noise_output->points.push_back(*iter);
+              deleted_distances.push_back(iter->distance);
+            }
+            break;
+          }
+          default: {
+            deleted_azimuths.push_back(iter->azimuth < 0.f ? 0.f : iter->azimuth);
+            deleted_distances.push_back(iter->distance);
+            noise_output->points.push_back(*iter);
+            break;
           }
         }
       }
@@ -286,55 +296,53 @@ void DualReturnOutlierFilterComponent::filter(
         continue;
       }
       while ((uint)deleted_azimuths[current_deleted_index] <
-                ((i + static_cast<uint>(min_azimuth/horizontal_res) + 1) * horizontal_res) &&
+               ((i + static_cast<uint>(min_azimuth / horizontal_res) + 1) * horizontal_res) &&
              current_deleted_index < (deleted_azimuths.size() - 1)) {
         noise_frequency[i] = noise_frequency[i] + 1;
         current_deleted_index++;
       }
       if (temp_segment.points.size() > 0) {
-        
-      while ((temp_segment.points[current_temp_segment_index].azimuth < 0.f
-                ? 0.f
-                : temp_segment.points[current_temp_segment_index].azimuth) <
-                ((i + 1 + static_cast<uint>(min_azimuth/horizontal_res)) * horizontal_res) &&
-             current_temp_segment_index < (temp_segment.points.size() - 1)) {
-        if (noise_frequency[i] < weak_first_local_noise_threshold_) {
-          pcl_output->points.push_back(temp_segment.points[current_temp_segment_index]);
-        } else {
-          switch (ROI_mode_)
-          {
-          case 2:
-          {
-            if(temp_segment.points[current_temp_segment_index].x < x_max_ &&
-            temp_segment.points[current_temp_segment_index].x > x_min_ &&
-            temp_segment.points[current_temp_segment_index].y > y_max_ &&
-            temp_segment.points[current_temp_segment_index].y < y_min_ &&
-            temp_segment.points[current_temp_segment_index].z < z_max_ &&
-            temp_segment.points[current_temp_segment_index].z > z_min_){
-            noise_frequency[i] = noise_frequency[i] + 1;
-            noise_output->points.push_back(temp_segment.points[current_temp_segment_index]);
+        while ((temp_segment.points[current_temp_segment_index].azimuth < 0.f
+                  ? 0.f
+                  : temp_segment.points[current_temp_segment_index].azimuth) <
+                 ((i + 1 + static_cast<uint>(min_azimuth / horizontal_res)) * horizontal_res) &&
+               current_temp_segment_index < (temp_segment.points.size() - 1)) {
+          if (noise_frequency[i] < weak_first_local_noise_threshold_) {
+            pcl_output->points.push_back(temp_segment.points[current_temp_segment_index]);
+          } else {
+            switch (ROI_mode_) {
+              case 2: {
+                if (
+                  temp_segment.points[current_temp_segment_index].x < x_max_ &&
+                  temp_segment.points[current_temp_segment_index].x > x_min_ &&
+                  temp_segment.points[current_temp_segment_index].y > y_max_ &&
+                  temp_segment.points[current_temp_segment_index].y < y_min_ &&
+                  temp_segment.points[current_temp_segment_index].z < z_max_ &&
+                  temp_segment.points[current_temp_segment_index].z > z_min_) {
+                  noise_frequency[i] = noise_frequency[i] + 1;
+                  noise_output->points.push_back(temp_segment.points[current_temp_segment_index]);
+                }
+                break;
+              }
+              case 3: {
+                if (
+                  temp_segment.points[current_temp_segment_index].azimuth < max_azimuth &&
+                  temp_segment.points[current_temp_segment_index].azimuth > min_azimuth &&
+                  temp_segment.points[current_temp_segment_index].distance < max_distance_) {
+                  noise_frequency[i] = noise_frequency[i] + 1;
+                  noise_output->points.push_back(temp_segment.points[current_temp_segment_index]);
+                }
+                break;
+              }
+              default: {
+                noise_frequency[i] = noise_frequency[i] + 1;
+                noise_output->points.push_back(temp_segment.points[current_temp_segment_index]);
+                break;
+              }
             }
-            break;
           }
-          case 3: 
-          {
-            if(temp_segment.points[current_temp_segment_index].azimuth < max_azimuth &&
-            temp_segment.points[current_temp_segment_index].azimuth > min_azimuth &&
-            temp_segment.points[current_temp_segment_index].distance < max_distance_){
-              noise_frequency[i] = noise_frequency[i] + 1;
-              noise_output->points.push_back(temp_segment.points[current_temp_segment_index]);}
-            break;
-          }
-          default: 
-          {
-            noise_frequency[i] = noise_frequency[i] + 1;
-            noise_output->points.push_back(temp_segment.points[current_temp_segment_index]);
-            break;
-          }
-          }
+          current_temp_segment_index++;
         }
-        current_temp_segment_index++;
-      }
       }
       frequency_image.at<uchar>(ring_id, i) = noise_frequency[i];
     }
@@ -373,8 +381,8 @@ void DualReturnOutlierFilterComponent::filter(
     }
   }
 
-  delete [] distance_inputpcl_array;
-  delete [] distance_weakfirstpcl_array;
+  delete[] distance_inputpcl_array;
+  delete[] distance_weakfirstpcl_array;
   // Threshold for diagnostics (tunable)
   cv::Mat binary_image;
   cv::inRange(frequency_image, weak_first_local_noise_threshold_, 255, binary_image);
