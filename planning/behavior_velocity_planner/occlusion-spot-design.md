@@ -141,7 +141,7 @@ end note
 note right
 calculated by
 - ebs deceleration [m/s] emergency braking system consider lateral distance to the occlusion spot.
-- maximum allowed deceleration [m/s]
+- maximum allowed deceleration [m/s^2]
 - min velocity [m/s] the velocity that is allowed on the road.
 - original_velocity [m/s]
 set minimum velocity for path point after occlusion spot.
@@ -237,7 +237,7 @@ note right
 end note
 :calculate collision path point and intersection point;
 }
-partition handle_possible_collision{
+partition handle_possible_collision {
 :filter collision by road type;
 :calculate slow down points for possible collision;
 :handle collision offset;
