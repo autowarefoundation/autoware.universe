@@ -385,7 +385,7 @@ void DualReturnOutlierFilterComponent::filter(
   cv::applyColorMap(frequency_image * 4, frequency_image_colorized, cv::COLORMAP_JET);
   sensor_msgs::msg::Image::SharedPtr frequency_image_msg =
     cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", frequency_image_colorized).toImageMsg();
-
+  frequency_image_msg->header = input->header;
   // Publish histogram image
   image_pub_.publish(frequency_image_msg);
   tier4_debug_msgs::msg::Float32Stamped visibility_msg;
