@@ -44,6 +44,7 @@ DualReturnOutlierFilterComponent::DualReturnOutlierFilterComponent(
     weak_first_local_noise_threshold_ =
       static_cast<int>(declare_parameter("weak_first_local_noise_threshold", 10));
     visibility_threshold_ = static_cast<float>(declare_parameter("visibility_threshold", 0.5));
+    ROI_mode_ = static_cast<uchar>(declare_parameter("ROI_mode",0))azimuth_steps;
     weak_first_segment_check_size_h_ = static_cast<uint>(declare_parameter("weak_first_segment_check_size_h",30));
     weak_first_segment_check_size_v_ = static_cast<uint>(declare_parameter("weak_first_segment_check_size_v",3));
   }
@@ -189,11 +190,47 @@ void DualReturnOutlierFilterComponent::filter(
         // Analyse segment points here
       } else {
         // Log the deleted azimuth and its distance for analysis
-        deleted_azimuths.push_back(iter->azimuth < 0.f ? 0.f : iter->azimuth);
-        deleted_distances.push_back(iter->distance);
-        noise_output->points.push_back(*iter);
-      }
+        switch (ROI_mode_)
+        {
+        case 1: //dynamic ROI free space 
+        {
+          // check surrounding normal pcl
+          uint neighbor_check = 0, h_range = 3, w_range = 10;
+          uint min_h = 0, max_h = ring_number;
+          uint min_w = 0, max_w = azimuth_steps;
+          min_h = iter->ring > h_range ? iter->ring - h_range : 0;
+          max_h = iter->ring < ring_number - h_range ? iter->ring + h_range : ring_number;
+          
+          min_w = azimuth_id > w_range ? azimuth_id - w_range : 0;
+          max_w = azimuth_id < azimuth_steps - w_range ?  azimuth_id + w_range : azimuth_steps;
+          for (auto i = min_h ; i < max_h; i++){
+            for (auto j = min_w ; j < max_w; j++){
+              if((distance_inputpcl_array[i*azimuth_steps + j] > 0.0f) && (iter->distance > 
+                (distance_inputpcl_array[i*azimuth_steps + j] - neighbor_r_thresh_))){
+                neighbor_check++;
+              }
+              if (neighbor_check > 1){
+                goto exit_neighbor_check;
+              }
+            }
+          }
+          exit_neighbor_check:
+          if(neighbor_check < 2){
+          deleted_azimuths.push_back(iter->azimuth < 0.f ? 0.f : iter->azimuth);
+          deleted_distances.push_back(iter->distance);
+          noise_output->points.push_back(*iter);}
+          break;
+        }
+        default:
+          {
+          deleted_azimuths.push_back(iter->azimuth < 0.f ? 0.f : iter->azimuth);
+          deleted_distances.push_back(iter->distance);
+          noise_output->points.push_back(*iter);
+          break;
+          }
+        }
     }
+        }
     // Analyse last segment points here
     std::vector<int> noise_frequency(horizontal_bins, 0);
     uint current_deleted_index = 0;
