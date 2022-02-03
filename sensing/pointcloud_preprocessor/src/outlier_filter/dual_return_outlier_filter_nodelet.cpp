@@ -53,7 +53,7 @@ DualReturnOutlierFilterComponent::DualReturnOutlierFilterComponent(
     weak_first_local_noise_threshold_ =
       static_cast<int>(declare_parameter("weak_first_local_noise_threshold", 10));
     visibility_threshold_ = static_cast<float>(declare_parameter("visibility_threshold", 0.5));
-    ROI_mode_ = static_cast<uchar>(declare_parameter("ROI_mode",0))azimuth_steps;
+    ROI_mode_ = static_cast<uchar>(declare_parameter("ROI_mode",0));
     weak_first_segment_check_size_h_ = static_cast<uint>(declare_parameter("weak_first_segment_check_size_h",30));
     weak_first_segment_check_size_v_ = static_cast<uint>(declare_parameter("weak_first_segment_check_size_v",3));
   }
