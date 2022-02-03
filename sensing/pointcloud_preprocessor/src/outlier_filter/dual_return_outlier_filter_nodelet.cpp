@@ -266,6 +266,7 @@ void DualReturnOutlierFilterComponent::filter(
           noise_output->points.push_back(*iter);
           deleted_distances.push_back(iter->distance);}
           break;
+        }
         default:
           {
           deleted_azimuths.push_back(iter->azimuth < 0.f ? 0.f : iter->azimuth);
@@ -274,8 +275,8 @@ void DualReturnOutlierFilterComponent::filter(
           break;
           }
         }
+      }
     }
-        }
     // Analyse last segment points here
     std::vector<int> noise_frequency(horizontal_bins, 0);
     uint current_deleted_index = 0;
@@ -303,17 +304,18 @@ void DualReturnOutlierFilterComponent::filter(
           switch (ROI_mode_)
           {
           case 2:
-            {if(temp_segment.points[current_temp_segment_index].x < x_max_ &&
+          {
+            if(temp_segment.points[current_temp_segment_index].x < x_max_ &&
             temp_segment.points[current_temp_segment_index].x > x_min_ &&
             temp_segment.points[current_temp_segment_index].y > y_max_ &&
             temp_segment.points[current_temp_segment_index].y < y_min_ &&
             temp_segment.points[current_temp_segment_index].z < z_max_ &&
             temp_segment.points[current_temp_segment_index].z > z_min_){
-          noise_frequency[i] = noise_frequency[i] + 1;
-          noise_output->points.push_back(temp_segment.points[current_temp_segment_index]);
-        }
-            break;
+            noise_frequency[i] = noise_frequency[i] + 1;
+            noise_output->points.push_back(temp_segment.points[current_temp_segment_index]);
             }
+            break;
+          }
           case 3: 
           {
             if(temp_segment.points[current_temp_segment_index].azimuth < max_azimuth &&
@@ -323,7 +325,8 @@ void DualReturnOutlierFilterComponent::filter(
               noise_output->points.push_back(temp_segment.points[current_temp_segment_index]);}
             break;
           }
-          default: {
+          default: 
+          {
             noise_frequency[i] = noise_frequency[i] + 1;
             noise_output->points.push_back(temp_segment.points[current_temp_segment_index]);
             break;
@@ -331,10 +334,9 @@ void DualReturnOutlierFilterComponent::filter(
           }
         }
         current_temp_segment_index++;
-        frequency_image.at<uchar>(ring_id, i) = noise_frequency[i];
       }
       }
-        frequency_image.at<uchar>(ring_id, i) = noise_frequency[i];
+      frequency_image.at<uchar>(ring_id, i) = noise_frequency[i];
     }
   }
 
