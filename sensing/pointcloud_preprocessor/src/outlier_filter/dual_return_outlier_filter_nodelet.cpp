@@ -34,6 +34,12 @@ DualReturnOutlierFilterComponent::DualReturnOutlierFilterComponent(
 {
   // set initial parameters
   {
+    x_max_ = static_cast<float>(declare_parameter("x_max", 18.0));
+    x_min_ = static_cast<float>(declare_parameter("x_min", -12.0));
+    y_max_ = static_cast<float>(declare_parameter("y_max", 2.0));
+    y_min_ = static_cast<float>(declare_parameter("y_min", -2.0));
+    z_max_ = static_cast<float>(declare_parameter("z_max", 10.0));
+    z_min_ = static_cast<float>(declare_parameter("z_min", 0.0));
     vertical_bins_ = static_cast<int>(declare_parameter("vertical_bins", 128));
     max_azimuth_diff_ = static_cast<float>(declare_parameter("max_azimuth_diff", 50.0));
     weak_first_distance_ratio_ =
@@ -221,6 +227,14 @@ void DualReturnOutlierFilterComponent::filter(
           noise_output->points.push_back(*iter);}
           break;
         }
+        case 2: //base_link xyz-ROI
+        {
+          if (iter->x > x_min_ && iter->x < x_max_ && iter->y > y_min_ && iter->y < y_max_ && iter->z > z_min_ && iter->z < z_max_){
+          deleted_azimuths.push_back(iter->azimuth < 0.f ? 0.f : iter->azimuth);
+          deleted_distances.push_back(iter->distance);
+          noise_output->points.push_back(*iter);}
+          break;
+        }
         default:
           {
           deleted_azimuths.push_back(iter->azimuth < 0.f ? 0.f : iter->azimuth);
@@ -245,9 +259,8 @@ void DualReturnOutlierFilterComponent::filter(
         noise_frequency[i] = noise_frequency[i] + 1;
         current_deleted_index++;
       }
-      if (temp_segment.points.size() == 0) {
-        continue;
-      }
+      if (temp_segment.points.size() > 0) {
+        
       while ((temp_segment.points[current_temp_segment_index].azimuth < 0.f
                 ? 0.f
                 : temp_segment.points[current_temp_segment_index].azimuth) <
@@ -256,11 +269,30 @@ void DualReturnOutlierFilterComponent::filter(
         if (noise_frequency[i] < weak_first_local_noise_threshold_) {
           pcl_output->points.push_back(temp_segment.points[current_temp_segment_index]);
         } else {
+          switch (ROI_mode_)
+          {
+          case 2:
+            {if(temp_segment.points[current_temp_segment_index].x < x_max_ &&
+            temp_segment.points[current_temp_segment_index].x > x_min_ &&
+            temp_segment.points[current_temp_segment_index].y > y_max_ &&
+            temp_segment.points[current_temp_segment_index].y < y_min_ &&
+            temp_segment.points[current_temp_segment_index].z < z_max_ &&
+            temp_segment.points[current_temp_segment_index].z > z_min_){
           noise_frequency[i] = noise_frequency[i] + 1;
           noise_output->points.push_back(temp_segment.points[current_temp_segment_index]);
         }
+            break;
+            }
+          default: {
+            noise_frequency[i] = noise_frequency[i] + 1;
+            noise_output->points.push_back(temp_segment.points[current_temp_segment_index]);
+            break;
+          }
+          }
+        }
         current_temp_segment_index++;
         frequency_image.at<uchar>(ring_id, i) = noise_frequency[i];
+      }
       }
     }
   }
