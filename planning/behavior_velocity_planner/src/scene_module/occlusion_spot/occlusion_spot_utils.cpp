@@ -426,7 +426,7 @@ void generateSidewalkPossibleCollisions(
   std::sort(
     sidewalk_slices.begin(), sidewalk_slices.end(),
     [](const geometry::Slice & s1, const geometry::Slice & s2) {
-      return s1.range.min_distance < s2.range.min_distance;
+      return std::abs(s1.range.min_distance) < std::abs(s2.range.min_distance);
     });
 
   std::sort(
