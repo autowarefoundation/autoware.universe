@@ -40,6 +40,9 @@ DualReturnOutlierFilterComponent::DualReturnOutlierFilterComponent(
     y_min_ = static_cast<float>(declare_parameter("y_min", -2.0));
     z_max_ = static_cast<float>(declare_parameter("z_max", 10.0));
     z_min_ = static_cast<float>(declare_parameter("z_min", 0.0));
+    min_azimuth_ = static_cast<float>(declare_parameter("min_azimuth",13500.0));
+    max_azimuth_ = static_cast<float>(declare_parameter("max_azimuth", 22500.0));
+    max_distance_ = static_cast<float>(declare_parameter("max_distance",12.0));
     vertical_bins_ = static_cast<int>(declare_parameter("vertical_bins", 128));
     max_azimuth_diff_ = static_cast<float>(declare_parameter("max_azimuth_diff", 50.0));
     weak_first_distance_ratio_ =
@@ -105,6 +108,26 @@ void DualReturnOutlierFilterComponent::filter(
 
   uint32_t vertical_bins = vertical_bins_;
   uint32_t horizontal_bins = 36;
+  float max_azimuth = 36000.0f;
+  float min_azimuth = 0;
+  switch (ROI_mode_)
+  {
+  case 3:
+    {
+      max_azimuth = max_azimuth_;
+      min_azimuth = min_azimuth_;
+    break;
+    }
+  
+  default:
+    {
+      max_azimuth = 36000.0f;
+      min_azimuth = 0.0f;
+    break;
+    }
+  }
+
+  uint32_t horizontal_res = static_cast<uint32_t> ((max_azimuth - min_azimuth)/horizontal_bins);
 
   pcl::PointCloud<return_type_cloud::PointXYZIRADT>::Ptr pcl_output(
     new pcl::PointCloud<return_type_cloud::PointXYZIRADT>);
@@ -235,6 +258,14 @@ void DualReturnOutlierFilterComponent::filter(
           noise_output->points.push_back(*iter);}
           break;
         }
+        case 3:
+        {
+
+          if (iter->azimuth > min_azimuth && iter->azimuth < max_azimuth && iter->distance < max_distance_){
+          deleted_azimuths.push_back(iter->azimuth < 0.f ? 0.f : iter->azimuth);
+          noise_output->points.push_back(*iter);
+          deleted_distances.push_back(iter->distance);}
+          break;
         default:
           {
           deleted_azimuths.push_back(iter->azimuth < 0.f ? 0.f : iter->azimuth);
@@ -254,7 +285,7 @@ void DualReturnOutlierFilterComponent::filter(
         continue;
       }
       while ((uint)deleted_azimuths[current_deleted_index] <
-               ((i + 1) * (36000 / horizontal_bins)) &&
+                ((i + static_cast<uint>(min_azimuth/horizontal_res) + 1) * horizontal_res) &&
              current_deleted_index < (deleted_azimuths.size() - 1)) {
         noise_frequency[i] = noise_frequency[i] + 1;
         current_deleted_index++;
@@ -264,7 +295,7 @@ void DualReturnOutlierFilterComponent::filter(
       while ((temp_segment.points[current_temp_segment_index].azimuth < 0.f
                 ? 0.f
                 : temp_segment.points[current_temp_segment_index].azimuth) <
-               ((i + 1) * (36000 / horizontal_bins)) &&
+                ((i + 1 + static_cast<uint>(min_azimuth/horizontal_res)) * horizontal_res) &&
              current_temp_segment_index < (temp_segment.points.size() - 1)) {
         if (noise_frequency[i] < weak_first_local_noise_threshold_) {
           pcl_output->points.push_back(temp_segment.points[current_temp_segment_index]);
@@ -283,6 +314,15 @@ void DualReturnOutlierFilterComponent::filter(
         }
             break;
             }
+          case 3: 
+          {
+            if(temp_segment.points[current_temp_segment_index].azimuth < max_azimuth &&
+            temp_segment.points[current_temp_segment_index].azimuth > min_azimuth &&
+            temp_segment.points[current_temp_segment_index].distance < max_distance_){
+              noise_frequency[i] = noise_frequency[i] + 1;
+              noise_output->points.push_back(temp_segment.points[current_temp_segment_index]);}
+            break;
+          }
           default: {
             noise_frequency[i] = noise_frequency[i] + 1;
             noise_output->points.push_back(temp_segment.points[current_temp_segment_index]);

@@ -84,6 +84,9 @@ private:
   float z_max_;
   float z_min_;
 
+  float min_azimuth_;
+  float max_azimuth_;
+  float max_distance_;
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   explicit DualReturnOutlierFilterComponent(const rclcpp::NodeOptions & options);
