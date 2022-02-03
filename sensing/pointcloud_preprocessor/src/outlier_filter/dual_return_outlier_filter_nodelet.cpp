@@ -170,7 +170,7 @@ void DualReturnOutlierFilterComponent::filter(
     if (weak_first_single_ring.points.size() < 2) {
       continue;
     }
-    std::vector<uint> deleted_azimuths;
+    std::vector<float> deleted_azimuths;
     std::vector<float> deleted_distances;
     pcl::PointCloud<return_type_cloud::PointXYZIRADT> temp_segment;
 
@@ -334,6 +334,7 @@ void DualReturnOutlierFilterComponent::filter(
         frequency_image.at<uchar>(ring_id, i) = noise_frequency[i];
       }
       }
+        frequency_image.at<uchar>(ring_id, i) = noise_frequency[i];
     }
   }
 
