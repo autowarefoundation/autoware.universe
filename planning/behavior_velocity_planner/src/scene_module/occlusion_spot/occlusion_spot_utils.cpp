@@ -276,15 +276,15 @@ ArcCoordinates getOcclusionPoint(const PredictedObject & obj, const ConstLineStr
 }
 
 // calculate value removing offset distance or 0
-double calcOffsetValue(const double val, const double offset)
+double calcSignedLateralDistanceWithOffset(const double lateral, const double offset)
 {
   // if distance is lower than offset return 0;
-  if (std::abs(val) < offset) {
+  if (std::abs(lateral) < offset) {
     return 0;
-  } else if (val < 0) {
-    return val + offset;
+  } else if (lateral < 0) {
+    return lateral + offset;
   } else {
-    return val - offset;
+    return lateral - offset;
   }
   // error case
   return -1.0;
@@ -339,7 +339,7 @@ std::vector<PossibleCollisionInfo> generatePossibleCollisionBehindParkedVehicle(
     ArcCoordinates arc_coord_occlusion = getOcclusionPoint(dyn, ll);
     ArcCoordinates arc_coord_occlusion_with_offset = {
       arc_coord_occlusion.length - baselink_to_front,
-      calcOffsetValue(arc_coord_occlusion.distance, half_vehicle_width)};
+      calcSignedLateralDistanceWithOffset(arc_coord_occlusion.distance, half_vehicle_width)};
     // ignore if collision is not avoidable by velocity control.
     if (
       arc_coord_occlusion_with_offset.length < offset_from_start_to_ego ||
@@ -475,7 +475,8 @@ void generateSidewalkPossibleCollisionFromOcclusionSpot(
       lanelet::geometry::toArcCoordinates(path_lanelet.centerline2d(), obstacle_point);
     const double length_to_col = arc_coord_occlusion_point.length - baselink_to_front;
     ArcCoordinates arc_coord_collision_point = {
-      length_to_col, calcOffsetValue(arc_coord_occlusion_point.distance, half_vehicle_width)};
+      length_to_col,
+      calcSignedLateralDistanceWithOffset(arc_coord_occlusion_point.distance, half_vehicle_width)};
     if (length_to_col < offset_from_start_to_ego) {
       continue;
     }
