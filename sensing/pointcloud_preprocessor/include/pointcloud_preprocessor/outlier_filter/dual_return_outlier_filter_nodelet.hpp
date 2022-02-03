@@ -77,6 +77,12 @@ private:
   uint weak_first_segment_check_size_v_;
   uint weak_first_segment_check_size_h_;
   uchar ROI_mode_;
+  float x_max_;
+  float x_min_;
+  float y_max_;
+  float y_min_;
+  float z_max_;
+  float z_min_;
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
