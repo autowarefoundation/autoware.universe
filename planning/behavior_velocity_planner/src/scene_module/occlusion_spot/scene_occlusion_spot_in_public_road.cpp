@@ -70,6 +70,8 @@ bool OcclusionSpotInPublicModule::modifyPathVelocity(
         interp_path, ego_pose, closest_idx, param_.dist_thr, param_.angle_thr)) {
     return true;
   }
+  // return if ego is final point of interpolated path
+  if (closest_idx == static_cast<int>(interp_path.size()) - 1) return true;
   DetectionAreaIdx focus_area =
     extractTargetRoadArcLength(lanelet_map_ptr, param_.detection_area_length, *path, PUBLIC);
   if (!focus_area) return true;

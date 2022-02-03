@@ -187,8 +187,8 @@ void calcSlowDownPointsForPossibleCollision(
   double dist_along_path_point = offset;
   double dist_along_next_path_point = dist_along_path_point;
   for (size_t idx = closest_idx; idx < path.points.size() - 1; idx++) {
-    auto p_prev = path.points[idx].point;
-    auto p_next = path.points[idx + 1].point;
+    auto p_prev = path.points.at(idx).point;
+    auto p_next = path.points.at(idx + 1).point;
     const double dist_to_col =
       possible_collisions.at(collision_index).arc_lane_dist_at_collision.length;
     dist_along_next_path_point +=
@@ -205,7 +205,7 @@ void calcSlowDownPointsForPossibleCollision(
         const double v = getInterpolatedValue(d0, v0, dist_to_col, d1, v1);
         const double z = getInterpolatedValue(d0, p0.z, dist_to_col, d1, p1.z);
         // height is used to visualize marker correctly
-        auto & col = possible_collisions[collision_index];
+        auto & col = possible_collisions.at(collision_index);
         col.collision_path_point.longitudinal_velocity_mps = v;
         col.collision_path_point.pose.position.z = z;
         col.intersection_pose.position.z = z;
@@ -275,7 +275,8 @@ ArcCoordinates getOcclusionPoint(const PredictedObject & obj, const ConstLineStr
   return arcs.at(0);
 }
 
-double calcSgnValue(const double val, const double offset)
+// calculate value removing offset distance or 0
+double calcOffsetValue(const double val, const double offset)
 {
   // if distance is lower than offset return 0;
   if (std::abs(val) < offset) {
@@ -338,7 +339,7 @@ std::vector<PossibleCollisionInfo> generatePossibleCollisionBehindParkedVehicle(
     ArcCoordinates arc_coord_occlusion = getOcclusionPoint(dyn, ll);
     ArcCoordinates arc_coord_occlusion_with_offset = {
       arc_coord_occlusion.length - baselink_to_front,
-      calcSgnValue(arc_coord_occlusion.distance, half_vehicle_width)};
+      calcOffsetValue(arc_coord_occlusion.distance, half_vehicle_width)};
     // ignore if collision is not avoidable by velocity control.
     if (
       arc_coord_occlusion_with_offset.length < offset_from_start_to_ego ||
@@ -474,7 +475,7 @@ void generateSidewalkPossibleCollisionFromOcclusionSpot(
       lanelet::geometry::toArcCoordinates(path_lanelet.centerline2d(), obstacle_point);
     const double length_to_col = arc_coord_occlusion_point.length - baselink_to_front;
     ArcCoordinates arc_coord_collision_point = {
-      length_to_col, calcSgnValue(arc_coord_occlusion_point.distance, half_vehicle_width)};
+      length_to_col, calcOffsetValue(arc_coord_occlusion_point.distance, half_vehicle_width)};
     if (length_to_col < offset_from_start_to_ego) {
       continue;
     }
