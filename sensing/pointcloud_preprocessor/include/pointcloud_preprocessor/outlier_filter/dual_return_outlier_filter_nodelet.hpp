@@ -73,6 +73,8 @@ private:
   double visibility_threshold_;
   int vertical_bins_;
   float max_azimuth_diff_;
+  uint weak_first_segment_check_size_v_;
+  uint weak_first_segment_check_size_h_;
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
