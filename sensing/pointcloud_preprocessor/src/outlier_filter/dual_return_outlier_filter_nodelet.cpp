@@ -44,6 +44,8 @@ DualReturnOutlierFilterComponent::DualReturnOutlierFilterComponent(
     weak_first_local_noise_threshold_ =
       static_cast<int>(declare_parameter("weak_first_local_noise_threshold", 10));
     visibility_threshold_ = static_cast<float>(declare_parameter("visibility_threshold", 0.5));
+    weak_first_segment_check_size_h_ = static_cast<uint>(declare_parameter("weak_first_segment_check_size_h",30));
+    weak_first_segment_check_size_v_ = static_cast<uint>(declare_parameter("weak_first_segment_check_size_v",3));
   }
   updater_.setHardwareID("dual_return_outlier_filter");
   updater_.add(
@@ -111,12 +113,23 @@ void DualReturnOutlierFilterComponent::filter(
     vertical_bins);  // TODO(davidw): this is for Pandar 40 only, make dynamic
   weak_first_pcl_input_ring_array.resize(vertical_bins);
 
+  const uint ring_number = vertical_bins;
+  const uint azimuth_steps = 36000;
+  float * distance_inputpcl_array = new float[ring_number * azimuth_steps];
+  float * distance_weakfirstpcl_array = new float[ring_number * azimuth_steps];
+  for (uint i = 0; i < ring_number * azimuth_steps; i++){
+    distance_inputpcl_array[i] = -1.0f;
+    distance_weakfirstpcl_array[i] = -1.0f;
+  }
   // Split into 36 x 10 degree bins x 40 lines (TODO: change to dynamic)
   for (const auto & p : pcl_input->points) {
+    uint azimuth_ind = static_cast<uint>(p.azimuth < 0.0f ? p.azimuth + 36000.0f : p.azimuth);
     if (p.return_type == ReturnType::DUAL_WEAK_FIRST) {
       weak_first_pcl_input_ring_array.at(p.ring).push_back(p);
+      distance_weakfirstpcl_array[p.ring*azimuth_steps + azimuth_ind] = p.distance;
     } else {
       pcl_input_ring_array.at(p.ring).push_back(p);
+      distance_inputpcl_array[p.ring * azimuth_steps +azimuth_ind] = p.distance;
     }
   }
 
@@ -135,12 +148,39 @@ void DualReturnOutlierFilterComponent::filter(
     uint ring_id = weak_first_single_ring.points.front().ring;
     for (auto iter = std::begin(weak_first_single_ring) + 1;
          iter != std::end(weak_first_single_ring) - 1; ++iter) {
-      const float min_dist = std::min(iter->distance, (iter + 1)->distance);
-      const float max_dist = std::max(iter->distance, (iter + 1)->distance);
+      uint azimuth_id = static_cast<uint> (iter->azimuth);
+      uint segment_check = 0, segment_check_thresh = 2; 
+      uint weakfirst_ring_min = 0, weakfirst_ring_max = ring_number;
+      uint weakfirst_w_min = 0, weakfirst_w_max = azimuth_steps;
+      
+      weakfirst_ring_min = ring_id > weak_first_segment_check_size_v_ ? 
+        ring_id - weak_first_segment_check_size_v_ : 0;
+      weakfirst_ring_max = ring_id + weak_first_segment_check_size_v_ < ring_number ? 
+        ring_id + weak_first_segment_check_size_v_ + 1: ring_number;
+      weakfirst_w_min = azimuth_id > weak_first_segment_check_size_h_ ? 
+        azimuth_id - weak_first_segment_check_size_h_ : 0;
+      weakfirst_w_max = azimuth_id + weak_first_segment_check_size_h_ < azimuth_steps ? 
+        azimuth_id + weak_first_segment_check_size_h_ +1 : azimuth_steps;
+
+      for ( auto i = weakfirst_ring_min; i < weakfirst_ring_max; i++){
+        for (auto j = weakfirst_w_min; j < weakfirst_w_max; j++){
+          if(distance_weakfirstpcl_array[i*azimuth_steps + j] > 0.0){
+          const float min_dist = std::min(iter->distance, distance_weakfirstpcl_array[i*azimuth_steps + j]);
+          const float max_dist = std::max(iter->distance, distance_weakfirstpcl_array[i* azimuth_steps + j]);
       float azimuth_diff = (iter + 1)->azimuth - iter->azimuth;
       azimuth_diff = azimuth_diff < 0.f ? azimuth_diff + 36000.f : azimuth_diff;
 
-      if (max_dist < min_dist * weak_first_distance_ratio_ && azimuth_diff < max_azimuth_diff) {
+          if (max_dist < min_dist * weak_first_distance_ratio_){
+            segment_check++;
+          }
+          }
+          if (segment_check >= segment_check_thresh ){
+            goto exit_segment_check;}
+        }
+      }
+      exit_segment_check:
+
+      if (segment_check >= segment_check_thresh) {
         temp_segment.points.push_back(*iter);
         keep_next = true;
       } else if (keep_next) {
@@ -220,6 +260,9 @@ void DualReturnOutlierFilterComponent::filter(
       pcl_output->points.push_back(tmp_p);
     }
   }
+
+  delete [] distance_inputpcl_array;
+  delete [] distance_weakfirstpcl_array;
   // Threshold for diagnostics (tunable)
   cv::Mat binary_image;
   cv::inRange(frequency_image, weak_first_local_noise_threshold_, 255, binary_image);
