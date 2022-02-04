@@ -10,7 +10,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic -Wno-deprecated-declarations -Werror)
 endif()
 
-option(CUDA_VERBOSE "Verbose output of CUDA modules" OFF)
+option(CUDA_VERBOSE "Verbose output of CUDA modules" ON)
 
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
