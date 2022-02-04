@@ -4,7 +4,6 @@ on:
   schedule:
     - cron: 0 19 * * * # run at 4 AM JST
   workflow_dispatch:
-  pull_request: # tmp
 
 jobs:
   build-and-test-arm:
