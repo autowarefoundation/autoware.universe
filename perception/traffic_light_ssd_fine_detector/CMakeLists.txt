@@ -11,7 +11,7 @@ endif()
 
 project(traffic_light_ssd_fine_detector)
 
-option(CUDA_VERBOSE "Verbose output of CUDA modules" ON)
+option(CUDA_VERBOSE "Verbose output of CUDA modules" OFF)
 
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()

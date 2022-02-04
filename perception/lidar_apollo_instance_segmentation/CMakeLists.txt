@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.5)
 project(lidar_apollo_instance_segmentation)
 
 # tmp: check cuda build
-option(CUDA_VERBOSE "Verbose output of CUDA modules" ON)
+option(CUDA_VERBOSE "Verbose output of CUDA modules" OFF)
 
 # set flags for CUDA availability
 option(CUDA_AVAIL "CUDA available" OFF)
