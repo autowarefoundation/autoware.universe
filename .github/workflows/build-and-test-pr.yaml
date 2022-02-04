@@ -6,7 +6,7 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-    container: ghcr.io/autowarefoundation/autoware-universe:latest
+    container: ros:galactic
     steps:
       - name: Cancel previous runs
         uses: styfle/cancel-workflow-action@0.9.1
