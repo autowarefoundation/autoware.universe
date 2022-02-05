@@ -16,8 +16,6 @@
 
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 
-#include <torch/torch.h>
-
 namespace centerpoint
 {
 VoxelGeneratorTemplate::VoxelGeneratorTemplate(const DensificationParam & param)
@@ -25,23 +23,18 @@ VoxelGeneratorTemplate::VoxelGeneratorTemplate(const DensificationParam & param)
   pd_ptr_ = std::make_unique<PointCloudDensification>(param);
 }
 
-int VoxelGenerator::pointsToVoxels(
-  at::Tensor & voxels, at::Tensor & coordinates, at::Tensor & num_points_per_voxel)
+size_t VoxelGenerator::pointsToVoxels(
+  std::vector<float> & voxels, std::vector<int> & coordinates,
+  std::vector<float> & num_points_per_voxel)
 {
-  // voxels (float): (max_num_voxels, max_num_points_per_voxel, num_point_features)
-  // coordinates (int): (max_num_voxels, num_point_dims)
-  // num_points_per_voxel (int): (max_num_voxels)
+  // voxels (float): (max_num_voxels * max_num_points_per_voxel * num_point_features)
+  // coordinates (int): (max_num_voxels * num_point_dims)
+  // num_points_per_voxel (float): (max_num_voxels)
 
-  at::Tensor coord_to_voxel_idx = torch::full(
-    {Config::grid_size_z, Config::grid_size_y, Config::grid_size_x}, -1,
-    at::TensorOptions().dtype(torch::kInt));
+  const size_t grid_size = Config::grid_size_z * Config::grid_size_y * Config::grid_size_x;
+  std::vector<int> coord_to_voxel_idx(grid_size, -1);
 
-  auto voxels_p = voxels.data_ptr<float>();
-  auto coordinates_p = coordinates.data_ptr<int>();
-  auto num_points_per_voxel_p = num_points_per_voxel.data_ptr<int>();
-  auto coord_to_voxel_idx_p = coord_to_voxel_idx.data_ptr<int>();
-
-  int voxel_cnt = 0;  // @return
+  size_t voxel_cnt = 0;  // @return
   std::array<float, Config::num_point_features> point;
   std::array<float, Config::num_point_dims> coord_zyx;
   bool out_of_range;
@@ -69,7 +62,7 @@ int VoxelGenerator::pointsToVoxels(
 
       out_of_range = false;
       for (int di = 0; di < Config::num_point_dims; di++) {
-        c = static_cast<int>((point[di] - pointcloud_range_[di]) * recip_voxel_size_[di]);
+        c = static_cast<int>((point[di] - range_[di]) * recip_voxel_size_[di]);
         if (c < 0 || c >= grid_size_[di]) {
           out_of_range = true;
           break;
@@ -82,7 +75,7 @@ int VoxelGenerator::pointsToVoxels(
 
       coord_idx = coord_zyx[0] * Config::grid_size_y * Config::grid_size_x +
                   coord_zyx[1] * Config::grid_size_x + coord_zyx[2];
-      voxel_idx = coord_to_voxel_idx_p[coord_idx];
+      voxel_idx = coord_to_voxel_idx[coord_idx];
       if (voxel_idx == -1) {
         voxel_idx = voxel_cnt;
         if (voxel_cnt >= Config::max_num_voxels) {
@@ -90,20 +83,20 @@ int VoxelGenerator::pointsToVoxels(
         }
 
         voxel_cnt++;
-        coord_to_voxel_idx_p[coord_idx] = voxel_idx;
+        coord_to_voxel_idx[coord_idx] = voxel_idx;
         for (int di = 0; di < Config::num_point_dims; di++) {
-          coordinates_p[voxel_idx * Config::num_point_dims + di] = coord_zyx[di];
+          coordinates[voxel_idx * Config::num_point_dims + di] = coord_zyx[di];
         }
       }
 
-      point_cnt = num_points_per_voxel_p[voxel_idx];
+      point_cnt = num_points_per_voxel[voxel_idx];
       if (point_cnt < Config::max_num_points_per_voxel) {
         for (int fi = 0; fi < Config::num_point_features; fi++) {
-          voxels_p
+          voxels
             [voxel_idx * Config::max_num_points_per_voxel * Config::num_point_features +
              point_cnt * Config::num_point_features + fi] = point[fi];
         }
-        num_points_per_voxel_p[voxel_idx]++;
+        num_points_per_voxel[voxel_idx]++;
       }
     }
   }

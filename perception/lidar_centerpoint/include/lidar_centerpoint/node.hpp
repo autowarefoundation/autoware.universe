@@ -58,10 +58,8 @@ private:
 
   std::string encoder_onnx_path_;
   std::string encoder_engine_path_;
-  std::string encoder_pt_path_;
   std::string head_onnx_path_;
   std::string head_engine_path_;
-  std::string head_pt_path_;
 
   std::vector<std::string> class_names_;
   bool rename_car_to_truck_and_bus_{false};

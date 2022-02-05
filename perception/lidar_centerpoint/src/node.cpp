@@ -17,7 +17,9 @@
 #include <config.hpp>
 #include <pcl_ros/transforms.hpp>
 #include <pointcloud_densification.hpp>
+#include <postprocess.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
+#include <tier4_autoware_utils/math/constants.hpp>
 
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
@@ -39,17 +41,13 @@ LidarCenterPointNode::LidarCenterPointNode(const rclcpp::NodeOptions & node_opti
   trt_precision_ = this->declare_parameter("trt_precision", "fp16");
   encoder_onnx_path_ = this->declare_parameter("encoder_onnx_path", "");
   encoder_engine_path_ = this->declare_parameter("encoder_engine_path", "");
-  encoder_pt_path_ = this->declare_parameter("encoder_pt_path", "");
   head_onnx_path_ = this->declare_parameter("head_onnx_path", "");
   head_engine_path_ = this->declare_parameter("head_engine_path", "");
-  head_pt_path_ = this->declare_parameter("head_pt_path", "");
   class_names_ = this->declare_parameter<std::vector<std::string>>("class_names");
   rename_car_to_truck_and_bus_ = this->declare_parameter("rename_car_to_truck_and_bus", false);
 
-  NetworkParam encoder_param(
-    encoder_onnx_path_, encoder_engine_path_, encoder_pt_path_, trt_precision_, use_encoder_trt_);
-  NetworkParam head_param(
-    head_onnx_path_, head_engine_path_, head_pt_path_, trt_precision_, use_head_trt_);
+  NetworkParam encoder_param(encoder_onnx_path_, encoder_engine_path_, trt_precision_);
+  NetworkParam head_param(head_onnx_path_, head_engine_path_, trt_precision_);
   DensificationParam densification_param(
     densification_world_frame_id, densification_num_past_frames);
   detector_ptr_ = std::make_unique<CenterPointTRT>(
@@ -75,26 +73,29 @@ void LidarCenterPointNode::pointCloudCallback(
     return;
   }
 
-  std::vector<float> boxes3d_vec = detector_ptr_->detect(*input_pointcloud_msg, tf_buffer_);
+  std::vector<Box> pred_boxes;
+  bool is_success = detector_ptr_->detect(*input_pointcloud_msg, tf_buffer_, pred_boxes);
+  if (!is_success) {
+    return;
+  }
 
   autoware_auto_perception_msgs::msg::DetectedObjects output_msg;
   output_msg.header = input_pointcloud_msg->header;
-  for (size_t obj_i = 0; obj_i < boxes3d_vec.size() / Config::num_box_features; obj_i++) {
-    float score = boxes3d_vec[obj_i * Config::num_box_features + 0];
+  for (const auto & box : pred_boxes) {
+    float score = box.score;
     if (score < score_threshold_) {
       continue;
     }
-
-    int class_id = static_cast<int>(boxes3d_vec[obj_i * Config::num_box_features + 1]);
-    float x = boxes3d_vec[obj_i * Config::num_box_features + 2];
-    float y = boxes3d_vec[obj_i * Config::num_box_features + 3];
-    float z = boxes3d_vec[obj_i * Config::num_box_features + 4];
-    float w = boxes3d_vec[obj_i * Config::num_box_features + 5];
-    float l = boxes3d_vec[obj_i * Config::num_box_features + 6];
-    float h = boxes3d_vec[obj_i * Config::num_box_features + 7];
-    float yaw = boxes3d_vec[obj_i * Config::num_box_features + 8];
-    float vel_x = boxes3d_vec[obj_i * Config::num_box_features + 9];
-    float vel_y = boxes3d_vec[obj_i * Config::num_box_features + 10];
+    size_t class_id = box.label;
+    float x = box.loc_x;
+    float y = box.loc_y;
+    float z = box.loc_z;
+    float l = box.dim_x;
+    float w = box.dim_y;
+    float h = box.dim_z;
+    float yaw = -std::atan2(box.rot_y, box.rot_x) - tier4_autoware_utils::pi / 2;
+    float vel_x = box.vel_x;
+    float vel_y = box.vel_y;
 
     autoware_auto_perception_msgs::msg::DetectedObject obj;
     // TODO(yukke42): the value of classification confidence of DNN, not probability.

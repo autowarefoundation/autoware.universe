@@ -52,23 +52,27 @@ else()
   set(TRT_AVAIL OFF)
 endif()
 
-option(TORCH_AVAIL "Torch available" OFF)
-if(CUDA_FOUND)
-  set(Torch_DIR /usr/local/libtorch/share/cmake/Torch)
-  find_package(Torch)
-  if(TORCH_FOUND)
-    if(CUDA_VERBOSE)
-      message(STATUS "TORCH_INCLUDE_DIRS: ${TORCH_INCLUDE_DIRS}")
-      message(STATUS "TORCH_LIBRARIES: ${TORCH_LIBRARIES}")
-    endif()
-    set(TORCH_AVAIL ON)
-  else()
-  message("Torch NOT FOUND")
-  set(TORCH_AVAIL OFF)
+# set flags for CUDNN availability
+option(CUDNN_AVAIL "CUDNN available" OFF)
+# try to find the CUDNN module
+find_library(CUDNN_LIBRARY
+NAMES libcudnn.so${__cudnn_ver_suffix} libcudnn${__cudnn_ver_suffix}.dylib ${__cudnn_lib_win_name}
+PATHS $ENV{LD_LIBRARY_PATH} ${__libpath_cudart} ${CUDNN_ROOT_DIR} ${PC_CUDNN_LIBRARY_DIRS} ${CMAKE_INSTALL_PREFIX}
+PATH_SUFFIXES lib lib64 bin
+DOC "CUDNN library."
+)
+if(CUDNN_LIBRARY)
+  if(CUDA_VERBOSE)
+    message(STATUS "CUDNN is available!")
+    message(STATUS "CUDNN_LIBRARY: ${CUDNN_LIBRARY}")
   endif()
+  set(CUDNN_AVAIL ON)
+else()
+  message("CUDNN is NOT Available")
+  set(CUDNN_AVAIL OFF)
 endif()
 
-if(TRT_AVAIL AND CUDA_AVAIL AND TORCH_AVAIL)
+if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
 # Download trained models
   find_program(GDOWN_AVAIL "gdown")
   if(NOT GDOWN_AVAIL)
@@ -95,16 +99,16 @@ if(TRT_AVAIL AND CUDA_AVAIL AND TORCH_AVAIL)
   endfunction()
 
   # default model
-  download(pts_voxel_encoder_default.onnx 1_8OCQmrPm_R4ZVh70QsS9HZo6uGrlbgz 01b860612e497591c4375d90dff61ef7)
-  download(pts_voxel_encoder_default.pt 1RZ7cuDnI-RBrDiWe-2vEs16mR_z0e9Uo 33136caa97e3bcef2cf3e04bbc93d1e4)
-  download(pts_backbone_neck_head_default.onnx 1UxDyt8T-TMJS7Ujx-1vbbqGRfDbMUZg2 e23a8ad4ea440f923e44dbe072b070da)
-  download(pts_backbone_neck_head_default.pt 1toAhmOriX8bwVI-ohuas9_2EBZnltoXh eb0df29b30acf9c1082ac4490af0bbc5)
+  # download(pts_voxel_encoder_default.onnx 1_8OCQmrPm_R4ZVh70QsS9HZo6uGrlbgz 01b860612e497591c4375d90dff61ef7)
+  # download(pts_voxel_encoder_default.pt 1RZ7cuDnI-RBrDiWe-2vEs16mR_z0e9Uo 33136caa97e3bcef2cf3e04bbc93d1e4)
+  # download(pts_backbone_neck_head_default.onnx 1UxDyt8T-TMJS7Ujx-1vbbqGRfDbMUZg2 e23a8ad4ea440f923e44dbe072b070da)
+  # download(pts_backbone_neck_head_default.pt 1toAhmOriX8bwVI-ohuas9_2EBZnltoXh eb0df29b30acf9c1082ac4490af0bbc5)
 
   # aip_x2 model
-  download(pts_voxel_encoder_aip_x2.onnx 1x-NAHQ3W0lbLmjJlrL6Nhvdq8yz6Ux0n 65eeb95c5e48ebfe6894146cdb48c160)
-  download(pts_voxel_encoder_aip_x2.pt 1jzKopAhXWjnEgo_v8rtYy0hQIayUE-oL 4db81ce8edc6571aa0afb1ae43ee72e9)
-  download(pts_backbone_neck_head_aip_x2.onnx 1l2fdIQcBWr3-6stVoNkudnL4OZaPqmNT a33c8910fd9c9c910b10904d3cd96717)
-  download(pts_backbone_neck_head_aip_x2.pt 18iOAlRsjvcWoUG9KiL1PlD7OY5mi9BSw 274fdf1580dd899e36c050c1366f1883)
+  # download(pts_voxel_encoder_aip_x2.onnx 1x-NAHQ3W0lbLmjJlrL6Nhvdq8yz6Ux0n 65eeb95c5e48ebfe6894146cdb48c160)
+  # download(pts_voxel_encoder_aip_x2.pt 1jzKopAhXWjnEgo_v8rtYy0hQIayUE-oL 4db81ce8edc6571aa0afb1ae43ee72e9)
+  # download(pts_backbone_neck_head_aip_x2.onnx 1l2fdIQcBWr3-6stVoNkudnL4OZaPqmNT a33c8910fd9c9c910b10904d3cd96717)
+  # download(pts_backbone_neck_head_aip_x2.pt 18iOAlRsjvcWoUG9KiL1PlD7OY5mi9BSw 274fdf1580dd899e36c050c1366f1883)
 
   find_package(ament_cmake_auto REQUIRED)
   ament_auto_find_build_dependencies()
@@ -112,7 +116,6 @@ if(TRT_AVAIL AND CUDA_AVAIL AND TORCH_AVAIL)
   include_directories(
     lib/include
     ${CUDA_INCLUDE_DIRS}
-    ${TORCH_INCLUDE_DIRS}
   )
 
   ### centerpoint ###
@@ -122,15 +125,22 @@ if(TRT_AVAIL AND CUDA_AVAIL AND TORCH_AVAIL)
     lib/src/centerpoint_trt.cpp
     lib/src/tensorrt_wrapper.cpp
     lib/src/network_trt.cpp
+    lib/src/postprocess.cpp
   )
+
+  cuda_add_library(centerpoint_cuda_libraries SHARED
+    lib/src/preprocess_kernels.cu
+    lib/src/scatter_kernels.cu
+)
 
   target_link_libraries(centerpoint
     ${NVINFER}
     ${NVONNXPARSER}
-    ${NVINFER_PLUGIN}
     ${CUDA_LIBRARIES}
     ${CUBLAS_LIBRARIES}
-    ${TORCH_LIBRARIES}
+    ${CUDA_curand_LIBRARY}
+    ${CUDNN_LIBRARY}
+    centerpoint_cuda_libraries
   )
 
   ## node ##

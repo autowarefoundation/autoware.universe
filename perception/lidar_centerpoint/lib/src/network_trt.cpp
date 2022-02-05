@@ -28,6 +28,7 @@ bool VoxelEncoderTRT::setProfile(
   profile->setDimensions(input_name, nvinfer1::OptProfileSelector::kMIN, in_dims);
   profile->setDimensions(input_name, nvinfer1::OptProfileSelector::kOPT, in_dims);
   profile->setDimensions(input_name, nvinfer1::OptProfileSelector::kMAX, in_dims);
+
   auto output_name = network.getOutput(0)->getName();
   auto out_dims = nvinfer1::Dims2(Config::max_num_voxels, Config::num_encoder_output_features);
   profile->setDimensions(output_name, nvinfer1::OptProfileSelector::kMIN, out_dims);

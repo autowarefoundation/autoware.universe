@@ -13,13 +13,9 @@
 // limitations under the License.
 
 #include <centerpoint_trt.hpp>
-#include <heatmap_utils.hpp>
+#include <preprocess_kernels.hpp>
+#include <scatter_kernels.hpp>
 #include <tier4_autoware_utils/math/constants.hpp>
-
-#include <ATen/cuda/CUDAContext.h>
-#include <NvOnnxParser.h>
-#include <c10/cuda/CUDAStream.h>
-#include <torch/script.h>
 
 #include <iostream>
 #include <memory>
@@ -28,38 +24,30 @@
 
 namespace centerpoint
 {
-using torch::indexing::Slice;
-
 CenterPointTRT::CenterPointTRT(
   const int num_class, const NetworkParam & encoder_param, const NetworkParam & head_param,
   const DensificationParam & densification_param)
 : num_class_(num_class)
 {
   vg_ptr_ = std::make_unique<VoxelGenerator>(densification_param);
-  bool verbose = false;
 
-  if (encoder_param.use_trt()) {
-    encoder_trt_ptr_ = std::make_unique<VoxelEncoderTRT>(verbose);
-    encoder_trt_ptr_->init(
-      encoder_param.onnx_path(), encoder_param.engine_path(), encoder_param.trt_precision());
-  } else {
-    loadTorchScript(encoder_pt_, encoder_param.pt_path());
-  }
+  // encoder
+  encoder_trt_ptr_ = std::make_unique<VoxelEncoderTRT>(verbose_);
+  encoder_trt_ptr_->init(
+    encoder_param.onnx_path(), encoder_param.engine_path(), encoder_param.trt_precision());
+  encoder_trt_ptr_->context_->setBindingDimensions(
+    0, nvinfer1::Dims3(
+         Config::max_num_voxels, Config::max_num_points_per_voxel,
+         Config::num_encoder_input_features));
 
-  if (head_param.use_trt()) {
-    head_trt_ptr_ = std::make_unique<HeadTRT>(num_class, verbose);
-    head_trt_ptr_->init(
-      head_param.onnx_path(), head_param.engine_path(), head_param.trt_precision());
-    head_trt_ptr_->context_->setBindingDimensions(
-      0, nvinfer1::Dims4(
-           1, Config::num_encoder_output_features, Config::grid_size_y, Config::grid_size_x));
-  } else {
-    loadTorchScript(head_pt_, head_param.pt_path());
-  }
+  // head
+  head_trt_ptr_ = std::make_unique<HeadTRT>(num_class, verbose_);
+  head_trt_ptr_->init(head_param.onnx_path(), head_param.engine_path(), head_param.trt_precision());
+  head_trt_ptr_->context_->setBindingDimensions(
+    0, nvinfer1::Dims4(
+         1, Config::num_encoder_output_features, Config::grid_size_y, Config::grid_size_x));
 
-  initPtr(encoder_param.use_trt(), head_param.use_trt());
-
-  torch::set_num_threads(1);  // disable CPU parallelization
+  initPtr();
 
   cudaStreamCreate(&stream_);
 }
@@ -72,235 +60,141 @@ CenterPointTRT::~CenterPointTRT()
   }
 }
 
-bool CenterPointTRT::initPtr(const bool use_encoder_trt, const bool use_head_trt)
+void CenterPointTRT::initPtr()
 {
-  if (use_encoder_trt) {
-    output_pillar_feature_t_ = torch::zeros(
-      {Config::max_num_voxels, Config::num_encoder_output_features},
-      torch::TensorOptions().device(device_).dtype(torch::kFloat));
-  }
+  voxels_d_ = cuda::make_unique<float[]>(size_of_voxels_);
+  coordinates_d_ = cuda::make_unique<int[]>(size_of_coordinates_);
+  num_points_per_voxel_d_ = cuda::make_unique<float[]>(size_of_num_points_per_voxel_);
+  input_features_d_ = cuda::make_unique<float[]>(input_features_size_);
+  pillar_features_d_ = cuda::make_unique<float[]>(pillar_features_size_);
+  spatial_features_d_ = cuda::make_unique<float[]>(spatial_features_size_);
 
-  if (use_head_trt) {
-    const int downsample_grid_x =
-      static_cast<int>(static_cast<float>(Config::grid_size_x) / Config::downsample_factor);
-    const int downsample_grid_y =
-      static_cast<int>(static_cast<float>(Config::grid_size_y) / Config::downsample_factor);
-    auto torch_options = torch::TensorOptions().device(device_).dtype(torch::kFloat);
-    output_heatmap_t_ = torch::zeros(
-      {Config::batch_size, num_class_, downsample_grid_y, downsample_grid_x}, torch_options);
-    output_offset_t_ = torch::zeros(
-      {Config::batch_size, Config::num_output_offset_features, downsample_grid_y,
-       downsample_grid_x},
-      torch_options);
-    output_z_t_ = torch::zeros(
-      {Config::batch_size, Config::num_output_z_features, downsample_grid_y, downsample_grid_x},
-      torch_options);
-    output_dim_t_ = torch::zeros(
-      {Config::batch_size, Config::num_output_dim_features, downsample_grid_y, downsample_grid_x},
-      torch_options);
-    output_rot_t_ = torch::zeros(
-      {Config::batch_size, Config::num_output_rot_features, downsample_grid_y, downsample_grid_x},
-      torch_options);
-    output_vel_t_ = torch::zeros(
-      {Config::batch_size, Config::num_output_vel_features, downsample_grid_y, downsample_grid_x},
-      torch_options);
-  }
-
-  return true;
+  const int downsample_grid_x =
+    static_cast<int>(static_cast<float>(Config::grid_size_x) / Config::downsample_factor);
+  const int downsample_grid_y =
+    static_cast<int>(static_cast<float>(Config::grid_size_y) / Config::downsample_factor);
+  const int grid_xy = downsample_grid_x * downsample_grid_y;
+  output_heatmap_d_ = cuda::make_unique<float[]>(grid_xy * num_class_);
+  output_offset_d_ = cuda::make_unique<float[]>(grid_xy * Config::num_output_offset_features);
+  output_z_d_ = cuda::make_unique<float[]>(grid_xy * Config::num_output_z_features);
+  output_dim_d_ = cuda::make_unique<float[]>(grid_xy * Config::num_output_dim_features);
+  output_rot_d_ = cuda::make_unique<float[]>(grid_xy * Config::num_output_rot_features);
+  output_vel_d_ = cuda::make_unique<float[]>(grid_xy * Config::num_output_vel_features);
 }
 
-std::vector<float> CenterPointTRT::detect(
-  const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const tf2_ros::Buffer & tf_buffer)
+bool CenterPointTRT::detect(
+  const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const tf2_ros::Buffer & tf_buffer,
+  std::vector<Box> & pred_boxes)
 {
-  voxels_t_ = torch::zeros(
-    {Config::max_num_voxels, Config::max_num_points_per_voxel, Config::num_point_features},
-    torch::TensorOptions().device(torch::kCPU).dtype(torch::kFloat));
-  coordinates_t_ = torch::zeros(
-    {Config::max_num_voxels, Config::num_point_dims},
-    torch::TensorOptions().device(torch::kCPU).dtype(torch::kInt));
-  num_points_per_voxel_t_ = torch::zeros(
-    {Config::max_num_voxels}, torch::TensorOptions().device(torch::kCPU).dtype(torch::kInt));
+  CHECK_CUDA_ERROR(
+    cudaMemsetAsync(input_features_d_.get(), 0, input_features_size_ * sizeof(float), stream_));
+  CHECK_CUDA_ERROR(
+    cudaMemsetAsync(spatial_features_d_.get(), 0, spatial_features_size_ * sizeof(float), stream_));
 
-  vg_ptr_->pd_ptr_->enqueuePointCloud(input_pointcloud_msg, tf_buffer);
-  int num_voxels = vg_ptr_->pointsToVoxels(voxels_t_, coordinates_t_, num_points_per_voxel_t_);
-  // Note: unlike python implementation, no slicing by num_voxels
-  //       .s.t voxels_t_ = voxels_t_[:num_voxels].
-  //       w/ slicing more GPU memories are allocated
-
-  voxels_t_ = voxels_t_.to(device_);
-  coordinates_t_ = coordinates_t_.to(device_);
-  num_points_per_voxel_t_ = num_points_per_voxel_t_.to(device_);
-  at::Tensor input_features =
-    createInputFeatures(voxels_t_, coordinates_t_, num_points_per_voxel_t_);
-
-  // Note: num_voxels <= max_num_voxels, so input_features[num_voxels:] are invalid features.
-  input_features.index_put_({Slice(num_voxels)}, 0);
-
-  if (encoder_trt_ptr_ && encoder_trt_ptr_->context_) {
-    std::vector<void *> encoder_buffers{
-      input_features.data_ptr(), output_pillar_feature_t_.data_ptr()};
-    encoder_trt_ptr_->context_->setBindingDimensions(
-      0, nvinfer1::Dims3(
-           Config::max_num_voxels, Config::max_num_points_per_voxel,
-           Config::num_encoder_input_features));
-    encoder_trt_ptr_->context_->enqueueV2(encoder_buffers.data(), stream_, nullptr);
-  } else {
-    std::vector<torch::jit::IValue> batch_input_features;
-    batch_input_features.emplace_back(input_features);
-    batch_input_features.emplace_back(num_points_per_voxel_t_);
-    batch_input_features.emplace_back(coordinates_t_);
-    {
-      torch::NoGradGuard no_grad;
-      output_pillar_feature_t_ = encoder_pt_.forward(batch_input_features).toTensor();
-    }
-  }
-
-  at::Tensor spatial_features =
-    scatterPillarFeatures(output_pillar_feature_t_, coordinates_t_.to(torch::kLong));
-
-  if (head_trt_ptr_ && head_trt_ptr_->context_) {
-    std::vector<void *> head_buffers = {spatial_features.data_ptr(), output_heatmap_t_.data_ptr(),
-                                        output_offset_t_.data_ptr(), output_z_t_.data_ptr(),
-                                        output_dim_t_.data_ptr(),    output_rot_t_.data_ptr(),
-                                        output_vel_t_.data_ptr()};
-    head_trt_ptr_->context_->enqueueV2(head_buffers.data(), stream_, nullptr);
-  } else {
-    std::vector<torch::jit::IValue> batch_spatial_features;
-    batch_spatial_features.emplace_back(spatial_features);
-
-    {
-      torch::NoGradGuard no_grad;
-      auto pred_arr = head_pt_.forward(batch_spatial_features).toTuple()->elements();
-      output_heatmap_t_ = pred_arr[0].toTensor();
-      output_offset_t_ = pred_arr[1].toTensor();
-      output_z_t_ = pred_arr[2].toTensor();
-      output_dim_t_ = pred_arr[3].toTensor();
-      output_rot_t_ = pred_arr[4].toTensor();
-      output_vel_t_ = pred_arr[5].toTensor();
-    }
-  }
-
-  at::Tensor boxes3d = generatePredictedBoxes();
-  std::vector<float> boxes3d_vec =
-    std::vector<float>(boxes3d.data_ptr<float>(), boxes3d.data_ptr<float>() + boxes3d.numel());
-
-  return boxes3d_vec;
-}
-
-at::Tensor CenterPointTRT::createInputFeatures(
-  const at::Tensor & voxels, const at::Tensor & coords, const at::Tensor & voxel_num_points)
-{
-  // voxels (float): (num_pillars, num_max_points, num_point_features)
-  // coordinates (int): (num_pillars, num_point_dims)
-  // voxel_num_points (int): (num_pillars,)
-
-  at::Tensor coords_f = coords.to(torch::kFloat);
-  at::Tensor voxel_num_points_f = voxel_num_points.to(torch::kFloat);
-
-  at::Tensor points_mean =
-    voxels.slice(/*dim=*/2, /*start=*/0, /*end=*/3).sum({1}, /*keepdim=*/true) /
-    voxel_num_points_f.view({-1, 1, 1});
-  at::Tensor cluster = voxels.slice(2, 0, 3) - points_mean;
-
-  // Note: unlike python implementation, batch_index isn't used in coords,
-  at::Tensor center_x =
-    voxels.slice(2, 0, 1) -
-    (coords_f.slice(1, 2, 3).unsqueeze(2) * Config::voxel_size_x + Config::offset_x);
-  at::Tensor center_y =
-    voxels.slice(2, 1, 2) -
-    (coords_f.slice(1, 1, 2).unsqueeze(2) * Config::voxel_size_y + Config::offset_y);
-  at::Tensor input_features = torch::cat({voxels, cluster, center_x, center_y}, /*dim=*/2);
-
-  // paddings_indicator
-  const size_t axis = 0;
-  const int voxel_cnt = input_features.sizes()[1];
-  at::Tensor actual_num = voxel_num_points.unsqueeze(axis + 1);
-  at::Tensor max_num =
-    torch::arange(
-      voxel_cnt, torch::TensorOptions().dtype(torch::kInt32).device(actual_num.device()))
-      .view({1, -1});
-  at::Tensor mask = actual_num.to(torch::kInt32) > max_num;
-  mask = mask.unsqueeze(-1).to(torch::kFloat);
-  input_features *= mask;
-
-  return input_features;  // (num_pillars, num_max_points, num_voxel_features)
-}
-
-at::Tensor CenterPointTRT::scatterPillarFeatures(
-  const at::Tensor & pillar_features, const at::Tensor & coordinates)
-{
-  // pillar_features (float): (num_pillars, num_encoder_output_features)
-  // coordinates (float): (num_pillars, num_point_dims)
-
-  at::Tensor spatial_feature = torch::zeros(
-    {Config::num_encoder_output_features, Config::grid_size_y * Config::grid_size_x},
-    torch::TensorOptions().dtype(pillar_features.dtype()).device(pillar_features.device()));
-  auto index = coordinates.select(1, 1) * Config::grid_size_x + coordinates.select(1, 2);
-  spatial_feature.index_put_({"...", index}, pillar_features.t());
-
-  return spatial_feature.view({1 /*batch size*/, -1, Config::grid_size_y, Config::grid_size_x})
-    .contiguous();
-}
-
-at::Tensor CenterPointTRT::generatePredictedBoxes()
-{
-  // output_heatmap (float): (batch_size, num_class, H, W)
-  // output_offset (float): (batch_size, num_offset_features, H, W)
-  // output_z (float): (batch_size, num_z_features, H, W)
-  // output_dim (float): (batch_size, num_dim_features, H, W)
-  // output_rot (float): (batch_size, num_rot_features, H, W)
-  // output_vel (float): (batch_size, num_vel_features, H, W)
-
-  at::Tensor heatmap_pred = output_heatmap_t_.clone();
-  heatmap_pred = sigmoid_hm(heatmap_pred);
-  heatmap_pred = nms_hm(heatmap_pred);
-
-  auto topk_tuple = select_topk(heatmap_pred, Config::max_num_output_objects);
-  at::Tensor scores = std::get<0>(topk_tuple);
-  at::Tensor index = std::get<1>(topk_tuple);
-  at::Tensor classes = std::get<2>(topk_tuple);
-  at::Tensor ys = std::get<3>(topk_tuple);
-  at::Tensor xs = std::get<4>(topk_tuple);
-
-  at::Tensor offset_poi = select_point_of_interest(index, output_offset_t_);
-  at::Tensor z_poi = select_point_of_interest(index, output_z_t_);
-  at::Tensor dim_poi = select_point_of_interest(index, output_dim_t_);
-  at::Tensor rot_poi = select_point_of_interest(index, output_rot_t_);
-  at::Tensor vel_poi = select_point_of_interest(index, output_vel_t_);
-
-  at::Tensor x = Config::voxel_size_x * Config::downsample_factor *
-                   (xs.view({1, -1, 1}) + offset_poi.slice(2, 0, 1)) +
-                 Config::pointcloud_range_xmin;
-  at::Tensor y = Config::voxel_size_y * Config::downsample_factor *
-                   (ys.view({1, -1, 1}) + offset_poi.slice(2, 1, 2)) +
-                 Config::pointcloud_range_ymin;
-  dim_poi = torch::exp(dim_poi);
-  at::Tensor rot = torch::atan2(rot_poi.slice(2, 0, 1), rot_poi.slice(2, 1, 2));
-  rot = -rot - tier4_autoware_utils::pi / 2;
-
-  at::Tensor boxes3d =
-    torch::cat(
-      {scores.view({1, -1, 1}), classes.view({1, -1, 1}), x, y, z_poi, dim_poi, rot, vel_poi},
-      /*dim=*/2)
-      .contiguous()
-      .to(torch::kCPU)
-      .to(torch::kFloat);
-
-  return boxes3d;
-}
-
-bool CenterPointTRT::loadTorchScript(
-  torch::jit::script::Module & module, const std::string & model_path)
-{
-  try {
-    module = torch::jit::load(model_path, device_);
-    module.eval();
-  } catch (const c10::Error & e) {
-    std::cout << "LOADING ERROR: " << e.msg() << std::endl;
+  if (!preprocess(input_pointcloud_msg, tf_buffer)) {
+    std::cout << "fail preprocess" << std::endl;
     return false;
   }
-  std::cout << "Loading from " << model_path << std::endl;
+
+  inference();
+
+  postprocess(pred_boxes);
+
   return true;
+}
+
+bool CenterPointTRT::preprocess(
+  const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const tf2_ros::Buffer & tf_buffer)
+{
+  std::vector<float> voxels(size_of_voxels_, 0);
+  std::vector<int> coordinates(size_of_coordinates_, -1);
+  std::vector<float> num_points_per_voxel(size_of_num_points_per_voxel_, 0);
+
+  vg_ptr_->pd_ptr_->enqueuePointCloud(input_pointcloud_msg, tf_buffer);
+  num_voxels_ = vg_ptr_->pointsToVoxels(voxels, coordinates, num_points_per_voxel);
+  if (num_voxels_ == 0) {
+    return false;
+  }
+
+  CHECK_CUDA_ERROR(cudaMemcpyAsync(
+    voxels_d_.get(), voxels.data(), voxels.size() * sizeof(float), cudaMemcpyHostToDevice));
+  CHECK_CUDA_ERROR(cudaMemcpyAsync(
+    coordinates_d_.get(), coordinates.data(), coordinates.size() * sizeof(int),
+    cudaMemcpyHostToDevice));
+  CHECK_CUDA_ERROR(cudaMemcpyAsync(
+    num_points_per_voxel_d_.get(), num_points_per_voxel.data(),
+    num_points_per_voxel.size() * sizeof(float), cudaMemcpyHostToDevice));
+  CHECK_CUDA_ERROR(cudaStreamSynchronize(stream_));
+
+  CHECK_CUDA_ERROR(generateFeatures_launch(
+    voxels_d_.get(), num_points_per_voxel_d_.get(), coordinates_d_.get(), num_voxels_,
+    Config::max_num_voxels, Config::voxel_size_x, Config::voxel_size_y, Config::voxel_size_z,
+    Config::range_min_x, Config::range_min_y, Config::range_min_z, input_features_d_.get(),
+    stream_));
+
+  return true;
+}
+
+void CenterPointTRT::inference()
+{
+  if (!encoder_trt_ptr_->context_ || !head_trt_ptr_->context_) {
+    throw std::runtime_error("Fail to create context");
+  }
+
+  std::vector<void *> encoder_buffers{input_features_d_.get(), pillar_features_d_.get()};
+  encoder_trt_ptr_->context_->enqueueV2(encoder_buffers.data(), stream_, nullptr);
+
+  CHECK_CUDA_ERROR(scatterFeatures_launch(
+    pillar_features_d_.get(), coordinates_d_.get(), num_voxels_, Config::max_num_voxels,
+    Config::num_encoder_output_features, Config::grid_size_x, Config::grid_size_y,
+    spatial_features_d_.get(), stream_));
+
+  std::vector<void *> head_buffers = {
+    spatial_features_d_.get(), 
+    output_heatmap_d_.get(), 
+    output_offset_d_.get(),
+    output_z_d_.get(), 
+    output_dim_d_.get(), 
+    output_rot_d_.get(),
+    output_vel_d_.get()};
+  head_trt_ptr_->context_->enqueueV2(head_buffers.data(), stream_, nullptr);
+}
+
+void CenterPointTRT::postprocess(std::vector<Box> & pred_boxes)
+{
+  const int downsample_grid_x =
+    static_cast<int>(static_cast<float>(Config::grid_size_x) / Config::downsample_factor);
+  const int downsample_grid_y =
+    static_cast<int>(static_cast<float>(Config::grid_size_y) / Config::downsample_factor);
+  const int grid_xy = downsample_grid_x * downsample_grid_y;
+  std::vector<float> output_heatmap(grid_xy * num_class_);
+  std::vector<float> output_offset(grid_xy * Config::num_output_offset_features);
+  std::vector<float> output_z(grid_xy * Config::num_output_z_features);
+  std::vector<float> output_dim(grid_xy * Config::num_output_dim_features);
+  std::vector<float> output_rot(grid_xy * Config::num_output_rot_features);
+  std::vector<float> output_vel(grid_xy * Config::num_output_vel_features);
+
+  CHECK_CUDA_ERROR(cudaMemcpyAsync(
+    output_heatmap.data(), output_heatmap_d_.get(), output_heatmap.size() * sizeof(float),
+    cudaMemcpyDeviceToHost));
+  CHECK_CUDA_ERROR(cudaMemcpyAsync(
+    output_offset.data(), output_offset_d_.get(), output_offset.size() * sizeof(float),
+    cudaMemcpyDeviceToHost));
+  CHECK_CUDA_ERROR(cudaMemcpyAsync(
+    output_z.data(), output_z_d_.get(), output_z.size() * sizeof(float), cudaMemcpyDeviceToHost));
+  CHECK_CUDA_ERROR(cudaMemcpyAsync(
+    output_dim.data(), output_dim_d_.get(), output_dim.size() * sizeof(float),
+    cudaMemcpyDeviceToHost));
+  CHECK_CUDA_ERROR(cudaMemcpyAsync(
+    output_rot.data(), output_rot_d_.get(), output_rot.size() * sizeof(float),
+    cudaMemcpyDeviceToHost));
+  CHECK_CUDA_ERROR(cudaMemcpyAsync(
+    output_vel.data(), output_vel_d_.get(), output_vel.size() * sizeof(float),
+    cudaMemcpyDeviceToHost));
+  CHECK_CUDA_ERROR(cudaStreamSynchronize(stream_));
+
+  generatePredictedBoxes(
+    output_heatmap, output_offset, output_z, output_dim, output_rot, output_vel, pred_boxes);
 }
 
 }  // namespace centerpoint
