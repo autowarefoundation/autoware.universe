@@ -90,16 +90,10 @@ OcclusionSpotModuleManager::OcclusionSpotModuleManager(rclcpp::Node & node)
   pp.angle_thr = node.declare_parameter(ns + ".threshold.search_angle", M_PI / 5.0);
   pp.show_debug_grid = node.declare_parameter(ns + ".show_debug_grid", false);
 
-  // public road ego param
-  pp.public_road.min_velocity = node.declare_parameter(ns + ".public_road.min_velocity", 2.7);
-  pp.public_road.ebs_decel = node.declare_parameter(ns + ".public_road.ebs_decel", -5.0);
-  pp.public_road.max_decel = node.declare_parameter(ns + ".public_road.max_decel", -1.5);
-
-  // private road
-  pp.private_road.min_velocity = node.declare_parameter(ns + ".private_road.min_velocity", 1.5);
-  pp.private_road.ebs_decel = node.declare_parameter(ns + ".private_road.ebs_decel", -4.0);
-  pp.private_road.max_decel = node.declare_parameter(ns + ".private_road.max_decel", -2.5);
-
+  // ego additional velocity config
+  pp.v.safety_ratio = node.declare_parameter(ns + ".v.safety_ratio", 1.0);
+  pp.v.a_min = node.declare_parameter(ns + ".v.a_min", -1.5);
+  pp.v.v_min = node.declare_parameter(ns + ".v.v_min", 1.5);
   // sidewalk param
   pp.sidewalk.min_occlusion_spot_size =
     node.declare_parameter(ns + ".sidewalk.min_occlusion_spot_size", 2.0);
@@ -108,6 +102,10 @@ OcclusionSpotModuleManager::OcclusionSpotModuleManager(rclcpp::Node & node)
   // occupancy grid param
   pp.grid.free_space_max = node.declare_parameter(ns + ".grid.free_space_max", 10);
   pp.grid.occupied_min = node.declare_parameter(ns + ".grid.occupied_min", 51);
+
+  const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo();
+  pp.baselink_to_front = vehicle_info.max_longitudinal_offset_m;
+  pp.half_vehicle_width = 0.5 * vehicle_info.vehicle_width_m;
 }
 
 void OcclusionSpotModuleManager::launchNewModules(

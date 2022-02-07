@@ -21,30 +21,6 @@
 
 #include <limits>
 
-TEST(calculateMinAllowedVelocity, min_max)
-{
-  using behavior_velocity_planner::occlusion_spot_utils::calculateMinAllowedVelocity;
-  const double inf = std::numeric_limits<double>::max();
-  std::cout << "PBS(v0,dist,pbs) of (10,2,-inf) --> 0[m/s]  \n";
-  // lower bound ego_vel
-  ASSERT_EQ(calculateMinAllowedVelocity(0, 2, -inf), 0);
-  std::cout << "PBS(v0,dist,pbs) of (10,inf,0) --> 10[m/s]  \n";
-  // upper bound
-  ASSERT_EQ(calculateMinAllowedVelocity(10, inf, 0), 10);
-}
-
-TEST(calculateSafeVelocity, min_max)
-{
-  using behavior_velocity_planner::occlusion_spot_utils::calculateSafeVelocity;
-  // lower bound ttc_vir = 0
-  const double t_buff = 0.5;
-  double d_obs = 0.5;
-  double v_obs = 1.0;
-  ASSERT_EQ(calculateSafeVelocity(t_buff, d_obs, v_obs, -5.0), 0.0);
-  // lower bound ebs_decel = 0
-  ASSERT_EQ(calculateSafeVelocity(1.0, 0.5, 0.5, 0), 0.0);
-}
-
 TEST(compareSafeVelocity, min_max)
 {
   using behavior_velocity_planner::occlusion_spot_utils::compareSafeVelocity;

@@ -23,10 +23,9 @@ namespace behavior_velocity_planner
 {
 namespace occlusion_spot_utils
 {
-void applySafeVelocityConsideringPossibleCollison(
-  autoware_auto_planning_msgs::msg::PathWithLaneId * inout_path,
-  std::vector<PossibleCollisionInfo> & possible_collisions, const double current_vel,
-  const EgoVelocity & ego, const PlannerParam & param)
+void applySafeVelocityConsideringPossibleCollision(
+  PathWithLaneId * inout_path, std::vector<PossibleCollisionInfo> & possible_collisions,
+  const PlannerParam & param)
 {
   const auto logger{rclcpp::get_logger("behavior_velocity_planner").get_child("occlusion_spot")};
   rclcpp::Clock clock{RCL_ROS_TIME};
@@ -34,13 +33,15 @@ void applySafeVelocityConsideringPossibleCollison(
   if (!inout_path || inout_path->points.size() < 2) {
     return;
   }
-  const double v0 = current_vel;
-  const double ebs_decel = ego.ebs_decel;
+  const double v0 = param.v.v_ego;
+  const double a_min = param.v.a_min;
+  const double v_min = param.v.v_min;
   for (auto & possible_collision : possible_collisions) {
     const double l_obs = possible_collision.arc_lane_dist_at_collision.length;
     auto & original_vel = possible_collision.collision_path_point.longitudinal_velocity_mps;
     const double d_obs = possible_collision.arc_lane_dist_at_collision.distance;
     const double v_obs = possible_collision.obstacle_info.max_velocity;
+    const double ttc = d_obs / v_obs;
     // skip if obstacle velocity is below zero
     if (v_obs < 0) {
       RCLCPP_WARN_THROTTLE(
@@ -53,14 +54,14 @@ void applySafeVelocityConsideringPossibleCollison(
       continue;
     }
     // safe velocity : Consider ego emergency braking deceleration
-    const double safe_velocity_using_ebs = calculateSafeVelocity(d_obs, v_obs, ebs_decel);
+    const double safe_velocity_using_ebs = calculateSafeMotion(param.v, ttc).safe_velocity;
 
     // min allowed velocity : min allowed velocity consider maximum allowed braking
-    const double min_allowed_velocity = calculateMinAllowedVelocity(v0, l_obs, ebs_decel);
+    const double min_allowed_velocity = calculateMinAllowedVelocity(v0, l_obs, a_min);
 
     // coompare safe velocity consider EBS, minimum allowed velocity and original velocity
-    const double safe_velocity = compareSafeVelocity(
-      min_allowed_velocity, safe_velocity_using_ebs, ego.min_velocity, original_vel);
+    const double safe_velocity =
+      compareSafeVelocity(min_allowed_velocity, safe_velocity_using_ebs, v_min, original_vel);
     original_vel = safe_velocity;
     const auto & pose = possible_collision.collision_path_point.pose;
     insertSafeVelocityToPath(pose, safe_velocity, param, inout_path);
@@ -74,8 +75,7 @@ bool isAheadOf(const geometry_msgs::msg::Pose & target, const geometry_msgs::msg
   return is_target_ahead;
 }
 
-bool setVelocityFrom(
-  const size_t idx, const double vel, autoware_auto_planning_msgs::msg::PathWithLaneId * input)
+bool setVelocityFrom(const size_t idx, const double vel, PathWithLaneId * input)
 {
   for (size_t i = idx; i < input->points.size(); ++i) {
     input->points.at(i).point.longitudinal_velocity_mps =
@@ -86,14 +86,14 @@ bool setVelocityFrom(
 
 int insertSafeVelocityToPath(
   const geometry_msgs::msg::Pose & in_pose, const double safe_vel, const PlannerParam & param,
-  autoware_auto_planning_msgs::msg::PathWithLaneId * inout_path)
+  PathWithLaneId * inout_path)
 {
   int closest_idx = -1;
   if (!planning_utils::calcClosestIndex(
         *inout_path, in_pose, closest_idx, param.dist_thr, param.angle_thr)) {
     return -1;
   }
-  autoware_auto_planning_msgs::msg::PathPointWithLaneId inserted_point;
+  PathPointWithLaneId inserted_point;
   inserted_point = inout_path->points.at(closest_idx);
   int insert_idx = closest_idx;
   // insert velocity to path if distance is not too close else insert new collision point

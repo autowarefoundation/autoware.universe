@@ -26,33 +26,42 @@ namespace behavior_velocity_planner
 {
 namespace occlusion_spot_utils
 {
-void applySafeVelocityConsideringPossibleCollison(
-  autoware_auto_planning_msgs::msg::PathWithLaneId * inout_path,
-  std::vector<PossibleCollisionInfo> & possible_collisions, const double current_vel,
-  const EgoVelocity & ego, const PlannerParam & param);
+void applySafeVelocityConsideringPossibleCollision(
+  PathWithLaneId * inout_path, std::vector<PossibleCollisionInfo> & possible_collisions,
+  const PlannerParam & param);
 
 int insertSafeVelocityToPath(
   const geometry_msgs::msg::Pose & in_pose, const double safe_vel, const PlannerParam & param,
-  autoware_auto_planning_msgs::msg::PathWithLaneId * inout_path);
+  PathWithLaneId * inout_path);
 
 // @brief calculates the maximum velocity allowing to decelerate within the given distance
-inline double calculateMinAllowedVelocity(const double v0, const double len, const double max_a)
+inline double calculateMinAllowedVelocity(const double v0, const double len, const double a_max)
 {
-  return std::sqrt(std::max(std::pow(v0, 2.0) - 2.0 * std::abs(max_a) * len, 0.0));
+  return std::sqrt(std::max(std::pow(v0, 2.0) - 2.0 * std::abs(a_max) * len, 0.0));
 }
 
 /**
- * @param: dist_to_obj: distance to virtual darting object
- * @param: v_obs: relative  velocity for virtual darting object
- * @param: ebs_decel: emergency brake
- * @return safe velocity considering rpb
+ * @param: sv: ego velocity config
+ * @param: ttc: time to collision
+ * @return safe motion
  **/
-inline double calculateSafeVelocity(
-  const double dist_to_obj, const double v_obs, const double ebs_decel)
+inline SafeMotion calculateSafeMotion(const Velocity & v, const double ttc)
 {
-  // safe velocity consider emergency brake
-  const double v_safe = std::abs(ebs_decel) * dist_to_obj / v_obs;
-  return v_safe;
+  SafeMotion sm;
+  const double j_max = v.safety_ratio * v.j_max;
+  const double a_max = v.safety_ratio * v.a_max;
+  const double t1 = a_max / j_max;
+  const double t2 = ttc;
+  double & v_safe = sm.safe_velocity;
+  double & stop_dist = sm.stop_dist;
+  if (t1 < t2) {
+    v_safe = -0.5 * j_max * t1 * t1 - a_max * (t2 - t1);
+    stop_dist = v_safe * t1 + j_max * t1 * t1 * t1 / 6 - a_max * (t2 - t1) * (t2 - t1) / 2;
+  } else {
+    v_safe = -0.5 * j_max * t1 * t1;
+    stop_dist = v_safe * t1 + j_max * t1 * t1 * t1 / 6;
+  }
+  return sm;
 }
 
 inline double compareSafeVelocity(
