@@ -52,22 +52,23 @@ inline SafeMotion calculateSafeMotion(const Velocity & v, const double ttc, cons
   const double a_max = v.safety_ratio * v.a_max;
   const double t1 = delay;
   double t2 = a_max / j_max;
-  const double t3 = ttc - t2 - t1;
   double & v_safe = sm.safe_velocity;
   double & stop_dist = sm.stop_dist;
-  if (t3 <= t1) {
+  if (ttc <= t1) {
     // delay
     v_safe = 0;
     stop_dist = 0;
-  } else if (t3 <= t2 + t1) {
+  } else if (ttc <= t2 + t1) {
     // delay + const jerk
     t2 = ttc - t1;
     v_safe = -0.5 * j_max * t2 * t2;
-    stop_dist = v_safe * t1 + j_max * t2 * t2 * t2 / 6;
+    stop_dist = v_safe * t1 - j_max * t2 * t2 * t2 / 6;
   } else {
+    const double t3 = ttc - t2 - t1;
     // delay + const jerk + const accel
-    v_safe = -0.5 * j_max * t2 * t2 - a_max * t3;
-    stop_dist = v_safe * t1 + j_max * t2 * t2 * t2 / 6 - 0.5 * a_max * t3 * t3;
+    const double v2 = -0.5 * j_max * t2 * t2;
+    v_safe = v2 - a_max * t3;
+    stop_dist = v_safe * t1 - j_max * t2 * t2 * t2 / 6 + v2 * t3 - 0.5 * a_max * t3 * t3;
   }
   return sm;
 }
