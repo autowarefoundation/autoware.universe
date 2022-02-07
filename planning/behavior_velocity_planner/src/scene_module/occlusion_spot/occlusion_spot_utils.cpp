@@ -318,11 +318,15 @@ PossibleCollisionInfo calculateCollisionPathPointFromOcclusionSpot(
    *             ------------------
    */
   PossibleCollisionInfo pc;
-  pc.arc_lane_dist_at_collision = arc_coord_occlusion_with_offset;
+  const double ttc = std::abs(arc_coord_occlusion_with_offset.distance / param.pedestrian_vel);
+  SafeMotion sm = calculateSafeMotion(param.v, ttc);
+  const double safe_length = arc_coord_occlusion_with_offset.length - sm.stop_dist;
+  pc.arc_lane_dist_at_collision = {safe_length, arc_coord_occlusion_with_offset.distance};
+  pc.obstacle_info.safe_velocity = sm.safe_velocity;
+  pc.obstacle_info.ttc = ttc;
   pc.obstacle_info.position = setPose(path_lanelet, arc_coord_occlusion).position;
   pc.obstacle_info.max_velocity = param.pedestrian_vel;
-  pc.collision_path_point.pose =
-    setPose(path_lanelet, {arc_coord_occlusion_with_offset.length, 0.0});
+  pc.collision_path_point.pose = setPose(path_lanelet, {safe_length, 0.0});
   pc.intersection_pose = setPose(path_lanelet, {arc_coord_occlusion.length, 0.0});
   return pc;
 }

@@ -113,7 +113,9 @@ struct SafeMotion
 struct ObstacleInfo
 {
   geometry_msgs::msg::Point position;
-  double max_velocity;  // [m/s] Maximum velocity of the possible obstacle
+  double max_velocity;   // [m/s] Maximum velocity of the possible obstacle
+  double safe_velocity;  // [m/s] Safe velocity for ego to pass before collision
+  double ttc;            // [s] time to collision with ego
 };
 
 /**

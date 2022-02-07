@@ -39,29 +39,16 @@ void applySafeVelocityConsideringPossibleCollision(
   for (auto & possible_collision : possible_collisions) {
     const double l_obs = possible_collision.arc_lane_dist_at_collision.length;
     auto & original_vel = possible_collision.collision_path_point.longitudinal_velocity_mps;
-    const double d_obs = possible_collision.arc_lane_dist_at_collision.distance;
-    const double v_obs = possible_collision.obstacle_info.max_velocity;
-    const double ttc = d_obs / v_obs;
-    // skip if obstacle velocity is below zero
-    if (v_obs < 0) {
-      RCLCPP_WARN_THROTTLE(
-        logger, clock, 3000, "velocity for virtual darting object is not set correctly");
-      continue;
-      // skip if distance to object is below zero
-    } else if (d_obs < 0) {
-      RCLCPP_WARN_THROTTLE(
-        logger, clock, 3000, "distance for virtual darting object is not set correctly");
-      continue;
-    }
+
     // safe velocity : Consider ego emergency braking deceleration
-    const double safe_velocity_using_ebs = calculateSafeMotion(param.v, ttc).safe_velocity;
+    const double v_safe = possible_collision.obstacle_info.safe_velocity;
 
     // min allowed velocity : min allowed velocity consider maximum allowed braking
     const double min_allowed_velocity = calculateMinAllowedVelocity(v0, l_obs, a_min);
 
     // coompare safe velocity consider EBS, minimum allowed velocity and original velocity
     const double safe_velocity =
-      compareSafeVelocity(min_allowed_velocity, safe_velocity_using_ebs, v_min, original_vel);
+      compareSafeVelocity(min_allowed_velocity, v_safe, v_min, original_vel);
     original_vel = safe_velocity;
     const auto & pose = possible_collision.collision_path_point.pose;
     insertSafeVelocityToPath(pose, safe_velocity, param, inout_path);

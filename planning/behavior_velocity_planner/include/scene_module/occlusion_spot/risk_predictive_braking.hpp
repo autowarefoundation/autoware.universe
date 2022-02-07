@@ -56,7 +56,7 @@ inline SafeMotion calculateSafeMotion(const Velocity & v, const double ttc)
   double & stop_dist = sm.stop_dist;
   if (t1 < t2) {
     v_safe = -0.5 * j_max * t1 * t1 - a_max * (t2 - t1);
-    stop_dist = v_safe * t1 + j_max * t1 * t1 * t1 / 6 - a_max * (t2 - t1) * (t2 - t1) / 2;
+    stop_dist = v_safe * t1 + j_max * t1 * t1 * t1 / 6 - 0.5 * a_max * (t2 - t1) * (t2 - t1);
   } else {
     v_safe = -0.5 * j_max * t1 * t1;
     stop_dist = v_safe * t1 + j_max * t1 * t1 * t1 / 6;

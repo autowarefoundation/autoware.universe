@@ -6,8 +6,7 @@
       threshold:
         detection_area_length: 100.0        # [m] the length of path to consider perception range
         stuck_vehicle_vel: 1.0              # [m/s] velocity below this value is assumed to stop
-        lateral_distance: 1.5               # [m] maximum lateral distance to consider hidden collision
-      # road type parameters
+        lateral_distance: 4.0               # [m] maximum lateral distance to consider hidden collision
       motion:
         safety_ratio: 0.8                   # [-] jerk/acceleration ratio for safety
         v_min: 1.0                          # [m/s] minimum velocity allowed
