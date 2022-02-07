@@ -46,7 +46,7 @@ protected Q_SLOTS:
   void onStepClicked();
 
 protected:
-  /// @brief creates ROS walltimer to periodically call onTimer()
+  /// @brief creates ROS wall timer to periodically call onTimer()
   void createWallTimer();
   void onTimer();
   /// @brief add some time to the clock
