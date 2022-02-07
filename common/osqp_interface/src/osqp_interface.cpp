@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "rclcpp/rclcpp.hpp"
 #include "osqp_interface/osqp_interface.hpp"
 
 #include "osqp/osqp.h"
