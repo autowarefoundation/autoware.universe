@@ -17,9 +17,10 @@
 #ifndef AUTOWARE_STATE_PANEL_HPP_
 #define AUTOWARE_STATE_PANEL_HPP_
 
-#include <QLabel>
-#include <QPushButton>
-#include <qt5/QtWidgets/qspinbox.h>
+#include <qt5/QtWidgets/QComboBox>
+#include <qt5/QtWidgets/QDoubleSpinBox>
+#include <qt5/QtWidgets/QPushButton>
+#include <qt5/QtWidgets/QSpinBox>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/timer.hpp>
 #include <rosgraph_msgs/msg/clock.hpp>
@@ -39,21 +40,25 @@ public:
   void onInitialize() override;
 
 protected Q_SLOTS:
-  void onRateChanged(double new_rate);
-
-  void update();
-  void onTimer();
-  void createWallTimer();
+  void onRateChanged(int new_rate);
+  void onStepClicked();
 
 protected:
+  void onTimer();
+  void createWallTimer();
+  void addTimeToClock(const uint32_t ns);
+
   rclcpp::Node::SharedPtr raw_node_;
   rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr clock_pub_;
   rclcpp::TimerBase::SharedPtr pub_timer_;
   rosgraph_msgs::msg::Clock clock_msg_;
 
   QPushButton * pause_button_;
-  QDoubleSpinBox * publishing_rate_box_;
-  QDoubleSpinBox * clock_speed_box_;
+  QPushButton * step_button_;
+  QSpinBox * publishing_rate_input_;
+  QDoubleSpinBox * clock_speed_input_;
+  QSpinBox * step_time_input_;
+  QComboBox * step_unit_combo_;
 
   std::chrono::time_point<std::chrono::system_clock> prev_published_time_;
 };

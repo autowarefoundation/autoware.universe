@@ -16,13 +16,12 @@
 
 #include "simulated_clock_panel.hpp"
 
-#include <QString>
-#include <QLineEdit>
-#include <QHBoxLayout>
+#include <qt5/QtWidgets/QGridLayout>
+#include <qt5/QtWidgets/QHBoxLayout>
+#include <qt5/QtWidgets/QLabel>
+#include <qt5/QtWidgets/QWidget>
 #include <rclcpp/duration.hpp>
 #include <rviz_common/display_context.hpp>
-#include <qspinbox.h>
-#include <qt5/QtWidgets/qboxlayout.h>
 
 #include <chrono>
 #include <string>
@@ -36,32 +35,48 @@ SimulatedClockPanel::SimulatedClockPanel(QWidget * parent) : rviz_common::Panel(
   pause_button_->setToolTip("Freeze ROS time.");
   pause_button_->setCheckable(true);
 
-  publishing_rate_box_ = new QDoubleSpinBox();
-  publishing_rate_box_->setRange(0.001, 1.0);
-  publishing_rate_box_->setSingleStep(0.01);
-  publishing_rate_box_->setValue(0.01);
-  publishing_rate_box_->setSuffix("s");
+  publishing_rate_input_ = new QSpinBox();
+  publishing_rate_input_->setRange(1, 1000);
+  publishing_rate_input_->setSingleStep(1);
+  publishing_rate_input_->setValue(100);
+  publishing_rate_input_->setSuffix("Hz");
 
-  clock_speed_box_ = new QDoubleSpinBox();
-  clock_speed_box_->setRange(0.0, 10.0);
-  clock_speed_box_->setSingleStep(0.1);
-  clock_speed_box_->setValue(1.0);
-  clock_speed_box_->setSuffix(" X real time");
+  clock_speed_input_ = new QDoubleSpinBox();
+  clock_speed_input_->setRange(0.0, 10.0);
+  clock_speed_input_->setSingleStep(0.1);
+  clock_speed_input_->setValue(1.0);
+  clock_speed_input_->setSuffix(" X real time");
 
-  auto * layout = new QHBoxLayout(this);
-  layout->addWidget(pause_button_);
-  layout->addWidget(new QLabel("Clock Speed:"));
-  layout->addWidget(clock_speed_box_);
-  layout->addWidget(new QLabel("Clock Publishing Rate:"));
-  layout->addWidget(publishing_rate_box_);
+  step_button_ = new QPushButton("Step");
+  step_button_->setToolTip("Pause and steps the simulation clock");
+  step_time_input_ = new QSpinBox();
+  step_time_input_->setRange(1, 999);
+  step_time_input_->setValue(1);
+  step_unit_combo_ = new QComboBox();
+  step_unit_combo_->addItems({"s", "ms", "µs", "ns"});
+
+  auto * layout = new QGridLayout(this);
+  auto * step_layout = new QHBoxLayout();
+  auto * clock_layout = new QHBoxLayout();
+  auto * clock_box = new QWidget();
+  auto * step_box = new QWidget();
+  clock_box->setLayout(clock_layout);
+  step_box->setLayout(step_layout);
+  layout->addWidget(pause_button_, 0, 0);
+  layout->addWidget(step_button_, 1, 0);
+  clock_layout->addWidget(new QLabel("Speed:"));
+  clock_layout->addWidget(clock_speed_input_);
+  clock_layout->addWidget(new QLabel("Rate:"));
+  clock_layout->addWidget(publishing_rate_input_);
+  step_layout->addWidget(step_time_input_);
+  step_layout->addWidget(step_unit_combo_);
+  layout->addWidget(clock_box, 0, 1, 1, 2);
+  layout->addWidget(step_box, 1, 1, 1, 2);
   layout->setContentsMargins(0, 0, 20, 0);
-  layout->addStretch();
-  /*
-  layout->setContentsMargins(11, 5, 11, 5);
-  */
   prev_published_time_ = std::chrono::system_clock::now();
 
-  connect(publishing_rate_box_, SIGNAL(valueChanged(double)), this, SLOT(onRateChanged(double)));
+  connect(publishing_rate_input_, SIGNAL(valueChanged(int)), this, SLOT(onRateChanged(int)));
+  connect(step_button_, SIGNAL(clicked()), this, SLOT(onStepClicked()));
 }
 
 void SimulatedClockPanel::onInitialize()
@@ -72,29 +87,54 @@ void SimulatedClockPanel::onInitialize()
   createWallTimer();
 }
 
-void SimulatedClockPanel::onRateChanged(double /*new_rate*/) {
+void SimulatedClockPanel::onRateChanged(int /*new_rate*/) {
   pub_timer_->cancel();
   createWallTimer();
 }
 
-void SimulatedClockPanel::createWallTimer() {
-  // convert rate from seconds to milliseconds
-  const auto period = std::chrono::milliseconds(static_cast<int64_t>(publishing_rate_box_->value() * 1e3));
-  pub_timer_ = raw_node_->create_wall_timer(period, [&]() { onTimer(); });
+void SimulatedClockPanel::onStepClicked() {
+  using std::chrono::duration_cast, std::chrono::seconds, std::chrono::milliseconds, std::chrono::microseconds ,std::chrono::nanoseconds;
+  pause_button_->setChecked(true);
+  const auto step_time = step_time_input_->value();
+  const auto unit = step_unit_combo_->currentText();
+  uint32_t step_duration_ns{};
+  if(unit == "s") {
+    clock_msg_.clock.sec += step_time;
+  }
+  else if(unit == "ms") {
+    step_duration_ns += duration_cast<nanoseconds>(milliseconds(step_time)).count();
+  }
+  else if(unit == "µs") {
+    step_duration_ns += duration_cast<nanoseconds>(microseconds(step_time)).count();
+  }
+  else if(unit == "ns") {
+    step_duration_ns += duration_cast<nanoseconds>(nanoseconds(step_time)).count();
+  }
+  addTimeToClock(step_duration_ns);
 }
 
 void SimulatedClockPanel::onTimer() {
-  constexpr auto one_sec = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::seconds(1)).count();
   const auto duration_since_prev_clock = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now() - prev_published_time_).count();
   if(!pause_button_->isChecked()) {
-    clock_msg_.clock.nanosec += static_cast<uint32_t>(static_cast<double>(duration_since_prev_clock) * clock_speed_box_->value());
+    addTimeToClock(static_cast<uint32_t>(static_cast<double>(duration_since_prev_clock) * clock_speed_input_->value()));
+  }
+  clock_pub_->publish(clock_msg_);
+  prev_published_time_ = std::chrono::system_clock::now();
+}
+
+void SimulatedClockPanel::createWallTimer() {
+  // convert rate from Hz to milliseconds
+  const auto period = std::chrono::milliseconds(static_cast<int64_t>(1e3 / publishing_rate_input_->value()));
+  pub_timer_ = raw_node_->create_wall_timer(period, [&]() { onTimer(); });
+}
+
+void SimulatedClockPanel::addTimeToClock(const uint32_t ns) {
+    constexpr auto one_sec = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::seconds(1)).count();
+    clock_msg_.clock.nanosec += ns;
     if(clock_msg_.clock.nanosec >= one_sec) {
       clock_msg_.clock.sec += static_cast<int32_t>(clock_msg_.clock.nanosec / one_sec);
       clock_msg_.clock.nanosec = clock_msg_.clock.nanosec % one_sec;
     }
-  }
-  clock_pub_->publish(clock_msg_);
-  prev_published_time_ = std::chrono::system_clock::now();
 }
 
 }  // namespace rviz_plugins
