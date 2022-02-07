@@ -80,10 +80,10 @@ public:
   void calcSplineCoefficients(
     const std::vector<double> & base_keys, const std::vector<double> & base_values);
 
-  std::vector<double> getSplineInterpolatedValues(
-    const std::vector<double> & base_keys, const std::vector<double> & query_keys) const;
+  std::vector<double> getSplineInterpolatedValues(const std::vector<double> & query_keys) const;
 
 private:
+  std::vector<double> base_keys_;
   interpolation::MultiSplineCoef multi_spline_coef_;
 };
 
@@ -92,7 +92,7 @@ private:
 //
 // Usage:
 // ```
-// SplineInterpolationPoint spline;
+// SplineInterpolationPoint2d spline;
 // spline.calcSplineCoefficients(base_keys, base_values);  // memorize pre-interpolation result
 // internally
 // const auto interpolation_result1 = spline.getSplineInterpolatedPoints(base_keys,
@@ -102,10 +102,10 @@ private:
 // const auto yaw_interpolation_result = spline.getSplineInterpolatedYaws(base_keys,
 //   query_keys1);
 // ```
-class SplineInterpolationPoint
+class SplineInterpolationPoint2d
 {
 public:
-  SplineInterpolationPoint() = default;
+  SplineInterpolationPoint2d() = default;
 
   // TODO(murooka) use template
   // template <typename T>

@@ -294,19 +294,20 @@ std::vector<double> slerpYawFromPoints(const std::vector<geometry_msgs::msg::Poi
 void SplineInterpolation1d::calcSplineCoefficients(
   const std::vector<double> & base_keys, const std::vector<double> & base_values)
 {
+  base_keys_ = base_keys;
   multi_spline_coef_ = ::getSplineCoefficients(base_keys, base_values);
 }
 
 std::vector<double> SplineInterpolation1d::getSplineInterpolatedValues(
-  const std::vector<double> & base_keys, const std::vector<double> & query_keys) const
+  const std::vector<double> & query_keys) const
 {
-  return ::getSplineInterpolatedValues(base_keys, query_keys, multi_spline_coef_);
+  return ::getSplineInterpolatedValues(base_keys_, query_keys, multi_spline_coef_);
 }
 
-// member functions of SplineInterpolationPoint
+// member functions of SplineInterpolationPoint2d
 // template <typename T>
-// void SplineInterpolationPoint::calcSplineCoefficients(const std::vector<T> & points)
-void SplineInterpolationPoint::calcSplineCoefficients(
+// void SplineInterpolationPoint2d::calcSplineCoefficients(const std::vector<T> & points)
+void SplineInterpolationPoint2d::calcSplineCoefficients(
   const std::vector<geometry_msgs::msg::Point> & points)
 {
   const auto base = getBaseValues(points);
@@ -320,15 +321,19 @@ void SplineInterpolationPoint::calcSplineCoefficients(
   multi_spline_coef_y_ = getSplineCoefficients(base_s_vec_, base_y_vec);
 }
 
-geometry_msgs::msg::Point SplineInterpolationPoint::getSplineInterpolatedPoint(
+geometry_msgs::msg::Point SplineInterpolationPoint2d::getSplineInterpolatedPoint(
   const size_t idx, const double s) const
 {
+  if (base_s_vec_.size() <= idx) {
+    throw std::out_of_range("idx is out of range.");
+  }
+
   double whole_s = base_s_vec_.at(idx) + s;
   if (whole_s < base_s_vec_.front()) {
-    whole_s = base_s_vec_.front();
+    throw std::out_of_range("s [m] forward from idx'th base point is out of base points.");
   }
   if (whole_s > base_s_vec_.back()) {
-    whole_s = base_s_vec_.back();
+    throw std::out_of_range("s [m] forward from idx'th base point is out of base points.");
   }
 
   const double x = getSplineInterpolatedValues(base_s_vec_, {whole_s}, multi_spline_coef_x_).at(0);
@@ -340,19 +345,18 @@ geometry_msgs::msg::Point SplineInterpolationPoint::getSplineInterpolatedPoint(
   return geom_point;
 }
 
-double SplineInterpolationPoint::getSplineInterpolatedYaw(const size_t idx, const double s) const
+double SplineInterpolationPoint2d::getSplineInterpolatedYaw(const size_t idx, const double s) const
 {
+  if (base_s_vec_.size() <= idx) {
+    throw std::out_of_range("idx is out of range.");
+  }
+
   double whole_s = base_s_vec_.at(idx) + s;
-
-  // if (whole_s < base_s_vec_.front() || whole_s > base_s_vec_.back()) {
-  //   return {};
-  // }
-
   if (whole_s < base_s_vec_.front()) {
-    whole_s = base_s_vec_.front();
+    throw std::out_of_range("s [m] forward from idx'th base point is out of base points.");
   }
   if (whole_s > base_s_vec_.back()) {
-    whole_s = base_s_vec_.back();
+    throw std::out_of_range("s [m] forward from idx'th base point is out of base points.");
   }
 
   const double diff_x =
@@ -363,10 +367,10 @@ double SplineInterpolationPoint::getSplineInterpolatedYaw(const size_t idx, cons
   return std::atan2(diff_y, diff_x);
 }
 
-double SplineInterpolationPoint::getAccumulatedDistance(const size_t idx) const
+double SplineInterpolationPoint2d::getAccumulatedDistance(const size_t idx) const
 {
-  if (idx >= base_s_vec_.size()) {
-    throw std::out_of_range("SplineInterpolationPoint::getAccumulatedDistance failed");
+  if (base_s_vec_.size() <= idx) {
+    throw std::out_of_range("idx is out of range.");
   }
   return base_s_vec_.at(idx);
 }
