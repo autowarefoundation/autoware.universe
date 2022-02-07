@@ -68,8 +68,8 @@ CPUMonitorBase::CPUMonitorBase(const std::string & node_name, const rclcpp::Node
   // Publisher
   rclcpp::QoS durable_qos{1};
   durable_qos.transient_local();
-  pub_cpu_usage_ = this->create_publisher<tier4_external_api_msgs::msg::CpuUsage>("~/cpu_usage", durable_qos); // TBD : topic name
-
+  pub_cpu_usage_ = this->create_publisher<tier4_external_api_msgs::msg::CpuUsage>(
+    "~/cpu_usage", durable_qos);  // TBD : topic name
 }
 
 void CPUMonitorBase::update() { updater_.force_update(); }
@@ -126,7 +126,7 @@ void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & st
     stat.summary(DiagStatus::ERROR, "mpstat error");
     stat.add(
       "mpstat", "Command 'mpstat' not found, but can be installed with: sudo apt install sysstat");
-    cpu_usage.all.status=STATUS.STALE;
+    cpu_usage.all.status = STATUS.STALE;
     publishCpuUsage(cpu_usage);
     return;
   }
@@ -142,7 +142,7 @@ void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & st
     is_err >> os.rdbuf();
     stat.summary(DiagStatus::ERROR, "mpstat error");
     stat.add("mpstat", os.str().c_str());
-    cpu_usage.all.status=STATUS.STALE;
+    cpu_usage.all.status = STATUS.STALE;
     publishCpuUsage(cpu_usage);
     return;
   }
@@ -250,7 +250,7 @@ void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & st
     stat.summary(DiagStatus::ERROR, "mpstat exception");
     stat.add("mpstat", e.what());
     std::fill(usage_check_cnt_.begin(), usage_check_cnt_.end(), 0);
-    cpu_usage.all.status=STATUS.STALE;
+    cpu_usage.all.status = STATUS.STALE;
     publishCpuUsage(cpu_usage);
     return;
   }
@@ -259,7 +259,6 @@ void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & st
 
   // Publish msg
   publishCpuUsage(cpu_usage);
-
 
   // Measure elapsed time since start time and report
   SystemMonitorUtility::stopMeasurement(t_start, stat);
@@ -422,7 +421,7 @@ void CPUMonitorBase::publishCpuUsage(tier4_external_api_msgs::msg::CpuUsage usag
 {
   // Create timestamp
   const auto stamp = this->now();
-  
+
   usage.stamp = stamp;
   pub_cpu_usage_->publish(usage);
 }
