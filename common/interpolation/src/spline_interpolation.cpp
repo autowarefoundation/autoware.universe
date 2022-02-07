@@ -195,8 +195,14 @@ std::vector<double> slerp(
 //   return getSplineInterpolatedDiffValues(base_keys, query_keys, multi_spline_coef);
 // }
 
-template <typename T>
-std::vector<double> slerpYawFromPoints(const std::vector<T> & points)
+// TODO(murooka) implement slerpYaw, just interpolates yaw directly from yaw in points.
+// NOTE: assuming that points have valid yaw information.
+// template <typename T>
+// std::vector<double> slerpYaw(const std::vector<T> & points);
+
+// template <typename T>
+// std::vector<double> slerpYawFromPoints(const std::vector<T> & points)
+std::vector<double> slerpYawFromPoints(const std::vector<geometry_msgs::msg::Point> & points)
 {
   const auto base = getBaseValues(points);
 
@@ -223,11 +229,6 @@ std::vector<double> slerpYawFromPoints(const std::vector<T> & points)
 
   return yaw_angle_vec;
 }
-
-// TODO(murooka) implement slerpYaw, just interpolates yaw directly from yaw in points.
-// NOTE: assuming that points have valid yaw information.
-// template <typename T>
-// std::vector<double> slerpYaw(const std::vector<T> & points);
 }  // namespace interpolation
 
 // member functions of SplineInterpolation1d
@@ -244,8 +245,10 @@ std::vector<double> SplineInterpolation1d::getSplineInterpolatedValues(
 }
 
 // member functions of SplineInterpolationPoint
-template <typename T>
-void SplineInterpolationPoint::calcSplineCoefficients(const std::vector<T> & points)
+// template <typename T>
+// void SplineInterpolationPoint::calcSplineCoefficients(const std::vector<T> & points)
+void SplineInterpolationPoint::calcSplineCoefficients(
+  const std::vector<geometry_msgs::msg::Point> & points)
 {
   const auto base = getBaseValues(points);
 

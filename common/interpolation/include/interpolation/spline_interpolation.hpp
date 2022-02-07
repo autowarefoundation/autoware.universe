@@ -54,8 +54,10 @@ std::vector<double> slerp(
 //   const std::vector<double> & base_keys, const std::vector<double> & base_values,
 //   const std::vector<double> & query_keys);
 
-template <typename T>
-std::vector<double> slerpYawFromPoints(const std::vector<T> & points);
+// TODO(murooka) use template
+// template <typename T>
+// std::vector<double> slerpYawFromPoints(const std::vector<T> & points);
+std::vector<double> slerpYawFromPoints(const std::vector<geometry_msgs::msg::Point> & points);
 }  // namespace interpolation
 
 // non-static 1-dimensional spline interpolation
@@ -100,8 +102,11 @@ class SplineInterpolationPoint
 public:
   SplineInterpolationPoint() = default;
 
-  template <typename T>
-  void calcSplineCoefficients(const std::vector<T> & points);
+  // TODO(murooka) use template
+  // template <typename T>
+  // void calcSplineCoefficients(const std::vector<T> & points);
+  void calcSplineCoefficients(const std::vector<geometry_msgs::msg::Point> & points);
+
   // TODO(murooka) implement these functions
   // std::vector<geometry_msgs::msg::Point> getSplineInterpolatedPoints(const double width);
   // std::vector<geometry_msgs::msg::Pose> getSplineInterpolatedPoses(const double width);
