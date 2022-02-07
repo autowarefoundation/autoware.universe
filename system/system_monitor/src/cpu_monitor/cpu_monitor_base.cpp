@@ -68,8 +68,8 @@ CPUMonitorBase::CPUMonitorBase(const std::string & node_name, const rclcpp::Node
   // Publisher
   rclcpp::QoS durable_qos{1};
   durable_qos.transient_local();
-  pub_cpu_usage_ = this->create_publisher<tier4_external_api_msgs::msg::CpuUsage>(
-    "~/cpu_usage", durable_qos);  // TBD : topic name
+  pub_cpu_usage_ =
+    this->create_publisher<tier4_external_api_msgs::msg::CpuUsage>("~/cpu_usage", durable_qos);
 }
 
 void CPUMonitorBase::update() { updater_.force_update(); }
