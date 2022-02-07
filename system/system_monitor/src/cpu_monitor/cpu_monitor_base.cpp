@@ -121,17 +121,6 @@ void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & st
 
   tier4_external_api_msgs::msg::CpuUsage cpu_usage;
   tier4_external_api_msgs::msg::CpuStatus STATUS;
-  // int cpu_num = 0;
-
-  // for(i = 0;i < 8; i++ ){
-  //   cpu_usage.cpus[i].status = 0;
-  //   cpu_usage.cpus[i].total = 0.0;
-  //   cpu_usage.cpus[i].user = 0.0;
-  //   cpu_usage.cpus[i].nice = 0.0;
-  //   cpu_usage.cpus[i].sys = 0.0;
-  //   cpu_usage.cpus[i].idle = 0.0;
-
-  // }
 
   if (!mpstat_exists_) {
     stat.summary(DiagStatus::ERROR, "mpstat error");
@@ -195,7 +184,6 @@ void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & st
             if (cpu_name == "all") {
               cpu_usage.all.usr = usr;
             } else {
-              // cpu_usage.cpus[cpu_num].usr = usr;
               cpu_status.usr = usr;
             }
           }
@@ -204,7 +192,6 @@ void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & st
             if (cpu_name == "all") {
               cpu_usage.all.nice = nice;
             } else {
-              // cpu_usage.cpus[cpu_num].nice = nice;
               cpu_status.nice = nice;
             }
           }
@@ -213,7 +200,6 @@ void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & st
             if (cpu_name == "all") {
               cpu_usage.all.sys = sys;
             } else {
-              // cpu_usage.cpus[cpu_num].sys = sys;
               cpu_status.sys = sys;
             }
           }
@@ -222,7 +208,6 @@ void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & st
             if (cpu_name == "all") {
               cpu_usage.all.idle = idle;
             } else {
-              // cpu_usage.cpus[cpu_num].idle = idle;
               cpu_status.idle = idle;
             }
           }
@@ -239,8 +224,6 @@ void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & st
             cpu_usage.all.total = total;
             cpu_usage.all.status = level;
           } else {
-            // cpu_usage.cpus[cpu_num].total = total;
-            // cpu_usage.cpus[cpu_num].status = level;
             cpu_status.total = total;
             cpu_status.status = level;
           }
@@ -259,7 +242,6 @@ void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & st
           } else {
             whole_level = std::max(whole_level, level);
           }
-          // cpu_num++;
           if (cpu_name != "all") cpu_usage.cpus.push_back(cpu_status);
         }
       }
