@@ -45,21 +45,29 @@ inline double calculateMinAllowedVelocity(const double v0, const double len, con
  * @param: ttc: time to collision
  * @return safe motion
  **/
-inline SafeMotion calculateSafeMotion(const Velocity & v, const double ttc)
+inline SafeMotion calculateSafeMotion(const Velocity & v, const double ttc, const double delay)
 {
   SafeMotion sm;
   const double j_max = v.safety_ratio * v.j_max;
   const double a_max = v.safety_ratio * v.a_max;
-  const double t1 = a_max / j_max;
-  const double t2 = ttc;
+  const double t1 = delay;
+  double t2 = a_max / j_max;
+  const double t3 = ttc - t2 - t1;
   double & v_safe = sm.safe_velocity;
   double & stop_dist = sm.stop_dist;
-  if (t1 < t2) {
-    v_safe = -0.5 * j_max * t1 * t1 - a_max * (t2 - t1);
-    stop_dist = v_safe * t1 + j_max * t1 * t1 * t1 / 6 - 0.5 * a_max * (t2 - t1) * (t2 - t1);
+  if (t3 <= t1) {
+    // delay
+    v_safe = 0;
+    stop_dist = 0;
+  } else if (t3 <= t2 + t1) {
+    // delay + const jerk
+    t2 = ttc - t1;
+    v_safe = -0.5 * j_max * t2 * t2;
+    stop_dist = v_safe * t1 + j_max * t2 * t2 * t2 / 6;
   } else {
-    v_safe = -0.5 * j_max * t1 * t1;
-    stop_dist = v_safe * t1 + j_max * t1 * t1 * t1 / 6;
+    // delay + const jerk + const accel
+    v_safe = -0.5 * j_max * t2 * t2 - a_max * t3;
+    stop_dist = v_safe * t1 + j_max * t2 * t2 * t2 / 6 - 0.5 * a_max * t3 * t3;
   }
   return sm;
 }
