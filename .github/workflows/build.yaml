@@ -17,7 +17,7 @@ jobs:
       - name: Install dependencies for the setup script
         run: |
           apt-get -y update
-          apt-get -y install sudo
+          apt-get -y install sudo git
           touch ~/.bashrc
           mkdir src
 
@@ -33,7 +33,7 @@ jobs:
 
       - name: Run vcs import
         run: |
-          mkdir src
+          mkdir -p src
           vcs import src < autoware.proj.repos
 
       - name: Run rosdep install
