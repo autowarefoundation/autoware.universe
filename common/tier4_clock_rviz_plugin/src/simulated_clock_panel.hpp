@@ -1,5 +1,5 @@
 //
-//  Copyright 2020 Tier IV, Inc. All rights reserved.
+//  Copyright 2022 Tier IV, Inc. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -40,19 +40,25 @@ public:
   void onInitialize() override;
 
 protected Q_SLOTS:
+  /// @brief callback for when the publishing rate is changed
   void onRateChanged(int new_rate);
+  /// @brief callback for when the step button is clicked
   void onStepClicked();
 
 protected:
-  void onTimer();
+  /// @brief creates ROS walltimer to periodically call onTimer()
   void createWallTimer();
+  void onTimer();
+  /// @brief add some time to the clock
+  /// @input ns time to add in nanoseconds
   void addTimeToClock(const uint32_t ns);
 
+  // ROS
   rclcpp::Node::SharedPtr raw_node_;
   rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr clock_pub_;
   rclcpp::TimerBase::SharedPtr pub_timer_;
-  rosgraph_msgs::msg::Clock clock_msg_;
 
+  // GUI
   QPushButton * pause_button_;
   QPushButton * step_button_;
   QSpinBox * publishing_rate_input_;
@@ -60,7 +66,9 @@ protected:
   QSpinBox * step_time_input_;
   QComboBox * step_unit_combo_;
 
+  // Clocks
   std::chrono::time_point<std::chrono::system_clock> prev_published_time_;
+  rosgraph_msgs::msg::Clock clock_msg_;
 };
 
 }  // namespace rviz_plugins

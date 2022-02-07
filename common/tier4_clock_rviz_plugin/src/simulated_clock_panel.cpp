@@ -1,5 +1,5 @@
 //
-//  Copyright 2020 Tier IV, Inc. All rights reserved.
+//  Copyright 2022 Tier IV, Inc. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -113,25 +113,26 @@ void SimulatedClockPanel::onStepClicked()
   addTimeToClock(step_duration_ns);
 }
 
-void SimulatedClockPanel::onTimer()
-{
-  const auto duration_since_prev_clock = std::chrono::duration_cast<std::chrono::nanoseconds>(
-                                           std::chrono::system_clock::now() - prev_published_time_)
-                                           .count();
-  if (!pause_button_->isChecked()) {
-    addTimeToClock(static_cast<uint32_t>(
-      static_cast<double>(duration_since_prev_clock) * clock_speed_input_->value()));
-  }
-  clock_pub_->publish(clock_msg_);
-  prev_published_time_ = std::chrono::system_clock::now();
-}
-
 void SimulatedClockPanel::createWallTimer()
 {
   // convert rate from Hz to milliseconds
   const auto period =
     std::chrono::milliseconds(static_cast<int64_t>(1e3 / publishing_rate_input_->value()));
   pub_timer_ = raw_node_->create_wall_timer(period, [&]() { onTimer(); });
+}
+
+void SimulatedClockPanel::onTimer()
+{
+  if (!pause_button_->isChecked()) {
+    const auto duration_since_prev_clock =
+      std::chrono::duration_cast<std::chrono::nanoseconds>(
+        std::chrono::system_clock::now() - prev_published_time_)
+        .count();
+    addTimeToClock(static_cast<uint32_t>(
+      static_cast<double>(duration_since_prev_clock) * clock_speed_input_->value()));
+  }
+  clock_pub_->publish(clock_msg_);
+  prev_published_time_ = std::chrono::system_clock::now();
 }
 
 void SimulatedClockPanel::addTimeToClock(const uint32_t ns)
