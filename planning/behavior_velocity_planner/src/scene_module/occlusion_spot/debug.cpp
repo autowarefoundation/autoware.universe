@@ -19,6 +19,7 @@
 #include <utilization/marker_helper.hpp>
 #include <utilization/util.hpp>
 
+#include <cmath>
 #include <string>
 #include <vector>
 
@@ -120,9 +121,13 @@ std::vector<visualization_msgs::msg::Marker> makeCollisionMarkers(
     debug_marker.scale.z = 1.0;
     debug_marker.color = tier4_autoware_utils::createMarkerColor(1.0, 1.0, 0.0, 1.0);
     std::ostringstream string_stream;
-    string_stream << "(s,d,v)=(" << possible_collision.arc_lane_dist_at_collision.length << " , "
-                  << possible_collision.arc_lane_dist_at_collision.distance << " , "
-                  << possible_collision.collision_path_point.longitudinal_velocity_mps << ")";
+    auto r = [](const double v) { return std::round(v * 100.0) / 100.0; };
+    const double len = r(possible_collision.arc_lane_dist_at_collision.length);
+    const double dist = r(possible_collision.arc_lane_dist_at_collision.distance);
+    const double vel = r(possible_collision.obstacle_info.sm.safe_velocity);
+    const double margin = r(possible_collision.obstacle_info.sm.stop_dist);
+    string_stream << "(s,d,v,m)=(" << len << " , " << dist << " , " << vel << " , " << margin
+                  << " )";
     debug_marker.text = string_stream.str();
     debug_markers.push_back(debug_marker);
   }
