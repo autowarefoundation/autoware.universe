@@ -151,6 +151,7 @@ visualization_msgs::msg::MarkerArray makePolygonMarker(
       debug_marker.points.push_back(point);
     }
     debug_markers.markers.push_back(debug_marker);
+    debug_marker.points.clear();
   }
   return debug_markers;
 }
