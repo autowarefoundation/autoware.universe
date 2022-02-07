@@ -72,6 +72,8 @@ void GyroOdometer::callbackImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_m
   if (
     std::fabs(transformed_angular_velocity.vector.z) < 0.01 &&
     std::fabs(twist_with_cov_msg_ptr_->twist.twist.linear.x) < 0.01) {
+    transformed_angular_velocity.vector.x = 0.0;
+    transformed_angular_velocity.vector.y = 0.0;
     transformed_angular_velocity.vector.z = 0.0;
   }
 
@@ -80,15 +82,21 @@ void GyroOdometer::callbackImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_m
   twist.header.stamp = imu_msg_ptr->header.stamp;
   twist.header.frame_id = output_frame_;
   twist.twist.linear = twist_with_cov_msg_ptr_->twist.twist.linear;
-  twist.twist.angular.z = transformed_angular_velocity.vector.z;  // TODO(YamatoAndo) yaw_rate only
+  twist.twist.angular.z = transformed_angular_velocity.vector.x;
+  twist.twist.angular.z = transformed_angular_velocity.vector.y;
+  twist.twist.angular.z = transformed_angular_velocity.vector.z;
   twist_pub_->publish(twist);
 
   geometry_msgs::msg::TwistWithCovarianceStamped twist_with_covariance;
   twist_with_covariance.header.stamp = imu_msg_ptr->header.stamp;
   twist_with_covariance.header.frame_id = output_frame_;
   twist_with_covariance.twist.twist.linear = twist_with_cov_msg_ptr_->twist.twist.linear;
+  twist_with_covariance.twist.twist.angular.x =
+    transformed_angular_velocity.vector.x;
+  twist_with_covariance.twist.twist.angular.y =
+    transformed_angular_velocity.vector.y;
   twist_with_covariance.twist.twist.angular.z =
-    transformed_angular_velocity.vector.z;  // TODO(YamatoAndo) yaw_rate only
+    transformed_angular_velocity.vector.z;
 
   // NOTE
   // linear.y, linear.z, angular.x, and angular.y are not measured values.
