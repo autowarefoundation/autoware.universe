@@ -10,8 +10,8 @@ This plugin allows publishing and controlling the simulated ROS time.
 
 ### Output
 
-| Name                       | Type                                   | Description                    |
-| -------------------------- | -------------------------------------- | ------------------------------ |
+| Name     | Type                        | Description                |
+| -------- | --------------------------- | -------------------------- |
 | `/clock` | `rosgraph_msgs::msg::Clock` | the current simulated time |
 
 ## HowToUse

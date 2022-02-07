@@ -23,11 +23,11 @@
 #include <qt5/QtWidgets/QSpinBox>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/timer.hpp>
-#include <rosgraph_msgs/msg/clock.hpp>
 #include <rviz_common/panel.hpp>
 
-#include <memory>
+#include <rosgraph_msgs/msg/clock.hpp>
 
+#include <memory>
 
 namespace rviz_plugins
 {

@@ -26,7 +26,6 @@
 #include <chrono>
 #include <string>
 
-
 namespace rviz_plugins
 {
 SimulatedClockPanel::SimulatedClockPanel(QWidget * parent) : rviz_common::Panel(parent)
@@ -87,54 +86,63 @@ void SimulatedClockPanel::onInitialize()
   createWallTimer();
 }
 
-void SimulatedClockPanel::onRateChanged(int /*new_rate*/) {
+void SimulatedClockPanel::onRateChanged(int new_rate)
+{
+  (void)new_rate;
   pub_timer_->cancel();
   createWallTimer();
 }
 
-void SimulatedClockPanel::onStepClicked() {
-  using std::chrono::duration_cast, std::chrono::seconds, std::chrono::milliseconds, std::chrono::microseconds ,std::chrono::nanoseconds;
+void SimulatedClockPanel::onStepClicked()
+{
+  using std::chrono::duration_cast, std::chrono::seconds, std::chrono::milliseconds,
+    std::chrono::microseconds, std::chrono::nanoseconds;
   pause_button_->setChecked(true);
   const auto step_time = step_time_input_->value();
   const auto unit = step_unit_combo_->currentText();
   uint32_t step_duration_ns{};
-  if(unit == "s") {
+  if (unit == "s") {
     clock_msg_.clock.sec += step_time;
-  }
-  else if(unit == "ms") {
+  } else if (unit == "ms") {
     step_duration_ns += duration_cast<nanoseconds>(milliseconds(step_time)).count();
-  }
-  else if(unit == "µs") {
+  } else if (unit == "µs") {
     step_duration_ns += duration_cast<nanoseconds>(microseconds(step_time)).count();
-  }
-  else if(unit == "ns") {
+  } else if (unit == "ns") {
     step_duration_ns += duration_cast<nanoseconds>(nanoseconds(step_time)).count();
   }
   addTimeToClock(step_duration_ns);
 }
 
-void SimulatedClockPanel::onTimer() {
-  const auto duration_since_prev_clock = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now() - prev_published_time_).count();
-  if(!pause_button_->isChecked()) {
-    addTimeToClock(static_cast<uint32_t>(static_cast<double>(duration_since_prev_clock) * clock_speed_input_->value()));
+void SimulatedClockPanel::onTimer()
+{
+  const auto duration_since_prev_clock = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                                           std::chrono::system_clock::now() - prev_published_time_)
+                                           .count();
+  if (!pause_button_->isChecked()) {
+    addTimeToClock(static_cast<uint32_t>(
+      static_cast<double>(duration_since_prev_clock) * clock_speed_input_->value()));
   }
   clock_pub_->publish(clock_msg_);
   prev_published_time_ = std::chrono::system_clock::now();
 }
 
-void SimulatedClockPanel::createWallTimer() {
+void SimulatedClockPanel::createWallTimer()
+{
   // convert rate from Hz to milliseconds
-  const auto period = std::chrono::milliseconds(static_cast<int64_t>(1e3 / publishing_rate_input_->value()));
+  const auto period =
+    std::chrono::milliseconds(static_cast<int64_t>(1e3 / publishing_rate_input_->value()));
   pub_timer_ = raw_node_->create_wall_timer(period, [&]() { onTimer(); });
 }
 
-void SimulatedClockPanel::addTimeToClock(const uint32_t ns) {
-    constexpr auto one_sec = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::seconds(1)).count();
-    clock_msg_.clock.nanosec += ns;
-    if(clock_msg_.clock.nanosec >= one_sec) {
-      clock_msg_.clock.sec += static_cast<int32_t>(clock_msg_.clock.nanosec / one_sec);
-      clock_msg_.clock.nanosec = clock_msg_.clock.nanosec % one_sec;
-    }
+void SimulatedClockPanel::addTimeToClock(const uint32_t ns)
+{
+  constexpr auto one_sec =
+    std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::seconds(1)).count();
+  clock_msg_.clock.nanosec += ns;
+  if (clock_msg_.clock.nanosec >= one_sec) {
+    clock_msg_.clock.sec += static_cast<int32_t>(clock_msg_.clock.nanosec / one_sec);
+    clock_msg_.clock.nanosec = clock_msg_.clock.nanosec % one_sec;
+  }
 }
 
 }  // namespace rviz_plugins
