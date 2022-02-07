@@ -124,7 +124,7 @@ bool splineInterpolate(
   if (output->points.size() > 1) {
     size_t l = resampled_s.size();
     output->points.front().point.pose.orientation = output->points.at(1).point.pose.orientation;
-    output->points.back().point.pose.orientation = output->points.at(l - 1).point.pose.orientation;
+    output->points.back().point.pose.orientation = output->points.at(l - 2).point.pose.orientation;
   }
   return true;
 }
