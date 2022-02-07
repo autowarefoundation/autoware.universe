@@ -66,9 +66,11 @@ std::vector<double> slerpYawFromPoints(const std::vector<geometry_msgs::msg::Poi
 // ```
 // SplineInterpolation1d spline;
 // spline.calcSplineCoefficients(base_keys, base_values);  // memorize pre-interpolation result
-// internally const auto interpolation_result1 = spline.getSplineInterpolatedValues(base_keys,
-// query_keys1); const auto interpolation_result2 = spline.getSplineInterpolatedValues(base_keys,
-// query_keys2);
+// internally
+// const auto interpolation_result1 = spline.getSplineInterpolatedValues(base_keys,
+//   query_keys1);
+// const auto interpolation_result2 = spline.getSplineInterpolatedValues(base_keys,
+//   query_keys2);
 // ```
 class SplineInterpolation1d
 {
@@ -92,10 +94,13 @@ private:
 // ```
 // SplineInterpolationPoint spline;
 // spline.calcSplineCoefficients(base_keys, base_values);  // memorize pre-interpolation result
-// internally const auto interpolation_result1 = spline.getSplineInterpolatedPoint(base_keys,
-// query_keys1); const auto interpolation_result2 = spline.getSplineInterpolatedPoint(base_keys,
-// query_keys2); const auto yaw_interpolation_result = spline.getSplineInterpolatedValues(base_keys,
-// query_keys1);
+// internally
+// const auto interpolation_result1 = spline.getSplineInterpolatedPoints(base_keys,
+//   query_keys1);
+// const auto interpolation_result2 = spline.getSplineInterpolatedPoints(base_keys,
+//   query_keys2);
+// const auto yaw_interpolation_result = spline.getSplineInterpolatedYaws(base_keys,
+//   query_keys1);
 // ```
 class SplineInterpolationPoint
 {

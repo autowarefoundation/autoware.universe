@@ -18,6 +18,66 @@
 
 namespace
 {
+// solve Ax = d
+// where A is tridiagonal matrix
+//     [b_0 c_0 ...                       ]
+//     [a_0 b_1 c_1 ...               O   ]
+// A = [            ...                   ]
+//     [   O         ... a_N-3 b_N-2 c_N-2]
+//     [                   ... a_N-2 b_N-1]
+struct TDMACoef
+{
+  explicit TDMACoef(const size_t num_row)
+  {
+    a.resize(num_row - 1);
+    b.resize(num_row);
+    c.resize(num_row - 1);
+    d.resize(num_row);
+  }
+
+  std::vector<double> a;
+  std::vector<double> b;
+  std::vector<double> c;
+  std::vector<double> d;
+};
+
+inline std::vector<double> solveTridiagonalMatrixAlgorithm(const TDMACoef & tdma_coef)
+{
+  const auto & a = tdma_coef.a;
+  const auto & b = tdma_coef.b;
+  const auto & c = tdma_coef.c;
+  const auto & d = tdma_coef.d;
+
+  const size_t num_row = b.size();
+
+  std::vector<double> x(num_row);
+  if (num_row != 1) {
+    // calculate p and q
+    std::vector<double> p;
+    std::vector<double> q;
+    p.push_back(-c[0] / b[0]);
+    q.push_back(d[0] / b[0]);
+
+    for (size_t i = 1; i < num_row; ++i) {
+      const double den = b[i] + a[i - 1] * p[i - 1];
+      p.push_back(-c[i - 1] / den);
+      q.push_back((d[i] - a[i - 1] * q[i - 1]) / den);
+    }
+
+    // calculate solution
+    x[num_row - 1] = q[num_row - 1];
+
+    for (size_t i = 1; i < num_row; ++i) {
+      const size_t j = num_row - 1 - i;
+      x[j] = p[j] * x[j + 1] + q[j];
+    }
+  } else {
+    x.push_back(d[0] / b[0]);
+  }
+
+  return x;
+}
+
 interpolation::MultiSplineCoef getSplineCoefficients(
   const std::vector<double> & base_keys, const std::vector<double> & base_values)
 {
@@ -36,7 +96,7 @@ interpolation::MultiSplineCoef getSplineCoefficients(
   std::vector<double> v = {0.0};
   if (num_base > 2) {
     // solve tridiagonal matrix algorithm
-    interpolation_utils::TDMACoef tdma_coef(num_base - 2);  // N-1
+    TDMACoef tdma_coef(num_base - 2);  // N-1
 
     for (size_t i = 0; i < num_base - 2; ++i) {
       tdma_coef.b[i] = 2 * (diff_keys[i] + diff_keys[i + 1]);
@@ -48,8 +108,7 @@ interpolation::MultiSplineCoef getSplineCoefficients(
         6.0 * (diff_values[i + 1] / diff_keys[i + 1] - diff_values[i] / diff_keys[i]);
     }
 
-    const std::vector<double> tdma_res =
-      interpolation_utils::solveTridiagonalMatrixAlgorithm(tdma_coef);
+    const std::vector<double> tdma_res = solveTridiagonalMatrixAlgorithm(tdma_coef);
 
     // calculate v
     v.insert(v.end(), tdma_res.begin(), tdma_res.end());
