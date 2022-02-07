@@ -81,7 +81,7 @@ struct VehicleInfo
 struct EgoVelocity
 {
   double ebs_decel;     // [m/s^2] emergency braking system deceleration
-  double pbs_decel;     // [m/s^2] predictive braking system deceleration
+  double max_decel;     // [m/s^2] predictive braking system deceleration
   double min_velocity;  // [m/s]   minimum allowed velocity not to stop
 };
 

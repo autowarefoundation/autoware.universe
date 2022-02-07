@@ -70,7 +70,7 @@ Note that the accuracy and performance of this search method is limited due to t
 | ------------------------------------ | ------ | -------------------------------------------------------------------- |
 | `min_velocity`                       | double | [m/s] minimum velocity to ignore occlusion spot                      |
 | `ebs_decel`                          | double | [m/s^2] maximum deceleration to assume for emergency braking system. |
-| `pbs_decel`                          | double | [m/s^2] deceleration to assume for predictive braking system         |
+| `max_decel`                          | double | [m/s^2] deceleration to assume for predictive braking system         |
 
 | Parameter /sidewalk       | Type   | Description                                                     |
 | ------------------------- | ------ | --------------------------------------------------------------- |

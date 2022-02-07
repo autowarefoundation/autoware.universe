@@ -34,10 +34,12 @@ void applySafeVelocityConsideringPossibleCollison(
   if (!inout_path || inout_path->points.size() < 2) {
     return;
   }
+  const double v0 = current_vel;
+  const double ebs_decel = ego.ebs_decel;
   for (auto & possible_collision : possible_collisions) {
-    const double dist_to_collision = possible_collision.arc_lane_dist_at_collision.length;
-    const double original_vel = possible_collision.collision_path_point.longitudinal_velocity_mps;
-    const double d_obs = std::abs(possible_collision.arc_lane_dist_at_collision.distance);
+    const double l_obs = possible_collision.arc_lane_dist_at_collision.length;
+    auto & original_vel = possible_collision.collision_path_point.longitudinal_velocity_mps;
+    const double d_obs = possible_collision.arc_lane_dist_at_collision.distance;
     const double v_obs = possible_collision.obstacle_info.max_velocity;
     // skip if obstacle velocity is below zero
     if (v_obs < 0) {
@@ -50,21 +52,18 @@ void applySafeVelocityConsideringPossibleCollison(
         logger, clock, 3000, "distance for virtual darting object is not set correctly");
       continue;
     }
-    // RPB : risk predictive braking system velocity consider ego emergency braking deceleration
-    const double risk_predictive_braking_velocity =
-      calculateSafeRPBVelocity(param.safety_time_buffer, d_obs, v_obs, ego.ebs_decel);
+    // safe velocity : Consider ego emergency braking deceleration
+    const double safe_velocity_using_ebs = calculateSafeVelocity(d_obs, v_obs, ebs_decel);
 
-    // PBS : predictive braking system velocity consider ego predictive braking deceleration
-    const double predictive_braking_system_velocity =
-      calculatePredictiveBrakingVelocity(current_vel, dist_to_collision, ego.pbs_decel);
+    // min allowed velocity : min allowed velocity consider maximum allowed braking
+    const double min_allowed_velocity = calculateMinAllowedVelocity(v0, l_obs, ebs_decel);
 
-    // get RPB velocity consider PBS limiter and minimum allowed velocity according to the road type
-    const double pbs_limited_rpb_vel = getPBSLimitedRPBVelocity(
-      predictive_braking_system_velocity, risk_predictive_braking_velocity, ego.min_velocity,
-      original_vel);
-    possible_collision.collision_path_point.longitudinal_velocity_mps = pbs_limited_rpb_vel;
-    insertSafeVelocityToPath(
-      possible_collision.collision_path_point.pose, pbs_limited_rpb_vel, param, inout_path);
+    // coompare safe velocity consider EBS, minimum allowed velocity and original velocity
+    const double safe_velocity = compareSafeVelocity(
+      min_allowed_velocity, safe_velocity_using_ebs, ego.min_velocity, original_vel);
+    original_vel = safe_velocity;
+    const auto & pose = possible_collision.collision_path_point.pose;
+    insertSafeVelocityToPath(pose, safe_velocity, param, inout_path);
   }
 }
 
