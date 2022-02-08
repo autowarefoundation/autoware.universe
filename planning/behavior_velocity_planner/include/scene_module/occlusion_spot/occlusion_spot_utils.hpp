@@ -132,16 +132,16 @@ struct ObstacleInfo
 struct PossibleCollisionInfo
 {
   ObstacleInfo obstacle_info;                          // For hidden obstacle
-  PathPoint collision_path_point;                      // For baselink at collision point
+  PathPoint collision_with_margin;                     // For baselink at collision point
   geometry_msgs::msg::Pose intersection_pose;          // For egp path and hidden obstacle
   lanelet::ArcCoordinates arc_lane_dist_at_collision;  // For ego distance to obstacle in s-d
   PossibleCollisionInfo() = default;
   PossibleCollisionInfo(
-    const ObstacleInfo & obstacle_info, const PathPoint & collision_path_point,
+    const ObstacleInfo & obstacle_info, const PathPoint & collision_with_margin,
     const geometry_msgs::msg::Pose & intersection_pose,
     const lanelet::ArcCoordinates & arc_lane_dist_to_occlusion)
   : obstacle_info(obstacle_info),
-    collision_path_point(collision_path_point),
+    collision_with_margin(collision_with_margin),
     intersection_pose(intersection_pose),
     arc_lane_dist_at_collision(arc_lane_dist_to_occlusion)
   {

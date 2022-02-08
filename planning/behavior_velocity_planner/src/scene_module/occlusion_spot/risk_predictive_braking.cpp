@@ -38,7 +38,7 @@ void applySafeVelocityConsideringPossibleCollision(
   const double v_min = param.v.v_min;
   for (auto & possible_collision : possible_collisions) {
     const double l_obs = possible_collision.arc_lane_dist_at_collision.length;
-    const double original_vel = possible_collision.collision_path_point.longitudinal_velocity_mps;
+    const double original_vel = possible_collision.collision_with_margin.longitudinal_velocity_mps;
 
     // safe velocity : Consider ego emergency braking deceleration
     const double v_safe = possible_collision.obstacle_info.sm.safe_velocity;
@@ -50,7 +50,7 @@ void applySafeVelocityConsideringPossibleCollision(
     const double safe_velocity =
       compareSafeVelocity(min_allowed_velocity, v_safe, v_min, original_vel);
     possible_collision.obstacle_info.sm.safe_velocity = safe_velocity;
-    const auto & pose = possible_collision.collision_path_point.pose;
+    const auto & pose = possible_collision.collision_with_margin.pose;
     insertSafeVelocityToPath(pose, safe_velocity, param, inout_path);
   }
 }

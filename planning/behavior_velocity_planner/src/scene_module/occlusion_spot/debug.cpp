@@ -96,12 +96,12 @@ std::vector<visualization_msgs::msg::Marker> makeCollisionMarkers(
   std::vector<visualization_msgs::msg::Marker> debug_markers;
   visualization_msgs::msg::Marker debug_marker;
   debug_marker.header.frame_id = "map";
-  debug_marker.ns = "collision_point";
+  debug_marker.ns = "collision_with_margin";
   debug_marker.id = id;
   // cylinder at collision_point point
   debug_marker.type = visualization_msgs::msg::Marker::CYLINDER;
-  debug_marker.pose = possible_collision.collision_path_point.pose;
-  debug_marker.scale = tier4_autoware_utils::createMarkerScale(1.0, 1.0, 0.5);
+  debug_marker.pose = possible_collision.collision_with_margin.pose;
+  debug_marker.scale = tier4_autoware_utils::createMarkerScale(0.5, 0.5, 0.5);
   debug_marker.color = tier4_autoware_utils::createMarkerColor(1.0, 0.0, 0.0, 0.5);
 
   debug_marker.lifetime = rclcpp::Duration::from_seconds(0.5);
@@ -117,7 +117,7 @@ std::vector<visualization_msgs::msg::Marker> makeCollisionMarkers(
     // info text at obstacle point
     debug_marker.ns = "info_obstacle";
     debug_marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
-    debug_marker.pose = possible_collision.collision_path_point.pose;
+    debug_marker.pose = possible_collision.collision_with_margin.pose;
     debug_marker.scale.z = 1.0;
     debug_marker.color = tier4_autoware_utils::createMarkerColor(1.0, 1.0, 0.0, 1.0);
     std::ostringstream string_stream;
