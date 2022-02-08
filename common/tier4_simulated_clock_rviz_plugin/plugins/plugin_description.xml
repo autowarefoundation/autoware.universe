@@ -1,4 +1,4 @@
-<library path="tier4_clock_rviz_plugin">
+<library path="tier4_simulated_clock_rviz_plugin">
 
   <class
     type="rviz_plugins::SimulatedClockPanel"

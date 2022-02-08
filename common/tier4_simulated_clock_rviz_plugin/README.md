@@ -1,4 +1,4 @@
-# tier4_clock_rviz_plugin
+# tier4_simulated_clock_rviz_plugin
 
 ## Purpose
 

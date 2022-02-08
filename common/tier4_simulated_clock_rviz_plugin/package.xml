@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
 
-  <name>tier4_clock_rviz_plugin</name>
-  <version>0.0.0</version>
+  <name>tier4_simulated_clock_rviz_plugin</name>
+  <version>0.0.1</version>
   <description>Rviz plugin to publish and control the /clock topic</description>
   <maintainer email="maxime.clement@tier4.jp">Maxime CLEMENT</maintainer>
   <license>Apache License 2.0</license>
