@@ -330,10 +330,10 @@ geometry_msgs::msg::Point SplineInterpolationPoint2d::getSplineInterpolatedPoint
 
   double whole_s = base_s_vec_.at(idx) + s;
   if (whole_s < base_s_vec_.front()) {
-    throw std::out_of_range("s [m] forward from idx'th base point is out of base points.");
+    whole_s = base_s_vec_.front();
   }
   if (whole_s > base_s_vec_.back()) {
-    throw std::out_of_range("s [m] forward from idx'th base point is out of base points.");
+    whole_s = base_s_vec_.back();
   }
 
   const double x = getSplineInterpolatedValues(base_s_vec_, {whole_s}, multi_spline_coef_x_).at(0);
@@ -353,10 +353,10 @@ double SplineInterpolationPoint2d::getSplineInterpolatedYaw(const size_t idx, co
 
   double whole_s = base_s_vec_.at(idx) + s;
   if (whole_s < base_s_vec_.front()) {
-    throw std::out_of_range("s [m] forward from idx'th base point is out of base points.");
+    whole_s = base_s_vec_.front();
   }
   if (whole_s > base_s_vec_.back()) {
-    throw std::out_of_range("s [m] forward from idx'th base point is out of base points.");
+    whole_s = base_s_vec_.back();
   }
 
   const double diff_x =

@@ -211,11 +211,18 @@ TEST(spline_interpolation, SplineInterpolationPoint2d)
     EXPECT_NEAR(random_point.x, 5.3036484, epsilon);
     EXPECT_NEAR(random_point.y, 10.3343074, epsilon);
 
-    // out of range
+    // out of range of total length
+    const auto front_out_point = s.getSplineInterpolatedPoint(0.0, -0.1);
+    EXPECT_NEAR(front_out_point.x, -2.0, epsilon);
+    EXPECT_NEAR(front_out_point.y, -10.0, epsilon);
+
+    const auto back_out_point = s.getSplineInterpolatedPoint(4.0, 0.1);
+    EXPECT_NEAR(back_out_point.x, 10.0, epsilon);
+    EXPECT_NEAR(back_out_point.y, 12.5, epsilon);
+
+    // out of range of index
     EXPECT_THROW(s.getSplineInterpolatedPoint(-1, 0.0), std::out_of_range);
-    EXPECT_THROW(s.getSplineInterpolatedPoint(0.0, -0.1), std::out_of_range);
     EXPECT_THROW(s.getSplineInterpolatedPoint(5, 0.0), std::out_of_range);
-    EXPECT_THROW(s.getSplineInterpolatedPoint(4, 0.1), std::out_of_range);
   }
 
   {  // yaw
@@ -228,11 +235,13 @@ TEST(spline_interpolation, SplineInterpolationPoint2d)
     // random
     EXPECT_NEAR(s.getSplineInterpolatedYaw(3, 0.5), 0.7757198, epsilon);
 
-    // out of range
+    // out of range of total length
+    EXPECT_NEAR(s.getSplineInterpolatedYaw(0.0, -0.1), 1.3593746, epsilon);
+    EXPECT_NEAR(s.getSplineInterpolatedYaw(4, 0.1), 0.2932783, epsilon);
+
+    // out of range of index
     EXPECT_THROW(s.getSplineInterpolatedYaw(-1, 0.0), std::out_of_range);
-    EXPECT_THROW(s.getSplineInterpolatedYaw(0.0, -0.1), std::out_of_range);
     EXPECT_THROW(s.getSplineInterpolatedYaw(5, 0.0), std::out_of_range);
-    EXPECT_THROW(s.getSplineInterpolatedYaw(4, 0.1), std::out_of_range);
   }
 
   {  // accumulated distance
@@ -245,7 +254,7 @@ TEST(spline_interpolation, SplineInterpolationPoint2d)
     // random
     EXPECT_NEAR(s.getAccumulatedLength(3), 21.2586811, epsilon);
 
-    // out of range
+    // out of range of index
     EXPECT_THROW(s.getAccumulatedLength(-1), std::out_of_range);
     EXPECT_THROW(s.getAccumulatedLength(5), std::out_of_range);
   }
