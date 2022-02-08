@@ -96,15 +96,19 @@ std::vector<visualization_msgs::msg::Marker> makeCollisionMarkers(
   std::vector<visualization_msgs::msg::Marker> debug_markers;
   visualization_msgs::msg::Marker debug_marker;
   debug_marker.header.frame_id = "map";
-  debug_marker.ns = "collision_with_margin";
+  debug_marker.ns = "collision_point";
   debug_marker.id = id;
-  // cylinder at collision_point point
+  // cylinder at collision with margin point
   debug_marker.type = visualization_msgs::msg::Marker::CYLINDER;
   debug_marker.pose = possible_collision.collision_with_margin.pose;
   debug_marker.scale = tier4_autoware_utils::createMarkerScale(0.5, 0.5, 0.5);
   debug_marker.color = tier4_autoware_utils::createMarkerColor(1.0, 0.0, 0.0, 0.5);
-
   debug_marker.lifetime = rclcpp::Duration::from_seconds(0.5);
+  debug_markers.push_back(debug_marker);
+  debug_marker.id++;
+  // cylinder at collision_point point
+  debug_marker.pose = possible_collision.collision_pose;
+  debug_marker.color = tier4_autoware_utils::createMarkerColor(1.0, 0.5, 0.0, 0.5);
   debug_markers.push_back(debug_marker);
   // cylinder at obstacle point
   debug_marker.ns = "obstacle";
