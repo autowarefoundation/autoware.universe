@@ -5,7 +5,7 @@
     - source: .github/workflows/pre-commit-optional.yaml
     - source: .github/workflows/pre-commit.yaml
     - source: .github/workflows/semantic-pull-request.yaml
-    - source: .github/workflows/spell-check.yaml
+    - source: .github/workflows/spell-check-differential.yaml
     # - source: .github/workflows/vcs-import.yaml # TODO: Sync after renaming to autoware.repos
     - source: .clang-format
     - source: .markdown-link-check.json
