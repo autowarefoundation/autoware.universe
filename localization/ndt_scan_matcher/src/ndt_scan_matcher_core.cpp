@@ -665,51 +665,6 @@ void NDTScanMatcher::callbackSensorPoints(
     key_value_stdmap_["is_local_optimal_solution_oscillation"] = "0";
   }
 
-  // debug code
-  // {
-  //   nav_msgs::msg::OccupancyGrid grid_map_msg;
-  //   grid_map_msg.header.stamp = sensor_ros_time;
-  //   grid_map_msg.header.frame_id = map_frame_;
-  //   grid_map_msg.info.resolution = 1.0;
-  //   grid_map_msg.info.width = 21;
-  //   grid_map_msg.info.height = 21 ;
-  //   auto rpy = getRPY(result_pose_msg);
-  //   grid_map_msg.info.origin = result_pose_msg;
-  //   double orig_x = -static_cast<int>(grid_map_msg.info.width)/2*grid_map_msg.info.resolution -grid_map_msg.info.resolution/2.0;
-  //   double orig_y = -static_cast<int>(grid_map_msg.info.height)/2*grid_map_msg.info.resolution-grid_map_msg.info.resolution/2.0;
-  //   grid_map_msg.info.origin.position.x += orig_x * std::cos(rpy.z) - orig_y * std::sin(rpy.z);
-  //   grid_map_msg.info.origin.position.y += orig_x * std::sin(rpy.z) + orig_y * std::cos(rpy.z);
-
-  //   for (size_t i = 0; i < grid_map_msg.info.height; ++i) {
-  //     for (size_t j = 0; j < grid_map_msg.info.width; ++j) {
-  //       Eigen::Matrix4f offset_pose_matrix;
-  //       offset_pose_matrix.setIdentity();
-
-  //       double offset_x = (static_cast<int>(j)-static_cast<int>(grid_map_msg.info.width)/2)*grid_map_msg.info.resolution;
-  //       double offset_y = (static_cast<int>(i)-static_cast<int>(grid_map_msg.info.height)/2)*grid_map_msg.info.resolution;
-
-  //       offset_pose_matrix(0,3) = offset_x * std::cos(rpy.z) - offset_y * std::sin(rpy.z);
-  //       offset_pose_matrix(1,3) = offset_x * std::sin(rpy.z) + offset_y * std::cos(rpy.z);
-
-  //       auto offset_sensor_points_mapTF_ptr = std::make_shared<pcl::PointCloud<PointSource>>();
-  //       pcl::transformPointCloud(*sensor_points_mapTF_ptr, *offset_sensor_points_mapTF_ptr, offset_pose_matrix);
-
-  //       double tp = ndt_ptr_->calculateNearestVoxelTransformationProbability(*offset_sensor_points_mapTF_ptr);
-  //       std::cerr << tp << " ";
-  //       tp -= 2.0;
-  //       tp *= 200.0;
-  //       // tp -= 2.0;
-  //       // tp *= 100.0;
-  //       tp = std::max(tp, 1.0);
-  //       tp = std::min(tp, 99.0);
-  //       grid_map_msg.data.push_back(static_cast<int>(tp));
-  //     }
-  //     std::cerr << std::endl;
-  //   }
-  // std::cerr << std::endl;
-  // tp_grid_map_pub_->publish(grid_map_msg);
-  // }
-
 }
 
 geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::alignUsingMonteCarlo(
