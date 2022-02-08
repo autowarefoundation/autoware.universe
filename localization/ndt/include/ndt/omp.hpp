@@ -59,8 +59,10 @@ public:
 
   boost::shared_ptr<pcl::search::KdTree<PointTarget>> getSearchMethodTarget() const override;
 
-  double calculateTransformationProbability(const pcl::PointCloud<PointSource> & trans_cloud) const override;
-  double calculateNearestVoxelTransformationProbability(const pcl::PointCloud<PointSource> & trans_cloud) const override;
+  double calculateTransformationProbability(
+    const pcl::PointCloud<PointSource> & trans_cloud) const override;
+  double calculateNearestVoxelTransformationProbability(
+    const pcl::PointCloud<PointSource> & trans_cloud) const override;
 
   // only OMP Impl
   void setNumThreads(int n);
@@ -68,6 +70,7 @@ public:
 
   int getNumThreads() const;
   pclomp::NeighborSearchMethod getNeighborhoodSearchMethod() const;
+
 private:
   boost::shared_ptr<pclomp::NormalDistributionsTransform<PointSource, PointTarget>> ndt_ptr_;
 };

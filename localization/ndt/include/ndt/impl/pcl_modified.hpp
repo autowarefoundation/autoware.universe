@@ -170,16 +170,17 @@ NormalDistributionsTransformPCLModified<PointSource, PointTarget>::getSearchMeth
 }
 
 template <class PointSource, class PointTarget>
-double
-NormalDistributionsTransformPCLModified<PointSource, PointTarget>::calculateTransformationProbability(const pcl::PointCloud<PointSource> & trans_cloud) const
+double NormalDistributionsTransformPCLModified<PointSource, PointTarget>::
+  calculateTransformationProbability(const pcl::PointCloud<PointSource> & trans_cloud) const
 {
   // return ndt_ptr_->calculateTransformationProbability(trans_cloud);
   return 0.0;
 }
 
 template <class PointSource, class PointTarget>
-double
-NormalDistributionsTransformPCLModified<PointSource, PointTarget>::calculateNearestVoxelTransformationProbability(const pcl::PointCloud<PointSource> & trans_cloud) const
+double NormalDistributionsTransformPCLModified<PointSource, PointTarget>::
+  calculateNearestVoxelTransformationProbability(
+    const pcl::PointCloud<PointSource> & trans_cloud) const
 {
   // return ndt_ptr_->calculateNearestVoxelTransformationProbability(trans_cloud);
   return 0.0;

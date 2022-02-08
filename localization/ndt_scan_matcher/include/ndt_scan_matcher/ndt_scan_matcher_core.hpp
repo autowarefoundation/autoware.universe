@@ -52,7 +52,10 @@
 #include <vector>
 
 enum class NDTImplementType { PCL_GENERIC = 0, PCL_MODIFIED = 1, OMP = 2 };
-enum class ConveredParamType { TRANSFORM_PROBABILITY = 0, NEAREST_VOXEL_TRANSFORMATION_PROBABILITY = 1 };
+enum class ConveredParamType {
+  TRANSFORM_PROBABILITY = 0,
+  NEAREST_VOXEL_TRANSFORMATION_PROBABILITY = 1
+};
 
 template <typename PointSource, typename PointTarget>
 std::shared_ptr<NormalDistributionsTransformBase<PointSource, PointTarget>> getNDT(
@@ -135,7 +138,8 @@ private:
     initial_pose_with_covariance_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr exe_time_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr transform_probability_pub_;
-  rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr nearest_voxel_transformation_probability_pub_;
+  rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr
+    nearest_voxel_transformation_probability_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Int32Stamped>::SharedPtr iteration_num_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr
     initial_to_result_distance_pub_;
