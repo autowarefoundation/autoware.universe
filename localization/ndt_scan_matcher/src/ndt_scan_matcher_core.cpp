@@ -537,8 +537,13 @@ void NDTScanMatcher::callbackSensorPoints(
   These bugs are now resolved in original pcl implementation.
   https://github.com/PointCloudLibrary/pcl/blob/424c1c6a0ca97d94ca63e5daff4b183a4db8aae4/registration/include/pcl/registration/impl/ndt.hpp#L73-L180
   *****************************************************************************/
+  bool is_ok_iteration_num = iteration_num < ndt_ptr_->getMaximumIterations() + 2;
+  if (!is_ok_iteration_num) {
+      RCLCPP_WARN(get_logger(), "The number of iterations has reached its upper limit. The number of iterations: %d, Limit: %d", iteration_num, ndt_ptr_->getMaximumIterations() + 2);
+  }
+
   bool is_local_optimal_solution_oscillation = false;
-  if (iteration_num >= ndt_ptr_->getMaximumIterations() + 2) {
+  if (!is_ok_iteration_num) {
     is_local_optimal_solution_oscillation = isLocalOptimalSolutionOscillation(
       result_pose_matrix_array, oscillation_threshold_, inversion_vector_threshold_);
   }
@@ -546,13 +551,13 @@ void NDTScanMatcher::callbackSensorPoints(
 
   bool is_ok_converged_param = false;
   if (converged_param_type_ == ConveredParamType::TRANSFORM_PROBABILITY) {
-    is_ok_converged_param = transform_probability < converged_param_transform_probability_;
+    is_ok_converged_param = transform_probability > converged_param_transform_probability_;
     if (!is_ok_converged_param) {
       RCLCPP_WARN(get_logger(), "Transform Probability is below the threshold. Score: %lf, Threshold: %lf", transform_probability, converged_param_transform_probability_);
     }
   }
   else if (converged_param_type_ == ConveredParamType::NEAREST_VOXEL_TRANSFORMATION_PROBABILITY) {
-    is_ok_converged_param = nearest_voxel_transformation_probability < converged_param_nearest_voxel_transformation_probability_;
+    is_ok_converged_param = nearest_voxel_transformation_probability > converged_param_nearest_voxel_transformation_probability_;
     if (!is_ok_converged_param) {
       RCLCPP_WARN(get_logger(), "Nearest Voxel Transform Probability is below the threshold. Score: %lf, Threshold: %lf", nearest_voxel_transformation_probability, converged_param_nearest_voxel_transformation_probability_);
     }
@@ -562,15 +567,15 @@ void NDTScanMatcher::callbackSensorPoints(
     RCLCPP_ERROR_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1, "Unknown converged param type.");
   }
 
-  bool is_converged = true;
+  bool is_converged = false;
   static size_t skipping_publish_num = 0;
-
-  if (is_ok_converged_param || iteration_num >= ndt_ptr_->getMaximumIterations() + 2) {
+  if (is_ok_iteration_num && is_ok_converged_param) {
+    is_converged = true;
+    skipping_publish_num = 0;
+  } else {
     is_converged = false;
     ++skipping_publish_num;
     RCLCPP_WARN(get_logger(), "Not Converged");
-  } else {
-    skipping_publish_num = 0;
   }
 
   // publish
@@ -660,49 +665,50 @@ void NDTScanMatcher::callbackSensorPoints(
     key_value_stdmap_["is_local_optimal_solution_oscillation"] = "0";
   }
 
-  {
-    nav_msgs::msg::OccupancyGrid grid_map_msg;
-    grid_map_msg.header.stamp = sensor_ros_time;
-    grid_map_msg.header.frame_id = map_frame_;
-    grid_map_msg.info.resolution = 1.0;
-    grid_map_msg.info.width = 21;
-    grid_map_msg.info.height = 21 ;
-    auto rpy = getRPY(result_pose_msg);
-    grid_map_msg.info.origin = result_pose_msg;
-    double orig_x = -static_cast<int>(grid_map_msg.info.width)/2*grid_map_msg.info.resolution -grid_map_msg.info.resolution/2.0;
-    double orig_y = -static_cast<int>(grid_map_msg.info.height)/2*grid_map_msg.info.resolution-grid_map_msg.info.resolution/2.0;
-    grid_map_msg.info.origin.position.x += orig_x * std::cos(rpy.z) - orig_y * std::sin(rpy.z);
-    grid_map_msg.info.origin.position.y += orig_x * std::sin(rpy.z) + orig_y * std::cos(rpy.z);
+  // debug code
+  // {
+  //   nav_msgs::msg::OccupancyGrid grid_map_msg;
+  //   grid_map_msg.header.stamp = sensor_ros_time;
+  //   grid_map_msg.header.frame_id = map_frame_;
+  //   grid_map_msg.info.resolution = 1.0;
+  //   grid_map_msg.info.width = 21;
+  //   grid_map_msg.info.height = 21 ;
+  //   auto rpy = getRPY(result_pose_msg);
+  //   grid_map_msg.info.origin = result_pose_msg;
+  //   double orig_x = -static_cast<int>(grid_map_msg.info.width)/2*grid_map_msg.info.resolution -grid_map_msg.info.resolution/2.0;
+  //   double orig_y = -static_cast<int>(grid_map_msg.info.height)/2*grid_map_msg.info.resolution-grid_map_msg.info.resolution/2.0;
+  //   grid_map_msg.info.origin.position.x += orig_x * std::cos(rpy.z) - orig_y * std::sin(rpy.z);
+  //   grid_map_msg.info.origin.position.y += orig_x * std::sin(rpy.z) + orig_y * std::cos(rpy.z);
 
-    for (size_t i = 0; i < grid_map_msg.info.height; ++i) {
-      for (size_t j = 0; j < grid_map_msg.info.width; ++j) {
-        Eigen::Matrix4f offset_pose_matrix;
-        offset_pose_matrix.setIdentity();
+  //   for (size_t i = 0; i < grid_map_msg.info.height; ++i) {
+  //     for (size_t j = 0; j < grid_map_msg.info.width; ++j) {
+  //       Eigen::Matrix4f offset_pose_matrix;
+  //       offset_pose_matrix.setIdentity();
 
-        double offset_x = (static_cast<int>(j)-static_cast<int>(grid_map_msg.info.width)/2)*grid_map_msg.info.resolution;
-        double offset_y = (static_cast<int>(i)-static_cast<int>(grid_map_msg.info.height)/2)*grid_map_msg.info.resolution;
+  //       double offset_x = (static_cast<int>(j)-static_cast<int>(grid_map_msg.info.width)/2)*grid_map_msg.info.resolution;
+  //       double offset_y = (static_cast<int>(i)-static_cast<int>(grid_map_msg.info.height)/2)*grid_map_msg.info.resolution;
 
-        offset_pose_matrix(0,3) = offset_x * std::cos(rpy.z) - offset_y * std::sin(rpy.z);
-        offset_pose_matrix(1,3) = offset_x * std::sin(rpy.z) + offset_y * std::cos(rpy.z);
+  //       offset_pose_matrix(0,3) = offset_x * std::cos(rpy.z) - offset_y * std::sin(rpy.z);
+  //       offset_pose_matrix(1,3) = offset_x * std::sin(rpy.z) + offset_y * std::cos(rpy.z);
 
-        auto offset_sensor_points_mapTF_ptr = std::make_shared<pcl::PointCloud<PointSource>>();
-        pcl::transformPointCloud(*sensor_points_mapTF_ptr, *offset_sensor_points_mapTF_ptr, offset_pose_matrix);
+  //       auto offset_sensor_points_mapTF_ptr = std::make_shared<pcl::PointCloud<PointSource>>();
+  //       pcl::transformPointCloud(*sensor_points_mapTF_ptr, *offset_sensor_points_mapTF_ptr, offset_pose_matrix);
 
-        double tp = ndt_ptr_->calculateNearestVoxelTransformationProbability(*offset_sensor_points_mapTF_ptr);
-        std::cerr << tp << " ";
-        tp -= 2.0;
-        tp *= 200.0;
-        // tp -= 2.0;
-        // tp *= 100.0;
-        tp = std::max(tp, 1.0);
-        tp = std::min(tp, 99.0);
-        grid_map_msg.data.push_back(static_cast<int>(tp));
-      }
-      std::cerr << std::endl;
-    }
-  std::cerr << std::endl;
-  tp_grid_map_pub_->publish(grid_map_msg);
-  }
+  //       double tp = ndt_ptr_->calculateNearestVoxelTransformationProbability(*offset_sensor_points_mapTF_ptr);
+  //       std::cerr << tp << " ";
+  //       tp -= 2.0;
+  //       tp *= 200.0;
+  //       // tp -= 2.0;
+  //       // tp *= 100.0;
+  //       tp = std::max(tp, 1.0);
+  //       tp = std::min(tp, 99.0);
+  //       grid_map_msg.data.push_back(static_cast<int>(tp));
+  //     }
+  //     std::cerr << std::endl;
+  //   }
+  // std::cerr << std::endl;
+  // tp_grid_map_pub_->publish(grid_map_msg);
+  // }
 
 }
 

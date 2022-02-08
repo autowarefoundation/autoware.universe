@@ -29,9 +29,11 @@
     # NEAREST_VOXEL_TRANSFORMATION_PROBABILITY is only available when NDTImplementType::OMP is selected
     converged_param_type: 1
 
+    # If converged_param_type is 0
     # Threshold for deciding whether to trust the estimation result
     converged_param_transform_probability: 3.0
 
+    # If converged_param_type is 1
     # Threshold for deciding whether to trust the estimation result
     converged_param_nearest_voxel_transformation_probability: 2.3
 
