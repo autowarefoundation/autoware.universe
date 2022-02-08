@@ -102,7 +102,7 @@ NDTScanMatcher::NDTScanMatcher()
   base_frame_("base_link"),
   ndt_base_frame_("ndt_base_link"),
   map_frame_("map"),
-  converged_param_type_(ConveredParamType::TRANSFORM_PROBABILITY)
+  converged_param_type_(ConveredParamType::TRANSFORM_PROBABILITY),
   converged_param_transform_probability_(4.5),
   converged_param_nearest_voxel_transformation_probability_(2.3),
   initial_estimate_particles_num_(100),
