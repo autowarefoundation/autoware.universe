@@ -26,7 +26,6 @@ TEST(safeMotion, delay_jerk_acceleration)
 {
   namespace utils = behavior_velocity_planner::occlusion_spot_utils;
   using utils::calculateSafeMotion;
-  // const double inf = std::numeric_limits<double>::max();
   /**
    * @brief check if calculation is correct in below parameter
    * delay =  0.5 [s]
@@ -36,27 +35,26 @@ TEST(safeMotion, delay_jerk_acceleration)
    * case2 delay + jerk
    * case3 delay + jerk + acc
    */
-  utils::Velocity v{1.0, -3.0, -4.5, -1.0, 0, 0, 0};
+  utils::Velocity v{1.0, -3.0, -4.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0};
   double ttc = 0.0;
-  double safety_time_buffer = 0.5;
   // case 1 delay
   {
     ttc = 0.5;
-    utils::SafeMotion sm = utils::calculateSafeMotion(v, ttc, safety_time_buffer);
+    utils::SafeMotion sm = utils::calculateSafeMotion(v, ttc);
     EXPECT_DOUBLE_EQ(sm.safe_velocity, 0.0);
     EXPECT_DOUBLE_EQ(sm.stop_dist, 0.0);
   }
   // case 2 delay + jerk
   {
     ttc = 1.5;
-    utils::SafeMotion sm = utils::calculateSafeMotion(v, ttc, safety_time_buffer);
+    utils::SafeMotion sm = utils::calculateSafeMotion(v, ttc);
     EXPECT_DOUBLE_EQ(sm.safe_velocity, 1.5);
     EXPECT_DOUBLE_EQ(sm.stop_dist, 1.25);
   }
   // case 3 delay + jerk + acc
   {
     ttc = 3.25;
-    utils::SafeMotion sm = utils::calculateSafeMotion(v, ttc, safety_time_buffer);
+    utils::SafeMotion sm = utils::calculateSafeMotion(v, ttc);
     EXPECT_DOUBLE_EQ(sm.safe_velocity, 9);
     EXPECT_DOUBLE_EQ(std::round(sm.stop_dist * 100.0) / 100.0, 13.92);
   }

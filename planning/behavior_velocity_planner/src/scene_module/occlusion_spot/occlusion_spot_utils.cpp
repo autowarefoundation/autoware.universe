@@ -319,7 +319,7 @@ PossibleCollisionInfo calculateCollisionPathPointFromOcclusionSpot(
    */
   PossibleCollisionInfo pc;
   const double ttc = std::abs(arc_coord_occlusion_with_offset.distance / param.pedestrian_vel);
-  SafeMotion sm = calculateSafeMotion(param.v, ttc, param.safety_time_buffer);
+  SafeMotion sm = calculateSafeMotion(param.v, ttc);
   double distance_to_stop = arc_coord_occlusion_with_offset.length - sm.stop_dist;
   const double eps = 1e-3;
   if (distance_to_stop <= param.baselink_to_front) distance_to_stop = param.baselink_to_front + eps;

@@ -78,14 +78,15 @@ struct Velocity
   double a_max;         // [m/s^2] emergency braking system deceleration
   double a_min;         // [m/s^2] maximum allowed deceleration
   double v_min;         // [m/s]   minimum allowed velocity not to stop
+  double a_ego;         // [m/s^2] current ego acceleration
   double v_ego;         // [m/s]   current ego velocity
-  double a_ego;         // [m/s]   current ego acceleration
+  double t_buf;         // [s] safety time buffer for delay response
+  double d_max;         // [m] maximum safety distance for any error
 };
 
 struct PlannerParam
 {
   // parameters in yaml
-  double safety_time_buffer;     // [s]
   double detection_area_length;  // [m]
   double stuck_vehicle_vel;      // [m/s]
   double lateral_distance_thr;   // [m] lateral distance threshold to consider

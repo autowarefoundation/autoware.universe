@@ -55,10 +55,10 @@ Note that the accuracy and performance of this search method is limited due to t
 
 #### Module Parameters
 
-| Parameter            | Type   | Description                                                               |
-| -------------------- | ------ | ------------------------------------------------------------------------- |
-| `pedestrian_vel`     | double | [m/s] maximum velocity assumed pedestrian coming out from occlusion point |
-| `safety_time_buffer` | double | [m/s] time buffer for the system delay                                    |
+| Parameter        | Type   | Description                                                               |
+| ---------------- | ------ | ------------------------------------------------------------------------- |
+| `pedestrian_vel` | double | [m/s] maximum velocity assumed pedestrian coming out from occlusion point |
+| `t_buf`          | double | [m/s] time buffer for the system delay                                    |
 
 | Parameter /threshold    | Type   | Description                                               |
 | ----------------------- | ------ | --------------------------------------------------------- |

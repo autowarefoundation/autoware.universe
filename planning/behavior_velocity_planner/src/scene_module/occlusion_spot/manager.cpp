@@ -81,7 +81,6 @@ OcclusionSpotModuleManager::OcclusionSpotModuleManager(rclcpp::Node & node)
   auto & pp = planner_param_;
   // assume pedestrian coming out from occlusion spot with this velocity
   pp.pedestrian_vel = node.declare_parameter(ns + ".pedestrian_vel", 1.0);
-  pp.safety_time_buffer = node.declare_parameter(ns + ".safety_time_buffer", 0.1);
   pp.detection_area_length = node.declare_parameter(ns + ".threshold.detection_area_length", 200.0);
   pp.stuck_vehicle_vel = node.declare_parameter(ns + ".threshold.stuck_vehicle_vel", 1.0);
   pp.lateral_distance_thr = node.declare_parameter(ns + ".threshold.lateral_distance", 10.0);
@@ -91,9 +90,11 @@ OcclusionSpotModuleManager::OcclusionSpotModuleManager(rclcpp::Node & node)
   pp.show_debug_grid = node.declare_parameter(ns + ".show_debug_grid", false);
 
   // ego additional velocity config
-  pp.v.safety_ratio = node.declare_parameter(ns + ".v.safety_ratio", 1.0);
-  pp.v.a_min = node.declare_parameter(ns + ".v.a_min", -1.5);
-  pp.v.v_min = node.declare_parameter(ns + ".v.v_min", 1.5);
+  pp.v.safety_ratio = node.declare_parameter(ns + ".motion.safety_ratio", 1.0);
+  pp.v.t_buf = node.declare_parameter(ns + ".motion.t_buf", 0.1);
+  pp.v.d_max = node.declare_parameter(ns + ".motion.d_max", 1.0);
+  pp.v.a_min = node.declare_parameter(ns + ".motion.a_min", -1.5);
+  pp.v.v_min = node.declare_parameter(ns + ".motion.v_min", 1.0);
   // sidewalk param
   pp.sidewalk.min_occlusion_spot_size =
     node.declare_parameter(ns + ".sidewalk.min_occlusion_spot_size", 2.0);

@@ -45,12 +45,12 @@ inline double calculateMinAllowedVelocity(const double v0, const double len, con
  * @param: ttc: time to collision
  * @return safe motion
  **/
-inline SafeMotion calculateSafeMotion(const Velocity & v, const double ttc, const double delay)
+inline SafeMotion calculateSafeMotion(const Velocity & v, const double ttc)
 {
   SafeMotion sm;
   const double j_max = v.safety_ratio * v.j_max;
   const double a_max = v.safety_ratio * v.a_max;
-  const double t1 = delay;
+  const double t1 = v.t_buf;
   double t2 = a_max / j_max;
   double & v_safe = sm.safe_velocity;
   double & stop_dist = sm.stop_dist;
@@ -70,6 +70,7 @@ inline SafeMotion calculateSafeMotion(const Velocity & v, const double ttc, cons
     v_safe = v2 - a_max * t3;
     stop_dist = v_safe * t1 - j_max * t2 * t2 * t2 / 6 + v2 * t3 - 0.5 * a_max * t3 * t3;
   }
+  stop_dist += v.d_max;
   return sm;
 }
 
