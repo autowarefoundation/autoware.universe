@@ -367,7 +367,7 @@ double SplineInterpolationPoint2d::getSplineInterpolatedYaw(const size_t idx, co
   return std::atan2(diff_y, diff_x);
 }
 
-double SplineInterpolationPoint2d::getAccumulatedDistance(const size_t idx) const
+double SplineInterpolationPoint2d::getAccumulatedLength(const size_t idx) const
 {
   if (base_s_vec_.size() <= idx) {
     throw std::out_of_range("idx is out of range.");

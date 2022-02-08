@@ -119,7 +119,7 @@ public:
   geometry_msgs::msg::Point getSplineInterpolatedPoint(const size_t idx, const double s) const;
   double getSplineInterpolatedYaw(const size_t idx, const double s) const;
 
-  double getAccumulatedDistance(const size_t idx) const;
+  double getAccumulatedLength(const size_t idx) const;
 
 private:
   interpolation::MultiSplineCoef multi_spline_coef_x_;

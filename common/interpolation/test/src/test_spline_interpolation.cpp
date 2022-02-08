@@ -237,16 +237,16 @@ TEST(spline_interpolation, SplineInterpolationPoint2d)
 
   {  // accumulated distance
     // front
-    EXPECT_NEAR(s.getAccumulatedDistance(0), 0.0, epsilon);
+    EXPECT_NEAR(s.getAccumulatedLength(0), 0.0, epsilon);
 
     // back
-    EXPECT_NEAR(s.getAccumulatedDistance(4), 26.8488511, epsilon);
+    EXPECT_NEAR(s.getAccumulatedLength(4), 26.8488511, epsilon);
 
     // random
-    EXPECT_NEAR(s.getAccumulatedDistance(3), 21.2586811, epsilon);
+    EXPECT_NEAR(s.getAccumulatedLength(3), 21.2586811, epsilon);
 
     // out of range
-    EXPECT_THROW(s.getAccumulatedDistance(-1), std::out_of_range);
-    EXPECT_THROW(s.getAccumulatedDistance(5), std::out_of_range);
+    EXPECT_THROW(s.getAccumulatedLength(-1), std::out_of_range);
+    EXPECT_THROW(s.getAccumulatedLength(5), std::out_of_range);
   }
 }
