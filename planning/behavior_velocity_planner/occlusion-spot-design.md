@@ -53,6 +53,28 @@ Occlusion spot computation: searching occlusion spots for all cells in the occup
 
 Note that the accuracy and performance of this search method is limited due to the approximation.
 
+#### Occlusion Spot Common
+
+##### The Concept of Safe Velocity
+
+Safe velocity is calculated from below parameters of ego emergency braking system and time to collision.
+
+- jerk limit[m/s^3]
+- deceleration limit[m/s2]
+- delay response time[s]
+- time to collision of pedestrian[s]
+  with these parameters we can briefly define safe motion before occlusion spot for ideal environment.
+  ![brief](./docs/occlusion_spot/jerk_limit.svg)
+
+since these parameters consider ideal case of deceleration motion. `safety_ratio` should be set correctly to have a safe margin for acceleration and jerk for emergency brake.
+
+##### Safe Behavior After Passing Safe Margin Point
+
+This module defines safe margin consider ego distance to stop and collision path point geometrically.
+while ego is cruising from safe margin to collision path point ego keeps same velocity as occlusion spot safe velocity.
+
+![brief](./docs/occlusion_spot/behavior_after_safe_margin.svg)
+
 #### Module Parameters
 
 | Parameter        | Type   | Description                                                               |
@@ -123,8 +145,12 @@ note right
   - occlusion spot is calculated by longitudinally closest point of unknown cells.
   - intersection point is where ego front bumper and darting object will crash.
   - collision path point is calculated by arc coordinate consider ego vehicle's geometry.
+  - safe velocity and safe margin is calculated from performance of ego emergency braking system.
 end note
-
+:calculate safe velocity and safe margin for possible collision;
+note right
+  - safe velocity and safe margin is calculated from performance of ego emergency braking system.
+end note
 }
 partition process_possible_collision {
 :filter possible collision by road type;
@@ -139,10 +165,10 @@ end note
 note right
 consider offset from path start to ego vehicle for possible collision
 end note
-:apply safe velocity consider possible collision;
+:apply safe velocity comparing with allowed velocity;
 note right
 calculated by
-- ebs deceleration [m/s] emergency braking system consider lateral distance to the occlusion spot.
+- safe velocity calculated from emergency brake performance.
 - maximum allowed deceleration [m/s^2]
 - min velocity [m/s] the velocity that is allowed on the road.
 - original_velocity [m/s]
@@ -188,12 +214,16 @@ note right
   - intersection point is where ego front bumper and darting object will crash.
   - collision path point is calculated by arc coordinate consider ego vehicle's geometry.
 end note
+:calculate safe velocity and safe margin for possible collision;
+note right
+  - safe velocity and safe margin is calculated from performance of ego emergency braking system.
+end note
 }
 partition process_possible_collision {
 :filter collision by road type;
 :calculate slow down points for possible collision;
 :handle collision offset;
-:calculate safe velocity consider lateral distance and safe velocity;
+:apply safe velocity comparing with allowed velocity;
 :insert safe velocity to path;
 }
 stop
@@ -238,12 +268,16 @@ note right
   - consider occlusion which is nearer than `lateral_distance_threshold`.
 end note
 :calculate collision path point and intersection point;
+:calculate safe velocity and safe margin for possible collision;
+note right
+  - safe velocity and safe margin is calculated from performance of ego emergency braking system.
+end note
 }
 partition handle_possible_collision {
 :filter collision by road type;
 :calculate slow down points for possible collision;
 :handle collision offset;
-:calculate safe velocity consider lateral distance and safe velocity;
+:apply safe velocity comparing with allowed velocity;
 :insert safe velocity to path;
 }
 stop
