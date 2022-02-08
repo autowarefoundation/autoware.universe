@@ -247,9 +247,6 @@ NDTScanMatcher::NDTScanMatcher()
   ndt_monte_carlo_initial_pose_marker_pub_ =
     this->create_publisher<visualization_msgs::msg::MarkerArray>(
       "monte_carlo_initial_pose_marker", 10);
-  tp_grid_map_pub_ =
-    this->create_publisher<nav_msgs::msg::OccupancyGrid>(
-      "tp_grid_map", 10);
 
   diagnostics_pub_ =
     this->create_publisher<diagnostic_msgs::msg::DiagnosticArray>("/diagnostics", 10);
