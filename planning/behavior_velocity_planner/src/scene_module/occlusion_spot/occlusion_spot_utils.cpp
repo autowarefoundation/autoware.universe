@@ -326,7 +326,7 @@ PossibleCollisionInfo calculateCollisionPathPointFromOcclusionSpot(
   // avoid inserting path point behind original path
   if (distance_to_stop < eps) distance_to_stop = eps;
   pc.arc_lane_dist_at_collision = {distance_to_stop, arc_coord_occlusion_with_offset.distance};
-  pc.obstacle_info.sm = sm;
+  pc.obstacle_info.safe_motion = sm;
   pc.obstacle_info.ttc = ttc;
   pc.obstacle_info.position = setPose(path_lanelet, arc_coord_occlusion).position;
   pc.obstacle_info.max_velocity = param.pedestrian_vel;

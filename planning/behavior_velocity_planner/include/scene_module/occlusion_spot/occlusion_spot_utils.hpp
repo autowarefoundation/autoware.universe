@@ -113,7 +113,7 @@ struct SafeMotion
 
 struct ObstacleInfo
 {
-  SafeMotion sm;  // safe motion of velocity and stop point
+  SafeMotion safe_motion;  // safe motion of velocity and stop point
   geometry_msgs::msg::Point position;
   double max_velocity;  // [m/s] Maximum velocity of the possible obstacle
   double ttc;           // [s] time to collision with ego
@@ -139,8 +139,7 @@ struct PossibleCollisionInfo
   PossibleCollisionInfo() = default;
   PossibleCollisionInfo(
     const ObstacleInfo & obstacle_info, const PathPoint & collision_with_margin,
-    const Pose & intersection_pose,
-    const lanelet::ArcCoordinates & arc_lane_dist_to_occlusion)
+    const Pose & intersection_pose, const lanelet::ArcCoordinates & arc_lane_dist_to_occlusion)
   : obstacle_info(obstacle_info),
     collision_with_margin(collision_with_margin),
     intersection_pose(intersection_pose),

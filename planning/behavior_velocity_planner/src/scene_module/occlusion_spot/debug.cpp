@@ -128,8 +128,8 @@ std::vector<visualization_msgs::msg::Marker> makeCollisionMarkers(
     auto r = [](const double v) { return std::round(v * 100.0) / 100.0; };
     const double len = r(possible_collision.arc_lane_dist_at_collision.length);
     const double dist = r(possible_collision.arc_lane_dist_at_collision.distance);
-    const double vel = r(possible_collision.obstacle_info.sm.safe_velocity);
-    const double margin = r(possible_collision.obstacle_info.sm.stop_dist);
+    const double vel = r(possible_collision.obstacle_info.safe_motion.safe_velocity);
+    const double margin = r(possible_collision.obstacle_info.safe_motion.stop_dist);
     string_stream << "(s,d,v,m)=(" << len << " , " << dist << " , " << vel << " , " << margin
                   << " )";
     debug_marker.text = string_stream.str();
