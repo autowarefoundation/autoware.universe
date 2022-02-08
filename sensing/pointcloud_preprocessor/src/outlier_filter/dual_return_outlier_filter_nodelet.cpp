@@ -179,23 +179,23 @@ void DualReturnOutlierFilterComponent::filter(
          iter != std::end(weak_first_single_ring) - 1; ++iter) {
       uint azimuth_id = static_cast<uint>(iter->azimuth);
       uint segment_check = 0, segment_check_thresh = 2;
-      uint weakfirst_ring_min = 0, weakfirst_ring_max = ring_number;
-      uint weakfirst_w_min = 0, weakfirst_w_max = azimuth_steps;
+      uint weak_first_ring_min = 0, weak_first_ring_max = ring_number;
+      uint weak_first_w_min = 0, weak_first_w_max = azimuth_steps;
 
-      weakfirst_ring_min =
+      weak_first_ring_min =
         ring_id > weak_first_segment_check_size_v_ ? ring_id - weak_first_segment_check_size_v_ : 0;
-      weakfirst_ring_max = ring_id + weak_first_segment_check_size_v_ < ring_number
+      weak_first_ring_max = ring_id + weak_first_segment_check_size_v_ < ring_number
                              ? ring_id + weak_first_segment_check_size_v_ + 1
                              : ring_number;
-      weakfirst_w_min = azimuth_id > weak_first_segment_check_size_h_
+      weak_first_w_min = azimuth_id > weak_first_segment_check_size_h_
                           ? azimuth_id - weak_first_segment_check_size_h_
                           : 0;
-      weakfirst_w_max = azimuth_id + weak_first_segment_check_size_h_ < azimuth_steps
+      weak_first_w_max = azimuth_id + weak_first_segment_check_size_h_ < azimuth_steps
                           ? azimuth_id + weak_first_segment_check_size_h_ + 1
                           : azimuth_steps;
 
-      for (auto i = weakfirst_ring_min; i < weakfirst_ring_max; i++) {
-        for (auto j = weakfirst_w_min; j < weakfirst_w_max; j++) {
+      for (auto i = weak_first_ring_min; i < weak_first_ring_max; i++) {
+        for (auto j = weak_first_w_min; j < weak_first_w_max; j++) {
           if (pcl_weak_first_distance_array[i * azimuth_steps + j] > 0.0) {
             const float min_dist =
               std::min(iter->distance, pcl_weak_first_distance_array[i * azimuth_steps + j]);
