@@ -165,6 +165,15 @@ std::string toString(const geometry_msgs::msg::Pose & pose)
   return ss.str();
 }
 
+void updateMinMaxPosition(
+  const lanelet::ConstPoint2d & point, double & min_x, double & min_y, double & max_x,
+  double & max_y)
+{
+  min_x = std::min(min_x, point.x());
+  min_y = std::min(min_y, point.y());
+  max_x = std::max(max_x, point.x());
+  max_y = std::max(max_y, point.y());
+}
 }  // namespace
 
 namespace route_handler
@@ -1312,6 +1321,121 @@ lanelet::routing::RelationType RouteHandler::getRelation(
 }
 
 lanelet::ConstLanelets RouteHandler::getShoulderLanelets() const { return shoulder_lanelets_; }
+
+std::array<double, 4> RouteHandler::getLaneletScope(
+  const lanelet::ConstLanelets & lanes, const size_t nearest_lane_idx,
+  const geometry_msgs::msg::Pose & current_pose, const DrivableAreaParameters & params)
+{
+  // define functions to get right/left bounds as a vector
+  const auto get_bound_funcs =
+    std::vector<std::function<lanelet::ConstLineString2d(const lanelet::ConstLanelet & lane)>>{
+      [](const lanelet::ConstLanelet & lane) -> lanelet::ConstLineString2d {
+        return lane.rightBound2d();
+      },
+      [](const lanelet::ConstLanelet & lane) -> lanelet::ConstLineString2d {
+        return lane.leftBound2d();
+      }};
+
+  // calculate min/max x and y
+  double min_x = current_pose.position.x;
+  double min_y = current_pose.position.y;
+  double max_x = current_pose.position.x;
+  double max_y = current_pose.position.y;
+
+  for (const auto & get_bound_func : get_bound_funcs) {
+    // search nearest point index to current pose
+    const auto & nearest_bound = get_bound_func(lanes.at(nearest_lane_idx));
+    if (nearest_bound.empty()) {
+      continue;
+    }
+
+    std::vector<geometry_msgs::msg::Point> points;
+    for (const auto & point : nearest_bound) {
+      geometry_msgs::msg::Point p;
+      p.x = point.x();
+      p.y = point.y();
+      points.push_back(p);
+    }
+    const size_t nearest_point_idx =
+      tier4_autoware_utils::findNearestIndex(points, current_pose.position);
+
+    updateMinMaxPosition(nearest_bound[nearest_point_idx], min_x, min_y, max_x, max_y);
+
+    // forward lanelet
+    double sum_length = 0.0;
+    size_t current_lane_idx = nearest_lane_idx;
+    auto current_lane = lanes.at(current_lane_idx);
+    size_t current_point_idx = nearest_point_idx;
+    while (sum_length < params.drivable_lane_forward_length + params.drivable_lane_margin) {
+      const auto & bound = get_bound_func(current_lane);
+      if (current_point_idx != bound.size() - 1) {
+        sum_length +=
+          (bound[current_point_idx].basicPoint() - bound[current_point_idx + 1].basicPoint())
+            .norm();
+        updateMinMaxPosition(bound[current_point_idx + 1], min_x, min_y, max_x, max_y);
+
+        ++current_point_idx;
+      } else {
+        const auto previous_lane = current_lane;
+        const size_t previous_point_idx = get_bound_func(previous_lane).size() - 1;
+        const auto & previous_bound = get_bound_func(previous_lane);
+        updateMinMaxPosition(previous_bound[previous_point_idx], min_x, min_y, max_x, max_y);
+
+        if (current_lane_idx == lanes.size() - 1) {
+          break;
+        }
+
+        current_lane_idx += 1;
+        current_lane = lanes.at(current_lane_idx);
+        current_point_idx = 0;
+        const auto & current_bound = get_bound_func(current_lane);
+        updateMinMaxPosition(current_bound[current_point_idx], min_x, min_y, max_x, max_y);
+
+        sum_length += boost::geometry::distance(
+          get_bound_func(previous_lane)[previous_point_idx].basicPoint(),
+          get_bound_func(current_lane)[current_point_idx].basicPoint());
+      }
+    }
+
+    // backward lanelet
+    current_point_idx = nearest_point_idx;
+    sum_length = 0.0;
+    current_lane_idx = nearest_lane_idx;
+    current_lane = lanes.at(current_lane_idx);
+    while (sum_length < params.drivable_lane_backward_length + params.drivable_lane_margin) {
+      const auto & bound = get_bound_func(current_lane);
+      if (current_point_idx != 0) {
+        sum_length +=
+          (bound[current_point_idx].basicPoint() - bound[current_point_idx - 1].basicPoint())
+            .norm();
+        updateMinMaxPosition(bound[current_point_idx - 1], min_x, min_y, max_x, max_y);
+
+        --current_point_idx;
+      } else {
+        const auto next_lane = current_lane;
+        const size_t next_point_idx = 0;
+        const auto & next_bound = get_bound_func(next_lane);
+        updateMinMaxPosition(next_bound[next_point_idx], min_x, min_y, max_x, max_y);
+
+        if (current_lane_idx == 0) {
+          break;
+        }
+
+        current_lane_idx -= 1;
+        current_lane = lanes.at(current_lane_idx);
+        const auto & current_bound = get_bound_func(current_lane);
+        current_point_idx = current_bound.size() - 1;
+        updateMinMaxPosition(current_bound[current_point_idx], min_x, min_y, max_x, max_y);
+
+        sum_length += boost::geometry::distance(
+          get_bound_func(next_lane)[next_point_idx].basicPoint(),
+          get_bound_func(current_lane)[current_point_idx].basicPoint());
+      }
+    }
+  }
+
+  return {min_x, min_y, max_x, max_y};
+}
 
 lanelet::ConstLanelets RouteHandler::getPreviousLaneletSequence(
   const lanelet::ConstLanelets & lanelet_sequence) const
