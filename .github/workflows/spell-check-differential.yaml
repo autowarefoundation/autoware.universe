@@ -1,13 +1,13 @@
-name: spell-check
+name: spell-check-differential
 
 on:
   pull_request:
 
 jobs:
-  spell-check:
+  spell-check-differential:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Check out repository
         uses: actions/checkout@v2
 
       - name: Run spell-check

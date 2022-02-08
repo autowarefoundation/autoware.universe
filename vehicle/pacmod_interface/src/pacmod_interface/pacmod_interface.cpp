@@ -44,6 +44,7 @@ PacmodInterface::PacmodInterface()
   vgr_coef_c_ = declare_parameter("vgr_coef_c", 0.042);
   accel_pedal_offset_ = declare_parameter("accel_pedal_offset", 0.0);
   brake_pedal_offset_ = declare_parameter("brake_pedal_offset", 0.0);
+  tire_radius_scale_factor_ = declare_parameter("tire_radius_scale_factor", 1.0);
 
   /* parameters for limitter */
   max_throttle_ = declare_parameter("max_throttle", 0.2);
@@ -150,13 +151,9 @@ PacmodInterface::PacmodInterface()
     create_publisher<SteeringWheelStatusStamped>("/vehicle/status/steering_wheel_status", 1);
 
   // Timer
-  auto timer_callback = std::bind(&PacmodInterface::publishCommands, this);
-  auto period = std::chrono::duration_cast<std::chrono::nanoseconds>(
-    std::chrono::duration<double>(1.0 / loop_rate_));
-  timer_ = std::make_shared<rclcpp::GenericTimer<decltype(timer_callback)>>(
-    this->get_clock(), period, std::move(timer_callback),
-    this->get_node_base_interface()->get_context());
-  this->get_node_timers_interface()->add_timer(timer_, nullptr);
+  const auto period_ns = rclcpp::Rate(loop_rate_).period();
+  timer_ = rclcpp::create_timer(
+    this, get_clock(), period_ns, std::bind(&PacmodInterface::publishCommands, this));
 }
 
 void PacmodInterface::callbackActuationCmd(const ActuationCommandStamped::ConstSharedPtr msg)
@@ -525,7 +522,7 @@ double PacmodInterface::calculateVehicleVelocity(
   const double sign = (shift_rpt.output == pacmod3_msgs::msg::SystemRptInt::SHIFT_REVERSE) ? -1 : 1;
   const double vel =
     (wheel_speed_rpt.rear_left_wheel_speed + wheel_speed_rpt.rear_right_wheel_speed) * 0.5 *
-    tire_radius_;
+    tire_radius_ * tire_radius_scale_factor_;
   return sign * vel;
 }
 

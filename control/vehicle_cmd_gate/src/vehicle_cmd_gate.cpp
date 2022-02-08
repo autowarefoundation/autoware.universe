@@ -189,13 +189,10 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
   start_request_ = std::make_unique<StartRequest>(this, use_start_request);
 
   // Timer
-  auto timer_callback = std::bind(&VehicleCmdGate::onTimer, this);
-  auto period = std::chrono::duration_cast<std::chrono::nanoseconds>(
+  const auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
     std::chrono::duration<double>(update_period_));
-  timer_ = std::make_shared<rclcpp::GenericTimer<decltype(timer_callback)>>(
-    this->get_clock(), period, std::move(timer_callback),
-    this->get_node_base_interface()->get_context());
-  this->get_node_timers_interface()->add_timer(timer_, nullptr);
+  timer_ =
+    rclcpp::create_timer(this, get_clock(), period_ns, std::bind(&VehicleCmdGate::onTimer, this));
 }
 
 bool VehicleCmdGate::isHeartbeatTimeout(
@@ -517,7 +514,7 @@ autoware_auto_control_msgs::msg::AckermannControlCommand VehicleCmdGate::createS
   const
 {
   autoware_auto_control_msgs::msg::AckermannControlCommand cmd;
-
+  cmd.stamp = this->now();
   cmd.lateral.steering_tire_angle = current_steer_;
   cmd.lateral.steering_tire_rotation_rate = 0.0;
   cmd.longitudinal.speed = 0.0;

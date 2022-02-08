@@ -1,4 +1,4 @@
-name: build-and-test-scheduled
+name: build-and-test-self-hosted
 
 on:
   schedule:
@@ -6,15 +6,11 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-test-scheduled:
-    runs-on: ${{ matrix.os }}
-    container: ros:galactic
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, ARM64]
+  build-and-test-self-hosted:
+    runs-on: [self-hosted, linux, ARM64]
+    container: ghcr.io/autowarefoundation/autoware-universe:latest
     steps:
-      - name: Checkout repository
+      - name: Check out repository
         uses: actions/checkout@v2
 
       - name: Remove exec_depend

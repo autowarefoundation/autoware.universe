@@ -1,17 +1,17 @@
-name: build-and-test-pr
+name: build-and-test-differential
 
 on:
   pull_request:
 
 jobs:
-  build-and-test:
+  build-and-test-differential:
     runs-on: ubuntu-latest
-    container: ros:galactic
+    container: ghcr.io/autowarefoundation/autoware-universe:latest
     steps:
       - name: Cancel previous runs
         uses: styfle/cancel-workflow-action@0.9.1
 
-      - name: Checkout repository
+      - name: Check out repository
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
@@ -36,12 +36,29 @@ jobs:
           target-packages: ${{ steps.get-modified-packages.outputs.modified-packages }}
           build-depends-repos: build_depends.repos
 
-  clang-tidy:
+      - name: Check the existence of coverage files
+        id: check-file-existence
+        uses: autowarefoundation/autoware-github-actions/check-file-existence@tier4/proposal
+        with:
+          files: |
+            lcov/total_coverage.info
+            coveragepy/.coverage
+          condition: or
+
+      - name: Upload coverage to CodeCov
+        if: ${{ steps.check-file-existence.outputs.exists == 'true' }}
+        uses: codecov/codecov-action@v2
+        with:
+          files: lcov/total_coverage.info,coveragepy/.coverage
+          fail_ci_if_error: false
+          verbose: true
+
+  clang-tidy-differential:
     runs-on: ubuntu-latest
     container: ros:galactic
-    needs: build-and-test
+    needs: build-and-test-differential
     steps:
-      - name: Checkout repository
+      - name: Check out repository
         uses: actions/checkout@v2
         with:
           fetch-depth: 0

@@ -1,0 +1,33 @@
+- repository: autowarefoundation/autoware
+  files:
+    - source: CODE_OF_CONDUCT.md
+    - source: CONTRIBUTING.md
+    - source: DISCLAIMER.md
+    - source: LICENSE
+    - source: .github/dependabot.yaml
+    - source: .github/workflows/pre-commit-optional.yaml
+    - source: .github/workflows/semantic-pull-request.yaml
+    - source: .github/workflows/spell-check-differential.yaml
+    - source: .clang-format
+    - source: .markdown-link-check.json
+    - source: .markdownlint.yaml
+    - source: .pre-commit-config-optional.yaml
+    - source: .prettierignore
+    - source: .prettierrc.yaml
+    - source: .yamllint.yaml
+    - source: CPPLINT.cfg
+    - source: setup.cfg
+
+- repository: autowarefoundation/autoware_common
+  files:
+    - source: .github/workflows/build-and-test.yaml
+    - source: .github/workflows/build-and-test-differential.yaml
+    - source: .github/workflows/build-and-test-differential-self-hosted.yaml
+    - source: .github/workflows/build-and-test-self-hosted.yaml
+    - source: .github/workflows/check-build-depends.yaml
+    - source: .github/workflows/pre-commit.yaml
+
+- repository: autowarefoundation/autoware-documentation
+  files:
+    - source: .github/workflows/deploy-docs.yaml
+    - source: .github/workflows/delete-closed-pr-docs.yaml

@@ -1,4 +1,4 @@
-name: build-and-test-arm-pr
+name: build-and-test-differential-self-hosted
 
 on:
   pull_request:
@@ -14,13 +14,13 @@ jobs:
     with:
       label: ARM64
 
-  build-and-test-arm:
+  build-and-test-differential-self-hosted:
     needs: prevent-no-label-execution
     if: ${{ needs.prevent-no-label-execution.outputs.run == 'true' }}
     runs-on: [self-hosted, linux, ARM64]
-    container: ros:galactic
+    container: ghcr.io/autowarefoundation/autoware-universe:latest
     steps:
-      - name: Checkout repository
+      - name: Check out repository
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
