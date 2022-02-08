@@ -37,6 +37,8 @@ int insertSafeVelocityToPath(
 // @brief calculates the maximum velocity allowing to decelerate within the given distance
 inline double calculateMinAllowedVelocity(const double v0, const double len, const double a_max)
 {
+  // if target velocity is inserted backward return current velocity as limit
+  if (len < 0) return v0;
   return std::sqrt(std::max(std::pow(v0, 2.0) - 2.0 * std::abs(a_max) * len, 0.0));
 }
 
