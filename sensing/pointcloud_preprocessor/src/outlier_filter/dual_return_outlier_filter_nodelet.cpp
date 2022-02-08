@@ -185,14 +185,14 @@ void DualReturnOutlierFilterComponent::filter(
       weak_first_ring_min =
         ring_id > weak_first_segment_check_size_v_ ? ring_id - weak_first_segment_check_size_v_ : 0;
       weak_first_ring_max = ring_id + weak_first_segment_check_size_v_ < ring_number
-                             ? ring_id + weak_first_segment_check_size_v_ + 1
-                             : ring_number;
+                              ? ring_id + weak_first_segment_check_size_v_ + 1
+                              : ring_number;
       weak_first_w_min = azimuth_id > weak_first_segment_check_size_h_
-                          ? azimuth_id - weak_first_segment_check_size_h_
-                          : 0;
+                           ? azimuth_id - weak_first_segment_check_size_h_
+                           : 0;
       weak_first_w_max = azimuth_id + weak_first_segment_check_size_h_ < azimuth_steps
-                          ? azimuth_id + weak_first_segment_check_size_h_ + 1
-                          : azimuth_steps;
+                           ? azimuth_id + weak_first_segment_check_size_h_ + 1
+                           : azimuth_steps;
 
       for (auto i = weak_first_ring_min; i < weak_first_ring_max; i++) {
         for (auto j = weak_first_w_min; j < weak_first_w_max; j++) {
