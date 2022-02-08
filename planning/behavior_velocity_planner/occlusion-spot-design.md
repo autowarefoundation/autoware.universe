@@ -58,7 +58,6 @@ Note that the accuracy and performance of this search method is limited due to t
 | Parameter        | Type   | Description                                                               |
 | ---------------- | ------ | ------------------------------------------------------------------------- |
 | `pedestrian_vel` | double | [m/s] maximum velocity assumed pedestrian coming out from occlusion point |
-| `t_buf`          | double | [m/s] time buffer for the system delay                                    |
 
 | Parameter /threshold    | Type   | Description                                               |
 | ----------------------- | ------ | --------------------------------------------------------- |
@@ -66,15 +65,18 @@ Note that the accuracy and performance of this search method is limited due to t
 | `stuck_vehicle_vel`     | double | [m/s] velocity below this value is assumed to stop        |
 | `lateral_distance`      | double | [m] maximum lateral distance to consider hidden collision |
 
-| Parameter /(public or private)\_road | Type   | Description                                                          |
-| ------------------------------------ | ------ | -------------------------------------------------------------------- |
-| `min_velocity`                       | double | [m/s] minimum velocity to ignore occlusion spot                      |
-| `ebs_decel`                          | double | [m/s^2] maximum deceleration to assume for emergency braking system. |
-| `max_decel`                          | double | [m/s^2] deceleration to assume for predictive braking system         |
+| Parameter /motion | Type   | Description                                                  |
+| ----------------- | ------ | ------------------------------------------------------------ |
+| `safety_ratio`    | double | [-] safety ratio for jerk and acceleration                   |
+| `a_min`           | double | [m/s^2] deceleration to assume for predictive braking system |
+| `v_min`           | double | [m/s] minimum velocity not to stop                           |
+| `t_buf`           | double | [m/s] time buffer for the system delay                       |
+| `d_max`           | double | [m] maximum error to stop with emergency braking system.     |
 
 | Parameter /sidewalk       | Type   | Description                                                     |
 | ------------------------- | ------ | --------------------------------------------------------------- |
 | `min_occlusion_spot_size` | double | [m] the length of path to consider occlusion spot               |
+| `slice_size`              | double | [m] the distance of divided detection area                      |
 | `focus_range`             | double | [m] buffer around the ego path used to build the sidewalk area. |
 
 | Parameter /grid  | Type   | Description                                                     |

@@ -5,11 +5,11 @@
       threshold:
         detection_area_length: 100.0        # [m] the length of path to consider perception range
         stuck_vehicle_vel: 1.0              # [m/s] velocity below this value is assumed to stop
-        lateral_distance: 4.0               # [m] maximum lateral distance to consider hidden collision
+        lateral_distance: 3.0               # [m] maximum lateral distance to consider hidden collision
       motion:
         safety_ratio: 0.8                   # [-] jerk/acceleration ratio for safety
-        v_min: 1.0                          # [m/s] minimum velocity allowed
         a_min: -1.5                         # [m/s^2] minimum deceleration for safe deceleration.
+        v_min: 1.0                          # [m/s] minimum velocity allowed
         t_buf: 0.1                          # [s] safety time buffer for delay system response
         d_max: 1.0                          # [m] maximum safety distance for any error
       sidewalk:
