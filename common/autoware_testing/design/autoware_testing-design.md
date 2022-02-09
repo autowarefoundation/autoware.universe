@@ -7,6 +7,7 @@ This is the design document for the `autoware_testing` package.
 
 The package aims to provide a unified way to add standard testing functionality to the package, currently supporting:
 - Smoke testing (`add_smoke_test`): launch a node with default configuration and ensure that it starts up and does not crash.
+- Interface testing (`add_interface_test`): launch a node with default configuration and topic configuration and ensure that it publishes and subscribes to the expected topics.
 
 # Design
 
@@ -14,10 +15,12 @@ Uses `ros_testing` (which is an extension of `launch_testing`) and provides some
 
 ## Assumptions / Known limits
 
-Parametrization is limited to package, executable names, parameters filename and executable arguments. Test namespace is set as 'test'.
-Parameters file for the package is expected to be in `param` directory inside package.
+Parametrization is limited to package, executable names, parameters filename, topics filename and executable arguments. Test namespace is set as 'test'.
+Parameters file and topics file for the package is expected to be in `param` directory inside package.
 
 ## Inputs / Outputs / API
+
+### Smoke test
 
 To add a smoke test to your package tests, add test dependency on `autoware_testing` to `package.xml`
 
@@ -38,7 +41,7 @@ Where
 
 `<executable_name>` - [required] tested node executable name.
 
-`<param_filename>` - [optional] param filename. Default value is `test.param.yaml`. Required mostly in situation where there are multiple smoke tests in a package and each requires different paramteres set
+`<param_filename>` - [optional] param filename. Default value is `test.param.yaml`. Required mostly in situation where there are multiple smoke tests in a package and each requires different paramteres set.
 
 `<arguments>` - [optional] arguments passed to executable. By default no arguments are passed.
 
@@ -48,6 +51,52 @@ Example test result:
 
 ```
 build/<package_name>/test_results/<package_name>/<executable_name>_smoke_test.xunit.xml: 1 test, 0 errors, 0 failures, 0 skipped
+
+```
+
+### Interface test
+
+To add a interface test to your package tests, add test dependency on `autoware_testing` to `package.xml`
+
+```{xml}
+<test_depend>autoware_testing</test_depend>
+```
+
+and add a yaml file that defines topics to your package. The file will looks like this:
+
+```{yaml}
+input_topics:
+  - autoware_auto_control_msgs/msg/AckermannLateralCommand
+  - autoware_auto_control_msgs/msg/LongitudinalCommand
+output_topics:
+  - autoware_auto_control_msgs/msg/AckermannControlCommand
+```
+
+and add the following two lines to `CMakeLists.txt` in the `IF (BUILD_TESTING)` section:
+
+```{cmake}
+find_package(autoware_testing REQUIRED)
+add_interface_test(<package_name> <executable_name> [TOPIC_FILENAME <topic_filename>] [PARAM_FILENAME <param_filename>] [EXECUTABLE_ARGUMENTS <arguments>])
+```
+
+Where 
+
+`<package_name>` - [required] tested node package name.
+
+`<executable_name>` - [required] tested node executable name.
+
+`<topic_filename>` - [required] topic filename. Defines the input and output topics to be used by the interface tests.
+
+`<param_filename>` - [optional] param filename. Default value is `test.param.yaml`. Required mostly in situation where there are multiple interface tests in a package and each requires different paramteres set.
+
+`<arguments>` - [optional] arguments passed to executable. By default no arguments are passed.
+
+which adds `<executable_name>_interface_test` test to suite.
+
+Example test result:
+
+```
+build/<package_name>/test_results/<package_name>/<executable_name>_interface_test.xunit.xml: 1 test, 0 errors, 0 failures, 0 skipped
 
 ```
 
@@ -63,3 +112,4 @@ build/<package_name>/test_results/<package_name>/<executable_name>_smoke_test.xu
 # Related issues
 - Issue #700: add smoke test
 - Issue #1224: Port other packages with smoke tests to use `autoware_testing`
+- Issue #951: Add infrastructure for component-interface test
