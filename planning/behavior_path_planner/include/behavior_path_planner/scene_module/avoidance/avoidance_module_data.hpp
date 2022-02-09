@@ -24,8 +24,13 @@
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_hash.hpp>>
+#include <boost/uuid/uuid_io.hpp>
+
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace behavior_path_planner
@@ -36,6 +41,14 @@ using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseStamped;
+
+struct HashForUuid
+{
+  std::size_t operator()(const boost::uuids::uuid & uuid) const
+  {
+    return boost::hash<boost::uuids::uuid>()(uuid);
+  }
+};
 
 struct AvoidanceParameters
 {
@@ -195,6 +208,7 @@ struct ObjectData  // avoidance target
   double to_road_shoulder_distance{0.0};
 };
 using ObjectDataArray = std::vector<ObjectData>;
+using ObjectDataMap = std::unordered_map<boost::uuids::uuid, ObjectData, HashForUuid>;
 
 /*
  * Shift point with additional info for avoidance planning
@@ -250,6 +264,9 @@ struct AvoidancePlanningData
 
   // avoidance target objects
   ObjectDataArray objects;
+
+  // Information is identical. The differences is only at type
+  ObjectDataMap mapped_objects;
 };
 
 /*

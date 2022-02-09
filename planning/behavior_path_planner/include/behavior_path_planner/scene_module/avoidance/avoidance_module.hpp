@@ -81,8 +81,11 @@ private:
     DebugData & debug) const;
 
   ObjectDataArray registered_objects_;
-  void updateRegisteredObject(const ObjectDataArray & objects);
-  void CompensateDetectionLost(ObjectDataArray & objects) const;
+  ObjectDataMap registered_objects_map_;
+
+  void updateRegisteredObject(const ObjectDataMap & mapped_objects);
+  void CompensateDetectionLost(
+    ObjectDataArray & now_objects, ObjectDataMap & now_mapped_objects) const;
 
   // -- for shift point generation --
   AvoidPointArray calcShiftPoints(

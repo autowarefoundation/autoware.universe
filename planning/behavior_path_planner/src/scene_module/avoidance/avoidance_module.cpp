@@ -24,6 +24,9 @@
 #include <opencv2/opencv.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_io.hpp>
+
 #include <algorithm>
 #include <iomanip>
 #include <limits>
@@ -146,6 +149,18 @@ AvoidancePlanningData AvoidanceModule::calcAvoidancePlanningData(DebugData & deb
 
   // target objects for avoidance
   data.objects = calcAvoidanceTargetObjects(data.current_lanelets, data.reference_path, debug);
+
+  const auto copy_objects_to_mapped_objects = [](const ObjectDataArray & objects) {
+    ObjectDataMap map;
+    for (const auto & object : objects) {
+      const auto & object_uuid = object.object.object_id.uuid;
+      boost::uuids::uuid uuid_as_key;
+      std::copy(object_uuid.cbegin(), object_uuid.cend(), uuid_as_key.begin());
+      map.insert(std::make_pair(uuid_as_key, object));
+    }
+    return map;
+  };
+  data.mapped_objects = copy_objects_to_mapped_objects(data.objects);
 
   DEBUG_PRINT("target object size = %lu", data.objects.size());
 
@@ -298,26 +313,36 @@ void AvoidanceModule::updateRegisteredRawShiftPoints()
 {
   fillAdditionalInfoFromPoint(registered_raw_shift_points_);
 
-  AvoidPointArray avoid_points;
   const int margin = 0;
   const auto deadline = static_cast<size_t>(
     std::max(static_cast<int>(avoidance_data_.ego_closest_path_index) - margin, 0));
 
-  for (const auto & ap : registered_raw_shift_points_) {
-    if (ap.end_idx > deadline) {
-      avoid_points.push_back(ap);
-    }
-  }
+  printShiftPoints(registered_raw_shift_points_, "registered_raw_shift_points_ (before)");
+  const auto registered_raw_sp_size_before = registered_raw_shift_points_.size(); // for debug print
+  const auto iterator = std::remove_if(
+    registered_raw_shift_points_.begin(), registered_raw_shift_points_.end(),
+    [this, &deadline](const AvoidPoint & ap) {
+      const auto & ap_uuid = ap.object.object.object_id.uuid;
+      boost::uuids::uuid uuid_to_map_key;
+      std::copy(ap_uuid.cbegin(), ap_uuid.cend(), uuid_to_map_key.begin());
+
+      bool less_than_equal_deadline = ap.end_idx <= deadline;
+      bool is_not_in_registered_object =
+        registered_objects_map_.find(uuid_to_map_key) == registered_objects_map_.end();
+      return (less_than_equal_deadline || is_not_in_registered_object);
+    });
+
+  registered_raw_shift_points_.erase(iterator, registered_raw_shift_points_.end());
+
+  const auto & avoid_points = registered_raw_shift_points_;
 
   DEBUG_PRINT(
     "ego_closest_path_index = %lu, registered_raw_shift_points_ size: %lu -> %lu",
-    avoidance_data_.ego_closest_path_index, registered_raw_shift_points_.size(),
+    avoidance_data_.ego_closest_path_index, registered_raw_sp_size_before,
     avoid_points.size());
 
-  printShiftPoints(registered_raw_shift_points_, "registered_raw_shift_points_ (before)");
   printShiftPoints(avoid_points, "registered_raw_shift_points_ (after)");
 
-  registered_raw_shift_points_ = avoid_points;
   debug_data_.registered_raw_shift = registered_raw_shift_points_;
 }
 
@@ -2348,8 +2373,8 @@ void AvoidanceModule::updateData()
   avoidance_data_ = calcAvoidancePlanningData(debug_data_);
 
   // TODO(Horibe): this is not tested yet, disable now.
-  updateRegisteredObject(avoidance_data_.objects);
-  CompensateDetectionLost(avoidance_data_.objects);
+  updateRegisteredObject(avoidance_data_.mapped_objects);
+  CompensateDetectionLost(avoidance_data_.objects, avoidance_data_.mapped_objects);
 
   path_shifter_.setPath(avoidance_data_.reference_path);
 
@@ -2396,29 +2421,31 @@ std::string getUuidStr(const ObjectDataArray & objs)
  *   - it has same ID
  *   - it has different id, but sn object is found around similar position
  */
-void AvoidanceModule::updateRegisteredObject(const ObjectDataArray & now_objects)
+void AvoidanceModule::updateRegisteredObject(const ObjectDataMap & mapped_objects)
 {
-  const auto updateIfDetectedNow = [&now_objects, this](auto & registered_object) {
-    const auto & n = now_objects;
-    const auto r_id = registered_object.object.object_id;
-    const auto same_id_obj = std::find_if(
-      n.begin(), n.end(), [&r_id](const auto & o) { return o.object.object_id == r_id; });
+  const auto updateIfDetectedNow = [&mapped_objects](auto & registered_object) noexcept {
+    const auto & uuid_array = registered_object.object.object_id.uuid;
+    boost::uuids::uuid r_id;
+    std::copy(uuid_array.cbegin(), uuid_array.cend(), r_id.begin());
 
     // same id object is detected. update registered.
-    if (same_id_obj != n.end()) {
-      registered_object = *same_id_obj;
+    if (mapped_objects.find(r_id) != mapped_objects.cend()) {
+      registered_object = mapped_objects.at(r_id);
       return true;
     }
 
     constexpr auto POS_THR = 1.5;
     const auto r_pos = registered_object.object.kinematics.initial_pose_with_covariance.pose;
-    const auto similar_pos_obj = std::find_if(n.begin(), n.end(), [&](const auto & o) {
-      return calcDistance2d(r_pos, o.object.kinematics.initial_pose_with_covariance.pose) < POS_THR;
-    });
+    const auto similar_pos_obj = std::find_if(
+      mapped_objects.cbegin(), mapped_objects.cend(), [&r_pos, &POS_THR](const auto & mapped) {
+        const auto o = mapped.second;
+        return calcDistance2d(r_pos, o.object.kinematics.initial_pose_with_covariance.pose) <
+               POS_THR;
+      });
 
     // same id object is not detected, but object is found around registered. update registered.
-    if (similar_pos_obj != n.end()) {
-      registered_object = *similar_pos_obj;
+    if (similar_pos_obj != mapped_objects.cend()) {
+      registered_object = similar_pos_obj->second;
       return true;
     }
 
@@ -2427,31 +2454,25 @@ void AvoidanceModule::updateRegisteredObject(const ObjectDataArray & now_objects
   };
 
   // -- check registered_objects, remove if lost_count exceeds limit. --
-  for (int i = static_cast<int>(registered_objects_.size()) - 1; i >= 0; --i) {
-    auto & r = registered_objects_.at(i);
-    const std::string s = getUuidStr(r);
+  for (auto map_iterator = registered_objects_map_.begin();
+       map_iterator != registered_objects_map_.end();) {
+    auto & registed_object = map_iterator->second;
+    if (!updateIfDetectedNow(registed_object)) {
+      ++registed_object.lost_count;
+    }
 
-    // registered object is not detected this time. lost count up.
-    if (!updateIfDetectedNow(r)) {
-      ++r.lost_count;
-
-      // lost count exceeds threshold. remove object from register.
-      if (r.lost_count > parameters_.object_hold_max_count) {
-        registered_objects_.erase(registered_objects_.begin() + i);
-      }
+    if (registed_object.lost_count > parameters_.object_hold_max_count) {
+      map_iterator = registered_objects_map_.erase(map_iterator);
+    } else {
+      ++map_iterator;
     }
   }
 
-  const auto isAlreadyRegistered = [this](const auto & n_id) {
-    const auto & r = registered_objects_;
-    return std::any_of(
-      r.begin(), r.end(), [&n_id](const auto & o) { return o.object.object_id == n_id; });
-  };
-
-  // -- check now_objects, add it if it has new object id --
-  for (const auto now_obj : now_objects) {
-    if (!isAlreadyRegistered(now_obj.object.object_id)) {
-      registered_objects_.push_back(now_obj);
+  // -- check mapped_objects, add it if it has new object id --
+  for (const auto & object : mapped_objects) {
+    const auto & object_uuid = object.first;
+    if (registered_objects_map_.find(object_uuid) == registered_objects_map_.end()) {
+      registered_objects_map_.insert(object);
     }
   }
 }
@@ -2462,21 +2483,19 @@ void AvoidanceModule::updateRegisteredObject(const ObjectDataArray & now_objects
  * add registered object if the now_objects does not contain the same object_id.
  *
  */
-void AvoidanceModule::CompensateDetectionLost(ObjectDataArray & now_objects) const
+void AvoidanceModule::CompensateDetectionLost(
+  ObjectDataArray & now_objects, ObjectDataMap & now_mapped_objects) const
 {
   const auto old_size = now_objects.size();  // for debug
 
-  const auto isDetectedNow = [&](const auto & r_id) {
-    const auto & n = now_objects;
-    return std::any_of(
-      n.begin(), n.end(), [&r_id](const auto & o) { return o.object.object_id == r_id; });
-  };
-
-  for (const auto & registered : registered_objects_) {
-    if (!isDetectedNow(registered.object.object_id)) {
-      now_objects.push_back(registered);
+  for (const auto & registered_object : registered_objects_map_) {
+    const auto & object_uuid = registered_object.first;
+    if (now_mapped_objects.find(object_uuid) == now_mapped_objects.end()) {
+      now_mapped_objects.insert(registered_object);
+      now_objects.push_back(registered_object.second);
     }
   }
+
   DEBUG_PRINT("object size: %lu -> %lu", old_size, now_objects.size());
 }
 
@@ -2589,6 +2608,7 @@ void AvoidanceModule::setDebugData(const PathShifter & shifter, const DebugData 
   using marker_utils::createOvehangFurthestLineStringMarkerArray;
   using marker_utils::createPathMarkerArray;
   using marker_utils::createPoseMarkerArray;
+  using marker_utils::createRegisteredObjectMapMarkerArray;
   using marker_utils::createShiftLengthMarkerArray;
   using marker_utils::createShiftPointMarkerArray;
   using marker_utils::makeOverhangToRoadShoulderMarkerArray;
@@ -2618,6 +2638,7 @@ void AvoidanceModule::setDebugData(const PathShifter & shifter, const DebugData 
   add(createLaneletsAreaMarkerArray(*debug.current_lanelets, "current_lanelet", 0.0, 1.0, 0.0));
   add(createLaneletsAreaMarkerArray(*debug.expanded_lanelets, "expanded_lanelet", 0.8, 0.8, 0.0));
   add(createAvoidanceObjectsMarkerArray(avoidance_data_.objects, "avoidance_object"));
+  add(createRegisteredObjectMapMarkerArray(avoidance_data_.mapped_objects, "mapped_objects"));
   add(makeOverhangToRoadShoulderMarkerArray(avoidance_data_.objects));
   add(createOvehangFurthestLineStringMarkerArray(
     *debug.farthest_linestring_from_overhang, "farthest_linestring_from_overhang", 1.0, 0.0, 1.0));
