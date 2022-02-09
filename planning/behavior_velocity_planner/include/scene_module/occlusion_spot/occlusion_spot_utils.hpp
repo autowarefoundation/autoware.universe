@@ -73,15 +73,15 @@ struct Sidewalk
 };
 struct Velocity
 {
-  double safety_ratio;  // [-] safety margin for planning error
-  double j_max;         // [m/s^3] emergency braking system jerk
-  double a_max;         // [m/s^2] emergency braking system deceleration
-  double a_min;         // [m/s^2] maximum allowed deceleration
-  double v_min;         // [m/s]   minimum allowed velocity not to stop
-  double a_ego;         // [m/s^2] current ego acceleration
-  double v_ego;         // [m/s]   current ego velocity
-  double t_buf;         // [s] safety time buffer for delay response
-  double d_max;         // [m] maximum safety distance for any error
+  double safety_ratio;          // [-] safety margin for planning error
+  double max_stop_jerk;         // [m/s^3] emergency braking system jerk
+  double max_stop_accel;        // [m/s^2] emergency braking system deceleration
+  double max_slow_down_accel;   // [m/s^2] maximum allowed deceleration
+  double min_allowed_velocity;  // [m/s]   minimum allowed velocity not to stop
+  double a_ego;                 // [m/s^2] current ego acceleration
+  double v_ego;                 // [m/s]   current ego velocity
+  double delay_time;            // [s] safety time buffer for delay response
+  double safe_margin;           // [m] maximum safety distance for any error
 };
 
 struct PlannerParam

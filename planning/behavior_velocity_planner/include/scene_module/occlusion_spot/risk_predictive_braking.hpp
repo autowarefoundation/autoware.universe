@@ -35,10 +35,11 @@ int insertSafeVelocityToPath(
   PathWithLaneId * inout_path);
 
 // @brief calculates the maximum velocity allowing to decelerate within the given distance
-inline double calculateMinAllowedVelocity(const double v0, const double len, const double a_max)
+inline double calculateMinSlowDownVelocity(
+  const double v0, const double len, const double a_max, const double safe_vel)
 {
   // if target velocity is inserted backward return current velocity as limit
-  if (len < 0) return v0;
+  if (len < 0) return safe_vel;
   return std::sqrt(std::max(std::pow(v0, 2.0) - 2.0 * std::abs(a_max) * len, 0.0));
 }
 
@@ -50,9 +51,9 @@ inline double calculateMinAllowedVelocity(const double v0, const double len, con
 inline SafeMotion calculateSafeMotion(const Velocity & v, const double ttc)
 {
   SafeMotion sm;
-  const double j_max = v.safety_ratio * v.j_max;
-  const double a_max = v.safety_ratio * v.a_max;
-  const double t1 = v.t_buf;
+  const double j_max = v.safety_ratio * v.max_stop_jerk;
+  const double a_max = v.safety_ratio * v.max_stop_accel;
+  const double t1 = v.delay_time;
   double t2 = a_max / j_max;
   double & v_safe = sm.safe_velocity;
   double & stop_dist = sm.stop_dist;
@@ -72,11 +73,11 @@ inline SafeMotion calculateSafeMotion(const Velocity & v, const double ttc)
     v_safe = v2 - a_max * t3;
     stop_dist = v_safe * t1 - j_max * t2 * t2 * t2 / 6 + v2 * t3 - 0.5 * a_max * t3 * t3;
   }
-  stop_dist += v.d_max;
+  stop_dist += v.safe_margin;
   return sm;
 }
 
-inline double compareSafeVelocity(
+inline double calculateInsertVelocity(
   const double min_allowed_vel, const double safe_vel, const double min_vel,
   const double original_vel)
 {

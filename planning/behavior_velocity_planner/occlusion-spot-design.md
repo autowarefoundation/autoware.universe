@@ -64,7 +64,6 @@ Safe velocity is calculated from below parameters of ego emergency braking syste
 - delay response time[s]
 - time to collision of pedestrian[s]
   with these parameters we can briefly define safe motion before occlusion spot for ideal environment.
-  ![brief](./docs/occlusion_spot/jerk_limit.svg)
 
 since these parameters consider ideal case of deceleration motion. `safety_ratio` should be set correctly to have a safe margin for acceleration and jerk for emergency brake.
 
@@ -87,13 +86,13 @@ while ego is cruising from safe margin to collision path point ego keeps same ve
 | `stuck_vehicle_vel`     | double | [m/s] velocity below this value is assumed to stop        |
 | `lateral_distance`      | double | [m] maximum lateral distance to consider hidden collision |
 
-| Parameter /motion | Type   | Description                                                  |
-| ----------------- | ------ | ------------------------------------------------------------ |
-| `safety_ratio`    | double | [-] safety ratio for jerk and acceleration                   |
-| `a_min`           | double | [m/s^2] deceleration to assume for predictive braking system |
-| `v_min`           | double | [m/s] minimum velocity not to stop                           |
-| `t_buf`           | double | [m/s] time buffer for the system delay                       |
-| `d_max`           | double | [m] maximum error to stop with emergency braking system.     |
+| Parameter /motion     | Type   | Description                                                  |
+| --------------------- | ------ | ------------------------------------------------------------ |
+| `safety_ratio`        | double | [-] safety ratio for jerk and acceleration                   |
+| `max_slow_down_accel` | double | [m/s^2] deceleration to assume for predictive braking system |
+| `v_min`               | double | [m/s] minimum velocity not to stop                           |
+| `delay_time`          | double | [m/s] time buffer for the system delay                       |
+| `safe_margin`         | double | [m] maximum error to stop with emergency braking system.     |
 
 | Parameter /sidewalk       | Type   | Description                                                     |
 | ------------------------- | ------ | --------------------------------------------------------------- |

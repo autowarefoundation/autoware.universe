@@ -8,10 +8,10 @@
         lateral_distance: 1.5               # [m] maximum lateral distance to consider hidden collision
       motion:
         safety_ratio: 0.8                   # [-] jerk/acceleration ratio for safety
-        a_min: -1.5                         # [m/s^2] minimum deceleration for safe deceleration.
-        v_min: 1.0                          # [m/s] minimum velocity allowed
-        t_buf: 0.1                          # [s] safety time buffer for delay system response
-        d_max: 1.0                          # [m] maximum safety distance for any error
+        max_slow_down_acceleration: -1.5    # [m/s^2] minimum deceleration for safe deceleration.
+        min_allowed_velocity: 1.0       # [m/s] minimum velocity allowed
+        delay_time: 0.1                     # [s] safety time buffer for delay system response
+        safe_margin: 1.0                    # [m] maximum safety distance for any error
       sidewalk:
         min_occlusion_spot_size: 1.0     # [m] occupancy grid must contain an UNKNOWN area of at least size NxN to be considered a hidden obstacle.
         slice_size: 1.5     # [m] size of sidewalk slices in both length and distance relative to the ego trajectory.

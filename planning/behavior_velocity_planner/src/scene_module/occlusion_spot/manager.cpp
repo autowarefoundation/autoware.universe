@@ -91,10 +91,10 @@ OcclusionSpotModuleManager::OcclusionSpotModuleManager(rclcpp::Node & node)
 
   // ego additional velocity config
   pp.v.safety_ratio = node.declare_parameter(ns + ".motion.safety_ratio", 1.0);
-  pp.v.t_buf = node.declare_parameter(ns + ".motion.t_buf", 0.1);
-  pp.v.d_max = node.declare_parameter(ns + ".motion.d_max", 1.0);
-  pp.v.a_min = node.declare_parameter(ns + ".motion.a_min", -1.5);
-  pp.v.v_min = node.declare_parameter(ns + ".motion.v_min", 1.0);
+  pp.v.delay_time = node.declare_parameter(ns + ".motion.delay_time", 0.1);
+  pp.v.safe_margin = node.declare_parameter(ns + ".motion.safe_margin", 1.0);
+  pp.v.max_slow_down_accel = node.declare_parameter(ns + ".motion.max_slow_down_accel", -1.5);
+  pp.v.min_allowed_velocity = node.declare_parameter(ns + ".motion.min_allowed_velocity", 1.0);
   // sidewalk param
   pp.sidewalk.min_occlusion_spot_size =
     node.declare_parameter(ns + ".sidewalk.min_occlusion_spot_size", 2.0);
