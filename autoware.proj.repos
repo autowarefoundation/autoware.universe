@@ -70,6 +70,10 @@ repositories:
     type: git
     url: git@github.com:tier4/AWMLevaluation.git
     version: main
+  simulator/ndt_convergence_evaluation:
+    type: git
+    url: git@github.com:tier4/ndt_convergence_evaluation.git
+    version: feature/standalone
   # ecu_system_setup
   ecu_system_setup:
     type: git
