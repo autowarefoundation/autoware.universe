@@ -64,8 +64,7 @@ Safe velocity is calculated from below parameters of ego emergency braking syste
 - delay response time[s]
 - time to collision of pedestrian[s]
   with these parameters we can briefly define safe motion before occlusion spot for ideal environment.
-
-since these parameters consider ideal case of deceleration motion. `safety_ratio` should be set correctly to have a safe margin for acceleration and jerk for emergency brake.
+  ![occupancy_grid](./docs/occlusion_spot/safe_motion.svg)
 
 ##### Safe Behavior After Passing Safe Margin Point
 
