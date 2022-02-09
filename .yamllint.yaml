@@ -3,6 +3,7 @@ extends: default
 ignore: |
   .clang-tidy
   *.param.yaml
+  codecov.yaml
 
 rules:
   braces:
