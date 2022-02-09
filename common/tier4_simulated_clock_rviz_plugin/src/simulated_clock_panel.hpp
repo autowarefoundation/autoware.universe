@@ -51,7 +51,7 @@ protected:
   void onTimer();
   /// @brief add some time to the clock
   /// @input ns time to add in nanoseconds
-  void addTimeToClock(const uint32_t ns);
+  void addTimeToClock(std::chrono::nanoseconds ns);
 
   // ROS
   rclcpp::Node::SharedPtr raw_node_;

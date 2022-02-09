@@ -100,15 +100,15 @@ void SimulatedClockPanel::onStepClicked()
   pause_button_->setChecked(true);
   const auto step_time = step_time_input_->value();
   const auto unit = step_unit_combo_->currentText();
-  uint32_t step_duration_ns{};
+  nanoseconds step_duration_ns{};
   if (unit == "s") {
-    clock_msg_.clock.sec += step_time;
+    step_duration_ns += duration_cast<nanoseconds>(seconds(step_time));
   } else if (unit == "ms") {
-    step_duration_ns += duration_cast<nanoseconds>(milliseconds(step_time)).count();
+    step_duration_ns += duration_cast<nanoseconds>(milliseconds(step_time));
   } else if (unit == "µs") {
-    step_duration_ns += duration_cast<nanoseconds>(microseconds(step_time)).count();
+    step_duration_ns += duration_cast<nanoseconds>(microseconds(step_time));
   } else if (unit == "ns") {
-    step_duration_ns += duration_cast<nanoseconds>(nanoseconds(step_time)).count();
+    step_duration_ns += duration_cast<nanoseconds>(nanoseconds(step_time));
   }
   addTimeToClock(step_duration_ns);
 }
@@ -124,25 +124,26 @@ void SimulatedClockPanel::createWallTimer()
 void SimulatedClockPanel::onTimer()
 {
   if (!pause_button_->isChecked()) {
-    const auto duration_since_prev_clock =
-      std::chrono::duration_cast<std::chrono::nanoseconds>(
-        std::chrono::system_clock::now() - prev_published_time_)
-        .count();
-    addTimeToClock(static_cast<uint32_t>(
-      static_cast<double>(duration_since_prev_clock) * clock_speed_input_->value()));
+    const auto duration_since_prev_clock = std::chrono::system_clock::now() - prev_published_time_;
+    const auto speed_adjusted_duration = duration_since_prev_clock * clock_speed_input_->value();
+    addTimeToClock(std::chrono::duration_cast<std::chrono::nanoseconds>(speed_adjusted_duration));
   }
   clock_pub_->publish(clock_msg_);
   prev_published_time_ = std::chrono::system_clock::now();
 }
 
-void SimulatedClockPanel::addTimeToClock(const uint32_t ns)
+void SimulatedClockPanel::addTimeToClock(std::chrono::nanoseconds time_to_add_ns)
 {
-  constexpr auto one_sec =
-    std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::seconds(1)).count();
-  clock_msg_.clock.nanosec += ns;
-  if (clock_msg_.clock.nanosec >= one_sec) {
-    clock_msg_.clock.sec += static_cast<int32_t>(clock_msg_.clock.nanosec / one_sec);
-    clock_msg_.clock.nanosec = clock_msg_.clock.nanosec % one_sec;
+  constexpr auto one_sec = std::chrono::seconds(1);
+  constexpr auto one_sec_ns = std::chrono::nanoseconds(one_sec);
+  while (time_to_add_ns >= one_sec) {
+    time_to_add_ns -= one_sec;
+    clock_msg_.clock.sec += 1;
+  }
+  clock_msg_.clock.nanosec += time_to_add_ns.count();
+  if (clock_msg_.clock.nanosec >= one_sec_ns.count()) {
+    clock_msg_.clock.sec += 1;
+    clock_msg_.clock.nanosec = clock_msg_.clock.nanosec - one_sec_ns.count();
   }
 }
 
