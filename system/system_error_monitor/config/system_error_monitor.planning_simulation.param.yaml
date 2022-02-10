@@ -50,5 +50,3 @@
         /autoware/system/emergency_stop_operation: default
 
         /autoware/vehicle/node_alive_monitoring: default
-
-
