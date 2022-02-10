@@ -14,4 +14,3 @@
               path: topic_status
               contains: [": vehicle_topic_status"]
               timeout: 1.0
-
