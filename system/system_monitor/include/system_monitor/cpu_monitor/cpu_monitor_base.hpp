@@ -167,7 +167,6 @@ protected:
 
   // Publisher
   rclcpp::Publisher<tier4_external_api_msgs::msg::CpuUsage>::SharedPtr pub_cpu_usage_;
-  // void publishCpuUsage(const tier4_external_api_msgs::msg::CpuUsage & cpu_usage);
 
   virtual void publishCpuUsage(tier4_external_api_msgs::msg::CpuUsage usage);
 };

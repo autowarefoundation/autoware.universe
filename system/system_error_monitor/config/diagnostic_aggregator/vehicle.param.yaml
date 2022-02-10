@@ -28,12 +28,4 @@
                   path: accel_brake_map_calibrator
                   contains: [": accel_brake_map_calibrator"]
                   timeout: 1.0
-        # calibration:
-        #   type: diagnostic_aggregator/AnalyzerGroup
-        #   path: calibration
-        #   analyzers:
-        #     accel_brake_map_calibrator:
-        #       type: diagnostic_aggregator/GenericAnalyzer
-        #       path: accel_brake_map_calibrator
-        #       contains: [": accel_brake_map_calibrator"]
-        #       timeout: 1.0
+
