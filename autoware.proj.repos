@@ -45,10 +45,6 @@ repositories:
     type: git
     url: https://github.com/tier4/aip_description.iv.git
     version: 094dce484cea799fbf6f95f00da708cfbc1d1f21
-  description/sensor/velodyne_simulator:
-    type: git
-    url: https://github.com/tier4/velodyne_simulator.git
-    version: 7bca7039a1d9b0a37a268e7ced3e97b96fe9f5ee
   description/vehicle/lexus_description:
     type: git
     url: https://github.com/tier4/lexus_description.iv.git
