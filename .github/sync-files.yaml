@@ -2,8 +2,9 @@
   files:
     - source: .github/dependabot.yaml
     # - source: .github/workflows/build.yaml # TODO: Sync after renaming to autoware.repos
-    - source: .github/workflows/pre-commit-optional.yaml
     - source: .github/workflows/pre-commit.yaml
+    - source: .github/workflows/pre-commit-ansible.yaml
+    - source: .github/workflows/pre-commit-optional.yaml
     - source: .github/workflows/semantic-pull-request.yaml
     - source: .github/workflows/spell-check-differential.yaml
     # - source: .github/workflows/vcs-import.yaml # TODO: Sync after renaming to autoware.repos
@@ -11,6 +12,7 @@
     - source: .markdown-link-check.json
     - source: .markdownlint.yaml
     # - source: .pre-commit-config.yaml # TODO: Sync after yamllint and ansible-lint have passed
+    - source: .pre-commit-config-ansible.yaml
     - source: .pre-commit-config-optional.yaml
     - source: .prettierignore
     - source: .prettierrc.yaml

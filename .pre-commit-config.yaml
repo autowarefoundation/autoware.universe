@@ -35,11 +35,6 @@ repos:
   #   hooks:
   #     - id: yamllint
 
-  # - repo: https://github.com/ansible/ansible-lint.git
-  #   rev: v5.3.2
-  #   hooks:
-  #     - id: ansible-lint
-
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: v0.8.0.3
     hooks:
