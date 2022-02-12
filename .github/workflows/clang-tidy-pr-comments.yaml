@@ -35,9 +35,13 @@ jobs:
           ref: ${{ steps.set-variables.outputs.pr-head-ref }}
           persist-credentials: false
 
+      - name: Copy fixes.yaml to access from Docker Container Action
+        run: |
+          cp /tmp/clang-tidy-result/fixes.yaml fixes.yaml
+
       - name: Run clang-tidy-pr-comments action
         uses: platisd/clang-tidy-pr-comments@1.1.6
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          clang_tidy_fixes: /tmp/clang-tidy-result/fixes.yaml
+          clang_tidy_fixes: fixes.yaml
           pull_request_id: ${{ steps.set-variables.outputs.pr-id }}
