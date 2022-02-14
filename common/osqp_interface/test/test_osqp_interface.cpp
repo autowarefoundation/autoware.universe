@@ -23,7 +23,21 @@
 namespace
 {
 using autoware::common::osqp::float64_t;
-/// Problem taken from https://github.com/osqp/osqp/blob/master/tests/basic_qp/generate_problem.py
+// Problem taken from https://github.com/osqp/osqp/blob/master/tests/basic_qp/generate_problem.py
+//
+// min  1/2 * x' * P * x  + q' * x
+// s.t. lb <= A * x <= ub
+//
+// P = [4, 1], q = [1], A = [1, 1], lb = [   1], ub = [1.0]
+//     [1, 2]      [1]      [1, 0]       [   0]       [0.7]
+//                          [0, 1]       [   0]       [0.7]
+//                          [0, 1]       [-inf]       [inf]
+//
+// The optimal solution is
+// x = [0.3, 0.7]'
+// y = [-2.9, 0.0, 0.2, 0.0]`
+// obj = 1.88
+
 // cppcheck-suppress syntaxError
 TEST(TestOsqpInterface, BasicQp) {
   using autoware::common::osqp::CSC_Matrix;
@@ -32,14 +46,22 @@ TEST(TestOsqpInterface, BasicQp) {
 
   auto check_result =
     [](const std::tuple<std::vector<float64_t>, std::vector<float64_t>, int, int, int> & result) {
-      EXPECT_EQ(std::get<2>(result), 1);
-      EXPECT_EQ(std::get<3>(result), 1);
-      ASSERT_EQ(std::get<0>(result).size(), size_t(2));
-      ASSERT_EQ(std::get<1>(result).size(), size_t(2));
-      EXPECT_DOUBLE_EQ(std::get<0>(result)[0], 0.3);
-      EXPECT_DOUBLE_EQ(std::get<0>(result)[1], 0.7);
-      EXPECT_DOUBLE_EQ(std::get<1>(result)[0], -2.9);
-      EXPECT_NEAR(std::get<1>(result)[1], 0.0, 1e-6);
+      EXPECT_EQ(std::get<2>(result), 1);  // polish succeeded
+      EXPECT_EQ(std::get<3>(result), 1);  // solution succeeded
+
+      static const auto ep = 1.0e-8;
+
+      const auto prime_val = std::get<0>(result);
+      ASSERT_EQ(prime_val.size(), size_t(2));
+      EXPECT_NEAR(prime_val[0], 0.3, ep);
+      EXPECT_NEAR(prime_val[1], 0.7, ep);
+
+      const auto dual_val = std::get<1>(result);
+      ASSERT_EQ(dual_val.size(), size_t(4));
+      EXPECT_NEAR(dual_val[0], -2.9, ep);
+      EXPECT_NEAR(dual_val[1], 0.0, ep);
+      EXPECT_NEAR(dual_val[2], 0.2, ep);
+      EXPECT_NEAR(dual_val[3], 0.0, ep);
     };
 
   {
