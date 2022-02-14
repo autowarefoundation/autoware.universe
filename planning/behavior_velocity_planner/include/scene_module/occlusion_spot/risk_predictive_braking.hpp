@@ -51,7 +51,7 @@ inline double calculateMinSlowDownVelocity(
  * @return lateral distance
  **/
 inline double calculateLateralDistanceFromTTC(
-  const double longitudinal_distance, const double max_time, const PlannerParam & param)
+  const double longitudinal_distance, const PlannerParam & param)
 {
   const double lateral_offset = param.half_vehicle_width;
   const auto & v = param.v;
@@ -61,9 +61,11 @@ inline double calculateLateralDistanceFromTTC(
   const double v0 = (v.v_ego > v_min) ? v.v_ego : v_min;
   // here is a part where ego t(ttc) can be replaced by calculation of velocity smoother or ?
   double t = longitudinal_distance / v0;
-  // if ego ttc exceeds max time then use max time for collision
-  if (t > max_time) t = max_time;
   const double lateral_distance = t * param.pedestrian_vel + lateral_offset;
+  const double min_distance = 0.1;
+  if (lateral_distance < min_distance) return min_distance;
+  if (param.detection_area.max_lateral_distance < lateral_distance)
+    return param.detection_area.max_lateral_distance;
   return lateral_distance;
 }
 
