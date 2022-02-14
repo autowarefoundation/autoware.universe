@@ -99,7 +99,7 @@ bool OcclusionSpotInPublicModule::modifyPathVelocity(
   utils::handleCollisionOffset(possible_collisions, offset_from_start_to_ego, 0.0);
   // apply safe velocity using ebs and pbs deceleration
   utils::applySafeVelocityConsideringPossibleCollision(path, possible_collisions, param_);
-
+  debug_data_.z = path->points.front().point.pose.position.z;
   debug_data_.possible_collisions = possible_collisions;
   return true;
 }
