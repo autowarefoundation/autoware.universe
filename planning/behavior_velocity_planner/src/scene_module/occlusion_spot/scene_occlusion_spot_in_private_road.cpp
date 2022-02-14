@@ -68,6 +68,7 @@ bool OcclusionSpotInPrivateModule::modifyPathVelocity(
   PathWithLaneId clipped_path;
   utils::clipPathByLength(*path, clipped_path, max_range);
   PathWithLaneId interp_path;
+  //! never change this interpolation interval(will affect module accuracy)
   utils::splineInterpolate(clipped_path, 1.0, &interp_path, logger_);
   debug_data_.interp_path = interp_path;
   int closest_idx = -1;
@@ -90,7 +91,7 @@ bool OcclusionSpotInPrivateModule::modifyPathVelocity(
   using Slice = occlusion_spot_utils::Slice;
   std::vector<Slice> detection_area_polygons;
   utils::buildDetectionAreaPolygon(
-    detection_area_polygons, interp_path, closest_idx, offset_from_start_to_ego, param_);
+    detection_area_polygons, interp_path, offset_from_start_to_ego, param_);
   for (const auto & p : detection_area_polygons) {
     debug_data_.detection_areas.emplace_back(p.polygon);
   }

@@ -46,17 +46,18 @@ BasicPoint2d calculateOffsetPoint(
 }
 
 void buildSlices(
-  std::vector<Slice> & slices, const lanelet::ConstLanelet & path_lanelet, const int closest_idx,
-  const double offset, const bool is_on_right, const PlannerParam & param)
+  std::vector<Slice> & slices, const lanelet::ConstLanelet & path_lanelet, const double offset,
+  const bool is_on_right, const PlannerParam & param)
 {
-  /**
-   * @brief bounds
-   * +---------- outer bounds
-   * |   +------ inner bounds(original path)
-   * |   |
-   */
   BasicLineString2d center_line = path_lanelet.centerline2d().basicLineString();
   const auto & p = param;
+  /**
+   * @brief relationships for interpolated polygon
+   *
+   * +(min_length,max_distance)-+ - +---+(max_length,max_distance) = outer_polygons
+   * |                                  |
+   * +--------------------------+ - +---+(max_length,min_distance) = inner_polygons
+   */
   const double min_length = offset + p.baselink_to_front;
   const double max_length = p.detection_area_length;
   const double min_distance = (is_on_right) ? -p.half_vehicle_width : p.half_vehicle_width;
@@ -65,6 +66,11 @@ void buildSlices(
   //! max index is the last index of path point
   const int max_index = static_cast<int>(center_line.size() - 2);
   int idx = closest_idx;
+  /**
+   * Note: create polygon from path point is better than from ego offset to consider below
+   * - less computation cost and no need to recalulated interpolated point start from ego
+   * - less stable for localization noise
+   **/
   for (int s = 0; s < max_index; s += num_step) {
     const double length = s * slice_length;
     const double next_length = static_cast<double>(s + num_step);
@@ -72,13 +78,19 @@ void buildSlices(
     Slice slice;
     BasicLineString2d inner_polygons;
     BasicLineString2d outer_polygons;
-    // build interpolated polygon for lateral
+    // build connected polygon for lateral
     for (int i = 0; i <= num_step; i++) {
       idx = s + i;
       const double arc_length_from_ego = std::max(0.0, static_cast<double>(idx) - min_length);
       if (idx >= max_index) continue;
       const auto & c0 = center_line.at(idx);
       const auto & c1 = center_line.at(idx + 1);
+      /**
+       * @brief points
+       * +--outer point (lateral distance obstacle can reach)
+       * |
+       * +--inner point(min distance)
+       */
       const BasicPoint2d inner_point = calculateOffsetPoint(c0, c1, min_distance);
       double lateral_distance = calculateLateralDistanceFromTTC(arc_length_from_ego, param);
       if (is_on_right) lateral_distance *= -1;
@@ -87,7 +99,7 @@ void buildSlices(
       outer_polygons.emplace_back(outer_point);
     }
     if (inner_polygons.empty()) continue;
-    //  Build polygon
+    //  connect invert point
     inner_polygons.insert(inner_polygons.end(), outer_polygons.rbegin(), outer_polygons.rend());
     slice.polygon = lanelet::BasicPolygon2d(inner_polygons);
     // add range info
@@ -98,15 +110,15 @@ void buildSlices(
 }
 
 void buildDetectionAreaPolygon(
-  std::vector<Slice> & slices, const PathWithLaneId & path, const int closest_idx,
-  const double offset, const PlannerParam & param)
+  std::vector<Slice> & slices, const PathWithLaneId & path, const double offset,
+  const PlannerParam & param)
 {
   std::vector<Slice> left_slices;
   std::vector<Slice> right_slices;
   lanelet::ConstLanelet path_lanelet = toPathLanelet(path);
   // in most case lateral distance is much more effective for velocity planning
-  buildSlices(left_slices, path_lanelet, closest_idx, offset, false /*is_on_right*/, param);
-  buildSlices(right_slices, path_lanelet, closest_idx, offset, true /*is_on_right*/, param);
+  buildSlices(left_slices, path_lanelet, offset, false /*is_on_right*/, param);
+  buildSlices(right_slices, path_lanelet, offset, true /*is_on_right*/, param);
   // Properly order lanelets from closest to furthest
   slices = left_slices;
   slices.insert(slices.end(), right_slices.begin(), right_slices.end());
