@@ -424,26 +424,23 @@ void generateSidewalkPossibleCollisions(
   if (path_lanelet.centerline2d().empty()) {
     return;
   }
-  std::vector<geometry::Slice> sidewalk_slices;
-  geometry::buildDetectionAreaPolygon(
+  using Slice = occlusion_spot_utils::Slice;
+  std::vector<Slice> sidewalk_slices;
+  occlusion_spot_utils::buildDetectionAreaPolygon(
     sidewalk_slices, path_lanelet, 0.0, param.half_vehicle_width, param.sidewalk.slice_size,
     param.sidewalk.focus_range);
   double length_lower_bound = std::numeric_limits<double>::max();
   double distance_lower_bound = std::numeric_limits<double>::max();
   // sort distance closest first to skip inferior collision
-  std::sort(
-    sidewalk_slices.begin(), sidewalk_slices.end(),
-    [](const geometry::Slice & s1, const geometry::Slice & s2) {
-      return std::abs(s1.range.min_distance) < std::abs(s2.range.min_distance);
-    });
+  std::sort(sidewalk_slices.begin(), sidewalk_slices.end(), [](const Slice & s1, const Slice s2) {
+    return std::abs(s1.range.min_distance) < std::abs(s2.range.min_distance);
+  });
 
-  std::sort(
-    sidewalk_slices.begin(), sidewalk_slices.end(),
-    [](const geometry::Slice & s1, const geometry::Slice & s2) {
-      return s1.range.min_length < s2.range.min_length;
-    });
+  std::sort(sidewalk_slices.begin(), sidewalk_slices.end(), [](const Slice s1, const Slice s2) {
+    return s1.range.min_length < s2.range.min_length;
+  });
 
-  for (const geometry::Slice & sidewalk_slice : sidewalk_slices) {
+  for (const Slice sidewalk_slice : sidewalk_slices) {
     debug.push_back(sidewalk_slice.polygon);
     if ((sidewalk_slice.range.min_length < length_lower_bound ||
          std::abs(sidewalk_slice.range.min_distance) < distance_lower_bound)) {

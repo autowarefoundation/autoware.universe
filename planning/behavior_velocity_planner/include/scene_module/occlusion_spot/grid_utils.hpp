@@ -19,7 +19,6 @@
 #include <grid_map_core/iterators/LineIterator.hpp>
 #include <grid_map_core/iterators/PolygonIterator.hpp>
 #include <opencv2/opencv.hpp>
-#include <scene_module/occlusion_spot/geometry.hpp>
 
 #include <nav_msgs/msg/occupancy_grid.hpp>
 

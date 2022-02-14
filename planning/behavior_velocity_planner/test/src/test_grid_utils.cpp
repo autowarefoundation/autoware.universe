@@ -209,9 +209,9 @@ TEST(isOcclusionSpotSquare, many_cells_occlusion_spot)
 
 TEST(buildSlices, test_buffer_offset)
 {
-  using behavior_velocity_planner::geometry::buildSlices;
-  using behavior_velocity_planner::geometry::Slice;
-  using behavior_velocity_planner::geometry::SliceRange;
+  using behavior_velocity_planner::occlusion_spot_utils::buildSlices;
+  using behavior_velocity_planner::occlusion_spot_utils::Slice;
+  using behavior_velocity_planner::occlusion_spot_utils::SliceRange;
 
   // Curving lanelet
   // lanelet::Lanelet l;

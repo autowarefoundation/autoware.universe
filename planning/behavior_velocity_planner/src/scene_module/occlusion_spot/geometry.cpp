@@ -22,7 +22,7 @@
 
 namespace behavior_velocity_planner
 {
-namespace geometry
+namespace occlusion_spot_utils
 {
 using lanelet::BasicLineString2d;
 using lanelet::BasicPoint2d;
@@ -57,7 +57,7 @@ void createOffsetLineString(
 
 void buildSlices(
   std::vector<Slice> & slices, const lanelet::ConstLanelet & path_lanelet, const SliceRange & range,
-  const double slice_length, const double resolution)
+  const double slice_length, [[maybe_unused]] const double slice_width, const double resolution)
 {
   /**
    * @brief bounds
@@ -111,19 +111,22 @@ void buildDetectionAreaPolygon(
 {
   std::vector<Slice> left_slices;
   std::vector<Slice> right_slices;
+  const double longitudinal_max_dist = lg::length2d(path_lanelet);
   SliceRange left_slice_range = {
-    longitudinal_offset, 0.0, lateral_offset, lateral_offset + lateral_max_dist};
+    longitudinal_offset, longitudinal_max_dist, lateral_offset, lateral_offset + lateral_max_dist};
   // in most case lateral distance is much more effective for velocity planning
   const double slice_length = 4.0 * slice_size;
+  const double slice_width = slice_size;
   const double resolution = 1.0;
-  buildSlices(left_slices, path_lanelet, left_slice_range, slice_length, resolution);
+  buildSlices(left_slices, path_lanelet, left_slice_range, slice_length, slice_width, resolution);
   SliceRange right_slice_range = {
-    longitudinal_offset, 0.0, -lateral_offset, -lateral_offset - lateral_max_dist};
-  buildSlices(right_slices, path_lanelet, right_slice_range, slice_length, resolution);
+    longitudinal_offset, longitudinal_max_dist, -lateral_offset,
+    -lateral_offset - lateral_max_dist};
+  buildSlices(right_slices, path_lanelet, right_slice_range, slice_length, slice_width, resolution);
   // Properly order lanelets from closest to furthest
   slices = left_slices;
   slices.insert(slices.end(), right_slices.begin(), right_slices.end());
   return;
 }
-}  // namespace geometry
+}  // namespace occlusion_spot_utils
 }  // namespace behavior_velocity_planner

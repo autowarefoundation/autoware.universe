@@ -15,6 +15,8 @@
 #ifndef SCENE_MODULE__OCCLUSION_SPOT__GEOMETRY_HPP_
 #define SCENE_MODULE__OCCLUSION_SPOT__GEOMETRY_HPP_
 
+#include <scene_module/occlusion_spot/occlusion_spot_utils.hpp>
+
 #include <boost/geometry.hpp>
 
 #include <lanelet2_core/geometry/Lanelet.h>
@@ -24,7 +26,7 @@
 
 namespace behavior_velocity_planner
 {
-namespace geometry
+namespace occlusion_spot_utils
 {
 namespace bg = boost::geometry;
 
@@ -52,7 +54,7 @@ void buildSlices(
   const double slice_length, const double resolution);
 //!< @brief build sidewalk slice from path
 void buildDetectionAreaPolygon(
-  std::vector<geometry::Slice> & slice, const lanelet::ConstLanelet & path_lanelet,
+  std::vector<Slice> & slice, const lanelet::ConstLanelet & path_lanelet,
   const double longitudinal_offset, const double lateral_offset, const double min_size,
   const double lateral_max_dist);
 //!< @brief calculate interpolation between a and b at distance ratio t
@@ -62,7 +64,7 @@ T lerp(T a, T b, double t)
   return a + t * (b - a);
 }
 
-}  // namespace geometry
+}  // namespace occlusion_spot_utils
 }  // namespace behavior_velocity_planner
 
 #endif  // SCENE_MODULE__OCCLUSION_SPOT__GEOMETRY_HPP_
