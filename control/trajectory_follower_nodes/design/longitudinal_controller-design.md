@@ -1,5 +1,4 @@
-Longitudinal Controller {#longitudinal-controller-design}
-===========
+# Longitudinal Controller {#longitudinal-controller-design}
 
 # Purpose / Use cases
 
@@ -142,10 +141,102 @@ Depending on the actuating principle of the vehicle, the mechanism that physical
 
 In this controller, the predicted ego-velocity and the target velocity after the delay time are calculated and used for the feedback to address the time delay problem.
 
+## Parameter description
+
+The default parameters defined in `param/lateral_controller_defaults.yaml` are adjusted to the
+AutonomouStuff Lexus RX 450h for under 40 km/h driving.
+
+| Name                                 | Type   | Description                                                                                                       | Default value |
+| :----------------------------------- | :----- | :---------------------------------------------------------------------------------------------------------------- | :------------ |
+| control_rate                         | double | control rate [Hz]                                                                                                 | 30            |
+| delay_compensation_time              | double | delay for longitudinal control [s]                                                                                | 0.17          |
+| enable_smooth_stop                   | bool   | flag to enable stopping mode                                                                                      | true          |
+| enable_overshoot_emergency           | bool   | flag to enable transition to EMERGENCY when the ego is a certain distance ahead of the goal                       | true          |
+| enable_slope_compensation            | bool   | flag to update output acceleration with pitch angle for slope compensation                                        | true          |
+| enable_brake_keeping_before_stop     | bool   | flag to keep a certain acceleration during DRIVE state before the ego stops                                       | false         |
+| max_acc                              | double | max value of output acceleration [m/s^2]                                                                          | 3.0           |
+| min_acc                              | double | min value of output acceleration [m/s^2]                                                                          | -5.0          |
+| max_jerk                             | double | max value of jerk of output acceleration [m/s^3]                                                                  | 2.0           |
+| min_jerk                             | double | min value of jerk of output acceleration [m/s^3]                                                                  | -5.0          |
+| use_trajectory_for_pitch_calculation | bool   | If true, pitch is estimated from the pre-defined map instead of the ego pose estimated in the localization module | false         |
+| lpf_pitch_gain                       | double | gain of low-pass filter for pitch estimation                                                                      | 0.95          |
+| max_pitch_rad                        | double | max value of estimated pitch [rad]                                                                                | 0.1           |
+| min_pitch_rad                        | double | min value of estimated pitch [rad]                                                                                | -0.1          |
+
+### State transition
+
+| Name                                | Type   | Description                                                                                                                                                   | Default value |
+| :---------------------------------- | :----- | :------------------------------------------------------------------------------------------------------------------------------------------------------------ | :------------ |
+| drive_state_stop_dist               | double | The state will transit to DRIVE when the distance to the goal is larger than `drive_state_stop_dist` + `drive_state_offset_stop_dist` [m]                     | 0.5           |
+| drive_state_offset_stop_dist        | double | The state will transit to DRIVE when the distance to the goal is larger than `drive_state_stop_dist` + `drive_state_offset_stop_dist` [m]                     | 1.0           |
+| stopping_state_stop_dist            | double | The state will transit to STOPPING when the distance to the goal is smaller than `stopping_state_stop_dist` [m]                                               | 0.5           |
+| stopped_state_entry_vel             | double | ego velocity to be considered as STOPPED state [m/s]                                                                                                          | 0.01          |
+| stopped_state_entry_acc             | double | ego acceleration to be considered as STOPPED state [m/s^2]                                                                                                    | 0.1           |
+| emergency_state_overshoot_stop_dist | double | If `enable_overshoot_emergency` is tru and the ego is `emergency_state_overshoot_stop_dist`-meter ahead of the goal, the state will transit to EMERGENCY. [m] | 1.5           |
+| emergency_state_traj_trans_dev      | double | If the ego's position differs `emergency_state_traj_tran_dev` meter from the nearest trajectory point, the state will transit to EMERGENCY. [m]               | 3.0           |
+| emergency_state_traj_rot_dev        | double | If the ego's orientation differs `emergency_state_traj_rot_dev` rad from the nearest trajectory point, the state will transit to EMERGENCY. [rad]             | 0.784         |
+
+### DRIVE Parameter
+
+| Name                                  | Type   | Description                                                                                                                   | Default value |
+| :------------------------------------ | :----- | :---------------------------------------------------------------------------------------------------------------------------- | :------------ |
+| kp                                    | double | p gain for longitudinal control                                                                                               | 1.0           |
+| ki                                    | double | i gain for longidutinal control                                                                                               | 0.1           |
+| kd                                    | double | d gain for longidutinal control                                                                                               | 0.0           |
+| max_out                               | double | max value of output acceleration during DRIVE state [m/s^2]                                                                   | 1.0           |
+| min_out                               | double | min value of output acceleration during DRIVE state [m/s^2]                                                                   | -1.0          |
+| max_p_effort                          | double | max value of acceleration with p gain                                                                                         | 1.0           |
+| min_p_effort                          | double | min value of acceleration with p gain                                                                                         | -1.0          |
+| max_i_effort                          | double | max value of acceleration with i gain                                                                                         | 0.3           |
+| min_i_effort                          | double | min value of acceleration with i gain                                                                                         | -0.3          |
+| max_d_effort                          | double | max value of acceleration with d gain                                                                                         | 0.0           |
+| min_d_effort                          | double | min value of acceleration with d gain                                                                                         | 0.0           |
+| lpf_vel_error_gain                    | double | gain of low-pass filter for velocity error                                                                                    | 0.9           |
+| current_vel_threshold_pid_integration | double | Velocity error will be integrated if absolute value of current velocity is larger larger than this parameter. [m/s]           | 0.5           |
+| brake_keeping_acc                     | double | If `enable_brake_keeping_before_stop` is true, a certain acceleration is kept during DRIVE state before the ego stops [m/s^2] | 0.2           |
+
+### STOPPING Parameter (smooth stop)
+
+Smooth stop is enabled if `enable_smooth_stop` is true.
+In smooth stop, strong acceleration (`strong_acc`) will be output first to decrease the ego velocity.
+Then weak acceleration (`weak_acc`) will be output to stop smoothly by decreasing the ego jerk.
+If the ego does not stop in a certain time or some-meter ahead of the goal, weak acceleration to stop right (`weak_stop_acc`) now will be output.
+If the ego is still running, strong acceleration (`strong_stop_acc`) to stop right now will be output.
+
+| Name                         | Type   | Description                                                                                                          | Default value |
+| :--------------------------- | :----- | :------------------------------------------------------------------------------------------------------------------- | :------------ |
+| smooth_stop_max_strong_acc   | double | max strong acceleration [m/s^2]                                                                                      | -0.5          |
+| smooth_stop_min_strong_acc   | double | min strong acceleration [m/s^2]                                                                                      | -0.8          |
+| smooth_stop_weak_acc         | double | weak accelerion [m/s^2]                                                                                              | -0.3          |
+| smooth_stop_weak_stop_acc    | double | weak acceleration to stop right now [m/s^2]                                                                          | -0.8          |
+| smooth_stop_strong_stop_acc  | double | strong acceleration to be output when the ego is `smooth_stop_strong_stop_dist`-meter ahead of the goal. [m/s^2]     | -3.4          |
+| smooth_stop_max_fast_vel     | double | max fast vel to judge the ego is running fast [m/s]. If the ego is running fast, strong acceleration will be output. | 0.5           |
+| smooth_stop_min_running_vel  | double | min ego velocity to judge if the ego is running or not [m/s]                                                         | 0.01          |
+| smooth_stop_min_running_acc  | double | min ego acceleration to judge if the ego is running or not [m/s^2]                                                   | 0.01          |
+| smooth_stop_weak_stop_time   | double | max time to output weak acceleration [s]. After this, strong acceleration will be output.                            | 0.8           |
+| smooth_stop_weak_stop_dist   | double | Weak acceleration will be output when the ego is `smooth_stop_weak_stop_dist`-meter before the goal. [m]             | -0.3          |
+| smooth_stop_strong_stop_dist | double | Strong acceleration will be output when the ego is `smooth_stop_strong_stop_dist`-meter ahead of the goal. [m]       | -0.5          |
+
+### STOPPED Parameter
+
+| Name         | Type   | Description                                  | Default value |
+| :----------- | :----- | :------------------------------------------- | :------------ |
+| stopped_vel  | double | target velocity in STOPPED state [m/s]       | 0.0           |
+| stopped_acc  | double | target acceleration in STOPPED state [m/s^2] | -3.4          |
+| stopped_jerk | double | target jerk in STOPPED state [m/s^3]         | -5.0          |
+
+### EMERGENCY Parameter
+
+| Name           | Type   | Description                                       | Default value |
+| :------------- | :----- | :------------------------------------------------ | :------------ |
+| emergency_vel  | double | target velocity in EMERGENCY state [m/s]          | 0.0           |
+| emergency_acc  | double | target acceleration in an EMERGENCY state [m/s^2] | -5.0          |
+| emergency_jerk | double | target jerk in an EMERGENCY state [m/s^3]         | -3.0          |
+
 # References / External links
 
 # Future extensions / Unimplemented parts
 
 # Related issues
 
-- https://gitlab.com/autowarefoundation/autoware.auto/AutowareAuto/-/issues/1058
+- <https://gitlab.com/autowarefoundation/autoware.auto/AutowareAuto/-/issues/1058>
