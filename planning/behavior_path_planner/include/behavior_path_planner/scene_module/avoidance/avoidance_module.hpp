@@ -89,7 +89,8 @@ private:
 
   // -- for shift point generation --
   AvoidPointArray calcShiftPoints(
-    AvoidPointArray & current_raw_shift_points, DebugData & debug) const;
+    AvoidPointArray & current_raw_shift_points, PathShifter & path_shifter,
+    DebugData & debug) const;
 
   // shift point generation: generator
   AvoidPointArray calcRawShiftPointsFromObjects(const ObjectDataArray & objects) const;

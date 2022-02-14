@@ -318,7 +318,8 @@ void AvoidanceModule::updateRegisteredRawShiftPoints()
     std::max(static_cast<int>(avoidance_data_.ego_closest_path_index) - margin, 0));
 
   printShiftPoints(registered_raw_shift_points_, "registered_raw_shift_points_ (before)");
-  const auto registered_raw_sp_size_before = registered_raw_shift_points_.size(); // for debug print
+  const auto registered_raw_sp_size_before =
+    registered_raw_shift_points_.size();  // for debug print
   const auto iterator = std::remove_if(
     registered_raw_shift_points_.begin(), registered_raw_shift_points_.end(),
     [this, &deadline](const AvoidPoint & ap) {
@@ -338,8 +339,7 @@ void AvoidanceModule::updateRegisteredRawShiftPoints()
 
   DEBUG_PRINT(
     "ego_closest_path_index = %lu, registered_raw_shift_points_ size: %lu -> %lu",
-    avoidance_data_.ego_closest_path_index, registered_raw_sp_size_before,
-    avoid_points.size());
+    avoidance_data_.ego_closest_path_index, registered_raw_sp_size_before, avoid_points.size());
 
   printShiftPoints(avoid_points, "registered_raw_shift_points_ (after)");
 
@@ -347,7 +347,7 @@ void AvoidanceModule::updateRegisteredRawShiftPoints()
 }
 
 AvoidPointArray AvoidanceModule::calcShiftPoints(
-  AvoidPointArray & current_raw_shift_points, DebugData & debug) const
+  AvoidPointArray & current_raw_shift_points, PathShifter & path_shifter, DebugData & debug) const
 {
   /**
    * Generate raw_shift_points (shift length, avoidance start point, end point, return point, etc)
@@ -356,6 +356,28 @@ AvoidPointArray AvoidanceModule::calcShiftPoints(
   current_raw_shift_points = calcRawShiftPointsFromObjects(avoidance_data_.objects);
   debug.current_raw_shift = current_raw_shift_points;
 
+  const auto current_raw_shift_point_iterator = std::partition(
+    current_raw_shift_points.begin(), current_raw_shift_points.end(),
+    [this](const AvoidPoint & ap) {
+      return registered_objects_map_.find(ap.associated_object_uuid) !=
+             registered_objects_map_.cend();
+    });
+
+  current_raw_shift_points.erase(current_raw_shift_point_iterator, current_raw_shift_points.end());
+
+  ShiftPointArray shifts = path_shifter.getShiftPoints();
+
+  // Remove unwanted shift
+  const auto remove_iter =
+    std::remove_if(shifts.begin(), shifts.end(), [this](const ShiftPoint & sp) {
+      return (
+        (avoidance_data_.mapped_objects.find(sp.associated_object_uuid) ==
+         avoidance_data_.mapped_objects.cend()) &&
+        (std::abs(sp.length) > 0));
+    });
+  shifts.erase(remove_iter, shifts.end());
+
+  path_shifter.reassignShiftPoints(shifts);
   /**
    * Use all registered points. For the current points, if the similar one of the current
    * points are already registered, will not use it.
@@ -383,6 +405,19 @@ AvoidPointArray AvoidanceModule::calcShiftPoints(
   addReturnShiftPointFromEgo(total_raw_shift_points, current_raw_shift_points);
   printShiftPoints(total_raw_shift_points, "total_raw_shift_points_with_extra_return_shift");
 
+  alignShiftPointsOrder(total_raw_shift_points);
+
+  const auto comp = [](const AvoidPoint & ap1, const AvoidPoint & ap2) noexcept {
+    return (ap1.associated_object_uuid != ap2.associated_object_uuid) &&
+           (ap1.end_longitudinal < ap2.end_longitudinal);
+  };
+  std::set<AvoidPoint, decltype(comp)> temp(comp);
+
+  for (const auto & c : total_raw_shift_points) {
+    if (temp.find(c) == temp.end()) {
+      temp.insert(c);
+    }
+  }
   /**
    * On each path point, compute shift length with considering the raw shift points.
    * Then create a merged shift points by finding the change point of the gradient of shifting.
@@ -395,6 +430,21 @@ AvoidPointArray AvoidanceModule::calcShiftPoints(
   auto merged_shift_points = mergeShiftPoints(total_raw_shift_points, debug);
   debug.merged = merged_shift_points;
 
+  // assign uuid to each of the shift points
+  auto iter = temp.cbegin();
+  for (auto & sp : merged_shift_points) {
+    if ((sp.end_idx >= iter->end_idx) && (iter != temp.cend())) {
+      ++iter;
+    }
+    if (iter != temp.cend()) {
+      sp.associated_object_uuid = iter->associated_object_uuid;
+    }
+    if (iter == temp.cend()) {
+      --iter;
+      sp.associated_object_uuid = iter->associated_object_uuid;
+      ++iter;
+    }
+  }
   /*
    * Remove unnecessary shift points
    *  - Quantize the shift length to reduce the shift point noise
@@ -446,7 +496,7 @@ void AvoidanceModule::registerRawShiftPoints(const AvoidPointArray & future)
       }
     }
   }
-
+  alignShiftPointsOrder(registered_raw_shift_points_);
   DEBUG_PRINT("registered object size: %lu -> %lu", old_size, registered_raw_shift_points_.size());
 }
 
@@ -542,6 +592,9 @@ AvoidPointArray AvoidanceModule::calcRawShiftPointsFromObjects(
 
     // TODO(Horibe): add margin with object length. __/\__ -> __/¯¯\__
     AvoidPoint ap_avoid;
+    std::copy(
+      o.object.object_id.uuid.cbegin(), o.object.object_id.uuid.cend(),
+      ap_avoid.associated_object_uuid.begin());
     ap_avoid.length = shift_length;
     ap_avoid.start_length = current_ego_shift;
     ap_avoid.end_longitudinal = o.longitudinal;
@@ -557,6 +610,9 @@ AvoidPointArray AvoidanceModule::calcRawShiftPointsFromObjects(
       std::max(avoidance_data_.arclength_from_ego.back() - o.longitudinal - end_margin, 0.0);
 
     AvoidPoint ap_return;
+    std::copy(
+      o.object.object_id.uuid.cbegin(), o.object.object_id.uuid.cend(),
+      ap_return.associated_object_uuid.begin());
     ap_return.length = 0.0;
     ap_return.start_length = shift_length;
     ap_return.start_longitudinal = o.longitudinal;
@@ -1619,6 +1675,7 @@ void AvoidanceModule::addReturnShiftPointFromEgo(
   // shift point for prepare distance: from last shift to return-start point.
   if (nominal_prepare_distance > last_sp_distance) {
     AvoidPoint ap;
+    ap.associated_object_uuid = last_sp.associated_object_uuid;
     ap.id = getOriginalShiftPointUniqueId();
     ap.start_idx = last_sp.end_idx;
     ap.start = last_sp.end;
@@ -1639,6 +1696,7 @@ void AvoidanceModule::addReturnShiftPointFromEgo(
   // shift point for return to center line
   {
     AvoidPoint ap;
+    ap.associated_object_uuid = last_sp.associated_object_uuid;
     ap.id = getOriginalShiftPointUniqueId();
     ap.start_idx = findPathIndexFromArclength(arclength_from_ego, prepare_distance_scaled);
     ap.start = avoidance_data_.reference_path.points.at(ap.start_idx).point.pose;
@@ -2059,7 +2117,7 @@ BehaviorModuleOutput AvoidanceModule::plan()
 {
   DEBUG_PRINT("AVOIDANCE plan");
 
-  const auto shift_points = calcShiftPoints(current_raw_shift_points_, debug_data_);
+  const auto shift_points = calcShiftPoints(current_raw_shift_points_, path_shifter_, debug_data_);
 
   const auto new_shift_points = findNewShiftPoint(shift_points, path_shifter_);
 
@@ -2127,7 +2185,7 @@ PathWithLaneId AvoidanceModule::planCandidate() const
   auto debug_data = debug_data_;
   auto current_raw_shift_points = current_raw_shift_points_;
 
-  const auto shift_points = calcShiftPoints(current_raw_shift_points, debug_data);
+  const auto shift_points = calcShiftPoints(current_raw_shift_points, path_shifter, debug_data);
   const auto new_shift_points = findNewShiftPoint(shift_points, path_shifter);
   if (new_shift_points) {
     addNewShiftPoints(path_shifter, *new_shift_points);

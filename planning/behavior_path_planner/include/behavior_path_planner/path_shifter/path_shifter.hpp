@@ -26,6 +26,8 @@
 #include <geometry_msgs/msg/polygon.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
+#include <boost/uuid/uuid.hpp>
+
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_routing/RoutingGraph.h>
 
@@ -49,6 +51,8 @@ struct ShiftPoint
 
   size_t start_idx{};  // associated start-point index for the reference path
   size_t end_idx{};    // associated end-point index for the reference path
+
+  boost::uuids::uuid associated_object_uuid;
 };
 using ShiftPointArray = std::vector<ShiftPoint>;
 
@@ -181,6 +185,8 @@ public:
   static bool calcShiftPointFromArcLength(
     const PathWithLaneId & path, const Point & origin, double dist_to_start, double dist_to_end,
     double shift_length, ShiftPoint * shift_point);
+
+  void reassignShiftPoints(const ShiftPointArray & shift_points) { shift_points_ = shift_points; }
 
 private:
   // The reference path along which the shift will be performed.
