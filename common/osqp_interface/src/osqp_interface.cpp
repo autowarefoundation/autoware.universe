@@ -288,7 +288,7 @@ std::tuple<std::vector<float64_t>, std::vector<float64_t>, int64_t, int64_t, int
   float64_t * sol_x = m_work->solution->x;
   float64_t * sol_y = m_work->solution->y;
   std::vector<float64_t> sol_primal(sol_x, sol_x + m_param_n);
-  std::vector<float64_t> sol_lagrange_multiplier(sol_y, sol_y + m_param_n);
+  std::vector<float64_t> sol_lagrange_multiplier(sol_y, sol_y + m_data->m);
 
   int64_t status_polish = m_work->info->status_polish;
   int64_t status_solution = m_work->info->status_val;
