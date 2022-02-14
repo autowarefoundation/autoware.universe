@@ -41,24 +41,32 @@ bool isOcclusionSpotSquare(
    *        .               .
    *   (min_x,max_y)...(max_x,max_y)
    */
-  const int offset = side_size - 1;
-  min_x = cell.x();
+  const int offset = (side_size != 1) ? (side_size - 1) : side_size;
+  min_x = cell.x() - offset;
   max_x = cell.x() + offset;
   min_y = cell.y() - offset;
-  max_y = cell.y();
+  max_y = cell.y() + offset;
   // Ensure we stay inside the grid
   min_x = std::max(0, min_x);
   max_x = std::min(grid_size.x() - 1, max_x);
   min_y = std::max(0, min_y);
   max_y = std::min(grid_size.y() - 1, max_y);
+  int unknown_count = 0;
   for (int x = min_x; x <= max_x; ++x) {
     for (int y = min_y; y <= max_y; ++y) {
       // if the value is not unknown value return false
-      if (grid_data(x, y) != grid_utils::occlusion_cost_value::UNKNOWN) {
-        return false;
+      if (grid_data(x, y) == grid_utils::occlusion_cost_value::UNKNOWN) {
+        unknown_count++;
       }
     }
   }
+  /**
+   * @brief case pass o: unknown x: freespace or occupied
+   *   oxx oxo oox xxx oxo oxo
+   *   oox oxx oox ooo oox oxo ... etc
+   *   ooo ooo oox ooo xoo oxo
+   */
+  if (unknown_count < (side_size + 1) * side_size) return false;
   occlusion_spot.side_size = side_size;
   occlusion_spot.index = cell;
   return true;
