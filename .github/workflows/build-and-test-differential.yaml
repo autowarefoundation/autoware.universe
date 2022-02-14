@@ -28,28 +28,28 @@ jobs:
         id: get-modified-packages
         uses: autowarefoundation/autoware-github-actions/get-modified-packages@tier4/proposal
 
-      - name: Build
+      - name: Build and test
         if: ${{ steps.get-modified-packages.outputs.modified-packages != '' }}
-        uses: autowarefoundation/autoware-github-actions/colcon-build@tier4/proposal
+        uses: autowarefoundation/autoware-github-actions/colcon-build-and-test@tier4/proposal
         with:
           rosdistro: galactic
           target-packages: ${{ steps.get-modified-packages.outputs.modified-packages }}
           build-depends-repos: build_depends.repos
 
-      - name: Test
-        id: test
-        if: ${{ steps.get-modified-packages.outputs.modified-packages != '' }}
-        uses: autowarefoundation/autoware-github-actions/colcon-test@tier4/proposal
+      - name: Check the existence of coverage files
+        id: check-file-existence
+        uses: autowarefoundation/autoware-github-actions/check-file-existence@tier4/proposal
         with:
-          rosdistro: galactic
-          target-packages: ${{ steps.get-modified-packages.outputs.modified-packages }}
-          build-depends-repos: build_depends.repos
+          files: |
+            lcov/total_coverage.info
+            coveragepy/.coverage
+          condition: or
 
       - name: Upload coverage to CodeCov
-        if: ${{ steps.test.outputs.coverage-report-files != '' }}
+        if: ${{ steps.check-file-existence.outputs.exists == 'true' }}
         uses: codecov/codecov-action@v2
         with:
-          files: ${{ steps.test.outputs.coverage-report-files }}
+          files: lcov/total_coverage.info,coveragepy/.coverage
           fail_ci_if_error: false
           verbose: true
 
