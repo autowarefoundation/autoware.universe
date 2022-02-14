@@ -49,9 +49,9 @@ struct Slice
 // using the given range and desired slice length and width
 void buildSlices(
   std::vector<Slice> & slices, const lanelet::ConstLanelet & path_lanelet, const SliceRange & range,
-  const double slice_length, const double slice_width, const double resolution);
+  const double slice_length, const double resolution);
 //!< @brief build sidewalk slice from path
-void buildSidewalkSlices(
+void buildDetectionAreaPolygon(
   std::vector<geometry::Slice> & slice, const lanelet::ConstLanelet & path_lanelet,
   const double longitudinal_offset, const double lateral_offset, const double min_size,
   const double lateral_max_dist);

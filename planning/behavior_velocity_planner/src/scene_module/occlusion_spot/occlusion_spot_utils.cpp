@@ -425,7 +425,7 @@ void generateSidewalkPossibleCollisions(
     return;
   }
   std::vector<geometry::Slice> sidewalk_slices;
-  geometry::buildSidewalkSlices(
+  geometry::buildDetectionAreaPolygon(
     sidewalk_slices, path_lanelet, 0.0, param.half_vehicle_width, param.sidewalk.slice_size,
     param.sidewalk.focus_range);
   double length_lower_bound = std::numeric_limits<double>::max();
