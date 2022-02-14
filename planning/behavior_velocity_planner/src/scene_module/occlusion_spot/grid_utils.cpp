@@ -58,17 +58,15 @@ bool isOcclusionSpotSquare(
       if (grid_data(x, y) != grid_utils::occlusion_cost_value::UNKNOWN) {
         not_unknown_count++;
       }
-      // early return if not
+      /**
+       * @brief case pass o: unknown x: freespace or occupied
+       *   oxx oxo oox xxx oxo oxo
+       *   oox oxx oox ooo oox oxo ... etc
+       *   ooo ooo oox ooo xoo oxo
+       */
       if (not_unknown_count > min_occlusion_size + 1) return false;
     }
   }
-  /**
-   * @brief case pass o: unknown x: freespace or occupied
-   *   oxx oxo oox xxx oxo oxo
-   *   oox oxx oox ooo oox oxo ... etc
-   *   ooo ooo oox ooo xoo oxo
-   */
-  if (unknown_count < (min_occlusion_size + 1) * min_occlusion_size) return false;
   occlusion_spot.min_occlusion_size = min_occlusion_size;
   occlusion_spot.index = cell;
   return true;

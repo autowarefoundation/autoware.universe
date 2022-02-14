@@ -254,8 +254,8 @@ DetectionAreaIdx extractTargetRoadArcLength(
 //!< @brief convert a set of occlusion spots found on detection_area slice
 boost::optional<PossibleCollisionInfo> generateOneNotebleCollisionFromOcclusionSpot(
   const grid_map::GridMap & grid, const std::vector<grid_map::Position> & occlusion_spot_positions,
-  const double offset_from_start_to_ego, const lanelet::ConstLanelet & path_lanelet,
-  const PlannerParam & param);
+  const double offset_from_start_to_ego, const BasicPoint2d basic_point,
+  const lanelet::ConstLanelet & path_lanelet, const PlannerParam & param);
 //!< @brief generate possible collisions coming from occlusion spots on the side of the path
 void generateDetectionAreaPossibleCollisions(
   std::vector<Slice> & detection_area_polygons,
