@@ -128,6 +128,10 @@ interpolation::MultiSplineCoef getSplineCoefficients(
   return multi_spline_coef;
 }
 
+//!< @brief get values of spline interpolation on designated sampling points
+// e.g. Assuming that query_keys are t vector for sampling, and multi_spline_coef is for x,
+//      meaning that spline interpolation was applied to x(t),
+//      return value will be x(t) vector
 std::vector<double> getSplineInterpolatedValues(
   const std::vector<double> & base_keys, const std::vector<double> & query_keys,
   const interpolation::MultiSplineCoef & multi_spline_coef)
@@ -154,6 +158,10 @@ std::vector<double> getSplineInterpolatedValues(
   return res;
 }
 
+//!< @brief get differential values of spline interpolation on designated sampling points
+// e.g. Assuming that query_keys are t vector for sampling, and multi_spline_coef is for x,
+//      meaning that spline interpolation was applied to x(t),
+//      return value will be dx/dt(t) vector
 std::vector<double> getSplineInterpolatedDiffValues(
   const std::vector<double> & base_keys, const std::vector<double> & query_keys,
   const interpolation::MultiSplineCoef & multi_spline_coef)
