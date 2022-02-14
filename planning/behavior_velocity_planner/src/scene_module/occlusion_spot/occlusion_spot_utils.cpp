@@ -429,42 +429,29 @@ void generateDetectionAreaPossibleCollisions(
   std::vector<Slice> detection_area_polygons;
   occlusion_spot_utils::buildDetectionAreaPolygon(
     detection_area_polygons, path_lanelet, offset_from_start_to_ego, param);
-  double length_lower_bound = std::numeric_limits<double>::max();
-  double distance_lower_bound = std::numeric_limits<double>::max();
-  // sort distance closest first to skip inferior collision
-  std::sort(
-    detection_area_polygons.begin(), detection_area_polygons.end(),
-    [](const Slice & s1, const Slice s2) {
-      return std::abs(s1.range.min_distance) < std::abs(s2.range.min_distance);
-    });
-
   std::sort(
     detection_area_polygons.begin(), detection_area_polygons.end(),
     [](const Slice s1, const Slice s2) { return s1.range.min_length < s2.range.min_length; });
-
+  double distance_lower_bound = std::numeric_limits<double>::max();
   for (const Slice detection_area_slice : detection_area_polygons) {
     debug.push_back(detection_area_slice.polygon);
-    if ((detection_area_slice.range.min_length < length_lower_bound ||
-         std::abs(detection_area_slice.range.min_distance) < distance_lower_bound)) {
-      std::vector<grid_map::Position> occlusion_spot_positions;
-      grid_utils::findOcclusionSpots(
-        occlusion_spot_positions, grid, detection_area_slice.polygon,
-        param.detection_area.min_occlusion_spot_size);
-      generateDetectionAreaPossibleCollisionFromOcclusionSpot(
-        possible_collisions, grid, occlusion_spot_positions, offset_from_start_to_ego, path_lanelet,
-        param);
-      if (!possible_collisions.empty()) {
-        length_lower_bound = detection_area_slice.range.min_length;
-        distance_lower_bound = std::abs(detection_area_slice.range.min_distance);
-        possible_collisions.insert(
-          possible_collisions.end(), possible_collisions.begin(), possible_collisions.end());
-        debug.push_back(detection_area_slice.polygon);
-      }
+    std::vector<grid_map::Position> occlusion_spot_positions;
+    grid_utils::findOcclusionSpots(
+      occlusion_spot_positions, grid, detection_area_slice.polygon,
+      param.detection_area.min_occlusion_spot_size);
+    if (occlusion_spot_positions.empty()) continue;
+    std::vector<PossibleCollisionInfo> pc;
+    generateOneNotebleCollisionFromOcclusionSpot(
+      pc, grid, occlusion_spot_positions, offset_from_start_to_ego, path_lanelet, param);
+    if (!pc.empty()) {
+      if (distance_lower_bound < pc.at(0).arc_lane_dist_at_collision.distance) continue;
+      distance_lower_bound = pc.at(0).arc_lane_dist_at_collision.distance;
+      possible_collisions.emplace_back(pc.at(0));
     }
   }
 }
 
-void generateDetectionAreaPossibleCollisionFromOcclusionSpot(
+void generateOneNotebleCollisionFromOcclusionSpot(
   std::vector<PossibleCollisionInfo> & possible_collisions, const grid_map::GridMap & grid,
   const std::vector<grid_map::Position> & occlusion_spot_positions,
   const double offset_from_start_to_ego, const lanelet::ConstLanelet & path_lanelet,
@@ -489,13 +476,15 @@ void generateDetectionAreaPossibleCollisionFromOcclusionSpot(
     }
     PossibleCollisionInfo pc = calculateCollisionPathPointFromOcclusionSpot(
       arc_coord_occlusion_point, arc_coord_collision_point, path_lanelet, param);
+    const double dist =
+      std::hypot(pc.arc_lane_dist_at_collision.length, pc.arc_lane_dist_at_collision.distance);
+    // skip if absolute distance is larger
+    if (distance_lower_bound < dist) continue;
     const auto & ip = pc.intersection_pose.position;
     bool collision_free_at_intersection =
       grid_utils::isCollisionFree(grid, occlusion_spot_position, grid_map::Position(ip.x, ip.y));
-    // this is going to extract collision that is nearest to path
-    if (
-      collision_free_at_intersection && distance_lower_bound > arc_coord_collision_point.distance) {
-      distance_lower_bound = arc_coord_collision_point.distance;
+    if (collision_free_at_intersection) {
+      distance_lower_bound = dist;
       candidate = {pc};
       has_collision = true;
     }

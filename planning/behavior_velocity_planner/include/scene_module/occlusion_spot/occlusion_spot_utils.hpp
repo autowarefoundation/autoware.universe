@@ -250,7 +250,7 @@ DetectionAreaIdx extractTargetRoadArcLength(
   const LaneletMapPtr lanelet_map_ptr, const double max_range, const PathWithLaneId & path,
   const ROAD_TYPE & target_road_type);
 //!< @brief convert a set of occlusion spots found on detection_area slice
-void generateDetectionAreaPossibleCollisionFromOcclusionSpot(
+void generateOneNotebleCollisionFromOcclusionSpot(
   std::vector<PossibleCollisionInfo> & possible_collisions, const grid_map::GridMap & grid,
   const std::vector<grid_map::Position> & occlusion_spot_positions,
   const double offset_from_start_to_ego, const lanelet::ConstLanelet & path_lanelet,
