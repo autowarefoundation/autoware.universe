@@ -440,20 +440,18 @@ void generateDetectionAreaPossibleCollisions(
       occlusion_spot_positions, grid, detection_area_slice.polygon,
       param.detection_area.min_occlusion_spot_size);
     if (occlusion_spot_positions.empty()) continue;
-    std::vector<PossibleCollisionInfo> pc;
-    generateOneNotebleCollisionFromOcclusionSpot(
-      pc, grid, occlusion_spot_positions, offset_from_start_to_ego, path_lanelet, param);
-    if (!pc.empty()) {
-      if (distance_lower_bound < pc.at(0).arc_lane_dist_at_collision.distance) continue;
-      distance_lower_bound = pc.at(0).arc_lane_dist_at_collision.distance;
-      possible_collisions.emplace_back(pc.at(0));
-    }
+    const auto & pc = generateOneNotebleCollisionFromOcclusionSpot(
+      grid, occlusion_spot_positions, offset_from_start_to_ego, path_lanelet, param);
+    if (!pc) continue;
+    const double lateral_distance = std::abs(pc.get().arc_lane_dist_at_collision.distance);
+    if (lateral_distance > distance_lower_bound) continue;
+    distance_lower_bound = lateral_distance;
+    possible_collisions.emplace_back(pc.get());
   }
 }
 
-void generateOneNotebleCollisionFromOcclusionSpot(
-  std::vector<PossibleCollisionInfo> & possible_collisions, const grid_map::GridMap & grid,
-  const std::vector<grid_map::Position> & occlusion_spot_positions,
+boost::optional<PossibleCollisionInfo> generateOneNotebleCollisionFromOcclusionSpot(
+  const grid_map::GridMap & grid, const std::vector<grid_map::Position> & occlusion_spot_positions,
   const double offset_from_start_to_ego, const lanelet::ConstLanelet & path_lanelet,
   const PlannerParam & param)
 {
@@ -467,19 +465,20 @@ void generateOneNotebleCollisionFromOcclusionSpot(
     lanelet::BasicPoint2d obstacle_point = {occlusion_spot_position[0], occlusion_spot_position[1]};
     lanelet::ArcCoordinates arc_coord_occlusion_point =
       lanelet::geometry::toArcCoordinates(path_lanelet.centerline2d(), obstacle_point);
+    const double dist =
+      std::hypot(arc_coord_occlusion_point.length, arc_coord_occlusion_point.distance);
+    // skip if absolute distance is larger
+    if (distance_lower_bound < dist) continue;
     const double length_to_col = arc_coord_occlusion_point.length - baselink_to_front;
     ArcCoordinates arc_coord_collision_point = {
       length_to_col,
       calcSignedLateralDistanceWithOffset(arc_coord_occlusion_point.distance, half_vehicle_width)};
+    // skip if occlusion is behind ego bumper
     if (length_to_col < offset_from_start_to_ego) {
       continue;
     }
     PossibleCollisionInfo pc = calculateCollisionPathPointFromOcclusionSpot(
       arc_coord_occlusion_point, arc_coord_collision_point, path_lanelet, param);
-    const double dist =
-      std::hypot(pc.arc_lane_dist_at_collision.length, pc.arc_lane_dist_at_collision.distance);
-    // skip if absolute distance is larger
-    if (distance_lower_bound < dist) continue;
     const auto & ip = pc.intersection_pose.position;
     bool collision_free_at_intersection =
       grid_utils::isCollisionFree(grid, occlusion_spot_position, grid_map::Position(ip.x, ip.y));
@@ -489,7 +488,11 @@ void generateOneNotebleCollisionFromOcclusionSpot(
       has_collision = true;
     }
   }
-  if (has_collision) possible_collisions.emplace_back(candidate);
+  if (has_collision) {
+    return candidate;
+  } else {
+    return {};
+  }
 }
 
 }  // namespace occlusion_spot_utils

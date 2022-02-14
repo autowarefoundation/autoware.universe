@@ -29,6 +29,8 @@
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 
+#include <boost/optional.hpp>
+
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_core/geometry/LaneletMap.h>
 #include <tf2/utils.h>
@@ -250,9 +252,8 @@ DetectionAreaIdx extractTargetRoadArcLength(
   const LaneletMapPtr lanelet_map_ptr, const double max_range, const PathWithLaneId & path,
   const ROAD_TYPE & target_road_type);
 //!< @brief convert a set of occlusion spots found on detection_area slice
-void generateOneNotebleCollisionFromOcclusionSpot(
-  std::vector<PossibleCollisionInfo> & possible_collisions, const grid_map::GridMap & grid,
-  const std::vector<grid_map::Position> & occlusion_spot_positions,
+boost::optional<PossibleCollisionInfo> generateOneNotebleCollisionFromOcclusionSpot(
+  const grid_map::GridMap & grid, const std::vector<grid_map::Position> & occlusion_spot_positions,
   const double offset_from_start_to_ego, const lanelet::ConstLanelet & path_lanelet,
   const PlannerParam & param);
 //!< @brief generate possible collisions coming from occlusion spots on the side of the path
