@@ -149,7 +149,6 @@ private:
    * @param [in] dt delta time to update state
    */
   void updateStateWithGear(Eigen::VectorXd & state, const Eigen::VectorXd & prev_state, const uint8_t gear, const double dt);
-
 };
 
 #endif  // SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_DELAY_STEER_ACC_GEARED_HPP_
