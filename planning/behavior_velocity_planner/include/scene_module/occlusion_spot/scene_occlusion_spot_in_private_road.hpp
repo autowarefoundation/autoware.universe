@@ -46,7 +46,7 @@ public:
   {
     double z;
     std::string road_type = "private";
-    std::vector<lanelet::BasicPolygon2d> sidewalks;
+    std::vector<lanelet::BasicPolygon2d> detection_areas;
     std::vector<occlusion_spot_utils::PossibleCollisionInfo> possible_collisions;
     PathWithLaneId path_raw;
     PathWithLaneId interp_path;

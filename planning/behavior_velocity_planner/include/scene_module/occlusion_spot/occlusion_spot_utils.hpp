@@ -18,7 +18,6 @@
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <lanelet2_extension/visualization/visualization.hpp>
-#include <scene_module/occlusion_spot/geometry.hpp>
 #include <scene_module/occlusion_spot/grid_utils.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <utilization/util.hpp>
@@ -65,10 +64,10 @@ namespace occlusion_spot_utils
 {
 enum ROAD_TYPE { PRIVATE, PUBLIC, HIGHWAY, UNKNOWN };
 
-struct Sidewalk
+struct DetectionArea
 {
-  double focus_range;              // [m] distance to care about occlusion spot
-  double slice_size;               // [m] size of each slice
+  double max_lateral_distance;     // [m] distance to care about occlusion spot
+  double slice_length;             // [m] size of each slice
   double min_occlusion_spot_size;  // [m] minumum size to care about the occlusion spot
 };
 struct Velocity
@@ -82,6 +81,12 @@ struct Velocity
   double v_ego;                 // [m/s]   current ego velocity
   double delay_time;            // [s] safety time buffer for delay response
   double safe_margin;           // [m] maximum safety distance for any error
+};
+
+struct LatLon
+{
+  double lateral_distance;       // [m] lateral distance
+  double longitudinal_distance;  // [m] longitudinal distance
 };
 
 struct PlannerParam
@@ -101,7 +106,7 @@ struct PlannerParam
   double baselink_to_front;   // [m]  wheel_base + front_overhang
 
   Velocity v;
-  Sidewalk sidewalk;
+  DetectionArea detection_area;
   grid_utils::GridParam grid;
 };
 
@@ -109,6 +114,22 @@ struct SafeMotion
 {
   double stop_dist;
   double safe_velocity;
+};
+
+// @brief represent the range of a each polygon
+struct SliceRange
+{
+  double min_length{};
+  double max_length{};
+  double min_distance{};
+  double max_distance{};
+};
+
+// @brief representation of a polygon along a path
+struct Slice
+{
+  SliceRange range{};
+  lanelet::BasicPolygon2d polygon{};
 };
 
 struct ObstacleInfo
@@ -228,14 +249,14 @@ void calcSlowDownPointsForPossibleCollision(
 DetectionAreaIdx extractTargetRoadArcLength(
   const LaneletMapPtr lanelet_map_ptr, const double max_range, const PathWithLaneId & path,
   const ROAD_TYPE & target_road_type);
-//!< @brief convert a set of occlusion spots found on sidewalk slice
-void generateSidewalkPossibleCollisionFromOcclusionSpot(
+//!< @brief convert a set of occlusion spots found on detection_area slice
+void generateDetectionAreaPossibleCollisionFromOcclusionSpot(
   std::vector<PossibleCollisionInfo> & possible_collisions, const grid_map::GridMap & grid,
   const std::vector<grid_map::Position> & occlusion_spot_positions,
   const double offset_from_start_to_ego, const lanelet::ConstLanelet & path_lanelet,
   const PlannerParam & param);
 //!< @brief generate possible collisions coming from occlusion spots on the side of the path
-void generateSidewalkPossibleCollisions(
+void generateDetectionAreaPossibleCollisions(
   std::vector<PossibleCollisionInfo> & possible_collisions, const grid_map::GridMap & grid,
   const PathWithLaneId & path, const double offset_from_start_to_ego, const PlannerParam & param,
   std::vector<BasicPolygon2d> & debug);

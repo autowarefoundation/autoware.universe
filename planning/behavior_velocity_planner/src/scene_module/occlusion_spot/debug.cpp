@@ -152,7 +152,7 @@ visualization_msgs::msg::MarkerArray makePolygonMarker(
   debug_marker.scale = tier4_autoware_utils::createMarkerScale(0.1, 0.1, 0.1);
   debug_marker.color = tier4_autoware_utils::createMarkerColor(1.0, 0.0, 1.0, 0.3);
   debug_marker.lifetime = rclcpp::Duration::from_seconds(0.1);
-  debug_marker.ns = "sidewalk";
+  debug_marker.ns = "detection_area";
   for (const auto & poly : polygons) {
     for (const auto & p : poly) {
       geometry_msgs::msg::Point point =
@@ -252,7 +252,8 @@ visualization_msgs::msg::MarkerArray OcclusionSpotInPrivateModule::createDebugMa
   visualization_msgs::msg::MarkerArray debug_marker_array;
   appendMarkerArray(createMarkers(debug_data_, module_id_), current_time, &debug_marker_array);
   appendMarkerArray(
-    makePolygonMarker(debug_data_.sidewalks, debug_data_.z), current_time, &debug_marker_array);
+    makePolygonMarker(debug_data_.detection_areas, debug_data_.z), current_time,
+    &debug_marker_array);
   appendMarkerArray(
     createPathMarkerArray(debug_data_.path_raw, "path_raw", 0, 0.0, 1.0, 1.0), current_time,
     &debug_marker_array);

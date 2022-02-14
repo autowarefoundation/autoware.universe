@@ -16,6 +16,7 @@
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <scene_module/occlusion_spot/geometry.hpp>
+#include <scene_module/occlusion_spot/occlusion_spot_utils.hpp>
 
 #include <algorithm>
 #include <vector>
@@ -57,7 +58,7 @@ void createOffsetLineString(
 
 void buildSlices(
   std::vector<Slice> & slices, const lanelet::ConstLanelet & path_lanelet, const SliceRange & range,
-  const double slice_length, [[maybe_unused]] const double slice_width, const double resolution)
+  const double slice_length, const double resolution)
 {
   /**
    * @brief bounds
@@ -105,24 +106,22 @@ void buildSlices(
 }
 
 void buildDetectionAreaPolygon(
-  std::vector<Slice> & slices, const lanelet::ConstLanelet & path_lanelet,
-  const double longitudinal_offset, const double lateral_offset, const double slice_size,
-  const double lateral_max_dist)
+  std::vector<Slice> & slices, const lanelet::ConstLanelet & path_lanelet, const double offset,
+  const PlannerParam & param)
 {
   std::vector<Slice> left_slices;
   std::vector<Slice> right_slices;
-  const double longitudinal_max_dist = lg::length2d(path_lanelet);
+  const double d_min = param.half_vehicle_width;
+  const double d_max = param.detection_area.max_lateral_distance;
   SliceRange left_slice_range = {
-    longitudinal_offset, longitudinal_max_dist, lateral_offset, lateral_offset + lateral_max_dist};
+    offset + param.baselink_to_front, param.detection_area_length, d_min, d_max};
   // in most case lateral distance is much more effective for velocity planning
-  const double slice_length = 4.0 * slice_size;
-  const double slice_width = slice_size;
-  const double resolution = 1.0;
-  buildSlices(left_slices, path_lanelet, left_slice_range, slice_length, slice_width, resolution);
+  const double slice_length = param.detection_area.slice_length;
+  const double resolution = 1.0;  // interpolation interval TODO parametrize this
+  buildSlices(left_slices, path_lanelet, left_slice_range, slice_length, resolution);
   SliceRange right_slice_range = {
-    longitudinal_offset, longitudinal_max_dist, -lateral_offset,
-    -lateral_offset - lateral_max_dist};
-  buildSlices(right_slices, path_lanelet, right_slice_range, slice_length, slice_width, resolution);
+    offset + param.baselink_to_front, param.detection_area_length, -d_min, -d_max};
+  buildSlices(right_slices, path_lanelet, right_slice_range, slice_length, resolution);
   // Properly order lanelets from closest to furthest
   slices = left_slices;
   slices.insert(slices.end(), right_slices.begin(), right_slices.end());

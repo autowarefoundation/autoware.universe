@@ -93,16 +93,16 @@ while ego is cruising from safe margin to collision path point ego keeps same ve
 | `delay_time`          | double | [m/s] time buffer for the system delay                       |
 | `safe_margin`         | double | [m] maximum error to stop with emergency braking system.     |
 
-| Parameter /sidewalk       | Type   | Description                                                     |
-| ------------------------- | ------ | --------------------------------------------------------------- |
-| `min_occlusion_spot_size` | double | [m] the length of path to consider occlusion spot               |
-| `slice_size`              | double | [m] the distance of divided detection area                      |
-| `focus_range`             | double | [m] buffer around the ego path used to build the sidewalk area. |
+| Parameter /detection_area | Type   | Description                                                           |
+| ------------------------- | ------ | --------------------------------------------------------------------- |
+| `min_occlusion_spot_size` | double | [m] the length of path to consider occlusion spot                     |
+| `slice_length`            | double | [m] the distance of divided detection area                            |
+| `max_lateral_distance`    | double | [m] buffer around the ego path used to build the detection_area area. |
 
-| Parameter /grid  | Type   | Description                                                     |
-| ---------------- | ------ | --------------------------------------------------------------- |
-| `free_space_max` | double | [-] maximum value of a free space cell in the occupancy grid    |
-| `occupied_min`   | double | [-] buffer around the ego path used to build the sidewalk area. |
+| Parameter /grid  | Type   | Description                                                           |
+| ---------------- | ------ | --------------------------------------------------------------------- |
+| `free_space_max` | double | [-] maximum value of a free space cell in the occupancy grid          |
+| `occupied_min`   | double | [-] buffer around the ego path used to build the detection_area area. |
 
 #### Flowchart
 
