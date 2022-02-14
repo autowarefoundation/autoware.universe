@@ -35,6 +35,11 @@ jobs:
           ref: ${{ steps.set-variables.outputs.pr-head-ref }}
           persist-credentials: false
 
+      - name: Replace paths in fixes.yaml
+        run: |
+          sed -i -e "s|/__w/|/home/runner/work/|g" /tmp/clang-tidy-result/fixes.yaml
+          cat /tmp/clang-tidy-result/fixes.yaml
+
       - name: Copy fixes.yaml to access from Docker Container Action
         run: |
           cp /tmp/clang-tidy-result/fixes.yaml fixes.yaml
