@@ -80,6 +80,7 @@ OcclusionSpotModuleManager::OcclusionSpotModuleManager(rclcpp::Node & node)
   // for crosswalk parameters
   auto & pp = planner_param_;
   // assume pedestrian coming out from occlusion spot with this velocity
+  pp.debug = node.declare_parameter(ns + ".debug", false);
   pp.pedestrian_vel = node.declare_parameter(ns + ".pedestrian_vel", 1.0);
   pp.detection_area_length = node.declare_parameter(ns + ".threshold.detection_area_length", 200.0);
   pp.stuck_vehicle_vel = node.declare_parameter(ns + ".threshold.stuck_vehicle_vel", 1.0);
@@ -87,7 +88,6 @@ OcclusionSpotModuleManager::OcclusionSpotModuleManager(rclcpp::Node & node)
 
   pp.dist_thr = node.declare_parameter(ns + ".threshold.search_dist", 10.0);
   pp.angle_thr = node.declare_parameter(ns + ".threshold.search_angle", M_PI / 5.0);
-  pp.show_debug_grid = node.declare_parameter(ns + ".show_debug_grid", false);
 
   // ego additional velocity config
   pp.v.safety_ratio = node.declare_parameter(ns + ".motion.safety_ratio", 1.0);

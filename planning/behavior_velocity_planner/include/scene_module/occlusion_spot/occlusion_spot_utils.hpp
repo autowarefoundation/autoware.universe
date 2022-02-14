@@ -93,15 +93,15 @@ struct LatLon
 
 struct PlannerParam
 {
+  bool debug;  // [-]
   // parameters in yaml
   double detection_area_length;  // [m]
   double stuck_vehicle_vel;      // [m/s]
   double lateral_distance_thr;   // [m] lateral distance threshold to consider
   double pedestrian_vel;         // [m/s]
 
-  double dist_thr;       // [m]
-  double angle_thr;      // [rad]
-  bool show_debug_grid;  // [-]
+  double dist_thr;   // [m]
+  double angle_thr;  // [rad]
 
   // vehicle info
   double half_vehicle_width;  // [m]  half vehicle_width from vehicle info

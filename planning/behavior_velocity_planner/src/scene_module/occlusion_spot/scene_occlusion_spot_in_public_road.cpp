@@ -87,9 +87,6 @@ bool OcclusionSpotInPublicModule::modifyPathVelocity(
   std::vector<Slice> detection_area_polygons;
   utils::buildDetectionAreaPolygon(
     detection_area_polygons, interp_path, offset_from_start_to_ego, param_);
-  for (const auto & p : detection_area_polygons) {
-    debug_data_.detection_areas.emplace_back(p.polygon);
-  }
   // Note: Don't consider offset from path start to ego here
   std::vector<PossibleCollisionInfo> possible_collisions =
     utils::generatePossibleCollisionBehindParkedVehicle(
@@ -100,7 +97,11 @@ bool OcclusionSpotInPublicModule::modifyPathVelocity(
   utils::handleCollisionOffset(possible_collisions, offset_from_start_to_ego, 0.0);
   // apply safe velocity using ebs and pbs deceleration
   utils::applySafeVelocityConsideringPossibleCollision(path, possible_collisions, param_);
-
+  if (param_.debug) {
+    for (const auto & p : detection_area_polygons) {
+      debug_data_.detection_areas.emplace_back(p.polygon);
+    }
+  }
   debug_data_.possible_collisions = possible_collisions;
   return true;
 }
