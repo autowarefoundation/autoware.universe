@@ -89,11 +89,16 @@ TEST(detectionArea, calcLateralDistance)
       const double d = utils::calculateLateralDistanceFromTTC(s, p);
       const double eps = 1e-3;
       std::cout << "s: " << l << " v: " << p.v.v_ego << " d: " << d << std::endl;
-      if (i == 0) EXPECT_NEAR(d, 2.5, eps);
-      else if (i == 5) EXPECT_NEAR(d, 3.5, eps);
-      else if (i == 10) EXPECT_NEAR(d, 5.0, eps);
-      else if (i == 15) EXPECT_NEAR(d, 5.0, eps);
-      else break;
+      if (i == 0)
+        EXPECT_NEAR(d, 2.5, eps);
+      else if (i == 5)
+        EXPECT_NEAR(d, 3.5, eps);
+      else if (i == 10)
+        EXPECT_NEAR(d, 5.0, eps);
+      else if (i == 15)
+        EXPECT_NEAR(d, 5.0, eps);
+      else
+        break;
     }
   }
 }

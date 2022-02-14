@@ -27,6 +27,8 @@ namespace behavior_velocity_planner
 {
 namespace
 {
+using builtin_interfaces::msg::Time;
+
 visualization_msgs::msg::Marker makeArrowMarker(
   const occlusion_spot_utils::PossibleCollisionInfo & possible_collision, const int id)
 {
@@ -145,6 +147,7 @@ visualization_msgs::msg::MarkerArray makePolygonMarker(
   visualization_msgs::msg::MarkerArray debug_markers;
   visualization_msgs::msg::Marker debug_marker;
   debug_marker.header.frame_id = "map";
+  debug_marker.header.stamp = rclcpp::Time(0);
   debug_marker.id = planning_utils::bitShift(id);
   debug_marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
   debug_marker.action = visualization_msgs::msg::Marker::ADD;
@@ -228,6 +231,25 @@ visualization_msgs::msg::MarkerArray createPossibleCollisionMarkers(
   return occlusion_spot_slowdown_markers;
 }
 
+visualization_msgs::msg::MarkerArray createOcclusionMarkerArray(
+  const std::vector<geometry_msgs::msg::Point> & occlusion_points, const int64_t module_id)
+{
+  visualization_msgs::msg::MarkerArray msg;
+  {
+    const Time now = rclcpp::Time(0);
+    auto marker = createDefaultMarker(
+      "map", now, "occlusion", 0, visualization_msgs::msg::Marker::SPHERE,
+      createMarkerColor(1.0, 0.0, 0.0, 0.999));
+    marker.scale = createMarkerScale(0.5, 0.5, 0.5);
+    marker.lifetime = rclcpp::Duration::from_seconds(0.1);
+    for (size_t i = 0; i < occlusion_points.size(); ++i) {
+      marker.id = i + planning_utils::bitShift(module_id);
+      marker.pose.position = occlusion_points.at(i);
+      msg.markers.push_back(marker);
+    }
+  }
+  return msg;
+}
 }  // namespace
 
 visualization_msgs::msg::MarkerArray OcclusionSpotInPublicModule::createDebugMarkerArray()
@@ -267,6 +289,11 @@ visualization_msgs::msg::MarkerArray OcclusionSpotInPrivateModule::createDebugMa
       &debug_marker_array);
     appendMarkerArray(
       createPathMarkerArray(debug_data_.interp_path, "path_interp", 0, 0.0, 1.0, 1.0), current_time,
+      &debug_marker_array);
+  }
+  if (!debug_data_.occlusion_points.empty()) {
+    appendMarkerArray(
+      createOcclusionMarkerArray(debug_data_.occlusion_points, module_id_), current_time,
       &debug_marker_array);
   }
   return debug_marker_array;

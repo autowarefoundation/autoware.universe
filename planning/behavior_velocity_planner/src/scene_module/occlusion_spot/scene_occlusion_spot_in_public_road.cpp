@@ -46,6 +46,7 @@ bool OcclusionSpotInPublicModule::modifyPathVelocity(
   [[maybe_unused]] tier4_planning_msgs::msg::StopReason * stop_reason)
 {
   debug_data_ = DebugData();
+  debug_data_.road_type = "public";
   if (path->points.size() < 2) {
     return true;
   }
@@ -99,7 +100,7 @@ bool OcclusionSpotInPublicModule::modifyPathVelocity(
   utils::handleCollisionOffset(possible_collisions, offset_from_start_to_ego, 0.0);
   // apply safe velocity using ebs and pbs deceleration
   utils::applySafeVelocityConsideringPossibleCollision(path, possible_collisions, param_);
-  debug_data_.z = path->points.front().point.pose.position.z;
+
   debug_data_.possible_collisions = possible_collisions;
   return true;
 }

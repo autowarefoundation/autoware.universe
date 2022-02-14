@@ -46,6 +46,7 @@ bool OcclusionSpotInPrivateModule::modifyPathVelocity(
   [[maybe_unused]] tier4_planning_msgs::msg::StopReason * stop_reason)
 {
   debug_data_ = DebugData();
+  debug_data_.road_type = "private";
   if (path->points.size() < 2) {
     return true;
   }
@@ -102,7 +103,7 @@ bool OcclusionSpotInPrivateModule::modifyPathVelocity(
   // Note: Don't consider offset from path start to ego here
   utils::generateDetectionAreaPossibleCollisions(
     detection_area_polygons, possible_collisions, grid_map, interp_path, offset_from_start_to_ego,
-    param_);
+    param_, debug_data_.occlusion_points);
   if (detection_area_polygons.empty()) return true;
   utils::filterCollisionByRoadType(possible_collisions, focus_area);
   RCLCPP_DEBUG_STREAM_THROTTLE(

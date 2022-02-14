@@ -419,18 +419,25 @@ void filterCollisionByRoadType(
 void generateDetectionAreaPossibleCollisions(
   std::vector<Slice> & detection_area_polygons,
   std::vector<PossibleCollisionInfo> & possible_collisions, const grid_map::GridMap & grid,
-  const PathWithLaneId & path, const double offset_from_start_to_ego, const PlannerParam & param)
+  const PathWithLaneId & path, const double offset_from_start_to_ego, const PlannerParam & param,
+  std::vector<Point> & debug_points)
 {
   lanelet::ConstLanelet path_lanelet = toPathLanelet(path);
   if (path_lanelet.centerline2d().empty()) {
     return;
   }
   double distance_lower_bound = std::numeric_limits<double>::max();
-  for (const Slice detection_area_slice : detection_area_polygons) {
+  for (const Slice & detection_area_slice : detection_area_polygons) {
     std::vector<grid_map::Position> occlusion_spot_positions;
     grid_utils::findOcclusionSpots(
       occlusion_spot_positions, grid, detection_area_slice.polygon,
       param.detection_area.min_occlusion_spot_size);
+    Point p;
+    for (const auto & op : occlusion_spot_positions) {
+      p.x = op[0];
+      p.y = op[1];
+      debug_points.emplace_back(p);
+    }
     if (occlusion_spot_positions.empty()) continue;
     const auto pc = generateOneNotebleCollisionFromOcclusionSpot(
       grid, occlusion_spot_positions, offset_from_start_to_ego, path_lanelet, param);
