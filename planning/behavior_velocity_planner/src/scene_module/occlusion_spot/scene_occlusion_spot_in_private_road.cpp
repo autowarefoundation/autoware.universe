@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <lanelet2_extension/utility/utilities.hpp>
+#include <scene_module/occlusion_spot/geometry.hpp>
 #include <scene_module/occlusion_spot/occlusion_spot_utils.hpp>
 #include <scene_module/occlusion_spot/risk_predictive_braking.hpp>
 #include <scene_module/occlusion_spot/scene_occlusion_spot_in_private_road.hpp>
@@ -86,14 +87,22 @@ bool OcclusionSpotInPrivateModule::modifyPathVelocity(
     publisher_->publish(occ_grid);
   }
   double offset_from_start_to_ego = utils::offsetFromStartToEgo(interp_path, ego_pose, closest_idx);
+  using Slice = occlusion_spot_utils::Slice;
+  std::vector<Slice> detection_area_polygons;
+  utils::buildDetectionAreaPolygon(
+    detection_area_polygons, interp_path, closest_idx, offset_from_start_to_ego, param_);
+  for (const auto & p : detection_area_polygons) {
+    debug_data_.detection_areas.emplace_back(p.polygon);
+  }
   RCLCPP_DEBUG_STREAM_THROTTLE(logger_, *clock_, 3000, "closest_idx : " << closest_idx);
   RCLCPP_DEBUG_STREAM_THROTTLE(
     logger_, *clock_, 3000, "offset_from_start_to_ego : " << offset_from_start_to_ego);
   std::vector<utils::PossibleCollisionInfo> possible_collisions;
   // Note: Don't consider offset from path start to ego here
   utils::generateDetectionAreaPossibleCollisions(
-    possible_collisions, grid_map, interp_path, offset_from_start_to_ego, param_,
-    debug_data_.detection_areas);
+    detection_area_polygons, possible_collisions, grid_map, interp_path, offset_from_start_to_ego,
+    param_);
+  if (detection_area_polygons.empty()) return true;
   utils::filterCollisionByRoadType(possible_collisions, focus_area);
   RCLCPP_DEBUG_STREAM_THROTTLE(
     logger_, *clock_, 3000, "num possible collision:" << possible_collisions.size());

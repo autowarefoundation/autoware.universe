@@ -417,30 +417,22 @@ void filterCollisionByRoadType(
 }
 
 void generateDetectionAreaPossibleCollisions(
+  std::vector<Slice> & detection_area_polygons,
   std::vector<PossibleCollisionInfo> & possible_collisions, const grid_map::GridMap & grid,
-  const PathWithLaneId & path, const double offset_from_start_to_ego, const PlannerParam & param,
-  std::vector<lanelet::BasicPolygon2d> & debug)
+  const PathWithLaneId & path, const double offset_from_start_to_ego, const PlannerParam & param)
 {
   lanelet::ConstLanelet path_lanelet = toPathLanelet(path);
   if (path_lanelet.centerline2d().empty()) {
     return;
   }
-  using Slice = occlusion_spot_utils::Slice;
-  std::vector<Slice> detection_area_polygons;
-  occlusion_spot_utils::buildDetectionAreaPolygon(
-    detection_area_polygons, path_lanelet, offset_from_start_to_ego, param);
-  std::sort(
-    detection_area_polygons.begin(), detection_area_polygons.end(),
-    [](const Slice s1, const Slice s2) { return s1.range.min_length < s2.range.min_length; });
   double distance_lower_bound = std::numeric_limits<double>::max();
   for (const Slice detection_area_slice : detection_area_polygons) {
-    debug.push_back(detection_area_slice.polygon);
     std::vector<grid_map::Position> occlusion_spot_positions;
     grid_utils::findOcclusionSpots(
       occlusion_spot_positions, grid, detection_area_slice.polygon,
       param.detection_area.min_occlusion_spot_size);
     if (occlusion_spot_positions.empty()) continue;
-    const auto & pc = generateOneNotebleCollisionFromOcclusionSpot(
+    const auto pc = generateOneNotebleCollisionFromOcclusionSpot(
       grid, occlusion_spot_positions, offset_from_start_to_ego, path_lanelet, param);
     if (!pc) continue;
     const double lateral_distance = std::abs(pc.get().arc_lane_dist_at_collision.distance);
@@ -484,7 +476,7 @@ boost::optional<PossibleCollisionInfo> generateOneNotebleCollisionFromOcclusionS
       grid_utils::isCollisionFree(grid, occlusion_spot_position, grid_map::Position(ip.x, ip.y));
     if (collision_free_at_intersection) {
       distance_lower_bound = dist;
-      candidate = {pc};
+      candidate = pc;
       has_collision = true;
     }
   }

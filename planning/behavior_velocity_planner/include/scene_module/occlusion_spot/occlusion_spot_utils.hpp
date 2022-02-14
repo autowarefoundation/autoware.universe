@@ -258,9 +258,9 @@ boost::optional<PossibleCollisionInfo> generateOneNotebleCollisionFromOcclusionS
   const PlannerParam & param);
 //!< @brief generate possible collisions coming from occlusion spots on the side of the path
 void generateDetectionAreaPossibleCollisions(
+  std::vector<Slice> & detection_area_polygons,
   std::vector<PossibleCollisionInfo> & possible_collisions, const grid_map::GridMap & grid,
-  const PathWithLaneId & path, const double offset_from_start_to_ego, const PlannerParam & param,
-  std::vector<BasicPolygon2d> & debug);
+  const PathWithLaneId & path, const double offset_from_start_to_ego, const PlannerParam & param);
 
 }  // namespace occlusion_spot_utils
 }  // namespace behavior_velocity_planner

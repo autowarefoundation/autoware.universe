@@ -33,12 +33,12 @@ namespace bg = boost::geometry;
 //!< @brief build slices all along the trajectory
 // using the given range and desired slice length and width
 void buildSlices(
-  std::vector<Slice> & slices, const lanelet::ConstLanelet & path_lanelet, const SliceRange & range,
-  const double slice_length, const double resolution);
+  std::vector<Slice> & slices, const lanelet::ConstLanelet & path_lanelet, const int closest_idx,
+  const double offset, const bool is_on_right, const PlannerParam & param);
 //!< @brief build detection_area slice from path
 void buildDetectionAreaPolygon(
-  std::vector<Slice> & slice, const lanelet::ConstLanelet & path_lanelet, const double offset,
-  const PlannerParam & param);
+  std::vector<Slice> & slices, const PathWithLaneId & path, const int closest_idx,
+  const double offset, const PlannerParam & param);
 //!< @brief calculate interpolation between a and b at distance ratio t
 template <typename T>
 T lerp(T a, T b, double t)
