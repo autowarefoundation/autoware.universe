@@ -242,7 +242,12 @@ visualization_msgs::msg::MarkerArray OcclusionSpotInPublicModule::createDebugMar
   const auto current_time = this->clock_->now();
 
   visualization_msgs::msg::MarkerArray debug_marker_array;
-  appendMarkerArray(createMarkers(debug_data_, module_id_), current_time, &debug_marker_array);
+  if (!debug_data_.detection_areas.empty()) {
+    appendMarkerArray(createMarkers(debug_data_, module_id_), current_time, &debug_marker_array);
+  }
+  appendMarkerArray(
+    makePolygonMarker(debug_data_.detection_areas, debug_data_.z), current_time,
+    &debug_marker_array);
   return debug_marker_array;
 }
 visualization_msgs::msg::MarkerArray OcclusionSpotInPrivateModule::createDebugMarkerArray()
@@ -251,9 +256,11 @@ visualization_msgs::msg::MarkerArray OcclusionSpotInPrivateModule::createDebugMa
 
   visualization_msgs::msg::MarkerArray debug_marker_array;
   appendMarkerArray(createMarkers(debug_data_, module_id_), current_time, &debug_marker_array);
-  appendMarkerArray(
-    makePolygonMarker(debug_data_.detection_areas, debug_data_.z), current_time,
-    &debug_marker_array);
+  if (!debug_data_.detection_areas.empty()) {
+    appendMarkerArray(
+      makePolygonMarker(debug_data_.detection_areas, debug_data_.z), current_time,
+      &debug_marker_array);
+  }
   appendMarkerArray(
     createPathMarkerArray(debug_data_.path_raw, "path_raw", 0, 0.0, 1.0, 1.0), current_time,
     &debug_marker_array);

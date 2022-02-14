@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <lanelet2_extension/utility/utilities.hpp>
+#include <scene_module/occlusion_spot/geometry.hpp>
 #include <scene_module/occlusion_spot/occlusion_spot_utils.hpp>
 #include <scene_module/occlusion_spot/risk_predictive_braking.hpp>
 #include <scene_module/occlusion_spot/scene_occlusion_spot_in_public_road.hpp>
@@ -81,6 +82,13 @@ bool OcclusionSpotInPublicModule::modifyPathVelocity(
   std::vector<PredictedObject> obj =
     utils::getParkedVehicles(*dynamic_obj_arr_ptr, param_, debug_data_.parked_vehicle_point);
   double offset_from_start_to_ego = utils::offsetFromStartToEgo(interp_path, ego_pose, closest_idx);
+  using Slice = occlusion_spot_utils::Slice;
+  std::vector<Slice> detection_area_polygons;
+  utils::buildDetectionAreaPolygon(
+    detection_area_polygons, interp_path, offset_from_start_to_ego, param_);
+  for (const auto & p : detection_area_polygons) {
+    debug_data_.detection_areas.emplace_back(p.polygon);
+  }
   // Note: Don't consider offset from path start to ego here
   std::vector<PossibleCollisionInfo> possible_collisions =
     utils::generatePossibleCollisionBehindParkedVehicle(

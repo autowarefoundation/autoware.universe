@@ -58,14 +58,14 @@ void buildSlices(
    * |                                  |
    * +--------------------------+ - +---+(max_length,min_distance) = inner_polygons
    */
-  const double min_length = offset + p.baselink_to_front;
-  const double max_length = p.detection_area_length;
+  const double min_length = offset;  // + p.baselink_to_front;
+  // const double max_length = p.detection_area_length;
   const double min_distance = (is_on_right) ? -p.half_vehicle_width : p.half_vehicle_width;
   const double slice_length = p.detection_area.slice_length;
   const int num_step = static_cast<int>(slice_length);
   //! max index is the last index of path point
   const int max_index = static_cast<int>(center_line.size() - 2);
-  int idx = closest_idx;
+  int idx = 0;
   /**
    * Note: create polygon from path point is better than from ego offset to consider below
    * - less computation cost and no need to recalulated interpolated point start from ego
@@ -74,14 +74,14 @@ void buildSlices(
   for (int s = 0; s < max_index; s += num_step) {
     const double length = s * slice_length;
     const double next_length = static_cast<double>(s + num_step);
-    if (max_length < length) continue;
+    /// if (max_length < length) continue;
     Slice slice;
     BasicLineString2d inner_polygons;
     BasicLineString2d outer_polygons;
     // build connected polygon for lateral
     for (int i = 0; i <= num_step; i++) {
       idx = s + i;
-      const double arc_length_from_ego = std::max(0.0, static_cast<double>(idx) - min_length);
+      const double arc_length_from_ego = std::max(0.0, static_cast<double>(idx - min_length));
       if (idx >= max_index) continue;
       const auto & c0 = center_line.at(idx);
       const auto & c1 = center_line.at(idx + 1);
