@@ -34,6 +34,7 @@
 
 namespace behavior_velocity_planner
 {
+namespace bg = boost::geometry;
 namespace occlusion_spot_utils
 {
 lanelet::ConstLanelet toPathLanelet(const PathWithLaneId & path)
@@ -399,6 +400,23 @@ DetectionAreaIdx extractTargetRoadArcLength(
   }
   if (!found_target) return {};
   return DetectionAreaIdx(std::make_pair(start_dist, dist_sum));
+}
+
+std::vector<PredictedObject> filterDynamicObjectByDetectionArea(
+  std::vector<PredictedObject> & objs, const std::vector<Slice> polys)
+{
+  std::vector<PredictedObject> filtered_obj;
+  // stuck points by predicted objects
+  for (const auto & object : objs) {
+    // check if the footprint is in the stuck detect area
+    const Polygon2d obj_footprint = planning_utils::toFootprintPolygon(object);
+    for (const auto & p : polys) {
+      if (!bg::disjoint(obj_footprint, p.polygon)) {
+        filtered_obj.emplace_back(object);
+      }
+    }
+  }
+  return filtered_obj;
 }
 
 void filterCollisionByRoadType(

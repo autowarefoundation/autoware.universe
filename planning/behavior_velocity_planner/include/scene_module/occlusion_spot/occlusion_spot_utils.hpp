@@ -222,6 +222,8 @@ inline bool isStuckVehicle(PredictedObject obj, const double min_vel)
 }
 void filterCollisionByRoadType(
   std::vector<PossibleCollisionInfo> & possible_collisions, const DetectionAreaIdx road_type);
+std::vector<PredictedObject> filterDynamicObjectByDetectionArea(
+  std::vector<PredictedObject> & objs, const std::vector<Slice> polys);
 bool splineInterpolate(
   const PathWithLaneId & input, const double interval, PathWithLaneId * output,
   const rclcpp::Logger logger);
