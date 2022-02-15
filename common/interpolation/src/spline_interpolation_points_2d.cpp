@@ -56,13 +56,11 @@ std::array<std::vector<double>, 3> getBaseValues(const std::vector<T> & points)
   }
 
   // calculate base_keys, base_values
-  if (base_x.empty() || base_y.empty()) {
-    // return std::vector<geometry_msgs::msg::Point>{};
+  if (base_x.size() < 2 || base_y.size() < 2) {
+    throw std::logic_error("The numbef of unique points is not enough.");
   }
+
   const std::vector<double> base_s = calcEuclidDist(base_x, base_y);
-  if (base_s.empty() || base_s.size() == 1) {
-    // return std::vector<geometry_msgs::msg::Point>{};
-  }
 
   return {base_s, base_x, base_y};
 }
@@ -70,9 +68,8 @@ std::array<std::vector<double>, 3> getBaseValues(const std::vector<T> & points)
 
 namespace interpolation
 {
-// template <typename T>
-// std::vector<double> slerpYawFromPoints(const std::vector<T> & points)
-std::vector<double> slerpYawFromPoints(const std::vector<geometry_msgs::msg::Point> & points)
+template <typename T>
+std::vector<double> slerpYawFromPoints(const std::vector<T> & points)
 {
   SplineInterpolationPoints2d interpolator;
 
@@ -87,12 +84,12 @@ std::vector<double> slerpYawFromPoints(const std::vector<geometry_msgs::msg::Poi
   }
   return yaw_vec;
 }
+template std::vector<double> slerpYawFromPoints(
+  const std::vector<geometry_msgs::msg::Point> & points);
 }  // namespace interpolation
 
-// template <typename T>
-// void SplineInterpolationPoints2d::calcSplineCoefficients(const std::vector<T> & points)
-void SplineInterpolationPoints2d::calcSplineCoefficients(
-  const std::vector<geometry_msgs::msg::Point> & points)
+template <typename T>
+void SplineInterpolationPoints2d::calcSplineCoefficients(const std::vector<T> & points)
 {
   const auto base = getBaseValues(points);
 

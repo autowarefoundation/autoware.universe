@@ -134,6 +134,13 @@ TEST(spline_interpolation, slerpYawFromPoints)
     }
   }
 
+  {  // size of base_keys is 1 (infeasible to interpolate)
+    std::vector<geometry_msgs::msg::Point> points;
+    points.push_back(createPoint(1.0, 0.0, 0.0));
+
+    EXPECT_THROW(interpolation::slerpYawFromPoints(points), std::logic_error);
+  }
+
   {  // straight: size of base_keys is 2 (edge case in the implementation)
     std::vector<geometry_msgs::msg::Point> points;
     points.push_back(createPoint(1.0, 0.0, 0.0));
@@ -259,4 +266,9 @@ TEST(spline_interpolation, SplineInterpolationPoints2d)
     EXPECT_THROW(s.getAccumulatedLength(-1), std::out_of_range);
     EXPECT_THROW(s.getAccumulatedLength(5), std::out_of_range);
   }
+
+  // size of base_keys is 1 (infeasible to interpolate)
+  std::vector<geometry_msgs::msg::Point> single_points;
+  single_points.push_back(createPoint(1.0, 0.0, 0.0));
+  EXPECT_THROW(s.calcSplineCoefficients(single_points), std::logic_error);
 }

@@ -21,10 +21,8 @@
 
 namespace interpolation
 {
-// TODO(murooka) use template
-// template <typename T>
-// std::vector<double> slerpYawFromPoints(const std::vector<T> & points);
-std::vector<double> slerpYawFromPoints(const std::vector<geometry_msgs::msg::Point> & points);
+template <typename T>
+std::vector<double> slerpYawFromPoints(const std::vector<T> & points);
 }  // namespace interpolation
 
 // non-static points spline interpolation
@@ -47,10 +45,8 @@ class SplineInterpolationPoints2d
 public:
   SplineInterpolationPoints2d() = default;
 
-  // TODO(murooka) use template
-  // template <typename T>
-  // void calcSplineCoefficients(const std::vector<T> & points);
-  void calcSplineCoefficients(const std::vector<geometry_msgs::msg::Point> & points);
+  template <typename T>
+  void calcSplineCoefficients(const std::vector<T> & points);
 
   // TODO(murooka) implement these functions
   // std::vector<geometry_msgs::msg::Point> getSplineInterpolatedPoints(const double width);
