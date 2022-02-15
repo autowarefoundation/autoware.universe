@@ -441,7 +441,7 @@ void generateDetectionAreaPossibleCollisions(
     if (occlusion_spot_positions.empty()) continue;
     // for each partition find nearest occlusion spot from polygon's origin
     BasicPoint2d base_point = detection_area_slice.polygon.at(0);
-    const auto pc = generateOneNotebleCollisionFromOcclusionSpot(
+    const auto pc = generateOneNotableCollisionFromOcclusionSpot(
       grid, occlusion_spot_positions, offset_from_start_to_ego, base_point, path_lanelet, param);
     if (!pc) continue;
     const double lateral_distance = std::abs(pc.get().arc_lane_dist_at_collision.distance);
@@ -451,7 +451,7 @@ void generateDetectionAreaPossibleCollisions(
   }
 }
 
-boost::optional<PossibleCollisionInfo> generateOneNotebleCollisionFromOcclusionSpot(
+boost::optional<PossibleCollisionInfo> generateOneNotableCollisionFromOcclusionSpot(
   const grid_map::GridMap & grid, const std::vector<grid_map::Position> & occlusion_spot_positions,
   const double offset_from_start_to_ego, const BasicPoint2d base_point,
   const lanelet::ConstLanelet & path_lanelet, const PlannerParam & param)

@@ -68,7 +68,7 @@ void buildSlices(
   int idx = 0;
   /**
    * Note: create polygon from path point is better than from ego offset to consider below
-   * - less computation cost and no need to recalulated interpolated point start from ego
+   * - less computation cost and no need to recalculated interpolated point start from ego
    * - less stable for localization noise
    **/
   for (int s = 0; s < max_index; s += num_step) {
