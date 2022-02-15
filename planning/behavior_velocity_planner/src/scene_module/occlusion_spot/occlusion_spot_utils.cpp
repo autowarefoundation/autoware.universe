@@ -489,13 +489,13 @@ boost::optional<PossibleCollisionInfo> generateOneNotableCollisionFromOcclusionS
     // skip if absolute distance is larger
     if (distance_lower_bound < dist) continue;
     const double length_to_col = arc_coord_occlusion_point.length - baselink_to_front;
-    ArcCoordinates arc_coord_collision_point = {
-      length_to_col,
-      calcSignedLateralDistanceWithOffset(arc_coord_occlusion_point.distance, half_vehicle_width)};
     // skip if occlusion is behind ego bumper
     if (length_to_col < offset_from_start_to_ego) {
       continue;
     }
+    ArcCoordinates arc_coord_collision_point = {
+      length_to_col,
+      calcSignedLateralDistanceWithOffset(arc_coord_occlusion_point.distance, half_vehicle_width)};
     PossibleCollisionInfo pc = calculateCollisionPathPointFromOcclusionSpot(
       arc_coord_occlusion_point, arc_coord_collision_point, path_lanelet, param);
     const auto & ip = pc.intersection_pose.position;
