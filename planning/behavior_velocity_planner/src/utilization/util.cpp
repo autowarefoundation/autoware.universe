@@ -244,6 +244,78 @@ double calcJudgeLineDistWithJerkLimit(
   return std::max(0.0, x1 + x2 + x3);
 }
 
+double findReachTime(
+  const double j, const double a, const double v, const double d, const double min,
+  const double max)
+{
+  auto f = [](const double t, const double j, const double a, const double v, const double d) {
+    return j * t * t * t / 6.0 + a * t * t / 2.0 + v * t - d;
+  };
+  const double eps = 1e-5;
+  const int max_iter = 100;
+  double lower = min;
+  double upper = max;
+  double t;
+  int iter = 0;
+  for (int i = 0; i < max_iter; i++) {
+    t = 0.5 * (lower + upper);
+    const double fx = f(t, j, a, v, d);
+    // std::cout<<"fx: "<<fx<<" up: "<<upper<<" lo: "<<lower<<" t: "<<t<<std::endl;
+    if (std::abs(fx) < eps) {
+      break;
+    } else if (fx > 0.0) {
+      upper = t;
+    } else {
+      lower = t;
+    }
+    iter++;
+  }
+  // std::cout<<"iter: "<<iter<<std::endl;
+  return t;
+}
+
+double calculateMaxSlowDownVelocity(
+  const double max_slowdown_jerk, const double max_slowdown_accel, const double current_accel,
+  const double current_velocity, const double distance_to_target)
+{
+  if (distance_to_target <= 0) return current_velocity;
+  auto ft = [](const double t, const double j, const double a, const double v, const double d) {
+    return j * t * t * t / 6.0 + a * t * t / 2.0 + v * t - d;
+  };
+  auto vt = [](const double t, const double j, const double a, const double v) {
+    return j * t * t / 2.0 + a * t + v;
+  };
+  const double j_max = max_slowdown_jerk;
+  const double a0 = current_accel;
+  const double a_max = max_slowdown_accel;
+  const double v0 = current_velocity;
+  const double l = distance_to_target;
+  const double t_const_jerk = (a_max - a0) / j_max;
+  const double d_const_jerk_stop = ft(t_const_jerk, j_max, a0, v0, 0.0);
+  const double d_const_acc_stop = l - d_const_jerk_stop;
+  const double v1 = vt(t_const_jerk, j_max, a0, v0);
+  // std::cout<<"t_const_jerk: "<<t_const_jerk<<" v1: "<<v1<<" a_max: "<<a_max<<std::endl;
+  // std::cout<<"v0: "<<v0<<" a0: "<<a0<<" j: "<<j_max<<std::endl;
+
+  // case1: target velocity is within constant jerk stop
+  if (d_const_acc_stop < 0) {
+    // use binary search instead of solving cubic equation
+    const double t_jerk = findReachTime(j_max, a0, v0, l, 0, t_const_jerk);
+    const double velocity = vt(t_jerk, j_max, a0, v0);
+    return velocity;
+    // case2: target velocity is within constant max accel after constant jerk
+  } else {
+    // case3: stop distance is farther than target point
+    if (d_const_acc_stop > (0 * 0 - v1 * v1) / (2.0 * a_max)) {
+      return 0.0;
+    }
+    // solve d = 0.5*a^2+v*t by t
+    const double t_acc = (-v1 + std::sqrt(2.0 * a_max * d_const_acc_stop + v1 * v1)) / a_max;
+    return vt(t_acc, 0.0, a_max, v1);
+  }
+  return -1;
+}
+
 tier4_planning_msgs::msg::StopReason initializeStopReason(const std::string & stop_reason)
 {
   tier4_planning_msgs::msg::StopReason stop_reason_msg;
