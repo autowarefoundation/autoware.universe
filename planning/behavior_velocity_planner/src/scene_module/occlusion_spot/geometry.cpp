@@ -32,7 +32,7 @@ using lanelet::BasicPolygon2d;
 namespace bg = boost::geometry;
 namespace lg = lanelet::geometry;
 
-BasicPoint2d calculateOffsetPoint(
+BasicPoint2d calculateLateralOffsetPoint(
   const BasicPoint2d & p0, const BasicPoint2d & p1, const double offset)
 {
   // translation
@@ -91,10 +91,10 @@ void buildSlices(
        * |
        * +--inner point(min distance)
        */
-      const BasicPoint2d inner_point = calculateOffsetPoint(c0, c1, min_distance);
+      const BasicPoint2d inner_point = calculateLateralOffsetPoint(c0, c1, min_distance);
       double lateral_distance = calculateLateralDistanceFromTTC(arc_length_from_ego, param);
       if (is_on_right) lateral_distance *= -1;
-      const BasicPoint2d outer_point = calculateOffsetPoint(c0, c1, lateral_distance);
+      const BasicPoint2d outer_point = calculateLateralOffsetPoint(c0, c1, lateral_distance);
       inner_polygons.emplace_back(inner_point);
       outer_polygons.emplace_back(outer_point);
     }

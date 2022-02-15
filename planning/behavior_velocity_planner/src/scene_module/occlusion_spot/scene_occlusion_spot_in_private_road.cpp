@@ -95,7 +95,7 @@ bool OcclusionSpotInPrivateModule::modifyPathVelocity(
     logger_, *clock_, 3000, "offset_from_start_to_ego : " << offset_from_start_to_ego);
   std::vector<utils::PossibleCollisionInfo> possible_collisions;
   // Note: Don't consider offset from path start to ego here
-  utils::generateDetectionAreaPossibleCollisions(
+  utils::createPossibleCollisionsInDetectionArea(
     detection_area_polygons, possible_collisions, grid_map, interp_path, offset_from_start_to_ego,
     param_, debug_data_.occlusion_points);
   if (detection_area_polygons.empty()) return true;

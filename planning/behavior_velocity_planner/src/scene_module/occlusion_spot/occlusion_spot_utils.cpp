@@ -434,8 +434,8 @@ void filterCollisionByRoadType(
   }
 }
 
-void generateDetectionAreaPossibleCollisions(
-  std::vector<Slice> & detection_area_polygons,
+void createPossibleCollisionsInDetectionArea(
+  const std::vector<Slice> & detection_area_polygons,
   std::vector<PossibleCollisionInfo> & possible_collisions, const grid_map::GridMap & grid,
   const PathWithLaneId & path, const double offset_from_start_to_ego, const PlannerParam & param,
   std::vector<Point> & debug_points)
