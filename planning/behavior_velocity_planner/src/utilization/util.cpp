@@ -306,14 +306,14 @@ double calculateMaxSlowDownVelocity(
     // case2: target velocity is within constant max accel after constant jerk
   } else {
     // case3: stop distance is farther than target point
-    if (d_const_acc_stop > (0 * 0 - v1 * v1) / (2.0 * a_max)) {
+    if (d_const_acc_stop >= (0 * 0 - v1 * v1) / (2.0 * a_max)) {
       return 0.0;
     }
     // solve d = 0.5*a^2+v*t by t
     const double t_acc = (-v1 + std::sqrt(2.0 * a_max * d_const_acc_stop + v1 * v1)) / a_max;
     return vt(t_acc, 0.0, a_max, v1);
   }
-  return -1;
+  return current_velocity;
 }
 
 tier4_planning_msgs::msg::StopReason initializeStopReason(const std::string & stop_reason)
