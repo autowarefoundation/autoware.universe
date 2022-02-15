@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "interpolation/spline_interpolation.hpp"
+#include "interpolation/spline_interpolation_points_2d.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 
 #include <gtest/gtest.h>
@@ -161,9 +162,9 @@ TEST(spline_interpolation, slerpYawFromPoints)
   }
 }
 
-TEST(spline_interpolation, SplineInterpolation1d)
+TEST(spline_interpolation, SplineInterpolation)
 {
-  SplineInterpolation1d s;
+  SplineInterpolation s;
 
   // curve: query_keys is random
   const std::vector<double> base_keys{-1.5, 1.0, 5.0, 10.0, 15.0, 20.0};
@@ -179,11 +180,11 @@ TEST(spline_interpolation, SplineInterpolation1d)
   }
 }
 
-TEST(spline_interpolation, SplineInterpolationPoint2d)
+TEST(spline_interpolation, SplineInterpolationPoints2d)
 {
   using tier4_autoware_utils::createPoint;
 
-  SplineInterpolationPoint2d s;
+  SplineInterpolationPoints2d s;
 
   // curve
   std::vector<geometry_msgs::msg::Point> points;

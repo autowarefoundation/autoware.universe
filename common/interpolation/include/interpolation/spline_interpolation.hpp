@@ -49,82 +49,34 @@ struct MultiSplineCoef
 std::vector<double> slerp(
   const std::vector<double> & base_keys, const std::vector<double> & base_values,
   const std::vector<double> & query_keys);
-
-// std::vector<double> slerpDiff(
-//   const std::vector<double> & base_keys, const std::vector<double> & base_values,
-//   const std::vector<double> & query_keys);
-
-// TODO(murooka) use template
-// template <typename T>
-// std::vector<double> slerpYawFromPoints(const std::vector<T> & points);
-std::vector<double> slerpYawFromPoints(const std::vector<geometry_msgs::msg::Point> & points);
 }  // namespace interpolation
 
 // non-static 1-dimensional spline interpolation
 //
 // Usage:
 // ```
-// SplineInterpolation1d spline;
-// spline.calcSplineCoefficients(base_keys, base_values);  // memorize pre-interpolation result
-// internally
-// const auto interpolation_result1 = spline.getSplineInterpolatedValues(base_keys,
-//   query_keys1);
-// const auto interpolation_result2 = spline.getSplineInterpolatedValues(base_keys,
-//   query_keys2);
+// SplineInterpolation spline;
+// // memorize pre-interpolation result internally
+// spline.calcSplineCoefficients(base_keys, base_values);
+// const auto interpolation_result1 = spline.getSplineInterpolatedValues(
+//   base_keys, query_keys1);
+// const auto interpolation_result2 = spline.getSplineInterpolatedValues(
+//   base_keys, query_keys2);
 // ```
-class SplineInterpolation1d
+class SplineInterpolation
 {
 public:
-  SplineInterpolation1d() = default;
+  SplineInterpolation() = default;
 
   void calcSplineCoefficients(
     const std::vector<double> & base_keys, const std::vector<double> & base_values);
 
   std::vector<double> getSplineInterpolatedValues(const std::vector<double> & query_keys) const;
+  std::vector<double> getSplineInterpolatedDiffValues(const std::vector<double> & query_keys) const;
 
 private:
   std::vector<double> base_keys_;
   interpolation::MultiSplineCoef multi_spline_coef_;
-};
-
-// non-static points spline interpolation
-// NOTE: We can calculate yaw from the x and y by interpolation derivatives.
-//
-// Usage:
-// ```
-// SplineInterpolationPoint2d spline;
-// spline.calcSplineCoefficients(base_keys, base_values);  // memorize pre-interpolation result
-// internally
-// const auto interpolation_result1 = spline.getSplineInterpolatedPoints(base_keys,
-//   query_keys1);
-// const auto interpolation_result2 = spline.getSplineInterpolatedPoints(base_keys,
-//   query_keys2);
-// const auto yaw_interpolation_result = spline.getSplineInterpolatedYaws(base_keys,
-//   query_keys1);
-// ```
-class SplineInterpolationPoint2d
-{
-public:
-  SplineInterpolationPoint2d() = default;
-
-  // TODO(murooka) use template
-  // template <typename T>
-  // void calcSplineCoefficients(const std::vector<T> & points);
-  void calcSplineCoefficients(const std::vector<geometry_msgs::msg::Point> & points);
-
-  // TODO(murooka) implement these functions
-  // std::vector<geometry_msgs::msg::Point> getSplineInterpolatedPoints(const double width);
-  // std::vector<geometry_msgs::msg::Pose> getSplineInterpolatedPoses(const double width);
-
-  geometry_msgs::msg::Point getSplineInterpolatedPoint(const size_t idx, const double s) const;
-  double getSplineInterpolatedYaw(const size_t idx, const double s) const;
-
-  double getAccumulatedLength(const size_t idx) const;
-
-private:
-  interpolation::MultiSplineCoef multi_spline_coef_x_;
-  interpolation::MultiSplineCoef multi_spline_coef_y_;
-  std::vector<double> base_s_vec_;
 };
 
 #endif  // INTERPOLATION__SPLINE_INTERPOLATION_HPP_
