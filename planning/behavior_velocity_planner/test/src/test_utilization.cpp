@@ -61,8 +61,9 @@ TEST(smoothDeceleration, calculateMaxSlowDownVelocity)
         EXPECT_NEAR(v, 2.872, eps);
       else if (i == 24)
         EXPECT_NEAR(v, 0.00, eps);
-      else continue;
-        std::cout << "s: " << l << " v: " << v << std::endl;
+      else
+        continue;
+      std::cout << "s: " << l << " v: " << v << std::endl;
     }
   }
 }

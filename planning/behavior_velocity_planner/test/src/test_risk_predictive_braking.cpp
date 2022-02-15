@@ -35,28 +35,33 @@ TEST(safeMotion, delay_jerk_acceleration)
    * case2 delay + jerk
    * case3 delay + jerk + acc
    */
-  utils::Velocity v{1.0, -3.0, -4.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0};
+  utils::Velocity v{};
+  v.safety_ratio = 1.0;
+  v.max_stop_jerk = -3.0;
+  v.max_stop_accel = -4.5;
+  v.delay_time = 0.5;
   double ttc = 0.0;
+  const double eps = 1e-3;
   // case 1 delay
   {
     ttc = 0.5;
     utils::SafeMotion sm = utils::calculateSafeMotion(v, ttc);
-    EXPECT_DOUBLE_EQ(sm.safe_velocity, 0.0);
-    EXPECT_DOUBLE_EQ(sm.stop_dist, 0.0);
+    EXPECT_NEAR(sm.safe_velocity, 0.0, eps);
+    EXPECT_NEAR(sm.stop_dist, 0.0, eps);
   }
   // case 2 delay + jerk
   {
     ttc = 1.5;
     utils::SafeMotion sm = utils::calculateSafeMotion(v, ttc);
-    EXPECT_DOUBLE_EQ(sm.safe_velocity, 1.5);
-    EXPECT_DOUBLE_EQ(sm.stop_dist, 1.25);
+    EXPECT_NEAR(sm.safe_velocity, 1.5, eps);
+    EXPECT_NEAR(sm.stop_dist, 1.25, eps);
   }
   // case 3 delay + jerk + acc
   {
     ttc = 3.25;
     utils::SafeMotion sm = utils::calculateSafeMotion(v, ttc);
-    EXPECT_DOUBLE_EQ(sm.safe_velocity, 9);
-    EXPECT_DOUBLE_EQ(std::round(sm.stop_dist * 100.0) / 100.0, 13.92);
+    EXPECT_NEAR(sm.safe_velocity, 9, eps);
+    EXPECT_NEAR(std::round(sm.stop_dist * 100.0) / 100.0, 13.92, eps);
   }
 }
 
