@@ -48,15 +48,16 @@ TEST(isOcclusionSpotSquare, occlusion_spot_cell)
   // case simple
   {
     /*
-        0 1 2 3
-      0     ?
-      1   x x
-      2 ? ? ? ?
-      3
+        0 1 2 3 4
+      0
+      1   ?   ?
+      2   ? x ?
+      3   ? ?
+      4
       */
-    grid_map::GridMap grid = test::generateGrid(4, 4, 1.0);
-    std::vector<grid_map::Index> unknown_cells = {{0, 2}, {1, 1}, {1, 2}, {2, 0},
-                                                  {2, 1}, {2, 2}, {3, 2}};
+    grid_map::GridMap grid = test::generateGrid(5, 5, 1.0);
+    std::vector<grid_map::Index> unknown_cells = {{1, 1}, {1, 2}, {1, 3}, {2, 2},
+                                                  {2, 3}, {3, 1}, {3, 2}};
     for (grid_map::Index index : unknown_cells) {
       grid.at("layer", index) = UNKNOWN;
     }
@@ -67,7 +68,7 @@ TEST(isOcclusionSpotSquare, occlusion_spot_cell)
         OcclusionSpotSquare occlusion_spot;
         bool found = isOcclusionSpotSquare(
           occlusion_spot, grid["layer"], {i, j}, min_occlusion_spot_size, grid.getSize());
-        if ((i == 1 && j == 1) || (i == 2 && j == 1)) {
+        if (i == 2 && j == 2) {
           EXPECT_TRUE(found);
         } else {
           EXPECT_FALSE(found);
@@ -81,9 +82,9 @@ TEST(isOcclusionSpotSquare, occlusion_spot_cell)
               << "    0|1|2|3|4|                      " << std::endl
               << "  0  |?| | | |                      " << std::endl
               << "  1  |?| | | |                      " << std::endl
-              << "  2 ?|?|?|?| |                      " << std::endl;
+              << "  2  |?|?|?| |                      " << std::endl;
     grid_map::GridMap grid = test::generateGrid(5, 3, 1.0);
-    std::vector<grid_map::Index> unknown_cells = {{0, 2}, {1, 0}, {1, 1}, {1, 2}, {2, 2}, {3, 2}};
+    std::vector<grid_map::Index> unknown_cells = {{1, 0}, {1, 1}, {1, 2}, {2, 2}, {3, 2}};
     for (grid_map::Index index : unknown_cells) {
       grid.at("layer", index) = UNKNOWN;
     }
