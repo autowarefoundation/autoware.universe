@@ -52,7 +52,7 @@
 #include <vector>
 
 enum class NDTImplementType { PCL_GENERIC = 0, PCL_MODIFIED = 1, OMP = 2 };
-enum class ConveredParamType {
+enum class ConvergedParamType {
   TRANSFORM_PROBABILITY = 0,
   NEAREST_VOXEL_TRANSFORMATION_PROBABILITY = 1
 };
@@ -166,7 +166,7 @@ private:
   std::string ndt_base_frame_;
   std::string map_frame_;
 
-  ConveredParamType converged_param_type_;
+  ConvergedParamType converged_param_type_;
   double converged_param_transform_probability_;
   double converged_param_nearest_voxel_transformation_probability_;
 

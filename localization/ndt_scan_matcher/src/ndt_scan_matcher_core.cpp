@@ -102,7 +102,7 @@ NDTScanMatcher::NDTScanMatcher()
   base_frame_("base_link"),
   ndt_base_frame_("ndt_base_link"),
   map_frame_("map"),
-  converged_param_type_(ConveredParamType::TRANSFORM_PROBABILITY),
+  converged_param_type_(ConvergedParamType::TRANSFORM_PROBABILITY),
   converged_param_transform_probability_(4.5),
   converged_param_nearest_voxel_transformation_probability_(2.3),
   initial_estimate_particles_num_(100),
@@ -168,13 +168,13 @@ NDTScanMatcher::NDTScanMatcher()
     trans_epsilon, step_size, resolution, max_iterations);
 
   int converged_param_type_tmp = this->declare_parameter("converged_param_type", 0);
-  converged_param_type_ = static_cast<ConveredParamType>(converged_param_type_tmp);
+  converged_param_type_ = static_cast<ConvergedParamType>(converged_param_type_tmp);
   if (
     ndt_implement_type_ != NDTImplementType::OMP &&
-    converged_param_type_ == ConveredParamType::NEAREST_VOXEL_TRANSFORMATION_PROBABILITY) {
+    converged_param_type_ == ConvergedParamType::NEAREST_VOXEL_TRANSFORMATION_PROBABILITY) {
     RCLCPP_ERROR(
       get_logger(),
-      "ConveredParamType::NEAREST_VOXEL_TRANSFORMATION_PROBABILITY is only available when "
+      "ConvergedParamType::NEAREST_VOXEL_TRANSFORMATION_PROBABILITY is only available when "
       "NDTImplementType::OMP is selected.");
     return;
   }
@@ -557,14 +557,14 @@ void NDTScanMatcher::callbackSensorPoints(
   }
 
   bool is_ok_converged_param = false;
-  if (converged_param_type_ == ConveredParamType::TRANSFORM_PROBABILITY) {
+  if (converged_param_type_ == ConvergedParamType::TRANSFORM_PROBABILITY) {
     is_ok_converged_param = transform_probability > converged_param_transform_probability_;
     if (!is_ok_converged_param) {
       RCLCPP_WARN(
         get_logger(), "Transform Probability is below the threshold. Score: %lf, Threshold: %lf",
         transform_probability, converged_param_transform_probability_);
     }
-  } else if (converged_param_type_ == ConveredParamType::NEAREST_VOXEL_TRANSFORMATION_PROBABILITY) {
+  } else if (converged_param_type_ == ConvergedParamType::NEAREST_VOXEL_TRANSFORMATION_PROBABILITY) {
     is_ok_converged_param = nearest_voxel_transformation_probability >
                             converged_param_nearest_voxel_transformation_probability_;
     if (!is_ok_converged_param) {
