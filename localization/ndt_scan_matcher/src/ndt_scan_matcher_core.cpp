@@ -564,7 +564,8 @@ void NDTScanMatcher::callbackSensorPoints(
         get_logger(), "Transform Probability is below the threshold. Score: %lf, Threshold: %lf",
         transform_probability, converged_param_transform_probability_);
     }
-  } else if (converged_param_type_ == ConvergedParamType::NEAREST_VOXEL_TRANSFORMATION_PROBABILITY) {
+  } else if (
+    converged_param_type_ == ConvergedParamType::NEAREST_VOXEL_TRANSFORMATION_PROBABILITY) {
     is_ok_converged_param = nearest_voxel_transformation_probability >
                             converged_param_nearest_voxel_transformation_probability_;
     if (!is_ok_converged_param) {
