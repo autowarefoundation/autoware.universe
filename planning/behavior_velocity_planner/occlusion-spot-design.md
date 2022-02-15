@@ -47,12 +47,6 @@ This module considers any occlusion spot around ego path computed from the occup
 
 ![occupancy_grid](./docs/occlusion_spot/occupancy_grid.svg)
 
-Occlusion spot computation: searching occlusion spots for all cells in the occupancy_grid inside "focus range" requires a lot of computational cost, so this module will stop searching if the first occlusion spot is found in the following searching process.
-
-![brief](./docs/occlusion_spot/sidewalk_slice.svg)
-
-Note that the accuracy and performance of this search method is limited due to the approximation.
-
 #### Occlusion Spot Common
 
 ##### The Concept of Safe Velocity
@@ -72,6 +66,12 @@ This module defines safe margin consider ego distance to stop and collision path
 while ego is cruising from safe margin to collision path point ego keeps same velocity as occlusion spot safe velocity.
 
 ![brief](./docs/occlusion_spot/behavior_after_safe_margin.svg)
+
+##### Detection area polygon
+
+Occlusion spot computation: searching occlusion spots for all cells in the occupancy_grid inside "max lateral distance" requires a lot of computational cost, so this module use only one most notable occlusion spot for each partition.(currently offset is from baselink to from for safety)
+
+![brief](./docs/occlusion_spot/detection_area_poly.svg)
 
 #### Module Parameters
 
@@ -135,8 +135,13 @@ else (no)
   stop
 endif
 }
-partition find_possible_collision {
 :calculate offset from start to ego;
+partition generate_detection_area_polygon {
+:convert path to path lanelet;
+:generate left/right slice of polygon that starts from path start;
+:generate interpolated polygon which is created from ego TTC and lateral distance that pedestrian can reach within ego TTC.;
+}
+partition find_possible_collision {
 :generate possible collision;
 :calculate collision path point and intersection point;
 note right
@@ -201,6 +206,7 @@ note right
   - velocity is below `stuck_vehicle_vel`.
 end note
 }
+:generate_detection_area_polygon;
 partition find_possible_collision {
 :generate possible collision behind parked vehicle;
 note right
@@ -258,6 +264,7 @@ note right
   convert from occupancy grid to image to use opencv functions.
 end note
 }
+:generate_detection_area_polygon;
 partition generate_possible_collision {
 :calculate offset from path start to ego;
 :generate possible collision from occlusion spot;
