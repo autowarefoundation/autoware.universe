@@ -54,13 +54,6 @@ enum class LaneChangeDirection { NONE, LEFT, RIGHT };
 enum class PullOverDirection { NONE, LEFT, RIGHT };
 enum class PullOutDirection { NONE, LEFT, RIGHT };
 
-struct DrivableAreaParameters
-{
-  double drivable_lane_backward_length;
-  double drivable_lane_forward_length;
-  double drivable_lane_margin;
-};
-
 class RouteHandler
 {
 public:
@@ -196,10 +189,6 @@ public:
   lanelet::routing::RelationType getRelation(
     const lanelet::ConstLanelet & prev_lane, const lanelet::ConstLanelet & next_lane) const;
   lanelet::ConstLanelets getShoulderLanelets() const;
-
-  std::array<double, 4> getLaneletScope(
-    const lanelet::ConstLanelets & lanes, const size_t nearest_lane_idx,
-    const geometry_msgs::msg::Pose & current_pose, const DrivableAreaParameters & params);
 
   // for path
   PathWithLaneId getCenterLinePath(
