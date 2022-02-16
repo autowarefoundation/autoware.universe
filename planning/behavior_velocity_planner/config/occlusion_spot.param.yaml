@@ -10,8 +10,8 @@
       motion:
         safety_ratio: 0.8                   # [-] jerk/acceleration ratio for safety
         max_slow_down_acceleration: -1.5    # [m/s^2] minimum deceleration for safe deceleration.
-        non_effective_jerk: -0.3            # [m/s^3] too weak jerk for velocity planning.
-        non_effective_acceleration: -1.0    # [m/s^2] too weak deceleration for velocity planning.
+        non_effective_jerk: -0.3            # [m/s^3] weak jerk for velocity planning.
+        non_effective_acceleration: -1.0    # [m/s^2] weak deceleration for velocity planning.
         min_allowed_velocity: 1.0           # [m/s] minimum velocity allowed
         delay_time: 0.1                     # [s] safety time buffer for delay system response
         safe_margin: 1.0                    # [m] maximum safety distance for any error
