@@ -50,7 +50,7 @@ void applySafeVelocityConsideringPossibleCollision(
       (l_obs < 0)
         ? v_safe
         : planning_utils::calcMaxSlowDownVelocityFromDistanceToTarget(j_min, a_min, a0, v0, l_obs);
-    // coompare safe velocity consider EBS, minimum allowed velocity and original velocity
+    // compare safe velocity consider EBS, minimum allowed velocity and original velocity
     const double safe_velocity = calculateInsertVelocity(v_slow_down, v_safe, v_min, original_vel);
     possible_collision.obstacle_info.safe_motion.safe_velocity = safe_velocity;
     const auto & pose = possible_collision.collision_with_margin.pose;
