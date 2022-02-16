@@ -59,7 +59,8 @@ void buildSlices(
    * +--------------------------+ - +---+(max_length,min_distance) = inner_polygons
    */
   const double min_length = offset;  // + p.baselink_to_front;
-  // Note: min_detection_area_length is for occlusion spot visualization but not effective for planning
+  // Note: min_detection_area_length is for occlusion spot visualization but not effective for
+  // planning
   const double min_detection_area_length = 10.0;
   const double max_length = std::max(
     min_detection_area_length, std::min(p.detection_area_max_length, p.detection_area_length));
