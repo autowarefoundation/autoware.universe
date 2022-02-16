@@ -54,11 +54,12 @@ void GyroOdometer::callbackTwistWithCovariance(
     return;
   }
   const double imu_dt = std::abs((this->now() - imu_msg_ptr_->header.stamp).seconds());
-  if(imu_dt > message_timeout_sec_) {
-    RCLCPP_ERROR_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Imu msg is timeout. imu_dt: %lf[sec], tolerance %lf[sec]", imu_dt, message_timeout_sec_);
+  if (imu_dt > message_timeout_sec_) {
+    RCLCPP_ERROR_THROTTLE(
+      this->get_logger(), *this->get_clock(), 1000,
+      "Imu msg is timeout. imu_dt: %lf[sec], tolerance %lf[sec]", imu_dt, message_timeout_sec_);
     return;
   }
-
 }
 
 void GyroOdometer::callbackImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg_ptr)
@@ -66,13 +67,17 @@ void GyroOdometer::callbackImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_m
   imu_msg_ptr_ = imu_msg_ptr;
 
   if (!twist_with_cov_msg_ptr_) {
-    RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Twist msg is not subscribed");
+    RCLCPP_WARN_THROTTLE(
+      this->get_logger(), *this->get_clock(), 1000, "Twist msg is not subscribed");
     return;
   }
 
   const double twist_dt = std::abs((this->now() - twist_with_cov_msg_ptr_->header.stamp).seconds());
-  if(twist_dt > message_timeout_sec_) {
-    RCLCPP_ERROR_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Twist msg is timeout. twist_dt: %lf[sec], tolerance %lf[sec]", twist_dt, message_timeout_sec_);
+  if (twist_dt > message_timeout_sec_) {
+    RCLCPP_ERROR_THROTTLE(
+      this->get_logger(), *this->get_clock(), 1000,
+      "Twist msg is timeout. twist_dt: %lf[sec], tolerance %lf[sec]", twist_dt,
+      message_timeout_sec_);
     return;
   }
 
