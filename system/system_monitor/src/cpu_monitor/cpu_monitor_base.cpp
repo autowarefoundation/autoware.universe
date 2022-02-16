@@ -181,35 +181,19 @@ void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & st
           }
           if (boost::optional<float> v = cpu_load.get_optional<float>("usr")) {
             usr = v.get();
-            if (cpu_name == "all") {
-              cpu_usage.all.usr = usr;
-            } else {
-              cpu_status.usr = usr;
-            }
+            cpu_status.usr = usr;
           }
           if (boost::optional<float> v = cpu_load.get_optional<float>("nice")) {
             nice = v.get();
-            if (cpu_name == "all") {
-              cpu_usage.all.nice = nice;
-            } else {
-              cpu_status.nice = nice;
-            }
+            cpu_status.nice = nice;
           }
           if (boost::optional<float> v = cpu_load.get_optional<float>("sys")) {
             sys = v.get();
-            if (cpu_name == "all") {
-              cpu_usage.all.sys = sys;
-            } else {
-              cpu_status.sys = sys;
-            }
+            cpu_status.sys = sys;
           }
           if (boost::optional<float> v = cpu_load.get_optional<float>("idle")) {
             idle = v.get();
-            if (cpu_name == "all") {
-              cpu_usage.all.idle = idle;
-            } else {
-              cpu_status.idle = idle;
-            }
+            cpu_status.idle = idle;
           }
 
           total = 100.0 - iowait - idle;
@@ -220,13 +204,8 @@ void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & st
             level = CpuUsageToLevel(std::string("err"), usage);
           }
 
-          if (cpu_name == "all") {
-            cpu_usage.all.total = total;
-            cpu_usage.all.status = level;
-          } else {
-            cpu_status.total = total;
-            cpu_status.status = level;
-          }
+          cpu_status.total = total;
+          cpu_status.status = level;
 
           stat.add(fmt::format("CPU {}: status", cpu_name), load_dict_.at(level));
           stat.addf(fmt::format("CPU {}: total", cpu_name), "%.2f%%", total);
@@ -242,7 +221,12 @@ void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & st
           } else {
             whole_level = std::max(whole_level, level);
           }
-          if (cpu_name != "all") cpu_usage.cpus.push_back(cpu_status);
+
+          if (cpu_name == "all") {
+            cpu_usage.all = cpu_status;
+          } else {
+            cpu_usage.cpus.push_back(cpu_status);
+          }
         }
       }
     }
@@ -252,6 +236,7 @@ void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & st
     std::fill(usage_check_cnt_.begin(), usage_check_cnt_.end(), 0);
     cpu_usage.all.status = STATUS.STALE;
     publishCpuUsage(cpu_usage);
+    cpu_usage.cpus.clear();
     return;
   }
 
@@ -259,6 +244,7 @@ void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & st
 
   // Publish msg
   publishCpuUsage(cpu_usage);
+  cpu_usage.cpus.clear();
 
   // Measure elapsed time since start time and report
   SystemMonitorUtility::stopMeasurement(t_start, stat);
