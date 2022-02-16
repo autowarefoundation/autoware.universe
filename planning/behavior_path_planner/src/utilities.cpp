@@ -34,13 +34,31 @@ double quantize(const double val, const double resolution)
 }
 
 void updateMinMaxPosition(
-  const lanelet::ConstPoint2d & point, double & min_x, double & min_y, double & max_x,
-  double & max_y)
+  const Eigen::Vector2d & point, double & min_x, double & min_y, double & max_x, double & max_y)
 {
   min_x = std::min(min_x, point.x());
   min_y = std::min(min_y, point.y());
   max_x = std::max(max_x, point.x());
   max_y = std::max(max_y, point.y());
+}
+
+bool isDrivableEndLane(
+  const Eigen::Vector2d & base_point, const Eigen::Vector2d & target_point,
+  const double length_threshold, double & sum_length, double & min_x, double & min_y,
+  double & max_x, double & max_y)
+{
+  const double norm_length = (base_point - target_point).norm();
+  sum_length += norm_length;
+  if (length_threshold < sum_length) {
+    const double diff_length = norm_length - (sum_length - length_threshold);
+    const Eigen::Vector2d interpolated_point =
+      base_point + diff_length * (target_point - base_point).normalized();
+    updateMinMaxPosition(interpolated_point, min_x, min_y, max_x, max_y);
+    return true;
+  }
+
+  updateMinMaxPosition(target_point, min_x, min_y, max_x, max_y);
+  return false;
 }
 
 std::array<double, 4> getLaneletScope(
@@ -81,27 +99,31 @@ std::array<double, 4> getLaneletScope(
     const size_t nearest_point_idx =
       tier4_autoware_utils::findNearestIndex(points, current_pose.position);
 
-    updateMinMaxPosition(nearest_bound[nearest_point_idx], min_x, min_y, max_x, max_y);
+    updateMinMaxPosition(nearest_bound[nearest_point_idx].basicPoint(), min_x, min_y, max_x, max_y);
 
     // forward lanelet
     double sum_length = 0.0;
     size_t current_lane_idx = nearest_lane_idx;
     auto current_lane = lanes.at(current_lane_idx);
     size_t current_point_idx = nearest_point_idx;
-    while (sum_length < forward_lane_length + lane_margin) {
+    while (true) {
       const auto & bound = get_bound_func(current_lane);
       if (current_point_idx != bound.size() - 1) {
-        sum_length +=
-          (bound[current_point_idx].basicPoint() - bound[current_point_idx + 1].basicPoint())
-            .norm();
-        updateMinMaxPosition(bound[current_point_idx + 1], min_x, min_y, max_x, max_y);
+        const Eigen::Vector2d & current_point = bound[current_point_idx].basicPoint();
+        const Eigen::Vector2d & next_point = bound[current_point_idx + 1].basicPoint();
+        if (isDrivableEndLane(
+              current_point, next_point, forward_lane_length + lane_margin, sum_length, min_x,
+              min_y, max_x, max_y)) {
+          break;
+        }
 
         ++current_point_idx;
       } else {
         const auto previous_lane = current_lane;
         const size_t previous_point_idx = get_bound_func(previous_lane).size() - 1;
         const auto & previous_bound = get_bound_func(previous_lane);
-        updateMinMaxPosition(previous_bound[previous_point_idx], min_x, min_y, max_x, max_y);
+        updateMinMaxPosition(
+          previous_bound[previous_point_idx].basicPoint(), min_x, min_y, max_x, max_y);
 
         if (current_lane_idx == lanes.size() - 1) {
           break;
@@ -111,11 +133,16 @@ std::array<double, 4> getLaneletScope(
         current_lane = lanes.at(current_lane_idx);
         current_point_idx = 0;
         const auto & current_bound = get_bound_func(current_lane);
-        updateMinMaxPosition(current_bound[current_point_idx], min_x, min_y, max_x, max_y);
 
-        sum_length += boost::geometry::distance(
-          get_bound_func(previous_lane)[previous_point_idx].basicPoint(),
-          get_bound_func(current_lane)[current_point_idx].basicPoint());
+        const Eigen::Vector2d & prev_point =
+          get_bound_func(previous_lane)[previous_point_idx].basicPoint();
+        const Eigen::Vector2d & current_point =
+          get_bound_func(current_lane)[current_point_idx].basicPoint();
+        if (isDrivableEndLane(
+              prev_point, current_point, forward_lane_length + lane_margin, sum_length, min_x,
+              min_y, max_x, max_y)) {
+          break;
+        }
       }
     }
 
@@ -124,20 +151,23 @@ std::array<double, 4> getLaneletScope(
     sum_length = 0.0;
     current_lane_idx = nearest_lane_idx;
     current_lane = lanes.at(current_lane_idx);
-    while (sum_length < backward_lane_length + lane_margin) {
+    while (true) {
       const auto & bound = get_bound_func(current_lane);
       if (current_point_idx != 0) {
-        sum_length +=
-          (bound[current_point_idx].basicPoint() - bound[current_point_idx - 1].basicPoint())
-            .norm();
-        updateMinMaxPosition(bound[current_point_idx - 1], min_x, min_y, max_x, max_y);
+        const Eigen::Vector2d & current_point = bound[current_point_idx].basicPoint();
+        const Eigen::Vector2d & prev_point = bound[current_point_idx - 1].basicPoint();
+        if (isDrivableEndLane(
+              current_point, prev_point, backward_lane_length + lane_margin, sum_length, min_x,
+              min_y, max_x, max_y)) {
+          break;
+        }
 
         --current_point_idx;
       } else {
         const auto next_lane = current_lane;
         const size_t next_point_idx = 0;
         const auto & next_bound = get_bound_func(next_lane);
-        updateMinMaxPosition(next_bound[next_point_idx], min_x, min_y, max_x, max_y);
+        updateMinMaxPosition(next_bound[next_point_idx].basicPoint(), min_x, min_y, max_x, max_y);
 
         if (current_lane_idx == 0) {
           break;
@@ -147,11 +177,15 @@ std::array<double, 4> getLaneletScope(
         current_lane = lanes.at(current_lane_idx);
         const auto & current_bound = get_bound_func(current_lane);
         current_point_idx = current_bound.size() - 1;
-        updateMinMaxPosition(current_bound[current_point_idx], min_x, min_y, max_x, max_y);
 
-        sum_length += boost::geometry::distance(
-          get_bound_func(next_lane)[next_point_idx].basicPoint(),
-          get_bound_func(current_lane)[current_point_idx].basicPoint());
+        const Eigen::Vector2d & next_point = get_bound_func(next_lane)[next_point_idx].basicPoint();
+        const Eigen::Vector2d & current_point =
+          get_bound_func(current_lane)[current_point_idx].basicPoint();
+        if (isDrivableEndLane(
+              next_point, current_point, backward_lane_length + lane_margin, sum_length, min_x,
+              min_y, max_x, max_y)) {
+          break;
+        }
       }
     }
   }
