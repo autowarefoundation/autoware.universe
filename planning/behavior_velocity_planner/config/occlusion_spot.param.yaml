@@ -1,7 +1,7 @@
 /**:
   ros__parameters:
     occlusion_spot:
-      debug: true                          # [-] whether to publish debug markers. Note Default should be false for performance
+      debug: false                         # [-] whether to publish debug markers. Note Default should be false for performance
       pedestrian_vel: 1.0                  # [m/s] assume pedestrian is dashing from occlusion at this velocity
       threshold:
         detection_area_length: 100.0        # [m] the length of path to consider perception range
