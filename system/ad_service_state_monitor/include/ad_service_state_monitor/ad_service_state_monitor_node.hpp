@@ -23,6 +23,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <std_srvs/srv/trigger.hpp>
 
+#include "tier4_debug_msgs/msg/string_stamped.hpp"
 #include <autoware_auto_planning_msgs/msg/had_map_route.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <autoware_auto_system_msgs/msg/autoware_state.hpp>
@@ -103,6 +104,7 @@ private:
   // Publisher
   rclcpp::Publisher<autoware_auto_system_msgs::msg::AutowareState>::SharedPtr pub_autoware_state_;
   rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::Engage>::SharedPtr pub_autoware_engage_;
+  rclcpp::Publisher<tier4_debug_msgs::msg::StringStamped>::SharedPtr pub_non_recieved_topic_;
 
   bool isEngaged();
   void setDisengage();

@@ -232,6 +232,19 @@ void AutowareStateMonitorNode::onTimer()
     pub_autoware_state_->publish(autoware_state_msg);
   }
 
+  // Publish non-recieved topic
+  {
+    const auto non_recieved_topic = state_machine_->getMessages();
+
+    tier4_debug_msgs::msg::StringStamped non_recieved_topic_msg;
+    non_recieved_topic_msg.stamp = this->now();
+    for (const auto & str : non_recieved_topic) {
+      non_recieved_topic_msg.data.append(str);
+    }
+
+    pub_non_recieved_topic_->publish(non_recieved_topic_msg);
+  }
+
   // Publish diag message
   updater_.force_update();
 }
@@ -452,6 +465,8 @@ AutowareStateMonitorNode::AutowareStateMonitorNode()
     "output/autoware_state", 1);
   pub_autoware_engage_ =
     this->create_publisher<autoware_auto_vehicle_msgs::msg::Engage>("output/autoware_engage", 1);
+  pub_non_recieved_topic_ =
+    this->create_publisher<tier4_debug_msgs::msg::StringStamped>("debug/non_recieved_topic", 1);
 
   // Diagnostic Updater
   setupDiagnosticUpdater();

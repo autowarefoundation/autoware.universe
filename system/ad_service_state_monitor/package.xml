@@ -24,6 +24,7 @@
   <depend>tf2_geometry_msgs</depend>
   <depend>tf2_ros</depend>
   <depend>tier4_autoware_utils</depend>
+  <depend>tier4_debug_msgs</depend>
 
   <exec_depend>sensor_msgs</exec_depend>
   <exec_depend>tier4_perception_msgs</exec_depend>
