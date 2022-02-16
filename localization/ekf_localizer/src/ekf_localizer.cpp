@@ -33,7 +33,9 @@
 using std::placeholders::_1;
 
 EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOptions & node_options)
-: rclcpp::Node(node_name, node_options), dim_x_(6 /* x, y, yaw, yaw_bias, vx, wz */)
+: rclcpp::Node(node_name, node_options),
+  dim_x_(6 /* x, y, yaw, yaw_bias, vx, wz */),
+  clock_(get_clock())
 {
   show_debug_info_ = declare_parameter("show_debug_info", false);
   ekf_rate_ = declare_parameter("predict_frequency", 50.0);
@@ -55,30 +57,29 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
   twist_gate_dist_ = declare_parameter("twist_gate_dist", 10000.0);  // Mahalanobis limit
 
   /* process noise */
-  double proc_stddev_yaw_c, proc_stddev_yaw_bias_c, proc_stddev_vx_c, proc_stddev_wz_c;
-  proc_stddev_yaw_c = declare_parameter("proc_stddev_yaw_c", 0.005);
-  proc_stddev_yaw_bias_c = declare_parameter("proc_stddev_yaw_bias_c", 0.001);
-  proc_stddev_vx_c = declare_parameter("proc_stddev_vx_c", 5.0);
-  proc_stddev_wz_c = declare_parameter("proc_stddev_wz_c", 1.0);
+  proc_stddev_yaw_c_ = declare_parameter("proc_stddev_yaw_c", 0.005);
+  proc_stddev_yaw_bias_c_ = declare_parameter("proc_stddev_yaw_bias_c", 0.001);
+  proc_stddev_vx_c_ = declare_parameter("proc_stddev_vx_c", 5.0);
+  proc_stddev_wz_c_ = declare_parameter("proc_stddev_wz_c", 1.0);
   if (!enable_yaw_bias_estimation_) {
-    proc_stddev_yaw_bias_c = 0.0;
+    proc_stddev_yaw_bias_c_ = 0.0;
   }
 
   /* convert to continuous to discrete */
-  proc_cov_vx_d_ = std::pow(proc_stddev_vx_c * ekf_dt_, 2.0);
-  proc_cov_wz_d_ = std::pow(proc_stddev_wz_c * ekf_dt_, 2.0);
-  proc_cov_yaw_d_ = std::pow(proc_stddev_yaw_c * ekf_dt_, 2.0);
-  proc_cov_yaw_bias_d_ = std::pow(proc_stddev_yaw_bias_c * ekf_dt_, 2.0);
+  proc_cov_vx_d_ = std::pow(proc_stddev_vx_c_ * ekf_dt_, 2.0);
+  proc_cov_wz_d_ = std::pow(proc_stddev_wz_c_ * ekf_dt_, 2.0);
+  proc_cov_yaw_d_ = std::pow(proc_stddev_yaw_c_ * ekf_dt_, 2.0);
+  proc_cov_yaw_bias_d_ = std::pow(proc_stddev_yaw_bias_c_ * ekf_dt_, 2.0);
 
   /* initialize ros system */
   auto period_control_ns =
     std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(ekf_dt_));
   timer_control_ = rclcpp::create_timer(
-    this, get_clock(), period_control_ns, std::bind(&EKFLocalizer::timerCallback, this));
+    this, clock_, period_control_ns, std::bind(&EKFLocalizer::timerCallback, this));
 
   const auto period_tf_ns = rclcpp::Rate(tf_rate_).period();
   timer_tf_ = rclcpp::create_timer(
-    this, get_clock(), period_tf_ns, std::bind(&EKFLocalizer::timerTFCallback, this));
+    this, clock_, period_tf_ns, std::bind(&EKFLocalizer::timerTFCallback, this));
 
   pub_pose_ = create_publisher<geometry_msgs::msg::PoseStamped>("ekf_pose", 1);
   pub_pose_cov_ =
@@ -112,11 +113,55 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
 }
 
 /*
+ * calcTimerRate
+ */
+double EKFLocalizer::calcTimerRate(size_t window_size) const
+{
+  if (time_buffer_.size() < window_size) {
+    return ekf_rate_;
+  }
+
+  const auto time_diff = (time_buffer_.back() - time_buffer_.front()).seconds();
+  const auto num_intervals = time_buffer_.size() - 1;
+
+  return static_cast<double>(num_intervals) / time_diff;
+}
+
+/*
+ * updatePredictFrequency
+ */
+void EKFLocalizer::updatePredictFrequency()
+{
+  size_t window_size = 10;
+  time_buffer_.push_back(clock_->now());
+  while (static_cast<int>(time_buffer_.size()) > window_size) {
+    time_buffer_.pop_front();
+  }
+
+  // Calc timer rate
+  double timer_rate = calcTimerRate(window_size);
+  if (timer_rate < ekf_rate_ * 0.99 || timer_rate > ekf_rate_ * 1.01) {
+    ekf_rate_ = timer_rate;
+    DEBUG_INFO(get_logger(), "[EKF] update ekf_rate_ to %f hz", ekf_rate_);
+    ekf_dt_ = 1.0 / std::max(ekf_rate_, 0.1);
+
+    /* Update discrete proc_cov*/
+    proc_cov_vx_d_ = std::pow(proc_stddev_vx_c_ * ekf_dt_, 2.0);
+    proc_cov_wz_d_ = std::pow(proc_stddev_wz_c_ * ekf_dt_, 2.0);
+    proc_cov_yaw_d_ = std::pow(proc_stddev_yaw_c_ * ekf_dt_, 2.0);
+    proc_cov_yaw_bias_d_ = std::pow(proc_stddev_yaw_bias_c_ * ekf_dt_, 2.0);
+  }
+}
+
+/*
  * timerCallback
  */
 void EKFLocalizer::timerCallback()
 {
   DEBUG_INFO(get_logger(), "========================= timer called =========================");
+
+  /* update predict frequency with measured timer rate */
+  updatePredictFrequency();
 
   /* predict model in EKF */
   stop_watch_.tic();
@@ -412,7 +457,7 @@ void EKFLocalizer::measurementUpdatePose(const geometry_msgs::msg::PoseStamped &
 {
   if (pose.header.frame_id != pose_frame_id_) {
     RCLCPP_WARN_THROTTLE(
-      get_logger(), *get_clock(), std::chrono::milliseconds(2000).count(),
+      get_logger(), *clock_, std::chrono::milliseconds(2000).count(),
       "pose frame_id is %s, but pose_frame is set as %s. They must be same.",
       pose.header.frame_id.c_str(), pose_frame_id_.c_str());
   }
@@ -428,13 +473,13 @@ void EKFLocalizer::measurementUpdatePose(const geometry_msgs::msg::PoseStamped &
   if (delay_time < 0.0) {
     delay_time = 0.0;
     RCLCPP_WARN_THROTTLE(
-      get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
+      get_logger(), *clock_, std::chrono::milliseconds(1000).count(),
       "Pose time stamp is inappropriate, set delay to 0[s]. delay = %f", delay_time);
   }
   int delay_step = std::roundf(delay_time / ekf_dt_);
   if (delay_step > extend_state_step_ - 1) {
     RCLCPP_WARN_THROTTLE(
-      get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
+      get_logger(), *clock_, std::chrono::milliseconds(1000).count(),
       "Pose delay exceeds the compensation limit, ignored. delay: %f[s], limit = "
       "extend_state_step * ekf_dt : %f [s]",
       delay_time, extend_state_step_ * ekf_dt_);
@@ -468,7 +513,7 @@ void EKFLocalizer::measurementUpdatePose(const geometry_msgs::msg::PoseStamped &
   P_y = P_curr.block(0, 0, dim_y, dim_y);
   if (!mahalanobisGate(pose_gate_dist_, y_ekf, y, P_y)) {
     RCLCPP_WARN_THROTTLE(
-      get_logger(), *get_clock(), std::chrono::milliseconds(2000).count(),
+      get_logger(), *clock_, std::chrono::milliseconds(2000).count(),
       "[EKF] Pose measurement update, mahalanobis distance is over limit. ignore "
       "measurement data.");
     return;
@@ -516,7 +561,7 @@ void EKFLocalizer::measurementUpdateTwist(const geometry_msgs::msg::TwistStamped
 {
   if (twist.header.frame_id != "base_link") {
     RCLCPP_WARN_THROTTLE(
-      get_logger(), *get_clock(), std::chrono::milliseconds(2000).count(),
+      get_logger(), *clock_, std::chrono::milliseconds(2000).count(),
       "twist frame_id must be base_link");
   }
 
@@ -531,14 +576,14 @@ void EKFLocalizer::measurementUpdateTwist(const geometry_msgs::msg::TwistStamped
   double delay_time = (t_curr - twist.header.stamp).seconds() + twist_additional_delay_;
   if (delay_time < 0.0) {
     RCLCPP_WARN_THROTTLE(
-      get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
+      get_logger(), *clock_, std::chrono::milliseconds(1000).count(),
       "Twist time stamp is inappropriate (delay = %f [s]), set delay to 0[s].", delay_time);
     delay_time = 0.0;
   }
   int delay_step = std::roundf(delay_time / ekf_dt_);
   if (delay_step > extend_state_step_ - 1) {
     RCLCPP_WARN_THROTTLE(
-      get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(),
+      get_logger(), *clock_, std::chrono::milliseconds(1000).count(),
       "Twist delay exceeds the compensation limit, ignored. delay: %f[s], limit = "
       "extend_state_step * ekf_dt : %f [s]",
       delay_time, extend_state_step_ * ekf_dt_);
@@ -566,7 +611,7 @@ void EKFLocalizer::measurementUpdateTwist(const geometry_msgs::msg::TwistStamped
   P_y = P_curr.block(4, 4, dim_y, dim_y);
   if (!mahalanobisGate(twist_gate_dist_, y_ekf, y, P_y)) {
     RCLCPP_WARN_THROTTLE(
-      get_logger(), *get_clock(), std::chrono::milliseconds(2000).count(),
+      get_logger(), *clock_, std::chrono::milliseconds(2000).count(),
       "[EKF] Twist measurement update, mahalanobis distance is over limit. ignore "
       "measurement data.");
     return;
