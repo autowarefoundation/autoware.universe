@@ -1074,16 +1074,10 @@ OccupancyGrid generateDrivableArea(
     lanes, nearest_lane_idx, current_pose->pose, params.drivable_lane_forward_length,
     params.drivable_lane_backward_length, params.drivable_lane_margin);
 
-  // TODO(murooka) think about resolution * 10.0 makes sense.
-  // If using resolution instead of resolution * 10.0, driavble area oscillates.
-  const double min_x =
-    quantize(lanelet_scope.at(0) - params.drivable_area_margin, resolution * 10.0);
-  const double min_y =
-    quantize(lanelet_scope.at(1) - params.drivable_area_margin, resolution * 10.0);
-  const double max_x =
-    quantize(lanelet_scope.at(2) + params.drivable_area_margin, resolution * 10.0);
-  const double max_y =
-    quantize(lanelet_scope.at(3) + params.drivable_area_margin, resolution * 10.0);
+  const double min_x = quantize(lanelet_scope.at(0) - params.drivable_area_margin, resolution);
+  const double min_y = quantize(lanelet_scope.at(1) - params.drivable_area_margin, resolution);
+  const double max_x = quantize(lanelet_scope.at(2) + params.drivable_area_margin, resolution);
+  const double max_y = quantize(lanelet_scope.at(3) + params.drivable_area_margin, resolution);
 
   const double width = max_x - min_x;
   const double height = max_y - min_y;
@@ -1114,8 +1108,8 @@ OccupancyGrid generateDrivableArea(
 
   // info
   {
-    const int width_cell = width / resolution;
-    const int height_cell = height / resolution;
+    const int width_cell = std::round(width / resolution);
+    const int height_cell = std::round(height / resolution);
 
     occupancy_grid.info.map_load_time = occupancy_grid.header.stamp;
     occupancy_grid.info.resolution = resolution;
