@@ -59,7 +59,7 @@ void buildSlices(
    * +--------------------------+ - +---+(max_length,min_distance) = inner_polygons
    */
   const double min_length = offset;  // + p.baselink_to_front;
-  // const double max_length = p.detection_area_length;
+  const double max_length = std::min(p.detection_area_max_length, p.detection_area_length);
   const double min_distance = (is_on_right) ? -p.half_vehicle_width : p.half_vehicle_width;
   const double slice_length = p.detection_area.slice_length;
   const int num_step = static_cast<int>(slice_length);
@@ -82,7 +82,7 @@ void buildSlices(
     for (int i = 0; i <= num_step; i++) {
       idx = s + i;
       const double arc_length_from_ego = std::max(0.0, static_cast<double>(idx - min_length));
-      if (arc_length_from_ego > param.detection_area_max_length + min_length) break;
+      if (arc_length_from_ego > max_length) break;
       if (idx >= max_index) break;
       const auto & c0 = center_line.at(idx);
       const auto & c1 = center_line.at(idx + 1);
