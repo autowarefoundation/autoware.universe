@@ -180,7 +180,7 @@ AdaptiveCruiseController::AdaptiveCruiseController(
 
   /* publisher */
   pub_debug_ =
-    node_->create_publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>("~/debug_values", 1);
+    node_->create_publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>("~/adaptive_cruise_control/debug_values", 1);
 }
 
 void AdaptiveCruiseController::insertAdaptiveCruiseVelocity(
