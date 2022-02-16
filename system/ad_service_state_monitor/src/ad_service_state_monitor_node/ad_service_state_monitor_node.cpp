@@ -239,7 +239,8 @@ void AutowareStateMonitorNode::onTimer()
     tier4_debug_msgs::msg::StringStamped non_recieved_topic_msg;
     non_recieved_topic_msg.stamp = this->now();
     for (const auto & str : non_recieved_topic) {
-      non_recieved_topic_msg.data.append(str);
+      non_recieved_topic_msg.data += str;
+      non_recieved_topic_msg.data += "\n";
     }
 
     pub_non_recieved_topic_->publish(non_recieved_topic_msg);
