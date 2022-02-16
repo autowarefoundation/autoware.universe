@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  pre-condition:
+  prevent-running-on-forks:
     name: Prevent running on forks
     runs-on: ubuntu-latest
     if: ${{ (github.event_name != 'schedule') || (github.event_name == 'schedule' && github.repository_owner == 'autowarefoundation') }}
@@ -14,6 +14,7 @@ jobs:
       - run: "true"
 
   build-and-test-self-hosted:
+    needs: prevent-running-on-forks
     runs-on: [self-hosted, linux, ARM64]
     container: ghcr.io/autowarefoundation/autoware-universe:latest
     steps:

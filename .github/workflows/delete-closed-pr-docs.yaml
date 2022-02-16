@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  pre_condition:
+  prevent-running-on-forks:
     name: Don't run scheduled jobs on forks
     runs-on: ubuntu-latest
     if: ${{ (github.event_name != 'schedule') || (github.event_name == 'schedule' && github.repository == 'autowarefoundation/autoware.universe') }}
@@ -14,7 +14,7 @@ jobs:
       - run: "true"
 
   delete-closed-pr-docs:
-    needs: pre_condition
+    needs: prevent-running-on-forks
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
