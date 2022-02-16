@@ -311,13 +311,14 @@ double calcMaxSlowDownVelocityFromDistanceToTarget(
     return velocity;
   } else {
     const double v1 = vt(t_const_jerk, j_max, a0, v0);
+    const double discriminant_of_stop = 2.0 * a_max * d_const_acc_stop + v1 * v1;
     // case3: distance to target is farther than distance to stop
-    if (d_const_acc_stop >= (0 * 0 - v1 * v1) / (2.0 * a_max)) {
+    if (discriminant_of_stop <= 0) {
       return 0.0;
     }
     // case2: distance to target is within constant accel deceleration
     // solve d = 0.5*a^2+v*t by t
-    const double t_acc = (-v1 + std::sqrt(2.0 * a_max * d_const_acc_stop + v1 * v1)) / a_max;
+    const double t_acc = (-v1 + std::sqrt(discriminant_of_stop)) / a_max;
     return vt(t_acc, 0.0, a_max, v1);
   }
   return current_velocity;

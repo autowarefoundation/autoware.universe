@@ -48,7 +48,7 @@ TEST(smoothDeceleration, calculateMaxSlowDownVelocity)
   const double max_slow_down_accel = -2.0;
   const double eps = 1e-3;
   {
-    for (size_t i = -8; i <= 24; i += 8) {
+    for (int i = -8; i <= 24; i += 8) {
       // arc length in path point
       const double l = i * 1.0;
       const double v = calcMaxSlowDownVelocityFromDistanceToTarget(
@@ -56,7 +56,7 @@ TEST(smoothDeceleration, calculateMaxSlowDownVelocity)
       // case 0 : behind ego
       if (i == -8) EXPECT_NEAR(v, 5.0, eps);
       // case 1 : const jerk
-      if (i == 0) EXPECT_NEAR(v, 5.0, eps);
+      else if (i == 0) EXPECT_NEAR(v, 5.0, eps);
       // case 1 : const jerk
       else if (i == 8)
         EXPECT_NEAR(v, 5.380, eps);
