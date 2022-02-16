@@ -82,7 +82,8 @@ void buildSlices(
     for (int i = 0; i <= num_step; i++) {
       idx = s + i;
       const double arc_length_from_ego = std::max(0.0, static_cast<double>(idx - min_length));
-      if (idx >= max_index) continue;
+      if (arc_length_from_ego > param.detection_area_max_length + min_length) break;
+      if (idx >= max_index) break;
       const auto & c0 = center_line.at(idx);
       const auto & c1 = center_line.at(idx + 1);
       /**

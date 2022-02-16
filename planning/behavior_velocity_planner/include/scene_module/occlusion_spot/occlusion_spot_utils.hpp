@@ -78,6 +78,8 @@ struct Velocity
   double max_stop_jerk;         // [m/s^3] emergency braking system jerk
   double max_stop_accel;        // [m/s^2] emergency braking system deceleration
   double max_slow_down_accel;   // [m/s^2] maximum allowed deceleration
+  double non_effective_jerk;    // [m/s^3] too weak jerk for velocity planning.
+  double non_effective_accel;   // [m/s^2] too weak deceleration for velocity planning.
   double min_allowed_velocity;  // [m/s]   minimum allowed velocity not to stop
   double a_ego;                 // [m/s^2] current ego acceleration
   double v_ego;                 // [m/s]   current ego velocity
@@ -95,10 +97,11 @@ struct PlannerParam
 {
   bool debug;  // [-]
   // parameters in yaml
-  double detection_area_length;  // [m]
-  double stuck_vehicle_vel;      // [m/s]
-  double lateral_distance_thr;   // [m] lateral distance threshold to consider
-  double pedestrian_vel;         // [m/s]
+  double detection_area_length;      // [m]
+  double detection_area_max_length;  // [m]
+  double stuck_vehicle_vel;          // [m/s]
+  double lateral_distance_thr;       // [m] lateral distance threshold to consider
+  double pedestrian_vel;             // [m/s]
 
   double dist_thr;   // [m]
   double angle_thr;  // [rad]

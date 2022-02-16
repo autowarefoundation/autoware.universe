@@ -56,6 +56,9 @@ bool OcclusionSpotInPrivateModule::modifyPathVelocity(
     param_.v.max_stop_accel = planner_data_->max_stop_acceleration_threshold;
     param_.v.v_ego = planner_data_->current_velocity->twist.linear.x;
     param_.v.a_ego = planner_data_->current_accel.get();
+    param_.detection_area_max_length = planning_utils::calcJudgeLineDistWithJerkLimit(
+      param_.v.v_ego, param_.v.a_ego, param_.v.non_effective_jerk, param_.v.non_effective_accel,
+      0.0);
   }
   const geometry_msgs::msg::Pose ego_pose = planner_data_->current_pose.pose;
   const auto & lanelet_map_ptr = planner_data_->lanelet_map;
