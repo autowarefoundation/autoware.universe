@@ -56,7 +56,8 @@ TEST(smoothDeceleration, calculateMaxSlowDownVelocity)
       // case 0 : behind ego
       if (i == -8) EXPECT_NEAR(v, 5.0, eps);
       // case 1 : const jerk
-      else if (i == 0) EXPECT_NEAR(v, 5.0, eps);
+      else if (i == 0)
+        EXPECT_NEAR(v, 5.0, eps);
       // case 1 : const jerk
       else if (i == 8)
         EXPECT_NEAR(v, 5.380, eps);
