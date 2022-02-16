@@ -51,7 +51,7 @@ This module considers any occlusion spot around ego path computed from the occup
 
 ##### The Concept of Safe Velocity
 
-Safe velocity is calculated from below parameters of ego emergency braking system and time to collision.
+Safe velocity is calculated from the below parameters of ego emergency braking system and time to collision.
 
 - jerk limit[m/s^3]
 - deceleration limit[m/s2]
@@ -62,14 +62,15 @@ Safe velocity is calculated from below parameters of ego emergency braking syste
 
 ##### Safe Behavior After Passing Safe Margin Point
 
-This module defines safe margin consider ego distance to stop and collision path point geometrically.
-while ego is cruising from safe margin to collision path point ego keeps same velocity as occlusion spot safe velocity.
+This module defines safe margin to consider ego distance to stop and collision path point geometrically.
+While ego is cruising from safe margin to collision path point, ego vehicle keeps the same velocity as occlusion spot safe velocity.
 
 ![brief](./docs/occlusion_spot/behavior_after_safe_margin.svg)
 
 ##### Detection area polygon
 
-Occlusion spot computation: searching occlusion spots for all cells in the occupancy_grid inside "max lateral distance" requires a lot of computational cost, so this module use only one most notable occlusion spot for each partition.(currently offset is from baselink to from for safety)
+Occlusion spot computation: searching occlusion spots for all cells in the occupancy_grid inside "max lateral distance" requires a lot of computational cost, so this module use only one most notable occlusion spot for each partition. (currently offset is from baselink to front for safety)
+The maximum length of detection area depends on ego current vehicle velocity and acceleration.
 
 ![brief](./docs/occlusion_spot/detection_area_poly.svg)
 
