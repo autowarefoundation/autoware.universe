@@ -251,13 +251,16 @@ double findReachTime(
   auto f = [](const double t, const double j, const double a, const double v, const double d) {
     return j * t * t * t / 6.0 + a * t * t / 2.0 + v * t - d;
   };
+  if (f(min, j, a, v, d) > 0 || f(max, j, a, v, d) < 0) {
+    std::logic_error("[behavior_velocity](findReachTime): search range is invalid");
+  }
   const double eps = 1e-5;
-  const int max_iter = 100;
+  const int warn_iter = 100;
   double lower = min;
   double upper = max;
   double t;
   int iter = 0;
-  for (int i = 0; i < max_iter; i++) {
+  for (int i = 0;; i++) {
     t = 0.5 * (lower + upper);
     const double fx = f(t, j, a, v, d);
     // std::cout<<"fx: "<<fx<<" up: "<<upper<<" lo: "<<lower<<" t: "<<t<<std::endl;
@@ -269,15 +272,21 @@ double findReachTime(
       lower = t;
     }
     iter++;
+    if (iter > warn_iter)
+      std::cerr << "[behavior_velocity](findReachTime): current iter is over warning" << std::endl;
   }
   // std::cout<<"iter: "<<iter<<std::endl;
   return t;
 }
 
-double calculateMaxSlowDownVelocity(
+double calcMaxSlowDownVelocityFromDistanceToTarget(
   const double max_slowdown_jerk, const double max_slowdown_accel, const double current_accel,
   const double current_velocity, const double distance_to_target)
 {
+  if (max_slowdown_jerk > 0 || max_slowdown_accel > 0) {
+    std::logic_error("max_slowdown_jerk and max_slowdown_accel should be negative");
+  }
+  // case0: distance to target is behind ego
   if (distance_to_target <= 0) return current_velocity;
   auto ft = [](const double t, const double j, const double a, const double v, const double d) {
     return j * t * t * t / 6.0 + a * t * t / 2.0 + v * t - d;
@@ -293,22 +302,20 @@ double calculateMaxSlowDownVelocity(
   const double t_const_jerk = (a_max - a0) / j_max;
   const double d_const_jerk_stop = ft(t_const_jerk, j_max, a0, v0, 0.0);
   const double d_const_acc_stop = l - d_const_jerk_stop;
-  const double v1 = vt(t_const_jerk, j_max, a0, v0);
-  // std::cout<<"t_const_jerk: "<<t_const_jerk<<" v1: "<<v1<<" a_max: "<<a_max<<std::endl;
-  // std::cout<<"v0: "<<v0<<" a0: "<<a0<<" j: "<<j_max<<std::endl;
 
-  // case1: target velocity is within constant jerk stop
   if (d_const_acc_stop < 0) {
+    // case0: distance to target is within constant jerk deceleration
     // use binary search instead of solving cubic equation
     const double t_jerk = findReachTime(j_max, a0, v0, l, 0, t_const_jerk);
     const double velocity = vt(t_jerk, j_max, a0, v0);
     return velocity;
-    // case2: target velocity is within constant max accel after constant jerk
   } else {
-    // case3: stop distance is farther than target point
+    const double v1 = vt(t_const_jerk, j_max, a0, v0);
+    // case3: distance to target is farther than distance to stop
     if (d_const_acc_stop >= (0 * 0 - v1 * v1) / (2.0 * a_max)) {
       return 0.0;
     }
+    // case2: distance to target is within constant accel deceleration
     // solve d = 0.5*a^2+v*t by t
     const double t_acc = (-v1 + std::sqrt(2.0 * a_max * d_const_acc_stop + v1 * v1)) / a_max;
     return vt(t_acc, 0.0, a_max, v1);
