@@ -11,17 +11,17 @@
          <range bottom="2.587438" top="3.256721" left="48.265130" right="51.387770"/>
          <limitY/>
          <curve name="" color="" />
-         <curve name="/planning/scenario_planning/lane_driving/motion_planning/obstacle_stop_planner/debug_values/data.0" color="#1f77b4">
+         <curve name="/planning/scenario_planning/lane_driving/motion_planning/obstacle_stop_planner/debug/debug_values/data.0" color="#1f77b4">
           <transform alias="pcl-based obj vel" name="Scale/Offset">
            <options value_offset="0" value_scale="1.0" time_offset="0"/>
           </transform>
          </curve>
-         <curve name="/planning/scenario_planning/lane_driving/motion_planning/obstacle_stop_planner/debug_values/data.1" color="#d62728">
+         <curve name="/planning/scenario_planning/lane_driving/motion_planning/obstacle_stop_planner/debug/debug_values/data.1" color="#d62728">
          <transform alias="dynamic-obj-based obj vel" name="Scale/Offset">
            <options value_offset="0" value_scale="1.0" time_offset="0"/>
           </transform>
          </curve>
-         <curve name="/planning/scenario_planning/lane_driving/motion_planning/obstacle_stop_planner/debug_values/data.2" color="#1ac938">
+         <curve name="/planning/scenario_planning/lane_driving/motion_planning/obstacle_stop_planner/debug/debug_values/data.2" color="#1ac938">
          <transform alias="final estimated obj vel" name="Scale/Offset">
            <options value_offset="0" value_scale="1.0" time_offset="0"/>
           </transform>
@@ -32,7 +32,7 @@
         <plot mode="TimeSeries" style="Lines">
          <range bottom="21.768126" top="22.395437" left="48.265130" right="51.387770"/>
          <limitY/>
-         <curve name="/planning/scenario_planning/lane_driving/motion_planning/obstacle_stop_planner/debug_values/data.3" color="#ff7f0e">
+         <curve name="/planning/scenario_planning/lane_driving/motion_planning/obstacle_stop_planner/debug/debug_values/data.3" color="#ff7f0e">
          <transform alias="dist" name="Scale/Offset">
            <options value_offset="0" value_scale="1.0" time_offset="0"/>
           </transform>
@@ -45,17 +45,17 @@
         <plot mode="TimeSeries" style="Lines">
          <range bottom="-0.045951" top="1.884001" left="45.299350" right="51.387770"/>
          <limitY/>
-         <curve name="/planning/scenario_planning/lane_driving/motion_planning/obstacle_stop_planner/debug_values/data.4" color="#f14cc1">
+         <curve name="/planning/scenario_planning/lane_driving/motion_planning/obstacle_stop_planner/debug/debug_values/data.4" color="#f14cc1">
          <transform alias="Current Velocity" name="Scale/Offset">
            <options value_offset="0" value_scale="1.0" time_offset="0"/>
           </transform>
          </curve>
-         <curve name="/planning/scenario_planning/lane_driving/motion_planning/obstacle_stop_planner/debug_values/data.8" color="#9467bd">
+         <curve name="/planning/scenario_planning/lane_driving/motion_planning/obstacle_stop_planner/debug/debug_values/data.8" color="#9467bd">
          <transform alias="Raw Upper Velocity" name="Scale/Offset">
            <options value_offset="0" value_scale="1.0" time_offset="0"/>
           </transform>
          </curve>
-         <curve name="/planning/scenario_planning/lane_driving/motion_planning/obstacle_stop_planner/debug_values/data.9" color="#17becf">
+         <curve name="/planning/scenario_planning/lane_driving/motion_planning/obstacle_stop_planner/debug/debug_values/data.9" color="#17becf">
          <transform alias="Upper Velocity" name="Scale/Offset">
            <options value_offset="0" value_scale="1.0" time_offset="0"/>
           </transform>
@@ -114,7 +114,7 @@
    <discard_large_arrays value="true"/>
    <max_array_size value="true"/>
    <selected_topics>
-    <topic name="/planning/scenario_planning/lane_driving/motion_planning/obstacle_stop_planner/debug_values"/>
+    <topic name="/planning/scenario_planning/lane_driving/motion_planning/obstacle_stop_planner/debug/debug_values"/>
     <topic name="/control/trajectory_follower/velocity_controller/debug_values"/>
    </selected_topics>
   </plugin>
