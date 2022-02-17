@@ -41,7 +41,7 @@ TEST(is_ahead_of, nominal)
 
 TEST(smoothDeceleration, calculateMaxSlowDownVelocity)
 {
-  using behavior_velocity_planner::planning_utils::calcMaxSlowDownVelocityFromDistanceToTarget;
+  using behavior_velocity_planner::planning_utils::calcDecelerationVelocityFromDistanceToTarget;
   const double current_accel = 1.0;
   const double current_velocity = 5.0;
   const double max_slow_down_jerk = -1.0;
@@ -51,7 +51,7 @@ TEST(smoothDeceleration, calculateMaxSlowDownVelocity)
     for (int i = -8; i <= 24; i += 8) {
       // arc length in path point
       const double l = i * 1.0;
-      const double v = calcMaxSlowDownVelocityFromDistanceToTarget(
+      const double v = calcDecelerationVelocityFromDistanceToTarget(
         max_slow_down_jerk, max_slow_down_accel, current_accel, current_velocity, l);
       // case 0 : behind ego
       if (i == -8) EXPECT_NEAR(v, 5.0, eps);
