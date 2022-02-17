@@ -113,8 +113,12 @@ private:
     const std::string & target_frame, const std::string & source_frame,
     const geometry_msgs::msg::TransformStamped::SharedPtr & transform_stamped_ptr);
 
-  bool validateTimeStampDifference(const rclcpp::Time & target_time, const rclcpp::Time & refarence_time, const double time_tolerance_sec);
-  bool validatePositionDifference(const geometry_msgs::msg::Point & target_point, const geometry_msgs::msg::Point & reference_point, const double distance_tolerance_m_);
+  bool validateTimeStampDifference(
+    const rclcpp::Time & target_time, const rclcpp::Time & refarence_time,
+    const double time_tolerance_sec);
+  bool validatePositionDifference(
+    const geometry_msgs::msg::Point & target_point,
+    const geometry_msgs::msg::Point & reference_point, const double distance_tolerance_m_);
 
   void timerDiagnostic();
 

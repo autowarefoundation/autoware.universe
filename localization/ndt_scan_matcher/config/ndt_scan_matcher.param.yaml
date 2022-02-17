@@ -29,7 +29,7 @@
 
     # The number of particles to estimate initial pose
     initial_estimate_particles_num: 100
-    
+
     # Tolerance of timestamp difference between initial_pose and sensor pointcloud. [sec]
     initial_pose_timeout_sec: 1.0
 
