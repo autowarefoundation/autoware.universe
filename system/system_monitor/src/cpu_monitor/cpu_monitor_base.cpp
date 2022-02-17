@@ -120,13 +120,16 @@ void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & st
   const auto t_start = SystemMonitorUtility::startMeasurement();
 
   tier4_external_api_msgs::msg::CpuUsage cpu_usage;
-  tier4_external_api_msgs::msg::CpuStatus STATUS;
+  // tier4_external_api_msgs::msg::CpuStatus STATUS;
+  using CpuStatus = tier4_external_api_msgs::msg::CpuStatus;
 
   if (!mpstat_exists_) {
     stat.summary(DiagStatus::ERROR, "mpstat error");
     stat.add(
       "mpstat", "Command 'mpstat' not found, but can be installed with: sudo apt install sysstat");
-    cpu_usage.all.status = STATUS.STALE;
+    // cpu_usage.all.status = STATUS.STALE;
+    cpu_usage.all.status = CpuStatus::STALE;
+    cpu_usage.cpus.clear();
     publishCpuUsage(cpu_usage);
     return;
   }
@@ -142,7 +145,9 @@ void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & st
     is_err >> os.rdbuf();
     stat.summary(DiagStatus::ERROR, "mpstat error");
     stat.add("mpstat", os.str().c_str());
-    cpu_usage.all.status = STATUS.STALE;
+    // cpu_usage.all.status = STATUS.STALE;
+    cpu_usage.all.status = CpuStatus::STALE;
+    cpu_usage.cpus.clear();
     publishCpuUsage(cpu_usage);
     return;
   }
@@ -173,7 +178,8 @@ void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & st
           const pt::ptree & cpu_load = child3.second;
           bool get_cpu_name = false;
 
-          tier4_external_api_msgs::msg::CpuStatus cpu_status;
+          // tier4_external_api_msgs::msg::CpuStatus cpu_status;
+          CpuStatus cpu_status;
 
           if (boost::optional<std::string> v = cpu_load.get_optional<std::string>("cpu")) {
             cpu_name = v.get();
@@ -234,9 +240,10 @@ void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & st
     stat.summary(DiagStatus::ERROR, "mpstat exception");
     stat.add("mpstat", e.what());
     std::fill(usage_check_cnt_.begin(), usage_check_cnt_.end(), 0);
-    cpu_usage.all.status = STATUS.STALE;
-    publishCpuUsage(cpu_usage);
+    // cpu_usage.all.status = STATUS.STALE;
+    cpu_usage.all.status = CpuStatus::STALE;
     cpu_usage.cpus.clear();
+    publishCpuUsage(cpu_usage);
     return;
   }
 
@@ -244,7 +251,6 @@ void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & st
 
   // Publish msg
   publishCpuUsage(cpu_usage);
-  cpu_usage.cpus.clear();
 
   // Measure elapsed time since start time and report
   SystemMonitorUtility::stopMeasurement(t_start, stat);
