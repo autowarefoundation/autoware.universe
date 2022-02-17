@@ -112,6 +112,6 @@ build/<package_name>/test_results/<package_name>/<executable_name>_interface_tes
 
 # Related issues
 
-- Issue #700: add smoke test
-- Issue #1224: Port other packages with smoke tests to use `autoware_testing`
-- Issue #951: Add infrastructure for component-interface test
+- [Issue #700: add smoke test](https://gitlab.com/autowarefoundation/autoware.auto/AutowareAuto/-/issues/700)
+- [Issue #1224: Port other packages with smoke tests to use `autoware_testing`](https://gitlab.com/autowarefoundation/autoware.auto/AutowareAuto/-/issues/1224)
+- [Issue #951: Add infrastructure for component-interface test](https://gitlab.com/autowarefoundation/autoware.auto/AutowareAuto/-/issues/951)
