@@ -406,7 +406,9 @@ TODO
 | max_right_shift_length                     | [m]    | double | Maximum shift length for right direction                                                                    | 5.0           |
 | max_left_shift_length                      | [m]    | double | Maximum shift length for left direction                                                                     | 5.0           |
 | road_shoulder_safety_margin                | [m]    | double | Prevents the generated path to come too close to the road shoulders.                                        | 0.5           |
+| avoidance_execution_lateral_threshold      | [m]    | double | The lateral distance deviation threshold between the current path and suggested avoidance point to execute avoidance. (\*2) | 0.5           |
 
+(\*2) If there are multiple vehicles in a row to be avoided, no new avoidance path will be generated unless their lateral margin difference exceeds this value.
 ### Speed limit modification
 
 | Name                                   | Unit   | Type   | Description                                                                 | Default value |
