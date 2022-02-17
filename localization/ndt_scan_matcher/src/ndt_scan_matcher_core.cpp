@@ -716,16 +716,16 @@ bool NDTScanMatcher::getTransform(
 }
 
 bool NDTScanMatcher::validateTimeStampDifference(
-  const rclcpp::Time & target_time, const rclcpp::Time & refarence_time,
+  const rclcpp::Time & target_time, const rclcpp::Time & reference_time,
   const double time_tolerance_sec)
 {
-  const double dt = std::abs((target_time - refarence_time).seconds());
+  const double dt = std::abs((target_time - reference_time).seconds());
   if (dt > time_tolerance_sec) {
     RCLCPP_WARN(
       get_logger(),
       "Validation error. The reference time is %lf[sec], but the target time is %lf[sec]. The "
       "difference is %lf[sec] (the tolerance is %lf[sec]).",
-      refarence_time.seconds(), target_time.seconds(), dt, time_tolerance_sec);
+      reference_time.seconds(), target_time.seconds(), dt, time_tolerance_sec);
     return false;
   }
   return true;
