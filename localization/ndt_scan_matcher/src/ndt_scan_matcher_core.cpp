@@ -104,7 +104,7 @@ NDTScanMatcher::NDTScanMatcher()
   map_frame_("map"),
   converged_param_transform_probability_(4.5),
   initial_estimate_particles_num_(100),
-  initial_pose_stamp_tolerance_sec_(1.0),
+  initial_pose_timeout_sec_(1.0),
   initial_pose_distance_tolerance_m_(10.0),
   inversion_vector_threshold_(-0.9),
   oscillation_threshold_(10)
@@ -171,8 +171,8 @@ NDTScanMatcher::NDTScanMatcher()
   initial_estimate_particles_num_ =
     this->declare_parameter("initial_estimate_particles_num", initial_estimate_particles_num_);
 
-  initial_pose_stamp_tolerance_sec_ = this->declare_parameter(
-    "initial_pose_stamp_tolerance_sec", initial_pose_stamp_tolerance_sec_);
+  initial_pose_timeout_sec_ = this->declare_parameter(
+    "initial_pose_timeout_sec", initial_pose_timeout_sec_);
 
   initial_pose_distance_tolerance_m_ = this->declare_parameter(
     "initial_pose_distance_tolerance_m", initial_pose_distance_tolerance_m_);
@@ -443,8 +443,8 @@ void NDTScanMatcher::callbackSensorPoints(
   popOldPose(initial_pose_msg_ptr_array_, sensor_ros_time);
 
   // check the time stamp
-  bool valid_old_timestamp = validateTimeStampDifference(initial_pose_old_msg_ptr->header.stamp, sensor_ros_time, initial_pose_stamp_tolerance_sec_);
-  bool valid_new_timestamp = validateTimeStampDifference(initial_pose_new_msg_ptr->header.stamp, sensor_ros_time, initial_pose_stamp_tolerance_sec_);
+  bool valid_old_timestamp = validateTimeStampDifference(initial_pose_old_msg_ptr->header.stamp, sensor_ros_time, initial_pose_timeout_sec_);
+  bool valid_new_timestamp = validateTimeStampDifference(initial_pose_new_msg_ptr->header.stamp, sensor_ros_time, initial_pose_timeout_sec_);
 
   // check the position jumping (ex. immediately after the initial pose estimation)
   bool valid_new_to_old_distance = validatePositionDifference(initial_pose_old_msg_ptr->pose.pose.position, initial_pose_new_msg_ptr->pose.pose.position, initial_pose_distance_tolerance_m_);
@@ -713,9 +713,9 @@ bool NDTScanMatcher::getTransform(
 
 bool NDTScanMatcher::validateTimeStampDifference(const rclcpp::Time & target_time, const rclcpp::Time & refarence_time, const double time_tolerance_sec)
 {
-  double time_stamp_diff_sec = std::abs((target_time - refarence_time).seconds());
-  if (time_stamp_diff_sec > time_tolerance_sec) {
-    RCLCPP_WARN(get_logger(), "Validation error. The reference time is %lf[sec], but the target time is %lf[sec]. The difference is %lf[sec] (the tolerance is %lf[sec]).", refarence_time.seconds(), target_time.seconds(), time_stamp_diff_sec, time_tolerance_sec);
+  const double dt = std::abs((target_time - refarence_time).seconds());
+  if (dt > time_tolerance_sec) {
+    RCLCPP_WARN(get_logger(), "Validation error. The reference time is %lf[sec], but the target time is %lf[sec]. The difference is %lf[sec] (the tolerance is %lf[sec]).", refarence_time.seconds(), target_time.seconds(), dt, time_tolerance_sec);
     return false;
   }
   return true;
@@ -723,9 +723,9 @@ bool NDTScanMatcher::validateTimeStampDifference(const rclcpp::Time & target_tim
 
 bool NDTScanMatcher::validatePositionDifference(const geometry_msgs::msg::Point & target_point, const geometry_msgs::msg::Point & reference_point, const double distance_tolerance_m_)
 {
-  double distance_m = norm(target_point, reference_point);
-  if (distance_m > distance_tolerance_m_) {
-    RCLCPP_WARN(get_logger(), "Validation error. The distance from reference position to target position is %lf[m] (the tolerance is %lf[m]).", distance_m, distance_tolerance_m_);
+  double distance = norm(target_point, reference_point);
+  if (distance > distance_tolerance_m_) {
+    RCLCPP_WARN(get_logger(), "Validation error. The distance from reference position to target position is %lf[m] (the tolerance is %lf[m]).", distance, distance_tolerance_m_);
     return false;
   }
   return true;
