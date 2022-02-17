@@ -81,8 +81,9 @@ private:
   rclcpp::Clock::SharedPtr clock_;
   //!< @brief time for ekf calculation callback
   rclcpp::TimerBase::SharedPtr timer_control_;
-  //!< @brief time buffer for updating ekf rate
-  std::deque<rclcpp::Time> time_buffer_;
+  //!< @brief last predict time
+  std::shared_ptr<const rclcpp::Time> last_predict_time_;
+
   //!< @brief timer to send transform
   rclcpp::TimerBase::SharedPtr timer_tf_;
   //!< @brief tf broadcaster
@@ -181,14 +182,7 @@ private:
   void initEKF();
 
   /**
-   * @brief calculate timer rate
-   * @param window_size calculate the average rate of this size
-   * @return average timer rate
-   */
-  double calcTimerRate(size_t window_size) const;
-
-  /**
-   * @brief update predict frequency because timer rate will be /clock rate when using /clock.
+   * @brief update predict frequency
    */
   void updatePredictFrequency();
 

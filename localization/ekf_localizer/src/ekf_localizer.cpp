@@ -113,35 +113,12 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
 }
 
 /*
- * calcTimerRate
- */
-double EKFLocalizer::calcTimerRate(size_t window_size) const
-{
-  if (time_buffer_.size() < window_size) {
-    return ekf_rate_;
-  }
-
-  const auto time_diff = (time_buffer_.back() - time_buffer_.front()).seconds();
-  const auto num_intervals = time_buffer_.size() - 1;
-
-  return static_cast<double>(num_intervals) / time_diff;
-}
-
-/*
  * updatePredictFrequency
  */
 void EKFLocalizer::updatePredictFrequency()
 {
-  size_t window_size = 10;
-  time_buffer_.push_back(clock_->now());
-  while (static_cast<int>(time_buffer_.size()) > window_size) {
-    time_buffer_.pop_front();
-  }
-
-  // Calc timer rate
-  double timer_rate = calcTimerRate(window_size);
-  if (timer_rate < ekf_rate_ * 0.99 || timer_rate > ekf_rate_ * 1.01) {
-    ekf_rate_ = timer_rate;
+  if (last_predict_time_) {
+    ekf_rate_ = 1.0 / (clock_->now() - *last_predict_time_).seconds();
     DEBUG_INFO(get_logger(), "[EKF] update ekf_rate_ to %f hz", ekf_rate_);
     ekf_dt_ = 1.0 / std::max(ekf_rate_, 0.1);
 
@@ -151,6 +128,7 @@ void EKFLocalizer::updatePredictFrequency()
     proc_cov_yaw_d_ = std::pow(proc_stddev_yaw_c_ * ekf_dt_, 2.0);
     proc_cov_yaw_bias_d_ = std::pow(proc_stddev_yaw_bias_c_ * ekf_dt_, 2.0);
   }
+  last_predict_time_ = std::make_shared<const rclcpp::Time>(clock_->now());
 }
 
 /*
