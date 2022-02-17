@@ -409,6 +409,7 @@ TODO
 | avoidance_execution_lateral_threshold      | [m]    | double | The lateral distance deviation threshold between the current path and suggested avoidance point to execute avoidance. (\*2) | 0.5           |
 
 (\*2) If there are multiple vehicles in a row to be avoided, no new avoidance path will be generated unless their lateral margin difference exceeds this value.
+
 ### Speed limit modification
 
 | Name                                   | Unit   | Type   | Description                                                                 | Default value |
