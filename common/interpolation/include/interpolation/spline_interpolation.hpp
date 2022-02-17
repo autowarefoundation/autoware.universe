@@ -71,7 +71,16 @@ public:
   void calcSplineCoefficients(
     const std::vector<double> & base_keys, const std::vector<double> & base_values);
 
+  //!< @brief get values of spline interpolation on designated sampling points.
+  //!< @details Assuming that query_keys are t vector for sampling, and interpolation is for x,
+  //            meaning that spline interpolation was applied to x(t),
+  //            return value will be x(t) vector
   std::vector<double> getSplineInterpolatedValues(const std::vector<double> & query_keys) const;
+
+  //!< @brief get 1st differential values of spline interpolation on designated sampling points.
+  //!< @details Assuming that query_keys are t vector for sampling, and interpolation is for x,
+  //            meaning that spline interpolation was applied to x(t),
+  //            return value will be dx/dt(t) vector
   std::vector<double> getSplineInterpolatedDiffValues(const std::vector<double> & query_keys) const;
 
 private:
