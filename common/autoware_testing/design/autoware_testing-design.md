@@ -41,7 +41,7 @@ Where
 
 `<executable_name>` - [required] tested node executable name.
 
-`<param_filename>` - [optional] param filename. Default value is `test.param.yaml`. Required mostly in situation where there are multiple smoke tests in a package and each requires different parameteres set.
+`<param_filename>` - [optional] param filename. Default value is `test.param.yaml`. Required mostly in situation where there are multiple smoke tests in a package and each requires different parameters set.
 
 `<arguments>` - [optional] arguments passed to executable. By default no arguments are passed.
 
@@ -87,7 +87,7 @@ Where
 
 `<topic_filename>` - [required] topic filename. Defines the input and output topics to be used by the interface tests.
 
-`<param_filename>` - [optional] param filename. Default value is `test.param.yaml`. Required mostly in situation where there are multiple interface tests in a package and each requires different parameteres set.
+`<param_filename>` - [optional] param filename. Default value is `test.param.yaml`. Required mostly in situation where there are multiple interface tests in a package and each requires different parameters set.
 
 `<arguments>` - [optional] arguments passed to executable. By default no arguments are passed.
 
