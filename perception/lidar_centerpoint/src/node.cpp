@@ -56,8 +56,6 @@ LidarCenterPointNode::LidarCenterPointNode(const rclcpp::NodeOptions & node_opti
     std::bind(&LidarCenterPointNode::pointCloudCallback, this, std::placeholders::_1));
   objects_pub_ = this->create_publisher<autoware_auto_perception_msgs::msg::DetectedObjects>(
     "~/output/objects", rclcpp::QoS{1});
-  pointcloud_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
-    "~/debug/pointcloud_densification", rclcpp::SensorDataQoS{}.keep_last(1));
 }
 
 void LidarCenterPointNode::pointCloudCallback(
@@ -65,9 +63,7 @@ void LidarCenterPointNode::pointCloudCallback(
 {
   const auto objects_sub_count =
     objects_pub_->get_subscription_count() + objects_pub_->get_intra_process_subscription_count();
-  const auto pointcloud_sub_count = pointcloud_pub_->get_subscription_count() +
-                                    pointcloud_pub_->get_intra_process_subscription_count();
-  if (objects_sub_count < 1 && pointcloud_sub_count < 1) {
+  if (objects_sub_count < 1) {
     return;
   }
 
@@ -92,10 +88,6 @@ void LidarCenterPointNode::pointCloudCallback(
 
   if (objects_sub_count > 0) {
     objects_pub_->publish(output_msg);
-  }
-  if (pointcloud_sub_count > 0) {
-    // TODO(yukke42): change to densification pointcloud for debugging
-    pointcloud_pub_->publish(*input_pointcloud_msg);
   }
 }
 
