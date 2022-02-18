@@ -27,13 +27,12 @@
 
 ## Assumptions / Known limits
 
-- [Assumption] The frame_id of input twist message must be base_link
+- [Assumption] The frame_id of input twist message must be base_link.
 
-- [Assumption] The covariance in the input messages must be properly assigned
+- [Assumption] The covariance in the input messages must be properly assigned.
 
-- [Assumption] The angular velocity is set to zero if both the longitudinal vehicle velocity and the angular velocity around the yaw axis are sufficiently small
-- This is because there was a bias in the angular velocity of the IMU, which sometimes caused a estimation that the vehicle was rotating even though it is actually stopped.
+- [Assumption] The angular velocity is set to zero if both the longitudinal vehicle velocity and the angular velocity around the yaw axis are sufficiently small. This is because there was a bias in the angular velocity of the IMU, which sometimes caused a estimation that the vehicle was rotating even though it is actually stopped.
 
-- [Limitation] The frequency of the output IMU message depends on the frequency of the input IMU message
+- [Limitation] The frequency of the output IMU message depends on the frequency of the input IMU message.
 
-- [Limitation] The variances of linear.y and linear.z are output message is assigned large values
+- [Limitation] We cannot produce reliable values for the lateral and vertical velocities and also for the angular velocity around pitch and roll axes. Therefore we assign large values to the corresponding elements in the output covariance matrix.
