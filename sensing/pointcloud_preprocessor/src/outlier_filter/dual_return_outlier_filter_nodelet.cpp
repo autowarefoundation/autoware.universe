@@ -374,7 +374,9 @@ void DualReturnOutlierFilterComponent::filter(
       } else {
         // Log the deleted azimuth and its distance for analysis
         float non_neg_azimuth = iter->azimuth;
-        while(non_neg_azimuth < 0.0f){non_neg_azimuth += 36000.0f;}
+        while (non_neg_azimuth < 0.0f) {
+          non_neg_azimuth += 36000.0f;
+        }
         switch (ROI_mode_) {
           case 2:  // base_link xyz-ROI
           {
@@ -394,12 +396,13 @@ void DualReturnOutlierFilterComponent::filter(
             break;
           }
           default: {
-            if(iter->distance < 15.0f)
-            {deleted_azimuths.push_back(non_neg_azimuth);}
+            if (iter->distance < 15.0f) {
+              deleted_azimuths.push_back(non_neg_azimuth);
+            }
             break;
           }
         }
-        
+
         // deleted_distances.push_back(iter->distance);
         noise_output->points.push_back(*iter);
       }
@@ -417,8 +420,10 @@ void DualReturnOutlierFilterComponent::filter(
         noise_frequency[i] = noise_frequency[i] + 1;
         current_deleted_index++;
       }
-      if(noise_frequency[i] >0){
-      frequency_image.at<uchar>(ring_id, i) = frequency_image.at<uchar>(ring_id, i) + noise_frequency[i];}
+      if (noise_frequency[i] > 0) {
+        frequency_image.at<uchar>(ring_id, i) =
+          frequency_image.at<uchar>(ring_id, i) + noise_frequency[i];
+      }
     }
     for (const auto & tmp_p : temp_segment.points) {
       pcl_output->points.push_back(tmp_p);
