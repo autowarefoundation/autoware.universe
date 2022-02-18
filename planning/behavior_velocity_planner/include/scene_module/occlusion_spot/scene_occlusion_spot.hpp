@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCENE_MODULE__OCCLUSION_SPOT__SCENE_OCCLUSION_SPOT_IN_PRIVATE_ROAD_HPP_
-#define SCENE_MODULE__OCCLUSION_SPOT__SCENE_OCCLUSION_SPOT_IN_PRIVATE_ROAD_HPP_
+#ifndef SCENE_MODULE__OCCLUSION_SPOT__SCENE_OCCLUSION_SPOT_HPP_
+#define SCENE_MODULE__OCCLUSION_SPOT__SCENE_OCCLUSION_SPOT_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 #include <scene_module/occlusion_spot/occlusion_spot_utils.hpp>
@@ -82,4 +82,4 @@ protected:
 };
 }  // namespace behavior_velocity_planner
 
-#endif  // SCENE_MODULE__OCCLUSION_SPOT__SCENE_OCCLUSION_SPOT_IN_PRIVATE_ROAD_HPP_
+#endif  // SCENE_MODULE__OCCLUSION_SPOT__SCENE_OCCLUSION_SPOT_HPP_

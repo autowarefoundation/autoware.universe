@@ -16,8 +16,7 @@
 #include <scene_module/occlusion_spot/geometry.hpp>
 #include <scene_module/occlusion_spot/occlusion_spot_utils.hpp>
 #include <scene_module/occlusion_spot/risk_predictive_braking.hpp>
-#include <scene_module/occlusion_spot/scene_occlusion_spot_in_private_road.hpp>
-#include <utilization/path_utilization.hpp>
+#include <scene_module/occlusion_spot/scene_occlusion_spot.hpp>
 #include <utilization/util.hpp>
 
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
