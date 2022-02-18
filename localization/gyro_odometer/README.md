@@ -29,11 +29,11 @@
 
 - [Assumption] The frame_id of input twist message must be base_link
 
-- [Assumption] The covariances in the input messages must be properly entered
+- [Assumption] The covariance in the input messages must be properly assigned
 
 - [Assumption] If both velocity and angular velocity are sufficiently small, the angular velocity is fixed at zero
 - This is because there was a bias in the angular velocity of the IMU, which sometimes caused a estimation that the vehicle was rotating even though it is actually stopped.
 
-- [Limitation] The cycle of the output messages depend on the cycle of the IMU message
+- [Limitation] The frequency of the output IMU message depends on the frequency of the input IMU message
 
 - [Limitation] The variances of linear.y and linear.z are output message is assigned large values
