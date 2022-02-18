@@ -142,8 +142,8 @@ double calcDecelerationVelocityFromDistanceToTarget(
   const double current_velocity, const double distance_to_target);
 
 double findReachTime(
-  const double j, const double a, const double v, const double d, const double min,
-  const double max);
+  const double jerk, const double accel, const double velocity, const double distance,
+  const double t_min, const double t_max);
 
 tier4_planning_msgs::msg::StopReason initializeStopReason(const std::string & stop_reason);
 

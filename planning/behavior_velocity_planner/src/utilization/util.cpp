@@ -246,12 +246,14 @@ double calcJudgeLineDistWithJerkLimit(
 
 double findReachTime(
   const double jerk, const double accel, const double velocity, const double distance,
-  const double min, const double max)
+  const double t_min, const double t_max)
 {
   const double j = jerk;
   const double a = accel;
   const double v = velocity;
   const double d = distance;
+  const double min = t_min;
+  const double max = t_max;
   auto f = [](const double t, const double j, const double a, const double v, const double d) {
     return j * t * t * t / 6.0 + a * t * t / 2.0 + v * t - d;
   };
