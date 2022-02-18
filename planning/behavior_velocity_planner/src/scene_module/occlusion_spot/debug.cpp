@@ -269,7 +269,7 @@ visualization_msgs::msg::MarkerArray OcclusionSpotInPublicModule::createDebugMar
 
   return debug_marker_array;
 }
-visualization_msgs::msg::MarkerArray OcclusionSpotInPrivateModule::createDebugMarkerArray()
+visualization_msgs::msg::MarkerArray OcclusionSpotModule::createDebugMarkerArray()
 {
   const auto current_time = this->clock_->now();
 

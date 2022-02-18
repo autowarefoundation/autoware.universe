@@ -37,7 +37,7 @@
 
 namespace behavior_velocity_planner
 {
-class OcclusionSpotInPrivateModule : public SceneModuleInterface
+class OcclusionSpotModule : public SceneModuleInterface
 {
   using PlannerParam = occlusion_spot_utils::PlannerParam;
 
@@ -45,7 +45,7 @@ public:
   struct DebugData
   {
     double z;
-    std::string road_type = "private";
+    std::string road_type = "general";
     std::vector<lanelet::BasicPolygon2d> detection_areas;
     std::vector<occlusion_spot_utils::PossibleCollisionInfo> possible_collisions;
     std::vector<geometry_msgs::msg::Point> occlusion_points;
@@ -53,7 +53,7 @@ public:
     PathWithLaneId interp_path;
   };
 
-  OcclusionSpotInPrivateModule(
+  OcclusionSpotModule(
     const int64_t module_id, std::shared_ptr<const PlannerData> planner_data,
     const PlannerParam & planner_param, const rclcpp::Logger logger,
     const rclcpp::Clock::SharedPtr clock,
