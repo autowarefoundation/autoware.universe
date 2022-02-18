@@ -35,4 +35,4 @@
 
 - [Limitation] The frequency of the output messages depends on the frequency of the input IMU message.
 
-- [Limitation] We cannot produce reliable values for the lateral and vertical velocities and also for the angular velocity around pitch and roll axes. Therefore we assign large values to the corresponding elements in the output covariance matrix.
+- [Limitation] We cannot produce reliable values for the lateral and vertical velocities. Therefore we assign large values to the corresponding elements in the output covariance matrix.
