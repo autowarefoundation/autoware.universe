@@ -27,7 +27,7 @@
 
 ## Assumptions / Known limits
 
-- [Assumption] The frame_id of input twist message must be base_link.
+- [Assumption] The frame_id of input twist message must be set to base_link.
 
 - [Assumption] The covariance in the input messages must be properly assigned.
 
