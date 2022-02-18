@@ -31,7 +31,7 @@
 
 - [Assumption] The covariance in the input messages must be properly assigned.
 
-- [Assumption] The angular velocity is set to zero if both the longitudinal vehicle velocity and the angular velocity around the yaw axis are sufficiently small. This is because there was a bias in the angular velocity of the IMU, which sometimes caused a estimation that the vehicle was rotating even though it is actually stopped.
+- [Assumption] The angular velocity is set to zero if both the longitudinal vehicle velocity and the angular velocity around the yaw axis are sufficiently small. This is for suppression of the IMU angular velocity bias. Without this process, we misestimate the vehicle status when stationary.
 
 - [Limitation] The frequency of the output IMU message depends on the frequency of the input IMU message.
 
