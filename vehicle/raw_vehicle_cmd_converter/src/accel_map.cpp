@@ -16,8 +16,18 @@
 
 #include <algorithm>
 #include <chrono>
+#include <iostream>
 #include <string>
 #include <vector>
+
+#define PRINT_VEC(v)           \
+  {                            \
+    std::cerr << #v << ": ";   \
+    for (const auto & p : v) { \
+      std::cerr << p << ", ";  \
+    }                          \
+    std::cerr << std::endl;    \
+  }
 
 using namespace std::literals::chrono_literals;
 
