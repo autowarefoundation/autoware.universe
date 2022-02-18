@@ -111,7 +111,7 @@ void DualReturnOutlierFilterComponent::filter(
   uint32_t vertical_bins = vertical_bins_;
   uint32_t horizontal_bins = 36;
   float max_azimuth = 36000.0f;
-  float min_azimuth = 0;
+  float min_azimuth = 0.0f;
   switch (ROI_mode_) {
     case 3: {
       max_azimuth = max_azimuth_;
@@ -353,10 +353,12 @@ void DualReturnOutlierFilterComponent::filter(
     if (input_ring.size() < 2) {
       continue;
     }
+    std::vector<float> deleted_azimuths;
     pcl::PointCloud<return_type_cloud::PointXYZIRADT> temp_segment;
     bool keep_next = false;
-    // uint ring_id = input_ring.points.front().ring;
+    uint16_t ring_id = input_ring.points.front().ring;
     for (auto iter = std::begin(input_ring) + 1; iter != std::end(input_ring) - 1; ++iter) {
+      // uint azimuth_id = static_cast<uint>(iter->azimuth);
       const float min_dist = std::min(iter->distance, (iter + 1)->distance);
       const float max_dist = std::max(iter->distance, (iter + 1)->distance);
       float azimuth_diff = (iter + 1)->azimuth - iter->azimuth;
@@ -371,10 +373,52 @@ void DualReturnOutlierFilterComponent::filter(
         // Analyse segment points here
       } else {
         // Log the deleted azimuth and its distance for analysis
-        // deleted_azimuths.push_back(iter->azimuth < 0.f ? 0.f : iter->azimuth);
+        float non_neg_azimuth = iter->azimuth;
+        while(non_neg_azimuth < 0.0f){non_neg_azimuth += 36000.0f;}
+        switch (ROI_mode_) {
+          case 2:  // base_link xyz-ROI
+          {
+            if (
+              iter->x > x_min_ && iter->x < x_max_ && iter->y > y_min_ && iter->y < y_max_ &&
+              iter->z > z_min_ && iter->z < z_max_) {
+              deleted_azimuths.push_back(non_neg_azimuth);
+            }
+            break;
+          }
+          case 3: {
+            if (
+              non_neg_azimuth > min_azimuth && non_neg_azimuth < max_azimuth &&
+              iter->distance < max_distance_) {
+              deleted_azimuths.push_back(non_neg_azimuth);
+            }
+            break;
+          }
+          default: {
+            if(iter->distance < 15.0f)
+            {deleted_azimuths.push_back(non_neg_azimuth);}
+            break;
+          }
+        }
+        
         // deleted_distances.push_back(iter->distance);
         noise_output->points.push_back(*iter);
       }
+    }
+    std::vector<uchar> noise_frequency(horizontal_bins, 0);
+    uint32_t current_deleted_index = 0;
+    // uint current_temp_segment_index = 0;
+    for (uint i = 0; i < noise_frequency.size() - 1; i++) {
+      if (deleted_azimuths.size() == 0) {
+        continue;
+      }
+      while ((uint)deleted_azimuths[current_deleted_index] <
+               ((i + static_cast<uint>(min_azimuth / horizontal_res) + 1) * horizontal_res) &&
+             current_deleted_index < (deleted_azimuths.size() - 1)) {
+        noise_frequency[i] = noise_frequency[i] + 1;
+        current_deleted_index++;
+      }
+      if(noise_frequency[i] >0){
+      frequency_image.at<uchar>(ring_id, i) = frequency_image.at<uchar>(ring_id, i) + noise_frequency[i];}
     }
     for (const auto & tmp_p : temp_segment.points) {
       pcl_output->points.push_back(tmp_p);
