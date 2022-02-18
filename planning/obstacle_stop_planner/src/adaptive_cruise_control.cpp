@@ -343,12 +343,12 @@ double AdaptiveCruiseController::calcTrajYaw(
   geometry_msgs::msg::Point next_point;
 
   // search next point for calculating yaw
-  double accumlated_length = 0.0;
+  double accumulated_length = 0.0;
   for (size_t i = nearest_idx + 1; i < trajectory.size(); i++) {
     next_point = trajectory.at(i).pose.position;
-    accumlated_length += tier4_autoware_utils::calcDistance2d(
+    accumulated_length += tier4_autoware_utils::calcDistance2d(
       trajectory.at(i - 1).pose.position, trajectory.at(i).pose.position);
-    if (accumlated_length > minimum_distance) break;
+    if (accumulated_length > minimum_distance) break;
   }
 
   const double diff_x = next_point.x - curr_point.x;
