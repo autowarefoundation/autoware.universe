@@ -17,7 +17,6 @@
 
 | Name                    | Type                                             | Description                     |
 | ----------------------- | ------------------------------------------------ | ------------------------------- |
-| `twist`                 | `geometry_msgs::msg::TwistStamped`               | estimated twist                 |
 | `twist_with_covariance` | `geometry_msgs::msg::TwistWithCovarianceStamped` | estimated twist with covariance |
 
 ## Parameters
@@ -28,4 +27,14 @@
 
 ## Assumptions / Known limits
 
-TBD.
+ - [Assumption] The frame_id of input twist message must be base_link
+
+ - [Assumption] The covariances in the input messages must be properly entered
+
+ - [Assumption] If both velocity and angular velocity are sufficiently small, the angular velocity is fixed at zero
+  - This is because there was a bias in the angular velocity of the IMU, which sometimes caused a estimation that the vehicle was rotating even though it is actually stopped.
+
+
+ - [Limitation] The cycle of the output messages depend on the cycle of the IMU message
+
+ - [Limitation] The variances of linear.y and linear.z are output message is assigned large values
