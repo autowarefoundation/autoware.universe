@@ -332,6 +332,38 @@ boost::optional<double> calcSignedArcLength(
 }
 
 /**
+ * @brief calcSignedArcLength from pose to pose
+ */
+template <class T>
+boost::optional<double> calcSignedArcLength(
+  const T & points, const geometry_msgs::msg::Pose & src_pose,
+  const geometry_msgs::msg::Pose & dst_pose,
+  const double max_src_dist = std::numeric_limits<double>::max(),
+  const double max_dst_dist = std::numeric_limits<double>::max(),
+  const double max_yaw = std::numeric_limits<double>::max())
+{
+  validateNonEmpty(points);
+
+  const auto src_seg_idx = findNearestSegmentIndex(points, src_pose, max_src_dist, max_yaw);
+  if (!src_seg_idx) {
+    return boost::none;
+  }
+
+  const auto dst_seg_idx = findNearestSegmentIndex(points, dst_pose, max_dst_dist, max_yaw);
+  if (!dst_seg_idx) {
+    return boost::none;
+  }
+
+  const double signed_length_on_traj = calcSignedArcLength(points, *src_seg_idx, dst_seg_idx);
+  const double signed_length_src_offset =
+    calcLongitudinalOffsetToSegment(points, *src_seg_idx, src_pose.position);
+  const double signed_length_dst_offset =
+    calcLongitudinalOffsetToSegment(points, dst_seg_idx, dst_pose.position);
+
+  return signed_length_on_traj - signed_length_src_offset + signed_length_dst_offset;
+}
+
+/**
  * @brief calcArcLength for the whole length
  */
 template <class T>
