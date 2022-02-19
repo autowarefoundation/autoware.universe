@@ -338,18 +338,17 @@ template <class T>
 boost::optional<double> calcSignedArcLength(
   const T & points, const geometry_msgs::msg::Pose & src_pose,
   const geometry_msgs::msg::Pose & dst_pose,
-  const double max_src_dist = std::numeric_limits<double>::max(),
-  const double max_dst_dist = std::numeric_limits<double>::max(),
+  const double max_dist = std::numeric_limits<double>::max(),
   const double max_yaw = std::numeric_limits<double>::max())
 {
   validateNonEmpty(points);
 
-  const auto src_seg_idx = findNearestSegmentIndex(points, src_pose, max_src_dist, max_yaw);
+  const auto src_seg_idx = findNearestSegmentIndex(points, src_pose, max_dist, max_yaw);
   if (!src_seg_idx) {
     return boost::none;
   }
 
-  const auto dst_seg_idx = findNearestSegmentIndex(points, dst_pose, max_dst_dist, max_yaw);
+  const auto dst_seg_idx = findNearestSegmentIndex(points, dst_pose, max_dist, max_yaw);
   if (!dst_seg_idx) {
     return boost::none;
   }
