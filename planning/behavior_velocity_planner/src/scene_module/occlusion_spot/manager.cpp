@@ -83,7 +83,7 @@ void OcclusionSpotModuleManager::launchNewModules(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
   if (path.points.empty()) return;
-  const int64_t module_id = static_cast<int64_t>(ModuleID::DEFAULT);
+  const int64_t module_id = static_cast<int64_t>(ModuleID::GENERAL);
   const int64_t public_road_module_id = static_cast<int64_t>(ModuleID::PUBLIC);
   // general
   if (!isModuleRegistered(module_id)) {

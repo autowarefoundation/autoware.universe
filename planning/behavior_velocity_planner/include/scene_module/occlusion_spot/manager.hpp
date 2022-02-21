@@ -45,7 +45,7 @@ public:
   const char * getModuleName() override { return "occlusion_spot"; }
 
 private:
-  enum class ModuleID { DEFAULT, PUBLIC };
+  enum class ModuleID { GENERAL, PUBLIC };
   using PlannerParam = occlusion_spot_utils::PlannerParam;
 
   PlannerParam planner_param_;
