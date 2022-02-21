@@ -1,7 +1,7 @@
 /**:
   ros__parameters:
     occlusion_spot:
-      method: "occupancy_grid"             # [-] candidate is "occupancy_grid" or "predicted_object"
+      method: "predicted_object"           # [-] candidate is "occupancy_grid" or "predicted_object"
       debug: false                         # [-] whether to publish debug markers. Note Default should be false for performance
       pedestrian_vel: 1.0                  # [m/s] assume pedestrian is dashing from occlusion at this velocity
       threshold:
