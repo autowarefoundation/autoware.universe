@@ -1697,8 +1697,7 @@ BoundsCandidates MPTOptimizer::getBoundsCandidates(
   }
 
   // if empty
-  // TODO(murooka) sometimes this condition realizes in odaiba
-  //               and if we use {1.0, -1.0}, MPT can be solved
+  // TODO(murooka) sometimes this condition realizes
   if (bounds_candidate.empty()) {
     RCLCPP_WARN_EXPRESSION(
       rclcpp::get_logger("getBoundsCandidate"), is_showing_debug_info_, "empty bounds candidate");

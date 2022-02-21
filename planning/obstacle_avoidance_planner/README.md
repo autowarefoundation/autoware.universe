@@ -49,7 +49,7 @@ group generateOptimizedTrajectory
       endif
     end group
 
-    :insertZeroVeloityOutsideDrivableArea;
+    :insertZeroVelocityOutsideDrivableArea;
 
     :publishDebugDataInOptimization;
   else (no)

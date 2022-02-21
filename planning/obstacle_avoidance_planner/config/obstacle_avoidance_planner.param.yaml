@@ -16,7 +16,7 @@
       # check if planned trajectory is outside drivable area
       drivability_check:
         # true: vehicle shape is considered as a set of circles
-        # false: vehicle shape is consideredas footprint (= rectangle)
+        # false: vehicle shape is considered as footprint (= rectangle)
         use_vehicle_circles: false
 
         # parameters only when use_vehicle_circles is true
@@ -75,7 +75,7 @@
     eb:
       common:
         num_joint_buffer_points: 3 # number of joint buffer points
-        num_offset_for_begin_idx: 2 # number of shifting points for beginning non-fix idxp
+        num_offset_for_begin_idx: 2 # number of shifting points for beginning non-fix idx
         delta_arc_length_for_eb: 0.6 # 1.0 # delta arc length when optimizing[m] When the value is around 1.0, overshoot at the corner happens.
         num_sampling_points_for_eb: 95 # number of optimizing points # must be longer than mpt points
 
