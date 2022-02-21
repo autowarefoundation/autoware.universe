@@ -185,7 +185,7 @@ bool generateStopLine(
 
   /* spline interpolation */
   autoware_auto_planning_msgs::msg::PathWithLaneId path_ip;
-  if (!splineInterpolate(target_path, interval, &path_ip, logger)) {
+  if (!interpolation::splineInterpolate(target_path, interval, &path_ip, logger)) {
     return false;
   }
 

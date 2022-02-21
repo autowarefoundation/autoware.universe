@@ -74,7 +74,7 @@ bool OcclusionSpotInPrivateModule::modifyPathVelocity(
   utils::clipPathByLength(*path, clipped_path, max_range);
   PathWithLaneId interp_path;
   //! never change this interpolation interval(will affect module accuracy)
-  splineInterpolate(clipped_path, 1.0, &interp_path, logger_);
+  interpolation::splineInterpolate(clipped_path, 1.0, &interp_path, logger_);
   debug_data_.interp_path = interp_path;
   int closest_idx = -1;
   if (!planning_utils::calcClosestIndex<PathWithLaneId>(

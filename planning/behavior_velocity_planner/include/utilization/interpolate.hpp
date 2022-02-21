@@ -25,12 +25,12 @@
 
 namespace behavior_velocity_planner
 {
+namespace interpolation
+{
 bool splineInterpolate(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & input, const double interval,
   autoware_auto_planning_msgs::msg::PathWithLaneId * output, const rclcpp::Logger logger);
 
-namespace interpolation
-{
 class LinearInterpolate
 {
 public:

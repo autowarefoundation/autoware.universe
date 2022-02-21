@@ -73,7 +73,7 @@ bool OcclusionSpotInPublicModule::modifyPathVelocity(
   PathWithLaneId clipped_path;
   utils::clipPathByLength(*path, clipped_path, param_.detection_area_length);
   PathWithLaneId interp_path;
-  splineInterpolate(clipped_path, 1.0, &interp_path, logger_);
+  interpolation::splineInterpolate(clipped_path, 1.0, &interp_path, logger_);
   int closest_idx = -1;
   if (!planning_utils::calcClosestIndex<PathWithLaneId>(
         interp_path, ego_pose, closest_idx, param_.dist_thr, param_.angle_thr)) {
