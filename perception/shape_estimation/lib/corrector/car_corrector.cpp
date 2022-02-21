@@ -22,4 +22,3 @@ bool CarCorrector::correct(
   }
   return correctVehicleBoundingBox(params_, shape, pose);
 }
-

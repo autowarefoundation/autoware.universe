@@ -39,8 +39,7 @@ constexpr float epsilon = 0.001;
 
 BoundingBoxShapeModel::BoundingBoxShapeModel() : ref_yaw_info_(boost::none) {}
 
-BoundingBoxShapeModel::BoundingBoxShapeModel(
-  const boost::optional<ReferenceYawInfo> & ref_yaw_info)
+BoundingBoxShapeModel::BoundingBoxShapeModel(const boost::optional<ReferenceYawInfo> & ref_yaw_info)
 : ref_yaw_info_(ref_yaw_info)
 {
 }
