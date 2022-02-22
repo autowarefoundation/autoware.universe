@@ -15,7 +15,6 @@
 #include "scene_module/no_stopping_area/scene_no_stopping_area.hpp"
 
 #include "utilization/arc_lane_util.hpp"
-#include "utilization/interpolate.hpp"
 #include "utilization/path_utilization.hpp"
 #include "utilization/util.hpp"
 
