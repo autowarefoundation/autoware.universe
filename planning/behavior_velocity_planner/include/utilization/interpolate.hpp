@@ -27,9 +27,6 @@ namespace behavior_velocity_planner
 {
 namespace interpolation
 {
-bool splineInterpolate(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & input, const double interval,
-  autoware_auto_planning_msgs::msg::PathWithLaneId * output, const rclcpp::Logger logger);
 
 class LinearInterpolate
 {
@@ -47,7 +44,6 @@ bool isIncrease(const std::vector<double> & x);
 bool isValidInput(
   const std::vector<double> & base_index, const std::vector<double> & base_value,
   const std::vector<double> & return_index);
-std::vector<double> calcEuclidDist(const std::vector<double> & x, const std::vector<double> & y);
 
 }  // namespace interpolation
 }  // namespace behavior_velocity_planner
