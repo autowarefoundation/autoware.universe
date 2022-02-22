@@ -21,6 +21,8 @@
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 
+#include <vector>
+
 namespace behavior_velocity_planner
 {
 bool splineInterpolate(
