@@ -187,9 +187,19 @@ void declareVehicleInfoParams(rclcpp::NodeOptions & node_options)
   node_options.append_parameter_override("vehicle_height", 1.5);
 }
 
-void testVehicleMotion(const std::string & vehicle_model_type)
+
+
+// Send a control command and run the simulation.
+// Then check if the vehicle is moving in the desired direction.
+class TestSimplePlanningSimulator : public ::testing::TestWithParam<std::string>
+{
+};
+
+TEST_P(TestSimplePlanningSimulator, TestIdealSteerVel)
 {
   rclcpp::init(0, nullptr);
+
+  const auto vehicle_model_type = GetParam();
 
   std::cout << "\n\n vehicle model = " << vehicle_model_type << std::endl << std::endl;
   rclcpp::NodeOptions node_options;
@@ -253,29 +263,14 @@ void testVehicleMotion(const std::string & vehicle_model_type)
   rclcpp::shutdown();
 }
 
-// Send a control command and run the simulation.
-// Then check if the vehicle is moving in the desired direction.
-TEST(TestSimplePlanningSimulator, TestIdealSteerVel)
-{
-  testVehicleMotion("IDEAL_STEER_VEL");
-}
-TEST(TestSimplePlanningSimulator, TestIdealSteerAcc)
-{
-  testVehicleMotion("IDEAL_STEER_ACC");
-}
-TEST(TestSimplePlanningSimulator, TestIdealSteerAccGeared)
-{
-  testVehicleMotion("IDEAL_STEER_ACC_GEARED");
-}
-TEST(TestSimplePlanningSimulator, TestDelaySteerVel)
-{
-  testVehicleMotion("DELAY_STEER_VEL");
-}
-TEST(TestSimplePlanningSimulator, TestDelaySteerAcc)
-{
-  testVehicleMotion("DELAY_STEER_ACC");
-}
-TEST(TestSimplePlanningSimulator, TestDelaySteerAccGeared)
-{
-  testVehicleMotion("DELAY_STEER_ACC_GEARED");
-}
+const std::string VEHICLE_MODEL_LIST[] = {
+  "IDEAL_STEER_VEL",
+  "IDEAL_STEER_ACC",
+  "IDEAL_STEER_ACC_GEARED",
+  "DELAY_STEER_VEL",
+  "DELAY_STEER_ACC",
+  "DELAY_STEER_ACC_GEARED",
+};
+
+INSTANTIATE_TEST_CASE_P(
+  TestForEachVehicleModel, TestSimplePlanningSimulator, ::testing::ValuesIn(VEHICLE_MODEL_LIST));
