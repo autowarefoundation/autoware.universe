@@ -83,8 +83,8 @@ void OcclusionSpotModuleManager::launchNewModules(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
   if (path.points.empty()) return;
-  const int64_t module_id = static_cast<int64_t>(ModuleID::GENERAL);
-  const int64_t public_road_module_id = static_cast<int64_t>(ModuleID::PUBLIC);
+  const int64_t module_id = static_cast<int64_t>(ModuleID::OCCUPANCY);
+  const int64_t public_road_module_id = static_cast<int64_t>(ModuleID::OBJECT);
   // general
   if (!isModuleRegistered(module_id)) {
     if (planner_param_.method == METHOD::OCCUPANCY_GRID) {
@@ -108,13 +108,7 @@ OcclusionSpotModuleManager::getModuleExpiredFunction(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
   return [path]([[maybe_unused]] const std::shared_ptr<SceneModuleInterface> & scene_module) {
-    // expire if no path points
-    if (path.points.empty()) return true;
-    // expire if there are path points
-    else if (path.points.size() > 0)
-      return false;
-    else
-      return true;
+    return false;
   };
 }
 }  // namespace behavior_velocity_planner

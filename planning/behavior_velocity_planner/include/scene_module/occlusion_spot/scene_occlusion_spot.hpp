@@ -45,7 +45,7 @@ public:
   struct DebugData
   {
     double z;
-    std::string road_type = "general";
+    std::string road_type = "occupancy";
     std::vector<lanelet::BasicPolygon2d> detection_areas;
     std::vector<occlusion_spot_utils::PossibleCollisionInfo> possible_collisions;
     std::vector<geometry_msgs::msg::Point> occlusion_points;

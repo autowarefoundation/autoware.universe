@@ -46,7 +46,6 @@ bool OcclusionSpotModule::modifyPathVelocity(
   [[maybe_unused]] tier4_planning_msgs::msg::StopReason * stop_reason)
 {
   debug_data_ = DebugData();
-  debug_data_.road_type = "general";
   if (path->points.size() < 2) {
     return true;
   }
