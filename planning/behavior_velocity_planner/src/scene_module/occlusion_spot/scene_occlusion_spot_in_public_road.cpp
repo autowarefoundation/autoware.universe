@@ -30,7 +30,6 @@
 namespace behavior_velocity_planner
 {
 using occlusion_spot_utils::PossibleCollisionInfo;
-using occlusion_spot_utils::ROAD_TYPE::PUBLIC;
 namespace utils = occlusion_spot_utils;
 
 OcclusionSpotInPublicModule::OcclusionSpotInPublicModule(

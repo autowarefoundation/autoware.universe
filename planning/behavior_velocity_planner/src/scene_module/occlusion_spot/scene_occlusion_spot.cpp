@@ -17,6 +17,7 @@
 #include <scene_module/occlusion_spot/occlusion_spot_utils.hpp>
 #include <scene_module/occlusion_spot/risk_predictive_braking.hpp>
 #include <scene_module/occlusion_spot/scene_occlusion_spot.hpp>
+#include <utilization/path_utilization.hpp>
 #include <utilization/util.hpp>
 
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
@@ -26,7 +27,6 @@
 
 namespace behavior_velocity_planner
 {
-using occlusion_spot_utils::ROAD_TYPE::PRIVATE;
 namespace bg = boost::geometry;
 namespace lg = lanelet::geometry;
 namespace utils = occlusion_spot_utils;
