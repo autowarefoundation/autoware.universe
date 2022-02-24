@@ -44,6 +44,7 @@ ament_auto_add_library(pointcloud_preprocessor_filter SHARED
   src/filter.cpp
   src/concatenate_data/concatenate_data_nodelet.cpp
   src/crop_box_filter/crop_box_filter_nodelet.cpp
+  src/crop_box_filter/vehicle_crop_box_filter_component.cpp
   src/downsample_filter/voxel_grid_downsample_filter_nodelet.cpp
   src/downsample_filter/random_downsample_filter_nodelet.cpp
   src/downsample_filter/approximate_downsample_filter_nodelet.cpp
@@ -82,6 +83,10 @@ rclcpp_components_register_node(pointcloud_preprocessor_filter
 rclcpp_components_register_node(pointcloud_preprocessor_filter
   PLUGIN "pointcloud_preprocessor::CropBoxFilterComponent"
   EXECUTABLE crop_box_filter_node)
+
+rclcpp_components_register_node(pointcloud_preprocessor_filter
+  PLUGIN "pointcloud_preprocessor::VehicleCropBoxFilterComponent"
+  EXECUTABLE vehicle_crop_box_filter_node)
 
 
 # ========== Down Sampler Filter ==========
