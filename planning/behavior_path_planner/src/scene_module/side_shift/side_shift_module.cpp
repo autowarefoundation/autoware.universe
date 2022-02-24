@@ -127,7 +127,7 @@ BT::NodeStatus SideShiftModule::updateState()
       const auto length = std::fabs(last_sp.get().length);
       const auto lateral_offset = std::fabs(lateral_offset_);
       offset_diff = lateral_offset - length;
-      if(!isAlmostZero(offset_diff)){
+      if (!isAlmostZero(offset_diff)) {
         lateral_offset_change_request_ = true;
       }
     }
