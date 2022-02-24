@@ -94,7 +94,7 @@
       option:
         steer_limit_constraint: true
         fix_points_around_ego: true
-        plan_from_ego: false
+        # plan_from_ego: false
         visualize_sampling_num: 1
         enable_manual_warm_start: true
         enable_warm_start: true # false
@@ -116,7 +116,7 @@
           l_inf_norm: true
           soft_constraint: true
           hard_constraint: false
-          two_step_soft_constraint: false
+          # two_step_soft_constraint: false
 
         vehicle_circles:
           use_manual_vehicle_circles: false
@@ -146,7 +146,6 @@
         yaw_error_rate_weight: 0.0 # weight for yaw error rate
         steer_input_weight: 10.0 # weight for steering input
         steer_rate_weight: 10.0 # weight for steering rate
-        steer_acc_weight: 0.0 # weight for steering acceleration
 
         obstacle_avoid_lat_error_weight: 3.0 # weight for lateral error
         obstacle_avoid_yaw_error_weight: 100.0 # weight for yaw error

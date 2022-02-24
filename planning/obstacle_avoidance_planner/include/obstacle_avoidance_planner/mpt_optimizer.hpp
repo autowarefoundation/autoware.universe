@@ -257,11 +257,7 @@ private:
     const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
     std::shared_ptr<DebugData> debug_data_ptr) const;
 
-  void addSteerWeightR(
-    std::vector<Eigen::Triplet<double>> & Rex_triplet_vec,
-    const std::vector<ReferencePoint> & ref_points) const;
-
-  void addSteerWeightF(Eigen::VectorXd & f) const;
+  void addSteerWeightR(std::vector<Eigen::Triplet<double>> & Rex_triplet_vec, const std::vector<ReferencePoint> & ref_points) const;
 
   boost::optional<Eigen::VectorXd> executeOptimization(
     const std::unique_ptr<Trajectories> & prev_trajs, const bool enable_avoidance,
@@ -298,10 +294,6 @@ private:
     const bool enable_avoidance, const MPTMatrix & mpt_mat,
     const std::vector<ReferencePoint> & ref_points,
     std::shared_ptr<DebugData> debug_data_ptr) const;
-
-  MPTMatrix translateMPTMatrix(
-    const MPTMatrix & mat, const std::vector<double> alpha_vec, const double offset,
-    const size_t D_x, const bool only_y = false) const;
 
 public:
   MPTOptimizer(

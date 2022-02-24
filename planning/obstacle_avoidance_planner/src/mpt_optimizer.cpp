@@ -139,37 +139,6 @@ void trimPoints(std::vector<T> & points)
   }
 }
 
-/*
-MPTOptimizer::MPTMatrix translateMPTMatrix(const MPTOptimizer::MPTMatrix & mpt_mat, const
-std::vector<ReferencePoint> ref_points, const double offset, const size_t D_x)
-{
-  const size_t T_rows = mpt_mat.B.rows();
-
-  // generate T_mat and T_vec to shift a vector
-  //   T_mat(X) + T_vec = T_mat * (Bex * U + Wex) + T_vec
-  //                    = T_mat * Bex U + T_mat * Wex + T_vec
-  Eigen::SparseMatrix<double> T_mat(T_rows, T_rows);
-  Eigen::VectorXd T_vec = Eigen::VectorXd::Zero(T_rows);
-  std::vector<Eigen::Triplet<double>> triplet_T;
-
-  for (size_t i = 0; i < ref_points.size(); ++i) {
-    const double alpha = ref_points.at(i).alpha;
-
-    triplet_T.push_back(Eigen::Triplet<double>(i * D_x, i * D_x, std::cos(alpha)));
-    triplet_T.push_back(Eigen::Triplet<double>(i * D_x, i * D_x + 1, offset * std::cos(alpha)));
-    triplet_T.push_back(Eigen::Triplet<double>(i * D_x + 1, i * D_x + 1, 1.0));
-
-    T_vec(i * D_x) = -offset * std::sin(alpha);
-  }
-  T_mat.setFromTriplets(triplet_T.begin(), triplet_T.end());
-
-  MPTOptimizer::MPTMatrix res_mpt_mat;
-  res_mpt_mat.B = T_mat * mpt_mat.B
-  res_mpt_mat.W = T_mat * mpt_mat.Wex + T_vec;
-  return res_mpt_mat;
-}
-*/
-
 std::vector<double> eigenVectorToStdVector(const Eigen::VectorXd & eigen_vec)
 {
   return {eigen_vec.data(), eigen_vec.data() + eigen_vec.rows()};
@@ -261,29 +230,25 @@ boost::optional<MPTOptimizer::MPTTrajs> MPTOptimizer::getModelPredictiveTrajecto
 
   std::vector<ReferencePoint> fixed_ref_points;
   std::vector<ReferencePoint> non_fixed_ref_points;
-  // bool fix = true;
   bool is_fixing_ref_points = true;
   for (size_t i = 0; i < full_ref_points.size(); ++i) {
     if (i == full_ref_points.size() - 1) {
-      if (full_ref_points.at(i).fix_kinematic_state) {
-      } else {
+      if (!full_ref_points.at(i).fix_kinematic_state) {
         is_fixing_ref_points = false;
       }
     } else if (
+               // fix first three points
       full_ref_points.at(i).fix_kinematic_state && full_ref_points.at(i + 1).fix_kinematic_state &&
       (i + 2 < full_ref_points.size() && full_ref_points.at(i + 2).fix_kinematic_state) &&
       (i + 3 < full_ref_points.size() && full_ref_points.at(i + 3).fix_kinematic_state)) {
-      // } else if (full_ref_points.at(i).fix_kinematic_state) {
     } else {
       is_fixing_ref_points = false;
     }
 
     if (is_fixing_ref_points) {
       fixed_ref_points.push_back(full_ref_points.at(i));
-      // RCLCPP_ERROR_STREAM(rclcpp::get_logger("fix"), i << " " << full_ref_points.at(i).s);
     } else {
       non_fixed_ref_points.push_back(full_ref_points.at(i));
-      // RCLCPP_ERROR_STREAM(rclcpp::get_logger("non_fix"), i << " " << full_ref_points.at(i).s);
     }
   }
 
@@ -603,15 +568,6 @@ MPTOptimizer::MPTMatrix MPTOptimizer::generateMPTMatrix(
   m.Bex = Bex;
   m.Wex = Wex;
 
-  /*
-  if (m.Bex.array().isNaN().any() || m.Wex.array().isNaN().any()) {
-    RCLCPP_WARN(
-      rclcpp::get_logger(__func__),
-      "[ObstacleAvoidance] MPT matrix includes NaN.");
-    return boost::none;
-  }
-  */
-
   debug_data_ptr->msg_stream << "        " << __func__ << ":= " << stop_watch_.toc(__func__)
                              << " [ms]\n";
   return m;
@@ -798,13 +754,6 @@ boost::optional<Eigen::VectorXd> MPTOptimizer::executeOptimization(
   prev_mat_n = H.rows();
   prev_mat_m = A.rows();
 
-  // osqp_solver_ptr_ = std::make_unique<autoware::common::osqp::OSQPInterface>(
-  //     P_csc, A_csc, f, lower_bound, upper_bound, 1.0e-3);
-  // osqp_solver_ptr_ = std::make_unique<autoware::common::osqp::OSQPInterface>(
-  //   obj_m.hessian, const_m.linear, obj_m.gradient, const_m.lower_bound, const_m.upper_bound,
-  //   1.0e-3);
-  // osqp_solver_ptr_->updateEpsRel(1.0e-3);
-
   debug_data_ptr->msg_stream << "          "
                              << "initOsqp"
                              << ":= " << stop_watch_.toc("initOsqp") << " [ms]\n";
@@ -891,8 +840,6 @@ MPTOptimizer::ObjectiveMatrix MPTOptimizer::getObjectiveMatrix(
   // Eigen::VectorXd f = ((sparse_T_mat * mpt_mat.Wex + T_vec).transpose() * QB).transpose();
   Eigen::VectorXd f = (sparse_T_mat * mpt_mat.Wex + T_vec).transpose() * QB;
 
-  // addSteerWeightF(f);
-
   const size_t N_avoid = mpt_param_.vehicle_circle_longitudinal_offsets.size();
   const size_t N_first_slack = [&]() -> size_t {
     if (mpt_param_.soft_constraint) {
@@ -919,15 +866,6 @@ MPTOptimizer::ObjectiveMatrix MPTOptimizer::getObjectiveMatrix(
 
   // extend f for slack variables
   Eigen::VectorXd full_f(D_v + N_ref * N_slack);
-  // full_f.segment(0, D_v) = f;
-  // full_f.segment(D_v, N_ref * N_first_slack) = mpt_param_.soft_avoidance_weight *
-  // Eigen::VectorXd::Ones(N_ref * N_first_slack); full_f.segment(D_v + N_ref * N_first_slack, N_ref
-  // * N_second_slack) = mpt_param_.soft_second_avoidance_weight * Eigen::VectorXd::Ones(N_ref
-  // * N_second_slack);
-
-  // full_f << f, mpt_param_.soft_avoidance_weight * Eigen::VectorXd::Ones(N_ref *
-  // N_first_slack), mpt_param_.soft_second_avoidance_weight * Eigen::VectorXd::Ones(N_ref *
-  // N_second_slack);
 
   full_f.segment(0, D_v) = f;
   if (N_first_slack > 0) {
@@ -941,7 +879,7 @@ MPTOptimizer::ObjectiveMatrix MPTOptimizer::getObjectiveMatrix(
 
   ObjectiveMatrix obj_matrix;
   obj_matrix.hessian = full_H;
-  obj_matrix.gradient = full_f;  // {full_f.data(), full_f.data() + full_f.rows()};
+  obj_matrix.gradient = full_f;
 
   debug_data_ptr->msg_stream << "          " << __func__ << ":= " << stop_watch_.toc(__func__)
                              << " [ms]\n";
@@ -1174,20 +1112,6 @@ std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> MPTOptimizer::get
   for (size_t i = 0; i < non_fixed_ref_points.size(); ++i) {
     lat_error_vec.push_back(Xex(i * N_kinematic_state));
     yaw_error_vec.push_back(Xex(i * N_kinematic_state + 1));
-
-    /*
-    if (non_fixed_ref_points.at(i).fix_kinematic_state) {
-      RCLCPP_ERROR_STREAM(
-        rclcpp::get_logger("non_fixed"), i << " " << lat_error_vec.back() << " "
-                                           << yaw_error_vec.back() << " "
-                                           <<
-    non_fixed_ref_points.at(i).fix_kinematic_state.get()(0) << " "
-                                           <<
-    non_fixed_ref_points.at(i).fix_kinematic_state.get()(1)); } else { RCLCPP_ERROR_STREAM(
-        rclcpp::get_logger("non_fixed"),
-        i << " " << lat_error_vec.back() << " " << yaw_error_vec.back());
-    }
-    */
   }
 
   // calculate trajectory from optimization result
@@ -1199,12 +1123,6 @@ std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> MPTOptimizer::get
                          : non_fixed_ref_points.at(i - fixed_ref_points.size());
     const double lat_error = lat_error_vec.at(i);
     const double yaw_error = yaw_error_vec.at(i);
-
-    /*
-    RCLCPP_ERROR_STREAM(
-      rclcpp::get_logger("full"),
-      i << " " << lat_error << " " << yaw_error << " " << ref_point.yaw);
-    */
 
     geometry_msgs::msg::Pose ref_pose;
     ref_pose.position = ref_point.p;
@@ -1279,18 +1197,7 @@ void MPTOptimizer::calcOrientation(std::vector<ReferencePoint> & ref_points) con
       continue;
     }
 
-    /*
-    if (i > 0) {
-      ref_points.at(i).yaw =
-        tf2::getYaw(geometry_utils::getQuaternionFromPoints(ref_points.at(i).p, ref_points.at(i -
-    1).p)); } else if (i == 0 && ref_points.size() > 1) { ref_points.at(i).yaw =
-        tf2::getYaw(geometry_utils::getQuaternionFromPoints(ref_points.at(i + 1).p,
-    ref_points.at(i).p));
-    }
-    */
-
     ref_points.at(i).yaw = yaw_angles.at(i);
-    // RCLCPP_ERROR_STREAM(rclcpp::get_logger("yaw"), i << " " << ref_points.at(i).yaw);
   }
 }
 
@@ -1308,7 +1215,7 @@ void MPTOptimizer::calcCurvature(std::vector<ReferencePoint> & ref_points) const
 {
   const size_t num_points = static_cast<int>(ref_points.size());
 
-  /* calculate curvature by circle fitting from three points */
+  // calculate curvature by circle fitting from three points
   size_t max_smoothing_num = static_cast<size_t>(std::floor(0.5 * (num_points - 1)));
   size_t L =
     std::min(static_cast<size_t>(mpt_param_.num_curvature_sampling_points), max_smoothing_num);
@@ -1319,7 +1226,7 @@ void MPTOptimizer::calcCurvature(std::vector<ReferencePoint> & ref_points) const
       ref_points.at(i).k = curvatures.at(i);
     }
   }
-  /* first and last curvature is copied from next value */
+  // first and last curvature is copied from next value
   for (size_t i = 0; i < std::min(L, num_points); ++i) {
     if (!ref_points.at(i).fix_kinematic_state) {
       ref_points.at(i).k = ref_points.at(std::min(L, num_points - 1)).k;
@@ -1398,69 +1305,6 @@ void MPTOptimizer::addSteerWeightR(
     Rex_triplet_vec.push_back(Eigen::Triplet<double>(i, i + 1, -mpt_param_.steer_rate_weight));
     Rex_triplet_vec.push_back(Eigen::Triplet<double>(i + 1, i + 1, mpt_param_.steer_rate_weight));
   }
-  /*
-  if (N > 1) {
-    // steer rate i = 0
-    R(0, 0) += mpt_param_.steer_rate_weight / (ctrl_period * ctrl_period);
-  }
-  */
-
-  /*
-  // add steering acceleration : weight for { (u(i+1) - 2*u(i) + u(i-1)) / dt^2 }^2
-  const double steer_acc_r = mpt_param_.steer_acc_weight / std::pow(DT, 4);
-  const double steer_acc_r_cp1 = mpt_param_.steer_acc_weight / (std::pow(DT, 3) * ctrl_period);
-  const double steer_acc_r_cp2 =
-    mpt_param_.steer_acc_weight / (std::pow(DT, 2) * std::pow(ctrl_period, 2));
-  const double steer_acc_r_cp4 = mpt_param_.steer_acc_weight / std::pow(ctrl_period, 4);
-  for (size_t i = 1; i < N - 1; ++i) {
-    R(i - 1, i - 1) += (steer_acc_r);
-    R(i - 1, i + 0) += (steer_acc_r * -2.0);
-    R(i - 1, i + 1) += (steer_acc_r);
-    R(i + 0, i - 1) += (steer_acc_r * -2.0);
-    R(i + 0, i + 0) += (steer_acc_r * 4.0);
-    R(i + 0, i + 1) += (steer_acc_r * -2.0);
-    R(i + 1, i - 1) += (steer_acc_r);
-    R(i + 1, i + 0) += (steer_acc_r * -2.0);
-    R(i + 1, i + 1) += (steer_acc_r);
-  }
-  if (N > 1) {
-    // steer acc i = 1
-    R(0, 0) += steer_acc_r * 1.0 + steer_acc_r_cp2 * 1.0 + steer_acc_r_cp1 * 2.0;
-    R(1, 0) += steer_acc_r * -1.0 + steer_acc_r_cp1 * -1.0;
-    R(0, 1) += steer_acc_r * -1.0 + steer_acc_r_cp1 * -1.0;
-    R(1, 1) += steer_acc_r * 1.0;
-    // steer acc i = 0
-    R(0, 0) += steer_acc_r_cp4 * 1.0;
-  }
-  */
-}
-
-void MPTOptimizer::addSteerWeightF(Eigen::VectorXd & f) const
-{
-  constexpr double DT = 0.1;
-  constexpr double ctrl_period = 0.03;
-  constexpr double raw_steer_cmd_prev = 0;
-  constexpr double raw_steer_cmd_pprev = 0;
-
-  if (f.rows() < 2) {
-    return;
-  }
-
-  // steer rate for i = 0
-  f(0) += -2.0 * mpt_param_.steer_rate_weight / (std::pow(DT, 2)) * 0.5;
-
-  // const double steer_acc_r = mpt_param_.weight_steer_acc / std::pow(DT, 4);
-  const double steer_acc_r_cp1 = mpt_param_.steer_acc_weight / (std::pow(DT, 3) * ctrl_period);
-  const double steer_acc_r_cp2 =
-    mpt_param_.steer_acc_weight / (std::pow(DT, 2) * std::pow(ctrl_period, 2));
-  const double steer_acc_r_cp4 = mpt_param_.steer_acc_weight / std::pow(ctrl_period, 4);
-
-  // steer acc  i = 0
-  f(0) += ((-2.0 * raw_steer_cmd_prev + raw_steer_cmd_pprev) * steer_acc_r_cp4) * 0.5;
-
-  // steer acc for i = 1
-  f(0) += (-2.0 * raw_steer_cmd_prev * (steer_acc_r_cp1 + steer_acc_r_cp2)) * 0.5;
-  f(1) += (2.0 * raw_steer_cmd_prev * steer_acc_r_cp1) * 0.5;
 }
 
 void MPTOptimizer::calcBounds(
@@ -1476,7 +1320,6 @@ void MPTOptimizer::calcBounds(
       enable_avoidance, convertRefPointsToPose(ref_point), maps, debug_data_ptr);
     sequential_bounds_candidates.push_back(bounds_candidates);
   }
-  // debug_data_ptr->sequential_bounds_candidates = sequential_bounds_candidates;
 
   // search continuous and widest bounds only for front point
   for (size_t i = 0; i < sequential_bounds_candidates.size(); ++i) {
@@ -1765,38 +1608,4 @@ boost::optional<double> MPTOptimizer::getClearance(
                             image_point.get().y))[static_cast<int>(image_point.get().x)] *
                           map_info.resolution;
   return clearance;
-}
-
-MPTOptimizer::MPTMatrix MPTOptimizer::translateMPTMatrix(
-  const MPTMatrix & mat, const std::vector<double> alpha_vec, const double offset, const size_t D_x,
-  const bool only_y) const
-{
-  // generate T_mat and T_vec to shift a vector
-  //   T_mat(X) + T_vec = T_mat * (Bex * U + Wex) + T_vec
-  //                    = T_mat * Bex U + T_mat * Wex + T_vec
-  const size_t N_ref = alpha_vec.size();
-
-  Eigen::SparseMatrix<double> T_mat(N_ref * (only_y ? 1 : D_x), N_ref * D_x);
-  std::vector<Eigen::Triplet<double>> T_triplet;
-  Eigen::VectorXd T_vec = Eigen::VectorXd::Zero(N_ref);
-
-  // calculate C mat and vec
-  for (size_t i = 0; i < N_ref; ++i) {
-    const double alpha = alpha_vec.at(i);
-    T_triplet.push_back(Eigen::Triplet<double>(i, i * D_x, 1.0 * std::cos(alpha)));
-    T_triplet.push_back(Eigen::Triplet<double>(i, i * D_x + 1, offset * std::cos(alpha)));
-    if (!only_y) {
-      T_triplet.push_back(Eigen::Triplet<double>(i * D_x + 1, i * D_x + 1, 1.0));
-    }
-
-    T_vec(i) = -offset * std::sin(alpha);
-  }
-  T_mat.setFromTriplets(T_triplet.begin(), T_triplet.end());
-
-  // calculate CB, and CW
-  MPTMatrix res_mat;
-  res_mat.Bex = T_mat * mat.Bex;
-  res_mat.Wex = T_mat * mat.Wex + T_vec;
-
-  return res_mat;
 }

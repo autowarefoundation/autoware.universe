@@ -328,7 +328,9 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
     mpt_param_ = MPTParam{};
 
     // option
-    mpt_param_.plan_from_ego = declare_parameter<bool>("mpt.option.plan_from_ego");
+    // TODO(murooka) implement plan_from_ego
+    mpt_param_.plan_from_ego = false;
+    // mpt_param_.plan_from_ego = declare_parameter<bool>("mpt.option.plan_from_ego");
     mpt_param_.steer_limit_constraint =
       declare_parameter<bool>("mpt.option.steer_limit_constraint");
     mpt_param_.fix_points_around_ego = declare_parameter<bool>("mpt.option.fix_points_around_ego");
@@ -357,8 +359,10 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
       declare_parameter<bool>("mpt.collision_free_constraints.option.soft_constraint");
     mpt_param_.hard_constraint =
       declare_parameter<bool>("mpt.collision_free_constraints.option.hard_constraint");
-    mpt_param_.two_step_soft_constraint =
-      declare_parameter<bool>("mpt.collision_free_constraints.option.two_step_soft_constraint");
+    // TODO(murooka) implement two-step soft constraint
+    mpt_param_.two_step_soft_constraint = false;
+    // mpt_param_.two_step_soft_constraint =
+    // declare_parameter<bool>("mpt.collision_free_constraints.option.two_step_soft_constraint");
 
     // vehicle_circles
     // NOTE: Vehicle shape for collision free constraints is considered as a set of circles
@@ -407,7 +411,6 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
       declare_parameter<double>("mpt.weight.yaw_error_rate_weight");
     mpt_param_.steer_input_weight = declare_parameter<double>("mpt.weight.steer_input_weight");
     mpt_param_.steer_rate_weight = declare_parameter<double>("mpt.weight.steer_rate_weight");
-    mpt_param_.steer_acc_weight = declare_parameter<double>("mpt.weight.steer_acc_weight");
 
     mpt_param_.obstacle_avoid_lat_error_weight =
       declare_parameter<double>("mpt.weight.obstacle_avoid_lat_error_weight");
@@ -593,7 +596,7 @@ rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::paramCallback
 
   {  // mpt param
     // option
-    updateParam<bool>(parameters, "mpt.option.plan_from_ego", mpt_param_.plan_from_ego);
+    // updateParam<bool>(parameters, "mpt.option.plan_from_ego", mpt_param_.plan_from_ego);
     updateParam<bool>(
       parameters, "mpt.option.steer_limit_constraint", mpt_param_.steer_limit_constraint);
     updateParam<bool>(
@@ -623,9 +626,9 @@ rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::paramCallback
     // collision_free_constraints
     updateParam<bool>(
       parameters, "mpt.collision_free_constraints.option.l_inf_norm", mpt_param_.l_inf_norm);
-    updateParam<bool>(
-      parameters, "mpt.collision_free_constraints.option.two_step_soft_constraint",
-      mpt_param_.two_step_soft_constraint);
+    // updateParam<bool>(
+    //   parameters, "mpt.collision_free_constraints.option.two_step_soft_constraint",
+    //   mpt_param_.two_step_soft_constraint);
     updateParam<bool>(
       parameters, "mpt.collision_free_constraints.option.soft_constraint",
       mpt_param_.soft_constraint);
@@ -688,7 +691,6 @@ rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::paramCallback
       parameters, "mpt.weight.yaw_error_rate_weight", mpt_param_.yaw_error_rate_weight);
     updateParam<double>(parameters, "mpt.weight.steer_input_weight", mpt_param_.steer_input_weight);
     updateParam<double>(parameters, "mpt.weight.steer_rate_weight", mpt_param_.steer_rate_weight);
-    updateParam<double>(parameters, "mpt.weight.steer_acc_weight", mpt_param_.steer_acc_weight);
 
     updateParam<double>(
       parameters, "mpt.weight.obstacle_avoid_lat_error_weight",

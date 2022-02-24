@@ -237,7 +237,6 @@ struct MPTParam
 
   double steer_input_weight;
   double steer_rate_weight;
-  double steer_acc_weight;
 
   double obstacle_avoid_lat_error_weight;
   double obstacle_avoid_yaw_error_weight;
