@@ -120,7 +120,21 @@ BT::NodeStatus SideShiftModule::updateState()
   // Never return the FAILURE. When the desired offset is zero and the vehicle is in the original
   // drivable area,this module can stop the computation and return SUCCESS.
 
-  const bool no_request = isAlmostZero(lateral_offset_);
+  const auto isShiftPointsAvailable = [this]() {
+    double offset_diff = lateral_offset_;
+    const auto last_sp = path_shifter_.getLastShiftPoint();
+    if (last_sp) {
+      const auto length = std::fabs(last_sp.get().length);
+      const auto lateral_offset = std::fabs(lateral_offset_);
+      offset_diff = lateral_offset - length;
+      if(!isAlmostZero(offset_diff)){
+        lateral_offset_change_request_ = true;
+      }
+    }
+    return isAlmostZero(offset_diff);
+  }();
+
+  const bool no_request = isShiftPointsAvailable;
 
   const auto no_shifted_plan = [&]() {
     if (prev_output_.shift_length.empty()) {
@@ -307,7 +321,7 @@ ShiftPoint SideShiftModule::calcShiftPoint() const
   const double dist_to_end = [&]() {
     const double shift_length = lateral_offset_ - getClosestShiftLength();
     const double jerk_shifting_distance = path_shifter_.calcLongitudinalDistFromJerk(
-      shift_length, p.shifting_lateral_jerk, std::min(ego_speed, p.min_shifting_speed));
+      shift_length, p.shifting_lateral_jerk, std::max(ego_speed, p.min_shifting_speed));
     const double shifting_distance = std::max(jerk_shifting_distance, p.min_shifting_distance);
     const double dist_to_end = dist_to_start + shifting_distance;
     RCLCPP_DEBUG(
@@ -360,16 +374,18 @@ void SideShiftModule::adjustDrivableArea(ShiftedPath * path) const
 PoseStamped SideShiftModule::getUnshiftedEgoPose(const ShiftedPath & prev_path) const
 {
   const auto ego_pose = getEgoPose();
+  if (prev_path.path.points.empty()) {
+    return ego_pose;
+  }
 
   // un-shifted fot current ideal pose
   const auto closest =
     tier4_autoware_utils::findNearestIndex(prev_path.path.points, ego_pose.pose.position);
 
-  PoseStamped unshifted_pose{};
-  unshifted_pose.header = ego_pose.header;
-  unshifted_pose.pose = prev_path.path.points.at(closest).point.pose;
+  PoseStamped unshifted_pose = ego_pose;
 
   util::shiftPose(&unshifted_pose.pose, -prev_path.shift_length.at(closest));
+  unshifted_pose.pose.orientation = ego_pose.pose.orientation;
 
   return unshifted_pose;
 }
