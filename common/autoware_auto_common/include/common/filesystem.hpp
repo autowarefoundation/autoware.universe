@@ -37,8 +37,8 @@
 // #endif
 //
 //---------------------------------------------------------------------------------------
-#ifndef GHC_FILESYSTEM_H
-#define GHC_FILESYSTEM_H
+#ifndef COMMON__FILESYSTEM_HPP_
+#define COMMON__FILESYSTEM_HPP_
 
 // #define BSD manifest constant only in
 // sys/param.h
@@ -5555,4 +5555,4 @@ GHC_INLINE recursive_directory_iterator end(const recursive_directory_iterator&)
 #undef GHC_INLINE
 #undef GHC_EXPAND_IMPL
 
-#endif  // GHC_FILESYSTEM_H
+#endif  // COMMON__FILESYSTEM_HPP_
