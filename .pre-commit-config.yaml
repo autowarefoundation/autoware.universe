@@ -35,7 +35,7 @@ repos:
       - id: yamllint
 
   - repo: https://github.com/tier4/pre-commit-hooks-ros
-    rev: ros-include-guard
+    rev: v0.5.0
     hooks:
       - id: prettier-package-xml
       - id: sort-package-xml
