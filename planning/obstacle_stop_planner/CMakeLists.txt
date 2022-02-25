@@ -42,6 +42,13 @@ rclcpp_components_register_node(obstacle_stop_planner
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
+  find_package(launch_testing_ament_cmake REQUIRED)
+  add_launch_test(test/test_obstacle_stop_planner_node.test.py)
+
+  install(DIRECTORY
+    test/config
+    DESTINATION share/${PROJECT_NAME}/
+  )
 endif()
 
 ament_auto_package(
@@ -49,3 +56,5 @@ ament_auto_package(
   config
   launch
 )
+
+

@@ -31,6 +31,9 @@
   <depend>vehicle_info_util</depend>
   <depend>visualization_msgs</depend>
 
+  <test_depend>launch</test_depend>
+  <test_depend>launch_ros</test_depend>
+  <test_depend>launch_testing</test_depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>
 
