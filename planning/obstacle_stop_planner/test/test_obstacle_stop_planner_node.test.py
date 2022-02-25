@@ -14,7 +14,7 @@
 
 import time
 import unittest
-
+import std_msgs.msg
 import autoware_simulation_msgs.msg
 import diagnostic_msgs.msg
 import launch
@@ -29,7 +29,7 @@ import rclpy
 
 def generate_test_description():
     
-    print("=========================================")
+    print("==================== launch test start =====================")
     obstacle_stop_planner_node = launch_ros.actions.Node(
         package='obstacle_stop_planner',
         executable='obstacle_stop_planner_node',
@@ -77,19 +77,45 @@ class TestObstacleStopPlannerLink(unittest.TestCase):
     
     def test_simple_calc(self):
         calc_result=5+5
-        #self.assertInStdout(calc_result)
-        print('===========================')
         self.assertEqual(10,calc_result) 
-        #return 0
 
     def test_simple_calc2(self):
-        calc_result=5+6
-
-        #self.assertInStdout(calc_result)
-        self.assertEqual(10,calc_result) 
-        #return 0
+        calc_result=5+5
+        self.assertEqual(10,calc_result)
     
+    def test_pubsub(self):
+        rx_data=[]
 
+        #publisher
+        pub = self.node.create_publisher(
+            std_msgs.msg.Int32,
+            'test_data',
+            10
+        )
+
+        #subscliber
+        sub = self.node.create_subscription(
+            std_msgs.msg.Int32,
+            'test_data',
+            lambda msg: rx_data.append(msg),
+            10
+        )
+
+        try:
+            end_time = time.time() + 10
+
+            tx_data=std_msgs.msg.Int32()
+            tx_data.data=10
+            pub.publish(tx_data)
+            #timeout 10[s]
+            while time.time() < end_time:
+                rclpy.spin_once(self.node, timeout_sec=0.1)
+                if len(rx_data)>0:
+                    break
+        finally:
+            self.node.destroy_subscription(sub)
+            self.node.destroy_publisher(pub)
+            self.assertEqual(tx_data.data,rx_data[0].data)
 
 
 @launch_testing.post_shutdown_test()
