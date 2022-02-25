@@ -1515,7 +1515,10 @@ std::vector<HADMapSegment> RouteHandler::createMapSegments(
 lanelet::ConstLanelets RouteHandler::getMainLanelets(
   const lanelet::ConstLanelets & path_lanelets) const
 {
-  auto lanelet_sequence = getLaneletSequence(path_lanelets.back());
+  const double backward_distance =
+    boost::geometry::length(path_lanelets.front().centerline().basicLineString());
+  const double epsilon = 0.01;
+  auto lanelet_sequence = getLaneletSequence(path_lanelets.back(), backward_distance + epsilon);
   lanelet::ConstLanelets main_lanelets;
   while (!lanelet_sequence.empty()) {
     main_lanelets.insert(main_lanelets.begin(), lanelet_sequence.begin(), lanelet_sequence.end());
