@@ -1,0 +1,12 @@
+<launch>
+  <arg name="input_topic_name" default="rectified/pointcloud_ex" />
+  <arg name="output_topic_name" default="blockage_diag/pointcloud" />
+
+  <arg name="input_frame" default="velodyne" />
+  <arg name="output_frame" default="velodyne" />
+
+  <node pkg="pointcloud_preprocessor" exec="blockage_diag_node" name="blockage_diag">
+    <remap from="input" to="$(var input_topic_name)" />
+    <remap from="output" to="$(var output_topic_name)" />
+  </node>
+</launch>
