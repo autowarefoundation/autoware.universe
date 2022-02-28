@@ -62,36 +62,36 @@ protected:
   rcl_interfaces::msg::SetParametersResult paramCallback(const std::vector<rclcpp::Parameter> & p);
   image_transport::Publisher lidar_depth_map_pub_;
   image_transport::Publisher blockage_mask_pub_;
-  rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr blockage_ratio_pub_;
-  rclcpp::Publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>::SharedPtr blockage_range_pub_;
+  rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr ground_blockage_ratio_pub_;
+  rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr sky_blockage_ratio_pub_;
 
 private:
   void onBlockageChecker(DiagnosticStatusWrapper & stat);
   void onSkyBlockageChecker(DiagnosticStatusWrapper & stat);
   Updater updater_{this};
   uint vertical_bins_;
-  float bound_left_;
-  float bound_right_;
+  float azimuth_bound_left_;
+  float azimuth_bound_right_;
   float max_distance_=200.0f;
   int ring_id_order_ = 1;
-  std::vector<double> angle_range_;
+  std::vector<double> angle_range_deg_;
   std::vector<double> distance_range_;
   float blockage_ratio_=0.0f;
   float blockage_posibility_ = 0.0f;
-  float ground_ring_id_ = 12;
+  uint horizontal_ring_id_ = 12;
   float ground_blockage_threshold_ = 0.1;
   float ground_blockage_ratio_ = -1.0f;
   float sky_blockage_threshold_ = 0.2f;
   float sky_blockage_ratio_ = -1.0f;
-  std::vector<float> ground_blockage_boundingbox_ = {0.0f, 0.0f, 0.0f, 0.0f}; // x1, y1, x2, y2 of blockage mask boundingbox
-  std::vector<float> sky_blockage_boundingbox_ = {0.0f, 0.0f, 0.0f, 0.0f};
-  uint erode_iterator_ = 5;
-  uint erode_kernel_ = 3;
+  std::vector<float> ground_blockage_range_deg_ = {0.0f, 0.0f}; 
+  std::vector<float> sky_blockage_range_deg_ = {0.0f, 0.0f};
+  uint erode_iterator_ = 20;
+  uint erode_kernel_ = 10;
   uint ground_blockage_count_ = 0;
   uint sky_blockage_count_ = 0;
   std::string lidar_model_ = "Pandar40P";
-
   float resolution_;
+
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   explicit BlockageDiagComponent(const rclcpp::NodeOptions & options);
