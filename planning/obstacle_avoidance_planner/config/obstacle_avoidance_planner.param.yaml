@@ -7,7 +7,7 @@
       is_publishing_object_clearance_map: false # publish clearance map as nav_msgs::OccupancyGrid
       is_publishing_area_with_objects: false # publish occupancy map as nav_msgs::OccupancyGrid
 
-      is_stopping_if_outside_drivable_area: true
+      is_stopping_if_outside_drivable_area: true # stop if the ego's footprint will be outside the drivable area
 
       # show
       is_showing_debug_info: false
@@ -34,8 +34,8 @@
 
       # other
       enable_avoidance: false # enable avoidance function
-      enable_pre_smoothing: true
-      skip_optimization: false
+      enable_pre_smoothing: true # enable EB
+      skip_optimization: false # skip MPT and EB
       reset_prev_optimization: false
 
     common:
@@ -148,8 +148,8 @@
         steer_rate_weight: 10.0 # weight for steering rate
 
         obstacle_avoid_lat_error_weight: 3.0 # weight for lateral error
-        obstacle_avoid_yaw_error_weight: 100.0 # weight for yaw error
-        obstacle_avoid_steer_input_weight: 10000.0 # weight for yaw error
+        obstacle_avoid_yaw_error_weight: 0.0 # weight for yaw error
+        obstacle_avoid_steer_input_weight: 1000.0 # weight for yaw error
         near_objects_length: 30.0 # weight for yaw error
 
         terminal_lat_error_weight: 100.0 # weight for lateral error at terminal point
@@ -159,5 +159,6 @@
 
     # replanning & trimming trajectory param outside algorithm
     replan:
-      min_ego_moving_dist_for_replan: 3.0 # minimum ego moving dist thres for replan [m]
-      min_delta_time_sec_for_replan: 1.0 # minimum delta time for replan [second]
+      max_path_shape_change_dist: 2.0 # threshold of path shape change from behavior path [m]
+      max_ego_moving_dist_for_replan: 3.0 # threshold of ego's moving distance for replan [m]
+      max_delta_time_sec_for_replan: 1.0 # threshold of delta time for replan [second]

@@ -48,6 +48,48 @@ size_t searchExtendedZeroVelocityIndex(
     fine_points, vel_points.at(zero_vel_idx).pose.position);
 }
 
+bool isPathShapeChanged(
+  const geometry_msgs::msg::Pose & ego_pose,
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
+  const std::unique_ptr<std::vector<autoware_auto_planning_msgs::msg::PathPoint>> &
+    prev_path_points,
+  const double max_path_shape_change_dist, const double delta_yaw_threshold)
+{
+  if (!prev_path_points) {
+    return false;
+  }
+
+  // truncate prev points from ego pose to fixed end points
+  const auto opt_prev_begin_idx = tier4_autoware_utils::findNearestIndex(
+    *prev_path_points, ego_pose, std::numeric_limits<double>::max(), delta_yaw_threshold);
+  const size_t prev_begin_idx = opt_prev_begin_idx ? *opt_prev_begin_idx : 0;
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> truncated_prev_points{
+    prev_path_points->begin() + prev_begin_idx, prev_path_points->end()};
+
+  // truncate points from ego pose to fixed end points
+  const auto opt_begin_idx = tier4_autoware_utils::findNearestIndex(
+    path_points, ego_pose, std::numeric_limits<double>::max(), delta_yaw_threshold);
+  const size_t begin_idx = opt_begin_idx ? *opt_begin_idx : 0;
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> truncated_points{
+    path_points.begin() + begin_idx, path_points.end()};
+
+  // guard for lateral offset
+  if (truncated_prev_points.size() < 2 || truncated_points.size() < 2) {
+    return false;
+  }
+
+  // calculate lateral deviations between truncated path_points and prev_path_points
+  for (const auto & prev_point : truncated_prev_points) {
+    const double dist =
+      tier4_autoware_utils::calcLateralOffset(truncated_points, prev_point.pose.position);
+    if (dist > max_path_shape_change_dist) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 bool isPathGoalChanged(
   const double current_vel,
   const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
@@ -431,10 +473,12 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
   }
 
   {  // replan
-    min_ego_moving_dist_for_replan_ =
-      declare_parameter<double>("replan.min_ego_moving_dist_for_replan");
-    min_delta_time_sec_for_replan_ =
-      declare_parameter<double>("replan.min_delta_time_sec_for_replan");
+    max_path_shape_change_dist_for_replan_ =
+      declare_parameter<double>("replan.max_path_shape_change_dist");
+    max_ego_moving_dist_for_replan_ =
+      declare_parameter<double>("replan.max_ego_moving_dist_for_replan");
+    max_delta_time_sec_for_replan_ =
+      declare_parameter<double>("replan.max_delta_time_sec_for_replan");
   }
 
   // TODO(murooka) tune this param when avoiding with obstacle_avoidance_planner
@@ -718,9 +762,11 @@ rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::paramCallback
 
   {  // replan
     updateParam<double>(
-      parameters, "replan.min_ego_moving_dist_for_replan", min_ego_moving_dist_for_replan_);
+      parameters, "replan.max_path_shape_change_dist", max_path_shape_change_dist_for_replan_);
     updateParam<double>(
-      parameters, "replan.min_delta_time_sec_for_replan", min_delta_time_sec_for_replan_);
+      parameters, "replan.max_ego_moving_dist_for_replan", max_ego_moving_dist_for_replan_);
+    updateParam<double>(
+      parameters, "replan.max_delta_time_sec_for_replan", max_delta_time_sec_for_replan_);
   }
 
   resetPlanning();
@@ -872,6 +918,14 @@ bool ObstacleAvoidancePlanner::checkReplan(
     return true;
   }
 
+  if (isPathShapeChanged(
+        current_ego_pose_, path_points, prev_path_points_ptr_,
+        max_path_shape_change_dist_for_replan_,
+        traj_param_.delta_yaw_threshold_for_closest_point)) {
+    RCLCPP_INFO(get_logger(), "Replan since path shape was changed.");
+    return true;
+  }
+
   if (isPathGoalChanged(current_twist_ptr_->twist.linear.x, path_points, prev_path_points_ptr_)) {
     RCLCPP_INFO(get_logger(), "Replan with resetting optimization since path goal was changed.");
     resetPrevOptimization();
@@ -881,7 +935,7 @@ bool ObstacleAvoidancePlanner::checkReplan(
   // For when ego pose is lost or new ego pose is designated in simulation
   const double delta_dist =
     tier4_autoware_utils::calcDistance2d(current_ego_pose_.position, prev_ego_pose_ptr_->position);
-  if (delta_dist > min_ego_moving_dist_for_replan_) {
+  if (delta_dist > max_ego_moving_dist_for_replan_) {
     RCLCPP_INFO(
       get_logger(),
       "Replan with resetting optimization since current ego pose is far from previous ego pose.");
@@ -900,7 +954,7 @@ bool ObstacleAvoidancePlanner::checkReplan(
   }
 
   const double delta_time_sec = (this->now() - *latest_replanned_time_ptr_).seconds();
-  if (delta_time_sec > min_delta_time_sec_for_replan_) {
+  if (delta_time_sec > max_delta_time_sec_for_replan_) {
     return true;
   }
   return false;

@@ -120,10 +120,10 @@ private:
   int vehicle_circle_radius_num_for_mpt_;
   double vehicle_circle_radius_ratio_for_mpt_;
 
-  // params outside logic
-  double min_ego_moving_dist_for_replan_;
-  double min_delta_time_sec_for_replan_;
-  double max_dist_for_extending_end_point_;
+  // params for replan
+  double max_path_shape_change_dist_for_replan_;
+  double max_ego_moving_dist_for_replan_;
+  double max_delta_time_sec_for_replan_;
 
   // logic
   std::unique_ptr<CostmapGenerator> costmap_generator_ptr_;
