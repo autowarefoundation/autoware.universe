@@ -30,8 +30,8 @@
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/search/pcl_search.h>
 
+#include <unordered_map>
 #include <vector>
-#include <unordered_map>  
 
 namespace pointcloud_preprocessor
 {
@@ -49,12 +49,11 @@ enum ReturnType : uint8_t {
   DUAL_ONLY,
 };
 
-std::unordered_map<std::string, uint8_t> roi_mode_map_ = 
-{
-  {"No_ROI",  0},
-  {"Dynamic_FreeSpace_ROI" , 1},
-  {"Fixed_xyz_ROI" , 2},
-  {"Fixed_azimuth_ROI" , 3},
+std::unordered_map<std::string, uint8_t> roi_mode_map_ = {
+  {"No_ROI", 0},
+  {"Dynamic_FreeSpace_ROI", 1},
+  {"Fixed_xyz_ROI", 2},
+  {"Fixed_azimuth_ROI", 3},
 };
 
 class DualReturnOutlierFilterComponent : public pointcloud_preprocessor::Filter
