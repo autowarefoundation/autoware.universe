@@ -237,7 +237,7 @@ boost::optional<MPTOptimizer::MPTTrajs> MPTOptimizer::getModelPredictiveTrajecto
         is_fixing_ref_points = false;
       }
     } else if (
-               // fix first three points
+      // fix first three points
       full_ref_points.at(i).fix_kinematic_state && full_ref_points.at(i + 1).fix_kinematic_state &&
       (i + 2 < full_ref_points.size() && full_ref_points.at(i + 2).fix_kinematic_state) &&
       (i + 3 < full_ref_points.size() && full_ref_points.at(i + 3).fix_kinematic_state)) {
@@ -286,7 +286,7 @@ boost::optional<MPTOptimizer::MPTTrajs> MPTOptimizer::getModelPredictiveTrajecto
 
 std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
   const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & smoothed_points,
-  [[maybe_unused]] const std::unique_ptr<Trajectories> & prev_trajs, const bool enable_avoidance,
+  const std::unique_ptr<Trajectories> & prev_trajs, const bool enable_avoidance,
   const CVMaps & maps, std::shared_ptr<DebugData> debug_data_ptr) const
 {
   stop_watch_.tic(__func__);
@@ -356,7 +356,7 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
 
     // set extra information (alpha and has_object_collision)
     // NOTE: This must be after bounds calculation.
-    calcExtraPoints(ref_points);
+    calcExtraPoints(ref_points, prev_trajs);
 
     const double ref_length =
       traj_param_.num_sampling_points * mpt_param_.delta_arc_length_for_mpt_points;
@@ -1250,7 +1250,8 @@ void MPTOptimizer::calcArcLength(std::vector<ReferencePoint> & ref_points) const
   }
 }
 
-void MPTOptimizer::calcExtraPoints(std::vector<ReferencePoint> & ref_points) const
+void MPTOptimizer::calcExtraPoints(
+  std::vector<ReferencePoint> & ref_points, const std::unique_ptr<Trajectories> & prev_trajs) const
 {
   for (size_t i = 0; i < ref_points.size(); ++i) {
     // alpha
@@ -1285,6 +1286,20 @@ void MPTOptimizer::calcExtraPoints(std::vector<ReferencePoint> & ref_points) con
       }
       return false;
     }();
+
+    // The point are considered to be near the object if nearest previous ref point is near the
+    // object.
+    if (prev_trajs && !prev_trajs->mpt_ref_points.empty()) {
+      const auto & prev_ref_points = prev_trajs->mpt_ref_points;
+
+      const size_t prev_idx =
+        tier4_autoware_utils::findNearestIndex(prev_ref_points, ref_points.at(i).p);
+      const double dist_to_nearest_prev_ref =
+        tier4_autoware_utils::calcDistance2d(prev_ref_points.at(prev_idx), ref_points.at(i));
+      if (dist_to_nearest_prev_ref < 1.0 && prev_ref_points.at(prev_idx).near_objects) {
+        ref_points.at(i).near_objects = true;
+      }
+    }
   }
 }
 

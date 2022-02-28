@@ -773,11 +773,11 @@ void ObstacleAvoidancePlanner::resetPrevOptimization()
 }
 
 void ObstacleAvoidancePlanner::pathCallback(
-  const autoware_auto_planning_msgs::msg::Path::SharedPtr path)
+  const autoware_auto_planning_msgs::msg::Path::SharedPtr path_ptr)
 {
   stop_watch_.tic(__func__);
 
-  if (path->points.empty() || path->drivable_area.data.empty() || !current_twist_ptr_) {
+  if (path_ptr->points.empty() || path_ptr->drivable_area.data.empty() || !current_twist_ptr_) {
     return;
   }
 
@@ -788,18 +788,18 @@ void ObstacleAvoidancePlanner::pathCallback(
     mpt_param_.vehicle_circle_radius, mpt_param_.vehicle_circle_longitudinal_offsets);
 
   // generate optimized trajectory
-  const auto optimized_traj_points = generateOptimizedTrajectory(*path);
+  const auto optimized_traj_points = generateOptimizedTrajectory(*path_ptr);
 
   // generate post processed trajectory
   const auto post_processed_traj_points =
-    generatePostProcessedTrajectory(path->points, optimized_traj_points);
+    generatePostProcessedTrajectory(path_ptr->points, optimized_traj_points);
 
   // convert to output msg type
   auto output_traj_msg = tier4_autoware_utils::convertToTrajectory(post_processed_traj_points);
-  output_traj_msg.header = path->header;
+  output_traj_msg.header = path_ptr->header;
 
   // publish debug data
-  publishDebugDataInMain(*path);
+  publishDebugDataInMain(*path_ptr);
 
   {  // print and publish debug msg
     debug_data_ptr_->msg_stream << __func__ << ":= " << stop_watch_.toc(__func__) << " [ms]\n"
@@ -812,7 +812,7 @@ void ObstacleAvoidancePlanner::pathCallback(
 
   // make previous variables
   prev_path_points_ptr_ =
-    std::make_unique<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(path->points);
+    std::make_unique<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(path_ptr->points);
   prev_ego_pose_ptr_ = std::make_unique<geometry_msgs::msg::Pose>(current_ego_pose_);
 
   traj_pub_->publish(output_traj_msg);
@@ -1046,16 +1046,6 @@ void ObstacleAvoidancePlanner::publishDebugDataInOptimization(
     auto debug_eb_traj = tier4_autoware_utils::convertToTrajectory(debug_data_ptr_->eb_traj);
     debug_eb_traj.header = path.header;
     debug_eb_traj_pub_->publish(debug_eb_traj);
-
-    auto debug_extended_fixed_traj =
-      tier4_autoware_utils::convertToTrajectory(debug_data_ptr_->extended_fixed_traj);
-    debug_extended_fixed_traj.header = path.header;
-    debug_extended_fixed_traj_pub_->publish(debug_extended_fixed_traj);
-
-    auto debug_extended_non_fixed_traj =
-      tier4_autoware_utils::convertToTrajectory(debug_data_ptr_->extended_non_fixed_traj);
-    debug_extended_non_fixed_traj.header = path.header;
-    debug_extended_non_fixed_traj_pub_->publish(debug_extended_non_fixed_traj);
 
     auto debug_mpt_fixed_traj =
       tier4_autoware_utils::convertToTrajectory(debug_data_ptr_->mpt_fixed_traj);
@@ -1324,6 +1314,18 @@ void ObstacleAvoidancePlanner::publishDebugDataInMain(
   const autoware_auto_planning_msgs::msg::Path & path) const
 {
   stop_watch_.tic(__func__);
+
+  {  // publish trajectories
+    auto debug_extended_fixed_traj =
+      tier4_autoware_utils::convertToTrajectory(debug_data_ptr_->extended_fixed_traj);
+    debug_extended_fixed_traj.header = path.header;
+    debug_extended_fixed_traj_pub_->publish(debug_extended_fixed_traj);
+
+    auto debug_extended_non_fixed_traj =
+      tier4_autoware_utils::convertToTrajectory(debug_data_ptr_->extended_non_fixed_traj);
+    debug_extended_non_fixed_traj.header = path.header;
+    debug_extended_non_fixed_traj_pub_->publish(debug_extended_non_fixed_traj);
+  }
 
   {  // publish clearance map
     stop_watch_.tic("publishClearanceMap");

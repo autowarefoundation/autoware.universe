@@ -14,7 +14,6 @@
 #include "obstacle_avoidance_planner/process_cv.hpp"
 
 #include "obstacle_avoidance_planner/eb_path_optimizer.hpp"
-#include "obstacle_avoidance_planner/util.hpp"
 
 #include <opencv2/core.hpp>
 #include <opencv2/opencv.hpp>

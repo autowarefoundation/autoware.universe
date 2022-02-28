@@ -241,7 +241,9 @@ private:
 
   void calcArcLength(std::vector<ReferencePoint> & ref_points) const;
 
-  void calcExtraPoints(std::vector<ReferencePoint> & ref_points) const;
+  void calcExtraPoints(
+    std::vector<ReferencePoint> & ref_points,
+    const std::unique_ptr<Trajectories> & prev_trajs) const;
 
   /*
    * predict equation: Xec = Aex * x0 + Bex * Uex + Wex
@@ -257,7 +259,9 @@ private:
     const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
     std::shared_ptr<DebugData> debug_data_ptr) const;
 
-  void addSteerWeightR(std::vector<Eigen::Triplet<double>> & Rex_triplet_vec, const std::vector<ReferencePoint> & ref_points) const;
+  void addSteerWeightR(
+    std::vector<Eigen::Triplet<double>> & Rex_triplet_vec,
+    const std::vector<ReferencePoint> & ref_points) const;
 
   boost::optional<Eigen::VectorXd> executeOptimization(
     const std::unique_ptr<Trajectories> & prev_trajs, const bool enable_avoidance,
