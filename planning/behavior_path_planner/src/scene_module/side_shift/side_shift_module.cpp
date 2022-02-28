@@ -120,7 +120,7 @@ BT::NodeStatus SideShiftModule::updateState()
   // Never return the FAILURE. When the desired offset is zero and the vehicle is in the original
   // drivable area,this module can stop the computation and return SUCCESS.
 
-  const auto isShiftPointsAvailable = [this]() {
+  const auto isOffsetAlmostZero = [this]() noexcept {
     double offset_diff = lateral_offset_;
     const auto last_sp = path_shifter_.getLastShiftPoint();
     if (last_sp) {
@@ -134,7 +134,7 @@ BT::NodeStatus SideShiftModule::updateState()
     return isAlmostZero(offset_diff);
   }();
 
-  const bool no_request = isShiftPointsAvailable;
+  const bool no_request = isOffsetAlmostZero;
 
   const auto no_shifted_plan = [&]() {
     if (prev_output_.shift_length.empty()) {
@@ -353,10 +353,16 @@ double SideShiftModule::getClosestShiftLength() const
 
 void SideShiftModule::adjustDrivableArea(ShiftedPath * path) const
 {
-  const auto itr = std::minmax_element(path->shift_length.begin(), path->shift_length.end());
+  // extend drivable area relative to ego pose.
+  const auto ego_current_pose = getEgoPose();
+  const auto closest =
+    tier4_autoware_utils::findNearestIndex(path->path.points, ego_current_pose.pose.position);
 
-  const double threshold = 0.1;
-  const double margin = 0.5;
+  const auto itr =
+    std::minmax_element(path->shift_length.begin() + closest, path->shift_length.end());
+
+  constexpr double threshold = 0.1;
+  constexpr double margin = 0.5;
   const double right_offset = std::min(*itr.first - (*itr.first < -threshold ? margin : 0.0), 0.0);
   const double left_offset = std::max(*itr.second + (*itr.first > threshold ? margin : 0.0), 0.0);
 
