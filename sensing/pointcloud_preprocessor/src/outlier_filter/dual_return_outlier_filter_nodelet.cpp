@@ -40,8 +40,8 @@ DualReturnOutlierFilterComponent::DualReturnOutlierFilterComponent(
     y_min_ = static_cast<float>(declare_parameter("y_min", -2.0));
     z_max_ = static_cast<float>(declare_parameter("z_max", 10.0));
     z_min_ = static_cast<float>(declare_parameter("z_min", 0.0));
-    min_azimuth_ = static_cast<float>(declare_parameter("min_azimuth", 13500.0));
-    max_azimuth_ = static_cast<float>(declare_parameter("max_azimuth", 22500.0));
+    min_azimuth_deg_ = static_cast<float>(declare_parameter("min_azimuth_deg", 135.0));
+    max_azimuth_deg_ = static_cast<float>(declare_parameter("max_azimuth_deg", 225.0));
     max_distance_ = static_cast<float>(declare_parameter("max_distance", 12.0));
     vertical_bins_ = static_cast<int>(declare_parameter("vertical_bins", 128));
     max_azimuth_diff_ = static_cast<float>(declare_parameter("max_azimuth_diff", 50.0));
@@ -53,7 +53,7 @@ DualReturnOutlierFilterComponent::DualReturnOutlierFilterComponent(
     weak_first_local_noise_threshold_ =
       static_cast<int>(declare_parameter("weak_first_local_noise_threshold", 10));
     visibility_threshold_ = static_cast<float>(declare_parameter("visibility_threshold", 0.5));
-    ROI_mode_ = static_cast<uchar>(declare_parameter("ROI_mode", 0));
+    roi_mode_ = static_cast<std::string>(declare_parameter("roi_mode", "Fixed_xyz_ROI"));
     weak_first_segment_check_size_h_ =
       static_cast<uint>(declare_parameter("weak_first_segment_check_size_h", 30));
     weak_first_segment_check_size_v_ =
@@ -112,10 +112,10 @@ void DualReturnOutlierFilterComponent::filter(
   uint32_t horizontal_bins = 36;
   float max_azimuth = 36000.0f;
   float min_azimuth = 0.0f;
-  switch (ROI_mode_) {
+  switch (roi_mode_map_[roi_mode_]) {
     case 3: {
-      max_azimuth = max_azimuth_;
-      min_azimuth = min_azimuth_;
+      max_azimuth = max_azimuth_deg_ * 100.0;
+      min_azimuth = min_azimuth_deg_ * 100.0;
       break;
     }
 
@@ -144,21 +144,21 @@ void DualReturnOutlierFilterComponent::filter(
 
   const uint ring_number = vertical_bins;
   const uint azimuth_steps = 36000;
-  float * pcl_input_distance_array = new float[ring_number * azimuth_steps];
-  float * pcl_weak_first_distance_array = new float[ring_number * azimuth_steps];
+  float * strong_return_distance_array = new float[ring_number * azimuth_steps];
+  float * weak_first_return_distance_array = new float[ring_number * azimuth_steps];
   for (uint i = 0; i < ring_number * azimuth_steps; i++) {
-    pcl_input_distance_array[i] = -1.0f;
-    pcl_weak_first_distance_array[i] = -1.0f;
+    strong_return_distance_array[i] = -1.0f;
+    weak_first_return_distance_array[i] = -1.0f;
   }
   // Split into 36 x 10 degree bins x 40 lines (TODO: change to dynamic)
   for (const auto & p : pcl_input->points) {
     uint azimuth_ind = static_cast<uint>(p.azimuth < 0.0f ? p.azimuth + 36000.0f : p.azimuth);
     if (p.return_type == ReturnType::DUAL_WEAK_FIRST) {
       weak_first_pcl_input_ring_array.at(p.ring).push_back(p);
-      pcl_weak_first_distance_array[p.ring * azimuth_steps + azimuth_ind] = p.distance;
+      weak_first_return_distance_array[p.ring * azimuth_steps + azimuth_ind] = p.distance;
     } else {
       pcl_input_ring_array.at(p.ring).push_back(p);
-      pcl_input_distance_array[p.ring * azimuth_steps + azimuth_ind] = p.distance;
+      strong_return_distance_array[p.ring * azimuth_steps + azimuth_ind] = p.distance;
     }
   }
 
@@ -196,11 +196,11 @@ void DualReturnOutlierFilterComponent::filter(
 
       for (auto i = weak_first_ring_min; i < weak_first_ring_max; i++) {
         for (auto j = weak_first_w_min; j < weak_first_w_max; j++) {
-          if (pcl_weak_first_distance_array[i * azimuth_steps + j] > 0.0) {
+          if (weak_first_return_distance_array[i * azimuth_steps + j] > 0.0) {
             const float min_dist =
-              std::min(iter->distance, pcl_weak_first_distance_array[i * azimuth_steps + j]);
+              std::min(iter->distance, weak_first_return_distance_array[i * azimuth_steps + j]);
             const float max_dist =
-              std::max(iter->distance, pcl_weak_first_distance_array[i * azimuth_steps + j]);
+              std::max(iter->distance, weak_first_return_distance_array[i * azimuth_steps + j]);
             float azimuth_diff = (iter + 1)->azimuth - iter->azimuth;
             azimuth_diff = azimuth_diff < 0.f ? azimuth_diff + 36000.f : azimuth_diff;
 
@@ -224,7 +224,7 @@ void DualReturnOutlierFilterComponent::filter(
         // Analyse segment points here
       } else {
         // Log the deleted azimuth and its distance for analysis
-        switch (ROI_mode_) {
+        switch (roi_mode_map_[roi_mode_]) {
           case 1:  // dynamic ROI free space
           {
             // check surrounding normal pcl
@@ -239,9 +239,9 @@ void DualReturnOutlierFilterComponent::filter(
             for (auto i = min_h; i < max_h; i++) {
               for (auto j = min_w; j < max_w; j++) {
                 if (
-                  (pcl_input_distance_array[i * azimuth_steps + j] > 0.0f) &&
+                  (strong_return_distance_array[i * azimuth_steps + j] > 0.0f) &&
                   (iter->distance >
-                   (pcl_input_distance_array[i * azimuth_steps + j] - neighbor_r_thresh_))) {
+                   (strong_return_distance_array[i * azimuth_steps + j] - neighbor_r_thresh_))) {
                   neighbor_check++;
                 }
                 if (neighbor_check > 1) {
@@ -310,7 +310,7 @@ void DualReturnOutlierFilterComponent::filter(
           if (noise_frequency[i] < weak_first_local_noise_threshold_) {
             pcl_output->points.push_back(temp_segment.points[current_temp_segment_index]);
           } else {
-            switch (ROI_mode_) {
+            switch (roi_mode_map_[roi_mode_]) {
               case 2: {
                 if (
                   temp_segment.points[current_temp_segment_index].x < x_max_ &&
@@ -377,7 +377,7 @@ void DualReturnOutlierFilterComponent::filter(
         while (non_neg_azimuth < 0.0f) {
           non_neg_azimuth += 36000.0f;
         }
-        switch (ROI_mode_) {
+        switch (roi_mode_map_[roi_mode_]) {
           case 2:  // base_link xyz-ROI
           {
             if (
@@ -430,8 +430,8 @@ void DualReturnOutlierFilterComponent::filter(
     }
   }
 
-  delete[] pcl_input_distance_array;
-  delete[] pcl_weak_first_distance_array;
+  delete[] strong_return_distance_array;
+  delete[] weak_first_return_distance_array;
   // Threshold for diagnostics (tunable)
   cv::Mat binary_image;
   cv::inRange(frequency_image, weak_first_local_noise_threshold_, 255, binary_image);

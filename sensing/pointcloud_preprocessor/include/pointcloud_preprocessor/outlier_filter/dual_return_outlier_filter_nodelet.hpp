@@ -31,6 +31,7 @@
 #include <pcl/search/pcl_search.h>
 
 #include <vector>
+#include <unordered_map>  
 
 namespace pointcloud_preprocessor
 {
@@ -46,6 +47,14 @@ enum ReturnType : uint8_t {
   DUAL_WEAK_FIRST,
   DUAL_WEAK_LAST,
   DUAL_ONLY,
+};
+
+std::unordered_map<std::string, uint8_t> roi_mode_map_ = 
+{
+  {"No_ROI",  0},
+  {"Dynamic_FreeSpace_ROI" , 1},
+  {"Fixed_xyz_ROI" , 2},
+  {"Fixed_azimuth_ROI" , 3},
 };
 
 class DualReturnOutlierFilterComponent : public pointcloud_preprocessor::Filter
@@ -76,7 +85,7 @@ private:
   float neighbor_r_thresh_ = 0.5f;
   uint weak_first_segment_check_size_v_;
   uint weak_first_segment_check_size_h_;
-  uchar ROI_mode_;
+  std::string roi_mode_;
   float x_max_;
   float x_min_;
   float y_max_;
@@ -84,8 +93,8 @@ private:
   float z_max_;
   float z_min_;
 
-  float min_azimuth_;
-  float max_azimuth_;
+  float min_azimuth_deg_;
+  float max_azimuth_deg_;
   float max_distance_;
 
 public:
