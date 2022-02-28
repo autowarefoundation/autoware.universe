@@ -64,6 +64,7 @@ class TrafficRules;
 
 namespace map_based_prediction
 {
+using autoware_auto_mapping_msgs::msg::HADMapBin;
 using autoware_auto_perception_msgs::msg::ObjectClassification;
 using autoware_auto_perception_msgs::msg::PredictedObject;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
@@ -104,7 +105,7 @@ private:
   double diff_dist_threshold_to_right_bound_;
 
   rclcpp::Subscription<TrackedObjects>::SharedPtr sub_objects_;
-  rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr sub_map_;
+  rclcpp::Subscription<HADMapBin>::SharedPtr sub_map_;
   rclcpp::Publisher<PredictedObjects>::SharedPtr pub_objects_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_markers_;
 
@@ -130,7 +131,7 @@ private:
     lanelet::routing::LaneletPaths & valid_paths);
 
   void objectsCallback(const TrackedObjects::ConstSharedPtr in_objects);
-  void mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg);
+  void mapCallback(const HADMapBin::ConstSharedPtr msg);
 
   bool getClosestLanelets(
     const TrackedObject & object, const lanelet::LaneletMapPtr & lanelet_map_ptr,

@@ -86,7 +86,7 @@ MapBasedPredictionROS::MapBasedPredictionROS(const rclcpp::NodeOptions & node_op
   sub_objects_ = this->create_subscription<TrackedObjects>(
     "/perception/object_recognition/tracking/objects", 1,
     std::bind(&MapBasedPredictionROS::objectsCallback, this, std::placeholders::_1));
-  sub_map_ = this->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
+  sub_map_ = this->create_subscription<HADMapBin>(
     "/vector_map", rclcpp::QoS{1}.transient_local(),
     std::bind(&MapBasedPredictionROS::mapCallback, this, std::placeholders::_1));
 
@@ -746,8 +746,7 @@ void MapBasedPredictionROS::objectsCallback(const TrackedObjects::ConstSharedPtr
   pub_objects_->publish(output);
 }
 
-void MapBasedPredictionROS::mapCallback(
-  const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg)
+void MapBasedPredictionROS::mapCallback(const HADMapBin::ConstSharedPtr msg)
 {
   RCLCPP_INFO(get_logger(), "Start loading lanelet");
   lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
