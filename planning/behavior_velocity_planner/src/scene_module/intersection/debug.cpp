@@ -150,7 +150,8 @@ visualization_msgs::msg::MarkerArray createPathMarkerArray(
 }
 
 visualization_msgs::msg::MarkerArray createVirtualStopWallMarkerArray(
-  const geometry_msgs::msg::Pose & pose, const int64_t lane_id, const std::string & stop_factor)
+  const geometry_msgs::msg::Pose & pose, const int64_t lane_id, const std::string & stop_factor,
+  const double offset_z = 0.0)
 {
   visualization_msgs::msg::MarkerArray msg;
 
@@ -162,7 +163,7 @@ visualization_msgs::msg::MarkerArray createVirtualStopWallMarkerArray(
   marker_virtual_wall.type = visualization_msgs::msg::Marker::CUBE;
   marker_virtual_wall.action = visualization_msgs::msg::Marker::ADD;
   marker_virtual_wall.pose = pose;
-  marker_virtual_wall.pose.position.z += 1.0;
+  marker_virtual_wall.pose.position.z += 1.0 + offset_z;
   marker_virtual_wall.scale = createMarkerScale(0.1, 5.0, 2.0);
   marker_virtual_wall.color = createMarkerColor(1.0, 0.0, 0.0, 0.5);
   msg.markers.push_back(marker_virtual_wall);
@@ -175,7 +176,7 @@ visualization_msgs::msg::MarkerArray createVirtualStopWallMarkerArray(
   marker_factor_text.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
   marker_factor_text.action = visualization_msgs::msg::Marker::ADD;
   marker_factor_text.pose = pose;
-  marker_factor_text.pose.position.z += 2.0;
+  marker_factor_text.pose.position.z += 2.0 + offset_z;
   marker_factor_text.scale = createMarkerScale(0.0, 0.0, 1.0);
   marker_factor_text.color = createMarkerColor(1.0, 1.0, 1.0, 0.999);
   marker_factor_text.text = stop_factor;
@@ -345,7 +346,7 @@ visualization_msgs::msg::MarkerArray MergeFromPrivateRoadModule::createDebugMark
 
     appendMarkerArray(
       createVirtualStopWallMarkerArray(
-        debug_data_.virtual_wall_pose, lane_id_, "merge_from_private_road"),
+        debug_data_.virtual_wall_pose, lane_id_, "merge_from_private_road", -1.0),
       current_time, &debug_marker_array);
   }
 
