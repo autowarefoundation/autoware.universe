@@ -37,6 +37,8 @@
 #include <utility>
 #include <vector>
 
+namespace
+{
 std::string toHexString(const unique_identifier_msgs::msg::UUID & id)
 {
   std::stringstream ss;
@@ -45,7 +47,9 @@ std::string toHexString(const unique_identifier_msgs::msg::UUID & id)
   }
   return ss.str();
 }
-
+}  // namespace
+namespace map_based_prediction
+{
 MapBasedPredictionROS::MapBasedPredictionROS(const rclcpp::NodeOptions & node_options)
 : Node("map_based_prediction", node_options),
   interpolating_resolution_(0.5),
@@ -757,6 +761,7 @@ void MapBasedPredictionROS::mapCallback(
     *msg, lanelet_map_ptr_, &traffic_rules_ptr_, &routing_graph_ptr_);
   RCLCPP_INFO(get_logger(), "Map is loaded");
 }
+}  // namespace map_based_prediction
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(MapBasedPredictionROS)
+RCLCPP_COMPONENTS_REGISTER_NODE(map_based_prediction::MapBasedPredictionROS)

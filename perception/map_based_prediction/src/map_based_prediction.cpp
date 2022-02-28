@@ -22,6 +22,8 @@
 #include <chrono>
 #include <vector>
 
+namespace map_based_prediction
+{
 MapBasedPrediction::MapBasedPrediction(
   double interpolating_resolution, double time_horizon, double sampling_delta_time)
 : interpolating_resolution_(interpolating_resolution),
@@ -302,3 +304,4 @@ void MapBasedPrediction::getLinearPredictedPath(
   predicted_path.confidence = 1.0;
   predicted_path.time_step = rclcpp::Duration::from_seconds(sampling_delta_time);
 }
+}  // namespace map_based_prediction

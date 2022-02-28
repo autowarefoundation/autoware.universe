@@ -22,6 +22,8 @@
 
 #include <vector>
 
+namespace map_based_prediction
+{
 struct DynamicObjectWithLanes
 {
   autoware_auto_perception_msgs::msg::TrackedObject object;
@@ -75,5 +77,6 @@ public:
   autoware_auto_perception_msgs::msg::PredictedObject convertToPredictedObject(
     const autoware_auto_perception_msgs::msg::TrackedObject & tracked_object);
 };
+}  // namespace map_based_prediction
 
 #endif  // MAP_BASED_PREDICTION_HPP_

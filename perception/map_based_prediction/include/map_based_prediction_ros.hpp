@@ -62,6 +62,8 @@ class TrafficRules;
 }  // namespace traffic_rules
 }  // namespace lanelet
 
+namespace map_based_prediction
+{
 struct ObjectData
 {
   lanelet::ConstLanelets current_lanelets;
@@ -154,5 +156,6 @@ private:
 public:
   explicit MapBasedPredictionROS(const rclcpp::NodeOptions & node_options);
 };
+}  // namespace map_based_prediction
 
 #endif  // MAP_BASED_PREDICTION_ROS_HPP_
