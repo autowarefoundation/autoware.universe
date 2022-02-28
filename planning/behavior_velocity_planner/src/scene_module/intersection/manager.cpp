@@ -92,12 +92,9 @@ MergeFromPrivateModuleManager::MergeFromPrivateModuleManager(rclcpp::Node & node
   auto & mp = merge_from_private_area_param_;
   mp.stop_duration_sec =
     node.declare_parameter(ns + ".merge_from_private_area.stop_duration_sec", 1.0);
-  mp.intersection_param.decel_velocity =
-    node.get_parameter("intersection.decel_velocity").as_double();
-  mp.intersection_param.detection_area_length =
-    node.get_parameter("intersection.detection_area_length").as_double();
-  mp.intersection_param.stop_line_margin =
-    node.get_parameter("intersection.stop_line_margin").as_double();
+  mp.decel_velocity = node.get_parameter("intersection.decel_velocity").as_double();
+  mp.detection_area_length = node.get_parameter("intersection.detection_area_length").as_double();
+  mp.stop_line_margin = node.get_parameter("intersection.stop_line_margin").as_double();
 }
 
 void IntersectionModuleManager::launchNewModules(
