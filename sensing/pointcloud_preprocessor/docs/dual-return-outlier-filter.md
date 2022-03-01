@@ -20,7 +20,7 @@ In some complicated road scenes where normal objects also reflect the light in t
 2. `Fixed_xyz_ROI` mode: Visibility estimation based on the weak points in a fixed cuboid surrounding region of ego-vehicle, defined by x, y, z in base_link perspective.
 3. `Fixed_azimuth_ROI` mode: Visibility estimation based on the weak points in a fixed surrouding region of ego-vehicle, defined by azimuth and distance of LiDAR perspective.
 
-When select 2 fixed ROI modes, due to the range of weak points is shrink, the sensitity of visibility is decrease so that a trade of between `weak_first_local_noise_threshold` and `visibility_threshold` is needed.
+When select 2 fixed ROI modes, due to the range of weak points is shrink, the sensitivity of visibility is decrease so that a trade of between `weak_first_local_noise_threshold` and `visibility_threshold` is needed.
 
 ![outlier_filter-dual_return_overall](./image/outlier_filter-dual_return_overall.drawio.svg)
 
