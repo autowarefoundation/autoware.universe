@@ -129,10 +129,10 @@ BT::NodeStatus SideShiftModule::updateState()
       const auto offset_diff = lateral_offset - length;
       if (!isAlmostZero(offset_diff)) {
         lateral_offset_change_request_ = true;
-        return true;
+        return false;
       }
     }
-    return false;
+    return true;
   }();
 
   const bool no_offset_diff = isOffsetDiffAlmostZero;
