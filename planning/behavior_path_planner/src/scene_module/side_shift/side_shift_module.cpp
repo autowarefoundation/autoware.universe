@@ -74,7 +74,7 @@ void SideShiftModule::initVariables()
   lateral_offset_ = 0.0;
   prev_output_ = ShiftedPath{};
   path_shifter_ = PathShifter{};
-  request_time = SideShiftRequestTimer();
+  request_timer = SideShiftRequestTimer();
 }
 
 void SideShiftModule::onEntry()
