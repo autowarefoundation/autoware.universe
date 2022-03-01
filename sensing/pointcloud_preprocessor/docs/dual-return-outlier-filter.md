@@ -63,6 +63,12 @@ This implementation inherits `pointcloud_preprocessor::Filter` class, please ref
 | `min_azimuth_deg`                  | float  | The left limit of azimuth for `Fixed_azimuth_ROI` mode                                                                    |
 | `max_azimuth_deg`                  | float  | The right limit of azimuth for `Fixed_azimuth_ROI` mode                                                                   |
 | `max_distance`                     | float  | The limit distance for for `Fixed_azimuth_ROI` mode                                                                       |
+| `x_max`                            | float  | Maximum of x for `Fixed_xyz_ROI` mode                                                                                     |
+| `x_min`                            | float  | Minimum of x for `Fixed_xyz_ROI` mode                                                                                     |
+| `y_max`                            | float  | Maximum of y for `Fixed_xyz_ROI` mode                                                                                     |
+| `y_min`                            | float  | Minimum of y for `Fixed_xyz_ROI` mode                                                                                     |
+| `z_max`                            | float  | Maximum of z for `Fixed_xyz_ROI` mode                                                                                     |
+| `z_min`                            | float  | Minimum of z for `Fixed_xyz_ROI` mode                                                                                     |
 
 ## Assumptions / Known limits
 
