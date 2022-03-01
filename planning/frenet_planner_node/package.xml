@@ -19,6 +19,7 @@
   <depend>osqp_interface</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
+  <depend>sampler_common</depend>
   <depend>std_msgs</depend>
   <depend>tf2_ros</depend>
   <depend>vehicle_info_util</depend>

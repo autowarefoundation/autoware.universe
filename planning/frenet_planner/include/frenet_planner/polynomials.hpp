@@ -36,13 +36,13 @@ public:
   // TODO(Maxime CLEMENT) add case where we do not care about final position/vel/acc
 
   // @brief Get the position at the given time
-  double position(const double t) const;
+  [[nodiscard]] double position(const double t) const;
   // @brief Get the velocity at the given time
-  double velocity(const double t) const;
+  [[nodiscard]] double velocity(const double t) const;
   // @brief Get the acceleration at the given time
-  double acceleration(const double t) const;
+  [[nodiscard]] double acceleration(const double t) const;
   // @brief Get the jerk at the given time
-  double jerk(const double t) const;
+  [[nodiscard]] double jerk(const double t) const;
 };
 }  // namespace frenet_planner
 

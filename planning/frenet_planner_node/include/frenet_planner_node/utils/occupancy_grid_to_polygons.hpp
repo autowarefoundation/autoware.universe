@@ -14,7 +14,7 @@
 #ifndef FRENET_PLANNER__UTILS__OCCUPANCY_GRID_TO_POLYGONS_HPP_
 #define FRENET_PLANNER__UTILS__OCCUPANCY_GRID_TO_POLYGONS_HPP_
 
-#include "frenet_planner/structures.hpp"
+#include "sampler_common/structures.hpp"
 
 #include <opencv2/core/mat.hpp>
 #include <opencv2/imgproc.hpp>
@@ -35,7 +35,7 @@
 
 namespace frenet_planner_node::utils
 {
-inline std::vector<frenet_planner::Polygon> occupancyGridToPolygons(
+inline std::vector<sampler_common::Polygon> occupancyGridToPolygons(
   const nav_msgs::msg::OccupancyGrid & og)
 {
   // Convert to CV format
@@ -56,12 +56,12 @@ inline std::vector<frenet_planner::Polygon> occupancyGridToPolygons(
     drivable_area, contours, cv::RETR_LIST, cv::ContourApproximationModes::CHAIN_APPROX_TC89_KCOS);
 
   // Get polygons
-  const frenet_planner::Point origin = {og.info.origin.position.x, og.info.origin.position.y};
+  const sampler_common::Point origin = {og.info.origin.position.x, og.info.origin.position.y};
   double yaw{};
   double pitch{};
   double roll{};
   tf2::getEulerYPR(og.info.origin.orientation, yaw, pitch, roll);
-  std::vector<frenet_planner::Polygon> polygons;
+  std::vector<sampler_common::Polygon> polygons;
   polygons.reserve(contours.size());
   for (const auto & cv_poly : contours) {
     auto & polygon = polygons.emplace_back();
@@ -79,7 +79,7 @@ inline std::vector<frenet_planner::Polygon> occupancyGridToPolygons(
   return polygons;
 }
 
-inline frenet_planner::Polygon createObjPolygon(
+inline sampler_common::Polygon createObjPolygon(
   const geometry_msgs::msg::Pose & pose, const geometry_msgs::msg::Vector3 & size)
 {
   // rename
@@ -90,27 +90,27 @@ inline frenet_planner::Polygon createObjPolygon(
   const double yaw = tf2::getYaw(pose.orientation);
 
   // create base polygon
-  frenet_planner::Polygon obj_poly;
-  boost::geometry::exterior_ring(obj_poly) = boost::assign::list_of<frenet_planner::Point>(
+  sampler_common::Polygon obj_poly;
+  boost::geometry::exterior_ring(obj_poly) = boost::assign::list_of<sampler_common::Point>(
     h / 2.0, w / 2.0)(-h / 2.0, w / 2.0)(-h / 2.0, -w / 2.0)(h / 2.0, -w / 2.0)(h / 2.0, w / 2.0);
 
   // rotate polygon(yaw)
   boost::geometry::strategy::transform::rotate_transformer<boost::geometry::radian, double, 2, 2>
     rotate(-yaw);  // anti-clockwise -> :clockwise rotation
-  frenet_planner::Polygon rotate_obj_poly;
+  sampler_common::Polygon rotate_obj_poly;
   boost::geometry::transform(obj_poly, rotate_obj_poly, rotate);
 
   // translate polygon(x, y)
   boost::geometry::strategy::transform::translate_transformer<double, 2, 2> translate(x, y);
-  frenet_planner::Polygon translate_obj_poly;
+  sampler_common::Polygon translate_obj_poly;
   boost::geometry::transform(rotate_obj_poly, translate_obj_poly, translate);
   return translate_obj_poly;
 }
 
-inline std::vector<frenet_planner::Polygon> predictedObjectsToPolygons(
+inline std::vector<sampler_common::Polygon> predictedObjectsToPolygons(
   const autoware_auto_perception_msgs::msg::PredictedObjects & objects)
 {
-  std::vector<frenet_planner::Polygon> polygons;
+  std::vector<sampler_common::Polygon> polygons;
   polygons.reserve(objects.objects.size());
   for (const auto & object : objects.objects) {
     auto & polygon = polygons.emplace_back();

@@ -16,11 +16,13 @@
 
 #include "frenet_planner/frenet_planner.hpp"
 
-#include "frenet_planner/constraints/hard_constraint.hpp"
-#include "frenet_planner/constraints/soft_constraint.hpp"
 #include "frenet_planner/polynomials.hpp"
 #include "frenet_planner/structures.hpp"
-#include "frenet_planner/transform/spline_transform.hpp"
+
+#include <sampler_common/constraints/hard_constraint.hpp>
+#include <sampler_common/constraints/soft_constraint.hpp>
+#include <sampler_common/structures.hpp>
+#include <sampler_common/transform/spline_transform.hpp>
 
 #include <algorithm>
 #include <cmath>
@@ -29,8 +31,8 @@
 namespace frenet_planner
 {
 std::optional<Trajectory> generateTrajectory(
-  const transform::Spline2D & reference_spline, const FrenetState & initial_state,
-  const SamplingParameters & sampling_parameters, const Constraints & constraints)
+  const sampler_common::transform::Spline2D & reference_spline, const FrenetState & initial_state,
+  const SamplingParameters & sampling_parameters, const sampler_common::Constraints & constraints)
 {
   // Generate candidate trajectories
   // TODO(Maxime CLEMENT): dont use vector to improve erase performances
@@ -47,19 +49,23 @@ std::optional<Trajectory> generateTrajectory(
 }
 
 std::vector<Trajectory> generateTrajectories(
-  const transform::Spline2D & reference_spline, const FrenetState & initial_state,
-  const SamplingParameters & sampling_parameters, const Constraints & constraints, Debug & debug)
+  const sampler_common::transform::Spline2D & reference_spline, const FrenetState & initial_state,
+  const SamplingParameters & sampling_parameters, const sampler_common::Constraints & constraints,
+  Debug & debug)
 {
   // Generate candidate trajectories
   // TODO(Maxime CLEMENT): dont use vector to improve erase performances
   auto candidates = generateCandidates(initial_state, sampling_parameters);
-  constraints::checkFrenetHardConstraints(candidates, constraints, debug);
-  // Calculate cartesian part of trajectories
   calculateCartesian(reference_spline, candidates);
-  // Check hard constraints (Cartesian)
-  constraints::checkCartesianHardConstraints(candidates, constraints, debug);
-  // Calculate objective function
-  constraints::calculateCost(candidates, constraints);
+  for (auto & candidate : candidates) {
+    // Check hard constraints (Cartesian)
+    const auto nb_of_violation =
+      sampler_common::constraints::checkHardConstraints(candidate, constraints);
+    debug.nb_constraint_violations.collision += nb_of_violation.collision;
+    debug.nb_constraint_violations.curvature += nb_of_violation.curvature;
+    // Calculate objective function
+    sampler_common::constraints::calculateCost(candidate, constraints);
+  }
   return candidates;
 }
 
@@ -117,7 +123,7 @@ Trajectory generateCandidate(
 }
 
 void calculateCartesian(
-  const transform::Spline2D & reference, std::vector<Trajectory> & trajectories)
+  const sampler_common::transform::Spline2D & reference, std::vector<Trajectory> & trajectories)
 {
   for (auto & trajectory : trajectories) {
     if (trajectory.valid && !trajectory.frenet_points.empty()) {

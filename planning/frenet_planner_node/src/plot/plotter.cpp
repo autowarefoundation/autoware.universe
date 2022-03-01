@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
-#include "frenet_planner/plot/plotter.hpp"
+#include "frenet_planner_node/plot/plotter.hpp"
 
 #include "frenet_planner/structures.hpp"
-#include "frenet_planner/transform/spline_transform.hpp"
+#include "sampler_common/structures.hpp"
+#include "sampler_common/transform/spline_transform.hpp"
 
 #include <qcustomplot.h>
 #include <qnamespace.h>
 
-namespace frenet_planner::plot
+namespace frenet_planner_node::plot
 {
 Plotter::Plotter(QCustomPlot * fcplot, QCustomPlot * polyplot)
 : fcplot_(fcplot), polyplot_(polyplot)
@@ -273,4 +274,4 @@ QCPCurve * Plotter::trajectoryToCartesianCurve(
   return curve;
 }
 
-}  // namespace frenet_planner::plot
+}  // namespace frenet_planner_node::plot

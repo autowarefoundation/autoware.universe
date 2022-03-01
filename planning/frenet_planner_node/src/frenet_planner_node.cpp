@@ -14,13 +14,14 @@
 
 #include "frenet_planner_node/frenet_planner_node.hpp"
 
-#include "frenet_planner/plot/debug_window.hpp"
 #include "frenet_planner/structures.hpp"
-#include "frenet_planner/trajectory_reuse.hpp"
-#include "frenet_planner/transform/spline_transform.hpp"
+#include "frenet_planner_node/plot/debug_window.hpp"
 #include "frenet_planner_node/prepare_inputs.hpp"
 #include "frenet_planner_node/trajectory_generation.hpp"
 #include "frenet_planner_node/utils/occupancy_grid_to_polygons.hpp"
+#include "sampler_common/structures.hpp"
+#include "sampler_common/trajectory_reuse.hpp"
+#include "sampler_common/transform/spline_transform.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/time.hpp>
@@ -159,7 +160,7 @@ void FrenetPlannerNode::odomCallback(const nav_msgs::msg::Odometry::SharedPtr ms
   current_twist_ptr_->twist = msg->twist.twist;
 }
 
-std::optional<frenet_planner::Point> FrenetPlannerNode::getCurrentEgoPose()
+std::optional<sampler_common::Point> FrenetPlannerNode::getCurrentEgoPose()
 {
   geometry_msgs::msg::TransformStamped tf_current_pose;
 
@@ -171,7 +172,7 @@ std::optional<frenet_planner::Point> FrenetPlannerNode::getCurrentEgoPose()
     return {};
   }
 
-  return frenet_planner::Point(
+  return sampler_common::Point(
     tf_current_pose.transform.translation.x, tf_current_pose.transform.translation.y);
 }
 

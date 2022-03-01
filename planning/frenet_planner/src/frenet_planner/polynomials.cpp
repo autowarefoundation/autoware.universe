@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <Eigen/Eigen>
+#include <eigen3/Eigen/Eigen>
 #include <frenet_planner/polynomials.hpp>
 
 namespace frenet_planner

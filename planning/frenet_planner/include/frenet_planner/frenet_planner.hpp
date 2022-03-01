@@ -18,7 +18,8 @@
 #define FRENET_PLANNER__FRENET_PLANNER_HPP
 
 #include "frenet_planner/structures.hpp"
-#include "frenet_planner/transform/spline_transform.hpp"
+#include "sampler_common/structures.hpp"
+#include "sampler_common/transform/spline_transform.hpp"
 
 #include <optional>
 #include <vector>
@@ -27,12 +28,13 @@ namespace frenet_planner
 {
 // @brief generate a valid trajectory (if any)
 std::optional<Trajectory> generateTrajectory(
-  const transform::Spline2D & reference_spline, const FrenetState & initial_state,
-  const SamplingParameters & sampling_parameters, const Constraints & constraints);
+  const sampler_common::transform::Spline2D & reference_spline, const FrenetState & initial_state,
+  const SamplingParameters & sampling_parameters, const sampler_common::Constraints & constraints);
 // @brief generate all trajectories
 std::vector<Trajectory> generateTrajectories(
-  const transform::Spline2D & reference_spline, const FrenetState & initial_state,
-  const SamplingParameters & sampling_parameters, const Constraints & constraints, Debug & debug);
+  const sampler_common::transform::Spline2D & reference_spline, const FrenetState & initial_state,
+  const SamplingParameters & sampling_parameters, const sampler_common::Constraints & constraints,
+  Debug & debug);
 // @brief generate a candidate trajectory
 Trajectory generateCandidate(
   const FrenetState & initial_state, const FrenetState & target_state, const double duration,
@@ -42,7 +44,7 @@ std::vector<Trajectory> generateCandidates(
   const FrenetState & initial_state, const SamplingParameters & sp);
 // @brief calculate cartesian frame of this trajectory
 void calculateCartesian(
-  const transform::Spline2D & reference, std::vector<Trajectory> & trajectories);
+  const sampler_common::transform::Spline2D & reference, std::vector<Trajectory> & trajectories);
 
 }  // namespace frenet_planner
 

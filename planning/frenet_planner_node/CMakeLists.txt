@@ -15,15 +15,23 @@ ament_auto_find_build_dependencies()
 find_package(Qt5 COMPONENTS Widgets REQUIRED)
 find_package(OpenCV REQUIRED)  # used for drivable area
 
+### Dependency for debug visualization executable
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+
+find_package(Qt5 COMPONENTS Widgets REQUIRED)
+find_package(QCustomPlot REQUIRED)
+
 
 ament_auto_add_library(frenet_planner_node SHARED
-  src/frenet_planner_node.cpp
-  src/prepare_inputs.cpp
-  src/trajectory_generation.cpp
+  DIRECTORY src
 )
 
 target_link_libraries(frenet_planner_node
   Qt5::Widgets
+  ${QCustomPlot_LIBRARIES}
   ${OpenCV_LIBRARIES}
 )
 
