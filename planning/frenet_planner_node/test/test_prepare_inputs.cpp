@@ -23,7 +23,7 @@ TEST(prepare_inputs, preparePreviousTrajectory)
   constexpr auto TOL = 1e-3;
   frenet_planner::Trajectory trajectory;
   trajectory.points = {{0, 0}, {1, 1}, {1, 2}};
-  frenet_planner::transform::Spline2D path_spline({0, 1, 2}, {0, 0, 0});
+  sampler_common::transform::Spline2D path_spline({0, 1, 2}, {0, 0, 0});
   const auto prev_traj = frenet_planner_node::preparePreviousTrajectory(trajectory, path_spline);
   ASSERT_EQ(trajectory.points.size(), prev_traj.points.size());
   EXPECT_NEAR(prev_traj.frenet_points[0].s, 0, TOL);
@@ -33,7 +33,7 @@ TEST(prepare_inputs, preparePreviousTrajectory)
   EXPECT_NEAR(prev_traj.frenet_points[2].s, 1, TOL);
   EXPECT_NEAR(prev_traj.frenet_points[2].d, 2, TOL);
 
-  frenet_planner::transform::Spline2D path_spline2({-2, 0, 1, 2}, {1, 1, 1, 1});
+  sampler_common::transform::Spline2D path_spline2({-2, 0, 1, 2}, {1, 1, 1, 1});
   const auto prev_traj2 = frenet_planner_node::preparePreviousTrajectory(prev_traj, path_spline2);
   ASSERT_EQ(prev_traj.points.size(), prev_traj2.points.size());
   EXPECT_NEAR(prev_traj2.frenet_points[0].s, 2, TOL);

@@ -16,7 +16,7 @@
 #define FRENET_PLANNER_NODE__PREPARE_INPUTS_HPP_
 
 #include "frenet_planner/structures.hpp"
-#include "frenet_planner/transform/spline_transform.hpp"
+#include "sampler_common/transform/spline_transform.hpp"
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path.hpp>
@@ -36,18 +36,18 @@
 namespace frenet_planner_node
 {
 
-frenet_planner::Constraints prepareConstraints(
+sampler_common::Constraints prepareConstraints(
   const nav_msgs::msg::OccupancyGrid & drivable_area,
   const autoware_auto_perception_msgs::msg::PredictedObjects & predicted_objects);
 frenet_planner::SamplingParameters prepareSamplingParameters(
   const frenet_planner::FrenetState & initial_state,
   const autoware_auto_planning_msgs::msg::Path & path, const double base_duration,
-  const frenet_planner::transform::Spline2D & path_spline);
-frenet_planner::transform::Spline2D preparePathSpline(
+  const sampler_common::transform::Spline2D & path_spline);
+sampler_common::transform::Spline2D preparePathSpline(
   const autoware_auto_planning_msgs::msg::Path & path_msg);
 frenet_planner::Trajectory preparePreviousTrajectory(
   const frenet_planner::Trajectory & prev_trajectory,
-  const frenet_planner::transform::Spline2D & path_spline);
+  const sampler_common::transform::Spline2D & path_spline);
 }  // namespace frenet_planner_node
 
 #endif  // FRENET_PLANNER_NODE__PREPARE_INPUTS_HPP_

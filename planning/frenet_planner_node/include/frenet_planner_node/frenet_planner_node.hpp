@@ -11,12 +11,13 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 #ifndef FRENET_PLANNER__FRENET_PLANNER_NODE_HPP_
 #define FRENET_PLANNER__FRENET_PLANNER_NODE_HPP_
 
 #include "frenet_planner/frenet_planner.hpp"
-#include "frenet_planner/plot/debug_window.hpp"
 #include "frenet_planner/structures.hpp"
+#include "frenet_planner_node/plot/debug_window.hpp"
 
 #include <QApplication>
 #include <rclcpp/rclcpp.hpp>
@@ -54,8 +55,8 @@ private:
   std::vector<char *> argv_ = {std::string("Frenet Debug Visualization").data()};
   QApplication qapplication_;
   std::unique_ptr<QApplication> qt_app_;
-  std::unique_ptr<frenet_planner::plot::MainWindow> qt_window_;
-  frenet_planner::plot::MainWindow w_;
+  std::unique_ptr<plot::MainWindow> qt_window_;
+  plot::MainWindow w_;
 
   // Parameters
 
@@ -89,13 +90,13 @@ private:
   void publishTrajectory(
     const frenet_planner::Trajectory & trajectory,
     const autoware_auto_planning_msgs::msg::Path::SharedPtr path_msg);
-  std::optional<frenet_planner::Point> getCurrentEgoPose();
+  std::optional<sampler_common::Point> getCurrentEgoPose();
   static std::vector<frenet_planner::Trajectory> generateFrenetTrajectories(
     const frenet_planner::FrenetState & initial_state,
     const frenet_planner::Trajectory & base_trajectory,
     const autoware_auto_planning_msgs::msg::Path & path_msg,
-    const frenet_planner::transform::Spline2D & path_spline,
-    const frenet_planner::Constraints & constraints, frenet_planner::Debug & debug);
+    const sampler_common::transform::Spline2D & path_spline,
+    const sampler_common::Constraints & constraints, frenet_planner::Debug & debug);
   static std::optional<frenet_planner::Trajectory> selectBestTrajectory(
     const std::vector<frenet_planner::Trajectory> & trajectories);
 

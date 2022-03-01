@@ -12,9 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "frenet_planner_node/prepare_inputs.hpp"
+
 #include "frenet_planner/structures.hpp"
-#include "frenet_planner/transform/spline_transform.hpp"
 #include "frenet_planner_node/utils/occupancy_grid_to_polygons.hpp"
+#include "sampler_common/structures.hpp"
+#include "sampler_common/transform/spline_transform.hpp"
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path.hpp>
@@ -25,11 +28,11 @@
 namespace frenet_planner_node
 {
 
-frenet_planner::Constraints prepareConstraints(
+sampler_common::Constraints prepareConstraints(
   const nav_msgs::msg::OccupancyGrid & drivable_area,
   const autoware_auto_perception_msgs::msg::PredictedObjects & predicted_objects)
 {
-  frenet_planner::Constraints constraints;
+  sampler_common::Constraints constraints;
   constraints.hard.max_curvature = 0.3;
   constraints.hard.min_curvature = -constraints.hard.max_curvature;
   constraints.hard.max_lateral_deviation = 6.0;
@@ -61,7 +64,7 @@ frenet_planner::Constraints prepareConstraints(
 frenet_planner::SamplingParameters prepareSamplingParameters(
   const frenet_planner::FrenetState & initial_state,
   const autoware_auto_planning_msgs::msg::Path & path, const double base_duration,
-  const frenet_planner::transform::Spline2D & path_spline)
+  const sampler_common::transform::Spline2D & path_spline)
 {
   const auto max_s =
     path_spline.frenet({path.points.back().pose.position.x, path.points.back().pose.position.y}).s;
@@ -109,7 +112,7 @@ frenet_planner::SamplingParameters prepareSamplingParameters(
   return sampling_parameters;
 }
 
-frenet_planner::transform::Spline2D preparePathSpline(
+sampler_common::transform::Spline2D preparePathSpline(
   const autoware_auto_planning_msgs::msg::Path & path_msg)
 {
   std::vector<double> x;
@@ -125,7 +128,7 @@ frenet_planner::transform::Spline2D preparePathSpline(
 
 frenet_planner::Trajectory preparePreviousTrajectory(
   const frenet_planner::Trajectory & prev_trajectory,
-  const frenet_planner::transform::Spline2D & path_spline)
+  const sampler_common::transform::Spline2D & path_spline)
 {
   frenet_planner::Trajectory trajectory = prev_trajectory;
   // Update frenet points for the new reference path

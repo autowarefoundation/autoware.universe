@@ -1,24 +1,22 @@
-/*
- * Copyright 2021 Autoware Foundation. All rights reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2022 Tier IV, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
-#include "frenet_planner/plot/debug_window.hpp"
+#include "frenet_planner_node/plot/debug_window.hpp"
 
 #include "frenet_planner/frenet_planner.hpp"
-#include "frenet_planner/plot/ui_mainwindow.h"
-#include "frenet_planner/transform/spline_transform.hpp"
+#include "frenet_planner_node/plot/ui_mainwindow.h"
+#include "sampler_common/transform/spline_transform.hpp"
 
 #include <qcustomplot.h>
 #include <qlineedit.h>
@@ -30,7 +28,7 @@
 
 #include <cmath>
 
-namespace frenet_planner::plot
+namespace frenet_planner_node::plot
 {
 MainWindow::MainWindow(QWidget * parent) : QMainWindow(parent), ui(new Ui::MainWindow)
 {
@@ -108,7 +106,7 @@ void MainWindow::compute()
     ys.push_back(std::sin(x / 10) * 10);
     reference_path.emplace_back(xs.back(), ys.back());
   }
-  frenet_planner::transform::Spline2D reference_spline(xs, ys);
+  sampler_common::transform::Spline2D reference_spline(xs, ys);
   // generation parameters
   frenet_planner::FrenetState initial_state;
   initial_state.position.s = ui->lon_pos->value();
@@ -168,4 +166,4 @@ void MainWindow::replot()
   }
 }
 
-}  // namespace frenet_planner::plot
+}  // namespace frenet_planner_node::plot

@@ -15,8 +15,8 @@
 #include "frenet_planner_node/trajectory_generation.hpp"
 
 #include <frenet_planner/frenet_planner.hpp>
-#include <frenet_planner/trajectory_reuse.hpp>  // TODO(Maxime CLEMENT): move to node package
 #include <frenet_planner_node/prepare_inputs.hpp>
+#include <sampler_common/trajectory_reuse.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
@@ -28,11 +28,11 @@
 namespace frenet_planner_node
 {
 std::vector<frenet_planner::Trajectory> generateCandidateTrajectories(
-  const frenet_planner::Point & pose, const geometry_msgs::msg::Twist & twist,
+  const sampler_common::Point & pose, const geometry_msgs::msg::Twist & twist,
   const autoware_auto_planning_msgs::msg::Path & path,
-  const frenet_planner::transform::Spline2D & path_spline,
+  const sampler_common::transform::Spline2D & path_spline,
   const frenet_planner::Trajectory & previous_trajectory,
-  const frenet_planner::Constraints & constraints, frenet_planner::Debug & debug)
+  const sampler_common::Constraints & constraints, frenet_planner::Debug & debug)
 {
   frenet_planner::FrenetState initial_state;
   initial_state.position = path_spline.frenet(pose);
@@ -43,8 +43,6 @@ std::vector<frenet_planner::Trajectory> generateCandidateTrajectories(
   auto trajectories = generateFrenetTrajectories(
     initial_state, base_trajectory, path, path_spline, constraints, debug);
 
-  const auto reused_prev_trajectory = preparePreviousTrajectory(previous_trajectory, path_spline);
-
   constexpr auto reuse_max_duration = 5.0;
   // constexpr auto reuse_max_length = 50.0;
   const auto reuse_max_length_max =
@@ -53,13 +51,15 @@ std::vector<frenet_planner::Trajectory> generateCandidateTrajectories(
   constexpr auto reuse_max_deviation = 1.0;
   for (auto reuse_max_length = reuse_length_step; reuse_max_length <= reuse_max_length_max;
        reuse_max_length += reuse_length_step) {
-    if (frenet_planner::tryToReuseTrajectory(
-          reused_prev_trajectory, pose, reuse_max_duration, reuse_max_length, reuse_max_deviation,
+    if (sampler_common::tryToReuseTrajectory(
+          previous_trajectory, pose, reuse_max_duration, reuse_max_length, reuse_max_deviation,
           constraints, base_trajectory)) {
+      const auto frenet_base_trajectory = preparePreviousTrajectory(base_trajectory, path_spline);
       frenet_planner::FrenetState end_of_reused_traj;
-      end_of_reused_traj.position = base_trajectory.frenet_points.back();
-      end_of_reused_traj.longitudinal_velocity = base_trajectory.longitudinal_velocities.back();
-      end_of_reused_traj.lateral_velocity = base_trajectory.lateral_velocities.back();
+      end_of_reused_traj.position = frenet_base_trajectory.frenet_points.back();
+      end_of_reused_traj.longitudinal_velocity =
+        frenet_base_trajectory.longitudinal_velocities.back();
+      end_of_reused_traj.lateral_velocity = frenet_base_trajectory.lateral_velocities.back();
       const auto trajs_from_prev_traj = generateFrenetTrajectories(
         end_of_reused_traj, base_trajectory, path, path_spline, constraints, debug);
       for (const auto & traj : trajs_from_prev_traj) {
@@ -78,8 +78,8 @@ std::vector<frenet_planner::Trajectory> generateFrenetTrajectories(
   const frenet_planner::FrenetState & initial_state,
   const frenet_planner::Trajectory & base_trajectory,
   const autoware_auto_planning_msgs::msg::Path & path,
-  const frenet_planner::transform::Spline2D & path_spline,
-  const frenet_planner::Constraints & constraints, frenet_planner::Debug & debug)
+  const sampler_common::transform::Spline2D & path_spline,
+  const sampler_common::Constraints & constraints, frenet_planner::Debug & debug)
 {
   const auto sampling_parameters =
     prepareSamplingParameters(initial_state, path, base_trajectory.duration, path_spline);
