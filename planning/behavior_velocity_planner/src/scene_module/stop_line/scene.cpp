@@ -265,15 +265,6 @@ bool StopLineModule::modifyPathVelocity(
     }
   }
 
-  if (counter % 50 == 0) {
-    const auto & srci = src_point_with_search_range_index.index;
-    const auto & dsti = dst_search_range;
-    std::cout << " src min_idx: " << srci.min_idx << " max_idx: " << srci.max_idx
-              << " dst min_idx: " << dsti.min_idx << " max_idx: " << dsti.max_idx
-              << " stop_line_id: " << lane_id_ << " arclength: " << signed_arc_dist_to_stop_point
-              << " current_state: " << static_cast<int>(state_) << std::endl;
-  }
-  counter++;
   return true;
 }
 
