@@ -74,7 +74,7 @@ void SideShiftModule::initVariables()
   lateral_offset_ = 0.0;
   prev_output_ = ShiftedPath{};
   path_shifter_ = PathShifter{};
-  request_timer = SideShiftRequestTimer();
+  request_timer_ = SideShiftRequestTimer();
 }
 
 void SideShiftModule::onEntry()
@@ -306,7 +306,7 @@ void SideShiftModule::onLateralOffset(const LateralOffset::ConstSharedPtr latera
   }
 
   // new offset is requested.
-  if (request_time.isRequestAllowed(parameters_.time_to_start_shifting)) {
+  if (request_timer_.isRequestAllowed(parameters_.time_to_start_shifting)) {
     lateral_offset_change_request_ = true;
 
     lateral_offset_ = new_lateral_offset;

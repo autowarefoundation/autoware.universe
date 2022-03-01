@@ -56,13 +56,13 @@ struct SideShiftRequestTimer
 
   bool override_request = true;
 
-  bool isRequestAllowed(const double & change_time)
+  bool isRequestAllowed(const double & min_request_time_sec)
   {
     time_point<high_resolution_clock> current_request_clock = high_resolution_clock::now();
-    const auto requested =
+    const auto interval_from_last_time_sec =
       duration<double, std::milli>(current_request_clock - last_request_clock).count() * 0.001;
 
-    if (requested >= change_time && override_request) {
+    if (interval_from_last_time_sec >= min_request_time_sec && override_request) {
       last_request_clock = current_request_clock;
       return true;
     } else {
