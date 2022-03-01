@@ -163,7 +163,7 @@ visualization_msgs::msg::MarkerArray createVirtualStopWallMarkerArray(
   marker_virtual_wall.type = visualization_msgs::msg::Marker::CUBE;
   marker_virtual_wall.action = visualization_msgs::msg::Marker::ADD;
   marker_virtual_wall.pose = pose;
-  marker_virtual_wall.pose.position.z += 1.0 + offset_z;
+  marker_virtual_wall.pose.position.z += 1.0;
   marker_virtual_wall.scale = createMarkerScale(0.1, 5.0, 2.0);
   marker_virtual_wall.color = createMarkerColor(1.0, 0.0, 0.0, 0.5);
   msg.markers.push_back(marker_virtual_wall);
