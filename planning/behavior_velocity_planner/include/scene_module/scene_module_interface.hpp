@@ -16,6 +16,7 @@
 #define SCENE_MODULE__SCENE_MODULE_INTERFACE_HPP_
 
 #include "behavior_velocity_planner/planner_data.hpp"
+#include "route_handler/route_handler.hpp"
 
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
@@ -34,6 +35,7 @@
 
 namespace behavior_velocity_planner
 {
+using route_handler::RouteHandler;
 class SceneModuleInterface
 {
 public:
@@ -54,7 +56,10 @@ public:
   {
     planner_data_ = planner_data;
   }
-
+  void setRouteHandler(const std::shared_ptr<const RouteHandler> & route_handler)
+  {
+    route_handler_ = route_handler;
+  }
   boost::optional<tier4_v2x_msgs::msg::InfrastructureCommand> getInfrastructureCommand()
   {
     return infrastructure_command_;
@@ -73,6 +78,7 @@ protected:
   rclcpp::Logger logger_;
   rclcpp::Clock::SharedPtr clock_;
   std::shared_ptr<const PlannerData> planner_data_;
+  std::shared_ptr<const RouteHandler> route_handler_;
   boost::optional<tier4_v2x_msgs::msg::InfrastructureCommand> infrastructure_command_;
   boost::optional<int> first_stop_path_point_index_;
 };
@@ -100,10 +106,11 @@ public:
 
   void updateSceneModuleInstances(
     const std::shared_ptr<const PlannerData> & planner_data,
+    const std::shared_ptr<const RouteHandler> & route_handler,
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
   {
     planner_data_ = planner_data;
-
+    route_handler_ = route_handler;
     launchNewModules(path);
     deleteExpiredModules(path);
   }
@@ -122,6 +129,7 @@ public:
     for (const auto & scene_module : scene_modules_) {
       tier4_planning_msgs::msg::StopReason stop_reason;
       scene_module->setPlannerData(planner_data_);
+      scene_module->setRouteHandler(route_handler_);
       scene_module->modifyPathVelocity(path, &stop_reason);
       stop_reason_array.stop_reasons.emplace_back(stop_reason);
 
@@ -193,6 +201,7 @@ protected:
   std::set<int64_t> registered_module_id_set_;
 
   std::shared_ptr<const PlannerData> planner_data_;
+  std::shared_ptr<const RouteHandler> route_handler_;
 
   boost::optional<int> first_stop_path_point_index_;
   rclcpp::Clock::SharedPtr clock_;

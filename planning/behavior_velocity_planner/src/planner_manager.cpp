@@ -57,6 +57,7 @@ void BehaviorVelocityPlannerManager::launchSceneModule(
 
 autoware_auto_planning_msgs::msg::PathWithLaneId BehaviorVelocityPlannerManager::planPathVelocity(
   const std::shared_ptr<const PlannerData> & planner_data,
+  const std::shared_ptr<const RouteHandler> & route_handler,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path_msg)
 {
   autoware_auto_planning_msgs::msg::PathWithLaneId output_path_msg = input_path_msg;
@@ -65,7 +66,7 @@ autoware_auto_planning_msgs::msg::PathWithLaneId BehaviorVelocityPlannerManager:
   std::string stop_reason_msg("path_end");
 
   for (const auto & scene_manager_ptr : scene_manager_ptrs_) {
-    scene_manager_ptr->updateSceneModuleInstances(planner_data, input_path_msg);
+    scene_manager_ptr->updateSceneModuleInstances(planner_data, route_handler, input_path_msg);
     scene_manager_ptr->modifyPathVelocity(&output_path_msg);
     boost::optional<int> firstStopPathPointIndex = scene_manager_ptr->getFirstStopPathPointIndex();
 

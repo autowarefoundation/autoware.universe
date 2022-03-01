@@ -44,6 +44,7 @@ public:
 
   autoware_auto_planning_msgs::msg::PathWithLaneId planPathVelocity(
     const std::shared_ptr<const PlannerData> & planner_data,
+    const std::shared_ptr<const RouteHandler> & route_handler,
     const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path_msg);
 
   diagnostic_msgs::msg::DiagnosticStatus getStopReasonDiag();

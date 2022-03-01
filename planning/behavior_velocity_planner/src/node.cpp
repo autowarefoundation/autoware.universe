@@ -276,6 +276,7 @@ void BehaviorVelocityPlannerNode::onLaneletMap(
 
     planner_data_.overall_graphs = std::make_shared<const RoutingGraphContainer>(overall_graphs);
   }
+  route_handler_.setMap(*msg);
 }
 
 void BehaviorVelocityPlannerNode::onTrafficSignals(
@@ -336,7 +337,8 @@ void BehaviorVelocityPlannerNode::onTrigger(
 
   // Plan path velocity
   const auto velocity_planned_path = planner_manager_.planPathVelocity(
-    std::make_shared<const PlannerData>(planner_data_), *input_path_msg);
+    std::make_shared<const PlannerData>(planner_data_),
+    std::make_shared<const RouteHandler>(route_handler_), *input_path_msg);
 
   // screening
   const auto filtered_path = filterLitterPathPoint(to_path(velocity_planned_path));

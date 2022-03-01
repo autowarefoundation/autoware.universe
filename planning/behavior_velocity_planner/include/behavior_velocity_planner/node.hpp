@@ -17,6 +17,7 @@
 
 #include "behavior_velocity_planner/planner_data.hpp"
 #include "behavior_velocity_planner/planner_manager.hpp"
+#include "route_handler/route_handler.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -38,6 +39,7 @@
 
 namespace behavior_velocity_planner
 {
+using route_handler::RouteHandler;
 class BehaviorVelocityPlannerNode : public rclcpp::Node
 {
 public:
@@ -99,6 +101,7 @@ private:
 
   // member
   PlannerData planner_data_;
+  RouteHandler route_handler_;
   BehaviorVelocityPlannerManager planner_manager_;
 
   // function
