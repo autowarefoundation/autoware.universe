@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FRENET_PLANNER_NODE__PREPARE_INPUTS_HPP_
-#define FRENET_PLANNER_NODE__PREPARE_INPUTS_HPP_
+#ifndef SAMPLER_NODE__PREPARE_INPUTS_HPP_
+#define SAMPLER_NODE__PREPARE_INPUTS_HPP_
 
 #include "frenet_planner/structures.hpp"
 #include "sampler_common/transform/spline_transform.hpp"
@@ -33,7 +33,7 @@
 #include <string>
 #include <vector>
 
-namespace frenet_planner_node
+namespace sampler_node
 {
 
 sampler_common::Constraints prepareConstraints(
@@ -48,6 +48,6 @@ sampler_common::transform::Spline2D preparePathSpline(
 frenet_planner::Trajectory preparePreviousTrajectory(
   const frenet_planner::Trajectory & prev_trajectory,
   const sampler_common::transform::Spline2D & path_spline);
-}  // namespace frenet_planner_node
+}  // namespace sampler_node
 
-#endif  // FRENET_PLANNER_NODE__PREPARE_INPUTS_HPP_
+#endif  // SAMPLER_NODE__PREPARE_INPUTS_HPP_

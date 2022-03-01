@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "frenet_planner_node/prepare_inputs.hpp"
+#include "sampler_node/prepare_inputs.hpp"
 
 #include "frenet_planner/structures.hpp"
-#include "frenet_planner_node/utils/occupancy_grid_to_polygons.hpp"
+#include "sampler_node/utils/occupancy_grid_to_polygons.hpp"
 #include "sampler_common/structures.hpp"
 #include "sampler_common/transform/spline_transform.hpp"
 
@@ -25,7 +25,7 @@
 #include <algorithm>
 #include <vector>
 
-namespace frenet_planner_node
+namespace sampler_node
 {
 
 sampler_common::Constraints prepareConstraints(
@@ -138,4 +138,4 @@ frenet_planner::Trajectory preparePreviousTrajectory(
   }
   return trajectory;
 }
-}  // namespace frenet_planner_node
+}  // namespace sampler_node

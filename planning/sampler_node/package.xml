@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>frenet_planner_node</name>
+  <name>sampler_node</name>
   <version>0.0.1</version>
-  <description>Node for trajectory generation by sampling polynomial curves in Frenet frame</description>
+  <description>Node for sampling-based path and trajectory generation</description>
 
   <maintainer email="maxime.clement@tier4.jp">Maxime CLEMENT</maintainer>
 

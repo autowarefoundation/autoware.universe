@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "frenet_planner_node/trajectory_generation.hpp"
+#include "sampler_node/trajectory_generation.hpp"
 
 #include <frenet_planner/frenet_planner.hpp>
-#include <frenet_planner_node/prepare_inputs.hpp>
+#include <sampler_node/prepare_inputs.hpp>
 #include <sampler_common/trajectory_reuse.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path.hpp>
@@ -25,7 +25,7 @@
 #include <algorithm>
 #include <vector>
 
-namespace frenet_planner_node
+namespace sampler_node
 {
 std::vector<frenet_planner::Trajectory> generateCandidateTrajectories(
   const sampler_common::Point & pose, const geometry_msgs::msg::Twist & twist,
@@ -88,4 +88,4 @@ std::vector<frenet_planner::Trajectory> generateFrenetTrajectories(
     path_spline, initial_state, sampling_parameters, constraints, debug);
 }
 
-}  // namespace frenet_planner_node
+}  // namespace sampler_node

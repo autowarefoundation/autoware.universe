@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "frenet_planner_node/frenet_planner_node.hpp"
+#include "sampler_node/sampler_node.hpp"
 
 #include "frenet_planner/structures.hpp"
-#include "frenet_planner_node/plot/debug_window.hpp"
-#include "frenet_planner_node/prepare_inputs.hpp"
-#include "frenet_planner_node/trajectory_generation.hpp"
-#include "frenet_planner_node/utils/occupancy_grid_to_polygons.hpp"
+#include "sampler_node/plot/debug_window.hpp"
+#include "sampler_node/prepare_inputs.hpp"
+#include "sampler_node/trajectory_generation.hpp"
+#include "sampler_node/utils/occupancy_grid_to_polygons.hpp"
 #include "sampler_common/structures.hpp"
 #include "sampler_common/trajectory_reuse.hpp"
 #include "sampler_common/transform/spline_transform.hpp"
@@ -44,10 +44,10 @@
 #include <string>
 #include <vector>
 
-namespace frenet_planner_node
+namespace sampler_node
 {
 FrenetPlannerNode::FrenetPlannerNode(const rclcpp::NodeOptions & node_options)
-: Node("frenet_planner_node", node_options),
+: Node("sampler_node", node_options),
   qapplication_(argc_, argv_.data()),
   tf_buffer_(this->get_clock()),
   tf_listener_(tf_buffer_)
@@ -211,7 +211,7 @@ void FrenetPlannerNode::publishTrajectory(
   trajectory_pub_->publish(traj_msg);
 }
 
-}  // namespace frenet_planner_node
+}  // namespace sampler_node
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(frenet_planner_node::FrenetPlannerNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(sampler_node::FrenetPlannerNode)

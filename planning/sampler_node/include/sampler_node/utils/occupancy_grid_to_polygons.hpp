@@ -33,7 +33,7 @@
 
 // TODO(Maxime CLEMENT): move code to .cpp file
 
-namespace frenet_planner_node::utils
+namespace sampler_node::utils
 {
 inline std::vector<sampler_common::Polygon> occupancyGridToPolygons(
   const nav_msgs::msg::OccupancyGrid & og)
@@ -126,6 +126,6 @@ inline std::vector<sampler_common::Polygon> predictedObjectsToPolygons(
   }
   return polygons;
 }
-}  // namespace frenet_planner_node::utils
+}  // namespace sampler_node::utils
 
 #endif  // FRENET_PLANNER__UTILS__OCCUPANCY_GRID_TO_POLYGONS_HPP_

@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FRENET_PLANNER_NODE__PLOT__DEBUG_WINDOW_HPP
-#define FRENET_PLANNER_NODE__PLOT__DEBUG_WINDOW_HPP
+#ifndef SAMPLER_NODE__PLOT__DEBUG_WINDOW_HPP
+#define SAMPLER_NODE__PLOT__DEBUG_WINDOW_HPP
 
-#include "frenet_planner_node/plot/plotter.hpp"
+#include "sampler_node/plot/plotter.hpp"
 #include "frenet_planner/structures.hpp"
 #include "sampler_common/structures.hpp"
 
@@ -32,7 +32,7 @@ namespace Ui
 class MainWindow;
 }  // namespace Ui
 
-namespace frenet_planner_node::plot
+namespace sampler_node::plot
 {
 class MainWindow : public QMainWindow
 {
@@ -48,7 +48,7 @@ public:
 
   // TODO make this private and have a better interface (separate class for interactive plot case ?)
   // Plotter to manage QCustomPlot of the Gui
-  std::shared_ptr<frenet_planner_node::plot::Plotter> plotter_;
+  std::shared_ptr<sampler_node::plot::Plotter> plotter_;
 
 private slots:
 
@@ -59,6 +59,6 @@ private:
   // Gui
   Ui::MainWindow * ui;
 };
-} // namespace frenet_planner_node::plot
+} // namespace sampler_node::plot
 
-#endif  // FRENET_PLANNER_NODE__PLOT__DEBUG_WINDOW_HPP
+#endif  // SAMPLER_NODE__PLOT__DEBUG_WINDOW_HPP
