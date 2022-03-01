@@ -74,7 +74,7 @@ public:
 
 public:
   StopLineModule(
-    const int64_t module_id, const StopLineWithLaneId & stop_lines_with_lane_id,
+    const int64_t module_id, const size_t lane_id, const lanelet::ConstLineString3d & stop_line,
     const PlannerParam & planner_param, const rclcpp::Logger logger,
     const rclcpp::Clock::SharedPtr clock);
 

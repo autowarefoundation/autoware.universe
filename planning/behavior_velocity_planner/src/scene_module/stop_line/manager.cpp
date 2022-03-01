@@ -101,10 +101,11 @@ void StopLineModuleManager::launchNewModules(
   for (const auto & stop_line_with_lane_id :
        getStopLinesWithLaneIdOnPath(path, planner_data_->route_handler_->getLaneletMapPtr())) {
     const auto module_id = stop_line_with_lane_id.first.id();
+    const auto lane_id = stop_line_with_lane_id.second;
     if (!isModuleRegistered(module_id)) {
       registerModule(std::make_shared<StopLineModule>(
-        module_id, stop_line_with_lane_id, planner_param_, logger_.get_child("stop_line_module"),
-        clock_));
+        module_id, lane_id, stop_line_with_lane_id.first, planner_param_,
+        logger_.get_child("stop_line_module"), clock_));
     }
   }
 }

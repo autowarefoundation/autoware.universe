@@ -91,13 +91,13 @@ boost::optional<StopLineModule::SegmentIndexWithOffset> findBackwardOffsetSegmen
 }  // namespace
 
 StopLineModule::StopLineModule(
-  const int64_t module_id, const StopLineWithLaneId & stop_line_with_lane_id,
+  const int64_t module_id, const size_t lane_id, const lanelet::ConstLineString3d & stop_line,
   const PlannerParam & planner_param, const rclcpp::Logger logger,
   const rclcpp::Clock::SharedPtr clock)
 : SceneModuleInterface(module_id, logger, clock),
   module_id_(module_id),
-  stop_line_(stop_line_with_lane_id.first),
-  lane_id_(stop_line_with_lane_id.second),
+  stop_line_(stop_line),
+  lane_id_(lane_id),
   state_(State::APPROACH)
 {
   planner_param_ = planner_param;
