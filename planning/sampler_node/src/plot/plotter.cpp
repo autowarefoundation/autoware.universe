@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "frenet_planner_node/plot/plotter.hpp"
+#include "sampler_node/plot/plotter.hpp"
 
 #include "frenet_planner/structures.hpp"
 #include "sampler_common/structures.hpp"
@@ -23,7 +23,7 @@
 #include <qcustomplot.h>
 #include <qnamespace.h>
 
-namespace frenet_planner_node::plot
+namespace sampler_node::plot
 {
 Plotter::Plotter(QCustomPlot * fcplot, QCustomPlot * polyplot)
 : fcplot_(fcplot), polyplot_(polyplot)
@@ -274,4 +274,4 @@ QCPCurve * Plotter::trajectoryToCartesianCurve(
   return curve;
 }
 
-}  // namespace frenet_planner_node::plot
+}  // namespace sampler_node::plot

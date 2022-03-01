@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "frenet_planner_node/path_generation.hpp"
+#include "sampler_node/path_generation.hpp"
 #include "frenet_planner/structures.hpp"
 #include "sampler_common/structures.hpp"
 
 #include <frenet_planner/frenet_planner.hpp>
-#include <frenet_planner_node/prepare_inputs.hpp>
+#include <sampler_node/prepare_inputs.hpp>
 #include <sampler_common/path_reuse.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path.hpp>
@@ -27,7 +27,7 @@
 #include <algorithm>
 #include <vector>
 
-namespace frenet_planner_node
+namespace sampler_node
 {
   /*
 std::vector<sampler_common::Path> generateCandidatePaths(
@@ -87,4 +87,4 @@ std::vector<sampler_common::Path> generateFrenetPaths(
 }
 
 */
-}  // namespace frenet_planner_node
+}  // namespace sampler_node

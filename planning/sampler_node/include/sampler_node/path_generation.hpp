@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FRENET_PLANNER_NODE__TRAJECTORY_GENERATION_HPP_
-#define FRENET_PLANNER_NODE__TRAJECTORY_GENERATION_HPP_
+#ifndef SAMPLER_NODE__TRAJECTORY_GENERATION_HPP_
+#define SAMPLER_NODE__TRAJECTORY_GENERATION_HPP_
 
 #include "frenet_planner/structures.hpp"
 #include "sampler_common/constraints/hard_constraint.hpp"
@@ -24,7 +24,7 @@
 
 #include <vector>
 
-namespace frenet_planner_node
+namespace sampler_node
 {
 /**
  * @brief generate candidate paths for the given problem inputs
@@ -53,6 +53,6 @@ std::vector<sampler_common::Path> generateFrenetPaths(
 
 // generateCartesianTrajectories()
 // generateSigmoidTrajectories()
-}  // namespace frenet_planner_node
+}  // namespace sampler_node
 
-#endif  // FRENET_PLANNER_NODE__TRAJECTORY_GENERATION_HPP_
+#endif  // SAMPLER_NODE__TRAJECTORY_GENERATION_HPP_

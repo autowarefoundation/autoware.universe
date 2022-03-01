@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
-project(frenet_planner_node)
+project(sampler_node)
 
 if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD 17)
   set(CMAKE_CXX_STANDARD_REQUIRED ON)
   set(CMAKE_CXX_EXTENSIONS OFF)
 endif()
@@ -25,30 +25,30 @@ find_package(Qt5 COMPONENTS Widgets REQUIRED)
 find_package(QCustomPlot REQUIRED)
 
 
-ament_auto_add_library(frenet_planner_node SHARED
+ament_auto_add_library(sampler_node SHARED
   DIRECTORY src
 )
 
-target_link_libraries(frenet_planner_node
+target_link_libraries(sampler_node
   Qt5::Widgets
   ${QCustomPlot_LIBRARIES}
   ${OpenCV_LIBRARIES}
 )
 
-rclcpp_components_register_node(frenet_planner_node
-  PLUGIN "frenet_planner_node::FrenetPlannerNode"
-  EXECUTABLE frenet_planner_node_exe
+rclcpp_components_register_node(sampler_node
+  PLUGIN "sampler_node::FrenetPlannerNode"
+  EXECUTABLE sampler_node_exe
 )
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
 
-  ament_add_gtest(test_frenet_planner_node
+  ament_add_gtest(test_sampler_node
     test/test_prepare_inputs.cpp
   )
-  target_link_libraries(test_frenet_planner_node
-    frenet_planner_node
+  target_link_libraries(test_sampler_node
+    sampler_node
   )
 endif()
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <frenet_planner_node/prepare_inputs.hpp>
+#include <sampler_node/prepare_inputs.hpp>
 
 #include <gtest/gtest.h>
 
@@ -24,7 +24,7 @@ TEST(prepare_inputs, preparePreviousTrajectory)
   frenet_planner::Trajectory trajectory;
   trajectory.points = {{0, 0}, {1, 1}, {1, 2}};
   sampler_common::transform::Spline2D path_spline({0, 1, 2}, {0, 0, 0});
-  const auto prev_traj = frenet_planner_node::preparePreviousTrajectory(trajectory, path_spline);
+  const auto prev_traj = sampler_node::preparePreviousTrajectory(trajectory, path_spline);
   ASSERT_EQ(trajectory.points.size(), prev_traj.points.size());
   EXPECT_NEAR(prev_traj.frenet_points[0].s, 0, TOL);
   EXPECT_NEAR(prev_traj.frenet_points[0].d, 0, TOL);
@@ -34,7 +34,7 @@ TEST(prepare_inputs, preparePreviousTrajectory)
   EXPECT_NEAR(prev_traj.frenet_points[2].d, 2, TOL);
 
   sampler_common::transform::Spline2D path_spline2({-2, 0, 1, 2}, {1, 1, 1, 1});
-  const auto prev_traj2 = frenet_planner_node::preparePreviousTrajectory(prev_traj, path_spline2);
+  const auto prev_traj2 = sampler_node::preparePreviousTrajectory(prev_traj, path_spline2);
   ASSERT_EQ(prev_traj.points.size(), prev_traj2.points.size());
   EXPECT_NEAR(prev_traj2.frenet_points[0].s, 2, TOL);
   EXPECT_NEAR(prev_traj2.frenet_points[0].d, -1, TOL);

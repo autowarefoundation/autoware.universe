@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "frenet_planner_node/plot/debug_window.hpp"
+#include "sampler_node/plot/debug_window.hpp"
 
 #include "frenet_planner/frenet_planner.hpp"
-#include "frenet_planner_node/plot/ui_mainwindow.h"
+#include "sampler_node/plot/ui_mainwindow.h"
 #include "sampler_common/transform/spline_transform.hpp"
 
 #include <qcustomplot.h>
@@ -28,7 +28,7 @@
 
 #include <cmath>
 
-namespace frenet_planner_node::plot
+namespace sampler_node::plot
 {
 MainWindow::MainWindow(QWidget * parent) : QMainWindow(parent), ui(new Ui::MainWindow)
 {
@@ -166,4 +166,4 @@ void MainWindow::replot()
   }
 }
 
-}  // namespace frenet_planner_node::plot
+}  // namespace sampler_node::plot

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FRENET_PLANNER_NODE__PLOT__PLOTTER_HPP
-#define FRENET_PLANNER_NODE__PLOT__PLOTTER_HPP
+#ifndef SAMPLER_NODE__PLOT__PLOTTER_HPP
+#define SAMPLER_NODE__PLOT__PLOTTER_HPP
 
 #include "frenet_planner/structures.hpp"
 #include "sampler_common/structures.hpp"
@@ -23,7 +23,7 @@
 
 #include <vector>
 
-namespace frenet_planner_node::plot
+namespace sampler_node::plot
 {
 using sampler_common::FrenetPoint;
 using sampler_common::Point;
@@ -72,6 +72,6 @@ private:
     const Trajectory & trajectory, QCPAxisRect * axis_rect);
 };
 
-}  // namespace frenet_planner_node::plot
+}  // namespace sampler_node::plot
 
-#endif  // FRENET_PLANNER_NODE__PLOT__PLOTTER_HPP
+#endif  // SAMPLER_NODE__PLOT__PLOTTER_HPP

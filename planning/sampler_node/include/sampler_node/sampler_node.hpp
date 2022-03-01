@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FRENET_PLANNER__FRENET_PLANNER_NODE_HPP_
-#define FRENET_PLANNER__FRENET_PLANNER_NODE_HPP_
+#ifndef FRENET_PLANNER__SAMPLER_NODE_HPP_
+#define FRENET_PLANNER__SAMPLER_NODE_HPP_
 
 #include "frenet_planner/frenet_planner.hpp"
 #include "frenet_planner/structures.hpp"
-#include "frenet_planner_node/plot/debug_window.hpp"
+#include "sampler_node/plot/debug_window.hpp"
 
 #include <QApplication>
 #include <rclcpp/rclcpp.hpp>
@@ -45,7 +45,7 @@
 #include <string>
 #include <vector>
 
-namespace frenet_planner_node
+namespace sampler_node
 {
 class FrenetPlannerNode : public rclcpp::Node
 {
@@ -103,6 +103,6 @@ private:
 public:
   explicit FrenetPlannerNode(const rclcpp::NodeOptions & node_options);
 };
-}  // namespace frenet_planner_node
+}  // namespace sampler_node
 
-#endif  // FRENET_PLANNER__FRENET_PLANNER_NODE_HPP_
+#endif  // FRENET_PLANNER__SAMPLER_NODE_HPP_
