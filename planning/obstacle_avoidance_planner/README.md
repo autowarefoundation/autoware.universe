@@ -3,6 +3,14 @@
 This package generates a trajectory that is feasible to drive and collision free based on a reference path, drivable area, and static/dynamic obstacles.
 Only position and orientation of trajectory are calculated in this module (velocity is just aligned from the one in the path), and velocity or acceleration will be updated in the latter modules.
 
+## Feature
+
+This package is able to
+
+- follow the behavior path smoothly
+- make the trajectory inside the drivable area as much as possible
+- insert stop point if its trajectory point is outside the drivable area
+
 ## Inputs / Outputs
 
 ### input
@@ -527,7 +535,7 @@ $$
 \begin{align}
 \boldsymbol{v} =
 \begin{pmatrix}
-  \boldsymbol{u}^T & \boldsymbol{\lambda}_\mathrm{base}^T & \boldsymbol{\lambda}_\mathrm{top}^T & \boldsymbol{\lambda}_\mathrm{mid}^T
+  \boldsymbol{u}'^T & \boldsymbol{\lambda}_\mathrm{base}^T & \boldsymbol{\lambda}_\mathrm{top}^T & \boldsymbol{\lambda}_\mathrm{mid}^T
 \end{pmatrix}^T
 \end{align}
 $$
@@ -628,7 +636,7 @@ $$
         O
     \end{pmatrix}
     \in \boldsymbol{R}^{3 N_{ref}} \\
-    \boldsymbol{b}_{upper, blk} & = \boldsymbol{\infinity}
+    \boldsymbol{b}_{upper, blk} & = \boldsymbol{\infty}
     \in \boldsymbol{R}^{3 N_{ref}}
 \end{align}
 $$
