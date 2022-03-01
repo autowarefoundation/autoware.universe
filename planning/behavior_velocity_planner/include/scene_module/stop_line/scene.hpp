@@ -27,6 +27,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <scene_module/scene_module_interface.hpp>
 #include <utilization/boost_geometry_helper.hpp>
+#include <utilization/util.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_routing/RoutingGraph.h>
@@ -89,9 +90,9 @@ private:
 
   geometry_msgs::msg::Point getCenterOfStopLine(const lanelet::ConstLineString3d & stop_line);
 
-  boost::optional<StopLineModule::SegmentIndexWithPoint2d> findCollisionAroundIndex(
+  boost::optional<StopLineModule::SegmentIndexWithPoint2d> findCollision(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const LineString2d & stop_line,
-    const size_t index);
+    const SearchRangeIndex & search_index);
 
   boost::optional<StopLineModule::SegmentIndexWithOffset> findOffsetSegment(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
