@@ -16,9 +16,8 @@ Another feature of this node is that it publishes visibility as a diagnostic top
 
 In some complicated road scenes where normal objects also reflect the light in two stages, for instance plants, leaves, some plastic net etc, the visibility faces some drop in fine weather condition. To deal with that, optional settings of a region of interest (ROI) are added.
 
-1. `Dynamic_FreeSpace_ROI` mode: Visibility estimation based on the weak points in the free space which defined as no normal points region.
-2. `Fixed_xyz_ROI` mode: Visibility estimation based on the weak points in a fixed cuboid surrounding region of ego-vehicle, defined by x, y, z in base_link perspective.
-3. `Fixed_azimuth_ROI` mode: Visibility estimation based on the weak points in a fixed surrounding region of ego-vehicle, defined by azimuth and distance of LiDAR perspective.
+1. `Fixed_xyz_ROI` mode: Visibility estimation based on the weak points in a fixed cuboid surrounding region of ego-vehicle, defined by x, y, z in base_link perspective.
+2. `Fixed_azimuth_ROI` mode: Visibility estimation based on the weak points in a fixed surrounding region of ego-vehicle, defined by azimuth and distance of LiDAR perspective.
 
 When select 2 fixed ROI modes, due to the range of weak points is shrink, the sensitivity of visibility is decrease so that a trade of between `weak_first_local_noise_threshold` and `visibility_threshold` is needed.
 

@@ -52,9 +52,8 @@ enum ReturnType : uint8_t {
 
 std::unordered_map<std::string, uint8_t> roi_mode_map_ = {
   {"No_ROI", 0},
-  {"Dynamic_FreeSpace_ROI", 1},
-  {"Fixed_xyz_ROI", 2},
-  {"Fixed_azimuth_ROI", 3},
+  {"Fixed_xyz_ROI", 1},
+  {"Fixed_azimuth_ROI", 2},
 };
 
 class DualReturnOutlierFilterComponent : public pointcloud_preprocessor::Filter
@@ -82,9 +81,6 @@ private:
   double visibility_threshold_;
   int vertical_bins_;
   float max_azimuth_diff_;
-  float neighbor_r_thresh_ = 0.5f;
-  uint weak_first_segment_check_size_v_;
-  uint weak_first_segment_check_size_h_;
   std::string roi_mode_;
   float x_max_;
   float x_min_;
