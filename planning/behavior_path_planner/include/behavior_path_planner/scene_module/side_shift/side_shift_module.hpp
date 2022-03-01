@@ -133,7 +133,7 @@ private:
   PathWithLaneId calcCenterLinePath(
     const std::shared_ptr<const PlannerData> & planner_data, const PoseStamped & pose) const;
 
-  SideShiftRequestTimer request_time;
+  SideShiftRequestTimer request_timer_;
 };
 
 }  // namespace behavior_path_planner
