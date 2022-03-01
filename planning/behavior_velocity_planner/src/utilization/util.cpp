@@ -23,6 +23,58 @@ namespace behavior_velocity_planner
 {
 namespace planning_utils
 {
+
+size_t findNearestIndexWithinArcLength(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const geometry_msgs::msg::Point & point, const double max_length)
+{
+  size_t idx = 0;
+  double current_length = 0;
+  double distance = std::numeric_limits<double>::max();
+  const size_t last_idx = static_cast<size_t>(path.points.size() - 1);
+  for (size_t i = 0; i < last_idx; i++) {
+    const auto & p0 = planning_utils::getPoint(path.points.at(i));
+    const auto & p1 = planning_utils::getPoint(path.points.at(i + 1));
+    // case except last point
+    const double current_distance = std::hypot(point.x - p0.x, point.y - p0.y);
+    if (current_distance < distance) {
+      distance = current_distance;
+      idx = i;
+    }
+    // case of last point
+    if (i == last_idx - 1) {
+      const double last_dist = std::hypot(point.x - p1.x, point.y - p1.y);
+      if (last_dist < distance) {
+        idx = last_idx;
+        distance = last_dist;
+      }
+    }
+    current_length += std::hypot(p1.x - p0.x, p1.y - p1.y);
+    if (current_length > max_length) return idx;
+  }
+  return idx;
+}
+size_t findClosestIndexWithLaneId(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const geometry_msgs::msg::Point & point, const int64_t lane_id)
+{
+  size_t idx = 0;
+  double distance = std::numeric_limits<double>::max();
+  for (size_t i = 0; i < path.points.size(); i++) {
+    const auto & p = path.points.at(i);
+    for (const auto & id : p.lane_ids) {
+      const auto & position = p.point.pose.position;
+      if (id == lane_id) {
+        const double current_distance = std::hypot(point.x - position.x, point.y - position.y);
+        if (current_distance < distance) {
+          distance = current_distance;
+          idx = i;
+        }
+      }
+    }
+  }
+  return idx;
+}
 Polygon2d toFootprintPolygon(const autoware_auto_perception_msgs::msg::PredictedObject & object)
 {
   Polygon2d obj_footprint;

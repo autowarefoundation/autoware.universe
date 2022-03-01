@@ -17,6 +17,7 @@
 
 #include <lanelet2_extension/utility/query.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
+#include <tier4_autoware_utils/trajectory/trajectory.hpp>
 #include <utilization/boost_geometry_helper.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
@@ -124,6 +125,29 @@ geometry_msgs::msg::Pose transformRelCoordinate2D(
   const geometry_msgs::msg::Pose & target, const geometry_msgs::msg::Pose & origin);
 geometry_msgs::msg::Pose transformAbsCoordinate2D(
   const geometry_msgs::msg::Pose & relative, const geometry_msgs::msg::Pose & origin);
+/**
+ * @brief calcSignedArcLength from point with closest index to point with with closest
+ */
+template <class T>
+double calcSignedArcLength(
+  const T & points, const size_t src_idx, const geometry_msgs::msg::Point & src_point,
+  const size_t dst_idx, const geometry_msgs::msg::Point & dst_point)
+{
+  tier4_autoware_utils::validateNonEmpty(points);
+  const double ego_to_segment_start =
+    -tier4_autoware_utils::calcLongitudinalOffsetToSegment(points, src_idx, src_point);
+  const double segment_start_to_end =
+    tier4_autoware_utils::calcSignedArcLength(points, src_idx, dst_idx);
+  const double segment_end_to_target =
+    tier4_autoware_utils::calcLongitudinalOffsetToSegment(points, dst_idx, dst_point);
+  return ego_to_segment_start + segment_start_to_end + segment_end_to_target;
+}
+size_t findNearestIndexWithinArcLength(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const geometry_msgs::msg::Point & point, const double length);
+size_t findClosestIndexWithLaneId(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const geometry_msgs::msg::Point & point, const int64_t lane_id);
 Polygon2d toFootprintPolygon(const autoware_auto_perception_msgs::msg::PredictedObject & object);
 bool isAheadOf(const geometry_msgs::msg::Pose & target, const geometry_msgs::msg::Pose & origin);
 Polygon2d generatePathPolygon(
