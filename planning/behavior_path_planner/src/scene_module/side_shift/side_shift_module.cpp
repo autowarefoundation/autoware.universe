@@ -74,6 +74,7 @@ void SideShiftModule::initVariables()
   lateral_offset_ = 0.0;
   prev_output_ = ShiftedPath{};
   path_shifter_ = PathShifter{};
+  request_time = SideShiftRequestTimer();
 }
 
 void SideShiftModule::onEntry()
@@ -120,21 +121,22 @@ BT::NodeStatus SideShiftModule::updateState()
   // Never return the FAILURE. When the desired offset is zero and the vehicle is in the original
   // drivable area,this module can stop the computation and return SUCCESS.
 
-  const auto isOffsetAlmostZero = [this]() noexcept {
-    double offset_diff = lateral_offset_;
+  const auto isOffsetDiffAlmostZero = [this]() noexcept {
     const auto last_sp = path_shifter_.getLastShiftPoint();
     if (last_sp) {
       const auto length = std::fabs(last_sp.get().length);
       const auto lateral_offset = std::fabs(lateral_offset_);
-      offset_diff = lateral_offset - length;
+      const auto offset_diff = lateral_offset - length;
       if (!isAlmostZero(offset_diff)) {
         lateral_offset_change_request_ = true;
+        return true;
       }
     }
-    return isAlmostZero(offset_diff);
+    return false;
   }();
 
-  const bool no_request = isOffsetAlmostZero;
+  const bool no_offset_diff = isOffsetDiffAlmostZero;
+  const bool no_request = isAlmostZero(lateral_offset_);
 
   const auto no_shifted_plan = [&]() {
     if (prev_output_.shift_length.empty()) {
@@ -151,7 +153,7 @@ BT::NodeStatus SideShiftModule::updateState()
     getLogger(), "ESS::updateState() : no_request = %d, no_shifted_plan = %d", no_request,
     no_shifted_plan);
 
-  if (no_request && no_shifted_plan) {
+  if (no_request && no_shifted_plan && no_offset_diff) {
     current_state_ = BT::NodeStatus::SUCCESS;
   } else {
     current_state_ = BT::NodeStatus::RUNNING;
@@ -304,9 +306,11 @@ void SideShiftModule::onLateralOffset(const LateralOffset::ConstSharedPtr latera
   }
 
   // new offset is requested.
-  lateral_offset_change_request_ = true;
+  if (request_time.isRequestAllowed(parameters_.time_to_start_shifting)) {
+    lateral_offset_change_request_ = true;
 
-  lateral_offset_ = new_lateral_offset;
+    lateral_offset_ = new_lateral_offset;
+  }
 }
 
 ShiftPoint SideShiftModule::calcShiftPoint() const
@@ -353,13 +357,7 @@ double SideShiftModule::getClosestShiftLength() const
 
 void SideShiftModule::adjustDrivableArea(ShiftedPath * path) const
 {
-  // extend drivable area relative to ego pose.
-  const auto ego_current_pose = getEgoPose();
-  const auto closest =
-    tier4_autoware_utils::findNearestIndex(path->path.points, ego_current_pose.pose.position);
-
-  const auto itr =
-    std::minmax_element(path->shift_length.begin() + closest, path->shift_length.end());
+  const auto itr = std::minmax_element(path->shift_length.begin(), path->shift_length.end());
 
   constexpr double threshold = 0.1;
   constexpr double margin = 0.5;
