@@ -265,6 +265,12 @@ bool StopLineModule::modifyPathVelocity(
     }
   }
 
+  if (counter % 50 == 0) {
+    std::cout << "path start_idx: " << start_idx << " stop_idx: " << stop_pose_with_index->index
+              << " stop_line_id: " << lane_id_ << " arclength: " << signed_arc_dist_to_stop_point
+              << " current_state: " << static_cast<int>(state_) << std::endl;
+  }
+  counter++;
   return true;
 }
 

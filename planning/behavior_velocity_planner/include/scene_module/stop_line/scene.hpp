@@ -35,6 +35,7 @@ namespace behavior_velocity_planner
 {
 class StopLineModule : public SceneModuleInterface
 {
+  int counter = 0;
   using StopLineWithLaneId = std::pair<lanelet::ConstLineString3d, int64_t>;
 
 public:
