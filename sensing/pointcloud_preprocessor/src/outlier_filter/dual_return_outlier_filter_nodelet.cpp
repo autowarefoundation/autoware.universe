@@ -54,6 +54,10 @@ DualReturnOutlierFilterComponent::DualReturnOutlierFilterComponent(
       static_cast<int>(declare_parameter("weak_first_local_noise_threshold", 2));
     visibility_threshold_ = static_cast<float>(declare_parameter("visibility_threshold", 0.5));
     roi_mode_ = static_cast<std::string>(declare_parameter("roi_mode", "Fixed_xyz_ROI"));
+    visibility_error_threshold_ =
+      static_cast<float>(declare_parameter("visibility_error_threshold", 0.5));
+    visibility_warn_threshold_ =
+      static_cast<float>(declare_parameter("visibility_warn_threshold", 0.7));
   }
   updater_.setHardwareID("dual_return_outlier_filter");
   updater_.add(
@@ -79,15 +83,27 @@ void DualReturnOutlierFilterComponent::onVisibilityChecker(DiagnosticStatusWrapp
   stat.add("value", std::to_string(visibility_));
 
   // Judge level
-  const auto level =
-    visibility_ > visibility_threshold_ ? DiagnosticStatus::OK : DiagnosticStatus::WARN;
+  auto level = DiagnosticStatus::OK;
+  if (visibility_ < 0) {
+    level = DiagnosticStatus::STALE;
+  } else if (visibility_ < visibility_error_threshold_) {
+    level = DiagnosticStatus::ERROR;
+  } else if (visibility_ < visibility_warn_threshold_) {
+    level = DiagnosticStatus::WARN;
+  } else {
+    level = DiagnosticStatus::OK;
+  }
 
   // Set message
   std::string msg;
   if (level == DiagnosticStatus::OK) {
     msg = "OK";
   } else if (level == DiagnosticStatus::WARN) {
-    msg = "low visibility in dual outlier filter";
+    msg = "WARNING: low visibility in dual outlier filter";
+  } else if (level == DiagnosticStatus::ERROR) {
+    msg = "ERROR: low visibility in dual outlier filter";
+  } else if (level == DiagnosticStatus::STALE) {
+    msg = "STALE";
   }
   stat.summary(level, msg);
 }
