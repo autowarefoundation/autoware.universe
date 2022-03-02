@@ -32,7 +32,6 @@
     <!-- object recognition -->
     <group if="$(var perception/enable_object_recognition)">
       <push-ros-namespace namespace="object_recognition"/>
-      <!-- detection module -->
       <!-- tracking module -->
       <group>
         <push-ros-namespace namespace="tracking"/>
