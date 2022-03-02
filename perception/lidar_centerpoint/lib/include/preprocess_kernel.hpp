@@ -12,19 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCATTER_KERNELS_HPP_
-#define SCATTER_KERNELS_HPP_
+#ifndef PREPROCESS_KERNEL_HPP_
+#define PREPROCESS_KERNEL_HPP_
 
 #include <cuda.h>
 #include <cuda_runtime_api.h>
 
+// For the function below
+#define WARP_SIZE 32       // one warp(32 threads) for one pillar
+#define WARPS_PER_BLOCK 4  // four warp for one block
+#define FEATURES_SIZE 9    // features maps number depands on "params.h"
+
 namespace centerpoint
 {
-cudaError_t scatterFeatures_launch(
-  const float * pillar_features, const int * coords, const size_t num_pillars,
-  const int max_num_pillar, const int num_pillar_feature, const int grid_size_x,
-  const int grid_size_y, float * scattered_features, cudaStream_t stream);
+cudaError_t generateFeatures_launch(
+  const float * voxel_features, const float * voxel_num_points, const int * coords,
+  const size_t num_voxels, const size_t max_num_voxels, const float voxel_size_x,
+  const float voxel_size_y, const float voxel_size_z, const float range_min_x,
+  const float range_min_y, const float range_min_z, float * features, cudaStream_t stream);
 
 }  // namespace centerpoint
 
-#endif  // SCATTER_KERNELS_HPP_
+#endif  // PREPROCESS_KERNEL_HPP_

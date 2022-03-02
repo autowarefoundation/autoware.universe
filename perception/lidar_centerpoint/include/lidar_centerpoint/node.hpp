@@ -40,7 +40,8 @@ public:
 
 private:
   void pointCloudCallback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr input_pointcloud_msg);
-
+  void box3DToDetectedObject(
+    const Box3D & box3d, autoware_auto_perception_msgs::msg::DetectedObject & obj);
   static uint8_t getSemanticType(const std::string & class_name);
   static bool isCarLikeVehicleLabel(const uint8_t label);
 
@@ -52,15 +53,6 @@ private:
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_pub_;
 
   float score_threshold_{0.0};
-  bool use_encoder_trt_{false};
-  bool use_head_trt_{false};
-  std::string trt_precision_;
-
-  std::string encoder_onnx_path_;
-  std::string encoder_engine_path_;
-  std::string head_onnx_path_;
-  std::string head_engine_path_;
-
   std::vector<std::string> class_names_;
   bool rename_car_to_truck_and_bus_{false};
 

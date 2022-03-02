@@ -18,7 +18,7 @@
 #include <config.hpp>
 #include <cuda_utils.hpp>
 #include <network_trt.hpp>
-#include <postprocess.hpp>
+#include <postprocess_kernel.hpp>
 #include <voxel_generator.hpp>
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
@@ -64,7 +64,7 @@ public:
 
   bool detect(
     const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const tf2_ros::Buffer & tf_buffer,
-    std::vector<Box> & pred_boxes);
+    std::vector<Box3D> & det_boxes3d);
 
 private:
   void initPtr();
@@ -74,11 +74,12 @@ private:
 
   void inference();
 
-  void postprocess(std::vector<Box> & pred_boxes);
+  void postProcess(std::vector<Box3D> & det_boxes3d);
 
   std::unique_ptr<VoxelGeneratorTemplate> vg_ptr_{nullptr};
   std::unique_ptr<VoxelEncoderTRT> encoder_trt_ptr_{nullptr};
   std::unique_ptr<HeadTRT> head_trt_ptr_{nullptr};
+  std::unique_ptr<PostProcessCUDA> post_proc_ptr{nullptr};
   cudaStream_t stream_{nullptr};
 
   bool verbose_{false};

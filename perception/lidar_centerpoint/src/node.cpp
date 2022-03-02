@@ -17,7 +17,7 @@
 #include <config.hpp>
 #include <pcl_ros/transforms.hpp>
 #include <pointcloud_densification.hpp>
-#include <postprocess.hpp>
+#include <postprocess_kernel.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/math/constants.hpp>
 
@@ -36,18 +36,16 @@ LidarCenterPointNode::LidarCenterPointNode(const rclcpp::NodeOptions & node_opti
   std::string densification_world_frame_id =
     this->declare_parameter("densification_world_frame_id", "map");
   int densification_num_past_frames = this->declare_parameter("densification_num_past_frames", 1);
-  use_encoder_trt_ = this->declare_parameter("use_encoder_trt", false);
-  use_head_trt_ = this->declare_parameter("use_head_trt", true);
-  trt_precision_ = this->declare_parameter("trt_precision", "fp16");
-  encoder_onnx_path_ = this->declare_parameter("encoder_onnx_path", "");
-  encoder_engine_path_ = this->declare_parameter("encoder_engine_path", "");
-  head_onnx_path_ = this->declare_parameter("head_onnx_path", "");
-  head_engine_path_ = this->declare_parameter("head_engine_path", "");
+  std::string trt_precision = this->declare_parameter("trt_precision", "fp16");
+  std::string encoder_onnx_path = this->declare_parameter("encoder_onnx_path", "");
+  std::string encoder_engine_path = this->declare_parameter("encoder_engine_path", "");
+  std::string head_onnx_path = this->declare_parameter("head_onnx_path", "");
+  std::string head_engine_path = this->declare_parameter("head_engine_path", "");
   class_names_ = this->declare_parameter<std::vector<std::string>>("class_names");
   rename_car_to_truck_and_bus_ = this->declare_parameter("rename_car_to_truck_and_bus", false);
 
-  NetworkParam encoder_param(encoder_onnx_path_, encoder_engine_path_, trt_precision_);
-  NetworkParam head_param(head_onnx_path_, head_engine_path_, trt_precision_);
+  NetworkParam encoder_param(encoder_onnx_path, encoder_engine_path, trt_precision);
+  NetworkParam head_param(head_onnx_path, head_engine_path, trt_precision);
   DensificationParam densification_param(
     densification_world_frame_id, densification_num_past_frames);
   detector_ptr_ = std::make_unique<CenterPointTRT>(
@@ -73,64 +71,21 @@ void LidarCenterPointNode::pointCloudCallback(
     return;
   }
 
-  std::vector<Box> pred_boxes;
-  bool is_success = detector_ptr_->detect(*input_pointcloud_msg, tf_buffer_, pred_boxes);
+  std::vector<Box3D> det_boxes3d;
+  bool is_success = detector_ptr_->detect(*input_pointcloud_msg, tf_buffer_, det_boxes3d);
   if (!is_success) {
     return;
   }
 
   autoware_auto_perception_msgs::msg::DetectedObjects output_msg;
   output_msg.header = input_pointcloud_msg->header;
-  for (const auto & box : pred_boxes) {
-    float score = box.score;
-    if (score < score_threshold_) {
+  for (const auto & box3d : det_boxes3d) {
+    if (box3d.score < score_threshold_) {
       continue;
     }
-    size_t class_id = box.label;
-    float x = box.loc_x;
-    float y = box.loc_y;
-    float z = box.loc_z;
-    float l = box.dim_x;
-    float w = box.dim_y;
-    float h = box.dim_z;
-    float yaw = -std::atan2(box.rot_y, box.rot_x) - tier4_autoware_utils::pi / 2;
-    float vel_x = box.vel_x;
-    float vel_y = box.vel_y;
 
     autoware_auto_perception_msgs::msg::DetectedObject obj;
-    // TODO(yukke42): the value of classification confidence of DNN, not probability.
-    obj.existence_probability = score;
-    autoware_auto_perception_msgs::msg::ObjectClassification classification;
-    classification.probability = 1.0f;
-    classification.label = getSemanticType(class_names_[class_id]);
-
-    if (classification.label == Label::CAR && rename_car_to_truck_and_bus_) {
-      // Note: object size is referred from multi_object_tracker
-      if ((w * l > 2.2 * 5.5) && (w * l <= 2.5 * 7.9)) {
-        classification.label = Label::TRUCK;
-      } else if (w * l > 2.5 * 7.9) {
-        classification.label = Label::BUS;
-      }
-    }
-
-    if (isCarLikeVehicleLabel(classification.label)) {
-      obj.kinematics.orientation_availability =
-        autoware_auto_perception_msgs::msg::DetectedObjectKinematics::SIGN_UNKNOWN;
-    }
-
-    obj.classification.emplace_back(classification);
-
-    obj.kinematics.pose_with_covariance.pose.position = tier4_autoware_utils::createPoint(x, y, z);
-    obj.kinematics.pose_with_covariance.pose.orientation =
-      tier4_autoware_utils::createQuaternionFromYaw(yaw);
-    obj.shape.type = autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX;
-    obj.shape.dimensions = tier4_autoware_utils::createTranslation(l, w, h);
-
-    geometry_msgs::msg::Twist twist;
-    twist.linear.x = std::sqrt(std::pow(vel_x, 2) + std::pow(vel_y, 2));
-    twist.angular.z = 2 * (std::atan2(vel_y, vel_x) - yaw);
-    obj.kinematics.twist_with_covariance.twist = twist;
-    obj.kinematics.has_twist = true;
+    box3DToDetectedObject(box3d, obj);
 
     output_msg.objects.emplace_back(obj);
   }
@@ -142,6 +97,60 @@ void LidarCenterPointNode::pointCloudCallback(
     // TODO(yukke42): change to densification pointcloud for debugging
     pointcloud_pub_->publish(*input_pointcloud_msg);
   }
+}
+
+void LidarCenterPointNode::box3DToDetectedObject(
+  const Box3D & box3d, autoware_auto_perception_msgs::msg::DetectedObject & obj)
+{
+  // TODO(yukke42): the value of classification confidence of DNN, not probability.
+  obj.existence_probability = box3d.score;
+
+  // classification
+  autoware_auto_perception_msgs::msg::ObjectClassification classification;
+  classification.probability = 1.0f;
+  if (box3d.label >= 0 && static_cast<size_t>(box3d.label) < class_names_.size()) {
+    classification.label = getSemanticType(class_names_[box3d.label]);
+  } else {
+    classification.label = Label::UNKNOWN;
+  }
+
+  float l = box3d.length;
+  float w = box3d.width;
+  if (classification.label == Label::CAR && rename_car_to_truck_and_bus_) {
+    // Note: object size is referred from multi_object_tracker
+    if ((w * l > 2.2 * 5.5) && (w * l <= 2.5 * 7.9)) {
+      classification.label = Label::TRUCK;
+    } else if (w * l > 2.5 * 7.9) {
+      classification.label = Label::BUS;
+    }
+  }
+
+  if (isCarLikeVehicleLabel(classification.label)) {
+    obj.kinematics.orientation_availability =
+      autoware_auto_perception_msgs::msg::DetectedObjectKinematics::SIGN_UNKNOWN;
+  }
+
+  obj.classification.emplace_back(classification);
+
+  // pose and shape
+  // mmdet3d yaw format to ros yaw format
+  float yaw = -box3d.yaw - tier4_autoware_utils::pi / 2;
+  obj.kinematics.pose_with_covariance.pose.position =
+    tier4_autoware_utils::createPoint(box3d.x, box3d.y, box3d.z);
+  obj.kinematics.pose_with_covariance.pose.orientation =
+    tier4_autoware_utils::createQuaternionFromYaw(yaw);
+  obj.shape.type = autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX;
+  obj.shape.dimensions =
+    tier4_autoware_utils::createTranslation(box3d.length, box3d.width, box3d.height);
+
+  // twist
+  float vel_x = box3d.vel_x;
+  float vel_y = box3d.vel_y;
+  geometry_msgs::msg::Twist twist;
+  twist.linear.x = std::sqrt(std::pow(vel_x, 2) + std::pow(vel_y, 2));
+  twist.angular.z = 2 * (std::atan2(vel_y, vel_x) - yaw);
+  obj.kinematics.twist_with_covariance.twist = twist;
+  obj.kinematics.has_twist = true;
 }
 
 uint8_t LidarCenterPointNode::getSemanticType(const std::string & class_name)

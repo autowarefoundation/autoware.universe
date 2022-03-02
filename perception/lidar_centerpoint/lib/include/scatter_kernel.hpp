@@ -12,34 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef POSTPROCESS_HPP_
-#define POSTPROCESS_HPP_
+#ifndef SCATTER_KERNEL_HPP_
+#define SCATTER_KERNEL_HPP_
 
-#include <vector>
+#include <cuda.h>
+#include <cuda_runtime_api.h>
 
 namespace centerpoint
 {
-struct Box
-{
-  size_t label;
-  float score;
-  float loc_x;
-  float loc_y;
-  float loc_z;
-  float dim_x;
-  float dim_y;
-  float dim_z;
-  float vel_x;
-  float vel_y;
-  float rot_x;
-  float rot_y;
-};
-
-void generatePredictedBoxes(
-  std::vector<float> & output_heatmap, std::vector<float> & output_offset,
-  std::vector<float> & output_z, std::vector<float> & output_dim, std::vector<float> & output_rot,
-  std::vector<float> & output_vel, std::vector<Box> & pred_boxes);
+cudaError_t scatterFeatures_launch(
+  const float * pillar_features, const int * coords, const size_t num_pillars,
+  const int max_num_pillar, const int num_pillar_feature, const int grid_size_x,
+  const int grid_size_y, float * scattered_features, cudaStream_t stream);
 
 }  // namespace centerpoint
 
-#endif  // POSTPROCESS_HPP_
+#endif  // SCATTER_KERNEL_HPP_

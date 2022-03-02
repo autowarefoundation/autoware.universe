@@ -13,8 +13,9 @@
 // limitations under the License.
 
 #include <centerpoint_trt.hpp>
-#include <preprocess_kernels.hpp>
-#include <scatter_kernels.hpp>
+#include <postprocess_kernel.hpp>
+#include <preprocess_kernel.hpp>
+#include <scatter_kernel.hpp>
 #include <tier4_autoware_utils/math/constants.hpp>
 
 #include <iostream>
@@ -30,6 +31,7 @@ CenterPointTRT::CenterPointTRT(
 : num_class_(num_class)
 {
   vg_ptr_ = std::make_unique<VoxelGenerator>(densification_param);
+  post_proc_ptr = std::make_unique<PostProcessCUDA>(num_class);
 
   // encoder
   encoder_trt_ptr_ = std::make_unique<VoxelEncoderTRT>(verbose_);
@@ -84,7 +86,7 @@ void CenterPointTRT::initPtr()
 
 bool CenterPointTRT::detect(
   const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const tf2_ros::Buffer & tf_buffer,
-  std::vector<Box> & pred_boxes)
+  std::vector<Box3D> & det_boxes3d)
 {
   CHECK_CUDA_ERROR(
     cudaMemsetAsync(input_features_d_.get(), 0, input_features_size_ * sizeof(float), stream_));
@@ -98,7 +100,7 @@ bool CenterPointTRT::detect(
 
   inference();
 
-  postprocess(pred_boxes);
+  postProcess(det_boxes3d);
 
   return true;
 }
@@ -150,51 +152,16 @@ void CenterPointTRT::inference()
     spatial_features_d_.get(), stream_));
 
   std::vector<void *> head_buffers = {
-    spatial_features_d_.get(), 
-    output_heatmap_d_.get(), 
-    output_offset_d_.get(),
-    output_z_d_.get(), 
-    output_dim_d_.get(), 
-    output_rot_d_.get(),
-    output_vel_d_.get()};
+    spatial_features_d_.get(), output_heatmap_d_.get(), output_offset_d_.get(), output_z_d_.get(),
+    output_dim_d_.get(),       output_rot_d_.get(),     output_vel_d_.get()};
   head_trt_ptr_->context_->enqueueV2(head_buffers.data(), stream_, nullptr);
 }
 
-void CenterPointTRT::postprocess(std::vector<Box> & pred_boxes)
+void CenterPointTRT::postProcess(std::vector<Box3D> & det_boxes3d)
 {
-  const int downsample_grid_x =
-    static_cast<int>(static_cast<float>(Config::grid_size_x) / Config::downsample_factor);
-  const int downsample_grid_y =
-    static_cast<int>(static_cast<float>(Config::grid_size_y) / Config::downsample_factor);
-  const int grid_xy = downsample_grid_x * downsample_grid_y;
-  std::vector<float> output_heatmap(grid_xy * num_class_);
-  std::vector<float> output_offset(grid_xy * Config::num_output_offset_features);
-  std::vector<float> output_z(grid_xy * Config::num_output_z_features);
-  std::vector<float> output_dim(grid_xy * Config::num_output_dim_features);
-  std::vector<float> output_rot(grid_xy * Config::num_output_rot_features);
-  std::vector<float> output_vel(grid_xy * Config::num_output_vel_features);
-
-  CHECK_CUDA_ERROR(cudaMemcpyAsync(
-    output_heatmap.data(), output_heatmap_d_.get(), output_heatmap.size() * sizeof(float),
-    cudaMemcpyDeviceToHost));
-  CHECK_CUDA_ERROR(cudaMemcpyAsync(
-    output_offset.data(), output_offset_d_.get(), output_offset.size() * sizeof(float),
-    cudaMemcpyDeviceToHost));
-  CHECK_CUDA_ERROR(cudaMemcpyAsync(
-    output_z.data(), output_z_d_.get(), output_z.size() * sizeof(float), cudaMemcpyDeviceToHost));
-  CHECK_CUDA_ERROR(cudaMemcpyAsync(
-    output_dim.data(), output_dim_d_.get(), output_dim.size() * sizeof(float),
-    cudaMemcpyDeviceToHost));
-  CHECK_CUDA_ERROR(cudaMemcpyAsync(
-    output_rot.data(), output_rot_d_.get(), output_rot.size() * sizeof(float),
-    cudaMemcpyDeviceToHost));
-  CHECK_CUDA_ERROR(cudaMemcpyAsync(
-    output_vel.data(), output_vel_d_.get(), output_vel.size() * sizeof(float),
-    cudaMemcpyDeviceToHost));
-  CHECK_CUDA_ERROR(cudaStreamSynchronize(stream_));
-
-  generatePredictedBoxes(
-    output_heatmap, output_offset, output_z, output_dim, output_rot, output_vel, pred_boxes);
+  CHECK_CUDA_ERROR(post_proc_ptr->generateDetectedBoxes3D_launch(
+    output_heatmap_d_.get(), output_offset_d_.get(), output_z_d_.get(), output_dim_d_.get(),
+    output_rot_d_.get(), output_vel_d_.get(), det_boxes3d, stream_));
 }
 
 }  // namespace centerpoint
