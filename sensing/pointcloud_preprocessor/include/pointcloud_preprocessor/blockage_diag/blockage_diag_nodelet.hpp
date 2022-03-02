@@ -30,6 +30,7 @@
 #include <cv_bridge/cv_bridge.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/search/pcl_search.h>
+
 #include <string>
 #include <vector>
 
@@ -71,8 +72,6 @@ private:
   uint vertical_bins_;
   std::vector<double> angle_range_deg_;
   std::vector<double> distance_range_;
-  float blockage_ratio_ = 0.0f;
-  float blockage_posibility_ = 0.0f;
   uint horizontal_ring_id_ = 12;
   float ground_blockage_threshold_ = 0.1;
   float ground_blockage_ratio_ = -1.0f;

@@ -145,7 +145,6 @@ void BlockageDiagComponent::filter(
   if (pcl_input->points.empty()) {
     ground_blockage_ratio_ = 1.0f;
     sky_blockage_ratio_ = 1.0f;
-    blockage_ratio_ = 1.0f;
     ground_blockage_count_ += 1;
     sky_blockage_count_ += 1;
     ground_blockage_range_deg_[0] = angle_range_deg_[0];
