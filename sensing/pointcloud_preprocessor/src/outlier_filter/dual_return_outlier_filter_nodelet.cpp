@@ -262,9 +262,9 @@ void DualReturnOutlierFilterComponent::filter(
             }
           }
           current_temp_segment_index++;
+          frequency_image.at<uchar>(ring_id, i) = noise_frequency[i];
         }
       }
-      frequency_image.at<uchar>(ring_id, i) = noise_frequency[i];
     }
   }
 
