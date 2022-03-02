@@ -13,7 +13,7 @@
   <arg name="initial_engage_state" default="true" description="/vehicle/engage state after starting Autoware"/>
   <arg name="perception/enable_detection_failure" default="true" description="enable to simulate detection failure when using dummy perception"/>
   <arg name="perception/enable_object_recognition" default="true" description="enable object recognition"/>
-  <arg name="perception/enable_traffic_light" default="false" description="enable object recognition"/>
+  <arg name="perception/enable_traffic_light" default="false" description="enable traffic light"/>
   <arg name="sensing/visible_range" default="300.0" description="visible range when using dummy perception"/>
   <arg name="scenario_simulation" default="false" description="use scenario simulation"/>
   <!-- Optional parameters for vcu emulation -->
