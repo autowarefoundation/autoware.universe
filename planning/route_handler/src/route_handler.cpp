@@ -495,8 +495,7 @@ lanelet::ConstLanelets RouteHandler::getLaneletSequenceUpTo(
 
   lanelet::ConstLanelet current_lanelet = lanelet;
   double length = 0;
-  bool break_flag = false;
-  while (rclcpp::ok() && length < min_length && !break_flag) {
+  while (rclcpp::ok() && length < min_length) {
     lanelet::ConstLanelets candidate_lanelets;
     if (!getPreviousLaneletsWithinRoute(current_lanelet, &candidate_lanelets)) {
       break;
