@@ -198,14 +198,18 @@ bool SideShiftModule::addShiftPoint()
   };
 
   // remove shift points on a far position.
-  for (int i = static_cast<int>(shift_points.size()) - 1; i >= 0; --i) {
-    const auto dist_to_start = calcLongitudinal(shift_points.at(i));
-    const double remove_threshold =
-      std::max(planner_data_->self_odometry->twist.twist.linear.x * 1.0 /* sec */, 2.0 /* m */);
-    if (dist_to_start > remove_threshold) {  // TODO(Horibe)
-      shift_points.erase(shift_points.begin() + i);
-    }
-  }
+  const auto remove_iter = std::remove_if(
+    shift_points.begin(), shift_points.end(), [this, calcLongitudinal](const ShiftPoint & sp) {
+      const auto dist_to_start = calcLongitudinal(sp);
+      constexpr double max_remove_threshold_time = 1.0;  // [s]
+      constexpr double max_remove_threshold_dist = 2.0;  // [m]
+      const auto ego_current_speed = planner_data_->self_odometry->twist.twist.linear.x;
+      const auto remove_threshold =
+        std::max(ego_current_speed * max_remove_threshold_time, max_remove_threshold_dist);
+      return (dist_to_start > remove_threshold);
+    });
+
+  shift_points.erase(remove_iter, shift_points.end());
 
   // check if the new_shift_point has conflicts with existing shift points.
   const auto new_sp = calcShiftPoint();
@@ -305,8 +309,12 @@ void SideShiftModule::onLateralOffset(const LateralOffset::ConstSharedPtr latera
     return;
   }
 
+  if (parameters_.shift_request_time_limit < parameters_.time_to_start_shifting) {
+    RCLCPP_DEBUG(
+      getLogger(), "Shift request time might be too low. Generated trajectory might be wavy");
+  }
   // new offset is requested.
-  if (request_timer_.isRequestAllowed(parameters_.time_to_start_shifting)) {
+  if (request_timer_.isRequestAllowed(parameters_.shift_request_time_limit)) {
     lateral_offset_change_request_ = true;
 
     lateral_offset_ = new_lateral_offset;

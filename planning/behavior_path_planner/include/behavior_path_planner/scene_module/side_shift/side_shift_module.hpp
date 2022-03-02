@@ -48,6 +48,7 @@ struct SideShiftParameters
   double drivable_area_resolution;
   double drivable_area_width;
   double drivable_area_height;
+  double shift_request_time_limit;
 };
 
 struct SideShiftRequestTimer
