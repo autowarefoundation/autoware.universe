@@ -30,7 +30,7 @@
 #include <cv_bridge/cv_bridge.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/search/pcl_search.h>
-
+#include <string>
 #include <vector>
 
 namespace pointcloud_preprocessor
