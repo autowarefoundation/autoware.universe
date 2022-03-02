@@ -22,17 +22,16 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <tier4_debug_msgs/msg/float32_multi_array_stamped.hpp>
-#include <tier4_debug_msgs/msg/float32_stamped.hpp>
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <tier4_debug_msgs/msg/float32_multi_array_stamped.hpp>
+#include <tier4_debug_msgs/msg/float32_stamped.hpp>
 
 #include <cv_bridge/cv_bridge.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/search/pcl_search.h>
 
 #include <vector>
-
 
 namespace pointcloud_preprocessor
 {
@@ -72,14 +71,14 @@ private:
   uint vertical_bins_;
   std::vector<double> angle_range_deg_;
   std::vector<double> distance_range_;
-  float blockage_ratio_=0.0f;
+  float blockage_ratio_ = 0.0f;
   float blockage_posibility_ = 0.0f;
   uint horizontal_ring_id_ = 12;
   float ground_blockage_threshold_ = 0.1;
   float ground_blockage_ratio_ = -1.0f;
   float sky_blockage_threshold_ = 0.2f;
   float sky_blockage_ratio_ = -1.0f;
-  std::vector<float> ground_blockage_range_deg_ = {0.0f, 0.0f}; 
+  std::vector<float> ground_blockage_range_deg_ = {0.0f, 0.0f};
   std::vector<float> sky_blockage_range_deg_ = {0.0f, 0.0f};
   uint erode_kernel_ = 10;
   uint ground_blockage_count_ = 0;
@@ -112,7 +111,7 @@ struct PointXYZIRADT
 POINT_CLOUD_REGISTER_POINT_STRUCT(
   return_type_cloud::PointXYZIRADT,
   (float, x, x)(float, y, y)(float, z, z)(float, intensity, intensity)(std::uint16_t, ring, ring)(
-    float, azimuth, azimuth)(float, distance, distance)(
-    double, time_stamp, time_stamp)(std::uint8_t, return_type, return_type))
+    float, azimuth, azimuth)(float, distance, distance)(double, time_stamp, time_stamp)(
+    std::uint8_t, return_type, return_type))
 
 #endif  // POINTCLOUD_PREPROCESSOR__BLOCKAGE_DIAG__BLOCKAGE_DIAG_NODELET_HPP_
