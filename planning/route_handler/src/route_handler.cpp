@@ -1271,10 +1271,24 @@ lanelet::ConstLanelets RouteHandler::getCheckTargetLanesFromPath(
   return check_lanelets;
 }
 
+bool RouteHandler::isMapMsgReady() const { return is_map_msg_ready_; }
+
+lanelet::routing::RoutingGraphPtr RouteHandler::getRoutingGraphPtr() const
+{
+  return routing_graph_ptr_;
+}
+
+lanelet::traffic_rules::TrafficRulesPtr RouteHandler::getTrafficRulesPtr() const
+{
+  return traffic_rules_ptr_;
+}
+
 lanelet::routing::RoutingGraphContainer RouteHandler::getOverallGraph() const
 {
   return *overall_graphs_ptr_;
 }
+
+lanelet::LaneletMapPtr RouteHandler::getLaneletMapPtr() const { return lanelet_map_ptr_; }
 
 lanelet::routing::RelationType RouteHandler::getRelation(
   const lanelet::ConstLanelet & prev_lane, const lanelet::ConstLanelet & next_lane) const
