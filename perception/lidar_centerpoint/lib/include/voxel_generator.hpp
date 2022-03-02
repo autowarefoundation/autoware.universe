@@ -30,13 +30,16 @@ class VoxelGeneratorTemplate
 public:
   explicit VoxelGeneratorTemplate(const DensificationParam & param);
 
-  virtual size_t pointsToVoxels(
+  virtual std::size_t pointsToVoxels(
     std::vector<float> & voxels, std::vector<int> & coordinates,
     std::vector<float> & num_points_per_voxel) = 0;
 
-  std::unique_ptr<PointCloudDensification> pd_ptr_{nullptr};
+  bool enqueuePointCloud(
+    const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const tf2_ros::Buffer & tf_buffer);
 
 protected:
+  std::unique_ptr<PointCloudDensification> pd_ptr_{nullptr};
+
   std::array<float, 6> range_{Config::range_min_x, Config::range_min_y, Config::range_min_z,
                               Config::range_max_x, Config::range_max_y, Config::range_max_z};
   std::array<float, 3> recip_voxel_size_{
@@ -49,7 +52,7 @@ class VoxelGenerator : public VoxelGeneratorTemplate
 public:
   using VoxelGeneratorTemplate::VoxelGeneratorTemplate;
 
-  size_t pointsToVoxels(
+  std::size_t pointsToVoxels(
     std::vector<float> & voxels, std::vector<int> & coordinates,
     std::vector<float> & num_points_per_voxel) override;
 };

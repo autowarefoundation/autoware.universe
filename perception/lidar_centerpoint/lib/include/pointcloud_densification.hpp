@@ -53,7 +53,7 @@ class PointCloudDensification
 public:
   explicit PointCloudDensification(const DensificationParam & param);
 
-  void enqueuePointCloud(
+  bool enqueuePointCloud(
     const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const tf2_ros::Buffer & tf_buffer);
 
   double getCurrentTimestamp() const { return current_timestamp_; }

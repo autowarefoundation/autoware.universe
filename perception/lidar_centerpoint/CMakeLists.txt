@@ -125,6 +125,7 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     lib/src/voxel_generator.cpp
     lib/src/tensorrt_wrapper.cpp
     lib/src/network_trt.cpp
+    lib/src/utils.cpp
   )
 
   cuda_add_library(centerpoint_cuda_libraries SHARED

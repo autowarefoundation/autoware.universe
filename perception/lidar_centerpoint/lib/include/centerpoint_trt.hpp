@@ -57,8 +57,8 @@ class CenterPointTRT
 {
 public:
   explicit CenterPointTRT(
-    const int num_class, const NetworkParam & encoder_param, const NetworkParam & head_param,
-    const DensificationParam & densification_param);
+    const std::size_t num_class, const float score_threshold, const NetworkParam & encoder_param,
+    const NetworkParam & head_param, const DensificationParam & densification_param);
 
   ~CenterPointTRT();
 
@@ -79,33 +79,29 @@ private:
   std::unique_ptr<VoxelGeneratorTemplate> vg_ptr_{nullptr};
   std::unique_ptr<VoxelEncoderTRT> encoder_trt_ptr_{nullptr};
   std::unique_ptr<HeadTRT> head_trt_ptr_{nullptr};
-  std::unique_ptr<PostProcessCUDA> post_proc_ptr{nullptr};
+  std::unique_ptr<PostProcessCUDA> post_proc_ptr_{nullptr};
   cudaStream_t stream_{nullptr};
 
   bool verbose_{false};
-  int num_class_{0};
-  size_t num_voxels_{0};
-  const int size_of_voxels_ =
-    Config::max_num_voxels * Config::max_num_points_per_voxel * Config::num_point_features;
-  const int size_of_coordinates_ = Config::max_num_voxels * Config::num_point_dims;
-  const size_t size_of_num_points_per_voxel_ = Config::max_num_voxels;
-  const size_t input_features_size_ =
-    Config::max_num_voxels * Config::max_num_points_per_voxel * Config::num_encoder_input_features;
-  const size_t pillar_features_size_ = Config::max_num_voxels * Config::num_encoder_output_features;
-  const size_t spatial_features_size_ =
-    Config::grid_size_x * Config::grid_size_y * Config::num_encoder_output_features;
+  std::size_t num_class_{0};
+  std::size_t num_voxels_{0};
+  std::size_t encoder_in_feature_size_{0};
+  std::size_t spatial_features_size_{0};
+  std::vector<float> voxels_;
+  std::vector<int> coordinates_;
+  std::vector<float> num_points_per_voxel_;
   cuda::unique_ptr<float[]> voxels_d_{nullptr};
   cuda::unique_ptr<int[]> coordinates_d_{nullptr};
   cuda::unique_ptr<float[]> num_points_per_voxel_d_{nullptr};
-  cuda::unique_ptr<float[]> input_features_d_{nullptr};
+  cuda::unique_ptr<float[]> encoder_in_features_d_{nullptr};
   cuda::unique_ptr<float[]> pillar_features_d_{nullptr};
   cuda::unique_ptr<float[]> spatial_features_d_{nullptr};
-  cuda::unique_ptr<float[]> output_heatmap_d_{nullptr};
-  cuda::unique_ptr<float[]> output_offset_d_{nullptr};
-  cuda::unique_ptr<float[]> output_z_d_{nullptr};
-  cuda::unique_ptr<float[]> output_dim_d_{nullptr};
-  cuda::unique_ptr<float[]> output_rot_d_{nullptr};
-  cuda::unique_ptr<float[]> output_vel_d_{nullptr};
+  cuda::unique_ptr<float[]> head_out_heatmap_d_{nullptr};
+  cuda::unique_ptr<float[]> head_out_offset_d_{nullptr};
+  cuda::unique_ptr<float[]> head_out_z_d_{nullptr};
+  cuda::unique_ptr<float[]> head_out_dim_d_{nullptr};
+  cuda::unique_ptr<float[]> head_out_rot_d_{nullptr};
+  cuda::unique_ptr<float[]> head_out_vel_d_{nullptr};
 };
 
 }  // namespace centerpoint

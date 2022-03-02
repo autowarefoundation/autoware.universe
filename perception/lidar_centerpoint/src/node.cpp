@@ -17,9 +17,9 @@
 #include <config.hpp>
 #include <pcl_ros/transforms.hpp>
 #include <pointcloud_densification.hpp>
-#include <postprocess_kernel.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/math/constants.hpp>
+#include <utils.hpp>
 
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
@@ -49,7 +49,7 @@ LidarCenterPointNode::LidarCenterPointNode(const rclcpp::NodeOptions & node_opti
   DensificationParam densification_param(
     densification_world_frame_id, densification_num_past_frames);
   detector_ptr_ = std::make_unique<CenterPointTRT>(
-    static_cast<int>(class_names_.size()), encoder_param, head_param, densification_param);
+    class_names_.size(), score_threshold_, encoder_param, head_param, densification_param);
 
   pointcloud_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "~/input/pointcloud", rclcpp::SensorDataQoS{}.keep_last(1),
@@ -79,10 +79,8 @@ void LidarCenterPointNode::pointCloudCallback(
     if (box3d.score < score_threshold_) {
       continue;
     }
-
     autoware_auto_perception_msgs::msg::DetectedObject obj;
     box3DToDetectedObject(box3d, obj);
-
     output_msg.objects.emplace_back(obj);
   }
 

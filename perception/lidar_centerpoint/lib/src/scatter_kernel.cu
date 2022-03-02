@@ -12,43 +12,55 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <config.hpp>
 #include <scatter_kernel.hpp>
+#include <utils.hpp>
+
+namespace
+{
+const std::size_t THREADS_PER_BLOCK = 32;
+}  // namespace
 
 namespace centerpoint
 {
 __global__ void scatterFeatures_kernel(
-  const float * pillar_features, const int * coords, const size_t num_pillars,
-  const int num_pillar_feature, const int grid_size_x, const int grid_size_y,
-  float * scattered_features)
+  const float * pillar_features, const int * coords, const std::size_t num_pillars,
+  const std::size_t pillar_feature_size, const std::size_t grid_size_x,
+  const std::size_t grid_size_y, float * scattered_features)
 {
-  // pillar_features: shape of (max_num_pillars, num_pillar_features)
+  // pillar_features: shape of (max_num_pillars, pillar_feature_size)
   // coords: shape of (max_num_pillars, 3)
   // scattered_features: shape of (num_pillars, grid_size_y, grid_size_x)
-  int pillar_i = blockIdx.x;
-  int feature_i = threadIdx.x;
-  int3 coord = ((int3 *)coords)[pillar_i];  // (zyx)
+  const auto pillar_i = blockIdx.x * THREADS_PER_BLOCK + threadIdx.x;
+  const auto feature_i = blockIdx.y * THREADS_PER_BLOCK + threadIdx.y;
 
+  if (pillar_i >= num_pillars || feature_i >= pillar_feature_size) {
+    return;
+  }
+
+  const int3 coord = ((int3 *)coords)[pillar_i];  // zyx
   if (coord.x < 0) {
     return;
   }
 
-  float features = pillar_features[num_pillar_feature * pillar_i + feature_i];
+  const auto feature = pillar_features[pillar_feature_size * pillar_i + feature_i];
   scattered_features[grid_size_y * grid_size_x * feature_i + grid_size_x * coord.y + coord.z] =
-    features;
+    feature;
 }
 
 cudaError_t scatterFeatures_launch(
-  const float * pillar_features, const int * coords, const size_t num_pillars,
-  const int max_num_pillar, const int num_pillar_feature, const int grid_size_x,
-  const int grid_size_y, float * scattered_features, cudaStream_t stream)
+  const float * pillar_features, const int * coords, const std::size_t num_pillars,
+  float * scattered_features, cudaStream_t stream)
 {
-  dim3 blocks(max_num_pillar);
-  dim3 threads(num_pillar_feature);
+  dim3 blocks(
+    divup(Config::max_num_voxels, THREADS_PER_BLOCK),
+    divup(Config::encoder_out_feature_size, THREADS_PER_BLOCK));
+  dim3 threads(THREADS_PER_BLOCK, THREADS_PER_BLOCK);
   scatterFeatures_kernel<<<blocks, threads, 0, stream>>>(
-    pillar_features, coords, num_pillars, num_pillar_feature, grid_size_x, grid_size_y,
-    scattered_features);
-  cudaError_t err = cudaGetLastError();
-  return err;
+    pillar_features, coords, num_pillars, Config::encoder_out_feature_size, Config::grid_size_x,
+    Config::grid_size_y, scattered_features);
+
+  return cudaGetLastError();
 }
 
 }  // namespace centerpoint

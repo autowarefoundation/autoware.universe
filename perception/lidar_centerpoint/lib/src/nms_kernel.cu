@@ -24,33 +24,36 @@ All Rights Reserved 2019-2020.
 #include <cuda_utils.hpp>
 #include <nms_kernel.hpp>
 
-#include <thrust/device_vector.h>
 #include <thrust/host_vector.h>
 
-#define THREADS_PER_BLOCK_NMS 16
-#define DIVUP(m, n) ((m) / (n) + ((m) % (n) > 0))
+namespace
+{
+const std::size_t THREADS_PER_BLOCK_NMS = 16;
+}  // namespace
 
 namespace centerpoint
 {
-__device__ inline float dist2d_pow_kernel(const Box3D * a, const Box3D * b)
+
+__device__ inline float dist2dPow(const Box3D * a, const Box3D * b)
 {
   return powf(a->x - b->x, 2) + powf(a->y - b->y, 2);
 }
 
 __global__ void circleNMS_Kernel(
-  const Box3D * boxes, const int num_boxes3d, const float dist2d_pow_threshold, uint64_t * mask)
+  const Box3D * boxes, const std::size_t num_boxes3d, const std::size_t col_blocks,
+  const float dist2d_pow_threshold, std::uint64_t * mask)
 {
-  // params: boxes (N, 12)
-  // params: mask (N, N/THREADS_PER_BLOCK_NMS)
+  // params: boxes (N,)
+  // params: mask (N, divup(N/THREADS_PER_BLOCK_NMS))
 
-  const int row_start = blockIdx.y;
-  const int col_start = blockIdx.x;
+  const auto row_start = blockIdx.y;
+  const auto col_start = blockIdx.x;
 
   if (row_start > col_start) return;
 
-  const int row_size =
+  const std::size_t row_size =
     fminf(num_boxes3d - row_start * THREADS_PER_BLOCK_NMS, THREADS_PER_BLOCK_NMS);
-  const int col_size =
+  const std::size_t col_size =
     fminf(num_boxes3d - col_start * THREADS_PER_BLOCK_NMS, THREADS_PER_BLOCK_NMS);
 
   __shared__ Box3D block_boxes[THREADS_PER_BLOCK_NMS];
@@ -61,83 +64,79 @@ __global__ void circleNMS_Kernel(
   __syncthreads();
 
   if (threadIdx.x < row_size) {
-    const int cur_box_idx = THREADS_PER_BLOCK_NMS * row_start + threadIdx.x;
+    const std::size_t cur_box_idx = THREADS_PER_BLOCK_NMS * row_start + threadIdx.x;
     const Box3D * cur_box = boxes + cur_box_idx;
 
-    uint64_t t = 0;
-    int start = 0;
+    std::uint64_t t = 0;
+    std::size_t start = 0;
     if (row_start == col_start) {
       start = threadIdx.x + 1;
     }
-    for (int i = start; i < col_size; i++) {
-      if (dist2d_pow_kernel(cur_box, block_boxes + i) < dist2d_pow_threshold) {
+    for (std::size_t i = start; i < col_size; i++) {
+      if (dist2dPow(cur_box, block_boxes + i) < dist2d_pow_threshold) {
         t |= 1ULL << i;
       }
     }
-    const int col_blocks = DIVUP(num_boxes3d, THREADS_PER_BLOCK_NMS);
     mask[cur_box_idx * col_blocks + col_start] = t;
   }
 }
 
 cudaError_t circleNMS_launch(
-  const thrust::device_vector<Box3D> & boxes3d, const int num_boxes3d,
-  const float distance_threshold, uint64_t * mask)
+  const thrust::device_vector<Box3D> & boxes3d, const std::size_t num_boxes3d,
+  std::size_t col_blocks, const float distance_threshold,
+  thrust::device_vector<std::uint64_t> & mask, cudaStream_t stream)
 {
   const float dist2d_pow_thres = powf(distance_threshold, 2);
 
-  dim3 blocks(DIVUP(num_boxes3d, THREADS_PER_BLOCK_NMS), DIVUP(num_boxes3d, THREADS_PER_BLOCK_NMS));
+  dim3 blocks(col_blocks, col_blocks);
   dim3 threads(THREADS_PER_BLOCK_NMS);
-  circleNMS_Kernel<<<blocks, threads>>>(
-    thrust::raw_pointer_cast(boxes3d.data()), num_boxes3d, dist2d_pow_thres, mask);
+  circleNMS_Kernel<<<blocks, threads, 0, stream>>>(
+    thrust::raw_pointer_cast(boxes3d.data()), num_boxes3d, col_blocks, dist2d_pow_thres,
+    thrust::raw_pointer_cast(mask.data()));
 
   return cudaGetLastError();
 }
 
-int circleNMS(
-  thrust::device_vector<Box3D> & boxes3d, thrust::device_vector<bool> & keep_mask,
-  const float distance_threshold)
+std::size_t circleNMS(
+  thrust::device_vector<Box3D> & boxes3d, const float distance_threshold,
+  thrust::device_vector<bool> & keep_mask, cudaStream_t stream)
 {
-  const int num_boxes3d = boxes3d.size();
-  const int col_blocks = DIVUP(num_boxes3d, THREADS_PER_BLOCK_NMS);
+  const auto num_boxes3d = boxes3d.size();
+  const auto col_blocks = divup(num_boxes3d, THREADS_PER_BLOCK_NMS);
+  thrust::device_vector<std::uint64_t> mask_d(num_boxes3d * col_blocks);
 
-  // TODO(yukke42): don't use cudaMaollc and cudaFree
-  uint64_t * mask_data = NULL;
-  CHECK_CUDA_ERROR(cudaMalloc((void **)&mask_data, num_boxes3d * col_blocks * sizeof(uint64_t)));
-  CHECK_CUDA_ERROR(circleNMS_launch(boxes3d, num_boxes3d, distance_threshold, mask_data));
+  CHECK_CUDA_ERROR(
+    circleNMS_launch(boxes3d, num_boxes3d, col_blocks, distance_threshold, mask_d, stream));
 
-  std::vector<uint64_t> mask_cpu(num_boxes3d * col_blocks);
-  CHECK_CUDA_ERROR(cudaMemcpy(
-    &mask_cpu[0], mask_data, num_boxes3d * col_blocks * sizeof(uint64_t), cudaMemcpyDeviceToHost));
-  cudaFree(mask_data);
+  // memcpy device to host
+  thrust::host_vector<std::uint64_t> mask_h(mask_d.size());
+  thrust::copy(mask_d.begin(), mask_d.end(), mask_h.begin());
+  CHECK_CUDA_ERROR(cudaStreamSynchronize(stream));
 
-  uint64_t * remv_cpu = new uint64_t[col_blocks]();
-  thrust::host_vector<bool> keep_mask_h(num_boxes3d);
-  int num_to_keep = 0;
-  for (int i = 0; i < num_boxes3d; i++) {
-    int nblock = i / THREADS_PER_BLOCK_NMS;
-    int inblock = i % THREADS_PER_BLOCK_NMS;
+  // generate keep_mask
+  std::vector<std::uint64_t> remv_h(col_blocks);
+  thrust::host_vector<bool> keep_mask_h(keep_mask.size());
+  std::size_t num_to_keep = 0;
+  for (std::size_t i = 0; i < num_boxes3d; i++) {
+    auto nblock = i / THREADS_PER_BLOCK_NMS;
+    auto inblock = i % THREADS_PER_BLOCK_NMS;
 
-    if (!(remv_cpu[nblock] & (1ULL << inblock))) {
-      // keep_data[num_to_keep++] = i;
+    if (!(remv_h[nblock] & (1ULL << inblock))) {
       keep_mask_h[i] = true;
       num_to_keep++;
-      uint64_t * p = &mask_cpu[0] + i * col_blocks;
-      for (int j = nblock; j < col_blocks; j++) {
-        remv_cpu[j] |= p[j];
+      std::uint64_t * p = &mask_h[0] + i * col_blocks;
+      for (std::size_t j = nblock; j < col_blocks; j++) {
+        remv_h[j] |= p[j];
       }
     } else {
       keep_mask_h[i] = false;
     }
   }
-  delete[] remv_cpu;
 
-  // host to device
+  // memcpy host to device
   keep_mask = keep_mask_h;
 
   return num_to_keep;
 }
 
 }  // namespace centerpoint
-
-#undef THREADS_PER_BLOCK
-#undef DIVUP

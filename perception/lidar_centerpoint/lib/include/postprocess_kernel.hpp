@@ -16,6 +16,7 @@
 #define POSTPROCESS_KERNEL_HPP_
 
 #include <config.hpp>
+#include <utils.hpp>
 
 #include <cuda.h>
 #include <cuda_runtime_api.h>
@@ -25,26 +26,10 @@
 
 namespace centerpoint
 {
-struct Box3D
-{
-  int label;
-  float score;
-  float x;
-  float y;
-  float z;
-  float length;
-  float width;
-  float height;
-  float yaw;
-  float vel_x;
-  float vel_y;
-  bool is_suppressed;
-};
-
 class PostProcessCUDA
 {
 public:
-  explicit PostProcessCUDA(const int num_class);
+  explicit PostProcessCUDA(const std::size_t num_class, const float score_threshold);
 
   cudaError_t generateDetectedBoxes3D_launch(
     const float * out_heatmap, const float * out_offset, const float * out_z, const float * out_dim,
@@ -56,9 +41,9 @@ private:
     const float * out_heatmap, const float * out_offset, const float * out_z, const float * out_dim,
     const float * out_rot, const float * out_vel, Box3D * det_boxes3d, cudaStream_t stream);
 
-  int num_class_{0};
-  float score_threshold_{0.1f};
-  float dist_threshold_{1.5f};
+  std::size_t num_class_{0};
+  float score_threshold_{0.0f};
+  float dist_threshold_{1.5f};  // TODO(yukke42): temporary value
   thrust::device_vector<Box3D> boxes3d_d_;
 };
 

@@ -28,18 +28,28 @@
  * limitations under the License.
  */
 
+#include <config.hpp>
 #include <preprocess_kernel.hpp>
+#include <utils.hpp>
+
+namespace
+{
+const std::size_t WARP_SIZE = 32;
+const std::size_t WARPS_PER_BLOCK = 4;
+const std::size_t FEATURE_SIZE = 9;  // same as `box_feature_size` in config.hpp
+
+}  // namespace
 
 namespace centerpoint
 {
 __global__ void generateFeatures_kernel(
   const float * voxel_features, const float * voxel_num_points, const int * coords,
-  const size_t num_voxels, const float voxel_x, const float voxel_y, const float voxel_z,
+  const std::size_t num_voxels, const float voxel_x, const float voxel_y, const float voxel_z,
   const float range_min_x, const float range_min_y, const float range_min_z, float * features)
 {
-  // voxel_features (float): (max_num_voxels, max_num_points_per_voxel, num_point_features)
+  // voxel_features (float): (max_num_voxels, max_num_points_per_voxel, point_feature_size)
   // voxel_num_points (int): (max_num_voxels)
-  // coords (int): (max_num_voxels, num_point_dims)
+  // coords (int): (max_num_voxels, point_dim_size)
   int pillar_idx = blockIdx.x * WARPS_PER_BLOCK + threadIdx.x / WARP_SIZE;
   int point_idx = threadIdx.x % WARP_SIZE;
   int pillar_idx_inBlock = threadIdx.x / WARP_SIZE;
@@ -47,11 +57,11 @@ __global__ void generateFeatures_kernel(
   if (pillar_idx >= num_voxels) return;
 
   // load src
-  __shared__ float4 pillarSM[WARPS_PER_BLOCK][WARP_SIZE];                   // 4 * 32 * 4(x,y,z,i)
-  __shared__ float3 pillarSumSM[WARPS_PER_BLOCK];                           // 4 * 3(x,y,z)
-  __shared__ int3 cordsSM[WARPS_PER_BLOCK];                                 // 4 * 3(z,y,x)
-  __shared__ int pointsNumSM[WARPS_PER_BLOCK];                              // 4
-  __shared__ float pillarOutSM[WARPS_PER_BLOCK][WARP_SIZE][FEATURES_SIZE];  // 4 * 32 * 9
+  __shared__ float4 pillarSM[WARPS_PER_BLOCK][WARP_SIZE];
+  __shared__ float3 pillarSumSM[WARPS_PER_BLOCK];
+  __shared__ int3 cordsSM[WARPS_PER_BLOCK];
+  __shared__ int pointsNumSM[WARPS_PER_BLOCK];
+  __shared__ float pillarOutSM[WARPS_PER_BLOCK][WARP_SIZE][FEATURE_SIZE];
 
   if (threadIdx.x < WARPS_PER_BLOCK) {
     pointsNumSM[threadIdx.x] = voxel_num_points[blockIdx.x * WARPS_PER_BLOCK + threadIdx.x];
@@ -123,26 +133,25 @@ __global__ void generateFeatures_kernel(
 
   __syncthreads();
 
-  for (int i = 0; i < FEATURES_SIZE; i++) {
-    int outputSMId = pillar_idx_inBlock * WARP_SIZE * FEATURES_SIZE + i * WARP_SIZE + point_idx;
-    int outputId = pillar_idx * WARP_SIZE * FEATURES_SIZE + i * WARP_SIZE + point_idx;
+  for (int i = 0; i < FEATURE_SIZE; i++) {
+    int outputSMId = pillar_idx_inBlock * WARP_SIZE * FEATURE_SIZE + i * WARP_SIZE + point_idx;
+    int outputId = pillar_idx * WARP_SIZE * FEATURE_SIZE + i * WARP_SIZE + point_idx;
     features[outputId] = ((float *)pillarOutSM)[outputSMId];
   }
 }
 
 cudaError_t generateFeatures_launch(
   const float * voxel_features, const float * voxel_num_points, const int * coords,
-  const size_t num_voxels, const size_t max_num_voxels, const float voxel_size_x,
-  const float voxel_size_y, const float voxel_size_z, const float range_min_x,
-  const float range_min_y, const float range_min_z, float * features, cudaStream_t stream)
+  const std::size_t num_voxels, float * features, cudaStream_t stream)
 {
-  dim3 blocks((max_num_voxels + WARPS_PER_BLOCK - 1) / WARPS_PER_BLOCK);
+  dim3 blocks(divup(Config::max_num_voxels, WARPS_PER_BLOCK));
   dim3 threads(WARPS_PER_BLOCK * WARP_SIZE);
   generateFeatures_kernel<<<blocks, threads, 0, stream>>>(
-    voxel_features, voxel_num_points, coords, num_voxels, voxel_size_x, voxel_size_y, voxel_size_z,
-    range_min_x, range_min_y, range_min_z, features);
-  cudaError_t err = cudaGetLastError();
-  return err;
+    voxel_features, voxel_num_points, coords, num_voxels, Config::voxel_size_x,
+    Config::voxel_size_y, Config::voxel_size_z, Config::range_min_x, Config::range_min_y,
+    Config::range_min_z, features);
+
+  return cudaGetLastError();
 }
 
 }  // namespace centerpoint

@@ -12,20 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef NMS_KERNEL_HPP_
-#define NMS_KERNEL_HPP_
+#ifndef UTILS_HPP_
+#define UTILS_HPP_
 
-#include <utils.hpp>
-
-#include <thrust/device_vector.h>
+#include <cstddef>
 
 namespace centerpoint
 {
-// TODO(yukke42): add description
-std::size_t circleNMS(
-  thrust::device_vector<Box3D> & boxes3d, const float distance_threshold,
-  thrust::device_vector<bool> & keep_mask, cudaStream_t stream);
+struct Box3D
+{
+  // initializer not allowed for __shared__ variable
+  int label;
+  float score;
+  float x;
+  float y;
+  float z;
+  float length;
+  float width;
+  float height;
+  float yaw;
+  float vel_x;
+  float vel_y;
+};
 
+std::size_t divup(const std::size_t a, const std::size_t b);
 }  // namespace centerpoint
 
-#endif  // NMS_KERNEL_HPP_
+#endif  // UTILS_HPP_
