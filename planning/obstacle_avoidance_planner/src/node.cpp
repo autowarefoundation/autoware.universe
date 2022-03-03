@@ -270,10 +270,14 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
         vehicle_circle_radius_for_drivability_ =
           declare_parameter<double>("advanced.option.drivability_check.vehicle_circles.radius");
       } else {  // vehicle circles are calculated automatically with designated ratio
+        const int default_radius_num =
+          std::round(vehicle_param_.length / vehicle_param_.width * 1.5);
+
         vehicle_circle_radius_num_for_drivability_ = declare_parameter<int>(
-          "advanced.option.drivability_check.vehicle_circles.num_for_radius");
+          "advanced.option.drivability_check.vehicle_circles.num_for_radius", default_radius_num);
         vehicle_circle_radius_ratio_for_drivability_ = declare_parameter<double>(
           "advanced.option.drivability_check.vehicle_circles.radius_ratio");
+
         std::tie(
           vehicle_circle_radius_for_drivability_,
           vehicle_circle_longitudinal_offsets_for_drivability_) =
@@ -393,8 +397,13 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
     // kinematics
     mpt_param_.max_steer_rad =
       declare_parameter<double>("mpt.kinematics.max_steer_deg") * M_PI / 180.0;
+
+    // By default, optimization_center_offset will be vehicle_info.wheel_base * 0.8
+    // The 0.8 scale is adopted as it performed the best.
+    constexpr double default_wheelbase_ratio = 0.8;
     mpt_param_.optimization_center_offset = declare_parameter<double>(
-      "mpt.kinematics.optimization_center_offset", vehicle_param_.wheelbase / 2.0);
+      "mpt.kinematics.optimization_center_offset",
+      vehicle_param_.wheelbase * default_wheelbase_ratio);
 
     // collision free constraints
     mpt_param_.l_inf_norm =
@@ -420,8 +429,11 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
       mpt_param_.vehicle_circle_radius =
         declare_parameter<double>("advanced.mpt.collision_free_constraints.vehicle_circles.radius");
     } else {  // vehicle circles are calculated automatically with designated ratio
+      const int default_radius_num = std::round(vehicle_param_.length / vehicle_param_.width * 1.5);
+
       vehicle_circle_radius_num_for_mpt_ = declare_parameter<int>(
-        "advanced.mpt.collision_free_constraints.vehicle_circles.num_for_radius");
+        "advanced.mpt.collision_free_constraints.vehicle_circles.num_for_radius",
+        default_radius_num);
       vehicle_circle_radius_ratio_for_mpt_ = declare_parameter<double>(
         "advanced.mpt.collision_free_constraints.vehicle_circles.radius_ratio");
 
