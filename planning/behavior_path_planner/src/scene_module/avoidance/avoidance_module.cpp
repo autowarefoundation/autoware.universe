@@ -1682,11 +1682,13 @@ void AvoidanceModule::generateExtendedDrivableArea(ShiftedPath * shifted_path) c
           extended_lanelets.push_back(lanelet_at_left.get());
           lanelet_at_left = route_handler->getLeftLanelet(lanelet_at_left.get());
         }
-        auto lanelet_at_right =
-          planner_data_->route_handler->getRightLanelet(lanelet_at_left.get());
-        while (lanelet_at_right) {
-          extended_lanelets.push_back(lanelet_at_right.get());
-          lanelet_at_right = route_handler->getRightLanelet(lanelet_at_right.get());
+        if (lanelet_at_left) {
+          auto lanelet_at_right =
+            planner_data_->route_handler->getRightLanelet(lanelet_at_left.get());
+          while (lanelet_at_right) {
+            extended_lanelets.push_back(lanelet_at_right.get());
+            lanelet_at_right = route_handler->getRightLanelet(lanelet_at_right.get());
+          }
         }
       } else {
         auto lanelet_at_right = route_handler->getRightLanelet(object_lanelet);
@@ -1694,10 +1696,12 @@ void AvoidanceModule::generateExtendedDrivableArea(ShiftedPath * shifted_path) c
           extended_lanelets.push_back(lanelet_at_right.get());
           lanelet_at_right = route_handler->getRightLanelet(lanelet_at_right.get());
         }
-        auto lanelet_at_left = route_handler->getLeftLanelet(lanelet_at_right.get());
-        while (lanelet_at_left) {
-          extended_lanelets.push_back(lanelet_at_left.get());
-          lanelet_at_left = route_handler->getLeftLanelet(lanelet_at_left.get());
+        if (lanelet_at_right) {
+          auto lanelet_at_left = route_handler->getLeftLanelet(lanelet_at_right.get());
+          while (lanelet_at_left) {
+            extended_lanelets.push_back(lanelet_at_left.get());
+            lanelet_at_left = route_handler->getLeftLanelet(lanelet_at_left.get());
+          }
         }
       }
     }
@@ -1871,8 +1875,7 @@ void AvoidanceModule::generateExtendedDrivableArea(ShiftedPath * shifted_path) c
   {
     const auto & p = planner_data_->parameters;
     shifted_path->path.drivable_area = util::generateDrivableArea(
-      extended_lanelets, getEgoPose(), p.drivable_area_width, p.drivable_area_height,
-      p.drivable_area_resolution, p.vehicle_length, *(planner_data_->route_handler));
+      extended_lanelets, p.drivable_area_resolution, p.vehicle_length, planner_data_);
   }
 }
 

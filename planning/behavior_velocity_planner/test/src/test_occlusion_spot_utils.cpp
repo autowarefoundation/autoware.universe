@@ -30,30 +30,6 @@ using autoware_auto_planning_msgs::msg::Path;
 using autoware_auto_planning_msgs::msg::PathPoint;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 
-autoware_auto_planning_msgs::msg::Path toPath(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path_with_id)
-{
-  autoware_auto_planning_msgs::msg::Path path;
-  for (const auto & p : path_with_id.points) {
-    path.points.push_back(p.point);
-  }
-  return path;
-}
-
-TEST(spline, splineInterpolate)
-{
-  using std::chrono::duration;
-  using std::chrono::duration_cast;
-  using std::chrono::high_resolution_clock;
-  using std::chrono::microseconds;
-  autoware_auto_planning_msgs::msg::PathWithLaneId path = test::generatePath(0, 0.0, 6.0, 0.0, 7);
-  const auto path_interp = behavior_velocity_planner::interpolatePath(toPath(path), 100, 0.5);
-  for (const auto & p : path_interp.points) {
-    std::cout << "interp" << p.pose.position.x << std::endl;
-  }
-  ASSERT_EQ(path_interp.points.size(), path.points.size() * 2 - +1);
-}
-
 TEST(calcSlowDownPointsForPossibleCollision, TooManyPossibleCollisions)
 {
   using behavior_velocity_planner::occlusion_spot_utils::calcSlowDownPointsForPossibleCollision;
@@ -117,7 +93,7 @@ TEST(calcSlowDownPointsForPossibleCollision, ConsiderSignedOffset)
      *    c : collision
      */
     calcSlowDownPointsForPossibleCollision(0, path, -offset_from_start_to_ego, pcs);
-    if (pcs[0].collision_path_point.longitudinal_velocity_mps - 3.0 > 1e-3) {
+    if (pcs[0].collision_with_margin.longitudinal_velocity_mps - 3.0 > 1e-3) {
       for (size_t i = 0; i < path.points.size(); i++) {
         std::cout << "v : " << path.points[i].point.longitudinal_velocity_mps << "\t";
       }
@@ -127,9 +103,9 @@ TEST(calcSlowDownPointsForPossibleCollision, ConsiderSignedOffset)
       }
       std::cout << std::endl;
     }
-    EXPECT_DOUBLE_EQ(pcs[0].collision_path_point.longitudinal_velocity_mps, 3);
-    EXPECT_DOUBLE_EQ(pcs[1].collision_path_point.longitudinal_velocity_mps, 4.5);
-    EXPECT_DOUBLE_EQ(pcs[2].collision_path_point.longitudinal_velocity_mps, 6);
+    EXPECT_DOUBLE_EQ(pcs[0].collision_with_margin.longitudinal_velocity_mps, 3);
+    EXPECT_DOUBLE_EQ(pcs[1].collision_with_margin.longitudinal_velocity_mps, 4.5);
+    EXPECT_DOUBLE_EQ(pcs[2].collision_with_margin.longitudinal_velocity_mps, 6);
   }
 
   pcs.clear();

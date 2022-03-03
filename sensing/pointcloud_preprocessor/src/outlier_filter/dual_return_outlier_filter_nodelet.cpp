@@ -90,9 +90,6 @@ void DualReturnOutlierFilterComponent::filter(
   pcl::PointCloud<return_type_cloud::PointXYZIRADT>::Ptr pcl_input(
     new pcl::PointCloud<return_type_cloud::PointXYZIRADT>);
   pcl::fromROSMsg(*input, *pcl_input);
-  if (pcl_input->points.empty()) {
-    return;
-  }
 
   uint32_t vertical_bins = vertical_bins_;
   uint32_t horizontal_bins = 36;

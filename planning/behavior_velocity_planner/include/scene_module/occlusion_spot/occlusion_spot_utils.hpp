@@ -18,7 +18,6 @@
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <lanelet2_extension/visualization/visualization.hpp>
-#include <scene_module/occlusion_spot/geometry.hpp>
 #include <scene_module/occlusion_spot/grid_utils.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <utilization/util.hpp>
@@ -29,6 +28,8 @@
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <visualization_msgs/msg/marker.hpp>
+
+#include <boost/optional.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_core/geometry/LaneletMap.h>
@@ -64,51 +65,87 @@ using DetectionAreaIdx = boost::optional<std::pair<double, double>>;
 namespace occlusion_spot_utils
 {
 enum ROAD_TYPE { PRIVATE, PUBLIC, HIGHWAY, UNKNOWN };
+enum METHOD { OCCUPANCY_GRID, PREDICTED_OBJECT };
 
-struct Sidewalk
+struct DetectionArea
 {
-  double focus_range;              // [m] distance to care about occlusion spot
-  double slice_size;               // [m] size of each slice
+  double max_lateral_distance;     // [m] distance to care about occlusion spot
+  double slice_length;             // [m] size of each slice
   double min_occlusion_spot_size;  // [m] minumum size to care about the occlusion spot
 };
-
-struct VehicleInfo
+struct Velocity
 {
-  double vehicle_width;      // [m]  vehicle_width from parameter server
-  double baselink_to_front;  // [m]  wheel_base + front_overhang
+  double safety_ratio;          // [-] safety margin for planning error
+  double max_stop_jerk;         // [m/s^3] emergency braking system jerk
+  double max_stop_accel;        // [m/s^2] emergency braking system deceleration
+  double max_slow_down_jerk;    // [m/s^3] maximum allowed slowdown jerk
+  double max_slow_down_accel;   // [m/s^2] maximum allowed deceleration
+  double non_effective_jerk;    // [m/s^3] too weak jerk for velocity planning.
+  double non_effective_accel;   // [m/s^2] too weak deceleration for velocity planning.
+  double min_allowed_velocity;  // [m/s]   minimum allowed velocity not to stop
+  double a_ego;                 // [m/s^2] current ego acceleration
+  double v_ego;                 // [m/s]   current ego velocity
+  double delay_time;            // [s] safety time buffer for delay response
+  double safe_margin;           // [m] maximum safety distance for any error
 };
 
-struct EgoVelocity
+struct LatLon
 {
-  double ebs_decel;     // [m/s^2] emergency braking system deceleration
-  double pbs_decel;     // [m/s^2] predictive braking system deceleration
-  double min_velocity;  // [m/s]   minimum allowed velocity not to stop
+  double lateral_distance;       // [m] lateral distance
+  double longitudinal_distance;  // [m] longitudinal distance
 };
 
 struct PlannerParam
 {
+  METHOD method;
+  bool debug;  // [-]
   // parameters in yaml
-  double safety_time_buffer;     // [s]
-  double detection_area_length;  // [m]
-  double stuck_vehicle_vel;      // [m/s]
-  double lateral_distance_thr;   // [m] lateral distance threshold to consider
-  double pedestrian_vel;         // [m/s]
+  double detection_area_length;      // [m]
+  double detection_area_max_length;  // [m]
+  double stuck_vehicle_vel;          // [m/s]
+  double lateral_distance_thr;       // [m] lateral distance threshold to consider
+  double pedestrian_vel;             // [m/s]
 
-  double dist_thr;       // [m]
-  double angle_thr;      // [rad]
-  bool show_debug_grid;  // [-]
+  double dist_thr;   // [m]
+  double angle_thr;  // [rad]
 
-  VehicleInfo vehicle_info;
-  EgoVelocity private_road;
-  EgoVelocity public_road;
-  Sidewalk sidewalk;
+  // vehicle info
+  double half_vehicle_width;  // [m]  half vehicle_width from vehicle info
+  double baselink_to_front;   // [m]  wheel_base + front_overhang
+
+  Velocity v;
+  DetectionArea detection_area;
   grid_utils::GridParam grid;
+};
+
+struct SafeMotion
+{
+  double stop_dist;
+  double safe_velocity;
+};
+
+// @brief represent the range of a each polygon
+struct SliceRange
+{
+  double min_length{};
+  double max_length{};
+  double min_distance{};
+  double max_distance{};
+};
+
+// @brief representation of a polygon along a path
+struct Slice
+{
+  SliceRange range{};
+  lanelet::BasicPolygon2d polygon{};
 };
 
 struct ObstacleInfo
 {
+  SafeMotion safe_motion;  // safe motion of velocity and stop point
   geometry_msgs::msg::Point position;
   double max_velocity;  // [m/s] Maximum velocity of the possible obstacle
+  double ttc;           // [s] time to collision with ego
 };
 
 /**
@@ -123,19 +160,17 @@ struct ObstacleInfo
  */
 struct PossibleCollisionInfo
 {
-  ObstacleInfo obstacle_info;  // For hidden obstacle
-  autoware_auto_planning_msgs::msg::PathPoint
-    collision_path_point;                              // For baselink at collision point
-  geometry_msgs::msg::Pose intersection_pose;          // For egp path and hidden obstacle
+  ObstacleInfo obstacle_info;                          // For hidden obstacle
+  PathPoint collision_with_margin;                     // For baselink at collision point
+  Pose collision_pose;                                 // only use this for debugging
+  Pose intersection_pose;                              // For egp path and hidden obstacle
   lanelet::ArcCoordinates arc_lane_dist_at_collision;  // For ego distance to obstacle in s-d
   PossibleCollisionInfo() = default;
   PossibleCollisionInfo(
-    const ObstacleInfo & obstacle_info,
-    const autoware_auto_planning_msgs::msg::PathPoint & collision_path_point,
-    const geometry_msgs::msg::Pose & intersection_pose,
-    const lanelet::ArcCoordinates & arc_lane_dist_to_occlusion)
+    const ObstacleInfo & obstacle_info, const PathPoint & collision_with_margin,
+    const Pose & intersection_pose, const lanelet::ArcCoordinates & arc_lane_dist_to_occlusion)
   : obstacle_info(obstacle_info),
-    collision_path_point(collision_path_point),
+    collision_with_margin(collision_with_margin),
     intersection_pose(intersection_pose),
     arc_lane_dist_at_collision(arc_lane_dist_to_occlusion)
   {
@@ -143,60 +178,15 @@ struct PossibleCollisionInfo
 };
 
 lanelet::ConstLanelet toPathLanelet(const PathWithLaneId & path);
-
 // Note : consider offset_from_start_to_ego and safety margin for collision here
-inline void handleCollisionOffset(
-  std::vector<PossibleCollisionInfo> & possible_collisions, double offset, double margin)
-{
-  for (auto & pc : possible_collisions) {
-    pc.arc_lane_dist_at_collision.length -= offset;
-    pc.arc_lane_dist_at_collision.length -= margin;
-  }
-}
-
-inline double offsetFromStartToEgo(
-  const PathWithLaneId & path, const Pose & ego_pose, const int closest_idx)
-{
-  double offset_from_ego_to_closest = 0;
-  for (int i = 0; i < closest_idx; i++) {
-    const auto & curr_p = path.points.at(i).point.pose.position;
-    const auto & next_p = path.points.at(i + 1).point.pose.position;
-    offset_from_ego_to_closest += tier4_autoware_utils::calcDistance2d(curr_p, next_p);
-  }
-  const double offset_from_closest_to_target =
-    -planning_utils::transformRelCoordinate2D(ego_pose, path.points[closest_idx].point.pose)
-       .position.x;
-  return offset_from_ego_to_closest + offset_from_closest_to_target;
-}
-
-inline void clipPathByLength(
-  const PathWithLaneId & path, PathWithLaneId & clipped, const double max_length = 100.0)
-{
-  double length_sum = 0;
-  for (int i = 0; i < static_cast<int>(path.points.size()) - 1; i++) {
-    length_sum += tier4_autoware_utils::calcDistance2d(path.points.at(i), path.points.at(i + 1));
-    if (length_sum > max_length) return;
-    clipped.points.emplace_back(path.points.at(i));
-  }
-}
-
-inline bool isStuckVehicle(PredictedObject obj, const double min_vel)
-{
-  if (
-    obj.classification.at(0).label == ObjectClassification::CAR ||
-    obj.classification.at(0).label == ObjectClassification::TRUCK ||
-    obj.classification.at(0).label == ObjectClassification::BUS) {
-    if (std::abs(obj.kinematics.initial_twist_with_covariance.twist.linear.x) < min_vel) {
-      return true;
-    }
-  }
-  return false;
-}
-void filterCollisionByRoadType(
-  std::vector<PossibleCollisionInfo> & possible_collisions, const DetectionAreaIdx road_type);
-bool splineInterpolate(
-  const PathWithLaneId & input, const double interval, PathWithLaneId * output,
-  const rclcpp::Logger logger);
+void handleCollisionOffset(std::vector<PossibleCollisionInfo> & possible_collisions, double offset);
+void clipPathByLength(
+  const PathWithLaneId & path, PathWithLaneId & clipped, const double max_length = 100.0);
+bool isStuckVehicle(PredictedObject obj, const double min_vel);
+double offsetFromStartToEgo(
+  const PathWithLaneId & path, const Pose & ego_pose, const int closest_idx);
+std::vector<PredictedObject> filterDynamicObjectByDetectionArea(
+  std::vector<PredictedObject> & objs, const std::vector<Slice> polys);
 std::vector<PredictedObject> getParkedVehicles(
   const PredictedObjects & dyn_objects, const PlannerParam & param,
   std::vector<Point> & debug_point);
@@ -223,17 +213,17 @@ void calcSlowDownPointsForPossibleCollision(
 DetectionAreaIdx extractTargetRoadArcLength(
   const LaneletMapPtr lanelet_map_ptr, const double max_range, const PathWithLaneId & path,
   const ROAD_TYPE & target_road_type);
-//!< @brief convert a set of occlusion spots found on sidewalk slice
-void generateSidewalkPossibleCollisionFromOcclusionSpot(
-  std::vector<PossibleCollisionInfo> & possible_collisions, const grid_map::GridMap & grid,
-  const std::vector<grid_map::Position> & occlusion_spot_positions,
-  const double offset_from_start_to_ego, const lanelet::ConstLanelet & path_lanelet,
-  const PlannerParam & param);
+//!< @brief convert a set of occlusion spots found on detection_area slice
+boost::optional<PossibleCollisionInfo> generateOneNotableCollisionFromOcclusionSpot(
+  const grid_map::GridMap & grid, const std::vector<grid_map::Position> & occlusion_spot_positions,
+  const double offset_from_start_to_ego, const BasicPoint2d basic_point,
+  const lanelet::ConstLanelet & path_lanelet, const PlannerParam & param);
 //!< @brief generate possible collisions coming from occlusion spots on the side of the path
-void generateSidewalkPossibleCollisions(
+void createPossibleCollisionsInDetectionArea(
+  const std::vector<Slice> & detection_area_polygons,
   std::vector<PossibleCollisionInfo> & possible_collisions, const grid_map::GridMap & grid,
   const PathWithLaneId & path, const double offset_from_start_to_ego, const PlannerParam & param,
-  std::vector<BasicPolygon2d> & debug);
+  std::vector<Point> & debug_points);
 
 }  // namespace occlusion_spot_utils
 }  // namespace behavior_velocity_planner
