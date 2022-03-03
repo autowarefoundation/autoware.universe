@@ -180,7 +180,10 @@ bool BehaviorVelocityPlannerNode::isDataReady()
   if (!d.no_ground_pointcloud) {
     return false;
   }
-  if (!d.lanelet_map) {
+  if (!d.route_handler_) {
+    return false;
+  }
+  if (!d.route_handler_->isMapMsgReady()) {
     return false;
   }
 
@@ -252,6 +255,8 @@ void BehaviorVelocityPlannerNode::onLaneletMap(
   const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg)
 {
   // Load map
+  planner_data_.route_handler_ = std::make_shared<route_handler::RouteHandler>();
+  planner_data_.route_handler_->setMap(*msg);
   planner_data_.lanelet_map = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(
     *msg, planner_data_.lanelet_map, &planner_data_.traffic_rules, &planner_data_.routing_graph);

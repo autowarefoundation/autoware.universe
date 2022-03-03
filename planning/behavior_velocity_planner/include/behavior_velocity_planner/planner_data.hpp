@@ -15,6 +15,8 @@
 #ifndef BEHAVIOR_VELOCITY_PLANNER__PLANNER_DATA_HPP_
 #define BEHAVIOR_VELOCITY_PLANNER__PLANNER_DATA_HPP_
 
+#include "route_handler/route_handler.hpp"
+
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
@@ -86,6 +88,8 @@ struct PlannerData
   boost::optional<tier4_api_msgs::msg::IntersectionStatus> external_intersection_status_input;
   tier4_v2x_msgs::msg::VirtualTrafficLightStateArray::ConstSharedPtr virtual_traffic_light_states;
 
+  // route handler
+  std::shared_ptr<route_handler::RouteHandler> route_handler_;
   // parameters
   vehicle_info_util::VehicleInfo vehicle_info_;
 
