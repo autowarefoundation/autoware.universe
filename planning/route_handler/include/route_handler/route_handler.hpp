@@ -79,6 +79,7 @@ public:
   lanelet::routing::RoutingGraphPtr getRoutingGraphPtr() const;
   lanelet::traffic_rules::TrafficRulesPtr getTrafficRulesPtr() const;
   lanelet::routing::RoutingGraphContainer getOverallGraph() const;
+  std::shared_ptr<const lanelet::routing::RoutingGraphContainer> getOverallGraphPtr() const;
   lanelet::LaneletMapPtr getLaneletMapPtr() const;
 
   // for routing

@@ -1283,9 +1283,16 @@ lanelet::traffic_rules::TrafficRulesPtr RouteHandler::getTrafficRulesPtr() const
   return traffic_rules_ptr_;
 }
 
+// TODO(tanaka): remove this
 lanelet::routing::RoutingGraphContainer RouteHandler::getOverallGraph() const
 {
   return *overall_graphs_ptr_;
+}
+
+std::shared_ptr<const lanelet::routing::RoutingGraphContainer> RouteHandler::getOverallGraphPtr()
+  const
+{
+  return overall_graphs_ptr_;
 }
 
 lanelet::LaneletMapPtr RouteHandler::getLaneletMapPtr() const { return lanelet_map_ptr_; }

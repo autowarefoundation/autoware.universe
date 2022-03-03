@@ -255,8 +255,7 @@ void BehaviorVelocityPlannerNode::onLaneletMap(
   const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg)
 {
   // Load map
-  planner_data_.route_handler_ = std::make_shared<route_handler::RouteHandler>();
-  planner_data_.route_handler_->setMap(*msg);
+  planner_data_.route_handler_ = std::make_shared<route_handler::RouteHandler>(*msg);
   planner_data_.lanelet_map = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(
     *msg, planner_data_.lanelet_map, &planner_data_.traffic_rules, &planner_data_.routing_graph);
