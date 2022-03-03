@@ -71,16 +71,11 @@ struct PlannerData
   std::deque<geometry_msgs::msg::TwistStamped> velocity_buffer;
   autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr predicted_objects;
   pcl::PointCloud<pcl::PointXYZ>::ConstPtr no_ground_pointcloud;
-  lanelet::LaneletMapPtr lanelet_map;
   // occupancy grid
   nav_msgs::msg::OccupancyGrid::ConstSharedPtr occupancy_grid;
 
   // other internal data
   std::map<int, autoware_auto_perception_msgs::msg::TrafficSignalStamped> traffic_light_id_map;
-  lanelet::traffic_rules::TrafficRulesPtr traffic_rules;
-  lanelet::routing::RoutingGraphPtr routing_graph;
-  std::shared_ptr<const lanelet::routing::RoutingGraphContainer> overall_graphs;
-
   // external data
   std::map<int, autoware_auto_perception_msgs::msg::TrafficSignalStamped>
     external_traffic_light_id_map;
