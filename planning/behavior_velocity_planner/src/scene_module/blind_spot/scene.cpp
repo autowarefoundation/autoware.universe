@@ -76,7 +76,7 @@ bool BlindSpotModule::modifyPathVelocity(
 
   /* get lanelet map */
   const auto lanelet_map_ptr = planner_data_->route_handler_->getLaneletMapPtr();
-  const auto routing_graph_ptr = planner_data_->routing_graph;
+  const auto routing_graph_ptr = planner_data_->route_handler_->getRoutingGraphPtr();
 
   /* set stop-line and stop-judgement-line for base_link */
   int stop_line_idx = -1;
