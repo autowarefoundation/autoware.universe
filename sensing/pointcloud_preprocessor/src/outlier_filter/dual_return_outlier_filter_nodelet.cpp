@@ -52,7 +52,6 @@ DualReturnOutlierFilterComponent::DualReturnOutlierFilterComponent(
 
     weak_first_local_noise_threshold_ =
       static_cast<int>(declare_parameter("weak_first_local_noise_threshold", 2));
-    visibility_threshold_ = static_cast<float>(declare_parameter("visibility_threshold", 0.5));
     roi_mode_ = static_cast<std::string>(declare_parameter("roi_mode", "Fixed_xyz_ROI"));
     visibility_error_threshold_ =
       static_cast<float>(declare_parameter("visibility_error_threshold", 0.5));
