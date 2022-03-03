@@ -96,13 +96,13 @@ void GyroOdometer::callbackImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_m
   twist_with_covariance.twist.twist.angular.z = transformed_angular_velocity.vector.z;
 
   // NOTE
-  // linear.y, linear.z, angular.x, and angular.y are not measured values.
+  // linear.y and linear.z are not measured values.
   // Therefore, they should be assigned large variance values.
   twist_with_covariance.twist.covariance[0] = twist_with_cov_msg_ptr_->twist.covariance[0];
   twist_with_covariance.twist.covariance[7] = 10000.0;
   twist_with_covariance.twist.covariance[14] = 10000.0;
-  twist_with_covariance.twist.covariance[21] = 10000.0;
-  twist_with_covariance.twist.covariance[28] = 10000.0;
+  twist_with_covariance.twist.covariance[21] = imu_msg_ptr->angular_velocity_covariance[0];
+  twist_with_covariance.twist.covariance[28] = imu_msg_ptr->angular_velocity_covariance[4];
   twist_with_covariance.twist.covariance[35] = imu_msg_ptr->angular_velocity_covariance[8];
 
   twist_with_covariance_pub_->publish(twist_with_covariance);
