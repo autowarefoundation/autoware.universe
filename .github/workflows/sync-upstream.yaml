@@ -2,7 +2,7 @@ name: sync-upstream
 
 on:
   schedule:
-    - cron: 0 19 * * * # run at 4 AM JST
+    - cron: 0 0 * * 0
   workflow_dispatch:
 
 jobs:
@@ -17,7 +17,7 @@ jobs:
           private_key: ${{ secrets.PRIVATE_KEY }}
 
       - name: Run sync-branches
-        uses: autowarefoundation/autoware-github-actions/sync-branches@tier4/proposal
+        uses: autowarefoundation/autoware-github-actions/sync-branches@v1
         with:
           token: ${{ steps.generate-token.outputs.token }}
           base-branch: tier4/universe
