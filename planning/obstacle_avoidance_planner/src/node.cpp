@@ -255,25 +255,25 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
 
     // drivability check
     use_vehicle_circles_for_drivability_ =
-      declare_parameter<bool>("option.drivability_check.use_vehicle_circles");
+      declare_parameter<bool>("advanced.option.drivability_check.use_vehicle_circles");
     if (use_vehicle_circles_for_drivability_) {
       // vehicle_circles
       // NOTE: Vehicle shape for drivability check is considered as a set of circles
       use_manual_vehicle_circles_for_drivability_ = declare_parameter<bool>(
-        "option.drivability_check.vehicle_circles.use_manual_vehicle_circles");
-      vehicle_circle_constraints_num_for_drivability_ =
-        declare_parameter<int>("option.drivability_check.vehicle_circles.num_for_constraints");
+        "advanced.option.drivability_check.vehicle_circles.use_manual_vehicle_circles");
+      vehicle_circle_constraints_num_for_drivability_ = declare_parameter<int>(
+        "advanced.option.drivability_check.vehicle_circles.num_for_constraints");
       if (use_manual_vehicle_circles_for_drivability_) {  // vehicle circles are designated manually
         vehicle_circle_longitudinal_offsets_for_drivability_ =
           declare_parameter<std::vector<double>>(
-            "option.drivability_check.vehicle_circles.longitudinal_offsets");
+            "advanced.option.drivability_check.vehicle_circles.longitudinal_offsets");
         vehicle_circle_radius_for_drivability_ =
-          declare_parameter<double>("option.drivability_check.vehicle_circles.radius");
+          declare_parameter<double>("advanced.option.drivability_check.vehicle_circles.radius");
       } else {  // vehicle circles are calculated automatically with designated ratio
-        vehicle_circle_radius_num_for_drivability_ =
-          declare_parameter<int>("option.drivability_check.vehicle_circles.num_for_radius");
-        vehicle_circle_radius_ratio_for_drivability_ =
-          declare_parameter<double>("option.drivability_check.vehicle_circles.radius_ratio");
+        vehicle_circle_radius_num_for_drivability_ = declare_parameter<int>(
+          "advanced.option.drivability_check.vehicle_circles.num_for_radius");
+        vehicle_circle_radius_ratio_for_drivability_ = declare_parameter<double>(
+          "advanced.option.drivability_check.vehicle_circles.radius_ratio");
         std::tie(
           vehicle_circle_radius_for_drivability_,
           vehicle_circle_longitudinal_offsets_for_drivability_) =
@@ -342,25 +342,27 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
     eb_param_ = EBParam{};
 
     // common
-    eb_param_.num_joint_buffer_points = declare_parameter<int>("eb.common.num_joint_buffer_points");
+    eb_param_.num_joint_buffer_points =
+      declare_parameter<int>("advanced.eb.common.num_joint_buffer_points");
     eb_param_.num_offset_for_begin_idx =
-      declare_parameter<int>("eb.common.num_offset_for_begin_idx");
+      declare_parameter<int>("advanced.eb.common.num_offset_for_begin_idx");
     eb_param_.delta_arc_length_for_eb =
-      declare_parameter<double>("eb.common.delta_arc_length_for_eb");
+      declare_parameter<double>("advanced.eb.common.delta_arc_length_for_eb");
     eb_param_.num_sampling_points_for_eb =
-      declare_parameter<int>("eb.common.num_sampling_points_for_eb");
+      declare_parameter<int>("advanced.eb.common.num_sampling_points_for_eb");
 
     // clearance
     eb_param_.clearance_for_straight_line =
-      declare_parameter<double>("eb.clearance.clearance_for_straight_line");
-    eb_param_.clearance_for_joint = declare_parameter<double>("eb.clearance.clearance_for_joint");
+      declare_parameter<double>("advanced.eb.clearance.clearance_for_straight_line");
+    eb_param_.clearance_for_joint =
+      declare_parameter<double>("advanced.eb.clearance.clearance_for_joint");
     eb_param_.clearance_for_only_smoothing =
-      declare_parameter<double>("eb.clearance.clearance_for_only_smoothing");
+      declare_parameter<double>("advanced.eb.clearance.clearance_for_only_smoothing");
 
     // qp
-    eb_param_.qp_param.max_iteration = declare_parameter<int>("eb.qp.max_iteration");
-    eb_param_.qp_param.eps_abs = declare_parameter<double>("eb.qp.eps_abs");
-    eb_param_.qp_param.eps_rel = declare_parameter<double>("eb.qp.eps_rel");
+    eb_param_.qp_param.max_iteration = declare_parameter<int>("advanced.eb.qp.max_iteration");
+    eb_param_.qp_param.eps_abs = declare_parameter<double>("advanced.eb.qp.eps_abs");
+    eb_param_.qp_param.eps_rel = declare_parameter<double>("advanced.eb.qp.eps_rel");
 
     // other
     eb_param_.clearance_for_fixing = 0.0;
@@ -396,32 +398,32 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
 
     // collision free constraints
     mpt_param_.l_inf_norm =
-      declare_parameter<bool>("mpt.collision_free_constraints.option.l_inf_norm");
+      declare_parameter<bool>("advanced.mpt.collision_free_constraints.option.l_inf_norm");
     mpt_param_.soft_constraint =
-      declare_parameter<bool>("mpt.collision_free_constraints.option.soft_constraint");
+      declare_parameter<bool>("advanced.mpt.collision_free_constraints.option.soft_constraint");
     mpt_param_.hard_constraint =
-      declare_parameter<bool>("mpt.collision_free_constraints.option.hard_constraint");
+      declare_parameter<bool>("advanced.mpt.collision_free_constraints.option.hard_constraint");
     // TODO(murooka) implement two-step soft constraint
     mpt_param_.two_step_soft_constraint = false;
     // mpt_param_.two_step_soft_constraint =
-    // declare_parameter<bool>("mpt.collision_free_constraints.option.two_step_soft_constraint");
+    // declare_parameter<bool>("advanced.mpt.collision_free_constraints.option.two_step_soft_constraint");
 
     // vehicle_circles
     // NOTE: Vehicle shape for collision free constraints is considered as a set of circles
     use_manual_vehicle_circles_for_mpt_ = declare_parameter<bool>(
-      "mpt.collision_free_constraints.vehicle_circles.use_manual_vehicle_circles");
-    vehicle_circle_constraints_num_for_mpt_ =
-      declare_parameter<int>("mpt.collision_free_constraints.vehicle_circles.num_for_constraints");
+      "advanced.mpt.collision_free_constraints.vehicle_circles.use_manual_vehicle_circles");
+    vehicle_circle_constraints_num_for_mpt_ = declare_parameter<int>(
+      "advanced.mpt.collision_free_constraints.vehicle_circles.num_for_constraints");
     if (use_manual_vehicle_circles_for_mpt_) {  // vehicle circles are designated manually
       mpt_param_.vehicle_circle_longitudinal_offsets = declare_parameter<std::vector<double>>(
-        "mpt.collision_free_constraints.vehicle_circles.longitudinal_offsets");
+        "advanced.mpt.collision_free_constraints.vehicle_circles.longitudinal_offsets");
       mpt_param_.vehicle_circle_radius =
-        declare_parameter<double>("mpt.collision_free_constraints.vehicle_circles.radius");
+        declare_parameter<double>("advanced.mpt.collision_free_constraints.vehicle_circles.radius");
     } else {  // vehicle circles are calculated automatically with designated ratio
-      vehicle_circle_radius_num_for_mpt_ =
-        declare_parameter<int>("mpt.collision_free_constraints.vehicle_circles.num_for_radius");
-      vehicle_circle_radius_ratio_for_mpt_ =
-        declare_parameter<double>("mpt.collision_free_constraints.vehicle_circles.radius_ratio");
+      vehicle_circle_radius_num_for_mpt_ = declare_parameter<int>(
+        "advanced.mpt.collision_free_constraints.vehicle_circles.num_for_radius");
+      vehicle_circle_radius_ratio_for_mpt_ = declare_parameter<double>(
+        "advanced.mpt.collision_free_constraints.vehicle_circles.radius_ratio");
 
       std::tie(mpt_param_.vehicle_circle_radius, mpt_param_.vehicle_circle_longitudinal_offsets) =
         calcVehicleCirclesInfo(
@@ -431,45 +433,48 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
 
     // clearance
     mpt_param_.hard_clearance_from_road =
-      declare_parameter<double>("mpt.clearance.hard_clearance_from_road");
+      declare_parameter<double>("advanced.mpt.clearance.hard_clearance_from_road");
     mpt_param_.soft_clearance_from_road =
-      declare_parameter<double>("mpt.clearance.soft_clearance_from_road");
+      declare_parameter<double>("advanced.mpt.clearance.soft_clearance_from_road");
     mpt_param_.soft_second_clearance_from_road =
-      declare_parameter<double>("mpt.clearance.soft_second_clearance_from_road");
+      declare_parameter<double>("advanced.mpt.clearance.soft_second_clearance_from_road");
     mpt_param_.extra_desired_clearance_from_road =
-      declare_parameter<double>("mpt.clearance.extra_desired_clearance_from_road");
+      declare_parameter<double>("advanced.mpt.clearance.extra_desired_clearance_from_road");
     mpt_param_.clearance_from_object =
-      declare_parameter<double>("mpt.clearance.clearance_from_object");
+      declare_parameter<double>("advanced.mpt.clearance.clearance_from_object");
 
     // weight
     mpt_param_.soft_avoidance_weight =
-      declare_parameter<double>("mpt.weight.soft_avoidance_weight");
+      declare_parameter<double>("advanced.mpt.weight.soft_avoidance_weight");
     mpt_param_.soft_second_avoidance_weight =
-      declare_parameter<double>("mpt.weight.soft_second_avoidance_weight");
+      declare_parameter<double>("advanced.mpt.weight.soft_second_avoidance_weight");
 
-    mpt_param_.lat_error_weight = declare_parameter<double>("mpt.weight.lat_error_weight");
-    mpt_param_.yaw_error_weight = declare_parameter<double>("mpt.weight.yaw_error_weight");
+    mpt_param_.lat_error_weight = declare_parameter<double>("advanced.mpt.weight.lat_error_weight");
+    mpt_param_.yaw_error_weight = declare_parameter<double>("advanced.mpt.weight.yaw_error_weight");
     mpt_param_.yaw_error_rate_weight =
-      declare_parameter<double>("mpt.weight.yaw_error_rate_weight");
-    mpt_param_.steer_input_weight = declare_parameter<double>("mpt.weight.steer_input_weight");
-    mpt_param_.steer_rate_weight = declare_parameter<double>("mpt.weight.steer_rate_weight");
+      declare_parameter<double>("advanced.mpt.weight.yaw_error_rate_weight");
+    mpt_param_.steer_input_weight =
+      declare_parameter<double>("advanced.mpt.weight.steer_input_weight");
+    mpt_param_.steer_rate_weight =
+      declare_parameter<double>("advanced.mpt.weight.steer_rate_weight");
 
     mpt_param_.obstacle_avoid_lat_error_weight =
-      declare_parameter<double>("mpt.weight.obstacle_avoid_lat_error_weight");
+      declare_parameter<double>("advanced.mpt.weight.obstacle_avoid_lat_error_weight");
     mpt_param_.obstacle_avoid_yaw_error_weight =
-      declare_parameter<double>("mpt.weight.obstacle_avoid_yaw_error_weight");
+      declare_parameter<double>("advanced.mpt.weight.obstacle_avoid_yaw_error_weight");
     mpt_param_.obstacle_avoid_steer_input_weight =
-      declare_parameter<double>("mpt.weight.obstacle_avoid_steer_input_weight");
-    mpt_param_.near_objects_length = declare_parameter<double>("mpt.weight.near_objects_length");
+      declare_parameter<double>("advanced.mpt.weight.obstacle_avoid_steer_input_weight");
+    mpt_param_.near_objects_length =
+      declare_parameter<double>("advanced.mpt.weight.near_objects_length");
 
     mpt_param_.terminal_lat_error_weight =
-      declare_parameter<double>("mpt.weight.terminal_lat_error_weight");
+      declare_parameter<double>("advanced.mpt.weight.terminal_lat_error_weight");
     mpt_param_.terminal_yaw_error_weight =
-      declare_parameter<double>("mpt.weight.terminal_yaw_error_weight");
+      declare_parameter<double>("advanced.mpt.weight.terminal_yaw_error_weight");
     mpt_param_.terminal_path_lat_error_weight =
-      declare_parameter<double>("mpt.weight.terminal_path_lat_error_weight");
+      declare_parameter<double>("advanced.mpt.weight.terminal_path_lat_error_weight");
     mpt_param_.terminal_path_yaw_error_weight =
-      declare_parameter<double>("mpt.weight.terminal_path_yaw_error_weight");
+      declare_parameter<double>("advanced.mpt.weight.terminal_path_yaw_error_weight");
   }
 
   {  // replan
@@ -520,28 +525,28 @@ rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::paramCallback
 
     // drivability check
     updateParam<bool>(
-      parameters, "option.drivability_check.use_vehicle_circles",
+      parameters, "advanced.option.drivability_check.use_vehicle_circles",
       use_vehicle_circles_for_drivability_);
     if (use_vehicle_circles_for_drivability_) {
       updateParam<bool>(
-        parameters, "option.drivability_check.vehicle_circles.use_manual_vehicle_circles",
+        parameters, "advanced.option.drivability_check.vehicle_circles.use_manual_vehicle_circles",
         use_manual_vehicle_circles_for_drivability_);
       updateParam<int>(
-        parameters, "option.drivability_check.vehicle_circles.num_for_constraints",
+        parameters, "advanced.option.drivability_check.vehicle_circles.num_for_constraints",
         vehicle_circle_constraints_num_for_drivability_);
       if (use_manual_vehicle_circles_for_drivability_) {
         updateParam<std::vector<double>>(
-          parameters, "option.drivability_check.vehicle_circles.longitudinal_offsets",
+          parameters, "advanced.option.drivability_check.vehicle_circles.longitudinal_offsets",
           vehicle_circle_longitudinal_offsets_for_drivability_);
         updateParam<double>(
-          parameters, "option.drivability_check.vehicle_circles.radius",
+          parameters, "advanced.option.drivability_check.vehicle_circles.radius",
           vehicle_circle_radius_for_drivability_);
       } else {
         updateParam<int>(
-          parameters, "option.drivability_check.vehicle_circles.num_for_radius",
+          parameters, "advanced.option.drivability_check.vehicle_circles.num_for_radius",
           vehicle_circle_radius_num_for_drivability_);
         updateParam<double>(
-          parameters, "option.drivability_check.vehicle_circles.radius_ratio",
+          parameters, "advanced.option.drivability_check.vehicle_circles.radius_ratio",
           vehicle_circle_radius_ratio_for_drivability_);
 
         std::tie(
@@ -614,28 +619,30 @@ rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::paramCallback
   {  // elastic band parameter
     // common
     updateParam<int>(
-      parameters, "eb.common.num_joint_buffer_points", eb_param_.num_joint_buffer_points);
+      parameters, "advanced.eb.common.num_joint_buffer_points", eb_param_.num_joint_buffer_points);
     updateParam<int>(
-      parameters, "eb.common.num_offset_for_begin_idx", eb_param_.num_offset_for_begin_idx);
+      parameters, "advanced.eb.common.num_offset_for_begin_idx",
+      eb_param_.num_offset_for_begin_idx);
     updateParam<double>(
-      parameters, "eb.common.delta_arc_length_for_eb", eb_param_.delta_arc_length_for_eb);
+      parameters, "advanced.eb.common.delta_arc_length_for_eb", eb_param_.delta_arc_length_for_eb);
     updateParam<int>(
-      parameters, "eb.common.num_sampling_points_for_eb", eb_param_.num_sampling_points_for_eb);
+      parameters, "advanced.eb.common.num_sampling_points_for_eb",
+      eb_param_.num_sampling_points_for_eb);
 
     // clearance
     updateParam<double>(
-      parameters, "eb.clearance.clearance_for_straight_line",
+      parameters, "advanced.eb.clearance.clearance_for_straight_line",
       eb_param_.clearance_for_straight_line);
     updateParam<double>(
-      parameters, "eb.clearance.clearance_for_joint", eb_param_.clearance_for_joint);
+      parameters, "advanced.eb.clearance.clearance_for_joint", eb_param_.clearance_for_joint);
     updateParam<double>(
-      parameters, "eb.clearance.clearance_for_only_smoothing",
+      parameters, "advanced.eb.clearance.clearance_for_only_smoothing",
       eb_param_.clearance_for_only_smoothing);
 
     // qp
-    updateParam<int>(parameters, "eb.qp.max_iteration", eb_param_.qp_param.max_iteration);
-    updateParam<double>(parameters, "eb.qp.eps_abs", eb_param_.qp_param.eps_abs);
-    updateParam<double>(parameters, "eb.qp.eps_rel", eb_param_.qp_param.eps_rel);
+    updateParam<int>(parameters, "advanced.eb.qp.max_iteration", eb_param_.qp_param.max_iteration);
+    updateParam<double>(parameters, "advanced.eb.qp.eps_abs", eb_param_.qp_param.eps_abs);
+    updateParam<double>(parameters, "advanced.eb.qp.eps_rel", eb_param_.qp_param.eps_rel);
   }
 
   {  // mpt param
@@ -669,37 +676,39 @@ rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::paramCallback
 
     // collision_free_constraints
     updateParam<bool>(
-      parameters, "mpt.collision_free_constraints.option.l_inf_norm", mpt_param_.l_inf_norm);
+      parameters, "advanced.mpt.collision_free_constraints.option.l_inf_norm",
+      mpt_param_.l_inf_norm);
     // updateParam<bool>(
-    //   parameters, "mpt.collision_free_constraints.option.two_step_soft_constraint",
+    //   parameters, "advanced.mpt.collision_free_constraints.option.two_step_soft_constraint",
     //   mpt_param_.two_step_soft_constraint);
     updateParam<bool>(
-      parameters, "mpt.collision_free_constraints.option.soft_constraint",
+      parameters, "advanced.mpt.collision_free_constraints.option.soft_constraint",
       mpt_param_.soft_constraint);
     updateParam<bool>(
-      parameters, "mpt.collision_free_constraints.option.hard_constraint",
+      parameters, "advanced.mpt.collision_free_constraints.option.hard_constraint",
       mpt_param_.hard_constraint);
 
     // vehicle_circles
     updateParam<bool>(
-      parameters, "mpt.collision_free_constraints.vehicle_circles.use_manual_vehicle_circles",
+      parameters,
+      "advanced.mpt.collision_free_constraints.vehicle_circles.use_manual_vehicle_circles",
       use_manual_vehicle_circles_for_mpt_);
     updateParam<int>(
-      parameters, "mpt.collision_free_constraints.vehicle_circles.num_for_constraints",
+      parameters, "advanced.mpt.collision_free_constraints.vehicle_circles.num_for_constraints",
       vehicle_circle_constraints_num_for_mpt_);
     if (use_manual_vehicle_circles_for_mpt_) {
       updateParam<std::vector<double>>(
-        parameters, "mpt.collision_free_constraints.vehicle_circles.longitudinal_offsets",
+        parameters, "advanced.mpt.collision_free_constraints.vehicle_circles.longitudinal_offsets",
         mpt_param_.vehicle_circle_longitudinal_offsets);
       updateParam<double>(
-        parameters, "mpt.collision_free_constraints.vehicle_circles.radius",
+        parameters, "advanced.mpt.collision_free_constraints.vehicle_circles.radius",
         mpt_param_.vehicle_circle_radius);
     } else {  // vehicle circles are calculated automatically with designated ratio
       updateParam<int>(
-        parameters, "mpt.collision_free_constraints.vehicle_circles.num_for_radius",
+        parameters, "advanced.mpt.collision_free_constraints.vehicle_circles.num_for_radius",
         vehicle_circle_radius_num_for_mpt_);
       updateParam<double>(
-        parameters, "mpt.collision_free_constraints.vehicle_circles.radius_ratio",
+        parameters, "advanced.mpt.collision_free_constraints.vehicle_circles.radius_ratio",
         vehicle_circle_radius_ratio_for_mpt_);
 
       std::tie(mpt_param_.vehicle_circle_radius, mpt_param_.vehicle_circle_longitudinal_offsets) =
@@ -710,53 +719,61 @@ rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::paramCallback
 
     // clearance
     updateParam<double>(
-      parameters, "mpt.clearance.hard_clearance_from_road", mpt_param_.hard_clearance_from_road);
+      parameters, "advanced.mpt.clearance.hard_clearance_from_road",
+      mpt_param_.hard_clearance_from_road);
     updateParam<double>(
-      parameters, "mpt.clearance.soft_clearance_from_road", mpt_param_.soft_clearance_from_road);
+      parameters, "advanced.mpt.clearance.soft_clearance_from_road",
+      mpt_param_.soft_clearance_from_road);
     updateParam<double>(
-      parameters, "mpt.clearance.soft_second_clearance_from_road",
+      parameters, "advanced.mpt.clearance.soft_second_clearance_from_road",
       mpt_param_.soft_second_clearance_from_road);
     updateParam<double>(
-      parameters, "mpt.clearance.extra_desired_clearance_from_road",
+      parameters, "advanced.mpt.clearance.extra_desired_clearance_from_road",
       mpt_param_.extra_desired_clearance_from_road);
     updateParam<double>(
-      parameters, "mpt.clearance.clearance_from_object", mpt_param_.clearance_from_object);
+      parameters, "advanced.mpt.clearance.clearance_from_object", mpt_param_.clearance_from_object);
 
     // weight
     updateParam<double>(
-      parameters, "mpt.weight.soft_avoidance_weight", mpt_param_.soft_avoidance_weight);
+      parameters, "advanced.mpt.weight.soft_avoidance_weight", mpt_param_.soft_avoidance_weight);
     updateParam<double>(
-      parameters, "mpt.weight.soft_second_avoidance_weight",
+      parameters, "advanced.mpt.weight.soft_second_avoidance_weight",
       mpt_param_.soft_second_avoidance_weight);
 
-    updateParam<double>(parameters, "mpt.weight.lat_error_weight", mpt_param_.lat_error_weight);
-    updateParam<double>(parameters, "mpt.weight.yaw_error_weight", mpt_param_.yaw_error_weight);
     updateParam<double>(
-      parameters, "mpt.weight.yaw_error_rate_weight", mpt_param_.yaw_error_rate_weight);
-    updateParam<double>(parameters, "mpt.weight.steer_input_weight", mpt_param_.steer_input_weight);
-    updateParam<double>(parameters, "mpt.weight.steer_rate_weight", mpt_param_.steer_rate_weight);
+      parameters, "advanced.mpt.weight.lat_error_weight", mpt_param_.lat_error_weight);
+    updateParam<double>(
+      parameters, "advanced.mpt.weight.yaw_error_weight", mpt_param_.yaw_error_weight);
+    updateParam<double>(
+      parameters, "advanced.mpt.weight.yaw_error_rate_weight", mpt_param_.yaw_error_rate_weight);
+    updateParam<double>(
+      parameters, "advanced.mpt.weight.steer_input_weight", mpt_param_.steer_input_weight);
+    updateParam<double>(
+      parameters, "advanced.mpt.weight.steer_rate_weight", mpt_param_.steer_rate_weight);
 
     updateParam<double>(
-      parameters, "mpt.weight.obstacle_avoid_lat_error_weight",
+      parameters, "advanced.mpt.weight.obstacle_avoid_lat_error_weight",
       mpt_param_.obstacle_avoid_lat_error_weight);
     updateParam<double>(
-      parameters, "mpt.weight.obstacle_avoid_yaw_error_weight",
+      parameters, "advanced.mpt.weight.obstacle_avoid_yaw_error_weight",
       mpt_param_.obstacle_avoid_yaw_error_weight);
     updateParam<double>(
-      parameters, "mpt.weight.obstacle_avoid_steer_input_weight",
+      parameters, "advanced.mpt.weight.obstacle_avoid_steer_input_weight",
       mpt_param_.obstacle_avoid_steer_input_weight);
     updateParam<double>(
-      parameters, "mpt.weight.near_objects_length", mpt_param_.near_objects_length);
+      parameters, "advanced.mpt.weight.near_objects_length", mpt_param_.near_objects_length);
 
     updateParam<double>(
-      parameters, "mpt.weight.terminal_lat_error_weight", mpt_param_.terminal_lat_error_weight);
+      parameters, "advanced.mpt.weight.terminal_lat_error_weight",
+      mpt_param_.terminal_lat_error_weight);
     updateParam<double>(
-      parameters, "mpt.weight.terminal_yaw_error_weight", mpt_param_.terminal_yaw_error_weight);
+      parameters, "advanced.mpt.weight.terminal_yaw_error_weight",
+      mpt_param_.terminal_yaw_error_weight);
     updateParam<double>(
-      parameters, "mpt.weight.terminal_path_lat_error_weight",
+      parameters, "advanced.mpt.weight.terminal_path_lat_error_weight",
       mpt_param_.terminal_path_lat_error_weight);
     updateParam<double>(
-      parameters, "mpt.weight.terminal_path_yaw_error_weight",
+      parameters, "advanced.mpt.weight.terminal_path_yaw_error_weight",
       mpt_param_.terminal_path_yaw_error_weight);
   }
 
