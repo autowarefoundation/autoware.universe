@@ -18,7 +18,7 @@
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <scene_module/intersection/util.hpp>
-#include <utilization/interpolate.hpp>
+#include <utilization/path_utilization.hpp>
 #include <utilization/util.hpp>
 
 #include <lanelet2_core/geometry/Polygon.h>
@@ -58,82 +58,6 @@ int insertPoint(
   inout_path->points.insert(it, inserted_point);
 
   return insert_idx;
-}
-
-bool splineInterpolate(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & input, const double interval,
-  autoware_auto_planning_msgs::msg::PathWithLaneId * output, const rclcpp::Logger logger)
-{
-  *output = input;
-
-  if (input.points.size() <= 1) {
-    RCLCPP_WARN(logger, "Do not interpolate because path size is 1.");
-    return false;
-  }
-
-  static constexpr double ep = 1.0e-8;
-
-  // calc arclength for path
-  std::vector<double> base_x;
-  std::vector<double> base_y;
-  std::vector<double> base_z;
-  for (const auto & p : input.points) {
-    base_x.push_back(p.point.pose.position.x);
-    base_y.push_back(p.point.pose.position.y);
-    base_z.push_back(p.point.pose.position.z);
-  }
-  std::vector<double> base_s = interpolation::calcEuclidDist(base_x, base_y);
-
-  // remove duplicating sample points
-  {
-    size_t Ns = base_s.size();
-    size_t i = 1;
-    while (i < Ns) {
-      if (std::fabs(base_s[i - 1] - base_s[i]) < ep) {
-        base_s.erase(base_s.begin() + i);
-        base_x.erase(base_x.begin() + i);
-        base_y.erase(base_y.begin() + i);
-        base_z.erase(base_z.begin() + i);
-        Ns -= 1;
-        i -= 1;
-      }
-      ++i;
-    }
-  }
-
-  std::vector<double> resampled_s;
-  for (double d = 0.0; d < base_s.back() - ep; d += interval) {
-    resampled_s.push_back(d);
-  }
-
-  // do spline for xy
-  const std::vector<double> resampled_x = ::interpolation::slerp(base_s, base_x, resampled_s);
-  const std::vector<double> resampled_y = ::interpolation::slerp(base_s, base_y, resampled_s);
-  const std::vector<double> resampled_z = ::interpolation::slerp(base_s, base_z, resampled_s);
-
-  // set xy
-  output->points.clear();
-  for (size_t i = 0; i < resampled_s.size(); i++) {
-    autoware_auto_planning_msgs::msg::PathPointWithLaneId p;
-    p.point.pose.position.x = resampled_x.at(i);
-    p.point.pose.position.y = resampled_y.at(i);
-    p.point.pose.position.z = resampled_z.at(i);
-    output->points.push_back(p);
-  }
-
-  // set yaw
-  for (int i = 1; i < static_cast<int>(resampled_s.size()) - 1; i++) {
-    auto p = output->points.at(i - 1).point.pose.position;
-    auto n = output->points.at(i + 1).point.pose.position;
-    double yaw = std::atan2(n.y - p.y, n.x - p.x);
-    output->points.at(i).point.pose.orientation = planning_utils::getQuaternionFromYaw(yaw);
-  }
-  if (output->points.size() > 1) {
-    size_t l = output->points.size();
-    output->points.front().point.pose.orientation = output->points.at(1).point.pose.orientation;
-    output->points.back().point.pose.orientation = output->points.at(l - 2).point.pose.orientation;
-  }
-  return true;
 }
 
 geometry_msgs::msg::Pose getAheadPose(
@@ -238,8 +162,7 @@ int getFirstPointInsidePolygons(
 
 bool generateStopLine(
   const int lane_id, const std::vector<lanelet::CompoundPolygon3d> detection_areas,
-  const std::shared_ptr<const PlannerData> & planner_data,
-  const IntersectionModule::PlannerParam & planner_param,
+  const std::shared_ptr<const PlannerData> & planner_data, const double stop_line_margin,
   autoware_auto_planning_msgs::msg::PathWithLaneId * original_path,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & target_path, int * stop_line_idx,
   int * pass_judge_line_idx, int * first_idx_inside_lane, const rclcpp::Logger logger)
@@ -254,14 +177,14 @@ bool generateStopLine(
   /* set parameters */
   constexpr double interval = 0.2;
 
-  const int margin_idx_dist = std::ceil(planner_param.stop_line_margin / interval);
+  const int margin_idx_dist = std::ceil(stop_line_margin / interval);
   const int base2front_idx_dist =
     std::ceil(planner_data->vehicle_info_.max_longitudinal_offset_m / interval);
   const int pass_judge_idx_dist = std::ceil(pass_judge_line_dist / interval);
 
   /* spline interpolation */
   autoware_auto_planning_msgs::msg::PathWithLaneId path_ip;
-  if (!util::splineInterpolate(target_path, interval, &path_ip, logger)) {
+  if (!splineInterpolate(target_path, interval, &path_ip, logger)) {
     return false;
   }
 
@@ -398,7 +321,7 @@ bool getStopPoseIndexFromMap(
 
 bool getObjectiveLanelets(
   lanelet::LaneletMapConstPtr lanelet_map_ptr, lanelet::routing::RoutingGraphPtr routing_graph_ptr,
-  const int lane_id, const IntersectionModule::PlannerParam & planner_param,
+  const int lane_id, const double detection_area_length,
   std::vector<lanelet::ConstLanelets> * conflicting_lanelets_result,
   std::vector<lanelet::ConstLanelets> * objective_lanelets_result, const rclcpp::Logger logger)
 {
@@ -455,7 +378,7 @@ bool getObjectiveLanelets(
   }
 
   // get possible lanelet path that reaches conflicting_lane longer than given length
-  const double length = planner_param.detection_area_length;
+  const double length = detection_area_length;
   std::vector<lanelet::ConstLanelets> objective_lanelets_sequences;
   for (const auto & ll : objective_lanelets) {
     // Preceding lanes does not include objective_lane so add them at the end

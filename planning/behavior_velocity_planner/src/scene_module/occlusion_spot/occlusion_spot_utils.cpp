@@ -19,7 +19,6 @@
 #include <scene_module/occlusion_spot/risk_predictive_braking.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/math/normalization.hpp>
-#include <utilization/interpolate.hpp>
 #include <utilization/path_utilization.hpp>
 #include <utilization/util.hpp>
 
@@ -49,87 +48,6 @@ lanelet::ConstLanelet toPathLanelet(const PathWithLaneId & path)
   lanelet::Lanelet path_lanelet(lanelet::InvalId);
   path_lanelet.setCenterline(centerline);
   return lanelet::ConstLanelet(path_lanelet);
-}
-
-bool splineInterpolate(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & input, const double interval,
-  autoware_auto_planning_msgs::msg::PathWithLaneId * output, const rclcpp::Logger logger)
-{
-  *output = input;
-
-  if (input.points.size() <= 1) {
-    RCLCPP_DEBUG(logger, "Do not interpolate because path size is 1.");
-    return false;
-  }
-
-  static constexpr double ep = 1.0e-8;
-
-  // calc arclength for path
-  std::vector<double> base_x;
-  std::vector<double> base_y;
-  std::vector<double> base_z;
-  std::vector<double> base_v;
-  for (const auto & p : input.points) {
-    base_x.push_back(p.point.pose.position.x);
-    base_y.push_back(p.point.pose.position.y);
-    base_z.push_back(p.point.pose.position.z);
-    base_v.push_back(p.point.longitudinal_velocity_mps);
-  }
-  std::vector<double> base_s = interpolation::calcEuclidDist(base_x, base_y);
-
-  // remove duplicating sample points
-  {
-    size_t Ns = base_s.size();
-    size_t i = 1;
-    while (i < Ns) {
-      if (std::fabs(base_s[i - 1] - base_s[i]) < ep) {
-        base_s.erase(base_s.begin() + i);
-        base_x.erase(base_x.begin() + i);
-        base_y.erase(base_y.begin() + i);
-        base_z.erase(base_z.begin() + i);
-        base_v.erase(base_v.begin() + i);
-        Ns -= 1;
-        i -= 1;
-      }
-      ++i;
-    }
-  }
-
-  std::vector<double> resampled_s;
-  for (double d = 0.0; d < base_s.back() - ep; d += interval) {
-    resampled_s.push_back(d);
-  }
-
-  // do spline for xy
-  const std::vector<double> resampled_x = ::interpolation::slerp(base_s, base_x, resampled_s);
-  const std::vector<double> resampled_y = ::interpolation::slerp(base_s, base_y, resampled_s);
-  const std::vector<double> resampled_z = ::interpolation::slerp(base_s, base_z, resampled_s);
-  const std::vector<double> resampled_v = ::interpolation::slerp(base_s, base_v, resampled_s);
-
-  // set xy
-  output->points.clear();
-  for (size_t i = 0; i < resampled_s.size(); i++) {
-    PathPointWithLaneId p;
-    p.point.pose.position.x = resampled_x.at(i);
-    p.point.pose.position.y = resampled_y.at(i);
-    p.point.pose.position.z = resampled_z.at(i);
-    p.point.longitudinal_velocity_mps = resampled_v.at(i);
-    output->points.push_back(p);
-  }
-
-  // set yaw
-  for (int i = 1; i < static_cast<int>(resampled_s.size()) - 1; i++) {
-    auto p = output->points.at(i - 1).point.pose.position;
-    auto n = output->points.at(i + 1).point.pose.position;
-    double yaw = std::atan2(n.y - p.y, n.x - p.x);
-    output->points.at(i).point.pose.orientation = planning_utils::getQuaternionFromYaw(yaw);
-  }
-  if (output->points.size() > 1) {
-    size_t l = output->points.size();
-    output->points.front().point.pose.orientation = output->points.at(1).point.pose.orientation;
-    output->points.back().point.pose.orientation = output->points.at(l - 2).point.pose.orientation;
-  }
-  return true;
 }
 
 ROAD_TYPE getCurrentRoadType(
@@ -226,6 +144,52 @@ void calcSlowDownPointsForPossibleCollision(
     }
     dist_along_path_point = dist_along_next_path_point;
   }
+}
+
+void handleCollisionOffset(std::vector<PossibleCollisionInfo> & possible_collisions, double offset)
+{
+  for (auto & pc : possible_collisions) {
+    pc.arc_lane_dist_at_collision.length -= offset;
+  }
+}
+
+void clipPathByLength(
+  const PathWithLaneId & path, PathWithLaneId & clipped, const double max_length)
+{
+  double length_sum = 0;
+  for (int i = 0; i < static_cast<int>(path.points.size()) - 1; i++) {
+    length_sum += tier4_autoware_utils::calcDistance2d(path.points.at(i), path.points.at(i + 1));
+    if (length_sum > max_length) return;
+    clipped.points.emplace_back(path.points.at(i));
+  }
+}
+
+bool isStuckVehicle(PredictedObject obj, const double min_vel)
+{
+  if (
+    obj.classification.at(0).label == ObjectClassification::CAR ||
+    obj.classification.at(0).label == ObjectClassification::TRUCK ||
+    obj.classification.at(0).label == ObjectClassification::BUS) {
+    if (std::abs(obj.kinematics.initial_twist_with_covariance.twist.linear.x) < min_vel) {
+      return true;
+    }
+  }
+  return false;
+}
+
+double offsetFromStartToEgo(
+  const PathWithLaneId & path, const Pose & ego_pose, const int closest_idx)
+{
+  double offset_from_ego_to_closest = 0;
+  for (int i = 0; i < closest_idx; i++) {
+    const auto & curr_p = path.points.at(i).point.pose.position;
+    const auto & next_p = path.points.at(i + 1).point.pose.position;
+    offset_from_ego_to_closest += tier4_autoware_utils::calcDistance2d(curr_p, next_p);
+  }
+  const double offset_from_closest_to_target =
+    -planning_utils::transformRelCoordinate2D(ego_pose, path.points[closest_idx].point.pose)
+       .position.x;
+  return offset_from_ego_to_closest + offset_from_closest_to_target;
 }
 
 std::vector<PredictedObject> getParkedVehicles(
@@ -417,21 +381,6 @@ std::vector<PredictedObject> filterDynamicObjectByDetectionArea(
     }
   }
   return filtered_obj;
-}
-
-void filterCollisionByRoadType(
-  std::vector<PossibleCollisionInfo> & possible_collisions, const DetectionAreaIdx area)
-{
-  std::pair<int, int> focus_length = area.get();
-  for (auto it = possible_collisions.begin(); it != possible_collisions.end();) {
-    const auto & pc_len = it->arc_lane_dist_at_collision.length;
-    if (focus_length.first < pc_len && pc_len < focus_length.second) {
-      it++;
-    } else {
-      // -----erase-----|start------target-------end|----erase---
-      it = possible_collisions.erase(it);
-    }
-  }
 }
 
 void createPossibleCollisionsInDetectionArea(
