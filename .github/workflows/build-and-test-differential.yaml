@@ -12,44 +12,39 @@ jobs:
         uses: styfle/cancel-workflow-action@0.9.1
 
       - name: Check out repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
       - name: Remove exec_depend
-        uses: autowarefoundation/autoware-github-actions/remove-exec-depend@tier4/proposal
-
-      - name: Register AutonomouStuff repository
-        uses: autowarefoundation/autoware-github-actions/register-autonomoustuff-repository@tier4/proposal
-        with:
-          rosdistro: galactic
+        uses: autowarefoundation/autoware-github-actions/remove-exec-depend@v1
 
       - name: Get modified packages
         id: get-modified-packages
-        uses: autowarefoundation/autoware-github-actions/get-modified-packages@tier4/proposal
+        uses: autowarefoundation/autoware-github-actions/get-modified-packages@v1
 
-      - name: Build and test
+      - name: Build
         if: ${{ steps.get-modified-packages.outputs.modified-packages != '' }}
-        uses: autowarefoundation/autoware-github-actions/colcon-build-and-test@tier4/proposal
+        uses: autowarefoundation/autoware-github-actions/colcon-build@v1
         with:
           rosdistro: galactic
           target-packages: ${{ steps.get-modified-packages.outputs.modified-packages }}
           build-depends-repos: build_depends.repos
 
-      - name: Check the existence of coverage files
-        id: check-file-existence
-        uses: autowarefoundation/autoware-github-actions/check-file-existence@tier4/proposal
+      - name: Test
+        id: test
+        if: ${{ steps.get-modified-packages.outputs.modified-packages != '' }}
+        uses: autowarefoundation/autoware-github-actions/colcon-test@v1
         with:
-          files: |
-            lcov/total_coverage.info
-            coveragepy/.coverage
-          condition: or
+          rosdistro: galactic
+          target-packages: ${{ steps.get-modified-packages.outputs.modified-packages }}
+          build-depends-repos: build_depends.repos
 
       - name: Upload coverage to CodeCov
-        if: ${{ steps.check-file-existence.outputs.exists == 'true' }}
+        if: ${{ steps.test.outputs.coverage-report-files != '' }}
         uses: codecov/codecov-action@v2
         with:
-          files: lcov/total_coverage.info,coveragepy/.coverage
+          files: ${{ steps.test.outputs.coverage-report-files }}
           fail_ci_if_error: false
           verbose: true
 
@@ -59,27 +54,22 @@ jobs:
     needs: build-and-test-differential
     steps:
       - name: Check out repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
       - name: Remove exec_depend
-        uses: autowarefoundation/autoware-github-actions/remove-exec-depend@tier4/proposal
-
-      - name: Register AutonomouStuff repository
-        uses: autowarefoundation/autoware-github-actions/register-autonomoustuff-repository@tier4/proposal
-        with:
-          rosdistro: galactic
+        uses: autowarefoundation/autoware-github-actions/remove-exec-depend@v1
 
       - name: Get modified packages
         id: get-modified-packages
-        uses: autowarefoundation/autoware-github-actions/get-modified-packages@tier4/proposal
+        uses: autowarefoundation/autoware-github-actions/get-modified-packages@v1
 
       - name: Run clang-tidy
         if: ${{ steps.get-modified-packages.outputs.modified-packages != '' }}
-        uses: autowarefoundation/autoware-github-actions/clang-tidy@tier4/proposal
+        uses: autowarefoundation/autoware-github-actions/clang-tidy@v1
         with:
           rosdistro: galactic
           target-packages: ${{ steps.get-modified-packages.outputs.modified-packages }}
-          clang-tidy-config-url: https://raw.githubusercontent.com/autowarefoundation/autoware/tier4/proposal/.clang-tidy
+          clang-tidy-config-url: https://raw.githubusercontent.com/autowarefoundation/autoware/main/.clang-tidy
           build-depends-repos: build_depends.repos
