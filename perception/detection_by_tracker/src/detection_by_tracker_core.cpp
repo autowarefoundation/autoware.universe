@@ -390,8 +390,9 @@ float DetectionByTracker::optimizeUnderSegmentedObject(
 
   // build output
   highest_iou_object.object.classification = target_object.classification;
-  // TODO(yukkysaito): It is necessary to consider appropriate values in the future.
-  highest_iou_object.object.existence_probability = 0.1f;
+  highest_iou_object.object.existence_probability =
+    utils::get2dIoU(target_object, highest_iou_object.object);
+
   output = highest_iou_object;
   return highest_iou;
 }
@@ -440,7 +441,6 @@ void DetectionByTracker::mergeOverSegmentedObjects(
 
     // build output clusters
     tier4_perception_msgs::msg::DetectedObjectWithFeature feature_object;
-    feature_object.object.existence_probability = 0.1f;
     feature_object.object.classification = tracked_object.classification;
 
     bool is_shape_estimated = shape_estimator_->estimateShapeAndPose(
@@ -453,6 +453,8 @@ void DetectionByTracker::mergeOverSegmentedObjects(
       continue;
     }
 
+    feature_object.object.existence_probability =
+      utils::get2dIoU(tracked_object, feature_object.object);
     setClusterInObjectWithFeature(in_cluster_objects.header, pcl_merged_cluster, feature_object);
     out_objects.feature_objects.push_back(feature_object);
   }
