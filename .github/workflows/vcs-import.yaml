@@ -24,6 +24,11 @@ jobs:
         with:
           rosdistro: galactic
 
+      - name: Register kvaser repository
+        run: |
+          sudo apt-get -y install software-properties-common
+          sudo apt-add-repository ppa:astuff/kvaser-linux
+
       - name: Set git config for private repositories
         run: |
           git config --local --unset-all http.https://github.com/.extraheader || true
