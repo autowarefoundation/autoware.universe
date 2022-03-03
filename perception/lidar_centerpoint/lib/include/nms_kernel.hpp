@@ -21,7 +21,8 @@
 
 namespace centerpoint
 {
-// TODO(yukke42): add description
+// Non-maximum suppression (NMS) uses the distance on the xy plane instead of
+// intersection over union (IoU) to suppress overlapped objects.
 std::size_t circleNMS(
   thrust::device_vector<Box3D> & boxes3d, const float distance_threshold,
   thrust::device_vector<bool> & keep_mask, cudaStream_t stream);
