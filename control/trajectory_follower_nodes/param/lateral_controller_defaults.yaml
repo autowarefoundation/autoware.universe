@@ -55,8 +55,8 @@
     error_deriv_lpf_cutoff_hz: 5.0
 
     # stop state
-    stop_state_entry_ego_speed: 0.2
-    stop_state_entry_target_speed: 0.5
+    stop_state_entry_ego_speed: 0.0
+    stop_state_entry_target_speed: 0.0
 
     # vehicle parameters
     mass_kg: 2400.0
@@ -66,4 +66,3 @@
     mass_rr: 600.0
     cf: 155494.663
     cr: 155494.663
-
