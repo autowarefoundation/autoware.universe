@@ -46,12 +46,9 @@ DummyPerceptionPublisherNode::DummyPerceptionPublisherNode()
     "input/object", 100,
     std::bind(&DummyPerceptionPublisherNode::objectCallback, this, std::placeholders::_1));
 
-  auto timer_callback = std::bind(&DummyPerceptionPublisherNode::timerCallback, this);
-  auto period = std::chrono::milliseconds(100);
-  timer_ = std::make_shared<rclcpp::GenericTimer<decltype(timer_callback)>>(
-    this->get_clock(), period, std::move(timer_callback),
-    this->get_node_base_interface()->get_context());
-  this->get_node_timers_interface()->add_timer(timer_, nullptr);
+  using std::chrono_literals::operator""ms;
+  timer_ = rclcpp::create_timer(
+    this, get_clock(), 100ms, std::bind(&DummyPerceptionPublisherNode::timerCallback, this));
 }
 
 void DummyPerceptionPublisherNode::timerCallback()
@@ -183,7 +180,9 @@ void DummyPerceptionPublisherNode::timerCallback()
       new pcl::PointCloud<pcl::PointXYZ>);
     pcl::VoxelGridOcclusionEstimation<pcl::PointXYZ> ray_tracing_filter;
     ray_tracing_filter.setInputCloud(merged_pointcloud_ptr);
-    ray_tracing_filter.setLeafSize(0.25, 0.25, 0.25);
+    // above this value raytrace won't be as expected
+    const double leaf_size = 0.02;
+    ray_tracing_filter.setLeafSize(leaf_size, leaf_size, leaf_size);
     ray_tracing_filter.initializeVoxelGrid();
     for (size_t i = 0; i < v_pointcloud.size(); ++i) {
       pcl::PointCloud<pcl::PointXYZ>::Ptr ray_traced_pointcloud_ptr(

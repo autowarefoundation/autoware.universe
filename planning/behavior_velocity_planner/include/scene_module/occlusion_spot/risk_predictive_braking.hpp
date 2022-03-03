@@ -26,52 +26,33 @@ namespace behavior_velocity_planner
 {
 namespace occlusion_spot_utils
 {
-void applySafeVelocityConsideringPossibleCollison(
-  autoware_auto_planning_msgs::msg::PathWithLaneId * inout_path,
-  std::vector<PossibleCollisionInfo> & possible_collisions, const double current_vel,
-  const EgoVelocity & ego, const PlannerParam & param);
+void applySafeVelocityConsideringPossibleCollision(
+  PathWithLaneId * inout_path, std::vector<PossibleCollisionInfo> & possible_collisions,
+  const PlannerParam & param);
 
 int insertSafeVelocityToPath(
   const geometry_msgs::msg::Pose & in_pose, const double safe_vel, const PlannerParam & param,
-  autoware_auto_planning_msgs::msg::PathWithLaneId * inout_path);
-
-// @brief calculates the maximum velocity allowing to decelerate within the given distance
-inline double calculatePredictiveBrakingVelocity(
-  const double ego_vel, const double dist2col, const double pbs_decel)
-{
-  return std::sqrt(std::max(std::pow(ego_vel, 2.0) - 2.0 * std::abs(pbs_decel) * dist2col, 0.0));
-}
+  PathWithLaneId * inout_path);
 
 /**
- * @param: safety_time: safety time buffer for reaction
- * @param: dist_to_obj: distance to virtual darting object
- * @param: v_obs: relative  velocity for virtual darting object
- * @param: ebs_decel: emergency brake
- * @return safe velocity considering rpb
+ *
+ * @param: longitudinal_distance: longitudinal distance to collision
+ * @param: param: planner param
+ * @return lateral distance
  **/
-inline double calculateSafeRPBVelocity(
-  const double safety_time, const double dist_to_obj, const double v_obs, const double ebs_decel)
-{
-  const double t_vir = dist_to_obj / v_obs;
-  // min safety time buffer is at least more than 0
-  const double ttc_virtual = std::max(t_vir - safety_time, 0.0);
-  // safe velocity consider emergency brake
-  const double v_safe = std::abs(ebs_decel) * ttc_virtual;
-  return v_safe;
-}
+double calculateLateralDistanceFromTTC(
+  const double longitudinal_distance, const PlannerParam & param);
 
-inline double getPBSLimitedRPBVelocity(
-  const double pbs_vel, const double rpb_vel, const double min_vel, const double original_vel)
-{
-  const double max_vel_noise = 0.05;
-  // ensure safe velocity doesn't exceed maximum allowed pbs deceleration
-  double rpb_pbs_limited_vel = std::max(pbs_vel + max_vel_noise, rpb_vel);
-  // ensure safe path velocity is also above ego min velocity
-  rpb_pbs_limited_vel = std::max(rpb_pbs_limited_vel, min_vel);
-  // ensure we only lower the original velocity (and do not increase it)
-  rpb_pbs_limited_vel = std::min(rpb_pbs_limited_vel, original_vel);
-  return rpb_pbs_limited_vel;
-}
+/**
+ * @param: v: ego velocity config
+ * @param: ttc: time to collision
+ * @return safe motion
+ **/
+SafeMotion calculateSafeMotion(const Velocity & v, const double ttc);
+
+double calculateInsertVelocity(
+  const double min_allowed_vel, const double safe_vel, const double min_vel,
+  const double original_vel);
 
 }  // namespace occlusion_spot_utils
 }  // namespace behavior_velocity_planner

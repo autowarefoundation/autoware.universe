@@ -16,6 +16,7 @@
 #define UTILIZATION__UTIL_HPP_
 
 #include <lanelet2_extension/utility/query.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <utilization/boost_geometry_helper.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
@@ -40,6 +41,16 @@
 
 #include <string>
 #include <vector>
+
+namespace tier4_autoware_utils
+{
+template <>
+inline geometry_msgs::msg::Point getPoint(
+  const autoware_auto_planning_msgs::msg::PathPointWithLaneId & p)
+{
+  return p.point.pose.position;
+}
+}  // namespace tier4_autoware_utils
 
 namespace behavior_velocity_planner
 {
@@ -125,6 +136,14 @@ double calcJudgeLineDistWithAccLimit(
 double calcJudgeLineDistWithJerkLimit(
   const double velocity, const double acceleration, const double max_stop_acceleration,
   const double max_stop_jerk, const double delay_response_time);
+
+double calcDecelerationVelocityFromDistanceToTarget(
+  const double max_slowdown_jerk, const double max_slowdown_accel, const double current_accel,
+  const double current_velocity, const double distance_to_target);
+
+double findReachTime(
+  const double jerk, const double accel, const double velocity, const double distance,
+  const double t_min, const double t_max);
 
 tier4_planning_msgs::msg::StopReason initializeStopReason(const std::string & stop_reason);
 

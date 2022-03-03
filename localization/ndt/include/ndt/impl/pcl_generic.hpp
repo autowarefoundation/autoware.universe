@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef NORMAL_DISTRIBUTIONS_TRANSFORM_PCL_GENERIC_HPP
-#define NORMAL_DISTRIBUTIONS_TRANSFORM_PCL_GENERIC_HPP
+#ifndef NDT__IMPL__PCL_GENERIC_HPP_
+#define NDT__IMPL__PCL_GENERIC_HPP_
 
 #include "ndt/pcl_generic.hpp"
 
@@ -138,10 +138,11 @@ NormalDistributionsTransformPCLGeneric<PointSource, PointTarget>::getFinalTransf
 }
 
 template <class PointSource, class PointTarget>
-std::vector<Eigen::Matrix4f> NormalDistributionsTransformPCLGeneric<
-  PointSource, PointTarget>::getFinalTransformationArray() const
+std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>>
+NormalDistributionsTransformPCLGeneric<PointSource, PointTarget>::getFinalTransformationArray()
+  const
 {
-  return std::vector<Eigen::Matrix4f>();
+  return std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>>();
 }
 
 template <class PointSource, class PointTarget>
@@ -159,4 +160,4 @@ NormalDistributionsTransformPCLGeneric<PointSource, PointTarget>::getSearchMetho
   return ndt_ptr_->getSearchMethodTarget();
 }
 
-#endif  // NORMAL_DISTRIBUTIONS_TRANSFORM_PCL_GENERIC_HPP
+#endif  // NDT__IMPL__PCL_GENERIC_HPP_

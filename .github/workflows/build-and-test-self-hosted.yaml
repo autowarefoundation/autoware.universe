@@ -1,0 +1,37 @@
+name: build-and-test-self-hosted
+
+on:
+  schedule:
+    - cron: 0 0 * * *
+  workflow_dispatch:
+
+jobs:
+  build-and-test-self-hosted:
+    runs-on: [self-hosted, linux, ARM64]
+    container: ghcr.io/autowarefoundation/autoware-universe:latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Remove exec_depend
+        uses: autowarefoundation/autoware-github-actions/remove-exec-depend@v1
+
+      - name: Get self packages
+        id: get-self-packages
+        uses: autowarefoundation/autoware-github-actions/get-self-packages@v1
+
+      - name: Build
+        if: ${{ steps.get-self-packages.outputs.self-packages != '' }}
+        uses: autowarefoundation/autoware-github-actions/colcon-build@v1
+        with:
+          rosdistro: galactic
+          target-packages: ${{ steps.get-self-packages.outputs.self-packages }}
+          build-depends-repos: build_depends.repos
+
+      - name: Test
+        if: ${{ steps.get-self-packages.outputs.self-packages != '' }}
+        uses: autowarefoundation/autoware-github-actions/colcon-test@v1
+        with:
+          rosdistro: galactic
+          target-packages: ${{ steps.get-self-packages.outputs.self-packages }}
+          build-depends-repos: build_depends.repos

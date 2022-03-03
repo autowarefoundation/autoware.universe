@@ -151,12 +151,11 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
 
   // Set timer
   {
-    auto cb = std::bind(&PointCloudConcatenateDataSynchronizerComponent::timer_callback, this);
-    auto period = std::chrono::duration_cast<std::chrono::nanoseconds>(
+    const auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
       std::chrono::duration<double>(timeout_sec_));
-    timer_ = std::make_shared<rclcpp::GenericTimer<decltype(cb)>>(
-      get_clock(), period, std::move(cb), get_node_base_interface()->get_context());
-    get_node_timers_interface()->add_timer(timer_, nullptr);
+    timer_ = rclcpp::create_timer(
+      this, get_clock(), period_ns,
+      std::bind(&PointCloudConcatenateDataSynchronizerComponent::timer_callback, this));
   }
 
   // Diagnostic Updater
@@ -297,26 +296,41 @@ void PointCloudConcatenateDataSynchronizerComponent::publish()
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void PointCloudConcatenateDataSynchronizerComponent::removeRADTFields(
-  const sensor_msgs::msg::PointCloud2 & input_cloud, sensor_msgs::msg::PointCloud2 & output_cloud)
+void PointCloudConcatenateDataSynchronizerComponent::convertToXYZICloud(
+  const sensor_msgs::msg::PointCloud2::SharedPtr & input_ptr,
+  sensor_msgs::msg::PointCloud2::SharedPtr & output_ptr)
 {
+  output_ptr->header = input_ptr->header;
+  PointCloud2Modifier<PointXYZI> output_modifier{*output_ptr, input_ptr->header.frame_id};
+  output_modifier.reserve(input_ptr->width);
+
   bool has_intensity = std::any_of(
-    input_cloud.fields.begin(), input_cloud.fields.end(),
+    input_ptr->fields.begin(), input_ptr->fields.end(),
     [](auto & field) { return field.name == "intensity"; });
 
-  if (input_cloud.fields.size() == 3 || (input_cloud.fields.size() == 4 && has_intensity)) {
-    output_cloud = input_cloud;
-  } else if (has_intensity) {
-    pcl::PointCloud<PointXYZI> tmp_cloud;
-    pcl::fromROSMsg(input_cloud, tmp_cloud);
-    pcl::toROSMsg(tmp_cloud, output_cloud);
-    output_cloud.header = input_cloud.header;
+  sensor_msgs::PointCloud2Iterator<float> it_x(*input_ptr, "x");
+  sensor_msgs::PointCloud2Iterator<float> it_y(*input_ptr, "y");
+  sensor_msgs::PointCloud2Iterator<float> it_z(*input_ptr, "z");
+
+  if (has_intensity) {
+    sensor_msgs::PointCloud2Iterator<float> it_i(*input_ptr, "intensity");
+    for (; it_x != it_x.end(); ++it_x, ++it_y, ++it_z, ++it_i) {
+      PointXYZI point;
+      point.x = *it_x;
+      point.y = *it_y;
+      point.z = *it_z;
+      point.intensity = *it_i;
+      output_modifier.push_back(std::move(point));
+    }
   } else {
-    pcl::PointCloud<pcl::PointXYZ> tmp_cloud;
-    pcl::fromROSMsg(input_cloud, tmp_cloud);
-    pcl::toROSMsg(tmp_cloud, output_cloud);
-    output_cloud.header = input_cloud.header;
+    for (; it_x != it_x.end(); ++it_x, ++it_y, ++it_z) {
+      PointXYZI point;
+      point.x = *it_x;
+      point.y = *it_y;
+      point.z = *it_z;
+      point.intensity = 0.0f;
+      output_modifier.push_back(std::move(point));
+    }
   }
 }
 
@@ -337,14 +351,11 @@ void PointCloudConcatenateDataSynchronizerComponent::setPeriod(const int64_t new
 }
 
 void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
-  const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_ptr, const std::string & topic_name)
+  const sensor_msgs::msg::PointCloud2::SharedPtr & input_ptr, const std::string & topic_name)
 {
   std::lock_guard<std::mutex> lock(mutex_);
-
-  sensor_msgs::msg::PointCloud2 xyz_cloud;
-  removeRADTFields(*input_ptr, xyz_cloud);
-  sensor_msgs::msg::PointCloud2::ConstSharedPtr xyz_input_ptr(
-    new sensor_msgs::msg::PointCloud2(xyz_cloud));
+  sensor_msgs::msg::PointCloud2::SharedPtr xyzi_input_ptr(new sensor_msgs::msg::PointCloud2());
+  convertToXYZICloud(input_ptr, xyzi_input_ptr);
 
   const bool is_already_subscribed_this = (cloud_stdmap_[topic_name] != nullptr);
   const bool is_already_subscribed_tmp = std::any_of(
@@ -352,7 +363,7 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
     [](const auto & e) { return e.second != nullptr; });
 
   if (is_already_subscribed_this) {
-    cloud_stdmap_tmp_[topic_name] = xyz_input_ptr;
+    cloud_stdmap_tmp_[topic_name] = xyzi_input_ptr;
 
     if (!is_already_subscribed_tmp) {
       auto period = std::chrono::duration_cast<std::chrono::nanoseconds>(
@@ -365,7 +376,7 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
       timer_->reset();
     }
   } else {
-    cloud_stdmap_[topic_name] = xyz_input_ptr;
+    cloud_stdmap_[topic_name] = xyzi_input_ptr;
 
     const bool is_subscribed_all = std::all_of(
       std::begin(cloud_stdmap_), std::end(cloud_stdmap_),

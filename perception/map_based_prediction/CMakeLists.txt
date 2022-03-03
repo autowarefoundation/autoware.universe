@@ -7,7 +7,7 @@ if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_EXTENSIONS OFF)
 endif()
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
+  add_compile_options(-Wall -Wextra -Wpedantic -Werror)
 endif()
 
 find_package(ament_cmake_auto REQUIRED)
@@ -21,7 +21,7 @@ ament_auto_add_library(map_based_prediction_node SHARED
 )
 
 rclcpp_components_register_node(map_based_prediction_node
-  PLUGIN "MapBasedPredictionROS"
+  PLUGIN "map_based_prediction::MapBasedPredictionROS"
   EXECUTABLE map_based_prediction
 )
 

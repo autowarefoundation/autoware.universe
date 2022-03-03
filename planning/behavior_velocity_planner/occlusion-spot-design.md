@@ -47,18 +47,49 @@ This module considers any occlusion spot around ego path computed from the occup
 
 ![occupancy_grid](./docs/occlusion_spot/occupancy_grid.svg)
 
-Occlusion spot computation: searching occlusion spots for all cells in the occupancy_grid inside "focus range" requires a lot of computational cost, so this module will stop searching if the first occlusion spot is found in the following searching process.
+#### Occlusion Spot Common
 
-![brief](./docs/occlusion_spot/sidewalk_slice.svg)
+##### The Concept of Safe Velocity
 
-Note that the accuracy and performance of this search method is limited due to the approximation.
+The safe slowdown velocity is calculated from the below parameters of ego emergency braking system and time to collision.
+
+- jerk limit[m/s^3]
+- deceleration limit[m/s2]
+- delay response time[s]
+- time to collision of pedestrian[s]
+  with these parameters we can briefly define safe motion before occlusion spot for ideal environment.
+  ![occupancy_grid](./docs/occlusion_spot/safe_motion.svg)
+
+##### Maximum Slowdown Velocity
+
+The maximum slowdown velocity is calculated from the below parameters of ego current velocity and acceleration with maximum slowdown jerk and maximum slowdown acceleration in order not to slowdown too much.
+
+- $j_{max}$ slowdown jerk limit[m/s^3]
+- $a_{max}$ slowdown deceleration limit[m/s2]
+- $v_{0}$ current velocity[m/s]
+- $a_{0}$ current acceleration[m/s]
+
+![brief](./docs/occlusion_spot/maximum_slowdown_velocity.svg)
+
+##### Safe Behavior After Passing Safe Margin Point
+
+This module defines safe margin to consider ego distance to stop and collision path point geometrically.
+While ego is cruising from safe margin to collision path point, ego vehicle keeps the same velocity as occlusion spot safe velocity.
+
+![brief](./docs/occlusion_spot/behavior_after_safe_margin.svg)
+
+##### DetectionArea Polygon
+
+Occlusion spot computation: searching occlusion spots for all cells in the occupancy_grid inside "max lateral distance" requires a lot of computational cost, so this module use only one most notable occlusion spot for each partition. (currently offset is from baselink to front for safety)
+The maximum length of detection area depends on ego current vehicle velocity and acceleration.
+
+![brief](./docs/occlusion_spot/detection_area_poly.svg)
 
 #### Module Parameters
 
-| Parameter            | Type   | Description                                                               |
-| -------------------- | ------ | ------------------------------------------------------------------------- |
-| `pedestrian_vel`     | double | [m/s] maximum velocity assumed pedestrian coming out from occlusion point |
-| `safety_time_buffer` | double | [m/s] time buffer for the system delay                                    |
+| Parameter        | Type   | Description                                                               |
+| ---------------- | ------ | ------------------------------------------------------------------------- |
+| `pedestrian_vel` | double | [m/s] maximum velocity assumed pedestrian coming out from occlusion point |
 
 | Parameter /threshold    | Type   | Description                                               |
 | ----------------------- | ------ | --------------------------------------------------------- |
@@ -66,21 +97,27 @@ Note that the accuracy and performance of this search method is limited due to t
 | `stuck_vehicle_vel`     | double | [m/s] velocity below this value is assumed to stop        |
 | `lateral_distance`      | double | [m] maximum lateral distance to consider hidden collision |
 
-| Parameter /(public or private)\_road | Type   | Description                                                          |
-| ------------------------------------ | ------ | -------------------------------------------------------------------- |
-| `min_velocity`                       | double | [m/s] minimum velocity to ignore occlusion spot                      |
-| `ebs_decel`                          | double | [m/s^2] maximum deceleration to assume for emergency braking system. |
-| `pbs_decel`                          | double | [m/s^2] deceleration to assume for predictive braking system         |
+| Parameter /motion            | Type   | Description                                              |
+| ---------------------------- | ------ | -------------------------------------------------------- |
+| `safety_ratio`               | double | [-] safety ratio for jerk and acceleration               |
+| `max_slow_down_jerk`         | double | [m/s^3] jerk for safe brake                              |
+| `max_slow_down_accel`        | double | [m/s^2] deceleration for safe brake                      |
+| `non_effective_jerk`         | double | [m/s^3] weak jerk for velocity planning.                 |
+| `non_effective_acceleration` | double | [m/s^2] weak deceleration for velocity planning.         |
+| `min_allowed_velocity`       | double | [m/s] minimum velocity allowed                           |
+| `delay_time`                 | double | [m/s] time buffer for the system delay                   |
+| `safe_margin`                | double | [m] maximum error to stop with emergency braking system. |
 
-| Parameter /sidewalk       | Type   | Description                                                     |
-| ------------------------- | ------ | --------------------------------------------------------------- |
-| `min_occlusion_spot_size` | double | [m] the length of path to consider occlusion spot               |
-| `focus_range`             | double | [m] buffer around the ego path used to build the sidewalk area. |
+| Parameter /detection_area | Type   | Description                                                           |
+| ------------------------- | ------ | --------------------------------------------------------------------- |
+| `min_occlusion_spot_size` | double | [m] the length of path to consider occlusion spot                     |
+| `slice_length`            | double | [m] the distance of divided detection area                            |
+| `max_lateral_distance`    | double | [m] buffer around the ego path used to build the detection_area area. |
 
-| Parameter /grid  | Type   | Description                                                     |
-| ---------------- | ------ | --------------------------------------------------------------- |
-| `free_space_max` | double | [-] maximum value of a free space cell in the occupancy grid    |
-| `occupied_min`   | double | [-] buffer around the ego path used to build the sidewalk area. |
+| Parameter /grid  | Type   | Description                                                           |
+| ---------------- | ------ | --------------------------------------------------------------------- |
+| `free_space_max` | double | [-] maximum value of a free space cell in the occupancy grid          |
+| `occupied_min`   | double | [-] buffer around the ego path used to build the detection_area area. |
 
 #### Flowchart
 
@@ -91,8 +128,20 @@ Note that the accuracy and performance of this search method is limited due to t
 title modifyPathVelocity (Private/Public) Road
 start
 
-:get current road type;
+partition process_path {
+:clip path by length;
+:interpolate path;
+note right
+  using spline interpolation and interpolate (x,y,z,v)
+end note
+:calc closest path point from ego;
+:extract target road pair;
+note right
+extract target road type start and end pair and early return if none
+end note
+}
 
+partition process_sensor_data {
 if (road type is PUBLIC) then (yes)
   :preprocess dynamic object;
 else if (road type is PRIVATE) then (yes)
@@ -100,22 +149,50 @@ else if (road type is PRIVATE) then (yes)
 else (no)
   stop
 endif
-
+}
+:calculate offset from start to ego;
+partition generate_detection_area_polygon {
+:convert path to path lanelet;
+:generate left/right slice of polygon that starts from path start;
+:generate interpolated polygon which is created from ego TTC and lateral distance that pedestrian can reach within ego TTC.;
+}
+partition find_possible_collision {
 :generate possible collision;
-
-:find possible collision between path and occlusion spot;
-
-if (possible collision is found?) then (yes)
-else (no)
-  stop
-endif
-
-:calculate collision path point;
-
-:calculate safe velocity consider lateral distance and safe velocity;
-
-:insertSafeVelocityToPath;
-
+:calculate collision path point and intersection point;
+note right
+  - occlusion spot is calculated by longitudinally closest point of unknown cells.
+  - intersection point is where ego front bumper and darting object will crash.
+  - collision path point is calculated by arc coordinate consider ego vehicle's geometry.
+  - safe velocity and safe margin is calculated from performance of ego emergency braking system.
+end note
+:calculate safe velocity and safe margin for possible collision;
+note right
+  - safe velocity and safe margin is calculated from performance of ego emergency braking system.
+end note
+}
+partition process_possible_collision {
+:filter possible collision by road type;
+note right
+filter by target road type start and end pair
+end note
+:calculate slow down points for possible collision;
+note right
+calculate original velocity and height for the possible collision
+end note
+:handle collision offset;
+note right
+consider offset from path start to ego vehicle for possible collision
+end note
+:apply safe velocity comparing with allowed velocity;
+note right
+calculated by
+- safe velocity calculated from emergency brake performance.
+- maximum allowed deceleration [m/s^2]
+- min velocity [m/s] the velocity that is allowed on the road.
+- original_velocity [m/s]
+set minimum velocity for path point after occlusion spot.
+end note
+}
 stop
 @enduml
 ```
@@ -126,36 +203,29 @@ stop
 @startuml
 title modifyPathVelocity For Public Road
 start
-partition parking_vehicle_selection {
-:get all lanelet id on ego path;
-:get right/left lanelets around ego path;
-:get center lane lines from lanelets around ego path;
+
+partition process_path {
+:clip path by length;
+note right
+  100m considering perception range
+end note
+:interpolate ego path;
+:get closest index from ego position in interpolated path;
+:extract target road type start/end distance by arc length;
+}
+partition preprocess_dynamic_object {
 :get parked vehicle from dynamic object array;
 note right
   target parked vehicle is define as follow .
   - dynamic object's semantic type is "car","bus","track".
   - velocity is below `stuck_vehicle_vel`.
-  - lateral position from lane center is farther than `lateral_deviation_threshold`.
 end note
 }
-partition offset_calculation {
-:interpolate ego path;
-note right
-  using spline interpolation and interpolate (x,y,z,v)
-end note
-:get closest index from ego position in interpolated path;
-:calculate offset from path start to ego;
-}
-:convert interpolated path to `path_lanelet`;
-note right
-  `path_lanelet` is lanelet which is created by ego path
-    and mainly used for arc coordinate conversion.
-end note
-partition generate_possible_collision {
+:generate_detection_area_polygon;
+partition find_possible_collision {
 :generate possible collision behind parked vehicle;
 note right
   - occlusion spot candidate is stuck vehicle polygon 2 points farther which is closer to ego path.
-  - consider occlusion which is nearer than `lateral_distance_threshold`.
 end note
 :calculate collision path point and intersection point;
 note right
@@ -163,26 +233,18 @@ note right
   - intersection point is where ego front bumper and darting object will crash.
   - collision path point is calculated by arc coordinate consider ego vehicle's geometry.
 end note
-}
-:extract target road type start/end distance by arc length;
-:calculate original velocity and height for the possible collision;
+:calculate safe velocity and safe margin for possible collision;
 note right
-calculated (x,y,z,v) at the path using linear interpolation between interpolated path points.
-end note
-partition calculate_safe_velocity {
-:calculate safe velocity consider lateral distance and safe velocity;
-note right
-calculated by
-- ebs deceleration [m/s] emergency braking system consider lateral distance to the occlusion spot.
-- pbs deceleration [m/s] predictive braking system consider distance to the possible collision.
-- min velocity [m/s] the velocity that is allowed on the road.
-- original_velocity [m/s]
+  - safe velocity and safe margin is calculated from performance of ego emergency braking system.
 end note
 }
+partition process_possible_collision {
+:filter collision by road type;
+:calculate slow down points for possible collision;
+:handle collision offset;
+:apply safe velocity comparing with allowed velocity;
 :insert safe velocity to path;
-note right
- set minimum velocity for path point after occlusion spot.
-end note
+}
 stop
 @enduml
 ```
@@ -193,6 +255,15 @@ stop
 @startuml
 title modifyPathVelocity For Private Road
 start
+
+partition process_path {
+:clip path by length;
+note right
+  50m considering occupancy grid range
+end note
+:interpolate ego path;
+:get closest index from ego position in interpolated path;
+}
 partition occupancy_grid_preprocess {
 :convert occupancy grid to image;
 note right
@@ -208,51 +279,27 @@ note right
   convert from occupancy grid to image to use opencv functions.
 end note
 }
-partition offset_calculation {
-:interpolate ego path;
-note right
-  using spline interpolation and interpolate (x,y,z,v)
-end note
-:get closest index from ego position in interpolated path;
-:calculate offset from path start to ego;
-}
-:convert interpolated path to `path_lanelet`;
-note right
-  `path_lanelet` is lanelet which is created by ego path
-    and mainly used for arc coordinate conversion.
-end note
+:generate_detection_area_polygon;
 partition generate_possible_collision {
+:calculate offset from path start to ego;
 :generate possible collision from occlusion spot;
 note right
   - occlusion spot candidate is N by N size unknown cells.
   - consider occlusion which is nearer than `lateral_distance_threshold`.
 end note
 :calculate collision path point and intersection point;
+:calculate safe velocity and safe margin for possible collision;
 note right
-  - occlusion spot is calculated by longitudinally closest point of unknown cells.
-  - intersection point is where ego front bumper and darting object will crash.
-  - collision path point is calculated by arc coordinate consider ego vehicle's geometry.
+  - safe velocity and safe margin is calculated from performance of ego emergency braking system.
 end note
 }
-:extract target road type start/end distance by arc length;
-:calculate original velocity and height for the possible collision;
-note right
-calculated (x,y,z,v) at the path using linear interpolation between interpolated path points.
-end note
-partition calculate_safe_velocity {
-:calculate safe velocity consider lateral distance and safe velocity;
-note right
-calculated by
-- ebs deceleration [m/s] emergency braking system consider lateral distance to the occlusion spot.
-- pbs deceleration [m/s] predictive braking system consider distance to the possible collision.
-- min velocity [m/s] the velocity that is allowed on the road.
-- original_velocity [m/s]
-end note
-}
+partition handle_possible_collision {
+:filter collision by road type;
+:calculate slow down points for possible collision;
+:handle collision offset;
+:apply safe velocity comparing with allowed velocity;
 :insert safe velocity to path;
-note right
- set minimum velocity for path point after occlusion spot.
-end note
+}
 stop
 @enduml
 ```
