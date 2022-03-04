@@ -9,17 +9,22 @@ ament_auto_find_build_dependencies()
 
 # Component
 ament_auto_add_library(${PROJECT_NAME} SHARED
-  include/simple_planning_simulator/simple_planning_simulator_core.hpp
-  include/simple_planning_simulator/visibility_control.hpp
-  src/simple_planning_simulator/simple_planning_simulator_core.cpp
-  src/simple_planning_simulator/vehicle_model/sim_model_interface.cpp
-  src/simple_planning_simulator/vehicle_model/sim_model_ideal_steer_vel.cpp
-  src/simple_planning_simulator/vehicle_model/sim_model_ideal_steer_acc.cpp
-  src/simple_planning_simulator/vehicle_model/sim_model_ideal_steer_acc_geared.cpp
-  src/simple_planning_simulator/vehicle_model/sim_model_delay_steer_vel.cpp
-  src/simple_planning_simulator/vehicle_model/sim_model_delay_steer_acc.cpp
-  src/simple_planning_simulator/vehicle_model/sim_model_delay_steer_acc_geared.cpp
-)
+        include/simple_planning_simulator/simple_planning_simulator_core.hpp
+        include/simple_planning_simulator/visibility_control.hpp
+        src/simple_planning_simulator/simple_planning_simulator_core.cpp
+        src/simple_planning_simulator/vehicle_model/sim_model_interface.cpp
+        src/simple_planning_simulator/vehicle_model/sim_model_ideal_steer_vel.cpp
+        src/simple_planning_simulator/vehicle_model/sim_model_ideal_steer_acc.cpp
+        src/simple_planning_simulator/vehicle_model/sim_model_ideal_steer_acc_geared.cpp
+        src/simple_planning_simulator/vehicle_model/sim_model_delay_steer_vel.cpp
+        src/simple_planning_simulator/vehicle_model/sim_model_delay_steer_acc.cpp
+        src/simple_planning_simulator/vehicle_model/sim_model_delay_steer_acc_geared.cpp
+        # DISTURBANCE MODIFICATIONS
+        src/simple_planning_simulator/vehicle_model/sim_model_delay_steer_acc_disturbance.cpp
+        src/autoware_control_toolbox/autoware_control_toolbox.cpp
+        src/autoware_control_toolbox/utils/act_utils_eigen.cpp
+        src/autoware_control_toolbox/utils/act_utils.cpp
+        )
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${tf2_INCLUDE_DIRS})
 autoware_set_compile_options(${PROJECT_NAME})
 
@@ -28,27 +33,25 @@ target_compile_options(${PROJECT_NAME} PRIVATE -Wno-old-style-cast) # RCLCPP_ERR
 
 # Node executable
 rclcpp_components_register_node(${PROJECT_NAME}
-  PLUGIN "simulation::simple_planning_simulator::SimplePlanningSimulator"
-  EXECUTABLE ${PROJECT_NAME}_exe
-)
+        PLUGIN "simulation::simple_planning_simulator::SimplePlanningSimulator"
+        EXECUTABLE ${PROJECT_NAME}_exe
+        )
 
 
 ### Test
-if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
+if (BUILD_TESTING)
+    find_package(ament_lint_auto REQUIRED)
+    ament_lint_auto_find_test_dependencies()
 
-  ament_add_gtest(test_simple_planning_simulator
-    test/test_simple_planning_simulator.cpp
-    TIMEOUT 120
-  )
+    ament_add_gtest(test_simple_planning_simulator
+            test/test_simple_planning_simulator.cpp
+            TIMEOUT 120
+            )
 
-  target_link_libraries(test_simple_planning_simulator
-    ${PROJECT_NAME}
-  )
-endif()
-
-
+    target_link_libraries(test_simple_planning_simulator
+            ${PROJECT_NAME}
+            )
+endif ()
 
 
 ament_auto_package(INSTALL_TO_SHARE param launch)
