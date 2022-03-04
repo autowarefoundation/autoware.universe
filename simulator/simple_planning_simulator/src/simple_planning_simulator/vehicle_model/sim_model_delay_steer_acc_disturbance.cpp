@@ -23,7 +23,6 @@ SimModelDelaySteerAcc_Dist::SimModelDelaySteerAcc_Dist(float64_t vx_lim,
                                                        float64_t vx_rate_lim,
                                                        float64_t steer_rate_lim,
                                                        float64_t wheelbase,
-                                                       float64_t dt,
                                                        float64_t acc_delay,
                                                        float64_t acc_time_constant,
                                                        float64_t steer_delay,
@@ -40,7 +39,7 @@ SimModelDelaySteerAcc_Dist::SimModelDelaySteerAcc_Dist(float64_t vx_lim,
           steer_delay_(steer_delay),
           steer_time_constant_(std::max(steer_time_constant, MIN_TIME_CONSTANT))
 {
-    initializeInputQueue(dt);
+    // initializeInputQueue(dt);
 }
 
 float64_t SimModelDelaySteerAcc_Dist::getX()
@@ -73,13 +72,31 @@ void SimModelDelaySteerAcc_Dist::update(const float64_t &dt)
 {
     Eigen::VectorXd delayed_input = Eigen::VectorXd::Zero(dim_u_);
 
-    acc_input_queue_.push_back(input_(IDX_U::ACCX_DES));
-    delayed_input(IDX_U::ACCX_DES) = acc_input_queue_.front();
-    acc_input_queue_.pop_front();
-    steer_input_queue_.push_back(input_(IDX_U::STEER_DES));
-    delayed_input(IDX_U::STEER_DES) = steer_input_queue_.front();
-    steer_input_queue_.pop_front();
+//    acc_input_queue_.push_back(input_(IDX_U::ACCX_DES));
+//    delayed_input(IDX_U::ACCX_DES) = acc_input_queue_.front();
+//    acc_input_queue_.pop_front();
+//
+//    steer_input_queue_.push_back(input_(IDX_U::STEER_DES));
+//    delayed_input(IDX_U::STEER_DES) = steer_input_queue_.front();
+//    steer_input_queue_.pop_front();
 
+    const double raw_acc_command = input_(IDX_U::ACCX_DES);
+    const double raw_steer_command = input_(IDX_U::STEER_DES);
+
+    // --------- DISTURBANCE GENERATOR MODIFICATIONS -------------------------
+
+
+    delayed_input(IDX_U::ACCX_DES) = raw_acc_command;// acc_delayed + acc_slope_dist;
+    delayed_input(IDX_U::STEER_DES) = raw_steer_command; //steer_delayed;
+
+
+    // --------- DISTURBANCE GENERATOR MODIFICATIONS -------------------------
+//    delayed_input(IDX_U::STEER_DES) = steer_delayed;
+//    delayed_input(IDX_U::ACCX_DES) = acc_delayed + acc_slope_dist;
+
+
+    // --------- DISTURBANCE GENERATOR MODIFICATIONS -------------------------
+    // Integrate the state
     updateRungeKutta(dt, delayed_input);
 
     state_(IDX::VX) = std::max(-vx_lim_, std::min(state_(IDX::VX), vx_lim_));
@@ -88,16 +105,16 @@ void SimModelDelaySteerAcc_Dist::update(const float64_t &dt)
     ns_utils::print("In the vehicle disturbance vehicle model \n");
 }
 
-void SimModelDelaySteerAcc_Dist::initializeInputQueue(const float64_t &dt)
-{
-    auto acc_input_queue_size = static_cast<size_t>(round(acc_delay_ / dt));
-    acc_input_queue_.resize(acc_input_queue_size);
-    std::fill(acc_input_queue_.begin(), acc_input_queue_.end(), 0.0);
-
-    auto steer_input_queue_size = static_cast<size_t>(round(steer_delay_ / dt));
-    steer_input_queue_.resize(steer_input_queue_size);
-    std::fill(steer_input_queue_.begin(), steer_input_queue_.end(), 0.0);
-}
+//void SimModelDelaySteerAcc_Dist::initializeInputQueue(const float64_t &dt)
+//{
+//    auto acc_input_queue_size = static_cast<size_t>(round(acc_delay_ / dt));
+//    acc_input_queue_.resize(acc_input_queue_size);
+//    std::fill(acc_input_queue_.begin(), acc_input_queue_.end(), 0.0);
+//
+//    auto steer_input_queue_size = static_cast<size_t>(round(steer_delay_ / dt));
+//    steer_input_queue_.resize(steer_input_queue_size);
+//    std::fill(steer_input_queue_.begin(), steer_input_queue_.end(), 0.0);
+//}
 
 Eigen::VectorXd SimModelDelaySteerAcc_Dist::calcModel(
         const Eigen::VectorXd &state, const Eigen::VectorXd &input)

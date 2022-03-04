@@ -25,7 +25,8 @@
 
 #include "simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
 
-class SimModelDelaySteerAcc_Dist : public SimModelInterface {
+class SimModelDelaySteerAcc_Dist : public SimModelInterface
+{
 public:
     /**
      * @brief constructor
@@ -45,7 +46,6 @@ public:
                                float64_t vx_rate_lim,
                                float64_t steer_rate_lim,
                                float64_t wheelbase,
-                               float64_t dt,
                                float64_t acc_delay,
                                float64_t acc_time_constant,
                                float64_t steer_delay,
@@ -58,8 +58,8 @@ public:
 
 private:
     const float64_t MIN_TIME_CONSTANT;  //!< @brief minimum time constant
-
-    enum IDX {
+    enum IDX
+    {
         X = 0,
         Y,
         YAW,
@@ -67,7 +67,8 @@ private:
         STEER,
         ACCX,
     };
-    enum IDX_U {
+    enum IDX_U
+    {
         ACCX_DES = 0,
         STEER_DES,
         DRIVE_SHIFT,
@@ -90,7 +91,7 @@ private:
      * @brief set queue buffer for input command
      * @param [in] dt delta time
      */
-    void initializeInputQueue(const float64_t &dt);
+    // void initializeInputQueue(const float64_t &dt);
 
     /**
      * @brief get vehicle position x
